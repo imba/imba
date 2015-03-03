@@ -1,0 +1,1241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>fileTypes</key>
+		<array><string>imba</string></array>
+		<key>name</key>
+		<string>Imba</string>
+		<key>patterns</key>
+		<array>
+			<dict>
+		<key>name</key>
+		<string>comment.block.imba</string>
+		<key>begin</key>
+		<string>^[\t]*###</string>
+		<key>end</key>
+		<string>###(?:[ \t]*\n)</string>
+		<key>captures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.comment.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>comment.line.imba</string>
+		<key>match</key>
+		<string>(?:^[ \t]+)?(#\s).*$\n?</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>string.quoted.single.imba</string>
+		<key>begin</key>
+		<string>'</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.string.begin.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>'</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.string.end.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>patterns</key>
+		<array>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>string.quoted.double.imba</string>
+		<key>begin</key>
+		<string>"</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.string.begin.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>"</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.string.end.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>#interpolated_imba</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>string.regexp.multiline.imba</string>
+		<key>begin</key>
+		<string>(\/{3})</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.regex.end.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>(\/{3})([imgy]{0,4})</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.regex.end.imba</string>
+		</dict>
+		
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>string.regexp.flags.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>#embedded_comment</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>string.regexp.simple.imba</string>
+		<key>begin</key>
+		<string>(\/)(?=[^\t\n]*\/)</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.regex.begin.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>(\/)([imgy]{0,4})</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.regex.end.imba</string>
+		</dict>
+		
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>string.regexp.flags.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>#regex_content</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.tag.empty.imba</string>
+		<key>match</key>
+		<string>(\&lt;)(\&gt;)</string>
+		<key>captures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.section.tag.open.imba</string>
+		</dict>
+		
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.section.tag.close.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.tag.imba</string>
+		<key>begin</key>
+		<string>(\&lt;)(([a-z\-]+\:|\@|\.|\#)?([a-z][a-z\-\d]*))</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.section.tag.open.imba</string>
+		</dict>
+		
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.tag.type.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>(\&gt;)</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.section.tag.close.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>#tag_imba</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.selector.imba.all</string>
+		<key>begin</key>
+		<string>(\$|%)\(</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.selector.begin.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>\)</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.selector.end.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>#selector_content</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.selector.imba.first</string>
+		<key>begin</key>
+		<string>(\$\$|%%)\(</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.selector.begin.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>\)</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.selector.close.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>#selector_content</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.selector.single.imba</string>
+		<key>begin</key>
+		<string>(%)(?=[\w\.])</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.selector.begin.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>(?=[\s\n\)\}\,])</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.definition.selector.close.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>#selector_content</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.selector.id.imba</string>
+		<key>match</key>
+		<string>(#[A-Za-z][A-Za-z\d]*(-[A-Za-z\d]+)*)</string>
+		<key>captures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.tag.html.id.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.class.imba</string>
+		<key>begin</key>
+		<string>(\t*)(local\s|export\s|extend\s)*(class)\s+(([A-Z]\w*\.)*([A-Z]\w*))(\s*(&lt;)\s*(([A-Z]\w*\.)*([A-Z]\w*)))?</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.access.imba</string>
+		</dict>
+		
+		<key>3</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.class.imba</string>
+		</dict>
+		
+		<key>4</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.type.class.imba</string>
+		</dict>
+		
+		<key>5</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.type.class.namespace.imba</string>
+		</dict>
+		
+		<key>6</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.type.class.name.imba</string>
+		</dict>
+		
+		<key>7</key>
+		<dict>
+		<key>name</key>
+		<string>meta.class.inheritance.imba</string>
+		</dict>
+		
+		<key>8</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.extends.imba</string>
+		</dict>
+		
+		<key>9</key>
+		<dict>
+		<key>name</key>
+		<string>entity.other.inherited.class.imba</string>
+		</dict>
+		
+		<key>10</key>
+		<dict>
+		<key>name</key>
+		<string>entity.other.inherited.class.namespace.imba</string>
+		</dict>
+		
+		<key>11</key>
+		<dict>
+		<key>name</key>
+		<string>entity.other.inherited.class.name.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>^(?!(\1\t+|\t*$))</string>
+		<key>contentName</key>
+		<string>meta.class.body.imba</string>
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>$self</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.tagdef.imba</string>
+		<key>match</key>
+		<string>\s*(tag)\s+([a-z\-]+:)?(\#?[a-z\-]+)(\s*(&lt;)\s*(\#?[a-z][a-z0-9_:\-]*))?</string>
+		<key>captures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.class.imba</string>
+		</dict>
+		
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.type.tag.namespace.imba</string>
+		</dict>
+		
+		<key>3</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.type.tag.name.imba</string>
+		</dict>
+		
+		<key>5</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.extends.imba</string>
+		</dict>
+		
+		<key>6</key>
+		<dict>
+		<key>name</key>
+		<string>entity.other.superclass.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.property.imba</string>
+		<key>match</key>
+		<string>\s*(property|prop) (([a-z\_][\w\_]*)(\-[\d\w\_]+)*)?</string>
+		<key>captures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.property.imba</string>
+		</dict>
+		
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.property.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.function.method.imba</string>
+		<key>begin</key>
+		<string>^(\t*)(local\s|export\s|global\s)*(def)\s(([A-Za-z][A-Za-z0-9_]*[\.\#])?([A-Za-z\_][A-Za-z0-9_\-]*[\=\?\!]?))(?=([\s\t]|$))</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.access.imba</string>
+		</dict>
+		
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>meta.function.method.declaration.imba</string>
+		</dict>
+		
+		<key>3</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.def.imba</string>
+		</dict>
+		
+		<key>4</key>
+		<dict>
+		<key>name</key>
+		<string>entity.name.function.imba</string>
+		</dict>
+		
+		<key>5</key>
+		<dict>
+		<key>name</key>
+		<string>meta.function.owner.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>($|\b(do)\b)</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.def.block.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>contentName</key>
+		<string>variable.parameter.function.imba</string>
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>$self</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>keyword.other.special.method.imba</string>
+		<key>match</key>
+		<string>\b(initialize|new|include|extend|raise|attr_reader|attr_writer|attr_accessor|attr|private|module_function|public|protected|prop|property)\b</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>support.function.imba</string>
+		<key>match</key>
+		<string>\b(log|setInterval|setTimeout)\b</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>accessor.ivar.imba</string>
+		<key>match</key>
+		<string>(\.)@[A-Z\_a-z\d][\w\_\d]*(\-[A-Z\_a-z\d]+)*</string>
+		<key>captures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>variable.instance.imba</string>
+		</dict>
+		
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.access.ivar.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>accessor.method.special.imba</string>
+		<key>match</key>
+		<string>(\.)(new|include|extend)</string>
+		<key>captures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>identifier.method.imba</string>
+		</dict>
+		
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.access.method.imba</string>
+		</dict>
+		
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.other.special.method.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>accessor.method.regular.imba</string>
+		<key>match</key>
+		<string>(\.)[a-z\_][\w\_]*(\-[A-Z\_a-z\d]+)*</string>
+		<key>captures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>identifier.method.imba</string>
+		</dict>
+		
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.access.method.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>accessor.class.imba</string>
+		<key>match</key>
+		<string>(\.)[A-Z\_]+([A-Za-z\d]+)*</string>
+		<key>captures</key>
+		<dict>
+		<key>0</key>
+		<dict>
+		<key>name</key>
+		<string>identifier.class.imba</string>
+		</dict>
+		
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>punctuation.access.class.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.function.block.params.imba</string>
+		<key>begin</key>
+		<string>\b(do)\s*(\|)</string>
+		<key>beginCaptures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.block.imba</string>
+		</dict>
+		
+		<key>2</key>
+		<dict>
+		<key>name</key>
+		<string>variable.parameter.function.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>end</key>
+		<string>(\|)</string>
+		<key>endCaptures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>variable.parameter.function.imba</string>
+		</dict>
+		
+		</dict>
+		
+		<key>contentName</key>
+		<string>variable.parameter.function.imba</string>
+		<key>patterns</key>
+		<array>
+		<dict>
+		<key>include</key>
+		<string>$self</string>
+		</dict>
+		</array>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.function.block.paramless.imba</string>
+		<key>match</key>
+		<string>\b(do)\b</string>
+		<key>captures</key>
+		<dict>
+		<key>1</key>
+		<dict>
+		<key>name</key>
+		<string>keyword.control.block.imba</string>
+		</dict>
+		
+		</dict>
+		
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>variable.instance.imba</string>
+		<key>match</key>
+		<string>@[A-Z\_a-z\d]+(\-[A-Z\_a-z\d]+)*</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>variable.language.scope.self.imba</string>
+		<key>match</key>
+		<string>self</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>variable.language.scope.this.imba</string>
+		<key>match</key>
+		<string>this</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>keyword.control.imba</string>
+		<key>match</key>
+		<string>(begin|continue|class|tag|if|else|elif|for|own|of|in|isa|instanceof|typeof|module|then|unless|until|switch|try|finally|catch|when|while|loop|break|return|throw|await|extern|delete)\b</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>keyword.special.imba</string>
+		<key>match</key>
+		<string>\b(require|global|super)\b</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>keyword.control.var.imba</string>
+		<key>match</key>
+		<string>\b(var|let)\b</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>constant.numeric.float.imba</string>
+		<key>match</key>
+		<string>\d+\.\d+</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>constant.numeric.integer.imba</string>
+		<key>match</key>
+		<string>(\b[0-9]+)</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>constant.language.boolean.imba</string>
+		<key>match</key>
+		<string>\b(yes|no|true|false)\b</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>constant.language.other.imba</string>
+		<key>match</key>
+		<string>\b(undefined|null|nil)\b</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>constant.language.math.imba</string>
+		<key>match</key>
+		<string>π</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>identifier.key.imba</string>
+		<key>match</key>
+		<string>[\w\_]+(\-[\w\d\_]+)*[\?\!]?\:(\s|\[|$)</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>identifier.const.imba</string>
+		<key>match</key>
+		<string>\b([A-Z\_]+)\b</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>identifier.class.imba</string>
+		<key>match</key>
+		<string>[A-Z]+([A-Za-z\d]+)?</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>identifier.symbol.imba</string>
+		<key>match</key>
+		<string>\:[\w\d\_]+(\-[\w\d\_]+)*[\?\!\=]?</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>identifier.basic.imba</string>
+		<key>match</key>
+		<string>[a-z_A-Z][\_\w\d]*(\-[_\d\w]+)?</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>keyword.operator.comparison.imba</string>
+		<key>match</key>
+		<string>&lt;=&gt;|&lt;(?!&lt;|=)|&gt;(?!&lt;|=|&gt;)|&lt;=|&gt;=| is | isnt | not |===|==|\?=|=~|!=|!~\?|≤|≥|≡|≈</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>keyword.operator.logical.imba</string>
+		<key>match</key>
+		<string>\bnot\b|&amp;&amp;| and |\|\|| or | in |\^|\s:\\s|\?\|{1,2}|\?\&amp;{1,2}|[\?\&amp;]\&gt;|∩|∪|∈|∉|∋|∌</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>keyword.operator.arithmetic.imba</string>
+		<key>match</key>
+		<string>(%|&amp;|\*\*|\*|\+|\-|\/|×|÷|√)</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>keyword.operator.assignment.imba</string>
+		<key>match</key>
+		<string>\=|\?\=|\&amp;\&amp;?\=</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>punctuation.section.scope.imba</string>
+		<key>match</key>
+		<string>\{|\}</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>punctuation.section.array.imba</string>
+		<key>match</key>
+		<string>\[|\]</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>punctuation.section.function.imba</string>
+		<key>match</key>
+		<string>\(|\)</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.indent.imba</string>
+		<key>match</key>
+		<string>^(\t+)</string>
+		</dict>
+		
+		<dict>
+		<key>name</key>
+		<string>meta.invalid.indent.imba</string>
+		<key>match</key>
+		<string>^([ ]+)</string>
+		</dict>
+		
+		</array>
+		<key>repository</key>
+		<dict>
+<key>interpolated_imba</key>
+
+<dict>
+<key>patterns</key>
+<array>
+<dict>
+<key>name</key>
+<string>source.imba.embedded.source</string>
+<key>begin</key>
+<string>\{</string>
+<key>end</key>
+<string>\}</string>
+<key>captures</key>
+<dict>
+<key>0</key>
+<dict>
+<key>name</key>
+<string>punctuation.section.embedded.imba</string>
+</dict>
+
+</dict>
+
+<key>patterns</key>
+<array>
+<dict>
+<key>include</key>
+<string>#nest_curly_and_self</string>
+</dict>
+
+<dict>
+<key>include</key>
+<string>$self</string>
+</dict>
+</array>
+
+</dict>
+</array>
+
+</dict>
+
+<key>nest_curly</key>
+
+<dict>
+<key>patterns</key>
+<array>
+<dict>
+<key>begin</key>
+<string>\{</string>
+<key>end</key>
+<string>\}</string>
+<key>captures</key>
+<dict>
+<key>0</key>
+<dict>
+<key>name</key>
+<string>punctuation.section.scope.imba</string>
+</dict>
+
+</dict>
+
+<key>patterns</key>
+<array>
+<dict>
+<key>include</key>
+<string>#nest_curly</string>
+</dict>
+</array>
+
+</dict>
+</array>
+
+</dict>
+
+<key>nest_curly_and_self</key>
+
+<dict>
+<key>patterns</key>
+<array>
+<dict>
+<key>begin</key>
+<string>\{</string>
+<key>end</key>
+<string>\}</string>
+<key>captures</key>
+<dict>
+<key>0</key>
+<dict>
+<key>name</key>
+<string>punctuation.section.scope.imba</string>
+</dict>
+
+</dict>
+
+<key>patterns</key>
+<array>
+<dict>
+<key>include</key>
+<string>#nest_curly_and_self</string>
+</dict>
+</array>
+
+</dict>
+
+<dict>
+<key>include</key>
+<string>$self</string>
+</dict>
+</array>
+
+</dict>
+
+<key>embedded_comment</key>
+
+<dict>
+<key>patterns</key>
+<array>
+<dict>
+<key>name</key>
+<string>comment.line.imba</string>
+<key>match</key>
+<string>(#)\s+(.*)$\n?</string>
+<key>captures</key>
+<dict>
+<key>1</key>
+<dict>
+<key>name</key>
+<string>punctuation.definition.comment.imba</string>
+</dict>
+
+</dict>
+
+</dict>
+</array>
+
+</dict>
+
+<key>regex_content</key>
+
+<dict>
+<key>patterns</key>
+<array>
+<dict>
+<key>name</key>
+<string>string.regex.group.imba</string>
+<key>match</key>
+<string>GROUP</string>
+</dict>
+
+<dict>
+<key>name</key>
+<string>string.regex.escaped.imba</string>
+<key>match</key>
+<string>\\([0-7]{1,3}|x[\da-fA-F]{1,2}|\/|.)</string>
+</dict>
+</array>
+
+</dict>
+
+<key>selector_content</key>
+
+<dict>
+<key>patterns</key>
+<array>
+<dict>
+<key>name</key>
+<string>meta.selector.class.imba</string>
+<key>match</key>
+<string>\.[A-Za-z_\-][\w_\-\d]*\b</string>
+</dict>
+</array>
+
+</dict>
+
+<key>escaped_char</key>
+
+<dict>
+<key>patterns</key>
+<array>
+<dict>
+<key>name</key>
+<string>constant.character.escape.imba</string>
+<key>match</key>
+<string>\\(?:[0-7]{1,3}|x[\da-fA-F]{1,2}|.)</string>
+</dict>
+</array>
+
+</dict>
+
+<key>tag_imba</key>
+
+<dict>
+<key>patterns</key>
+<array>
+<dict>
+<key>name</key>
+<string>entity.name.tag.class.evaled.imba</string>
+<key>begin</key>
+<string>\.\{</string>
+<key>end</key>
+<string>\}</string>
+<key>patterns</key>
+<array>
+<dict>
+<key>include</key>
+<string>$self</string>
+</dict>
+</array>
+
+</dict>
+
+<dict>
+<key>name</key>
+<string>entity.name.tag.id.evaled.imba</string>
+<key>begin</key>
+<string>#\{</string>
+<key>end</key>
+<string>\}</string>
+<key>patterns</key>
+<array>
+<dict>
+<key>include</key>
+<string>$self</string>
+</dict>
+</array>
+
+</dict>
+
+<dict>
+<key>name</key>
+<string>entity.name.tag.object.imba</string>
+<key>begin</key>
+<string>\[</string>
+<key>end</key>
+<string>\]</string>
+<key>patterns</key>
+<array>
+<dict>
+<key>include</key>
+<string>$self</string>
+</dict>
+</array>
+
+</dict>
+
+<dict>
+<key>name</key>
+<string>entity.name.tag.id.imba</string>
+<key>match</key>
+<string>#[a-z]*</string>
+</dict>
+
+<dict>
+<key>name</key>
+<string>entity.name.tag.class.imba</string>
+<key>match</key>
+<string>\.[A-Za-z\-\_\d]*</string>
+</dict>
+
+<dict>
+<key>name</key>
+<string>entity.name.tag.ref.imba</string>
+<key>match</key>
+<string>\@[A-Za-z\-\_\d]*</string>
+</dict>
+
+<dict>
+<key>name</key>
+<string>entity.name.tag.attribute.imba</string>
+<key>begin</key>
+<string>[a-z]+(\:[a-z]+)?\s*\=</string>
+<key>end</key>
+<string>((?=([\w\-\_\:]+)\s*\=)|(?=&gt;))</string>
+<key>patterns</key>
+<array>
+<dict>
+<key>include</key>
+<string>$self</string>
+</dict>
+</array>
+
+</dict>
+</array>
+
+</dict>
+
+</dict>
+
+		<key>scopeName</key>
+		<string>source.imba</string>
+		<key>uuid</key>
+		<string>af5d7d71-7c4e-43d9-b91e-dce3f02c3c32</string>
+	</dict>
+</plist>

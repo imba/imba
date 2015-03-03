@@ -1,0 +1,48 @@
+{
+  "name": "imba",
+  "description": "A rich language for the web",
+  "keywords": [
+    "javascript",
+    "language",
+    "imba",
+    "compiler"
+  ],
+  "author": "Sindre Aarsaether",
+  "bugs": "https://github.com/somebee/imba/issues",
+  "version": "0.6.0",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/somebee/imba/raw/master/LICENSE"
+    }
+  ],
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "files": [
+    "./lib/imba/node"
+  ],
+  "directories": {
+    "lib": "./lib/compiler"
+  },
+  "main": "./lib/compiler/compiler",
+
+  "bin": {
+    "imba": "./bin/imba"
+  },
+  "preferGlobal": true,
+  "homepage": "http://imba.io",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/somebee/imba.git"
+  },
+  "devDependencies": {
+    "jison": "0.4.13"
+  },
+  "dependencies": {
+    "bluebird": "^2.9.12",
+    "chalk": "^1.0.0",
+    "chokidar": "^1.0.0-rc3",
+    "commander": "^2.6.0"
+  }
+}
