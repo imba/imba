@@ -255,7 +255,7 @@ class AST.VarReference < AST.ValueNode
 		if ref && !ref.option(:declared)
 			if o.up(AST.VarBlock)
 				ref.set(declared: yes)
-			elif o.isExpression # why?
+			elif o.isExpression or option(:export) # why?
 				# p "FORCE VARIABLE DECLARE {out}".red
 				# TODO
 				ref.autodeclare
@@ -264,6 +264,19 @@ class AST.VarReference < AST.ValueNode
 				out = "var {out}"
 				ref.set(declared: yes)
 
+		
+
+		# need to think the export through -- like registering somehow
+		# should register in scope - export on analysis++
+		# this is far from production-ready
+		if option(:export)
+			# hmmmm
+			out = "module.exports.{ref.c} = {ref.c}"
+
+		# if option(:export)
+		# 	# p "option.export for var"
+		# 	# this is NOT good
+		# 	out = [out,"module.exports.{ref.c} = {ref.c}"] 
 		return out
 
 	def declare
@@ -280,6 +293,11 @@ class AST.VarReference < AST.ValueNode
 		# FIXME -- should not simply override the declarator here(!)
 		self.variable.declarator = self # hmm, cannot be certain, but ok for now
 		self.variable.addReference(value) # is this the first reference?
+
+		if option(:export)
+			self
+			# should only allow in the top-scope, no?
+			# self.variable.export = yes
 		self
 
 	def refnr

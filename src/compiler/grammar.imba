@@ -613,10 +613,16 @@ var grammar =
 	]
 
 	VarReference: [
-		o 'VAR SPLAT Identifier' do SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
-		o 'VAR Identifier' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
-		o 'LET Identifier' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
-		o 'LET SPLAT Identifier' do SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
+		o 'VAR SPLAT VarIdentifier' do SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
+		o 'VAR VarIdentifier' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
+		o 'LET VarIdentifier' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
+		o 'LET SPLAT VarIdentifier' do SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
+		o 'EXPORT VarReference' do A2.set(export: A1)
+	]
+
+	VarIdentifier: [
+		o 'Const'
+		o 'Identifier'
 	]
 
 	# Variables and properties that can be assigned to.
@@ -634,7 +640,7 @@ var grammar =
 		o 'Value . Super' do SuperAccess.new('.',A1,A3)
 		o 'Value . Identifier' do PropertyAccess.new('.',A1,A3)
 		o 'Value . Ivar' do IvarAccess.new('.',A1,A3)
-		o 'Value -> Identifier' do ObjectAccess.new('.',A1,A3)
+		o 'Value -> Identifier' do ObjectAccess.new('.',A1,A3) # should remove
 		o 'Value . Symbol' do ObjectAccess.new('.',A1,Identifier.new(A3.value))
 		o 'Value . Const' do ConstAccess.new('.',A1,A3)
 		o 'Value . NUMBER' do OP('.',A1,Num.new(A3))

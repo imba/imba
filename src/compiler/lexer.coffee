@@ -665,7 +665,7 @@ exports.Lexer = class Lexer
     #     prev[0] = 'GLOBAL'
     #     console.log('change global access!!!')
 
-    if tag == 'CLASS' or tag == 'DEF' or tag == 'TAG'
+    if tag == 'CLASS' or tag == 'DEF' or tag == 'TAG' or tag == 'VAR'
       i = @tokens.length
       # console.log("FOUND CLASS/DEF",i)
       while i
@@ -678,7 +678,9 @@ exports.Lexer = class Lexer
         else
           break
 
-      # look for previous
+    # if tag == 'VAR'
+    #
+    # look for previous
 
 
     if tag == 'IDENTIFIER'

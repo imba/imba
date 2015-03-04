@@ -164,11 +164,17 @@ cli.command('watch <path>')
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')
 	.option('-v, --verbose', 'return detailed output')
+	.option('-t, --tokens', 'return detailed output')
 	# .option('-f, --format <format>', 'format of output', 'json', /^(json|plain|html)$/i)	
 	.action do |path, opts|
 		var file = sourcefile-for-path(path)
-		var meta = await file.analyze
-		log JSON.stringify(meta)
+
+		if opts:tokens
+			# log "tokens"
+			file.tokenize.then do print-tokens(file.tokens)
+		else
+			file.analyze.then do |meta|
+				log JSON.stringify(meta)
 
 cli.command('dev <task>')
 	.description('commands for imba-development')

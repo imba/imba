@@ -161,7 +161,7 @@ class AST.FileScope < AST.Scope
 
 	def initialize
 		super
-
+		# really? makes little sense
 		register :global, self, type: 'global'
 		register :exports, self, type: 'global'
 		register :console, self, type: 'global'
@@ -197,6 +197,8 @@ class AST.FileScope < AST.Scope
 		# var helpers = helpers.c(expression: no)
 		var body = node.body.c(expression: no)
 		var head = [@params,@vars].block.c(expression: no)
+		# var foot = []
+
 		# p "head from scope is {head}"
 		[head or nil,@helpers or nil,body].flatten.compact.join("\n")
 
@@ -271,6 +273,7 @@ class AST.Variable < AST.Node
 	prop declarator
 	prop autodeclare
 	prop references
+	prop export
 
 	def initialize scope, name, decl, options
 		@scope = scope
@@ -282,6 +285,7 @@ class AST.Variable < AST.Node
 		@resolved = no
 		@options = options || {}
 		@type = @options:type || 'var'
+		@export = no # hmmmm
 		# @declarators = [] # not used now
 		@references = [] # should probably be somewhere else, no?
 
