@@ -3,10 +3,12 @@ var fs        = require 'fs'
 var path      = require 'path'
 var compiler  = require './compiler'
 var chalk     = require 'chalk'
-var chokidar  = require 'chokidar'
+# var chokidar  = require 'chokidar'
 
 
 var tasks = require './tasks'
+
+# require '../register'
 
 
 var fspath = path
@@ -69,7 +71,7 @@ def write-file source, outpath
 	source.dirty
 	# log "made dirty"
 	# log ts, chalk:dim.grey "will compile {source.path}"
-	source.write(outpath).then do
+	source.write(outpath) do |err,res|
 		var srcp = fspath.relative(process.cwd,source.path)
 		var outp = fspath.relative(process.cwd,outpath)
 		log ts, chalk:dim.grey "compiled {b chalk.white srcp} to {b chalk.white outp}"
@@ -77,6 +79,7 @@ def write-file source, outpath
 
 # shared action for compile and watch
 def cli-compile root, o, watch: no
+	var chokidar  = require 'chokidar'
 
 	var base = fspath.resolve(process.cwd, root)
 	var basedir = base
@@ -144,6 +147,7 @@ cli.command('* <path>')
 	.usage('<path>')
 	.description('run imba')
 	.action do |path,o|
+		# should run directly without promises and all that stuff
 		var file = sourcefile-for-path(path)
 		file.run
 
@@ -171,9 +175,9 @@ cli.command('analyze <path>')
 
 		if opts:tokens
 			# log "tokens"
-			file.tokenize.then do print-tokens(file.tokens)
+			print-tokens(file.tokens)
 		else
-			file.analyze.then do |meta|
+			file.analyze do |meta|
 				log JSON.stringify(meta)
 
 cli.command('dev <task>')

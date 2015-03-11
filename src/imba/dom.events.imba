@@ -83,8 +83,8 @@ class Imba.Pointer
 				touch = nil # reuse?
 				# trigger pointerup
 
-			if !e0 || e0:button != e1:button
-				console.log('button-state changed!!!',e0,e1)
+			# if !e0 || e0:button != e1:button
+			# 	console.log('button-state changed!!!',e0,e1)
 			# see if button has transitioned?
 			# console.log e:type
 		else

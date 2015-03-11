@@ -51,4 +51,4 @@ AST.NEWTAG = AST.Identifier.new("tag$")
 
 # require the parser itself?
 # Are we sure?
-AST.Imba = require('../worker')
+AST.Imba = require('../compiler') # what?

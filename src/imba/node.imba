@@ -1,5 +1,4 @@
-(function(){
-
+`
 
 log$ = function(){ console.log.apply(console,arguments); return this; };
 splat$ = iter$ = function(a) { return a.toArray ? a.toArray() : a; }
@@ -73,5 +72,4 @@ idx$ = function(a,b){
 	return [].indexOf.call(a,b);
 }
 
-;
-}())
+`

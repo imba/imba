@@ -9,7 +9,7 @@
   ],
   "author": "Sindre Aarsaether",
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "licenses": [
     {
       "type": "MIT",
@@ -25,7 +25,7 @@
   "directories": {
     "lib": "./lib/compiler"
   },
-  "main": "./lib/compiler/compiler",
+  "main": "index.js",
 
   "bin": {
     "imba": "./bin/imba"
