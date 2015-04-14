@@ -12,7 +12,8 @@ var parser	= require('./parser')['parser']
 
 # should this really happen up here?
 
-require '../imba/node'
+# require '../imba/node'
+
 require '../imba/imba'
 require '../imba/core.events'
 
@@ -23,7 +24,7 @@ require '../imba/dom.server'
 require './ast/ast'
 
 # Instantiate a Lexer for our use here.
-var lex = lexer.Lexer.new
+export var lex = lexer.Lexer.new
 
 
 # The real Lexer produces a generic stream of tokens. This object provides a
@@ -57,14 +58,12 @@ parser:lexer =
 
 	upcomingInput: do ""
 
-
 parser:yy = AST # require './../nodes'
-
 
 export def tokenize code, o = {}
 	try
 		# console.log("tokenize code",code)
-		lex.tokenize code
+		lex.tokenize code, o
 	catch err
 		console.log("ERROR1",err)
 
@@ -128,7 +127,6 @@ elif require:registerExtension
 		compile content
 
 
-
 # really?
 # wrapper for files?
 export class SourceFile
@@ -149,12 +147,6 @@ export class SourceFile
 	def name
 		path.split("/").pop # for testing
 
-	# def read
-	# 	@read ||= promise.new do |resolve|
-	# 		# console.log "PATH IS {@path}"
-	# 		@code = fs.readFileSync(@path,"utf8")#  do |err,res|
-	# 		resolve(self)
-
 	def code
 		@code ||= fs.readFileSync(@path,"utf8")
 
@@ -167,34 +159,10 @@ export class SourceFile
 	def js o = {}
 		@js ||= ast.compile(o)
 
-	# def tokenize
-	# 	@tokenize ||= promise.new do |resolve|
-	# 		await self.read
-	# 		# what about errors?
-	# 		@tokens = tokenize(@code)
-	# 		resolve(self)
-
-	# def parse
-	# 	@parse ||= promise.new do |resolve|
-	# 		await self.tokenize
-	# 		@ast = parser.parse @tokens
-	# 		resolve(self)
-
 	def write outpath, cb
 		# promise.new do |resolve|
 		# await self.compile
 		fs.writeFile(outpath,js,cb)
-
-
-	# def compile options
-	# 	@compile ||= promise.new do |resolve|
-	# 		# console.log "compiling file -- wait for reading"
-	# 		# what about the output?
-	# 		await self.parse
-	# 		# console.log "will parse {@path}"
-	# 		
-	# 		@js = @ast.compile(options || {}) # compile(@code)
-	# 		resolve(self)
 
 	def dirty
 		# console.log "marking file as dirty!"
@@ -223,20 +191,6 @@ export class SourceFile
 			console.log "ERROR {e:message}"
 
 		return @meta
-
-			# node = (parser.parse tokens)
-			# data = node.analyze(options)
-		# catch e
-		#     err = {message: e.message, line: e.line}
-		#     if m = err.message.match(/\[(\d+)\:(\d+)\]/)
-		#       err.loc = [parseInt(m[1]),parseInt(m[2])]
-		#     if !err.line && m = err.message.match(/line (\d+)\b/)
-		#       err.line = parseInt(m[1])
-		#     data = {errors: [err]}
-		#     throw e
-		#     # errors.push {message: err.message, line: err.line}
-		#     # return JSON.stringify({errors: [err]})
-		# return JSON.stringify(data)
 		
 	def run
 		run(code, filename: @path)

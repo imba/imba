@@ -100,14 +100,11 @@ describe 'Syntax - Functions' do
 		# optional arguments
 		eq obj.opt, 'anon'
 
-		
 		# null overrides the default argument
 		eq obj.opt(null), null
 
 		# undefined is like sending on argument
 		eq obj.opt(undefined), 'anon'
-
-		self
 
 	test "keyword arguments" do
 		# [name,gender,age]

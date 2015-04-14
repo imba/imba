@@ -36,7 +36,7 @@ class AST.Root < AST.Code
 		return c
 
 	def js
-		'(function(){\n' + scope.c + '\n}())'
+		'(function(){\n\n' + scope.c(indent: yes) + '\n\n}())'
 
 	def analyze
 		# STACK.loglevel = 0
@@ -63,65 +63,65 @@ class AST.ClassDeclaration < AST.Code
 		# replace with some advanced lookup?
 		scope.visit
 
-		if option(:local)
-			self.name = scope.parent.register(name,self)
+		# local is the default -- should it really be referenced?
+		# if option(:local)
+		#	self.name = scope.parent.register(name,self)
 
 		body.traverse
 
 	def js
+		scope.virtualize
 		scope.context.value = name
 
 		# should probably also warn about stuff etc
 		if option(:extension)
 			return body.c
 
-		var initor = body.pluck do |c| c isa AST.MethodDeclaration && c.type == :constructor
+		var o = @options or {}
+		var cname = name isa AST.Access ? name.right : name
+		var namespaced = name != cname
 		var sup = superclass
-		# ns = (name isa AST.Const ? nil : name.context)
+		var initor = body.pluck do |c| c isa AST.MethodDeclaration && c.type == :constructor
 
-		# FIXME this is buggy as hell
-		if name.c in ['String','Array','Window']
-			initor = no
+		if !initor
+			if sup
+				initor = "function {cname.c}()\{ {sup.c}.apply(this,arguments) \}"
+			else
+				initor = "function {cname.c}()" + '{ }'
+		
 		else
-			if sup && !initor
-				initor = AST.inline("""
-					def initialize
-						{sup.c}.apply(this,arguments)
-				""").first
-				initor.type = :constructor
-				# initor.traverse
-				# p "initor {initor} {initor}"
-			else
-				initor ||= FN([],[AST.SELF]) # should not be needed
-		# if there is no initor, we need to spawn a fake one
-
-		var head = []
-		# ast = body
-		if initor
-			var cname = name isa AST.Access ? name.right : name
 			initor.name = cname
+		
+		# if we are defining a class inside a namespace etc -- how should we set up the class?
+		var head = []
 
-			
-			# does not work if namespaced?!?
-			if option(:local)
-				# set local variable-def here, no?
-				head.push(initor)
-				head.push(CALL(AST.CLASSDEF,[name,sup]))
-				# body.unshift(CALL(AST.CLASSDEF,[name,sup]))
-				# body.unshift(initor)
-				# decl = CALL(AST.CLASSDEF,[initor,sup])
-			else
-				var decl = OP('=',name,CALL(AST.CLASSDEF,[initor,sup]))
-				head.push(decl)
+		if namespaced
+			initor = "{name.c} = {initor.c}" # OP('=',name,initor) # hmm
 
-			if option(:export)
-				head.push("exports.{name.c} = {name.c}")
-				
-			# call var in front, no?
-			# decl = CALL(AST.CLASSDEF,[initor,sup])
+		head.push("/* @class {cname.c} */\n{initor.c};\n\n")
+
+		if sup
+			# console.log "deal with superclass!"
+			# head.push("// extending the superclass\nimba$class({name.c},{sup.c});\n\n")
+			head.push(AST.Util.Subclass.new([name,sup]))
+
+		# only if it is not namespaced
+		if o:global and !namespaced # option(:global)
+			head.push("global.{cname.c} = {name.c}; // global class \n")
+
+		if o:export and !namespaced
+			head.push("exports.{cname.c} = {name.c}; // export class \n")
+
+		# FIXME
+		# if namespaced and (o:local or o:export)
+		# 	console.log "namespaced classes are implicitly local/global depending on the namespace"
+
+
 		body.unshift(part) for part in head.reverse
+		body.@indentation = nil
+		var out = body.c
 
-		return body.c
+		return out
 
 # class AST.TagTypeRef < AST.ValueNode
 # 
@@ -175,9 +175,16 @@ class AST.TagDeclaration < AST.Code
 		# FIXME should consolidate the way we generate all code - this
 		# is going down a route of more direct conversion, which is less
 		# flexible.
+
+		# WARN should fix
+		body.@indentation = nil
+
 		out = "var tag = {out};"
 		scope.context.value = AST.Const.new('tag')
 		out += "\n{body.c}"
+
+
+
 		return '(function()' + out.wrap + ')()'
 
 class AST.Func < AST.Code
@@ -191,15 +198,15 @@ class AST.Func < AST.Code
 
 	def scopetype do AST.FunctionScope
 
-	def initialize params, body, name, target, options
+	def initialize params, body, name, target, o
 		# p "INIT Function!!",params,body,name
 		var typ = scopetype
-		@scope ||= typ.new(self)
+		@scope ||= (o and o:scope) || typ.new(self)
 		@scope.params = @params = AST.ParamList.new(params)
 		@body = body.block
 		@name = name || ''
 		@target = target
-		@options = options
+		@options = o
 		@type = :function
 		self
 
@@ -211,8 +218,8 @@ class AST.Func < AST.Code
 		
 
 	def js o
-		body.consume(AST.ImplicitReturn.new)
-		var code = scope.c
+		body.consume(AST.ImplicitReturn.new) unless option(:noreturn)
+		var code = scope.c(indent: yes, braces: yes)
 		# args = params.map do |par| par.name
 		# head = params.map do |par| par.c
 		# code = [head,body.c(expression: no)].flatten.compact.join("\n").wrap
@@ -220,7 +227,8 @@ class AST.Func < AST.Code
 		# will need to wrap the value in a FunctionName which takes care of looking up scope
 		# and possibly dealing with it
 		var name = self.name.c.replace(/\./g,'_')
-		var out = "function {name}({params.c})" + code.wrap
+		var out = "function {name}({params.c})" + code
+		out = "({out})()" if option(:eval)
 		# out = out.parenthesize if isExpression
 		return out
 
@@ -240,6 +248,8 @@ class AST.MethodDeclaration < AST.Func
 	def scopetype do AST.MethodScope
 
 	def visit
+		# prebreak # make sure this has a break?
+
 		if name.toSymbol == 'initialize'
 			self.type = :constructor
 
@@ -281,19 +291,19 @@ class AST.MethodDeclaration < AST.Func
 
 	def js
 		# FIXME Do this in the grammar - remnants of old implementation
-		unless type == :constructor
+		unless type == :constructor or option(:noreturn)
 			if option(:greedy)
 				# haaack
 				body.consume(AST.GreedyReturn.new)
 			else
 				body.consume(AST.ImplicitReturn.new) 
-		var code = scope.c
+		var code = scope.c(indent: yes, braces: yes)
 
 		var name = self.name.c.replace(/\./g,'_') # WHAT?
 		var foot = []
 
 		var left = ""
-		var func = "({params.c})" + code.wrap
+		var func = "({params.c})" + code # .wrap
 		var target = self.target
 		var decl = !option(:global) and !option(:export)
 
@@ -329,8 +339,6 @@ class AST.MethodDeclaration < AST.Func
 		elif target
 			# hmm
 			out = "{target.c}.prototype.{fname} = function {func}"
-		# elif option(:global)
-		# 	out = "{fname} = function {func}"
 		else
 			out = "function {fdecl}{func}"
 
@@ -374,7 +382,7 @@ class AST.PropertyDeclaration < AST.Expression
 
 	def initialize name, options
 		@name = name
-		@options = options || AST.Obj.new([])
+		@options = options || AST.Obj.new(AST.AssignList.new)
 
 	def visit
 		@options.traverse
@@ -434,8 +442,8 @@ class AST.PropertyDeclaration < AST.Expression
 			js:set = "this.setAttribute('{key}',v)"
 			js:get = "this.getAttribute('{key}')"
 
-		# if we have a delegate
 		elif o.key(:delegate)
+			# if we have a delegate
 			js:set = "this.__{key}.delegate.set(this,'{key}',v,this.__{key})"
 			js:get = "this.__{key}.delegate.get(this,'{key}',this.__{key})"
 
@@ -455,52 +463,7 @@ class AST.PropertyDeclaration < AST.Expression
 		var out = tpl.replace(reg) do |m,a| js[a]
 		# run another time for nesting. hacky
 		out = out.replace(reg) do |m,a| js[a]
+		out = out.replace(/\n\s*$/,'')
 		
 		# if o.key(:v)
 		return out
-
-#		if scope isa AST.TagScope
-#			# p "IS TAGSCOPE {options.key(:dom)}"
-#			if options.key(:dom)
-#				js:set = "this.setAttribute('{key}',v)"
-#				js:get = "this.getAttribute('{key}')"
-#				js:init = "{scope}.dom.setAttribute('{key}',{deflt.value.c})" if deflt
-#
-#		# if o.key(:watch)
-#		# 	var js = propWithWatch.replace(/PROP/g,key).replace(/SETTER/,setjs)
-#		# 	return js
-#
-#			# var js = '''function(v){ var a = this.PROP(); a != v ? }'
-#
-#		if scope isa AST.TagScope
-#			# p "IS TAGSCOPE {options.key(:dom)}"
-#			if options.key(:dom)
-#				gets = "getAttribute('{key}')"
-#				sets = "setAttribute('{key}',v)"
-#				init = "self.dom.setAttribute('{key}',{deflt.value.c})" if deflt
-#
-#			# getter = "def {name.c} v do v !== undefined ? ({name.c} = v,self) : @{name.c}"
-#			ast = AST.inline """
-#				def {key} do arguments:length ? ({key} = arguments[0],self) : {gets}	
-#				def {key}= v do return ({sets},self)		
-#				{init}	
-#			"""
-#		else
-#			var getter = "def {key} do {gets}"
-#
-#			if options.key(:getset)
-#				getter = "def {key} do arguments:length ? ({key} = arguments[0],self) : {gets}"
-#
-#			ast = AST.inline """
-#				{getter}	
-#				def {key}= v do return ({sets},self)	
-#				{deflt ? "self:prototype.@{key} = {deflt.value.c}" : ""}
-#			"""
-
-
-		# if options.key(:default)
-
-
-		ast.traverse.c
-
-

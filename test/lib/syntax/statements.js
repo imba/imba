@@ -1,46 +1,72 @@
 (function(){
-var ary = [1, 2, 3];
-for(var i = 0, items = iter$(ary), len = items.length, v, res = []; i < len; i = i + 1){
-	v = items[i];
-	res.push(v + 1);
-};
-var rets = res;;
-var str = ("" + (ary[0]) + " " + (ary[1]) + " " + (ary[2]));
-describe("Syntax - Statements",function (){
-	return test("allow statements as arguments",function (){
-		var fn = function (){
-			var $0 = arguments, i = $0.length;
-			var pars = new Array(i>0 ? i : 0);
-			while(i>0) pars[i-1] = $0[--i];;
-			return pars;
-		};
-		var ary = [1, 2, 3, 4];
-		var res = fn(10,((function (){
-			for(var i = 0, items = iter$(ary), len = items.length, v, res1 = []; i < len; i = i + 1){
-				v = items[i];
-				res1.push(v * 2);
+
+
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	union$ = function(a,b){
+		if(a && a.__union) return a.__union(b);
+	
+		var u = a.slice(0);
+		for(var i=0,l=b.length;i<l;i++) if(u.indexOf(b[i]) == -1) u.push(b[i]);
+		return u;
+	};
+	
+	var ary = [1,2,3];
+	for(var i=0, items=iter$(ary), len=items.length, res=[]; i < len; i++) {
+		res.push(items[i] + 1);
+	};var rets = res;
+	
+	var str = ("" + (ary[0]) + " " + (ary[1]) + " " + (ary[2]));
+	
+	
+	
+	
+	describe("Syntax - Statements",function (){
+		
+		return test("allow statements as arguments",function (){
+			
+			var fn = function (){
+				var $0 = arguments, i = $0.length;
+				var pars = new Array(i>0 ? i : 0);
+				while(i>0) pars[i-1] = $0[--i];
+				return pars;
 			};
-			return res1;;
-		})()),20);
-		eq(res,[10, [2, 4, 6, 8], 20]);
-		res = fn(union$(ary,((function (){
-			for(var i = 0, items = iter$(ary), len = items.length, v, res1 = []; i < len; i = i + 1){
-				v = items[i];
-				res1.push(v * 2);
+			var ary = [1,2,3,4];
+			var res = fn(10,((function (){
+				for(var i=0, items=iter$(ary), len=items.length, res1=[]; i < len; i++) {
+					res1.push(items[i] * 2);
+				};return res1;
+			})()),20);
+			eq(res,[10,[2,4,6,8],20]);
+			
+			// unsure
+			// 10 + try 10 catch e 10
+			// since ary and fn are local, we can go all the way
+			// up to cache it before.
+			
+			res = fn(union$(ary,((function (){
+				for(var i=0, items=iter$(ary), len=items.length, res1=[]; i < len; i++) {
+					res1.push(items[i] * 2);
+				};return res1;
+			})())));
+			
+			var outer = 0;
+			// when using statements as arguments, they might be
+			// moved up into the statement and cache, but it needs
+			// to happen in the expected order
+			return /* @class Obj */
+			function Obj(){ };
+			
+			Obj.obj = function (){
+				return new this();
 			};
-			return res1;;
-		})())));
-		var outer = 0;
-		return function Obj(){
-			return this;
-		};
-		imba$class(Obj);
-		Obj.obj = function (){
-			return new this();
-		};
-		Obj.prototype.test = function (arg){
-			return arg;
-		};;
+			Obj.prototype.test = function (arg){
+				return arg;
+			};
+			
+			
+			// res = Obj.new.test ((outer = v) for v in ary)
+		});
 	});
-});
+
+
 }())

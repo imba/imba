@@ -1,4 +1,3 @@
-		
 
 var svg-support = yes
 # unless global:document
@@ -285,6 +284,10 @@ class ElementTag
 		# dom:className += " " + flag
 		self
 
+	def self.unflag flag
+		self.dom:classList.remove(flag)
+		self		
+
 	def classes
 		dom:classList
 		
@@ -317,7 +320,7 @@ class HTMLElementTag < ElementTag
 		return @dom if @dom
 
 		var dom
-		var sup = self:superclass
+		var sup = self:__super__:constructor
 
 		# should clone the parent no?
 		if @isNative
@@ -361,8 +364,9 @@ class HTMLElementTag < ElementTag
 		# dom:id = id if id 
 		return dom
 
-	def setup body
-		append(body)
+	# are we sure
+	# def setup body
+	# 	append(body)
 
 	# we need special dom-properties with unified getters and setters
 	# def text text
@@ -394,12 +398,23 @@ Imba.TAGS = IMBA_TAGS
 
 # TODO remove nodeClass? No need to have two representations of the same
 
+def extender obj, sup
+	for own k,v of sup
+		obj[k] = v
+
+	obj:prototype = Object.create(sup:prototype)
+	obj:__super__ = obj:prototype:__super__ = sup:prototype
+	obj:prototype:initialize = obj:prototype:constructor = obj
+	return obj
+
 def Imba.defineTag name, func, supr
 	var name,ns = name.split("$")
 	supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
 
 	var suprklass = IMBA_TAGS[supr]
-	var klass = imba$class(func,suprklass)
+	var klass = func # imba$class(func,suprklass)
+
+	extender(klass,suprklass)
 
 	klass.@nodeType = suprklass.@nodeType or name
 
@@ -438,7 +453,8 @@ def Imba.defineTag name, func, supr
 def Imba.defineSingletonTag id, func, supr
 	var superklass = Imba.TAGS[supr || 'div']
 	# do we really want a class for singletons?
-	var klass = imba$class(func,superklass)
+	# var klass = imba$class(func,superklass)
+	var klass = extender(func,superklass)
 
 	klass.@id = id
 	klass.@ns = superklass.@ns
@@ -455,7 +471,7 @@ def Imba.defineSingletonTag id, func, supr
 
 	# add the default flags / classes for ns etc
 	# if namespaced -- this is dangerous
-	console.log('registered singleton')
+	# console.log('registered singleton')
 	Imba.SINGLETONS[id] = klass
 	return klass
 
@@ -637,6 +653,7 @@ tag input
 	prop name dom: yes
 	prop type dom: yes
 	prop value dom: yes # dom property - NOT attribute -- hmm
+	prop required dom: yes
 	prop disabled dom: yes
 	prop placeholder dom: yes
 
@@ -677,7 +694,10 @@ tag noscript
 tag object
 tag ol
 tag optgroup
+
 tag option
+	prop value dom: yes
+
 tag output
 tag p
 tag param
@@ -695,7 +715,11 @@ tag script
 	prop type dom: yes
 
 tag section
+
 tag select
+	prop multiple dom: yes
+
+
 tag small
 tag source
 tag span
@@ -711,6 +735,7 @@ tag td
 tag textarea
 	prop name dom: yes
 	prop disabled dom: yes
+	prop required dom: yes
 	prop placeholder dom: yes
 	prop value dom: yes
 	prop rows dom: yes

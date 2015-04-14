@@ -30,7 +30,11 @@ extend class String
 		str = "\x1B[{code}m{str}{resetStr}"
 		return str
 
-class Spec
+def fmt color, str
+	str.color(color)
+	
+
+global class Spec
 
 	prop blocks
 	prop context
@@ -90,7 +94,7 @@ class Spec
 #	# 	instance.run
 #
 
-class SpecCaller
+global class SpecCaller
 
 	def initialize scope, method, args
 		@scope = scope
@@ -100,7 +104,7 @@ class SpecCaller
 	def run
 		@value ?= @scope[@method](*@args)
 
-class SpecGroup
+global class SpecGroup
 
 	def initialize name, blk
 		@name = name
@@ -134,7 +138,7 @@ class SpecGroup
 		if console:group
 			console.group @name
 		else
-			console.log "\n-------- {@name} --------".magenta
+			console.log "\n-------- {@name} --------"
 		
 		
 	def finish
@@ -142,7 +146,7 @@ class SpecGroup
 		emit(:done, [self])
 
 
-class SpecExample
+global class SpecExample
 
 	def initialize name, block
 		@evaluated = no
@@ -177,22 +181,22 @@ class SpecExample
 		var details = []
 		var dots = @assertions.map do |v,i|
 			if v.success
-				"✔".color(:green)
+				fmt(:green,"✔")
 			else
 				details.push(" - {v.details}")
-				"✘".color(:red)
+				fmt(:red,"✘")
 				
 		var str = "{@name} {dots.join(" ")}"
 		console.log(str)
 		console.log(details.join("\n")) if details:length > 0
 		emit(:done,[self])
 
-class SpecObject
+global class SpecObject
 
 	def ok actual
 		SPEC.ok(actual)
 
-class SpecCondition
+global class SpecCondition
 
 	prop success
 
@@ -220,7 +224,7 @@ class SpecCondition
 	def details
 		"error?"
 
-class SpecAwait < SpecCondition
+global class SpecAwait < SpecCondition
 
 	# #initialize
 	# 0. example <Object>
@@ -243,7 +247,7 @@ class SpecAwait < SpecCondition
 	def callback
 		@callback
 
-class SpecAssert < SpecCondition
+global class SpecAssert < SpecCondition
 	def initialize example, actual, expected, format = null
 		@example = example
 		@actual = actual
@@ -276,13 +280,13 @@ class SpecAssert < SpecCondition
 	def details
 		unless @success
 			if @format
-				"expected {@right} got {@left}".red
+				fmt(:red,"expected {@right} got {@left}")
 			else
-				"expected {@expected} got {@value}".red
+				fmt(:red,"expected {@expected} got {@value}")
 		else
 			"passed test"
 
-class SpecAssertTruthy < SpecAssert
+global class SpecAssertTruthy < SpecAssert
 
 	def initialize example, value
 		@example = example
@@ -292,7 +296,7 @@ class SpecAssertTruthy < SpecAssert
 	def test value
 		!!(value) ? passed : failed
 
-class SpecAssertFalsy < SpecAssert
+global class SpecAssertFalsy < SpecAssert
 
 	def initialize example, value
 		@example = example

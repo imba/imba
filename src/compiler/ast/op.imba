@@ -102,10 +102,6 @@ class AST.UnaryOp < AST.Op
 		elif op == '√'
 			"Math.sqrt({left.c})"
 
-		# should deprecate
-		# elif op == 'typeof'
-		# 	"{op} {right.c}"
-
 		elif left
 			"{left.c}{op}"
 
@@ -185,6 +181,7 @@ class AST.In < AST.Op
 
 	def js
 		var cond = @invert ? "== -1" : ">= 0"
-		"idx$({left.c},{right.c}) {cond}"
+		var idx = AST.Util.indexOf(left,right)
+		"{idx.c} {cond}"
 		
 		

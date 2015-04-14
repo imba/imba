@@ -67,6 +67,9 @@ local class FakeDog < Dog
 
 local class Human < Animal
 
+	def initialize
+		@human = yes
+
 	def lineage
 		"human.{super.lineage}"
 
@@ -79,6 +82,13 @@ local class Zombie < Human
 
 	def alive
 		no
+
+local class Human.Child < Human
+
+	def initialize
+		super
+
+
 
 
 describe 'Syntax - super' do

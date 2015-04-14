@@ -6,6 +6,13 @@ class AST.Return < AST.Statement
 
 	def initialize v
 		@value = v
+		@prebreak = v and v.@prebreak # hmmm
+		# console.log "return?!? {v}",@prebreak
+
+		if v isa AST.ArgList
+			v = v.nodes
+			# @value = v:length > 1 ? AST.Arr.new(v) : v[0]
+
 		if v isa Array
 			@value = v:length > 1 ? AST.Arr.new(v) : v[0]
 
@@ -17,7 +24,7 @@ class AST.Return < AST.Statement
 
 	def c
 		return super if !value or value.isExpressable
-		p "return must cascade into value".red
+		# p "return must cascade into value".red
 		value.consume(self).c
 
 	def consume node
@@ -59,14 +66,14 @@ class AST.LoopFlowStatement < AST.Statement
 		expression.traverse if expression
 
 	def consume node
-		p "break/continue should consume?!"
+		# p "break/continue should consume?!"
 		self
 
 	def c
 		return super unless expression
 		# get up to the outer loop
 		var _loop = STACK.up(AST.Loop)
-		p "found loop?",_loop
+		# p "found loop?",_loop
 
 		# need to fix the grammar for this. Right now it 
 		# is like a fake call, but should only care about the first argument

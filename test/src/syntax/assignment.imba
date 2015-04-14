@@ -191,6 +191,12 @@ describe 'Syntax - Assignment' do
 			eq o2.ivar, 2
 			eq o1.calls, 1
 
+	test "indexes" do
+		var a = {}
+		var b = no
+		a[b ? 'yes' : 'no'] = true
+		eq a:no, true
+
 	# Compound Assignment
 	test "boolean operators" do
 		var nonce = {}

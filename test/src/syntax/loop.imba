@@ -11,7 +11,6 @@ class IterableObject
 	def toArray
 		[1,2,3,4,5]
 
-console.log("syntax loop")
 
 describe 'Syntax - Loops' do
 	var ary = [1,2,3,4,5]
@@ -23,6 +22,20 @@ describe 'Syntax - Loops' do
 	var obj = SyntaxLoopsObj.new
 
 	describe "For In" do
+
+		test "quirks" do
+			var i = 10
+			var a = [1,2,3]
+			var sum = 0
+
+			# i should be local here - or at least be reset
+			for v,i in a
+				sum += i
+
+			eq sum, 0 + 1 + 2
+
+
+
 
 		test "basic assignment" do
 			var rets = for v in ary

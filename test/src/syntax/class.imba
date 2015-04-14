@@ -13,6 +13,8 @@
 
 class Organism
 
+	var lvar = 10
+
 	def self.type
 		'organism'
 
@@ -30,6 +32,9 @@ class Organism
 
 	def alive
 		yes
+
+	def lvar
+		lvar
 
 	# hmm, maybe we shouldnt allow this?
 	#	class Other
@@ -100,6 +105,12 @@ describe 'Syntax - Class' do
 	# test 'nested classes work' do
 	# 	ok !!Organism.Other
 
+	test 'should' do
+
+		# you can define variables local to classbody
+		var obj = Organism.new
+		eq obj.lvar, 10
+
 	describe 'Methods' do
 
 		it 'should define class methods' do
@@ -116,7 +127,7 @@ describe 'Syntax - Class' do
 
 		it 'should call the parent constructor by default' do
 			var obj = Cat.new
-			eq obj.@ivar, 1 
+			eq obj.@ivar, 1
 
 		it 'should define instance methods' do
 			var obj = Organism.new
@@ -156,7 +167,40 @@ describe 'Syntax - Class' do
 		eq Cls.new.a, 2
 		eq Cls.new.b, 2
 
-		
+	
+	test 'Scoping' do
+
+		var variable = 1
+
+		local class A
+			var variable = 2
+
+			def self.base
+				variable
+
+			def self.add add
+				variable += add
+
+			def initialize add
+				@sum = variable + add
+				self
+
+			def base
+				variable
+
+			def sum
+				@sum
+
+		eq variable, 1
+		eq A.base, 2
+		eq A.new.base, 2
+		eq A.new(5).sum, 7
+
+		A.add(2)
+
+		eq variable, 1
+		eq A.base, 4
+
 			
 
 

@@ -9,9 +9,6 @@ class AST.Splat < AST.ValueNode
 		else
 			"SPLAT"
 
-	# def visit
-	# 	p "visit splat {value}"
-	# 	value.traverse
 
 	def node
 		value

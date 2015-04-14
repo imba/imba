@@ -1,16 +1,24 @@
 
+var helpers = require './helpers'
+
 class AST.ControlFlow < AST.Node
+
+
 
 class AST.ControlFlowStatement < AST.ControlFlow
 
 	def isExpressable
 		no
-		
+
+
+
 class AST.If < AST.ControlFlow
+
 
 	prop test
 	prop body
 	prop alt
+
 
 	def addElse add
 		# p "add else!",add
@@ -21,23 +29,28 @@ class AST.If < AST.ControlFlow
 			self.alt = add
 		self
 
+
 	def initialize cond, body, o = {}
 		# p "IF options",o && o:type
 		@test = (o:type == 'unless' ? OP('!',cond) : cond)
 		@body = body
+
 
 	def visit
 		test.traverse if test
 		body.traverse if body
 		alt.traverse if alt
 
+
 	def js o
 		# would possibly want to look up / out 
+		var brace = braces: yes, indent: yes
 
 		var cond = test.c(expression: yes) # the condition is always an expression
-		var code = body.c
+		
 
 		if o.isExpression
+			var code = body.c # (braces: yes)
 			# is expression!
 			if alt
 				# be safe - wrap condition as well
@@ -47,11 +60,13 @@ class AST.If < AST.ControlFlow
 				# maybe better if we rewrite this to an OP('&&'), and put
 				# the parens logic there
 				return "({cond}) && ({code})"
+		else
+			var code = body.c(brace) # (braces: yes)
+			# don't wrap if it is only a single expression?
+			var out = "if({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
+			out += " else {alt.c(alt isa AST.If ? {} : brace)}" if alt
+			out
 
-		# don't wrap if it is only a single expression?
-		var out = "if({cond}) {code.wrap}"
-		out += " else {alt.c.wrap}" if alt
-		out
 
 	def consume node
 		# p 'assignify if?!'
@@ -71,6 +86,7 @@ class AST.If < AST.ControlFlow
 			@alt = alt.consume(node) if alt
 		self
 
+
 	def isExpressable
 		var exp = body.isExpressable && (!alt || alt.isExpressable)
 		# if exp
@@ -78,18 +94,22 @@ class AST.If < AST.ControlFlow
 		# else
 		# 	p "if is not expressable".red
 		return exp
-		
+
+
 
 class AST.Loop < AST.Statement
+
 
 	prop scope
 	prop options
 	prop body
 	prop catcher
 
+
 	def initialize options = {}
 		self.options = options 
 		self
+
 
 	def set obj
 		# p "configure for!"
@@ -99,9 +119,11 @@ class AST.Loop < AST.Statement
 			@options[k] = obj[k]
 		self
 
+
 	def addBody body
 		self.body = body.block
 		self
+
 
 	def c o
 		# p "Loop.c - {isExpressable} {stack} {stack.isExpression}"
@@ -112,8 +134,9 @@ class AST.Loop < AST.Statement
 			# this will resut in an infinite loop, no?!?
 			var ast = CALL(FN([],[self]),[])
 			return ast.c o
-		# hmm - need to check more thoroughly
+		
 		elif stack.current isa AST.Block
+			# hmm - need to check more thoroughly
 			# p "parent is a block!"
 			super.c o
 		else
@@ -122,13 +145,13 @@ class AST.Loop < AST.Statement
 			return ast.c o
 			# need to wrap in function
 
-	# def consume node
-	#	self
-			
+
 
 class AST.While < AST.Loop
 
+
 	prop test
+
 
 	def initialize test, opts
 		@test = test
@@ -145,6 +168,7 @@ class AST.While < AST.Loop
 		scope.visit
 		test.traverse if test
 		body.traverse if body
+
 
 	# TODO BUG -- when we declare a var like: while var y = ...
 	# the variable will be declared in the WhileScope which never
@@ -171,7 +195,7 @@ class AST.While < AST.Loop
 		# 	node = null
 		# 	p "consume variable declarator!?".cyan
 		# else
-			# declare the variable we will use to soak up results
+		# declare the variable we will use to soak up results
 		# p "Creating value to store the result of loop".cyan
 		# TODO Use a special vartype for this?
 		var resvar = scope.declare(:res,AST.Arr.new([]),system: yes)
@@ -186,21 +210,26 @@ class AST.While < AST.Loop
 		# return the resvar. Often it will not be needed
 		# FIXME what happens if there is no node?!?
 
+
 	def js
-		var out = "while({test.c(expression: yes)})" + body.c.wrap
+		var out = "while({test.c(expression: yes)})" + body.c(braces: yes, indent: yes) # .wrap
 
 		if scope.vars.count > 0
 			# p "while-block has declared variables(!)"
 			return [scope.vars.c,out]
 		out
 
+
+
 # This should define an open scope
 # should rather 
 class AST.For < AST.Loop
 
+
 	def initialize o = {}
 		@options = o
 		@scope = AST.ForScope.new(self)
+
 
 	def visit
 		scope.visit
@@ -208,6 +237,7 @@ class AST.For < AST.Loop
 		# should be able to toggle whether to keep the results here already(!)
 		body.traverse
 		options[:source].traverse # what about awakening the vars here?
+
 
 	def declare
 
@@ -225,24 +255,15 @@ class AST.For < AST.Loop
 			vars:value = vars:index
 		else			
 			# vars:value = scope.declare(options:name,null,let: yes)
-			var i = vars:index = oi ? scope.declare(oi,0) : util.counter(0,yes).predeclare
+			var i = vars:index = oi ? scope.declare(oi,0, let: yes) : util.counter(0,yes).predeclare
 			vars:source = util.iterable(src,yes).predeclare
 			vars:len    = util.len(vars:source,yes).predeclare
 			vars:value  = scope.declare(options:name,null,let: yes)
 			vars:value.addReference(options:name) # adding reference!
 			i.addReference(oi) if oi
 
-		self
-		
-		# var i = vars:index  = oi ? scope.declare(oi,0) : util.counter(0,yes).predeclare
-		# var o = vars:source = util.iterable(options[:source],yes).predeclare
-		# scope.declare('o',options[:source],system: true)
-		
-		# scope.declare('l',AST.Util.len(o),system: true)
+		return self
 
-		# var v = vars:value  = scope.declare(options:name,null,let: yes)
-		
-		
 
 	def consume node
 		# p "Loop consume? {node}"
@@ -282,10 +303,6 @@ class AST.For < AST.Loop
 		# this is never an expression (for now -- but still)
 		return ast
 
-	# def assignify node
-	# 	p "assignify!!!"
-	# 	@assigns = AST.Assign.new('=',node,self)
-	# 	# return self
 
 	def js
 		var vars = options:vars
@@ -312,27 +329,20 @@ class AST.For < AST.Loop
 		else
 			body.unshift(OP('=',val,OP('.',vars:source,i)))
 			# body.unshift(head)
-		"for({scope.vars.c}; {cond.c}; {final.c})" + body.c.wrap
+			# TODO check lengths - intelligently decide whether to brace and indent
+		var head = "for({scope.vars.c}; {cond.c}; {final.c}) "
+		head + body.c(braces: yes, indent: yes) # .wrap
+
 
 	def head
 		var vars = options:vars
 		OP('=',vars:value,OP('.',vars:source,vars:index))
 
+
+
 class AST.ForIn < AST.For
 
-# class AST.ForInRange < AST.ForIn
-# 
-# 	def initialize o = {}
-# 		@options = o
-# 		@scope = AST.ForScope.new(self)
-# 		self
-# 
-# 	def visit
-# 		# p "forinrange visit"
-# 		self
-# 
-# 	def c
-# 		"forinrange"
+
 		
 class AST.ForOf < AST.For
 
@@ -377,11 +387,12 @@ class AST.ForOf < AST.For
 			else
 				body.unshift(OP('=',k,OP('.',vars:keys,i)))
 
-			return "for({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})" + body.c.wrap
+			var head = "for({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
+			return head + body.c(indent: yes, braces: yes) # .wrap
 
-		var code = body.c
+		var code = body.c(braces: yes, indent: yes)
 		# it is really important that this is a treated as a statement
-		[scope.vars.c,"for(var {k.c} in {o.c})" + code.wrap]
+		[scope.vars.c,"for(var {k.c} in {o.c})" + code]
 
 	def head
 		var v = options:vars
@@ -391,87 +402,105 @@ class AST.ForOf < AST.For
 			OP('=',v:value,OP('.',v:source,v:key)) if v:value
 		]
 
+
+
 class AST.Begin < AST.Block
+
 
 	def initialize body
 		@nodes = body.block.nodes
 
+
 	def shouldParenthesize
 		isExpression # hmmm
 
-	# this can later be used for try / catch etc as well
-	# def js
-	# 	'(' + body.c + ')'
+
 
 class AST.Switch < AST.ControlFlowStatement
+
 
 	prop source
 	prop cases
 	prop fallback
+
 
 	def initialize a,b,c
 		@source = a
 		@cases = b
 		@fallback = c
 
+
 	def visit
 		cases.map do |item| item.traverse
 		fallback.visit if fallback
 		source.visit if source
+
 
 	def consume node
 		@cases = @cases.map(|item| item.consume(node))
 		@fallback = @fallback.consume(node) if @fallback
 		self
 
+
 	def js
 		var body = []
-
-		# we need to push break into statements
 
 		for part in cases
 			part.autobreak
 			body.push(part)
 
 		if fallback
-			body.push("default:\n" + fallback.c.indent)
+			body.push("default:\n" + fallback.c(indent: yes))
 
 		"switch({source.c}) " + body.c.join("\n").wrap
 
+
+
 class AST.SwitchCase < AST.ControlFlowStatement
+
 
 	prop test
 	prop body
+
 
 	def initialize test, body
 		@test = test
 		@body = body.block
 
+
 	def visit
 		body.traverse
+
 
 	def consume node
 		body.consume(node)
 		self
 
+
 	def autobreak
 		body.push(AST.BreakStatement.new) unless body.last isa AST.BreakStatement
 		self
 
+
 	def js
 		@test = [@test] unless @test isa Array 
 		var cases = @test.map do |item| "case {item.c}:"
-		cases.join("\n") + "\n" + body.c.indent
+		cases.join("\n") + body.c(indent: yes) # .indent
+
+
 
 class AST.Try < AST.ControlFlowStatement
+
 
 	prop body
 	# prop ncatch
 	# prop nfinally
+
 	def initialize body, c, f
 		@body = body.block
 		@catch = c
 		@finally = f
+
 
 	def consume node
 		@body = @body.consume(node)
@@ -479,15 +508,16 @@ class AST.Try < AST.ControlFlowStatement
 		@finally = @finally.consume(node) if @finally
 		self
 
+
 	def visit
 		@body.traverse
 		@catch.traverse if @catch
 		@finally.traverse if @finally
 		# no blocks - add an empty catch
 
-	def js
 
-		var out = "try " + body.c.wrap + "\n"
+	def js
+		var out = "try " + body.c(braces: yes, indent: yes) + "\n"
 		out += @catch.c if @catch
 		out += @finally.c if @finally
 
@@ -495,40 +525,51 @@ class AST.Try < AST.ControlFlowStatement
 			out += "catch(e)\{\}"
 		out
 
+
+
 class AST.Catch < AST.ControlFlowStatement
+
 
 	def initialize body, varname
 		@body = body.block
 		@scope = AST.CatchScope.new(self)
 		@varname = varname
 
+
 	def consume node
 		@body = @body.consume(node)
 		self
+
 
 	def visit
 		@scope.visit
 		@variable = @scope.register(@varname,self,type: 'catchvar')
 		@body.traverse
 
+
 	def js
-		"catch ({@variable.c}) " + @body.c.wrap + "\n"
+		"catch ({@variable.c}) " + @body.c(braces: yes, indent: yes) + "\n"
+
 
 # repeating myself.. don't deal with it until we move to compact tuple-args
 # for all astnodes
 
+
 class AST.Finally < AST.ControlFlowStatement
-	
+
 	def initialize body
 		@body = body.block
 
+
 	def visit
 		@body.traverse
+
 
 	def consume node
 		# swallow silently
 		self
 
+
 	def js
-		"finally " + @body.c.wrap
+		"finally " + @body.c(braces: yes, indent: yes)
 

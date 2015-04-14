@@ -1,5 +1,5 @@
 
-class ImbaSelector
+global class ImbaSelector
 	
 	# def self.first selector, scope
 	# 	sel = self.new(selector,scope)

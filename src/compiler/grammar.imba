@@ -91,16 +91,36 @@ var grammar =
 	# Any list of statements and expressions, separated by line breaks or semicolons.
 	Body: [
 		o 'Line' do Block.wrap [A1]
-		o 'Body TERMINATOR Line' do A1.push A3,A2
-		o 'Body TERMINATOR'
+		# o 'TERMINATOR' do Block.wrap [A1]
+		o 'Body Terminator Line' do A1.break(A2).add(A3) # A3.prebreak(A2) # why not add as real nodes?!
+		o 'Body Terminator' do A1.break(A2)
+	]
+
+	Terminator: [
+		o 'TERMINATOR' do Terminator.new(A1)
+	]
+
+	# An indented block of expressions. Note that the [Rewriter](rewriter.html)
+	# will convert some postfix forms into blocks for us, by adjusting the
+	# token stream.
+	Block: [
+		o 'INDENT OUTDENT' do Block.new([]).indented(A1,A2).set(ends: [A1,A2])
+		o 'INDENT Body OUTDENT' do A2.indented(A1,A3).set(ends: [A1,A3])
+		# hacky way to support terminators at the start of blocks
+		o 'INDENT TERMINATOR Body OUTDENT' do A3.prebreak(A2).indented(A1,A4).set(ends: [A1,A4]) # rather indent, no?
 	]
 
 	# Block and statements, which make up a line in a body.
 	Line: [
 		o 'Splat'
+		# o 'TERMINATOR'
 		o 'Expression'
 		o 'Line , Expression' do A1.addExpression(A3) # Onto something??
 		o 'Line , Splat' do A1.addExpression(A3) # Onto something??
+		# o 'Line Comment' do
+		# 	console.log "found comment line!"
+		# 	A1
+		o 'Comment'
 		o 'Statement'
 	]
 
@@ -108,10 +128,9 @@ var grammar =
 	Statement: [
 		# o 'VarDeclaration'
 		# o 'TupleAssign'
-		# o 'TupleStatement'    
 		o 'Return'
 		o 'Throw'
-		o 'Comment'
+		# o 'Comment'
 		o 'STATEMENT' do Literal.new A1
 
 		o 'BREAK' do BreakStatement.new A1
@@ -121,19 +140,27 @@ var grammar =
 		o 'CONTINUE CALL_START Expression CALL_END' do ContinueStatement.new A1,A3
 
 		o 'DEBUGGER' do DebuggerStatement.new A1
+		o 'ImportStatement'
 	]
 
-	TupleStatement: [
-		# like an array really
-		# o '[ ArgList OptComma ]' do A2
+	ImportStatement: [
+		o 'IMPORT ImportArgList FROM ImportFrom' do ImportStatement.new(A2,A4)
+		o 'IMPORT ImportFrom AS ImportArg' do ImportStatement.new(null,A2,A4)
+		o 'IMPORT ImportFrom' do ImportStatement.new(null,A2)
 	]
 
-	TupleStuff: [
-		o 'Arg' do [A1]
-		o 'ArgList , Arg' do A1.concat A3
-		o 'ArgList OptComma TERMINATOR Arg' do A1.concat A4
-		o 'INDENT ArgList OptComma OUTDENT' do A2
-		o 'ArgList OptComma INDENT ArgList OptComma OUTDENT' do A1.concat A4
+	ImportFrom: [
+		o 'STRING'
+	]
+
+	ImportArgList: [
+		o 'ImportArg' do [A1]
+		o 'ImportArgList , ImportArg' do A1.concat A3
+	]
+
+	# Valid arguments are Blocks or Splats.
+	ImportArg: [
+		o 'VarIdentifier'
 	]
 
 	# All the different types of expressions in our language. The basic unit of
@@ -158,6 +185,11 @@ var grammar =
 		o 'TagDeclaration'
 		o 'Tag'
 		o 'Property'
+		# o 'Comment'
+		# test!
+		# o 'Expression Comment' do
+		# 	A1.@comment = A2
+		# 	A1
 	]
 
 	TagSelector: [
@@ -248,7 +280,8 @@ var grammar =
 	# ]
 
 	TagBody: [
-		o 'INDENT ArgList OUTDENT' do A2
+		o 'INDENT ArgList OUTDENT' do A2.indented(A1,A3)
+		# o 'ArgList' do A1
 		o 'CALL_START ArgList CALL_END' do A2
 	]
 
@@ -289,13 +322,7 @@ var grammar =
 	#   o 'SELECTOR [ ArgList ]' do Call.new(Literal.new('__tagfor'), A3)
 	# ]
 
-	# An indented block of expressions. Note that the [Rewriter](rewriter.html)
-	# will convert some postfix forms into blocks for us, by adjusting the
-	# token stream.
-	Block: [
-		o 'INDENT OUTDENT' do Block.new([]).set(ends: [A1,A2])
-		o 'INDENT Body OUTDENT' do A2.set(ends: [A1,A3])
-	]
+	
 
 	# A literal identifier, a variable name or property.
 	Identifier: [
@@ -351,7 +378,7 @@ var grammar =
 	Assign: [
 		# o 'SimpleAssignable , Assign' do A3
 		o 'Assignable = Expression' do Assign.new "=", A1, A3
-		o 'Assignable = INDENT Expression OUTDENT' do Assign.new "=", A1, A4
+		o 'Assignable = INDENT Expression Outdent' do Assign.new "=", A1, A4.indented(A3,A5)
 	]
 
 	# Assignment when it happens within an object literal. The difference from
@@ -360,7 +387,7 @@ var grammar =
 		o 'ObjAssignable' do ObjAttr.new A1
 		o 'ObjAssignable : Expression' do ObjAttr.new A1, A3, 'object'
 		o 'ObjAssignable :
-			 INDENT Expression OUTDENT' do ObjAttr.new A1, A4, 'object'
+			 INDENT Expression Outdent' do ObjAttr.new A1, A4.indented(A3,A5), 'object'
 		o 'Comment'
 	]
 
@@ -383,7 +410,8 @@ var grammar =
 
 	# A block comment.
 	Comment: [
-		o 'HERECOMMENT' do Comment.new A1
+		o 'HERECOMMENT' do Comment.new A1,true
+		o 'COMMENT' do Comment.new A1,false
 	]
 
 	# The **Code** node is the function literal. It's defined by an indented block
@@ -409,9 +437,9 @@ var grammar =
 	]
 
 	Property: [
-		o 'PROP PropertyIdentifier Object' do PropertyDeclaration.new A2, A3
-		o 'PROP PropertyIdentifier CALL_START Object CALL_END' do PropertyDeclaration.new A2, A4
-		o 'PROP PropertyIdentifier' do PropertyDeclaration.new A2, null
+		o 'PROP PropertyIdentifier Object' do PropertyDeclaration.new A2, A3, A1
+		o 'PROP PropertyIdentifier CALL_START Object CALL_END' do PropertyDeclaration.new A2, A4, $1
+		o 'PROP PropertyIdentifier' do PropertyDeclaration.new A2, null, A1
 	]
 
 	PropertyIdentifier: [
@@ -423,42 +451,25 @@ var grammar =
 		o 'VAR Identifier , Expression' do A1
 	]
 
-	VarDeclaration: [
-		# o 'VAR ParamList' do VariableDeclaration.new A2
-		# o 'VAR MultiAssignment' do VariableDeclaration.new A2
-		# o 'VAR MultiAssignable = Expression' do VarList.new A1,A2,A4
-		# o 'VAR MultiAssignable = SimpleArgs TERMINATOR' do VarList.new A1,A2,A4
-		
-		# o 'VAR MultiAssignable = SimpleArgs TERMINATOR' do VarList.new A1,A2,A4
-		# o 'VAR MultiAssignable MSET MultiAssignmentValues' do VarList.new A1,A2,A4
-		# o 'VAR MultiAssignable = SingleAssignmentValue' do VarList.new A1,A2,[A4]
-		# o 'VAR MultiAssignable = SingleAssignmentValue TERMINATOR' do VarList.new A1,A2,[A4]
-		# o 'VAR MultiAssignable MSET SimpleArgs TERMINATOR' do VarList.new A1,A2,A4
-	]
-
-	# MultiAssignment: [
-	#   o 'MultiAssignable = MultiAssignmentValues' do [A1,A3]
+	# MultiAssignable: [
+	# 	o '' do []
+	# 	o 'MultiAssignmentVar' do [A1]
+	# 	o 'MultiAssignable , MultiAssignmentVar' do A1.concat A3
+	# 	o '( MultiAssignable )' do A2 # really?
+	# 	# TODO support a, b, (c, d) as well
 	# ]
 
-	MultiAssignable: [
-		o '' do []
-		o 'MultiAssignmentVar' do [A1]
-		o 'MultiAssignable , MultiAssignmentVar' do A1.concat A3
-		o '( MultiAssignable )' do A2 # really?
-		# TODO support a, b, (c, d) as well
-	]
+	# MultiAssignmentValues: [
+	# 	# o '' do []
+	# 	o 'MultiAssignmentValue' do [A1]
+	# 	o 'MultiAssignmentValues , MultiAssignmentValue' do A1.concat A3
+	# 	# o 'MultiAssignmentValues TERMINATOR' do A1
+	# ]
 
-	MultiAssignmentValues: [
-		# o '' do []
-		o 'MultiAssignmentValue' do [A1]
-		o 'MultiAssignmentValues , MultiAssignmentValue' do A1.concat A3
-		# o 'MultiAssignmentValues TERMINATOR' do A1
-	]
-
-	MultiAssignmentValue: [
-		o 'Value'
-		o 'Invocation'
-	]
+	# MultiAssignmentValue: [
+	# 	o 'Value'
+	# 	o 'Invocation'
+	# ]
 
 	SingleAssignmentValue: [
 		o 'IfBlock'
@@ -466,11 +477,11 @@ var grammar =
 		o 'Assign'
 	]
 
- # Function Parameters
-	MultiAssignmentVar: [
-		o 'Identifier' do VarName.new(A1)
-		o 'SPLAT Identifier' do VarName.new(A2,A1)
-	]
+ 	# Function Parameters
+	# MultiAssignmentVar: [
+	# 	o 'Identifier' do VarName.new(A1)
+	# 	o 'SPLAT Identifier' do VarName.new(A2,A1)
+	# ]
 
 	# The list of parameters that a function accepts can be of any length.
 	#  VarList: [
@@ -640,13 +651,13 @@ var grammar =
 		o 'Value . Super' do SuperAccess.new('.',A1,A3)
 		o 'Value . Identifier' do PropertyAccess.new('.',A1,A3)
 		o 'Value . Ivar' do IvarAccess.new('.',A1,A3)
-		o 'Value -> Identifier' do ObjectAccess.new('.',A1,A3) # should remove
+		# o 'Value -> Identifier' do ObjectAccess.new('.',A1,A3) # should remove
 		o 'Value . Symbol' do ObjectAccess.new('.',A1,Identifier.new(A3.value))
 		o 'Value . Const' do ConstAccess.new('.',A1,A3)
 		o 'Value . NUMBER' do OP('.',A1,Num.new(A3))
 
 		o 'Invocation . Identifier' do PropertyAccess.new('.',A1,A3)
-		o 'Invocation -> Identifier' do ObjectAccess.new('.',A1,A3)
+		# o 'Invocation -> Identifier' do ObjectAccess.new('.',A1,A3)
 		o 'Invocation . Symbol' do ObjectAccess.new('.',A1,Identifier.new(A3.value))
 		o 'Invocation . Const' do ConstAccess.new('.',A1,A3)
 		o 'Invocation . Ivar' do IvarAccess.new('.',A1,A3)
@@ -672,8 +683,8 @@ var grammar =
 	Assignable: [
 		o 'SimpleAssignable'
 		# these are for splats etc, might be okay to remove 
-		o 'Array' do A1
-		o 'Object' do A1
+		o 'Array' #  do A1
+		o 'Object' # do A1
 	]
 
 	Await: [
@@ -720,11 +731,12 @@ var grammar =
 	# ]
 
 	IndexArgList: [
-		o 'Arg , Arg' do [A1,A3]
-		o 'ArgList , Arg' do A1.concat A3
-		o 'ArgList OptComma TERMINATOR Arg' do A1.concat A4
-		o 'INDENT ArgList OptComma OUTDENT' do A2
-		o 'ArgList OptComma INDENT ArgList OptComma OUTDENT' do A1.concat A4
+		o 'Arg , Arg' do ArgList.new([A1,A3])
+		o 'ArgList , Arg' do A1.add A3
+		o 'ArgList OptComma Terminator Arg' do A1.add(A3).add(A4)
+		o 'INDENT ArgList OptComma Outdent' do A2.indented(A1,A4)
+		# FIXME must remember the indentation
+		o 'ArgList OptComma INDENT ArgList OptComma Outdent' do A1.concat A4
 	]
 
 	IndexValue: [
@@ -740,11 +752,13 @@ var grammar =
 	# Assignment of properties within an object literal can be separated by
 	# comma, as in JavaScript, or simply by newline.
 	AssignList: [
-		o '' do []
-		o 'AssignObj' do [A1]
-		o 'AssignList , AssignObj' do A1.concat A3
-		o 'AssignList OptComma TERMINATOR AssignObj' do A1.concat A4
-		o 'AssignList OptComma INDENT AssignList OptComma OUTDENT' do A1.concat A4
+		o '' do AssignList.new([])
+		o 'AssignObj' do AssignList.new([A1])
+		o 'AssignList , AssignObj' do A1.add A3
+		o 'AssignList OptComma Terminator AssignObj' do A1.add(A3).add(A4) # A4.prebreak(A3)
+		# this is strange
+		o 'AssignList OptComma INDENT AssignList OptComma Outdent' do 
+			A1.concat A4.indented(A3,A6) # hmmm
 	]
 
 	# Class definitions have optional bodies of prototype property assignments,
@@ -753,6 +767,7 @@ var grammar =
 		o 'ClassStart' do A1
 		o 'EXTEND ClassStart' do A2.set(extension: A1)
 		o 'LOCAL ClassStart' do A2.set(local: A1)
+		o 'GLOBAL ClassStart' do A2.set(global: A1)
 		o 'EXPORT ClassStart' do A2.set(export: A1)
 		o 'EXPORT LOCAL ClassStart' do A3.set(export: A1, local: A2)
 	]
@@ -778,7 +793,10 @@ var grammar =
 	Invocation: [
 		o 'Value OptFuncExist Arguments' do Call.new A1, A3, A2
 		o 'Invocation OptFuncExist Arguments' do Call.new A1, A3, A2
-		o 'Invocation Do' do A1.addBlock(A2); A1
+		o 'Invocation Do' do
+			A1.addBlock(A2)
+			A1
+
 		# o 'TAG ( Arg )' do TagWrapper.new A3
 		# o 'BREAK Arguments' do BreakStatement.new(A1,A2)
 		# FIXME Break should only support a single value as argument, no?
@@ -804,7 +822,7 @@ var grammar =
 
 	# The list of arguments to a function call.
 	Arguments: [
-		o 'CALL_START CALL_END' do []
+		o 'CALL_START CALL_END' do ArgList.new([]) # hmm
 		o 'CALL_START ArgList OptComma CALL_END' do A2
 	]
 
@@ -819,17 +837,9 @@ var grammar =
 		o 'SELF' do Self.new(A1)
 	]
 
-	# A reference to a property on *this*.
-	# remove this?
-	# ThisProperty: [
-	#   o '@@ Identifier' do 
-	#     # FIXME -- this should return an ivar - not a regular access
-	#     Value.new Literal.new('this'), [Access.new(A2)], 'this'
-	# ]
-
 	# The array literal.
 	Array: [
-		o '[ ]' do Arr.new []
+		o '[ ]' do Arr.new ArgList.new([])
 		o '[ ArgList OptComma ]' do Arr.new A2
 	]
 
@@ -854,11 +864,19 @@ var grammar =
 	# as well as the contents of an array literal
 	# (i.e. comma-separated expressions). Newlines work as well.
 	ArgList: [
-		o 'Arg' do [A1]
-		o 'ArgList , Arg' do A1.concat A3
-		o 'ArgList OptComma TERMINATOR Arg' do A1.concat A4
-		o 'INDENT ArgList OptComma OUTDENT' do A2
-		o 'ArgList OptComma INDENT ArgList OptComma OUTDENT' do A1.concat A4
+		o 'Arg' do ArgList.new([A1])
+		o 'ArgList , Arg' do A1.add A3
+		o 'ArgList OptComma Terminator Arg' do A1.add(A3).add(A4)
+		o 'INDENT ArgList OptComma Outdent' do
+			# not good -- arglist should be a separate node-type -- really
+			A2.indented(A1,A4)
+		# hmmm
+		o 'ArgList OptComma INDENT ArgList OptComma Outdent' do A1.concat A4
+	]
+
+	Outdent: [
+		o 'Terminator OUTDENT' do [A1,A2]
+		o 'OUTDENT' do A1
 	]
 
 	# Valid arguments are Blocks or Splats.
@@ -866,6 +884,7 @@ var grammar =
 		o 'Expression'
 		o 'Splat'
 		o 'LOGIC'
+		o 'Comment'
 	]
 
 	# Just simple, comma-separated, required arguments (no fancy syntax). We need
@@ -943,21 +962,24 @@ var grammar =
 	]
 
 	ForBody: [
-		o 'FOR Range' do source: Value.new(A2)
+		o 'FOR Range' do source: ValueNode.new(A2)
 		o 'ForStart ForSource' do A2.configure(own: A1:own, name: A1[0], index: A1[1])
 	]
 
 	ForStart: [
 		o 'FOR ForVariables' do A2
-		o 'FOR OWN ForVariables' do A3:own = yes; A3
+		o 'FOR OWN ForVariables' do
+			A3:own = yes
+			A3
+
 	]
 
 	# An array of all accepted values for a variable inside the loop.
 	# This enables support for pattern matching.
 	ForValue: [
 		o 'Identifier'
-		o 'Array' do Value.new A1
-		o 'Object' do Value.new A1
+		o 'Array' do ValueNode.new A1
+		o 'Object' do ValueNode.new A1
 	]
 
 	# An array or range comprehension has variables for the current element
@@ -983,7 +1005,7 @@ var grammar =
 
 	Switch: [
 		o 'SWITCH Expression INDENT Whens OUTDENT' do Switch.new A2, A4
-		o 'SWITCH Expression INDENT Whens ELSE Block OUTDENT' do Switch.new A2, A4, A6
+		o 'SWITCH Expression INDENT Whens ELSE Block Outdent' do Switch.new A2, A4, A6
 		o 'SWITCH INDENT Whens OUTDENT' do Switch.new null, A3
 		o 'SWITCH INDENT Whens ELSE Block OUTDENT' do Switch.new null, A3, A5
 	]
@@ -1065,7 +1087,7 @@ var grammar =
 				OP A2, A1, A3
 
 		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do OP(A2, A1, A3)
-		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression OUTDENT' do OP(A2, A1, A4)
+		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do OP(A2, A1, A4.indented(A3,A5))
 	]
 
 

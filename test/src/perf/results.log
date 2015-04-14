@@ -1,0 +1,469 @@
+{"name":"Testing","commit":"e2f6747d1da0601a909643fa2560898737a8841e - now passing tests including tag","tests":[["String#boxed",126447.68449521842],["Token",490756.2491074305]]}{"name":"Testing","commit":"e2f6747d1da0601a909643fa2560898737a8841e - now passing tests including tag","tests":[["String#boxed",124582.5763693121],["Token",484482.7435822938]]}{
+    "name": "Testing",
+    "commit": "e2f6747d1da0601a909643fa2560898737a8841e - now passing tests including tag",
+    "tests": [
+        [
+            "String#boxed",
+            "125121"
+        ],
+        [
+            "Token",
+            "486849"
+        ]
+    ]
+}{
+    "name": "Testing",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "125044 - String#boxed",
+        "489499 - Token"
+    ]
+}{
+    "name": "Testing",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "124670 - String#boxed",
+        "494714 - Token"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "2329 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "2266 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "2203 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "2278 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "2288 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "2349 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "2341 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "58758c6742d894de08b9739b8cf8fdcfbb995b9d - working on benchmarking",
+    "tests": [
+        "2274 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "530f0e4f2624ee86dfbca714eb8a933ae5faa5cd - stuff",
+    "tests": [
+        "2285 - tokenize"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "530f0e4f2624ee86dfbca714eb8a933ae5faa5cd - stuff",
+    "tests": [
+        "2330 - tokenize",
+        "0 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "530f0e4f2624ee86dfbca714eb8a933ae5faa5cd - stuff",
+    "tests": [
+        "2379 - tokenize",
+        "0 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "530f0e4f2624ee86dfbca714eb8a933ae5faa5cd - stuff",
+    "tests": [
+        "2359 - tokenize",
+        "1611 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "530f0e4f2624ee86dfbca714eb8a933ae5faa5cd - stuff",
+    "tests": [
+        "2388 - tokenize",
+        "1604 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "530f0e4f2624ee86dfbca714eb8a933ae5faa5cd - stuff",
+    "tests": [
+        "2333 - tokenize",
+        "929 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "530f0e4f2624ee86dfbca714eb8a933ae5faa5cd - stuff",
+    "tests": [
+        "2192 - tokenize",
+        "1732 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4231c5f2679e6bdb59a08392189c9cece4731667 - more",
+    "tests": [
+        "2247 - tokenize",
+        "1691 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4231c5f2679e6bdb59a08392189c9cece4731667 - more",
+    "tests": [
+        "2250 - tokenize",
+        "1537 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4231c5f2679e6bdb59a08392189c9cece4731667 - more",
+    "tests": [
+        "2246 - tokenize",
+        "1659 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4231c5f2679e6bdb59a08392189c9cece4731667 - more",
+    "tests": [
+        "49 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4231c5f2679e6bdb59a08392189c9cece4731667 - more",
+    "tests": [
+        "51 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4231c5f2679e6bdb59a08392189c9cece4731667 - more",
+    "tests": [
+        "52 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "52 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "53 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "53 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "Testing",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "133701 - String#boxed",
+        "509238 - Token",
+        "10227723 - Long regex",
+        "16875519 - Short regex"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "52 - tokenize",
+        "47 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "54 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "55 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "51 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "53 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "76e222685a1dce1583bb9929e4a5a1016e483a81 - more perf",
+    "tests": [
+        "53 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "55 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "55 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "54 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "53 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "54 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "52 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "54 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "54 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "53 - tokenize",
+        "44 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "56 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "54 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "55 - tokenize",
+        "47 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "55 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "50 - tokenize",
+        "44 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "52 - tokenize",
+        "43 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "51 - tokenize",
+        "43 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "49 - tokenize",
+        "43 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "50 - tokenize",
+        "43 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "65ba70742e9d94642c1c7a22c76be62c1fe465fc - optimizing",
+    "tests": [
+        "51 - tokenize",
+        "42 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "24ec76886ce0c38902de83daabf93f2b556bbb4d - more work on optimizing",
+    "tests": [
+        "50 - tokenize",
+        "44 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "24ec76886ce0c38902de83daabf93f2b556bbb4d - more work on optimizing",
+    "tests": [
+        "49 - tokenize",
+        "40 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "24ec76886ce0c38902de83daabf93f2b556bbb4d - more work on optimizing",
+    "tests": [
+        "51 - tokenize",
+        "44 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "24ec76886ce0c38902de83daabf93f2b556bbb4d - more work on optimizing",
+    "tests": [
+        "50 - tokenize",
+        "43 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "b5594d4be07f792ecc1486ef788f7ae7d90eb6d7 - working",
+    "tests": [
+        "52 - tokenize",
+        "47 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "b5594d4be07f792ecc1486ef788f7ae7d90eb6d7 - working",
+    "tests": [
+        "52 - tokenize",
+        "47 - parse"
+    ]
+}

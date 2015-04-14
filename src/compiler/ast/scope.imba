@@ -21,6 +21,7 @@ class AST.Scope
 		@node = node
 		@parent = parent
 		@vars = AST.VariableDeclaration.new([])
+		@virtual = no
 		@counter = 0
 		@varmap = {}
 		@varpool = []
@@ -41,6 +42,13 @@ class AST.Scope
 		STACK.addScope(self)
 		root.scopes.push(self)
 		self
+
+	# called for scopes that are not real scopes in js
+	# must ensure that the local variables inside of the scopes do not
+	# collide with variables in outer scopes -- rename if needed
+	def virtualize
+		self
+		
 
 	def root
 		var scope = self
@@ -98,6 +106,7 @@ class AST.Scope
 		var item = AST.Variable.new(self,name,decl,options)
 		decl.variable = item
 		item.resolve
+		# should be possible to force-declare for this scope, no?
 		# if this is a system-variable 
 
 	def lookup name
@@ -132,12 +141,20 @@ class AST.Scope
 			return scope if scope isa AST.ClassScope
 		return nil
 
-	def c
+	def head
+		[@vars,@params]
+
+	def c o = {}
+		o:expression = no
 		# need to fix this
-		var body = node.body.c(expression: no)
-		var head = [@vars,@params].block.c(expression: no)
-		# p "head from scope is {head}"
-		[head or nil,body].flatten.compact.join("\n")
+		node.body.head = head
+		var body = node.body.c(o)
+
+		# var head = [@vars,@params].block.c(expression: no)
+		# p "head from scope is ({head})"
+		# var out = [head or nil,body].flatten.compact.join("\n")
+		# out
+		# out = '{' + out + 
 
 	def dump
 		var vars = Object.keys(@varmap).map do |k| 
@@ -192,15 +209,18 @@ class AST.FileScope < AST.Scope
 		@helpers.push(value) if @helpers.indexOf(value) == -1
 		return self
 
-	def c
-		# need to fix this
-		# var helpers = helpers.c(expression: no)
-		var body = node.body.c(expression: no)
-		var head = [@params,@vars].block.c(expression: no)
-		# var foot = []
+	def head
+		[@helpers,@params,@vars]
 
-		# p "head from scope is {head}"
-		[head or nil,@helpers or nil,body].flatten.compact.join("\n")
+	# def c
+	# 	# need to fix this
+	# 	# var helpers = helpers.c(expression: no)
+	# 	var body = node.body.c(expression: no)
+	# 	var head = [@params,@vars].block.c(expression: no)
+	# 	# var foot = []
+	# 
+	# 	# p "head from scope is {head}"
+	# 	[head or nil,@helpers or nil,body].flatten.compact.join("\n")
 
 	def warn data
 		# hacky
@@ -222,6 +242,17 @@ class AST.FileScope < AST.Scope
 
 
 class AST.ClassScope < AST.Scope
+
+	# called for scopes that are not real scopes in js
+	# must ensure that the local variables inside of the scopes do not
+	# collide with variables in outer scopes -- rename if needed
+	def virtualize
+		# console.log "virtualizing ClassScope"
+		var up = parent
+		for own k,v of @varmap
+			true
+			v.resolve(up,yes) # force new resolve
+		self
 
 class AST.TagScope < AST.ClassScope
 
@@ -290,8 +321,8 @@ class AST.Variable < AST.Node
 		@references = [] # should probably be somewhere else, no?
 
 
-	def resolve
-		return self if @resolved
+	def resolve scope = scope, force = no
+		return self if @resolved and !force
 
 		@resolved = yes
 		# p "need to resolve!".cyan
@@ -513,7 +544,7 @@ class AST.Super < AST.Node
 			out = "{m.target.c}.superclass"
 			out += ".apply({m.scope.context.c},arguments)" unless deep
 		else
-			out = "{m.target.c}.prototype.__super"
+			out = "{m.target.c}.__super__"
 			unless up isa AST.Access
 				out += ".{m.supername.c}" 
 				unless up isa AST.Call # autocall?

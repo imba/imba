@@ -63,3 +63,16 @@ describe "Syntax - Scope" do
 	test "def inside method" do
 		item.innerDef
 
+	test "class" do
+		var x = 10
+		local class A
+			var x = 20
+
+			def test
+				eq x, 20
+				x += 10
+				eq x, 30
+
+		eq x, 10
+		A.new.test
+		eq x, 10

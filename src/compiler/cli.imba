@@ -3,17 +3,11 @@ var fs        = require 'fs'
 var path      = require 'path'
 var compiler  = require './compiler'
 var chalk     = require 'chalk'
-# var chokidar  = require 'chokidar'
-
 
 var tasks = require './tasks'
 
-# require '../register'
-
-
 var fspath = path
 
-# var verboser  = do |v, tot| tot + 1
 
 def log *pars
 	console.log(*pars)
@@ -31,12 +25,11 @@ def print-tokens tokens
 		var typ = t[0]
 		var id = t[1]
 
-		if id == '\n'
-			continue "\n"
-		# var id = {"\n": '\\n'}[t[1]] or t[1]
+		if typ == 'TERMINATOR'
+			continue "[" + chalk.yellow(id.replace(/\n/g,"\\n")) + "]"
 
 		if id == typ
-			chalk.red(id)
+			"[" + chalk.red(id) + "]"
 		else
 			id = chalk.white(id)
 			chalk.grey "[{typ} {id}]"
@@ -69,12 +62,19 @@ def write-file source, outpath
 	# var outpath = source.path.replace(/\.imba$/,'.js')
 	# destpath = destpath.replace(basedir,outdir)
 	source.dirty
+
+	var srcp = fspath.relative(process.cwd,source.path)
+	var outp = fspath.relative(process.cwd,outpath)
+
+	log ts, chalk:dim.grey "compile {b chalk.white srcp} to {b chalk.white outp}"
+
 	# log "made dirty"
 	# log ts, chalk:dim.grey "will compile {source.path}"
 	source.write(outpath) do |err,res|
-		var srcp = fspath.relative(process.cwd,source.path)
-		var outp = fspath.relative(process.cwd,outpath)
-		log ts, chalk:dim.grey "compiled {b chalk.white srcp} to {b chalk.white outp}"
+		true
+		# var srcp = fspath.relative(process.cwd,source.path)
+		# var outp = fspath.relative(process.cwd,outpath)
+		# log ts, chalk:dim.grey "compiled {b chalk.white srcp} to {b chalk.white outp}"
 
 
 # shared action for compile and watch
@@ -135,13 +135,9 @@ def cli-compile root, o, watch: no
 
 	
 cli
-	.version('0.6.0')
-	# .usage('[options] <file ...>')
+	.version('0.7.0')
 	.option('--join [FILE]',    'concatenate the source Imba before compiling')
 	.option('-v, --version',	'display the version number')
-	# .action do |path,o|
-	# 	var file = sourcefile-for-path(path)
-	# 	file.run
 
 cli.command('* <path>')
 	.usage('<path>')
@@ -153,23 +149,21 @@ cli.command('* <path>')
 
 
 cli.command('compile <path>')
-	# .usage('[options] <path>')
 	.description('compile scripts')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |path,o| cli-compile path, o, watch: no
 
 cli.command('watch <path>')
-	# .usage('watch [options] <path>')
 	.description('listen for changes and compile scripts')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
-	# .option('--poll', 'useful for successfully watching files over a network')
 	.action do |root,o| cli-compile(root,o,watch: yes)
+
+# .option('--poll', 'useful for successfully watching files over a network')
 
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')
 	.option('-v, --verbose', 'return detailed output')
 	.option('-t, --tokens', 'return detailed output')
-	# .option('-f, --format <format>', 'format of output', 'json', /^(json|plain|html)$/i)	
 	.action do |path, opts|
 		var file = sourcefile-for-path(path)
 
@@ -180,17 +174,17 @@ cli.command('analyze <path>')
 			file.analyze do |meta|
 				log JSON.stringify(meta)
 
+# .option('-f, --format <format>', 'format of output', 'json', /^(json|plain|html)$/i)	
+
 cli.command('dev <task>')
 	.description('commands for imba-development')
-	# .option('--poll', 'useful for successfully watching files over a network')
 	.action do |cmd,o|
 		if tasks[cmd] isa Function
 			tasks[cmd](o)
 		else
 			log chalk.red("could not find task {b cmd}")
 
-
-
+# .option('--poll', 'useful for successfully watching files over a network')
 
 
 

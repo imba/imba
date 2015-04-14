@@ -1,11 +1,12 @@
 
+extern window, document
+
+
 var doc = global:document
 var win = global:window
 
-extern window
-
 # hmm -- this is probably wrong
-var hasTouchEvents = window && window:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
+var hasTouchEvents = win && win:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
 
 
 # Ringbuffer for events?
@@ -229,6 +230,7 @@ class Imba.Touch
 		self
 
 	def touchstart e,t
+		@touch = t
 		@x = t:clientX
 		@y = t:clientY
 		began
@@ -277,7 +279,7 @@ class Imba.Touch
 		update
 
 	def began
-		console.log "begaN??"
+		# console.log "begaN??"
 		@x0 = @x
 		@y0 = @y
 
@@ -296,15 +298,15 @@ class Imba.Touch
 				break unless @bubble
 			dom = dom:parentNode
 
-		console.log('target??',target)
+		# console.log('target??',target)
 		@updates++
 		# if target
 		# 	target.ontouchstart(self)
 		# 	# ptr.event.preventDefault unless @native
 		# 	# prevent default?
 
-		 #  = e:clientX
-		 #  = e:clientY
+		#  = e:clientX
+		#  = e:clientY
 		self
 
 	def update
@@ -334,6 +336,11 @@ class Imba.Touch
 			g.ontouchend(self) for g in @gestures
 
 		target.ontouchend(self) if target and target:ontouchend
+
+		# simulate tap -- need to be careful about this(!)
+		# must look at timing and movement(!)
+		if @touch
+			ED.trigger('tap',event:target)
 		self
 
 	def cancelled
@@ -510,12 +517,20 @@ class Imba.Event
 class Imba.EventManager
 
 	prop root
+	prop enabled default: no, watch: yes
 	prop listeners
+	prop delegators
 	prop delegator
+
+	def enabled-did-set bool
+		bool ? onenable : ondisable
+		self
+
 
 	def initialize node, events: []
 		root = node
-		listeners = {}
+		listeners = []
+		delegators = {}
 		delegator = do |e| 
 			# console.log "delegating event?! {e}"
 			delegate(e)
@@ -530,13 +545,14 @@ class Imba.EventManager
 			register(v,handler) for v in name
 			return self
 
-		return self if listeners[name]
+		return self if delegators[name]
 		# console.log("register for event {name}")
-		root.addEventListener(name,handler isa Function ? handler : delegator,yes)
-		listeners[name] = handler
+		var fn = delegators[name] = handler isa Function ? handler : delegator
+		root.addEventListener(name,fn,yes) if enabled
 
-	def listen name, handler
-		root.addEventListener(name,handler,yes)
+	def listen name, handler, capture = yes
+		listeners.push([name,handler,capture])
+		root.addEventListener(name,handler,capture) if enabled
 		self
 
 	def delegate e
@@ -573,17 +589,34 @@ class Imba.EventManager
 			# now we simply link to onobject event
 		self
 
+	def onenable
+		for own name,handler of delegators
+			root.addEventListener(name,handler,yes)
 
-ED = Imba.EventManager.new(global:document, events: [
+		for item in listeners
+			root.addEventListener(item[0],item[1],item[2])
+		self
+
+	def ondisable
+		for own name,handler of delegators
+			root.removeEventListener(name,handler,yes)
+
+		for item in listeners
+			root.removeEventListener(item[0],item[1],item[2])
+		self
+		
+
+
+ED = Imba.EventManager.new(document, events: [
 	:keydown,:keyup,:keypress,:textInput,:input,
 	:focusin,:focusout,:contextmenu,:submit,
 	:mousedown,:mouseup
 ])
 
 
-ED.listen(:click) do |e|
-	# console.log('onclick',e)
-	ED.trigger('tap',e:target)
+# ED.listen(:click) do |e|
+# 	# console.log('onclick',e)
+# 	ED.trigger('tap',e:target)
 
 
 if hasTouchEvents
@@ -593,6 +626,11 @@ if hasTouchEvents
 	ED.listen(:touchcancel) do |e| Imba.Touch.ontouchcancel(e)
 else
 	# ...
+	ED.listen(:click) do |e|
+		# console.log('onclick',e)
+		ED.trigger('tap',e:target)
+
+
 	ED.listen(:mousedown) do |e|
 		Imba.POINTER.update(e).process if Imba.POINTER
 
@@ -603,7 +641,7 @@ else
 		Imba.POINTER.update(e).process if Imba.POINTER
 
 
-console.log "Imba touches",hasTouchEvents
+# console.log "Imba touches",hasTouchEvents
 
 # set up the events for touches
 

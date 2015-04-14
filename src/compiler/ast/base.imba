@@ -1,5 +1,10 @@
 # TODO Create AST.Expression - make all expressions inherit from these?
 
+extern parseInt
+
+
+var helpers = require './helpers'
+
 AST = {}
 
 # Helpers for operators
@@ -22,8 +27,9 @@ OP = do |op, left, right, opts|
 		# AST.AsyncAssign.new(op,left,right)
 	elif op in ['+=','-=','*=','/=','^=','%=']
 		AST.CompoundAssign.new(op,left,right)
-	# elif op == '<<'
-	#	AST.PushAssign.new(op,left,right)
+		# elif op == '<<'
+		#	AST.PushAssign.new(op,left,right)
+
 	elif op == 'instanceof'
 		AST.InstanceOf.new(op,left,right)
 	elif op == 'in'
@@ -99,6 +105,44 @@ def AST.node typ, pars
 		if pars[0].c == 'return'
 			pars[0] = 'tata'	
 		AST.Call.new(pars[0],pars[1],pars[2])
+
+
+def AST.escapeComments str
+	return '' unless str
+	return str
+	# var v = str.replace(/\\n/g,'\n')
+	# v.split("\n").join("\n")
+	# v.split("\n").map(|v| v ? "// {v}" : v).join("\n")
+
+class AST.Indentation
+
+	prop open
+	prop close
+
+	def initialize a,b
+		@open = a or 1
+		@close = b or 1
+		self
+
+	# should rather parse and extract the comments, no?
+	def wrap str, o
+		var pre = @open:pre
+		var post = @open:post
+		var esc = AST:escapeComments
+
+		# the first newline should not be indented?
+		str = esc(post).replace(/^\n/,'') + str
+		str = str.replace(/^/g,"\t").replace(/\n/g,"\n\t").replace(/\n\t$/g,"\n")
+
+		str = esc(pre) + '\n' + str
+		# only add br if needed
+		str = str + '\n' unless str[str:length - 1] == '\n'
+		# if o and o:braces
+		# 	str = '{' + str + '}'
+
+		return str
+		
+AST.INDENT = AST.Indentation.new
 
 class AST.Stack
 
@@ -341,6 +385,29 @@ class AST.Node
 		var node = AST.ExpressionBlock.new([self])
 		return node.addExpression(expr)
 
+	def addComment comment
+		# console.log "adding comment"
+		@comment = comment
+		self
+
+	def indented a,b
+		# this is a _BIG_ hack
+		if b isa Array
+			# console.log "indented array?", b[0]
+			add(b[0])
+			b = b[1]
+
+		# if indent and indent.match(/\:/)
+		@indented = [a,b]
+		@indentation ||= a and b ? AST.Indentation.new(a,b) : AST.INDENT
+		self
+
+	def prebreak term = '\n'
+		# in options instead?
+		# console.log "prebreak!!!!"
+		# @prebreak = @prebreak or term
+		self
+
 	def invert
 		return OP('!',self)
 
@@ -391,16 +458,31 @@ class AST.Node
 
 		STACK.push(self)
 		forceExpression if o && o:expression
-		var out = js(STACK)
+
+		if o and o:indent
+			# console.log "set indentation"
+			@indentation ||= AST.INDENT
+			# self.indented()
+
+		var out = js(STACK,o)
 
 		var paren = shouldParenthesize
 		
+		if var indent = @indentation
+			out = indent.wrap(out,o)
+
 		if paren
 			# this is not a good way to do it
 			if out isa Array
 				out = "({out})"
 			else
-				out = out.parenthesize 
+				out = out.parenthesize
+
+		if o and o:braces
+			out = '{' + out + '}'
+
+
+		# what about if we should indent?!?
 
 		STACK.pop(self)
 
@@ -422,20 +504,7 @@ class AST.Node
 
 		return out
 
-# Legacy from CS. Has little point - should try to really drop this
-class AST.Value < AST.Node
-
-	prop value
-
-	def initialize value
-		self.value = value
-
-	def visit
-		# p "AST.Value.visit - Value should be deprecated".red
-		value.traverse if value && value:traverse
-
-	def js
-		value.c
+class AST.Expression < AST.Node
 
 class AST.ValueNode < AST.Node
 	prop value
@@ -456,6 +525,57 @@ class AST.ValueNode < AST.Node
 	def region
 		@value:_region
 
+class AST.Statement < AST.ValueNode
+
+	def isExpressable
+		return no
+		
+	def statement
+		return true
+
+
+class AST.Meta < AST.ValueNode
+
+class AST.Comment < AST.Meta
+
+	def c o
+		if o and o:expression or @value.match(/\n/) # multiline?
+			"/*{value.c}*/"
+		else
+			"// {value.c}"
+
+
+class AST.Terminator < AST.Meta
+
+	def c
+		return @value
+		# var v = value.replace(/\\n/g,'\n')
+		v # .split()
+		# v.split("\n").map(|v| v ? " // {v}" : v).join("\n")
+
+class AST.Newline < AST.Terminator
+
+	def initialize v
+		@value = v or '\n'
+
+	def c
+		@value
+		
+
+# weird place?
+class AST.Index < AST.ValueNode
+
+	def js
+		@value.c
+
+class AST.NewLines < AST.ValueNode
+
+	def js
+		@value
+
+	def isExpressable
+		yes
+
 class AST.ListNode < AST.Node
 
 	prop nodes
@@ -463,7 +583,8 @@ class AST.ListNode < AST.Node
 	def initialize list = [], options = {}
 		@nodes = load(list)
 		@options = options
-		
+	
+	# PERF acces @nodes directly?
 	def list
 		@nodes
 
@@ -475,6 +596,7 @@ class AST.ListNode < AST.Node
 		list
 
 	def concat other
+		# need to store indented content as well?
 		@nodes = nodes.concat(other isa Array ? other : other.nodes)
 		self
 
@@ -487,12 +609,26 @@ class AST.ListNode < AST.Node
 		nodes.push(item)
 		self
 
-	def unshift item
+	def unshift item, br
+		nodes.unshift(AST.BR) if br
 		nodes.unshift(item)
 		self
 
+	# test
+	def slice a, b
+		self:constructor.new(@nodes.slice(a,b))
+
 	def add item
 		push(item)
+		self
+
+	def break br, pre = no
+		# console.log "breaking block! ({br})"
+		# should just accept regular terminators no?
+		# console.log "BREAKING {br}"
+		br = AST.Terminator.new(br) if typeof br == 'string' # hmmm?
+		pre ? unshift(br) : push(br)
+		self
 
 	def some cb
 		nodes.some(cb)
@@ -527,11 +663,22 @@ class AST.ListNode < AST.Node
 	def first
 		list[0]
 		
+	# def last
+	#	list[list:length - 1]
+
 	def last
-		list[list:length - 1]
+		var i = @nodes:length
+		while i
+			i = i - 1
+			var v = @nodes[i]
+			return v unless v isa AST.Meta
+		return nil
 
 	def map fn
 		list.map(fn)
+
+	def forEach fn
+		list.forEach(fn)
 
 	def remap fn
 		@nodes = map(fn)
@@ -545,69 +692,107 @@ class AST.ListNode < AST.Node
 		nodes[idx] = replacement if idx >= 0
 		self
 
+
 	def visit
-		map do |node| node.traverse
+		@nodes.forEach do |node|
+			# console.log "traverse node {node}"
+			node.traverse
 		self
 
 	def isExpressable
 		return no unless nodes.every(|v| v.isExpressable )
 		return yes
 
+	def toArray
+		@nodes
 
-class AST.Statement < AST.ValueNode
+	def delimiter
+		@delimiter or ","
 
-	def isExpressable
-		return no
+	def js o, delim: delimiter, indent: @indentation, nodes: nodes
+		# var delim = delimiter
+		var express = delim != ';'
+		var shouldDelim = no
+		var nodes = nodes.compact
+		var last = last
+		var realLast = nodes[nodes:length - 1]
+		# need to find the last node that is not a comment or newline?
+
+		var parts = nodes.map do |arg| 
+			var out = arg.c(expression: express)
+			# if var br = arg.@prebreak
+			# 	indent = yes # force indentation if one item is indented for now
+			# 	out = br.replace(/\\n/g,"\n") + out #  '\n' + arg.@prebreak + out 
+			# 	console.log "prebreak!!"
+			#	out = delim + out if shouldDelim
+			# else
+			#	out = delim + " " + out if shouldDelim
+
+			if arg isa AST.Meta
+				true
+				# console.log "argument is a comment!"
+				# shouldDelim = no
+			else
+				# comment as well?
+				# shouldDelim = yes
+				out = out + delim if !express or arg != last
+			out
+
+		return parts.join("")
 		
-	def statement
-		return true
 
-class AST.Expression < AST.Node
+class AST.ArgList < AST.ListNode
 
-class AST.Comment < AST.ValueNode
+	def hasSplat
+		list.some do |v| v isa AST.Splat
 
-	def c
-		"/* {value.c} */"
+	def delimiter
+		","
 
-# weird place?
-class AST.Index < AST.ValueNode
 
-	def js
-		@value.c
+class AST.AssignList < AST.ArgList	
+	# def c o
+	# 	# p "compile arglist {self}"
+	# 	super.c o
 
-class AST.NewLines < AST.ValueNode
+	def concat other
+		if @nodes:length == 0 and other isa AST.AssignList
+			# console.log "return the other one(!)",other.@indented[0]
+			return other
+		else
+			super
+		# need to store indented content as well?
+		# @nodes = nodes.concat(other isa Array ? other : other.nodes)
+		self
 
-	def js
-		@value
-
-	def isExpressable
-		yes
 
 class AST.Block < AST.ListNode	
 	
+	prop head
+
+
 	def self.wrap ary
-		# p "called Block wrap!!", $0
-		ary:length == 1 && ary.0 isa AST.Block ? ary.0 : AST.Block.new(ary)
-		# return nodes[0] if nodes.length is 1 and nodes[0] instanceof Block
-		# new Block nodes
+		ary:length == 1 && ary[0] isa AST.Block ? ary[0] : AST.Block.new(ary)
 
-	def push item, sep
-		if sep
-			# probably better to set property on the item - no?
-			# only newlines - no ?
-			
-			# @newlines = sep.replace(//)
-			# var ln = sep.replace(/[^\n]/g,''):length
-			var ln = sep.split("\\n"):length
-			# p "block separator!",ln,sep
-			last && last.@newlines = ln - 1
-			# nodes.push(AST.NewLines.new(sep))
 
+	def visit
+		# @indentation ||= AST.INDENT
+
+		if @prebreak # hmm
+			# are we sure?
+			console.log "PREBREAK IN AST.BLOCK SHOULD THROW"
+			first and first.prebreak(@prebreak)
+		super
+		
+
+	def push item
 		nodes.push(item)
 		self
 
+
 	def block
 		self
+
 
 	def loc
 		if var opt = option(:ends)
@@ -622,8 +807,10 @@ class AST.Block < AST.ListNode
 		else
 			[0,0]
 
+
 	def initialize expr = []
 		self.nodes = expr.flatten.compact or []
+		
 
 	# go through children and unwrap inner nodes
 	def unwrap
@@ -636,68 +823,90 @@ class AST.Block < AST.ListNode
 				ary.push(node)
 		return ary
 
+
 	# This is just to work as an inplace replacement of nodes.coffee
 	# After things are working okay we'll do bigger refactorings
 	def compile o = {}
 		var root = AST.Root.new(self,o)
 		root.compile(o)
 
+
 	# Not sure if we should create a separate block?
 	def analyze o = {}
 		# p "analyzing block!!!",o
 		self
 
-	def js o
+
+	def js o, opts
 		var l = nodes:length
 		# var filter = 
 		var filter = (|n| n != null && n != undefined && n != AST.EMPTY)
 		var ast = nodes.flatten.compact.filter(|n| n != null && n != undefined && n != AST.EMPTY)
+		var express = isExpression or o.isExpression or (option(:express) and isExpressable)
 		return null if ast:length == 0
 
-		if isExpression or o.isExpression or (option(:express) and isExpressable) # cache this??
-			ast.c.flatten.compact.join(", ")
-		else
-			ast = ast.map do |node,i|
-				var c = node.c
-				return null if c == ""
+		# return super(o, delim: ';', indent: no)
 
-				if c isa Array
-					c = c.flatten.compact.filter(filter).join(";\n")
-					# p "joined array for block",c
-				# if c.replace(/[\n\s\t\;\r]+/g,'') == "" # .match(/^[\s\t]*$/)
-				# 	p "fully blank -- remove?!"
-				# p c
-				# return null if c == "" or c.match(/^\t*\n?$/m)
-				c += ";" unless c[c:length - 1] == ";"
-				var ln = node.@newlines or 1
-				c += Array(ln + 1).join("\n") # "\n"
+		if express
+			return super(o,delim: ',', nodes: ast)
 
-			# code.map(|line|
-			#	line.replace(/$/)
-			# )
-			ast.compact.filter(filter).join("").replace(/[\s\n]+$/,'') # hmm
-			# ast.c.join(";\n") + ";"
+		# should probably delegate to super for ; as well
+		# else
+		# 	return super(o,delim: ';', nodes: ast)
+		# return ast.c.flatten.compact.join(", ")
 
-	def replace original, replacement
-		var idx = nodes.indexOf(original)
-		nodes[idx] = replacement if idx >= 0
-		self
+		var compile = do |node,i|
+			# if node isa Array
+			# 	console.log "was array initially"
+
+			var out = node ? node.c : ""
+			return null if out == ""
+
+			# FIXME should never happen
+			# we need to handle it in a better way - results in ugly output
+			if out isa Array
+
+				# really??
+				# console.log "out is array"
+				out = out.flatten.compact.filter(filter).join(";\n")
+
+			var hasSemiColon = out.match(/;(\s*\/\/.*)?[\n\s\t]*$/) # out[out:length - 1] == ";"
+
+			out += ";" unless hasSemiColon or node isa AST.Meta
+			
+			# if var br = node.@prebreak
+			# 	console.log "br prebreak"
+			# 	out = br.replace(/\\n/g,"\n") + out
+			# hmm
+			return out
+
+		ast = ast.map(compile)
+
+		# now add the head items as well
+		if @head
+			var prefix = []
+			helpers.flatten(@head).forEach do |item|
+				var out = compile(item)
+				prefix.push(out + '\n') if out
+
+			ast = prefix.concat(ast)
+			# var ln = node.@newlines or 1
+			# c += Array(ln + 1).join("\n") # "\n"
+		
+		ast = ast.compact.filter(filter).join("") # .replace(/[\s\n]+$/,'')  # hmm really?
+
+		# @indentation ? @indentation.wrap(ast,opts) : ast
+
 
 	# Should this create the function as well?
 	def defers original, replacement
 		var idx = nodes.indexOf(original)
 		nodes[idx] = replacement if idx >= 0
 		# now return the nodes after this
+		replacement.@prebreak ||= original.@prebreak # hacky
 		var rest = nodes.splice(idx + 1)
 		return rest
 
-	def last
-		var i = nodes:length
-		while i
-			i = i - 1
-			var v = nodes[i]
-			return v unless v isa AST.Comment
-		return nil
 
 	def consume node
 		if node isa AST.TagTree # special case?!?
@@ -709,30 +918,34 @@ class AST.Block < AST.ListNode
 			
 			# hmmm
 			return self
+
 		# can also return super if it is expressable, but should we really?
 		if var before = last
 			var after = before.consume(node)
 			if after != before
-				# p "actually replaced the node"
+				
 				# p "replace node in block"
 				replace(before,after)
 		# really?
 		return self
-		
+
+
 	def isExpressable
 		return no unless nodes.every(|v| v.isExpressable )
 		return yes
 
+
 	def isExpression
 		option(:express) || super.isExpression
+
 
 # this is almost like the old VarDeclarations but without the values
 class AST.VarBlock < AST.ListNode
 
+
 	# TODO All these inner items should rather be straight up literals
 	# or basic localvars - without any care whatsoever about adding var to the
 	# beginning etc. 
-
 	def addExpression expr
 		# p "addExpression {self} <- {expr}"
 
@@ -755,21 +968,24 @@ class AST.VarBlock < AST.ListNode
 			throw "VarBlock does not allow non-variable expressions"
 		self
 
+
 	def isExpressable
 		# hmm, we would need to force-drop the variables, makes little sense
 		# but, it could be, could just push the variables out?
 		no
+
 
 	def js o
 		var code = nodes.map do |node| node.c
 		code = code.flatten.compact.filter(|n| n != null && n != undefined && n != AST.EMPTY)
 		return "var {code.join(",")}"
 
+
 	def consume node
 		# It doesnt make much sense for a VarBlock to consume anything
 		# it should probably return void for methods
-		# throw "VarBlock.consume"
 		return self
+
 
 # Could inherit from valueNode
 class AST.Parens < AST.ValueNode
@@ -783,50 +999,52 @@ class AST.Parens < AST.ValueNode
 			@noparen = yes unless o.isExpression
 			return value.c(expression: o.isExpression)
 		else
-			value.c(expression: yes)
-		# if value isa AST.Block
-		# 	# no need to pare
-		# 	p "compile the parens {value} {value.count}"
-		# p "compile the parens {value}"
-		# should not force expression
-		# p o.isExpression
-		# value.c(expression: yes)
-		# "({value.c(expression: o.isExpression)})"
+			return value.c(expression: yes)
+
 
 	def shouldParenthesize
-		# var par = up
 		# no need to parenthesize if this is a line in a block
 		return no if @noparen #  or par isa AST.ArgList
 		return yes
 
+
+	def prebreak br
+		super(br)
+		# hmm
+		@value.prebreak(br) if @value
+		self
+
+
 	def isExpressable
 		value.isExpressable
 
+
 	def consume node
 		value.consume(node)
+
+
 
 # Could inherit from valueNode
 # an explicit expression-block (with parens) is somewhat different
 # can be used to return after an expression
 class AST.ExpressionBlock < AST.ListNode
 
+
 	def visit
 		# we need to see if this
 		map(|item| item.traverse)
 		self
+
 		
 	def c
 		map(|item| item.c).join(",")
 
-	# def isExpressable
-	#	value.isExpressable
 
 	def consume node
 		value.consume(node)
 
-	def addExpression expr
-		# p "add expression {self} <- {expr}"
 
+	def addExpression expr
 		# Need to take care of the splat here to.. hazzle
 		if expr.node isa AST.Assign
 			# p "is assignment!"
@@ -837,8 +1055,4 @@ class AST.ExpressionBlock < AST.ListNode
 		else
 			push(expr)
 		self
-
-# create a raw-block for compiled stuff?
-		
-		
 

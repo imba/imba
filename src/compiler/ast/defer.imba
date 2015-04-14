@@ -5,7 +5,7 @@ class AST.Await < AST.ValueNode
 
 	def js
 		# introduce a util here, no?
-		CALL(OP('.',AST.Util.Promisify.new([value]),'then'),[func]).c
+		CALL(OP('.',AST.Util.Promisify.new([value]),'then').prebreak,[func]).c
 		# value.c
 	
 	def visit o

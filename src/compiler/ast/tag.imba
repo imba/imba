@@ -230,7 +230,7 @@ class AST.Tag < AST.Expression
 			reference # hmm
 
 		if var body = tree.c(expression: yes) # force it to be an expression, no?
-			calls.push (isSelf ? ".setChildren({body})" : ".setContent({body})")
+			calls.push (isSelf ? ".setChildren([{body}])" : ".setContent([{body}])")
 			# out += ".body({body})"
 
 		# if o:attributes:length # or -- always?
@@ -269,7 +269,11 @@ class AST.Tag < AST.Expression
 class AST.TagTree < AST.ListNode
 
 	def load list
-		(list isa Array ? list : [list]).compact
+		if list isa AST.ListNode
+			@indentation ||= list.@indentation
+			list.nodes
+		else
+			(list isa Array ? list : [list]).compact
 
 	def root
 		option(:root)
@@ -285,6 +289,8 @@ class AST.TagTree < AST.ListNode
 		@static ?= every do |c| c isa AST.Tag
 
 	def c
+		return super
+		
 		# p "TagTree.c {nodes}"	
 		var l = nodes:length 
 		if l == 1
@@ -292,7 +298,7 @@ class AST.TagTree < AST.ListNode
 			map do |v| v.c(expression: yes)
 			# nodes.c(expression: yes)
 		elif l > 1
-			nodes.toAST.indented.c(expression: yes)
+			nodes.c(expression: yes)
 
 
 class AST.TagWrapper < AST.ValueNode

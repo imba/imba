@@ -9,7 +9,7 @@
   ],
   "author": "Sindre Aarsaether",
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "licenses": [
     {
       "type": "MIT",
@@ -40,9 +40,9 @@
     "jison": "0.4.13"
   },
   "dependencies": {
-    "bluebird": "^2.9.12",
+    "bluebird": "^2.9.24",
     "chalk": "^1.0.0",
-    "chokidar": "^1.0.0-rc3",
+    "chokidar": "^1.0.1",
     "commander": "^2.6.0"
   }
 }

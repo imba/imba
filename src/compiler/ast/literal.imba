@@ -112,6 +112,9 @@ class AST.RegExp < AST.Literal
 # Should inherit from ListNode - would simplify
 class AST.Arr < AST.Literal
 
+	def load value
+		value isa Array ? AST.ArgList.new(value) : value
+
 	def push item
 		value.push(item)
 		self
@@ -126,8 +129,9 @@ class AST.Arr < AST.Literal
 		value.some(|v| v isa AST.Splat)
 
 	def visit
-		for v in value
-			v.traverse
+		@value.traverse if @value
+		# for v in value
+		# 	v.traverse
 		self
 
 	def js
@@ -150,15 +154,15 @@ class AST.Arr < AST.Literal
 		else
 			# very temporary. need a more generic way to prettify code
 			# should depend on the length of the inner items etc
-			if option(:indent)
-				"[\n{value.c.join(",\n").indent}\n]"
-			else
-				"[{value.c.join(", ")}]"
+			# if @indented or option(:indent) or value.@indented
+			#	"[\n{value.c.join(",\n").indent}\n]"
+			# else
+			"[{value.c}]"
 
-	def indented
-		var o = @options ||= {}
-		o:indent = yes
-		self
+	# def indented
+	# 	var o = @options ||= {}
+	# 	o:indent = yes
+	# 	self
 
 	def hasSideEffects
 		value.some(|v| v.hasSideEffects )
@@ -173,13 +177,17 @@ class AST.Arr < AST.Literal
 # should not be cklassified as a literal?
 class AST.Obj < AST.Literal
 
+	def load value
+		value isa Array ? AST.AssignList.new(value) : value
+
 	def visit
-		for v in value
-			v.traverse
+		@value.traverse if @value
+		# for v in value
+		# 	v.traverse
 		self
 
 	def js
-		var dyn = value.filter(|v| v.key isa AST.Op )
+		var dyn = value.filter(|v| v isa AST.ObjAttr and v.key isa AST.Op )
 
 		if dyn:length > 0
 			var idx = value.indexOf(dyn[0])
@@ -196,8 +204,21 @@ class AST.Obj < AST.Literal
 				ast.push(OP('=',OP('.',tmp,atr.key),atr.value))
 			ast.push(tmp) # access the tmp at in the last part
 			return AST.Parens.new(ast).c
+
+
+		# var body = value.map do |v|
+		# 	var out = v.c
+		# 	out = '\n' + out if v.@pbr # hmmm 
+		# 	out
+
+		# if @indented
+		# 	# should be more generalized?
+		# 	body = '\n' + body.join(',').indent + '\n' # hmmm
+		# else
+		# 	body.join(',')
+		
 		# for objects with expression-keys we need to think differently
-		'{' + value.map(|v| v.c).join(',') + '}'
+		'{' + value.c + '}'
 
 	def add k, v
 		var kv = AST.ObjAttr.new(k,v)
@@ -207,15 +228,19 @@ class AST.Obj < AST.Literal
 	def hash
 		var hash = {}
 		for k in value
-			hash[k.key.symbol] = k.value
+			hash[k.key.symbol] = k.value if k isa AST.ObjAttr
 		return hash
 		# return k if k.key.symbol == key
 
 	# add method for finding properties etc?
 	def key key
 		for k in value
-			return k if k.key.symbol == key
+			return k if k isa AST.ObjAttr and k.key.symbol == key
 		nil
+
+	def indented a,b
+		@value.indented(a,b)
+		self
 
 	def hasSideEffects
 		value.some(|v| v.hasSideEffects )

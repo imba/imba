@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html class='_page _welcome-page o-small'>
+
+<head>
+    <title>Benchmark</title>
+    <meta charset="UTF-8"></meta>
+    <meta name="viewport" content="initial-scale=1"></meta>
+    <script src="../../../lib/compiler/browser.js" type="text/javascript"></script>
+    <script src="snippets.js" type="text/javascript"></script>
+</head>
+<body>
+    <script type="text/javascript">
+    tokenize = function(num,snippet) {
+        snippet = snippet || LONG_SAMPLE;
+        num = num || 1;
+        console.time("tokenize");
+        console.profile();
+
+        while(num){
+            num = num - 1;
+            compiler.tokenize(snippet);    
+        }
+        
+        console.timeEnd("tokenize");
+        console.profileEnd();
+    };
+    </script>
+</body>
+
+</html>

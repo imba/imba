@@ -1,11 +1,5 @@
-# TODO subclass Op ?
-class AST.Assign < AST.Op
 
-	# need to call assigns upon visit instead of on compile 
-	def c
-		# unless right.isExpressable
-		# 	p WARN "Assign.c -- Assignment is not expressable".red
-		super
+class AST.Assign < AST.Op
 
 	def isExpressable
 		!right || right.isExpressable
@@ -18,19 +12,17 @@ class AST.Assign < AST.Op
 	def js o
 
 		unless right.isExpressable
-			# p "Assign.consume!".blue
-			# ast = right.consume(self)
-			# Buggy statements and semicolons
 			return right.consume(self).c
 
 		# p "assign left {left:contrstru}"
 		var l = left.node
 
 		# We are setting self(!)
+		# TODO document functionality
 		if l isa AST.Self
 			var ctx = scope__.context
 			l = ctx.reference
-			# return "tata"
+
 
 		if l isa AST.PropertyAccess
 			var ast = CALL(OP('.',l.left,l.right.setter),[right])
@@ -40,17 +32,13 @@ class AST.Assign < AST.Op
 				# dont cache it again if it is already cached(!)
 				right.cache(type: 'val', uses: 1) unless right.cachevar # 
 				ast = AST.Parens.new([ast,right].block)
-			# else
-			# 	WARN p "is not used {STACK} - {up.last}"
-			
 
 			# should check the up-value no?
 			return ast.c(expression: yes)
-		# left doesnt really need to be an expression??
+
 		# FIXME -- does not always need to be an expression?
 		var out = "{l.c} {op} {right.c(expression: true)}"
-		# out = out.parenthesize if up isa AST.Op # hmm
-		# what if the left is a tuple?!
+
 		return out
 
 	def shouldParenthesize
@@ -61,8 +49,6 @@ class AST.Assign < AST.Op
 		if isExpressable
 			forceExpression
 			return super
-		# if node isa AST.Assign
-		# 	p "Assign.consume assignment"
 
 		var ast = right.consume(self)
 		return ast.consume(node)
@@ -70,30 +56,17 @@ class AST.Assign < AST.Op
 
 class AST.PushAssign < AST.Assign
 
-
 	def js
 		"{left.c}.push({right.c})"
 
 	def consume node
 		return self
 
+
 class AST.ConditionalAssign < AST.Assign
 
 	def consume node
-		# happens before visit?
 		normalize.consume(node)
-		# should we really consume it this way if our node is expressable? Nah
-		# p "is expression - solved" if isExpressable
-		# left.left.precache if left isa AST.Access && left.left
-
-		# TODO FIXME we want to cache the context of the assignment
-		# ast = IF(condition, OP('=',left,right), left)
-		# return ast.consume(node)
-
-	# def cache o
-	# 	p "cache conditional assign {JSON.stringify(o)}"
-	# 	self
-		
 
 	def normalize
 		var l = left.node
@@ -110,7 +83,7 @@ class AST.ConditionalAssign < AST.Assign
 				# p "cache the right side of indexAccess!!! {l.right}"
 				l.right.cache 
 
-			# we should only cache the value itself  if it is dynamic?
+			# we should only cache the value itself if it is dynamic?
 			# l.cache # cache the value as well -- we cannot use this in assigns them
 
 		# some ops are less messy
@@ -127,11 +100,10 @@ class AST.ConditionalAssign < AST.Assign
 		ast.toExpression if ast.isExpressable # hmm
 		ast
 
-		# return ast.consume(node)
+
 	def c
-		# what if we return the same?
-		var ast = normalize
-		ast.c
+		# WARN what if we return the same?
+		normalize.c
 
 	def condition
 		# use switch instead to cache op access
@@ -181,7 +153,6 @@ class AST.CompoundAssign < AST.Assign
 		return ast
 		
 	def c
-		# p "compound assign"
 		var ast = normalize
 		return super if ast == self
 
@@ -200,7 +171,7 @@ class AST.AsyncAssign < AST.Assign
 
 	# this will transform the tree by a decent amount.
 	# Need to adjust Block to allow this
-		
+
 
 class AST.TupleAssign < AST.Assign
 
@@ -219,14 +190,12 @@ class AST.TupleAssign < AST.Assign
 		right.isExpressable
 
 	def addExpression expr
-		# p "{self} <- {expr}"
-		# p "add expression to tuple {self} <- {expr}"
 		if right isa AST.Tuple
 			right.push(expr)
 		else
 			# p "making child become a tuple?"
 			self.right = AST.Tuple.new([right,expr])
-		# right.push(expr)
+		
 		return self
 
 	def visit
@@ -306,8 +275,10 @@ class AST.TupleAssign < AST.Assign
 			# p "got here??? {pars}"
 			lft.map do |l,i| ast.push OP('=',l.node,pars.at(i,yes).visit.variable) # s.params.at(value - 1,yes)
 
-		# we have several items in the right part. what about splats here?
+		
 		elif rlen
+			# we have several items in the right part. what about splats here?
+
 			# pre-evaluate rvalues that might be reference from other assignments
 			# we need to check if the rightside values has no side-effects. Cause if
 			# they dont, we really do not need temporary variables.
@@ -386,8 +357,6 @@ class AST.TupleAssign < AST.Assign
 					ast.replace(r,OP('=',l,r))
 				else
 					ast.push OP('=',l,r)
-
-
 
 			# WARN FIXME Is there not an issue with VarBlock vs not here?
 		else 

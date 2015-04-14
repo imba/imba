@@ -89,7 +89,7 @@ class AST.NamedParams < AST.ListNode
 		@variable ||= s.temporary(self, type: 'keypars')
 		@variable.predeclared
 
-		# this is a listnode, which will automatically traverse
+		# this is a listnode, which will automatically traverse
 		# and visit all children
 		super
 		# register the inner variables as well(!)
@@ -269,8 +269,9 @@ class AST.ParamList < AST.ListNode
 			for par,i in opt
 				ast.push "if({par.name.c} === undefined) {par.name.c} = {par.defaults.c}"
 
-		# different shorthands
+		
 		elif named && !splat && !blk && opt.count == 0 # and no block?!
+			# different shorthands
 			# if named
 			ast.push "if(!{namedvar.c}||{isntObj(namedvar.c)}) {namedvar.c} = \{\}"
 

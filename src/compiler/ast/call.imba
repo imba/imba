@@ -1,25 +1,4 @@
 
-class AST.ArgList < AST.ListNode
-
-	def splat?
-		list.some do |v| v isa AST.Splat
-
-	def js
-		compact.map(|arg| arg.c(expression: yes) ).join(",")
-
-	def c o
-		# p "compile arglist {self}"
-		super.c o
-
-		
-	# TODO need to deal with inner 
-
-	# must be expression!!!
-
-	# setting the block
-	# def block= block
-	#	for v,i in list
-	#		if v isa AST.Identifier && v.value == 
 
 class AST.Call < AST.Expression
 
@@ -38,14 +17,22 @@ class AST.Call < AST.Expression
 				# p "returning extern instead!"
 				return AST.ExternDeclaration.new(args)
 			if str == 'tag'
-				return AST.TagWrapper.new(args[0]) # hmmm
+				# console.log "ERROR - access args by some method"
+				return AST.TagWrapper.new(args and args:index ? args.index(0) : args[0]) # hmmm
+			if str == 'export'
+				return AST.ExportStatement.new(args) # hmmm
 
 		@callee = callee
-		@args = AST.ArgList.new(args || [])
+		@args = args or AST.ArgList.new([]) # hmmm
+
+		if args isa Array
+			@args = AST.ArgList.new(args)
+			# console.log "ARGUMENTS IS ARRAY - error {args}"
 		# p "call opexists {opexists}"
 		self
 
 	def visit
+		# console.log "visit args {args}"
 		args.traverse
 		callee.traverse
 
@@ -84,7 +71,7 @@ class AST.Call < AST.Expression
 		var rgt = nil
 		var wrap = nil
 
-		@callee = @callee.node # drop the var or access?
+		var callee = @callee = @callee.node # drop the var or access?
 
 		# p "{self} - {@callee}"
 
@@ -102,10 +89,12 @@ class AST.Call < AST.Expression
 			# return "supercall"
 
 		# never call the property-access directly?
-		if callee isa AST.PropertyAccess && rec = callee.receiver
+		if callee isa AST.PropertyAccess # && rec = callee.receiver
 			# p "unwrapping property-access in call"
-			@callee = OP('.',callee.left,callee.right)
-			@receiver = rec
+			@receiver = callee.receiver
+			callee = @callee = OP('.',callee.left,callee.right)
+			# console.log "unwrapping the propertyAccess"
+			
 
 		if lft && lft.safechain
 			# p "Call[left] is safechain {lft}".blue
@@ -172,6 +161,8 @@ class AST.ImplicitCall < AST.Call
 	def js
 		"{callee.c}()"
 
+
+
 class AST.New < AST.Call
 
 	def js o
@@ -182,6 +173,8 @@ class AST.New < AST.Call
 		out
 		# "{callee.c}()"
 
+
+
 class AST.SuperCall < AST.Call
 
 	def js o
@@ -189,6 +182,7 @@ class AST.SuperCall < AST.Call
 		self.receiver = AST.SELF
 		self.callee = "{m.target.c}.super$.prototype.{m.name.c}"
 		super
+
 
 
 class AST.ExternDeclaration < AST.ListNode

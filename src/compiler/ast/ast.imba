@@ -19,19 +19,15 @@ require './range'
 require './splat'
 require './tag'
 require './selector'
-require './vars'
 require './defer'
+require './import'
+require './export'
+
 require './utils'
 require './scope'
 
-# AST.register :if, AST.If, []
-
-
-# def AST.op op, left, right
-# 	AST.Op.new(op,left,right)
-
-# def AST.cond cond, body, alt
-# 	AST.If.new(cond, body)
+AST.BR = AST.Newline.new('\n')
+AST.BR2 = AST.Newline.new('\n\n')
 AST.SELF = AST.Self.new
 AST.SUPER = AST.Super.new
 AST.TRUE = AST.True.new('true')
@@ -51,4 +47,4 @@ AST.NEWTAG = AST.Identifier.new("tag$")
 
 # require the parser itself?
 # Are we sure?
-AST.Imba = require('../compiler') # what?
+# AST.Imba = require('../compiler') # what?

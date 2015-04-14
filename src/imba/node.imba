@@ -20,7 +20,7 @@ BaseClass = Class;
 // 	return module.require(path);
 // }
 
-imba$class = function(obj,sup){
+imba$class = function(obj,sup,body){
 	var name = obj.name;
 	sup = sup || Class;
 
@@ -38,6 +38,8 @@ imba$class = function(obj,sup){
 	obj.superclass = sup;
 
 	// Now set the methods from superclass?
+	// Execute the classBody
+	if(body instanceof Function) body(obj,obj.prototype);
 	return obj;
 }
 

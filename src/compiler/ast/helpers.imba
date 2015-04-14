@@ -11,6 +11,21 @@ TERMINAL_COLOR_CODES =
 	cyan: 36
 	white: 37
 
+
+export def brace str
+	var lines = str.match(/\n/)
+	# what about indentation?
+
+	if lines
+		'{' + str + '\n}'
+	else
+		'{\n' + str + '\n}'
+
+export def flatten arr
+	var out = []
+	arr.forEach do |v| v isa Array ? out:push.apply(out,flatten(v)) : out.push(v)
+	return out
+
 # NEXT extend class is needed for ast
 extend class String
 	def color code
@@ -57,7 +72,8 @@ extend class String
 		'{' + "\n" + indent + "\n" + '}'
 	
 	def indent
-		self.replace(/^/g,"\t").replace(/\n/g,"\n\t")
+		# hmm
+		self.replace(/^/g,"\t").replace(/\n/g,"\n\t").replace(/\n\t$/g,"\n")
 
 	def c
 		"" + self
@@ -99,8 +115,8 @@ extend class Array
 		forEach do |v| v isa Array ? a:push.apply(a,v.flatten) : a.push(v)
 		return a
 
-	def inspect
-		map do |v| v && v:inspect ? v.inspect : v
+	# def inspect
+	# 	map do |v| v && v:inspect ? v.inspect : v
 
 	def compact
 		filter do |v| v != undefined && v != nil
@@ -121,15 +137,6 @@ extend class Array
 
 	def dump key
 		map do |v| v && v:dump ? v.dump(key) : v
-
-	# def toString
-	# 	if par = STACK.parent
-	# 		"compile-array"
-	# 	else
-	# 		"[]"
-
-	# def traverse
-	# 	map do |v| v.traverse
 
 	def block
 		AST.Block.wrap(self)
