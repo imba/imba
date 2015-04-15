@@ -1,16 +1,9 @@
 
 var svg-support = yes
-# unless global:document
-#	Imba:doc = ImbaServerDocument.new
-# var hasSVG = !!Imba:doc && !!document.createElementNS(ns.svg, 'svg').createSVGRect;
-# hmm - not a good way to detect client
+
 if var doc = global:document
 	Imba:doc = doc
 	svg-support = doc:createElementNS && doc.createElementNS('http://www.w3.org/2000/svg', "svg")[:createSVGRect]
-# else
-#	# introduce global document here.
-#	global:document = Imba:doc
-
 
 # This is VERY experimental. Using Imba for serverside templates
 # is not recommended unless you're ready for a rough ride. It is
@@ -357,26 +350,7 @@ class HTMLElementTag < ElementTag
 			var nc = dom:className
 			dom:className = nc && flags ? (nc + " " + flags) : (nc or flags)
 
-		# var dom = global:document.createElement(@nodeType)
-		# var nc = @nodeClass
-		# if nc or flags
-		# 	dom:className = nc && flags ? (nc + " " + flags) : (nc or flags)
-		# dom:id = id if id 
 		return dom
-
-	# are we sure
-	# def setup body
-	# 	append(body)
-
-	# we need special dom-properties with unified getters and setters
-	# def text text
-	# 	if text !== undefined
-	# 		@dom:innerText = text
-	# 		return self
-	# 	return @dom:innerText
-
-# Imba.Tag.
-# Imba.Tag.TYPES_HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 
 HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 HTML_TAGS_UNSAFE = "article aside header section".split(" ")
@@ -390,13 +364,6 @@ IMBA_TAGS = {
 
 Imba.SINGLETONS = {}
 Imba.TAGS = IMBA_TAGS
-
-# IMBA_TAGS:htmlelement = HTMLElementTag
-
-# def Imba.p
-# 	console.log(*arguments)
-
-# TODO remove nodeClass? No need to have two representations of the same
 
 def extender obj, sup
 	for own k,v of sup
@@ -759,19 +726,3 @@ tag u
 tag ul
 tag video
 tag wbr
-
-# for type in Imba.Tag.TYPES_HTML
-# 	# create the tags
-# 	# really? is this the way to create the initializers?! dropping the namespace
-# 	Imba.Tag.NATIVE[type] = do |o,b|
-# 		this.setup(o,b)
-# 		# this.initialize(attrs,body)
-# 
-# for type in Imba.Tag.TYPES_SVG
-# 	# dont add method here? It is probably better to precreate all the types explicitly
-# 	Imba.Tag.NATIVE["svg:{type}"] = type
-# 
-# Should probably predefine the regular 'primitive' types here
-# tag a < htmlelement
-
-

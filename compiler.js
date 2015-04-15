@@ -1,0 +1,1 @@
+module.exports = exports = require('./lib/compiler/index.js');

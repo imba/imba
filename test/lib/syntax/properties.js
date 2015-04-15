@@ -78,7 +78,6 @@
 	// * Context Property (@) Assignment
 	// * Existential Assignment (?=)
 	describe('Syntax - Properties',function (){
-		
 		return test("default values",function (){
 			var object = new Model();
 			eq(object.a(),undefined);

@@ -147,46 +147,4 @@ describe 'Syntax - Loops' do
 			eq a, 1
 
 
-
-# 
-# 	# n = a ?= b = c = d = if 1
-# 	# 	if 2
-# 	# 		v
-# 	# 	else
-# 	# 		return
-# 	# else
-# 	# 	2
-# 	# return
-# 	
-# 	# a is a setter
-# 	# must be statement because of return
-# 	a = b = c ?= if x
-# 		v1
-# 	else
-# 		if y
-# 			m1
-# 			return 2
-# 		else
-# 			m1
-# 			v2 1, 2, 3
-# 
-# 	return 2
-# 
-# 	# can wrap the assignment in a localvar-assignment
-# 	# caching the result of the expression
-# 	# return cached result after this block
-# 
-# def ok
-# 	var ary = [1,2,3,4,5]
-# 	var ret = null
-# 
-# 	ret = if okay
-# 		for x,i in ary
-# 			i > 2 ? x * 10 : x * 2 
-# 			
-# 		20
-# 	else
-# 		20
-# 
-
 	

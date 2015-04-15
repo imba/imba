@@ -1,12 +1,85 @@
 var cli       = require 'commander'
 var fs        = require 'fs'
 var path      = require 'path'
-var compiler  = require './compiler'
 var chalk     = require 'chalk'
 
 var tasks = require './tasks'
+var compiler  = require './compiler'
 
 var fspath = path
+
+var T = require './token'
+
+var parser = compiler:parser
+
+
+# really?
+# wrapper for files?
+class SourceFile
+	
+	prop path
+	# prop code
+	# prop tokens
+	# prop ast
+	prop meta
+	# prop js
+
+	def initialize path
+		@path = path
+		@code = nil
+		@js = nil
+		self
+
+	def name
+		path.split("/").pop # for testing
+
+	def code
+		@code ||= fs.readFileSync(@path,"utf8")
+
+	def tokens
+		@tokens ||= compiler.tokenize(code)
+
+	def ast
+		@ast ||= parser.parse(tokens)
+		
+	def js o = {}
+		@js ||= ast.compile(o)
+
+	def write outpath, cb
+		# promise.new do |resolve|
+		# await self.compile
+		fs.writeFile(outpath,js,cb)
+
+	def dirty
+		# console.log "marking file as dirty!"
+		# simply removing all info abou tfiles
+		@code = @js = @tokens = @ast = @meta = nil
+		@read = @tokenize = @compile = @parse = @analyze = nil
+		self
+
+	# could analyze with different options - caching promise might not be the
+	# best approach for this.
+	def analyze cb
+		if @meta
+			cb and cb(@meta)
+			return @meta
+
+		STACK:_loglevel = 0 # not here?
+		var errors = []
+		var err = null
+		var data = {}
+
+		try
+			@meta = ast.analyze({})
+			cb and cb(@meta)
+			# resolve(self.meta)
+		catch e
+			console.log "ERROR {e:message}"
+
+		return @meta
+		
+	def run
+		compiler.run(code, filename: @path)
 
 
 def log *pars
@@ -22,8 +95,8 @@ def b *pars
 
 def print-tokens tokens
 	var strings = for t in tokens
-		var typ = t[0]
-		var id = t[1]
+		var typ = T.typ(t)
+		var id = T.val(t)
 
 		if typ == 'TERMINATOR'
 			continue "[" + chalk.yellow(id.replace(/\n/g,"\\n")) + "]"
@@ -55,7 +128,7 @@ def ensure-dir path
 
 def sourcefile-for-path path
 	path = fspath.resolve(process.cwd, path)
-	compiler.SourceFile.new(path)
+	SourceFile.new(path)
 
 def write-file source, outpath
 	ensure-dir(outpath)
@@ -123,7 +196,7 @@ def cli-compile root, o, watch: no
 	watcher.on('all') do |event,path|
 		# need to fix on remove as well!
 		# log "watcher {event} {path}"
-		if path.match(/\.imba$/)
+		if path.match(/\.imba$/) and event == 'add' or event == 'change'
 			var realpath = fspath.resolve(process.cwd, path)
 			var source = sources[realpath] ||= sourcefile-for-path(realpath)
 			var destpath = source.path.replace(/\.imba$/,'.js')
@@ -135,7 +208,7 @@ def cli-compile root, o, watch: no
 
 	
 cli
-	.version('0.7.0')
+	.version('0.7.2')
 	.option('--join [FILE]',    'concatenate the source Imba before compiling')
 	.option('-v, --version',	'display the version number')
 

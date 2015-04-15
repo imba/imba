@@ -1,3 +1,0 @@
-require './ast'
-
-export AST

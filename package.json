@@ -9,7 +9,7 @@
   ],
   "author": "Sindre Aarsaether",
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "0.7.0",
+  "version": "0.7.2",
   "licenses": [
     {
       "type": "MIT",
@@ -19,14 +19,10 @@
   "engines": {
     "node": ">=0.8.0"
   },
-  "files": [
-    "./lib/imba/node"
-  ],
-  "directories": {
-    "lib": "./lib/compiler"
-  },
-  "main": "index.js",
-
+  "files": [],
+  "directories": {},
+  "main": "./index.js",
+  "browser": "./lib/imba/index.js",
   "bin": {
     "imba": "./bin/imba"
   },
@@ -37,7 +33,8 @@
     "url": "git://github.com/somebee/imba.git"
   },
   "devDependencies": {
-    "jison": "0.4.13"
+    "jison": "^0.4.15",
+    "browserify": "^9.0.8"
   },
   "dependencies": {
     "bluebird": "^2.9.24",

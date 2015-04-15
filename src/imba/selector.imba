@@ -1,10 +1,6 @@
 
 global class ImbaSelector
 	
-	# def self.first selector, scope
-	# 	sel = self.new(selector,scope)
-	# 	return sel.first
-
 	prop query
 
 	def initialize sel, scope, nodes
@@ -13,7 +9,7 @@ global class ImbaSelector
 		@context = scope
 
 		if nodes
-			@nodes = (<{node}> for node in nodes)
+			@nodes = (tag(node) for node in nodes)
 
 		@lazy = !nodes
 		return self
@@ -28,7 +24,7 @@ global class ImbaSelector
 		@scope = ctx:toScope ? ctx.toScope : ctx
 
 	def first
-		if @lazy then <{(@first ||= scope.querySelector(query))}>
+		if @lazy then tag(@first ||= scope.querySelector(query))
 		else nodes[0]
 
 	def last
@@ -37,7 +33,7 @@ global class ImbaSelector
 	def nodes
 		return @nodes if @nodes
 		var items = scope.querySelectorAll(query)
-		@nodes = (<{node}> for node in items)
+		@nodes = (tag(node) for node in items)
 		@lazy = no
 		@nodes
 	
@@ -131,16 +127,12 @@ global class ImbaSelector
 	def call meth, args = []
 		forEach do |n| fn.apply(n,args) if fn = n[meth]
 
-q$  = do |sel,scope| ImbaSelector.new(sel, scope)
+# hmm
+q$ = do |sel,scope| ImbaSelector.new(sel, scope)
 
 q$$ = do |sel,scope| 
 	var el = (scope || global:document).querySelector(sel)
-	el && <{el}> || nil
-	# scope.querySelector(query)
-	# ImbaSelector.first(sel, scope)
-
-# $q$ = (sel,scope) -> Imba.DOM.Selector.new(sel, scope)
-# $q$$= (sel,scope) -> Imba.DOM.Selector.first(sel, scope)
+	el && tag(el) || nil
 
 # extending tags with query-methods
 # must be a better way to reopen classes

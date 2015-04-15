@@ -1,10 +1,10 @@
 (function(){
 
 
-	require('../../lib');
+	// really?
 	
+	require('../../index');
 	require('./spec');
-	
 	require('./syntax/loop');
 	require('./syntax/assignment');
 	require('./syntax/class');

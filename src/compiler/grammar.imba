@@ -19,7 +19,7 @@
 # The only dependency is on the **Jison.Parser**.
 
 var jison = require 'jison'
-Parser = jison.Parser
+var Parser = jison.Parser
 
 # Jison DSL
 # ---------
@@ -49,16 +49,7 @@ var o = do |patternString, action, options|
 	action = action.replace /\bA(\d+)/g, '$$$1'
 	action = action.replace /\bnew /g, '$&yy.'
 	action = action.replace /\b(?:Block\.wrap|extend)\b/g, 'yy.$&'
-
-	# first step is just basic location
-	var loc = do |first, last|
-		if not last
-			"yy.LOC(@{first},@1)"
-		else
-			"yy.LOC(@{first}, @{last})"
-
-	action = action.replace /L\(([0-9]*)\)/g, loc('$1')
-	action = action.replace /L\(([0-9]*),\s*([0-9]*)\)/g, loc('$1', '$2')
+	action = action.replace /\bAST\b/g, 'yy'
 
 	# really?
 	# # should we always add locdata? does not work when statement)!
@@ -91,7 +82,6 @@ var grammar =
 	# Any list of statements and expressions, separated by line breaks or semicolons.
 	Body: [
 		o 'Line' do Block.wrap [A1]
-		# o 'TERMINATOR' do Block.wrap [A1]
 		o 'Body Terminator Line' do A1.break(A2).add(A3) # A3.prebreak(A2) # why not add as real nodes?!
 		o 'Body Terminator' do A1.break(A2)
 	]
@@ -113,24 +103,17 @@ var grammar =
 	# Block and statements, which make up a line in a body.
 	Line: [
 		o 'Splat'
-		# o 'TERMINATOR'
 		o 'Expression'
 		o 'Line , Expression' do A1.addExpression(A3) # Onto something??
 		o 'Line , Splat' do A1.addExpression(A3) # Onto something??
-		# o 'Line Comment' do
-		# 	console.log "found comment line!"
-		# 	A1
 		o 'Comment'
 		o 'Statement'
 	]
 
 	# Pure statements which cannot be expressions.
 	Statement: [
-		# o 'VarDeclaration'
-		# o 'TupleAssign'
 		o 'Return'
 		o 'Throw'
-		# o 'Comment'
 		o 'STATEMENT' do Literal.new A1
 
 		o 'BREAK' do BreakStatement.new A1
@@ -185,11 +168,59 @@ var grammar =
 		o 'TagDeclaration'
 		o 'Tag'
 		o 'Property'
-		# o 'Comment'
-		# test!
-		# o 'Expression Comment' do
-		# 	A1.@comment = A2
-		# 	A1
+	]
+
+	# A literal identifier, a variable name or property.
+	Identifier: [
+		o 'IDENTIFIER' do Identifier.new A1
+		# o 'TAGID' do TagId.new A1
+	]
+
+	# A literal identifier, a variable name or property.
+	Ivar: [
+		o 'IVAR' do Ivar.new A1
+		o 'CVAR' do Ivar.new A1 # kinda hacky, should be defined as something else
+	]
+
+	Gvar: [
+		o 'GVAR' do Gvar.new A1
+	]
+
+	Const: [
+		o 'CONST' do Const.new A1
+	]
+
+	Argvar: [
+		o 'ARGVAR' do Argvar.new A1
+	]
+
+	Symbol: [
+		o 'SYMBOL' do Symbol.new A1
+	]
+
+
+	# Alphanumerics are separated from the other **Literal** matchers because
+	# they can also serve as keys in object literals.
+	AlphaNumeric: [
+		o 'NUMBER' do Num.new A1
+		o 'STRING' do Str.new A1
+		o 'Symbol'
+	]
+
+	# All of our immediate values. Generally these can be passed straight
+	# through and printed to JavaScript.
+	Literal: [
+		o 'AlphaNumeric'
+		o 'JS' do Literal.new A1
+		o 'REGEX' do RegExp.new A1
+		o 'BOOL' do Bool.new A1
+	]
+
+	# A return statement from a function body.
+	Return: [
+		o 'RETURN Expression' do Return.new A2
+		o 'RETURN Arguments' do Return.new A2 # should probably force as array
+		o 'RETURN' do Return.new
 	]
 
 	TagSelector: [
@@ -274,11 +305,6 @@ var grammar =
 		o 'Expression'
 	]
 
-	# TagAttrs: [
-	#   o 'TAG_ATTR_SET Value' do []
-	#   o 'TagAttrs TAG_ATTR_SET Value' do A1
-	# ]
-
 	TagBody: [
 		o 'INDENT ArgList OUTDENT' do A2.indented(A1,A3)
 		# o 'ArgList' do A1
@@ -317,62 +343,13 @@ var grammar =
 		o 'TAG_ID' do TagTypeIdentifier.new(A1)
 	]
 
-	# Selector: [
-	#   o 'SELECTOR ( ArgList )' do Value.new(Selector.new(A3,A1))
-	#   o 'SELECTOR [ ArgList ]' do Call.new(Literal.new('__tagfor'), A3)
-	# ]
-
 	
-
-	# A literal identifier, a variable name or property.
-	Identifier: [
-		o 'IDENTIFIER' do Identifier.new A1
-		# o 'TAGID' do TagId.new A1
-	]
-
 	TagId: [
 		o 'IDREF' do TagId.new(A1)
 		o '# Identifier' do TagId.new(A2)
 	]
 
-	Symbol: [
-		o 'SYMBOL' do Symbol.new A1
-	]
-
-	# A literal identifier, a variable name or property.
-	Ivar: [
-		o 'IVAR' do Ivar.new A1
-		o 'CVAR' do Ivar.new A1 # kinda hacky, should be defined as something else
-	]
-
-	Gvar: [
-		o 'GVAR' do Gvar.new A1
-	]
-
-	Const: [
-		o 'CONST' do Const.new A1
-	]
-
-	Argvar: [
-		o 'ARGVAR' do Argvar.new A1
-	]
-
-	# Alphanumerics are separated from the other **Literal** matchers because
-	# they can also serve as keys in object literals.
-	AlphaNumeric: [
-		o 'NUMBER' do Num.new A1
-		o 'STRING' do Str.new A1
-		o 'Symbol'
-	]
-
-	# All of our immediate values. Generally these can be passed straight
-	# through and printed to JavaScript.
-	Literal: [
-		o 'AlphaNumeric'
-		o 'JS' do Literal.new A1
-		o 'REGEX' do RegExp.new A1
-		o 'BOOL' do Bool.new A1
-	]
+	
 
 	# Assignment of a variable, property, or index to a value.
 	Assign: [
@@ -386,8 +363,7 @@ var grammar =
 	AssignObj: [
 		o 'ObjAssignable' do ObjAttr.new A1
 		o 'ObjAssignable : Expression' do ObjAttr.new A1, A3, 'object'
-		o 'ObjAssignable :
-			 INDENT Expression Outdent' do ObjAttr.new A1, A4.indented(A3,A5), 'object'
+		o 'ObjAssignable : INDENT Expression Outdent' do ObjAttr.new A1, A4.indented(A3,A5), 'object'
 		o 'Comment'
 	]
 
@@ -395,18 +371,12 @@ var grammar =
 		o 'Identifier'
 		o 'Const'
 		o 'AlphaNumeric'
-		# o 'ThisProperty'
 		o 'Ivar' # rly?
 		o 'Gvar' # rly?
 		o '( Expression )' do A2
 	]
 
-	# A return statement from a function body.
-	Return: [
-		o 'RETURN Expression' do Return.new A2
-		o 'RETURN Arguments' do Return.new A2 # should probably force as array
-		o 'RETURN' do Return.new
-	]
+	
 
 	# A block comment.
 	Comment: [
@@ -418,8 +388,6 @@ var grammar =
 	# of **Block** preceded by a function arrow, with an optional parameter
 	# list.
 	Code: [
-		# o 'PARAM_START ParamList PARAM_END FuncGlyph Block' do Code.new A2, A5, A4
-		# o 'FuncGlyph Block' do Code.new [], A2, A1
 		o 'Method'
 		o 'Do'
 		o 'Begin'
@@ -450,61 +418,6 @@ var grammar =
 	TupleAssign: [
 		o 'VAR Identifier , Expression' do A1
 	]
-
-	# MultiAssignable: [
-	# 	o '' do []
-	# 	o 'MultiAssignmentVar' do [A1]
-	# 	o 'MultiAssignable , MultiAssignmentVar' do A1.concat A3
-	# 	o '( MultiAssignable )' do A2 # really?
-	# 	# TODO support a, b, (c, d) as well
-	# ]
-
-	# MultiAssignmentValues: [
-	# 	# o '' do []
-	# 	o 'MultiAssignmentValue' do [A1]
-	# 	o 'MultiAssignmentValues , MultiAssignmentValue' do A1.concat A3
-	# 	# o 'MultiAssignmentValues TERMINATOR' do A1
-	# ]
-
-	# MultiAssignmentValue: [
-	# 	o 'Value'
-	# 	o 'Invocation'
-	# ]
-
-	SingleAssignmentValue: [
-		o 'IfBlock'
-		o 'ForBlock'
-		o 'Assign'
-	]
-
- 	# Function Parameters
-	# MultiAssignmentVar: [
-	# 	o 'Identifier' do VarName.new(A1)
-	# 	o 'SPLAT Identifier' do VarName.new(A2,A1)
-	# ]
-
-	# The list of parameters that a function accepts can be of any length.
-	#  VarList: [
-	#    o '' do []
-	#    o 'Var' do [A1]
-	#    o 'ParamList , Param' do A1.concat A3
-	#  ]
-	#
-	#  # A single parameter in a function definition can be ordinary, or a splat
-	#  # that hoovers up the remaining arguments.
-	#  Var: [
-	#    o 'ParamVar' do Param.new A1
-	#    o '... ParamVar' do Param.new A2, null, on
-	#    o 'ParamVar = Expression' do Param.new A1, A3
-	#  ]
-	#
-	# # Function Parameters
-	#  ParamVar: [
-	#    o 'Identifier'
-	#    o 'ThisProperty'
-	#    o 'Array'
-	#    o 'Object'
-	#  ]
 
 	# FIXME clean up method
 	Method: [
@@ -562,7 +475,6 @@ var grammar =
 	MethodBody: [
 		o 'Block'
 		o 'Do' do A1.body
-		# o 'TERMINATOR' do Block.new()
 	]
 
 	# should support much more
@@ -574,9 +486,6 @@ var grammar =
 		# o 'Identifier'
 		# o 'Const'
 		# o 'SimpleAssignable'
-	]
-
-	FuncGlyph: [
 	]
 
 	# An optional, trailing comma.
@@ -651,23 +560,17 @@ var grammar =
 		o 'Value . Super' do SuperAccess.new('.',A1,A3)
 		o 'Value . Identifier' do PropertyAccess.new('.',A1,A3)
 		o 'Value . Ivar' do IvarAccess.new('.',A1,A3)
-		# o 'Value -> Identifier' do ObjectAccess.new('.',A1,A3) # should remove
 		o 'Value . Symbol' do ObjectAccess.new('.',A1,Identifier.new(A3.value))
 		o 'Value . Const' do ConstAccess.new('.',A1,A3)
-		o 'Value . NUMBER' do OP('.',A1,Num.new(A3))
+		o 'Value . NUMBER' do AST.OP('.',A1,Num.new(A3))
 
 		o 'Invocation . Identifier' do PropertyAccess.new('.',A1,A3)
-		# o 'Invocation -> Identifier' do ObjectAccess.new('.',A1,A3)
 		o 'Invocation . Symbol' do ObjectAccess.new('.',A1,Identifier.new(A3.value))
 		o 'Invocation . Const' do ConstAccess.new('.',A1,A3)
 		o 'Invocation . Ivar' do IvarAccess.new('.',A1,A3)
-
 		# Should probably just be a regular access?
 		o 'Value INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
 		o 'Invocation INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
-		# o 'Value Accessor' do A1.add A2
-		# o 'Invocation Accessor' do Value.new A1, [A2]
-		# o 'ThisProperty'
 	]
 
 	Super: [
@@ -705,40 +608,6 @@ var grammar =
 		o 'Selector'
 	]
 
-	# The general group of accessors into an object, by property, by prototype
-	# or by array index or slice.
-	# Accessor: [
-	#   # o '. Identifier' do Access.new(A2)
-	#   # o '. Ivar' do Access.new(A2)
-	#   # o '. Symbol' do Access.new(A2)
-	#   # o '. Const' do Access.new(A2)
-	#   o ':: Const' do Access.new(A2)
-	#   # o '?. Identifier' do Access.new A2, 'soak'
-	#   #  'RawIndex'
-	#   # o 'INDEX_START IndexArgList OptComma INDEX_END' do IndexCall.new(A2)
-	#   # o 'INDEX_START IndexValue INDEX_END' do A2
-	# ]
-
-	# RawIndex: [
-	#   o 'RAW_INDEX_START IndexValue RAW_INDEX_END' do A2
-	#   # o 'INDEX_SOAK  Index' do extend A2, soak : yes
-	# ]
-
-	# Indexing into an object or array using bracket notation.
-	# Index: [
-	#  o 'INDEX_START IndexValue INDEX_END' do A2
-	#  o 'INDEX_SOAK  Index' do extend A2, soak : yes
-	# ]
-
-	IndexArgList: [
-		o 'Arg , Arg' do ArgList.new([A1,A3])
-		o 'ArgList , Arg' do A1.add A3
-		o 'ArgList OptComma Terminator Arg' do A1.add(A3).add(A4)
-		o 'INDENT ArgList OptComma Outdent' do A2.indented(A1,A4)
-		# FIXME must remember the indentation
-		o 'ArgList OptComma INDENT ArgList OptComma Outdent' do A1.concat A4
-	]
-
 	IndexValue: [
 		o 'Expression' do Index.new A1
 		o 'Slice' do Slice.new A1
@@ -763,6 +632,9 @@ var grammar =
 
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
+
+
+	# might as well handle this in the lexer instead
 	Class: [
 		o 'ClassStart' do A1
 		o 'EXTEND ClassStart' do A2.set(extension: A1)
@@ -773,11 +645,6 @@ var grammar =
 	]
 
 	ClassStart: [
-		# o 'CLASS' do ClassDeclaration.new
-		# o 'CLASS Block' do ClassDeclaration.new null, null, A2
-		# o 'CLASS EXTENDS Expression' do ClassDeclaration.new null, A3
-		# o 'CLASS EXTENDS Expression Block' do ClassDeclaration.new null, A3, A4
-		# no anonymous classes
 		o 'CLASS SimpleAssignable' do ClassDeclaration.new A2, null, [] # empty blocks
 		o 'CLASS SimpleAssignable Block' do ClassDeclaration.new A2, null, A3
 		o 'CLASS SimpleAssignable COMPARE Expression' do ClassDeclaration.new A2, A4, []
@@ -796,13 +663,6 @@ var grammar =
 		o 'Invocation Do' do
 			A1.addBlock(A2)
 			A1
-
-		# o 'TAG ( Arg )' do TagWrapper.new A3
-		# o 'BREAK Arguments' do BreakStatement.new(A1,A2)
-		# FIXME Break should only support a single value as argument, no?
-		# o 'SuperCall'
-		# o 'SUPER' do SuperCall.new AST.SUPER, [Splat.new Literal.new 'arguments']
-		# o 'SUPER Arguments' do SuperCall.new AST.SUPER, A2
 	]
 
 	SuperCall: [
@@ -850,7 +710,7 @@ var grammar =
 	]
 
 	Range: [
-		o '[ Expression RangeDots Expression ]' do OP(A3,A2,A4) # Range.new A2, A4, A3
+		o '[ Expression RangeDots Expression ]' do AST.OP(A3,A2,A4) # Range.new A2, A4, A3
 	]
 
 	# Array slice literals.
@@ -1059,35 +919,34 @@ var grammar =
 	# -type rule, but in order to make the precedence binding possible, separate
 	# rules are necessary.
 	Operation: [
-		o 'UNARY Expression' do OP A1, A2
-		o 'SQRT Expression' do OP A1, A2
-		o '-     Expression', (|v| Op.new '-', A2), prec: 'UNARY'
-		o '+     Expression', (|v| Op.new '+', A2), prec: 'UNARY'
-
-		o '-- SimpleAssignable' do OP '--', null, A2
-		o '++ SimpleAssignable' do OP '++', null, A2
-		o 'SimpleAssignable --' do OP '--', A1, null, true
-		o 'SimpleAssignable ++' do OP '++', A1, null, true
+		o 'UNARY Expression' do AST.OP A1, A2
+		o 'SQRT Expression' do AST.OP A1, A2
+		o('-     Expression', &, prec: 'UNARY') do Op.new '-', A2
+		o('+     Expression', &, prec: 'UNARY') do Op.new '+', A2
+		o '-- SimpleAssignable' do AST.OP '--', null, A2
+		o '++ SimpleAssignable' do AST.OP '++', null, A2
+		o 'SimpleAssignable --' do AST.OP '--', A1, null, true
+		o 'SimpleAssignable ++' do AST.OP '++', A1, null, true
 
 		# [The existential operator](http://jashkenas.github.com/coffee-script/#existence).
 		o 'Expression ?' do Existence.new A1
 
-		o 'Expression +  Expression' do OP '+' , A1, A3
-		o 'Expression -  Expression' do OP '-' , A1, A3
+		o 'Expression +  Expression' do AST.OP '+' , A1, A3
+		o 'Expression -  Expression' do AST.OP '-' , A1, A3
 
-		o 'Expression MATH     Expression' do OP A2, A1, A3
-		o 'Expression SHIFT    Expression' do OP A2, A1, A3
-		o 'Expression COMPARE  Expression' do OP A2, A1, A3
-		o 'Expression LOGIC    Expression' do OP A2, A1, A3
+		o 'Expression MATH     Expression' do AST.OP A2, A1, A3
+		o 'Expression SHIFT    Expression' do AST.OP A2, A1, A3
+		o 'Expression COMPARE  Expression' do AST.OP A2, A1, A3
+		o 'Expression LOGIC    Expression' do AST.OP A2, A1, A3
 
 		o 'Expression RELATION Expression' do
 			if A2.charAt(0) is '!'
-				OP(A2.slice(1), A1, A3).invert # hmm, really?
+				AST.OP(A2.slice(1), A1, A3).invert # hmm, really?
 			else
-				OP A2, A1, A3
+				AST.OP A2, A1, A3
 
-		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do OP(A2, A1, A3)
-		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do OP(A2, A1, A4.indented(A3,A5))
+		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do AST.OP(A2, A1, A3)
+		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do AST.OP(A2, A1, A4.indented(A3,A5))
 	]
 
 

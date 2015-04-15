@@ -467,3 +467,760 @@
         "47 - parse"
     ]
 }
+{
+    "name": "tokenize",
+    "commit": "cd7b8c71cd1a487959866cbfec83b76fdf460816 - fixed specs",
+    "tests": [
+        "51 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "cd7b8c71cd1a487959866cbfec83b76fdf460816 - fixed specs",
+    "tests": [
+        "50 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "edef90e3b5c67e912cfece9d0034b14a83a7c829 - deduped compiler and index",
+    "tests": [
+        "51 - tokenize",
+        "43 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "071227e65fb55567471323a7647dbc1fdfc106ca - working towards it",
+    "tests": [
+        "53 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "af1130a6800d4aaf7888a6667846b278a81fd3db - more on rewrite",
+    "tests": [
+        "49 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "af1130a6800d4aaf7888a6667846b278a81fd3db - more on rewrite",
+    "tests": [
+        "50 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "af1130a6800d4aaf7888a6667846b278a81fd3db - more on rewrite",
+    "tests": [
+        "48 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "f9fb85e20cd73040c42be73656ab1177bfd97510 - more",
+    "tests": [
+        "49 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "f9fb85e20cd73040c42be73656ab1177bfd97510 - more",
+    "tests": [
+        "49 - tokenize",
+        "43 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "f9fb85e20cd73040c42be73656ab1177bfd97510 - more",
+    "tests": [
+        "49 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "777268b9bb605a44424a9085aeeab90471651cd8 - ready to start altering the token",
+    "tests": [
+        "46 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "777268b9bb605a44424a9085aeeab90471651cd8 - ready to start altering the token",
+    "tests": [
+        "50 - tokenize",
+        "47 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "777268b9bb605a44424a9085aeeab90471651cd8 - ready to start altering the token",
+    "tests": [
+        "50 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9f8dbf4ec80d9b74c5b9b995808f2cacaad84a07 - stuff",
+    "tests": [
+        "49 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9f8dbf4ec80d9b74c5b9b995808f2cacaad84a07 - stuff",
+    "tests": [
+        "49 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9f8dbf4ec80d9b74c5b9b995808f2cacaad84a07 - stuff",
+    "tests": [
+        "50 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9f8dbf4ec80d9b74c5b9b995808f2cacaad84a07 - stuff",
+    "tests": [
+        "50 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9f8dbf4ec80d9b74c5b9b995808f2cacaad84a07 - stuff",
+    "tests": [
+        "49 - tokenize",
+        "44 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9f8dbf4ec80d9b74c5b9b995808f2cacaad84a07 - stuff",
+    "tests": [
+        "52 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "6b1afd3acce278bce39729c5320aaad5815bbb28 - closer",
+    "tests": [
+        "50 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4248f0df0f533c4c4966f29a1907cf6ae435a5c7 - almost",
+    "tests": [
+        "47 - tokenize",
+        "43 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4248f0df0f533c4c4966f29a1907cf6ae435a5c7 - almost",
+    "tests": [
+        "51 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4248f0df0f533c4c4966f29a1907cf6ae435a5c7 - almost",
+    "tests": [
+        "48 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "bc4d8390bce1926959e349e7be13a9137c93275d - using real tokens instead now",
+    "tests": [
+        "47 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "bc4d8390bce1926959e349e7be13a9137c93275d - using real tokens instead now",
+    "tests": [
+        "50 - tokenize",
+        "46 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "bc4d8390bce1926959e349e7be13a9137c93275d - using real tokens instead now",
+    "tests": [
+        "51 - tokenize",
+        "47 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9f9a63f9773ec9df4980c41a8b92b69d9b2729b4 - experiments",
+    "tests": [
+        "51 - tokenize",
+        "48 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9f9a63f9773ec9df4980c41a8b92b69d9b2729b4 - experiments",
+    "tests": [
+        "49 - tokenize",
+        "45 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "426dbd691cb55c89b822a67c76703c7b941b61a2 - stuff",
+    "tests": [
+        "52 - tokenize",
+        "49 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "426dbd691cb55c89b822a67c76703c7b941b61a2 - stuff",
+    "tests": [
+        "52 - tokenize",
+        "50 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "a2bf3bc96a95506a43423ecc7c87febec965f8a6 - optim",
+    "tests": [
+        "54 - tokenize",
+        "51 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "a2bf3bc96a95506a43423ecc7c87febec965f8a6 - optim",
+    "tests": [
+        "55 - tokenize",
+        "51 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "a2bf3bc96a95506a43423ecc7c87febec965f8a6 - optim",
+    "tests": [
+        "54 - tokenize",
+        "51 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0aefec2b2b93907d68459124606b2d350614c429 - added regions for identifiers again",
+    "tests": [
+        "52 - tokenize",
+        "50 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0aefec2b2b93907d68459124606b2d350614c429 - added regions for identifiers again",
+    "tests": [
+        "55 - tokenize",
+        "51 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0aefec2b2b93907d68459124606b2d350614c429 - added regions for identifiers again",
+    "tests": [
+        "54 - tokenize",
+        "47 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0aefec2b2b93907d68459124606b2d350614c429 - added regions for identifiers again",
+    "tests": [
+        "53 - tokenize",
+        "48 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98ba80113873feb83ae1b0e7dcf7e30acbc71c27 - stuff",
+    "tests": [
+        "54 - tokenize",
+        "51 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98ba80113873feb83ae1b0e7dcf7e30acbc71c27 - stuff",
+    "tests": [
+        "52 - tokenize",
+        "51 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98ba80113873feb83ae1b0e7dcf7e30acbc71c27 - stuff",
+    "tests": [
+        "52 - tokenize",
+        "48 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98ba80113873feb83ae1b0e7dcf7e30acbc71c27 - stuff",
+    "tests": [
+        "53 - tokenize",
+        "51 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98ba80113873feb83ae1b0e7dcf7e30acbc71c27 - stuff",
+    "tests": [
+        "51 - tokenize",
+        "49 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "52 - tokenize",
+        "49 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "53 - tokenize",
+        "36 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "51 - tokenize",
+        "52 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "51 - tokenize",
+        "37 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "50 - tokenize",
+        "36 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "53 - tokenize",
+        "36 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "51 - tokenize",
+        "50 - parse",
+        "0 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "52 - tokenize",
+        "50 - parse",
+        "0 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "2de3209848c2df1e92903fe48615861179ac7ed4 - stuff",
+    "tests": [
+        "52 - tokenize",
+        "50 - parse",
+        "21 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "a32eedb989d8f4abf75672901d973d62eb0c554d - more performance-exploration",
+    "tests": [
+        "54 - tokenize",
+        "49 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9bed0393c920406051cf34cacb206bc522bfe920 - trying to modularize",
+    "tests": [
+        "49 - tokenize",
+        "48 - parse",
+        "19 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "61ed81267c33390704fc564726ce74ff10fbecf2 - moved the ast into namespace",
+    "tests": [
+        "49 - tokenize",
+        "50 - parse",
+        "20 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "61ed81267c33390704fc564726ce74ff10fbecf2 - moved the ast into namespace",
+    "tests": [
+        "52 - tokenize",
+        "49 - parse",
+        "20 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4c73765d9d53f374f9e21b5815c23e794cd11d3f - removed ast.imba",
+    "tests": [
+        "53 - tokenize",
+        "48 - parse",
+        "20 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4c73765d9d53f374f9e21b5815c23e794cd11d3f - removed ast.imba",
+    "tests": [
+        "51 - tokenize",
+        "50 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "7e25a03ba009e5dc23888475736690efaee24034 - stuff",
+    "tests": [
+        "56 - tokenize",
+        "47 - parse",
+        "21 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0e65c04bf760bef51042f659b933e53ff1f6a55e - stuff",
+    "tests": [
+        "54 - tokenize",
+        "48 - parse",
+        "20 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "66ac93bd1544a4481ca1f04335e34df77a1322a4 - no more extensions for array",
+    "tests": [
+        "55 - tokenize",
+        "49 - parse",
+        "23 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "66ac93bd1544a4481ca1f04335e34df77a1322a4 - no more extensions for array",
+    "tests": [
+        "55 - tokenize",
+        "50 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9c282b39d61c793b8c47169c08afb6508340a7b1 - almost removed all helpers",
+    "tests": [
+        "56 - tokenize",
+        "50 - parse",
+        "23 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "9c282b39d61c793b8c47169c08afb6508340a7b1 - almost removed all helpers",
+    "tests": [
+        "56 - tokenize",
+        "50 - parse",
+        "23 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "06644c5d050186074d77ea24ad0965c93f32cd1b - passing tests without ever calling String#c",
+    "tests": [
+        "56 - tokenize",
+        "50 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4b35d5b48d6ec32490f5fc598e9cbaaad4cb4c7d - removed everything in extensions",
+    "tests": [
+        "56 - tokenize",
+        "50 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "962b7fe4001723172d2ca7665c596e24266149eb - roark server starts with this",
+    "tests": [
+        "57 - tokenize",
+        "50 - parse",
+        "23 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "a2a1e5ad46a607260054f921bfa76d759c981caf - client compiles with this as well",
+    "tests": [
+        "58 - tokenize",
+        "50 - parse",
+        "23 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f55777434cd68780d14eee7bccbe866bcb74bb6 - recompiled tests",
+    "tests": [
+        "54 - tokenize",
+        "49 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f55777434cd68780d14eee7bccbe866bcb74bb6 - recompiled tests",
+    "tests": [
+        "55 - tokenize",
+        "34 - parse",
+        "19 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f55777434cd68780d14eee7bccbe866bcb74bb6 - recompiled tests",
+    "tests": [
+        "55 - tokenize",
+        "34 - parse",
+        "19 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "5ed1e6ef1fa564e7b53486cb5b2011d910c4bae1 - benched",
+    "tests": [
+        "53 - tokenize",
+        "47 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "53ed7f3f99be92be6361c1adf3c7eb908328e313 - optimizing",
+    "tests": [
+        "55 - tokenize",
+        "48 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "53ed7f3f99be92be6361c1adf3c7eb908328e313 - optimizing",
+    "tests": [
+        "54 - tokenize",
+        "49 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "adc7c446a74a130f35bd05137b600b5daa8556c9 - tests are passing when called directly from a single ast-file",
+    "tests": [
+        "57 - tokenize",
+        "47 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "26197037c65864e7188ffb3660a6ef68c47abc6a - stuff",
+    "tests": [
+        "57 - tokenize",
+        "49 - parse",
+        "23 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "5f28bddc0a67dcb71cef178746016d8679ac091e - stuff",
+    "tests": [
+        "56 - tokenize",
+        "49 - parse",
+        "21 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "5f28bddc0a67dcb71cef178746016d8679ac091e - stuff",
+    "tests": [
+        "81 - lex",
+        "187 - rewrite",
+        "57 - tokenize",
+        "48 - parse",
+        "22 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "c98d8b4d9b1e7f75818c597b63ab47aef1686ccb - it works well enough now -- wait with more perf updates",
+    "tests": [
+        "13 - lex",
+        "29 - rewrite",
+        "8 - tokenize",
+        "9 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "c98d8b4d9b1e7f75818c597b63ab47aef1686ccb - it works well enough now -- wait with more perf updates",
+    "tests": [
+        "13 - lex",
+        "32 - rewrite",
+        "10 - tokenize",
+        "9 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "5a387dc5e462414e7ad30db1339e400340b6f103 - stuff",
+    "tests": [
+        "12 - lex",
+        "32 - rewrite",
+        "9 - tokenize",
+        "9 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4de2a595ef6ccd5b61ac577b8fb990cbeaa41344 - parser",
+    "tests": [
+        "13 - lex",
+        "30 - rewrite",
+        "10 - tokenize",
+        "9 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4de2a595ef6ccd5b61ac577b8fb990cbeaa41344 - parser",
+    "tests": [
+        "12 - lex",
+        "31 - rewrite",
+        "9 - tokenize",
+        "9 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "18ba2975edd0e2dd7d34461f03c01591b4054bf1 - stuff",
+    "tests": [
+        "12 - lex",
+        "31 - rewrite",
+        "7 - tokenize",
+        "9 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "27253300996f8e2d38351618cb400f96f47def90 - stuff",
+    "tests": [
+        "13 - lex",
+        "27 - rewrite",
+        "7 - tokenize",
+        "10 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "27253300996f8e2d38351618cb400f96f47def90 - stuff",
+    "tests": [
+        "12 - lex",
+        "32 - rewrite",
+        "9 - tokenize",
+        "10 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "27253300996f8e2d38351618cb400f96f47def90 - stuff",
+    "tests": [
+        "12 - lex",
+        "31 - rewrite",
+        "7 - tokenize",
+        "10 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "67fc65c318e35b38f6bf8f6c22be9a3d7a3b3d75 - some more fixes",
+    "tests": [
+        "13 - lex",
+        "27 - rewrite",
+        "10 - tokenize",
+        "10 - parse",
+        "4 - compile"
+    ]
+}

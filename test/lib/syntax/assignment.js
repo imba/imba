@@ -1,7 +1,7 @@
 (function(){
 
 
-	union$ = function(a,b){
+	function union$(a,b){
 		if(a && a.__union) return a.__union(b);
 	
 		var u = a.slice(0);
@@ -9,7 +9,7 @@
 		return u;
 	};
 	
-	intersect$ = function(a,b){
+	function intersect$(a,b){
 		if(a && a.__intersect) return a.__intersect(b);
 		var res = [];
 		for(var i=0, l=a.length; i<l; i++) {
@@ -109,7 +109,6 @@
 	// * Context Property (@) Assignment
 	// * Existential Assignment (?=)
 	describe('Syntax - Assignment',function (){
-		
 		describe("properties",function (){
 			var obj = new SyntaxAssignment();
 			
@@ -429,7 +428,6 @@
 		
 		
 		test('a,b,c = 1,2,3',function (_0,_1,_2){
-			
 			var b, c, items, len, i, array, len_, j, coll, len__, k, ary_, length_, i_, ary__, $1, i__, $2, $3, $4, $5, $6, $7, $8, $9, $10, tmp, $11, $12, v_, $13, $14, $15, tmplist;
 			var ary = [1,2,3,4,5];
 			var obj = new O();
@@ -440,28 +438,28 @@
 			eq([a,b,c],[1,2,3]);
 			
 			var items=iter$([2,4,6]),len=items.length,i=0;var a = items[i++],b = new Array(len - 2);while(i < len - 1){
-				b[i - 1] = items[i++];
+				b[i - 1] = items[i++]
 			};var c = items[i++];// should result in error, no?
 			eq([a,b,c],[2,[4],6]);
 			
 			
 			var array=iter$([2,4,6]),len_=array.length,j=0;var a = array[j++],b = array[j++],c = new Array(len_ - 2);while(j < len_){
-				c[j - 2] = array[j++];
+				c[j - 2] = array[j++]
 			};// should result in error, no?
 			eq([a,b,c],[2,4,[6]]);
 			
 			var coll=iter$([1,2,3,4,5]),len__=coll.length,k=0;var a = coll[k++],b = new Array(len__ - 3);while(k < len__ - 2){
-				b[k - 1] = coll[k++];
+				b[k - 1] = coll[k++]
 			};var c = coll[k++],d = coll[k++];// should result in error, no?
 			eq([a,b,c,d],[1,[2,3],4,5]);
 			
 			var ary_=iter$([1,2,3,4,5]),length_=ary_.length,i_=0;var a = ary_[i_++],b = ary_[i_++],c = ary_[i_++],d = new Array(length_ - 3);while(i_ < length_){
-				d[i_ - 3] = ary_[i_++];
+				d[i_ - 3] = ary_[i_++]
 			};// should result in error, no?
 			eq([a,b,c,d],[1,2,3,[4,5]]);
 			
 			var ary__=iter$([1,2,3,4,5]),$1=ary__.length,i__=0;var a = new Array($1 - 3);while(i__ < $1 - 3){
-				a[i__ - 0] = ary__[i__++];
+				a[i__ - 0] = ary__[i__++]
 			};var b = ary__[i__++],c = ary__[i__++],d = ary__[i__++];// should result in error, no?
 			eq([a,b,c,d],[[1,2],3,4,5]);
 			
@@ -475,7 +473,7 @@
 			eq([a,b,c],[1,2,3]);
 			
 			var $5=iter$(ary),$6=$5.length,$7=0;var a = $5[$7++],b = $5[$7++],c = new Array($6 - 2);while($7 < $6){
-				c[$7 - 2] = $5[$7++];
+				c[$7 - 2] = $5[$7++]
 			};
 			eq([a,b,c],[1,2,[3,4,5]]);
 			
@@ -485,7 +483,7 @@
 			eq(list,[20,10,30]);
 			
 			var $8=iter$(ary),$9=$8.length,$10=0,tmp=new Array($9 - 2);list[0] = $8[$10++];while($10 < $9 - 1){
-				tmp[$10 - 1] = $8[$10++];
+				tmp[$10 - 1] = $8[$10++]
 			};list[1] = tmp;list[2] = $8[$10++];
 			eq(list,[1,[2,3,4],5]);
 			
@@ -509,7 +507,7 @@
 			for(var $1=0, $2=iter$(ary), $3=$2.length, res=[]; $1 < $3; $1++) {
 				res.push($2[$1] * 2);
 			};var $13=iter$(res),$14=$13.length,$15=0,tmplist=new Array($14 - 2);x = $13[$15++];y = $13[$15++];while($15 < $14){
-				tmplist[$15 - 2] = $13[$15++];
+				tmplist[$15 - 2] = $13[$15++]
 			};(obj.setZ(tmplist),tmplist);
 			eq([x,y,obj.z()],[2,4,[6,8,10]]);
 			
@@ -549,7 +547,6 @@
 		});
 		
 		test('.a,.b = x,y',function (){
-			// b will nececarrily need to be set after a is set
 			var z_, a, b, c, i, $1, $2;
 			/* @class A */
 			function A(){
@@ -627,73 +624,6 @@
 			return eq([a,b,c],[11,12,13]);
 		});
 	});
-	
-	// #
-	// # Destructuring Assignment
-	// #	test "empty destructuring assignment" do
-	// 	{} = [] = undefined
-	// #	test "chained destructuring assignments" do
-	// 	[a] = {0: b} = {'0': c} = [nonce={}]
-	// 	eq nonce, a
-	// 	eq nonce, b
-	// 	eq nonce, c
-	// #	test "variable swapping to verify caching of RHS values when appropriate" do
-	// 	a = nonceA = {}
-	// 	b = nonceB = {}
-	// 	c = nonceC = {}
-	// 	[a, b, c] = [b, c, a]
-	// 	eq nonceB, a
-	// 	eq nonceC, b
-	// 	eq nonceA, c
-	// 	[a, b, c] = [b, c, a]
-	// 	eq nonceC, a
-	// 	eq nonceA, b
-	// 	eq nonceB, c
-	// #		fn = ->
-	// 		[a, b, c] = [b, c, a]
-	// #		eq [nonceA,nonceB,nonceC], fn()
-	// 	eq nonceA, a
-	// 	eq nonceB, b
-	// 	eq nonceC, c
-	// #	test "#713", ->
-	// 	nonces = [nonceA={},nonceB={}]
-	// 	eq nonces, [a, b] = [c, d] = nonces
-	// 	eq nonceA, a
-	// 	eq nonceA, c
-	// 	eq nonceB, b
-	// 	eq nonceB, d
-	// #	# Existential Assignment
-	// test "existential assignment" do
-	// 	nonce = {}
-	// 	a = false
-	// 	a ?= nonce
-	// 	eq false, a
-	// 	b = undefined
-	// 	b ?= nonce
-	// 	eq nonce, b
-	// 	c = null
-	// 	c ?= nonce
-	// 	eq nonce, c
-	// 	d ?= nonce
-	// 	eq nonce, d
-	// #	test "#1348, #1216: existential assignment compilation" do
-	// 	nonce = {}
-	// 	a = nonce
-	// 	b = (a ?= 0)
-	// 	eq nonce, b
-	// 	# the first ?= compiles into a statement; the second ?= compiles to a ternary expression
-	// 	eq a ?= b ?= 1, nonce
-	// 	
-	// 	e ?= f ?= g ?= 1
-	// 	eq e + g, 2
-	// 	
-	// 	# need to ensure the two vars are not defined, hence the strange names;
-	// 	# broke earlier when using c ?= d ?= 1 because `d` is declared elsewhere
-	// 	eq und1_1348 ?= und2_1348 ?= 1, 1
-	// 	
-	// 	if a then a ?= 2 else a = 3
-	// 	eq a, nonce
-	// 
 
 
 }())

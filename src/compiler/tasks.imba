@@ -1,29 +1,26 @@
 var fs = require 'fs'
+var path = require 'path'
+
+
 
 export def build o = {}
-	# console.log "run build! {__dirname}"
 	require 'jison'
-	# return
 	var parser = require('./grammar.js')[:parser]
-	# console.log "found parser"
 	fs.writeFile "{__dirname}/parser.js", parser.generate
-	
-# var cli = require 'commander'
-# 
-# 
-# cli.command('build')
-# 	.description('build the parser')
-# 	# .option('-v, --verbose', 'return detailed output', 0, verboser)
-# 	# .option('-f, --format <format>', 'format of output', 'json', /^(json|plain|html)$/i)	
-# 	.action do |path, opts|
-# 		console.log "got here?!?"
-# 		# var file = sourcefile-for-path(path)
-# 		# var meta = await file.analyze
-# 		# log JSON.stringify(meta)
-# 
-# # require 'jison'
-# # parser = require('./lib/compiler/grammar.js').parser
-# # fs.writeFile 'lib/compiler/parser.js', parser.generate()
-# # 
-# 
-# cli.parse(process:argv)
+
+
+export def dist o = {}
+	var dest = path.normalize("{__dirname}/../browser/")
+	var writer = fs.createWriteStream("{dest}/main.js");
+	var browserify = require 'browserify'
+
+	var b = browserify(basedir: "{__dirname}/../imba", standalone: "imba")
+	b.exclude('./dom.server.js')
+	b.ignore('./dom.server')
+	b.add('./index.js')
+	b.bundle().pipe(fs.createWriteStream("{dest}/main.js");)
+
+	var b = browserify(basedir: "{__dirname}/", standalone: "imbalang")
+	b.add('./index.js')
+	b.bundle().pipe(fs.createWriteStream("{dest}/compiler.js");)
+

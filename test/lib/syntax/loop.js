@@ -36,7 +36,6 @@
 		var obj = new SyntaxLoopsObj();
 		
 		describe("For In",function (){
-			
 			test("quirks",function (){
 				var i = 10;
 				var a = [1,2,3];
@@ -125,7 +124,6 @@
 		});
 		
 		describe("For In with ranges",function (){
-			
 			test("statement",function (){
 				var ary = [];
 				for(var len=3, i=0; i <= len; i++) {
@@ -149,7 +147,6 @@
 		
 		
 		describe("For Of",function (){
-			
 			test("all keys assignment",function (){
 				var o=dict, k, res=[];
 				for(var k in o){
@@ -213,7 +210,6 @@
 		});
 		
 		return describe("Loop",function (){
-			
 			return it("should work",function (){
 				var a, b;
 				var a = 0,b = 0;
@@ -228,49 +224,6 @@
 			});
 		});
 	});
-	
-	
-	
-	// 
-	// 	# n = a ?= b = c = d = if 1
-	// 	# 	if 2
-	// 	# 		v
-	// 	# 	else
-	// 	# 		return
-	// 	# else
-	// 	# 	2
-	// 	# return
-	// 	
-	// 	# a is a setter
-	// 	# must be statement because of return
-	// 	a = b = c ?= if x
-	// 		v1
-	// 	else
-	// 		if y
-	// 			m1
-	// 			return 2
-	// 		else
-	// 			m1
-	// 			v2 1, 2, 3
-	// 
-	// 	return 2
-	// 
-	// 	# can wrap the assignment in a localvar-assignment
-	// 	# caching the result of the expression
-	// 	# return cached result after this block
-	// 
-	// def ok
-	// 	var ary = [1,2,3,4,5]
-	// 	var ret = null
-	// 
-	// 	ret = if okay
-	// 		for x,i in ary
-	// 			i > 2 ? x * 10 : x * 2 
-	// 			
-	// 		20
-	// 	else
-	// 		20
-	// 
 
 
 }())

@@ -26,9 +26,7 @@
 	
 	
 	describe('Syntax - Catch',function (){
-		
 		return test("throw catch",function (){
-			
 			var res = false;
 			var after = false;
 			

@@ -2,7 +2,6 @@
 
 
 	describe('Syntax - Return',function (){
-		
 		/* @class SyntaxReturn */
 		function SyntaxReturn(){ };
 		
@@ -34,8 +33,9 @@
 			eq(obj.d(),undefined);
 			
 			var fn = function (){
-				return [1,
-				2
+				return [
+					1,
+					2
 				];
 			};
 			return eq(fn(),[1,2]);

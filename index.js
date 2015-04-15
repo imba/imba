@@ -1,2 +1,1 @@
-require("./lib/index");
-// module.exports = true;
+module.exports = exports = require("./lib/imba/index.js");

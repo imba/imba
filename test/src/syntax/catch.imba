@@ -1,6 +1,6 @@
 # self = SPEC
 
-local class ThrowClass
+class ThrowClass
 
 	prop cleanup
 	

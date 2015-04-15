@@ -2,7 +2,6 @@
 
 
 	describe('Syntax - Switch',function (){
-		
 		return test("general",function (){
 			var type = 1;
 			switch(type) {

@@ -56,10 +56,3 @@ describe 'Syntax - Arrays' do
 		a = [[nonce]]
 		list = [1, 2, *a]
 		eq list, [1, 2, [nonce]]
-
-	# test "#1274: `[] = a()` compiles to `false` instead of `a()`" do
-	# 	a = false
-	#   a is added to an inner scope for this method(!)
-	# 	fn = -> a = true
-	# 	[] = fn()
-	# 	ok a

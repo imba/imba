@@ -1,6 +1,9 @@
 
 extern parseInt, parseFloat
 
+var T = require './token'
+var Token = T.Token
+
 var rw = require './rewriter'
 var Rewriter = rw.Rewriter
 var INVERSES = rw.INVERSES
@@ -30,6 +33,38 @@ def count str, substr
 		num++ 
 	num
 
+# def tV tok
+# 	tok.@value
+# 
+# def tVs tok, v
+# 	tok.@value = v
+# 	return
+# 
+# def tT tok
+# 	tok.@type
+# 
+# def tTs tok, v
+# 	tok.@type = v
+# 	return
+
+# def tV tok
+# 	tok[1]
+# 
+# def tVs tok, v
+# 	tok[1] = v
+# 	return
+# 
+# def tT tok
+# 	tok[0]
+# 
+# def tTs tok, v
+# 	tok[0] = v
+# 	return
+
+var tT  = T:typ
+var tV  = T:val
+var tTs = T:setTyp
+var tVs = T:setVal
 
 # The Lexer class reads a stream of Imba and divvies it up into tokidged
 # tokens. Some potential ambiguity in the grammar has been avoided by
@@ -37,7 +72,6 @@ def count str, substr
 
 # Based on the original lexer.coffee from CoffeeScript
 export class Lexer
-
 
 	def tokenize code, o = {}
 		code     = "\n{code}" if WHITESPACE.test code
@@ -134,16 +168,20 @@ export class Lexer
 
 	def closeDef
 		if context is 'DEF'
+			var pop
 			var prev = last(@tokens)
+			# console.log "close def {prev}"
 			# console.log('closeDef with last>',prev)
-			if prev[0] == 'DEF_FRAGMENT'
+			if tT(prev) == 'DEF_FRAGMENT'
 				true
 			else
-				if prev[0] == 'TERMINATOR'
-					var pop = @tokens.pop
+				if tT(prev) == 'TERMINATOR'
+					# console.log "here?!??"
+					pop = @tokens.pop
 
 				token('DEF_BODY', 'DEF_BODY')
 				@tokens.push(pop) if pop
+
 
 			pair('DEF')
 		return
@@ -225,7 +263,8 @@ export class Lexer
 
 			elif chr == '|'
 				var tok = @tokens[@tokens:length - 1]
-				tok[0] = 'SELECTOR_NS'
+				tTs(tok,'SELECTOR_NS')
+				# tok[0] = 'SELECTOR_NS' # FIX
 				return 1
 
 			elif chr == ','
@@ -376,8 +415,6 @@ export class Lexer
 
 		if pre == '@'
 			typ = 'IVAR'
-			id  = String.new id
-			id:wrap = yes
 
 		elif pre == '$'
 			typ = 'GVAR'
@@ -389,10 +426,9 @@ export class Lexer
 			# console.log('global!!',typ,id)
 			typ = 'CONST'
 
-		if match[4] or match[5] or id == 'eval' or id == 'arguments' or id in JS_FORBIDDEN
-			# console.log('got here')
-			id = String.new(id)
-			id:wrap = yes
+		# if match[4] or match[5] or id == 'eval' or id == 'arguments' or id in JS_FORBIDDEN
+		# 	console.log('got here')
+		# 	true
 		
 		if match[5] and @lastTyp in ['IDENTIFIER','CONST','GVAR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING','IDREF']
 			token '.','.'
@@ -400,9 +436,8 @@ export class Lexer
 		token typ, id
 
 		if space
-			# console.log("add space here")
+			# FIX - but it is okay
 			last(@tokens):spaced = yes 
-			# token ' ', ' '
 
 		return length
 
@@ -425,6 +460,7 @@ export class Lexer
 		var ctx0 = @ends[@ends:length - 1]
 		var innerctx = ctx0
 		var typ
+		var reserved = no
 
 		var addLoc = false
 		var inTag = ctx0 == 'TAG_END' or (ctx1 == 'TAG_END' and ctx0 == 'OUTDENT')
@@ -469,7 +505,7 @@ export class Lexer
 			token 'OWN', id
 			return id:length
 
-		var prev = last @tokens
+		var prev = last(@tokens)
 		var lastTyp = @lastTyp
 		# should we force this to be an identifier even if it is a reserved word?
 		# this should only happen for when part of object etc
@@ -491,8 +527,11 @@ export class Lexer
 		if id == 'tag' and @chunk.indexOf("tag(") == 0 # @chunk.match(/^tokid\(/)
 			forcedIdentifier = yes
 
+		# console.log "match",match
+		# console.log "typ is {typ}"
 		# little reason to check for this right here? but I guess it is only a simple check
 		if typ == '$' and ARGVAR.test(id) # id.match(/^\$\d$/)
+			# console.log "TYP $"
 			if id == '$0'
 				typ = 'ARGUMENTS'
 			else
@@ -501,8 +540,6 @@ export class Lexer
 
 		elif typ == '@'
 			typ = 'IVAR'
-			id  = String.new id
-			id:wrap = yes
 
 			# id:reserved = yes if colon
 		elif typ == '#'
@@ -514,8 +551,6 @@ export class Lexer
 			id = id.substr(1)
 
 		elif typ == '@@'
-			id  = String.new id
-			id:wrap = yes
 			typ = 'CVAR'
 
 		elif typ == '$' and not colon
@@ -577,20 +612,10 @@ export class Lexer
 
 			if forcedIdentifier 
 				typ = 'IDENTIFIER'
-				# console.log('got here')
-				# wrapping strings do create problems
-				# it might actually be better to append some special info
-				# directly to the string -- and then parse that in the ast
-				id = String.new id
-				id:reserved = yes
+				reserved = yes
 
 			elif id in RESERVED
-
-				# if id in STRICT_RESERVED
-				# 	error "reserved word \"{id}\"", id:length
-
-				id = String.new id
-				id:reserved = yes
+				reserved = yes
 
 		unless forcedIdentifier
 			id  = IMBA_ALIAS_MAP[id] if id in IMBA_ALIASES
@@ -613,11 +638,13 @@ export class Lexer
 			# console.log("FOUND CLASS/DEF",i)
 			while i
 				var prev = @tokens[--i]
-				var ctrl = prev && ( "" + prev[1] )
+				var ctrl = "" + tV(prev)
+				# console.log("ctrl is {ctrl}")
 				# need to coerce to string because of stupid CS ===
 				# console.log("prev is",prev[0],prev[1])
 				if ctrl in IMBA_CONTEXTUAL_KEYWORDS
-					prev[0] = ctrl.toUpperCase # what?
+					tTs(prev,ctrl.toUpperCase)
+					# prev[0] = ctrl.toUpperCase # FIX
 				else
 					break
 
@@ -638,7 +665,7 @@ export class Lexer
 			# see if previous was catch -- belongs in rewriter?
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
-			token typ, id, len # hmm
+			token typ, id, len # what??
 
 		elif addLoc
 			token typ, id, len, true
@@ -663,8 +690,7 @@ export class Lexer
 
 		var prev = last(@tokens)
 
-		if match[0][0] == '.' && prev && !prev:spaced && prev[0] in ['IDENTIFIER',')','}',']','NUMBER']
-			# console.log('FIX NUM')
+		if match[0][0] == '.' && prev && !prev:spaced && tT(prev) in ['IDENTIFIER',')','}',']','NUMBER']
 			token ".","."
 			number = number.substr(1)
 
@@ -682,7 +708,9 @@ export class Lexer
 		# should invert this -- only allow when prev IS .. 
 		# hmm, symbols not be quoted initially
 		# : should be a token itself, with a specification of spacing (LR,R,L,NONE)
-		if prev and !prev:spaced and prev[0] not in ['(','{','[','.','RAW_INDEX_START','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR']
+
+		# FIX
+		if prev and !prev:spaced and tT(prev) not in ['(','{','[','.','RAW_INDEX_START','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR']
 			token '.','.'
 			symbol = symbol.split(/[\:\\\/]/)[0] # really?
 			# token 'SYMBOL', "'#{symbol}'"
@@ -747,7 +775,7 @@ export class Lexer
 			# console.log "match inline token (#{indent}) indent",comment,@indent,indent:length
 			# ADD / FIX INDENTATION? 
 			prev = last(@tokens)
-			var pt = prev and prev[0]
+			var pt = prev and tT(prev)
 			var note = '// ' + comment.substr(2)
 
 			if pt and pt not in ['INDENT','TERMINATOR']
@@ -759,7 +787,8 @@ export class Lexer
 			#  return match[0]:length
 			else
 				if pt == 'TERMINATOR'
-					prev[1] += note
+					tVs(prev,tV(prev) + note)
+					# prev[1] += note
 				elif pt == 'INDENT'
 					addLinebreaks(1,note)
 				else
@@ -812,7 +841,8 @@ export class Lexer
 			return length
 
 		prev = last @tokens
-		return 0 if prev and (prev[0] in (if prev:spaced then NOT_REGEX else NOT_SPACED_REGEX))
+		# FIX
+		return 0 if prev and (tT(prev) in (if prev:spaced then NOT_REGEX else NOT_SPACED_REGEX))
 		return 0 unless match = REGEX.exec(@chunk)
 		var m, regex, flags = match
 
@@ -841,12 +871,13 @@ export class Lexer
 			return heregex:length
 
 		token 'CONST', 'RegExp'
-		@tokens.push ['CALL_START', '(']
+		@tokens.push T.token('CALL_START', '(')
 		var tokens = []
 
 		for pair in interpolateString(body, regex: yes)
-			var tokid = pair[0]
-			var value = pair[1]
+
+			var tokid = tT(pair) # FIX
+			var value = tV(pair) # FIX
 
 			if tokid == 'TOKENS'
 				# FIXME what is this?
@@ -855,16 +886,19 @@ export class Lexer
 				continue unless value = value.replace(HEREGEX_OMIT, '')
 
 				value = value.replace /\\/g, '\\\\'
-				tokens.push ['STRING', makeString(value, '"', yes)]
-			tokens.push ['+', '+']
+				tokens.push T.token('STRING', makeString(value, '"', yes)) # FIX
+			tokens.push T.token('+', '+') # FIX
 
 		tokens.pop
 
-		unless tokens[0] and tokens[0][0] is 'STRING'
-			@tokens.push ['STRING', '""'], ['+', '+']
+		# FIX
+		unless tokens[0] and tT(tokens[0]) is 'STRING'
+			# FIX
+			@tokens.push T.token('STRING', '""'), T.token('+', '+')
 
 		@tokens.push *tokens # what is this?
-		@tokens.push [',', ','], ['STRING', '"' + flags + '"'] if flags
+		# FIX
+		@tokens.push T.token(',', ','), T.token('STRING', '"' + flags + '"') if flags
 		token ')', ')'
 
 		return heregex:length
@@ -930,12 +964,15 @@ export class Lexer
 
 			var immediate = last(@tokens)
 
-			if immediate and immediate[0] == 'TERMINATOR'
+			if immediate and tT(immediate) == 'TERMINATOR'
 				# console.log "terminator before indent??"
 				var node = Number.new(diff)
 				node:pre = immediate[1]
-				immediate[0] = 'INDENT'
-				immediate[1] = node # {count: diff, pre: immediate[0]}
+				# FIX
+				tTs(immediate,'INDENT')
+				tVs(immediate,node)
+				# immediate[0] = 'INDENT'
+				# immediate[1] = node # {count: diff, pre: immediate[0]}
 
 			else
 				token 'INDENT', diff
@@ -984,13 +1021,12 @@ export class Lexer
 				token 'OUTDENT', dent
 
 		@outdebt -= moveOut if dent
-		@tokens.pop() while value() is ';'
+		@tokens.pop while value() is ';'
 		# console.log "outdenting",tokid() 
 
 		# addLinebreaks(1) unless noNewlines
 		# really?
 		token 'TERMINATOR', '\n' unless tokid() is 'TERMINATOR' or noNewlines
-
 
 		var ctx = context
 		pair(ctx) if ctx in ['%','TAG']
@@ -1004,14 +1040,14 @@ export class Lexer
 		return 0 unless (match = WHITESPACE.exec(@chunk)) || (nline = @chunk.charAt(0) is '\n')
 		prev = last @tokens
 
-		# console.log('whitespace?',match,nline,prev && prev[0])
-		# if nline
-		#  console.log('whitespace newline',prev)
-		# else
-
-		# PERF
-		prev[match ? 'spaced' : 'newLine'] = true if prev
-		match ? match[0]:length : 0
+		# FIX - why oh why?
+		if prev
+			if match
+				prev:spaced = yes
+				return match[0]:length
+			else
+				prev:newLine = yes
+				return 0
 
 	def addNewline
 		token 'TERMINATOR', '\n'
@@ -1024,19 +1060,25 @@ export class Lexer
 		prev = last @tokens
 		br = Array.new(count + 1).join('\n')
 
-		if prev and prev[0] == 'INDENT'
-			if typeof prev[1] == 'object' # hmmm
-				# console.log 'add to indent directly'
-				prev[1]:post = (prev[1]:post || "") + (raw or br)
-				# console.log "adding terminator after indent"
-			else
-				prev[1] = "{prev[1]}_{count}" # br
-			return this
+		# FIX
+		if prev
+			var t = tT(prev)
+			var v = tV(prev)
 
-		if prev and prev[0] == 'TERMINATOR'
-			# console.log "already exists terminator"
-			prev[1] = prev[1] + br
-			return this
+			if t == 'INDENT'
+				
+				if typeof v == 'object' # hmmm
+					# console.log 'add to indent directly'
+					v:post = (v:post || "") + (raw or br) # FIX
+					# console.log "adding terminator after indent"
+				else
+					tVs(prev,"{v}_{count}") # FIX
+				return this
+
+			if t == 'TERMINATOR'
+				# console.log "already exists terminator"
+				tVs(prev,v + br)
+				return this
 		
 		token 'TERMINATOR', br
 		this
@@ -1047,31 +1089,12 @@ export class Lexer
 		@tokens.pop while value() is ';' # hmm
 		var prev = last @tokens
 
-		# console.log "newline token"
-
-		# if prev and prev[0] is 'TERMINATOR'
-		#   console.log('multiple newlines?')
-		# console.log('newline',tokid())
-		# console.log('newline!')
 		var t = tokid()
-		# arr = ['\\n']
-		
-		# i = 0
-		# arr.push('\\n') until (++i) == lines
 		var lines = count(chunk, '\n')
 		
 		addLinebreaks(lines)
 
-		# if false
-		#   unless t is 'TERMINATOR'
-		#     token 'TERMINATOR', arr.join("") 
-		#   else
-		#     console.log "already a terminator!!"
-		
-		# pair('%') if context is '%'
-		# pair('%') if context is '%'
 		var ctx = context
-		# Ghost?
 		# WARN now import cannot go over multiple lines
 		pair(ctx) if ctx in ['%','TAG','IMPORT']
 
@@ -1082,7 +1105,7 @@ export class Lexer
 	# Use a `\` at a line-ending to suppress the newline.
 	# The slash is removed here once its job is done.
 	def suppressNewlines
-		@tokens.pop() if value() is '\\'
+		@tokens.pop if value() is '\\'
 		this
 
 	# We treat all other single characters as a token. E.g.: `( ) , . !`
@@ -1105,24 +1128,29 @@ export class Lexer
 
 		var tokid  = value
 		var prev = last @tokens
+		var pt = prev and tT(prev)
+		var pv = prev and tV(prev)
 		var length = value:length
 
 		# is this needed?
 		if value is '=' and prev
+			# FIX
+			if not prev:reserved and pv in JS_FORBIDDEN
+				error "reserved word \"{value()}\" can't be assigned"
 
-			if not prev[1]:reserved and prev[1] in JS_FORBIDDEN
-				@error "reserved word \"#{value()}\" can't be assigned"
-
-			if prev[1] in ['||', '&&']
-				prev[0] = 'COMPOUND_ASSIGN'
-				prev[1] += '='
+			# FIX
+			if pv in ['||', '&&']
+				tTs(prev,'COMPOUND_ASSIGN')
+				tVs(prev,pv + '=')
+				# prev[0] = 'COMPOUND_ASSIGN'
+				# prev[1] += '='
 				return value:length
 
 		if value is ';'             
 			@seenFor = no
 			tokid = 'TERMINATOR'
 
-		elif value is '(' and inTag and prev[0] != '=' and prev:spaced
+		elif value is '(' and inTag and pt != '=' and prev:spaced # FIXed
 			# console.log 'spaced before ( in tokid'
 			# FIXME - should rather add a special token like TAG_PARAMS_START
 			token ',',','
@@ -1158,7 +1186,7 @@ export class Lexer
 			# change the next identifier instead?
 
 		# elif value.match()
-		elif value == '*' and @chunk.charAt(1).match(/[A-Za-z\_\@\[]/) and (prev:spaced or prev[1] in [',','(','[','{','|','\n','\t'])
+		elif value == '*' and @chunk.charAt(1).match(/[A-Za-z\_\@\[]/) and (prev:spaced or pv in [',','(','[','{','|','\n','\t'])
 			tokid = "SPLAT"
 
 		elif value == '√'
@@ -1183,16 +1211,17 @@ export class Lexer
 			if value is '(' and end1 == '%'
 				tokid = 'TAG_ATTRS_START'
 
-			elif value is '(' and prev[0] in CALLABLE
+			elif value is '(' and pt in CALLABLE
 				# not using this ???
 				# prev[0] = 'FUNC_EXIST' if prev[0] is '?'
 				tokid = 'CALL_START'
 
-			elif value is '[' and prev[0] in INDEXABLE
+			elif value is '[' and pt in INDEXABLE
 				tokid = 'INDEX_START'
-				prev[0] = 'INDEX_SOAK' if prev[0] == '?'
+				tTs(prev,'INDEX_SOAK') if pt == '?'
+				# prev[0] = 'INDEX_SOAK' if prev[0] == '?'
 
-			elif value is '{' and prev[0] in INDEXABLE
+			elif value is '{' and pt in INDEXABLE
 				tokid = 'RAW_INDEX_START'
 
 		switch value
@@ -1240,17 +1269,18 @@ export class Lexer
 		var tokens = @tokens
 		var i = tokens:length
 
-		tokens[--i][0] = 'PARAM_END'
+		tTs(tokens[--i], 'PARAM_END')
 
 		while var tok = tokens[--i]
-			switch tok[0]
+			var t = tT(tok)
+			switch t
 				when ')'
 					stack.push tok
 				when '(', 'CALL_START'
 					if stack:length
 						stack.pop
-					elif tok[0] is '('
-						tok[0] = 'PARAM_START'
+					elif t is '('
+						tTs(tok,'PARAM_START')
 						return this
 					else
 						return this
@@ -1338,7 +1368,7 @@ export class Lexer
 			unless str.charAt(i) is '{' and (expr = balancedString(str.slice(i), '}'))
 				continue
 
-			tokens.push ['NEOSTRING', str.slice(pi, i)] if pi < i
+			tokens.push T.token('NEOSTRING', str.slice(pi, i)) if pi < i
 			var inner = expr.slice(1, -1)
 			# console.log 'inner is',inner
 
@@ -1348,32 +1378,34 @@ export class Lexer
 				var nested = Lexer.new.tokenize inner, line: @line, rewrite: no, loc: @loc + i + 2
 				nested.pop
 
-				if nested[0] and nested[0][0] == 'TERMINATOR'
+				if nested[0] and tT(nested[0]) == 'TERMINATOR'
 					nested.shift
 
 				if var len = nested:length
 					if len > 1
-						nested.unshift ['(', '(']
-						nested.push    [')', ')']
-					tokens.push ['TOKENS', nested]
+						nested.unshift T.token('(', '(')
+						nested.push    T.token(')', ')')
+					# FIX FIX -- must change format
+					tokens.push T.token('TOKENS', nested) # hmmm --
 			i += expr:length - 1
 			pi = i + 1
 
 		if i > pi < str:length
-			tokens.push ['NEOSTRING', str.slice pi] 
+			# FIX
+			tokens.push T.token('NEOSTRING', str.slice pi)
 
 		return tokens if regex
 
 		return token 'STRING', '""' unless tokens:length
 
-		tokens.unshift ['', ''] unless tokens[0][0] is 'NEOSTRING'
+		tokens.unshift T.token('', '') unless tT(tokens[0]) is 'NEOSTRING'
 
 		if var interpolated = tokens:length > 1
 			token '(', '('
 
 		for v, k in tokens
-			var typ = v[0]
-			var value = v[1]
+			var typ = tT(v)
+			var value = tV(v)
 
 			token '+', '+' if k
 
@@ -1400,7 +1432,7 @@ export class Lexer
 					i++
 					continue
 				when end
-					stack.pop()
+					stack.pop
 					unless stack:length
 						return str.slice(0, i + 1)
 
@@ -1414,7 +1446,7 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter # what, why?
 
-		error "missing { stack.pop() }, starting"
+		error "missing { stack.pop }, starting"
 
 	# Expand variables and expressions inside double-quoted strings using
 	# Ruby-like notation for substitution of arbitrary expressions.
@@ -1424,6 +1456,8 @@ export class Lexer
 	# If it encounters an interpolation, this method will recursively create a
 	# new Lexer, tokenize the interpolated contents, and merge them into the
 	# token stream.
+
+	# should handle some other way
 	def interpolateSelector str, options = {}
 
 		var heredoc = options:heredoc
@@ -1440,32 +1474,32 @@ export class Lexer
 			unless letter is '{' and (expr = balancedSelector(str.slice(i), '}'))
 				continue
 
-			tokens.push ['NEOSTRING', str.slice(pi, i)] if pi < i
+			tokens.push T.token('NEOSTRING', str.slice(pi, i)) if pi < i
 			var inner = expr.slice(1, -1)
 
 			if inner:length
 				nested = Lexer.new.tokenize(inner, line: @line, rewrite: no)
 				nested.pop
-				nested.shift if nested[0] and nested[0][0] is 'TERMINATOR'
+				nested.shift if nested[0] and tT(nested[0]) is 'TERMINATOR'
 
 				if var len = nested:length
 					if len > 1
-						nested.unshift ['(', '(']
-						nested.push    [')', ')']
-					tokens.push ['TOKENS', nested]
+						nested.unshift T.token('(', '(')
+						nested.push    T.token(')', ')')
+					tokens.push T.token('TOKENS', nested) # FIX
 			i += expr:length - 1
 			pi = i + 1
 
-		tokens.push ['NEOSTRING', str.slice pi] if i > pi < str:length
+		tokens.push T.token('NEOSTRING', str.slice pi) if i > pi < str:length
 		return tokens if regex
 		return token 'STRING', '""' unless tokens:length
 
-		tokens.unshift ['', ''] unless tokens[0][0] is 'NEOSTRING'
+		tokens.unshift T.token('', '') unless tT(tokens[0]) is 'NEOSTRING'
 		token '(', '(' if var interpolated = tokens:length > 1
 
 		for v, i in tokens
-			var tokid = v[0]
-			var value = v[1]
+			var tokid = tT(v)
+			var value = tV(v)
 
 			token ',', ',' if i
 
@@ -1503,53 +1537,38 @@ export class Lexer
 	# -------
 
 	# Add a token to the results, taking note of the line number.
-	def token id, value, len, addLoc
+	def token id, value, len # , addLoc
 		# console.log(@line)
-		var loc = {first_line: @line, first_column: 2, last_line: @line, last_column: 2, range: [@loc,1000]}
+		# var loc = {first_line: @line, first_column: 2, last_line: @line, last_column: 2}
+		var region = null
 
-		# if len and addLoc
-		#   # console.log('addLoc',value)
-		#   if typeof value == 'string'
-		#     value = value + "$#{@loc}$$#{len}"
-		#   else
-		#     value:_region = [@loc, @loc + len]
-
-		if len and addLoc
-			# console.log('no loc')
-			true
-
-		elif len
-			# value = value + "_" + len
-			# POC - not optimized at all
-			# Might be better to just use jison for this
-			if typeof value == 'string'
-				value = String.new(value) # are we so sure about this?
-			value:_region = [@loc, @loc + len]
-
-		if id == 'INDENT' || id == 'OUTDENT'
-			# console.log(value)
-			value = Number.new(value) # real
-			value:_region = [@loc,@loc]
-		# loc = {range: [10,1000]}
+		if len
+			@region = [@loc, @loc + len]
 
 		@lastTyp = id
 		@lastVal = value
-		@last = [id, value, loc]
-		@tokens.push @last		
+
+		var tok = @last = Token.new(id, value, @line, @region)
+
+		@tokens.push tok # @last		
 
 
 	# Peek at a tokid in the current token stream.
-	def tokid index, tokid
+	def tokid index, val
 		if var tok = last(@tokens, index)
-			tok[0] = tokid if tokid # why?
-			tok[0]
+			tTs(tok,val) if val
+			return tT(tok)
+			# tok.@type = tokid if tokid # why?
+			# tok.@type
 		else null
 
 	# Peek at a value in the current token stream.
 	def value index, val
 		if var tok = last(@tokens, index)
-			tok[1] = val if val # why?
-			tok[1]
+			tVs(tok,val) if val
+			return tV(tok)
+			# tok.@value = val if val # why?
+			# tok.@value
 		else null
 		
 
@@ -1657,9 +1676,10 @@ var METHOD_IDENTIFIER = /// ^
 
 # Token matching regexes.
 # added hyphens to identifiers now - to test
+# hmmm
 var IDENTIFIER = /// ^
 	(
-		(\$|@@|@|\#)[A-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* |
+		(\$|@@|@|\#)[\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)*
 	)
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?

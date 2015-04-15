@@ -74,7 +74,6 @@
 	
 	
 	Animal.prototype.lineage = function (){
-		// super should do the same as super.lineage(*arguments)
 		return "animal." + Animal.__super__.lineage.apply(this,arguments);
 	};
 	
@@ -97,7 +96,6 @@
 	};
 	
 	Cat.prototype.cloak = function (){
-		// call the initialize of animal
 		return Cat.__super__.initialize.call(this);
 	};
 	
@@ -171,9 +169,7 @@
 	
 	
 	describe('Syntax - super',function (){
-		
 		return test("stuff",function (){
-			
 			var cat = new Cat();
 			var virus = new Virus();
 			var dog = new Dog();

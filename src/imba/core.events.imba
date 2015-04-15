@@ -1,6 +1,6 @@
 
 
-def emit event, args, cbs
+def emit__ event, args, cbs
 	var node, prev, cb, ret
 	var node = cbs[event]
 
@@ -43,16 +43,6 @@ def Imba.unlisten obj, event, cb
 
 def Imba.emit obj, event, params
 	var cb  = obj:__callbacks__
-	emit(event,params,cb) if cb
-	emit('all',[event,params],cb) if cb
+	emit__(event,params,cb) if cb
+	emit__('all',[event,params],cb) if cb
 	return
-
-# def Imba.testEvents
-# 	var obj = {name: "Hello"}
-# 	var fn = do console.log "event did trigger!!",arguments
-# 	FOBJ = obj
-# 	Imba.listen(obj,"ping",fn)
-# 	Imba.listen(obj,"all",fn)
-# 	Imba.emit(obj,"ping",1,2,3)
-# 	Imba.unlisten(obj,"ping",fn)
-# 	Imba.emit(obj,"ping",1,2,3)

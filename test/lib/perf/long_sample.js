@@ -1,10 +1,10 @@
 (function(){
 
 
-	idx$ = function(a,b){
+	function idx$(a,b){
 		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
 	};
-	;
+	
 	// helper for subclassing
 	function subclass$(obj,sup) {
 		for (var k in sup) {
@@ -15,7 +15,7 @@
 		obj.__super__ = obj.prototype.__super__ = sup.prototype;
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
-	;
+	
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// TODO Create AST.Expression - make all expressions inherit from these?
 	
@@ -29,7 +29,6 @@
 	// Helpers for operators
 	OP = function (op,left,right,opts){
 		if(op == '.') {
-			// Be careful
 			if((typeof right=='string'||right instanceof String)) {
 				right = new AST.Identifier(right);
 			};
@@ -37,7 +36,6 @@
 			return new AST.Access(op,left,right);
 		} else if(op == '=') {
 			if(left instanceof AST.Tuple) {
-				// p "catching tuple-assign OP"
 				return new AST.TupleAssign(op,left,right);
 			};
 			return new AST.Assign(op,left,right);
@@ -59,7 +57,7 @@
 				new AST.TypeOf(op,left,right)
 			) : ((op == 'delete') ? (
 				new AST.Delete(op,left,right)
-			) : ((idx$(op,['--','++','!','√']) >= 0) ? (// hmm
+			) : ((idx$(op,['--','++','!','√']) >= 0) ? (
 				new AST.UnaryOp(op,left,right)
 			) : ((idx$(op,['>','<','>=','<=','==','===','!=','!==']) >= 0) ? (
 				new AST.ComparisonOp(op,left,right)
@@ -94,7 +92,6 @@
 	};
 	
 	CALL = function (callee,pars){
-		// possibly return instead(!)
 		if(pars === undefined) pars = [];
 		return new AST.Call(callee,pars);
 	};
@@ -115,7 +112,6 @@
 	
 	SPLAT = function (value){
 		if(value instanceof AST.Assign) {
-			// p "WARN"
 			value.setLeft(new AST.Splat(value.left()));
 			return value;
 		} else {
@@ -129,7 +125,7 @@
 	OP.UNARY = ["++","--"];
 	
 	AST.LOC = function (loc){
-		return ;
+		return this;
 	};
 	
 	AST.parse = function (str,opts){
@@ -299,7 +295,6 @@
 	};
 	
 	AST.Stack.prototype.scopes = function (){
-		// include deeper scopes as well?
 		var scopes = [];
 		var i = this._nodes.length - 1;
 		while(i >= 0){
@@ -388,8 +383,6 @@
 	};
 	
 	AST.Node.prototype.p = function (){
-		// hmm
-		// allow controlling this from commandline
 		if(STACK.loglevel() > 0) {
 			console.log.apply(console,arguments);
 		};
@@ -477,13 +470,10 @@
 		};
 		
 		if(node instanceof AST.Assign) {
-			// p "consume assignment".cyan
-			// node.right = self
 			return OP(node.op(),node.left(),this);
 		} else if(node instanceof AST.Op) {
 			return OP(node.op(),node.left(),this);
 		} else if(node instanceof AST.Return) {
-			// p "consume return".cyan
 			return new AST.Return(this);
 		};
 		return this;
@@ -544,22 +534,17 @@
 	};
 	
 	AST.Node.prototype.addExpression = function (expr){
-		// might be better to nest this up after parsing is done?
-		// p "addExpression {self} <- {expr}"
 		var node = new AST.ExpressionBlock([this]);
 		return node.addExpression(expr);
 	};
 	
 	AST.Node.prototype.addComment = function (comment){
-		// console.log "adding comment"
 		this._comment = comment;
 		return this;
 	};
 	
 	AST.Node.prototype.indented = function (a,b){
-		// this is a _BIG_ hack
 		if(b instanceof Array) {
-			// console.log "indented array?", b[0]
 			this.add(b[0]);
 			b = b[1];
 		};
@@ -571,9 +556,6 @@
 	};
 	
 	AST.Node.prototype.prebreak = function (term){
-		// in options instead?
-		// console.log "prebreak!!!!"
-		// @prebreak = @prebreak or term
 		if(term === undefined) term = '\n';
 		return this;
 	};
@@ -617,8 +599,6 @@
 	};
 	
 	AST.Node.prototype.warn = function (text,opts){
-		// opts:node = self
-		// p "AST.warn {text} {opts}"
 		if(opts === undefined) opts = {};
 		opts.message = text;
 		opts.loc || (opts.loc = this.loc());
@@ -646,7 +626,6 @@
 		};
 		
 		if(o && o.indent) {
-			// console.log "set indentation"
 			this._indentation || (this._indentation = AST.INDENT);
 			// self.indented()
 		};
@@ -660,7 +639,6 @@
 		};
 		
 		if(paren) {
-			// this is not a good way to do it
 			if(out instanceof Array) {
 				out = ("(" + out + ")");
 			} else {
@@ -678,8 +656,6 @@
 		STACK.pop(this);
 		
 		if(this._cache) {
-			
-			// FIXME possibly double parenthesizing?
 			if(!(this._cache.manual)) {
 				out = ("" + (this._cache.var.c()) + "=" + out);
 			};
@@ -692,7 +668,6 @@
 		
 		if(this._temporary && this._temporary.length) {
 			this._temporary.map(function (temp){
-				// p "decache temp!!! {temp}"
 				return temp.decache();
 			});
 		};
@@ -768,7 +743,7 @@
 	
 	subclass$(AST.Comment,AST.Meta);
 	AST.Comment.prototype.c = function (o){
-		return (o && o.expression || this._value.match(/\n/)) ? (// multiline?
+		return (o && o.expression || this._value.match(/\n/)) ? (
 			("/*" + (this.value().c()) + "*/")
 		) : (
 			("// " + (this.value().c()))
@@ -857,7 +832,6 @@
 	};
 	
 	AST.ListNode.prototype.concat = function (other){
-		// need to store indented content as well?
 		this._nodes = this.nodes().concat((other instanceof Array) ? (other) : (other.nodes()));
 		return this;
 	};
@@ -894,9 +868,6 @@
 	};
 	
 	AST.ListNode.prototype.break = function (br,pre){
-		// console.log "breaking block! ({br})"
-		// should just accept regular terminators no?
-		// console.log "BREAKING {br}"
 		if(pre === undefined) pre = false;
 		if(typeof br == 'string') {
 			br = new AST.Terminator(br);
@@ -1000,7 +971,6 @@
 	
 	AST.ListNode.prototype.visit = function (){
 		this._nodes.forEach(function (node){
-			// console.log "traverse node {node}"
 			return node.traverse();
 		});
 		return this;
@@ -1024,7 +994,6 @@
 	};
 	
 	AST.ListNode.prototype.js = function (o,pars){
-		// var delim = delimiter
 		if(!pars||pars.constructor !== Object) pars = {};
 		var delim = pars.delim !== undefined ? pars.delim : this.delimiter();
 		var indent = pars.indent !== undefined ? pars.indent : this._indentation;
@@ -1051,8 +1020,6 @@
 				// console.log "argument is a comment!"
 				// shouldDelim = no
 			} else {
-				// comment as well?
-				// shouldDelim = yes
 				if(!express || arg != last) {
 					out = out + delim;
 				};
@@ -1114,7 +1081,6 @@
 	subclass$(AST.AssignList,AST.ArgList);
 	AST.AssignList.prototype.concat = function (other){
 		if(this._nodes.length == 0 && (other instanceof AST.AssignList)) {
-			// console.log "return the other one(!)",other.@indented[0]
 			return other;
 		} else {
 			AST.AssignList.__super__.concat.apply(this,arguments);
@@ -1143,7 +1109,6 @@
 	AST.Block.prototype.setHead = function(v){ this._head = v; return this; };
 	
 	AST.Block.wrap = function (ary){
-		// p "called Block wrap!!", $0
 		return (ary.length == 1 && (ary[0] instanceof AST.Block)) ? (ary[0]) : (new AST.Block(ary));
 		// return nodes[0] if nodes.length is 1 and nodes[0] instanceof Block
 		// new Block nodes
@@ -1154,10 +1119,7 @@
 	// 	super
 	
 	AST.Block.prototype.visit = function (){
-		// @indentation ||= AST.INDENT
-		
-		if(this._prebreak) {// hmm
-			// are we sure?
+		if(this._prebreak) {
 			console.log("PREBREAK IN AST.BLOCK SHOULD THROW");
 			this.first() && this.first().prebreak(this._prebreak);
 		};
@@ -1165,17 +1127,6 @@
 	};
 	
 	AST.Block.prototype.push = function (item,sep){
-		// if sep
-		// 	# probably better to set property on the item - no?
-		// 	# only newlines - no ?
-		// 	
-		// 	# @newlines = sep.replace(//)
-		// 	# var ln = sep.replace(/[^\n]/g,''):length
-		// 	var ln = sep.split("\\n"):length
-		// 	# p "block separator!",ln,sep
-		// 	last && last.@newlines = ln - 1
-		// 	# nodes.push(AST.NewLines.new(sep))
-		
 		this.nodes().push(item);
 		return this;
 	};
@@ -1187,7 +1138,6 @@
 	AST.Block.prototype.loc = function (){
 		var opt, a, b;
 		return (opt = this.option('ends')) ? (
-			// p "location is",opt
 			a = opt[0].loc(),
 			b = opt[1].loc(),
 			
@@ -1207,7 +1157,6 @@
 		var ary = [];
 		for(var i=0, items=iter$(this.nodes()), len=items.length, node; i < len; i++) {
 			node = items[i];if(node instanceof AST.Block) {
-				// p "unwrapping inner block"
 				ary.push.apply(ary,node.unwrap());
 			} else {
 				ary.push(node);
@@ -1226,7 +1175,6 @@
 	
 	// Not sure if we should create a separate block?
 	AST.Block.prototype.analyze = function (o){
-		// p "analyzing block!!!",o
 		if(o === undefined) o = {};
 		return this;
 	};
@@ -1263,7 +1211,6 @@
 			
 			// hmm -- are we sure?
 			if(out instanceof Array) {
-				// really??
 				out = out.flatten().compact().filter(filter).join(";\n");
 			};
 			
@@ -1314,9 +1261,7 @@
 	
 	AST.Block.prototype.consume = function (node){
 		var v_, before;
-		if(node instanceof AST.TagTree) {// special case?!?
-			// what if there is only one node?
-			// let all the inner nodes consume this
+		if(node instanceof AST.TagTree) {
 			this.setNodes(this.nodes().map(function (child){
 				return child.consume(node);
 			}));
@@ -1333,8 +1278,6 @@
 		if(before = this.last()) {
 			var after = before.consume(node);
 			if(after != before) {
-				
-				// p "replace node in block"
 				this.replace(before,after);
 			};
 		};
@@ -1362,8 +1305,6 @@
 	
 	subclass$(AST.VarBlock,AST.ListNode);
 	AST.VarBlock.prototype.addExpression = function (expr){
-		// p "addExpression {self} <- {expr}"
-		
 		if(expr instanceof AST.Assign) {
 			this.addExpression(expr.left());// make sure this is a valid thing?
 			// make this into a tuple instead
@@ -1371,10 +1312,8 @@
 			// does not need to be a tuple?
 			return new AST.TupleAssign('=',new AST.Tuple(this.nodes()),expr.right());
 		} else if(expr instanceof AST.VarOrAccess) {
-			// this is really a VarReference
 			this.push(new AST.VarReference(expr.value()));
 		} else if((expr instanceof AST.Splat) && (expr.node() instanceof AST.VarOrAccess)) {
-			// p "is a splat - only allowed in tuple-assignment"
 			expr.setValue(new AST.VarReference(expr.node().value()));
 			this.push(expr);
 		} else {
@@ -1384,8 +1323,6 @@
 	};
 	
 	AST.VarBlock.prototype.isExpressable = function (){
-		// hmm, we would need to force-drop the variables, makes little sense
-		// but, it could be, could just push the variables out?
 		return false;
 	};
 	
@@ -1400,9 +1337,6 @@
 	};
 	
 	AST.VarBlock.prototype.consume = function (node){
-		// It doesnt make much sense for a VarBlock to consume anything
-		// it should probably return void for methods
-		// throw "VarBlock.consume"
 		return this;
 	};
 	
@@ -1435,8 +1369,6 @@
 	};
 	
 	AST.Parens.prototype.shouldParenthesize = function (){
-		// var par = up
-		// no need to parenthesize if this is a line in a block
 		if(this._noparen) {
 			return false;
 		};//  or par isa AST.ArgList
@@ -1470,7 +1402,6 @@
 	
 	subclass$(AST.ExpressionBlock,AST.ListNode);
 	AST.ExpressionBlock.prototype.visit = function (){
-		// we need to see if this
 		this.map(function (item){
 			return item.traverse();
 		});
@@ -1491,11 +1422,7 @@
 	};
 	
 	AST.ExpressionBlock.prototype.addExpression = function (expr){
-		// p "add expression {self} <- {expr}"
-		
-		// Need to take care of the splat here to.. hazzle
 		if(expr.node() instanceof AST.Assign) {
-			// p "is assignment!"
 			this.push(expr.left());
 			// make this into a tuple instead
 			// possibly fix this as well?!?

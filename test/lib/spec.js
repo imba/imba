@@ -12,11 +12,7 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
-	// $current_describe_block = null
-	// $current_it_block = null
-	// SPEC_STACK = []
-	
-	TERMINAL_COLOR_CODES = {
+	var TERMINAL_COLOR_CODES = {
 		bold: 1,
 		underline: 4,
 		reverse: 7,
@@ -30,29 +26,20 @@
 		white: 37
 	};
 	
-	
-		String.prototype.color = function (code){
-			// return self if we are in client
-			if(console.group) {
-				return this.toString();
-			};
-			
-			code = TERMINAL_COLOR_CODES[code];
-			var resetStr = "\x1B[0m";
-			var resetRegex = /\x1B\[0m/g;
-			var codeRegex = /\x1B\[\d+m/g;
-			var tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i;
-			var numRegex = /\d+/;
-			var str = ('' + this).replace(resetRegex,("" + resetStr + "\x1B[" + code + "m"));// allow nesting
-			str = ("\x1B[" + code + "m" + str + resetStr);
-			return str;
+	function fmt(code,string){
+		if(console.group) {
+			return string.toString();
 		};
-	
-	
-	function fmt(color,str){
-		return str.color(color);
+		code = TERMINAL_COLOR_CODES[code];
+		var resetStr = "\x1B[0m";
+		var resetRegex = /\x1B\[0m/g;
+		var codeRegex = /\x1B\[\d+m/g;
+		var tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i;
+		var numRegex = /\d+/;
+		var str = ('' + string).replace(resetRegex,("" + resetStr + "\x1B[" + code + "m"));// allow nesting
+		str = ("\x1B[" + code + "m" + str + resetStr);
+		return str;
 	};
-	
 	
 	/* @class Spec */
 	function Spec(){
@@ -94,7 +81,6 @@
 	};
 	
 	Spec.prototype.run = function (i){
-		// p "SPEC.run {i}"
 		var self=this;
 		if(i === undefined) i = 0;
 		var block = self._blocks[i];
@@ -138,19 +124,8 @@
 		return (context_=SPEC.context()).await.apply(context_,arguments);
 	};
 	
-	// def self.call scope, method, *args
-	// 	SpecCaller.new(scope,method,args)
-	;
 	
-	// #	# def self.context
-	// # 	@context || instance
-	// 	
-	// # def self.stack
-	// # 	@stack ||= [instance]
-	// # 
-	// # def self.run
-	// # 	instance.run
-	// 
+	
 	/* @class SpecCaller */
 	function SpecCaller(scope,method,args){
 		this._scope = scope;
@@ -249,7 +224,7 @@
 	};
 	
 	SpecExample.prototype.await = function (){
-		return this.assertion(new SpecAwait(this,$0)).callback();
+		return this.assertion(new SpecAwait(this,arguments)).callback();
 	};
 	
 	SpecExample.prototype.eq = function (actual,expected,format){
@@ -471,29 +446,9 @@
 	};
 	
 	
-	// 
-	// # extending object?!
-	// # use extend syntax instead?
-	
-	// Want to extend root(!)
-	// class Object
 	
 	SPEC = new Spec();
 	
-	// describe 'Syntax - Assignment' do
-	// 	true
-	// 	describe "test" do
-	// 		false
-	// 
-	// 		test "one" do
-	// 			eq(1, 1)
-	// 			true
-	// 
-	// def describe name, blk
-	// 		if @context == self
-	// 			@blocks.push SpecGroup.new(name, blk)
-	// 		else
-	// 
 	p = function p(){
 		return console.log.apply(console,arguments);
 	};

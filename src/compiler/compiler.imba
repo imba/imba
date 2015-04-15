@@ -1,64 +1,40 @@
 
 var fs = require 'fs'
 var path = require 'path'
-# var promise = require 'bluebird'
 
-var lexer 	= require './lexer'
-var parser	= require('./parser')['parser']
+var imba = require '../imba'
+var lexer = require './lexer'
+var rewriter = require './rewriter'
+export var parser = require('./parser')['parser']
+var ast = require './nodes'
 
-# var vm = require 'vm'
-# require files needed to run imba
-# whole runtime - no?
-
-# should this really happen up here?
-
-# require '../imba/node'
-
-require '../imba/imba'
-require '../imba/core.events'
-
-require '../imba/dom'
-require '../imba/dom.server'
-
-# setting up the actual compiler
-require './ast/ast'
+var T = require './token'
 
 # Instantiate a Lexer for our use here.
 export var lex = lexer.Lexer.new
-
+export var Rewriter = rewriter.Rewriter
 
 # The real Lexer produces a generic stream of tokens. This object provides a
 # thin wrapper around it, compatible with the Jison API. We can then pass it
 # directly as a "Jison lexer".
 
 parser:lexer =
-	options:
-		ranges: true
+	yyloc:
+		first_column: 0,
+		first_line: 1,
+		last_line: 1,
+		last_column: 0
 
-	lex: do
-		var token = this:tokens[this:pos++]
-		var ttag
-
-		if token
-			ttag, this:yytext, this:yylloc = token
-
-			if this:yylloc
-				this:currloc = this:yylloc
-			else
-				this:yylloc = this:currloc
-			this:yylineno = this:yylloc && this:yylloc:first_line
-		else
-			ttag = ''
-
-		return ttag
+	lex: T:lex
 
 	setInput: do |tokens|
+		this:yylloc = this:yyloc
 		this:tokens = tokens
 		this:pos = 0
 
 	upcomingInput: do ""
 
-parser:yy = AST # require './../nodes'
+parser:yy = ast # everything is exported right here now
 
 export def tokenize code, o = {}
 	try
@@ -66,11 +42,21 @@ export def tokenize code, o = {}
 		lex.tokenize code, o
 	catch err
 		console.log("ERROR1",err)
+		throw err
+
+export def rewrite tokens, o = {}
+	var rewriter = Rewriter.new
+	try
+		# console.log("tokenize code",code)
+		rewriter.rewrite tokens, o
+	catch err
+		console.log("ERROR rewriting",err)
+		throw err
 
 
 export def parse code, o
 	try
-		var tokens = tokenize(code)
+		var tokens = code isa Array ? code : tokenize(code)
 		# console.log("Tokens",tokens)
 		return parser.parse tokens
 	catch err
@@ -126,74 +112,6 @@ elif require:registerExtension
 		# console.log "in registerExtension!"
 		compile content
 
-
-# really?
-# wrapper for files?
-export class SourceFile
-	
-	prop path
-	# prop code
-	# prop tokens
-	# prop ast
-	prop meta
-	# prop js
-
-	def initialize path
-		@path = path
-		@code = nil
-		@js = nil
-		self
-
-	def name
-		path.split("/").pop # for testing
-
-	def code
-		@code ||= fs.readFileSync(@path,"utf8")
-
-	def tokens
-		@tokens ||= tokenize(code)
-
-	def ast
-		@ast ||= parser.parse(tokens)
-		
-	def js o = {}
-		@js ||= ast.compile(o)
-
-	def write outpath, cb
-		# promise.new do |resolve|
-		# await self.compile
-		fs.writeFile(outpath,js,cb)
-
-	def dirty
-		# console.log "marking file as dirty!"
-		# simply removing all info abou tfiles
-		@code = @js = @tokens = @ast = @meta = nil
-		@read = @tokenize = @compile = @parse = @analyze = nil
-		self
-
-	# could analyze with different options - caching promise might not be the
-	# best approach for this.
-	def analyze cb
-		if @meta
-			cb and cb(@meta)
-			return @meta
-
-		STACK:_loglevel = 0 # not here?
-		var errors = []
-		var err = null
-		var data = {}
-
-		try
-			@meta = ast.analyze({})
-			cb and cb(@meta)
-			# resolve(self.meta)
-		catch e
-			console.log "ERROR {e:message}"
-
-		return @meta
-		
-	def run
-		run(code, filename: @path)
 
 
 

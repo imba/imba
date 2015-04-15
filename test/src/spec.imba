@@ -1,8 +1,5 @@
-# $current_describe_block = null
-# $current_it_block = null
-# SPEC_STACK = []
 
-TERMINAL_COLOR_CODES =
+var TERMINAL_COLOR_CODES =
 	bold: 1
 	underline: 4
 	reverse: 7
@@ -15,24 +12,17 @@ TERMINAL_COLOR_CODES =
 	cyan: 36
 	white: 37
 
-extend class String
-	def color code
-		# return self if we are in client
-		return toString if console:group
-
-		code = TERMINAL_COLOR_CODES[code]
-		var resetStr = "\x1B[0m"
-		var resetRegex = /\x1B\[0m/g
-		var codeRegex = /\x1B\[\d+m/g
-		var tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i
-		var numRegex = /\d+/
-		var str = ('' + self).replace resetRegex, "{resetStr}\x1B[{code}m" # allow nesting
-		str = "\x1B[{code}m{str}{resetStr}"
-		return str
-
-def fmt color, str
-	str.color(color)
-	
+def fmt code, string
+	return string.toString if console:group
+	code = TERMINAL_COLOR_CODES[code]
+	var resetStr = "\x1B[0m"
+	var resetRegex = /\x1B\[0m/g
+	var codeRegex = /\x1B\[\d+m/g
+	var tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i
+	var numRegex = /\d+/
+	var str = ('' + string).replace resetRegex, "{resetStr}\x1B[{code}m" # allow nesting
+	str = "\x1B[{code}m{str}{resetStr}"
+	return str
 
 global class Spec
 
@@ -80,19 +70,6 @@ global class Spec
 	def assert expression do SPEC.context.assert(expression)
 	def await do SPEC.context.await(*arguments)
 
-	# def self.call scope, method, *args
-	# 	SpecCaller.new(scope,method,args)
-
-#
-#	# def self.context
-#	# 	@context || instance
-#		
-#	# def self.stack
-#	# 	@stack ||= [instance]
-#	# 
-#	# def self.run
-#	# 	instance.run
-#
 
 global class SpecCaller
 
@@ -305,30 +282,10 @@ global class SpecAssertFalsy < SpecAssert
 
 	def test value
 		!(value) ? passed : failed
-		
-# 
-# # extending object?!
-# # use extend syntax instead?
 
-# Want to extend root(!)
-# class Object
 
 SPEC = Spec.new
 
-# describe 'Syntax - Assignment' do
-# 	true
-# 	describe "test" do
-# 		false
-# 
-# 		test "one" do
-# 			eq(1, 1)
-# 			true
-# 
-# def describe name, blk
-# 		if @context == self
-# 			@blocks.push SpecGroup.new(name, blk)
-# 		else
-# 
 global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
 global def it name, blk do SPEC.context.it(name,blk)

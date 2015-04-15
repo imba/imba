@@ -5,8 +5,10 @@ tag custom
 	def hello
 		true
 
-
-
+<a>
+<a.a.b>
+<a.b href="">
+<a.b .c=yes>
 
 describe 'Tags - Define' do
 

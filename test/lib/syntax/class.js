@@ -132,19 +132,12 @@
 	
 	
 	describe('Syntax - Class',function (){
-		
-		// test 'nested classes work' do
-		// 	ok !!Organism.Other
-		
 		test('should',function (){
-			
-			// you can define variables local to classbody
 			var obj = new Organism();
 			return eq(obj.lvar(),10);
 		});
 		
 		describe('Methods',function (){
-			
 			it('should define class methods',function (){
 				return eq(Organism.type(),'organism');
 			});
@@ -159,7 +152,6 @@
 		});
 		
 		describe('Instance',function (){
-			
 			it('should call the parent constructor by default',function (){
 				var obj = new Cat();
 				return eq(obj._ivar,1);
@@ -185,7 +177,6 @@
 			});
 			
 			return it('should call super in instance methods',function (){
-				// Should not refer to the prototype directly?
 				eq(new Virus().lineage(),'virus.organism');
 				return eq(new Zombie().lineage(),'zombie.human.animal.organism');
 			});
@@ -220,7 +211,6 @@
 		
 		
 		return test('Scoping',function (){
-			
 			var variable = 1;
 			
 			/* @class A */

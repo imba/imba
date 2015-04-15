@@ -6,8 +6,10 @@
 # shorthand into the unambiguous long form, add implicit indentation and
 # parentheses, and generally clean things up.
 
-# The **Rewriter** class is used by the [Lexer](lexer.html), directly against
-# its internal array of tokens.
+var T = require './token'
+var Token = T.Token
+
+# Based on the original rewriter.coffee from CoffeeScript
 export class Rewriter
 	
 	def tokens
@@ -76,6 +78,7 @@ export class Rewriter
 		var levels = 0
 		var starts = []
 		var token
+		var t,v
 
 		while token = tokens[i]
 			if levels is 0 and condition.call(this,token,i,starts)
@@ -83,10 +86,12 @@ export class Rewriter
 			if not token or levels < 0
 				return action.call(self, token, i - 1)
 
-			if token[0] in EXPRESSION_START
+			t = T.typ(token)
+
+			if t in EXPRESSION_START
 				starts.push(i) if levels == 0
 				levels += 1
-			else if token[0] in EXPRESSION_END
+			elif t in EXPRESSION_END
 				levels -= 1
 			i += 1
 		i - 1
@@ -96,7 +101,7 @@ export class Rewriter
 	def removeLeadingNewlines
 		var at = 0
 		for token,i in @tokens
-			if token[0] != 'TERMINATOR'
+			if T.typ(token) != 'TERMINATOR'
 				break at = i
 
 		@tokens.splice 0, at
@@ -106,7 +111,8 @@ export class Rewriter
 	def removeMidExpressionNewlines
 		scanTokens do |token,i,tokens| # do |token,i,tokens|
 			var next = tokenType(i + 1)
-			return 1 unless token[0] is 'TERMINATOR' and next in EXPRESSION_CLOSE
+
+			return 1 unless T.typ(token) is 'TERMINATOR' and next in EXPRESSION_CLOSE
 			return 1 if next == 'OUTDENT'
 			tokens.splice i, 1
 			0
@@ -116,15 +122,18 @@ export class Rewriter
 		var terminator = -1
 
 		scanTokens do |token,i,tokens|
+			var t = T.typ(token)
 			# console.log(token[0])
-			if token[0] is 'TERMINATOR'
+			if t is 'TERMINATOR'
 				# console.log "found terminator at",i
 				terminator = i
 				return 1
-			if token[0] is 'INLINECOMMENT'
+
+			if t is 'INLINECOMMENT'
 				@tokens.splice i, 1
 				return 0 if terminator == -1 # hmm
-				@tokens.splice terminator + 1, 0, ['HERECOMMENT',token[1]],['TERMINATOR','\\n']
+
+				@tokens.splice terminator + 1, 0, T.token('HERECOMMENT',T.val(token)), T.token('TERMINATOR','\n')
 				# console.log("found inline comment!",terminator)
 				return 2
 			return 1
@@ -137,51 +146,55 @@ export class Rewriter
 	# calls that close on the same line, just before their outdent.
 	def closeOpenCalls
 		var condition = do |token,i|
-			token[0] in [')', 'CALL_END'] || token[0] is 'OUTDENT' and tokenType(i - 1) is ')'
+			var t = T.typ(token)
+			t in [')', 'CALL_END'] || t is 'OUTDENT' and tokenType(i - 1) is ')'
 
 		var action = do |token, i|
-			@tokens[(token[0] is 'OUTDENT' ? i - 1 : i)][0] = 'CALL_END'
+			var t = T.typ(token)
+			var tok = @tokens[t == 'OUTDENT' ? i - 1 : i]
+			T.setTyp(tok,'CALL_END')
+			# [0] = 'CALL_END'
 
 		scanTokens do |token,i|
-			detectEnd(i + 1, condition, action) if token[0] is 'CALL_START'
+			detectEnd(i + 1, condition, action) if T.typ(token) is 'CALL_START'
 			return 1
 
 	# The lexer has tagged the opening parenthesis of an indexing operation call.
 	# Match it with its paired close.
 	def closeOpenIndexes
-		var condition = do |token, i| token[0] in [']', 'INDEX_END']
-		var action    = do |token, i| token[0] = 'INDEX_END'
+		var condition = do |token, i| T.typ(token) in [']', 'INDEX_END']
+		var action    = do |token, i| T.setTyp(token,'INDEX_END')
 		
 		scanTokens do |token,i|
-			detectEnd i + 1, condition, action if token[0] is 'INDEX_START'
+			detectEnd i + 1, condition, action if T.typ(token) is 'INDEX_START'
 			return 1
 
 	# The lexer has tagged the opening parenthesis of an indexing operation call.
 	# Match it with its paired close.
 	def closeOpenRawIndexes
-		var condition = do |token, i| token[0] in ['}', 'RAW_INDEX_END']
-		var action    = do |token, i| token[0] = 'RAW_INDEX_END'
+		var condition = do |token, i| T.typ(token) in ['}', 'RAW_INDEX_END']
+		var action    = do |token, i| T.setTyp(token,'RAW_INDEX_END')
 
 		scanTokens do |token,i|
-			detectEnd i + 1, condition, action if token[0] is 'RAW_INDEX_START'
+			detectEnd i + 1, condition, action if T.typ(token) is 'RAW_INDEX_START'
 			return 1
 	
 	def closeOpenTagAttrLists
-		var condition = do |token, i| token[0] in [')', 'TAG_ATTRS_END']
-		var action    = do |token, i| token[0] = 'TAG_ATTRS_END'
+		var condition = do |token, i| T.typ(token) in [')', 'TAG_ATTRS_END']
+		var action    = do |token, i| T.setTyp(token,'TAG_ATTRS_END') # 'TAG_ATTRS_END'
 
 		scanTokens do |token,i|
-			detectEnd i + 1, condition, action if token[0] is 'TAG_ATTRS_START'
+			detectEnd i + 1, condition, action if T.typ(token) is 'TAG_ATTRS_START'
 			return 1
 	
 	# The lexer has tagged the opening parenthesis of an indexing operation call.
 	# Match it with its paired close.
 	def closeOpenTags
-		var condition = do |token, i| token[0] in ['>', 'TAG_END']
-		var action    = do |token, i| token[0] = 'TAG_END'
+		var condition = do |token, i| T.typ(token) in ['>', 'TAG_END']
+		var action    = do |token, i| T.setTyp(token,'TAG_END') # token[0] = 'TAG_END'
 
 		scanTokens do |token,i|
-			detectEnd i + 1, condition, action if token[0] is 'TAG_START'
+			detectEnd i + 1, condition, action if T.typ(token) is 'TAG_START'
 			return 1
 		
 	def addImplicitCommas
@@ -190,13 +203,15 @@ export class Rewriter
 	def addImplicitBlockCalls
 		scanTokens do |token,i,tokens|
 			var prev = tokens[i - 1] or []
+			var t = T.typ(prev)
+			var v = T.val(prev)
 			# next = tokens[i+1]
 
-			if token[0] == 'DO' and prev[0] in ['RAW_INDEX_END','INDEX_END','IDENTIFIER','NEW']
+			if t == 'DO' and v in ['RAW_INDEX_END','INDEX_END','IDENTIFIER','NEW']
 				# if token[0] == 'DO' and prev and prev[0] not in ['CALL_END','=','DEF_BODY','(','CALL_START',',',':','RETURN']
 				# console.log 'added implicit blocs!!'
-				tokens.splice i, 0, ['CALL_END',')']
-				tokens.splice i, 0, ['CALL_START','(']
+				tokens.splice i, 0, T.token('CALL_END',')')
+				tokens.splice i, 0, T.token('CALL_START','(')
 				return 2
 			return 1
 
@@ -212,14 +227,17 @@ export class Rewriter
 			stack[stack:length - 1] or []
 
 		var action = do |token,i|
-			var tok = ['}', '}', token[2]]
+			# messy
+			var tok = T.token('}', '}',T.loc(token))
 			tok:generated = yes
 			@tokens.splice i, 0, tok
 
 		var open = do |token,i|
+			# FIX 
 			var value = String.new('{')
-			value:generated = yes
-			var tok = ['{', value, token[2]]
+			value:generated = yes # drop this?!
+			var tok = T.token('{', value,T.loc(token))
+			# T.setLoc(tok,T.loc(token)) # , token[2]]
 			tok:generated = yes
 			@tokens.splice i, 0, tok
 
@@ -228,47 +246,43 @@ export class Rewriter
 			# stack.push(s)
 
 		var close = do |token,i|
-			var tok = ['}', '}', token[2]]
+			var tok = T.token('}', '}',T.loc(token))
 			tok:generated = yes
 			@tokens.splice i, 0, tok
-			var ctx = scope() #  hmmm??
-			# this is cleaner - but fix later
-			# if ctx[0] == '{' and ctx:generated
-			#   stack.pop()
-			# else
-			#   console.log('should not pop, not inside:generated context!')
-			# if ctx[0] == '{' and ctx:generated
-			# should remove from scope as well?
-			# true
 
-		var reopen = do |token,i|
-			true
-
-		
+		var stackToken = do |a,b|
+			return [a,b]
+			# var ctx = scope() #  hmmm??
 
 		scanTokens do |token,i,tokens|
-			var type = token[0]
+			var type = T.typ(token)
+			var v = T.val(token)
 			var ctx = stack[stack:length - 1] or []
 			var idx
 
-			if token[1] == '?'
+			
+
+			if v == '?'
 				# console.log('TERNARY OPERATOR!')
-				stack.push ['TERNARY',i]
+				stack.push stackToken('TERNARY',i)
 				return 1
 			
 			if type in EXPRESSION_START
 				# console.log('expression start',type)
 				if type == 'INDENT' and tokenType(i - 1) == '{'
-					stack.push ['{', i] # should not autogenerate another?
+					# stack ?!? no token
+					stack.push stackToken('{', i) # should not autogenerate another?
 				else
-					stack.push [type, i]
+					stack.push stackToken(type, i)
 				return 1
 
 			if type in EXPRESSION_END
-				if ctx[0] == 'TERNARY'
+				if ctx[0] == 'TERNARY' # FIX?
 					stack.pop
 
 				start = stack.pop
+				unless start
+					console.log "NO STACK!!"
 				start[2] = i
 
 				# console.log('the end-expression was',start[0])
@@ -276,7 +290,8 @@ export class Rewriter
 				# if start[0] == 'INDENT'
 				#   console.log('was indent?')
 
-				if start[0] == '{' and start:generated # type != '}' # and start:generated
+				# seems like the stack should use tokens, no?)
+				if start[0] == '{' and start:generated #  # type != '}' # and start:generated
 					# console.log('inside curly-braces!')
 					# console.log('the expression is',type)
 					close(token,i)
@@ -309,8 +324,8 @@ export class Rewriter
 				# could just check if the end was right before this?
 				
 				if start and start[2] == i - 1
-					console.log('this expression was just ending before colon!')
-					idx = start[1] - 1
+					# console.log('this expression was just ending before colon!')
+					idx = start[1] - 1 # these are the stackTokens
 				else
 					# console.log "rewrite here? #{i}"
 					idx = i - 2 # if start then start[1] - 1 else i - 2
@@ -325,26 +340,26 @@ export class Rewriter
 				# t = @tokens
 				# console.log(t[i-4],t[i-3],t[i-2],t[i-1])
 
-				if t0 and t0[0] == '}' and t0:generated
+				if t0 and T.typ(t0) == '}' and t0:generated
 					# console.log('already inside the:generated token!')
 					# console.log(t0,t1,idx,i)
 					# removing this
 					@tokens.splice(idx - 1,1)
-					var s = ['{']
+					var s = stackToken('{')
 					s:generated = yes
 					stack.push s
 					return 0
 
 				# hacky edgecase for indents
-				else if t0 and t0[0] == ',' and tokenType(idx - 2) == '}'
+				else if t0 and T.typ(t0) == ',' and tokenType(idx - 2) == '}'
 					@tokens.splice(idx - 2,1)
-					var s = ['{']
+					var s = stackToken('{')
 					s:generated = yes
 					stack.push s
 					return 0
 
 				else
-					var s = ['{']
+					var s = stackToken('{')
 					s:generated = yes
 					stack.push s
 					open(token,idx + 1)
@@ -353,10 +368,10 @@ export class Rewriter
 			# we probably need to run through autocall first?!
 
 			if type == 'DO' # and ctx:generated
-				var prev = tokens[i - 1][0]
+				var prev = T.typ(tokens[i - 1]) # [0]
 				if prev in ['NUMBER','STRING','REGEX','SYMBOL',']','}',')']
 
-					var tok = [',', ',']
+					var tok = T.token(',', ',')
 					tok:generated = yes
 					@tokens.splice(i,0,tok)
 
@@ -381,13 +396,13 @@ export class Rewriter
 		var noCallTag = ['CLASS', 'IF','UNLESS','TAG','WHILE','FOR','UNTIL','CATCH','FINALLY','MODULE','LEADING_WHEN']
 		
 		var action = do |token,i|
-			@tokens.splice i, 0, ['CALL_END', ')', token[2]]
+			@tokens.splice i, 0, T.token('CALL_END', ')', T.loc(token))
 
 		# console.log "adding implicit parenthesis" # ,self:scanTokens
 
 		scanTokens do |token,i,tokens|
 			# console.log "detect end??"
-			var type = token[0]
+			var type = T.typ(token)
 			
 			# Never make these tags implicitly call
 			if type in noCallTag
@@ -396,13 +411,16 @@ export class Rewriter
 			var prev    = tokens[i - 1]
 			var current = tokens[i]
 			var next    = tokens[i + 1]
+
+			var pt = prev and T.typ(prev)
+			var nt = next and T.typ(next)
 			# [prev, current, next] = tokens[i - 1 .. i + 1]
 
 			# check for comments
 			# console.log "detect end??"
-			var callObject  = !noCall and type is 'INDENT' and next and ((next:generated and next[0] is '{') or (next[0] in IMPLICIT_CALL)) and prev and prev[0] in IMPLICIT_FUNC
+			var callObject  = !noCall and type is 'INDENT' and next and ((next:generated and nt is '{') or (nt in IMPLICIT_CALL)) and prev and pt in IMPLICIT_FUNC
 			# new test
-			var callIndent = !noCall and type is 'INDENT' and next and next[0] in IMPLICIT_CALL and prev and prev[0] in IMPLICIT_FUNC
+			var callIndent = !noCall and type is 'INDENT' and next and nt in IMPLICIT_CALL and prev and pt in IMPLICIT_FUNC
 
 			var seenSingle  = no
 			var seenControl = no
@@ -414,13 +432,13 @@ export class Rewriter
 
 			# where does fromThem come from?
 			return 1 if token:fromThen
+			# here we deal with :spaced and :newLine
+			return 1 unless callObject or callIndent or (prev and prev:spaced) and (prev:call or pt in IMPLICIT_FUNC) and (type in IMPLICIT_CALL or not (token:spaced or token:newLine) and type in IMPLICIT_UNSPACED_CALL)
 
-			return 1 unless callObject or callIndent or (prev and prev:spaced) and (prev:call or prev[0] in IMPLICIT_FUNC) and (type in IMPLICIT_CALL or not (token:spaced or token:newLine) and type in IMPLICIT_UNSPACED_CALL)
-
-			tokens.splice i, 0, ['CALL_START', '(', token[2]]
+			tokens.splice i, 0, T.token('CALL_START', '(', T.loc(token))
 
 			var cond = do |token,i|
-				var type = token[0]
+				var type = T.typ(token)
 				return yes if not seenSingle and token:fromThen
 				seenSingle  = yes if type in ['IF', 'UNLESS', 'ELSE', 'CATCH', '->', '=>']
 				seenControl = yes if type in ['IF', 'UNLESS', 'ELSE', 'SWITCH', 'TRY']
@@ -429,13 +447,16 @@ export class Rewriter
 				return yes if type in ['.', '?.','::'] and prev is 'OUTDENT'
 
 				var post = @tokens[i + 1]
+				var postTyp = post and T.typ(post)
 				# WTF
-				return !token:generated and prev isnt ',' and (type in IMPLICIT_END or (type is 'INDENT' and !seenControl) or (type is 'DOS' and prev not in ['='])) and (type isnt 'INDENT' or (tokenType(i - 2) isnt 'CLASS' and prev not in IMPLICIT_BLOCK and not (post and ((post:generated and post[0] is '{') or post[0] in IMPLICIT_CALL))))
+				return !token:generated and prev isnt ',' and (type in IMPLICIT_END or (type is 'INDENT' and !seenControl) or (type is 'DOS' and prev not in ['='])) and (type isnt 'INDENT' or (tokenType(i - 2) isnt 'CLASS' and prev not in IMPLICIT_BLOCK and not (post and ((post:generated and postTyp is '{') or postTyp in IMPLICIT_CALL))))
 
 			# The action for detecting when the call should end
 			# console.log "detect end??"
 			detectEnd(i + 1, cond, action)
-			prev[0] = 'FUNC_EXIST' if prev[0] is '?'
+			if T.typ(prev) == '?'
+				T.setTyp(prev,'FUNC_EXIST')
+				# prev[0] = 'FUNC_EXIST' 
 			2
 
 	# Because our grammar is LALR(1), it can't handle some single-line
@@ -445,7 +466,7 @@ export class Rewriter
 	def addImplicitIndentation
 
 		scanTokens do |token,i,tokens|
-			var type = token[0]
+			var type = T.typ(token)
 			var next = tokenType(i + 1)
 
 			if type is 'TERMINATOR' and next is 'THEN'
@@ -456,8 +477,7 @@ export class Rewriter
 				tokens.splice i + 2, 0, *indentation(token) # hmm ...
 				return 4
 
-			if type in SINGLE_LINERS and next not in ['INDENT','BLOCK_PARAM_START'] and
-				 not (type is 'ELSE' and next is 'IF') and not (type is 'ELIF')
+			if type in SINGLE_LINERS and next not in ['INDENT','BLOCK_PARAM_START'] and not (type == 'ELSE' and next == 'IF') and type != 'ELIF'
 
 				var starter = type
 
@@ -470,7 +490,8 @@ export class Rewriter
 				# outerOutdent = outdent
 
 				var condition = do |token,i|
-					token[1] isnt ';' and token[0] in SINGLE_CLOSERS and not (token[0] is 'ELSE' and starter not in ['IF', 'THEN'])
+					var t = T.typ(token)
+					T.val(token) != ';' and t in SINGLE_CLOSERS and not (t == 'ELSE' and starter not in ['IF', 'THEN'])
 
 				var action = do |token,i|
 					var idx = tokenType(i - 1) is ',' ? i - 1 : i
@@ -484,28 +505,31 @@ export class Rewriter
 	# Tag postfix conditionals as such, so that we can parse them with a
 	# different precedence.
 	def tagPostfixConditionals
-		var condition = do |token,i| token[0] in ['TERMINATOR', 'INDENT']
+		var condition = do |token,i| T.typ(token) in ['TERMINATOR', 'INDENT']
 
 		scanTokens do |token, i|
-			return 1 unless token[0] is 'IF'
+			return 1 unless T.typ(token) == 'IF'
 			var original = token
 			detectEnd(i + 1, condition) do |token,i|
-				original[0] = 'POST_' + original[0] if token[0] isnt 'INDENT'
+				T.setTyp(original, 'POST_' + T.typ(original)) if T.typ(token) != 'INDENT'
+				# original[0] = 'POST_' + original[0] if token[0] isnt 'INDENT'
 			1
 
 	# Generate the indentation tokens, based on another token on the same line.
 	def indentation token
-		[['INDENT', 2, token[2]], ['OUTDENT', 2, token[2]]]
+		[T.token('INDENT', 2, T.loc(token)), T.token('OUTDENT', 2, T.loc(token))]
 
 	# Look up a type by token index.
 	def type i 
-		if i < 0 then return null
+		# if i < 0 then return null
 		var tok = @tokens[i]
-		if tok then tok[0] else null
+		tok and T.typ(tok)
+		# if tok then tok[0] else null
 
 	def tokenType i 
 		var tok = @tokens[i]
-		return tok and tok[0]
+		tok and T.typ(tok)
+		# return tok and tok[0]
 
 # Constants
 # ---------

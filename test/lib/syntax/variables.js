@@ -4,8 +4,6 @@
 	// self = SPEC
 	
 	describe("Syntax - Variables",function (){
-		
-		
 		test("allow predeclaring variables",function (){
 			var b;
 			var a;
@@ -20,8 +18,6 @@
 		
 		
 		return test("allow implicit returns from var declaration",function (){
-			// var hey, ho
-			
 			var hey = (10) ? (5) : (3);
 			var blank = function (){
 				return true;

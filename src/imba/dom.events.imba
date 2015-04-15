@@ -294,7 +294,6 @@ class Imba.Touch
 				@bubble = no
 				target = node
 				target.ontouchstart(self)
-				console.log "hello?!?!?"
 				break unless @bubble
 			dom = dom:parentNode
 
@@ -614,11 +613,6 @@ ED = Imba.EventManager.new(document, events: [
 ])
 
 
-# ED.listen(:click) do |e|
-# 	# console.log('onclick',e)
-# 	ED.trigger('tap',e:target)
-
-
 if hasTouchEvents
 	ED.listen(:touchstart) do |e| Imba.Touch.ontouchstart(e)
 	ED.listen(:touchmove) do |e| Imba.Touch.ontouchmove(e)
@@ -639,50 +633,3 @@ else
 
 	ED.listen(:mouseup) do |e|
 		Imba.POINTER.update(e).process if Imba.POINTER
-
-
-# console.log "Imba touches",hasTouchEvents
-
-# set up the events for touches
-
-# var onmousedown = do |e|
-# 
-# doc.addEventListener("mousedown",)
-# 
-# var onmousedown = do |e|
-# 	console.log('mousedown',e)
-# 	# var touch = Imba.Pointer.new
-# 	# a single pointer -- update
-# 	var touch = Imba.POINTER
-# 	touch.update(e).process if touch
-# 	# Imba.POINTERS.push(touch) # Should this not always be active?
-# 	# touch
-# 
-# def doc.onmousemove e
-# 	var touch = Imba.POINTER
-# 	touch.update(e) if touch
-# 
-# def doc.onmouseup e
-# 	console.log('mouseup',e)
-# 	var touch = Imba.POINTER
-# 	touch.update(e).process if touch
-# 	# should reuse pointers?
-# 	# Imba.POINTERS = []
-# 
-# def doc.onclick e
-# 	console.log('onclick',e)
-# 	ED.trigger('tap',e:target)
-# 	# should reuse pointers?
-# 	# Imba.POINTERS = []
-
-# register some basic events
-
-# [:keydown,:keyup,:keypress,:textInput,:input].forEach do |e| ED.register(e)
-# [:focusin,:focusout,:contextmenu,:submit].forEach do |e| ED.register(e)
-
-# Now setup the the other event-delegators
-# Possibly wrap events in our own for convenience instead of extending regular event
-
-
-
-

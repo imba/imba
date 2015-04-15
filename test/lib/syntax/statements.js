@@ -2,7 +2,7 @@
 
 
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-	union$ = function(a,b){
+	function union$(a,b){
 		if(a && a.__union) return a.__union(b);
 	
 		var u = a.slice(0);
@@ -21,9 +21,7 @@
 	
 	
 	describe("Syntax - Statements",function (){
-		
 		return test("allow statements as arguments",function (){
-			
 			var fn = function (){
 				var $0 = arguments, i = $0.length;
 				var pars = new Array(i>0 ? i : 0);

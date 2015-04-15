@@ -2,8 +2,6 @@
 
 
 	describe("Syntax - Literals",function (){
-		
-		
 		return test("hashes with dynamic keys",function (){
 			var $1;
 			var key = "b";

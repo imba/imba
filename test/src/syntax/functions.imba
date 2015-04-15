@@ -1,7 +1,7 @@
 
 # self = SPEC
 
-local class Paramer < SpecObject
+class Paramer < SpecObject
 	
 	def blk &blk
 		return [blk]

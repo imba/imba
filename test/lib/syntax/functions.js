@@ -63,7 +63,6 @@
 	};
 	
 	Paramer.prototype.req_key = function (name,pars){
-		// m('john', age: 20)
 		if(!pars||pars.constructor !== Object) pars = {};
 		var gender = pars.gender !== undefined ? pars.gender : 0;
 		var age = pars.age !== undefined ? pars.age : 18;
@@ -71,7 +70,6 @@
 	};
 	
 	Paramer.prototype.req_key_blk = function (name,pars,blk){
-		// m(age: 20)
 		if(blk==undefined && typeof pars == 'function') blk = pars,pars = {};
 		else if(!pars||pars.constructor !== Object) pars = {};
 		var gender = pars.gender !== undefined ? pars.gender : 0;
@@ -81,8 +79,6 @@
 	// if the arg is an actual options-block I guess we should check for this first
 	
 	Paramer.prototype.opt_key_blk = function (name,pars,blk){
-		// m(age: 20)
-		// m('john', age: 20) # should work
 		var $0 = arguments, i = $0.length;
 		var blk = typeof $0[i-1] == 'function' ? $0[--i] : null;
 		var pars = $0[i-1]&&$0[i-1].constructor === Object ? $0[--i] : {};
@@ -110,7 +106,6 @@
 	
 	
 	
-		
 		Number.prototype.num_meth = function (){
 			return true;
 		};
@@ -118,7 +113,6 @@
 	
 	
 	describe('Syntax - Functions',function (){
-		
 		var obj = new Paramer();
 		var blk = function (){
 			return true;
@@ -126,7 +120,6 @@
 		var res = null;
 		
 		test("methods",function (){
-			// basic arguments works
 			eq(obj.req('john'),['john']);
 			eq(obj.blk(blk),[blk]);
 			
@@ -174,7 +167,6 @@
 		});
 		
 		test("keyword arguments",function (){
-			// [name,gender,age]
 			res = obj.req_key('john',{age: 20});
 			eq(res,['john',0,20]);
 			
@@ -221,8 +213,6 @@
 		
 		
 		test("basic lambdas",function (){
-			
-			// we use do-syntax fo define basic functions
 			var fn = function (){
 				return 1;
 			};

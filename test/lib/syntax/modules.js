@@ -31,7 +31,6 @@
 	
 	
 	describe("Syntax - Modules",function (){
-		
 		return test("modules",function (){
 			var item = new Item();
 			eq(item.name(),"item");

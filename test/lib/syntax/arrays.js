@@ -2,7 +2,6 @@
 
 
 	describe('Syntax - Arrays',function (){
-		
 		test("trailing commas",function (){
 			var ary = [1,2,3];
 			ok((ary[0] == 1) && (ary[2] == 3) && (ary.length == 3));
@@ -60,13 +59,6 @@
 			list = [].concat([1,2], [].slice.call(a));
 			return eq(list,[1,2,[nonce]]);
 		});
-		
-		// test "#1274: `[] = a()` compiles to `false` instead of `a()`" do
-		// 	a = false
-		//   a is added to an inner scope for this method(!)
-		// 	fn = -> a = true
-		// 	[] = fn()
-		// 	ok a
 	});
 
 
