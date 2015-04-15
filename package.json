@@ -37,7 +37,6 @@
     "browserify": "^9.0.8"
   },
   "dependencies": {
-    "bluebird": "^2.9.24",
     "chalk": "^1.0.0",
     "chokidar": "^1.0.1",
     "commander": "^2.6.0"
