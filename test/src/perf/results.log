@@ -1224,3 +1224,47 @@
         "4 - compile"
     ]
 }
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - lex",
+        "27 - rewrite",
+        "9 - tokenize",
+        "9 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - lex",
+        "27 - rewrite",
+        "9 - tokenize",
+        "9 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "10 - lex",
+        "44 - rewrite",
+        "8 - tokenize",
+        "6 - parse",
+        "3 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "11 - lex",
+        "48 - rewrite",
+        "8 - tokenize",
+        "6 - parse",
+        "3 - compile"
+    ]
+}

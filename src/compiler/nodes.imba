@@ -23,8 +23,6 @@ export var OP = do |op, left, right, opts|
 		Assign.new(op,left,right)
 	elif opstr in ['?=','||=','&&=']
 		ConditionalAssign.new(op,left,right)
-	elif opstr  == '=<'
-		AsyncAssign.new('=',left,Await.new(right))
 	elif opstr in ['+=','-=','*=','/=','^=','%=']
 		CompoundAssign.new(op,left,right)
 	elif opstr == 'instanceof'
@@ -45,6 +43,12 @@ export var OP = do |op, left, right, opts|
 		Range.new(op,left,right)
 	else
 		Op.new(op,left,right)
+
+export var OP_COMPOUND = do |sym,op,l,r|
+	if sym == '?=' or sym == '||=' or sym == '&&='
+		return ConditionalAssign.new(op,l,r)
+	else
+		return CompoundAssign.new(op,l,r)
 
 LIT = do |val|
 	Literal.new(val)
@@ -74,7 +78,7 @@ BLOCK = do
 WHILE = do |test,code|
 	While.new(test).addBody(code)
 
-SPLAT = do |value|
+export var SPLAT = do |value|
 	if value isa Assign
 		# p "WARN"
 		value.left = Splat.new(value.left)
@@ -787,14 +791,14 @@ export class Block < ListNode
 		ary:length == 1 && ary[0] isa Block ? ary[0] : Block.new(ary)
 
 
-	def visit
-		# @indentation ||= INDENT
-
-		if @prebreak # hmm
-			# are we sure?
-			# console.log "PREBREAK IN BLOCK SHOULD THROW"
-			first and first.prebreak(@prebreak)
-		super
+	# def visit
+	# 	# @indentation ||= INDENT
+	# 	
+	# 	if @prebreak # hmm
+	# 		# are we sure?
+	# 		# console.log "PREBREAK IN BLOCK SHOULD THROW"
+	# 		first and first.prebreak(@prebreak)
+	# 	super
 		
 
 	def push item
@@ -807,6 +811,7 @@ export class Block < ListNode
 
 
 	def loc
+		# rather indents, no?
 		if var opt = option(:ends)
 			# p "location is",opt
 			var a = opt[0].loc
@@ -2273,6 +2278,7 @@ export class Num < Literal
 	# 	self
 
 	def raw
+		# really?
 		JSON.parse(String(value))
 
 # should be quoted no?
@@ -2282,13 +2288,15 @@ export class Str < Literal
 
 	def initialize v
 		@value = v
+		# should grab the actual value immediately?
 
 	def raw
 		# JSON.parse requires double-quoted strings,
 		# while eval also allows single quotes. 
 		# NEXT eval is not accessible like this
 		# WARNING TODO be careful! - should clean up
-		@raw ||= global.eval(String(value)) # incredibly stupid solution
+
+		@raw ||= String(value).slice(1,-1) # incredibly stupid solution
 
 	def isValidIdentifier
 		# there are also some values we cannot use

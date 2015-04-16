@@ -2,10 +2,10 @@
 
 export class Token
 	
-	Token:prototype:generated = no
-	Token:prototype:reserved = no
-	Token:prototype:newLine = no
-	Token:prototype:spaced = no
+	# Token:prototype:generated = no
+	# Token:prototype:reserved = no
+	# Token:prototype:newLine = no
+	# Token:prototype:spaced = no
 
 	def initialize type, value, line, region
 		@type = type

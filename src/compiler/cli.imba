@@ -196,7 +196,7 @@ def cli-compile root, o, watch: no
 	watcher.on('all') do |event,path|
 		# need to fix on remove as well!
 		# log "watcher {event} {path}"
-		if path.match(/\.imba$/) and event == 'add' or event == 'change'
+		if path.match(/\.imba$/) and (event == 'add' or event == 'change')
 			var realpath = fspath.resolve(process.cwd, path)
 			var source = sources[realpath] ||= sourcefile-for-path(realpath)
 			var destpath = source.path.replace(/\.imba$/,'.js')

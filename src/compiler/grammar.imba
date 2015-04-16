@@ -94,10 +94,10 @@ var grammar =
 	# will convert some postfix forms into blocks for us, by adjusting the
 	# token stream.
 	Block: [
-		o 'INDENT OUTDENT' do Block.new([]).indented(A1,A2).set(ends: [A1,A2])
-		o 'INDENT Body OUTDENT' do A2.indented(A1,A3).set(ends: [A1,A3])
+		o 'INDENT OUTDENT' do Block.new([]).indented(A1,A2)
+		o 'INDENT Body OUTDENT' do A2.indented(A1,A3)
 		# hacky way to support terminators at the start of blocks
-		o 'INDENT TERMINATOR Body OUTDENT' do A3.prebreak(A2).indented(A1,A4).set(ends: [A1,A4]) # rather indent, no?
+		o 'INDENT TERMINATOR Body OUTDENT' do A3.prebreak(A2).indented(A1,A4)
 	]
 
 	# Block and statements, which make up a line in a body.
@@ -524,7 +524,7 @@ var grammar =
 	# A splat that occurs outside of a parameter list.
 	Splat: [
 		# o '... Expression' do Splat.new A2
-		o 'SPLAT Expression' do SPLAT(A2)
+		o 'SPLAT Expression' do AST.SPLAT(A2)
 	]
 
 	Reference: [
@@ -533,10 +533,10 @@ var grammar =
 	]
 
 	VarReference: [
-		o 'VAR SPLAT VarIdentifier' do SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
+		o 'VAR SPLAT VarIdentifier' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
 		o 'VAR VarIdentifier' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
 		o 'LET VarIdentifier' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
-		o 'LET SPLAT VarIdentifier' do SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
+		o 'LET SPLAT VarIdentifier' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
 		o 'EXPORT VarReference' do A2.set(export: A1)
 	]
 
@@ -923,16 +923,16 @@ var grammar =
 		o 'SQRT Expression' do AST.OP A1, A2
 		o('-     Expression', &, prec: 'UNARY') do Op.new '-', A2
 		o('+     Expression', &, prec: 'UNARY') do Op.new '+', A2
-		o '-- SimpleAssignable' do AST.OP '--', null, A2
-		o '++ SimpleAssignable' do AST.OP '++', null, A2
-		o 'SimpleAssignable --' do AST.OP '--', A1, null, true
-		o 'SimpleAssignable ++' do AST.OP '++', A1, null, true
+		o '-- SimpleAssignable' do UnaryOp.new '--', null, A2
+		o '++ SimpleAssignable' do UnaryOp.new '++', null, A2
+		o 'SimpleAssignable --' do UnaryOp.new '--', A1, null, true
+		o 'SimpleAssignable ++' do UnaryOp.new '++', A1, null, true
 
 		# [The existential operator](http://jashkenas.github.com/coffee-script/#existence).
 		o 'Expression ?' do Existence.new A1
 
-		o 'Expression +  Expression' do AST.OP '+' , A1, A3
-		o 'Expression -  Expression' do AST.OP '-' , A1, A3
+		o 'Expression +  Expression' do Op.new('+',A1,A3)
+		o 'Expression -  Expression' do Op.new('-',A1,A3)
 
 		o 'Expression MATH     Expression' do AST.OP A2, A1, A3
 		o 'Expression SHIFT    Expression' do AST.OP A2, A1, A3
@@ -945,8 +945,8 @@ var grammar =
 			else
 				AST.OP A2, A1, A3
 
-		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do AST.OP(A2, A1, A3)
-		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do AST.OP(A2, A1, A4.indented(A3,A5))
+		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do AST.OP_COMPOUND(A2.@value,A2,A1,A3)
+		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do AST.OP_COMPOUND(A2.@value, A1, A4.indented(A3,A5))
 	]
 
 

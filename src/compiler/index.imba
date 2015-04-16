@@ -1,8 +1,4 @@
 
-# var fs = require 'fs'
-# var path = require 'path'
-# var promise = require 'bluebird'
-
 require '../imba'
 
 var compiler  = require './compiler'
