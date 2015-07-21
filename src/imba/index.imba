@@ -1,6 +1,5 @@
 extern window
 
-# console.log("required imba/lib/imba/index")
 require './imba'
 require './core.events'
 require './dom'

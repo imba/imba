@@ -22,7 +22,7 @@ describe "Syntax - Modules" do
 
 		eq m.Item, Item
 
-		eq hello, "world"
+		eq hello(), "world"
 
 
 		# subclassing an imported class

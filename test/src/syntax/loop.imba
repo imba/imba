@@ -139,7 +139,8 @@ describe 'Syntax - Loops' do
 	describe "Loop" do
 
 		it "should work" do
-			var a,b = 0,0
+			var a = 0
+			var b = 0
 			loop
 				a++
 				break if b == 0

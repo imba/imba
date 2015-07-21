@@ -18,7 +18,7 @@ tag ast-tag < ast-expression
 		<ast.head>
 			<ast.type> object.option(:type)
 			object.parts # render to classes - no?
-		<ast.body> object.option(:body) # hmm
+		<ast.body> object.option(:body)
 
 tag ast-tag-body < ast-list-node
 

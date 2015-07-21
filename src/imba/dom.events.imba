@@ -5,7 +5,6 @@ extern window, document
 var doc = global:document
 var win = global:window
 
-# hmm -- this is probably wrong
 var hasTouchEvents = win && win:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
 
 
@@ -47,6 +46,7 @@ class Imba.Pointer
 	def initialize
 		button = -1
 		events = Imba.RingBuffer.new(10)
+		event = {x: 0, y: 0, type: 'uninitialized'}
 		self
 
 	def update e
@@ -60,7 +60,8 @@ class Imba.Pointer
 	# this is just for regular mouse now
 	def process
 		var phase = phase
-		var e0,e1 = prevEvent,event
+		var e0 = prevEvent
+		var e1 = event
 
 		if dirty
 			prevEvent = e1
@@ -81,7 +82,7 @@ class Imba.Pointer
 				button = -1
 				# console.log('button-state changed!!!',button)
 				touch.mouseup(e1,e1) if touch
-				touch = nil # reuse?
+				touch = null # reuse?
 				# trigger pointerup
 
 			# if !e0 || e0:button != e1:button
@@ -112,7 +113,6 @@ class Imba.Pointer
 			ptr.process
 		# need to be able to prevent the default behaviour of touch, no?
 		win.requestAnimationFrame(Imba.Pointer:update)
-
 		self
 
 
@@ -146,7 +146,6 @@ class Imba.Touch
 		return
 
 	def self.ontouchstart e
-		log "ontouchstart",e
 		for t in e:changedTouches
 			continue if lookup(t)
 			var touch = identifiers[t:identifier] = self.new(e) # (e)
@@ -190,6 +189,7 @@ class Imba.Touch
 	prop target # if 'safe' we can cache multiple uses
 	prop handler
 	prop updates
+	prop suppress
 	prop data
 	prop bubble chainable: yes
 
@@ -206,11 +206,13 @@ class Imba.Touch
 		event = e
 		data = {}
 		active = yes
+		@suppress = no
 		bubble = no
 		pointer = ptr
 		updates = 0
 
 	def preventDefault
+		@preventDefault = yes
 		event and event.preventDefault
 		# pointer.event.preventDefault
 		self
@@ -218,7 +220,7 @@ class Imba.Touch
 	def extend gesture
 		# console.log "added gesture!!!"
 		@gestures ||= []
-		@gestures.push(gesture) # hmmm
+		@gestures.push(gesture)
 		self
 
 	def redirect target
@@ -230,23 +232,29 @@ class Imba.Touch
 		self
 
 	def touchstart e,t
+		@event = e
 		@touch = t
 		@x = t:clientX
 		@y = t:clientY
 		began
+		e.preventDefault if e and @suppress
 		self
 
 	def touchmove e,t
+		@event = e
 		@x = t:clientX
 		@y = t:clientY
 		update
+		e.preventDefault if e and @suppress
 		self
 
 	def touchend e,t
+		@event = e
 		# log "touchend"
 		@x = t:clientX
 		@y = t:clientY
 		ended
+		e.preventDefault if e and @suppress
 		self
 
 	def touchcancel e,t
@@ -265,7 +273,11 @@ class Imba.Touch
 		# log "mousemove"
 		@x = t:clientX
 		@y = t:clientY
+		# how does this work with touches?
+		@event = e
+		e.preventDefault if @suppress
 		update
+		move
 		self
 
 	def mouseup e,t
@@ -284,9 +296,11 @@ class Imba.Touch
 		@y0 = @y
 
 		var e = event
-		# var ptr = pointer # hmmm
+		# var ptr = pointer
 		var dom = event:target
 		var node = nil
+
+		@sourceTarget = dom and tag(dom)
 		# need to find the 
 		while dom
 			node = tag(dom)
@@ -326,6 +340,16 @@ class Imba.Touch
 		target.ontouchupdate(self) if target and target:ontouchupdate
 		self
 
+	def move
+		return self unless @active
+
+		if @gestures
+			for g in @gestures
+				g.ontouchmove(self,@event) if g:ontouchmove
+
+		target.ontouchmove(self,@event) if target and target:ontouchmove
+		self
+
 	def ended
 		return self unless @active
 
@@ -356,7 +380,10 @@ class Imba.Touch
 	def x do @x # pointer.x
 	def y do @y # pointer.y
 
-	def button do @pointer ? @pointer.button : 0 # hmmmm
+	def button do @pointer ? @pointer.button : 0
+
+	def sourceTarget
+		@sourceTarget
 
 
 class Imba.TouchGesture
@@ -384,8 +411,8 @@ class Imba.TouchGesture
 Imba.POINTER = Imba.Pointer.new
 Imba.POINTERS = [Imba.POINTER]
 
-	
-Imba.Pointer.update
+# are we really sure we want to use RAF for this?
+# Imba.Pointer.update
 
 
 
@@ -495,16 +522,17 @@ class Imba.Event
 	def process
 		var meth = "on{@prefix or ''}{name}"
 		var domtarget = event:_target or event:target		
-		# var node = <{domtarget:_responder or domtarget}> # hmm
+		# var node = <{domtarget:_responder or domtarget}>
 
 		var domnode = domtarget:_responder or domtarget
 		# need to stop infinite redirect-rules here??!?
 		while domnode
-			@redirect = nil
-			var node = tag(domnode)
+			@redirect = null
+			var node = tag(domnode) # not only tag
 			if node and node[meth] isa Function
-				node[meth](self,data)
+				var res = node[meth](self,data)
 			# log "hit?",domnode
+			# add node.nextEventResponder as a separate method here?
 			break unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
 
 		return self
@@ -618,18 +646,17 @@ if hasTouchEvents
 	ED.listen(:touchmove) do |e| Imba.Touch.ontouchmove(e)
 	ED.listen(:touchend) do |e| Imba.Touch.ontouchend(e)
 	ED.listen(:touchcancel) do |e| Imba.Touch.ontouchcancel(e)
+
 else
-	# ...
 	ED.listen(:click) do |e|
 		# console.log('onclick',e)
 		ED.trigger('tap',e:target)
-
 
 	ED.listen(:mousedown) do |e|
 		Imba.POINTER.update(e).process if Imba.POINTER
 
 	ED.listen(:mousemove) do |e|
-		Imba.POINTER.update(e) if Imba.POINTER # .process if touch # should not happen? We process through 
+		Imba.POINTER.update(e).process if Imba.POINTER # .process if touch # should not happen? We process through 
 
 	ED.listen(:mouseup) do |e|
 		Imba.POINTER.update(e).process if Imba.POINTER

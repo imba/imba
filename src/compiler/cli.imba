@@ -1,28 +1,52 @@
-var cli       = require 'commander'
+
+extern parseInt
+
 var fs        = require 'fs'
 var path      = require 'path'
+var cli       = require 'commander'
 var chalk     = require 'chalk'
 
+var orig = cli:helpInformation
+var cliproto = cli:constructor:prototype
+
+var ERR = require './errors'
+
+def cliproto.helpInformation
+	var str = orig.call(self)
+
+	str = str.replace(/(Options|Usage|Examples|Commands)\:/g) do |m| chalk.bold m
+	return str
+	# return "TTOT {str}"
+
+# override cli to add color
+def cli.optionHelp2
+	var width = this.largestOptionLength
+	# Prepend the help information
+	var out = "TATATA"
+	# return [pad('-h, --help', width) + '  ' + 'output usage information']
+	#   .concat(this.options.map(function(option) {
+	#     return pad(option.flags, width) + '  ' + option.description;
+	#     }))
+	#   .join('\n');
+	
+
+
+# console.time("compiler")
 var tasks = require './tasks'
 var compiler  = require './compiler'
-
 var fspath = path
-
 var T = require './token'
+# console.timeEnd("compiler")
 
 var parser = compiler:parser
 
-
 # really?
 # wrapper for files?
+# this caches an awful lot now - no need before we introduce a shared worker++
 class SourceFile
 	
 	prop path
-	# prop code
-	# prop tokens
-	# prop ast
 	prop meta
-	# prop js
 
 	def initialize path
 		@path = path
@@ -48,11 +72,12 @@ class SourceFile
 	def write outpath, cb
 		# promise.new do |resolve|
 		# await self.compile
-		fs.writeFile(outpath,js,cb)
+		fs.writeFileSync(outpath,js)
 
 	def dirty
 		# console.log "marking file as dirty!"
 		# simply removing all info abou tfiles
+		@prevcode = @code
 		@code = @js = @tokens = @ast = @meta = nil
 		@read = @tokenize = @compile = @parse = @analyze = nil
 		self
@@ -64,22 +89,39 @@ class SourceFile
 			cb and cb(@meta)
 			return @meta
 
-		STACK:_loglevel = 0 # not here?
+		# STACK:_loglevel = 0 # not here?
 		var errors = []
 		var err = null
 		var data = {}
 
 		try
-			@meta = ast.analyze({})
+			@meta = ast.analyze(loglevel: 0)
 			cb and cb(@meta)
 			# resolve(self.meta)
 		catch e
-			console.log "ERROR {e:message}"
+			# console.log "something wrong {e:message}"
+			unless e isa ERR.ImbaParseError
+				if e:lexer
+					e = ERR.ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
+				else
+					throw e
+					# e = {message: e:message}
+
+				
+			@meta = {warnings: [e]}
+			cb and cb(@meta)
 
 		return @meta
 		
 	def run
 		compiler.run(code, filename: @path)
+
+	def htmlify
+		var out = compiler.highlight(code,filename: @path)
+		fs.writeFileSync(@path.replace(/\.imba$/,'.html'),out)
+		console.log "htmlify code",out
+		return out
+
 
 
 def log *pars
@@ -91,6 +133,15 @@ def ts
 
 def b *pars
 	chalk.bold(*pars)
+
+def dim
+	chalk:dim
+
+def puts str
+	process:stdout.write str
+
+def print str
+	process:stdout.write str
 	
 
 def print-tokens tokens
@@ -130,30 +181,143 @@ def sourcefile-for-path path
 	path = fspath.resolve(process.cwd, path)
 	SourceFile.new(path)
 
+def printCompilerError e, source: nil
+	#  return printError(e,source: source)
+	console.log "error {e}"
+	var lex = e:lexer
+	var tok = lex and lex:yytext
+	var src = source and source.code
+	var lines = src and src.split(/\n/g)
+	var tokens = lex and lex:tokens
+
+	# log "OH NOH"
+
+	var lnum = do |l, color = 'grey'|
+		var s = String(l + 1)
+		while s:length < 6
+			s = ' ' + s
+		return dim[color]('    ' + s + '  ')
+
+
+	def printLn nr, errtok
+		var pos = lex:pos
+		var ln = lines[nr]
+		var prefix = lnum(nr,errtok ? 'red' : 'grey')
+
+		return log(prefix) unless ln
+
+		# log lnum(nr)
+
+		var colors = {
+			NUMBER: chalk:blue
+			STRING: chalk:green
+			KEYWORD: chalk:gray
+			PUNCTUATION: chalk:white
+			IDENTIFIER: chalk:bold
+			ERR: chalk:bold:red:underline
+		}
+
+		# first get the pos up to the wanted line
+		while var tok = tokens[++pos]
+			break if tok.@line > nr
+
+		while var tok = tokens[--pos]
+			continue if tok.@col == -1 # generated
+
+			var l = tok.@line
+			# log "looping token {tok.@line} {tok.@col}"
+			continue if l > nr
+			break if l < nr
+			# log "breakign at line {tok.@line}"
+			# log "highlight {tok.@type}"
+			var typ = tok.@type
+			var col = tok.@col
+			var len = tok.@len or tok.@value:length
+
+			typ = 'KEYWORD' if typ:length > 1 and typ == tok.@value.toUpperCase
+			typ = 'PUNCTUATION' if typ.match(/^[\[\]\{\}\(\)\,]/)
+			if tok == errtok
+				typ = 'ERR'
+
+			if var fmt = colors[typ]
+				ln = ln.substr(0,col) + fmt(ln.substr(col,len)) + ln.slice(col + len)
+
+		log prefix + ln
+
+		return
+		
+
+		
+	# select the lines to show
+	# go backwards in tokenlist and colorize the string if type
+	# try first on the single line
+	# var character = src.charAt(tok.@loc)
+	# var c2 = lines[tok.@line].charAt(tok.@col + 1)
+
+	log " - " + chalk.red(e:message)  # + character + c2
+
+
+	if tok and src
+		log(chalk.grey("    ------") + "  ------------------")
+		var lines = src.split(/\n/g)
+
+		# find the closest non-generated token to show error
+		var tpos = tokens.indexOf(tok)
+		while tok and tok.@col == -1
+			tok = tokens[--tpos]
+
+		var ln = tok.@line
+		var col = tok.@col
+
+		printLn(ln - 3)
+		printLn(ln - 2)
+		printLn(ln - 1)
+		printLn(ln,tok)
+		printLn(ln + 1)
+		log(chalk.grey("    ------") + "  ------------------")
+		# log ln,col
+	return
+
+
+
 def write-file source, outpath
 	ensure-dir(outpath)
 	# var outpath = source.path.replace(/\.imba$/,'.js')
 	# destpath = destpath.replace(basedir,outdir)
-	source.dirty
+	return unless source.dirty
 
 	var srcp = fspath.relative(process.cwd,source.path)
 	var outp = fspath.relative(process.cwd,outpath)
 
-	log ts, chalk:dim.grey "compile {b chalk.white srcp} to {b chalk.white outp}"
+	var str = ts + " " + chalk:dim.grey("compile {b chalk.white srcp} to {b chalk.white outp}")
+	# console.log ts, str
+	print str
 
 	# log "made dirty"
 	# log ts, chalk:dim.grey "will compile {source.path}"
-	source.write(outpath) do |err,res|
-		true
-		# var srcp = fspath.relative(process.cwd,source.path)
-		# var outp = fspath.relative(process.cwd,outpath)
-		# log ts, chalk:dim.grey "compiled {b chalk.white srcp} to {b chalk.white outp}"
+	try
+		var start = Date.now
+		var code = compiler.compile(source.code, filename: source.path)
+		var time = Date.now - start
+		print " - " + chalk:dim.grey("{time}ms") + "\n"
+		fs.writeFileSync(outpath,code)
+
+	catch e
+		# print " - " + chalk:dim.red("failed") + "\n"
+		printCompilerError(e, source: source) # e:message + "\n"
+	return
+
+	#  do |err,res|
+	# 	log "compiled \r"
+	# 	true
+	# 	# var srcp = fspath.relative(process.cwd,source.path)
+	# 	# var outp = fspath.relative(process.cwd,outpath)
+	# 	# log ts, chalk:dim.grey "compiled {b chalk.white srcp} to {b chalk.white outp}"
 
 
 # shared action for compile and watch
 def cli-compile root, o, watch: no
-	var chokidar  = require 'chokidar'
-
+	
 	var base = fspath.resolve(process.cwd, root)
 	var basedir = base
 	var exists  = fs.existsSync(base)
@@ -184,13 +348,22 @@ def cli-compile root, o, watch: no
 			# absolute paths here?
 			var libExists = fs.existsSync(libPath)
 			outdir = out = libPath
-			log chalk.blue "--- found dir: {b libPath}" if watch
+			# log chalk.blue "--- found dir: {b libPath}" if watch
 	
+	# compiling a single file - no need to require chokidar at all
+	if isFile and !watch
+		var source = sourcefileForPath(base)
+		var destpath = source.path.replace(/\.imba$/,'.js').replace(basedir,outdir)
+		write-file(source,destpath)
+		return
+
 	log chalk.blue "--- write dir: {b out}"
-	# log chalk:bold.blue "--- write dir: {out}"
-	# want to respect the output-place
+
 	var sources = {}
 
+	# it is bad practice to require modules inside methods, but chokidar takes
+	# some time to load, and we really dont want that for single-file compiles
+	var chokidar = require 'chokidar'
 	var watcher = chokidar.watch(base, ignored: /[\/\\]\./, persistent: watch)
 
 	watcher.on('all') do |event,path|
@@ -198,25 +371,22 @@ def cli-compile root, o, watch: no
 		# log "watcher {event} {path}"
 		if path.match(/\.imba$/) and (event == 'add' or event == 'change')
 			var realpath = fspath.resolve(process.cwd, path)
-			var source = sources[realpath] ||= sourcefile-for-path(realpath)
+			var source = sources[realpath] ||= sourcefileForPath(realpath)
 			var destpath = source.path.replace(/\.imba$/,'.js')
 			destpath = destpath.replace(basedir,outdir)
 			# should supply the dir
 			# log "write file {destpath}"
 			write-file(source,destpath)
-	self
+	return
 
 	
 cli
-	.version('0.7.2')
-	.option('--join [FILE]',    'concatenate the source Imba before compiling')
-	.option('-v, --version',	'display the version number')
+	.version('0.8.0')
 
 cli.command('* <path>')
 	.usage('<path>')
 	.description('run imba')
 	.action do |path,o|
-		# should run directly without promises and all that stuff
 		var file = sourcefile-for-path(path)
 		file.run
 
@@ -230,8 +400,6 @@ cli.command('watch <path>')
 	.description('listen for changes and compile scripts')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |root,o| cli-compile(root,o,watch: yes)
-
-# .option('--poll', 'useful for successfully watching files over a network')
 
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')
@@ -247,6 +415,17 @@ cli.command('analyze <path>')
 			file.analyze do |meta|
 				log JSON.stringify(meta)
 
+cli.command('export <path>')
+	.description('create highlighted snippet of script')
+	.option('-v, --verbose', 'return detailed output')
+	.option('-t, --tokens', 'return detailed output')
+	.action do |path, opts|
+		var file = sourcefile-for-path(path)
+		var out = file.htmlify # do |meta| log JSON.stringify(meta)
+		log JSON.stringify(out)
+		return 
+
+
 # .option('-f, --format <format>', 'format of output', 'json', /^(json|plain|html)$/i)	
 
 cli.command('dev <task>')
@@ -259,10 +438,19 @@ cli.command('dev <task>')
 
 # .option('--poll', 'useful for successfully watching files over a network')
 
-
+# cli.on('--help') do
+# 	console.log('  Examples:')
+# 	console.log('')
+# 	console.log('    $ custom-help --help')
+# 	console.log('    $ custom-help -h')
+# 	console.log('')
 
 export def run argv
 	var res = cli.parse(argv)
+
+	if !process:argv.slice(2):length
+		cli.outputHelp
+
 	# console.log(cli.name)
 	# console.log res.name
 	# console.log "herel"

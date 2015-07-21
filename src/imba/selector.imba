@@ -101,14 +101,15 @@ global class ImbaSelector
 
 	def filter blk, bool = yes
 		var fn = blk isa Function and blk or (|n| n.matches(blk) )
-		var ary = nodes.filter(|n| fn(n) == bool) # hmm -- not sure about this?
+		var ary = nodes.filter(|n| fn(n) == bool)
 		# if we want to return a new selector for this, we should do that for
 		# others as well
 		ImbaSelector.new("", @scope, ary)
 
-	# hmm - what is this even for?
 	def __query__ query, contexts
-		var nodes,i,l = [],0,contexts:length
+		var nodes = []
+		var i = 0
+		var l = contexts:length
 
 		while i < l
 			nodes.push(*contexts[i++].querySelectorAll(query))
@@ -127,7 +128,6 @@ global class ImbaSelector
 	def call meth, args = []
 		forEach do |n| fn.apply(n,args) if fn = n[meth]
 
-# hmm
 q$ = do |sel,scope| ImbaSelector.new(sel, scope)
 
 q$$ = do |sel,scope| 

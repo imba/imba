@@ -18,7 +18,7 @@
 
 # The only dependency is on the **Jison.Parser**.
 
-var jison = require 'jison'
+var jison = require '../jison/jison'
 var Parser = jison.Parser
 
 # Jison DSL
@@ -81,7 +81,7 @@ var grammar =
 
 	# Any list of statements and expressions, separated by line breaks or semicolons.
 	Body: [
-		o 'Line' do Block.wrap [A1]
+		o 'Line' do Block.new([A1])
 		o 'Body Terminator Line' do A1.break(A2).add(A3) # A3.prebreak(A2) # why not add as real nodes?!
 		o 'Body Terminator' do A1.break(A2)
 	]
@@ -105,7 +105,7 @@ var grammar =
 		o 'Splat'
 		o 'Expression'
 		o 'Line , Expression' do A1.addExpression(A3) # Onto something??
-		o 'Line , Splat' do A1.addExpression(A3) # Onto something??
+		o 'Line , Splat' do A1.addExpression(A3) # Onto something?? # why is not splat an expression?
 		o 'Comment'
 		o 'Statement'
 	]
@@ -153,7 +153,6 @@ var grammar =
 	Expression: [
 		o 'Await'
 		o 'Value'
-		o 'Invocation'
 		o 'Code'
 		o 'Operation'
 		o 'Assign'
@@ -173,7 +172,6 @@ var grammar =
 	# A literal identifier, a variable name or property.
 	Identifier: [
 		o 'IDENTIFIER' do Identifier.new A1
-		# o 'TAGID' do TagId.new A1
 	]
 
 	# A literal identifier, a variable name or property.
@@ -214,6 +212,11 @@ var grammar =
 		o 'JS' do Literal.new A1
 		o 'REGEX' do RegExp.new A1
 		o 'BOOL' do Bool.new A1
+		o 'TRUE' do AST.TRUE
+		o 'FALSE' do AST.FALSE
+		o 'NULL' do AST.NIL
+		o 'UNDEFINED' do AST.UNDEFINED
+		# we loose locations for these
 	]
 
 	# A return statement from a function body.
@@ -255,20 +258,10 @@ var grammar =
 	]
 
 	Tag: [
-		o 'TAG_START TagOptions TagAttributes TAG_END' do A2.set(attributes: A3)
-		o 'TAG_START TagOptions TagAttributes TAG_END TagBody' do A2.set(attributes: A3, body: A5)
-
-		# should now be dynamic tag instead -- we have the tag(dom) wrapper
+		o 'TAG_START TagOptions TagAttributes TAG_END' do A2.set(attributes: A3, open: A1, close: A4)
+		o 'TAG_START TagOptions TagAttributes TAG_END TagBody' do A2.set(attributes: A3, body: A5, open: A1, close: A4)
 		o 'TAG_START { Expression } TAG_END' do TagWrapper.new A3, A1, A5
-		# o 'TAG_START TAG_NAME [ IndexValue ] , TagAttributes TAG_END' do Tag.new A2, Obj.new(A7), [], A4
-		# o 'TAG_START TAG_NAME TagAttributes TAG_END' do Tag.new A2, Obj.new(A3)
-		# o 'TAG_START TAG_NAME TagAttributes TAG_END TagBody' do Tag.new A2, Obj.new(A3), [Arr.new(A5)]
 	]
-
-	# TagClose: [
-	#   o 'TAG_CLOSE TAG_END' do A2
-	#   o 'TAG_END' do A1
-	# ]
 
 	TagTypeName: [
 		o 'Self' do A1
@@ -405,9 +398,14 @@ var grammar =
 	]
 
 	Property: [
-		o 'PROP PropertyIdentifier Object' do PropertyDeclaration.new A2, A3, A1
-		o 'PROP PropertyIdentifier CALL_START Object CALL_END' do PropertyDeclaration.new A2, A4, $1
-		o 'PROP PropertyIdentifier' do PropertyDeclaration.new A2, null, A1
+		o 'PropType PropertyIdentifier Object' do PropertyDeclaration.new A2, A3, A1
+		o 'PropType PropertyIdentifier CALL_START Object CALL_END' do PropertyDeclaration.new A2, A4, A1
+		o 'PropType PropertyIdentifier' do PropertyDeclaration.new A2, null, A1
+	]
+
+	PropType: [
+		o 'PROP'
+		o 'ATTR'
 	]
 
 	PropertyIdentifier: [
@@ -416,6 +414,7 @@ var grammar =
 	]
 
 	TupleAssign: [
+		# what about LET?
 		o 'VAR Identifier , Expression' do A1
 	]
 
@@ -441,20 +440,16 @@ var grammar =
 
 		# haaaacks
 		o 'DEF MethodScope MethodScopeType MethodIdentifier CALL_START ParamList CALL_END DEF_FRAGMENT MethodBody' do 
-			A9:expressions = [Arr.new(A9:expressions)]
-			MethodDeclaration.new A6, A9, A4, A2, A3
+			MethodDeclaration.new(A6, A9, A4, A2, A3).set(greedy: yes)
 
 		o 'DEF MethodScope MethodScopeType MethodIdentifier DEF_FRAGMENT MethodBody' do
-			A6:expressions = [Arr.new(A6:expressions)]
-			MethodDeclaration.new [], A6, A4, A2, A3
+			MethodDeclaration.new([], A6, A4, A2, A3).set(greedy: yes)
 
 		o 'DEF MethodIdentifier CALL_START ParamList CALL_END DEF_FRAGMENT MethodBody' do 
-			A7:expressions = [Arr.new(A7:expressions)]
-			MethodDeclaration.new A4, A7, A2, null
+			MethodDeclaration.new(A4, A7, A2, null).set(greedy: yes)
 
 		o 'DEF MethodIdentifier DEF_FRAGMENT MethodBody' do
-			A4:expressions = [Arr.new(A4:expressions)]
-			MethodDeclaration.new [], A4, A2, null
+			MethodDeclaration.new([], A4, A2, null).set(greedy: yes)
 	]
 
 	MethodScopeType: [
@@ -483,9 +478,6 @@ var grammar =
 		o 'This'
 		o 'Self' # global?
 		o 'Gvar'
-		# o 'Identifier'
-		# o 'Const'
-		# o 'SimpleAssignable'
 	]
 
 	# An optional, trailing comma.
@@ -516,9 +508,6 @@ var grammar =
  	# Function Parameters
 	ParamVar: [
 		o 'Identifier'
-		# o 'ThisProperty'
-		# o 'Array'
-		
 	]
 
 	# A splat that occurs outside of a parameter list.
@@ -527,16 +516,16 @@ var grammar =
 		o 'SPLAT Expression' do AST.SPLAT(A2)
 	]
 
-	Reference: [
-		o 'Value Symbol' do Reference.new A1, A2
-		# o 'Value INDEX_START IndexValue INDEX_END' do Reference.new A1, A3.index
-	]
+	# Reference: [
+	# 	o 'Value Symbol' do Reference.new A1, A2
+	# 	# o 'Value INDEX_START IndexValue INDEX_END' do Reference.new A1, A3.index
+	# ]
 
 	VarReference: [
-		o 'VAR SPLAT VarIdentifier' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
-		o 'VAR VarIdentifier' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
-		o 'LET VarIdentifier' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
-		o 'LET SPLAT VarIdentifier' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
+		o 'VAR SPLAT VarAssignable' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
+		o 'VAR VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
+		o 'LET VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
+		o 'LET SPLAT VarAssignable' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
 		o 'EXPORT VarReference' do A2.set(export: A1)
 	]
 
@@ -545,49 +534,46 @@ var grammar =
 		o 'Identifier'
 	]
 
+	VarAssignable: [
+		o 'Const'
+		o 'Identifier'
+		o 'Array' # all kinds?
+	]
+
 	# Variables and properties that can be assigned to.
 	SimpleAssignable: [
 
-		o 'Const' do A1
+		o 'Const'
 		o 'Ivar' do IvarAccess.new('.',null,A1)
-		o 'Gvar' do A1
-		o 'Argvar' do A1
-		o 'Self' do A1
+		o 'Gvar'
+		o 'Argvar'
+		o 'Self' # not sure if self should be assignable really
+		o 'VarReference'
 		o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
-		o 'VarReference' do A1
-		o 'Reference' do A1
 		o 'Value . NEW' do New.new(A1)
 		o 'Value . Super' do SuperAccess.new('.',A1,A3)
-		o 'Value . Identifier' do PropertyAccess.new('.',A1,A3)
-		o 'Value . Ivar' do IvarAccess.new('.',A1,A3)
-		o 'Value . Symbol' do ObjectAccess.new('.',A1,Identifier.new(A3.value))
-		o 'Value . Const' do ConstAccess.new('.',A1,A3)
-		o 'Value . NUMBER' do AST.OP('.',A1,Num.new(A3))
-
-		o 'Invocation . Identifier' do PropertyAccess.new('.',A1,A3)
-		o 'Invocation . Symbol' do ObjectAccess.new('.',A1,Identifier.new(A3.value))
-		o 'Invocation . Const' do ConstAccess.new('.',A1,A3)
-		o 'Invocation . Ivar' do IvarAccess.new('.',A1,A3)
-		# Should probably just be a regular access?
+		o 'Value SoakableOp Identifier' do PropertyAccess.new(A2,A1,A3)
+		o 'Value ?: Identifier' do Access.new(A2,A1,A3)
+		o 'Value SoakableOp Ivar' do Access.new(A2,A1,A3)
+		o 'Value . Symbol' do Access.new('.',A1,Identifier.new(A3.value))
+		o 'Value SoakableOp Const' do Access.new(A2,A1,A3)
 		o 'Value INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
-		o 'Invocation INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
+	]
+
+	SoakableOp: [
+		'.'
+		'?.'
 	]
 
 	Super: [
 		o 'SUPER' do AST.SUPER
 	]
 
-	# Accessor: [
-	#   o 'Identifier' do Getter.new(A1)
-	#   o 'Const' #  do A1
-	# ]
-
 	# Everything that can be assigned to.
 	Assignable: [
 		o 'SimpleAssignable'
-		# these are for splats etc, might be okay to remove 
 		o 'Array' #  do A1
-		o 'Object' # do A1
+		o 'Object' # not supported anymore
 	]
 
 	Await: [
@@ -598,17 +584,19 @@ var grammar =
 	# as functions, indexed into, named as a class, etc.
 	Value: [
 		o 'Assignable'
-		o 'Super' do A1
-		o 'Literal' do A1
-		o 'Parenthetical' do A1
-		o 'Range' do A1
+		o 'Super'
+		o 'Literal'
+		o 'Parenthetical'
+		o 'Range'
 		o 'ARGUMENTS' do AST.ARGUMENTS
 		o 'This'
-		o 'TagId' do A1
+		o 'TagId'
 		o 'Selector'
+		o 'Invocation'
 	]
 
 	IndexValue: [
+		# Do we need to wrap this?
 		o 'Expression' do Index.new A1
 		o 'Slice' do Slice.new A1
 	]
@@ -626,8 +614,7 @@ var grammar =
 		o 'AssignList , AssignObj' do A1.add A3
 		o 'AssignList OptComma Terminator AssignObj' do A1.add(A3).add(A4) # A4.prebreak(A3)
 		# this is strange
-		o 'AssignList OptComma INDENT AssignList OptComma Outdent' do 
-			A1.concat A4.indented(A3,A6) # hmmm
+		o 'AssignList OptComma INDENT AssignList OptComma Outdent' do  A1.concat(A4.indented(A3,A6))
 	]
 
 	# Class definitions have optional bodies of prototype property assignments,
@@ -659,19 +646,9 @@ var grammar =
 	# Ordinary function invocation, or a chained series of calls.
 	Invocation: [
 		o 'Value OptFuncExist Arguments' do Call.new A1, A3, A2
-		o 'Invocation OptFuncExist Arguments' do Call.new A1, A3, A2
-		o 'Invocation Do' do
-			A1.addBlock(A2)
-			A1
-	]
-
-	SuperCall: [
-		o 'SUPER' do  SuperReference.new(AST.SUPER)
-		o 'SUPER SuperAccess' do A1.access(A3)
-	]
-
-	SuperAccess: [
-		o '. SUPER' do A2
+		o 'Value Do' do A1.addBlock(A2)
+		# o 'Invocation OptFuncExist Arguments' do Call.new A1, A3, A2
+		# o 'Invocation Do' do A1.addBlock(A2)
 	]
 
 	# An optional existence check on a function.
@@ -682,7 +659,7 @@ var grammar =
 
 	# The list of arguments to a function call.
 	Arguments: [
-		o 'CALL_START CALL_END' do ArgList.new([]) # hmm
+		o 'CALL_START CALL_END' do ArgList.new([])
 		o 'CALL_START ArgList OptComma CALL_END' do A2
 	]
 
@@ -727,15 +704,12 @@ var grammar =
 		o 'Arg' do ArgList.new([A1])
 		o 'ArgList , Arg' do A1.add A3
 		o 'ArgList OptComma Terminator Arg' do A1.add(A3).add(A4)
-		o 'INDENT ArgList OptComma Outdent' do
-			# not good -- arglist should be a separate node-type -- really
-			A2.indented(A1,A4)
-		# hmmm
+		o 'INDENT ArgList OptComma Outdent' do A2.indented(A1,A4)
 		o 'ArgList OptComma INDENT ArgList OptComma Outdent' do A1.concat A4
 	]
 
 	Outdent: [
-		o 'Terminator OUTDENT' do [A1,A2]
+		o 'Terminator OUTDENT' do A1 # we are going to change how this works
 		o 'OUTDENT' do A1
 	]
 
@@ -828,9 +802,7 @@ var grammar =
 
 	ForStart: [
 		o 'FOR ForVariables' do A2
-		o 'FOR OWN ForVariables' do
-			A3:own = yes
-			A3
+		o 'FOR OWN ForVariables' do (A3:own = yes) && A3
 
 	]
 
@@ -887,8 +859,8 @@ var grammar =
 
 
 	IfBlock: [
-		o 'IF Expression Block' do If.new A2, A3, type: A1
-		o 'IfBlock ELSE IF Expression Block' do A1.addElse If.new A4, A5, type: A3
+		o 'IF Expression Block' do If.new(A2, A3, type: A1)
+		o 'IfBlock ELSE IF Expression Block' do A1.addElse If.new(A4, A5, type: A3)
 
 		# seems like this refers to the wrong blocks no?
 		o 'IfBlock ELIF Expression Block' do 
@@ -901,15 +873,12 @@ var grammar =
 	# *if* and *unless*.
 	If: [
 		o 'IfBlock'
-		o 'Statement  POST_IF Expression' do If.new A3, Block.wrap([A1]), type: A2, statement: true
-		o 'Expression POST_IF Expression' do If.new A3, Block.wrap([A1]), type: A2, statement: true
+		o 'Statement  POST_IF Expression' do If.new A3, Block.new([A1]), type: A2, statement: true
+		o 'Expression POST_IF Expression' do If.new A3, Block.new([A1]), type: A2 # , statement: true # why is this a statement?!?
 	]
 
 	Ternary: [
-		o 'Expression ? Expression : Expression' do
-			var ifblock = If.new A1, Block.wrap([A3]), type: 'if'
-			ifblock.addElse Block.wrap([A5])
-			ifblock
+		o 'Expression ? Expression : Expression' do AST.If.ternary(A1,A3,A5)
 	]
 
 	# Arithmetic and logical operators, working on one or more operands.
@@ -938,10 +907,11 @@ var grammar =
 		o 'Expression SHIFT    Expression' do AST.OP A2, A1, A3
 		o 'Expression COMPARE  Expression' do AST.OP A2, A1, A3
 		o 'Expression LOGIC    Expression' do AST.OP A2, A1, A3
+		# o 'Expression ?.    Expression' do AST.OP A2, A1, A3
 
 		o 'Expression RELATION Expression' do
 			if A2.charAt(0) is '!'
-				AST.OP(A2.slice(1), A1, A3).invert # hmm, really?
+				AST.OP(A2.slice(1), A1, A3).invert
 			else
 				AST.OP A2, A1, A3
 
@@ -955,7 +925,7 @@ var grammar =
 
 var operators = [
 	['left',      'MSET']
-	['left',      '.', '?.', '::']
+	['left',      '.', '?.', '?:', '::']
 	['left',      'CALL_START', 'CALL_END']
 	['nonassoc',  '++', '--']
 	['right',     'UNARY','THROW','SQRT']

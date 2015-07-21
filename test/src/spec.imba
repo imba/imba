@@ -39,7 +39,7 @@ global class Spec
 		@stack.push(@context = ctx)
 		block()
 		@stack.pop
-		@context = @stack[@stack[:length] - 1] # hmm
+		@context = @stack[@stack[:length] - 1]
 		self
 
 	def describe name, blk
@@ -59,6 +59,7 @@ global class Spec
 
 	
 	def finish
+		console.log "specs did run"
 		Imba.emit(self, :done, [self])
 
 	# def describe name, blk do SPEC.context.describe(name,blk)
@@ -184,12 +185,14 @@ global class SpecCondition
 		@done = yes
 		@success = no
 		emit :done, [no]
+		# process:stdout.write(fmt(:red,"✘"))
 		yes
 	
 	def passed
 		@done = yes
 		@success = yes
 		emit :done, [yes]
+		# process:stdout.write(fmt(:green,"✔"))
 		yes
 
 	def emit ev, pars

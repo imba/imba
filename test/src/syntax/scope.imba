@@ -1,14 +1,22 @@
 
 extern eq
 
-local class A
+class A
 	
 	prop a
 	prop b
+	prop c
+	prop d
+	prop e
+	prop f
 
 	def initialize a,b
 		@a = a
 		@b = b
+		@c = 1
+		@d = 1
+		@e = 1
+		@f = 1
 
 	def call fn
 		var other = A.new(2,2)
@@ -49,7 +57,77 @@ local class A
 		eq ary, [0,1,2,3,4,5,0,1,2,3,4,5]
 
 
+	def letVar
+		var ary = [1,2,3]
+		var a = 1
+		var b = 1
+		var len = 1
+		var i = 1
+		var v = 1
 
+		for v,i in ary
+			v + 2
+			i
+
+		eq i,1
+
+		if true
+			for v,i in ary
+				i
+			eq i,1
+
+		var r = for v in ary
+			v
+
+		r:length
+
+		for v in ary
+			let l = 1
+			let a = 2
+			let b = 2
+			let c = 2
+			let h = 0
+			a + b + c
+
+		for v in ary
+			let a = 3
+			let b = 3
+			let c = 3
+			f
+
+		if true
+			let a = 4
+			let b = 4
+			let i = 0
+			let len = 10
+
+			if true
+				let a = 5
+				let b = 5
+
+			let e = for v,i in ary
+				eq a,4
+				i
+
+			eq a,4
+			eq i,0
+		else
+			let a = 4, b = 4, d = 4
+			true
+
+		var z = if 1
+			for v in ary
+				yes
+			4
+		else
+			5
+
+		eq v,1
+		eq i,1
+		eq len,1
+		eq a + b + c + d + e + f, 6
+		return
+# console.log A.new.test
 		
 
 describe "Syntax - Scope" do
@@ -62,6 +140,9 @@ describe "Syntax - Scope" do
 
 	test "def inside method" do
 		item.innerDef
+
+	test "blocklocal variables (let)" do
+		item.letVar
 
 	test "class" do
 		var x = 10
@@ -76,3 +157,10 @@ describe "Syntax - Scope" do
 		eq x, 10
 		A.new.test
 		eq x, 10
+
+	test "let" do
+		var a = 0
+		if true
+			let a = 1
+			eq a, 1
+		eq a, 0

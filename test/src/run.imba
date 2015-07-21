@@ -3,7 +3,6 @@
 require '../../index'
 require './spec'
 require './syntax/loop'
-require './syntax/assignment'
 require './syntax/class'
 require './syntax/super'
 require './syntax/operators'
@@ -21,6 +20,10 @@ require './syntax/delete'
 require './syntax/blockparam'
 require './syntax/modules'
 require './syntax/switch'
+require './syntax/assignment'
+
+require './syntax/selectors'
+require './syntax/formatting'
 
 require './tags/define'
 

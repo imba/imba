@@ -2,14 +2,31 @@
 
 describe "Syntax - Variables" do
 
+	test "allow in expression" do
+
+		def x
+			if true
+				var a = 1
+				var b = 2
+				3
+
+		var res = try x catch e 0
+
+		eq x, 3
+
+
 
 	test "allow predeclaring variables" do
 		var a
 		var b
 
 	test "allow predeclaring multiple variables" do
-		var a,b,c = 1,2,3
+		var [a,b,c] = 1,2,3
 		var x,y,z
+
+		eq a,1
+		eq b,2
+		eq c,3
 		
 
 	test "allow implicit returns from var declaration" do

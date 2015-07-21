@@ -1228,10 +1228,43 @@
     "name": "tokenize",
     "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
     "tests": [
-        "12 - lex",
-        "27 - rewrite",
+        "13 - lex",
+        "30 - rewrite",
+        "10 - tokenize",
+        "10 - parse",
+        "5 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - lex",
+        "32 - rewrite",
+        "7 - tokenize",
+        "10 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - lex",
+        "28 - rewrite",
+        "10 - tokenize",
+        "10 - parse",
+        "4 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - lex",
+        "31 - rewrite",
         "9 - tokenize",
-        "9 - parse",
+        "10 - parse",
         "4 - compile"
     ]
 }
@@ -1240,31 +1273,383 @@
     "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
     "tests": [
         "12 - lex",
-        "27 - rewrite",
+        "32 - rewrite",
         "9 - tokenize",
-        "9 - parse",
-        "4 - compile"
+        "10 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
     "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
     "tests": [
-        "10 - lex",
-        "44 - rewrite",
-        "8 - tokenize",
-        "6 - parse",
-        "3 - compile"
+        "11 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
     "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
     "tests": [
-        "11 - lex",
-        "48 - rewrite",
-        "8 - tokenize",
-        "6 - parse",
-        "3 - compile"
+        "13 - parse",
+        "5 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "11 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "11 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "Testing",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "2032756 - eval",
+        "1997138 - regex"
+    ]
+}
+{
+    "name": "Testing",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "2048025 - eval",
+        "37138199 - slice"
+    ]
+}
+{
+    "name": "Testing",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "2055137 - eval",
+        "37091269 - slice"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0f021c8cad78a4c7e2c92f5c9d41e8c4d631bc52 - dropped bluebird as a dependency",
+    "tests": [
+        "13 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "be962fd9d6a83711fdebee14ccf6d04334554ef4 - improving parser performance (by 25%+) by switching to a specialized fork of jison",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "be962fd9d6a83711fdebee14ccf6d04334554ef4 - improving parser performance (by 25%+) by switching to a specialized fork of jison",
+    "tests": [
+        "12 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "29b6948457a63ac4a6724fd9103621c3ea6e4450 - improved",
+    "tests": [
+        "14 - parse"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "ed446ff7dd8fad7cf7c5ffd9cde90677fe447686 - more tweaking",
+    "tests": [
+        "14 - lex",
+        "31 - rewrite",
+        "13 - parse",
+        "6 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "485fa5b26b2e940c1fa132ac34bb52b7d6bb4daa - stuff",
+    "tests": [
+        "15 - lex",
+        "34 - rewrite",
+        "14 - parse",
+        "6 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "c37a5388f124756af5a33fb618789fa2f746c7bf - fixed bug?",
+    "tests": [
+        "15 - lex",
+        "34 - rewrite",
+        "15 - parse",
+        "7 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "13 - lex",
+        "41 - rewrite",
+        "8 - parse",
+        "5 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "6579 - basic",
+        "7415 - interpolated"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "7141 - interpolated",
+        "6754 - basic"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "7193 - interpolated",
+        "7520 - basic"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "5889 - interpolated",
+        "6334 - basic"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "5885 - interpolated",
+        "6213 - basic",
+        "5962 - interpolated"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "5773 - interpolated",
+        "6129 - basic",
+        "5899 - interpolated"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "3811 - interpolated",
+        "6191 - basic",
+        "4091 - interpolated"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "5798 - interpolated",
+        "6104 - basic",
+        "5952 - interpolated"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
+    "tests": [
+        "5990 - interpolated",
+        "6330 - basic",
+        "6165 - interpolated"
     ]
 }

@@ -1,5 +1,7 @@
 # self = SPEC
 
+extern eq
+
 local class O
 
 	prop x
@@ -329,43 +331,43 @@ describe 'Syntax - Assignment' do
 		
 		var a = 1
 		eq a, 1
-		var b,c = 2,3
+		var [b,c] = 2,3
 		eq [a,b,c], [1,2,3]
 
-		var a,*b,c = [2,4,6] # should result in error, no?
+		var [a,*b,c] = [2,4,6] # should result in error, no?
 		eq [a,b,c], [2,[4],6]
 
 	
-		var a,b,*c = [2,4,6] # should result in error, no?
+		var [a,b,*c] = [2,4,6] # should result in error, no?
 		eq [a,b,c], [2,4,[6]]
 
-		var a,*b,c,d = [1,2,3,4,5] # should result in error, no?
+		var [a,*b,c,d] = [1,2,3,4,5] # should result in error, no?
 		eq [a,b,c,d], [1,[2,3],4,5]
 
-		var a,b,c,*d = [1,2,3,4,5] # should result in error, no?
+		var [a,b,c,*d] = [1,2,3,4,5] # should result in error, no?
 		eq [a,b,c,d], [1,2,3,[4,5]]
 
-		var *a,b,c,d = [1,2,3,4,5] # should result in error, no?
+		var [*a,b,c,d] = [1,2,3,4,5] # should result in error, no?
 		eq [a,b,c,d], [[1,2],3,4,5]
 
-		a,b = b,a
+		[a,b] = b,a
 		eq [a,b], [3,[1,2]]
 
-		a,b,*c = 10,20,30,a
+		[a,b,*c] = 10,20,30,a
 		eq [a,b,c], [10,20,[30,3]]
 
-		var a,b,c = ary
+		var [a,b,c] = ary
 		eq [a,b,c], [1,2,3]
 
-		var a,b,*c = ary
+		var [a,b,*c] = ary
 		eq [a,b,c], [1,2,[3,4,5]]
 
 		var list = [10,20,30]
 
-		list[0] , list[1] = list[1] , list[0]
+		[list[0] , list[1]] = list[1] , list[0]
 		eq list, [20,10,30]
 
-		list[0],*list[1],list[2] = ary
+		[list[0],*list[1],list[2]] = ary
 		eq list, [1,[2,3,4],5]
 
 		var x = for v in ary
@@ -373,35 +375,35 @@ describe 'Syntax - Assignment' do
 
 		eq x, [2,4,6,8,10]
 
-		var x,y = for v in ary
+		var [x,y] = for v in ary
 			v * 2
 
 		eq [x,y], [2,4]
 
-		x,y,obj.z = for v in ary
+		[x,y,obj.z] = for v in ary
 			v * 2
 		eq [x,y,obj.z], [2,4,6]
 
-		x,y,*obj.z = for v in ary
+		[x,y,*obj.z] = for v in ary
 			v * 2
 		eq [x,y,obj.z], [2,4,[6,8,10]]
 
 		# special case for arguments
-		a,b,c = arguments
+		[a,b,c] = arguments
 		return
 
 	test 'a,b,c = x,y,z' do
 		var o = {x: 0, y: 1, z: 2}
-		var a,b,c = o:x,o:y,o:z
+		var [a,b,c] = o:x,o:y,o:z
 		eq [a,b,c], [0,1,2]
 
 		# tuples should be preevaluated
 		var v = 0
-		var a,b,c = (v=5),v,v
+		var [a,b,c] = (v=5),v,v
 		eq [a,b,c], [5,5,5]
 
-		var x,y = 10,20
-		x,y = y,x
+		var [x,y] = 10,20
+		[x,y] = y,x
 		eq [x,y], [20,10]
 
 		x,y = 10,20
@@ -413,8 +415,8 @@ describe 'Syntax - Assignment' do
 			return 10
 
 		# how are we supposed to handle this?
-		x,y = 10,20
-		x,y = fn(),x
+		[x,y] = 10,20
+		[x,y] = fn(),x
 		eq [x,y], [10,100]
 
 	test '.a,.b = x,y' do
@@ -437,30 +439,44 @@ describe 'Syntax - Assignment' do
 			def x= x
 				@z++
 				@x = x
+
+
+			def test
+				x = 1
+				y = 2
+				# switching them
+				[x,y] = y,x
+
+				eq y, 1
+				eq x, 2
+
 				
 		# o.x should not be set before we get o.z
 		# if the left side was vars however, we could do it the easy way
 		var o = A.new
-		o.x,o.y = 1,o.z
+		[o.x,o.y] = 1,o.z
 		eq [o.x,o.y], [1,0]
 
 		# now predefine local variables
-		var a,b,c,i = 0,0,0,0
+		var [a,b,c,i] = 0,0,0,0
 		var m = do a + b + c
-		a,b,c = m(),m(),m()
+		[a,b,c] = m(),m(),m()
 		eq [a,b,c], [0,0,0]
 
+		o.test
+
+
 	test 'tuples - edgecase' do
-		var b,c,i = 0,0,0
+		var [b,c,i] = 0,0,0
 		var m = do (++i) + b + c
 
 		# since a is not predefined, it is safe to evaluate this directly
 		# while the values for b and c must be precached before assignment
-		var a,b,c = m(),m(),m()
+		var [a,b,c] = m(),m(),m()
 		eq [a,b,c], [1,2,3]		
 
 	test 'tuples - edgecase 2' do
-		var a,c,i = 0,0,0
+		var [a,c,i] = 0,0,0
 
 		var m = do
 			a = 10
@@ -469,5 +485,15 @@ describe 'Syntax - Assignment' do
 		# since a is not predefined, it is safe to evaluate this directly
 		# while the values for b and c must be precached before assignment
 		# here a is predefined AND evals to a value
-		var a,b,c = m(),m(),m()
+		var [a,b,c] = m(),m(),m()
 		eq [a,b,c], [11,12,13]
+
+	test 'hoisting' do
+		var fn = do |o,i|
+			fn(o,i - 1) if i > 0
+			o:counter++
+			return o:counter
+
+		var obj = {counter: 0}
+		eq fn(obj,10), 11
+		yes

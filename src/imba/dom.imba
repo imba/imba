@@ -41,7 +41,7 @@ class ElementTag
 
 	def object v
 		return (object = v,self) if arguments:length
-		@object # hmm
+		@object
 
 	def body v
 		return (body = v,self) if arguments:length
@@ -153,17 +153,19 @@ class ElementTag
 			node = node.parent
 		return nil
 
-	def contains node
-		dom.contains(node and node.@dom or node)
+	def path sel
+		var node = self
+		var nodes = []
+		sel = sel.query if sel and sel:query
 
-	def index
-		var i = 0
-		var el = dom
-		while el:previousSibling
-			el = el:previousSibling
-			i++
-			
-		return i
+		while node
+			nodes.push(node) if !sel or node.matches(sel)
+			node = node.parent
+		return nodes
+
+	def parents sel
+		var par = parent
+		par ? par.path(sel) : []
 
 	def up sel
 		return parent unless sel
@@ -191,6 +193,20 @@ class ElementTag
 			return nil
 		tag(dom:previousElementSibling)
 
+	def contains node
+		dom.contains(node and node.@dom or node)
+
+	def index
+		var i = 0
+		var el = dom
+		while el:previousSibling
+			el = el:previousSibling
+			i++
+			
+		return i
+
+	
+
 	def insert node, before: nil, after: nil
 		before = after.next if after
 		node = (<fragment> node) if node isa Array
@@ -203,7 +219,7 @@ class ElementTag
 	# bind / present
 	def bind obj
 		object = obj
-		render(obj) if @built # hmm
+		render(obj) if @built
 		self
 
 	def build
@@ -270,7 +286,6 @@ class ElementTag
 		@dom.toString # really?
 
 	def self.flag flag
-		# hmm - this is not good enough
 		# should redirect to the prototype with a dom-node already set?
 		var dom = self.dom
 		dom:classList.add(flag)
@@ -375,7 +390,11 @@ def extender obj, sup
 	return obj
 
 def Imba.defineTag name, func, supr
-	var name,ns = name.split("$")
+	var m = name.split("$")
+
+	var name = m[0]
+	var ns = m[1]
+
 	supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
 
 	var suprklass = IMBA_TAGS[supr]
@@ -403,6 +422,7 @@ def Imba.defineTag name, func, supr
 		klass.@isNative = true
 
 	klass.@dom = nil
+	klass:prototype.@nodeType = klass.@nodeType
 	klass:prototype.@dom = nil
 	klass:prototype.@built = no
 	klass:prototype.@empty = yes
@@ -477,7 +497,6 @@ def Imba.getTagSingleton id
 		# no instance - check for element
 		if dom = Imba:doc.getElementById(id)
 			# we have a live instance - when finding it through a selector we should awake it, no?
-			# hmm?
 			# console.log('creating the singleton from existing node in dom?',id,type)
 			node = type.Instance = type.new(dom)
 			node.awake # should only awaken
@@ -524,7 +543,7 @@ def Imba.getTagForDom dom
 		# should fall back to less specific later? - otherwise things may fail
 		# TODO rework this
 		if var m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)
-			type = m[1].replace(/-/g,'_') # hmm -should not do that here?
+			type = m[1].replace(/-/g,'_')
 
 		if m = cls.match(/\b([a-z]+)_\b/)
 			ns = m[1] 
@@ -617,9 +636,10 @@ tag img
 	prop src dom: yes
 
 tag input
+	# can use attr instead
 	prop name dom: yes
 	prop type dom: yes
-	prop value dom: yes # dom property - NOT attribute -- hmm
+	prop value dom: yes # dom property - NOT attribute
 	prop required dom: yes
 	prop disabled dom: yes
 	prop placeholder dom: yes
@@ -685,6 +705,13 @@ tag section
 
 tag select
 	prop multiple dom: yes
+	
+	def value
+		dom:value
+
+	def value= v
+		dom:value = v
+		self
 
 
 tag small

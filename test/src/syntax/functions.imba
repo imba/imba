@@ -72,6 +72,9 @@ describe 'Syntax - Functions' do
 		# if we supply options to method, blk is still specified
 		eq obj.req_opt_blk('john',opt: 10, blk), ['john',{opt: 10},blk]
 
+		# hmmm
+		eq obj.req_opt_blk('john',undefined,blk), ['john',{},blk]
+
 		# only set blk if it is a function
 		eq obj.req_opt_blk('john',opt: 10), ['john',{opt: 10},undefined]
 
@@ -198,6 +201,20 @@ describe 'Syntax - Functions' do
 
 	test "methods on numbers" do
 		ok 1.num_meth
+
+
+	test "block-argument position" do
+		var fn = do |a,b,c| [a isa Function ? a() : a,b isa Function ? b() : b,c isa Function ? c() : c]
+		var res
+		
+		res = fn(1,2) do 3
+		eq res, [1,2,3]
+
+		res = fn(1,&,2) do 3
+		eq res, [1,3,2]
+
+		res = fn(&,2,3) do 3
+		eq res, [3,2,3]
 
 
 

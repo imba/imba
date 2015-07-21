@@ -1,9 +1,26 @@
 
 var fs = require 'fs'
-var compiler = require '/repos/imba/lib/compiler'
-var source = fs.readFileSync('/repos/imba/src/compiler/nodes.imba').toString
-source = source + '\n\n' + source
+var compiler = require '/repos/imba/lib/compiler/compiler'
+var source = fs.readFileSync('/repos/imba/test/src/samples/nodes.imba').toString
+# var source = fs.readFileSync('/repos/imba/test/src/samples/simple.imba').toString
+# source = source + '\n' + source + '\n' + source + '\n' + source + '\n' + source + '\n' + source
 var tokens = nil
+
+var v8 = require 'v8-natives'
+
+var tata = compiler.parse([], filename: "o")
+
+
+# var origtoks = compiler.tokenize(source, rewrite: no)
+var origtoks = compiler.compile(source, filename: "o")
+# for v,i in origtoks
+# 	var v2 = origtoks[i + 1]
+# 	if v and v2 and !v8.haveSameMap(v,v2)
+# 		console.log "not same mape {v.@type} - {v2.@type}"
+# 		console.log Object.keys(v)
+# 		# for own k,v of v
+# 		#	console.log "has key {k}"
+
 
 def time name, blk
 	console.time(name)
@@ -13,13 +30,21 @@ def time name, blk
 def block blk
 	blk()
 
-time "Tokenize" do
-	tokens = compiler.tokenize(source)
-	return
+# time "Lex" do
+# 	tokens = compiler.tokenize(source, rewrite: no)
+# 	return
 
-time "Compile" do
-	var code = compiler.compile(tokens)
-	return
+# time "Compile" do
+# 	var code = compiler.compile(origtoks)
+# 	return
+
+# time "Tokenize" do
+# 	tokens = compiler.tokenize(source)
+# 	return
+
+# time "Compile" do
+# 	var code = compiler.compile(tokens)
+# 	return
 
 # block do
 # console.time("b")

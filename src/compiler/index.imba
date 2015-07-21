@@ -1,6 +1,4 @@
-
-require '../imba'
-
+# everything should be moved to this file instead
 var compiler  = require './compiler'
 var parser = compiler:parser
 
@@ -15,3 +13,6 @@ export def parse code, o
 
 export def compile code, o = {}
 	compiler.compile(code,o)
+
+export def highlight code, o = {}
+	compiler.highlight(code,o)

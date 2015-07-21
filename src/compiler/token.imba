@@ -1,17 +1,30 @@
 
 
-export class Token
-	
-	# Token:prototype:generated = no
-	# Token:prototype:reserved = no
-	# Token:prototype:newLine = no
-	# Token:prototype:spaced = no
+export var TOK = {}
+var TTERMINATOR = TOK.TERMINATOR = 1
+var TIDENTIFIER = TOK.IDENTIFIER = 2
+var TIDENTIFIER = TOK.IVAR = 2
+var CONST = TOK.CONST = 3
+var VAR = TOK.VAR = 4
+var IF = TOK.IF = 5
+var ELSE = TOK.ELSE = 6
+var DEF = TOK.DEF = 7
 
-	def initialize type, value, line, region
-		@type = type
+
+
+export class Token
+
+	def initialize type, value, line, loc, len
+		@type  = type
 		@value = value
-		@line = line or 0
-		@region = region
+		@meta  = nil
+		@line  = line or 0
+		@col   = -1
+		@loc   = loc or 0
+		@len   = len or 0
+		this:generated = no
+		this:newLine = no
+		this:spaced = no
 		return self
 
 	def type
@@ -20,9 +33,6 @@ export class Token
 	def value
 		@value
 
-	def loc
-		@region
-
 	def traverse
 		return
 		
@@ -30,28 +40,28 @@ export class Token
 		"" + @value
 
 	def toString
-		"" + @value
+		@value
 
-	# added for legacy reasons
 	def charAt i
 		@value.charAt(i)
 
 	def slice i
 		@value.slice(i)
+
+	def region
+		[@loc,@loc + (@len or @value:length)]
 		
 
 export def lex
 	var token = this:tokens[this:pos++]
-	var ttag, loc
+	var ttag
 
 	if token
 		ttag = token.@type
-		this:yytext = token # .@value
+		this:yytext = token
 
 		if var line = token.@line
 			this:yylineno = line
-			this:yylloc:first_line = line
-			this:yylloc:last_line = line
 
 	else
 		ttag = ''
@@ -59,11 +69,30 @@ export def lex
 	return ttag
 
 
-export def token typ, val, line, region do Token.new(typ,val,line,region) # [null,typ,val,loc]
+# export def token typ, val, line, col, len do Token.new(typ,val,line, col or 0, len or 0) # [null,typ,val,loc]
+export def token typ, val do Token.new(typ,val,0,0,0)
+
 export def typ tok do tok.@type
 export def val tok do tok.@value # tok[offset + 1]
-export def loc tok do tok.@region # tok[offset + 2]
+export def line tok do tok.@line # tok[offset + 2]
+export def loc tok do tok.@loc # tok[offset + 2]
 
 export def setTyp tok, v do tok.@type = v
 export def setVal tok, v do tok.@value = v
-export def setLoc tok, v do tok.@region = v
+export def setLine tok, v do tok.@line = v
+export def setLoc tok, v do tok.@loc = v
+
+
+export var LBRACKET = Token.new('{','{',0,0,0)
+export var RBRACKET = Token.new('}','}',0,0,0)
+
+export var LPAREN = Token.new('(','(',0,0,0)
+export var RPAREN = Token.new(')',')',0,0,0)
+
+LBRACKET:generated = yes
+RBRACKET:generated = yes
+LPAREN:generated = yes
+RPAREN:generated = yes
+
+export var INDENT = Token.new('INDENT','2',0,0,0)
+export var OUTDENT = Token.new('OUTDENT','2',0,0,0)

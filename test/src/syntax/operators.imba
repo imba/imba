@@ -19,6 +19,10 @@ local class Group
 	def __union other do Group.new(@items ∪ other.items)
 	def __intersect other do Group.new(@items ∩ other.items)
 
+# x if 3 > i > 0
+# x unless 3 > i > 0
+# should test if/unless inversions
+
 describe 'Syntax - Operators' do
 
 	test "union and intersect" do
@@ -103,3 +107,17 @@ describe 'Syntax - Operators' do
 		a = 0
 		a = 10 unless true or true
 		eq a, 0
+
+	test "ternary" do
+		var x = 0 or 1 ? true : false
+		eq x, true
+
+		x = 1 or 0 ? false : true
+		eq x, false
+
+		if x = 2
+			true
+
+		eq x, 2
+
+

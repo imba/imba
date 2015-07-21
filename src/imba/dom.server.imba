@@ -8,7 +8,7 @@ global class ImbaServerDocument
 		return ImbaServerElement.new(type)
 
 	def createTextNode value
-		return value # hmm
+		return value
 
 
 # could optimize by using a dictionary in addition to keys
@@ -39,7 +39,8 @@ global class ImbaNodeClassList
 		return clone
 		
 	def toString
-		@classes.join(" ")
+		# beware of perf
+		@classes.join(" ").trim
 		
 
 global class ImbaServerElement
@@ -50,14 +51,14 @@ global class ImbaServerElement
 		# when we optimize - do it some other way
 
 		# should somehow be linked to their owner, no?
-		@nodeType = type
-		self:nodeName = type
+		self:nodeName  = type
 		self:classList = ImbaNodeClassList.new(self)
+		self:children  = nil
 		self
 
 	def cloneNode deep
 		# need to include classes as well
-		var el = ImbaServerElement.new(@nodeType)
+		var el = ImbaServerElement.new(self:nodeName)
 		el:classList = self:classList.clone(self)
 		# FIXME clone the attributes as well
 		# el:className = self:className
@@ -66,7 +67,8 @@ global class ImbaServerElement
 	def appendChild child
 		# again, could be optimized much more
 		self:children ||= []
-		self:children.push(child) # hmmmm
+		self:children.push(child)
+		return child
 
 	# should implement at some point
 	# should also use shortcut to wipe
@@ -92,7 +94,6 @@ global class ImbaServerElement
 
 	def __innerHTML
 		return self:innerHTML || self:textContent || (self:children and self:children.join("")) or ''
-		# hmmm
 		var str = self:innerHTML || self:textContent || ''
 		return str if str
 
@@ -106,7 +107,7 @@ global class ImbaServerElement
 		return str
 	
 	def __outerHTML
-		var typ = @nodeType
+		var typ = self:nodeName
 		var sel = "{typ}"
 		# difficult with all the attributes etc?
 		# iterating through keys is slow (as tested) -
@@ -122,7 +123,7 @@ global class ImbaServerElement
 		sel += " {@attributes.join(" ")}" if var v = @attributes
 
 		# var inner = self:innerHTML || self:textContent || (self:children and self:children.join("")) or ''
-		return "<{sel}>{__innerHTML}</{typ}>" # hmm
+		return "<{sel}>{__innerHTML}</{typ}>"
 		# if self:innerHTML
 		# 
 		# if self:children
@@ -140,10 +141,26 @@ global class ImbaServerElement
 			# return @tag.toNodeString
 		__outerHTML
 
+
+var el = ImbaServerElement:prototype
+Object.defineProperty(el, 'firstChild',
+	get: (|v| this:children and this:children[0] ),
+	enumerable: true,
+	configurable: true
+)
+
 extend tag htmlelement
 
 	def toString
-		dom.toString # hmmm
+		dom.toString
+
+	def empty
+		@dom:children = []
+		@dom:innerHTML = null
+		# @dom.removeChild(@dom:firstChild) while @dom:firstChild
+		@empty = yes
+		self
+
 
 extend tag html
 
@@ -158,7 +175,6 @@ extend tag style
 	
 	def toString
 		"<style/>"
-		
-# hmm
+
 Imba:doc = global:document || ImbaServerDocument.new
 global:document ||= Imba:doc

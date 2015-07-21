@@ -18,7 +18,9 @@ export def pascalCase str
 	str.replace(/(^|[\-\_\s])(\w)/g) do |m,v,l| l.toUpperCase
 
 export def camelCase str
-	String(str).replace(/([\-\_\s])(\w)/g) do |m,v,l| l.toUpperCase
+	str = String(str)
+	# should add shortcut out
+	str.replace(/([\-\_\s])(\w)/g) do |m,v,l| l.toUpperCase
 
 export def snakeCase str
 	var str = str.replace(/([\-\s])(\w)/g,'_')
@@ -34,18 +36,24 @@ export def singlequote str
 	"'" + str + "'"
 
 export def symbolize str
-	var sym = String(str).replace(/(.+)\=$/,"set-$1")
-	sym = sym.replace(/(.+)\?$/,"is-$1")
-	sym = sym.replace(/([\-\s])(\w)/g) do |m,v,l| l.toUpperCase
-	return sym
+	str = String(str)
+	var end = str.charAt(str:length - 1)
+
+	if end == '='
+		str = 'set' + str[0].toUpperCase + str.slice(1,-1)
+
+	if str.indexOf("-") >= 0
+		str = str.replace(/([\-\s])(\w)/g) do |m,v,l| l.toUpperCase
+			
+	return str
+
 
 export def indent str
-		# hmm
-		String(str).replace(/^/g,"\t").replace(/\n/g,"\n\t").replace(/\n\t$/g,"\n")
+	String(str).replace(/^/g,"\t").replace(/\n/g,"\n\t").replace(/\n\t$/g,"\n")
 
 export def bracketize str, ind = yes
-		str = "\n" + indent(str) + "\n" if ind
-		'{' + str + '}'
+	str = "\n" + indent(str) + "\n" if ind
+	'{' + str + '}'
 	
 export def parenthesize str
-		'(' + String(str) + ')'
+	'(' + String(str) + ')'
