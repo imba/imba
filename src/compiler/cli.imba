@@ -379,7 +379,7 @@ def cli-compile root, o, watch: no
 			write-file(source,destpath)
 	return
 
-	
+
 cli.version('0.9.0')
 
 cli.command('* <path>')

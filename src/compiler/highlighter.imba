@@ -45,6 +45,8 @@ export class Highlighter
 			'?': 'op ternary'
 			',': 'comma'
 			':': 'colon'
+			'.': 'op dot'
+			'?.': 'op qdot'
 			'[': ['s','sbl']
 			']': ['s','sbr']
 			'math': 'op math'
@@ -56,6 +58,7 @@ export class Highlighter
 			'from': 'keyword from'
 			'logic': 'keyword logic'
 			'post_if': 'keyword if'
+			'prop': 'keyword prop'
 		}
 
 		var OPEN = {

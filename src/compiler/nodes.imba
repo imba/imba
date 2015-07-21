@@ -6290,7 +6290,7 @@ export class Variable < Node
 	prop export
 
 	def pool
-		nil
+		null
 
 	def initialize scope, name, decl, o
 		@ref = STACK.@counter++
@@ -6429,7 +6429,8 @@ export class Variable < Node
 		Assign.new('=',self,val)
 
 	def addReference ref
-		@references.push(ref)
+		@references.push(ref) if ref:region and ref.region
+		# p "reference is {ref:region and ref.region}"
 		self
 
 	def autodeclare
@@ -6437,11 +6438,6 @@ export class Variable < Node
 		# p "variable should autodeclare(!) {name}"
 		@autodeclare = yes
 		scope.autodeclare(self)
-
-		# WARN
-		# if scope isa WhileScope
-		# 	p "should do different autodeclare!!"
-		# 	# or we should simply add them
 		@declared = yes
 		self
 
