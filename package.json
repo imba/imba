@@ -9,7 +9,7 @@
   ],
   "author": "Sindre Aarsaether",
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "0.7.2",
+  "version": "0.9.0",
   "licenses": [
     {
       "type": "MIT",
@@ -32,13 +32,17 @@
     "type": "git",
     "url": "git://github.com/somebee/imba.git"
   },
+
   "devDependencies": {
-    "jison": "^0.4.15",
-    "browserify": "^9.0.8"
+    "browserify": "^9.0.8",
+    "ebnf-parser": "^0.1.10",
+    "lex-parser": "^0.1.4",
+    "marked": "^0.3.3"
   },
+
   "dependencies": {
-    "chalk": "^1.0.0",
+    "chalk": "^1.0.5",
     "chokidar": "^1.0.1",
-    "commander": "^2.6.0"
+    "commander": "^2.8.1"
   }
 }
