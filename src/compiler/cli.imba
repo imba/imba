@@ -380,8 +380,7 @@ def cli-compile root, o, watch: no
 	return
 
 	
-cli
-	.version('0.8.0')
+cli.version('0.9.0')
 
 cli.command('* <path>')
 	.usage('<path>')
