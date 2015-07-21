@@ -1,10 +1,11 @@
 (function(){
 
 
-	describe('Syntax - Switch',function (){
-		return test("general",function (){
+	describe('Syntax - Switch',function() {
+		
+		return test("general",function() {
 			var type = 1;
-			switch(type) {
+			switch (type) {
 				case 1:
 					value = 'A';
 					break;
@@ -17,7 +18,7 @@
 			eq(value,'A');
 			
 			// compact
-			switch(type) {
+			switch (type) {
 				case 1:
 					value = 'A';break;
 				

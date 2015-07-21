@@ -1,7 +1,8 @@
 (function(){
 
 
-	describe('Syntax - Return',function (){
+	describe('Syntax - Return',function() {
+		
 		/* @class SyntaxReturn */
 		function SyntaxReturn(){ };
 		
@@ -18,21 +19,19 @@
 		};
 		
 		SyntaxReturn.prototype.d = function (){
-			if(true) {
-				return;
-			};
+			if (true) { return };
 			return 1;
 		};
 		
 		
 		var obj = new SyntaxReturn();
 		
-		return test("explicit",function (){
+		return test("explicit",function() {
 			eq(obj.single(),1);
 			eq(obj.multi(),[1,2]);
 			eq(obj.d(),undefined);
 			
-			var fn = function (){
+			var fn = function() {
 				return [
 					1,
 					2

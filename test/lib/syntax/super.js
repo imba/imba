@@ -14,16 +14,15 @@
 	
 	/* @class Organism */
 	function Organism(){
-		var v_;
-		(this.setGroup(v_="organism"),v_);
+		this.setGroup("organism");
 	};
 	
 	
-	Organism.prototype.__alias = {};
+	Organism.prototype.__alias = {name: 'alias'};
 	Organism.prototype.alias = function(v){ return this._alias; }
 	Organism.prototype.setAlias = function(v){ this._alias = v; return this; };
 	
-	Organism.prototype.__group = {};
+	Organism.prototype.__group = {name: 'group'};
 	Organism.prototype.group = function(v){ return this._group; }
 	Organism.prototype.setGroup = function(v){ this._group = v; return this; };
 	
@@ -66,22 +65,21 @@
 	
 	/* @class Animal */
 	function Animal(){
-		var v_;
-		(this.setGroup(v_="animal"),v_);
+		this.setGroup("animal");
 	};
 	
 	subclass$(Animal,Organism);
 	
 	
 	Animal.prototype.lineage = function (){
+		// super should do the same as super.lineage(*arguments)
 		return "animal." + Animal.__super__.lineage.apply(this,arguments);
 	};
 	
 	
 	/* @class Cat */
 	function Cat(){
-		var v_;
-		(this.setGroup(v_="cat"),v_);
+		this.setGroup("cat");
 	};
 	
 	subclass$(Cat,Animal);
@@ -96,6 +94,7 @@
 	};
 	
 	Cat.prototype.cloak = function (){
+		// call the initialize of animal
 		return Cat.__super__.initialize.call(this);
 	};
 	
@@ -168,8 +167,10 @@
 	
 	
 	
-	describe('Syntax - super',function (){
-		return test("stuff",function (){
+	describe('Syntax - super',function() {
+		
+		return test("stuff",function() {
+			
 			var cat = new Cat();
 			var virus = new Virus();
 			var dog = new Dog();

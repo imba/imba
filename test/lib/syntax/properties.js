@@ -11,11 +11,11 @@
 	};
 	
 	
-	Model.prototype.__a = {};
+	Model.prototype.__a = {name: 'a'};
 	Model.prototype.a = function(v){ return this._a; }
 	Model.prototype.setA = function(v){ this._a = v; return this; };
 	
-	Model.prototype.__b = {default: 10};
+	Model.prototype.__b = {default: 10,name: 'b'};
 	Model.prototype.b = function(v){ return this._b; }
 	Model.prototype.setB = function(v){ this._b = v; return this; }
 	Model.prototype._b = 10;
@@ -53,9 +53,7 @@
 		this._gets = 0;
 		this._sets = 0;
 		this._calls = 0;
-		if(this._child) {
-			this._child.reset();
-		};
+		if (this._child) { this._child.reset() };
 		return this;
 	};
 	
@@ -77,8 +75,9 @@
 	// * Destructuring Assignment
 	// * Context Property (@) Assignment
 	// * Existential Assignment (?=)
-	describe('Syntax - Properties',function (){
-		return test("default values",function (){
+	describe('Syntax - Properties',function() {
+		
+		return test("default values",function() {
 			var object = new Model();
 			eq(object.a(),undefined);
 			return eq(object.b(),10);

@@ -1,8 +1,9 @@
 (function(){
 
 
-	describe('Syntax - Arrays',function (){
-		test("trailing commas",function (){
+	describe('Syntax - Arrays',function() {
+		
+		test("trailing commas",function() {
 			var ary = [1,2,3];
 			ok((ary[0] == 1) && (ary[2] == 3) && (ary.length == 3));
 			
@@ -20,13 +21,13 @@
 		
 		// Splats in Array Literals
 		
-		test("array splat expansions with assignments",function (){
+		test("array splat expansions with assignments",function() {
 			var nums = [1,2,3];
 			var list = [].concat([0], [].slice.call(nums), [4]);
 			return eq([0,1,2,3,4],list);
 		});
 		
-		test("mixed shorthand objects in array lists",function (){
+		test("mixed shorthand objects in array lists",function() {
 			var ary = [
 				{a: 1},
 				'b',
@@ -48,7 +49,7 @@
 		});
 		
 		
-		return test("array splats with nested arrays",function (){
+		return test("array splats with nested arrays",function() {
 			var nonce = {};
 			var a = [nonce];
 			var list = [].concat([1,2], [].slice.call(a));

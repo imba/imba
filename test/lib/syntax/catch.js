@@ -7,7 +7,7 @@
 	function ThrowClass(){ };
 	
 	
-	ThrowClass.prototype.__cleanup = {};
+	ThrowClass.prototype.__cleanup = {name: 'cleanup'};
 	ThrowClass.prototype.cleanup = function(v){ return this._cleanup; }
 	ThrowClass.prototype.setCleanup = function(v){ this._cleanup = v; return this; };
 	
@@ -15,49 +15,44 @@
 		try {
 			10;
 			return num * 2;
-		}
-		finally {
+		} finally {
 			10;
-			(this.setCleanup(true),true);
+			this.setCleanup(true);
 		};
 	};
 	
 	
 	
 	
-	describe('Syntax - Catch',function (){
-		return test("throw catch",function (){
+	describe('Syntax - Catch',function() {
+		
+		return test("throw catch",function() {
+			
 			var res = false;
 			var after = false;
 			
 			try {
 				nometh() * 10;
-			}
-			catch (e) {
+			} catch (e) {
 				res = 1;
-			}
-			;
+			};
 			ok(res);
 			
 			// also works with statements
 			try {
 				res = nometh();
-			}
-			catch (e) {
+			} catch (e) {
 				res = 2;
-			}
-			;
+			};
 			eq(res,2);
 			
 			// finally is executed after the result of
 			// expression is evaluated
 			try {
 				res = nometh();
-			}
-			catch (e) {
+			} catch (e) {
 				res = 2;
-			}
-			finally {
+			} finally {
 				after = 3;
 			};
 			
@@ -68,19 +63,16 @@
 			try {
 				2;
 				throw 10;
-			}
-			catch (e) {
+			} catch (e) {
 				res = e + 10;
-			}
-			;
+			};
 			
 			eq(res,20);
 			
 			// try works alone - adds automatic catch
 			try {
 				res = 10;
-			}
-			catch(e){};
+			} catch (e) { };
 			eq(res,10);
 			
 			var obj = new ThrowClass();

@@ -46,9 +46,10 @@
 	};
 	
 	// hmm, maybe we shouldnt allow this?
-	// class Other
-	// 	#		def inner
-	// 		yes
+	//	class Other
+	//
+	//		def inner
+	//			yes
 	;
 	
 	/* @class Virus */
@@ -131,18 +132,25 @@
 	
 	
 	
-	describe('Syntax - Class',function (){
-		test('should',function (){
+	describe('Syntax - Class',function() {
+		
+		// test 'nested classes work' do
+		// 	ok !!Organism.Other
+		
+		test('should',function() {
+			
+			// you can define variables local to classbody
 			var obj = new Organism();
 			return eq(obj.lvar(),10);
 		});
 		
-		describe('Methods',function (){
-			it('should define class methods',function (){
+		describe('Methods',function() {
+			
+			it('should define class methods',function() {
 				return eq(Organism.type(),'organism');
 			});
 			
-			return it('should inherit class methods',function (){
+			return it('should inherit class methods',function() {
 				return eq(Virus.type,Organism.type);
 			});
 			
@@ -151,13 +159,14 @@
 			//   eq Cat.type, "cat.animal.organism"
 		});
 		
-		describe('Instance',function (){
-			it('should call the parent constructor by default',function (){
+		describe('Instance',function() {
+			
+			it('should call the parent constructor by default',function() {
 				var obj = new Cat();
 				return eq(obj._ivar,1);
 			});
 			
-			it('should define instance methods',function (){
+			it('should define instance methods',function() {
 				var obj = new Organism();
 				var val = obj.alive();
 				// eq val, true
@@ -165,24 +174,25 @@
 				return eq(obj.speak(),'ghaarg');
 			});
 			
-			it('should inherit instance methods',function (){
+			it('should inherit instance methods',function() {
 				var obj = new Virus();
 				return ok(obj.alive());
 			});
 			
 			
-			it('should override instance methods',function (){
+			it('should override instance methods',function() {
 				eq(new Organism().name(),'organism');
 				return eq(new Virus().name(),'virus');
 			});
 			
-			return it('should call super in instance methods',function (){
+			return it('should call super in instance methods',function() {
+				// Should not refer to the prototype directly?
 				eq(new Virus().lineage(),'virus.organism');
 				return eq(new Zombie().lineage(),'zombie.human.animal.organism');
 			});
 		});
 		
-		test('define methods outside scope',function (){
+		test('define methods outside scope',function() {
 			/* @class Cls */
 			function Cls(){ };
 			
@@ -210,7 +220,8 @@
 		});
 		
 		
-		return test('Scoping',function (){
+		return test('Scoping',function() {
+			
 			var variable = 1;
 			
 			/* @class A */

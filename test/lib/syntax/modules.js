@@ -12,10 +12,7 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
-	var $1;
-	$1=require('./module');
-	var Item = $1.Item;
-	var hello = $1.hello;
+	var module$=require('./module'), Item=module$.Item, hello=module$.hello;
 	
 	// import everything from module into a local namespace/variable 'm'
 	var m = require('./module');
@@ -30,8 +27,9 @@
 	
 	
 	
-	describe("Syntax - Modules",function (){
-		return test("modules",function (){
+	describe("Syntax - Modules",function() {
+		
+		return test("modules",function() {
 			var item = new Item();
 			eq(item.name(),"item");
 			

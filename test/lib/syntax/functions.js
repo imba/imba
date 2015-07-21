@@ -63,6 +63,7 @@
 	};
 	
 	Paramer.prototype.req_key = function (name,pars){
+		// m('john', age: 20)
 		if(!pars||pars.constructor !== Object) pars = {};
 		var gender = pars.gender !== undefined ? pars.gender : 0;
 		var age = pars.age !== undefined ? pars.age : 18;
@@ -70,6 +71,7 @@
 	};
 	
 	Paramer.prototype.req_key_blk = function (name,pars,blk){
+		// m(age: 20)
 		if(blk==undefined && typeof pars == 'function') blk = pars,pars = {};
 		else if(!pars||pars.constructor !== Object) pars = {};
 		var gender = pars.gender !== undefined ? pars.gender : 0;
@@ -79,6 +81,8 @@
 	// if the arg is an actual options-block I guess we should check for this first
 	
 	Paramer.prototype.opt_key_blk = function (name,pars,blk){
+		// m(age: 20)
+		// m('john', age: 20) # should work
 		var $0 = arguments, i = $0.length;
 		var blk = typeof $0[i-1] == 'function' ? $0[--i] : null;
 		var pars = $0[i-1]&&$0[i-1].constructor === Object ? $0[--i] : {};
@@ -106,20 +110,23 @@
 	
 	
 	
+		
 		Number.prototype.num_meth = function (){
 			return true;
 		};
 	
 	
 	
-	describe('Syntax - Functions',function (){
+	describe('Syntax - Functions',function() {
+		
 		var obj = new Paramer();
-		var blk = function (){
+		var blk = function() {
 			return true;
 		};
 		var res = null;
 		
-		test("methods",function (){
+		test("methods",function() {
+			// basic arguments works
 			eq(obj.req('john'),['john']);
 			eq(obj.blk(blk),[blk]);
 			
@@ -130,6 +137,9 @@
 			
 			// if we supply options to method, blk is still specified
 			eq(obj.req_opt_blk('john',{opt: 10},blk),['john',{opt: 10},blk]);
+			
+			// hmmm
+			eq(obj.req_opt_blk('john',undefined,blk),['john',{},blk]);
 			
 			// only set blk if it is a function
 			eq(obj.req_opt_blk('john',{opt: 10}),['john',{opt: 10},undefined]);
@@ -166,7 +176,8 @@
 			return eq(obj.opt(undefined),'anon');
 		});
 		
-		test("keyword arguments",function (){
+		test("keyword arguments",function() {
+			// [name,gender,age]
 			res = obj.req_key('john',{age: 20});
 			eq(res,['john',0,20]);
 			
@@ -212,14 +223,16 @@
 		});
 		
 		
-		test("basic lambdas",function (){
-			var fn = function (){
+		test("basic lambdas",function() {
+			
+			// we use do-syntax fo define basic functions
+			var fn = function() {
 				return 1;
 			};
 			eq(fn(),1);
 			
 			// arguments are defined in do | args |
-			fn = function (a){
+			fn = function(a) {
 				return 1 + a;
 			};
 			
@@ -227,7 +240,7 @@
 			eq(fn(1),2);
 			
 			// multiple arguments
-			fn = function (a,b){
+			fn = function(a,b) {
 				return a + b;
 			};
 			
@@ -235,7 +248,7 @@
 			eq(fn(2,3),5);
 			
 			// we support default arguments
-			fn = function (a,b,c){
+			fn = function(a,b,c) {
 				if(c === undefined) c = 2;
 				return a + b + c;
 			};
@@ -244,7 +257,7 @@
 			eq(fn(1,1,1),3);
 			
 			// splat arguments
-			fn = function (a,b,c){
+			fn = function(a,b,c) {
 				var $0 = arguments, i = $0.length;
 				var d = new Array(i>3 ? i-3 : 0);
 				while(i>3) d[--i - 3] = $0[i];
@@ -253,27 +266,50 @@
 			
 			eq(fn(1,2,3,4,5),[1,2,3,[4,5]]);
 			
-			var outer = function (){
+			var outer = function() {
 				var $0 = arguments, i = $0.length;
 				var args = new Array(i>0 ? i : 0);
 				while(i>0) args[i-1] = $0[--i];
 				return args;
 			};
 			
-			var inner = function (blk){
-				return (blk) ? (blk()) : (null);
+			var inner = function(blk) {
+				return blk ? (blk()) : (null);
 			};
 			
 			// block precedence
 			// f1 f2 do 10 -> f1(f2(10))
-			var v = outer(5,inner(function (){
+			var v = outer(5,inner(function() {
 				return 10;
 			}));
 			return eq(v,[5,10]);
 		});
 		
-		return test("methods on numbers",function (){
+		test("methods on numbers",function() {
 			return ok((1).num_meth());
+		});
+		
+		
+		return test("block-argument position",function() {
+			var fn = function(a,b,c) {
+				return [a instanceof Function ? (a()) : (a),b instanceof Function ? (b()) : (b),c instanceof Function ? (c()) : (c)];
+			};
+			var res;
+			
+			res = fn(1,2,function() {
+				return 3;
+			});
+			eq(res,[1,2,3]);
+			
+			res = fn(1,function() {
+				return 3;
+			},2);
+			eq(res,[1,3,2]);
+			
+			res = fn(function() {
+				return 3;
+			},2,3);
+			return eq(res,[3,2,3]);
 		});
 	});
 	

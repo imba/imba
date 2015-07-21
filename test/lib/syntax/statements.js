@@ -1,7 +1,6 @@
 (function(){
 
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	function union$(a,b){
 		if(a && a.__union) return a.__union(b);
 	
@@ -11,28 +10,31 @@
 	};
 	
 	var ary = [1,2,3];
-	for(var i=0, items=iter$(ary), len=items.length, res=[]; i < len; i++) {
-		res.push(items[i] + 1);
-	};var rets = res;
+	for (var rets = [], i=0, len=ary.length; i < len; i++) {
+		rets.push(ary[i] + 1);
+	};
 	
 	var str = ("" + (ary[0]) + " " + (ary[1]) + " " + (ary[2]));
 	
 	
 	
 	
-	describe("Syntax - Statements",function (){
-		return test("allow statements as arguments",function (){
-			var fn = function (){
+	describe("Syntax - Statements",function() {
+		
+		return test("allow statements as arguments",function() {
+			
+			var fn = function() {
 				var $0 = arguments, i = $0.length;
 				var pars = new Array(i>0 ? i : 0);
 				while(i>0) pars[i-1] = $0[--i];
 				return pars;
 			};
 			var ary = [1,2,3,4];
-			var res = fn(10,((function (){
-				for(var i=0, items=iter$(ary), len=items.length, res1=[]; i < len; i++) {
-					res1.push(items[i] * 2);
-				};return res1;
+			var res = fn(10,((function() {
+				for (var i=0, len=ary.length, res=[]; i < len; i++) {
+					res.push(ary[i] * 2);
+				};
+				return res;
 			})()),20);
 			eq(res,[10,[2,4,6,8],20]);
 			
@@ -41,10 +43,11 @@
 			// since ary and fn are local, we can go all the way
 			// up to cache it before.
 			
-			res = fn(union$(ary,((function (){
-				for(var i=0, items=iter$(ary), len=items.length, res1=[]; i < len; i++) {
-					res1.push(items[i] * 2);
-				};return res1;
+			res = fn(union$(ary,((function() {
+				for (var i=0, len=ary.length, res=[]; i < len; i++) {
+					res.push(ary[i] * 2);
+				};
+				return res;
 			})())));
 			
 			var outer = 0;

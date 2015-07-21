@@ -1,12 +1,8 @@
 (function(){
 
 
-	function union$(a,b){
-		if(a && a.__union) return a.__union(b);
-	
-		var u = a.slice(0);
-		for(var i=0,l=b.length;i<l;i++) if(u.indexOf(b[i]) == -1) u.push(b[i]);
-		return u;
+	function idx$(a,b){
+		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
 	};
 	
 	function intersect$(a,b){
@@ -19,8 +15,12 @@
 		return res;
 	};
 	
-	function idx$(a,b){
-		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+	function union$(a,b){
+		if(a && a.__union) return a.__union(b);
+	
+		var u = a.slice(0);
+		for(var i=0,l=b.length;i<l;i++) if(u.indexOf(b[i]) == -1) u.push(b[i]);
+		return u;
 	};
 	
 	// package imba.ast
@@ -32,14 +32,14 @@
 	};
 	
 	
-	Cache.prototype.__gets = {};
+	Cache.prototype.__gets = {name: 'gets'};
 	Cache.prototype.gets = function(v){ return this._gets; }
 	Cache.prototype.setGets = function(v){ this._gets = v; return this; };
 	
 	
 	
 	Cache.prototype.value = function (){
-		(this._gets)++;
+		this._gets++;
 		return this._value;
 	};
 	
@@ -50,7 +50,7 @@
 	};
 	
 	
-	Group.prototype.__items = {};
+	Group.prototype.__items = {name: 'items'};
 	Group.prototype.items = function(v){ return this._items; }
 	Group.prototype.setItems = function(v){ this._items = v; return this; };
 	
@@ -65,8 +65,15 @@
 	};
 	
 	
-	describe('Syntax - Operators',function (){
-		test("union and intersect",function (){
+	// x if 3 > i > 0
+	// x unless 3 > i > 0
+	// should test if/unless inversions
+	
+	describe('Syntax - Operators',function() {
+		
+		test("union and intersect",function() {
+			
+			// union regular arrays
 			var a = [1,2,3,6];
 			var b = [3,4,5,6];
 			eq(union$(a,b),[1,2,3,6,4,5]);
@@ -88,7 +95,7 @@
 			eq((intersect$(gb,gc)).items(),[]);
 			
 			// precedence
-			gd = union$(intersect$(ga,gb),gc);// precedence right
+			gd = union$(intersect$(ga,gb),gc); // precedence right
 			// gd = ((ga ∩ gb) ∪ gc)
 			eq(gd,[5,6,8,9]);
 			
@@ -98,7 +105,7 @@
 		});
 		
 		
-		test("in",function (){
+		test("in",function() {
 			var a = 5;
 			var ary = [1,2,3,4,5];
 			
@@ -112,11 +119,12 @@
 		});
 		
 		
-		test("comparison",function (){
+		test("comparison",function() {
+			
 			var $1, value_, $2;
 			var a = 50;
 			ok(100 > a && a > 10);
-			eq(100 > ($1=(a = 10)) && $1 > 10,false);// not elegant
+			eq(100 > ($1=(a = 10)) && $1 > 10,false); // not elegant
 			ok(100 > a && a < 50);
 			
 			var b = new Cache(10);
@@ -128,7 +136,8 @@
 		});
 		
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
-		return test("precedence",function (){
+		test("precedence",function() {
+			
 			ok(10 + 10 * 2,30);
 			ok((10 + 10) * 2,40);
 			
@@ -146,10 +155,22 @@
 			eq(a,5);
 			
 			a = 0;
-			if(!(true || true)) {
-				a = 10;
-			};
+			if (!(true || true)) { a = 10 };
 			return eq(a,0);
+		});
+		
+		return test("ternary",function() {
+			var x = 0 || 1 ? (true) : (false);
+			eq(x,true);
+			
+			x = 1 || 0 ? (false) : (true);
+			eq(x,false);
+			
+			if (x = 2) {
+				true;
+			};
+			
+			return eq(x,2);
 		});
 	});
 
