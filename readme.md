@@ -4,7 +4,7 @@ Imba is a new programming language for the web that compiles to performant
 and readable JavaScript.
 
 ## Why
-Imba started out several years ago as a fork of CoffeeScript, with a plan to add native syntax for creating, traversing, and manipulating DOM tags. It quickly changed into something quite different. The syntax is very close to Ruby (but with indentation). 
+Imba started out several years ago as a fork of CoffeeScript, with a plan to add native syntax for creating, traversing, and manipulating DOM tags. After having used CoffeeScript for a long time, I found myself avoiding all the syntactic sugar that made CS nice, because I knew how cluttered the compiled code was. Imba tries to take all the good stuff from CoffeeScript, with the conciseness of Ruby, and tags as a native part of the language (like jsx).
 
 ## Principles
 - Ultra-readable compiled js (keeping comments, indentation, style).
