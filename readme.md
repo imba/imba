@@ -20,7 +20,7 @@ Get [Node.js](http://nodejs.org) and [npm](http://npmjs.org), then:
 - `npm install -g imba`
 
 ## Usage
-After installying you can call `imba --help` to see our options.
+After installing you can call `imba --help` to see our options.
 For information about the commands you call `imba compile --help`, `imba watch --help`, etc.
 
 
