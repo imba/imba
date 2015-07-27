@@ -177,6 +177,7 @@
 			var falsy = 0;
 			
 			test("=",function() {
+				var v_;
 				var localvar;
 				obj.setIvar(1);
 				eq(obj.ivar(),1);
@@ -209,7 +210,7 @@
 			});
 			
 			test("||= statement",function() {
-				var ivar_;
+				var ivar_, v_;
 				obj.setIvar(0);
 				if (!(ivar_=(obj.ivar()))) { if (truthy) {
 					try {

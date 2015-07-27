@@ -87,7 +87,7 @@
 			});
 			
 			test("inside statement",function() {
-				var value_;
+				var value_, v_;
 				obj.setValue(null);
 				if ((value_=obj.value()) == null) { if (1) {
 					for (var i=0, len=ary.length, res=[]; i < len; i++) {

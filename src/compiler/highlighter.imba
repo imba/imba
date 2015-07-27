@@ -14,6 +14,17 @@ export class Highlighter
 
 	def process
 		var marked = require 'marked'
+		var hljs = require 'highlight.js'
+
+		hljs.configure classPrefix: ''
+
+		marked.setOptions
+			highlight: do |code,language|
+				console.log "highlighting here!",language
+				return hljs.highlightAuto(code):value
+
+		# console.log(marked('```js\n console.log("hello"); \n```'))
+
 		var str = @code
 		var pos = @tokens:length
 
@@ -44,21 +55,30 @@ export class Highlighter
 			'*': 'op mult math'
 			'?': 'op ternary'
 			',': 'comma'
-			':': 'colon'
+			':': 'op colon'
 			'.': 'op dot'
 			'?.': 'op qdot'
 			'[': ['s','sbl']
 			']': ['s','sbr']
+			'(': 'rb rbl'
+			')': 'rb rbr'
+			'compound_assign': 'op assign compound'
+			'call_start': 'call rb rbl'
+			'call_end': 'call rb rbr'
+			'str': 'string'
+			'num': 'number'
 			'math': 'op math'
 			'forin': 'keyword in'
-			'string': 'str'
 			'compare': 'op compare'
 			'herecomment': ['blockquote','comment']
 			'relation': 'keyword relation'
+			'export': 'keyword export'
+			'global': 'keyword global'
 			'from': 'keyword from'
 			'logic': 'keyword logic'
 			'post_if': 'keyword if'
 			'prop': 'keyword prop'
+			'attr': 'keyword attr'
 		}
 
 		var OPEN = {
@@ -68,7 +88,7 @@ export class Highlighter
 			'(': 'paren'
 			'{': 'curly'
 			'[': 'square'
-			'("': 'str'
+			'("': 'string'
 		}
 
 		var CLOSE = {
@@ -78,7 +98,7 @@ export class Highlighter
 			')': 'paren'
 			']': 'square'
 			'}': 'curly'
-			'")': 'str'
+			'")': 'string'
 		}
 
 		var open,close
@@ -87,6 +107,7 @@ export class Highlighter
 			sub.replace(/(\#)([^\n]*)/g) do |m,s,q|
 				# q = marked(q)
 				# q = 
+				q = marked.inlineLexer(q, [], {})
 				"<q><s>{s}</s>{q}</q>"
 
 		def split
@@ -158,6 +179,8 @@ export class Highlighter
 			caret = loc + len
 
 			if typ == 'identifier'
+				if content[0] == '#'
+					cls.push('idref')
 				if tok.@variable
 					# console.log "IS VARIABLEREF",tok.@value
 					cls.push('_lvar')
@@ -169,7 +192,15 @@ export class Highlighter
 
 			if typ == 'herecomment'
 				addSection(res) # resetting
-				content = content.replace(/(^\s*###\n*|\n*###\s*$)/g,'<s>$1</s>')
+
+				# content = content.replace(/(^\s*###\n*|\n*###\s*$)/g,'<s>$1</s>')
+				content = content.replace(/(^\s*###\n*|\n*###\s*$)/g,'')
+				# console.log("converting to markdown",content)
+				content = marked(content)
+				res += '<s>###</s>' + content + '<s>###</s>'
+				addSection(res, type: 'comment')
+				continue
+				# console.log("converted",content)
 				# content = marked(content)
 
 			if typ == 'string'
@@ -177,8 +208,6 @@ export class Highlighter
 
 			res += "<{node} class='{cls.join(" ")}'>" + content + "</{node}>"
 
-			if typ == 'herecomment'
-				addSection(res, type: 'comment') # reset here as well
 
 			# true
 			# console.log "token {loc}"
@@ -194,13 +223,14 @@ export class Highlighter
 		addSection(res, type: 'code')
 
 		var html = ''
-		html += '<code>'
+		# html += '<code>'
 
 		for section in sections
 			var out = section:content
-			html += "<div class='{section:type} imbalang'>" + out + '</div>'
+			var typ = {code: 'code', comment: 'blockquote'}[section:type] or 'div'
+			html += "<{typ} class='{section:type} imbalang'>" + out + "</{typ}>"
 			# html += section:content # '<pre><code>' + group:html + '</code></pre>'
-		html += '</code>'
+		# html += '</code>'
 
 		unless options:bare
 			html = '<link rel="stylesheet" href="imba.css" media="screen"></link><script src="imba.js"></script>' + html + '<script src="hl.js"></script>'

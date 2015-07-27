@@ -1,6 +1,9 @@
 (function(){
 
 
+	
+	// self = SPEC
+	
 	describe('Syntax - Arrays',function() {
 		
 		test("trailing commas",function() {

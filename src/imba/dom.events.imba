@@ -228,6 +228,7 @@ class Imba.Touch
 		self
 
 	def suppress
+		# collision with the suppress property
 		@active = no
 		self
 
@@ -521,6 +522,7 @@ class Imba.Event
 
 	def process
 		var meth = "on{@prefix or ''}{name}"
+		var args = null
 		var domtarget = event:_target or event:target		
 		# var node = <{domtarget:_responder or domtarget}>
 
@@ -528,9 +530,20 @@ class Imba.Event
 		# need to stop infinite redirect-rules here??!?
 		while domnode
 			@redirect = null
-			var node = tag(domnode) # not only tag
-			if node and node[meth] isa Function
-				var res = node[meth](self,data)
+			if var node = tag(domnode) # not only tag 
+
+				if node[meth] isa String
+					meth = node[meth]
+					continue
+
+				if node[meth] isa Array
+					args = node[meth].concat(node)
+					meth = args.shift
+					continue
+
+				if node[meth] isa Function
+					var res = args ? node[meth].apply(node,args) : node[meth](self,data)
+
 			# log "hit?",domnode
 			# add node.nextEventResponder as a separate method here?
 			break unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))

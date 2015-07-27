@@ -1,7 +1,7 @@
 (function(){
 
 
-	var lex, rewrite, tokenize, parse, compile;
+	var lex, rewrite, tokenize, parse, astify, compile;
 	// externs;
 	// var compiler = require '/repos/imba/lib/compiler'
 	var compiler = imbalang;
@@ -10,63 +10,87 @@
 	// var html = fs.readFileSync(__dirname + '/robot.html', 'utf8')
 	// console.log(html)
 	
-	function bench(name,blk){
+	function bench(name,o,blk){
+		if(blk==undefined && typeof o == 'function') blk = o,o = {};
 		console.time(name);
-		console.profile();
+		if(!(o.profile == false)) {
+			console.profile();
+		};
 		blk();
 		console.timeEnd(name);
-		return console.profileEnd();
-	};
-	
-	module.exports.lex = lex = function (num,snippet){
-		num = num || 1;
-		snippet = snippet || snippets.NODES;
-		snippet = new Array(num + 1).join(snippet + "\n");
-		bench("lex",function (){
-			return compiler.tokenize(snippet,{rewrite: false});
-		});
+		if(!(o.profile == false)) {
+			console.profileEnd();
+		};
 		return;
 	};
 	
-	module.exports.rewrite = rewrite = function (num,snippet){
+	module.exports.lex = lex = function (num,o){
+		if(o === undefined) o = {};
 		num = num || 1;
+		var snippet = new Array(num + 1).join(snippets.NODES + "\n");
+		bench("lex",o,function (){
+			compiler.tokenize(snippet,{rewrite: false});
+			return;
+		});
 		
-		snippet = snippet || snippets.NODES;
-		snippet = new Array(num + 1).join(snippet + "\n");
+		return;
+	};
+	
+	module.exports.rewrite = rewrite = function (num,o){
+		if(o === undefined) o = {};
+		num = num || 1;
+		var snippet = new Array(num + 1).join(snippets.NODES + "\n");
 		var tokens = compiler.tokenize(snippet,{rewrite: false});
-		bench("rewrite",function (){
-			return compiler.rewrite(tokens);
+		bench("rewrite",o,function (){
+			compiler.rewrite(tokens);
+			return;
 		});
 		return;
 	};
 	
-	module.exports.tokenize = tokenize = function (num,snippet){
+	module.exports.tokenize = tokenize = function (num,o){
+		if(o === undefined) o = {};
 		num = num || 1;
-		snippet = snippet || snippets.NODES;
-		snippet = new Array(num + 1).join(snippet + "\n");
-		bench("tokenize",function (){
-			return compiler.tokenize(snippet);
+		var snippet = new Array(num + 1).join(snippets.NODES + "\n");
+		bench("tokenize",o,function (){
+			compiler.tokenize(snippet);
+			return;
 		});
 		return;
 	};
 	
-	module.exports.parse = parse = function (num,snippet){
+	module.exports.parse = parse = function (num,o){
+		if(o === undefined) o = {};
 		num = num || 1;
-		snippet = snippet || snippets.NODES;
-		snippet = new Array(num + 1).join(snippet + "\n");
-		bench("parse",function (){
-			return compiler.parse(snippet);
+		var snippet = new Array(num + 1).join(snippets.NODES + "\n");
+		bench("parse",o,function (){
+			compiler.parse(snippet);
+			return;
 		});
 		return;
 	};
 	
 	
-	module.exports.compile = compile = function (num,snippet){
+	module.exports.astify = astify = function (num,o){
+		if(o === undefined) o = {};
 		num = num || 1;
-		snippet = snippet || snippets.NODES;
-		snippet = new Array(num + 1).join(snippet + "\n");
-		bench("compile",function (){
-			return compiler.compile(snippet);
+		var snippet = new Array(num + 1).join(snippets.NODES + "\n");
+		var tokens = compiler.tokenize(snippet,{filename: "stdin"});
+		bench("parse",o,function (){
+			compiler.parse(tokens);
+			tokens = undefined;
+			return;
+		});
+		return;
+	};
+	
+	module.exports.compile = compile = function (num,o){
+		if(o === undefined) o = {};
+		num = num || 1;
+		var snippet = new Array(num + 1).join(snippets.NODES + "\n");
+		bench("compile",o,function (){
+			compiler.compile(snippet);
+			return;
 		});
 		return;
 	};

@@ -53,7 +53,6 @@
 	};
 	
 	
-	
 	time("Literals",function (){
 		var count = 1000000;
 		

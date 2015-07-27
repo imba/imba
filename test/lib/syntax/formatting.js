@@ -1,6 +1,7 @@
 (function(){
 
 
+	
 	function chk(str,fn){
 		var stripped = fn.toString().replace(/^function\s?\(\)\s?\{\s*(return )?/,'').replace(/\;?\s*\}\s*$/,'');
 		return this.eq(stripped,str);

@@ -1,145 +1,636 @@
 {
     "name": "tokenize",
-    "commit": "6ee3ca75e6b856eeeedcaac195fc75258040737b - stuff",
+    "commit": "38fbd25c9929d6f62af042a179ce2ab5989d4b8d - testing v8 stuff",
     "tests": [
-        "469 - single long",
-        "471 - split"
+        "14 - lex",
+        "40 - rewrite",
+        "8 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "6ee3ca75e6b856eeeedcaac195fc75258040737b - stuff",
+    "commit": "09ea31e770ba8b7d8ecfc803d43060e3e065a787 - improved hidden classes",
     "tests": [
-        "458 - single long",
-        "468 - split"
+        "13 - lex",
+        "41 - rewrite",
+        "8 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "6ee3ca75e6b856eeeedcaac195fc75258040737b - stuff",
+    "commit": "f435b3583e4c646e38171c9e320b3ecaacf6f9c5 - fewer diffs",
     "tests": [
-        "460 - single long",
-        "489 - split"
+        "13 - lex",
+        "40 - rewrite",
+        "8 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "6ee3ca75e6b856eeeedcaac195fc75258040737b - stuff",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "20 - single long",
-        "24 - split"
+        "14 - lex",
+        "41 - rewrite",
+        "10 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "dbad4384c25f88331a833b4e65e1114a3bfbdb6e - experimenting more with benchmarks",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "19 - single long",
-        "23 - split"
+        "14 - lex",
+        "41 - rewrite",
+        "10 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "dbad4384c25f88331a833b4e65e1114a3bfbdb6e - experimenting more with benchmarks",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "8 - single long",
-        "10 - split"
+        "6278 - basic",
+        "6056 - interpolated"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "dbad4384c25f88331a833b4e65e1114a3bfbdb6e - experimenting more with benchmarks",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "3 - single long",
-        "7 - split"
+        "6313 - basic",
+        "5924 - interpolated"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "63595f164cc2eeb5086438dac81debb114a2ff79 - splitting the files for compilation can be much fater",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "2 - single long",
-        "3 - split"
+        "6275 - basic",
+        "5886 - interpolated"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "63595f164cc2eeb5086438dac81debb114a2ff79 - splitting the files for compilation can be much fater",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "2 - single long",
-        "3 - split"
+        "6362 - basic",
+        "6069 - interpolated"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "5d655821a2f3c6f7d14c631a1b3162202fda7664 - splitting large files before parsing could be smart",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "2 - single long",
-        "3 - split"
+        "15 - lex",
+        "42 - rewrite",
+        "10 - parse",
+        "6 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "5d655821a2f3c6f7d14c631a1b3162202fda7664 - splitting large files before parsing could be smart",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "8 - full",
-        "8 - parts",
-        "2 - single long",
-        "2 - split"
+        "14 - lex",
+        "40 - rewrite",
+        "9 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "5d655821a2f3c6f7d14c631a1b3162202fda7664 - splitting large files before parsing could be smart",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "8 - full",
-        "8 - parts",
-        "8 - chunks",
-        "2 - single long",
-        "2 - split"
+        "15 - lex",
+        "42 - rewrite",
+        "9 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "5d655821a2f3c6f7d14c631a1b3162202fda7664 - splitting large files before parsing could be smart",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "8 - full",
-        "8 - parts",
-        "7 - chunks",
-        "2 - single long",
-        "2 - split"
+        "15 - lex",
+        "42 - rewrite",
+        "10 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "5f28bddc0a67dcb71cef178746016d8679ac091e - stuff",
+    "commit": "98540e15e505a266060546710eb53f829cab7c0c - perf",
     "tests": [
-        "74 - lex",
-        "285 - rewrite",
-        "54 - tokenize",
-        "27 - parse",
-        "18 - compile"
+        "14 - lex",
+        "39 - rewrite",
+        "9 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "5f28bddc0a67dcb71cef178746016d8679ac091e - stuff",
+    "commit": "0a9d8925019d2f0d2c6e1016768566530228434e - stuff",
     "tests": [
-        "73 - lex",
-        "281 - rewrite",
-        "56 - tokenize",
-        "27 - parse",
-        "18 - compile"
+        "15 - lex",
+        "41 - rewrite",
+        "10 - parse",
+        "5 - compile"
     ]
 }
 {
     "name": "tokenize",
-    "commit": "5f28bddc0a67dcb71cef178746016d8679ac091e - stuff",
+    "commit": "0a9d8925019d2f0d2c6e1016768566530228434e - stuff",
     "tests": [
-        "11 - lex",
-        "46 - rewrite",
-        "9 - tokenize",
-        "5 - parse",
-        "3 - compile"
+        "15 - lex",
+        "42 - rewrite",
+        "10 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0193c19865c52ce45b9f38b3ef17b78134fb1855 - fixed test",
+    "tests": [
+        "16 - lex",
+        "42 - rewrite",
+        "10 - parse",
+        "6 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4e468a720e86abdcdbda6ba4d45adffd86f15c89 - tweaks",
+    "tests": [
+        "16 - lex",
+        "41 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4e468a720e86abdcdbda6ba4d45adffd86f15c89 - tweaks",
+    "tests": [
+        "16 - lex",
+        "42 - rewrite",
+        "10 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4e468a720e86abdcdbda6ba4d45adffd86f15c89 - tweaks",
+    "tests": [
+        "16 - lex",
+        "39 - rewrite",
+        "9 - parse",
+        "4 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "4e468a720e86abdcdbda6ba4d45adffd86f15c89 - tweaks",
+    "tests": [
+        "17 - lex",
+        "43 - rewrite",
+        "10 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "095c9b86de40b589b46e7934816c392816d742bd - test",
+    "tests": [
+        "17 - lex",
+        "41 - rewrite",
+        "10 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "095c9b86de40b589b46e7934816c392816d742bd - test",
+    "tests": [
+        "16 - lex",
+        "37 - rewrite",
+        "8 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "095c9b86de40b589b46e7934816c392816d742bd - test",
+    "tests": [
+        "16 - lex",
+        "39 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "095c9b86de40b589b46e7934816c392816d742bd - test",
+    "tests": [
+        "17 - lex",
+        "39 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "095c9b86de40b589b46e7934816c392816d742bd - test",
+    "tests": [
+        "17 - lex",
+        "38 - rewrite",
+        "8 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "688083c4f39ff81d42c85123ddcfb4efbda91f63 - more",
+    "tests": [
+        "15 - lex",
+        "38 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "688083c4f39ff81d42c85123ddcfb4efbda91f63 - more",
+    "tests": [
+        "18 - lex",
+        "38 - rewrite",
+        "7 - parse",
+        "4 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "688083c4f39ff81d42c85123ddcfb4efbda91f63 - more",
+    "tests": [
+        "18 - lex",
+        "43 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "e728d630de002080719e26d747ae81f01f02e39e - fix",
+    "tests": [
+        "16 - lex",
+        "38 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "e728d630de002080719e26d747ae81f01f02e39e - fix",
+    "tests": [
+        "18 - lex",
+        "41 - rewrite",
+        "9 - parse",
+        "4 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "8735414f0b1b39541a82c88dadc7a167dfe9e8d9 - stuff",
+    "tests": [
+        "18 - lex",
+        "42 - rewrite",
+        "10 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "8735414f0b1b39541a82c88dadc7a167dfe9e8d9 - stuff",
+    "tests": [
+        "18 - lex",
+        "42 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "8735414f0b1b39541a82c88dadc7a167dfe9e8d9 - stuff",
+    "tests": [
+        "19 - lex",
+        "42 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "8735414f0b1b39541a82c88dadc7a167dfe9e8d9 - stuff",
+    "tests": [
+        "19 - lex",
+        "42 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "673ae7c3fea94c18ff670e94d16cc5b227ef524b - stuff",
+    "tests": [
+        "18 - lex",
+        "40 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "c7723177b2cab01b00f18c3144d61b6a49a59b6b - stuff",
+    "tests": [
+        "4 - lex",
+        "11 - rewrite",
+        "3 - parse",
+        "1 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "c7723177b2cab01b00f18c3144d61b6a49a59b6b - stuff",
+    "tests": [
+        "18 - lex",
+        "40 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "c7723177b2cab01b00f18c3144d61b6a49a59b6b - stuff",
+    "tests": [
+        "20 - lex",
+        "42 - rewrite",
+        "10 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "71391c828fbeee682c3ce4c6af73bde6f652b410 - trying to fix more",
+    "tests": [
+        "18 - lex",
+        "40 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "71391c828fbeee682c3ce4c6af73bde6f652b410 - trying to fix more",
+    "tests": [
+        "13 - lex",
+        "38 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "71391c828fbeee682c3ce4c6af73bde6f652b410 - trying to fix more",
+    "tests": [
+        "18 - lex",
+        "41 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "71391c828fbeee682c3ce4c6af73bde6f652b410 - trying to fix more",
+    "tests": [
+        "19 - lex",
+        "40 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "71391c828fbeee682c3ce4c6af73bde6f652b410 - trying to fix more",
+    "tests": [
+        "19 - lex",
+        "41 - rewrite",
+        "10 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "c86146adcb2a69c90f6bdce36e6562091e56b6da - st",
+    "tests": [
+        "19 - lex",
+        "41 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "c86146adcb2a69c90f6bdce36e6562091e56b6da - st",
+    "tests": [
+        "18 - lex",
+        "42 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "b5961b5a2e64a899652538c2f5c3ff0b1182ee0f - stuff",
+    "tests": [
+        "19 - lex",
+        "40 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "b5961b5a2e64a899652538c2f5c3ff0b1182ee0f - stuff",
+    "tests": [
+        "18 - lex",
+        "40 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "0aa14a5dc9d5f598aca2ed6d028a3b15c7499b3c - stuff",
+    "tests": [
+        "18 - lex",
+        "40 - rewrite",
+        "9 - parse",
+        "4 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "972f5b74767168907a5c39adcd6ce7e864a55326 - stuff",
+    "tests": [
+        "16 - lex",
+        "34 - rewrite",
+        "8 - parse",
+        "4 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "972f5b74767168907a5c39adcd6ce7e864a55326 - stuff",
+    "tests": [
+        "16 - lex",
+        "35 - rewrite",
+        "8 - parse",
+        "4 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "972f5b74767168907a5c39adcd6ce7e864a55326 - stuff",
+    "tests": [
+        "19 - lex",
+        "39 - rewrite",
+        "9 - parse",
+        "5 - compile",
+        "3 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "6aa763ec77dd95e3e3f38ade9910a884fe550dae - seems to work without invocation",
+    "tests": [
+        "19 - lex",
+        "43 - rewrite",
+        "11 - parse",
+        "6 - compile",
+        "4 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "6aa763ec77dd95e3e3f38ade9910a884fe550dae - seems to work without invocation",
+    "tests": [
+        "18 - lex",
+        "43 - rewrite",
+        "11 - parse",
+        "6 - compile",
+        "4 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "6aa763ec77dd95e3e3f38ade9910a884fe550dae - seems to work without invocation",
+    "tests": [
+        "18 - lex",
+        "43 - rewrite",
+        "12 - parse",
+        "6 - compile",
+        "4 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "6aa763ec77dd95e3e3f38ade9910a884fe550dae - seems to work without invocation",
+    "tests": [
+        "19 - lex",
+        "42 - rewrite",
+        "10 - parse",
+        "6 - compile",
+        "4 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "6aa763ec77dd95e3e3f38ade9910a884fe550dae - seems to work without invocation",
+    "tests": [
+        "18 - lex",
+        "41 - rewrite",
+        "11 - parse",
+        "6 - compile",
+        "4 - full"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "066f67324c97f6b44504edd66e7067f79630f557 - revert",
+    "tests": [
+        "7 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "066f67324c97f6b44504edd66e7067f79630f557 - revert",
+    "tests": [
+        "7 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "066f67324c97f6b44504edd66e7067f79630f557 - revert",
+    "tests": [
+        "7 - compile"
+    ]
+}
+{
+    "name": "tokenize",
+    "commit": "dddbf349acc60eec7f113b1550a4a75a02b5db99 - more corrections and fixes",
+    "tests": [
+        "16 - lex",
+        "39 - rewrite",
+        "10 - parse",
+        "6 - compile",
+        "3 - full"
     ]
 }

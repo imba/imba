@@ -12,6 +12,9 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	
+	// self = SPEC
+	
 	/* @class Paramer */
 	function Paramer(){ SpecObject.apply(this,arguments) };
 	

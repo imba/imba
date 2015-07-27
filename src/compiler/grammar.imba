@@ -81,7 +81,10 @@ var grammar =
 
 	# Any list of statements and expressions, separated by line breaks or semicolons.
 	Body: [
+		o 'BODYSTART' do Block.new([])
 		o 'Line' do Block.new([A1])
+		# o 'HEADER Line' do Block.new([A2])
+		# o 'LeadingTerminator' do Block.new([Terminator.new(A1)])
 		o 'Body Terminator Line' do A1.break(A2).add(A3) # A3.prebreak(A2) # why not add as real nodes?!
 		o 'Body Terminator' do A1.break(A2)
 	]
@@ -104,6 +107,7 @@ var grammar =
 	Line: [
 		o 'Splat'
 		o 'Expression'
+		# o 'HEADER' do Terminator.new(A1)
 		o 'Line , Expression' do A1.addExpression(A3) # Onto something??
 		o 'Line , Splat' do A1.addExpression(A3) # Onto something?? # why is not splat an expression?
 		o 'Comment'
@@ -316,6 +320,7 @@ var grammar =
 	TagDeclaration: [
 		o 'TagDeclarationBlock' do A1
 		o 'EXTEND TagDeclarationBlock' do A2.set(extension: yes)
+		o 'LOCAL TagDeclarationBlock' do A2.set(local: yes)
 	]
 
 	TagDeclarationBlock: [

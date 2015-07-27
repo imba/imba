@@ -12,6 +12,19 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	
+	// self = SPEC
+	
+	// module A
+	// 
+	// 	class B
+	// 
+	// 		class C
+	// 
+	// 			def type
+	// 				'harroo'
+	// local scope
+	
 	/* @class Organism */
 	function Organism(){
 		this._ivar = 1;

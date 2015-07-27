@@ -12,6 +12,8 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	
+	
 	function hello(){
 		return "world";
 	}; exports.hello = hello;

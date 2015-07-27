@@ -29,6 +29,7 @@ export class Rewriter
 		# console.log "tokens in: " + tokens:length
 		console.time("tokenize:rewrite") if opts:profile
 
+		step("ensureFirstLine")
 		step("removeLeadingNewlines")
 		step("removeMidExpressionNewlines")
 		step("tagDefArguments")
@@ -94,15 +95,26 @@ export class Rewriter
 			i += 1
 		i - 1
 
+	def ensureFirstLine
+		var tok = @tokens[0]
+
+		if T.typ(tok) == 'TERMINATOR'
+			# console.log "adding bodystart"
+			@tokens = [T.token('BODYSTART','BODYSTART')].concat(@tokens)
+			# T.setTyp(tok,'HEADER')
+		return
+
 	# Leading newlines would introduce an ambiguity in the grammar, so we
 	# dispatch them here.
 	def removeLeadingNewlines
 		var at = 0
+
 		for token,i in @tokens
 			if T.typ(token) != 'TERMINATOR'
 				break at = i
-
+		
 		@tokens.splice(0, at) if at
+
 		return
 
 	# Some blocks occur in the middle of expressions -- when we're expecting

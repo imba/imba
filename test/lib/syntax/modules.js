@@ -12,6 +12,8 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	
+	// import two specific items from module
 	var module$=require('./module'), Item=module$.Item, hello=module$.hello;
 	
 	// import everything from module into a local namespace/variable 'm'

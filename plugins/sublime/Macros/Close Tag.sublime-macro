@@ -1,4 +1,0 @@
-[
-    {"command": "insert_snippet", "args": {"contents": "${0}>"}},
-    {"command": "auto_complete"}
-]

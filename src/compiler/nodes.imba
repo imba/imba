@@ -1776,7 +1776,7 @@ export class Root < Code
 		@traversed = no
 		@body = blk__(body)
 		@scope = FileScope.new(self,null)
-
+		@options = {}
 
 	def visit
 		scope.visit
@@ -1785,15 +1785,19 @@ export class Root < Code
 	def compile o
 		STACK.reset # -- nested compilation does not work now
 		STACK.@options = o
+		@options = o or {}
 		OPTS = o
+		
 		traverse
 		var out = c
-		# STACK.reset
-		# console.log "copmiled",STACK.@counter
 		return out
 
 	def js o
-		'(function(){\n\n' + scope.c(indent: yes) + '\n\n}())'
+		if @options:bare
+			scope.c
+		else
+			'(function(){\n\n' + scope.c(indent: yes) + '\n\n}())'
+
 
 	def analyze loglevel: 0
 		STACK.loglevel = loglevel
@@ -1919,16 +1923,19 @@ export class TagDeclaration < Code
 
 		# should disallow initialize for tags?
 		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
+		var ctor = "" # ",function {name.func}(d)\{this.setDom(d)\}"
+		var outbody = body.count ? ', function(){' + body.c + '}' : ''
 
 		var out = if name.id
-			"Imba.defineSingletonTag('{name.id}',function {name.func}(d)\{this.setDom(d)\}{sup})"
+			"Imba.defineSingletonTag('{name.id}'{ctor}{sup}{outbody})"
 		else
-			"Imba.defineTag('{name.func}',function {name.func}(d)\{this.setDom(d)\}{sup})"
+			"Imba.defineTag('{name.func}'{ctor}{sup}{outbody})"
+
+		return out
 
 		# if the body is empty we can return this directly
 		# console.log "here"
 		if body.count == 0
-
 			return out
 
 		# create closure etc
@@ -1941,7 +1948,7 @@ export class TagDeclaration < Code
 		body.@indentation = null
 
 		out = "var tag = {out};"
-		scope.context.value = Const.new('tag')
+		# scope.context.value = Const.new('tag')
 		out += "\n{body.c}"
 
 		return '(function()' + helpers.bracketize(out,yes) + ')()'
@@ -2356,9 +2363,10 @@ export class Num < Literal
 		paren ? "(" + js + ")" : js
 		# @cache ? super(o) : String(@value)
 
-	# def cache
-	# 	p "cache num"
-	# 	self
+	def cache o
+		# p "cache num",o
+		return self unless o and (o:cache or o:pool)
+		super(o)
 
 	def raw
 		# really?
@@ -5224,6 +5232,8 @@ export class Tag < Node
 
 				if akey[0] == '.' # should check in a better way
 					calls.push ".flag({quote(akey.substr(1))},{part.value.c})"
+				elif akey[0] == ':'
+					calls.push ".setHandler({quote(akey.substr(1))},{part.value.c})"
 				else
 					calls.push ".{helpers.setterSym(akey)}({part.value.c})"
 
@@ -5268,7 +5278,7 @@ export class Tag < Node
 			if @reference
 				out = "({reference.c} = {acc} || ({acc} = {out}))"
 			else
-				out = "({acc} || ({acc} = {out}))"
+				out = "({acc} = {acc} || {out})"
 			
 
 		# should we not add references to the outer ones first?
@@ -5627,29 +5637,42 @@ export class ImportStatement < Statement
 		
 		# should also register the imported items, no?
 		if @imports
-			# p "ImportStatement has imports {@imports:cont}"
-			@declarations = VariableDeclaration.new([])
-			@moduledecl = @declarations.add(@alias,CALL(Identifier.new("require"),[source]))
+			var dec = @declarations = VariableDeclaration.new([])
+
+			if @imports:length == 1
+				@alias = @imports[0]
+				dec.add(@alias,OP('.',CALL(Identifier.new("require"),[source]),@alias))
+				dec.traverse
+				return self
+				
+				# dec.add(@alias,CALL(Identifier.new("require"),[source]))
+
+			# p "ImportStatement has imports {@imports:length}"
+			# @declarations = VariableDeclaration.new([])
+			@moduledecl = dec.add(@alias,CALL(Identifier.new("require"),[source]))
 			@moduledecl.traverse
 
-			for imp in @imports
-				@declarations.add(imp,OP('.',@moduledecl.variable,imp))
 
-			@declarations.traverse
+			if @imports:length > 1
+				for imp in @imports
+					@declarations.add(imp,OP('.',@moduledecl.variable,imp))
+
+			dec.traverse
 		self
 
 
 	def js o
+
+		if @declarations
+			return @declarations.c
+
 		var req = CALL(Identifier.new("require"),[source])
 
 		if @ns
 			# must register ns as a real variable
 			return "var {@nsvar.c} = {req.c}"
 
-		if @declarations
-			return @declarations.c
-
-		elif @imports
+		if @imports
 
 			var src = source.c
 			var alias = []
@@ -6269,7 +6292,13 @@ export class ForScope < FlowScope
 
 export class IfScope < FlowScope
 
+	def temporary refnode, o = {}, name = null
+		parent.temporary(refnode,o,name)
+
 export class BlockScope < FlowScope
+
+	def temporary refnode, o = {}, name = null
+		parent.temporary(refnode,o,name)
 
 	def region
 		node.region

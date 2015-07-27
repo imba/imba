@@ -77,7 +77,6 @@
 	// 	def invoke2
 	// 		@y
 	
-	
 	COUNT = 100000000;
 	
 	// console.time("bench")
@@ -91,7 +90,6 @@
 	// 
 	// console.log sum
 	// console.timeEnd("bench")
-	
 	
 	time("only A",function (){
 		var count = COUNT;

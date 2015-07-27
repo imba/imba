@@ -18,6 +18,10 @@ class ElementTag
 
 	def dom
 		@dom
+
+	def initialize dom
+		self.dom = dom
+		self
 		
 	def dom= dom
 		dom.@tag = self
@@ -28,8 +32,12 @@ class ElementTag
 		flag(@ref = ref)
 		self
 
+	def setHandler name, v
+		self["on" + name] = v
+		self
+
 	def setAttribute key, v
-		v != nil && v !== false ? dom.setAttribute(key,v) : removeAttribute(key)
+		v != null && v !== false ? dom.setAttribute(key,v) : removeAttribute(key)
 		return v # non-obvious that we need to return the value here, no?
 
 	def removeAttribute key
@@ -225,6 +233,9 @@ class ElementTag
 	def build
 		self
 
+	def awaken
+		self
+
 	def commit
 		self
 
@@ -262,7 +273,6 @@ class ElementTag
 
 	def prepend item
 		insert(item, before: first)
-		
 
 	def append item
 		# possible to append blank
@@ -314,7 +324,9 @@ class ElementTag
 
 	def has-flag ref
 		classes.contains ref
-		
+
+ElementTag:prototype:initialize = ElementTag
+
 
 class HTMLElementTag < ElementTag
 
@@ -389,7 +401,7 @@ def extender obj, sup
 	obj:prototype:initialize = obj:prototype:constructor = obj
 	return obj
 
-def Imba.defineTag name, func, supr
+def Imba.defineTag name, supr = '', &body
 	var m = name.split("$")
 
 	var name = m[0]
@@ -398,7 +410,13 @@ def Imba.defineTag name, func, supr
 	supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
 
 	var suprklass = IMBA_TAGS[supr]
-	var klass = func # imba$class(func,suprklass)
+
+	var Tag = do |dom|
+		this.setDom(dom)
+		this
+
+	# var Tag = {}
+	var klass = Tag # imba$class(func,suprklass)
 
 	extender(klass,suprklass)
 
@@ -435,13 +453,21 @@ def Imba.defineTag name, func, supr
 	IMBA_TAGS["{name}${ns or 'html'}"] = klass
 
 	# create the global shortcut for tag init as well
+	body.call(klass,klass:prototype) if body
 	return klass
 
-def Imba.defineSingletonTag id, func, supr
+def Imba.defineSingletonTag id, supr = '', &body
+
 	var superklass = Imba.TAGS[supr || 'div']
 	# do we really want a class for singletons?
 	# var klass = imba$class(func,superklass)
-	var klass = extender(func,superklass)
+	# var ctor = (Function.new("return function " + name + "(){ alert('sweet!')}")()
+
+	var singleton = do |dom|
+		this.setDom(dom)
+		this
+
+	var klass = extender(singleton,superklass)
 
 	klass.@id = id
 	klass.@ns = superklass.@ns
@@ -460,6 +486,7 @@ def Imba.defineSingletonTag id, func, supr
 	# if namespaced -- this is dangerous
 	# console.log('registered singleton')
 	Imba.SINGLETONS[id] = klass
+	body.call(klass,klass:prototype) if body
 	return klass
 
 def Imba.tag name
@@ -517,12 +544,12 @@ id$ = Imba:getTagSingleton
 def Imba.getTagForDom dom
 
 	# ugly checks
-	return nil unless dom
+	return null unless dom
 	return dom if dom.@dom # could use inheritance instead
 	return dom.@tag if dom.@tag
-	return nil unless dom:nodeName # better check?
+	return null unless dom:nodeName # better check?
 
-	var ns = nil
+	var ns = null
 	var id = dom:id
 	var type = dom:nodeName.toLowerCase
 	var cls = dom:className
@@ -550,7 +577,7 @@ def Imba.getTagForDom dom
 
 	var spawner = IMBA_TAGS[type]
 	# console.log("tag for dom?!",ns,type,cls,spawner)
-	spawner ? spawner.new(dom) : nil
+	spawner ? spawner.new(dom).awaken(dom) : null
 
 tag$wrap = Imba:getTagForDom
 # predefine all supported html tags

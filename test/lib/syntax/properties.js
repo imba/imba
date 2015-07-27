@@ -1,6 +1,7 @@
 (function(){
 
 
+	
 	/* @class Model */
 	function Model(nestings){
 		if(nestings === undefined) nestings = 0;

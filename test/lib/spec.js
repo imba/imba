@@ -12,6 +12,7 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	
 	var TERMINAL_COLOR_CODES = {
 		bold: 1,
 		underline: 4,

@@ -12,6 +12,7 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	
 	/* @class Organism */
 	function Organism(){
 		this.setGroup("organism");

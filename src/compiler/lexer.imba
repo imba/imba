@@ -117,7 +117,7 @@ var TAG = /// ^
 var TAG_TYPE = /^(\w[\w\d]*:)?(\w[\w\d]*)(-[\w\d]+)*/
 var TAG_ID = /^#((\w[\w\d]*)(-[\w\d]+)*)/
 
-var TAG_ATTR = /^([\.]?[\w\_]+([\-\:][\w]+)*)(\s)*\=/
+var TAG_ATTR = /^([\.\:]?[\w\_]+([\-\:][\w]+)*)(\s)*\=/
 
 var SELECTOR = /^([%\$]{1,2})([\(\w\#\.\[])/
 var SELECTOR_PART = /^(\#|\.|:|::)?([\w]+(\-[\w]+)*)/
@@ -376,10 +376,11 @@ export class Lexer
 
 		if code:length == 0
 			return []
+
 		# console.log "code is {code}"
 		# if true # !o:inline
 		if WHITESPACE.test(code)
-			# console.log "is empty?"
+			console.log "is empty?"
 			code = "\n{code}"
 			return [] if code.match(/^\s*$/g)
 
@@ -423,7 +424,7 @@ export class Lexer
 				ln = @line
 
 			@loc = @locOffset + i
-			pi = (@end == 'TAG' and tagContextToken) || basicContext
+			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || basicContext
 			@col += pi
 			i += pi
 
@@ -433,6 +434,10 @@ export class Lexer
 	def basicContext
 		return selectorToken || symbolToken || methodNameToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || jsToken || literalToken || 0
 
+	def moveCaret i
+		@loc += i
+		@col += i
+		
 
 	def context
 		@ends[@ends:length - 1]
@@ -446,13 +451,22 @@ export class Lexer
 		@ends.push(val)
 		@contexts.push(nil)
 		@end = val
+		refreshScope
 		self
 
 	def popEnd val
 		@ends.pop
 		@contexts.pop
 		@end = @ends[@ends:length - 1]
+		refreshScope
 		self
+
+	def refreshScope
+		var ctx0 = @ends[@ends:length - 1]
+		var ctx1 = @ends[@ends:length - 2]
+		@inTag = ctx0 == 'TAG_END' or (ctx1 == 'TAG_END' and ctx0 == 'OUTDENT')
+
+		
 
 	def queueScope val
 		# console.log("pushing scope {val} - {@indents} {@indents:length}")
@@ -503,9 +517,28 @@ export class Lexer
 			pair('DEF')
 		return
 
-
-
 	def tagContextToken
+		if var match = TAG_ATTR.exec(@chunk)
+			# console.log 'TAG_SDDSATTR IN tokid',match
+			# var prev = last @tokens
+			# if the prev is a terminator, we dont really need to care?
+			if @lastTyp != 'TAG_NAME'
+				if @lastTyp == 'TERMINATOR'
+					# console.log('prev was terminator -- drop it?')
+					true
+				else
+					token(",", ",")
+
+			var l = match[0]:length
+
+			token 'TAG_ATTR',match[1],l - 1  # add to loc?
+			@loc += l - 1
+			token '=','=',1
+			return l
+		return 0
+
+	def tagDefContextToken
+		# console.log "tagContextToken"
 		if var match = TAG_TYPE.exec(@chunk)
 			token 'TAG_TYPE', match[0], match[0]:length
 			return match[0]:length
@@ -826,7 +859,7 @@ export class Lexer
 		# console.log ctx1,ctx0
 	
 		if inTag && match = TAG_ATTR.exec(@chunk)
-			# console.log 'TAG_ATTR IN tokid'
+			# console.log 'TAG_ATTR IN tokid',match
 			# var prev = last @tokens
 			# if the prev is a terminator, we dont really need to care?
 			if @lastTyp != 'TAG_NAME'
@@ -860,6 +893,7 @@ export class Lexer
 			return 0
 
 		var [input, id, typ, m3, m4, colon] = match
+		var idlen = id:length
 
 		# What is the logic here?
 		if id is 'own' and lastTokenType == 'FOR'
@@ -926,7 +960,7 @@ export class Lexer
 			typ = 'CONST'
 
 		elif id == 'elif'
-			token 'ELSE', 'else'
+			token 'ELSE', 'elif', id:length
 			token 'IF', 'if'
 			return id:length
 
@@ -1052,8 +1086,13 @@ export class Lexer
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
 		
-		token(typ, id, len)
-		token(':', ':',0) if colon # _what_?
+		if colon
+			token(typ, id, idlen)
+			moveCaret(idlen)
+			token(':', ':',colon:length)
+			moveCaret(-idlen)
+		else
+			token(typ, id, idlen)
 
 		return len
 
@@ -1162,6 +1201,7 @@ export class Lexer
 		var typ = 'HERECOMMENT'
 
 		if match = INLINE_COMMENT.exec(@chunk) # .match(INLINE_COMMENT)
+			# console.log "match inline comment"
 			length = match[0]:length
 			indent = match[1]
 			comment = match[2]
@@ -1175,7 +1215,7 @@ export class Lexer
 				# console.log "the previous node was SPACED"
 			# console.log "comment {note} - indent({indent}) - {length} {comment:length}"
 
-			if pt and pt != 'INDENT' and pt != 'TERMINATOR'
+			if (pt and pt != 'INDENT' and pt != 'TERMINATOR') or !pt
 				# console.log "skip comment"
 				# token 'INLINECOMMENT', comment.substr(2)
 				# console.log "adding as terminator"
@@ -1249,7 +1289,7 @@ export class Lexer
 		if regex == '//'
 			regex = '/(?:)/'
 
-		token 'REGEX', "{regex}{flags}"
+		token 'REGEX', "{regex}{flags}", m:length
 		m:length
 
 	# Matches multiline extended regular expressions.
@@ -1263,7 +1303,7 @@ export class Lexer
 			if re.match(/^\*/)
 				error 'regular expressions cannot begin with `*`'
 
-			token 'REGEX', "/{ re or '(?:)' }/{flags}"
+			token 'REGEX', "/{ re or '(?:)' }/{flags}", heregex:length
 			return heregex:length
 
 		token 'CONST', 'RegExp'
@@ -1513,8 +1553,8 @@ export class Lexer
 	# Generate a newline token. Consecutive newlines get merged together.
 	def newlineToken lines
 		# console.log "newlineToken"
-		while @lastVal == ';'
-			console.log "pop token"
+		while lastTokenValue() == ';'
+			console.log "pop token",@tokens[@tokens:length - 1]
 			@tokens.pop
 
 		addLinebreaks(lines)

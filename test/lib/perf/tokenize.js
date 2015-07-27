@@ -6,8 +6,10 @@
 	var compiler = require("../../../lib/compiler");
 	// var compiler  = require "/repos/imba/lib/compiler"
 	var rawtokens = compiler.tokenize(code,{rewrite: false});
-	var tokens = compiler.tokenize(code);
-	var ast = compiler.parse(tokens);
+	var tokens = compiler.tokenize(code,{filename: "a"});
+	var ast = compiler.parse(tokens,{filename: "a"});
+	
+	var arg = process.argv[2];
 	// console.log compiler:ast
 	// compiler:ast.compile(ast)
 	
@@ -22,32 +24,34 @@
 	var helper = require('./helper');
 	var b = new helper.Benchmark("tokenize",{maxTime: 1});
 	
-	b.add('lex',function (){
+	(!arg || arg == 'lex') && b.add('lex',function (){
 		return compiler.tokenize(code,{rewrite: false});// hmm
 	});
 	
-	b.add('rewrite',function (){
+	(!arg || arg == 'rewrite') && b.add('rewrite',function (){
 		var arr = rawtokens.slice();
 		return compiler.rewrite(arr);// hmm
 	});
 	
 	// add tests
-	b.add('tokenize',function (){
-		return compiler.tokenize(code);// hmm
+	// b.add('tokenize') do
+	// 	compiler.tokenize(code) # hmm
+	
+	(!arg || arg == 'parse') && b.add('parse',function (){
+		return compiler.parse(tokens,{filename: "a"});// hmm
 	});
 	
-	b.add('parse',function (){
-		return compiler.parse(tokens);// hmm
-	});
 	
-	b.add('compile',function (){
+	(!arg || arg == 'compile') && b.add('compile',function (){
 		var ast = compiler.parse(tokens);
 		return ast.compile(ast);// hmm
-		// try
-		// 	compiler:ast.compile(ast) # hmm
-		// catch e
-		// 	console.log "ERROR {e:message}"
 	});
+	
+	(!arg || arg == 'full') && b.add('full',function (){
+		compiler.compile(code,{filename: "a"});
+		return;
+	});
+	
 	
 	// b.add('Token') do
 	// 	var arr = []
@@ -60,6 +64,7 @@
 	// 	true
 	
 	// run async
+	console.log(process.argv);
 	b.run();
 
 

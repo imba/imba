@@ -1,10 +1,7 @@
 (function(){
 
 
-	function idx$(a,b){
-		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-	};
-	
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// helper for subclassing
 	function subclass$(obj,sup) {
 		for (var k in sup) {
@@ -16,11 +13,13 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	function idx$(a,b){
+		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+	};
+	
 	// TODO Create AST.Expression - make all expressions inherit from these?
 	
 	// externs;
-	
 	
 	var helpers = require('./helpers');
 	
@@ -609,7 +608,7 @@
 	AST.Node.prototype.c = function (o){
 		var indent;
 		if(this._cache && this._cache.cached) {
-			(this._cache.lookups)++;
+			this._cache.lookups++;
 			if(this._cache.uses == this._cache.lookups) {
 				this._cache.var.free();
 				//  "free variable(!) {@cache:var.c}"
