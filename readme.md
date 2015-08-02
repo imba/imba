@@ -1,3 +1,5 @@
+Visit [imba.io](http://imba.io) for more information!
+
 # Imba
 *if ruby and react had an indentation-based child, what would it look like?*
 Imba is a new programming language for the web that compiles to performant
