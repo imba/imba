@@ -9,6 +9,7 @@ var chalk     = require 'chalk'
 var orig = cli:helpInformation
 var cliproto = cli:constructor:prototype
 
+var package = require '../../package.json'
 var ERR = require './errors'
 
 def cliproto.helpInformation
@@ -379,8 +380,7 @@ def cli-compile root, o, watch: no
 			write-file(source,destpath)
 	return
 
-
-cli.version('0.9.0')
+cli.version(package:version)
 
 cli.command('* <path>')
 	.usage('<path>')

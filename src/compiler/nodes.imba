@@ -612,11 +612,11 @@ export class Comment < Meta
 
 	def c o
 		var v = @value.@value
-		if o and o:expression or v.match(/\n/) # multiline?
+		# p @value.type
+		if o and o:expression or v.match(/\n/) or @value.type == 'HERECOMMENT' # multiline?
 			"/*{v}*/"
 		else
 			"// {v}"
-
 
 export class Terminator < Meta
 	
@@ -1865,7 +1865,7 @@ export class ClassDeclaration < Code
 		if namespaced
 			initor = "{cpath} = {initor}" # OP('=',name,initor)
 
-		head.push("/* @class {cname} */\n{initor};\n\n")
+		head.push("// @class {cname}\n{initor};\n\n")
 
 		if sup
 			# console.log "deal with superclass!"

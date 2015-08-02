@@ -9,9 +9,7 @@ Imba started out several years ago as a fork of CoffeeScript, with a plan to add
 ## Principles
 - Ultra-readable compiled js (keeping comments, indentation, style).
   Making the technological investment minimal - as it is easy to move on with js codebase at any time.
-- Everything is an expression.
-  Without wrapping things in huge ugly anonymous functions everywhere
-- Respect JS semantics and idioms.
+- Everything is an expression, including cases missing from CoffeeScript ( returning from loops, break/continue with arguments etc) without wrapping everything in anonymous functions all over the place. 
 - Implement syntactic sugar like in CS, but with clean and performant code.
 
 ## Installation

@@ -194,7 +194,7 @@ export class Highlighter
 				addSection(res) # resetting
 
 				# content = content.replace(/(^\s*###\n*|\n*###\s*$)/g,'<s>$1</s>')
-				content = content.replace(/(^\s*###\n*|\n*###\s*$)/g,'')
+				content = content.replace(/(^\s*###[\s\n]*|[\n\s]*###\s*$)/g,'')
 				# console.log("converting to markdown",content)
 				content = marked(content)
 				res += '<s>###</s>' + content + '<s>###</s>'
@@ -224,6 +224,9 @@ export class Highlighter
 
 		var html = ''
 		# html += '<code>'
+
+		if options:json
+			return sections
 
 		for section in sections
 			var out = section:content
