@@ -732,6 +732,12 @@ export class ListNode < Node
 		@nodes.splice(idx, 1) if idx >= 0
 		self
 
+	def removeAt idx
+		var item = @nodes[idx]
+		@nodes.splice(idx, 1) if idx >= 0
+		return item
+		
+
 	def replace original, replacement
 		var idx = @nodes.indexOf(original)
 		if idx >= 0
@@ -1256,7 +1262,15 @@ export class Param < Node
 
 	def visit
 		@defaults.traverse if @defaults
-		self.variable ||= scope__.register(name,self)	
+		self.variable ||= scope__.register(name,self)
+
+		if @name isa Identifier
+			# change type here?
+			@name.@value.@type = "PARAMVAR" if @name.@value
+			@name.references(@variable)
+			# console.log "got here!! {@name:constructor}"
+			# @name.@token.@variable = @variable if @name.@token
+		
 		self
 
 	def assignment
@@ -1831,19 +1845,31 @@ export class ClassDeclaration < Code
 		self
 
 	def js o
-		scope.virtualize
+		scope.virtualize # is this always needed?
 		scope.context.value = name
 
 		# should probably also warn about stuff etc
 		if option(:extension)
 			return body.c
 
+		var head = []
 		var o = @options or {}
 		var cname = name isa Access ? name.right : name
 		var namespaced = name != cname
-
+		var initor = null
 		var sup = superclass
-		var initor = body.pluck do |c| c isa MethodDeclaration && c.type == :constructor
+
+		var bodyindex = -1
+		var spaces = body.filter do |item| item isa Terminator
+
+		body.map do |c,i|
+			if c isa MethodDeclaration && c.type == :constructor
+				bodyindex = i
+
+		if bodyindex >= 0
+			initor = body.removeAt(bodyindex)
+
+		# var initor = body.pluck do |c| c isa MethodDeclaration && c.type == :constructor
 		# compile the cname
 		cname = cname.c unless typeof cname == 'string'
 
@@ -1851,21 +1877,31 @@ export class ClassDeclaration < Code
 
 		if !initor
 			if sup
-				initor = "function {cname}()\{ {sup.c}.apply(this,arguments) \}"
+				initor = "function {cname}()\{ {sup.c}.apply(this,arguments) \};\n\n"
 			else
-				initor = "function {cname}()" + '{ }'
-		
+				initor = "function {cname}()" + '{ };\n\n'
+			
 		else
 			initor.name = cname
-			initor = initor.c
+			initor = initor.c + ';'
 		
 		# if we are defining a class inside a namespace etc -- how should we set up the class?
-		var head = []
-
+		
 		if namespaced
+			# should use Nodes to build this instead
 			initor = "{cpath} = {initor}" # OP('=',name,initor)
 
-		head.push("// @class {cname}\n{initor};\n\n")
+		head.push(initor) # // @class {cname}\n
+
+		if bodyindex >= 0
+			# add the space after initor?
+			if body.index(bodyindex) isa Terminator
+				head.push(body.removeAt(bodyindex))
+		else
+			# head.push(Terminator.new('\n\n'))
+			true
+		
+
 
 		if sup
 			# console.log "deal with superclass!"
@@ -1920,11 +1956,17 @@ export class TagDeclaration < Code
 			# check if we have an initialize etc - not allowed?
 			scope.context.value = name
 			return body.c
+		else
+			# context should come from the body, no?
+			@ctx = scope.declare('tag',null,system: yes)
+			scope.context.value = @ctx
+		
 
 		# should disallow initialize for tags?
 		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
 		var ctor = "" # ",function {name.func}(d)\{this.setDom(d)\}"
-		var outbody = body.count ? ', function(){' + body.c + '}' : ''
+		var cbody = body.c
+		var outbody = body.count ? ", function({@ctx.c})\{{cbody}\}" : ''
 
 		var out = if name.id
 			"Imba.defineSingletonTag('{name.id}'{ctor}{sup}{outbody})"
@@ -2033,11 +2075,11 @@ export class MethodDeclaration < Func
 			# body.nodes = [Arr.new(body.nodes)]
 
 		
-		@context = scope.parent
+		@context = scope.parent.closure
 		@params.traverse
 
 		if target isa Self
-			@target = @scope.parent.context
+			@target = @context.context
 			set(static: yes)
 
 		if context isa ClassScope
@@ -3134,7 +3176,10 @@ export class VarOrAccess < ValueNode
 			# ie.  var x = x would resolve to var x = this.x() if x
 			# was not previously defined
 
-			if variable.@initialized or scope != variable.scope
+			# should do this even if we are not in the same scope?
+			# we only need to be in the same closure(!)
+
+			if variable.@initialized or (scope.closure != variable.scope.closure)
 				@variable = variable
 				variable.addReference(self)
 				@value = variable # variable.accessor(self)
@@ -3203,6 +3248,9 @@ export class VarOrAccess < ValueNode
 		var loc = @identifier.region
 		return loc or [0,0]
 
+	def region
+		@identifier.region
+
 	def toString
 		"VarOrAccess({value})"
 
@@ -3242,6 +3290,9 @@ export class VarReference < ValueNode
 		@variable = null
 		@declared = yes # just testing now
 
+	def loc
+		# p "loc for VarReference {@value:constructor} {@value.@value:constructor} {@value.region}"
+		@value.region
 
 	def set o
 		# hack - workaround for hidden classes perf
@@ -3294,7 +3345,7 @@ export class VarReference < ValueNode
 		var name = value.c
 
 		# what about looking up? - on register we want to mark
-		var v = @variable ||= scope__.register(name,null, type: @type)
+		var v = @variable ||= scope__.register(name, self, type: @type)
 		# FIXME -- should not simply override the declarator here(!)
 
 		if !v.declarator
@@ -3375,18 +3426,18 @@ export class Assign < Op
 		var l = @left
 		var r = @right
 
-		if l isa Arr
-			p "assigning to array!!"
-
 		# WARNING - slightly undefined
 		# MARK THE STACK
 		l.traverse if l
 
 		var lvar = l isa VarReference and l.variable
 
+		# p "assign {l} {r} {l.value}"
+
+
+
 		# this should probably be done in a different manner
 		if lvar and lvar.declarator == l
-			# p "lvar is first declared in this assign"
 			lvar.@initialized = no
 			r.traverse if r
 			lvar.@initialized = yes
@@ -3395,7 +3446,7 @@ export class Assign < Op
 			r.traverse if r
 
 		if l isa VarReference or l.@variable
-			l.@variable.assigned(r)
+			l.@variable.assigned(r,self)
 
 		return self
 	
@@ -3922,6 +3973,10 @@ export class Identifier < Node
 		# @safechain = ("" + value).indexOf("?") >= 0
 		self
 
+	def references variable
+		@value.@variable = variable if @value
+		self
+
 	def load v
 		return (v isa Identifier ? v.value : v)
 
@@ -4197,7 +4252,8 @@ export class Call < Node
 			out = "{callee.c(expression: yes)}.apply({receiver.c},{ary.c(expression: yes)})"
 
 		elif @receiver
-			@receiver.cache
+			# quick workaround
+			@receiver.cache unless @receiver isa ScopeContext
 			args.unshift(receiver)
 			# should rather rewrite to a new call?
 			out = "{callee.c(expression: yes)}.call({args.c(expression: yes)})"
@@ -4715,7 +4771,8 @@ export class For < Loop
 		if src isa Range
 			cond.op = '<=' if src.inclusive
 		
-		elif val.refcount < 3
+		elif val.refcount < 3 and val.assignments:length == 0
+			# p "proxy the value {val.assignments:length}"
 			# p "should proxy value-variable instead"
 			val.proxy(vars:source,i)
 		else
@@ -4746,8 +4803,10 @@ export class ForOf < For
 
 		# p "ForOf source isa {o:source}"
 
-		# if o:source is a variable -- refer directly
-		var src = vars:source = o:source.@variable || scope.declare('o',o:source, system: true)
+		# if o:source is a variable -- refer directly # variable? is this the issue?
+		# p scope.@varmap['o'], scope.parent.@varmap['o']
+
+		var src = vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
 		var v = vars:value = scope.declare(o:index,null,let: yes) if o:index
 
 		# p "ForOf o:index {o:index} o:name {o:name}"
@@ -4756,10 +4815,10 @@ export class ForOf < For
 		# possibly proxy the index-variable?
 
 		if o:own
-			var i = vars:index = scope.declare('i',0,system: true) # mark as a counter?
+			var i = vars:index = scope.declare('i',0,system: true, type: 'let') # mark as a counter?
 			# systemvariable -- should not really be added to the map
 			var keys = vars:keys = scope.declare('keys',Util.keys(src.accessor),system: yes, type: 'let') # the outer one should resolve first
-			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes)
+			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
 			var k = vars:key = scope.register(o:name,o:name,type: 'let') # scope.declare(o:name,null,system: yes)
 		else
 			# we set the var -- why even declare it
@@ -6017,13 +6076,15 @@ export class Scope
 
 	# just like register, but we automatically 
 	def declare name, init = null, o = {}
+
 		var variable = register(name,null,o)
 		# TODO create the variabledeclaration here instead?
+		# if this is a sysvar we need it to be renameable
 		var dec = @vars.add(variable,init)
 		variable.declarator ||= dec
 		return variable
 
-		p "declare variable {name} {o}"
+		# p "declare variable {name} {o}"
 		# if name isa Variable
 		# p "SCOPE declare var".green
 		name = helpers.symbolize(name)
@@ -6148,7 +6209,8 @@ export class Scope
 
 	def toString
 		"{self:constructor:name}"
-		
+	
+
 # FileScope is wrong? Rather TopScope or ProgramScope
 export class FileScope < Scope
 
@@ -6227,6 +6289,9 @@ export class ClassScope < Scope
 			v.resolve(up,yes) # force new resolve
 		self
 
+	def isClosed
+		yes
+
 export class TagScope < ClassScope
 
 export class ClosureScope < Scope
@@ -6253,9 +6318,17 @@ export class FlowScope < Scope
 		@parent.params if @parent
 
 	def register name, decl = null, o = {}
-		if o:type != 'let'
+		if o:type != 'let' and (closure != self)
+			if var found = lookup(name)
+				# p "already found variable {found.type}"
+				if found.type == 'let'
+					p "{name} already exists as a block-variable {decl}"
+					# TODO should throw error instead
+					decl.warn "Variable already exists in block" if decl
+					# root.warn message: "Holy shit"
+				# if found.
 			# p "FlowScope register var -- do it right in the outer scope"
-			parent.register(name,decl,o)
+			closure.register(name,decl,o)
 		else
 			# p "Register local variable for FlowScope {name}"
 			# o:closure = parent
@@ -6289,6 +6362,9 @@ export class ForScope < FlowScope
 	def autodeclare variable
 		vars.push(variable)
 		# parent.autodeclare(variable)
+
+	# def closure
+	# 	self
 
 export class IfScope < FlowScope
 
@@ -6336,14 +6412,19 @@ export class Variable < Node
 		@type			= o and o:type || 'var' # what about let here=
 		@export			= no
 		@references 	= [] # only needed when profiling
+		@assignments 	= []
 		self
 
 	def closure
 		@scope.closure
 
+	def assignments
+		@assignments
+
 	# Here we can collect lots of type-info about variables
 	# and show warnings / give advice if variables are ambiguous etc
-	def assigned val
+	def assigned val, source
+		@assignments.push(val)
 		# p "Variable was assigned {val}"
 		if val isa Arr
 			# just for testing really

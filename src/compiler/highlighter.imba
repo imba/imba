@@ -18,6 +18,9 @@ export class Highlighter
 
 		hljs.configure classPrefix: ''
 
+		var mdrenderer = marked.Renderer.new
+		mdrenderer:heading = do |text, level| '<h' + level + '><span>' + text + '</span></h' + level + '>'
+
 		marked.setOptions
 			highlight: do |code,language|
 				console.log "highlighting here!",language
@@ -133,6 +136,7 @@ export class Highlighter
 			var loc = tok.@loc
 			var val = tok.@value
 			var len = tok.@len # or tok.@value:length
+			var meta = tok.@meta
 
 			if loc > caret
 				var add = str.substring(caret,loc)
@@ -181,14 +185,15 @@ export class Highlighter
 			if typ == 'identifier'
 				if content[0] == '#'
 					cls.push('idref')
-				if tok.@variable
-					# console.log "IS VARIABLEREF",tok.@value
-					cls.push('_lvar')
-					cls.push("ref-"+tok.@variable.@ref)
-				elif var m = tok.@meta
+				
+				if meta
 					# console.log "META"
-					cls.push('access') if m:type == 'ACCESS'
+					cls.push('access') if meta:type == 'ACCESS'
 
+			if tok.@variable
+				# console.log "IS VARIABLEREF",tok.@value
+				cls.push('_lvar')
+				cls.push("ref-"+tok.@variable.@ref)
 
 			if typ == 'herecomment'
 				addSection(res) # resetting
@@ -196,7 +201,7 @@ export class Highlighter
 				# content = content.replace(/(^\s*###\n*|\n*###\s*$)/g,'<s>$1</s>')
 				content = content.replace(/(^\s*###[\s\n]*|[\n\s]*###\s*$)/g,'')
 				# console.log("converting to markdown",content)
-				content = marked(content)
+				content = marked(content, renderer: mdrenderer)
 				res += '<s>###</s>' + content + '<s>###</s>'
 				addSection(res, type: 'comment')
 				continue

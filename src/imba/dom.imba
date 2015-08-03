@@ -23,12 +23,12 @@ class ElementTag
 		self.dom = dom
 		self
 		
-	def dom= dom
+	def setDom dom
 		dom.@tag = self
 		@dom = dom
 		self
 
-	def ref= ref
+	def setRef ref
 		flag(@ref = ref)
 		self
 
@@ -453,7 +453,7 @@ def Imba.defineTag name, supr = '', &body
 	IMBA_TAGS["{name}${ns or 'html'}"] = klass
 
 	# create the global shortcut for tag init as well
-	body.call(klass,klass:prototype) if body
+	body.call(klass,klass,klass:prototype) if body
 	return klass
 
 def Imba.defineSingletonTag id, supr = '', &body
@@ -486,7 +486,7 @@ def Imba.defineSingletonTag id, supr = '', &body
 	# if namespaced -- this is dangerous
 	# console.log('registered singleton')
 	Imba.SINGLETONS[id] = klass
-	body.call(klass,klass:prototype) if body
+	body.call(klass,klass,klass:prototype) if body
 	return klass
 
 def Imba.tag name

@@ -34,13 +34,27 @@ describe 'Syntax - Loops' do
 
 			eq sum, 0 + 1 + 2
 
+		test "redefining var inside" do
 
+			var breaks = [1,2,3]
+			for br,i in breaks
+				let br = 0
+				eq br, 0
+
+			for x,i in breaks
+				x = 0
+
+			eq breaks, [1,2,3]
+
+			return
 
 
 		test "basic assignment" do
+			var o = 0, l = 0, i = 0, len = 0
 			var rets = for v in ary
 				v + 1
 			eq rets, [2,3,4,5,6], String
+			eq o + l + i + len, 0
 
 		test "forin with conditional assign" do
 			var ret
@@ -99,6 +113,10 @@ describe 'Syntax - Loops' do
 	describe "For Of" do
 
 		test "all keys assignment" do
+			var o = 0
+			var l = 0
+			var len = 0
+
 			var keys = (k for k,v of dict)
 			eq keys, [:a,:b,:c,:d], String
 
@@ -111,6 +129,10 @@ describe 'Syntax - Loops' do
 			keys = (k for k,v of dict2)
 			eq keys, [:e,:a,:b,:c,:d]
 
+			eq o, 0
+			eq l, 0
+			eq len, 0
+
 		test "for own of" do
 			var keys = (k for own k,v of dict)
 			eq keys, [:a,:b,:c,:d], String
@@ -119,6 +141,22 @@ describe 'Syntax - Loops' do
 			var vals = (val for own k,val of dict2)
 			eq keys, [:e]
 			eq vals, [10]
+
+			var l = 0
+			var len = 0
+
+			def d
+				return {obj: {a: 1, b: 2, c: 3}}
+
+			def m o
+				for own k,v of d:obj
+					o.push(k,v)
+				return		
+
+			var v = []
+			m(v)
+			eq v, [:a,1,:b,2,:c,3]
+
 
 	test "implicit return from assignment" do
 		var c = 1

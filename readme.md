@@ -34,5 +34,7 @@ Contributors are always welcome. To start with, you should clone the repository 
 Even though Imba has been used in production on several large commercial applications for 2+ years, it is still quite rough around the egdes. Some of the more esoteric language features still have some quirks, and don't be surprised if you run into some of them. When you do, please file an issue so that we can fix and improve it asap.
 
 ## Roadmap
+- Clarify and fix implicit self at root level
 - Support for svg and arbitrarily namespaced tags
-- full await / defer support even in complex nested codeblocks 
+- full await / defer support even in complex nested codeblocks
+- sourcemaps. All tokens are already tagged with locations, so it should be relatively trivial.

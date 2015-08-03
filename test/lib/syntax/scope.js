@@ -4,7 +4,6 @@
 	
 	// externs;
 	
-	/* @class A */
 	function A(a,b){
 		this._a = a;
 		this._b = b;
@@ -13,8 +12,6 @@
 		this._e = 1;
 		this._f = 1;
 	};
-	
-	
 	A.prototype.__a = {name: 'a'};
 	A.prototype.a = function(v){ return this._a; }
 	A.prototype.setA = function(v){ this._a = v; return this; };
@@ -97,16 +94,16 @@
 		var i = 1;
 		var v = 1;
 		
-		for (var i1=0, len_=ary.length; i1 < len_; i1++) {
-			ary[i1] + 2;
-			i1;
+		for (var i=0, len_=ary.length; i < len_; i++) {
+			ary[i] + 2;
+			i;
 		};
 		
 		eq(i,1);
 		
 		if (true) {
-			for (var i2=0, len_=ary.length; i2 < len_; i2++) {
-				i2;
+			for (var i=0, len_=ary.length; i < len_; i++) {
+				i;
 			};
 			eq(i,1);
 		};
@@ -119,40 +116,40 @@
 		
 		for (var j=0, len_=ary.length; j < len_; j++) {
 			var l = 1;
-			var a1 = 2;
-			var b1 = 2;
+			var a = 2;
+			var b = 2;
 			var c = 2;
 			var h = 0;
-			a1 + b1 + c;
+			a + b + c;
 		};
 		
 		for (var j=0, len_=ary.length; j < len_; j++) {
-			var a2 = 3;
-			var b2 = 3;
-			var c1 = 3;
+			var a = 3;
+			var b = 3;
+			var c = 3;
 			this.f();
 		};
 		
 		if (true) {
-			var a3 = 4;
-			var b3 = 4;
-			var i3 = 0;
+			var a1 = 4;
+			var b1 = 4;
+			var i1 = 0;
 			var len1 = 10;
 			
 			if (true) {
-				var a4 = 5;
-				var b4 = 5;
+				var a2 = 5;
+				var b2 = 5;
 			};
 			
-			for (var e = [], i4=0, len_=ary.length; i4 < len_; i4++) {
-				eq(a3,4);
-				e.push(i4);
+			for (var e = [], i=0, len_=ary.length; i < len_; i++) {
+				eq(a1,4);
+				e.push(i);
 			};
 			
-			eq(a3,4);
-			eq(i3,0);
+			eq(a1,4);
+			eq(i1,0);
 		} else {
-			var a5 = 4,b5 = 4,d = 4;
+			var a3 = 4,b3 = 4,d = 4;
 			true;
 		};
 		
@@ -170,9 +167,21 @@
 		eq(len,1);
 		eq(a + b + this.c() + this.d() + this.e() + this.f(),6);
 		return;
-		// console.log A.new.test
 	};
 	
+	A.prototype.caching = function (){
+		
+		var f;
+		if (f = this.f()) {
+			eq(f,this._f);
+		} else {
+			eq(1,0);
+		};
+		return this;
+	};
+	
+	
+	// console.log A.new.test
 	
 	
 	describe("Syntax - Scope",function() {
@@ -194,10 +203,7 @@
 		
 		test("class",function() {
 			var x = 10;
-			/* @class A */
-			function A(){ };
-			
-			var x1 = 20;
+			function A(){ };var x1 = 20;
 			
 			A.prototype.test = function (){
 				eq(x1,20);
@@ -211,13 +217,17 @@
 			return eq(x,10);
 		});
 		
-		return test("let",function() {
+		test("let",function() {
 			var a = 0;
 			if (true) {
 				var a1 = 1;
 				eq(a1,1);
 			};
 			return eq(a,0);
+		});
+		
+		return test("caching",function() {
+			return new A().caching();
 		});
 	});
 

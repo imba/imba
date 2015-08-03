@@ -127,6 +127,15 @@ class A
 		eq len,1
 		eq a + b + c + d + e + f, 6
 		return
+
+	def caching
+
+		if var f = f
+			eq f, @f
+		else
+			eq 1, 0
+		self
+		
 # console.log A.new.test
 		
 
@@ -164,3 +173,7 @@ describe "Syntax - Scope" do
 			let a = 1
 			eq a, 1
 		eq a, 0
+
+	test "caching" do
+		A.new.caching
+
