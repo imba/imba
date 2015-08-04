@@ -961,7 +961,11 @@ export class Block < ListNode
 	def consume node
 		if node isa TagTree # special case?!?
 			@nodes = @nodes.map(|child| child.consume(node))
-			@nodes = [Arr.new(ArgList.new(@nodes))] if @nodes:length > 1
+			# FIXME should not include terminators and comments when counting
+			if @nodes:length > 1
+				@nodes = [Arr.new(ArgList.new(@nodes))]
+				@nodes[0].value.@indentation = @indentation
+				@indentation = null
 			
 		
 			return self
@@ -1827,7 +1831,7 @@ export class Root < Code
 			shebang = shebang.replace(/\bimba\b/g,'node')
 			shebangs.push("#{shebang}\n")
 			return ""
-		
+
 		out = shebangs.join('') + out
 		return out
 
@@ -2845,7 +2849,7 @@ export class UnaryOp < Op
 			# l.@parens = yes
 			var str = l.c
 			# p "check for parens in !: {str}"
-			str = '(' + str + ')' unless str.match(/^\!?([\w\.]+)$/) or l isa Parens
+			str = '(' + str + ')' unless str.match(/^\!?([\w\.]+)$/) or l isa Parens or l.shouldParenthesize
 			# l.set(parens: yes) # sure?
 			"{op}{str}"
 
@@ -5349,8 +5353,10 @@ export class Tag < Node
 			# if this is an ivar, we should set the reference relative
 			# to the outer reference, or possibly right on context?
 			var par = parent
+			var tree = par and par.tree
 			var ctx =  !o:ivar and par and par.reference or scope.context
-			var key = o:ivar or par and par.tree.indexOf(self)
+			var key = o:ivar or tree and tree.nextCacheKey
+
 
 			# need the context -- might be better to rewrite it for real?
 			# parse the whole thing into calls etc
@@ -5376,11 +5382,17 @@ export class Tag < Node
 # This is a helper-node
 # Should probably use the same type of listnode everywhere - and simply flag the type as TagTree instead
 export class TagTree < ListNode
+	
+	prop counter
 
 	def initialize list, options = {}
 		@nodes = load(list)
 		@options = options
+		@counter = 0
 		self
+
+	def nextCacheKey
+		@counter++
 
 	def load list
 		if list isa ListNode

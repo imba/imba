@@ -53,7 +53,8 @@ global class ImbaServerElement
 		# should somehow be linked to their owner, no?
 		self:nodeName  = type
 		self:classList = ImbaNodeClassList.new(self)
-		self:children  = nil
+		self:children  = []
+
 		self
 
 	def cloneNode deep
@@ -66,9 +67,13 @@ global class ImbaServerElement
 
 	def appendChild child
 		# again, could be optimized much more
-		self:children ||= []
 		self:children.push(child)
 		return child
+
+	def insertBefore node, before
+		var idx = self:children.indexOf(before)
+		arr.splice(idx, 0, node)
+		self
 
 	# should implement at some point
 	# should also use shortcut to wipe
@@ -97,11 +102,11 @@ global class ImbaServerElement
 		var str = self:innerHTML || self:textContent || ''
 		return str if str
 
-		if var ary = self:children
+		if self:children:length
 			var i = 0
-			var l = ary:length
+			var l = self:children:length
 			while i < l
-				if var item = ary[i++]
+				if var item = self:children[i++]
 					str += item.toString
 
 		return str
@@ -149,6 +154,18 @@ Object.defineProperty(el, 'firstChild',
 	configurable: true
 )
 
+Object.defineProperty(el, 'firstElementChild',
+	get: (|v| this:children and this:children[0] ),
+	enumerable: true,
+	configurable: true
+)
+
+Object.defineProperty(el, 'lastElementChild',
+	get: (|v| this:children and this:children[this:children:length - 1] ),
+	enumerable: true,
+	configurable: true
+)
+
 extend tag htmlelement
 
 	def toString
@@ -160,6 +177,17 @@ extend tag htmlelement
 		# @dom.removeChild(@dom:firstChild) while @dom:firstChild
 		@empty = yes
 		self
+
+	def first
+		@dom:children[0]
+	
+	def last
+		@dom:children[@dom:children:length - 1]
+	
+	def prepend item
+		console.log "PREPEND FROM SERVER"
+		@dom:children.unshift(item)
+		# insert(item, before: first)
 
 
 extend tag html
