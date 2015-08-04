@@ -182,6 +182,9 @@ export class Highlighter
 
 			caret = loc + len
 
+			# if tok.@variable
+			# 	console.log "found variable {tok.@variable}"
+
 			if typ == 'identifier'
 				if content[0] == '#'
 					cls.push('idref')

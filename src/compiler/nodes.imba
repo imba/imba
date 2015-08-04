@@ -1074,6 +1074,7 @@ export class Parens < ValueNode
 
 		var par = up
 		var v = @value
+		var str = null
 
 		@noparen = yes if v isa Func
 		# p "compile parens {v} {v isa Block and v.count}"
@@ -1081,9 +1082,12 @@ export class Parens < ValueNode
 		if par isa Block
 			# is it worth it?
 			@noparen = yes unless o.isExpression
-			return v isa Array ? cary__(v) : v.c(expression: o.isExpression)
+			str = v isa Array ? cary__(v) : v.c(expression: o.isExpression)
 		else
-			return v isa Array ? cary__(v) : v.c(expression: yes)
+			str = v isa Array ? cary__(v) : v.c(expression: yes)
+
+		# check if we really need parens here?
+		return str
 
 	def set obj
 		console.log "Parens set {JSON.stringify(obj)}"
@@ -1807,10 +1811,25 @@ export class Root < Code
 		return out
 
 	def js o
+		var out
 		if @options:bare
-			scope.c
+			out = scope.c
 		else
-			'(function(){\n\n' + scope.c(indent: yes) + '\n\n}())'
+			out = scope.c(indent: yes)
+			out = out.replace(/^\n?/,'\n')
+			out = out.replace(/\n?$/,'\n\n')
+			out = '(function(){' + out + '})()'
+
+		# find and replace shebangs
+		var shebangs = []
+		out = out.replace(/^[ \t]*\/\/(\!.+)$/mg) do |m,shebang|
+			# p "found shebang {shebang}"
+			shebang = shebang.replace(/\bimba\b/g,'node')
+			shebangs.push("#{shebang}\n")
+			return ""
+		
+		out = shebangs.join('') + out
+		return out
 
 
 	def analyze loglevel: 0
@@ -2823,9 +2842,12 @@ export class UnaryOp < Op
 		# r.set(parens: yes) if r
 
 		if op == '!'
-			l.@parens = yes
+			# l.@parens = yes
+			var str = l.c
+			# p "check for parens in !: {str}"
+			str = '(' + str + ')' unless str.match(/^\!?([\w\.]+)$/) or l isa Parens
 			# l.set(parens: yes) # sure?
-			"{op}{l.c}"
+			"{op}{str}"
 
 		elif op == '√'
 			"Math.sqrt({l.c})"
@@ -4659,7 +4681,7 @@ export class For < Loop
 			vars:source = bare ? src : util.iterable(src,yes).predeclare
 			vars:len    = util.len(vars:source,yes).predeclare
 
-			vars:value  = scope.declare(o:name,null,type: 'let')
+			vars:value = scope.declare(o:name,null,type: 'let')
 			vars:value.addReference(o:name) # adding reference!
 			i.addReference(oi) if oi
 
@@ -6219,8 +6241,9 @@ export class FileScope < Scope
 
 	def initialize
 		super
-		# really? makes little sense
+
 		register :global, self, type: 'global'
+		register :module, self, type: 'global'
 		register :exports, self, type: 'global'
 		register :console, self, type: 'global'
 		register :process, self, type: 'global'
@@ -6229,6 +6252,7 @@ export class FileScope < Scope
 		register :clearTimeout, self, type: 'global'
 		register :clearInterval, self, type: 'global'
 		register :__dirname, self, type: 'global'
+
 		# preregister global special variables here
 		@warnings = []
 		@scopes   = []
@@ -6539,7 +6563,12 @@ export class Variable < Node
 		Assign.new('=',self,val)
 
 	def addReference ref
-		@references.push(ref) if ref:region and ref.region
+		if ref isa Identifier
+			ref.references(self)
+
+		if ref:region and ref.region
+			@references.push(ref)
+
 		# p "reference is {ref:region and ref.region}"
 		self
 

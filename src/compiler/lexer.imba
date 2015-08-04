@@ -21,7 +21,7 @@ var JS_KEYWORDS = [
 	'new', 'delete', 'typeof', 'in', 'instanceof'
 	'throw', 'break', 'continue', 'debugger'
 	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally'
-	'class', 'extends', 'super', 'module', 'return'
+	'class', 'extends', 'super', 'return'
 ]
 
 # We want to treat return like any regular call for now
@@ -50,15 +50,16 @@ var IMBA_ALIAS_MAP =
 	'nil'  : 'null'
 
 var IMBA_ALIASES  = Object.keys(IMBA_ALIAS_MAP)
-var IMBA_KEYWORDS = IMBA_KEYWORDS.concat(IMBA_ALIASES) # .concat(IMBA_CONTEXTUAL_KEYWORDS)
-# var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
+var IMBA_KEYWORDS = IMBA_KEYWORDS.concat(IMBA_ALIASES)
+
 # FixedArray for performance
+# var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
 export var ALL_KEYWORDS = [
 	'true', 'false', 'null', 'this',
 	'new', 'delete', 'typeof', 'in', 'instanceof',
 	'throw', 'break', 'continue', 'debugger',
 	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally',
-	'class', 'extends', 'super', 'module', 'return',
+	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','self','await','import',
 	'and','or','is','isnt','not','yes','no','isa','case','nil'
@@ -167,7 +168,7 @@ var WHITESPACE = /^[^\n\S]+/
 
 var COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|(?:###)?$)/
 # COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|(?:###)?$)|^(?:\s*(#\s.*|#\s*$))+/
-var INLINE_COMMENT = /^(\s*)(#[ \t](.*)|#[ \t]?(?=\n|$))+/
+var INLINE_COMMENT = /^(\s*)(#[ \t\!](.*)|#[ \t]?(?=\n|$))+/
 
 var CODE       = /^[-=]=>/
 
