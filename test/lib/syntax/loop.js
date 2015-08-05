@@ -1,10 +1,7 @@
 (function(){
-
-
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// self = SPEC
 	
-	/* @class SyntaxLoopsObj */
 	function SyntaxLoopsObj(){ };
 	
 	
@@ -13,12 +10,9 @@
 	SyntaxLoopsObj.prototype.setValue = function(v){ this._value = v; return this; };
 	
 	
-	/* @class IterableObject */
 	function IterableObject(){
 		this;
 	};
-	
-	
 	
 	IterableObject.prototype.toArray = function (){
 		return [1,2,3,4,5];
@@ -50,14 +44,44 @@
 				return eq(sum,0 + 1 + 2);
 			});
 			
-			
+			test("redefining var inside",function() {
+				
+				var breaks = [1,2,3];
+				for (var i=0, len=breaks.length, br; i < len; i++) {
+					br = breaks[i];
+					var br = 0;
+					eq(br,0);
+				};
+				
+				for (var i1=0, len=breaks.length, x; i1 < len; i1++) {
+					x = breaks[i1];
+					x = 0;
+				};
+				
+				eq(breaks,[1,2,3]);
+				
+				return;
+			});
 			
 			
 			test("basic assignment",function() {
-				for (var rets = [], i=0, len=ary.length; i < len; i++) {
-					rets.push(ary[i] + 1);
+				var o = 0,l = 0,i = 0,len = 0;
+				for (var rets = [], j=0, len_=ary.length; j < len_; j++) {
+					rets.push(ary[j] + 1);
 				};
-				return eq(rets,[2,3,4,5,6],String);
+				eq(rets,[2,3,4,5,6],String);
+				return eq(o + l + i + len,0);
+			});
+			
+			test("guarded",function() {
+				var items = [1,2,3,4];
+				
+				for (var ret = [], i=0, len=items.length, v; i < len; i++) {
+					v = items[i];
+					if (!(v % 2)) { continue };
+					ret.push(v);
+				};
+				return eq(ret,[1,3]);
 			});
 			
 			test("forin with conditional assign",function() {
@@ -66,7 +90,7 @@
 				
 				obj.setValue(1);
 				
-				if (!(value_=(obj.value()))) { for (var i=0, len=ary.length, res=[]; i < len; i++) {
+				if (!(value_=obj.value())) { for (var i=0, len=ary.length, res=[]; i < len; i++) {
 					res.push(ary[i] + 1);
 				};
 				ret = (obj.setValue(res),res); } else {
@@ -148,6 +172,10 @@
 		describe("For Of",function() {
 			
 			test("all keys assignment",function() {
+				var o = 0;
+				var l = 0;
+				var len = 0;
+				
 				var keys = [], v;
 				for (var k in dict){
 					v = dict[k];keys.push(k);
@@ -167,25 +195,48 @@
 				for (var k2 in dict2){
 					v = dict2[k2];keys.push(k2);
 				};
-				return eq(keys,['e','a','b','c','d']);
+				eq(keys,['e','a','b','c','d']);
+				
+				eq(o,0);
+				eq(l,0);
+				return eq(len,0);
 			});
 			
 			return test("for own of",function() {
-				for (var keys = [], i=0, keys1=Object.keys(dict), l=keys1.length; i < l; i++){
-					keys.push(keys1[i]);
+				for (var keys = [], v, i=0, keys1=Object.keys(dict), l1=keys1.length; i < l1; i++){
+					v = dict[keys1[i]];keys.push(keys1[i]);
 				};
 				eq(keys,['a','b','c','d'],String);
 				
-				for (var keys = [], i1=0, keys2=Object.keys(dict2), l1=keys2.length; i1 < l1; i1++){
-					keys.push(keys2[i1]);
+				for (var keys = [], v, i1=0, keys2=Object.keys(dict2), l2=keys2.length; i1 < l2; i1++){
+					v = dict2[keys2[i1]];keys.push(keys2[i1]);
 				};
-				for (var vals = [], i2=0, keys3=Object.keys(dict2), l2=keys3.length; i2 < l2; i2++){
+				for (var vals = [], i2=0, keys3=Object.keys(dict2), l3=keys3.length; i2 < l3; i2++){
 					vals.push(dict2[keys3[i2]]);
 				};
 				eq(keys,['e']);
-				return eq(vals,[10]);
+				eq(vals,[10]);
+				
+				var l = 0;
+				var len = 0;
+				
+				function d(){
+					return {obj: {a: 1,b: 2,c: 3}};
+				};
+				
+				function m(o){
+					for (var o1=d().obj, i3=0, keys4=Object.keys(o1), l4=keys4.length; i3 < l4; i3++){
+						o.push(keys4[i3],o1[keys4[i3]]);
+					};
+					return;
+				};
+				
+				var v = [];
+				m(v);
+				return eq(v,['a',1,'b',2,'c',3]);
 			});
 		});
+		
 		
 		test("implicit return from assignment",function() {
 			var c = 1;
@@ -224,5 +275,4 @@
 		});
 	});
 
-
-}())
+})()

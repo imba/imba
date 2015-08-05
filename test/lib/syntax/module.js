@@ -1,6 +1,4 @@
 (function(){
-
-
 	// helper for subclassing
 	function subclass$(obj,sup) {
 		for (var k in sup) {
@@ -18,7 +16,6 @@
 		return "world";
 	}; exports.hello = hello;
 	
-	/* @class Item */
 	function Item(){ };
 	
 	exports.Item = Item; // export class 
@@ -28,7 +25,6 @@
 	
 	
 	
-	/* @class A */
 	function A(){ };
 	
 	A.prototype.name = function (){
@@ -36,7 +32,6 @@
 	};
 	
 	
-	/* @class B */
 	function B(){ A.apply(this,arguments) };
 	
 	subclass$(B,A);
@@ -50,5 +45,4 @@
 	module.exports.B = B;
 	
 
-
-}())
+})()

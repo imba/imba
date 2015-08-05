@@ -1,6 +1,4 @@
 (function(){
-
-
 	// helper for subclassing
 	function subclass$(obj,sup) {
 		for (var k in sup) {
@@ -15,7 +13,6 @@
 	
 	// self = SPEC
 	
-	/* @class Paramer */
 	function Paramer(){ SpecObject.apply(this,arguments) };
 	
 	subclass$(Paramer,SpecObject);
@@ -392,5 +389,4 @@
 	// 		change()
 	// 		eq change, 10
 
-
-}())
+})()

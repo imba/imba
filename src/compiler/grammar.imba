@@ -279,7 +279,8 @@ var grammar =
 		# o 'IDENTIFIER' do Tag.new(type: TagTypeIdentifier.new(A1))
 		o 'TagOptions INDEX_START Expression INDEX_END' do A1.addIndex(A3)
 		o 'TagOptions . IDENTIFIER' do A1.addClass(A3)
-		o 'TagOptions . { Expression }' do A1.addClass(A4) # WARN probably wont work
+		o 'TagOptions . { Expression }' do A1.addClass(A4)
+		o 'TagOptions @ { Expression }' do A1.set(key: A4)
 		o 'TagOptions # IDENTIFIER' do A1.set(id: A3)
 		o 'TagOptions Ivar' do A1.set(ivar: A2)
 		o 'TagOptions # { Expression }' do A1.set(id: A4)
@@ -775,6 +776,7 @@ var grammar =
 
 	# The while loop can either be normal, with a block of expressions to execute,
 	# or postfix, with a single expression. There is no do..while.
+	# should be solved by POST_WHILE instead
 	While: [
 		o 'WhileSource Block' do A1.addBody A2
 		o 'Statement  WhileSource' do A2.addBody Block.wrap [A1]
@@ -796,18 +798,23 @@ var grammar =
 		o 'ForBody    Block' do A1.addBody(A2)
 	]
 
+	ForKeyword: [
+		o 'FOR'
+		o 'POST_FOR'
+	]
+
 	ForBlock: [
 		o 'ForBody Block' do A1.addBody(A2)
 	]
 
 	ForBody: [
-		o 'FOR Range' do source: ValueNode.new(A2)
+		o 'ForKeyword Range' do source: ValueNode.new(A2)
 		o 'ForStart ForSource' do A2.configure(own: A1:own, name: A1[0], index: A1[1])
 	]
 
 	ForStart: [
-		o 'FOR ForVariables' do A2
-		o 'FOR OWN ForVariables' do (A3:own = yes) && A3
+		o 'ForKeyword ForVariables' do A2
+		o 'ForKeyword OWN ForVariables' do (A3:own = yes) && A3
 
 	]
 
@@ -947,7 +954,7 @@ var operators = [
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']
 	['right',     'TAG_END']
 	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER', 'CLASS', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END']
-	['right',     'POST_IF']
+	['right',     'POST_IF','POST_FOR']
 	['right', 'NEW_TAG']
 	['right', 'TAG_ATTR_SET']
 	['right', 'SPLAT']

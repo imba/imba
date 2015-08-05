@@ -1,6 +1,4 @@
 (function(){
-
-
 	
 	// externs;
 	
@@ -12,6 +10,8 @@
 		this._e = 1;
 		this._f = 1;
 	};
+	
+	
 	A.prototype.__a = {name: 'a'};
 	A.prototype.a = function(v){ return this._a; }
 	A.prototype.setA = function(v){ this._a = v; return this; };
@@ -35,8 +35,6 @@
 	A.prototype.__f = {name: 'f'};
 	A.prototype.f = function(v){ return this._f; }
 	A.prototype.setF = function(v){ this._f = v; return this; };
-	
-	
 	
 	A.prototype.call = function (fn){
 		var other = new A(2,2);
@@ -94,16 +92,16 @@
 		var i = 1;
 		var v = 1;
 		
-		for (var i=0, len_=ary.length; i < len_; i++) {
-			ary[i] + 2;
-			i;
+		for (var i1=0, len_=ary.length; i1 < len_; i1++) {
+			ary[i1] + 2;
+			i1;
 		};
 		
 		eq(i,1);
 		
 		if (true) {
-			for (var i=0, len_=ary.length; i < len_; i++) {
-				i;
+			for (var i2=0, len_=ary.length; i2 < len_; i2++) {
+				i2;
 			};
 			eq(i,1);
 		};
@@ -116,40 +114,40 @@
 		
 		for (var j=0, len_=ary.length; j < len_; j++) {
 			var l = 1;
-			var a = 2;
-			var b = 2;
+			var a1 = 2;
+			var b1 = 2;
 			var c = 2;
 			var h = 0;
-			a + b + c;
+			a1 + b1 + c;
 		};
 		
 		for (var j=0, len_=ary.length; j < len_; j++) {
-			var a = 3;
-			var b = 3;
-			var c = 3;
+			var a2 = 3;
+			var b2 = 3;
+			var c1 = 3;
 			this.f();
 		};
 		
 		if (true) {
-			var a1 = 4;
-			var b1 = 4;
-			var i1 = 0;
+			var a3 = 4;
+			var b3 = 4;
+			var i3 = 0;
 			var len1 = 10;
 			
 			if (true) {
-				var a2 = 5;
-				var b2 = 5;
+				var a4 = 5;
+				var b4 = 5;
 			};
 			
-			for (var e = [], i=0, len_=ary.length; i < len_; i++) {
-				eq(a1,4);
-				e.push(i);
+			for (var e = [], i4=0, len_=ary.length; i4 < len_; i4++) {
+				eq(a3,4);
+				e.push(i4);
 			};
 			
-			eq(a1,4);
-			eq(i1,0);
+			eq(a3,4);
+			eq(i3,0);
 		} else {
-			var a3 = 4,b3 = 4,d = 4;
+			var a5 = 4,b5 = 4,d = 4;
 			true;
 		};
 		
@@ -203,7 +201,9 @@
 		
 		test("class",function() {
 			var x = 10;
-			function A(){ };var x1 = 20;
+			function A(){ };
+			
+			var x1 = 20;
 			
 			A.prototype.test = function (){
 				eq(x1,20);
@@ -231,5 +231,4 @@
 		});
 	});
 
-
-}())
+})()

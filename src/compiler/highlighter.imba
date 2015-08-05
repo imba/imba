@@ -52,6 +52,8 @@ export class Highlighter
 
 		var classes = {
 			'+': 'op add math'
+			'++': 'op incr math'
+			'--': 'op decr math'
 			'-': 'op sub math'
 			'=': 'op eq'
 			'/': 'op div math'
@@ -77,6 +79,7 @@ export class Highlighter
 			'relation': 'keyword relation'
 			'export': 'keyword export'
 			'global': 'keyword global'
+			'extern': 'keyword global'
 			'from': 'keyword from'
 			'logic': 'keyword logic'
 			'post_if': 'keyword if'
@@ -87,6 +90,7 @@ export class Highlighter
 		var OPEN = {
 			'tag_start': 'tag'
 			'selector_start': 'sel'
+			'index_start': 'index'
 			'indent': '_indent'
 			'(': 'paren'
 			'{': 'curly'
@@ -97,6 +101,7 @@ export class Highlighter
 		var CLOSE = {
 			'tag_end': 'tag'
 			'selector_end': 'sel'
+			'index_end': 'index'
 			'outdent': '_indent'
 			')': 'paren'
 			']': 'square'

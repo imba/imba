@@ -1,6 +1,4 @@
 (function(){
-
-
 	function idx$(a,b){
 		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
 	};
@@ -25,7 +23,6 @@
 	
 	// package imba.ast
 	
-	/* @class Cache */
 	function Cache(val){
 		this._gets = 0;
 		this._value = val;
@@ -36,24 +33,19 @@
 	Cache.prototype.gets = function(v){ return this._gets; }
 	Cache.prototype.setGets = function(v){ this._gets = v; return this; };
 	
-	
-	
 	Cache.prototype.value = function (){
 		this._gets++;
 		return this._value;
 	};
 	
 	
-	/* @class Group */
 	function Group(items){
 		this._items = items;
 	};
 	
-	
 	Group.prototype.__items = {name: 'items'};
 	Group.prototype.items = function(v){ return this._items; }
 	Group.prototype.setItems = function(v){ this._items = v; return this; };
-	
 	Group.prototype.toString = function (){
 		return this._items.toString();
 	};
@@ -174,5 +166,4 @@
 		});
 	});
 
-
-}())
+})()

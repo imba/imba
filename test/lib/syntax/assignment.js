@@ -1,6 +1,4 @@
 (function(){
-
-
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	function intersect$(a,b){
 		if(a && a.__intersect) return a.__intersect(b);
@@ -24,7 +22,6 @@
 	
 	// externs;
 	
-	/* @class O */
 	function O(){ };
 	
 	
@@ -41,7 +38,6 @@
 	O.prototype.setZ = function(v){ this._z = v; return this; };
 	
 	
-	/* @class SyntaxAssignment */
 	function SyntaxAssignment(nestings){
 		if(nestings === undefined) nestings = 0;
 		this._gets = 0;
@@ -52,8 +48,6 @@
 		};
 		this;
 	};
-	
-	
 	
 	SyntaxAssignment.prototype.setIvar = function (val){
 		this._sets = this._sets + 1;
@@ -212,7 +206,7 @@
 			test("||= statement",function() {
 				var ivar_, v_;
 				obj.setIvar(0);
-				if (!(ivar_=(obj.ivar()))) { if (truthy) {
+				if (!(ivar_=obj.ivar())) { if (truthy) {
 					try {
 						var l = (obj.setIvar(v_=nomethod()),v_);
 					} catch (e) {
@@ -531,12 +525,15 @@
 		test('.a,.b = x,y',function() {
 			// b will nececarrily need to be set after a is set
 			var z_, $1, $2;
-			/* @class A */
 			function A(){
 				this._x = 0;
 				this._y = 0;
 				this._z = 0;
 			};
+			
+			// accessing x will increment y
+			// def x
+			// 	@x
 			
 			
 			A.prototype.__x = {name: 'x'};
@@ -550,12 +547,6 @@
 			A.prototype.__z = {name: 'z'};
 			A.prototype.z = function(v){ return this._z; }
 			A.prototype.setZ = function(v){ this._z = v; return this; };
-			
-			
-			
-			// accessing x will increment y
-			// def x
-			// 	@x
 			
 			A.prototype.setX = function (x){
 				this._z++;
@@ -636,5 +627,4 @@
 		});
 	});
 
-
-}())
+})()

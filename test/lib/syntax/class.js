@@ -1,6 +1,4 @@
 (function(){
-
-
 	// helper for subclassing
 	function subclass$(obj,sup) {
 		for (var k in sup) {
@@ -25,7 +23,6 @@
 	// 				'harroo'
 	// local scope
 	
-	/* @class Organism */
 	function Organism(){
 		this._ivar = 1;
 	};
@@ -35,8 +32,6 @@
 	Organism.type = function (){
 		return 'organism';
 	};
-	
-	
 	
 	Organism.prototype.lineage = function (){
 		return 'organism';
@@ -65,14 +60,11 @@
 	//			yes
 	;
 	
-	/* @class Virus */
 	function Virus(){
 		this._ivar = 2;
 	};
 	
 	subclass$(Virus,Organism);
-	
-	
 	Virus.prototype.lineage = function (){
 		return "" + this.name() + "." + (Virus.__super__.lineage.call(this));
 	};
@@ -82,7 +74,6 @@
 	};
 	
 	
-	/* @class Animal */
 	function Animal(){ Organism.apply(this,arguments) };
 	
 	subclass$(Animal,Organism);
@@ -91,7 +82,6 @@
 	};
 	
 	
-	/* @class Cat */
 	function Cat(){ Animal.apply(this,arguments) };
 	
 	subclass$(Cat,Animal);
@@ -104,7 +94,6 @@
 	};
 	
 	
-	/* @class Dog */
 	function Dog(){ Animal.apply(this,arguments) };
 	
 	subclass$(Dog,Animal);
@@ -118,7 +107,6 @@
 	
 	
 	
-	/* @class Human */
 	function Human(){ Animal.apply(this,arguments) };
 	
 	subclass$(Human,Animal);
@@ -131,7 +119,6 @@
 	};
 	
 	
-	/* @class Zombie */
 	function Zombie(){ Human.apply(this,arguments) };
 	
 	subclass$(Zombie,Human);
@@ -206,7 +193,6 @@
 		});
 		
 		test('define methods outside scope',function() {
-			/* @class Cls */
 			function Cls(){ };
 			
 			Cls.a = function (){
@@ -237,7 +223,6 @@
 			
 			var variable = 1;
 			
-			/* @class A */
 			function A(add){
 				this._sum = variable1 + add;
 				this;
@@ -252,8 +237,6 @@
 			A.add = function (add){
 				return variable1 += add;
 			};
-			
-			
 			
 			A.prototype.base = function (){
 				return variable1;
@@ -276,5 +259,4 @@
 		});
 	});
 
-
-}())
+})()

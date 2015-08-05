@@ -1,6 +1,4 @@
 (function(){
-
-
 	describe("Syntax - Literals",function() {
 		
 		
@@ -14,5 +12,4 @@
 		});
 	});
 
-
-}())
+})()

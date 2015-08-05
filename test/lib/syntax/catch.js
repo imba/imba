@@ -1,9 +1,6 @@
 (function(){
-
-
 	// self = SPEC
 	
-	/* @class ThrowClass */
 	function ThrowClass(){ };
 	
 	
@@ -81,5 +78,4 @@
 		});
 	});
 
-
-}())
+})()

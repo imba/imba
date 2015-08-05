@@ -1,6 +1,4 @@
 (function(){
-
-
 	
 	function check(sel,query){
 		return this.eq(sel.query(),query);
@@ -20,5 +18,4 @@
 		});
 	});
 
-
-}())
+})()

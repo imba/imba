@@ -1,6 +1,4 @@
 (function(){
-
-
 	function fn(blk,time){
 		return blk(time);
 	};
@@ -21,5 +19,4 @@
 		});
 	});
 
-
-}())
+})()

@@ -1,6 +1,4 @@
 (function(){
-
-
 	// helper for subclassing
 	function subclass$(obj,sup) {
 		for (var k in sup) {
@@ -19,7 +17,6 @@
 	// import everything from module into a local namespace/variable 'm'
 	var m = require('./module');
 	
-	/* @class Sub */
 	function Sub(){ Item.apply(this,arguments) };
 	
 	subclass$(Sub,Item);
@@ -57,5 +54,4 @@
 	module.exports.Item = Item;
 	
 
-
-}())
+})()

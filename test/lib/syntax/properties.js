@@ -1,8 +1,5 @@
 (function(){
-
-
 	
-	/* @class Model */
 	function Model(nestings){
 		if(nestings === undefined) nestings = 0;
 		this._gets = 0;
@@ -20,8 +17,6 @@
 	Model.prototype.b = function(v){ return this._b; }
 	Model.prototype.setB = function(v){ this._b = v; return this; }
 	Model.prototype._b = 10;
-	
-	
 	
 	Model.prototype.setIvar = function (val){
 		this._sets = this._sets + 1;
@@ -85,5 +80,4 @@
 		});
 	});
 
-
-}())
+})()

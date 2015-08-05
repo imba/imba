@@ -1,6 +1,4 @@
 (function(){
-
-
 	describe('Syntax - Delete',function() {
 		
 		return test("should return value",function() {
@@ -12,5 +10,4 @@
 		});
 	});
 
-
-}())
+})()

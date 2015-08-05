@@ -1,6 +1,4 @@
 (function(){
-
-
 	function union$(a,b){
 		if(a && a.__union) return a.__union(b);
 	
@@ -54,8 +52,7 @@
 			// when using statements as arguments, they might be
 			// moved up into the statement and cache, but it needs
 			// to happen in the expected order
-			return /* @class Obj */
-			function Obj(){ };
+			return function Obj(){ };
 			
 			Obj.obj = function (){
 				return new this();
@@ -69,5 +66,4 @@
 		});
 	});
 
-
-}())
+})()

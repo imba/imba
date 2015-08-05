@@ -1,9 +1,6 @@
 (function(){
-
-
 	describe('Syntax - Return',function() {
 		
-		/* @class SyntaxReturn */
 		function SyntaxReturn(){ };
 		
 		SyntaxReturn.prototype.none = function (){
@@ -41,5 +38,4 @@
 		});
 	});
 
-
-}())
+})()

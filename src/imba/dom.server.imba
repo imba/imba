@@ -99,17 +99,6 @@ global class ImbaServerElement
 
 	def __innerHTML
 		return self:innerHTML || self:textContent || (self:children and self:children.join("")) or ''
-		var str = self:innerHTML || self:textContent || ''
-		return str if str
-
-		if self:children:length
-			var i = 0
-			var l = self:children:length
-			while i < l
-				if var item = self:children[i++]
-					str += item.toString
-
-		return str
 	
 	def __outerHTML
 		var typ = self:nodeName
@@ -129,15 +118,6 @@ global class ImbaServerElement
 
 		# var inner = self:innerHTML || self:textContent || (self:children and self:children.join("")) or ''
 		return "<{sel}>{__innerHTML}</{typ}>"
-		# if self:innerHTML
-		# 
-		# if self:children
-		# 	"<{sel}>{inner}</{typ}>"
-		# elif self:textContent
-		# 	"<{sel}>{self:textContent}</{typ}>"
-		# # what about self-closing?
-		# else
-		# 	"<{sel}></{typ}>"
 
 	def toString
 		if @tag and @tag:toNodeString
@@ -185,9 +165,7 @@ extend tag htmlelement
 		@dom:children[@dom:children:length - 1]
 	
 	def prepend item
-		console.log "PREPEND FROM SERVER"
 		@dom:children.unshift(item)
-		# insert(item, before: first)
 
 
 extend tag html

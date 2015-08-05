@@ -1,6 +1,4 @@
 (function(){
-
-
 	// really?
 	
 	require('../../index');
@@ -33,5 +31,4 @@
 	
 	SPEC.run();
 
-
-}())
+})()

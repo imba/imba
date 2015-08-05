@@ -56,6 +56,13 @@ describe 'Syntax - Loops' do
 			eq rets, [2,3,4,5,6], String
 			eq o + l + i + len, 0
 
+		test "guarded" do
+			var items = [1,2,3,4]
+
+			var ret = for v in items when (v % 2)
+				v
+			eq ret, [1,3]
+
 		test "forin with conditional assign" do
 			var ret
 			

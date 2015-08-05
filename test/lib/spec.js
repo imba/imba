@@ -1,6 +1,4 @@
 (function(){
-
-
 	// helper for subclassing
 	function subclass$(obj,sup) {
 		for (var k in sup) {
@@ -40,7 +38,6 @@
 		return str;
 	};
 	
-	/* @class Spec */
 	function Spec(){
 		this._blocks = [];
 		this._stack = [this._context = this];
@@ -60,8 +57,6 @@
 	Spec.prototype.__stack = {name: 'stack'};
 	Spec.prototype.stack = function(v){ return this._stack; }
 	Spec.prototype.setStack = function(v){ this._stack = v; return this; };
-	
-	
 	
 	Spec.prototype.eval = function (block,ctx){
 		this._stack.push(this._context = ctx);
@@ -125,7 +120,6 @@
 	
 	
 	
-	/* @class SpecCaller */
 	function SpecCaller(scope,method,args){
 		this._scope = scope;
 		this._method = method;
@@ -133,14 +127,11 @@
 	};
 	
 	global.SpecCaller = SpecCaller; // global class 
-	
-	
 	SpecCaller.prototype.run = function (){
 		return this._value == null ? (this._value = this._scope[this._method].apply(this._scope,this._args)) : (this._value);
 	};
 	
 	
-	/* @class SpecGroup */
 	function SpecGroup(name,blk){
 		this._name = name;
 		this._blocks = [];
@@ -149,8 +140,6 @@
 	};
 	
 	global.SpecGroup = SpecGroup; // global class 
-	
-	
 	SpecGroup.prototype.blocks = function (){
 		return this._blocks;
 	};
@@ -198,7 +187,6 @@
 	
 	
 	
-	/* @class SpecExample */
 	function SpecExample(name,block){
 		this._evaluated = false;
 		this._name = name;
@@ -208,8 +196,6 @@
 	};
 	
 	global.SpecExample = SpecExample; // global class 
-	
-	
 	SpecExample.prototype.emit = function (ev,pars){
 		return Imba.emit(this,ev,pars);
 	};
@@ -264,7 +250,6 @@
 	};
 	
 	
-	/* @class SpecObject */
 	function SpecObject(){ };
 	
 	global.SpecObject = SpecObject; // global class 
@@ -273,7 +258,6 @@
 	};
 	
 	
-	/* @class SpecCondition */
 	function SpecCondition(){ };
 	
 	global.SpecCondition = SpecCondition; // global class 
@@ -315,7 +299,6 @@
 	};
 	
 	
-	/* @class SpecAwait */
 	function SpecAwait(example,args){
 		var self=this;
 		self._example = example;
@@ -341,14 +324,11 @@
 	
 	subclass$(SpecAwait,SpecCondition);
 	global.SpecAwait = SpecAwait; // global class 
-	
-	
 	SpecAwait.prototype.callback = function (){
 		return this._callback;
 	};
 	
 	
-	/* @class SpecAssert */
 	function SpecAssert(example,actual,expected,format){
 		if(format === undefined) format = null;
 		this._example = example;
@@ -364,8 +344,6 @@
 	
 	subclass$(SpecAssert,SpecCondition);
 	global.SpecAssert = SpecAssert; // global class 
-	
-	
 	SpecAssert.prototype.run = function (){
 		var value = this._actual instanceof SpecCaller ? (this._actual.run()) : (this._actual);
 		return this.test(this._value = value);
@@ -391,7 +369,7 @@
 	};
 	
 	SpecAssert.prototype.details = function (){
-		if (!(this._success)) {
+		if (!this._success) {
 			if (this._format) {
 				return fmt('red',("expected " + this._right + " got " + this._left));
 			} else {
@@ -403,7 +381,6 @@
 	};
 	
 	
-	/* @class SpecAssertTruthy */
 	function SpecAssertTruthy(example,value){
 		this._example = example;
 		this._actual = value;
@@ -412,14 +389,11 @@
 	
 	subclass$(SpecAssertTruthy,SpecAssert);
 	global.SpecAssertTruthy = SpecAssertTruthy; // global class 
-	
-	
 	SpecAssertTruthy.prototype.test = function (value){
 		return !(!(value)) ? (this.passed()) : (this.failed());
 	};
 	
 	
-	/* @class SpecAssertFalsy */
 	function SpecAssertFalsy(example,value){
 		this._example = example;
 		this._actual = value;
@@ -428,8 +402,6 @@
 	
 	subclass$(SpecAssertFalsy,SpecAssert);
 	global.SpecAssertFalsy = SpecAssertFalsy; // global class 
-	
-	
 	SpecAssertFalsy.prototype.test = function (value){
 		return !(value) ? (this.passed()) : (this.failed());
 	};
@@ -467,5 +439,4 @@
 		return (context_=SPEC.context()).await.apply(context_,arguments);
 	};
 
-
-}())
+})()

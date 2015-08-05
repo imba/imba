@@ -957,7 +957,7 @@ export class Lexer
 			typ = 'GVAR'
 
 		elif CONST_IDENTIFIER.test(id) or id == 'require' or id == 'global' or id == 'exports'
-			# should not hardcode this
+			# thous should really be handled by the ast instead
 			typ = 'CONST'
 
 		elif id == 'elif'

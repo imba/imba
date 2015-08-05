@@ -1,6 +1,4 @@
 (function(){
-
-
 	// helper for subclassing
 	function subclass$(obj,sup) {
 		for (var k in sup) {
@@ -13,7 +11,6 @@
 	};
 	
 	
-	/* @class Organism */
 	function Organism(){
 		this.setGroup("organism");
 	};
@@ -31,8 +28,6 @@
 		return 'organism';
 	};
 	
-	
-	
 	Organism.prototype.lineage = function (){
 		return 'organism';
 	};
@@ -47,14 +42,11 @@
 	};
 	
 	
-	/* @class Virus */
 	function Virus(){
 		this._ivar = 2;
 	};
 	
 	subclass$(Virus,Organism);
-	
-	
 	Virus.prototype.lineage = function (){
 		return "" + this.name() + "." + (Virus.__super__.lineage.call(this));
 	};
@@ -64,28 +56,22 @@
 	};
 	
 	
-	/* @class Animal */
 	function Animal(){
 		this.setGroup("animal");
 	};
 	
 	subclass$(Animal,Organism);
-	
-	
 	Animal.prototype.lineage = function (){
 		// super should do the same as super.lineage(*arguments)
 		return "animal." + Animal.__super__.lineage.apply(this,arguments);
 	};
 	
 	
-	/* @class Cat */
 	function Cat(){
 		this.setGroup("cat");
 	};
 	
 	subclass$(Cat,Animal);
-	
-	
 	Cat.prototype.lineage = function (){
 		return "cat." + (Cat.__super__.lineage.call(this));
 	};
@@ -101,12 +87,10 @@
 	
 	
 	
-	/* @class Dog */
 	function Dog(){ Animal.apply(this,arguments) };
 	
 	subclass$(Dog,Animal);
 	Dog.prototype.lineage = function (){
-		var $1;
 		return "dog." + (Dog.__super__.lineage.call(this));
 	};
 	
@@ -115,25 +99,20 @@
 	};
 	
 	
-	/* @class FakeDog */
 	function FakeDog(){ Dog.apply(this,arguments) };
 	
 	subclass$(FakeDog,Dog);
 	FakeDog.prototype.lineage = function (){
-		var $1;
 		"fakedog." + (FakeDog.__super__.__super__.lineage.apply(this,arguments));
 		return "fakedog." + (FakeDog.__super__.__super__.lineage.call(this));
 	};
 	
 	
-	/* @class Human */
 	function Human(){
 		this._human = true;
 	};
 	
 	subclass$(Human,Animal);
-	
-	
 	Human.prototype.lineage = function (){
 		return "human." + (Human.__super__.lineage.call(this));
 	};
@@ -143,7 +122,6 @@
 	};
 	
 	
-	/* @class Zombie */
 	function Zombie(){ Human.apply(this,arguments) };
 	
 	subclass$(Zombie,Human);
@@ -156,13 +134,10 @@
 	};
 	
 	
-	/* @class Child */
 	Human.Child = function Child(){
 		Human.Child.__super__.constructor.apply(this,arguments);
 	};
-	
 	subclass$(Human.Child,Human);
-	
 	
 	
 	
@@ -191,5 +166,4 @@
 		});
 	});
 
-
-}())
+})()

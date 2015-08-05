@@ -1,12 +1,9 @@
 (function(){
-
-
 	
 	describe('Syntax - Existential operator',function() {
 		
 		return test('chained',function() {
 			var chain;
-			/* @class Chainable */
 			function Chainable(){ };
 			
 			Chainable.prototype.a = function (){
@@ -28,5 +25,4 @@
 		});
 	});
 
-
-}())
+})()

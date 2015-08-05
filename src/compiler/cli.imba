@@ -17,7 +17,6 @@ def cliproto.helpInformation
 
 	str = str.replace(/(Options|Usage|Examples|Commands)\:/g) do |m| chalk.bold m
 	return str
-	# return "TTOT {str}"
 
 # override cli to add color
 def cli.optionHelp2
@@ -79,8 +78,8 @@ class SourceFile
 		# console.log "marking file as dirty!"
 		# simply removing all info abou tfiles
 		@prevcode = @code
-		@code = @js = @tokens = @ast = @meta = nil
-		@read = @tokenize = @compile = @parse = @analyze = nil
+		@code = @js = @tokens = @ast = @meta = null
+		@read = @tokenize = @compile = @parse = @analyze = null
 		self
 
 	# could analyze with different options - caching promise might not be the
@@ -182,14 +181,16 @@ def sourcefile-for-path path
 	path = fspath.resolve(process.cwd, path)
 	SourceFile.new(path)
 
-def printCompilerError e, source: nil
+def printCompilerError e, source: null, tok: null, tokens: null
 	#  return printError(e,source: source)
-	console.log "error {e}"
+	# console.log "error {e}"
 	var lex = e:lexer
-	var tok = lex and lex:yytext
+
+	tok ||= lex and lex:yytext
+	tokens ||= lex and lex:tokens
+
 	var src = source and source.code
 	var lines = src and src.split(/\n/g)
-	var tokens = lex and lex:tokens
 
 	# log "OH NOH"
 
@@ -201,7 +202,7 @@ def printCompilerError e, source: nil
 
 
 	def printLn nr, errtok
-		var pos = lex:pos
+		var pos = lex and lex:pos or 0
 		var ln = lines[nr]
 		var prefix = lnum(nr,errtok ? 'red' : 'grey')
 
@@ -300,21 +301,28 @@ def write-file source, outpath
 		var start = Date.now
 		var code = compiler.compile(source.code, filename: source.path)
 		var time = Date.now - start
+		var ok = true
 		print " - " + chalk:dim.grey("{time}ms") + "\n"
-		fs.writeFileSync(outpath,code)
+
+		if code:warnings
+			for warn,i in code:warnings
+				# print String(warn:token)
+				if warn:type == 'error'
+					ok = false
+					# print chalk.red "    {b 'error'}: {warn:message} {warn:loc}"
+					printCompilerError(warn, source: source, tok: warn:token, tokens: code:options.@tokens)
+				else
+					print chalk.yellow "    {b 'warning'}: {warn:message}"
+
+				# if warn:token
+				# 	print String(warn:token.@len)
+
+		fs.writeFileSync(outpath,code:js or code) if ok
 
 	catch e
 		# print " - " + chalk:dim.red("failed") + "\n"
 		printCompilerError(e, source: source) # e:message + "\n"
 	return
-
-	#  do |err,res|
-	# 	log "compiled \r"
-	# 	true
-	# 	# var srcp = fspath.relative(process.cwd,source.path)
-	# 	# var outp = fspath.relative(process.cwd,outpath)
-	# 	# log ts, chalk:dim.grey "compiled {b chalk.white srcp} to {b chalk.white outp}"
-
 
 # shared action for compile and watch
 def cli-compile root, o, watch: no

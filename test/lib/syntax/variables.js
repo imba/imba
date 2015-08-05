@@ -1,6 +1,4 @@
 (function(){
-
-
 	// self = SPEC
 	
 	describe("Syntax - Variables",function() {
@@ -61,5 +59,4 @@
 		});
 	});
 
-
-}())
+})()

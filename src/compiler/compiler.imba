@@ -38,10 +38,11 @@ export def rewrite tokens, o = {}
 		throw err
 
 
-export def parse code, o
+export def parse code, o = {}
 	var tokens = code isa Array ? code : tokenize(code,o)
 	try
 		# console.log("Tokens",tokens)
+		o.@tokens = tokens
 		return parser.parse tokens
 	catch err
 		# console.log("ERROR",err)
@@ -74,9 +75,8 @@ export def highlight code, o = {}
 
 
 
-export def run code, filename: nil
+export def run code, filename: null
 	var main = require:main
-	# console.log "should run!"
 	main:filename = process:argv[1] = (filename ? fs.realpathSync(filename) : '.')
 	main:moduleCache &&= {} # removing all cache?!?
 
@@ -84,13 +84,14 @@ export def run code, filename: nil
 	main:paths = Module._nodeModulePaths(path.dirname(filename))
 
 	if path.extname(main:filename) != '.imba' or require:extensions
-		main._compile compile(code, arguments[1]), main:filename
+		var content = compile(code, arguments[1])
+		main._compile (content:js or content), main:filename
 	else
 		main._compile code, main:filename
 
 if require:extensions
 	require:extensions['.imba'] = do |mod, filename|
 		var content = compile(fs.readFileSync(filename, 'utf8'), filename: filename)
-		mod._compile content, filename
+		mod._compile (content:js or content), filename
 
 

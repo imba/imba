@@ -1,6 +1,4 @@
 (function(){
-
-
 	
 	describe('Syntax - Switch',function() {
 		
@@ -32,5 +30,4 @@
 		});
 	});
 
-
-}())
+})()

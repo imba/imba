@@ -961,8 +961,11 @@ export class Block < ListNode
 	def consume node
 		if node isa TagTree # special case?!?
 			@nodes = @nodes.map(|child| child.consume(node))
+
 			# FIXME should not include terminators and comments when counting
-			if @nodes:length > 1
+			# should only wrap the content in array (returning all parts)
+			# for if/else blocks -- not loops
+			if !node.@loop && @nodes:length > 1
 				@nodes = [Arr.new(ArgList.new(@nodes))]
 				@nodes[0].value.@indentation = @indentation
 				@indentation = null
@@ -1809,10 +1812,10 @@ export class Root < Code
 		STACK.@options = o
 		@options = o or {}
 		OPTS = o
-		
 		traverse
 		var out = c
-		return out
+		var result = {js: out, warnings: scope.warnings, options: o, toString: (do this:js) }
+		return result
 
 	def js o
 		var out
@@ -1833,6 +1836,7 @@ export class Root < Code
 			return ""
 
 		out = shebangs.join('') + out
+
 		return out
 
 
@@ -2065,8 +2069,8 @@ export class Func < Code
 		out = "({out})()" if option(:eval)
 		return out
 
-	def shouldParenthesize
-		up isa Call && up.callee == self
+	def shouldParenthesize par = up
+		par isa Call && par.callee == self
 		# if up as a call? Only if we are 
 
 export class Lambda < Func
@@ -2409,8 +2413,7 @@ export class Num < Literal
 	def toString
 		String(@value)
 
-	def shouldParenthesize
-		var par = up
+	def shouldParenthesize par = up
 		par isa Access and par.left == self
 
 	def js o
@@ -2848,8 +2851,11 @@ export class UnaryOp < Op
 		if op == '!'
 			# l.@parens = yes
 			var str = l.c
-			# p "check for parens in !: {str}"
-			str = '(' + str + ')' unless str.match(/^\!?([\w\.]+)$/) or l isa Parens or l.shouldParenthesize
+			var paren = l.shouldParenthesize(self)
+			# p "check for parens in !: {str} {l} {l.@parens} {l.shouldParenthesize(self)}"
+			# FIXME this is a very hacky workaround. Need to handle all this
+			# in the child instead, problems arise due to automatic caching
+			str = '(' + str + ')' unless str.match(/^\!?([\w\.]+)$/) or l isa Parens or paren or l isa Access or l isa Call
 			# l.set(parens: yes) # sure?
 			"{op}{str}"
 
@@ -3221,8 +3227,7 @@ export class VarOrAccess < ValueNode
 		if value.symbol.indexOf('$') >= 0
 			# big hack - should disable
 			# major hack here, no?
-			console.log "GlobalVarAccess"
-
+			# console.log "GlobalVarAccess"
 			@value = GlobalVarAccess.new(value)
 			return self
 
@@ -3525,8 +3530,11 @@ export class Assign < Op
 		return out
 
 	# FIXME op is a token? _FIX_
-	def shouldParenthesize
-		up isa Op && up.op != '='
+	# this (and similar cases) is broken when called from
+	# another position in the stack, since 'up' is dynamic
+	# should maybe freeze up?
+	def shouldParenthesize par = up
+		par isa Op && par.op != '='
 
 	def consume node
 		if isExpressable
@@ -4179,6 +4187,7 @@ export class Call < Node
 			# p "Call callee {callee} - {str}"
 			if str == 'extern'
 				# p "returning extern instead!"
+				callee.value.value.@type = 'EXTERN'
 				return ExternDeclaration.new(args)
 			if str == 'tag'
 				# console.log "ERROR - access args by some method"
@@ -4327,6 +4336,7 @@ export class SuperCall < Call
 export class ExternDeclaration < ListNode
 
 	def visit
+
 		# p "visiting externdeclaration"
 		nodes = map do |item| item.node # drop var or access really
 		# only in global scope?
@@ -4645,6 +4655,12 @@ export class For < Loop
 		options[:source].traverse # what about awakening the vars here?
 		declare
 		# should be able to toggle whether to keep the results here already(!)
+
+		# add guard to body
+		if options:guard
+			var op = IF(options:guard.invert,Block.wrap([ContinueStatement.new("continue")]))
+			body.unshift(op,BR)
+
 		body.traverse
 		
 	def isBare src
@@ -4693,24 +4709,28 @@ export class For < Loop
 
 
 	def consume node
-		# p "Loop consume? {node} - {isExpressable}"
-		# if node isa ImplicitReturn
-		# 	return self
 
-		# p "For.consume {node}".cyan
-		return super if isExpressable
+		if isExpressable
+			return super 
 
 		# other cases as well, no?
 		if node isa TagTree
-			# WARN this is a hack to allow references coming through the wrapping scope 
-			# will result in unneeded self-declarations and other oddities
-			# scope.parent.context.reference
 			scope.context.reference
-			return CALL(Lambda.new([],[self]),[])
+			var ref = node.root.reference
+			node.@loop = self
+
+			# Should not be consumed the same way
+			body.consume(node)
+			node.@loop = null
+			let fn = Lambda.new([Param.new(ref)],[self])
+			fn.scope.wrap(scope)
+			# TODO Scope of generated lambda should be added into stack for
+			# variable naming / resolution
+			return CALL(fn,[ref])
 
 
 		if @resvar
-			p "already have a resvar -- change consume? {node}"
+			# p "already have a resvar -- change consume? {node}"
 			var ast = Block.new([self,BR,@resvar.accessor])
 			ast.consume(node)
 			return ast
@@ -4802,7 +4822,7 @@ export class For < Loop
 			# p "should proxy value-variable instead"
 			val.proxy(vars:source,i)
 		else
-			body.unshift(OP('=',val,OP('.',vars:source,i)))
+			body.unshift(OP('=',val,OP('.',vars:source,i)), BR)
 			# body.unshift(head)
 			# TODO check lengths - intelligently decide whether to brace and indent
 		var head = "for ({scope.vars.c}; {cond.c}; {final.c}) "
@@ -5214,8 +5234,17 @@ export class Tag < Node
 	def consume node
 		if node isa TagTree
 			# p "tag consume tagtree? {node.reactive}"
-			reactive = node.reactive or !!option(:ivar)
 			parent = node.root
+
+			if node.@loop
+				reactive = !!option(:key)
+
+				if option(:ivar)
+					warn "Tag inside loop can not have a static reference {option(:ivar)}", type: 'error', token: option(:ivar).value
+
+			else
+				reactive = node.reactive or !!option(:ivar)
+			
 			return self
 		else
 			super
@@ -5229,12 +5258,15 @@ export class Tag < Node
 			o:body = TagFragmentFunc.new([],Block.wrap([@tree]))
 			# console.log "made o body a function?"
 
+		o:key.traverse if o:key
+
 		if o:body
 			o:body.traverse
 
 		# id should also be a regular part
 	
 		o:id.traverse if o:id
+		
 
 		for part in @parts
 			part.traverse
@@ -5284,7 +5316,6 @@ export class Tag < Node
 			# setting correct context directly
 			reactive = yes
 			@reference = scope.context
-		
 			scope.context.c
 
 		elif o:id
@@ -5349,13 +5380,29 @@ export class Tag < Node
 			out = out + statics.join("")
 
 	
-		if (o:ivar or reactive) and !(type isa Self)
+		if (o:ivar or o:key or reactive) and !(type isa Self)
 			# if this is an ivar, we should set the reference relative
 			# to the outer reference, or possibly right on context?
+			var ctx, key
 			var par = parent
 			var tree = par and par.tree
-			var ctx =  !o:ivar and par and par.reference or scope.context
-			var key = o:ivar or tree and tree.nextCacheKey
+			# ctx = !o:ivar and par and par.reference or scope.context
+			# key = o:ivar or tree and tree.nextCacheKey
+
+			if o:key
+				# closest tag
+				# TODO if the dynamic key starts with a static string we should
+				# just prepend _ to the string instead of wrapping in OP
+				ctx = par and par.reference
+				key = OP('+',Str.new("'_'"),o:key)
+
+			elif o:ivar
+				ctx = scope.context
+				key = o:ivar
+
+			else
+				ctx = par and par.reference
+				key = tree and tree.nextCacheKey
 
 
 			# need the context -- might be better to rewrite it for real?
@@ -6074,6 +6121,11 @@ export class Scope
 
 		STACK.addScope(self)
 		root.scopes.push(self)
+		self
+
+	def wrap scope
+		@parent = scope.@parent
+		scope.@parent = self
 		self
 
 	# called for scopes that are not real scopes in js

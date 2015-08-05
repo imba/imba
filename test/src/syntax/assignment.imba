@@ -2,13 +2,13 @@
 
 extern eq
 
-local class O
+class O
 
 	prop x
 	prop y
 	prop z
 
-local class SyntaxAssignment
+class SyntaxAssignment
 
 	def initialize nestings = 0
 		@gets = 0

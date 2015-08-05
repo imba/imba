@@ -339,8 +339,10 @@ export class Rewriter
 	# deal with them.
 	# Practically everything will now be callable this way (every identifier)
 	def addImplicitParentheses
-		var noCall = no
+		
 		var noCallTag = ['CLASS', 'IF','UNLESS','TAG','WHILE','FOR','UNTIL','CATCH','FINALLY','MODULE','LEADING_WHEN']
+
+
 		
 		var action = do |token,i|
 			@tokens.splice i, 0, T.token('CALL_END', ')')
@@ -348,19 +350,14 @@ export class Rewriter
 		# console.log "adding implicit parenthesis" # ,self:scanTokens
 		var tokens = @tokens
 
-
+		var noCall = no
+		var seenFor = no
 		var endCallAtTerminator = no
 
 		var i = 0
 		while var token = tokens[i]
 			# console.log "detect end??"
 			var type = token.@type
-			
-			# Never make these tags implicitly call
-			if noCallTag.indexOf(type) >= 0
-				# console.log("is nocall {type}")
-				endCallAtTerminator = yes
-				noCall  = yes
 
 			var prev    = tokens[i - 1]
 			var current = tokens[i]
@@ -368,6 +365,18 @@ export class Rewriter
 
 			var pt = prev and prev.@type
 			var nt = next and next.@type
+
+			# if pt == 'WHEN'
+			# Never make these tags implicitly call
+			if (pt == ')' or pt == ']') and type == 'INDENT'
+				noCall = yes
+
+			if noCallTag.indexOf(pt) >= 0
+				# console.log("seen nocall tag {pt} ({pt} {type} {nt})")
+				endCallAtTerminator = yes
+				noCall  = yes
+				seenFor = yes if pt == 'FOR'
+				
 
 			var callObject = no
 			var callIndent = no
@@ -402,7 +411,7 @@ export class Rewriter
 
 
 			tokens.splice i, 0, T.token('CALL_START', '(')
-
+			# console.log "added ( {prev}"
 			var cond = do |token,i|
 				var type = T.typ(token)
 				return yes if !seenSingle and token:fromThen
@@ -413,6 +422,9 @@ export class Rewriter
 
 				return yes if (type == '.' or type == '?.' or type == '::') and prev is 'OUTDENT'
 				return yes if endCallAtTerminator and (type == 'INDENT' or type == 'TERMINATOR')
+				if (type == 'WHEN' or type == 'BY') and !seenFor
+					# console.log "dont close implicit call outside for"
+					return no 
 
 				var post = tokens[i + 1]
 				var postTyp = post and T.typ(post)
@@ -424,6 +436,11 @@ export class Rewriter
 			detectEnd(i + 1, cond, action)
 			T.setTyp(prev,'FUNC_EXIST') if T.typ(prev) == '?'
 			i += 2
+			# need to reset after a match
+			endCallAtTerminator = no
+			noCall = no
+			seenFor = no
+
 
 		return
 
@@ -482,7 +499,8 @@ export class Rewriter
 		var condition = do |token,i| T.typ(token) in ['TERMINATOR', 'INDENT']
 
 		scanTokens do |token, i|
-			return 1 unless T.typ(token) == 'IF'
+			var typ = T.typ(token)
+			return 1 unless typ == 'IF' or typ == 'FOR'
 			var original = token
 			detectEnd(i + 1, condition) do |token,i|
 				T.setTyp(original, 'POST_' + T.typ(original)) if T.typ(token) != 'INDENT'
@@ -545,7 +563,7 @@ var IDENTIFIERS = ['IDENTIFIER', 'GVAR', 'IVAR', 'CVAR', 'CONST', 'ARGVAR']
 var EXPRESSION_CLOSE = ['CATCH', 'WHEN', 'ELSE', 'FINALLY'].concat EXPRESSION_END
 
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
-var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', ')', ']', 'INDEX_END', #  'CALL_END',
+var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', ')', 'INDEX_END', #  'CALL_END',
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 
 	'GVAR', 'CONST', 'ARGVAR', 'NEW', 'BREAK', 'CONTINUE','RETURN'
 ]
@@ -554,8 +572,13 @@ var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', ')', ']', 'INDEX_END', #  'CALL_E
 var IMPLICIT_CALL    = [
 	'SELECTOR','IDENTIFIER', 'NUMBER', 'STRING', 'SYMBOL', 'JS', 'REGEX', 'NEW', 'PARAM_START', 'CLASS'
 	'IF', 'UNLESS', 'TRY', 'SWITCH', 'THIS', 'BOOL', 'TRUE','FALSE', 'NULL', 'UNDEFINED', 'UNARY', 'SUPER', 'IVAR', 'GVAR', 'CONST', 'ARGVAR','SELF', 
-	'NEW', '@', '[', '(', '{', '--', '++','SELECTOR', 'TAG_START', 'TAGID', '#', 'SELECTOR_START', 'IDREF', 'SPLAT', 'DO', 'BLOCK_ARG'
+	'@', '[', '(', '{', '--', '++','SELECTOR', 'TAG_START', 'TAGID', '#', 'SELECTOR_START', 'IDREF', 'SPLAT', 'DO', 'BLOCK_ARG'
+	'FOR'
 ] # '->', '=>', why does it not work with symbol?
+
+var IMPLICIT_INDENT_CALL = [
+	'FOR'
+]
 # is not do an implicit call??
 
 var IMPLICIT_UNSPACED_CALL = ['+', '-']
@@ -582,7 +605,7 @@ var NO_IMPLICIT_BLOCK_CALL = [
 var IMPLICIT_COMMA = ['DO']
 
 # Tokens that always mark the end of an implicit call for single-liners.
-var IMPLICIT_END     = ['POST_IF', 'POST_UNLESS', 'FOR', 'WHILE', 'UNTIL', 'WHEN', 'BY', 'LOOP', 'TERMINATOR','DEF_BODY','DEF_FRAGMENT']
+var IMPLICIT_END     = ['POST_IF', 'POST_UNLESS', 'POST_FOR', 'WHILE', 'UNTIL', 'WHEN', 'BY', 'LOOP', 'TERMINATOR','DEF_BODY','DEF_FRAGMENT']
 
 # Single-line flavors of block expressions that have unclosed endings.
 # The grammar can't disambiguate them, so we insert the implicit indentation.
