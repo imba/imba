@@ -67,6 +67,14 @@ class ElementTag
 		@empty ? append(nodes) : empty.append(nodes)
 		self
 
+	def staticContent= nodes
+		staticChildren = nodes
+		self
+
+	def staticChildren= nodes
+		children = nodes
+		self
+
 	def text v
 		return (text = v,self) if arguments:length
 		@dom:textContent
