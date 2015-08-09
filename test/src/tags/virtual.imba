@@ -22,9 +22,14 @@ tag group
 		super(nodes)
 
 		for child,i in @dom:childNodes
+			var el = tag(child)
+			if el != expected[i]
+				log "not the same as expected at i",child,expected[i].@dom
 			actual.push( tag(child) )
 
+		log actual
 		eq actual, expected
+		log "is the same, no?!?"
 		return self
 
 	def appendChild node
@@ -120,4 +125,5 @@ describe "Tags" do
 
 		test "should be reorderable" do
 			group.render list: [b,a,c,d]
+			eq group.opstr, "I"
 			console.log group.opstr

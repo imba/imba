@@ -39,11 +39,18 @@
 			this.log("setStaticChildren",nodes,this.expected());
 			tag.__super__.setStaticChildren.call(this,nodes);
 			
-			for (var i=0, ary=iter$(this._dom.childNodes), len=ary.length; i < len; i++) {
-				this.actual().push(tag$wrap(ary[i]));
+			for (var i=0, ary=iter$(this._dom.childNodes), len=ary.length, child; i < len; i++) {
+				child = ary[i];
+				var el = tag$wrap(child);
+				if (el != this.expected()[i]) {
+					this.log("not the same as expected at i",child,this.expected()[i]._dom);
+				};
+				this.actual().push(tag$wrap(child));
 			};
 			
+			this.log(this.actual());
 			eq(this.actual(),this.expected());
+			this.log("is the same, no?!?");
 			return this;
 		};
 		
@@ -163,6 +170,7 @@
 			
 			return test("should be reorderable",function() {
 				group.render({list: [b,a,c,d]});
+				eq(group.opstr(),"I");
 				return console.log(group.opstr());
 			});
 		});

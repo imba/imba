@@ -47,7 +47,63 @@ def insertNestedAfter root, node, after
 	else
 		appendNested(root,node)
 		return root.@dom:lastChild
-	
+
+
+def reconcileChanges root, new, old, caret
+	return caret
+
+
+def reconcileCollection root, new, old, caret
+	var removedNodes = 0
+	var isSorted = yes
+
+	# `groups` contains the indexOf 
+	var groups = []
+	var prevIdx = -1
+	var maxIdx = -1
+	var lastGroup
+
+	# in most cases the two collections will be
+	# unchanged. Might be smartest to look for this case first?
+
+	for node in old
+		var newIdx = new.indexOf(node)
+
+		if newIdx == -1
+			# the node was removed
+			removedNodes++
+		else
+			if newIdx < maxIdx
+				isSorted = no
+			else
+				maxIdx = newIdx
+
+		if prevIdx != -1 and (newIdx - prevIdx) == 1
+			lastGroup.push(newIdx)
+		else
+			lastGroup = [newIdx]
+			groups.push(lastGroup)
+		prevIdx = newIdx
+
+	var addedNodes = new:length - (old:length - removedNodes)
+
+	# "changes" here implies that nodes have been added or removed
+	var hasChanges = !(addedNodes == 0 and removedNodes == 0)
+
+	console.log "reconcileLoop",isSorted,addedNodes,removedNodes,groups
+
+	if isSorted
+		if hasChanges
+			return reconcileChanges(old, new, tail)
+		else
+			return tail
+	else
+		if !hasChanges and groups:length == 2
+			return reconcileSwap(new, groups)
+		elif !hasChanges and groups:length == 3
+			return reconcileOrder(new, groups)
+		else
+			return reconcileScratch(old, new, tail)
 
 
 # the general reconciler that respects conditions etc
@@ -96,6 +152,8 @@ def reconcileNested root, new, old, caret
 				return caret = insertNestedAfter(root,new,caret)
 		else
 			# this is where we get into the advanced reconcileLoop
+			console.log "should redirect to dynamic!"
+			caret = reconcileCollection(root,new,old,caret)
 			return caret
 
 
@@ -108,9 +166,7 @@ def reconcileBlocks root, new, old, caret
 	return caret
 	
 
-def reconcileLoop root, new, old, caret
-	return
-	
+
 
 
 extend tag htmlelement
@@ -258,6 +314,9 @@ extend tag htmlelement
 
 		# "changes" here implies that nodes have been added or removed
 		var hasChanges = !(addedNodes == 0 and removedNodes == 0)
+
+		console.log "reconcileLoop",addedNodes,removedNodes,groups
+		return
 
 		if isSorted
 			if hasChanges
