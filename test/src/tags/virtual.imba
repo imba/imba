@@ -20,9 +20,13 @@ tag group
 			<ul>
 				<li> "Hello"
 				<li> "World"
-				if link
+				if long
 					<li> "long"
 					<li> "loong"
+
+	def setStaticChildren nodes
+		log "setStaticChildren",nodes
+		super(nodes)
 
 describe "Tags" do
 

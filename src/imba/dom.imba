@@ -225,7 +225,8 @@ class ElementTag
 
 	def insert node, before: nil, after: nil
 		before = after.next if after
-		node = (<fragment> node) if node isa Array
+		if node isa Array
+			node = (<fragment> node)
 		if before
 			dom.insertBefore(node.dom,before.dom)
 		else
@@ -419,9 +420,14 @@ def Imba.defineTag name, supr = '', &body
 
 	var suprklass = IMBA_TAGS[supr]
 
-	var Tag = do |dom|
-		this.setDom(dom)
-		this
+	# should drop this in production / optimized mode, but for debug
+	# we create a constructor with a recognizeable name
+
+	var fun = Function.new("return function {name.replace(/\s\-\:/g,'_')}(dom)\{ this.setDom(dom); \}")
+	var Tag = fun()
+	# var Tag = do |dom|
+	# 	this.setDom(dom)
+	# 	this
 
 	# var Tag = {}
 	var klass = Tag # imba$class(func,suprklass)

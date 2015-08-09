@@ -34,12 +34,17 @@
 				(t0 = this[2] || (this[2] = t$('ul'))).setStaticContent([
 					(t0[0] = t0[0] || t$('li')).setStaticContent("Hello").end(),
 					(t0[1] = t0[1] || t$('li')).setStaticContent("World").end(),
-					(this.link()) && ([
+					(this.long()) && ([
 						(t0[2] = t0[2] || t$('li')).setStaticContent("long").end(),
 						(t0[3] = t0[3] || t$('li')).setStaticContent("loong").end()
 					])
 				]).end()
 			]).synced();
+		};
+		
+		tag.prototype.setStaticChildren = function (nodes){
+			this.log("setStaticChildren",nodes);
+			return tag.__super__.setStaticChildren.call(this,nodes);
 		};
 	});
 	
