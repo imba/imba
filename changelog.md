@@ -1,6 +1,11 @@
+## Dev
+
+- Allow `new` and `char` as varnames
+- Slightly improved error reporting when using `:` in control-flow (like python)
+
 ## 0.10.0 (2015-08-05)
 
-- Add support for guarded loops: `... for x in ary where x > 10`
+- Add support for guarded loops: `... for x in ary when x > 10`
 - Add dynamic cachekey for tags using `<node@{mykey}>` inside loops
 - Add support for if/forin as first/only argument to implicit calls
 - Fixed bug where for-in could not be the first/only indented child in a tag.

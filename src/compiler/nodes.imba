@@ -1264,6 +1264,9 @@ export class Param < Node
 		@typ = typ
 		@variable = null
 
+	def varname
+		@variable ? @variable.c : name
+
 	def js o
 		return @variable.c if @variable
 
@@ -1342,8 +1345,12 @@ export class NamedParams < ListNode
 		# register the inner variables as well(!)
 		self
 
-	def name
+
+	def varname
 		variable.c
+
+	def name
+		varname
 
 	def js o
 		"namedpar"
@@ -1450,7 +1457,7 @@ export class ParamList < ListNode
 			var pars = nodes
 			# pars = filter(|arg| arg != @splat && !(arg isa BlockParam)) if @splat
 			pars = filter(|arg| arg isa RequiredParam or arg isa OptionalParam) if @splat
-			compact__(pars.map(|arg| c__(arg.name) )).join(",")
+			compact__(pars.map(|arg| c__(arg.varname) )).join(",")
 		else
 			throw "not implemented paramlist js"
 			"ta" + compact__(map(|arg| arg.c )).join(",")
@@ -6609,6 +6616,10 @@ export class Variable < Node
 			@c = typeof v == 'string' ? v : v.c
 			# allow certain reserved words
 			# should warn on others though (!!!)
+			# if @c == 'new'
+			# 	@c = '_new'
+			# 	# should happen at earlier stage to
+			# 	# get around naming conventions
 			@c = "{c}$" if RESERVED_REGEX.test(@c) # @c.match(/^(default)$/)
 		return @c
 
@@ -6819,7 +6830,7 @@ export var EMPTY = ''
 export var NULL = 'null'
 
 export var RESERVED = ['default','native','enum','with']
-export var RESERVED_REGEX = /^(default|native|enum|with)$/
+export var RESERVED_REGEX = /^(default|native|enum|with|new|char)$/
 
 export var UNION = Const.new('union$')
 export var INTERSECT = Const.new('intersect$')

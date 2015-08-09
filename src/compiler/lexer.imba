@@ -17,12 +17,15 @@ var ERR = require './errors'
 
 # Keywords that Imba shares in common with JavaScript.
 var JS_KEYWORDS = [
-	'true', 'false', 'null', 'this',
-	'new', 'delete', 'typeof', 'in', 'instanceof'
+	'true', 'false', 'null', 'this'
+	'delete', 'typeof', 'in', 'instanceof'
 	'throw', 'break', 'continue', 'debugger'
 	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally'
 	'class', 'extends', 'super', 'return'
 ]
+
+# new can be used as a keyword in imba, since object initing is done through
+# MyObject.new. new is a very useful varname.
 
 # We want to treat return like any regular call for now
 # Must be careful to throw the exceptions in AST, since the parser
@@ -56,7 +59,7 @@ var IMBA_KEYWORDS = IMBA_KEYWORDS.concat(IMBA_ALIASES)
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
 export var ALL_KEYWORDS = [
 	'true', 'false', 'null', 'this',
-	'new', 'delete', 'typeof', 'in', 'instanceof',
+	'delete', 'typeof', 'in', 'instanceof',
 	'throw', 'break', 'continue', 'debugger',
 	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally',
 	'class', 'extends', 'super', 'return',
@@ -885,9 +888,23 @@ export class Lexer
 			var id = match[1]
 			var typ = 'IDENTIFIER'
 
-			token typ, id, match[0]:length
-			token ':', ':'
+			# FIXME loc of key includes colon
+			# moveCaret(id:length)
+			# console.log "ok"
+			if true
+				# console.log "got here? {match}"
+				token(typ, id, id:length)
+				moveCaret(id:length)
+				token ':', ':', match[3]:length
+				moveCaret(-id:length)
+				# moveCaret(match[3]:length)
+				return match[0]:length
 
+			# moveCaret(match[2]:length)
+			# return 0
+			console.log match[3]:length
+			token typ, id, match[0]:length
+			token ':', ':',1
 			return match[0]:length
 
 		unless match = IDENTIFIER.exec(@chunk)
@@ -1090,6 +1107,7 @@ export class Lexer
 		if colon
 			token(typ, id, idlen)
 			moveCaret(idlen)
+			# console.log "add colon?"
 			token(':', ':',colon:length)
 			moveCaret(-idlen)
 		else
@@ -1114,7 +1132,7 @@ export class Lexer
 		var prev = last(@tokens)
 
 		if match[0][0] == '.' && prev && !prev:spaced && ['IDENTIFIER',')','}',']','NUMBER'].indexOf(tT(prev)) >= 0
-			console.log "got here"
+			# console.log "got here"
 			token ".","."
 			number = number.substr(1)
 		
@@ -1136,14 +1154,14 @@ export class Lexer
 
 		# FIX
 		if prev and !prev:spaced and tT(prev) not in ['(','{','[','.','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR']
-			token '.','.'
-			symbol = symbol.split(/[\:\\\/]/)[0] # really?
+			token '.:',':', 1
+			var sym = symbol.split(/[\:\\\/]/)[0] # really?
 			# token 'SYMBOL', "'#{symbol}'"
-			token 'SYMBOL', symbol
-			return symbol:length+1
+			token 'IDENTIFIER', sym, sym:length, 1
+			return (sym:length + 1)
 		else
 			# token 'SYMBOL', "'#{symbol}'"
-			token 'SYMBOL', symbol
+			token 'SYMBOL', symbol, match[0]:length
 			match[0]:length
 
 	# Matches strings, including multi-line strings. Ensures that quotation marks
@@ -1978,14 +1996,14 @@ export class Lexer
 	# -------
 
 	# Add a token to the results, taking note of the line number.
-	def token id, value, len # , addLoc
+	def token id, value, len, offset
 		# console.log(@line)
 		# var loc = {first_line: @line, first_column: 2, last_line: @line, last_column: 2}
 		@lastTyp = id
 		@lastVal = value
 
-		var tok = @last = Token.new(id, value, @line, @loc, len or 0)
-		tok.@col = @col
+		var tok = @last = Token.new(id, value, @line, @loc + (offset or 0), len or 0)
+		tok.@col = @col + (offset or 0)
 		@tokens.push tok # @last
 		return
 

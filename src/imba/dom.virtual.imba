@@ -9,12 +9,6 @@ def flatten input, out = []
 		Array.isArray(el) ? flatten(el,out) : out.push(el)
 	return out
 
-# for (var i=0; i<input.length; ++i) {
-#     var current = input[i];
-#     for (var j=0; j<current.length; ++j)
-#         flattened.push(current[j]);
-# }
-	
 
 extend tag htmlelement
 	
@@ -71,6 +65,7 @@ extend tag htmlelement
 					#	continue
 
 					if b and b != a
+						# need to add at this position 
 						append(b)
 						
 						# should not remove if another has just been added

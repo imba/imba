@@ -560,6 +560,7 @@ var grammar =
 		o 'Value . Super' do SuperAccess.new('.',A1,A3)
 		o 'Value SoakableOp Identifier' do PropertyAccess.new(A2,A1,A3)
 		o 'Value ?: Identifier' do Access.new(A2,A1,A3)
+		o 'Value .: Identifier' do Access.new(A2,A1,A3)
 		o 'Value SoakableOp Ivar' do Access.new(A2,A1,A3)
 		o 'Value . Symbol' do Access.new('.',A1,Identifier.new(A3.value))
 		o 'Value SoakableOp Const' do Access.new(A2,A1,A3)
@@ -937,7 +938,7 @@ var grammar =
 
 var operators = [
 	['left',      'MSET']
-	['left',      '.', '?.', '?:', '::']
+	['left',      '.', '?.', '?:', '::','.:']
 	['left',      'CALL_START', 'CALL_END']
 	['nonassoc',  '++', '--']
 	['right',     'UNARY','THROW','SQRT']
