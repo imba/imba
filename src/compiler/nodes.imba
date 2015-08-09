@@ -5305,7 +5305,14 @@ export class Tag < Node
 		var content = o:body
 
 		var isSelf = type isa Self
-		var bodySetter = isSelf ? "setStaticChildren" : "setStaticContent"
+		var bodySetter = "setChildren"
+
+		if isSelf
+			bodySetter = "setStaticChildren"
+		elif reactive
+			bodySetter = "setStaticContent"
+
+		# isSelf ? "setStaticChildren" : "setStaticContent"
 
 		for atr in o:attributes
 			a[atr.key] = atr.value # .populate(obj)

@@ -20,10 +20,10 @@
 		
 		tag.prototype.render = function (){
 			var t0;
-			return this.setChildren([
+			return this.setStaticChildren([
 				(this.headed()) && ([
-					(t0 = this[0] || (this[0] = t$('el'))).flag('header').setContent([
-						(t0[0] = t0[0] || t$('el')).flag('title').setContent("Header").end(),
+					(t0 = this[0] || (this[0] = t$('el'))).flag('header').setStaticContent([
+						(t0[0] = t0[0] || t$('el')).flag('title').setStaticContent("Header").end(),
 						(t0[1] = t0[1] || t$('el')).flag('tools').end(),
 						(this.long()) && ([
 							(t0[2] = t0[2] || t$('el')).flag('long').end()
@@ -31,12 +31,12 @@
 					]).end(),
 					(this[1] = this[1] || t$('el')).flag('ruler').end()
 				]),
-				(t0 = this[2] || (this[2] = t$('ul'))).setContent([
-					(t0[0] = t0[0] || t$('li')).setContent("Hello").end(),
-					(t0[1] = t0[1] || t$('li')).setContent("World").end(),
+				(t0 = this[2] || (this[2] = t$('ul'))).setStaticContent([
+					(t0[0] = t0[0] || t$('li')).setStaticContent("Hello").end(),
+					(t0[1] = t0[1] || t$('li')).setStaticContent("World").end(),
 					(this.link()) && ([
-						(t0[2] = t0[2] || t$('li')).setContent("long").end(),
-						(t0[3] = t0[3] || t$('li')).setContent("loong").end()
+						(t0[2] = t0[2] || t$('li')).setStaticContent("long").end(),
+						(t0[3] = t0[3] || t$('li')).setStaticContent("loong").end()
 					])
 				]).end()
 			]).synced();
