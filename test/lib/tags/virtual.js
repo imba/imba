@@ -1,5 +1,8 @@
 (function(){
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	// to run these tests, simply open the imbadir/test/dom.html in your browser and
+	// open the console / developer tools.
+	
 	// externs;
 	
 	Imba.defineTag('el', function(tag){
