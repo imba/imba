@@ -49,11 +49,84 @@ def insertNestedAfter root, node, after
 		return root.@dom:lastChild
 
 
+def moveGroup root, nodes, group, nextGroup
+	var tail = nodes[nextGroup[0]].@dom:nextSibling
+	moveGroupBeforeTail(nodes, group, tail)
+
+
+def swapGroup root, nodes, group1, group2, caret
+	var group, tail
+
+	if group1:length < group2:length
+		# Move group1 to the right of group2
+		group = group1
+		tail = nodes[group2[group2:length - 1]].@dom:nextSibling
+	else
+		# Move group2 in from of group1
+		group = group2
+		tail = nodes[group1[0]].@dom
+	moveGroupBeforeTail(nodes, group, tail)
+
+
 def reconcileChanges root, new, old, caret
 	return caret
 
 
+def reconcileOrder root, nodes, groups, caret
+
+	var last
+	# We have these possible cases:
+	# (1, 3, 2)
+	# (2, 3, 1)
+	# (2, 1, 3)
+	# (3, 2, 1)
+
+	# Note that swapGroup/moveGroup does not change `groups` or `nodes`
+
+	if groups[0][0] == 0
+		# (1, 3, 2)
+		last = groups[1]
+		swapGroup(nodes, groups[1], groups[2])
+
+	elif groups[1][0] == 0
+		# (2, 1, 3)
+		last = groups[2]
+		swapGroup(nodes, groups[0], groups[1])
+
+	elif groups[2][0] == 0
+		moveGroup(nodes, group[2], group[0])
+
+		if groups[0][0] > groups[1][0]
+			# (3, 2, 1)
+			last = groups[0]
+			swapGroup(nodes, groups[0], groups[1])
+		else
+			# (2, 3, 1)
+			last = groups[1]
+
+	var lastNode = nodes[last[last:length - 1]]
+	return lastNode.@dom:nextSibling
+
+	return caret
+
+
+def reconcileSwap root, nodes, groups, caret
+	return caret
+
+
+def reconcileFull root, new, old, caret
+	console.log "reconcileFull"
+	removeNested(root,old,caret)
+	caret = insertNestedAfter(root,new,caret)
+	return caret
+
+
+# expects a flat non-sparse array of nodes in both new and old, always
 def reconcileCollection root, new, old, caret
+
+	var newLen = new:length
+	var oldLen = old:length
+
 	var removedNodes = 0
 	var isSorted = yes
 
@@ -92,18 +165,27 @@ def reconcileCollection root, new, old, caret
 
 	console.log "reconcileLoop",isSorted,addedNodes,removedNodes,groups
 
+	# fix this first
+	return reconcileFull(root, new, old, caret)
+
 	if isSorted
 		if hasChanges
-			return reconcileChanges(old, new, tail)
+			console.log "hasChanges"
+			return reconcileChanges(root, new, old, caret)
 		else
-			return tail
+			# the caret should now be the very last element here
+			return new[newLen - 1].@dom
 	else
+		# change to elif hasChanges?
 		if !hasChanges and groups:length == 2
-			return reconcileSwap(new, groups)
+			console.log "reconcileSwap!",groups
+			return reconcileSwap(root,new, groups, caret)
 		elif !hasChanges and groups:length == 3
-			return reconcileOrder(new, groups)
+			console.log "reconcileOrder",groups
+			return reconcileOrder(root, new, groups, caret)
 		else
-			return reconcileScratch(old, new, tail)
+			console.log "reconcileScratch",groups
+			return reconcileFull(root, new, old, caret)
 
 
 # the general reconciler that respects conditions etc
