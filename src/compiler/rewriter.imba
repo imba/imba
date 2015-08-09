@@ -205,6 +205,11 @@ export class Rewriter
 		var startIndent = 0
 		var startIdx = null
 
+		var noBraceTag = ['CLASS', 'IF','UNLESS','TAG','WHILE','FOR','UNTIL','CATCH','FINALLY','MODULE','LEADING_WHEN']
+		var noBraceContext = ['IF','TERNARY','FOR']
+
+		var noBrace = no
+
 		var scope = do 
 			stack[stack:length - 1] or []
 
@@ -226,6 +231,11 @@ export class Rewriter
 			var ctx = stack[stack:length - 1] or []
 			var idx
 
+			if noBraceContext.indexOf(type) >= 0
+				# console.log "found noBraceTag {type}"
+				stack.push stackToken(type,i)
+				return 1
+
 			if v == '?'
 				# console.log('TERNARY OPERATOR!')
 				stack.push stackToken('TERNARY',i)
@@ -233,7 +243,10 @@ export class Rewriter
 			
 			# no need to test for this here as well as in
 			if EXPRESSION_START.indexOf(type) >= 0
-				# console.log('expression start',type)
+				if type == 'INDENT' and noBraceContext.indexOf(ctx[0]) >= 0
+					stack.pop
+
+				# console.log('expression start',type,ctx[0])
 				if type == 'INDENT' and tokenType(i - 1) == '{'
 					# stack ?!? no token
 					stack.push stackToken('{', i) # should not autogenerate another?
@@ -242,6 +255,7 @@ export class Rewriter
 				return 1
 
 			if EXPRESSION_END.indexOf(type) >= 0
+				# console.log "EXPRESSION_END at {type} - stack is {ctx[0]}"
 				if ctx[0] == 'TERNARY' # FIX?
 					stack.pop
 
@@ -257,8 +271,13 @@ export class Rewriter
 
 				return 1
 			
-
+			# is this correct? same for if/class etc?
 			if ctx[0] == 'TERNARY' and (type == 'TERMINATOR' or type == 'OUTDENT')
+				stack.pop
+				return 1
+
+			if noBraceContext.indexOf(ctx[0]) >= 0 and type == 'INDENT'
+				console.log "popping noBraceContext"
 				stack.pop
 				return 1
 
@@ -275,7 +294,7 @@ export class Rewriter
 				true
 
 			# found a type
-			if type == ':' and ctx[0] != '{' and ctx[0] != 'TERNARY'
+			if type == ':' and ctx[0] != '{' and ctx[0] != 'TERNARY' and (noBraceContext.indexOf(ctx[0]) == -1)
 				# could just check if the end was right before this?
 				
 				if start and start[2] == i - 1
