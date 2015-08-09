@@ -130,8 +130,14 @@ def reconcileCollection root, new, old, caret
 	var removedNodes = 0
 	var isSorted = yes
 
+	# if we trust that reconcileCollection does the job
+	# we know that the caret should have moved to the
+	# last element of our new nodes.
+	var lastNew = new[newLen - 1]
+
 	# `groups` contains the indexOf 
 	var groups = []
+	var remove = []
 	var prevIdx = -1
 	var maxIdx = -1
 	var lastGroup
@@ -144,6 +150,7 @@ def reconcileCollection root, new, old, caret
 
 		if newIdx == -1
 			# the node was removed
+			remove.push(node)
 			removedNodes++
 		else
 			if newIdx < maxIdx
@@ -166,26 +173,63 @@ def reconcileCollection root, new, old, caret
 	console.log "reconcileLoop",isSorted,addedNodes,removedNodes,groups
 
 	# fix this first
-	return reconcileFull(root, new, old, caret)
 
 	if isSorted
-		if hasChanges
-			console.log "hasChanges"
-			return reconcileChanges(root, new, old, caret)
-		else
-			# the caret should now be the very last element here
-			return new[newLen - 1].@dom
+		if removedNodes and !addedNodes
+			console.log "only removed nodes"
+			root.removeChild(node) for node,i in remove
+		elif addedNodes
+			# this can include both removed and 
+			# maybe remove nodes first -- so easy
+			var remaining = old
+			var oldI = 0
+
+			if removedNodes
+				root.removeChild(node) for node,i in remove
+				remaining = old.filter do |node| remove.indexOf(node) == -1
+
+			# what if we get past other
+			for node,i in new
+				var other = remaining[oldI++]
+
+				if other 
+					if node != other
+						root.insertBefore(node,other)
+						oldI--
+
+				elif i > 0
+					root.insertBefore(node,new[i -1].@dom:nextSibling)
+				else
+					root.insertBefore(node,caret and caret:nextSibling)
+
+	elif hasChanges
+		console.log "reconcileScratch",groups
+		reconcileFull(root, new, old, caret)
+
+	elif groups:length == 2
+		reconcileSwap(root,new, groups, caret)
+
+	elif groups:length == 3
+		reconcileOrder(root, new, groups, caret)
+
 	else
-		# change to elif hasChanges?
-		if !hasChanges and groups:length == 2
-			console.log "reconcileSwap!",groups
-			return reconcileSwap(root,new, groups, caret)
-		elif !hasChanges and groups:length == 3
-			console.log "reconcileOrder",groups
-			return reconcileOrder(root, new, groups, caret)
-		else
-			console.log "reconcileScratch",groups
-			return reconcileFull(root, new, old, caret)
+		# too much to sort - just remove and append everything
+		reconcileFull(root, new, old, caret)
+	#
+	#
+	#	# change to elif hasChanges?
+	#	if !hasChanges and groups:length == 2
+	#		console.log "reconcileSwap!",groups
+	#		return reconcileSwap(root,new, groups, caret)
+	#	elif !hasChanges and groups:length == 3
+	#		console.log "reconcileOrder",groups
+	#		return reconcileOrder(root, new, groups, caret)
+	#	else
+	#		console.log "reconcileScratch",groups
+	#		return reconcileFull(root, new, old, caret)
+
+	# should trust that the last item in new list is the caret
+	return lastNew and lastNew.@dom or caret
 
 
 # the general reconciler that respects conditions etc

@@ -162,14 +162,22 @@
 		
 		return describe("dynamic lists",function() {
 			// render once without anything to reset
+			var full = [a,b,c,d,e,f];
 			
 			test("adding dynamic list items",function() {
-				group.render({list: [a,b,c,d]});
-				return eq(group.opstr(),"IIII");
+				group.render({list: full});
+				return eq(group.opstr(),"IIIIII");
+			});
+			
+			test("removing",function() {
+				group.render({list: [a,b,e,f]});
+				eq(group.opstr(),"RR");
+				
+				return group.render({list: full});
 			});
 			
 			return test("should be reorderable",function() {
-				group.render({list: [b,a,c,d]});
+				group.render({list: [b,a,c,d,e,f]});
 				eq(group.opstr(),"I");
 				return console.log(group.opstr());
 			});

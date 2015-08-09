@@ -118,12 +118,19 @@ describe "Tags" do
 
 	describe "dynamic lists" do
 		# render once without anything to reset
+		var full = [a,b,c,d,e,f]
 
 		test "adding dynamic list items" do
-			group.render list: [a,b,c,d]
-			eq group.opstr, "IIII"
+			group.render list: full
+			eq group.opstr, "IIIIII"
+
+		test "removing" do
+			group.render list: [a,b,e,f]
+			eq group.opstr, "RR"
+
+			group.render list: full
 
 		test "should be reorderable" do
-			group.render list: [b,a,c,d]
+			group.render list: [b,a,c,d,e,f]
 			eq group.opstr, "I"
 			console.log group.opstr
