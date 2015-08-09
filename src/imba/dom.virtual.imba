@@ -33,6 +33,7 @@ extend tag htmlelement
 			elif prevNode === node
 				tail = skipNode(node, tail)
 			else
+				# if this is not a loop - we can be certain to simply
 				tail = removeNode(prevNode, tail)
 				tail = insertNode(node, tail)
 
