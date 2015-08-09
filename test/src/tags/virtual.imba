@@ -49,6 +49,11 @@ tag manual
 		@ops = []
 		super(nodes)
 
+	def insertDomNode domNode, tail
+		log "insertDomNode"
+		super(domNode, tail)
+		
+
 describe "Tags" do
 
 	var root = <manual>
@@ -82,6 +87,7 @@ describe "Tags" do
 	# make eq test actual 
 
 	def render o
+		var CARY = 0
 		var tree = [
 			a
 			b
@@ -94,6 +100,13 @@ describe "Tags" do
 			e
 			o:list or []
 			f
+			if o:e
+				[
+					g
+					h
+					[i,j] if o:f
+				]
+			k
 		]
 		console.log "will render",tree
 		var pre = _.compact(_.flatten(tree.slice))
@@ -112,4 +125,10 @@ describe "Tags" do
 		render(d: yes)
 		render(c: yes)
 		render(list: [l1,l2,l3,l4,l5,l6,l7,l8])
+		render(list: [l2,l3,l4,l5,l6,l7,l8,l1])
+		render(e: yes)
+		render(e: yes, f: yes)
+
+	test "other" do
+		eq 1, 1
 

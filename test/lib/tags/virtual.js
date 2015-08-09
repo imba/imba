@@ -74,7 +74,13 @@
 			this._ops = [];
 			return tag.__super__.setStaticChildren.call(this,nodes);
 		};
+		
+		tag.prototype.insertDomNode = function (domNode,tail){
+			this.log("insertDomNode");
+			return tag.__super__.insertDomNode.call(this,domNode,tail);
+		};
 	});
+	
 	
 	describe("Tags",function() {
 		
@@ -109,6 +115,7 @@
 		// make eq test actual 
 		
 		function render(o){
+			var CARY = 0;
 			var tree = [
 				a,
 				b,
@@ -122,7 +129,15 @@
 				),
 				e,
 				o.list || [],
-				f
+				f,
+				(o.e) && (
+					[
+						g,
+						h,
+						(o.f) && ([i,j])
+					]
+				),
+				k
 			];
 			console.log("will render",tree);
 			var pre = _.compact(_.flatten(tree.slice()));
@@ -138,11 +153,18 @@
 		};
 		
 		
-		return test("something",function() {
+		test("something",function() {
 			eq(1,1);
 			render({d: true});
 			render({c: true});
-			return render({list: [l1,l2,l3,l4,l5,l6,l7,l8]});
+			render({list: [l1,l2,l3,l4,l5,l6,l7,l8]});
+			render({list: [l2,l3,l4,l5,l6,l7,l8,l1]});
+			render({e: true});
+			return render({e: true,f: true});
+		});
+		
+		return test("other",function() {
+			return eq(1,1);
 		});
 	});
 
