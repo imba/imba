@@ -62,6 +62,7 @@ export class Highlighter
 			',': 'comma'
 			':': 'op colon'
 			'.': 'op dot'
+			'.:': 'op cdot'
 			'?.': 'op qdot'
 			'[': ['s','sbl']
 			']': ['s','sbr']
