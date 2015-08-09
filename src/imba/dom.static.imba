@@ -29,11 +29,11 @@ def appendNested root, node
 def insertNestedBefore root, node, before
 
 	if node isa Array
-		insertNested(root,member,before) for member in node
+		insertNestedBefore(root,member,before) for member in node
 	elif node isa Number
 		no # noop now -- will be used in 
 	elif node
-		root.insertBefore(root,node)
+		root.insertBefore(node,before)
 
 	return before
 
@@ -53,18 +53,19 @@ def insertNestedAfter root, node, after
 # the general reconciler that respects conditions etc
 # caret is the current node we want to insert things after
 def reconcileNested root, new, old, caret
-
 	if new === old
 		# will call reconcile directly for every node
 		# cant be very efficient?
-		return new # this is now the caret
+		# what if this is a number? can that happen?
+
+		# remember that the caret must be an actual dom element
+		return (new and new.@dom) or new or caret
 
 	var newIsArray = new isa Array
 	var oldIsArray = old isa Array
 
 	# this could be a dynamic / loop
 	if newIsArray and oldIsArray
-
 		var newLen = new:length
 		var oldLen = old:length
 
@@ -76,22 +77,24 @@ def reconcileNested root, new, old, caret
 		# if these are static blocks, they
 		# always include a unique number as first element
 		if isBlocks
+			# console.log "is blocks"
 			# these are static blocks. If they are not the same
 			# block we can handle them in the most primitive way
 
 			# if they are the same, we need to reconcile members
 			# they should also have the same length
 			if new0 == old0
+				# console.log "same block!"
 				let i = 0
-				while i < newLen
-					caret = reconcileNested(root,new[i++],old[i],caret)
+				while ++i < newLen
+					caret = reconcileNested(root,new[i],old[i],caret)
+				# console.log "return caret",caret
 				return caret
 			else
 				# these are two fully separate blocks - we can remove and insert
 				removeNested(root,old)
 				return caret = insertNestedAfter(root,new,caret)
 		else
-			console.log "should go to advanced reconcile(!)",new,old
 			# this is where we get into the advanced reconcileLoop
 			return caret
 
@@ -117,9 +120,21 @@ extend tag htmlelement
 	# 	dom.removeChild(a.dom) if a
 	# 	self
 
-	def setStaticChildren nodes
-		reconcileNested(self,nodes,@staticChildren,null)
-		@staticChildren = nodes
+	def setStaticChildren new
+		var old = @staticChildren
+		var caret = null
+
+		if !old
+			appendNested(self,@staticChildren = new)
+			return self
+
+		for node,i in new
+			if node === old[i]
+				caret = node.@dom if node and node.@dom
+			else
+				caret = reconcileNested(self,node,old[i],caret)
+
+		@staticChildren = new
 		return self
 
 		if nodes isa String or nodes isa Number

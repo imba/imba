@@ -28,12 +28,13 @@ tag group
 		return self
 
 	def appendChild node
-		log "appendChild"
+		log "appendChild",node
 		ops.push ["appendChild",node]
 		@opstr += "A"
 		super
 
 	def removeChild node
+		log "removeChild",node
 		ops.push ["removeChild", node]
 		@opstr += "R"
 		super
@@ -44,12 +45,15 @@ tag group
 		@opstr += "I"
 		super
 
+	def reset
+		render
+
 	def render a: no, b: no, c: no, d: no, e: no, list: null
 		# no need for nested stuff here - we're testing setStaticChildren
 		# if it works on the flat level it should work everywhere
 		<self>
-			<div> "top"
-			<div> "ok"
+			<el.a> "top"
+			<el.b> "ok"
 			if a
 				<el.header>
 				<el.title> "Header"
@@ -73,109 +77,47 @@ tag group
 			else
 				<el> "!d and !e"
 			list
-			<div> "very last"
+			<el.x> "very last"
 
-
-tag manual
-
-	prop ops
-
-	def setStaticChildren nodes
-		log "setStaticChildren",nodes
-		@ops = []
-		super(nodes)
-
-	def insertDomNode domNode, tail
-		log "insertDomNode"
-		super(domNode, tail)
-		
 
 describe "Tags" do
 
-	var grp = <group>
-	document:body.appendChild(grp.dom)
+	var a = <el.a> "a"
+	var b = <el.b> "b"
+	var c = <el.c> "c"
+	var d = <el.d> "d"
+	var e = <el.e> "e"
+	var f = <el.f> "f"
+	var g = <el.g> "g"
+	var h = <el.h> "h"
 
-	test "group" do
-		grp.render
-		eq grp.opstr, "AAAA"
+	var group = <group>
+	document:body.appendChild(group.dom)
 
-	return
+	test "first render" do
+		group.render
+		eq group.opstr, "AAAA"
 
-	var root = <manual>
-	document:body.appendChild(root.dom)
+	test "second render" do
+		# nothing should happen on second render
+		group.render
+		eq group.opstr, ""
 
-	var a  = <el.a> "a" 
-	var b  = <el.b> "b" 
-	var c  = <el.c> "c" 
-	var d1 = <el.d> "d1"
-	var d2 = <el.d> "d2"
-	var e  = <el.e> "e" 
-	var f  = <el.f> "f" 
-	var g  = <el.g> "g" 
-	var h  = <el.h> "h" 
-	var i  = <el.i> "i" 
-	var j  = <el.j> "j" 
-	var k  = <el.k> "k" 
-	var l  = <el.l> "l" 
-	var m  = <el.m> "m"
+	test "added block" do
+		group.render c: yes
+		eq group.opstr, "II"
 
-	var l0  = <el.l0> "l0" 
-	var l1  = <el.l1> "l1" 
-	var l2  = <el.l2> "l2" 
-	var l3  = <el.l3> "l3" 
-	var l4  = <el.l4> "l4" 
-	var l5  = <el.l5> "l5"
-	var l6  = <el.l6> "l6"
-	var l7  = <el.l7> "l7"
-	var l8  = <el.l8> "l8"
+	test "remove again" do
+		group.render c: no
+		eq group.opstr, "RR"
 
-	# make eq test actual
+	describe "dynamic lists" do
+		# render once without anything to reset
 
+		test "adding dynamic list items" do
+			group.render list: [a,b,c,d]
+			eq group.opstr, "IIII"
 
-
-	def render o
-		var CARY = 0
-		var tree = [
-			a
-			b
-			if o:c
-				c
-			if o:d
-				d1
-			else
-				d2
-			e
-			o:list or []
-			f
-			if o:e
-				[
-					g
-					h
-					[i,j] if o:f
-				]
-			k
-		]
-		console.log "will render",tree
-		var pre = _.compact(_.flatten(tree.slice))
-		var actual = []
-		console.log "expects",pre
-		root.setStaticChildren(tree)
-		for child,i in root.dom:children
-			actual.push( tag(child) )
-
-		console.log "expects",pre,actual
-		eq actual, pre
-
-
-	test "something" do
-		eq 1, 1
-		render(d: yes)
-		render(c: yes)
-		render(list: [l1,l2,l3,l4,l5,l6,l7,l8])
-		render(list: [l2,l3,l4,l5,l6,l7,l8,l1])
-		render(e: yes)
-		render(e: yes, f: yes)
-
-	test "other" do
-		eq 1, 1
-
+		test "should be reorderable" do
+			group.render list: [b,a,c,d]
+			console.log group.opstr
