@@ -1,8 +1,5 @@
 extern describe, test, eq, document, _
 
-
-var ops = []
-
 tag el
 
 	def flag ref
@@ -10,51 +7,74 @@ tag el
 		super
 
 tag group
-	prop long
-	prop headed
-	prop footed
+	prop ops
+	prop opstr
 
-	def render
-		<self>
-			if headed
-				<el.header>
-					<el.title> "Header"
-					<el.tools>
-					if long
-						<el.long>
-						<el.long>
-					else
-						<el.short>
-				<el.ruler>
-			<ul>
-				<li> "Hello {Math.random}"
-				<li> "World"
-				if long
-					<li> "long"
-					<li> "loong"
-			if long and footed
-				<el.long>
-				<el.footer>
-					<el.title> "Footer"
-				<el.bottom>
-			elif footed
-				<el.footer>
-				<el.bottom>
-			
-
+	prop expected
+	prop actual
+		
 	def setStaticChildren nodes
 		@ops = []
-		log "setStaticChildren",nodes
+		@opstr = ""
+		expected = _.flatten(nodes).filter do |n| n and n.@dom
+		actual = []
+		log "setStaticChildren",nodes,expected
 		super(nodes)
 
-	def testRender nodes
-		var pre = nodes.slice
-		setStaticChildren(nodes)
+		for child,i in @dom:childNodes
+			actual.push( tag(child) )
 
-	def checkRender o
-		var tree = [
+		eq actual, expected
+		return self
 
-		]
+	def appendChild node
+		log "appendChild"
+		ops.push ["appendChild",node]
+		@opstr += "A"
+		super
+
+	def removeChild node
+		ops.push ["removeChild", node]
+		@opstr += "R"
+		super
+
+	def insertBefore node, rel
+		log "insertBefore"
+		ops.push ["insertBefore",node,rel]
+		@opstr += "I"
+		super
+
+	def render a: no, b: no, c: no, d: no, e: no, list: null
+		# no need for nested stuff here - we're testing setStaticChildren
+		# if it works on the flat level it should work everywhere
+		<self>
+			<div> "top"
+			<div> "ok"
+			if a
+				<el.header>
+				<el.title> "Header"
+				<el.tools>
+				if b
+					<el.long>
+					<el.long>
+				else
+					<el.short>
+				<el.ruler>
+			if c
+				<div.c1> "long"
+				<div.c2> "loong"
+			if d and e
+				<el.long>
+				<el.footer>
+				<el.bottom>
+			elif e
+				<el.footer>
+				<el.bottom>
+			else
+				<el> "!d and !e"
+			list
+			<div> "very last"
+
 
 tag manual
 
@@ -71,6 +91,15 @@ tag manual
 		
 
 describe "Tags" do
+
+	var grp = <group>
+	document:body.appendChild(grp.dom)
+
+	test "group" do
+		grp.render
+		eq grp.opstr, "AAAA"
+
+	return
 
 	var root = <manual>
 	document:body.appendChild(root.dom)
@@ -100,7 +129,9 @@ describe "Tags" do
 	var l7  = <el.l7> "l7"
 	var l8  = <el.l8> "l8"
 
-	# make eq test actual 
+	# make eq test actual
+
+
 
 	def render o
 		var CARY = 0

@@ -5370,7 +5370,7 @@ export class Tag < Node
 
 				# find out if it is an interpolated string
 				# if single isa Str or single isa Op
-				p "body isa tsring? {o:body}"
+				# p "body isa tsring? {o:body}"
 			else
 			# would probably be better to convert to a tagtree during the initial visit
 				tree = TagTree.new(o:body, root: self, reactive: reactive)
