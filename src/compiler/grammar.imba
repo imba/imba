@@ -764,8 +764,8 @@ var grammar =
 	# where only values are accepted, wrapping it in parentheses will always do
 	# the trick.
 	Parenthetical: [
-		o '( Body )' do Parens.new A2
-		o '( INDENT Body OUTDENT )' do Parens.new A3
+		o '( Body )' do Parens.new(A2,A1,A3)
+		o '( INDENT Body OUTDENT )' do Parens.new(A3,A1,A5)
 	]
 	# The condition portion of a while loop.
 	WhileSource: [

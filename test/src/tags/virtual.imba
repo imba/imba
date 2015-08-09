@@ -5,6 +5,10 @@ var ops = []
 
 tag el
 
+	def flag ref
+		@flagged = ref
+		super
+
 tag group
 	prop long
 	prop headed
@@ -18,13 +22,25 @@ tag group
 					<el.tools>
 					if long
 						<el.long>
+						<el.long>
+					else
+						<el.short>
 				<el.ruler>
 			<ul>
-				<li> "Hello"
+				<li> "Hello {Math.random}"
 				<li> "World"
 				if long
 					<li> "long"
 					<li> "loong"
+			if long and footed
+				<el.long>
+				<el.footer>
+					<el.title> "Footer"
+				<el.bottom>
+			elif footed
+				<el.footer>
+				<el.bottom>
+			
 
 	def setStaticChildren nodes
 		@ops = []

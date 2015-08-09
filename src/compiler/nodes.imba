@@ -399,6 +399,9 @@ export class Node
 	def stack
 		STACK
 
+	def isString
+		no
+
 	# should rather do traversals
 	# o = {}, up, key, index
 	def traverse
@@ -960,13 +963,16 @@ export class Block < ListNode
 
 	def consume node
 		if node isa TagTree # special case?!?
-			@nodes = @nodes.map(|child| child.consume(node))
+			@nodes = @nodes.map do |child|
+				child.consume(node)
 
 			# FIXME should not include terminators and comments when counting
 			# should only wrap the content in array (returning all parts)
 			# for if/else blocks -- not loops
 			if !node.@loop && @nodes:length > 1
-				@nodes = [Arr.new(ArgList.new(@nodes))]
+				@nodes.unshift(Num.new(node.blocks.push(self)))
+				@nodes = [Arr.new(ArgList.new( @nodes ))]
+				# @nodes = [Arr.new( ArgList.new( @nodes ))]
 				@nodes[0].value.@indentation = @indentation
 				@indentation = null
 			
@@ -1072,10 +1078,20 @@ export class VarBlock < ListNode
 
 # Could inherit from valueNode
 export class Parens < ValueNode
+
+	def initialize value, open, close
+		setup
+		@open = open
+		@close = close
+		@value = load(value)
 	
 	def load value
 		@noparen = no
 		value isa Block and value.count == 1 ? value.first : value
+
+	def isString
+		# checking if this is an interpolated string
+		@open and String(@open) == '("' or value.isString
 		
 	def js o
 
@@ -2458,6 +2474,9 @@ export class Str < Literal
 		@cache = null
 		@value = v
 		# should grab the actual value immediately?
+
+	def isString
+		yes
 
 	def raw
 		# JSON.parse requires double-quoted strings,
@@ -5345,11 +5364,18 @@ export class Tag < Node
 		if o:body isa Func
 			# console.log "o:body isa function!"
 			bodySetter = "setTemplate"
-		# would probably be better to convert to a tagtree during the initial visit
 		elif o:body
-			tree = TagTree.new(o:body, root: self, reactive: reactive)
-			content = tree
-			self.tree = tree
+			if o:body isa ArgList and o:body.count == 1 and o:body.first.isString
+				bodySetter = "setText"
+
+				# find out if it is an interpolated string
+				# if single isa Str or single isa Op
+				p "body isa tsring? {o:body}"
+			else
+			# would probably be better to convert to a tagtree during the initial visit
+				tree = TagTree.new(o:body, root: self, reactive: reactive)
+				content = tree
+				self.tree = tree
 
 		if tree
 			tree.resolve
@@ -5445,10 +5471,14 @@ export class Tag < Node
 export class TagTree < ListNode
 	
 	prop counter
+	prop conditions
+	prop blocks
 
 	def initialize list, options = {}
 		@nodes = load(list)
 		@options = options
+		@conditions = []
+		@blocks = []
 		@counter = 0
 		self
 
@@ -5485,7 +5515,7 @@ export class TagTree < ListNode
 		# FIXME TEST what about comments???
 		var single = count == 1
 		var out = super(o)
-		out = "[" + out + "]" unless single
+		out = "[" + out + "]" # unless single
 		return out
 
 export class TagWrapper < ValueNode

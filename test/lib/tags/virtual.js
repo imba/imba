@@ -5,7 +5,13 @@
 	
 	var ops = [];
 	
-	Imba.defineTag('el');
+	Imba.defineTag('el', function(tag){
+		
+		tag.prototype.flag = function (ref){
+			this._flagged = ref;
+			return tag.__super__.flag.apply(this,arguments);
+		};
+	});
 	
 	Imba.defineTag('group', function(tag){
 		
@@ -25,25 +31,37 @@
 			var t0;
 			return this.setStaticChildren([
 				(this.headed()) && ([
-					(t0 = this[0] || (this[0] = t$('el'))).flag('header').setStaticContent([
-						(t0[0] = t0[0] || t$('el')).flag('title').setStaticContent("Header").end(),
+					1,(t0 = this[0] || (this[0] = t$('el'))).flag('header').setStaticContent([
+						(t0[0] = t0[0] || t$('el')).flag('title').setText("Header").end(),
 						(t0[1] = t0[1] || t$('el')).flag('tools').end(),
-						(this.long()) && ([
-							(t0[2] = t0[2] || t$('el')).flag('long').end()
+						this.long() ? ([
+							1,(t0[2] = t0[2] || t$('el')).flag('long').end(),
+							(t0[3] = t0[3] || t$('el')).flag('long').end()
+						]) : ([
+							2,(t0[4] = t0[4] || t$('el')).flag('short').end()
 						])
 					]).end(),
 					(this[1] = this[1] || t$('el')).flag('ruler').end()
 				]),
 				(t0 = this[2] || (this[2] = t$('ul'))).setStaticContent([
-					(t0[0] = t0[0] || t$('li')).setStaticContent("Hello").end(),
-					(t0[1] = t0[1] || t$('li')).setStaticContent("World").end(),
+					(t0[0] = t0[0] || t$('li')).setText(("Hello " + (Math.random()))).end(),
+					(t0[1] = t0[1] || t$('li')).setText("World").end(),
 					(this.long()) && ([
-						(t0[2] = t0[2] || t$('li')).setStaticContent("long").end(),
-						(t0[3] = t0[3] || t$('li')).setStaticContent("loong").end()
+						1,(t0[2] = t0[2] || t$('li')).setText("long").end(),
+						(t0[3] = t0[3] || t$('li')).setText("loong").end()
 					])
-				]).end()
+				]).end(),
+				this.long() && this.footed() ? ([
+					2,(this[3] = this[3] || t$('el')).flag('long').end(),
+					(t0 = this[4] || (this[4] = t$('el'))).flag('footer').setStaticContent([(t0[0] = t0[0] || t$('el')).flag('title').setText("Footer").end()]).end(),
+					(this[5] = this[5] || t$('el')).flag('bottom').end()
+				]) : ((this.footed()) && ([
+					3,(this[6] = this[6] || t$('el')).flag('footer').end(),
+					(this[7] = this[7] || t$('el')).flag('bottom').end()
+				]))
 			]).synced();
 		};
+		
 		
 		tag.prototype.setStaticChildren = function (nodes){
 			this._ops = [];
@@ -87,30 +105,30 @@
 		var root = t$('manual').end();
 		document.body.appendChild(root.dom());
 		
-		var a = t$('el').flag('a').setChildren("a").end();
-		var b = t$('el').flag('b').setChildren("b").end();
-		var c = t$('el').flag('c').setChildren("c").end();
-		var d1 = t$('el').flag('d').setChildren("d1").end();
-		var d2 = t$('el').flag('d').setChildren("d2").end();
-		var e = t$('el').flag('e').setChildren("e").end();
-		var f = t$('el').flag('f').setChildren("f").end();
-		var g = t$('el').flag('g').setChildren("g").end();
-		var h = t$('el').flag('h').setChildren("h").end();
-		var i = t$('el').flag('i').setChildren("i").end();
-		var j = t$('el').flag('j').setChildren("j").end();
-		var k = t$('el').flag('k').setChildren("k").end();
-		var l = t$('el').flag('l').setChildren("l").end();
-		var m = t$('el').flag('m').setChildren("m").end();
+		var a = t$('el').flag('a').setText("a").end();
+		var b = t$('el').flag('b').setText("b").end();
+		var c = t$('el').flag('c').setText("c").end();
+		var d1 = t$('el').flag('d').setText("d1").end();
+		var d2 = t$('el').flag('d').setText("d2").end();
+		var e = t$('el').flag('e').setText("e").end();
+		var f = t$('el').flag('f').setText("f").end();
+		var g = t$('el').flag('g').setText("g").end();
+		var h = t$('el').flag('h').setText("h").end();
+		var i = t$('el').flag('i').setText("i").end();
+		var j = t$('el').flag('j').setText("j").end();
+		var k = t$('el').flag('k').setText("k").end();
+		var l = t$('el').flag('l').setText("l").end();
+		var m = t$('el').flag('m').setText("m").end();
 		
-		var l0 = t$('el').flag('l0').setChildren("l0").end();
-		var l1 = t$('el').flag('l1').setChildren("l1").end();
-		var l2 = t$('el').flag('l2').setChildren("l2").end();
-		var l3 = t$('el').flag('l3').setChildren("l3").end();
-		var l4 = t$('el').flag('l4').setChildren("l4").end();
-		var l5 = t$('el').flag('l5').setChildren("l5").end();
-		var l6 = t$('el').flag('l6').setChildren("l6").end();
-		var l7 = t$('el').flag('l7').setChildren("l7").end();
-		var l8 = t$('el').flag('l8').setChildren("l8").end();
+		var l0 = t$('el').flag('l0').setText("l0").end();
+		var l1 = t$('el').flag('l1').setText("l1").end();
+		var l2 = t$('el').flag('l2').setText("l2").end();
+		var l3 = t$('el').flag('l3').setText("l3").end();
+		var l4 = t$('el').flag('l4').setText("l4").end();
+		var l5 = t$('el').flag('l5').setText("l5").end();
+		var l6 = t$('el').flag('l6').setText("l6").end();
+		var l7 = t$('el').flag('l7').setText("l7").end();
+		var l8 = t$('el').flag('l8').setText("l8").end();
 		
 		// make eq test actual 
 		
