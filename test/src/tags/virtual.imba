@@ -29,7 +29,7 @@ tag group
 			var el = tag(child)
 			if el != expected[i]
 				@errors ||= []
-				log "not the same as expected at i",child,expected[i].@dom
+				# log "not the same as expected at i",child,expected[i].@dom
 				@errors.push([el,expected[i],i])
 
 			actual.push( tag(child) )
@@ -88,6 +88,13 @@ tag group
 				<el> "!d and !e"
 			list
 			<el.x> "very last"
+
+
+tag other
+
+	def render
+		<self> for item in items
+			<li> item
 
 
 describe "Tags" do

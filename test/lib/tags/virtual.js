@@ -48,7 +48,7 @@
 				var el = tag$wrap(child);
 				if (el != this.expected()[i]) {
 					this._errors || (this._errors = []);
-					this.log("not the same as expected at i",child,this.expected()[i]._dom);
+					// log "not the same as expected at i",child,expected[i].@dom
 					this._errors.push([el,this.expected()[i],i]);
 				};
 				
@@ -126,6 +126,20 @@
 				list,
 				(this[17] = this[17] || t$('el')).flag('x').setText("very last").end()
 			]).synced();
+		};
+	});
+	
+	
+	Imba.defineTag('other', function(tag){
+		
+		tag.prototype.render = function (){
+			var self=this;
+			return this.setStaticChildren([(function(self) {
+				for (var i=0, ary=iter$(self.items()), len=ary.length, res=[]; i < len; i++) {
+					res.push(t$('li').setChildren([ary[i]]).end());
+				};
+				return res;
+			})(self)]).synced();
 		};
 	});
 	
