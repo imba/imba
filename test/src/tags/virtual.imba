@@ -16,36 +16,38 @@ tag group
 	def setStaticChildren nodes
 		@ops = []
 		@opstr = ""
+		@errors = null
 		expected = _.flatten(nodes).filter do |n| n and n.@dom
 		actual = []
-		log "setStaticChildren",nodes,expected
+		# log "setStaticChildren",nodes,expected
 		super(nodes)
 
 		for child,i in @dom:childNodes
 			var el = tag(child)
 			if el != expected[i]
+				@errors ||= []
 				log "not the same as expected at i",child,expected[i].@dom
-			actual.push( tag(child) )
+				@errors.push([el,expected[i],i])
 
-		log actual
-		eq actual, expected
-		log "is the same, no?!?"
+			actual.push( tag(child) )
+		# log actual
+		eq @errors, null
 		return self
 
 	def appendChild node
-		log "appendChild",node
+		# log "appendChild",node
 		ops.push ["appendChild",node]
 		@opstr += "A"
 		super
 
 	def removeChild node
-		log "removeChild",node
+		# log "removeChild",node
 		ops.push ["removeChild", node]
 		@opstr += "R"
 		super
 
 	def insertBefore node, rel
-		log "insertBefore"
+		# log "insertBefore"
 		ops.push ["insertBefore",node,rel]
 		@opstr += "I"
 		super
@@ -129,8 +131,24 @@ describe "Tags" do
 			eq group.opstr, "RR"
 
 			group.render list: full
+			eq group.opstr, "II"
 
 		test "should be reorderable" do
+
+			group.render list: full # render with the regular list
 			group.render list: [b,a,c,d,e,f]
 			eq group.opstr, "I"
-			console.log group.opstr
+
+			# reordering two elements
+			group.render list: full
+			group.render list: [c,d,a,b,e,f]
+			eq group.opstr, "II"
+
+			# reordering two elements
+			group.render list: full
+			group.render list: [c,d,e,f,a,b]
+			eq group.opstr, "II"
+
+
+
+

@@ -32,44 +32,46 @@
 		tag.prototype.setStaticChildren = function (nodes){
 			this._ops = [];
 			this._opstr = "";
+			this._errors = null;
 			this.setExpected(_.flatten(nodes).filter(function(n) {
 				return n && n._dom;
 			}));
 			this.setActual([]);
-			this.log("setStaticChildren",nodes,this.expected());
+			// log "setStaticChildren",nodes,expected
 			tag.__super__.setStaticChildren.call(this,nodes);
 			
 			for (var i=0, ary=iter$(this._dom.childNodes), len=ary.length, child; i < len; i++) {
 				child = ary[i];
 				var el = tag$wrap(child);
 				if (el != this.expected()[i]) {
+					this._errors || (this._errors = []);
 					this.log("not the same as expected at i",child,this.expected()[i]._dom);
+					this._errors.push([el,this.expected()[i],i]);
 				};
+				
 				this.actual().push(tag$wrap(child));
 			};
-			
-			this.log(this.actual());
-			eq(this.actual(),this.expected());
-			this.log("is the same, no?!?");
+			// log actual
+			eq(this._errors,null);
 			return this;
 		};
 		
 		tag.prototype.appendChild = function (node){
-			this.log("appendChild",node);
+			// log "appendChild",node
 			this.ops().push(["appendChild",node]);
 			this._opstr += "A";
 			return tag.__super__.appendChild.apply(this,arguments);
 		};
 		
 		tag.prototype.removeChild = function (node){
-			this.log("removeChild",node);
+			// log "removeChild",node
 			this.ops().push(["removeChild",node]);
 			this._opstr += "R";
 			return tag.__super__.removeChild.apply(this,arguments);
 		};
 		
 		tag.prototype.insertBefore = function (node,rel){
-			this.log("insertBefore");
+			// log "insertBefore"
 			this.ops().push(["insertBefore",node,rel]);
 			this._opstr += "I";
 			return tag.__super__.insertBefore.apply(this,arguments);
@@ -173,13 +175,25 @@
 				group.render({list: [a,b,e,f]});
 				eq(group.opstr(),"RR");
 				
-				return group.render({list: full});
+				group.render({list: full});
+				return eq(group.opstr(),"II");
 			});
 			
 			return test("should be reorderable",function() {
+				
+				group.render({list: full}); // render with the regular list
 				group.render({list: [b,a,c,d,e,f]});
 				eq(group.opstr(),"I");
-				return console.log(group.opstr());
+				
+				// reordering two elements
+				group.render({list: full});
+				group.render({list: [c,d,a,b,e,f]});
+				eq(group.opstr(),"II");
+				
+				// reordering two elements
+				group.render({list: full});
+				group.render({list: [c,d,e,f,a,b]});
+				return eq(group.opstr(),"II");
 			});
 		});
 	});

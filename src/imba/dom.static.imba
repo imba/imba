@@ -48,11 +48,17 @@ def insertNestedAfter root, node, after
 		appendNested(root,node)
 		return root.@dom:lastChild
 
+# same as insertNestedBefore?
+def moveGroupBeforeTail root, nodes, group, tail
+	for nodeIdx in group
+		var node = nodes[nodeIdx]
+		root.insertBefore(node,tail)
+	# tail will stay the same
+	return
 
-def moveGroup root, nodes, group, nextGroup
+def moveGroup root, nodes, group, nextGroup, caret
 	var tail = nodes[nextGroup[0]].@dom:nextSibling
-	moveGroupBeforeTail(nodes, group, tail)
-
+	moveGroupBeforeTail(root, nodes, group, tail)
 
 def swapGroup root, nodes, group1, group2, caret
 	var group, tail
@@ -65,11 +71,8 @@ def swapGroup root, nodes, group1, group2, caret
 		# Move group2 in from of group1
 		group = group2
 		tail = nodes[group1[0]].@dom
-	moveGroupBeforeTail(nodes, group, tail)
 
-
-def reconcileChanges root, new, old, caret
-	return caret
+	moveGroupBeforeTail(root,nodes, group, tail)
 
 
 def reconcileOrder root, nodes, groups, caret
@@ -86,20 +89,20 @@ def reconcileOrder root, nodes, groups, caret
 	if groups[0][0] == 0
 		# (1, 3, 2)
 		last = groups[1]
-		swapGroup(nodes, groups[1], groups[2])
+		swapGroup(root, nodes, groups[1], groups[2], caret)
 
 	elif groups[1][0] == 0
 		# (2, 1, 3)
 		last = groups[2]
-		swapGroup(nodes, groups[0], groups[1])
+		swapGroup(root, nodes, groups[0], groups[1], caret)
 
 	elif groups[2][0] == 0
-		moveGroup(nodes, group[2], group[0])
+		moveGroup(root, nodes, group[2], group[0], caret)
 
 		if groups[0][0] > groups[1][0]
 			# (3, 2, 1)
 			last = groups[0]
-			swapGroup(nodes, groups[0], groups[1])
+			swapGroup(root, nodes, groups[0], groups[1], caret)
 		else
 			# (2, 3, 1)
 			last = groups[1]
@@ -115,7 +118,7 @@ def reconcileSwap root, nodes, groups, caret
 
 
 def reconcileFull root, new, old, caret
-	console.log "reconcileFull"
+	# console.log "reconcileFull"
 	removeNested(root,old,caret)
 	caret = insertNestedAfter(root,new,caret)
 	return caret
@@ -170,14 +173,16 @@ def reconcileCollection root, new, old, caret
 	# "changes" here implies that nodes have been added or removed
 	var hasChanges = !(addedNodes == 0 and removedNodes == 0)
 
-	console.log "reconcileLoop",isSorted,addedNodes,removedNodes,groups
+	# console.log "reconcileLoop",isSorted,addedNodes,removedNodes,groups
 
 	# fix this first
 
 	if isSorted
+		# this is very simple
 		if removedNodes and !addedNodes
-			console.log "only removed nodes"
+			# console.log "only removed nodes"
 			root.removeChild(node) for node,i in remove
+
 		elif addedNodes
 			# this can include both removed and 
 			# maybe remove nodes first -- so easy
@@ -188,7 +193,7 @@ def reconcileCollection root, new, old, caret
 				root.removeChild(node) for node,i in remove
 				remaining = old.filter do |node| remove.indexOf(node) == -1
 
-			# what if we get past other
+			# simply loop over new nodes, and insert them where they belong
 			for node,i in new
 				var other = remaining[oldI++]
 
@@ -203,30 +208,20 @@ def reconcileCollection root, new, old, caret
 					root.insertBefore(node,caret and caret:nextSibling)
 
 	elif hasChanges
-		console.log "reconcileScratch",groups
+		# console.log "reconcileScratch",groups
 		reconcileFull(root, new, old, caret)
 
 	elif groups:length == 2
+		# console.log "reconcileSwap"
 		reconcileSwap(root,new, groups, caret)
 
 	elif groups:length == 3
+		# console.log "reconcileOrder"
 		reconcileOrder(root, new, groups, caret)
 
 	else
 		# too much to sort - just remove and append everything
 		reconcileFull(root, new, old, caret)
-	#
-	#
-	#	# change to elif hasChanges?
-	#	if !hasChanges and groups:length == 2
-	#		console.log "reconcileSwap!",groups
-	#		return reconcileSwap(root,new, groups, caret)
-	#	elif !hasChanges and groups:length == 3
-	#		console.log "reconcileOrder",groups
-	#		return reconcileOrder(root, new, groups, caret)
-	#	else
-	#		console.log "reconcileScratch",groups
-	#		return reconcileFull(root, new, old, caret)
 
 	# should trust that the last item in new list is the caret
 	return lastNew and lastNew.@dom or caret
@@ -278,7 +273,7 @@ def reconcileNested root, new, old, caret
 				return caret = insertNestedAfter(root,new,caret)
 		else
 			# this is where we get into the advanced reconcileLoop
-			console.log "should redirect to dynamic!"
+			# console.log "should redirect to dynamic!"
 			caret = reconcileCollection(root,new,old,caret)
 			return caret
 
