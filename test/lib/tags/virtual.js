@@ -104,6 +104,7 @@
 			var e = pars.e !== undefined ? pars.e : false;
 			var list = pars.list !== undefined ? pars.list : null;
 			var str = pars.str !== undefined ? pars.str : null;
+			var list2 = pars.list2 !== undefined ? pars.list2 : null;
 			return this.setStaticChildren([
 				(this[0] = this[0] || t$('el')).flag('a').setStaticContent([this.name()]).end(),
 				str,
@@ -135,7 +136,8 @@
 					7,(this[16] = this[16] || t$('el')).setText("!d and !e").end()
 				])),
 				list,
-				(this[17] = this[17] || t$('el')).flag('x').setText("very last").end()
+				(this[17] = this[17] || t$('el')).flag('x').setText("very last").end(),
+				list2
 			]).synced();
 		};
 	});
@@ -163,8 +165,11 @@
 		var d = t$('el').flag('d').setText("d").end();
 		var e = t$('el').flag('e').setText("e").end();
 		var f = t$('el').flag('f').setText("f").end();
+		
 		var g = t$('el').flag('g').setText("g").end();
 		var h = t$('el').flag('h').setText("h").end();
+		var i = t$('el').flag('i').setText("i").end();
+		var j = t$('el').flag('j').setText("j").end();
 		
 		var group = t$('group').end();
 		document.body.appendChild(group.dom());
@@ -213,9 +218,27 @@
 			// render once without anything to reset
 			var full = [a,b,c,d,e,f];
 			
+			test("last list",function() {
+				group.render({list2: [h,i]});
+				eq(group.opstr(),"AA");
+				
+				group.render({list2: [h,i,j]});
+				eq(group.opstr(),"A");
+				
+				return group.render();
+				// render full regular again
+			});
+			
 			test("adding dynamic list items",function() {
 				group.render({list: full});
-				return eq(group.opstr(),"IIIIII");
+				eq(group.opstr(),"IIIIII");
+				
+				// append one
+				group.render({list: [a,b,c,d,e,f,g]});
+				eq(group.opstr(),"I");
+				// remove again
+				group.render({list: full});
+				return eq(group.opstr(),"R");
 			});
 			
 			test("removing",function() {

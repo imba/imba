@@ -110,7 +110,7 @@ def reconcileOrder root, nodes, groups, caret
 		swapGroup(root, nodes, groups[0], groups[1], caret)
 
 	elif groups[2][0] == 0
-		moveGroup(root, nodes, group[2], group[0], caret)
+		moveGroup(root, nodes, groups[2], groups[0], caret)
 
 		if groups[0][0] > groups[1][0]
 			# (3, 2, 1)
@@ -185,6 +185,7 @@ def reconcileCollection root, new, old, caret
 
 	var addedNodes = new:length - (old:length - removedNodes)
 
+	# console.log "reconcileCollection",addedNodes, removedNodes, isSorted,new,old,groups
 	# "changes" here implies that nodes have been added or removed
 	var hasChanges = !(addedNodes == 0 and removedNodes == 0)
 
@@ -206,17 +207,12 @@ def reconcileCollection root, new, old, caret
 
 			# simply loop over new nodes, and insert them where they belong
 			for node,i in new
-				var other = remaining[oldI++]
+				if node === remaining[oldI]
+					oldI++ # only step forward if it is the same
+					caret = node.@dom
+					continue
 
-				if other 
-					if node != other
-						root.insertBefore(node,other)
-						oldI--
-
-				elif i > 0
-					root.insertBefore(node,new[i -1].@dom:nextSibling)
-				else
-					root.insertBefore(node,caret and caret:nextSibling)
+				caret = insertNestedAfter(root,node,caret)
 
 	elif hasChanges
 		# console.log "reconcileScratch",groups

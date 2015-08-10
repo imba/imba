@@ -66,7 +66,7 @@ tag group
 	def name
 		"test"
 
-	def render a: no, b: no, c: no, d: no, e: no, list: null, str: null
+	def render a: no, b: no, c: no, d: no, e: no, list: null, str: null, list2: null
 		# no need for nested stuff here - we're testing setStaticChildren
 		# if it works on the flat level it should work everywhere
 		<self>
@@ -97,6 +97,7 @@ tag group
 				<el> "!d and !e"
 			list
 			<el.x> "very last"
+			list2
 
 
 tag other
@@ -114,8 +115,11 @@ describe "Tags" do
 	var d = <el.d> "d"
 	var e = <el.e> "e"
 	var f = <el.f> "f"
+
 	var g = <el.g> "g"
 	var h = <el.h> "h"
+	var i = <el.i> "i"
+	var j = <el.j> "j"
 
 	var group = <group>
 	document:body.appendChild(group.dom)
@@ -153,15 +157,32 @@ describe "Tags" do
 		# removing string, expect a single removeChild
 		group.render str: null
 		eq group.opstr, "R"
-		
+
 
 	describe "dynamic lists" do
 		# render once without anything to reset
 		var full = [a,b,c,d,e,f]
 
+		test "last list" do
+			group.render list2: [h,i]
+			eq group.opstr, "AA"
+
+			group.render list2: [h,i,j]
+			eq group.opstr, "A"
+
+			group.render
+			# render full regular again
+
 		test "adding dynamic list items" do
 			group.render list: full
 			eq group.opstr, "IIIIII"
+
+			# append one
+			group.render list: [a,b,c,d,e,f,g]
+			eq group.opstr, "I"
+			# remove again
+			group.render list: full
+			eq group.opstr, "R"
 
 		test "removing" do
 			group.render list: [a,b,e,f]
