@@ -1,6 +1,7 @@
 ## Dev 
 
 - Allow `new` and `char` as varnames
+- `tag#render` is called by default from `tag#build`
 - Slightly improved error reporting when using `:` in control-flow (like python)
 - Massively improved algorithm for reconciling dom trees (rendering for-loops etc  will now be much more efficient) - contributed by @judofyr
 

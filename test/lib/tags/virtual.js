@@ -89,6 +89,11 @@
 			return this.render();
 		};
 		
+		tag.prototype.build = function (){
+			return this; // dont render immediately
+		};
+		
+		
 		tag.prototype.name = function (){
 			return "test";
 		};

@@ -63,6 +63,10 @@ tag group
 	def reset
 		render
 
+	def build
+		self # dont render immediately
+		
+
 	def name
 		"test"
 

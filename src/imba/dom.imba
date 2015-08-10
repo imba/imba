@@ -68,6 +68,7 @@ class ElementTag
 
 	def children= nodes
 		@empty ? append(nodes) : empty.append(nodes)
+		@staticChildren = null
 		self
 
 	def staticContent= nodes
@@ -102,12 +103,6 @@ class ElementTag
 	def parent
 		tag(dom:parentNode)
 
-	# def first sel
-	# 	# want to filter
-	# 	var el = tag(dom:firstChild)
-	# 	if sel and el and !el.matches(sel)
-	# 		return el.next(sel)
-	# 	return el
 
 	def log *args
 		# playing safe for ie
@@ -117,14 +112,14 @@ class ElementTag
 		self
 		
 
-	# def emit name, data: nil, bubble: yes
+	# def emit name, data: null, bubble: yes
 	# 	ED.trigger name, self, data: data, bubble: bubble
 	# 	return self
 
 	def css key, val
 		if key isa Object
 			css(k,v) for own k,v of key
-		elif val == nil
+		elif val == null
 			dom:style.removeProperty(key)
 		elif val == undefined
 			return dom:style[key]
@@ -170,7 +165,7 @@ class ElementTag
 		while node
 			return node if node.matches(sel)
 			node = node.parent
-		return nil
+		return null
 
 	def path sel
 		var node = self
@@ -201,7 +196,7 @@ class ElementTag
 			var el = self
 			while el = el.next
 				return el if el.matches(sel)
-			return nil
+			return null
 		tag(dom:nextElementSibling)
 
 	def prev sel
@@ -209,7 +204,7 @@ class ElementTag
 			var el = self
 			while el = el.prev
 				return el if el.matches(sel)
-			return nil
+			return null
 		tag(dom:previousElementSibling)
 
 	def contains node
@@ -226,7 +221,7 @@ class ElementTag
 
 	
 
-	def insert node, before: nil, after: nil
+	def insert node, before: null, after: null
 		before = after.next if after
 		if node isa Array
 			node = (<fragment> node)
@@ -236,30 +231,21 @@ class ElementTag
 			append(node)
 		self	
 
+
 	# bind / present
+	# should deprecate / remove
 	def bind obj
 		object = obj
-		render(obj) if @built
+		self
+
+	def render
 		self
 
 	def build
-		self
-
-	def awaken
+		render
 		self
 
 	def commit
-		self
-
-	def synced
-		self
-
-	def focus
-		dom.focus
-		self
-
-	def blur
-		dom.blur
 		self
 
 	def end
@@ -270,18 +256,27 @@ class ElementTag
 			build
 		self
 
-	def render par
-		body = template(par or @object)
+	# called whenever a node has rendered itself like in <self> <div> ...
+	def synced
 		self
 
 	# called when the node is awakened in the dom - either automatically
 	# upon attachment to the dom-tree, or the first time imba needs the
 	# tag for a domnode that has been rendered on the server
-	def awake
+	def awaken
+		self
+
+	def focus
+		dom.focus
+		self
+
+	def blur
+		dom.blur
 		self
 
 	def template
 		null
+
 
 	def prepend item
 		insert(item, before: first)
@@ -307,16 +302,6 @@ class ElementTag
 	def toString
 		@dom.toString # really?
 
-	def self.flag flag
-		# should redirect to the prototype with a dom-node already set?
-		dom:classList.add(flag)
-		# dom:className += " " + flag
-		self
-
-	def self.unflag flag
-		dom:classList.remove(flag)
-		self		
-
 	def classes
 		dom:classList
 		
@@ -333,8 +318,17 @@ class ElementTag
 		classes.remove ref
 		return self
 
-	def has-flag ref
+	def hasFlag ref
 		classes.contains ref
+
+	def self.flag flag
+		# should redirect to the prototype with a dom-node already set?
+		dom:classList.add(flag)
+		self
+
+	def self.unflag flag
+		dom:classList.remove(flag)
+		self	
 
 ElementTag:prototype:initialize = ElementTag
 
@@ -455,9 +449,9 @@ def Imba.defineTag name, supr = '', &body
 	else
 		klass.@isNative = true
 
-	klass.@dom = nil
+	klass.@dom = null
 	klass:prototype.@nodeType = klass.@nodeType
-	klass:prototype.@dom = nil
+	klass:prototype.@dom = null
 	klass:prototype.@built = no
 	klass:prototype.@empty = yes
 
@@ -492,9 +486,9 @@ def Imba.defineSingletonTag id, supr = '', &body
 	klass.@domFlags = superklass.@domFlags
 	klass.@isNative = false
 
-	klass.@dom = nil
-	klass.@instance = nil
-	klass:prototype.@dom = nil
+	klass.@dom = null
+	klass.@instance = null
+	klass:prototype.@dom = null
 	klass:prototype.@built = no
 	klass:prototype.@empty = yes
 
@@ -547,14 +541,14 @@ def Imba.getTagSingleton id
 			# we have a live instance - when finding it through a selector we should awake it, no?
 			# console.log('creating the singleton from existing node in dom?',id,type)
 			node = type.Instance = type.new(dom)
-			node.awake # should only awaken
+			node.awaken(dom) # should only awaken
 			return node
 
 		dom = type.createNode
 		dom:id = id
 		# console.log('creating the singleton',id,type)
 		node = type.Instance = type.new(dom)
-		node.end.awake
+		node.end.awaken(dom)
 		return node
 	elif dom = Imba.document.getElementById(id)
 		# console.log('found plain element with id')
@@ -678,10 +672,12 @@ tag header
 tag hr
 tag html
 tag i
+
 tag iframe
+	attr src
 
 tag img
-	prop src dom: yes
+	attr src
 
 tag input
 	# can use attr instead
