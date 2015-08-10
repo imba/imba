@@ -505,6 +505,11 @@ def Imba.defineSingletonTag id, supr = '', &body
 	body.call(klass,klass,klass:prototype) if body
 	return klass
 
+def Imba.extendTag name, body
+	var klass = (name isa String ? IMBA_TAGS[name] : name)
+	body and body.call(klass,klass,klass:prototype) if body
+	return klass
+
 def Imba.tag name
 	var typ = IMBA_TAGS[name]
 	return typ.new(typ.createNode)

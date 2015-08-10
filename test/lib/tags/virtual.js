@@ -106,37 +106,37 @@
 			var str = pars.str !== undefined ? pars.str : null;
 			var list2 = pars.list2 !== undefined ? pars.list2 : null;
 			return this.setStaticChildren([
-				(this[0] = this[0] || t$('el')).flag('a').setStaticContent([this.name()]).end(),
+				(this.$a = this.$a || t$('el')).flag('a').setStaticContent([this.name()]).end(),
 				str,
-				(this[1] = this[1] || t$('el')).flag('b').setText("ok").end(),
+				(this.$b = this.$b || t$('el')).flag('b').setText("ok").end(),
 				(a) && ([
-					3,(this[2] = this[2] || t$('el')).flag('header').end(),
-					(this[3] = this[3] || t$('el')).flag('title').setText("Header").end(),
-					(this[4] = this[4] || t$('el')).flag('tools').end(),
+					3,(this.$c = this.$c || t$('el')).flag('header').end(),
+					(this.$d = this.$d || t$('el')).flag('title').setText("Header").end(),
+					(this.$e = this.$e || t$('el')).flag('tools').end(),
 					b ? ([
-						1,(this[5] = this[5] || t$('el')).flag('long').end(),
-						(this[6] = this[6] || t$('el')).flag('long').end()
+						1,(this.$f = this.$f || t$('el')).flag('long').end(),
+						(this.$g = this.$g || t$('el')).flag('long').end()
 					]) : ([
-						2,(this[7] = this[7] || t$('el')).flag('short').end()
+						2,(this.$h = this.$h || t$('el')).flag('short').end()
 					]),
-					(this[8] = this[8] || t$('el')).flag('ruler').end()
+					(this.$i = this.$i || t$('el')).flag('ruler').end()
 				]),
 				(c) && ([
-					4,(this[9] = this[9] || t$('div')).flag('c1').setText("long").end(),
-					(this[10] = this[10] || t$('div')).flag('c2').setText("loong").end()
+					4,(this.$j = this.$j || t$('div')).flag('c1').setText("long").end(),
+					(this.$k = this.$k || t$('div')).flag('c2').setText("loong").end()
 				]),
 				d && e ? ([
-					5,(this[11] = this[11] || t$('el')).flag('long').end(),
-					(this[12] = this[12] || t$('el')).flag('footer').end(),
-					(this[13] = this[13] || t$('el')).flag('bottom').end()
+					5,(this.$l = this.$l || t$('el')).flag('long').end(),
+					(this.$m = this.$m || t$('el')).flag('footer').end(),
+					(this.$n = this.$n || t$('el')).flag('bottom').end()
 				]) : (e ? ([
-					6,(this[14] = this[14] || t$('el')).flag('footer').end(),
-					(this[15] = this[15] || t$('el')).flag('bottom').end()
+					6,(this.$o = this.$o || t$('el')).flag('footer').end(),
+					(this.$p = this.$p || t$('el')).flag('bottom').end()
 				]) : ([
-					7,(this[16] = this[16] || t$('el')).setText("!d and !e").end()
+					7,(this.$q = this.$q || t$('el')).setText("!d and !e").end()
 				])),
 				list,
-				(this[17] = this[17] || t$('el')).flag('x').setText("very last").end(),
+				(this.$r = this.$r || t$('el')).flag('x').setText("very last").end(),
 				list2
 			]).synced();
 		};

@@ -2001,49 +2001,22 @@ export class TagDeclaration < Code
 		name.id
 
 	def js o
+		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
 
-		if option(:extension)
-			# check if we have an initialize etc - not allowed?
-			scope.context.value = name
-			return body.c
-		else
-			# context should come from the body, no?
-			@ctx = scope.declare('tag',null,system: yes)
-			scope.context.value = @ctx
-		
-
-		# should disallow initialize for tags?
-		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
-		var ctor = "" # ",function {name.func}(d)\{this.setDom(d)\}"
 		var cbody = body.c
 		var outbody = body.count ? ", function({@ctx.c})\{{cbody}\}" : ''
 
+		if option(:extension)
+			return "Imba.extendTag('{name.id or name.func}'{outbody})"
+
+		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
+
 		var out = if name.id
-			"Imba.defineSingletonTag('{name.id}'{ctor}{sup}{outbody})"
+			"Imba.defineSingletonTag('{name.id}'{sup}{outbody})"
 		else
-			"Imba.defineTag('{name.func}'{ctor}{sup}{outbody})"
+			"Imba.defineTag('{name.func}'{sup}{outbody})"
 
 		return out
-
-		# if the body is empty we can return this directly
-		# console.log "here"
-		if body.count == 0
-			return out
-
-		# create closure etc
-		# again, we should really use the included system
-		# FIXME should consolidate the way we generate all code - this
-		# is going down a route of more direct conversion, which is less
-		# flexible.
-
-		# WARN should fix
-		body.@indentation = null
-
-		out = "var tag = {out};"
-		# scope.context.value = Const.new('tag')
-		out += "\n{body.c}"
-
-		return '(function()' + helpers.bracketize(out,yes) + ')()'
 
 export class Func < Code
 
@@ -5258,9 +5231,13 @@ export class Tag < Node
 		@options:type || :div
 
 	def consume node
+		var o = @options
+
+
 		if node isa TagTree
 			# p "tag consume tagtree? {node.reactive}"
 			parent = node.root
+			# o:treeRef = node.nextCacheKey
 
 			if node.@loop
 				reactive = !!option(:key)
@@ -5272,8 +5249,9 @@ export class Tag < Node
 				reactive = node.reactive or !!option(:ivar)
 			
 			return self
-		else
-			super
+
+		super
+
 
 	def visit
 
@@ -5283,9 +5261,12 @@ export class Tag < Node
 			reactive = yes
 
 		var typ = enclosing
+
+		# look for outer tag here?
+
 		if typ == '->' or typ == '=>'
 			# console.log "tag is template?!? {typ}"
-			@tree = TagTree.new(o:body, root: self, reactive: reactive)
+			@tree = TagTree.new(self,o:body, root: self, reactive: reactive)
 			o:body = TagFragmentFunc.new([],Block.wrap([@tree]))
 			# console.log "made o body a function?"
 
@@ -5344,6 +5325,8 @@ export class Tag < Node
 		var quote = do |str| helpers.singlequote(str)
 		var id = o:id isa Node ? o:id.c : (o:id and quote(o:id.c))
 		var tree = @tree or null
+		var parent = self.parent
+		# var parTree = parent and parent.tree
 
 
 		#  "scope is", !!scope
@@ -5369,20 +5352,20 @@ export class Tag < Node
 		if o:body isa Func
 			# console.log "o:body isa function!"
 			bodySetter = "setTemplate"
+
 		elif o:body
 			if o:body isa ArgList and o:body.count == 1 and o:body.first.isString
 				bodySetter = "setText"
 
-				# find out if it is an interpolated string
-				# if single isa Str or single isa Op
-				# p "body isa tsring? {o:body}"
 			else
-			# would probably be better to convert to a tagtree during the initial visit
-				tree = TagTree.new(o:body, root: self, reactive: reactive)
+				# would probably be better to convert to a tagtree during the initial visit
+				tree = TagTree.new(self, o:body, root: self, reactive: reactive)
 				content = tree
 				self.tree = tree
 
 		if tree
+			# this is the point where we traverse the inner nodes with our tree
+			# should rather happen in visit - long before.
 			tree.resolve
 
 		for part in @parts
@@ -5411,6 +5394,8 @@ export class Tag < Node
 		if reactive and tree and tree.hasTags
 			reference
 
+		if reactive and parent and parent.tree
+			o:treeRef = parent.tree.nextCacheKey(self)
 	
 		if var body = content and content.c(expression: yes) # force it to be an expression, no?
 			calls.push ".{bodySetter}({body})"
@@ -5429,8 +5414,7 @@ export class Tag < Node
 			# if this is an ivar, we should set the reference relative
 			# to the outer reference, or possibly right on context?
 			var ctx, key
-			var par = parent
-			var tree = par and par.tree
+			var partree = parent and parent.tree
 			# ctx = !o:ivar and par and par.reference or scope.context
 			# key = o:ivar or tree and tree.nextCacheKey
 
@@ -5438,7 +5422,7 @@ export class Tag < Node
 				# closest tag
 				# TODO if the dynamic key starts with a static string we should
 				# just prepend _ to the string instead of wrapping in OP
-				ctx = par and par.reference
+				ctx = parent and parent.reference
 				key = OP('+',Str.new("'_'"),o:key)
 
 			elif o:ivar
@@ -5446,8 +5430,10 @@ export class Tag < Node
 				key = o:ivar
 
 			else
-				ctx = par and par.reference
-				key = tree and tree.nextCacheKey
+				ctx = parent and parent.reference
+				# ctx = partree.cacher
+				key = o:treeRef or partree and partree.nextCacheKey
+				# key = tree and tree.nextCacheKey
 
 
 			# need the context -- might be better to rewrite it for real?
@@ -5478,8 +5464,10 @@ export class TagTree < ListNode
 	prop counter
 	prop conditions
 	prop blocks
+	prop cacher
 
-	def initialize list, options = {}
+	def initialize owner, list, options = {}
+		@owner = owner
 		@nodes = load(list)
 		@options = options
 		@conditions = []
@@ -5487,8 +5475,37 @@ export class TagTree < ListNode
 		@counter = 0
 		self
 
+	def parent
+		@parent ||= @owner.parent
+
+	# def cacher
+	# 	@cacher ||= if true
+	# 		if parent and parent.tree
+	# 			parent.tree.cacher
+	# 		else
+	# 			@owner.reference
+
 	def nextCacheKey
-		@counter++
+		var root = @owner
+		
+		# if parent and parent.tree # parent tree?
+		# 	return parent.tree.nextCacheKey
+
+
+		# if we want to cache everything on root
+		var num = ++@counter
+		var base = "A".charCodeAt(0)
+		var str = ""
+
+		while true
+			num -= 1
+			str = String.fromCharCode(base + (num % 26)) + str
+			num = Math.floor(num / 26)
+			break unless num > 0
+
+		str = (@owner.type isa Self ? "$" : "$$") + str.toLowerCase
+		return str
+		return num
 
 	def load list
 		if list isa ListNode

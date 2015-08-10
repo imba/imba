@@ -384,7 +384,6 @@ export class Lexer
 		# console.log "code is {code}"
 		# if true # !o:inline
 		if WHITESPACE.test(code)
-			console.log "is empty?"
 			code = "\n{code}"
 			return [] if code.match(/^\s*$/g)
 
