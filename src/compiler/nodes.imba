@@ -2091,6 +2091,7 @@ export class MethodDeclaration < Func
 			self.type = :constructor
 
 		if option(:greedy)
+			warn "deprecated"
 			# set(greedy: true)
 			# p "BODY EXPRESSIONS!! This is a fragment"
 			var tree = TagTree.new
@@ -2106,18 +2107,17 @@ export class MethodDeclaration < Func
 			set(static: yes)
 
 		if context isa ClassScope
+			@target ||= context.context
 			# register as class-method?
 			# should register for this
 			# console.log "context is classscope {@name}"
-			yes
 
-		elif !@target
+		if !@target
+			# should not be registered on the outermost closure?
 			@variable = context.register(name, self, type: 'meth')
-		@target ||= @scope.parent.context
 
 		@body.traverse # so soon?
 
-		# p "method target {@target} {@context}"
 		self
 
 	def supername
@@ -3013,11 +3013,7 @@ export class Access < Op
 
 		# really?
 		# var ctx = (left || scope__.context)
-		var out = if ctx isa RootScopeContext
-			# this is a hacky workaround
-			(raw ? raw : "global[{rgt.c}]")
-
-		elif raw
+		var out = if raw
 			# see if it needs quoting
 			# need to check to see if it is legal
 			ctx ? "{ctx.c}.{raw}" : raw
@@ -6840,13 +6836,13 @@ export class ScopeContext < Node
 
 export class RootScopeContext < ScopeContext
 
-	def reference scope
-		self
+	# def reference scope
+	# 	self
 
 	def c o
-		return "" if o and o:explicit
+		# return "" if o and o:explicit
 		var val = @value || @reference
-		return val ? val.c : "this"
+		return (val and val != this) ? val.c : "this"
 		# should be the other way around, no?
 		# o and o:explicit ? super : ""
 		
