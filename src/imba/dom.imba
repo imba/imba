@@ -1,14 +1,13 @@
 
 extern window
-var svg-support = yes
-
-# dont check for global in browser
-if var doc = global:document
-	Imba:doc = doc
-	svg-support = doc:createElementNS && doc.createElementNS('http://www.w3.org/2000/svg', "svg")[:createSVGRect]
 
 def Imba.document
-	window:document
+	if @document or typeof window == 'undefined'
+		@document ||= ImbaServerDocument.new
+	else
+		window:document
+
+var svgSupport = Imba.document:createElementNS && Imba.document.createElementNS('http://www.w3.org/2000/svg', "svg")[:createSVGRect]
 
 # This is VERY experimental. Using Imba for serverside templates
 # is not recommended unless you're ready for a rough ride. It is
@@ -137,7 +136,7 @@ class ElementTag
 		self
 
 	# selectors / traversal
-	def find sel do ImbaSelector.new(sel,self)
+	def find sel do Imba.Selector.new(sel,self)
 
 	def first sel
 		sel ? find(sel).first : tag(dom:firstElementChild)
@@ -149,7 +148,7 @@ class ElementTag
 		tag(dom:children[i or 0])
 
 	def children sel
-		var nodes = ImbaSelector.new(null, self, @dom:children)
+		var nodes = Imba.Selector.new(null, self, @dom:children)
 		sel ? nodes.filter(sel) : nodes
 	
 	def orphanize
@@ -195,7 +194,7 @@ class ElementTag
 	def siblings sel
 		return [] unless var par = parent # FIXME
 		var ary = dom:parentNode:children
-		var nodes = ImbaSelector.new(null, self, ary)
+		var nodes = Imba.Selector.new(null, self, ary)
 		nodes.filter(|n| n != self && (!sel || n.matches(sel)))
 
 	def next sel
@@ -297,7 +296,7 @@ class ElementTag
 			member && append(member) for member in item
 
 		elif item isa String or item isa Number
-			var node = Imba:doc.createTextNode(item)
+			var node = Imba.document.createTextNode(item)
 			@dom.appendChild(node)
 			@empty = no if @empty			
 		else
@@ -311,13 +310,12 @@ class ElementTag
 
 	def self.flag flag
 		# should redirect to the prototype with a dom-node already set?
-		var dom = self.dom
 		dom:classList.add(flag)
 		# dom:className += " " + flag
 		self
 
 	def self.unflag flag
-		self.dom:classList.remove(flag)
+		dom:classList.remove(flag)
 		self		
 
 	def classes
@@ -358,10 +356,10 @@ class HTMLElementTag < ElementTag
 
 		# should clone the parent no?
 		if @isNative
-			dom = Imba:doc.createElement(@nodeType)
+			dom = Imba.document.createElement(@nodeType)
 		elif @nodeType != sup.@nodeType
 			console.log "custom dom type(!)"
-			dom = Imba:doc.createElement(@nodeType)
+			dom = Imba.document.createElement(@nodeType)
 			dom.setAttribute(atr:name,atr:value) for atr in sup.dom	
 			# dom:className = sup.dom:className
 			# what about default attributes?
@@ -541,7 +539,7 @@ def Imba.getTagSingleton id
 
 		return type.Instance if type and type.Instance 
 		# no instance - check for element
-		if dom = Imba:doc.getElementById(id)
+		if dom = Imba.document.getElementById(id)
 			# we have a live instance - when finding it through a selector we should awake it, no?
 			# console.log('creating the singleton from existing node in dom?',id,type)
 			node = type.Instance = type.new(dom)
@@ -554,7 +552,7 @@ def Imba.getTagSingleton id
 		node = type.Instance = type.new(dom)
 		node.end.awake
 		return node
-	elif dom = Imba:doc.getElementById(id)
+	elif dom = Imba.document.getElementById(id)
 		# console.log('found plain element with id')
 		return Imba.getTagForDom(dom)
 
@@ -580,7 +578,7 @@ def Imba.getTagForDom dom
 	# look for id - singleton
 
 	# need better test here
-	if svg-support and dom isa SVGElement
+	if svgSupport and dom isa SVGElement
 		ns = "svg" 
 		cls = dom:className:baseVal
 

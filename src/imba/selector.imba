@@ -1,11 +1,11 @@
 
-global class ImbaSelector
+class Imba.Selector
 	
 	prop query
 
 	def initialize sel, scope, nodes
 
-		@query = sel isa ImbaSelector ? sel.query : sel
+		@query = sel isa Imba.Selector ? sel.query : sel
 		@context = scope
 
 		if nodes
@@ -20,7 +20,7 @@ global class ImbaSelector
 
 	def scope
 		return @scope if @scope
-		return global:document unless var ctx = @context
+		return Imba.document unless var ctx = @context
 		@scope = ctx:toScope ? ctx.toScope : ctx
 
 	def first
@@ -88,12 +88,12 @@ global class ImbaSelector
 
 	# TODO IMPLEMENT
 	def __union
-		p "called ImbaSelector.__union"
+		p "called Imba.Selector.__union"
 		self
 
 	# TODO IMPLEMENT
 	def __intersect
-		p "called ImbaSelector.__union"
+		p "called Imba.Selector.__union"
 		self
 
 	def reject blk
@@ -104,7 +104,7 @@ global class ImbaSelector
 		var ary = nodes.filter(|n| fn(n) == bool)
 		# if we want to return a new selector for this, we should do that for
 		# others as well
-		ImbaSelector.new("", @scope, ary)
+		Imba.Selector.new("", @scope, ary)
 
 	def __query__ query, contexts
 		var nodes = []
@@ -128,10 +128,10 @@ global class ImbaSelector
 	def call meth, args = []
 		forEach do |n| fn.apply(n,args) if fn = n[meth]
 
-q$ = do |sel,scope| ImbaSelector.new(sel, scope)
+q$ = do |sel,scope| Imba.Selector.new(sel, scope)
 
 q$$ = do |sel,scope| 
-	var el = (scope || global:document).querySelector(sel)
+	var el = (scope || Imba.document).querySelector(sel)
 	el && tag(el) || nil
 
 # extending tags with query-methods
@@ -139,5 +139,5 @@ q$$ = do |sel,scope|
 extend tag element
 	def querySelectorAll q do @dom.querySelectorAll q
 	def querySelector q do @dom.querySelector q
-	def find sel do ImbaSelector.new(sel,self)
+	def find sel do Imba.Selector.new(sel,self)
 

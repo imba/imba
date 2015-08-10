@@ -1,3 +1,6 @@
+
+
+
 # could create a fake document 
 global class ImbaServerDocument
 
@@ -9,7 +12,6 @@ global class ImbaServerDocument
 
 	def createTextNode value
 		return value
-
 
 # could optimize by using a dictionary in addition to keys
 # where we cache the indexes?
@@ -182,5 +184,4 @@ extend tag style
 	def toString
 		"<style/>"
 
-Imba:doc = global:document || ImbaServerDocument.new
-global:document ||= Imba:doc
+global:document ||= Imba.document

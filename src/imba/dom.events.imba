@@ -1,9 +1,9 @@
 
-extern window, document
+extern window, document, parseInt
 
 
-var doc = global:document
-var win = global:window
+var doc = document
+var win = window
 
 var hasTouchEvents = win && win:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
 
@@ -504,7 +504,7 @@ class Imba.Event
 			# p 'keysym!',ki,sym
 
 			if !sym and ki.substr(0,2) == "U+"
-				sym = String.fromCharCode(global.parseInt(ki.substr(2), 16))
+				sym = String.fromCharCode(parseInt(ki.substr(2), 16))
 			return sym
 
 		return nil

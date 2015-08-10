@@ -66,7 +66,7 @@ extend tag htmlelement
 				# TODO: assert that `child` is a tag in development
 				insertDomNode(child.@dom)
 		elif node isa String or node isa Number
-			var domNode = Imba:doc.createTextNode(item)
+			var domNode = Imba.document.createTextNode(item)
 			insertDomNode(domNode, tail)
 		elif node and node.@dom
 			insertDomNode(node.@dom, tail)
@@ -197,7 +197,7 @@ extend tag htmlelement
 		for node in prevNodes
 			tail = removeNode(node, tail)
 
-		var frag = Imba:doc.createDocumentFragment
+		var frag = Imba.document.createDocumentFragment
 		frag:appendChild(node.@dom) for node in nodes
 
 		return insertDomNode(frag, tail)
