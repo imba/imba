@@ -5,9 +5,9 @@ require './core.events'
 require './dom'
 
 if typeof window === 'undefined'
-	require './dom.server' # hmm -- dont require events?
+	require './dom.server'
 else
 	require './dom.events'
-	require './dom.virtual'
+	require './dom.static'
 
 require './selector'
