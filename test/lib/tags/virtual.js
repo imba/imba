@@ -43,16 +43,21 @@
 			// log "setStaticChildren",nodes,expected
 			tag.__super__.setStaticChildren.call(this,nodes);
 			
-			for (var i=0, ary=iter$(this._dom.childNodes), len=ary.length, child; i < len; i++) {
+			for (var i=0, ary=iter$(this._dom.children), len=ary.length, child; i < len; i++) {
+				// how would this work on server?
+				// if child isa Text
+				// 	actual.push( child:textContent )
+				// 	continue if child:textContent == expected[i]
+				
 				child = ary[i];
-				var el = tag$wrap(child);
+				var el = child instanceof Text ? (child.textContent) : (tag$wrap(child));
 				if (el != this.expected()[i]) {
 					this._errors || (this._errors = []);
 					// log "not the same as expected at i",child,expected[i].@dom
 					this._errors.push([el,this.expected()[i],i]);
 				};
 				
-				this.actual().push(tag$wrap(child));
+				this.actual().push(el);
 			};
 			// log actual
 			eq(this._errors,null);
@@ -84,6 +89,10 @@
 			return this.render();
 		};
 		
+		tag.prototype.name = function (){
+			return "test";
+		};
+		
 		tag.prototype.render = function (pars){
 			// no need for nested stuff here - we're testing setStaticChildren
 			// if it works on the flat level it should work everywhere
@@ -94,8 +103,10 @@
 			var d = pars.d !== undefined ? pars.d : false;
 			var e = pars.e !== undefined ? pars.e : false;
 			var list = pars.list !== undefined ? pars.list : null;
+			var str = pars.str !== undefined ? pars.str : null;
 			return this.setStaticChildren([
-				(this[0] = this[0] || t$('el')).flag('a').setText("top").end(),
+				(this[0] = this[0] || t$('el')).flag('a').setStaticContent([this.name()]).end(),
+				str,
 				(this[1] = this[1] || t$('el')).flag('b').setText("ok").end(),
 				(a) && ([
 					3,(this[2] = this[2] || t$('el')).flag('header').end(),
@@ -158,6 +169,10 @@
 		var group = t$('group').end();
 		document.body.appendChild(group.dom());
 		
+		// test "first render with string" do
+		// 	group.render str: "Hello"
+		// 	eq group.opstr, "AAAAA"
+		
 		test("first render",function() {
 			group.render();
 			return eq(group.opstr(),"AAAA");
@@ -178,6 +193,21 @@
 			group.render({c: false});
 			return eq(group.opstr(),"RR");
 		});
+		
+		test("with string",function() {
+			group.render({str: "Hello there"});
+			eq(group.opstr(),"I");
+			
+			// changing the string only - should not be any
+			// dom operations on the parent
+			group.render({str: "Changed string"});
+			eq(group.opstr(),"");
+			
+			// removing string, expect a single removeChild
+			group.render({str: null});
+			return eq(group.opstr(),"R");
+		});
+		
 		
 		return describe("dynamic lists",function() {
 			// render once without anything to reset
@@ -209,8 +239,8 @@
 				
 				// reordering two elements
 				group.render({list: full});
-				group.render({list: [c,d,e,f,a,b]});
-				return eq(group.opstr(),"II");
+				group.render({list: [c,d,e,f,a,b],str: "Added string again as well"});
+				return eq(group.opstr(),"III");
 			});
 		});
 	});

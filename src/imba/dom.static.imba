@@ -6,8 +6,10 @@ def removeNested root, node, caret
 	# 	for now we will simply not support this
 	if node isa Array
 		removeNested(root,member,caret) for member in node
+
 	elif node isa Number
 		no # noop now -- will be used in 
+
 	elif node
 		root.removeChild(node)
 
@@ -15,11 +17,19 @@ def removeNested root, node, caret
 
 def appendNested root, node
 	if node isa Array
-		appendNested(root,member) for member in node
+		for member,i in node
+			appendNested(root,member)
+
 	elif node isa Number
 		no
+
+	elif node isa String
+		console.log "String in appendNested"
+		root.appendChild Imba.document.createTextNode(node)
+
 	elif node
 		root.appendChild(node)
+
 	return
 
 # insert nodes before a certain node
@@ -27,6 +37,9 @@ def appendNested root, node
 # will still be correct there
 # before must be an actual domnode
 def insertNestedBefore root, node, before
+
+	if node isa String
+		node = Imba.document.createTextNode(node)
 
 	if node isa Array
 		insertNestedBefore(root,member,before) for member in node
@@ -227,7 +240,7 @@ def reconcileCollection root, new, old, caret
 
 # the general reconciler that respects conditions etc
 # caret is the current node we want to insert things after
-def reconcileNested root, new, old, caret
+def reconcileNested root, new, old, caret, container, ci
 	if new === old
 		# will call reconcile directly for every node
 		# cant be very efficient?
@@ -262,7 +275,7 @@ def reconcileNested root, new, old, caret
 				# console.log "same block!"
 				let i = 0
 				while ++i < newLen
-					caret = reconcileNested(root,new[i],old[i],caret)
+					caret = reconcileNested(root,new[i],old[i],caret,new,i)
 				# console.log "return caret",caret
 				return caret
 			else
@@ -275,8 +288,33 @@ def reconcileNested root, new, old, caret
 			caret = reconcileCollection(root,new,old,caret)
 			return caret
 
+	elif new isa String
+		let textNode
+
+		if old isa Text
+			old:textContent = new
+			textNode = old
+		else
+			removeNested(root,old,caret) if old
+			textNode = Imba.document.createTextNode(new)
+			insertNestedAfter(root,textNode,caret)
+			# insert the text node now
+			# root.insertBefore(textNode,caret ? caret:nextSibling : root.@dom:firstChild)
+
+		# swap the text with textNode in container
+		return container[ci] = caret = textNode
+
+		# the other one will now either be a textnode or null
+		# if it is a textnode - merely replace the text - copy the node
+		# if typeof old === 'string'
+		# 	console.log "found string here -- trust at the next element after caret is"
+		# 	let textNode = (caret or root.@dom:firstChild)
+		# 	textNode:textContent = new
+
+
 
 	# simply remove the previous one and add the new one
+	# will these ever be arrays?
 	removeNested(root,old,caret) if old
 	caret = insertNestedAfter(root,new,caret) if new
 	return caret
@@ -286,7 +324,7 @@ def reconcileNested root, new, old, caret
 extend tag htmlelement
 
 	def setStaticChildren new
-		var old = @staticChildren
+		var old = @staticChildren or []
 		var caret = null
 
 		if !old
@@ -297,7 +335,7 @@ extend tag htmlelement
 			if node === old[i]
 				caret = node.@dom if node and node.@dom
 			else
-				caret = reconcileNested(self,node,old[i],caret)
+				caret = reconcileNested(self,node,old[i],caret,new,i)
 
 		@staticChildren = new
 		return self
@@ -306,14 +344,19 @@ extend tag htmlelement
 		# if node isa String
 		# 	log "insertBefore WITH STRING!! - not allowed now"
 		# supports both plain dom nodes and imba nodes
+		# if typeof node == 'string'
+		#	log "converted to string"
+		node = Imba.document.createTextNode(node) if node isa String 
 		dom.insertBefore( (node.@dom or node), (rel.@dom or rel) ) if node and rel
 		self
 
 	def appendChild node
+		node = Imba.document.createTextNode(node) if node isa String
 		dom.appendChild(node.@dom or node) if node
 		self
 
 	def removeChild node
+		# cannot remove a string
 		dom.removeChild(node.@dom or node) if node
 		self
 

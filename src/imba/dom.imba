@@ -1,9 +1,14 @@
 
+extern window
 var svg-support = yes
 
+# dont check for global in browser
 if var doc = global:document
 	Imba:doc = doc
 	svg-support = doc:createElementNS && doc.createElementNS('http://www.w3.org/2000/svg', "svg")[:createSVGRect]
+
+def Imba.document
+	window:document
 
 # This is VERY experimental. Using Imba for serverside templates
 # is not recommended unless you're ready for a rough ride. It is

@@ -25,14 +25,19 @@ tag group
 		# log "setStaticChildren",nodes,expected
 		super(nodes)
 
-		for child,i in @dom:childNodes
-			var el = tag(child)
+		for child,i in @dom:children
+			# how would this work on server?
+			# if child isa Text
+			# 	actual.push( child:textContent )
+			# 	continue if child:textContent == expected[i]
+
+			var el = child isa Text ? child:textContent : tag(child)
 			if el != expected[i]
 				@errors ||= []
 				# log "not the same as expected at i",child,expected[i].@dom
 				@errors.push([el,expected[i],i])
 
-			actual.push( tag(child) )
+			actual.push( el )
 		# log actual
 		eq @errors, null
 		return self
@@ -58,11 +63,15 @@ tag group
 	def reset
 		render
 
-	def render a: no, b: no, c: no, d: no, e: no, list: null
+	def name
+		"test"
+
+	def render a: no, b: no, c: no, d: no, e: no, list: null, str: null
 		# no need for nested stuff here - we're testing setStaticChildren
 		# if it works on the flat level it should work everywhere
 		<self>
-			<el.a> "top"
+			<el.a> name
+			str
 			<el.b> "ok"
 			if a
 				<el.header>
@@ -111,6 +120,10 @@ describe "Tags" do
 	var group = <group>
 	document:body.appendChild(group.dom)
 
+	# test "first render with string" do
+	# 	group.render str: "Hello"
+	# 	eq group.opstr, "AAAAA"
+
 	test "first render" do
 		group.render
 		eq group.opstr, "AAAA"
@@ -127,6 +140,20 @@ describe "Tags" do
 	test "remove again" do
 		group.render c: no
 		eq group.opstr, "RR"
+
+	test "with string" do
+		group.render str: "Hello there"
+		eq group.opstr, "I"
+
+		# changing the string only - should not be any
+		# dom operations on the parent
+		group.render str: "Changed string"
+		eq group.opstr, ""
+
+		# removing string, expect a single removeChild
+		group.render str: null
+		eq group.opstr, "R"
+		
 
 	describe "dynamic lists" do
 		# render once without anything to reset
@@ -156,8 +183,8 @@ describe "Tags" do
 
 			# reordering two elements
 			group.render list: full
-			group.render list: [c,d,e,f,a,b]
-			eq group.opstr, "II"
+			group.render list: [c,d,e,f,a,b], str: "Added string again as well"
+			eq group.opstr, "III"
 
 
 
