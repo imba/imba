@@ -218,6 +218,7 @@ export class Highlighter
 				# content = marked(content)
 
 			if typ == 'string'
+				cls.push('pathname') if content.match(/^['"]?\.?\.\//)
 				content = content.replace(/(^['"]|['"]$)/g) do |m| '<s>' + m + '</s>'
 
 			res += "<{node} class='{cls.join(" ")}'>" + content + "</{node}>"
