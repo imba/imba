@@ -5276,7 +5276,12 @@ export class Tag < Node
 			super
 
 	def visit
+
 		var o = @options
+
+		if o:ivar or o:key
+			reactive = yes
+
 		var typ = enclosing
 		if typ == '->' or typ == '=>'
 			# console.log "tag is template?!? {typ}"

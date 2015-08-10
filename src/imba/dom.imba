@@ -1,13 +1,12 @@
 
-extern window
+extern window, SVGElement
+
+var svgSupport = typeof SVGElement !== 'undefined'
 
 def Imba.document
-	if @document or typeof window == 'undefined'
-		@document ||= ImbaServerDocument.new
-	else
-		window:document
+	window:document
 
-var svgSupport = Imba.document:createElementNS && Imba.document.createElementNS('http://www.w3.org/2000/svg', "svg")[:createSVGRect]
+# Imba.document:createElementNS && Imba.document.createElementNS('http://www.w3.org/2000/svg', "svg")[:createSVGRect]
 
 # This is VERY experimental. Using Imba for serverside templates
 # is not recommended unless you're ready for a rough ride. It is
@@ -614,7 +613,7 @@ extend tag htmlelement
 tag fragment < htmlelement
 	
 	def self.createNode
-		global:document.createDocumentFragment
+		Imba.document.createDocumentFragment
 
 tag a
 	prop href dom: yes

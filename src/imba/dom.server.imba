@@ -13,6 +13,9 @@ global class ImbaServerDocument
 	def createTextNode value
 		return value
 
+def Imba.document
+	@document ||= ImbaServerDocument.new
+
 # could optimize by using a dictionary in addition to keys
 # where we cache the indexes?
 global class ImbaNodeClassList
