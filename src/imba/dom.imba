@@ -65,10 +65,12 @@ class ElementTag
 		@object
 
 	def body v
+		console.warn "tag#body is deprecated"
 		return (body = v,self) if arguments:length
 		return self
 
 	def body= body
+		console.warn "tag#setBody is deprecated"
 		@empty ? append(body) : empty.append(body)
 		self
 
@@ -78,15 +80,7 @@ class ElementTag
 
 	def children= nodes
 		@empty ? append(nodes) : empty.append(nodes)
-		@staticChildren = null
-		self
-
-	def staticContent= nodes
-		staticChildren = nodes
-		self
-
-	def staticChildren= nodes
-		children = nodes
+		@children = null
 		self
 
 	def text v
@@ -100,6 +94,7 @@ class ElementTag
 
 	def empty
 		@dom.removeChild(@dom:firstChild) while @dom:firstChild
+		@children = null
 		@empty = yes
 		self
 
@@ -309,6 +304,21 @@ class ElementTag
 
 		return self
 
+
+	def insertBefore node, rel
+		node = Imba.document.createTextNode(node) if node isa String 
+		dom.insertBefore( (node.@dom or node), (rel.@dom or rel) ) if node and rel
+		self
+
+	def appendChild node
+		node = Imba.document.createTextNode(node) if node isa String
+		dom.appendChild(node.@dom or node) if node
+		self
+
+	def removeChild node
+		dom.removeChild(node.@dom or node) if node
+		self
+
 	def toString
 		@dom.toString # really?
 
@@ -428,7 +438,6 @@ def Imba.defineTag name, supr = '', &body
 
 	# should drop this in production / optimized mode, but for debug
 	# we create a constructor with a recognizeable name
-
 	var fun = Function.new("return function {name.replace(/\s\-\:/g,'_')}(dom)\{ this.setDom(dom); \}")
 	var Tag = fun()
 	# var Tag = do |dom|
@@ -479,13 +488,15 @@ def Imba.defineTag name, supr = '', &body
 def Imba.defineSingletonTag id, supr = '', &body
 
 	var superklass = Imba.TAGS[supr || 'div']
-	# do we really want a class for singletons?
-	# var klass = imba$class(func,superklass)
-	# var ctor = (Function.new("return function " + name + "(){ alert('sweet!')}")()
 
-	var singleton = do |dom|
-		this.setDom(dom)
-		this
+	# should drop this in production / optimized mode, but for debug
+	# we create a constructor with a recognizeable name
+	var fun = Function.new("return function {id.substr(1).replace(/\s\-\:/g,'_')}(dom)\{ this.setDom(dom); \}")
+	var singleton = fun()
+
+	# var singleton = do |dom|
+	# 	this.setDom(dom)
+	# 	this
 
 	var klass = extender(singleton,superklass)
 

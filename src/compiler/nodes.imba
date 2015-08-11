@@ -5342,12 +5342,12 @@ export class Tag < Node
 		var content = o:body
 
 		var isSelf = type isa Self
-		var bodySetter = "setChildren"
+		var bodySetter = isSelf ? "setChildren" : "setContent"
 
-		if isSelf
-			bodySetter = "setStaticChildren"
-		elif reactive
-			bodySetter = "setStaticContent"
+		# if isSelf
+		# 	bodySetter = "setStaticChildren"
+		# elif reactive
+		# 	bodySetter = "setStaticContent"
 
 		# isSelf ? "setStaticChildren" : "setStaticContent"
 
@@ -5503,7 +5503,7 @@ export class TagTree < ListNode
 		@nodes = load(list)
 		@options = options
 		@conditions = []
-		@blocks = []
+		@blocks = [self]
 		@counter = 0
 		self
 
@@ -5569,7 +5569,12 @@ export class TagTree < ListNode
 		# FIXME TEST what about comments???
 		var single = count == 1
 		var out = super(o)
-		out = "[" + out + "]" # unless single
+
+		if reactive or @owner.reactive
+			out = "Imba.static([{out}],1)"
+		else
+			out = "[" + out + "]" # unless single
+
 		return out
 
 export class TagWrapper < ValueNode

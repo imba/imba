@@ -141,7 +141,7 @@ def reconcileFull root, new, old, caret
 
 # expects a flat non-sparse array of nodes in both new and old, always
 def reconcileCollection root, new, old, caret
-	
+
 	var newLen = new:length
 	var oldLen = old:length
 
@@ -267,21 +267,9 @@ def reconcileNested root, new, old, caret, container, ci
 			removeNested(root,old,caret) if old
 			textNode = Imba.document.createTextNode(new)
 			insertNestedAfter(root,textNode,caret)
-			# insert the text node now
-			# root.insertBefore(textNode,caret ? caret:nextSibling : root.@dom:firstChild)
 
 		# swap the text with textNode in container
 		return container[ci] = caret = textNode
-
-		# the other one will now either be a textnode or null
-		# if it is a textnode - merely replace the text - copy the node
-		# if typeof old === 'string'
-		# 	console.log "found string here -- trust at the next element after caret is"
-		# 	let textNode = (caret or root.@dom:firstChild)
-		# 	textNode:textContent = new
-
-
-
 	# simply remove the previous one and add the new one
 	# will these ever be arrays?
 	removeNested(root,old,caret) if old
@@ -292,13 +280,28 @@ def reconcileNested root, new, old, caret, container, ci
 
 extend tag htmlelement
 
+		
+	def setChildren nodes
+		if nodes and nodes:static
+			setStaticChildren(nodes)
+		else
+			empty.append(nodes)
+			@children = nodes
+		return self
+
 	def setStaticChildren new
-		var old = @staticChildren or []
+
+		var old = @children or []
 		var caret = null
 
-		if !old
-			appendNested(self,@staticChildren = new)
-			return self
+		# common case that should bail out from staticChildren
+		if new:length == 1 and new[0] isa String
+			return text = new[0]
+
+		# must be array
+		if !old:length or !old:static
+			old = []
+			empty
 
 		for node,i in new
 			if node === old[i]
@@ -306,28 +309,8 @@ extend tag htmlelement
 			else
 				caret = reconcileNested(self,node,old[i],caret,new,i)
 
-		@staticChildren = new
+		@children = new
 		return self
-
-	def insertBefore node, rel
-		# if node isa String
-		# 	log "insertBefore WITH STRING!! - not allowed now"
-		# supports both plain dom nodes and imba nodes
-		# if typeof node == 'string'
-		#	log "converted to string"
-		node = Imba.document.createTextNode(node) if node isa String 
-		dom.insertBefore( (node.@dom or node), (rel.@dom or rel) ) if node and rel
-		self
-
-	def appendChild node
-		node = Imba.document.createTextNode(node) if node isa String
-		dom.appendChild(node.@dom or node) if node
-		self
-
-	def removeChild node
-		# cannot remove a string
-		dom.removeChild(node.@dom or node) if node
-		self
 
 	def content
 		@content or children.toArray

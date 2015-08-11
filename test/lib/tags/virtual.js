@@ -110,8 +110,8 @@
 			var list = pars.list !== undefined ? pars.list : null;
 			var str = pars.str !== undefined ? pars.str : null;
 			var list2 = pars.list2 !== undefined ? pars.list2 : null;
-			return this.setStaticChildren([
-				(this.$a = this.$a || t$('el')).flag('a').setStaticContent([this.name()]).end(),
+			return this.setChildren(Imba.static([
+				(this.$a = this.$a || t$('el')).flag('a').setContent(Imba.static([this.name()],1)).end(),
 				str,
 				(this.$b = this.$b || t$('el')).flag('b').setText("ok").end(),
 				(a) && (Imba.static([
@@ -121,31 +121,31 @@
 					b ? (Imba.static([
 						(this.$f = this.$f || t$('el')).flag('long').end(),
 						(this.$g = this.$g || t$('el')).flag('long').end()
-					],1)) : (Imba.static([
+					],2)) : (Imba.static([
 						(this.$h = this.$h || t$('el')).flag('short').end(),
 						(this.$i = this.$i || t$('el')).flag('short').end(),
 						(this.$j = this.$j || t$('el')).flag('short').end()
-					],2)),
+					],3)),
 					(this.$k = this.$k || t$('el')).flag('ruler').end()
-				],3)),
+				],4)),
 				(c) && (Imba.static([
 					(this.$l = this.$l || t$('div')).flag('c1').setText("long").end(),
 					(this.$m = this.$m || t$('div')).flag('c2').setText("loong").end()
-				],4)),
+				],5)),
 				d && e ? (Imba.static([
 					(this.$n = this.$n || t$('el')).flag('long').end(),
 					(this.$o = this.$o || t$('el')).flag('footer').end(),
 					(this.$p = this.$p || t$('el')).flag('bottom').end()
-				],5)) : (e ? (Imba.static([
+				],6)) : (e ? (Imba.static([
 					(this.$q = this.$q || t$('el')).flag('footer').end(),
 					(this.$r = this.$r || t$('el')).flag('bottom').end()
-				],6)) : (
+				],7)) : (
 					(this.$s = this.$s || t$('el')).setText("!d and !e").end()
 				)),
 				list,
 				(this.$t = this.$t || t$('el')).flag('x').setText("very last").end(),
 				list2
-			]).synced();
+			],1)).synced();
 		};
 	});
 	
@@ -154,12 +154,12 @@
 		
 		tag.prototype.render = function (){
 			var self=this;
-			return this.setStaticChildren([(function(self) {
+			return this.setChildren(Imba.static([(function(self) {
 				for (var i=0, ary=iter$(self.items()), len=ary.length, res=[]; i < len; i++) {
-					res.push(t$('li').setChildren([ary[i]]).end());
+					res.push(t$('li').setContent([ary[i]]).end());
 				};
 				return res;
-			})(self)]).synced();
+			})(self)],1)).synced();
 		};
 	});
 	
