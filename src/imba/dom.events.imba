@@ -552,7 +552,7 @@ class Imba.Event
 
 	def x do event:x
 	def y do event:y
-
+	def which do event:which
 
 class Imba.EventManager
 
@@ -646,13 +646,12 @@ class Imba.EventManager
 		self
 		
 
-
-ED = Imba.EventManager.new(document, events: [
-	:keydown,:keyup,:keypress,:textInput,:input,
-	:focusin,:focusout,:contextmenu,:submit,
-	:mousedown,:mouseup
+ED = Imba.Events = Imba.EventManager.new(document, events: [
+	:keydown,:keyup,:keypress,:textInput,:input,:change,:submit,
+	:focusin,:focusout,:blur,:contextmenu,
+	:mousedown,:mouseup,
+	:dblclick
 ])
-
 
 if hasTouchEvents
 	ED.listen(:touchstart) do |e| Imba.Touch.ontouchstart(e)
@@ -662,8 +661,7 @@ if hasTouchEvents
 
 else
 	ED.listen(:click) do |e|
-		# console.log('onclick',e)
-		ED.trigger('tap',e:target)
+		ED.trigger('tap',e:target) # no
 
 	ED.listen(:mousedown) do |e|
 		Imba.POINTER.update(e).process if Imba.POINTER
@@ -673,3 +671,6 @@ else
 
 	ED.listen(:mouseup) do |e|
 		Imba.POINTER.update(e).process if Imba.POINTER
+
+# enable immediately by default
+Imba.Events.enabled = yes

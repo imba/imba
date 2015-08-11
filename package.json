@@ -21,7 +21,7 @@
   },
   "directories": {},
   "main": "./index.js",
-  "browser": "./lib/browser/imba.js",
+  "browser": "./lib/imba/browser.js",
   "bin": {
     "imba": "./bin/imba"
   },

@@ -44,16 +44,21 @@ class ElementTag
 		self["on" + name] = v
 		self
 
-	def setAttribute key, v
-		v != null && v !== false ? dom.setAttribute(key,v) : removeAttribute(key)
-		return v # non-obvious that we need to return the value here, no?
+	def setAttribute key, new
+		var old = dom.getAttribute(key)
+
+		if old == new
+			new
+		elif new != null && new !== false
+			dom.setAttribute(key,new)
+		else
+			dom.removeAttribute(key)
 
 	def removeAttribute key
 		dom.removeAttribute(key)
 
 	def getAttribute key
-		var val = dom.getAttribute(key)
-		return val
+		return dom.getAttribute(key)
 
 	def object v
 		return (object = v,self) if arguments:length
@@ -698,6 +703,13 @@ tag input
 
 	def value= v
 		dom:value = v
+		self
+
+	def checked
+		dom:checked
+
+	def checked= bool
+		dom:checked = bool
 		self
 
 tag ins
