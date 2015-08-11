@@ -30,6 +30,8 @@ export class Highlighter
 
 		var str = @code
 		var pos = @tokens:length
+		var nextVarRef = 0
+		var varRefs = {}
 
 		var sections = []
 
@@ -202,7 +204,8 @@ export class Highlighter
 			if tok.@variable
 				# console.log "IS VARIABLEREF",tok.@value
 				cls.push('_lvar')
-				cls.push("ref-"+tok.@variable.@ref)
+				let ref = varRefs[tok.@variable.@ref] ||= nextVarRef++
+				cls.push("ref-"+ref)
 
 			if typ == 'herecomment'
 				addSection(res) # resetting
