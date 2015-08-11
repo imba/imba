@@ -4,6 +4,7 @@
 - `tag#render` is called by default from `tag#build`
 - Slightly improved error reporting when using `:` in control-flow (like python)
 - Massively improved algorithm for reconciling dom trees (rendering for-loops etc  will now be much more efficient) - contributed by @judofyr
+- Fixed issue when requiring imba through browserify
 
 ## 0.10.0 (2015-08-05)
 

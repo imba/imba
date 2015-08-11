@@ -24,7 +24,6 @@ def appendNested root, node
 		no
 
 	elif node isa String
-		console.log "String in appendNested"
 		root.appendChild Imba.document.createTextNode(node)
 
 	elif node
@@ -261,7 +260,10 @@ def reconcileNested root, new, old, caret, container, ci
 		let textNode
 
 		if old isa Text
-			old:textContent = new
+			# make sure not to trigger reflow in certain browsers
+			if old:textContent != new
+				old:textContent = new
+
 			textNode = old
 		else
 			removeNested(root,old,caret) if old
