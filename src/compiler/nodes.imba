@@ -488,6 +488,11 @@ export class Node
 
 
 	def indented a,b
+
+		if a isa Indentation
+			@indentation = a
+			return self
+
 		# this is a _BIG_ hack
 		if b isa Array
 			add(b[0])
@@ -813,13 +818,25 @@ export class ListNode < Node
 			str += delim if part and (!express or arg != last) and !(arg isa Meta)
 
 		return str
+
+	def indented a,b
+		if a isa Indentation
+			@indentation = a
+			return self
+
+		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
+		self
 		
 
 export class ArgList < ListNode
 
-	def indented a,b
-		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
-		self
+#	def indented a,b
+#		if a isa Indentation
+#			@indentation = a
+#			return self
+#
+#		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
+#		self
 
 # def hasSplat
 # 	@nodes.some do |v| v isa Splat
@@ -865,9 +882,9 @@ export class Block < ListNode
 	def block
 		self
 
-	def indented a,b
-		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
-		self
+	# def indented a,b
+	# 	@indentation ||= a and b ? Indentation.new(a,b) : INDENT
+	# 	self
 
 	def loc
 		# rather indents, no?
@@ -961,20 +978,36 @@ export class Block < ListNode
 		var rest = @nodes.splice(idx + 1)
 		return rest
 
+	def expressions
+		var expressions = []
+		for node in nodes
+			expressions.push(node) unless node isa Terminator
+		return expressions
+		
+
 	def consume node
 		if node isa TagTree # special case?!?
 			@nodes = @nodes.map do |child|
 				child.consume(node)
 
+			let real = expressions
 			# FIXME should not include terminators and comments when counting
 			# should only wrap the content in array (returning all parts)
 			# for if/else blocks -- not loops
-			if !node.@loop && @nodes:length > 1
-				@nodes.unshift(Num.new(node.blocks.push(self)))
-				@nodes = [Arr.new(ArgList.new( @nodes ))]
-				# @nodes = [Arr.new( ArgList.new( @nodes ))]
-				@nodes[0].value.@indentation = @indentation
+
+			# we need to compare the real length
+			if !node.@loop && real:length > 1
+				# p "lengths",@nodes:length,expressions:length
+				let nr = node.blocks.push(self)
+				var arr = Arr.new(ArgList.new( @nodes ))
+				arr.indented(@indentation)
 				@indentation = null
+
+				if node.reactive
+					@nodes = [Util.callImba("static",[arr,Num.new(nr)])]
+				else
+					@nodes = [arr]
+
 			
 		
 			return self
@@ -2577,7 +2610,10 @@ export class Arr < Literal
 
 	def toString
 		"Arr"
-		
+	
+	def indented a,b
+		@value.indented(a,b)
+		self
 
 	def self.wrap val
 		Arr.new(val)
@@ -5924,6 +5960,9 @@ export class Util < Node
 	# this is how we deal with it now
 	def self.extend a,b
 		Util.Extend.new([a,b])
+
+	def self.callImba meth, args
+		CALL(OP('.',Const.new("Imba"),Identifier.new(meth)),args)
 
 	def self.repeat str, times
 		var res = ''

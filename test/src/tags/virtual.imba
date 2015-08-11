@@ -86,6 +86,8 @@ tag group
 					<el.long>
 				else
 					<el.short>
+					<el.short>
+					<el.short>
 				<el.ruler>
 			if c
 				<div.c1> "long"
@@ -162,12 +164,19 @@ describe "Tags" do
 		group.render str: null
 		eq group.opstr, "R"
 
+	test "changing conditionals" do
+		group.render a: yes
+		eq group.opstr, "IIIIIII"
+
+		group.render a: yes, b: yes
+		eq group.opstr, "RRRII"
 
 	describe "dynamic lists" do
 		# render once without anything to reset
 		var full = [a,b,c,d,e,f]
 
 		test "last list" do
+			group.render
 			group.render list2: [h,i]
 			eq group.opstr, "AA"
 
@@ -210,7 +219,6 @@ describe "Tags" do
 			group.render list: full
 			group.render list: [c,d,e,f,a,b], str: "Added string again as well"
 			eq group.opstr, "III"
-
 
 
 

@@ -141,7 +141,7 @@ def reconcileFull root, new, old, caret
 
 # expects a flat non-sparse array of nodes in both new and old, always
 def reconcileCollection root, new, old, caret
-
+	
 	var newLen = new:length
 	var oldLen = old:length
 
@@ -237,52 +237,25 @@ def reconcileCollection root, new, old, caret
 # the general reconciler that respects conditions etc
 # caret is the current node we want to insert things after
 def reconcileNested root, new, old, caret, container, ci
-	if new === old
-		# will call reconcile directly for every node
-		# cant be very efficient?
-		# what if this is a number? can that happen?
 
+	if new === old
 		# remember that the caret must be an actual dom element
 		return (new and new.@dom) or new or caret
 
-	var newIsArray = new isa Array
-	var oldIsArray = old isa Array
-
 	# this could be a dynamic / loop
-	if newIsArray and oldIsArray
-		var newLen = new:length
-		var oldLen = old:length
+	if new isa Array and old isa Array
 
-		var new0 = new[0]
-		var old0 = old[0]
-
-		var isBlocks = typeof new0 == 'number' and typeof old0 == 'number'
-
-		# if these are static blocks, they
-		# always include a unique number as first element
-		if isBlocks
-			# console.log "is blocks"
-			# these are static blocks. If they are not the same
-			# block we can handle them in the most primitive way
-
-			# if they are the same, we need to reconcile members
-			# they should also have the same length
-			if new0 == old0
-				# console.log "same block!"
-				let i = 0
-				while ++i < newLen
-					caret = reconcileNested(root,new[i],old[i],caret,new,i)
-				# console.log "return caret",caret
+		if new:static
+			# if the static is not nested - we could get a hint from compiler
+			# and just skip it
+			if new:static == old:static
+				for item,i in new
+					caret = reconcileNested(root,item,old[i],caret,new,i)
 				return caret
-			else
-				# these are two fully separate blocks - we can remove and insert
-				removeNested(root,old)
-				return caret = insertNestedAfter(root,new,caret)
+			# if they are not the same we continue through to the default
+
 		else
-			# this is where we get into the advanced reconcileLoop
-			# console.log "should redirect to dynamic!"
-			caret = reconcileCollection(root,new,old,caret)
-			return caret
+			return reconcileCollection(root,new,old,caret)
 
 	elif new isa String
 		let textNode

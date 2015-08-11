@@ -6,6 +6,11 @@ var svgSupport = typeof SVGElement !== 'undefined'
 def Imba.document
 	window:document
 
+def Imba.static items, nr
+	items:static = nr
+	return items
+	
+
 # Imba.document:createElementNS && Imba.document.createElementNS('http://www.w3.org/2000/svg', "svg")[:createSVGRect]
 
 # This is VERY experimental. Using Imba for serverside templates
