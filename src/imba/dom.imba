@@ -64,16 +64,6 @@ class ElementTag
 		return (object = v,self) if arguments:length
 		@object
 
-	def body v
-		console.warn "tag#body is deprecated"
-		return (body = v,self) if arguments:length
-		return self
-
-	def body= body
-		console.warn "tag#setBody is deprecated"
-		@empty ? append(body) : empty.append(body)
-		self
-
 	def content= content
 		children = content # override?
 		self
@@ -103,23 +93,19 @@ class ElementTag
 		var el = node and node.dom
 		par.removeChild(el) if el and el:parentNode == par
 		self
-		
 
 	def parent
 		tag(dom:parentNode)
 
 
 	def log *args
-		# playing safe for ie
 		args.unshift(console)
 		Function:prototype:call.apply(console:log, args)
-		# console.log(*arguments)
 		self
 		
-
-	# def emit name, data: null, bubble: yes
-	# 	ED.trigger name, self, data: data, bubble: bubble
-	# 	return self
+	def emit name, data: null, bubble: yes
+		Imba.Events.trigger name, self, data: data, bubble: bubble
+		return self
 
 	def css key, val
 		if key isa Object
@@ -221,10 +207,8 @@ class ElementTag
 		while el:previousSibling
 			el = el:previousSibling
 			i++
-			
 		return i
 
-	
 
 	def insert node, before: null, after: null
 		before = after.next if after
@@ -282,7 +266,6 @@ class ElementTag
 	def template
 		null
 
-
 	def prepend item
 		insert(item, before: first)
 
@@ -323,23 +306,26 @@ class ElementTag
 		@dom.toString # really?
 
 	def classes
-		dom:classList
+		@dom:classList
+
+	def flags
+		@dom:classList
 		
 	def flag ref, toggle
 		# it is most natural to treat a second undefined argument as a no-switch
 		# so we need to check the arguments-length
 		if arguments:length == 2
-			toggle ? classes.add(ref) : classes.remove(ref)
+			toggle ? flags.add(ref) : flags.remove(ref)
 		else 
-			classes.add(ref)
+			flags.add(ref)
 		return self
 
 	def unflag ref
-		classes.remove ref
+		flags.remove ref
 		return self
 
 	def hasFlag ref
-		classes.contains ref
+		flags.contains ref
 
 	def self.flag flag
 		# should redirect to the prototype with a dom-node already set?
@@ -473,9 +459,6 @@ def Imba.defineTag name, supr = '', &body
 	klass:prototype.@dom = null
 	klass:prototype.@built = no
 	klass:prototype.@empty = yes
-
-	tag$[name] = Imba.basicTagSpawner(klass,klass.@nodeType)
-
 	# add the default flags / classes for ns etc
 	# if namespaced -- this is dangerous
 	IMBA_TAGS[name] = klass unless ns
@@ -493,10 +476,6 @@ def Imba.defineSingletonTag id, supr = '', &body
 	# we create a constructor with a recognizeable name
 	var fun = Function.new("return function {id.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")
 	var singleton = fun()
-
-	# var singleton = do |dom|
-	# 	this.setDom(dom)
-	# 	this
 
 	var klass = extender(singleton,superklass)
 
@@ -529,26 +508,11 @@ def Imba.tag name
 	var typ = IMBA_TAGS[name]
 	return typ.new(typ.createNode)
 
-# tags are a big and important part of Imba. It is critical to make this as
-# fast as possible. Since most engines really like functions they can optimize
-# we use several different functions for generating tags, depending on which
-# parts are supplied (classes, id, attributes, ...)
-def Imba.basicTagSpawner type
-	return do type.new(type.createNode)
-
 def Imba.tagWithId name, id
 	var typ = IMBA_TAGS[name]
 	var dom = typ.createNode
 	dom:id = id
 	return typ.new(dom)
-
-tag$ = Imba:tag
-
-t$ = Imba:tag
-tc$ = Imba:tagWithFlags
-ti$ = Imba:tagWithId
-tic$ = Imba:tagWithIdAndFlags
-
 
 def Imba.getTagSingleton id
 	var type, node, dom
@@ -575,7 +539,7 @@ def Imba.getTagSingleton id
 		# console.log('found plain element with id')
 		return Imba.getTagForDom(dom)
 
-id$ = Imba:getTagSingleton
+
 
 def Imba.getTagForDom dom
 
@@ -615,20 +579,20 @@ def Imba.getTagForDom dom
 	# console.log("tag for dom?!",ns,type,cls,spawner)
 	spawner ? spawner.new(dom).awaken(dom) : null
 
+t$ = Imba:tag
+tc$ = Imba:tagWithFlags
+ti$ = Imba:tagWithId
+tic$ = Imba:tagWithIdAndFlags
+id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom
+
 # predefine all supported html tags
-
-
 extend tag htmlelement
 	
-	prop id dom: yes
-	prop tabindex dom: yes
-	prop title dom: yes
-	prop role dom: yes
-
-	# def log *params
-	# 	console.log(*params)
-	# 	self
+	attr id
+	attr tabindex
+	attr title
+	attr role
 
 tag fragment < htmlelement
 	
@@ -652,7 +616,9 @@ tag big
 tag blockquote
 tag body
 tag br
+
 tag button
+	attr autofocus
 	prop type dom: yes
 	prop disabled dom: yes
 
@@ -708,6 +674,8 @@ tag input
 	prop required dom: yes
 	prop disabled dom: yes
 	prop placeholder dom: yes
+
+	attr autofocus
 
 	def value
 		dom:value
@@ -806,6 +774,8 @@ tag textarea
 	prop value dom: yes
 	prop rows dom: yes
 	prop cols dom: yes
+
+	attr autofocus
 
 	def value
 		dom:value
