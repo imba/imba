@@ -1,4 +1,8 @@
-## Dev 
+## 0.11.1 (2015-08-12)
+
+- Fixed issue in dom reconciler
+
+## 0.11.0 (2015-08-11)
 
 - Allow `new` and `char` as varnames
 - `tag#render` is called by default from `tag#build`
