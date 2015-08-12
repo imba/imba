@@ -491,7 +491,7 @@ def Imba.defineSingletonTag id, supr = '', &body
 
 	# should drop this in production / optimized mode, but for debug
 	# we create a constructor with a recognizeable name
-	var fun = Function.new("return function {id.substr(1).replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")
+	var fun = Function.new("return function {id.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")
 	var singleton = fun()
 
 	# var singleton = do |dom|

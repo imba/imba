@@ -13,9 +13,7 @@ export def dist o = {}
 	var browserify = require 'browserify'
 
 	var b = browserify(basedir: "{__dirname}/../imba", standalone: "imba")
-	b.exclude('./dom.server.js')
-	b.ignore('./dom.server')
-	b.add('./index.js')
+	b.add('./browser.js')
 	b.bundle().pipe(fs.createWriteStream("{dest}/imba.js"))
 
 	var b = browserify(basedir: "{__dirname}/", standalone: "imbalang")

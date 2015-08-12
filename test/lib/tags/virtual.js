@@ -253,7 +253,13 @@
 				eq(group.opstr(),"I");
 				// remove again
 				group.render({list: full});
-				return eq(group.opstr(),"R");
+				eq(group.opstr(),"R");
+				
+				// add first element last
+				group.render({list: [b,c,d,e,f,a]});
+				eq(group.opstr(),"I");
+				
+				return group.render({list: full});
 			});
 			
 			test("removing",function() {

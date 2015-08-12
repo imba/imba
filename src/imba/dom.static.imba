@@ -64,7 +64,7 @@ def insertNestedAfter root, node, after
 def moveGroupBeforeTail root, nodes, group, tail
 	for nodeIdx in group
 		var node = nodes[nodeIdx]
-		root.insertBefore(node,tail)
+		tail ? root.insertBefore(node,tail) : root.appendChild(node)
 	# tail will stay the same
 	return
 
@@ -78,7 +78,13 @@ def swapGroup root, nodes, group1, group2, caret
 	if group1:length < group2:length
 		# Move group1 to the right of group2
 		group = group1
+		# selec the very last element of the 
 		tail = nodes[group2[group2:length - 1]].@dom:nextSibling
+		# var nodes = group.map do |idx| nodes[idx]
+		# insertNestedAfter(root,)
+		# what we want is to know about the next element in parent after the previous
+		# last element
+		# insertNestedAfter(root,)
 	else
 		# Move group2 in from of group1
 		group = group2
@@ -126,6 +132,8 @@ def reconcileOrder root, nodes, groups, caret
 
 def reconcileSwap root, nodes, groups, caret
 	swapGroup(root, nodes, groups[0], groups[1], caret)
+	return
+
 	var last = groups[0]
 	var lastNode = nodes[last[last:length - 1]]
 	return lastNode.@dom:nextSibling

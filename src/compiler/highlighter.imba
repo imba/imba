@@ -85,7 +85,8 @@ export class Highlighter
 			'extern': 'keyword global'
 			'from': 'keyword from'
 			'logic': 'keyword logic'
-			'post_if': 'keyword if'
+			'post_if': 'keyword if post_if'
+			'post_for': 'keyword for post_for'
 			'prop': 'keyword prop'
 			'attr': 'keyword attr'
 		}

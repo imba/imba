@@ -197,6 +197,12 @@ describe "Tags" do
 			group.render list: full
 			eq group.opstr, "R"
 
+			# add first element last
+			group.render list: [b,c,d,e,f,a]
+			eq group.opstr, "I"
+
+			group.render list: full
+
 		test "removing" do
 			group.render list: [a,b,e,f]
 			eq group.opstr, "RR"
