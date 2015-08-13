@@ -194,6 +194,9 @@ export class Indentation
 		@close = b
 		self
 
+	def isGenerated
+		@open and @open:generated
+
 	# should rather parse and extract the comments, no?
 	def wrap str
 		# var pre, post
@@ -690,6 +693,10 @@ export class ListNode < Node
 	def push item
 		@nodes.push(item)
 		self
+
+	def pop
+		var end = @nodes.pop
+		return end
 
 	def add item
 		@nodes.push(item)
@@ -2005,6 +2012,8 @@ export class ClassDeclaration < Code
 
 		body.unshift(part) for part in head.reverse
 		body.@indentation = null
+		var end = body.index(body.count - 1)
+		body.pop if end isa Terminator and end.c:length == 1
 		var out = body.c
 
 		return out
@@ -2085,7 +2094,12 @@ export class Func < Code
 
 	def js o
 		body.consume(ImplicitReturn.new) unless option(:noreturn)
-		var code = scope.c(indent: yes, braces: yes)
+		var ind = body.@indentation
+		# var s = ind and ind.@open
+		# p "indent function? {body.@indentation} {s} {s:generated} {body.count}"
+		body.@indentation = null if ind and ind.isGenerated
+		var code = scope.c(indent: (!ind or !ind.isGenerated), braces: yes)
+
 		# args = params.map do |par| par.name
 		# head = params.map do |par| par.c
 		# code = [head,body.c(expression: no)].flatten__.compact.join("\n").wrap

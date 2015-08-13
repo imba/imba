@@ -83,6 +83,7 @@ export class Highlighter
 			'export': 'keyword export'
 			'global': 'keyword global'
 			'extern': 'keyword global'
+			'require': 'keyword require'
 			'from': 'keyword from'
 			'logic': 'keyword logic'
 			'post_if': 'keyword if post_if'
@@ -178,6 +179,11 @@ export class Highlighter
 
 			var node = 'span'
 			var content = str.substr(loc,len)
+			# temporary workaround until we redefine require as an identifier
+			if typ == 'const' and content == 'require'
+				typ = 'require'
+
+
 			var cls = classes[typ] or typ
 
 			if cls isa Array
@@ -201,6 +207,7 @@ export class Highlighter
 				if meta
 					# console.log "META"
 					cls.push('access') if meta:type == 'ACCESS'
+
 
 			if tok.@variable
 				# console.log "IS VARIABLEREF",tok.@value

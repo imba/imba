@@ -649,7 +649,7 @@ class Imba.EventManager
 ED = Imba.Events = Imba.EventManager.new(document, events: [
 	:keydown,:keyup,:keypress,:textInput,:input,:change,:submit,
 	:focusin,:focusout,:blur,:contextmenu,
-	:mousedown,:mouseup,
+	:mousedown,:mouseup,:mousewheel,
 	:dblclick
 ])
 
