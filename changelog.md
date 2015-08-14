@@ -1,3 +1,7 @@
+## Dev
+
+- Added window, document, parseInt, parseFloat as implicit global variables
+
 ## 0.11.1 (2015-08-12)
 
 - Fixed issue in dom reconciler

@@ -6426,16 +6426,20 @@ export class FileScope < Scope
 	def initialize
 		super
 
-		register :global, self, type: 'global'
-		register :module, self, type: 'global'
-		register :exports, self, type: 'global'
-		register :console, self, type: 'global'
-		register :process, self, type: 'global'
-		register :setTimeout, self, type: 'global'
-		register :setInterval, self, type: 'global'
-		register :clearTimeout, self, type: 'global'
-		register :clearInterval, self, type: 'global'
-		register :__dirname, self, type: 'global'
+		register 'global', self, type: 'global'
+		register 'module', self, type: 'global'
+		register 'window', self, type: 'global'
+		register 'document', self, type: 'global'
+		register 'exports', self, type: 'global'
+		register 'console', self, type: 'global'
+		register 'process', self, type: 'global'
+		register 'parseInt', self, type: 'global'
+		register 'parseFloat', self, type: 'global'
+		register 'setTimeout', self, type: 'global'
+		register 'setInterval', self, type: 'global'
+		register 'clearTimeout', self, type: 'global'
+		register 'clearInterval', self, type: 'global'
+		register '__dirname', self, type: 'global'
 
 		# preregister global special variables here
 		@warnings = []
