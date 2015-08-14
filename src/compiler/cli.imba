@@ -99,7 +99,7 @@ class SourceFile
 		return @meta
 		
 	def run
-		process:argv.pop
+		process:argv.shift
 		process:argv[0] = 'imba'
 		compiler.run(code, filename: @path)
 
