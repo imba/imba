@@ -1,5 +1,6 @@
 
 var lexer = require './lexer'
+var imba = require './index'
 
 export class Highlighter
 
@@ -23,7 +24,15 @@ export class Highlighter
 
 		marked.setOptions
 			highlight: do |code,language|
-				console.log "highlighting here!",language
+				language ||= 'imba' unless code.match(/^\s*\>/)
+
+				console.log "highlighting here!",code, language
+
+				if language == 'imba'
+					var out = imba.highlight(code, bare: yes)
+					return out
+
+				
 				return hljs.highlightAuto(code):value
 
 		# console.log(marked('```js\n console.log("hello"); \n```'))
