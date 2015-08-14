@@ -17,6 +17,11 @@
     "email" : "judofyr@gmail.com",
     "url" : "http://github.com/judofyr/"
   }],
+
+  "scripts": {
+    "test": "imba test/src/run.imba"
+  },
+
   "bugs": "https://github.com/somebee/imba/issues",
   "version": "0.11.2",
   "licenses": [

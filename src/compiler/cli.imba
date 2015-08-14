@@ -1,6 +1,4 @@
 
-extern parseInt
-
 var fs        = require 'fs'
 var path      = require 'path'
 var cli       = require 'commander'
@@ -17,19 +15,6 @@ def cliproto.helpInformation
 
 	str = str.replace(/(Options|Usage|Examples|Commands)\:/g) do |m| chalk.bold m
 	return str
-
-# override cli to add color
-def cli.optionHelp2
-	var width = this.largestOptionLength
-	# Prepend the help information
-	var out = "TATATA"
-	# return [pad('-h, --help', width) + '  ' + 'output usage information']
-	#   .concat(this.options.map(function(option) {
-	#     return pad(option.flags, width) + '  ' + option.description;
-	#     }))
-	#   .join('\n');
-	
-
 
 # console.time("compiler")
 var tasks = require './tasks'
@@ -114,6 +99,8 @@ class SourceFile
 		return @meta
 		
 	def run
+		process:argv.pop
+		process:argv[0] = 'imba'
 		compiler.run(code, filename: @path)
 
 	def htmlify
@@ -432,9 +419,6 @@ cli.command('export <path>')
 		log JSON.stringify(out)
 		return 
 
-
-# .option('-f, --format <format>', 'format of output', 'json', /^(json|plain|html)$/i)	
-
 cli.command('dev <task>')
 	.description('commands for imba-development')
 	.action do |cmd,o|
@@ -443,22 +427,8 @@ cli.command('dev <task>')
 		else
 			log chalk.red("could not find task {b cmd}")
 
-# .option('--poll', 'useful for successfully watching files over a network')
-
-# cli.on('--help') do
-# 	console.log('  Examples:')
-# 	console.log('')
-# 	console.log('    $ custom-help --help')
-# 	console.log('    $ custom-help -h')
-# 	console.log('')
 
 export def run argv
-	var res = cli.parse(argv)
-
-	if !process:argv.slice(2):length
-		cli.outputHelp
-
-	# console.log(cli.name)
-	# console.log res.name
-	# console.log "herel"
+	return cli.outputHelp if process:argv:length < 3
+	cli.parse(argv)
 
