@@ -1,4 +1,4 @@
-## Dev
+## 0.11.2 (2015-08-14)
 
 - Added window, document, parseInt, parseFloat as implicit global variables
 
