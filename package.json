@@ -8,6 +8,15 @@
     "compiler"
   ],
   "author": "Sindre Aarsaether",
+  "contributors": [{
+    "name" : "Sindre Aarsaether",
+    "email" : "sindre@identu.no",
+    "url" : "http://github.com/somebee/"
+  },{
+    "name" : "Magnus Holm",
+    "email" : "judofyr@gmail.com",
+    "url" : "http://github.com/judofyr/"
+  }],
   "bugs": "https://github.com/somebee/imba/issues",
   "version": "0.11.1",
   "licenses": [
