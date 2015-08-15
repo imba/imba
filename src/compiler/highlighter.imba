@@ -11,7 +11,17 @@ export class Highlighter
 		@tokens = tokens
 		@ast = ast
 		@options = options
+		@options:nextVarCounter ||= 0
+		@varRefs = {}
 		return self
+
+	def varRef variable
+		var i = @options:nested
+		var pfx = i ? 'i' : ''
+		# @options:nextVarCounter
+		# will stick - no
+		@varRefs[variable.@ref] ||= (pfx + @options:nextVarCounter++)
+		
 
 	def process
 		var marked = require 'marked'
@@ -29,7 +39,7 @@ export class Highlighter
 				console.log "highlighting here!",code, language
 
 				if language == 'imba'
-					var out = imba.highlight(code, bare: yes)
+					var out = imba.highlight(code, bare: yes, nested: yes)
 					return out
 
 				
@@ -39,8 +49,9 @@ export class Highlighter
 
 		var str = @code
 		var pos = @tokens:length
-		var nextVarRef = 0
-		var varRefs = {}
+
+		# var nextVarRef = 0
+		# var varRefs = {}
 
 		var sections = []
 
@@ -221,7 +232,7 @@ export class Highlighter
 			if tok.@variable
 				# console.log "IS VARIABLEREF",tok.@value
 				cls.push('_lvar')
-				let ref = varRefs[tok.@variable.@ref] ||= nextVarRef++
+				let ref = self.varRef(tok.@variable)
 				cls.push("ref-"+ref)
 
 			if typ == 'herecomment'

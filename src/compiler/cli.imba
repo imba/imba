@@ -393,7 +393,10 @@ cli.command('compile <path>')
 cli.command('watch <path>')
 	.description('listen for changes and compile scripts')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
-	.action do |root,o| cli-compile(root,o,watch: yes)
+	.option('--cache-tag-attributes', 'set the output directory for compiled JavaScript')
+	.action do |root,o|
+		# console.log o # ['cache-tag-attributes']
+		cli-compile(root,o,watch: yes)
 
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')
