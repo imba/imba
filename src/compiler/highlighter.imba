@@ -97,6 +97,8 @@ export class Highlighter
 			'num': 'number'
 			'math': 'op math'
 			'forin': 'keyword in'
+			'forof': 'keyword of'
+			'own': 'keyword own'
 			'compare': 'op compare'
 			'herecomment': ['blockquote','comment']
 			'relation': 'keyword relation'

@@ -914,7 +914,7 @@ export class Lexer
 
 		# What is the logic here?
 		if id is 'own' and lastTokenType == 'FOR'
-			token 'OWN', id
+			token 'OWN', id, id:length
 			return id:length
 
 		var prev = last(@tokens)
