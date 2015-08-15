@@ -2414,6 +2414,9 @@ export class Bool < Literal
 	def cache
 		self
 
+	def isPrimitive
+		yes
+
 	def truthy
 		# p "bool is truthy? {value}"
 		String(value) == "true"
@@ -2429,11 +2432,17 @@ export class Bool < Literal
 		# @raw ? "true" : "false"
 
 export class Undefined < Literal
+	
+	def isPrimitive
+		yes
 
 	def c
 		"undefined"
 
 export class Nil < Literal
+	
+	def isPrimitive
+		yes
 
 	def c
 		"null"
@@ -2571,6 +2580,9 @@ export class Symbol < Literal
 		"'{sym__(value)}'"
 
 export class RegExp < Literal
+
+	def isPrimitive
+		yes
 
 	# def toString
 	# 	"" + value
