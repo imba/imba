@@ -405,6 +405,9 @@ export class Node
 	def isString
 		no
 
+	def isPrimitive deep
+		no
+
 	# should rather do traversals
 	# o = {}, up, key, index
 	def traverse
@@ -619,6 +622,9 @@ export class Statement < ValueNode
 
 export class Meta < ValueNode
 
+	def isPrimitive deep
+		yes
+
 export class Comment < Meta
 
 	def c o
@@ -637,6 +643,8 @@ export class Terminator < Meta
 
 	def traverse
 		self
+
+
 
 	def c
 		return @value.c
@@ -2456,6 +2464,9 @@ export class Num < Literal
 	def toString
 		String(@value)
 
+	def isPrimitive deep
+		yes
+
 	def shouldParenthesize par = up
 		par isa Access and par.left == self
 
@@ -2496,6 +2507,9 @@ export class Str < Literal
 		# should grab the actual value immediately?
 
 	def isString
+		yes
+
+	def isPrimitive deep
 		yes
 
 	def raw
@@ -2547,6 +2561,9 @@ export class Symbol < Literal
 	def isValidIdentifier
 		raw.match(/^[a-zA-Z\$\_]+[\d\w\$\_]*$/) ? true : false
 
+	def isPrimitive deep
+		yes
+
 	def raw
 		@raw ||= sym__(value)
 
@@ -2581,6 +2598,9 @@ export class Arr < Literal
 	def visit
 		@value.traverse if @value and @value:traverse
 		self
+
+	def isPrimitive deep
+		!value.some(|v| !v.isPrimitive(yes) )
 
 	def js o
 
@@ -5358,12 +5378,9 @@ export class Tag < Node
 		var isSelf = type isa Self
 		var bodySetter = isSelf ? "setChildren" : "setContent"
 
-		# if isSelf
-		# 	bodySetter = "setStaticChildren"
-		# elif reactive
-		# 	bodySetter = "setStaticContent"
-
-		# isSelf ? "setStaticChildren" : "setStaticContent"
+		# should not cache statics if the node itself is not cached
+		# that would only mangle the order in which we set the properties
+		var cacheStatics = yes
 
 		for atr in o:attributes
 			a[atr.key] = atr.value # .populate(obj)
@@ -5415,20 +5432,34 @@ export class Tag < Node
 			tree.resolve
 
 		for part in @parts
+			var pjs
+			var pcache = no
+
 			if part isa TagAttr
 				var akey = String(part.key)
+				var aval = part.value
+				# p "part value {aval} {aval.isPrimitive(yes)}"
 
 				# the attr should compile itself instead -- really
+				pcache = aval.isPrimitive
 
 				if akey[0] == '.' # should check in a better way
-					calls.push ".flag({quote(akey.substr(1))},{part.value.c})"
+					pcache = no
+					pjs = ".flag({quote(akey.substr(1))},{part.value.c})"
 				elif akey[0] == ':'
-					calls.push ".setHandler({quote(akey.substr(1))},{part.value.c})"
+					# need to analyze whether this is static or not
+					pjs = ".setHandler({quote(akey.substr(1))},{part.value.c})"
 				else
-					calls.push ".{helpers.setterSym(akey)}({part.value.c})"
+					pjs = ".{helpers.setterSym(akey)}({part.value.c})"
 
 			elif part isa TagFlag
-				calls.push(part.c)
+				pjs = part.c
+				pcache = yes
+
+			if pjs
+				cacheStatics && pcache ? statics.push(pjs) : calls.push(pjs)
+
+
 
 		if object
 			calls.push(".setObject({object.c})")
