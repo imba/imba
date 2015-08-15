@@ -60,182 +60,96 @@ def insertNestedAfter root, node, after
 		appendNested(root,node)
 		return root.@dom:lastChild
 
-# same as insertNestedBefore?
-def moveGroupBeforeTail root, nodes, group, tail
-	for nodeIdx in group
-		var node = nodes[nodeIdx]
-		tail ? root.insertBefore(node,tail) : root.appendChild(node)
-	# tail will stay the same
-	return
-
-def moveGroup root, nodes, group, nextGroup, caret
-	var tail = nodes[nextGroup[0]].@dom:nextSibling
-	moveGroupBeforeTail(root, nodes, group, tail)
-
-def swapGroup root, nodes, group1, group2, caret
-	var group, tail
-
-	if group1:length < group2:length
-		# Move group1 to the right of group2
-		group = group1
-		# selec the very last element of the 
-		tail = nodes[group2[group2:length - 1]].@dom:nextSibling
-		# var nodes = group.map do |idx| nodes[idx]
-		# insertNestedAfter(root,)
-		# what we want is to know about the next element in parent after the previous
-		# last element
-		# insertNestedAfter(root,)
-	else
-		# Move group2 in from of group1
-		group = group2
-		tail = nodes[group1[0]].@dom
-
-	moveGroupBeforeTail(root,nodes, group, tail)
-
-
-def reconcileOrder root, nodes, groups, caret
-
-	var last
-	# We have these possible cases:
-	# (1, 3, 2)
-	# (2, 3, 1)
-	# (2, 1, 3)
-	# (3, 2, 1)
-
-	# Note that swapGroup/moveGroup does not change `groups` or `nodes`
-
-	if groups[0][0] == 0
-		# (1, 3, 2)
-		last = groups[1]
-		swapGroup(root, nodes, groups[1], groups[2], caret)
-
-	elif groups[1][0] == 0
-		# (2, 1, 3)
-		last = groups[2]
-		swapGroup(root, nodes, groups[0], groups[1], caret)
-
-	elif groups[2][0] == 0
-		moveGroup(root, nodes, groups[2], groups[0], caret)
-
-		if groups[0][0] > groups[1][0]
-			# (3, 2, 1)
-			last = groups[0]
-			swapGroup(root, nodes, groups[0], groups[1], caret)
-		else
-			# (2, 3, 1)
-			last = groups[1]
-
-	# no need to return the caret?
-	var lastNode = nodes[last[last:length - 1]]
-	return lastNode.@dom:nextSibling
-
-
-def reconcileSwap root, nodes, groups, caret
-	swapGroup(root, nodes, groups[0], groups[1], caret)
-	return
-
-	var last = groups[0]
-	var lastNode = nodes[last[last:length - 1]]
-	return lastNode.@dom:nextSibling
-
-
-def reconcileFull root, new, old, caret
-	# console.log "reconcileFull"
-	removeNested(root,old,caret)
-	caret = insertNestedAfter(root,new,caret)
-	return caret
-
-
 # expects a flat non-sparse array of nodes in both new and old, always
 def reconcileCollection root, new, old, caret
 
 	var newLen = new:length
 	var oldLen = old:length
 
-	var removedNodes = 0
-	var isSorted = yes
-
 	# if we trust that reconcileCollection does the job
 	# we know that the caret should have moved to the
 	# last element of our new nodes.
 	var lastNew = new[newLen - 1]
 
-	# `groups` contains the indexOf 
-	var groups = []
-	var remove = []
-	var prevIdx = -1
-	var maxIdx = -1
-	var lastGroup
+	# This re-order algorithm is based on the following principle:
+	# 
+	# We build a "chain" which shows which items are already sorted.
+	# If we're going from [1, 2, 3] -> [2, 1, 3], the tree looks like:
+	#
+	# 	3 ->  0 (idx)
+	# 	2 -> -1 (idx)
+	# 	1 -> -1 (idx)
+	#
+	# This tells us that we have two chains of ordered items:
+	# 
+	# 	(1, 3) and (2)
+	# 
+	# The optimal re-ordering then becomes two keep the longest chain intact,
+	# and move all the other items.
 
-	# in most cases the two collections will be
-	# unchanged. Might be smartest to look for this case first?
+	var newPosition = []
 
-	for node in old
-		var newIdx = new.indexOf(node)
+	# The tree/graph itself
+	var prevChain = []
+	# The length of the chain
+	var lengthChain = []
 
-		if newIdx == -1
-			# the node was removed
-			remove.push(node)
-			removedNodes++
-		else
-			if newIdx < maxIdx
-				isSorted = no
+	# Keep track of the longest chain
+	var maxChainLength = 0
+	var maxChainEnd = 0
+
+	for node, idx in old
+		var newPos = new.indexOf(node)
+		newPosition.push(newPos)
+
+		if newPos == -1
+			root.removeChild(node)
+			prevChain.push(-1)
+			lengthChain.push(-1)
+			continue
+
+		var prevIdx = newPosition:length - 2
+
+		# Build the chain:
+		while prevIdx >= 0
+			if newPosition[prevIdx] == -1
+				prevIdx--
+			elif newPos > newPosition[prevIdx]
+				# Yay, we're bigger than the previous!
+				break
 			else
-				maxIdx = newIdx
+				# Nope, let's walk back the chain
+				prevIdx = prevChain[prevIdx]
 
-		if prevIdx != -1 and (newIdx - prevIdx) == 1
-			lastGroup.push(newIdx)
-		else
-			lastGroup = [newIdx]
-			groups.push(lastGroup)
-		prevIdx = newIdx
+		prevChain.push(prevIdx)
 
-	var addedNodes = new:length - (old:length - removedNodes)
+		var currLength = (prevIdx == -1) ? 0 : lengthChain[prevIdx]+1
 
-	# console.log "reconcileCollection",addedNodes, removedNodes, isSorted,new,old,groups
-	# "changes" here implies that nodes have been added or removed
-	var hasChanges = !(addedNodes == 0 and removedNodes == 0)
+		if currLength > maxChainLength
+			maxChainLength = currLength
+			maxChainEnd = idx
 
-	if isSorted
-		# this is very simple
-		if removedNodes and !addedNodes
-			# console.log "only removed nodes"
-			root.removeChild(node) for node,i in remove
+		lengthChain.push(currLength)
 
-		elif addedNodes
-			# this can include both removed and 
-			# maybe remove nodes first -- so easy
-			var remaining = old
-			var oldI = 0
+	var stickyNodes = []
 
-			if removedNodes
-				root.removeChild(node) for node,i in remove
-				remaining = old.filter do |node| remove.indexOf(node) == -1
+	# Now we can walk the longest chain backwards and mark them as "sticky",
+	# which implies that they should not be moved
+	var cursor = newPosition:length - 1
+	while cursor >= 0
+		if newPosition[cursor] == -1
+			# do nothing. it was removed.
+		elif cursor == maxChainEnd
+			stickyNodes[newPosition[cursor]] = true
+			maxChainEnd = prevChain[maxChainEnd]
+		
+		cursor -= 1
 
-			# simply loop over new nodes, and insert them where they belong
-			for node,i in new
-				if node === remaining[oldI]
-					oldI++ # only step forward if it is the same
-					caret = node.@dom
-					continue
-
-				caret = insertNestedAfter(root,node,caret)
-
-	elif hasChanges
-		# console.log "reconcileScratch",groups
-		reconcileFull(root, new, old, caret)
-
-	elif groups:length == 2
-		# console.log "reconcileSwap"
-		reconcileSwap(root,new, groups, caret)
-
-	elif groups:length == 3
-		# console.log "reconcileOrder"
-		reconcileOrder(root, new, groups, caret)
-
-	else
-		# too much to sort - just remove and append everything
-		reconcileFull(root, new, old, caret)
+	# And let's iterate forward, but only move non-sticky nodes
+	for node, idx in new
+		if !stickyNodes[idx]
+			var after = new[idx - 1]
+			insertNestedAfter(root, node, (after and after.@dom) or caret)
 
 	# should trust that the last item in new list is the caret
 	return lastNew and lastNew.@dom or caret
