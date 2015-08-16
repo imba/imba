@@ -60,15 +60,10 @@ def insertNestedAfter root, node, after
 		appendNested(root,node)
 		return root.@dom:lastChild
 
-# expects a flat non-sparse array of nodes in both new and old, always
-def reconcileCollection root, new, old, caret
+def reconcileCollectionChanges root, new, old, caret
 
 	var newLen = new:length
 	var oldLen = old:length
-
-	# if we trust that reconcileCollection does the job
-	# we know that the caret should have moved to the
-	# last element of our new nodes.
 	var lastNew = new[newLen - 1]
 
 	# This re-order algorithm is based on the following principle:
@@ -154,6 +149,23 @@ def reconcileCollection root, new, old, caret
 	# should trust that the last item in new list is the caret
 	return lastNew and lastNew.@dom or caret
 
+
+# expects a flat non-sparse array of nodes in both new and old, always
+def reconcileCollection root, new, old, caret
+	var k = new:length
+	var i = k
+	var last = new[k - 1]
+
+
+	if k == old:length and new[0] === old[0]
+		# running through to compare
+		while i--
+			break if new[i] !== old[i]
+
+	if i == -1
+		return last and last.@dom or caret
+	else
+		return reconcileCollectionChanges(root,new,old,caret)
 
 # the general reconciler that respects conditions etc
 # caret is the current node we want to insert things after
