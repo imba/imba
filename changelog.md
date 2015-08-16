@@ -1,6 +1,7 @@
 ## 0.11.3 (2015-08-15)
 
 - Now caching static attributes on tags
+- More improvements to reconciler
 
 ## 0.11.2 (2015-08-14)
 
