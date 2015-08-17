@@ -1,6 +1,4 @@
 
-extern window, SVGElement
-
 var svgSupport = typeof SVGElement !== 'undefined'
 
 def Imba.document
@@ -9,16 +7,7 @@ def Imba.document
 def Imba.static items, nr
 	items:static = nr
 	return items
-	
 
-# Imba.document:createElementNS && Imba.document.createElementNS('http://www.w3.org/2000/svg', "svg")[:createSVGRect]
-
-# This is VERY experimental. Using Imba for serverside templates
-# is not recommended unless you're ready for a rough ride. It is
-# a priority to get this fast and stable.
-
-# room for lots of optimization to serverside nodes. can be much more
-# clever when it comes to the classes etc
 
 class ElementTag
 
@@ -43,6 +32,13 @@ class ElementTag
 	def setHandler name, v
 		self["on" + name] = v
 		self
+
+	def setId id
+		dom:id = id
+		self
+
+	def id
+		dom:id
 
 	def setAttribute key, new
 		var old = dom.getAttribute(key)
@@ -327,25 +323,7 @@ class ElementTag
 	def hasFlag ref
 		flags.contains ref
 
-	def self.flag flag
-		# should redirect to the prototype with a dom-node already set?
-		dom:classList.add(flag)
-		self
 
-	def self.unflag flag
-		dom:classList.remove(flag)
-		self	
-
-ElementTag:prototype:initialize = ElementTag
-
-
-class HTMLElementTag < ElementTag
-
-	# most tags will have their flags set upon creation, and
-	# since we do set some imba-specific class names to identify
-	# tags, it is important to stick to a single className set, for
-	# performance. Setting the classes on creation needs vastly less
-	# logic than after the node is alive.
 
 	def self.dom
 		return @dom if @dom
@@ -356,8 +334,8 @@ class HTMLElementTag < ElementTag
 		# should clone the parent no?
 		if @isNative
 			dom = Imba.document.createElement(@nodeType)
+
 		elif @nodeType != sup.@nodeType
-			console.log "custom dom type(!)"
 			dom = Imba.document.createElement(@nodeType)
 			dom.setAttribute(atr:name,atr:value) for atr in sup.dom	
 			# dom:className = sup.dom:className
@@ -369,39 +347,51 @@ class HTMLElementTag < ElementTag
 		# and still keeping the classes?
 
 		if @domFlags
+			# TODO remove classList dependency (ie9)
 			dom:classList.add(f) for f in @domFlags
-		
-		# include the super?!
-		# dom:className = @nodeClass or ""
+
 		@dom = dom
 
 	# we really ought to optimize this
 	def self.createNode flags, id
 		var proto = @dom or self.dom
 		var dom = proto.cloneNode(false)
-		
-		if id
-			dom:id = id
-
-		if flags
-			p "SHOULD NEVER GET HERE?!"
-			var nc = dom:className
-			dom:className = nc && flags ? (nc + " " + flags) : (nc or flags)
-
 		return dom
+
+	def self.flag flag
+		# should redirect to the prototype with a dom-node already set?
+		dom:classList.add(flag)
+		self
+
+	def self.unflag flag
+		dom:classList.remove(flag)
+		self	
+
+	def self.createNode flags, id
+		var proto = @dom or self.dom
+		var dom = proto.cloneNode(false)
+		return dom
+
+ElementTag:prototype:initialize = ElementTag
+
+
+class HTMLElementTag < ElementTag
+
+class SVGElementTag < ElementTag
+
 
 HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 HTML_TAGS_UNSAFE = "article aside header section".split(" ")
-
 SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
 
-IMBA_TAGS = {
+Imba.TAGS = {
 	element: ElementTag
 	htmlelement: HTMLElementTag
+	svgelement: SVGElementTag
 }
 
 Imba.SINGLETONS = {}
-Imba.TAGS = IMBA_TAGS
+IMBA_TAGS = Imba.TAGS
 
 def extender obj, sup
 	for own k,v of sup
@@ -420,17 +410,13 @@ def Imba.defineTag name, supr = '', &body
 
 	supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
 
-	var suprklass = IMBA_TAGS[supr]
+	var suprklass = Imba.TAGS[supr]
 
 	# should drop this in production / optimized mode, but for debug
 	# we create a constructor with a recognizeable name
 	var fun = Function.new("return function {name.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")
 	var Tag = fun()
-	# var Tag = do |dom|
-	# 	this.setDom(dom)
-	# 	this
 
-	# var Tag = {}
 	var klass = Tag # imba$class(func,suprklass)
 
 	extender(klass,suprklass)
@@ -461,8 +447,8 @@ def Imba.defineTag name, supr = '', &body
 	klass:prototype.@empty = yes
 	# add the default flags / classes for ns etc
 	# if namespaced -- this is dangerous
-	IMBA_TAGS[name] = klass unless ns
-	IMBA_TAGS["{name}${ns or 'html'}"] = klass
+	Imba.TAGS[name] = klass unless ns
+	Imba.TAGS["{name}${ns or 'html'}"] = klass
 
 	# create the global shortcut for tag init as well
 	body.call(klass,klass,klass:prototype) if body
@@ -500,16 +486,16 @@ def Imba.defineSingletonTag id, supr = '', &body
 	return klass
 
 def Imba.extendTag name, body
-	var klass = (name isa String ? IMBA_TAGS[name] : name)
+	var klass = (name isa String ? Imba.TAGS[name] : name)
 	body and body.call(klass,klass,klass:prototype) if body
 	return klass
 
 def Imba.tag name
-	var typ = IMBA_TAGS[name]
+	var typ = Imba.TAGS[name]
 	return typ.new(typ.createNode)
 
 def Imba.tagWithId name, id
-	var typ = IMBA_TAGS[name]
+	var typ = Imba.TAGS[name]
 	var dom = typ.createNode
 	dom:id = id
 	return typ.new(dom)
@@ -543,16 +529,15 @@ def Imba.getTagSingleton id
 
 def Imba.getTagForDom dom
 
-	# ugly checks
 	return null unless dom
 	return dom if dom.@dom # could use inheritance instead
 	return dom.@tag if dom.@tag
-	return null unless dom:nodeName # better check?
+	return null unless dom:nodeName
 
-	var ns = null
-	var id = dom:id
+	var ns   = null
+	var id   = dom:id
 	var type = dom:nodeName.toLowerCase
-	var cls = dom:className
+	var cls  = dom:className
 
 	if id and Imba.SINGLETONS[id]
 		# FIXME control that it is the same singleton?
@@ -575,8 +560,7 @@ def Imba.getTagForDom dom
 		if m = cls.match(/\b([a-z]+)_\b/)
 			ns = m[1] 
 
-	var spawner = IMBA_TAGS[type]
-	# console.log("tag for dom?!",ns,type,cls,spawner)
+	var spawner = Imba.TAGS[type]
 	spawner ? spawner.new(dom).awaken(dom) : null
 
 t$ = Imba:tag
@@ -586,212 +570,5 @@ tic$ = Imba:tagWithIdAndFlags
 id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom
 
-# predefine all supported html tags
-extend tag htmlelement
-	
-	attr id
-	attr tabindex
-	attr title
-	attr role
-
-tag fragment < htmlelement
-	
-	def self.createNode
-		Imba.document.createDocumentFragment
-
-tag a
-	prop href dom: yes
-
-tag abbr
-tag address
-tag area
-tag article
-tag aside
-tag audio
-tag b
-tag base
-tag bdi
-tag bdo
-tag big
-tag blockquote
-tag body
-tag br
-
-tag button
-	attr autofocus
-	prop type dom: yes
-	prop disabled dom: yes
-
-tag canvas
-tag caption
-tag cite
-tag code
-tag col
-tag colgroup
-tag data
-tag datalist
-tag dd
-tag del
-tag details
-tag dfn
-tag div
-tag dl
-tag dt
-tag em
-tag embed
-tag fieldset
-tag figcaption
-tag figure
-tag footer
-
-tag form
-	prop method dom: yes
-	prop action dom: yes
-
-tag h1
-tag h2
-tag h3
-tag h4
-tag h5
-tag h6
-tag head
-tag header
-tag hr
-tag html
-tag i
-
-tag iframe
-	attr src
-
-tag img
-	attr src
-
-tag input
-	# can use attr instead
-	prop name dom: yes
-	prop type dom: yes
-	prop value dom: yes # dom property - NOT attribute
-	prop required dom: yes
-	prop disabled dom: yes
-	prop placeholder dom: yes
-
-	attr autofocus
-
-	def value
-		dom:value
-
-	def value= v
-		dom:value = v
-		self
-
-	def checked
-		dom:checked
-
-	def checked= bool
-		dom:checked = bool
-		self
-
-tag ins
-tag kbd
-tag keygen
-tag label
-tag legend
-tag li
-
-tag link
-	prop rel dom: yes
-	prop type dom: yes
-	prop href dom: yes
-	prop media dom: yes
-
-tag main
-tag map
-tag mark
-tag menu
-tag menuitem
-
-tag meta
-	prop name dom: yes
-	prop content dom: yes
-	prop charset dom: yes
-
-tag meter
-tag nav
-tag noscript
-tag object
-tag ol
-tag optgroup
-
-tag option
-	prop value dom: yes
-
-tag output
-tag p
-tag param
-tag pre
-tag progress
-tag q
-tag rp
-tag rt
-tag ruby
-tag s
-tag samp
-
-tag script
-	prop src dom: yes
-	prop type dom: yes
-
-tag section
-
-tag select
-	prop multiple dom: yes
-	
-	def value
-		dom:value
-
-	def value= v
-		dom:value = v
-		self
 
 
-tag small
-tag source
-tag span
-tag strong
-tag style
-tag sub
-tag summary
-tag sup
-tag table
-tag tbody
-tag td
-
-tag textarea
-	prop name dom: yes
-	prop disabled dom: yes
-	prop required dom: yes
-	prop placeholder dom: yes
-	prop value dom: yes
-	prop rows dom: yes
-	prop cols dom: yes
-
-	attr autofocus
-
-	def value
-		dom:value
-
-	def value= v
-		dom:value = v
-		self
-
-tag tfoot
-tag th
-tag thead
-tag time
-tag title
-tag tr
-tag track
-tag u
-tag ul
-tag video
-tag wbr
