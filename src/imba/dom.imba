@@ -9,7 +9,7 @@ def Imba.static items, nr
 	return items
 
 
-class ElementTag
+global class ElementTag
 
 	prop object
 
@@ -306,47 +306,49 @@ class ElementTag
 	def flag ref, toggle
 		# it is most natural to treat a second undefined argument as a no-switch
 		# so we need to check the arguments-length
-		if arguments:length == 2
-			toggle ? flags.add(ref) : flags.remove(ref)
+		if arguments:length == 2 and toggle
+			@dom:classList.remove(ref)
 		else 
-			flags.add(ref)
+			@dom:classList.add(ref)
 		return self
 
 	def unflag ref
-		flags.remove ref
+		@dom:classList.remove(ref)
+		return self
+
+	def toggleFlag ref
+		@dom:classList.toggle(ref)
 		return self
 
 	def hasFlag ref
-		flags.contains ref
-
-
+		@dom:classList.contains(ref)
 
 	def self.dom
 		return @dom if @dom
 
 		var dom
 		var sup = self:__super__:constructor
+		var proto = self:prototype
 
 		# should clone the parent no?
 		if @isNative
-			dom = Imba.document.createElement(@nodeType)
+			@dom = dom = Imba.document.createElement(@nodeType)
 
 		elif @nodeType != sup.@nodeType
-			dom = Imba.document.createElement(@nodeType)
+			@dom = dom = Imba.document.createElement(@nodeType)
 			dom.setAttribute(atr:name,atr:value) for atr in sup.dom	
 			# dom:className = sup.dom:className
 			# what about default attributes?
 		else
-			dom = sup.dom.cloneNode(false)
+			@dom = dom = sup.dom.cloneNode(false)
 
 		# should be a way to use a native domtype without precreating the doc
 		# and still keeping the classes?
-
 		if @domFlags
-			# TODO remove classList dependency (ie9)
-			dom:classList.add(f) for f in @domFlags
+			proto:flag.call(self,f) for f in @domFlags
 
-		@dom = dom
+		return @dom
+		
 
 	# we really ought to optimize this
 	def self.createNode flags, id
@@ -399,7 +401,6 @@ def extender obj, sup
 
 def Imba.defineTag name, supr = '', &body
 	var m = name.split("$")
-
 	var name = m[0]
 	var ns = m[1]
 
@@ -407,17 +408,16 @@ def Imba.defineTag name, supr = '', &body
 
 	var suprklass = Imba.TAGS[supr]
 
+	var fname = name == 'var' ? 'vartag' : name
 	# should drop this in production / optimized mode, but for debug
 	# we create a constructor with a recognizeable name
-	var fun = Function.new("return function {name.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")
-	var Tag = fun()
-
-	var klass = Tag # imba$class(func,suprklass)
+	var Tag = Function.new("return function {fname.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")()
+	# var Tag = do |dom| this.setDom(dom)
+	var klass = Tag
 
 	extender(klass,suprklass)
 
 	klass.@nodeType = suprklass.@nodeType or name
-
 	klass.@name = name
 	klass.@ns = ns
 
@@ -565,5 +565,7 @@ tic$ = Imba:tagWithIdAndFlags
 id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom
 
+
+# shim for classList
 
 

@@ -1,5 +1,3 @@
-extern window
-
 require './imba'
 require './core.events'
 require './dom'

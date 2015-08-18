@@ -25,3 +25,8 @@ export def dist o = {}
 	var b = browserify(basedir: "{__dirname}/", standalone: "imbalang")
 	b.add('./index.js')
 	b.bundle().pipe(fs.createWriteStream("{dest}/compiler.js"))
+
+	var bmin = browserify(basedir: "{__dirname}/", standalone: "imbalang")
+	bmin.add('./index.js')
+	bmin.transform({ sourcemap: false },'uglifyify')
+	bmin.bundle().pipe(fs.createWriteStream("{dest}/compiler.min.js"))

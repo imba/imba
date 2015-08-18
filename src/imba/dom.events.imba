@@ -1,12 +1,8 @@
-
-extern window, document, parseInt
-
-
 var doc = document
 var win = window
 
-var hasTouchEvents = win && win:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
-
+# typeof ontouchstart instead?
+var hasTouchEvents = window && window:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
 
 # Ringbuffer for events?
 
@@ -27,9 +23,6 @@ class Imba.RingBuffer
 
 	def last
 		@array[@head % @keep]
-
-# button-states. Normalize ringbuffer to contain reuseable
-# normalized events?
 
 # really more like a pointer?
 class Imba.Pointer
@@ -68,27 +61,16 @@ class Imba.Pointer
 			dirty = no
 			# button should only change on mousedown etc
 			if e1:type == 'mousedown'
-				# this is correct when we know it is a mousedown(!)
 				button = e1:button
-				# console.log('button-state changed!!!',button)
 				touch = Imba.Touch.new(e1,self)
 				touch.mousedown(e1,e1)
-				# trigger pointerdown
 			elif e1:type == 'mousemove'
 				touch.mousemove(e1,e1) if touch
-
 			elif e1:type == 'mouseup'
-				# console.log('mouseup!!!')
 				button = -1
-				# console.log('button-state changed!!!',button)
 				touch.mouseup(e1,e1) if touch
 				touch = null # reuse?
 				# trigger pointerup
-
-			# if !e0 || e0:button != e1:button
-			# 	console.log('button-state changed!!!',e0,e1)
-			# see if button has transitioned?
-			# console.log e:type
 		else
 			# set type to stationary?
 			# update always?
@@ -99,7 +81,6 @@ class Imba.Pointer
 
 	def emit name, target, bubble: yes
 		yes
-		
 		
 	def cleanup
 		Imba.POINTERS
@@ -399,11 +380,6 @@ class Imba.TouchGesture
 
 	def ontouchend e
 		self
-		
-		
-
-# should be possible
-# def Imba.Pointer.update
 
 
 # A Touch-event is created on mousedown (always)
@@ -411,10 +387,6 @@ class Imba.TouchGesture
 # be delegated to this active event.
 Imba.POINTER = Imba.Pointer.new
 Imba.POINTERS = [Imba.POINTER]
-
-# are we really sure we want to use RAF for this?
-# Imba.Pointer.update
-
 
 
 # regular event stuff
@@ -512,13 +484,13 @@ class Imba.Event
 	def keycombo
 		return unless var sym = keychar
 		sym = Imba.CHARMAP[sym] or sym
-		var combo = []
-		combo.push(:ctrl) if event:ctrlKey
-		combo.push(:shift) if event:shiftKey
-		combo.push(:alt) if event:altKey
-		combo.push(:cmd) if event:metaKey
+		var combo = [], e = event
+		combo.push(:ctrl) if e:ctrlKey
+		combo.push(:shift) if e:shiftKey
+		combo.push(:alt) if e:altKey
+		combo.push(:cmd) if e:metaKey
 		combo.push(sym)
-		return combo.join("_").toLowerCase
+		combo.join("_").toLowerCase
 
 	def process
 		var meth = "on{@prefix or ''}{name}"

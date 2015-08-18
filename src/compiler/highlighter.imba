@@ -1,6 +1,6 @@
 
-var lexer = require './lexer'
-var imba = require './index'
+# var lexer = require './lexer'
+# var imba = require './index'
 
 export class Highlighter
 
@@ -25,9 +25,8 @@ export class Highlighter
 
 	def process
 		var marked = require 'marked'
-		var hljs = require 'highlight.js'
-
-		hljs.configure classPrefix: ''
+		# var hljs = require 'highlight.js'
+		# hljs.configure classPrefix: ''
 
 		var mdrenderer = marked.Renderer.new
 		mdrenderer:heading = do |text, level| '<h' + level + '><span>' + text + '</span></h' + level + '>'
@@ -35,13 +34,13 @@ export class Highlighter
 		marked.setOptions
 			highlight: do |code,language|
 				language ||= 'imba' unless code.match(/^\s*\>/)
-
 				console.log "highlighting here!",code, language
 
 				if language == 'imba'
 					var out = imba.highlight(code, bare: yes, nested: yes)
 					return out
-
+				else
+					return out
 				
 				return hljs.highlightAuto(code):value
 
