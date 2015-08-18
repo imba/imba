@@ -56,10 +56,6 @@ class ElementTag
 	def getAttribute key
 		return dom.getAttribute(key)
 
-	def object v
-		return (object = v,self) if arguments:length
-		@object
-
 	def content= content
 		children = content # override?
 		self
@@ -373,7 +369,6 @@ class ElementTag
 		return dom
 
 ElementTag:prototype:initialize = ElementTag
-
 
 class HTMLElementTag < ElementTag
 

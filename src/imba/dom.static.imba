@@ -216,7 +216,6 @@ def reconcileNested root, new, old, caret, container, ci
 
 extend tag htmlelement
 
-		
 	def setChildren nodes
 		if nodes and nodes:static
 			setStaticChildren(nodes)
