@@ -306,9 +306,9 @@ global class ElementTag
 	def flag ref, toggle
 		# it is most natural to treat a second undefined argument as a no-switch
 		# so we need to check the arguments-length
-		if arguments:length == 2 and toggle
+		if arguments:length == 2 and !toggle
 			@dom:classList.remove(ref)
-		else 
+		else
 			@dom:classList.add(ref)
 		return self
 
