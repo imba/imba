@@ -1,3 +1,8 @@
+## 0.11.4 (2015-08-19)
+
+- Added minified version of library and compiler
+- Remove need for classList (to support ie9)
+
 ## 0.11.3 (2015-08-15)
 
 - Now caching static attributes on tags
