@@ -1,6 +1,6 @@
 
-# var lexer = require './lexer'
-# var imba = require './index'
+var lexer = require './lexer'
+var imba = require './index'
 
 export class Highlighter
 
@@ -104,6 +104,7 @@ export class Highlighter
 			'export': 'keyword export'
 			'global': 'keyword global'
 			'extern': 'keyword global'
+			'extend': 'keyword extend'
 			'require': 'keyword require'
 			'from': 'keyword from'
 			'logic': 'keyword logic'
