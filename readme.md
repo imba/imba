@@ -6,7 +6,7 @@ Imba is a new programming language for the web that compiles
 to performant and readable JavaScript. It has language level 
 support for defining, extending, subclassing, instantiating 
 and rendering dom nodes. For a semi-complex application like 
-[TodoMVC](http://todomvc.com), it [outperforms React by 10x or more](https://github.com/somebee/todomvc-imba-react) on rendering,
+[TodoMVC](http://todomvc.com), it is more than **[20 times faster than React](https://github.com/somebee/todomvc-render-benchmark)**
 with less code, and a much smaller library.
 
 ## Origin
