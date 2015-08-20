@@ -499,12 +499,15 @@ class Imba.Event
 		# var node = <{domtarget:_responder or domtarget}>
 
 		var domnode = domtarget:_responder or domtarget
+		var rerouter = null
+		var rerouted = no
 		# need to stop infinite redirect-rules here??!?
 		while domnode
 			@redirect = null
 			if var node = tag(domnode) # not only tag 
 
 				if node[meth] isa String
+					# should remember the receiver of the event
 					meth = node[meth]
 					continue
 

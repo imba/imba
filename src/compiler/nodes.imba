@@ -5457,12 +5457,12 @@ export class Tag < Node
 
 				if akey[0] == '.' # should check in a better way
 					pcache = no
-					pjs = ".flag({quote(akey.substr(1))},{part.value.c})"
+					pjs = ".flag({quote(akey.substr(1))},{aval.c})"
 				elif akey[0] == ':'
 					# need to analyze whether this is static or not
-					pjs = ".setHandler({quote(akey.substr(1))},{part.value.c})"
+					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c})"
 				else
-					pjs = ".{helpers.setterSym(akey)}({part.value.c})"
+					pjs = ".{helpers.setterSym(akey)}({aval.c})"
 
 			elif part isa TagFlag
 				pjs = part.c

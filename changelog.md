@@ -1,6 +1,8 @@
 ## 0.11.5 (2015-08-20)
 
 - Don't single children in Imba.static
+- Reworked how setHandler to bind directly to outer scope
+- Guard against loading the library multiple times
 
 ## 0.11.4 (2015-08-19)
 

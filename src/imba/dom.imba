@@ -29,8 +29,16 @@ global class ElementTag
 		flag(@ref = ref)
 		self
 
-	def setHandler name, v
-		self["on" + name] = v
+	def setHandler event, handler, ctx
+		var key = 'on' + event
+
+		if handler isa Function
+			self[key] = handler
+		elif handler isa Array
+			var fn = handler.shift
+			self[key] = do |e| ctx[fn].apply(ctx,handler.concat(e))
+		else
+			self[key] = do |e| ctx[handler](e)
 		self
 
 	def setId id
