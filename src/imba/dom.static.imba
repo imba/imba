@@ -217,11 +217,19 @@ def reconcileNested root, new, old, caret, container, ci
 extend tag htmlelement
 
 	def setChildren nodes
+		if nodes === @children
+			return self
+
 		if nodes and nodes:static
 			setStaticChildren(nodes)
+		elif nodes isa Array and @children isa Array
+			reconcileCollection(self,nodes,@children,null)
+		elif nodes isa String
+			text = nodes
 		else
 			empty.append(nodes)
-			@children = nodes
+
+		@children = nodes
 		return self
 
 	def setStaticChildren new

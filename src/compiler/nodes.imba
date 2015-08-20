@@ -5624,10 +5624,13 @@ export class TagTree < ListNode
 
 	def c o
 		# FIXME TEST what about comments???
-		var single = count == 1
+		var len = realCount
+		var single = len == 1
 		var out = super(o)
 
-		if reactive or @owner.reactive
+		if single
+			out
+		elif reactive or @owner.reactive
 			out = "Imba.static([{out}],1)"
 		else
 			out = "[" + out + "]" # unless single

@@ -1,3 +1,7 @@
+## 0.11.5 (2015-08-20)
+
+- Don't single children in Imba.static
+
 ## 0.11.4 (2015-08-19)
 
 - Added minified version of library and compiler

@@ -36,9 +36,7 @@
 			this._ops = [];
 			this._opstr = "";
 			this._errors = null;
-			this.setExpected(_.flatten(nodes).filter(function(n) {
-				return n && n._dom;
-			}));
+			this.setExpected(_.flatten(nodes).filter(function(n) { return n && n._dom; }));
 			this.setActual([]);
 			// log "setStaticChildren",nodes,expected
 			tag.__super__.setStaticChildren.call(this,nodes);
@@ -111,39 +109,39 @@
 			var str = pars.str !== undefined ? pars.str : null;
 			var list2 = pars.list2 !== undefined ? pars.list2 : null;
 			return this.setChildren(Imba.static([
-				(this.$a = this.$a || t$('el')).flag('a').setContent(Imba.static([this.name()],1)).end(),
+				(this.$a = this.$a || t$('el').flag('a')).setContent(this.name()).end(),
 				str,
-				(this.$b = this.$b || t$('el')).flag('b').setText("ok").end(),
+				(this.$b = this.$b || t$('el').flag('b')).setText("ok").end(),
 				(a) && (Imba.static([
-					(this.$c = this.$c || t$('el')).flag('header').end(),
-					(this.$d = this.$d || t$('el')).flag('title').setText("Header").end(),
-					(this.$e = this.$e || t$('el')).flag('tools').end(),
+					(this.$c = this.$c || t$('el').flag('header')).end(),
+					(this.$d = this.$d || t$('el').flag('title')).setText("Header").end(),
+					(this.$e = this.$e || t$('el').flag('tools')).end(),
 					b ? (Imba.static([
-						(this.$f = this.$f || t$('el')).flag('long').end(),
-						(this.$g = this.$g || t$('el')).flag('long').end()
+						(this.$f = this.$f || t$('el').flag('long')).end(),
+						(this.$g = this.$g || t$('el').flag('long')).end()
 					],2)) : (Imba.static([
-						(this.$h = this.$h || t$('el')).flag('short').end(),
-						(this.$i = this.$i || t$('el')).flag('short').end(),
-						(this.$j = this.$j || t$('el')).flag('short').end()
+						(this.$h = this.$h || t$('el').flag('short')).end(),
+						(this.$i = this.$i || t$('el').flag('short')).end(),
+						(this.$j = this.$j || t$('el').flag('short')).end()
 					],3)),
-					(this.$k = this.$k || t$('el')).flag('ruler').end()
+					(this.$k = this.$k || t$('el').flag('ruler')).end()
 				],4)),
 				(c) && (Imba.static([
-					(this.$l = this.$l || t$('div')).flag('c1').setText("long").end(),
-					(this.$m = this.$m || t$('div')).flag('c2').setText("loong").end()
+					(this.$l = this.$l || t$('div').flag('c1')).setText("long").end(),
+					(this.$m = this.$m || t$('div').flag('c2')).setText("loong").end()
 				],5)),
 				d && e ? (Imba.static([
-					(this.$n = this.$n || t$('el')).flag('long').end(),
-					(this.$o = this.$o || t$('el')).flag('footer').end(),
-					(this.$p = this.$p || t$('el')).flag('bottom').end()
+					(this.$n = this.$n || t$('el').flag('long')).end(),
+					(this.$o = this.$o || t$('el').flag('footer')).end(),
+					(this.$p = this.$p || t$('el').flag('bottom')).end()
 				],6)) : (e ? (Imba.static([
-					(this.$q = this.$q || t$('el')).flag('footer').end(),
-					(this.$r = this.$r || t$('el')).flag('bottom').end()
+					(this.$q = this.$q || t$('el').flag('footer')).end(),
+					(this.$r = this.$r || t$('el').flag('bottom')).end()
 				],7)) : (
 					(this.$s = this.$s || t$('el')).setText("!d and !e").end()
 				)),
 				list,
-				(this.$t = this.$t || t$('el')).flag('x').setText("very last").end(),
+				(this.$t = this.$t || t$('el').flag('x')).setText("very last").end(),
 				list2
 			],1)).synced();
 		};
@@ -154,12 +152,12 @@
 		
 		tag.prototype.render = function (){
 			var self=this;
-			return this.setChildren(Imba.static([(function(self) {
+			return this.setChildren((function(self) {
 				for (var i=0, ary=iter$(self.items()), len=ary.length, res=[]; i < len; i++) {
-					res.push(t$('li').setContent([ary[i]]).end());
+					res.push(t$('li').setContent(ary[i]).end());
 				};
 				return res;
-			})(self)],1)).synced();
+			})(self)).synced();
 		};
 	});
 	
