@@ -111,6 +111,7 @@ export var SPLAT = do |value|
 # OP.UNARY = [ "++" , "--" ]
 
 var SEMICOLON_TEST = /;(\s*\/\/.*)?[\n\s\t]*$/
+var RESERVED_TEST = /^(default|char)$/
 
 
 export def parseError str, o
@@ -407,6 +408,10 @@ export class Node
 
 	def isPrimitive deep
 		no
+
+	def isReserved
+		no
+		
 
 	# should rather do traversals
 	# o = {}, up, key, index
@@ -2757,7 +2762,8 @@ export class ObjAttr < Node
 		value.traverse
 
 	def js o
-		"{key.c}: {value.c}"
+		var k = key.isReserved ? "'{key.c}'" : key.c
+		"{k}: {value.c}"
 
 	def hasSideEffects
 		true
@@ -4109,8 +4115,7 @@ export class Identifier < Node
 		yes
 		
 	def isReserved
-	
-		@value:reserved
+		@value:reserved or RESERVED_TEST.test(String(@value))
 
 	def symbol
 		# console.log "Identifier#symbol {value}"
