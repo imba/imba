@@ -150,17 +150,19 @@ def print-tokens tokens
 
 def ensure-dir path
 	return yes if fs.existsSync(path)
-	var parts = path.split(fspath:sep)
+	var parts = fspath.normalize(path).split(fspath:sep)
 	for part,i in parts
+		continue if i < 1
 		# what about relative paths here? no good? might be important for symlinks etc no?
-		var path = fspath:sep + fspath.join(*parts.slice(0,i + 1))
-		if fs.existsSync(path)
-			var stat = fs.statSync(path)
+		var dir = parts.slice(0,i + 1).join(fspath:sep)
+
+		if fs.existsSync(dir)
+			var stat = fs.statSync(dir)
 		elif part.match(/\.(imba|js)$/)
 			yes
 		else
-			fs.mkdirSync(path)
-			log chalk.green("+ mkdir {path}")
+			fs.mkdirSync(dir)
+			log chalk.green("+ mkdir {dir}")
 	return
 
 
@@ -340,6 +342,7 @@ def cli-compile root, o, watch: no
 		var srcIndex = dirs.indexOf('src')
 		if srcIndex >= 0
 			dirs[srcIndex] = 'lib'
+
 			var libPath = fspath:sep + fspath.join(*dirs)
 			# absolute paths here?
 			var libExists = fs.existsSync(libPath)
