@@ -148,6 +148,17 @@ def print-tokens tokens
 	log strings.join(' ')
 
 
+def isDir path
+	try
+		fs.statSync(path).isDirectory
+	catch e
+		no
+
+
+def copyFile source, dest
+	var data = fs.readFileSync(source,'utf-8')
+	fs.writeFileSync(dest,data)
+
 def ensure-dir path
 	return yes if fs.existsSync(path)
 	var parts = fspath.normalize(path).split(fspath:sep)
@@ -381,8 +392,8 @@ def cli-compile root, o, watch: no
 cli.version(package:version)
 
 cli.command('* <path>')
-	.usage('<path>')
 	.description('run imba')
+	.usage('<path>')
 	.action do |path,o|
 		var file = sourcefile-for-path(path)
 		file.run
@@ -423,6 +434,28 @@ cli.command('export <path>')
 		var file = sourcefile-for-path(path)
 		var out = file.htmlify # do |meta| log JSON.stringify(meta)
 		log JSON.stringify(out)
+		return
+
+
+cli.command('export-runtime <path>')
+	.description('eport the imba.js runtime to <path>')
+	.option('-m, --min', 'minified version')
+	.action do |path, opts|
+		var filename = (opts:min ? 'imba.min.js' : 'imba.js')
+		var rel = '../browser/' + filename
+		var lib = fspath.resolve(__dirname,rel)
+		var out = fspath.resolve(process.cwd,path)
+
+		if isDir(out)
+			var dir = fspath.resolve(out,filename)
+			log "write runetime to {b dir}"
+			copyFile(lib,dir)
+		elif out.match(/\.js$/)
+			log "write runetime to {b out}"
+			copyFile(lib,out)
+		else
+			log chalk.red("{b out} is not a directory")
+
 		return 
 
 cli.command('dev <task>')

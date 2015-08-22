@@ -1,3 +1,7 @@
+## Dev
+
+- Added `imba export-runtime` command to export the latest imba.js runtime.
+
 ## 0.11.5 (2015-08-20)
 
 - Don't single children in Imba.static
