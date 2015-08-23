@@ -1,6 +1,7 @@
-## Dev
+## 0.11.6 (2015-08-23)
 
 - Added `imba export-runtime` command to export the latest imba.js runtime.
+- Fix `imba watch` on Windows (issue #11)
 
 ## 0.11.5 (2015-08-20)
 
