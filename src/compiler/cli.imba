@@ -423,8 +423,7 @@ cli.command('watch <path>')
 
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')
-	.option('-v, --verbose', 'return detailed output')
-	.option('-t, --tokens', 'return detailed output')
+	.option('-t, --tokens', 'print the raw tokens')
 	.action do |path, opts|
 		var file = sourcefile-for-path(path)
 
@@ -435,10 +434,8 @@ cli.command('analyze <path>')
 			file.analyze do |meta|
 				log JSON.stringify(meta)
 
-cli.command('export <path>')
+cli.command('highlight <path>')
 	.description('create highlighted snippet of script')
-	.option('-v, --verbose', 'return detailed output')
-	.option('-t, --tokens', 'return detailed output')
 	.action do |path, opts|
 		var file = sourcefile-for-path(path)
 		var out = file.htmlify # do |meta| log JSON.stringify(meta)
@@ -477,6 +474,10 @@ cli.command('dev <task>')
 
 
 export def run argv
-	return cli.outputHelp if process:argv:length < 3
+	if process:argv:length < 3
+		return cli.outputHelp
+	elif process:argv:length == 3 and process:argv[2] == '-v'
+		return log package:version
+
 	cli.parse(argv)
 
