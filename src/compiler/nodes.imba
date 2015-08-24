@@ -4944,7 +4944,7 @@ export class For < Loop
 			body.unshift(OP('=',val,OP('.',vars:source,i)), BR)
 			# body.unshift(head)
 			# TODO check lengths - intelligently decide whether to brace and indent
-		var head = "for ({scope.vars.c}; {cond.c}; {final.c}) "
+		var head = "{mark__(options:keyword)}for ({scope.vars.c}; {cond.c}; {final.c}) "
 		head + body.c(braces: yes, indent: yes) # .wrap
 
 
@@ -5017,12 +5017,12 @@ export class ForOf < For
 			else
 				body.unshift(OP('=',k,OP('.',vars:keys,i)))
 
-			var head = "for ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
+			var head = "{mark__(options:keyword)}for ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
 			return head + body.c(indent: yes, braces: yes) # .wrap
 
 		var code = body.c(braces: yes, indent: yes)
 		# it is really important that this is a treated as a statement
-		scope.vars.c + ";\nfor (var {k.c} in {o.c})" + code
+		scope.vars.c + ";\n{mark__(options:keyword)}for (var {k.c} in {o.c})" + code
 
 	def head
 		var v = options:vars
@@ -5457,9 +5457,9 @@ export class Tag < Node
 			scope.context.c
 
 		elif o:id
-			"ti$('{type.func}',{id})"
+			"{mark__(o:open)}ti$('{type.func}',{id})"
 		else
-			"t$('{type.func}')"
+			"{mark__(o:open)}t$('{type.func}')"
 
 		# this is reactive if it has an ivar
 		if o:ivar
