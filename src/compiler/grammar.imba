@@ -216,7 +216,7 @@ var grammar =
 		o 'JS' do Literal.new A1
 		o 'REGEX' do RegExp.new A1
 		o 'BOOL' do Bool.new A1
-		o 'TRUE' do AST.TRUE
+		o 'TRUE' do AST.TRUE # should not cheat like this
 		o 'FALSE' do AST.FALSE
 		o 'NULL' do AST.NIL
 		o 'UNDEFINED' do AST.UNDEFINED
@@ -353,8 +353,8 @@ var grammar =
 	# Assignment of a variable, property, or index to a value.
 	Assign: [
 		# o 'SimpleAssignable , Assign' do A3
-		o 'Assignable = Expression' do Assign.new "=", A1, A3
-		o 'Assignable = INDENT Expression Outdent' do Assign.new "=", A1, A4.indented(A3,A5)
+		o 'Assignable = Expression' do Assign.new A2, A1, A3
+		o 'Assignable = INDENT Expression Outdent' do Assign.new A2, A1, A4.indented(A3,A5)
 	]
 
 	# Assignment when it happens within an object literal. The difference from

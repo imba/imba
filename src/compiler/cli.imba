@@ -135,15 +135,19 @@ def print-tokens tokens
 	var strings = for t in tokens
 		var typ = T.typ(t)
 		var id = T.val(t)
-
+		var s
 		if typ == 'TERMINATOR'
 			continue "[" + chalk.yellow(id.replace(/\n/g,"\\n")) + "]"
 
 		if id == typ
-			"[" + chalk.red(id) + "]"
+			s = "[" + chalk.red(id) + "]"
 		else
 			id = chalk.white(id)
-			chalk.grey "[{typ} {id}]"
+			s = chalk.grey "[{typ} {id}]"
+
+		if t.@col != -1
+			s = chalk.bold(s)
+		s
 
 	log strings.join(' ')
 
@@ -282,7 +286,7 @@ def printCompilerError e, source: null, tok: null, tokens: null
 
 
 
-def write-file source, outpath
+def write-file source, outpath, options = {}
 	ensure-dir(outpath)
 	# var outpath = source.path.replace(/\.imba$/,'.js')
 	# destpath = destpath.replace(basedir,outdir)
@@ -297,9 +301,11 @@ def write-file source, outpath
 
 	# log "made dirty"
 	# log ts, chalk:dim.grey "will compile {source.path}"
+	options:filename ||= source.path
+
 	try
 		var start = Date.now
-		var code = compiler.compile(source.code, filename: source.path)
+		var code = compiler.compile(source.code, options)
 		var time = Date.now - start
 		var ok = true
 		print " - " + chalk:dim.grey("{time}ms") + "\n"
@@ -317,7 +323,10 @@ def write-file source, outpath
 				# if warn:token
 				# 	print String(warn:token.@len)
 
-		fs.writeFileSync(outpath,code:js or code) if ok
+		if ok
+			fs.writeFileSync(outpath,code:js or code)
+			if let map = code:sourcemap
+				fs.writeFileSync(outpath.replace(/\.js$/,'.map'),JSON.stringify(map,null,2))
 
 	catch e
 		# print " - " + chalk:dim.red("failed") + "\n"
@@ -364,7 +373,7 @@ def cli-compile root, o, watch: no
 	if isFile and !watch
 		var source = sourcefileForPath(base)
 		var destpath = source.path.replace(/\.imba$/,'.js').replace(basedir,outdir)
-		write-file(source,destpath)
+		write-file(source,destpath,o)
 		return
 
 	log chalk.blue "--- write dir: {b out}"
@@ -386,7 +395,7 @@ def cli-compile root, o, watch: no
 			destpath = destpath.replace(basedir,outdir)
 			# should supply the dir
 			# log "write file {destpath}"
-			write-file(source,destpath)
+			write-file(source,destpath,o)
 	return
 
 cli.version(package:version)
@@ -401,16 +410,15 @@ cli.command('* <path>')
 
 cli.command('compile <path>')
 	.description('compile scripts')
+	.option('-m, --map', 'include sourcemaps')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |path,o| cli-compile path, o, watch: no
 
 cli.command('watch <path>')
 	.description('listen for changes and compile scripts')
+	.option('-m, --map', 'include sourcemaps')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
-	.option('--cache-tag-attributes', 'set the output directory for compiled JavaScript')
-	.action do |root,o|
-		# console.log o # ['cache-tag-attributes']
-		cli-compile(root,o,watch: yes)
+	.action do |root,o| cli-compile(root,o,watch: yes)
 
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')

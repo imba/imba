@@ -8,6 +8,7 @@ var v8 = null # require 'v8-natives'
 var T = require './token'
 var Token = T.Token
 
+import SourceMap from './sourcemap'
 
 export var AST = {}
 
@@ -127,6 +128,12 @@ export def parseError str, o
 def c__ obj
 	typeof obj == 'string' ? obj : obj.c
 
+def mark__ tok
+	if tok and OPTS:map and tok:sourceMapMarker
+		tok.sourceMapMarker
+	else
+		''
+
 def num__ num
 	Num.new(num)
 
@@ -242,6 +249,9 @@ export class Stack
 		@loglevel = 3
 		@counter = 0
 		self
+
+	def option key
+		@options and @options[key]
 
 	def addScope scope
 		@scopes.push(scope)
@@ -394,6 +404,9 @@ export class Node
 	def loc
 		[0,0]
 
+	def token
+		null
+
 	def compile
 		self
 
@@ -411,7 +424,6 @@ export class Node
 
 	def isReserved
 		no
-		
 
 	# should rather do traversals
 	# o = {}, up, key, index
@@ -649,12 +661,13 @@ export class Terminator < Meta
 	def traverse
 		self
 
-
-
 	def c
-		return @value.c
+		# TODO this can contain several newlines
+		# for sourcemaps it would be nice to parse this
+		# and fix it up
+		return mark__(@value) + @value.c
 		# var v = value.replace(/\\n/g,'\n')
-		v # .split()
+		# v # .split()
 		# v.split("\n").map(|v| v ? " // {v}" : v).join("\n")
 
 export class Newline < Terminator
@@ -1340,6 +1353,7 @@ export class Param < Node
 		return @variable.c if @variable
 
 		if defaults
+			# should not include any source-mapping here?
 			"if({name.c} == null) {name.c} = {defaults.c}"
 		# see if this is the initial declarator?
 
@@ -1781,6 +1795,7 @@ export class VarName < ValueNode
 	def visit
 		# p "visiting varname(!)", value.c
 		# should we not lookup instead?
+		# FIXME p "register value {value.c}"
 		self.variable ||= scope__.register(value.c,null)
 		self.variable.declarator = self
 		self.variable.addReference(value)
@@ -1891,6 +1906,11 @@ export class Root < Code
 		traverse
 		var out = c
 		var result = {js: out, warnings: scope.warnings, options: o, toString: (do this:js) }
+
+		if o:map
+			var mapper = SourceMap.new(result)
+			mapper.generate
+
 		return result
 
 	def js o
@@ -2442,7 +2462,7 @@ export class Undefined < Literal
 		yes
 
 	def c
-		"undefined"
+		mark__(@value) + "undefined"
 
 export class Nil < Literal
 	
@@ -2450,7 +2470,7 @@ export class Nil < Literal
 		yes
 
 	def c
-		"null"
+		mark__(@value) + "null"
 
 export class True < Bool
 
@@ -2458,7 +2478,7 @@ export class True < Bool
 		true
 
 	def c
-		"true"
+		mark__(@value) + "true"
 		
 export class False < Bool
 
@@ -2466,7 +2486,7 @@ export class False < Bool
 		false
 
 	def c
-		"false"
+		mark__(@value) + "false"
 
 export class Num < Literal
 	
@@ -2496,7 +2516,7 @@ export class Num < Literal
 		var paren = par isa Access and par.left == self
 		# only if this is the right part of teh acces
 		# console.log "should paren?? {shouldParenthesize}"
-		paren ? "(" + js + ")" : js
+		paren ? "({mark__(@value)}" + js + ")" : (mark__(@value) + js)
 		# @cache ? super(o) : String(@value)
 
 	def cache o
@@ -3323,7 +3343,7 @@ export class VarOrAccess < ValueNode
 		self
 
 	def c
-		@variable ? super() : value.c
+		mark__(@token) + (@variable ? super() : value.c)
 
 	def js o
 	
@@ -3432,7 +3452,7 @@ export class VarReference < ValueNode
 				ref.autodeclare
 			else
 				# 
-				out = "var {out}"
+				out = "var {mark__(@value)}{out}"
 				ref.@declared = yes
 				# ref.set(declared: yes)
 
@@ -3456,6 +3476,8 @@ export class VarReference < ValueNode
 		# console.log "value type for VarReference {@value} {@value.@loc} {@value:constructor}"
 
 		# should be possible to have a VarReference without a name as well? for a system-variable
+		# name should not set this way.
+		# p "varname {value} {value:constructor}"
 		var name = value.c
 
 		# what about looking up? - on register we want to mark
@@ -3608,7 +3630,8 @@ export class Assign < Op
 		# 	l.@variable.assigned(r)
 
 		# FIXME -- does not always need to be an expression?
-		var out = "{l.c} {op} {right.c(expression: true)}"
+		p "typeof op {@op:constructor}"
+		var out = "{l.c} {mark__(@op)}{op} {right.c(expression: true)}"
 
 		return out
 
@@ -4094,6 +4117,9 @@ export class Identifier < Node
 		@value.@variable = variable if @value
 		self
 
+	def sourceMapMarker
+		@value.sourceMapMarker
+
 	def load v
 		return (v isa Identifier ? v.value : v)
 
@@ -4135,7 +4161,14 @@ export class Identifier < Node
 		symbol
 
 	def c
-		symbol
+		# p "compile identifier"
+		# if STACK.option('map') and @value.@line
+		# 	var loc = "%%{@value.@line}${@value.@col}%%"
+		# 	return loc + symbol
+		# return mark__(@value) + 
+		return symbol
+		# STACK.option('map') ? ('$$$$' + symbol) : symbol
+		# symbol
 
 	def dump
 		{ loc: region }
@@ -4172,7 +4205,7 @@ export class Ivar < Identifier
 		'_' + name
 
 	def c
-		'_' + helpers.camelCase(@value).slice(1) # .replace(/^@/,'')
+		mark__(@value) + '_' + helpers.camelCase(@value).slice(1) # .replace(/^@/,'')
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
@@ -4551,10 +4584,12 @@ export class If < ControlFlow
 
 			code = body.c(braces: yes) # (braces: yes)
 			# don't wrap if it is only a single expression?
-			var out = "if ({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
+			var out = "{mark__(@type)}if ({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
 			out += " else {alt.c(alt isa If ? {} : brace)}" if alt
 			out
 
+	def sourceMapMarker
+		self
 
 	def consume node
 		# p 'assignify if?!'
@@ -6313,7 +6348,6 @@ export class Scope
 		return null
 
 	def register name, decl = null, o = {}
-
 		# FIXME re-registering a variable should really return the existing one
 		# Again, here we should not really have to deal with system-generated vars
 		# But again, it is important
@@ -6333,7 +6367,6 @@ export class Scope
 
 	# just like register, but we automatically 
 	def declare name, init = null, o = {}
-
 		var variable = register(name,null,o)
 		# TODO create the variabledeclaration here instead?
 		# if this is a sysvar we need it to be renameable

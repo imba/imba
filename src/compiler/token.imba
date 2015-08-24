@@ -50,7 +50,9 @@ export class Token
 
 	def region
 		[@loc,@loc + (@len or @value:length)]
-		
+
+	def sourceMapMarker
+		@col == -1 ? '' : "%%{@line}${@col}%%"
 
 export def lex
 	var token = this:tokens[this:pos++]
