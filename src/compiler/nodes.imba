@@ -129,7 +129,7 @@ def c__ obj
 	typeof obj == 'string' ? obj : obj.c
 
 def mark__ tok
-	if tok and OPTS:map and tok:sourceMapMarker
+	if tok and OPTS:sourceMapInline and tok:sourceMapMarker
 		tok.sourceMapMarker
 	else
 		''
@@ -664,8 +664,8 @@ export class Terminator < Meta
 	def c
 		# TODO this can contain several newlines
 		# for sourcemaps it would be nice to parse this
-		# and fix it up
-		return mark__(@value) + @value.c
+		# and fix it up mark__(@value) + 
+		return @value.c
 		# var v = value.replace(/\\n/g,'\n')
 		# v # .split()
 		# v.split("\n").map(|v| v ? " // {v}" : v).join("\n")
@@ -1907,9 +1907,8 @@ export class Root < Code
 		var out = c
 		var result = {js: out, warnings: scope.warnings, options: o, toString: (do this:js) }
 
-		if o:map
-			var mapper = SourceMap.new(result)
-			mapper.generate
+		if o:sourceMapInline
+			SourceMap.new(result).generate
 
 		return result
 
@@ -1984,6 +1983,7 @@ export class ClassDeclaration < Code
 
 		var bodyindex = -1
 		var spaces = body.filter do |item| item isa Terminator
+		var mark = mark__(option('keyword'))
 
 		body.map do |c,i|
 			if c isa MethodDeclaration && c.type == :constructor
@@ -2000,9 +2000,9 @@ export class ClassDeclaration < Code
 
 		if !initor
 			if sup
-				initor = "function {cname}()\{ {sup.c}.apply(this,arguments) \};\n\n"
+				initor = "{mark}function {cname}()\{ {sup.c}.apply(this,arguments) \};\n\n"
 			else
-				initor = "function {cname}()" + '{ };\n\n'
+				initor = "{mark}function {cname}()" + '{ };\n\n'
 			
 		else
 			initor.name = cname
@@ -2078,18 +2078,19 @@ export class TagDeclaration < Code
 	def js o
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
 
+		var mark = mark__(option('keyword'))
 		var cbody = body.c
 		var outbody = body.count ? ", function({@ctx.c})\{{cbody}\}" : ''
 
 		if option(:extension)
-			return "Imba.extendTag('{name.id or name.func}'{outbody})"
+			return "{mark}Imba.extendTag('{name.id or name.func}'{outbody})"
 
 		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
 
 		var out = if name.id
-			"Imba.defineSingletonTag('{name.id}'{sup}{outbody})"
+			"{mark}Imba.defineSingletonTag('{name.id}'{sup}{outbody})"
 		else
-			"Imba.defineTag('{name.func}'{sup}{outbody})"
+			"{mark}Imba.defineTag('{name.func}'{sup}{outbody})"
 
 		return out
 
@@ -2235,9 +2236,8 @@ export class MethodDeclaration < Func
 
 		var ctx = context
 		var out = ""
+		var mark = mark__(option('def'))
 		# if ctx 
-
-
 
 		var fname = sym__(self.name)
 		# console.log "symbolize {self.name} -- {fname}"
@@ -2245,24 +2245,24 @@ export class MethodDeclaration < Func
 
 		if ctx isa ClassScope and !target
 			if type == :constructor
-				out = "function {fname}{func}"
+				out = "{mark}function {fname}{func}"
 			elif option(:static)
-				out = "{ctx.context.c}.{fname} = function {func}"
+				out = "{mark}{ctx.context.c}.{fname} = function {func}"
 			else
-				out = "{ctx.context.c}.prototype.{fname} = function {func}"
+				out = "{mark}{ctx.context.c}.prototype.{fname} = function {func}"
 
 		elif ctx isa FileScope and !target
 			# register method as a root-function, but with auto-call? hmm
 			# should probably set using variable directly instead, no?
-			out = "function {fdecl}{func}"
+			out = "{mark}function {fdecl}{func}"
 
 		elif target and option(:static)
-			out = "{target.c}.{fname} = function {func}"
+			out = "{mark}{target.c}.{fname} = function {func}"
 
 		elif target
-			out = "{target.c}.prototype.{fname} = function {func}"
+			out = "{mark}{target.c}.prototype.{fname} = function {func}"
 		else
-			out = "function {fdecl}{func}"
+			out = "{mark}function {fdecl}{func}"
 
 		if option(:global)
 			out = "{fname} = {out}"
@@ -2846,6 +2846,7 @@ export class Op < Node
 		@parens = no
 		@cache = null
 		@invert = no
+		@opToken = o
 		@op = o and o.@value or o
 		@left = l
 		@right = r
@@ -2871,9 +2872,9 @@ export class Op < Node
 		r = r.c if r isa Node
 
 		if l && r
-			out = "{l} {op} {r}"
+			out = "{l} {mark__(@opToken)}{op} {r}"
 		elif l
-			out = "{op}{l}"
+			out = "{mark__(@opToken)}{op}{l}"
 		# out = out.parenthesize if up isa Op # really?
 		out
 
@@ -2925,7 +2926,7 @@ export class ComparisonOp < Op
 
 		l = l.c if l isa Node
 		r = r.c if r isa Node
-		return "{l} {op} {r}"
+		return "{l} {mark__(@opToken)}{op} {r}"
 
 		
 export class MathOp < Op
@@ -3542,6 +3543,7 @@ export class Assign < Op
 		@parens = no
 		@cache = null
 		@invert = no
+		@opToken = o
 		@op = o and o.@value or o
 		@left = l
 		@right = r
@@ -3630,8 +3632,8 @@ export class Assign < Op
 		# 	l.@variable.assigned(r)
 
 		# FIXME -- does not always need to be an expression?
-		p "typeof op {@op:constructor}"
-		var out = "{l.c} {mark__(@op)}{op} {right.c(expression: true)}"
+		# p "typeof op {@opToken and @opToken:constructor}"
+		var out = "{l.c} {mark__(@opToken)}{op} {right.c(expression: true)}"
 
 		return out
 
@@ -5502,7 +5504,7 @@ export class Tag < Node
 					# need to analyze whether this is static or not
 					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c})"
 				else
-					pjs = ".{helpers.setterSym(akey)}({aval.c})"
+					pjs = ".{mark__(part.key)}{helpers.setterSym(akey)}({aval.c})"
 
 			elif part isa TagFlag
 				pjs = part.c

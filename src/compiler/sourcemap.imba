@@ -18,17 +18,24 @@ export class SourceMap
 	def filename
 		options:options:filename
 
-	def sourceName
-		path.basename(filename)
+	def targetPath
+		options:options:targetPath
 
 	def sourcePath
-		options:options:filename
+		options:options:sourcePath
+
+	def sourceName
+		path.basename(sourcePath)
+
+	def targetName
+		path.basename(targetPath)
+		
 
 	def sourceFiles
 		[sourceName]
 
 	def parse
-		console.log "PARSE"
+		# console.log "PARSE"
 		var matcher = /\%\%(\d*)\$(\d*)\%\%/
 		var replacer = /^(.*?)\%\%(\d*)\$(\d*)\%\%/
 		var lines = options:js.split(/\n/g) # what about js?
@@ -52,12 +59,8 @@ export class SourceMap
 					return pre
 			lines[i] = line
 
-		@js = lines.join('\n')
-
-		console.log JSON.stringify(@maps)
-		console.log @source:js
-		options:js = lines.join('\n')
-		options:js += "\n//# sourceMappingURL={sourceName.replace(/\.imba$/,'.map')}"
+		# console.log source:js
+		source:js = lines.join('\n')
 		self
 
 	def generate
@@ -90,16 +93,23 @@ export class SourceMap
 
 			buffer += ";"
 
+		var rel = path.relative(path.dirname(targetPath),sourcePath)
+
+		# console.log sourcePath, targetPath, rel
+
 		var sourcemap =
 			version: 3
 			file: sourceName.replace(/\.imba/,'.js') or ''
 			sourceRoot: options:sourceRoot or ''
-			sources:    sourceFiles
+			sources:    [rel]
 			names:      []
 			mappings:   buffer
 
 		options:sourcemap = sourcemap
-		
+		var base64 = Buffer.new(JSON.stringify(sourcemap)).toString("base64")
+		# var base64 = "data:application/json;base64,{base64}"
+		# options:js += "\n//# sourceMappingURL={sourceName.replace(/\.imba$/,'.map')}"
+		source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
 		self
 
 	VLQ_SHIFT = 5

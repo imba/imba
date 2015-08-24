@@ -146,7 +146,7 @@ def print-tokens tokens
 			s = chalk.grey "[{typ} {id}]"
 
 		if t.@col != -1
-			s = chalk.bold(s)
+			s = '#' + s # chalk.bold(s)
 		s
 
 	log strings.join(' ')
@@ -302,6 +302,8 @@ def write-file source, outpath, options = {}
 	# log "made dirty"
 	# log ts, chalk:dim.grey "will compile {source.path}"
 	options:filename ||= source.path
+	options:sourcePath = source.path
+	options:targetPath = outpath
 
 	try
 		var start = Date.now
@@ -325,9 +327,8 @@ def write-file source, outpath, options = {}
 
 		if ok
 			fs.writeFileSync(outpath,code:js or code)
-			if let map = code:sourcemap
-				fs.writeFileSync(outpath.replace(/\.js$/,'.map'),JSON.stringify(map,null,2))
-
+			# if let map = code:sourcemap
+			# 	fs.writeFileSync(outpath.replace(/\.js$/,'.map'),JSON.stringify(map,null,2))
 	catch e
 		# print " - " + chalk:dim.red("failed") + "\n"
 		printCompilerError(e, source: source) # e:message + "\n"
@@ -410,13 +411,13 @@ cli.command('* <path>')
 
 cli.command('compile <path>')
 	.description('compile scripts')
-	.option('-m, --map', 'include sourcemaps')
+	.option('-m, --source-map-inline', 'Embed inline sourcemap in compiled JavaScript')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |path,o| cli-compile path, o, watch: no
 
 cli.command('watch <path>')
 	.description('listen for changes and compile scripts')
-	.option('-m, --map', 'include sourcemaps')
+	.option('-m, --source-map-inline', 'Embed inline sourcemap in compiled JavaScript')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |root,o| cli-compile(root,o,watch: yes)
 

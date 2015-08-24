@@ -283,7 +283,7 @@ var grammar =
 		o 'TagOptions @ { Expression }' do A1.set(key: A4)
 		o 'TagOptions # IDENTIFIER' do A1.set(id: A3)
 		o 'TagOptions Ivar' do A1.set(ivar: A2)
-		o 'TagOptions # { Expression }' do A1.set(id: A4)
+		o 'TagOptions # { Expression }' do A1.set(id: A4) # need to add info about the tokens
 	]
 
 
@@ -296,7 +296,7 @@ var grammar =
 
 	TagAttr: [
 		o 'TAG_ATTR' do TagAttr.new(A1,A1)
-		o 'TAG_ATTR = TagAttrValue' do TagAttr.new(A1,A3)
+		o 'TAG_ATTR = TagAttrValue' do TagAttr.new(A1,A3,A2)
 	]
 
 	TagAttrValue: [
@@ -325,10 +325,10 @@ var grammar =
 	]
 
 	TagDeclarationBlock: [
-		o 'TAG TagType' do TagDeclaration.new A2
-		o 'TAG TagType Block' do TagDeclaration.new A2, null, A3
-		o 'TAG TagType COMPARE TagType' do TagDeclaration.new A2, A4
-		o 'TAG TagType COMPARE TagType Block' do TagDeclaration.new A2, A4, A5
+		o 'TAG TagType' do TagDeclaration.new(A2).set(keyword: A1)
+		o 'TAG TagType Block' do TagDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'TAG TagType COMPARE TagType' do TagDeclaration.new(A2, A4).set(keyword: A1)
+		o 'TAG TagType COMPARE TagType Block' do TagDeclaration.new(A2, A4, A5).set(keyword: A1)
 	]
 
 	TagDeclKeywords: [
@@ -433,18 +433,18 @@ var grammar =
 
 	MethodDeclaration: [
 		o 'DEF MethodScope MethodScopeType MethodIdentifier CALL_START ParamList CALL_END DEF_BODY MethodBody' do
-			MethodDeclaration.new A6, A9, A4, A2, A3
+			MethodDeclaration.new(A6, A9, A4, A2, A3).set(def: A1)
 
 		o 'DEF MethodScope MethodScopeType MethodIdentifier DEF_BODY MethodBody' do
-			MethodDeclaration.new [], A6, A4, A2, A3
+			MethodDeclaration.new([], A6, A4, A2, A3).set(def: A1)
 
 		o 'DEF MethodIdentifier CALL_START ParamList CALL_END DEF_BODY MethodBody' do
-			MethodDeclaration.new A4, A7, A2, null
+			MethodDeclaration.new(A4, A7, A2, null).set(def: A1)
 
 		o 'DEF MethodIdentifier DEF_BODY MethodBody' do
-			MethodDeclaration.new [], A4, A2, null
+			MethodDeclaration.new([], A4, A2, null).set(def: A1)
 
-		# haaaacks
+		# haaaacks - deprecate
 		o 'DEF MethodScope MethodScopeType MethodIdentifier CALL_START ParamList CALL_END DEF_FRAGMENT MethodBody' do 
 			MethodDeclaration.new(A6, A9, A4, A2, A3).set(greedy: yes)
 
@@ -639,12 +639,13 @@ var grammar =
 	]
 
 	ClassStart: [
-		o 'CLASS SimpleAssignable' do ClassDeclaration.new A2, null, [] # empty blocks
-		o 'CLASS SimpleAssignable Block' do ClassDeclaration.new A2, null, A3
-		o 'CLASS SimpleAssignable COMPARE Expression' do ClassDeclaration.new A2, A4, []
-		o 'CLASS SimpleAssignable COMPARE Expression Block' do ClassDeclaration.new A2, A4, A5
+		o 'CLASS SimpleAssignable' do ClassDeclaration.new(A2, null, []).set(keyword: A1)
+		o 'CLASS SimpleAssignable Block' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'CLASS SimpleAssignable COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
+		o 'CLASS SimpleAssignable COMPARE Expression Block' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
 	]
 
+	# should be removed - not used
 	Module: [
 		o 'MODULE SimpleAssignable' do Module.new A2
 		o 'MODULE SimpleAssignable Block' do Module.new A2, null, A3
@@ -769,7 +770,7 @@ var grammar =
 	]
 	# The condition portion of a while loop.
 	WhileSource: [
-		o 'WHILE Expression' do While.new A2
+		o 'WHILE Expression' do While.new(A2)
 		o 'WHILE Expression WHEN Expression' do While.new A2, guard: A4
 		o 'UNTIL Expression' do While.new A2, invert: true
 		o 'UNTIL Expression WHEN Expression' do While.new A2, invert: true, guard: A4
@@ -785,6 +786,7 @@ var grammar =
 		o 'Loop' do A1
 	]
 
+	# should deprecate
 	Loop: [
 		o 'LOOP Block' do While.new(Literal.new 'true').addBody A2
 		o 'LOOP Expression' do While.new(Literal.new 'true').addBody Block.wrap [A2]
@@ -810,12 +812,14 @@ var grammar =
 
 	ForBody: [
 		o 'ForKeyword Range' do source: ValueNode.new(A2)
-		o 'ForStart ForSource' do A2.configure(own: A1:own, name: A1[0], index: A1[1])
+		o 'ForStart ForSource' do A2.configure(own: A1:own, name: A1[0], index: A1[1], keyword: A1:keyword)
 	]
 
 	ForStart: [
-		o 'ForKeyword ForVariables' do A2
-		o 'ForKeyword OWN ForVariables' do (A3:own = yes) && A3
+		o 'ForKeyword ForVariables' do (A2:keyword = A1) && A2
+
+		# should link to the actual keyword instead
+		o 'ForKeyword OWN ForVariables' do (A3:own = yes) && (A3:keyword = A1) && A3
 
 	]
 
@@ -913,8 +917,8 @@ var grammar =
 		# [The existential operator](http://jashkenas.github.com/coffee-script/#existence).
 		o 'Expression ?' do Existence.new A1
 
-		o 'Expression +  Expression' do Op.new('+',A1,A3)
-		o 'Expression -  Expression' do Op.new('-',A1,A3)
+		o 'Expression +  Expression' do Op.new(A2,A1,A3)
+		o 'Expression -  Expression' do Op.new(A2,A1,A3)
 
 		o 'Expression MATH     Expression' do AST.OP A2, A1, A3
 		o 'Expression SHIFT    Expression' do AST.OP A2, A1, A3
