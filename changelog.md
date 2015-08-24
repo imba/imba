@@ -1,3 +1,7 @@
+## Edge
+
+- Preliminary support for source maps (through `--source-map-inline` option for ̀`imba watch` and `imba compile`
+
 ## 0.11.6 (2015-08-23)
 
 - Added `imba export-runtime` command to export the latest imba.js runtime.
