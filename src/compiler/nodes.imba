@@ -349,15 +349,15 @@ export class Node
 	def safechain
 		no
 
-	def dom
-		var name = "ast_" + self:constructor:name.replace(/([a-z])([A-Z])/g,"$1_$2").toLowerCase
-		# p "try to get the dom-node for this ast-node",name
-		if Imba.TAGS[name]
-			var node = Imba.tag(name)
-			node.bind(self).build
-			return node
-		else
-			return "[{name}]"
+	# def dom
+	# 	var name = "ast_" + self:constructor:name.replace(/([a-z])([A-Z])/g,"$1_$2").toLowerCase
+	# 	# p "try to get the dom-node for this ast-node",name
+	# 	if Imba.TAGS[name]
+	# 		var node = Imba.tag(name)
+	# 		node.bind(self).build
+	# 		return node
+	# 	else
+	# 		return "[{name}]"
 
 	def p
 	
