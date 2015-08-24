@@ -1,6 +1,6 @@
-## Edge
+## 0.12.0 (2015-08-24)
 
-- Preliminary support for source maps (through `--source-map-inline` option for ̀`imba watch` and `imba compile`
+- Preliminary support for source maps (through `--source-map-inline` option for ̀`imba watch` and `imba compile`)
 
 ## 0.11.6 (2015-08-23)
 
