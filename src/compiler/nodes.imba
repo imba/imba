@@ -4221,7 +4221,7 @@ export class Const < Identifier
 		symbol
 
 	def c
-		symbol
+		mark__(@value) + symbol
 
 export class TagTypeIdentifier < Identifier
 
