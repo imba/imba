@@ -443,19 +443,6 @@ var grammar =
 
 		o 'DEF MethodIdentifier DEF_BODY MethodBody' do
 			MethodDeclaration.new([], A4, A2, null).set(def: A1)
-
-		# haaaacks - deprecate
-		o 'DEF MethodScope MethodScopeType MethodIdentifier CALL_START ParamList CALL_END DEF_FRAGMENT MethodBody' do 
-			MethodDeclaration.new(A6, A9, A4, A2, A3).set(greedy: yes)
-
-		o 'DEF MethodScope MethodScopeType MethodIdentifier DEF_FRAGMENT MethodBody' do
-			MethodDeclaration.new([], A6, A4, A2, A3).set(greedy: yes)
-
-		o 'DEF MethodIdentifier CALL_START ParamList CALL_END DEF_FRAGMENT MethodBody' do 
-			MethodDeclaration.new(A4, A7, A2, null).set(greedy: yes)
-
-		o 'DEF MethodIdentifier DEF_FRAGMENT MethodBody' do
-			MethodDeclaration.new([], A4, A2, null).set(greedy: yes)
 	]
 
 	MethodScopeType: [
@@ -518,14 +505,8 @@ var grammar =
 
 	# A splat that occurs outside of a parameter list.
 	Splat: [
-		# o '... Expression' do Splat.new A2
 		o 'SPLAT Expression' do AST.SPLAT(A2)
 	]
-
-	# Reference: [
-	# 	o 'Value Symbol' do Reference.new A1, A2
-	# 	# o 'Value INDEX_START IndexValue INDEX_END' do Reference.new A1, A3.index
-	# ]
 
 	VarReference: [
 		o 'VAR SPLAT VarAssignable' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
@@ -584,7 +565,7 @@ var grammar =
 	]
 
 	Await: [
-		o 'AWAIT Expression' do Await.new(A2)
+		o 'AWAIT Expression' do Await.new(A2).set(keyword: A1)
 	]
 
 	# The types of things that can be treated as values -- assigned to, invoked
@@ -655,8 +636,6 @@ var grammar =
 	Invocation: [
 		o 'Value OptFuncExist Arguments' do Call.new A1, A3, A2
 		o 'Value Do' do A1.addBlock(A2)
-		# o 'Invocation OptFuncExist Arguments' do Call.new A1, A3, A2
-		# o 'Invocation Do' do A1.addBlock(A2)
 	]
 
 	# An optional existence check on a function.
@@ -674,8 +653,6 @@ var grammar =
 	# A reference to the *this* current object.
 	This: [
 		o 'THIS' do This.new(A1) # Value.new Literal.new 'this'
-		
-		# Add a Self-node instead
 	]
 
 	Self: [
@@ -689,6 +666,7 @@ var grammar =
 	]
 
 	# Inclusive and exclusive range dots.
+	# should return the tokens instead
 	RangeDots: [
 		o '..' do '..'
 		o '...' do '...'
