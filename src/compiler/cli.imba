@@ -444,7 +444,7 @@ cli.command('highlight <path>')
 
 
 cli.command('export-runtime <path>')
-	.description('eport the imba.js runtime to <path>')
+	.description('export the imba.js runtime to <path>')
 	.option('-m, --min', 'minified version')
 	.action do |path, opts|
 		var filename = (opts:min ? 'imba.min.js' : 'imba.js')
@@ -454,10 +454,10 @@ cli.command('export-runtime <path>')
 
 		if isDir(out)
 			var dir = fspath.resolve(out,filename)
-			log "write runetime to {b dir}"
+			log "write runtime to {b dir}"
 			copyFile(lib,dir)
 		elif out.match(/\.js$/)
-			log "write runetime to {b out}"
+			log "write runtime to {b out}"
 			copyFile(lib,out)
 		else
 			log chalk.red("{b out} is not a directory")
