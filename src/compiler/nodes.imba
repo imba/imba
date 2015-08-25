@@ -2000,7 +2000,7 @@ export class ClassDeclaration < Code
 
 		if !initor
 			if sup
-				initor = "{mark}function {cname}()\{ {sup.c}.apply(this,arguments) \};\n\n"
+				initor = "{mark}function {cname}()\{ return {sup.c}.apply(this,arguments) \};\n\n"
 			else
 				initor = "{mark}function {cname}()" + '{ };\n\n'
 			
