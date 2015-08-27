@@ -95,14 +95,14 @@ tag input
 		dom:value
 
 	def value= v
-		dom:value = v
+		dom:value = v unless v == dom:value
 		self
 
 	def checked
 		dom:checked
 
 	def checked= bool
-		dom:checked = bool
+		dom:checked = bool unless bool == dom:checked
 		self
 
 tag ins
@@ -164,7 +164,7 @@ tag select
 		dom:value
 
 	def value= v
-		dom:value = v
+		dom:value = v unless v == dom:value
 		self
 
 
@@ -195,7 +195,7 @@ tag textarea
 		dom:value
 
 	def value= v
-		dom:value = v
+		dom:value = v unless v == dom:value
 		self
 
 tag tfoot
