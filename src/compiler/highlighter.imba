@@ -1,6 +1,6 @@
 
 var lexer = require './lexer'
-var imba = require './index'
+var imba = require './compiler'
 
 export class Highlighter
 
