@@ -62,8 +62,9 @@ export def compile code, o = {}
 
 
 export def highlight code, o = {}
-	var tokens = tokenize(code,o)
-	var ast = parse(tokens,o)
+
+	var tokens = o:tokens or tokenize(code,o)
+	var ast = o:ast or parse(tokens,o)
 	var hl = Highlighter.new(code,tokens,ast,o)
 	return hl.process
 	# try

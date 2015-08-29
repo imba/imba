@@ -387,7 +387,8 @@ export class Lexer
 			code = "\n{code}"
 			return [] if code.match(/^\s*$/g)
 
-		code = code.replace(/\r/g, '').replace TRAILING_SPACES, ''
+		# code = code.replace(/\r/g, '').replace TRAILING_SPACES, ''
+		code = code.replace(/\r/g, '').replace /[\t ]+$/g, ''
 
 		@last    = nil
 		@lastTyp = nil
@@ -410,7 +411,9 @@ export class Lexer
 		console.time("tokenize:lexer") if o:profile
 		parse(code)
 		closeIndentation unless o:inline
-		error "missing {tok}" if var tok = @ends.pop
+		if !o:silent and @ends:length
+			error "missing {@ends.pop}"
+
 		console.timeEnd("tokenize:lexer") if o:profile
 		return @tokens if o:rewrite == no or o:norewrite
 		return Rewriter.new.rewrite(@tokens, o)

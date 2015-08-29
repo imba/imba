@@ -1905,7 +1905,13 @@ export class Root < Code
 		OPTS = o
 		traverse
 		var out = c
-		var result = {js: out, warnings: scope.warnings, options: o, toString: (do this:js) }
+		var result = {
+			js: out,
+			ast: self,
+			warnings: scope.warnings,
+			options: o,
+			toString: (do this:js)
+		}
 
 		if o:sourceMapInline
 			SourceMap.new(result).generate
