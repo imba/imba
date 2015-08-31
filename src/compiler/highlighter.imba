@@ -21,9 +21,9 @@ export class Highlighter
 		# @options:nextVarCounter
 		# will stick - no
 		@varRefs[variable.@ref] ||= (pfx + @options:nextVarCounter++)
-		
 
 	def process
+		var o = options
 		var marked = require 'marked'
 		# var hljs = require 'highlight.js'
 		# hljs.configure classPrefix: ''
@@ -54,7 +54,8 @@ export class Highlighter
 
 		var sections = []
 
-		try @ast.analyze({}) catch e nil
+		if @ast
+			try @ast.analyze({}) catch e null
 
 		var res = ""
 		# should rather add onto another string instead of reslicing the same string on every iteration
@@ -139,6 +140,8 @@ export class Highlighter
 		var open,close
 
 		def comments sub
+			return sub if o:plain
+
 			sub.replace(/(\#)([^\n]*)/g) do |m,s,q|
 				# q = marked(q)
 				# q = 
@@ -237,7 +240,7 @@ export class Highlighter
 				let ref = self.varRef(tok.@variable)
 				cls.push("ref-"+ref)
 
-			if typ == 'herecomment'
+			if typ == 'herecomment' and !o:plain
 				addSection(res) # resetting
 
 				# content = content.replace(/(^\s*###\n*|\n*###\s*$)/g,'<s>$1</s>')
@@ -267,6 +270,10 @@ export class Highlighter
 		# split # convert to group?
 
 		var json = sections: []
+
+		# no sections - only code - straight out
+		if o:plain
+			return res
 
 		addSection(res, type: 'code')
 
