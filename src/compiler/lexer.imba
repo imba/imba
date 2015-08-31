@@ -1815,7 +1815,7 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter
 
-		error "missing { stack.pop }, starting"
+		error "missing { stack.pop }, starting" unless @opts:silent
 
 	# Expand variables and expressions inside double-quoted strings using
 	# Ruby-like notation for substitution of arbitrary expressions.
@@ -1984,14 +1984,7 @@ export class Lexer
 			@indent -= size
 			outdentToken(size, true, 0)
 			return pair(tok)
-		# FIXME move into endSelector
-		if false and tok == '%' # move outside?
-			# have not added to the loc just yet
-			token('SELECTOR_END','%',0)
-		# @ends["_" + (@ends:length - 1)] = undefined
 		self.popEnd
-		# @contexts.pop
-		# @ends.pop
 
 
 	# Helpers
