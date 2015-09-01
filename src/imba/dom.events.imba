@@ -456,6 +456,7 @@ class Imba.Event
 
 	def cancel
 		event.preventDefault if event:preventDefault
+		@cancel = yes
 		self
 
 	def target

@@ -4,6 +4,7 @@ var path = require 'path'
 
 # var imba = require '../imba'
 var T = require './token'
+var ERR = require './errors'
 var lexer = require './lexer'
 var rewriter = require './rewriter'
 export var parser = require('./parser')['parser']
@@ -60,6 +61,21 @@ export def compile code, o = {}
 		# err:message = "In {o:filename}, {err:message}" if o:filename
 		throw err
 
+
+export def analyze code, o = {}
+	var meta
+	try
+		var ast = parse(code,o)
+		meta = ast.analyze(loglevel: 0)
+	catch e
+		# console.log "something wrong {e:message}"
+		unless e isa ERR.ImbaParseError
+			if e:lexer
+				e = ERR.ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
+			else
+				throw e
+		meta = {warnings: [e]}
+	return meta
 
 export def highlight code, o = {}
 

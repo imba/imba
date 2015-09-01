@@ -2,6 +2,52 @@
 var lexer = require './lexer'
 var imba = require './compiler'
 
+var classes = {
+	'+': '_imop op add math'
+	'++': '_imop op incr math'
+	'--': '_imop op decr math'
+	'-': '_imop op sub math'
+	'=': '_imop op eq'
+	'/': '_imop op div math'
+	'*': '_imop op mult math'
+	'?': '_imop op ternary'
+	',': '_imop comma'
+	':': '_imop op colon'
+	'.': '_imop op dot'
+	'.:': '_imop op cdot'
+	'?.': '_imop op qdot'
+	'[': ['s','sbl']
+	']': ['s','sbr']
+	'(': 'rb rbl'
+	')': 'rb rbr'
+	'var': '_imkeyword'
+	'compound_assign': 'op assign compound'
+	'call_start': 'call rb rbl'
+	'call_end': 'call rb rbr'
+	'str': '_imstr string'
+	'num': '_imnum number'
+	'string': '_imstr string'
+	'number': '_imnum number'
+	'math': '_imop op math'
+	'forin': 'keyword in'
+	'forof': 'keyword of'
+	'own': 'keyword own'
+	'compare': '_imop op compare'
+	'herecomment': ['blockquote','comment']
+	'relation': 'keyword relation'
+	'export': 'keyword export'
+	'global': 'keyword global'
+	'extern': 'keyword global'
+	'extend': 'keyword extend'
+	'require': 'keyword require'
+	'from': 'keyword from'
+	'logic': 'keyword logic'
+	'post_if': 'keyword if post_if'
+	'post_for': 'keyword for post_for'
+	'prop': 'keyword prop'
+	'attr': 'keyword attr'
+}
+
 export class Highlighter
 
 	prop options
@@ -58,34 +104,23 @@ export class Highlighter
 			try @ast.analyze({}) catch e null
 
 		var res = ""
-		# should rather add onto another string instead of reslicing the same string on every iteration
-
-		if false
-			while var tok = @tokens[--pos]
-				continue if tok.@col == -1
-				var loc = tok.@loc
-				var len = tok.@len or tok.@value:length
-				true
-				console.log "token {loc}"
-				str = str.substring(0,loc - 1) + '<a>' + str.substr(loc,len) + '</a>' + str.slice(loc + len)
-
 		var pos = 0
 		var caret = 0
 
 		var classes = {
-			'+': 'op add math'
-			'++': 'op incr math'
-			'--': 'op decr math'
-			'-': 'op sub math'
-			'=': 'op eq'
-			'/': 'op div math'
-			'*': 'op mult math'
-			'?': 'op ternary'
-			',': 'comma'
-			':': 'op colon'
-			'.': 'op dot'
-			'.:': 'op cdot'
-			'?.': 'op qdot'
+			'+': '_imop op add math'
+			'++': '_imop op incr math'
+			'--': '_imop op decr math'
+			'-': '_imop op sub math'
+			'=': '_imop op eq'
+			'/': '_imop op div math'
+			'*': '_imop op mult math'
+			'?': '_imop op ternary'
+			',': '_imop comma'
+			':': '_imop op colon'
+			'.': '_imop op dot'
+			'.:': '_imop op cdot'
+			'?.': '_imop op qdot'
 			'[': ['s','sbl']
 			']': ['s','sbr']
 			'(': 'rb rbl'
@@ -93,13 +128,15 @@ export class Highlighter
 			'compound_assign': 'op assign compound'
 			'call_start': 'call rb rbl'
 			'call_end': 'call rb rbr'
-			'str': 'string'
-			'num': 'number'
-			'math': 'op math'
+			'str': '_imstr string'
+			'num': '_imnum number'
+			'string': '_imstr string'
+			'number': '_imnum number'
+			'math': '_imop op math'
 			'forin': 'keyword in'
 			'forof': 'keyword of'
 			'own': 'keyword own'
-			'compare': 'op compare'
+			'compare': '_imop op compare'
 			'herecomment': ['blockquote','comment']
 			'relation': 'keyword relation'
 			'export': 'keyword export'
@@ -116,14 +153,14 @@ export class Highlighter
 		}
 
 		var OPEN = {
-			'tag_start': 'tag'
-			'selector_start': 'sel'
+			'tag_start': '_imtag tag'
+			'selector_start': '_imsel sel'
 			'index_start': 'index'
 			'indent': '_indent'
-			'(': 'paren'
-			'{': 'curly'
-			'[': 'square'
-			'("': 'string'
+			'(': '_imparens paren'
+			'{': '_imcurly curly'
+			'[': '_imsquare square'
+			'("': '_imistring string'
 		}
 
 		var CLOSE = {
@@ -165,7 +202,7 @@ export class Highlighter
 
 			if close
 				res += "</i>"
-				close = nil
+				close = null
 
 			var typ = tok.@type.toLowerCase
 			var loc = tok.@loc
@@ -228,6 +265,8 @@ export class Highlighter
 			if typ == 'identifier'
 				if content[0] == '#'
 					cls.push('idref')
+				else
+					cls.unshift('_imtok')
 				
 				if meta
 					# console.log "META"
@@ -255,7 +294,8 @@ export class Highlighter
 
 			if typ == 'string'
 				cls.push('pathname') if content.match(/^['"]?\.?\.\//)
-				content = content.replace(/(^['"]|['"]$)/g) do |m| '<s>' + m + '</s>'
+				# dont do this anymore
+				# content = content.replace(/(^['"]|['"]$)/g) do |m| '<s>' + m + '</s>'
 
 			res += "<{node} class='{cls.join(" ")}'>" + content + "</{node}>"
 

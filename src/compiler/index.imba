@@ -16,3 +16,6 @@ export def compile code, o = {}
 
 export def highlight code, o = {}
 	compiler.highlight(code,o)
+
+export def analyze code, o = {}
+	compiler.analyze(code,o)
