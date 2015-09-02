@@ -304,6 +304,11 @@ export class Highlighter
 			# console.log "token {loc}"
 			# str = str.substring(0,loc - 1) + '<a>' + str.substr(loc,len) + '</a>' + str.slice(loc + len)
 
+		# close after?
+		if close
+			res += "</i>"
+			close = null
+
 		if caret < str:length - 1
 			res += comments(str.slice(caret))
 
