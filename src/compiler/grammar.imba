@@ -892,9 +892,6 @@ var grammar =
 		o 'SimpleAssignable --' do UnaryOp.new '--', A1, null, true
 		o 'SimpleAssignable ++' do UnaryOp.new '++', A1, null, true
 
-		# [The existential operator](http://jashkenas.github.com/coffee-script/#existence).
-		o 'Expression ?' do Existence.new A1
-
 		o 'Expression +  Expression' do Op.new(A2,A1,A3)
 		o 'Expression -  Expression' do Op.new(A2,A1,A3)
 
