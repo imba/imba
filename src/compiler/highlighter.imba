@@ -16,14 +16,16 @@ var classes = {
 	'.': '_imop op dot'
 	'.:': '_imop op cdot'
 	'?.': '_imop op qdot'
-	'[': ['s','sbl']
-	']': ['s','sbr']
-	'(': 'rb rbl'
-	')': 'rb rbr'
-	'var': '_imkeyword'
+	'[': ['s','_imopen sb sbl']
+	']': ['s','_imclose sb sbr']
+	'(': ['s','_imopen rb rbl']
+	')': ['s','_imclose rb rbr']
+	'{': ['s','_imopen cb cbl']
+	'}': ['s','_imclose cb cbr']
+	'call_start': ['s','_imopen call rb rbl']
+	'call_end': ['s','_imclose call rb rbr']
+
 	'compound_assign': 'op assign compound'
-	'call_start': 'call rb rbl'
-	'call_end': 'call rb rbr'
 	'str': '_imstr string'
 	'num': '_imnum number'
 	'string': '_imstr string'
@@ -74,6 +76,7 @@ export class Highlighter
 		# var hljs = require 'highlight.js'
 		# hljs.configure classPrefix: ''
 
+		# don't create this every time
 		var mdrenderer = marked.Renderer.new
 		mdrenderer:heading = do |text, level| '<h' + level + '><span>' + text + '</span></h' + level + '>'
 
@@ -107,50 +110,7 @@ export class Highlighter
 		var pos = 0
 		var caret = 0
 
-		var classes = {
-			'+': '_imop op add math'
-			'++': '_imop op incr math'
-			'--': '_imop op decr math'
-			'-': '_imop op sub math'
-			'=': '_imop op eq'
-			'/': '_imop op div math'
-			'*': '_imop op mult math'
-			'?': '_imop op ternary'
-			',': '_imop comma'
-			':': '_imop op colon'
-			'.': '_imop op dot'
-			'.:': '_imop op cdot'
-			'?.': '_imop op qdot'
-			'[': ['s','sbl']
-			']': ['s','sbr']
-			'(': 'rb rbl'
-			')': 'rb rbr'
-			'compound_assign': 'op assign compound'
-			'call_start': 'call rb rbl'
-			'call_end': 'call rb rbr'
-			'str': '_imstr string'
-			'num': '_imnum number'
-			'string': '_imstr string'
-			'number': '_imnum number'
-			'math': '_imop op math'
-			'forin': 'keyword in'
-			'forof': 'keyword of'
-			'own': 'keyword own'
-			'compare': '_imop op compare'
-			'herecomment': ['blockquote','comment']
-			'relation': 'keyword relation'
-			'export': 'keyword export'
-			'global': 'keyword global'
-			'extern': 'keyword global'
-			'extend': 'keyword extend'
-			'require': 'keyword require'
-			'from': 'keyword from'
-			'logic': 'keyword logic'
-			'post_if': 'keyword if post_if'
-			'post_for': 'keyword for post_for'
-			'prop': 'keyword prop'
-			'attr': 'keyword attr'
-		}
+		
 
 		var OPEN = {
 			'tag_start': '_imtag tag'
@@ -160,7 +120,7 @@ export class Highlighter
 			'(': '_imparens paren'
 			'{': '_imcurly curly'
 			'[': '_imsquare square'
-			'("': '_imistring string'
+			'("': '_iminterstr string'
 		}
 
 		var CLOSE = {
@@ -296,8 +256,10 @@ export class Highlighter
 				cls.push('pathname') if content.match(/^['"]?\.?\.\//)
 				# dont do this anymore
 				# content = content.replace(/(^['"]|['"]$)/g) do |m| '<s>' + m + '</s>'
+			var clstr = cls.join(" ")
+			clstr = '_imtok ' + clstr unless clstr.match(/\b\_/)
 
-			res += "<{node} class='{cls.join(" ")}'>" + content + "</{node}>"
+			res += "<{node} class='{clstr}'>" + content + "</{node}>"
 
 
 			# true
@@ -312,6 +274,8 @@ export class Highlighter
 		if caret < str:length - 1
 			res += comments(str.slice(caret))
 
+		if @tokens:length == 0
+			res = @code
 		# split # convert to group?
 
 		var json = sections: []

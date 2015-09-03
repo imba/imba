@@ -388,7 +388,8 @@ export class Lexer
 			return [] if code.match(/^\s*$/g)
 
 		# code = code.replace(/\r/g, '').replace TRAILING_SPACES, ''
-		code = code.replace(/\r/g, '').replace /[\t ]+$/g, ''
+		unless o:inline
+			code = code.replace(/\r/g, '').replace /[\t ]+$/g, ''
 
 		@last    = nil
 		@lastTyp = nil

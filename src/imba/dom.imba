@@ -267,7 +267,9 @@ global class ElementTag
 		null
 
 	def prepend item
-		insert(item, before: first)
+		var first = @dom:childNodes[0]
+		first ? insertBefore(item, first) : appendChild(item)
+		self
 
 	def append item
 		# possible to append blank
