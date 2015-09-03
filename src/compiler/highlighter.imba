@@ -24,6 +24,8 @@ var classes = {
 	'}': ['s','_imclose cb cbr']
 	'call_start': ['s','_imopen call rb rbl']
 	'call_end': ['s','_imclose call rb rbr']
+	'tag_start': ['s','_imopen tag_open']
+	'tag_end': ['s','_imclose tag_close']
 
 	'compound_assign': 'op assign compound'
 	'str': '_imstr string'
