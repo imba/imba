@@ -37,7 +37,7 @@ var classes = {
 	'forof': 'keyword of'
 	'own': 'keyword own'
 	'compare': '_imop op compare'
-	'herecomment': ['blockquote','comment']
+	'herecomment': ['i','_herecomment']
 	'relation': 'keyword relation'
 	'export': 'keyword export'
 	'global': 'keyword global'
@@ -52,17 +52,46 @@ var classes = {
 	'attr': 'keyword attr'
 }
 
+var OPEN = {
+	'tag_start': '_imtag tag'
+	'selector_start': '_imsel sel'
+	'index_start': 'index'
+	'indent': '_indent'
+	'(': '_imparens paren'
+	'{': '_imcurly curly'
+	'[': '_imsquare square'
+	'("': '_iminterstr string'
+}
+
+var CLOSE = {
+	'tag_end': 'tag'
+	'selector_end': 'sel'
+	'index_end': 'index'
+	'outdent': '_indent'
+	')': 'paren'
+	']': 'square'
+	'}': 'curly'
+	'")': 'string'
+}
+
+
 export class Highlighter
 
 	prop options
 	
-	def initialize code, tokens, ast, options = {}
+	def initialize code, tokens, ast, o = {}
 		@code = code
 		@tokens = tokens
 		@ast = ast
-		@options = options
+
+		o:render ||= {}
+		o:hl ||= {}
+		o:hl:newline ||= '<b class="_n">\n</b>'
+		@options = o
+
 		@options:nextVarCounter ||= 0
 		@varRefs = {}
+
 		return self
 
 	def varRef variable
@@ -72,13 +101,30 @@ export class Highlighter
 		# will stick - no
 		@varRefs[variable.@ref] ||= (pfx + @options:nextVarCounter++)
 
+	def parseWhitespace text
+		# parsing comments
+		text = text.replace(/(\#)([^\n]*)/g) do |m,s,q|
+			if @options:render:comment
+				m = @options:render:comment('comment',m)
+			"<span class='_im _imcomment'>{m}</span>"
+
+		# wrapping newlines
+		text = text.replace(/\n/g,@options:hl:newline)
+
+
+	def addSection content, type: 'code', reset: yes
+		# if type == 'code'
+		#	content = '<pre><code>' + content + '</code></pre>'
+		var section = content: content, type: type
+		sections.push(section)
+		res = "" if reset
+		return section
+
 	def process
 		var o = options
-		var marked = require 'marked'
-		# var hljs = require 'highlight.js'
-		# hljs.configure classPrefix: ''
 
-		# don't create this every time
+		# should not be included in the highlighter itself 
+		var marked = require 'marked'
 		var mdrenderer = marked.Renderer.new
 		mdrenderer:heading = do |text, level| '<h' + level + '><span>' + text + '</span></h' + level + '>'
 
@@ -95,65 +141,28 @@ export class Highlighter
 				
 				return hljs.highlightAuto(code):value
 
-		# console.log(marked('```js\n console.log("hello"); \n```'))
+		# comment renderer q = marked.inlineLexer(q, [], {})
 
 		var str = @code
 		var pos = @tokens:length
 
-		# var nextVarRef = 0
-		# var varRefs = {}
-
 		var sections = []
 
-		if @ast
+		if @ast and @ast:analyze
 			try @ast.analyze({}) catch e null
 
 		var res = ""
 		var pos = 0
 		var caret = 0
 
-		
-
-		var OPEN = {
-			'tag_start': '_imtag tag'
-			'selector_start': '_imsel sel'
-			'index_start': 'index'
-			'indent': '_indent'
-			'(': '_imparens paren'
-			'{': '_imcurly curly'
-			'[': '_imsquare square'
-			'("': '_iminterstr string'
-		}
-
-		var CLOSE = {
-			'tag_end': 'tag'
-			'selector_end': 'sel'
-			'index_end': 'index'
-			'outdent': '_indent'
-			')': 'paren'
-			']': 'square'
-			'}': 'curly'
-			'")': 'string'
-		}
-
 		var open,close
-
-		def comments sub
-			return sub if o:plain
-
-			sub.replace(/(\#)([^\n]*)/g) do |m,s,q|
-				# q = marked(q)
-				# q = 
-				q = marked.inlineLexer(q, [], {})
-				"<q><s>{s}</s>{q}</q>"
 
 		def split
 			groups.push({html: res})
 			res = ""
 
+		# should be defined outside
 		def addSection content, type: 'code', reset: yes
-			# if type == 'code'
-			#	content = '<pre><code>' + content + '</code></pre>'
 			var section = content: content, type: type
 			sections.push(section)
 			res = "" if reset
@@ -174,26 +183,14 @@ export class Highlighter
 
 			if loc > caret
 				var add = str.substring(caret,loc)
-				res += comments(add)
+				res += parseWhitespace(add)
 				caret = loc
-
 
 			close = CLOSE[typ]
 
 			if open = OPEN[typ]
 				open = OPEN[val] || open
 				res += "<i class='{open}'>"
-
-			# elif var close = CLOSE[typ]
-			#	res += "</i>"
-			#	# should close after?
-			#	# either on the next 
-
-			# adding some interpolators
-			# if loc and val == '("'
-			# 	res += '<i>'
-			# elif loc and val == '")'
-			# 	res += '</i>'
 
 			if len == 0 or typ == 'terminator' or typ == 'indent' or typ == 'outdent'
 				continue 
@@ -221,9 +218,6 @@ export class Highlighter
 
 			caret = loc + len
 
-			# if tok.@variable
-			# 	console.log "found variable {tok.@variable}"
-
 			if typ == 'identifier'
 				if content[0] == '#'
 					cls.push('idref')
@@ -241,32 +235,26 @@ export class Highlighter
 				let ref = self.varRef(tok.@variable)
 				cls.push("ref-"+ref)
 
-			if typ == 'herecomment' and !o:plain
-				addSection(res) # resetting
+			if typ == 'herecomment'
+				if o:render:comment
+					content = content.replace(/(^\s*###[\s\n]*|[\n\s]*###\s*$)/g,'')
+					# console.log("converting to markdown",content)
+					content = o:render:comment('herecomment',content)
+					# content = marked(content, renderer: mdrenderer)
 
-				# content = content.replace(/(^\s*###\n*|\n*###\s*$)/g,'<s>$1</s>')
-				content = content.replace(/(^\s*###[\s\n]*|[\n\s]*###\s*$)/g,'')
-				# console.log("converting to markdown",content)
-				content = marked(content, renderer: mdrenderer)
-				res += '<s>###</s>' + content + '<s>###</s>'
-				addSection(res, type: 'comment')
-				continue
-				# console.log("converted",content)
-				# content = marked(content)
+					res += '<s>###</s>' + content + '<s>###</s>'
+					addSection(res, type: 'comment')
+					continue
+
+				content = res += '<s>###</s>' + content.slice(3,-3) + '<s>###</s>'
 
 			if typ == 'string'
 				cls.push('pathname') if content.match(/^['"]?\.?\.\//)
-				# dont do this anymore
-				# content = content.replace(/(^['"]|['"]$)/g) do |m| '<s>' + m + '</s>'
+
+
 			var clstr = cls.join(" ")
 			clstr = '_imtok ' + clstr unless clstr.match(/\b\_/)
-
 			res += "<{node} class='{clstr}'>" + content + "</{node}>"
-
-
-			# true
-			# console.log "token {loc}"
-			# str = str.substring(0,loc - 1) + '<a>' + str.substr(loc,len) + '</a>' + str.slice(loc + len)
 
 		# close after?
 		if close
@@ -274,7 +262,7 @@ export class Highlighter
 			close = null
 
 		if caret < str:length - 1
-			res += comments(str.slice(caret))
+			res += parseWhitespace(str.slice(caret))
 
 		if @tokens:length == 0
 			res = @code
@@ -289,9 +277,8 @@ export class Highlighter
 		addSection(res, type: 'code')
 
 		var html = ''
-		# html += '<code>'
 
-		if options:json
+		if o:json
 			return sections
 
 		for section in sections
@@ -301,7 +288,7 @@ export class Highlighter
 			# html += section:content # '<pre><code>' + group:html + '</code></pre>'
 		# html += '</code>'
 
-		unless options:bare
+		unless o:bare
 			html = '<link rel="stylesheet" href="imba.css" media="screen"></link><script src="imba.js"></script>' + html + '<script src="hl.js"></script>'
 
 		return html
