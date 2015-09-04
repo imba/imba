@@ -1,3 +1,10 @@
+## 0.12.1 (2015-09-04)
+
+- Fix standalone compiler for browser
+- Renamed packaged compiler from compiler.js to imbac.js
+- Export standalone compiler to `Imbac` instead of `imbalang`
+- Returning self from default constructors
+
 ## 0.12.0 (2015-08-24)
 
 - Preliminary support for source maps (through `--source-map-inline` option for ̀`imba watch` and `imba compile`)
