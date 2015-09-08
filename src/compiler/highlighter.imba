@@ -27,6 +27,9 @@ var classes = {
 	'tag_start': ['s','_imopen tag_open']
 	'tag_end': ['s','_imclose tag_close']
 
+	'"': 'doublequote'
+	"'": 'singlequote'
+
 	'compound_assign': 'op assign compound'
 	'str': '_imstr string'
 	'num': '_imnum number'
@@ -105,13 +108,37 @@ export class Highlighter
 
 	def parseWhitespace text
 		# parsing comments
+		var hl = @options:hl
+		var comments = []
+
 		text = text.replace(/(\#)([^\n]*)/g) do |m,s,q|
 			if @options:render:comment
 				m = @options:render:comment('comment',m)
-			"<span class='_im _imcomment'>{m}</span>"
+			var nr = comments.push("<span class='_im _imcomment'>{m}</span>")
+			"${nr - 1}$"
+
+		text = text.replace(/(\n|[ ]+|[\t]+)/g) do |m,l|
+			if l == '\n'
+				hl:newline or '\n'
+			elif l[0] == ' '
+				hl:space isa Function ? hl.space(l) : l
+			elif l[0] == '\t'
+				hl:tab isa Function ? hl.tab(l) : l
 
 		# wrapping newlines
-		text = text.replace(/\n/g,@options:hl:newline)
+		# if hl:newline
+		# 	text = text.replace(/\n/g,hl:newline)
+		# 
+		# if hl:space
+		# 	text = text.replace(/[ ]+/g,hl:space)
+		# 
+		# if hl:tab
+		# 	text = text.replace(/\t+/g,hl:tab)
+
+		if comments:length
+			text = text.replace(/\$(\d+)\$/g) do |m,nr|
+				comments[parseInt(nr)]
+		return text
 
 
 	def addSection content, type: 'code', reset: yes
