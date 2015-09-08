@@ -1784,10 +1784,6 @@ export class Lexer
 		var stack = [end]
 		var i = 0
 
-		
-		# had to fix issue after later versions of coffee-script broke old loop type
-		# should submit bugreport to coffee-script
-
 		# could it not happen here?
 		while i < (str:length - 1)
 			i++
@@ -1845,11 +1841,15 @@ export class Lexer
 				i += 1
 				continue
 
+			# if str.charAt(i) == '{'
+			# 	# console.log 'found {'
+			# 	expr = balancedString(str.slice(i), '}')
+			# 	# console.log expr
+
 			unless str.charAt(i) is '{' and (expr = balancedString(str.slice(i), '}'))
 				continue
 
 			# these have no real sense of location or anything?
-			# what is this conditino really?
 			if pi < i
 				# this is the prefix-string - before any item
 				var tok = T.token('NEOSTRING', str.slice(pi, i))
@@ -1871,6 +1871,7 @@ export class Lexer
 				# console.log "tokenize inner parts of string",inner
 				var spaces = 0
 				var offset = @loc + i + (expr:length - inner:length)
+				# why create a whole new lexer? Should rather reuse one
 				var nested = Lexer.new.tokenize inner, inline: yes, line: @line, rewrite: no, loc: offset
 				# console.log nested.pop
 
@@ -1883,6 +1884,7 @@ export class Lexer
 				if var len = nested:length
 					if len > 1
 						# what about here?!?
+						# these should not have line and col - they are generated
 						nested.unshift Token.new('(', '(',@line,0,0)
 						nested.push    Token.new(')', ')',@line,0,0) # very last line?
 					tokens.push T.token('TOKENS',nested,0)
@@ -1893,11 +1895,14 @@ export class Lexer
 			pi = i + 1
 
 		# adding the last part of the string here
-		if i > pi < str:length
+		if i >= pi and pi < str:length
 			# set the length as well - or?
 			# the string after?
+			# console.log 'push neostring'
 
 			tokens.push T.token('NEOSTRING', str.slice(pi), 0)
+
+		# console.log tokens:length
 
 		return tokens if regex
 
@@ -1905,7 +1910,6 @@ export class Lexer
 
 		unless tT(tokens[0]) is 'NEOSTRING'
 			# adding a blank string to the very beginning
-			# 
 			tokens.unshift T.token('', '', 0)
 
 		if var interpolated = tokens:length > 1

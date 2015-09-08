@@ -54,6 +54,7 @@ var classes = {
 
 var OPEN = {
 	'tag_start': '_imtag tag'
+	'call_start': '_imparens call'
 	'selector_start': '_imsel sel'
 	'index_start': 'index'
 	'indent': '_indent'
@@ -65,6 +66,7 @@ var OPEN = {
 
 var CLOSE = {
 	'tag_end': 'tag'
+	'call_end': '_imparens call'
 	'selector_end': 'sel'
 	'index_end': 'index'
 	'outdent': '_indent'
