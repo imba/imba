@@ -1041,7 +1041,7 @@ export class Lexer
 					@seenFor = no
 				else
 					typ = 'RELATION'
-					if value().toString() is '!'
+					if String(value) == '!'
 						@tokens.pop # is fucked up??!
 						# WARN we need to keep the loc, no?
 						id = '!' + id
