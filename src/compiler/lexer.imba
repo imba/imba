@@ -381,19 +381,16 @@ export class Lexer
 		if code:length == 0
 			return []
 
-		# console.log "code is {code}"
-		# if true # !o:inline
-		if WHITESPACE.test(code)
-			code = "\n{code}"
-			return [] if code.match(/^\s*$/g)
-
-		# code = code.replace(/\r/g, '').replace TRAILING_SPACES, ''
 		unless o:inline
+			if WHITESPACE.test(code)
+				code = "\n{code}"
+				return [] if code.match(/^\s*$/g)
+
 			code = code.replace(/\r/g, '').replace /[\t ]+$/g, ''
 
-		@last    = nil
-		@lastTyp = nil
-		@lastVal = nil
+		@last    = null
+		@lastTyp = null
+		@lastVal = null
 
 		@code    = code           # The remainder of the source code.
 		@opts    = o
