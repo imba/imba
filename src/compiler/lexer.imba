@@ -1851,14 +1851,6 @@ export class Lexer
 				i += 1
 				continue
 
-			# if str.charAt(i) == '{'
-			# 	# console.log 'found {'
-			# 	expr = balancedString(str.slice(i), '}')
-			# 	# console.log expr
-			if str.charAt(i) == '{'
-				if str.charAt(i + 1) == '}'
-					console.log 'found empty interpolation'
-
 			unless str.charAt(i) is '{' and (expr = balancedString(str.slice(i), '}'))
 				continue
 
@@ -1905,12 +1897,11 @@ export class Lexer
 					if len > 1
 						# what about here?!?
 						# these should not have line and col - they are generated
+						# should probably be handled by the compiler / ast instead
 						nested.unshift Token.new('(', '(',@line,0,0)
 						nested.push    Token.new(')', ')',@line,0,0) # very last line?
 					tokens.push *nested # T.token('TOKENS',nested,0)
 					# tokens.push nested
-			else
-				console.log 'empty expression'
 			
 			# should rather add the amount by which our lexer has moved?
 			i += expr:length - 1
@@ -1924,19 +1915,17 @@ export class Lexer
 			# console.log 'push neostring'
 			tokens.push Token.new('NEOSTRING', str.slice(pi), 0,@loc + pi + locOffset, str:length - pi)
 
-
-		if isInterpolated
-			console.log 'was interpolated'
-			# @tokens.push Token.new('STR_CLOSE',str.charAt(0),@line,@loc,1)
-			for tok in tokens
-				@tokens.push(tok)
-			# @tokens.push Token.new('STR_OPEN',str.charAt(0),@line,@loc + str:length,1)
-			return tokens
-
 		# console.log tokens:length
 		return tokens if regex
 
-		return token 'STRING', '""' unless tokens:length
+		return token 'NEOSTRING', '""' unless tokens:length
+
+		# console.log 'was interpolated'
+		# @tokens.push Token.new('STR_CLOSE',str.charAt(0),@line,@loc,1)
+		for tok in tokens
+			@tokens.push(tok)
+		# @tokens.push Token.new('STR_OPEN',str.charAt(0),@line,@loc + str:length,1)
+		return tokens
 
 		unless tT(tokens[0]) is 'NEOSTRING'
 			# adding a blank string to the very beginning

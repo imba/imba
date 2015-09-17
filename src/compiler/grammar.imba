@@ -213,8 +213,14 @@ var grammar =
 	InterpolatedString: [
 		o 'STRING_START' do InterpolatedString.new([],open: A1)
 		o 'InterpolatedString NEOSTRING' do A1.add A2
-		o 'InterpolatedString {{ Expression }}' do A1.add A3
-		o 'InterpolatedString STRING_END' do A1.option(close: A2)
+		o 'InterpolatedString Interpolation' do A2 ? A1.add(A2) : A1
+		o 'InterpolatedString STRING_END' do A1.option('close',A2)
+	]
+
+	# The list of arguments to a function call.
+	Interpolation: [
+		o '{{ }}' do null
+		o '{{ Expression }}' do A2
 	]
 
 	# All of our immediate values. Generally these can be passed straight
@@ -928,6 +934,8 @@ var operators = [
 	['left',      'MSET']
 	['left',      '.', '?.', '?:', '::','.:']
 	['left',      'CALL_START', 'CALL_END']
+	# ['left',      '{{', '}}']
+	# ['left', 'STRING_START','STRING_END']
 	['nonassoc',  '++', '--']
 	['right',     'UNARY','THROW','SQRT']
 	['left',      'MATH']
@@ -948,7 +956,6 @@ var operators = [
 	['right', 'TAG_ATTR_SET']
 	['right', 'SPLAT']
 	['left', 'SELECTOR_START']
-	['left', 'STRING_START','STRING_END']
 ]
 
 # Wrapping Up

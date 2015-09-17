@@ -2570,13 +2570,31 @@ export class Str < Literal
 	def c o
 		@cache ? super(o) : String(@value)
 
+
+export class Interpolation < ValueNode
+
 # Currently not used - it would be better to use this
 # for real interpolated strings though, than to break
 # them up into their parts before parsing
 export class InterpolatedString < ListNode
 
 	def js o
-		"interpolated string"
+		# creating the string
+		var parts = []
+		var str = '('
+
+		map do |part,i|
+			if part isa Token and part.@type == 'NEOSTRING'
+				parts.push('"' + part.@value + '"')
+			elif part
+				if i == 0
+					# force first part to be string
+					parts.push('""')
+				parts.push(part.c(expression: yes))
+
+		str += parts.join(" + ")
+		str += ')'
+		return str
 
 
 export class Tuple < ListNode
