@@ -8,7 +8,33 @@ describe "Syntax - Literals" do
 		eq obj:b, 2
 		eq obj:c, 3
 
-	test "regex with interpolation" do
-		var str = "hey"
-		var reg = /// #{str} ///
-		eq reg.test("hey"), true
+	test "strings" do
+		var str = """test {1} """
+		eq str, "test 1 "
+
+		str = "test {2} 
+dette"
+		eq str, "test 2 dette"
+
+		eq "basic{100}", "basic100"
+
+		str = "test {100} 
+	this"
+
+		eq str, "test 100 	this"
+
+		str = """
+		test
+		this
+		now
+		"""
+
+		eq str, "test\nthis\nnow"
+		
+		str = """
+			test
+				this
+				now
+		"""
+
+		eq str, "test\n\tthis\n\tnow"
