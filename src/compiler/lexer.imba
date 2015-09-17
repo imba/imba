@@ -1168,6 +1168,10 @@ export class Lexer
 			token 'SYMBOL', symbol, match[0]:length
 			match[0]:length
 
+	def escapeStr str, heredoc
+		str.replace MULTILINER, (heredoc ? '\\n' : '')
+		# str = str.replace(MULTILINER, '\\n')
+		# str = str.replace(/\t/g, '\\t')
 	# Matches strings, including multi-line strings. Ensures that quotation marks
 	# are balanced within the string's contents, and within nested interpolations.
 	def stringToken
@@ -1176,7 +1180,9 @@ export class Lexer
 		switch @chunk.charAt(0)
 			when "'"
 				return 0 unless match = SIMPLESTR.exec(@chunk)
-				token 'STRING', (string = match[0]).replace(MULTILINER, '\\\n'), string:length
+				string = match[0]
+				token 'STRING', escapeStr(string), string:length
+				# token 'STRING', (string = match[0]).replace(MULTILINER, '\\\n'), string:length
 
 			when '"'
 				return 0 unless string = balancedString(@chunk, '"')
@@ -1190,7 +1196,9 @@ export class Lexer
 					interpolateString(string.slice 1, -1)
 					token 'STRING_END', string.charAt(len - 1), 1, string:length - 1
 				else
-					token 'STRING', escapeLines(string), string:length
+					var len = string:length
+					# string = string.replace(MULTILINER, '\\\n')
+					token 'STRING', escapeStr(string), len
 			else
 				return 0
 
@@ -1213,7 +1221,11 @@ export class Lexer
 		# console.log "found heredoc {match[0]:length} {doc:length}"
 
 		if quote == '"' && doc.indexOf('{') >= 0
-			interpolateString(doc, heredoc: yes)
+			var open = match[1]
+			# console.log doc.substr(0,3),match[1]
+			token 'STRING_START', open, open:length
+			interpolateString(doc, heredoc: yes, offset: open:length)
+			token 'STRING_END', open, open:length, heredoc:length - open:length
 		else
 			token('STRING', makeString(doc, quote, yes), 0)
 
@@ -1301,8 +1313,6 @@ export class Lexer
 		if match = HEREGEX.exec(@chunk)
 			length = heregexToken(match)
 			moveHead(match[0])
-			# var br = count(match[0], '\n')
-			# @line += br
 			return length
 
 		prev = last @tokens
@@ -1322,6 +1332,7 @@ export class Lexer
 		m:length
 
 	# Matches multiline extended regular expressions.
+	# The escaping should rather happen in AST - possibly as an additional flag?
 	def heregexToken match
 		var [heregex, body, flags] = match
 
@@ -1334,6 +1345,8 @@ export class Lexer
 
 			token 'REGEX', "/{ re or '(?:)' }/{flags}", heregex:length
 			return heregex:length
+
+		# use more basic regex type
 
 		token 'CONST', 'RegExp'
 		@tokens.push T.token('CALL_START', '(',0)
@@ -1741,7 +1754,7 @@ export class Lexer
 				if indent is null or 0 < attempt:length < indent:length
 					indent = attempt
 
-		doc = doc.replace /// \n #{indent} ///g, '\n' if indent
+		doc = doc.replace RegExp("\\n{indent}","g"), '\n' if indent
 		doc = doc.replace /^\n/, '' unless herecomment
 		return doc
 
@@ -1839,7 +1852,7 @@ export class Lexer
 		var tokens = []
 		var pi = 0
 		var i  = -1
-		var locOffset = 1
+		var locOffset = options:offset or 1
 		var strlen = str:length
 		var letter
 		var expr
@@ -1859,7 +1872,7 @@ export class Lexer
 			# these have no real sense of location or anything?
 			if pi < i
 				# this is the prefix-string - before any item
-				var tok = Token.new('NEOSTRING', str.slice(pi, i),@line,@loc + pi + locOffset,i - pi)
+				var tok = Token.new('NEOSTRING', escapeStr(str.slice(pi, i),heredoc),@line,@loc + pi + locOffset,i - pi)
 				# tok.@loc = @loc + pi
 				# tok.@len = i - pi + 2
 				tokens.push(tok)
@@ -1880,11 +1893,11 @@ export class Lexer
 				# should share with the selector no?
 				# console.log "tokenize inner parts of string",inner
 				var spaces = 0
-				var offset = @loc + i + (expr:length - inner:length)
+				var offset = @loc + i + (expr:length - inner:length) - 1
 				# why create a whole new lexer? Should rather reuse one
 				# much better to simply move into interpolation mode where
 				# we continue parsing until we meet unpaired }
-				var nested = Lexer.new.tokenize inner, inline: yes, line: @line, rewrite: no, loc: offset
+				var nested = Lexer.new.tokenize inner, inline: yes, line: @line, rewrite: no, loc: offset + locOffset
 				# console.log nested.pop
 
 				if nested[0] and tT(nested[0]) == 'TERMINATOR'
@@ -1895,11 +1908,12 @@ export class Lexer
 
 				if var len = nested:length
 					if len > 1
+						true
 						# what about here?!?
 						# these should not have line and col - they are generated
 						# should probably be handled by the compiler / ast instead
-						nested.unshift Token.new('(', '(',@line,0,0)
-						nested.push    Token.new(')', ')',@line,0,0) # very last line?
+						# nested.unshift Token.new('(', '(',@line,0,0)
+						# nested.push    Token.new(')', ')',@line,0,0) # very last line?
 					tokens.push *nested # T.token('TOKENS',nested,0)
 					# tokens.push nested
 			
@@ -1913,7 +1927,7 @@ export class Lexer
 			# set the length as well - or?
 			# the string after?
 			# console.log 'push neostring'
-			tokens.push Token.new('NEOSTRING', str.slice(pi), 0,@loc + pi + locOffset, str:length - pi)
+			tokens.push Token.new('NEOSTRING', escapeStr(str.slice(pi),heredoc), 0,@loc + pi + locOffset, str:length - pi)
 
 		# console.log tokens:length
 		return tokens if regex
@@ -1925,46 +1939,6 @@ export class Lexer
 		for tok in tokens
 			@tokens.push(tok)
 		# @tokens.push Token.new('STR_OPEN',str.charAt(0),@line,@loc + str:length,1)
-		return tokens
-
-		unless tT(tokens[0]) is 'NEOSTRING'
-			# adding a blank string to the very beginning
-			tokens.unshift T.token('', '', 0)
-
-		if var interpolated = tokens:length > 1
-			token('(', '("',0)
-
-		for v, k in tokens
-			token('+', '+',0) if k
-
-			# if v isa Array
-			# 	@tokens.push(iv) for iv in v
-			# 	continue
-
-			var typ = tT(v)
-			var value = tV(v)
-
-			if typ == 'TOKENS'
-				# console.log 'got here'
-			
-				for inner in value
-					# console.log "token {inner.@type} {inner.@loc}"
-					@tokens.push(inner)
-					@loc = inner.@loc + inner.@len
-				# @tokens.push *value
-			else
-				if typ == 'NEOSTRING'
-					# console.log "WAS NEOSTRING {value} - {value:length}"
-					@loc = v.@loc
-					# just change the string?
-
-				token 'STRING', makeString(value, '"', heredoc), value:length # , v.@len # , value:length
-				@loc += v.@len
-
-		if interpolated
-			@loc += 2 # really?
-			@loc = startLoc + str:length + 2
-			token(')', '")',0)
 		return tokens
 
 	# Matches a balanced group such as a single or double-quoted string. Pass in
@@ -2069,8 +2043,8 @@ export class Lexer
 		return quote + quote unless body
 		body = body.replace(/\\([\s\S])/g) do |match, contents|
 			(contents == '\n' or contents == quote) ? contents : match
-
-		body = body.replace /// #{quote} ///g, '\\$&'
+		# Does not work now
+		body = body.replace RegExp("{quote}","g"), '\\$&'
 		quote + escapeLines(body, heredoc) + quote
 		
 	# Throws a syntax error on the current `@line`.

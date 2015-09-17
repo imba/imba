@@ -2592,6 +2592,13 @@ export class InterpolatedString < Node
 			node.traverse
 		self
 
+	def escapeString str
+		# var idx = 0
+		# var len = str:length
+		# var chr
+		# while chr = str[idx++]
+		str = str.replace(/\n/g, '\\\n')
+
 	def js o
 		# creating the string
 		var parts = []
@@ -2599,11 +2606,13 @@ export class InterpolatedString < Node
 
 		@nodes.map do |part,i|
 			if part isa Token and part.@type == 'NEOSTRING'
-				parts.push('"' + part.@value + '"')
+				# esca
+				parts.push('"' + escapeString(part.@value) + '"')
 			elif part
 				if i == 0
 					# force first part to be string
 					parts.push('""')
+				part.@parens = yes
 				parts.push(part.c(expression: yes))
 
 		str += parts.join(" + ")
