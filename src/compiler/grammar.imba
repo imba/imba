@@ -209,6 +209,13 @@ var grammar =
 		o 'Symbol'
 	]
 
+	InterpolatedString: [
+		o 'STRING_START' do InterpolatedString.new([],open: A1)
+		o 'InterpolatedString NEOSTRING' do A1.add A2
+		o 'InterpolatedString {{ Expression }}' do A1.add A3
+		o 'InterpolatedString STRING_END' do A1.option(close: A2)
+	]
+
 	# All of our immediate values. Generally these can be passed straight
 	# through and printed to JavaScript.
 	Literal: [
@@ -372,6 +379,7 @@ var grammar =
 		o 'AlphaNumeric'
 		o 'Ivar' # rly?
 		o 'Gvar' # rly?
+		# this is the interpolated string
 		o '( Expression )' do A2
 	]
 

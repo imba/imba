@@ -145,7 +145,7 @@ def print-tokens tokens
 			id = chalk.white(id)
 			s = chalk.grey "[{typ} {id}]"
 
-		if t.@col != -1
+		if t.@loc != -1
 			s = "({t.@loc}:{t.@len})" + s # chalk.bold(s)
 		s
 

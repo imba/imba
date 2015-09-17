@@ -694,6 +694,7 @@ export class Lexer
 				return 0 unless var string = balancedSelector(@chunk, ')')
 				if 0 < string.indexOf('{', 1)
 					token 'SELECTOR',id
+					# is this even used anymore? If so - we need to fix it
 					interpolateString(string.slice idx, -1)
 					return string:length
 				else
@@ -1179,9 +1180,15 @@ export class Lexer
 
 			when '"'
 				return 0 unless string = balancedString(@chunk, '"')
+				# what about tripe quoted strings?
 
 				if string.indexOf('{') >= 0
+					var len = string:length
+					# if this has no interpolation?
+					# we are now messing with locations - beware
+					token 'STRING_START', string.charAt(0), 1
 					interpolateString(string.slice 1, -1)
+					token 'STRING_END', string.charAt(len - 1), 1, string:length - 1
 				else
 					token 'STRING', escapeLines(string), string:length
 			else
@@ -1832,9 +1839,12 @@ export class Lexer
 		var tokens = []
 		var pi = 0
 		var i  = -1
+		var locOffset = 1
 		var strlen = str:length
 		var letter
 		var expr
+
+		var isInterpolated = no
 		# out of bounds
 		while letter = str.charAt(i += 1)
 			if letter is '\\'
@@ -1845,21 +1855,29 @@ export class Lexer
 			# 	# console.log 'found {'
 			# 	expr = balancedString(str.slice(i), '}')
 			# 	# console.log expr
+			if str.charAt(i) == '{'
+				if str.charAt(i + 1) == '}'
+					console.log 'found empty interpolation'
 
 			unless str.charAt(i) is '{' and (expr = balancedString(str.slice(i), '}'))
 				continue
 
+			isInterpolated = yes
+
 			# these have no real sense of location or anything?
 			if pi < i
 				# this is the prefix-string - before any item
-				var tok = T.token('NEOSTRING', str.slice(pi, i))
-				tok.@loc = @loc + pi
-				tok.@len = i - pi + 2
+				var tok = Token.new('NEOSTRING', str.slice(pi, i),@line,@loc + pi + locOffset,i - pi)
+				# tok.@loc = @loc + pi
+				# tok.@len = i - pi + 2
 				tokens.push(tok)
+
+			tokens.push Token.new('{{','{',0,@loc + i + locOffset,1)
 
 			var inner = expr.slice(1, -1)
 			# console.log 'inner is',inner
 			# remove leading spaces 
+			# need to keep track of how much whitespace we dropped from the start
 			inner = inner.replace(/^[^\n\S]+/,'')
 
 			if inner:length
@@ -1872,6 +1890,8 @@ export class Lexer
 				var spaces = 0
 				var offset = @loc + i + (expr:length - inner:length)
 				# why create a whole new lexer? Should rather reuse one
+				# much better to simply move into interpolation mode where
+				# we continue parsing until we meet unpaired }
 				var nested = Lexer.new.tokenize inner, inline: yes, line: @line, rewrite: no, loc: offset
 				# console.log nested.pop
 
@@ -1887,11 +1907,14 @@ export class Lexer
 						# these should not have line and col - they are generated
 						nested.unshift Token.new('(', '(',@line,0,0)
 						nested.push    Token.new(')', ')',@line,0,0) # very last line?
-					tokens.push T.token('TOKENS',nested,0)
+					tokens.push *nested # T.token('TOKENS',nested,0)
 					# tokens.push nested
-
+			else
+				console.log 'empty expression'
+			
 			# should rather add the amount by which our lexer has moved?
 			i += expr:length - 1
+			tokens.push Token.new('}}','}',0,@loc + i + locOffset,1)
 			pi = i + 1
 
 		# adding the last part of the string here
@@ -1899,11 +1922,18 @@ export class Lexer
 			# set the length as well - or?
 			# the string after?
 			# console.log 'push neostring'
+			tokens.push Token.new('NEOSTRING', str.slice(pi), 0,@loc + pi + locOffset, str:length - pi)
 
-			tokens.push T.token('NEOSTRING', str.slice(pi), 0)
+
+		if isInterpolated
+			console.log 'was interpolated'
+			# @tokens.push Token.new('STR_CLOSE',str.charAt(0),@line,@loc,1)
+			for tok in tokens
+				@tokens.push(tok)
+			# @tokens.push Token.new('STR_OPEN',str.charAt(0),@line,@loc + str:length,1)
+			return tokens
 
 		# console.log tokens:length
-
 		return tokens if regex
 
 		return token 'STRING', '""' unless tokens:length
@@ -1939,7 +1969,7 @@ export class Lexer
 					@loc = v.@loc
 					# just change the string?
 
-				token 'STRING', makeString(value, '"', heredoc) # , v.@len # , value:length
+				token 'STRING', makeString(value, '"', heredoc), value:length # , v.@len # , value:length
 				@loc += v.@len
 
 		if interpolated
