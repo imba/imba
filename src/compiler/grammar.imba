@@ -207,6 +207,7 @@ var grammar =
 		o 'NUMBER' do Num.new A1
 		o 'STRING' do Str.new A1
 		o 'Symbol'
+		o 'InterpolatedString'
 	]
 
 	InterpolatedString: [
@@ -947,6 +948,7 @@ var operators = [
 	['right', 'TAG_ATTR_SET']
 	['right', 'SPLAT']
 	['left', 'SELECTOR_START']
+	['left', 'STRING_START','STRING_END']
 ]
 
 # Wrapping Up
