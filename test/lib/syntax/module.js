@@ -24,21 +24,18 @@
 	};
 	
 	
-	
 	function A(){ };
 	
 	A.prototype.name = function (){
 		return "a";
 	};
 	
-	
-	function B(){ A.apply(this,arguments) };
+	function B(){ return A.apply(this,arguments) };
 	
 	subclass$(B,A);
 	B.prototype.name = function (){
 		return "b";
 	};
-	
 	
 	
 	module.exports.A = A;

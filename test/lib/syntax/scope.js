@@ -1,4 +1,5 @@
 (function(){
+	var self=this;
 	
 	// externs;
 	
@@ -178,28 +179,27 @@
 		return this;
 	};
 	
-	
 	// console.log A.new.test
 	
 	
-	describe("Syntax - Scope",function() {
+	self.describe("Syntax - Scope",function() {
 		var item = new A(1,1);
 		
-		test("nested scope",function() {
+		self.test("nested scope",function() {
 			var obj = new A(1,1);
 			var res = obj.test();
 			return eq(res,[1,1,1,2,1,2]);
 		});
 		
-		test("def inside method",function() {
+		self.test("def inside method",function() {
 			return item.innerDef();
 		});
 		
-		test("blocklocal variables (let)",function() {
+		self.test("blocklocal variables (let)",function() {
 			return item.letVar();
 		});
 		
-		test("class",function() {
+		self.test("class",function() {
 			var x = 10;
 			function A(){ };
 			
@@ -211,13 +211,12 @@
 				return eq(x1,30);
 			};
 			
-			
 			eq(x,10);
 			new A().test();
 			return eq(x,10);
 		});
 		
-		test("let",function() {
+		self.test("let",function() {
 			var a = 0;
 			if (true) {
 				var a1 = 1;
@@ -226,9 +225,10 @@
 			return eq(a,0);
 		});
 		
-		return test("caching",function() {
+		return self.test("caching",function() {
 			return new A().caching();
 		});
 	});
+	
 
 })()

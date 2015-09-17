@@ -10,6 +10,7 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	var self=this;
 	
 	// import two specific items from module
 	var module$=require('./module'), Item=module$.Item, hello=module$.hello;
@@ -17,7 +18,7 @@
 	// import everything from module into a local namespace/variable 'm'
 	var m = require('./module');
 	
-	function Sub(){ Item.apply(this,arguments) };
+	function Sub(){ return Item.apply(this,arguments) };
 	
 	subclass$(Sub,Item);
 	Sub.prototype.name = function (){
@@ -25,28 +26,27 @@
 	};
 	
 	
-	
-	describe("Syntax - Modules",function() {
+	self.describe("Syntax - Modules",function() {
 		
-		return test("modules",function() {
+		return self.test("modules",function() {
 			var item = new Item();
-			eq(item.name(),"item");
+			self.eq(item.name(),"item");
 			
 			item = new m.Item();
-			eq(item.name(),"item");
+			self.eq(item.name(),"item");
 			
-			eq(m.Item,Item);
+			self.eq(m.Item,Item);
 			
-			eq(hello(),"world");
+			self.eq(hello(),"world");
 			
 			
 			// subclassing an imported class
 			var sub = new Sub();
-			eq(sub.name(),"subitem");
+			self.eq(sub.name(),"subitem");
 			
 			
-			eq(new m.A().name(),"a");
-			return eq(new m.B().name(),"b");
+			self.eq(new m.A().name(),"a");
+			return self.eq(new m.B().name(),"b");
 		});
 	});
 	

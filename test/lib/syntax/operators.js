@@ -21,6 +21,7 @@
 		return u;
 	};
 	
+	var self=this;
 	// package imba.ast
 	
 	function Cache(val){
@@ -37,7 +38,6 @@
 		this._gets++;
 		return this._value;
 	};
-	
 	
 	function Group(items){
 		this._items = items;
@@ -56,20 +56,19 @@
 		return new Group(intersect$(this._items,other.items()));
 	};
 	
-	
 	// x if 3 > i > 0
 	// x unless 3 > i > 0
 	// should test if/unless inversions
 	
-	describe('Syntax - Operators',function() {
+	self.describe('Syntax - Operators',function() {
 		
-		test("union and intersect",function() {
+		self.test("union and intersect",function() {
 			
 			// union regular arrays
 			var a = [1,2,3,6];
 			var b = [3,4,5,6];
-			eq(union$(a,b),[1,2,3,6,4,5]);
-			eq(intersect$(a,b),[3,6]);
+			self.eq(union$(a,b),[1,2,3,6,4,5]);
+			self.eq(intersect$(a,b),[3,6]);
 			
 			// union custom objects
 			var ga = new Group([4,5,6]);
@@ -77,93 +76,95 @@
 			var gc = new Group([8,9]);
 			var gd = (union$(ga,gb));
 			
-			ok(gd instanceof Group);
-			eq(gd.items(),[4,5,6,7]);
+			self.ok(gd instanceof Group);
+			self.eq(gd.items(),[4,5,6,7]);
 			
 			gd = intersect$(ga,gb);
-			ok(gd instanceof Group);
-			eq(gd.items(),[5,6]);
+			self.ok(gd instanceof Group);
+			self.eq(gd.items(),[5,6]);
 			
-			eq((intersect$(gb,gc)).items(),[]);
+			self.eq((intersect$(gb,gc)).items(),[]);
 			
 			// precedence
 			gd = union$(intersect$(ga,gb),gc); // precedence right
 			// gd = ((ga ∩ gb) ∪ gc)
-			eq(gd,[5,6,8,9]);
+			self.eq(gd,[5,6,8,9]);
 			
 			gd = union$(intersect$(ga,gb),gc) && ga;
 			// gd = ((ga ∩ gb) ∪ gc) && true
-			return eq(gd,ga);
+			return self.eq(gd,ga);
 		});
 		
 		
-		test("in",function() {
+		self.test("in",function() {
 			var a = 5;
 			var ary = [1,2,3,4,5];
 			
-			ok(idx$(a,ary) >= 0);
-			eq(idx$(3,ary) >= 0,true);
-			eq(idx$(10,ary) >= 0,false);
-			eq(idx$(3,[1,2,3,4]) >= 0,true);
-			eq(idx$(6,[1,2,3,4]) >= 0,false);
+			self.ok(idx$(a,ary) >= 0);
+			self.eq(idx$(3,ary) >= 0,true);
+			self.eq(idx$(10,ary) >= 0,false);
+			self.eq(idx$(3,[1,2,3,4]) >= 0,true);
+			self.eq(idx$(6,[1,2,3,4]) >= 0,false);
 			
-			return ok(idx$(6,ary) == -1);
+			return self.ok(idx$(6,ary) == -1);
 		});
 		
 		
-		test("comparison",function() {
+		self.test("comparison",function() {
 			
 			var $1, value_, $2;
 			var a = 50;
-			ok(100 > a && a > 10);
-			eq(100 > ($1=(a = 10)) && $1 > 10,false); // not elegant
-			ok(100 > a && a < 50);
+			self.ok(100 > a && a > 10);
+			self.eq(100 > ($1=(a = 10)) && $1 > 10,false); // not elegant
+			self.ok(100 > a && a < 50);
 			
 			var b = new Cache(10);
-			ok(100 > (value_=b.value()) && value_ > 2);
-			ok(b.gets() == 1);
+			self.ok(100 > (value_=b.value()) && value_ > 2);
+			self.ok(b.gets() == 1);
 			
-			ok(100 > ($2=b.value()) && $2 < 30);
-			return ok(b.gets() == 2);
+			self.ok(100 > ($2=b.value()) && $2 < 30);
+			return self.ok(b.gets() == 2);
 		});
 		
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
-		test("precedence",function() {
+		self.test("precedence",function() {
 			
-			ok(10 + 10 * 2,30);
-			ok((10 + 10) * 2,40);
+			self.ok(10 + 10 * 2,30);
+			self.ok((10 + 10) * 2,40);
 			
 			var a = 0;
 			var b = 0;
 			var c = 0;
 			
 			a = 10 + 20;
-			eq(a,30);
+			self.eq(a,30);
 			
 			(a = 10) + 20;
-			eq(a,10);
+			self.eq(a,10);
 			b = 10 + (a = 5);
-			eq(b,15);
-			eq(a,5);
+			self.eq(b,15);
+			self.eq(a,5);
 			
 			a = 0;
 			if (!(true || true)) { a = 10 };
-			return eq(a,0);
+			return self.eq(a,0);
 		});
 		
-		return test("ternary",function() {
+		return self.test("ternary",function() {
 			var x = 0 || 1 ? (true) : (false);
-			eq(x,true);
+			self.eq(x,true);
 			
 			x = 1 || 0 ? (false) : (true);
-			eq(x,false);
+			self.eq(x,false);
 			
 			if (x = 2) {
 				true;
 			};
 			
-			return eq(x,2);
+			return self.eq(x,2);
 		});
 	});
+	
+	
 
 })()

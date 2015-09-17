@@ -10,6 +10,7 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	var self=this;
 	
 	function Organism(){
 		this.setGroup("organism");
@@ -41,20 +42,18 @@
 		return true;
 	};
 	
-	
 	function Virus(){
 		this._ivar = 2;
 	};
 	
 	subclass$(Virus,Organism);
 	Virus.prototype.lineage = function (){
-		return "" + this.name() + "." + (Virus.__super__.lineage.call(this));
+		return ("" + this.name() + "." + (Virus.__super__.lineage.call(this)));
 	};
 	
 	Virus.prototype.name = function (){
 		return 'virus';
 	};
-	
 	
 	function Animal(){
 		this.setGroup("animal");
@@ -63,9 +62,8 @@
 	subclass$(Animal,Organism);
 	Animal.prototype.lineage = function (){
 		// super should do the same as super.lineage(*arguments)
-		return "animal." + Animal.__super__.lineage.apply(this,arguments);
+		return ("animal." + Animal.__super__.lineage.apply(this,arguments));
 	};
-	
 	
 	function Cat(){
 		this.setGroup("cat");
@@ -73,7 +71,7 @@
 	
 	subclass$(Cat,Animal);
 	Cat.prototype.lineage = function (){
-		return "cat." + (Cat.__super__.lineage.call(this));
+		return ("cat." + (Cat.__super__.lineage.call(this)));
 	};
 	
 	Cat.prototype.speak = function (){
@@ -86,27 +84,24 @@
 	};
 	
 	
-	
-	function Dog(){ Animal.apply(this,arguments) };
+	function Dog(){ return Animal.apply(this,arguments) };
 	
 	subclass$(Dog,Animal);
 	Dog.prototype.lineage = function (){
-		return "dog." + (Dog.__super__.lineage.call(this));
+		return ("dog." + (Dog.__super__.lineage.call(this)));
 	};
 	
 	Dog.prototype.speak = function (){
 		return 'woff';
 	};
 	
-	
-	function FakeDog(){ Dog.apply(this,arguments) };
+	function FakeDog(){ return Dog.apply(this,arguments) };
 	
 	subclass$(FakeDog,Dog);
 	FakeDog.prototype.lineage = function (){
-		"fakedog." + (FakeDog.__super__.__super__.lineage.apply(this,arguments));
-		return "fakedog." + (FakeDog.__super__.__super__.lineage.call(this));
+		("fakedog." + (FakeDog.__super__.__super__.lineage.apply(this,arguments)));
+		return ("fakedog." + (FakeDog.__super__.__super__.lineage.call(this)));
 	};
-	
 	
 	function Human(){
 		this._human = true;
@@ -114,25 +109,23 @@
 	
 	subclass$(Human,Animal);
 	Human.prototype.lineage = function (){
-		return "human." + (Human.__super__.lineage.call(this));
+		return ("human." + (Human.__super__.lineage.call(this)));
 	};
 	
 	Human.prototype.speak = function (){
 		return 'hello';
 	};
 	
-	
-	function Zombie(){ Human.apply(this,arguments) };
+	function Zombie(){ return Human.apply(this,arguments) };
 	
 	subclass$(Zombie,Human);
 	Zombie.prototype.lineage = function (){
-		return "zombie." + Zombie.__super__.lineage.apply(this,arguments);
+		return ("zombie." + Zombie.__super__.lineage.apply(this,arguments));
 	};
 	
 	Zombie.prototype.alive = function (){
 		return false;
 	};
-	
 	
 	Human.Child = function Child(){
 		Human.Child.__super__.constructor.apply(this,arguments);
@@ -143,9 +136,9 @@
 	
 	
 	
-	describe('Syntax - super',function() {
+	self.describe('Syntax - super',function() {
 		
-		return test("stuff",function() {
+		return self.test("stuff",function() {
 			
 			var cat = new Cat();
 			var virus = new Virus();
@@ -154,16 +147,19 @@
 			var human = new Human();
 			var zombie = new Zombie();
 			
-			eq(virus.lineage(),'virus.organism');
-			eq(cat.lineage(),'cat.animal.organism');
-			eq(dog.lineage(),'dog.animal.organism');
-			eq(zombie.lineage(),'zombie.human.animal.organism');
-			eq(fakedog.lineage(),'fakedog.animal.organism');
+			self.eq(virus.lineage(),'virus.organism');
+			self.eq(cat.lineage(),'cat.animal.organism');
+			self.eq(dog.lineage(),'dog.animal.organism');
+			self.eq(zombie.lineage(),'zombie.human.animal.organism');
+			self.eq(fakedog.lineage(),'fakedog.animal.organism');
 			
-			eq(cat.group(),"cat");
+			self.eq(cat.group(),"cat");
 			cat.cloak();
-			return eq(cat.group(),"animal");
+			return self.eq(cat.group(),"animal");
 		});
 	});
+	
+	
+	
 
 })()

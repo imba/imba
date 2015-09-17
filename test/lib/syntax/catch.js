@@ -1,4 +1,5 @@
 (function(){
+	var self=this;
 	// self = SPEC
 	
 	function ThrowClass(){ };
@@ -20,41 +21,40 @@
 	
 	
 	
-	
-	describe('Syntax - Catch',function() {
+	self.describe('Syntax - Catch',function() {
 		
-		return test("throw catch",function() {
+		return self.test("throw catch",function() {
 			
 			var res = false;
 			var after = false;
 			
 			try {
-				nometh() * 10;
+				self.nometh() * 10;
 			} catch (e) {
 				res = 1;
 			};
-			ok(res);
+			self.ok(res);
 			
 			// also works with statements
 			try {
-				res = nometh();
+				res = self.nometh();
 			} catch (e) {
 				res = 2;
 			};
-			eq(res,2);
+			self.eq(res,2);
 			
 			// finally is executed after the result of
 			// expression is evaluated
 			try {
-				res = nometh();
+				res = self.nometh();
 			} catch (e) {
 				res = 2;
 			} finally {
 				after = 3;
 			};
 			
-			eq(res,2);
-			eq(after,3);
+			self.eq(res,2);
+			self.eq(after,3);
 			
 			// check that throw works as expected
 			try {
@@ -64,18 +64,23 @@
 				res = e + 10;
 			};
 			
-			eq(res,20);
+			self.eq(res,20);
 			
 			// try works alone - adds automatic catch
 			try {
 				res = 10;
 			} catch (e) { };
-			eq(res,10);
+			self.eq(res,10);
 			
 			var obj = new ThrowClass();
-			eq(obj.returnBeforeFinally(2),4);
-			return eq(obj.cleanup(),true);
+			self.eq(obj.returnBeforeFinally(2),4);
+			return self.eq(obj.cleanup(),true);
 		});
 	});
+	
+	
+	
+	
+	
 
 })()

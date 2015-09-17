@@ -10,6 +10,7 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	var self=this;
 	
 	// self = SPEC
 	
@@ -66,39 +67,36 @@
 	
 	subclass$(Virus,Organism);
 	Virus.prototype.lineage = function (){
-		return "" + this.name() + "." + (Virus.__super__.lineage.call(this));
+		return ("" + this.name() + "." + (Virus.__super__.lineage.call(this)));
 	};
 	
 	Virus.prototype.name = function (){
 		return 'virus';
 	};
 	
-	
-	function Animal(){ Organism.apply(this,arguments) };
+	function Animal(){ return Organism.apply(this,arguments) };
 	
 	subclass$(Animal,Organism);
 	Animal.prototype.lineage = function (){
-		return "animal." + (Animal.__super__.lineage.call(this));
+		return ("animal." + (Animal.__super__.lineage.call(this)));
 	};
 	
-	
-	function Cat(){ Animal.apply(this,arguments) };
+	function Cat(){ return Animal.apply(this,arguments) };
 	
 	subclass$(Cat,Animal);
 	Cat.prototype.lineage = function (){
-		return "cat." + (Cat.__super__.lineage.call(this));
+		return ("cat." + (Cat.__super__.lineage.call(this)));
 	};
 	
 	Cat.prototype.speak = function (){
 		return 'miau';
 	};
 	
-	
-	function Dog(){ Animal.apply(this,arguments) };
+	function Dog(){ return Animal.apply(this,arguments) };
 	
 	subclass$(Dog,Animal);
 	Dog.prototype.lineage = function (){
-		return "dog." + (Dog.__super__.lineage.call(this));
+		return ("dog." + (Dog.__super__.lineage.call(this)));
 	};
 	
 	Dog.prototype.speak = function (){
@@ -106,24 +104,22 @@
 	};
 	
 	
-	
-	function Human(){ Animal.apply(this,arguments) };
+	function Human(){ return Animal.apply(this,arguments) };
 	
 	subclass$(Human,Animal);
 	Human.prototype.lineage = function (){
-		return "human." + (Human.__super__.lineage.call(this));
+		return ("human." + (Human.__super__.lineage.call(this)));
 	};
 	
 	Human.prototype.speak = function (){
 		return 'hello';
 	};
 	
-	
-	function Zombie(){ Human.apply(this,arguments) };
+	function Zombie(){ return Human.apply(this,arguments) };
 	
 	subclass$(Zombie,Human);
 	Zombie.prototype.lineage = function (){
-		return "zombie." + (Zombie.__super__.lineage.call(this));
+		return ("zombie." + (Zombie.__super__.lineage.call(this)));
 	};
 	
 	Zombie.prototype.alive = function (){
@@ -131,27 +127,26 @@
 	};
 	
 	
-	
-	describe('Syntax - Class',function() {
+	self.describe('Syntax - Class',function() {
 		
 		// test 'nested classes work' do
 		// 	ok !!Organism.Other
 		
-		test('should',function() {
+		self.test('should',function() {
 			
 			// you can define variables local to classbody
 			var obj = new Organism();
-			return eq(obj.lvar(),10);
+			return self.eq(obj.lvar(),10);
 		});
 		
-		describe('Methods',function() {
+		self.describe('Methods',function() {
 			
-			it('should define class methods',function() {
-				return eq(Organism.type(),'organism');
+			self.it('should define class methods',function() {
+				return self.eq(Organism.type(),'organism');
 			});
 			
-			return it('should inherit class methods',function() {
-				return eq(Virus.type,Organism.type);
+			return self.it('should inherit class methods',function() {
+				return self.eq(Virus.type,Organism.type);
 			});
 			
 			// it 'should call super in class methods' do
@@ -159,40 +154,40 @@
 			//   eq Cat.type, "cat.animal.organism"
 		});
 		
-		describe('Instance',function() {
+		self.describe('Instance',function() {
 			
-			it('should call the parent constructor by default',function() {
+			self.it('should call the parent constructor by default',function() {
 				var obj = new Cat();
-				return eq(obj._ivar,1);
+				return self.eq(obj._ivar,1);
 			});
 			
-			it('should define instance methods',function() {
+			self.it('should define instance methods',function() {
 				var obj = new Organism();
 				var val = obj.alive();
 				// eq val, true
-				ok(obj.alive());
-				return eq(obj.speak(),'ghaarg');
+				self.ok(obj.alive());
+				return self.eq(obj.speak(),'ghaarg');
 			});
 			
-			it('should inherit instance methods',function() {
+			self.it('should inherit instance methods',function() {
 				var obj = new Virus();
-				return ok(obj.alive());
+				return self.ok(obj.alive());
 			});
 			
 			
-			it('should override instance methods',function() {
-				eq(new Organism().name(),'organism');
-				return eq(new Virus().name(),'virus');
+			self.it('should override instance methods',function() {
+				self.eq(new Organism().name(),'organism');
+				return self.eq(new Virus().name(),'virus');
 			});
 			
-			return it('should call super in instance methods',function() {
+			return self.it('should call super in instance methods',function() {
 				// Should not refer to the prototype directly?
-				eq(new Virus().lineage(),'virus.organism');
-				return eq(new Zombie().lineage(),'zombie.human.animal.organism');
+				self.eq(new Virus().lineage(),'virus.organism');
+				return self.eq(new Zombie().lineage(),'zombie.human.animal.organism');
 			});
 		});
 		
-		test('define methods outside scope',function() {
+		self.test('define methods outside scope',function() {
 			function Cls(){ };
 			
 			Cls.a = function (){
@@ -202,7 +197,6 @@
 				return 2;
 			};
 			
-			
 			Cls.b = function (){
 				return 1;
 			};
@@ -211,15 +205,15 @@
 				return 2;
 			};
 			
-			eq(Cls.a(),1);
-			eq(Cls.b(),1);
+			self.eq(Cls.a(),1);
+			self.eq(Cls.b(),1);
 			
-			eq(new Cls().a(),2);
-			return eq(new Cls().b(),2);
+			self.eq(new Cls().a(),2);
+			return self.eq(new Cls().b(),2);
 		});
 		
 		
-		return test('Scoping',function() {
+		return self.test('Scoping',function() {
 			
 			var variable = 1;
 			
@@ -246,17 +240,21 @@
 				return this._sum;
 			};
 			
-			
-			eq(variable,1);
-			eq(A.base(),2);
-			eq(new A().base(),2);
-			eq(new A(5).sum(),7);
+			self.eq(variable,1);
+			self.eq(A.base(),2);
+			self.eq(new A().base(),2);
+			self.eq(new A(5).sum(),7);
 			
 			A.add(2);
 			
-			eq(variable,1);
-			return eq(A.base(),4);
+			self.eq(variable,1);
+			return self.eq(A.base(),4);
 		});
 	});
+	
+	
+	
+	
+	
 
 })()

@@ -10,10 +10,11 @@
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 	
+	var self=this;
 	
 	// self = SPEC
 	
-	function Paramer(){ SpecObject.apply(this,arguments) };
+	function Paramer(){ return SpecObject.apply(this,arguments) };
 	
 	subclass$(Paramer,SpecObject);
 	Paramer.prototype.blk = function (blk){
@@ -109,7 +110,6 @@
 	};
 	
 	
-	
 		
 		Number.prototype.num_meth = function (){
 			return true;
@@ -117,135 +117,131 @@
 	
 	
 	
-	describe('Syntax - Functions',function() {
+	self.describe('Syntax - Functions',function() {
 		
 		var obj = new Paramer();
-		var blk = function() {
-			return true;
-		};
+		var blk = function() { return true; };
 		var res = null;
 		
-		test("methods",function() {
+		self.test("methods",function() {
 			// basic arguments works
-			eq(obj.req('john'),['john']);
-			eq(obj.blk(blk),[blk]);
+			self.eq(obj.req('john'),['john']);
+			self.eq(obj.blk(blk),[blk]);
 			
-			eq(obj.req_blk('john',blk),['john',blk]);
+			self.eq(obj.req_blk('john',blk),['john',blk]);
 			
 			// options will be set to default, blk will be correctly set
-			eq(obj.req_opt_blk('john',blk),['john',{},blk]);
+			self.eq(obj.req_opt_blk('john',blk),['john',{},blk]);
 			
 			// if we supply options to method, blk is still specified
-			eq(obj.req_opt_blk('john',{opt: 10},blk),['john',{opt: 10},blk]);
+			self.eq(obj.req_opt_blk('john',{opt: 10},blk),['john',{opt: 10},blk]);
 			
 			// hmmm
-			eq(obj.req_opt_blk('john',undefined,blk),['john',{},blk]);
+			self.eq(obj.req_opt_blk('john',undefined,blk),['john',{},blk]);
 			
 			// only set blk if it is a function
-			eq(obj.req_opt_blk('john',{opt: 10}),['john',{opt: 10},undefined]);
+			self.eq(obj.req_opt_blk('john',{opt: 10}),['john',{opt: 10},undefined]);
 			
 			// should work for two optionals as well
-			eq(obj.opt_opt_blk(blk),['anon',{},blk]);
+			self.eq(obj.opt_opt_blk(blk),['anon',{},blk]);
 			
 			// should work for two optionals as well
-			eq(obj.opt_opt_blk('john',blk),['john',{},blk]);
-			eq(obj.opt_opt_blk('john',{opt: 10},blk),['john',{opt: 10},blk]);
+			self.eq(obj.opt_opt_blk('john',blk),['john',{},blk]);
+			self.eq(obj.opt_opt_blk('john',{opt: 10},blk),['john',{opt: 10},blk]);
 			
 			res = obj.req_opt_splat_blk('john',blk);
-			eq(res,['john',{},[],blk]);
+			self.eq(res,['john',{},[],blk]);
 			
 			res = obj.req_opt_splat_blk('john',{opt: 10},blk);
-			eq(res,['john',{opt: 10},[],blk]);
+			self.eq(res,['john',{opt: 10},[],blk]);
 			
 			res = obj.req_opt_splat_blk('john');
-			eq(res,['john',{},[],undefined]);
+			self.eq(res,['john',{},[],undefined]);
 			
 			res = obj.req_opt_splat_blk('john',{opt: 10},10,11,12,blk);
-			eq(res,['john',{opt: 10},[10,11,12],blk]);
+			self.eq(res,['john',{opt: 10},[10,11,12],blk]);
 			
 			res = obj.req_splat('john',1,2,3);
-			eq(res,['john',[1,2,3]]);
+			self.eq(res,['john',[1,2,3]]);
 			
 			// optional arguments
-			eq(obj.opt(),'anon');
+			self.eq(obj.opt(),'anon');
 			
 			// null overrides the default argument
-			eq(obj.opt(null),null);
+			self.eq(obj.opt(null),null);
 			
 			// undefined is like sending on argument
-			return eq(obj.opt(undefined),'anon');
+			return self.eq(obj.opt(undefined),'anon');
 		});
 		
-		test("keyword arguments",function() {
+		self.test("keyword arguments",function() {
 			// [name,gender,age]
 			res = obj.req_key('john',{age: 20});
-			eq(res,['john',0,20]);
+			self.eq(res,['john',0,20]);
 			
 			res = obj.req_key('john');
-			eq(res,['john',0,18]);
+			self.eq(res,['john',0,18]);
 			
 			// keywords are optional, and block is greedy
 			// req_key_blk name, gender: 0, age: 18, &blk
 			res = obj.req_key_blk('john',blk);
-			eq(res,['john',0,18,blk]);
+			self.eq(res,['john',0,18,blk]);
 			
 			res = obj.req_key_blk('john',{gender: 1},blk);
-			eq(res,['john',1,18,blk]);
+			self.eq(res,['john',1,18,blk]);
 			
 			// opt_key_blk name = 'anon', gender: 0, age: 18, &blk
 			res = obj.opt_key_blk({gender: 1},blk);
-			eq(res,['anon',1,18,blk]);
+			self.eq(res,['anon',1,18,blk]);
 			
 			res = obj.opt_key_blk(blk);
-			eq(res,['anon',0,18,blk]);
+			self.eq(res,['anon',0,18,blk]);
 			
 			res = obj.opt_key_blk('john',{age: 20});
-			eq(res,['john',0,20,null]);
+			self.eq(res,['john',0,20,null]);
 			
 			// splat_key_blk *tags, gender: 0, age: 18, &blk
 			res = obj.splat_key_blk(1,2,3,{age: 20});
-			eq(res,[[1,2,3],0,20,null]);
+			self.eq(res,[[1,2,3],0,20,null]);
 			
 			res = obj.splat_key_blk(1,2,3,{gender: 1},blk);
-			eq(res,[[1,2,3],1,18,blk]);
+			self.eq(res,[[1,2,3],1,18,blk]);
 			
 			res = obj.splat_key_blk({gender: 1},blk);
-			eq(res,[[],1,18,blk]);
+			self.eq(res,[[],1,18,blk]);
 			
 			res = obj.splat_key_blk();
-			eq(res,[[],0,18,null]);
+			self.eq(res,[[],0,18,null]);
 			
 			res = obj.splat_key_blk(1,2,3);
-			eq(res,[[1,2,3],0,18,null]);
+			self.eq(res,[[1,2,3],0,18,null]);
 			
 			res = obj.splat_key_blk(1,2,3,blk);
-			return eq(res,[[1,2,3],0,18,blk]);
+			return self.eq(res,[[1,2,3],0,18,blk]);
 		});
 		
 		
-		test("basic lambdas",function() {
+		self.test("basic lambdas",function() {
 			
 			// we use do-syntax fo define basic functions
-			var fn = function() {
-				return 1;
-			};
-			eq(fn(),1);
+			var fn = function() { return 1; };
+			self.eq(fn(),1);
 			
 			// arguments are defined in do | args |
 			fn = function(a) {
 				return 1 + a;
 			};
 			
-			eq(fn(0),1);
-			eq(fn(1),2);
+			self.eq(fn(0),1);
+			self.eq(fn(1),2);
 			
 			// multiple arguments
 			fn = function(a,b) {
 				return a + b;
 			};
 			
-			eq(fn(1,1),2);
-			eq(fn(2,3),5);
+			self.eq(fn(1,1),2);
+			self.eq(fn(2,3),5);
 			
 			// we support default arguments
 			fn = function(a,b,c) {
@@ -253,8 +249,8 @@
 				return a + b + c;
 			};
 			
-			eq(fn(1,1),4);
-			eq(fn(1,1,1),3);
+			self.eq(fn(1,1),4);
+			self.eq(fn(1,1,1),3);
 			
 			// splat arguments
 			fn = function(a,b,c) {
@@ -264,7 +260,7 @@
 				return [a,b,c,d];
 			};
 			
-			eq(fn(1,2,3,4,5),[1,2,3,[4,5]]);
+			self.eq(fn(1,2,3,4,5),[1,2,3,[4,5]]);
 			
 			var outer = function() {
 				var $0 = arguments, i = $0.length;
@@ -279,37 +275,27 @@
 			
 			// block precedence
 			// f1 f2 do 10 -> f1(f2(10))
-			var v = outer(5,inner(function() {
-				return 10;
-			}));
-			return eq(v,[5,10]);
+			var v = outer(5,inner(function() { return 10; }));
+			return self.eq(v,[5,10]);
 		});
 		
-		test("methods on numbers",function() {
-			return ok((1).num_meth());
+		self.test("methods on numbers",function() {
+			return self.ok((1).num_meth());
 		});
 		
 		
-		return test("block-argument position",function() {
-			var fn = function(a,b,c) {
-				return [a instanceof Function ? (a()) : (a),b instanceof Function ? (b()) : (b),c instanceof Function ? (c()) : (c)];
-			};
+		return self.test("block-argument position",function() {
+			var fn = function(a,b,c) { return [a instanceof Function ? (a()) : (a),b instanceof Function ? (b()) : (b),c instanceof Function ? (c()) : (c)]; };
 			var res;
 			
-			res = fn(1,2,function() {
-				return 3;
-			});
-			eq(res,[1,2,3]);
+			res = fn(1,2,function() { return 3; });
+			self.eq(res,[1,2,3]);
 			
-			res = fn(1,function() {
-				return 3;
-			},2);
-			eq(res,[1,3,2]);
+			res = fn(1,function() { return 3; },2);
+			self.eq(res,[1,3,2]);
 			
-			res = fn(function() {
-				return 3;
-			},2,3);
-			return eq(res,[3,2,3]);
+			res = fn(function() { return 3; },2,3);
+			return self.eq(res,[3,2,3]);
 		});
 	});
 	

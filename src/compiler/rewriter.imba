@@ -335,7 +335,7 @@ export class Rewriter
 
 			if type == 'DO' # and ctx:generated
 				var prev = T.typ(tokens[i - 1]) # [0]
-				if ['NUMBER','STRING','REGEX','SYMBOL',']','}',')'].indexOf(prev) >= 0
+				if ['NUMBER','STRING','REGEX','SYMBOL',']','}',')','STRING_END'].indexOf(prev) >= 0
 
 					var tok = T.token(',', ',')
 					tok:generated = yes
@@ -549,6 +549,7 @@ var BALANCED_PAIRS = [
 	['(', ')']
 	['[', ']']
 	['{', '}']
+	['{{', '}}']
 	['INDENT', 'OUTDENT'],
 	['CALL_START', 'CALL_END']
 	['PARAM_START', 'PARAM_END']
@@ -573,8 +574,8 @@ for pair in BALANCED_PAIRS
 	INVERSES[rite] = left
 	INVERSES[left] = rite
 
-var EXPRESSION_START = ['(','[','{','INDENT','CALL_START','PARAM_START','INDEX_START','TAG_PARAM_START','BLOCK_PARAM_START']
-var EXPRESSION_END = [')',']','}','OUTDENT','CALL_END','PARAM_END','INDEX_END','TAG_PARAM_END','BLOCK_PARAM_END']
+var EXPRESSION_START = ['(','[','{','INDENT','CALL_START','PARAM_START','INDEX_START','TAG_PARAM_START','BLOCK_PARAM_START','STRING_START']
+var EXPRESSION_END = [')',']','}','OUTDENT','CALL_END','PARAM_END','INDEX_END','TAG_PARAM_END','BLOCK_PARAM_END','STRING_END']
 
 var IDENTIFIERS = ['IDENTIFIER', 'GVAR', 'IVAR', 'CVAR', 'CONST', 'ARGVAR']
 
@@ -592,7 +593,7 @@ var IMPLICIT_CALL    = [
 	'SELECTOR','IDENTIFIER', 'NUMBER', 'STRING', 'SYMBOL', 'JS', 'REGEX', 'NEW', 'PARAM_START', 'CLASS'
 	'IF', 'UNLESS', 'TRY', 'SWITCH', 'THIS', 'BOOL', 'TRUE','FALSE', 'NULL', 'UNDEFINED', 'UNARY', 'SUPER', 'IVAR', 'GVAR', 'CONST', 'ARGVAR','SELF', 
 	'@', '[', '(', '{', '--', '++','SELECTOR', 'TAG_START', 'TAGID', '#', 'SELECTOR_START', 'IDREF', 'SPLAT', 'DO', 'BLOCK_ARG'
-	'FOR'
+	'FOR', 'STRING_START'
 ] # '->', '=>', why does it not work with symbol?
 
 var IMPLICIT_INDENT_CALL = [

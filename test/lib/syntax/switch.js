@@ -1,8 +1,9 @@
 (function(){
+	var self=this;
 	
-	describe('Syntax - Switch',function() {
+	self.describe('Syntax - Switch',function() {
 		
-		return test("general",function() {
+		return self.test("general",function() {
 			var type = 1;
 			switch (type) {
 				case 1:
@@ -14,7 +15,7 @@
 					var value = 'B';
 			
 			};
-			eq(value,'A');
+			self.eq(value,'A');
 			
 			// compact
 			switch (type) {
@@ -26,7 +27,7 @@
 					value = 'B';
 			
 			};
-			return eq(value,'A');
+			return self.eq(value,'A');
 		});
 	});
 

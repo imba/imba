@@ -1,12 +1,13 @@
 (function(){
+	var self=this;
 	
 	function check(sel,query){
 		return this.eq(sel.query(),query);
 	};
 	
-	describe("Syntax - Selectors",function() {
+	self.describe("Syntax - Selectors",function() {
 		
-		return test("variations",function() {
+		return self.test("variations",function() {
 			var a = 1;
 			var s = "ok";
 			

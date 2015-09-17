@@ -18,6 +18,7 @@
 		return u;
 	};
 	
+	var self=this;
 	// self = SPEC
 	
 	// externs;
@@ -36,7 +37,6 @@
 	O.prototype.__z = {name: 'z'};
 	O.prototype.z = function(v){ return this._z; }
 	O.prototype.setZ = function(v){ this._z = v; return this; };
-	
 	
 	function SyntaxAssignment(nestings){
 		if(nestings === undefined) nestings = 0;
@@ -93,7 +93,6 @@
 	};
 	
 	
-	
 	// Assignment
 	// ----------
 	
@@ -102,17 +101,17 @@
 	// * Destructuring Assignment
 	// * Context Property (@) Assignment
 	// * Existential Assignment (?=)
-	describe('Syntax - Assignment',function() {
+	self.describe('Syntax - Assignment',function() {
 		
-		describe("properties",function() {
+		self.describe("properties",function() {
 			var obj = new SyntaxAssignment();
 			
-			test("=",function() {
+			self.test("=",function() {
 				obj.setIvar(1);
 				return eq(obj.ivar(),1);
 			});
 			
-			test("||=",function() {
+			self.test("||=",function() {
 				var ivar_, v_, $1, $2;
 				(ivar_=obj.ivar()) || ((obj.setIvar(v_=2),v_));
 				eq(obj.ivar(),1);
@@ -126,26 +125,26 @@
 				return eq(obj.ivar(),3);
 			});
 			
-			test("&&=",function() {
+			self.test("&&=",function() {
 				var ivar_, v_;
 				obj.setIvar(1);
 				(ivar_=obj.ivar()) && ((obj.setIvar(v_=2),v_));
 				return eq(obj.ivar(),2);
 			});
 			
-			test("+=",function() {
+			self.test("+=",function() {
 				obj.setIvar(1);
 				obj.setIvar(obj.ivar() + 1);
 				return eq(obj.ivar(),2);
 			});
 			
-			test("-=",function() {
+			self.test("-=",function() {
 				obj.setIvar(1);
 				obj.setIvar(obj.ivar() - 1);
 				return eq(obj.ivar(),0);
 			});
 			
-			return test("caching target",function() {
+			return self.test("caching target",function() {
 				var child_;
 				var o1 = new SyntaxAssignment(3);
 				var o2 = o1.child();
@@ -165,12 +164,12 @@
 		});
 		
 		
-		describe("statements",function() {
+		self.describe("statements",function() {
 			var obj = new SyntaxAssignment();
 			var truthy = 1;
 			var falsy = 0;
 			
-			test("=",function() {
+			self.test("=",function() {
 				var v_;
 				var localvar;
 				obj.setIvar(1);
@@ -191,7 +190,7 @@
 				
 				if (truthy) {
 					try {
-						localvar = (obj.setIvar(v_=nomethod()),v_);
+						localvar = (obj.setIvar(v_=self.nomethod()),v_);
 					} catch (e) {
 						localvar = (obj.setIvar($1=3),$1);
 					};
@@ -203,12 +202,12 @@
 				return eq(obj.ivar(),3);
 			});
 			
-			test("||= statement",function() {
+			self.test("||= statement",function() {
 				var ivar_, v_;
 				obj.setIvar(0);
 				if (!(ivar_=obj.ivar())) { if (truthy) {
 					try {
-						var l = (obj.setIvar(v_=nomethod()),v_);
+						var l = (obj.setIvar(v_=self.nomethod()),v_);
 					} catch (e) {
 						l = (obj.setIvar($1=3),$1);
 					};
@@ -222,7 +221,7 @@
 				return eq(obj.ivar(),3);
 			});
 			
-			test("+= statement",function() {
+			self.test("+= statement",function() {
 				var tmp, v_;
 				var l0 = 0;
 				var l1 = 0;
@@ -233,7 +232,7 @@
 				// 
 				if (!l1) { if (l3) { if (truthy) {
 					try {
-						l0 = l1 = (obj.setIvar(v_=obj.ivar() + (l3 = nomethod())),v_);
+						l0 = l1 = (obj.setIvar(v_=obj.ivar() + (l3 = self.nomethod())),v_);
 					} catch (e) {
 						l0 = l1 = (obj.setIvar($1=obj.ivar() + (l3 = 3)),$1);
 					};
@@ -251,7 +250,7 @@
 				// eq obj.ivar, 4
 			});
 			
-			return test("caching access for compound assigns",function() {
+			return self.test("caching access for compound assigns",function() {
 				var child_, ivar_, v_;
 				var o1 = new SyntaxAssignment(3);
 				var o2 = o1.child();
@@ -270,7 +269,7 @@
 			});
 		});
 		
-		test("indexes",function() {
+		self.test("indexes",function() {
 			var a = {};
 			var b = false;
 			a[b ? ('yes') : ('no')] = true;
@@ -278,7 +277,7 @@
 		});
 		
 		// Compound Assignment
-		test("boolean operators",function() {
+		self.test("boolean operators",function() {
 			var nonce = {};
 			
 			var a = 0;
@@ -300,7 +299,7 @@
 			return eq(nonce,d);
 		});
 		
-		test("mathematical operators",function() {
+		self.test("mathematical operators",function() {
 			var a = [1,2,3,4];
 			var b = [3,4,5,6];
 			
@@ -316,8 +315,8 @@
 			// eq false, e
 		});
 		
-		test("compound assignment as a sub expression",function() {
-			return p("no support for compound assigns yet");
+		self.test("compound assignment as a sub expression",function() {
+			return self.p("no support for compound assigns yet");
 			// [a, b, c] = [1, 2, 3]
 			// eq 6, (a + b += c)
 			// eq 1, a
@@ -326,7 +325,7 @@
 			//
 			//	# *note: this test could still use refactoring*
 		});
-		test("compound assignment should be careful about caching variables",function() {
+		self.test("compound assignment should be careful about caching variables",function() {
 			var $1, $2, $3, $4, $5;
 			var count = 0;
 			var list = [];
@@ -361,7 +360,7 @@
 			return eq(5,count);
 		});
 		
-		test("compound assignment with implicit objects",function() {
+		self.test("compound assignment with implicit objects",function() {
 			var obj = undefined;
 			obj == null ? (obj = {one: 1}) : (obj);
 			
@@ -373,7 +372,7 @@
 			return eq(2,obj.two);
 		});
 		
-		test("compound assignment (math operators)",function() {
+		self.test("compound assignment (math operators)",function() {
 			var num = 10;
 			num -= 5;
 			eq(5,num);
@@ -388,7 +387,7 @@
 			return eq(2,num);
 		});
 		
-		test("more compound assignment",function() {
+		self.test("more compound assignment",function() {
 			var a = {};
 			var val = undefined;
 			val || (val = a);
@@ -409,7 +408,7 @@
 		});
 		
 		
-		test('a,b,c = 1,2,3',function(_0,_1,_2) {
+		self.test('a,b,c = 1,2,3',function(_0,_1,_2) {
 			
 			var $1, $2, items, array, len, i, coll, len_, j, tmp, ary_, ary__, $3, len__, k, tmplist;
 			var ary = [1,2,3,4,5];
@@ -492,7 +491,7 @@
 			return;
 		});
 		
-		test('a,b,c = x,y,z',function() {
+		self.test('a,b,c = x,y,z',function() {
 			var $1, $2, $3;
 			var o = {x: 0,y: 1,z: 2};
 			var a = o.x,b = o.y,c = o.z;
@@ -522,7 +521,7 @@
 			return eq([x,y],[10,100]);
 		});
 		
-		test('.a,.b = x,y',function() {
+		self.test('.a,.b = x,y',function() {
 			// b will nececarrily need to be set after a is set
 			var z_, $1, $2;
 			function A(){
@@ -566,7 +565,6 @@
 			};
 			
 			
-			
 			// o.x should not be set before we get o.z
 			// if the left side was vars however, we could do it the easy way
 			var o = new A();
@@ -575,9 +573,7 @@
 			
 			// now predefine local variables
 			var a = 0,b = 0,c = 0,i = 0;
-			var m = function() {
-				return a + b + c;
-			};
+			var m = function() { return a + b + c; };
 			z_=m(),$1=m(),$2=m(),a = z_,b = $1,c = $2;
 			eq([a,b,c],[0,0,0]);
 			
@@ -585,12 +581,10 @@
 		});
 		
 		
-		test('tuples - edgecase',function() {
+		self.test('tuples - edgecase',function() {
 			var $1, $2;
 			var b = 0,c = 0,i = 0;
-			var m = function() {
-				return (++i) + b + c;
-			};
+			var m = function() { return (++i) + b + c; };
 			
 			// since a is not predefined, it is safe to evaluate this directly
 			// while the values for b and c must be precached before assignment
@@ -598,7 +592,7 @@
 			return eq([a,b,c],[1,2,3]);
 		});
 		
-		test('tuples - edgecase 2',function() {
+		self.test('tuples - edgecase 2',function() {
 			var $1, $2, $3;
 			var a = 0,c = 0,i = 0;
 			
@@ -614,7 +608,7 @@
 			return eq([a,b,c],[11,12,13]);
 		});
 		
-		return test('hoisting',function() {
+		return self.test('hoisting',function() {
 			var fn = function(o,i) {
 				if (i > 0) { fn(o,i - 1) };
 				o.counter++;

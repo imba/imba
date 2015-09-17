@@ -2576,14 +2576,28 @@ export class Interpolation < ValueNode
 # Currently not used - it would be better to use this
 # for real interpolated strings though, than to break
 # them up into their parts before parsing
-export class InterpolatedString < ListNode
+export class InterpolatedString < Node
+
+	def initialize nodes, o = {}
+		@nodes = nodes
+		@options = o
+		self
+
+	def add part
+		@nodes.push(part) if part
+		self
+
+	def visit
+		for node in @nodes
+			node.traverse
+		self
 
 	def js o
 		# creating the string
 		var parts = []
 		var str = '('
 
-		map do |part,i|
+		@nodes.map do |part,i|
 			if part isa Token and part.@type == 'NEOSTRING'
 				parts.push('"' + part.@value + '"')
 			elif part
@@ -2726,7 +2740,7 @@ export class Obj < Literal
 		self
 
 	def js o
-		var dyn = value.filter(|v| v isa ObjAttr and v.key isa Op )
+		var dyn = value.filter(|v| v isa ObjAttr and (v.key isa Op or v.key isa InterpolatedString)  )
 
 		if dyn:length > 0
 			var idx = value.indexOf(dyn[0])

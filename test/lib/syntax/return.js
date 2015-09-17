@@ -1,5 +1,6 @@
 (function(){
-	describe('Syntax - Return',function() {
+	var self=this;
+	self.describe('Syntax - Return',function() {
 		
 		function SyntaxReturn(){ };
 		
@@ -20,13 +21,12 @@
 			return 1;
 		};
 		
-		
 		var obj = new SyntaxReturn();
 		
-		return test("explicit",function() {
-			eq(obj.single(),1);
-			eq(obj.multi(),[1,2]);
-			eq(obj.d(),undefined);
+		return self.test("explicit",function() {
+			self.eq(obj.single(),1);
+			self.eq(obj.multi(),[1,2]);
+			self.eq(obj.d(),undefined);
 			
 			var fn = function() {
 				return [
@@ -34,7 +34,7 @@
 					2
 				];
 			};
-			return eq(fn(),[1,2]);
+			return self.eq(fn(),[1,2]);
 		});
 	});
 

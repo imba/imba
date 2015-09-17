@@ -1,8 +1,9 @@
 (function(){
+	var self=this;
 	
-	describe('Syntax - Existential operator',function() {
+	self.describe('Syntax - Existential operator',function() {
 		
-		return test('chained',function() {
+		return self.test('chained',function() {
 			var chain;
 			function Chainable(){ };
 			
@@ -15,7 +16,6 @@
 			Chainable.prototype.n = function (){
 				return null;
 			};
-			
 			
 			
 			return chain = new Chainable();

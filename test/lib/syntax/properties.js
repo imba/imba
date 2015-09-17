@@ -1,4 +1,5 @@
 (function(){
+	var self=this;
 	
 	function Model(nestings){
 		if(nestings === undefined) nestings = 0;
@@ -13,7 +14,7 @@
 	Model.prototype.a = function(v){ return this._a; }
 	Model.prototype.setA = function(v){ this._a = v; return this; };
 	
-	Model.prototype.__b = {default: 10,name: 'b'};
+	Model.prototype.__b = {'default': 10,name: 'b'};
 	Model.prototype.b = function(v){ return this._b; }
 	Model.prototype.setB = function(v){ this._b = v; return this; }
 	Model.prototype._b = 10;
@@ -62,7 +63,6 @@
 	};
 	
 	
-	
 	// Assignment
 	// ----------
 	
@@ -71,12 +71,12 @@
 	// * Destructuring Assignment
 	// * Context Property (@) Assignment
 	// * Existential Assignment (?=)
-	describe('Syntax - Properties',function() {
+	self.describe('Syntax - Properties',function() {
 		
-		return test("default values",function() {
+		return self.test("default values",function() {
 			var object = new Model();
-			eq(object.a(),undefined);
-			return eq(object.b(),10);
+			self.eq(object.a(),undefined);
+			return self.eq(object.b(),10);
 		});
 	});
 
