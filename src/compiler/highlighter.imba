@@ -27,6 +27,9 @@ var classes = {
 	'tag_start': ['s','_imopen tag_open']
 	'tag_end': ['s','_imclose tag_close']
 
+	'string_start': ['s','_imopen _imstrstart']
+	'string_end': ['s','_imclose _imstrend']
+	'neostring': '_imneostring neostring'
 	'"': 'doublequote'
 	"'": 'singlequote'
 
@@ -59,10 +62,12 @@ var OPEN = {
 	'tag_start': '_imtag tag'
 	'call_start': '_imparens call'
 	'selector_start': '_imsel sel'
+	'string_start': '_imistring string'
 	'index_start': 'index'
 	'indent': '_indent'
 	'(': '_imparens paren'
 	'{': '_imcurly curly'
+	'{{': '_imiexpr curly'
 	'[': '_imsquare square'
 	'("': '_iminterstr string'
 }
@@ -70,12 +75,14 @@ var OPEN = {
 var CLOSE = {
 	'tag_end': 'tag'
 	'call_end': '_imparens call'
+	'string_end': '_imistring string'
 	'selector_end': 'sel'
 	'index_end': 'index'
 	'outdent': '_indent'
 	')': 'paren'
 	']': 'square'
 	'}': 'curly'
+	'}}': '_imiexpr curly'
 	'")': 'string'
 }
 
@@ -224,7 +231,7 @@ export class Highlighter
 			if len == 0 or typ == 'terminator' or typ == 'indent' or typ == 'outdent'
 				continue 
 
-			if tok.@col == -1
+			if tok.@col == -1 and tok.@loc <= 0
 				continue 
 
 			var node = 'span'
