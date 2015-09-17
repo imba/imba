@@ -590,8 +590,8 @@ export class Lexer
 				return 0
 
 			if match = SELECTOR_COMBINATOR.exec(@chunk)
-
-				token 'SELECTOR_COMBINATOR', match[1] || " "
+				# spaces between? -- include the whole
+				token 'SELECTOR_COMBINATOR', match[1] || " ", match[0]:length
 				return match[0]:length
 			
 			elif match = SELECTOR_PART.exec(@chunk)
@@ -616,8 +616,11 @@ export class Lexer
 				token('[','[',1)
 				self.pushEnd(']')
 				if match = SELECTOR_ATTR.exec(@chunk)
-					token('IDENTIFIER', match[1], 0)
-					token('SELECTOR_ATTR_OP', match[2], 0)
+					# fuck this length shit
+					var idoffset = match[0].indexOf(match[1])
+					var opoffset = match[0].indexOf(match[2])
+					token('IDENTIFIER', match[1], match[1]:length, idoffset)
+					token('SELECTOR_ATTR_OP', match[2], match[2]:length, opoffset)
 					return match[0]:length
 				return 1
 
@@ -655,7 +658,7 @@ export class Lexer
 		# this is a closed selector
 		if kind == '('
 			# token '(','('
-			token 'SELECTOR_START', id
+			token 'SELECTOR_START', id, id:length + 1
 			# self.pushEnd(')') # are we so sure about this?
 			self.pushEnd('%')
 
@@ -666,7 +669,7 @@ export class Lexer
 		elif id == '%'
 			# we are already scoped in on a selector
 			return 1 if context == '%'
-			token 'SELECTOR_START', id
+			token 'SELECTOR_START', id, id:length
 			# this is a separate - scope. Full selector should rather be $, and keep the single selector as %
 		
 			scope('%', open: yes)

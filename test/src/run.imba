@@ -2,6 +2,9 @@
 
 require '../../index'
 require './spec'
+
+require './parser/index'
+
 require './syntax/loop'
 require './syntax/class'
 require './syntax/super'
