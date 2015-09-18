@@ -1,5 +1,6 @@
 
 import 'path' as path
+import './helpers' as util
 
 export class SourceMap
 
@@ -18,6 +19,9 @@ export class SourceMap
 	def filename
 		options:options:filename
 
+	def sourceCode
+		options:options.@source
+
 	def targetPath
 		options:options:targetPath
 
@@ -35,11 +39,14 @@ export class SourceMap
 		[sourceName]
 
 	def parse
-		# console.log "PARSE"
-		var matcher = /\%\%(\d*)\$(\d*)\%\%/
-		var replacer = /^(.*?)\%\%(\d*)\$(\d*)\%\%/
+		var matcher = /\%\$(\d*)\$\%/
+		var replacer = /^(.*?)\%\$(\d*)\$\%/
 		var lines = options:js.split(/\n/g) # what about js?
+		# return self
+		var locmap = util.locationToLineColMap(sourceCode)
 		@maps = []
+
+
 		
 		var match
 		# split the code in lines. go through each line 
@@ -52,9 +59,10 @@ export class SourceMap
 
 			@maps[i] = []
 			while line.match(matcher)
-				line = line.replace(replacer) do |m,pre,line,col|
+				line = line.replace(replacer) do |m,pre,loc|
+					var lc = locmap[parseInt(loc)]
 					caret = pre:length
-					var mapping = [ [parseInt(line),parseInt(col)], [i,caret] ] # source and output
+					var mapping = [ [lc[0],lc[1]], [i,caret] ] # source and output
 					@maps[i].push(mapping)
 					return pre
 			lines[i] = line

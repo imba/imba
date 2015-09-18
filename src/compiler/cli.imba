@@ -24,6 +24,7 @@ var T = require './token'
 # console.timeEnd("compiler")
 
 var parser = compiler:parser
+var util = require './helpers'
 
 # really?
 # wrapper for files?
@@ -35,8 +36,8 @@ class SourceFile
 
 	def initialize path
 		@path = path
-		@code = nil
-		@js = nil
+		@code = null
+		@js = null
 		self
 
 	def name
@@ -187,16 +188,15 @@ def sourcefile-for-path path
 
 def printCompilerError e, source: null, tok: null, tokens: null
 	#  return printError(e,source: source)
-	# console.log "error {e}"
+	
 	var lex = e:lexer
 
 	tok ||= lex and lex:yytext
 	tokens ||= lex and lex:tokens
 
-	var src = source and source.code
-	var lines = src and src.split(/\n/g)
-
-	# log "OH NOH"
+	var src    = source and source.code
+	var locmap = util.locationToLineColMap(src)
+	var lines  = src and src.split(/\n/g)
 
 	var lnum = do |l, color = 'grey'|
 		var s = String(l + 1)
@@ -225,20 +225,24 @@ def printCompilerError e, source: null, tok: null, tokens: null
 
 		# first get the pos up to the wanted line
 		while var tok = tokens[++pos]
-			break if tok.@line > nr
+			var tloc = locmap[tok.@loc]
+			break if tloc and tloc[0] > nr
 
 		while var tok = tokens[--pos]
-			continue if tok.@col == -1 # generated
+			continue if tok.@loc == -1 # generated
 
-			var l = tok.@line
 			# log "looping token {tok.@line} {tok.@col}"
-			continue if l > nr
-			break if l < nr
+			
 			# log "breakign at line {tok.@line}"
 			# log "highlight {tok.@type}"
 			var typ = tok.@type
-			var col = tok.@col
+			var loc = locmap[tok.@loc]
+			var col = loc and loc[1] or 0
 			var len = tok.@len or tok.@value:length
+			var l = loc[0]
+
+			continue if l > nr
+			break if l < nr
 
 			typ = 'KEYWORD' if typ:length > 1 and typ == tok.@value.toUpperCase
 			typ = 'PUNCTUATION' if typ.match(/^[\[\]\{\}\(\)\,]/)
@@ -252,28 +256,25 @@ def printCompilerError e, source: null, tok: null, tokens: null
 
 		return
 		
-
-		
-	# select the lines to show
-	# go backwards in tokenlist and colorize the string if type
-	# try first on the single line
-	# var character = src.charAt(tok.@loc)
-	# var c2 = lines[tok.@line].charAt(tok.@col + 1)
-
 	log " - " + chalk.red(e:message)  # + character + c2
-
 
 	if tok and src
 		log(chalk.grey("    ------") + "  ------------------")
-		var lines = src.split(/\n/g)
+
+		# var lines = src.split(/\n/g)
+		# var map = util.locationToLineColMap(src)
+		# util.markLineColForTokens(tokens,src)
 
 		# find the closest non-generated token to show error
 		var tpos = tokens.indexOf(tok)
-		while tok and tok.@col == -1
+		while tok and tok.@loc == -1
 			tok = tokens[--tpos]
 
-		var ln = tok.@line
-		var col = tok.@col
+		var lc = locmap[tok.@loc] or [0,0]
+		var ln = lc[0]
+		var col = lc[1]
+		# var ln = tok.@line
+		# var col = tok.@col
 
 		printLn(ln - 3)
 		printLn(ln - 2)

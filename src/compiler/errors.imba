@@ -24,7 +24,7 @@ export class ImbaParseError < Error
 		var o = @options
 		var idx = o:pos - 1
 		var tok = o:tokens and o:tokens[idx]
-		tok = o:tokens[--idx] while tok and tok.@col == -1
+		tok = o:tokens[--idx] while tok and tok.@loc == -1
 		return tok
 
 
@@ -33,4 +33,5 @@ export class ImbaParseError < Error
 		var tok = start
 		# var tok = o:tokens and o:tokens[o:pos - 1]
 		# var loc = tok and [tok.@loc,tok.@loc + (tok.@len or tok.@value:length)] or [0,0]
-		return {warn: yes, message: self:message, loc: tok.region, col: tok.@col, line: tok.@line}
+		# , col: tok.@col, line: tok.@line
+		return {warn: yes, message: self:message, loc: tok.region}

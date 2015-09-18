@@ -26,6 +26,7 @@ parser:yy = ast # everything is exported right here now
 
 export def tokenize code, o = {}
 	try
+		o.@source = code
 		lex.reset
 		lex.tokenize code, o
 	catch err
@@ -43,6 +44,7 @@ export def parse code, o = {}
 	var tokens = code isa Array ? code : tokenize(code,o)
 	try
 		# console.log("Tokens",tokens)
+		o.@source = code
 		o.@tokens = tokens
 		return parser.parse tokens
 	catch err

@@ -14,14 +14,12 @@ var DEF = TOK.DEF = 7
 
 export class Token
 
-	def initialize type, value, line, loc, len
+	def initialize type, value, loc, len
 		@type  = type
 		@value = value
-		@meta  = nil
-		@line  = line or 0
-		@col   = -1
-		@loc   = loc or 0
+		@loc   = loc != null ? loc : -1
 		@len   = len or 0
+		@meta  = null
 		this:generated = no
 		this:newLine = no
 		this:spaced = no
@@ -52,7 +50,9 @@ export class Token
 		[@loc,@loc + (@len or @value:length)]
 
 	def sourceMapMarker
-		@col == -1 ? '' : "%%{@line}${@col}%%"
+		@loc == -1 ? ':' : "%${@loc}$%"
+		# @col == -1 ? '' : "%%{@line}${@col}%%"
+
 
 export def lex
 	var token = this:tokens[this:pos++]
@@ -61,10 +61,6 @@ export def lex
 	if token
 		ttag = token.@type
 		this:yytext = token
-
-		if var line = token.@line
-			this:yylineno = line
-
 	else
 		ttag = ''
 

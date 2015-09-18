@@ -57,3 +57,28 @@ export def bracketize str, ind = yes
 	
 export def parenthesize str
 	'(' + String(str) + ')'
+
+export def locationToLineColMap code
+	var lines = code.split(/\n/g)
+	var map = []
+
+	var chr
+	var loc = 0
+	var col = 0
+	var line = 0
+
+	while chr = code[loc]
+		map[loc] = [line,col]
+
+		if chr == '\n'
+			line++
+			col = 0
+		else
+			col++
+
+		loc++
+
+	return map
+
+export def markLineColForTokens tokens, code
+	self

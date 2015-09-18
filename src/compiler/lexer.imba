@@ -1,6 +1,4 @@
 
-extern parseInt, parseFloat
-
 var T = require './token'
 var Token = T.Token
 
@@ -351,9 +349,6 @@ export class Lexer
 
 		@tokens  = []             # Stream of parsed tokens in the form `['TYPE', value, line]`.
 		@seenFor = no
-
-		@line = 0 # The current line.
-		@col = 0
 		@loc = 0
 		@locOffset = 0
 
@@ -392,9 +387,8 @@ export class Lexer
 		@lastTyp = null
 		@lastVal = null
 
-		@code    = code           # The remainder of the source code.
+		@code    = code
 		@opts    = o
-		@line    = o:line or 0 # The current line.
 		@locOffset = o:loc or 0
 		# what about col here?
 
@@ -419,17 +413,10 @@ export class Lexer
 	def parse code
 		var i = 0
 		var pi = 0
-		var ln = @line
-		# @chunk = code
 
 		while @chunk = code.slice(i)
-			if @line != ln
-				@col = @colOffset or 0
-				ln = @line
-
 			@loc = @locOffset + i
 			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || basicContext
-			@col += pi
 			i += pi
 
 		return
@@ -440,8 +427,6 @@ export class Lexer
 
 	def moveCaret i
 		@loc += i
-		@col += i
-		
 
 	def context
 		@ends[@ends:length - 1]
@@ -1209,9 +1194,6 @@ export class Lexer
 				return 0
 
 		moveHead(string)
-		# var br = count(string, '\n')
-		# @line += br
-
 		return string:length
 
 	# Matches heredocs, adjusting indentation to the correct level, as heredocs
@@ -1236,9 +1218,6 @@ export class Lexer
 			token('STRING', makeString(doc, quote, yes), 0)
 
 		moveHead(heredoc)
-		# var br = count heredoc, '\n'
-		# @line += br
-
 		return heredoc:length
 
 	# Matches and consumes comments.
@@ -1296,9 +1275,6 @@ export class Lexer
 			token 'TERMINATOR', '\n' # auto? really?
 
 		moveHead(comment)
-		# var br = count(comment,'\n')
-		# @line += br
-
 		return comment:length
 
 	# Matches JavaScript interpolated directly into the source via backticks.
@@ -1418,7 +1394,6 @@ export class Lexer
 		var indent = match[0]
 		# var brCount = count indent, '\n'
 		var brCount = moveHead(indent)
-		# @line += brCount
 		@seenFor = no
 		# reset column as well?
 
@@ -1547,15 +1522,6 @@ export class Lexer
 
 	def moveHead str
 		var br = count(str,'\n')
-		@line += br
-
-
-		if br > 0
-			var idx = str:length
-			var col = 0
-			col++ while idx > 0 and str[--idx] != '\n'
-			@col = @colOffset = col
-
 		return br
 		
 
@@ -1879,12 +1845,12 @@ export class Lexer
 			# these have no real sense of location or anything?
 			if pi < i
 				# this is the prefix-string - before any item
-				var tok = Token.new('NEOSTRING', escapeStr(str.slice(pi, i),heredoc,quote),@line,@loc + pi + locOffset,i - pi)
+				var tok = Token.new('NEOSTRING', escapeStr(str.slice(pi, i),heredoc,quote),@loc + pi + locOffset,i - pi)
 				# tok.@loc = @loc + pi
 				# tok.@len = i - pi + 2
 				tokens.push(tok)
 
-			tokens.push Token.new('{{','{',0,@loc + i + locOffset,1)
+			tokens.push Token.new('{{','{',@loc + i + locOffset,1)
 
 			var inner = expr.slice(1, -1)
 			# console.log 'inner is',inner
@@ -1904,21 +1870,18 @@ export class Lexer
 				# why create a whole new lexer? Should rather reuse one
 				# much better to simply move into interpolation mode where
 				# we continue parsing until we meet unpaired }
-				var nested = Lexer.new.tokenize inner, inline: yes, line: @line, rewrite: no, loc: offset + locOffset
+				var nested = Lexer.new.tokenize inner, inline: yes, rewrite: no, loc: offset + locOffset
 				# console.log nested.pop
 
 				if nested[0] and tT(nested[0]) == 'TERMINATOR'
 					nested.shift
-
-				# drop the automatic terminator at the end as well?
-				# console.log "last token from lexer ",nested[nested:length - 1]
 
 				if nested:length
 					tokens.push *nested # T.token('TOKENS',nested,0)
 			
 			# should rather add the amount by which our lexer has moved?
 			i += expr:length - 1
-			tokens.push Token.new('}}','}',0,@loc + i + locOffset,1)
+			tokens.push Token.new('}}','}',@loc + i + locOffset,1)
 			pi = i + 1
 
 		# adding the last part of the string here
@@ -1926,18 +1889,15 @@ export class Lexer
 			# set the length as well - or?
 			# the string after?
 			# console.log 'push neostring'
-			tokens.push Token.new('NEOSTRING', escapeStr(str.slice(pi),heredoc,quote), 0,@loc + pi + locOffset, str:length - pi)
+			tokens.push Token.new('NEOSTRING', escapeStr(str.slice(pi),heredoc,quote),@loc + pi + locOffset, str:length - pi)
 
 		# console.log tokens:length
 		return tokens if regex
 
 		return token 'NEOSTRING', '""' unless tokens:length
 
-		# console.log 'was interpolated'
-		# @tokens.push Token.new('STR_CLOSE',str.charAt(0),@line,@loc,1)
-		for tok in tokens
-			@tokens.push(tok)
-		# @tokens.push Token.new('STR_OPEN',str.charAt(0),@line,@loc + str:length,1)
+		@tokens.push(tok) for tok in tokens
+
 		return tokens
 
 	# Matches a balanced group such as a single or double-quoted string. Pass in
@@ -1989,14 +1949,10 @@ export class Lexer
 
 	# Add a token to the results, taking note of the line number.
 	def token id, value, len, offset
-		# console.log(@line)
-		# var loc = {first_line: @line, first_column: 2, last_line: @line, last_column: 2}
 		@lastTyp = id
 		@lastVal = value
-
-		var tok = @last = Token.new(id, value, @line, @loc + (offset or 0), len or 0)
-		tok.@col = @col + (offset or 0)
-		@tokens.push tok # @last
+		var tok = @last = Token.new(id, value, @loc + (offset or 0), len or 0)
+		@tokens.push tok
 		return
 
 	def lastTokenType
