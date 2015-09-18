@@ -14,13 +14,6 @@ var ast = require './nodes'
 export var lex = lexer.Lexer.new
 export var Rewriter = rewriter.Rewriter
 
-# The real Lexer produces a generic stream of tokens. This object provides a
-# thin wrapper around it, compatible with the Jison API. We can then pass it
-# directly as a "Jison lexer".
-
-import Highlighter from './highlighter'
-
-
 parser:lexer = lex.jisonBridge
 parser:yy = ast # everything is exported right here now
 
@@ -48,8 +41,6 @@ export def parse code, o = {}
 		o.@tokens = tokens
 		return parser.parse tokens
 	catch err
-		# console.log("ERROR",err)
-		# err:message = "In {o:filename}, {err:message}" if o:filename
 		err:_filename = o:filename if o:filename
 		throw err
 
@@ -60,7 +51,6 @@ export def compile code, o = {}
 		return ast.compile(o)
 	catch err
 		err:_filename = o:filename if o:filename
-		# err:message = "In {o:filename}, {err:message}" if o:filename
 		throw err
 
 
@@ -78,20 +68,6 @@ export def analyze code, o = {}
 				throw e
 		meta = {warnings: [e]}
 	return meta
-
-export def highlight code, o = {}
-
-	var tokens = o:tokens or tokenize(code,o)
-	var ast = o:ast or parse(tokens,o)
-	var hl = Highlighter.new(code,tokens,ast,o)
-	return hl.process
-	# try
-	# 	return ast.compile(o)
-	# catch err
-	# 	err:_filename = o:filename if o:filename
-	# 	# err:message = "In {o:filename}, {err:message}" if o:filename
-	# 	throw err
-
 
 
 export def run code, filename: null

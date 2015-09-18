@@ -16,18 +16,14 @@ def cliproto.helpInformation
 	str = str.replace(/(Options|Usage|Examples|Commands)\:/g) do |m| chalk.bold m
 	return str
 
-# console.time("compiler")
 var tasks = require './tasks'
 var compiler  = require './compiler'
 var fspath = path
 var T = require './token'
-# console.timeEnd("compiler")
 
 var parser = compiler:parser
 var util = require './helpers'
 
-# really?
-# wrapper for files?
 # this caches an awful lot now - no need before we introduce a shared worker++
 class SourceFile
 	
@@ -434,15 +430,6 @@ cli.command('analyze <path>')
 		else
 			file.analyze do |meta|
 				log JSON.stringify(meta)
-
-cli.command('highlight <path>')
-	.description('create highlighted snippet of script')
-	.action do |path, opts|
-		var file = sourcefile-for-path(path)
-		var out = file.htmlify # do |meta| log JSON.stringify(meta)
-		log JSON.stringify(out)
-		return
-
 
 cli.command('export-runtime <path>')
 	.description('export the imba.js runtime to <path>')
