@@ -9,6 +9,8 @@ describe "Syntax - Literals" do
 		eq obj:c, 3
 
 	test "strings" do
+		var fn = do |arg| arg
+		var name = 'john'
 		var str = """test {1} """
 		eq str, "test 1 "
 
@@ -38,3 +40,4 @@ dette"
 		"""
 
 		eq str, "test\n\tthis\n\tnow"
+		eq "import {fn name}", "import john"
