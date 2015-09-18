@@ -291,17 +291,6 @@ export class LexerError < SyntaxError
 def last array, back = 0
 	array[array:length - back - 1]
 
-def countOld str, substr
-	console.log "count number of in strin {str:length}"
-	var num = 0
-	var pos = 0
-	unless substr:length
-		return 1 / 0
-
-	while pos = 1 + str.indexOf(substr,pos)
-		num++ 
-	num
-
 def count str, substr
 	return str.split(substr):length - 1
 	
