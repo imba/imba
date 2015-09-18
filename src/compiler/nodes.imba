@@ -119,7 +119,6 @@ export def parseError str, o
 	# console.log "parseError {str}"
 	if o:lexer
 		var token = o:lexer:yytext
-		# console.log token.@col
 		str = "[{token.@loc}:{token.@len || String(token):length}] {str}"
 	var e = Error.new(str)
 	e:lexer = o:lexer
@@ -4210,14 +4209,7 @@ export class Identifier < Node
 		symbol
 
 	def c
-		# p "compile identifier"
-		# if STACK.option('map') and @value.@line
-		# 	var loc = "%%{@value.@line}${@value.@col}%%"
-		# 	return loc + symbol
-		# return mark__(@value) + 
 		return symbol
-		# STACK.option('map') ? ('$$$$' + symbol) : symbol
-		# symbol
 
 	def dump
 		{ loc: region }

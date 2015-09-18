@@ -1,3 +1,8 @@
+## 0.12.2 (dev)
+
+- Fix parsing bug for tags inside object literals
+- Internal refactoring
+
 ## 0.12.1 (2015-09-04)
 
 - Fix standalone compiler for browser
