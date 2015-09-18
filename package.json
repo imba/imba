@@ -47,9 +47,7 @@
   },
   "devDependencies": {
     "browserify": "^9.0.8",
-    "ebnf-parser": "^0.1.10",
     "highlight.js": "^8.6.0",
-    "lex-parser": "^0.1.4",
     "marked": "^0.3.3"
   },
   "dependencies": {
