@@ -1618,6 +1618,7 @@ export class ParamList < ListNode
 			var opn = op.name.c
 			var bn = blk.name.c
 			ast.push "if({bn}==undefined && {isFunc(opn)}) {bn} = {opn},{opn} = {op.defaults.c}"
+			ast.push "if({opn}==undefined) {opn} = {op.defaults.c}"
 
 		elif blk && named && opt:length == 0 && !splat
 			var bn = blk.name.c
@@ -1692,7 +1693,7 @@ export class ParamList < ListNode
 		if arys:length
 			for v,i in arys
 				# create tuples
-				p "adding arrayparams"
+				# p "adding arrayparams"
 				v.head(o,ast,self)
 				# ast.push v.c
 				
