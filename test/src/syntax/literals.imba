@@ -41,3 +41,6 @@ dette"
 
 		eq str, "test\n\tthis\n\tnow"
 		eq "import {fn name}", "import john"
+
+		str = """<?xml \" version="1.0" \{ encoding="UTF-8"?>"""
+		eq str, '<?xml " version="1.0" { encoding="UTF-8"?>'

@@ -1168,8 +1168,14 @@ export class Lexer
 			token 'SYMBOL', symbol, match[0]:length
 			match[0]:length
 
-	def escapeStr str, heredoc
-		str.replace MULTILINER, (heredoc ? '\\n' : '')
+	def escapeStr str, heredoc, q
+		str = str.replace MULTILINER, (heredoc ? '\\n' : '')
+		if q
+			var r = RegExp("\\\\[{q}]","g")
+			str = str.replace(r,q)
+			str = str.replace RegExp("{q}","g"), '\\$&'
+		return str
+
 		# str = str.replace(MULTILINER, '\\n')
 		# str = str.replace(/\t/g, '\\t')
 	# Matches strings, including multi-line strings. Ensures that quotation marks
@@ -1224,7 +1230,7 @@ export class Lexer
 			var open = match[1]
 			# console.log doc.substr(0,3),match[1]
 			token 'STRING_START', open, open:length
-			interpolateString(doc, heredoc: yes, offset: open:length)
+			interpolateString(doc, heredoc: yes, offset: open:length, quote: quote)
 			token 'STRING_END', open, open:length, heredoc:length - open:length
 		else
 			token('STRING', makeString(doc, quote, yes), 0)
@@ -1845,6 +1851,7 @@ export class Lexer
 	def interpolateString str, options = {}
 		# console.log "interpolate string"
 		var heredoc = options:heredoc
+		var quote = options:quote
 		var regex = options:regex
 		var prefix = options:prefix
 
@@ -1872,7 +1879,7 @@ export class Lexer
 			# these have no real sense of location or anything?
 			if pi < i
 				# this is the prefix-string - before any item
-				var tok = Token.new('NEOSTRING', escapeStr(str.slice(pi, i),heredoc),@line,@loc + pi + locOffset,i - pi)
+				var tok = Token.new('NEOSTRING', escapeStr(str.slice(pi, i),heredoc,quote),@line,@loc + pi + locOffset,i - pi)
 				# tok.@loc = @loc + pi
 				# tok.@len = i - pi + 2
 				tokens.push(tok)
@@ -1906,16 +1913,8 @@ export class Lexer
 				# drop the automatic terminator at the end as well?
 				# console.log "last token from lexer ",nested[nested:length - 1]
 
-				if var len = nested:length
-					if len > 1
-						true
-						# what about here?!?
-						# these should not have line and col - they are generated
-						# should probably be handled by the compiler / ast instead
-						# nested.unshift Token.new('(', '(',@line,0,0)
-						# nested.push    Token.new(')', ')',@line,0,0) # very last line?
+				if nested:length
 					tokens.push *nested # T.token('TOKENS',nested,0)
-					# tokens.push nested
 			
 			# should rather add the amount by which our lexer has moved?
 			i += expr:length - 1
@@ -1927,7 +1926,7 @@ export class Lexer
 			# set the length as well - or?
 			# the string after?
 			# console.log 'push neostring'
-			tokens.push Token.new('NEOSTRING', escapeStr(str.slice(pi),heredoc), 0,@loc + pi + locOffset, str:length - pi)
+			tokens.push Token.new('NEOSTRING', escapeStr(str.slice(pi),heredoc,quote), 0,@loc + pi + locOffset, str:length - pi)
 
 		# console.log tokens:length
 		return tokens if regex
