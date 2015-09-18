@@ -110,6 +110,7 @@ export class SourceMap
 			file: sourceName.replace(/\.imba/,'.js') or ''
 			sourceRoot: options:sourceRoot or ''
 			sources:    [rel]
+			sourcesContent: [sourceCode]
 			names:      []
 			mappings:   buffer
 
