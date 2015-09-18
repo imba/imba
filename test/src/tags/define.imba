@@ -40,3 +40,9 @@ describe 'Tags - Define' do
 		el.render
 		# children should remain the same after rerender
 		eq el.dom:children, [a,b,c]
+
+	# bug
+	test "as part of object" do
+		var obj =
+			name: 'something'
+			node: <a href='#'>
