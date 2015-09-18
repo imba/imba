@@ -3689,7 +3689,7 @@ export class Assign < Op
 	# another position in the stack, since 'up' is dynamic
 	# should maybe freeze up?
 	def shouldParenthesize par = up
-		par isa Op && par.op != '='
+		@parens or par isa Op && par.op != '='
 
 	def consume node
 		if isExpressable
