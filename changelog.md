@@ -1,6 +1,8 @@
 ## 0.12.2 (dev)
 
-- Fix parsing bug for tags inside object literals
+- Bugfix: parsing tags inside object literals
+- Bugfix: methods with optional arg and block arg compiles correctly
+- Bugfix: tag#prepend works for empty tag
 - Internal refactoring
 
 ## 0.12.1 (2015-09-04)
