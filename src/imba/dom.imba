@@ -120,6 +120,28 @@ global class ElementTag
 			dom:style[key] = val
 		self
 
+	def dataset key, val
+		if key isa Object
+			dataset(k,v) for own k,v of key
+			return self
+
+		if arguments:length == 2
+			setAttribute("data-{key}",val)
+			return self
+
+		if key
+			return getAttribute("data-{key}")
+
+		var dataset = dom:dataset
+
+		unless dataset
+			dataset = {}
+			for atr,i in dom:attributes
+				if atr:name.substr(0,5) == 'data-'
+					dataset[Imba.toCamelCase(atr:name.slice(5))] = atr:value
+
+		return dataset
+
 	# selectors / traversal
 	def find sel do Imba.Selector.new(sel,self)
 

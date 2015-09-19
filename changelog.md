@@ -1,4 +1,8 @@
-## 0.12.2 (dev)
+## 0.13.0 (dev)
+
+- Added support for data-attributes through tag#dataset method
+
+## 0.12.2 (2015-09-18)
 
 - Bugfix: parsing tags inside object literals
 - Bugfix: methods with optional arg and block arg compiles correctly

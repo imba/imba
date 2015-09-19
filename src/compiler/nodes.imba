@@ -5544,6 +5544,8 @@ export class Tag < Node
 				elif akey[0] == ':'
 					# need to analyze whether this is static or not
 					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c})"
+				elif akey.substr(0,5) == 'data-'
+					pjs = ".dataset('{akey.slice(5)}',{aval.c})"
 				else
 					pjs = ".{mark__(part.key)}{helpers.setterSym(akey)}({aval.c})"
 
