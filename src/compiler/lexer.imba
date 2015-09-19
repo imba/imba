@@ -78,7 +78,7 @@ var JS_FORBIDDEN = JS_KEYWORDS.concat RESERVED
 
 var METHOD_IDENTIFIER = /// ^
 	( 
-		(([\x23]?[\$A-Za-z_\x7f-\uffff][$\-\w\x7f-\uffff]*)([\=\!]?)) | 
+		(([\x23]?[\$A-Za-z_\x7f-\uffff][$\-\w\x7f-\uffff]*)([\=]?)) | 
 		(<=>|\|(?![\|=]))
 	)
 ///
@@ -104,14 +104,6 @@ var OBJECT_KEY_ESCAPE = ///
 	[\-\@\$]
 ///
 
-
-var PROPERTY = /// ^
-	((set|get|on)\s+)?
-	( [$A-Za-z_\x7f-\uffff][$\w\x7f-\uffff\:]* )
-	( [^\n\S]* :\s)  # Is this a property name?
-///
-
-
 var TAG = /// ^
 	(\<|%)(?=[A-Za-z\#\.\{\@\>])
 ///
@@ -133,7 +125,6 @@ var SYMBOL = ///^
 	\:(
 		(
 			([\*\@$\w\x7f-\uffff]+)+([\-\/\\\:][\w\x7f-\uffff]+)*
-			[!\?\=]?
 		)|==|\<=\>|\[\]|\[\]\=|\*|[\/,\\]
 	)
 ///

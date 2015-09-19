@@ -120,4 +120,22 @@ describe 'Syntax - Operators' do
 
 		eq x, 2
 
+	test "?." do
+		class Obj
+			def meth
+				return 10
+
+			def chain
+				return self
+
+		var o = Obj.new
+		o:key = 1
+		o:ref = o
+
+		eq o?.meth, 10
+		eq o?:key, 1
+		eq o?.none, null
+		eq o?.none?.none, null
+		eq o:ref?.meth, 10
+
 
