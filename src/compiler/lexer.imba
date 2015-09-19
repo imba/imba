@@ -99,11 +99,6 @@ var OBJECT_KEY = /// ^
 	( [^\n\S\s]* : (?![\*\=:$\w\x7f-\uffff]) )  # Is this a property name?
 ///
 
-
-var OBJECT_KEY_ESCAPE = ///
-	[\-\@\$]
-///
-
 var TAG = /// ^
 	(\<|%)(?=[A-Za-z\#\.\{\@\>])
 ///
@@ -205,8 +200,6 @@ var CONST_IDENTIFIER = /^[A-Z]/
 
 var ARGVAR = /^\$\d$/
 
-# CONDITIONAL_ASSIGN = ['||=', '&&=', '?=', '&=', '|=', '!?=']
-
 # Compound assignment tokens.
 var COMPOUND_ASSIGN = [ '-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=', '>>=', '>>>=', '&=', '^=', '|=','=<']
 
@@ -257,12 +250,7 @@ var INDEXABLE = [
 	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'IDREF', 'ARGUMENTS','}'
 ]
 
-# console.log NOT_SPACED_REGEX:length
-
 var GLOBAL_IDENTIFIERS = ['global','exports','require']
-
-# STARTS = [']',')','}','TAG_ATTRS_END']
-# ENDS = [']',')','}','TAG_ATTRS_END']
 
 # Tokens that, when immediately preceding a `WHEN`, indicate that the `WHEN`
 # occurs at the start of a line. We disambiguate these from trailing whens to
@@ -400,7 +388,6 @@ export class Lexer
 			i += pi
 
 		return
-
 
 	def basicContext
 		return selectorToken || symbolToken || methodNameToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || jsToken || literalToken || 0
@@ -607,15 +594,9 @@ export class Lexer
 				token('SELECTOR_END',')',1)
 				return 1
 
-			# what, really?
 			elif chr in [')','}',']','']
-				# console.log "here, no??? {chr}"
-				# should we pair it BEFORE the closing ')'
 				pair '%'
 				return 0
-
-			# how to get out of the scope?
-
 
 		return 0 unless match = SELECTOR.exec(@chunk)
 		var [input, id, kind] = match
@@ -684,12 +665,9 @@ export class Lexer
 		# we can optimize this by after a def simply
 		# fetching all the way after the def until a space or (
 		# and then add this to the def-token itself (as with fragment)
-
 		return 0 if @chunk.charAt(0) == ' '
 
 		var match
-		# var outerctx = @ends[@ends:length - 2]
-		# var innerctx = @ends[@ends:length - 1]
 
 		if @end == ')'
 			var outerctx = @ends[@ends:length - 2]
@@ -802,13 +780,6 @@ export class Lexer
 			# console.log "id is prop: {scopes.join(" -> ")} | {@indents.join(" -> ")}"
 			return true if incls
 
-		# if incls and (id == 'attr' or id == 'prop')
-		# 	return true
-
-		# if id == 'prop' or id == 'attr'
-		# 	# console.log "is prop keyword?? {scop}"
-		# 	return false unless scop == 'CLASS' or scop == 'TAG'
-			
 		ALL_KEYWORDS.indexOf(id) >= 0
 
 	# Matches identifying literals: variables, keywords, method names, etc.
@@ -1994,5 +1965,3 @@ export class Lexer
 		# err:columnNumber
 		var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)
 		throw err
-
-
