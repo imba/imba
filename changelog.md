@@ -1,4 +1,4 @@
-## 0.13.0 (dev)
+## 0.13.0 (2015-09-19)
 
 - Bugfix: safe call `object:key?.method` parses correctly
 - Added support for data-attributes through tag#dataset method
