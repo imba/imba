@@ -713,17 +713,17 @@ export class Lexer
 				token('DO', 'DO',0)
 				self.pushEnd('|')
 				# @ends.push '|'
-				token('BLOCK_PARAM_START', id,0)
+				token('BLOCK_PARAM_START', id,1)
 				return length
 
 			elif ltyp == 'DO' or ltyp == '{'
 				# @ends.push '|'
 				self.pushEnd('|')
-				token('BLOCK_PARAM_START', id,0)
+				token('BLOCK_PARAM_START', id,1)
 				return length
 				
 			elif @ends[@ends:length - 1] == '|'
-				token('BLOCK_PARAM_END', '|',0)
+				token('BLOCK_PARAM_END', '|',1)
 				pair '|'
 				return length
 			else
