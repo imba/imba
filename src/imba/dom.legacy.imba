@@ -1,8 +1,5 @@
-
-# unless document:documentElement:classList
 unless document:documentElement:classList
-
-	extend class ElementTag
+	extend tag htmlelement
 
 		def hasFlag ref
 			return RegExp.new('(^|\\s)' + ref + '(\\s|$)').test(@dom:className)
@@ -25,4 +22,5 @@ unless document:documentElement:classList
 			if arguments:length == 2 and bool == no
 				return unflag(ref)
 			return addFlag(ref)
+
 	true

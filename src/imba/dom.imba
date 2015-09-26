@@ -1,72 +1,32 @@
 
+var ElementTag = require('./tag').ElementTag
+
 var svgSupport = typeof SVGElement !== 'undefined'
 
 def Imba.document
 	window:document
 
-def Imba.static items, nr
-	items:static = nr
-	return items
+class HTMLElementTag < ElementTag
+	def self.inherit child
+		child:prototype.@empty = yes
 
+		if @nodeType
+			child.@nodeType = @nodeType
 
-global class ElementTag
-
-	prop object
-
-	def dom
-		@dom
-
-	def initialize dom
-		self.dom = dom
-		self
-		
-	def setDom dom
-		dom.@tag = self
-		@dom = dom
-		self
-
-	def setRef ref
-		flag(@ref = ref)
-		self
-
-	def setHandler event, handler, ctx
-		var key = 'on' + event
-
-		if handler isa Function
-			self[key] = handler
-		elif handler isa Array
-			var fn = handler.shift
-			self[key] = do |e| ctx[fn].apply(ctx,handler.concat(e))
+			var className = "_" + child.@name.replace(/_/g, '-')
+			child.@classes = @classes.concat(className)
 		else
-			self[key] = do |e| ctx[handler](e)
-		self
+			child.@nodeType = child.@name
+			child.@classes = []		
 
-	def setId id
-		dom:id = id
-		self
+	def self.buildNode
+		var dom = Imba.document.createElement(@nodeType)
+		dom:className = @classes.join(" ")
+		dom
 
-	def id
-		dom:id
-
-	def setAttribute key, new
-		var old = dom.getAttribute(key)
-
-		if old == new
-			new
-		elif new != null && new !== false
-			dom.setAttribute(key,new)
-		else
-			dom.removeAttribute(key)
-
-	def removeAttribute key
-		dom.removeAttribute(key)
-
-	def getAttribute key
-		return dom.getAttribute(key)
-
-	def content= content
-		children = content # override?
-		self
+	def self.createNode
+		var proto = (@protoDom ||= buildNode)
+		proto.cloneNode(false)
 
 	def children= nodes
 		@empty ? append(nodes) : empty.append(nodes)
@@ -96,7 +56,6 @@ global class ElementTag
 
 	def parent
 		tag(dom:parentNode)
-
 
 	def log *args
 		args.unshift(console)
@@ -242,41 +201,6 @@ global class ElementTag
 			append(node)
 		self	
 
-
-	# bind / present
-	# should deprecate / remove
-	def bind obj
-		object = obj
-		self
-
-	def render
-		self
-
-	def build
-		render
-		self
-
-	def commit
-		self
-
-	def end
-		if @built
-			commit
-		else
-			@built = yes
-			build
-		self
-
-	# called whenever a node has rendered itself like in <self> <div> ...
-	def synced
-		self
-
-	# called when the node is awakened in the dom - either automatically
-	# upon attachment to the dom-tree, or the first time imba needs the
-	# tag for a domnode that has been rendered on the server
-	def awaken
-		self
-
 	def focus
 		dom.focus
 		self
@@ -355,59 +279,7 @@ global class ElementTag
 	def hasFlag ref
 		@dom:classList.contains(ref)
 
-	def self.dom
-		return @dom if @dom
-
-		var dom
-		var sup = self:__super__:constructor
-		var proto = self:prototype
-
-		# should clone the parent no?
-		if @isNative
-			@dom = dom = Imba.document.createElement(@nodeType)
-
-		elif @nodeType != sup.@nodeType
-			@dom = dom = Imba.document.createElement(@nodeType)
-			dom.setAttribute(atr:name,atr:value) for atr in sup.dom	
-			# dom:className = sup.dom:className
-			# what about default attributes?
-		else
-			@dom = dom = sup.dom.cloneNode(false)
-
-		# should be a way to use a native domtype without precreating the doc
-		# and still keeping the classes?
-		if @domFlags
-			proto:flag.call(self,f) for f in @domFlags
-
-		return @dom
-		
-
-	# we really ought to optimize this
-	def self.createNode flags, id
-		var proto = @dom or self.dom
-		var dom = proto.cloneNode(false)
-		return dom
-
-	def self.flag flag
-		# should redirect to the prototype with a dom-node already set?
-		dom:classList.add(flag)
-		self
-
-	def self.unflag flag
-		dom:classList.remove(flag)
-		self	
-
-	def self.createNode flags, id
-		var proto = @dom or self.dom
-		var dom = proto.cloneNode(false)
-		return dom
-
-ElementTag:prototype:initialize = ElementTag
-
-class HTMLElementTag < ElementTag
-
-class SVGElementTag < ElementTag
-
+class SVGElementTag < HTMLElementTag
 
 HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 HTML_TAGS_UNSAFE = "article aside header section".split(" ")
@@ -424,91 +296,44 @@ IMBA_TAGS = Imba.TAGS
 
 def extender obj, sup
 	for own k,v of sup
-		obj[k] = v
+		obj[k] ?= v
 
 	obj:prototype = Object.create(sup:prototype)
 	obj:__super__ = obj:prototype:__super__ = sup:prototype
 	obj:prototype:initialize = obj:prototype:constructor = obj
+	sup.inherit(obj) if sup:inherit
 	return obj
 
 def Imba.defineTag name, supr = '', &body
-	var m = name.split("$")
-	var name = m[0]
-	var ns = m[1]
-
 	supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
 
-	var suprklass = Imba.TAGS[supr]
+	var superklass = Imba.TAGS[supr]
 
 	var fname = name == 'var' ? 'vartag' : name
 	# should drop this in production / optimized mode, but for debug
 	# we create a constructor with a recognizeable name
-	var Tag = Function.new("return function {fname.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")()
-	# var Tag = do |dom| this.setDom(dom)
-	var klass = Tag
-
-	extender(klass,suprklass)
-
-	klass.@nodeType = suprklass.@nodeType or name
+	var klass = Function.new("return function {fname.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")()
 	klass.@name = name
-	klass.@ns = ns
 
-	# add the classes -- if this is not a basic native node?
-	if klass.@nodeType != name
-		klass.@nodeFlag = "_" + name.replace(/_/g,'-')
-		var nc = suprklass.@nodeClass
-		nc = nc ? nc.split(/\s+/g) : []
-		var c = null
-		nc.push(c = "{ns}_") if ns and c not in nc
-		nc.push(c = klass.@nodeFlag) unless c in nc
-		klass.@nodeClass = nc.join(" ")
-		klass.@domFlags = nc
-		klass.@isNative = false
-	else
-		klass.@isNative = true
+	extender(klass,superklass)
 
-	klass.@dom = null
-	klass:prototype.@nodeType = klass.@nodeType
-	klass:prototype.@dom = null
-	klass:prototype.@built = no
-	klass:prototype.@empty = yes
-	# add the default flags / classes for ns etc
-	# if namespaced -- this is dangerous
-	Imba.TAGS[name] = klass unless ns
-	Imba.TAGS["{name}${ns or 'html'}"] = klass
+	Imba.TAGS[name] = klass
 
-	# create the global shortcut for tag init as well
 	body.call(klass,klass,klass:prototype) if body
 	return klass
 
 def Imba.defineSingletonTag id, supr = '', &body
-
 	var superklass = Imba.TAGS[supr || 'div']
 
 	# should drop this in production / optimized mode, but for debug
 	# we create a constructor with a recognizeable name
-	var fun = Function.new("return function {id.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")
-	var singleton = fun()
+	var klass = Function.new("return function {id.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")()
+	klass.@name = null
 
-	var klass = extender(singleton,superklass)
+	extender(klass,superklass)
 
-	klass.@id = id
-	klass.@ns = superklass.@ns
-	klass.@nodeType = superklass.@nodeType
-	klass.@nodeClass = superklass.@nodeClass
-	klass.@domFlags = superklass.@domFlags
-	klass.@isNative = false
-
-	klass.@dom = null
-	klass.@instance = null
-	klass:prototype.@dom = null
-	klass:prototype.@built = no
-	klass:prototype.@empty = yes
-
-	# add the default flags / classes for ns etc
-	# if namespaced -- this is dangerous
-	# console.log('registered singleton')
 	Imba.SINGLETONS[id] = klass
+
 	body.call(klass,klass,klass:prototype) if body
 	return klass
 
@@ -527,35 +352,29 @@ def Imba.tagWithId name, id
 	dom:id = id
 	return typ.new(dom)
 
-def Imba.getTagSingleton id
-	var type, node, dom
-	
-	if type = Imba.SINGLETONS[id]
-		# return basic awakening if singleton does not exist?
+def Imba.getTagSingleton id	
+	var dom, node
 
-		return type.Instance if type and type.Instance 
+	if var klass = Imba.SINGLETONS[id]
+		return klass.Instance if klass and klass.Instance 
+
 		# no instance - check for element
 		if dom = Imba.document.getElementById(id)
 			# we have a live instance - when finding it through a selector we should awake it, no?
 			# console.log('creating the singleton from existing node in dom?',id,type)
-			node = type.Instance = type.new(dom)
+			node = klass.Instance = klass.new(dom)
 			node.awaken(dom) # should only awaken
 			return node
 
-		dom = type.createNode
+		dom = klass.createNode
 		dom:id = id
-		# console.log('creating the singleton',id,type)
-		node = type.Instance = type.new(dom)
+		node = klass.Instance = klass.new(dom)
 		node.end.awaken(dom)
 		return node
 	elif dom = Imba.document.getElementById(id)
-		# console.log('found plain element with id')
 		return Imba.getTagForDom(dom)
 
-
-
 def Imba.getTagForDom dom
-
 	return null unless dom
 	return dom if dom.@dom # could use inheritance instead
 	return dom.@tag if dom.@tag
@@ -596,8 +415,4 @@ ti$ = Imba:tagWithId
 tic$ = Imba:tagWithIdAndFlags
 id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom
-
-
-# shim for classList
-
 
