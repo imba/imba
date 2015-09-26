@@ -1,12 +1,10 @@
 
 var ElementTag = require('./tag').ElementTag
 
-var svgSupport = typeof SVGElement !== 'undefined'
-
 def Imba.document
 	window:document
 
-class HTMLElementTag < ElementTag
+tag htmlelement < element
 	def self.inherit child
 		child:prototype.@empty = yes
 
@@ -279,140 +277,4 @@ class HTMLElementTag < ElementTag
 	def hasFlag ref
 		@dom:classList.contains(ref)
 
-class SVGElementTag < HTMLElementTag
-
-HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
-HTML_TAGS_UNSAFE = "article aside header section".split(" ")
-SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
-
-Imba.TAGS = {
-	element: ElementTag
-	htmlelement: HTMLElementTag
-	svgelement: SVGElementTag
-}
-
-Imba.SINGLETONS = {}
-IMBA_TAGS = Imba.TAGS
-
-def extender obj, sup
-	for own k,v of sup
-		obj[k] ?= v
-
-	obj:prototype = Object.create(sup:prototype)
-	obj:__super__ = obj:prototype:__super__ = sup:prototype
-	obj:prototype:initialize = obj:prototype:constructor = obj
-	sup.inherit(obj) if sup:inherit
-	return obj
-
-def Imba.defineTag name, supr = '', &body
-	supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
-
-	var superklass = Imba.TAGS[supr]
-
-	var fname = name == 'var' ? 'vartag' : name
-	# should drop this in production / optimized mode, but for debug
-	# we create a constructor with a recognizeable name
-	var klass = Function.new("return function {fname.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")()
-	klass.@name = name
-
-	extender(klass,superklass)
-
-	Imba.TAGS[name] = klass
-
-	body.call(klass,klass,klass:prototype) if body
-	return klass
-
-def Imba.defineSingletonTag id, supr = '', &body
-	var superklass = Imba.TAGS[supr || 'div']
-
-	# should drop this in production / optimized mode, but for debug
-	# we create a constructor with a recognizeable name
-	var klass = Function.new("return function {id.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")()
-	klass.@name = null
-
-	extender(klass,superklass)
-
-	Imba.SINGLETONS[id] = klass
-
-	body.call(klass,klass,klass:prototype) if body
-	return klass
-
-def Imba.extendTag name, body
-	var klass = (name isa String ? Imba.TAGS[name] : name)
-	body and body.call(klass,klass,klass:prototype) if body
-	return klass
-
-def Imba.tag name
-	var typ = Imba.TAGS[name]
-	return typ.new(typ.createNode)
-
-def Imba.tagWithId name, id
-	var typ = Imba.TAGS[name]
-	var dom = typ.createNode
-	dom:id = id
-	return typ.new(dom)
-
-def Imba.getTagSingleton id	
-	var dom, node
-
-	if var klass = Imba.SINGLETONS[id]
-		return klass.Instance if klass and klass.Instance 
-
-		# no instance - check for element
-		if dom = Imba.document.getElementById(id)
-			# we have a live instance - when finding it through a selector we should awake it, no?
-			# console.log('creating the singleton from existing node in dom?',id,type)
-			node = klass.Instance = klass.new(dom)
-			node.awaken(dom) # should only awaken
-			return node
-
-		dom = klass.createNode
-		dom:id = id
-		node = klass.Instance = klass.new(dom)
-		node.end.awaken(dom)
-		return node
-	elif dom = Imba.document.getElementById(id)
-		return Imba.getTagForDom(dom)
-
-def Imba.getTagForDom dom
-	return null unless dom
-	return dom if dom.@dom # could use inheritance instead
-	return dom.@tag if dom.@tag
-	return null unless dom:nodeName
-
-	var ns   = null
-	var id   = dom:id
-	var type = dom:nodeName.toLowerCase
-	var cls  = dom:className
-
-	if id and Imba.SINGLETONS[id]
-		# FIXME control that it is the same singleton?
-		# might collide -- not good?
-		return Imba.getTagSingleton(id)
-	# look for id - singleton
-
-	# need better test here
-	if svgSupport and dom isa SVGElement
-		ns = "svg" 
-		cls = dom:className:baseVal
-
-	if cls
-		# there can be several matches here - should choose the last
-		# should fall back to less specific later? - otherwise things may fail
-		# TODO rework this
-		if var m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)
-			type = m[1].replace(/-/g,'_')
-
-		if m = cls.match(/\b([a-z]+)_\b/)
-			ns = m[1] 
-
-	var spawner = Imba.TAGS[type]
-	spawner ? spawner.new(dom).awaken(dom) : null
-
-t$ = Imba:tag
-tc$ = Imba:tagWithFlags
-ti$ = Imba:tagWithId
-tic$ = Imba:tagWithIdAndFlags
-id$ = Imba:getTagSingleton
-tag$wrap = Imba:getTagForDom
-
+tag svgelement < htmlelement
