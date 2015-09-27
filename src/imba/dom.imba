@@ -7,6 +7,7 @@ def Imba.document
 tag htmlelement < element
 	def self.inherit child
 		child:prototype.@empty = yes
+		child.@protoDom = null
 
 		if @nodeType
 			child.@nodeType = @nodeType
