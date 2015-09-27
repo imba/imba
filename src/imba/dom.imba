@@ -7,6 +7,7 @@ def Imba.document
 tag htmlelement < element
 	def self.inherit child
 		child:prototype.@empty = yes
+		child.@protoDom = null
 
 		if @nodeType
 			child.@nodeType = @nodeType
@@ -25,6 +26,9 @@ tag htmlelement < element
 	def self.createNode
 		var proto = (@protoDom ||= buildNode)
 		proto.cloneNode(false)
+
+	def self.dom
+		@protoDom ||= buildNode
 
 	def children= nodes
 		@empty ? append(nodes) : empty.append(nodes)

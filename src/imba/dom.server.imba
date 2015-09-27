@@ -151,6 +151,18 @@ Object.defineProperty(el, 'lastElementChild',
 	configurable: true
 )
 
+Object.defineProperty(el, 'className',
+	enumerable: true
+	configurable: true
+
+	get: do
+		this:classList.toString
+
+	set: do |v|
+		this:classList.@classes = (v or '').split(' ')
+		this:classList.toString		
+)
+
 extend tag htmlelement
 
 	def toString
