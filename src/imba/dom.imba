@@ -27,6 +27,9 @@ tag htmlelement < element
 		var proto = (@protoDom ||= buildNode)
 		proto.cloneNode(false)
 
+	def self.dom
+		@protoDom ||= buildNode
+
 	def children= nodes
 		@empty ? append(nodes) : empty.append(nodes)
 		@children = null
