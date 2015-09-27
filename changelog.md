@@ -1,3 +1,7 @@
+## 0.13.1
+
+- Rework tag class structure
+
 ## 0.13.0 (2015-09-19)
 
 - Bugfix: safe call `object:key?.method` parses correctly
