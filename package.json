@@ -19,7 +19,9 @@
   }],
 
   "scripts": {
-    "test": "imba test/src/run.imba"
+    "test": "imba test/src/run.imba",
+    "pack": "imba scripts/pack.imba",
+    "build-parser": "imba scripts/build-parser.imba"
   },
 
   "bugs": "https://github.com/somebee/imba/issues",

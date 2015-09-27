@@ -16,7 +16,6 @@ def cliproto.helpInformation
 	str = str.replace(/(Options|Usage|Examples|Commands)\:/g) do |m| chalk.bold m
 	return str
 
-var tasks = require './tasks'
 var compiler  = require './compiler'
 var fspath = path
 var T = require './token'
@@ -451,14 +450,6 @@ cli.command('export-runtime <path>')
 			log chalk.red("{b out} is not a directory")
 
 		return 
-
-cli.command('dev <task>')
-	.description('commands for imba-development')
-	.action do |cmd,o|
-		if tasks[cmd] isa Function
-			tasks[cmd](o)
-		else
-			log chalk.red("could not find task {b cmd}")
 
 
 export def run argv
