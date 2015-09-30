@@ -474,6 +474,11 @@ export class Lexer
 		return
 
 	def tagContextToken
+		if @chunk[0] == '#'
+			# console.log('found id # in tagContextToken')
+			token('#','#',1)
+			return 1
+
 		if var match = TAG_ATTR.exec(@chunk)
 			# console.log 'TAG_SDDSATTR IN tokid',match
 			# var prev = last @tokens

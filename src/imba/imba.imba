@@ -3,7 +3,9 @@ extern window, global
 if typeof window !== 'undefined'
 	global = window
 
-Imba = {}
+Imba = {
+	VERSION: '0.13.1'
+}
 
 var reg = /-./g
 

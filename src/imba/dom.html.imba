@@ -37,6 +37,21 @@ tag button
 	prop disabled dom: yes
 
 tag canvas
+	def width= val
+		dom:width = val
+		self
+
+	def height= val
+		dom:height = val
+		self
+
+	def width
+		dom:width
+
+	def height
+		dom:height
+
+
 tag caption
 tag cite
 tag code
