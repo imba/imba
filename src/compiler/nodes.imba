@@ -1885,6 +1885,7 @@ export class Code < Node
 		# @scope.parent = STACK.scope(1) if @scope
 		self
 
+
 # Rename to Program?
 export class Root < Code
 
@@ -1924,6 +1925,7 @@ export class Root < Code
 		if @options:bare
 			out = scope.c
 		else
+			body.consume(ImplicitReturn.new)
 			out = scope.c(indent: yes)
 			out = out.replace(/^\n?/,'\n')
 			out = out.replace(/\n?$/,'\n\n')
@@ -1957,6 +1959,12 @@ export class ClassDeclaration < Code
 	prop name
 	prop superclass
 	prop initor
+
+	def consume node
+		if node isa Return
+			option('return',yes)
+			return self
+		super
 
 	def initialize name, superclass, body
 		# what about the namespace?
@@ -2049,11 +2057,14 @@ export class ClassDeclaration < Code
 		# if namespaced and (o:local or o:export)
 		# 	console.log "namespaced classes are implicitly local/global depending on the namespace"
 
+		if option('return')
+			body.push("return {cpath};")
 
 		body.unshift(part) for part in head.reverse
 		body.@indentation = null
 		var end = body.index(body.count - 1)
 		body.pop if end isa Terminator and end.c:length == 1
+
 		var out = body.c
 
 		return out
@@ -2171,6 +2182,12 @@ export class MethodDeclaration < Func
 
 	def scopetype do MethodScope
 
+	def consume node
+		if node isa Return
+			option('return',yes)
+			return self
+		super
+
 	def visit
 		# prebreak # make sure this has a break?
 		scope.visit
@@ -2222,7 +2239,7 @@ export class MethodDeclaration < Func
 				# haaack
 				body.consume(GreedyReturn.new)
 			else
-				body.consume(ImplicitReturn.new) 
+				body.consume(ImplicitReturn.new)
 		var code = scope.c(indent: yes, braces: yes)
 
 		# same for Func -- should generalize
@@ -2276,6 +2293,10 @@ export class MethodDeclaration < Func
 
 		if option(:export)
 			out = "{out}; exports.{fname} = {fname};"
+			out = "{out}; return {fname};" if option(:return)
+
+		elif option(:return)
+			out = "return {out}"
 
 		out
 
