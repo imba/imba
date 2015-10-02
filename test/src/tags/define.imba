@@ -1,14 +1,24 @@
 extern eq
 
-tag custom
 
-	def hello
-		true
 
 <a>
 <a.a.b>
 <a.b href="">
 <a.b .c=yes>
+
+var buildCount = 0
+
+tag custom
+
+	def build
+		super
+		buildCount++
+		
+	def hello
+		true
+
+
 
 tag cached
 
@@ -20,7 +30,6 @@ tag cached
 		<self>
 			for v in @ary
 				<div@{v}> "v"
-		
 
 describe 'Tags - Define' do
 
@@ -49,6 +58,7 @@ describe 'Tags - Define' do
 
 	test "with switch" do
 		var num = 1
+		# not yet caching with switch
 		var el = <div>
 			<div.inner>
 				switch num
@@ -56,4 +66,29 @@ describe 'Tags - Define' do
 						<div.one>
 					else
 						<div.other>
+
+
+
+	test "cache for in" do
+		buildCount = 0
+		var root = <div>
+		
+		def root.render
+			var ary = ['a','b','c','d']
+			<self>
+				<h1> 'heading'
+				for v in ary
+					<custom> v
+
+		root.render
+		eq buildCount, 4
+
+		root.render
+		root.render
+		root.render
+		eq buildCount, 4
+
+
+
+
 					

@@ -5430,7 +5430,9 @@ export class Tag < Node
 			# o:treeRef = node.nextCacheKey
 
 			if node.@loop
-				reactive = !!option(:key)
+				# alwatys make items in loop reactive
+				reactive = node.reactive or option(:key)
+				option(:loop,node.@loop)
 
 				if option(:ivar)
 					warn "Tag inside loop can not have a static reference {option(:ivar)}", type: 'error', token: option(:ivar).value
@@ -5637,6 +5639,10 @@ export class Tag < Node
 				# ctx = partree.cacher
 				key = o:treeRef or partree and partree.nextCacheKey
 				# key = tree and tree.nextCacheKey
+				if o:loop
+					let idx = o:loop.option(:vars)[:index]
+					key = OP('+',"'" + key + "'",idx)
+
 
 
 			# need the context -- might be better to rewrite it for real?
