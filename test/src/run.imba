@@ -27,6 +27,7 @@ require './syntax/assignment'
 
 require './syntax/selectors'
 require './syntax/formatting'
+require './syntax/issues'
 
 require './tags/define'
 

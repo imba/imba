@@ -4497,7 +4497,17 @@ export class ImplicitCall < Call
 export class New < Call
 
 	def js o
-		# 
+		var target = callee
+
+		while target isa Access
+			let left = target.left
+
+			if (left isa PropertyAccess) or (left isa VarOrAccess)
+				callee.@parens = yes
+				break
+
+			target = left
+
 		var out = "new {callee.c}"
 		out += '()' unless o.parent isa Call
 		out
@@ -6131,6 +6141,7 @@ export class ExportStatement < ValueNode
 
 		if nodes:length > 1 and up isa Return
 			return '[' + nodes.join(',') + ']'
+
 		else
 			return nodes.join(';\n') + ';'
 
