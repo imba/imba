@@ -6129,7 +6129,7 @@ export class ExportStatement < ValueNode
 	def js o
 		var nodes = @value.map do |arg| "module.exports.{arg.c} = {arg.c}"
 
-		if up isa Return
+		if nodes:length > 1 and up isa Return
 			return '[' + nodes.join(',') + ']'
 		else
 			return nodes.join(';\n') + ';'
