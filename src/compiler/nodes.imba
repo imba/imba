@@ -5130,9 +5130,17 @@ export class Switch < ControlFlowStatement
 
 
 	def consume node
+		# TODO work inside tags (like loops)
 		@cases = @cases.map(|item| item.consume(node))
 		@fallback = @fallback.consume(node) if @fallback
 		self
+
+	def c o
+		if stack.isExpression or isExpression
+			var ast = CALL(FN([],[self]),[])
+			return ast.c o
+
+		super.c(o)
 
 
 	def js o
@@ -6113,10 +6121,12 @@ export class ImportStatement < Statement
 export class ExportStatement < ValueNode
 
 	def js o
-		yes
-		var nodes = @value.map do |arg|
-			"module.exports.{arg.c} = {arg.c};\n"
-		nodes.join("")
+		var nodes = @value.map do |arg| "module.exports.{arg.c} = {arg.c}"
+
+		if up isa Return
+			return '[' + nodes.join(',') + ']'
+		else
+			return nodes.join(';\n') + ';'
 
 
 # UTILS

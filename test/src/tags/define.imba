@@ -46,3 +46,14 @@ describe 'Tags - Define' do
 		var obj =
 			name: 'something'
 			node: <a href='#'>
+
+	test "with switch" do
+		var num = 1
+		var el = <div>
+			<div.inner>
+				switch num
+					when 1
+						<div.one>
+					else
+						<div.other>
+					
