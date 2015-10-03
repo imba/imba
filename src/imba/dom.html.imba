@@ -38,11 +38,11 @@ tag button
 
 tag canvas
 	def width= val
-		dom:width = val
+		dom:width = val unless width == val
 		self
 
 	def height= val
-		dom:height = val
+		dom:height = val unless height == val
 		self
 
 	def width
