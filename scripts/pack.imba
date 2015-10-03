@@ -24,6 +24,8 @@ imbamin.add('./browser.js')
 imbamin.transform({ sourcemap: false },'uglifyify')
 imbamin.bundle().pipe(fs.createWriteStream("{dest}/imba.min.js"))
 
+
+# build compiler
 var imbac = browserify(basedir: "{lib}/compiler", standalone: "Imbac")
 imbac.add('./index.js')
 imbac.bundle().pipe(fs.createWriteStream("{dest}/imbac.js"))
@@ -32,3 +34,13 @@ var imbacmin = browserify(basedir: "{lib}/compiler", standalone: "Imbac")
 imbacmin.add('./index.js')
 imbacmin.transform({ sourcemap: false },'uglifyify')
 imbacmin.bundle().pipe(fs.createWriteStream("{dest}/imbac.min.js"))
+
+# build worker
+var worker = browserify(basedir: "{lib}/compiler", standalone: "ImbaWorker")
+worker.add('./worker.js')
+worker.bundle().pipe(fs.createWriteStream("{dest}/imbac.worker.js"))
+
+var workermin = browserify(basedir: "{lib}/compiler", standalone: "ImbaWorker")
+workermin.add('./worker.js')
+workermin.transform({ sourcemap: false },'uglifyify')
+workermin.bundle().pipe(fs.createWriteStream("{dest}/imbac.worker.min.js"))
