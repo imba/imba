@@ -597,7 +597,7 @@ export class Node
 		s.pop(self)
 
 		if ch = @cache
-			out = "{ch:var.c}={out}" unless ch:manual
+			out = "{ch:var.c} = {out}" unless ch:manual
 			var par = s.current
 			out = '(' + out + ')' if par isa Access || par isa Op # others? # 
 			ch:cached = yes
@@ -1774,7 +1774,7 @@ export class VariableDeclarator < Param
 			# console.log "defaults is {defaults}"
 			defs = defs.c(expression: yes) if defs isa Node
 
-			"{variable.c}={defs}"
+			"{variable.c} = {defs}"
 		else
 			"{variable.c}"
 
