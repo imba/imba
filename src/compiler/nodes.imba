@@ -114,15 +114,15 @@ export var SPLAT = do |value|
 var SEMICOLON_TEST = /;(\s*\/\/.*)?[\n\s\t]*$/
 var RESERVED_TEST = /^(default|char)$/
 
-
+# captures error from parser
 export def parseError str, o
-	# console.log "parseError {str}"
 	if o:lexer
 		var token = o:lexer:yytext
 		# should find the closest token with actual position
 		str = "[{token.@loc}:{token.@len || String(token):length}] {str}"
 	var e = Error.new(str)
 	e:lexer = o:lexer
+	e:options = o
 	throw e
 
 def c__ obj

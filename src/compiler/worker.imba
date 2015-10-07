@@ -42,11 +42,19 @@ def api.compile code, o = {}
 	var ast = api.parse(code,o)
 	try
 		var res = ast.compile(o)
-		return {code: res.toString}
+		return {code: res.toString, sourcemap: res:sourcemap}
 
-	catch err
-		err:_filename = o:filename if o:filename
-		return {error: err}
+	catch e
+		# normalize somewhere else
+		unless e isa ERR.ImbaParseError
+			if e:lexer
+				e = ERR.ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
+			else
+				e = {message: e:message}
+
+		e = e.toJSON if e isa ERR.ImbaParseError
+
+		return {error: e}
 
 def api.analyze code, o = {}
 	var meta
@@ -59,7 +67,10 @@ def api.analyze code, o = {}
 			if e:lexer
 				e = ERR.ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
 			else
-				throw e
+				e = {message: e:message}
+
+		e = e.toJSON if e isa ERR.ImbaParseError
+		
 		meta = {warnings: [e]}
 	return meta
 
