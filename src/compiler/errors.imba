@@ -27,6 +27,14 @@ export class ImbaParseError < Error
 		tok = o:tokens[--idx] while tok and tok.@loc == -1
 		return tok
 
+	def desc
+		var o = @options
+		let msg = self:message
+		if o:token and o:token.@loc == -1
+			'Syntax Error'
+		else
+			msg
+		
 
 	def toJSON
 		var o = @options
@@ -34,4 +42,5 @@ export class ImbaParseError < Error
 		# var tok = o:tokens and o:tokens[o:pos - 1]
 		# var loc = tok and [tok.@loc,tok.@loc + (tok.@len or tok.@value:length)] or [0,0]
 		# , col: tok.@col, line: tok.@line
-		return {warn: yes, message: self:message, loc: tok.region}
+		# get the token itself?
+		return {warn: yes, message: desc, loc: tok?.region}

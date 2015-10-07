@@ -1960,7 +1960,7 @@ export class Lexer
 		
 	# Throws a syntax error on the current `@line`.
 	def error message, len
-		var msg = "{message} on line {@line}"
+		var msg = "{message} on line {@line}" if @line isa Number
 
 		if len
 			msg += " [{@loc}:{@loc + len}]"
@@ -1969,4 +1969,5 @@ export class Lexer
 		err:line = @line
 		# err:columnNumber
 		var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)
+		err:region = [@loc,@loc + (len or 0)]
 		throw err

@@ -3,6 +3,7 @@
 extern parseInt
 
 var helpers = require './helpers'
+var ERR = require './errors'
 var v8 = null # require 'v8-natives'
 
 var T = require './token'
@@ -116,10 +117,25 @@ var RESERVED_TEST = /^(default|char)$/
 
 # captures error from parser
 export def parseError str, o
+	# console.log 'parseError',o:token
+
+	# find nearest token
+	var err
+
 	if o:lexer
 		var token = o:lexer:yytext
+		# console.log o:lexer:pos,token.@loc
+		err = ERR.ImbaParseError.new({message: str},{
+			pos: o:lexer:pos
+			tokens: o:lexer:tokens
+			token: o:lexer:yytext
+			meta: o
+		})
+
+		throw err
+
 		# should find the closest token with actual position
-		str = "[{token.@loc}:{token.@len || String(token):length}] {str}"
+		# str = "[{token.@loc}:{token.@len || String(token):length}] {str}"
 	var e = Error.new(str)
 	e:lexer = o:lexer
 	e:options = o

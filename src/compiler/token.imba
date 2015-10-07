@@ -68,7 +68,7 @@ export def lex
 
 
 # export def token typ, val, line, col, len do Token.new(typ,val,line, col or 0, len or 0) # [null,typ,val,loc]
-export def token typ, val do Token.new(typ,val,0,0,0)
+export def token typ, val do Token.new(typ,val,-1,0)
 
 export def typ tok do tok.@type
 export def val tok do tok.@value # tok[offset + 1]
