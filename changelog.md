@@ -1,3 +1,12 @@
+## 0.13.2 (2015-10-09)
+
+- cache tags in for-loops by default (inside static trees) 
+- call render in tag#commit by default
+- Improved sourcemaps
+- Tap and click events handled in more consistent manner
+- Added version of compiler that can run in a WebWorker
+- Various bugfixes
+
 ## 0.13.1
 
 - Rework tag class structure

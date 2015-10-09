@@ -1,7 +1,6 @@
 var doc = document
 var win = window
 
-# typeof ontouchstart instead?
 var hasTouchEvents = window && window:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
 
 # Ringbuffer for events?
@@ -96,6 +95,8 @@ class Imba.Pointer
 		win.requestAnimationFrame(Imba.Pointer:update)
 		self
 
+var lastNativeTouchTimeStamp = 0
+var lastNativeTouchTimeout = 50
 
 # Imba.Touch
 # Began	A finger touched the screen.
@@ -149,8 +150,10 @@ class Imba.Touch
 				touch.touchend(e,t)
 				release(t,touch)
 				count--
-				# not always supported!
-				# touches = touches.filter(||)
+
+		# e.preventDefault
+		# not always supported!
+		# touches = touches.filter(||)
 		self
 
 	def self.ontouchcancel e
@@ -161,7 +164,14 @@ class Imba.Touch
 				count--
 		self
 
+	def self.onmousedown e
+		self
 
+	def self.onmousemove e
+		self
+
+	def self.onmouseup e
+		self
 
 	prop phase
 	prop active
@@ -214,6 +224,7 @@ class Imba.Touch
 		self
 
 	def touchstart e,t
+		# console.log 'native ontouchstart',e,t
 		@event = e
 		@touch = t
 		@x = t:clientX
@@ -223,6 +234,7 @@ class Imba.Touch
 		self
 
 	def touchmove e,t
+		# console.log 'native ontouchmove',e,t
 		@event = e
 		@x = t:clientX
 		@y = t:clientY
@@ -231,12 +243,24 @@ class Imba.Touch
 		self
 
 	def touchend e,t
+		# console.log 'native ontouchend',e,t,e:timeStamp
 		@event = e
 		# log "touchend"
 		@x = t:clientX
 		@y = t:clientY
 		ended
-		e.preventDefault if e and @suppress
+
+		lastNativeTouchTimeStamp = e:timeStamp
+
+		if @maxdr < 20
+			var tap = Imba.Event.new(e)
+			tap.type = 'tap'
+			tap.process
+			e.preventDefault if tap.@responder	
+
+		if e and @suppress
+			e.preventDefault
+
 		self
 
 	def touchcancel e,t
@@ -273,17 +297,17 @@ class Imba.Touch
 		update
 
 	def began
-		# console.log "begaN??"
+		@maxdr = @dr = 0
 		@x0 = @x
 		@y0 = @y
 
 		var e = event
 		# var ptr = pointer
 		var dom = event:target
-		var node = nil
+		var node = null
 
 		@sourceTarget = dom and tag(dom)
-		# need to find the 
+
 		while dom
 			node = tag(dom)
 			if node && node:ontouchstart
@@ -293,25 +317,22 @@ class Imba.Touch
 				break unless @bubble
 			dom = dom:parentNode
 
-		# console.log('target??',target)
 		@updates++
-		# if target
-		# 	target.ontouchstart(self)
-		# 	# ptr.event.preventDefault unless @native
-		# 	# prevent default?
-
-		#  = e:clientX
-		#  = e:clientY
 		self
 
 	def update
 		return self unless @active
+
+		var dr = Math.sqrt(dx*dx + dy*dy)
+		@maxdr = dr if dr > @dr
+		@dr = dr
+
 		# catching a touch-redirect?!?
 		if @redirect
 			if @target and @target:ontouchcancel
 				@target.ontouchcancel(self)
 			target = @redirect
-			@redirect = nil
+			@redirect = null
 			target.ontouchstart(self) if target:ontouchstart
 
 
@@ -342,25 +363,16 @@ class Imba.Touch
 
 		target.ontouchend(self) if target and target:ontouchend
 
-		# simulate tap -- need to be careful about this(!)
-		# must look at timing and movement(!)
-		if @touch
-			ED.trigger('tap',event:target)
 		self
 
 	def cancelled
 		self
 
-	def dx
-		@x - @x0
-		# pointer.x - @x0
-
-	def dy
-		@y - @y0
-		# pointer.y - @y0
-	
-	def x do @x # pointer.x
-	def y do @y # pointer.y
+	def dr do @dr
+	def dx do @x - @x0
+	def dy do @y - @y0
+	def x do @x
+	def y do @y
 
 	def button do @pointer ? @pointer.button : 0
 
@@ -440,8 +452,15 @@ class Imba.Event
 		event = e
 		bubble = yes
 
+	def type= type
+		@type = type
+		self
+
+	def type
+		@type || event:type
+
 	def name
-		event:type.toLowerCase.replace(/\:/g,'')
+		@name ||= type.toLowerCase.replace(/\:/g,'')
 
 	# mimc getset
 	def bubble v
@@ -458,6 +477,9 @@ class Imba.Event
 		event.preventDefault if event:preventDefault
 		@cancel = yes
 		self
+
+	def isPrevented
+		event and event:defaultPrevented or @cancel
 
 	def target
 		tag(event:_target or event:target)
@@ -502,7 +524,9 @@ class Imba.Event
 		var domnode = domtarget:_responder or domtarget
 		var rerouter = null
 		var rerouted = no
+
 		# need to stop infinite redirect-rules here??!?
+
 		while domnode
 			@redirect = null
 			if var node = tag(domnode) # not only tag 
@@ -518,11 +542,13 @@ class Imba.Event
 					continue
 
 				if node[meth] isa Function
+					@responder ||= node
+					# should autostop bubble here?
 					var res = args ? node[meth].apply(node,args) : node[meth](self,data)
-
-			# log "hit?",domnode
+					
 			# add node.nextEventResponder as a separate method here?
-			break unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
+			unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
+				break
 
 		return self
 
@@ -572,38 +598,19 @@ class Imba.EventManager
 		self
 
 	def delegate e
-		# console.log "delegate event {e and e:type}"
-		# really? wrap all events? Quite expensive unless we reuse them
 		var event = Imba.Event.wrap(e)
-		# console.log "delegate event {e:type}"
 		event.process
-		# name = e:type.toLowerCase.replace(/\:/g,'')
-		# create our own event here?
 		self
 
-	def create type, target, data: nil, source: nil
+	def create type, target, data: null, source: null
 		var event = Imba.Event.wrap type: type, target: target
 		event.data = data if data
 		event.source = source if source
 		event
 
 	# use create instead?
-	def trigger type, target, data: nil, source: nil
-		var event = Imba.Event.wrap type: type, target: target
-		event.data = data if data
-		event.source = source if source
-		event.process
-
-	def emit obj, event, data, dom: yes, ns: 'object' 
-		# log "emit event for",obj,event,data
-		var fn = "on{ns}"
-		var nodes = DOC:querySelectorAll(".{obj.uid}")
-		for node in nodes
-			# log "found node {node:className}"
-			if node.@tag and node.@tag[fn]
-				node.@tag[fn](event,data)
-			# now we simply link to onobject event
-		self
+	def trigger
+		create(*arguments).process
 
 	def onenable
 		for own name,handler of delegators
@@ -625,27 +632,37 @@ class Imba.EventManager
 ED = Imba.Events = Imba.EventManager.new(document, events: [
 	:keydown,:keyup,:keypress,:textInput,:input,:change,:submit,
 	:focusin,:focusout,:blur,:contextmenu,
-	:mousedown,:mouseup,:mousewheel,
-	:dblclick
+	:mousedown,:mouseup,:mousewheel,:dblclick
 ])
 
 if hasTouchEvents
-	ED.listen(:touchstart) do |e| Imba.Touch.ontouchstart(e)
-	ED.listen(:touchmove) do |e| Imba.Touch.ontouchmove(e)
-	ED.listen(:touchend) do |e| Imba.Touch.ontouchend(e)
-	ED.listen(:touchcancel) do |e| Imba.Touch.ontouchcancel(e)
+	Imba.Events.listen(:touchstart) do |e| Imba.Touch.ontouchstart(e)
+	Imba.Events.listen(:touchmove) do |e| Imba.Touch.ontouchmove(e)
+	Imba.Events.listen(:touchend) do |e| Imba.Touch.ontouchend(e)
+	Imba.Events.listen(:touchcancel) do |e| Imba.Touch.ontouchcancel(e)
 
-else
-	ED.listen(:click) do |e|
-		ED.trigger('tap',e:target) # no
+Imba.Events.listen(:click) do |e|
+	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
+		var tap = Imba.Event.new(e)
+		tap.type = 'tap'
+		tap.process
+		return if tap.@responder
 
-	ED.listen(:mousedown) do |e|
+	# delegate the real click event
+	Imba.Events.delegate(e)
+
+Imba.Events.listen(:mousedown) do |e|
+	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		Imba.POINTER.update(e).process if Imba.POINTER
 
-	ED.listen(:mousemove) do |e|
+Imba.Events.listen(:mousemove) do |e|
+	# console.log 'mousemove',e:timeStamp
+	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		Imba.POINTER.update(e).process if Imba.POINTER # .process if touch # should not happen? We process through 
 
-	ED.listen(:mouseup) do |e|
+Imba.Events.listen(:mouseup) do |e|
+	# console.log 'mouseup',e:timeStamp
+	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		Imba.POINTER.update(e).process if Imba.POINTER
 
 # enable immediately by default
