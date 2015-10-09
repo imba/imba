@@ -46,7 +46,7 @@ export class SourceMap
 		var locmap = util.locationToLineColMap(sourceCode)
 		@maps = []
 
-
+		# console.log options:js
 		
 		var match
 		# split the code in lines. go through each line 
@@ -100,6 +100,7 @@ export class SourceMap
 				lastSourceColumn = src[1]
 
 			buffer += ";"
+
 
 		var rel = path.relative(path.dirname(targetPath),sourcePath)
 

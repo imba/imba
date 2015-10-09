@@ -301,6 +301,10 @@ def write-file source, outpath, options = {}
 	options:sourcePath = source.path
 	options:targetPath = outpath
 
+	if options:sourceMapInline
+		options:sourceMap ||= {}
+		options:sourceMap:inline = yes
+
 	try
 		var start = Date.now
 		var code = compiler.compile(source.code, options)

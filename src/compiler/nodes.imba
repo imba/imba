@@ -2361,7 +2361,7 @@ export class PropertyDeclaration < Node
 	def c
 		var o = options
 		var ast = ""
-		var key = name.c
+		var key = name.js
 		var gets = "@{key}"
 		var sets = "@{key} = v"
 		var scope = STACK.scope
@@ -3178,6 +3178,7 @@ export class Access < Op
 		var rgt = right
 		var ctx = (left || scope__.context)
 		var pre = ""
+		var mark = ''
 
 		# if safechain
 		#	p "Access is safechained {rgt.c}"
@@ -3199,6 +3200,7 @@ export class Access < Op
 			raw = rgt.raw
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
+			mark = mark__(rgt.@value)
 			raw = rgt.c
 
 		if safechain and ctx
@@ -3210,7 +3212,7 @@ export class Access < Op
 		var out = if raw
 			# see if it needs quoting
 			# need to check to see if it is legal
-			ctx ? "{ctx.c}.{raw}" : raw
+			ctx ? "{ctx.c}.{mark}{raw}" : raw
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
 			"{ctx.c}[{r}]"
@@ -4236,7 +4238,10 @@ export class Identifier < Node
 
 	def setter
 		# console.log "Identifier#setter"
-		@setter ||= Identifier.new("set-{value.c}")
+		@setter ||= if true
+			var tok = Token.new('IDENTIFIER',sym__('set-' + @value),@value.@loc or -1)
+			Identifier.new(tok)
+			# Identifier.new("set-{symbol}")
 
 	def toString
 		String(@value)
@@ -4248,7 +4253,7 @@ export class Identifier < Node
 		symbol
 
 	def c
-		return symbol
+		return '' + symbol # mark__(@value) + 
 
 	def dump
 		{ loc: region }
@@ -4285,7 +4290,7 @@ export class Ivar < Identifier
 		'_' + name
 
 	def c
-		mark__(@value) + '_' + helpers.camelCase(@value).slice(1) # .replace(/^@/,'')
+		'_' + helpers.camelCase(@value).slice(1) # .replace(/^@/,'') # mark__(@value) + 
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
