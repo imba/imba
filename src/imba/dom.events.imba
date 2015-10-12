@@ -641,13 +641,13 @@ if hasTouchEvents
 	Imba.Events.listen(:touchend) do |e| Imba.Touch.ontouchend(e)
 	Imba.Events.listen(:touchcancel) do |e| Imba.Touch.ontouchcancel(e)
 
-Imba.Events.listen(:click) do |e|
+Imba.Events.register(:click) do |e|
 	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		var tap = Imba.Event.new(e)
 		tap.type = 'tap'
 		tap.process
-		return if tap.@responder
-
+		if tap.@responder
+			return e.preventDefault
 	# delegate the real click event
 	Imba.Events.delegate(e)
 
