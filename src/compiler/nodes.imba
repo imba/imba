@@ -2971,6 +2971,14 @@ export class Op < Node
 		10
 
 	def consume node
+		# p 'assignify if?!'
+		# if it is possible, convert into expression
+		if node isa TagTree
+			@left.consume(node)
+			@right.consume(node)
+			# @body = @body.consume(node)
+			# @alt = @alt.consume(node) if @alt
+			return self
 		# p "Op.consume {node}".cyan
 		return super if isExpressable
 
@@ -5512,7 +5520,7 @@ export class Tag < Node
 		self
 
 	def reference
-		@reference ||= scope__.temporary(self,pool: 'tag').resolve
+		@reference ||= scope__.closure.temporary(self,pool: 'tag').resolve
 
 	# should this not happen in js?
 	# should this not happen in js?
@@ -5627,7 +5635,7 @@ export class Tag < Node
 
 		# we need to trigger our own reference before the body does
 		# but we do not need a reference if we have no body (no nodes will refer it)
-		if reactive and tree and tree.hasTags
+		if reactive and tree # and tree.hasTags
 			reference
 
 		if reactive and parent and parent.tree
@@ -5681,7 +5689,7 @@ export class Tag < Node
 			var acc = OP('.',ctx,key).c
 
 			if @reference
-				out = "({reference.c} = {acc} || ({acc} = {out}))"
+				out = "({reference.c} = {acc}={acc} || {out})"
 			else
 				out = "({acc} = {acc} || {out})"
 			
@@ -5691,7 +5699,7 @@ export class Tag < Node
 		# now work on the refereces?
 
 		# free variable
-		@reference.free if @reference isa Variable
+		# @reference.free if @reference isa Variable
 		# if setup:length
 		#	out += ".setup({setup.join(",")})"
 
@@ -6744,6 +6752,8 @@ export class FlowScope < Scope
 			# o:closure = parent
 			# p "FlowScope register", arguments
 			super(name,decl,o)
+
+	# FIXME should override temporary as well
 
 	def autodeclare variable
 		parent.autodeclare(variable)
