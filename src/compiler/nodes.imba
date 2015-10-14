@@ -2974,8 +2974,8 @@ export class Op < Node
 		# p 'assignify if?!'
 		# if it is possible, convert into expression
 		if node isa TagTree
-			@left.consume(node)
-			@right.consume(node)
+			@left.consume(node) if @left
+			@right.consume(node) if @right
 			# @body = @body.consume(node)
 			# @alt = @alt.consume(node) if @alt
 			return self
