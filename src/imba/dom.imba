@@ -16,11 +16,12 @@ tag htmlelement < element
 			child.@classes = @classes.concat(className)
 		else
 			child.@nodeType = child.@name
-			child.@classes = []		
+			child.@classes = []
 
 	def self.buildNode
 		var dom = Imba.document.createElement(@nodeType)
-		dom:className = @classes.join(" ")
+		var cls = @classes.join(" ")
+		dom:className = cls if cls
 		dom
 
 	def self.createNode

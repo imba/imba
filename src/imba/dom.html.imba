@@ -113,6 +113,10 @@ tag input
 		dom:value = v unless v == dom:value
 		self
 
+	def placeholder= v
+		dom:placeholder = v unless v == dom:placeholder
+		self
+
 	def checked
 		dom:checked
 
@@ -211,6 +215,10 @@ tag textarea
 
 	def value= v
 		dom:value = v unless v == dom:value
+		self
+
+	def placeholder= v
+		dom:placeholder = v unless v == dom:placeholder
 		self
 
 tag tfoot

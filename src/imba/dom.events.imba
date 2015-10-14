@@ -631,8 +631,8 @@ class Imba.EventManager
 
 ED = Imba.Events = Imba.EventManager.new(document, events: [
 	:keydown,:keyup,:keypress,:textInput,:input,:change,:submit,
-	:focusin,:focusout,:blur,:contextmenu,
-	:mousedown,:mouseup,:mousewheel,:dblclick
+	:focusin,:focusout,:blur,:contextmenu,:dblclick,
+	:mousewheel,:wheel
 ])
 
 if hasTouchEvents
@@ -647,6 +647,7 @@ Imba.Events.register(:click) do |e|
 		tap.type = 'tap'
 		tap.process
 		if tap.@responder
+			console.log 'have tap.responder!'
 			return e.preventDefault
 	# delegate the real click event
 	Imba.Events.delegate(e)
@@ -665,5 +666,6 @@ Imba.Events.listen(:mouseup) do |e|
 	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		Imba.POINTER.update(e).process if Imba.POINTER
 
+Imba.Events.register([:mousedown,:mouseup])
 # enable immediately by default
 Imba.Events.enabled = yes
