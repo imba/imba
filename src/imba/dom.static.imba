@@ -241,7 +241,7 @@ extend tag htmlelement
 			return self
 
 		elif typeof nodes == 'string'
-			return text = nodes
+			text = nodes
 
 		elif !@children
 			empty
@@ -270,9 +270,10 @@ extend tag htmlelement
 
 		# common case that should bail out from staticChildren
 		if new:length == 1 and new[0] isa String
-			return text = new[0]
+			text = new[0]
+			return self
 
-		if new:static
+		elif new:static
 			# only when we are dealing with a single if/else?
 			reconcileNested(self,new,old,null,null,0)
 		else
