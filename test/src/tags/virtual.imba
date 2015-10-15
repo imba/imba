@@ -162,6 +162,46 @@ tag group5 < group
 			"b"
 			a ? (<el.c> "c") : "d"
 
+tag unknowns < div
+
+	def ontap
+		render
+		setInterval(&,100) do render
+		self
+
+	def tast
+		10
+
+	def render
+		<self>
+			5
+			Date.new.toString
+			10
+			"20"
+			"30"
+			<div.hello>
+			<div.int> 10
+			<div.date> Date.new
+			<div.str> "string"
+			<div.list> list
+			<div.if>
+				if true
+					list
+				else
+					<b>
+					<b>
+
+			<div.if>
+				<b>
+				<b>
+				tast
+				<b>
+
+
+	def list
+		for x in [1,2,3]
+			<div@{x}.x>
+
 tag stat < group
 	def render
 		<self>
@@ -271,6 +311,12 @@ describe "Tags" do
 
 			node.render(a: no)
 			eq node.opstr, "RA"
+
+	test "unknowns" do
+		var node = <unknowns>
+		document:body.appendChild(node.dom)
+		node.render a: no
+		# eq node.opstr, "AAA"
 
 	describe "dynamic lists" do
 		# render once without anything to reset

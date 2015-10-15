@@ -662,7 +662,6 @@ Imba.Events.register(:click) do |e|
 		tap.type = 'tap'
 		tap.process
 		if tap.@responder
-			console.log 'have tap.responder!'
 			return e.preventDefault
 	# delegate the real click event
 	Imba.Events.delegate(e)

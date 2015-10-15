@@ -237,6 +237,57 @@
 		};
 	});
 	
+	Imba.defineTag('unknowns','div', function(tag){
+		
+		tag.prototype.ontap = function (){
+			var self = this;
+			self.render();
+			setInterval(function() { return self.render(); },100);
+			return self;
+		};
+		
+		tag.prototype.tast = function (){
+			return 10;
+		};
+		
+		tag.prototype.render = function (){
+			var t0, t1, t2, t3, t4;
+			return this.setChildren([
+				5,
+				new Date().toString(),
+				10,
+				"20",
+				"30",
+				(this.$a = this.$a || t$('div').flag('hello')).end(),
+				(t0 = this.$b=this.$b || t$('div').flag('int')).setContent(10,3).end(),
+				(t1 = this.$c=this.$c || t$('div').flag('date')).setContent(new Date(),3).end(),
+				(this.$d = this.$d || t$('div').flag('str')).setText("string").end(),
+				(t2 = this.$e=this.$e || t$('div').flag('list')).setContent(this.list(),3).end(),
+				(t3 = this.$f=this.$f || t$('div').flag('if')).setContent(true ? (
+					this.list()
+				) : (Imba.static([
+					(t3.$$a = t3.$$a || t$('b')).end(),
+					(t3.$$b = t3.$$b || t$('b')).end()
+				],2)),3).end(),
+				
+				(t4 = this.$g=this.$g || t$('div').flag('if')).setContent([
+					(t4.$$a = t4.$$a || t$('b')).end(),
+					(t4.$$b = t4.$$b || t$('b')).end(),
+					this.tast(),
+					(t4.$$c = t4.$$c || t$('b')).end()
+				],1).end()
+			],1).synced();
+		};
+		
+		
+		tag.prototype.list = function (){
+			for (var i = 0, ary = [1,2,3], len = ary.length, res = []; i < len; i++) {
+				res.push((this['_' + ary[i]] = this['_' + ary[i]] || t$('div').flag('x')).end());
+			};
+			return res;
+		};
+	});
+	
 	Imba.defineTag('stat','group', function(tag){
 		tag.prototype.render = function (){
 			var t0;
@@ -361,6 +412,13 @@
 				node.render({a: false});
 				return eq(node.opstr(),"RA");
 			});
+		});
+		
+		test("unknowns",function() {
+			var node = t$('unknowns').end();
+			document.body.appendChild(node.dom());
+			return node.render({a: false});
+			// eq node.opstr, "AAA"
 		});
 		
 		return describe("dynamic lists",function() {

@@ -1,59 +1,66 @@
-
+var ImbaTag = Imba.TAGS:element
 
 def removeNested root, node, caret
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements
 	# 	for now we will simply not support this
-	if node isa Array
+	if node isa ImbaTag
+		root.removeChild(node)
+	elif node isa Array
 		removeNested(root,member,caret) for member in node
-
-	elif node isa Number
-		no # noop now -- will be used in 
-
-	elif typeof node == 'string'
-		# trust that the next element is in fact the string
+	else
+		# what if this is not null?!?!?
+		# take a chance and remove a text-elementng
 		let next = caret ? caret:nextSibling : root.@dom:firstChild
-		if next isa Text
+		if next isa Text and next:textContent == node
 			root.removeChild(next)
 		else
 			throw 'cannot remove string'
 
-	elif node
-		root.removeChild(node)
-
 	return caret
 
+def replaceNestedWithString root, new, old, caret
+	self
+
 def appendNested root, node
-	if node isa Array
-		for member,i in node
-			appendNested(root,member)
-
-	elif node isa Number
-		no
-
-	elif node isa String
-		root.appendChild Imba.document.createTextNode(node)
-
-	elif node
+	if node isa ImbaTag
 		root.appendChild(node)
 
+	elif node isa Array
+		appendNested(root,member) for member in node
+
+	elif node != null and node !== false
+		root.appendChild Imba.document.createTextNode(node)
+
 	return
+
+def setOnlyChild root, node
+	return
+
+	#	if nodes isa Array
+	#		if nodes:static
+	#			reconcileNested(self,nodes,@children,null,null,0)
+	#		else
+	#			reconcileCollection(self,nodes,@children,null)
+	#		# reconcile nested
+	#		# reconcileNested(self,nodes,@children,null,null,0)
+	#	elif nodes isa ImbaTag
+	#		empty
+	#		appendChild(nodes)
+	#	else
+	#		text = nodes
 
 # insert nodes before a certain node
 # does not need to return any tail, as before
 # will still be correct there
 # before must be an actual domnode
 def insertNestedBefore root, node, before
-
-	if node isa String
-		node = Imba.document.createTextNode(node)
-
-	if node isa Array
-		insertNestedBefore(root,member,before) for member in node
-	elif node isa Number
-		no # noop now -- will be used in 
-	elif node
+	if node isa ImbaTag
 		root.insertBefore(node,before)
+	elif node isa Array
+		insertNestedBefore(root,member,before) for member in node
+	elif node != null and node !== false
+		root.insertBefore(Imba.document.createTextNode(node),before)
 
 	return before
 
@@ -179,71 +186,106 @@ def reconcileCollection root, new, old, caret
 # caret is the current node we want to insert things after
 def reconcileNested root, new, old, caret, container, ci
 
+	# if new == null or new === false or new === true
+	# 	if new === old
+	# 		return caret
+	# 	if old && new != old
+	# 		removeNested(root,old,caret) if old
+	# 
+	# 	return caret
+
+	# var skipnew = new == null or new === false or new === true
+	var newIsNull = new == null or new === false
+	var oldIsNull = old == null or old === false
+
+
 	if new === old
 		# remember that the caret must be an actual dom element
 		# we should instead move the actual caret? - trust
-		if new == null or new === false or new === true
+		if newIsNull
 			return caret
-
 		elif new and new.@dom
 			return new.@dom
 		else
 			return caret ? caret:nextSibling : root.@dom:firstChild
 
-	elif new isa Array and old isa Array
+	elif new isa Array
+		if old isa Array
+			if new:static
+				# if the static is not nested - we could get a hint from compiler
+				# and just skip it
+				if new:static == old:static
+					for item,i in new
+						# this is where we could do the triple equal directly
+						caret = reconcileNested(root,item,old[i],caret,new,i)
+					return caret
+				else
+					removeNested(root,old,caret)
+					
+				# if they are not the same we continue through to the default
+			else
+				return reconcileCollection(root,new,old,caret)
 
-		if new:static
-			# if the static is not nested - we could get a hint from compiler
-			# and just skip it
-			if new:static == old:static
-				for item,i in new
-					# this is where we could do the triple equal directly
-					caret = reconcileNested(root,item,old[i],caret,new,i)
-				return caret
-			# if they are not the same we continue through to the default
+		elif old isa ImbaTag
+			root.removeChild(old)
+		elif !oldIsNull
+			# old was a string-like object?
+			root.removeChild(caret ? caret:nextSibling : root.@dom:firstChild)			
 
-		else
-			return reconcileCollection(root,new,old,caret)
+		return insertNestedAfter(root,new,caret)
+		# remove old
 
-	elif new isa String
+	elif new isa ImbaTag
+		removeNested(root,old,caret) if old != null and old !== false # what if old is an empty string?
+		insertNestedAfter(root,new,caret)
+		return new
+
+	elif newIsNull
+		removeNested(root,old,caret) unless oldIsNull
+		return caret
+	else
+		# if old did not exist we need to add a new directly
 		let textNode
+		let nextNode
+		# if old was array or imbatag we need to remove it and then add
+		if old isa Array
+			removeNested(root,old,caret)
+		elif old isa ImbaTag
+			root.removeChild(old)
 
-		if typeof old == 'string'
-			let next = caret ? caret:nextSibling : root.@dom:firstChild
-			# console.log 'the next element is a text?',next
-			old = next if next isa Text
+		elif !oldIsNull
+			# ...
+			nextNode = caret ? caret:nextSibling : root.@dom:firstChild
+			if nextNode isa Text and nextNode:textContent != new
+				nextNode:textContent = new
+				return nextNode
 
-		if old isa Text
-			# make sure not to trigger reflow in certain browsers
-			if old:textContent != new
-				old:textContent = new
+		# now add the textnode
+		return insertNestedAfter(root,new,caret)
 
-			textNode = old
-		else
-			removeNested(root,old,caret) if old
-			textNode = Imba.document.createTextNode(new)
-			insertNestedAfter(root,textNode,caret)
 
-		# swap the text with textNode in container
-		return caret = textNode
 		# return container[ci] = caret = textNode
 	# simply remove the previous one and add the new one
 	# will these ever be arrays?
-	removeNested(root,old,caret) if old
-	caret = insertNestedAfter(root,new,caret) if new
-	return caret
+
+	# removeNested(root,old,caret) if old
+	# caret = insertNestedAfter(root,new,caret) if new
+	# return caret
 
 
 extend tag htmlelement
 	
 	def setChildren nodes, typ
+		# var isArray = nodes isa Array
 		if nodes === @children
 			return self
 
-		elif typeof nodes == 'string'
+
+		if typeof nodes == 'string'
 			text = nodes
 
 		elif !@children
+			# what if this is a text?
 			empty
 			appendNested(self,nodes)
 
@@ -254,10 +296,23 @@ extend tag htmlelement
 			return self
 
 		elif typ == 3
-			reconcileNested(self,nodes,@children,null,null,0)
+			# what if it was previously a static array? edgecase - but must work
+			if nodes isa Array
+				if nodes:static
+					reconcileNested(self,nodes,@children,null,null,0)
+				else
+					reconcileCollection(self,nodes,@children,null)
+
+			elif nodes isa ImbaTag
+				empty
+				appendChild(nodes)
+			else
+				text = nodes
+				return self
 
 		elif nodes isa Array and @children isa Array
 			reconcileCollection(self,nodes,@children,null)
+
 		else
 			empty.append(nodes)
 
@@ -265,6 +320,7 @@ extend tag htmlelement
 		return self
 
 
+	# only ever called with array as argument
 	def setStaticChildren new
 		var old = @children
 
@@ -275,10 +331,12 @@ extend tag htmlelement
 
 		elif new:static
 			# only when we are dealing with a single if/else?
+			# better to break i those cases
 			reconcileNested(self,new,old,null,null,0)
 		else
 			let caret = null
 			for item,i in new
+				# prev = old[i]
 				caret = reconcileNested(self,item,old[i],caret,new,i)
 
 		@children = new
@@ -289,5 +347,6 @@ extend tag htmlelement
 
 	def text= text
 		if text != @children
-			dom:textContent = @children = text
+			@children = text
+			dom:textContent = text == null or text === false ? '' : text
 		self
