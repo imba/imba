@@ -559,6 +559,7 @@ class Imba.Event
 class Imba.EventManager
 
 	prop root
+	prop count
 	prop enabled default: no, watch: yes
 	prop listeners
 	prop delegators
@@ -571,6 +572,7 @@ class Imba.EventManager
 
 	def initialize node, events: []
 		root = node
+		count = 0
 		listeners = []
 		delegators = {}
 		delegator = do |e| 
@@ -598,6 +600,7 @@ class Imba.EventManager
 		self
 
 	def delegate e
+		count++
 		var event = Imba.Event.wrap(e)
 		event.process
 		self
@@ -636,12 +639,24 @@ ED = Imba.Events = Imba.EventManager.new(document, events: [
 ])
 
 if hasTouchEvents
-	Imba.Events.listen(:touchstart) do |e| Imba.Touch.ontouchstart(e)
-	Imba.Events.listen(:touchmove) do |e| Imba.Touch.ontouchmove(e)
-	Imba.Events.listen(:touchend) do |e| Imba.Touch.ontouchend(e)
-	Imba.Events.listen(:touchcancel) do |e| Imba.Touch.ontouchcancel(e)
+	Imba.Events.listen(:touchstart) do |e|
+		Imba.Events.count++
+		Imba.Touch.ontouchstart(e)
+
+	Imba.Events.listen(:touchmove) do |e|
+		Imba.Events.count++
+		Imba.Touch.ontouchmove(e)
+
+	Imba.Events.listen(:touchend) do |e|
+		Imba.Events.count++
+		Imba.Touch.ontouchend(e)
+
+	Imba.Events.listen(:touchcancel) do |e|
+		Imba.Events.count++
+		Imba.Touch.ontouchcancel(e)
 
 Imba.Events.register(:click) do |e|
+
 	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		var tap = Imba.Event.new(e)
 		tap.type = 'tap'

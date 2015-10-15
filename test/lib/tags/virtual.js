@@ -1,5 +1,6 @@
 (function(){
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	var self = this;
 	// to run these tests, simply open the imbadir/test/dom.html in your browser and
 	// open the console / developer tools.
 	
@@ -36,12 +37,16 @@
 			this._ops = [];
 			this._opstr = "";
 			this._errors = null;
-			this.setExpected(_.flatten(nodes).filter(function(n) { return n && n._dom; }));
+			this.setExpected(_.flatten(nodes).filter(function(n) {
+				return (typeof n=='string'||n instanceof String) || (n && n._dom);
+				// n isa String ? n : (n and n.@dom)
+				// n and n.@dom
+			}));
 			this.setActual([]);
 			// log "setStaticChildren",nodes,expected
 			tag.__super__.setStaticChildren.call(this,nodes);
 			
-			for (var i=0, ary=iter$(this._dom.children), len=ary.length, child; i < len; i++) {
+			for (var i = 0, ary = iter$(this._dom.childNodes), len = ary.length, child; i < len; i++) {
 				// how would this work on server?
 				// if child isa Text
 				// 	actual.push( child:textContent )
@@ -58,6 +63,13 @@
 				this.actual().push(el);
 			};
 			// log actual
+			
+			if (this._errors) {
+				console.log('got errors');
+				console.log('expected',this.expected());
+				console.log('found',this.actual());
+			};
+			
 			eq(this._errors,null);
 			return this;
 		};
@@ -91,6 +103,9 @@
 			return this; // dont render immediately
 		};
 		
+		tag.prototype.commit = function (){
+			return this; // dont render automatically
+		};
 		
 		tag.prototype.name = function (){
 			return "test";
@@ -99,6 +114,7 @@
 		tag.prototype.render = function (pars){
 			// no need for nested stuff here - we're testing setStaticChildren
 			// if it works on the flat level it should work everywhere
+			var t0;
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
 			var b = pars.b !== undefined ? pars.b : false;
@@ -109,7 +125,7 @@
 			var str = pars.str !== undefined ? pars.str : null;
 			var list2 = pars.list2 !== undefined ? pars.list2 : null;
 			return this.setChildren(Imba.static([
-				(this.$a = this.$a || t$('el').flag('a')).setContent(this.name()).end(),
+				(t0 = this.$a=this.$a || t$('el').flag('a')).setContent(this.name()).end(),
 				str,
 				(this.$b = this.$b || t$('el').flag('b')).setText("ok").end(),
 				(a) && (Imba.static([
@@ -151,10 +167,11 @@
 	Imba.defineTag('other', function(tag){
 		
 		tag.prototype.render = function (){
-			var self=this;
+			var self = this;
 			return this.setChildren((function(self) {
-				for (var i=0, ary=iter$(self.items()), len=ary.length, res=[]; i < len; i++) {
-					res.push(t$('li').setContent(ary[i]).end());
+				var t0;
+				for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
+					res.push((t0 = self['$a' + i]=self['$a' + i] || t$('li')).setContent(ary[i]).end());
 				};
 				return res;
 			})(self)).synced();
@@ -162,7 +179,65 @@
 	});
 	
 	
-	describe("Tags",function() {
+	Imba.defineTag('group2','group', function(tag){
+		
+		tag.prototype.render = function (pars){
+			if(!pars||pars.constructor !== Object) pars = {};
+			var a = pars.a !== undefined ? pars.a : false;
+			return this.setChildren(a ? (Imba.static([
+				(this.$a = this.$a || t$('el').flag('a')).end(),
+				(this.$b = this.$b || t$('el').flag('b')).end(),
+				(this.$c = this.$c || t$('el').flag('c')).end()
+			],2)) : (Imba.static([
+				(this.$d = this.$d || t$('el').flag('d')).end(),
+				(this.$e = this.$e || t$('el').flag('e')).end()
+			],3))).synced();
+		};
+	});
+	
+	Imba.defineTag('group3','group', function(tag){
+		
+		tag.prototype.render = function (pars){
+			if(!pars||pars.constructor !== Object) pars = {};
+			var a = pars.a !== undefined ? pars.a : false;
+			return this.setChildren(Imba.static([
+				(this.$a = this.$a || t$('el').flag('a')).end(),
+				a ? ("items") : ("item")
+			],1)).synced();
+		};
+	});
+	
+	Imba.defineTag('group4','group', function(tag){
+		
+		tag.prototype.render = function (pars){
+			if(!pars||pars.constructor !== Object) pars = {};
+			var a = pars.a !== undefined ? pars.a : false;
+			return this.setChildren(Imba.static([
+				(this.$a = this.$a || t$('el').flag('a')).end(),
+				a ? (
+					"text"
+				) : (Imba.static([
+					(this.$b = this.$b || t$('el').flag('b')).end(),
+					(this.$c = this.$c || t$('el').flag('c')).end()
+				],2))
+			],1)).synced();
+		};
+	});
+	
+	Imba.defineTag('group5','group', function(tag){
+		
+		tag.prototype.render = function (pars){
+			if(!pars||pars.constructor !== Object) pars = {};
+			var a = pars.a !== undefined ? pars.a : false;
+			return this.setChildren(Imba.static([
+				"a",
+				"b",
+				a ? ((this.$a = this.$a || t$('el').flag('c')).setText("c").end()) : ("d")
+			],1)).synced();
+		};
+	});
+	
+	return describe("Tags",function() {
 		
 		var a = t$('el').flag('a').setText("a").end();
 		var b = t$('el').flag('b').setText("b").end();
@@ -226,6 +301,54 @@
 			return eq(group.opstr(),"RRRII");
 		});
 		
+		test("toplevel conditionals",function() {
+			var node = t$('group2').end();
+			node.render({a: true});
+			eq(node.opstr(),"AAA");
+			
+			node.render({a: false});
+			eq(node.opstr(),"RRRAA");
+			return self;
+		});
+		
+		test("conditionals with strings",function() {
+			var node = t$('group3').end();
+			node.render({a: true});
+			eq(node.opstr(),"AA");
+			
+			node.render({a: false});
+			eq(node.opstr(),"");
+			return self;
+		});
+		
+		test("conditionals with strings II",function() {
+			var node = t$('group4').end();
+			node.render({a: true});
+			eq(node.opstr(),"AA");
+			
+			// string should simply be replaced
+			node.render({a: false});
+			eq(node.opstr(),"RAA");
+			return self;
+		});
+		
+		describe("group5",function() {
+			
+			return test("conditions",function() {
+				var node = t$('group5').end();
+				document.body.appendChild(node.dom());
+				node.render({a: false});
+				eq(node.opstr(),"AAA");
+				
+				// string should simply be replaced
+				node.render({a: true});
+				eq(node.opstr(),"RA");
+				
+				node.render({a: false});
+				return eq(node.opstr(),"RA");
+			});
+		});
+		
 		return describe("dynamic lists",function() {
 			// render once without anything to reset
 			var full = [a,b,c,d,e,f];
@@ -286,5 +409,7 @@
 			});
 		});
 	});
+	
+	
 
 })()

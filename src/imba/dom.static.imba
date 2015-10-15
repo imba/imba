@@ -10,6 +10,14 @@ def removeNested root, node, caret
 	elif node isa Number
 		no # noop now -- will be used in 
 
+	elif typeof node == 'string'
+		# trust that the next element is in fact the string
+		let next = caret ? caret:nextSibling : root.@dom:firstChild
+		if next isa Text
+			root.removeChild(next)
+		else
+			throw 'cannot remove string'
+
 	elif node
 		root.removeChild(node)
 
@@ -173,7 +181,14 @@ def reconcileNested root, new, old, caret, container, ci
 
 	if new === old
 		# remember that the caret must be an actual dom element
-		return (new and new.@dom) or new or caret
+		# we should instead move the actual caret? - trust
+		if new == null or new === false or new === true
+			return caret
+
+		let next = caret ? caret:nextSibling : root.@dom:firstChild
+		# console.log 'returning next caret',(new and new.@dom),next
+		return next
+		# return (new and new.@dom) or new or caret
 
 	# this could be a dynamic / loop
 	if new isa Array and old isa Array
@@ -183,6 +198,7 @@ def reconcileNested root, new, old, caret, container, ci
 			# and just skip it
 			if new:static == old:static
 				for item,i in new
+					# this is where we could do the triple equal directly
 					caret = reconcileNested(root,item,old[i],caret,new,i)
 				return caret
 			# if they are not the same we continue through to the default
@@ -192,6 +208,11 @@ def reconcileNested root, new, old, caret, container, ci
 
 	elif new isa String
 		let textNode
+
+		if typeof old == 'string'
+			let next = caret ? caret:nextSibling : root.@dom:firstChild
+			# console.log 'the next element is a text?',next
+			old = next if next isa Text
 
 		if old isa Text
 			# make sure not to trigger reflow in certain browsers
@@ -205,7 +226,8 @@ def reconcileNested root, new, old, caret, container, ci
 			insertNestedAfter(root,textNode,caret)
 
 		# swap the text with textNode in container
-		return container[ci] = caret = textNode
+		return caret = textNode
+		# return container[ci] = caret = textNode
 	# simply remove the previous one and add the new one
 	# will these ever be arrays?
 	removeNested(root,old,caret) if old
@@ -221,7 +243,9 @@ extend tag htmlelement
 			return self
 
 		if nodes and nodes:static
-			setStaticChildren(nodes)
+			# should return here
+			return setStaticChildren(nodes)
+
 		elif nodes isa Array and @children isa Array
 			reconcileCollection(self,nodes,@children,null)
 		elif nodes isa String
@@ -246,11 +270,16 @@ extend tag htmlelement
 			old = []
 			empty
 
-		for node,i in new
-			if node === old[i]
-				caret = node.@dom if node and node.@dom
-			else
-				caret = reconcileNested(self,node,old[i],caret,new,i)
+		var i = 0
+
+		# should send directly to reconcileNested?
+		reconcileNested(self,new,old,caret,null,0)
+
+		# for node,i in new
+		# 	if node === old[i]
+		# 		caret = node.@dom if node and node.@dom
+		# 	else
+		# 		caret = reconcileNested(self,node,old[i],caret,new,i)
 
 		@children = new
 		return self

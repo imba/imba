@@ -20,12 +20,15 @@ tag group
 		@ops = []
 		@opstr = ""
 		@errors = null
-		expected = _.flatten(nodes).filter do |n| n and n.@dom
+		expected = _.flatten(nodes).filter do |n|
+			n isa String or (n and n.@dom)
+			# n isa String ? n : (n and n.@dom)
+			# n and n.@dom
 		actual = []
 		# log "setStaticChildren",nodes,expected
 		super(nodes)
 
-		for child,i in @dom:children
+		for child,i in @dom:childNodes
 			# how would this work on server?
 			# if child isa Text
 			# 	actual.push( child:textContent )
@@ -39,6 +42,12 @@ tag group
 
 			actual.push( el )
 		# log actual
+
+		if @errors
+			console.log 'got errors'
+			console.log 'expected',expected
+			console.log 'found',actual
+
 		eq @errors, null
 		return self
 
@@ -65,7 +74,9 @@ tag group
 
 	def build
 		self # dont render immediately
-		
+	
+	def commit
+		self # dont render automatically
 
 	def name
 		"test"
@@ -112,6 +123,44 @@ tag other
 		<self> for item in items
 			<li> item
 
+
+tag group2 < group
+
+	def render a: no
+		<self>
+			if a
+				<el.a>
+				<el.b>
+				<el.c>
+			else
+				<el.d>
+				<el.e>
+
+tag group3 < group
+
+	def render a: no
+		<self>
+			<el.a>
+			a ? "items" : "item"
+
+tag group4 < group
+
+	def render a: no
+		<self>
+			<el.a>
+			if a
+				"text"
+			else
+				<el.b>
+				<el.c>
+
+tag group5 < group
+
+	def render a: no
+		<self>
+			"a"
+			"b"
+			a ? (<el.c> "c") : "d"
 
 describe "Tags" do
 
@@ -171,6 +220,49 @@ describe "Tags" do
 		group.render a: yes, b: yes
 		eq group.opstr, "RRRII"
 
+	test "toplevel conditionals" do
+		var node = <group2>
+		node.render a: yes
+		eq node.opstr, "AAA"
+
+		node.render(a: no)
+		eq node.opstr, "RRRAA"
+		self
+
+	test "conditionals with strings" do
+		var node = <group3>
+		node.render a: yes
+		eq node.opstr, "AA"
+
+		node.render(a: no)
+		eq node.opstr, ""
+		self
+
+	test "conditionals with strings II" do
+		var node = <group4>
+		node.render a: yes
+		eq node.opstr, "AA"
+
+		# string should simply be replaced
+		node.render(a: no)
+		eq node.opstr, "RAA"
+		self
+
+	describe "group5" do
+
+		test "conditions" do
+			var node = <group5>
+			document:body.appendChild(node.dom)
+			node.render a: no
+			eq node.opstr, "AAA"
+
+			# string should simply be replaced
+			node.render(a: yes)
+			eq node.opstr, "RA"
+
+			node.render(a: no)
+			eq node.opstr, "RA"
+
 	describe "dynamic lists" do
 		# render once without anything to reset
 		var full = [a,b,c,d,e,f]
@@ -225,6 +317,5 @@ describe "Tags" do
 			group.render list: full
 			group.render list: [c,d,e,f,a,b], str: "Added string again as well"
 			eq group.opstr, "III"
-
 
 
