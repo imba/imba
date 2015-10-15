@@ -5642,9 +5642,18 @@ export class Tag < Node
 			o:treeRef = parent.tree.nextCacheKey(self)
 
 		if var body = content and content.c(expression: yes) # force it to be an expression, no?
-			if tree and tree.static
-				bodySetter = 'setStatics'
-			calls.push ".{bodySetter}({body})"
+			let typ = 0
+
+			if tree 
+				if tree.static
+					typ = 2
+				elif reactive or tree.reactive
+					typ = 1
+
+			if bodySetter == 'setChildren' or bodySetter == 'setContent'
+				calls.push ".{bodySetter}({body},{typ})"
+			else
+				calls.push ".{bodySetter}({body})"
 
 			# out += ".body({body})"
 
@@ -5783,10 +5792,11 @@ export class TagTree < ListNode
 		if single
 			out
 		elif reactive or @owner.reactive
-			if static
-				out = "[{out}]"
-			else
-				out = "Imba.static([{out}],1)"
+			out = "[{out}]"
+			# if static
+			# 	out = "[{out}]"
+			# else
+			# 	out = "Imba.static([{out}],1)"
 		else
 			out = "[" + out + "]" # unless single
 

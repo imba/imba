@@ -234,43 +234,47 @@ def reconcileNested root, new, old, caret, container, ci
 	return caret
 
 
-
 extend tag htmlelement
-
-	def setChildren nodes
+	
+	def setChildren nodes, typ
 		if nodes === @children
 			return self
 
-		elif nodes and nodes:static
+		elif typeof nodes == 'string'
+			return text = nodes
+
+		elif typ == 1
 			return setStaticChildren(nodes)
+
+		elif typ == 2
+			unless @children
+				appendNested(self,@children = nodes)
+			return self
 
 		elif nodes isa Array and @children isa Array
 			reconcileCollection(self,nodes,@children,null)
-
-		elif nodes isa String
-			text = nodes
 		else
 			empty.append(nodes)
 
 		@children = nodes
 		return self
 
-	def setStatics nodes
-		unless @children
-			empty
-			appendNested(self,nodes)
-			@children = nodes
-		return self
 
 	def setStaticChildren new
 		var old = @children
-		var caret = null
+
 		# common case that should bail out from staticChildren
 		if new:length == 1 and new[0] isa String
 			return text = new[0]
 
 		elif old
-			reconcileNested(self,new,old,caret,null,0)
+			if new:static
+				# only when we are dealing with a single if/else?
+				reconcileNested(self,new,old,null,null,0)
+			else
+				let caret = null
+				for item,i in new
+					caret = reconcileNested(self,item,old[i],caret,new,i)
 		else
 			empty
 			appendNested(self,new)

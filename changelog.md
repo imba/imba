@@ -1,5 +1,5 @@
 ## 0.13.3
-
+- Optimized rendering further
 - Bugfix: native tags no longer spawn with empty class attribute
 - Bugfix: wrong cachekeys in certain nested trees
 - Bugfix: (cond && <sometag>) were not cached in static trees

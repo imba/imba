@@ -124,8 +124,8 @@
 			var list = pars.list !== undefined ? pars.list : null;
 			var str = pars.str !== undefined ? pars.str : null;
 			var list2 = pars.list2 !== undefined ? pars.list2 : null;
-			return this.setChildren(Imba.static([
-				(t0 = this.$a=this.$a || t$('el').flag('a')).setContent(this.name()).end(),
+			return this.setChildren([
+				(t0 = this.$a=this.$a || t$('el').flag('a')).setContent(this.name(),1).end(),
 				str,
 				(this.$b = this.$b || t$('el').flag('b')).setText("ok").end(),
 				(a) && (Imba.static([
@@ -159,7 +159,7 @@
 				list,
 				(this.$t = this.$t || t$('el').flag('x')).setText("very last").end(),
 				list2
-			],1)).synced();
+			],1).synced();
 		};
 	});
 	
@@ -171,10 +171,10 @@
 			return this.setChildren((function(self) {
 				var t0;
 				for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
-					res.push((t0 = self['$a' + i]=self['$a' + i] || t$('li')).setContent(ary[i]).end());
+					res.push((t0 = self['$a' + i]=self['$a' + i] || t$('li')).setContent(ary[i],1).end());
 				};
 				return res;
-			})(self)).synced();
+			})(self),1).synced();
 		};
 	});
 	
@@ -191,7 +191,7 @@
 			],2)) : (Imba.static([
 				(this.$d = this.$d || t$('el').flag('d')).end(),
 				(this.$e = this.$e || t$('el').flag('e')).end()
-			],3))).synced();
+			],3)),1).synced();
 		};
 	});
 	
@@ -200,10 +200,10 @@
 		tag.prototype.render = function (pars){
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
-			return this.setChildren(Imba.static([
+			return this.setChildren([
 				(this.$a = this.$a || t$('el').flag('a')).end(),
 				a ? ("items") : ("item")
-			],1)).synced();
+			],1).synced();
 		};
 	});
 	
@@ -212,7 +212,7 @@
 		tag.prototype.render = function (pars){
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
-			return this.setChildren(Imba.static([
+			return this.setChildren([
 				(this.$a = this.$a || t$('el').flag('a')).end(),
 				a ? (
 					"text"
@@ -220,7 +220,7 @@
 					(this.$b = this.$b || t$('el').flag('b')).end(),
 					(this.$c = this.$c || t$('el').flag('c')).end()
 				],2))
-			],1)).synced();
+			],1).synced();
 		};
 	});
 	
@@ -229,25 +229,25 @@
 		tag.prototype.render = function (pars){
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
-			return this.setChildren(Imba.static([
+			return this.setChildren([
 				"a",
 				"b",
 				a ? ((this.$a = this.$a || t$('el').flag('c')).setText("c").end()) : ("d")
-			],1)).synced();
+			],1).synced();
 		};
 	});
 	
 	Imba.defineTag('stat','group', function(tag){
 		tag.prototype.render = function (){
 			var t0;
-			return this.setStatics([
+			return this.setChildren([
 				(this.$a = this.$a || t$('div').flag('hello')).end(),
-				(t0 = this.$b=this.$b || t$('ul').flag('other')).setStatics([
+				(t0 = this.$b=this.$b || t$('ul').flag('other')).setContent([
 					(t0.$$a = t0.$$a || t$('li').flag('a')).end(),
 					(t0.$$b = t0.$$b || t$('li').flag('b')).end()
-				]).end(),
+				],2).end(),
 				(this.$c = this.$c || t$('div').flag('again')).end()
-			]).synced();
+			],2).synced();
 		};
 	});
 	
