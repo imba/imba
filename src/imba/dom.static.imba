@@ -243,11 +243,11 @@ extend tag htmlelement
 			return self
 
 		if nodes and nodes:static
-			# should return here
 			return setStaticChildren(nodes)
 
 		elif nodes isa Array and @children isa Array
 			reconcileCollection(self,nodes,@children,null)
+
 		elif nodes isa String
 			text = nodes
 		else
@@ -257,7 +257,6 @@ extend tag htmlelement
 		return self
 
 	def setStaticChildren new
-
 		var old = @children or []
 		var caret = null
 
@@ -265,21 +264,11 @@ extend tag htmlelement
 		if new:length == 1 and new[0] isa String
 			return text = new[0]
 
-		# must be array
-		if !old:length or !old:static
-			old = []
+		elif old
+			reconcileNested(self,new,old,caret,null,0)
+		else
 			empty
-
-		var i = 0
-
-		# should send directly to reconcileNested?
-		reconcileNested(self,new,old,caret,null,0)
-
-		# for node,i in new
-		# 	if node === old[i]
-		# 		caret = node.@dom if node and node.@dom
-		# 	else
-		# 		caret = reconcileNested(self,node,old[i],caret,new,i)
+			appendNested(self,new)
 
 		@children = new
 		return self
