@@ -1,4 +1,4 @@
-## 0.13.6
+## 0.13.7
 - Reworked tag rendering to work with non-string textual nodes again
 
 ## 0.13.5
