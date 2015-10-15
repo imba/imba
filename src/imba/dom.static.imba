@@ -257,7 +257,7 @@ extend tag htmlelement
 		return self
 
 	def setStaticChildren new
-		var old = @children or []
+		var old = @children
 		var caret = null
 
 		# common case that should bail out from staticChildren
