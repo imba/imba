@@ -191,7 +191,7 @@
 			],2)) : (Imba.static([
 				(this.$d = this.$d || t$('el').flag('d')).end(),
 				(this.$e = this.$e || t$('el').flag('e')).end()
-			],3))],3).synced();
+			],3))],1).synced();
 		};
 	});
 	
@@ -251,7 +251,7 @@
 		};
 		
 		tag.prototype.render = function (){
-			var t0, t1, t2, t3, t4, t5;
+			var t0, t1, t2, t3, t4, t5, t6;
 			return this.setChildren([
 				5,
 				new Date().toString(),
@@ -259,23 +259,24 @@
 				"20",
 				"30",
 				(this.$a = this.$a || t$('div').flag('hello')).end(),
-				(t0 = this.$b=this.$b || t$('div').flag('int')).setContent(10,3).end(),
-				(t1 = this.$c=this.$c || t$('div').flag('date')).setContent(new Date(),3).end(),
-				(this.$d = this.$d || t$('div').flag('str')).setText("string").end(),
-				(t2 = this.$e=this.$e || t$('div').flag('list')).setContent(this.list(),3).end(),
-				(t3 = this.$f=this.$f || t$('div').flag('item')).setContent(this.tast(),3).end(),
-				(t4 = this.$g=this.$g || t$('div').flag('if')).setContent([true ? (
+				(t0 = this.$b=this.$b || t$('div').flag('hello')).setContent((t0.$$a = t0.$$a || t$('b')).end(),2).end(),
+				(t1 = this.$c=this.$c || t$('div').flag('int')).setContent(10,3).end(),
+				(t2 = this.$d=this.$d || t$('div').flag('date')).setContent(new Date(),3).end(),
+				(this.$e = this.$e || t$('div').flag('str')).setText("string").end(),
+				(t3 = this.$f=this.$f || t$('div').flag('list')).setContent(this.list(),3).end(),
+				(t4 = this.$g=this.$g || t$('div').flag('item')).setContent(this.tast(),3).end(),
+				(t5 = this.$h=this.$h || t$('div').flag('if')).setContent([true ? (
 					this.list()
 				) : (Imba.static([
-					(t4.$$a = t4.$$a || t$('b')).end(),
-					(t4.$$b = t4.$$b || t$('b')).end()
-				],2))],3).end(),
-				
-				(t5 = this.$h=this.$h || t$('div').flag('if')).setContent([
 					(t5.$$a = t5.$$a || t$('b')).end(),
-					(t5.$$b = t5.$$b || t$('b')).end(),
+					(t5.$$b = t5.$$b || t$('b')).end()
+				],2))],1).end(),
+				
+				(t6 = this.$i=this.$i || t$('div').flag('if')).setContent([
+					(t6.$$a = t6.$$a || t$('b')).end(),
+					(t6.$$b = t6.$$b || t$('b')).end(),
 					this.tast(),
-					(t5.$$c = t5.$$c || t$('b')).end()
+					(t6.$$c = t6.$$c || t$('b')).end()
 				],1).end()
 			],1).synced();
 		};

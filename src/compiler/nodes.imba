@@ -5648,13 +5648,11 @@ export class Tag < Node
 				if tree.static
 					typ = 2
 				elif reactive or tree.reactive
-					if tree.single
-						# p "tree is single {tree.single}"
-						# seems strange to special-case this?
-						# if we know that arrays will always be mapped?
-						typ = 3
-					else
+					if !tree.single or tree.single isa If
 						typ = 1
+					else
+						typ = 3
+						
 
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
 				calls.push ".{bodySetter}({body},{typ})"
@@ -5783,28 +5781,13 @@ export class TagTree < ListNode
 
 	def c o
 		# FIXME TEST what about comments???
-		var len = realCount
 		var single = single
 		var out = super(o)
-		# return out = "[{out}]"
-		if single
-			p "single {single}"
 
 		if !single or single isa If
 			"[{out}]"
 		else
 			out
-
-		# elif reactive or @owner.reactive
-		# 	out = "[{out}]"
-		# 	# if static
-		# 	# 	out = "[{out}]"
-		# 	# else
-		# 	# 	out = "Imba.static([{out}],1)"
-		# else
-		# 	out = "[" + out + "]" # unless single
-		# 
-		# return out
 
 export class TagWrapper < ValueNode
 

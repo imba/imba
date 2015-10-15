@@ -180,6 +180,7 @@ tag unknowns < div
 			"20"
 			"30"
 			<div.hello>
+			<div.hello> <b>
 			<div.int> 10
 			<div.date> Date.new
 			<div.str> "string"

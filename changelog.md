@@ -1,3 +1,9 @@
+## 0.13.6
+- Reworked tag rendering to work with non-string textual nodes again
+
+## 0.13.5
+- Fixed yet another regression
+
 ## 0.13.4
 - Throw error when trying to spawn undefined tag
 - Fix regression with serverside rendering from 0.13.3

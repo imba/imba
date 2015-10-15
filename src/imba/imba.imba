@@ -4,7 +4,7 @@ if typeof window !== 'undefined'
 	global = window
 
 Imba = {
-	VERSION: '0.13.5'
+	VERSION: '0.13.6'
 }
 
 var reg = /-./g

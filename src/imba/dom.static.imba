@@ -184,7 +184,7 @@ def reconcileCollection root, new, old, caret
 
 # the general reconciler that respects conditions etc
 # caret is the current node we want to insert things after
-def reconcileNested root, new, old, caret, container, ci
+def reconcileNested root, new, old, caret
 
 	# if new == null or new === false or new === true
 	# 	if new === old
@@ -211,13 +211,13 @@ def reconcileNested root, new, old, caret, container, ci
 
 	elif new isa Array
 		if old isa Array
-			if new:static
+			if new:static or old:static
 				# if the static is not nested - we could get a hint from compiler
 				# and just skip it
 				if new:static == old:static
 					for item,i in new
 						# this is where we could do the triple equal directly
-						caret = reconcileNested(root,item,old[i],caret,new,i)
+						caret = reconcileNested(root,item,old[i],caret)
 					return caret
 				else
 					removeNested(root,old,caret)
@@ -236,7 +236,7 @@ def reconcileNested root, new, old, caret, container, ci
 		# remove old
 
 	elif new isa ImbaTag
-		removeNested(root,old,caret) if old != null and old !== false # what if old is an empty string?
+		removeNested(root,old,caret) unless oldIsNull
 		insertNestedAfter(root,new,caret)
 		return new
 
@@ -245,14 +245,12 @@ def reconcileNested root, new, old, caret, container, ci
 		return caret
 	else
 		# if old did not exist we need to add a new directly
-		let textNode
 		let nextNode
 		# if old was array or imbatag we need to remove it and then add
 		if old isa Array
 			removeNested(root,old,caret)
 		elif old isa ImbaTag
 			root.removeChild(old)
-
 		elif !oldIsNull
 			# ...
 			nextNode = caret ? caret:nextSibling : root.@dom:firstChild
@@ -264,66 +262,60 @@ def reconcileNested root, new, old, caret, container, ci
 		return insertNestedAfter(root,new,caret)
 
 
-		# return container[ci] = caret = textNode
-	# simply remove the previous one and add the new one
-	# will these ever be arrays?
-
-	# removeNested(root,old,caret) if old
-	# caret = insertNestedAfter(root,new,caret) if new
-	# return caret
-
-
 extend tag htmlelement
 	
-	def setChildren nodes, typ
+	def setChildren new, typ
+		var old = @children
 		# var isArray = nodes isa Array
-		if nodes === @children
+		if new === old
 			return self
 
-
-		if typeof nodes == 'string'
-			text = nodes
-
-		elif !@children
+		if !old
 			# what if this is a text?
+			# what if new is string-like?
 			empty
-			appendNested(self,nodes)
+			appendNested(self,new)
+
+		elif typ == 2
+			return self
 
 		elif typ == 1
 			# here we _know _that it is an array with the same shape
 			# every time
-			return setStaticChildren(nodes)
-
-		elif typ == 2
-			# this is a never-changing list of children
-			return self
+			let caret = null
+			for item,i in new
+				# prev = old[i]
+				caret = reconcileNested(self,item,old[i],caret)
 
 		elif typ == 3
 			# this is possibly fully dynamic. It often is
 			# but the old or new could be static while the other is not
 			# this is not handled now
 			# what if it was previously a static array? edgecase - but must work
-			if nodes isa Array
-				# is this not the same as setting staticChildren now but with the
-				if nodes:static
-					reconcileNested(self,nodes,@children,null,null,0)
-				else
-					reconcileCollection(self,nodes,@children,null)
-
-			elif nodes isa ImbaTag
+			if new isa ImbaTag
 				empty
 				appendChild(nodes)
+
+			# check if old and new isa array
+			elif new isa Array
+				if old isa Array
+					# is this not the same as setting staticChildren now but with the
+					reconcileCollection(self,new,old,null)
+				else
+					empty
+					appendNested(self,new)
+				
 			else
-				text = nodes
+				text = new
 				return self
 
-		elif nodes isa Array and @children isa Array
-			reconcileCollection(self,nodes,@children,null)
-
+		elif new isa Array and old isa Array
+			reconcileCollection(self,new,old,null)
 		else
-			empty.append(nodes)
+			empty
+			appendChild(new)
 
-		@children = nodes
+		@children = new
 		return self
 
 
@@ -331,20 +323,10 @@ extend tag htmlelement
 	def setStaticChildren new
 		var old = @children
 
-		# common case that should bail out from staticChildren
-		if new:length == 1 and new[0] isa String
-			text = new[0]
-			return self
-
-		elif new:static
-			# only when we are dealing with a single if/else?
-			# better to break i those cases
-			reconcileNested(self,new,old,null,null,0)
-		else
-			let caret = null
-			for item,i in new
-				# prev = old[i]
-				caret = reconcileNested(self,item,old[i],caret,new,i)
+		let caret = null
+		for item,i in new
+			# prev = old[i]
+			caret = reconcileNested(self,item,old[i],caret)
 
 		@children = new
 		return self
