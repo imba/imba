@@ -185,13 +185,12 @@ def reconcileNested root, new, old, caret, container, ci
 		if new == null or new === false or new === true
 			return caret
 
-		let next = caret ? caret:nextSibling : root.@dom:firstChild
-		# console.log 'returning next caret',(new and new.@dom),next
-		return next
-		# return (new and new.@dom) or new or caret
+		elif new and new.@dom
+			return new.@dom
+		else
+			return caret ? caret:nextSibling : root.@dom:firstChild
 
-	# this could be a dynamic / loop
-	if new isa Array and old isa Array
+	elif new isa Array and old isa Array
 
 		if new:static
 			# if the static is not nested - we could get a hint from compiler
