@@ -5650,6 +5650,8 @@ export class Tag < Node
 				elif reactive or tree.reactive
 					if tree.single
 						# p "tree is single {tree.single}"
+						# seems strange to special-case this?
+						# if we know that arrays will always be mapped?
 						typ = 3
 					else
 						typ = 1
@@ -5763,7 +5765,7 @@ export class TagTree < ListNode
 		option(:root)
 
 	def reactive
-		option(:reactive)		
+		option(:reactive)
 
 	def resolve
 		remap do |c| c.consume(self)
@@ -5782,14 +5784,16 @@ export class TagTree < ListNode
 	def c o
 		# FIXME TEST what about comments???
 		var len = realCount
-		var single = len == 1
+		var single = single
 		var out = super(o)
 		# return out = "[{out}]"
-
 		if single
-			out
-		else
+			p "single {single}"
+
+		if !single or single isa If
 			"[{out}]"
+		else
+			out
 
 		# elif reactive or @owner.reactive
 		# 	out = "[{out}]"

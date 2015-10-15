@@ -184,14 +184,14 @@
 		tag.prototype.render = function (pars){
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
-			return this.setChildren(a ? (Imba.static([
+			return this.setChildren([a ? (Imba.static([
 				(this.$a = this.$a || t$('el').flag('a')).end(),
 				(this.$b = this.$b || t$('el').flag('b')).end(),
 				(this.$c = this.$c || t$('el').flag('c')).end()
 			],2)) : (Imba.static([
 				(this.$d = this.$d || t$('el').flag('d')).end(),
 				(this.$e = this.$e || t$('el').flag('e')).end()
-			],3)),3).synced();
+			],3))],3).synced();
 		};
 	});
 	
@@ -251,7 +251,7 @@
 		};
 		
 		tag.prototype.render = function (){
-			var t0, t1, t2, t3, t4;
+			var t0, t1, t2, t3, t4, t5;
 			return this.setChildren([
 				5,
 				new Date().toString(),
@@ -263,18 +263,19 @@
 				(t1 = this.$c=this.$c || t$('div').flag('date')).setContent(new Date(),3).end(),
 				(this.$d = this.$d || t$('div').flag('str')).setText("string").end(),
 				(t2 = this.$e=this.$e || t$('div').flag('list')).setContent(this.list(),3).end(),
-				(t3 = this.$f=this.$f || t$('div').flag('if')).setContent(true ? (
+				(t3 = this.$f=this.$f || t$('div').flag('item')).setContent(this.tast(),3).end(),
+				(t4 = this.$g=this.$g || t$('div').flag('if')).setContent([true ? (
 					this.list()
 				) : (Imba.static([
-					(t3.$$a = t3.$$a || t$('b')).end(),
-					(t3.$$b = t3.$$b || t$('b')).end()
-				],2)),3).end(),
-				
-				(t4 = this.$g=this.$g || t$('div').flag('if')).setContent([
 					(t4.$$a = t4.$$a || t$('b')).end(),
-					(t4.$$b = t4.$$b || t$('b')).end(),
+					(t4.$$b = t4.$$b || t$('b')).end()
+				],2))],3).end(),
+				
+				(t5 = this.$h=this.$h || t$('div').flag('if')).setContent([
+					(t5.$$a = t5.$$a || t$('b')).end(),
+					(t5.$$b = t5.$$b || t$('b')).end(),
 					this.tast(),
-					(t4.$$c = t4.$$c || t$('b')).end()
+					(t5.$$c = t5.$$c || t$('b')).end()
 				],1).end()
 			],1).synced();
 		};

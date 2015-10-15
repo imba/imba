@@ -290,14 +290,21 @@ extend tag htmlelement
 			appendNested(self,nodes)
 
 		elif typ == 1
+			# here we _know _that it is an array with the same shape
+			# every time
 			return setStaticChildren(nodes)
 
 		elif typ == 2
+			# this is a never-changing list of children
 			return self
 
 		elif typ == 3
+			# this is possibly fully dynamic. It often is
+			# but the old or new could be static while the other is not
+			# this is not handled now
 			# what if it was previously a static array? edgecase - but must work
 			if nodes isa Array
+				# is this not the same as setting staticChildren now but with the
 				if nodes:static
 					reconcileNested(self,nodes,@children,null,null,0)
 				else
