@@ -5648,7 +5648,11 @@ export class Tag < Node
 				if tree.static
 					typ = 2
 				elif reactive or tree.reactive
-					typ = 1
+					if tree.single
+						# p "tree is single {tree.single}"
+						typ = 1
+					else
+						typ = 1
 
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
 				calls.push ".{bodySetter}({body},{typ})"
@@ -5727,19 +5731,8 @@ export class TagTree < ListNode
 	def parent
 		@parent ||= @owner.parent
 
-	# def cacher
-	# 	@cacher ||= if true
-	# 		if parent and parent.tree
-	# 			parent.tree.cacher
-	# 		else
-	# 			@owner.reference
-
 	def nextCacheKey
 		var root = @owner
-		
-		# if parent and parent.tree # parent tree?
-		# 	return parent.tree.nextCacheKey
-
 
 		# if we want to cache everything on root
 		var num = ++@counter
@@ -5780,6 +5773,9 @@ export class TagTree < ListNode
 		# every real node
 		@static ?= every do |c| (c isa Tag or c isa Str or c isa Meta)
 
+	def single
+		@single ?= (realCount == 1 ? last : no)
+
 	def hasTags
 		some do |c| c isa Tag
 
@@ -5788,19 +5784,22 @@ export class TagTree < ListNode
 		var len = realCount
 		var single = len == 1
 		var out = super(o)
+		return out = "[{out}]"
 
 		if single
 			out
-		elif reactive or @owner.reactive
-			out = "[{out}]"
-			# if static
-			# 	out = "[{out}]"
-			# else
-			# 	out = "Imba.static([{out}],1)"
 		else
-			out = "[" + out + "]" # unless single
-
-		return out
+			"[{out}]"
+		# elif reactive or @owner.reactive
+		# 	out = "[{out}]"
+		# 	# if static
+		# 	# 	out = "[{out}]"
+		# 	# else
+		# 	# 	out = "Imba.static([{out}],1)"
+		# else
+		# 	out = "[" + out + "]" # unless single
+		# 
+		# return out
 
 export class TagWrapper < ValueNode
 
