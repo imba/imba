@@ -243,22 +243,21 @@ extend tag htmlelement
 		elif typeof nodes == 'string'
 			return text = nodes
 
+		elif !@children
+			empty
+			appendNested(self,nodes)
+
 		elif typ == 1
 			return setStaticChildren(nodes)
 
 		elif typ == 2
-			unless @children
-				appendNested(self,@children = nodes)
 			return self
 
 		elif typ == 3
-			# single dynamic item
-			let old = @children
 			reconcileNested(self,nodes,@children,null,null,0)
 
 		elif nodes isa Array and @children isa Array
 			reconcileCollection(self,nodes,@children,null)
-
 		else
 			empty.append(nodes)
 
@@ -273,17 +272,13 @@ extend tag htmlelement
 		if new:length == 1 and new[0] isa String
 			return text = new[0]
 
-		elif old
-			if new:static
-				# only when we are dealing with a single if/else?
-				reconcileNested(self,new,old,null,null,0)
-			else
-				let caret = null
-				for item,i in new
-					caret = reconcileNested(self,item,old[i],caret,new,i)
+		if new:static
+			# only when we are dealing with a single if/else?
+			reconcileNested(self,new,old,null,null,0)
 		else
-			empty
-			appendNested(self,new)
+			let caret = null
+			for item,i in new
+				caret = reconcileNested(self,item,old[i],caret,new,i)
 
 		@children = new
 		return self

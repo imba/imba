@@ -176,10 +176,12 @@ def Imba.extendTag name, body
 
 def Imba.tag name
 	var typ = Imba.TAGS[name]
+	throw Error.new("tag {name} is not defined") if !typ
 	return typ.new(typ.createNode)
 
 def Imba.tagWithId name, id
 	var typ = Imba.TAGS[name]
+	throw Error.new("tag {name} is not defined") if !typ
 	var dom = typ.createNode
 	dom:id = id
 	return typ.new(dom)

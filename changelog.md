@@ -1,3 +1,7 @@
+## 0.13.4
+- Throw error when trying to spawn undefined tag
+- Fix regression with serverside rendering from 0.13.3
+
 ## 0.13.3
 - Optimized rendering further
 - Bugfix: native tags no longer spawn with empty class attribute
