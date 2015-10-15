@@ -5650,7 +5650,7 @@ export class Tag < Node
 				elif reactive or tree.reactive
 					if tree.single
 						# p "tree is single {tree.single}"
-						typ = 1
+						typ = 3
 					else
 						typ = 1
 
@@ -5784,12 +5784,13 @@ export class TagTree < ListNode
 		var len = realCount
 		var single = len == 1
 		var out = super(o)
-		return out = "[{out}]"
+		# return out = "[{out}]"
 
 		if single
 			out
 		else
 			"[{out}]"
+
 		# elif reactive or @owner.reactive
 		# 	out = "[{out}]"
 		# 	# if static

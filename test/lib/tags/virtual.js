@@ -33,7 +33,7 @@
 		tag.prototype.actual = function(v){ return this._actual; }
 		tag.prototype.setActual = function(v){ this._actual = v; return this; };
 		
-		tag.prototype.setStaticChildren = function (nodes){
+		tag.prototype.setChildren = function (nodes,typ){
 			this._ops = [];
 			this._opstr = "";
 			this._errors = null;
@@ -44,7 +44,7 @@
 			}));
 			this.setActual([]);
 			// log "setStaticChildren",nodes,expected
-			tag.__super__.setStaticChildren.call(this,nodes);
+			tag.__super__.setChildren.call(this,nodes,typ);
 			
 			for (var i = 0, ary = iter$(this._dom.childNodes), len = ary.length, child; i < len; i++) {
 				// how would this work on server?
@@ -125,7 +125,7 @@
 			var str = pars.str !== undefined ? pars.str : null;
 			var list2 = pars.list2 !== undefined ? pars.list2 : null;
 			return this.setChildren([
-				(t0 = this.$a=this.$a || t$('el').flag('a')).setContent(this.name(),1).end(),
+				(t0 = this.$a=this.$a || t$('el').flag('a')).setContent(this.name(),3).end(),
 				str,
 				(this.$b = this.$b || t$('el').flag('b')).setText("ok").end(),
 				(a) && (Imba.static([
@@ -171,10 +171,10 @@
 			return this.setChildren((function(self) {
 				var t0;
 				for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
-					res.push((t0 = self['$a' + i]=self['$a' + i] || t$('li')).setContent(ary[i],1).end());
+					res.push((t0 = self['$a' + i]=self['$a' + i] || t$('li')).setContent(ary[i],3).end());
 				};
 				return res;
-			})(self),1).synced();
+			})(self),3).synced();
 		};
 	});
 	
@@ -191,7 +191,7 @@
 			],2)) : (Imba.static([
 				(this.$d = this.$d || t$('el').flag('d')).end(),
 				(this.$e = this.$e || t$('el').flag('e')).end()
-			],3)),1).synced();
+			],3)),3).synced();
 		};
 	});
 	

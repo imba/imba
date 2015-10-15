@@ -251,8 +251,14 @@ extend tag htmlelement
 				appendNested(self,@children = nodes)
 			return self
 
+		elif typ == 3
+			# single dynamic item
+			let old = @children
+			reconcileNested(self,nodes,@children,null,null,0)
+
 		elif nodes isa Array and @children isa Array
 			reconcileCollection(self,nodes,@children,null)
+
 		else
 			empty.append(nodes)
 

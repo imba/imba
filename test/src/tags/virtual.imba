@@ -16,7 +16,7 @@ tag group
 	prop expected
 	prop actual
 		
-	def setStaticChildren nodes
+	def setChildren nodes, typ
 		@ops = []
 		@opstr = ""
 		@errors = null
@@ -26,7 +26,7 @@ tag group
 			# n and n.@dom
 		actual = []
 		# log "setStaticChildren",nodes,expected
-		super(nodes)
+		super(nodes,typ)
 
 		for child,i in @dom:childNodes
 			# how would this work on server?
