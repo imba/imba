@@ -271,8 +271,6 @@ extend tag htmlelement
 			return self
 
 		if !old
-			# what if this is a text?
-			# what if new is string-like?
 			empty
 			appendNested(self,new)
 
@@ -294,7 +292,7 @@ extend tag htmlelement
 			# what if it was previously a static array? edgecase - but must work
 			if new isa ImbaTag
 				empty
-				appendChild(nodes)
+				appendChild(new)
 
 			# check if old and new isa array
 			elif new isa Array
@@ -313,7 +311,7 @@ extend tag htmlelement
 			reconcileCollection(self,new,old,null)
 		else
 			empty
-			appendChild(new)
+			appendNested(self,new)
 
 		@children = new
 		return self
