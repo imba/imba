@@ -5640,8 +5640,10 @@ export class Tag < Node
 
 		if reactive and parent and parent.tree
 			o:treeRef = parent.tree.nextCacheKey(self)
-	
+
 		if var body = content and content.c(expression: yes) # force it to be an expression, no?
+			if tree and tree.static
+				bodySetter = 'setStatics'
 			calls.push ".{bodySetter}({body})"
 
 			# out += ".body({body})"
@@ -5692,16 +5694,6 @@ export class Tag < Node
 				out = "({reference.c} = {acc}={acc} || {out})"
 			else
 				out = "({acc} = {acc} || {out})"
-			
-
-		# should we not add references to the outer ones first?
-
-		# now work on the refereces?
-
-		# free variable
-		# @reference.free if @reference isa Variable
-		# if setup:length
-		#	out += ".setup({setup.join(",")})"
 
 		return out + calls.join("")
 
@@ -5776,7 +5768,8 @@ export class TagTree < ListNode
 		self
 
 	def static
-		@static ?= every do |c| c isa Tag
+		# every real node
+		@static ?= every do |c| (c isa Tag or c isa Str or c isa Meta)
 
 	def hasTags
 		some do |c| c isa Tag
@@ -5790,7 +5783,10 @@ export class TagTree < ListNode
 		if single
 			out
 		elif reactive or @owner.reactive
-			out = "Imba.static([{out}],1)"
+			if static
+				out = "[{out}]"
+			else
+				out = "Imba.static([{out}],1)"
 		else
 			out = "[" + out + "]" # unless single
 

@@ -56,11 +56,14 @@ export class ElementTag
 	def getAttribute key
 		dom.getAttribute(key)
 
-	def content= content
-		children = content
+	def setContent content
+		setChildren content
 		self
 
-	def children= nodes
+	def setChildren nodes
+		throw "Not implemented"
+
+	def setStatics nodes
 		throw "Not implemented"
 
 	def text v

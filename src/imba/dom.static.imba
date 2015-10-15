@@ -241,7 +241,7 @@ extend tag htmlelement
 		if nodes === @children
 			return self
 
-		if nodes and nodes:static
+		elif nodes and nodes:static
 			return setStaticChildren(nodes)
 
 		elif nodes isa Array and @children isa Array
@@ -255,10 +255,16 @@ extend tag htmlelement
 		@children = nodes
 		return self
 
+	def setStatics nodes
+		unless @children
+			empty
+			appendNested(self,nodes)
+			@children = nodes
+		return self
+
 	def setStaticChildren new
 		var old = @children
 		var caret = null
-
 		# common case that should bail out from staticChildren
 		if new:length == 1 and new[0] isa String
 			return text = new[0]

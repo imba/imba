@@ -237,6 +237,20 @@
 		};
 	});
 	
+	Imba.defineTag('stat','group', function(tag){
+		tag.prototype.render = function (){
+			var t0;
+			return this.setStatics([
+				(this.$a = this.$a || t$('div').flag('hello')).end(),
+				(t0 = this.$b=this.$b || t$('ul').flag('other')).setStatics([
+					(t0.$$a = t0.$$a || t$('li').flag('a')).end(),
+					(t0.$$b = t0.$$b || t$('li').flag('b')).end()
+				]).end(),
+				(this.$c = this.$c || t$('div').flag('again')).end()
+			]).synced();
+		};
+	});
+	
 	return describe("Tags",function() {
 		
 		var a = t$('el').flag('a').setText("a").end();

@@ -3,6 +3,7 @@
 - Bugfix: native tags no longer spawn with empty class attribute
 - Bugfix: wrong cachekeys in certain nested trees
 - Bugfix: (cond && <sometag>) were not cached in static trees
+- Bugfix: numerous edgecases with static trees
 
 ## 0.13.2 (2015-10-09)
 

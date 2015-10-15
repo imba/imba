@@ -162,6 +162,15 @@ tag group5 < group
 			"b"
 			a ? (<el.c> "c") : "d"
 
+tag stat < group
+	def render
+		<self>
+			<div.hello>
+			<ul.other>
+				<li.a>
+				<li.b>
+			<div.again>
+
 describe "Tags" do
 
 	var a = <el.a> "a"
