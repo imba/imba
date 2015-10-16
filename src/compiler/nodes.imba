@@ -1918,9 +1918,7 @@ export class Root < Code
 
 	def compile o
 		STACK.reset # -- nested compilation does not work now
-		STACK.@options = o
-		@options = o or {}
-		OPTS = o
+		OPTS = STACK.@options = @options = o or {}
 		traverse
 		var out = c
 		var result = {
@@ -6250,9 +6248,13 @@ export class Util < Node
 	def self.defineClass name, supr, initor
 		CALL(CLASSDEF,[name or initor,sup])
 
+	def isStandalone
+		OPTS:standalone !== no
+
 	def js o
 		"helper"
 
+# TODO Deprecate and remove
 export class Util.Union < Util
 
 	def helper
@@ -6266,13 +6268,13 @@ export class Util.Union < Util
 		};
 
 		'''
-		
 
 	def js o
 		scope__.root.helper(self,helper)
 		# When this is triggered, we need to add it to the top of file?
 		"union$({args.map(|v| v.c ).join(',')})"
 
+# TODO Deprecate and remove
 export class Util.Intersect < Util
 
 	def helper
@@ -6309,12 +6311,15 @@ export class Util.IndexOf < Util
 		};
 
 		'''
-		
 
 	def js o
-		scope__.root.helper(self,helper)
-		# When this is triggered, we need to add it to the top of file?
-		"idx$({args.map(|v| v.c ).join(',')})"
+		if isStandalone
+			scope__.root.helper(self,helper)
+			# When this is triggered, we need to add it to the top of file?
+			"idx$({args.map(|v| v.c ).join(',')})"
+		else
+			"Imba.indexOf({args.map(|v| v.c ).join(',')})"
+		
 
 export class Util.Subclass < Util
 
@@ -6335,9 +6340,12 @@ export class Util.Subclass < Util
 		'''
 
 	def js o
-		# When this is triggered, we need to add it to the top of file?
-		scope__.root.helper(self,helper)
-		"subclass$({args.map(|v| v.c).join(',')});\n"
+		if isStandalone
+			# When this is triggered, we need to add it to the top of file?
+			scope__.root.helper(self,helper)
+			"subclass$({args.map(|v| v.c).join(',')});\n"
+		else
+			"Imba.subclass({args.map(|v| v.c).join(',')});\n"
 
 export class Util.Promisify < Util
 
@@ -6346,10 +6354,14 @@ export class Util.Promisify < Util
 		"function promise$(a)\{ return a instanceof Array ? Promise.all(a) : (a && a.then ? a : Promise.resolve(a)); \}"
 		
 	def js o
-		# When this is triggered, we need to add it to the top of file?
-		scope__.root.helper(self,helper)
-		"promise$({args.map(|v| v.c).join(',')})"
-
+		if isStandalone
+			# When this is triggered, we need to add it to the top of file?
+			scope__.root.helper(self,helper)
+			"promise$({args.map(|v| v.c).join(',')})"
+		else
+			"Imba.await({args.map(|v| v.c).join(',')})"
+		
+# TODO deprecated: can remove
 export class Util.Class < Util
 
 	def js o
@@ -6365,19 +6377,17 @@ export class Util.Iterable < Util
 		
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
-		# only wrap if it is not clear that this is an array?
-		scope__.root.helper(self,helper)
-		return "iter$({args[0].c})"
 
+		if isStandalone
+			scope__.root.helper(self,helper)
+			return "iter$({args[0].c})"
+		else
+			return "Imba.iterable({args[0].c})"
+		
 export class Util.IsFunction < Util
 
 	def js o
-		# p "IS FUNCTION {args[0]}"
-		# just plain check for now
 		"{args[0].c}"
-		# "isfn$({args[0].c})"
-		# "typeof {args[0].c} == 'function'"
-		
 
 export class Util.Array < Util
 

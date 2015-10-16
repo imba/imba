@@ -305,6 +305,9 @@ def write-file source, outpath, options = {}
 		options:sourceMap ||= {}
 		options:sourceMap:inline = yes
 
+	# if options:standalone
+	# 	options:hasRuntime = no
+
 	try
 		var start = Date.now
 		var code = compiler.compile(source.code, options)
@@ -412,12 +415,14 @@ cli.command('* <path>')
 cli.command('compile <path>')
 	.description('compile scripts')
 	.option('-m, --source-map-inline', 'Embed inline sourcemap in compiled JavaScript')
+	.option('-s, --standalone', 'Embed utils from Imba runtime')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |path,o| cli-compile path, o, watch: no
 
 cli.command('watch <path>')
 	.description('listen for changes and compile scripts')
 	.option('-m, --source-map-inline', 'Embed inline sourcemap in compiled JavaScript')
+	.option('-s, --standalone', 'Embed utils from Imba runtime')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |root,o| cli-compile(root,o,watch: yes)
 
