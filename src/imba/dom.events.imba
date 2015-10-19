@@ -71,11 +71,7 @@ class Imba.Pointer
 				touch = null # reuse?
 				# trigger pointerup
 		else
-			# set type to stationary?
-			# update always?
 			touch.idle if touch
-		
-
 		self
 
 	def emit name, target, bubble: yes
@@ -273,13 +269,16 @@ class Imba.Touch
 		@x = t:clientX
 		@y = t:clientY
 		began
+
+		@mousemove = (|e| mousemove(e,e) )
+		doc.addEventListener('mousemove',@mousemove,yes)
+		# inside here -- start tracking mousemove directly
+
 		self
 
 	def mousemove e,t
-		# log "mousemove"
 		@x = t:clientX
 		@y = t:clientY
-		# how does this work with touches?
 		@event = e
 		e.preventDefault if @suppress
 		update
@@ -287,10 +286,11 @@ class Imba.Touch
 		self
 
 	def mouseup e,t
-		# log "mousemove"
 		@x = t:clientX
 		@y = t:clientY
 		ended
+		doc.removeEventListener('mousemove',@mousemove,yes)
+		@mousemove = null
 		self
 
 	def idle
@@ -569,7 +569,6 @@ class Imba.EventManager
 		bool ? onenable : ondisable
 		self
 
-
 	def initialize node, events: []
 		root = node
 		count = 0
@@ -638,6 +637,9 @@ ED = Imba.Events = Imba.EventManager.new(document, events: [
 	:mousewheel,:wheel
 ])
 
+# should set these up inside the Imba.Events object itself
+# so that we can have different EventManager for different roots
+
 if hasTouchEvents
 	Imba.Events.listen(:touchstart) do |e|
 		Imba.Events.count++
@@ -670,16 +672,16 @@ Imba.Events.listen(:mousedown) do |e|
 	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		Imba.POINTER.update(e).process if Imba.POINTER
 
-Imba.Events.listen(:mousemove) do |e|
-	# console.log 'mousemove',e:timeStamp
-	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
-		Imba.POINTER.update(e).process if Imba.POINTER # .process if touch # should not happen? We process through 
+# Imba.Events.listen(:mousemove) do |e|
+# 	# console.log 'mousemove',e:timeStamp
+# 	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
+# 		Imba.POINTER.update(e).process if Imba.POINTER # .process if touch # should not happen? We process through 
 
 Imba.Events.listen(:mouseup) do |e|
 	# console.log 'mouseup',e:timeStamp
 	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		Imba.POINTER.update(e).process if Imba.POINTER
 
+
 Imba.Events.register([:mousedown,:mouseup])
-# enable immediately by default
 Imba.Events.enabled = yes
