@@ -1,3 +1,6 @@
+## 0.13.8
+- Added scheduler for an official/approved way to schedule rendering
+
 ## 0.13.7
 - Reworked tag rendering to work with non-string textual nodes again
 
