@@ -550,7 +550,12 @@ class Imba.Event
 			unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
 				break
 
+		processed
 		return self
+
+	def processed
+		Imba.emit(Imba,'event',[self])
+		self
 
 	def x do event:x
 	def y do event:y
