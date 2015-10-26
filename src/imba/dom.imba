@@ -45,6 +45,13 @@ tag htmlelement < element
 		@dom:textContent = txt ?= ""
 		self
 
+	def html= html
+		@dom:innerHTML = html
+		self
+
+	def html
+		@dom:innerHTML
+
 	def empty
 		@dom.removeChild(@dom:firstChild) while @dom:firstChild
 		@children = null
