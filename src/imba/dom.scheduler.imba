@@ -54,7 +54,6 @@ export class Scheduler
 
 	def reschedule
 		raf(@ticker)
-		# requestAnimationFrame(@ticker)
 		self
 
 	def mark
@@ -117,6 +116,8 @@ export class Scheduler
 		@marker
 
 	def onevent e
+		return self if @marked
+
 		if @events isa Function
 			mark if @events(e)	
 		elif @events isa Array
