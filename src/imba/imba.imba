@@ -35,21 +35,3 @@ def Imba.toCamelCase str
 
 def Imba.indexOf a,b
 	return (b && b:indexOf) ? b.indexOf(a) : []:indexOf.call(a,b)
-
-# trackable timeout
-def Imba.setTimeout delay, &block
-	setTimeout(&,delay) do
-		block()
-		Imba.emit(Imba,'timeout',[block])
-
-# trackable interval
-def Imba.setInterval interval, &block
-	setInterval(&,interval) do
-		block()
-		Imba.emit(Imba,'interval',[block])
-
-def Imba.clearInterval interval
-	clearInterval(interval)
-
-def Imba.clearTimeout timeout
-	clearTimeout(timeout)

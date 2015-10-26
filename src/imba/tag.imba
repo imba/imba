@@ -89,6 +89,10 @@ export class ElementTag
 		render
 		self
 
+	def tick
+		render
+		self
+
 	def end
 		if @built
 			commit
@@ -110,8 +114,20 @@ export class ElementTag
 	def flag ref, toggle
 		throw "Not implemented"
 
+	def scheduler
+		@scheduler ?= Imba.Scheduler.new(self)
+
+	def schedule o = {}
+		scheduler.configure(o).activate
+		self
+
+	def unschedule
+		scheduler.deactivate if @scheduler
+		self
+
 	def self.createNode
 		throw "Not implemented"
+
 
 ElementTag:prototype:initialize = ElementTag
 

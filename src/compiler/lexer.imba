@@ -747,7 +747,9 @@ export class Lexer
 			typ = 'IVAR'
 
 		elif pre == '$'
-			typ = 'GVAR'
+			yes
+			# typ = 'GVAR'
+
 
 		elif pre == '#'
 			typ = 'TAGID'
@@ -916,7 +918,8 @@ export class Lexer
 			typ = 'CVAR'
 
 		elif typ == '$' and !colon
-			typ = 'GVAR'
+			typ = 'IDENTIFIER'
+			# typ = 'GVAR'
 
 		elif CONST_IDENTIFIER.test(id) or id == 'require' or id == 'global' or id == 'exports'
 			# thous should really be handled by the ast instead
