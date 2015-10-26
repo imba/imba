@@ -177,7 +177,10 @@ tag script
 tag section
 
 tag select
+	attr name
 	prop multiple dom: yes
+	prop required dom: yes
+	prop disabled dom: yes
 	
 	def value
 		dom:value
