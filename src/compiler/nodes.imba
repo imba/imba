@@ -5752,7 +5752,7 @@ export class TagTree < ListNode
 			# p "is a list node!! {list.count}"
 			# we still want the indentation if we are not in a template
 			# or, rather - we want the block to get the indentation - not the tree
-			@indentation ||= list.@indentation if list.count > 1
+			@indentation ||= list.@indentation # if list.count > 1
 			list.nodes
 		else
 			compact__(list isa Array ? list : [list])
@@ -5781,6 +5781,8 @@ export class TagTree < ListNode
 		# FIXME TEST what about comments???
 		var single = single
 		var out = super(o)
+
+		# p "compile tagTree",@indent
 
 		if !single or single isa If
 			"[{out}]"
