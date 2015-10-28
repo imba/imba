@@ -1,6 +1,8 @@
 Visit [imba.io](http://imba.io) for more information!
 
 # Imba
+
+[![Join the chat at https://gitter.im/somebee/imba](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/somebee/imba?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 *if ruby and react had an indentation-based child, what would it look like?*
 Imba is a new programming language for the web that compiles
 to performant and readable JavaScript. It has language level 
