@@ -25,5 +25,18 @@ describe 'Issues' do
 		ok (A.b.C).new isa A.B.C
 		ok a.B.new isa A.B
 
+	test 'var hoisting with loops' do
+
+		let a = 0
+
+		def method
+			a = for x in [1,2,3]
+				x * 2
+			return
+
+		method # call the method
+
+		eq a, [2,4,6]
+
 
 
