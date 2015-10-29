@@ -1560,6 +1560,12 @@ export class ParamList < ListNode
 			# need to visit at the same time, no?
 		list[index]
 
+	def metadata
+		{
+			type: 'params'
+			count: count
+		}
+
 	def visit
 		@splat = filter(|par| par isa SplatParam)[0]
 		var blk = filter(|par| par isa BlockParam)
@@ -2240,6 +2246,7 @@ export class MethodDeclaration < Func
 		{
 			type: "method"
 			name: "" + name
+			params: @params.metadata
 			desc: @desc
 		}
 
