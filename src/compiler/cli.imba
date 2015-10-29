@@ -437,7 +437,7 @@ cli.command('analyze <path>')
 			print-tokens(file.tokens)
 		else
 			file.analyze do |meta|
-				log JSON.stringify(meta)
+				log JSON.stringify(meta,null,4)
 
 cli.command('export-runtime <path>')
 	.description('export the imba.js runtime to <path>')

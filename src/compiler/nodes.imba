@@ -249,6 +249,25 @@ export class Indentation
 		
 var INDENT = Indentation.new({},{})
 
+class Stash
+
+	def initialize
+		@entities = []
+
+	def add item
+		@entities.unshift(item)
+		self
+
+	def pluck item
+		var match = null
+		for entity,i in @entities
+			if entity == item or entity isa item
+				match = entity
+				@entities.splice(i,1)
+				return match
+		return null
+
+
 export class Stack
 
 	prop loglevel
@@ -262,9 +281,13 @@ export class Stack
 		@nodes   = []
 		@scoping = []
 		@scopes  = [] # for analysis - should rename
+		@stash   = Stash.new(self)
 		@loglevel = 3
 		@counter = 0
 		self
+
+	def stash
+		@stash
 
 	def option key
 		@options and @options[key]
@@ -329,6 +352,9 @@ export class Stack
 
 	def method
 		up(MethodDeclaration)
+
+	def block
+		up(Block)
 
 	def isExpression
 		var i = @nodes:length - 1
@@ -659,6 +685,14 @@ export class Meta < ValueNode
 		yes
 
 export class Comment < Meta
+	
+	def visit
+		stack.stash.add(self)
+		self
+
+	def toDoc
+		# should remove superfluous indentation
+		"" + @value.@value
 
 	def c o
 		var v = @value.@value
@@ -782,7 +816,7 @@ export class ListNode < Node
 		@nodes.indexOf(item)
 
 	def index i
-		@nodes[i]	
+		@nodes[i]
 
 	def remove item
 		var idx = @nodes.indexOf(item)
@@ -2202,6 +2236,13 @@ export class MethodDeclaration < Func
 			return self
 		super
 
+	def metadata
+		{
+			type: "method"
+			name: "" + name
+			desc: @desc
+		}
+
 	def visit
 		# prebreak # make sure this has a break?
 		scope.visit
@@ -2217,6 +2258,8 @@ export class MethodDeclaration < Func
 			@body = body.consume(tree)
 			# body.nodes = [Arr.new(body.nodes)]
 
+		if let desc = stack.stash.pluck(Comment)
+			@desc = desc.toDoc
 		
 		@context = scope.parent.closure
 		@params.traverse
@@ -2226,6 +2269,7 @@ export class MethodDeclaration < Func
 			set(static: yes)
 
 		if context isa ClassScope
+			context.annotate(self)
 			@target ||= context.context
 			# register as class-method?
 			# should register for this
@@ -2236,7 +2280,6 @@ export class MethodDeclaration < Func
 			@variable = context.register(name, self, type: 'meth')
 
 		@body.traverse # so soon?
-
 		self
 
 	def supername
@@ -6432,6 +6475,7 @@ export class Scope
 		@node = node
 		@parent = parent
 		@vars = VariableDeclaration.new([])
+		@annotations = []
 		@closure = self
 		@virtual = no
 		@counter = 0
@@ -6491,6 +6535,10 @@ export class Scope
 		# going to refactor later
 		@varmap[name] = item unless o:system # dont even add to the varmap if it is a sysvar
 		return item
+
+	def annotate obj
+		@annotations.push(obj)
+		self
 
 	# just like register, but we automatically 
 	def declare name, init = null, o = {}
@@ -6618,11 +6666,16 @@ export class Scope
 			var v = @varmap[k]
 			v.references:length ? dump__(v) : null
 
-		return \
+		var desc = 
 			type: self:constructor:name
 			level: (level or 0)
 			vars: compact__(vars)
 			loc: region
+
+		desc:entities = for item, i in @annotations
+			item.metadata
+
+		return desc
 
 	def toString
 		"{self:constructor:name}"

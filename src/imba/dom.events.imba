@@ -484,9 +484,11 @@ class Imba.Event
 	def target
 		tag(event:_target or event:target)
 
+
 	def redirect node
 		@redirect = node
 		self
+
 
 	def keychar
 		if event isa TextEvent
