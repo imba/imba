@@ -1569,10 +1569,7 @@ export class ParamList < ListNode
 		list[index]
 
 	def metadata
-		{
-			type: 'params'
-			count: count
-		}
+		{count: count}
 
 	def visit
 		@splat = filter(|par| par isa SplatParam)[0]
@@ -2031,7 +2028,7 @@ export class ClassDeclaration < Code
 	def metadata
 		{
 			type: 'class'
-			name: name
+			name: name.toString
 			desc: @desc
 			superclass: superclass?.name
 		}
@@ -2046,7 +2043,6 @@ export class ClassDeclaration < Code
 		self
 
 	def visit
-		@desc = stack.stash.pluck(Comment)
 		# replace with some advanced lookup?
 		scope.visit
 		body.traverse
@@ -2268,7 +2264,7 @@ export class MethodDeclaration < Func
 		}
 
 	def visit
-		@desc = stack.stash.pluck(Comment)
+		# @desc = stack.stash.pluck(Comment)
 		# prebreak # make sure this has a break?
 		scope.visit
 
@@ -6473,6 +6469,9 @@ export class Util.Array < Util
 # handles local variables, self etc. Should create references to outer scopes
 # when needed etc.
 
+# add class for annotations / registering methods, etc?
+# class Interface
+
 # should move the whole context-thingie right into scope
 export class Scope
 
@@ -6492,18 +6491,28 @@ export class Scope
 			console.log(*arguments)
 		self
 
+	def stack
+		STACK
+
 	def initialize node, parent
 		@nr = STACK.incr('scopes')
 		@head = []
 		@node = node
 		@parent = parent
 		@vars = VariableDeclaration.new([])
+		@meta = {}
 		@annotations = []
 		@closure = self
 		@virtual = no
 		@counter = 0
 		@varmap  = {}
 		@varpool = []
+
+	def meta key, value
+		if value != undefined
+			@meta[key] = value
+			return self
+		@meta[key]
 
 	def context
 		@context ||= ScopeContext.new(self)
@@ -6518,7 +6527,6 @@ export class Scope
 		@level = STACK.scopes:length - 1
 
 		# p "parent is",@parent
-
 		STACK.addScope(self)
 		root.scopes.push(self)
 		self
@@ -6692,6 +6700,7 @@ export class Scope
 		var desc = 
 			nr: @nr
 			type: self:constructor:name
+			desc: @desc
 			level: (level or 0)
 			vars: compact__(vars)
 			loc: region
@@ -6702,6 +6711,9 @@ export class Scope
 			item.metadata
 
 		return desc
+
+	def toJSON
+		dump
 
 	def toString
 		"{self:constructor:name}"
@@ -6779,6 +6791,11 @@ export class FileScope < Scope
 		
 
 export class ClassScope < Scope
+	
+	def visit
+		super
+		@desc = stack.stash.pluck(Comment)
+		self
 
 	# called for scopes that are not real scopes in js
 	# must ensure that the local variables inside of the scopes do not
@@ -6801,6 +6818,11 @@ export class ClosureScope < Scope
 export class FunctionScope < Scope
 
 export class MethodScope < Scope
+	
+	def visit
+		super
+		@desc = stack.stash.pluck(Comment)
+		self
 
 	def isClosed
 		yes
