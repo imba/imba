@@ -284,7 +284,12 @@ export class Stack
 		@stash   = Stash.new(self)
 		@loglevel = 3
 		@counter = 0
+		@counters = {}
 		self
+
+	def incr name
+		@counters[name] ||= 0
+		@counters[name] += 1
 
 	def stash
 		@stash
@@ -692,6 +697,9 @@ export class Comment < Meta
 
 	def toDoc
 		# should remove superfluous indentation
+		"" + @value.@value
+
+	def toJSON
 		"" + @value.@value
 
 	def c o
@@ -2020,6 +2028,14 @@ export class ClassDeclaration < Code
 			return self
 		super
 
+	def metadata
+		{
+			type: 'class'
+			name: name
+			desc: @desc
+			superclass: superclass?.name
+		}
+
 	def initialize name, superclass, body
 		# what about the namespace?
 		@traversed = no
@@ -2030,6 +2046,7 @@ export class ClassDeclaration < Code
 		self
 
 	def visit
+		@desc = stack.stash.pluck(Comment)
 		# replace with some advanced lookup?
 		scope.visit
 		body.traverse
@@ -2251,6 +2268,7 @@ export class MethodDeclaration < Func
 		}
 
 	def visit
+		@desc = stack.stash.pluck(Comment)
 		# prebreak # make sure this has a break?
 		scope.visit
 
@@ -2264,9 +2282,6 @@ export class MethodDeclaration < Func
 			var tree = TagTree.new
 			@body = body.consume(tree)
 			# body.nodes = [Arr.new(body.nodes)]
-
-		if let desc = stack.stash.pluck(Comment)
-			@desc = desc.toDoc
 		
 		@context = scope.parent.closure
 		@params.traverse
@@ -6478,6 +6493,7 @@ export class Scope
 		self
 
 	def initialize node, parent
+		@nr = STACK.incr('scopes')
 		@head = []
 		@node = node
 		@parent = parent
@@ -6674,10 +6690,13 @@ export class Scope
 			v.references:length ? dump__(v) : null
 
 		var desc = 
+			nr: @nr
 			type: self:constructor:name
 			level: (level or 0)
 			vars: compact__(vars)
 			loc: region
+
+		desc:meta = @node?.metadata
 
 		desc:entities = for item, i in @annotations
 			item.metadata
