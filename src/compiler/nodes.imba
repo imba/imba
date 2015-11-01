@@ -2028,7 +2028,7 @@ export class ClassDeclaration < Code
 	def metadata
 		{
 			type: 'class'
-			name: name.toString
+			path: name.c.toString
 			desc: @desc
 			superclass: superclass?.name
 		}
@@ -2260,7 +2260,7 @@ export class MethodDeclaration < Func
 			type: "method"
 			name: "" + name
 			params: @params.metadata
-			desc: @desc
+			desc: scope.@desc?.toDoc
 		}
 
 	def visit

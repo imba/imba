@@ -435,7 +435,13 @@ Imba.CHARMAP = {
 	".": 'dot'
 }
 
-
+###
+Imba handles all events in the dom through a single manager,
+listening at the root of your document. If Imba finds a tag
+that listens to a certain event, the event will be wrapped 
+in an `Imba.Event`, which normalizes some of the quirks and 
+browser differences.
+###
 class Imba.Event
 
 	prop event
@@ -506,6 +512,7 @@ class Imba.Event
 
 		return nil
 
+
 	def keycombo
 		return unless var sym = keychar
 		sym = Imba.CHARMAP[sym] or sym
@@ -516,6 +523,7 @@ class Imba.Event
 		combo.push(:cmd) if e:metaKey
 		combo.push(sym)
 		combo.join("_").toLowerCase
+
 
 	def process
 		var meth = "on{@prefix or ''}{name}"
@@ -555,12 +563,24 @@ class Imba.Event
 		processed
 		return self
 
+
 	def processed
 		Imba.emit(Imba,'event',[self])
 		self
 
+	###
+	Return the x/left coordinate of the mouse / pointer for this event
+	###
 	def x do event:x
+
+	###
+	Return the y/top coordinate of the mouse / pointer for this event
+	###
 	def y do event:y
+
+	###
+	Return the y/top coordinate of the mouse / pointer for this event
+	###
 	def which do event:which
 
 class Imba.EventManager
