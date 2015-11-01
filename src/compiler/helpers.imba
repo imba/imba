@@ -8,6 +8,20 @@ export def brace str
 	else
 		'{\n' + str + '\n}'
 
+export def normalizeIndentation str
+	var m
+	var reg = /\n+([^\n\S]*)/g
+	var ind = null
+
+	while m = reg.exec(str)
+		var attempt = m[1]
+		if ind is null or 0 < attempt:length < ind:length
+			ind = attempt
+
+	str = str.replace(RegExp("\\n{ind}","g"), '\n') if ind
+	return str
+
+
 export def flatten arr
 	var out = []
 	arr.forEach do |v| v isa Array ? out:push.apply(out,flatten(v)) : out.push(v)

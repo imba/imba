@@ -696,8 +696,7 @@ export class Comment < Meta
 		self
 
 	def toDoc
-		# should remove superfluous indentation
-		"" + @value.@value
+		helpers.normalizeIndentation("" + @value.@value)
 
 	def toJSON
 		"" + @value.@value
