@@ -51,21 +51,35 @@ export class ElementTag
 	def id
 		dom:id
 
-	def setAttribute key, new
-		var old = dom.getAttribute(key)
+	###
+	Adds a new attribute or changes the value of an existing attribute
+	on the specified tag. If the value is null or false, the attribute
+	will be removed.
+	###
+	def setAttribute name, value
+		# should this not return self?
+		var old = dom.getAttribute(name)
 
-		if old == new
-			new
-		elif new != null && new !== false
-			dom.setAttribute(key,new)
+		if old == value
+			value
+		elif value != null && value !== false
+			dom.setAttribute(name,value)
 		else
-			dom.removeAttribute(key)
+			dom.removeAttribute(name)
 
-	def removeAttribute key
-		dom.removeAttribute(key)
+	###
+	removes an attribute from the specified tag
+	###
+	def removeAttribute name
+		dom.removeAttribute(name)
 
-	def getAttribute key
-		dom.getAttribute(key)
+	###
+	returns the value of an attribute on the tag.
+	If the given attribute does not exist, the value returned
+	will either be null or "" (the empty string)
+	###
+	def getAttribute name
+		dom.getAttribute(name)
 
 	def setContent content, typ
 		setChildren content, typ

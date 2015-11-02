@@ -23,13 +23,22 @@ class Imba.Selector
 		return Imba.document unless var ctx = @context
 		@scope = ctx:toScope ? ctx.toScope : ctx
 
+	###
+	@returns {Imba.Tag} first node matching this selector
+	###
 	def first
 		if @lazy then tag(@first ||= scope.querySelector(query))
 		else nodes[0]
 
+	###
+	@returns {Imba.Tag} last node matching this selector
+	###
 	def last
 		nodes[@nodes:length - 1]
 
+	###
+	@returns [Imba.Tag] all nodes matching this selector
+	###
 	def nodes
 		return @nodes if @nodes
 		var items = scope.querySelectorAll(query)
@@ -37,20 +46,39 @@ class Imba.Selector
 		@lazy = no
 		@nodes
 	
+	###
+	The number of nodes matching this selector
+	###
 	def count do nodes:length
+
 	def len do nodes:length
+
+	# really? Should work more like Array.some
 	def any do count
 	
+	###
+	Get node at index
+	###
 	def at idx
 		nodes[idx]
 
+	###
+	Loop through nodes
+	###
 	def forEach block
 		nodes.forEach(block)
 		self
 
+	###
+	Map nodes
+	###
 	def map block
 		nodes.map(block)
 
+	###
+	Returns a plain array containing nodes. Implicitly called
+	when iterating over a selector in Imba `(node for node in $(selector))`
+	###
 	def toArray
 		nodes
 	
@@ -72,28 +100,6 @@ class Imba.Selector
 	# elements, filtered by a selector.
 	def find sel
 		@nodes = __query__(sel.query, nodes)
-		self
-
-	# TODO IMPLEMENT
-	# Get the children of each element in the set of matched elements, 
-	# optionally filtered by a selector.
-	def children sel
-		yes
-
-	# TODO IMPLEMENT
-	# Reduce the set of matched elements to those that have a descendant that
-	# matches the selector or DOM element.
-	def has
-		yes
-
-	# TODO IMPLEMENT
-	def __union
-		p "called Imba.Selector.__union"
-		self
-
-	# TODO IMPLEMENT
-	def __intersect
-		p "called Imba.Selector.__union"
 		self
 
 	def reject blk
