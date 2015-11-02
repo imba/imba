@@ -444,12 +444,22 @@ browser differences.
 ###
 class Imba.Event
 
+	### reference to the native event ###
 	prop event
-	prop target
+
+	### reference to the native event ###
 	prop prefix
+
 	prop data
+
+	###
+	should remove this alltogether?
+	@deprecated
+	###
 	prop source
-	prop bubble # getset: yes
+
+	### A {Boolean} indicating whether the event bubbles up or not ###
+	prop bubble type: Boolean, chainable: yes
 
 	def self.wrap e
 		self.new(e)
@@ -462,6 +472,9 @@ class Imba.Event
 		@type = type
 		self
 
+	###
+	@returns {String} The name of the event (case-insensitive)
+	###
 	def type
 		@type || event:type
 
@@ -475,27 +488,56 @@ class Imba.Event
 			return self
 		return @bubble
 
+	###
+	Prevents further propagation of the current event.
+
+	@returns {Imba.Event} The instance on which this method was called
+	###
 	def halt
 		bubble = no
 		self
 
+	###
+	Cancel the event (if cancelable). In the case of native events it
+	will call `preventDefault` on the wrapped event object.
+
+	@returns {Imba.Event} The instance on which this method was called
+	###
 	def cancel
 		event.preventDefault if event:preventDefault
 		@cancel = yes
 		self
 
+	###
+	Indicates whether or not event.cancel has been called.
+
+	@returns {Boolean}
+	###
 	def isPrevented
 		event and event:defaultPrevented or @cancel
 
+	###
+	A reference to the initial target of the event.
+	###
 	def target
 		tag(event:_target or event:target)
 
+	###
+	A reference to the object responding to the event.
+	###
+	def responder
+		@responder
 
+	###
+	Redirect the event to new target
+	###
 	def redirect node
 		@redirect = node
 		self
 
-
+	###
+	@return {String} normalized character for KeyboardEvent/TextEvent
+	###
 	def keychar
 		if event isa TextEvent
 			return event:data
@@ -510,9 +552,11 @@ class Imba.Event
 				sym = String.fromCharCode(parseInt(ki.substr(2), 16))
 			return sym
 
-		return nil
+		return null
 
-
+	###
+	@deprecated
+	###
 	def keycombo
 		return unless var sym = keychar
 		sym = Imba.CHARMAP[sym] or sym
@@ -530,7 +574,7 @@ class Imba.Event
 		var args = null
 		var domtarget = event:_target or event:target		
 		# var node = <{domtarget:_responder or domtarget}>
-
+		# need to clean up and document this behaviour
 		var domnode = domtarget:_responder or domtarget
 		var rerouter = null
 		var rerouted = no
@@ -570,16 +614,25 @@ class Imba.Event
 
 	###
 	Return the x/left coordinate of the mouse / pointer for this event
+	@return {Number} x coordinate of mouse / pointer for event
 	###
 	def x do event:x
 
 	###
 	Return the y/top coordinate of the mouse / pointer for this event
+	@return {Number} y coordinate of mouse / pointer for event
 	###
 	def y do event:y
 
 	###
-	Return the y/top coordinate of the mouse / pointer for this event
+	Returns a Number representing a system and implementation
+	dependent numeric code identifying the unmodified value of the
+	pressed key; this is usually the same as keyCode.
+
+	For mouse-events, the returned value indicates which button was
+	pressed on the mouse to trigger the event.
+
+	@return {Number}
 	###
 	def which do event:which
 
