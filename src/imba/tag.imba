@@ -2,7 +2,11 @@ def Imba.static items, nr
 	items:static = nr
 	return items
 
+###
+This is the baseclass that all tags in imba inherit from.
+###
 class Imba.Tag
+
 	prop object
 
 	def dom
@@ -110,14 +114,6 @@ class Imba.Tag
 		throw "Not implemented"
 
 	###
-	Sets the object-property.
-	@deprecated
-	###
-	def bind obj
-		object = obj
-		self
-
-	###
 	Empty placeholder. Override to implement custom render behaviour.
 	Works much like the familiar render-method in React.
 	###
@@ -141,7 +137,7 @@ class Imba.Tag
 		render
 		self
 
-	### @method tick
+	###
 
 	Called by the tag-scheduler (if this tag is scheduled)
 	By default it will call this.render. Do not override unless
@@ -218,8 +214,8 @@ class Imba.Tag
 	activate the scheduler.
 
 	###
-	def schedule o = {}
-		scheduler.configure(o).activate
+	def schedule options = {}
+		scheduler.configure(options).activate
 		self
 
 	###
