@@ -1505,6 +1505,13 @@ export class NamedParams < ListNode
 	def js o
 		"namedpar"
 
+	def toJSON
+		{
+			type: typeName
+			nodes: filter(|v| v isa NamedParam)
+		}
+
+
 export class IndexedParam < Param
 
 	prop parent
@@ -1578,7 +1585,7 @@ export class ParamList < ListNode
 		list[index]
 
 	def metadata
-		filter(|par| par isa Param)
+		filter(|par| !(par isa Meta))
 
 	def toJSON
 		metadata

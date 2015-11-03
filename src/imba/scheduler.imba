@@ -64,6 +64,10 @@ own schedulers to control when they render.
 ###
 class Imba.Scheduler
 
+	###
+	Create a new Imba.Scheduler for specified target
+	@return {Imba.Scheduler}
+	###
 	def initialize target
 		@target = target
 		@marked = no
@@ -94,9 +98,13 @@ class Imba.Scheduler
 	def dt
 		@dt
 
-	def configure o
-		@events = o:events if o:events != null
-		@fps = o:fps if o:fps != null
+	###
+	Delta time between the two last ticks
+	@return {Number}
+	###
+	def configure fps: 1, events: yes
+		@events = events if events != null
+		@fps = fps if fps != null
 		self
 
 	# def reschedule
