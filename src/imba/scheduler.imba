@@ -50,6 +50,18 @@ def Imba.clearTimeout timeout
 # should add an Imba.run / setImmediate that
 # pushes listener onto the tick-queue with times - once
 
+
+###
+
+Instances of Imba.Scheduler manages when to call `tick()` on their target,
+at a specified framerate or when certain events occur. Root-nodes in your
+applications will usually have a scheduler to make sure they rerender when
+something changes. It is also possible to make inner components use their
+own schedulers to control when they render.
+
+@iname scheduler
+
+###
 class Imba.Scheduler
 
 	def initialize target
@@ -68,9 +80,17 @@ class Imba.Scheduler
 		@flushes = 0
 		self
 
+	###
+	Check whether the current scheduler is active or not
+	@return {bool}
+	###
 	def active
 		@active
 
+	###
+	Delta time between the two last ticks
+	@return {Number}
+	###
 	def dt
 		@dt
 
@@ -83,6 +103,11 @@ class Imba.Scheduler
 	# 	raf(@ticker)
 	# 	self
 
+	###
+	Mark the scheduler as dirty. This will make sure that
+	the scheduler calls `target.tick` on the next frame
+	@return {self}
+	###
 	def mark
 		@marked = yes
 		self
@@ -93,10 +118,27 @@ class Imba.Scheduler
 		@target.tick
 		self
 
-	# WARN this expects raf to run at 60 fps
-	def tick d
+	###
+	@fixme this expects raf to run at 60 fps 
+
+	Called automatically on every frame while the scheduler is active.
+	It will only call `target.tick` if the scheduler is marked dirty,
+	or when according to @fps setting.
+
+	If you have set up a scheduler with an fps of 1, tick will still be
+	called every frame, but `target.tick` will only be called once every
+	second, and it will *make sure* each `target.tick` happens in separate
+	seconds according to Date. So if you have a node that renders a clock
+	based on Date.now (or something similar), you can schedule it with 1fps,
+	never needing to worry about two ticks happening within the same second.
+	The same goes for 4fps, 10fps etc.
+
+	@protected
+	@return {self}
+	###
+	def tick delta
 		@ticks++
-		@dt = d
+		@dt = delta
 
 		let fps = @fps
 		
@@ -121,6 +163,14 @@ class Imba.Scheduler
 		# reschedule if @active
 		self
 
+	###
+	Start the scheduler if it is not already active.
+	**While active**, the scheduler will override `target.commit`
+	to do nothing. By default Imba.tag#commit calls render, so
+	that rendering is cascaded through to children when rendering
+	a node. When a scheduler is active (for a node), Imba disables
+	this automatic rendering.
+	###
 	def activate
 		unless @active
 			@active = yes
@@ -132,6 +182,9 @@ class Imba.Scheduler
 			tick(0) # start ticking
 		return self
 
+	###
+	Stop the scheduler if it is active.
+	###
 	def deactivate
 		if @active
 			@active = no
@@ -143,13 +196,13 @@ class Imba.Scheduler
 	def track
 		@marker
 
-	def onevent e
+	def onevent event
 		return self if @marked
 
 		if @events isa Function
-			mark if @events(e)	
+			mark if @events(event)	
 		elif @events isa Array
-			mark if e?.type in @events
+			mark if event?.type in @events
 		elif @events
-			mark if e.@responder
+			mark if event.@responder
 		self

@@ -113,6 +113,17 @@ class Imba.Tag
 	###
 	Method for getting and setting data-attributes. When called with zero
 	arguments it will return the actual dataset for the tag.
+
+	# Example
+		var node = <div data-name='hello'>
+		# get the whole dataset
+		node.dataset # {name: 'hello'}
+		# get a single value
+		node.dataset('name') # 'hello'
+		# set a single value
+		node.dataset('name','newname') # self
+
+
 	###
 	def dataset key, val
 		throw "Not implemented"

@@ -100,6 +100,32 @@ var lastNativeTouchTimeout = 50
 # Stationary	A finger is touching the screen but hasn't moved.
 # Ended	A finger was lifted from the screen. This is the final phase of a touch.
 # Canceled The system cancelled tracking for the touch.
+
+###
+Consolidates mouse and touch events. Touch objects persist across a touch,
+from touchstart until end/cancel. When a touch starts, it will traverse
+down from the innermost target, until it finds a node that responds to
+ontouchstart. Unless the touch is explicitly redirected, the touch will
+call ontouchmove and ontouchend / ontouchcancel on the responder when appropriate.
+
+# custom draggable tag
+	tag draggable
+		# called when a touch starts
+		def ontouchstart touch
+			flag 'dragging'
+			self
+		
+		# called when touch moves - same touch object
+		def ontouchmove touch
+			# move the node with touch
+			css top: touch.dy, left: touch.dx
+		
+		# called when touch ends
+		def ontouchend touch
+			unflag 'dragging'
+
+@iname touch
+###
 class Imba.Touch
 
 	var multi = yes
@@ -169,6 +195,7 @@ class Imba.Touch
 	def self.onmouseup e
 		self
 
+
 	prop phase
 	prop active
 	prop event
@@ -181,21 +208,22 @@ class Imba.Touch
 	prop bubble chainable: yes
 
 	prop gestures
-	# prop preventDefault
-
-	prop x0
-	prop y0
 
 	# duration etc -- important
+	###
+	
 
-	def initialize e, ptr
+	@internal
+	@constructor
+	###
+	def initialize event, pointer
 		# @native  = false
-		event = e
+		self.event = event
 		data = {}
 		active = yes
 		@suppress = no
 		bubble = no
-		pointer = ptr
+		pointer = pointer
 		updates = 0
 
 	def preventDefault
@@ -204,16 +232,31 @@ class Imba.Touch
 		# pointer.event.preventDefault
 		self
 
-	def extend gesture
+	###
+	Extend the touch with a plugin / gesture. 
+	All events (touchstart,move etc) for the touch
+	will be triggered on the plugins in the order they
+	are added.
+	###
+	def extend plugin
 		# console.log "added gesture!!!"
 		@gestures ||= []
-		@gestures.push(gesture)
+		@gestures.push(plugin)
 		self
 
+	###
+	Redirect touch to specified target. ontouchstart will always be
+	called on the new target.
+	@return {Number}
+	###
 	def redirect target
 		@redirect = target
 		self
 
+	###
+	Suppress the default behaviour. Will call preventDefault for
+	all native events that are part of the touch.
+	###
 	def suppress
 		# collision with the suppress property
 		@active = no
@@ -296,6 +339,7 @@ class Imba.Touch
 	def idle
 		update
 
+
 	def began
 		@maxdr = @dr = 0
 		@x0 = @x
@@ -368,12 +412,52 @@ class Imba.Touch
 	def cancelled
 		self
 
+	###
+	The absolute distance the touch has moved from starting position 
+	@return {Number}
+	###
 	def dr do @dr
+
+	###
+	The distance the touch has moved horizontally
+	@return {Number}
+	###
 	def dx do @x - @x0
+
+	###
+	The distance the touch has moved vertically
+	@return {Number}
+	###
 	def dy do @y - @y0
+
+	###
+	Initial horizontal position of touch
+	@return {Number}
+	###
+	def x0 do @x0
+
+	###
+	Initial vertical position of touch
+	@return {Number}
+	###
+	def y0 do @y0
+
+	###
+	Horizontal position of touch
+	@return {Number}
+	###
 	def x do @x
+
+	###
+	Vertical position of touch
+	@return {Number}
+	###
 	def y do @y
 
+	###
+	Button pressed in this touch. Native touches defaults to left-click (0)
+	@return {Number}
+	###
 	def button do @pointer ? @pointer.button : 0
 
 	def sourceTarget
@@ -643,6 +727,18 @@ class Imba.Event
 	###
 	def which do event:which
 
+
+###
+
+Manager for listening to and delegating events in Imba. A single instance
+is always created by Imba (as `Imba.Events`), which handles and delegates all
+events at the very root of the document. Imba does not capture all events
+by default, so if you want to make sure exotic or custom DOMEvents are delegated
+in Imba you will need to register them in `Imba.Events.register(myCustomEventName)`
+
+@iname manager
+
+###
 class Imba.EventManager
 
 	prop root
@@ -670,6 +766,14 @@ class Imba.EventManager
 			register(event)
 		self
 
+	###
+
+	Tell the current EventManager to intercept and handle event of a certain name.
+	By default, Imba.Events will register interceptors for: *keydown*, *keyup*, 
+	*keypress*, *textInput*, *input*, *change*, *submit*, *focusin*, *focusout*, 
+	*blur*, *contextmenu*, *dblclick*, *mousewheel*, *wheel*
+
+	###
 	def register name, handler = true
 		if name isa Array
 			register(v,handler) for v in name

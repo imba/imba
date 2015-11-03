@@ -414,7 +414,7 @@ export class Node
 		self
 
 	def typeName
-		self:constructor:name		
+		self:constructor:name
 
 	def initialize
 		setup
@@ -1445,7 +1445,9 @@ export class Param < Node
 
 	def toJSON
 		{
-			type: 
+			type: typeName
+			name: name
+			defaults: defaults
 		}
 		
 
@@ -1576,7 +1578,10 @@ export class ParamList < ListNode
 		list[index]
 
 	def metadata
-		{count: count, params: filter(|par| par isa Param)}
+		filter(|par| par isa Param)
+
+	def toJSON
+		metadata
 
 	def visit
 		@splat = filter(|par| par isa SplatParam)[0]
@@ -2541,7 +2546,8 @@ export class Literal < ValueNode
 		
 
 export class Bool < Literal
-
+	
+	# Should keep the real value (yes/no/true/false)?
 	def initialize v
 		@value = v
 		@raw = String(v) == "true" ? true : false
@@ -2565,6 +2571,9 @@ export class Bool < Literal
 		# undefined should not be a bool
 		String(@value)
 		# @raw ? "true" : "false"
+
+	def toJSON
+		{type: 'Bool', value: @value}
 
 export class Undefined < Literal
 	
@@ -2637,6 +2646,9 @@ export class Num < Literal
 	def raw
 		# really?
 		JSON.parse(String(value))
+
+	def toJSON
+		{type: typeName, value: raw}
 
 # should be quoted no?
 # what about strings in object-literals?
@@ -4319,6 +4331,9 @@ export class Identifier < Node
 
 	def toString
 		String(@value)
+
+	def toJSON
+		toString
 
 	def alias
 		sym__(@value)
