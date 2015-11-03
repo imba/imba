@@ -441,6 +441,8 @@ listening at the root of your document. If Imba finds a tag
 that listens to a certain event, the event will be wrapped 
 in an `Imba.Event`, which normalizes some of the quirks and 
 browser differences.
+
+@iname event
 ###
 class Imba.Event
 
@@ -473,7 +475,7 @@ class Imba.Event
 		self
 
 	###
-	@returns {String} The name of the event (case-insensitive)
+	@return {String} The name of the event (case-insensitive)
 	###
 	def type
 		@type || event:type
@@ -490,8 +492,7 @@ class Imba.Event
 
 	###
 	Prevents further propagation of the current event.
-
-	@returns {Imba.Event} The instance on which this method was called
+	@return {self}
 	###
 	def halt
 		bubble = no
@@ -500,8 +501,7 @@ class Imba.Event
 	###
 	Cancel the event (if cancelable). In the case of native events it
 	will call `preventDefault` on the wrapped event object.
-
-	@returns {Imba.Event} The instance on which this method was called
+	@return {self}
 	###
 	def cancel
 		event.preventDefault if event:preventDefault
@@ -511,7 +511,7 @@ class Imba.Event
 	###
 	Indicates whether or not event.cancel has been called.
 
-	@returns {Boolean}
+	@return {Boolean}
 	###
 	def isPrevented
 		event and event:defaultPrevented or @cancel
@@ -536,7 +536,8 @@ class Imba.Event
 		self
 
 	###
-	@return {String} normalized character for KeyboardEvent/TextEvent
+	Get the normalized character for KeyboardEvent/TextEvent
+	@return {String}
 	###
 	def keychar
 		if event isa TextEvent
@@ -614,6 +615,12 @@ class Imba.Event
 
 	###
 	Return the x/left coordinate of the mouse / pointer for this event
+	
+	# tag syntax using bool
+		node.prepend <div.top> # prepend node
+    	node.prepend "some text" # prepend text
+    	node.prepend [<ul>,<ul>] # prepend array
+
 	@return {Number} x coordinate of mouse / pointer for event
 	###
 	def x do event:x

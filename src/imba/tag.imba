@@ -4,6 +4,7 @@ def Imba.static items, nr
 
 ###
 This is the baseclass that all tags in imba inherit from.
+@iname node
 ###
 class Imba.Tag
 
@@ -25,6 +26,7 @@ class Imba.Tag
 	Setting references for tags like
 	`<div@header>` will compile to `tag('div').setRef('header',this).end()`
 	By default it adds the reference as a className to the tag.
+	@return {self}
 	###
 	def setRef ref, ctx
 		flag(@ref = ref)
@@ -35,6 +37,7 @@ class Imba.Tag
 	binding events on tags to methods etc.
 	`<a :tap=fn>` compiles to `tag('a').setHandler('tap',fn,this).end()`
 	where this refers to the context in which the tag is created.
+	@return {self}
 	###
 	def setHandler event, handler, ctx
 		var key = 'on' + event
@@ -59,6 +62,7 @@ class Imba.Tag
 	Adds a new attribute or changes the value of an existing attribute
 	on the specified tag. If the value is null or false, the attribute
 	will be removed.
+	@return {self}
 	###
 	def setAttribute name, value
 		# should this not return self?
@@ -94,21 +98,21 @@ class Imba.Tag
 
 	###
 	Get the text-content of tag
+	@return {String}
 	###
 	def text v
 		throw "Not implemented"
 
 	###
 	Set the text-content of tag
+	@return {self}
 	###
 	def text= txt
 		throw "Not implemented"
 
 	###
-	Method for getting and setting data-attributes.
-
-	When called with zero arguments it will return the
-	actual dataset for the tag.
+	Method for getting and setting data-attributes. When called with zero
+	arguments it will return the actual dataset for the tag.
 	###
 	def dataset key, val
 		throw "Not implemented"
@@ -116,6 +120,7 @@ class Imba.Tag
 	###
 	Empty placeholder. Override to implement custom render behaviour.
 	Works much like the familiar render-method in React.
+	@return {self}
 	###
 	def render
 		self
@@ -124,6 +129,7 @@ class Imba.Tag
 	Called implicitly through Imba.Tag#end, upon creating a tag. All
 	properties will have been set before build is called, including
 	setContent.
+	@return {self}
 	###
 	def build
 		render
@@ -132,6 +138,7 @@ class Imba.Tag
 	###
 	Called implicitly through Imba.Tag#end, for tags that are part of
 	a tag tree (that are rendered several times).
+	@return {self}
 	###
 	def commit
 		render
@@ -157,7 +164,7 @@ class Imba.Tag
 	You are highly adviced to not override its behaviour. The first time
 	end is called it will mark the tag as built and call Imba.Tag#build,
 	and call Imba.Tag#commit on subsequent calls.
-
+	@return {self}
 	###
 	def end
 		if @built
@@ -170,6 +177,7 @@ class Imba.Tag
 	###
 	This is called instead of Imba.Tag#end for `<self>` tag chains.
 	Defaults to noop
+	@return {self}
 	###
 	def synced
 		self
@@ -184,12 +192,14 @@ class Imba.Tag
 	Add speficied flag to current node.
 	If a second argument is supplied, it will be coerced into a Boolean,
 	and used to indicate whether we should remove the flag instead.
+	@return {self}
 	###
 	def flag name, toggler
 		throw "Not implemented"
 
 	###
 	Remove specified flag from node
+	@return {self}
 	###
 	def unflag name
 		throw "Not implemented"
@@ -202,7 +212,7 @@ class Imba.Tag
 	Get the scheduler for this node. A new scheduler will be created
 	if it does not already exist.
 
-	@returns {Imba.Scheduler}
+	@return {Imba.Scheduler}
 	###
 	def scheduler
 		@scheduler ?= Imba.Scheduler.new(self)
@@ -212,7 +222,8 @@ class Imba.Tag
 	Shorthand to start scheduling a node. The method will basically
 	proxy the arguments through to scheduler.configure, and then
 	activate the scheduler.
-
+	
+	@return {self}
 	###
 	def schedule options = {}
 		scheduler.configure(options).activate
@@ -220,6 +231,7 @@ class Imba.Tag
 
 	###
 	Shorthand for deactivating scheduler (if tag has one).
+	@deprecated
 	###
 	def unschedule
 		scheduler.deactivate if @scheduler

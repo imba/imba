@@ -413,6 +413,9 @@ export class Node
 			console.log(*arguments)
 		self
 
+	def typeName
+		self:constructor:name		
+
 	def initialize
 		setup
 		self
@@ -1439,6 +1442,11 @@ export class Param < Node
 
 	def loc
 		@name && @name.region
+
+	def toJSON
+		{
+			type: 
+		}
 		
 
 export class SplatParam < Param
@@ -1568,7 +1576,7 @@ export class ParamList < ListNode
 		list[index]
 
 	def metadata
-		{count: count}
+		{count: count, params: filter(|par| par isa Param)}
 
 	def visit
 		@splat = filter(|par| par isa SplatParam)[0]

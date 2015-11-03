@@ -240,6 +240,10 @@ tag htmlelement < element
 		return i
 
 
+	###
+	
+	@deprecated
+	###
 	def insert node, before: null, after: null
 		before = after.next if after
 		if node isa Array
