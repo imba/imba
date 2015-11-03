@@ -222,11 +222,35 @@ tag htmlelement < element
 	def template
 		null
 
+	###
+
+	The .prepend method inserts the specified content as the first
+	child of the target node. If the content is already a child of 
+	node it will be moved to the start.
+	
+    	node.prepend <div.top> # prepend node
+    	node.prepend "some text" # prepend text
+    	node.prepend [<ul>,<ul>] # prepend array
+
+	###
 	def prepend item
 		var first = @dom:childNodes[0]
 		first ? insertBefore(item, first) : appendChild(item)
 		self
 
+	###
+	The .append method inserts the specified content as the last child
+	of the target node. If the content is already a child of node it
+	will be moved to the end.
+	
+	# example
+	    var root = <div.root>
+	    var item = <div.item> "This is an item"
+	    root.append item # appends item to the end of root
+
+	    root.prepend "some text" # append text
+	    root.prepend [<ul>,<ul>] # append array
+	###
 	def append item
 		# possible to append blank
 		# possible to simplify on server?
@@ -245,17 +269,29 @@ tag htmlelement < element
 
 		return self
 
-
+	###
+	Insert a node into the current node (self), before another.
+	The relative node must be a child of current node. 
+	###
 	def insertBefore node, rel
 		node = Imba.document.createTextNode(node) if node isa String 
 		dom.insertBefore( (node.@dom or node), (rel.@dom or rel) ) if node and rel
 		self
 
+	###
+	Append a single item (node or string) to the current node.
+	If supplied item is a string it will automatically. This is used
+	by Imba internally, but will practically never be used explicitly.
+	###
 	def appendChild node
 		node = Imba.document.createTextNode(node) if node isa String
 		dom.appendChild(node.@dom or node) if node
 		self
 
+	###
+	Remove a single child from the current node.
+	Used by Imba internally.
+	###
 	def removeChild node
 		dom.removeChild(node.@dom or node) if node
 		self

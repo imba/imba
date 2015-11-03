@@ -1,6 +1,17 @@
 
+###
+The special syntax for selectors in Imba creates Imba.Selector
+instances.
+###
 class Imba.Selector
 	
+	def self.one sel, scope
+		var el = (scope || Imba.document).querySelector(sel)
+		el && tag(el) || null
+
+	def self.all sel, scope
+		Imba.Selector.new(sel,scope)
+
 	prop query
 
 	def initialize sel, scope, nodes
@@ -54,7 +65,9 @@ class Imba.Selector
 	def len do nodes:length
 
 	# really? Should work more like Array.some
-	def any do count
+	def any
+		throw 'Imba.Selector#any no longer supported'
+		count
 	
 	###
 	Get node at index
@@ -105,6 +118,9 @@ class Imba.Selector
 	def reject blk
 		filter(blk,no)
 
+	###
+	Filter the nodes in selector by a function or other selector
+	###
 	def filter blk, bool = yes
 		var fn = blk isa Function and blk or (|n| n.matches(blk) )
 		var ary = nodes.filter(|n| fn(n) == bool)
@@ -124,26 +140,38 @@ class Imba.Selector
 	def __matches__
 		return yes
 
-	# Proxies
+	###
+	Add specified flag to all nodes in selector
+	###
 	def flag flag
 		forEach do |n| n.flag(flag)
 
+	###
+	Remove specified flag from all nodes in selector
+	###
 	def unflag flag
 		forEach do |n| n.unflag(flag)
 
 	def call meth, args = []
+		throw 'Imba.Selector#call is no longer supported'
 		forEach do |n| fn.apply(n,args) if fn = n[meth]
 
+# def Imba.querySelectorAll
 q$ = do |sel,scope| Imba.Selector.new(sel, scope)
 
+# def Imba.Selector.one
 q$$ = do |sel,scope| 
 	var el = (scope || Imba.document).querySelector(sel)
 	el && tag(el) || nil
+
 
 # extending tags with query-methods
 # must be a better way to reopen classes
 extend tag element
 	def querySelectorAll q do @dom.querySelectorAll q
 	def querySelector q do @dom.querySelector q
+
+	# should be moved to Imba.Tag instead?
+	# or we should implement all of them here
 	def find sel do Imba.Selector.new(sel,self)
 

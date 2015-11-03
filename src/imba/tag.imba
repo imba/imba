@@ -184,7 +184,22 @@ export class ElementTag
 	def awaken
 		self
 
-	def flag ref, toggle
+	###
+	Add speficied flag to current node.
+	If a second argument is supplied, it will be coerced into a Boolean,
+	and used to indicate whether we should remove the flag instead.
+	###
+	def flag name, toggler
+		throw "Not implemented"
+
+	###
+	Remove specified flag from node
+	###
+	def unflag name
+		throw "Not implemented"
+		self
+
+	def toggleFlag name
 		throw "Not implemented"
 
 	###
