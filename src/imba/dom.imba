@@ -1,10 +1,12 @@
 
-var ElementTag = require('./tag').ElementTag
-
 def Imba.document
 	window:document
 
 tag htmlelement < element
+
+	###
+	Called when a tag type is being subclassed.
+	###
 	def self.inherit child
 		child:prototype.@empty = yes
 		child.@protoDom = null
@@ -36,34 +38,57 @@ tag htmlelement < element
 		@children = null
 		self
 
+	###
+	Get text of node. Uses textContent behind the scenes (not innerText)
+	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
+	@return {string} inner text of node
+	###
 	def text v
-		return (text = v,self) if arguments:length
 		@dom:textContent
 
+	###
+	Set text of node. Uses textContent behind the scenes (not innerText)
+	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
+	###
 	def text= txt
 		@empty = no
 		@dom:textContent = txt ?= ""
 		self
 
+	###
+	Set inner html of node
+	###
 	def html= html
 		@dom:innerHTML = html
 		self
 
+	###
+	Get inner html of node
+	###
 	def html
 		@dom:innerHTML
 
+	###
+	Remove all content inside node
+	###
 	def empty
 		@dom.removeChild(@dom:firstChild) while @dom:firstChild
 		@children = null
 		@empty = yes
 		self
 
-	def remove node
+	###
+	Remove specified child from current node.
+	###
+	def remove child
 		var par = dom
-		var el = node and node.dom
+		var el = child and child.dom
 		par.removeChild(el) if el and el:parentNode == par
 		self
 
+	###
+	@return {Imba.Tag} the parent of current node
+	###
 	def parent
 		tag(dom:parentNode)
 
@@ -112,14 +137,28 @@ tag htmlelement < element
 		return dataset
 
 	# selectors / traversal
-	def find sel do Imba.Selector.new(sel,self)
 
+	###
+	@return {Imba.Selector} descendants matching selector
+	###
+	def find sel
+		Imba.Selector.new(sel,self)
+
+	###
+	@return {Imba.Tag} first matching node
+	###
 	def first sel
 		sel ? find(sel).first : tag(dom:firstElementChild)
 
+	###
+	@return {Imba.Tag} last matching node
+	###
 	def last sel
 		sel ? find(sel).last : tag(dom:lastElementChild)
 
+	###
+	Get the child at index
+	###
 	def child i
 		tag(dom:children[i or 0])
 

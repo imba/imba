@@ -4,6 +4,7 @@ if typeof Imba === 'undefined'
 	require './core.events'
 	require './scheduler'
 
+	require './tag'
 	require './dom'
 	require './dom.client'
 	require './dom.html'
