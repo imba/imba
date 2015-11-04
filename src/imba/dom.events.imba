@@ -3,9 +3,8 @@ var win = window
 
 var hasTouchEvents = window && window:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
 
-# Ringbuffer for events?
-
-class Imba.RingBuffer
+# will remove
+class RingBuffer
 
 	prop head
 
@@ -23,11 +22,12 @@ class Imba.RingBuffer
 	def last
 		@array[@head % @keep]
 
-# really more like a pointer?
+
 class Imba.Pointer
 
 	# began, moved, stationary, ended, cancelled
-	prop phase # change: update
+
+	prop phase
 	prop prevEvent
 	prop button
 	prop event
@@ -37,7 +37,7 @@ class Imba.Pointer
 
 	def initialize
 		button = -1
-		events = Imba.RingBuffer.new(10)
+		events = RingBuffer.new(10)
 		event = {x: 0, y: 0, type: 'uninitialized'}
 		self
 
