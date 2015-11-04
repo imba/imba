@@ -58,7 +58,7 @@ export def analyze code, o = {}
 	var meta
 	try
 		var ast = parse(code,o)
-		meta = ast.analyze(loglevel: 0)
+		meta = ast.analyze(o)
 	catch e
 		# console.log "something wrong {e:message}"
 		unless e isa ERR.ImbaParseError

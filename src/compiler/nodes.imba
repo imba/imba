@@ -2069,13 +2069,21 @@ export class ClassDeclaration < Code
 			return self
 		super
 
+	def namepath
+		@namepath ||= "{name.c}"
+
 	def metadata
 		{
 			type: 'class'
+			namepath: namepath
 			path: name.c.toString
 			desc: @desc
-			superclass: superclass?.name
-		}
+			superclass: superclass?.namepath
+			loc: loc
+		}	
+
+	def toJSON
+		metadata
 
 	def initialize name, superclass, body
 		# what about the namespace?
@@ -2088,6 +2096,7 @@ export class ClassDeclaration < Code
 
 	def visit
 		# replace with some advanced lookup?
+		ROOT.entities.add(namepath,self)
 		scope.visit
 		body.traverse
 		self
@@ -2303,6 +2312,7 @@ export class MethodDeclaration < Func
 		{
 			type: "method"
 			name: "" + name
+			namepath: namepath
 			params: @params.metadata
 			desc: scope.@desc?.toDoc
 			scopenr: scope.@nr
@@ -6557,6 +6567,9 @@ class Entities
 	def add path, object
 		@map[path] = object
 		self
+
+	def plain
+		JSON.parse(JSON.stringify(@map))
 
 	def toJSON
 		@map
