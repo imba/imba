@@ -33,26 +33,9 @@ tag htmlelement < element
 	def self.dom
 		@protoDom ||= buildNode
 
-	def children= nodes
+	def setChildren nodes, type
 		@empty ? append(nodes) : empty.append(nodes)
 		@children = null
-		self
-
-	###
-	Get text of node. Uses textContent behind the scenes (not innerText)
-	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
-	@return {string} inner text of node
-	###
-	def text v
-		@dom:textContent
-
-	###
-	Set text of node. Uses textContent behind the scenes (not innerText)
-	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
-	###
-	def text= txt
-		@empty = no
-		@dom:textContent = txt ?= ""
 		self
 
 	###
@@ -84,17 +67,6 @@ tag htmlelement < element
 		var par = dom
 		var el = child and child.dom
 		par.removeChild(el) if el and el:parentNode == par
-		self
-
-	###
-	@return {Imba.Tag} the parent of current node
-	###
-	def parent
-		tag(dom:parentNode)
-
-	def log *args
-		args.unshift(console)
-		Function:prototype:call.apply(console:log, args)
 		self
 		
 	def emit name, data: null, bubble: yes
@@ -136,22 +108,30 @@ tag htmlelement < element
 
 		return dataset
 
-	# selectors / traversal
-
 	###
-	@return {Imba.Selector} descendants matching selector
+	Get descendants of current node, optionally matching selector
+	@return {Imba.Selector}
 	###
 	def find sel
 		Imba.Selector.new(sel,self)
 
 	###
-	@return {Imba.Tag} first matching node
+	Get the first matching child of node
+
+	@return {Imba.Tag}
 	###
 	def first sel
 		sel ? find(sel).first : tag(dom:firstElementChild)
 
 	###
-	@return {Imba.Tag} last matching node
+	Get the last matching child of node
+
+	# example
+		node.last # returns the last child of node
+		node.last %span # returns the last span inside node
+		node.last do |el| el.text == 'Hi' # return last node with text Hi
+
+	@return {Imba.Tag}
 	###
 	def last sel
 		sel ? find(sel).last : tag(dom:lastElementChild)
@@ -212,6 +192,9 @@ tag htmlelement < element
 		var nodes = Imba.Selector.new(null, self, ary)
 		nodes.filter(|n| n != self && (!sel || n.matches(sel)))
 
+	###
+	Get the immediately following sibling of node.
+	###
 	def next sel
 		if sel
 			var el = self
@@ -220,6 +203,9 @@ tag htmlelement < element
 			return null
 		tag(dom:nextElementSibling)
 
+	###
+	Get the immediately preceeding sibling of node.
+	###
 	def prev sel
 		if sel
 			var el = self
@@ -254,10 +240,18 @@ tag htmlelement < element
 			append(node)
 		self	
 
+	###
+	Focus on current node
+	@return {self}
+	###
 	def focus
 		dom.focus
 		self
 
+	###
+	Remove focus from current node
+	@return {self}
+	###
 	def blur
 		dom.blur
 		self
@@ -266,6 +260,7 @@ tag htmlelement < element
 		null
 
 	###
+	@todo Should support multiple arguments like append
 
 	The .prepend method inserts the specified content as the first
 	child of the target node. If the content is already a child of 
@@ -342,31 +337,11 @@ tag htmlelement < element
 	def toString
 		@dom.toString # really?
 
+	###
+	@deprecated
+	###
 	def classes
+		console.log 'Imba.Tag#classes is deprecated'
 		@dom:classList
-
-
-	def flags
-		@dom:classList
-		
-	def flag ref, toggle
-		# it is most natural to treat a second undefined argument as a no-switch
-		# so we need to check the arguments-length
-		if arguments:length == 2 and !toggle
-			@dom:classList.remove(ref)
-		else
-			@dom:classList.add(ref)
-		return self
-
-	def unflag ref
-		@dom:classList.remove(ref)
-		return self
-
-	def toggleFlag ref
-		@dom:classList.toggle(ref)
-		return self
-
-	def hasFlag ref
-		@dom:classList.contains(ref)
 
 tag svgelement < htmlelement

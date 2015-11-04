@@ -8,6 +8,9 @@ This is the baseclass that all tags in imba inherit from.
 ###
 class Imba.Tag
 
+	def self.createNode
+		throw "Not implemented"
+
 	prop object
 
 	def dom
@@ -89,26 +92,39 @@ class Imba.Tag
 	def getAttribute name
 		dom.getAttribute(name)
 
-	def setContent content, typ
-		setChildren content, typ
-		self
-
-	def setChildren nodes, typ
-		throw "Not implemented"
-
 	###
-	Get the text-content of tag
-	@return {String}
-	###
-	def text v
-		throw "Not implemented"
-
-	###
-	Set the text-content of tag
+	Override this to provide special wrapping etc.
 	@return {self}
 	###
-	def text= txt
+	def setContent content, type
+		setChildren content, type
+		self
+
+	###
+	Set the children of node. type param is optional,
+	and should only be used by Imba when compiling tag trees. 
+	@return {self}
+	###
+	def setChildren nodes, type
 		throw "Not implemented"
+
+	###
+	Get text of node. Uses textContent behind the scenes (not innerText)
+	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
+	@return {string} inner text of node
+	###
+	def text v
+		@dom:textContent
+
+	###
+	Set text of node. Uses textContent behind the scenes (not innerText)
+	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
+	###
+	def text= txt
+		@empty = no
+		@dom:textContent = txt ?= ""
+		self
+
 
 	###
 	Method for getting and setting data-attributes. When called with zero
@@ -200,24 +216,48 @@ class Imba.Tag
 		self
 
 	###
+	List of flags for this node. 
+	###
+	def flags
+		@dom:classList
+
+	###
 	Add speficied flag to current node.
 	If a second argument is supplied, it will be coerced into a Boolean,
 	and used to indicate whether we should remove the flag instead.
 	@return {self}
 	###
 	def flag name, toggler
-		throw "Not implemented"
+		# it is most natural to treat a second undefined argument as a no-switch
+		# so we need to check the arguments-length
+		if arguments:length == 2 and !toggler
+			@dom:classList.remove(name)
+		else
+			@dom:classList.add(name)
+		return self
 
 	###
 	Remove specified flag from node
 	@return {self}
 	###
 	def unflag name
-		throw "Not implemented"
+		@dom:classList.remove(name)
 		self
 
+	###
+	Toggle specified flag on node
+	@return {self}
+	###
 	def toggleFlag name
-		throw "Not implemented"
+		@dom:classList.toggle(name)
+		self
+
+	###
+	Check whether current node has specified flag
+	@return {bool}
+	###
+	def hasFlag name
+		@dom:classList.contains(name)
 
 	###
 	Get the scheduler for this node. A new scheduler will be created
@@ -248,8 +288,22 @@ class Imba.Tag
 		scheduler.deactivate if @scheduler
 		self
 
-	def self.createNode
-		throw "Not implemented"
+
+	###
+	Get the parent of current node
+	@return {Imba.Tag} 
+	###
+	def parent
+		tag(dom:parentNode)
+
+	###
+	Shorthand for console.log on elements
+	@return {self}
+	###
+	def log *args
+		args.unshift(console)
+		Function:prototype:call.apply(console:log, args)
+		self
 
 
 Imba.Tag:prototype:initialize = Imba.Tag
