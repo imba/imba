@@ -4578,9 +4578,11 @@ export class Call < Node
 			# important to wrap the single value in a value, to keep implicit call
 			# this is due to the way we check for an outer Call without checking if
 			# we are the receiver (in PropertyAccess). Should rather wrap in CallArguments
+			let rec = receiver
 			var ary = (args.count == 1 ? ValueNode.new(args.first.value) : Arr.new(args.list))
-			receiver.cache # need to cache the target
-			out = "{callee.c(expression: yes)}.apply({receiver.c},{ary.c(expression: yes)})"
+
+			rec.cache # need to cache the context as it will be referenced in apply
+			out = "{callee.c(expression: yes)}.apply({rec.c},{ary.c(expression: yes)})"
 
 		elif @receiver
 			# quick workaround
@@ -7238,6 +7240,9 @@ export class ScopeContext < Node
 	def c
 		var val = @value || @reference
 		(val ? val.c : "this")
+
+	def cache
+		self
 
 export class RootScopeContext < ScopeContext
 
