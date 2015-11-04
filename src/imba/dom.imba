@@ -158,6 +158,11 @@ tag htmlelement < element
 		return fn.call(@dom,sel) if var fn = (@dom:webkitMatchesSelector or @dom:matches)
 		# TODO support other browsers etc?
 
+	###
+	Get the first element matching supplied selector / filter
+	traversing upwards, but including the node itself.
+	@return {Imba.Tag}
+	###
 	def closest sel
 		return parent unless sel # should return self?!
 		var node = self
@@ -167,6 +172,16 @@ tag htmlelement < element
 			return node if node.matches(sel)
 			node = node.parent
 		return null
+
+	###
+	Get the closest ancestor of node that matches
+	specified selector / matcher.
+
+	@return {Imba.Tag}
+	###
+	def up sel
+		return parent unless sel
+		parent and parent.closest(sel)
 
 	def path sel
 		var node = self
@@ -182,9 +197,7 @@ tag htmlelement < element
 		var par = parent
 		par ? par.path(sel) : []
 
-	def up sel
-		return parent unless sel
-		parent and parent.closest(sel)
+	
 
 	def siblings sel
 		return [] unless var par = parent # FIXME
