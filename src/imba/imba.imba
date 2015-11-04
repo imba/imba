@@ -9,6 +9,11 @@ Imba = {
 
 var reg = /-./g
 
+def Imba.isClient
+	Imba.CLIENT == yes
+
+def Imba.isServer
+	Imba.SERVER == yes
 
 def Imba.subclass obj, sup
 	for k,v of sup
