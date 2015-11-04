@@ -64,10 +64,11 @@ class Imba.Selector
 
 	def len do nodes:length
 
-	# really? Should work more like Array.some
-	def any
-		throw 'Imba.Selector#any no longer supported'
-		count
+	###
+	@todo Add support for block or selector?
+	###
+	def some
+		count >= 1
 	
 	###
 	Get node at index
@@ -152,9 +153,6 @@ class Imba.Selector
 	def unflag flag
 		forEach do |n| n.unflag(flag)
 
-	def call meth, args = []
-		throw 'Imba.Selector#call is no longer supported'
-		forEach do |n| fn.apply(n,args) if fn = n[meth]
 
 # def Imba.querySelectorAll
 q$ = do |sel,scope| Imba.Selector.new(sel, scope)

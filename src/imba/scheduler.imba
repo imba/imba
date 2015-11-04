@@ -30,12 +30,23 @@ def Imba.unschedule obj, meth
 	self
 
 # trackable timeout
+
+###
+
+Instances of Imba.Scheduler manages when to call `tick()` on their target,
+at a specified framerate or when certain events occur. Root-nodes in your
+applications will usually have a scheduler to make sure they rerender when
+something changes. It is also possible to make inner components use their
+own schedulers to control when they render.
+
+###
 def Imba.setTimeout delay, &block
 	setTimeout(&,delay) do
 		block()
 		Imba.emit(Imba,'timeout',[block])
 
 # trackable interval
+
 def Imba.setInterval interval, &block
 	setInterval(&,interval) do
 		block()
@@ -82,7 +93,6 @@ class Imba.Scheduler
 		@timestamp = 0
 		@ticks = 0
 		@flushes = 0
-		self
 
 	###
 	Check whether the current scheduler is active or not

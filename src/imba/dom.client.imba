@@ -1,13 +1,14 @@
+# Extending Imba.Tag#css to work without prefixes by inspecting
+# the properties of a CSSStyleDeclaration and creating a map
 
+# var prefixes = ['-webkit-','-ms-','-moz-','-o-','-blink-']
+# var props = ['transform','transition','animation']
 
-var prefixes = ['-webkit-','-ms-','-moz-','-o-','-blink-']
-var props = ['transform','transition','animation']
 var styles = window.getComputedStyle(document:documentElement, '')
+
 Imba.CSSKeyMap = {}
 
 for prefixed in styles
-	# really? this must be for the client ---
-	# there is no way to set this otherwise?
 	var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'')
 	var camelCase = unprefixed.replace(/-(\w)/g) do |m,a| a.toUpperCase
 

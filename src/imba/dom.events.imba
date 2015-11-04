@@ -12,7 +12,7 @@ class RingBuffer
 		@array  = []
 		@keep = len
 		@head = 0
-		self
+		return self
 
 	def push obj
 		var i = @head++
@@ -39,7 +39,7 @@ class Imba.Pointer
 		button = -1
 		events = RingBuffer.new(10)
 		event = {x: 0, y: 0, type: 'uninitialized'}
-		self
+		return self
 
 	def update e
 		# console.log(e)
@@ -51,20 +51,21 @@ class Imba.Pointer
 
 	# this is just for regular mouse now
 	def process
-		var phase = phase
-		var e0 = prevEvent
 		var e1 = event
 
 		if dirty
 			prevEvent = e1
 			dirty = no
+
 			# button should only change on mousedown etc
 			if e1:type == 'mousedown'
 				button = e1:button
 				touch = Imba.Touch.new(e1,self)
 				touch.mousedown(e1,e1)
+
 			elif e1:type == 'mousemove'
 				touch.mousemove(e1,e1) if touch
+
 			elif e1:type == 'mouseup'
 				button = -1
 				touch.mouseup(e1,e1) if touch
@@ -73,9 +74,6 @@ class Imba.Pointer
 		else
 			touch.idle if touch
 		self
-
-	def emit name, target, bubble: yes
-		yes
 		
 	def cleanup
 		Imba.POINTERS
@@ -83,6 +81,7 @@ class Imba.Pointer
 	def x do event:x
 	def y do event:y
 
+	# deprecated -- should remove
 	def self.update 
 		# console.log('update touch')
 		for ptr,i in Imba.POINTERS
@@ -128,7 +127,6 @@ call ontouchmove and ontouchend / ontouchcancel on the responder when appropriat
 ###
 class Imba.Touch
 
-	var multi = yes
 	var touches = []
 	var count = 0
 	var identifiers = {}
@@ -225,6 +223,7 @@ class Imba.Touch
 		bubble = no
 		pointer = pointer
 		updates = 0
+		return self
 
 	def preventDefault
 		@preventDefault = yes
@@ -345,8 +344,6 @@ class Imba.Touch
 		@x0 = @x
 		@y0 = @y
 
-		var e = event
-		# var ptr = pointer
 		var dom = event:target
 		var node = null
 
@@ -660,11 +657,9 @@ class Imba.Event
 		var domtarget = event:_target or event:target		
 		# var node = <{domtarget:_responder or domtarget}>
 		# need to clean up and document this behaviour
-		var domnode = domtarget:_responder or domtarget
-		var rerouter = null
-		var rerouted = no
 
-		# need to stop infinite redirect-rules here??!?
+		var domnode = domtarget:_responder or domtarget
+		# @todo need to stop infinite redirect-rules here
 
 		while domnode
 			@redirect = null
@@ -673,17 +668,17 @@ class Imba.Event
 				if node[meth] isa String
 					# should remember the receiver of the event
 					meth = node[meth]
-					continue
+					continue # should not continue?
 
 				if node[meth] isa Array
 					args = node[meth].concat(node)
 					meth = args.shift
-					continue
+					continue # should not continue?
 
 				if node[meth] isa Function
 					@responder ||= node
 					# should autostop bubble here?
-					var res = args ? node[meth].apply(node,args) : node[meth](self,data)
+					args ? node[meth].apply(node,args) : node[meth](self,data)
 					
 			# add node.nextEventResponder as a separate method here?
 			unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
@@ -764,7 +759,8 @@ class Imba.EventManager
 
 		for event in events
 			register(event)
-		self
+
+		return self
 
 	###
 
@@ -790,7 +786,7 @@ class Imba.EventManager
 		self
 
 	def delegate e
-		count++
+		count += 1
 		var event = Imba.Event.wrap(e)
 		event.process
 		self

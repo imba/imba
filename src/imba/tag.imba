@@ -18,7 +18,6 @@ class Imba.Tag
 
 	def initialize dom
 		self.dom = dom
-		self
 		
 	def setDom dom
 		dom.@tag = self

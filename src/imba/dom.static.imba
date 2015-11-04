@@ -19,9 +19,6 @@ def removeNested root, node, caret
 
 	return caret
 
-def replaceNestedWithString root, new, old, caret
-	self
-
 def appendNested root, node
 	if node isa ImbaTag
 		root.appendChild(node)
@@ -34,21 +31,6 @@ def appendNested root, node
 
 	return
 
-def setOnlyChild root, node
-	return
-
-	#	if nodes isa Array
-	#		if nodes:static
-	#			reconcileNested(self,nodes,@children,null,null,0)
-	#		else
-	#			reconcileCollection(self,nodes,@children,null)
-	#		# reconcile nested
-	#		# reconcileNested(self,nodes,@children,null,null,0)
-	#	elif nodes isa ImbaTag
-	#		empty
-	#		appendChild(nodes)
-	#	else
-	#		text = nodes
 
 # insert nodes before a certain node
 # does not need to return any tail, as before
@@ -78,7 +60,6 @@ def insertNestedAfter root, node, after
 def reconcileCollectionChanges root, new, old, caret
 
 	var newLen = new:length
-	var oldLen = old:length
 	var lastNew = new[newLen - 1]
 
 	# This re-order algorithm is based on the following principle:
@@ -147,9 +128,7 @@ def reconcileCollectionChanges root, new, old, caret
 	# which implies that they should not be moved
 	var cursor = newPosition:length - 1
 	while cursor >= 0
-		if newPosition[cursor] == -1
-			# do nothing. it was removed.
-		elif cursor == maxChainEnd
+		if cursor == maxChainEnd and newPosition[cursor] != -1
 			stickyNodes[newPosition[cursor]] = true
 			maxChainEnd = prevChain[maxChainEnd]
 		

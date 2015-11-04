@@ -19,7 +19,7 @@ unless document:documentElement:classList
 			hasFlag(ref) ? unflag(ref) : flag(ref)
 
 		def flag ref, bool
-			if arguments:length == 2 and bool == no
+			if arguments:length == 2 and !!bool === no
 				return unflag(ref)
 			return addFlag(ref)
 
