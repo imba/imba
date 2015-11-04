@@ -2,6 +2,12 @@
 def Imba.document
 	window:document
 
+###
+Returns the body element wrapped in an Imba.Tag
+###
+def Imba.root
+	tag(Imba.document:body)
+
 tag htmlelement < element
 
 	###
