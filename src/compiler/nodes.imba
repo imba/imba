@@ -3569,6 +3569,9 @@ export class VarOrAccess < ValueNode
 	def toString
 		"VarOrAccess({value})"
 
+	def toJSON
+		{type: typeName, value: @identifier.toString}
+
 #	def js
 #		if right isa Variable and right.type == 'meth'
 #			return "{right.c}()" unless up isa Call
