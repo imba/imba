@@ -65,7 +65,7 @@ class SourceFile
 
 	# could analyze with different options - caching promise might not be the
 	# best approach for this.
-	def analyze cb
+	def analyze o, cb
 		if @meta
 			cb and cb(@meta)
 			return @meta
@@ -76,7 +76,7 @@ class SourceFile
 		var data = {}
 
 		try
-			@meta = ast.analyze(loglevel: 0)
+			@meta = ast.analyze(loglevel: 0, entities: o:entities, scopes: yes)
 			cb and cb(@meta)
 			# resolve(self.meta)
 		catch e
@@ -429,6 +429,7 @@ cli.command('watch <path>')
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')
 	.option('-t, --tokens', 'print the raw tokens')
+	.option('-e, --entities', 'print the raw tokens')
 	.action do |path, opts|
 		var file = sourcefile-for-path(path)
 
@@ -436,7 +437,7 @@ cli.command('analyze <path>')
 			# log "tokens"
 			print-tokens(file.tokens)
 		else
-			file.analyze do |meta|
+			file.analyze(opts) do |meta|
 				log JSON.stringify(meta,null,4)
 
 cli.command('export-runtime <path>')

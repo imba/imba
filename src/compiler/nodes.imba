@@ -68,6 +68,7 @@ export var OP_COMPOUND = do |sym,op,l,r|
 		return CompoundAssign.new(op,l,r)
 
 var OPTS = {}
+var ROOT = null
 
 export var NODES = []
 
@@ -221,6 +222,12 @@ export class Indentation
 	def isGenerated
 		@open and @open:generated
 
+	def aloc
+		@open and @open.@loc or 0
+
+	def bloc
+		@close and @close.@loc or 0
+
 	# should rather parse and extract the comments, no?
 	def wrap str
 		# var pre, post
@@ -278,12 +285,12 @@ export class Stack
 		reset
 
 	def reset
-		@nodes   = []
-		@scoping = []
-		@scopes  = [] # for analysis - should rename
-		@stash   = Stash.new(self)
+		@nodes    = []
+		@scoping  = []
+		@scopes   = [] # for analysis - should rename
+		@stash    = Stash.new(self)
 		@loglevel = 3
-		@counter = 0
+		@counter  = 0
 		@counters = {}
 		self
 
@@ -415,6 +422,9 @@ export class Node
 
 	def typeName
 		self:constructor:name
+
+	def namepath
+		typeName
 
 	def initialize
 		setup
@@ -990,6 +1000,8 @@ export class Block < ListNode
 			p "no loc for {opt[1]}" unless b
 
 			[a[0],b[1]]
+		elif var ind = @indentation
+			[ind.aloc,ind.bloc]
 		else
 			[0,0]
 
@@ -1973,17 +1985,20 @@ export class Root < Code
 		# p "create root!"
 		@traversed = no
 		@body = blk__(body)
-		@scope = FileScope.new(self,null)
+		@scope = RootScope.new(self,null)
 		@options = {}
 
 	def visit
+		ROOT = STACK.ROOT = @scope
 		scope.visit
 		body.traverse
 
 	def compile o
 		STACK.reset # -- nested compilation does not work now
 		OPTS = STACK.@options = @options = o or {}
+
 		traverse
+
 		var out = c
 		var result = {
 			js: out,
@@ -2022,11 +2037,21 @@ export class Root < Code
 		return out
 
 
-	def analyze loglevel: 0
+	def analyze loglevel: 0, entities: no, scopes: yes
 		STACK.loglevel = loglevel
 		STACK.@analyzing = true
+		ROOT = STACK.ROOT = @scope
+
+		OPTS = {
+			analysis: {
+				entities: entities,
+				scopes: scopes
+			}
+		}
+
 		traverse
 		STACK.@analyzing = false
+
 		return scope.dump
 
 	def inspect
@@ -2280,7 +2305,29 @@ export class MethodDeclaration < Func
 			name: "" + name
 			params: @params.metadata
 			desc: scope.@desc?.toDoc
+			scopenr: scope.@nr
+			loc: loc
 		}
+
+	def loc
+		if let d = option(:def)
+			[d.@loc,body.loc[1]]
+		else
+			[0,0]
+		
+
+	def toJSON
+		metadata
+
+	def namepath
+		return @namepath if @namepath
+		
+		var name = String(name)
+		var sep = (option('static') ? '.' : '#')
+		if target
+			@namepath = @target.namepath + sep + name
+		else
+			@namepath = '&' + name
 
 	def visit
 		# @desc = stack.stash.pluck(Comment)
@@ -2316,6 +2363,7 @@ export class MethodDeclaration < Func
 			# should not be registered on the outermost closure?
 			@variable = context.register(name, self, type: 'meth')
 
+		ROOT.entities.add(namepath,self)
 		@body.traverse # so soon?
 		self
 
@@ -2369,7 +2417,7 @@ export class MethodDeclaration < Func
 			else
 				out = "{mark}{ctx.context.c}.prototype.{fname} = function {func}"
 
-		elif ctx isa FileScope and !target
+		elif ctx isa RootScope and !target
 			# register method as a root-function, but with auto-call? hmm
 			# should probably set using variable directly instead, no?
 			out = "{mark}function {fdecl}{func}"
@@ -4357,6 +4405,8 @@ export class Identifier < Node
 	def dump
 		{ loc: region }
 
+	def namepath
+		toString
 		
 export class TagId < Identifier
 
@@ -4390,6 +4440,8 @@ export class Ivar < Identifier
 
 	def c
 		'_' + helpers.camelCase(@value).slice(1) # .replace(/^@/,'') # mark__(@value) + 
+
+
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
@@ -6495,8 +6547,19 @@ export class Util.Array < Util
 
 
 
+class Entities
 
+	def initialize root
+		@root = root
+		@map = {}
+		return self
 
+	def add path, object
+		@map[path] = object
+		self
+
+	def toJSON
+		@map
 
 # SCOPES
 
@@ -6548,6 +6611,9 @@ export class Scope
 			return self
 		@meta[key]
 
+	def namepath
+		'?'
+
 	def context
 		@context ||= ScopeContext.new(self)
 
@@ -6579,7 +6645,7 @@ export class Scope
 	def root
 		var scope = self
 		while scope
-			return scope if scope isa FileScope
+			return scope if scope isa RootScope
 			scope = scope.parent
 		return null
 
@@ -6753,11 +6819,12 @@ export class Scope
 		"{self:constructor:name}"
 	
 
-# FileScope is wrong? Rather TopScope or ProgramScope
-export class FileScope < Scope
+# RootScope is wrong? Rather TopScope or ProgramScope
+export class RootScope < Scope
 
 	prop warnings
 	prop scopes
+	prop entities
 
 	def initialize
 		super
@@ -6781,6 +6848,7 @@ export class FileScope < Scope
 		@warnings = []
 		@scopes   = []
 		@helpers  = []
+		@entities = Entities.new(self)
 		@head = [@vars]
 
 	def context
@@ -6814,17 +6882,23 @@ export class FileScope < Scope
 		self
 
 	def dump
-		var scopes = @scopes.map(|s| s.dump)
-		scopes.unshift(super.dump)
+		var obj = {warnings: dump__(@warnings)}
 
-		var obj = 
-			warnings: dump__(@warnings)
-			scopes: scopes
+		if OPTS:analysis:scopes
+			var scopes = @scopes.map(|s| s.dump)
+			scopes.unshift(super.dump)
+			obj:scopes = scopes 
+
+		if OPTS:analysis:entities
+			obj:entities = @entities
 
 		return obj
 		
 
 export class ClassScope < Scope
+
+	def namepath
+		@node.name.c
 	
 	def visit
 		super
@@ -7226,6 +7300,9 @@ export class ScopeContext < Node
 		@value = value
 		@reference = null
 		self
+
+	def namepath
+		@scope.namepath
 
 	# instead of all these references we should probably
 	# just register when it is accessed / looked up from
