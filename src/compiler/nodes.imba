@@ -4817,16 +4817,6 @@ export class If < ControlFlow
 			alt.traverse
 			STACK.push(self)
 
-			# if alt isa If
-			# 	# alt.@scope.visit if alt.@scope
-			# 	true
-			# else
-			# 	
-			# 	p "else-block isa {alt}"
-
-			# popping ourselves from stack while we
-			# traverse the alternate route
-			
 		# force it as expression?
 		toExpression if @type == '?' and isExpressable
 		self
@@ -4853,10 +4843,13 @@ export class If < ControlFlow
 				# maybe better if we rewrite this to an OP('&&'), and put
 				# the parens logic there
 				# cond should possibly have parens - but where do we decide?
-				return "({cond}) && {code}"
+				if @tagtree
+					return "({cond}) ? {code} : void(0)"	
+				else
+					return "({cond}) && {code}"
 		else
 			# if there is only a single item - and it is an expression?
-			var code = nil
+			var code = null
 			# if body.count == 1 # dont indent by ourselves?
 
 			if body isa Block and body.count == 1
@@ -4881,6 +4874,7 @@ export class If < ControlFlow
 		if node isa TagTree
 			@body = @body.consume(node)
 			@alt = @alt.consume(node) if @alt
+			@tagtree = node
 			return self
 
 		# special case for If created from conditional assign as well?
@@ -5963,9 +5957,12 @@ export class TagTree < ListNode
 	def c o
 		# FIXME TEST what about comments???
 		var single = single
-		var out = super(o)
 
-		# p "compile tagTree",@indent
+		# no indentation if this should return
+		if single and STACK.current isa Return
+			@indentation = null
+
+		var out = super(o)
 
 		if !single or single isa If
 			"[{out}]"

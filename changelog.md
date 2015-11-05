@@ -1,3 +1,7 @@
+## 0.13.10
+- Bugfix: Regression where indented return broke certain tag trees
+- Bugfix: if branches without else does not return 0 when false (inside tag trees)
+
 ## 0.13.9
 - Documented more of the runtime/stdlib
 - Adding prelim support for static analysis of tags,classes,methods++
