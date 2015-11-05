@@ -3,6 +3,10 @@ extern window, global
 if typeof window !== 'undefined'
 	global = window
 
+###
+Imba is the namespace for all runtime related utilities
+@namespace
+###
 Imba = {
 	VERSION: '0.13.9'
 }

@@ -705,14 +705,23 @@ export class Meta < ValueNode
 export class Comment < Meta
 	
 	def visit
-		stack.stash.add(self)
+		# stack.stash.add(self)
+
+		if var block = up
+			var idx = block.indexOf(self) + 1
+			idx += 1 if block.index(idx) isa Terminator
+			if var next = block.index(idx)
+				next.@desc = self
+
+			# console.log "Next item after comment is {block.index(idx)}"
+
 		self
 
 	def toDoc
 		helpers.normalizeIndentation("" + @value.@value)
 
 	def toJSON
-		"" + @value.@value
+		helpers.normalizeIndentation("" + @value.@value)
 
 	def c o
 		var v = @value.@value
@@ -978,7 +987,7 @@ export class Block < ListNode
 	def visit
 		@scope.visit if @scope
 
-		for node in @nodes
+		for node,i in @nodes
 			node and node.traverse
 		self
 
@@ -2314,7 +2323,7 @@ export class MethodDeclaration < Func
 			name: "" + name
 			namepath: namepath
 			params: @params.metadata
-			desc: scope.@desc?.toDoc
+			desc: @desc
 			scopenr: scope.@nr
 			loc: loc
 		}
@@ -2340,6 +2349,7 @@ export class MethodDeclaration < Func
 			@namepath = '&' + name
 
 	def visit
+		# @desc = stack.stash.pluck(Comment)
 		# @desc = stack.stash.pluck(Comment)
 		# prebreak # make sure this has a break?
 		scope.visit
@@ -6913,10 +6923,6 @@ export class ClassScope < Scope
 	def namepath
 		@node.name.c
 	
-	def visit
-		super
-		@desc = stack.stash.pluck(Comment)
-		self
 
 	# called for scopes that are not real scopes in js
 	# must ensure that the local variables inside of the scopes do not
@@ -6940,10 +6946,6 @@ export class FunctionScope < Scope
 
 export class MethodScope < Scope
 	
-	def visit
-		super
-		@desc = stack.stash.pluck(Comment)
-		self
 
 	def isClosed
 		yes
