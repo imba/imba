@@ -13,9 +13,17 @@ Imba = {
 
 var reg = /-./g
 
+###
+True if running in client environment.
+@return {bool}
+###
 def Imba.isClient
 	Imba.CLIENT === yes
 
+###
+True if running in server environment.
+@return {bool}
+###
 def Imba.isServer
 	Imba.SERVER === yes
 
@@ -31,13 +39,20 @@ def Imba.subclass obj, sup
 def Imba.iterable o
 	return o ? (o:toArray ? o.toArray : o) : []
 
-def Imba.await o
-	if a isa Array
-		Promise.all(a)
-	elif a and a:then
-		a
+###
+Coerces a value into a promise. If value is array it will
+call `Promise.all(value)`, or if it is not a promise it will
+wrap the value in `Promise.resolve(value)`. Used for experimental
+await syntax.
+@return {Promise}
+###
+def Imba.await value
+	if value isa Array
+		Promise.all(value)
+	elif value and value:then
+		value
 	else
-		Promise.resolve(a)
+		Promise.resolve(value)
 
 def Imba.toCamelCase str
 	str.replace(reg) do |m| m.charAt(1).toUpperCase

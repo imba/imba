@@ -3821,9 +3821,12 @@ export class Assign < Op
 
 		var lvar = l isa VarReference and l.variable
 
-		# p "assign {l} {r} {l.value}"
-
-
+		# how does this work with constants that are really var references?
+		# should work when things are not described as well - but this is for testing
+		# but if it refers to something else 
+		if !lvar and @desc
+			# entities should be able to extract the needed info instead
+			ROOT.entities.add(l.namepath,{namepath: l.namepath, type: r.typeName, desc: @desc})
 
 		# this should probably be done in a different manner
 		if lvar and lvar.declarator == l
@@ -6815,6 +6818,9 @@ export class Scope
 	def region
 		node.body.region
 
+	def loc
+		node.loc
+
 	def dump
 		var vars = Object.keys(@varmap).map do |k| 
 			var v = @varmap[k]
@@ -6823,15 +6829,9 @@ export class Scope
 		var desc = 
 			nr: @nr
 			type: self:constructor:name
-			desc: @desc
 			level: (level or 0)
 			vars: compact__(vars)
-			loc: region
-
-		desc:meta = @node?.metadata
-
-		desc:entities = for item, i in @annotations
-			item.metadata
+			loc: loc
 
 		return desc
 

@@ -14,30 +14,38 @@ def Imba.tick d
 def Imba.ticker
 	@ticker ||= do |e| tick(e)
 
-def Imba.schedule obj, meth = 'tick'
-	listen(self,'tick',obj,meth)
+###
+
+Global alternative to requestAnimationFrame. Schedule a target
+to tick every frame. You can specify which method to call on the
+target (defaults to tick).
+
+###
+def Imba.schedule target, method = 'tick'
+	listen(self,'tick',target,method)
 	# start scheduling now if this was the first one
 	unless @scheduled
 		@scheduled = yes
 		raf(Imba.ticker)
 	self
 
-def Imba.unschedule obj, meth
-	unlisten(self,'tick',obj,meth)
+###
+
+Unschedule a previously scheduled target
+
+###
+def Imba.unschedule target, method
+	unlisten(self,'tick',target,method)
 	var cbs = self:__listeners__ ||= {}
 	if !cbs:tick or !cbs:tick:next or !cbs:tick:next:listener
 		@scheduled = no
 	self
 
-# trackable timeout
-
 ###
 
-Instances of Imba.Scheduler manages when to call `tick()` on their target,
-at a specified framerate or when certain events occur. Root-nodes in your
-applications will usually have a scheduler to make sure they rerender when
-something changes. It is also possible to make inner components use their
-own schedulers to control when they render.
+Light wrapper around native setTimeout that expects the block / function
+as last argument (instead of first). It also triggers an event to Imba
+after the timeout to let schedulers update (to rerender etc) afterwards.
 
 ###
 def Imba.setTimeout delay, &block
@@ -45,8 +53,13 @@ def Imba.setTimeout delay, &block
 		block()
 		Imba.emit(Imba,'timeout',[block])
 
-# trackable interval
+###
 
+Light wrapper around native setInterval that expects the block / function
+as last argument (instead of first). It also triggers an event to Imba
+after every interval to let schedulers update (to rerender etc) afterwards.
+
+###
 def Imba.setInterval interval, &block
 	setInterval(&,interval) do
 		block()
