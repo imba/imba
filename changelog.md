@@ -1,3 +1,12 @@
+## 0.13.9
+- Documented more of the runtime/stdlib
+- Adding prelim support for static analysis of tags,classes,methods++
+- `imba analyze` now takes `--entities` flag to export entities
+- Removed several undocumented and deprecated methods
+- Cleaned up code UglifyJS warned about when minifying runtime
+- Add failing test for known scoping bug (fix is underway for next release)
+- Bugfix: temp vars were declared (but not used) in certain situations
+
 ## 0.13.8
 - Added scheduler for an official/approved way to schedule rendering
 
