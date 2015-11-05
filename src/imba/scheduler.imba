@@ -65,9 +65,15 @@ def Imba.setInterval interval, &block
 		block()
 		Imba.emit(Imba,'interval',[block])
 
+###
+Clear interval with specified id
+###
 def Imba.clearInterval interval
 	clearInterval(interval)
 
+###
+Clear timeout with specified id
+###
 def Imba.clearTimeout timeout
 	clearTimeout(timeout)
 
@@ -143,6 +149,12 @@ class Imba.Scheduler
 		@marked = yes
 		self
 
+	###
+	Instantly trigger target.tick and mark scheduler as clean (not dirty/marked).
+	This is called implicitly from tick, but can also be called manually if you
+	really want to force a tick without waiting for the next frame.
+	@return {self}
+	###
 	def flush
 		@marked = no
 		@flushes++
