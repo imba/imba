@@ -2085,9 +2085,9 @@ export class ClassDeclaration < Code
 		{
 			type: 'class'
 			namepath: namepath
+			inherits: superclass?.namepath
 			path: name.c.toString
 			desc: @desc
-			superclass: superclass?.namepath
 			loc: loc
 		}	
 
@@ -2205,6 +2205,18 @@ export class TagDeclaration < Code
 	prop superclass
 	prop initor
 
+	def namepath
+		"<{name}>"
+
+	def toJSON
+		{
+			type: 'tag'
+			namepath: namepath
+			inherits: superclass ? "<{superclass.name}>" : null
+			loc: loc
+			desc: @desc
+		}
+
 	def initialize name, superclass, body
 		# what about the namespace?
 		# @name = TagTypeRef.new(name)
@@ -2215,6 +2227,7 @@ export class TagDeclaration < Code
 		@body = blk__(body || [])
 
 	def visit
+		ROOT.entities.register(self)
 		# replace with some advanced lookup?
 		scope.visit
 		body.traverse
@@ -6581,6 +6594,11 @@ class Entities
 		@map[path] = object
 		self
 
+	def register entity
+		var path = entity.namepath
+		@map[path] ||= entity
+		self
+
 	def plain
 		JSON.parse(JSON.stringify(@map))
 
@@ -6921,7 +6939,7 @@ export class RootScope < Scope
 export class ClassScope < Scope
 
 	def namepath
-		@node.name.c
+		@node.namepath
 	
 
 	# called for scopes that are not real scopes in js
