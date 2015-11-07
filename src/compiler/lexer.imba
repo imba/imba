@@ -358,6 +358,8 @@ export class Lexer
 		@code    = code
 		@opts    = o
 		@locOffset = o:loc or 0
+		# add a reference to the options object
+		o.@tokens = @tokens 
 		# what about col here?
 
 		# @indent  = 0 # The current indentation level.
@@ -1963,12 +1965,12 @@ export class Lexer
 		
 	# Throws a syntax error on the current `@line`.
 	def error message, len
-		var msg = "{message} on line {@line}" if @line isa Number
+		message = "{message} on line {@line}" if @line isa Number
 
 		if len
-			msg += " [{@loc}:{@loc + len}]"
+			message += " [{@loc}:{@loc + len}]"
 
-		var err = SyntaxError.new(msg)
+		var err = SyntaxError.new(message)
 		err:line = @line
 		# err:columnNumber
 		var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)

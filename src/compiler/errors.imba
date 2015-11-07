@@ -34,7 +34,9 @@ export class ImbaParseError < Error
 			'Syntax Error'
 		else
 			msg
-		
+	
+	def loc
+		start?.region
 
 	def toJSON
 		var o = @options
@@ -43,4 +45,4 @@ export class ImbaParseError < Error
 		# var loc = tok and [tok.@loc,tok.@loc + (tok.@len or tok.@value:length)] or [0,0]
 		# , col: tok.@col, line: tok.@line
 		# get the token itself?
-		return {warn: yes, message: desc, loc: tok?.region}
+		return {warn: yes, message: desc, loc: loc}

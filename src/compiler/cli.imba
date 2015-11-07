@@ -333,8 +333,16 @@ def write-file source, outpath, options = {}
 			# if let map = code:sourcemap
 			# 	fs.writeFileSync(outpath.replace(/\.js$/,'.map'),JSON.stringify(map,null,2))
 	catch e
-		# print " - " + chalk:dim.red("failed") + "\n"
-		printCompilerError(e, source: source) # e:message + "\n"
+		let toks = options.@tokens
+		print " - " + chalk:bold.red("failed") + "\n"
+
+		if e isa ERR.ImbaParseError
+			let tok = try e.start catch e null
+			# console.log e:message, e:type, e:filename, !!e:lexer,tok, e:constructor,toks
+			printCompilerError(e, source: source, tok: tok, tokens: toks) # e:message + "\n"	
+		else
+			print " - " + e:message + "\n"
+		
 	return
 
 # shared action for compile and watch
