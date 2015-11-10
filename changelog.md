@@ -1,3 +1,6 @@
+## 0.13.11
+- tag(domnode) will awaken domnode as native type if the custom tag is not defined
+
 ## 0.13.10
 - Bugfix: Regression where indented return broke certain tag trees
 - Bugfix: if branches without else does not return 0 when false (inside tag trees)

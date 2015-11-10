@@ -414,6 +414,8 @@ def Imba.getTagForDom dom
 	var ns   = null
 	var id   = dom:id
 	var type = dom:nodeName.toLowerCase
+	var tags = Imba.TAGS
+	var native = type
 	var cls  = dom:className
 
 	if id and Imba.SINGLETONS[id]
@@ -427,6 +429,8 @@ def Imba.getTagForDom dom
 		ns = "svg" 
 		cls = dom:className:baseVal
 
+	var spawner
+
 	if cls
 		# there can be several matches here - should choose the last
 		# should fall back to less specific later? - otherwise things may fail
@@ -435,9 +439,10 @@ def Imba.getTagForDom dom
 			type = m[1].replace(/-/g,'_')
 
 		if m = cls.match(/\b([a-z]+)_\b/)
-			ns = m[1] 
+			ns = m[1]
 
-	var spawner = Imba.TAGS[type]
+
+	spawner = tags[type] or tags[native]
 	spawner ? spawner.new(dom).awaken(dom) : null
 
 t$ = Imba:tag
