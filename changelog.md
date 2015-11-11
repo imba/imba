@@ -1,5 +1,6 @@
 ## 0.13.11
 - tag(domnode) will awaken domnode as native type if the custom tag is not defined
+- Bugfix: Parser should not treat `]` and `)` as implicit functions (issue#34)
 
 ## 0.13.10
 - Bugfix: Regression where indented return broke certain tag trees

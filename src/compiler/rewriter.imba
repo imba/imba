@@ -360,8 +360,6 @@ export class Rewriter
 	def addImplicitParentheses
 		
 		var noCallTag = ['CLASS', 'IF','UNLESS','TAG','WHILE','FOR','UNTIL','CATCH','FINALLY','MODULE','LEADING_WHEN']
-
-
 		
 		var action = do |token,i|
 			@tokens.splice i, 0, T.token('CALL_END', ')')
@@ -375,7 +373,15 @@ export class Rewriter
 
 		var i = 0
 		while var token = tokens[i]
-			# console.log "detect end??"
+
+			# to handle cases like:
+			# if a(do yes).test
+			# 	yes
+			# we need to keep a stack for balanced pairs
+			# until then you must explicitly end the call like
+			# if a(do yes).test()
+			# 	yes
+
 			var type = token.@type
 
 			var prev    = tokens[i - 1]
@@ -387,6 +393,7 @@ export class Rewriter
 
 			# if pt == 'WHEN'
 			# Never make these tags implicitly call
+			# should we not just remove these from IMPLICIT_FUNC?
 			if (pt == ')' or pt == ']') and type == 'INDENT'
 				noCall = yes
 
@@ -583,7 +590,7 @@ var IDENTIFIERS = ['IDENTIFIER', 'GVAR', 'IVAR', 'CVAR', 'CONST', 'ARGVAR']
 var EXPRESSION_CLOSE = ['CATCH', 'WHEN', 'ELSE', 'FINALLY'].concat EXPRESSION_END
 
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
-var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', ')', 'INDEX_END', #  'CALL_END',
+var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 
 	'GVAR', 'CONST', 'ARGVAR', 'NEW', 'BREAK', 'CONTINUE','RETURN'
 ]
