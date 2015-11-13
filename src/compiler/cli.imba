@@ -25,7 +25,7 @@ var util = require './helpers'
 
 # this caches an awful lot now - no need before we introduce a shared worker++
 class SourceFile
-	
+
 	prop path
 	prop meta
 
@@ -46,7 +46,7 @@ class SourceFile
 
 	def ast
 		@ast ||= parser.parse(tokens)
-		
+
 	def js o = {}
 		@js ||= ast.compile(o)
 
@@ -88,12 +88,12 @@ class SourceFile
 					throw e
 					# e = {message: e:message}
 
-				
+
 			@meta = {warnings: [e]}
 			cb and cb(@meta)
 
 		return @meta
-		
+
 	def run
 		process:argv.shift
 		process:argv[0] = 'imba'
@@ -125,7 +125,7 @@ def puts str
 
 def print str
 	process:stdout.write str
-	
+
 
 def print-tokens tokens
 	var strings = for t in tokens
@@ -183,7 +183,7 @@ def sourcefile-for-path path
 
 def printCompilerError e, source: null, tok: null, tokens: null
 	#  return printError(e,source: source)
-	
+
 	var lex = e:lexer
 
 	tok ||= lex and lex:yytext
@@ -227,7 +227,7 @@ def printCompilerError e, source: null, tok: null, tokens: null
 			continue if tok.@loc == -1 # generated
 
 			# log "looping token {tok.@line} {tok.@col}"
-			
+
 			# log "breakign at line {tok.@line}"
 			# log "highlight {tok.@type}"
 			var typ = tok.@type
@@ -250,7 +250,7 @@ def printCompilerError e, source: null, tok: null, tokens: null
 		log prefix + ln
 
 		return
-		
+
 	log " - " + chalk.red(e:message)  # + character + c2
 
 	if tok and src
@@ -339,15 +339,15 @@ def write-file source, outpath, options = {}
 		if e isa ERR.ImbaParseError
 			let tok = try e.start catch e null
 			# console.log e:message, e:type, e:filename, !!e:lexer,tok, e:constructor,toks
-			printCompilerError(e, source: source, tok: tok, tokens: toks) # e:message + "\n"	
+			printCompilerError(e, source: source, tok: tok, tokens: toks) # e:message + "\n"
 		else
 			print " - " + e:message + "\n"
-		
+
 	return
 
 # shared action for compile and watch
 def cli-compile root, o, watch: no
-	
+
 	var base = fspath.resolve(process.cwd, root)
 	var basedir = base
 	var exists  = fs.existsSync(base)
@@ -380,7 +380,7 @@ def cli-compile root, o, watch: no
 			var libExists = fs.existsSync(libPath)
 			outdir = out = libPath
 			# log chalk.blue "--- found dir: {b libPath}" if watch
-	
+
 	# compiling a single file - no need to require chokidar at all
 	if isFile and !watch
 		var source = sourcefileForPath(base)
@@ -467,7 +467,7 @@ cli.command('export-runtime <path>')
 		else
 			log chalk.red("{b out} is not a directory")
 
-		return 
+		return
 
 
 export def run argv
@@ -477,4 +477,3 @@ export def run argv
 		return log package:version
 
 	cli.parse(argv)
-

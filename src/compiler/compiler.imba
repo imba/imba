@@ -5,6 +5,7 @@ var path = require 'path'
 # var imba = require '../imba'
 var T = require './token'
 var ERR = require './errors'
+var util = require './helpers'
 var lexer = require './lexer'
 var rewriter = require './rewriter'
 export var parser = require('./parser')['parser']
@@ -46,13 +47,33 @@ export def parse code, o = {}
 
 
 export def compile code, o = {}
-	var ast = parse(code,o)
 	try
+		var tokens = tokenize(code, o)
+		var ast = parse(tokens, o)
 		return ast.compile(o)
 	catch err
 		err:_filename = o:filename if o:filename
-		throw err
+		if tokens && err isa ERR:ImbaParseError
+			try
+				var tok = err.start
+			catch e
+				throw err
 
+			var locmap = util.locationToLineColMap(code)
+			var lines  = code.split(/\n/g)
+
+			var lc = locmap[tok.@loc] or [0,0]
+			var ln = lc[0]
+			var col = lc[1]
+			var line = lines[ln]
+
+			var message = err:message + "\n\n{ln}" + "\n{ln + 1} {line}" + "\n{ln + 2}"
+			var reducer = do |s,c,i|
+				s += i == col ? "^" : (c == "\t" ? c : " ")
+			message += line.split('').reduce(reducer, "")
+
+			err:message = message
+		throw err
 
 export def analyze code, o = {}
 	var meta
@@ -88,5 +109,3 @@ if require:extensions
 	require:extensions['.imba'] = do |mod, filename|
 		var content = compile(fs.readFileSync(filename, 'utf8'), filename: filename)
 		mod._compile (content:js or content), filename
-
-
