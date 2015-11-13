@@ -1066,7 +1066,7 @@ export class Block < ListNode
 		var l = ast:length
 		# really?
 		var express = isExpression or o.isExpression or (option(:express) and isExpressable)
-		return null if ast:length == 0
+		return '' if ast:length == 0
 
 		if express
 			return super(o,nodes: ast)
@@ -2415,6 +2415,7 @@ export class MethodDeclaration < Func
 				body.consume(GreedyReturn.new)
 			else
 				body.consume(ImplicitReturn.new)
+
 		var code = scope.c(indent: yes, braces: yes)
 
 		# same for Func -- should generalize

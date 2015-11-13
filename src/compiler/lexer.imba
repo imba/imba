@@ -457,20 +457,19 @@ export class Lexer
 
 	def closeDef
 		if context is 'DEF'
-			var pop
 			var prev = last(@tokens)
 			# console.log "close def {prev}"
 			# console.log('closeDef with last>',prev)
 			if tT(prev) == 'DEF_FRAGMENT'
 				true
-			else
-				if tT(prev) == 'TERMINATOR'
-					# console.log "here?!??"
-					pop = @tokens.pop
-
+			elif tT(prev) == 'TERMINATOR'
+				# console.log "here?!??"
+				let n = @tokens.pop
 				token('DEF_BODY', 'DEF_BODY',0)
-				@tokens.push(pop) if pop
-
+				token('TERMINATOR', '',0)
+				@tokens.push(n)
+			else
+				token('DEF_BODY', 'DEF_BODY',0)
 
 			pair('DEF')
 		return

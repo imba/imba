@@ -447,17 +447,17 @@ var grammar =
 	]
 
 	MethodDeclaration: [
-		o 'DEF MethodScope MethodScopeType MethodIdentifier CALL_START ParamList CALL_END DEF_BODY MethodBody' do
-			MethodDeclaration.new(A6, A9, A4, A2, A3).set(def: A1)
+		o 'DEF MethodScope MethodScopeType MethodIdentifier CALL_START ParamList CALL_END MethodBody' do
+			MethodDeclaration.new(A6, A8, A4, A2, A3).set(def: A1)
 
-		o 'DEF MethodScope MethodScopeType MethodIdentifier DEF_BODY MethodBody' do
-			MethodDeclaration.new([], A6, A4, A2, A3).set(def: A1)
+		o 'DEF MethodScope MethodScopeType MethodIdentifier MethodBody' do
+			MethodDeclaration.new([], A5, A4, A2, A3).set(def: A1)
 
-		o 'DEF MethodIdentifier CALL_START ParamList CALL_END DEF_BODY MethodBody' do
-			MethodDeclaration.new(A4, A7, A2, null).set(def: A1)
+		o 'DEF MethodIdentifier CALL_START ParamList CALL_END MethodBody' do
+			MethodDeclaration.new(A4, A6, A2, null).set(def: A1)
 
-		o 'DEF MethodIdentifier DEF_BODY MethodBody' do
-			MethodDeclaration.new([], A4, A2, null).set(def: A1)
+		o 'DEF MethodIdentifier MethodBody' do
+			MethodDeclaration.new([], A3, A2, null).set(def: A1)
 	]
 
 	MethodScopeType: [
@@ -476,8 +476,9 @@ var grammar =
 	]
 
 	MethodBody: [
-		o 'Block'
-		o 'Do' do A1.body
+		o 'DEF_BODY Block' do A2
+		o 'DEF_BODY Do' do A2.body
+		o 'DEF_BODY TERMINATOR' do []
 	]
 
 	# should support much more
