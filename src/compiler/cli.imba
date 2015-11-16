@@ -193,11 +193,16 @@ def printCompilerError e, source: null, tok: null, tokens: null
 	var locmap = util.locationToLineColMap(src)
 	var lines  = src and src.split(/\n/g)
 
+	var ln0, ln1, gutter
+
+
 	var lnum = do |l, color = 'grey'|
 		var s = String(l + 1)
-		while s:length < 6
+		if s:length < String(ln1)[:length]
 			s = ' ' + s
-		return dim[color]('    ' + s + '  ')
+		# while s:length < String(ln1)
+			
+		return dim[color]('    ' + s + ' |  ')
 
 
 	def printLn nr, errtok
@@ -226,10 +231,6 @@ def printCompilerError e, source: null, tok: null, tokens: null
 		while var tok = tokens[--pos]
 			continue if tok.@loc == -1 # generated
 
-			# log "looping token {tok.@line} {tok.@col}"
-
-			# log "breakign at line {tok.@line}"
-			# log "highlight {tok.@type}"
 			var typ = tok.@type
 			var loc = locmap[tok.@loc]
 			var col = loc and loc[1] or 0
@@ -241,6 +242,7 @@ def printCompilerError e, source: null, tok: null, tokens: null
 
 			typ = 'KEYWORD' if typ:length > 1 and typ == tok.@value.toUpperCase
 			typ = 'PUNCTUATION' if typ.match(/^[\[\]\{\}\(\)\,]/)
+
 			if tok == errtok
 				typ = 'ERR'
 
@@ -251,14 +253,10 @@ def printCompilerError e, source: null, tok: null, tokens: null
 
 		return
 
-	log " - " + chalk.red(e:message)  # + character + c2
+	log "    " + chalk.red(e:message.split('\n').shift)  # + character + c2
 
 	if tok and src
-		log(chalk.grey("    ------") + "  ------------------")
-
-		# var lines = src.split(/\n/g)
-		# var map = util.locationToLineColMap(src)
-		# util.markLineColForTokens(tokens,src)
+		log(chalk.grey("    ") + "------------------------------------")
 
 		# find the closest non-generated token to show error
 		var tpos = tokens.indexOf(tok)
@@ -268,16 +266,17 @@ def printCompilerError e, source: null, tok: null, tokens: null
 		var lc = locmap[tok.@loc] or [0,0]
 		var ln = lc[0]
 		var col = lc[1]
-		# var ln = tok.@line
-		# var col = tok.@col
 
-		printLn(ln - 3)
-		printLn(ln - 2)
-		printLn(ln - 1)
-		printLn(ln,tok)
-		printLn(ln + 1)
-		log(chalk.grey("    ------") + "  ------------------")
-		# log ln,col
+		ln0 = Math.max(0,ln - 3)
+		ln1 = ln0 + 4
+		gutter = ("" + ln1)['length']
+
+		for i in [0 ... 5]
+			let n = ln0 + i
+			printLn(n,n == ln ? tok : null)
+
+		log(chalk.grey("    ") + "------------------------------------")
+		log('')
 	return
 
 
@@ -291,12 +290,10 @@ def write-file source, outpath, options = {}
 	var srcp = fspath.relative(process.cwd,source.path)
 	var outp = fspath.relative(process.cwd,outpath)
 
-	var str = ts + " " + chalk:dim.grey("compile {b chalk.white srcp} to {b chalk.white outp}")
-	# console.log ts, str
+	var str = ts + " " + chalk.dim("compile ") + srcp + chalk.dim(" to ") + outp
+
 	print str
 
-	# log "made dirty"
-	# log ts, chalk:dim.grey "will compile {source.path}"
 	options:filename ||= source.path
 	options:sourcePath = source.path
 	options:targetPath = outpath
@@ -313,32 +310,26 @@ def write-file source, outpath, options = {}
 		var code = compiler.compile(source.code, options)
 		var time = Date.now - start
 		var ok = true
-		print " - " + chalk:dim.grey("{time}ms") + "\n"
+		print " " + chalk:bold.green("✔ ") + chalk:dim.grey("{time}ms") + "\n"
 
 		if code:warnings
 			for warn,i in code:warnings
 				# print String(warn:token)
 				if warn:type == 'error'
 					ok = false
-					# print chalk.red "    {b 'error'}: {warn:message} {warn:loc}"
 					printCompilerError(warn, source: source, tok: warn:token, tokens: code:options.@tokens)
 				else
 					print chalk.yellow "    {b 'warning'}: {warn:message}"
 
-				# if warn:token
-				# 	print String(warn:token.@len)
-
 		if ok
 			fs.writeFileSync(outpath,code:js or code)
-			# if let map = code:sourcemap
-			# 	fs.writeFileSync(outpath.replace(/\.js$/,'.map'),JSON.stringify(map,null,2))
+
 	catch e
 		let toks = options.@tokens
-		print " - " + chalk:bold.red("failed") + "\n"
+		print " " + chalk:bold.red("✘") + "\n"
 
 		if e isa ERR.ImbaParseError
 			let tok = try e.start catch e null
-			# console.log e:message, e:type, e:filename, !!e:lexer,tok, e:constructor,toks
 			printCompilerError(e, source: source, tok: tok, tokens: toks) # e:message + "\n"
 		else
 			print " - " + e:message + "\n"

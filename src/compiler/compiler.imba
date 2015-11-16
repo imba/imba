@@ -11,6 +11,8 @@ var rewriter = require './rewriter'
 export var parser = require('./parser')['parser']
 var ast = require './nodes'
 
+import ImbaParseError from './errors'
+
 # Instantiate a Lexer for our use here.
 export var lex = lexer.Lexer.new
 export var Rewriter = rewriter.Rewriter
@@ -53,7 +55,7 @@ export def compile code, o = {}
 		return ast.compile(o)
 	catch err
 		err:_filename = o:filename if o:filename
-		if tokens && err isa ERR:ImbaParseError
+		if tokens && err isa ImbaParseError
 			try
 				var tok = err.start
 			catch e
@@ -82,9 +84,9 @@ export def analyze code, o = {}
 		meta = ast.analyze(o)
 	catch e
 		# console.log "something wrong {e:message}"
-		unless e isa ERR.ImbaParseError
+		unless e isa ImbaParseError
 			if e:lexer
-				e = ERR.ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
+				e = ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
 			else
 				throw e
 		meta = {warnings: [e]}
