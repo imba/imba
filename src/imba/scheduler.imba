@@ -6,9 +6,8 @@ raf ||= global:mozRequestAnimationFrame
 raf ||= do |blk| setTimeout(blk,1000 / 60)
 
 def Imba.tick d
-	# how do we start this?
-	emit(self,'tick',[d])
 	raf(Imba.ticker) if @scheduled
+	emit(self,'tick',[d])
 	return
 
 def Imba.ticker
