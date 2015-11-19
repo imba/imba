@@ -29,6 +29,14 @@ export class Rewriter
 		# console.log "tokens in: " + tokens:length
 		console.time("tokenize:rewrite") if opts:profile
 
+		var i = 0
+		# flag empty methods
+		while var token = tokens[i]
+			var next = tokens[i + 1]
+			if token.@type == 'DEF_BODY' and next and next.@type == 'TERMINATOR'
+				token.@type = 'DEF_EMPTY'
+			i++
+
 		step("ensureFirstLine")
 		step("removeLeadingNewlines")
 		step("removeMidExpressionNewlines")

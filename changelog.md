@@ -1,6 +1,7 @@
 ## 0.13.12 (dev)
 - Error now includes the relevant code/lines in message - contributed by @sleewoo
 - Make scheduler register for next tick before running the current ticks
+- Bugfix: Regression where methods with trailing comment did not parse
 
 ## 0.13.11
 - tag(domnode) will awaken domnode as native type if the custom tag is not defined

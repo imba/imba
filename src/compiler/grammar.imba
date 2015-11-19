@@ -478,7 +478,7 @@ var grammar =
 	MethodBody: [
 		o 'DEF_BODY Block' do A2
 		o 'DEF_BODY Do' do A2.body
-		o 'DEF_BODY TERMINATOR' do []
+		o 'DEF_EMPTY' do []
 	]
 
 	# should support much more

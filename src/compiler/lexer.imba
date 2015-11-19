@@ -465,8 +465,9 @@ export class Lexer
 			elif tT(prev) == 'TERMINATOR'
 				# console.log "here?!??"
 				let n = @tokens.pop
+				# console.log n
 				token('DEF_BODY', 'DEF_BODY',0)
-				token('TERMINATOR', '',0)
+				# token('TERMINATOR', '',0) unless n.@value.indexOf('//') >= 0
 				@tokens.push(n)
 			else
 				token('DEF_BODY', 'DEF_BODY',0)
