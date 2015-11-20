@@ -522,6 +522,10 @@ export class Lexer
 			token('TAG_START', '<',1)
 			pushEnd(INVERSES['TAG_START'])
 
+			if match = TAG_TYPE.exec(@chunk.substr(1,40))
+				token('TAG_TYPE',match[0],match[0]:length,1)
+				return input:length + match[0]:length
+
 			if identifier
 				if identifier.substr(0,1) == '{'
 					return type:length
