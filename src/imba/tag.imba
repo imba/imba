@@ -11,6 +11,9 @@ class Imba.Tag
 	def self.createNode
 		throw "Not implemented"
 
+	def self.build
+		self.new(self.createNode)
+
 	prop object
 
 	def dom
@@ -327,6 +330,8 @@ def Tag
 		this.setDom(dom)
 		return this
 
+def TagSpawner type
+	return do type.build
 
 class Imba.Tags
 
@@ -337,7 +342,9 @@ class Imba.Tags
 
 
 	def __clone
-		Object.create(self)
+		var clone = Object.create(self)
+		clone.@parent = self
+		return clone
 
 	def __def name, supr, &body
 
@@ -348,6 +355,7 @@ class Imba.Tags
 		tagtype.@name = name
 		extender(tagtype,supertype)
 		self[name] = tagtype
+		self['$'+name] = TagSpawner(tagtype)
 		body.call(tagtype,tagtype,tagtype:prototype) if body
 		return tagtype
 
@@ -358,57 +366,17 @@ class Imba.Tags
 
 Imba.TAGS = Imba.Tags.new
 Imba.TAGS[:element] = Imba.Tag
-
-# Inherit from this -- override for html?
-
-# {
-# 	element: Imba.Tag
-# }
-
 Imba.SINGLETONS = {}
 
 
 def Imba.defineTag name, supr = '', &body
 	return Imba.TAGS.__def(name,supr,body)
 
-	supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
-
-	var superklass = Imba.TAGS[supr]
-
-	var fname = name == 'var' ? 'vartag' : name
-	# should drop this in production / optimized mode, but for debug
-	# we create a constructor with a recognizeable name
-	var klass = Function.new("return function {fname.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")()
-	klass.@name = name
-
-	extender(klass,superklass)
-
-	Imba.TAGS[name] = klass
-
-	body.call(klass,klass,klass:prototype) if body
-	return klass
-
-def Imba.defineSingletonTag id, supr = '', &body
-	var superklass = Imba.TAGS[supr || 'div']
-
-	# should drop this in production / optimized mode, but for debug
-	# we create a constructor with a recognizeable name
-	var klass = Function.new("return function {id.replace(/[\s\-\:]/g,'_')}(dom)\{ this.setDom(dom); \}")()
-	klass.@name = null
-
-	extender(klass,superklass)
-
-	Imba.SINGLETONS[id] = klass
-
-	body.call(klass,klass,klass:prototype) if body
-	return klass
+def Imba.defineSingletonTag id, supr = 'div', &body
+	return Imba.TAGS.__def(name,supr,body)
 
 def Imba.extendTag name, body
 	return Imba.TAGS.__extend(name,body)
-
-	var klass = (name isa String ? Imba.TAGS[name] : name)
-	body and body.call(klass,klass,klass:prototype) if body
-	return klass
 
 def Imba.tag name
 	var typ = Imba.TAGS[name]
