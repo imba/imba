@@ -311,12 +311,6 @@ HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquo
 HTML_TAGS_UNSAFE = "article aside header section".split(" ")
 SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
 
-Imba.TAGS = {
-	element: Imba.Tag
-}
-
-Imba.SINGLETONS = {}
-IMBA_TAGS = Imba.TAGS
 
 def extender obj, sup
 	for own k,v of sup
@@ -328,7 +322,55 @@ def extender obj, sup
 	sup.inherit(obj) if sup:inherit
 	return obj
 
+def Tag
+	return do |dom|
+		this.setDom(dom)
+		return this
+
+
+class Imba.Tags
+
+	def initialize
+		self
+
+	def __base
+
+
+	def __clone
+		Object.create(self)
+
+	def __def name, supr, &body
+
+		supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
+		let supertype = self[supr]
+
+		let tagtype = Tag()
+		tagtype.@name = name
+		extender(tagtype,supertype)
+		self[name] = tagtype
+		body.call(tagtype,tagtype,tagtype:prototype) if body
+		return tagtype
+
+	def __extend name, body
+		var klass = (name isa String ? self[name] : name)
+		body and body.call(klass,klass,klass:prototype) if body
+		return klass
+
+Imba.TAGS = Imba.Tags.new
+Imba.TAGS[:element] = Imba.Tag
+
+# Inherit from this -- override for html?
+
+# {
+# 	element: Imba.Tag
+# }
+
+Imba.SINGLETONS = {}
+
+
 def Imba.defineTag name, supr = '', &body
+	return Imba.TAGS.__def(name,supr,body)
+
 	supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
 
 	var superklass = Imba.TAGS[supr]
@@ -362,6 +404,8 @@ def Imba.defineSingletonTag id, supr = '', &body
 	return klass
 
 def Imba.extendTag name, body
+	return Imba.TAGS.__extend(name,body)
+
 	var klass = (name isa String ? Imba.TAGS[name] : name)
 	body and body.call(klass,klass,klass:prototype) if body
 	return klass

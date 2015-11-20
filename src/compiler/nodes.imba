@@ -4512,8 +4512,7 @@ export class TagTypeIdentifier < Identifier
 		return @str
 
 	def js o
-		# p "tagtypeidentifier.js {self}"
-		return "IMBA_TAGS.{@str.replace(":","$")}"
+		return "Imba.TAGS.{@str.replace(":","$")}"
 
 	def c
 		js
