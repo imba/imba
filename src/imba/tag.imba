@@ -346,7 +346,7 @@ class Imba.Tags
 		clone.@parent = self
 		return clone
 
-	def __def name, supr, &body
+	def defineTag name, supr, &body
 
 		supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
 		let supertype = self[supr]
@@ -359,7 +359,7 @@ class Imba.Tags
 		body.call(tagtype,tagtype,tagtype:prototype) if body
 		return tagtype
 
-	def __extend name, body
+	def extendTag name, body
 		var klass = (name isa String ? self[name] : name)
 		body and body.call(klass,klass,klass:prototype) if body
 		return klass
@@ -370,13 +370,13 @@ Imba.SINGLETONS = {}
 
 
 def Imba.defineTag name, supr = '', &body
-	return Imba.TAGS.__def(name,supr,body)
+	return Imba.TAGS.defineTag(name,supr,body)
 
 def Imba.defineSingletonTag id, supr = 'div', &body
-	return Imba.TAGS.__def(name,supr,body)
+	return Imba.TAGS.defineTag(name,supr,body)
 
 def Imba.extendTag name, body
-	return Imba.TAGS.__extend(name,body)
+	return Imba.TAGS.extendTag(name,body)
 
 def Imba.tag name
 	var typ = Imba.TAGS[name]

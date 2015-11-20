@@ -2235,6 +2235,9 @@ export class TagDeclaration < Code
 	def id
 		name.id
 
+	def tagspace
+		"Imba.TAGS"
+
 	def js o
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
 
@@ -2243,14 +2246,14 @@ export class TagDeclaration < Code
 		var outbody = body.count ? ", function({@ctx.c})\{{cbody}\}" : ''
 
 		if option(:extension)
-			return "{mark}Imba.extendTag('{name.id or name.func}'{outbody})"
+			return "{mark}{tagspace}.extendTag('{name.id or name.func}'{outbody})"
 
 		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
 
 		var out = if name.id
-			"{mark}Imba.defineSingletonTag('{name.id}'{sup}{outbody})"
+			"{mark}{tagspace}.defineTag('{name.id}'{sup}{outbody})"
 		else
-			"{mark}Imba.defineTag('{name.func}'{sup}{outbody})"
+			"{mark}{tagspace}.defineTag('{name.func}'{sup}{outbody})"
 
 		return out
 
@@ -7410,7 +7413,7 @@ export var RESERVED_REGEX = /^(default|native|enum|with|new|char)$/
 export var UNION = Const.new('union$')
 export var INTERSECT = Const.new('intersect$')
 export var CLASSDEF = Const.new('imba$class')
-export var TAGDEF = Const.new('Imba.Tag.define')
+export var TAGDEF = Const.new('Imba.TAGS.define')
 export var NEWTAG = Identifier.new("tag$")
 
 
