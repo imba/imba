@@ -14,7 +14,7 @@ tag fragment < htmlelement
 		Imba.document.createDocumentFragment
 
 tag a
-	prop href dom: yes
+	attr href
 
 tag abbr
 tag address
@@ -33,8 +33,8 @@ tag br
 
 tag button
 	attr autofocus
-	prop type dom: yes
-	prop disabled dom: yes
+	attr type
+	attr disabled
 
 tag canvas
 	def width= val
@@ -74,8 +74,8 @@ tag figure
 tag footer
 
 tag form
-	prop method dom: yes
-	prop action dom: yes
+	attr method
+	attr action
 
 tag h1
 tag h2
@@ -97,13 +97,10 @@ tag img
 
 tag input
 	# can use attr instead
-	prop name dom: yes
-	prop type dom: yes
-	prop value dom: yes # dom property - NOT attribute
-	prop required dom: yes
-	prop disabled dom: yes
-	prop placeholder dom: yes
-
+	attr name
+	attr type
+	attr required
+	attr disabled
 	attr autofocus
 
 	def value
@@ -116,6 +113,9 @@ tag input
 	def placeholder= v
 		dom:placeholder = v unless v == dom:placeholder
 		self
+
+	def placeholder
+		dom:placeholder
 
 	def checked
 		dom:checked
@@ -132,10 +132,10 @@ tag legend
 tag li
 
 tag link
-	prop rel dom: yes
-	prop type dom: yes
-	prop href dom: yes
-	prop media dom: yes
+	attr rel
+	attr type
+	attr href
+	attr media
 
 tag main
 tag map
@@ -144,9 +144,9 @@ tag menu
 tag menuitem
 
 tag meta
-	prop name dom: yes
-	prop content dom: yes
-	prop charset dom: yes
+	attr name
+	attr content
+	attr charset
 
 tag meter
 tag nav
@@ -156,7 +156,7 @@ tag ol
 tag optgroup
 
 tag option
-	prop value dom: yes
+	attr value
 
 tag output
 tag p
@@ -171,16 +171,16 @@ tag s
 tag samp
 
 tag script
-	prop src dom: yes
-	prop type dom: yes
+	attr src
+	attr type
 
 tag section
 
 tag select
 	attr name
-	prop multiple dom: yes
-	prop required dom: yes
-	prop disabled dom: yes
+	attr multiple
+	attr required
+	attr disabled
 	
 	def value
 		dom:value
@@ -203,14 +203,11 @@ tag tbody
 tag td
 
 tag textarea
-	prop name dom: yes
-	prop disabled dom: yes
-	prop required dom: yes
-	prop placeholder dom: yes
-	prop value dom: yes
-	prop rows dom: yes
-	prop cols dom: yes
-
+	attr name
+	attr disabled
+	attr required
+	attr rows
+	attr cols
 	attr autofocus
 
 	def value
@@ -223,6 +220,9 @@ tag textarea
 	def placeholder= v
 		dom:placeholder = v unless v == dom:placeholder
 		self
+
+	def placeholder
+		dom:placeholder
 
 tag tfoot
 tag th

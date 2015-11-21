@@ -2,6 +2,7 @@
 - Removed IMBA_TAGS (must use Imba.TAGS)
 - Groundwork for arbitrary namespaces for tags (and local/private tags)
 - Added support for SVG
+- attr definitions will preserve dash in generated setAttribute
 - Removed description object for plain generated properties
 
 
