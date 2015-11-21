@@ -4526,6 +4526,12 @@ export class TagTypeIdentifier < Identifier
 		name += "${@ns.toLowerCase}" if @ns
 		name
 
+	def spawner
+		if @ns
+			"{@ns.toUpperCase}.${@name.replace(/-/g,'_')}"
+		else
+			"${@name.replace(/-/g,'_')}"
+
 	def id
 		var m = @str.match(/\#([\w\-\d\_]+)\b/)
 		m ? m[1] : null
@@ -5749,7 +5755,10 @@ export class Tag < Node
 		elif o:id
 			"{mark__(o:open)}ti$('{type.func}',{id})"
 		else
-			"{mark__(o:open)}t$('{type.func}')"
+			if type.ns
+				"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}()"
+			else
+				"{mark__(o:open)}t$('{type.func}')"
 
 		# this is reactive if it has an ivar
 		if o:ivar
@@ -6658,6 +6667,9 @@ export class Scope
 
 	def namepath
 		'?'
+
+	def tagContextPath
+		"Imba.TAGS"
 
 	def context
 		@context ||= ScopeContext.new(self)
