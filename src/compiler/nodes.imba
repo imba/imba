@@ -5784,15 +5784,11 @@ export class Tag < Node
 			reactive = yes
 			@reference = scope.context
 			scope.context.c
-
-		elif o:id
-			"{mark__(o:open)}ti$('{type.func}',{id})"
 		else
-			if type.ns
-				"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}()"
-			else
-				"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}()"
+			"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}()"
 
+		if o:id
+			statics.push(".setId({quote(o:id)})")
 		# this is reactive if it has an ivar
 		if o:ivar
 			reactive = yes
