@@ -24,6 +24,10 @@ tag svg:svgelement
 			var className = "_" + child.@name.replace(/_/g, '-')
 			child.@classes = @classes.concat(className)
 
+
+	attr x
+	attr y
+
 tag svg:svg
 	attr viewbox
 	attr width
