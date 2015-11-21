@@ -356,12 +356,13 @@ class Imba.Tags
 	def defineTag name, supr = '', &body
 		supr ||= baseType(name)
 		let supertype = self[supr]
-
 		let tagtype = Tag()
+		let norm = name.replace(/\-/g,'_')
+
 		tagtype.@name = name
 		extender(tagtype,supertype)
-		self[name] = tagtype
-		self['$'+name] = TagSpawner(tagtype)
+		self[norm] = tagtype
+		self['$'+norm] = TagSpawner(tagtype)
 		body.call(tagtype,tagtype,tagtype:prototype) if body
 		return tagtype
 
@@ -374,7 +375,6 @@ class Imba.Tags
 		return klass
 
 
-
 Imba.TAGS = Imba.Tags.new
 Imba.TAGS.@nativeTypes = HTML_TAGS
 
@@ -383,7 +383,7 @@ Imba.TAGS[:element] = Imba.Tag
 var svg = Imba.TAGS.defineNamespace('svg')
 
 def svg.baseType name
-	name in SVG_TAGS ? 'svgelement' : 'svgelement'
+	'svgelement'
 
 
 Imba.SINGLETONS = {}
