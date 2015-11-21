@@ -2546,6 +2546,15 @@ export class PropertyDeclaration < Node
 			headers: ""
 			ondirty: ""
 
+
+		if pars:inline
+			if pars:inline isa Bool and !pars:inline.truthy
+				o.remove('inline')
+				# p "dont make attr inline(!)"
+				return "Imba.{@token}({js:scope},'{js:key}',{o.c})"
+
+			# p "pars inline?!? {pars:inline}", typeof pars:inline
+
 		var tpl = propTemplate
 
 		o.add('name',Symbol.new(key))
@@ -2978,6 +2987,11 @@ export class Obj < Literal
 		var kv = ObjAttr.new(k,v)
 		value.push(kv)
 		return kv
+
+	def remove key
+		for k in value
+			value.remove(k) if k.key.symbol == key
+		self
 
 	def keys
 		Object.keys(hash)

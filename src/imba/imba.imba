@@ -79,3 +79,9 @@ def Imba.toCamelCase str
 
 def Imba.indexOf a,b
 	return (b && b:indexOf) ? b.indexOf(a) : []:indexOf.call(a,b)
+
+def Imba.prop scope, name, opts
+	return "oh noes"
+
+def Imba.attr scope, name, opts
+	return "oh noes"
