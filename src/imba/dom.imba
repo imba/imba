@@ -21,7 +21,7 @@ tag htmlelement < element
 			child.@nodeType = @nodeType
 
 			var className = "_" + child.@name.replace(/_/g, '-')
-			child.@classes = @classes.concat(className)
+			child.@classes = @classes.concat(className) unless child.@name[0] == '#'
 		else
 			child.@nodeType = child.@name
 			child.@classes = []
