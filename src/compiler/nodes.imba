@@ -2484,28 +2484,28 @@ export class MethodDeclaration < Func
 export class TagFragmentDeclaration < MethodDeclaration
 
 
-var propTemplate = '''
-${headers}
-${path}.__${getter} = ${options};
-${path}.${getter} = function(v){ return ${get}; }
-${path}.${setter} = function(v){ ${set}; return this; }
-${init}
-'''
-
-var propWatchTemplate = '''
-${headers}
-${path}.__${getter} = ${options};
-${path}.${getter} = function(v){ return ${get}; }
-${path}.${setter} = function(v){
-	var a = this.${getter}();
-	if(v != a) { v = ${set}; }
-	if(v != a) { ${ondirty} }
-	return this;
-}
-${init}
-'''
-
 export class PropertyDeclaration < Node
+
+	var propTemplate = '''
+
+	${headers}
+	${path}.${getter} = function(v){ return ${get}; }
+	${path}.${setter} = function(v){ ${set}; return this; }
+	${init}
+	'''
+
+	var propWatchTemplate = '''
+
+	${headers}
+	${path}.${getter} = function(v){ return ${get}; }
+	${path}.${setter} = function(v){
+		var a = this.${getter}();
+		if(v != a) { v = ${set}; }
+		if(v != a) { ${ondirty} }
+		return this;
+	}
+	${init}
+	'''
 
 	prop name
 	prop options
@@ -2526,16 +2526,9 @@ export class PropertyDeclaration < Node
 		var o = options
 		var ast = ""
 		var key = name.js
-		var gets = "@{key}"
-		var sets = "@{key} = v"
 		var scope = STACK.scope
 
-		var deflt = options.key(:default)
-		var init = deflt ? "self:prototype.@{key} = {deflt.value.c}" : ""
-
-		# var pars =
-		# 	watch: o.key(:watch)
-		# 	delegate: o.key(:delegate)
+		var addDesc = o.keys:length
 
 		var pars = o.hash
 
@@ -2567,12 +2560,8 @@ export class PropertyDeclaration < Node
 			elif pars:watch isa Bool
 				o.key(:watch).value = Symbol.new("{key}DidSet")
 
-			# should check for the function first, no?
-			# HACK
-			# o.key(:watch).value = Symbol
 			var fn = OP('.',This.new,wfn)
-			js:ondirty = OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c # CALLSELF(wfn,[]).c
-			# js:ondirty = "if(this.{wfn}) this.{wfn}(v,a,this.__{key});"
+			js:ondirty = OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 
 		if pars:observe
 			if pars:observe isa Bool
@@ -2583,9 +2572,10 @@ export class PropertyDeclaration < Node
 			# OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 
 		if (@token and String(@token) == 'attr') or o.key(:dom) or o.key(:attr)
+			let attrKey = o.key(:dom) isa Str ? o.key(:dom) : name.value
 			# need to make sure o has a key for attr then - so that the delegate can know?
-			js:set = "this.setAttribute('{key}',v)"
-			js:get = "this.getAttribute('{key}')"
+			js:set = "this.setAttribute('{attrKey}',v)"
+			js:get = "this.getAttribute('{attrKey}')"
 
 		elif o.key(:delegate)
 			# if we have a delegate
@@ -2594,17 +2584,21 @@ export class PropertyDeclaration < Node
 
 
 
-		if deflt
+		if pars:default
 			# add better default-support here - go through class-method setAttribute instead
 			if o.key(:dom)
-				js:init = "{js:scope}.dom().setAttribute('{key}',{deflt.value.c});"
+				js:init = "{js:scope}.dom().setAttribute('{key}',{pars:default.c});"
 			else
-				js:init = "{js:scope}.prototype._{key} = {deflt.value.c};"
+				js:init = "{js:scope}.prototype._{key} = {pars:default.c};"
 
 		if o.key(:chainable)
 			js:get = "v !== undefined ? (this.{js:setter}(v),this) : {js:get}"
 
+
 		js:options = o.c
+
+		if addDesc
+			js:headers = "{js:path}.__{js:getter} = {js:options};"
 
 		var reg = /\$\{(\w+)\}/gm
 		# var tpl = o.key(:watch) ? propWatchTemplate : propTemplate
@@ -2984,6 +2978,9 @@ export class Obj < Literal
 		var kv = ObjAttr.new(k,v)
 		value.push(kv)
 		return kv
+
+	def keys
+		Object.keys(hash)
 
 	def hash
 		var hash = {}

@@ -1,5 +1,9 @@
 ## edge
 - Removed IMBA_TAGS (must use Imba.TAGS)
+- Groundwork for arbitrary namespaces for tags (and local/private tags)
+- Added support for SVG
+- Removed description object for plain generated properties
+
 
 ## 0.13.12
 - Error now includes the relevant code/lines in message - contributed by @sleewoo
