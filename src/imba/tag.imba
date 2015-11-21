@@ -465,6 +465,7 @@ def Imba.getTagForDom dom
 	if svgSupport and dom isa SVGElement
 		ns = "svg" 
 		cls = dom:className:baseVal
+		tags = tags.SVG
 
 	var spawner
 
@@ -475,7 +476,7 @@ def Imba.getTagForDom dom
 		if var m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)
 			type = m[1].replace(/-/g,'_')
 
-		if m = cls.match(/\b([a-z]+)_\b/)
+		if m = cls.match(/\b([A-Z\-]+)_\b/)
 			ns = m[1]
 
 
