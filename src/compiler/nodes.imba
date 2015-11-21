@@ -2251,12 +2251,12 @@ export class TagDeclaration < Code
 
 		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
 
-		var out = if name.id
-			"{mark}{tagspace}.defineSingleton('{name.id}'{sup}{outbody})"
-		else
-			"{mark}{tagspace}.defineTag('{name.name}'{sup}{outbody})"
+		# var out = if name.id
+		#	"{mark}{tagspace}.defineSingleton('{name.name}'{sup}{outbody})"
+		# else
+		return "{mark}{tagspace}.defineTag('{name.name}'{sup}{outbody})"
 
-		return out
+		# return out
 
 export class Func < Code
 
