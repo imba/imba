@@ -77,11 +77,29 @@ def Imba.await value
 def Imba.toCamelCase str
 	str.replace(reg) do |m| m.charAt(1).toUpperCase
 
+def Imba.toCamelCase str
+	str.replace(reg) do |m| m.charAt(1).toUpperCase
+
 def Imba.indexOf a,b
 	return (b && b:indexOf) ? b.indexOf(a) : []:indexOf.call(a,b)
 
 def Imba.prop scope, name, opts
-	return "oh noes"
+	if scope:defineProperty
+		return scope.defineProperty(name,opts)
+	return
 
 def Imba.attr scope, name, opts
-	return "oh noes"
+	if scope:defineAttribute
+		return scope.defineAttribute(name,opts)
+
+	let getName = Imba.toCamelCase(name)
+	let setName = Imba.toCamelCase('set-' + name)
+
+	scope:prototype[getName] = do
+		return this.getAttribute(name)
+
+	scope:prototype[setName] = do |value|
+		this.setAttribute(name,value)
+		return this
+
+	return
