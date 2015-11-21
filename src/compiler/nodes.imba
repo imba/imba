@@ -2235,12 +2235,13 @@ export class TagDeclaration < Code
 	def id
 		name.id
 
+
 	def tagspace
-		"Imba.TAGS"
+		name.ns ? "Imba.TAGS.{name.ns.toUpperCase}" : "Imba.TAGS"
 
 	def js o
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
-
+		var ns = name.ns
 		var mark = mark__(option('keyword'))
 		var cbody = body.c
 		var outbody = body.count ? ", function({@ctx.c})\{{cbody}\}" : ''
@@ -2251,9 +2252,9 @@ export class TagDeclaration < Code
 		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
 
 		var out = if name.id
-			"{mark}{tagspace}.defineTag('{name.id}'{sup}{outbody})"
+			"{mark}{tagspace}.defineSingleton('{name.id}'{sup}{outbody})"
 		else
-			"{mark}{tagspace}.defineTag('{name.func}'{sup}{outbody})"
+			"{mark}{tagspace}.defineTag('{name.name}'{sup}{outbody})"
 
 		return out
 

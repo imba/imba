@@ -338,17 +338,23 @@ class Imba.Tags
 	def initialize
 		self
 
-	def __base
-
-
-	def __clone
+	def __clone ns
 		var clone = Object.create(self)
 		clone.@parent = self
 		return clone
 
-	def defineTag name, supr, &body
+	def defineNamespace name
+		var clone = Object.create(self)
+		clone.@parent = self
+		clone.@ns = name
+		self[name.toUpperCase] = clone
+		return clone
 
-		supr ||= (name in HTML_TAGS) ? 'htmlelement' : 'div'
+	def baseType name
+		name in HTML_TAGS ? 'htmlelement' : 'div'
+
+	def defineTag name, supr = '', &body
+		supr ||= baseType(name)
 		let supertype = self[supr]
 
 		let tagtype = Tag()
@@ -359,13 +365,27 @@ class Imba.Tags
 		body.call(tagtype,tagtype,tagtype:prototype) if body
 		return tagtype
 
+	def defineSingleton name, supr, &body
+		defineTag(name,supr,body)
+
 	def extendTag name, body
 		var klass = (name isa String ? self[name] : name)
 		body and body.call(klass,klass,klass:prototype) if body
 		return klass
 
+
+
 Imba.TAGS = Imba.Tags.new
+Imba.TAGS.@nativeTypes = HTML_TAGS
+
 Imba.TAGS[:element] = Imba.Tag
+
+var svg = Imba.TAGS.defineNamespace('svg')
+
+def svg.baseType name
+	name in SVG_TAGS ? 'svgelement' : 'svgelement'
+
+
 Imba.SINGLETONS = {}
 
 
