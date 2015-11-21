@@ -9,11 +9,10 @@ tag svg:svgelement
 	def self.buildNode
 		var dom = Imba.document.createElementNS(namespaceURI,@nodeType)
 		var cls = @classes.join(" ")
-		dom:className = cls if cls
+		dom:className:baseVal = cls if cls
 		dom
 
 	def self.inherit child
-		console.log 'svg inherit',child
 		child.@protoDom = null
 
 		if child.@name in types

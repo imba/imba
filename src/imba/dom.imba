@@ -39,6 +39,11 @@ tag htmlelement < element
 	def self.dom
 		@protoDom ||= buildNode
 
+	attr id
+	attr tabindex
+	attr title
+	attr role
+
 	def setChildren nodes, type
 		@empty ? append(nodes) : empty.append(nodes)
 		@children = null

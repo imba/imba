@@ -1,13 +1,5 @@
 
 # predefine all supported html tags
-extend tag htmlelement
-	
-	attr id
-	attr tabindex
-	attr title
-	attr role
-
-
 tag fragment < htmlelement
 	
 	def self.createNode
