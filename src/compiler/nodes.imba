@@ -2227,7 +2227,15 @@ export class TagDeclaration < Code
 		@body = blk__(body || [])
 
 	def visit
-		ROOT.entities.register(self)
+		ROOT.entities.register(self) # what if this is not local?
+
+		for scope,i in STACK.scopes
+			if i > 0 and scope isa TagScope
+				# register inside here?
+				scope.node.option(:hasLocalTags,yes)
+				option(:parent,scope.node)
+				break
+				# console.log "tag is local!!!"
 		# replace with some advanced lookup?
 		scope.visit
 		body.traverse
@@ -2235,26 +2243,40 @@ export class TagDeclaration < Code
 	def id
 		name.id
 
-
 	def tagspace
-		name.ns ? "Imba.TAGS.{name.ns.toUpperCase}" : "Imba.TAGS"
+		var ctx = scope.closure.tagContextPath
+		name.ns ? "{ctx}.{name.ns.toUpperCase}" : ctx
 
 	def js o
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
+
 		var ns = name.ns
 		var mark = mark__(option('keyword'))
+
+		var params = [helpers.singlequote(name.name)]
 		var cbody = body.c
-		var outbody = body.count ? ", function({@ctx.c})\{{cbody}\}" : ''
+		# var outbody = body.count ? ", function({@ctx.c})\{{cbody}\}" : ''
 
-		if option(:extension)
-			return "{mark}{tagspace}.extendTag('{name.id or name.func}'{outbody})"
+		if superclass
+			# WARN what if the superclass has a namespace?
+			params.push(helpers.singlequote(superclass.name))
 
-		var sup =  superclass and "," + helpers.singlequote(superclass.func) or ""
+		if body.count
+			if option(:hasLocalTags)
+				params.push("function({@ctx.c},{scope.closure.tagContextPath})\{{cbody}\}")
+			else
+				params.push("function({@ctx.c})\{{cbody}\}")
+
+		var meth = option(:extension) ? 'extendTag' : 'defineTag'
+		# return "{mark}{tagspace}.extendTag('{name.name}'{outbody})"
+
+		# var sup = superclass and "," + helpers.singlequote(superclass.func) or ""
 
 		# var out = if name.id
 		#	"{mark}{tagspace}.defineSingleton('{name.name}'{sup}{outbody})"
 		# else
-		return "{mark}{tagspace}.defineTag('{name.name}'{sup}{outbody})"
+
+		return "{mark}{tagspace}.{meth}({params.join(', ')})"
 
 		# return out
 
@@ -5769,7 +5791,7 @@ export class Tag < Node
 			if type.ns
 				"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}()"
 			else
-				"{mark__(o:open)}t$('{type.func}')"
+				"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}()"
 
 		# this is reactive if it has an ivar
 		if o:ivar
@@ -6680,7 +6702,8 @@ export class Scope
 		'?'
 
 	def tagContextPath
-		"Imba.TAGS"
+		# bypassing for now
+		@tagContextPath ||= "tag$" # parent.tagContextPath
 
 	def context
 		@context ||= ScopeContext.new(self)
@@ -6918,6 +6941,9 @@ export class RootScope < Scope
 
 	def context
 		@context ||= RootScopeContext.new(self)
+
+	def tagContextPath
+		@tagContextPath ||= "tag$"
 
 	def lookup name
 		# p "lookup filescope"

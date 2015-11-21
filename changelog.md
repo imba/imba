@@ -4,6 +4,7 @@
 - Added support for SVG
 - attr definitions will preserve dash in generated setAttribute
 - Removed description object for plain generated properties
+- Allow nested tag definitions (local to the parent scope)
 
 
 ## 0.13.12

@@ -367,17 +367,25 @@ class Imba.Tags
 			self[name] = tagtype
 			Imba.SINGLETONS[name.slice(1)] = tagtype
 		else
-			self[norm] = tagtype
+			self[name] = tagtype
 			self['$'+norm] = TagSpawner(tagtype)
 
-		body.call(tagtype,tagtype,tagtype:prototype) if body
+		if body
+			if body:length == 2
+				# create clone
+				unless tagtype.hasOwnProperty('TAGS')
+					tagtype.TAGS = (supertype.TAGS or self).__clone
+
+			body.call(tagtype,tagtype, tagtype.TAGS or self)
+
 		return tagtype
 
 	def defineSingleton name, supr, &body
 		defineTag(name,supr,body)
 
-	def extendTag name, body
+	def extendTag name, supr = '', &body
 		var klass = (name isa String ? self[name] : name)
+		# allow for private tags here as well?
 		body and body.call(klass,klass,klass:prototype) if body
 		return klass
 
@@ -483,6 +491,7 @@ def Imba.getTagForDom dom
 	spawner = tags[type] or tags[native]
 	spawner ? spawner.new(dom).awaken(dom) : null
 
+tag$ = Imba.TAGS
 t$ = Imba:tag
 tc$ = Imba:tagWithFlags
 ti$ = Imba:tagWithId
