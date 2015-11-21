@@ -2551,7 +2551,7 @@ export class PropertyDeclaration < Node
 			if pars:inline isa Bool and !pars:inline.truthy
 				o.remove('inline')
 				# p "dont make attr inline(!)"
-				return "Imba.{@token}({js:scope},'{name.value}',{o.c})"
+				return "Imba.{@token}({js:scope},'{name.value}',{o.c})".replace(',{})',')')
 
 			# p "pars inline?!? {pars:inline}", typeof pars:inline
 

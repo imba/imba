@@ -28,6 +28,9 @@ tag svg:svgelement
 	attr x
 	attr y
 
+	attr stroke inline: no
+	attr stroke-width inline: no
+
 tag svg:svg
 	attr viewbox
 	attr width
@@ -47,3 +50,13 @@ tag svg:ellipse
 	attr cy
 	attr rx
 	attr ry
+
+tag svg:path
+	attr d
+	attr pathLength inline: no
+
+tag svg:line
+	attr x1 inline: no
+	attr x2 inline: no
+	attr y1 inline: no
+	attr y2 inline: no
