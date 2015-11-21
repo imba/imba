@@ -25,34 +25,33 @@ tag svg:svgelement
 			child.@classes = @classes.concat(className)
 
 
-	attr x
-	attr y
+	attr x inline: no
+	attr y inline: no
+
+	attr width inline: no
+	attr height inline: no
 
 	attr stroke inline: no
 	attr stroke-width inline: no
 
 tag svg:svg
-	attr viewbox
-	attr width
-	attr height
+	attr viewbox inline: no
 
 tag svg:rect
-	attr width
-	attr height
 
 tag svg:circle
-	attr cx
-	attr cy
-	attr r
+	attr cx inline: no
+	attr cy inline: no
+	attr r inline: no
 
 tag svg:ellipse
-	attr cx
-	attr cy
-	attr rx
-	attr ry
+	attr cx inline: no
+	attr cy inline: no
+	attr rx inline: no
+	attr ry inline: no
 
 tag svg:path
-	attr d
+	attr d inline: no
 	attr pathLength inline: no
 
 tag svg:line
