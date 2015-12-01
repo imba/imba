@@ -482,7 +482,7 @@ def Imba.getTagForDom dom
 		# should fall back to less specific later? - otherwise things may fail
 		# TODO rework this
 		if var m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)
-			type = m[1].replace(/-/g,'_')
+			type = m[1] # .replace(/-/g,'_')
 
 		if m = cls.match(/\b([A-Z\-]+)_\b/)
 			ns = m[1]

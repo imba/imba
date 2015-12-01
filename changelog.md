@@ -1,4 +1,7 @@
-## edge
+## 0.14.1
+- Fixed regression for awakening tags from client
+
+## 0.14.0
 - Removed IMBA_TAGS (must use Imba.TAGS)
 - Groundwork for arbitrary namespaces for tags (and local/private tags)
 - Added support for SVG
