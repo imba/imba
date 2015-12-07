@@ -39,8 +39,8 @@ def api.parse code, o = {}
 
 
 def api.compile code, o = {}
-	var ast = api.parse(code,o)
 	try
+		var ast = api.parse(code,o)
 		var res = ast.compile(o)
 		return {code: res.toString, sourcemap: res:sourcemap}
 

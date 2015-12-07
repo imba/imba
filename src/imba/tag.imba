@@ -132,7 +132,6 @@ class Imba.Tag
 	Method for getting and setting data-attributes. When called with zero
 	arguments it will return the actual dataset for the tag.
 
-	# Example
 		var node = <div data-name='hello'>
 		# get the whole dataset
 		node.dataset # {name: 'hello'}

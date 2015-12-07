@@ -4895,7 +4895,8 @@ export class If < ControlFlow
 			var code = null
 			# if body.count == 1 # dont indent by ourselves?
 
-			if body isa Block and body.count == 1
+			if body isa Block and body.count == 1 and !(body.first isa LoopFlowStatement)
+				# p "body to body first {body.first}"
 				body = body.first
 
 			# if body.count == 1
@@ -4903,6 +4904,7 @@ export class If < ControlFlow
 			#	body = body.first
 
 			code = body.c(braces: yes) # (braces: yes)
+
 			# don't wrap if it is only a single expression?
 			var out = "{mark__(@type)}if ({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
 			out += " else {alt.c(alt isa If ? {} : brace)}" if alt

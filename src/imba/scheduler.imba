@@ -221,6 +221,7 @@ class Imba.Scheduler
 			@target:commit = do this
 			Imba.schedule(self)
 			Imba.listen(Imba,'event',self,'onevent') if @events
+			@target?.flag('scheduled_')
 			tick(0) # start ticking
 		return self
 
@@ -233,6 +234,7 @@ class Imba.Scheduler
 			@target:commit = @commit
 			Imba.unschedule(self)
 			Imba.unlisten(Imba,'event',self)
+			@target?.unflag('scheduled_')
 		return self
 
 	def track

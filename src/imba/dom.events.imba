@@ -107,7 +107,6 @@ down from the innermost target, until it finds a node that responds to
 ontouchstart. Unless the touch is explicitly redirected, the touch will
 call ontouchmove and ontouchend / ontouchcancel on the responder when appropriate.
 
-# custom draggable tag
 	tag draggable
 		# called when a touch starts
 		def ontouchstart touch
@@ -694,12 +693,6 @@ class Imba.Event
 
 	###
 	Return the x/left coordinate of the mouse / pointer for this event
-	
-	# tag syntax using bool
-		node.prepend <div.top> # prepend node
-    	node.prepend "some text" # prepend text
-    	node.prepend [<ul>,<ul>] # prepend array
-
 	@return {Number} x coordinate of mouse / pointer for event
 	###
 	def x do event:x

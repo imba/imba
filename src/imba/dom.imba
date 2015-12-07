@@ -137,7 +137,6 @@ tag htmlelement < element
 	###
 	Get the last matching child of node
 
-	# example
 		node.last # returns the last child of node
 		node.last %span # returns the last span inside node
 		node.last do |el| el.text == 'Hi' # return last node with text Hi
