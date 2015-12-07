@@ -451,6 +451,18 @@ class Imba.Touch
 	def y do @y
 
 	###
+	Horizontal position of touch relative to target
+	@return {Number}
+	###
+	def offsetX do @touch ? @touch:offsetX : @event:offsetX
+
+	###
+	Vertical position of touch relative to target
+	@return {Number}
+	###
+	def offsetY do @touch ? @touch:offsetY : @event:offsetY
+
+	###
 	Button pressed in this touch. Native touches defaults to left-click (0)
 	@return {Number}
 	###
