@@ -1,27 +1,7 @@
 var doc = document
 var win = window
 
-var hasTouchEvents = window && window:ontouchstart !== undefined # .hasOwnProperty('ontouchstart')
-
-# will remove
-class RingBuffer
-
-	prop head
-
-	def initialize len = 10
-		@array  = []
-		@keep = len
-		@head = 0
-		return self
-
-	def push obj
-		var i = @head++
-		@array[i % @keep] = obj
-		i
-
-	def last
-		@array[@head % @keep]
-
+var hasTouchEvents = window && window:ontouchstart !== undefined
 
 class Imba.Pointer
 
@@ -37,15 +17,11 @@ class Imba.Pointer
 
 	def initialize
 		button = -1
-		events = RingBuffer.new(10)
 		event = {x: 0, y: 0, type: 'uninitialized'}
 		return self
 
 	def update e
-		# console.log(e)
 		event = e
-		# normalize the event / touch?
-		events.push(e)
 		dirty = yes
 		self
 
@@ -197,7 +173,7 @@ class Imba.Touch
 	prop active
 	prop event
 	prop pointer
-	prop target # if 'safe' we can cache multiple uses
+	prop target
 	prop handler
 	prop updates
 	prop suppress
@@ -206,7 +182,6 @@ class Imba.Touch
 
 	prop gestures
 
-	# duration etc -- important
 	###
 	
 
@@ -218,17 +193,20 @@ class Imba.Touch
 		self.event = event
 		data = {}
 		active = yes
-		@suppress = no
+		@suppress = no # deprecated
+		@captured = no
 		bubble = no
 		pointer = pointer
 		updates = 0
 		return self
 
-	def preventDefault
-		@preventDefault = yes
-		event and event.preventDefault
-		# pointer.event.preventDefault
+	def capture
+		@captured = yes
+		@event and @event.preventDefault
 		self
+
+	def isCaptured
+		!!@captured
 
 	###
 	Extend the touch with a plugin / gesture. 
@@ -260,29 +238,30 @@ class Imba.Touch
 		@active = no
 		self
 
+	def suppress= value
+		console.warn 'Imba.Touch#suppress= is deprecated'
+		@supress = value
+		self
+
 	def touchstart e,t
-		# console.log 'native ontouchstart',e,t
 		@event = e
 		@touch = t
 		@x = t:clientX
 		@y = t:clientY
 		began
-		e.preventDefault if e and @suppress
+		e.preventDefault if e and isCaptured
 		self
 
 	def touchmove e,t
-		# console.log 'native ontouchmove',e,t
 		@event = e
 		@x = t:clientX
 		@y = t:clientY
 		update
-		e.preventDefault if e and @suppress
+		e.preventDefault if e and isCaptured
 		self
 
 	def touchend e,t
-		# console.log 'native ontouchend',e,t,e:timeStamp
 		@event = e
-		# log "touchend"
 		@x = t:clientX
 		@y = t:clientY
 		ended
@@ -295,33 +274,30 @@ class Imba.Touch
 			tap.process
 			e.preventDefault if tap.@responder	
 
-		if e and @suppress
+		if e and isCaptured
 			e.preventDefault
 
 		self
 
 	def touchcancel e,t
-		# log "touchcancel"
+		# TODO implement
 		self
 
 
 	def mousedown e,t
-		# log "mousedown"
 		@x = t:clientX
 		@y = t:clientY
 		began
 
 		@mousemove = (|e| mousemove(e,e) )
 		doc.addEventListener('mousemove',@mousemove,yes)
-		# inside here -- start tracking mousemove directly
-
 		self
 
 	def mousemove e,t
 		@x = t:clientX
 		@y = t:clientY
 		@event = e
-		e.preventDefault if @suppress
+		e.preventDefault if isCaptured
 		update
 		move
 		self
@@ -336,7 +312,6 @@ class Imba.Touch
 
 	def idle
 		update
-
 
 	def began
 		@maxdr = @dr = 0
@@ -454,13 +429,17 @@ class Imba.Touch
 	Horizontal position of touch relative to target
 	@return {Number}
 	###
-	def offsetX do @touch ? @touch:offsetX : @event:offsetX
+	def tx do
+		@targetBox ||= @target.dom.getBoundingClientRect
+		@x - @targetBox:left
 
 	###
 	Vertical position of touch relative to target
 	@return {Number}
 	###
-	def offsetY do @touch ? @touch:offsetY : @event:offsetY
+	def ty
+		@targetBox ||= @target.dom.getBoundingClientRect
+		@y - @targetBox:top
 
 	###
 	Button pressed in this touch. Native touches defaults to left-click (0)

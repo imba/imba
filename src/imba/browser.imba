@@ -1,7 +1,7 @@
 
 if typeof Imba === 'undefined'
 	require './imba'
-	
+
 	Imba.CLIENT = yes
 
 	require './core.events'
@@ -15,3 +15,5 @@ if typeof Imba === 'undefined'
 	require './dom.events'
 	require './dom.static'
 	require './selector'
+else
+	console.warn "Imba is already loaded"

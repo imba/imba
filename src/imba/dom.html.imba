@@ -43,6 +43,8 @@ tag canvas
 	def height
 		dom:height
 
+	def context type = '2d'
+		dom.getContext(type)
 
 tag caption
 tag cite

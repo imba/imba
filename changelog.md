@@ -1,5 +1,10 @@
 ## 0.14.1
 - Fixed regression for awakening tags from client
+- Add width/height getters for tags
+- Add context getter for canvas
+- Add Imba.Touch#tx and Imba.Touch#ty for pos relative to target
+- Removed deprecated code in dom.events
+- Deprecate Imba.Touch#suppress
 
 ## 0.14.0
 - Removed IMBA_TAGS (must use Imba.TAGS)

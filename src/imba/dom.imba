@@ -44,6 +44,12 @@ tag htmlelement < element
 	attr title
 	attr role
 
+	def width
+		@dom:offsetWidth
+
+	def height
+		@dom:offsetHeight
+
 	def setChildren nodes, type
 		@empty ? append(nodes) : empty.append(nodes)
 		@children = null
