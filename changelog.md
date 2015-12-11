@@ -8,6 +8,7 @@
 - Handle touchcancel correctly
 - Deprecate Imba.Touch#suppress
 - Bugfix: right-click caused havok with mousebased Imba.Touch
+- Bugfix: watched attribute would not trigger correctly
 
 ## 0.14.0
 - Removed IMBA_TAGS (must use Imba.TAGS)

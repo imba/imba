@@ -2522,7 +2522,7 @@ export class PropertyDeclaration < Node
 	${path}.${getter} = function(v){ return ${get}; }
 	${path}.${setter} = function(v){
 		var a = this.${getter}();
-		if(v != a) { v = ${set}; }
+		if(v != a) { ${set}; }
 		if(v != a) { ${ondirty} }
 		return this;
 	}
@@ -2610,16 +2610,18 @@ export class PropertyDeclaration < Node
 
 		elif o.key(:delegate)
 			# if we have a delegate
-			js:set = "this.__{key}.delegate.set(this,'{key}',v,this.__{key})"
+			js:set = "v = this.__{key}.delegate.set(this,'{key}',v,this.__{key})"
 			js:get = "this.__{key}.delegate.get(this,'{key}',this.__{key})"
 
 
 
 		if pars:default
-			# add better default-support here - go through class-method setAttribute instead
 			if o.key(:dom)
+				# FIXME go through class-method setAttribute instead
 				js:init = "{js:scope}.dom().setAttribute('{key}',{pars:default.c});"
 			else
+				# if this is not a primitive - it MUST be included in the
+				# getter / setter instead
 				js:init = "{js:scope}.prototype._{key} = {pars:default.c};"
 
 		if o.key(:chainable)
