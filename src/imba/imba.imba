@@ -9,6 +9,7 @@ Imba is the namespace for all runtime related utilities
 ###
 Imba = {
 	VERSION: '0.14.1'
+	DEBUG: no
 }
 
 var reg = /-./g

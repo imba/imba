@@ -2,9 +2,12 @@
 - Fixed regression for awakening tags from client
 - Add width/height getters for tags
 - Add context getter for canvas
-- Add Imba.Touch#tx and Imba.Touch#ty for pos relative to target
 - Removed deprecated code in dom.events
+- Add Imba.Touch#tx and Imba.Touch#ty for pos relative to target
+- Add Imba.Touch#capture for preventing all default behaviour of events
+- Handle touchcancel correctly
 - Deprecate Imba.Touch#suppress
+- Bugfix: right-click caused havok with mousebased Imba.Touch
 
 ## 0.14.0
 - Removed IMBA_TAGS (must use Imba.TAGS)

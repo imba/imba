@@ -36,6 +36,13 @@ class Imba.Pointer
 			# button should only change on mousedown etc
 			if e1:type == 'mousedown'
 				button = e1:button
+
+				# do not create touch for right click
+				if button == 2 or (touch and button != 0)
+					return
+
+				# cancel the previous touch
+				touch.cancel if touch
 				touch = Imba.Touch.new(e1,self)
 				touch.mousedown(e1,e1)
 
@@ -44,8 +51,10 @@ class Imba.Pointer
 
 			elif e1:type == 'mouseup'
 				button = -1
-				touch.mouseup(e1,e1) if touch
-				touch = null # reuse?
+
+				if touch and touch.button == e1:button
+					touch.mouseup(e1,e1)
+					touch = null
 				# trigger pointerup
 		else
 			touch.idle if touch
@@ -110,12 +119,7 @@ class Imba.Touch
 		count
 
 	def self.lookup item
-		# return touch if var touch = item:__touch__
 		return item and (item:__touch__ or identifiers[item:identifier])
-		# look for lookup
-		# var id = item:identifier
-		# if id != undefined and (touch = IMBA_TOUCH_IDENTIFIERS{id})
-		# 	return touch 
 
 	def self.release item,touch
 		delete identifiers[item:identifier]
@@ -193,6 +197,7 @@ class Imba.Touch
 		self.event = event
 		data = {}
 		active = yes
+		@button = event and event:button or 0
 		@suppress = no # deprecated
 		@captured = no
 		bubble = no
@@ -246,6 +251,7 @@ class Imba.Touch
 	def touchstart e,t
 		@event = e
 		@touch = t
+		@button = 0
 		@x = t:clientX
 		@y = t:clientY
 		began
@@ -280,11 +286,11 @@ class Imba.Touch
 		self
 
 	def touchcancel e,t
-		# TODO implement
-		self
-
+		cancel
 
 	def mousedown e,t
+		@event = e
+		@button = e:button
 		@x = t:clientX
 		@y = t:clientY
 		began
@@ -355,7 +361,7 @@ class Imba.Touch
 		if @gestures
 			g.ontouchupdate(self) for g in @gestures
 
-		target.ontouchupdate(self) if target and target:ontouchupdate
+		target?.ontouchupdate(self)
 		self
 
 	def move
@@ -365,7 +371,7 @@ class Imba.Touch
 			for g in @gestures
 				g.ontouchmove(self,@event) if g:ontouchmove
 
-		target.ontouchmove(self,@event) if target and target:ontouchmove
+		target?.ontouchmove(self,@event)
 		self
 
 	def ended
@@ -376,11 +382,28 @@ class Imba.Touch
 		if @gestures
 			g.ontouchend(self) for g in @gestures
 
-		target.ontouchend(self) if target and target:ontouchend
+		target?.ontouchend(self)
 
 		self
 
+	def cancel
+		unless @cancelled
+			@cancelled = yes
+			cancelled
+			doc.removeEventListener('mousemove',@mousemove,yes) if @mousemove
+		self
+
 	def cancelled
+		return self unless @active
+
+		@cancelled = yes
+		@updates++
+
+		if @gestures
+			for g in @gestures
+				g.ontouchcancel(self) if g:ontouchcancel
+
+		target?.ontouchcancel(self)
 		self
 
 	###
@@ -445,7 +468,7 @@ class Imba.Touch
 	Button pressed in this touch. Native touches defaults to left-click (0)
 	@return {Number}
 	###
-	def button do @pointer ? @pointer.button : 0
+	def button do @button # @pointer ? @pointer.button : 0
 
 	def sourceTarget
 		@sourceTarget
@@ -829,7 +852,7 @@ if hasTouchEvents
 		Imba.Touch.ontouchcancel(e)
 
 Imba.Events.register(:click) do |e|
-
+	# Only for main mousebutton, no?
 	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
 		var tap = Imba.Event.new(e)
 		tap.type = 'tap'
