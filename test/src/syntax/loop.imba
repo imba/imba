@@ -181,6 +181,19 @@ describe 'Syntax - Loops' do
 			a.push a:length
 		eq a, [0,1,2,3,4]
 
+	test "nested loops" do
+		var res = []
+		var people = [{name: 'John', meta: {a: 1}},{name: 'Jane', meta: {b: 2}}]
+
+		for person in people
+			var name = person:name
+
+			for own k,v of person:meta
+				res.push(k)
+
+		eq res, ['a','b']
+		return
+
 	describe "Loop" do
 
 		it "should work" do

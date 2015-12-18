@@ -5127,6 +5127,7 @@ export class For < Loop
 			# are we sure? _really_?
 			vars:len = scope.declare('len',src.right) # util.len(o,yes).predeclare
 			# make the scope be the declarator
+			# TODO would like to be able to have counter in range as well
 			vars:index = scope.register(o:name,scope,type: 'let', declared: yes)
 			# p "registered {vars:index:constructor}"
 			# p "index-var is declareod?!?! {vars:index.@declared}"
@@ -5303,7 +5304,8 @@ export class ForOf < For
 		# possibly proxy the index-variable?
 
 		if o:own
-			var i = vars:index = scope.declare('i',0,system: true, type: 'let') # mark as a counter?
+			# var i = vars:index = scope.declare('i',0,system: true, type: 'let') # mark as a counter?
+			var i = vars:index = util.counter(0,yes,scope).predeclare
 			# systemvariable -- should not really be added to the map
 			var keys = vars:keys = scope.declare('keys',Util.keys(src.accessor),system: yes, type: 'let') # the outer one should resolve first
 			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
