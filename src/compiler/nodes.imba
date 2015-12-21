@@ -5185,11 +5185,12 @@ export class For < Loop
 		var assignee = null
 		# might only work for locals?
 		if node isa Assign
+			# p "node isa assign {node} {node.left}"
 			if var receiver = node.left
-				assignee = receiver.@variable
-				if receiver.@variable
-					# assignee
-					reuseable = yes
+				if assignee = receiver.@variable
+					# we can only pull the var reference into the scope
+					# if we know that the variable is declared in this scope
+					reuseable = (receiver isa VarReference)
 
 		# p "reusable?!?! {node} {node}"
 
