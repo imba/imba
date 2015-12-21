@@ -127,17 +127,13 @@ class Imba.Scheduler
 		@dt
 
 	###
-	Delta time between the two last ticks
-	@return {Number}
+	Configure the scheduler
+	@return {self}
 	###
 	def configure fps: 1, events: yes
 		@events = events if events != null
 		@fps = fps if fps != null
 		self
-
-	# def reschedule
-	# 	raf(@ticker)
-	# 	self
 
 	###
 	Mark the scheduler as dirty. This will make sure that
