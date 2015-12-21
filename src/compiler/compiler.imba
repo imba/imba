@@ -40,7 +40,7 @@ export def parse code, o = {}
 	var tokens = code isa Array ? code : tokenize(code,o)
 	try
 		# console.log("Tokens",tokens)
-		o.@source = code
+		o.@source ||= code if tokens != code
 		o.@tokens = tokens
 		return parser.parse tokens
 	catch err
