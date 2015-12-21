@@ -36,7 +36,28 @@ tag svg:svgelement
 tag svg:svg
 	attr viewbox inline: no
 
+tag svg:g
+
+tag svg:defs
+
+tag svg:symbol
+	attr preserveAspectRatio inline: no
+	attr viewBox inline: no
+
+tag svg:marker
+	attr markerUnits inline: no
+	attr refX inline: no
+	attr refY inline: no
+	attr markerWidth inline: no
+	attr markerHeight inline: no
+	attr orient inline: no
+
+
+# Basic shapes
+
 tag svg:rect
+	attr rx inline: no
+	attr ry inline: no
 
 tag svg:circle
 	attr cx inline: no
@@ -58,3 +79,24 @@ tag svg:line
 	attr x2 inline: no
 	attr y1 inline: no
 	attr y2 inline: no
+
+tag svg:polyline
+	attr points inline: no
+
+tag svg:polygon
+	attr points inline: no
+
+tag svg:text
+	attr dx inline: no
+	attr dy inline: no
+	attr text-anchor inline: no
+	attr rotate inline: no
+	attr textLength inline: no
+	attr lengthAdjust inline: no
+
+tag svg:tspan
+	attr dx inline: no
+	attr dy inline: no
+	attr rotate inline: no
+	attr textLength inline: no
+	attr lengthAdjust inline: no
