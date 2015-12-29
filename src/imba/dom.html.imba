@@ -167,6 +167,8 @@ tag samp
 tag script
 	attr src
 	attr type
+	attr async
+	attr defer
 
 tag section
 
