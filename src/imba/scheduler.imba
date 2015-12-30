@@ -7,7 +7,9 @@ raf ||= do |blk| setTimeout(blk,1000 / 60)
 
 def Imba.tick d
 	raf(Imba.ticker) if @scheduled
+	Imba.Scheduler.willRun
 	emit(self,'tick',[d])
+	Imba.Scheduler.didRun
 	return
 
 def Imba.ticker
@@ -50,7 +52,8 @@ after the timeout to let schedulers update (to rerender etc) afterwards.
 def Imba.setTimeout delay, &block
 	setTimeout(&,delay) do
 		block()
-		Imba.emit(Imba,'timeout',[block])
+		Imba.Scheduler.markDirty
+		# Imba.emit(Imba,'timeout',[block])
 
 ###
 
@@ -62,7 +65,8 @@ after every interval to let schedulers update (to rerender etc) afterwards.
 def Imba.setInterval interval, &block
 	setInterval(&,interval) do
 		block()
-		Imba.emit(Imba,'interval',[block])
+		Imba.Scheduler.markDirty
+		# Imba.emit(Imba,'interval',[block])
 
 ###
 Clear interval with specified id
@@ -92,6 +96,23 @@ own schedulers to control when they render.
 
 ###
 class Imba.Scheduler
+
+	def self.markDirty
+		@dirty = yes
+		self
+
+	def self.isDirty
+		!!@dirty
+
+	def self.willRun
+		@active = yes
+
+	def self.didRun
+		@active = no
+		@dirty = no
+
+	def self.isActive
+		!!@active
 
 	###
 	Create a new Imba.Scheduler for specified target
@@ -197,7 +218,7 @@ class Imba.Scheduler
 				@beat = beat
 				@marked = yes
 
-		flush if @marked
+		flush if @marked or (@events and Imba.Scheduler.isDirty)
 		# reschedule if @active
 		self
 
