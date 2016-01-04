@@ -171,8 +171,8 @@ tag htmlelement < element
 			return sel(self)
 
 		sel = sel.query if sel:query
-		return fn.call(@dom,sel) if var fn = (@dom:webkitMatchesSelector or @dom:matches)
-		# TODO support other browsers etc?
+		if var fn = (@dom:matches or @dom:matchesSelector or @dom:webkitMatchesSelector or @dom:msMatchesSelector or @dom:mozMatchesSelector)
+			return fn.call(@dom,sel)
 
 	###
 	Get the first element matching supplied selector / filter
