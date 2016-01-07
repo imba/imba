@@ -90,19 +90,6 @@ tag htmlelement < element
 		Imba.Events.trigger name, self, data: data, bubble: bubble
 		return self
 
-	def css key, val
-		if key isa Object
-			css(k,v) for own k,v of key
-		elif val == null
-			dom:style.removeProperty(key)
-		elif val == undefined
-			return dom:style[key]
-		else
-			if val isa Number and key.match(/width|height|left|right|top|bottom/)
-				val = val + "px"
-			dom:style[key] = val
-		self
-
 	def dataset key, val
 		if key isa Object
 			dataset(k,v) for own k,v of key
