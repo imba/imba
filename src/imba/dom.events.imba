@@ -602,6 +602,13 @@ class Imba.Event
 		@cancel = yes
 		self
 
+	def silence
+		@silenced = yes
+		self
+
+	def isSilenced
+		!!@silenced
+
 	###
 	Indicates whether or not event.cancel has been called.
 
@@ -702,7 +709,7 @@ class Imba.Event
 
 
 	def processed
-		Imba.emit(Imba,'event',[self])
+		Imba.emit(Imba,'event',[self]) unless @silenced
 		self
 
 	###
@@ -828,7 +835,7 @@ class Imba.EventManager
 ED = Imba.Events = Imba.EventManager.new(document, events: [
 	:keydown,:keyup,:keypress,:textInput,:input,:change,:submit,
 	:focusin,:focusout,:blur,:contextmenu,:dblclick,
-	:mousewheel,:wheel
+	:mousewheel,:wheel,:scroll
 ])
 
 # should set these up inside the Imba.Events object itself
