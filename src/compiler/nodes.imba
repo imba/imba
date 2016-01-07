@@ -2509,7 +2509,6 @@ export class TagFragmentDeclaration < MethodDeclaration
 export class PropertyDeclaration < Node
 
 	var propTemplate = '''
-
 	${headers}
 	${path}.${getter} = function(v){ return ${get}; }
 	${path}.${setter} = function(v){ ${set}; return this; }
@@ -2517,7 +2516,6 @@ export class PropertyDeclaration < Node
 	'''
 
 	var propWatchTemplate = '''
-
 	${headers}
 	${path}.${getter} = function(v){ return ${get}; }
 	${path}.${setter} = function(v){
@@ -2638,7 +2636,8 @@ export class PropertyDeclaration < Node
 		var out = tpl.replace(reg) do |m,a| js[a]
 		# run another time for nesting. hacky
 		out = out.replace(reg) do |m,a| js[a]
-		out = out.replace(/\n\s*$/,'')
+		# out = out.replace(/\n\s*$/,'')
+		out = out.replace(/^\s+|\s+$/g, '')
 		
 		# if o.key(:v)
 		return out
