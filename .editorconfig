@@ -1,0 +1,23 @@
+root = true
+
+# Reflects the current formatting of code in repo
+# while we are actively discussing tabs vs spaces
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.imba]
+charset = utf-8
+indent_style = tab
+indent_size = 4
+
+[*.js]
+charset = utf-8
+indent_style = tab
+indent_size = 4
+
+[package.json]
+indent_style = space
+indent_size = 2
