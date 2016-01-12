@@ -354,23 +354,24 @@ def cli-compile root, o, watch: no
 		basedir = fspath.dirname(base)
 		log chalk.magenta "--- watch file: {b base}" if watch
 
-	# what if it does not exist
-	# log "stat",stat
-
-	var dirs = basedir.split(fspath:sep)
 	var out  = o:output ? fspath.resolve(process.cwd, o:output) : basedir
 	var outdir = out
 
 	unless o:output
-		var srcIndex = dirs.indexOf('src')
-		if srcIndex >= 0
-			dirs[srcIndex] = 'lib'
+		let sep = fspath:sep
+		let idx = (basedir + sep).lastIndexOf(sep + 'src' + sep)
 
-			var libPath = fspath:sep + fspath.join(*dirs)
-			# absolute paths here?
-			var libExists = fs.existsSync(libPath)
-			outdir = out = libPath
-			# log chalk.blue "--- found dir: {b libPath}" if watch
+		if idx >= 1
+			let replace = sep + 'lib'
+			let pre = basedir.substr(0,idx)
+			let rest = basedir.substr( idx + replace['length'] )
+			let dest = pre + replace + rest
+
+			if fs.existsSync(pre + replace)
+				outdir = out = dest
+			else
+				print "{chalk.dim '--- warn:'} {pre + (chalk.bold replace) + rest} "
+				log chalk.dim "not found - compiling to /src"
 
 	# compiling a single file - no need to require chokidar at all
 	if isFile and !watch
