@@ -1356,12 +1356,7 @@ export class Lexer
 		var match
 
 		return 0 unless match = MULTI_DENT.exec(@chunk)
-		# should it not pair by itself token('SELECTOR_END','%',0)
-		# if @end == '%'
-		# 	console.log "pairing selector in lineToken {@chunk.substr(0,10)}"
-		# 	# should not need to add anything here?
-		# 	pair('%')
-		
+
 		var indent = match[0]
 		var brCount = moveHead(indent)
 
@@ -1370,40 +1365,35 @@ export class Lexer
 
 		var prev = last @tokens, 1
 		let whitespace = indent.substr(indent.lastIndexOf('\n') + 1)
-		# var size = indent:length - 1 - indent.lastIndexOf '\n'
 		var size = whitespace:length
 		var noNewlines = self.unfinished
 
-		# console.log "noNewlines",noNewlines
-		# console.log "lineToken -- ",@chunk.substr(0,10),"--"
 		if (/^\n#\s/).test(@chunk)
 			addLinebreaks(1)
 			return 0
 
 		if size > 0
-			# we need to warn about mixing indentation, both on the same line
-			# if indent.match(/(\ \t|\t\ )/)
-			# 	console.log 'mixed indentation'
-
-			# let pre = indent.substr(indent.lastIndexOf('\n') + 1)
-
 			unless @indentStyle
 				@opts:indent = @indentStyle = whitespace
 
 			let indentSize = 0
 			let offset = 0
-			# let index = -1
-			while whitespace.indexOf(@indentStyle,offset) >= 0
-				offset += @indentStyle:length
-				indentSize++
 
-			if offset != size
-				return error('inconsistent indentation')
+			while true
+				let idx = whitespace.indexOf(@indentStyle,offset)
+				if idx == offset
+					indentSize++
+					offset += @indentStyle['length']
+				elif offset == whitespace:length
+					break
+				else
+					# workaround to report correct location
+					@loc += indent:length - whitespace:length
+					token('INDENT', whitespace,whitespace:length)
+					return error('inconsistent indentation')
 
-			# console.log size, indentSize
 			size = indentSize
 
-			# now find the right length based on the number of repeats of ptatern
 
 		if size - @indebt is @indent
 			if noNewlines

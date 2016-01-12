@@ -515,7 +515,7 @@ var grammar =
 		o 'ParamVar = Expression' do OptionalParam.new A1, A3, A2
 	]
 
- 	# Function Parameters
+	# Function Parameters
 	ParamVar: [
 		o 'Identifier'
 	]
