@@ -315,6 +315,8 @@ export class Lexer
 		# should rather make it like a statemachine that moves from CLASS_DEF to CLASS_BODY etc
 		# Things should compile differently when you are in a CLASS_BODY than when in a DEF_BODY++
 
+		@indentStyle = null
+
 		@tokens  = []             # Stream of parsed tokens in the form `['TYPE', value, line]`.
 		@seenFor = no
 		@loc = 0
@@ -358,6 +360,8 @@ export class Lexer
 		@code    = code
 		@opts    = o
 		@locOffset = o:loc or 0
+
+		o:indent ||= {style: null, size: null}
 		# add a reference to the options object
 		o.@tokens = @tokens 
 		# what about col here?
@@ -1359,13 +1363,15 @@ export class Lexer
 		# 	pair('%')
 		
 		var indent = match[0]
-		# var brCount = count indent, '\n'
 		var brCount = moveHead(indent)
+
 		@seenFor = no
 		# reset column as well?
 
 		var prev = last @tokens, 1
-		var size = indent:length - 1 - indent.lastIndexOf '\n'
+		let whitespace = indent.substr(indent.lastIndexOf('\n') + 1)
+		# var size = indent:length - 1 - indent.lastIndexOf '\n'
+		var size = whitespace:length
 		var noNewlines = self.unfinished
 
 		# console.log "noNewlines",noNewlines
@@ -1373,6 +1379,31 @@ export class Lexer
 		if (/^\n#\s/).test(@chunk)
 			addLinebreaks(1)
 			return 0
+
+		if size > 0
+			# we need to warn about mixing indentation, both on the same line
+			# if indent.match(/(\ \t|\t\ )/)
+			# 	console.log 'mixed indentation'
+
+			# let pre = indent.substr(indent.lastIndexOf('\n') + 1)
+
+			unless @indentStyle
+				@opts:indent = @indentStyle = whitespace
+
+			let indentSize = 0
+			let offset = 0
+			# let index = -1
+			while whitespace.indexOf(@indentStyle,offset) >= 0
+				offset += @indentStyle:length
+				indentSize++
+
+			if offset != size
+				return error('inconsistent indentation')
+
+			# console.log size, indentSize
+			size = indentSize
+
+			# now find the right length based on the number of repeats of ptatern
 
 		if size - @indebt is @indent
 			if noNewlines
