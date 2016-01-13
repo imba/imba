@@ -146,7 +146,7 @@ def c__ obj
 	typeof obj == 'string' ? obj : obj.c
 
 def mark__ tok
-	if tok and OPTS:sourceMapInline and tok:sourceMapMarker
+	if tok and (OPTS:sourceMapInline or OPTS:sourceMap) and tok:sourceMapMarker
 		tok.sourceMapMarker
 	else
 		''
@@ -193,7 +193,8 @@ def flatten__ ary, compact = no
 	
 def AST.parse str, opts = {}
 	var indent = str.match(/\t+/)[0]
-	Imba.parse(str,opts)
+	# really? Require the compiler, not this
+	Imbac.parse(str,opts)
 
 def AST.inline str, opts = {}
 	parse(str,opts).body
@@ -2016,9 +2017,8 @@ export class Root < Code
 			options: o,
 			toString: (do this:js)
 		}
-
-		if o:sourceMapInline
-			SourceMap.new(result).generate
+		if o:sourceMapInline or o:sourceMap
+			result:sourcemap = SourceMap.new(result).generate
 
 		return result
 
@@ -3599,8 +3599,6 @@ export class VarOrAccess < ValueNode
 
 		var scope = scope__
 
-		# p "look for variable named {value} in {scope}"
-
 		var variable = scope.lookup(value)
 
 		# does not really need to have a declarator already? -- tricky
@@ -3718,15 +3716,15 @@ export class VarReference < ValueNode
 	prop type
 
 	def initialize value, type
-
+		if value isa VarOrAccess
+			value = value.value
 		# for now - this can happen
-		# if value isa Arr
-
 		super(value)
 		@export = no
 		@type = type and String(type)
 		@variable = null
 		@declared = yes # just testing now
+
 
 	def loc
 		# p "loc for VarReference {@value:constructor} {@value.@value:constructor} {@value.region}"
@@ -3742,7 +3740,7 @@ export class VarReference < ValueNode
 		
 		# what about resolving?
 		var ref = @variable
-		var out = ref.c
+		var out = "{mark__(@value)}{ref.c}"
 
 		# p "VarReference {out} - {o.up} {o.up == self}\n{o}"
 
@@ -3755,8 +3753,7 @@ export class VarReference < ValueNode
 				# p "autodeclare"
 				ref.autodeclare
 			else
-				# 
-				out = "var {mark__(@value)}{out}"
+				out = "var {out}"
 				ref.@declared = yes
 				# ref.set(declared: yes)
 
@@ -3776,13 +3773,14 @@ export class VarReference < ValueNode
 		self
 
 	def visit
-		# p "visit vardecl"
+		
 		# console.log "value type for VarReference {@value} {@value.@loc} {@value:constructor}"
 
 		# should be possible to have a VarReference without a name as well? for a system-variable
 		# name should not set this way.
 		# p "varname {value} {value:constructor}"
 		var name = value.c
+		# p "visit vardecl {name} {value}"
 
 		# what about looking up? - on register we want to mark
 		var v = @variable ||= scope__.register(name, self, type: @type)
@@ -3816,7 +3814,6 @@ export class Assign < Op
 		# to always use explicit tuples - then we can move assignments out etc
 		# this will not be needed after we remove support for var a,b,c = 1,2,3
 		if l isa VarReference and l.value isa Arr
-			# p "case with var!!"
 			# converting all nodes to var-references ?
 			# do we need to keep it in a varblock at all?
 			var vars = l.value.nodes.map do |v|
@@ -3828,6 +3825,8 @@ export class Assign < Op
 				elif v isa VarReference
 					true
 				else
+					# what about retaining location?
+					# v = v.value if v isa VarOrAccess
 					v = VarReference.new(v,l.type)
 
 				return v

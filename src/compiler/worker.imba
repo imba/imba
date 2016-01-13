@@ -1,9 +1,10 @@
 extern postMessage
 
-var ERR = require './errors'
+import ImbaParseError from './errors'
+
 var lexer = require './lexer'
 var rewriter = require './rewriter'
-var parser = require('./parser')['parser']
+var parser = require('../../lib/compiler/parser')['parser']
 var ast = require './nodes'
 
 # Instantiate a Lexer for our use here.
@@ -40,19 +41,21 @@ def api.parse code, o = {}
 
 def api.compile code, o = {}
 	try
+		# console.log 'try compile'
 		var ast = api.parse(code,o)
 		var res = ast.compile(o)
 		return {code: res.toString, sourcemap: res:sourcemap}
 
 	catch e
+		# console.log 'compile error',e:message
 		# normalize somewhere else
-		unless e isa ERR.ImbaParseError
+		unless e isa ImbaParseError
 			if e:lexer
-				e = ERR.ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
+				e = ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
 			else
 				e = {message: e:message}
 
-		e = e.toJSON if e isa ERR.ImbaParseError
+		e = e.toJSON if e isa ImbaParseError
 
 		return {error: e}
 
@@ -63,19 +66,20 @@ def api.analyze code, o = {}
 		meta = ast.analyze(loglevel: 0)
 	catch e
 		# console.log "something wrong {e:message}"
-		unless e isa ERR.ImbaParseError
+		unless e isa ImbaParseError
 			if e:lexer
-				e = ERR.ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
+				e = ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
 			else
 				e = {message: e:message}
 
-		e = e.toJSON if e isa ERR.ImbaParseError
+		e = e.toJSON if e isa ImbaParseError
 		
 		meta = {warnings: [e]}
 	return meta
 
 
 global def onmessage e
+	# console.log 'message to webworker'
 	var params = e:data
 	var id = params:id
 

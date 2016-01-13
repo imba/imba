@@ -1,14 +1,11 @@
 
-var fs = require 'fs'
-var path = require 'path'
-
 # var imba = require '../imba'
 var T = require './token'
 var ERR = require './errors'
 var util = require './helpers'
 var lexer = require './lexer'
 var rewriter = require './rewriter'
-export var parser = require('./parser')['parser']
+export var parser = require('../../lib/compiler/parser')['parser']
 var ast = require './nodes'
 
 import ImbaParseError from './errors'
@@ -94,23 +91,3 @@ export def analyze code, o = {}
 				throw e
 		meta = {warnings: [e]}
 	return meta
-
-
-export def run code, filename: null
-	var main = require:main
-	main:filename = process:argv[1] = (filename ? fs.realpathSync(filename) : '.')
-	main:moduleCache &&= {} # removing all cache?!?
-
-	var Module = require('module').Module
-	main:paths = Module._nodeModulePaths(path.dirname(filename))
-
-	if path.extname(main:filename) != '.imba' or require:extensions
-		var content = compile(code, arguments[1])
-		main._compile (content:js or content), main:filename
-	else
-		main._compile code, main:filename
-
-if require:extensions
-	require:extensions['.imba'] = do |mod, filename|
-		var content = compile(fs.readFileSync(filename, 'utf8'), filename: filename)
-		mod._compile (content:js or content), filename

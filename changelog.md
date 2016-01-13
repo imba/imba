@@ -1,3 +1,9 @@
+## 0.14.3
+- Internal refactoring
+- Moved internal build over to webpack
+- Bugfix: source maps should work again
+- Bugfix: compilation on windows finds correct path
+
 ## 0.14.1
 - Fixed regression for awakening tags from client
 - Add width/height getters for tags

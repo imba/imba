@@ -16,6 +16,7 @@ def cliproto.helpInformation
 	str = str.replace(/(Options|Usage|Examples|Commands)\:/g) do |m| chalk.bold m
 	return str
 
+Imbac = require './index'
 var compiler  = require './compiler'
 var fspath = path
 var T = require './token'
@@ -97,7 +98,7 @@ class SourceFile
 	def run
 		process:argv.shift
 		process:argv[0] = 'imba'
-		compiler.run(code, filename: @path)
+		Imbac.run(code, filename: @path)
 
 	def htmlify
 		var out = compiler.highlight(code,filename: @path)

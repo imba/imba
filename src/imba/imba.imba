@@ -1,14 +1,16 @@
-extern window, global
-
 if typeof window !== 'undefined'
+	# should not go there
 	global = window
 
+var isClient = (typeof window == 'object' and this == window)
 ###
 Imba is the namespace for all runtime related utilities
 @namespace
 ###
 Imba = {
-	VERSION: '0.14.2'
+	VERSION: '0.14.3'
+	CLIENT: isClient
+	SERVER: !isClient
 	DEBUG: no
 }
 

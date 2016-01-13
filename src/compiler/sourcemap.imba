@@ -52,6 +52,8 @@ export class SourceMap
 		# split the code in lines. go through each line 
 		# go through the code looking for LOC markers
 		# remove markers along the way and keep track of
+		# console.log source:js
+
 		for line,i in lines
 			# could split on these?
 			var col = 0
@@ -67,7 +69,7 @@ export class SourceMap
 					return pre
 			lines[i] = line
 
-		# console.log source:js
+		
 		source:js = lines.join('\n')
 		self
 
@@ -104,9 +106,7 @@ export class SourceMap
 
 		var rel = path.relative(path.dirname(targetPath),sourcePath)
 
-		# console.log sourcePath, targetPath, rel
-
-		var sourcemap =
+		var map =
 			version: 3
 			file: sourceName.replace(/\.imba/,'.js') or ''
 			sourceRoot: options:sourceRoot or ''
@@ -115,12 +115,10 @@ export class SourceMap
 			names:      []
 			mappings:   buffer
 
-		options:sourcemap = sourcemap
-		var base64 = Buffer.new(JSON.stringify(sourcemap)).toString("base64")
-		# var base64 = "data:application/json;base64,{base64}"
-		# options:js += "\n//# sourceMappingURL={sourceName.replace(/\.imba$/,'.map')}"
-		source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
-		self
+		# source:sourcemap = sourcemap
+		# var base64 = Buffer.new(JSON.stringify(map)).toString("base64")
+		# source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
+		return map
 
 	VLQ_SHIFT = 5
 	VLQ_CONTINUATION_BIT = 1 << VLQ_SHIFT

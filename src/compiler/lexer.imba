@@ -641,39 +641,6 @@ export class Lexer
 			return id:length
 		else
 			return 0
-
-		if (id == '%' or id == '$') and ['%','$','@','(','['].indexOf(chr) >= 0
-			var idx = 2
-			
-
-			# VERY temporary way of solving this
-			if (chr == '%' or chr == '$' or chr == '@')
-				id += chr
-				idx = 3
-				chr = @chunk.charAt(2)
-
-
-			if chr == '('
-				return 0 unless var string = balancedSelector(@chunk, ')')
-				if 0 < string.indexOf('{', 1)
-					token 'SELECTOR',id
-					# is this even used anymore? If so - we need to fix it
-					interpolateString(string.slice idx, -1)
-					return string:length
-				else
-					token 'SELECTOR',id
-					token '(','('
-					token 'STRING', '"'+string.slice(idx,-1)+'"'
-					token ')',')'
-					return string:length
-
-			elif chr == '['
-				token 'SELECTOR',id
-				return 1
-				# token '[','['
-				# @ends.push ''
-		else
-			return 0
 	
 	# is this really needed? Should be possible to
 	# parse the identifiers and = etc i jison?
@@ -861,7 +828,7 @@ export class Lexer
 
 			# moveCaret(match[2]:length)
 			# return 0
-			console.log match[3]:length
+			# console.log match[3]:length
 			token typ, id, match[0]:length
 			token ':', ':',1
 			return match[0]:length
