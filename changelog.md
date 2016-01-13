@@ -1,4 +1,5 @@
 ## 0.14.3
+- Mixing tabs and spaces for indentation will now throw error
 - Internal refactoring
 - Moved internal build over to webpack
 - Bugfix: source maps should work again
