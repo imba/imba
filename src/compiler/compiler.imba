@@ -20,6 +20,7 @@ export var Rewriter = rewriter.Rewriter
 parser:lexer = lex.jisonBridge
 parser:yy = ast # everything is exported right here now
 
+
 export def tokenize code, o = {}
 	try
 		o.@source = code
@@ -55,6 +56,8 @@ export def compile code, o = {}
 		return ast.compile(o)
 	catch err
 		err:_filename = o:filename if o:filename
+		tokens ||= o.@tokens
+
 		if tokens && err isa ImbaParseError
 			try
 				var tok = err.start
