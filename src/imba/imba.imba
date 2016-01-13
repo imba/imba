@@ -19,14 +19,14 @@ True if running in client environment.
 @return {bool}
 ###
 def Imba.isClient
-	Imba.CLIENT === yes
+	Imba.CLIENT == yes
 
 ###
 True if running in server environment.
 @return {bool}
 ###
 def Imba.isServer
-	Imba.SERVER === yes
+	Imba.SERVER == yes
 
 def Imba.subclass obj, sup
 	for k,v of sup

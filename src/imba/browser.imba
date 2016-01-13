@@ -2,7 +2,8 @@
 if typeof Imba === 'undefined'
 	require './imba'
 
-	Imba.CLIENT = yes
+	var imba = Imba
+	imba.CLIENT = yes
 
 	require './core.events'
 	require './scheduler'

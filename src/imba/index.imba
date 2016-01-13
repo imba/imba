@@ -1,6 +1,7 @@
 require './imba'
 
-Imba.SERVER = yes
+var imba = Imba
+imba.SERVER = yes
 
 require './core.events'
 require './scheduler'
