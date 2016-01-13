@@ -19,47 +19,25 @@ var dev = [
 	new webpack.SourceMapDevToolPlugin({})
 ]
 
-if(false){
+if(true){
 	module.exports = [{
 		module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
-		// resolveLoader: { root: path.join(__dirname, "node_modules") },
-		resolve: {extensions: ['', '.js', '.imba']},
-		entry: "./tmp/src/bug.imba",
-		output: { filename: "./dist/imbac.dev.js", library: "Imbac" },
+		resolveLoader: { root: path.join(__dirname, "node_modules") },
+		resolve: {extensions: ['', '.imba', '.js']},
+		entry: "./src/imba/index.imba",
+		output: { filename: "./dist/imba.dev.js" },
 		plugins: dev
-	}]
-} else {
-	module.exports = [{
-	// 	module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
-	// 	// resolveLoader: { root: path.join(__dirname, "node_modules") },
-	// 	resolve: {extensions: ['', '.js', '.imba']},
-	// 	entry: "./src/imba/browser.imba",
-	// 	output: { filename: "./dist/imba.js" },
-	// 	plugins: [
-	// 		new webpack.DefinePlugin({
-	// 			"Imba.SERVER": false,
-	// 			"Imba.DEBUG": false,
-	// 			"Imba.CLIENT": true
-	// 		}),
-	// 		new webpack.optimize.UglifyJsPlugin({minimize: true})
-	// 	]
-	// },{
-	// 	module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
-	// 	// resolveLoader: { root: path.join(__dirname, "node_modules") },
-	// 	resolve: {extensions: ['', '.js', '.imba']},
-	// 	entry: "./src/imba/browser.imba",
-	// 	output: { filename: "./dist/imba.dev.js" },
-	// 	plugins: [
-	// 		new webpack.DefinePlugin({
-	// 			"Imba.SERVER": false,
-	// 			"Imba.DEBUG": true,
-	// 			"Imba.CLIENT": true
-	// 		}),
-	// 		new webpack.SourceMapDevToolPlugin({})
-	// 	]
-	// },{
+	},{
 		module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
-		// resolveLoader: { root: path.join(__dirname, "node_modules") },
+		resolveLoader: { root: path.join(__dirname, "node_modules") },
+		resolve: {extensions: ['', '.imba','.js']},
+		entry: "./src/imba/index.imba",
+		output: { filename: "./dist/imba.js" },
+		plugins: prod
+	},{
+	
+		module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
+		resolveLoader: { root: path.join(__dirname, "node_modules") },
 		resolve: {extensions: ['', '.js', '.imba']},
 		entry: "./src/compiler/compiler.imba",
 		output: { filename: "./dist/imbac.dev.js", library: "Imbac" },
@@ -71,7 +49,7 @@ if(false){
 		plugins: dev
 	},{
 		module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
-		// resolveLoader: { root: path.join(__dirname, "node_modules") },
+		resolveLoader: { root: path.join(__dirname, "node_modules") },
 		resolve: {extensions: ['', '.js', '.imba']},
 		entry: "./src/compiler/compiler.imba",
 		output: { filename: "./dist/imbac.js", library: "Imbac" },
@@ -83,7 +61,7 @@ if(false){
 		plugins: prod
 	},{
 		module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
-		// resolveLoader: { root: path.join(__dirname, "node_modules") },
+		resolveLoader: { root: path.join(__dirname, "node_modules") },
 		resolve: {extensions: ['', '.js', '.imba']},
 		entry: "./src/compiler/worker.imba",
 		output: { filename: "./dist/imbac.worker.js", library: "ImbaWorker"},
@@ -91,7 +69,7 @@ if(false){
 		plugins: prod
 	},{
 		module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
-		// resolveLoader: { root: path.join(__dirname, "node_modules") },
+		resolveLoader: { root: path.join(__dirname, "node_modules") },
 		resolve: {extensions: ['', '.js', '.imba']},
 		entry: "./src/compiler/worker.imba",
 		output: { filename: "./dist/imbac.worker.js", library: "ImbaWorker"},
@@ -99,7 +77,7 @@ if(false){
 		plugins: prod
 	},{
 		module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
-		// resolveLoader: { root: path.join(__dirname, "node_modules") },
+		resolveLoader: { root: path.join(__dirname, "node_modules") },
 		resolve: {extensions: ['', '.js', '.imba']},
 		entry: "./src/compiler/worker.imba",
 		output: { filename: "./dist/imbac.worker.dev.js", library: "ImbaWorker"},
@@ -107,8 +85,3 @@ if(false){
 		plugins: dev
 	}]
 }
-
-
-/*
-
-*/
