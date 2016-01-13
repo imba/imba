@@ -51,7 +51,9 @@
     "url": "git://github.com/somebee/imba.git"
   },
   "devDependencies": {
-    "browserify": "^9.0.8"
+    "imba-loader": "^1.0.1",
+    "source-map": "^0.5.1",
+    "webpack": "^1.12.9"
   },
   "dependencies": {
     "chalk": "^1.0.5",

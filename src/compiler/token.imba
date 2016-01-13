@@ -2,15 +2,12 @@
 
 export var TOK = {}
 var TTERMINATOR = TOK.TERMINATOR = 1
-var TIDENTIFIER = TOK.IDENTIFIER = 2
-var TIDENTIFIER = TOK.IVAR = 2
+var TIDENTIFIER = TOK.IDENTIFIER = TOK.IVAR = 2
 var CONST = TOK.CONST = 3
 var VAR = TOK.VAR = 4
 var IF = TOK.IF = 5
 var ELSE = TOK.ELSE = 6
 var DEF = TOK.DEF = 7
-
-
 
 export class Token
 

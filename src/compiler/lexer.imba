@@ -51,7 +51,7 @@ var IMBA_ALIAS_MAP =
 	'nil'  : 'null'
 
 var IMBA_ALIASES  = Object.keys(IMBA_ALIAS_MAP)
-var IMBA_KEYWORDS = IMBA_KEYWORDS.concat(IMBA_ALIASES)
+IMBA_KEYWORDS = IMBA_KEYWORDS.concat(IMBA_ALIASES)
 
 # FixedArray for performance
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
