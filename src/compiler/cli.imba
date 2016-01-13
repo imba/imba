@@ -323,7 +323,11 @@ def write-file source, outpath, options = {}
 					print chalk.yellow "    {b 'warning'}: {warn:message}"
 
 		if ok
-			fs.writeFileSync(outpath,code:js or code)
+			var js = code:js or code
+			if options:sourceMapInline and code:sourcemap
+				var base64 = Buffer.new(JSON.stringify(code:sourcemap)).toString("base64")
+				js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
+			fs.writeFileSync(outpath,js)
 
 	catch e
 		let toks = options.@tokens
