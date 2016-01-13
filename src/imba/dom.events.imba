@@ -641,18 +641,16 @@ class Imba.Event
 	@return {String}
 	###
 	def keychar
-		if event isa TextEvent
-			return event:data
-
 		if event isa KeyboardEvent
 			var ki = event:keyIdentifier
 			var sym = Imba.KEYMAP[event:keyCode]
 
-			# p 'keysym!',ki,sym
-
 			if !sym and ki.substr(0,2) == "U+"
 				sym = String.fromCharCode(parseInt(ki.substr(2), 16))
 			return sym
+
+		elif event isa (window.TextEvent or window.InputEvent)
+			return event:data
 
 		return null
 
