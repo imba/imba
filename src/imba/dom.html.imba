@@ -152,6 +152,13 @@ tag optgroup
 tag option
 	attr value
 
+	def selected
+		dom:selected
+
+	def selected= bool
+		dom:selected = bool unless bool == dom:selected
+		self
+
 tag output
 tag p
 tag param
