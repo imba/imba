@@ -421,6 +421,7 @@ cli.command('compile <path>')
 	.description('compile scripts')
 	.option('-m, --source-map-inline', 'Embed inline sourcemap in compiled JavaScript')
 	.option('-s, --standalone', 'Embed utils from Imba runtime')
+	.option('-b, --bare', 'Skipp wrapping code in outer closure')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |path,o| cli-compile path, o, watch: no
 
@@ -428,6 +429,7 @@ cli.command('watch <path>')
 	.description('listen for changes and compile scripts')
 	.option('-m, --source-map-inline', 'Embed inline sourcemap in compiled JavaScript')
 	.option('-s, --standalone', 'Embed utils from Imba runtime')
+	.option('-b, --bare', 'Skipp wrapping code in outer closure')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |root,o| cli-compile(root,o,watch: yes)
 
