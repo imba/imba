@@ -481,7 +481,6 @@ export class Lexer
 
 	def tagContextToken
 		if @chunk[0] == '#'
-			# console.log('found id # in tagContextToken')
 			token('#','#',1)
 			return 1
 
@@ -849,6 +848,10 @@ export class Lexer
 
 		var prev = last(@tokens)
 		var lastTyp = @lastTyp
+
+		if lastTyp == '#'
+			token('IDENTIFIER', id, idlen)
+			return idlen
 
 		# should we force this to be an identifier even if it is a reserved word?
 		# this should only happen for when part of object etc

@@ -67,6 +67,11 @@ describe 'Tags - Define' do
 					else
 						<div.other>
 
+	test "singleton with reserved names" do
+		tag #try
+			def hello
+				yes
+		<#try>
 
 
 	test "cache for in" do
