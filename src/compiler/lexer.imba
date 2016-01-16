@@ -515,6 +515,9 @@ export class Lexer
 			token 'TAG_ID', input, input:length
 			return input:length
 
+		if @chunk[0] == '\n'
+			pair('TAG')
+
 		return 0
 
 
@@ -1281,8 +1284,9 @@ export class Lexer
 				# FIXME what is this?
 				tokens.push *value
 			else
-				if !value
-					console.log "what??"
+
+				# if !value
+				#	throw error?
 
 				continue unless value = value.replace(HEREGEX_OMIT, '')
 
@@ -1521,9 +1525,8 @@ export class Lexer
 
 	# Generate a newline token. Consecutive newlines get merged together.
 	def newlineToken lines
-		# console.log "newlineToken"
+		
 		while lastTokenValue() == ';'
-			console.log "pop token",@tokens[@tokens:length - 1]
 			@tokens.pop
 
 		addLinebreaks(lines)
@@ -1714,8 +1717,6 @@ export class Lexer
 
 	# Close up all remaining open blocks at the end of the file.
 	def closeIndentation
-		# ctx = context
-		# pair(ctx) if ctx in ['%','DEF']
 		closeDef
 		closeSelector
 		outdentToken(@indent,no,0)
