@@ -1,7 +1,6 @@
 
 # var imba = require '../imba'
 var T = require './token'
-var ERR = require './errors'
 var util = require './helpers'
 var lexer = require './lexer'
 var rewriter = require './rewriter'
