@@ -362,6 +362,9 @@ class Imba.Tags
 		clone.@parent = self
 		return clone
 
+	def ns name
+		self[name.toUpperCase] || defineNamespace(name)
+
 	def defineNamespace name
 		var clone = Object.create(self)
 		clone.@parent = self

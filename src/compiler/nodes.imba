@@ -2245,7 +2245,7 @@ export class TagDeclaration < Code
 
 	def tagspace
 		var ctx = scope.closure.tagContextPath
-		name.ns ? "{ctx}.{name.ns.toUpperCase}" : ctx
+		name.ns ? "{ctx}.ns({helpers.singlequote name.ns})" : ctx
 
 	def js o
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
