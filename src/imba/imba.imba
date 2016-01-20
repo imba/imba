@@ -1,8 +1,9 @@
-if typeof window !== 'undefined'
-	# should not go there
-	global = window
-
 var isClient = (typeof window == 'object' and this == window)
+
+if isClient
+	# should not go there
+	window:global ||= window
+
 ###
 Imba is the namespace for all runtime related utilities
 @namespace

@@ -76,13 +76,14 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {(function(){
-		if (typeof window !== 'undefined') {
+	(function(){
+		var isClient = (typeof window == 'object' && this == window);
+		
+		if (isClient) {
 			// should not go there
-			global = window;
+			window.global || (window.global = window);
 		};
 		
-		var isClient = (typeof window == 'object' && this == window);
 		/*
 		Imba is the namespace for all runtime related utilities
 		@namespace
@@ -210,7 +211,6 @@
 		};
 
 	})()
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
 /* 2 */
