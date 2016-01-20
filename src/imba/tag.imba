@@ -234,8 +234,8 @@ class Imba.Tag
 		if arguments:length == 2
 			if @dom:classList.contains(name) != !!toggler
 				@dom:classList.toggle(name)
-			else
-				@dom:classList.add(name)
+		else
+			@dom:classList.add(name)
 		return self
 
 	###
