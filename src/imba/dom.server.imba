@@ -37,7 +37,11 @@ global class ImbaNodeClassList
 		self
 
 	def toggle flag
+		contains(flag) ? remove(flag) : add(flag)
 		self
+
+	def contains flag
+		@classes.indexOf(flag) >= 0
 
 	def clone dom
 		var clone = ImbaNodeClassList.new(dom,@classes.slice(0))
