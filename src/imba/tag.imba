@@ -232,11 +232,11 @@ class Imba.Tag
 		# it is most natural to treat a second undefined argument as a no-switch
 		# so we need to check the arguments-length
 		if arguments:length == 2
-            if @dom:classList.contains(name) != !!toggler
-                @dom:classList.toggle(name)
-            else
-                @dom:classList.add(name)
-            return self
+			if @dom:classList.contains(name) != !!toggler
+				@dom:classList.toggle(name)
+			else
+				@dom:classList.add(name)
+		return self
 
 	###
 	Remove specified flag from node
