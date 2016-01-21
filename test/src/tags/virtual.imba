@@ -123,6 +123,10 @@ tag other
 		<self> for item in items
 			<li> item
 
+tag textlist
+	def render texts = []
+		<self> for item in texts
+			item
 
 tag group2 < group
 
@@ -375,4 +379,11 @@ describe "Tags" do
 			group.render list: [c,d,e,f,a,b], str: "Added string again as well"
 			eq group.opstr, "III"
 
+	describe "text lists" do
+		var node = <textlist>
+		document:body.appendChild(node.dom)
+
+		test "render" do
+			node.render(['a','b','c','d'])
+			eq node.dom:textContent, 'abcd'
 

@@ -6,7 +6,7 @@
 	
 	// externs;
 	
-	Imba.defineTag('el', function(tag){
+	tag$.defineTag('el', function(tag){
 		
 		tag.prototype.flag = function (ref){
 			this._flagged = ref;
@@ -14,22 +14,14 @@
 		};
 	});
 	
-	Imba.defineTag('group', function(tag){
-		
-		tag.prototype.__ops = {name: 'ops'};
+	tag$.defineTag('group', function(tag){
 		tag.prototype.ops = function(v){ return this._ops; }
 		tag.prototype.setOps = function(v){ this._ops = v; return this; };
-		
-		tag.prototype.__opstr = {name: 'opstr'};
 		tag.prototype.opstr = function(v){ return this._opstr; }
 		tag.prototype.setOpstr = function(v){ this._opstr = v; return this; };
 		
-		
-		tag.prototype.__expected = {name: 'expected'};
 		tag.prototype.expected = function(v){ return this._expected; }
 		tag.prototype.setExpected = function(v){ this._expected = v; return this; };
-		
-		tag.prototype.__actual = {name: 'actual'};
 		tag.prototype.actual = function(v){ return this._actual; }
 		tag.prototype.setActual = function(v){ this._actual = v; return this; };
 		
@@ -125,106 +117,120 @@
 			var str = pars.str !== undefined ? pars.str : null;
 			var list2 = pars.list2 !== undefined ? pars.list2 : null;
 			return this.setChildren([
-				(t0 = this.$a=this.$a || t$('el').flag('a')).setContent(this.name(),3).end(),
+				(t0 = this.$a=this.$a || tag$.$el().flag('a')).setContent(this.name(),3).end(),
 				str,
-				(this.$b = this.$b || t$('el').flag('b')).setText("ok").end(),
-				(a) && (Imba.static([
-					(this.$c = this.$c || t$('el').flag('header')).end(),
-					(this.$d = this.$d || t$('el').flag('title')).setText("Header").end(),
-					(this.$e = this.$e || t$('el').flag('tools')).end(),
+				(this.$b = this.$b || tag$.$el().flag('b')).setText("ok").end(),
+				(a) ? (Imba.static([
+					(this.$c = this.$c || tag$.$el().flag('header')).end(),
+					(this.$d = this.$d || tag$.$el().flag('title')).setText("Header").end(),
+					(this.$e = this.$e || tag$.$el().flag('tools')).end(),
 					b ? (Imba.static([
-						(this.$f = this.$f || t$('el').flag('long')).end(),
-						(this.$g = this.$g || t$('el').flag('long')).end()
+						(this.$f = this.$f || tag$.$el().flag('long')).end(),
+						(this.$g = this.$g || tag$.$el().flag('long')).end()
 					],2)) : (Imba.static([
-						(this.$h = this.$h || t$('el').flag('short')).end(),
-						(this.$i = this.$i || t$('el').flag('short')).end(),
-						(this.$j = this.$j || t$('el').flag('short')).end()
+						(this.$h = this.$h || tag$.$el().flag('short')).end(),
+						(this.$i = this.$i || tag$.$el().flag('short')).end(),
+						(this.$j = this.$j || tag$.$el().flag('short')).end()
 					],3)),
-					(this.$k = this.$k || t$('el').flag('ruler')).end()
-				],4)),
-				(c) && (Imba.static([
-					(this.$l = this.$l || t$('div').flag('c1')).setText("long").end(),
-					(this.$m = this.$m || t$('div').flag('c2')).setText("loong").end()
-				],5)),
+					(this.$k = this.$k || tag$.$el().flag('ruler')).end()
+				],4)) : void(0),
+				(c) ? (Imba.static([
+					(this.$l = this.$l || tag$.$div().flag('c1')).setText("long").end(),
+					(this.$m = this.$m || tag$.$div().flag('c2')).setText("loong").end()
+				],5)) : void(0),
 				d && e ? (Imba.static([
-					(this.$n = this.$n || t$('el').flag('long')).end(),
-					(this.$o = this.$o || t$('el').flag('footer')).end(),
-					(this.$p = this.$p || t$('el').flag('bottom')).end()
+					(this.$n = this.$n || tag$.$el().flag('long')).end(),
+					(this.$o = this.$o || tag$.$el().flag('footer')).end(),
+					(this.$p = this.$p || tag$.$el().flag('bottom')).end()
 				],6)) : (e ? (Imba.static([
-					(this.$q = this.$q || t$('el').flag('footer')).end(),
-					(this.$r = this.$r || t$('el').flag('bottom')).end()
+					(this.$q = this.$q || tag$.$el().flag('footer')).end(),
+					(this.$r = this.$r || tag$.$el().flag('bottom')).end()
 				],7)) : (
-					(this.$s = this.$s || t$('el')).setText("!d and !e").end()
+					(this.$s = this.$s || tag$.$el()).setText("!d and !e").end()
 				)),
 				list,
-				(this.$t = this.$t || t$('el').flag('x')).setText("very last").end(),
+				(this.$t = this.$t || tag$.$el().flag('x')).setText("very last").end(),
 				list2
 			],1).synced();
 		};
 	});
 	
 	
-	Imba.defineTag('other', function(tag){
+	tag$.defineTag('other', function(tag){
 		
 		tag.prototype.render = function (){
 			var self = this;
 			return this.setChildren((function(self) {
 				var t0;
 				for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
-					res.push((t0 = self['$a' + i]=self['$a' + i] || t$('li')).setContent(ary[i],3).end());
+					res.push((t0 = self['$a' + i]=self['$a' + i] || tag$.$li()).setContent(ary[i],3).end());
 				};
 				return res;
 			})(self),3).synced();
 		};
 	});
 	
-	
-	Imba.defineTag('group2','group', function(tag){
-		
-		tag.prototype.render = function (pars){
-			if(!pars||pars.constructor !== Object) pars = {};
-			var a = pars.a !== undefined ? pars.a : false;
-			return this.setChildren([a ? (Imba.static([
-				(this.$a = this.$a || t$('el').flag('a')).end(),
-				(this.$b = this.$b || t$('el').flag('b')).end(),
-				(this.$c = this.$c || t$('el').flag('c')).end()
-			],2)) : (Imba.static([
-				(this.$d = this.$d || t$('el').flag('d')).end(),
-				(this.$e = this.$e || t$('el').flag('e')).end()
-			],3))],1).synced();
+	tag$.defineTag('textlist', function(tag){
+		tag.prototype.render = function (texts){
+			var self = this;
+			if(texts === undefined) texts = [];
+			return this.setChildren((function(self) {
+				for (var i = 0, ary = iter$(texts), len = ary.length, res = []; i < len; i++) {
+					res.push(ary[i]);
+				};
+				return res;
+			})(self),3).synced();
 		};
 	});
 	
-	Imba.defineTag('group3','group', function(tag){
+	tag$.defineTag('group2', 'group', function(tag){
 		
 		tag.prototype.render = function (pars){
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
 			return this.setChildren([
-				(this.$a = this.$a || t$('el').flag('a')).end(),
+				a ? (Imba.static([
+					(this.$a = this.$a || tag$.$el().flag('a')).end(),
+					(this.$b = this.$b || tag$.$el().flag('b')).end(),
+					(this.$c = this.$c || tag$.$el().flag('c')).end()
+				],2)) : (Imba.static([
+					(this.$d = this.$d || tag$.$el().flag('d')).end(),
+					(this.$e = this.$e || tag$.$el().flag('e')).end()
+				],3))
+			],1).synced();
+		};
+	});
+	
+	tag$.defineTag('group3', 'group', function(tag){
+		
+		tag.prototype.render = function (pars){
+			if(!pars||pars.constructor !== Object) pars = {};
+			var a = pars.a !== undefined ? pars.a : false;
+			return this.setChildren([
+				(this.$a = this.$a || tag$.$el().flag('a')).end(),
 				a ? ("items") : ("item")
 			],1).synced();
 		};
 	});
 	
-	Imba.defineTag('group4','group', function(tag){
+	tag$.defineTag('group4', 'group', function(tag){
 		
 		tag.prototype.render = function (pars){
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
 			return this.setChildren([
-				(this.$a = this.$a || t$('el').flag('a')).end(),
+				(this.$a = this.$a || tag$.$el().flag('a')).end(),
 				a ? (
 					"text"
 				) : (Imba.static([
-					(this.$b = this.$b || t$('el').flag('b')).end(),
-					(this.$c = this.$c || t$('el').flag('c')).end()
+					(this.$b = this.$b || tag$.$el().flag('b')).end(),
+					(this.$c = this.$c || tag$.$el().flag('c')).end()
 				],2))
 			],1).synced();
 		};
 	});
 	
-	Imba.defineTag('group5','group', function(tag){
+	tag$.defineTag('group5', 'group', function(tag){
 		
 		tag.prototype.render = function (pars){
 			if(!pars||pars.constructor !== Object) pars = {};
@@ -232,12 +238,12 @@
 			return this.setChildren([
 				"a",
 				"b",
-				a ? ((this.$a = this.$a || t$('el').flag('c')).setText("c").end()) : ("d")
+				a ? ((this.$a = this.$a || tag$.$el().flag('c')).setText("c").end()) : ("d")
 			],1).synced();
 		};
 	});
 	
-	Imba.defineTag('unknowns','div', function(tag){
+	tag$.defineTag('unknowns', 'div', function(tag){
 		
 		tag.prototype.ontap = function (){
 			var self = this;
@@ -258,25 +264,27 @@
 				10,
 				"20",
 				"30",
-				(this.$a = this.$a || t$('div').flag('hello')).end(),
-				(t0 = this.$b=this.$b || t$('div').flag('hello')).setContent((t0.$$a = t0.$$a || t$('b')).end(),2).end(),
-				(t1 = this.$c=this.$c || t$('div').flag('int')).setContent(10,3).end(),
-				(t2 = this.$d=this.$d || t$('div').flag('date')).setContent(new Date(),3).end(),
-				(this.$e = this.$e || t$('div').flag('str')).setText("string").end(),
-				(t3 = this.$f=this.$f || t$('div').flag('list')).setContent(this.list(),3).end(),
-				(t4 = this.$g=this.$g || t$('div').flag('item')).setContent(this.tast(),3).end(),
-				(t5 = this.$h=this.$h || t$('div').flag('if')).setContent([true ? (
-					this.list()
-				) : (Imba.static([
-					(t5.$$a = t5.$$a || t$('b')).end(),
-					(t5.$$b = t5.$$b || t$('b')).end()
-				],2))],1).end(),
+				(this.$a = this.$a || tag$.$div().flag('hello')).end(),
+				(t0 = this.$b=this.$b || tag$.$div().flag('hello')).setContent((t0.$$a = t0.$$a || tag$.$b()).end(),2).end(),
+				(t1 = this.$c=this.$c || tag$.$div().flag('int')).setContent(10,3).end(),
+				(t2 = this.$d=this.$d || tag$.$div().flag('date')).setContent(new Date(),3).end(),
+				(this.$e = this.$e || tag$.$div().flag('str')).setText("string").end(),
+				(t3 = this.$f=this.$f || tag$.$div().flag('list')).setContent(this.list(),3).end(),
+				(t4 = this.$g=this.$g || tag$.$div().flag('item')).setContent(this.tast(),3).end(),
+				(t5 = this.$h=this.$h || tag$.$div().flag('if')).setContent([
+					true ? (
+						this.list()
+					) : (Imba.static([
+						(t5.$$a = t5.$$a || tag$.$b()).end(),
+						(t5.$$b = t5.$$b || tag$.$b()).end()
+					],2))
+				],1).end(),
 				
-				(t6 = this.$i=this.$i || t$('div').flag('if')).setContent([
-					(t6.$$a = t6.$$a || t$('b')).end(),
-					(t6.$$b = t6.$$b || t$('b')).end(),
+				(t6 = this.$i=this.$i || tag$.$div().flag('if')).setContent([
+					(t6.$$a = t6.$$a || tag$.$b()).end(),
+					(t6.$$b = t6.$$b || tag$.$b()).end(),
 					this.tast(),
-					(t6.$$c = t6.$$c || t$('b')).end()
+					(t6.$$c = t6.$$c || tag$.$b()).end()
 				],1).end()
 			],1).synced();
 		};
@@ -284,41 +292,41 @@
 		
 		tag.prototype.list = function (){
 			for (var i = 0, ary = [1,2,3], len = ary.length, res = []; i < len; i++) {
-				res.push((this['_' + ary[i]] = this['_' + ary[i]] || t$('div').flag('x')).end());
+				res.push((this['_' + ary[i]] = this['_' + ary[i]] || tag$.$div().flag('x')).end());
 			};
 			return res;
 		};
 	});
 	
-	Imba.defineTag('stat','group', function(tag){
+	tag$.defineTag('stat', 'group', function(tag){
 		tag.prototype.render = function (){
 			var t0;
 			return this.setChildren([
-				(this.$a = this.$a || t$('div').flag('hello')).end(),
-				(t0 = this.$b=this.$b || t$('ul').flag('other')).setContent([
-					(t0.$$a = t0.$$a || t$('li').flag('a')).end(),
-					(t0.$$b = t0.$$b || t$('li').flag('b')).end()
+				(this.$a = this.$a || tag$.$div().flag('hello')).end(),
+				(t0 = this.$b=this.$b || tag$.$ul().flag('other')).setContent([
+					(t0.$$a = t0.$$a || tag$.$li().flag('a')).end(),
+					(t0.$$b = t0.$$b || tag$.$li().flag('b')).end()
 				],2).end(),
-				(this.$c = this.$c || t$('div').flag('again')).end()
+				(this.$c = this.$c || tag$.$div().flag('again')).end()
 			],2).synced();
 		};
 	});
 	
 	return describe("Tags",function() {
 		
-		var a = t$('el').flag('a').setText("a").end();
-		var b = t$('el').flag('b').setText("b").end();
-		var c = t$('el').flag('c').setText("c").end();
-		var d = t$('el').flag('d').setText("d").end();
-		var e = t$('el').flag('e').setText("e").end();
-		var f = t$('el').flag('f').setText("f").end();
+		var a = tag$.$el().flag('a').setText("a").end();
+		var b = tag$.$el().flag('b').setText("b").end();
+		var c = tag$.$el().flag('c').setText("c").end();
+		var d = tag$.$el().flag('d').setText("d").end();
+		var e = tag$.$el().flag('e').setText("e").end();
+		var f = tag$.$el().flag('f').setText("f").end();
 		
-		var g = t$('el').flag('g').setText("g").end();
-		var h = t$('el').flag('h').setText("h").end();
-		var i = t$('el').flag('i').setText("i").end();
-		var j = t$('el').flag('j').setText("j").end();
+		var g = tag$.$el().flag('g').setText("g").end();
+		var h = tag$.$el().flag('h').setText("h").end();
+		var i = tag$.$el().flag('i').setText("i").end();
+		var j = tag$.$el().flag('j').setText("j").end();
 		
-		var group = t$('group').end();
+		var group = tag$.$group().end();
 		document.body.appendChild(group.dom());
 		
 		// test "first render with string" do
@@ -369,7 +377,7 @@
 		});
 		
 		test("toplevel conditionals",function() {
-			var node = t$('group2').end();
+			var node = tag$.$group2().end();
 			node.render({a: true});
 			eq(node.opstr(),"AAA");
 			
@@ -379,7 +387,7 @@
 		});
 		
 		test("conditionals with strings",function() {
-			var node = t$('group3').end();
+			var node = tag$.$group3().end();
 			node.render({a: true});
 			eq(node.opstr(),"AA");
 			
@@ -389,7 +397,7 @@
 		});
 		
 		test("conditionals with strings II",function() {
-			var node = t$('group4').end();
+			var node = tag$.$group4().end();
 			node.render({a: true});
 			eq(node.opstr(),"AA");
 			
@@ -402,7 +410,7 @@
 		describe("group5",function() {
 			
 			return test("conditions",function() {
-				var node = t$('group5').end();
+				var node = tag$.$group5().end();
 				document.body.appendChild(node.dom());
 				node.render({a: false});
 				eq(node.opstr(),"AAA");
@@ -417,13 +425,13 @@
 		});
 		
 		test("unknowns",function() {
-			var node = t$('unknowns').end();
+			var node = tag$.$unknowns().end();
 			document.body.appendChild(node.dom());
 			return node.render({a: false});
 			// eq node.opstr, "AAA"
 		});
 		
-		return describe("dynamic lists",function() {
+		describe("dynamic lists",function() {
 			// render once without anything to reset
 			var full = [a,b,c,d,e,f];
 			
@@ -482,8 +490,17 @@
 				return eq(group.opstr(),"III");
 			});
 		});
+		
+		return describe("text lists",function() {
+			var node = tag$.$textlist().end();
+			document.body.appendChild(node.dom());
+			
+			return test("render",function() {
+				node.render(['a','b','c','d']);
+				return eq(node.dom().textContent,'abcd');
+			});
+		});
 	});
-	
 	
 
 })()
