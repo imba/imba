@@ -320,6 +320,9 @@ class Imba.Tag
 			dom:style[key] = val
 		self
 
+	def trigger event, data = {}
+		Imba.Events.trigger(event,self,data: data)
+
 	def transform= value
 		css(:transform, value)
 		self

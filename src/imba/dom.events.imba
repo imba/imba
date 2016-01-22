@@ -803,13 +803,22 @@ class Imba.EventManager
 		event.process
 		self
 
+	###
+
+	Create a new Imba.Event
+
+	###
 	def create type, target, data: null, source: null
 		var event = Imba.Event.wrap type: type, target: target
 		event.data = data if data
 		event.source = source if source
 		event
 
-	# use create instead?
+	###
+
+	Trigger / process an Imba.Event.
+
+	###
 	def trigger
 		create(*arguments).process
 
