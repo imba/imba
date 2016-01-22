@@ -497,10 +497,13 @@
 			
 			return test("render",function() {
 				node.render(['a','b','c','d']);
-				return eq(node.dom().textContent,'abcd');
+				eq(node.dom().textContent,'abcd');
+				node.render(['b','c','a','d']);
+				return eq(node.dom().textContent,'bcad');
 			});
 		});
 	});
+	
 	
 
 })()

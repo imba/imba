@@ -386,4 +386,7 @@ describe "Tags" do
 		test "render" do
 			node.render(['a','b','c','d'])
 			eq node.dom:textContent, 'abcd'
+			node.render(['b','c','a','d'])
+			eq node.dom:textContent, 'bcad'
+
 
