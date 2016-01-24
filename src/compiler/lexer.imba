@@ -647,6 +647,7 @@ export class Lexer
 	# is this really needed? Should be possible to
 	# parse the identifiers and = etc i jison?
 	# what is special about methodNameToken? really?
+	# this whole step should be removed - it's a huge mess
 	def methodNameToken
 		# we can optimize this by after a def simply
 		# fetching all the way after the def until a space or (
@@ -678,7 +679,7 @@ export class Lexer
 		# drop match 4??
 
 		# should this not quit here in practically all cases?
-		unless (ltyp == '.' or ltyp == 'DEF') or (m4 == '!' or m4 == '?') or match[5]
+		unless (ltyp == '.' or ltyp == 'DEF') or (m4 == '!') or match[5]
 			return 0
 
 		# again, why?
@@ -686,7 +687,8 @@ export class Lexer
 			return 0
 
 		if id == 'new'
-			typ = 'NEW'
+			# console.log 'NEW here?'
+			typ = 'NEW' unless ltyp == '.' and inTag
 
 		if id == '...' and [',','(','CALL_START','BLOCK_PARAM_START','PARAM_START'].indexOf(ltyp) >= 0
 			return 0

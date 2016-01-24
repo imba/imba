@@ -1042,6 +1042,11 @@
 			return this;
 		};
 		
+		Imba.Tag.prototype.trigger = function (event,data){
+			if(data === undefined) data = {};
+			return Imba.Events.trigger(event,this,{data: data});
+		};
+		
 		Imba.Tag.prototype.setTransform = function (value){
 			this.css('transform',value);
 			return this;
@@ -3339,6 +3344,12 @@
 			return this;
 		};
 		
+		/*
+		
+			Create a new Imba.Event
+		
+			*/
+		
 		Imba.EventManager.prototype.create = function (type,target,pars){
 			if(!pars||pars.constructor !== Object) pars = {};
 			var data = pars.data !== undefined ? pars.data : null;
@@ -3349,7 +3360,12 @@
 			return event;
 		};
 		
-		// use create instead?
+		/*
+		
+			Trigger / process an Imba.Event.
+		
+			*/
+		
 		Imba.EventManager.prototype.trigger = function (){
 			return this.create.apply(this,arguments).process();
 		};
