@@ -145,7 +145,7 @@ tag meta
 tag meter
 tag nav
 tag noscript
-tag object
+
 tag ol
 tag optgroup
 
@@ -161,7 +161,18 @@ tag option
 
 tag output
 tag p
+
+tag object
+	attr name inline: no
+	attr type inline: no
+	attr data inline: no
+	attr width inline: no
+	attr height inline: no
+
 tag param
+	attr name
+	attr value
+
 tag pre
 tag progress
 tag q
