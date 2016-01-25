@@ -452,7 +452,7 @@ cli.command('export-runtime <path>')
 	.option('-m, --min', 'minified version')
 	.action do |path, opts|
 		var filename = (opts:min ? 'imba.min.js' : 'imba.js')
-		var rel = '../browser/' + filename
+		var rel = '../../dist/' + filename
 		var lib = fspath.resolve(__dirname,rel)
 		var out = fspath.resolve(process.cwd,path)
 
