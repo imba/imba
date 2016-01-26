@@ -330,6 +330,14 @@ class Imba.Tag
 	def transform
 		css(:transform)
 
+	def style= style
+		setAttribute('style',style)
+		self
+
+	def style
+		getAttribute('style')
+
+	
 
 Imba.Tag:prototype:initialize = Imba.Tag
 

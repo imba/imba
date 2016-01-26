@@ -1056,6 +1056,16 @@
 			return this.css('transform');
 		};
 		
+		Imba.Tag.prototype.setStyle = function (style){
+			this.setAttribute('style',style);
+			return this;
+		};
+		
+		Imba.Tag.prototype.style = function (){
+			return this.getAttribute('style');
+		};
+		
+		
 		
 		Imba.Tag.prototype.initialize = Imba.Tag;
 		
