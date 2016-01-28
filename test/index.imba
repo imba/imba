@@ -1,9 +1,7 @@
-# really?
 
-require '../../index'
+# require imba ( ensure local version )
+require '../index'
 require './spec'
-
-require './parser/index'
 
 require './syntax/loop'
 require './syntax/class'
@@ -30,6 +28,9 @@ require './syntax/formatting'
 require './syntax/issues'
 
 require './tags/define'
+
+if Imba.CLIENT
+	require './tags/virtual'
 
 
 SPEC.run

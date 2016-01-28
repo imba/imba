@@ -31,24 +31,27 @@ tag cached
 			for v in @ary
 				<div@{v}> "v"
 
+var toArray = do |list|
+	[]:slice.call(list,0)
+
 describe 'Tags - Define' do
 
 	test "basic" do
 		var el = <custom>
 		eq el.hello, true
-		eq el.toString, "<div class='_custom'></div>"
+		eq el.toString, '<div class="_custom"></div>'
 
 
 	test "caching" do
 		var el = <cached>
-		var els = el.dom:children
+		var els = toArray(el.dom:children)
 		var [a,b,c] = els
 		eq els:length, 3
-		eq els, [a,b,c]
+		eq els,[a,b,c]
 
 		el.render
 		# children should remain the same after rerender
-		eq el.dom:children, [a,b,c]
+		eq toArray(el.dom:children), [a,b,c]
 
 	# bug
 	test "as part of object" do

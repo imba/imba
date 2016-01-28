@@ -1,7 +1,9 @@
 # to run these tests, simply open the imbadir/test/dom.html in your browser and
 # open the console / developer tools.
 
-extern describe, test, eq, document, _
+extern describe, test, eq
+
+var _ = require 'underscore'
 
 tag el
 

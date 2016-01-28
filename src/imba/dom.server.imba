@@ -125,17 +125,8 @@ global class ImbaServerElement
 		var typ = self:nodeName
 		var sel = "{typ}"
 
-		# difficult with all the attributes etc?
-		# iterating through keys is slow (as tested) -
-		# the whole point is to not need this on the server either
-		# but it can surely be fixed later
-		# and what if we use classList etc?
-		# we do instead want to make it happen directly
-		# better to use setAttribute or something, so we can get the
-		# order and everything. It might not even matter though - fast
-		# no matter what.
-		sel += " id='{v}'" if var v = self:id
-		sel += " class='{v}'" if var v = self:classList.toString
+		sel += " id=\"{v}\"" if var v = self:id
+		sel += " class=\"{v}\"" if var v = self:classList.toString
 		sel += " {@attributes.join(" ")}" if var v = @attributes
 
 		if voidElements[typ]
@@ -182,10 +173,12 @@ Object.defineProperty(el, 'className',
 		this:classList.toString		
 )
 
-extend tag htmlelement
+extend tag element
 
 	def toString
 		dom.toString
+
+extend tag htmlelement
 
 	def empty
 		@dom:children = []
@@ -214,7 +207,7 @@ extend tag html
 		# <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 extend tag style
-	
+
 	def toString
 		"<style/>"
 
