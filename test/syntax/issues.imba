@@ -39,4 +39,19 @@ describe 'Issues' do
 		eq a, [2,4,6]
 
 
+	test 'incorrect var lookup with loops' do
+		var a = {}
+		var b = {}
 
+		for el in [a]
+			let proto = el
+			def proto.first
+				yes
+
+		for el,i in [b]
+			let proto = el
+			def proto.last
+				yes
+
+		ok a:first isa Function
+		ok b:last isa Function
