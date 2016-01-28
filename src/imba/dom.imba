@@ -350,9 +350,6 @@ tag htmlelement < element
 		dom.removeChild(node.@dom or node) if node
 		self
 
-	def toString
-		@dom.toString # really?
-
 	###
 	@deprecated
 	###

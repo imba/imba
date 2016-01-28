@@ -337,6 +337,8 @@ class Imba.Tag
 	def style
 		getAttribute('style')
 
+	def toString
+		dom:outerHTML
 	
 
 Imba.Tag:prototype:initialize = Imba.Tag
