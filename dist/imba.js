@@ -1065,6 +1065,9 @@
 			return this.getAttribute('style');
 		};
 		
+		Imba.Tag.prototype.toString = function (){
+			return this.dom().outerHTML;
+		};
 		
 		
 		Imba.Tag.prototype.initialize = Imba.Tag;
@@ -1761,10 +1764,6 @@
 			tag.prototype.removeChild = function (node){
 				if (node) { this.dom().removeChild(node._dom || node) };
 				return this;
-			};
-			
-			tag.prototype.toString = function (){
-				return this._dom.toString(); // really?
 			};
 			
 			/*

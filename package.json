@@ -28,7 +28,7 @@
     "build-parser": "imba scripts/build-parser.imba",
     "build": "webpack --progress --colors --display-modules",
     "watch": "webpack --watch --progress --colors --display-modules",
-    "test": "imba test/src/run.imba"
+    "test": "bin/imba test/index.imba"
   },
   "bugs": "https://github.com/somebee/imba/issues",
   "version": "0.14.3",
@@ -57,6 +57,7 @@
   "devDependencies": {
     "path-browserify": "0.0.0",
     "source-map": "^0.5.1",
+    "underscore": "^1.8.3",
     "webpack": "^1.12.9"
   },
   "dependencies": {
