@@ -75,7 +75,7 @@ module.exports = [{
 	module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
 	resolveLoader: resolveLoader,
 	resolve: {extensions: ['', '.js', '.imba']},
-	entry: "./test/src/index.imba",
+	entry: "./test/index.imba",
 	output: { filename: "./test/client.js"},
 	target: 'web',
 	node: {fs: "empty"},
