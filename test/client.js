@@ -1950,7 +1950,6 @@
 		});
 		
 		tag$.defineTag('input', function(tag){
-			// can use attr instead
 			tag.prototype.name = function(v){ return this.getAttribute('name'); }
 			tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
 			tag.prototype.type = function(v){ return this.getAttribute('type'); }
@@ -2160,7 +2159,39 @@
 		tag$.defineTag('u');
 		tag$.defineTag('ul');
 		tag$.defineTag('video');
-		return tag$.defineTag('wbr');
+		tag$.defineTag('wbr');
+		
+		// var idls =
+		// 	name: ['button','form','fieldset','iframe','input','keygen','object','output','select','textarea','map','meta','param']
+		// 	src: ['audio','embed','iframe','img','input','script','source','track','video']
+		// 	disabled: ['button','fieldset','input','keygen','optgroup','option','select','textarea'] # 'command',
+		// 	required: ['input','select','textarea']
+		// 
+		// for own name,tags of idls
+		// 	idls[name] = tags.map do |name|
+		// 		console.log name
+		// 		Imba.TAGS[name][:prototype]
+		// 
+		// for typ in idls:src
+		// 	def typ.src do dom:src
+		// 	def typ.setSrc val
+		// 		dom:src = val if val != dom:src
+		// 		self
+		// 
+		// for typ in idls:disabled
+		// 	def typ.disabled do dom:disabled
+		// 	def typ.setDisabled val
+		// 		dom:disabled = val if dom:disabled != !!val
+		// 		self
+		// 
+		// for typ in idls:required
+		// 	def typ.required do dom:required
+		// 	def typ.setRequired val
+		// 		dom:required = val if dom:required != !!val
+		// 		self
+		
+		
+		return true;
 
 	})()
 
@@ -7521,7 +7552,7 @@
 				return self.ok(new (a().B)() instanceof A.B);
 			});
 			
-			return self.test('var hoisting with loops',function() {
+			self.test('var hoisting with loops',function() {
 				
 				var a = 0;
 				
@@ -7537,10 +7568,30 @@
 				
 				return self.eq(a,[2,4,6]);
 			});
+			
+			
+			return self.test('incorrect var lookup with loops',function() {
+				var a = {};
+				var b = {};
+				
+				for (var i = 0, ary = [a], len = ary.length; i < len; i++) {
+					var proto = ary[i];
+					proto.first = function (){
+						return true;
+					};
+				};
+				
+				for (var i = 0, ary = [b], len = ary.length; i < len; i++) {
+					var proto1 = ary[i];
+					proto.last = function (){
+						return true;
+					};
+				};
+				
+				self.ok(a.first instanceof Function);
+				return self.ok(b.last instanceof Function);
+			});
 		});
-		
-		
-		
 
 	})()
 
@@ -7691,14 +7742,15 @@
 				return eq(buildCount,4);
 			});
 			
-			return self.test("void elements",function() {
+			self.test("void elements",function() {
 				var el = tag$.$input().end();
 				return eq(el.toString(),'<input>');
 			});
 			
-			// test "boolean attributes" do
-			// 	var el = <input required=true>
-			// 	eq el.toString, '<input required>'
+			return self.test("boolean attributes",function() {
+				var el = tag$.$input().setRequired(true).end();
+				return eq(el.toString(),'<input required>');
+			});
 		});
 		
 		

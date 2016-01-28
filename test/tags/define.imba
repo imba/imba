@@ -100,9 +100,9 @@ describe 'Tags - Define' do
 		var el = <input>
 		eq el.toString, '<input>'
 
-	# test "boolean attributes" do
-	# 	var el = <input required=true>
-	# 	eq el.toString, '<input required>'
+	test "boolean attributes" do
+		var el = <input required=yes>
+		eq el.toString, '<input required>'
 
 
 					

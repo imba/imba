@@ -90,7 +90,6 @@ tag img
 	attr src
 
 tag input
-	# can use attr instead
 	attr name
 	attr type
 	attr required
@@ -249,3 +248,35 @@ tag u
 tag ul
 tag video
 tag wbr
+
+# var idls =
+# 	name: ['button','form','fieldset','iframe','input','keygen','object','output','select','textarea','map','meta','param']
+# 	src: ['audio','embed','iframe','img','input','script','source','track','video']
+# 	disabled: ['button','fieldset','input','keygen','optgroup','option','select','textarea'] # 'command',
+# 	required: ['input','select','textarea']
+# 
+# for own name,tags of idls
+# 	idls[name] = tags.map do |name|
+# 		console.log name
+# 		Imba.TAGS[name][:prototype]
+# 
+# for typ in idls:src
+# 	def typ.src do dom:src
+# 	def typ.setSrc val
+# 		dom:src = val if val != dom:src
+# 		self
+# 
+# for typ in idls:disabled
+# 	def typ.disabled do dom:disabled
+# 	def typ.setDisabled val
+# 		dom:disabled = val if dom:disabled != !!val
+# 		self
+# 
+# for typ in idls:required
+# 	def typ.required do dom:required
+# 	def typ.setRequired val
+# 		dom:required = val if dom:required != !!val
+# 		self
+
+
+yes
