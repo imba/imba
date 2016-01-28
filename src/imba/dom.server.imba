@@ -1,5 +1,25 @@
 
 
+# TODO classes should not be global,
+# rather imported where they are needed
+
+var voidElements = {
+	area: yes
+	base: yes
+	br: yes
+	col: yes
+	embed: yes
+	hr: yes
+	img: yes
+	input: yes
+	keygen: yes
+	link: yes
+	meta: yes
+	param: yes
+	source: yes
+	track: yes
+	wbr: yes
+}
 
 # could create a fake document 
 global class ImbaServerDocument
@@ -84,14 +104,6 @@ global class ImbaServerElement
 		arr.splice(idx, 0, node)
 		self
 
-	# should implement at some point
-	# should also use shortcut to wipe
-	# def firstChild
-	# 	nil
-	# 
-	# def removeChild
-	# 	nil
-
 	def setAttribute key, value
 		@attributes ||= []
 		@attributes.push("{key}=\"{value}\"")
@@ -112,6 +124,7 @@ global class ImbaServerElement
 	def __outerHTML
 		var typ = self:nodeName
 		var sel = "{typ}"
+
 		# difficult with all the attributes etc?
 		# iterating through keys is slow (as tested) -
 		# the whole point is to not need this on the server either
@@ -125,8 +138,10 @@ global class ImbaServerElement
 		sel += " class='{v}'" if var v = self:classList.toString
 		sel += " {@attributes.join(" ")}" if var v = @attributes
 
-		# var inner = self:innerHTML || self:textContent || (self:children and self:children.join("")) or ''
-		return "<{sel}>{__innerHTML}</{typ}>"
+		if voidElements[typ]
+			return "<{sel}>"
+		else
+			return "<{sel}>{__innerHTML}</{typ}>"
 
 	def toString
 		if @tag and @tag:toNodeString

@@ -93,7 +93,13 @@ describe 'Tags - Define' do
 		root.render
 		eq buildCount, 4
 
+	test "void elements" do
+		var el = <input>
+		eq el.toString, '<input>'
 
+	# test "boolean attributes" do
+	# 	var el = <input required=true>
+	# 	eq el.toString, '<input required>'
 
 
 					
