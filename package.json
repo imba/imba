@@ -8,26 +8,28 @@
     "compiler"
   ],
   "author": "Sindre Aarsaether",
-  "contributors": [{
-    "name" : "Sindre Aarsaether",
-    "email" : "sindre@identu.no",
-    "url" : "http://github.com/somebee/"
-  },{
-    "name" : "Magnus Holm",
-    "email" : "judofyr@gmail.com",
-    "url" : "http://github.com/judofyr/"
-  },{
-    "name" : "Slee Woo",
-    "url" : "http://github.com/sleewoo/"
-  }],
-
+  "contributors": [
+    {
+      "name": "Sindre Aarsaether",
+      "email": "sindre@identu.no",
+      "url": "http://github.com/somebee/"
+    },
+    {
+      "name": "Magnus Holm",
+      "email": "judofyr@gmail.com",
+      "url": "http://github.com/judofyr/"
+    },
+    {
+      "name": "Slee Woo",
+      "url": "http://github.com/sleewoo/"
+    }
+  ],
   "scripts": {
     "build-parser": "imba scripts/build-parser.imba",
     "build": "webpack --progress --colors --display-modules",
     "watch": "webpack --watch --progress --colors --display-modules",
     "test": "imba test/src/run.imba"
   },
-
   "bugs": "https://github.com/somebee/imba/issues",
   "version": "0.14.3",
   "licenses": [
@@ -43,7 +45,9 @@
   "main": "./index.js",
   "browser": "./lib/imba/browser.js",
   "webpack": "./index",
-  "bin": {"imba": "./bin/imba"},
+  "bin": {
+    "imba": "./bin/imba"
+  },
   "preferGlobal": true,
   "homepage": "http://imba.io",
   "repository": {
@@ -51,7 +55,7 @@
     "url": "git://github.com/somebee/imba.git"
   },
   "devDependencies": {
-    "imba-loader": "^1.0.1",
+    "path-browserify": "0.0.0",
     "source-map": "^0.5.1",
     "webpack": "^1.12.9"
   },

@@ -26,7 +26,10 @@ var dev = [
 
 var resolver = {
 	// root: path.join(__dirname, "node_modules")
-	alias: { "imba-loader": path.join(__dirname, "./loader") }
+	alias: {
+		"imba-loader": path.join(__dirname, "./loader"),
+		"path": "path-browserify"
+	}
 }
 
 if(true){
@@ -58,7 +61,7 @@ if(true){
 		entry: "./src/compiler/compiler.imba",
 		output: { filename: "./dist/imbac.dev.js", library: "Imbac" },
 		target: 'web',
-		node: {fs: "empty", path: "empty" },
+		node: {fs: "empty"},
 		plugins: dev
 	},{
 		module: {loaders: [{ "test": /\.imba$/, "loader": 'imba-loader'}]},
@@ -67,7 +70,7 @@ if(true){
 		entry: "./src/compiler/compiler.imba",
 		output: { filename: "./dist/imbac.js", library: "Imbac" },
 		target: 'web',
-		node: {fs: "empty", path: "empty" },
+		node: {fs: "empty"},
 		plugins: prod
 	}]
 }
