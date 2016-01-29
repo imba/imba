@@ -129,6 +129,13 @@ global class ImbaServerElement
 		sel += " class=\"{v}\"" if var v = self:classList.toString
 		sel += " {@attributes.join(" ")}" if var v = @attributes
 
+		# temporary workaround for IDL attributes
+		# needs support for placeholder etc
+		sel += " placeholder=\"{v}\"" if v = self:placeholder
+		sel += " disabled" if self:disabled
+		sel += " required" if self:required
+		sel += " readonly" if self:readonly
+
 		if voidElements[typ]
 			return "<{sel}>"
 		else
