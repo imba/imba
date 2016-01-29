@@ -101,8 +101,19 @@ describe 'Tags - Define' do
 		eq el.toString, '<input>'
 
 	test "boolean attributes" do
-		var el = <input required=yes>
-		eq el.toString, '<input required>'
+		var el = <input required=yes disabled=no>
 
+		if Imba.SERVER
+			eq el.toString, '<input required>'
+		elif Imba.CLIENT
+			eq el.dom:required, yes
+			eq el.dom:disabled, no
 
+	test "style attribute" do
+		var el = <div style='display: block;'>
+		if Imba.CLIENT
+			eq el.dom.getAttribute('style'), 'display: block;'
+		else
+			eq el.toString, '<div style="display: block;"></div>'
+		
 					
