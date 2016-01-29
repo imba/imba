@@ -38,6 +38,13 @@ describe 'Issues' do
 
 		eq a, [2,4,6]
 
+	test 'missing var alias in loop' do
+		try
+			for el in [{}]
+				def el.first
+					yes
+		catch e
+			eq 1, 2
 
 	test 'incorrect var lookup with loops' do
 		var a = {}

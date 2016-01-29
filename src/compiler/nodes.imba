@@ -2422,6 +2422,10 @@ export class MethodDeclaration < Func
 			# should not be registered on the outermost closure?
 			@variable = context.register(name, self, type: 'meth')
 
+		if target isa Identifier
+			if let variable = scope.lookup(target.toString)
+				target = variable
+
 		ROOT.entities.add(namepath,self)
 		@body.traverse # so soon?
 		self
@@ -5092,6 +5096,7 @@ export class For < Loop
 
 	def visit
 		scope.visit
+
 		options[:source].traverse # what about awakening the vars here?
 		declare
 		# should be able to toggle whether to keep the results here already(!)
@@ -5114,15 +5119,10 @@ export class For < Loop
 		var oi   = o:index
 
 		var bare = isBare(src)
-		# p "source is a {src} - {bare}"
-		# var i = vars:index = oi ? scope.declare(oi,0) : util.counter(0,yes).predeclare
 
 		# what about a range where we also include an index?
 		if src isa Range
-			# p "range for-loop"
 
-			# really? declare? 
-			# are we sure? _really_?
 			vars:len = scope.declare('len',src.right) # util.len(o,yes).predeclare
 			# make the scope be the declarator
 			# TODO would like to be able to have counter in range as well
@@ -5189,8 +5189,6 @@ export class For < Loop
 					# we can only pull the var reference into the scope
 					# if we know that the variable is declared in this scope
 					reuseable = (receiver isa VarReference)
-
-		# p "reusable?!?! {node} {node}"
 
 		# WARN Optimization - might have untended side-effects
 		# if we are assigning directly to a local variable, we simply
