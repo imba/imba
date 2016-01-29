@@ -26,22 +26,12 @@ tag br
 tag button
 	attr autofocus
 	attr type
-	attr disabled
+
+	prop disabled dom: yes
 
 tag canvas
-	def width= val
-		dom:width = val unless width == val
-		self
-
-	def height= val
-		dom:height = val unless height == val
-		self
-
-	def width
-		dom:width
-
-	def height
-		dom:height
+	prop width dom: yes
+	prop height dom: yes
 
 	def context type = '2d'
 		dom.getContext(type)
@@ -62,7 +52,10 @@ tag dl
 tag dt
 tag em
 tag embed
+
 tag fieldset
+	prop disabled dom: yes
+
 tag figcaption
 tag figure
 tag footer
@@ -90,32 +83,16 @@ tag img
 	attr src
 
 tag input
-	attr name
 	attr type
 	attr required
 	attr disabled
 	attr autofocus
 
-	def value
-		dom:value
-
-	def value= v
-		dom:value = v unless v == dom:value
-		self
-
-	def placeholder= v
-		dom:placeholder = v unless v == dom:placeholder
-		self
-
-	def placeholder
-		dom:placeholder
-
-	def checked
-		dom:checked
-
-	def checked= bool
-		dom:checked = bool unless bool == dom:checked
-		self
+	prop value dom: yes
+	prop placeholder dom: yes
+	prop required dom: yes
+	prop disabled dom: yes
+	prop checked dom: yes
 
 tag ins
 tag kbd
@@ -137,7 +114,6 @@ tag menu
 tag menuitem
 
 tag meta
-	attr name
 	attr content
 	attr charset
 
@@ -147,22 +123,17 @@ tag noscript
 
 tag ol
 tag optgroup
+	prop disabled dom: yes
 
 tag option
-	attr value
-
-	def selected
-		dom:selected
-
-	def selected= bool
-		dom:selected = bool unless bool == dom:selected
-		self
+	prop disabled dom: yes
+	prop selected dom: yes
+	prop value dom: yes
 
 tag output
 tag p
 
 tag object
-	attr name inline: no
 	attr type inline: no
 	attr data inline: no
 	attr width inline: no
@@ -190,17 +161,11 @@ tag script
 tag section
 
 tag select
-	attr name
 	attr multiple
-	attr required
-	attr disabled
-	
-	def value
-		dom:value
 
-	def value= v
-		dom:value = v unless v == dom:value
-		self
+	prop disabled dom: yes
+	prop required dom: yes
+	prop value dom: yes
 
 
 tag small
@@ -216,26 +181,14 @@ tag tbody
 tag td
 
 tag textarea
-	attr name
-	attr disabled
-	attr required
 	attr rows
 	attr cols
 	attr autofocus
 
-	def value
-		dom:value
-
-	def value= v
-		dom:value = v unless v == dom:value
-		self
-
-	def placeholder= v
-		dom:placeholder = v unless v == dom:placeholder
-		self
-
-	def placeholder
-		dom:placeholder
+	prop value dom: yes
+	prop disabled dom: yes
+	prop required dom: yes
+	prop placeholder dom: yes
 
 tag tfoot
 tag th
@@ -254,7 +207,7 @@ tag wbr
 # 	src: ['audio','embed','iframe','img','input','script','source','track','video']
 # 	disabled: ['button','fieldset','input','keygen','optgroup','option','select','textarea'] # 'command',
 # 	required: ['input','select','textarea']
-# 
+
 # for own name,tags of idls
 # 	idls[name] = tags.map do |name|
 # 		console.log name
