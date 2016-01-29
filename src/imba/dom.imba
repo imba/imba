@@ -39,10 +39,17 @@ tag htmlelement < element
 	def self.dom
 		@protoDom ||= buildNode
 
-	attr id
 	attr tabindex
 	attr title
 	attr role
+	attr name
+
+	def id
+		dom:id
+
+	def id= id
+		dom:id = id
+		self
 
 	def width
 		@dom:offsetWidth
