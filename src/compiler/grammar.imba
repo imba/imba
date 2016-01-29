@@ -294,6 +294,7 @@ var grammar =
 		# o 'IDENTIFIER' do Tag.new(type: TagTypeIdentifier.new(A1))
 		o 'TagOptions INDEX_START Expression INDEX_END' do A1.addIndex(A3)
 		o 'TagOptions . IDENTIFIER' do A1.addClass(A3)
+		o 'TagOptions . CONST' do A1.addClass(A3)
 		o 'TagOptions . { Expression }' do A1.addClass(A4)
 		o 'TagOptions @ { Expression }' do A1.set(key: A4)
 		o 'TagOptions # IDENTIFIER' do A1.set(id: A3)
