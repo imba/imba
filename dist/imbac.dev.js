@@ -7516,6 +7516,7 @@ var Imbac =
 			// @desc = stack.stash.pluck(Comment)
 			// @desc = stack.stash.pluck(Comment)
 			// prebreak # make sure this has a break?
+			var variable;
 			this.scope().visit();
 			
 			if (String(this.name()) == 'initialize') {
@@ -7550,6 +7551,12 @@ var Imbac =
 			if (!this._target) {
 				// should not be registered on the outermost closure?
 				this._variable = this.context().register(this.name(),this,{type: 'meth'});
+			};
+			
+			if (this.target() instanceof Identifier) {
+				if (variable = this.scope().lookup(this.target().toString())) {
+					this.setTarget(variable);
+				};
 			};
 			
 			ROOT.entities().add(this.namepath(),this);
@@ -7736,7 +7743,12 @@ var Imbac =
 				// OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 			};
 			
-			if ((this._token && String(this._token) == 'attr') || o.key('dom') || o.key('attr')) {
+			if (!isAttr && o.key('dom')) {
+				js.set = ("if (v != this.dom()." + (this.name().value()) + ") \{ this.dom()." + (this.name().value()) + " = v \}");
+				js.get = ("this.dom()." + (this.name().value()));
+			};
+			
+			if (isAttr) { // (@token and String(@token) == 'attr') or o.key(:dom) or o.key(:attr)
 				var attrKey = o.key('dom') instanceof Str ? (o.key('dom')) : (this.name().value());
 				// need to make sure o has a key for attr then - so that the delegate can know?
 				js.set = ("this.setAttribute('" + attrKey + "',v)");
@@ -7756,6 +7768,7 @@ var Imbac =
 				} else {
 					// if this is not a primitive - it MUST be included in the
 					// getter / setter instead
+					// FIXME throw warning if the default is not a primitive object
 					js.init = ("" + (js.scope) + ".prototype._" + key + " = " + (pars.default.c()) + ";");
 				};
 			};
@@ -10722,6 +10735,7 @@ var Imbac =
 		exports.For = For; // export class 
 		For.prototype.visit = function (){
 			this.scope().visit();
+			
 			this.options().source.traverse(); // what about awakening the vars here?
 			this.declare();
 			// should be able to toggle whether to keep the results here already(!)
@@ -10747,15 +10761,10 @@ var Imbac =
 			var oi = o.index;
 			
 			var bare = this.isBare(src);
-			// p "source is a {src} - {bare}"
-			// var i = vars:index = oi ? scope.declare(oi,0) : util.counter(0,yes).predeclare
 			
 			// what about a range where we also include an index?
 			if (src instanceof Range) {
-				// p "range for-loop"
 				
-				// really? declare? 
-				// are we sure? _really_?
 				vars.len = scope.declare('len',src.right()); // util.len(o,yes).predeclare
 				// make the scope be the declarator
 				// TODO would like to be able to have counter in range as well
@@ -10831,8 +10840,6 @@ var Imbac =
 					};
 				};
 			};
-			
-			// p "reusable?!?! {node} {node}"
 			
 			// WARN Optimization - might have untended side-effects
 			// if we are assigning directly to a local variable, we simply

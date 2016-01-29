@@ -1414,14 +1414,23 @@
 				return this._protoDom || (this._protoDom = this.buildNode());
 			};
 			
-			tag.prototype.id = function(v){ return this.getAttribute('id'); }
-			tag.prototype.setId = function(v){ this.setAttribute('id',v); return this; };
 			tag.prototype.tabindex = function(v){ return this.getAttribute('tabindex'); }
 			tag.prototype.setTabindex = function(v){ this.setAttribute('tabindex',v); return this; };
 			tag.prototype.title = function(v){ return this.getAttribute('title'); }
 			tag.prototype.setTitle = function(v){ this.setAttribute('title',v); return this; };
 			tag.prototype.role = function(v){ return this.getAttribute('role'); }
 			tag.prototype.setRole = function(v){ this.setAttribute('role',v); return this; };
+			tag.prototype.name = function(v){ return this.getAttribute('name'); }
+			tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
+			
+			tag.prototype.id = function (){
+				return this.dom().id;
+			};
+			
+			tag.prototype.setId = function (id){
+				this.dom().id = id;
+				return this;
+			};
 			
 			tag.prototype.width = function (){
 				return this._dom.offsetWidth;
@@ -1870,28 +1879,19 @@
 			tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
 			tag.prototype.type = function(v){ return this.getAttribute('type'); }
 			tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
-			tag.prototype.disabled = function(v){ return this.getAttribute('disabled'); }
-			tag.prototype.setDisabled = function(v){ this.setAttribute('disabled',v); return this; };
+			
+			tag.prototype.__disabled = {dom: true,name: 'disabled'};
+			tag.prototype.disabled = function(v){ return this.dom().disabled; }
+			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
 		});
 		
 		tag$.defineTag('canvas', function(tag){
-			tag.prototype.setWidth = function (val){
-				if (this.width() != val) { this.dom().width = val };
-				return this;
-			};
-			
-			tag.prototype.setHeight = function (val){
-				if (this.height() != val) { this.dom().height = val };
-				return this;
-			};
-			
-			tag.prototype.width = function (){
-				return this.dom().width;
-			};
-			
-			tag.prototype.height = function (){
-				return this.dom().height;
-			};
+			tag.prototype.__width = {dom: true,name: 'width'};
+			tag.prototype.width = function(v){ return this.dom().width; }
+			tag.prototype.setWidth = function(v){ if(v != this.dom().width){ this.dom().width = v }; return this; };
+			tag.prototype.__height = {dom: true,name: 'height'};
+			tag.prototype.height = function(v){ return this.dom().height; }
+			tag.prototype.setHeight = function(v){ if(v != this.dom().height){ this.dom().height = v }; return this; };
 			
 			tag.prototype.context = function (type){
 				if(type === undefined) type = '2d';
@@ -1915,7 +1915,13 @@
 		tag$.defineTag('dt');
 		tag$.defineTag('em');
 		tag$.defineTag('embed');
-		tag$.defineTag('fieldset');
+		
+		tag$.defineTag('fieldset', function(tag){
+			tag.prototype.__disabled = {dom: true,name: 'disabled'};
+			tag.prototype.disabled = function(v){ return this.dom().disabled; }
+			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+		});
+		
 		tag$.defineTag('figcaption');
 		tag$.defineTag('figure');
 		tag$.defineTag('footer');
@@ -1950,8 +1956,6 @@
 		});
 		
 		tag$.defineTag('input', function(tag){
-			tag.prototype.name = function(v){ return this.getAttribute('name'); }
-			tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
 			tag.prototype.type = function(v){ return this.getAttribute('type'); }
 			tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
 			tag.prototype.required = function(v){ return this.getAttribute('required'); }
@@ -1961,32 +1965,21 @@
 			tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
 			tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
 			
-			tag.prototype.value = function (){
-				return this.dom().value;
-			};
-			
-			tag.prototype.setValue = function (v){
-				if (v != this.dom().value) { this.dom().value = v };
-				return this;
-			};
-			
-			tag.prototype.setPlaceholder = function (v){
-				if (v != this.dom().placeholder) { this.dom().placeholder = v };
-				return this;
-			};
-			
-			tag.prototype.placeholder = function (){
-				return this.dom().placeholder;
-			};
-			
-			tag.prototype.checked = function (){
-				return this.dom().checked;
-			};
-			
-			tag.prototype.setChecked = function (bool){
-				if (bool != this.dom().checked) { this.dom().checked = bool };
-				return this;
-			};
+			tag.prototype.__value = {dom: true,name: 'value'};
+			tag.prototype.value = function(v){ return this.dom().value; }
+			tag.prototype.setValue = function(v){ if(v != this.dom().value){ this.dom().value = v }; return this; };
+			tag.prototype.__placeholder = {dom: true,name: 'placeholder'};
+			tag.prototype.placeholder = function(v){ return this.dom().placeholder; }
+			tag.prototype.setPlaceholder = function(v){ if(v != this.dom().placeholder){ this.dom().placeholder = v }; return this; };
+			tag.prototype.__required = {dom: true,name: 'required'};
+			tag.prototype.required = function(v){ return this.dom().required; }
+			tag.prototype.setRequired = function(v){ if(v != this.dom().required){ this.dom().required = v }; return this; };
+			tag.prototype.__disabled = {dom: true,name: 'disabled'};
+			tag.prototype.disabled = function(v){ return this.dom().disabled; }
+			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.__checked = {dom: true,name: 'checked'};
+			tag.prototype.checked = function(v){ return this.dom().checked; }
+			tag.prototype.setChecked = function(v){ if(v != this.dom().checked){ this.dom().checked = v }; return this; };
 		});
 		
 		tag$.defineTag('ins');
@@ -2014,8 +2007,6 @@
 		tag$.defineTag('menuitem');
 		
 		tag$.defineTag('meta', function(tag){
-			tag.prototype.name = function(v){ return this.getAttribute('name'); }
-			tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
 			tag.prototype.content = function(v){ return this.getAttribute('content'); }
 			tag.prototype.setContent = function(v){ this.setAttribute('content',v); return this; };
 			tag.prototype.charset = function(v){ return this.getAttribute('charset'); }
@@ -2027,27 +2018,28 @@
 		tag$.defineTag('noscript');
 		
 		tag$.defineTag('ol');
-		tag$.defineTag('optgroup');
+		tag$.defineTag('optgroup', function(tag){
+			tag.prototype.__disabled = {dom: true,name: 'disabled'};
+			tag.prototype.disabled = function(v){ return this.dom().disabled; }
+			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+		});
 		
 		tag$.defineTag('option', function(tag){
-			tag.prototype.value = function(v){ return this.getAttribute('value'); }
-			tag.prototype.setValue = function(v){ this.setAttribute('value',v); return this; };
-			
-			tag.prototype.selected = function (){
-				return this.dom().selected;
-			};
-			
-			tag.prototype.setSelected = function (bool){
-				if (bool != this.dom().selected) { this.dom().selected = bool };
-				return this;
-			};
+			tag.prototype.__disabled = {dom: true,name: 'disabled'};
+			tag.prototype.disabled = function(v){ return this.dom().disabled; }
+			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.__selected = {dom: true,name: 'selected'};
+			tag.prototype.selected = function(v){ return this.dom().selected; }
+			tag.prototype.setSelected = function(v){ if(v != this.dom().selected){ this.dom().selected = v }; return this; };
+			tag.prototype.__value = {dom: true,name: 'value'};
+			tag.prototype.value = function(v){ return this.dom().value; }
+			tag.prototype.setValue = function(v){ if(v != this.dom().value){ this.dom().value = v }; return this; };
 		});
 		
 		tag$.defineTag('output');
 		tag$.defineTag('p');
 		
 		tag$.defineTag('object', function(tag){
-			Imba.attr(tag,'name');
 			Imba.attr(tag,'type');
 			Imba.attr(tag,'data');
 			Imba.attr(tag,'width');
@@ -2084,23 +2076,18 @@
 		tag$.defineTag('section');
 		
 		tag$.defineTag('select', function(tag){
-			tag.prototype.name = function(v){ return this.getAttribute('name'); }
-			tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
 			tag.prototype.multiple = function(v){ return this.getAttribute('multiple'); }
 			tag.prototype.setMultiple = function(v){ this.setAttribute('multiple',v); return this; };
-			tag.prototype.required = function(v){ return this.getAttribute('required'); }
-			tag.prototype.setRequired = function(v){ this.setAttribute('required',v); return this; };
-			tag.prototype.disabled = function(v){ return this.getAttribute('disabled'); }
-			tag.prototype.setDisabled = function(v){ this.setAttribute('disabled',v); return this; };
 			
-			tag.prototype.value = function (){
-				return this.dom().value;
-			};
-			
-			tag.prototype.setValue = function (v){
-				if (v != this.dom().value) { this.dom().value = v };
-				return this;
-			};
+			tag.prototype.__disabled = {dom: true,name: 'disabled'};
+			tag.prototype.disabled = function(v){ return this.dom().disabled; }
+			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.__required = {dom: true,name: 'required'};
+			tag.prototype.required = function(v){ return this.dom().required; }
+			tag.prototype.setRequired = function(v){ if(v != this.dom().required){ this.dom().required = v }; return this; };
+			tag.prototype.__value = {dom: true,name: 'value'};
+			tag.prototype.value = function(v){ return this.dom().value; }
+			tag.prototype.setValue = function(v){ if(v != this.dom().value){ this.dom().value = v }; return this; };
 		});
 		
 		
@@ -2117,12 +2104,6 @@
 		tag$.defineTag('td');
 		
 		tag$.defineTag('textarea', function(tag){
-			tag.prototype.name = function(v){ return this.getAttribute('name'); }
-			tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
-			tag.prototype.disabled = function(v){ return this.getAttribute('disabled'); }
-			tag.prototype.setDisabled = function(v){ this.setAttribute('disabled',v); return this; };
-			tag.prototype.required = function(v){ return this.getAttribute('required'); }
-			tag.prototype.setRequired = function(v){ this.setAttribute('required',v); return this; };
 			tag.prototype.rows = function(v){ return this.getAttribute('rows'); }
 			tag.prototype.setRows = function(v){ this.setAttribute('rows',v); return this; };
 			tag.prototype.cols = function(v){ return this.getAttribute('cols'); }
@@ -2130,23 +2111,18 @@
 			tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
 			tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
 			
-			tag.prototype.value = function (){
-				return this.dom().value;
-			};
-			
-			tag.prototype.setValue = function (v){
-				if (v != this.dom().value) { this.dom().value = v };
-				return this;
-			};
-			
-			tag.prototype.setPlaceholder = function (v){
-				if (v != this.dom().placeholder) { this.dom().placeholder = v };
-				return this;
-			};
-			
-			tag.prototype.placeholder = function (){
-				return this.dom().placeholder;
-			};
+			tag.prototype.__value = {dom: true,name: 'value'};
+			tag.prototype.value = function(v){ return this.dom().value; }
+			tag.prototype.setValue = function(v){ if(v != this.dom().value){ this.dom().value = v }; return this; };
+			tag.prototype.__disabled = {dom: true,name: 'disabled'};
+			tag.prototype.disabled = function(v){ return this.dom().disabled; }
+			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.__required = {dom: true,name: 'required'};
+			tag.prototype.required = function(v){ return this.dom().required; }
+			tag.prototype.setRequired = function(v){ if(v != this.dom().required){ this.dom().required = v }; return this; };
+			tag.prototype.__placeholder = {dom: true,name: 'placeholder'};
+			tag.prototype.placeholder = function(v){ return this.dom().placeholder; }
+			tag.prototype.setPlaceholder = function(v){ if(v != this.dom().placeholder){ this.dom().placeholder = v }; return this; };
 		});
 		
 		tag$.defineTag('tfoot');
@@ -2166,7 +2142,7 @@
 		// 	src: ['audio','embed','iframe','img','input','script','source','track','video']
 		// 	disabled: ['button','fieldset','input','keygen','optgroup','option','select','textarea'] # 'command',
 		// 	required: ['input','select','textarea']
-		// 
+		
 		// for own name,tags of idls
 		// 	idls[name] = tags.map do |name|
 		// 		console.log name
@@ -7569,6 +7545,18 @@
 				return self.eq(a,[2,4,6]);
 			});
 			
+			self.test('missing var alias in loop',function() {
+				try {
+					for (var i = 0, ary = [{}], len = ary.length, res = []; i < len; i++) {
+						res.push(ary[i].first = function (){
+							return true;
+						});
+					};
+					return res;
+				} catch (e) {
+					return self.eq(1,2);
+				};
+			});
 			
 			return self.test('incorrect var lookup with loops',function() {
 				var a = {};
@@ -7583,7 +7571,7 @@
 				
 				for (var i = 0, ary = [b], len = ary.length; i < len; i++) {
 					var proto1 = ary[i];
-					proto.last = function (){
+					proto1.last = function (){
 						return true;
 					};
 				};
@@ -7597,7 +7585,7 @@
 
 /***/ },
 /* 38 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	(function(){
 		function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -7747,12 +7735,26 @@
 				return eq(el.toString(),'<input>');
 			});
 			
-			return self.test("boolean attributes",function() {
-				var el = tag$.$input().setRequired(true).end();
-				return eq(el.toString(),'<input required>');
+			self.test("boolean attributes",function() {
+				var el = tag$.$input().setRequired(true).setDisabled(false).end();
+				
+				if (false) {
+					return eq(el.toString(),'<input required>');
+				} else if (true) {
+					eq(el.dom().required,true);
+					return eq(el.dom().disabled,false);
+				};
+			});
+			
+			return self.test("style attribute",function() {
+				var el = tag$.$div().setStyle('display: block;').end();
+				if (true) {
+					return eq(el.dom().getAttribute('style'),'display: block;');
+				} else {
+					return eq(el.toString(),'<div style="display: block;"></div>');
+				};
 			});
 		});
-		
 		
 
 	})()
