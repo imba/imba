@@ -2604,7 +2604,11 @@ export class PropertyDeclaration < Node
 			js:ondirty = "Imba.observeProperty(this,'{key}',{o.key(:observe).value.c},v,a);" + (js:ondirty or '')
 			# OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 
-		if (@token and String(@token) == 'attr') or o.key(:dom) or o.key(:attr)
+		if !isAttr and o.key(:dom)
+			js:set = "if (v != this.dom().{name.value}) \{ this.dom().{name.value} = v \}"
+			js:get = "this.dom().{name.value}"
+
+		if isAttr # (@token and String(@token) == 'attr') or o.key(:dom) or o.key(:attr)
 			let attrKey = o.key(:dom) isa Str ? o.key(:dom) : name.value
 			# need to make sure o has a key for attr then - so that the delegate can know?
 			js:set = "this.setAttribute('{attrKey}',v)"
@@ -2624,6 +2628,7 @@ export class PropertyDeclaration < Node
 			else
 				# if this is not a primitive - it MUST be included in the
 				# getter / setter instead
+				# FIXME throw warning if the default is not a primitive object
 				js:init = "{js:scope}.prototype._{key} = {pars:default.c};"
 
 		if o.key(:chainable)
