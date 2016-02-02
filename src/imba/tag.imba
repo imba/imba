@@ -517,14 +517,22 @@ def Imba.getTagForDom dom
 		# there can be several matches here - should choose the last
 		# should fall back to less specific later? - otherwise things may fail
 		# TODO rework this
-		if var m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)
-			type = m[1] # .replace(/-/g,'_')
+		let flags = cls.split(' ')
+		let nr = flags:length 
 
-		if m = cls.match(/\b([A-Z\-]+)_\b/)
+		while --nr >= 0
+			let flag = flags[nr]
+			if flag[0] == '_'
+				if spawner = tags[flag.slice(1)]
+					break
+
+		# if var m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)
+		# 	type = m[1] # .replace(/-/g,'_')
+
+		if let m = cls.match(/\b([A-Z\-]+)_\b/)
 			ns = m[1]
 
-
-	spawner = tags[type] or tags[native]
+	spawner ||= tags[native]
 	spawner ? spawner.new(dom).awaken(dom) : null
 
 tag$ = Imba.TAGS
