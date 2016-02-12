@@ -42,7 +42,7 @@
     "node": ">=0.8.0"
   },
   "directories": {},
-  "main": "./index.js",
+  "main": "./lib/compiler/index.js",
   "browser": "./lib/imba/browser.js",
   "webpack": "./index",
   "bin": {
