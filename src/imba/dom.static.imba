@@ -8,7 +8,7 @@ def removeNested root, node, caret
 		root.removeChild(node)
 	elif node isa Array
 		removeNested(root,member,caret) for member in node
-	else
+	elif node != null
 		# what if this is not null?!?!?
 		# take a chance and remove a text-elementng
 		let next = caret ? caret:nextSibling : root.@dom:firstChild
