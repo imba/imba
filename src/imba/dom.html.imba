@@ -93,6 +93,7 @@ tag input
 	prop required dom: yes
 	prop disabled dom: yes
 	prop checked dom: yes
+	prop readOnly dom: yes
 
 tag ins
 tag kbd
@@ -165,6 +166,7 @@ tag select
 
 	prop disabled dom: yes
 	prop required dom: yes
+	prop readOnly dom: yes
 	prop value dom: yes
 
 
@@ -188,6 +190,7 @@ tag textarea
 	prop value dom: yes
 	prop disabled dom: yes
 	prop required dom: yes
+	prop readOnly dom: yes
 	prop placeholder dom: yes
 
 tag tfoot
