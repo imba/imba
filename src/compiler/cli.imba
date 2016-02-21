@@ -180,6 +180,12 @@ def ensure-dir path
 
 def sourcefile-for-path path
 	path = fspath.resolve(process.cwd, path)
+	if isDir(path)
+		var f = fspath.join(path, 'index.imba')
+		if fs.existsSync(f)
+			path = f
+		else
+			# throw error & exit here
 	SourceFile.new(path)
 
 def printCompilerError e, source: null, tok: null, tokens: null
@@ -202,7 +208,7 @@ def printCompilerError e, source: null, tok: null, tokens: null
 		if s:length < String(ln1)[:length]
 			s = ' ' + s
 		# while s:length < String(ln1)
-			
+
 		return dim[color]('    ' + s + ' |  ')
 
 
