@@ -1,4 +1,10 @@
 ## 0.14.4
+- Add trailing semicolon to IIFE wrapper (#67)
+- Allow uppercase flags in tag (#64)
+- Setters return self by default (#56)
+- CLI will find index.imba, if exists within folder
+- Improved serverside rendering
+- Predeclare `_` in global scope
 
 ## 0.14.3
 - Mixing tabs and spaces for indentation will now throw error
