@@ -63,6 +63,11 @@ tag footer
 tag form
 	attr method
 	attr action
+	attr enctype
+	attr autocomplete
+	attr target
+
+	prop novalidate dom: yes
 
 tag h1
 tag h2
@@ -81,6 +86,7 @@ tag iframe
 
 tag img
 	attr src
+	attr srcset
 
 tag input
 	attr type
@@ -92,6 +98,7 @@ tag input
 	prop placeholder dom: yes
 	prop required dom: yes
 	prop disabled dom: yes
+	prop multiple dom: yes
 	prop checked dom: yes
 	prop readOnly dom: yes
 
