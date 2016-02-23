@@ -190,7 +190,7 @@ def flatten__ ary, compact = no
 	for v in ary
 		v isa Array ? reduce__(out,v) : out.push(v)
 	return out
-	
+
 def AST.parse str, opts = {}
 	var indent = str.match(/\t+/)[0]
 	# really? Require the compiler, not this
@@ -202,7 +202,7 @@ def AST.inline str, opts = {}
 def AST.node typ, pars
 	if typ == 'call'
 		if pars[0].c == 'return'
-			pars[0] = 'tata'	
+			pars[0] = 'tata'
 		Call.new(pars[0],pars[1],pars[2])
 
 
@@ -232,7 +232,7 @@ export class Indentation
 	# should rather parse and extract the comments, no?
 	def wrap str
 		# var pre, post
-	
+
 		# console.log "INDENT {@open and JSON.stringify(@open.@meta)}"
 		# console.log "OUTDENT {@close}"
 		# var ov = @open and @open.@value
@@ -254,7 +254,7 @@ export class Indentation
 		str += out.c if out isa Terminator
 		str = str + '\n' unless str[str:length - 1] == '\n'
 		return str
-		
+
 var INDENT = Indentation.new({},{})
 
 class Stash
@@ -415,7 +415,7 @@ export class Node
 	# 		return "[{name}]"
 
 	def p
-	
+
 		# allow controlling this from commandline
 		if STACK.loglevel > 0
 			console.log(*arguments)
@@ -490,7 +490,7 @@ export class Node
 	# o = {}, up, key, index
 	def traverse
 		if @traversed
-			return self 
+			return self
 		# NODES.push(self)
 		@traversed = yes
 		STACK.push self
@@ -542,7 +542,7 @@ export class Node
 
 	def isUsed
 		true
-		
+
 	def shouldParenthesize
 		false
 
@@ -643,7 +643,7 @@ export class Node
 
 		# really? why not call this somewhere else?
 		var paren = shouldParenthesize
-		
+
 		if var indent = @indentation
 			out = indent.wrap(out,o)
 
@@ -651,7 +651,7 @@ export class Node
 		out = "({out})" if paren
 		if o and o:braces
 			if indent
-				out = '{' + out + '}' 
+				out = '{' + out + '}'
 			else
 				out = '{ ' + out + ' }'
 
@@ -660,7 +660,7 @@ export class Node
 		if ch = @cache
 			out = "{ch:var.c} = {out}" unless ch:manual
 			var par = s.current
-			out = '(' + out + ')' if par isa Access || par isa Op # others? # 
+			out = '(' + out + ')' if par isa Access || par isa Op # others? #
 			ch:cached = yes
 		return out
 
@@ -684,7 +684,7 @@ export class ValueNode < Node
 		typeof @value == 'string' ? @value : @value.c
 
 	def visit
-	
+
 		@value.traverse if @value isa Node #  && @value:traverse
 		self
 
@@ -704,7 +704,7 @@ export class Meta < ValueNode
 		yes
 
 export class Comment < Meta
-	
+
 	def visit
 		# stack.stash.add(self)
 
@@ -733,7 +733,7 @@ export class Comment < Meta
 			"// {v}"
 
 export class Terminator < Meta
-	
+
 	def initialize v
 		@value = v
 		self
@@ -744,7 +744,7 @@ export class Terminator < Meta
 	def c
 		# TODO this can contain several newlines
 		# for sourcemaps it would be nice to parse this
-		# and fix it up mark__(@value) + 
+		# and fix it up mark__(@value) +
 		return @value.c
 		# var v = value.replace(/\\n/g,'\n')
 		# v # .split()
@@ -758,7 +758,7 @@ export class Newline < Terminator
 
 	def c
 		c__(@value)
-		
+
 
 # weird place?
 export class Index < ValueNode
@@ -817,7 +817,7 @@ export class ListNode < Node
 	def slice a, b
 		self:constructor.new(@nodes.slice(a,b))
 
-	
+
 
 	def break br, pre = no
 		br = Terminator.new(br) if typeof br == 'string'
@@ -857,7 +857,7 @@ export class ListNode < Node
 		var item = @nodes[idx]
 		@nodes.splice(idx, 1) if idx >= 0
 		return item
-		
+
 
 	def replace original, replacement
 		var idx = @nodes.indexOf(original)
@@ -866,7 +866,7 @@ export class ListNode < Node
 				# p "replaceing with array of items"
 				@nodes.splice(idx,1,*replacement)
 			else
-				@nodes[idx] = replacement 
+				@nodes[idx] = replacement
 		self
 
 	def first
@@ -939,7 +939,7 @@ export class ListNode < Node
 
 		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
 		self
-		
+
 
 export class ArgList < ListNode
 
@@ -957,7 +957,7 @@ export class ArgList < ListNode
 # 	","
 
 
-export class AssignList < ArgList	
+export class AssignList < ArgList
 
 	def concat other
 		if @nodes:length == 0 and other isa AssignList
@@ -969,8 +969,8 @@ export class AssignList < ArgList
 		self
 
 
-export class Block < ListNode	
-	
+export class Block < ListNode
+
 	prop head
 
 	def initialize list
@@ -1098,7 +1098,7 @@ export class Block < ListNode
 		for node in nodes
 			expressions.push(node) unless node isa Terminator
 		return expressions
-		
+
 
 	def consume node
 		if node isa TagTree # special case?!?
@@ -1123,8 +1123,8 @@ export class Block < ListNode
 				else
 					@nodes = [arr]
 
-			
-		
+
+
 			return self
 
 		# can also return super if it is expressable, but should we really?
@@ -1146,7 +1146,7 @@ export class Block < ListNode
 		return yes
 
 	def isExpression
-	
+
 		option(:express) || @expression
 
 
@@ -1164,10 +1164,10 @@ export class VarBlock < ListNode
 		# p "here {list[0]} - {@type}"
 		# @type = list[0] and list[0].type
 		list
-		
+
 	# TODO All these inner items should rather be straight up literals
 	# or basic localvars - without any care whatsoever about adding var to the
-	# beginning etc. 
+	# beginning etc.
 	def addExpression expr
 		# p "VarBlock.addExpression {self} <- {expr}"
 
@@ -1232,7 +1232,7 @@ export class Parens < ValueNode
 		@open = open
 		@close = close
 		@value = load(value)
-	
+
 	def load value
 		@noparen = no
 		value isa Block and value.count == 1 ? value.first : value
@@ -1240,7 +1240,7 @@ export class Parens < ValueNode
 	def isString
 		# checking if this is an interpolated string
 		@open and String(@open) == '("' or value.isString
-		
+
 	def js o
 
 		var par = up
@@ -1263,7 +1263,7 @@ export class Parens < ValueNode
 	def set obj
 		console.log "Parens set {JSON.stringify(obj)}"
 		super(obj)
-		
+
 
 	def shouldParenthesize
 		# no need to parenthesize if this is a line in a block
@@ -1359,7 +1359,7 @@ export class Throw < Statement
 	def consume node
 		# ROADMAP should possibly consume to the value of throw and then throw?
 		return self
-		
+
 
 export class LoopFlowStatement < Statement
 
@@ -1383,7 +1383,7 @@ export class LoopFlowStatement < Statement
 		var _loop = STACK.up(Loop)
 		# p "found loop?",_loop
 
-		# need to fix the grammar for this. Right now it 
+		# need to fix the grammar for this. Right now it
 		# is like a fake call, but should only care about the first argument
 		var expr = self.expression
 
@@ -1397,7 +1397,7 @@ export class LoopFlowStatement < Statement
 		else
 			super
 		# return "loopflow"
-		
+
 
 export class BreakStatement < LoopFlowStatement
 	def js o do "break"
@@ -1449,7 +1449,7 @@ export class Param < Node
 			@name.references(@variable)
 			# console.log "got here!! {@name:constructor}"
 			# @name.@token.@variable = @variable if @name.@token
-		
+
 		self
 
 	def assignment
@@ -1471,7 +1471,7 @@ export class Param < Node
 			name: name
 			defaults: defaults
 		}
-		
+
 
 export class SplatParam < Param
 
@@ -1662,7 +1662,7 @@ export class ParamList < ListNode
 			if par isa NamedParams
 				signature.push('named')
 				named = par
-			elif par isa OptionalParam 
+			elif par isa OptionalParam
 				signature.push('opt')
 				opt.push(par)
 			elif par isa BlockParam
@@ -1709,7 +1709,7 @@ export class ParamList < ListNode
 			for par,i in opt
 				ast.push "if({par.name.c} === undefined) {par.name.c} = {par.defaults.c}"
 
-		
+
 		elif named && !splat && !blk && opt:length == 0 # and no block?!
 			# different shorthands
 			# if named
@@ -1798,7 +1798,7 @@ export class ParamList < ListNode
 				# p "adding arrayparams"
 				v.head(o,ast,self)
 				# ast.push v.c
-				
+
 
 
 		# if opt:length == 0
@@ -1829,7 +1829,7 @@ export class VariableDeclaration < ListNode
 	# 	else
 	# 		super.remove(item)
 	# 	self
-	
+
 	def load list
 		# temporary solution!!!
 		list.map do |par| VariableDeclarator.new(par.name,par.defaults,par.splat)
@@ -1864,7 +1864,7 @@ export class VariableDeclarator < Param
 		self.variable.declarator = self
 		self.variable.addReference(name)
 		self
-		
+
 	# needs to be linked up to the actual scoped variables, no?
 	def js o
 		return null if variable.@proxy
@@ -1908,8 +1908,8 @@ export class VarName < ValueNode
 		variable.c
 
 	def c
-		variable.c		
-		
+		variable.c
+
 
 export class VarList < Node
 
@@ -1937,7 +1937,7 @@ export class VarList < Node
 		self
 
 	def js o
-		# for the regular items 
+		# for the regular items
 		var pairs = []
 		var ll = left:length
 		var rl = right:length
@@ -1959,7 +1959,7 @@ export class VarList < Node
 						v = util.slice(r,i,-(ll - i) + 1)
 				else
 					v = OP('.',r,num__(i))
-				
+
 				pairs.push(OP('=',l,v))
 
 		else
@@ -2089,7 +2089,7 @@ export class ClassDeclaration < Code
 			path: name.c.toString
 			desc: @desc
 			loc: loc
-		}	
+		}
 
 	def toJSON
 		metadata
@@ -2147,13 +2147,13 @@ export class ClassDeclaration < Code
 				initor = "{mark}function {cname}()\{ return {sup.c}.apply(this,arguments) \};\n\n"
 			else
 				initor = "{mark}function {cname}()" + '{ };\n\n'
-			
+
 		else
 			initor.name = cname
 			initor = initor.c + ';'
-		
+
 		# if we are defining a class inside a namespace etc -- how should we set up the class?
-		
+
 		if namespaced
 			# should use Nodes to build this instead
 			initor = "{cpath} = {initor}" # OP('=',name,initor)
@@ -2167,7 +2167,7 @@ export class ClassDeclaration < Code
 		else
 			# head.push(Terminator.new('\n\n'))
 			true
-		
+
 
 
 		if sup
@@ -2310,7 +2310,7 @@ export class Func < Code
 		@context = scope.parent
 		@params.traverse
 		@body.traverse # so soon?
-		
+
 
 	def js o
 		body.consume(ImplicitReturn.new) unless option(:noreturn)
@@ -2334,7 +2334,7 @@ export class Func < Code
 
 	def shouldParenthesize par = up
 		par isa Call && par.callee == self
-		# if up as a call? Only if we are 
+		# if up as a call? Only if we are
 
 export class Lambda < Func
 	def scopetype do LambdaScope
@@ -2372,14 +2372,14 @@ export class MethodDeclaration < Func
 			[d.@loc,body.loc[1]]
 		else
 			[0,0]
-		
+
 
 	def toJSON
 		metadata
 
 	def namepath
 		return @namepath if @namepath
-		
+
 		var name = String(name)
 		var sep = (option('static') ? '.' : '#')
 		if target
@@ -2403,7 +2403,7 @@ export class MethodDeclaration < Func
 			var tree = TagTree.new
 			@body = body.consume(tree)
 			# body.nodes = [Arr.new(body.nodes)]
-		
+
 		@context = scope.parent.closure
 		@params.traverse
 
@@ -2467,7 +2467,7 @@ export class MethodDeclaration < Func
 		var ctx = context
 		var out = ""
 		var mark = mark__(option('def'))
-		# if ctx 
+		# if ctx
 
 		var fname = sym__(self.name)
 		# console.log "symbolize {self.name} -- {fname}"
@@ -2562,7 +2562,7 @@ export class PropertyDeclaration < Node
 			key: key
 			getter: key
 			setter: sym__("set-{key}")
-			scope: "{scope.context.c}" 
+			scope: "{scope.context.c}"
 			path: '${scope}.prototype'
 			set: "this._{key} = v"
 			get: "this._{key}"
@@ -2647,7 +2647,7 @@ export class PropertyDeclaration < Node
 		out = out.replace(reg) do |m,a| js[a]
 		# out = out.replace(/\n\s*$/,'')
 		out = out.replace(/^\s+|\s+$/g, '')
-		
+
 		# if o.key(:v)
 		return out
 
@@ -2658,7 +2658,7 @@ export class PropertyDeclaration < Node
 # from listnode.
 
 export class Literal < ValueNode
-	
+
 	def initialize v
 		@traversed = no
 		@expression = yes
@@ -2671,10 +2671,10 @@ export class Literal < ValueNode
 
 	def hasSideEffects
 		false
-		
+
 
 export class Bool < Literal
-	
+
 	# Should keep the real value (yes/no/true/false)?
 	def initialize v
 		@value = v
@@ -2704,7 +2704,7 @@ export class Bool < Literal
 		{type: 'Bool', value: @value}
 
 export class Undefined < Literal
-	
+
 	def isPrimitive
 		yes
 
@@ -2712,7 +2712,7 @@ export class Undefined < Literal
 		mark__(@value) + "undefined"
 
 export class Nil < Literal
-	
+
 	def isPrimitive
 		yes
 
@@ -2726,7 +2726,7 @@ export class True < Bool
 
 	def c
 		mark__(@value) + "true"
-		
+
 export class False < Bool
 
 	def raw
@@ -2736,7 +2736,7 @@ export class False < Bool
 		mark__(@value) + "false"
 
 export class Num < Literal
-	
+
 	# value is token - should not be
 	def initialize v
 		@traversed = no
@@ -2798,7 +2798,7 @@ export class Str < Literal
 
 	def raw
 		# JSON.parse requires double-quoted strings,
-		# while eval also allows single quotes. 
+		# while eval also allows single quotes.
 		# NEXT eval is not accessible like this
 		# WARNING TODO be careful! - should clean up
 
@@ -2878,8 +2878,8 @@ export class Tuple < ListNode
 			return first.consume(node)
 		else
 			throw "multituple cannot consume"
-		
-	
+
+
 # Because we've dropped the Str-wrapper it is kinda difficult
 export class Symbol < Literal
 
@@ -2972,7 +2972,7 @@ export class Arr < Literal
 
 	def toString
 		"Arr"
-	
+
 	def indented a,b
 		@value.indented(a,b)
 		self
@@ -3061,7 +3061,7 @@ export class Obj < Literal
 
 	def toString
 		"Obj"
-		
+
 export class ObjAttr < Node
 
 	prop key
@@ -3086,7 +3086,7 @@ export class ObjAttr < Node
 
 	def hasSideEffects
 		true
-		
+
 
 
 export class ArgsReference < Node
@@ -3114,7 +3114,7 @@ export class Self < Literal
 		(s ? s.context.c : "this")
 
 export class ImplicitSelf < Self
-		
+
 export class This < Self
 
 	def cache
@@ -3138,7 +3138,7 @@ export class Op < Node
 	prop left
 	prop right
 
-	def initialize o, l, r 
+	def initialize o, l, r
 		# set expression yes, no?
 		@expression = no
 		@traversed = no
@@ -3235,7 +3235,7 @@ export class ComparisonOp < Op
 		r = r.c if r isa Node
 		return "{l} {mark__(@opToken)}{op} {r}"
 
-		
+
 export class MathOp < Op
 	# BUG if we have a statement in left or right we need
 	# to FORCE it into an expression, and register warning
@@ -3323,7 +3323,7 @@ export class InstanceOf < Op
 					obj.cache
 				# need a double check for these (cache left) - possibly
 				return "(typeof {obj.c}=='{name.toLowerCase}'||{obj.c} instanceof {name})"
-			
+
 				# convert
 		var out = "{left.c} {op} {right.c}"
 
@@ -3363,7 +3363,7 @@ export class In < Op
 		var cond = @invert ? "== -1" : ">= 0"
 		var idx = Util.indexOf(left,right)
 		"{idx.c} {cond}"
-	
+
 
 
 
@@ -3379,7 +3379,7 @@ export var K_PROP = 4
 
 export class Access < Op
 
-	def initialize o, l, r 
+	def initialize o, l, r
 		# set expression yes, no?
 		@expression = no
 		@traversed = no
@@ -3461,7 +3461,7 @@ export class Access < Op
 
 	def cache o
 		(right isa Ivar && !left) ? self : super(o)
-		
+
 
 
 # Should change this to just refer directly to the variable? Or VarReference
@@ -3497,7 +3497,7 @@ export class ObjectAccess < Access
 
 export class PropertyAccess < Access
 
-	def initialize o, l, r 
+	def initialize o, l, r
 		@traversed = no
 		@invert = no
 		@parens = no
@@ -3517,7 +3517,7 @@ export class PropertyAccess < Access
 	# to create a call and regular access instead
 
 	def js o
-	
+
 		if var rec = receiver
 			# p "converting to call"
 			var ast = CALL(OP('.',left,right),[]) # convert to ArgList or null
@@ -3654,13 +3654,13 @@ export class VarOrAccess < ValueNode
 		mark__(@token) + (@variable ? super() : value.c)
 
 	def js o
-	
+
 		if var v = @variable
 			var out = v.c
 			out += "()" if v.@type == 'meth' and !(o.up isa Call)
 			return out
 		return "NONO"
-		
+
 	def node
 		@variable ? self : value
 
@@ -3746,7 +3746,7 @@ export class VarReference < ValueNode
 
 	def js o
 		# experimental fix
-		
+
 		# what about resolving?
 		var ref = @variable
 		var out = "{mark__(@value)}{ref.c}"
@@ -3782,7 +3782,7 @@ export class VarReference < ValueNode
 		self
 
 	def visit
-		
+
 		# console.log "value type for VarReference {@value} {@value.@loc} {@value:constructor}"
 
 		# should be possible to have a VarReference without a name as well? for a system-variable
@@ -3839,7 +3839,7 @@ export class Assign < Op
 					v = VarReference.new(v,l.type)
 
 				return v
-				
+
 				# v isa VarReference ? v : VarReference.new(v)
 			return TupleAssign.new(o,Tuple.new(vars),r)
 
@@ -3867,7 +3867,7 @@ export class Assign < Op
 		# really?
 		# if up is a block in general this should not be used -- since it should already have received implicit self?
 		if up isa Block # && up.last != self
-			return no 
+			return no
 		return yes
 
 	# FIXME optimize
@@ -3883,7 +3883,7 @@ export class Assign < Op
 
 		# how does this work with constants that are really var references?
 		# should work when things are not described as well - but this is for testing
-		# but if it refers to something else 
+		# but if it refers to something else
 		if !lvar and @desc
 			# entities should be able to extract the needed info instead
 			ROOT.entities.add(l.namepath,{namepath: l.namepath, type: r.typeName, desc: @desc})
@@ -3901,7 +3901,7 @@ export class Assign < Op
 			l.@variable.assigned(r,self)
 
 		return self
-	
+
 	def c o
 		unless right.isExpressable
 			# p "Assign#c right is not expressable "
@@ -3934,7 +3934,7 @@ export class Assign < Op
 			if isUsed
 				# p "Assign is used {stack}"
 				# dont cache it again if it is already cached(!)
-				right.cache(pool: 'val', uses: 1) unless right.cachevar # 
+				right.cache(pool: 'val', uses: 1) unless right.cachevar #
 				# this is only when used.. should be more clever about it
 				ast = Parens.new(blk__([ast,right]))
 
@@ -3999,12 +3999,12 @@ export class ConditionalAssign < Assign
 			# p "conditional-assign {l} {l.left} {l.right}"
 			if l.left
 				# p "cache l.left {l.left:constructor}̋"
-				l.left.cache 
+				l.left.cache
 			ls = l.clone(l.left,l.right) # this should still be cached?
 			l.cache if l isa PropertyAccess # correct now, to a certain degree
 			if l isa IndexAccess
 				# p "cache the right side of indexAccess!!! {l.right}"
-				l.right.cache 
+				l.right.cache
 
 			# we should only cache the value itself if it is dynamic?
 			# l.cache # cache the value as well -- we cannot use this in assigns them
@@ -4045,7 +4045,7 @@ export class ConditionalAssign < Assign
 			OP('!=',left,NULL)
 		else
 			left
-		
+
 	def js o
 		# p "ConditionalAssign.js".red
 		var ast = IF(condition, OP('=',left,right), left)
@@ -4080,7 +4080,7 @@ export class CompoundAssign < Assign
 		ast.toExpression if ast.isExpressable
 
 		return ast
-		
+
 	def c
 		var ast = normalize
 		return super if ast == self
@@ -4125,7 +4125,7 @@ export class TupleAssign < Assign
 		else
 			# p "making child become a tuple?"
 			self.right = Tuple.new([right,expr])
-		
+
 		return self
 
 	def visit
@@ -4152,7 +4152,7 @@ export class TupleAssign < Assign
 		# only for actual inner expressions, otherwise cache the whole array, no?
 		unless right.isExpressable
 			# p "TupleAssign.consume! {right}".blue
-		
+
 			return right.consume(self).c
 
 		# p "TUPLE {type}"
@@ -4161,7 +4161,7 @@ export class TupleAssign < Assign
 		# - direct. no matter if lvalues are variables or not. Make fake arguments up to the same count as tuple
 
 		### a,*b,b = arguments ###
-		# Need to convert arguments to an array. IF arguments is not referenced anywhere else in scope, 
+		# Need to convert arguments to an array. IF arguments is not referenced anywhere else in scope,
 		# we can do the assignment directly while rolling through arguments
 
 		### a,b = b,a ###
@@ -4214,7 +4214,7 @@ export class TupleAssign < Assign
 			# p "got here??? {pars}"
 			lft.map do |l,i| ast.push OP('=',l.node,pars.at(i,yes).visit.variable) # s.params.at(value - 1,yes)
 
-		
+
 		elif rlen
 			# we have several items in the right part. what about splats here?
 
@@ -4238,7 +4238,7 @@ export class TupleAssign < Assign
 			# 		# but the builtin caching should really take care of this for us
 			# 		# we need to really force the caching though -- since we need a copy of it even if it is a local
 			# 		# we need to predeclare the variables at the top of scope if this does not take care of it
-			# 		
+			#
 			# 		# these are the declarations -- we need to add them somewhere smart
 			# 		@temporary.push(v) # need a generalized way to do this type of thing
 			# 		ast.push(v.cache(force: yes, type: 'swap', declared: typ == 'var'))
@@ -4269,9 +4269,9 @@ export class TupleAssign < Assign
 					v = rgt.index(li++)
 				[l.node,v]
 
-				# if l isa VarReference && l.refnr 
+				# if l isa VarReference && l.refnr
 			var clean = true
-			
+
 			pairs.map do |v,i|
 				var l = v[0]
 				var r = v[1]
@@ -4299,11 +4299,11 @@ export class TupleAssign < Assign
 					ast.push OP('=',l,r)
 
 			# WARN FIXME Is there not an issue with VarBlock vs not here?
-		else 
+		else
 			# this is where we need to cache the right side before assigning
 			# if the right side is a for loop, we COULD try to be extra clever, but
 			# for now it is not worth the added compiler complexity
-			
+
 			# iter.cache(force: yes, type: 'iter')
 			var top = VarBlock.new
 			var iter = util.iterable(rgt, yes)
@@ -4322,14 +4322,14 @@ export class TupleAssign < Assign
 			# only if the block is variable based, no?
 			# ast.push(blk = VarBlock.new)
 			# blk = null
-			
+
 			var blktype = typ == 'var' ? VarBlock : Block
 			var blk = blktype.new([])
 			# blk = top if typ == 'var'
 			ast.push(blk)
 
 			# if the lvals are not variables - we need to preassign
-			# can also use slice here for simplicity, but try with while now			
+			# can also use slice here for simplicity, but try with while now
 			lft.map do |l,i|
 				if l == lsplat
 					var lvar = l.node
@@ -4344,13 +4344,13 @@ export class TupleAssign < Assign
 						var arr = util.array( OP('-',len,num__(i + rem) ) )
 						blk.push(OP('=',lvar,arr))
 
-					# if !lvar:variable || !lvar.variable # lvar = 
+					# if !lvar:variable || !lvar.variable # lvar =
 					# 	top.push()
 					#	p "has variable - no need to create a temp"
 					# blk.push(OP('=',lvar,Arr.new([]))) # dont precalculate size now
 					# max = to = (rlen - (llen - i))
-					
-					 
+
+
 					var test = rem ? OP('-',len,rem) : len
 
 					var set = OP('=',
@@ -4361,7 +4361,7 @@ export class TupleAssign < Assign
 					ast.push(WHILE(OP('<',idx,test), set))
 
 					if typ != 'var'
-						ast.push(blk = Block.new) 
+						ast.push(blk = Block.new)
 						blk.push(OP('=',l.node,lvar))
 					else
 						blk = null
@@ -4377,7 +4377,7 @@ export class TupleAssign < Assign
 					ast.push(blk = blktype.new) unless blk
 					blk.push(OP('=',l,OP('.',iter,num__(i) )))
 
-		# if we are in an expression we really need to 
+		# if we are in an expression we really need to
 		if o.isExpression and @vars
 			# p "tuple is expression" # variables MUST be autodeclared outside of the expression
 			for v in @vars
@@ -4397,7 +4397,7 @@ export class TupleAssign < Assign
 			return out
 		else
 			var out = ast.c
-			# if this is a varblock 
+			# if this is a varblock
 			return out
 
 
@@ -4444,7 +4444,7 @@ export class Identifier < Node
 		self
 
 	def visit
-	
+
 		if @value isa Node
 			# console.log "IDENTIFIER VALUE IS NODE"
 			@value.traverse
@@ -4455,7 +4455,7 @@ export class Identifier < Node
 
 	def isValidIdentifier
 		yes
-		
+
 	def isReserved
 		@value:reserved or RESERVED_TEST.test(String(@value))
 
@@ -4483,14 +4483,14 @@ export class Identifier < Node
 		symbol
 
 	def c
-		return '' + symbol # mark__(@value) + 
+		return '' + symbol # mark__(@value) +
 
 	def dump
 		{ loc: region }
 
 	def namepath
 		toString
-		
+
 export class TagId < Identifier
 
 	def initialize v
@@ -4499,7 +4499,7 @@ export class TagId < Identifier
 
 	def c
 		"id$('{value.c}')"
-		
+
 # This is not an identifier - it is really a string
 # Is this not a literal?
 
@@ -4522,14 +4522,14 @@ export class Ivar < Identifier
 		'_' + name
 
 	def c
-		'_' + helpers.camelCase(@value).slice(1) # .replace(/^@/,'') # mark__(@value) + 
+		'_' + helpers.camelCase(@value).slice(1) # .replace(/^@/,'') # mark__(@value) +
 
 
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
 export class Const < Identifier
-		
+
 	def symbol
 		# console.log "Identifier#symbol {value}"
 		@symbol ||= sym__(value)
@@ -4577,7 +4577,7 @@ export class TagTypeIdentifier < Identifier
 	def id
 		var m = @str.match(/\#([\w\-\d\_]+)\b/)
 		m ? m[1] : null
-		
+
 
 	def flag
 		"_" + name.replace(/--/g,'_').toLowerCase
@@ -4620,7 +4620,7 @@ export class Call < Node
 		@receiver = null
 		@opexists = opexists
 		# some axioms that share the same syntax as calls will be redirected from here
-		
+
 		if callee isa VarOrAccess
 			var str = callee.value.symbol
 			# p "Call callee {callee} - {str}"
@@ -4650,7 +4650,7 @@ export class Call < Node
 
 		# if the callee is a PropertyAccess - better to immediately change it
 
-		@block && @block.traverse 
+		@block && @block.traverse
 
 	def addBlock block
 		var pos = @args.filter(|n,i| n == '&')[0] # WOULD BE TOKEN - CAREFUL
@@ -4714,7 +4714,7 @@ export class Call < Node
 			var isfn = Util.IsFunction.new([callee])
 			wrap = ["{isfn.c}  &&  ",""]
 			callee = OP('.',callee.left,callee.right)
-			# callee should already be cached now - 
+			# callee should already be cached now -
 
 		# should just force expression from the start, no?
 		if splat
@@ -4741,7 +4741,7 @@ export class Call < Node
 			# we set the cachevar inside
 			# p "special caching for call"
 			if @cache
-				@cache:manual = yes 
+				@cache:manual = yes
 				out = "({cachevar.c}={out})"
 
 			out = [wrap[0],out,wrap[1]].join("")
@@ -4750,7 +4750,7 @@ export class Call < Node
 
 
 
-		
+
 export class ImplicitCall < Call
 
 	def js o
@@ -4798,8 +4798,8 @@ export class ExternDeclaration < ListNode
 		self
 
 	def c
-		"// externs"		
-		
+		"// externs"
+
 
 # FLOW
 
@@ -4876,7 +4876,7 @@ export class If < ControlFlow
 
 	def js o
 		var body = body
-		# would possibly want to look up / out 
+		# would possibly want to look up / out
 		var brace = braces: yes, indent: yes
 
 		var cond = test.c(expression: yes) # the condition is always an expression
@@ -4896,7 +4896,7 @@ export class If < ControlFlow
 				# the parens logic there
 				# cond should possibly have parens - but where do we decide?
 				if @tagtree
-					return "({cond}) ? {code} : void(0)"	
+					return "({cond}) ? {code} : void(0)"
 				else
 					return "({cond}) && {code}"
 		else
@@ -4932,7 +4932,7 @@ export class If < ControlFlow
 			return self
 
 		# special case for If created from conditional assign as well?
-		# @type == '?' and 
+		# @type == '?' and
 		# ideally we dont really want to make any expression like this by default
 		var isRet = node isa Return
 
@@ -4999,9 +4999,9 @@ export class Loop < Statement
 			# this will resut in an infinite loop, no?!?
 			var ast = CALL(FN([],[self]),[])
 			return ast.c o
-		
+
 		elif stack.current isa Block or (s.up isa Block and s.current.@consumer == self)
-		
+
 			# p "what is the current stack of loop? {stack.current}"
 			super.c o
 		else
@@ -5027,7 +5027,7 @@ export class While < Loop
 		# p "invert test for while? {@test}"
 		if option(:invert)
 			# "invert test for while {@test}"
-			@test = test.invert 
+			@test = test.invert
 		# invert the test
 
 
@@ -5048,7 +5048,7 @@ export class While < Loop
 		return super if isExpressable
 
 		if node isa TagTree
-			# WARN this is a hack to allow references coming through the wrapping scope 
+			# WARN this is a hack to allow references coming through the wrapping scope
 			# will result in unneeded self-declarations and other oddities
 			scope.context.reference
 			return CALL(FN([],[self]),[])
@@ -5073,7 +5073,7 @@ export class While < Loop
 		# scope vars must not be compiled before this -- this is important
 		var ast = Block.new([self,resvar.accessor]) # should be varaccess instead?
 		ast.consume(node)
-		# NOTE Here we can find a way to know wheter or not we even need to 
+		# NOTE Here we can find a way to know wheter or not we even need to
 		# return the resvar. Often it will not be needed
 		# FIXME what happens if there is no node?!?
 
@@ -5089,7 +5089,7 @@ export class While < Loop
 
 
 # This should define an open scope
-# should rather 
+# should rather
 export class For < Loop
 
 
@@ -5112,7 +5112,7 @@ export class For < Loop
 			body.unshift(op,BR)
 
 		body.traverse
-		
+
 	def isBare src
 		src and src.@variable and src.@variable.@isArray
 
@@ -5157,7 +5157,7 @@ export class For < Loop
 	def consume node
 
 		if isExpressable
-			return super 
+			return super
 
 		# other cases as well, no?
 		if node isa TagTree
@@ -5180,7 +5180,7 @@ export class For < Loop
 			var ast = Block.new([self,BR,@resvar.accessor])
 			ast.consume(node)
 			return ast
-		
+
 		# if node isa return -- do something else
 
 		var resvar = null
@@ -5261,7 +5261,7 @@ export class For < Loop
 		# the actual variable and instead make it proxy through the index
 		if src isa Range
 			cond.op = '<=' if src.inclusive
-		
+
 		elif val.refcount < 3 and val.assignments:length == 0
 			# p "proxy the value {val.assignments:length}"
 			# p "should proxy value-variable instead"
@@ -5283,14 +5283,14 @@ export class For < Loop
 export class ForIn < For
 
 
-		
+
 export class ForOf < For
 
 	def declare
 		var o = options
 		var vars = o:vars = {}
 
-		# see if 
+		# see if
 
 		# p "ForOf source isa {o:source}"
 
@@ -5302,7 +5302,7 @@ export class ForOf < For
 
 		# p "ForOf o:index {o:index} o:name {o:name}"
 		# if o:index
-		
+
 		# possibly proxy the index-variable?
 
 		if o:own
@@ -5316,7 +5316,7 @@ export class ForOf < For
 			# we set the var -- why even declare it
 			# no need to declare -- it will declare itself in the loop - no?
 			var k = vars:key = scope.register(o:name,o:name,type: 'let')
-		
+
 		# TODO use util - why add references already? Ah -- this is for the highlighting
 		v.addReference(o:index) if v and o:index
 		k.addReference(o:name) if k and o:name
@@ -5332,7 +5332,7 @@ export class ForOf < For
 		var i = vars:index
 
 
-		if v 
+		if v
 			# set value as proxy of object[key]
 			# possibly make it a ref? what is happening?
 			v.refcount < 3 ? v.proxy(o,k) : body.unshift(OP('=',v,OP('.',o,k)))
@@ -5449,7 +5449,7 @@ export class SwitchCase < ControlFlowStatement
 
 
 	def js o
-		@test = [@test] unless @test isa Array 
+		@test = [@test] unless @test isa Array
 		var cases = @test.map do |item| "case {item.c}:"
 		cases.join("\n") + body.c(indent: yes) # .indent
 
@@ -5496,7 +5496,7 @@ export class Try < ControlFlowStatement
 
 
 export class Catch < ControlFlowStatement
-	
+
 	prop body
 
 	def initialize body, varname
@@ -5552,7 +5552,7 @@ export class Range < Op
 
 	def inclusive
 		op == '..'
-		
+
 	def c
 		"range"
 
@@ -5581,33 +5581,33 @@ TAG_TYPES = {}
 TAG_ATTRS = {}
 
 
-TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br 
-button canvas caption cite code col colgroup data datalist dd del details dfn 
-div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 
-head header hr html i iframe img input ins kbd keygen label legend li link 
-main map mark menu menuitem meta meter nav noscript object ol optgroup option 
-output p param pre progress q rp rt ruby s samp script section select small 
-source span strong style sub summary sup table tbody td textarea tfoot th 
+TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br
+button canvas caption cite code col colgroup data datalist dd del details dfn
+div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
+head header hr html i iframe img input ins kbd keygen label legend li link
+main map mark menu menuitem meta meter nav noscript object ol optgroup option
+output p param pre progress q rp rt ruby s samp script section select small
+source span strong style sub summary sup table tbody td textarea tfoot th
 thead time title tr track u ul var video wbr".split(" ")
 
-TAG_TYPES.SVG = "circle defs ellipse g line linearGradient mask path pattern polygon polyline 
+TAG_TYPES.SVG = "circle defs ellipse g line linearGradient mask path pattern polygon polyline
 radialGradient rect stop svg text tspan".split(" ")
 
-TAG_ATTRS.HTML = "accept accessKey action allowFullScreen allowTransparency alt async 
-autoComplete autoFocus autoPlay cellPadding cellSpacing charSet checked 
-className cols colSpan content contentEditable contextMenu controls coords 
-crossOrigin data dateTime defer dir disabled download draggable encType form 
-formNoValidate frameBorder height hidden href hrefLang htmlFor httpEquiv icon 
-id label lang list loop max maxLength mediaGroup method min multiple muted 
-name noValidate pattern placeholder poster preload radioGroup readOnly rel 
-required role rows rowSpan sandbox scope scrollLeft scrolling scrollTop 
-seamless selected shape size span spellCheck src srcDoc srcSet start step 
+TAG_ATTRS.HTML = "accept accessKey action allowFullScreen allowTransparency alt async
+autoComplete autoFocus autoPlay cellPadding cellSpacing charSet checked
+className cols colSpan content contentEditable contextMenu controls coords
+crossOrigin data dateTime defer dir disabled download draggable encType form
+formNoValidate frameBorder height hidden href hrefLang htmlFor httpEquiv icon
+id label lang list loop max maxLength mediaGroup method min multiple muted
+name noValidate pattern placeholder poster preload radioGroup readOnly rel
+required role rows rowSpan sandbox scope scrollLeft scrolling scrollTop
+seamless selected shape size span spellCheck src srcDoc srcSet start step
 style tabIndex target title type useMap value width wmode"
 
-TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradientTransform 
-gradientUnits markerEnd markerMid markerStart offset opacity 
-patternContentUnits patternUnits points preserveAspectRatio r rx ry 
-spreadMethod stopColor stopOpacity stroke strokeDasharray strokeLinecap 
+TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradientTransform
+gradientUnits markerEnd markerMid markerStart offset opacity
+patternContentUnits patternUnits points preserveAspectRatio r rx ry
+spreadMethod stopColor stopOpacity stroke strokeDasharray strokeLinecap
 strokeOpacity strokeWidth textAnchor transform version viewBox x1 x2 x y1 y2 y"
 
 
@@ -5671,7 +5671,7 @@ export class Tag < Node
 			@parts.push(node)
 			@options:ns = node
 		self
-		
+
 
 	def addAttribute atr
 		# p "add attribute!!!", key, value
@@ -5704,7 +5704,7 @@ export class Tag < Node
 
 			else
 				reactive = node.reactive or !!option(:ivar)
-			
+
 			return self
 
 		super
@@ -5733,9 +5733,9 @@ export class Tag < Node
 			o:body.traverse
 
 		# id should also be a regular part
-	
+
 		o:id.traverse if o:id
-		
+
 
 		for part in @parts
 			part.traverse
@@ -5869,7 +5869,7 @@ export class Tag < Node
 		if var body = content and content.c(expression: yes) # force it to be an expression, no?
 			let typ = 0
 
-			if tree 
+			if tree
 				if tree.static
 					typ = 2
 				elif reactive or tree.reactive
@@ -5877,7 +5877,7 @@ export class Tag < Node
 						typ = 1
 					else
 						typ = 3
-						
+
 
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
 				calls.push ".{bodySetter}({body},{typ})"
@@ -5893,7 +5893,7 @@ export class Tag < Node
 		if statics:length
 			out = out + statics.join("")
 
-	
+
 		if (o:ivar or o:key or reactive) and !(type isa Self)
 			# if this is an ivar, we should set the reference relative
 			# to the outer reference, or possibly right on context?
@@ -5938,7 +5938,7 @@ export class Tag < Node
 # This is a helper-node
 # Should probably use the same type of listnode everywhere - and simply flag the type as TagTree instead
 export class TagTree < ListNode
-	
+
 	prop counter
 	prop conditions
 	prop blocks
@@ -6027,7 +6027,7 @@ export class TagWrapper < ValueNode
 		else
 			value.traverse
 		self
-		
+
 	def c
 		"tag$wrap({value.c(expression: yes)})"
 
@@ -6037,8 +6037,8 @@ export class TagAttributes < ListNode
 	def get name
 		for node in nodes
 			return node if node.key == name
-		
-		
+
+
 export class TagAttr < Node
 
 	prop key
@@ -6082,8 +6082,8 @@ export class TagFlag < Node
 			".flag({value.c})"
 		else
 			".flag({helpers.singlequote(value)})"
-		
-		
+
+
 
 
 
@@ -6092,11 +6092,11 @@ export class TagFlag < Node
 
 
 export class Selector < ListNode
-	
+
 	def initialize list, options
 		@nodes = list or []
 		@options = options
-		
+
 	def add part, typ
 		# p "select add!",part,typ
 		# mark if special?
@@ -6130,11 +6130,11 @@ export class Selector < ListNode
 			"q$({q},{o.scope.context.c(explicit: yes)})" # explicit context
 		elif typ == '%%'
 			"q$$({q},{o.scope.context.c(explicit: yes)})"
-		else 
+		else
 			"q{typ}({q})"
 
 		# return "{typ} {scoped} - {all}"
-		
+
 
 export class SelectorPart < ValueNode
 
@@ -6154,10 +6154,10 @@ export class SelectorType < SelectorPart
 		# p "selectortype {value}"
 		# var out = value.c
 		var name = value.name
-	
+
 		# at least be very conservative about which tags we
 		# can drop the tag for?
-		# out in TAG_TYPES.HTML ? 
+		# out in TAG_TYPES.HTML ?
 		name in TAG_TYPES.HTML ? name : value.sel
 
 
@@ -6206,9 +6206,9 @@ export class SelectorAttribute < SelectorPart
 			"[{@left.c}{@op}\"'+{c__(@right)}+'\"]"
 		else
 			"[{@left.c}]"
-		
+
 			# ...
-		
+
 
 
 
@@ -6222,7 +6222,7 @@ export class Await < ValueNode
 		# introduce a util here, no?
 		CALL(OP('.',Util.Promisify.new([value]),'then'),[func]).c
 		# value.c
-	
+
 	def visit o
 		# things are now traversed in a somewhat chaotic order. Need to tighten
 		# Create await function - push this value up to block, take the outer
@@ -6266,8 +6266,8 @@ export class Await < ValueNode
 				# regular setters
 				par.right = func.params.at(0,yes)
 				func.body.unshift(par)
-				
-			
+
+
 
 		# If it is an advance tuple or something, it should be possible to
 		# feed in the paramlist, and let the tuple handle it as if it was any
@@ -6319,7 +6319,7 @@ export class ImportStatement < Statement
 			var src = source.c
 			var m = src.match(/(\w+)(\.js|imba)?[\"\']$/)
 			@alias = m ? m[1] + '$' : 'mod$'
-		
+
 		# should also register the imported items, no?
 		if @imports
 			var dec = @declarations = VariableDeclaration.new([])
@@ -6329,7 +6329,7 @@ export class ImportStatement < Statement
 				dec.add(@alias,OP('.',CALL(Identifier.new("require"),[source]),@alias))
 				dec.traverse
 				return self
-				
+
 				# dec.add(@alias,CALL(Identifier.new("require"),[source]))
 
 			# p "ImportStatement has imports {@imports:length}"
@@ -6384,7 +6384,7 @@ export class ImportStatement < Statement
 		return self
 
 
-# EXPORT 
+# EXPORT
 
 export class ExportStatement < ValueNode
 
@@ -6406,7 +6406,7 @@ export class Util < Node
 
 	def initialize args
 		@args = args
-		
+
 	# this is how we deal with it now
 	def self.extend a,b
 		Util.Extend.new([a,b])
@@ -6422,8 +6422,8 @@ export class Util < Node
 			str += str
 			times >>= 1
 		return res
-		
-		
+
+
 
 	def self.keys obj
 		var l = Const.new("Object")
@@ -6446,7 +6446,7 @@ export class Util < Node
 		var slice = Identifier.new("slice")
 		console.log "slice {a} {b}"
 		return CALL(OP('.',obj,slice),compact__([a,b]))
-	
+
 	def self.iterable obj, cache
 		var node = Util.Iterable.new([obj])
 		node.cache(force: yes, pool: 'iter') if cache
@@ -6551,7 +6551,7 @@ export class Util.IndexOf < Util
 			"idx$({args.map(|v| v.c ).join(',')})"
 		else
 			"Imba.indexOf({args.map(|v| v.c ).join(',')})"
-		
+
 
 export class Util.Subclass < Util
 
@@ -6584,7 +6584,7 @@ export class Util.Promisify < Util
 	def helper
 		# should also check if it is a real promise
 		"function promise$(a)\{ return a instanceof Array ? Promise.all(a) : (a && a.then ? a : Promise.resolve(a)); \}"
-		
+
 	def js o
 		if isStandalone
 			# When this is triggered, we need to add it to the top of file?
@@ -6592,7 +6592,7 @@ export class Util.Promisify < Util
 			"promise$({args.map(|v| v.c).join(',')})"
 		else
 			"Imba.await({args.map(|v| v.c).join(',')})"
-		
+
 # TODO deprecated: can remove
 export class Util.Class < Util
 
@@ -6606,7 +6606,7 @@ export class Util.Iterable < Util
 		# now we want to allow null values as well - just return as empty collection
 		# should be the same for for own of I guess
 		"function iter$(a)\{ return a ? (a.toArray ? a.toArray() : a) : []; \};"
-		
+
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
 
@@ -6615,7 +6615,7 @@ export class Util.Iterable < Util
 			return "iter$({args[0].c})"
 		else
 			return "Imba.iterable({args[0].c})"
-		
+
 export class Util.IsFunction < Util
 
 	def js o
@@ -6766,7 +6766,7 @@ export class Scope
 		@annotations.push(obj)
 		self
 
-	# just like register, but we automatically 
+	# just like register, but we automatically
 	def declare name, init = null, o = {}
 		var variable = register(name,null,o)
 		# TODO create the variabledeclaration here instead?
@@ -6780,7 +6780,7 @@ export class Scope
 		# p "SCOPE declare var".green
 		name = helpers.symbolize(name)
 		# we will see here
-		@vars.add(name,init) # .last -- 
+		@vars.add(name,init) # .last --
 		var decl = @vars.last # bug(!)
 		var item
 		# item = Variable.new(self,name,decl)
@@ -6792,13 +6792,13 @@ export class Scope
 		item = Variable.new(self,name,decl,o)
 		decl.variable = item
 		item.resolve # why on earth should it resolve immediately?
-		
+
 		# decl.variable = item
 		# item.resolve # why on earth should it resolve immediately?
 		return item
 
 		# should be possible to force-declare for this scope, no?
-		# if this is a system-variable 
+		# if this is a system-variable
 
 	# declares a variable (has no real declaration beforehand)
 
@@ -6824,22 +6824,22 @@ export class Scope
 		return item
 		# return register(name || "__",null,system: yes, temporary: yes)
 
-	
+
 
 	def lookup name
 		var ret = null
 		name = helpers.symbolize(name)
 		if @varmap.hasOwnProperty(name)
-			ret = @varmap[name] 
+			ret = @varmap[name]
 		else
 			# look up any parent scope ?? seems okay
-			# !isClosed && 
+			# !isClosed &&
 			ret = parent && parent.lookup(name)
 			# or -- not all scopes have a parent?
-		
+
 		# should this not happen by itself?
-		# if !ret and 
-		#	ret = 
+		# if !ret and
+		#	ret =
 		# ret ||= (g.lookup(name) if var g = root)
 		# g = root
 		ret
@@ -6852,7 +6852,7 @@ export class Scope
 		variable.free # :owner = null
 		# @varpool.push(variable)
 		self
-	
+
 	def isClosed
 		no
 
@@ -6882,7 +6882,7 @@ export class Scope
 		# p "head from scope is ({head})"
 		# var out = [head or null,body].flatten__.compact.join("\n")
 		# out
-		# out = '{' + out + 
+		# out = '{' + out +
 
 	def region
 		node.body.region
@@ -6891,11 +6891,11 @@ export class Scope
 		node.loc
 
 	def dump
-		var vars = Object.keys(@varmap).map do |k| 
+		var vars = Object.keys(@varmap).map do |k|
 			var v = @varmap[k]
 			v.references:length ? dump__(v) : null
 
-		var desc = 
+		var desc =
 			nr: @nr
 			type: self:constructor:name
 			level: (level or 0)
@@ -6909,7 +6909,7 @@ export class Scope
 
 	def toString
 		"{self:constructor:name}"
-	
+
 
 # RootScope is wrong? Rather TopScope or ProgramScope
 export class RootScope < Scope
@@ -6984,19 +6984,19 @@ export class RootScope < Scope
 		if OPTS:analysis:scopes
 			var scopes = @scopes.map(|s| s.dump)
 			scopes.unshift(super.dump)
-			obj:scopes = scopes 
+			obj:scopes = scopes
 
 		if OPTS:analysis:entities
 			obj:entities = @entities
 
 		return obj
-		
+
 
 export class ClassScope < Scope
 
 	def namepath
 		@node.namepath
-	
+
 
 	# called for scopes that are not real scopes in js
 	# must ensure that the local variables inside of the scopes do not
@@ -7019,7 +7019,7 @@ export class ClosureScope < Scope
 export class FunctionScope < Scope
 
 export class MethodScope < Scope
-	
+
 
 	def isClosed
 		yes
@@ -7081,7 +7081,7 @@ export class WhileScope < FlowScope
 		vars.push(variable)
 
 export class ForScope < FlowScope
-	
+
 	def autodeclare variable
 		vars.push(variable)
 		# parent.autodeclare(variable)
@@ -7164,7 +7164,7 @@ export class Variable < Node
 		var item = scope.lookup(@name)
 
 		# if this is a let-definition inside a virtual scope we do need
-		# 
+		#
 		if @scope != closure and @type == 'let' # or if it is a system-variable
 			# p "scope is not the closure -- need to resolve {@name}"
 			item = closure.lookup(@name)
@@ -7286,7 +7286,7 @@ export class Variable < Node
 	def predeclared
 		@declared = yes
 		self
-		
+
 
 	def toString
 		String(name)
@@ -7303,16 +7303,16 @@ export class Variable < Node
 
 
 export class SystemVariable < Variable
-	
+
 	def pool
 		@options:pool
-		
+
 	# weird name for this
 	def predeclared
 		# p "remove var from scope(!)"
 		scope.vars.remove(self)
 		self
-	
+
 	def resolve
 		return self if @resolved || @name
 		# p "RESOLVE SYSTEM VARIABLE".red
@@ -7424,7 +7424,7 @@ export class RootScopeContext < ScopeContext
 		return (val and val != this) ? val.c : "this"
 		# should be the other way around, no?
 		# o and o:explicit ? super : ""
-		
+
 export class Super < Node
 
 	def c
@@ -7442,9 +7442,9 @@ export class Super < Node
 		else
 			out = "{m.target.c}.__super__"
 			unless up isa Access
-				out += ".{c__(m.supername)}" 
+				out += ".{c__(m.supername)}"
 				unless up isa Call # autocall?
-					out += ".apply({m.scope.context.c},arguments)" 
+					out += ".apply({m.scope.context.c},arguments)"
 		out
 
 # constants
