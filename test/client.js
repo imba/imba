@@ -83,7 +83,7 @@
 		
 		return SPEC.run();
 
-	})()
+	})();
 
 /***/ },
 /* 1 */
@@ -121,7 +121,7 @@
 			return console.warn(("Imba v" + (Imba.VERSION) + " is already loaded"));
 		};
 
-	})()
+	})();
 
 /***/ },
 /* 3 */
@@ -261,7 +261,7 @@
 			return;
 		};
 
-	})()
+	})();
 
 /***/ },
 /* 4 */
@@ -348,7 +348,7 @@
 			return this;
 		};
 
-	})()
+	})();
 
 /***/ },
 /* 5 */
@@ -684,7 +684,7 @@
 		};
 		return Imba.Scheduler;
 
-	})()
+	})();
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
@@ -1333,17 +1333,27 @@
 				// there can be several matches here - should choose the last
 				// should fall back to less specific later? - otherwise things may fail
 				// TODO rework this
-				if (m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)) {
-					type = m[1]; // .replace(/-/g,'_')
+				var flags = cls.split(' ');
+				var nr = flags.length;
+				
+				while (--nr >= 0){
+					var flag = flags[nr];
+					if (flag[0] == '_') {
+						if (spawner = tags[flag.slice(1)]) {
+							break;
+						};
+					};
 				};
+				
+				// if var m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)
+				// 	type = m[1] # .replace(/-/g,'_')
 				
 				if (m = cls.match(/\b([A-Z\-]+)_\b/)) {
 					ns = m[1];
 				};
 			};
 			
-			
-			spawner = tags[type] || tags[native$];
+			spawner || (spawner = tags[native$]);
 			return spawner ? (new spawner(dom).awaken(dom)) : (null);
 		};
 		
@@ -1356,7 +1366,7 @@
 		return tag$wrap = Imba.getTagForDom;
 		
 
-	})()
+	})();
 
 /***/ },
 /* 7 */
@@ -1838,7 +1848,7 @@
 		
 		return tag$.defineTag('svgelement', 'htmlelement');
 
-	})()
+	})();
 
 /***/ },
 /* 8 */
@@ -1882,16 +1892,16 @@
 			
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
-			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 		});
 		
 		tag$.defineTag('canvas', function(tag){
 			tag.prototype.__width = {dom: true,name: 'width'};
 			tag.prototype.width = function(v){ return this.dom().width; }
-			tag.prototype.setWidth = function(v){ if(v != this.dom().width){ this.dom().width = v }; return this; };
+			tag.prototype.setWidth = function(v){ if (v != this.dom().width) { this.dom().width = v }; return this; };
 			tag.prototype.__height = {dom: true,name: 'height'};
 			tag.prototype.height = function(v){ return this.dom().height; }
-			tag.prototype.setHeight = function(v){ if(v != this.dom().height){ this.dom().height = v }; return this; };
+			tag.prototype.setHeight = function(v){ if (v != this.dom().height) { this.dom().height = v }; return this; };
 			
 			tag.prototype.context = function (type){
 				if(type === undefined) type = '2d';
@@ -1919,7 +1929,7 @@
 		tag$.defineTag('fieldset', function(tag){
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
-			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 		});
 		
 		tag$.defineTag('figcaption');
@@ -1931,6 +1941,16 @@
 			tag.prototype.setMethod = function(v){ this.setAttribute('method',v); return this; };
 			tag.prototype.action = function(v){ return this.getAttribute('action'); }
 			tag.prototype.setAction = function(v){ this.setAttribute('action',v); return this; };
+			tag.prototype.enctype = function(v){ return this.getAttribute('enctype'); }
+			tag.prototype.setEnctype = function(v){ this.setAttribute('enctype',v); return this; };
+			tag.prototype.autocomplete = function(v){ return this.getAttribute('autocomplete'); }
+			tag.prototype.setAutocomplete = function(v){ this.setAttribute('autocomplete',v); return this; };
+			tag.prototype.target = function(v){ return this.getAttribute('target'); }
+			tag.prototype.setTarget = function(v){ this.setAttribute('target',v); return this; };
+			
+			tag.prototype.__novalidate = {dom: true,name: 'novalidate'};
+			tag.prototype.novalidate = function(v){ return this.dom().novalidate; }
+			tag.prototype.setNovalidate = function(v){ if (v != this.dom().novalidate) { this.dom().novalidate = v }; return this; };
 		});
 		
 		tag$.defineTag('h1');
@@ -1953,6 +1973,8 @@
 		tag$.defineTag('img', function(tag){
 			tag.prototype.src = function(v){ return this.getAttribute('src'); }
 			tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
+			tag.prototype.srcset = function(v){ return this.getAttribute('srcset'); }
+			tag.prototype.setSrcset = function(v){ this.setAttribute('srcset',v); return this; };
 		});
 		
 		tag$.defineTag('input', function(tag){
@@ -1967,19 +1989,25 @@
 			
 			tag.prototype.__value = {dom: true,name: 'value'};
 			tag.prototype.value = function(v){ return this.dom().value; }
-			tag.prototype.setValue = function(v){ if(v != this.dom().value){ this.dom().value = v }; return this; };
+			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
 			tag.prototype.__placeholder = {dom: true,name: 'placeholder'};
 			tag.prototype.placeholder = function(v){ return this.dom().placeholder; }
-			tag.prototype.setPlaceholder = function(v){ if(v != this.dom().placeholder){ this.dom().placeholder = v }; return this; };
+			tag.prototype.setPlaceholder = function(v){ if (v != this.dom().placeholder) { this.dom().placeholder = v }; return this; };
 			tag.prototype.__required = {dom: true,name: 'required'};
 			tag.prototype.required = function(v){ return this.dom().required; }
-			tag.prototype.setRequired = function(v){ if(v != this.dom().required){ this.dom().required = v }; return this; };
+			tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
-			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
+			tag.prototype.__multiple = {dom: true,name: 'multiple'};
+			tag.prototype.multiple = function(v){ return this.dom().multiple; }
+			tag.prototype.setMultiple = function(v){ if (v != this.dom().multiple) { this.dom().multiple = v }; return this; };
 			tag.prototype.__checked = {dom: true,name: 'checked'};
 			tag.prototype.checked = function(v){ return this.dom().checked; }
-			tag.prototype.setChecked = function(v){ if(v != this.dom().checked){ this.dom().checked = v }; return this; };
+			tag.prototype.setChecked = function(v){ if (v != this.dom().checked) { this.dom().checked = v }; return this; };
+			tag.prototype.__readOnly = {dom: true,name: 'readOnly'};
+			tag.prototype.readOnly = function(v){ return this.dom().readOnly; }
+			tag.prototype.setReadOnly = function(v){ if (v != this.dom().readOnly) { this.dom().readOnly = v }; return this; };
 		});
 		
 		tag$.defineTag('ins');
@@ -2021,19 +2049,19 @@
 		tag$.defineTag('optgroup', function(tag){
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
-			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 		});
 		
 		tag$.defineTag('option', function(tag){
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
-			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 			tag.prototype.__selected = {dom: true,name: 'selected'};
 			tag.prototype.selected = function(v){ return this.dom().selected; }
-			tag.prototype.setSelected = function(v){ if(v != this.dom().selected){ this.dom().selected = v }; return this; };
+			tag.prototype.setSelected = function(v){ if (v != this.dom().selected) { this.dom().selected = v }; return this; };
 			tag.prototype.__value = {dom: true,name: 'value'};
 			tag.prototype.value = function(v){ return this.dom().value; }
-			tag.prototype.setValue = function(v){ if(v != this.dom().value){ this.dom().value = v }; return this; };
+			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
 		});
 		
 		tag$.defineTag('output');
@@ -2081,13 +2109,16 @@
 			
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
-			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 			tag.prototype.__required = {dom: true,name: 'required'};
 			tag.prototype.required = function(v){ return this.dom().required; }
-			tag.prototype.setRequired = function(v){ if(v != this.dom().required){ this.dom().required = v }; return this; };
+			tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
+			tag.prototype.__readOnly = {dom: true,name: 'readOnly'};
+			tag.prototype.readOnly = function(v){ return this.dom().readOnly; }
+			tag.prototype.setReadOnly = function(v){ if (v != this.dom().readOnly) { this.dom().readOnly = v }; return this; };
 			tag.prototype.__value = {dom: true,name: 'value'};
 			tag.prototype.value = function(v){ return this.dom().value; }
-			tag.prototype.setValue = function(v){ if(v != this.dom().value){ this.dom().value = v }; return this; };
+			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
 		});
 		
 		
@@ -2113,16 +2144,19 @@
 			
 			tag.prototype.__value = {dom: true,name: 'value'};
 			tag.prototype.value = function(v){ return this.dom().value; }
-			tag.prototype.setValue = function(v){ if(v != this.dom().value){ this.dom().value = v }; return this; };
+			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
-			tag.prototype.setDisabled = function(v){ if(v != this.dom().disabled){ this.dom().disabled = v }; return this; };
+			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 			tag.prototype.__required = {dom: true,name: 'required'};
 			tag.prototype.required = function(v){ return this.dom().required; }
-			tag.prototype.setRequired = function(v){ if(v != this.dom().required){ this.dom().required = v }; return this; };
+			tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
+			tag.prototype.__readOnly = {dom: true,name: 'readOnly'};
+			tag.prototype.readOnly = function(v){ return this.dom().readOnly; }
+			tag.prototype.setReadOnly = function(v){ if (v != this.dom().readOnly) { this.dom().readOnly = v }; return this; };
 			tag.prototype.__placeholder = {dom: true,name: 'placeholder'};
 			tag.prototype.placeholder = function(v){ return this.dom().placeholder; }
-			tag.prototype.setPlaceholder = function(v){ if(v != this.dom().placeholder){ this.dom().placeholder = v }; return this; };
+			tag.prototype.setPlaceholder = function(v){ if (v != this.dom().placeholder) { this.dom().placeholder = v }; return this; };
 		});
 		
 		tag$.defineTag('tfoot');
@@ -2169,7 +2203,7 @@
 		
 		return true;
 
-	})()
+	})();
 
 /***/ },
 /* 9 */
@@ -2300,7 +2334,7 @@
 			Imba.attr(tag,'lengthAdjust');
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 10 */
@@ -2395,7 +2429,7 @@
 			};
 		};
 
-	})()
+	})();
 
 /***/ },
 /* 11 */
@@ -3548,7 +3582,7 @@
 		Imba.Events.register(['mousedown','mouseup']);
 		return (Imba.Events.setEnabled(true),true);
 
-	})()
+	})();
 
 /***/ },
 /* 12 */
@@ -3568,7 +3602,7 @@
 				for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
 					removeNested(root,ary[i],caret);
 				};
-			} else {
+			} else if (node != null) {
 				// what if this is not null?!?!?
 				// take a chance and remove a text-elementng
 				var next = caret ? (caret.nextSibling) : (root._dom.firstChild);
@@ -3913,7 +3947,7 @@
 			};
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 13 */
@@ -4154,7 +4188,7 @@
 		});
 		
 
-	})()
+	})();
 
 /***/ },
 /* 14 */
@@ -4573,7 +4607,7 @@
 		
 		
 
-	})()
+	})();
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
@@ -4874,7 +4908,7 @@
 		
 		
 
-	})()
+	})();
 
 /***/ },
 /* 16 */
@@ -5139,7 +5173,7 @@
 		
 		
 
-	})()
+	})();
 
 /***/ },
 /* 17 */
@@ -5305,7 +5339,7 @@
 		
 		
 
-	})()
+	})();
 
 /***/ },
 /* 18 */
@@ -5499,7 +5533,7 @@
 		
 		
 
-	})()
+	})();
 
 /***/ },
 /* 19 */
@@ -5565,7 +5599,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 20 */
@@ -5637,7 +5671,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 21 */
@@ -5726,7 +5760,7 @@
 		
 		
 
-	})()
+	})();
 
 /***/ },
 /* 22 */
@@ -6111,7 +6145,7 @@
 		// 		change()
 		// 		eq change, 10
 
-	})()
+	})();
 
 /***/ },
 /* 23 */
@@ -6157,7 +6191,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 24 */
@@ -6232,7 +6266,7 @@
 		
 		
 
-	})()
+	})();
 
 /***/ },
 /* 25 */
@@ -6317,7 +6351,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 26 */
@@ -6366,7 +6400,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 27 */
@@ -6399,7 +6433,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 28 */
@@ -6626,7 +6660,7 @@
 		});
 		
 
-	})()
+	})();
 
 /***/ },
 /* 29 */
@@ -6645,7 +6679,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 30 */
@@ -6671,7 +6705,7 @@
 		
 		
 
-	})()
+	})();
 
 /***/ },
 /* 31 */
@@ -6732,7 +6766,7 @@
 		
 		return module.exports.Item = Item;
 
-	})()
+	})();
 
 /***/ },
 /* 32 */
@@ -6780,7 +6814,7 @@
 		
 		return [module.exports.A = A,module.exports.B = B];
 
-	})()
+	})();
 
 /***/ },
 /* 33 */
@@ -6819,7 +6853,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 34 */
@@ -7436,7 +7470,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 35 */
@@ -7463,7 +7497,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 36 */
@@ -7486,7 +7520,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 37 */
@@ -7581,7 +7615,7 @@
 			});
 		});
 
-	})()
+	})();
 
 /***/ },
 /* 38 */
@@ -7757,7 +7791,7 @@
 		});
 		
 
-	})()
+	})();
 
 /***/ },
 /* 39 */
@@ -8273,7 +8307,7 @@
 		
 		
 
-	})()
+	})();
 
 /***/ },
 /* 40 */
