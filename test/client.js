@@ -5879,6 +5879,16 @@
 			return name;
 		};
 		
+		Paramer.prototype.setVal = function (value){
+			this._val = value;
+			return this;
+		};
+		
+		Paramer.prototype.val = function (){
+			return this._val;
+		};
+		
+		
 		
 			
 			Number.prototype.num_meth = function (){
@@ -6054,7 +6064,7 @@
 			});
 			
 			
-			return self.test("block-argument position",function() {
+			self.test("block-argument position",function() {
 				var fn = function(a,b,c) { return [a instanceof Function ? (a()) : (a),b instanceof Function ? (b()) : (b),c instanceof Function ? (c()) : (c)]; };
 				var res;
 				
@@ -6067,8 +6077,16 @@
 				res = fn(function() { return 3; },2,3);
 				return self.eq(res,[3,2,3]);
 			});
+			
+			return self.test("setters",function() {
+				obj.setVal(10);
+				self.eq(obj.val(),10);
+				
+				var res = obj.setVal(20);
+				self.eq(obj.val(),20);
+				return self.eq(res,obj);
+			});
 		});
-		
 		
 		
 		// 	describe 'argvars' do
@@ -6292,7 +6310,8 @@
 		
 		Model.prototype.setIvar = function (val){
 			this._sets = this._sets + 1;
-			return this._ivar = val;
+			this._ivar = val;
+			return this;
 		};
 		
 		Model.prototype.ivar = function (){
@@ -6906,7 +6925,8 @@
 		
 		SyntaxAssignment.prototype.setIvar = function (val){
 			this._sets = this._sets + 1;
-			return this._ivar = val;
+			this._ivar = val;
+			return this;
 		};
 		
 		SyntaxAssignment.prototype.ivar = function (){
@@ -7398,7 +7418,8 @@
 				
 				A.prototype.setX = function (x){
 					this._z++;
-					return this._x = x;
+					this._x = x;
+					return this;
 				};
 				
 				

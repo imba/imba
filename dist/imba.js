@@ -716,6 +716,7 @@
 		
 		Imba.Tag.prototype.setId = function (id){
 			this.dom().id = id;
+			this;
 			return this;
 		};
 		
@@ -799,6 +800,7 @@
 		Imba.Tag.prototype.setText = function (txt){
 			this._empty = false;
 			this._dom.textContent = txt == null ? (txt = "") : (txt);
+			this;
 			return this;
 		};
 		
@@ -1049,6 +1051,7 @@
 		
 		Imba.Tag.prototype.setTransform = function (value){
 			this.css('transform',value);
+			this;
 			return this;
 		};
 		
@@ -1058,6 +1061,7 @@
 		
 		Imba.Tag.prototype.setStyle = function (style){
 			this.setAttribute('style',style);
+			this;
 			return this;
 		};
 		
@@ -1388,6 +1392,7 @@
 			
 			tag.prototype.setId = function (id){
 				this.dom().id = id;
+				this;
 				return this;
 			};
 			
@@ -1411,6 +1416,7 @@
 			
 			tag.prototype.setHtml = function (html){
 				this._dom.innerHTML = html;
+				this;
 				return this;
 			};
 			
@@ -2695,6 +2701,7 @@
 		Imba.Touch.prototype.setSuppress = function (value){
 			console.warn('Imba.Touch#suppress= is deprecated');
 			this._supress = value;
+			this;
 			return this;
 		};
 		
@@ -3100,6 +3107,7 @@
 		
 		Imba.Event.prototype.setType = function (type){
 			this._type = type;
+			this;
 			return this;
 		};
 		
@@ -3892,6 +3900,7 @@
 					this._children = text;
 					this.dom().textContent = text == null || text === false ? ('') : (text);
 				};
+				this;
 				return this;
 			};
 		});

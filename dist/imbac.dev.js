@@ -7756,6 +7756,10 @@ var Imbac =
 			var variable;
 			this.scope().visit();
 			
+			if (String(this.name()).match(/\=$/)) {
+				this.set({chainable: true});
+			};
+			
 			if (String(this.name()) == 'initialize') {
 				this.setType('constructor');
 			};
@@ -7812,7 +7816,9 @@ var Imbac =
 		MethodDeclaration.prototype.js = function (o){
 			// FIXME Do this in the grammar - remnants of old implementation
 			if (!(this.type() == 'constructor' || this.option('noreturn'))) {
-				if (this.option('greedy')) {
+				if (this.option('chainable')) {
+					this.body().add(new ImplicitReturn(this.scope().context()));
+				} else if (this.option('greedy')) {
 					// haaack
 					this.body().consume(new GreedyReturn());
 				} else {
