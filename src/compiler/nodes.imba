@@ -2227,6 +2227,9 @@ export class TagDeclaration < Code
 		@body = blk__(body || [])
 
 	def visit
+		if String(name).match(/^[A-Z]/)
+			set(isClass: yes)
+
 		ROOT.entities.register(self) # what if this is not local?
 
 		for scope,i in STACK.scopes
@@ -4573,6 +4576,9 @@ export class TagTypeIdentifier < Identifier
 		name += "${@ns.toLowerCase}" if @ns
 		name
 
+	def isClass
+		@name[0] == @name[0].toUpperCase
+
 	def spawner
 		if @ns
 			"{@ns.toUpperCase}.${@name.replace(/-/g,'_')}"
@@ -5794,9 +5800,12 @@ export class Tag < Node
 			commit = "synced"
 			# p "got here"
 			# setting correct context directly
+			# TODO should call something here as well - marks the start of render - useful for pushing state etc
 			reactive = yes
 			@reference = scope.context
 			scope.context.c
+		elif type.isClass
+			"{mark__(o:open)}{type.name}.build()"
 		else
 			"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}()"
 

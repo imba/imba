@@ -31,6 +31,11 @@ tag cached
 			for v in @ary
 				<div@{v}> "v"
 
+class CustomClass < Imba.Tag
+
+	def render
+		<self.one.two> "Custom"
+
 var toArray = do |list|
 	[]:slice.call(list,0)
 
@@ -76,7 +81,6 @@ describe 'Tags - Define' do
 				yes
 		<#try>
 
-
 	test "cache for in" do
 		buildCount = 0
 		var root = <div>
@@ -115,5 +119,12 @@ describe 'Tags - Define' do
 			eq el.dom.getAttribute('style'), 'display: block;'
 		else
 			eq el.toString, '<div style="display: block;"></div>'
-		
+	
+	test "class" do
+		var el = <CustomClass>
+		if Imba.CLIENT
+			eq el.dom:className, 'one two'
+			document:body.appendChild(el.dom)
+		else
+			eq el.toString, '<div class="one two">Custom</div>'
 					
