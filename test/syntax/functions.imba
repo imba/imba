@@ -47,6 +47,13 @@ class Paramer < SpecObject
 	def opt name = 'anon'
 		return name
 
+	def val= value
+		@val = value
+
+	def val
+		@val
+
+
 extend class Number
 
 	def num_meth
@@ -216,6 +223,13 @@ describe 'Syntax - Functions' do
 		res = fn(&,2,3) do 3
 		eq res, [3,2,3]
 
+	test "setters" do
+		obj.val = 10
+		eq obj.val, 10
+
+		var res = obj.setVal(20)
+		eq obj.val, 20
+		eq res, obj
 
 
 # 	describe 'argvars' do

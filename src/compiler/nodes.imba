@@ -2393,6 +2393,9 @@ export class MethodDeclaration < Func
 		# prebreak # make sure this has a break?
 		scope.visit
 
+		if String(name).match(/\=$/)
+			set(chainable: yes)
+
 		if String(name) == 'initialize'
 			self.type = :constructor
 
@@ -2440,7 +2443,9 @@ export class MethodDeclaration < Func
 	def js o
 		# FIXME Do this in the grammar - remnants of old implementation
 		unless type == :constructor or option(:noreturn)
-			if option(:greedy)
+			if option(:chainable)
+				body.add(ImplicitReturn.new(scope.context))
+			elif option(:greedy)
 				# haaack
 				body.consume(GreedyReturn.new)
 			else
