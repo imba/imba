@@ -2031,7 +2031,7 @@ export class Root < Code
 			out = scope.c(indent: yes)
 			out = out.replace(/^\n?/,'\n')
 			out = out.replace(/\n?$/,'\n\n')
-			out = '(function(){' + out + '})()'
+			out = '(function(){' + out + '})();'
 
 		# find and replace shebangs
 		var shebangs = []
