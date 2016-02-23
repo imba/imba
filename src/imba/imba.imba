@@ -9,7 +9,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 ###
 Imba = {
-	VERSION: '0.14.4'
+	VERSION: '0.14.5'
 	CLIENT: isClient
 	SERVER: !isClient
 	DEBUG: no

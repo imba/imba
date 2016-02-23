@@ -35,7 +35,7 @@
     "test": "bin/imba test/index.imba"
   },
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "0.14.4",
+  "version": "0.14.5",
   "licenses": [
     {
       "type": "MIT",
