@@ -414,10 +414,8 @@ var grammar =
 	]
 
 	Do: [
-		o 'DO Block' do Lambda.new [], A2,null,null, {bound: true}
-		o 'DO BLOCK_PARAM_START ParamList BLOCK_PARAM_END Block' do Lambda.new A3, A5,null,null, {bound: true}
-		# remove this, no?
-		o '{ BLOCK_PARAM_START ParamList BLOCK_PARAM_END Block }' do Lambda.new A3, A5,null,null, {bound: true}
+		o 'DO Block' do Lambda.new [], A2, null,null, {bound: true, keyword: A1}
+		o 'DO BLOCK_PARAM_START ParamList BLOCK_PARAM_END Block' do Lambda.new A3, A5, null, null, {bound: true, keyword: A1}
 	]
 
 	Property: [
