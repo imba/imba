@@ -105,5 +105,14 @@ def Imba.attr scope, name, opts
 	scope:prototype[setName] = do |value|
 		this.setAttribute(name,value)
 		return this
-
 	return
+
+def Imba.propDidSet object, property, val, prev
+	let fn = property:watch
+	if fn isa Function
+		fn.call(object,val,prev,property)
+	elif fn isa String and object[fn]
+		object[fn](val,prev,property)
+	return
+
+Imba

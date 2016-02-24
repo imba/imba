@@ -2598,11 +2598,19 @@ export class PropertyDeclaration < Node
 
 			if pars:watch isa Symbol
 				wfn = pars:watch
+			elif pars:watch isa Str
+				wfn = pars:watch
 			elif pars:watch isa Bool
 				o.key(:watch).value = Symbol.new("{key}DidSet")
+			else
+				wfn = null
 
-			var fn = OP('.',This.new,wfn)
-			js:ondirty = OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
+			if wfn
+				let fn = OP('.',This.new,wfn)
+				js:ondirty = OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
+			else
+				js:ondirty = "Imba.propDidSet(this,this.__{key},v,a)"
+				
 
 		if pars:observe
 			if pars:observe isa Bool

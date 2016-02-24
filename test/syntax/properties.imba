@@ -83,3 +83,10 @@ describe 'Syntax - Properties' do
 
 		Example.new.other = 10
 		eq track, 10
+
+	test "watch: function" do
+		let track = null
+		class Example
+			prop name watch: do |v| track = v
+		Example.new.name = 10
+		eq track, 10
