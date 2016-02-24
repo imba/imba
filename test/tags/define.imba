@@ -1,4 +1,4 @@
-extern eq
+extern eq, ok
 
 
 
@@ -126,14 +126,18 @@ describe 'Tags - Define' do
 		var el = <input>
 		eq el.toString, '<input>'
 
-	test "boolean attributes" do
-		var el = <input required=yes disabled=no>
+	test "idn attributes" do
+		var el = <input type='checkbox' required=yes disabled=no checked=yes value="a">
+		var html = el.dom:outerHTML
 
-		if Imba.SERVER
-			eq el.toString, '<input required>'
-		elif Imba.CLIENT
-			eq el.dom:required, yes
-			eq el.dom:disabled, no
+		eq el.dom:required, yes
+		eq el.dom:checked, yes
+		eq el.dom:disabled, no
+
+		ok html.indexOf('required') >= 0
+		ok html.indexOf('value="a"') >= 0
+
+
 
 	test "style attribute" do
 		var el = <div style='display: block;'>

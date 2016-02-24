@@ -74,6 +74,13 @@ global class ImbaNodeClassList
 
 global class ImbaServerElement
 
+	def self.getter name, fn
+		Object.defineProperty(self:prototype, name, {
+			get: fn,
+			enumerable: true,
+			configurable: true
+		})
+
 	def initialize type
 		# slowing things down -- be careful
 		# should only need to copy from the outer element
@@ -132,9 +139,12 @@ global class ImbaServerElement
 		# temporary workaround for IDL attributes
 		# needs support for placeholder etc
 		sel += " placeholder=\"{v}\"" if v = self:placeholder
+		sel += " value=\"{v}\"" if v = self:value
+		sel += " checked" if self:checked
 		sel += " disabled" if self:disabled
 		sel += " required" if self:required
-		sel += " readonly" if self:readonly
+		sel += " readonly" if self:readOnly
+		sel += " autofocus" if self:autofocus
 
 		if voidElements[typ]
 			return "<{sel}>"
@@ -148,25 +158,19 @@ global class ImbaServerElement
 			# return @tag.toNodeString
 		__outerHTML
 
+	getter 'outerHTML' do
+		this.__outerHTML
+
+	getter 'firstChild' do
+		this:children and this:children[0]
+
+	getter 'firstElementChild' do
+		this:children and this:children[0]
+
+	getter 'lastElementChild' do
+		this:children and this:children[this:children:length - 1]
 
 var el = ImbaServerElement:prototype
-Object.defineProperty(el, 'firstChild',
-	get: (|v| this:children and this:children[0] ),
-	enumerable: true,
-	configurable: true
-)
-
-Object.defineProperty(el, 'firstElementChild',
-	get: (|v| this:children and this:children[0] ),
-	enumerable: true,
-	configurable: true
-)
-
-Object.defineProperty(el, 'lastElementChild',
-	get: (|v| this:children and this:children[this:children:length - 1] ),
-	enumerable: true,
-	configurable: true
-)
 
 Object.defineProperty(el, 'className',
 	enumerable: true
