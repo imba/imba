@@ -1254,6 +1254,28 @@
 		};
 		
 		
+		/*
+			Set/update a named flag. It remembers the previous
+			value of the flag, and removes it before setting the new value.
+		
+				node.setFlag('type','todo')
+				node.setFlag('type','project')
+				# todo is removed, project is added.
+		
+			@return {self}
+			*/
+		
+		Imba.Tag.prototype.setFlag = function (name,value){
+			this._namedFlags || (this._namedFlags = []);
+			var prev = this._namedFlags[name];
+			if (prev != value) {
+				if (prev) { this.unflag(prev) };
+				if (value) { this.flag(value) };
+				this._namedFlags[name] = value;
+			};
+			return this;
+		};
+		
 		
 		/*
 			Get the scheduler for this node. A new scheduler will be created
@@ -8057,21 +8079,37 @@
 				return eq(buildCount,4);
 			});
 			
+			self.test("dynamic flags",function() {
+				var val = 'hello';
+				var div = tag$.$div().end();
+				div.render = function (){
+					return this.setFlag(1,val).synced();
+				};
+				
+				eq(div.render().toString(),'<div class="hello"></div>');
+				
+				val = 'other';
+				return eq(div.render().toString(),'<div class="other"></div>');
+			});
+			
 			self.test("void elements",function() {
 				var el = tag$.$input().end();
 				return eq(el.toString(),'<input>');
 			});
 			
-			self.test("boolean attributes",function() {
-				var el = tag$.$input().setRequired(true).setDisabled(false).end();
+			self.test("idn attributes",function() {
+				var el = tag$.$input().setType('checkbox').setRequired(true).setDisabled(false).setChecked(true).setValue("a").end();
+				var html = el.dom().outerHTML;
 				
-				if (false) {
-					return eq(el.toString(),'<input required>');
-				} else if (true) {
-					eq(el.dom().required,true);
-					return eq(el.dom().disabled,false);
-				};
+				eq(el.dom().required,true);
+				eq(el.dom().checked,true);
+				eq(el.dom().disabled,false);
+				
+				ok(html.indexOf('required') >= 0);
+				return ok(html.indexOf('value="a"') >= 0);
 			});
+			
+			
 			
 			self.test("style attribute",function() {
 				var el = tag$.$div().setStyle('display: block;').end();

@@ -11241,7 +11241,6 @@ var Imbac =
 		Tag.prototype.set = function (obj){
 			for (var v, i = 0, keys = Object.keys(obj), l = keys.length; i < l; i++){
 				k = keys[i];v = obj[k];if (k == 'attributes') {
-					// p "attributs!"
 					for (var j = 0, ary = iter$(v), len = ary.length; j < len; j++) {
 						this.addAttribute(ary[j]);
 					};
@@ -11259,8 +11258,6 @@ var Imbac =
 			};
 			this._options.classes.push(node);
 			this._parts.push(node);
-			
-			// p "add class!!!"
 			return this;
 		};
 		
@@ -11450,6 +11447,8 @@ var Imbac =
 				tree.resolve();
 			};
 			
+			var dynamicFlagIndex = isSelf ? (1) : (0);
+			
 			for (var i = 0, ary = iter$(this._parts), len = ary.length, part; i < len; i++) {
 				part = ary[i];
 				var pjs;
@@ -11475,8 +11474,18 @@ var Imbac =
 						pjs = ("." + mark__(part.key()) + helpers.setterSym(akey) + "(" + (aval.c()) + ")");
 					};
 				} else if (part instanceof TagFlag) {
-					pjs = part.c();
-					pcache = true;
+					if (part.value() instanceof Node) {
+						if (this.reactive()) {
+							var idx = dynamicFlagIndex;
+							pjs = (".setFlag(" + idx + "," + (part.value().c()) + ")");
+							dynamicFlagIndex = idx + 2;
+						} else {
+							pjs = part.c();
+						};
+					} else {
+						pjs = part.c();
+						pcache = true;
+					};
 				};
 				
 				if (pjs) {
@@ -11559,8 +11568,8 @@ var Imbac =
 					key = o.treeRef || partree && partree.nextCacheKey();
 					// key = tree and tree.nextCacheKey
 					if (o.loop) {
-						var idx = o.loop.option('vars').index;
-						key = OP('+',"'" + key + "'",idx);
+						var idx1 = o.loop.option('vars').index;
+						key = OP('+',"'" + key + "'",idx1);
 					};
 				};
 				
@@ -11772,9 +11781,6 @@ var Imbac =
 				return (".flag(" + helpers.singlequote(this.value()) + ")");
 			};
 		};
-		
-		
-		
 		
 		
 		

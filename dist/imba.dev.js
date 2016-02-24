@@ -1203,6 +1203,28 @@
 		};
 		
 		
+		/*
+			Set/update a named flag. It remembers the previous
+			value of the flag, and removes it before setting the new value.
+		
+				node.setFlag('type','todo')
+				node.setFlag('type','project')
+				# todo is removed, project is added.
+		
+			@return {self}
+			*/
+		
+		Imba.Tag.prototype.setFlag = function (name,value){
+			this._namedFlags || (this._namedFlags = []);
+			var prev = this._namedFlags[name];
+			if (prev != value) {
+				if (prev) { this.unflag(prev) };
+				if (value) { this.flag(value) };
+				this._namedFlags[name] = value;
+			};
+			return this;
+		};
+		
 		
 		/*
 			Get the scheduler for this node. A new scheduler will be created
