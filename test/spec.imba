@@ -29,11 +29,16 @@ global class Spec
 	prop blocks
 	prop context
 	prop stack
+	prop assertions
 
 	def initialize
 		@blocks = []
+		@assertions = []
 		@stack = [@context = self]
 		self
+
+	def fullName
+		""
 
 	def eval block, ctx
 		@stack.push(@context = ctx)
@@ -44,12 +49,12 @@ global class Spec
 
 	def describe name, blk
 		if @context == self
-			@blocks.push SpecGroup.new(name, blk)
+			@blocks.push SpecGroup.new(name, blk, self)
 		else
 			@context.describe(name,blk)
 		
 	def run i = 0
-		# p "SPEC.run {i}"
+		Spec.CURRENT = self
 		var block = @blocks[i]
 
 		# we need the notifications
@@ -59,7 +64,26 @@ global class Spec
 
 	
 	def finish
-		console.log "specs did run"
+		console.log "\n"
+
+		var ok = []
+		var failed = []
+
+		for test in assertions
+			test.success ? ok.push(test) : failed.push(test)
+		
+		var logs = [
+			fmt(:green,"{ok:length} OK")
+			fmt(:red,"{failed:length} FAILED")
+			"{assertions:length} TOTAL"
+		]
+
+		console.log logs.join(" | ")
+
+		for item in failed
+			console.log item.fullName
+			console.log "    " + item.details
+
 		Imba.emit(self, :done, [self])
 
 	# def describe name, blk do SPEC.context.describe(name,blk)
@@ -84,20 +108,24 @@ global class SpecCaller
 
 global class SpecGroup
 
-	def initialize name, blk
+	def initialize name, blk, parent
+		@parent = parent
 		@name = name
 		@blocks = []
 		SPEC.eval(blk,self) if blk
 		self
+
+	def fullName
+		"{@parent.fullName}{@name} > "
 	
 	def blocks
 		@blocks
 
 	def describe name, blk
-		@blocks.push SpecGroup.new name, blk
+		@blocks.push SpecGroup.new(name, blk, self)
 	
 	def it name, blk
-		@blocks.push SpecExample.new name, blk
+		@blocks.push SpecExample.new(name, blk, self)
 
 	def emit ev, pars
 		Imba.emit(self,ev,pars)
@@ -126,12 +154,16 @@ global class SpecGroup
 
 global class SpecExample
 
-	def initialize name, block
+	def initialize name, block, parent
+		@parent = parent
 		@evaluated = no
 		@name = name
 		@block = block
 		@assertions = []
 		self
+
+	def fullName
+		"{@parent.fullName}{@name}"
 
 	def emit ev, pars
 		Imba.emit(self,ev,pars)
@@ -158,6 +190,7 @@ global class SpecExample
 	def finish
 		var details = []
 		var dots = @assertions.map do |v,i|
+			Spec.CURRENT.assertions.push(v)
 			if v.success
 				fmt(:green,"✔")
 			else
@@ -177,6 +210,14 @@ global class SpecObject
 global class SpecCondition
 
 	prop success
+
+	def initialize example
+		@example = example
+		self
+
+
+	def fullName
+		@example.fullName
 
 	def state
 		yes
@@ -228,6 +269,7 @@ global class SpecAwait < SpecCondition
 		@callback
 
 global class SpecAssert < SpecCondition
+
 	def initialize example, actual, expected, format = null
 		@example = example
 		@actual = actual
