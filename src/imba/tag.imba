@@ -22,13 +22,14 @@ class Imba.Tag
 	def self.build
 		self.new(self.createNode)
 
+	def initialize dom
+		self.dom = dom
+		self
+
 	prop object
 
 	def dom
 		@dom
-
-	def initialize dom
-		self.dom = dom
 		
 	def setDom dom
 		dom.@tag = self
@@ -44,6 +45,9 @@ class Imba.Tag
 	def setRef ref, ctx
 		flag(@ref = ref)
 		self
+
+	def ref
+		@ref
 
 	###
 	Set inner html of node
@@ -697,13 +701,13 @@ def extender obj, sup
 
 	obj:prototype = Object.create(sup:prototype)
 	obj:__super__ = obj:prototype:__super__ = sup:prototype
-	obj:prototype:initialize = obj:prototype:constructor = obj
+	obj:prototype:constructor = obj
 	sup.inherit(obj) if sup:inherit
 	return obj
 
 def Tag
 	return do |dom|
-		this.setDom(dom)
+		this.initialize(dom)
 		return this
 
 def TagSpawner type

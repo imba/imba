@@ -2401,9 +2401,6 @@ export class MethodDeclaration < Func
 		if String(name).match(/\=$/)
 			set(chainable: yes)
 
-		if String(name) == 'initialize'
-			self.type = :constructor
-
 		if option(:greedy)
 			warn "deprecated"
 			# set(greedy: true)
@@ -2414,6 +2411,10 @@ export class MethodDeclaration < Func
 		
 		@context = scope.parent.closure
 		@params.traverse
+
+		if String(name) == 'initialize'
+			if (context isa ClassScope) and !(context isa TagScope)
+				self.type = :constructor
 
 		if target isa Self
 			@target = @context.context

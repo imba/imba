@@ -18,8 +18,6 @@ tag custom
 	def hello
 		true
 
-
-
 tag cached
 
 	def build
@@ -35,6 +33,20 @@ class CustomClass < Imba.Tag
 
 	def render
 		<self.one.two> "Custom"
+
+tag custom-init
+
+	def initialize dom
+		self.dom = dom
+		@custom = yes
+		log 'custom init'
+		self
+
+tag super-init
+
+	def initialize dom
+		@custom = yes
+		super
 
 var toArray = do |list|
 	[]:slice.call(list,0)
@@ -127,4 +139,12 @@ describe 'Tags - Define' do
 			document:body.appendChild(el.dom)
 		else
 			eq el.toString, '<div class="one two">Custom</div>'
+
+	test "initialize" do
+		var a = <custom-init>
+		eq a.@custom, yes
+
+		var b = <super-init>
+		eq b.@custom, yes
+
 					
