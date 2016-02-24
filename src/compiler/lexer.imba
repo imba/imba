@@ -1629,7 +1629,7 @@ export class Lexer
 		elif value == '√'
 			tokid = 'SQRT'
 		elif value == 'ƒ'
-			tokid = 'FUNC'
+			tokid = 'DO'
 		elif value in MATH
 			tokid = 'MATH'
 		elif value in COMPARE

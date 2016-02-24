@@ -2296,6 +2296,7 @@ export class Func < Code
 
 	def initialize params, body, name, target, o
 		# p "INIT Function!!",params,body,name
+		@options = o	
 		var typ = scopetype
 		@traversed = no
 		@body = blk__(body)
@@ -2303,7 +2304,6 @@ export class Func < Code
 		@scope.params = @params = ParamList.new(params)
 		@name = name || ''
 		@target = target
-		@options = o
 		@type = :function
 		@variable = null
 		self
@@ -2340,7 +2340,9 @@ export class Func < Code
 		# if up as a call? Only if we are 
 
 export class Lambda < Func
-	def scopetype do LambdaScope
+	def scopetype
+		var k = option(:keyword)
+		(k and k.@value == 'ƒ') ? (MethodScope) : (LambdaScope)
 
 export class TagFragmentFunc < Func
 
