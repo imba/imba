@@ -438,6 +438,25 @@ class Imba.Tag
 		@dom:classList.contains(name)
 
 
+	###
+	Set/update a named flag. It remembers the previous
+	value of the flag, and removes it before setting the new value.
+
+		node.setFlag('type','todo')
+		node.setFlag('type','project')
+		# todo is removed, project is added.
+
+	@return {self}
+	###
+	def setFlag name, value
+		@namedFlags ||= []
+		let prev = @namedFlags[name]
+		if prev != value
+			unflag(prev) if prev
+			flag(value) if value
+			@namedFlags[name] = value
+		return self
+
 
 	###
 	Get the scheduler for this node. A new scheduler will be created

@@ -5666,7 +5666,6 @@ export class Tag < Node
 	def set obj
 		for own k,v of obj
 			if k == 'attributes'
-				# p "attributs!"
 				addAttribute(atr) for atr in v
 				continue
 
@@ -5678,8 +5677,6 @@ export class Tag < Node
 			node = TagFlag.new(node)
 		@options:classes.push(node)
 		@parts.push(node)
-
-		# p "add class!!!"
 		self
 
 	def addIndex node
@@ -5846,6 +5843,8 @@ export class Tag < Node
 			# should rather happen in visit - long before.
 			tree.resolve
 
+		var dynamicFlagIndex = isSelf ? 1 : 0
+
 		for part in @parts
 			var pjs
 			var pcache = no
@@ -5870,8 +5869,17 @@ export class Tag < Node
 					pjs = ".{mark__(part.key)}{helpers.setterSym(akey)}({aval.c})"
 
 			elif part isa TagFlag
-				pjs = part.c
-				pcache = yes
+				if part.value isa Node
+					if reactive
+						let idx = dynamicFlagIndex
+						pjs = ".setFlag({idx},{part.value.c})"
+						dynamicFlagIndex = idx + 2
+					else
+						pjs = part.c
+
+				else
+					pjs = part.c
+					pcache = yes
 
 			if pjs
 				cacheStatics && pcache ? statics.push(pjs) : calls.push(pjs)
@@ -6107,9 +6115,6 @@ export class TagFlag < Node
 			".flag({value.c})"
 		else
 			".flag({helpers.singlequote(value)})"
-		
-		
-
 
 
 

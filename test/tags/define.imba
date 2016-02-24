@@ -112,6 +112,16 @@ describe 'Tags - Define' do
 		root.render
 		eq buildCount, 4
 
+	test "dynamic flags" do
+		let val = 'hello'
+		var div = <div>
+		def div.render do <self .{val}>
+
+		eq div.render.toString, '<div class="hello"></div>'
+
+		val = 'other'
+		eq div.render.toString, '<div class="other"></div>'
+
 	test "void elements" do
 		var el = <input>
 		eq el.toString, '<input>'
