@@ -1,3 +1,11 @@
+## 0.14.5
+- `tag.initialize` can now be defined / overridden
+- Dynamic flags `<div .{flag}>` works as expected
+- Added more missing attributes to html elements
+- Allow defining properties with reserved names
+- `prop watch:` now accepts a Function
+- Minor bugfixes
+
 ## 0.14.4
 - Add trailing semicolon to IIFE wrapper (#67)
 - Allow uppercase flags in tag (#64)
