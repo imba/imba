@@ -89,11 +89,20 @@ tag img
 	attr srcset
 
 tag input
-	attr type
-	attr required
+	attr accept
 	attr disabled
-	attr autofocus
+	attr form
+	attr list
+	attr max
+	attr maxlength
+	attr min
+	attr pattern
+	attr required
+	attr size
+	attr step
+	attr type
 
+	prop autofocus dom: yes
 	prop value dom: yes
 	prop placeholder dom: yes
 	prop required dom: yes
@@ -106,6 +115,11 @@ tag ins
 tag kbd
 tag keygen
 tag label
+	attr accesskey
+	attr for
+	attr form
+
+
 tag legend
 tag li
 
@@ -130,15 +144,21 @@ tag nav
 tag noscript
 
 tag ol
+
 tag optgroup
+	attr label
 	prop disabled dom: yes
 
 tag option
+	attr label
 	prop disabled dom: yes
 	prop selected dom: yes
 	prop value dom: yes
 
 tag output
+	attr for
+	attr form
+
 tag p
 
 tag object
@@ -153,6 +173,9 @@ tag param
 
 tag pre
 tag progress
+	attr max
+	prop value dom: yes
+
 tag q
 tag rp
 tag rt
@@ -169,11 +192,12 @@ tag script
 tag section
 
 tag select
+	attr size
+	attr form
 	attr multiple
-
+	prop autofocus dom: yes
 	prop disabled dom: yes
 	prop required dom: yes
-	prop readOnly dom: yes
 	prop value dom: yes
 
 
@@ -192,8 +216,8 @@ tag td
 tag textarea
 	attr rows
 	attr cols
-	attr autofocus
 
+	prop autofocus dom: yes
 	prop value dom: yes
 	prop disabled dom: yes
 	prop required dom: yes
