@@ -241,7 +241,7 @@
 			return;
 		};
 		
-		return Imba.attr = function (scope,name,opts){
+		Imba.attr = function (scope,name,opts){
 			if (scope.defineAttribute) {
 				return scope.defineAttribute(name,opts);
 			};
@@ -257,9 +257,20 @@
 				this.setAttribute(name,value);
 				return this;
 			};
-			
 			return;
 		};
+		
+		Imba.propDidSet = function (object,property,val,prev){
+			var fn = property.watch;
+			if (fn instanceof Function) {
+				fn.call(object,val,prev,property);
+			} else if ((typeof fn=='string'||fn instanceof String) && object[fn]) {
+				object[fn](val,prev,property);
+			};
+			return;
+		};
+		
+		return Imba;
 
 	})();
 
@@ -696,6 +707,7 @@
 			return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
 		};
 		
+		function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 		Imba.static = function (items,nr){
 			items.static = nr;
 			return items;
@@ -708,10 +720,21 @@
 		
 		Imba.Tag = function Tag(dom){
 			this.setDom(dom);
+			this;
+		};
+		
+		Imba.Tag.buildNode = function (){
+			var dom = Imba.document().createElement(this._nodeType || 'div');
+			if (this._classes) {
+				var cls = this._classes.join(" ");
+				if (cls) { dom.className = cls };
+			};
+			return dom;
 		};
 		
 		Imba.Tag.createNode = function (){
-			throw "Not implemented";
+			var proto = (this._protoDom || (this._protoDom = this.buildNode()));
+			return proto.cloneNode(false);
 		};
 		
 		Imba.Tag.build = function (){
@@ -741,6 +764,27 @@
 		Imba.Tag.prototype.setRef = function (ref,ctx){
 			this.flag(this._ref = ref);
 			return this;
+		};
+		
+		Imba.Tag.prototype.ref = function (){
+			return this._ref;
+		};
+		
+		/*
+			Set inner html of node
+			*/
+		
+		Imba.Tag.prototype.setHtml = function (html){
+			this._dom.innerHTML = html;
+			return this;
+		};
+		
+		/*
+			Get inner html of node
+			*/
+		
+		Imba.Tag.prototype.html = function (){
+			return this._dom.innerHTML;
 		};
 		
 		/*
@@ -833,6 +877,147 @@
 		};
 		
 		/*
+			Remove specified child from current node.
+			@return {self}
+			*/
+		
+		Imba.Tag.prototype.removeChild = function (child){
+			var par = this.dom();
+			var el = child instanceof Imba.Tag ? (child.dom()) : (child);
+			if (el && el.parentNode == par) { par.removeChild(el) };
+			return this;
+		};
+		
+		// Benchmark difference
+		// def removeChild node
+		// 	dom.removeChild(node.@dom or node) if node
+		// 	self
+		
+		/*
+			@deprecated
+			Remove specified child from current node.
+			*/
+		
+		Imba.Tag.prototype.remove = function (child){
+			var par = this.dom();
+			var el = child && child.dom();
+			if (el && el.parentNode == par) { par.removeChild(el) };
+			return this;
+		};
+		
+		/*
+			Append a single item (node or string) to the current node.
+			If supplied item is a string it will automatically. This is used
+			by Imba internally, but will practically never be used explicitly.
+			@return {self}
+			*/
+		
+		Imba.Tag.prototype.appendChild = function (node){
+			if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
+			if (node) { this.dom().appendChild(node._dom || node) };
+			return this;
+		};
+		
+		/*
+			Insert a node into the current node (self), before another.
+			The relative node must be a child of current node. 
+			*/
+		
+		Imba.Tag.prototype.insertBefore = function (node,rel){
+			if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
+			if (node && rel) { this.dom().insertBefore((node._dom || node),(rel._dom || rel)) };
+			return this;
+		};
+		
+		/*
+			The .append method inserts the specified content as the last child
+			of the target node. If the content is already a child of node it
+			will be moved to the end.
+			
+			# example
+			    var root = <div.root>
+			    var item = <div.item> "This is an item"
+			    root.append item # appends item to the end of root
+		
+			    root.prepend "some text" # append text
+			    root.prepend [<ul>,<ul>] # append array
+			*/
+		
+		Imba.Tag.prototype.append = function (item){
+			// possible to append blank
+			// possible to simplify on server?
+			if (!item) { return this };
+			
+			if (item instanceof Array) {
+				for (var i = 0, ary = iter$(item), len = ary.length, member; i < len; i++) {
+					member = ary[i];
+					member && this.append(member);
+				};
+			} else if ((typeof item=='string'||item instanceof String) || (typeof item=='number'||item instanceof Number)) {
+				var node = Imba.document().createTextNode(item);
+				this._dom.appendChild(node);
+				if (this._empty) { this._empty = false };
+			} else {
+				// should delegate to self.appendChild
+				this._dom.appendChild(item._dom || item);
+				if (this._empty) { this._empty = false };
+			};
+			
+			return this;
+		};
+		
+		/*
+			@deprecated
+			*/
+		
+		Imba.Tag.prototype.insert = function (node,pars){
+			if(!pars||pars.constructor !== Object) pars = {};
+			var before = pars.before !== undefined ? pars.before : null;
+			var after = pars.after !== undefined ? pars.after : null;
+			if (after) { before = after.next() };
+			if (node instanceof Array) {
+				node = (tag$.$fragment().setContent(node,0).end());
+			};
+			if (before) {
+				this.dom().insertBefore(node.dom(),before.dom());
+			} else {
+				this.append(node);
+			};
+			return this;
+		};
+		
+		/*
+			@todo Should support multiple arguments like append
+		
+			The .prepend method inserts the specified content as the first
+			child of the target node. If the content is already a child of 
+			node it will be moved to the start.
+			
+		    	node.prepend <div.top> # prepend node
+		    	node.prepend "some text" # prepend text
+		    	node.prepend [<ul>,<ul>] # prepend array
+		
+			*/
+		
+		Imba.Tag.prototype.prepend = function (item){
+			var first = this._dom.childNodes[0];
+			first ? (this.insertBefore(item,first)) : (this.appendChild(item));
+			return this;
+		};
+		
+		
+		/*
+			Remove node from the dom tree
+			@return {self}
+			*/
+		
+		Imba.Tag.prototype.orphanize = function (){
+			var par;
+			if (par = this.parent()) { par.removeChild(this) };
+			return this;
+		};
+		
+		/*
 			Get text of node. Uses textContent behind the scenes (not innerText)
 			[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
 			@return {string} inner text of node
@@ -850,6 +1035,7 @@
 		Imba.Tag.prototype.setText = function (txt){
 			this._empty = false;
 			this._dom.textContent = txt == null ? (txt = "") : (txt);
+			this;
 			return this;
 		};
 		
@@ -870,7 +1056,49 @@
 			*/
 		
 		Imba.Tag.prototype.dataset = function (key,val){
-			throw "Not implemented";
+			if (key instanceof Object) {
+				for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
+					this.dataset(keys[i],key[keys[i]]);
+				};
+				return this;
+			};
+			
+			if (arguments.length == 2) {
+				this.setAttribute(("data-" + key),val);
+				return this;
+			};
+			
+			if (key) {
+				return this.getAttribute(("data-" + key));
+			};
+			
+			var dataset = this.dom().dataset;
+			
+			if (!dataset) {
+				dataset = {};
+				for (var i = 0, ary = iter$(this.dom().attributes), len = ary.length, atr; i < len; i++) {
+					atr = ary[i];
+					if (atr.name.substr(0,5) == 'data-') {
+						dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
+					};
+				};
+			};
+			
+			return dataset;
+		};
+		
+		
+		/*
+			Remove all content inside node
+			*/
+		
+		Imba.Tag.prototype.empty = function (){
+			while (this._dom.firstChild){
+				this._dom.removeChild(this._dom.firstChild);
+			};
+			this._children = null;
+			this._empty = true;
+			return this;
 		};
 		
 		/*
@@ -958,12 +1186,22 @@
 			return this;
 		};
 		
+		
+		
 		/*
 			List of flags for this node. 
 			*/
 		
 		Imba.Tag.prototype.flags = function (){
 			return this._dom.classList;
+		};
+		
+		/*
+			@deprecated
+			*/
+		
+		Imba.Tag.prototype.classes = function (){
+			throw "Imba.Tag#classes is removed. Use Imba.Tag#flags";
 		};
 		
 		/*
@@ -1015,6 +1253,8 @@
 			return this._dom.classList.contains(name);
 		};
 		
+		
+		
 		/*
 			Get the scheduler for this node. A new scheduler will be created
 			if it does not already exist.
@@ -1062,6 +1302,200 @@
 		};
 		
 		/*
+			Get the child at index
+			*/
+		
+		Imba.Tag.prototype.child = function (i){
+			return tag$wrap(this.dom().children[i || 0]);
+		};
+		
+		
+		/*
+			Get the children of node
+			@return {Imba.Selector}
+			*/
+		
+		Imba.Tag.prototype.children = function (sel){
+			var nodes = new Imba.Selector(null,this,this._dom.children);
+			return sel ? (nodes.filter(sel)) : (nodes);
+		};
+		
+		/*
+			Get the siblings of node
+			@return {Imba.Selector}
+			*/
+		
+		Imba.Tag.prototype.siblings = function (sel){
+			var par, self = this;
+			if (!(par = this.parent())) { return [] }; // FIXME
+			var ary = this.dom().parentNode.children;
+			var nodes = new Imba.Selector(null,this,ary);
+			return nodes.filter(function(n) { return n != self && (!sel || n.matches(sel)); });
+		};
+		
+		/*
+			Get node and its ascendents
+			@return {Array}
+			*/
+		
+		Imba.Tag.prototype.path = function (sel){
+			var node = this;
+			var nodes = [];
+			if (sel && sel.query) { sel = sel.query() };
+			
+			while (node){
+				if (!sel || node.matches(sel)) { nodes.push(node) };
+				node = node.parent();
+			};
+			return nodes;
+		};
+		
+		/*
+			Get ascendents of node
+			@return {Array}
+			*/
+		
+		Imba.Tag.prototype.parents = function (sel){
+			var par = this.parent();
+			return par ? (par.path(sel)) : ([]);
+		};
+		
+		/*
+			Get the immediately following sibling of node.
+			*/
+		
+		Imba.Tag.prototype.next = function (sel){
+			if (sel) {
+				var el = this;
+				while (el = el.next()){
+					if (el.matches(sel)) { return el };
+				};
+				return null;
+			};
+			return tag$wrap(this.dom().nextElementSibling);
+		};
+		
+		/*
+			Get the immediately preceeding sibling of node.
+			*/
+		
+		Imba.Tag.prototype.prev = function (sel){
+			if (sel) {
+				var el = this;
+				while (el = el.prev()){
+					if (el.matches(sel)) { return el };
+				};
+				return null;
+			};
+			return tag$wrap(this.dom().previousElementSibling);
+		};
+		
+		/*
+			Get descendants of current node, optionally matching selector
+			@return {Imba.Selector}
+			*/
+		
+		Imba.Tag.prototype.find = function (sel){
+			return new Imba.Selector(sel,this);
+		};
+		
+		/*
+			Get the first matching child of node
+		
+			@return {Imba.Tag}
+			*/
+		
+		Imba.Tag.prototype.first = function (sel){
+			return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
+		};
+		
+		/*
+			Get the last matching child of node
+		
+				node.last # returns the last child of node
+				node.last %span # returns the last span inside node
+				node.last do |el| el.text == 'Hi' # return last node with text Hi
+		
+			@return {Imba.Tag}
+			*/
+		
+		Imba.Tag.prototype.last = function (sel){
+			return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
+		};
+		
+		/*
+			Check if this node matches a selector
+			@return {Boolean}
+			*/
+		
+		Imba.Tag.prototype.matches = function (sel){
+			var fn;
+			if (sel instanceof Function) {
+				return sel(this);
+			};
+			
+			if (sel.query) { sel = sel.query() };
+			if (fn = (this._dom.matches || this._dom.matchesSelector || this._dom.webkitMatchesSelector || this._dom.msMatchesSelector || this._dom.mozMatchesSelector)) {
+				return fn.call(this._dom,sel);
+			};
+		};
+		
+		/*
+			Get the first element matching supplied selector / filter
+			traversing upwards, but including the node itself.
+			@return {Imba.Tag}
+			*/
+		
+		Imba.Tag.prototype.closest = function (sel){
+			if (!sel) { return this.parent() }; // should return self?!
+			var node = this;
+			if (sel.query) { sel = sel.query() };
+			
+			while (node){
+				if (node.matches(sel)) { return node };
+				node = node.parent();
+			};
+			return null;
+		};
+		
+		/*
+			Get the closest ancestor of node that matches
+			specified selector / matcher.
+		
+			@return {Imba.Tag}
+			*/
+		
+		Imba.Tag.prototype.up = function (sel){
+			if (!sel) { return this.parent() };
+			return this.parent() && this.parent().closest(sel);
+		};
+		
+		/*
+			Get the index of node.
+			@return {Number}
+			*/
+		
+		Imba.Tag.prototype.index = function (){
+			var i = 0;
+			var el = this.dom();
+			while (el.previousSibling){
+				el = el.previousSibling;
+				i++;
+			};
+			return i;
+		};
+		
+		/*
+			Check if node contains other node
+			@return {Boolean} 
+			*/
+		
+		Imba.Tag.prototype.contains = function (node){
+			return this.dom().contains(node && node._dom || node);
+		};
+		
+		
+		/*
 			Shorthand for console.log on elements
 			@return {self}
 			*/
@@ -1100,6 +1534,7 @@
 		
 		Imba.Tag.prototype.setTransform = function (value){
 			this.css('transform',value);
+			this;
 			return this;
 		};
 		
@@ -1109,11 +1544,32 @@
 		
 		Imba.Tag.prototype.setStyle = function (style){
 			this.setAttribute('style',style);
+			this;
 			return this;
 		};
 		
 		Imba.Tag.prototype.style = function (){
 			return this.getAttribute('style');
+		};
+		
+		/*
+			Focus on current node
+			@return {self}
+			*/
+		
+		Imba.Tag.prototype.focus = function (){
+			this.dom().focus();
+			return this;
+		};
+		
+		/*
+			Remove focus from current node
+			@return {self}
+			*/
+		
+		Imba.Tag.prototype.blur = function (){
+			this.dom().blur();
+			return this;
 		};
 		
 		Imba.Tag.prototype.toString = function (){
@@ -1135,14 +1591,14 @@
 			
 			obj.prototype = Object.create(sup.prototype);
 			obj.__super__ = obj.prototype.__super__ = sup.prototype;
-			obj.prototype.initialize = obj.prototype.constructor = obj;
+			obj.prototype.constructor = obj;
 			if (sup.inherit) { sup.inherit(obj) };
 			return obj;
 		};
 		
 		function Tag(){
 			return function(dom) {
-				this.setDom(dom);
+				this.initialize(dom);
 				return this;
 			};
 		};
@@ -1373,7 +1829,6 @@
 /***/ function(module, exports) {
 
 	(function(){
-		function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 		
 		Imba.document = function (){
 			return window.document;
@@ -1433,15 +1888,6 @@
 			tag.prototype.name = function(v){ return this.getAttribute('name'); }
 			tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
 			
-			tag.prototype.id = function (){
-				return this.dom().id;
-			};
-			
-			tag.prototype.setId = function (id){
-				this.dom().id = id;
-				return this;
-			};
-			
 			tag.prototype.width = function (){
 				return this._dom.offsetWidth;
 			};
@@ -1456,47 +1902,6 @@
 				return this;
 			};
 			
-			/*
-				Set inner html of node
-				*/
-			
-			tag.prototype.setHtml = function (html){
-				this._dom.innerHTML = html;
-				return this;
-			};
-			
-			/*
-				Get inner html of node
-				*/
-			
-			tag.prototype.html = function (){
-				return this._dom.innerHTML;
-			};
-			
-			/*
-				Remove all content inside node
-				*/
-			
-			tag.prototype.empty = function (){
-				while (this._dom.firstChild){
-					this._dom.removeChild(this._dom.firstChild);
-				};
-				this._children = null;
-				this._empty = true;
-				return this;
-			};
-			
-			/*
-				Remove specified child from current node.
-				*/
-			
-			tag.prototype.remove = function (child){
-				var par = this.dom();
-				var el = child && child.dom();
-				if (el && el.parentNode == par) { par.removeChild(el) };
-				return this;
-			};
-			
 			tag.prototype.emit = function (name,pars){
 				if(!pars||pars.constructor !== Object) pars = {};
 				var data = pars.data !== undefined ? pars.data : null;
@@ -1505,344 +1910,8 @@
 				return this;
 			};
 			
-			tag.prototype.dataset = function (key,val){
-				if (key instanceof Object) {
-					for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
-						this.dataset(keys[i],key[keys[i]]);
-					};
-					return this;
-				};
-				
-				if (arguments.length == 2) {
-					this.setAttribute(("data-" + key),val);
-					return this;
-				};
-				
-				if (key) {
-					return this.getAttribute(("data-" + key));
-				};
-				
-				var dataset = this.dom().dataset;
-				
-				if (!dataset) {
-					dataset = {};
-					for (var i = 0, ary = iter$(this.dom().attributes), len = ary.length, atr; i < len; i++) {
-						atr = ary[i];
-						if (atr.name.substr(0,5) == 'data-') {
-							dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
-						};
-					};
-				};
-				
-				return dataset;
-			};
-			
-			/*
-				Get descendants of current node, optionally matching selector
-				@return {Imba.Selector}
-				*/
-			
-			tag.prototype.find = function (sel){
-				return new Imba.Selector(sel,this);
-			};
-			
-			/*
-				Get the first matching child of node
-			
-				@return {Imba.Tag}
-				*/
-			
-			tag.prototype.first = function (sel){
-				return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
-			};
-			
-			/*
-				Get the last matching child of node
-			
-					node.last # returns the last child of node
-					node.last %span # returns the last span inside node
-					node.last do |el| el.text == 'Hi' # return last node with text Hi
-			
-				@return {Imba.Tag}
-				*/
-			
-			tag.prototype.last = function (sel){
-				return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
-			};
-			
-			/*
-				Get the child at index
-				*/
-			
-			tag.prototype.child = function (i){
-				return tag$wrap(this.dom().children[i || 0]);
-			};
-			
-			tag.prototype.children = function (sel){
-				var nodes = new Imba.Selector(null,this,this._dom.children);
-				return sel ? (nodes.filter(sel)) : (nodes);
-			};
-			
-			tag.prototype.orphanize = function (){
-				var par;
-				if (par = this.dom().parentNode) { par.removeChild(this._dom) };
-				return this;
-			};
-			
-			tag.prototype.matches = function (sel){
-				var fn;
-				if (sel instanceof Function) {
-					return sel(this);
-				};
-				
-				if (sel.query) { sel = sel.query() };
-				if (fn = (this._dom.matches || this._dom.matchesSelector || this._dom.webkitMatchesSelector || this._dom.msMatchesSelector || this._dom.mozMatchesSelector)) {
-					return fn.call(this._dom,sel);
-				};
-			};
-			
-			/*
-				Get the first element matching supplied selector / filter
-				traversing upwards, but including the node itself.
-				@return {Imba.Tag}
-				*/
-			
-			tag.prototype.closest = function (sel){
-				if (!sel) { return this.parent() }; // should return self?!
-				var node = this;
-				if (sel.query) { sel = sel.query() };
-				
-				while (node){
-					if (node.matches(sel)) { return node };
-					node = node.parent();
-				};
-				return null;
-			};
-			
-			/*
-				Get the closest ancestor of node that matches
-				specified selector / matcher.
-			
-				@return {Imba.Tag}
-				*/
-			
-			tag.prototype.up = function (sel){
-				if (!sel) { return this.parent() };
-				return this.parent() && this.parent().closest(sel);
-			};
-			
-			tag.prototype.path = function (sel){
-				var node = this;
-				var nodes = [];
-				if (sel && sel.query) { sel = sel.query() };
-				
-				while (node){
-					if (!sel || node.matches(sel)) { nodes.push(node) };
-					node = node.parent();
-				};
-				return nodes;
-			};
-			
-			tag.prototype.parents = function (sel){
-				var par = this.parent();
-				return par ? (par.path(sel)) : ([]);
-			};
-			
-			
-			
-			tag.prototype.siblings = function (sel){
-				var par, self = this;
-				if (!(par = this.parent())) { return [] }; // FIXME
-				var ary = this.dom().parentNode.children;
-				var nodes = new Imba.Selector(null,this,ary);
-				return nodes.filter(function(n) { return n != self && (!sel || n.matches(sel)); });
-			};
-			
-			/*
-				Get the immediately following sibling of node.
-				*/
-			
-			tag.prototype.next = function (sel){
-				if (sel) {
-					var el = this;
-					while (el = el.next()){
-						if (el.matches(sel)) { return el };
-					};
-					return null;
-				};
-				return tag$wrap(this.dom().nextElementSibling);
-			};
-			
-			/*
-				Get the immediately preceeding sibling of node.
-				*/
-			
-			tag.prototype.prev = function (sel){
-				if (sel) {
-					var el = this;
-					while (el = el.prev()){
-						if (el.matches(sel)) { return el };
-					};
-					return null;
-				};
-				return tag$wrap(this.dom().previousElementSibling);
-			};
-			
-			tag.prototype.contains = function (node){
-				return this.dom().contains(node && node._dom || node);
-			};
-			
-			tag.prototype.index = function (){
-				var i = 0;
-				var el = this.dom();
-				while (el.previousSibling){
-					el = el.previousSibling;
-					i++;
-				};
-				return i;
-			};
-			
-			
-			/*
-				
-				@deprecated
-				*/
-			
-			tag.prototype.insert = function (node,pars){
-				if(!pars||pars.constructor !== Object) pars = {};
-				var before = pars.before !== undefined ? pars.before : null;
-				var after = pars.after !== undefined ? pars.after : null;
-				if (after) { before = after.next() };
-				if (node instanceof Array) {
-					node = (tag$.$fragment().setContent(node,0).end());
-				};
-				if (before) {
-					this.dom().insertBefore(node.dom(),before.dom());
-				} else {
-					this.append(node);
-				};
-				return this;
-			};
-			
-			/*
-				Focus on current node
-				@return {self}
-				*/
-			
-			tag.prototype.focus = function (){
-				this.dom().focus();
-				return this;
-			};
-			
-			/*
-				Remove focus from current node
-				@return {self}
-				*/
-			
-			tag.prototype.blur = function (){
-				this.dom().blur();
-				return this;
-			};
-			
 			tag.prototype.template = function (){
 				return null;
-			};
-			
-			/*
-				@todo Should support multiple arguments like append
-			
-				The .prepend method inserts the specified content as the first
-				child of the target node. If the content is already a child of 
-				node it will be moved to the start.
-				
-			    	node.prepend <div.top> # prepend node
-			    	node.prepend "some text" # prepend text
-			    	node.prepend [<ul>,<ul>] # prepend array
-			
-				*/
-			
-			tag.prototype.prepend = function (item){
-				var first = this._dom.childNodes[0];
-				first ? (this.insertBefore(item,first)) : (this.appendChild(item));
-				return this;
-			};
-			
-			/*
-				The .append method inserts the specified content as the last child
-				of the target node. If the content is already a child of node it
-				will be moved to the end.
-				
-				# example
-				    var root = <div.root>
-				    var item = <div.item> "This is an item"
-				    root.append item # appends item to the end of root
-			
-				    root.prepend "some text" # append text
-				    root.prepend [<ul>,<ul>] # append array
-				*/
-			
-			tag.prototype.append = function (item){
-				// possible to append blank
-				// possible to simplify on server?
-				if (!item) { return this };
-				
-				if (item instanceof Array) {
-					for (var i = 0, ary = iter$(item), len = ary.length, member; i < len; i++) {
-						member = ary[i];
-						member && this.append(member);
-					};
-				} else if ((typeof item=='string'||item instanceof String) || (typeof item=='number'||item instanceof Number)) {
-					var node = Imba.document().createTextNode(item);
-					this._dom.appendChild(node);
-					if (this._empty) { this._empty = false };
-				} else {
-					this._dom.appendChild(item._dom || item);
-					if (this._empty) { this._empty = false };
-				};
-				
-				return this;
-			};
-			
-			/*
-				Insert a node into the current node (self), before another.
-				The relative node must be a child of current node. 
-				*/
-			
-			tag.prototype.insertBefore = function (node,rel){
-				if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
-				if (node && rel) { this.dom().insertBefore((node._dom || node),(rel._dom || rel)) };
-				return this;
-			};
-			
-			/*
-				Append a single item (node or string) to the current node.
-				If supplied item is a string it will automatically. This is used
-				by Imba internally, but will practically never be used explicitly.
-				*/
-			
-			tag.prototype.appendChild = function (node){
-				if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
-				if (node) { this.dom().appendChild(node._dom || node) };
-				return this;
-			};
-			
-			/*
-				Remove a single child from the current node.
-				Used by Imba internally.
-				*/
-			
-			tag.prototype.removeChild = function (node){
-				if (node) { this.dom().removeChild(node._dom || node) };
-				return this;
-			};
-			
-			/*
-				@deprecated
-				*/
-			
-			tag.prototype.classes = function (){
-				console.log('Imba.Tag#classes is deprecated');
-				return this._dom.classList;
 			};
 		});
 		
@@ -1978,15 +2047,34 @@
 		});
 		
 		tag$.defineTag('input', function(tag){
-			tag.prototype.type = function(v){ return this.getAttribute('type'); }
-			tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
-			tag.prototype.required = function(v){ return this.getAttribute('required'); }
-			tag.prototype.setRequired = function(v){ this.setAttribute('required',v); return this; };
+			tag.prototype.accept = function(v){ return this.getAttribute('accept'); }
+			tag.prototype.setAccept = function(v){ this.setAttribute('accept',v); return this; };
 			tag.prototype.disabled = function(v){ return this.getAttribute('disabled'); }
 			tag.prototype.setDisabled = function(v){ this.setAttribute('disabled',v); return this; };
-			tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
-			tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
+			tag.prototype.form = function(v){ return this.getAttribute('form'); }
+			tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
+			tag.prototype.list = function(v){ return this.getAttribute('list'); }
+			tag.prototype.setList = function(v){ this.setAttribute('list',v); return this; };
+			tag.prototype.max = function(v){ return this.getAttribute('max'); }
+			tag.prototype.setMax = function(v){ this.setAttribute('max',v); return this; };
+			tag.prototype.maxlength = function(v){ return this.getAttribute('maxlength'); }
+			tag.prototype.setMaxlength = function(v){ this.setAttribute('maxlength',v); return this; };
+			tag.prototype.min = function(v){ return this.getAttribute('min'); }
+			tag.prototype.setMin = function(v){ this.setAttribute('min',v); return this; };
+			tag.prototype.pattern = function(v){ return this.getAttribute('pattern'); }
+			tag.prototype.setPattern = function(v){ this.setAttribute('pattern',v); return this; };
+			tag.prototype.required = function(v){ return this.getAttribute('required'); }
+			tag.prototype.setRequired = function(v){ this.setAttribute('required',v); return this; };
+			tag.prototype.size = function(v){ return this.getAttribute('size'); }
+			tag.prototype.setSize = function(v){ this.setAttribute('size',v); return this; };
+			tag.prototype.step = function(v){ return this.getAttribute('step'); }
+			tag.prototype.setStep = function(v){ this.setAttribute('step',v); return this; };
+			tag.prototype.type = function(v){ return this.getAttribute('type'); }
+			tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
 			
+			tag.prototype.__autofocus = {dom: true,name: 'autofocus'};
+			tag.prototype.autofocus = function(v){ return this.dom().autofocus; }
+			tag.prototype.setAutofocus = function(v){ if (v != this.dom().autofocus) { this.dom().autofocus = v }; return this; };
 			tag.prototype.__value = {dom: true,name: 'value'};
 			tag.prototype.value = function(v){ return this.dom().value; }
 			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
@@ -2013,7 +2101,16 @@
 		tag$.defineTag('ins');
 		tag$.defineTag('kbd');
 		tag$.defineTag('keygen');
-		tag$.defineTag('label');
+		tag$.defineTag('label', function(tag){
+			tag.prototype.accesskey = function(v){ return this.getAttribute('accesskey'); }
+			tag.prototype.setAccesskey = function(v){ this.setAttribute('accesskey',v); return this; };
+			tag.prototype.for = function(v){ return this.getAttribute('for'); }
+			tag.prototype.setFor = function(v){ this.setAttribute('for',v); return this; };
+			tag.prototype.form = function(v){ return this.getAttribute('form'); }
+			tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
+		});
+		
+		
 		tag$.defineTag('legend');
 		tag$.defineTag('li');
 		
@@ -2046,13 +2143,18 @@
 		tag$.defineTag('noscript');
 		
 		tag$.defineTag('ol');
+		
 		tag$.defineTag('optgroup', function(tag){
+			tag.prototype.label = function(v){ return this.getAttribute('label'); }
+			tag.prototype.setLabel = function(v){ this.setAttribute('label',v); return this; };
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
 			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 		});
 		
 		tag$.defineTag('option', function(tag){
+			tag.prototype.label = function(v){ return this.getAttribute('label'); }
+			tag.prototype.setLabel = function(v){ this.setAttribute('label',v); return this; };
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
 			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
@@ -2064,7 +2166,13 @@
 			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
 		});
 		
-		tag$.defineTag('output');
+		tag$.defineTag('output', function(tag){
+			tag.prototype.for = function(v){ return this.getAttribute('for'); }
+			tag.prototype.setFor = function(v){ this.setAttribute('for',v); return this; };
+			tag.prototype.form = function(v){ return this.getAttribute('form'); }
+			tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
+		});
+		
 		tag$.defineTag('p');
 		
 		tag$.defineTag('object', function(tag){
@@ -2082,7 +2190,14 @@
 		});
 		
 		tag$.defineTag('pre');
-		tag$.defineTag('progress');
+		tag$.defineTag('progress', function(tag){
+			tag.prototype.max = function(v){ return this.getAttribute('max'); }
+			tag.prototype.setMax = function(v){ this.setAttribute('max',v); return this; };
+			tag.prototype.__value = {dom: true,name: 'value'};
+			tag.prototype.value = function(v){ return this.dom().value; }
+			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
+		});
+		
 		tag$.defineTag('q');
 		tag$.defineTag('rp');
 		tag$.defineTag('rt');
@@ -2104,18 +2219,21 @@
 		tag$.defineTag('section');
 		
 		tag$.defineTag('select', function(tag){
+			tag.prototype.size = function(v){ return this.getAttribute('size'); }
+			tag.prototype.setSize = function(v){ this.setAttribute('size',v); return this; };
+			tag.prototype.form = function(v){ return this.getAttribute('form'); }
+			tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
 			tag.prototype.multiple = function(v){ return this.getAttribute('multiple'); }
 			tag.prototype.setMultiple = function(v){ this.setAttribute('multiple',v); return this; };
-			
+			tag.prototype.__autofocus = {dom: true,name: 'autofocus'};
+			tag.prototype.autofocus = function(v){ return this.dom().autofocus; }
+			tag.prototype.setAutofocus = function(v){ if (v != this.dom().autofocus) { this.dom().autofocus = v }; return this; };
 			tag.prototype.__disabled = {dom: true,name: 'disabled'};
 			tag.prototype.disabled = function(v){ return this.dom().disabled; }
 			tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 			tag.prototype.__required = {dom: true,name: 'required'};
 			tag.prototype.required = function(v){ return this.dom().required; }
 			tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
-			tag.prototype.__readOnly = {dom: true,name: 'readOnly'};
-			tag.prototype.readOnly = function(v){ return this.dom().readOnly; }
-			tag.prototype.setReadOnly = function(v){ if (v != this.dom().readOnly) { this.dom().readOnly = v }; return this; };
 			tag.prototype.__value = {dom: true,name: 'value'};
 			tag.prototype.value = function(v){ return this.dom().value; }
 			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
@@ -2139,9 +2257,10 @@
 			tag.prototype.setRows = function(v){ this.setAttribute('rows',v); return this; };
 			tag.prototype.cols = function(v){ return this.getAttribute('cols'); }
 			tag.prototype.setCols = function(v){ this.setAttribute('cols',v); return this; };
-			tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
-			tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
 			
+			tag.prototype.__autofocus = {dom: true,name: 'autofocus'};
+			tag.prototype.autofocus = function(v){ return this.dom().autofocus; }
+			tag.prototype.setAutofocus = function(v){ if (v != this.dom().autofocus) { this.dom().autofocus = v }; return this; };
 			tag.prototype.__value = {dom: true,name: 'value'};
 			tag.prototype.value = function(v){ return this.dom().value; }
 			tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
@@ -2746,6 +2865,7 @@
 		Imba.Touch.prototype.setSuppress = function (value){
 			console.warn('Imba.Touch#suppress= is deprecated');
 			this._supress = value;
+			this;
 			return this;
 		};
 		
@@ -3151,6 +3271,7 @@
 		
 		Imba.Event.prototype.setType = function (type){
 			this._type = type;
+			this;
 			return this;
 		};
 		
@@ -3943,6 +4064,7 @@
 					this._children = text;
 					this.dom().textContent = text == null || text === false ? ('') : (text);
 				};
+				this;
 				return this;
 			};
 		});
@@ -4206,6 +4328,7 @@
 			obj.prototype.initialize = obj.prototype.constructor = obj;
 		};
 		
+		function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 		
 		var TERMINAL_COLOR_CODES = {
 			bold: 1,
@@ -4236,6 +4359,7 @@
 		
 		function Spec(){
 			this._blocks = [];
+			this._assertions = [];
 			this._stack = [this._context = this];
 			this;
 		};
@@ -4247,6 +4371,12 @@
 		Spec.prototype.setContext = function(v){ this._context = v; return this; };
 		Spec.prototype.stack = function(v){ return this._stack; }
 		Spec.prototype.setStack = function(v){ this._stack = v; return this; };
+		Spec.prototype.assertions = function(v){ return this._assertions; }
+		Spec.prototype.setAssertions = function(v){ this._assertions = v; return this; };
+		
+		Spec.prototype.fullName = function (){
+			return "";
+		};
 		
 		Spec.prototype.eval = function (block,ctx){
 			this._stack.push(this._context = ctx);
@@ -4258,16 +4388,16 @@
 		
 		Spec.prototype.describe = function (name,blk){
 			if (this._context == this) {
-				return this._blocks.push(new SpecGroup(name,blk));
+				return this._blocks.push(new SpecGroup(name,blk,this));
 			} else {
 				return this._context.describe(name,blk);
 			};
 		};
 		
 		Spec.prototype.run = function (i){
-			// p "SPEC.run {i}"
 			var self = this;
 			if(i === undefined) i = 0;
+			Spec.CURRENT = self;
 			var block = self._blocks[i];
 			
 			// we need the notifications
@@ -4278,7 +4408,30 @@
 		
 		
 		Spec.prototype.finish = function (){
-			console.log("specs did run");
+			console.log("\n");
+			
+			var ok = [];
+			var failed = [];
+			
+			for (var i = 0, ary = iter$(this.assertions()), len = ary.length, test1; i < len; i++) {
+				test1 = ary[i];
+				test1.success() ? (ok.push(test1)) : (failed.push(test1));
+			};
+			
+			var logs = [
+				fmt('green',("" + (ok.length) + " OK")),
+				fmt('red',("" + (failed.length) + " FAILED")),
+				("" + (this.assertions().length) + " TOTAL")
+			];
+			
+			console.log(logs.join(" | "));
+			
+			for (var i = 0, len = failed.length, item; i < len; i++) {
+				item = failed[i];
+				console.log(item.fullName());
+				console.log("    " + item.details());
+			};
+			
 			return Imba.emit(this,'done',[this]);
 		};
 		
@@ -4318,7 +4471,8 @@
 			return this._value == null ? (this._value = this._scope[this._method].apply(this._scope,this._args)) : (this._value);
 		};
 		
-		function SpecGroup(name,blk){
+		function SpecGroup(name,blk,parent){
+			this._parent = parent;
 			this._name = name;
 			this._blocks = [];
 			if (blk) { SPEC.eval(blk,this) };
@@ -4326,16 +4480,20 @@
 		};
 		
 		global.SpecGroup = SpecGroup; // global class 
+		SpecGroup.prototype.fullName = function (){
+			return ("" + (this._parent.fullName()) + (this._name) + " > ");
+		};
+		
 		SpecGroup.prototype.blocks = function (){
 			return this._blocks;
 		};
 		
 		SpecGroup.prototype.describe = function (name,blk){
-			return this._blocks.push(new SpecGroup(name,blk));
+			return this._blocks.push(new SpecGroup(name,blk,this));
 		};
 		
 		SpecGroup.prototype.it = function (name,blk){
-			return this._blocks.push(new SpecExample(name,blk));
+			return this._blocks.push(new SpecExample(name,blk,this));
 		};
 		
 		SpecGroup.prototype.emit = function (ev,pars){
@@ -4370,7 +4528,8 @@
 		};
 		
 		
-		function SpecExample(name,block){
+		function SpecExample(name,block,parent){
+			this._parent = parent;
 			this._evaluated = false;
 			this._name = name;
 			this._block = block;
@@ -4379,6 +4538,10 @@
 		};
 		
 		global.SpecExample = SpecExample; // global class 
+		SpecExample.prototype.fullName = function (){
+			return ("" + (this._parent.fullName()) + (this._name));
+		};
+		
 		SpecExample.prototype.emit = function (ev,pars){
 			return Imba.emit(this,ev,pars);
 		};
@@ -4412,6 +4575,7 @@
 		SpecExample.prototype.finish = function (){
 			var details = [];
 			var dots = this._assertions.map(function(v,i) {
+				Spec.CURRENT.assertions().push(v);
 				if (v.success()) {
 					return fmt('green',"✔");
 				} else {
@@ -4433,11 +4597,19 @@
 			return SPEC.ok(actual);
 		};
 		
-		function SpecCondition(){ };
+		function SpecCondition(example){
+			this._example = example;
+			this;
+		};
+		
 		
 		global.SpecCondition = SpecCondition; // global class 
 		SpecCondition.prototype.success = function(v){ return this._success; }
 		SpecCondition.prototype.setSuccess = function(v){ this._success = v; return this; };
+		
+		SpecCondition.prototype.fullName = function (){
+			return this._example.fullName();
+		};
 		
 		SpecCondition.prototype.state = function (){
 			return true;
@@ -6363,10 +6535,77 @@
 		// * Existential Assignment (?=)
 		return self.describe('Syntax - Properties',function() {
 			
-			return self.test("default values",function() {
+			self.test("default values",function() {
 				var object = new Model();
 				self.eq(object.a(),undefined);
 				return self.eq(object.b(),10);
+			});
+			
+			self.test("watch: yes",function() {
+				var track = null;
+				function Example(){ };
+				
+				Example.prototype.__name = {watch: 'nameDidSet',name: 'name'};
+				Example.prototype.name = function(v){ return this._name; }
+				Example.prototype.setName = function(v){
+					var a = this.name();
+					if(v != a) { this._name = v; }
+					if(v != a) { this.nameDidSet && this.nameDidSet(v,a,this.__name) }
+					return this;
+				};
+				
+				Example.prototype.nameDidSet = function (value){
+					return track = value;
+				};
+				
+				new Example().setName(10);
+				return self.eq(track,10);
+			});
+			
+			self.test("watch: String",function() {
+				var track = null;
+				function Example(){ };
+				
+				Example.prototype.__name = {watch: 'tracker',name: 'name'};
+				Example.prototype.name = function(v){ return this._name; }
+				Example.prototype.setName = function(v){
+					var a = this.name();
+					if(v != a) { this._name = v; }
+					if(v != a) { this.tracker && this.tracker(v,a,this.__name) }
+					return this;
+				};
+				Example.prototype.__other = {watch: 'tracker',name: 'other'};
+				Example.prototype.other = function(v){ return this._other; }
+				Example.prototype.setOther = function(v){
+					var a = this.other();
+					if(v != a) { this._other = v; }
+					if(v != a) { this.tracker && this.tracker(v,a,this.__other) }
+					return this;
+				};
+				Example.prototype.tracker = function (value){
+					return track = value;
+				};
+				new Example().setName(10);
+				self.eq(track,10);
+				
+				new Example().setOther(10);
+				return self.eq(track,10);
+			});
+			
+			return self.test("watch: function",function() {
+				var track = null;
+				function Example(){ };
+				
+				Example.prototype.__name = {watch: function(v) { return track = v; },name: 'name'};
+				Example.prototype.name = function(v){ return this._name; }
+				Example.prototype.setName = function(v){
+					var a = this.name();
+					if(v != a) { this._name = v; }
+					if(v != a) { Imba.propDidSet(this,this.__name,v,a) }
+					return this;
+				};
+				new Example().setName(10);
+				return self.eq(track,10);
 			});
 		});
 
@@ -7643,6 +7882,17 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
+		// helper for subclassing
+		function subclass$(obj,sup) {
+			for (var k in sup) {
+				if (sup.hasOwnProperty(k)) obj[k] = sup[k];
+			};
+			// obj.__super__ = sup;
+			obj.prototype = Object.create(sup.prototype);
+			obj.__super__ = obj.prototype.__super__ = sup.prototype;
+			obj.prototype.initialize = obj.prototype.constructor = obj;
+		};
+		
 		function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 		var self = this;
 		// externs;
@@ -7668,8 +7918,6 @@
 			};
 		});
 		
-		
-		
 		tag$.defineTag('cached', function(tag){
 			
 			tag.prototype.build = function (){
@@ -7687,6 +7935,31 @@
 						return res;
 					})(self)
 				,3).synced();
+			};
+		});
+		
+		function CustomClass(){ return Imba.Tag.apply(this,arguments) };
+		
+		subclass$(CustomClass,Imba.Tag);
+		CustomClass.prototype.render = function (){
+			return this.flag('one').flag('two').setText("Custom").synced();
+		};
+		
+		tag$.defineTag('custom-init', function(tag){
+			
+			tag.prototype.initialize = function (dom){
+				this.setDom(dom);
+				this._custom = true;
+				this.log('custom init');
+				return this;
+			};
+		});
+		
+		tag$.defineTag('super-init', function(tag){
+			
+			tag.prototype.initialize = function (dom){
+				this._custom = true;
+				return tag.__super__.initialize.apply(this,arguments);
 			};
 		});
 		
@@ -7756,7 +8029,6 @@
 				return tag$.$div().setId('try').end();
 			});
 			
-			
 			self.test("cache for in",function() {
 				buildCount = 0;
 				var root = tag$.$div().end();
@@ -7801,13 +8073,31 @@
 				};
 			});
 			
-			return self.test("style attribute",function() {
+			self.test("style attribute",function() {
 				var el = tag$.$div().setStyle('display: block;').end();
 				if (true) {
 					return eq(el.dom().getAttribute('style'),'display: block;');
 				} else {
 					return eq(el.toString(),'<div style="display: block;"></div>');
 				};
+			});
+			
+			self.test("class",function() {
+				var el = CustomClass.build().end();
+				if (true) {
+					eq(el.dom().className,'one two');
+					return document.body.appendChild(el.dom());
+				} else {
+					return eq(el.toString(),'<div class="one two">Custom</div>');
+				};
+			});
+			
+			return self.test("initialize",function() {
+				var a = tag$.$custom_init().end();
+				eq(a._custom,true);
+				
+				var b = tag$.$super_init().end();
+				return eq(b._custom,true);
 			});
 		});
 		
