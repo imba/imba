@@ -1,5 +1,5 @@
 
-local class Model
+class Model
 	
 	prop a
 	prop b default: 10
@@ -60,3 +60,26 @@ describe 'Syntax - Properties' do
 		var object = Model.new
 		eq object.a, undefined
 		eq object.b, 10
+
+	test "watch: yes" do
+		let track = null
+		class Example
+			prop name watch: yes
+
+			def nameDidSet value
+				track = value
+
+		Example.new.name = 10
+		eq track, 10
+
+	test "watch: String" do
+		let track = null
+		class Example
+			prop name watch: 'tracker'
+			prop other watch: :tracker
+			def tracker value do track = value
+		Example.new.name = 10
+		eq track, 10
+
+		Example.new.other = 10
+		eq track, 10
