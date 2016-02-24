@@ -766,9 +766,10 @@ export class Lexer
 		if (id == 'attr' or id == 'prop')
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG'
-			# var scopes = @indents.map(|ind,i| @scopes[i] or 'NONE')
-			# console.log "id is prop: {scopes.join(" -> ")} | {@indents.join(" -> ")}"
 			return true if incls
+
+		if @lastTyp == 'ATTR' or @lastTyp == 'PROP'
+			return false
 
 		ALL_KEYWORDS.indexOf(id) >= 0
 
