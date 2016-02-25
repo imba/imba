@@ -2055,7 +2055,7 @@ export class ClassDeclaration < Code
 	def js o
 		scope.virtualize # is this always needed?
 		scope.context.value = name
-
+		scope.context.reference = name
 		# should probably also warn about stuff etc
 		if option(:extension)
 			return body.c
@@ -2109,8 +2109,6 @@ export class ClassDeclaration < Code
 		else
 			# head.push(Terminator.new('\n\n'))
 			true
-		
-
 
 		if sup
 			# console.log "deal with superclass!"
@@ -7102,6 +7100,7 @@ export class ScopeContext < Node
 
 	prop scope
 	prop value
+	prop reference
 
 	def initialize scope, value
 		@scope = scope

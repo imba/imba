@@ -201,7 +201,17 @@ describe 'Syntax - Class' do
 		eq variable, 1
 		eq A.base, 4
 
-			
+	test 'issue #71' do
+		var res
+		def ping cb
+			res = cb()
+
+		class A
+			ping do self
+
+		eq res, A
+
+					
 
 
 
