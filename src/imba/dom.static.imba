@@ -1,10 +1,8 @@
-var ImbaTag = Imba.TAGS:element
-
 def removeNested root, node, caret
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements
 	# 	for now we will simply not support this
-	if node isa ImbaTag
+	if node isa Imba.Tag
 		root.removeChild(node)
 	elif node isa Array
 		removeNested(root,member,caret) for member in node
@@ -20,7 +18,7 @@ def removeNested root, node, caret
 	return caret
 
 def appendNested root, node
-	if node isa ImbaTag
+	if node isa Imba.Tag
 		root.appendChild(node)
 
 	elif node isa Array
@@ -37,7 +35,7 @@ def appendNested root, node
 # will still be correct there
 # before must be an actual domnode
 def insertNestedBefore root, node, before
-	if node isa ImbaTag
+	if node isa Imba.Tag
 		root.insertBefore(node,before)
 	elif node isa Array
 		insertNestedBefore(root,member,before) for member in node
@@ -205,7 +203,7 @@ def reconcileNested root, new, old, caret
 			else
 				return reconcileCollection(root,new,old,caret)
 
-		elif old isa ImbaTag
+		elif old isa Imba.Tag
 			root.removeChild(old)
 		elif !oldIsNull
 			# old was a string-like object?
@@ -214,7 +212,7 @@ def reconcileNested root, new, old, caret
 		return insertNestedAfter(root,new,caret)
 		# remove old
 
-	elif new isa ImbaTag
+	elif new isa Imba.Tag
 		removeNested(root,old,caret) unless oldIsNull
 		insertNestedAfter(root,new,caret)
 		return new
@@ -228,7 +226,7 @@ def reconcileNested root, new, old, caret
 		# if old was array or imbatag we need to remove it and then add
 		if old isa Array
 			removeNested(root,old,caret)
-		elif old isa ImbaTag
+		elif old isa Imba.Tag
 			root.removeChild(old)
 		elif !oldIsNull
 			# ...
@@ -241,11 +239,11 @@ def reconcileNested root, new, old, caret
 		return insertNestedAfter(root,new,caret)
 
 
-extend tag htmlelement
-	
+extend tag element
+
 	def setChildren new, typ
 		var old = @children
-		# var isArray = nodes isa Array
+
 		if new === old
 			return self
 
@@ -269,7 +267,7 @@ extend tag htmlelement
 			# but the old or new could be static while the other is not
 			# this is not handled now
 			# what if it was previously a static array? edgecase - but must work
-			if new isa ImbaTag
+			if new isa Imba.Tag
 				empty
 				appendChild(new)
 
