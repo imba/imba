@@ -5,10 +5,10 @@ Imba.CSSKeyMap = {}
 Get the current document
 ###
 def Imba.document
-	if Imba.SERVER
-		@document ||= ImbaServerDocument.new
-	else
+	if Imba.CLIENT
 		window:document
+	else
+		@document ||= ImbaServerDocument.new
 
 ###
 Get the body element wrapped in an Imba.Tag

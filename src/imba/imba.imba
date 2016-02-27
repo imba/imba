@@ -27,7 +27,7 @@ True if running in server environment.
 @return {bool}
 ###
 def Imba.isServer
-	Imba.SERVER == yes
+	!Imba.CLIENT
 
 def Imba.subclass obj, sup
 	for k,v of sup
