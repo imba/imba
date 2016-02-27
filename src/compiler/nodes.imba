@@ -4880,12 +4880,14 @@ export class Loop < Statement
 			# what the inner one should not be an expression though?
 			# this will resut in an infinite loop, no?!?
 			var ast = CALL(FN([],[self]),[])
+			scope.context.reference
 			return ast.c o
 		
 		elif stack.current isa Block or (s.up isa Block and s.current.@consumer == self)
 			super.c o
 		else
 			var ast = CALL(FN([],[self]),[])
+			scope.context.reference
 			return ast.c o
 			# need to wrap in function
 
