@@ -185,12 +185,7 @@ Object.defineProperty(el, 'className',
 )
 
 extend tag element
-
-	def toString
-		dom.toString
-
-extend tag htmlelement
-
+	
 	def empty
 		@dom:children = []
 		@dom:innerHTML = null
@@ -203,10 +198,12 @@ extend tag htmlelement
 	
 	def last
 		@dom:children[@dom:children:length - 1]
-	
+
 	def prepend item
 		@dom:children.unshift(item)
 
+	def toString
+		dom.toString
 
 extend tag html
 

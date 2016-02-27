@@ -1,5 +1,5 @@
 
-tag svg:svgelement
+tag svg:element
 
 	def self.namespaceURI
 		"http://www.w3.org/2000/svg"
@@ -51,7 +51,6 @@ tag svg:marker
 	attr markerWidth inline: no
 	attr markerHeight inline: no
 	attr orient inline: no
-
 
 # Basic shapes
 

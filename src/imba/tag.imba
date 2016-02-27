@@ -3,6 +3,18 @@ def Imba.static items, nr
 	return items
 
 ###
+Get the current document
+###
+def Imba.document
+	window:document
+
+###
+Get the body element wrapped in an Imba.Tag
+###
+def Imba.root
+	tag(Imba.document:body)
+
+###
 This is the baseclass that all tags in imba inherit from.
 @iname node
 ###
@@ -22,9 +34,34 @@ class Imba.Tag
 	def self.build
 		self.new(self.createNode)
 
+	def self.dom
+		@protoDom ||= buildNode
+
+	###
+	Called when a tag type is being subclassed.
+	###
+	def self.inherit child
+		child:prototype.@empty = yes
+		child.@protoDom = null
+
+		if @nodeType
+			child.@nodeType = @nodeType
+
+			var className = "_" + child.@name.replace(/_/g, '-')
+			child.@classes = @classes.concat(className) unless child.@name[0] == '#'
+		else
+			child.@nodeType = child.@name
+			child.@classes = []
+
+
 	def initialize dom
 		self.dom = dom
 		self
+
+	attr tabindex
+	attr title
+	attr role
+	attr name
 
 	prop object
 
@@ -60,6 +97,21 @@ class Imba.Tag
 	###
 	def html
 		@dom:innerHTML
+
+
+	###
+	Get width of node (offsetWidth)
+	@return {number}
+	###
+	def width
+		@dom:offsetWidth
+
+	###
+	Get height of node (offsetHeight)
+	@return {number}
+	###
+	def height
+		@dom:offsetHeight
 
 	###
 	Method that is called by the compiled tag-chains, for
@@ -131,7 +183,9 @@ class Imba.Tag
 	@return {self}
 	###
 	def setChildren nodes, type
-		throw "Not implemented"
+		@empty ? append(nodes) : empty.append(nodes)
+		@children = null
+		self
 
 	###
 	Remove specified child from current node.
@@ -673,6 +727,11 @@ class Imba.Tag
 	def trigger event, data = {}
 		Imba.Events.trigger(event,self,data: data)
 
+	def emit name, data: null, bubble: yes
+		console.warn('tag#emit is deprecated -> use tag#trigger')
+		Imba.Events.trigger name, self, data: data, bubble: bubble
+		return self
+
 	def transform= value
 		css(:transform, value)
 		self
@@ -753,7 +812,7 @@ class Imba.Tags
 		return clone
 
 	def baseType name
-		name in HTML_TAGS ? 'htmlelement' : 'div'
+		name in HTML_TAGS ? 'element' : 'div'
 
 	def defineTag name, supr = '', &body
 		supr ||= baseType(name)
@@ -792,17 +851,17 @@ class Imba.Tags
 		return klass
 
 
+Imba.SINGLETONS = {}
 Imba.TAGS = Imba.Tags.new
-Imba.TAGS[:element] = Imba.Tag
+Imba.TAGS[:element] = Imba.TAGS[:htmlelement] = Imba.Tag
 
+
+var html = Imba.TAGS.defineNamespace('html')
 var svg = Imba.TAGS.defineNamespace('svg')
+Imba.TAGS = html # make the html namespace the root
 
 def svg.baseType name
-	'svgelement'
-
-
-Imba.SINGLETONS = {}
-
+	'element'
 
 def Imba.defineTag name, supr = '', &body
 	return Imba.TAGS.defineTag(name,supr,body)
