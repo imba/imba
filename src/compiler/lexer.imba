@@ -1363,6 +1363,8 @@ export class Lexer
 					offset += @indentStyle['length']
 				elif offset == whitespace:length
 					break
+				elif @opts:silent
+					break
 				else
 					# workaround to report correct location
 					@loc += indent:length - whitespace:length
