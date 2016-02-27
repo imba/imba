@@ -31,6 +31,7 @@ require './tags/define'
 
 if Imba.CLIENT
 	require './tags/virtual'
+	require './tags/svg'
 
 
 SPEC.run
