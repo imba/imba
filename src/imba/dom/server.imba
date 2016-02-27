@@ -189,7 +189,6 @@ extend tag element
 	def empty
 		@dom:children = []
 		@dom:innerHTML = null
-		# @dom.removeChild(@dom:firstChild) while @dom:firstChild
 		@empty = yes
 		self
 
@@ -212,11 +211,6 @@ extend tag html
 
 	def toString
 		doctype + super
-		# <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
-extend tag style
 
-	def toString
-		"<style/>"
-
-global:document ||= Imba.document
+# global:document ||= Imba.document

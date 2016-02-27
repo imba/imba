@@ -1895,6 +1895,8 @@ var Imbac =
 						offset += this._indentStyle.length;
 					} else if (offset == whitespace.length) {
 						break;
+					} else if (this._opts.silent) {
+						break;
 					} else {
 						// workaround to report correct location
 						this._loc += indent.length - whitespace.length;
@@ -4537,26 +4539,18 @@ var Imbac =
 		
 		module.exports.SPLAT = SPLAT = function(value) {
 			if (value instanceof Assign) {
-				// p "WARN"
 				value.setLeft(new Splat(value.left()));
 				return value;
 			} else {
 				return new Splat(value);
-				// not sure about this
 			};
 		};
-		
-		// OP.ASSIGNMENT = [ "=" , "+=" , "-=" , "*=" , "/=" , "%=", "<<=" , ">>=" , ">>>=", "|=" , "^=" , "&=" ]
-		// OP.LOGICAL = [ "||" , "&&" ]
-		// OP.UNARY = [ "++" , "--" ]
 		
 		var SEMICOLON_TEST = /;(\s*\/\/.*)?[\n\s\t]*$/;
 		var RESERVED_TEST = /^(default|char)$/;
 		
 		// captures error from parser
 		function parseError(str,o){
-			// console.log 'parseError',o:token
-			
 			// find nearest token
 			var err;
 			
@@ -4920,19 +4914,8 @@ var Imbac =
 			return false;
 		};
 		
-		// def dom
-		// 	var name = "ast_" + self:constructor:name.replace(/([a-z])([A-Z])/g,"$1_$2").toLowerCase
-		// 	# p "try to get the dom-node for this ast-node",name
-		// 	if Imba.TAGS[name]
-		// 		var node = Imba.tag(name)
-		// 		node.bind(self).build
-		// 		return node
-		// 	else
-		// 		return "[{name}]"
-		
 		Node.prototype.p = function (){
-			
-			// allow controlling this from commandline
+			// allow controlling this from CLI
 			if (STACK.loglevel() > 0) {
 				console.log.apply(console,arguments);
 			};
@@ -5050,13 +5033,11 @@ var Imbac =
 			};
 			
 			if (node instanceof Assign) {
-				// p "consume assignment".cyan
 				// node.right = self
 				return OP(node.op(),node.left(),this);
 			} else if (node instanceof Op) {
 				return OP(node.op(),node.left(),this);
 			} else if (node instanceof Return) {
-				// p "consume return".cyan
 				return new Return(this);
 			};
 			return this;
@@ -5118,7 +5099,6 @@ var Imbac =
 		
 		Node.prototype.addExpression = function (expr){
 			// might be better to nest this up after parsing is done?
-			// p "addExpression {self} <- {expr}"
 			var node = new ExpressionBlock([this]);
 			return node.addExpression(expr);
 		};
@@ -5143,9 +5123,6 @@ var Imbac =
 		};
 		
 		Node.prototype.prebreak = function (term){
-			// in options instead?
-			// console.log "prebreak!!!!"
-			// @prebreak = @prebreak or term
 			if(term === undefined) term = '\n';
 			return this;
 		};
@@ -5297,8 +5274,6 @@ var Imbac =
 		subclass$(Comment,Meta);
 		exports.Comment = Comment; // export class 
 		Comment.prototype.visit = function (){
-			// stack.stash.add(self)
-			
 			var block, next;
 			if (block = this.up()) {
 				var idx = block.indexOf(this) + 1;
@@ -5306,8 +5281,6 @@ var Imbac =
 				if (next = block.index(idx)) {
 					next._desc = this;
 				};
-				
-				// console.log "Next item after comment is {block.index(idx)}"
 			};
 			
 			return this;
@@ -5323,7 +5296,6 @@ var Imbac =
 		
 		Comment.prototype.c = function (o){
 			var v = this._value._value;
-			// p @value.type
 			if (o && o.expression || v.match(/\n/) || this._value.type() == 'HERECOMMENT') { // multiline?
 				return ("/*" + v + "*/");
 			} else {
@@ -5494,7 +5466,6 @@ var Imbac =
 			var idx = this._nodes.indexOf(original);
 			if (idx >= 0) {
 				if (replacement instanceof Array) {
-					// p "replaceing with array of items"
 					this._nodes.splice.apply(this._nodes,[].concat([idx,1], [].slice.call(replacement)));
 				} else {
 					this._nodes[idx] = replacement;
@@ -5678,7 +5649,6 @@ var Imbac =
 			// rather indents, no?
 			var opt, ind;
 			if (opt = this.option('ends')) {
-				// p "location is",opt
 				var a = opt[0].loc();
 				var b = opt[1].loc();
 				
@@ -5699,7 +5669,6 @@ var Imbac =
 			for (var i = 0, items = iter$(this.nodes()), len = items.length, node; i < len; i++) {
 				node = items[i];
 				if (node instanceof Block) {
-					// p "unwrapping inner block"
 					ary.push.apply(ary,node.unwrap());
 				} else {
 					ary.push(node);
@@ -5729,7 +5698,6 @@ var Imbac =
 		
 		// Not sure if we should create a separate block?
 		Block.prototype.analyze = function (o){
-			// p "analyzing block!!!",o
 			if(o === undefined) o = {};
 			return this;
 		};
@@ -5814,7 +5782,6 @@ var Imbac =
 				
 				// we need to compare the real length
 				if (!node._loop && real.length > 1) {
-					// p "lengths",@nodes:length,expressions:length
 					var nr = node.blocks().push(this);
 					var arr = new Arr(new ArgList(this._nodes));
 					arr.indented(this._indentation);
@@ -5836,9 +5803,7 @@ var Imbac =
 			if (before = this.last()) {
 				var after = before.consume(node);
 				if (after != before) {
-					// p "replace node in block {before} -> {after}"
 					if (after instanceof Block) {
-						// p "replaced with block -- should basically add it instead?"
 						after = after.nodes();
 					};
 					
@@ -5874,7 +5839,6 @@ var Imbac =
 			} else if (first instanceof VarReference) {
 				this._type = first._type;
 			};
-			// p "here {list[0]} - {@type}"
 			// @type = list[0] and list[0].type
 			return list;
 		};
@@ -5883,7 +5847,6 @@ var Imbac =
 		// or basic localvars - without any care whatsoever about adding var to the
 		// beginning etc. 
 		VarBlock.prototype.addExpression = function (expr){
-			// p "VarBlock.addExpression {self} <- {expr}"
 			
 			if (expr instanceof Assign) {
 				// make sure the left-side is a var-reference
@@ -5902,8 +5865,6 @@ var Imbac =
 				// this is really a VarReference
 				this.push(new VarReference(expr.value(),this._type));
 			} else if ((expr instanceof Splat) && (expr.node() instanceof VarOrAccess)) {
-				// p "is a splat - only allowed in tuple-assignment"
-				// what?
 				expr.setValue(new VarReference(expr.node().value(),this._type));
 				this.push(expr);
 			} else {
@@ -5921,9 +5882,6 @@ var Imbac =
 		};
 		
 		VarBlock.prototype.js = function (o){
-			// p "VarBlock"
-			// for n in @nodes
-			// 	p "VarBlock child {n}"
 			var code = compact__(flatten__(cary__(this.nodes())));
 			code = code.filter(function(n) { return n != null && n != undefined && n != EMPTY; });
 			var out = code.join(",");
@@ -5968,8 +5926,7 @@ var Imbac =
 			var str = null;
 			
 			if (v instanceof Func) { this._noparen = true };
-			// p "compile parens {v} {v isa Block and v.count}"
-			// p "Parens up {par} {o.isExpression}"
+			
 			if (par instanceof Block) {
 				// is it worth it?
 				if (!o.isExpression()) { this._noparen = true };
@@ -6030,7 +5987,6 @@ var Imbac =
 		ExpressionBlock.prototype.addExpression = function (expr){
 			// Need to take care of the splat here to.. hazzle
 			if (expr.node() instanceof Assign) {
-				// p "is assignment!"
 				this.push(expr.left());
 				// make this into a tuple instead
 				// possibly fix this as well?!?
@@ -6077,7 +6033,6 @@ var Imbac =
 		
 		Return.prototype.c = function (){
 			if (!(this.value()) || this.value().isExpressable()) { return Return.__super__.c.apply(this,arguments) };
-			// p "return must cascade into value".red
 			return this.value().consume(this).c();
 		};
 		
@@ -6129,7 +6084,6 @@ var Imbac =
 		};
 		
 		LoopFlowStatement.prototype.consume = function (node){
-			// p "break/continue should consume?!"
 			return this;
 		};
 		
@@ -6137,7 +6091,6 @@ var Imbac =
 			if (!(this.expression())) { return LoopFlowStatement.__super__.c.apply(this,arguments) };
 			// get up to the outer loop
 			var _loop = STACK.up(Loop);
-			// p "found loop?",_loop
 			
 			// need to fix the grammar for this. Right now it 
 			// is like a fake call, but should only care about the first argument
@@ -6242,7 +6195,6 @@ var Imbac =
 		
 		Param.prototype.isExpressable = function (){
 			return !(this.defaults()) || this.defaults().isExpressable();
-			// p "visiting param!!!"
 		};
 		
 		Param.prototype.dump = function (){
@@ -6362,7 +6314,6 @@ var Imbac =
 		IndexedParam.prototype.setSubindex = function(v){ this._subindex = v; return this; };
 		
 		IndexedParam.prototype.visit = function (){
-			// p "VISIT PARAM {name}!"
 			// ary.[-1] # possible
 			// ary.(-1) # possible
 			// str(/ok/,-1)
@@ -6401,7 +6352,6 @@ var Imbac =
 		ArrayParams.prototype.load = function (list){
 			var self = this;
 			if (!((list instanceof Arr))) { return null };
-			// p "loading arrayparams"
 			// try the basic first
 			if (!list.splat()) {
 				return list.value().map(function(v,i) {
@@ -6409,7 +6359,6 @@ var Imbac =
 					// should really not parse any array at all(!)
 					var name = v;
 					if (v instanceof VarOrAccess) {
-						// p "varoraccess {v.value}"
 						// FIX?
 						name = v.value().value();
 						// this is accepted
@@ -6658,7 +6607,6 @@ var Imbac =
 			if (arys.length) {
 				for (var i4 = 0, len_ = arys.length; i4 < len_; i4++) {
 					// create tuples
-					// p "adding arrayparams"
 					arys[i4].head(o,ast,this);
 					// ast.push v.c
 				};
@@ -6713,7 +6661,6 @@ var Imbac =
 			if (this.count() == 0) { return EMPTY };
 			
 			if (this.count() == 1 && !(this.isExpressable())) {
-				// p "SHOULD ALTER VARDEC!!!".cyan
 				this.first().variable().autodeclare();
 				var node = this.first().assignment();
 				return node.c();
@@ -6778,7 +6725,6 @@ var Imbac =
 		VarName.prototype.setSplat = function(v){ this._splat = v; return this; };
 		
 		VarName.prototype.visit = function (){
-			// p "visiting varname(!)", value.c
 			// should we not lookup instead?
 			// FIXME p "register value {value.c}"
 			var variable_, v_;
@@ -6898,7 +6844,6 @@ var Imbac =
 		
 		// Rename to Program?
 		function Root(body,opts){
-			// p "create root!"
 			this._traversed = false;
 			this._body = blk__(body);
 			this._scope = new RootScope(this,null);
@@ -6949,7 +6894,6 @@ var Imbac =
 			// find and replace shebangs
 			var shebangs = [];
 			out = out.replace(/^[ \t]*\/\/(\!.+)$/mg,function(m,shebang) {
-				// p "found shebang {shebang}"
 				shebang = shebang.replace(/\bimba\b/g,'node');
 				shebangs.push(("#" + shebang + "\n"));
 				return "";
@@ -7045,7 +6989,7 @@ var Imbac =
 		ClassDeclaration.prototype.js = function (o){
 			this.scope().virtualize(); // is this always needed?
 			this.scope().context().setValue(this.name());
-			
+			this.scope().context().setReference(this.name());
 			// should probably also warn about stuff etc
 			if (this.option('extension')) {
 				return this.body().c();
@@ -7107,8 +7051,6 @@ var Imbac =
 				// head.push(Terminator.new('\n\n'))
 				true;
 			};
-			
-			
 			
 			if (sup) {
 				// console.log "deal with superclass!"
@@ -7248,7 +7190,6 @@ var Imbac =
 		};
 		
 		function Func(params,body,name,target,o){
-			// p "INIT Function!!",params,body,name
 			this._options = o;
 			var typ = this.scopetype();
 			this._traversed = false;
@@ -7293,7 +7234,6 @@ var Imbac =
 			if (!this.option('noreturn')) { this.body().consume(new ImplicitReturn()) };
 			var ind = this.body()._indentation;
 			// var s = ind and ind.@open
-			// p "indent function? {body.@indentation} {s} {s:generated} {body.count}"
 			if (ind && ind.isGenerated()) { this.body()._indentation = null };
 			var code = this.scope().c({indent: (!ind || !ind.isGenerated()),braces: true});
 			
@@ -7405,7 +7345,6 @@ var Imbac =
 			if (this.option('greedy')) {
 				this.warn("deprecated");
 				// set(greedy: true)
-				// p "BODY EXPRESSIONS!! This is a fragment"
 				var tree = new TagTree();
 				this._body = this.body().consume(tree);
 				// body.nodes = [Arr.new(body.nodes)]
@@ -7594,11 +7533,8 @@ var Imbac =
 			if (pars.inline) {
 				if ((pars.inline instanceof Bool) && !pars.inline.truthy()) {
 					o.remove('inline');
-					// p "dont make attr inline(!)"
 					return ("Imba." + (this._token) + "(" + (js.scope) + ",'" + (this.name().value()) + "'," + (o.c()) + ")").replace(',{})',')');
 				};
-				
-				// p "pars inline?!? {pars:inline}", typeof pars:inline
 			};
 			
 			var tpl = propTemplate;
@@ -7606,7 +7542,6 @@ var Imbac =
 			o.add('name',new Symbol(key));
 			
 			if (pars.watch) {
-				// p "watch is a property {pars:watch}"
 				if (!((pars.watch instanceof Bool) && !pars.watch.truthy())) { tpl = propWatchTemplate };
 				var wfn = ("" + key + "DidSet");
 				
@@ -7733,7 +7668,6 @@ var Imbac =
 		};
 		
 		Bool.prototype.truthy = function (){
-			// p "bool is truthy? {value}"
 			return String(this.value()) == "true";
 			// yes
 		};
@@ -7839,7 +7773,6 @@ var Imbac =
 		};
 		
 		Num.prototype.cache = function (o){
-			// p "cache num",o
 			if (!(o && (o.cache || o.pool))) { return this };
 			return Num.__super__.cache.call(this,o);
 		};
@@ -8059,7 +7992,6 @@ var Imbac =
 			
 			var splat = this.splat();
 			var nodes = val instanceof Array ? (val) : (val.nodes());
-			// p "value of array isa {@value}"
 			
 			// for v in @value
 			// 	break splat = yes if v isa Splat
@@ -8068,7 +8000,6 @@ var Imbac =
 			if (splat) {
 				// "SPLATTED ARRAY!"
 				// if we know for certain that the splats are arrays we can drop the slice?
-				// p "array is splat?!?"
 				var slices = [];
 				var group = null;
 				
@@ -8132,7 +8063,6 @@ var Imbac =
 			
 			if (dyn.length > 0) {
 				var idx = this.value().indexOf(dyn[0]);
-				// p "dynamic keys! {dyn}"
 				// create a temp variable
 				
 				var tmp = this.scope__().temporary(this);
@@ -8297,7 +8227,6 @@ var Imbac =
 		};
 		
 		This.prototype.reference = function (){
-			// p "referencing this"
 			return this;
 		};
 		
@@ -8373,7 +8302,6 @@ var Imbac =
 		};
 		
 		Op.prototype.consume = function (node){
-			// p 'assignify if?!'
 			// if it is possible, convert into expression
 			if (node instanceof TagTree) {
 				if (this._left) { this._left.consume(node) };
@@ -8382,7 +8310,6 @@ var Imbac =
 				// @alt = @alt.consume(node) if @alt
 				return this;
 			};
-			// p "Op.consume {node}".cyan
 			if (this.isExpressable()) { return Op.__super__.consume.apply(this,arguments) };
 			
 			// TODO can rather use global caching?
@@ -8404,9 +8331,6 @@ var Imbac =
 			var pairs = ["==","!=","===","!==",">","<=","<",">="];
 			var idx = pairs.indexOf(op);
 			idx += (idx % 2 ? (-1) : (1));
-			
-			// p "invert {@op}"
-			// p "inverted comparison(!) {idx} {op} -> {pairs[idx]}"
 			this.setOp(pairs[idx]);
 			this._invert = !this._invert;
 			return this;
@@ -8469,7 +8393,6 @@ var Imbac =
 				// l.@parens = yes
 				var str = l.c();
 				var paren = l.shouldParenthesize(this);
-				// p "check for parens in !: {str} {l} {l.@parens} {l.shouldParenthesize(self)}"
 				// FIXME this is a very hacky workaround. Need to handle all this
 				// in the child instead, problems arise due to automatic caching
 				if (!(str.match(/^\!?([\w\.]+)$/) || (l instanceof Parens) || paren || (l instanceof Access) || (l instanceof Call))) { str = '(' + str + ')' };
@@ -8516,7 +8439,6 @@ var Imbac =
 		exports.InstanceOf = InstanceOf; // export class 
 		InstanceOf.prototype.js = function (o){
 			// fix checks for String and Number
-			// p right.inspect
 			
 			if (this.right() instanceof Const) {
 				// WARN otherwise - what do we do? does not work with dynamic
@@ -8771,7 +8693,6 @@ var Imbac =
 			
 			var rec;
 			if (rec = this.receiver()) {
-				// p "converting to call"
 				var ast = CALL(OP('.',this.left(),this.right()),[]); // convert to ArgList or null
 				ast.setReceiver(rec);
 				return ast.c();
@@ -8780,7 +8701,6 @@ var Imbac =
 			var up = this.up();
 			
 			if (!((up instanceof Call))) {
-				// p "convert to call instead"
 				ast = CALL(new Access(this.op(),this.left(),this.right()),[]);
 				return ast.c();
 			};
@@ -8790,7 +8710,6 @@ var Imbac =
 			var js = ("" + PropertyAccess.__super__.js.call(this,o));
 			
 			if (!((up instanceof Call) || (up instanceof Util.IsFunction))) {
-				// p "Called"
 				js += "()";
 			};
 			
@@ -8879,7 +8798,6 @@ var Imbac =
 		VarOrAccess.prototype.visit = function (){
 			// @identifier = value # this is not a real identifier?
 			// console.log "VarOrAccess {@identifier}"
-			// p "visit {self}"
 			
 			
 			var scope = this.scope__();
@@ -8905,9 +8823,6 @@ var Imbac =
 					this._token._variable = variable;
 					return this;
 				};
-				
-				// p "var is not yet initialized!"
-				// p "declarator for var {decl.@declared}"
 				// FIX
 				// @value.safechain = safechain
 			};
@@ -9035,7 +8950,6 @@ var Imbac =
 		VarReference.prototype.setType = function(v){ this._type = v; return this; };
 		
 		VarReference.prototype.loc = function (){
-			// p "loc for VarReference {@value:constructor} {@value.@value:constructor} {@value.region}"
 			return this._value.region();
 		};
 		
@@ -9052,15 +8966,12 @@ var Imbac =
 			var ref = this._variable;
 			var out = ("" + mark__(this._value) + (ref.c()));
 			
-			// p "VarReference {out} - {o.up} {o.up == self}\n{o}"
-			
 			if (ref && !ref._declared) { // .option(:declared)
 				if (o.up(VarBlock)) { // up varblock??
 					ref._declared = true;
 					
 					// ref.set(declared: yes)
 				} else if (o.isExpression() || this._export) { // why?
-					// p "autodeclare"
 					ref.autodeclare();
 				} else {
 					out = ("var " + out);
@@ -9094,9 +9005,7 @@ var Imbac =
 			
 			// should be possible to have a VarReference without a name as well? for a system-variable
 			// name should not set this way.
-			// p "varname {value} {value:constructor}"
 			var name = this.value().c();
-			// p "visit vardecl {name} {value}"
 			
 			// what about looking up? - on register we want to mark
 			var v = this._variable || (this._variable = this.scope__().register(name,this,{type: this._type}));
@@ -9139,7 +9048,6 @@ var Imbac =
 					// keep the splats -- clumsy but true
 					var v_;
 					if (v instanceof Splat) {
-						// p "value is a splat!!"
 						if (!((v.value() instanceof VarReference))) { (v.setValue(v_ = new VarReference(v.value(),l.type())),v_) };
 					} else if (v instanceof VarReference) {
 						true;
@@ -9158,7 +9066,6 @@ var Imbac =
 			
 			if (l instanceof Arr) {
 				return new TupleAssign(o,new Tuple(l.nodes()),r);
-				// p "left is array in assign - in init"
 			};
 			
 			
@@ -9227,7 +9134,6 @@ var Imbac =
 		
 		Assign.prototype.c = function (o){
 			if (!this.right().isExpressable()) {
-				// p "Assign#c right is not expressable "
 				return this.right().consume(this).c(o);
 			};
 			// testing this
@@ -9241,8 +9147,6 @@ var Imbac =
 				// it should already be consumed?
 				return this.right().consume(this).c();
 			};
-			
-			// p "assign left {left:contrstru}"
 			var l = this.left().node();
 			var r = this.right();
 			
@@ -9259,7 +9163,6 @@ var Imbac =
 				ast.setReceiver(l.receiver());
 				
 				if (this.isUsed()) {
-					// p "Assign is used {stack}"
 					// dont cache it again if it is already cached(!)
 					if (!this.right().cachevar()) { this.right().cache({pool: 'val',uses: 1}) }; // 
 					// this is only when used.. should be more clever about it
@@ -9275,7 +9178,6 @@ var Imbac =
 			// 	l.@variable.assigned(r)
 			
 			// FIXME -- does not always need to be an expression?
-			// p "typeof op {@opToken and @opToken:constructor}"
 			var out = ("" + (l.c()) + " " + mark__(this._opToken) + this.op() + " " + this.right().c({expression: true}));
 			
 			return out;
@@ -9307,7 +9209,6 @@ var Imbac =
 				typ = VarBlock;
 			};
 			// might be better to nest this up after parsing is done?
-			// p "Assign.addExpression {self} <- {expr}"
 			var node = new typ([this]);
 			return node.addExpression(expr);
 		};
@@ -9339,15 +9240,12 @@ var Imbac =
 			var ls = l;
 			
 			if (l instanceof Access) {
-				// p "conditional-assign {l} {l.left} {l.right}"
 				if (l.left()) {
-					// p "cache l.left {l.left:constructor}̋"
 					l.left().cache();
 				};
 				ls = l.clone(l.left(),l.right()); // this should still be cached?
 				if (l instanceof PropertyAccess) { l.cache() }; // correct now, to a certain degree
 				if (l instanceof IndexAccess) {
-					// p "cache the right side of indexAccess!!! {l.right}"
 					l.right().cache();
 				};
 				
@@ -9398,7 +9296,6 @@ var Imbac =
 		};
 		
 		ConditionalAssign.prototype.js = function (o){
-			// p "ConditionalAssign.js".red
 			var ast = IF(this.condition(),OP('=',this.left(),this.right()),this.left());
 			ast.setScope(null); // not sure about this
 			if (ast.isExpressable()) { ast.toExpression() }; // forced expression already
@@ -9431,7 +9328,6 @@ var Imbac =
 				if (ln.left()) { ln.left().cache() };
 			};
 			// TODO FIXME we want to cache the context of the assignment
-			// p "normalize compound assign {left}"
 			var ast = OP('=',this.left(),OP(this.op()[0],this.left(),this.right()));
 			if (ast.isExpressable()) { ast.toExpression() };
 			
@@ -9447,7 +9343,6 @@ var Imbac =
 			// etc -- otherwise there WILL be issues.
 			var up = STACK.current();
 			if (up instanceof Block) {
-				// p "parent is block, should replace!"
 				// an alternative would be to just pass
 				up.replace(this,ast);
 			};
@@ -9489,7 +9384,6 @@ var Imbac =
 			if (this.right() instanceof Tuple) {
 				this.right().push(expr);
 			} else {
-				// p "making child become a tuple?"
 				this.setRight(new Tuple([this.right(),expr]));
 			};
 			
@@ -9510,7 +9404,6 @@ var Imbac =
 				// collect the vars for tuple for easy access
 				
 				// NOTE can improve.. should rather make the whole left be a VarBlock or TupleVarBlock
-				// p "type is var -- skip the rest"
 			};
 			
 			this.right().traverse();
@@ -9522,12 +9415,9 @@ var Imbac =
 			// only for actual inner expressions, otherwise cache the whole array, no?
 			var self = this;
 			if (!self.right().isExpressable()) {
-				// p "TupleAssign.consume! {right}".blue
 				
 				return self.right().consume(self).c();
 			};
-			
-			// p "TUPLE {type}"
 			
 			/* a,b,c = arguments */
 			
@@ -9586,9 +9476,7 @@ var Imbac =
 			if (!lsplat && rgt == ARGUMENTS) {
 				
 				var pars = self.scope__().params();
-				// p "special case with arguments {pars}"
 				// forcing the arguments to be named
-				// p "got here??? {pars}"
 				lft.map(function(l,i) { return ast.push(OP('=',l.node(),pars.at(i,true).visit().variable())); }); // s.params.at(value - 1,yes)
 			} else if (rlen) {
 				// we have several items in the right part. what about splats here?
@@ -9636,7 +9524,6 @@ var Imbac =
 					if (l == lsplat) {
 						v = new ArgList([]);
 						var to = (rlen - (ri - i));
-						// p "assing splat at index {i} to slice {li} - {to}".cyan
 						while (li <= to){
 							v.push(rgt.index(li++));
 						};
@@ -9661,21 +9548,18 @@ var Imbac =
 							clean = true;
 						} else {
 							clean = false;
-							// p "now cache"
 							pairs.slice(i).map(function(part) {
 								if (part[1].hasSideEffects()) {
 									self._temporary.push(part[1]); // need a generalized way to do this type of thing
 									return ast.push(part[1].cache({force: true,pool: 'swap',declared: typ == 'var'}));
 								};
 							});
-							// p "from {i} - cache all remaining with side-effects"
 						};
 					};
 					
 					// if the previous value in ast is a reference to our value - the caching was not needed
 					if (ast.last() == r) {
 						r.decache();
-						// p "was cached - not needed"
 						// simple assign
 						return ast.replace(r,OP('=',l,r));
 					} else {
@@ -9767,20 +9651,17 @@ var Imbac =
 			
 			// if we are in an expression we really need to 
 			if (o.isExpression() && self._vars) {
-				// p "tuple is expression" # variables MUST be autodeclared outside of the expression
 				for (var i = 0, ary = iter$(self._vars), len_ = ary.length; i < len_; i++) {
 					ary[i].variable().autodeclare();
 				};
 			} else if (self._vars) {
 				for (var i = 0, ary = iter$(self._vars), len_ = ary.length; i < len_; i++) {
-					// p "predeclare variable before compilation"
 					ary[i].variable().predeclared();
 				};
 			};
 			
 			// is there any reason to make it into an expression?
 			if (ast.isExpressable()) { // NO!
-				// p "express"
 				// if this is an expression
 				var out = ast.c({expression: true});
 				if (typ && !o.isExpression()) { out = ("" + typ + " " + out) }; // not in expression
@@ -10066,9 +9947,7 @@ var Imbac =
 			
 			if (callee instanceof VarOrAccess) {
 				var str = callee.value().symbol();
-				// p "Call callee {callee} - {str}"
 				if (str == 'extern') {
-					// p "returning extern instead!"
 					callee.value().value()._type = 'EXTERN';
 					return new ExternDeclaration(args);
 				};
@@ -10088,7 +9967,6 @@ var Imbac =
 				this._args = new ArgList(args);
 				// console.log "ARGUMENTS IS ARRAY - error {args}"
 			};
-			// p "call opexists {opexists}"
 			this;
 		};
 		
@@ -10161,15 +10039,12 @@ var Imbac =
 			
 			// never call the property-access directly?
 			if (callee instanceof PropertyAccess) { // && rec = callee.receiver
-				// p "unwrapping property-access in call"
 				this._receiver = callee.receiver();
 				callee = this._callee = new Access(callee.op(),callee.left(),callee.right());
-				// p "got here? {callee}"
 				// console.log "unwrapping the propertyAccess"
 			};
 			
 			if (callee.safechain()) {
-				// p "callee is safechained?!?"
 				// if lft isa Call
 				// if lft isa Call # could be a property access as well - it is the same?
 				// if it is a local var access we simply check if it is a function, then call
@@ -10177,7 +10052,6 @@ var Imbac =
 				// lft.cache if lft
 				// the outer safechain should not cache the whole call - only ask to cache
 				// the result? -- chain onto
-				// p "Call safechain {callee} {lft}.{rgt}"
 				var isfn = new Util.IsFunction([callee]);
 				wrap = [("" + (isfn.c()) + "  &&  "),""];
 				callee = OP('.',callee.left(),callee.right());
@@ -10206,7 +10080,6 @@ var Imbac =
 			
 			if (wrap) {
 				// we set the cachevar inside
-				// p "special caching for call"
 				if (this._cache) {
 					this._cache.manual = true;
 					out = ("(" + (this.cachevar().c()) + "=" + out + ")");
@@ -10270,8 +10143,6 @@ var Imbac =
 		subclass$(ExternDeclaration,ListNode);
 		exports.ExternDeclaration = ExternDeclaration; // export class 
 		ExternDeclaration.prototype.visit = function (){
-			
-			// p "visiting externdeclaration"
 			this.setNodes(this.map(function(item) { return item.node(); })); // drop var or access really
 			// only in global scope?
 			var root = this.scope__();
@@ -10339,9 +10210,7 @@ var Imbac =
 		};
 		
 		If.prototype.addElse = function (add){
-			// p "add else!",add
 			if (this.alt() && (this.alt() instanceof If)) {
-				// p 'add to the inner else(!)',add
 				this.alt().addElse(add);
 			} else {
 				this.setAlt(add);
@@ -10367,7 +10236,6 @@ var Imbac =
 			
 			// should skip the scope in alt.
 			if (alt) {
-				// p "scoping {STACK.scopes:length}"
 				STACK.pop(this);
 				alt._scope || (alt._scope = new BlockScope(alt));
 				alt.traverse();
@@ -10413,7 +10281,6 @@ var Imbac =
 				// if body.count == 1 # dont indent by ourselves?
 				
 				if ((body instanceof Block) && body.count() == 1 && !(body.first() instanceof LoopFlowStatement)) {
-					// p "body to body first {body.first}"
 					body = body.first();
 				};
 				
@@ -10435,7 +10302,6 @@ var Imbac =
 		};
 		
 		If.prototype.consume = function (node){
-			// p 'assignify if?!'
 			// if it is possible, convert into expression
 			if (node instanceof TagTree) {
 				this._body = this._body.consume(node);
@@ -10492,7 +10358,6 @@ var Imbac =
 		
 		
 		Loop.prototype.set = function (obj){
-			// p "configure for!"
 			this._options || (this._options = {});
 			var keys = Object.keys(obj);
 			for (var i = 0, ary = iter$(keys), len = ary.length, k; i < len; i++) {
@@ -10513,24 +10378,20 @@ var Imbac =
 			
 			var s = this.stack();
 			var curr = s.current();
-			// p "Loop.c - {isExpressable} {stack} {stack.isExpression}"
-			// p "stack is expression? {o} {isExpression}"
 			
 			
 			
 			if (this.stack().isExpression() || this.isExpression()) {
-				// p "the stack is an expression for loop now(!)"
 				// what the inner one should not be an expression though?
 				// this will resut in an infinite loop, no?!?
 				var ast = CALL(FN([],[this]),[]);
+				this.scope().context().reference();
 				return ast.c(o);
 			} else if ((this.stack().current() instanceof Block) || ((s.up() instanceof Block) && s.current()._consumer == this)) {
-				
-				// p "what is the current stack of loop? {stack.current}"
 				return Loop.__super__.c.call(this,o);
 			} else {
-				// p "Should never get here?!?"
 				ast = CALL(FN([],[this]),[]);
+				this.scope().context().reference();
 				return ast.c(o);
 				// need to wrap in function
 			};
@@ -10544,7 +10405,6 @@ var Imbac =
 			this._options = opts || {};
 			this._scope = new WhileScope(this);
 			// set(opts) if opts
-			// p "invert test for while? {@test}"
 			if (this.option('invert')) {
 				// "invert test for while {@test}"
 				this._test = test.invert();
@@ -10571,7 +10431,6 @@ var Imbac =
 		// force-declares the inner variables in the scope
 		
 		While.prototype.consume = function (node){
-			// p "While.consume {node}".cyan
 			// This is never expressable, but at some point
 			// we might want to wrap it in a function (like CS)
 			if (this.isExpressable()) { return While.__super__.consume.apply(this,arguments) };
@@ -10593,7 +10452,6 @@ var Imbac =
 			// 	p "consume variable declarator!?".cyan
 			// else
 			// declare the variable we will use to soak up results
-			// p "Creating value to store the result of loop".cyan
 			// TODO Use a special vartype for this?
 			var resvar = this.scope().declare('res',new Arr([]),{system: true});
 			// WHAT -- fix this --
@@ -10613,7 +10471,6 @@ var Imbac =
 			var out = ("while (" + this.test().c({expression: true}) + ")") + this.body().c({braces: true,indent: true}); // .wrap
 			
 			if (this.scope().vars().count() > 0) {
-				// p "while-block has declared variables(!)"
 				return [this.scope().vars().c(),out];
 			};
 			return out;
@@ -10669,8 +10526,6 @@ var Imbac =
 				// make the scope be the declarator
 				// TODO would like to be able to have counter in range as well
 				vars.index = scope.register(o.name,scope,{type: 'let',declared: true});
-				// p "registered {vars:index:constructor}"
-				// p "index-var is declareod?!?! {vars:index.@declared}"
 				scope.vars().push(vars.index.assignment(src.left()));
 				// scope.declare(options:name,src.left)
 				vars.value = vars.index;
@@ -10718,7 +10573,6 @@ var Imbac =
 			
 			
 			if (this._resvar) {
-				// p "already have a resvar -- change consume? {node}"
 				var ast = new Block([this,BR,this._resvar.accessor()]);
 				ast.consume(node);
 				return ast;
@@ -10731,7 +10585,6 @@ var Imbac =
 			var assignee = null;
 			// might only work for locals?
 			if (node instanceof Assign) {
-				// p "node isa assign {node} {node.left}"
 				if (receiver = node.left()) {
 					if (assignee = receiver._variable) {
 						// we can only pull the var reference into the scope
@@ -10747,7 +10600,6 @@ var Imbac =
 			if (reuseable && assignee) {
 				// instead of declaring it in the scope - why not declare it outside?
 				// it might already exist in the outer scope no?
-				// p "reuseable {assignee} {scope} {scope.parent.lookup(assignee)}"
 				// assignee.resolve
 				// should probably instead alter the assign-node to set value to a blank array
 				// resvar = scope.parent.declare(assignee,Arr.new([]),proxy: yes,pos: 0)
@@ -10762,11 +10614,8 @@ var Imbac =
 				
 				node._consumer = this;
 				node = null;
-				
-				// p "consume variable declarator!?".cyan
 			} else {
 				// declare the variable we will use to soak up results
-				// p "Creating value to store the result of loop".cyan
 				// what about a pool here?
 				resvar = this._resvar = this.scope().declare('res',new Arr([]),{system: true});
 			};
@@ -10777,14 +10626,12 @@ var Imbac =
 			
 			
 			if (node) {
-				// p "returning new ast where Loop is first"
 				ast = new Block([this,BR,resvar.accessor().consume(node)]);
 				return ast;
 			};
 			// var ast = Block.new([self,BR,resvar.accessor])
 			// ast.consume(node) if node
 			// return ast
-			// p "Loop did consume successfully"
 			return this;
 			
 			// this is never an expression (for now -- but still)
@@ -10800,8 +10647,6 @@ var Imbac =
 			var cond = OP('<',i,vars.len);
 			var src = this.options().source;
 			
-			// p "references for value",val.references:length
-			
 			var final = this.options().step ? (
 				OP('=',i,OP('+',i,this.options().step))
 			) : (
@@ -10813,8 +10658,6 @@ var Imbac =
 			if (src instanceof Range) {
 				if (src.inclusive()) { (cond.setOp(v_ = '<='),v_) };
 			} else if (val.refcount() < 3 && val.assignments().length == 0) {
-				// p "proxy the value {val.assignments:length}"
-				// p "should proxy value-variable instead"
 				val.proxy(vars.source,i);
 			} else {
 				this.body().unshift(OP('=',val,OP('.',vars.source,i)),BR);
@@ -10849,18 +10692,8 @@ var Imbac =
 			var o = this.options();
 			var vars = o.vars = {};
 			
-			// see if 
-			
-			// p "ForOf source isa {o:source}"
-			
-			// if o:source is a variable -- refer directly # variable? is this the issue?
-			// p scope.@varmap['o'], scope.parent.@varmap['o']
-			
 			var src = vars.source = o.source._variable || this.scope().declare('o',o.source,{system: true,type: 'let'});
 			if (o.index) { var v = vars.value = this.scope().declare(o.index,null,{let: true}) };
-			
-			// p "ForOf o:index {o:index} o:name {o:name}"
-			// if o:index
 			
 			// possibly proxy the index-variable?
 			
@@ -11268,7 +11101,6 @@ var Imbac =
 		};
 		
 		Tag.prototype.addSymbol = function (node){
-			// p "addSymbol to the tag",node
 			if (this._parts.length == 0) {
 				this._parts.push(node);
 				this._options.ns = node;
@@ -11278,8 +11110,7 @@ var Imbac =
 		
 		
 		Tag.prototype.addAttribute = function (atr){
-			// p "add attribute!!!", key, value
-			this._parts.push(atr); // what?
+			this._parts.push(atr);
 			this._options.attributes.push(atr);
 			return this;
 		};
@@ -11297,9 +11128,7 @@ var Imbac =
 			
 			
 			if (node instanceof TagTree) {
-				// p "tag consume tagtree? {node.reactive}"
 				this.setParent(node.root());
-				// o:treeRef = node.nextCacheKey
 				
 				if (node._loop) {
 					// alwatys make items in loop reactive
@@ -11330,32 +11159,18 @@ var Imbac =
 			
 			var typ = this.enclosing();
 			
-			// look for outer tag here?
-			
 			if (typ == '->' || typ == '=>') {
-				// console.log "tag is template?!? {typ}"
 				this._tree = new TagTree(this,o.body,{root: this,reactive: this.reactive()});
 				o.body = new TagFragmentFunc([],Block.wrap([this._tree]));
-				// console.log "made o body a function?"
 			};
 			
 			if (o.key) { o.key.traverse() };
-			
-			if (o.body) {
-				o.body.traverse();
-			};
-			
-			// id should also be a regular part
-			
+			if (o.body) { o.body.traverse() };
 			if (o.id) { o.id.traverse() };
-			
 			
 			for (var i = 0, ary = iter$(this._parts), len = ary.length; i < len; i++) {
 				ary[i].traverse();
 			};
-			
-			// for atr in @options:attributes
-			// 	atr.traverse
 			
 			return this;
 		};
@@ -11364,12 +11179,7 @@ var Imbac =
 			return this._reference || (this._reference = this.scope__().closure().temporary(this,{pool: 'tag'}).resolve());
 		};
 		
-		// should this not happen in js?
-		// should this not happen in js?
 		Tag.prototype.js = function (o){
-			// p JSON.stringify(@options)
-			// var attrs = TagAttributes.new(o:attributes)
-			// p "got here?"
 			var body;
 			var o = this._options;
 			var a = {};
@@ -11392,23 +11202,16 @@ var Imbac =
 			
 			for (var i = 0, ary = iter$(o.attributes), len = ary.length, atr; i < len; i++) {
 				atr = ary[i];
-				a[atr.key()] = atr.value(); // .populate(obj)
+				a[atr.key()] = atr.value();
 			};
 			
 			var quote = function(str) { return helpers.singlequote(str); };
 			var id = o.id instanceof Node ? (o.id.c()) : ((o.id && quote(o.id.c())));
 			var tree = this._tree || null;
 			var parent = this.parent();
-			// var parTree = parent and parent.tree
 			
-			
-			//  "scope is", !!scope
-			// p "type is {type}"
 			var out = isSelf ? (
 				commit = "synced",
-				// p "got here"
-				// setting correct context directly
-				// TODO should call something here as well - marks the start of render - useful for pushing state etc
 				this.setReactive(true),
 				this._reference = scope.context(),
 				scope.context().c()
@@ -11421,6 +11224,7 @@ var Imbac =
 			if (o.id) {
 				statics.push((".setId(" + quote(o.id) + ")"));
 			};
+			
 			// this is reactive if it has an ivar
 			if (o.ivar) {
 				this.setReactive(true);
@@ -11428,7 +11232,6 @@ var Imbac =
 			};
 			
 			if (o.body instanceof Func) {
-				// console.log "o:body isa function!"
 				bodySetter = "setTemplate";
 			} else if (o.body) {
 				if ((o.body instanceof ArgList) && o.body.count() == 1 && o.body.first().isString()) {
@@ -11457,16 +11260,14 @@ var Imbac =
 				if (part instanceof TagAttr) {
 					var akey = String(part.key());
 					var aval = part.value();
-					// p "part value {aval} {aval.isPrimitive(yes)}"
 					
-					// the attr should compile itself instead -- really
 					pcache = aval.isPrimitive();
 					
-					if (akey[0] == '.') { // should check in a better way
+					if (akey[0] == '.') {
 						pcache = false;
 						pjs = (".flag(" + quote(akey.substr(1)) + "," + (aval.c()) + ")");
 					} else if (akey[0] == ':') {
-						// need to analyze whether this is static or not
+						// TODO need to analyze whether this is static or not
 						pjs = (".setHandler(" + quote(akey.substr(1)) + "," + (aval.c()) + "," + (scope.context().c()) + ")");
 					} else if (akey.substr(0,5) == 'data-') {
 						pjs = (".dataset('" + akey.slice(5) + "'," + (aval.c()) + ")");
@@ -11493,17 +11294,13 @@ var Imbac =
 				};
 			};
 			
-			
-			
 			if (this.object()) {
 				calls.push((".setObject(" + (this.object().c()) + ")"));
 			};
 			
-			// p "tagtree is static? {tree.static}"
-			
 			// we need to trigger our own reference before the body does
-			// but we do not need a reference if we have no body (no nodes will refer it)
-			if (this.reactive() && tree) { // and tree.hasTags
+			// but we do not need a reference if we have no body
+			if (this.reactive() && tree) {
 				this.reference();
 			};
 			
@@ -11511,7 +11308,7 @@ var Imbac =
 				o.treeRef = parent.tree().nextCacheKey(this);
 			};
 			
-			if (body = content && content.c({expression: true})) { // force it to be an expression, no?
+			if (body = content && content.c({expression: true})) {
 				var typ = 0;
 				
 				if (tree) {
@@ -11532,26 +11329,19 @@ var Imbac =
 				} else {
 					calls.push(("." + bodySetter + "(" + body + ")"));
 				};
-				
-				// out += ".body({body})"
 			};
 			
-			// if o:attributes:length # or -- always?
-			// adds lots of extra calls - but okay for now
 			calls.push(("." + commit + "()"));
 			
 			if (statics.length) {
 				out = out + statics.join("");
 			};
 			
-			
 			if ((o.ivar || o.key || this.reactive()) && !(this.type() instanceof Self)) {
 				// if this is an ivar, we should set the reference relative
 				// to the outer reference, or possibly right on context?
 				var ctx,key;
 				var partree = parent && parent.tree();
-				// ctx = !o:ivar and par and par.reference or scope.context
-				// key = o:ivar or tree and tree.nextCacheKey
 				
 				if (o.key) {
 					// closest tag
@@ -11573,8 +11363,6 @@ var Imbac =
 					};
 				};
 				
-				
-				
 				// need the context -- might be better to rewrite it for real?
 				// parse the whole thing into calls etc
 				var acc = OP('.',ctx,key).c();
@@ -11590,7 +11378,8 @@ var Imbac =
 		};
 		
 		// This is a helper-node
-		// Should probably use the same type of listnode everywhere - and simply flag the type as TagTree instead
+		// Should probably use the same type of listnode everywhere
+		// and simply flag the type as TagTree instead
 		function TagTree(owner,list,options){
 			if(options === undefined) options = {};
 			this._owner = owner;
@@ -11639,7 +11428,6 @@ var Imbac =
 		
 		TagTree.prototype.load = function (list){
 			if (list instanceof ListNode) {
-				// p "is a list node!! {list.count}"
 				// we still want the indentation if we are not in a template
 				// or, rather - we want the block to get the indentation - not the tree
 				this._indentation || (this._indentation = list._indentation); // if list.count > 1
@@ -11726,7 +11514,6 @@ var Imbac =
 		
 		
 		function TagAttr(k,v){
-			// p "init TagAttribute", $0
 			this._traversed = false;
 			this._key = k;
 			this._value = v;
@@ -11795,14 +11582,11 @@ var Imbac =
 		subclass$(Selector,ListNode);
 		exports.Selector = Selector; // export class 
 		Selector.prototype.add = function (part,typ){
-			// p "select add!",part,typ
-			// mark if special?
 			this.push(part);
 			return this;
 		};
 		
 		Selector.prototype.group = function (){
-			// console.log "grouped!"
 			// for now we simply add a comma
 			// how would this work for dst?
 			this._nodes.push(new SelectorGroup(","));
@@ -11846,7 +11630,6 @@ var Imbac =
 		exports.SelectorPart = SelectorPart; // export class 
 		SelectorPart.prototype.c = function (){
 			return c__(this._value);
-			// "{value.c}"
 		};
 		
 		function SelectorGroup(){ return SelectorPart.apply(this,arguments) };
@@ -11862,9 +11645,6 @@ var Imbac =
 		subclass$(SelectorType,SelectorPart);
 		exports.SelectorType = SelectorType; // export class 
 		SelectorType.prototype.c = function (){
-			// support
-			// p "selectortype {value}"
-			// var out = value.c
 			var name = this.value().name();
 			
 			// at least be very conservative about which tags we
@@ -11975,8 +11755,6 @@ var Imbac =
 			var outer = o.relative(block,1);
 			var par = o.relative(self,-1);
 			
-			// p "Block {block} {outer} {par}"
-			
 			self.setFunc(new AsyncFunc([],[]));
 			// now we move this node up to the block
 			self.func().body().setNodes(block.defers(outer,self));
@@ -11985,7 +11763,6 @@ var Imbac =
 			if (par instanceof Assign) {
 				par.left().traverse();
 				var lft = par.left().node();
-				// p "Async assignment {par} {lft}"
 				// Can be a tuple as well, no?
 				if (lft instanceof VarReference) {
 					// the param is already registered?
@@ -11997,7 +11774,6 @@ var Imbac =
 					// we can just use arguments
 					
 					if (par.type() == 'var' && !lft.hasSplat()) {
-						// p "SIMPLIFY! {lft.nodes[0]}"
 						lft.map(function(el,i) {
 							return self.func().params().at(i,true,el.value());
 						});
@@ -12089,7 +11865,6 @@ var Imbac =
 					// dec.add(@alias,CALL(Identifier.new("require"),[source]))
 				};
 				
-				// p "ImportStatement has imports {@imports:length}"
 				// @declarations = VariableDeclaration.new([])
 				this._moduledecl = dec.add(this._alias,CALL(new Identifier("require"),[this.source()]));
 				this._moduledecl.traverse();
@@ -12133,7 +11908,6 @@ var Imbac =
 				};
 				
 				// var alias = src.match(/(\w+)(\.js|imba)?[\"\']$/)
-				// p "source type {source}"
 				// create a require for the source, with a temporary name?
 				var out = [req.cache({names: alias}).c()];
 				
@@ -12213,7 +11987,6 @@ var Imbac =
 		};
 		
 		Util.len = function (obj,cache){
-			// p "LEN HELPER".green
 			var r = new Identifier("length");
 			var node = OP('.',obj,r);
 			if (cache) { node.cache({force: true,pool: 'len'}) };
@@ -12242,12 +12015,10 @@ var Imbac =
 		
 		Util.union = function (a,b){
 			return new Util.Union([a,b]);
-			// CALL(UNION,[a,b])
 		};
 		
 		Util.intersect = function (a,b){
 			return new Util.Intersect([a,b]);
-			// CALL(INTERSECT,[a,b])
 		};
 		
 		Util.counter = function (start,cache){
@@ -12527,11 +12298,9 @@ var Imbac =
 		
 		Scope.prototype.visit = function (){
 			if (this._parent) { return this };
-			// p "visited scope!"
 			this._parent = STACK.scope(1); // the parent scope
 			this._level = STACK.scopes().length - 1;
 			
-			// p "parent is",@parent
 			STACK.addScope(this);
 			this.root().scopes().push(this);
 			return this;
@@ -12564,7 +12333,6 @@ var Imbac =
 			// Again, here we should not really have to deal with system-generated vars
 			// But again, it is important
 			
-			// p "registering {name}"
 			if(decl === undefined) decl = null;
 			if(o === undefined) o = {};
 			name = helpers.symbolize(name);
@@ -12596,43 +12364,13 @@ var Imbac =
 			var dec = this._vars.add(variable,init);
 			(declarator_ = variable.declarator()) || ((variable.setDeclarator(dec),dec));
 			return variable;
-			
-			// p "declare variable {name} {o}"
-			// if name isa Variable
-			// p "SCOPE declare var".green
-			name = helpers.symbolize(name);
-			// we will see here
-			this._vars.add(name,init); // .last -- 
-			var decl = this._vars.last(); // bug(!)
-			var item;
-			// item = Variable.new(self,name,decl)
-			
-			// if o:system
-			// 	item = SystemVariable.new(self,name,decl,o)
-			// 	decl.variable = item
-			// else
-			item = new Variable(this,name,decl,o);
-			decl.setVariable(item);
-			item.resolve(); // why on earth should it resolve immediately?
-			
-			// decl.variable = item
-			// item.resolve # why on earth should it resolve immediately?
-			return item;
-			
-			// should be possible to force-declare for this scope, no?
-			// if this is a system-variable 
 		};
-		
-		// declares a variable (has no real declaration beforehand)
-		
 		
 		// what are the differences here? omj
 		// we only need a temporary thing with defaults -- that is all
 		// change these values, no?
 		Scope.prototype.temporary = function (refnode,o,name){
 			
-			// p "registering temporary {refnode} {name}"
-			// reuse variables -- hmm
 			if(o === undefined) o = {};
 			if(name === undefined) name = null;
 			if (o.pool) {
@@ -12651,10 +12389,7 @@ var Imbac =
 			this._varpool.push(item); // WHAT? It should not be in the pool unless explicitly put there?
 			this._vars.push(item); // WARN variables should not go directly into a declaration-list
 			return item;
-			// return register(name || "__",null,system: yes, temporary: yes)
 		};
-		
-		
 		
 		Scope.prototype.lookup = function (name){
 			var ret = null;
@@ -12662,17 +12397,9 @@ var Imbac =
 			if (this._varmap.hasOwnProperty(name)) {
 				ret = this._varmap[name];
 			} else {
-				// look up any parent scope ?? seems okay
-				// !isClosed && 
 				ret = this.parent() && this.parent().lookup(name);
 				// or -- not all scopes have a parent?
 			};
-			
-			// should this not happen by itself?
-			// if !ret and 
-			//	ret = 
-			// ret ||= (g.lookup(name) if var g = root)
-			// g = root
 			return ret;
 		};
 		
@@ -12681,7 +12408,6 @@ var Imbac =
 		};
 		
 		Scope.prototype.free = function (variable){
-			// p "free variable"
 			variable.free(); // :owner = null
 			// @varpool.push(variable)
 			return this;
@@ -12719,12 +12445,6 @@ var Imbac =
 			// need to fix this
 			this.node().body().setHead(this.head());
 			return body = this.node().body().c(o);
-			
-			// var head = [@vars,@params].block.c(expression: no)
-			// p "head from scope is ({head})"
-			// var out = [head or null,body].flatten__.compact.join("\n")
-			// out
-			// out = '{' + out + 
 		};
 		
 		Scope.prototype.region = function (){
@@ -12809,7 +12529,6 @@ var Imbac =
 		};
 		
 		RootScope.prototype.lookup = function (name){
-			// p "lookup filescope"
 			name = helpers.symbolize(name);
 			if (this._varmap.hasOwnProperty(name)) { return this._varmap[name] };
 		};
@@ -12836,7 +12555,6 @@ var Imbac =
 		RootScope.prototype.warn = function (data){
 			// hacky
 			data.node = null;
-			// p "warning",JSON.stringify(data)
 			this._warnings.push(data);
 			return this;
 		};
@@ -12935,21 +12653,16 @@ var Imbac =
 			if(o === undefined) o = {};
 			if (o.type != 'let' && (this.closure() != this)) {
 				if (found = this.lookup(name)) {
-					// p "already found variable {found.type}"
 					if (found.type() == 'let') {
 						this.p(("" + name + " already exists as a block-variable " + decl));
 						// TODO should throw error instead
 						if (decl) { decl.warn("Variable already exists in block") };
 						// root.warn message: "Holy shit"
 					};
-					// if found.
 				};
-				// p "FlowScope register var -- do it right in the outer scope"
+				
 				return this.closure().register(name,decl,o);
 			} else {
-				// p "Register local variable for FlowScope {name}"
-				// o:closure = parent
-				// p "FlowScope register", arguments
 				return FlowScope.__super__.register.call(this,name,decl,o);
 			};
 		};
@@ -12994,12 +12707,7 @@ var Imbac =
 		exports.ForScope = ForScope; // export class 
 		ForScope.prototype.autodeclare = function (variable){
 			return this.vars().push(variable);
-			// parent.autodeclare(variable)
 		};
-		
-		// def closure
-		// 	self
-		;
 		
 		function IfScope(){ return FlowScope.apply(this,arguments) };
 		
@@ -13086,7 +12794,6 @@ var Imbac =
 		// and show warnings / give advice if variables are ambiguous etc
 		Variable.prototype.assigned = function (val,source){
 			this._assignments.push(val);
-			// p "Variable was assigned {val}"
 			if (val instanceof Arr) {
 				// just for testing really
 				this._isArray = true;
@@ -13108,7 +12815,6 @@ var Imbac =
 			// if this is a let-definition inside a virtual scope we do need
 			// 
 			if (this._scope != closure && this._type == 'let') { // or if it is a system-variable
-				// p "scope is not the closure -- need to resolve {@name}"
 				item = closure.lookup(this._name);
 				
 				// we now need to ensure that this variable is unique inside
@@ -13116,24 +12822,18 @@ var Imbac =
 				scope = closure;
 			};
 			
-			// p "scope is not the closure -- need to resolve {@name} {@type}"
-			
 			if (item == this) {
 				scope.varmap()[this._name] = this;
 				return this;
 			} else if (item) {
-				// p "variable already exists {@name}"
-				
 				// possibly redefine this inside, use it only in this scope
 				// if the item is defined in an outer scope - we reserve the
 				if (item.scope() != scope && (this.options().let || this._type == 'let')) {
-					// p "override variable inside this scope {@name}"
 					scope.varmap()[this._name] = this;
 				};
 				
 				// different rules for different variables?
 				if (this._options.proxy) {
-					// p "is proxy -- no need to change name!!! {name}".cyan
 					true;
 				} else {
 					var i = 0;
@@ -13149,7 +12849,6 @@ var Imbac =
 			scope.varmap()[this._name] = this;
 			closure.varmap()[this._name] = this;
 			return this;
-			// p "resolve variable".cyan
 		};
 		
 		Variable.prototype.reference = function (){
@@ -13161,12 +12860,10 @@ var Imbac =
 		};
 		
 		Variable.prototype.traverse = function (){
-			// NODES.push(self)
 			return this;
 		};
 		
 		Variable.prototype.free = function (ref){
-			// p "free variable!"
 			this._declarator = null;
 			return this;
 		};
@@ -13189,7 +12886,6 @@ var Imbac =
 			if (this._c) { return this._c };
 			// options - proxy??
 			if (this._proxy) {
-				// p "var is proxied!",@proxy
 				this._c = this._proxy[0].c() + '[' + this._proxy[1].c() + ']';
 			} else {
 				if (!this._resolved) this.resolve();
@@ -13208,13 +12904,13 @@ var Imbac =
 		
 		// variables should probably inherit from node(!)
 		Variable.prototype.consume = function (node){
-			// p "variable assignify!!!"
 			return this;
 		};
 		
 		// this should only generate the accessors - not dael with references
 		Variable.prototype.accessor = function (ref){
-			var node = new LocalVarAccess(".",null,this); // this is just wrong .. should not be a regular accessor
+			var node = new LocalVarAccess(".",null,this);
+			// this is just wrong .. should not be a regular accessor
 			// @references.push([ref,el]) if ref # weird temp format
 			return node;
 		};
@@ -13232,13 +12928,11 @@ var Imbac =
 				this._references.push(ref);
 			};
 			
-			// p "reference is {ref:region and ref.region}"
 			return this;
 		};
 		
 		Variable.prototype.autodeclare = function (){
 			if (this._declared) { return this };
-			// p "variable should autodeclare(!) {name}"
 			this._autodeclare = true;
 			this.scope().autodeclare(this);
 			this._declared = true;
@@ -13258,7 +12952,7 @@ var Imbac =
 		Variable.prototype.dump = function (typ){
 			var name = this.name();
 			if (name[0].match(/[A-Z]/)) { return null };
-			// console.log "dump variable of type {type} - {name}"
+			
 			return {
 				type: this.type(),
 				name: name,
@@ -13277,7 +12971,6 @@ var Imbac =
 		
 		// weird name for this
 		SystemVariable.prototype.predeclared = function (){
-			// p "remove var from scope(!)"
 			this.scope().vars().remove(this);
 			return this;
 		};
@@ -13285,7 +12978,6 @@ var Imbac =
 		SystemVariable.prototype.resolve = function (){
 			var alias, v_;
 			if (this._resolved || this._name) { return this };
-			// p "RESOLVE SYSTEM VARIABLE".red
 			this._resolved = true;
 			// unless @name
 			// adds a very random initial name
@@ -13336,10 +13028,7 @@ var Imbac =
 				if (!scope.lookup(alt)) { this._name = alt };
 			};
 			
-			// p "suggested names {names.join(" , ")} {node}".cyan
-			//  Math.floor(Math.random * 1000)
 			this._name || (this._name = ("$" + (scope.setCounter(v_ = scope.counter() + 1),v_)));
-			// p "name for variable is {@name}"
 			scope.varmap()[this._name] = this;
 			return this;
 		};
@@ -13363,6 +13052,8 @@ var Imbac =
 		ScopeContext.prototype.setScope = function(v){ this._scope = v; return this; };
 		ScopeContext.prototype.value = function(v){ return this._value; }
 		ScopeContext.prototype.setValue = function(v){ this._value = v; return this; };
+		ScopeContext.prototype.reference = function(v){ return this._reference; }
+		ScopeContext.prototype.setReference = function(v){ this._reference = v; return this; };
 		
 		ScopeContext.prototype.namepath = function (){
 			return this._scope.namepath();
@@ -13377,7 +13068,6 @@ var Imbac =
 		// name of the variable etc?
 		
 		ScopeContext.prototype.reference = function (){
-			// p "p reference {STACK.scoping}"
 			// should be a special context-variable!!!
 			return this._reference || (this._reference = this.scope().declare("self",new This()));
 		};

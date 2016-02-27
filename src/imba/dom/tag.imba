@@ -1,18 +1,27 @@
-def Imba.static items, nr
-	items:static = nr
-	return items
+
+Imba.CSSKeyMap = {}
 
 ###
 Get the current document
 ###
 def Imba.document
-	window:document
+	if Imba.SERVER
+		@document ||= ImbaServerDocument.new
+	else
+		window:document
 
 ###
 Get the body element wrapped in an Imba.Tag
 ###
 def Imba.root
 	tag(Imba.document:body)
+
+
+def Imba.static items, nr
+	items:static = nr
+	return items
+
+
 
 ###
 This is the baseclass that all tags in imba inherit from.
@@ -714,7 +723,11 @@ class Imba.Tag
 	def css key, val
 		if key isa Object
 			css(k,v) for own k,v of key
-		elif val == null
+			return self
+
+		key = Imba.CSSKeyMap[key] or key
+
+		if val == null
 			dom:style.removeProperty(key)
 		elif val == undefined
 			return dom:style[key]
@@ -968,3 +981,47 @@ tic$ = Imba:tagWithIdAndFlags
 id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom
 
+def Imba.generateCSSPrefixes
+	var styles = window.getComputedStyle(document:documentElement, '')
+
+	for prefixed in styles
+		var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'')
+		var camelCase = unprefixed.replace(/-(\w)/g) do |m,a| a.toUpperCase
+
+		# if there exists an unprefixed version -- always use this
+		if prefixed != unprefixed
+			continue if styles.hasOwnProperty(unprefixed)
+
+		# register the prefixes
+		Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed
+	return
+
+Imba.generateCSSPrefixes if Imba.CLIENT and document
+
+# Ovverride classList
+if Imba.CLIENT and document and !document:documentElement:classList
+	extend tag element
+
+		def hasFlag ref
+			return RegExp.new('(^|\\s)' + ref + '(\\s|$)').test(@dom:className)
+
+		def addFlag ref
+			return self if hasFlag(ref)
+			@dom:className += (@dom:className ? ' ' : '') + ref
+			return self
+
+		def unflag ref
+			return self unless hasFlag(ref)
+			var regex = RegExp.new('(^|\\s)*' + ref + '(\\s|$)*', 'g')
+			@dom:className = @dom:className.replace(regex, '')
+			return self
+
+		def toggleFlag ref
+			hasFlag(ref) ? unflag(ref) : flag(ref)
+
+		def flag ref, bool
+			if arguments:length == 2 and !!bool === no
+				return unflag(ref)
+			return addFlag(ref)
+
+Imba.Tag

@@ -48,7 +48,6 @@
   },
   "directories": {},
   "main": "./index.js",
-  "browser": "./lib/imba/browser.js",
   "webpack": "./index",
   "bin": {
     "imba": "./bin/imba"
