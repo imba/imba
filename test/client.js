@@ -90,7 +90,11 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = exports = __webpack_require__(2);
+	(function(){
+		var imba;
+		return module.exports.imba = imba = __webpack_require__(2);
+
+	})();
 
 /***/ },
 /* 2 */
@@ -147,7 +151,7 @@
 		*/
 		
 		Imba.isServer = function (){
-			return (false) == true;
+			return !(true);
 		};
 		
 		Imba.subclass = function (obj,sup){
@@ -695,12 +699,10 @@
 		__webpack_require__(12);
 		__webpack_require__(13);
 		
-		if (false) {
-			require('./server');
-		};
-		
 		if (true) {
 			__webpack_require__(14);
+		} else {
+			require('./server');
 		};
 		
 		if (true) {
@@ -792,10 +794,10 @@
 		*/
 		
 		Imba.document = function (){
-			if (false) {
-				return this._document || (this._document = new ImbaServerDocument());
-			} else {
+			if (true) {
 				return window.document;
+			} else {
+				return this._document || (this._document = new ImbaServerDocument());
 			};
 		};
 		
