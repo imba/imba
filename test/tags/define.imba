@@ -31,7 +31,7 @@ tag cached
 
 class CustomClass < Imba.Tag
 
-	def render
+	def end
 		<self.one.two> "Custom"
 
 tag custom-init
