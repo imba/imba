@@ -216,12 +216,6 @@ class Imba.Tag
 			Imba.TagManager.remove(el.@tag,self) if el.@tag
 		self
 
-	# Benchmark difference
-	# def removeChild node
-	# 	dom.removeChild(node.@dom or node) if node
-	# 	self
-
-	
 
 	###
 	Append a single item (node or string) to the current node.
@@ -234,8 +228,8 @@ class Imba.Tag
 			dom.appendChild(Imba.document.createTextNode(node))
 		elif node
 			dom.appendChild(node.@dom or node)
-			# text nodes?
 			Imba.TagManager.insert(node.@tag or node, self)
+			# FIXME ensure these are not called for text nodes
 		self
 
 	###
@@ -248,8 +242,8 @@ class Imba.Tag
 
 		if node and rel
 			dom.insertBefore( (node.@dom or node), (rel.@dom or rel) )
-			# not for text nodes
 			Imba.TagManager.insert(node.@tag or node, self)
+			# FIXME ensure these are not called for text nodes
 		self
 
 	###
@@ -279,7 +273,7 @@ class Imba.Tag
 			@empty = no if @empty			
 		else
 			# should delegate to self.appendChild
-			@dom.appendChild(item.@dom or item)
+			appendChild(item)
 			@empty = no if @empty
 
 		return self
@@ -292,9 +286,9 @@ class Imba.Tag
 		if node isa Array
 			node = (<fragment> node)
 		if before
-			dom.insertBefore(node.dom,before.dom)
+			insertBefore(node,before.dom)
 		else
-			append(node)
+			appendChild(node)
 		self
 
 	###
