@@ -62,6 +62,35 @@ class Imba.Tag
 			child.@nodeType = child.@name
 			child.@classes = []
 
+	###
+	Internal method called after a tag class has
+	been declared or extended.
+	###
+	def optimizeTagStructure
+		var base = Imba.Tag:prototype
+		# var has = do |k| self:hasOwnProperty(k)
+		# if has(:commit) or has(:render) or has(:mount) or has(:build)
+
+		var hasBuild  = self:build  != base:build
+		var hasCommit = self:commit != base:commit
+		var hasRender = self:render != base:render
+		var hasMount  = self:mount
+		
+		if hasCommit or hasRender or hasBuild or hasMount
+
+			self:end = do
+				if this:mount and !this.@mounted
+					Imba.TagManager.mount(this)
+
+				unless @built
+					this.@built = yes
+					this.build
+				else
+					this.commit
+
+				return this
+		self
+
 
 	def initialize dom
 		self.dom = dom
@@ -431,11 +460,6 @@ class Imba.Tag
 	@return {self}
 	###
 	def end
-		if @built
-			commit
-		else
-			@built = yes
-			build
 		self
 
 	###
@@ -857,6 +881,7 @@ class Imba.Tags
 
 			body.call(tagtype,tagtype, tagtype.TAGS or self)
 			tagtype.defined if tagtype:defined
+			optimizeTag(tagtype)
 		return tagtype
 
 	def defineSingleton name, supr, &body
@@ -867,7 +892,12 @@ class Imba.Tags
 		# allow for private tags here as well?
 		body and body.call(klass,klass,klass:prototype) if body
 		klass.extended if klass:extended
+		optimizeTag(klass)
 		return klass
+
+	def optimizeTag tagtype
+		tagtype:prototype?.optimizeTagStructure
+		self
 
 
 Imba.SINGLETONS = {}
