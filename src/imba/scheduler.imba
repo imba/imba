@@ -110,6 +110,7 @@ class Imba.Scheduler
 	def self.didRun
 		@active = no
 		@dirty = no
+		Imba.TagManager.refresh
 
 	def self.isActive
 		!!@active
