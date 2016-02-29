@@ -862,10 +862,10 @@ class Imba.Tags
 
 	def defineTag name, supr = '', &body
 		supr ||= baseType(name)
-		let supertype = self[supr]
+
+		let supertype = supr isa String ? self[supr]: supr
 		let tagtype = Tag()
 		let norm = name.replace(/\-/g,'_')
-
 
 		tagtype.@name = name
 		extender(tagtype,supertype)
@@ -873,6 +873,8 @@ class Imba.Tags
 		if name[0] == '#'
 			self[name] = tagtype
 			Imba.SINGLETONS[name.slice(1)] = tagtype
+		elif name[0] == name[0].toUpperCase
+			true # this is a local type
 		else
 			self[name] = tagtype
 			self['$'+norm] = TagSpawner(tagtype)

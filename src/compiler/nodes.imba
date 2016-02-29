@@ -2215,13 +2215,14 @@ export class TagDeclaration < Code
 
 		var ns = name.ns
 		var mark = mark__(option('keyword'))
+		var params = []
 
-		var params = [helpers.singlequote(name.name)]
+		params.push(helpers.singlequote(name.name))
 		var cbody = body.c
-		# var outbody = body.count ? ", function({@ctx.c})\{{cbody}\}" : ''
 
 		if superclass
 			# WARN what if the superclass has a namespace?
+			# what if it is a regular class?
 			params.push(helpers.singlequote(superclass.name))
 
 		if body.count
@@ -2231,13 +2232,6 @@ export class TagDeclaration < Code
 				params.push("function({@ctx.c})\{{cbody}\}")
 
 		var meth = option(:extension) ? 'extendTag' : 'defineTag'
-		# return "{mark}{tagspace}.extendTag('{name.name}'{outbody})"
-
-		# var sup = superclass and "," + helpers.singlequote(superclass.func) or ""
-
-		# var out = if name.id
-		#	"{mark}{tagspace}.defineSingleton('{name.name}'{sup}{outbody})"
-		# else
 
 		return "{mark}{tagspace}.{meth}({params.join(', ')})"
 
