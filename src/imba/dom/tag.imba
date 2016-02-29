@@ -94,6 +94,7 @@ class Imba.Tag
 
 	def initialize dom
 		self.dom = dom
+		self.@_cache = {}
 		self
 
 	attr tabindex

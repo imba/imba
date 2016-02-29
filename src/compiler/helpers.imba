@@ -36,6 +36,13 @@ export def camelCase str
 	# should add shortcut out
 	str.replace(/([\-\_\s])(\w)/g) do |m,v,l| l.toUpperCase
 
+export def dashToCamelCase str
+	str = String(str)
+	if str.indexOf('-') >= 0
+		# should add shortcut out
+		str = str.replace(/([\-\s])(\w)/g) do |m,v,l| l.toUpperCase
+	return str
+
 export def snakeCase str
 	var str = str.replace(/([\-\s])(\w)/g,'_')
 	str.replace(/()([A-Z])/g,"_$1") do |m,v,l| l.toUpperCase

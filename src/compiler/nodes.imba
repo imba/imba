@@ -202,6 +202,26 @@ def AST.escapeComments str
 	return '' unless str
 	return str
 
+
+var shortRefCache = []
+
+def counterToShortRef nr
+	var base = "A".charCodeAt(0)	
+
+	while shortRefCache:length <= nr
+		var num = shortRefCache:length + 1
+		var str = ""
+
+		while true
+			num -= 1
+			str = String.fromCharCode(base + (num % 26)) + str
+			num = Math.floor(num / 26)
+			break unless num > 0
+
+		shortRefCache.push(str)
+	return shortRefCache[nr]
+
+
 export class Indentation
 
 	prop open
@@ -4409,7 +4429,7 @@ export class Ivar < Identifier
 		self
 
 	def name
-		helpers.camelCase(@value).replace(/^@/,'')
+		helpers.dashToCamelCase(@value).replace(/^@/,'')
 		# value.c.camelCase.replace(/^@/,'')
 
 	def alias
@@ -4420,7 +4440,7 @@ export class Ivar < Identifier
 		'_' + name
 
 	def c
-		'_' + helpers.camelCase(@value).slice(1) # .replace(/^@/,'') # mark__(@value) + 
+		'_' + helpers.dashToCamelCase(@value).slice(1) # .replace(/^@/,'') # mark__(@value) + 
 
 
 
@@ -5037,10 +5057,12 @@ export class For < Loop
 		# other cases as well, no?
 		if node isa TagTree
 			scope.context.reference
+
 			var ref = node.root.reference
 			node.@loop = self
 
 			# Should not be consumed the same way
+			# One per loop - or no?
 			body.consume(node)
 			node.@loop = null
 			let fn = Lambda.new([Param.new(ref)],[self])
@@ -5691,7 +5713,8 @@ export class Tag < Node
 		# we need to trigger our own reference before the body does
 		# but we do not need a reference if we have no body
 		if reactive and tree
-			reference
+			# reference
+			self
 
 		if reactive and parent and parent.tree
 			o:treeRef = parent.tree.nextCacheKey(self)
@@ -5724,30 +5747,51 @@ export class Tag < Node
 			# to the outer reference, or possibly right on context?
 			var ctx, key
 			var partree = parent and parent.tree
+			var acc
 
-			if o:key
-				# closest tag
-				# TODO if the dynamic key starts with a static string we should
-				# just prepend _ to the string instead of wrapping in OP
-				ctx = parent and parent.reference
-				key = OP('+',Str.new("'_'"),o:key)
+			let nr = STACK.incr('tagCacheKey')
+			let key = counterToShortRef(nr)
 
-			elif o:ivar
+			# find the closest tag-declaration?
+			let method = STACK.method
+
+			if method
+				ctx = method.scope.tagContext
+
+			if o:ivar
 				ctx = scope.context
 				key = o:ivar
 
-			else
-				ctx = parent and parent.reference
-				# ctx = partree.cacher
-				key = o:treeRef or partree and partree.nextCacheKey
-				# key = tree and tree.nextCacheKey
-				if o:loop
+			elif o:loop
+				# ctx = parent and parent.reference
+				let s = method.scope
+				let path = OP('.',ctx,key)
+				let kvar = "${key}"
+				let cacheDefault = LIT('{}')
+
+				if o:key
+					key = o:key
+				else
 					let idx = o:loop.option(:vars)[:index]
-					key = OP('+',"'" + key + "'",idx)
+					cacheDefault = LIT('[]')
+					key = idx
+
+				let setter = OP('=',path,OP('||',path,cacheDefault))
+				ctx = s.declare(kvar,Parens.new(setter))
+
+			elif o:key
+				# closest tag
+				# TODO if the dynamic key starts with a static string we should
+				# just prepend _ to the string instead of wrapping in OP
+				# if we are in a loop we still need to do something special here
+				# ctx = parent and parent.reference
+				key = OP('+',Str.new("'_'"),o:key)
+
 
 			# need the context -- might be better to rewrite it for real?
 			# parse the whole thing into calls etc
-			var acc = OP('.',ctx,key).c
+			acc ||= OP('.',ctx,key).c
+			@cachedReference = acc
 
 			if @reference
 				out = "({reference.c} = {acc}={acc} || {out})"
@@ -6771,6 +6815,9 @@ export class MethodScope < Scope
 
 	def isClosed
 		yes
+
+	def tagContext
+		@tagContext ||= self.declare("$",OP('.',This.new,'__cache'))
 
 export class LambdaScope < Scope
 
