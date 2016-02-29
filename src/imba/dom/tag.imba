@@ -405,7 +405,10 @@ class Imba.Tag
 	Remove all content inside node
 	###
 	def empty
-		@dom.removeChild(@dom:firstChild) while @dom:firstChild
+		if @dom:firstChild
+			@dom.removeChild(@dom:firstChild) while @dom:firstChild
+			Imba.TagManager.remove(null,self)
+
 		@children = null
 		@empty = yes
 		self
