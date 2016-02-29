@@ -82,7 +82,7 @@ class Imba.Tag
 				if this:mount and !this.@mounted
 					Imba.TagManager.mount(this)
 
-				unless @built
+				unless this.@built
 					this.@built = yes
 					this.build
 				else
