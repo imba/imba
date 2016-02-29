@@ -5603,6 +5603,18 @@ export class Tag < Node
 	def reference
 		@reference ||= scope__.closure.temporary(self,pool: 'tag').resolve
 
+	def closureCache
+		@closureCache ||= scope__.tagContextCache
+
+	def staticCache
+		if type isa Self
+			@staticCache ||= scope__.tagContextCache
+		elif option(:ivar) or option(:key)
+			@staticCache ||= OP('.',reference,'__')
+		elif @parent
+			@staticCache ||= @parent.staticCache
+		
+
 	def js o
 		var o = @options
 		var a = {}
@@ -5745,26 +5757,27 @@ export class Tag < Node
 		if (o:ivar or o:key or reactive) and !(type isa Self)
 			# if this is an ivar, we should set the reference relative
 			# to the outer reference, or possibly right on context?
-			var ctx, key
+			var key
 			var partree = parent and parent.tree
 			var acc
 
 			let nr = STACK.incr('tagCacheKey')
 			let key = counterToShortRef(nr)
 
-			# find the closest tag-declaration?
-			let method = STACK.method
-
-			if method
-				ctx = method.scope.tagContext
+			let ctx
 
 			if o:ivar
 				ctx = scope.context
 				key = o:ivar
 
-			elif o:loop
+			elif o:loop or o:key
+				if parent
+					ctx = parent.staticCache
+				else
+					ctx = closureCache
+				
 				# ctx = parent and parent.reference
-				let s = method.scope
+				let s = scope.closure
 				let path = OP('.',ctx,key)
 				let kvar = "${key}"
 				let cacheDefault = LIT('{}')
@@ -5777,16 +5790,10 @@ export class Tag < Node
 					key = idx
 
 				let setter = OP('=',path,OP('||',path,cacheDefault))
+				# dont redeclare?
 				ctx = s.declare(kvar,Parens.new(setter))
-
-			elif o:key
-				# closest tag
-				# TODO if the dynamic key starts with a static string we should
-				# just prepend _ to the string instead of wrapping in OP
-				# if we are in a loop we still need to do something special here
-				# ctx = parent and parent.reference
-				key = OP('+',Str.new("'_'"),o:key)
-
+			else
+				ctx = parent ? parent.staticCache : closureCache
 
 			# need the context -- might be better to rewrite it for real?
 			# parse the whole thing into calls etc
@@ -6554,6 +6561,9 @@ export class Scope
 		# bypassing for now
 		@tagContextPath ||= "tag$" # parent.tagContextPath
 
+	def tagContextCache
+		@tagContextCache ||= closure.declare("__",OP('.',context.reference,'__'))
+
 	def context
 		@context ||= ScopeContext.new(self)
 
@@ -6817,7 +6827,7 @@ export class MethodScope < Scope
 		yes
 
 	def tagContext
-		@tagContext ||= self.declare("$",OP('.',This.new,'__cache'))
+		@tagContext ||= self.declare("$",OP('.',This.new,'__'))
 
 export class LambdaScope < Scope
 

@@ -28,6 +28,7 @@ require './syntax/formatting'
 require './syntax/issues'
 
 require './tags/define'
+require './tags/caching'
 
 if Imba.CLIENT
 	require './tags/virtual'
