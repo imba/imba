@@ -449,7 +449,8 @@
 		
 		Imba.Scheduler.didRun = function (){
 			this._active = false;
-			return this._dirty = false;
+			this._dirty = false;
+			return Imba.TagManager.refresh();
 		};
 		
 		Imba.Scheduler.isActive = function (){
@@ -634,20 +635,29 @@
 	(function(){
 		var Imba_;
 		__webpack_require__(4);
+		
+		Imba.TagManager = new Imba.TagManagerClass();
+		
 		__webpack_require__(5);
 		__webpack_require__(6);
-		
 		__webpack_require__(7);
+		
 		__webpack_require__(8);
 		__webpack_require__(9);
 		__webpack_require__(10);
 		__webpack_require__(11);
+		__webpack_require__(12);
+		
+		
+		
 		
 		if (true) {
-			__webpack_require__(12);
+			__webpack_require__(13);
 		} else {
 			require('./server');
 		};
+		
+		
 		
 		if (true) {
 			
@@ -722,6 +732,118 @@
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	(function(){
+		function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+		Imba.TagManagerClass = function TagManagerClass(){
+			this._spawns = 0;
+			this._inserts = 0;
+			this._removes = 0;
+			this._mountable = [];
+			this._mounted = [];
+		};
+		
+		Imba.TagManagerClass.prototype.inserts = function(v){ return this._inserts; }
+		Imba.TagManagerClass.prototype.setInserts = function(v){ this._inserts = v; return this; };
+		Imba.TagManagerClass.prototype.spawns = function(v){ return this._spawns; }
+		Imba.TagManagerClass.prototype.setSpawns = function(v){ this._spawns = v; return this; };
+		Imba.TagManagerClass.prototype.removes = function(v){ return this._removes; }
+		Imba.TagManagerClass.prototype.setRemoves = function(v){ this._removes = v; return this; };
+		Imba.TagManagerClass.prototype.mountable = function(v){ return this._mountable; }
+		Imba.TagManagerClass.prototype.setMountable = function(v){ this._mountable = v; return this; };
+		Imba.TagManagerClass.prototype.mounted = function(v){ return this._mounted; }
+		Imba.TagManagerClass.prototype.setMounted = function(v){ this._mounted = v; return this; };
+		
+		Imba.TagManagerClass.prototype.insert = function (node,parent){
+			this._inserts++;
+			return;
+		};
+		
+		Imba.TagManagerClass.prototype.remove = function (node,parent){
+			this._removes++;
+			return;
+		};
+		
+		Imba.TagManagerClass.prototype.mount = function (node){
+			if (false) { return };
+			
+			if (this._mountable.indexOf(node) < 0) {
+				node._mounted = 2; // use bitmask instead?
+				return this._mountable.push(node);
+			};
+		};
+		
+		Imba.TagManagerClass.prototype.refresh = function (){
+			if (false) { return };
+			
+			if (this._inserts && this._mountable.length) {
+				this.tryMount();
+			};
+			
+			if (this._removes && this._mounted.length) {
+				this.tryUnmount();
+			};
+			
+			this._inserts = 0;
+			this._removes = 0;
+			return this;
+		};
+		
+		Imba.TagManagerClass.prototype.unmount = function (node){
+			return this;
+		};
+		
+		Imba.TagManagerClass.prototype.tryMount = function (){
+			var count = 0;
+			
+			for (var i = 0, ary = iter$(this._mountable), len = ary.length, item; i < len; i++) {
+				item = ary[i];
+				if (item && document.body.contains(item._dom)) {
+					this._mounted.push(item);
+					item._mounted = 1;
+					item.mount();
+					this._mountable[i] = null;
+					count++;
+				};
+			};
+			
+			if (count) {
+				this._mountable = this._mountable.filter(function(item) { return item; });
+			};
+			return this;
+		};
+		
+		Imba.TagManagerClass.prototype.tryUnmount = function (){
+			var count = 0;
+			var root = document.body;
+			for (var i = 0, ary = iter$(this._mounted), len = ary.length, item; i < len; i++) {
+				item = ary[i];
+				if (!document.contains(item.dom())) {
+					item._mounted = 0;
+					if (item.unmount) {
+						item.unmount();
+					} else if (item._scheduler) {
+						item.unschedule();
+					};
+					this._mounted[i] = null;
+					count++;
+				};
+			};
+			
+			if (count) {
+				// console.log "unmounted {count} nodes"
+				this._mounted = this._mounted.filter(function(item) { return item; });
+			};
+			
+			return this;
+		};
+		return Imba.TagManagerClass;
+
+	})();
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
@@ -810,6 +932,41 @@
 				child._nodeType = child._name;
 				return child._classes = [];
 			};
+		};
+		
+		/*
+			Internal method called after a tag class has
+			been declared or extended.
+			*/
+		
+		Imba.Tag.prototype.optimizeTagStructure = function (){
+			var base = Imba.Tag.prototype;
+			// var has = do |k| self:hasOwnProperty(k)
+			// if has(:commit) or has(:render) or has(:mount) or has(:build)
+			
+			var hasBuild = this.build != base.build;
+			var hasCommit = this.commit != base.commit;
+			var hasRender = this.render != base.render;
+			var hasMount = this.mount;
+			
+			if (hasCommit || hasRender || hasBuild || hasMount) {
+				
+				this.end = function() {
+					if (this.mount && !this._mounted) {
+						Imba.TagManager.mount(this);
+					};
+					
+					if (!this._built) {
+						this._built = true;
+						this.build();
+					} else {
+						this.commit();
+					};
+					
+					return this;
+				};
+			};
+			return this;
 		};
 		
 		
@@ -979,6 +1136,15 @@
 		};
 		
 		/*
+			@deprecated
+			Remove specified child from current node.
+			*/
+		
+		Imba.Tag.prototype.remove = function (child){
+			return this.removeChild(child);
+		};
+		
+		/*
 			Remove specified child from current node.
 			@return {self}
 			*/
@@ -986,26 +1152,14 @@
 		Imba.Tag.prototype.removeChild = function (child){
 			var par = this.dom();
 			var el = child instanceof Imba.Tag ? (child.dom()) : (child);
-			if (el && el.parentNode == par) { par.removeChild(el) };
+			
+			if (el && el.parentNode == par) {
+				par.removeChild(el);
+				if (el._tag) { Imba.TagManager.remove(el._tag,this) };
+			};
 			return this;
 		};
 		
-		// Benchmark difference
-		// def removeChild node
-		// 	dom.removeChild(node.@dom or node) if node
-		// 	self
-		
-		/*
-			@deprecated
-			Remove specified child from current node.
-			*/
-		
-		Imba.Tag.prototype.remove = function (child){
-			var par = this.dom();
-			var el = child && child.dom();
-			if (el && el.parentNode == par) { par.removeChild(el) };
-			return this;
-		};
 		
 		/*
 			Append a single item (node or string) to the current node.
@@ -1015,8 +1169,13 @@
 			*/
 		
 		Imba.Tag.prototype.appendChild = function (node){
-			if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
-			if (node) { this.dom().appendChild(node._dom || node) };
+			if ((typeof node=='string'||node instanceof String)) {
+				this.dom().appendChild(Imba.document().createTextNode(node));
+			} else if (node) {
+				this.dom().appendChild(node._dom || node);
+				Imba.TagManager.insert(node._tag || node,this);
+				// FIXME ensure these are not called for text nodes
+			};
 			return this;
 		};
 		
@@ -1026,8 +1185,15 @@
 			*/
 		
 		Imba.Tag.prototype.insertBefore = function (node,rel){
-			if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
-			if (node && rel) { this.dom().insertBefore((node._dom || node),(rel._dom || rel)) };
+			if ((typeof node=='string'||node instanceof String)) {
+				node = Imba.document().createTextNode(node);
+			};
+			
+			if (node && rel) {
+				this.dom().insertBefore((node._dom || node),(rel._dom || rel));
+				Imba.TagManager.insert(node._tag || node,this);
+				// FIXME ensure these are not called for text nodes
+			};
 			return this;
 		};
 		
@@ -1061,7 +1227,7 @@
 				if (this._empty) { this._empty = false };
 			} else {
 				// should delegate to self.appendChild
-				this._dom.appendChild(item._dom || item);
+				this.appendChild(item);
 				if (this._empty) { this._empty = false };
 			};
 			
@@ -1081,9 +1247,9 @@
 				node = (tag$.$fragment().setContent(node,0).end());
 			};
 			if (before) {
-				this.dom().insertBefore(node.dom(),before.dom());
+				this.insertBefore(node,before.dom());
 			} else {
-				this.append(node);
+				this.appendChild(node);
 			};
 			return this;
 		};
@@ -1195,9 +1361,13 @@
 			*/
 		
 		Imba.Tag.prototype.empty = function (){
-			while (this._dom.firstChild){
-				this._dom.removeChild(this._dom.firstChild);
+			if (this._dom.firstChild) {
+				while (this._dom.firstChild){
+					this._dom.removeChild(this._dom.firstChild);
+				};
+				Imba.TagManager.remove(null,this);
 			};
+			
 			this._children = null;
 			this._empty = true;
 			return this;
@@ -1262,12 +1432,6 @@
 			*/
 		
 		Imba.Tag.prototype.end = function (){
-			if (this._built) {
-				this.commit();
-			} else {
-				this._built = true;
-				this.build();
-			};
 			return this;
 		};
 		
@@ -1800,8 +1964,9 @@
 				};
 				
 				body.call(tagtype,tagtype,tagtype.TAGS || this);
+				if (tagtype.defined) { tagtype.defined() };
+				this.optimizeTag(tagtype);
 			};
-			
 			return tagtype;
 		};
 		
@@ -1815,7 +1980,15 @@
 			var klass = ((typeof name=='string'||name instanceof String) ? (this[name]) : (name));
 			// allow for private tags here as well?
 			if (body) { body && body.call(klass,klass,klass.prototype) };
+			if (klass.extended) { klass.extended() };
+			this.optimizeTag(klass);
 			return klass;
+		};
+		
+		Imba.Tags.prototype.optimizeTag = function (tagtype){
+			var prototype_;
+			(prototype_ = tagtype.prototype) && prototype_.optimizeTagStructure  &&  prototype_.optimizeTagStructure();
+			return this;
 		};
 		
 		
@@ -2019,7 +2192,7 @@
 	})();
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -2394,7 +2567,7 @@
 	})();
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -2524,7 +2697,7 @@
 	})();
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -2605,7 +2778,7 @@
 	})();
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -3148,7 +3321,7 @@
 	})();
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -3452,7 +3625,7 @@
 	})();
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -3607,7 +3780,7 @@
 	})();
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -3848,7 +4021,7 @@
 	})();
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	(function(){
