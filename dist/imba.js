@@ -890,6 +890,7 @@
 		
 		Imba.Tag = function Tag(dom){
 			this.setDom(dom);
+			this.__ = {};
 			this;
 		};
 		

@@ -344,6 +344,15 @@ var Imbac =
 			return str.replace(/([\-\_\s])(\w)/g,function(m,v,l) { return l.toUpperCase(); });
 		}; exports.camelCase = camelCase;
 		
+		function dashToCamelCase(str){
+			str = String(str);
+			if (str.indexOf('-') >= 0) {
+				// should add shortcut out
+				str = str.replace(/([\-\s])(\w)/g,function(m,v,l) { return l.toUpperCase(); });
+			};
+			return str;
+		}; exports.dashToCamelCase = dashToCamelCase;
+		
 		function snakeCase(str){
 			var str = str.replace(/([\-\s])(\w)/g,'_');
 			return str.replace(/()([A-Z])/g,"_$1",function(m,v,l) { return l.toUpperCase(); });
@@ -4669,6 +4678,29 @@ var Imbac =
 			if (!str) { return '' };
 			return str;
 		};
+		
+		
+		var shortRefCache = [];
+		
+		function counterToShortRef(nr){
+			var base = "A".charCodeAt(0);
+			
+			while (shortRefCache.length <= nr){
+				var num = shortRefCache.length + 1;
+				var str = "";
+				
+				while (true){
+					num -= 1;
+					str = String.fromCharCode(base + (num % 26)) + str;
+					num = Math.floor(num / 26);
+					if (num <= 0) { break; };
+				};
+				
+				shortRefCache.push(str);
+			};
+			return shortRefCache[nr];
+		};
+		
 		
 		function Indentation(a,b){
 			this._open = a;
@@ -9813,7 +9845,7 @@ var Imbac =
 		subclass$(Ivar,Identifier);
 		exports.Ivar = Ivar; // export class 
 		Ivar.prototype.name = function (){
-			return helpers.camelCase(this._value).replace(/^@/,'');
+			return helpers.dashToCamelCase(this._value).replace(/^@/,'');
 			// value.c.camelCase.replace(/^@/,'')
 		};
 		
@@ -9827,7 +9859,7 @@ var Imbac =
 		};
 		
 		Ivar.prototype.c = function (){
-			return '_' + helpers.camelCase(this._value).slice(1); // .replace(/^@/,'') # mark__(@value) + 
+			return '_' + helpers.dashToCamelCase(this._value).slice(1); // .replace(/^@/,'') # mark__(@value) + 
 		};
 		
 		
@@ -10558,10 +10590,12 @@ var Imbac =
 			// other cases as well, no?
 			if (node instanceof TagTree) {
 				this.scope().context().reference();
+				
 				var ref = node.root().reference();
 				node._loop = this;
 				
 				// Should not be consumed the same way
+				// One per loop - or no?
 				this.body().consume(node);
 				node._loop = null;
 				var fn = new Lambda([new Param(ref)],[this]);
@@ -11179,6 +11213,21 @@ var Imbac =
 			return this._reference || (this._reference = this.scope__().closure().temporary(this,{pool: 'tag'}).resolve());
 		};
 		
+		Tag.prototype.closureCache = function (){
+			return this._closureCache || (this._closureCache = this.scope__().tagContextCache());
+		};
+		
+		Tag.prototype.staticCache = function (){
+			if (this.type() instanceof Self) {
+				return this._staticCache || (this._staticCache = this.scope__().tagContextCache());
+			} else if (this.option('ivar') || this.option('key')) {
+				return this._staticCache || (this._staticCache = OP('.',this.reference(),'__'));
+			} else if (this._parent) {
+				return this._staticCache || (this._staticCache = this._parent.staticCache());
+			};
+		};
+		
+		
 		Tag.prototype.js = function (o){
 			var body;
 			var o = this._options;
@@ -11301,7 +11350,8 @@ var Imbac =
 			// we need to trigger our own reference before the body does
 			// but we do not need a reference if we have no body
 			if (this.reactive() && tree) {
-				this.reference();
+				// reference
+				this;
 			};
 			
 			if (this.reactive() && parent && parent.tree()) {
@@ -11340,32 +11390,50 @@ var Imbac =
 			if ((o.ivar || o.key || this.reactive()) && !(this.type() instanceof Self)) {
 				// if this is an ivar, we should set the reference relative
 				// to the outer reference, or possibly right on context?
-				var ctx,key;
+				var key;
 				var partree = parent && parent.tree();
+				var acc;
 				
-				if (o.key) {
-					// closest tag
-					// TODO if the dynamic key starts with a static string we should
-					// just prepend _ to the string instead of wrapping in OP
-					ctx = parent && parent.reference();
-					key = OP('+',new Str("'_'"),o.key);
-				} else if (o.ivar) {
+				var nr = STACK.incr('tagCacheKey');
+				var key1 = counterToShortRef(nr);
+				
+				var ctx;
+				
+				if (o.ivar) {
 					ctx = scope.context();
-					key = o.ivar;
-				} else {
-					ctx = parent && parent.reference();
-					// ctx = partree.cacher
-					key = o.treeRef || partree && partree.nextCacheKey();
-					// key = tree and tree.nextCacheKey
-					if (o.loop) {
-						var idx1 = o.loop.option('vars').index;
-						key = OP('+',"'" + key + "'",idx1);
+					key1 = o.ivar;
+				} else if (o.loop || o.key) {
+					if (parent) {
+						ctx = parent.staticCache();
+					} else {
+						ctx = this.closureCache();
 					};
+					
+					// ctx = parent and parent.reference
+					var s = scope.closure();
+					var path = OP('.',ctx,key1);
+					var kvar = ("$" + key1);
+					var cacheDefault = LIT('{}');
+					
+					if (o.key) {
+						key1 = o.key;
+					} else {
+						var idx1 = o.loop.option('vars').index;
+						cacheDefault = LIT('[]');
+						key1 = idx1;
+					};
+					
+					var setter = OP('=',path,OP('||',path,cacheDefault));
+					// dont redeclare?
+					ctx = s.declare(kvar,new Parens(setter));
+				} else {
+					ctx = parent ? (parent.staticCache()) : (this.closureCache());
 				};
 				
 				// need the context -- might be better to rewrite it for real?
 				// parse the whole thing into calls etc
-				var acc = OP('.',ctx,key).c();
+				acc || (acc = OP('.',ctx,key1).c());
+				this._cachedReference = acc;
 				
 				if (this._reference) {
 					out = ("(" + (this.reference().c()) + " = " + acc + "=" + acc + " || " + out + ")");
@@ -12288,6 +12356,10 @@ var Imbac =
 			return this._tagContextPath || (this._tagContextPath = "tag$"); // parent.tagContextPath
 		};
 		
+		Scope.prototype.tagContextCache = function (){
+			return this._tagContextCache || (this._tagContextCache = this.closure().declare("__",OP('.',this.context().reference(),'__')));
+		};
+		
 		Scope.prototype.context = function (){
 			return this._context || (this._context = new ScopeContext(this));
 		};
@@ -12626,6 +12698,10 @@ var Imbac =
 		exports.MethodScope = MethodScope; // export class 
 		MethodScope.prototype.isClosed = function (){
 			return true;
+		};
+		
+		MethodScope.prototype.tagContext = function (){
+			return this._tagContext || (this._tagContext = this.declare("$",OP('.',new This(),'__')));
 		};
 		
 		function LambdaScope(){ return Scope.apply(this,arguments) };

@@ -75,10 +75,11 @@
 		__webpack_require__(39);
 		
 		__webpack_require__(40);
+		__webpack_require__(41);
 		
 		if (true) {
-			__webpack_require__(41);
-			__webpack_require__(43);
+			__webpack_require__(42);
+			__webpack_require__(44);
 		};
 		
 		
@@ -946,6 +947,7 @@
 		
 		Imba.Tag = function Tag(dom){
 			this.setDom(dom);
+			this.__ = {};
 			this;
 		};
 		
@@ -8073,8 +8075,9 @@
 				var self = this;
 				return this.setChildren(
 					(function(self) {
+						var __ = self.__, $B = (__.B = __.B || {});
 						for (var i = 0, ary = iter$(self._ary), len = ary.length, res = []; i < len; i++) {
-							res.push((self['_' + ary[i]] = self['_' + ary[i]] || tag$.$div()).setText("v").end());
+							res.push(($B[ary[i]] = $B[ary[i]] || tag$.$div()).setText("v").end());
 						};
 						return res;
 					})(self)
@@ -8178,14 +8181,14 @@
 				var root = tag$.$div().end();
 				
 				root.render = function (){
-					var self = this;
+					var self = this, __ = self.__;
 					var ary = ['a','b','c','d'];
 					return this.setChildren([
-						(self.$a = self.$a || tag$.$h1()).setText('heading').end(),
+						(__.C = __.C || tag$.$h1()).setText('heading').end(),
 						(function(self) {
-							var t0;
+							var $D = (__.D = __.D || []);
 							for (var i = 0, len = ary.length, res = []; i < len; i++) {
-								res.push((t0 = self['$b' + i]=self['$b' + i] || tag$.$custom()).setContent(ary[i],3).end());
+								res.push(($D[i] = $D[i] || tag$.$custom()).setContent(ary[i],3).end());
 							};
 							return res;
 						})(self)
@@ -8266,6 +8269,120 @@
 
 /***/ },
 /* 41 */
+/***/ function(module, exports) {
+
+	(function(){
+		function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+		var self = this;
+		var a = 0;
+		var b = 0;
+		var c = 0;
+		
+		tag$.defineTag('cachetest', function(tag,tag$){
+			
+			tag$.defineTag('panel', function(tag){
+				
+				tag.prototype.header = function (){
+					var t0;
+					return (t0 = this._header=this._header || tag$.$div().setRef('header',this)).setContent((t0.__.B = t0.__.B || tag$.$div()).setText('H').end(),2).end();
+				};
+				
+				tag.prototype.body = function (){
+					return tag$.$div().end();
+				};
+				
+				tag.prototype.render = function (){
+					var self = this, __ = self.__;
+					return this.setChildren([
+						(__.D = __.D || tag$.$div()).setText('P').end(),
+						self.header(),
+						self.body()
+					],1).synced();
+				};
+			});
+			
+			tag$.defineTag('subpanel', 'panel', function(tag){
+				
+				tag.prototype.header = function (){
+					var t0;
+					return (t0 = this._header=this._header || tag$.$div().setRef('header',this)).setContent((t0.__.E = t0.__.E || tag$.$div()).setText('X').end(),2).end();
+				};
+			});
+			
+			tag$.defineTag('wrapped', function(tag){
+				tag.prototype.content = function(v){ return this._content; }
+				tag.prototype.setContent = function(v){ this._content = v; return this; };
+				
+				tag.prototype.render = function (){
+					var self = this, __ = self.__;
+					return this.setChildren([
+						(__.G = __.G || tag$.$div()).setText('W').end(),
+						self._content
+					],1).synced();
+				};
+			});
+			
+			tag.prototype.render = function (o){
+				var self = this, __ = self.__;
+				if(o === undefined) o = {};
+				return this.setChildren([
+					(o.a) ? (
+						(__.H = __.H || tag$.$div()).setText('A').end()
+					) : void(0),
+					o.b && (__.I = __.I || tag$.$div()).setText('B').end(),
+					(o.c) ? (
+						(__.L = __.L || tag$.$wrapped()).setContent([
+							(__.J = __.J || tag$.$div()).setText('B').end(),
+							(__.K = __.K || tag$.$div()).setText('C').end()
+						],2).end()
+					) : void(0),
+					
+					(function(self) {
+						var $M = (__.M = __.M || []);
+						for (var i = 0, ary = iter$(o.letters), len = ary.length, res = []; i < len; i++) {
+							res.push(($M[i] = $M[i] || tag$.$div()).setContent(ary[i],3).end());
+						};
+						return res;
+					})(self)
+				],1).synced();
+			};
+			
+			tag.prototype.toString = function (){
+				var html = this.dom().outerHTML;
+				// strip away all tags
+				return html = html.replace(/\<[^\>]+\>/g,function(m) {
+					return m[1] == '/' ? (']') : ('[');
+				});
+				// html = html.replace(/\[(\w+)\]/g,'$1')
+			};
+			
+			tag.prototype.test = function (options){
+				this.render(options);
+				return this.toString();
+			};
+		});
+		
+		
+		
+		return self.describe('Tags - Cache',function() {
+			var node = tag$.$cachetest().end();
+			self.test("basic",function() {
+				return self.eq(node.test(),"[]");
+			});
+			
+			self.test("wrapped",function() {
+				return self.eq(node.test({c: true}),"[[[W][B][C]]]");
+			});
+			
+			return self.test("with list",function() {
+				return self.eq(node.test({letters: ['A','B','C']}),"[[A][B][C]]");
+			});
+		});
+
+	})();
+
+/***/ },
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
@@ -8276,7 +8393,7 @@
 		
 		// externs;
 		
-		var _ = __webpack_require__(42);
+		var _ = __webpack_require__(43);
 		
 		tag$.defineTag('el', function(tag){
 			
@@ -8378,7 +8495,7 @@
 			tag.prototype.render = function (pars){
 				// no need for nested stuff here - we're testing setStaticChildren
 				// if it works on the flat level it should work everywhere
-				var t0;
+				var self = this, __ = self.__;
 				if(!pars||pars.constructor !== Object) pars = {};
 				var a = pars.a !== undefined ? pars.a : false;
 				var b = pars.b !== undefined ? pars.b : false;
@@ -8389,39 +8506,39 @@
 				var str = pars.str !== undefined ? pars.str : null;
 				var list2 = pars.list2 !== undefined ? pars.list2 : null;
 				return this.setChildren([
-					(t0 = this.$a=this.$a || tag$.$el().flag('a')).setContent(this.name(),3).end(),
+					(__.B = __.B || tag$.$el().flag('a')).setContent(this.name(),3).end(),
 					str,
-					(this.$b = this.$b || tag$.$el().flag('b')).setText("ok").end(),
+					(__.C = __.C || tag$.$el().flag('b')).setText("ok").end(),
 					(a) ? (Imba.static([
-						(this.$c = this.$c || tag$.$el().flag('header')).end(),
-						(this.$d = this.$d || tag$.$el().flag('title')).setText("Header").end(),
-						(this.$e = this.$e || tag$.$el().flag('tools')).end(),
+						(__.D = __.D || tag$.$el().flag('header')).end(),
+						(__.E = __.E || tag$.$el().flag('title')).setText("Header").end(),
+						(__.F = __.F || tag$.$el().flag('tools')).end(),
 						b ? (Imba.static([
-							(this.$f = this.$f || tag$.$el().flag('long')).end(),
-							(this.$g = this.$g || tag$.$el().flag('long')).end()
+							(__.G = __.G || tag$.$el().flag('long')).end(),
+							(__.H = __.H || tag$.$el().flag('long')).end()
 						],2)) : (Imba.static([
-							(this.$h = this.$h || tag$.$el().flag('short')).end(),
-							(this.$i = this.$i || tag$.$el().flag('short')).end(),
-							(this.$j = this.$j || tag$.$el().flag('short')).end()
+							(__.I = __.I || tag$.$el().flag('short')).end(),
+							(__.J = __.J || tag$.$el().flag('short')).end(),
+							(__.K = __.K || tag$.$el().flag('short')).end()
 						],3)),
-						(this.$k = this.$k || tag$.$el().flag('ruler')).end()
+						(__.L = __.L || tag$.$el().flag('ruler')).end()
 					],4)) : void(0),
 					(c) ? (Imba.static([
-						(this.$l = this.$l || tag$.$div().flag('c1')).setText("long").end(),
-						(this.$m = this.$m || tag$.$div().flag('c2')).setText("loong").end()
+						(__.M = __.M || tag$.$div().flag('c1')).setText("long").end(),
+						(__.N = __.N || tag$.$div().flag('c2')).setText("loong").end()
 					],5)) : void(0),
 					d && e ? (Imba.static([
-						(this.$n = this.$n || tag$.$el().flag('long')).end(),
-						(this.$o = this.$o || tag$.$el().flag('footer')).end(),
-						(this.$p = this.$p || tag$.$el().flag('bottom')).end()
+						(__.O = __.O || tag$.$el().flag('long')).end(),
+						(__.P = __.P || tag$.$el().flag('footer')).end(),
+						(__.Q = __.Q || tag$.$el().flag('bottom')).end()
 					],6)) : (e ? (Imba.static([
-						(this.$q = this.$q || tag$.$el().flag('footer')).end(),
-						(this.$r = this.$r || tag$.$el().flag('bottom')).end()
+						(__.R = __.R || tag$.$el().flag('footer')).end(),
+						(__.S = __.S || tag$.$el().flag('bottom')).end()
 					],7)) : (
-						(this.$s = this.$s || tag$.$el()).setText("!d and !e").end()
+						(__.T = __.T || tag$.$el()).setText("!d and !e").end()
 					)),
 					list,
-					(this.$t = this.$t || tag$.$el().flag('x')).setText("very last").end(),
+					(__.U = __.U || tag$.$el().flag('x')).setText("very last").end(),
 					list2
 				],1).synced();
 			};
@@ -8433,9 +8550,9 @@
 			tag.prototype.render = function (){
 				var self = this;
 				return this.setChildren((function(self) {
-					var t0;
+					var __ = self.__, $V = (__.V = __.V || []);
 					for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
-						res.push((t0 = self['$a' + i]=self['$a' + i] || tag$.$li()).setContent(ary[i],3).end());
+						res.push(($V[i] = $V[i] || tag$.$li()).setContent(ary[i],3).end());
 					};
 					return res;
 				})(self),3).synced();
@@ -8458,16 +8575,17 @@
 		tag$.defineTag('group2', 'group', function(tag){
 			
 			tag.prototype.render = function (pars){
+				var self = this, __ = self.__;
 				if(!pars||pars.constructor !== Object) pars = {};
 				var a = pars.a !== undefined ? pars.a : false;
 				return this.setChildren([
 					a ? (Imba.static([
-						(this.$a = this.$a || tag$.$el().flag('a')).end(),
-						(this.$b = this.$b || tag$.$el().flag('b')).end(),
-						(this.$c = this.$c || tag$.$el().flag('c')).end()
+						(__.W = __.W || tag$.$el().flag('a')).end(),
+						(__.X = __.X || tag$.$el().flag('b')).end(),
+						(__.Y = __.Y || tag$.$el().flag('c')).end()
 					],2)) : (Imba.static([
-						(this.$d = this.$d || tag$.$el().flag('d')).end(),
-						(this.$e = this.$e || tag$.$el().flag('e')).end()
+						(__.Z = __.Z || tag$.$el().flag('d')).end(),
+						(__.AA = __.AA || tag$.$el().flag('e')).end()
 					],3))
 				],1).synced();
 			};
@@ -8476,10 +8594,11 @@
 		tag$.defineTag('group3', 'group', function(tag){
 			
 			tag.prototype.render = function (pars){
+				var self = this, __ = self.__;
 				if(!pars||pars.constructor !== Object) pars = {};
 				var a = pars.a !== undefined ? pars.a : false;
 				return this.setChildren([
-					(this.$a = this.$a || tag$.$el().flag('a')).end(),
+					(__.AB = __.AB || tag$.$el().flag('a')).end(),
 					a ? ("items") : ("item")
 				],1).synced();
 			};
@@ -8488,15 +8607,16 @@
 		tag$.defineTag('group4', 'group', function(tag){
 			
 			tag.prototype.render = function (pars){
+				var self = this, __ = self.__;
 				if(!pars||pars.constructor !== Object) pars = {};
 				var a = pars.a !== undefined ? pars.a : false;
 				return this.setChildren([
-					(this.$a = this.$a || tag$.$el().flag('a')).end(),
+					(__.AC = __.AC || tag$.$el().flag('a')).end(),
 					a ? (
 						"text"
 					) : (Imba.static([
-						(this.$b = this.$b || tag$.$el().flag('b')).end(),
-						(this.$c = this.$c || tag$.$el().flag('c')).end()
+						(__.AD = __.AD || tag$.$el().flag('b')).end(),
+						(__.AE = __.AE || tag$.$el().flag('c')).end()
 					],2))
 				],1).synced();
 			};
@@ -8505,12 +8625,13 @@
 		tag$.defineTag('group5', 'group', function(tag){
 			
 			tag.prototype.render = function (pars){
+				var self = this, __ = self.__;
 				if(!pars||pars.constructor !== Object) pars = {};
 				var a = pars.a !== undefined ? pars.a : false;
 				return this.setChildren([
 					"a",
 					"b",
-					a ? ((this.$a = this.$a || tag$.$el().flag('c')).setText("c").end()) : ("d")
+					a ? ((__.AF = __.AF || tag$.$el().flag('c')).setText("c").end()) : ("d")
 				],1).synced();
 			};
 		});
@@ -8529,42 +8650,43 @@
 			};
 			
 			tag.prototype.render = function (){
-				var t0, t1, t2, t3, t4, t5, t6;
+				var self = this, __ = self.__;
 				return this.setChildren([
 					5,
 					new Date().toString(),
 					10,
 					"20",
 					"30",
-					(this.$a = this.$a || tag$.$div().flag('hello')).end(),
-					(t0 = this.$b=this.$b || tag$.$div().flag('hello')).setContent((t0.$$a = t0.$$a || tag$.$b()).end(),2).end(),
-					(t1 = this.$c=this.$c || tag$.$div().flag('int')).setContent(10,3).end(),
-					(t2 = this.$d=this.$d || tag$.$div().flag('date')).setContent(new Date(),3).end(),
-					(this.$e = this.$e || tag$.$div().flag('str')).setText("string").end(),
-					(t3 = this.$f=this.$f || tag$.$div().flag('list')).setContent(this.list(),3).end(),
-					(t4 = this.$g=this.$g || tag$.$div().flag('item')).setContent(this.tast(),3).end(),
-					(t5 = this.$h=this.$h || tag$.$div().flag('if')).setContent([
+					(__.AG = __.AG || tag$.$div().flag('hello')).end(),
+					(__.AI = __.AI || tag$.$div().flag('hello')).setContent((__.AH = __.AH || tag$.$b()).end(),2).end(),
+					(__.AJ = __.AJ || tag$.$div().flag('int')).setContent(10,3).end(),
+					(__.AK = __.AK || tag$.$div().flag('date')).setContent(new Date(),3).end(),
+					(__.AL = __.AL || tag$.$div().flag('str')).setText("string").end(),
+					(__.AM = __.AM || tag$.$div().flag('list')).setContent(self.list(),3).end(),
+					(__.AN = __.AN || tag$.$div().flag('item')).setContent(self.tast(),3).end(),
+					(__.AQ = __.AQ || tag$.$div().flag('if')).setContent([
 						true ? (
-							this.list()
+							self.list()
 						) : (Imba.static([
-							(t5.$$a = t5.$$a || tag$.$b()).end(),
-							(t5.$$b = t5.$$b || tag$.$b()).end()
+							(__.AO = __.AO || tag$.$b()).end(),
+							(__.AP = __.AP || tag$.$b()).end()
 						],2))
 					],1).end(),
 					
-					(t6 = this.$i=this.$i || tag$.$div().flag('if')).setContent([
-						(t6.$$a = t6.$$a || tag$.$b()).end(),
-						(t6.$$b = t6.$$b || tag$.$b()).end(),
-						this.tast(),
-						(t6.$$c = t6.$$c || tag$.$b()).end()
+					(__.AU = __.AU || tag$.$div().flag('if')).setContent([
+						(__.AR = __.AR || tag$.$b()).end(),
+						(__.AS = __.AS || tag$.$b()).end(),
+						self.tast(),
+						(__.AT = __.AT || tag$.$b()).end()
 					],1).end()
 				],1).synced();
 			};
 			
 			
 			tag.prototype.list = function (){
+				var self = this, __ = self.__, $AV = (__.AV = __.AV || {});
 				for (var i = 0, ary = [1,2,3], len = ary.length, res = []; i < len; i++) {
-					res.push((this['_' + ary[i]] = this['_' + ary[i]] || tag$.$div().flag('x')).end());
+					res.push(($AV[ary[i]] = $AV[ary[i]] || tag$.$div().flag('x')).end());
 				};
 				return res;
 			};
@@ -8572,14 +8694,14 @@
 		
 		tag$.defineTag('stat', 'group', function(tag){
 			tag.prototype.render = function (){
-				var t0;
+				var self = this, __ = self.__;
 				return this.setChildren([
-					(this.$a = this.$a || tag$.$div().flag('hello')).end(),
-					(t0 = this.$b=this.$b || tag$.$ul().flag('other')).setContent([
-						(t0.$$a = t0.$$a || tag$.$li().flag('a')).end(),
-						(t0.$$b = t0.$$b || tag$.$li().flag('b')).end()
+					(__.AW = __.AW || tag$.$div().flag('hello')).end(),
+					(__.AZ = __.AZ || tag$.$ul().flag('other')).setContent([
+						(__.AX = __.AX || tag$.$li().flag('a')).end(),
+						(__.AY = __.AY || tag$.$li().flag('b')).end()
 					],2).end(),
-					(this.$c = this.$c || tag$.$div().flag('again')).end()
+					(__.BA = __.BA || tag$.$div().flag('again')).end()
 				],2).synced();
 			};
 		});
@@ -8781,7 +8903,7 @@
 	})();
 
 /***/ },
-/* 42 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -10335,7 +10457,7 @@
 
 
 /***/ },
-/* 43 */
+/* 44 */
 /***/ function(module, exports) {
 
 	(function(){
