@@ -1,3 +1,7 @@
+require './manager'
+
+Imba.TagManager = Imba.TagManagerClass.new
+
 require './tag'
 require './html'
 require './svg'
@@ -8,10 +12,15 @@ require './event'
 require './event-manager'
 require './selector'
 
+
+
+
 if Imba.CLIENT
 	require './reconciler'
 else
 	require './server'
+
+
 
 if Imba.CLIENT
 
