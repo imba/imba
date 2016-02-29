@@ -197,13 +197,23 @@ class Imba.Tag
 		self
 
 	###
+	@deprecated
+	Remove specified child from current node.
+	###
+	def remove child
+		removeChild(child)
+
+	###
 	Remove specified child from current node.
 	@return {self}
 	###
 	def removeChild child
 		var par = dom
 		var el = child isa Imba.Tag ? child.dom : child
-		par.removeChild(el) if el and el:parentNode == par
+
+		if el and el:parentNode == par
+			par.removeChild(el)
+			Imba.TagManager.remove(el.@tag,self) if el.@tag
 		self
 
 	# Benchmark difference
@@ -211,15 +221,7 @@ class Imba.Tag
 	# 	dom.removeChild(node.@dom or node) if node
 	# 	self
 
-	###
-	@deprecated
-	Remove specified child from current node.
-	###
-	def remove child
-		var par = dom
-		var el = child and child.dom
-		par.removeChild(el) if el and el:parentNode == par
-		self
+	
 
 	###
 	Append a single item (node or string) to the current node.
@@ -228,8 +230,12 @@ class Imba.Tag
 	@return {self}
 	###
 	def appendChild node
-		node = Imba.document.createTextNode(node) if node isa String
-		dom.appendChild(node.@dom or node) if node
+		if node isa String
+			dom.appendChild(Imba.document.createTextNode(node))
+		elif node
+			dom.appendChild(node.@dom or node)
+			# text nodes?
+			Imba.TagManager.insert(node.@tag or node, self)
 		self
 
 	###
@@ -237,8 +243,13 @@ class Imba.Tag
 	The relative node must be a child of current node. 
 	###
 	def insertBefore node, rel
-		node = Imba.document.createTextNode(node) if node isa String 
-		dom.insertBefore( (node.@dom or node), (rel.@dom or rel) ) if node and rel
+		if node isa String
+			node = Imba.document.createTextNode(node)
+
+		if node and rel
+			dom.insertBefore( (node.@dom or node), (rel.@dom or rel) )
+			# not for text nodes
+			Imba.TagManager.insert(node.@tag or node, self)
 		self
 
 	###
@@ -851,7 +862,7 @@ class Imba.Tags
 					tagtype.TAGS = (supertype.TAGS or self).__clone
 
 			body.call(tagtype,tagtype, tagtype.TAGS or self)
-
+			tagtype.defined if tagtype:defined
 		return tagtype
 
 	def defineSingleton name, supr, &body
@@ -861,6 +872,7 @@ class Imba.Tags
 		var klass = (name isa String ? self[name] : name)
 		# allow for private tags here as well?
 		body and body.call(klass,klass,klass:prototype) if body
+		klass.extended if klass:extended
 		return klass
 
 
