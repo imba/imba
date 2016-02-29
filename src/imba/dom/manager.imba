@@ -65,7 +65,10 @@ class Imba.TagManagerClass
 		for item, i in @mounted
 			unless document.contains(item.dom)
 				item.@mounted = 0
-				item.unmount
+				if item:unmount
+					item.unmount
+				elif item.@scheduler
+					item.unschedule
 				@mounted[i] = null
 				count++
 		
