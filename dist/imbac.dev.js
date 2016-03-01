@@ -6979,19 +6979,18 @@ var Imbac =
 		};
 		
 		
-		Root.prototype.analyze = function (pars){
-			if(!pars||pars.constructor !== Object) pars = {};
-			var loglevel = pars.loglevel !== undefined ? pars.loglevel : 0;
-			var entities = pars.entities !== undefined ? pars.entities : false;
-			var scopes = pars.scopes !== undefined ? pars.scopes : true;
-			STACK.setLoglevel(loglevel);
+		Root.prototype.analyze = function (o){
+			// loglevel: 0, entities: no, scopes: yes
+			if(o === undefined) o = {};
+			STACK.setLoglevel(o.loglevel || 0);
 			STACK._analyzing = true;
 			ROOT = STACK.ROOT = this._scope;
-			
-			OPTS = {
+			OPTS = STACK._options = {
+				target: o.target,
+				loglevel: o.loglevel || 0,
 				analysis: {
-					entities: entities,
-					scopes: scopes
+					entities: (o.entities || false),
+					scopes: (o.scopes == null ? (o.scopes = true) : (o.scopes))
 				}
 			};
 			
@@ -11382,7 +11381,7 @@ var Imbac =
 			// this is reactive if it has an ivar
 			if (o.ivar) {
 				this.setReactive(true);
-				statics.push((".setRef(" + quote(o.ivar.name()) + "," + (scope.context().c()) + ")"));
+				statics.push((".__ref(" + quote(o.ivar.name()) + "," + (scope.context().c()) + ")"));
 			};
 			
 			if (o.body instanceof Func) {
@@ -11492,7 +11491,16 @@ var Imbac =
 			
 			calls.push(("." + commit + "()"));
 			
+			var lineLen = out.length;
+			
 			if (statics.length) {
+				// for item in statics
+				// 	if lineLen > 40
+				// 		out += "\n\t\t\t"
+				// 		lineLen = 0
+				// 	out += item
+				// 	lineLen += item:length
+				
 				out = out + statics.join("");
 			};
 			
@@ -11552,13 +11560,23 @@ var Imbac =
 				// need the context -- might be better to rewrite it for real?
 				// parse the whole thing into calls etc
 				acc || (acc = OP('.',ctx,key)); // .c
-				this._cachedReference = acc;
+				
+				if (o.ivar) {
+					out = ("" + (acc.c()) + " || " + out);
+				} else {
+					out = ("" + (acc.c()) + " = " + (acc.c()) + " || " + out);
+				};
 				
 				if (this._reference) {
-					out = ("(" + (this.reference().c()) + " = " + (acc.c()) + "=" + (acc.c()) + " || " + out + ")");
-				} else {
-					out = ("(" + (acc.c()) + " = " + (acc.c()) + " || " + out + ")");
+					out = ("" + (this.reference().c()) + " = " + out);
 				};
+				
+				out = ("(" + out + ")");
+				
+				// 
+				// 	out = "({reference.c} = {acc.c}={acc.c} || {out})"
+				// else
+				// 	out = "({acc.c} = {acc.c} || {out})"
 			};
 			
 			return out + calls.join("");

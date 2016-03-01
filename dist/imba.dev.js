@@ -1014,6 +1014,13 @@
 			return this._ref;
 		};
 		
+		Imba.Tag.prototype.__ref = function (ref,ctx){
+			ctx['_' + ref] = this;
+			this.flag(this._ref = ref);
+			this._owner = ctx;
+			return this;
+		};
+		
 		/*
 			Set inner html of node
 			*/
@@ -2705,7 +2712,7 @@
 			Imba.attr(tag,'lengthAdjust');
 		});
 		
-		tag$.ns('svg').defineTag('tspan', function(tag){
+		return tag$.ns('svg').defineTag('tspan', function(tag){
 			Imba.attr(tag,'dx');
 			Imba.attr(tag,'dy');
 			Imba.attr(tag,'rotate');
@@ -4021,7 +4028,7 @@
 		
 		// extending tags with query-methods
 		// must be a better way to reopen classes
-		tag$.extendTag('element', function(tag){
+		return tag$.extendTag('element', function(tag){
 			tag.prototype.querySelectorAll = function (q){
 				return this._dom.querySelectorAll(q);
 			};
@@ -4319,7 +4326,7 @@
 		};
 		
 		
-		tag$.extendTag('element', function(tag){
+		return tag$.extendTag('element', function(tag){
 			
 			tag.prototype.setChildren = function (new$,typ){
 				var old = this._children;

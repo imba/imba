@@ -1071,6 +1071,13 @@
 			return this._ref;
 		};
 		
+		Imba.Tag.prototype.__ref = function (ref,ctx){
+			ctx['_' + ref] = this;
+			this.flag(this._ref = ref);
+			this._owner = ctx;
+			return this;
+		};
+		
 		/*
 			Set inner html of node
 			*/
@@ -2762,7 +2769,7 @@
 			Imba.attr(tag,'lengthAdjust');
 		});
 		
-		tag$.ns('svg').defineTag('tspan', function(tag){
+		return tag$.ns('svg').defineTag('tspan', function(tag){
 			Imba.attr(tag,'dx');
 			Imba.attr(tag,'dy');
 			Imba.attr(tag,'rotate');
@@ -4078,7 +4085,7 @@
 		
 		// extending tags with query-methods
 		// must be a better way to reopen classes
-		tag$.extendTag('element', function(tag){
+		return tag$.extendTag('element', function(tag){
 			tag.prototype.querySelectorAll = function (q){
 				return this._dom.querySelectorAll(q);
 			};
@@ -4376,7 +4383,7 @@
 		};
 		
 		
-		tag$.extendTag('element', function(tag){
+		return tag$.extendTag('element', function(tag){
 			
 			tag.prototype.setChildren = function (new$,typ){
 				var old = this._children;
@@ -8312,7 +8319,7 @@
 				
 				tag.prototype.header = function (){
 					var t0;
-					return (t0 = this._header=this._header || tag$.$div().setRef('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div()).setText('H').end(),2).end();
+					return (t0 = this._header || tag$.$div().__ref('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div()).setText('H').end(),2).end();
 				};
 				
 				tag.prototype.body = function (){
@@ -8333,7 +8340,7 @@
 				
 				tag.prototype.header = function (){
 					var t0;
-					return (t0 = this._header=this._header || tag$.$div().setRef('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div()).setText('X').end(),2).end();
+					return (t0 = this._header || tag$.$div().__ref('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div()).setText('X').end(),2).end();
 				};
 			});
 			
