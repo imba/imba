@@ -5631,9 +5631,11 @@ export class Tag < Node
 			@staticCache ||= OP('.',reference,'__')
 		elif @parent
 			@staticCache ||= @parent.staticCache
-		
 
-	def js o
+	def explicitKey
+		option(:ivar) or option(:key)
+
+	def js jso
 		var o = @options
 		var a = {}
 		var enc = enclosing
@@ -5648,6 +5650,8 @@ export class Tag < Node
 
 		var isSelf = type isa Self
 		var bodySetter = isSelf ? "setChildren" : "setContent"
+
+		# if we are reactive - find the 
 
 		# should not cache statics if the node itself is not cached
 		# that would only mangle the order in which we set the properties
@@ -5746,8 +5750,11 @@ export class Tag < Node
 			# reference
 			self
 
-		if reactive and parent and parent.tree
+		if reactive and parent and parent.tree and !option(:ivar)
+			# not if it has a separate tag?
 			o:treeRef = parent.tree.nextCacheKey(self)
+			if parent.option(:treeRef) and !parent.explicitKey
+				o:treeRef = parent.option(:treeRef) + o:treeRef
 
 		if var body = content and content.c(expression: yes)
 			let typ = 0
@@ -5775,18 +5782,29 @@ export class Tag < Node
 		if (o:ivar or o:key or reactive) and !(type isa Self)
 			# if this is an ivar, we should set the reference relative
 			# to the outer reference, or possibly right on context?
-			var key
 			var partree = parent and parent.tree
 			var acc
 
 			let nr = STACK.incr('tagCacheKey')
-			let key = counterToShortRef(nr)
-
+			let key = o:treeRef or counterToShortRef(nr) + '__'
 			let ctx
 
 			if o:ivar
 				ctx = scope.context
 				key = o:ivar
+
+			elif o:key and !o:treeRef
+				# p "has dynamic key but not inside any node",o:key.c
+				let method = STACK.method
+				let paths = OP('.',OP('.',Self.new,'__'),'_' + method.name)
+				let setter = OP('=',paths,OP('||',paths,LIT('{}')))
+				ctx = scope.closure.declare('__',Parens.new(setter))
+				key = o:key
+
+			elif o:key and !o:loop
+				key = OP('+',"'{key}$$'",o:key)
+				key.cache()
+				ctx = parent ? parent.staticCache : closureCache
 
 			elif o:loop or o:key
 				if parent
@@ -5803,6 +5821,7 @@ export class Tag < Node
 				if o:key
 					key = o:key
 				else
+					kvar = '_$'
 					let idx = o:loop.option(:vars)[:index]
 					cacheDefault = LIT('[]')
 					key = idx
@@ -5815,13 +5834,13 @@ export class Tag < Node
 
 			# need the context -- might be better to rewrite it for real?
 			# parse the whole thing into calls etc
-			acc ||= OP('.',ctx,key).c
+			acc ||= OP('.',ctx,key) # .c
 			@cachedReference = acc
 
 			if @reference
-				out = "({reference.c} = {acc}={acc} || {out})"
+				out = "({reference.c} = {acc.c}={acc.c} || {out})"
 			else
-				out = "({acc} = {acc} || {out})"
+				out = "({acc.c} = {acc.c} || {out})"
 
 		return out + calls.join("")
 
@@ -5848,22 +5867,16 @@ export class TagTree < ListNode
 		@parent ||= @owner.parent
 
 	def nextCacheKey
-		var root = @owner
+		var num = @counter++
+		var ref = counterToShortRef(num)
 
-		# if we want to cache everything on root
-		var num = ++@counter
-		var base = "A".charCodeAt(0)
-		var str = ""
+		if ref:length > 1
+			ref = ref + ref:length
 
-		while true
-			num -= 1
-			str = String.fromCharCode(base + (num % 26)) + str
-			num = Math.floor(num / 26)
-			break unless num > 0
-
-		str = (@owner.type isa Self ? "$" : "$$") + str.toLowerCase
-		return str
-		return num
+		if @owner.explicitKey
+			ref = '$' + ref
+		# ref = ref.toLowerCase unless @owner.type isa Self
+		return ref
 
 	def load list
 		if list isa ListNode

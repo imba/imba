@@ -8089,9 +8089,9 @@
 				var self = this;
 				return this.setChildren(
 					(function(self) {
-						var __ = self.__, $B = (__.B = __.B || {});
+						var __ = self.__, $A = (__.A = __.A || {});
 						for (var i = 0, ary = iter$(self._ary), len = ary.length, res = []; i < len; i++) {
-							res.push(($B[ary[i]] = $B[ary[i]] || tag$.$div()).setText("v").end());
+							res.push(($A[ary[i]] = $A[ary[i]] || tag$.$div()).setText("v").end());
 						};
 						return res;
 					})(self)
@@ -8198,11 +8198,11 @@
 					var self = this, __ = self.__;
 					var ary = ['a','b','c','d'];
 					return this.setChildren([
-						(__.C = __.C || tag$.$h1()).setText('heading').end(),
+						(__.A = __.A || tag$.$h1()).setText('heading').end(),
 						(function(self) {
-							var $D = (__.D = __.D || []);
+							var _$ = (__.B = __.B || []);
 							for (var i = 0, len = ary.length, res = []; i < len; i++) {
-								res.push(($D[i] = $D[i] || tag$.$custom()).setContent(ary[i],3).end());
+								res.push((_$[i] = _$[i] || tag$.$custom()).setContent(ary[i],3).end());
 							};
 							return res;
 						})(self)
@@ -8319,7 +8319,7 @@
 				
 				tag.prototype.header = function (){
 					var t0;
-					return (t0 = this._header=this._header || tag$.$div().setRef('header',this)).setContent((t0.__.B = t0.__.B || tag$.$div()).setText('H').end(),2).end();
+					return (t0 = this._header=this._header || tag$.$div().setRef('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div()).setText('H').end(),2).end();
 				};
 				
 				tag.prototype.body = function (){
@@ -8329,7 +8329,7 @@
 				tag.prototype.render = function (){
 					var self = this, __ = self.__;
 					return this.setChildren([
-						(__.D = __.D || tag$.$div()).setText('P').end(),
+						(__.A = __.A || tag$.$div()).setText('P').end(),
 						self.header(),
 						self.body()
 					],1).synced();
@@ -8340,7 +8340,7 @@
 				
 				tag.prototype.header = function (){
 					var t0;
-					return (t0 = this._header=this._header || tag$.$div().setRef('header',this)).setContent((t0.__.E = t0.__.E || tag$.$div()).setText('X').end(),2).end();
+					return (t0 = this._header=this._header || tag$.$div().setRef('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div()).setText('X').end(),2).end();
 				};
 			});
 			
@@ -8351,7 +8351,7 @@
 				tag.prototype.render = function (){
 					var self = this, __ = self.__;
 					return this.setChildren([
-						(__.G = __.G || tag$.$div()).setText('W').end(),
+						(__.A = __.A || tag$.$div()).setText('W').end(),
 						self._content
 					],1).synced();
 				};
@@ -8362,20 +8362,20 @@
 				if(o === undefined) o = {};
 				return this.setChildren([
 					(o.a) ? (
-						(__.H = __.H || tag$.$div()).setText('A').end()
+						(__.A = __.A || tag$.$div()).setText('A').end()
 					) : void(0),
-					o.b && (__.I = __.I || tag$.$div()).setText('B').end(),
+					o.b && (__.B = __.B || tag$.$div()).setText('B').end(),
 					(o.c) ? (
-						(__.L = __.L || tag$.$wrapped()).setContent([
-							(__.J = __.J || tag$.$div()).setText('B').end(),
-							(__.K = __.K || tag$.$div()).setText('C').end()
+						(__.C = __.C || tag$.$wrapped()).setContent([
+							(__.CA = __.CA || tag$.$div()).setText('B').end(),
+							(__.CB = __.CB || tag$.$div()).setText('C').end()
 						],2).end()
 					) : void(0),
 					
 					(function(self) {
-						var $M = (__.M = __.M || []);
+						var _$ = (__.D = __.D || []);
 						for (var i = 0, ary = iter$(o.letters), len = ary.length, res = []; i < len; i++) {
-							res.push(($M[i] = $M[i] || tag$.$div()).setContent(ary[i],3).end());
+							res.push((_$[i] = _$[i] || tag$.$div()).setContent(ary[i],3).end());
 						};
 						return res;
 					})(self)
@@ -8541,39 +8541,39 @@
 				var str = pars.str !== undefined ? pars.str : null;
 				var list2 = pars.list2 !== undefined ? pars.list2 : null;
 				return this.setChildren([
-					(__.B = __.B || tag$.$el().flag('a')).setContent(this.name(),3).end(),
+					(__.A = __.A || tag$.$el().flag('a')).setContent(this.name(),3).end(),
 					str,
-					(__.C = __.C || tag$.$el().flag('b')).setText("ok").end(),
+					(__.B = __.B || tag$.$el().flag('b')).setText("ok").end(),
 					(a) ? (Imba.static([
-						(__.D = __.D || tag$.$el().flag('header')).end(),
-						(__.E = __.E || tag$.$el().flag('title')).setText("Header").end(),
-						(__.F = __.F || tag$.$el().flag('tools')).end(),
+						(__.C = __.C || tag$.$el().flag('header')).end(),
+						(__.D = __.D || tag$.$el().flag('title')).setText("Header").end(),
+						(__.E = __.E || tag$.$el().flag('tools')).end(),
 						b ? (Imba.static([
-							(__.G = __.G || tag$.$el().flag('long')).end(),
-							(__.H = __.H || tag$.$el().flag('long')).end()
+							(__.F = __.F || tag$.$el().flag('long')).end(),
+							(__.G = __.G || tag$.$el().flag('long')).end()
 						],2)) : (Imba.static([
+							(__.H = __.H || tag$.$el().flag('short')).end(),
 							(__.I = __.I || tag$.$el().flag('short')).end(),
-							(__.J = __.J || tag$.$el().flag('short')).end(),
-							(__.K = __.K || tag$.$el().flag('short')).end()
+							(__.J = __.J || tag$.$el().flag('short')).end()
 						],3)),
-						(__.L = __.L || tag$.$el().flag('ruler')).end()
+						(__.K = __.K || tag$.$el().flag('ruler')).end()
 					],4)) : void(0),
 					(c) ? (Imba.static([
-						(__.M = __.M || tag$.$div().flag('c1')).setText("long").end(),
-						(__.N = __.N || tag$.$div().flag('c2')).setText("loong").end()
+						(__.L = __.L || tag$.$div().flag('c1')).setText("long").end(),
+						(__.M = __.M || tag$.$div().flag('c2')).setText("loong").end()
 					],5)) : void(0),
 					d && e ? (Imba.static([
-						(__.O = __.O || tag$.$el().flag('long')).end(),
-						(__.P = __.P || tag$.$el().flag('footer')).end(),
-						(__.Q = __.Q || tag$.$el().flag('bottom')).end()
+						(__.N = __.N || tag$.$el().flag('long')).end(),
+						(__.O = __.O || tag$.$el().flag('footer')).end(),
+						(__.P = __.P || tag$.$el().flag('bottom')).end()
 					],6)) : (e ? (Imba.static([
-						(__.R = __.R || tag$.$el().flag('footer')).end(),
-						(__.S = __.S || tag$.$el().flag('bottom')).end()
+						(__.Q = __.Q || tag$.$el().flag('footer')).end(),
+						(__.R = __.R || tag$.$el().flag('bottom')).end()
 					],7)) : (
-						(__.T = __.T || tag$.$el()).setText("!d and !e").end()
+						(__.S = __.S || tag$.$el()).setText("!d and !e").end()
 					)),
 					list,
-					(__.U = __.U || tag$.$el().flag('x')).setText("very last").end(),
+					(__.T = __.T || tag$.$el().flag('x')).setText("very last").end(),
 					list2
 				],1).synced();
 			};
@@ -8585,9 +8585,9 @@
 			tag.prototype.render = function (){
 				var self = this;
 				return this.setChildren((function(self) {
-					var __ = self.__, $V = (__.V = __.V || []);
+					var __ = self.__, _$ = (__.A = __.A || []);
 					for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
-						res.push(($V[i] = $V[i] || tag$.$li()).setContent(ary[i],3).end());
+						res.push((_$[i] = _$[i] || tag$.$li()).setContent(ary[i],3).end());
 					};
 					return res;
 				})(self),3).synced();
@@ -8615,12 +8615,12 @@
 				var a = pars.a !== undefined ? pars.a : false;
 				return this.setChildren([
 					a ? (Imba.static([
-						(__.W = __.W || tag$.$el().flag('a')).end(),
-						(__.X = __.X || tag$.$el().flag('b')).end(),
-						(__.Y = __.Y || tag$.$el().flag('c')).end()
+						(__.A = __.A || tag$.$el().flag('a')).end(),
+						(__.B = __.B || tag$.$el().flag('b')).end(),
+						(__.C = __.C || tag$.$el().flag('c')).end()
 					],2)) : (Imba.static([
-						(__.Z = __.Z || tag$.$el().flag('d')).end(),
-						(__.AA = __.AA || tag$.$el().flag('e')).end()
+						(__.D = __.D || tag$.$el().flag('d')).end(),
+						(__.E = __.E || tag$.$el().flag('e')).end()
 					],3))
 				],1).synced();
 			};
@@ -8633,7 +8633,7 @@
 				if(!pars||pars.constructor !== Object) pars = {};
 				var a = pars.a !== undefined ? pars.a : false;
 				return this.setChildren([
-					(__.AB = __.AB || tag$.$el().flag('a')).end(),
+					(__.A = __.A || tag$.$el().flag('a')).end(),
 					a ? ("items") : ("item")
 				],1).synced();
 			};
@@ -8646,12 +8646,12 @@
 				if(!pars||pars.constructor !== Object) pars = {};
 				var a = pars.a !== undefined ? pars.a : false;
 				return this.setChildren([
-					(__.AC = __.AC || tag$.$el().flag('a')).end(),
+					(__.A = __.A || tag$.$el().flag('a')).end(),
 					a ? (
 						"text"
 					) : (Imba.static([
-						(__.AD = __.AD || tag$.$el().flag('b')).end(),
-						(__.AE = __.AE || tag$.$el().flag('c')).end()
+						(__.B = __.B || tag$.$el().flag('b')).end(),
+						(__.C = __.C || tag$.$el().flag('c')).end()
 					],2))
 				],1).synced();
 			};
@@ -8666,7 +8666,7 @@
 				return this.setChildren([
 					"a",
 					"b",
-					a ? ((__.AF = __.AF || tag$.$el().flag('c')).setText("c").end()) : ("d")
+					a ? ((__.A = __.A || tag$.$el().flag('c')).setText("c").end()) : ("d")
 				],1).synced();
 			};
 		});
@@ -8692,36 +8692,36 @@
 					10,
 					"20",
 					"30",
-					(__.AG = __.AG || tag$.$div().flag('hello')).end(),
-					(__.AI = __.AI || tag$.$div().flag('hello')).setContent((__.AH = __.AH || tag$.$b()).end(),2).end(),
-					(__.AJ = __.AJ || tag$.$div().flag('int')).setContent(10,3).end(),
-					(__.AK = __.AK || tag$.$div().flag('date')).setContent(new Date(),3).end(),
-					(__.AL = __.AL || tag$.$div().flag('str')).setText("string").end(),
-					(__.AM = __.AM || tag$.$div().flag('list')).setContent(self.list(),3).end(),
-					(__.AN = __.AN || tag$.$div().flag('item')).setContent(self.tast(),3).end(),
-					(__.AQ = __.AQ || tag$.$div().flag('if')).setContent([
+					(__.A = __.A || tag$.$div().flag('hello')).end(),
+					(__.B = __.B || tag$.$div().flag('hello')).setContent((__.BA = __.BA || tag$.$b()).end(),2).end(),
+					(__.C = __.C || tag$.$div().flag('int')).setContent(10,3).end(),
+					(__.D = __.D || tag$.$div().flag('date')).setContent(new Date(),3).end(),
+					(__.E = __.E || tag$.$div().flag('str')).setText("string").end(),
+					(__.F = __.F || tag$.$div().flag('list')).setContent(self.list(),3).end(),
+					(__.G = __.G || tag$.$div().flag('item')).setContent(self.tast(),3).end(),
+					(__.H = __.H || tag$.$div().flag('if')).setContent([
 						true ? (
 							self.list()
 						) : (Imba.static([
-							(__.AO = __.AO || tag$.$b()).end(),
-							(__.AP = __.AP || tag$.$b()).end()
+							(__.HA = __.HA || tag$.$b()).end(),
+							(__.HB = __.HB || tag$.$b()).end()
 						],2))
 					],1).end(),
 					
-					(__.AU = __.AU || tag$.$div().flag('if')).setContent([
-						(__.AR = __.AR || tag$.$b()).end(),
-						(__.AS = __.AS || tag$.$b()).end(),
+					(__.I = __.I || tag$.$div().flag('if')).setContent([
+						(__.IA = __.IA || tag$.$b()).end(),
+						(__.IB = __.IB || tag$.$b()).end(),
 						self.tast(),
-						(__.AT = __.AT || tag$.$b()).end()
+						(__.IC = __.IC || tag$.$b()).end()
 					],1).end()
 				],1).synced();
 			};
 			
 			
 			tag.prototype.list = function (){
-				var self = this, __ = self.__, $AV = (__.AV = __.AV || {});
+				var __ = (this.__._list = this.__._list || {});
 				for (var i = 0, ary = [1,2,3], len = ary.length, res = []; i < len; i++) {
-					res.push(($AV[ary[i]] = $AV[ary[i]] || tag$.$div().flag('x')).end());
+					res.push((__[ary[i]] = __[ary[i]] || tag$.$div().flag('x')).end());
 				};
 				return res;
 			};
@@ -8731,12 +8731,12 @@
 			tag.prototype.render = function (){
 				var self = this, __ = self.__;
 				return this.setChildren([
-					(__.AW = __.AW || tag$.$div().flag('hello')).end(),
-					(__.AZ = __.AZ || tag$.$ul().flag('other')).setContent([
-						(__.AX = __.AX || tag$.$li().flag('a')).end(),
-						(__.AY = __.AY || tag$.$li().flag('b')).end()
+					(__.A = __.A || tag$.$div().flag('hello')).end(),
+					(__.B = __.B || tag$.$ul().flag('other')).setContent([
+						(__.BA = __.BA || tag$.$li().flag('a')).end(),
+						(__.BB = __.BB || tag$.$li().flag('b')).end()
 					],2).end(),
-					(__.BA = __.BA || tag$.$div().flag('again')).end()
+					(__.C = __.C || tag$.$div().flag('again')).end()
 				],2).synced();
 			};
 		});

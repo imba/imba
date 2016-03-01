@@ -11254,8 +11254,11 @@ var Imbac =
 			};
 		};
 		
+		Tag.prototype.explicitKey = function (){
+			return this.option('ivar') || this.option('key');
+		};
 		
-		Tag.prototype.js = function (o){
+		Tag.prototype.js = function (jso){
 			var body;
 			var o = this._options;
 			var a = {};
@@ -11271,6 +11274,8 @@ var Imbac =
 			
 			var isSelf = (this.type() instanceof Self);
 			var bodySetter = isSelf ? ("setChildren") : ("setContent");
+			
+			// if we are reactive - find the 
 			
 			// should not cache statics if the node itself is not cached
 			// that would only mangle the order in which we set the properties
@@ -11381,8 +11386,12 @@ var Imbac =
 				this;
 			};
 			
-			if (this.reactive() && parent && parent.tree()) {
+			if (this.reactive() && parent && parent.tree() && !this.option('ivar')) {
+				// not if it has a separate tag?
 				o.treeRef = parent.tree().nextCacheKey(this);
+				if (parent.option('treeRef') && !parent.explicitKey()) {
+					o.treeRef = parent.option('treeRef') + o.treeRef;
+				};
 			};
 			
 			if (body = content && content.c({expression: true})) {
@@ -11417,18 +11426,27 @@ var Imbac =
 			if ((o.ivar || o.key || this.reactive()) && !(this.type() instanceof Self)) {
 				// if this is an ivar, we should set the reference relative
 				// to the outer reference, or possibly right on context?
-				var key;
 				var partree = parent && parent.tree();
 				var acc;
 				
 				var nr = STACK.incr('tagCacheKey');
-				var key1 = counterToShortRef(nr);
-				
+				var key = o.treeRef || counterToShortRef(nr) + '__';
 				var ctx;
 				
 				if (o.ivar) {
 					ctx = scope.context();
-					key1 = o.ivar;
+					key = o.ivar;
+				} else if (o.key && !o.treeRef) {
+					// p "has dynamic key but not inside any node",o:key.c
+					var method = STACK.method();
+					var paths = OP('.',OP('.',new Self(),'__'),'_' + method.name());
+					var setter = OP('=',paths,OP('||',paths,LIT('{}')));
+					ctx = scope.closure().declare('__',new Parens(setter));
+					key = o.key;
+				} else if (o.key && !o.loop) {
+					key = OP('+',("'" + key + "$$'"),o.key);
+					key.cache();
+					ctx = parent ? (parent.staticCache()) : (this.closureCache());
 				} else if (o.loop || o.key) {
 					if (parent) {
 						ctx = parent.staticCache();
@@ -11438,34 +11456,35 @@ var Imbac =
 					
 					// ctx = parent and parent.reference
 					var s = scope.closure();
-					var path = OP('.',ctx,key1);
-					var kvar = ("$" + key1);
+					var path = OP('.',ctx,key);
+					var kvar = ("$" + key);
 					var cacheDefault = LIT('{}');
 					
 					if (o.key) {
-						key1 = o.key;
+						key = o.key;
 					} else {
+						kvar = '_$';
 						var idx1 = o.loop.option('vars').index;
 						cacheDefault = LIT('[]');
-						key1 = idx1;
+						key = idx1;
 					};
 					
-					var setter = OP('=',path,OP('||',path,cacheDefault));
+					var setter1 = OP('=',path,OP('||',path,cacheDefault));
 					// dont redeclare?
-					ctx = s.declare(kvar,new Parens(setter));
+					ctx = s.declare(kvar,new Parens(setter1));
 				} else {
 					ctx = parent ? (parent.staticCache()) : (this.closureCache());
 				};
 				
 				// need the context -- might be better to rewrite it for real?
 				// parse the whole thing into calls etc
-				acc || (acc = OP('.',ctx,key1).c());
+				acc || (acc = OP('.',ctx,key)); // .c
 				this._cachedReference = acc;
 				
 				if (this._reference) {
-					out = ("(" + (this.reference().c()) + " = " + acc + "=" + acc + " || " + out + ")");
+					out = ("(" + (this.reference().c()) + " = " + (acc.c()) + "=" + (acc.c()) + " || " + out + ")");
 				} else {
-					out = ("(" + acc + " = " + acc + " || " + out + ")");
+					out = ("(" + (acc.c()) + " = " + (acc.c()) + " || " + out + ")");
 				};
 			};
 			
@@ -11502,23 +11521,18 @@ var Imbac =
 		};
 		
 		TagTree.prototype.nextCacheKey = function (){
-			var root = this._owner;
+			var num = this._counter++;
+			var ref = counterToShortRef(num);
 			
-			// if we want to cache everything on root
-			var num = ++this._counter;
-			var base = "A".charCodeAt(0);
-			var str = "";
-			
-			while (true){
-				num -= 1;
-				str = String.fromCharCode(base + (num % 26)) + str;
-				num = Math.floor(num / 26);
-				if (num <= 0) { break; };
+			if (ref.length > 1) {
+				ref = ref + ref.length;
 			};
 			
-			str = (this._owner.type() instanceof Self ? ("$") : ("$$")) + str.toLowerCase();
-			return str;
-			return num;
+			if (this._owner.explicitKey()) {
+				ref = '$' + ref;
+			};
+			// ref = ref.toLowerCase unless @owner.type isa Self
+			return ref;
 		};
 		
 		TagTree.prototype.load = function (list){
