@@ -22,14 +22,14 @@ class Imba.TagManagerClass
 		return
 
 	def mount node
-		return unless Imba.CLIENT
+		return unless $web$
 
 		unless @mountable.indexOf(node) >= 0
 			node.@mounted = 2 # use bitmask instead?
 			@mountable.push(node)
 
 	def refresh
-		return unless Imba.CLIENT
+		return unless $web$
 
 		if @inserts and @mountable:length
 			tryMount

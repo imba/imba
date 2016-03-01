@@ -1,10 +1,12 @@
 var isClient = (typeof window == 'object' and this == window)
 
 if isClient
+	ENV_TARGET = 'web'
 	ENV_WEB = true
 	ENV_NODE = false
 	window:global ||= window
 else
+	ENV_TARGET = 'node'
 	ENV_WEB = false
 	ENV_NODE = true
 

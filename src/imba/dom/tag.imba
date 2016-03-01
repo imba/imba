@@ -5,7 +5,7 @@ Imba.CSSKeyMap = {}
 Get the current document
 ###
 def Imba.document
-	if Imba.CLIENT
+	if $web$
 		window:document
 	else
 		@document ||= ImbaServerDocument.new
@@ -1048,32 +1048,33 @@ def Imba.generateCSSPrefixes
 		Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed
 	return
 
-Imba.generateCSSPrefixes if Imba.CLIENT and document
+if $web$
+	Imba.generateCSSPrefixes if document
 
-# Ovverride classList
-if Imba.CLIENT and document and !document:documentElement:classList
-	extend tag element
+	# Ovverride classList
+	if document and !document:documentElement:classList
+		extend tag element
 
-		def hasFlag ref
-			return RegExp.new('(^|\\s)' + ref + '(\\s|$)').test(@dom:className)
+			def hasFlag ref
+				return RegExp.new('(^|\\s)' + ref + '(\\s|$)').test(@dom:className)
 
-		def addFlag ref
-			return self if hasFlag(ref)
-			@dom:className += (@dom:className ? ' ' : '') + ref
-			return self
+			def addFlag ref
+				return self if hasFlag(ref)
+				@dom:className += (@dom:className ? ' ' : '') + ref
+				return self
 
-		def unflag ref
-			return self unless hasFlag(ref)
-			var regex = RegExp.new('(^|\\s)*' + ref + '(\\s|$)*', 'g')
-			@dom:className = @dom:className.replace(regex, '')
-			return self
+			def unflag ref
+				return self unless hasFlag(ref)
+				var regex = RegExp.new('(^|\\s)*' + ref + '(\\s|$)*', 'g')
+				@dom:className = @dom:className.replace(regex, '')
+				return self
 
-		def toggleFlag ref
-			hasFlag(ref) ? unflag(ref) : flag(ref)
+			def toggleFlag ref
+				hasFlag(ref) ? unflag(ref) : flag(ref)
 
-		def flag ref, bool
-			if arguments:length == 2 and !!bool === no
-				return unflag(ref)
-			return addFlag(ref)
+			def flag ref, bool
+				if arguments:length == 2 and !!bool === no
+					return unflag(ref)
+				return addFlag(ref)
 
 Imba.Tag

@@ -30,7 +30,7 @@ require './syntax/issues'
 require './tags/define'
 require './tags/caching'
 
-if Imba.CLIENT
+if $web$
 	require './tags/virtual'
 	require './tags/svg'
 

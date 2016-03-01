@@ -15,18 +15,17 @@ require './selector'
 
 
 
-if Imba.CLIENT
+if $web$
 	require './reconciler'
-else
+
+if $node$
 	require './server'
 
 
-
-if Imba.CLIENT
-
+if $web$
 	Imba.POINTER ||= Imba.Pointer.new
 
-	Imba.Events = Imba.EventManager.new((Imba.CLIENT ? Imba.document : {}), events: [
+	Imba.Events = Imba.EventManager.new(Imba.document, events: [
 		:keydown,:keyup,:keypress,:textInput,:input,:change,:submit,
 		:focusin,:focusout,:blur,:contextmenu,:dblclick,
 		:mousewheel,:wheel,:scroll

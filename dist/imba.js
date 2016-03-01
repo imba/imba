@@ -58,14 +58,20 @@
 
 /***/ },
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	(function(){
 		var isClient = (typeof window == 'object' && this == window);
 		
 		if (isClient) {
-			// should not go there
+			ENV_TARGET = 'web';
+			ENV_WEB = true;
+			ENV_NODE = false;
 			window.global || (window.global = window);
+		} else {
+			ENV_TARGET = 'node';
+			ENV_WEB = false;
+			ENV_NODE = true;
 		};
 		
 		/*
@@ -86,7 +92,7 @@
 		*/
 		
 		Imba.isClient = function (){
-			return (true) == true;
+			return Imba.CLIENT == true;
 		};
 		
 		/*
@@ -95,7 +101,7 @@
 		*/
 		
 		Imba.isServer = function (){
-			return !(true);
+			return !Imba.CLIENT;
 		};
 		
 		Imba.subclass = function (obj,sup){
@@ -653,17 +659,15 @@
 		
 		if (true) {
 			__webpack_require__(13);
-		} else {
-			require('./server');
 		};
 		
+		if (false) {};
 		
 		
 		if (true) {
-			
 			Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
 			
-			Imba.Events = new Imba.EventManager(( true ? (Imba.document()) : ({})),{events: [
+			Imba.Events = new Imba.EventManager(Imba.document(),{events: [
 				'keydown','keyup','keypress','textInput','input','change','submit',
 				'focusin','focusout','blur','contextmenu','dblclick',
 				'mousewheel','wheel','scroll'
@@ -844,7 +848,7 @@
 
 /***/ },
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	(function(){
 		function idx$(a,b){
@@ -862,8 +866,6 @@
 		Imba.document = function (){
 			if (true) {
 				return window.document;
-			} else {
-				return this._document || (this._document = new ImbaServerDocument());
 			};
 		};
 		
@@ -2166,40 +2168,42 @@
 			return;
 		};
 		
-		if ((true) && document) { Imba.generateCSSPrefixes() };
-		
-		// Ovverride classList
-		if ((true) && document && !document.documentElement.classList) {
-			tag$.extendTag('element', function(tag){
-				
-				tag.prototype.hasFlag = function (ref){
-					return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
-				};
-				
-				tag.prototype.addFlag = function (ref){
-					if (this.hasFlag(ref)) { return this };
-					this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
-					return this;
-				};
-				
-				tag.prototype.unflag = function (ref){
-					if (!this.hasFlag(ref)) { return this };
-					var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
-					this._dom.className = this._dom.className.replace(regex,'');
-					return this;
-				};
-				
-				tag.prototype.toggleFlag = function (ref){
-					return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
-				};
-				
-				tag.prototype.flag = function (ref,bool){
-					if (arguments.length == 2 && !!bool === false) {
-						return this.unflag(ref);
+		if (true) {
+			if (document) { Imba.generateCSSPrefixes() };
+			
+			// Ovverride classList
+			if (document && !document.documentElement.classList) {
+				tag$.extendTag('element', function(tag){
+					
+					tag.prototype.hasFlag = function (ref){
+						return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
 					};
-					return this.addFlag(ref);
-				};
-			});
+					
+					tag.prototype.addFlag = function (ref){
+						if (this.hasFlag(ref)) { return this };
+						this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
+						return this;
+					};
+					
+					tag.prototype.unflag = function (ref){
+						if (!this.hasFlag(ref)) { return this };
+						var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
+						this._dom.className = this._dom.className.replace(regex,'');
+						return this;
+					};
+					
+					tag.prototype.toggleFlag = function (ref){
+						return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
+					};
+					
+					tag.prototype.flag = function (ref,bool){
+						if (arguments.length == 2 && !!bool === false) {
+							return this.unflag(ref);
+						};
+						return this.addFlag(ref);
+					};
+				});
+			};
 		};
 		
 		return Imba.Tag;

@@ -5,6 +5,11 @@ var prodDefines = new webpack.DefinePlugin({
 	"Imba.CLIENT": true
 })
 
+var minify = new webpack.optimize.UglifyJsPlugin({
+	minimize: true,
+	compress: { warnings: false }
+});
+
 var prod = [
 	new webpack.DefinePlugin({
 		"Imba.CLIENT": true
@@ -35,6 +40,7 @@ function pkg(options){
 		resolveLoader: resolveLoader,
 		resolve: {extensions: ['', '.imba', '.js']},
 		entry: "./src/imba/index.imba",
+		target: 'web',
 		output: { filename: "./dist/imba.js" }
 	}
 	Object.keys(options).map(function(key){
@@ -46,33 +52,29 @@ function pkg(options){
 
 module.exports = [pkg({
 	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.dev.js" },
-	plugins: dev
+	output: { filename: "./dist/imba.dev.js" }
 }),pkg({
 	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.js" },
-	plugins: [prodDefines]
+	output: { filename: "./dist/imba.js" }
 }),pkg({
 	entry: "./src/imba/index.imba",
 	output: { filename: "./dist/imba.min.js" },
-	plugins: prod
+	plugins: [minify]
 }),pkg({
 	entry: "./src/compiler/compiler.imba",
 	output: { filename: "./dist/imbac.dev.js", library: "Imbac" },
 	target: 'web',
-	node: {fs: "empty"},
-	plugins: dev
+	node: {fs: "empty"}
 }),pkg({
 	entry: "./src/compiler/compiler.imba",
 	output: { filename: "./dist/imbac.js", library: "Imbac" },
 	target: 'web',
 	node: {fs: "empty"},
-	plugins: prod
+	plugins: [minify]
 }),pkg({
 	entry: "./test/index.imba",
 	output: { filename: "./test/client.js"},
 	target: 'web',
-	node: {fs: "empty"},
-	plugins: dev
+	node: {fs: "empty"}
 })]
 

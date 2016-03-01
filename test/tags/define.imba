@@ -141,14 +141,14 @@ describe 'Tags - Define' do
 
 	test "style attribute" do
 		var el = <div style='display: block;'>
-		if Imba.CLIENT
+		if $web$
 			eq el.dom.getAttribute('style'), 'display: block;'
 		else
 			eq el.toString, '<div style="display: block;"></div>'
 	
 	test "class" do
 		var el = <CustomClass>
-		if Imba.CLIENT
+		if $web$
 			eq el.dom:className, 'one two'
 			document:body.appendChild(el.dom)
 		else

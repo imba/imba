@@ -115,14 +115,20 @@
 
 /***/ },
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	(function(){
 		var isClient = (typeof window == 'object' && this == window);
 		
 		if (isClient) {
-			// should not go there
+			ENV_TARGET = 'web';
+			ENV_WEB = true;
+			ENV_NODE = false;
 			window.global || (window.global = window);
+		} else {
+			ENV_TARGET = 'node';
+			ENV_WEB = false;
+			ENV_NODE = true;
 		};
 		
 		/*
@@ -143,7 +149,7 @@
 		*/
 		
 		Imba.isClient = function (){
-			return (true) == true;
+			return Imba.CLIENT == true;
 		};
 		
 		/*
@@ -152,7 +158,7 @@
 		*/
 		
 		Imba.isServer = function (){
-			return !(true);
+			return !Imba.CLIENT;
 		};
 		
 		Imba.subclass = function (obj,sup){
@@ -710,17 +716,15 @@
 		
 		if (true) {
 			__webpack_require__(15);
-		} else {
-			require('./server');
 		};
 		
+		if (false) {};
 		
 		
 		if (true) {
-			
 			Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
 			
-			Imba.Events = new Imba.EventManager(( true ? (Imba.document()) : ({})),{events: [
+			Imba.Events = new Imba.EventManager(Imba.document(),{events: [
 				'keydown','keyup','keypress','textInput','input','change','submit',
 				'focusin','focusout','blur','contextmenu','dblclick',
 				'mousewheel','wheel','scroll'
@@ -901,7 +905,7 @@
 
 /***/ },
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	(function(){
 		function idx$(a,b){
@@ -919,8 +923,6 @@
 		Imba.document = function (){
 			if (true) {
 				return window.document;
-			} else {
-				return this._document || (this._document = new ImbaServerDocument());
 			};
 		};
 		
@@ -2223,40 +2225,42 @@
 			return;
 		};
 		
-		if ((true) && document) { Imba.generateCSSPrefixes() };
-		
-		// Ovverride classList
-		if ((true) && document && !document.documentElement.classList) {
-			tag$.extendTag('element', function(tag){
-				
-				tag.prototype.hasFlag = function (ref){
-					return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
-				};
-				
-				tag.prototype.addFlag = function (ref){
-					if (this.hasFlag(ref)) { return this };
-					this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
-					return this;
-				};
-				
-				tag.prototype.unflag = function (ref){
-					if (!this.hasFlag(ref)) { return this };
-					var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
-					this._dom.className = this._dom.className.replace(regex,'');
-					return this;
-				};
-				
-				tag.prototype.toggleFlag = function (ref){
-					return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
-				};
-				
-				tag.prototype.flag = function (ref,bool){
-					if (arguments.length == 2 && !!bool === false) {
-						return this.unflag(ref);
+		if (true) {
+			if (document) { Imba.generateCSSPrefixes() };
+			
+			// Ovverride classList
+			if (document && !document.documentElement.classList) {
+				tag$.extendTag('element', function(tag){
+					
+					tag.prototype.hasFlag = function (ref){
+						return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
 					};
-					return this.addFlag(ref);
-				};
-			});
+					
+					tag.prototype.addFlag = function (ref){
+						if (this.hasFlag(ref)) { return this };
+						this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
+						return this;
+					};
+					
+					tag.prototype.unflag = function (ref){
+						if (!this.hasFlag(ref)) { return this };
+						var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
+						this._dom.className = this._dom.className.replace(regex,'');
+						return this;
+					};
+					
+					tag.prototype.toggleFlag = function (ref){
+						return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
+					};
+					
+					tag.prototype.flag = function (ref,bool){
+						if (arguments.length == 2 && !!bool === false) {
+							return this.unflag(ref);
+						};
+						return this.addFlag(ref);
+					};
+				});
+			};
 		};
 		
 		return Imba.Tag;
@@ -5025,15 +5029,13 @@
 				});
 				
 				self.test("inside statement",function() {
-					var value_, v_;
+					var value_;
 					obj.setValue(null);
 					if ((value_ = obj.value()) == null) { if (1) {
 						for (var i = 0, len = ary.length, res = []; i < len; i++) {
 							res.push(ary[i] * 2);
 						};
 						var ret = (obj.setValue(res),res);
-					} else {
-						ret = (obj.setValue(v_ = 2),v_);
 					} } else {
 						ret = value_
 					};
@@ -5917,7 +5919,7 @@
 			return self.test("allow implicit returns from var declaration",function() {
 				// var hey, ho
 				
-				var hey = 10 ? (5) : (3);
+				var hey = (10) && (5);
 				var blank = function() { return true; };
 				
 				var fn = function(a) {
@@ -6994,9 +6996,6 @@
 				
 				eq(a3,4);
 				eq(i3,0);
-			} else {
-				var a5 = 4,b5 = 4,d = 4;
-				true;
 			};
 			
 			if (1) {
@@ -7004,8 +7003,6 @@
 					true;
 				};
 				var z = 4;
-			} else {
-				z = 5;
 			};
 			
 			eq(v,1);
@@ -8039,7 +8036,7 @@
 
 /***/ },
 /* 40 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	(function(){
 		// helper for subclassing
@@ -8254,8 +8251,6 @@
 				var el = tag$.$div().setStyle('display: block;').end();
 				if (true) {
 					return eq(el.dom().getAttribute('style'),'display: block;');
-				} else {
-					return eq(el.toString(),'<div style="display: block;"></div>');
 				};
 			});
 			
@@ -8264,8 +8259,6 @@
 				if (true) {
 					eq(el.dom().className,'one two');
 					return document.body.appendChild(el.dom());
-				} else {
-					return eq(el.toString(),'<div class="one two">Custom</div>');
 				};
 			});
 			
@@ -8700,12 +8693,9 @@
 					(__.F = __.F || tag$.$div().flag('list')).setContent(self.list(),3).end(),
 					(__.G = __.G || tag$.$div().flag('item')).setContent(self.tast(),3).end(),
 					(__.H = __.H || tag$.$div().flag('if')).setContent([
-						true ? (
+						(true) ? (
 							self.list()
-						) : (Imba.static([
-							(__.HA = __.HA || tag$.$b()).end(),
-							(__.HB = __.HB || tag$.$b()).end()
-						],2))
+						) : void(0)
 					],1).end(),
 					
 					(__.I = __.I || tag$.$div().flag('if')).setContent([
