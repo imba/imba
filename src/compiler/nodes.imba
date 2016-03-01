@@ -2033,15 +2033,17 @@ export class Root < Code
 		return out
 
 
-	def analyze loglevel: 0, entities: no, scopes: yes
-		STACK.loglevel = loglevel
+	def analyze o = {}
+		# loglevel: 0, entities: no, scopes: yes
+		STACK.loglevel = o:loglevel or 0
 		STACK.@analyzing = true
 		ROOT = STACK.ROOT = @scope
-
-		OPTS = {
+		OPTS = STACK.@options = {
+			target: o:target
+			loglevel: o:loglevel or 0
 			analysis: {
-				entities: entities,
-				scopes: scopes
+				entities: (o:entities or no),
+				scopes: (o:scopes ?= yes)
 			}
 		}
 

@@ -77,18 +77,14 @@ class SourceFile
 		var data = {}
 
 		try
-			@meta = ast.analyze(loglevel: 0, entities: o:entities, scopes: yes)
+			@meta = ast.analyze(loglevel: 0, entities: o:entities, scopes: yes, target: o:target)
 			cb and cb(@meta)
-			# resolve(self.meta)
 		catch e
-			# console.log "something wrong {e:message}"
 			unless e isa ERR.ImbaParseError
 				if e:lexer
 					e = ERR.ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)
 				else
 					throw e
-					# e = {message: e:message}
-
 
 			@meta = {warnings: [e]}
 			cb and cb(@meta)
@@ -98,15 +94,7 @@ class SourceFile
 	def run
 		process:argv.shift
 		process:argv[0] = 'imba'
-		Imbac.run(code, filename: @path)
-
-	def htmlify
-		var out = compiler.highlight(code,filename: @path)
-		fs.writeFileSync(@path.replace(/\.imba$/,'.html'),out)
-		console.log "htmlify code",out
-		return out
-
-
+		Imbac.run(code, filename: @path, target: 'node')
 
 def log *pars
 	console.log(*pars)
@@ -443,7 +431,8 @@ cli.command('watch <path>')
 
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')
-	.option('-t, --tokens', 'print the raw tokens')
+	.option('--tokens', 'print the raw tokens')
+	.option('--target [platform]', 'Compile for specific platform')
 	.option('-e, --entities', 'print the raw tokens')
 	.action do |path, opts|
 		var file = sourcefile-for-path(path)
