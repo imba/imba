@@ -5735,7 +5735,7 @@ export class Tag < Node
 		# this is reactive if it has an ivar
 		if o:ivar
 			reactive = yes
-			statics.push(".setRef({quote(o:ivar.name)},{scope.context.c})")
+			statics.push(".__ref({quote(o:ivar.name)},{scope.context.c})")
 
 		if o:body isa Func
 			bodySetter = "setTemplate"
@@ -5829,7 +5829,16 @@ export class Tag < Node
 
 		calls.push ".{commit}()"
 
+		let lineLen = out:length
+
 		if statics:length
+			# for item in statics
+			# 	if lineLen > 40
+			# 		out += "\n\t\t\t"
+			# 		lineLen = 0
+			# 	out += item
+			# 	lineLen += item:length
+
 			out = out + statics.join("")
 	
 		if (o:ivar or o:key or reactive) and !(type isa Self)
@@ -5888,12 +5897,21 @@ export class Tag < Node
 			# need the context -- might be better to rewrite it for real?
 			# parse the whole thing into calls etc
 			acc ||= OP('.',ctx,key) # .c
-			@cachedReference = acc
+
+			if o:ivar
+				out = "{acc.c} || {out}"
+			else
+				out = "{acc.c} = {acc.c} || {out}"
 
 			if @reference
-				out = "({reference.c} = {acc.c}={acc.c} || {out})"
-			else
-				out = "({acc.c} = {acc.c} || {out})"
+				out = "{reference.c} = {out}"
+
+			out = "({out})"
+
+			# 
+			# 	out = "({reference.c} = {acc.c}={acc.c} || {out})"
+			# else
+			# 	out = "({acc.c} = {acc.c} || {out})"
 
 		return out + calls.join("")
 

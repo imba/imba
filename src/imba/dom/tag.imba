@@ -127,6 +127,12 @@ class Imba.Tag
 	def ref
 		@ref
 
+	def __ref ref, ctx
+		ctx['_' + ref] = self
+		flag(@ref = ref)
+		@owner = ctx
+		self
+
 	###
 	Set inner html of node
 	###
