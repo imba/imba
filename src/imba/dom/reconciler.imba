@@ -20,14 +20,20 @@ def removeNested root, node, caret
 def appendNested root, node
 	if node isa Imba.Tag
 		root.appendChild(node)
+		node = node.@dom
 
 	elif node isa Array
-		appendNested(root,member) for member in node
+		node:doms = []
+		for member, idx in node
+			var dom = appendNested(root, member)
+			node:doms.push(dom)
 
 	elif node != null and node !== false
-		root.appendChild Imba.document.createTextNode(node)
+		if !node:nodeType
+			node = Imba.document.createTextNode(node)
+		root.appendChild node
 
-	return
+	return node
 
 
 # insert nodes before a certain node
@@ -40,7 +46,9 @@ def insertNestedBefore root, node, before
 	elif node isa Array
 		insertNestedBefore(root,member,before) for member in node
 	elif node != null and node !== false
-		root.insertBefore(Imba.document.createTextNode(node),before)
+		if !node:nodeType
+			node = Imba.document.createTextNode(node)
+		root.insertBefore(node,before)
 
 	return before
 
@@ -78,6 +86,10 @@ def reconcileCollectionChanges root, new, old, caret
 
 	var newPosition = []
 
+	# Same as `new`, but contains the actual DOM nodes from the previous render,
+	# not tags/strings.
+	var newDoms = []
+
 	# The tree/graph itself
 	var prevChain = []
 	# The length of the chain
@@ -96,6 +108,9 @@ def reconcileCollectionChanges root, new, old, caret
 			prevChain.push(-1)
 			lengthChain.push(-1)
 			continue
+
+		var oldDom = (old:doms and old:doms[idx])
+		newDoms[newPos] = oldDom
 
 		var prevIdx = newPosition:length - 2
 
@@ -135,8 +150,10 @@ def reconcileCollectionChanges root, new, old, caret
 	# And let's iterate forward, but only move non-sticky nodes
 	for node, idx in new
 		if !stickyNodes[idx]
+			var dom = (newDoms[idx] or node)
 			var after = new[idx - 1]
-			insertNestedAfter(root, node, (after and after.@dom) or caret)
+			var afterDom = (newDoms[idx - 1] or (after and after.@dom))
+			insertNestedAfter(root, dom, afterDom or caret)
 
 	# should trust that the last item in new list is the caret
 	return lastNew and lastNew.@dom or caret
@@ -147,7 +164,6 @@ def reconcileCollection root, new, old, caret
 	var k = new:length
 	var i = k
 	var last = new[k - 1]
-
 
 	if k == old:length and new[0] === old[0]
 		# running through to compare
@@ -273,7 +289,7 @@ extend tag element
 
 			# check if old and new isa array
 			elif new isa Array
-				if old isa Array
+				if old isa Array and old:length
 					# is this not the same as setting staticChildren now but with the
 					reconcileCollection(self,new,old,null)
 				else
