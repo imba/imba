@@ -7279,6 +7279,10 @@ var Imbac =
 				if (this.option('return')) {
 					js += ("\nreturn " + cname + ";");
 				};
+			} else {
+				if (this.option('return')) {
+					js = "return " + js;
+				};
 			};
 			
 			
@@ -10350,11 +10354,11 @@ var Imbac =
 			if (this._scope) { this._scope.visit() };
 			if (this.test()) { this.test().traverse() };
 			
-			var pretest = truthy__(this.test());
+			this._pretest = truthy__(this.test());
 			
-			if (pretest === true) {
+			if (this._pretest === true) {
 				alt = this._alt = null;
-			} else if (pretest === false) {
+			} else if (this._pretest === false) {
 				// drop the body
 				// possibly skip the if all together
 				this.setBody(null);
@@ -10384,7 +10388,7 @@ var Imbac =
 			var cond = this.test().c({expression: true}); // the condition is always an expression
 			
 			if (o.isExpression()) {
-				var code = body ? (body.c()) : (''); // (braces: yes)
+				var code = body ? (body.c()) : ('true'); // (braces: yes)
 				code = '(' + code + ')'; // if code.indexOf(',') >= 0
 				// is expression!
 				if (this.alt()) {

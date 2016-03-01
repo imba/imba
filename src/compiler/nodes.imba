@@ -2281,6 +2281,10 @@ export class TagDeclaration < Code
 			if option(:return)
 				js += "\nreturn {cname};"
 
+		else
+			if option(:return)
+				js = "return " + js
+		
 
 		return js
 
@@ -4826,11 +4830,11 @@ export class If < ControlFlow
 		@scope.visit if @scope
 		test.traverse if test
 
-		var pretest = truthy__(test)
+		@pretest = truthy__(test)
 
-		if pretest === true
+		if @pretest === true
 			alt = @alt = null
-		elif pretest === false
+		elif @pretest === false
 			# drop the body
 			# possibly skip the if all together
 			body = null
@@ -4857,7 +4861,7 @@ export class If < ControlFlow
 		var cond = test.c(expression: yes) # the condition is always an expression
 
 		if o.isExpression
-			var code = body ? body.c : '' # (braces: yes)
+			var code = body ? body.c : 'true' # (braces: yes)
 			code = '(' + code + ')' # if code.indexOf(',') >= 0
 			# is expression!
 			if alt
