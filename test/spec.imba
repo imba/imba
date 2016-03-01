@@ -53,7 +53,8 @@ global class Spec
 		else
 			@context.describe(name,blk)
 		
-	def run i = 0
+	def run i = 0, &blk
+		Imba.once(self,'done',blk) if blk
 		Spec.CURRENT = self
 		var block = @blocks[i]
 
@@ -84,7 +85,9 @@ global class Spec
 			console.log item.fullName
 			console.log "    " + item.details
 
-		Imba.emit(self, :done, [self])
+		var exitCode = (failed:length == 0 ? 0 : 1)
+
+		Imba.emit(self, :done, [exitCode])
 
 	# def describe name, blk do SPEC.context.describe(name,blk)
 	def it name, blk do SPEC.context.it(name,blk)

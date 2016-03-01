@@ -75,6 +75,6 @@ module.exports = [pkg({
 	entry: "./test/index.imba",
 	output: { filename: "./test/client.js"},
 	target: 'web',
-	node: {fs: "empty"}
+	node: {fs: "empty", process: "empty"}
 })]
 
