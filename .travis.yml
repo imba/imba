@@ -1,0 +1,17 @@
+---
+language: node_js
+node_js:
+  - "5.7"
+  - "4.3"
+
+env:
+  - NPM_SCRIPT=test
+
+before_script: npm run build
+
+script: npm run $NPM_SCRIPT
+
+matrix:
+  include:
+    - node_js: "5.7"
+      env: NPM_SCRIPT=test-phantom

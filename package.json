@@ -33,7 +33,8 @@
     "build-parser": "imba scripts/build-parser.imba",
     "build": "webpack --progress --colors --display-modules",
     "watch": "webpack --watch --progress --colors --display-modules",
-    "test": "bin/imba test/index.imba"
+    "test": "bin/imba test/index.imba",
+    "test-phantom": "phantomjs test/client.js"
   },
   "bugs": "https://github.com/somebee/imba/issues",
   "version": "0.15.0-alpha.1",
