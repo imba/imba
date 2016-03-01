@@ -926,11 +926,14 @@
 			
 			if (this._nodeType) {
 				child._nodeType = this._nodeType;
+				child._classes = this._classes.slice();
 				
-				var className = "_" + child._name.replace(/_/g,'-');
-				if (child._name[0] != '#') { return child._classes = this._classes.concat(className) };
+				if (child._flagName) {
+					return child._classes.push(child._flagName);
+				};
 			} else {
 				child._nodeType = child._name;
+				child._flagName = null;
 				return child._classes = [];
 			};
 		};
@@ -1939,22 +1942,33 @@
 		Imba.Tags.prototype.defineTag = function (name,supr,body){
 			if(body==undefined && typeof supr == 'function') body = supr,supr = '';
 			if(supr==undefined) supr = '';
+			if (body && body._nodeType) {
+				supr = body;
+				body = null;
+			};
+			
 			supr || (supr = this.baseType(name));
-			var supertype = this[supr];
+			
+			var supertype = (typeof supr=='string'||supr instanceof String) ? (this[supr]) : (supr);
 			var tagtype = Tag();
 			var norm = name.replace(/\-/g,'_');
 			
-			
 			tagtype._name = name;
-			extender(tagtype,supertype);
+			tagtype._flagName = null;
 			
 			if (name[0] == '#') {
 				this[name] = tagtype;
 				Imba.SINGLETONS[name.slice(1)] = tagtype;
+			} else if (name[0] == name[0].toUpperCase()) {
+				true;
 			} else {
+				tagtype._flagName = "_" + name.replace(/_/g,'-');
 				this[name] = tagtype;
 				this['$' + norm] = TagSpawner(tagtype);
 			};
+			
+			
+			extender(tagtype,supertype);
 			
 			if (body) {
 				if (body.length == 2) {
@@ -2687,7 +2701,7 @@
 			Imba.attr(tag,'lengthAdjust');
 		});
 		
-		return tag$.ns('svg').defineTag('tspan', function(tag){
+		tag$.ns('svg').defineTag('tspan', function(tag){
 			Imba.attr(tag,'dx');
 			Imba.attr(tag,'dy');
 			Imba.attr(tag,'rotate');
@@ -4003,7 +4017,7 @@
 		
 		// extending tags with query-methods
 		// must be a better way to reopen classes
-		return tag$.extendTag('element', function(tag){
+		tag$.extendTag('element', function(tag){
 			tag.prototype.querySelectorAll = function (q){
 				return this._dom.querySelectorAll(q);
 			};
@@ -4301,7 +4315,7 @@
 		};
 		
 		
-		return tag$.extendTag('element', function(tag){
+		tag$.extendTag('element', function(tag){
 			
 			tag.prototype.setChildren = function (new$,typ){
 				var old = this._children;
