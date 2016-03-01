@@ -44,13 +44,12 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	(function(){
+	/* WEBPACK VAR INJECTION */(function(process) {(function(){
 		
 		// require imba ( ensure local version )
-		__webpack_require__(1);
-		__webpack_require__(16);
-		
+		__webpack_require__(2);
 		__webpack_require__(17);
+		
 		__webpack_require__(18);
 		__webpack_require__(19);
 		__webpack_require__(20);
@@ -67,46 +66,61 @@
 		__webpack_require__(31);
 		__webpack_require__(32);
 		__webpack_require__(33);
-		__webpack_require__(35);
+		__webpack_require__(34);
 		__webpack_require__(36);
-		
 		__webpack_require__(37);
+		
 		__webpack_require__(38);
 		__webpack_require__(39);
-		
 		__webpack_require__(40);
+		
 		__webpack_require__(41);
+		__webpack_require__(42);
 		
 		if (true) {
-			__webpack_require__(42);
-			__webpack_require__(44);
+			__webpack_require__(43);
+			__webpack_require__(45);
 		};
 		
+		// externs;
 		
-		return SPEC.run();
+		return SPEC.run(function(exitCode) {
+			if (typeof phantom == 'object') {
+				return phantom.exit(exitCode);
+			} else if (typeof process == 'object' && process.exit) {
+				return process.exit(exitCode);
+			};
+		});
 
 	})();
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	(function(){
-		var imba;
-		return module.exports.imba = imba = __webpack_require__(2);
-
-	})();
+	
 
 /***/ },
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
+		var imba;
+		return module.exports.imba = imba = __webpack_require__(3);
+
+	})();
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	(function(){
 		
 		if (typeof Imba === 'undefined') {
-			__webpack_require__(3);
 			__webpack_require__(4);
-			return __webpack_require__(5);
+			__webpack_require__(5);
+			return __webpack_require__(6);
 		} else {
 			return console.warn(("Imba v" + (Imba.VERSION) + " is already loaded"));
 		};
@@ -114,7 +128,7 @@
 	})();
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -354,7 +368,7 @@
 	})();
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {(function(){
@@ -692,30 +706,30 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
 		var Imba_;
-		__webpack_require__(6);
+		__webpack_require__(7);
 		
 		Imba.TagManager = new Imba.TagManagerClass();
 		
-		__webpack_require__(7);
 		__webpack_require__(8);
 		__webpack_require__(9);
-		
 		__webpack_require__(10);
+		
 		__webpack_require__(11);
 		__webpack_require__(12);
 		__webpack_require__(13);
 		__webpack_require__(14);
+		__webpack_require__(15);
 		
 		
 		
 		
 		if (true) {
-			__webpack_require__(15);
+			__webpack_require__(16);
 		};
 		
 		if (false) {};
@@ -792,7 +806,7 @@
 	})();
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
@@ -904,7 +918,7 @@
 	})();
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -2275,7 +2289,7 @@
 	})();
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -2650,7 +2664,7 @@
 	})();
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -2780,7 +2794,7 @@
 	})();
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -2861,7 +2875,7 @@
 	})();
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -3404,7 +3418,7 @@
 	})();
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -3708,7 +3722,7 @@
 	})();
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -3863,7 +3877,7 @@
 	})();
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -4104,7 +4118,7 @@
 	})();
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -4453,7 +4467,7 @@
 	})();
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {(function(){
@@ -4534,9 +4548,11 @@
 			};
 		};
 		
-		Spec.prototype.run = function (i){
+		Spec.prototype.run = function (i,blk){
 			var self = this;
-			if(i === undefined) i = 0;
+			if(blk==undefined && typeof i == 'function') blk = i,i = 0;
+			if(i==undefined) i = 0;
+			if (blk) { Imba.once(self,'done',blk) };
 			Spec.CURRENT = self;
 			var block = self._blocks[i];
 			
@@ -4572,7 +4588,9 @@
 				console.log("    " + item.details());
 			};
 			
-			return Imba.emit(this,'done',[this]);
+			var exitCode = (failed.length == 0 ? (0) : (1));
+			
+			return Imba.emit(this,'done',[exitCode]);
 		};
 		
 		// def describe name, blk do SPEC.context.describe(name,blk)
@@ -4923,7 +4941,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -5239,7 +5257,7 @@
 	})();
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -5517,7 +5535,7 @@
 	})();
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -5683,7 +5701,7 @@
 	})();
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
@@ -5877,7 +5895,7 @@
 	})();
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -5943,7 +5961,7 @@
 	})();
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -6015,7 +6033,7 @@
 	})();
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -6104,7 +6122,7 @@
 	})();
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -6507,7 +6525,7 @@
 	})();
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -6553,7 +6571,7 @@
 	})();
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -6628,7 +6646,7 @@
 	})();
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -6781,7 +6799,7 @@
 	})();
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -6830,7 +6848,7 @@
 	})();
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -6863,7 +6881,7 @@
 	})();
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -7085,7 +7103,7 @@
 	})();
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -7104,7 +7122,7 @@
 	})();
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -7130,7 +7148,7 @@
 	})();
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
@@ -7148,10 +7166,10 @@
 		var self = this;
 		
 		// import two specific items from module
-		var module$ = __webpack_require__(34), Item = module$.Item, hello = module$.hello;
+		var module$ = __webpack_require__(35), Item = module$.Item, hello = module$.hello;
 		
 		// import everything from module into a local namespace/variable 'm'
-		var m = __webpack_require__(34);
+		var m = __webpack_require__(35);
 		
 		function Sub(){ return Item.apply(this,arguments) };
 		
@@ -7191,7 +7209,7 @@
 	})();
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -7239,7 +7257,7 @@
 	})();
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -7278,7 +7296,7 @@
 	})();
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -7897,7 +7915,7 @@
 	})();
 
 /***/ },
-/* 37 */
+/* 38 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -7924,7 +7942,7 @@
 	})();
 
 /***/ },
-/* 38 */
+/* 39 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -7947,7 +7965,7 @@
 	})();
 
 /***/ },
-/* 39 */
+/* 40 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -8042,7 +8060,7 @@
 	})();
 
 /***/ },
-/* 40 */
+/* 41 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -8303,7 +8321,7 @@
 	})();
 
 /***/ },
-/* 41 */
+/* 42 */
 /***/ function(module, exports) {
 
 	(function(){
@@ -8417,7 +8435,7 @@
 	})();
 
 /***/ },
-/* 42 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
@@ -8428,7 +8446,7 @@
 		
 		// externs;
 		
-		var _ = __webpack_require__(43);
+		var _ = __webpack_require__(44);
 		
 		tag$.defineTag('el', function(tag){
 			
@@ -8935,7 +8953,7 @@
 	})();
 
 /***/ },
-/* 43 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -10489,7 +10507,7 @@
 
 
 /***/ },
-/* 44 */
+/* 45 */
 /***/ function(module, exports) {
 
 	(function(){
