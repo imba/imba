@@ -2177,9 +2177,13 @@ export class TagDeclaration < Code
 			desc: @desc
 		}
 
+	def consume node
+		if node isa Return
+			option('return',yes)
+			return self
+		super
+
 	def initialize name, superclass, body
-		# what about the namespace?
-		# @name = TagTypeRef.new(name)
 		@traversed = no
 		@name = name
 		@superclass = superclass
@@ -2223,7 +2227,10 @@ export class TagDeclaration < Code
 		if superclass
 			# WARN what if the superclass has a namespace?
 			# what if it is a regular class?
-			params.push(helpers.singlequote(superclass.name))
+			let supname = superclass.name
+			if !supname[0].match(/[A-Z]/)
+				supname = helpers.singlequote(supname)
+			params.push(supname)
 
 		if body.count
 			if option(:hasLocalTags)
@@ -2233,7 +2240,24 @@ export class TagDeclaration < Code
 
 		var meth = option(:extension) ? 'extendTag' : 'defineTag'
 
-		return "{mark}{tagspace}.{meth}({params.join(', ')})"
+		var js = "{mark}{tagspace}.{meth}({params.join(', ')})"
+
+
+		if option(:isClass)
+			let cname = name.name
+			# declare variable
+			js = "var {cname} = {js}"
+			# only if it is not namespaced
+			# if o:global and !namespaced # option(:global)
+			#	js.push("global.{cname} = {cpath}; // global class \n")
+			if option(:export)
+				js = "{js}\nexports.{cname} = {cname};"
+			
+			if option(:return)
+				js += "\nreturn {cname};"
+
+
+		return js
 
 		# return out
 

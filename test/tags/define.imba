@@ -161,4 +161,22 @@ describe 'Tags - Define' do
 		var b = <super-init>
 		eq b.@custom, yes
 
+	test "local tag" do
+		tag LocalTag < canvas
+			def initialize
+				@local = yes
+				super
+
+		var node = <LocalTag>
+		eq node.toString, '<canvas></canvas>'
+		eq node.@local, yes
+
+
+		tag SubTag < LocalTag
+
+		var sub = <SubTag>
+		eq node.@local, yes
+		
+
+
 					

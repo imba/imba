@@ -55,11 +55,13 @@ class Imba.Tag
 
 		if @nodeType
 			child.@nodeType = @nodeType
+			child.@classes = @classes.slice
 
-			var className = "_" + child.@name.replace(/_/g, '-')
-			child.@classes = @classes.concat(className) unless child.@name[0] == '#'
+			if child.@flagName
+				child.@classes.push(child.@flagName)
 		else
 			child.@nodeType = child.@name
+			child.@flagName = null
 			child.@classes = []
 
 	###
@@ -861,23 +863,31 @@ class Imba.Tags
 		name in HTML_TAGS ? 'element' : 'div'
 
 	def defineTag name, supr = '', &body
+		if body and body.@nodeType
+			supr = body
+			body = null
+
 		supr ||= baseType(name)
 
-		let supertype = supr isa String ? self[supr]: supr
+		let supertype = supr isa String ? self[supr] : supr
 		let tagtype = Tag()
 		let norm = name.replace(/\-/g,'_')
 
 		tagtype.@name = name
-		extender(tagtype,supertype)
+		tagtype.@flagName = null
 
 		if name[0] == '#'
 			self[name] = tagtype
 			Imba.SINGLETONS[name.slice(1)] = tagtype
 		elif name[0] == name[0].toUpperCase
-			true # this is a local type
+			true
 		else
+			tagtype.@flagName = "_" + name.replace(/_/g, '-')
 			self[name] = tagtype
 			self['$'+norm] = TagSpawner(tagtype)
+
+
+		extender(tagtype,supertype)
 
 		if body
 			if body:length == 2
