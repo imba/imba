@@ -221,6 +221,18 @@ def counterToShortRef nr
 		shortRefCache.push(str)
 	return shortRefCache[nr]
 
+def truthy__ node
+
+	if node isa True
+		return true
+
+	if node isa False
+		return false
+
+	if node:isTruthy
+		return node.isTruthy
+
+	return undefined
 
 export class Indentation
 
@@ -316,6 +328,19 @@ export class Stack
 
 	def option key
 		@options and @options[key]
+
+	def platform
+		@options:target
+
+	def env key
+		var val = @options["ENV_{key}"]
+		return val if val != undefined
+
+		if platform and key in ['WEB','NODE','WEBWORKER']
+			return platform.toUpperCase == key
+
+		return undefined
+
 
 	def addScope scope
 		@scopes.push(scope)
@@ -2697,6 +2722,9 @@ export class Undefined < Literal
 	def isPrimitive
 		yes
 
+	def isTruthy
+		no
+
 	def c
 		mark__(@value) + "undefined"
 
@@ -2704,6 +2732,9 @@ export class Nil < Literal
 	
 	def isPrimitive
 		yes
+
+	def isTruthy
+		no
 
 	def c
 		mark__(@value) + "null"
@@ -2713,6 +2744,9 @@ export class True < Bool
 	def raw
 		true
 
+	def isTruthy
+		yes
+
 	def c
 		mark__(@value) + "true"
 		
@@ -2720,6 +2754,9 @@ export class False < Bool
 
 	def raw
 		false
+
+	def isTruthy
+		no
 
 	def c
 		mark__(@value) + "false"
@@ -2736,6 +2773,9 @@ export class Num < Literal
 
 	def isPrimitive deep
 		yes
+
+	def isTruthy
+		String(@value) != "0"
 
 	def shouldParenthesize par = up
 		par isa Access and par.left == self
@@ -4764,7 +4804,6 @@ export class If < ControlFlow
 			self.alt = add
 		self
 
-
 	def initialize cond, body, o = {}
 		setup
 		@test = cond # (o:type == 'unless' ? UnaryOp.new('!',cond,null) : cond)
@@ -4786,6 +4825,16 @@ export class If < ControlFlow
 
 		@scope.visit if @scope
 		test.traverse if test
+
+		var pretest = truthy__(test)
+
+		if pretest === true
+			alt = @alt = null
+		elif pretest === false
+			# drop the body
+			# possibly skip the if all together
+			body = null
+
 		body.traverse if body
 
 		# should skip the scope in alt.
@@ -4808,7 +4857,7 @@ export class If < ControlFlow
 		var cond = test.c(expression: yes) # the condition is always an expression
 
 		if o.isExpression
-			var code = body.c # (braces: yes)
+			var code = body ? body.c : '' # (braces: yes)
 			code = '(' + code + ')' # if code.indexOf(',') >= 0
 			# is expression!
 			if alt
@@ -4837,7 +4886,7 @@ export class If < ControlFlow
 			#	p "one item only!"
 			#	body = body.first
 
-			code = body.c(braces: yes) # (braces: yes)
+			code = body ? body.c(braces: yes) : '{}' # (braces: yes)
 
 			# don't wrap if it is only a single expression?
 			var out = "{mark__(@type)}if ({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
@@ -4850,7 +4899,7 @@ export class If < ControlFlow
 	def consume node
 		# if it is possible, convert into expression
 		if node isa TagTree
-			@body = @body.consume(node)
+			@body = @body.consume(node) if @body
 			@alt = @alt.consume(node) if @alt
 			@tagtree = node
 			return self
@@ -4866,14 +4915,14 @@ export class If < ControlFlow
 			toExpression # mark as expression(!) - is this needed?
 			return super(node)
 		else
-			@body = @body.consume(node)
+			@body = @body.consume(node) if @body
 			@alt = @alt.consume(node) if @alt
 		self
 
 
 	def isExpressable
 		# process:stdout.write 'x'
-		var exp = body.isExpressable && (!alt || alt.isExpressable)
+		var exp = (!body || body.isExpressable) && (!alt || alt.isExpressable)
 		return exp
 
 
@@ -6283,6 +6332,24 @@ export class ExportStatement < ValueNode
 		else
 			return nodes.join(';\n') + ';'
 
+
+export class EnvFlag < ValueNode
+	
+	def raw
+		STACK.env("" + @value)
+
+	def isTruthy
+		var val = raw
+		return !!val if val != undefined
+		return undefined
+
+	def c
+		var val = raw
+		if val != undefined
+			"{val}"
+		else
+			"ENV_{@value}"
+		
 
 # UTILS
 

@@ -549,7 +549,7 @@ var grammar =
 
 	# Variables and properties that can be assigned to.
 	SimpleAssignable: [
-
+		o 'ENV_FLAG' do EnvFlag.new(A1)
 		o 'Const'
 		o 'Ivar' do IvarAccess.new('.',null,A1)
 		o 'Gvar'

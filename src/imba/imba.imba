@@ -1,8 +1,12 @@
 var isClient = (typeof window == 'object' and this == window)
 
 if isClient
-	# should not go there
+	ENV_WEB = true
+	ENV_NODE = false
 	window:global ||= window
+else
+	ENV_WEB = false
+	ENV_NODE = true
 
 ###
 Imba is the namespace for all runtime related utilities

@@ -198,6 +198,8 @@ var TRAILING_SPACES = /\s+$/
 
 var CONST_IDENTIFIER = /^[A-Z]/
 
+var ENV_FLAG = /^\$\w+\$/
+
 var ARGVAR = /^\$\d$/
 
 # Compound assignment tokens.
@@ -731,7 +733,6 @@ export class Lexer
 
 		elif pre == '$'
 			yes
-			# typ = 'GVAR'
 
 
 		elif pre == '#'
@@ -889,6 +890,10 @@ export class Lexer
 			else
 				typ = 'ARGVAR'
 				id = id.substr(1)
+
+		elif typ == '$' and ENV_FLAG.test(id)
+			typ = 'ENV_FLAG'
+			id = id.toUpperCase.slice(1, -1)
 
 		elif typ == '@'
 			typ = 'IVAR'
