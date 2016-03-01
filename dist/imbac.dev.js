@@ -10690,18 +10690,18 @@ var Imbac =
 			if (node instanceof TagTree) {
 				this.scope().context().reference();
 				
-				var ref = node.root().reference();
+				// var ref = node.root.reference
 				node._loop = this;
 				
 				// Should not be consumed the same way
 				// One per loop - or no?
 				this.body().consume(node);
 				node._loop = null;
-				var fn = new Lambda([new Param(ref)],[this]);
+				var fn = new Lambda([],[this]);
 				fn.scope().wrap(this.scope());
 				// TODO Scope of generated lambda should be added into stack for
 				// variable naming / resolution
-				return CALL(fn,[ref]);
+				return CALL(fn,[]);
 			};
 			
 			
@@ -11305,21 +11305,24 @@ var Imbac =
 				ary[i].traverse();
 			};
 			
+			// remember scope
+			this._tagScope = this.scope__();
+			
 			return this;
 		};
 		
 		Tag.prototype.reference = function (){
-			return this._reference || (this._reference = this.scope__().closure().temporary(this,{pool: 'tag'}).resolve());
+			return this._reference || (this._reference = this._tagScope.closure().temporary(this,{pool: 'tag'}).resolve());
 		};
 		
 		Tag.prototype.closureCache = function (){
-			return this._closureCache || (this._closureCache = this.scope__().tagContextCache());
+			return this._closureCache || (this._closureCache = this._tagScope.tagContextCache());
 		};
 		
 		Tag.prototype.staticCache = function (){
 			if (this.type() instanceof Self) {
-				return this._staticCache || (this._staticCache = this.scope__().tagContextCache());
-			} else if (this.option('ivar') || this.option('key')) {
+				return this._staticCache || (this._staticCache = this._tagScope.tagContextCache());
+			} else if (this.explicitKey() || this.option('loop')) {
 				return this._staticCache || (this._staticCache = OP('.',this.reference(),'__'));
 			} else if (this._parent) {
 				return this._staticCache || (this._staticCache = this._parent.staticCache());
@@ -11453,15 +11456,15 @@ var Imbac =
 			
 			// we need to trigger our own reference before the body does
 			// but we do not need a reference if we have no body
-			if (this.reactive() && tree) {
-				// reference
-				this;
+			if (this.reactive() && tree && (this.explicitKey() || o.loop)) {
+				this.reference();
+				// self
 			};
 			
 			if (this.reactive() && parent && parent.tree() && !this.option('ivar')) {
 				// not if it has a separate tag?
 				o.treeRef = parent.tree().nextCacheKey(this);
-				if (parent.option('treeRef') && !parent.explicitKey()) {
+				if (parent.option('treeRef') && !parent.explicitKey() && !parent.option('loop')) {
 					o.treeRef = parent.option('treeRef') + o.treeRef;
 				};
 			};
@@ -11619,7 +11622,7 @@ var Imbac =
 				ref = ref + ref.length;
 			};
 			
-			if (this._owner.explicitKey()) {
+			if (this._owner.explicitKey() || this._owner.option('loop')) {
 				ref = '$' + ref;
 			};
 			// ref = ref.toLowerCase unless @owner.type isa Self

@@ -5131,18 +5131,18 @@ export class For < Loop
 		if node isa TagTree
 			scope.context.reference
 
-			var ref = node.root.reference
+			# var ref = node.root.reference
 			node.@loop = self
 
 			# Should not be consumed the same way
 			# One per loop - or no?
 			body.consume(node)
 			node.@loop = null
-			let fn = Lambda.new([Param.new(ref)],[self])
+			let fn = Lambda.new([],[self])
 			fn.scope.wrap(scope)
 			# TODO Scope of generated lambda should be added into stack for
 			# variable naming / resolution
-			return CALL(fn,[ref])
+			return CALL(fn,[])
 
 
 		if @resvar
@@ -5671,18 +5671,21 @@ export class Tag < Node
 		for part in @parts
 			part.traverse
 
+		# remember scope
+		@tagScope = scope__
+
 		self
 
 	def reference
-		@reference ||= scope__.closure.temporary(self,pool: 'tag').resolve
+		@reference ||= @tagScope.closure.temporary(self,pool: 'tag').resolve
 
 	def closureCache
-		@closureCache ||= scope__.tagContextCache
+		@closureCache ||= @tagScope.tagContextCache
 
 	def staticCache
 		if type isa Self
-			@staticCache ||= scope__.tagContextCache
-		elif option(:ivar) or option(:key)
+			@staticCache ||= @tagScope.tagContextCache
+		elif explicitKey or option(:loop)
 			@staticCache ||= OP('.',reference,'__')
 		elif @parent
 			@staticCache ||= @parent.staticCache
@@ -5801,14 +5804,14 @@ export class Tag < Node
 
 		# we need to trigger our own reference before the body does
 		# but we do not need a reference if we have no body
-		if reactive and tree
-			# reference
-			self
+		if reactive and tree and (explicitKey or o:loop)
+			reference
+			# self
 
 		if reactive and parent and parent.tree and !option(:ivar)
 			# not if it has a separate tag?
 			o:treeRef = parent.tree.nextCacheKey(self)
-			if parent.option(:treeRef) and !parent.explicitKey
+			if parent.option(:treeRef) and !parent.explicitKey and !parent.option(:loop)
 				o:treeRef = parent.option(:treeRef) + o:treeRef
 
 		if var body = content and content.c(expression: yes)
@@ -5946,7 +5949,7 @@ export class TagTree < ListNode
 		if ref:length > 1
 			ref = ref + ref:length
 
-		if @owner.explicitKey
+		if @owner.explicitKey or @owner.option(:loop)
 			ref = '$' + ref
 		# ref = ref.toLowerCase unless @owner.type isa Self
 		return ref

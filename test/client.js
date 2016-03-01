@@ -8090,15 +8090,15 @@
 			};
 			
 			tag.prototype.render = function (){
-				var self = this;
+				var self = this, __ = self.__;
 				return this.setChildren(
-					(function(self) {
-						var __ = self.__, $A = (__.A = __.A || {});
+					(function() {
+						var $A = (__.A = __.A || {});
 						for (var i = 0, ary = iter$(self._ary), len = ary.length, res = []; i < len; i++) {
 							res.push(($A[ary[i]] = $A[ary[i]] || tag$.$div()).setText("v").end());
 						};
 						return res;
-					})(self)
+					})()
 				,3).synced();
 			};
 		});
@@ -8203,13 +8203,13 @@
 					var ary = ['a','b','c','d'];
 					return this.setChildren([
 						(__.A = __.A || tag$.$h1()).setText('heading').end(),
-						(function(self) {
-							var _$ = (__.B = __.B || []);
+						(function() {
+							var t0, _$ = (__.B = __.B || []);
 							for (var i = 0, len = ary.length, res = []; i < len; i++) {
-								res.push((_$[i] = _$[i] || tag$.$custom()).setContent(ary[i],3).end());
+								res.push((t0 = _$[i] = _$[i] || tag$.$custom()).setContent(ary[i],3).end());
 							};
 							return res;
-						})(self)
+						})()
 					],1).synced();
 				};
 				
@@ -8372,13 +8372,13 @@
 						],2).end()
 					) : void(0),
 					
-					(function(self) {
-						var _$ = (__.D = __.D || []);
+					(function() {
+						var t0, _$ = (__.D = __.D || []);
 						for (var i = 0, ary = iter$(o.letters), len = ary.length, res = []; i < len; i++) {
-							res.push((_$[i] = _$[i] || tag$.$div()).setContent(ary[i],3).end());
+							res.push((t0 = _$[i] = _$[i] || tag$.$div()).setContent(ary[i],3).end());
 						};
 						return res;
-					})(self)
+					})()
 				],1).synced();
 			};
 			
@@ -8583,14 +8583,14 @@
 		tag$.defineTag('other', function(tag){
 			
 			tag.prototype.render = function (){
-				var self = this;
-				return this.setChildren((function(self) {
-					var __ = self.__, _$ = (__.A = __.A || []);
+				var self = this, __ = self.__;
+				return this.setChildren((function() {
+					var t0, _$ = (__.A = __.A || []);
 					for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
-						res.push((_$[i] = _$[i] || tag$.$li()).setContent(ary[i],3).end());
+						res.push((t0 = _$[i] = _$[i] || tag$.$li()).setContent(ary[i],3).end());
 					};
 					return res;
-				})(self),3).synced();
+				})(),3).synced();
 			};
 		});
 		
@@ -8598,12 +8598,12 @@
 			tag.prototype.render = function (texts){
 				var self = this;
 				if(texts === undefined) texts = [];
-				return this.setChildren((function(self) {
+				return this.setChildren((function() {
 					for (var i = 0, ary = iter$(texts), len = ary.length, res = []; i < len; i++) {
 						res.push(ary[i]);
 					};
 					return res;
-				})(self),3).synced();
+				})(),3).synced();
 			};
 		});
 		
