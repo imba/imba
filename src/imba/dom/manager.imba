@@ -25,7 +25,7 @@ class Imba.TagManagerClass
 		return unless $web$
 
 		unless @mountable.indexOf(node) >= 0
-			node.@mounted = 2 # use bitmask instead?
+			node.@mounted = 2
 			@mountable.push(node)
 
 	def refresh
@@ -57,6 +57,7 @@ class Imba.TagManagerClass
 		
 		if count
 			@mountable = @mountable.filter do |item| item
+
 		self
 
 	def tryUnmount
@@ -73,7 +74,6 @@ class Imba.TagManagerClass
 				count++
 		
 		if count
-			# console.log "unmounted {count} nodes"
 			@mounted = @mounted.filter do |item| item
 
 		self

@@ -28,7 +28,6 @@ class Imba.EventManager
 		listeners = []
 		delegators = {}
 		delegator = do |e| 
-			# console.log "delegating event?! {e}"
 			delegate(e)
 			return true
 
