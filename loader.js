@@ -6,7 +6,8 @@ module.exports = function(content) {
 	var opts = {
 		sourceMap: this.sourceMap,
 		sourcePath: this.resourcePath,
-		target: this.target
+		target: this.target,
+		bare: true
 	};
 
 	var result = compiler.compile(content, opts);

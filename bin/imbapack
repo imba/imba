@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+
+var path = require('path');
+var fs = require('fs');
+var dir = path.join(path.dirname(fs.realpathSync(__filename)), '../');
+
+// Return the module for webpack
+if(require.main !== module){
+	module.exports = {
+		module: {
+			loaders: [{
+				"test": /\.imba$/,
+				"loader": dir + "/loader.js"
+			}]
+		},
+		resolve: {
+			extensions: ['', '.js', '.imba'],
+			alias: { imba$: dir + "/src/imba/index.imba" }
+		}
+	}
+	return;
+}
+
+var cp = require('child_process');
+var args = process.argv.slice(2);
+
+args.push("--config " + dir + 'bin/imbapack');
+
+cp.exec('which webpack',function(e,stdout,stderr){
+
+	if(stdout.length == 0){
+		process.stdout.write("Webpack need to be installed:\n");
+		process.stdout.write("\tnpm install -g webpack");
+		process.exit(0);
+	}
+
+	var packer = cp.exec('webpack ' + args.join(' '));
+	packer.stderr.pipe(process.stderr);
+	packer.stdout.pipe(process.stdout);
+	
+});

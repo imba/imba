@@ -51,7 +51,8 @@
   "main": "./index.js",
   "webpack": "./index",
   "bin": {
-    "imba": "./bin/imba"
+    "imba": "./bin/imba",
+    "imbapack": "./bin/imbapack"
   },
   "preferGlobal": true,
   "homepage": "http://imba.io",
