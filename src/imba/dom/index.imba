@@ -23,7 +23,8 @@ if $web$
 	Imba.Events = Imba.EventManager.new(Imba.document, events: [
 		:keydown,:keyup,:keypress,:textInput,:input,:change,:submit,
 		:focusin,:focusout,:blur,:contextmenu,:dblclick,
-		:mousewheel,:wheel,:scroll
+		:mousewheel,:wheel,:scroll,
+		:beforecopy, :copy, :beforepaste, :paste, :beforecut, :cut
 	])
 
 	var hasTouchEvents = window && window:ontouchstart !== undefined

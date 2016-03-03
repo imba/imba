@@ -579,7 +579,7 @@ class Imba.Tag
 	
 	@return {self}
 	###
-	def schedule options = {}
+	def schedule options = {events: yes}
 		scheduler.configure(options).activate
 		self
 

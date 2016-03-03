@@ -23,7 +23,7 @@ class Imba.TagManagerClass
 
 	def mount node
 		return unless $web$
-
+		# is this happening inside the runloop?
 		unless @mountable.indexOf(node) >= 0
 			node.@mounted = 2
 			@mountable.push(node)

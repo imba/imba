@@ -60,6 +60,8 @@ class Imba.Event
 	### A {Boolean} indicating whether the event bubbles up or not ###
 	prop bubble type: Boolean, chainable: yes
 
+	prop responder
+
 	def self.wrap e
 		self.new(e)
 	
@@ -186,6 +188,7 @@ class Imba.Event
 			@redirect = null
 			if var node = tag(domnode) # not only tag 
 
+				# FIXME No longer used? 
 				if node[meth] isa String
 					# should remember the receiver of the event
 					meth = node[meth]
@@ -200,6 +203,9 @@ class Imba.Event
 					@responder ||= node
 					# should autostop bubble here?
 					args ? node[meth].apply(node,args) : node[meth](self,data)
+
+				if node:onevent
+					node.onevent(self)
 					
 			# add node.nextEventResponder as a separate method here?
 			unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
@@ -210,7 +216,7 @@ class Imba.Event
 
 
 	def processed
-		Imba.emit(Imba,'event',[self]) unless @silenced
+		Imba.emit(Imba,'event',[self]) if !@silenced and @responder
 		self
 
 	###

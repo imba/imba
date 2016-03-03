@@ -1,46 +1,88 @@
 
-var raf # very simple raf polyfill
-raf ||= global:requestAnimationFrame
-raf ||= global:webkitRequestAnimationFrame
-raf ||= global:mozRequestAnimationFrame
-raf ||= do |blk| setTimeout(blk,1000 / 60)
+var requestAnimationFrame # very simple raf polyfill
+var cancelAnimationFrame
+
+if $node$
+	cancelAnimationFrame = do |id| clearTimeout(id)
+	requestAnimationFrame = do |blk| setTimeout(blk,1000 / 60)
+
+if $web$
+	cancelAnimationFrame = window:cancelAnimationFrame || window:mozCancelAnimationFrame || window:webkitRequestAnimationFrame
+	requestAnimationFrame = window:requestAnimationFrame
+	requestAnimationFrame ||= window:webkitRequestAnimationFrame
+	requestAnimationFrame ||= window:mozRequestAnimationFrame
+	requestAnimationFrame ||= do |blk| setTimeout(blk,1000 / 60)
+
+class Ticker
+
+	prop stage
+
+	def initialize
+		@queue = []
+		@stage = -1
+		@scheduled = no
+		@ticker = do |e|
+			@scheduled = no
+			tick(e)
+		self
+
+	def add item
+		@queue.push(item)
+		schedule unless @scheduled
+
+	def tick e
+		var items = @queue
+		@queue = []
+		@stage = 1
+		before
+		if items:length
+			for item,i in items
+				if item isa Function
+					item(e) 
+				elif item:tick
+					item.tick(e,self)
+		@stage = 2
+		after
+		@stage = 0
+		self
+
+	def schedule
+		if !@scheduled
+			@scheduled = yes
+			requestAnimationFrame(@ticker)
+		self
+
+	def before
+		# Imba.Scheduler.willRun
+		self
+
+	def after
+		# Imba.Scheduler.didRun
+		Imba.commit
+		self
+
+Imba.TICKER = Ticker.new
 
 def Imba.tick d
-	raf(Imba.ticker) if @scheduled
-	Imba.Scheduler.willRun
-	emit(self,'tick',[d])
-	Imba.Scheduler.didRun
+	# raf(Imba.ticker) if @scheduled
+	# Imba.Scheduler.willRun
+	# emit(self,'tick',[d])
+	# Imba.Scheduler.didRun
 	return
 
+def Imba.commit
+	Imba.TagManager.refresh
+
 def Imba.ticker
-	@ticker ||= do |e| tick(e)
+	@ticker ||= do |e|
+		Imba.SCHEDULED = no
+		Imba.tick(e)
 
-###
+def Imba.requestAnimationFrame callback
+	requestAnimationFrame(callback)
 
-Global alternative to requestAnimationFrame. Schedule a target
-to tick every frame. You can specify which method to call on the
-target (defaults to tick).
-
-###
-def Imba.schedule target, method = 'tick'
-	listen(self,'tick',target,method)
-	# start scheduling now if this was the first one
-	unless @scheduled
-		@scheduled = yes
-		raf(Imba.ticker)
-	self
-
-###
-
-Unschedule a previously scheduled target
-
-###
-def Imba.unschedule target, method
-	unlisten(self,'tick',target,method)
-	var cbs = self:__listeners__ ||= {}
-	if !cbs:tick or !cbs:tick:next or !cbs:tick:next:listener
-		@scheduled = no
-	self
+def Imba.cancelAnimationFrame id
+	cancelAnimationFrame(id)
 
 ###
 
@@ -52,7 +94,8 @@ after the timeout to let schedulers update (to rerender etc) afterwards.
 def Imba.setTimeout delay, &block
 	setTimeout(&,delay) do
 		block()
-		Imba.Scheduler.markDirty
+		Imba.commit
+		# Imba.Scheduler.markDirty
 		# Imba.emit(Imba,'timeout',[block])
 
 ###
@@ -65,7 +108,8 @@ after every interval to let schedulers update (to rerender etc) afterwards.
 def Imba.setInterval interval, &block
 	setInterval(&,interval) do
 		block()
-		Imba.Scheduler.markDirty
+		Imba.commit
+		# Imba.Scheduler.markDirty
 		# Imba.emit(Imba,'interval',[block])
 
 ###
@@ -82,6 +126,34 @@ def Imba.clearTimeout timeout
 
 # should add an Imba.run / setImmediate that
 # pushes listener onto the tick-queue with times - once
+
+
+###
+
+Global alternative to requestAnimationFrame. Schedule a target
+to tick every frame. You can specify which method to call on the
+target (defaults to tick).
+
+###
+def Imba.schedule target, method = 'tick'
+	listen(self,'tick',target,method)
+	# start scheduling now if this was the first one
+	unless @scheduled
+		@scheduled = yes
+		requestAnimationFrame(Imba.ticker)
+	self
+
+###
+
+Unschedule a previously scheduled target
+
+###
+def Imba.unschedule target, method
+	unlisten(self,'tick',target,method)
+	var cbs = self:__listeners__ ||= {}
+	if !cbs:tick or !cbs:tick:next or !cbs:tick:next:listener
+		@scheduled = no
+	self
 
 
 ###
@@ -124,15 +196,41 @@ class Imba.Scheduler
 		@marked = no
 		@active = no
 		@marker = do mark
-		@ticker = do |e| tick(e)
-		
-		@events = yes
-		@fps = 1
+
+		@ticker = do |e|
+			# @scheduled = no
+			tick(e)
 
 		@dt = 0
+		@state = {raf: no, event: no, interval: no}
+		@scheduled = no
 		@timestamp = 0
 		@ticks = 0
 		@flushes = 0
+		self
+
+	prop raf watch: yes
+	prop interval watch: yes
+	prop events watch: yes
+
+	def rafDidSet bool
+		console.log 'rafDidSet'
+		@state:raf = bool
+		requestTick if bool
+		self
+
+	def intervalDidSet time
+		clearInterval(@intervalId)
+
+		if time
+			@intervalId = Imba.setInterval(time,@ticker)
+		self
+
+	def eventsDidSet new, prev
+		if new
+			Imba.listen(Imba,'event',self,'onevent')
+		else
+			Imba.unlisten(Imba,'event',self,'onevent')
 
 	###
 	Check whether the current scheduler is active or not
@@ -152,9 +250,12 @@ class Imba.Scheduler
 	Configure the scheduler
 	@return {self}
 	###
-	def configure fps: 1, events: yes
-		@events = events if events != null
-		@fps = fps if fps != null
+	def configure o = {} # fps: 1, events: yes
+		raf = o:raf if o:raf != undefined
+		interval = o:interval if o:interval != undefined
+		events = o:events if o:events != undefined
+		# @events = events if events != null
+		# @fps = fps if fps != null
 		self
 
 	###
@@ -163,7 +264,9 @@ class Imba.Scheduler
 	@return {self}
 	###
 	def mark
-		@marked = yes
+		if !@scheduled
+			# console.log('Scheduler was #marked')
+			requestTick
 		self
 
 	###
@@ -175,7 +278,7 @@ class Imba.Scheduler
 	def flush
 		@marked = no
 		@flushes++
-		@target.tick
+		@target.tick(@state,self)
 		self
 
 	###
@@ -197,30 +300,19 @@ class Imba.Scheduler
 	@return {self}
 	###
 	def tick delta
+		# console.log("ticking",@target.dom)
+		@scheduled = no
 		@ticks++
 		@dt = delta
+		flush
+		requestTick if @raf and !@scheduled
+		self
 
-		let fps = @fps
-		
-		if fps == 60
-			@marked = yes
-		elif fps == 30
-			@marked = yes if @ticks % 2
-		elif fps
-			# if it is less round - we trigger based
-			# on date, for consistent rendering.
-			# ie, if you want to render every second
-			# it is important that no two renders
-			# happen during the same second (according to Date)
-			let period = ((60 / fps) / 60) * 1000
-			let beat = Math.floor(Date.now / period)
-
-			if @beat != beat
-				@beat = beat
-				@marked = yes
-
-		flush if @marked or (@events and Imba.Scheduler.isDirty)
-		# reschedule if @active
+	def requestTick
+		# console.log 'Scheduler requestTick'
+		unless @scheduled
+			@scheduled = yes
+			Imba.TICKER.add(self)
 		self
 
 	###
@@ -237,8 +329,9 @@ class Imba.Scheduler
 			# override target#commit while this is active
 			@commit = @target:commit
 			@target:commit = do this
-			Imba.schedule(self)
-			Imba.listen(Imba,'event',self,'onevent') if @events
+			# should track when commit comes from 
+			# Imba.schedule(self)
+			# Imba.listen(Imba,'event',self,'onevent') if @events
 			@target?.flag('scheduled_')
 			tick(0) # start ticking
 		return self
@@ -247,11 +340,17 @@ class Imba.Scheduler
 	Stop the scheduler if it is active.
 	###
 	def deactivate
+		console.log 'deactivate scheduler'
+		@restoreState = {events: events, raf: raf, interval: interval}
+		events = no
+		raf = no
+		interval = 0
+
 		if @active
 			@active = no
 			@target:commit = @commit
-			Imba.unschedule(self)
-			Imba.unlisten(Imba,'event',self)
+			# Imba.unschedule(self)
+			# Imba.unlisten(Imba,'event',self)
 			@target?.unflag('scheduled_')
 		return self
 
@@ -259,12 +358,12 @@ class Imba.Scheduler
 		@marker
 
 	def onevent event
-		return self if @marked
+		return self if @marked or !@events
 
 		if @events isa Function
 			mark if @events(event)	
 		elif @events isa Array
 			mark if event?.type in @events
-		elif @events
-			mark if event.@responder
+		else
+			mark
 		self
