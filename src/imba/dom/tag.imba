@@ -289,7 +289,6 @@ class Imba.Tag
 	of the target node. If the content is already a child of node it
 	will be moved to the end.
 	
-	# example
 	    var root = <div.root>
 	    var item = <div.item> "This is an item"
 	    root.append item # appends item to the end of root

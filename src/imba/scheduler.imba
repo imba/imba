@@ -250,12 +250,10 @@ class Imba.Scheduler
 	Configure the scheduler
 	@return {self}
 	###
-	def configure o = {} # fps: 1, events: yes
-		raf = o:raf if o:raf != undefined
-		interval = o:interval if o:interval != undefined
-		events = o:events if o:events != undefined
-		# @events = events if events != null
-		# @fps = fps if fps != null
+	def configure options = {} # fps: 1, events: yes
+		raf = options:raf if options:raf != undefined
+		interval = options:interval if options:interval != undefined
+		events = options:events if options:events != undefined
 		self
 
 	###

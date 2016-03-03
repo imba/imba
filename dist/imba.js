@@ -627,14 +627,12 @@
 		@return {self}
 		*/
 
-	Imba.Scheduler.prototype.configure = function (o){ // fps: 1, events: yes
+	Imba.Scheduler.prototype.configure = function (options){ // fps: 1, events: yes
 		var v_;
-		if(o === undefined) o = {};
-		if (o.raf != undefined) { (this.setRaf(v_ = o.raf),v_) };
-		if (o.interval != undefined) { (this.setInterval(v_ = o.interval),v_) };
-		if (o.events != undefined) { (this.setEvents(v_ = o.events),v_) };
-		// @events = events if events != null
-		// @fps = fps if fps != null
+		if(options === undefined) options = {};
+		if (options.raf != undefined) { (this.setRaf(v_ = options.raf),v_) };
+		if (options.interval != undefined) { (this.setInterval(v_ = options.interval),v_) };
+		if (options.events != undefined) { (this.setEvents(v_ = options.events),v_) };
 		return this;
 	};
 
@@ -1338,7 +1336,6 @@
 		of the target node. If the content is already a child of node it
 		will be moved to the end.
 		
-		# example
 		    var root = <div.root>
 		    var item = <div.item> "This is an item"
 		    root.append item # appends item to the end of root
