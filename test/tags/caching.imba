@@ -1,3 +1,5 @@
+extern describe, test, ok, eq, it
+
 var a = 0
 var b = 0
 var c = 0

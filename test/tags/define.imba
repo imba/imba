@@ -1,6 +1,4 @@
-extern eq, ok
-
-
+extern describe, test, ok, eq, it
 
 <a>
 <a.a.b>

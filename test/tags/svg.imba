@@ -1,7 +1,7 @@
 # to run these tests, simply open the imbadir/test/dom.html in your browser and
 # open the console / developer tools.
 
-extern describe, test, eq
+extern describe, test, ok, eq, it
 
 describe "Tags - SVG" do
 
