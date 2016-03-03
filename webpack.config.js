@@ -52,13 +52,16 @@ function pkg(options){
 
 module.exports = [pkg({
 	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.dev.js" }
+	output: { filename: "./dist/imba.dev.js" },
+	node: {fs: "empty", process: "empty", global: false}
 }),pkg({
 	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.js" }
+	output: { filename: "./dist/imba.js" },
+	node: {fs: "empty", process: "empty", global: false}
 }),pkg({
 	entry: "./src/imba/index.imba",
 	output: { filename: "./dist/imba.min.js" },
+	node: {fs: "empty", process: "empty", global: false},
 	plugins: [minify]
 }),pkg({
 	entry: "./src/compiler/compiler.imba",
@@ -75,6 +78,6 @@ module.exports = [pkg({
 	entry: "./test/index.imba",
 	output: { filename: "./test/client.js"},
 	target: 'web',
-	node: {fs: "empty", process: "empty"}
+	node: {fs: "empty", process: "empty", global: false}
 })]
 
