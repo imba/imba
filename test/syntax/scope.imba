@@ -1,5 +1,4 @@
-
-extern eq
+extern describe, test, ok, eq, it
 
 class A
 	

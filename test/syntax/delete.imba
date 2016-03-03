@@ -1,3 +1,5 @@
+extern describe, test, ok, eq, it
+
 describe 'Syntax - Delete' do
 
 	test "should return value" do

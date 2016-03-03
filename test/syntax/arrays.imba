@@ -1,5 +1,4 @@
-
-# self = SPEC
+extern describe, test, ok, eq
 
 describe 'Syntax - Arrays' do
 

@@ -1,3 +1,4 @@
+extern describe, test, ok, eq, it
 
 def check sel, query
 	eq(sel.query,query)

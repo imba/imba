@@ -1,3 +1,5 @@
+extern describe, test, ok, eq, it
+
 def fn blk, time
 	return blk(time)
 	

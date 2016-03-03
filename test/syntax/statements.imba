@@ -1,11 +1,11 @@
+extern describe, test, ok, eq, it
+
 var ary = [1,2,3]
 var rets = for v in ary
 	v + 1
 
 var str = "{ary[0]} {ary[1]} {ary[2]}"
 
-
-		
 
 describe "Syntax - Statements" do
 

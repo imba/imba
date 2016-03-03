@@ -1,6 +1,4 @@
-# self = SPEC
-
-extern eq
+extern describe, test, ok, eq, it
 
 class O
 
@@ -236,15 +234,7 @@ describe 'Syntax - Assignment' do
 		# e and= f or true
 		# eq false, e
 
-	test "compound assignment as a sub expression" do
-		p "no support for compound assigns yet"
-		# [a, b, c] = [1, 2, 3]
-		# eq 6, (a + b += c)
-		# eq 1, a
-		# eq 5, b
-		# eq 3, c
-#
-#	# *note: this test could still use refactoring*
+	# *note: this test could still use refactoring*
 	test "compound assignment should be careful about caching variables" do
 		var count = 0
 		var list = []

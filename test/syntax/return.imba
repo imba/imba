@@ -1,6 +1,8 @@
+extern describe, test, ok, eq, it
+
 describe 'Syntax - Return' do
 
-	local class SyntaxReturn
+	class SyntaxReturn
 
 		def none
 			return

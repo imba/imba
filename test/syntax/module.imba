@@ -1,4 +1,4 @@
-
+extern describe, test, ok, eq, it
 
 export def hello
 	return "world"

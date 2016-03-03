@@ -1,3 +1,5 @@
+extern describe, test, ok, eq, it
+
 describe "Syntax - Literals" do
 
 

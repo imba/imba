@@ -1,3 +1,4 @@
+extern describe, test, ok, eq, it
 
 # import two specific items from module
 import Item,hello from './module'

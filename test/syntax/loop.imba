@@ -1,4 +1,4 @@
-# self = SPEC
+extern describe, test, ok, eq, it
 
 class SyntaxLoopsObj
 	prop value

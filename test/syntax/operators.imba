@@ -1,6 +1,6 @@
-# package imba.ast
+extern describe, test, ok, eq, it
 
-local class Cache
+class Cache
 
 	prop gets
 
@@ -12,8 +12,9 @@ local class Cache
 		@gets++
 		@value
 
-local class Group
+class Group
 	prop items
+
 	def initialize items do @items = items
 	def toString do @items.toString
 	def __union other do Group.new(@items ∪ other.items)

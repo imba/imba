@@ -1,15 +1,4 @@
-
-# self = SPEC
-
-# module A
-# 
-# 	class B
-# 
-# 		class C
-# 
-# 			def type
-# 				'harroo'
-# local scope
+extern describe, test, ok, eq, it
 
 class Organism
 

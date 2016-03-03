@@ -1,3 +1,4 @@
+extern describe, test, ok, eq, it
 
 describe 'Syntax - Existential operator' do
 

@@ -1,5 +1,6 @@
+extern describe, test, ok, eq, it
 
-local class Organism
+class Organism
 
 	prop alias
 	prop group
@@ -15,7 +16,7 @@ local class Organism
 	def speak do 'ghaarg'
 	def alive do yes
 
-local class Virus < Organism
+class Virus < Organism
 
 	def initialize
 		@ivar = 2
@@ -26,7 +27,7 @@ local class Virus < Organism
 	def name
 		'virus'
 
-local class Animal < Organism
+class Animal < Organism
 	
 	def initialize
 		group = "animal"
@@ -35,7 +36,7 @@ local class Animal < Organism
 		# super should do the same as super.lineage(*arguments)
 		"animal.{super}"
 
-local class Cat < Animal
+class Cat < Animal
 	
 	def initialize
 		group = "cat"
@@ -51,7 +52,7 @@ local class Cat < Animal
 		super.initialize
 		
 
-local class Dog < Animal
+class Dog < Animal
 
 	def lineage
 		"dog.{super()}"
@@ -59,13 +60,13 @@ local class Dog < Animal
 	def speak
 		'woff'
 
-local class FakeDog < Dog
+class FakeDog < Dog
 	
 	def lineage
 		"fakedog.{super.super}"
 		"fakedog.{super.super()}"
 
-local class Human < Animal
+class Human < Animal
 
 	def initialize
 		@human = yes
@@ -76,14 +77,14 @@ local class Human < Animal
 	def speak
 		'hello'
 
-local class Zombie < Human
+class Zombie < Human
 
 	def lineage do "zombie.{super}"
 
 	def alive
 		no
 
-local class Human.Child < Human
+class Human.Child < Human
 
 	def initialize
 		super

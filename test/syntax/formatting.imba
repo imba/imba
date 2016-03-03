@@ -1,3 +1,4 @@
+extern describe, test, ok, eq, it
 
 def chk str,fn
 	var stripped = fn.toString.replace(/^function\s?\(\)\s?\{\s*(return )?/,'').replace(/\;?\s*\}\s*$/,'')
