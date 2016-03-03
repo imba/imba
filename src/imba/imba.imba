@@ -1,4 +1,5 @@
-var isClient = (typeof window == 'object' and this == window)
+
+var isClient = (typeof window == 'object' and typeof document == 'object')
 
 if isClient
 	ENV_TARGET = 'web'
