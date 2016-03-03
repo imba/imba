@@ -145,7 +145,7 @@
 	*/
 
 	Imba = {
-		VERSION: '0.15.0-alpha.1',
+		VERSION: '0.15.0-alpha.2',
 		CLIENT: isClient,
 		SERVER: !isClient,
 		DEBUG: false
@@ -5007,7 +5007,9 @@
 
 	SPEC = new Spec();
 
-	// global def p do console.log(*arguments)
+	p = function p(){
+		return console.log.apply(console,arguments);
+	};
 	describe = function describe(name,blk){
 		return SPEC.context().describe(name,blk);
 	};
