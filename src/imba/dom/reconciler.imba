@@ -214,8 +214,7 @@ def reconcileNested root, new, old, caret
 
 	elif new isa Imba.Tag
 		removeNested(root,old,caret) unless oldIsNull
-		insertNestedAfter(root,new,caret)
-		return new
+		return insertNestedAfter(root,new,caret)
 
 	elif newIsNull
 		removeNested(root,old,caret) unless oldIsNull
