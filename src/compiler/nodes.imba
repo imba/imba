@@ -2316,6 +2316,9 @@ export class Func < Code
 		@variable = null
 		self
 
+	def nonlocals
+		@scope.@nonlocals
+
 	def visit
 		scope.visit
 		@context = scope.parent
@@ -5772,16 +5775,27 @@ export class Tag < Node
 
 				pcache = aval.isPrimitive
 
+
 				if akey[0] == '.'
 					pcache = no
 					pjs = ".flag({quote(akey.substr(1))},{aval.c})"
 				elif akey[0] == ':'
-					# TODO need to analyze whether this is static or not
 					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c})"
+
 				elif akey.substr(0,5) == 'data-'
 					pjs = ".dataset('{akey.slice(5)}',{aval.c})"
 				else
 					pjs = ".{mark__(part.key)}{helpers.setterSym(akey)}({aval.c})"
+
+				if aval isa Parens
+					aval = aval.value
+
+				# if the value is a function which does not refer to any outer
+				# variables (besides self), we can make it static, so as to not
+				# recreate the function on every render
+				if aval isa Func and !aval.nonlocals
+					pcache = yes
+
 
 			elif part isa TagFlag
 				if part.value isa Node
@@ -6774,10 +6788,13 @@ export class Scope
 		var ret = null
 		name = helpers.symbolize(name)
 		if @varmap.hasOwnProperty(name)
-			ret = @varmap[name] 
+			ret = @varmap[name]
 		else
 			ret = parent && parent.lookup(name)
-			# or -- not all scopes have a parent?
+
+			if ret
+				@nonlocals ||= {}
+				@nonlocals[name] = ret
 		ret
 
 	def autodeclare variable

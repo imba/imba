@@ -7308,6 +7308,10 @@ var Imbac =
 		return FunctionScope;
 	};
 
+	Func.prototype.nonlocals = function (){
+		return this._scope._nonlocals;
+	};
+
 	Func.prototype.visit = function (){
 		this.scope().visit();
 		this._context = this.scope().parent();
@@ -11404,16 +11408,27 @@ var Imbac =
 				
 				pcache = aval.isPrimitive();
 				
+				
 				if (akey[0] == '.') {
 					pcache = false;
 					pjs = (".flag(" + quote(akey.substr(1)) + "," + (aval.c()) + ")");
 				} else if (akey[0] == ':') {
-					// TODO need to analyze whether this is static or not
 					pjs = (".setHandler(" + quote(akey.substr(1)) + "," + (aval.c()) + "," + (scope.context().c()) + ")");
 				} else if (akey.substr(0,5) == 'data-') {
 					pjs = (".dataset('" + akey.slice(5) + "'," + (aval.c()) + ")");
 				} else {
 					pjs = ("." + mark__(part.key()) + helpers.setterSym(akey) + "(" + (aval.c()) + ")");
+				};
+				
+				if (aval instanceof Parens) {
+					aval = aval.value();
+				};
+				
+				// if the value is a function which does not refer to any outer
+				// variables (besides self), we can make it static, so as to not
+				// recreate the function on every render
+				if ((aval instanceof Func) && !aval.nonlocals()) {
+					pcache = true;
 				};
 			} else if (part instanceof TagFlag) {
 				if (part.value() instanceof Node) {
@@ -12614,7 +12629,11 @@ var Imbac =
 			ret = this._varmap[name];
 		} else {
 			ret = this.parent() && this.parent().lookup(name);
-			// or -- not all scopes have a parent?
+			
+			if (ret) {
+				this._nonlocals || (this._nonlocals = {});
+				this._nonlocals[name] = ret;
+			};
 		};
 		return ret;
 	};
