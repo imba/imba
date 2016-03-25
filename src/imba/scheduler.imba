@@ -53,21 +53,15 @@ class Ticker
 		self
 
 	def before
-		# Imba.Scheduler.willRun
 		self
 
 	def after
-		# Imba.Scheduler.didRun
 		Imba.commit
 		self
 
 Imba.TICKER = Ticker.new
 
 def Imba.tick d
-	# raf(Imba.ticker) if @scheduled
-	# Imba.Scheduler.willRun
-	# emit(self,'tick',[d])
-	# Imba.Scheduler.didRun
 	return
 
 def Imba.commit
@@ -196,10 +190,7 @@ class Imba.Scheduler
 		@marked = no
 		@active = no
 		@marker = do mark
-
-		@ticker = do |e|
-			# @scheduled = no
-			tick(e)
+		@ticker = do |e| tick(e)
 
 		@dt = 0
 		@state = {raf: no, event: no, interval: no}
@@ -214,7 +205,6 @@ class Imba.Scheduler
 	prop events watch: yes
 
 	def rafDidSet bool
-		console.log 'rafDidSet'
 		@state:raf = bool
 		requestTick if bool
 		self
@@ -263,7 +253,6 @@ class Imba.Scheduler
 	###
 	def mark
 		if !@scheduled
-			# console.log('Scheduler was #marked')
 			requestTick
 		self
 
@@ -274,7 +263,6 @@ class Imba.Scheduler
 	@return {self}
 	###
 	def flush
-		@marked = no
 		@flushes++
 		@target.tick(@state,self)
 		self
@@ -298,7 +286,6 @@ class Imba.Scheduler
 	@return {self}
 	###
 	def tick delta
-		# console.log("ticking",@target.dom)
 		@scheduled = no
 		@ticks++
 		@dt = delta
@@ -307,7 +294,6 @@ class Imba.Scheduler
 		self
 
 	def requestTick
-		# console.log 'Scheduler requestTick'
 		unless @scheduled
 			@scheduled = yes
 			Imba.TICKER.add(self)
@@ -324,21 +310,16 @@ class Imba.Scheduler
 	def activate
 		unless @active
 			@active = yes
-			# override target#commit while this is active
 			@commit = @target:commit
 			@target:commit = do this
-			# should track when commit comes from 
-			# Imba.schedule(self)
-			# Imba.listen(Imba,'event',self,'onevent') if @events
 			@target?.flag('scheduled_')
-			tick(0) # start ticking
+			tick(0) # should not always force tick here?
 		return self
 
 	###
 	Stop the scheduler if it is active.
 	###
 	def deactivate
-		console.log 'deactivate scheduler'
 		@restoreState = {events: events, raf: raf, interval: interval}
 		events = no
 		raf = no
@@ -356,7 +337,7 @@ class Imba.Scheduler
 		@marker
 
 	def onevent event
-		return self if @marked or !@events
+		return self if @scheduled or !@events
 
 		if @events isa Function
 			mark if @events(event)	

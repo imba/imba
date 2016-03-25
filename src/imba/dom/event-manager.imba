@@ -24,7 +24,6 @@ class Imba.EventManager
 
 	def initialize node, events: []
 		root = node
-		count = 0
 		listeners = []
 		delegators = {}
 		delegator = do |e| 
@@ -60,7 +59,6 @@ class Imba.EventManager
 		self
 
 	def delegate e
-		count += 1
 		var event = Imba.Event.wrap(e)
 		event.process
 		self
