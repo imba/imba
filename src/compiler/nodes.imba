@@ -5165,7 +5165,7 @@ export class ForOf < For
 		var vars = o:vars = {}
 
 		var src = vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
-		var v = vars:value = scope.declare(o:index,null,let: yes) if o:index
+		var v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
 		
 		# possibly proxy the index-variable?
 
