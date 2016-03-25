@@ -4378,18 +4378,13 @@ var Imbac =
 	};
 
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-	var AST, OP, OP_COMPOUND, NODES, SPLAT, STACK, K_IVAR, K_SYM, K_STR, K_PROP, BR, BR2, SELF, SUPER, TRUE, FALSE, UNDEFINED, NIL, ARGUMENTS, EMPTY, NULL, RESERVED, RESERVED_REGEX, UNION, INTERSECT, CLASSDEF, TAGDEF, NEWTAG;
+	var AST, OP, OP_COMPOUND, NODES, SPLAT, STACK, BR, BR2, SELF, SUPER, TRUE, FALSE, UNDEFINED, NIL, ARGUMENTS, EMPTY, NULL, RESERVED, RESERVED_REGEX, UNION, INTERSECT, CLASSDEF, TAGDEF, NEWTAG;
 	// TODO Create Expression - make all expressions inherit from these?
 
-	// externs;
-
 	var helpers = __webpack_require__(2);
-	var ERR = __webpack_require__(5);
-	var v8 = null; // require 'v8-natives'
 
-	var T = __webpack_require__(1);
-	var Token = T.Token;
-
+	var ImbaParseError = __webpack_require__(5).ImbaParseError;
+	var Token = __webpack_require__(1).Token;
 	var SourceMap = __webpack_require__(8).SourceMap;
 
 	module.exports.AST = AST = {};
@@ -4397,7 +4392,6 @@ var Imbac =
 	// Helpers for operators
 	module.exports.OP = OP = function(op,l,r) {
 		var o = String(op);
-		// console.log "operator",o
 		switch (o) {
 			case '.':
 				if ((typeof r=='string'||r instanceof String)) { r = new Identifier(r) };
@@ -4427,9 +4421,9 @@ var Imbac =
 			
 			case '?.':
 				if (r instanceof VarOrAccess) {
-					// console.log "is var or access"
 					r = r.value();
 				};
+				
 				// depends on the right side - this is wrong
 				return new PropertyAccess(op,l,r);
 				break;
@@ -4561,7 +4555,7 @@ var Imbac =
 		if (o.lexer) {
 			var token = o.lexer.yytext;
 			// console.log o:lexer:pos,token.@loc
-			err = new ERR.ImbaParseError({message: str},{
+			err = new ImbaParseError({message: str},{
 				pos: o.lexer.pos,
 				tokens: o.lexer.tokens,
 				token: o.lexer.yytext,
@@ -4737,17 +4731,7 @@ var Imbac =
 		return this._close && this._close._loc || 0;
 	};
 
-	// should rather parse and extract the comments, no?
 	Indentation.prototype.wrap = function (str){
-		// var pre, post
-		
-		// console.log "INDENT {@open and JSON.stringify(@open.@meta)}"
-		// console.log "OUTDENT {@close}"
-		// var ov = @open and @open.@value
-		// if ov and ov:length > 1
-		// 	console.log "value for indent",ov
-		// 	if ov.indexOf('%|%')
-		// 		pre = ov.substr
 		var om = this._open && this._open._meta;
 		var pre = om && om.pre || '';
 		var post = om && om.post || '';
@@ -4999,7 +4983,6 @@ var Imbac =
 	};
 
 	Node.prototype.set = function (obj){
-		// console.log "setting options {JSON.stringify(obj)}"
 		this._options || (this._options = {});
 		for (var i = 0, keys = Object.keys(obj), l = keys.length; i < l; i++){
 			this._options[keys[i]] = obj[keys[i]];
@@ -5010,7 +4993,6 @@ var Imbac =
 	// get and set
 	Node.prototype.option = function (key,val){
 		if (val != undefined) {
-			// console.log "setting option {key} {val}"
 			this._options || (this._options = {});
 			this._options[key] = val;
 			return this;
@@ -5240,8 +5222,6 @@ var Imbac =
 		s.push(this);
 		if (o && o.expression) this.forceExpression();
 		
-		v8 && console.log(v8.hasFastObjectElements(this));
-		
 		if (o && o.indent) {
 			this._indentation || (this._indentation = INDENT);
 		};
@@ -5374,13 +5354,7 @@ var Imbac =
 	};
 
 	Terminator.prototype.c = function (){
-		// TODO this can contain several newlines
-		// for sourcemaps it would be nice to parse this
-		// and fix it up mark__(@value) + 
 		return this._value.c();
-		// var v = value.replace(/\\n/g,'\n')
-		// v # .split()
-		// v.split("\n").map(|v| v ? " // {v}" : v).join("\n")
 	};
 
 	function Newline(v){
@@ -5466,8 +5440,6 @@ var Imbac =
 	ListNode.prototype.slice = function (a,b){
 		return new this.constructor(this._nodes.slice(a,b));
 	};
-
-
 
 	ListNode.prototype.break = function (br,pre){
 		if(pre === undefined) pre = false;
@@ -5586,7 +5558,7 @@ var Imbac =
 			node = ary[i];
 			if (node && !node.isExpressable()) { return false };
 		};
-		// return no unless nodes.every(|v| v.isExpressable )
+		
 		return true;
 	};
 
@@ -5636,20 +5608,6 @@ var Imbac =
 	exports.ArgList = ArgList; // export class 
 
 
-	//	def indented a,b
-	//		if a isa Indentation
-	//			@indentation = a
-	//			return self
-	//
-	//		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
-	//		self
-
-	// def hasSplat
-	// 	@nodes.some do |v| v isa Splat
-	// def delimiter
-	// 	","
-
-
 	function AssignList(){ return ArgList.apply(this,arguments) };
 
 	subclass$(AssignList,ArgList);
@@ -5668,7 +5626,6 @@ var Imbac =
 
 	function Block(list){
 		this.setup();
-		// @nodes = compact__(flatten__(list)) or []
 		this._nodes = list || [];
 		this._head = null;
 		this._indentation = null;
@@ -5699,10 +5656,6 @@ var Imbac =
 	Block.prototype.block = function (){
 		return this;
 	};
-
-	// def indented a,b
-	// 	@indentation ||= a and b ? Indentation.new(a,b) : INDENT
-	// 	self
 
 	Block.prototype.loc = function (){
 		// rather indents, no?
@@ -5869,7 +5822,7 @@ var Imbac =
 				this.replace(before,after);
 			};
 		};
-		// really?
+		
 		return this;
 	};
 
@@ -6063,9 +6016,6 @@ var Imbac =
 	function Return(v){
 		this._traversed = false;
 		this._value = (v instanceof ArgList) && v.count() == 1 ? (v.last()) : (v);
-		// @prebreak = v and v.@prebreak
-		// console.log "return?!? {v}",@prebreak
-		// if v isa ArgList and v.count == 1
 		return this;
 	};
 
@@ -6128,7 +6078,7 @@ var Imbac =
 
 	function LoopFlowStatement(lit,expr){
 		this.setLiteral(lit);
-		this.setExpression(expr); // && ArgList.new(expr) # really?
+		this.setExpression(expr);
 	};
 
 	subclass$(LoopFlowStatement,Statement);
@@ -6197,7 +6147,7 @@ var Imbac =
 	function Param(name,defaults,typ){
 		// could have introduced bugs by moving back to identifier here
 		this._traversed = false;
-		this._name = name; // .value # this is an identifier(!)
+		this._name = name;
 		this._defaults = defaults;
 		this._typ = typ;
 		this._variable = null;
@@ -6215,8 +6165,6 @@ var Imbac =
 	Param.prototype.setSplat = function(v){ this._splat = v; return this; };
 	Param.prototype.variable = function(v){ return this._variable; }
 	Param.prototype.setVariable = function(v){ this._variable = v; return this; };
-
-	// what about object-params?
 
 	Param.prototype.varname = function (){
 		return this._variable ? (this._variable.c()) : (this.name());
@@ -6373,10 +6321,6 @@ var Imbac =
 	IndexedParam.prototype.setSubindex = function(v){ this._subindex = v; return this; };
 
 	IndexedParam.prototype.visit = function (){
-		// ary.[-1] # possible
-		// ary.(-1) # possible
-		// str(/ok/,-1)
-		// scope.register(@name,self)
 		// BUG The defaults should probably be looked up like vars
 		var variable_, v_;
 		(variable_ = this.variable()) || ((this.setVariable(v_ = this.scope__().register(this.name(),this)),v_));
@@ -6436,7 +6380,6 @@ var Imbac =
 	};
 
 	ArrayParams.prototype.head = function (ast){
-		// "arrayparams"
 		return this;
 	};
 
@@ -6693,19 +6636,7 @@ var Imbac =
 		if (name instanceof Variable) { (vardec.setVariable(name),name) };
 		pos == 0 ? (this.unshift(vardec)) : (this.push(vardec));
 		return vardec;
-		
-		// TODO (target) << (node) rewrites to a caching push which returns node
 	};
-
-	// def remove item
-	// 	if item isa Variable
-	// 		map do |v,i|
-	// 			if v.variable == item
-	// 				p "found variable to remove"
-	// 				super.remove(v)
-	// 	else
-	// 		super.remove(item)
-	// 	self
 
 	VariableDeclaration.prototype.load = function (list){
 		// temporary solution!!!
@@ -6728,7 +6659,6 @@ var Imbac =
 		// FIX PERFORMANCE
 		var out = compact__(cary__(this.nodes())).join(", ");
 		return out ? (("var " + out)) : ("");
-		// "var " + compact__(cary__(nodes)).join(", ") + ""
 	};
 
 	function VariableDeclarator(){ return Param.apply(this,arguments) };
@@ -7195,13 +7125,12 @@ var Imbac =
 		for (var i = 0, ary = iter$(STACK.scopes()), len = ary.length, scope; i < len; i++) {
 			scope = ary[i];
 			if (i > 0 && (scope instanceof TagScope)) {
-				// register inside here?
 				scope.node().option('hasLocalTags',true);
 				this.option('parent',scope.node());
 				break;
-				// console.log "tag is local!!!"
 			};
 		};
+		
 		// replace with some advanced lookup?
 		this.scope().visit();
 		return this.body().traverse();
@@ -7346,6 +7275,7 @@ var Imbac =
 		// if up as a call? Only if we are 
 	};
 
+
 	function Lambda(){ return Func.apply(this,arguments) };
 
 	subclass$(Lambda,Func);
@@ -7355,14 +7285,13 @@ var Imbac =
 		return (k && k._value == 'ƒ') ? ((MethodScope)) : ((LambdaScope));
 	};
 
+
 	function TagFragmentFunc(){ return Func.apply(this,arguments) };
 
 	subclass$(TagFragmentFunc,Func);
 	exports.TagFragmentFunc = TagFragmentFunc; // export class 
 
 
-	// MethodDeclaration
-	// Create a shared body?
 
 	function MethodDeclaration(){ return Func.apply(this,arguments) };
 
@@ -8055,10 +7984,6 @@ var Imbac =
 		return true;
 	};
 
-	// def toString
-	// 	"" + value
-	;
-
 	// Should inherit from ListNode - would simplify
 	function Arr(){ return Literal.apply(this,arguments) };
 
@@ -8494,10 +8419,6 @@ var Imbac =
 	UnaryOp.prototype.js = function (o){
 		var l = this._left;
 		var r = this._right;
-		// all of this could really be done i a much
-		// cleaner way.
-		// l.set(parens: yes) if l # are we really sure about this?
-		// r.set(parens: yes) if r
 		
 		if (this.op() == '!') {
 			// l.@parens = yes
@@ -8619,16 +8540,7 @@ var Imbac =
 
 
 
-
-
-
-
 	// ACCESS
-
-	module.exports.K_IVAR = K_IVAR = 1;
-	module.exports.K_SYM = K_SYM = 2;
-	module.exports.K_STR = K_STR = 3;
-	module.exports.K_PROP = K_PROP = 4;
 
 	function Access(o,l,r){
 		// set expression yes, no?
@@ -11140,10 +11052,8 @@ var Imbac =
 
 	// TAGS
 
-
 	TAG_TYPES = {};
 	TAG_ATTRS = {};
-
 
 	TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
 
@@ -11487,10 +11397,13 @@ var Imbac =
 			
 			if (bodySetter == 'setChildren' || bodySetter == 'setContent') {
 				calls.push(("." + bodySetter + "(" + body + "," + typ + ")"));
+			} else if (bodySetter == 'setText') {
+				statics.push(("." + bodySetter + "(" + body + ")"));
 			} else {
 				calls.push(("." + bodySetter + "(" + body + ")"));
 			};
 		};
+		
 		
 		calls.push(("." + commit + "()"));
 		
@@ -12017,13 +11930,6 @@ var Imbac =
 	AsyncFunc.prototype.scopetype = function (){
 		return LambdaScope;
 	};
-
-	// need to override, since we wont do implicit returns
-	// def js
-	// 	var code = scope.c
-	// 	return "function ({params.c})" + code.wrap
-	;
-
 
 
 	// IMPORTS

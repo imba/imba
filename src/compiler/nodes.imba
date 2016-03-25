@@ -1,14 +1,9 @@
 # TODO Create Expression - make all expressions inherit from these?
 
-extern parseInt
-
 var helpers = require './helpers'
-var ERR = require './errors'
-var v8 = null # require 'v8-natives'
 
-var T = require './token'
-var Token = T.Token
-
+import ImbaParseError from './errors'
+import Token from './token'
 import SourceMap from './sourcemap'
 
 export var AST = {}
@@ -16,7 +11,6 @@ export var AST = {}
 # Helpers for operators
 export var OP = do |op, l, r|
 	var o = String(op)
-	# console.log "operator",o
 	switch o
 		when '.'
 			r = Identifier.new(r) if r isa String
@@ -33,8 +27,8 @@ export var OP = do |op, l, r|
 
 		when '?.'
 			if r isa VarOrAccess
-				# console.log "is var or access"
 				r = r.value
+
 			# depends on the right side - this is wrong
 			PropertyAccess.new(op,l,r)
 
@@ -118,7 +112,7 @@ export def parseError str, o
 	if o:lexer
 		var token = o:lexer:yytext
 		# console.log o:lexer:pos,token.@loc
-		err = ERR.ImbaParseError.new({message: str},{
+		err = ImbaParseError.new({message: str},{
 			pos: o:lexer:pos
 			tokens: o:lexer:tokens
 			token: o:lexer:yytext
@@ -253,17 +247,7 @@ export class Indentation
 	def bloc
 		@close and @close.@loc or 0
 
-	# should rather parse and extract the comments, no?
 	def wrap str
-		# var pre, post
-	
-		# console.log "INDENT {@open and JSON.stringify(@open.@meta)}"
-		# console.log "OUTDENT {@close}"
-		# var ov = @open and @open.@value
-		# if ov and ov:length > 1
-		# 	console.log "value for indent",ov
-		# 	if ov.indexOf('%|%')
-		# 		pre = ov.substr
 		var om = @open and @open.@meta
 		var pre = om and om:pre or ''
 		var post = om and om:post or ''
@@ -466,7 +450,6 @@ export class Node
 		self
 
 	def set obj
-		# console.log "setting options {JSON.stringify(obj)}"
 		@options ||= {}
 		for own k,v of obj
 			@options[k] = v
@@ -475,7 +458,6 @@ export class Node
 	# get and set
 	def option key, val
 		if val != undefined
-			# console.log "setting option {key} {val}"
 			@options ||= {}
 			@options[key] = val
 			return self
@@ -654,8 +636,6 @@ export class Node
 		s.push(self)
 		forceExpression if o && o:expression
 
-		v8 and console.log v8.hasFastObjectElements(self)
-
 		if o and o:indent
 			@indentation ||= INDENT
 
@@ -757,13 +737,7 @@ export class Terminator < Meta
 		self
 
 	def c
-		# TODO this can contain several newlines
-		# for sourcemaps it would be nice to parse this
-		# and fix it up mark__(@value) + 
 		return @value.c
-		# var v = value.replace(/\\n/g,'\n')
-		# v # .split()
-		# v.split("\n").map(|v| v ? " // {v}" : v).join("\n")
 
 export class Newline < Terminator
 
@@ -831,8 +805,6 @@ export class ListNode < Node
 	# test
 	def slice a, b
 		self:constructor.new(@nodes.slice(a,b))
-
-	
 
 	def break br, pre = no
 		br = Terminator.new(br) if typeof br == 'string'
@@ -921,7 +893,7 @@ export class ListNode < Node
 	def isExpressable
 		for node in nodes
 			return no if node and !node.isExpressable
-		# return no unless nodes.every(|v| v.isExpressable )
+
 		return yes
 
 	def toArray
@@ -957,20 +929,6 @@ export class ListNode < Node
 
 export class ArgList < ListNode
 
-#	def indented a,b
-#		if a isa Indentation
-#			@indentation = a
-#			return self
-#
-#		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
-#		self
-
-# def hasSplat
-# 	@nodes.some do |v| v isa Splat
-# def delimiter
-# 	","
-
-
 export class AssignList < ArgList	
 
 	def concat other
@@ -989,7 +947,6 @@ export class Block < ListNode
 
 	def initialize list
 		setup
-		# @nodes = compact__(flatten__(list)) or []
 		@nodes = list or []
 		@head = null
 		@indentation = null
@@ -1008,10 +965,6 @@ export class Block < ListNode
 
 	def block
 		self
-
-	# def indented a,b
-	# 	@indentation ||= a and b ? Indentation.new(a,b) : INDENT
-	# 	self
 
 	def loc
 		# rather indents, no?
@@ -1145,7 +1098,7 @@ export class Block < ListNode
 					after = after.nodes
 
 				replace(before,after)
-		# really?
+
 		return self
 
 
@@ -1319,9 +1272,6 @@ export class Return < Statement
 	def initialize v
 		@traversed = no
 		@value = v isa ArgList and v.count == 1 ? v.last : v
-		# @prebreak = v and v.@prebreak
-		# console.log "return?!? {v}",@prebreak
-		# if v isa ArgList and v.count == 1
 		return self
 
 	def visit
@@ -1366,7 +1316,7 @@ export class LoopFlowStatement < Statement
 
 	def initialize lit, expr
 		self.literal = lit
-		self.expression = expr # && ArgList.new(expr) # really?
+		self.expression = expr
 
 	def visit
 		expression.traverse if expression
@@ -1414,12 +1364,10 @@ export class Param < Node
 	prop splat
 	prop variable
 
-	# what about object-params?
-
 	def initialize name, defaults, typ
 		# could have introduced bugs by moving back to identifier here
 		@traversed = no
-		@name = name # .value # this is an identifier(!)
+		@name = name
 		@defaults = defaults
 		@typ = typ
 		@variable = null
@@ -1535,10 +1483,6 @@ export class IndexedParam < Param
 	prop subindex
 
 	def visit
-		# ary.[-1] # possible
-		# ary.(-1) # possible
-		# str(/ok/,-1)
-		# scope.register(@name,self)
 		# BUG The defaults should probably be looked up like vars
 		self.variable ||= scope__.register(name,self)
 		self.variable.proxy(parent.variable,subindex)
@@ -1584,7 +1528,6 @@ export class ArrayParams < ListNode
 		param
 
 	def head ast
-		# "arrayparams"
 		self
 
 export class ParamList < ListNode
@@ -1808,18 +1751,6 @@ export class VariableDeclaration < ListNode
 		vardec.variable = name if name isa Variable
 		pos == 0 ? unshift(vardec) : push(vardec)
 		vardec
-
-		# TODO (target) << (node) rewrites to a caching push which returns node
-
-	# def remove item
-	# 	if item isa Variable
-	# 		map do |v,i|
-	# 			if v.variable == item
-	# 				p "found variable to remove"
-	# 				super.remove(v)
-	# 	else
-	# 		super.remove(item)
-	# 	self
 	
 	def load list
 		# temporary solution!!!
@@ -1839,7 +1770,6 @@ export class VariableDeclaration < ListNode
 		# FIX PERFORMANCE
 		var out = compact__(cary__(nodes)).join(", ")
 		out ? "var {out}" : ""
-		# "var " + compact__(cary__(nodes)).join(", ") + ""
 
 export class VariableDeclarator < Param
 
@@ -2225,11 +2155,10 @@ export class TagDeclaration < Code
 
 		for scope,i in STACK.scopes
 			if i > 0 and scope isa TagScope
-				# register inside here?
 				scope.node.option(:hasLocalTags,yes)
 				option(:parent,scope.node)
 				break
-				# console.log "tag is local!!!"
+
 		# replace with some advanced lookup?
 		scope.visit
 		body.traverse
@@ -2349,15 +2278,15 @@ export class Func < Code
 		par isa Call && par.callee == self
 		# if up as a call? Only if we are 
 
+
 export class Lambda < Func
 	def scopetype
 		var k = option(:keyword)
 		(k and k.@value == 'ƒ') ? (MethodScope) : (LambdaScope)
 
+
 export class TagFragmentFunc < Func
 
-# MethodDeclaration
-# Create a shared body?
 
 export class MethodDeclaration < Func
 
@@ -2937,9 +2866,6 @@ export class RegExp < Literal
 	def isPrimitive
 		yes
 
-	# def toString
-	# 	"" + value
-
 # Should inherit from ListNode - would simplify
 export class Arr < Literal
 
@@ -3286,10 +3212,6 @@ export class UnaryOp < Op
 	def js o
 		var l = @left
 		var r = @right
-		# all of this could really be done i a much
-		# cleaner way.
-		# l.set(parens: yes) if l # are we really sure about this?
-		# r.set(parens: yes) if r
 
 		if op == '!'
 			# l.@parens = yes
@@ -3392,16 +3314,7 @@ export class In < Op
 	
 
 
-
-
-
-
 # ACCESS
-
-export var K_IVAR = 1
-export var K_SYM = 2
-export var K_STR = 3
-export var K_PROP = 4
 
 export class Access < Op
 
@@ -5527,10 +5440,8 @@ export class Splat < ValueNode
 
 # TAGS
 
-
 TAG_TYPES = {}
 TAG_ATTRS = {}
-
 
 TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br 
 button canvas caption cite code col colgroup data datalist dd del details dfn 
@@ -5843,8 +5754,11 @@ export class Tag < Node
 
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
 				calls.push ".{bodySetter}({body},{typ})"
+			elif bodySetter == 'setText'
+				statics.push ".{bodySetter}({body})"
 			else
 				calls.push ".{bodySetter}({body})"
+
 
 		calls.push ".{commit}()"
 
@@ -6265,12 +6179,6 @@ export class AsyncFunc < Func
 		super(params,body,name,target,options)
 
 	def scopetype do LambdaScope
-
-	# need to override, since we wont do implicit returns
-	# def js
-	# 	var code = scope.c
-	# 	return "function ({params.c})" + code.wrap
-
 
 
 # IMPORTS
