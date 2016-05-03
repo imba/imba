@@ -7,6 +7,12 @@ tag fragment < element
 
 tag a
 	attr href
+	attr target
+	attr hreflang
+	attr media
+	attr download
+	attr rel
+	attr type
 
 tag abbr
 tag address
