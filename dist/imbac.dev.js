@@ -4545,7 +4545,7 @@ var Imbac =
 	};
 
 	var SEMICOLON_TEST = /;(\s*\/\/.*)?[\n\s\t]*$/;
-	var RESERVED_TEST = /^(default|char)$/;
+	var RESERVED_TEST = /^(default|char|for)$/;
 
 	// captures error from parser
 	function parseError(str,o){
@@ -7507,9 +7507,9 @@ var Imbac =
 
 	subclass$(PropertyDeclaration,Node);
 	exports.PropertyDeclaration = PropertyDeclaration; // export class 
-	var propTemplate = '${headers}\n${path}.${getter} = function(v){ return ${get}; }\n${path}.${setter} = function(v){ ${set}; return this; }\n${init}';
+	var propTemplate = '${headers}\n${path}${getterKey} = function(v){ return ${get}; }\n${path}.${setter} = function(v){ ${set}; return this; }\n${init}';
 
-	var propWatchTemplate = '${headers}\n${path}.${getter} = function(v){ return ${get}; }\n${path}.${setter} = function(v){\n	var a = this.${getter}();\n	if(v != a) { ${set}; }\n	if(v != a) { ${ondirty} }\n	return this;\n}\n${init}';
+	var propWatchTemplate = '${headers}\n${path}${getterKey} = function(v){ return ${get}; }\n${path}.${setter} = function(v){\n	var a = this.${getter}();\n	if(v != a) { ${set}; }\n	if(v != a) { ${ondirty} }\n	return this;\n}\n${init}';
 
 	PropertyDeclaration.prototype.name = function(v){ return this._name; }
 	PropertyDeclaration.prototype.setName = function(v){ this._name = v; return this; };
@@ -7538,6 +7538,7 @@ var Imbac =
 		var js = {
 			key: key,
 			getter: key,
+			getterKey: RESERVED_TEST.test(key) ? (("['" + key + "']")) : (("." + key)),
 			setter: sym__(("set-" + key)),
 			scope: ("" + (scope.context().c())),
 			path: '${scope}.prototype',
@@ -10727,7 +10728,7 @@ var Imbac =
 		var vars = o.vars = {};
 		
 		var src = vars.source = o.source._variable || this.scope().declare('o',o.source,{system: true,type: 'let'});
-		if (o.index) { var v = vars.value = this.scope().declare(o.index,null,{let: true}) };
+		if (o.index) { var v = vars.value = this.scope().declare(o.index,null,{let: true,type: 'let'}) };
 		
 		// possibly proxy the index-variable?
 		

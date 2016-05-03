@@ -366,12 +366,10 @@
 	};
 
 	Ticker.prototype.before = function (){
-		// Imba.Scheduler.willRun
 		return this;
 	};
 
 	Ticker.prototype.after = function (){
-		// Imba.Scheduler.didRun
 		Imba.commit();
 		return this;
 	};
@@ -379,10 +377,6 @@
 	Imba.TICKER = new Ticker();
 
 	Imba.tick = function (d){
-		// raf(Imba.ticker) if @scheduled
-		// Imba.Scheduler.willRun
-		// emit(self,'tick',[d])
-		// Imba.Scheduler.didRun
 		return;
 	};
 
@@ -512,11 +506,7 @@
 		self._marked = false;
 		self._active = false;
 		self._marker = function() { return self.mark(); };
-		
-		self._ticker = function(e) {
-			// @scheduled = no
-			return self.tick(e);
-		};
+		self._ticker = function(e) { return self.tick(e); };
 		
 		self._dt = 0;
 		self._state = {raf: false,event: false,interval: false};
@@ -581,7 +571,6 @@
 	};
 
 	Imba.Scheduler.prototype.rafDidSet = function (bool){
-		console.log('rafDidSet');
 		this._state.raf = bool;
 		if (bool) this.requestTick();
 		return this;
@@ -644,7 +633,6 @@
 
 	Imba.Scheduler.prototype.mark = function (){
 		if (!this._scheduled) {
-			// console.log('Scheduler was #marked')
 			this.requestTick();
 		};
 		return this;
@@ -658,7 +646,6 @@
 		*/
 
 	Imba.Scheduler.prototype.flush = function (){
-		this._marked = false;
 		this._flushes++;
 		this._target.tick(this._state,this);
 		return this;
@@ -684,7 +671,6 @@
 		*/
 
 	Imba.Scheduler.prototype.tick = function (delta){
-		// console.log("ticking",@target.dom)
 		this._scheduled = false;
 		this._ticks++;
 		this._dt = delta;
@@ -694,7 +680,6 @@
 	};
 
 	Imba.Scheduler.prototype.requestTick = function (){
-		// console.log 'Scheduler requestTick'
 		if (!this._scheduled) {
 			this._scheduled = true;
 			Imba.TICKER.add(this);
@@ -714,14 +699,10 @@
 	Imba.Scheduler.prototype.activate = function (){
 		if (!this._active) {
 			this._active = true;
-			// override target#commit while this is active
 			this._commit = this._target.commit;
 			this._target.commit = function() { return this; };
-			// should track when commit comes from 
-			// Imba.schedule(self)
-			// Imba.listen(Imba,'event',self,'onevent') if @events
 			this._target && this._target.flag  &&  this._target.flag('scheduled_');
-			this.tick(0); // start ticking
+			this.tick(0); // should not always force tick here?
 		};
 		return this;
 	};
@@ -731,7 +712,6 @@
 		*/
 
 	Imba.Scheduler.prototype.deactivate = function (){
-		console.log('deactivate scheduler');
 		this._restoreState = {events: this.events(),raf: this.raf(),interval: this.interval()};
 		this.setEvents(false);
 		this.setRaf(false);
@@ -753,7 +733,7 @@
 
 	Imba.Scheduler.prototype.onevent = function (event){
 		var $1;
-		if (this._marked || !this._events) { return this };
+		if (this._scheduled || !this._events) { return this };
 		
 		if (this._events instanceof Function) {
 			if (this._events(event)) this.mark();
@@ -794,36 +774,32 @@
 		Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
 		
 		Imba.Events = new Imba.EventManager(Imba.document(),{events: [
-			'keydown','keyup','keypress','textInput','input','change','submit',
-			'focusin','focusout','blur','contextmenu','dblclick',
+			'keydown','keyup','keypress',
+			'textInput','input','change','submit',
+			'focusin','focusout','blur',
+			'contextmenu','dblclick',
 			'mousewheel','wheel','scroll',
-			'beforecopy','copy','beforepaste','paste','beforecut','cut'
+			'beforecopy','copy',
+			'beforepaste','paste',
+			'beforecut','cut'
 		]});
 		
 		var hasTouchEvents = window && window.ontouchstart !== undefined;
 		
 		if (hasTouchEvents) {
 			Imba.Events.listen('touchstart',function(e) {
-				var Events_, v_;
-				(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
 				return Imba.Touch.ontouchstart(e);
 			});
 			
 			Imba.Events.listen('touchmove',function(e) {
-				var Events_, v_;
-				(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
 				return Imba.Touch.ontouchmove(e);
 			});
 			
 			Imba.Events.listen('touchend',function(e) {
-				var Events_, v_;
-				(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
 				return Imba.Touch.ontouchend(e);
 			});
 			
 			Imba.Events.listen('touchcancel',function(e) {
-				var Events_, v_;
-				(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
 				return Imba.Touch.ontouchcancel(e);
 			});
 		};
@@ -948,7 +924,7 @@
 		var root = document.body;
 		for (var i = 0, ary = iter$(this._mounted), len = ary.length, item; i < len; i++) {
 			item = ary[i];
-			if (!document.contains(item.dom())) {
+			if (!document.body.contains(item.dom())) {
 				item._mounted = 0;
 				if (item.unmount) {
 					item.unmount();
@@ -2352,6 +2328,18 @@
 	tag$.defineTag('a', function(tag){
 		tag.prototype.href = function(v){ return this.getAttribute('href'); }
 		tag.prototype.setHref = function(v){ this.setAttribute('href',v); return this; };
+		tag.prototype.target = function(v){ return this.getAttribute('target'); }
+		tag.prototype.setTarget = function(v){ this.setAttribute('target',v); return this; };
+		tag.prototype.hreflang = function(v){ return this.getAttribute('hreflang'); }
+		tag.prototype.setHreflang = function(v){ this.setAttribute('hreflang',v); return this; };
+		tag.prototype.media = function(v){ return this.getAttribute('media'); }
+		tag.prototype.setMedia = function(v){ this.setAttribute('media',v); return this; };
+		tag.prototype.download = function(v){ return this.getAttribute('download'); }
+		tag.prototype.setDownload = function(v){ this.setAttribute('download',v); return this; };
+		tag.prototype.rel = function(v){ return this.getAttribute('rel'); }
+		tag.prototype.setRel = function(v){ this.setAttribute('rel',v); return this; };
+		tag.prototype.type = function(v){ return this.getAttribute('type'); }
+		tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
 	});
 
 	tag$.defineTag('abbr');
@@ -2520,7 +2508,7 @@
 	tag$.defineTag('label', function(tag){
 		tag.prototype.accesskey = function(v){ return this.getAttribute('accesskey'); }
 		tag.prototype.setAccesskey = function(v){ this.setAttribute('accesskey',v); return this; };
-		tag.prototype.for = function(v){ return this.getAttribute('for'); }
+		tag.prototype['for'] = function(v){ return this.getAttribute('for'); }
 		tag.prototype.setFor = function(v){ this.setAttribute('for',v); return this; };
 		tag.prototype.form = function(v){ return this.getAttribute('form'); }
 		tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
@@ -2583,7 +2571,7 @@
 	});
 
 	tag$.defineTag('output', function(tag){
-		tag.prototype.for = function(v){ return this.getAttribute('for'); }
+		tag.prototype['for'] = function(v){ return this.getAttribute('for'); }
 		tag.prototype.setFor = function(v){ this.setAttribute('for',v); return this; };
 		tag.prototype.form = function(v){ return this.getAttribute('form'); }
 		tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
@@ -3079,6 +3067,8 @@
 	Imba.Touch.prototype.__bubble = {chainable: true,name: 'bubble'};
 	Imba.Touch.prototype.bubble = function(v){ return v !== undefined ? (this.setBubble(v),this) : this._bubble; }
 	Imba.Touch.prototype.setBubble = function(v){ this._bubble = v; return this; };
+	Imba.Touch.prototype.timestamp = function(v){ return this._timestamp; }
+	Imba.Touch.prototype.setTimestamp = function(v){ this._timestamp = v; return this; };
 
 	Imba.Touch.prototype.gestures = function(v){ return this._gestures; }
 	Imba.Touch.prototype.setGestures = function(v){ this._gestures = v; return this; };
@@ -3148,6 +3138,7 @@
 		this._x = t.clientX;
 		this._y = t.clientY;
 		this.began();
+		this.update();
 		if (e && this.isCaptured()) { e.preventDefault() };
 		return this;
 	};
@@ -3194,7 +3185,7 @@
 		self._x = t.clientX;
 		self._y = t.clientY;
 		self.began();
-		
+		self.update();
 		self._mousemove = function(e) { return self.mousemove(e,e); };
 		Imba.document().addEventListener('mousemove',self._mousemove,true);
 		return self;
@@ -3224,6 +3215,7 @@
 	};
 
 	Imba.Touch.prototype.began = function (){
+		this._timestamp = Date.now();
 		this._maxdr = this._dr = 0;
 		this._x0 = this._x;
 		this._y0 = this._y;
@@ -3264,6 +3256,7 @@
 			this.setTarget(this._redirect);
 			this._redirect = null;
 			if (this.target().ontouchstart) { this.target().ontouchstart(this) };
+			if (this._redirect) { return this.update() }; // possibly redirecting again
 		};
 		
 		
@@ -3275,6 +3268,7 @@
 		};
 		
 		(target_ = this.target()) && target_.ontouchupdate  &&  target_.ontouchupdate(this);
+		if (this._redirect) this.update();
 		return this;
 	};
 
@@ -3431,6 +3425,10 @@
 
 	Imba.Touch.prototype.sourceTarget = function (){
 		return this._sourceTarget;
+	};
+
+	Imba.Touch.prototype.elapsed = function (){
+		return Date.now() - this._timestamp;
 	};
 
 
@@ -3786,7 +3784,6 @@
 		if(!pars||pars.constructor !== Object) pars = {};
 		var events = pars.events !== undefined ? pars.events : [];
 		self.setRoot(node);
-		self.setCount(0);
 		self.setListeners([]);
 		self.setDelegators({});
 		self.setDelegator(function(e) {
@@ -3858,7 +3855,6 @@
 	};
 
 	Imba.EventManager.prototype.delegate = function (e){
-		this.setCount(this.count() + 1);
 		var event = Imba.Event.wrap(e);
 		event.process();
 		return this;

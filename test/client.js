@@ -433,12 +433,10 @@
 	};
 
 	Ticker.prototype.before = function (){
-		// Imba.Scheduler.willRun
 		return this;
 	};
 
 	Ticker.prototype.after = function (){
-		// Imba.Scheduler.didRun
 		Imba.commit();
 		return this;
 	};
@@ -446,10 +444,6 @@
 	Imba.TICKER = new Ticker();
 
 	Imba.tick = function (d){
-		// raf(Imba.ticker) if @scheduled
-		// Imba.Scheduler.willRun
-		// emit(self,'tick',[d])
-		// Imba.Scheduler.didRun
 		return;
 	};
 
@@ -579,11 +573,7 @@
 		self._marked = false;
 		self._active = false;
 		self._marker = function() { return self.mark(); };
-		
-		self._ticker = function(e) {
-			// @scheduled = no
-			return self.tick(e);
-		};
+		self._ticker = function(e) { return self.tick(e); };
 		
 		self._dt = 0;
 		self._state = {raf: false,event: false,interval: false};
@@ -648,7 +638,6 @@
 	};
 
 	Imba.Scheduler.prototype.rafDidSet = function (bool){
-		console.log('rafDidSet');
 		this._state.raf = bool;
 		if (bool) this.requestTick();
 		return this;
@@ -711,7 +700,6 @@
 
 	Imba.Scheduler.prototype.mark = function (){
 		if (!this._scheduled) {
-			// console.log('Scheduler was #marked')
 			this.requestTick();
 		};
 		return this;
@@ -725,7 +713,6 @@
 		*/
 
 	Imba.Scheduler.prototype.flush = function (){
-		this._marked = false;
 		this._flushes++;
 		this._target.tick(this._state,this);
 		return this;
@@ -751,7 +738,6 @@
 		*/
 
 	Imba.Scheduler.prototype.tick = function (delta){
-		// console.log("ticking",@target.dom)
 		this._scheduled = false;
 		this._ticks++;
 		this._dt = delta;
@@ -761,7 +747,6 @@
 	};
 
 	Imba.Scheduler.prototype.requestTick = function (){
-		// console.log 'Scheduler requestTick'
 		if (!this._scheduled) {
 			this._scheduled = true;
 			Imba.TICKER.add(this);
@@ -781,14 +766,10 @@
 	Imba.Scheduler.prototype.activate = function (){
 		if (!this._active) {
 			this._active = true;
-			// override target#commit while this is active
 			this._commit = this._target.commit;
 			this._target.commit = function() { return this; };
-			// should track when commit comes from 
-			// Imba.schedule(self)
-			// Imba.listen(Imba,'event',self,'onevent') if @events
 			this._target && this._target.flag  &&  this._target.flag('scheduled_');
-			this.tick(0); // start ticking
+			this.tick(0); // should not always force tick here?
 		};
 		return this;
 	};
@@ -798,7 +779,6 @@
 		*/
 
 	Imba.Scheduler.prototype.deactivate = function (){
-		console.log('deactivate scheduler');
 		this._restoreState = {events: this.events(),raf: this.raf(),interval: this.interval()};
 		this.setEvents(false);
 		this.setRaf(false);
@@ -820,7 +800,7 @@
 
 	Imba.Scheduler.prototype.onevent = function (event){
 		var $1;
-		if (this._marked || !this._events) { return this };
+		if (this._scheduled || !this._events) { return this };
 		
 		if (this._events instanceof Function) {
 			if (this._events(event)) this.mark();
@@ -861,36 +841,32 @@
 		Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
 		
 		Imba.Events = new Imba.EventManager(Imba.document(),{events: [
-			'keydown','keyup','keypress','textInput','input','change','submit',
-			'focusin','focusout','blur','contextmenu','dblclick',
+			'keydown','keyup','keypress',
+			'textInput','input','change','submit',
+			'focusin','focusout','blur',
+			'contextmenu','dblclick',
 			'mousewheel','wheel','scroll',
-			'beforecopy','copy','beforepaste','paste','beforecut','cut'
+			'beforecopy','copy',
+			'beforepaste','paste',
+			'beforecut','cut'
 		]});
 		
 		var hasTouchEvents = window && window.ontouchstart !== undefined;
 		
 		if (hasTouchEvents) {
 			Imba.Events.listen('touchstart',function(e) {
-				var Events_, v_;
-				(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
 				return Imba.Touch.ontouchstart(e);
 			});
 			
 			Imba.Events.listen('touchmove',function(e) {
-				var Events_, v_;
-				(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
 				return Imba.Touch.ontouchmove(e);
 			});
 			
 			Imba.Events.listen('touchend',function(e) {
-				var Events_, v_;
-				(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
 				return Imba.Touch.ontouchend(e);
 			});
 			
 			Imba.Events.listen('touchcancel',function(e) {
-				var Events_, v_;
-				(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
 				return Imba.Touch.ontouchcancel(e);
 			});
 		};
@@ -1015,7 +991,7 @@
 		var root = document.body;
 		for (var i = 0, ary = iter$(this._mounted), len = ary.length, item; i < len; i++) {
 			item = ary[i];
-			if (!document.contains(item.dom())) {
+			if (!document.body.contains(item.dom())) {
 				item._mounted = 0;
 				if (item.unmount) {
 					item.unmount();
@@ -2419,6 +2395,18 @@
 	tag$.defineTag('a', function(tag){
 		tag.prototype.href = function(v){ return this.getAttribute('href'); }
 		tag.prototype.setHref = function(v){ this.setAttribute('href',v); return this; };
+		tag.prototype.target = function(v){ return this.getAttribute('target'); }
+		tag.prototype.setTarget = function(v){ this.setAttribute('target',v); return this; };
+		tag.prototype.hreflang = function(v){ return this.getAttribute('hreflang'); }
+		tag.prototype.setHreflang = function(v){ this.setAttribute('hreflang',v); return this; };
+		tag.prototype.media = function(v){ return this.getAttribute('media'); }
+		tag.prototype.setMedia = function(v){ this.setAttribute('media',v); return this; };
+		tag.prototype.download = function(v){ return this.getAttribute('download'); }
+		tag.prototype.setDownload = function(v){ this.setAttribute('download',v); return this; };
+		tag.prototype.rel = function(v){ return this.getAttribute('rel'); }
+		tag.prototype.setRel = function(v){ this.setAttribute('rel',v); return this; };
+		tag.prototype.type = function(v){ return this.getAttribute('type'); }
+		tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
 	});
 
 	tag$.defineTag('abbr');
@@ -2587,7 +2575,7 @@
 	tag$.defineTag('label', function(tag){
 		tag.prototype.accesskey = function(v){ return this.getAttribute('accesskey'); }
 		tag.prototype.setAccesskey = function(v){ this.setAttribute('accesskey',v); return this; };
-		tag.prototype.for = function(v){ return this.getAttribute('for'); }
+		tag.prototype['for'] = function(v){ return this.getAttribute('for'); }
 		tag.prototype.setFor = function(v){ this.setAttribute('for',v); return this; };
 		tag.prototype.form = function(v){ return this.getAttribute('form'); }
 		tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
@@ -2650,7 +2638,7 @@
 	});
 
 	tag$.defineTag('output', function(tag){
-		tag.prototype.for = function(v){ return this.getAttribute('for'); }
+		tag.prototype['for'] = function(v){ return this.getAttribute('for'); }
 		tag.prototype.setFor = function(v){ this.setAttribute('for',v); return this; };
 		tag.prototype.form = function(v){ return this.getAttribute('form'); }
 		tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
@@ -3146,6 +3134,8 @@
 	Imba.Touch.prototype.__bubble = {chainable: true,name: 'bubble'};
 	Imba.Touch.prototype.bubble = function(v){ return v !== undefined ? (this.setBubble(v),this) : this._bubble; }
 	Imba.Touch.prototype.setBubble = function(v){ this._bubble = v; return this; };
+	Imba.Touch.prototype.timestamp = function(v){ return this._timestamp; }
+	Imba.Touch.prototype.setTimestamp = function(v){ this._timestamp = v; return this; };
 
 	Imba.Touch.prototype.gestures = function(v){ return this._gestures; }
 	Imba.Touch.prototype.setGestures = function(v){ this._gestures = v; return this; };
@@ -3215,6 +3205,7 @@
 		this._x = t.clientX;
 		this._y = t.clientY;
 		this.began();
+		this.update();
 		if (e && this.isCaptured()) { e.preventDefault() };
 		return this;
 	};
@@ -3261,7 +3252,7 @@
 		self._x = t.clientX;
 		self._y = t.clientY;
 		self.began();
-		
+		self.update();
 		self._mousemove = function(e) { return self.mousemove(e,e); };
 		Imba.document().addEventListener('mousemove',self._mousemove,true);
 		return self;
@@ -3291,6 +3282,7 @@
 	};
 
 	Imba.Touch.prototype.began = function (){
+		this._timestamp = Date.now();
 		this._maxdr = this._dr = 0;
 		this._x0 = this._x;
 		this._y0 = this._y;
@@ -3331,6 +3323,7 @@
 			this.setTarget(this._redirect);
 			this._redirect = null;
 			if (this.target().ontouchstart) { this.target().ontouchstart(this) };
+			if (this._redirect) { return this.update() }; // possibly redirecting again
 		};
 		
 		
@@ -3342,6 +3335,7 @@
 		};
 		
 		(target_ = this.target()) && target_.ontouchupdate  &&  target_.ontouchupdate(this);
+		if (this._redirect) this.update();
 		return this;
 	};
 
@@ -3498,6 +3492,10 @@
 
 	Imba.Touch.prototype.sourceTarget = function (){
 		return this._sourceTarget;
+	};
+
+	Imba.Touch.prototype.elapsed = function (){
+		return Date.now() - this._timestamp;
 	};
 
 
@@ -3853,7 +3851,6 @@
 		if(!pars||pars.constructor !== Object) pars = {};
 		var events = pars.events !== undefined ? pars.events : [];
 		self.setRoot(node);
-		self.setCount(0);
 		self.setListeners([]);
 		self.setDelegators({});
 		self.setDelegator(function(e) {
@@ -3925,7 +3922,6 @@
 	};
 
 	Imba.EventManager.prototype.delegate = function (e){
-		this.setCount(this.count() + 1);
 		var event = Imba.Event.wrap(e);
 		event.process();
 		return this;
@@ -5006,9 +5002,7 @@
 
 	SPEC = new Spec();
 
-	p = function p(){
-		return console.log.apply(console,arguments);
-	};
+	// global def p do console.log(*arguments)
 	describe = function describe(name,blk){
 		return SPEC.context().describe(name,blk);
 	};
@@ -5214,24 +5208,24 @@
 				var l = 0;
 				var len = 0;
 				
-				var keys = [], v;
+				var keys = [];
 				for (var k in dict){
-					v = dict[k];keys.push(k);
+					keys.push(k);
 				};
 				eq(keys,['a','b','c','d'],String);
 				
-				var vals = [], v;
+				var vals = [];
 				for (var k1 in dict){
-					v = dict[k1];vals.push(v);
+					vals.push(dict[k1]);
 				};
 				eq(vals,[2,4,6,8]);
 				
 				// The order of the keys are based on assignment-order,
 				// prototype-keys always come at the end (as if they were assigned
 				// after all other keys=
-				var v, res = [];
+				var res = [];
 				for (var k2 in dict2){
-					v = dict2[k2];res.push(k2);
+					res.push(k2);
 				};
 				keys = res;
 				eq(keys,['e','a','b','c','d']);
@@ -5242,13 +5236,13 @@
 			});
 			
 			return test("for own of",function() {
-				for (var keys = [], v, i = 0, keys1 = Object.keys(dict), l1 = keys1.length; i < l1; i++){
-					v = dict[keys1[i]];keys.push(keys1[i]);
+				for (var keys = [], i = 0, keys1 = Object.keys(dict), l1 = keys1.length; i < l1; i++){
+					keys.push(keys1[i]);
 				};
 				eq(keys,['a','b','c','d'],String);
 				
-				for (var v, i = 0, keys2 = Object.keys(dict2), l2 = keys2.length, res = []; i < l2; i++){
-					v = dict2[keys2[i]];res.push(keys2[i]);
+				for (var i = 0, keys2 = Object.keys(dict2), l2 = keys2.length, res = []; i < l2; i++){
+					res.push(keys2[i]);
 				};
 				keys = res;
 				for (var vals = [], i = 0, keys3 = Object.keys(dict2), l3 = keys3.length; i < l3; i++){
@@ -8134,7 +8128,7 @@
 				(function() {
 					var $A = (__.A = __.A || {});
 					for (var i = 0, ary = iter$(self._ary), len = ary.length, res = []; i < len; i++) {
-						res.push(($A[ary[i]] = $A[ary[i]] || tag$.$div()).setText("v").end());
+						res.push(($A[ary[i]] = $A[ary[i]] || tag$.$div().setText("v")).end());
 					};
 					return res;
 				})()
@@ -8241,7 +8235,7 @@
 				var self = this, __ = self.__;
 				var ary = ['a','b','c','d'];
 				return this.setChildren([
-					(__.A = __.A || tag$.$h1()).setText('heading').end(),
+					(__.A = __.A || tag$.$h1().setText('heading')).end(),
 					(function() {
 						var t0, _$ = (__.B = __.B || []);
 						for (var i = 0, len = ary.length, res = []; i < len; i++) {
@@ -8357,7 +8351,7 @@
 			
 			tag.prototype.header = function (){
 				var t0;
-				return (t0 = this._header || tag$.$div().__ref('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div()).setText('H').end(),2).end();
+				return (t0 = this._header || tag$.$div().__ref('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div().setText('H')).end(),2).end();
 			};
 			
 			tag.prototype.body = function (){
@@ -8367,7 +8361,7 @@
 			tag.prototype.render = function (){
 				var self = this, __ = self.__;
 				return this.setChildren([
-					(__.A = __.A || tag$.$div()).setText('P').end(),
+					(__.A = __.A || tag$.$div().setText('P')).end(),
 					self.header(),
 					self.body()
 				],1).synced();
@@ -8378,7 +8372,7 @@
 			
 			tag.prototype.header = function (){
 				var t0;
-				return (t0 = this._header || tag$.$div().__ref('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div()).setText('X').end(),2).end();
+				return (t0 = this._header || tag$.$div().__ref('header',this)).setContent((t0.__.$A = t0.__.$A || tag$.$div().setText('X')).end(),2).end();
 			};
 		});
 		
@@ -8389,7 +8383,7 @@
 			tag.prototype.render = function (){
 				var self = this, __ = self.__;
 				return this.setChildren([
-					(__.A = __.A || tag$.$div()).setText('W').end(),
+					(__.A = __.A || tag$.$div().setText('W')).end(),
 					self._content
 				],1).synced();
 			};
@@ -8400,13 +8394,13 @@
 			if(o === undefined) o = {};
 			return this.setChildren([
 				(o.a) ? (
-					(__.A = __.A || tag$.$div()).setText('A').end()
+					(__.A = __.A || tag$.$div().setText('A')).end()
 				) : void(0),
-				o.b && (__.B = __.B || tag$.$div()).setText('B').end(),
+				o.b && (__.B = __.B || tag$.$div().setText('B')).end(),
 				(o.c) ? (
 					(__.C = __.C || tag$.$wrapped()).setContent([
-						(__.CA = __.CA || tag$.$div()).setText('B').end(),
-						(__.CB = __.CB || tag$.$div()).setText('C').end()
+						(__.CA = __.CA || tag$.$div().setText('B')).end(),
+						(__.CB = __.CB || tag$.$div().setText('C')).end()
 					],2).end()
 				) : void(0),
 				
@@ -8579,10 +8573,10 @@
 			return this.setChildren([
 				(__.A = __.A || tag$.$el().flag('a')).setContent(this.name(),3).end(),
 				str,
-				(__.B = __.B || tag$.$el().flag('b')).setText("ok").end(),
+				(__.B = __.B || tag$.$el().flag('b').setText("ok")).end(),
 				(a) ? (Imba.static([
 					(__.C = __.C || tag$.$el().flag('header')).end(),
-					(__.D = __.D || tag$.$el().flag('title')).setText("Header").end(),
+					(__.D = __.D || tag$.$el().flag('title').setText("Header")).end(),
 					(__.E = __.E || tag$.$el().flag('tools')).end(),
 					b ? (Imba.static([
 						(__.F = __.F || tag$.$el().flag('long')).end(),
@@ -8595,8 +8589,8 @@
 					(__.K = __.K || tag$.$el().flag('ruler')).end()
 				],4)) : void(0),
 				(c) ? (Imba.static([
-					(__.L = __.L || tag$.$div().flag('c1')).setText("long").end(),
-					(__.M = __.M || tag$.$div().flag('c2')).setText("loong").end()
+					(__.L = __.L || tag$.$div().flag('c1').setText("long")).end(),
+					(__.M = __.M || tag$.$div().flag('c2').setText("loong")).end()
 				],5)) : void(0),
 				d && e ? (Imba.static([
 					(__.N = __.N || tag$.$el().flag('long')).end(),
@@ -8606,10 +8600,10 @@
 					(__.Q = __.Q || tag$.$el().flag('footer')).end(),
 					(__.R = __.R || tag$.$el().flag('bottom')).end()
 				],7)) : (
-					(__.S = __.S || tag$.$el()).setText("!d and !e").end()
+					(__.S = __.S || tag$.$el().setText("!d and !e")).end()
 				)),
 				list,
-				(__.T = __.T || tag$.$el().flag('x')).setText("very last").end(),
+				(__.T = __.T || tag$.$el().flag('x').setText("very last")).end(),
 				list2
 			],1).synced();
 		};
@@ -8702,7 +8696,7 @@
 			return this.setChildren([
 				"a",
 				"b",
-				a ? ((__.A = __.A || tag$.$el().flag('c')).setText("c").end()) : ("d")
+				a ? ((__.A = __.A || tag$.$el().flag('c').setText("c")).end()) : ("d")
 			],1).synced();
 		};
 	});
@@ -8732,7 +8726,7 @@
 				(__.B = __.B || tag$.$div().flag('hello')).setContent((__.BA = __.BA || tag$.$b()).end(),2).end(),
 				(__.C = __.C || tag$.$div().flag('int')).setContent(10,3).end(),
 				(__.D = __.D || tag$.$div().flag('date')).setContent(new Date(),3).end(),
-				(__.E = __.E || tag$.$div().flag('str')).setText("string").end(),
+				(__.E = __.E || tag$.$div().flag('str').setText("string")).end(),
 				(__.F = __.F || tag$.$div().flag('list')).setContent(self.list(),3).end(),
 				(__.G = __.G || tag$.$div().flag('item')).setContent(self.tast(),3).end(),
 				(__.H = __.H || tag$.$div().flag('if')).setContent([

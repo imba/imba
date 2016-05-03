@@ -334,7 +334,7 @@ global class SpecAssertFalsy < SpecAssert
 
 SPEC = Spec.new
 
-global def p do console.log(*arguments)
+# global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
 global def it name, blk do SPEC.context.it(name,blk)
 global def test name, blk do SPEC.context.it(name,blk)
