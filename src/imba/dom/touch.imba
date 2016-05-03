@@ -107,6 +107,7 @@ class Imba.Touch
 	prop suppress
 	prop data
 	prop bubble chainable: yes
+	prop timestamp
 
 	prop gestures
 
@@ -242,6 +243,7 @@ class Imba.Touch
 		update
 
 	def began
+		@timestamp = Date.now
 		@maxdr = @dr = 0
 		@x0 = @x
 		@y0 = @y
@@ -394,6 +396,9 @@ class Imba.Touch
 
 	def sourceTarget
 		@sourceTarget
+
+	def elapsed
+		Date.now - @timestamp
 
 
 class Imba.TouchGesture
