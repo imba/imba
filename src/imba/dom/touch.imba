@@ -178,6 +178,7 @@ class Imba.Touch
 		@x = t:clientX
 		@y = t:clientY
 		began
+		update
 		e.preventDefault if e and isCaptured
 		self
 
@@ -217,7 +218,7 @@ class Imba.Touch
 		@x = t:clientX
 		@y = t:clientY
 		began
-
+		update
 		@mousemove = (|e| mousemove(e,e) )
 		Imba.document.addEventListener('mousemove',@mousemove,yes)
 		self
@@ -279,6 +280,7 @@ class Imba.Touch
 			target = @redirect
 			@redirect = null
 			target.ontouchstart(self) if target:ontouchstart
+			return update if @redirect # possibly redirecting again
 
 
 		@updates++
@@ -286,6 +288,7 @@ class Imba.Touch
 			g.ontouchupdate(self) for g in @gestures
 
 		target?.ontouchupdate(self)
+		update if @redirect
 		self
 
 	def move
