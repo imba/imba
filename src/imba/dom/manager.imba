@@ -64,7 +64,7 @@ class Imba.TagManagerClass
 		var count = 0
 		var root = document:body
 		for item, i in @mounted
-			unless document.contains(item.dom)
+			unless document:body.contains(item.dom)
 				item.@mounted = 0
 				if item:unmount
 					item.unmount
