@@ -102,7 +102,7 @@ export var SPLAT = do |value|
 		Splat.new(value)
 
 var SEMICOLON_TEST = /;(\s*\/\/.*)?[\n\s\t]*$/
-var RESERVED_TEST = /^(default|char)$/
+var RESERVED_TEST = /^(default|char|for)$/
 
 # captures error from parser
 export def parseError str, o
@@ -2463,14 +2463,14 @@ export class PropertyDeclaration < Node
 
 	var propTemplate = '''
 	${headers}
-	${path}.${getter} = function(v){ return ${get}; }
+	${path}${getterKey} = function(v){ return ${get}; }
 	${path}.${setter} = function(v){ ${set}; return this; }
 	${init}
 	'''
 
 	var propWatchTemplate = '''
 	${headers}
-	${path}.${getter} = function(v){ return ${get}; }
+	${path}${getterKey} = function(v){ return ${get}; }
 	${path}.${setter} = function(v){
 		var a = this.${getter}();
 		if(v != a) { ${set}; }
@@ -2510,6 +2510,7 @@ export class PropertyDeclaration < Node
 		var js =
 			key: key
 			getter: key
+			getterKey: RESERVED_TEST.test(key) ? "['{key}']" : ".{key}"
 			setter: sym__("set-{key}")
 			scope: "{scope.context.c}" 
 			path: '${scope}.prototype'
