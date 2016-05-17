@@ -5788,6 +5788,7 @@ var Imbac =
 			});
 			
 			var real = this.expressions();
+			// console.log 'Block.consume TagTree',node.@loop
 			// FIXME should not include terminators and comments when counting
 			// should only wrap the content in array (returning all parts)
 			// for if/else blocks -- not loops
@@ -5807,6 +5808,20 @@ var Imbac =
 			};
 			
 			
+			
+			return this;
+		} else if (node instanceof TagPushAssign) {
+			// console.log 'TagPushAssign'
+			var real1 = this.expressions();
+			
+			this._nodes = this._nodes.map(function(child) {
+				if (idx$(child,real1) >= 0 && !(child instanceof Assign)) {
+					// console.log "{child}"
+					return child.consume(node);
+				} else {
+					return child;
+				};
+			});
 			
 			return this;
 		};
@@ -9249,6 +9264,18 @@ var Imbac =
 		return this;
 	};
 
+	function TagPushAssign(){ return PushAssign.apply(this,arguments) };
+
+	subclass$(TagPushAssign,PushAssign);
+	exports.TagPushAssign = TagPushAssign; // export class 
+	TagPushAssign.prototype.js = function (o){
+		return ("" + (this.left().c()) + ".push(" + (this.right().c()) + ")");
+	};
+
+	TagPushAssign.prototype.consume = function (node){
+		return this;
+	};
+
 
 	function ConditionalAssign(){ return Assign.apply(this,arguments) };
 
@@ -10594,15 +10621,19 @@ var Imbac =
 			
 			// var ref = node.root.reference
 			node._loop = this;
-			
+			// @resvar ||= scope.declare(:res,Arr.new([]),system: yes)
 			// Should not be consumed the same way
 			// One per loop - or no?
 			this.body().consume(node);
+			// maybe add the resvar here already
+			// @tagtree = node
+			
 			node._loop = null;
 			var fn = new Lambda([],[this]);
 			fn.scope().wrap(this.scope());
 			// TODO Scope of generated lambda should be added into stack for
 			// variable naming / resolution
+			// console.log "TagTree consumes for-in"
 			return CALL(fn,[]);
 		};
 		
@@ -10652,13 +10683,16 @@ var Imbac =
 		} else {
 			// declare the variable we will use to soak up results
 			// what about a pool here?
-			resvar = this._resvar = this.scope().declare('res',new Arr([]),{system: true});
+			resvar = this._resvar || (this._resvar = this.scope().declare('res',new Arr([]),{system: true}));
 		};
 		
-		this._catcher = new PushAssign("push",resvar,null); // the value is not preset
+		if (this._tagtree) {
+			this._catcher = new TagPushAssign("push",resvar,null);
+		} else {
+			this._catcher = new PushAssign("push",resvar,null); // the value is not preset
+		};
+		
 		this.body().consume(this._catcher); // should still return the same body
-		
-		
 		
 		if (node) {
 			ast = new Block([this,BR,resvar.accessor().consume(node)]);
@@ -11234,7 +11268,7 @@ var Imbac =
 	};
 
 	Tag.prototype.js = function (jso){
-		var body;
+		var body, loop_;
 		var o = this._options;
 		var a = {};
 		var enc = this.enclosing();
@@ -11462,6 +11496,15 @@ var Imbac =
 					key = o.key;
 				} else {
 					kvar = '_$';
+					if (o.loop) {
+						(loop_ = o.loop)._tagCount || (loop_._tagCount = 0);
+						
+						if (o.loop._tagCount > 0) {
+							kvar += o.loop._tagCount;
+						};
+						o.loop._tagCount++;
+					};
+					
 					var idx1 = o.loop.option('vars').index;
 					cacheDefault = LIT('[]');
 					key = idx1;

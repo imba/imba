@@ -108,7 +108,29 @@ describe 'Tags - Define' do
 		root.render
 		root.render
 		root.render
+		console.log root.@children
 		eq buildCount, 4
+
+	test "cache double for in" do
+		buildCount = 0
+		var root = <div>
+		
+		def root.render
+			var ary = ['a','b','c','d']
+			<self>
+				<h1> 'heading'
+				for v in ary
+					<custom.one> v
+					<custom.two> v
+
+		root.render
+		eq buildCount, 8
+
+		root.render
+		root.render
+		root.render
+		eq buildCount, 8
+		eq root.dom:children:length,9
 
 	test "dynamic flags" do
 		let val = 'hello'

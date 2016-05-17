@@ -1070,6 +1070,7 @@ export class Block < ListNode
 				child.consume(node)
 
 			let real = expressions
+			# console.log 'Block.consume TagTree',node.@loop
 			# FIXME should not include terminators and comments when counting
 			# should only wrap the content in array (returning all parts)
 			# for if/else blocks -- not loops
@@ -1088,6 +1089,19 @@ export class Block < ListNode
 
 			
 		
+			return self
+
+		elif node isa TagPushAssign
+			# console.log 'TagPushAssign'
+			let real = expressions
+
+			@nodes = @nodes.map do |child|
+				if child in real and !(child isa Assign)
+					# console.log "{child}"
+					child.consume(node)
+				else
+					child
+
 			return self
 
 		# can also return super if it is expressable, but should we really?
@@ -3904,6 +3918,14 @@ export class PushAssign < Assign
 	def consume node
 		return self
 
+export class TagPushAssign < PushAssign
+
+	def js o
+		"{left.c}.push({right.c})"
+
+	def consume node
+		return self
+
 
 export class ConditionalAssign < Assign
 
@@ -5050,15 +5072,18 @@ export class For < Loop
 
 			# var ref = node.root.reference
 			node.@loop = self
-
+			@tagtree = node
+			# @resvar ||= scope.declare(:res,Arr.new([]),system: yes)
 			# Should not be consumed the same way
 			# One per loop - or no?
 			body.consume(node)
+			# maybe add the resvar here already
 			node.@loop = null
 			let fn = Lambda.new([],[self])
 			fn.scope.wrap(scope)
 			# TODO Scope of generated lambda should be added into stack for
 			# variable naming / resolution
+			# console.log "TagTree consumes for-in"
 			return CALL(fn,[])
 
 
@@ -5103,12 +5128,14 @@ export class For < Loop
 		else
 			# declare the variable we will use to soak up results
 			# what about a pool here?
-			resvar = @resvar = scope.declare(:res,Arr.new([]),system: yes)
+			resvar = @resvar ||= scope.declare(:res,Arr.new([]),system: yes)
 
-		@catcher = PushAssign.new("push",resvar,null) # the value is not preset
+		if @tagtree
+			@catcher = TagPushAssign.new("push",resvar,null)
+		else
+			@catcher = PushAssign.new("push",resvar,null) # the value is not preset
+
 		body.consume(@catcher) # should still return the same body
-
-
 
 		if node
 			var ast = Block.new([self,BR,resvar.accessor.consume(node)])
@@ -5818,6 +5845,13 @@ export class Tag < Node
 					key = o:key
 				else
 					kvar = '_$'
+					if o:loop
+						o:loop.@tagCount ||= 0
+
+						if o:loop.@tagCount > 0
+							kvar += o:loop.@tagCount
+						o:loop.@tagCount++
+
 					let idx = o:loop.option(:vars)[:index]
 					cacheDefault = LIT('[]')
 					key = idx

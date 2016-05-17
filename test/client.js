@@ -8252,7 +8252,39 @@
 			root.render();
 			root.render();
 			root.render();
+			console.log(root._children);
 			return eq(buildCount,4);
+		});
+		
+		test("cache double for in",function() {
+			buildCount = 0;
+			var root = tag$.$div().end();
+			
+			root.render = function (){
+				var self = this, __ = self.__;
+				var ary = ['a','b','c','d'];
+				return this.setChildren([
+					(__.A = __.A || tag$.$h1().setText('heading')).end(),
+					(function() {
+						var t0, _$ = (__.B = __.B || []), t1, _$1 = (__.C = __.C || []);
+						for (var i = 0, len = ary.length, v, res = []; i < len; i++) {
+							v = ary[i];
+							(t0 = _$[i] = _$[i] || tag$.$custom().flag('one')).setContent(v,3).end();
+							res.push((t1 = _$1[i] = _$1[i] || tag$.$custom().flag('two')).setContent(v,3).end());
+						};
+						return res;
+					})()
+				],1).synced();
+			};
+			
+			root.render();
+			eq(buildCount,8);
+			
+			root.render();
+			root.render();
+			root.render();
+			eq(buildCount,8);
+			return eq(root.dom().children.length,9);
 		});
 		
 		test("dynamic flags",function() {
