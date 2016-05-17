@@ -4849,6 +4849,11 @@ export class If < ControlFlow
 			@tagtree = node
 			return self
 
+		if node isa TagPushAssign
+			@body = @body.consume(node) if @body
+			@alt = @alt.consume(node) if @alt
+			return self
+
 		# special case for If created from conditional assign as well?
 		# @type == '?' and 
 		# ideally we dont really want to make any expression like this by default

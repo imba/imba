@@ -8269,7 +8269,7 @@
 						var t0, _$ = (__.B = __.B || []), t1, _$1 = (__.C = __.C || []);
 						for (var i = 0, len = ary.length, v, res = []; i < len; i++) {
 							v = ary[i];
-							(t0 = _$[i] = _$[i] || tag$.$custom().flag('one')).setContent(v,3).end();
+							res.push((t0 = _$[i] = _$[i] || tag$.$custom().flag('one')).setContent(v,3).end());
 							res.push((t1 = _$1[i] = _$1[i] || tag$.$custom().flag('two')).setContent(v,3).end());
 						};
 						return res;

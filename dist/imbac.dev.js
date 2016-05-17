@@ -10370,6 +10370,12 @@ var Imbac =
 			return this;
 		};
 		
+		if (node instanceof TagPushAssign) {
+			if (this._body) { this._body = this._body.consume(node) };
+			if (this._alt) { this._alt = this._alt.consume(node) };
+			return this;
+		};
+		
 		// special case for If created from conditional assign as well?
 		// @type == '?' and 
 		// ideally we dont really want to make any expression like this by default
@@ -10621,13 +10627,12 @@ var Imbac =
 			
 			// var ref = node.root.reference
 			node._loop = this;
+			this._tagtree = node;
 			// @resvar ||= scope.declare(:res,Arr.new([]),system: yes)
 			// Should not be consumed the same way
 			// One per loop - or no?
 			this.body().consume(node);
 			// maybe add the resvar here already
-			// @tagtree = node
-			
 			node._loop = null;
 			var fn = new Lambda([],[this]);
 			fn.scope().wrap(this.scope());
