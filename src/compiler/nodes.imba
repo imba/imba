@@ -5042,7 +5042,7 @@ export class For < Loop
 		# what about a range where we also include an index?
 		if src isa Range
 
-			vars:len = scope.declare('len',src.right) # util.len(o,yes).predeclare
+			vars:len = scope.declare('len',src.right,type: 'let',system: yes) # util.len(o,yes).predeclare
 			# make the scope be the declarator
 			# TODO would like to be able to have counter in range as well
 			vars:index = scope.register(o:name,scope,type: 'let', declared: yes)

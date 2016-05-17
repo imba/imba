@@ -99,6 +99,17 @@ describe 'Syntax - Loops' do
 			var res = (v for v in ary by 2)
 			eq res, [1,3,5]
 
+		test "variable collisions" do
+
+			var res = []
+			for a in [0..2]
+				var len = 10
+				res.push(a)
+
+			eq res:length, 3
+
+			return
+
 	describe "For In with ranges" do
 		
 		test "statement" do
