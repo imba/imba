@@ -180,7 +180,8 @@ class Imba.Tag
 		self
 
 	def id= id
-		dom:id = id
+		if id != null
+			dom:id = id
 
 	def id
 		dom:id
