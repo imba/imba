@@ -30,17 +30,20 @@ class Ticker
 		@queue.push(item)
 		schedule unless @scheduled
 
-	def tick e
+	def tick timestamp
 		var items = @queue
+		@ts = timestamp unless @ts
+		@dt = timestamp - @ts
+		@ts = timestamp
 		@queue = []
 		@stage = 1
 		before
 		if items:length
 			for item,i in items
 				if item isa Function
-					item(e) 
+					item(@dt,self)
 				elif item:tick
-					item.tick(e,self)
+					item.tick(@dt,self)
 		@stage = 2
 		after
 		@stage = 0
@@ -162,7 +165,7 @@ own schedulers to control when they render.
 
 ###
 class Imba.Scheduler
-
+	var counter = 0
 	def self.markDirty
 		@dirty = yes
 		self
@@ -186,6 +189,7 @@ class Imba.Scheduler
 	@return {Imba.Scheduler}
 	###
 	def initialize target
+		@id = counter++
 		@target = target
 		@marked = no
 		@active = no
@@ -285,12 +289,17 @@ class Imba.Scheduler
 	@protected
 	@return {self}
 	###
-	def tick delta
-		@scheduled = no
+	def tick delta, ticker
 		@ticks++
 		@dt = delta
+
+		if ticker
+			@scheduled = no
+
 		flush
-		requestTick if @raf and !@scheduled
+
+		if @raf
+			requestTick
 		self
 
 	def requestTick
@@ -313,7 +322,8 @@ class Imba.Scheduler
 			@commit = @target:commit
 			@target:commit = do this
 			@target?.flag('scheduled_')
-			tick(0) # should not always force tick here?
+			tick(0)
+
 		return self
 
 	###
