@@ -8,6 +8,7 @@
     "compiler"
   ],
   "author": "Sindre Aarsaether",
+  "license": "MIT",
   "contributors": [
     {
       "name": "Sindre Aarsaether",
