@@ -46,3 +46,7 @@ dette"
 
 		str = """<?xml \" version="1.0" \{ encoding="UTF-8"?>"""
 		eq str, '<?xml " version="1.0" { encoding="UTF-8"?>'
+
+		var v = 1
+		str = "{v ? 'a' : 'b'}c"
+		eq str, 'ac'

@@ -4851,6 +4851,9 @@ export class If < ControlFlow
 	def sourceMapMarker
 		self
 
+	def shouldParenthesize
+		!!@parens
+
 	def consume node
 		# if it is possible, convert into expression
 		if node isa TagTree
