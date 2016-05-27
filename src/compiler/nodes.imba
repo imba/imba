@@ -3073,16 +3073,18 @@ export class ArgsReference < Node
 # should be a separate Context or something
 export class Self < Literal
 
-	prop scope
-
-	def initialize scope
-		@scope = scope
+	def initialize value
+		@value = value
 
 	def cache
 		self
 
 	def reference
 		return self
+
+	def visit
+		scope__.context
+		self
 
 	def c
 		var s = scope__
@@ -3096,6 +3098,9 @@ export class This < Self
 		self
 
 	def reference
+		self
+
+	def visit
 		self
 
 	def c
@@ -3501,6 +3506,11 @@ export class PropertyAccess < Access
 
 
 export class IvarAccess < Access
+	
+	def visit
+		@right.traverse if @right
+		@left ? @left.traverse : scope__.context
+		return self
 
 	def cache
 		# WARN hmm, this is not right... when accessing on another object it will need to be cached
@@ -4916,15 +4926,16 @@ export class Loop < Statement
 		if stack.isExpression or isExpression
 			# what the inner one should not be an expression though?
 			# this will resut in an infinite loop, no?!?
+			scope.closeScope
 			var ast = CALL(FN([],[self]),[])
-			scope.context.reference
 			return ast.c o
 		
 		elif stack.current isa Block or (s.up isa Block and s.current.@consumer == self)
 			super.c o
 		else
+			scope.closeScope
 			var ast = CALL(FN([],[self]),[])
-			scope.context.reference
+			# scope.context.reference
 			return ast.c o
 			# need to wrap in function
 
@@ -4966,7 +4977,7 @@ export class While < Loop
 		if node isa TagTree
 			# WARN this is a hack to allow references coming through the wrapping scope 
 			# will result in unneeded self-declarations and other oddities
-			scope.context.reference
+			scope.closeScope
 			return CALL(FN([],[self]),[])
 
 		var reuse = no
@@ -5073,9 +5084,8 @@ export class For < Loop
 
 		# other cases as well, no?
 		if node isa TagTree
-			scope.context.reference
+			scope.closeScope
 
-			# var ref = node.root.reference
 			node.@loop = self
 			@tagtree = node
 			# @resvar ||= scope.declare(:res,Arr.new([]),system: yes)
@@ -6733,6 +6743,7 @@ export class Scope
 		return item
 
 	def lookup name
+		@lookups ||= {}
 		var ret = null
 		name = helpers.symbolize(name)
 		if @varmap.hasOwnProperty(name)
@@ -6803,6 +6814,9 @@ export class Scope
 
 	def toString
 		"{self:constructor:name}"
+
+	def closeScope
+		self
 	
 
 # RootScope is wrong? Rather TopScope or ProgramScope
@@ -6897,7 +6911,6 @@ export class ClassScope < Scope
 		# console.log "virtualizing ClassScope"
 		var up = parent
 		for own k,v of @varmap
-			true
 			v.resolve(up,yes) # force new resolve
 		self
 
@@ -6922,10 +6935,12 @@ export class MethodScope < Scope
 export class LambdaScope < Scope
 
 	def context
+		# why do we need to make sure it is referenced?
+		unless @context
+			@context = parent.context
+			@context.reference(self)
+		@context
 
-		# when accessing the outer context we need to make sure that it is cached
-		# so this is wrong - but temp okay
-		@context ||= parent.context.reference(self)
 
 export class FlowScope < Scope
 
@@ -6952,16 +6967,14 @@ export class FlowScope < Scope
 		parent.autodeclare(variable)
 
 	def closure
-		# rather all the way?
 		@parent.closure # this is important?
 
 	def context
-		# if we are wrapping in an expression - we do need to add a reference
-		# @referenced = yes
-		parent.context
-		# usually - if the parent scope is a closed scope we dont really need
-		# to force a reference
-		# @context ||= parent.context.reference(self)
+		@context ||= parent.context
+
+	def closeScope
+		@context.reference if @context
+		self
 
 export class CatchScope < FlowScope
 
@@ -6971,7 +6984,7 @@ export class WhileScope < FlowScope
 		vars.push(variable)
 
 export class ForScope < FlowScope
-	
+
 	def autodeclare variable
 		vars.push(variable)
 
@@ -7269,7 +7282,6 @@ export class ScopeContext < Node
 	# name of the variable etc?
 
 	def reference
-		# should be a special context-variable!!!
 		@reference ||= scope.declare("self",This.new)
 
 	def c
