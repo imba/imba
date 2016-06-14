@@ -790,6 +790,7 @@ var Imbac =
 		
 		if (o.profile) { console.time("tokenize:lexer") };
 		this.parse(code);
+		
 		if (!o.inline) this.closeIndentation();
 		if (!o.silent && this._ends.length) {
 			this.error(("missing " + (this._ends.pop())));
@@ -803,11 +804,12 @@ var Imbac =
 	Lexer.prototype.parse = function (code){
 		var i = 0;
 		var pi = 0;
+		this._loc = this._locOffset + i;
 		
 		while (this._chunk = code.slice(i)){
-			this._loc = this._locOffset + i;
 			pi = (this._end == 'TAG' && this.tagDefContextToken()) || (this._inTag && this.tagContextToken()) || this.basicContext();
 			i += pi;
+			this._loc = this._locOffset + i;
 		};
 		
 		return;
@@ -2011,7 +2013,6 @@ var Imbac =
 		};
 		
 		if (!(this.lastTokenType() == 'TERMINATOR' || noNewlines)) { this.token('TERMINATOR','\n',0) };
-		
 		// capping scopes so they dont hang around 
 		this._scopes.length = this._indents.length;
 		
@@ -2146,9 +2147,8 @@ var Imbac =
 			
 			if (pv == '||' || pv == '&&') { // in ['||', '&&']
 				tTs(prev,'COMPOUND_ASSIGN');
-				tVs(prev,pv + '=');
-				// prev[0] = 'COMPOUND_ASSIGN'
-				// prev[1] += '='
+				tVs(prev,pv + '='); // need to change the length as well
+				prev._len = this._loc - prev._loc + value.length;
 				return value.length;
 			};
 		};
@@ -2316,7 +2316,6 @@ var Imbac =
 	Lexer.prototype.balancedString = function (str,end){
 		var match,letter,prev;
 		
-		// console.log 'balancing string!', str, end
 		var stack = [end];
 		var i = 0;
 		
@@ -2366,7 +2365,7 @@ var Imbac =
 	// new Lexer, tokenize the interpolated contents, and merge them into the
 	// token stream.
 	Lexer.prototype.interpolateString = function (str,options){
-		// console.log "interpolate string"
+		
 		if(options === undefined) options = {};
 		var heredoc = options.heredoc;
 		var quote = options.quote;
@@ -2408,7 +2407,7 @@ var Imbac =
 			tokens.push(new Token('{{','{',this._loc + i + locOffset,1));
 			
 			var inner = expr.slice(1,-1);
-			// console.log 'inner is',inner
+			
 			// remove leading spaces 
 			// need to keep track of how much whitespace we dropped from the start
 			inner = inner.replace(/^[^\n\S]+/,'');
@@ -8241,20 +8240,22 @@ var Imbac =
 	};
 
 	// should be a separate Context or something
-	function Self(scope){
-		this._scope = scope;
+	function Self(value){
+		this._value = value;
 	};
 
 	subclass$(Self,Literal);
 	exports.Self = Self; // export class 
-	Self.prototype.scope = function(v){ return this._scope; }
-	Self.prototype.setScope = function(v){ this._scope = v; return this; };
-
 	Self.prototype.cache = function (){
 		return this;
 	};
 
 	Self.prototype.reference = function (){
+		return this;
+	};
+
+	Self.prototype.visit = function (){
+		this.scope__().context();
 		return this;
 	};
 
@@ -8278,6 +8279,10 @@ var Imbac =
 	};
 
 	This.prototype.reference = function (){
+		return this;
+	};
+
+	This.prototype.visit = function (){
 		return this;
 	};
 
@@ -8768,6 +8773,12 @@ var Imbac =
 
 	subclass$(IvarAccess,Access);
 	exports.IvarAccess = IvarAccess; // export class 
+	IvarAccess.prototype.visit = function (){
+		if (this._right) { this._right.traverse() };
+		this._left ? (this._left.traverse()) : (this.scope__().context());
+		return this;
+	};
+
 	IvarAccess.prototype.cache = function (){
 		// WARN hmm, this is not right... when accessing on another object it will need to be cached
 		return this;
@@ -10361,6 +10372,10 @@ var Imbac =
 		return this;
 	};
 
+	If.prototype.shouldParenthesize = function (){
+		return !!this._parens;
+	};
+
 	If.prototype.consume = function (node){
 		// if it is possible, convert into expression
 		if (node instanceof TagTree) {
@@ -10450,14 +10465,15 @@ var Imbac =
 		if (this.stack().isExpression() || this.isExpression()) {
 			// what the inner one should not be an expression though?
 			// this will resut in an infinite loop, no?!?
+			this.scope().closeScope();
 			var ast = CALL(FN([],[this]),[]);
-			this.scope().context().reference();
 			return ast.c(o);
 		} else if ((this.stack().current() instanceof Block) || ((s.up() instanceof Block) && s.current()._consumer == this)) {
 			return Loop.__super__.c.call(this,o);
 		} else {
+			this.scope().closeScope();
 			ast = CALL(FN([],[this]),[]);
-			this.scope().context().reference();
+			// scope.context.reference
 			return ast.c(o);
 			// need to wrap in function
 		};
@@ -10504,7 +10520,7 @@ var Imbac =
 		if (node instanceof TagTree) {
 			// WARN this is a hack to allow references coming through the wrapping scope 
 			// will result in unneeded self-declarations and other oddities
-			this.scope().context().reference();
+			this.scope().closeScope();
 			return CALL(FN([],[this]),[]);
 		};
 		
@@ -10588,7 +10604,7 @@ var Imbac =
 		// what about a range where we also include an index?
 		if (src instanceof Range) {
 			
-			vars.len = scope.declare('len',src.right()); // util.len(o,yes).predeclare
+			vars.len = scope.declare('len',src.right(),{type: 'let',system: true}); // util.len(o,yes).predeclare
 			// make the scope be the declarator
 			// TODO would like to be able to have counter in range as well
 			vars.index = scope.register(o.name,scope,{type: 'let',declared: true});
@@ -10623,9 +10639,8 @@ var Imbac =
 		
 		// other cases as well, no?
 		if (node instanceof TagTree) {
-			this.scope().context().reference();
+			this.scope().closeScope();
 			
-			// var ref = node.root.reference
 			node._loop = this;
 			this._tagtree = node;
 			// @resvar ||= scope.declare(:res,Arr.new([]),system: yes)
@@ -11612,7 +11627,7 @@ var Imbac =
 
 	TagTree.prototype.resolve = function (){
 		var self = this;
-		this.remap(function(c) { return c.consume(self); });
+		self.remap(function(c) { return c.consume(self); });
 		return self;
 	};
 
@@ -12578,6 +12593,7 @@ var Imbac =
 	};
 
 	Scope.prototype.lookup = function (name){
+		this._lookups || (this._lookups = {});
 		var ret = null;
 		name = helpers.symbolize(name);
 		if (this._varmap.hasOwnProperty(name)) {
@@ -12647,7 +12663,7 @@ var Imbac =
 
 	Scope.prototype.dump = function (){
 		var self = this;
-		var vars = Object.keys(this._varmap).map(function(k) {
+		var vars = Object.keys(self._varmap).map(function(k) {
 			var v = self._varmap[k];
 			return v.references().length ? (dump__(v)) : (null);
 		});
@@ -12669,6 +12685,10 @@ var Imbac =
 
 	Scope.prototype.toString = function (){
 		return ("" + (this.constructor.name));
+	};
+
+	Scope.prototype.closeScope = function (){
+		return this;
 	};
 
 
@@ -12782,7 +12802,6 @@ var Imbac =
 		// console.log "virtualizing ClassScope"
 		var up = this.parent();
 		for (var o = this._varmap, i = 0, keys = Object.keys(o), l = keys.length; i < l; i++){
-			true;
 			o[keys[i]].resolve(up,true); // force new resolve
 		};
 		return this;
@@ -12827,11 +12846,14 @@ var Imbac =
 	subclass$(LambdaScope,Scope);
 	exports.LambdaScope = LambdaScope; // export class 
 	LambdaScope.prototype.context = function (){
-		
-		// when accessing the outer context we need to make sure that it is cached
-		// so this is wrong - but temp okay
-		return this._context || (this._context = this.parent().context().reference(this));
+		// why do we need to make sure it is referenced?
+		if (!this._context) {
+			this._context = this.parent().context();
+			this._context.reference(this);
+		};
+		return this._context;
 	};
+
 
 	function FlowScope(){ return Scope.apply(this,arguments) };
 
@@ -12868,17 +12890,16 @@ var Imbac =
 	};
 
 	FlowScope.prototype.closure = function (){
-		// rather all the way?
 		return this._parent.closure(); // this is important?
 	};
 
 	FlowScope.prototype.context = function (){
-		// if we are wrapping in an expression - we do need to add a reference
-		// @referenced = yes
-		return this.parent().context();
-		// usually - if the parent scope is a closed scope we dont really need
-		// to force a reference
-		// @context ||= parent.context.reference(self)
+		return this._context || (this._context = this.parent().context());
+	};
+
+	FlowScope.prototype.closeScope = function (){
+		if (this._context) { this._context.reference() };
+		return this;
 	};
 
 	function CatchScope(){ return FlowScope.apply(this,arguments) };
@@ -13262,7 +13283,6 @@ var Imbac =
 	// name of the variable etc?
 
 	ScopeContext.prototype.reference = function (){
-		// should be a special context-variable!!!
 		return this._reference || (this._reference = this.scope().declare("self",new This()));
 	};
 
@@ -13409,10 +13429,10 @@ var Imbac =
 		var self = this;
 		var matcher = /\%\$(\d*)\$\%/;
 		var replacer = /^(.*?)\%\$(\d*)\$\%/;
-		var lines = this.options().js.split(/\n/g); // what about js?
+		var lines = self.options().js.split(/\n/g); // what about js?
 		// return self
-		var locmap = util.locationToLineColMap(this.sourceCode());
-		this._maps = [];
+		var locmap = util.locationToLineColMap(self.sourceCode());
+		self._maps = [];
 		
 		// console.log options:js
 		
@@ -13428,7 +13448,7 @@ var Imbac =
 			var col = 0;
 			var caret = 0;
 			
-			this._maps[i] = [];
+			self._maps[i] = [];
 			while (line.match(matcher)){
 				line = line.replace(replacer,function(m,pre,loc) {
 					var lc = locmap[parseInt(loc)];

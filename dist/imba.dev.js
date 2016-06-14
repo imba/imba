@@ -330,14 +330,19 @@
 
 	Ticker.prototype.stage = function(v){ return this._stage; }
 	Ticker.prototype.setStage = function(v){ this._stage = v; return this; };
+	Ticker.prototype.queue = function(v){ return this._queue; }
+	Ticker.prototype.setQueue = function(v){ this._queue = v; return this; };
 
 	Ticker.prototype.add = function (item){
 		this._queue.push(item);
 		if (!this._scheduled) { return this.schedule() };
 	};
 
-	Ticker.prototype.tick = function (e){
+	Ticker.prototype.tick = function (timestamp){
 		var items = this._queue;
+		if (!this._ts) { this._ts = timestamp };
+		this._dt = timestamp - this._ts;
+		this._ts = timestamp;
 		this._queue = [];
 		this._stage = 1;
 		this.before();
@@ -345,9 +350,9 @@
 			for (var i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
 				item = ary[i];
 				if (item instanceof Function) {
-					item(e);
+					item(this._dt,this);
 				} else if (item.tick) {
-					item.tick(e,this);
+					item.tick(this._dt,this);
 				};
 			};
 		};
@@ -502,6 +507,7 @@
 
 	Imba.Scheduler = function Scheduler(target){
 		var self = this;
+		self._id = counter++;
 		self._target = target;
 		self._marked = false;
 		self._active = false;
@@ -517,6 +523,7 @@
 		self;
 	};
 
+	var counter = 0;
 	Imba.Scheduler.markDirty = function (){
 		this._dirty = true;
 		return this;
@@ -670,12 +677,19 @@
 		@return {self}
 		*/
 
-	Imba.Scheduler.prototype.tick = function (delta){
-		this._scheduled = false;
+	Imba.Scheduler.prototype.tick = function (delta,ticker){
 		this._ticks++;
 		this._dt = delta;
+		
+		if (ticker) {
+			this._scheduled = false;
+		};
+		
 		this.flush();
-		if (this._raf && !this._scheduled) this.requestTick();
+		
+		if (this._raf) {
+			this.requestTick();
+		};
 		return this;
 	};
 
@@ -702,8 +716,9 @@
 			this._commit = this._target.commit;
 			this._target.commit = function() { return this; };
 			this._target && this._target.flag  &&  this._target.flag('scheduled_');
-			this.tick(0); // should not always force tick here?
+			this.tick(0);
 		};
+		
 		return this;
 	};
 
@@ -1177,7 +1192,9 @@
 	};
 
 	Imba.Tag.prototype.setId = function (id){
-		this.dom().id = id;
+		if (id != null) {
+			this.dom().id = id;
+		};
 		return this;
 	};
 
@@ -1723,10 +1740,10 @@
 		*/
 
 	Imba.Tag.prototype.siblings = function (sel){
-		var par, self = this;
-		if (!(par = this.parent())) { return [] }; // FIXME
-		var ary = this.dom().parentNode.children;
-		var nodes = new Imba.Selector(null,this,ary);
+		var self = this, par;
+		if (!(par = self.parent())) { return [] }; // FIXME
+		var ary = self.dom().parentNode.children;
+		var nodes = new Imba.Selector(null,self,ary);
 		return nodes.filter(function(n) { return n != self && (!sel || n.matches(sel)); });
 	};
 
@@ -3640,7 +3657,7 @@
 
 	Imba.Event.prototype.keychar = function (){
 		if (this.event() instanceof KeyboardEvent) {
-			var ki = this.event().keyIdentifier;
+			var ki = this.event().keyIdentifier || this.event().key;
 			var sym = Imba.KEYMAP[this.event().keyCode];
 			
 			if (!sym && ki.substr(0,2) == "U+") {
