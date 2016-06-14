@@ -147,7 +147,7 @@ class Imba.Event
 	###
 	def keychar
 		if event isa KeyboardEvent
-			var ki = event:keyIdentifier
+			var ki = event:keyIdentifier or event:key
 			var sym = Imba.KEYMAP[event:keyCode]
 
 			if !sym and ki.substr(0,2) == "U+"
