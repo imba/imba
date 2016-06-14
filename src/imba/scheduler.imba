@@ -16,6 +16,7 @@ if $web$
 class Ticker
 
 	prop stage
+	prop queue
 
 	def initialize
 		@queue = []
