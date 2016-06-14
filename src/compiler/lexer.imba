@@ -378,6 +378,7 @@ export class Lexer
 		
 		console.time("tokenize:lexer") if o:profile
 		parse(code)
+
 		closeIndentation unless o:inline
 		if !o:silent and @ends:length
 			error "missing {@ends.pop}"
@@ -389,11 +390,12 @@ export class Lexer
 	def parse code
 		var i = 0
 		var pi = 0
+		@loc = @locOffset + i
 
 		while @chunk = code.slice(i)
-			@loc = @locOffset + i
 			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || basicContext
 			i += pi
+			@loc = @locOffset + i
 
 		return
 
@@ -1464,7 +1466,6 @@ export class Lexer
 		@tokens.pop while lastTokenValue == ';'
 
 		token('TERMINATOR','\n',0) unless lastTokenType == 'TERMINATOR' or noNewlines
-
 		# capping scopes so they dont hang around 
 		@scopes:length = @indents:length
 
@@ -1585,9 +1586,8 @@ export class Lexer
 
 			if pv == '||' or pv == '&&' # in ['||', '&&']
 				tTs(prev,'COMPOUND_ASSIGN')
-				tVs(prev,pv + '=')
-				# prev[0] = 'COMPOUND_ASSIGN'
-				# prev[1] += '='
+				tVs(prev,pv + '=') # need to change the length as well
+				prev.@len = @loc - prev.@loc + value:length
 				return value:length
 
 		if value is ';'             
@@ -1741,7 +1741,6 @@ export class Lexer
 	def balancedString str, end
 		var match, letter, prev
 
-		# console.log 'balancing string!', str, end
 		var stack = [end]
 		var i = 0
 
@@ -1784,7 +1783,7 @@ export class Lexer
 	# new Lexer, tokenize the interpolated contents, and merge them into the
 	# token stream.
 	def interpolateString str, options = {}
-		# console.log "interpolate string"
+
 		var heredoc = options:heredoc
 		var quote = options:quote
 		var regex = options:regex
@@ -1822,7 +1821,7 @@ export class Lexer
 			tokens.push Token.new('{{','{',@loc + i + locOffset,1)
 
 			var inner = expr.slice(1, -1)
-			# console.log 'inner is',inner
+
 			# remove leading spaces 
 			# need to keep track of how much whitespace we dropped from the start
 			inner = inner.replace(/^[^\n\S]+/,'')
