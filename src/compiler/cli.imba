@@ -122,7 +122,7 @@ def print-tokens tokens
 		var id = T.val(t)
 		var s
 		if typ == 'TERMINATOR'
-			continue "[" + chalk.yellow(id.replace(/\n/g,"\\n")) + "]"
+			continue "({t.@loc}:{t.@len})[" + chalk.yellow(id.replace(/\n/g,"\\n")) + "]"
 
 		if id == typ
 			s = "[" + chalk.red(id) + "]"
