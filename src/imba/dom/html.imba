@@ -204,8 +204,30 @@ tag select
 	prop autofocus dom: yes
 	prop disabled dom: yes
 	prop required dom: yes
-	prop value dom: yes
 
+	def value= value
+		value = String(value)
+	
+		if dom:value != value
+			dom:value = value
+		
+			if dom:value != value
+				@delayedValue = value
+
+		self
+	
+	def value
+		dom:value
+	
+	def syncValue
+		if @delayedValue != undefined
+			dom:value = @delayedValue
+			@delayedValue = undefined
+		self
+	
+	def setChildren
+		super
+		syncValue
 
 tag small
 tag source

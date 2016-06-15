@@ -33,6 +33,7 @@ require './tags/caching'
 if $web$
 	require './tags/virtual'
 	require './tags/svg'
+	require './tags/html'
 
 extern phantom
 
