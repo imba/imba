@@ -79,6 +79,7 @@
 	if (true) {
 		__webpack_require__(43);
 		__webpack_require__(45);
+		__webpack_require__(46);
 	};
 
 	// externs;
@@ -2722,11 +2723,39 @@
 		tag.prototype.__required = {dom: true,name: 'required'};
 		tag.prototype.required = function(v){ return this.dom().required; }
 		tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
-		tag.prototype.__value = {dom: true,name: 'value'};
-		tag.prototype.value = function(v){ return this.dom().value; }
-		tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
+		
+		tag.prototype.setValue = function (value){
+			value = String(value);
+			
+			if (this.dom().value != value) {
+				this.dom().value = value;
+				
+				if (this.dom().value != value) {
+					this._delayedValue = value;
+				};
+			};
+			
+			this;
+			return this;
+		};
+		
+		tag.prototype.value = function (){
+			return this.dom().value;
+		};
+		
+		tag.prototype.syncValue = function (){
+			if (this._delayedValue != undefined) {
+				this.dom().value = this._delayedValue;
+				this._delayedValue = undefined;
+			};
+			return this;
+		};
+		
+		tag.prototype.setChildren = function (){
+			tag.__super__.setChildren.apply(this,arguments);
+			return this.syncValue();
+		};
 	});
-
 
 	tag$.defineTag('small');
 	tag$.defineTag('source');
@@ -10611,6 +10640,40 @@
 			return ok((tag$.SVG.$circle().end()).dom() instanceof SVGCircleElement);
 		});
 	});
+
+
+/***/ },
+/* 46 */
+/***/ function(module, exports) {
+
+	// externs;
+
+	describe("HTML",function() {
+		
+		return describe("select",function() {
+			
+			test("automatic value",function() {
+				var el = tag$.$select().setContent([
+					tag$.$option().setText("a").end(),
+					tag$.$option().setText("b").end(),
+					tag$.$option().setText("c").end()
+				],2).end();
+				
+				return eq(el.value(),"a");
+			});
+			
+			return test("setting value",function() {
+				var el = tag$.$select().setValue("c").setContent([
+					tag$.$option().setText("a").end(),
+					tag$.$option().setText("b").end(),
+					tag$.$option().setText("c").end()
+				],2).end();
+				
+				return eq(el.value(),"c");
+			});
+		});
+	});
+
 
 
 /***/ }

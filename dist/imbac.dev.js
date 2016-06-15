@@ -293,7 +293,8 @@ var Imbac =
 /* 2 */
 /***/ function(module, exports) {
 
-	
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+
 	function brace(str){
 		var lines = str.match(/\n/);
 		// what about indentation?
@@ -394,6 +395,37 @@ var Imbac =
 	function parenthesize(str){
 		return '(' + String(str) + ')';
 	}; exports.parenthesize = parenthesize;
+
+	function unionOfLocations(){
+		var $0 = arguments, i = $0.length;
+		var locs = new Array(i>0 ? i : 0);
+		while(i>0) locs[i-1] = $0[--i];
+		var a = Infinity;
+		var b = -Infinity;
+		
+		for (var i = 0, ary = iter$(locs), len = ary.length, loc; i < len; i++) {
+			loc = ary[i];
+			if (loc && loc._loc != undefined) {
+				loc = loc._loc;
+			};
+			
+			if (loc && (loc.loc instanceof Function)) {
+				loc = loc.loc();
+			};
+			
+			if (loc instanceof Array) {
+				if (a > loc[0]) { a = loc[0] };
+				if (b < loc[0]) { b = loc[1] };
+			} else if ((typeof loc=='number'||loc instanceof Number)) {
+				if (a > loc) { a = loc };
+				if (b < loc) { b = loc };
+			};
+		};
+		
+		return [a,b];
+	}; exports.unionOfLocations = unionOfLocations;
+
+
 
 	function locationToLineColMap(code){
 		var lines = code.split(/\n/g);
@@ -3585,16 +3617,16 @@ var Imbac =
 	self.$ = new yy.Bool($$[$0]);
 	break;
 	case 71:
-	self.$ = yy.TRUE;
+	self.$ = new yy.True($$[$0]);
 	break;
 	case 72:
-	self.$ = yy.FALSE;
+	self.$ = new yy.False($$[$0]);
 	break;
 	case 73:
-	self.$ = yy.NIL;
+	self.$ = new yy.Nil($$[$0]);
 	break;
 	case 74:
-	self.$ = yy.UNDEFINED;
+	self.$ = new yy.Undefined($$[$0]);
 	break;
 	case 75: case 76:
 	self.$ = new yy.Return($$[$0]);
@@ -3999,16 +4031,16 @@ var Imbac =
 	self.$ = new yy.Parens($$[$0-2],$$[$0-4],$$[$0]);
 	break;
 	case 303:
-	self.$ = new yy.While($$[$0]);
+	self.$ = new yy.While($$[$0],{keyword: $$[$0-1]});
 	break;
 	case 304:
-	self.$ = new yy.While($$[$0-2],{guard: $$[$0]});
+	self.$ = new yy.While($$[$0-2],{guard: $$[$0],keyword: $$[$0-3]});
 	break;
 	case 305:
-	self.$ = new yy.While($$[$0],{invert: true});
+	self.$ = new yy.While($$[$0],{invert: true,keyword: $$[$0-1]});
 	break;
 	case 306:
-	self.$ = new yy.While($$[$0-2],{invert: true,guard: $$[$0]});
+	self.$ = new yy.While($$[$0-2],{invert: true,guard: $$[$0],keyword: $$[$0-3]});
 	break;
 	case 307: case 315: case 318:
 	self.$ = $$[$0-1].addBody($$[$0]);
@@ -4017,10 +4049,10 @@ var Imbac =
 	self.$ = $$[$0].addBody(yy.Block.wrap([$$[$0-1]]));
 	break;
 	case 311:
-	self.$ = new yy.While(new yy.Literal('true')).addBody($$[$0]);
+	self.$ = new yy.While(new yy.Literal('true',{keyword: $$[$0-1]})).addBody($$[$0]);
 	break;
 	case 312:
-	self.$ = new yy.While(new yy.Literal('true')).addBody(yy.Block.wrap([$$[$0]]));
+	self.$ = new yy.While(new yy.Literal('true',{keyword: $$[$0-1]})).addBody(yy.Block.wrap([$$[$0]]));
 	break;
 	case 313: case 314:
 	self.$ = $$[$0].addBody([$$[$0-1]]);
@@ -5352,6 +5384,10 @@ var Imbac =
 		return this;
 	};
 
+	Terminator.prototype.loc = function (){
+		return [this._value._loc,this._value._loc + this._value._value.length];
+	};
+
 	Terminator.prototype.c = function (){
 		return this._value.c();
 	};
@@ -5670,7 +5706,10 @@ var Imbac =
 		} else if (ind = this._indentation) {
 			return [ind.aloc(),ind.bloc()];
 		} else {
-			return [0,0];
+			// first node
+			var a1 = this._nodes[0];
+			var b1 = this._nodes[this._nodes.length - 1];
+			return [a1 && a1.loc()[0] || 0,b1 && b1.loc()[1] || 0];
 		};
 	};
 
@@ -6855,6 +6894,10 @@ var Imbac =
 
 	subclass$(Root,Code);
 	exports.Root = Root; // export class 
+	Root.prototype.loc = function (){
+		return this._body.loc();
+	};
+
 	Root.prototype.visit = function (){
 		ROOT = STACK.ROOT = this._scope;
 		this.scope().visit();
@@ -7719,6 +7762,10 @@ var Imbac =
 
 	Bool.prototype.toJSON = function (){
 		return {type: 'Bool',value: this._value};
+	};
+
+	Bool.prototype.loc = function (){
+		return this._value.region ? (this._value.region()) : ([0,0]);
 	};
 
 	function Undefined(){ return Literal.apply(this,arguments) };
@@ -10226,9 +10273,9 @@ var Imbac =
 
 	subclass$(ControlFlow,Node);
 	exports.ControlFlow = ControlFlow; // export class 
-
-
-
+	ControlFlow.prototype.loc = function (){
+		return this._body ? (this._body.loc()) : ([0,0]);
+	};
 
 	function ControlFlowStatement(){ return ControlFlow.apply(this,arguments) };
 
@@ -10277,6 +10324,10 @@ var Imbac =
 			this.setAlt(add);
 		};
 		return this;
+	};
+
+	If.prototype.loc = function (){
+		return [this._type ? (this._type._loc) : (0),this.body().loc()[1]];
 	};
 
 	If.prototype.invert = function (){
@@ -10425,7 +10476,6 @@ var Imbac =
 		this;
 	};
 
-
 	subclass$(Loop,Statement);
 	exports.Loop = Loop; // export class 
 	Loop.prototype.scope = function(v){ return this._scope; }
@@ -10437,6 +10487,17 @@ var Imbac =
 	Loop.prototype.catcher = function(v){ return this._catcher; }
 	Loop.prototype.setCatcher = function(v){ this._catcher = v; return this; };
 
+	Loop.prototype.loc = function (){
+		var a = this._options.keyword;
+		var b = this._body;
+		
+		if (a && b) {
+			// FIXME does not support POST_ variants yet
+			return [a._loc,b.loc()[1]];
+		} else {
+			return [0,0];
+		};
+	};
 
 	Loop.prototype.set = function (obj){
 		this._options || (this._options = {});
@@ -10507,6 +10568,10 @@ var Imbac =
 		if (this.body()) { return this.body().traverse() };
 	};
 
+	While.prototype.loc = function (){
+		var o = this._options;
+		return helpers.unionOfLocations(o.keyword,this._body,o.guard,this._test);
+	};
 
 	// TODO BUG -- when we declare a var like: while var y = ...
 	// the variable will be declared in the WhileScope which never
@@ -10572,6 +10637,11 @@ var Imbac =
 
 	subclass$(For,Loop);
 	exports.For = For; // export class 
+	For.prototype.loc = function (){
+		var o = this._options;
+		return helpers.unionOfLocations(o.keyword,this._body,o.guard,o.step,o.source);
+	};
+
 	For.prototype.visit = function (){
 		this.scope().visit();
 		
