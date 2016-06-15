@@ -196,7 +196,26 @@ describe 'Tags - Define' do
 
 		var sub = <SubTag>
 		eq node.@local, yes
-		
 
+	test "caching event-handlers" do
+		tag Cache
+			def render
+				<self> <@body :tap=(|e| title )>
+
+		var node = <Cache>
+		var fn = node.@body:ontap
+		node.render
+		eq node.@body:ontap, fn
+
+		# if the handler references variables outside
+		# of its scope we dont cache it on first render
+		tag NoCache
+			def render arg
+				<self> <@body :tap=(|e| arg )>
+
+		var node = <NoCache>
+		var fn = node.@body:ontap
+		node.render
+		ok node.@body:ontap != fn
 
 					

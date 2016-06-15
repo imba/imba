@@ -8404,7 +8404,7 @@
 			return eq(b._custom,true);
 		});
 		
-		return test("local tag",function() {
+		test("local tag",function() {
 			var LocalTag = tag$.defineTag('LocalTag', 'canvas', function(tag){
 				tag.prototype.initialize = function (){
 					this._local = true;
@@ -8422,9 +8422,34 @@
 			var sub = SubTag.build().end();
 			return eq(node._local,true);
 		});
+		
+		return test("caching event-handlers",function() {
+			var Cache = tag$.defineTag('Cache', function(tag){
+				tag.prototype.render = function (){
+					var self = this;
+					return self.setChildren((self._body || tag$.$div().__ref('body',self).setHandler('tap',function(e) { return self.title(); },self)).end(),2).synced();
+				};
+			});
+			
+			var node = Cache.build().end();
+			var fn = node._body.ontap;
+			node.render();
+			eq(node._body.ontap,fn);
+			
+			// if the handler references variables outside
+			// of its scope we dont cache it on first render
+			var NoCache = tag$.defineTag('NoCache', function(tag){
+				tag.prototype.render = function (arg){
+					return this.setChildren((this._body || tag$.$div().__ref('body',this)).setHandler('tap',function(e) { return arg; },this).end(),2).synced();
+				};
+			});
+			
+			node = NoCache.build().end();
+			fn = node._body.ontap;
+			node.render();
+			return ok(node._body.ontap != fn);
+		});
 	});
-
-
 
 
 
