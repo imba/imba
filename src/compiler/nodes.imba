@@ -5651,8 +5651,8 @@ export class Tag < Node
 		var typ = enclosing
 
 		if typ == '->' or typ == '=>'
-			@tree = TagTree.new(self,o:body, root: self, reactive: reactive)
-			o:body = TagFragmentFunc.new([],Block.wrap([@tree]))
+			@tree = TagFragmentTree.new(self,o:body, root: self, reactive: yes)
+			@fragment = o:body = TagFragmentFunc.new([],Block.wrap([@tree]))
 
 		o:key.traverse if o:key
 		o:body.traverse if o:body
@@ -5663,6 +5663,8 @@ export class Tag < Node
 
 		# remember scope
 		@tagScope = scope__
+		# if typ == '->' or typ == '=>'
+		# 	@tagScope = o:body.scope
 
 		self
 
@@ -5672,8 +5674,11 @@ export class Tag < Node
 	def closureCache
 		@closureCache ||= @tagScope.tagContextCache
 
+
 	def staticCache
-		if type isa Self
+		if @fragment
+			@staticCache ||= @fragment.scope.tagContextCache
+		elif type isa Self
 			@staticCache ||= @tagScope.tagContextCache
 		elif explicitKey or option(:loop)
 			@staticCache ||= OP('.',reference,'__')
@@ -5908,7 +5913,14 @@ export class Tag < Node
 				# dont redeclare?
 				ctx = s.declare(kvar,Parens.new(setter))
 			else
+				# or the tree-cache no?
 				ctx = parent ? parent.staticCache : closureCache
+
+			unless ctx
+				if parent
+					var tree = parent.tree
+					console.log 'no context!',tree
+					ctx = parent.tree.staticCache
 
 			# need the context -- might be better to rewrite it for real?
 			# parse the whole thing into calls etc
@@ -5952,6 +5964,9 @@ export class TagTree < ListNode
 
 	def parent
 		@parent ||= @owner.parent
+
+	def staticCache
+		@owner.staticCache
 
 	def nextCacheKey
 		var num = @counter++
@@ -6008,6 +6023,17 @@ export class TagTree < ListNode
 			"[{out}]"
 		else
 			out
+
+export class TagFragmentTree < TagTree
+
+	def visit
+		super
+		@closure = scope__
+		self
+
+	def staticCache
+		console.log 'called staticCache'
+		@owner.staticCache
 
 export class TagWrapper < ValueNode
 

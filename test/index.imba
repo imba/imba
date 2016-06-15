@@ -34,6 +34,7 @@ if $web$
 	require './tags/virtual'
 	require './tags/svg'
 	require './tags/html'
+	require './tags/templates'
 
 extern phantom
 

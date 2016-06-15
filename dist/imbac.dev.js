@@ -11317,8 +11317,8 @@ var Imbac =
 		var typ = this.enclosing();
 		
 		if (typ == '->' || typ == '=>') {
-			this._tree = new TagTree(this,o.body,{root: this,reactive: this.reactive()});
-			o.body = new TagFragmentFunc([],Block.wrap([this._tree]));
+			this._tree = new TagFragmentTree(this,o.body,{root: this,reactive: true});
+			this._fragment = o.body = new TagFragmentFunc([],Block.wrap([this._tree]));
 		};
 		
 		if (o.key) { o.key.traverse() };
@@ -11331,6 +11331,8 @@ var Imbac =
 		
 		// remember scope
 		this._tagScope = this.scope__();
+		// if typ == '->' or typ == '=>'
+		// 	@tagScope = o:body.scope
 		
 		return this;
 	};
@@ -11343,8 +11345,11 @@ var Imbac =
 		return this._closureCache || (this._closureCache = this._tagScope.tagContextCache());
 	};
 
+
 	Tag.prototype.staticCache = function (){
-		if (this.type() instanceof Self) {
+		if (this._fragment) {
+			return this._staticCache || (this._staticCache = this._fragment.scope().tagContextCache());
+		} else if (this.type() instanceof Self) {
 			return this._staticCache || (this._staticCache = this._tagScope.tagContextCache());
 		} else if (this.explicitKey() || this.option('loop')) {
 			return this._staticCache || (this._staticCache = OP('.',this.reference(),'__'));
@@ -11604,7 +11609,16 @@ var Imbac =
 				// dont redeclare?
 				ctx = s.declare(kvar,new Parens(setter1));
 			} else {
+				// or the tree-cache no?
 				ctx = parent ? (parent.staticCache()) : (this.closureCache());
+			};
+			
+			if (!ctx) {
+				if (parent) {
+					tree = parent.tree();
+					console.log('no context!',tree);
+					ctx = parent.tree().staticCache();
+				};
 			};
 			
 			// need the context -- might be better to rewrite it for real?
@@ -11659,6 +11673,10 @@ var Imbac =
 
 	TagTree.prototype.parent = function (){
 		return this._parent || (this._parent = this._owner.parent());
+	};
+
+	TagTree.prototype.staticCache = function (){
+		return this._owner.staticCache();
 	};
 
 	TagTree.prototype.nextCacheKey = function (){
@@ -11730,6 +11748,21 @@ var Imbac =
 		} else {
 			return out;
 		};
+	};
+
+	function TagFragmentTree(){ return TagTree.apply(this,arguments) };
+
+	subclass$(TagFragmentTree,TagTree);
+	exports.TagFragmentTree = TagFragmentTree; // export class 
+	TagFragmentTree.prototype.visit = function (){
+		TagFragmentTree.__super__.visit.apply(this,arguments);
+		this._closure = this.scope__();
+		return this;
+	};
+
+	TagFragmentTree.prototype.staticCache = function (){
+		console.log('called staticCache');
+		return this._owner.staticCache();
 	};
 
 	function TagWrapper(){ return ValueNode.apply(this,arguments) };

@@ -80,6 +80,7 @@
 		__webpack_require__(43);
 		__webpack_require__(45);
 		__webpack_require__(46);
+		__webpack_require__(47);
 	};
 
 	// externs;
@@ -1329,6 +1330,41 @@
 		this._children = null;
 		return this;
 	};
+
+	/*
+		Set the template that will render the content of node.
+		@return {self}
+		*/
+
+	Imba.Tag.prototype.setTemplate = function (template){
+		if (!this._template) {
+			// override the basic
+			if (this.render == Imba.Tag.prototype.render) {
+				this.render = this.renderTemplate; // do setChildren(renderTemplate)
+			};
+			this.optimizeTagStructure();
+		};
+		
+		this.template = this._template = template;
+		return this;
+	};
+
+	Imba.Tag.prototype.template = function (){
+		return null;
+	};
+
+	/*
+		If no custom render-method is defined, and the node
+		has a template, this method will used to render
+		@return {self}
+		*/
+
+	Imba.Tag.prototype.renderTemplate = function (){
+		var body = this.template();
+		if (body != this) { this.setChildren(body) };
+		return this;
+	};
+
 
 	/*
 		@deprecated
@@ -10699,6 +10735,118 @@
 		});
 	});
 
+
+
+/***/ },
+/* 47 */
+/***/ function(module, exports) {
+
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	// externs;
+
+	// extend class Imba.Tag
+	// 
+	// 	def setTemplate template
+	// 		unless @template
+	// 			# override the basic
+	// 			if self:render == Imba.Tag:prototype:render
+	// 				self:render = self:renderTemplate # do setChildren(renderTemplate)
+	// 			self.optimizeTagStructure
+	// 
+	// 		self:template = @template = template
+	// 		self
+	// 
+	// 	def renderTemplate
+	// 		var body = template
+	// 		setChildren(body) if body != self
+	// 		self
+
+
+	tag$.defineTag('xul', 'ul');
+	tag$.defineTag('xno');
+
+	tag$.defineTag('wraps', function(tag){
+		
+		tag.prototype.render = function (){
+			var self = this, __ = self.__;
+			return this.setChildren(
+				(__.A = __.A || tag$.$div()).setContent([
+					(__.AA = __.AA || tag$.$h2().setText("content of template:")).end(),
+					self.template()
+				],1).end()
+			,2).synced();
+		};
+	});
+
+	AA = [1,2,3,4,5];
+	TT = tag$.$div().setTemplate(function() {
+		var self = this, __ = self.__;
+		return [
+			(__.A = __.A || tag$.$ul().flag('x')).setContent([
+				(__.AA = __.AA || tag$.$li().setText("Hello")).end(),
+				(__.AB = __.AB || tag$.$li()).setContent(Date.now(),3).end(),
+				(__.AC = __.AC || tag$.$li()).setContent([
+					(__.ACA = __.ACA || tag$.$xul()).setTemplate(function() {
+						return [
+							(__.ACAA = __.ACAA || tag$.$li().setText("Inner")).end(),
+							(__.ACAB = __.ACAB || tag$.$li()).setContent(Date.now(),3).end()
+						];
+					}).end(),
+					(__.ACB = __.ACB || tag$.$xno()).setTemplate(function() {
+						var self = this, __ = self.__;
+						return this.dataset('stamp',Date.now()).setChildren([
+							(__.ACBAA = __.ACBAA || tag$.$li().setText("Inner")).end(),
+							(__.ACBAB = __.ACBAB || tag$.$li()).setContent(Date.now(),3).end(),
+							(function() {
+								var t0, _$ = (__.ACBAC = __.ACBAC || []);
+								for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
+									res.push((t0 = _$[i] = _$[i] || tag$.$li()).setContent(ary[i],3).end());
+								};
+								return res;
+							})()
+						],1).synced();
+					}).end(),
+					(__.ACC = __.ACC || tag$.$wraps()).setTemplate(function() {
+						return [
+							(__.ACCA = __.ACCA || tag$.$div()).setContent(("This is inside " + (Date.now())),3).end(),
+							(function() {
+								var t0, _$ = (__.ACCB = __.ACCB || []);
+								for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
+									res.push((t0 = _$[i] = _$[i] || tag$.$div()).setContent(ary[i],3).end());
+								};
+								return res;
+							})()
+						];
+					}).end()
+				],2).end()
+			],2).end(),
+			(__.B = __.B || tag$.$span()).end()
+		];
+	}).end();
+
+	tag$.defineTag('hello', function(tag){
+		
+		tag.prototype.render = function (){
+			var self = this, __ = self.__;
+			return this.setChildren(
+				(__.A = __.A || tag$.$div()).setContent([
+					(__.AA = __.AA || tag$.$h2().setText("content of template:")).end(),
+					(__.AB = __.AB || tag$.$div()).setContent(("This is inside " + (Date.now())),3).end(),
+					(function() {
+						var t0, _$ = (__.AC = __.AC || []);
+						for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
+							res.push((t0 = _$[i] = _$[i] || tag$.$div()).setContent(ary[i],3).end());
+						};
+						return res;
+					})()
+				],1).end()
+			,2).synced();
+		};
+	});
+
+	HE = tag$.$hello().end();
+	document.body.appendChild(TT.dom());
+	document.body.appendChild(HE.dom());
 
 
 /***/ }

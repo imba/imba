@@ -236,6 +236,34 @@ class Imba.Tag
 		self
 
 	###
+	Set the template that will render the content of node.
+	@return {self}
+	###
+	def setTemplate template
+		unless @template
+			# override the basic
+			if self:render == Imba.Tag:prototype:render
+				self:render = self:renderTemplate # do setChildren(renderTemplate)
+			self.optimizeTagStructure
+
+		self:template = @template = template
+		self
+
+	def template
+		null
+
+	###
+	If no custom render-method is defined, and the node
+	has a template, this method will used to render
+	@return {self}
+	###
+	def renderTemplate
+		var body = template
+		setChildren(body) if body != self
+		self
+
+
+	###
 	@deprecated
 	Remove specified child from current node.
 	###
