@@ -5817,7 +5817,7 @@ export class Tag < Node
 		if reactive and parent and parent.tree and !option(:ivar)
 			# not if it has a separate tag?
 			o:treeRef = parent.tree.nextCacheKey(self)
-			if parent.option(:treeRef) and !parent.explicitKey and !parent.option(:loop)
+			if parent.option(:treeRef) and !parent.explicitKey and !parent.option(:loop) and !(parent.tree isa TagFragmentTree)
 				o:treeRef = parent.option(:treeRef) + o:treeRef
 
 		if var body = content and content.c(expression: yes)
@@ -5916,11 +5916,11 @@ export class Tag < Node
 				# or the tree-cache no?
 				ctx = parent ? parent.staticCache : closureCache
 
-			unless ctx
-				if parent
-					var tree = parent.tree
-					console.log 'no context!',tree
-					ctx = parent.tree.staticCache
+			# unless ctx
+			# 	if parent
+			# 		var tree = parent.tree
+			# 		console.log 'no context!',tree
+			# 		ctx = parent.tree.staticCache
 
 			# need the context -- might be better to rewrite it for real?
 			# parse the whole thing into calls etc
@@ -5975,10 +5975,16 @@ export class TagTree < ListNode
 		if ref:length > 1
 			ref = ref + ref:length
 
-		if @owner.explicitKey or @owner.option(:loop)
-			ref = '$' + ref
+		# if @owner.explicitKey or @owner.option(:loop)
+		ref = cachePrefix + ref
 		# ref = ref.toLowerCase unless @owner.type isa Self
 		return ref
+
+	def cachePrefix
+		if @owner.explicitKey or @owner.option(:loop)
+			'$'
+		else
+			''
 
 	def load list
 		if list isa ListNode
@@ -6026,13 +6032,16 @@ export class TagTree < ListNode
 
 export class TagFragmentTree < TagTree
 
+	def cachePrefix
+		'$$'
+
 	def visit
 		super
 		@closure = scope__
 		self
 
 	def staticCache
-		console.log 'called staticCache'
+		# console.log 'called staticCache'
 		@owner.staticCache
 
 export class TagWrapper < ValueNode

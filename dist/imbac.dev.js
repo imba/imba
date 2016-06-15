@@ -11504,7 +11504,7 @@ var Imbac =
 		if (this.reactive() && parent && parent.tree() && !this.option('ivar')) {
 			// not if it has a separate tag?
 			o.treeRef = parent.tree().nextCacheKey(this);
-			if (parent.option('treeRef') && !parent.explicitKey() && !parent.option('loop')) {
+			if (parent.option('treeRef') && !parent.explicitKey() && !parent.option('loop') && !(parent.tree() instanceof TagFragmentTree)) {
 				o.treeRef = parent.option('treeRef') + o.treeRef;
 			};
 		};
@@ -11613,13 +11613,11 @@ var Imbac =
 				ctx = parent ? (parent.staticCache()) : (this.closureCache());
 			};
 			
-			if (!ctx) {
-				if (parent) {
-					tree = parent.tree();
-					console.log('no context!',tree);
-					ctx = parent.tree().staticCache();
-				};
-			};
+			// unless ctx
+			// 	if parent
+			// 		var tree = parent.tree
+			// 		console.log 'no context!',tree
+			// 		ctx = parent.tree.staticCache
 			
 			// need the context -- might be better to rewrite it for real?
 			// parse the whole thing into calls etc
@@ -11687,11 +11685,18 @@ var Imbac =
 			ref = ref + ref.length;
 		};
 		
-		if (this._owner.explicitKey() || this._owner.option('loop')) {
-			ref = '$' + ref;
-		};
+		// if @owner.explicitKey or @owner.option(:loop)
+		ref = this.cachePrefix() + ref;
 		// ref = ref.toLowerCase unless @owner.type isa Self
 		return ref;
+	};
+
+	TagTree.prototype.cachePrefix = function (){
+		if (this._owner.explicitKey() || this._owner.option('loop')) {
+			return '$';
+		} else {
+			return '';
+		};
 	};
 
 	TagTree.prototype.load = function (list){
@@ -11754,6 +11759,10 @@ var Imbac =
 
 	subclass$(TagFragmentTree,TagTree);
 	exports.TagFragmentTree = TagFragmentTree; // export class 
+	TagFragmentTree.prototype.cachePrefix = function (){
+		return '$$';
+	};
+
 	TagFragmentTree.prototype.visit = function (){
 		TagFragmentTree.__super__.visit.apply(this,arguments);
 		this._closure = this.scope__();
@@ -11761,7 +11770,7 @@ var Imbac =
 	};
 
 	TagFragmentTree.prototype.staticCache = function (){
-		console.log('called staticCache');
+		// console.log 'called staticCache'
 		return this._owner.staticCache();
 	};
 
