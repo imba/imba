@@ -4551,7 +4551,7 @@
 					return this;
 				};
 			} else if ((new$ instanceof Array) && (old instanceof Array)) {
-				reconcileCollection(this,new$,old,null);
+				reconcileNested(this,new$,old,null);
 			} else {
 				this.empty();
 				appendNested(this,new$);

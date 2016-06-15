@@ -284,7 +284,7 @@ extend tag element
 				return self
 
 		elif new isa Array and old isa Array
-			reconcileCollection(self,new,old,null)
+			reconcileNested(self,new,old,null)
 		else
 			empty
 			appendNested(self,new)

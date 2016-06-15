@@ -4620,7 +4620,7 @@
 					return this;
 				};
 			} else if ((new$ instanceof Array) && (old instanceof Array)) {
-				reconcileCollection(this,new$,old,null);
+				reconcileNested(this,new$,old,null);
 			} else {
 				this.empty();
 				appendNested(this,new$);
@@ -10744,37 +10744,17 @@
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// externs;
 
-	// extend class Imba.Tag
-	// 
-	// 	def setTemplate template
-	// 		unless @template
-	// 			# override the basic
-	// 			if self:render == Imba.Tag:prototype:render
-	// 				self:render = self:renderTemplate # do setChildren(renderTemplate)
-	// 			self.optimizeTagStructure
-	// 
-	// 		self:template = @template = template
-	// 		self
-	// 
-	// 	def renderTemplate
-	// 		var body = template
-	// 		setChildren(body) if body != self
-	// 		self
-
-
 	tag$.defineTag('xul', 'ul');
 	tag$.defineTag('xno');
 
 	tag$.defineTag('wraps', function(tag){
 		
 		tag.prototype.render = function (){
-			var self = this, __ = self.__;
 			return this.setChildren(
-				(__.A = __.A || tag$.$div()).setContent([
-					(__.AA = __.AA || tag$.$h2().setText("content of template:")).end(),
-					self.template()
-				],1).end()
-			,2).synced();
+				// <div>
+				// <h2> "content of template:"
+				this.template()
+			,3).synced();
 		};
 	});
 
