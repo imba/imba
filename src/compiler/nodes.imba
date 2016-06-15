@@ -736,6 +736,9 @@ export class Terminator < Meta
 	def traverse
 		self
 
+	def loc
+		[@value.@loc,@value.@loc + @value.@value:length]
+
 	def c
 		return @value.c
 
@@ -979,7 +982,10 @@ export class Block < ListNode
 		elif var ind = @indentation
 			[ind.aloc,ind.bloc]
 		else
-			[0,0]
+			# first node
+			let a = @nodes[0]
+			let b = @nodes[@nodes:length - 1]
+			[a and a.loc[0] or 0,b and b.loc[1] or 0]
 
 	# go through children and unwrap inner nodes
 	def unwrap
@@ -1930,6 +1936,9 @@ export class Root < Code
 		@scope = RootScope.new(self,null)
 		@options = {}
 
+	def loc
+		@body.loc
+
 	def visit
 		ROOT = STACK.ROOT = @scope
 		scope.visit
@@ -2669,6 +2678,9 @@ export class Bool < Literal
 
 	def toJSON
 		{type: 'Bool', value: @value}
+
+	def loc
+		@value:region ? @value.region : [0,0]
 
 export class Undefined < Literal
 	
@@ -4729,7 +4741,8 @@ export class ExternDeclaration < ListNode
 
 export class ControlFlow < Node
 
-
+	def loc
+		@body ? @body.loc : [0,0]
 
 export class ControlFlowStatement < ControlFlow
 
@@ -4739,7 +4752,6 @@ export class ControlFlowStatement < ControlFlow
 
 
 export class If < ControlFlow
-
 
 	prop test
 	prop body
@@ -4768,6 +4780,9 @@ export class If < ControlFlow
 		invert if @type == 'unless'
 		@scope = IfScope.new(self)
 		self
+
+	def loc
+		[@type ? @type.@loc : 0,body.loc[1]]
 
 	def invert
 		if @test isa ComparisonOp
@@ -4898,13 +4913,21 @@ export class Loop < Statement
 	prop body
 	prop catcher
 
+	def loc
+		var a = @options:keyword
+		var b = @body
+
+		if a and b
+			# FIXME does not support POST_ variants yet
+			[a.@loc,b.loc[1]]
+		else
+			[0,0]
 
 	def initialize options = {}
 		@traversed = no
 		@options = options
 		@body = null
 		self
-
 
 	def set obj
 		@options ||= {}
@@ -4967,6 +4990,9 @@ export class While < Loop
 		test.traverse if test
 		body.traverse if body
 
+	def loc
+		var o = @options
+		helpers.unionOfLocations(o:keyword,@body,o:guard,@test)
 
 	# TODO BUG -- when we declare a var like: while var y = ...
 	# the variable will be declared in the WhileScope which never
@@ -5026,6 +5052,10 @@ export class For < Loop
 		@options = o
 		@scope = ForScope.new(self)
 		@catcher = null
+
+	def loc
+		var o = @options
+		helpers.unionOfLocations(o:keyword,@body,o:guard,o:step,o:source)
 
 	def visit
 		scope.visit

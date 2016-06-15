@@ -79,6 +79,28 @@ export def bracketize str, ind = yes
 export def parenthesize str
 	'(' + String(str) + ')'
 
+export def unionOfLocations *locs
+	var a = Infinity
+	var b = -Infinity
+
+	for loc in locs
+		if loc and loc.@loc != undefined
+			loc = loc.@loc
+
+		if loc and loc:loc isa Function
+			loc = loc.loc
+
+		if loc isa Array
+			a = loc[0] if a > loc[0]
+			b = loc[1] if b < loc[0]
+		elif loc isa Number
+			a = loc if a > loc
+			b = loc if b < loc
+
+	return [a,b]
+				
+
+
 export def locationToLineColMap code
 	var lines = code.split(/\n/g)
 	var map = []

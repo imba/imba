@@ -230,10 +230,10 @@ var grammar =
 		o 'JS' do Literal.new A1
 		o 'REGEX' do RegExp.new A1
 		o 'BOOL' do Bool.new A1
-		o 'TRUE' do AST.TRUE # should not cheat like this
-		o 'FALSE' do AST.FALSE
-		o 'NULL' do AST.NIL
-		o 'UNDEFINED' do AST.UNDEFINED
+		o 'TRUE' do True.new(A1) # AST.TRUE # should not cheat like this
+		o 'FALSE' do False.new(A1) # AST.FALSE
+		o 'NULL' do Nil.new(A1) # AST.NIL
+		o 'UNDEFINED' do Undefined.new(A1) # AST.UNDEFINED
 		# we loose locations for these
 	]
 
@@ -768,10 +768,10 @@ var grammar =
 	]
 	# The condition portion of a while loop.
 	WhileSource: [
-		o 'WHILE Expression' do While.new(A2)
-		o 'WHILE Expression WHEN Expression' do While.new A2, guard: A4
-		o 'UNTIL Expression' do While.new A2, invert: true
-		o 'UNTIL Expression WHEN Expression' do While.new A2, invert: true, guard: A4
+		o 'WHILE Expression' do While.new(A2, keyword: A1)
+		o 'WHILE Expression WHEN Expression' do While.new(A2, guard: A4, keyword: A1)
+		o 'UNTIL Expression' do While.new(A2, invert: true, keyword: A1)
+		o 'UNTIL Expression WHEN Expression' do While.new(A2, invert: true, guard: A4, keyword: A1)
 	]
 
 	# The while loop can either be normal, with a block of expressions to execute,
@@ -786,8 +786,8 @@ var grammar =
 
 	# should deprecate
 	Loop: [
-		o 'LOOP Block' do While.new(Literal.new 'true').addBody A2
-		o 'LOOP Expression' do While.new(Literal.new 'true').addBody Block.wrap [A2]
+		o 'LOOP Block' do While.new(Literal.new 'true', keyword: A1).addBody A2
+		o 'LOOP Expression' do While.new(Literal.new 'true', keyword: A1).addBody Block.wrap [A2]
 	]
 
 	# Array, object, and range comprehensions, at the most generic level.
