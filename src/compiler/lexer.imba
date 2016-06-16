@@ -425,8 +425,8 @@ export class Lexer
 		refreshScope
 
 		if ctx and ctx:id
-			ctx:open = Token.new(ctx:id + '_OPEN',val, @last.region[1],0)
-			@tokens.push(ctx:open)
+			ctx:start = Token.new(ctx:id + '_START',val, @last.region[1],0)
+			@tokens.push(ctx:start)
 		self
 
 	def popEnd val
@@ -435,11 +435,11 @@ export class Lexer
 
 		# automatically adding a closer if this is defined
 		var ctx = @context
-		if ctx and ctx:open
-			ctx:close = Token.new(ctx:id + '_CLOSE',popped,@last.region[1],0)
-			ctx:close.@opener = ctx:open
-			ctx:open.@closer = ctx:close
-			@tokens.push(ctx:close)
+		if ctx and ctx:start
+			ctx:end = Token.new(ctx:id + '_END',popped,@last.region[1],0)
+			ctx:end.@start = ctx:start
+			ctx:start.@end = ctx:end
+			@tokens.push(ctx:end)
 
 		@contexts.pop
 		@context = @contexts[@contexts:length - 1]
@@ -512,19 +512,19 @@ export class Lexer
 			# console.log 'TAG_SDDSATTR IN tokid',match
 			# var prev = last @tokens
 			# if the prev is a terminator, we dont really need to care?
-			if @lastTyp != 'TAG_NAME'
-				if @lastTyp == 'TERMINATOR'
-					# console.log('prev was terminator -- drop it?')
-					true
-				else
-					token(",", ",")
+			# if @lastTyp != 'TAG_NAME'
+			# 	if @lastTyp == 'TERMINATOR'
+			# 		# console.log('prev was terminator -- drop it?')
+			# 		true
+			# 	else
+			# 		token(",", ",")
 
 			var l = match[0]:length
 
 			token 'TAG_ATTR',match[1],l - 1  # add to loc?
 			@loc += l - 1
 			token '=','=',1
-			pushEnd('TAG_ATTR',id: 'TAG_ATTR_VALUE', pop: /^[\s\n\>]/) #  [' ','\n','>']
+			pushEnd('TAG_ATTR',id: 'VALUE', pop: /^[\s\n\>]/) #  [' ','\n','>']
 			return l
 		return 0
 

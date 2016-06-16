@@ -8419,7 +8419,6 @@
 		});
 		
 		
-		
 		test("style attribute",function() {
 			var el = _T.DIV().setStyle('display: block;').end();
 			if (true) {
@@ -8462,7 +8461,7 @@
 			return eq(node._local,true);
 		});
 		
-		return test("caching event-handlers",function() {
+		test("caching event-handlers",function() {
 			var Cache = _T.defineTag('Cache', function(tag){
 				tag.prototype.render = function (){
 					var self = this;
@@ -8487,6 +8486,14 @@
 			fn = node._body.ontap;
 			node.render();
 			return ok(node._body.ontap != fn);
+		});
+		
+		return test("parsing correctly",function() {
+			try {
+				return _T.DIV().dataset('date',new Date()).end();
+			} catch (e) {
+				return ok(false);
+			};
 		});
 	});
 
