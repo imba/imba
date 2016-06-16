@@ -78,7 +78,7 @@
 	*/
 
 	Imba = {
-		VERSION: '0.15.0-alpha.3',
+		VERSION: '0.15.0-alpha.4',
 		CLIENT: isClient,
 		SERVER: !isClient,
 		DEBUG: false
@@ -969,6 +969,8 @@
 
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 
+	// externs;
+
 	Imba.CSSKeyMap = {};
 
 	/*
@@ -1405,7 +1407,7 @@
 		var after = pars.after !== undefined ? pars.after : null;
 		if (after) { before = after.next() };
 		if (node instanceof Array) {
-			node = (tag$.$fragment().setContent(node,0).end());
+			node = (_T.FRAGMENT().setContent(node,0).end());
 		};
 		if (before) {
 			this.insertBefore(node,before.dom());
@@ -2081,14 +2083,14 @@
 	};
 
 	Imba.Tags.prototype.ns = function (name){
-		return this[name.toUpperCase()] || this.defineNamespace(name);
+		return this['_' + name.toUpperCase()] || this.defineNamespace(name);
 	};
 
 	Imba.Tags.prototype.defineNamespace = function (name){
 		var clone = Object.create(this);
 		clone._parent = this;
 		clone._ns = name;
-		this[name.toUpperCase()] = clone;
+		this['_' + name.toUpperCase()] = clone;
 		return clone;
 	};
 
@@ -2121,7 +2123,8 @@
 		} else {
 			tagtype._flagName = "_" + name.replace(/_/g,'-');
 			this[name] = tagtype;
-			this['$' + norm] = TagSpawner(tagtype);
+			this[norm.toUpperCase()] = TagSpawner(tagtype);
+			// '$'+
 		};
 		
 		
@@ -2263,7 +2266,7 @@
 		if (svgSupport && (dom instanceof SVGElement)) {
 			ns = "svg";
 			cls = dom.className.baseVal;
-			tags = tags.SVG;
+			tags = tags._SVG;
 		};
 		
 		var spawner;
@@ -2296,7 +2299,8 @@
 		return spawner ? (new spawner(dom).awaken(dom)) : (null);
 	};
 
-	tag$ = Imba.TAGS;
+
+	_T = tag$ = Imba.TAGS;
 	t$ = Imba.tag;
 	tc$ = Imba.tagWithFlags;
 	ti$ = Imba.tagWithId;
@@ -2328,7 +2332,7 @@
 		
 		// Ovverride classList
 		if (document && !document.documentElement.classList) {
-			tag$.extendTag('element', function(tag){
+			_T.extendTag('element', function(tag){
 				
 				tag.prototype.hasFlag = function (ref){
 					return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
@@ -2370,14 +2374,14 @@
 
 	
 	// predefine all supported html tags
-	tag$.defineTag('fragment', 'element', function(tag){
+	_T.defineTag('fragment', 'element', function(tag){
 		
 		tag.createNode = function (){
 			return Imba.document().createDocumentFragment();
 		};
 	});
 
-	tag$.defineTag('a', function(tag){
+	_T.defineTag('a', function(tag){
 		tag.prototype.href = function(v){ return this.getAttribute('href'); }
 		tag.prototype.setHref = function(v){ this.setAttribute('href',v); return this; };
 		tag.prototype.target = function(v){ return this.getAttribute('target'); }
@@ -2394,22 +2398,22 @@
 		tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
 	});
 
-	tag$.defineTag('abbr');
-	tag$.defineTag('address');
-	tag$.defineTag('area');
-	tag$.defineTag('article');
-	tag$.defineTag('aside');
-	tag$.defineTag('audio');
-	tag$.defineTag('b');
-	tag$.defineTag('base');
-	tag$.defineTag('bdi');
-	tag$.defineTag('bdo');
-	tag$.defineTag('big');
-	tag$.defineTag('blockquote');
-	tag$.defineTag('body');
-	tag$.defineTag('br');
+	_T.defineTag('abbr');
+	_T.defineTag('address');
+	_T.defineTag('area');
+	_T.defineTag('article');
+	_T.defineTag('aside');
+	_T.defineTag('audio');
+	_T.defineTag('b');
+	_T.defineTag('base');
+	_T.defineTag('bdi');
+	_T.defineTag('bdo');
+	_T.defineTag('big');
+	_T.defineTag('blockquote');
+	_T.defineTag('body');
+	_T.defineTag('br');
 
-	tag$.defineTag('button', function(tag){
+	_T.defineTag('button', function(tag){
 		tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
 		tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
 		tag.prototype.type = function(v){ return this.getAttribute('type'); }
@@ -2420,7 +2424,7 @@
 		tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 	});
 
-	tag$.defineTag('canvas', function(tag){
+	_T.defineTag('canvas', function(tag){
 		tag.prototype.__width = {dom: true,name: 'width'};
 		tag.prototype.width = function(v){ return this.dom().width; }
 		tag.prototype.setWidth = function(v){ if (v != this.dom().width) { this.dom().width = v }; return this; };
@@ -2434,34 +2438,34 @@
 		};
 	});
 
-	tag$.defineTag('caption');
-	tag$.defineTag('cite');
-	tag$.defineTag('code');
-	tag$.defineTag('col');
-	tag$.defineTag('colgroup');
-	tag$.defineTag('data');
-	tag$.defineTag('datalist');
-	tag$.defineTag('dd');
-	tag$.defineTag('del');
-	tag$.defineTag('details');
-	tag$.defineTag('dfn');
-	tag$.defineTag('div');
-	tag$.defineTag('dl');
-	tag$.defineTag('dt');
-	tag$.defineTag('em');
-	tag$.defineTag('embed');
+	_T.defineTag('caption');
+	_T.defineTag('cite');
+	_T.defineTag('code');
+	_T.defineTag('col');
+	_T.defineTag('colgroup');
+	_T.defineTag('data');
+	_T.defineTag('datalist');
+	_T.defineTag('dd');
+	_T.defineTag('del');
+	_T.defineTag('details');
+	_T.defineTag('dfn');
+	_T.defineTag('div');
+	_T.defineTag('dl');
+	_T.defineTag('dt');
+	_T.defineTag('em');
+	_T.defineTag('embed');
 
-	tag$.defineTag('fieldset', function(tag){
+	_T.defineTag('fieldset', function(tag){
 		tag.prototype.__disabled = {dom: true,name: 'disabled'};
 		tag.prototype.disabled = function(v){ return this.dom().disabled; }
 		tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 	});
 
-	tag$.defineTag('figcaption');
-	tag$.defineTag('figure');
-	tag$.defineTag('footer');
+	_T.defineTag('figcaption');
+	_T.defineTag('figure');
+	_T.defineTag('footer');
 
-	tag$.defineTag('form', function(tag){
+	_T.defineTag('form', function(tag){
 		tag.prototype.method = function(v){ return this.getAttribute('method'); }
 		tag.prototype.setMethod = function(v){ this.setAttribute('method',v); return this; };
 		tag.prototype.action = function(v){ return this.getAttribute('action'); }
@@ -2478,31 +2482,31 @@
 		tag.prototype.setNovalidate = function(v){ if (v != this.dom().novalidate) { this.dom().novalidate = v }; return this; };
 	});
 
-	tag$.defineTag('h1');
-	tag$.defineTag('h2');
-	tag$.defineTag('h3');
-	tag$.defineTag('h4');
-	tag$.defineTag('h5');
-	tag$.defineTag('h6');
-	tag$.defineTag('head');
-	tag$.defineTag('header');
-	tag$.defineTag('hr');
-	tag$.defineTag('html');
-	tag$.defineTag('i');
+	_T.defineTag('h1');
+	_T.defineTag('h2');
+	_T.defineTag('h3');
+	_T.defineTag('h4');
+	_T.defineTag('h5');
+	_T.defineTag('h6');
+	_T.defineTag('head');
+	_T.defineTag('header');
+	_T.defineTag('hr');
+	_T.defineTag('html');
+	_T.defineTag('i');
 
-	tag$.defineTag('iframe', function(tag){
+	_T.defineTag('iframe', function(tag){
 		tag.prototype.src = function(v){ return this.getAttribute('src'); }
 		tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
 	});
 
-	tag$.defineTag('img', function(tag){
+	_T.defineTag('img', function(tag){
 		tag.prototype.src = function(v){ return this.getAttribute('src'); }
 		tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
 		tag.prototype.srcset = function(v){ return this.getAttribute('srcset'); }
 		tag.prototype.setSrcset = function(v){ this.setAttribute('srcset',v); return this; };
 	});
 
-	tag$.defineTag('input', function(tag){
+	_T.defineTag('input', function(tag){
 		tag.prototype.accept = function(v){ return this.getAttribute('accept'); }
 		tag.prototype.setAccept = function(v){ this.setAttribute('accept',v); return this; };
 		tag.prototype.disabled = function(v){ return this.getAttribute('disabled'); }
@@ -2554,10 +2558,10 @@
 		tag.prototype.setReadOnly = function(v){ if (v != this.dom().readOnly) { this.dom().readOnly = v }; return this; };
 	});
 
-	tag$.defineTag('ins');
-	tag$.defineTag('kbd');
-	tag$.defineTag('keygen');
-	tag$.defineTag('label', function(tag){
+	_T.defineTag('ins');
+	_T.defineTag('kbd');
+	_T.defineTag('keygen');
+	_T.defineTag('label', function(tag){
 		tag.prototype.accesskey = function(v){ return this.getAttribute('accesskey'); }
 		tag.prototype.setAccesskey = function(v){ this.setAttribute('accesskey',v); return this; };
 		tag.prototype['for'] = function(v){ return this.getAttribute('for'); }
@@ -2567,10 +2571,10 @@
 	});
 
 
-	tag$.defineTag('legend');
-	tag$.defineTag('li');
+	_T.defineTag('legend');
+	_T.defineTag('li');
 
-	tag$.defineTag('link', function(tag){
+	_T.defineTag('link', function(tag){
 		tag.prototype.rel = function(v){ return this.getAttribute('rel'); }
 		tag.prototype.setRel = function(v){ this.setAttribute('rel',v); return this; };
 		tag.prototype.type = function(v){ return this.getAttribute('type'); }
@@ -2581,26 +2585,26 @@
 		tag.prototype.setMedia = function(v){ this.setAttribute('media',v); return this; };
 	});
 
-	tag$.defineTag('main');
-	tag$.defineTag('map');
-	tag$.defineTag('mark');
-	tag$.defineTag('menu');
-	tag$.defineTag('menuitem');
+	_T.defineTag('main');
+	_T.defineTag('map');
+	_T.defineTag('mark');
+	_T.defineTag('menu');
+	_T.defineTag('menuitem');
 
-	tag$.defineTag('meta', function(tag){
+	_T.defineTag('meta', function(tag){
 		tag.prototype.content = function(v){ return this.getAttribute('content'); }
 		tag.prototype.setContent = function(v){ this.setAttribute('content',v); return this; };
 		tag.prototype.charset = function(v){ return this.getAttribute('charset'); }
 		tag.prototype.setCharset = function(v){ this.setAttribute('charset',v); return this; };
 	});
 
-	tag$.defineTag('meter');
-	tag$.defineTag('nav');
-	tag$.defineTag('noscript');
+	_T.defineTag('meter');
+	_T.defineTag('nav');
+	_T.defineTag('noscript');
 
-	tag$.defineTag('ol');
+	_T.defineTag('ol');
 
-	tag$.defineTag('optgroup', function(tag){
+	_T.defineTag('optgroup', function(tag){
 		tag.prototype.label = function(v){ return this.getAttribute('label'); }
 		tag.prototype.setLabel = function(v){ this.setAttribute('label',v); return this; };
 		tag.prototype.__disabled = {dom: true,name: 'disabled'};
@@ -2608,7 +2612,7 @@
 		tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
 	});
 
-	tag$.defineTag('option', function(tag){
+	_T.defineTag('option', function(tag){
 		tag.prototype.label = function(v){ return this.getAttribute('label'); }
 		tag.prototype.setLabel = function(v){ this.setAttribute('label',v); return this; };
 		tag.prototype.__disabled = {dom: true,name: 'disabled'};
@@ -2622,31 +2626,31 @@
 		tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
 	});
 
-	tag$.defineTag('output', function(tag){
+	_T.defineTag('output', function(tag){
 		tag.prototype['for'] = function(v){ return this.getAttribute('for'); }
 		tag.prototype.setFor = function(v){ this.setAttribute('for',v); return this; };
 		tag.prototype.form = function(v){ return this.getAttribute('form'); }
 		tag.prototype.setForm = function(v){ this.setAttribute('form',v); return this; };
 	});
 
-	tag$.defineTag('p');
+	_T.defineTag('p');
 
-	tag$.defineTag('object', function(tag){
+	_T.defineTag('object', function(tag){
 		Imba.attr(tag,'type');
 		Imba.attr(tag,'data');
 		Imba.attr(tag,'width');
 		Imba.attr(tag,'height');
 	});
 
-	tag$.defineTag('param', function(tag){
+	_T.defineTag('param', function(tag){
 		tag.prototype.name = function(v){ return this.getAttribute('name'); }
 		tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
 		tag.prototype.value = function(v){ return this.getAttribute('value'); }
 		tag.prototype.setValue = function(v){ this.setAttribute('value',v); return this; };
 	});
 
-	tag$.defineTag('pre');
-	tag$.defineTag('progress', function(tag){
+	_T.defineTag('pre');
+	_T.defineTag('progress', function(tag){
 		tag.prototype.max = function(v){ return this.getAttribute('max'); }
 		tag.prototype.setMax = function(v){ this.setAttribute('max',v); return this; };
 		tag.prototype.__value = {dom: true,name: 'value'};
@@ -2654,14 +2658,14 @@
 		tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
 	});
 
-	tag$.defineTag('q');
-	tag$.defineTag('rp');
-	tag$.defineTag('rt');
-	tag$.defineTag('ruby');
-	tag$.defineTag('s');
-	tag$.defineTag('samp');
+	_T.defineTag('q');
+	_T.defineTag('rp');
+	_T.defineTag('rt');
+	_T.defineTag('ruby');
+	_T.defineTag('s');
+	_T.defineTag('samp');
 
-	tag$.defineTag('script', function(tag){
+	_T.defineTag('script', function(tag){
 		tag.prototype.src = function(v){ return this.getAttribute('src'); }
 		tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
 		tag.prototype.type = function(v){ return this.getAttribute('type'); }
@@ -2672,9 +2676,9 @@
 		tag.prototype.setDefer = function(v){ this.setAttribute('defer',v); return this; };
 	});
 
-	tag$.defineTag('section');
+	_T.defineTag('section');
 
-	tag$.defineTag('select', function(tag){
+	_T.defineTag('select', function(tag){
 		tag.prototype.size = function(v){ return this.getAttribute('size'); }
 		tag.prototype.setSize = function(v){ this.setAttribute('size',v); return this; };
 		tag.prototype.form = function(v){ return this.getAttribute('form'); }
@@ -2724,19 +2728,19 @@
 		};
 	});
 
-	tag$.defineTag('small');
-	tag$.defineTag('source');
-	tag$.defineTag('span');
-	tag$.defineTag('strong');
-	tag$.defineTag('style');
-	tag$.defineTag('sub');
-	tag$.defineTag('summary');
-	tag$.defineTag('sup');
-	tag$.defineTag('table');
-	tag$.defineTag('tbody');
-	tag$.defineTag('td');
+	_T.defineTag('small');
+	_T.defineTag('source');
+	_T.defineTag('span');
+	_T.defineTag('strong');
+	_T.defineTag('style');
+	_T.defineTag('sub');
+	_T.defineTag('summary');
+	_T.defineTag('sup');
+	_T.defineTag('table');
+	_T.defineTag('tbody');
+	_T.defineTag('td');
 
-	tag$.defineTag('textarea', function(tag){
+	_T.defineTag('textarea', function(tag){
 		tag.prototype.rows = function(v){ return this.getAttribute('rows'); }
 		tag.prototype.setRows = function(v){ this.setAttribute('rows',v); return this; };
 		tag.prototype.cols = function(v){ return this.getAttribute('cols'); }
@@ -2762,17 +2766,17 @@
 		tag.prototype.setPlaceholder = function(v){ if (v != this.dom().placeholder) { this.dom().placeholder = v }; return this; };
 	});
 
-	tag$.defineTag('tfoot');
-	tag$.defineTag('th');
-	tag$.defineTag('thead');
-	tag$.defineTag('time');
-	tag$.defineTag('title');
-	tag$.defineTag('tr');
-	tag$.defineTag('track');
-	tag$.defineTag('u');
-	tag$.defineTag('ul');
-	tag$.defineTag('video');
-	tag$.defineTag('wbr');
+	_T.defineTag('tfoot');
+	_T.defineTag('th');
+	_T.defineTag('thead');
+	_T.defineTag('time');
+	_T.defineTag('title');
+	_T.defineTag('tr');
+	_T.defineTag('track');
+	_T.defineTag('u');
+	_T.defineTag('ul');
+	_T.defineTag('video');
+	_T.defineTag('wbr');
 
 	true;
 
@@ -2786,7 +2790,7 @@
 	};
 
 
-	tag$.ns('svg').defineTag('element', function(tag){
+	_T.ns('svg').defineTag('element', function(tag){
 		
 		tag.namespaceURI = function (){
 			return "http://www.w3.org/2000/svg";
@@ -2825,20 +2829,20 @@
 		Imba.attr(tag,'stroke-width');
 	});
 
-	tag$.ns('svg').defineTag('svg', function(tag){
+	_T.ns('svg').defineTag('svg', function(tag){
 		Imba.attr(tag,'viewbox');
 	});
 
-	tag$.ns('svg').defineTag('g');
+	_T.ns('svg').defineTag('g');
 
-	tag$.ns('svg').defineTag('defs');
+	_T.ns('svg').defineTag('defs');
 
-	tag$.ns('svg').defineTag('symbol', function(tag){
+	_T.ns('svg').defineTag('symbol', function(tag){
 		Imba.attr(tag,'preserveAspectRatio');
 		Imba.attr(tag,'viewBox');
 	});
 
-	tag$.ns('svg').defineTag('marker', function(tag){
+	_T.ns('svg').defineTag('marker', function(tag){
 		Imba.attr(tag,'markerUnits');
 		Imba.attr(tag,'refX');
 		Imba.attr(tag,'refY');
@@ -2849,45 +2853,45 @@
 
 	// Basic shapes
 
-	tag$.ns('svg').defineTag('rect', function(tag){
+	_T.ns('svg').defineTag('rect', function(tag){
 		Imba.attr(tag,'rx');
 		Imba.attr(tag,'ry');
 	});
 
-	tag$.ns('svg').defineTag('circle', function(tag){
+	_T.ns('svg').defineTag('circle', function(tag){
 		Imba.attr(tag,'cx');
 		Imba.attr(tag,'cy');
 		Imba.attr(tag,'r');
 	});
 
-	tag$.ns('svg').defineTag('ellipse', function(tag){
+	_T.ns('svg').defineTag('ellipse', function(tag){
 		Imba.attr(tag,'cx');
 		Imba.attr(tag,'cy');
 		Imba.attr(tag,'rx');
 		Imba.attr(tag,'ry');
 	});
 
-	tag$.ns('svg').defineTag('path', function(tag){
+	_T.ns('svg').defineTag('path', function(tag){
 		Imba.attr(tag,'d');
 		Imba.attr(tag,'pathLength');
 	});
 
-	tag$.ns('svg').defineTag('line', function(tag){
+	_T.ns('svg').defineTag('line', function(tag){
 		Imba.attr(tag,'x1');
 		Imba.attr(tag,'x2');
 		Imba.attr(tag,'y1');
 		Imba.attr(tag,'y2');
 	});
 
-	tag$.ns('svg').defineTag('polyline', function(tag){
+	_T.ns('svg').defineTag('polyline', function(tag){
 		Imba.attr(tag,'points');
 	});
 
-	tag$.ns('svg').defineTag('polygon', function(tag){
+	_T.ns('svg').defineTag('polygon', function(tag){
 		Imba.attr(tag,'points');
 	});
 
-	tag$.ns('svg').defineTag('text', function(tag){
+	_T.ns('svg').defineTag('text', function(tag){
 		Imba.attr(tag,'dx');
 		Imba.attr(tag,'dy');
 		Imba.attr(tag,'text-anchor');
@@ -2896,7 +2900,7 @@
 		Imba.attr(tag,'lengthAdjust');
 	});
 
-	tag$.ns('svg').defineTag('tspan', function(tag){
+	_T.ns('svg').defineTag('tspan', function(tag){
 		Imba.attr(tag,'dx');
 		Imba.attr(tag,'dy');
 		Imba.attr(tag,'rotate');
@@ -4213,7 +4217,7 @@
 
 	// extending tags with query-methods
 	// must be a better way to reopen classes
-	tag$.extendTag('element', function(tag){
+	_T.extendTag('element', function(tag){
 		tag.prototype.querySelectorAll = function (q){
 			return this._dom.querySelectorAll(q);
 		};
@@ -4508,7 +4512,7 @@
 	};
 
 
-	tag$.extendTag('element', function(tag){
+	_T.extendTag('element', function(tag){
 		
 		tag.prototype.setChildren = function (new$,typ){
 			var old = this._children;

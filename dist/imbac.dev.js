@@ -588,7 +588,7 @@ var Imbac =
 
 	var HEREDOC = /^("""|''')([\s\S]*?)(?:\n[^\n\S]*)?\1/;
 
-	var OPERATOR = /^(?:[-=]=>|===|->|!==|[-+*\/%<>&|^!?=]=|=<|>>>=?|([-+:])\1|([&|<>])\2=?|\?\.|\?\:|\.{2,3}|\*(?=[a-zA-Z\_]))/;
+	var OPERATOR = /^(?:[-=]=>|===|->|=>|!==|[-+*\/%<>&|^!?=]=|=<|>>>=?|([-+:])\1|([&|<>])\2=?|\?\.|\?\:|\.{2,3}|\*(?=[a-zA-Z\_]))/;
 
 	// FIXME splat should only be allowed when the previous thing is spaced or inside call?
 
@@ -2193,6 +2193,9 @@ var Imbac =
 			// FIXME - should rather add a special token like TAG_PARAMS_START
 			this.token(',',',');
 		} else if (value == '->' && inTag) {
+			tokid = 'TAG_END';
+			this.pair('TAG_END');
+		} else if (value == '=>' && inTag) {
 			tokid = 'TAG_END';
 			this.pair('TAG_END');
 		} else if (value == '/>' && inTag) {
@@ -7347,8 +7350,10 @@ var Imbac =
 
 	subclass$(TagFragmentFunc,Func);
 	exports.TagFragmentFunc = TagFragmentFunc; // export class 
-
-
+	TagFragmentFunc.prototype.scopetype = function (){
+		// caching still needs to be local no matter what?
+		return this.option('closed') ? ((MethodScope)) : ((LambdaScope));
+	};
 
 	function MethodDeclaration(){ return Func.apply(this,arguments) };
 
@@ -10000,9 +10005,9 @@ var Imbac =
 
 	TagTypeIdentifier.prototype.spawner = function (){
 		if (this._ns) {
-			return ("" + (this._ns.toUpperCase()) + ".$" + this._name.replace(/-/g,'_'));
+			return ("_" + (this._ns.toUpperCase()) + "." + (this._name.replace(/-/g,'_').toUpperCase()));
 		} else {
-			return ("$" + this._name.replace(/-/g,'_'));
+			return ("" + (this._name.replace(/-/g,'_').toUpperCase()));
 		};
 	};
 
@@ -11318,7 +11323,7 @@ var Imbac =
 		
 		if (typ == '->' || typ == '=>') {
 			this._tree = new TagFragmentTree(this,o.body,{root: this,reactive: true});
-			this._fragment = o.body = new TagFragmentFunc([],Block.wrap([this._tree]));
+			this._fragment = o.body = new TagFragmentFunc([],Block.wrap([this._tree]),null,null,{closed: typ == '->'});
 		};
 		
 		if (o.key) { o.key.traverse() };
@@ -11348,7 +11353,7 @@ var Imbac =
 
 	Tag.prototype.staticCache = function (){
 		if (this._fragment) {
-			return this._staticCache || (this._staticCache = this._fragment.scope().tagContextCache());
+			return this._staticCache || (this._staticCache = this._fragment.scope().declare("__",OP('.',new This(),'__'))); // .tagContextCache
 		} else if (this.type() instanceof Self) {
 			return this._staticCache || (this._staticCache = this._tagScope.tagContextCache());
 		} else if (this.explicitKey() || this.option('loop')) {
@@ -11768,7 +11773,7 @@ var Imbac =
 	subclass$(TagFragmentTree,TagTree);
 	exports.TagFragmentTree = TagFragmentTree; // export class 
 	TagFragmentTree.prototype.cachePrefix = function (){
-		return '$$';
+		return '$';
 	};
 
 	TagFragmentTree.prototype.visit = function (){
@@ -12605,7 +12610,7 @@ var Imbac =
 
 	Scope.prototype.tagContextPath = function (){
 		// bypassing for now
-		return this._tagContextPath || (this._tagContextPath = "tag$"); // parent.tagContextPath
+		return this._tagContextPath || (this._tagContextPath = "_T"); // parent.tagContextPath
 	};
 
 	Scope.prototype.tagContextCache = function (){
@@ -12858,7 +12863,7 @@ var Imbac =
 	};
 
 	RootScope.prototype.tagContextPath = function (){
-		return this._tagContextPath || (this._tagContextPath = "tag$");
+		return this._tagContextPath || (this._tagContextPath = "_T");
 	};
 
 	RootScope.prototype.lookup = function (name){
@@ -13481,7 +13486,7 @@ var Imbac =
 	module.exports.INTERSECT = INTERSECT = new Const('intersect$');
 	module.exports.CLASSDEF = CLASSDEF = new Const('imba$class');
 	module.exports.TAGDEF = TAGDEF = new Const('Imba.TAGS.define');
-	module.exports.NEWTAG = NEWTAG = new Identifier("tag$");
+	module.exports.NEWTAG = NEWTAG = new Identifier("_T");
 
 
 
@@ -13556,8 +13561,6 @@ var Imbac =
 		// return self
 		var locmap = util.locationToLineColMap(self.sourceCode());
 		self._maps = [];
-		
-		// console.log options:js
 		
 		var match;
 		// split the code in lines. go through each line 

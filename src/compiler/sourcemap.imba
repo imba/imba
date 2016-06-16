@@ -45,8 +45,6 @@ export class SourceMap
 		# return self
 		var locmap = util.locationToLineColMap(sourceCode)
 		@maps = []
-
-		# console.log options:js
 		
 		var match
 		# split the code in lines. go through each line 
