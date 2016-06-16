@@ -6026,9 +6026,15 @@ export class TagTree < ListNode
 		var out = super(o)
 
 		if !single or single isa If
-			"[{out}]"
+			if shouldMarkArray
+				"Imba.static([{out}],1)"
+			else
+				"[{out}]"
 		else
 			out
+
+	def shouldMarkArray
+		no
 
 export class TagFragmentTree < TagTree
 
@@ -6041,8 +6047,10 @@ export class TagFragmentTree < TagTree
 		self
 
 	def staticCache
-		# console.log 'called staticCache'
 		@owner.staticCache
+
+	def shouldMarkArray
+		yes
 
 export class TagWrapper < ValueNode
 

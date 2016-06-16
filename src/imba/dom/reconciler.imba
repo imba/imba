@@ -273,8 +273,7 @@ extend tag element
 			# check if old and new isa array
 			elif new isa Array
 				if old isa Array
-					# is this not the same as setting staticChildren now but with the
-					reconcileCollection(self,new,old,null)
+					reconcileNested(self,new,old,null)
 				else
 					empty
 					appendNested(self,new)
