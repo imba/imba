@@ -382,6 +382,7 @@ export class Lexer
 
 		closeIndentation unless o:inline
 		if !o:silent and @ends:length
+			console.log @ends
 			error "missing {@ends.pop}"
 
 		console.timeEnd("tokenize:lexer") if o:profile
@@ -394,6 +395,10 @@ export class Lexer
 		@loc = @locOffset + i
 
 		while @chunk = code.slice(i)
+			if @context and @context:pop
+				if @context:pop.test(@chunk)
+					popEnd
+
 			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || basicContext
 			i += pi
 			@loc = @locOffset + i
@@ -413,18 +418,32 @@ export class Lexer
 		var o = @contexts[@contexts:length - 1]
 		return o and o[key]
 
-	def pushEnd val
-		# console.log "pushing end",val
+	def pushEnd val, ctx
 		@ends.push(val)
-		@contexts.push(nil)
+		@contexts.push(@context = (ctx or null))
 		@end = val
 		refreshScope
+
+		if ctx and ctx:id
+			ctx:open = Token.new(ctx:id + '_OPEN',val, @last.region[1],0)
+			@tokens.push(ctx:open)
 		self
 
 	def popEnd val
-		@ends.pop
-		@contexts.pop
+		var popped = @ends.pop
 		@end = @ends[@ends:length - 1]
+
+		# automatically adding a closer if this is defined
+		var ctx = @context
+		if ctx and ctx:open
+			ctx:close = Token.new(ctx:id + '_CLOSE',popped,@last.region[1],0)
+			ctx:close.@opener = ctx:open
+			ctx:open.@closer = ctx:close
+			@tokens.push(ctx:close)
+
+		@contexts.pop
+		@context = @contexts[@contexts:length - 1]
+
 		refreshScope
 		self
 
@@ -450,7 +469,7 @@ export class Lexer
 		
 	def scope sym, opts
 		var len = @ends.push(@end = sym)
-		@contexts.push(opts or nil)
+		@contexts.push(opts or null)
 		return sym
 	
 
@@ -505,6 +524,7 @@ export class Lexer
 			token 'TAG_ATTR',match[1],l - 1  # add to loc?
 			@loc += l - 1
 			token '=','=',1
+			pushEnd('TAG_ATTR',id: 'TAG_ATTR_VALUE', pop: /^[\s\n\>]/) #  [' ','\n','>']
 			return l
 		return 0
 
@@ -693,6 +713,8 @@ export class Lexer
 
 		if id == 'new'
 			# console.log 'NEW here?'
+			# this is wrong -- in the case of <div value=Date.new>
+			# we are basically in a nested scope until the next space or >
 			typ = 'NEW' unless ltyp == '.' and inTag
 
 		if id == '...' and [',','(','CALL_START','BLOCK_PARAM_START','PARAM_START'].indexOf(ltyp) >= 0

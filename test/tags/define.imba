@@ -158,7 +158,6 @@ describe 'Tags - Define' do
 		ok html.indexOf('value="a"') >= 0
 
 
-
 	test "style attribute" do
 		var el = <div style='display: block;'>
 		if $web$
@@ -217,5 +216,11 @@ describe 'Tags - Define' do
 		var fn = node.@body:ontap
 		node.render
 		ok node.@body:ontap != fn
+
+	test "parsing correctly" do
+		try
+			<div data-date=Date.new>
+		catch e
+			ok false
 
 					

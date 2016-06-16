@@ -300,6 +300,7 @@ var grammar =
 		o 'TagOptions # IDENTIFIER' do A1.set(id: A3)
 		o 'TagOptions Ivar' do A1.set(ivar: A2)
 		o 'TagOptions # { Expression }' do A1.set(id: A4) # need to add info about the tokens
+		# o 'TagOptions TagAttr' do A1.addAttribute(A2) # need to add info about the tokens
 	]
 
 
@@ -317,6 +318,7 @@ var grammar =
 
 	TagAttrValue: [
 		o 'Expression'
+		o 'TAG_ATTR_VALUE_OPEN Expression TAG_ATTR_VALUE_CLOSE' do A2
 	]
 
 	TagBody: [
