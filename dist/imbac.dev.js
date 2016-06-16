@@ -11749,10 +11749,18 @@ var Imbac =
 		var out = TagTree.__super__.c.call(this,o);
 		
 		if (!single || (single instanceof If)) {
-			return ("[" + out + "]");
+			if (this.shouldMarkArray()) {
+				return ("Imba.static([" + out + "],1)");
+			} else {
+				return ("[" + out + "]");
+			};
 		} else {
 			return out;
 		};
+	};
+
+	TagTree.prototype.shouldMarkArray = function (){
+		return false;
 	};
 
 	function TagFragmentTree(){ return TagTree.apply(this,arguments) };
@@ -11770,8 +11778,11 @@ var Imbac =
 	};
 
 	TagFragmentTree.prototype.staticCache = function (){
-		// console.log 'called staticCache'
 		return this._owner.staticCache();
+	};
+
+	TagFragmentTree.prototype.shouldMarkArray = function (){
+		return true;
 	};
 
 	function TagWrapper(){ return ValueNode.apply(this,arguments) };

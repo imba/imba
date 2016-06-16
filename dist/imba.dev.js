@@ -4540,8 +4540,7 @@
 					this.appendChild(new$);
 				} else if (new$ instanceof Array) {
 					if (old instanceof Array) {
-						// is this not the same as setting staticChildren now but with the
-						reconcileCollection(this,new$,old,null);
+						reconcileNested(this,new$,old,null);
 					} else {
 						this.empty();
 						appendNested(this,new$);

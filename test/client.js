@@ -4609,8 +4609,7 @@
 					this.appendChild(new$);
 				} else if (new$ instanceof Array) {
 					if (old instanceof Array) {
-						// is this not the same as setting staticChildren now but with the
-						reconcileCollection(this,new$,old,null);
+						reconcileNested(this,new$,old,null);
 					} else {
 						this.empty();
 						appendNested(this,new$);
@@ -10761,24 +10760,25 @@
 	AA = [1,2,3,4,5];
 	TT = tag$.$div().setTemplate(function() {
 		var self = this, __ = self.__;
-		return [
-			(__.A = __.A || tag$.$ul().flag('x')).setContent([
-				(__.AA = __.AA || tag$.$li().setText("Hello")).end(),
-				(__.AB = __.AB || tag$.$li()).setContent(Date.now(),3).end(),
-				(__.AC = __.AC || tag$.$li()).setContent([
-					(__.ACA = __.ACA || tag$.$xul()).setTemplate(function() {
-						return [
-							(__.ACAA = __.ACAA || tag$.$li().setText("Inner")).end(),
-							(__.ACAB = __.ACAB || tag$.$li()).setContent(Date.now(),3).end()
-						];
+		return Imba.static([
+			(__.$$A = __.$$A || tag$.$ul().flag('x')).setContent([
+				(__.$$AA = __.$$AA || tag$.$li().setText("Hello")).end(),
+				(__.$$AB = __.$$AB || tag$.$li()).setContent(Date.now(),3).end(),
+				(__.$$AC = __.$$AC || tag$.$li()).setContent([
+					(__.$$ACA = __.$$ACA || tag$.$xul()).setTemplate(function() {
+						var self = this, __ = self.__;
+						return Imba.static([
+							(__.$$A = __.$$A || tag$.$li().setText("Inner")).end(),
+							(__.$$B = __.$$B || tag$.$li()).setContent(Date.now(),3).end()
+						],1);
 					}).end(),
-					(__.ACB = __.ACB || tag$.$xno()).setTemplate(function() {
+					(__.$$ACB = __.$$ACB || tag$.$xno()).setTemplate(function() {
 						var self = this, __ = self.__;
 						return this.dataset('stamp',Date.now()).setChildren([
-							(__.ACBAA = __.ACBAA || tag$.$li().setText("Inner")).end(),
-							(__.ACBAB = __.ACBAB || tag$.$li()).setContent(Date.now(),3).end(),
+							(__.$$AA = __.$$AA || tag$.$li().setText("Inner")).end(),
+							(__.$$AB = __.$$AB || tag$.$li()).setContent(Date.now(),3).end(),
 							(function() {
-								var t0, _$ = (__.ACBAC = __.ACBAC || []);
+								var t0, _$ = (__.$$AC = __.$$AC || []);
 								for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
 									res.push((t0 = _$[i] = _$[i] || tag$.$li()).setContent(ary[i],3).end());
 								};
@@ -10786,22 +10786,23 @@
 							})()
 						],1).synced();
 					}).end(),
-					(__.ACC = __.ACC || tag$.$wraps()).setTemplate(function() {
-						return [
-							(__.ACCA = __.ACCA || tag$.$div()).setContent(("This is inside " + (Date.now())),3).end(),
+					(__.$$ACC = __.$$ACC || tag$.$wraps()).setTemplate(function() {
+						var self = this, __ = self.__;
+						return Imba.static([
+							(__.$$A = __.$$A || tag$.$div()).setContent(("This is inside " + (Date.now())),3).end(),
 							(function() {
-								var t0, _$ = (__.ACCB = __.ACCB || []);
+								var t0, _$ = (__.$$B = __.$$B || []);
 								for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
 									res.push((t0 = _$[i] = _$[i] || tag$.$div()).setContent(ary[i],3).end());
 								};
 								return res;
 							})()
-						];
+						],1);
 					}).end()
 				],2).end()
 			],2).end(),
-			(__.B = __.B || tag$.$span()).end()
-		];
+			(__.$$B = __.$$B || tag$.$span()).end()
+		],1);
 	}).end();
 
 	tag$.defineTag('hello', function(tag){
