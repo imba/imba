@@ -1,4 +1,6 @@
 
+extern _T
+
 Imba.CSSKeyMap = {}
 
 ###
@@ -884,13 +886,13 @@ class Imba.Tags
 		return clone
 
 	def ns name
-		self[name.toUpperCase] || defineNamespace(name)
+		self['_' + name.toUpperCase] || defineNamespace(name)
 
 	def defineNamespace name
 		var clone = Object.create(self)
 		clone.@parent = self
 		clone.@ns = name
-		self[name.toUpperCase] = clone
+		self['_' + name.toUpperCase] = clone
 		return clone
 
 	def baseType name
@@ -918,7 +920,8 @@ class Imba.Tags
 		else
 			tagtype.@flagName = "_" + name.replace(/_/g, '-')
 			self[name] = tagtype
-			self['$'+norm] = TagSpawner(tagtype)
+			self[norm.toUpperCase] = TagSpawner(tagtype)
+			# '$'+
 
 
 		extender(tagtype,supertype)
@@ -1033,7 +1036,7 @@ def Imba.getTagForDom dom
 	if svgSupport and dom isa SVGElement
 		ns = "svg" 
 		cls = dom:className:baseVal
-		tags = tags.SVG
+		tags = tags:_SVG
 
 	var spawner
 
@@ -1059,7 +1062,8 @@ def Imba.getTagForDom dom
 	spawner ||= tags[native]
 	spawner ? spawner.new(dom).awaken(dom) : null
 
-tag$ = Imba.TAGS
+
+_T = tag$ = Imba.TAGS
 t$ = Imba:tag
 tc$ = Imba:tagWithFlags
 ti$ = Imba:tagWithId

@@ -2309,7 +2309,10 @@ export class Lambda < Func
 
 
 export class TagFragmentFunc < Func
-
+	
+	def scopetype
+		# caching still needs to be local no matter what?
+		option(:closed) ? (MethodScope) : (LambdaScope)
 
 export class MethodDeclaration < Func
 
@@ -4516,9 +4519,9 @@ export class TagTypeIdentifier < Identifier
 
 	def spawner
 		if @ns
-			"{@ns.toUpperCase}.${@name.replace(/-/g,'_')}"
+			"_{@ns.toUpperCase}.{@name.replace(/-/g,'_').toUpperCase}"
 		else
-			"${@name.replace(/-/g,'_')}"
+			"{@name.replace(/-/g,'_').toUpperCase}"
 
 	def id
 		var m = @str.match(/\#([\w\-\d\_]+)\b/)
@@ -5652,7 +5655,7 @@ export class Tag < Node
 
 		if typ == '->' or typ == '=>'
 			@tree = TagFragmentTree.new(self,o:body, root: self, reactive: yes)
-			@fragment = o:body = TagFragmentFunc.new([],Block.wrap([@tree]))
+			@fragment = o:body = TagFragmentFunc.new([],Block.wrap([@tree]),null,null,closed: typ == '->')
 
 		o:key.traverse if o:key
 		o:body.traverse if o:body
@@ -5677,7 +5680,7 @@ export class Tag < Node
 
 	def staticCache
 		if @fragment
-			@staticCache ||= @fragment.scope.tagContextCache
+			@staticCache ||= @fragment.scope.declare("__",OP('.',This.new,'__')) # .tagContextCache
 		elif type isa Self
 			@staticCache ||= @tagScope.tagContextCache
 		elif explicitKey or option(:loop)
@@ -6039,7 +6042,7 @@ export class TagTree < ListNode
 export class TagFragmentTree < TagTree
 
 	def cachePrefix
-		'$$'
+		'$'
 
 	def visit
 		super
@@ -6732,7 +6735,7 @@ export class Scope
 
 	def tagContextPath
 		# bypassing for now
-		@tagContextPath ||= "tag$" # parent.tagContextPath
+		@tagContextPath ||= "_T" # parent.tagContextPath
 
 	def tagContextCache
 		@tagContextCache ||= closure.declare("__",OP('.',context.reference,'__'))
@@ -6933,7 +6936,7 @@ export class RootScope < Scope
 		@context ||= RootScopeContext.new(self)
 
 	def tagContextPath
-		@tagContextPath ||= "tag$"
+		@tagContextPath ||= "_T"
 
 	def lookup name
 		name = helpers.symbolize(name)
@@ -7421,7 +7424,7 @@ export var UNION = Const.new('union$')
 export var INTERSECT = Const.new('intersect$')
 export var CLASSDEF = Const.new('imba$class')
 export var TAGDEF = Const.new('Imba.TAGS.define')
-export var NEWTAG = Identifier.new("tag$")
+export var NEWTAG = Identifier.new("_T")
 
 
 
