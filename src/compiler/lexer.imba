@@ -137,6 +137,7 @@ var OPERATOR = /// ^ (
 	?: [-=]=>             # function - what
 	 | ===
 	 | ->
+	 | =>
 	 | !==
 	 | [-+*/%<>&|^!?=]=  # compound assign / compare
 	 | =<
@@ -1600,6 +1601,10 @@ export class Lexer
 			token ',',','
 
 		elif value is '->' and inTag
+			tokid = 'TAG_END'
+			pair 'TAG_END'
+
+		elif value is '=>' and inTag
 			tokid = 'TAG_END'
 			pair 'TAG_END'
 
