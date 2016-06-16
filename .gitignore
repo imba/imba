@@ -3,4 +3,5 @@ node_modules
 tmp
 test/perf
 npm-debug.log
+test/**/*.js
 /determinator.json
