@@ -300,15 +300,7 @@ var grammar =
 		o 'TagOptions # IDENTIFIER' do A1.set(id: A3)
 		o 'TagOptions Ivar' do A1.set(ivar: A2)
 		o 'TagOptions # { Expression }' do A1.set(id: A4) # need to add info about the tokens
-		o 'TagOptions TagAttr' do A1.addAttribute(A2) # need to add info about the tokens
-	]
-
-
-	TagAttributes: [
-		o '' do []
-		o 'TagAttr' do [A1]
-		o 'TagAttributes , TagAttr' do A1.concat(A3)
-		o 'TagAttributes OptComma TERMINATOR TagAttr' do A1.concat(A4)
+		o 'TagOptions TagAttr' do A1.addAttribute(A2)
 	]
 
 	TagAttr: [
@@ -317,13 +309,11 @@ var grammar =
 	]
 
 	TagAttrValue: [
-		# o 'Expression'
 		o 'VALUE_START Expression VALUE_END' do A2
 	]
 
 	TagBody: [
 		o 'INDENT ArgList OUTDENT' do A2.indented(A1,A3)
-		# o 'ArgList' do A1
 		o 'CALL_START ArgList CALL_END' do A2
 	]
 
