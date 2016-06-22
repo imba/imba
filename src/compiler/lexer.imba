@@ -843,7 +843,7 @@ export class Lexer
 		# are accessable as keys or strings etc
 		if match = OBJECT_KEY.exec(@chunk)
 			var id = match[1]
-			var typ = 'IDENTIFIER'
+			var typ = 'KEY'
 
 			# FIXME loc of key includes colon
 			# moveCaret(id:length)
@@ -1071,9 +1071,14 @@ export class Lexer
 				typ = 'CATCH_VAR'
 		
 		if colon
+			# console.log 'colon',colon,typ
+			if @lastTyp != '?' and typ == 'IDENTIFIER'
+				typ = 'KEY'
+
 			token(typ, id, idlen)
 			moveCaret(idlen)
 			# console.log "add colon?"
+			# should have traced ternary - no?
 			token(':', ':',colon:length)
 			moveCaret(-idlen)
 		else

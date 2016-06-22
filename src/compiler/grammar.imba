@@ -178,6 +178,10 @@ var grammar =
 		o 'IDENTIFIER' do Identifier.new A1
 	]
 
+	Key: [
+		o 'KEY' do Identifier.new A1
+	]
+
 	# A literal identifier, a variable name or property.
 	Ivar: [
 		o 'IVAR' do Ivar.new A1
@@ -381,6 +385,7 @@ var grammar =
 	ObjAssignable: [
 		o 'Identifier'
 		o 'Const'
+		o 'Key'
 		o 'AlphaNumeric'
 		o 'Ivar' # rly?
 		o 'Gvar' # rly?
