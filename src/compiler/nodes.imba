@@ -1411,7 +1411,8 @@ export class Param < Node
 			# change type here?
 			@name.@value.@type = "PARAMVAR" if @name.@value
 			@name.references(@variable)
-			# console.log "got here!! {@name:constructor}"
+			@variable.addReference(@name)
+			# console.log @name.c, "got here!! {@name:constructor}"
 			# @name.@token.@variable = @variable if @name.@token
 		
 		self
@@ -3775,7 +3776,6 @@ export class VarReference < ValueNode
 
 	# convert this into a list of references
 	def addExpression expr
-
 		VarBlock.new([self]).addExpression(expr)
 
 
@@ -6877,6 +6877,9 @@ export class Scope
 	def dump
 		var vars = Object.keys(@varmap).map do |k| 
 			var v = @varmap[k]
+			# unless v.@declarator isa Scope
+			# 	console.log v.name, v.@declarator:constructor:name
+			# dump__(v)
 			v.references:length ? dump__(v) : null
 
 		var desc = 
