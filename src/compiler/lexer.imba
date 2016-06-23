@@ -1187,14 +1187,18 @@ export class Lexer
 
 		heredoc = match[0]
 		quote = heredoc.charAt 0
-		doc = sanitizeHeredoc(match[2], quote: quote, indent: null)
+		var opts = {quote: quote, indent: null, offset: 0}
+		doc = sanitizeHeredoc(match[2], opts)
+		# doc = match[2]
 		# console.log "found heredoc {match[0]:length} {doc:length}"
 
 		if quote == '"' && doc.indexOf('{') >= 0
 			var open = match[1]
 			# console.log doc.substr(0,3),match[1]
+			# console.log 'heredoc here',open:length,open
+
 			token 'STRING_START', open, open:length
-			interpolateString(doc, heredoc: yes, offset: open:length, quote: quote)
+			interpolateString(doc, heredoc: yes, offset: (open:length + opts:offset), quote: quote, indent: opts:realIndent)
 			token 'STRING_END', open, open:length, heredoc:length - open:length
 		else
 			token('STRING', makeString(doc, quote, yes), 0)
@@ -1730,7 +1734,11 @@ export class Lexer
 					indent = attempt
 
 		doc = doc.replace RegExp("\\n{indent}","g"), '\n' if indent
-		doc = doc.replace /^\n/, '' unless herecomment
+		unless herecomment
+			if doc[0] == '\n'
+				options:offset = indent:length + 1
+			doc = doc.replace(/^\n/, '')
+		options:realIndent = indent
 		return doc
 
 	# A source of ambiguity in our grammar used to be parameter lists in function
@@ -1820,6 +1828,7 @@ export class Lexer
 		var quote = options:quote
 		var regex = options:regex
 		var prefix = options:prefix
+		var indent = options:indent
 
 		var startLoc = @loc
 		var tokens = []
@@ -1836,6 +1845,9 @@ export class Lexer
 			if letter is '\\'
 				i += 1
 				continue
+
+			if letter is '\n' and indent
+				locOffset += indent:length
 
 			unless str.charAt(i) is '{' and (expr = balancedString(str.slice(i), '}'))
 				continue
