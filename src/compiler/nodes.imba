@@ -6922,9 +6922,12 @@ export class RootScope < Scope
 		register 'parseFloat', self, type: 'global'
 		register 'setTimeout', self, type: 'global'
 		register 'setInterval', self, type: 'global'
+		register 'setImmediate', self, type: 'global'
 		register 'clearTimeout', self, type: 'global'
 		register 'clearInterval', self, type: 'global'
+		register 'clearImmediate', self, type: 'global'
 		register '__dirname', self, type: 'global'
+		register '__filename', self, type: 'global'
 		register '_', self, type: 'global'
 
 

@@ -198,6 +198,7 @@ class Imba.Scheduler
 		@ticker = do |e| tick(e)
 
 		@dt = 0
+		@frame = {}
 		@state = {raf: no, event: no, interval: no}
 		@scheduled = no
 		@timestamp = 0
@@ -208,6 +209,7 @@ class Imba.Scheduler
 	prop raf watch: yes
 	prop interval watch: yes
 	prop events watch: yes
+	prop marked
 
 	def rafDidSet bool
 		@state:raf = bool
@@ -215,13 +217,13 @@ class Imba.Scheduler
 		self
 
 	def intervalDidSet time
+		@state:interval = time
 		clearInterval(@intervalId)
-
-		if time
-			@intervalId = Imba.setInterval(time,@ticker)
+		@intervalId = Imba.setInterval(time,@ticker) if time
 		self
 
 	def eventsDidSet new, prev
+		@state:events = new
 		if new
 			Imba.listen(Imba,'event',self,'onevent')
 		else
@@ -257,6 +259,7 @@ class Imba.Scheduler
 	@return {self}
 	###
 	def mark
+		@marked = yes
 		if !@scheduled
 			requestTick
 		self
@@ -269,7 +272,8 @@ class Imba.Scheduler
 	###
 	def flush
 		@flushes++
-		@target.tick(@state,self)
+		@target.tick(self)
+		@marked = no
 		self
 
 	###
@@ -348,7 +352,7 @@ class Imba.Scheduler
 		@marker
 
 	def onevent event
-		return self if @scheduled or !@events
+		return self if !@events
 
 		if @events isa Function
 			mark if @events(event)	
