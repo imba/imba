@@ -1572,8 +1572,8 @@ export class Lexer
 	# Generate a newline token. Consecutive newlines get merged together.
 	def newlineToken lines
 		
-		while lastTokenValue() == ';'
-			@tokens.pop
+		# while lastTokenValue == ';'
+		#	@tokens.pop
 
 		addLinebreaks(lines)
 
