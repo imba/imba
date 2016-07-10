@@ -548,6 +548,10 @@
 		return !!this._active;
 	};
 
+	Imba.Scheduler.event = function (e){
+		return Imba.emit(Imba,'event',e);
+	};
+
 	/*
 		Create a new Imba.Scheduler for specified target
 		@return {Imba.Scheduler}
@@ -1001,7 +1005,16 @@
 		return items;
 	};
 
+	/*
 
+	*/
+
+	Imba.mount = function (node,into){
+		into || (into = Imba.document().body);
+		into.appendChild(node.dom());
+		Imba.commit();
+		return node;
+	};
 
 	/*
 	This is the baseclass that all tags in imba inherit from.

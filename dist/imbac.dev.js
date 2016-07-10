@@ -2163,9 +2163,8 @@ var Imbac =
 	// Generate a newline token. Consecutive newlines get merged together.
 	Lexer.prototype.newlineToken = function (lines){
 		
-		while (this.lastTokenValue() == ';'){
-			this._tokens.pop();
-		};
+		// while lastTokenValue == ';'
+		//	@tokens.pop
 		
 		this.addLinebreaks(lines);
 		
