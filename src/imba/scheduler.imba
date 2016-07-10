@@ -185,6 +185,9 @@ class Imba.Scheduler
 	def self.isActive
 		!!@active
 
+	def self.event e
+		Imba.emit(Imba,'event',e)
+
 	###
 	Create a new Imba.Scheduler for specified target
 	@return {Imba.Scheduler}
