@@ -23,7 +23,14 @@ def Imba.static items, nr
 	items:static = nr
 	return items
 
+###
 
+###
+def Imba.mount node, into
+	into ||= Imba.document:body
+	into.appendChild(node.dom)
+	Imba.commit
+	return node
 
 ###
 This is the baseclass that all tags in imba inherit from.
