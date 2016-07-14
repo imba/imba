@@ -831,7 +831,7 @@ class Imba.Tag
 
 		if val == null
 			dom:style.removeProperty(key)
-		elif val == undefined
+		elif val == undefined and arguments:length == 1
 			return dom:style[key]
 		else
 			if val isa Number and key.match(/width|height|left|right|top|bottom/)

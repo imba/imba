@@ -2087,7 +2087,7 @@
 		
 		if (val == null) {
 			this.dom().style.removeProperty(key);
-		} else if (val == undefined) {
+		} else if (val == undefined && arguments.length == 1) {
 			return this.dom().style[key];
 		} else {
 			if ((typeof val=='number'||val instanceof Number) && key.match(/width|height|left|right|top|bottom/)) {

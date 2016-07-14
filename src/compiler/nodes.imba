@@ -5782,7 +5782,11 @@ export class Tag < Node
 				elif part.isNamespaced
 					let ns = akey.split(":")[0]
 					let k = akey.split(":")[1]
-					pjs = ".{mark__(part.key)}setNestedAttr('{ns}','{k}',{aval.c})"
+
+					if ns == 'css'
+						pjs = ".{mark__(part.key)}css('{k}',{aval.c})"
+					else
+						pjs = ".{mark__(part.key)}setNestedAttr('{ns}','{k}',{aval.c})"
 				else
 					pjs = ".{mark__(part.key)}{helpers.setterSym(akey)}({aval.c})"
 
