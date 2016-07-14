@@ -117,9 +117,15 @@ global class ImbaServerElement
 		@attributes[key] = value
 		self
 
+	def setAttributeNS ns, key, value
+		setAttribute(ns + ':' + key,value)
+
 	def getAttribute key
 		# console.log "getAttribute not implemented on server"
 		@attributes ? @attributes[key] : undefined
+
+	def getAttributeNS ns, key
+		getAttribute(ns + ':' + key)
 
 	def removeAttribute key
 		console.log "removeAttribute not implemented on server"

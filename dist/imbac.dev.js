@@ -11505,6 +11505,10 @@ var Imbac =
 					pjs = (".setHandler(" + quote(akey.substr(1)) + "," + (aval.c()) + "," + (scope.context().c()) + ")");
 				} else if (akey.substr(0,5) == 'data-') {
 					pjs = (".dataset('" + akey.slice(5) + "'," + (aval.c()) + ")");
+				} else if (part.isNamespaced()) {
+					var ns = akey.split(":")[0];
+					var k = akey.split(":")[1];
+					pjs = ("." + mark__(part.key()) + "setNestedAttr('" + ns + "','" + k + "'," + (aval.c()) + ")");
 				} else {
 					pjs = ("." + mark__(part.key()) + helpers.setterSym(akey) + "(" + (aval.c()) + ")");
 				};
@@ -11886,6 +11890,10 @@ var Imbac =
 	TagAttr.prototype.populate = function (obj){
 		obj.add(this.key(),this.value());
 		return this;
+	};
+
+	TagAttr.prototype.isNamespaced = function (){
+		return String(this.key()).indexOf(':') > 0;
 	};
 
 	TagAttr.prototype.c = function (){

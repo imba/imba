@@ -1310,6 +1310,30 @@
 		};
 	};
 
+	Imba.Tag.prototype.setNestedAttr = function (ns,name,value){
+		if ((this[ns] instanceof Function) && this[ns].length > 1) {
+			this[ns](name,value);
+			return this;
+		};
+		
+		return this.setAttributeNS(ns,name,value);
+	};
+
+	Imba.Tag.prototype.setAttributeNS = function (ns,name,value){
+		var old = this.getAttributeNS(ns,name);
+		
+		if (old == value) {
+			value;
+		} else if (value != null && value !== false) {
+			this.dom().setAttributeNS(ns,name,value);
+		} else {
+			this.dom().removeAttributeNS(ns,name);
+		};
+		
+		return this;
+	};
+
+
 	/*
 		removes an attribute from the specified tag
 		*/
@@ -1326,6 +1350,11 @@
 
 	Imba.Tag.prototype.getAttribute = function (name){
 		return this.dom().getAttribute(name);
+	};
+
+
+	Imba.Tag.prototype.getAttributeNS = function (ns,name){
+		return this.dom().getAttributeNS(ns,name);
 	};
 
 	/*
@@ -8450,6 +8479,11 @@
 				return document.body.appendChild(el.dom());
 			};
 		});
+		
+		// test "namespaced attributes" do
+		// 	var el = <div cust:title="one">
+		// 	eq el.toString, '<div cust:title="one"></div>'
+		
 		
 		test("initialize",function() {
 			var a = _T.CUSTOM_INIT().end();

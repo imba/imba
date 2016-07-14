@@ -212,6 +212,26 @@ class Imba.Tag
 		else
 			dom.removeAttribute(name)
 
+	def setNestedAttr ns, name, value
+		if self[ns] isa Function and self[ns]:length > 1
+			self[ns](name,value)
+			return self
+
+		return setAttributeNS(ns, name,value)
+
+	def setAttributeNS ns, name, value
+		var old = getAttributeNS(ns,name)
+
+		if old == value
+			value
+		elif value != null && value !== false
+			dom.setAttributeNS(ns,name,value)
+		else
+			dom.removeAttributeNS(ns,name)
+
+		return self
+
+
 	###
 	removes an attribute from the specified tag
 	###
@@ -225,6 +245,10 @@ class Imba.Tag
 	###
 	def getAttribute name
 		dom.getAttribute(name)
+
+
+	def getAttributeNS ns, name
+		dom.getAttributeNS(ns,name)
 
 	###
 	Override this to provide special wrapping etc.

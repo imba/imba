@@ -173,6 +173,11 @@ describe 'Tags - Define' do
 		else
 			eq el.toString, '<div class="one two">Custom</div>'
 
+	# test "namespaced attributes" do
+	# 	var el = <div cust:title="one">
+	# 	eq el.toString, '<div cust:title="one"></div>'
+
+
 	test "initialize" do
 		var a = <custom-init>
 		eq a.@custom, yes

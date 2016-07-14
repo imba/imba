@@ -5779,6 +5779,10 @@ export class Tag < Node
 
 				elif akey.substr(0,5) == 'data-'
 					pjs = ".dataset('{akey.slice(5)}',{aval.c})"
+				elif part.isNamespaced
+					let ns = akey.split(":")[0]
+					let k = akey.split(":")[1]
+					pjs = ".{mark__(part.key)}setNestedAttr('{ns}','{k}',{aval.c})"
 				else
 					pjs = ".{mark__(part.key)}{helpers.setterSym(akey)}({aval.c})"
 
@@ -6092,6 +6096,9 @@ export class TagAttr < Node
 	def populate obj
 		obj.add(key, value)
 		self
+
+	def isNamespaced
+		String(key).indexOf(':') > 0
 
 	def c
 		"attribute"
