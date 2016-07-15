@@ -7596,7 +7596,7 @@ var Imbac =
 		};
 		
 		if (this.option('export')) {
-			out = ("" + out + "; exports." + fname + " = " + fname + ";");
+			out = ("" + out + "; exports." + (this.option('default') ? ('default') : (fname)) + " = " + fname + ";");
 			if (this.option('return')) { out = ("" + out + "; return " + fname + ";") };
 		} else if (this.option('return')) {
 			out = ("return " + out);
@@ -12340,23 +12340,17 @@ var Imbac =
 	Export.prototype.js = function (o){
 		// p "Export {value}"
 		var self = this;
-		self.value().set({export: self,return: self.option('return')});
+		self.value().set({export: self,return: self.option('return'),'default': self.option('default')});
 		
-		if (self.value() instanceof Assign) {
-			self.value().set({export: self});
-			return self.value().c();
-		} else if (self.value() instanceof ListNode) {
-			self.value().map(function(item) { return item.set({export: self}); });
-			return self.value().c();
-		} else if ((self.value() instanceof TagDeclaration) || (self.value() instanceof ClassDeclaration)) {
-			self.value().set({export: self,'default': self.option('default'),return: self.option('return')});
-			return self.value().c();
-		} else if (self.value() instanceof VarOrAccess) {
+		if (self.value() instanceof VarOrAccess) {
 			return ("exports." + (self.value().c()) + " = " + (self.value().c()) + ";");
-		} else {
-			return self.value().c();
-			// return "// no export"
 		};
+		
+		if (self.value() instanceof ListNode) {
+			self.value().map(function(item) { return item.set({export: self}); });
+		};
+		
+		return self.value().c();
 	};
 
 	function EnvFlag(){ return ValueNode.apply(this,arguments) };

@@ -2477,7 +2477,7 @@ export class MethodDeclaration < Func
 			out = "{fname} = {out}"
 
 		if option(:export)
-			out = "{out}; exports.{fname} = {fname};"
+			out = "{out}; exports.{option(:default) ? 'default' : fname} = {fname};"
 			out = "{out}; return {fname};" if option(:return)
 
 		elif option(:return)
@@ -6445,25 +6445,15 @@ export class Export < ValueNode
 
 	def js o
 		# p "Export {value}"
-		value.set export: self, return: option(:return)
+		value.set export: self, return: option(:return), default: option(:default)
 
-		if value isa Assign
-			value.set export: self
-			return value.c
-
-		elif value isa ListNode
-			value.map do |item| item.set export: self
-			return value.c
-
-		elif value isa TagDeclaration or value isa ClassDeclaration
-			value.set export: self, default: option(:default), return: option(:return)
-			return value.c
-
-		elif value isa VarOrAccess
+		if value isa VarOrAccess
 			return "exports.{value.c} = {value.c};"
-		else
-			return value.c
-			# return "// no export"
+
+		if value isa ListNode
+			value.map do |item| item.set export: self
+		
+		return value.c
 
 export class EnvFlag < ValueNode
 	
