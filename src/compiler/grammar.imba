@@ -112,6 +112,9 @@ var grammar =
 		o 'Line , Splat' do A1.addExpression(A3) # Onto something?? # why is not splat an expression?
 		o 'Comment'
 		o 'Statement'
+
+		# should work inside preprocessed nesting(!)
+		o 'ExportStatement'
 	]
 
 	# Pure statements which cannot be expressions.
@@ -326,6 +329,10 @@ var grammar =
 		o 'TagTypeDef . Identifier' do A1.classes(A3)
 	]
 	
+	ExportStatement: [
+		o 'EXPORT DEFAULT Expression' do Export.new(A3).set(default: A2, keyword: A1)
+		o 'EXPORT Expression' do Export.new(A2).set(keyword: A1)
+	]
 	
 
 	# Class definitions have optional bodies of prototype property assignments,
@@ -334,9 +341,7 @@ var grammar =
 		o 'TagDeclarationBlock' do A1
 		o 'EXTEND TagDeclarationBlock' do A2.set(extension: yes)
 		o 'LOCAL TagDeclarationBlock' do A2.set(local: yes)
-		o 'EXPORT TagDeclarationBlock' do A2.set(export: A1)
 		o 'GLOBAL TagDeclarationBlock' do A2.set(global: A1)
-		o 'EXPORT GLOBAL TagDeclarationBlock' do A3.set(global: A1, export: A2)
 
 	]
 
@@ -435,16 +440,10 @@ var grammar =
 		o '{ Expression }' do A2
 	]
 
-	TupleAssign: [
-		# what about LET?
-		o 'VAR Identifier , Expression' do A1
-	]
-
 	# FIXME clean up method
 	Method: [
 		o 'MethodDeclaration' do A1
 		o 'GLOBAL MethodDeclaration' do A2.set(global: A1)
-		o 'EXPORT MethodDeclaration' do A2.set(export: A1)
 	]
 
 	MethodDeclaration: [
@@ -470,10 +469,6 @@ var grammar =
 		o 'Identifier'
 		o 'Const'
 		o '{ Expression }' do A2
-	]
-
-	MethodReceiver: [
-
 	]
 
 	MethodBody: [
@@ -530,7 +525,6 @@ var grammar =
 		o 'VAR VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
 		o 'LET VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
 		o 'LET SPLAT VarAssignable' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
-		o 'EXPORT VarReference' do A2.set(export: A1)
 	]
 
 	VarIdentifier: [
@@ -630,10 +624,8 @@ var grammar =
 	Class: [
 		o 'ClassStart' do A1
 		o 'EXTEND ClassStart' do A2.set(extension: A1)
-		o 'LOCAL ClassStart' do A2.set(local: A1)
+		o 'LOCAL ClassStart' do A2.set(local: A1) # deprecated
 		o 'GLOBAL ClassStart' do A2.set(global: A1)
-		o 'EXPORT ClassStart' do A2.set(export: A1)
-		o 'EXPORT LOCAL ClassStart' do A3.set(export: A1, local: A2)
 	]
 
 	ClassStart: [

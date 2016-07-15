@@ -956,6 +956,7 @@ export class Lexer
 		# this catches all 
 		if !forcedIdentifier and isKeyword = self.isKeyword(id)
 			# (id in JS_KEYWORDS or id in IMBA_KEYWORDS)
+
 			typ = id.toUpperCase
 			addLoc = true
 
@@ -1015,6 +1016,12 @@ export class Lexer
 		# do we really want to check this here
 		if !forcedIdentifier
 			# should already have dealt with this
+
+			if @lastVal == 'export' and id == 'default'
+				# console.log 'id is default!!!'
+				tTs(prev,'EXPORT')
+				typ = 'DEFAULT'
+
 
 			id = IMBA_ALIAS_MAP[id] if isKeyword and IMBA_ALIASES.indexOf(id) >= 0
 			# these really should not go here?!?

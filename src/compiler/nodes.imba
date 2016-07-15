@@ -2085,6 +2085,9 @@ export class ClassDeclaration < Code
 
 		var cpath = typeof name  == 'string' ? name : name.c
 
+		@cname = cname
+		@cpath = cpath
+
 		if !initor
 			if sup
 				initor = "{mark}function {cname}()\{ return {sup.c}.apply(this,arguments) \};\n\n"
@@ -2121,7 +2124,7 @@ export class ClassDeclaration < Code
 			head.push("global.{cname} = {cpath}; // global class \n")
 
 		if o:export and !namespaced
-			head.push("exports.{cname} = {cpath}; // export class \n")
+			head.push("exports.{o:default ? 'default' : cname} = {cpath}; // export class \n")
 
 		# FIXME
 		# if namespaced and (o:local or o:export)
@@ -2231,7 +2234,7 @@ export class TagDeclaration < Code
 			# if o:global and !namespaced # option(:global)
 			#	js.push("global.{cname} = {cpath}; // global class \n")
 			if option(:export)
-				js = "{js}\nexports.{cname} = {cname};"
+				js = "{js}\nexports.{option(:default) ? 'default' : cname} = {cname};"
 			
 			if option(:return)
 				js += "\nreturn {cname};"
@@ -3806,11 +3809,11 @@ export class Assign < Op
 				return v
 				
 				# v isa VarReference ? v : VarReference.new(v)
+
 			return TupleAssign.new(o,Tuple.new(vars),r)
 
 		if l isa Arr
 			return TupleAssign.new(o,Tuple.new(l.nodes),r)
-
 
 		# set expression yes, no?
 		@expression = no
@@ -3906,9 +3909,14 @@ export class Assign < Op
 		# 	l.@variable.assigned(r)
 
 		# FIXME -- does not always need to be an expression?
-		var out = "{l.c} {mark__(@opToken)}{op} {right.c(expression: true)}"
+		var lc = l.c
 
-		return out
+		if option(:export)
+			let ename = l isa VarReference ? l.variable.c : lc
+			return "{lc} {mark__(@opToken)}{op} exports.{ename} = {right.c(expression: true)}"
+		else
+			return "{lc} {mark__(@opToken)}{op} {right.c(expression: true)}"
+		# return out
 
 	# FIXME op is a token? _FIX_
 	# this (and similar cases) is broken when called from
@@ -3927,6 +3935,7 @@ export class Assign < Op
 
 	# more workaround during transition away from a,b,c = 1,2,3 style assign
 	def addExpression expr
+		# p "addExpression {expr}"
 		var typ = ExpressionBlock
 		if @left and @left isa VarReference
 			typ = VarBlock
@@ -4484,7 +4493,11 @@ export class Const < Identifier
 		symbol
 
 	def c
-		mark__(@value) + symbol
+		if option(:export)
+			"exports.{@value} = " + mark__(@value) + symbol
+		else
+			mark__(@value) + symbol
+
 
 export class TagTypeIdentifier < Identifier
 
@@ -4579,21 +4592,18 @@ export class Call < Node
 				# console.log "ERROR - access args by some method"
 				return TagWrapper.new(args and args:index ? args.index(0) : args[0])
 			if str == 'export'
-				return ExportStatement.new(args)
+				return Export.new(args)
 
 		@callee = callee
 		@args = args or ArgList.new([])
 
 		if args isa Array
 			@args = ArgList.new(args)
-			# console.log "ARGUMENTS IS ARRAY - error {args}"
 		self
 
 	def visit
-		# console.log "visit args {args}"
 		args.traverse
 		callee.traverse
-
 		# if the callee is a PropertyAccess - better to immediately change it
 
 		@block && @block.traverse 
@@ -6421,6 +6431,39 @@ export class ExportStatement < ValueNode
 		else
 			return nodes.join(';\n') + ';'
 
+export class Export < ValueNode
+
+	def addExpression expr
+		value = value.addExpression(expr)
+		return self
+
+	def consume node
+		if node isa Return
+			option('return',yes)
+			return self
+		super
+
+	def js o
+		# p "Export {value}"
+		value.set export: self, return: option(:return)
+
+		if value isa Assign
+			value.set export: self
+			return value.c
+
+		elif value isa ListNode
+			value.map do |item| item.set export: self
+			return value.c
+
+		elif value isa TagDeclaration or value isa ClassDeclaration
+			value.set export: self, default: option(:default), return: option(:return)
+			return value.c
+
+		elif value isa VarOrAccess
+			return "exports.{value.c} = {value.c};"
+		else
+			return value.c
+			# return "// no export"
 
 export class EnvFlag < ValueNode
 	
