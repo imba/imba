@@ -183,7 +183,6 @@ var grammar =
 		o 'TagDeclaration'
 		o 'Tag'
 		o 'Property'
-		o 'Require'
 	]
 
 	# A literal identifier, a variable name or property.
@@ -602,6 +601,7 @@ var grammar =
 		o 'TagId'
 		o 'Selector'
 		o 'Invocation'
+		o 'Require'
 	]
 
 	IndexValue: [
