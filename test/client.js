@@ -105,8 +105,7 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var imba;
-	module.exports.imba = imba = __webpack_require__(3);
+	var imba = exports.imba = __webpack_require__(3);
 
 
 /***/ },
@@ -7393,7 +7392,7 @@
 	});
 
 
-	module.exports.Item = Item;
+	exports.Item = Item;
 
 
 /***/ },
@@ -7439,8 +7438,7 @@
 	};
 
 
-	module.exports.A = A;
-	module.exports.B = B;
+	exports.A = A,exports.B = B;
 
 
 /***/ },

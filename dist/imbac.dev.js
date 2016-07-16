@@ -45,21 +45,20 @@ var Imbac =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var parser, lex, Rewriter;
-
+	
 	// var imba = require '../imba'
 	var T = __webpack_require__(1);
 	var util = __webpack_require__(2);
 	var lexer = __webpack_require__(3);
 	var rewriter = __webpack_require__(4);
-	module.exports.parser = parser = __webpack_require__(6).parser;
+	var parser = exports.parser = __webpack_require__(6).parser;
 	var ast = __webpack_require__(7);
 
 	var ImbaParseError = __webpack_require__(5).ImbaParseError;
 
 	// Instantiate a Lexer for our use here.
-	module.exports.lex = lex = new (lexer.Lexer)();
-	module.exports.Rewriter = Rewriter = rewriter.Rewriter;
+	var lex = exports.lex = new (lexer.Lexer)();
+	var Rewriter = exports.Rewriter = rewriter.Rewriter;
 
 	parser.lexer = lex.jisonBridge();
 	parser.yy = ast; // everything is exported right here now
@@ -164,10 +163,9 @@ var Imbac =
 /* 1 */
 /***/ function(module, exports) {
 
-	var TOK, LBRACKET, RBRACKET, LPAREN, RPAREN, INDENT, OUTDENT;
+	
 
-
-	module.exports.TOK = TOK = {};
+	var TOK = exports.TOK = {};
 	var TTERMINATOR = TOK.TERMINATOR = 1;
 	var TIDENTIFIER = TOK.IDENTIFIER = TOK.IVAR = 2;
 	var CONST = TOK.CONST = 3;
@@ -274,19 +272,19 @@ var Imbac =
 	}; exports.setLoc = setLoc;
 
 
-	module.exports.LBRACKET = LBRACKET = new Token('{','{',0,0,0);
-	module.exports.RBRACKET = RBRACKET = new Token('}','}',0,0,0);
+	var LBRACKET = exports.LBRACKET = new Token('{','{',0,0,0);
+	var RBRACKET = exports.RBRACKET = new Token('}','}',0,0,0);
 
-	module.exports.LPAREN = LPAREN = new Token('(','(',0,0,0);
-	module.exports.RPAREN = RPAREN = new Token(')',')',0,0,0);
+	var LPAREN = exports.LPAREN = new Token('(','(',0,0,0);
+	var RPAREN = exports.RPAREN = new Token(')',')',0,0,0);
 
 	LBRACKET.generated = true;
 	RBRACKET.generated = true;
 	LPAREN.generated = true;
 	RPAREN.generated = true;
 
-	module.exports.INDENT = INDENT = new Token('INDENT','2',0,0,0);
-	module.exports.OUTDENT = OUTDENT = new Token('OUTDENT','2',0,0,0);
+	var INDENT = exports.INDENT = new Token('INDENT','2',0,0,0);
+	var OUTDENT = exports.OUTDENT = new Token('OUTDENT','2',0,0,0);
 
 
 /***/ },
@@ -477,7 +475,6 @@ var Imbac =
 		obj.prototype.initialize = obj.prototype.constructor = obj;
 	};
 
-	var ALL_KEYWORDS;
 
 	var T = __webpack_require__(1);
 	var Token = T.Token;
@@ -536,7 +533,7 @@ var Imbac =
 
 	// FixedArray for performance
 	// var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
-	module.exports.ALL_KEYWORDS = ALL_KEYWORDS = [
+	var ALL_KEYWORDS = exports.ALL_KEYWORDS = [
 		'true','false','null','this',
 		'delete','typeof','in','instanceof',
 		'throw','break','continue','debugger',
@@ -2703,7 +2700,6 @@ var Imbac =
 	};
 
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-	var INVERSES;
 
 	// The Imba language has a good deal of optional syntax, implicit syntax,
 	// and shorthand syntax. This can greatly complicate a grammar and bloat
@@ -3383,7 +3379,7 @@ var Imbac =
 
 	// The inverse mappings of `BALANCED_PAIRS` we're trying to fix up, so we can
 	// look things up from either end.
-	module.exports.INVERSES = INVERSES = {};
+	var INVERSES = exports.INVERSES = {};
 
 	// The tokens that signal the start/end of a balanced pair.
 	// var EXPRESSION_START = []
@@ -4461,7 +4457,6 @@ var Imbac =
 	};
 
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-	var AST, OP, OP_COMPOUND, NODES, SPLAT, STACK, BR, BR2, SELF, SUPER, TRUE, FALSE, UNDEFINED, NIL, ARGUMENTS, EMPTY, NULL, RESERVED, RESERVED_REGEX, UNION, INTERSECT, CLASSDEF, TAGDEF, NEWTAG;
 	// TODO Create Expression - make all expressions inherit from these?
 
 	var helpers = __webpack_require__(2);
@@ -4470,10 +4465,10 @@ var Imbac =
 	var Token = __webpack_require__(1).Token;
 	var SourceMap = __webpack_require__(8).SourceMap;
 
-	module.exports.AST = AST = {};
+	var AST = exports.AST = {};
 
 	// Helpers for operators
-	module.exports.OP = OP = function(op,l,r) {
+	var OP = exports.OP = function(op,l,r) {
 		var o = String(op);
 		switch (o) {
 			case '.':
@@ -4562,7 +4557,7 @@ var Imbac =
 		};
 	};
 
-	module.exports.OP_COMPOUND = OP_COMPOUND = function(sym,op,l,r) {
+	var OP_COMPOUND = exports.OP_COMPOUND = function(sym,op,l,r) {
 		// console.log "?. soak operator",sym
 		if (sym == '?.') {
 			console.log("?. soak operator");
@@ -4578,7 +4573,7 @@ var Imbac =
 	var OPTS = {};
 	var ROOT = null;
 
-	module.exports.NODES = NODES = [];
+	var NODES = exports.NODES = [];
 
 	var LIT = function(val) {
 		return new Literal(val);
@@ -4618,7 +4613,7 @@ var Imbac =
 		return new While(test).addBody(code);
 	};
 
-	module.exports.SPLAT = SPLAT = function(value) {
+	var SPLAT = exports.SPLAT = function(value) {
 		if (value instanceof Assign) {
 			value.setLeft(new Splat(value.left()));
 			return value;
@@ -5017,7 +5012,7 @@ var Imbac =
 	};
 
 	// Lots of globals -- really need to deal with one stack per file / context
-	module.exports.STACK = STACK = new Stack();
+	var STACK = exports.STACK = new Stack();
 
 	GLOBSTACK = STACK;
 
@@ -13577,28 +13572,28 @@ var Imbac =
 
 	// constants
 
-	module.exports.BR = BR = new Newline('\n');
-	module.exports.BR2 = BR2 = new Newline('\n\n');
-	module.exports.SELF = SELF = new Self();
-	module.exports.SUPER = SUPER = new Super();
+	var BR = exports.BR = new Newline('\n');
+	var BR2 = exports.BR2 = new Newline('\n\n');
+	var SELF = exports.SELF = new Self();
+	var SUPER = exports.SUPER = new Super();
 
-	module.exports.TRUE = TRUE = new True('true');
-	module.exports.FALSE = FALSE = new False('false');
-	module.exports.UNDEFINED = UNDEFINED = new Undefined();
-	module.exports.NIL = NIL = new Nil();
+	var TRUE = exports.TRUE = new True('true');
+	var FALSE = exports.FALSE = new False('false');
+	var UNDEFINED = exports.UNDEFINED = new Undefined();
+	var NIL = exports.NIL = new Nil();
 
-	module.exports.ARGUMENTS = ARGUMENTS = new ArgsReference('arguments');
-	module.exports.EMPTY = EMPTY = '';
-	module.exports.NULL = NULL = 'null';
+	var ARGUMENTS = exports.ARGUMENTS = new ArgsReference('arguments');
+	var EMPTY = exports.EMPTY = '';
+	var NULL = exports.NULL = 'null';
 
-	module.exports.RESERVED = RESERVED = ['default','native','enum','with'];
-	module.exports.RESERVED_REGEX = RESERVED_REGEX = /^(default|native|enum|with|new|char)$/;
+	var RESERVED = exports.RESERVED = ['default','native','enum','with'];
+	var RESERVED_REGEX = exports.RESERVED_REGEX = /^(default|native|enum|with|new|char)$/;
 
-	module.exports.UNION = UNION = new Const('union$');
-	module.exports.INTERSECT = INTERSECT = new Const('intersect$');
-	module.exports.CLASSDEF = CLASSDEF = new Const('imba$class');
-	module.exports.TAGDEF = TAGDEF = new Const('Imba.TAGS.define');
-	module.exports.NEWTAG = NEWTAG = new Identifier("_T");
+	var UNION = exports.UNION = new Const('union$');
+	var INTERSECT = exports.INTERSECT = new Const('intersect$');
+	var CLASSDEF = exports.CLASSDEF = new Const('imba$class');
+	var TAGDEF = exports.TAGDEF = new Const('Imba.TAGS.define');
+	var NEWTAG = exports.NEWTAG = new Identifier("_T");
 
 
 
