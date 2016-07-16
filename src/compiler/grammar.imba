@@ -153,6 +153,15 @@ var grammar =
 		o 'VarIdentifier'
 	]
 
+	Require: [
+		o 'REQUIRE RequireArg' do Require.new(A2).set(keyword: A1)
+	]
+
+	RequireArg: [
+		o 'Literal'
+		o 'Parenthetical'
+	]
+
 	# All the different types of expressions in our language. The basic unit of
 	# Imba is the **Expression** -- everything that can be an expression
 	# is one. Blocks serve as the building blocks of many other rules, making
@@ -174,6 +183,7 @@ var grammar =
 		o 'TagDeclaration'
 		o 'Tag'
 		o 'Property'
+		o 'Require'
 	]
 
 	# A literal identifier, a variable name or property.

@@ -6362,14 +6362,12 @@ export class ImportStatement < Statement
 
 			if @imports:length == 1
 				@alias = @imports[0]
-				dec.add(@alias,OP('.',CALL(Identifier.new("require"),[source]),@alias))
+				dec.add(@alias,OP('.',Require.new(source),@alias))
 				dec.traverse
 				return self
-				
-				# dec.add(@alias,CALL(Identifier.new("require"),[source]))
 
 			# @declarations = VariableDeclaration.new([])
-			@moduledecl = dec.add(@alias,CALL(Identifier.new("require"),[source]))
+			@moduledecl = dec.add(@alias,Require.new(source))
 			@moduledecl.traverse
 
 
@@ -6386,7 +6384,7 @@ export class ImportStatement < Statement
 		if @declarations
 			return @declarations.c
 
-		var req = CALL(Identifier.new("require"),[source])
+		var req = Require.new(source)
 
 		if @ns
 			# must register ns as a real variable
@@ -6454,6 +6452,12 @@ export class Export < ValueNode
 			value.map do |item| item.set export: self
 		
 		return value.c
+
+export class Require < ValueNode
+
+	def js o
+		var out = value isa Parens ? value.value.c : value.c
+		"require({out})"
 
 export class EnvFlag < ValueNode
 	
@@ -6973,7 +6977,6 @@ export class RootScope < Scope
 		register '__dirname', self, type: 'global'
 		register '__filename', self, type: 'global'
 		register '_', self, type: 'global'
-
 
 		# preregister global special variables here
 		@warnings = []

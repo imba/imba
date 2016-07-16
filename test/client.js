@@ -146,7 +146,7 @@
 	*/
 
 	Imba = {
-		VERSION: '0.15.0-alpha.5',
+		VERSION: '0.15.0-alpha.6',
 		CLIENT: isClient,
 		SERVER: !isClient,
 		DEBUG: false

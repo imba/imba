@@ -33,7 +33,7 @@ var JS_KEYWORDS = [
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','self','await','import'
+	'when','def','tag','do','elif','begin','var','let','self','await','import','require'
 ]
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','static','local','export','global','prop']
@@ -63,7 +63,7 @@ export var ALL_KEYWORDS = [
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','self','await','import',
-	'and','or','is','isnt','not','yes','no','isa','case','nil'
+	'and','or','is','isnt','not','yes','no','isa','case','nil','require'
 ]
 
 # The list of keywords that are reserved by JavaScript, but not used, or are
@@ -253,7 +253,7 @@ var INDEXABLE = [
 	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'IDREF', 'ARGUMENTS','}','TAG_TYPE'
 ]
 
-var GLOBAL_IDENTIFIERS = ['global','exports','require']
+var GLOBAL_IDENTIFIERS = ['global','exports']
 
 # Tokens that, when immediately preceding a `WHEN`, indicate that the `WHEN`
 # occurs at the start of a line. We disambiguate these from trailing whens to
@@ -763,7 +763,7 @@ export class Lexer
 		elif pre == '#'
 			typ = 'TAGID'
 
-		elif CONST_IDENTIFIER.test(pre) or id == 'require' or id == 'global' or id == 'exports'
+		elif CONST_IDENTIFIER.test(pre) or id == 'global' or id == 'exports'
 			# really? seems very strange
 			# console.log('global!!',typ,id)
 			typ = 'CONST'
@@ -939,7 +939,7 @@ export class Lexer
 			typ = 'IDENTIFIER'
 			# typ = 'GVAR'
 
-		elif CONST_IDENTIFIER.test(id) or id == 'require' or id == 'global' or id == 'exports'
+		elif CONST_IDENTIFIER.test(id) or id == 'global' or id == 'exports'
 			# thous should really be handled by the ast instead
 			typ = 'CONST'
 
