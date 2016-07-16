@@ -1,4 +1,4 @@
-{
+ {
   "name": "imba",
   "description": "A rich language for the web",
   "keywords": [
@@ -38,7 +38,7 @@
     "test-phantom": "phantomjs test/client.js"
   },
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "0.15.0-alpha.5",
+  "version": "0.15.0-alpha.6",
   "licenses": [
     {
       "type": "MIT",
