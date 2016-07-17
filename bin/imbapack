@@ -6,7 +6,7 @@ var dir = path.join(path.dirname(fs.realpathSync(__filename)), '../');
 
 // Return the module for webpack
 if(require.main !== module){
-	module.exports = {
+	var conf = {
 		module: {
 			loaders: [{
 				"test": /\.imba$/,
@@ -18,13 +18,58 @@ if(require.main !== module){
 			alias: { imba$: dir + "/src/imba/index.imba" }
 		}
 	}
+
+	function mergeConfig(obj){
+		// TODO merge instead of overriding module/resolve
+		obj.module = conf.module;
+		obj.resolve = conf.resolve;
+		return obj;
+	}
+
+	// check for existing config
+	var idx = process.argv.indexOf('--baseconf') + 1;
+	if(idx){
+		// should run the file
+		var cfgPath = process.argv[idx];
+		var baseconf = require(cfgPath);
+
+		if(baseconf instanceof Array){
+			baseconf.forEach(function(v){ mergeConfig(v); })
+		} else {
+			mergeConfig(baseconf);
+		}
+		// console.log('config is',baseconf);
+		module.exports = baseconf;
+	} else {
+		module.exports = conf;	
+	}
 	return;
 }
 
 var cp = require('child_process');
 var args = process.argv.slice(2);
+var cwd = process.cwd();
 
-args.push("--config " + dir + 'bin/imbapack');
+var cfgIdx = args.indexOf('--config') + 1;
+var cfgPath = cfgIdx > 0 ? args[cfgIdx] : 'webpack.config.js';
+var cfg = path.resolve(cwd,cfgPath);
+
+// console.log('arguments',args,__dirname,process.cwd(),cfgPath,cfg);
+// TODO drop default config if input/output is declared in process args
+
+if(fs.existsSync(cfg)){
+	if(cfgIdx){
+		args[cfgIdx] = dir + 'bin/imbapack'
+	} else {
+		args.push("--config " + dir + 'bin/imbapack');
+	}
+	args.push("--baseconf " + cfg);
+
+} else {
+	args.push("--config " + dir + 'bin/imbapack');
+}
+
+
 
 cp.exec('which webpack',function(e,stdout,stderr){
 
