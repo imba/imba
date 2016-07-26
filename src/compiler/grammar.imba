@@ -331,6 +331,7 @@ var grammar =
 	TagBody: [
 		o 'INDENT ArgList OUTDENT' do A2.indented(A1,A3)
 		o 'CALL_START ArgList CALL_END' do A2
+		o 'Tag' do ArgList.new([A1])
 	]
 
 	TagTypeDef: [
