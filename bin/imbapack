@@ -10,7 +10,7 @@ if(require.main !== module){
 		module: {
 			loaders: [{
 				"test": /\.imba$/,
-				"loader": dir + "/loader.js"
+				"loader": dir + "loader.js"
 			}]
 		},
 		resolve: {
@@ -20,9 +20,27 @@ if(require.main !== module){
 	}
 
 	function mergeConfig(obj){
+		var m = (obj.module = obj.module || {loaders: []})
+		var r = (obj.resolve = obj.resolve || {})
 		// TODO merge instead of overriding module/resolve
-		obj.module = conf.module;
-		obj.resolve = conf.resolve;
+
+		if(m.loaders) {
+			// add the imba loader
+			m.loaders.unshift(conf.module.loaders[0])
+		} else {
+			m.loaders = conf.module.loaders;
+		}
+
+		if(r.extensions){
+			r.extensions.splice(1,0,'.imba')
+		} else {
+			r.extensions = ["", ".imba", ".webpack.js", ".web.js", ".js",".css"]
+		}
+
+		// Set correct alias
+		r.alias = r.alias || {}
+		r.alias.imba$ = dir + "src/imba/index.imba"
+
 		return obj;
 	}
 
@@ -38,7 +56,7 @@ if(require.main !== module){
 		} else {
 			mergeConfig(baseconf);
 		}
-		// console.log('config is',baseconf);
+
 		module.exports = baseconf;
 	} else {
 		module.exports = conf;	
