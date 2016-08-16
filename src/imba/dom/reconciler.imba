@@ -25,7 +25,7 @@ def appendNested root, node
 		appendNested(root,member) for member in node
 
 	elif node != null and node !== false
-		root.appendChild Imba.document.createTextNode(node)
+		root.appendChild Imba.createTextNode(node)
 
 	return
 
@@ -40,7 +40,7 @@ def insertNestedBefore root, node, before
 	elif node isa Array
 		insertNestedBefore(root,member,before) for member in node
 	elif node != null and node !== false
-		root.insertBefore(Imba.document.createTextNode(node),before)
+		root.insertBefore(Imba.createTextNode(node),before)
 
 	return before
 
@@ -73,7 +73,7 @@ def reconcileCollectionChanges root, new, old, caret
 	# 
 	# 	(1, 3) and (2)
 	# 
-	# The optimal re-ordering then becomes two keep the longest chain intact,
+	# The optimal re-ordering then becomes to keep the longest chain intact,
 	# and move all the other items.
 
 	var newPosition = []
@@ -87,8 +87,18 @@ def reconcileCollectionChanges root, new, old, caret
 	var maxChainLength = 0
 	var maxChainEnd = 0
 
+	var hasTextNodes = no
+	var newPos
+
 	for node, idx in old
-		var newPos = new.indexOf(node)
+		# special case for Text nodes
+		if node and node:nodeType == 3
+			newPos = new.indexOf(node:textContent)
+			new[newPos] = node if newPos >= 0
+			hasTextNodes = yes
+		else
+			newPos = new.indexOf(node)
+
 		newPosition.push(newPos)
 
 		if newPos == -1
@@ -133,13 +143,23 @@ def reconcileCollectionChanges root, new, old, caret
 		cursor -= 1
 
 	# And let's iterate forward, but only move non-sticky nodes
+	var newCaret = caret
+
+	# possible to do this in reversed order instead?
 	for node, idx in new
 		if !stickyNodes[idx]
+			# create textnode for string, and update the array
+			unless node isa Imba.Tag
+				node = new[idx] = Imba.createTextNode(node)
+
 			var after = new[idx - 1]
-			insertNestedAfter(root, node, (after and after.@dom) or caret)
+			insertNestedAfter(root, node, (after and after.@dom or after or newCaret))
+
+		newCaret = node.@dom or (newCaret and newCaret:nextSibling or root.@dom:firstChild)
+
 
 	# should trust that the last item in new list is the caret
-	return lastNew and lastNew.@dom or caret
+	return lastNew and lastNew.@dom or newCaret
 
 
 # expects a flat non-sparse array of nodes in both new and old, always
@@ -162,14 +182,6 @@ def reconcileCollection root, new, old, caret
 # the general reconciler that respects conditions etc
 # caret is the current node we want to insert things after
 def reconcileNested root, new, old, caret
-
-	# if new == null or new === false or new === true
-	# 	if new === old
-	# 		return caret
-	# 	if old && new != old
-	# 		removeNested(root,old,caret) if old
-	# 
-	# 	return caret
 
 	# var skipnew = new == null or new === false or new === true
 	var newIsNull = new == null or new === false

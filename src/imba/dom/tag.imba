@@ -32,6 +32,12 @@ def Imba.mount node, into
 	Imba.commit
 	return node
 
+
+def Imba.createTextNode node
+	if node and node:nodeType == 3
+		return node
+	return Imba.document.createTextNode(node)
+
 ###
 This is the baseclass that all tags in imba inherit from.
 @iname node
