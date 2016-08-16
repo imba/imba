@@ -391,4 +391,9 @@ describe "Tags" do
 			node.render(['b','c','a','d'])
 			eq node.dom:textContent, 'bcad'
 
+			node.render(['b','a','a','d','a','g'])
+			eq node.dom:textContent, 'baadag'
+			node.render(['b','g','a','a','d','a'])
+			eq node.dom:textContent, 'bgaada'
+
 

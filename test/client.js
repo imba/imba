@@ -365,12 +365,7 @@
 /* 5 */
 /***/ function(module, exports) {
 
-	function idx$(a,b){
-		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-	};
-
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-
+	
 	var requestAnimationFrame; // very simple raf polyfill
 	var cancelAnimationFrame;
 
@@ -415,7 +410,7 @@
 		this._stage = 1;
 		this.before();
 		if (items.length) {
-			for (var i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(items), len = ary.length, item; i < len; i++) {
 				item = ary[i];
 				if (item instanceof Function) {
 					item(this._dt,this);
@@ -829,7 +824,7 @@
 		if (this._events instanceof Function) {
 			if (this._events(event)) this.mark();
 		} else if (this._events instanceof Array) {
-			if (idx$(($1 = event) && $1.type  &&  $1.type(),this._events) >= 0) this.mark();
+			if (Imba.indexOf(($1 = event) && $1.type  &&  $1.type(),this._events) >= 0) this.mark();
 		} else {
 			this.mark();
 		};
@@ -930,7 +925,6 @@
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	Imba.TagManagerClass = function TagManagerClass(){
 		this._spawns = 0;
 		this._inserts = 0;
@@ -992,7 +986,7 @@
 	Imba.TagManagerClass.prototype.tryMount = function (){
 		var count = 0;
 		
-		for (var i = 0, ary = iter$(this._mountable), len = ary.length, item; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(this._mountable), len = ary.length, item; i < len; i++) {
 			item = ary[i];
 			if (item && document.body.contains(item._dom)) {
 				this._mounted.push(item);
@@ -1013,7 +1007,7 @@
 	Imba.TagManagerClass.prototype.tryUnmount = function (){
 		var count = 0;
 		var root = document.body;
-		for (var i = 0, ary = iter$(this._mounted), len = ary.length, item; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(this._mounted), len = ary.length, item; i < len; i++) {
 			item = ary[i];
 			if (!document.body.contains(item.dom())) {
 				item._mounted = 0;
@@ -1039,12 +1033,7 @@
 /* 8 */
 /***/ function(module, exports) {
 
-	function idx$(a,b){
-		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-	};
-
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-
+	
 	// externs;
 
 	Imba.CSSKeyMap = {};
@@ -1082,6 +1071,14 @@
 		into.appendChild(node.dom());
 		Imba.commit();
 		return node;
+	};
+
+
+	Imba.createTextNode = function (node){
+		if (node && node.nodeType == 3) {
+			return node;
+		};
+		return Imba.document().createTextNode(node);
 	};
 
 	/*
@@ -1494,7 +1491,7 @@
 		if (!item) { return this };
 		
 		if (item instanceof Array) {
-			for (var i = 0, ary = iter$(item), len = ary.length, member; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(item), len = ary.length, member; i < len; i++) {
 				member = ary[i];
 				member && this.append(member);
 			};
@@ -1621,7 +1618,7 @@
 		
 		if (!dataset) {
 			dataset = {};
-			for (var i = 0, ary = iter$(this.dom().attributes), len = ary.length, atr; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(this.dom().attributes), len = ary.length, atr; i < len; i++) {
 				atr = ary[i];
 				if (atr.name.substr(0,5) == 'data-') {
 					dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
@@ -2209,7 +2206,7 @@
 	};
 
 	Imba.Tags.prototype.baseType = function (name){
-		return idx$(name,HTML_TAGS) >= 0 ? ('element') : ('div');
+		return Imba.indexOf(name,HTML_TAGS) >= 0 ? ('element') : ('div');
 	};
 
 	Imba.Tags.prototype.defineTag = function (name,supr,body){
@@ -2425,7 +2422,7 @@
 	Imba.generateCSSPrefixes = function (){
 		var styles = window.getComputedStyle(document.documentElement,'');
 		
-		for (var i = 0, ary = iter$(styles), len = ary.length, prefixed; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(styles), len = ary.length, prefixed; i < len; i++) {
 			prefixed = ary[i];
 			var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'');
 			var camelCase = unprefixed.replace(/-(\w)/g,function(m,a) { return a.toUpperCase(); });
@@ -2899,11 +2896,7 @@
 /* 10 */
 /***/ function(module, exports) {
 
-	function idx$(a,b){
-		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-	};
-
-
+	
 	_T.ns('svg').defineTag('element', function(tag){
 		
 		tag.namespaceURI = function (){
@@ -2922,7 +2915,7 @@
 		tag.inherit = function (child){
 			child._protoDom = null;
 			
-			if (idx$(child._name,types) >= 0) {
+			if (Imba.indexOf(child._name,types) >= 0) {
 				child._nodeType = child._name;
 				return child._classes = [];
 			} else {
@@ -3105,7 +3098,6 @@
 /* 12 */
 /***/ function(module, exports) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// Imba.Touch
 	// Began	A finger touched the screen.
 	// Moved	A finger moved on the screen.
@@ -3177,7 +3169,7 @@
 	};
 
 	Imba.Touch.ontouchstart = function (e){
-		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (this.lookup(t)) { continue; };
 			var touch = identifiers[t.identifier] = new this(e); // (e)
@@ -3191,7 +3183,7 @@
 
 	Imba.Touch.ontouchmove = function (e){
 		var touch;
-		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchmove(e,t);
@@ -3203,7 +3195,7 @@
 
 	Imba.Touch.ontouchend = function (e){
 		var touch;
-		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchend(e,t);
@@ -3220,7 +3212,7 @@
 
 	Imba.Touch.ontouchcancel = function (e){
 		var touch;
-		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchcancel(e,t);
@@ -3460,7 +3452,7 @@
 		
 		this._updates++;
 		if (this._gestures) {
-			for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length; i < len; i++) {
 				ary[i].ontouchupdate(this);
 			};
 		};
@@ -3475,7 +3467,7 @@
 		if (!this._active) { return this };
 		
 		if (this._gestures) {
-			for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length, g; i < len; i++) {
 				g = ary[i];
 				if (g.ontouchmove) { g.ontouchmove(this,this._event) };
 			};
@@ -3492,7 +3484,7 @@
 		this._updates++;
 		
 		if (this._gestures) {
-			for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length; i < len; i++) {
 				ary[i].ontouchend(this);
 			};
 		};
@@ -3519,7 +3511,7 @@
 		this._updates++;
 		
 		if (this._gestures) {
-			for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length, g; i < len; i++) {
 				g = ary[i];
 				if (g.ontouchcancel) { g.ontouchcancel(this) };
 			};
@@ -3964,7 +3956,6 @@
 /* 14 */
 /***/ function(module, exports) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	/*
 
 	Manager for listening to and delegating events in Imba. A single instance
@@ -3989,7 +3980,7 @@
 			return true;
 		});
 		
-		for (var i = 0, ary = iter$(events), len = ary.length; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(events), len = ary.length; i < len; i++) {
 			self.register(ary[i]);
 		};
 		
@@ -4033,7 +4024,7 @@
 	Imba.EventManager.prototype.register = function (name,handler){
 		if(handler === undefined) handler = true;
 		if (name instanceof Array) {
-			for (var i = 0, ary = iter$(name), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(name), len = ary.length; i < len; i++) {
 				this.register(ary[i],handler);
 			};
 			return this;
@@ -4089,7 +4080,7 @@
 			this.root().addEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var i = 0, ary = iter$(this.listeners()), len = ary.length, item; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; i < len; i++) {
 			item = ary[i];
 			this.root().addEventListener(item[0],item[1],item[2]);
 		};
@@ -4101,7 +4092,7 @@
 			this.root().removeEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var i = 0, ary = iter$(this.listeners()), len = ary.length, item; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; i < len; i++) {
 			item = ary[i];
 			this.root().removeEventListener(item[0],item[1],item[2]);
 		};
@@ -4113,8 +4104,7 @@
 /* 15 */
 /***/ function(module, exports) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-
+	
 	/*
 	The special syntax for selectors in Imba creates Imba.Selector
 	instances.
@@ -4126,7 +4116,7 @@
 		this._context = scope;
 		
 		if (nodes) {
-			for (var i = 0, ary = iter$(nodes), len = ary.length, res = []; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(nodes), len = ary.length, res = []; i < len; i++) {
 				res.push(tag$wrap(ary[i]));
 			};
 			this._nodes = res;
@@ -4185,7 +4175,7 @@
 	Imba.Selector.prototype.nodes = function (){
 		if (this._nodes) { return this._nodes };
 		var items = this.scope().querySelectorAll(this.query());
-		for (var i = 0, ary = iter$(items), len = ary.length, res = []; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(items), len = ary.length, res = []; i < len; i++) {
 			res.push(tag$wrap(ary[i]));
 		};
 		this._nodes = res;
@@ -4352,7 +4342,6 @@
 /* 16 */
 /***/ function(module, exports) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	function removeNested(root,node,caret){
 		// if node/nodes isa String
 		// 	we need to use the caret to remove elements
@@ -4360,7 +4349,7 @@
 		if (node instanceof Imba.Tag) {
 			root.removeChild(node);
 		} else if (node instanceof Array) {
-			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(node), len = ary.length; i < len; i++) {
 				removeNested(root,ary[i],caret);
 			};
 		} else if (node != null) {
@@ -4381,11 +4370,11 @@
 		if (node instanceof Imba.Tag) {
 			root.appendChild(node);
 		} else if (node instanceof Array) {
-			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(node), len = ary.length; i < len; i++) {
 				appendNested(root,ary[i]);
 			};
 		} else if (node != null && node !== false) {
-			root.appendChild(Imba.document().createTextNode(node));
+			root.appendChild(Imba.createTextNode(node));
 		};
 		
 		return;
@@ -4400,11 +4389,11 @@
 		if (node instanceof Imba.Tag) {
 			root.insertBefore(node,before);
 		} else if (node instanceof Array) {
-			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(node), len = ary.length; i < len; i++) {
 				insertNestedBefore(root,ary[i],before);
 			};
 		} else if (node != null && node !== false) {
-			root.insertBefore(Imba.document().createTextNode(node),before);
+			root.insertBefore(Imba.createTextNode(node),before);
 		};
 		
 		return before;
@@ -4441,7 +4430,7 @@
 		// 
 		// 	(1, 3) and (2)
 		// 
-		// The optimal re-ordering then becomes two keep the longest chain intact,
+		// The optimal re-ordering then becomes to keep the longest chain intact,
 		// and move all the other items.
 		
 		var newPosition = [];
@@ -4455,9 +4444,20 @@
 		var maxChainLength = 0;
 		var maxChainEnd = 0;
 		
-		for (var idx = 0, ary = iter$(old), len = ary.length, node; idx < len; idx++) {
+		var hasTextNodes = false;
+		var newPos;
+		
+		for (var idx = 0, ary = Imba.iterable(old), len = ary.length, node; idx < len; idx++) {
+			// special case for Text nodes
 			node = ary[idx];
-			var newPos = new$.indexOf(node);
+			if (node && node.nodeType == 3) {
+				newPos = new$.indexOf(node.textContent);
+				if (newPos >= 0) { new$[newPos] = node };
+				hasTextNodes = true;
+			} else {
+				newPos = new$.indexOf(node);
+			};
+			
 			newPosition.push(newPos);
 			
 			if (newPos == -1) {
@@ -4508,12 +4508,20 @@
 			cursor -= 1;
 		};
 		
-		// And let's iterate forward, but only move non-sticky nodes
-		for (var idx1 = 0, ary = iter$(new$), len = ary.length; idx1 < len; idx1++) {
+		// possible to do this in reversed order instead?
+		for (var idx1 = 0, ary = Imba.iterable(new$), len = ary.length, node1; idx1 < len; idx1++) {
+			node1 = ary[idx1];
 			if (!stickyNodes[idx1]) {
+				// create textnode for string, and update the array
+				if (!((node1 instanceof Imba.Tag))) {
+					node1 = new$[idx1] = Imba.createTextNode(node1);
+				};
+				
 				var after = new$[idx1 - 1];
-				insertNestedAfter(root,ary[idx1],(after && after._dom) || caret);
+				insertNestedAfter(root,node1,(after && after._dom || after || caret));
 			};
+			
+			caret = node1._dom || (caret && caret.nextSibling || root._dom.firstChild);
 		};
 		
 		// should trust that the last item in new list is the caret
@@ -4536,7 +4544,7 @@
 		};
 		
 		if (i == -1) {
-			return last && last._dom || caret;
+			return last && last._dom || last || caret;
 		} else {
 			return reconcileCollectionChanges(root,new$,old,caret);
 		};
@@ -4545,14 +4553,6 @@
 	// the general reconciler that respects conditions etc
 	// caret is the current node we want to insert things after
 	function reconcileNested(root,new$,old,caret){
-		
-		// if new == null or new === false or new === true
-		// 	if new === old
-		// 		return caret
-		// 	if old && new != old
-		// 		removeNested(root,old,caret) if old
-		// 
-		// 	return caret
 		
 		// var skipnew = new == null or new === false or new === true
 		var newIsNull = new$ == null || new$ === false;
@@ -4575,7 +4575,7 @@
 					// if the static is not nested - we could get a hint from compiler
 					// and just skip it
 					if (new$.static == old.static) {
-						for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
+						for (var i = 0, ary = Imba.iterable(new$), len = ary.length; i < len; i++) {
 							// this is where we could do the triple equal directly
 							caret = reconcileNested(root,ary[i],old[i],caret);
 						};
@@ -4644,7 +4644,7 @@
 				// here we _know _that it is an array with the same shape
 				// every time
 				var caret = null;
-				for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
+				for (var i = 0, ary = Imba.iterable(new$), len = ary.length; i < len; i++) {
 					// prev = old[i]
 					caret = reconcileNested(this,ary[i],old[i],caret);
 				};
@@ -4697,19 +4697,7 @@
 /* 17 */
 /***/ function(module, exports) {
 
-	// helper for subclassing
-	function subclass$(obj,sup) {
-		for (var k in sup) {
-			if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-		};
-		// obj.__super__ = sup;
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-	};
-
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-
+	
 	var TERMINAL_COLOR_CODES = {
 		bold: 1,
 		underline: 4,
@@ -4795,7 +4783,7 @@
 		var ok = [];
 		var failed = [];
 		
-		for (var i = 0, ary = iter$(this.assertions()), len = ary.length, test1; i < len; i++) {
+		for (var i = 0, ary = Imba.iterable(this.assertions()), len = ary.length, test1; i < len; i++) {
 			test1 = ary[i];
 			test1.success() ? (ok.push(test1)) : (failed.push(test1));
 		};
@@ -5048,7 +5036,7 @@
 		self;
 	};
 
-	subclass$(SpecAwait,SpecCondition);
+	Imba.subclass(SpecAwait,SpecCondition);
 	global.SpecAwait = SpecAwait; // global class 
 	SpecAwait.prototype.callback = function (){
 		return this._callback;
@@ -5067,7 +5055,7 @@
 		this;
 	};
 
-	subclass$(SpecAssert,SpecCondition);
+	Imba.subclass(SpecAssert,SpecCondition);
 	global.SpecAssert = SpecAssert; // global class 
 	SpecAssert.prototype.run = function (){
 		var value = this._actual instanceof SpecCaller ? (this._actual.run()) : (this._actual);
@@ -5111,7 +5099,7 @@
 		this.run();
 	};
 
-	subclass$(SpecAssertTruthy,SpecAssert);
+	Imba.subclass(SpecAssertTruthy,SpecAssert);
 	global.SpecAssertTruthy = SpecAssertTruthy; // global class 
 	SpecAssertTruthy.prototype.test = function (value){
 		return !(!(value)) ? (this.passed()) : (this.failed());
@@ -5123,7 +5111,7 @@
 		this.run();
 	};
 
-	subclass$(SpecAssertFalsy,SpecAssert);
+	Imba.subclass(SpecAssertFalsy,SpecAssert);
 	global.SpecAssertFalsy = SpecAssertFalsy; // global class 
 	SpecAssertFalsy.prototype.test = function (value){
 		return !(value) ? (this.passed()) : (this.failed());
@@ -5166,7 +5154,6 @@
 /* 18 */
 /***/ function(module, exports) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// externs;
 
 	function SyntaxLoopsObj(){ };
@@ -5291,7 +5278,7 @@
 			
 			test("custom iterable objects",function() {
 				var item = new IterableObject();
-				for (var res = [], i = 0, items = iter$(item), len = items.length; i < len; i++) {
+				for (var res = [], i = 0, items = Imba.iterable(item), len = items.length; i < len; i++) {
 					res.push(items[i] * 2);
 				};
 				return eq(res,[2,4,6,8,10]);
@@ -5492,17 +5479,6 @@
 /* 19 */
 /***/ function(module, exports) {
 
-	// helper for subclassing
-	function subclass$(obj,sup) {
-		for (var k in sup) {
-			if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-		};
-		// obj.__super__ = sup;
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-	};
-
 	// externs;
 
 	function Organism(){
@@ -5546,7 +5522,7 @@
 		this._ivar = 2;
 	};
 
-	subclass$(Virus,Organism);
+	Imba.subclass(Virus,Organism);
 	Virus.prototype.lineage = function (){
 		return ("" + this.name() + "." + (Virus.__super__.lineage.call(this)));
 	};
@@ -5557,14 +5533,14 @@
 
 	function Animal(){ return Organism.apply(this,arguments) };
 
-	subclass$(Animal,Organism);
+	Imba.subclass(Animal,Organism);
 	Animal.prototype.lineage = function (){
 		return ("animal." + (Animal.__super__.lineage.call(this)));
 	};
 
 	function Cat(){ return Animal.apply(this,arguments) };
 
-	subclass$(Cat,Animal);
+	Imba.subclass(Cat,Animal);
 	Cat.prototype.lineage = function (){
 		return ("cat." + (Cat.__super__.lineage.call(this)));
 	};
@@ -5575,7 +5551,7 @@
 
 	function Dog(){ return Animal.apply(this,arguments) };
 
-	subclass$(Dog,Animal);
+	Imba.subclass(Dog,Animal);
 	Dog.prototype.lineage = function (){
 		return ("dog." + (Dog.__super__.lineage.call(this)));
 	};
@@ -5587,7 +5563,7 @@
 
 	function Human(){ return Animal.apply(this,arguments) };
 
-	subclass$(Human,Animal);
+	Imba.subclass(Human,Animal);
 	Human.prototype.lineage = function (){
 		return ("human." + (Human.__super__.lineage.call(this)));
 	};
@@ -5598,7 +5574,7 @@
 
 	function Zombie(){ return Human.apply(this,arguments) };
 
-	subclass$(Zombie,Human);
+	Imba.subclass(Zombie,Human);
 	Zombie.prototype.lineage = function (){
 		return ("zombie." + (Zombie.__super__.lineage.call(this)));
 	};
@@ -5756,17 +5732,6 @@
 /* 20 */
 /***/ function(module, exports) {
 
-	// helper for subclassing
-	function subclass$(obj,sup) {
-		for (var k in sup) {
-			if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-		};
-		// obj.__super__ = sup;
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-	};
-
 	// externs;
 
 	function Organism(){
@@ -5799,7 +5764,7 @@
 		this._ivar = 2;
 	};
 
-	subclass$(Virus,Organism);
+	Imba.subclass(Virus,Organism);
 	Virus.prototype.lineage = function (){
 		return ("" + this.name() + "." + (Virus.__super__.lineage.call(this)));
 	};
@@ -5812,7 +5777,7 @@
 		this.setGroup("animal");
 	};
 
-	subclass$(Animal,Organism);
+	Imba.subclass(Animal,Organism);
 	Animal.prototype.lineage = function (){
 		// super should do the same as super.lineage(*arguments)
 		return ("animal." + Animal.__super__.lineage.apply(this,arguments));
@@ -5822,7 +5787,7 @@
 		this.setGroup("cat");
 	};
 
-	subclass$(Cat,Animal);
+	Imba.subclass(Cat,Animal);
 	Cat.prototype.lineage = function (){
 		return ("cat." + (Cat.__super__.lineage.call(this)));
 	};
@@ -5839,7 +5804,7 @@
 
 	function Dog(){ return Animal.apply(this,arguments) };
 
-	subclass$(Dog,Animal);
+	Imba.subclass(Dog,Animal);
 	Dog.prototype.lineage = function (){
 		return ("dog." + Dog.__super__.lineage.call(this));
 	};
@@ -5850,7 +5815,7 @@
 
 	function FakeDog(){ return Dog.apply(this,arguments) };
 
-	subclass$(FakeDog,Dog);
+	Imba.subclass(FakeDog,Dog);
 	FakeDog.prototype.lineage = function (){
 		("fakedog." + (FakeDog.__super__.__super__.lineage.apply(this,arguments)));
 		return ("fakedog." + FakeDog.__super__.__super__.lineage.call(this));
@@ -5860,7 +5825,7 @@
 		this._human = true;
 	};
 
-	subclass$(Human,Animal);
+	Imba.subclass(Human,Animal);
 	Human.prototype.lineage = function (){
 		return ("human." + (Human.__super__.lineage.call(this)));
 	};
@@ -5871,7 +5836,7 @@
 
 	function Zombie(){ return Human.apply(this,arguments) };
 
-	subclass$(Zombie,Human);
+	Imba.subclass(Zombie,Human);
 	Zombie.prototype.lineage = function (){
 		return ("zombie." + Zombie.__super__.lineage.apply(this,arguments));
 	};
@@ -5883,7 +5848,7 @@
 	Human.Child = function Child(){
 		Human.Child.__super__.constructor.apply(this,arguments);
 	};
-	subclass$(Human.Child,Human);
+	Imba.subclass(Human.Child,Human);
 
 
 
@@ -5919,10 +5884,6 @@
 /***/ },
 /* 21 */
 /***/ function(module, exports, __webpack_require__) {
-
-	function idx$(a,b){
-		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-	};
 
 	function intersect$(a,b){
 		if(a && a.__intersect) return a.__intersect(b);
@@ -6017,13 +5978,13 @@
 			var a = 5;
 			var ary = [1,2,3,4,5];
 			
-			ok(idx$(a,ary) >= 0);
-			eq(idx$(3,ary) >= 0,true);
-			eq(idx$(10,ary) >= 0,false);
-			eq(idx$(3,[1,2,3,4]) >= 0,true);
-			eq(idx$(6,[1,2,3,4]) >= 0,false);
+			ok(Imba.indexOf(a,ary) >= 0);
+			eq(Imba.indexOf(3,ary) >= 0,true);
+			eq(Imba.indexOf(10,ary) >= 0,false);
+			eq(Imba.indexOf(3,[1,2,3,4]) >= 0,true);
+			eq(Imba.indexOf(6,[1,2,3,4]) >= 0,false);
 			
-			return ok(idx$(6,ary) == -1);
+			return ok(Imba.indexOf(6,ary) == -1);
 		});
 		
 		
@@ -6330,22 +6291,11 @@
 /* 25 */
 /***/ function(module, exports) {
 
-	// helper for subclassing
-	function subclass$(obj,sup) {
-		for (var k in sup) {
-			if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-		};
-		// obj.__super__ = sup;
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-	};
-
 	// externs;
 
 	function Paramer(){ return SpecObject.apply(this,arguments) };
 
-	subclass$(Paramer,SpecObject);
+	Imba.subclass(Paramer,SpecObject);
 	Paramer.prototype.blk = function (blk){
 		return [blk];
 	};
@@ -7340,17 +7290,6 @@
 /* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// helper for subclassing
-	function subclass$(obj,sup) {
-		for (var k in sup) {
-			if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-		};
-		// obj.__super__ = sup;
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-	};
-
 	// externs;
 
 	// import two specific items from module
@@ -7361,7 +7300,7 @@
 
 	function Sub(){ return Item.apply(this,arguments) };
 
-	subclass$(Sub,Item);
+	Imba.subclass(Sub,Item);
 	Sub.prototype.name = function (){
 		return "sub" + Sub.__super__.name.apply(this,arguments);
 	};
@@ -7399,17 +7338,6 @@
 /* 35 */
 /***/ function(module, exports) {
 
-	// helper for subclassing
-	function subclass$(obj,sup) {
-		for (var k in sup) {
-			if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-		};
-		// obj.__super__ = sup;
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-	};
-
 	// externs;
 
 	function hello(){
@@ -7432,7 +7360,7 @@
 
 	function B(){ return A.apply(this,arguments) };
 
-	subclass$(B,A);
+	Imba.subclass(B,A);
 	B.prototype.name = function (){
 		return "b";
 	};
@@ -7482,7 +7410,6 @@
 /* 37 */
 /***/ function(module, exports) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	function intersect$(a,b){
 		if(a && a.__intersect) return a.__intersect(b);
 		var res = [];
@@ -7908,10 +7835,10 @@
 			$1 = [30,a],a = 10,b = 20,c = $1;
 			eq([a,b,c],[10,20,[30,3]]);
 			
-			var items = iter$(ary);var a = items[0],b = items[1],c = items[2];
+			var items = Imba.iterable(ary);var a = items[0],b = items[1],c = items[2];
 			eq([a,b,c],[1,2,3]);
 			
-			var array = iter$(ary),len = array.length,i = 0;var a = array[i++],b = array[i++],c = new Array(len - 2);while (i < len){
+			var array = Imba.iterable(ary),len = array.length,i = 0;var a = array[i++],b = array[i++],c = new Array(len - 2);while (i < len){
 				c[i - 2] = array[i++]
 			};
 			eq([a,b,c],[1,2,[3,4,5]]);
@@ -7921,7 +7848,7 @@
 			$1 = list[1],$2 = list[0],list[0] = $1,list[1] = $2;
 			eq(list,[20,10,30]);
 			
-			var coll = iter$(ary),len_ = coll.length,j = 0,tmp = new Array(len_ - 2);list[0] = coll[j++];while (j < len_ - 1){
+			var coll = Imba.iterable(ary),len_ = coll.length,j = 0,tmp = new Array(len_ - 2);list[0] = coll[j++];while (j < len_ - 1){
 				tmp[j - 1] = coll[j++]
 			};list[1] = tmp;list[2] = coll[j++];
 			eq(list,[1,[2,3,4],5]);
@@ -7935,20 +7862,20 @@
 			for (var k = 0, len__ = ary.length, res = []; k < len__; k++) {
 				res.push(ary[k] * 2);
 			};
-			var ary_ = iter$(res);var x = ary_[0];var y = ary_[1];
+			var ary_ = Imba.iterable(res);var x = ary_[0];var y = ary_[1];
 			
 			eq([x,y],[2,4]);
 			
 			for (var k = 0, len__ = ary.length, res = []; k < len__; k++) {
 				res.push(ary[k] * 2);
 			};
-			var ary__ = iter$(res);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
+			var ary__ = Imba.iterable(res);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
 			eq([x,y,obj.z()],[2,4,6]);
 			
 			for (var k = 0, len__ = ary.length, res = []; k < len__; k++) {
 				res.push(ary[k] * 2);
 			};
-			var $3 = iter$(res),len__ = $3.length,k = 0,tmplist = new Array(len__ - 2);x = $3[k++];y = $3[k++];while (k < len__){
+			var $3 = Imba.iterable(res),len__ = $3.length,k = 0,tmplist = new Array(len__ - 2);x = $3[k++];y = $3[k++];while (k < len__){
 				tmplist[k - 2] = $3[k++]
 			};obj.setZ(tmplist);
 			eq([x,y,obj.z()],[2,4,[6,8,10]]);
@@ -8227,18 +8154,6 @@
 /* 41 */
 /***/ function(module, exports) {
 
-	// helper for subclassing
-	function subclass$(obj,sup) {
-		for (var k in sup) {
-			if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-		};
-		// obj.__super__ = sup;
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-	};
-
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// externs;
 
 	_T.A().end();
@@ -8272,7 +8187,7 @@
 			return this.setChildren(
 				(function() {
 					var $A = (__.A = __.A || {});
-					for (var i = 0, ary = iter$(self._ary), len = ary.length, res = []; i < len; i++) {
+					for (var i = 0, ary = Imba.iterable(self._ary), len = ary.length, res = []; i < len; i++) {
 						res.push(($A[ary[i]] = $A[ary[i]] || _T.DIV().setText("v")).end());
 					};
 					return res;
@@ -8283,7 +8198,7 @@
 
 	function CustomClass(){ return Imba.Tag.apply(this,arguments) };
 
-	subclass$(CustomClass,Imba.Tag);
+	Imba.subclass(CustomClass,Imba.Tag);
 	CustomClass.prototype.end = function (){
 		return this.flag('one').flag('two').setText("Custom").synced();
 	};
@@ -8323,7 +8238,7 @@
 			var ary;
 			var el = _T.CACHED().end();
 			var els = toArray(el.dom().children);
-			var ary = iter$(els);var a = ary[0],b = ary[1],c = ary[2];
+			var ary = Imba.iterable(els);var a = ary[0],b = ary[1],c = ary[2];
 			eq(els.length,3);
 			eq(els,[a,b,c]);
 			
@@ -8552,7 +8467,6 @@
 /* 42 */
 /***/ function(module, exports) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// externs;
 
 	var a = 0;
@@ -8620,7 +8534,7 @@
 				
 				(function() {
 					var t0, _$ = (__.D = __.D || []);
-					for (var i = 0, ary = iter$(o.letters), len = ary.length, res = []; i < len; i++) {
+					for (var i = 0, ary = Imba.iterable(o.letters), len = ary.length, res = []; i < len; i++) {
 						res.push((t0 = _$[i] = _$[i] || _T.DIV()).setContent(ary[i],3).end());
 					};
 					return res;
@@ -8665,7 +8579,6 @@
 /* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	var self = this;
 	// to run these tests, simply open the imbadir/test/dom.html in your browser and
 	// open the console / developer tools.
@@ -8706,7 +8619,7 @@
 			// log "setStaticChildren",nodes,expected
 			tag.__super__.setChildren.call(this,nodes,typ);
 			
-			for (var i = 0, ary = iter$(this._dom.childNodes), len = ary.length, child; i < len; i++) {
+			for (var i = 0, ary = Imba.iterable(this._dom.childNodes), len = ary.length, child; i < len; i++) {
 				// how would this work on server?
 				// if child isa Text
 				// 	actual.push( child:textContent )
@@ -8830,7 +8743,7 @@
 			var self = this, __ = self.__;
 			return this.setChildren((function() {
 				var t0, _$ = (__.A = __.A || []);
-				for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
+				for (var i = 0, ary = Imba.iterable(self.items()), len = ary.length, res = []; i < len; i++) {
 					res.push((t0 = _$[i] = _$[i] || _T.LI()).setContent(ary[i],3).end());
 				};
 				return res;
@@ -8842,7 +8755,7 @@
 		tag.prototype.render = function (texts){
 			if(texts === undefined) texts = [];
 			return this.setChildren((function() {
-				for (var i = 0, ary = iter$(texts), len = ary.length, res = []; i < len; i++) {
+				for (var i = 0, ary = Imba.iterable(texts), len = ary.length, res = []; i < len; i++) {
 					res.push(ary[i]);
 				};
 				return res;
@@ -9168,7 +9081,12 @@
 				node.render(['a','b','c','d']);
 				eq(node.dom().textContent,'abcd');
 				node.render(['b','c','a','d']);
-				return eq(node.dom().textContent,'bcad');
+				eq(node.dom().textContent,'bcad');
+				
+				node.render(['b','a','a','d','a','g']);
+				eq(node.dom().textContent,'baadag');
+				node.render(['b','g','a','a','d','a']);
+				return eq(node.dom().textContent,'bgaada');
 			});
 		});
 	});
@@ -10800,7 +10718,6 @@
 /* 47 */
 /***/ function(module, exports) {
 
-	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// externs;
 
 	_T.defineTag('xul', 'ul');
@@ -10839,7 +10756,7 @@
 							(__.$AB = __.$AB || _T.LI()).setContent(Date.now(),3).end(),
 							(function() {
 								var t0, _$ = (__.$AC = __.$AC || []);
-								for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
+								for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
 									res.push((t0 = _$[i] = _$[i] || _T.LI()).setContent(ary[i],3).end());
 								};
 								return res;
@@ -10852,7 +10769,7 @@
 							(__.$A = __.$A || _T.DIV()).setContent(("This is inside " + (Date.now())),3).end(),
 							(function() {
 								var t0, _$ = (__.$B = __.$B || []);
-								for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
+								for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
 									res.push((t0 = _$[i] = _$[i] || _T.DIV()).setContent(ary[i],3).end());
 								};
 								return res;
@@ -10875,7 +10792,7 @@
 					(__.AB = __.AB || _T.DIV()).setContent(("This is inside " + (Date.now())),3).end(),
 					(function() {
 						var t0, _$ = (__.AC = __.AC || []);
-						for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
+						for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
 							res.push((t0 = _$[i] = _$[i] || _T.DIV()).setContent(ary[i],3).end());
 						};
 						return res;
