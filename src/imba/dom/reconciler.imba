@@ -139,11 +139,8 @@ def reconcileCollectionChanges root, new, old, caret
 		if cursor == maxChainEnd and newPosition[cursor] != -1
 			stickyNodes[newPosition[cursor]] = true
 			maxChainEnd = prevChain[maxChainEnd]
-		
-		cursor -= 1
 
-	# And let's iterate forward, but only move non-sticky nodes
-	var newCaret = caret
+		cursor -= 1
 
 	# possible to do this in reversed order instead?
 	for node, idx in new
@@ -153,13 +150,12 @@ def reconcileCollectionChanges root, new, old, caret
 				node = new[idx] = Imba.createTextNode(node)
 
 			var after = new[idx - 1]
-			insertNestedAfter(root, node, (after and after.@dom or after or newCaret))
+			insertNestedAfter(root, node, (after and after.@dom or after or caret))
 
-		newCaret = node.@dom or (newCaret and newCaret:nextSibling or root.@dom:firstChild)
-
+		caret = node.@dom or (caret and caret:nextSibling or root.@dom:firstChild)
 
 	# should trust that the last item in new list is the caret
-	return lastNew and lastNew.@dom or newCaret
+	return lastNew and lastNew.@dom or caret
 
 
 # expects a flat non-sparse array of nodes in both new and old, always
@@ -175,7 +171,7 @@ def reconcileCollection root, new, old, caret
 			break if new[i] !== old[i]
 
 	if i == -1
-		return last and last.@dom or caret
+		return last and last.@dom or last or caret
 	else
 		return reconcileCollectionChanges(root,new,old,caret)
 
