@@ -8,6 +8,7 @@ module.exports = function(content) {
 		sourcePath: this.resourcePath,
 		target: this.target,
 		ENV_DEBUG: this.debug,
+		standalone: false,
 		bare: true
 	};
 
