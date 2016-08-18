@@ -94,6 +94,9 @@ def Imba.toCamelCase str
 def Imba.indexOf a,b
 	return (b && b:indexOf) ? b.indexOf(a) : []:indexOf.call(a,b)
 
+def Imba.len a
+	return a && (a:len isa Function ? a:len.call(a) : a:length) or 0
+
 def Imba.prop scope, name, opts
 	if scope:defineProperty
 		return scope.defineProperty(name,opts)
