@@ -239,6 +239,10 @@
 		return (b && b.indexOf) ? (b.indexOf(a)) : ([].indexOf.call(a,b));
 	};
 
+	Imba.len = function (a){
+		return a && (a.len instanceof Function ? (a.len.call(a)) : (a.length)) || 0;
+	};
+
 	Imba.prop = function (scope,name,opts){
 		if (scope.defineProperty) {
 			return scope.defineProperty(name,opts);
