@@ -55,3 +55,8 @@ describe 'Syntax - Arrays' do
 		a = [[nonce]]
 		list = [1, 2, *a]
 		eq list, [1, 2, [nonce]]
+
+	test "special #len method" do
+		var a = [1,2,3]
+		eq a:length, 3
+		eq a.len, 3

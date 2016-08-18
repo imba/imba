@@ -12498,7 +12498,7 @@ var Imbac =
 
 	Imba.subclass(Util.Len,Util);
 	Util.Len.prototype.helper = function (){
-		return 'function len$(a){\n	return a && (a.len instanceof Function ? a.len() : a:length) || 0;\n};\n';
+		return 'function len$(a){\n	return a && (a.len instanceof Function ? a.len() : a.length) || 0;\n};\n';
 	};
 
 	Util.Len.prototype.js = function (o){

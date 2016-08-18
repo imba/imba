@@ -6638,7 +6638,7 @@ export class Util.Len < Util
 	def helper
 		'''
 		function len$(a){
-			return a && (a.len instanceof Function ? a.len() : a:length) || 0;
+			return a && (a.len instanceof Function ? a.len() : a.length) || 0;
 		};
 
 		'''

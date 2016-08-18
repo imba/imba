@@ -6190,7 +6190,7 @@
 		});
 		
 		
-		return test("array splats with nested arrays",function() {
+		test("array splats with nested arrays",function() {
 			var nonce = {};
 			var a = [nonce];
 			var list = [].concat([1,2], [].slice.call(a));
@@ -6200,6 +6200,12 @@
 			a = [[nonce]];
 			list = [].concat([1,2], [].slice.call(a));
 			return eq(list,[1,2,[nonce]]);
+		});
+		
+		return test("special #len method",function() {
+			var a = [1,2,3];
+			eq(a.length,3);
+			return eq(Imba.len(a),3);
 		});
 	});
 
