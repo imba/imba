@@ -953,6 +953,7 @@ class Imba.Tags
 			self[name] = tagtype
 			Imba.SINGLETONS[name.slice(1)] = tagtype
 		elif name[0] == name[0].toUpperCase
+			tagtype.@flagName = name
 			true
 		else
 			tagtype.@flagName = "_" + name.replace(/_/g, '-')

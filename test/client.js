@@ -2234,6 +2234,7 @@
 			this[name] = tagtype;
 			Imba.SINGLETONS[name.slice(1)] = tagtype;
 		} else if (name[0] == name[0].toUpperCase()) {
+			tagtype._flagName = name;
 			true;
 		} else {
 			tagtype._flagName = "_" + name.replace(/_/g,'-');
