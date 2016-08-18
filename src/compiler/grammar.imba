@@ -160,6 +160,7 @@ var grammar =
 	RequireArg: [
 		o 'Literal'
 		o 'Parenthetical'
+		o ''
 	]
 
 	# All the different types of expressions in our language. The basic unit of

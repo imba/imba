@@ -6457,7 +6457,7 @@ export class Require < ValueNode
 
 	def js o
 		var out = value isa Parens ? value.value.c : value.c
-		"require({out})"
+		out == 'require' ? 'require' : "require({out})"
 
 export class EnvFlag < ValueNode
 
