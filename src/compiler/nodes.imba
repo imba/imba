@@ -4655,6 +4655,11 @@ export class Call < Node
 			callee = @callee = Access.new(callee.op,callee.left,callee.right)
 			# console.log "unwrapping the propertyAccess"
 
+		if rgt isa Identifier and rgt.value == 'len' and args.count == 0
+			return Util.Len.new([lft or callee]).c
+
+			# rewrite a.len(..) to len$(a)
+
 		if callee.safechain
 			# if lft isa Call
 			# if lft isa Call # could be a property access as well - it is the same?
@@ -6627,6 +6632,24 @@ export class Util.IndexOf < Util
 			"idx$({args.map(|v| v.c ).join(',')})"
 		else
 			"Imba.indexOf({args.map(|v| v.c ).join(',')})"
+
+export class Util.Len < Util
+
+	def helper
+		'''
+		function len$(a){
+			return a && (a.len instanceof Function ? a.len() : a:length) || 0;
+		};
+
+		'''
+
+	def js o
+		if isStandalone
+			scope__.root.helper(self,helper)
+			# When this is triggered, we need to add it to the top of file?
+			"len$({args.map(|v| v.c ).join(',')})"
+		else
+			"Imba.len({args.map(|v| v.c ).join(',')})"
 
 
 export class Util.Subclass < Util
