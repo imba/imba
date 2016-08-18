@@ -192,7 +192,7 @@ describe 'Tags - Define' do
 				super
 
 		var node = <LocalTag>
-		eq node.toString, '<canvas></canvas>'
+		eq node.toString, '<canvas class="LocalTag"></canvas>'
 		eq node.@local, yes
 
 

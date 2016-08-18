@@ -8426,7 +8426,7 @@
 			});
 			
 			var node = LocalTag.build().end();
-			eq(node.toString(),'<canvas></canvas>');
+			eq(node.toString(),'<canvas class="LocalTag"></canvas>');
 			eq(node._local,true);
 			
 			
