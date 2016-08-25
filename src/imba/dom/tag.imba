@@ -582,7 +582,8 @@ class Imba.Tag
 			if @dom:classList.contains(name) != !!toggler
 				@dom:classList.toggle(name)
 		else
-			@dom:classList.add(name)
+			# firefox will trigger a change if adding existing class
+			@dom:classList.add(name) unless @dom:classList.contains(name)
 		return self
 
 	###
