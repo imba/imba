@@ -228,4 +228,13 @@ describe 'Tags - Define' do
 		catch e
 			ok false
 
+	test "snake_case properties" do
+		tag Custom
+			prop my_title
+
+		try
+			<Custom my_title="hello">
+		catch e
+			ok false
+
 					

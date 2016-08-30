@@ -48,7 +48,7 @@ export def snakeCase str
 	str.replace(/()([A-Z])/g,"_$1") do |m,v,l| l.toUpperCase
 
 export def setterSym sym
-	camelCase("set-{sym}")
+	dashToCamelCase("set-{sym}")
 
 export def quote str
 	'"' + str + '"'
