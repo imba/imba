@@ -23,7 +23,7 @@ if $web$
 	Imba.Events = Imba.EventManager.new(Imba.document, events: [
 		:keydown, :keyup, :keypress,
 		:textInput, :input, :change, :submit,
-		:focusin, :focusout, :blur,
+		:focusin, :focusout, :focus, :blur,
 		:contextmenu, :dblclick,
 		:mousewheel, :wheel, :scroll,
 		:beforecopy, :copy,
