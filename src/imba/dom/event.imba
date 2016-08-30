@@ -150,8 +150,11 @@ class Imba.Event
 			var ki = event:keyIdentifier or event:key
 			var sym = Imba.KEYMAP[event:keyCode]
 
-			if !sym and ki.substr(0,2) == "U+"
-				sym = String.fromCharCode(parseInt(ki.substr(2), 16))
+			if !sym 
+				if ki.substr(0,2) == "U+"
+					sym = String.fromCharCode(parseInt(ki.substr(2), 16))
+				else
+					sym = ki
 			return sym
 
 		elif event isa (window.TextEvent or window.InputEvent)
