@@ -1695,7 +1695,8 @@
 				this._dom.classList.toggle(name);
 			};
 		} else {
-			this._dom.classList.add(name);
+			// firefox will trigger a change if adding existing class
+			if (!this._dom.classList.contains(name)) { this._dom.classList.add(name) };
 		};
 		return this;
 	};
@@ -3770,8 +3771,12 @@
 			var ki = this.event().keyIdentifier || this.event().key;
 			var sym = Imba.KEYMAP[this.event().keyCode];
 			
-			if (!sym && ki.substr(0,2) == "U+") {
-				sym = String.fromCharCode(parseInt(ki.substr(2),16));
+			if (!sym) {
+				if (ki.substr(0,2) == "U+") {
+					sym = String.fromCharCode(parseInt(ki.substr(2),16));
+				} else {
+					sym = ki;
+				};
 			};
 			return sym;
 		} else if (this.event() instanceof (window.TextEvent || window.InputEvent)) {

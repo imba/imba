@@ -352,7 +352,7 @@ var Imbac =
 	}; exports.snakeCase = snakeCase;
 
 	function setterSym(sym){
-		return camelCase(("set-" + sym));
+		return dashToCamelCase(("set-" + sym));
 	}; exports.setterSym = setterSym;
 
 	function quote(str){

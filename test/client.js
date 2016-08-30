@@ -1763,7 +1763,8 @@
 				this._dom.classList.toggle(name);
 			};
 		} else {
-			this._dom.classList.add(name);
+			// firefox will trigger a change if adding existing class
+			if (!this._dom.classList.contains(name)) { this._dom.classList.add(name) };
 		};
 		return this;
 	};
@@ -3838,8 +3839,12 @@
 			var ki = this.event().keyIdentifier || this.event().key;
 			var sym = Imba.KEYMAP[this.event().keyCode];
 			
-			if (!sym && ki.substr(0,2) == "U+") {
-				sym = String.fromCharCode(parseInt(ki.substr(2),16));
+			if (!sym) {
+				if (ki.substr(0,2) == "U+") {
+					sym = String.fromCharCode(parseInt(ki.substr(2),16));
+				} else {
+					sym = ki;
+				};
 			};
 			return sym;
 		} else if (this.event() instanceof (window.TextEvent || window.InputEvent)) {
@@ -8463,9 +8468,22 @@
 			return ok(node._body.ontap != fn);
 		});
 		
-		return test("parsing correctly",function() {
+		test("parsing correctly",function() {
 			try {
 				return _T.DIV().dataset('date',new Date()).end();
+			} catch (e) {
+				return ok(false);
+			};
+		});
+		
+		return test("snake_case properties",function() {
+			var Custom = _T.defineTag('Custom', function(tag){
+				tag.prototype.my_title = function(v){ return this._my_title; }
+				tag.prototype.setMy_title = function(v){ this._my_title = v; return this; };
+			});
+			
+			try {
+				return Custom.build().setMy_title("hello").end();
 			} catch (e) {
 				return ok(false);
 			};
