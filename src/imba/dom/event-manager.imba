@@ -23,6 +23,7 @@ class Imba.EventManager
 		self
 
 	def initialize node, events: []
+		@shimFocusEvents = window:netscape && node:onfocusin === undefined
 		root = node
 		listeners = []
 		delegators = {}
@@ -61,6 +62,11 @@ class Imba.EventManager
 	def delegate e
 		var event = Imba.Event.wrap(e)
 		event.process
+		if @shimFocusEvents
+			if e:type == 'focus'
+				Imba.Event.wrap(e).setType('focusin').process
+			elif e:type == 'blur'
+				Imba.Event.wrap(e).setType('focusout').process
 		self
 
 	###

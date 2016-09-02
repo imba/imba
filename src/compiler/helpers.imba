@@ -125,3 +125,77 @@ export def locationToLineColMap code
 
 export def markLineColForTokens tokens, code
 	self
+
+export def parseArgs argv, o = {}
+	var aliases = o:alias ||= {}
+	var groups = o:groups ||= []
+	var schema = o:schema || {}
+
+	schema:main = {}
+
+	var options = {}
+	var explicit = {}
+	argv = argv || process:argv.slice(2)
+	var curr = null
+	var i = 0
+	var m
+
+	while(i < argv:length)
+		var arg = argv[i]
+		i++
+
+		if m = arg.match(/^\-([a-zA-Z]+)$/)
+			curr = null
+			let chars = m[1].split
+
+			for item,i in chars
+				# console.log "parsing {item} at {i}",aliases
+				var key = aliases[item] or item
+				chars[i] = key
+				options[key] = yes
+
+			if chars:length == 1
+				curr = chars
+
+		elif m = arg.match(/^\-\-([a-z0-9\-\_A-Z]+)$/)
+			var val = true
+			var key = m[1]
+
+			if key.indexOf('no-') == 0
+				key = key.substr(3)
+				val = false
+
+			for g in groups
+				if key.substr(0,g:length) == g
+					console.log 'should be part of group'
+
+			key = dashToCamelCase(key)
+
+			options[key] = val
+			curr = key
+
+		else
+			unless curr and schema[curr]
+				curr = 'main'
+
+			if arg.match(/^\d+$/)
+				arg = parseInt(arg)
+
+			var val = options[curr]
+			if val == true or val == false
+				options[curr] = arg
+			elif val isa String or val isa Number
+				options[curr] = [val].concat(arg)
+			elif val isa Array
+				val.push(arg)
+			else
+				options[curr] = arg
+
+
+	if options:env isa String
+		options["ENV_{options:env}"] = yes
+
+	return options
+
+
+

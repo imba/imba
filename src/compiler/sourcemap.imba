@@ -102,13 +102,13 @@ export class SourceMap
 			buffer += ";"
 
 
-		var rel = path.relative(path.dirname(targetPath),sourcePath)
+		var rel = targetPath and path.relative(path.dirname(targetPath),sourcePath)
 
 		var map =
 			version: 3
 			file: sourceName.replace(/\.imba/,'.js') or ''
 			sourceRoot: options:sourceRoot or ''
-			sources:    [rel]
+			sources:    [rel or sourcePath]
 			sourcesContent: [sourceCode]
 			names:      []
 			mappings:   buffer

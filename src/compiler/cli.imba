@@ -37,7 +37,7 @@ class SourceFile
 		self
 
 	def name
-		path.split("/").pop # for testing
+		@path.split("/").pop # for testing
 
 	def code
 		@code ||= fs.readFileSync(@path,"utf8")
@@ -96,6 +96,19 @@ class SourceFile
 		process:argv[0] = 'imba'
 		Imbac.run(code, filename: @path, target: 'node')
 
+
+	def compile o = {}
+		o:filename = @path
+		o:target ||= 'node'
+
+		var res = {}
+		try 
+			res = Imbac.compile(code, o)
+		catch e
+			console.log "ERROR IN COMPILE"
+			return {error: e}
+
+
 def log *pars
 	console.log(*pars)
 
@@ -116,13 +129,13 @@ def print str
 	process:stdout.write str
 
 
-def print-tokens tokens
+export def printTokens tokens
 	var strings = for t in tokens
 		var typ = T.typ(t)
 		var id = T.val(t)
 		var s
 		if typ == 'TERMINATOR'
-			continue "({t.@loc}:{t.@len})[" + chalk.yellow(id.replace(/\n/g,"\\n")) + "]"
+			continue "({t.@loc}:{t.@len})[" + chalk.yellow(id.replace(/\n/g,"\\n")) + "]\n"
 
 		if id == typ
 			s = "[" + chalk.red(id) + "]"
@@ -132,6 +145,7 @@ def print-tokens tokens
 
 		if t.@loc != -1
 			s = "({t.@loc}:{t.@len})" + s # chalk.bold(s)
+
 		s
 
 	log strings.join(' ')
@@ -166,7 +180,7 @@ def ensure-dir path
 	return
 
 
-def sourcefile-for-path path
+export def sourcefile-for-path path
 	path = fspath.resolve(process.cwd, path)
 	if isDir(path)
 		var f = fspath.join(path, 'index.imba')
@@ -274,12 +288,39 @@ def printCompilerError e, source: null, tok: null, tokens: null
 		log('')
 	return
 
+def find-files root
+	var results = []
+	log "root: {root}"
+	root = fspath.relative(process.cwd,root)
+	root = fspath.normalize(root)
+
+	log root
+
+	var read = do |src,depth|
+		src = fspath.normalize(src)
+		var stat = fs.statSync(src)
+		log src,depth
+
+		if stat.isDirectory and depth > 0
+			var files = fs.readdirSync(src)
+			read(src + '/' + file,depth - 1) for file in files
+
+		elif src.match(/\.imba$/)
+			results.push(src)
+
+	if root.match(/\/\*\.imba$/)
+		log 'root matched imba!!'
+		root = root.slice(0,-7)
+		read(root,1)
+	else
+		read(root,10)
+
+	return results
 
 
-def write-file source, outpath, options = {}
+
+export def write-file source, outpath, options = {}
 	ensure-dir(outpath)
-	# var outpath = source.path.replace(/\.imba$/,'.js')
-	# destpath = destpath.replace(basedir,outdir)
 	return unless source.dirty
 
 	var srcp = fspath.relative(process.cwd,source.path)
@@ -335,6 +376,21 @@ def write-file source, outpath, options = {}
 
 	return
 
+export def compileFile source, opts = {}
+	var srcp = fspath.relative(process.cwd,source.path)
+	var ret = {}
+
+	opts:filename = source.name
+	opts:sourcePath = source.path
+
+	var start = Date.now
+	var code = compiler.compile(source.code, opts)
+	var time = Date.now - start
+
+	return code
+
+
+
 # shared action for compile and watch
 def cli-compile root, o, watch: no
 
@@ -383,6 +439,8 @@ def cli-compile root, o, watch: no
 
 	var sources = {}
 
+
+
 	# it is bad practice to require modules inside methods, but chokidar takes
 	# some time to load, and we really dont want that for single-file compiles
 	var chokidar = require 'chokidar'
@@ -420,6 +478,14 @@ cli.command('compile <path>')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |path,o| cli-compile path, o, watch: no
 
+
+cli.command('find <path>')
+	.description('compile scripts')
+	.action do |src,o|
+		log "action with path {src}"
+		log "files:" + find-files(src).join("\n")
+
+
 cli.command('watch <path>')
 	.description('listen for changes and compile scripts')
 	.option('-m, --source-map-inline', 'Embed inline sourcemap in compiled JavaScript')
@@ -428,6 +494,7 @@ cli.command('watch <path>')
 	.option('-b, --bare', 'Skip wrapping code in outer closure')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |path,o| cli-compile(path,o,watch: yes)
+
 
 cli.command('analyze <path>')
 	.description('get information about scopes, variables and more')
@@ -443,27 +510,6 @@ cli.command('analyze <path>')
 		else
 			file.analyze(opts) do |meta|
 				log JSON.stringify(meta,null,4)
-
-cli.command('export-runtime <path>')
-	.description('export the imba.js runtime to <path>')
-	.option('-m, --min', 'minified version')
-	.action do |path, opts|
-		var filename = (opts:min ? 'imba.min.js' : 'imba.js')
-		var rel = '../../dist/' + filename
-		var lib = fspath.resolve(__dirname,rel)
-		var out = fspath.resolve(process.cwd,path)
-
-		if isDir(out)
-			var dir = fspath.resolve(out,filename)
-			log "write runtime to {b dir}"
-			copyFile(lib,dir)
-		elif out.match(/\.js$/)
-			log "write runtime to {b out}"
-			copyFile(lib,out)
-		else
-			log chalk.red("{b out} is not a directory")
-
-		return
 
 
 export def run argv

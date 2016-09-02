@@ -1,5 +1,18 @@
 #!/usr/bin/env node
 
-var path = require('path'), fs = require('fs');
-var lib  = path.join(path.dirname(fs.realpathSync(__filename)), '../lib');
-require(lib + '/compiler/cli').run(process.argv);
+var path = require('path')
+var fs = require('fs');
+var lib = path.join(path.dirname(fs.realpathSync(__filename)), '../lib');
+var cli = require(lib + '/compiler/cli');
+
+var args = process.argv;
+var file = cli.sourcefileForPath(args[2]);
+// console.log(file.path());
+// console.log(process.argv);
+
+// file.run();
+// var file = cli.sourcefileForPath()
+// parse the arguments now
+
+
+cli.run(process.argv);
