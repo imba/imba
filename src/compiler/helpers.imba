@@ -197,5 +197,11 @@ export def parseArgs argv, o = {}
 
 	return options
 
+export var ansi =
+	bold: do |text| '\u001b[1m' + text + '\u001b[22m'
+	red: do |text| '\u001b[31m' +text + '\u001b[39m'
+	green: do |text| '\u001b[32m' +text + '\u001b[39m'
+	gray: do |text| '\u001b[90m' +text + '\u001b[39m'
+	white: do |text| '\u001b[37m' +text + '\u001b[39m'
 
 

@@ -45,11 +45,7 @@ export class ImbaParseError < Error
 		var tok = start
 		return {warn: yes, message: desc, loc: loc}
 
-	def excerpt gutter: yes, ansi: no
-
-		var fmt = 
-			bold: do |text| ansi ? '\u001b[1m' + text + '\u001b[22m' : text
-			red: do |text| ansi ? '\u001b[31m' +text + '\u001b[39m' : text
+	def excerpt gutter: yes, colors: no, details: yes
 
 		var code = @code
 		var loc = loc
@@ -78,11 +74,13 @@ export class ImbaParseError < Error
 				else
 					"      {prefix} | {line}"
 
-		if ansi
-			out[lni] = fmt.red(fmt.bold(out[lni]))
+		if colors
+			out[lni] = util:ansi.red(util:ansi.bold(out[lni]))
+
+		if details
+			out.unshift(self:message)
 
 		return out.join('\n')
 
 	def prettyMessage
 		var excerpt = self.excerpt
-		"{self:message}\n{excerpt}"
