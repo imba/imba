@@ -277,12 +277,19 @@ def printCompilerError e, source: null, tok: null, tokens: null
 		var col = lc[1]
 
 		ln0 = Math.max(0,ln - 3)
-		ln1 = ln0 + 4
+		ln1 = Math.min(ln0 + 4,lines:length)
 		gutter = ("" + ln1)['length']
 
-		for i in [0 ... 5]
-			let n = ln0 + i
+		var n = ln0
+
+		while n < ln1
 			printLn(n,n == ln ? tok : null)
+			n++
+
+		# for i in [0 ... 5]
+		# 	let n = ln0 + i
+		# 	printLn(n,n == ln ? tok : null)
+		# 	n++
 
 		log(chalk.grey("    ") + "------------------------------------")
 		log('')

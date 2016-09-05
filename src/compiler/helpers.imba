@@ -146,7 +146,7 @@ export def parseArgs argv, o = {}
 
 		if m = arg.match(/^\-([a-zA-Z]+)$/)
 			curr = null
-			let chars = m[1].split
+			let chars = m[1].split('')
 
 			for item,i in chars
 				# console.log "parsing {item} at {i}",aliases

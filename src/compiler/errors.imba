@@ -1,5 +1,7 @@
 # create separate error-types with all the logic
 
+var util = require './helpers'
+
 export class ImbaParseError < Error
 	
 	def self.wrap err
@@ -41,8 +43,39 @@ export class ImbaParseError < Error
 	def toJSON
 		var o = @options
 		var tok = start
-		# var tok = o:tokens and o:tokens[o:pos - 1]
-		# var loc = tok and [tok.@loc,tok.@loc + (tok.@len or tok.@value:length)] or [0,0]
-		# , col: tok.@col, line: tok.@line
-		# get the token itself?
 		return {warn: yes, message: desc, loc: loc}
+
+	def excerpt gutter: yes, ansi: no
+
+		var fmt = 
+			bold: do |text| ansi ? '\u001b[1m' + text + '\u001b[22m' : text
+			red: do |text| ansi ? '\u001b[31m' +text + '\u001b[39m' : text
+
+		var code = @code
+		var loc = loc
+		var lines  = code.split(/\n/g)
+		var locmap = util.locationToLineColMap(code)
+		var lc = locmap[loc[0]] or [0,0]
+		var ln = lc[0]
+		var col = lc[1]
+		var line = lines[ln]
+
+		var ln0 = Math.max(0,ln - 3)
+		var ln1 = ln0 + 4
+		var l = ln0
+
+		var out = while l < ln1
+			var line = lines[l++]
+
+		if gutter
+			out = out.map do |line,i|
+				let prefix =  "{ln0 + i + 1}"
+				while prefix:length < String(ln1):length
+					prefix = " {prefix}"
+				" {prefix} | {line}"
+
+		if ansi
+			let lni = ln - ln0
+			out[lni] = fmt.red(fmt.bold(out[lni]))
+
+		return out.join('\n')

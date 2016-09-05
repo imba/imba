@@ -51,6 +51,7 @@ export def compile code, o = {}
 		var ast = parse(tokens, o)
 		return ast.compile(o)
 	catch err
+		err:_code = code
 		err:_filename = o:filename if o:filename
 		tokens ||= o.@tokens
 
