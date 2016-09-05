@@ -53,6 +53,7 @@
   "webpack": "./index",
   "bin": {
     "imba": "./bin/imba",
+    "imbac": "./bin/imbac",
     "imbapack": "./bin/imbapack"
   },
   "preferGlobal": true,
@@ -67,9 +68,5 @@
     "underscore": "^1.8.3",
     "webpack": "^1.12.9"
   },
-  "dependencies": {
-    "chalk": "^1.0.5",
-    "chokidar": "^1.0.1",
-    "commander": "^2.8.1"
-  }
+  "dependencies": {}
 }

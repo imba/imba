@@ -19,7 +19,7 @@ Usage: imba [options] path/to/script.imba
 
 """
 
-def sourcefile-for-path src
+def lookup src
 	src = path.resolve(process.cwd, src)
 
 	if fs.statSync(src).isDirectory
@@ -31,7 +31,8 @@ def sourcefile-for-path src
 
 	return src
 
-export def run args
+export def run
+	var args = process:argv
 	var o = helpers.parseArgs(args.slice(2),parseOpts)
 	var src = o:main
 	src = src[0] if src isa Array
@@ -41,6 +42,7 @@ export def run args
 	elif !o:main or o:help
 		return console.log help
 
+	src = lookup(src)
 	src = path.resolve(process.cwd,src)
 	var body = fs.readFileSync(src,'utf8')
 	process:argv.shift

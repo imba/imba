@@ -128,6 +128,8 @@ class CLI
 		process.cwd
 
 	def run
+		o:target ||= 'node'
+
 		if o:output
 			o:output = path.normalize(path.resolve(cwd,o:output))
 
@@ -230,8 +232,9 @@ class CLI
 		self
 
 
-export def run args
-	var o = helpers.parseArgs(args,parseOpts)
+export def run
+	var o = helpers.parseArgs(process:argv.slice(2),parseOpts)
+
 	if o:version
 		console.log package:version
 	elif !o:main or o:help
