@@ -3,10 +3,11 @@
 var path = require('path')
 var fs = require('fs');
 var lib = path.join(path.dirname(fs.realpathSync(__filename)), '../lib');
-var cli = require(lib + '/compiler/cli');
+var cli = require(lib + '/cli/imba');
 
 var args = process.argv;
-var file = cli.sourcefileForPath(args[2]);
+
+// var file = cli.sourcefileForPath(args[2]);
 // console.log(file.path());
 // console.log(process.argv);
 

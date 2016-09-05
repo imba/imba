@@ -486,14 +486,6 @@ cli.command('compile <path>')
 	.option('-o, --output [dest]', 'set the output directory for compiled JavaScript')
 	.action do |path,o| cli-compile path, o, watch: no
 
-
-cli.command('find <path>')
-	.description('compile scripts')
-	.action do |src,o|
-		log "action with path {src}"
-		log "files:" + find-files(src).join("\n")
-
-
 cli.command('watch <path>')
 	.description('listen for changes and compile scripts')
 	.option('-m, --source-map-inline', 'Embed inline sourcemap in compiled JavaScript')

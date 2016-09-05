@@ -22,6 +22,7 @@ var parseOpts =
 
 	schema:
 		output: {type: 'string'}
+		target: {type: 'string'}
 
 	group: ['source-map']
 
@@ -30,16 +31,16 @@ var help = """
 
 Usage: imbac [options] path/to/script.imba
 
-  -a, --analyze        print out the scopes and variables of your script
-  -b, --bare           compile without a top-level function wrapper
-  -c, --compile        compile to JavaScript and save as .js files
-  -h, --help           display this help message
-  -m, --source-map     generate source map and add inline to .js files
-  -o, --output [dir]   set the output directory for compiled JavaScript
-  -p, --print          print out the compiled JavaScript
-  -s, --stdio          listen for and compile scripts over stdio
-  -t, --tokens         print out the tokens that the lexer/rewriter produce
-  -v, --version        display the version number
+  -a, --analyze          print out the scopes and variables of your script
+  -b, --bare             compile without a top-level function wrapper
+  -h, --help             display this help message
+  -m, --source-map       generate source map and add inline to .js files
+  -o, --output [dir]     set the output directory for compiled JavaScript
+  -p, --print            print out the compiled JavaScript
+  -s, --stdio            listen for and compile scripts over stdio
+  -t, --tokenize         print out the tokens that the lexer/rewriter produce
+      --target [target]  explicitly compile for node/web/webworker
+  -v, --version          display the version number
 
 """
 

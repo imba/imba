@@ -323,6 +323,12 @@ export class Stack
 		if platform and key in ['WEB','NODE','WEBWORKER']
 			return platform.toUpperCase == key
 
+		if process:env
+			val = process:env[key.toUpperCase]
+			if val != undefined
+				return val
+			return null
+
 		return undefined
 
 
@@ -405,6 +411,9 @@ export class Stack
 
 	def toString
 		"Stack({@nodes.join(" -> ")})"
+
+	def isAnalyzing
+		@analyzing
 
 	def scoping
 		@nodes.filter(|n| n.@scope ).map(|n| n.@scope )
@@ -4800,7 +4809,7 @@ export class If < ControlFlow
 		self
 
 	def loc
-		[@type ? @type.@loc : 0,body.loc[1]]
+		@loc ||= [@type ? @type.@loc : 0,body.loc[1]]
 
 	def invert
 		if @test isa ComparisonOp
@@ -4814,14 +4823,14 @@ export class If < ControlFlow
 		@scope.visit if @scope
 		test.traverse if test
 
-		@pretest = truthy__(test)
+		unless stack.isAnalyzing
+			@pretest = truthy__(test)
 
-		if @pretest === true
-			alt = @alt = null
-		elif @pretest === false
-			# drop the body
-			# possibly skip the if all together
-			body = null
+			if @pretest === true
+				alt = @alt = null
+			elif @pretest === false
+				loc # cache location before removing body
+				body = null
 
 		body.traverse if body
 
@@ -6467,17 +6476,27 @@ export class Require < ValueNode
 export class EnvFlag < ValueNode
 
 	def raw
-		STACK.env("" + @value)
+		@raw ?= STACK.env("" + @value)
 
 	def isTruthy
 		var val = raw
-		return !!val if val != undefined
+		return !!val if val !== undefined
 		return undefined
+
+	def loc
+		[0,0]
 
 	def c
 		var val = raw
-		if val != undefined
-			"{val}"
+		if val !== undefined
+			if val isa String
+				if val.match(/^\d+(\.\d+)?$/)
+					parseFloat(val)
+				else
+					"'{val}'"
+			else
+				"{val}"
+
 		else
 			"ENV_{@value}"
 
