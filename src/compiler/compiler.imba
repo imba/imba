@@ -41,6 +41,7 @@ export def parse code, o = {}
 		o.@tokens = tokens
 		return parser.parse tokens
 	catch err
+		err:_code = code
 		err:_filename = o:filename if o:filename
 		throw err
 
@@ -53,28 +54,6 @@ export def compile code, o = {}
 	catch err
 		err:_code = code
 		err:_filename = o:filename if o:filename
-		tokens ||= o.@tokens
-
-		if tokens && err isa ImbaParseError
-			try
-				var tok = err.start
-			catch e
-				throw err
-
-			var locmap = util.locationToLineColMap(code)
-			var lines  = code.split(/\n/g)
-
-			var lc = locmap[tok.@loc] or [0,0]
-			var ln = lc[0]
-			var col = lc[1]
-			var line = lines[ln]
-
-			var message = err:message + "\n\n{ln}" + "\n{ln + 1} {line}" + "\n{ln + 2}"
-			var reducer = do |s,c,i|
-				s += i == col ? "^" : (c == "\t" ? c : " ")
-			message += line.split('').reduce(reducer, "")
-
-			err:message = message
 		throw err
 
 export def analyze code, o = {}

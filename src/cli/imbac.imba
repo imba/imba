@@ -70,8 +70,10 @@ def compile sources, o
 def handle sources, o
 	try
 		if o:analyze
+			o:print = yes
 			analyze(sources,o)
 		elif o:tokenize
+			o:print = yes
 			tokenize(sources,o)
 		else
 			compile(sources,o)
@@ -87,8 +89,6 @@ def handle sources, o
 export def run args
 	var o = helpers.parseArgs(args,parseOpts)
 	var cwd = process.cwd
-
-	console.log 'o',o,args
 
 	if o:output
 		o:output = path.normalize(path.resolve(cwd,o:output))

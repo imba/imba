@@ -60,8 +60,9 @@ export class ImbaParseError < Error
 		var col = lc[1]
 		var line = lines[ln]
 
-		var ln0 = Math.max(0,ln - 3)
-		var ln1 = ln0 + 4
+		var ln0 = Math.max(0,ln - 2)
+		var ln1 = Math.min(ln0 + 5,lines:length)
+		let lni = ln - ln0
 		var l = ln0
 
 		var out = while l < ln1
@@ -72,10 +73,16 @@ export class ImbaParseError < Error
 				let prefix =  "{ln0 + i + 1}"
 				while prefix:length < String(ln1):length
 					prefix = " {prefix}"
-				" {prefix} | {line}"
+				if i == lni
+					"   -> {prefix} | {line}"
+				else
+					"      {prefix} | {line}"
 
 		if ansi
-			let lni = ln - ln0
 			out[lni] = fmt.red(fmt.bold(out[lni]))
 
 		return out.join('\n')
+
+	def prettyMessage
+		var excerpt = self.excerpt
+		"{self:message}\n{excerpt}"

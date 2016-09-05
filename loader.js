@@ -12,8 +12,13 @@ module.exports = function(content) {
 		bare: true
 	};
 
-	var result = compiler.compile(content, opts);
-	var js = result.toString();
+	try {
+		var result = compiler.compile(content, opts);
+		var js = result.toString();
+		this.callback(null, js, result.sourcemap);
+	} catch(e) {
+		this.emitError(e.prettyMessage());
+		// this.callback(null,"");
+	}
 	
-	this.callback(null, js, result.sourcemap);
 }

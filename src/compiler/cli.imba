@@ -244,6 +244,7 @@ def printCompilerError e, source: null, tok: null, tokens: null
 			var loc = locmap[tok.@loc]
 			var col = loc and loc[1] or 0
 			var len = tok.@len or tok.@value:length
+
 			var l = loc[0]
 
 			continue if l > nr
@@ -277,7 +278,7 @@ def printCompilerError e, source: null, tok: null, tokens: null
 		var col = lc[1]
 
 		ln0 = Math.max(0,ln - 3)
-		ln1 = Math.min(ln0 + 4,lines:length)
+		ln1 = Math.min(ln0 + 5,lines:length - 1)
 		gutter = ("" + ln1)['length']
 
 		var n = ln0
