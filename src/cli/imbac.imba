@@ -19,6 +19,7 @@ var parseOpts =
 		a: 'analyze'
 		t: 'tokenize'
 		v: 'version'
+		w: 'watch'
 
 	schema:
 		output: {type: 'string'}
@@ -41,6 +42,7 @@ Usage: imbac [options] path/to/script.imba
   -t, --tokenize         print out the tokens that the lexer/rewriter produce
       --target [target]  explicitly compile for node/web/webworker
   -v, --version          display the version number
+  -w, --watch            recompile files on change
 
 """
 
@@ -169,7 +171,7 @@ class CLI
 		src = src:sourcePath or src
 		path.relative(process.cwd,src)
 
-	def present data, o
+	def present data
 		if o:print
 			process:stdout.write(data)
 		self
@@ -180,7 +182,7 @@ class CLI
 			o2:filename = src:filename
 			var out = compiler.analyze(src:sourceBody,o2)
 			src:analysis = out
-			present(JSON.stringify(out),o)
+			present(JSON.stringify(out))
 
 	def tokenize
 		# should prettyprint tikens
@@ -189,28 +191,61 @@ class CLI
 			o2:filename = src:filename
 			var out = compiler.tokenize(src:sourceBody,o2)
 			src:tokens = out
-			present(JSON.stringify(out),o)
+
+			var strings = for t in src:tokens
+				var typ = t.@type
+				var id = t.@value
+				var s
+				if typ == 'TERMINATOR'
+					s = "[" + b(id.replace(/\n/g,"\\n")) + "]\n"
+
+				elif typ == 'IDENTIFIER'
+					s = id
+
+				elif typ == 'NUMBER'
+					s = id
+
+				elif id == typ
+					s = "[" + b(id) + "]"
+				else
+					s = b "[{typ} {id}]"
+
+				if t.@loc != -1 and o:sourceMap
+					s = "({t.@loc}:{t.@len})" + s # chalk.bold(s)
+
+				s
+
+			process:stdout.write(strings.join(' ') + '\n')
 
 	def compile
-		traverse do |src|
-			var o2 = Object.create(o)
-			o2:filename = src:filename
-			var out = compiler.compile(src:sourceBody,o2)
-			# optionally add sourcemap
-			if o:sourceMap and out:sourcemap
-				var base64 = Buffer.new(JSON.stringify(out:sourcemap)).toString("base64")
-				out:js = out:js + "\n//# sourceMappingURL=data:application/json;base64," + base64
+		traverse do |src| compileFile(src)
 
-			src:output = out
+	def compileFile src
+		var opts = Object.create(o)
+		opts:filename = src:filename
+		var out = compiler.compile(src:sourceBody,opts)
+		if o:sourceMap and out:sourcemap
+			var base64 = Buffer.new(JSON.stringify(out:sourcemap)).toString("base64")
+			out:js = out:js + "\n//# sourceMappingURL=data:application/json;base64," + base64
 
-			if src:targetPath
-				ensureDir(src:targetPath)
-				fs.writeFileSync(src:targetPath,out:js,'utf8')
-				var srcp = path.relative(process.cwd,src:sourcePath)
-				var dstp = path.relative(process.cwd,src:targetPath)
-				log ansi.gray("compile") + " {b(srcp)} to {b(dstp)}"
+		src:output = out
 
-			present(out:js,o)
+		if src:targetPath
+			ensureDir(src:targetPath)
+			fs.writeFileSync(src:targetPath,out:js,'utf8')
+			var srcp = path.relative(process.cwd,src:sourcePath)
+			var dstp = path.relative(process.cwd,src:targetPath)
+			log ansi.gray("compile") + " {b(srcp)} to {b(dstp)}"
+
+		if o:watch and !src:watcher
+			src:watcher = fs.watch(src:sourcePath) do |type,filename|
+				# console.log 'file was changed or accessed!!!',type,filename
+				var body = fs.readFileSync(src:sourcePath,'utf8')
+				if type == 'change' and body != src:sourceBody
+					src:sourceBody = body
+					compileFile(src)
+
+		present(out:js)
 
 	def finish
 		try
