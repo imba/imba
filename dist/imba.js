@@ -55,6 +55,7 @@
 
 
 
+
 /***/ },
 /* 1 */
 /***/ function(module, exports) {
@@ -846,7 +847,7 @@
 
 /***/ },
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	Imba.TagManagerClass = function TagManagerClass(){
 		this._spawns = 0;
@@ -878,7 +879,7 @@
 	};
 
 	Imba.TagManagerClass.prototype.mount = function (node){
-		if (false) { return };
+		
 		// is this happening inside the runloop?
 		if (this._mountable.indexOf(node) < 0) {
 			node._mounted = 2;
@@ -887,7 +888,7 @@
 	};
 
 	Imba.TagManagerClass.prototype.refresh = function (){
-		if (false) { return };
+		
 		
 		if (this._inserts && this._mountable.length) {
 			this.tryMount();
@@ -3901,7 +3902,7 @@
 		var self = this;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var events = pars.events !== undefined ? pars.events : [];
-		self._shimFocusEvents = window.netscape && node.onfocusin === undefined;
+		self._shimFocusEvents = true && window.netscape && node.onfocusin === undefined;
 		self.setRoot(node);
 		self.setListeners([]);
 		self.setDelegators({});
