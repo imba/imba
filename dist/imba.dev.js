@@ -69,7 +69,7 @@
 	Imba = {VERSION: '1.0.0-beta'};
 
 
-		window.global || (window.global = window);
+	window.global || (window.global = window);
 
 
 	/*
@@ -296,11 +296,11 @@
 
 
 
-		cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitRequestAnimationFrame;
-		requestAnimationFrame = window.requestAnimationFrame;
-		requestAnimationFrame || (requestAnimationFrame = window.webkitRequestAnimationFrame);
-		requestAnimationFrame || (requestAnimationFrame = window.mozRequestAnimationFrame);
-		requestAnimationFrame || (requestAnimationFrame = function(blk) { return setTimeout(blk,1000 / 60); });
+	cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitRequestAnimationFrame;
+	requestAnimationFrame = window.requestAnimationFrame;
+	requestAnimationFrame || (requestAnimationFrame = window.webkitRequestAnimationFrame);
+	requestAnimationFrame || (requestAnimationFrame = window.mozRequestAnimationFrame);
+	requestAnimationFrame || (requestAnimationFrame = function(blk) { return setTimeout(blk,1000 / 60); });
 
 
 	function Ticker(){
@@ -775,73 +775,73 @@
 	__webpack_require__(12);
 
 
-		__webpack_require__(13);
+	__webpack_require__(13);
 
 
 
 
 
-		Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
+	Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
+
+	Imba.Events = new Imba.EventManager(Imba.document(),{events: [
+		'keydown','keyup','keypress',
+		'textInput','input','change','submit',
+		'focusin','focusout','focus','blur',
+		'contextmenu','dblclick',
+		'mousewheel','wheel','scroll',
+		'beforecopy','copy',
+		'beforepaste','paste',
+		'beforecut','cut'
+	]});
+
+	var hasTouchEvents = window && window.ontouchstart !== undefined;
+
+	if (hasTouchEvents) {
+		Imba.Events.listen('touchstart',function(e) {
+			return Imba.Touch.ontouchstart(e);
+		});
 		
-		Imba.Events = new Imba.EventManager(Imba.document(),{events: [
-			'keydown','keyup','keypress',
-			'textInput','input','change','submit',
-			'focusin','focusout','focus','blur',
-			'contextmenu','dblclick',
-			'mousewheel','wheel','scroll',
-			'beforecopy','copy',
-			'beforepaste','paste',
-			'beforecut','cut'
-		]});
+		Imba.Events.listen('touchmove',function(e) {
+			return Imba.Touch.ontouchmove(e);
+		});
 		
-		var hasTouchEvents = window && window.ontouchstart !== undefined;
+		Imba.Events.listen('touchend',function(e) {
+			return Imba.Touch.ontouchend(e);
+		});
 		
-		if (hasTouchEvents) {
-			Imba.Events.listen('touchstart',function(e) {
-				return Imba.Touch.ontouchstart(e);
-			});
-			
-			Imba.Events.listen('touchmove',function(e) {
-				return Imba.Touch.ontouchmove(e);
-			});
-			
-			Imba.Events.listen('touchend',function(e) {
-				return Imba.Touch.ontouchend(e);
-			});
-			
-			Imba.Events.listen('touchcancel',function(e) {
-				return Imba.Touch.ontouchcancel(e);
-			});
+		Imba.Events.listen('touchcancel',function(e) {
+			return Imba.Touch.ontouchcancel(e);
+		});
+	};
+
+	Imba.Events.register('click',function(e) {
+		// Only for main mousebutton, no?
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			var tap = new Imba.Event(e);
+			tap.setType('tap');
+			tap.process();
+			if (tap._responder) {
+				return e.preventDefault();
+			};
 		};
-		
-		Imba.Events.register('click',function(e) {
-			// Only for main mousebutton, no?
-			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-				var tap = new Imba.Event(e);
-				tap.setType('tap');
-				tap.process();
-				if (tap._responder) {
-					return e.preventDefault();
-				};
-			};
-			// delegate the real click event
-			return Imba.Events.delegate(e);
-		});
-		
-		Imba.Events.listen('mousedown',function(e) {
-			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-				if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-			};
-		});
-		
-		Imba.Events.listen('mouseup',function(e) {
-			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-				if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-			};
-		});
-		
-		Imba.Events.register(['mousedown','mouseup']);
-		Imba.Events.setEnabled(true);
+		// delegate the real click event
+		return Imba.Events.delegate(e);
+	});
+
+	Imba.Events.listen('mousedown',function(e) {
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		};
+	});
+
+	Imba.Events.listen('mouseup',function(e) {
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		};
+	});
+
+	Imba.Events.register(['mousedown','mouseup']);
+	Imba.Events.setEnabled(true);
 
 
 
@@ -968,7 +968,7 @@
 
 	Imba.document = function (){
 		
-			return window.document;
+		return window.document;
 		
 	};
 
@@ -2365,41 +2365,41 @@
 	};
 
 
-		if (document) { Imba.generateCSSPrefixes() };
-		
-		// Ovverride classList
-		if (document && !document.documentElement.classList) {
-			_T.extendTag('element', function(tag){
-				
-				tag.prototype.hasFlag = function (ref){
-					return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
+	if (document) { Imba.generateCSSPrefixes() };
+
+	// Ovverride classList
+	if (document && !document.documentElement.classList) {
+		_T.extendTag('element', function(tag){
+			
+			tag.prototype.hasFlag = function (ref){
+				return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
+			};
+			
+			tag.prototype.addFlag = function (ref){
+				if (this.hasFlag(ref)) { return this };
+				this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
+				return this;
+			};
+			
+			tag.prototype.unflag = function (ref){
+				if (!this.hasFlag(ref)) { return this };
+				var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
+				this._dom.className = this._dom.className.replace(regex,'');
+				return this;
+			};
+			
+			tag.prototype.toggleFlag = function (ref){
+				return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
+			};
+			
+			tag.prototype.flag = function (ref,bool){
+				if (arguments.length == 2 && !!bool === false) {
+					return this.unflag(ref);
 				};
-				
-				tag.prototype.addFlag = function (ref){
-					if (this.hasFlag(ref)) { return this };
-					this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
-					return this;
-				};
-				
-				tag.prototype.unflag = function (ref){
-					if (!this.hasFlag(ref)) { return this };
-					var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
-					this._dom.className = this._dom.className.replace(regex,'');
-					return this;
-				};
-				
-				tag.prototype.toggleFlag = function (ref){
-					return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
-				};
-				
-				tag.prototype.flag = function (ref,bool){
-					if (arguments.length == 2 && !!bool === false) {
-						return this.unflag(ref);
-					};
-					return this.addFlag(ref);
-				};
-			});
-		};
+				return this.addFlag(ref);
+			};
+		});
+	};
 
 
 	Imba.Tag;

@@ -1509,13 +1509,13 @@ var Imbac =
 			// moveCaret(id:length)
 			// console.log "ok"
 			
-				// console.log "got here? {match}"
-				this.token(typ,id,id.length);
-				this.moveCaret(id.length);
-				this.token(':',':',match[3].length);
-				this.moveCaret(-id.length);
-				// moveCaret(match[3]:length)
-				return match[0].length;
+			// console.log "got here? {match}"
+			this.token(typ,id,id.length);
+			this.moveCaret(id.length);
+			this.token(':',':',match[3].length);
+			this.moveCaret(-id.length);
+			// moveCaret(match[3]:length)
+			return match[0].length;
 			
 			
 			// moveCaret(match[2]:length)
@@ -8733,6 +8733,11 @@ var Imbac =
 		};
 	};
 
+	UnaryOp.prototype.isTruthy = function (){
+		var val = truthy__(this.left());
+		return val !== undefined ? ((!val)) : ((undefined));
+	};
+
 	UnaryOp.prototype.js = function (o){
 		var l = this._left;
 		var r = this._right;
@@ -10118,11 +10123,11 @@ var Imbac =
 	Identifier.prototype.setter = function (){
 		// console.log "Identifier#setter"
 		var tok;
-		return this._setter || (this._setter = 
-			tok = new Token('IDENTIFIER',sym__('set-' + this._value),this._value._loc || -1),
-			new Identifier(tok)
-			// Identifier.new("set-{symbol}")
-		);
+		return this._setter || (this._setter = (
+		tok = new Token('IDENTIFIER',sym__('set-' + this._value),this._value._loc || -1),
+		new Identifier(tok)
+		// Identifier.new("set-{symbol}")
+		));
 	};
 
 	Identifier.prototype.toString = function (){
@@ -10639,7 +10644,7 @@ var Imbac =
 	};
 
 
-	If.prototype.js = function (o,opts){
+	If.prototype.js = function (o){
 		var v_;
 		var body = this.body();
 		// would possibly want to look up / out
@@ -10647,10 +10652,26 @@ var Imbac =
 		
 		if (this._pretest === true) {
 			// what if it is inside expression?
-			return body ? (body.c({braces: !(!(this.prevIf()))})) : ('true');
+			var js = body ? (body.c({braces: !(!(this.prevIf()))})) : ('true');
+			
+			if (!(this.prevIf())) {
+				js = helpers.normalizeIndentation(js);
+			};
+			
+			if (o.isExpression()) {
+				js = '(' + js + ')';
+			};
+			
+			return js;
 		} else if (this._pretest === false) {
 			if (this.alt() instanceof If) { (this.alt().setPrevIf(v_ = this.prevIf()),v_) };
-			return this.alt() ? (this.alt().c({braces: !(!(this.prevIf()))})) : ('');
+			var js1 = this.alt() ? (this.alt().c({braces: !(!(this.prevIf()))})) : ('');
+			
+			if (!(this.prevIf())) {
+				js1 = helpers.normalizeIndentation(js1);
+			};
+			
+			return js1;
 		};
 		
 		var cond = this.test().c({expression: true}); // the condition is always an expression

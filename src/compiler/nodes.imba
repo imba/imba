@@ -4862,18 +4862,31 @@ export class If < ControlFlow
 		self
 
 
-	def js o,opts
+	def js o
 		var body = body
 		# would possibly want to look up / out
 		var brace = braces: yes, indent: yes
 
 		if @pretest === true
 			# what if it is inside expression?
-			return body ? body.c(braces: !!prevIf) : 'true'
+			let js = body ? body.c(braces: !!prevIf) : 'true'
+
+			unless prevIf
+				js = helpers.normalizeIndentation(js)
+
+			if o.isExpression
+				js = '(' + js + ')'
+
+			return js
 
 		elif @pretest === false
 			alt.prevIf = prevIf if alt isa If
-			return alt ? alt.c(braces: !!prevIf) : ''
+			let js = alt ? alt.c(braces: !!prevIf) : ''
+
+			unless prevIf
+				js = helpers.normalizeIndentation(js)
+
+			return js
 
 		var cond = test.c(expression: yes) # the condition is always an expression
 

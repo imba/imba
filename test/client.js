@@ -77,10 +77,10 @@
 	__webpack_require__(42);
 
 
-		__webpack_require__(43);
-		__webpack_require__(45);
-		__webpack_require__(46);
-		__webpack_require__(47);
+	__webpack_require__(43);
+	__webpack_require__(45);
+	__webpack_require__(46);
+	__webpack_require__(47);
 
 
 	// externs;
@@ -137,7 +137,7 @@
 	Imba = {VERSION: '1.0.0-beta'};
 
 
-		window.global || (window.global = window);
+	window.global || (window.global = window);
 
 
 	/*
@@ -364,11 +364,11 @@
 
 
 
-		cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitRequestAnimationFrame;
-		requestAnimationFrame = window.requestAnimationFrame;
-		requestAnimationFrame || (requestAnimationFrame = window.webkitRequestAnimationFrame);
-		requestAnimationFrame || (requestAnimationFrame = window.mozRequestAnimationFrame);
-		requestAnimationFrame || (requestAnimationFrame = function(blk) { return setTimeout(blk,1000 / 60); });
+	cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitRequestAnimationFrame;
+	requestAnimationFrame = window.requestAnimationFrame;
+	requestAnimationFrame || (requestAnimationFrame = window.webkitRequestAnimationFrame);
+	requestAnimationFrame || (requestAnimationFrame = window.mozRequestAnimationFrame);
+	requestAnimationFrame || (requestAnimationFrame = function(blk) { return setTimeout(blk,1000 / 60); });
 
 
 	function Ticker(){
@@ -843,73 +843,73 @@
 	__webpack_require__(15);
 
 
-		__webpack_require__(16);
+	__webpack_require__(16);
 
 
 
 
 
-		Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
+	Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
+
+	Imba.Events = new Imba.EventManager(Imba.document(),{events: [
+		'keydown','keyup','keypress',
+		'textInput','input','change','submit',
+		'focusin','focusout','focus','blur',
+		'contextmenu','dblclick',
+		'mousewheel','wheel','scroll',
+		'beforecopy','copy',
+		'beforepaste','paste',
+		'beforecut','cut'
+	]});
+
+	var hasTouchEvents = window && window.ontouchstart !== undefined;
+
+	if (hasTouchEvents) {
+		Imba.Events.listen('touchstart',function(e) {
+			return Imba.Touch.ontouchstart(e);
+		});
 		
-		Imba.Events = new Imba.EventManager(Imba.document(),{events: [
-			'keydown','keyup','keypress',
-			'textInput','input','change','submit',
-			'focusin','focusout','focus','blur',
-			'contextmenu','dblclick',
-			'mousewheel','wheel','scroll',
-			'beforecopy','copy',
-			'beforepaste','paste',
-			'beforecut','cut'
-		]});
+		Imba.Events.listen('touchmove',function(e) {
+			return Imba.Touch.ontouchmove(e);
+		});
 		
-		var hasTouchEvents = window && window.ontouchstart !== undefined;
+		Imba.Events.listen('touchend',function(e) {
+			return Imba.Touch.ontouchend(e);
+		});
 		
-		if (hasTouchEvents) {
-			Imba.Events.listen('touchstart',function(e) {
-				return Imba.Touch.ontouchstart(e);
-			});
-			
-			Imba.Events.listen('touchmove',function(e) {
-				return Imba.Touch.ontouchmove(e);
-			});
-			
-			Imba.Events.listen('touchend',function(e) {
-				return Imba.Touch.ontouchend(e);
-			});
-			
-			Imba.Events.listen('touchcancel',function(e) {
-				return Imba.Touch.ontouchcancel(e);
-			});
+		Imba.Events.listen('touchcancel',function(e) {
+			return Imba.Touch.ontouchcancel(e);
+		});
+	};
+
+	Imba.Events.register('click',function(e) {
+		// Only for main mousebutton, no?
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			var tap = new Imba.Event(e);
+			tap.setType('tap');
+			tap.process();
+			if (tap._responder) {
+				return e.preventDefault();
+			};
 		};
-		
-		Imba.Events.register('click',function(e) {
-			// Only for main mousebutton, no?
-			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-				var tap = new Imba.Event(e);
-				tap.setType('tap');
-				tap.process();
-				if (tap._responder) {
-					return e.preventDefault();
-				};
-			};
-			// delegate the real click event
-			return Imba.Events.delegate(e);
-		});
-		
-		Imba.Events.listen('mousedown',function(e) {
-			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-				if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-			};
-		});
-		
-		Imba.Events.listen('mouseup',function(e) {
-			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-				if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-			};
-		});
-		
-		Imba.Events.register(['mousedown','mouseup']);
-		Imba.Events.setEnabled(true);
+		// delegate the real click event
+		return Imba.Events.delegate(e);
+	});
+
+	Imba.Events.listen('mousedown',function(e) {
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		};
+	});
+
+	Imba.Events.listen('mouseup',function(e) {
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		};
+	});
+
+	Imba.Events.register(['mousedown','mouseup']);
+	Imba.Events.setEnabled(true);
 
 
 
@@ -1036,7 +1036,7 @@
 
 	Imba.document = function (){
 		
-			return window.document;
+		return window.document;
 		
 	};
 
@@ -2433,41 +2433,41 @@
 	};
 
 
-		if (document) { Imba.generateCSSPrefixes() };
-		
-		// Ovverride classList
-		if (document && !document.documentElement.classList) {
-			_T.extendTag('element', function(tag){
-				
-				tag.prototype.hasFlag = function (ref){
-					return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
+	if (document) { Imba.generateCSSPrefixes() };
+
+	// Ovverride classList
+	if (document && !document.documentElement.classList) {
+		_T.extendTag('element', function(tag){
+			
+			tag.prototype.hasFlag = function (ref){
+				return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
+			};
+			
+			tag.prototype.addFlag = function (ref){
+				if (this.hasFlag(ref)) { return this };
+				this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
+				return this;
+			};
+			
+			tag.prototype.unflag = function (ref){
+				if (!this.hasFlag(ref)) { return this };
+				var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
+				this._dom.className = this._dom.className.replace(regex,'');
+				return this;
+			};
+			
+			tag.prototype.toggleFlag = function (ref){
+				return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
+			};
+			
+			tag.prototype.flag = function (ref,bool){
+				if (arguments.length == 2 && !!bool === false) {
+					return this.unflag(ref);
 				};
-				
-				tag.prototype.addFlag = function (ref){
-					if (this.hasFlag(ref)) { return this };
-					this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
-					return this;
-				};
-				
-				tag.prototype.unflag = function (ref){
-					if (!this.hasFlag(ref)) { return this };
-					var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
-					this._dom.className = this._dom.className.replace(regex,'');
-					return this;
-				};
-				
-				tag.prototype.toggleFlag = function (ref){
-					return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
-				};
-				
-				tag.prototype.flag = function (ref,bool){
-					if (arguments.length == 2 && !!bool === false) {
-						return this.unflag(ref);
-					};
-					return this.addFlag(ref);
-				};
-			});
-		};
+				return this.addFlag(ref);
+			};
+		});
+	};
 
 
 	Imba.Tag;
@@ -5270,10 +5270,10 @@
 				var value_;
 				obj.setValue(null);
 				if ((value_ = obj.value()) == null) { 
-					for (var i = 0, len = ary.length, res = []; i < len; i++) {
-						res.push(ary[i] * 2);
-					};
-					var ret = (obj.setValue(res),res);
+				for (var i = 0, len = ary.length, res = []; i < len; i++) {
+					res.push(ary[i] * 2);
+				};
+				var ret = (obj.setValue(res),res);
 				 } else {
 					ret = value_
 				};
@@ -6087,9 +6087,9 @@
 			
 			function x(){
 				
-					var a = 1;
-					var b = 2;
-					return 3;
+				var a = 1;
+				var b = 2;
+				return 3;
 				
 			};
 			
@@ -6123,7 +6123,7 @@
 		return test("allow implicit returns from var declaration",function() {
 			// var hey, ho
 			
-			var hey = 5;
+			var hey = (5);
 			var blank = function() { return true; };
 			
 			var fn = function(a) {
@@ -7129,10 +7129,10 @@
 		eq(i,1);
 		
 		
-			for (var i2 = 0, len_ = ary.length; i2 < len_; i2++) {
-				i2;
-			};
-			eq(i,1);
+		for (var i2 = 0, len_ = ary.length; i2 < len_; i2++) {
+			i2;
+		};
+		eq(i,1);
 		
 		
 		for (var r = [], j = 0, len_ = ary.length; j < len_; j++) {
@@ -7158,30 +7158,30 @@
 		};
 		
 		
-			var a3 = 4;
-			var b3 = 4;
-			var i3 = 0;
-			var len1 = 10;
-			
-			
-				var a4 = 5;
-				var b4 = 5;
-			
-			
-			for (var e = [], i4 = 0, len_ = ary.length; i4 < len_; i4++) {
-				eq(a3,4);
-				e.push(i4);
-			};
-			
+		var a3 = 4;
+		var b3 = 4;
+		var i3 = 0;
+		var len1 = 10;
+		
+		
+		var a4 = 5;
+		var b4 = 5;
+		
+		
+		for (var e = [], i4 = 0, len_ = ary.length; i4 < len_; i4++) {
 			eq(a3,4);
-			eq(i3,0);
+			e.push(i4);
+		};
+		
+		eq(a3,4);
+		eq(i3,0);
 		
 		
 		
-			for (var j = 0, len_ = ary.length; j < len_; j++) {
-				true;
-			};
-			var z = 4;
+		for (var j = 0, len_ = ary.length; j < len_; j++) {
+			true;
+		};
+		var z = 4;
 		
 		
 		eq(v,1);
@@ -7242,8 +7242,8 @@
 		test("let",function() {
 			var a = 0;
 			
-				var a1 = 1;
-				eq(a1,1);
+			var a1 = 1;
+			eq(a1,1);
 			
 			return eq(a,0);
 		});
@@ -8393,15 +8393,15 @@
 		test("style attribute",function() {
 			var el = _T.DIV().setStyle('display: block;').end();
 			
-				return eq(el.dom().getAttribute('style'),'display: block;');
+			return eq(el.dom().getAttribute('style'),'display: block;');
 			
 		});
 		
 		test("class",function() {
 			var el = CustomClass.build().end();
 			
-				eq(el.dom().className,'one two');
-				return document.body.appendChild(el.dom());
+			eq(el.dom().className,'one two');
+			return document.body.appendChild(el.dom());
 			
 		});
 		
@@ -8881,9 +8881,9 @@
 				(__.F = __.F || _T.DIV().flag('list')).setContent(self.list(),3).end(),
 				(__.G = __.G || _T.DIV().flag('item')).setContent(self.tast(),3).end(),
 				(__.H = __.H || _T.DIV().flag('if')).setContent([
-					
-						self.list()
-				
+					(
+					self.list()
+					)
 				],1).end(),
 				
 				(__.I = __.I || _T.DIV().flag('if')).setContent([
