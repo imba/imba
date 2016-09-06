@@ -6,15 +6,17 @@ var dir = path.join(path.dirname(fs.realpathSync(__filename)), '../');
 
 // Return the module for webpack
 if(require.main !== module){
+	var loader = {
+		"test": /\.imba$/,
+		"loader": dir + "loader.js"
+	}
+
 	var conf = {
 		module: {
-			loaders: [{
-				"test": /\.imba$/,
-				"loader": dir + "loader.js"
-			}]
+			loaders: [loader]
 		},
 		resolve: {
-			extensions: ['', '.js', '.imba'],
+			extensions: ["", ".imba", ".webpack.js", ".web.js", ".js",".css"],
 			alias: { imba$: dir + "/src/imba/index.imba" }
 		}
 	}
@@ -26,17 +28,16 @@ if(require.main !== module){
 
 		if(m.loaders) {
 			// add the imba loader
-			m.loaders.unshift(conf.module.loaders[0])
+			m.loaders.unshift(loader)
 		} else {
-			m.loaders = conf.module.loaders;
+			m.loaders = [loader];
 		}
 
 		if(r.extensions){
 			r.extensions.splice(1,0,'.imba')
 		} else {
-			r.extensions = ["", ".imba", ".webpack.js", ".web.js", ".js",".css"]
+			r.extensions = conf.resolve.extensions
 		}
-
 		// Set correct alias
 		r.alias = r.alias || {}
 		r.alias.imba$ = dir + "src/imba/index.imba"
