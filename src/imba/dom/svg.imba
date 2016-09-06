@@ -4,8 +4,6 @@ tag svg:element
 	def self.namespaceURI
 		"http://www.w3.org/2000/svg"
 
-	let types = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
-
 	def self.buildNode
 		var dom = Imba.document.createElementNS(namespaceURI,@nodeType)
 		var cls = @classes.join(" ")
@@ -15,7 +13,7 @@ tag svg:element
 	def self.inherit child
 		child.@protoDom = null
 
-		if child.@name in types
+		if child.@name in Imba.SVG_TAGS
 			child.@nodeType = child.@name
 			child.@classes = []
 		else

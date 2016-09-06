@@ -352,66 +352,68 @@ class Imba.Tag
 			# FIXME ensure these are not called for text nodes
 		self
 
-	###
-	The .append method inserts the specified content as the last child
-	of the target node. If the content is already a child of node it
-	will be moved to the end.
-	
-	    var root = <div.root>
-	    var item = <div.item> "This is an item"
-	    root.append item # appends item to the end of root
 
-	    root.prepend "some text" # append text
-	    root.prepend [<ul>,<ul>] # append array
-	###
-	def append item
-		# possible to append blank
-		# possible to simplify on server?
-		return self unless item
+	unless $drop_deprecated$
+		###
+		The .append method inserts the specified content as the last child
+		of the target node. If the content is already a child of node it
+		will be moved to the end.
+		
+		    var root = <div.root>
+		    var item = <div.item> "This is an item"
+		    root.append item # appends item to the end of root
 
-		if item isa Array
-			member && append(member) for member in item
+		    root.prepend "some text" # append text
+		    root.prepend [<ul>,<ul>] # append array
+		###
+		def append item
+			# possible to append blank
+			# possible to simplify on server?
+			return self unless item
 
-		elif item isa String or item isa Number
-			var node = Imba.document.createTextNode(item)
-			@dom.appendChild(node)
-			@empty = no if @empty			
-		else
-			# should delegate to self.appendChild
-			appendChild(item)
-			@empty = no if @empty
+			if item isa Array
+				member && append(member) for member in item
 
-		return self
+			elif item isa String or item isa Number
+				var node = Imba.document.createTextNode(item)
+				@dom.appendChild(node)
+				@empty = no if @empty			
+			else
+				# should delegate to self.appendChild
+				appendChild(item)
+				@empty = no if @empty
 
-	###
-	@deprecated
-	###
-	def insert node, before: null, after: null
-		before = after.next if after
-		if node isa Array
-			node = (<fragment> node)
-		if before
-			insertBefore(node,before.dom)
-		else
-			appendChild(node)
-		self
+			return self
 
-	###
-	@todo Should support multiple arguments like append
+		###
+		@deprecated
+		###
+		def insert node, before: null, after: null
+			before = after.next if after
+			if node isa Array
+				node = (<fragment> node)
+			if before
+				insertBefore(node,before.dom)
+			else
+				appendChild(node)
+			self
 
-	The .prepend method inserts the specified content as the first
-	child of the target node. If the content is already a child of 
-	node it will be moved to the start.
-	
-    	node.prepend <div.top> # prepend node
-    	node.prepend "some text" # prepend text
-    	node.prepend [<ul>,<ul>] # prepend array
+		###
+		@todo Should support multiple arguments like append
 
-	###
-	def prepend item
-		var first = @dom:childNodes[0]
-		first ? insertBefore(item, first) : appendChild(item)
-		self
+		The .prepend method inserts the specified content as the first
+		child of the target node. If the content is already a child of 
+		node it will be moved to the start.
+		
+	    	node.prepend <div.top> # prepend node
+	    	node.prepend "some text" # prepend text
+	    	node.prepend [<ul>,<ul>] # prepend array
+
+		###
+		def prepend item
+			var first = @dom:childNodes[0]
+			first ? insertBefore(item, first) : appendChild(item)
+			self
 
 
 	###
@@ -683,94 +685,95 @@ class Imba.Tag
 		var nodes = Imba.Selector.new(null, self, @dom:children)
 		sel ? nodes.filter(sel) : nodes
 
-	###
-	Get the siblings of node
-	@return {Imba.Selector}
-	###
-	def siblings sel
-		# DEPRECATE extract into imba-tag-helpers
-		return [] unless var par = parent # FIXME
-		var ary = dom:parentNode:children
-		var nodes = Imba.Selector.new(null, self, ary)
-		nodes.filter(|n| n != self && (!sel || n.matches(sel)))
+	unless $drop_deprecated$
+		###
+		Get the siblings of node
+		@return {Imba.Selector}
+		###
+		def siblings sel
+			# DEPRECATE extract into imba-tag-helpers
+			return [] unless var par = parent # FIXME
+			var ary = dom:parentNode:children
+			var nodes = Imba.Selector.new(null, self, ary)
+			nodes.filter(|n| n != self && (!sel || n.matches(sel)))
 
-	###
-	Get node and its ascendents
-	@return {Array}
-	###
-	def path sel
-		# DEPRECATE extract into imba-tag-helpers
-		var node = self
-		var nodes = []
-		sel = sel.query if sel and sel:query
+		###
+		Get node and its ascendents
+		@return {Array}
+		###
+		def path sel
+			# DEPRECATE extract into imba-tag-helpers
+			var node = self
+			var nodes = []
+			sel = sel.query if sel and sel:query
 
-		while node
-			nodes.push(node) if !sel or node.matches(sel)
-			node = node.parent
-		return nodes
+			while node
+				nodes.push(node) if !sel or node.matches(sel)
+				node = node.parent
+			return nodes
 
-	###
-	Get ascendents of node
-	@return {Array}
-	###
-	def parents sel
-		# DEPRECATE extract into imba-tag-helpers
-		var par = parent
-		par ? par.path(sel) : []
+		###
+		Get ascendents of node
+		@return {Array}
+		###
+		def parents sel
+			# DEPRECATE extract into imba-tag-helpers
+			var par = parent
+			par ? par.path(sel) : []
 
-	###
-	Get the immediately following sibling of node.
-	###
-	def next sel
-		# DEPRECATE extract into imba-tag-helpers
-		if sel
-			var el = self
-			while el = el.next
-				return el if el.matches(sel)
-			return null
-		tag(dom:nextElementSibling)
+		###
+		Get the immediately following sibling of node.
+		###
+		def next sel
+			# DEPRECATE extract into imba-tag-helpers
+			if sel
+				var el = self
+				while el = el.next
+					return el if el.matches(sel)
+				return null
+			tag(dom:nextElementSibling)
 
-	###
-	Get the immediately preceeding sibling of node.
-	###
-	def prev sel
-		# DEPRECATE extract into imba-tag-helpers
-		if sel
-			var el = self
-			while el = el.prev
-				return el if el.matches(sel)
-			return null
-		tag(dom:previousElementSibling)
+		###
+		Get the immediately preceeding sibling of node.
+		###
+		def prev sel
+			# DEPRECATE extract into imba-tag-helpers
+			if sel
+				var el = self
+				while el = el.prev
+					return el if el.matches(sel)
+				return null
+			tag(dom:previousElementSibling)
 
-	###
-	Get descendants of current node, optionally matching selector
-	@return {Imba.Selector}
-	###
-	def find sel
-		# DEPRECATE extract into imba-tag-helpers
-		Imba.Selector.new(sel,self)
+		###
+		Get descendants of current node, optionally matching selector
+		@return {Imba.Selector}
+		###
+		def find sel
+			# DEPRECATE extract into imba-tag-helpers
+			Imba.Selector.new(sel,self)
 
-	###
-	Get the first matching child of node
+		###
+		Get the first matching child of node
 
-	@return {Imba.Tag}
-	###
-	def first sel
-		# DEPRECATE extract into imba-tag-helpers
-		sel ? find(sel).first : tag(dom:firstElementChild)
+		@return {Imba.Tag}
+		###
+		def first sel
+			# DEPRECATE extract into imba-tag-helpers
+			sel ? find(sel).first : tag(dom:firstElementChild)
 
-	###
-	Get the last matching child of node
+		###
+		Get the last matching child of node
 
-		node.last # returns the last child of node
-		node.last %span # returns the last span inside node
-		node.last do |el| el.text == 'Hi' # return last node with text Hi
+			node.last # returns the last child of node
+			node.last %span # returns the last span inside node
+			node.last do |el| el.text == 'Hi' # return last node with text Hi
 
-	@return {Imba.Tag}
-	###
-	def last sel
-		# DEPRECATE extract into imba-tag-helpers
-		sel ? find(sel).last : tag(dom:lastElementChild)
+		@return {Imba.Tag}
+		###
+		def last sel
+			# DEPRECATE extract into imba-tag-helpers
+			sel ? find(sel).last : tag(dom:lastElementChild)
 
 	###
 	Check if this node matches a selector
@@ -1023,21 +1026,6 @@ def Imba.defineSingletonTag id, supr = 'div', &body
 def Imba.extendTag name, body
 	return Imba.TAGS.extendTag(name,body)
 
-def Imba.tag name
-	var typ = Imba.TAGS[name]
-	throw Error.new("tag {name} is not defined") if !typ
-	return typ.new(typ.createNode)
-
-def Imba.tagWithId name, id
-	var typ = Imba.TAGS[name]
-	throw Error.new("tag {name} is not defined") if !typ
-	var dom = typ.createNode
-	dom:id = id
-	return typ.new(dom)
-
-# TODO: Can we move these out and into dom.imba in a clean way?
-# These methods depends on Imba.document.getElementById
-
 def Imba.getTagSingleton id	
 	var dom, node
 
@@ -1112,11 +1100,8 @@ def Imba.getTagForDom dom
 	spawner ? spawner.new(dom).awaken(dom) : null
 
 
-_T = tag$ = Imba.TAGS
+_T = Imba.TAGS
 t$ = Imba:tag
-tc$ = Imba:tagWithFlags # FIXME deprecated
-ti$ = Imba:tagWithId # FIXME deprecated
-tic$ = Imba:tagWithIdAndFlags # FIXME deprecated
 id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom
 

@@ -1465,18 +1465,20 @@
 		return this;
 	};
 
-	/*
-		The .append method inserts the specified content as the last child
-		of the target node. If the content is already a child of node it
-		will be moved to the end.
-		
-		    var root = <div.root>
-		    var item = <div.item> "This is an item"
-		    root.append item # appends item to the end of root
 
-		    root.prepend "some text" # append text
-		    root.prepend [<ul>,<ul>] # append array
-		*/
+
+	/*
+			The .append method inserts the specified content as the last child
+			of the target node. If the content is already a child of node it
+			will be moved to the end.
+			
+			    var root = <div.root>
+			    var item = <div.item> "This is an item"
+			    root.append item # appends item to the end of root
+
+			    root.prepend "some text" # append text
+			    root.prepend [<ul>,<ul>] # append array
+			*/
 
 	Imba.Tag.prototype.append = function (item){
 		// possible to append blank
@@ -1502,8 +1504,8 @@
 	};
 
 	/*
-		@deprecated
-		*/
+			@deprecated
+			*/
 
 	Imba.Tag.prototype.insert = function (node,pars){
 		if(!pars||pars.constructor !== Object) pars = {};
@@ -1522,23 +1524,24 @@
 	};
 
 	/*
-		@todo Should support multiple arguments like append
+			@todo Should support multiple arguments like append
 
-		The .prepend method inserts the specified content as the first
-		child of the target node. If the content is already a child of 
-		node it will be moved to the start.
-		
-	    	node.prepend <div.top> # prepend node
-	    	node.prepend "some text" # prepend text
-	    	node.prepend [<ul>,<ul>] # prepend array
+			The .prepend method inserts the specified content as the first
+			child of the target node. If the content is already a child of 
+			node it will be moved to the start.
+			
+		    	node.prepend <div.top> # prepend node
+		    	node.prepend "some text" # prepend text
+		    	node.prepend [<ul>,<ul>] # prepend array
 
-		*/
+			*/
 
 	Imba.Tag.prototype.prepend = function (item){
 		var first = this._dom.childNodes[0];
 		first ? (this.insertBefore(item,first)) : (this.appendChild(item));
 		return this;
 	};
+
 
 
 	/*
@@ -1877,10 +1880,11 @@
 		return sel ? (nodes.filter(sel)) : (nodes);
 	};
 
+
 	/*
-		Get the siblings of node
-		@return {Imba.Selector}
-		*/
+			Get the siblings of node
+			@return {Imba.Selector}
+			*/
 
 	Imba.Tag.prototype.siblings = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
@@ -1892,9 +1896,9 @@
 	};
 
 	/*
-		Get node and its ascendents
-		@return {Array}
-		*/
+			Get node and its ascendents
+			@return {Array}
+			*/
 
 	Imba.Tag.prototype.path = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
@@ -1910,9 +1914,9 @@
 	};
 
 	/*
-		Get ascendents of node
-		@return {Array}
-		*/
+			Get ascendents of node
+			@return {Array}
+			*/
 
 	Imba.Tag.prototype.parents = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
@@ -1921,8 +1925,8 @@
 	};
 
 	/*
-		Get the immediately following sibling of node.
-		*/
+			Get the immediately following sibling of node.
+			*/
 
 	Imba.Tag.prototype.next = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
@@ -1937,8 +1941,8 @@
 	};
 
 	/*
-		Get the immediately preceeding sibling of node.
-		*/
+			Get the immediately preceeding sibling of node.
+			*/
 
 	Imba.Tag.prototype.prev = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
@@ -1953,9 +1957,9 @@
 	};
 
 	/*
-		Get descendants of current node, optionally matching selector
-		@return {Imba.Selector}
-		*/
+			Get descendants of current node, optionally matching selector
+			@return {Imba.Selector}
+			*/
 
 	Imba.Tag.prototype.find = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
@@ -1963,10 +1967,10 @@
 	};
 
 	/*
-		Get the first matching child of node
+			Get the first matching child of node
 
-		@return {Imba.Tag}
-		*/
+			@return {Imba.Tag}
+			*/
 
 	Imba.Tag.prototype.first = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
@@ -1974,19 +1978,20 @@
 	};
 
 	/*
-		Get the last matching child of node
+			Get the last matching child of node
 
-			node.last # returns the last child of node
-			node.last %span # returns the last span inside node
-			node.last do |el| el.text == 'Hi' # return last node with text Hi
+				node.last # returns the last child of node
+				node.last %span # returns the last span inside node
+				node.last do |el| el.text == 'Hi' # return last node with text Hi
 
-		@return {Imba.Tag}
-		*/
+			@return {Imba.Tag}
+			*/
 
 	Imba.Tag.prototype.last = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
 		return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
 	};
+
 
 	/*
 		Check if this node matches a selector
@@ -2312,23 +2317,6 @@
 		return Imba.TAGS.extendTag(name,body);
 	};
 
-	Imba.tag = function (name){
-		var typ = Imba.TAGS[name];
-		if (!typ) { throw new Error(("tag " + name + " is not defined")) };
-		return new typ(typ.createNode());
-	};
-
-	Imba.tagWithId = function (name,id){
-		var typ = Imba.TAGS[name];
-		if (!typ) { throw new Error(("tag " + name + " is not defined")) };
-		var dom = typ.createNode();
-		dom.id = id;
-		return new typ(dom);
-	};
-
-	// TODO: Can we move these out and into dom.imba in a clean way?
-	// These methods depends on Imba.document.getElementById
-
 	Imba.getTagSingleton = function (id){
 		var klass;
 		var dom,node;
@@ -2416,11 +2404,8 @@
 	};
 
 
-	_T = tag$ = Imba.TAGS;
+	_T = Imba.TAGS;
 	t$ = Imba.tag;
-	tc$ = Imba.tagWithFlags; // FIXME deprecated
-	ti$ = Imba.tagWithId; // FIXME deprecated
-	tic$ = Imba.tagWithIdAndFlags; // FIXME deprecated
 	id$ = Imba.getTagSingleton;
 	tag$wrap = Imba.getTagForDom;
 
@@ -2908,8 +2893,6 @@
 			return "http://www.w3.org/2000/svg";
 		};
 		
-		var types = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
-		
 		tag.buildNode = function (){
 			var dom = Imba.document().createElementNS(this.namespaceURI(),this._nodeType);
 			var cls = this._classes.join(" ");
@@ -2920,7 +2903,7 @@
 		tag.inherit = function (child){
 			child._protoDom = null;
 			
-			if (Imba.indexOf(child._name,types) >= 0) {
+			if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0) {
 				child._nodeType = child._name;
 				return child._classes = [];
 			} else {
@@ -4122,10 +4105,11 @@
 /***/ function(module, exports) {
 
 	
+
 	/*
-	The special syntax for selectors in Imba creates Imba.Selector
-	instances.
-	*/
+		The special syntax for selectors in Imba creates Imba.Selector
+		instances.
+		*/
 
 	Imba.Selector = function Selector(sel,scope,nodes){
 		
@@ -4168,8 +4152,8 @@
 	};
 
 	/*
-		@returns {Imba.Tag} first node matching this selector
-		*/
+			@returns {Imba.Tag} first node matching this selector
+			*/
 
 	Imba.Selector.prototype.first = function (){
 		if (this._lazy) { return tag$wrap(this._first || (this._first = this.scope().querySelector(this.query()))) } else {
@@ -4178,16 +4162,16 @@
 	};
 
 	/*
-		@returns {Imba.Tag} last node matching this selector
-		*/
+			@returns {Imba.Tag} last node matching this selector
+			*/
 
 	Imba.Selector.prototype.last = function (){
 		return this.nodes()[this._nodes.length - 1];
 	};
 
 	/*
-		@returns [Imba.Tag] all nodes matching this selector
-		*/
+			@returns [Imba.Tag] all nodes matching this selector
+			*/
 
 	Imba.Selector.prototype.nodes = function (){
 		if (this._nodes) { return this._nodes };
@@ -4201,8 +4185,8 @@
 	};
 
 	/*
-		The number of nodes matching this selector
-		*/
+			The number of nodes matching this selector
+			*/
 
 	Imba.Selector.prototype.count = function (){
 		return this.nodes().length;
@@ -4213,24 +4197,24 @@
 	};
 
 	/*
-		@todo Add support for block or selector?
-		*/
+			@todo Add support for block or selector?
+			*/
 
 	Imba.Selector.prototype.some = function (){
 		return this.count() >= 1;
 	};
 
 	/*
-		Get node at index
-		*/
+			Get node at index
+			*/
 
 	Imba.Selector.prototype.at = function (idx){
 		return this.nodes()[idx];
 	};
 
 	/*
-		Loop through nodes
-		*/
+			Loop through nodes
+			*/
 
 	Imba.Selector.prototype.forEach = function (block){
 		this.nodes().forEach(block);
@@ -4238,17 +4222,17 @@
 	};
 
 	/*
-		Map nodes
-		*/
+			Map nodes
+			*/
 
 	Imba.Selector.prototype.map = function (block){
 		return this.nodes().map(block);
 	};
 
 	/*
-		Returns a plain array containing nodes. Implicitly called
-		when iterating over a selector in Imba `(node for node in $(selector))`
-		*/
+			Returns a plain array containing nodes. Implicitly called
+			when iterating over a selector in Imba `(node for node in $(selector))`
+			*/
 
 	Imba.Selector.prototype.toArray = function (){
 		return this.nodes();
@@ -4282,8 +4266,8 @@
 	};
 
 	/*
-		Filter the nodes in selector by a function or other selector
-		*/
+			Filter the nodes in selector by a function or other selector
+			*/
 
 	Imba.Selector.prototype.filter = function (blk,bool){
 		if(bool === undefined) bool = true;
@@ -4310,16 +4294,16 @@
 	};
 
 	/*
-		Add specified flag to all nodes in selector
-		*/
+			Add specified flag to all nodes in selector
+			*/
 
 	Imba.Selector.prototype.flag = function (flag){
 		return this.forEach(function(n) { return n.flag(flag); });
 	};
 
 	/*
-		Remove specified flag from all nodes in selector
-		*/
+			Remove specified flag from all nodes in selector
+			*/
 
 	Imba.Selector.prototype.unflag = function (flag){
 		return this.forEach(function(n) { return n.unflag(flag); });
@@ -4352,6 +4336,7 @@
 			return new Imba.Selector(sel,this);
 		};
 	});
+
 
 
 

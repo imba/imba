@@ -17,7 +17,8 @@ function pkg(options){
 		resolve: {extensions: ['', '.imba', '.js']},
 		entry: "./src/imba/index.imba",
 		target: 'web',
-		output: { filename: "./dist/imba.js" }
+		output: { filename: "./dist/imba.js" },
+		node: {fs: "empty", process: "empty", global: false}
 	}
 
 	Object.keys(options).map(function(key){
@@ -30,23 +31,25 @@ function pkg(options){
 module.exports = [pkg({
 	entry: "./src/imba/index.imba",
 	output: { filename: "./dist/imba.dev.js" },
-	target: 'web', debug: true,
-	node: {fs: "empty", process: "empty", global: false}
+	debug: true
 }),pkg({
 	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.js" },
-	target: 'web',
-	node: {fs: "empty", process: "empty", global: false}
+	output: { filename: "./dist/imba.js" }
 }),pkg({
 	entry: "./src/imba/index.imba",
 	output: { filename: "./dist/imba.min.js" },
-	target: 'web',
-	node: {fs: "empty", process: "empty", global: false},
+	plugins: [minify]
+}),pkg({
+	entry: "./src/imba/index.imba",
+	output: { filename: "./dist/imba.edge.js" },
+	loader: {env: {drop_deprecated: true}}
+}),pkg({
+	entry: "./src/imba/index.imba",
+	output: { filename: "./dist/imba.edge.min.js" },
+	loader: {env: {drop_deprecated: true}},
 	plugins: [minify]
 }),pkg({
 	entry: "./test/index.imba",
-	output: { filename: "./test/client.js"},
-	target: 'web',
-	node: {fs: "empty", process: "empty", global: false}
+	output: { filename: "./test/client.js"}
 })]
 
