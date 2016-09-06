@@ -11,6 +11,9 @@ module.exports = function(content) {
 		standalone: false,
 		bare: true
 	};
+	if(this.env){
+		opts.env = this.env;
+	}
 
 	try {
 		var result = compiler.compile(content, opts);
