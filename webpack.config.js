@@ -1,48 +1,25 @@
 var path = require('path');
 var webpack = require('webpack');
 
-var prodDefines = new webpack.DefinePlugin({
-	"Imba.CLIENT": true
-})
-
 var minify = new webpack.optimize.UglifyJsPlugin({
-	minimize: true,
-	compress: { warnings: false }
+	minimize: true, compress: { warnings: false }
 });
 
-var prod = [
-	new webpack.DefinePlugin({
-		"Imba.CLIENT": true
-	}),
-	new webpack.optimize.UglifyJsPlugin({
-		minimize: true,
-		compress: { warnings: false }
-	})
-]
-
-var dev = [
-	new webpack.DefinePlugin({
-		"Imba.DEBUG": true,
-		"Imba.CLIENT": true
-	})
-]
-
-var loaderPath = path.join(__dirname, "./loader");
-var loaders = [{ "test": /\.imba$/, "loader": loaderPath}];
-
-var resolveLoader = {
-	alias: { "path": "path-browserify" }
-}
+var loaders = [{
+	"test": /\.imba$/,
+	"loader": path.join(__dirname, "./loader")
+	}];
 
 function pkg(options){
 	var pkg = {
 		module: {loaders: loaders},
-		resolveLoader: resolveLoader,
+		resolveLoader: {alias: { "path": "path-browserify" }},
 		resolve: {extensions: ['', '.imba', '.js']},
 		entry: "./src/imba/index.imba",
 		target: 'web',
 		output: { filename: "./dist/imba.js" }
 	}
+
 	Object.keys(options).map(function(key){
 		pkg[key] = options[key];
 	})
@@ -53,14 +30,17 @@ function pkg(options){
 module.exports = [pkg({
 	entry: "./src/imba/index.imba",
 	output: { filename: "./dist/imba.dev.js" },
+	target: 'web',
 	node: {fs: "empty", process: "empty", global: false}
 }),pkg({
 	entry: "./src/imba/index.imba",
 	output: { filename: "./dist/imba.js" },
+	target: 'web',
 	node: {fs: "empty", process: "empty", global: false}
 }),pkg({
 	entry: "./src/imba/index.imba",
 	output: { filename: "./dist/imba.min.js" },
+	target: 'web',
 	node: {fs: "empty", process: "empty", global: false},
 	plugins: [minify]
 }),pkg({
