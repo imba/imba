@@ -7,4 +7,5 @@ require './scheduler'
 require './dom/index'
 	
 if $node$
-	require '../../register.js'
+	unless $webpack$
+		require '../../register.js'

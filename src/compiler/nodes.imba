@@ -3265,6 +3265,10 @@ export class UnaryOp < Op
 		else
 			super # regular invert
 
+	def isTruthy
+		var val = truthy__(left)
+		return val !== undefined ? (!val) : (undefined)
+
 	def js o
 		var l = @left
 		var r = @right
