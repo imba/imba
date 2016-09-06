@@ -7,8 +7,11 @@ if(require.extensions) {
 	var Module = require('module');
 	
 	require.extensions['.imba'] = function (mod,filename){
-		var content = imba.compile(fs.readFileSync(filename,'utf8'),{filename: filename});
-		return mod._compile(content,filename);
+		var content = imba.compile(fs.readFileSync(filename,'utf8'),{
+			filename: filename,
+			target: 'node'
+		});
+		return mod._compile(content.js,filename);
 	};
 	
 	
@@ -37,7 +40,7 @@ if(require.extensions) {
 	};
 } else if(require.registerExtension) {
 	require.registerExtension('.imba',function (content){
-		return imba.compile(content);
+		return imba.compile(content, {target: 'node'}).js;
 	});
 };
 

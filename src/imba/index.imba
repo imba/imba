@@ -6,3 +6,5 @@ require './imba'
 require './scheduler'
 require './dom/index'
 	
+if $node$
+	require '../../register.js'
