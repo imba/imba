@@ -22,14 +22,14 @@ class Imba.TagManagerClass
 		return
 
 	def mount node
-		return unless $web$
+		return if $node$
 		# is this happening inside the runloop?
 		unless @mountable.indexOf(node) >= 0
 			node.@mounted = 2
 			@mountable.push(node)
 
 	def refresh
-		return unless $web$
+		return if $node$
 
 		if @inserts and @mountable:length
 			tryMount

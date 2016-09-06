@@ -23,7 +23,7 @@ class Imba.EventManager
 		self
 
 	def initialize node, events: []
-		@shimFocusEvents = window:netscape && node:onfocusin === undefined
+		@shimFocusEvents = $web$ && window:netscape && node:onfocusin === undefined
 		root = node
 		listeners = []
 		delegators = {}
