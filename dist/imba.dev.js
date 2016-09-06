@@ -45,13 +45,14 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	if (typeof Imba === 'undefined') {
-		__webpack_require__(1);
-		__webpack_require__(2);
-		__webpack_require__(3);
-	} else {
+	if (typeof Imba !== 'undefined') {
 		console.warn(("Imba v" + (Imba.VERSION) + " is already loaded"));
 	};
+
+	__webpack_require__(1);
+	__webpack_require__(2);
+	__webpack_require__(3);
+
 
 
 /***/ },
@@ -59,30 +60,16 @@
 /***/ function(module, exports) {
 
 	
-	var isClient = (typeof window == 'object' && typeof document == 'object');
-
-	if (isClient) {
-		ENV_TARGET = 'web';
-		ENV_WEB = true;
-		ENV_NODE = false;
-		window.global || (window.global = window);
-	} else {
-		ENV_TARGET = 'node';
-		ENV_WEB = false;
-		ENV_NODE = true;
-	};
-
 	/*
 	Imba is the namespace for all runtime related utilities
 	@namespace
 	*/
 
-	Imba = {
-		VERSION: '0.15.0-alpha.7',
-		CLIENT: isClient,
-		SERVER: !isClient,
-		DEBUG: false
-	};
+	Imba = {VERSION: '1.0.0-beta'};
+
+
+		window.global || (window.global = window);
+
 
 	/*
 	True if running in client environment.
@@ -90,7 +77,7 @@
 	*/
 
 	Imba.isClient = function (){
-		return Imba.CLIENT == true;
+		return true;
 	};
 
 	/*
@@ -99,7 +86,7 @@
 	*/
 
 	Imba.isServer = function (){
-		return !Imba.CLIENT;
+		return false;
 	};
 
 	Imba.subclass = function (obj,sup){
@@ -305,15 +292,15 @@
 	var requestAnimationFrame; // very simple raf polyfill
 	var cancelAnimationFrame;
 
-	if (false) {};
 
-	if (true) {
+
+
 		cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitRequestAnimationFrame;
 		requestAnimationFrame = window.requestAnimationFrame;
 		requestAnimationFrame || (requestAnimationFrame = window.webkitRequestAnimationFrame);
 		requestAnimationFrame || (requestAnimationFrame = window.mozRequestAnimationFrame);
 		requestAnimationFrame || (requestAnimationFrame = function(blk) { return setTimeout(blk,1000 / 60); });
-	};
+
 
 	function Ticker(){
 		var self = this;
@@ -786,19 +773,19 @@
 	__webpack_require__(11);
 	__webpack_require__(12);
 
-	if (true) {
+
 		__webpack_require__(13);
-	};
 
-	if (false) {};
 
-	if (true) {
+
+
+
 		Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
 		
 		Imba.Events = new Imba.EventManager(Imba.document(),{events: [
 			'keydown','keyup','keypress',
 			'textInput','input','change','submit',
-			'focusin','focusout','blur',
+			'focusin','focusout','focus','blur',
 			'contextmenu','dblclick',
 			'mousewheel','wheel','scroll',
 			'beforecopy','copy',
@@ -854,7 +841,7 @@
 		
 		Imba.Events.register(['mousedown','mouseup']);
 		Imba.Events.setEnabled(true);
-	};
+
 
 
 /***/ },
@@ -979,9 +966,9 @@
 	*/
 
 	Imba.document = function (){
-		if (true) {
+		
 			return window.document;
-		};
+		
 	};
 
 	/*
@@ -2376,7 +2363,7 @@
 		return;
 	};
 
-	if (true) {
+
 		if (document) { Imba.generateCSSPrefixes() };
 		
 		// Ovverride classList
@@ -2412,7 +2399,7 @@
 				};
 			});
 		};
-	};
+
 
 	Imba.Tag;
 
@@ -3914,6 +3901,7 @@
 		var self = this;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var events = pars.events !== undefined ? pars.events : [];
+		self._shimFocusEvents = window.netscape && node.onfocusin === undefined;
 		self.setRoot(node);
 		self.setListeners([]);
 		self.setDelegators({});
@@ -3988,6 +3976,13 @@
 	Imba.EventManager.prototype.delegate = function (e){
 		var event = Imba.Event.wrap(e);
 		event.process();
+		if (this._shimFocusEvents) {
+			if (e.type == 'focus') {
+				Imba.Event.wrap(e).setType('focusin').process();
+			} else if (e.type == 'blur') {
+				Imba.Event.wrap(e).setType('focusout').process();
+			};
+		};
 		return this;
 	};
 

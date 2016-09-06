@@ -49,12 +49,12 @@ var Imbac =
 	// var imba = require '../imba'
 	var T = __webpack_require__(1);
 	var util = __webpack_require__(2);
-	var lexer = __webpack_require__(3);
-	var rewriter = __webpack_require__(4);
-	var parser = exports.parser = __webpack_require__(6).parser;
-	var ast = __webpack_require__(7);
+	var lexer = __webpack_require__(4);
+	var rewriter = __webpack_require__(5);
+	var parser = exports.parser = __webpack_require__(7).parser;
+	var ast = __webpack_require__(8);
 
-	var ImbaParseError = __webpack_require__(5).ImbaParseError;
+	var ImbaParseError = __webpack_require__(6).ImbaParseError;
 
 	// Instantiate a Lexer for our use here.
 	var lex = exports.lex = new (lexer.Lexer)();
@@ -95,6 +95,7 @@ var Imbac =
 			o._tokens = tokens;
 			return parser.parse(tokens);
 		} catch (err) {
+			err._code = code;
 			if (o.filename) { err._filename = o.filename };
 			throw err;
 		};
@@ -108,32 +109,8 @@ var Imbac =
 			var ast = parse(tokens,o);
 			return ast.compile(o);
 		} catch (err) {
+			err._code = code;
 			if (o.filename) { err._filename = o.filename };
-			tokens || (tokens = o._tokens);
-			
-			if (tokens && (err instanceof ImbaParseError)) {
-				try {
-					var tok = err.start();
-				} catch (e) {
-					throw err;
-				};
-				
-				var locmap = util.locationToLineColMap(code);
-				var lines = code.split(/\n/g);
-				
-				var lc = locmap[tok._loc] || [0,0];
-				var ln = lc[0];
-				var col = lc[1];
-				var line = lines[ln];
-				
-				var message = err.message + ("\n\n" + ln) + ("\n" + (ln + 1) + " " + line) + ("\n" + (ln + 2));
-				var reducer = function(s,c,i) {
-					return s += i == col ? ("^") : ((c == "\t" ? (c) : (" ")));
-				};
-				message += line.split('').reduce(reducer,"");
-				
-				err.message = message;
-			};
 			throw err;
 		};
 	}; exports.compile = compile;
@@ -289,9 +266,9 @@ var Imbac =
 
 /***/ },
 /* 2 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	/* WEBPACK VAR INJECTION */(function(process) {
 	function brace(str){
 		var lines = str.match(/\n/);
 		// what about indentation?
@@ -453,22 +430,215 @@ var Imbac =
 		return this;
 	}; exports.markLineColForTokens = markLineColForTokens;
 
+	function parseArgs(argv,o){
+		var env_;
+		if(o === undefined) o = {};
+		var aliases = o.alias || (o.alias = {});
+		var groups = o.groups || (o.groups = []);
+		var schema = o.schema || {};
+		
+		schema.main = {};
+		
+		var options = {};
+		var explicit = {};
+		argv = argv || process.argv.slice(2);
+		var curr = null;
+		var i = 0;
+		var m;
+		
+		while ((i < argv.length)){
+			var arg = argv[i];
+			i++;
+			
+			if (m = arg.match(/^\-([a-zA-Z]+)$/)) {
+				curr = null;
+				var chars = m[1].split('');
+				
+				for (var i1 = 0, ary = Imba.iterable(chars), len = ary.length, item; i1 < len; i1++) {
+					// console.log "parsing {item} at {i}",aliases
+					item = ary[i1];
+					var key = aliases[item] || item;
+					chars[i1] = key;
+					options[key] = true;
+				};
+				
+				if (chars.length == 1) {
+					curr = chars;
+				};
+			} else if (m = arg.match(/^\-\-([a-z0-9\-\_A-Z]+)$/)) {
+				var val = true;
+				key = m[1];
+				
+				if (key.indexOf('no-') == 0) {
+					key = key.substr(3);
+					val = false;
+				};
+				
+				for (var j = 0, ary = Imba.iterable(groups), len = ary.length, g; j < len; j++) {
+					g = ary[j];
+					if (key.substr(0,g.length) == g) {
+						console.log('should be part of group');
+					};
+				};
+				
+				key = dashToCamelCase(key);
+				
+				options[key] = val;
+				curr = key;
+			} else {
+				if (!(curr && schema[curr])) {
+					curr = 'main';
+				};
+				
+				if (arg.match(/^\d+$/)) {
+					arg = parseInt(arg);
+				};
+				
+				val = options[curr];
+				if (val == true || val == false) {
+					options[curr] = arg;
+				} else if ((typeof val=='string'||val instanceof String) || (typeof val=='number'||val instanceof Number)) {
+					options[curr] = [val].concat(arg);
+				} else if (val instanceof Array) {
+					val.push(arg);
+				} else {
+					options[curr] = arg;
+				};
+			};
+		};
+		
+		
+		if ((typeof (env_ = options.env)=='string'||env_ instanceof String)) {
+			options[("ENV_" + (options.env))] = true;
+		};
+		
+		return options;
+	}; exports.parseArgs = parseArgs;
+
+	var ansi = exports.ansi = {
+		bold: function(text) { return '\u001b[1m' + text + '\u001b[22m'; },
+		red: function(text) { return '\u001b[31m' + text + '\u001b[39m'; },
+		green: function(text) { return '\u001b[32m' + text + '\u001b[39m'; },
+		gray: function(text) { return '\u001b[90m' + text + '\u001b[39m'; },
+		white: function(text) { return '\u001b[37m' + text + '\u001b[39m'; }
+	};
+
+
+
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
 /* 3 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+
+	var process = module.exports = {};
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+
+	function cleanUpNextTick() {
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = setTimeout(cleanUpNextTick);
+	    draining = true;
+
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    clearTimeout(timeout);
+	}
+
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        setTimeout(drainQueue, 0);
+	    }
+	};
+
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
+
+/***/ },
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var T = __webpack_require__(1);
 	var Token = T.Token;
 
-	var rw = __webpack_require__(4);
+	var rw = __webpack_require__(5);
 	var Rewriter = rw.Rewriter;
 	var INVERSES = rw.INVERSES;
 
 	var K = 0;
 
-	var ERR = __webpack_require__(5);
+	var ERR = __webpack_require__(6);
 
 	// Constants
 	// ---------
@@ -1338,7 +1508,7 @@ var Imbac =
 			// FIXME loc of key includes colon
 			// moveCaret(id:length)
 			// console.log "ok"
-			if (true) {
+			
 				// console.log "got here? {match}"
 				this.token(typ,id,id.length);
 				this.moveCaret(id.length);
@@ -1346,7 +1516,7 @@ var Imbac =
 				this.moveCaret(-id.length);
 				// moveCaret(match[3]:length)
 				return match[0].length;
-			};
+			
 			
 			// moveCaret(match[2]:length)
 			// return 0
@@ -2675,7 +2845,7 @@ var Imbac =
 
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3432,10 +3602,12 @@ var Imbac =
 
 
 /***/ },
-/* 5 */
-/***/ function(module, exports) {
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
 
 	// create separate error-types with all the logic
+
+	var util = __webpack_require__(2);
 
 	function ImbaParseError(e,o){
 		this.error = e;
@@ -3489,16 +3661,66 @@ var Imbac =
 	ImbaParseError.prototype.toJSON = function (){
 		var o = this._options;
 		var tok = this.start();
-		// var tok = o:tokens and o:tokens[o:pos - 1]
-		// var loc = tok and [tok.@loc,tok.@loc + (tok.@len or tok.@value:length)] or [0,0]
-		// , col: tok.@col, line: tok.@line
-		// get the token itself?
 		return {warn: true,message: this.desc(),loc: this.loc()};
+	};
+
+	ImbaParseError.prototype.excerpt = function (pars){
+		
+		if(!pars||pars.constructor !== Object) pars = {};
+		var gutter = pars.gutter !== undefined ? pars.gutter : true;
+		var colors = pars.colors !== undefined ? pars.colors : false;
+		var details = pars.details !== undefined ? pars.details : true;
+		var code = this._code;
+		var loc = this.loc();
+		var lines = code.split(/\n/g);
+		var locmap = util.locationToLineColMap(code);
+		var lc = locmap[loc[0]] || [0,0];
+		var ln = lc[0];
+		var col = lc[1];
+		var line = lines[ln];
+		
+		var ln0 = Math.max(0,ln - 2);
+		var ln1 = Math.min(ln0 + 5,lines.length);
+		var lni = ln - ln0;
+		var l = ln0;
+		
+		var res = [];while (l < ln1){
+			res.push((line = lines[l++]));
+		};var out = res;
+		
+		if (gutter) {
+			out = out.map(function(line,i) {
+				var prefix = ("" + (ln0 + i + 1));
+				while (prefix.length < String(ln1).length){
+					prefix = (" " + prefix);
+				};
+				if (i == lni) {
+					return ("   -> " + prefix + " | " + line);
+				} else {
+					return ("      " + prefix + " | " + line);
+				};
+			});
+		};
+		
+		if (colors) {
+			out[lni] = util.ansi.red(util.ansi.bold(out[lni]));
+		};
+		
+		if (details) {
+			out.unshift(this.message);
+		};
+		
+		return out.join('\n');
+	};
+
+	ImbaParseError.prototype.prettyMessage = function (){
+		var excerpt;
+		return excerpt = this.excerpt();
 	};
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* parser generated by jison-fork */
@@ -4405,16 +4627,16 @@ var Imbac =
 	}
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// TODO Create Expression - make all expressions inherit from these?
+	/* WEBPACK VAR INJECTION */(function(process) {// TODO Create Expression - make all expressions inherit from these?
 
 	var helpers = __webpack_require__(2);
 
-	var ImbaParseError = __webpack_require__(5).ImbaParseError;
+	var ImbaParseError = __webpack_require__(6).ImbaParseError;
 	var Token = __webpack_require__(1).Token;
-	var SourceMap = __webpack_require__(8).SourceMap;
+	var SourceMap = __webpack_require__(9).SourceMap;
 
 	var AST = exports.AST = {};
 
@@ -4844,11 +5066,30 @@ var Imbac =
 	};
 
 	Stack.prototype.env = function (key){
+		var e;
 		var val = this._options[("ENV_" + key)];
 		if (val != undefined) { return val };
 		
 		if (this.platform() && Imba.indexOf(key,['WEB','NODE','WEBWORKER']) >= 0) {
 			return this.platform().toUpperCase() == key;
+		};
+		
+		// console.log 'lookup env var',key,@options:env
+		
+		if (e = this._options.env) {
+			if (e.hasOwnProperty(key)) {
+				return e[key];
+			} else if (e.hasOwnProperty(key.toLowerCase())) {
+				return e[key.toLowerCase()];
+			};
+		};
+		
+		if (process.env) {
+			val = process.env[key.toUpperCase()];
+			if (val != undefined) {
+				return val;
+			};
+			return null;
 		};
 		
 		return undefined;
@@ -4956,6 +5197,10 @@ var Imbac =
 
 	Stack.prototype.toString = function (){
 		return ("Stack(" + this._nodes.join(" -> ") + ")");
+	};
+
+	Stack.prototype.isAnalyzing = function (){
+		return this._analyzing;
 	};
 
 	Stack.prototype.scoping = function (){
@@ -9873,11 +10118,11 @@ var Imbac =
 	Identifier.prototype.setter = function (){
 		// console.log "Identifier#setter"
 		var tok;
-		return this._setter || (this._setter = (true) && (
+		return this._setter || (this._setter = 
 			tok = new Token('IDENTIFIER',sym__('set-' + this._value),this._value._loc || -1),
 			new Identifier(tok)
 			// Identifier.new("set-{symbol}")
-		));
+		);
 	};
 
 	Identifier.prototype.toString = function (){
@@ -10327,6 +10572,8 @@ var Imbac =
 	If.prototype.setAlt = function(v){ this._alt = v; return this; };
 	If.prototype.scope = function(v){ return this._scope; }
 	If.prototype.setScope = function(v){ this._scope = v; return this; };
+	If.prototype.prevIf = function(v){ return this._prevIf; }
+	If.prototype.setPrevIf = function(v){ this._prevIf = v; return this; };
 
 	If.ternary = function (cond,body,alt){
 		// prefer to compile it this way as well
@@ -10340,12 +10587,15 @@ var Imbac =
 			this.alt().addElse(add);
 		} else {
 			this.setAlt(add);
+			if (add instanceof If) {
+				add.setPrevIf(this);
+			};
 		};
 		return this;
 	};
 
 	If.prototype.loc = function (){
-		return [this._type ? (this._type._loc) : (0),this.body().loc()[1]];
+		return this._loc || (this._loc = [this._type ? (this._type._loc) : (0),this.body().loc()[1]]);
 	};
 
 	If.prototype.invert = function (){
@@ -10362,14 +10612,15 @@ var Imbac =
 		if (this._scope) { this._scope.visit() };
 		if (this.test()) { this.test().traverse() };
 		
-		this._pretest = truthy__(this.test());
-		
-		if (this._pretest === true) {
-			alt = this._alt = null;
-		} else if (this._pretest === false) {
-			// drop the body
-			// possibly skip the if all together
-			this.setBody(null);
+		if (!this.stack().isAnalyzing()) {
+			this._pretest = truthy__(this.test());
+			
+			if (this._pretest === true) {
+				alt = this._alt = null;
+			} else if (this._pretest === false) {
+				this.loc(); // cache location before removing body
+				this.setBody(null);
+			};
 		};
 		
 		if (this.body()) { this.body().traverse() };
@@ -10388,21 +10639,27 @@ var Imbac =
 	};
 
 
-	If.prototype.js = function (o){
+	If.prototype.js = function (o,opts){
+		var v_;
 		var body = this.body();
 		// would possibly want to look up / out
 		var brace = {braces: true,indent: true};
+		
+		if (this._pretest === true) {
+			// what if it is inside expression?
+			return body ? (body.c({braces: !(!(this.prevIf()))})) : ('true');
+		} else if (this._pretest === false) {
+			if (this.alt() instanceof If) { (this.alt().setPrevIf(v_ = this.prevIf()),v_) };
+			return this.alt() ? (this.alt().c({braces: !(!(this.prevIf()))})) : ('');
+		};
 		
 		var cond = this.test().c({expression: true}); // the condition is always an expression
 		
 		if (o.isExpression()) {
 			var code = body ? (body.c()) : ('true'); // (braces: yes)
 			code = '(' + code + ')'; // if code.indexOf(',') >= 0
-			// is expression!
+			
 			if (this.alt()) {
-				// console.log "type of ternary {test}"
-				// be safe - wrap condition as well
-				// ask for parens
 				return ("" + cond + " ? " + code + " : (" + (this.alt().c()) + ")");
 			} else {
 				// again - we need a better way to decide what needs parens
@@ -12317,19 +12574,31 @@ var Imbac =
 	Imba.subclass(EnvFlag,ValueNode);
 	exports.EnvFlag = EnvFlag; // export class 
 	EnvFlag.prototype.raw = function (){
-		return STACK.env("" + this._value);
+		return this._raw == null ? (this._raw = STACK.env("" + this._value)) : (this._raw);
 	};
 
 	EnvFlag.prototype.isTruthy = function (){
 		var val = this.raw();
-		if (val != undefined) { return !!val };
+		if (val !== undefined) { return !!val };
 		return undefined;
+	};
+
+	EnvFlag.prototype.loc = function (){
+		return [0,0];
 	};
 
 	EnvFlag.prototype.c = function (){
 		var val = this.raw();
-		if (val != undefined) {
-			return ("" + val);
+		if (val !== undefined) {
+			if ((typeof val=='string'||val instanceof String)) {
+				if (val.match(/^\d+(\.\d+)?$/)) {
+					return parseFloat(val);
+				} else {
+					return ("'" + val + "'");
+				};
+			} else {
+				return ("" + val);
+			};
 		} else {
 			return ("ENV_" + (this._value));
 		};
@@ -13585,13 +13854,14 @@ var Imbac =
 
 
 
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var path = __webpack_require__(9);
+	var path = __webpack_require__(10);
 	var util = __webpack_require__(2);
 
 	function SourceMap(source){
@@ -13712,13 +13982,13 @@ var Imbac =
 		};
 		
 		
-		var rel = path.relative(path.dirname(this.targetPath()),this.sourcePath());
+		var rel = this.targetPath() && path.relative(path.dirname(this.targetPath()),this.sourcePath());
 		
 		var map = {
 			version: 3,
 			file: this.sourceName().replace(/\.imba/,'.js') || '',
 			sourceRoot: this.options().sourceRoot || '',
-			sources: [rel],
+			sources: [rel || this.sourcePath()],
 			sourcesContent: [this.sourceCode()],
 			names: [],
 			mappings: buffer
@@ -13765,7 +14035,7 @@ var Imbac =
 
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -13993,104 +14263,7 @@ var Imbac =
 	    }
 	;
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10)))
-
-/***/ },
-/* 10 */
-/***/ function(module, exports) {
-
-	// shim for using process in browser
-
-	var process = module.exports = {};
-	var queue = [];
-	var draining = false;
-	var currentQueue;
-	var queueIndex = -1;
-
-	function cleanUpNextTick() {
-	    draining = false;
-	    if (currentQueue.length) {
-	        queue = currentQueue.concat(queue);
-	    } else {
-	        queueIndex = -1;
-	    }
-	    if (queue.length) {
-	        drainQueue();
-	    }
-	}
-
-	function drainQueue() {
-	    if (draining) {
-	        return;
-	    }
-	    var timeout = setTimeout(cleanUpNextTick);
-	    draining = true;
-
-	    var len = queue.length;
-	    while(len) {
-	        currentQueue = queue;
-	        queue = [];
-	        while (++queueIndex < len) {
-	            if (currentQueue) {
-	                currentQueue[queueIndex].run();
-	            }
-	        }
-	        queueIndex = -1;
-	        len = queue.length;
-	    }
-	    currentQueue = null;
-	    draining = false;
-	    clearTimeout(timeout);
-	}
-
-	process.nextTick = function (fun) {
-	    var args = new Array(arguments.length - 1);
-	    if (arguments.length > 1) {
-	        for (var i = 1; i < arguments.length; i++) {
-	            args[i - 1] = arguments[i];
-	        }
-	    }
-	    queue.push(new Item(fun, args));
-	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
-	    }
-	};
-
-	// v8 likes predictible objects
-	function Item(fun, array) {
-	    this.fun = fun;
-	    this.array = array;
-	}
-	Item.prototype.run = function () {
-	    this.fun.apply(null, this.array);
-	};
-	process.title = 'browser';
-	process.browser = true;
-	process.env = {};
-	process.argv = [];
-	process.version = ''; // empty string to avoid regexp issues
-	process.versions = {};
-
-	function noop() {}
-
-	process.on = noop;
-	process.addListener = noop;
-	process.once = noop;
-	process.off = noop;
-	process.removeListener = noop;
-	process.removeAllListeners = noop;
-	process.emit = noop;
-
-	process.binding = function (name) {
-	    throw new Error('process.binding is not supported');
-	};
-
-	process.cwd = function () { return '/' };
-	process.chdir = function (dir) {
-	    throw new Error('process.chdir is not supported');
-	};
-	process.umask = function() { return 0; };
-
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }
 /******/ ]);

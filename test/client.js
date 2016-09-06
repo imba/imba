@@ -76,12 +76,12 @@
 	__webpack_require__(41);
 	__webpack_require__(42);
 
-	if (true) {
+
 		__webpack_require__(43);
 		__webpack_require__(45);
 		__webpack_require__(46);
 		__webpack_require__(47);
-	};
+
 
 	// externs;
 
@@ -113,13 +113,14 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	if (typeof Imba === 'undefined') {
-		__webpack_require__(4);
-		__webpack_require__(5);
-		__webpack_require__(6);
-	} else {
+	if (typeof Imba !== 'undefined') {
 		console.warn(("Imba v" + (Imba.VERSION) + " is already loaded"));
 	};
+
+	__webpack_require__(4);
+	__webpack_require__(5);
+	__webpack_require__(6);
+
 
 
 /***/ },
@@ -127,30 +128,16 @@
 /***/ function(module, exports) {
 
 	
-	var isClient = (typeof window == 'object' && typeof document == 'object');
-
-	if (isClient) {
-		ENV_TARGET = 'web';
-		ENV_WEB = true;
-		ENV_NODE = false;
-		window.global || (window.global = window);
-	} else {
-		ENV_TARGET = 'node';
-		ENV_WEB = false;
-		ENV_NODE = true;
-	};
-
 	/*
 	Imba is the namespace for all runtime related utilities
 	@namespace
 	*/
 
-	Imba = {
-		VERSION: '0.15.0-alpha.7',
-		CLIENT: isClient,
-		SERVER: !isClient,
-		DEBUG: false
-	};
+	Imba = {VERSION: '1.0.0-beta'};
+
+
+		window.global || (window.global = window);
+
 
 	/*
 	True if running in client environment.
@@ -158,7 +145,7 @@
 	*/
 
 	Imba.isClient = function (){
-		return Imba.CLIENT == true;
+		return true;
 	};
 
 	/*
@@ -167,7 +154,7 @@
 	*/
 
 	Imba.isServer = function (){
-		return !Imba.CLIENT;
+		return false;
 	};
 
 	Imba.subclass = function (obj,sup){
@@ -373,15 +360,15 @@
 	var requestAnimationFrame; // very simple raf polyfill
 	var cancelAnimationFrame;
 
-	if (false) {};
 
-	if (true) {
+
+
 		cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitRequestAnimationFrame;
 		requestAnimationFrame = window.requestAnimationFrame;
 		requestAnimationFrame || (requestAnimationFrame = window.webkitRequestAnimationFrame);
 		requestAnimationFrame || (requestAnimationFrame = window.mozRequestAnimationFrame);
 		requestAnimationFrame || (requestAnimationFrame = function(blk) { return setTimeout(blk,1000 / 60); });
-	};
+
 
 	function Ticker(){
 		var self = this;
@@ -854,19 +841,19 @@
 	__webpack_require__(14);
 	__webpack_require__(15);
 
-	if (true) {
+
 		__webpack_require__(16);
-	};
 
-	if (false) {};
 
-	if (true) {
+
+
+
 		Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
 		
 		Imba.Events = new Imba.EventManager(Imba.document(),{events: [
 			'keydown','keyup','keypress',
 			'textInput','input','change','submit',
-			'focusin','focusout','blur',
+			'focusin','focusout','focus','blur',
 			'contextmenu','dblclick',
 			'mousewheel','wheel','scroll',
 			'beforecopy','copy',
@@ -922,7 +909,7 @@
 		
 		Imba.Events.register(['mousedown','mouseup']);
 		Imba.Events.setEnabled(true);
-	};
+
 
 
 /***/ },
@@ -1047,9 +1034,9 @@
 	*/
 
 	Imba.document = function (){
-		if (true) {
+		
 			return window.document;
-		};
+		
 	};
 
 	/*
@@ -2444,7 +2431,7 @@
 		return;
 	};
 
-	if (true) {
+
 		if (document) { Imba.generateCSSPrefixes() };
 		
 		// Ovverride classList
@@ -2480,7 +2467,7 @@
 				};
 			});
 		};
-	};
+
 
 	Imba.Tag;
 
@@ -3982,6 +3969,7 @@
 		var self = this;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var events = pars.events !== undefined ? pars.events : [];
+		self._shimFocusEvents = window.netscape && node.onfocusin === undefined;
 		self.setRoot(node);
 		self.setListeners([]);
 		self.setDelegators({});
@@ -4056,6 +4044,13 @@
 	Imba.EventManager.prototype.delegate = function (e){
 		var event = Imba.Event.wrap(e);
 		event.process();
+		if (this._shimFocusEvents) {
+			if (e.type == 'focus') {
+				Imba.Event.wrap(e).setType('focusin').process();
+			} else if (e.type == 'blur') {
+				Imba.Event.wrap(e).setType('focusout').process();
+			};
+		};
 		return this;
 	};
 
@@ -5273,12 +5268,12 @@
 			test("inside statement",function() {
 				var value_;
 				obj.setValue(null);
-				if ((value_ = obj.value()) == null) { if (1) {
+				if ((value_ = obj.value()) == null) { 
 					for (var i = 0, len = ary.length, res = []; i < len; i++) {
 						res.push(ary[i] * 2);
 					};
 					var ret = (obj.setValue(res),res);
-				} } else {
+				 } else {
 					ret = value_
 				};
 				
@@ -6090,11 +6085,11 @@
 		test("allow in expression",function() {
 			
 			function x(){
-				if (true) {
+				
 					var a = 1;
 					var b = 2;
 					return 3;
-				};
+				
 			};
 			
 			try {
@@ -6127,7 +6122,7 @@
 		return test("allow implicit returns from var declaration",function() {
 			// var hey, ho
 			
-			var hey = (10) && (5);
+			var hey = 5;
 			var blank = function() { return true; };
 			
 			var fn = function(a) {
@@ -6713,7 +6708,7 @@
 		};
 		
 		SyntaxReturn.prototype.d = function (){
-			if (true) { return };
+			return;
 			return 1;
 		};
 		
@@ -7132,12 +7127,12 @@
 		
 		eq(i,1);
 		
-		if (true) {
+		
 			for (var i2 = 0, len_ = ary.length; i2 < len_; i2++) {
 				i2;
 			};
 			eq(i,1);
-		};
+		
 		
 		for (var r = [], j = 0, len_ = ary.length; j < len_; j++) {
 			r.push(ary[j]);
@@ -7161,16 +7156,16 @@
 			this.f();
 		};
 		
-		if (true) {
+		
 			var a3 = 4;
 			var b3 = 4;
 			var i3 = 0;
 			var len1 = 10;
 			
-			if (true) {
+			
 				var a4 = 5;
 				var b4 = 5;
-			};
+			
 			
 			for (var e = [], i4 = 0, len_ = ary.length; i4 < len_; i4++) {
 				eq(a3,4);
@@ -7179,14 +7174,14 @@
 			
 			eq(a3,4);
 			eq(i3,0);
-		};
 		
-		if (1) {
+		
+		
 			for (var j = 0, len_ = ary.length; j < len_; j++) {
 				true;
 			};
 			var z = 4;
-		};
+		
 		
 		eq(v,1);
 		eq(i,1);
@@ -7245,10 +7240,10 @@
 		
 		test("let",function() {
 			var a = 0;
-			if (true) {
+			
 				var a1 = 1;
 				eq(a1,1);
-			};
+			
 			return eq(a,0);
 		});
 		
@@ -8396,17 +8391,17 @@
 		
 		test("style attribute",function() {
 			var el = _T.DIV().setStyle('display: block;').end();
-			if (true) {
+			
 				return eq(el.dom().getAttribute('style'),'display: block;');
-			};
+			
 		});
 		
 		test("class",function() {
 			var el = CustomClass.build().end();
-			if (true) {
+			
 				eq(el.dom().className,'one two');
 				return document.body.appendChild(el.dom());
-			};
+			
 		});
 		
 		// test "namespaced attributes" do
@@ -8885,9 +8880,9 @@
 				(__.F = __.F || _T.DIV().flag('list')).setContent(self.list(),3).end(),
 				(__.G = __.G || _T.DIV().flag('item')).setContent(self.tast(),3).end(),
 				(__.H = __.H || _T.DIV().flag('if')).setContent([
-					(true) ? (
+					
 						self.list()
-					) : void(0)
+				
 				],1).end(),
 				
 				(__.I = __.I || _T.DIV().flag('if')).setContent([
