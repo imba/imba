@@ -30,7 +30,7 @@ function pkg(options){
 module.exports = [pkg({
 	entry: "./src/imba/index.imba",
 	output: { filename: "./dist/imba.dev.js" },
-	target: 'web',
+	target: 'web', debug: true,
 	node: {fs: "empty", process: "empty", global: false}
 }),pkg({
 	entry: "./src/imba/index.imba",
@@ -42,17 +42,6 @@ module.exports = [pkg({
 	output: { filename: "./dist/imba.min.js" },
 	target: 'web',
 	node: {fs: "empty", process: "empty", global: false},
-	plugins: [minify]
-}),pkg({
-	entry: "./src/compiler/compiler.imba",
-	output: { filename: "./dist/imbac.dev.js", library: "Imbac" },
-	target: 'web',
-	node: {fs: "empty"}
-}),pkg({
-	entry: "./src/compiler/compiler.imba",
-	output: { filename: "./dist/imbac.js", library: "Imbac" },
-	target: 'web',
-	node: {fs: "empty"},
 	plugins: [minify]
 }),pkg({
 	entry: "./test/index.imba",
