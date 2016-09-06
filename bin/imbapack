@@ -17,7 +17,10 @@ if(require.main !== module){
 		},
 		resolve: {
 			extensions: ["", ".imba", ".webpack.js", ".web.js", ".js",".css"],
-			alias: { imba$: dir + "/src/imba/index.imba" }
+			alias: {
+				imba$: dir + "/src/imba/index.imba",
+				imba: dir
+			}
 		}
 	}
 
@@ -41,6 +44,7 @@ if(require.main !== module){
 		// Set correct alias
 		r.alias = r.alias || {}
 		r.alias.imba$ = dir + "src/imba/index.imba"
+		r.alias.imba = dir
 
 		return obj;
 	}
