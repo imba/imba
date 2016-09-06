@@ -22,6 +22,7 @@ require './syntax/blockparam'
 require './syntax/modules'
 require './syntax/switch'
 require './syntax/assignment'
+require './syntax/conditionals'
 
 require './syntax/selectors'
 require './syntax/formatting'

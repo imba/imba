@@ -253,6 +253,8 @@ var INDEXABLE = [
 	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'IDREF', 'ARGUMENTS','}','TAG_TYPE'
 ]
 
+var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:']
+
 var GLOBAL_IDENTIFIERS = ['global','exports']
 
 # Tokens that, when immediately preceding a `WHEN`, indicate that the `WHEN`
@@ -845,23 +847,10 @@ export class Lexer
 			var id = match[1]
 			var typ = 'KEY'
 
-			# FIXME loc of key includes colon
-			# moveCaret(id:length)
-			# console.log "ok"
-			if true
-				# console.log "got here? {match}"
-				token(typ, id, id:length)
-				moveCaret(id:length)
-				token ':', ':', match[3]:length
-				moveCaret(-id:length)
-				# moveCaret(match[3]:length)
-				return match[0]:length
-
-			# moveCaret(match[2]:length)
-			# return 0
-			# console.log match[3]:length
-			token typ, id, match[0]:length
-			token ':', ':',1
+			token(typ, id, id:length)
+			moveCaret(id:length)
+			token ':', ':', match[3]:length
+			moveCaret(-id:length)
 			return match[0]:length
 
 		unless match = IDENTIFIER.exec(@chunk)
@@ -1079,13 +1068,11 @@ export class Lexer
 		
 		if colon
 			# console.log 'colon',colon,typ
-			if @lastTyp != '?' and typ == 'IDENTIFIER'
+			if typ == 'IDENTIFIER' and NOT_KEY_AFTER.indexOf(@lastTyp) == -1
 				typ = 'KEY'
 
 			token(typ, id, idlen)
 			moveCaret(idlen)
-			# console.log "add colon?"
-			# should have traced ternary - no?
 			token(':', ':',colon:length)
 			moveCaret(-idlen)
 		else

@@ -27,7 +27,7 @@ describe "Syntax - Statements" do
 		# when using statements as arguments, they might be
 		# moved up into the statement and cache, but it needs
 		# to happen in the expected order
-		local class Obj
+		class Obj
 			def self.obj do return self.new
 			def test arg do return arg
 
