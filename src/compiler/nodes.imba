@@ -323,6 +323,14 @@ export class Stack
 		if platform and key in ['WEB','NODE','WEBWORKER']
 			return platform.toUpperCase == key
 
+		# console.log 'lookup env var',key,@options:env
+
+		if var e = @options:env
+			if e.hasOwnProperty(key)
+				return e[key]
+			elif e.hasOwnProperty(key.toLowerCase)
+				return e[key.toLowerCase]
+
 		if process:env
 			val = process:env[key.toUpperCase]
 			if val != undefined
@@ -4784,6 +4792,7 @@ export class If < ControlFlow
 	prop body
 	prop alt
 	prop scope
+	prop prevIf
 
 	def self.ternary cond, body, alt
 		# prefer to compile it this way as well
@@ -4796,6 +4805,8 @@ export class If < ControlFlow
 			alt.addElse(add)
 		else
 			self.alt = add
+			if add isa If
+				add.prevIf = self
 		self
 
 	def initialize cond, body, o = {}
@@ -4828,6 +4839,7 @@ export class If < ControlFlow
 
 			if @pretest === true
 				alt = @alt = null
+
 			elif @pretest === false
 				loc # cache location before removing body
 				body = null
@@ -4846,21 +4858,26 @@ export class If < ControlFlow
 		self
 
 
-	def js o
+	def js o,opts
 		var body = body
 		# would possibly want to look up / out
 		var brace = braces: yes, indent: yes
+
+		if @pretest === true
+			# what if it is inside expression?
+			return body ? body.c(braces: !!prevIf) : 'true'
+
+		elif @pretest === false
+			alt.prevIf = prevIf if alt isa If
+			return alt ? alt.c(braces: !!prevIf) : ''
 
 		var cond = test.c(expression: yes) # the condition is always an expression
 
 		if o.isExpression
 			var code = body ? body.c : 'true' # (braces: yes)
 			code = '(' + code + ')' # if code.indexOf(',') >= 0
-			# is expression!
+
 			if alt
-				# console.log "type of ternary {test}"
-				# be safe - wrap condition as well
-				# ask for parens
 				return "{cond} ? {code} : ({alt.c})"
 			else
 				# again - we need a better way to decide what needs parens

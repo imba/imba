@@ -1,40 +1,26 @@
 
-var isClient = (typeof window == 'object' and typeof document == 'object')
-
-if isClient
-	ENV_TARGET = 'web'
-	ENV_WEB = true
-	ENV_NODE = false
-	window:global ||= window
-else
-	ENV_TARGET = 'node'
-	ENV_WEB = false
-	ENV_NODE = true
-
 ###
 Imba is the namespace for all runtime related utilities
 @namespace
 ###
-Imba = {
-	VERSION: '0.15.0-alpha.7'
-	CLIENT: isClient
-	SERVER: !isClient
-	DEBUG: no
-}
+Imba = {VERSION: '0.15.0-alpha.7'}
+
+if $web$
+	window:global ||= window
 
 ###
 True if running in client environment.
 @return {bool}
 ###
 def Imba.isClient
-	Imba.CLIENT == yes
+	return $web$
 
 ###
 True if running in server environment.
 @return {bool}
 ###
 def Imba.isServer
-	!Imba.CLIENT
+	return $node$
 
 def Imba.subclass obj, sup
 	for k,v of sup
