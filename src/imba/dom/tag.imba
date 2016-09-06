@@ -679,6 +679,7 @@ class Imba.Tag
 	@return {Imba.Selector}
 	###
 	def children sel
+		# DEPRECATE this is overridden by reconciler
 		var nodes = Imba.Selector.new(null, self, @dom:children)
 		sel ? nodes.filter(sel) : nodes
 
@@ -687,6 +688,7 @@ class Imba.Tag
 	@return {Imba.Selector}
 	###
 	def siblings sel
+		# DEPRECATE extract into imba-tag-helpers
 		return [] unless var par = parent # FIXME
 		var ary = dom:parentNode:children
 		var nodes = Imba.Selector.new(null, self, ary)
@@ -697,6 +699,7 @@ class Imba.Tag
 	@return {Array}
 	###
 	def path sel
+		# DEPRECATE extract into imba-tag-helpers
 		var node = self
 		var nodes = []
 		sel = sel.query if sel and sel:query
@@ -711,6 +714,7 @@ class Imba.Tag
 	@return {Array}
 	###
 	def parents sel
+		# DEPRECATE extract into imba-tag-helpers
 		var par = parent
 		par ? par.path(sel) : []
 
@@ -718,6 +722,7 @@ class Imba.Tag
 	Get the immediately following sibling of node.
 	###
 	def next sel
+		# DEPRECATE extract into imba-tag-helpers
 		if sel
 			var el = self
 			while el = el.next
@@ -729,6 +734,7 @@ class Imba.Tag
 	Get the immediately preceeding sibling of node.
 	###
 	def prev sel
+		# DEPRECATE extract into imba-tag-helpers
 		if sel
 			var el = self
 			while el = el.prev
@@ -741,6 +747,7 @@ class Imba.Tag
 	@return {Imba.Selector}
 	###
 	def find sel
+		# DEPRECATE extract into imba-tag-helpers
 		Imba.Selector.new(sel,self)
 
 	###
@@ -749,6 +756,7 @@ class Imba.Tag
 	@return {Imba.Tag}
 	###
 	def first sel
+		# DEPRECATE extract into imba-tag-helpers
 		sel ? find(sel).first : tag(dom:firstElementChild)
 
 	###
@@ -761,6 +769,7 @@ class Imba.Tag
 	@return {Imba.Tag}
 	###
 	def last sel
+		# DEPRECATE extract into imba-tag-helpers
 		sel ? find(sel).last : tag(dom:lastElementChild)
 
 	###
@@ -781,6 +790,7 @@ class Imba.Tag
 	@return {Imba.Tag}
 	###
 	def closest sel
+		# FIXME use native implementation if supported
 		return parent unless sel # should return self?!
 		var node = self
 		sel = sel.query if sel:query
@@ -1104,9 +1114,9 @@ def Imba.getTagForDom dom
 
 _T = tag$ = Imba.TAGS
 t$ = Imba:tag
-tc$ = Imba:tagWithFlags
-ti$ = Imba:tagWithId
-tic$ = Imba:tagWithIdAndFlags
+tc$ = Imba:tagWithFlags # FIXME deprecated
+ti$ = Imba:tagWithId # FIXME deprecated
+tic$ = Imba:tagWithIdAndFlags # FIXME deprecated
 id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom
 
