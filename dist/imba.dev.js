@@ -1803,6 +1803,7 @@
 		*/
 
 	Imba.Tag.prototype.children = function (sel){
+		// DEPRECATE this is overridden by reconciler
 		var nodes = new Imba.Selector(null,this,this._dom.children);
 		return sel ? (nodes.filter(sel)) : (nodes);
 	};
@@ -1813,6 +1814,7 @@
 		*/
 
 	Imba.Tag.prototype.siblings = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		var self = this, par;
 		if (!(par = self.parent())) { return [] }; // FIXME
 		var ary = self.dom().parentNode.children;
@@ -1826,6 +1828,7 @@
 		*/
 
 	Imba.Tag.prototype.path = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		var node = this;
 		var nodes = [];
 		if (sel && sel.query) { sel = sel.query() };
@@ -1843,6 +1846,7 @@
 		*/
 
 	Imba.Tag.prototype.parents = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		var par = this.parent();
 		return par ? (par.path(sel)) : ([]);
 	};
@@ -1852,6 +1856,7 @@
 		*/
 
 	Imba.Tag.prototype.next = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		if (sel) {
 			var el = this;
 			while (el = el.next()){
@@ -1867,6 +1872,7 @@
 		*/
 
 	Imba.Tag.prototype.prev = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		if (sel) {
 			var el = this;
 			while (el = el.prev()){
@@ -1883,6 +1889,7 @@
 		*/
 
 	Imba.Tag.prototype.find = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		return new Imba.Selector(sel,this);
 	};
 
@@ -1893,6 +1900,7 @@
 		*/
 
 	Imba.Tag.prototype.first = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
 	};
 
@@ -1907,6 +1915,7 @@
 		*/
 
 	Imba.Tag.prototype.last = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
 	};
 
@@ -1934,6 +1943,7 @@
 		*/
 
 	Imba.Tag.prototype.closest = function (sel){
+		// FIXME use native implementation if supported
 		if (!sel) { return this.parent() }; // should return self?!
 		var node = this;
 		if (sel.query) { sel = sel.query() };
@@ -2339,9 +2349,9 @@
 
 	_T = tag$ = Imba.TAGS;
 	t$ = Imba.tag;
-	tc$ = Imba.tagWithFlags;
-	ti$ = Imba.tagWithId;
-	tic$ = Imba.tagWithIdAndFlags;
+	tc$ = Imba.tagWithFlags; // FIXME deprecated
+	ti$ = Imba.tagWithId; // FIXME deprecated
+	tic$ = Imba.tagWithIdAndFlags; // FIXME deprecated
 	id$ = Imba.getTagSingleton;
 	tag$wrap = Imba.getTagForDom;
 

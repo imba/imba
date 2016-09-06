@@ -68,19 +68,20 @@
 	__webpack_require__(34);
 	__webpack_require__(36);
 	__webpack_require__(37);
-
 	__webpack_require__(38);
+
 	__webpack_require__(39);
 	__webpack_require__(40);
-
 	__webpack_require__(41);
+
 	__webpack_require__(42);
-
-
 	__webpack_require__(43);
-	__webpack_require__(45);
+
+
+	__webpack_require__(44);
 	__webpack_require__(46);
 	__webpack_require__(47);
+	__webpack_require__(48);
 
 
 	// externs;
@@ -1871,6 +1872,7 @@
 		*/
 
 	Imba.Tag.prototype.children = function (sel){
+		// DEPRECATE this is overridden by reconciler
 		var nodes = new Imba.Selector(null,this,this._dom.children);
 		return sel ? (nodes.filter(sel)) : (nodes);
 	};
@@ -1881,6 +1883,7 @@
 		*/
 
 	Imba.Tag.prototype.siblings = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		var self = this, par;
 		if (!(par = self.parent())) { return [] }; // FIXME
 		var ary = self.dom().parentNode.children;
@@ -1894,6 +1897,7 @@
 		*/
 
 	Imba.Tag.prototype.path = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		var node = this;
 		var nodes = [];
 		if (sel && sel.query) { sel = sel.query() };
@@ -1911,6 +1915,7 @@
 		*/
 
 	Imba.Tag.prototype.parents = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		var par = this.parent();
 		return par ? (par.path(sel)) : ([]);
 	};
@@ -1920,6 +1925,7 @@
 		*/
 
 	Imba.Tag.prototype.next = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		if (sel) {
 			var el = this;
 			while (el = el.next()){
@@ -1935,6 +1941,7 @@
 		*/
 
 	Imba.Tag.prototype.prev = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		if (sel) {
 			var el = this;
 			while (el = el.prev()){
@@ -1951,6 +1958,7 @@
 		*/
 
 	Imba.Tag.prototype.find = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		return new Imba.Selector(sel,this);
 	};
 
@@ -1961,6 +1969,7 @@
 		*/
 
 	Imba.Tag.prototype.first = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
 	};
 
@@ -1975,6 +1984,7 @@
 		*/
 
 	Imba.Tag.prototype.last = function (sel){
+		// DEPRECATE extract into imba-tag-helpers
 		return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
 	};
 
@@ -2002,6 +2012,7 @@
 		*/
 
 	Imba.Tag.prototype.closest = function (sel){
+		// FIXME use native implementation if supported
 		if (!sel) { return this.parent() }; // should return self?!
 		var node = this;
 		if (sel.query) { sel = sel.query() };
@@ -2407,9 +2418,9 @@
 
 	_T = tag$ = Imba.TAGS;
 	t$ = Imba.tag;
-	tc$ = Imba.tagWithFlags;
-	ti$ = Imba.tagWithId;
-	tic$ = Imba.tagWithIdAndFlags;
+	tc$ = Imba.tagWithFlags; // FIXME deprecated
+	ti$ = Imba.tagWithId; // FIXME deprecated
+	tic$ = Imba.tagWithIdAndFlags; // FIXME deprecated
 	id$ = Imba.getTagSingleton;
 	tag$wrap = Imba.getTagForDom;
 
@@ -8029,6 +8040,27 @@
 
 	// externs;
 
+	describe("Syntax - Conditionals",function() {
+		
+		return test("unary",function() {
+			var $1, $2;
+			var t = true,f = false;
+			var obj = {on: function() { return true; },off: function() { return false; }};
+			
+			eq((t ? (10) : (20)),10);
+			eq((f !== undefined ? (!f) : (undefined)),true);
+			return eq((t ? (($1 = obj) && $1.on  &&  $1.on()) : (($2 = obj) && $2.off  &&  $2.off())),true);
+			// e.event:metaKey ? pane?.show : pane?.maximize
+		});
+	});
+
+
+/***/ },
+/* 39 */
+/***/ function(module, exports) {
+
+	// externs;
+
 	function check(sel,query){
 		return eq(sel.query(),query);
 	};
@@ -8049,7 +8081,7 @@
 
 
 /***/ },
-/* 39 */
+/* 40 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -8070,7 +8102,7 @@
 
 
 /***/ },
-/* 40 */
+/* 41 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -8163,7 +8195,7 @@
 
 
 /***/ },
-/* 41 */
+/* 42 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -8489,7 +8521,7 @@
 
 
 /***/ },
-/* 42 */
+/* 43 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -8601,7 +8633,7 @@
 
 
 /***/ },
-/* 43 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var self = this;
@@ -8610,7 +8642,7 @@
 
 	// externs;
 
-	var _ = __webpack_require__(44);
+	var _ = __webpack_require__(45);
 
 	_T.defineTag('el', function(tag){
 		
@@ -9120,7 +9152,7 @@
 
 
 /***/ },
-/* 44 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -10674,7 +10706,7 @@
 
 
 /***/ },
-/* 45 */
+/* 46 */
 /***/ function(module, exports) {
 
 	// to run these tests, simply open the imbadir/test/dom.html in your browser and
@@ -10706,7 +10738,7 @@
 
 
 /***/ },
-/* 46 */
+/* 47 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -10740,7 +10772,7 @@
 
 
 /***/ },
-/* 47 */
+/* 48 */
 /***/ function(module, exports) {
 
 	// externs;

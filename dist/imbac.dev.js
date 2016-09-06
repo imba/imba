@@ -831,6 +831,8 @@ var Imbac =
 		'NUMBER','BOOL','TAG_SELECTOR','IDREF','ARGUMENTS','}','TAG_TYPE'
 	];
 
+	var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:'];
+
 	var GLOBAL_IDENTIFIERS = ['global','exports'];
 
 	// Tokens that, when immediately preceding a `WHEN`, indicate that the `WHEN`
@@ -1505,24 +1507,10 @@ var Imbac =
 			var id = match[1];
 			typ = 'KEY';
 			
-			// FIXME loc of key includes colon
-			// moveCaret(id:length)
-			// console.log "ok"
-			
-			// console.log "got here? {match}"
 			this.token(typ,id,id.length);
 			this.moveCaret(id.length);
 			this.token(':',':',match[3].length);
 			this.moveCaret(-id.length);
-			// moveCaret(match[3]:length)
-			return match[0].length;
-			
-			
-			// moveCaret(match[2]:length)
-			// return 0
-			// console.log match[3]:length
-			this.token(typ,id,match[0].length);
-			this.token(':',':',1);
 			return match[0].length;
 		};
 		
@@ -1750,14 +1738,12 @@ var Imbac =
 		
 		if (colon) {
 			// console.log 'colon',colon,typ
-			if (this._lastTyp != '?' && typ == 'IDENTIFIER') {
+			if (typ == 'IDENTIFIER' && NOT_KEY_AFTER.indexOf(this._lastTyp) == -1) {
 				typ = 'KEY';
 			};
 			
 			this.token(typ,id,idlen);
 			this.moveCaret(idlen);
-			// console.log "add colon?"
-			// should have traced ternary - no?
 			this.token(':',':',colon.length);
 			this.moveCaret(-idlen);
 		} else {
