@@ -63,9 +63,8 @@
     "url": "git://github.com/somebee/imba.git"
   },
   "devDependencies": {
-    "path-browserify": "0.0.0",
     "underscore": "^1.8.3",
-    "webpack": "^1.12.9"
+    "webpack": "^1.13.2"
   },
   "dependencies": {}
 }

@@ -5251,10 +5251,10 @@
 				
 				eq(ret,1,String);
 				
-				if ($1 = obj.value()) { for (var i = 0, len = ary.length, res = []; i < len; i++) {
-					res.push(ary[i] * 1);
+				if ($1 = obj.value()) { for (var i = 0, len = ary.length, res1 = []; i < len; i++) {
+					res1.push(ary[i] * 1);
 				};
-				ret = (obj.setValue(res),res); } else {
+				ret = (obj.setValue(res1),res1); } else {
 					ret = $1
 				};
 				
@@ -5304,6 +5304,16 @@
 				
 				eq(res.length,3);
 				
+				function hello(){
+					var res;
+					var ary = [1,2,3];
+					for (var i = 0, len_ = ary.length, res1 = []; i < len_; i++) {
+						res1.push((res = ary[i] * 2));
+					};
+					return res1;
+				};
+				
+				eq(hello(),[2,4,6]);
 				return;
 			});
 		});
@@ -6759,10 +6769,10 @@
 			return pars; };
 			var ary = [1,2,3,4];
 			var res = fn(10,((function() {
-				for (var i = 0, len = ary.length, res = []; i < len; i++) {
-					res.push(ary[i] * 2);
+				for (var i = 0, len = ary.length, res1 = []; i < len; i++) {
+					res1.push(ary[i] * 2);
 				};
-				return res;
+				return res1;
 			})()),20);
 			eq(res,[10,[2,4,6,8],20]);
 			
@@ -6772,10 +6782,10 @@
 			// up to cache it before.
 			
 			res = fn(union$(ary,((function() {
-				for (var i = 0, len = ary.length, res = []; i < len; i++) {
-					res.push(ary[i] * 2);
+				for (var i = 0, len = ary.length, res2 = []; i < len; i++) {
+					res2.push(ary[i] * 2);
 				};
-				return res;
+				return res2;
 			})())));
 			
 			var outer = 0;
@@ -7874,16 +7884,16 @@
 			
 			eq([x,y],[2,4]);
 			
-			for (var k = 0, len__ = ary.length, res = []; k < len__; k++) {
-				res.push(ary[k] * 2);
+			for (var k = 0, len__ = ary.length, res1 = []; k < len__; k++) {
+				res1.push(ary[k] * 2);
 			};
-			var ary__ = Imba.iterable(res);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
+			var ary__ = Imba.iterable(res1);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
 			eq([x,y,obj.z()],[2,4,6]);
 			
-			for (var k = 0, len__ = ary.length, res = []; k < len__; k++) {
-				res.push(ary[k] * 2);
+			for (var k = 0, len__ = ary.length, res2 = []; k < len__; k++) {
+				res2.push(ary[k] * 2);
 			};
-			var $3 = Imba.iterable(res),len__ = $3.length,k = 0,tmplist = new Array(len__ - 2);x = $3[k++];y = $3[k++];while (k < len__){
+			var $3 = Imba.iterable(res2),len__ = $3.length,k = 0,tmplist = new Array(len__ - 2);x = $3[k++];y = $3[k++];while (k < len__){
 				tmplist[k - 2] = $3[k++]
 			};obj.setZ(tmplist);
 			eq([x,y,obj.z()],[2,4,[6,8,10]]);

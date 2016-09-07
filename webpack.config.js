@@ -13,7 +13,6 @@ var loaders = [{
 function pkg(options){
 	var pkg = {
 		module: {loaders: loaders},
-		resolveLoader: {alias: { "path": "path-browserify" }},
 		resolve: {extensions: ['', '.imba', '.js']},
 		entry: "./src/imba/index.imba",
 		target: 'web',
