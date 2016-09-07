@@ -7,13 +7,14 @@ var fs = require "fs"
 var package = require '../../package.json'
 
 var parseOpts =
-	alias: {h: 'help', v: 'version'}
-	schema: {target: {type: 'string'}}
+	alias: {h: 'help', v: 'version',e: 'eval'}
+	schema: {eval: {type: 'string'}}
 
 var help = """
 
-Usage: imba [options] path/to/script.imba
+Usage: imba [options] [ -e script | script.imba ] [arguments]
 
+  -e, --eval script      evaluate script
   -h, --help             display this help message
   -v, --version          display the version number
 
@@ -37,17 +38,21 @@ export def run
 	var src = o:main
 	src = src[0] if src isa Array
 
+	process:argv.shift
+	process:argv[0] = 'imba'
+
 	if o:version
 		return console.log package:version
-	elif !o:main or o:help
+
+	elif (!o:main and !o:eval) or o:help
 		return console.log help
+
+	if o:eval
+		return imbac.run(o:eval, target: 'node')
 
 	src = lookup(src)
 	src = path.resolve(process.cwd,src)
 	var body = fs.readFileSync(src,'utf8')
-	process:argv.shift
-	process:argv[0] = 'imba'
-
 	imbac.run(body, filename: src, target: 'node')
 
 	
