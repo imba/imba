@@ -1140,23 +1140,28 @@
 		// if has(:commit) or has(:render) or has(:mount) or has(:build)
 		
 		var hasBuild = this.build != base.build;
+		var hasSetup = this.setup != base.setup;
 		var hasCommit = this.commit != base.commit;
 		var hasRender = this.render != base.render;
 		var hasMount = this.mount;
 		
-		if (hasCommit || hasRender || hasBuild || hasMount) {
+		if (hasBuild) {
+			console.warn(("<" + (this.constructor._name) + "> tag#build must be renamed to tag#setup"));
+		};
+		
+		if (hasCommit || hasRender || hasBuild || hasMount || hasSetup) {
 			
 			this.end = function() {
 				if (this.mount && !this._mounted) {
 					Imba.TagManager.mount(this);
 				};
 				
-				if (!this._built) {
-					this._built = true;
-					this.build();
-				} else {
-					this.commit();
+				if (!this._initialized) {
+					this._initialized = true;
+					this.setup();
 				};
+				
+				this.commit();
 				
 				return this;
 			};
@@ -1661,7 +1666,10 @@
 		*/
 
 	Imba.Tag.prototype.build = function (){
-		this.render();
+		return this;
+	};
+
+	Imba.Tag.prototype.setup = function (){
 		return this;
 	};
 
@@ -8204,8 +8212,8 @@
 
 	_T.defineTag('custom', function(tag){
 		
-		tag.prototype.build = function (){
-			tag.__super__.build.apply(this,arguments);
+		tag.prototype.setup = function (){
+			tag.__super__.setup.apply(this,arguments);
 			return buildCount++;
 		};
 		
@@ -8216,7 +8224,7 @@
 
 	_T.defineTag('cached', function(tag){
 		
-		tag.prototype.build = function (){
+		tag.prototype.setup = function (){
 			this._ary = ['a','b','c'];
 			return this.render();
 		};
@@ -8722,10 +8730,6 @@
 		
 		tag.prototype.reset = function (){
 			return this.render();
-		};
-		
-		tag.prototype.build = function (){
-			return this; // dont render immediately
 		};
 		
 		tag.prototype.commit = function (){
