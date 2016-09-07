@@ -5030,9 +5030,7 @@ export class Loop < Statement
 
 export class While < Loop
 
-
 	prop test
-
 
 	def initialize test, opts
 		@traversed = no
@@ -5182,17 +5180,14 @@ export class For < Loop
 
 			node.@loop = self
 			@tagtree = node
-			# @resvar ||= scope.declare(:res,Arr.new([]),system: yes)
-			# Should not be consumed the same way
-			# One per loop - or no?
+
 			body.consume(node)
-			# maybe add the resvar here already
+
 			node.@loop = null
 			let fn = Lambda.new([],[self])
 			fn.scope.wrap(scope)
 			# TODO Scope of generated lambda should be added into stack for
 			# variable naming / resolution
-			# console.log "TagTree consumes for-in"
 			return CALL(fn,[])
 
 
@@ -5200,8 +5195,6 @@ export class For < Loop
 			var ast = Block.new([self,BR,@resvar.accessor])
 			ast.consume(node)
 			return ast
-
-		# if node isa return -- do something else
 
 		var resvar = null
 		var reuseable = no # node isa Assign && node.left.node isa LocalVarAccess
@@ -5231,13 +5224,15 @@ export class For < Loop
 			# dont declare it - simply push an assign into the vardecl of scope
 			scope.vars.unshift(OP('=',assignee,Arr.new([])))
 			resvar = @resvar = assignee
+			
 
 			node.@consumer = self
 			node = null
+
 		else
 			# declare the variable we will use to soak up results
 			# what about a pool here?
-			resvar = @resvar ||= scope.declare(:res,Arr.new([]),system: yes)
+			resvar = @resvar ||= scope.declare(:res,Arr.new([]),system: yes, type: 'let')
 
 		if @tagtree
 			@catcher = TagPushAssign.new("push",resvar,null)

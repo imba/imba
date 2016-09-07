@@ -108,6 +108,12 @@ describe 'Syntax - Loops' do
 
 			eq res:length, 3
 
+			def hello
+				var ary = [1,2,3]
+				for item in ary
+					var res = item * 2
+
+			eq hello, [2,4,6]
 			return
 
 	describe "For In with ranges" do
