@@ -167,6 +167,15 @@ class CLI
 	def b text
 		o:colors ? ansi.bold(text) : text
 
+	def gray text
+		o:colors ? ansi.gray(text) : text
+
+	def red text
+		o:colors ? ansi.red(text) : text
+
+	def green text
+		o:colors ? ansi.green(text) : text
+
 	def rel src
 		src = src:sourcePath or src
 		path.relative(process.cwd,src)
@@ -223,29 +232,49 @@ class CLI
 	def compileFile src
 		var opts = Object.create(o)
 		opts:filename = src:filename
-		var out = compiler.compile(src:sourceBody,opts)
+		var out = {}
+		var t = Date.now
+		var at = Date.new.toTimeString.substr(0,8)
+		var srcp = path.relative(process.cwd,src:sourcePath)
+		var dstp = src:targetPath and path.relative(process.cwd,src:targetPath)
+
+		try
+			out = compiler.compile(src:sourceBody,opts)
+		catch e
+			out = {error: e}
+
+		out:compileTime = Date.now - t
+
 		if o:sourceMap and out:sourcemap
 			var base64 = Buffer.new(JSON.stringify(out:sourcemap)).toString("base64")
 			out:js = out:js + "\n//# sourceMappingURL=data:application/json;base64," + base64
 
 		src:output = out
 
-		if src:targetPath
+		if src:targetPath and out:js
 			ensureDir(src:targetPath)
 			fs.writeFileSync(src:targetPath,out:js,'utf8')
-			var srcp = path.relative(process.cwd,src:sourcePath)
-			var dstp = path.relative(process.cwd,src:targetPath)
-			log ansi.gray("compile") + " {b(srcp)} to {b(dstp)}"
+			log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
+
+		elif out:error
+			unless o:print
+				log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
+				log "   " + out:error.excerpt(colors: o:colors)
 
 		if o:watch and !src:watcher
+			var now = Date.now
 			src:watcher = fs.watch(src:sourcePath) do |type,filename|
-				# console.log 'file was changed or accessed!!!',type,filename
-				var body = fs.readFileSync(src:sourcePath,'utf8')
-				if type == 'change' and body != src:sourceBody
-					src:sourceBody = body
-					compileFile(src)
+				if type == 'change'
+					setTimeout(&,100) do
+						fs.readFile(src:sourcePath,'utf8') do |err,body|
+							if body != src:sourceBody
+								src:sourceBody = body
+								compileFile(src)
 
-		present(out:js)
+
+		if o:print and out:js
+			process:stdout.write(out:js)
+		self
 
 	def finish
 		try
@@ -269,6 +298,8 @@ class CLI
 
 export def run
 	var o = helpers.parseArgs(process:argv.slice(2),parseOpts)
+
+	o:colors ?= yes 
 
 	if o:version
 		console.log package:version
