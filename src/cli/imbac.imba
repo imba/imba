@@ -259,7 +259,11 @@ class CLI
 		elif out:error
 			unless o:print
 				log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
-				log "   " + out:error.excerpt(colors: o:colors)
+				if out:error:excerpt
+					log "   " + out:error.excerpt(colors: o:colors)
+				else
+					log "   " + out:error:message
+					log out:error:stack if out:error:stack
 
 		if o:watch and !src:watcher
 			var now = Date.now
