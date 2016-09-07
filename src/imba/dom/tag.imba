@@ -89,21 +89,25 @@ class Imba.Tag
 		# if has(:commit) or has(:render) or has(:mount) or has(:build)
 
 		var hasBuild  = self:build  != base:build
+		var hasSetup  = self:setup  != base:setup
 		var hasCommit = self:commit != base:commit
 		var hasRender = self:render != base:render
 		var hasMount  = self:mount
+
+		if hasBuild
+			console.warn "<{self:constructor.@name}> tag#build must be renamed to tag#setup"
 		
-		if hasCommit or hasRender or hasBuild or hasMount
+		if hasCommit or hasRender or hasBuild or hasMount or hasSetup
 
 			self:end = do
 				if this:mount and !this.@mounted
 					Imba.TagManager.mount(this)
 
-				unless this.@built
-					this.@built = yes
-					this.build
-				else
-					this.commit
+				unless this.@initialized
+					this.@initialized = yes
+					this.setup
+				
+				this.commit
 
 				return this
 		self
@@ -506,7 +510,9 @@ class Imba.Tag
 	@return {self}
 	###
 	def build
-		render
+		self
+
+	def setup
 		self
 
 	###

@@ -9,7 +9,7 @@ var buildCount = 0
 
 tag custom
 
-	def build
+	def setup
 		super
 		buildCount++
 		
@@ -18,7 +18,7 @@ tag custom
 
 tag cached
 
-	def build
+	def setup
 		@ary = ['a','b','c']
 		render
 		
