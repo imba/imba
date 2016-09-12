@@ -31,7 +31,15 @@ if(require.main !== module){
 
 		if(m.loaders) {
 			// add the imba loader
-			m.loaders.unshift(loader)
+			var l = null;
+			m.loaders.forEach(function(loader){
+				if(String(loader.test) == '/\\.imba/'){
+					l = loader;
+					l.loader = loader.loader; // update path
+				}
+			});
+			// push our loader of we have one
+			if(!l) m.loaders.unshift(loader)
 		} else {
 			m.loaders = [loader];
 		}
