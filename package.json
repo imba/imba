@@ -50,7 +50,7 @@
   },
   "directories": {},
   "main": "./index.js",
-  "webpack": "./index",
+  "webpack": "./index.webpack.js",
   "bin": {
     "imba": "./bin/imba",
     "imbac": "./bin/imbac",
