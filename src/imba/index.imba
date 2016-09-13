@@ -3,8 +3,10 @@ if typeof Imba !== 'undefined'
 	console.warn "Imba v{Imba.VERSION} is already loaded"
 
 require './imba'
-require './scheduler'
-require './dom/index'
+
+unless $webworker$
+	require './scheduler'
+	require './dom/index'
 	
 if $node$
 	unless $webpack$
