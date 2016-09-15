@@ -36,7 +36,6 @@ export def rewrite tokens, o = {}
 export def parse code, o = {}
 	var tokens = code isa Array ? code : tokenize(code,o)
 	try
-		# console.log("Tokens",tokens)
 		o.@source ||= code if tokens != code
 		o.@tokens = tokens
 		return parser.parse tokens
@@ -62,7 +61,6 @@ export def analyze code, o = {}
 		var ast = parse(code,o)
 		meta = ast.analyze(o)
 	catch e
-		# console.log "something wrong {e:message}"
 		unless e isa ImbaParseError
 			if e:lexer
 				e = ImbaParseError.new(e, tokens: e:lexer:tokens, pos: e:lexer:pos)

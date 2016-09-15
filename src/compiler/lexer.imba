@@ -251,7 +251,7 @@ var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TA
 # optimize for FixedArray
 var INDEXABLE = [
 	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST','NEW','ARGVAR','SYMBOL','RETURN'
-	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'IDREF', 'ARGUMENTS','}','TAG_TYPE'
+	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'IDREF', 'ARGUMENTS','}','TAG_TYPE','TAGID'
 ]
 
 var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:']
@@ -308,6 +308,7 @@ export class Lexer
 		@code    = null
 		@chunk   = null           # The remainder of the source code.
 		@opts    = null
+		@state = {}
 		
 		@indent  = 0              # The current indentation level.
 		@indebt  = 0              # The over-indentation at the current level.
@@ -368,17 +369,13 @@ export class Lexer
 		@locOffset = o:loc or 0
 
 		o:indent ||= {style: null, size: null}
-		# add a reference to the options object
-		o.@tokens = @tokens 
-		# what about col here?
 
-		# @indent  = 0 # The current indentation level.
-		# @indebt  = 0 # The over-indentation at the current level.
-		# @outdebt = 0 # The under-outdentation at the current level.
-		# @indents = [] # The stack of all current indentation levels.
-		# @ends    = [] # The stack for pairing up tokens.
-		# @tokens  = [] # Stream of parsed tokens in the form `['TYPE', value, line]`.
-		# @char = nil
+		# if the very first line is indented, take this as a gutter
+		if let m = code.match(/^([\ \t]*)[^\n\s\t]/)
+			@state:gutter = m[1]
+
+		o.@tokens = @tokens 
+
 		
 		console.time("tokenize:lexer") if o:profile
 		parse(code)
@@ -512,16 +509,6 @@ export class Lexer
 			return 1
 
 		if var match = TAG_ATTR.exec(@chunk)
-			# console.log 'TAG_SDDSATTR IN tokid',match
-			# var prev = last @tokens
-			# if the prev is a terminator, we dont really need to care?
-			# if @lastTyp != 'TAG_NAME'
-			# 	if @lastTyp == 'TERMINATOR'
-			# 		# console.log('prev was terminator -- drop it?')
-			# 		true
-			# 	else
-			# 		token(",", ",")
-
 			var l = match[0]:length
 
 			token 'TAG_ATTR',match[1],l - 1  # add to loc?
@@ -912,15 +899,9 @@ export class Lexer
 
 		elif typ == '@'
 			typ = 'IVAR'
-
 			# id:reserved = yes if colon
 		elif typ == '#'
-			# we are trying to move to generic tokens,
-			# so we are starting to splitting up the symbols and the items
-			# we'll see if that works
-			typ = 'IDENTIFIER'
-			token '#', '#'
-			id = id.substr(1)
+			typ = 'TAGID'
 
 		elif typ == '@@'
 			typ = 'CVAR'
@@ -1373,17 +1354,39 @@ export class Lexer
 
 		@seenFor = no
 		# reset column as well?
-
 		var prev = last @tokens, 1
 		let whitespace = indent.substr(indent.lastIndexOf('\n') + 1)
-		var size = whitespace:length
 		var noNewlines = self.unfinished
 
 		if (/^\n#\s/).test(@chunk)
 			addLinebreaks(1)
 			return 0
 
+		# decide the general line-prefix by the very first line with characters
+
+		# if gutter is undefined - we create it on the very first chance we have
+		if @state:gutter == undefined
+			@state:gutter = whitespace
+
+		# if we have a gutter -- remove it
+		if var gutter = @state:gutter or @opts:gutter
+			if whitespace.indexOf(gutter) == 0
+				whitespace = whitespace.slice(gutter:length)
+
+			elif @chunk[indent:length] === undefined
+				# if this is the end of code we're okay
+				yes
+			else
+				warn('incorrect indentation')
+				# console.log "GUTTER IS INCORRECT!!",JSON.stringify(indent),JSON.stringify(@chunk[indent:length]),@last # @chunk[indent:length - 1]
+
+			# should throw error otherwise?
+
+		var size = whitespace:length
+
 		if size > 0
+			# seen indent?
+
 			unless @indentStyle
 				@opts:indent = @indentStyle = whitespace
 
@@ -2022,3 +2025,10 @@ export class Lexer
 		var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)
 		err:region = [@loc,@loc + (len or 0)]
 		throw err
+
+	def warn message
+		var ary = @tokens:warnings ||= []
+		ary.push(message)
+		console.warn message
+		self
+

@@ -140,15 +140,16 @@ describe 'Syntax - Class' do
 			eq Zombie.new.lineage, 'zombie.human.animal.organism'
 
 	test 'define methods outside scope' do
-		local class Cls
+		class Cls
 			def self.a do 1
 			def a do 2
 
 		def Cls.b
 			1
 
-		def Cls#b
-			2
+		extend class Cls
+			def b
+				2
 
 		eq Cls.a, 1
 		eq Cls.b, 1

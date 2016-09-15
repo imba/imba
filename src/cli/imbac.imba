@@ -263,6 +263,7 @@ class CLI
 					log "   " + out:error.excerpt(colors: o:colors)
 				else
 					log "   " + out:error:message
+					log "   " + "in file {srcp}"
 					log out:error:stack if out:error:stack
 
 		if o:watch and !src:watcher

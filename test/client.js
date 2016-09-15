@@ -119,8 +119,11 @@
 	};
 
 	__webpack_require__(4);
+
+
 	__webpack_require__(5);
 	__webpack_require__(6);
+
 
 
 
@@ -5678,9 +5681,11 @@
 				return 1;
 			};
 			
-			Cls.prototype.b = function (){
-				return 2;
-			};
+			
+				Cls.prototype.b = function (){
+					return 2;
+				};
+			
 			
 			eq(Cls.a(),1);
 			eq(Cls.b(),1);

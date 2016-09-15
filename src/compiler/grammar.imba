@@ -377,7 +377,7 @@ var grammar =
 	
 	TagId: [
 		o 'IDREF' do TagId.new(A1)
-		o '# Identifier' do TagId.new(A2)
+		o 'TAGID' do TagId.new(A1)
 	]
 
 	
