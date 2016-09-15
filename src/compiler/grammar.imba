@@ -922,11 +922,11 @@ var grammar =
 		o 'Expression LOGIC    Expression' do AST.OP A2, A1, A3
 		# o 'Expression ?.    Expression' do AST.OP A2, A1, A3
 
+		o 'Expression NOT RELATION Expression' do
+			AST.OP(A3, A1, A4).invert(A2)
+
 		o 'Expression RELATION Expression' do
-			if A2.charAt(0) is '!'
-				AST.OP(A2.slice(1), A1, A3).invert
-			else
-				AST.OP A2, A1, A3
+			AST.OP A2, A1, A3
 
 		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do AST.OP_COMPOUND(A2.@value,A2,A1,A3)
 		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do AST.OP_COMPOUND(A2.@value, A1, A4.indented(A3,A5))
@@ -943,7 +943,7 @@ var operators = [
 	# ['left',      '{{', '}}']
 	# ['left', 'STRING_START','STRING_END']
 	['nonassoc',  '++', '--']
-	['right',     'UNARY','THROW','SQRT']
+	['right',     'UNARY','THROW','SQRT','NOT']
 	['left',      'MATH']
 	['left',      '+', '-']
 	['left',      'SHIFT']

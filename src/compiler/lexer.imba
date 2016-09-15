@@ -996,10 +996,9 @@ export class Lexer
 					@seenFor = no
 				else
 					typ = 'RELATION'
-					if String(value) == '!' or String(value) == 'not'
-						# FIXME not retaining actual token<->code mapping
-						@tokens.pop # WARN we need to keep the loc, no?
-						id = '!' + id
+
+					if prev.@type == 'UNARY'
+						prev.@type = 'NOT'
 
 		if id == 'super'
 			typ = 'SUPER'
@@ -1513,6 +1512,7 @@ export class Lexer
 		if prev
 			if match
 				prev:spaced = yes
+				prev.@s = match[0]
 				return match[0]:length
 			else
 				prev:newLine = yes
@@ -1996,8 +1996,6 @@ export class Lexer
 		return true if LINE_CONTINUER.test(@chunk)	
 		return UNFINISHED.indexOf(@lastTyp) >= 0
 	
-	# var tokens = ['\\','.', '?.', 'UNARY', 'MATH', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
-
 	# Converts newlines for string literals.
 	def escapeLines str, heredoc
 		str.replace MULTILINER, (heredoc ? '\\n' : '')
