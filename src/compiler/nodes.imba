@@ -4478,7 +4478,7 @@ export class TagId < Identifier
 		self
 
 	def c
-		"id$('{value.c}')"
+		"id$('{value.c.substr(1)}')"
 
 # This is not an identifier - it is really a string
 # Is this not a literal?

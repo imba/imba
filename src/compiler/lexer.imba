@@ -247,11 +247,11 @@ var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', '+', '-', 'SHIFT', 'REL
 
 # } should not be callable anymore!!! '}', '::',
 var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST','NEW','ARGVAR','SYMBOL','RETURN']
-# var INDEXABLE = CALLABLE.concat 'NUMBER', 'BOOL', 'TAG_SELECTOR', 'IDREF', 'ARGUMENTS','}' # are booleans indexable? really?
+
 # optimize for FixedArray
 var INDEXABLE = [
 	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST','NEW','ARGVAR','SYMBOL','RETURN'
-	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'IDREF', 'ARGUMENTS','}','TAG_TYPE','TAGID'
+	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID'
 ]
 
 var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:']
@@ -759,7 +759,7 @@ export class Lexer
 			typ = 'CONST'
 		
 		# what is this really for?
-		if match[5] and ['IDENTIFIER','CONST','GVAR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING','IDREF'].indexOf(ltyp) >= 0
+		if match[5] and ['IDENTIFIER','CONST','GVAR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING'].indexOf(ltyp) >= 0
 			token('.','.',0)
 	
 		token(typ, id, length)
