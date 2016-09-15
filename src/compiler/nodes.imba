@@ -32,7 +32,7 @@ export var OP = do |op, l, r|
 			# depends on the right side - this is wrong
 			PropertyAccess.new(op,l,r)
 
-		when 'instanceof'
+		when 'instanceof','isa'
 			InstanceOf.new(op,l,r)
 		when 'in'
 			In.new(op,l,r)
@@ -40,7 +40,7 @@ export var OP = do |op, l, r|
 			TypeOf.new(op,l,r)
 		when 'delete'
 			Delete.new(op,l,r)
-		when '--','++','!','√'
+		when '--','++','!','√','not' # alias
 			UnaryOp.new(op,l,r)
 		when '>','<','>=','<=','==','===','!=','!=='
 			ComparisonOp.new(op,l,r)
@@ -2569,7 +2569,7 @@ export class PropertyDeclaration < Node
 
 
 		if pars:inline
-			if pars:inline isa Bool and !pars:inline.truthy
+			if pars:inline isa Bool and !pars:inline.isTruthy
 				o.remove('inline')
 				return "Imba.{@token}({js:scope},'{name.value}',{o.c})".replace(',{})',')')
 
@@ -2578,7 +2578,7 @@ export class PropertyDeclaration < Node
 		o.add('name',Symbol.new(key))
 
 		if pars:watch
-			tpl = propWatchTemplate unless pars:watch isa Bool and !pars:watch.truthy
+			tpl = propWatchTemplate unless pars:watch isa Bool and !pars:watch.isTruthy
 			var wfn = "{key}DidSet"
 
 			if pars:watch isa Symbol
@@ -3272,6 +3272,10 @@ export class UnaryOp < Op
 	def js o
 		var l = @left
 		var r = @right
+		var op = op
+
+		if op == 'not'
+			op = '!'
 
 		if op == '!'
 			# l.@parens = yes
@@ -3333,7 +3337,7 @@ export class InstanceOf < Op
 				return "(typeof {obj.c}=='{name.toLowerCase}'||{obj.c} instanceof {name})"
 
 				# convert
-		var out = "{left.c} {op} {right.c}"
+		var out = "{left.c} instanceof {right.c}"
 
 		# should this not happen in #c?
 		out = helpers.parenthesize(out) if o.parent isa Op

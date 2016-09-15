@@ -38,17 +38,18 @@ var IMBA_KEYWORDS = [
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','static','local','export','global','prop']
 
+# should not rewrite the actual tokens
 var IMBA_ALIAS_MAP =
 	'and'  : '&&'
 	'or'   : '||'
 	'is'   : '=='
 	'isnt' : '!='
-	'not'  : '!'
-	'yes'  : 'true'
-	'no'   : 'false'
-	'isa'  : 'instanceof'
+	# 'not'  : '!'
+	# 'yes'  : 'true'
+	# 'no'   : 'false'
+	# 'isa'  : 'instanceof'
 	'case' : 'switch'
-	'nil'  : 'null'
+	# 'nil'  : 'null'
 
 var IMBA_ALIASES  = Object.keys(IMBA_ALIAS_MAP)
 IMBA_KEYWORDS = IMBA_KEYWORDS.concat(IMBA_ALIASES)
@@ -964,6 +965,7 @@ export class Lexer
 			# skipping 
 			elif typ == 'IF' or typ == 'ELSE' or typ == 'TRUE' or typ == 'FALSE' or typ == 'NULL'
 				true
+
 			elif typ == 'TAG'
 				self.pushEnd('TAG')
 				# @ends.push('TAG')
@@ -994,9 +996,9 @@ export class Lexer
 					@seenFor = no
 				else
 					typ = 'RELATION'
-					if String(value) == '!'
-						@tokens.pop # is fucked up??!
-						# WARN we need to keep the loc, no?
+					if String(value) == '!' or String(value) == 'not'
+						# FIXME not retaining actual token<->code mapping
+						@tokens.pop # WARN we need to keep the loc, no?
 						id = '!' + id
 
 		if id == 'super'
@@ -1011,11 +1013,11 @@ export class Lexer
 				tTs(prev,'EXPORT')
 				typ = 'DEFAULT'
 
-
+			# could use lookup-hash instead
 			id = IMBA_ALIAS_MAP[id] if isKeyword and IMBA_ALIASES.indexOf(id) >= 0
 			# these really should not go here?!?
 			switch id
-				when '!'                                  then typ = 'UNARY'
+				when '!','not'                            then typ = 'UNARY'
 				when '==', '!=', '===', '!=='             then typ = 'COMPARE'
 				when '&&', '||'                           then typ = 'LOGIC'
 				when 'break', 'continue', 'debugger','arguments' then typ = id.toUpperCase
@@ -1118,7 +1120,7 @@ export class Lexer
 		# : should be a token itself, with a specification of spacing (LR,R,L,NONE)
 
 		# FIX
-		if prev and !prev:spaced and tT(prev) not in ['(','{','[','.','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR']
+		if prev and !prev:spaced and tT(prev) !in ['(','{','[','.','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR']
 			token '.:',':', 1
 			var sym = symbol.split(/[\:\\\/]/)[0] # really?
 			# token 'SYMBOL', "'#{symbol}'"
@@ -1271,7 +1273,7 @@ export class Lexer
 	def regexToken
 		var match, length, prev
 
-		return 0 if @chunk.charAt(0) isnt '/'
+		return 0 if @chunk.charAt(0) != '/'
 		if match = HEREGEX.exec(@chunk)
 			length = heregexToken(match)
 			moveHead(match[0])

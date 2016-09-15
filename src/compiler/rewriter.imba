@@ -463,7 +463,7 @@ export class Rewriter
 				var post = tokens[i + 1]
 				var postTyp = post and T.typ(post)
 				# WTF
-				return !token:generated and prev isnt ',' and (IMPLICIT_END.indexOf(type) >= 0 or (type is 'INDENT' and !seenControl) or (type is 'DOS' and prev != '=')) and (type isnt 'INDENT' or (tokenType(i - 2) isnt 'CLASS' and IMPLICIT_BLOCK.indexOf(prev) == -1 and not (post and ((post:generated and postTyp is '{') or IMPLICIT_CALL.indexOf(postTyp) >= 0))))
+				return !token:generated and prev != ',' and (IMPLICIT_END.indexOf(type) >= 0 or (type is 'INDENT' and !seenControl) or (type is 'DOS' and prev != '=')) and (type != 'INDENT' or (tokenType(i - 2) != 'CLASS' and IMPLICIT_BLOCK.indexOf(prev) == -1 and not (post and ((post:generated and postTyp is '{') or IMPLICIT_CALL.indexOf(postTyp) >= 0))))
 
 			# The action for detecting when the call should end
 			# console.log "detect end??"
