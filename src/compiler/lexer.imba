@@ -254,7 +254,7 @@ var INDEXABLE = [
 	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID'
 ]
 
-var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:']
+var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:','+','-']
 
 var GLOBAL_IDENTIFIERS = ['global','exports']
 

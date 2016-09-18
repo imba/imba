@@ -8063,7 +8063,9 @@
 			
 			eq((t ? (10) : (20)),10);
 			eq((f !== undefined ? (!f) : (undefined)),true);
-			return eq((t ? (($1 = obj) && $1.on  &&  $1.on()) : (($2 = obj) && $2.off  &&  $2.off())),true);
+			eq((t ? (($1 = obj) && $1.on  &&  $1.on()) : (($2 = obj) && $2.off  &&  $2.off())),true);
+			
+			return eq((t ? ('.' + f) : ('')),'.false');
 			// e.event:metaKey ? pane?.show : pane?.maximize
 		});
 	});

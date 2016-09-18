@@ -9,4 +9,6 @@ describe "Syntax - Conditionals" do
 		eq (t ? 10 : 20), 10
 		eq (f !== undefined ? !f : undefined), yes
 		eq (t ? obj?.on : obj?.off), yes
+
+		eq (t ? '.' + f : ''), '.false'
 		# e.event:metaKey ? pane?.show : pane?.maximize

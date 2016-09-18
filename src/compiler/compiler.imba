@@ -53,6 +53,8 @@ export def compile code, o = {}
 	catch err
 		err:_code = code
 		err:_filename = o:filename if o:filename
+		if o:evaling
+			console.log "error during compile",o:filename
 		throw err
 
 export def analyze code, o = {}
