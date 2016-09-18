@@ -87,17 +87,17 @@ class Imba.Tag
 		var base = Imba.Tag:prototype
 		# var has = do |k| self:hasOwnProperty(k)
 		# if has(:commit) or has(:render) or has(:mount) or has(:build)
+		# var hasBuild  = self:build  != base:build
 
-		var hasBuild  = self:build  != base:build
 		var hasSetup  = self:setup  != base:setup
 		var hasCommit = self:commit != base:commit
 		var hasRender = self:render != base:render
 		var hasMount  = self:mount
 
-		if hasBuild
-			console.warn "<{self:constructor.@name}> tag#build must be renamed to tag#setup"
+		# if hasBuild
+		#	console.warn "<{self:constructor.@name}> tag#build must be renamed to tag#setup"
 		
-		if hasCommit or hasRender or hasBuild or hasMount or hasSetup
+		if hasCommit or hasRender or hasMount or hasSetup
 
 			self:end = do
 				if this:mount and !this.@mounted
@@ -116,6 +116,7 @@ class Imba.Tag
 	def initialize dom
 		self.dom = dom
 		self.@_ = {}
+		build
 		self
 
 	attr tabindex
@@ -504,14 +505,19 @@ class Imba.Tag
 		self
 
 	###
-	Called implicitly through Imba.Tag#end, upon creating a tag. All
-	properties will have been set before build is called, including
-	setContent.
+	Called implicitly while tag is initializing. No initial props
+	will have been set at this point.
 	@return {self}
 	###
 	def build
 		self
 
+	###
+	Called once, implicitly through Imba.Tag#end. All initial props
+	and children will have been set before setup is called.
+	setContent.
+	@return {self}
+	###
 	def setup
 		self
 
@@ -542,8 +548,8 @@ class Imba.Tag
 	ends with .end. `<a.large>` compiles to `tag('a').flag('large').end()`
 	
 	You are highly adviced to not override its behaviour. The first time
-	end is called it will mark the tag as built and call Imba.Tag#build,
-	and call Imba.Tag#commit on subsequent calls.
+	end is called it will mark the tag as initialized and call Imba.Tag#setup,
+	and call Imba.Tag#commit every time.
 	@return {self}
 	###
 	def end

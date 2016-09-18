@@ -237,4 +237,22 @@ describe 'Tags - Define' do
 		catch e
 			ok false
 
+	test "build order" do
+		var order = []
+		tag Custom
+
+			def build
+				order.push('build')
+
+			def setup
+				order.push('setup')
+
+			def setName val
+				@name = val
+				order.push('name')
+				self
+
+		var node = <Custom name="custom">
+		eq order, ['build','name','setup']
+		
 					

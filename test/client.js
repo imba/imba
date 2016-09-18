@@ -1085,6 +1085,7 @@
 	Imba.Tag = function Tag(dom){
 		this.setDom(dom);
 		this.__ = {};
+		this.build();
 		this;
 	};
 
@@ -1141,18 +1142,17 @@
 		var base = Imba.Tag.prototype;
 		// var has = do |k| self:hasOwnProperty(k)
 		// if has(:commit) or has(:render) or has(:mount) or has(:build)
+		// var hasBuild  = self:build  != base:build
 		
-		var hasBuild = this.build != base.build;
 		var hasSetup = this.setup != base.setup;
 		var hasCommit = this.commit != base.commit;
 		var hasRender = this.render != base.render;
 		var hasMount = this.mount;
 		
-		if (hasBuild) {
-			console.warn(("<" + (this.constructor._name) + "> tag#build must be renamed to tag#setup"));
-		};
+		// if hasBuild
+		//	console.warn "<{self:constructor.@name}> tag#build must be renamed to tag#setup"
 		
-		if (hasCommit || hasRender || hasBuild || hasMount || hasSetup) {
+		if (hasCommit || hasRender || hasMount || hasSetup) {
 			
 			this.end = function() {
 				if (this.mount && !this._mounted) {
@@ -1662,15 +1662,21 @@
 	};
 
 	/*
-		Called implicitly through Imba.Tag#end, upon creating a tag. All
-		properties will have been set before build is called, including
-		setContent.
+		Called implicitly while tag is initializing. No initial props
+		will have been set at this point.
 		@return {self}
 		*/
 
 	Imba.Tag.prototype.build = function (){
 		return this;
 	};
+
+	/*
+		Called once, implicitly through Imba.Tag#end. All initial props
+		and children will have been set before setup is called.
+		setContent.
+		@return {self}
+		*/
 
 	Imba.Tag.prototype.setup = function (){
 		return this;
@@ -1707,8 +1713,8 @@
 		ends with .end. `<a.large>` compiles to `tag('a').flag('large').end()`
 		
 		You are highly adviced to not override its behaviour. The first time
-		end is called it will mark the tag as built and call Imba.Tag#build,
-		and call Imba.Tag#commit on subsequent calls.
+		end is called it will mark the tag as initialized and call Imba.Tag#setup,
+		and call Imba.Tag#commit every time.
 		@return {self}
 		*/
 
@@ -8512,7 +8518,7 @@
 			};
 		});
 		
-		return test("snake_case properties",function() {
+		test("snake_case properties",function() {
 			var Custom = _T.defineTag('Custom', function(tag){
 				tag.prototype.my_title = function(v){ return this._my_title; }
 				tag.prototype.setMy_title = function(v){ this._my_title = v; return this; };
@@ -8523,6 +8529,29 @@
 			} catch (e) {
 				return ok(false);
 			};
+		});
+		
+		return test("build order",function() {
+			var order = [];
+			var Custom = _T.defineTag('Custom', function(tag){
+				
+				tag.prototype.build = function (){
+					return order.push('build');
+				};
+				
+				tag.prototype.setup = function (){
+					return order.push('setup');
+				};
+				
+				tag.prototype.setName = function (val){
+					this._name = val;
+					order.push('name');
+					return this;
+				};
+			});
+			
+			var node = Custom.build().setName("custom").end();
+			return eq(order,['build','name','setup']);
 		});
 	});
 
