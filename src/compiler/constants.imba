@@ -28,3 +28,17 @@ for pair in BALANCED_PAIRS
 	INVERSES[rite] = left
 	INVERSES[left] = rite
 
+
+export var ALL_KEYWORDS = [
+	'true', 'false', 'null', 'this',
+	'delete', 'typeof', 'in', 'instanceof',
+	'throw', 'break', 'continue', 'debugger',
+	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally',
+	'class', 'extends', 'super', 'return',
+	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
+	'when','def','tag','do','elif','begin','var','let','self','await','import',
+	'and','or','is','isnt','not','yes','no','isa','case','nil','require'
+]
+
+export var TOKEN_TYPES =
+	TERMINATOR: 'TERMINATOR'

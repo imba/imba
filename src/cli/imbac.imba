@@ -198,7 +198,7 @@ class CLI
 		traverse do |src|
 			var o2 = Object.create(o)
 			o2:filename = src:filename
-			o2:rewrite = no if o:noRewrite
+			o2:rewrite = o:rewrite
 			var out = compiler.tokenize(src:sourceBody,o2)
 			src:tokens = out
 

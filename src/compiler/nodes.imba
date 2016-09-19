@@ -296,7 +296,7 @@ export class Stack
 	def reset
 		@nodes    = []
 		@scoping  = []
-		@scopes   = [] # for analysis - should rename
+		@scopes   = []
 		@stash    = Stash.new(self)
 		@loglevel = 3
 		@counter  = 0

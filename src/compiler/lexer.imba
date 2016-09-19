@@ -42,12 +42,7 @@ var IMBA_ALIAS_MAP =
 	'or'   : '||'
 	'is'   : '=='
 	'isnt' : '!='
-	# 'not'  : '!'
-	# 'yes'  : 'true'
-	# 'no'   : 'false'
-	# 'isa'  : 'instanceof'
 	'case' : 'switch'
-	# 'nil'  : 'null'
 
 var IMBA_ALIASES  = Object.keys(IMBA_ALIAS_MAP)
 IMBA_KEYWORDS = IMBA_KEYWORDS.concat(IMBA_ALIASES)

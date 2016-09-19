@@ -138,8 +138,10 @@ export class Rewriter
 		scanTokens do |token,i,tokens| # do |token,i,tokens|
 			var next = tokenType(i + 1)
 
-			return 1 unless T.typ(token) is 'TERMINATOR' and EXPRESSION_CLOSE.indexOf(next) >= 0
+			return 1 unless T.typ(token) == 'TERMINATOR' and EXPRESSION_CLOSE.indexOf(next) >= 0
 			return 1 if next == 'OUTDENT'
+			# return 1
+			# console.log 'found mid-expression newline?',token.@type,next
 			tokens.splice(i, 1)
 			0
 
@@ -568,11 +570,12 @@ export class Rewriter
 
 var EXPRESSION_START = ['(','[','{','INDENT','CALL_START','PARAM_START','INDEX_START','TAG_PARAM_START','BLOCK_PARAM_START','STRING_START','{{', 'TAG_START']
 var EXPRESSION_END = [')',']','}','OUTDENT','CALL_END','PARAM_END','INDEX_END','TAG_PARAM_END','BLOCK_PARAM_END','STRING_END','}}', 'TAG_END']
+# Tokens that indicate the close of a clause of an expression.
+var EXPRESSION_CLOSE = [')',']','}','OUTDENT','CALL_END','PARAM_END','INDEX_END','TAG_PARAM_END','BLOCK_PARAM_END','STRING_END','}}', 'TAG_END','CATCH', 'WHEN', 'ELSE', 'FINALLY']
 
 var IDENTIFIERS = ['IDENTIFIER', 'GVAR', 'IVAR', 'CVAR', 'CONST', 'ARGVAR']
 
-# Tokens that indicate the close of a clause of an expression.
-var EXPRESSION_CLOSE = ['CATCH', 'WHEN', 'ELSE', 'FINALLY'].concat EXPRESSION_END
+
 
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
 var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',

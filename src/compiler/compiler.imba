@@ -27,7 +27,7 @@ export def tokenize code, o = {}
 		var tokens = lex.tokenize code, o
 		console.timeEnd('tokenize') if o:profile
 
-		if o:rewrite or !o:noRewrite
+		unless o:rewrite === no
 			tokens = rewriter.rewrite(tokens,o)
 		return tokens
 
