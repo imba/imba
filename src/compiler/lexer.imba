@@ -312,10 +312,12 @@ export class Lexer
 		@contexts = [] # suplements @ends
 		@scopes   = []
 		@nextScope = null # the scope to add on the next indent
+		@context = null
 		# should rather make it like a statemachine that moves from CLASS_DEF to CLASS_BODY etc
 		# Things should compile differently when you are in a CLASS_BODY than when in a DEF_BODY++
 
 		@indentStyle = null
+		@inTag = no
 
 		@tokens  = []             # Stream of parsed tokens in the form `['TYPE', value, line]`.
 		@seenFor = no
@@ -325,6 +327,7 @@ export class Lexer
 		@end     = null
 		@char 	 = null
 		@bridge  = null
+
 		@last    = null
 		@lastTyp = ''
 		@lastVal = null
@@ -372,6 +375,7 @@ export class Lexer
 		parse(code)
 
 		closeIndentation unless o:inline
+
 		if !o:silent and @ends:length
 			console.log @ends
 			error "missing {@ends.pop}"
@@ -656,17 +660,16 @@ export class Lexer
 		# we can optimize this by after a def simply
 		# fetching all the way after the def until a space or (
 		# and then add this to the def-token itself (as with fragment)
-		return 0 if @chunk.charAt(0) == ' '
+		return 0 if @chunk[0] == ' '
 
 		var match
 
 		if @end == ')'
-			var outerctx = @ends[@ends:length - 2]
-			# weird assumption, no?
-			# console.log 'context is inside!!!'
-			if outerctx == '%' and match = TAG_ATTR.exec(@chunk)
-				token('TAG_ATTR_SET',match[1])
-				return match[0]:length
+			if @ends:length > 1
+				var outerctx = @ends[@ends:length - 2]
+				if outerctx == '%' and match = TAG_ATTR.exec(@chunk)
+					token('TAG_ATTR_SET',match[1])
+					return match[0]:length
 
 		unless match = METHOD_IDENTIFIER.exec(@chunk)
 			return 0			
@@ -1498,7 +1501,7 @@ export class Lexer
 		if prev
 			if match
 				prev:spaced = yes
-				prev.@s = match[0]
+				# prev.@s = match[0]
 				return match[0]:length
 			else
 				prev:newLine = yes
@@ -1820,7 +1823,8 @@ export class Lexer
 
 		var isInterpolated = no
 		# out of bounds
-		while letter = str.charAt(i += 1)
+
+		while letter = str[i += 1]
 			if letter is '\\'
 				i += 1
 				continue
@@ -1828,7 +1832,7 @@ export class Lexer
 			if letter is '\n' and indent
 				locOffset += indent:length
 
-			unless str.charAt(i) is '{' and (expr = balancedString(str.slice(i), '}'))
+			unless str[i] == '{' and (expr = balancedString(str.slice(i), '}'))
 				continue
 
 			isInterpolated = yes

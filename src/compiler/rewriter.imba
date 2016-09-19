@@ -10,10 +10,10 @@
 var T = require './token'
 var Token = T.Token
 
-var prof
-if $imbac_profile_node$
+var v8
+if $v8prof$
 	console.log 'import profiler'
-	prof = require 'v8-profiler'
+	v8 = require 'v8-natives'	
 
 import INVERSES,BALANCED_PAIRS,TOK from './constants'
 
@@ -221,6 +221,12 @@ var LINEBREAKS       = ['TERMINATOR', 'INDENT', 'OUTDENT'] # Tokens that end a l
 var CALLCOUNT = 0
 # Based on the original rewriter.coffee from CoffeeScript
 export class Rewriter
+	
+	def initialize
+		@tokens = []
+		@options = {}
+		@len = 0
+		self
 
 	def reset
 		self
@@ -242,11 +248,15 @@ export class Rewriter
 		@options = opts
 
 		var i = 0
+		var k = tokens:length
 		# flag empty methods
-		while var token = tokens[i]
-			var next = tokens[i + 1]
-			if token.@type == 'DEF_BODY' and next and next.@type == TERMINATOR
-				token.@type = 'DEF_EMPTY'
+		while i < (k - 1)
+			var token = tokens[i]
+			
+			if token.@type == 'DEF_BODY'
+				var next = tokens[i + 1]
+				if next and next.@type == TERMINATOR
+					token.@type = 'DEF_EMPTY'
 			i++
 
 		step("all")
@@ -272,6 +282,17 @@ export class Rewriter
 
 		this[fn]()
 
+		if v8
+			var opt = v8.getOptimizationStatus(this[fn])
+			if opt != 1
+				process:stdout.write "{fn}: {opt}\n" 
+				v8.optimizeFunctionOnNextCall(this[fn])
+
+			# if opt == 2
+			# v8.optimizeFunctionOnNextCall(this[fn])
+			#	v8:helpers.printStatus(this[fn])
+			# console.log v8.getOptimizationStatus(this[fn])
+
 		if $imbac_profile$
 			console.timeEnd(fn)
 
@@ -286,25 +307,26 @@ export class Rewriter
 		var tokens = @tokens
 
 		var i = 0
-		while var token = tokens[i]
-			i += block.call(self, token, i, tokens)
-
+		while i < tokens:length
+			i += block.call(self, tokens[i], i, tokens)
 		true
 
 	def detectEnd i, condition, action, state = {}
+
 		var tokens = @tokens
 		var levels = 0
 		var starts = []
 		var token
 		var t,v
-
-		while token = tokens[i]
+ 
+		while i < tokens:length
+			token = tokens[i]
 
 			if levels == 0 and condition.call(this,token,i,starts,tokens)
-				return action.call(self, token, i)
+				return action.call(self, token, i,tokens)
 
 			if !token or levels < 0
-				return action.call(self, token, i - 1)
+				return action.call(self, token, i - 1,tokens)
 
 			t = token.@type
 
@@ -322,9 +344,8 @@ export class Rewriter
 		var token = @tokens[0]
 
 		if token.@type === TERMINATOR
-			# console.log "adding bodystart"
-			@tokens = [T.token('BODYSTART','BODYSTART')].concat(@tokens)
-			# T.setTyp(tok,'HEADER')
+			@tokens.unshift(T.token('BODYSTART','BODYSTART'))
+			# @tokens = [T.token('BODYSTART','BODYSTART')].concat(@tokens)
 		return
 
 	# Leading newlines would introduce an ambiguity in the grammar, so we
@@ -332,19 +353,26 @@ export class Rewriter
 	def removeLeadingNewlines
 		var at = 0
 
-		for token,i in @tokens
+		var i = 0 # @tokens:length
+		var tokens = @tokens
+		var token
+		var l = tokens:length
+
+		while i < l
+			token = tokens[i]
 			if token.@type !== TERMINATOR
 				break at = i
+			i++
 		
-		@tokens.splice(0, at) if at
-
+		tokens.splice(0, at) if at
 		return
 
 	# Some blocks occur in the middle of expressions -- when we're expecting
 	# this, remove their trailing newlines.
 	def removeMidExpressionNewlines
+
 		scanTokens do |token,i,tokens| # do |token,i,tokens|
-			var next = tokens[i + 1]
+			var next = tokens:length > (i + 1) ? tokens[i + 1] : null
 			return 1 unless token.@type === TERMINATOR and next and EXPRESSION_CLOSE_HASH[next.@type] # .indexOf(next) >= 0
 			return 1 if next and next.@type == OUTDENT
 			# return 1
@@ -359,27 +387,30 @@ export class Rewriter
 	# its paired close. We have the mis-nested outdent case included here for
 	# calls that close on the same line, just before their outdent.
 	def closeOpenCalls
-		var condition = do |token,i|
+		var condition = do |token,i,starts,tokens|
 			var t = token.@type
-			(t == ')' or t == 'CALL_END') || t == OUTDENT and tokenType(i - 1) == ')'
+			(t == ')' or t == 'CALL_END') || t == OUTDENT and this.tokenType(i - 1) == ')'
 
-		var action = do |token, i|
+		var action = do |token, i, tokens|
 			var t = token.@type
-			token = @tokens[i - 1] if t === OUTDENT
+			token = tokens[i - 1] if t === OUTDENT
 			# var tok = @tokens[t == OUTDENT ? i - 1 : i]
 			token.@type = 'CALL_END'
 			return
 			# T.setTyp(tok,'CALL_END')
 
 		scanTokens do |token,i,tokens|
-			detectEnd(i + 1, condition, action) if token.@type === 'CALL_START'
+			this.detectEnd(i + 1, condition, action) if token.@type === 'CALL_START'
 			return 1
+
+		return
 
 	# The lexer has tagged the opening parenthesis of an indexing operation call.
 	# Match it with its paired close.
 	def closeOpenIndexes
+		# why differentiate between index and []
 		var condition = do |token, i| token.@type === ']' or token.@type === 'INDEX_END'
-		var action    = do |token, i| T.setTyp(token,'INDEX_END')
+		var action    = do |token, i| token.@type = 'INDEX_END'
 		
 		scanTokens do |token,i,tokens|
 			detectEnd(i + 1, condition, action) if token.@type === 'INDEX_START'
@@ -388,21 +419,21 @@ export class Rewriter
 	# The lexer has tagged the opening parenthesis of an indexing operation call.
 	# Match it with its paired close. Should be done in lexer directly
 	def closeOpenTags
-		var condition = do |token, i| T.typ(token) in ['>', 'TAG_END']
-		var action    = do |token, i| T.setTyp(token,'TAG_END') # token[0] = 'TAG_END'
+		var condition = do |token, i| token.@type == '>' or token.@type == 'TAG_END'
+		var action    = do |token, i| token.@type = 'TAG_END'
 
 		scanTokens do |token,i,tokens|
-			detectEnd i + 1, condition, action if T.typ(token) is 'TAG_START'
+			detectEnd(i + 1, condition, action) if token.@type === 'TAG_START'
 			return 1
-		
-	def addImplicitCommas
-		return
 
 	def addImplicitBlockCalls
 		var i = 1
 		var tokens = @tokens
 
-		while var token = tokens[i]
+		# can use shared states for these
+		while i < tokens:length
+
+			var token = tokens[i]
 			var t = token.@type
 			var v = token.@value
 			# hmm
@@ -416,18 +447,20 @@ export class Rewriter
 
 	# Object literals may be written with implicit braces, for simple cases.
 	# Insert the missing braces here, so that the parser doesn't have to.
+
+	def addLeftBrace
+		self
+
 	def addImplicitBraces
 		var stack       = []
 		var start       = null
 		var startIndent = 0
 		var startIdx = null
+		var baseCtx = ['ROOT',0]
 
 		var noBraceContext = ['IF','TERNARY','FOR']
 
 		var noBrace = no
-
-		var scope = do 
-			stack[stack:length - 1] or []
 
 		var action = do |token,i|
 			@tokens.splice i, 0, T.RBRACKET
@@ -441,10 +474,12 @@ export class Rewriter
 		var stackToken = do |a,b|
 			return [a,b]
 
+		# method is called so many times
 		scanTokens do |token,i,tokens|
 			var type = token.@type
 			var v = token.@value
-			var ctx = stack[stack:length - 1] or []
+
+			var ctx = stack:length ? stack[stack:length - 1] : baseCtx
 			var idx
 
 			if noBraceContext.indexOf(type) >= 0
@@ -491,8 +526,6 @@ export class Rewriter
 
 
 			if type == ','
-				# automatically add an ending here if inside:generated scope?
-				# it is important that this is:generated(!)
 				if ctx[0] == '{' and ctx:generated
 					tokens.splice(i, 0, T.RBRACKET)
 					stack.pop
@@ -565,10 +598,6 @@ export class Rewriter
 	# deal with them.
 	# Practically everything will now be callable this way (every identifier)
 	def addImplicitParentheses
-		
-		# var noCallTag = ['CLASS', 'IF','UNLESS','TAG','WHILE','FOR','UNTIL','CATCH','FINALLY','MODULE','LEADING_WHEN']
-
-		# console.log "adding implicit parenthesis" # ,self:scanTokens
 		var tokens = @tokens
 
 		var noCall = no
@@ -581,11 +610,11 @@ export class Rewriter
 		var callObject = no
 		var callIndent = no
 
-		var action = do |token,i|
+		var parensAction = do |token,i|
 			tokens.splice i, 0, T.token('CALL_END', ')')
 
 		# function will not be optimized in single run
-		var cond = do |token,i,starts,tokens|
+		var parensCond = do |token,i,starts,tokens|
 			
 			var type = token.@type
 
@@ -612,7 +641,7 @@ export class Rewriter
 				# console.log "dont close implicit call outside for"
 				return no 
 
-			var post = tokens[i + 1]
+			var post = tokens:length > i ? tokens[i + 1] : null
 			var postTyp = post and post.@type
 
 			if token:generated or prev === ','
@@ -632,10 +661,11 @@ export class Rewriter
 			return no
 
 		var i = 0
-		while var token = tokens[i]
+		while tokens:length > (i + 1)
+			var token = tokens[i]
 			var type = token.@type
 
-			var prev    = tokens[i - 1]
+			var prev    = i > 0 ? tokens[i - 1] : null
 			var current = tokens[i]
 			var next    = tokens[i + 1]
 
@@ -682,13 +712,16 @@ export class Rewriter
 			unless callObject or callIndent or (prev and prev:spaced) and (prev:call or IMPLICIT_FUNC_MAP[pt]) and (IMPLICIT_CALL_MAP[type] or !(token:spaced or token:newLine) and IMPLICIT_UNSPACED_CALL.indexOf(type) >= 0)
 				continue i += 1
 
-
+			# cache where we want to splice -- add them later
 			tokens.splice i, 0, T.token('CALL_START', '(')
 			# CALLCOUNT++
 
-			detectEnd(i + 1, cond, action)
+			detectEnd(i + 1, parensCond, parensAction)
+
 			T.setTyp(prev,'FUNC_EXIST') if T.typ(prev) == '?'
+
 			i += 2
+
 			# need to reset after a match
 			endCallAtTerminator = no
 			noCall = no
@@ -711,15 +744,17 @@ export class Rewriter
 		var tokens = @tokens
 		var starter 
 
-		var action = @indentationAction ||= do |token,i|
-			var idx = tokenType(i - 1) === ',' ? (i - 1) : i
-			@tokens.splice idx, 0, T.OUTDENT
+		var indentAction = do |token,i,tokens|
+			var idx = this.tokenType(i - 1) === ',' ? (i - 1) : i
+			tokens.splice idx, 0, T.OUTDENT
+			return
 
-		var condition = do |token,i|
+		var indentCondition = do |token,i,starts,tokens|
 			var t = token.@type
 			SINGLE_CLOSERS_MAP[t] and token.@value !== ';' and not (t == 'ELSE' and starter != 'IF' and starter != 'THEN')
 
-		while var token = tokens[i]
+		while i < tokens:length
+			var token = tokens[i]
 			var type = token.@type
 			var next = tokenType(i + 1)
 
@@ -729,20 +764,19 @@ export class Rewriter
 				continue
 
 			if type === CATCH and lookup1[tokenType(i + 2)]
-				tokens.splice i + 2, 0, *indentation(token)
-				continue i += 4
+				tokens.splice i + 2, 0, T.token(INDENT, '2'), T.token(OUTDENT, '2')
+				i += 4
+				continue
 
-			if SINGLE_LINERS[type] and (next != INDENT and next != 'BLOCK_PARAM_START') and not (type == 'ELSE' and next == 'IF') and type != 'ELIF'
+			if SINGLE_LINERS[type] and (next != INDENT and next != 'BLOCK_PARAM_START') and !(type == 'ELSE' and next == 'IF') and type != 'ELIF'
 				starter = type
 
 				var indent = T.token(INDENT, '2')
 				indent:fromThen   = true if starter === THEN
 				indent:generated  = true
 				tokens.splice i + 1, 0, indent
-
-				detectEnd(i + 2, condition, action)
+				detectEnd(i + 2, indentCondition, indentAction)
 				tokens.splice i, 1 if type === THEN
-			
 			i++
 
 		return
@@ -750,13 +784,13 @@ export class Rewriter
 	# Tag postfix conditionals as such, so that we can parse them with a
 	# different precedence.
 	def tagPostfixConditionals
-		var condition = do |token,i| T.typ(token) in [TERMINATOR, INDENT]
+		var condition = do |token,i,starts,tokens| token.@type === TERMINATOR or token.@type === INDENT
 
 		scanTokens do |token, i, tokens|
-			var typ = T.typ(token)
+			var typ = token.@type
 			return 1 unless typ == 'IF' or typ == 'FOR'
 			var original = token
-			detectEnd(i + 1, condition) do |token,i|
+			this.detectEnd(i + 1, condition) do |token,i|
 				T.setTyp(original, 'POST_' + T.typ(original)) if T.typ(token) != INDENT
 			1
 
@@ -767,10 +801,18 @@ export class Rewriter
 	# Look up a type by token index.
 	def type i 
 		# if i < 0 then return null
+		throw "deprecated"
 		var tok = @tokens[i]
 		tok and tok.@type
 
-	def tokenType i 
+	def injectToken index, token
+		self
+
+	def tokenType i
+		if i >= @tokens:length
+			# CALLCOUNT++
+			return null
+
 		var tok = @tokens[i]
 		tok and tok.@type
 
