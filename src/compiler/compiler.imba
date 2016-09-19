@@ -12,6 +12,7 @@ import ImbaParseError from './errors'
 # Instantiate a Lexer for our use here.
 export var lex = lexer.Lexer.new
 export var Rewriter = rewriter.Rewriter
+var rewriter = Rewriter.new
 
 parser:lexer = lex.jisonBridge
 parser:yy = ast # everything is exported right here now
@@ -19,18 +20,28 @@ parser:yy = ast # everything is exported right here now
 
 export def tokenize code, o = {}
 	try
+		# console.log('tokenize') if o:profile
+		console.time('tokenize') if o:profile
 		o.@source = code
 		lex.reset
-		lex.tokenize code, o
+		var tokens = lex.tokenize code, o
+		console.timeEnd('tokenize') if o:profile
+
+		if o:rewrite or !o:noRewrite
+			tokens = rewriter.rewrite(tokens,o)
+		return tokens
+
 	catch err
 		throw err
 
 export def rewrite tokens, o = {}
-	var rewriter = Rewriter.new
 	try
-		rewriter.rewrite tokens, o
+		console.time('rewrite') if o:profile
+		tokens = rewriter.rewrite tokens, o
+		console.timeEnd('rewrite') if o:profile
 	catch err
 		throw err
+	return tokens
 
 
 export def parse code, o = {}

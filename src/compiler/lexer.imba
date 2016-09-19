@@ -2,9 +2,7 @@
 var T = require './token'
 var Token = T.Token
 
-var rw = require './rewriter'
-var Rewriter = rw.Rewriter
-var INVERSES = rw.INVERSES
+import INVERSES from './constants'
 
 var K = 0
 
@@ -376,8 +374,6 @@ export class Lexer
 
 		o.@tokens = @tokens 
 
-		
-		console.time("tokenize:lexer") if o:profile
 		parse(code)
 
 		closeIndentation unless o:inline
@@ -385,9 +381,7 @@ export class Lexer
 			console.log @ends
 			error "missing {@ends.pop}"
 
-		console.timeEnd("tokenize:lexer") if o:profile
-		return @tokens if o:rewrite == no or o:norewrite
-		return Rewriter.new.rewrite(@tokens, o)
+		return @tokens
 
 	def parse code
 		var i = 0
@@ -1431,6 +1425,7 @@ export class Lexer
 
 			if immediate and tT(immediate) == 'TERMINATOR'
 				tTs(immediate,'INDENT')
+				# should add terminator inside indent?
 				immediate.@meta ||= {pre: tV(immediate), post: ''}
 
 				# should rather add to meta somehow?!?

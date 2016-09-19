@@ -9,8 +9,13 @@
 var T = require './token'
 var Token = T.Token
 
+import INVERSES,BALANCED_PAIRS from './constants'
+
 # Based on the original rewriter.coffee from CoffeeScript
 export class Rewriter
+
+	def reset
+		self
 	
 	def tokens
 		@tokens
@@ -23,11 +28,13 @@ export class Rewriter
 	# like this. The order of these passes matters -- indentation must be
 	# corrected before implicit parentheses can be wrapped around blocks of code.
 	def rewrite tokens, opts = {}
+		reset
+
 		@tokens  = tokens
 		@options = opts
 
 		# console.log "tokens in: " + tokens:length
-		console.time("tokenize:rewrite") if opts:profile
+		# console.time("tokenize:rewrite") if opts:profile
 
 		var i = 0
 		# flag empty methods
@@ -37,6 +44,12 @@ export class Rewriter
 				token.@type = 'DEF_EMPTY'
 			i++
 
+		step("all")
+		# console.timeEnd("tokenize:rewrite") if opts:profile
+		# console.log "tokens out: " + @tokens:length
+		return @tokens
+
+	def all
 		step("ensureFirstLine")
 		step("removeLeadingNewlines")
 		step("removeMidExpressionNewlines")
@@ -50,20 +63,14 @@ export class Rewriter
 		step("addImplicitBraces")
 		step("addImplicitParentheses")
 
-		console.timeEnd("tokenize:rewrite") if opts:profile
-		# console.log "tokens out: " + @tokens:length
-		@tokens
-
 	def step fn
-		if @options:profile
-			console.log "---- starting {fn} ---- "
+		if $imbac_profile$
 			console.time(fn)
 
 		this[fn]()
 
-		if @options:profile
+		if $imbac_profile$
 			console.timeEnd(fn)
-			console.log "\n\n"
 		return
 
 	# Rewrite the token stream, looking one token ahead and behind.
@@ -558,36 +565,6 @@ export class Rewriter
 
 # Constants
 # ---------
-
-# List of the token pairs that must be balanced.
-var BALANCED_PAIRS = [
-	['(', ')']
-	['[', ']']
-	['{', '}']
-	['{{', '}}']
-	['INDENT', 'OUTDENT'],
-	['CALL_START', 'CALL_END']
-	['PARAM_START', 'PARAM_END']
-	['INDEX_START', 'INDEX_END']
-	['TAG_START','TAG_END']
-	['TAG_PARAM_START','TAG_PARAM_END']
-	['TAG_ATTRS_START','TAG_ATTRS_END']
-	['BLOCK_PARAM_START','BLOCK_PARAM_END']
-]
-
-# The inverse mappings of `BALANCED_PAIRS` we're trying to fix up, so we can
-# look things up from either end.
-export var INVERSES = {}
-
-# The tokens that signal the start/end of a balanced pair.
-# var EXPRESSION_START = []
-# var EXPRESSION_END   = []
-
-for pair in BALANCED_PAIRS
-	var left = pair[0]
-	var rite = pair[1]
-	INVERSES[rite] = left
-	INVERSES[left] = rite
 
 var EXPRESSION_START = ['(','[','{','INDENT','CALL_START','PARAM_START','INDEX_START','TAG_PARAM_START','BLOCK_PARAM_START','STRING_START','{{', 'TAG_START']
 var EXPRESSION_END = [')',']','}','OUTDENT','CALL_END','PARAM_END','INDEX_END','TAG_PARAM_END','BLOCK_PARAM_END','STRING_END','}}', 'TAG_END']
