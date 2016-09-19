@@ -9,8 +9,6 @@ export var BALANCED_PAIRS = [
 	['PARAM_START', 'PARAM_END']
 	['INDEX_START', 'INDEX_END']
 	['TAG_START','TAG_END']
-	['TAG_PARAM_START','TAG_PARAM_END']
-	['TAG_ATTRS_START','TAG_ATTRS_END']
 	['BLOCK_PARAM_START','BLOCK_PARAM_END']
 ]
 
@@ -40,5 +38,10 @@ export var ALL_KEYWORDS = [
 	'and','or','is','isnt','not','yes','no','isa','case','nil','require'
 ]
 
-export var TOKEN_TYPES =
+export var TOK =
 	TERMINATOR: 'TERMINATOR'
+	INDENT: 'INDENT'
+	OUTDENT: 'OUTDENT'
+	DEF_BODY: 'DEF_BODY'
+	THEN: 'THEN'
+	CATCH: 'CATCH'

@@ -1669,11 +1669,7 @@ export class Lexer
 			tokid = 'LOGIC' # or value is '?' and prev?:spaced 
 
 		elif prev and !prev:spaced
-			# need a better way to do these
-			if value is '(' and end1 == '%'
-				tokid = 'TAG_ATTRS_START'
-
-			elif value is '(' and pt in CALLABLE
+			if value is '(' and pt in CALLABLE
 				# not using this ???
 				# prev[0] = 'FUNC_EXIST' if prev[0] is '?'
 				tokid = 'CALL_START'
