@@ -254,7 +254,7 @@ var INDEXABLE = [
 	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID'
 ]
 
-var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:','+','-']
+var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:','+','-','*']
 
 var GLOBAL_IDENTIFIERS = ['global','exports']
 
@@ -1264,13 +1264,6 @@ export class Lexer
 		return 0 if prev and (tT(prev) in (if prev:spaced then NOT_REGEX else NOT_SPACED_REGEX))
 		return 0 unless match = REGEX.exec(@chunk)
 		var [m, regex, flags] = match
-
-		# FIXME
-		# if regex[..1] is '/*'
-		#	error 'regular expressions cannot begin with `*`'
-
-		if regex == '//'
-			regex = '/(?:)/'
 
 		token 'REGEX', "{regex}{flags}", m:length
 		m:length

@@ -2917,6 +2917,10 @@ export class RegExp < Literal
 	def isPrimitive
 		yes
 
+	def js
+		var v = super
+		v == '//' ? '/(?:)/' : v
+
 # Should inherit from ListNode - would simplify
 export class Arr < Literal
 
@@ -4479,6 +4483,7 @@ export class TagId < Identifier
 
 	def c
 		"id$('{value.c.substr(1)}')"
+
 
 # This is not an identifier - it is really a string
 # Is this not a literal?
