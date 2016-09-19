@@ -413,7 +413,7 @@ export class Lexer
 
 	def pushEnd val, ctx
 		@ends.push(val)
-		@contexts.push(@context = (ctx or null))
+		@contexts.push(@context = (ctx or {}))
 		@end = val
 		refreshScope
 
@@ -448,8 +448,6 @@ export class Lexer
 		
 
 	def queueScope val
-		# console.log("pushing scope {val} - {@indents} {@indents:length}")
-		# @scopes.push(val) # no no
 		@scopes[@indents:length] = val
 		self
 
@@ -477,18 +475,14 @@ export class Lexer
 
 
 	def closeDef
-		if context is 'DEF'
+		if context == 'DEF'
 			var prev = last(@tokens)
-			# console.log "close def {prev}"
-			# console.log('closeDef with last>',prev)
+
 			if tT(prev) == 'DEF_FRAGMENT'
 				true
 			elif tT(prev) == 'TERMINATOR'
-				# console.log "here?!??"
 				let n = @tokens.pop
-				# console.log n
 				token('DEF_BODY', 'DEF_BODY',0)
-				# token('TERMINATOR', '',0) unless n.@value.indexOf('//') >= 0
 				@tokens.push(n)
 			else
 				token('DEF_BODY', 'DEF_BODY',0)
@@ -556,7 +550,7 @@ export class Lexer
 
 		# special handling if we are in this context
 		if @end == '%'
-			var chr = @chunk.charAt(0)
+			var chr = @chunk[0]
 			var open = inContext('open')
 
 			# should add for +, ~ etc
@@ -626,17 +620,14 @@ export class Lexer
 				return 0
 
 		return 0 unless match = SELECTOR.exec(@chunk)
+
 		var [input, id, kind] = match
 
 		# this is a closed selector
 		if kind == '('
 			# token '(','('
 			token 'SELECTOR_START', id, id:length + 1
-			# self.pushEnd(')') # are we so sure about this?
-			self.pushEnd('%')
-
-			# @ends.push ')'
-			# @ends.push '%'
+			pushEnd('%')
 			return id:length + 1
 
 		elif id == '%'
@@ -645,7 +636,7 @@ export class Lexer
 			token 'SELECTOR_START', id, id:length
 			# this is a separate - scope. Full selector should rather be $, and keep the single selector as %
 		
-			scope('%', open: yes)
+			pushEnd('%', open: yes)
 			# @ends.push '%'
 			# make sure a terminator breaks out
 			return id:length
@@ -709,12 +700,10 @@ export class Lexer
 			if ltyp == '(' or ltyp == 'CALL_START'
 				token('DO', 'DO',0)
 				self.pushEnd('|')
-				# @ends.push '|'
 				token('BLOCK_PARAM_START', id,1)
 				return length
 
 			elif ltyp == 'DO' or ltyp == '{'
-				# @ends.push '|'
 				self.pushEnd('|')
 				token('BLOCK_PARAM_START', id,1)
 				return length
@@ -790,8 +779,8 @@ export class Lexer
 	def identifierToken
 		var match
 
-		var ctx0 = @ends[@ends:length - 1]
-		var ctx1 = @ends[@ends:length - 2]
+		var ctx0 = @ends:length > 0 ? @ends[@ends:length - 1] : null
+		var ctx1 = @ends:length > 1 ? @ends[@ends:length - 2] : null
 		var innerctx = ctx0
 		var typ
 		var reserved = no
@@ -941,7 +930,6 @@ export class Lexer
 
 			elif typ == 'TAG'
 				self.pushEnd('TAG')
-				# @ends.push('TAG')
 			# FIXME @ends is not used the way it is supposed to..
 			# what we want is a context-stack
 			elif typ == 'DEF'
@@ -1008,12 +996,8 @@ export class Lexer
 			while i
 				var prev = @tokens[--i]
 				var ctrl = "" + tV(prev)
-				# console.log("ctrl is {ctrl}")
-				# need to coerce to string because of stupid CS ===
-				# console.log("prev is",prev[0],prev[1])
 				if ctrl in IMBA_CONTEXTUAL_KEYWORDS
 					tTs(prev,ctrl.toUpperCase)
-					# prev[0] = ctrl.toUpperCase # FIX
 				else
 					break
 
@@ -1023,7 +1007,6 @@ export class Lexer
 		elif typ == 'IMPORT'
 			# could manually parse the whole ting here?
 			pushEnd('IMPORT')
-			# @ends.push 'IMPORT'
 
 		elif id == 'from' and ctx0 == 'IMPORT'
 			typ = 'FROM'
@@ -1439,7 +1422,6 @@ export class Lexer
 
 			@indents.push diff
 			pushEnd('OUTDENT')
-			# @ends.push 'OUTDENT'
 			@outdebt = @indebt = 0
 			addLinebreaks(brCount)
 		else

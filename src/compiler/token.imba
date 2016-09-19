@@ -20,6 +20,7 @@ export class Token
 		this:generated = no
 		this:newLine = no
 		this:spaced = no
+		this:call = no
 		return self
 
 	def type
