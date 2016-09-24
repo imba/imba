@@ -363,12 +363,14 @@ export class Lexer
 		@code    = code
 		@opts    = o
 		@locOffset = o:loc or 0
-
-		o:indent ||= {style: null, size: null}
+		@indentStyle = o:indentation or null
 
 		# if the very first line is indented, take this as a gutter
 		if let m = code.match(/^([\ \t]*)[^\n\s\t]/)
 			@state:gutter = m[1]
+		
+		if o:gutter !== undefined
+			@state:gutter = o:gutter
 
 		o.@tokens = @tokens 
 
@@ -1351,6 +1353,9 @@ export class Lexer
 			# should throw error otherwise?
 
 		var size = whitespace:length
+		
+		if @opts:dropIndentation
+			return size
 
 		if size > 0
 			# seen indent?
@@ -1374,12 +1379,13 @@ export class Lexer
 					# workaround to report correct location
 					@loc += indent:length - whitespace:length
 					token('INDENT', whitespace,whitespace:length)
-					return error('inconsistent indentation')
+					unless @opts:silent
+						return error("inconsistent {@indentStyle} indentation")
 
 			size = indentSize
 
 
-		if size - @indebt is @indent
+		if (size - @indebt) == @indent
 			if noNewlines
 				suppressNewlines()
 			else
@@ -1392,12 +1398,8 @@ export class Lexer
 				suppressNewlines
 				return indent:length
 
-			if inTag()
-				# console.log "indent inside tokid?!?"
-				# @indebt = size - @indent
-				# suppressNewlines()
+			if inTag
 				return indent:length
-
 
 			var diff = size - @indent + @outdebt
 			closeDef()
