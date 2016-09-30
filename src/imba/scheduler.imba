@@ -27,8 +27,10 @@ class Ticker
 			tick(e)
 		self
 
-	def add item
-		@queue.push(item)
+	def add item, force
+		if force or @queue.indexOf(item) == -1
+			@queue.push(item)
+
 		schedule unless @scheduled
 
 	def tick timestamp
