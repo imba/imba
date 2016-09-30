@@ -2907,10 +2907,10 @@ export class Symbol < Literal
 		yes
 
 	def raw
-		@raw ||= sym__(value)
+		@raw ||= sym__(value.toString.replace(/^\:/,''))
 
 	def js o
-		"'{sym__(value)}'"
+		"'{sym__(raw)}'"
 
 export class RegExp < Literal
 

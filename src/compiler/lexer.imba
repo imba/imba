@@ -111,11 +111,7 @@ var SELECTOR_ATTR_OP = /^(\$=|\~=|\^=|\*=|\|=|=|\!=)/
 var SELECTOR_ATTR = /^\[([\w\_\-]+)(\$=|\~=|\^=|\*=|\|=|=|\!=)/
 
 var SYMBOL = ///^
-	\:(
-		(
-			([\*\@$\w\x7f-\uffff]+)+([\-\/\\\:][\w\x7f-\uffff]+)*
-		)|==|\<=\>|\[\]|\[\]\=|\*|[\/,\\]
-	)
+	\:((([\*\@$\w\x7f-\uffff]+)+([\-\\\:][\w\x7f-\uffff]+)*)|==|\<=\>)
 ///
 
 
@@ -1068,23 +1064,18 @@ export class Lexer
 		var match, symbol, prev
 
 		return 0 unless match = SYMBOL.exec(@chunk)
-		symbol = match[0].substr(1)
+		symbol = match[0]
 		prev = last(@tokens)
 
 		# is this a property-access?
 		# should invert this -- only allow when prev IS .. 
-	
 		# : should be a token itself, with a specification of spacing (LR,R,L,NONE)
-
-		# FIX
 		if prev and !prev:spaced and tT(prev) !in ['(','{','[','.','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR']
 			token '.:',':', 1
-			var sym = symbol.split(/[\:\\\/]/)[0] # really?
-			# token 'SYMBOL', "'#{symbol}'"
-			token 'IDENTIFIER', sym, sym:length, 1
-			return (sym:length + 1)
+			var access = symbol.split(':')[1] # really?
+			token 'IDENTIFIER', access, access:length, 1
+			return access:length + 1
 		else
-			# token 'SYMBOL', "'#{symbol}'"
 			token 'SYMBOL', symbol, match[0]:length
 			match[0]:length
 
@@ -1278,7 +1269,7 @@ export class Lexer
 
 				# if !value
 				#	throw error?
-
+				# WARN
 				continue unless value = value.replace(HEREGEX_OMIT, '')
 
 				value = value.replace /\\/g, '\\\\'

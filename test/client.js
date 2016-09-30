@@ -6997,7 +6997,7 @@
 			return eq(obj.c,3);
 		});
 		
-		return test("strings",function() {
+		test("strings",function() {
 			var fn = function(arg) { return arg; };
 			var name = 'john';
 			var str = ("test " + 1 + " ");
@@ -7027,6 +7027,15 @@
 			var v = 1;
 			str = ("" + (v ? ('a') : ('b')) + "c");
 			return eq(str,'ac');
+		});
+		
+		return test("symbols",function() {
+			var sym = 'one';
+			
+			eq('one','one');
+			eq('one:two','one:two');
+			eq('oneTwo','oneTwo');
+			return eq('one_two','one_two');
 		});
 	});
 

@@ -50,3 +50,12 @@ dette"
 		var v = 1
 		str = "{v ? 'a' : 'b'}c"
 		eq str, 'ac'
+	
+	test "symbols" do
+		var sym = :one
+		
+		eq :one, 'one'
+		eq :one:two, 'one:two'
+		eq :one-two, 'oneTwo'
+		eq :one_two, 'one_two'
+		
