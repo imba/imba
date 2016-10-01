@@ -1240,58 +1240,7 @@ export class Lexer
 	# The escaping should rather happen in AST - possibly as an additional flag?
 	def heregexToken match
 		var [heregex, body, flags] = match
-		
-		if 0 > body.indexOf('#{')
-			# var re = body.replace(HEREGEX_OMIT, '').replace(/\//g, '\\/')
-			# if re.match(/^\*/)
-			# 	error 'regular expressions cannot begin with `*`'
-			token 'REGEX', heregex, heregex:length
-			# token 'REGEX', "/{ re or '(?:)' }/{flags}", heregex:length
-			# set raw value of HEREGEX here
-			return heregex:length
-
-		# use more basic regex type
-
-		token 'CONST', 'RegExp'
-		@tokens.push T.token('CALL_START', '(',0)
-		var tokens = []
-
-		for pair in interpolateString(body, regex: yes)
-
-			var tok = tT(pair) # FIX
-			var value = tV(pair) # FIX
-
-			if tok == 'TOKENS'
-				# FIXME what is this?
-				tokens.push *value
-			else
-
-				# if !value
-				#	throw error?
-				# WARN
-				continue unless value = value.replace(HEREGEX_OMIT, '')
-
-				value = value.replace /\\/g, '\\\\'
-				tokens.push T.token('STRING', makeString(value, '"', yes), 0) # FIX
-
-			tokens.push T.token('+', '+', 0) # FIX
-
-		tokens.pop
-
-		# FIX
-		unless tokens[0] and tT(tokens[0]) is 'STRING'
-			# FIX
-			@tokens.push T.token('STRING', '""'), T.token('+', '+')
-
-		@tokens.push *tokens # what is this?
-		# FIX
-
-		if flags
-			@tokens.push(T.token(',', ',', 0))
-			@tokens.push(T.token('STRING', '"' + flags + '"', 0))
-
-		token(')', ')',0)
-
+		token 'REGEX', heregex, heregex:length
 		return heregex:length
 
 	# Matches newlines, indents, and outdents, and determines which is which.
@@ -1771,9 +1720,9 @@ export class Lexer
 		error "missing { stack.pop }, starting" unless @opts:silent
 
 	# Expand variables and expressions inside double-quoted strings using
-	# Ruby-like notation for substitution of arbitrary expressions.
+	# braces for substitution of arbitrary expressions.
 	#
-	#     "Hello #{name.capitalize()}."
+	#     "Hello {name.capitalize}."
 	#
 	# If it encounters an interpolation, this method will recursively create a
 	# new Lexer, tokenize the interpolated contents, and merge them into the
@@ -1937,8 +1886,6 @@ export class Lexer
 		if var tok = last(@tokens, index)
 			tTs(tok,val) if val
 			return tT(tok)
-			# tok.@type = tokid if tokid # why?
-			# tok.@type
 		else null
 
 	# Peek at a value in the current token stream.
@@ -1946,8 +1893,6 @@ export class Lexer
 		if var tok = last(@tokens, index)
 			tVs(tok,val) if val
 			return tV(tok)
-			# tok.@value = val if val # why?
-			# tok.@value
 		else null
 		
 
