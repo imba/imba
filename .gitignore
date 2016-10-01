@@ -2,6 +2,7 @@
 node_modules
 tmp
 test/perf
+attic/*
 npm-debug.log
 dist/imba.edge.*
 /determinator.json
