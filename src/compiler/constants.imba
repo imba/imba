@@ -45,3 +45,7 @@ export var TOK =
 	DEF_BODY: 'DEF_BODY'
 	THEN: 'THEN'
 	CATCH: 'CATCH'
+	
+
+export var HEREGEX_OMIT = /\s+(?:#.*)?/g
+export var HEREGEX = /// ^ /{3} ([\s\S]+?) /{3} ([imgy]{0,4}) (?!\w) ///

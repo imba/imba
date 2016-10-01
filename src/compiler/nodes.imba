@@ -1,6 +1,7 @@
 # TODO Create Expression - make all expressions inherit from these?
 
 var helpers = require './helpers'
+var constants = require './constants'
 
 import ImbaParseError from './errors'
 import Token from './token'
@@ -2919,6 +2920,13 @@ export class RegExp < Literal
 
 	def js
 		var v = super
+		
+		# special casing heregex
+		if var m = constants.HEREGEX.exec(v)
+			# console.log 'matxhed heregex',m
+			var re = m[1].replace(constants.HEREGEX_OMIT, '').replace(/\//g, '\\/')
+			return '/' + (re or '(?:)') + '/' + m[2]
+		
 		v == '//' ? '/(?:)/' : v
 
 # Should inherit from ListNode - would simplify

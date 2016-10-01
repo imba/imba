@@ -1240,15 +1240,14 @@ export class Lexer
 	# The escaping should rather happen in AST - possibly as an additional flag?
 	def heregexToken match
 		var [heregex, body, flags] = match
-
+		
 		if 0 > body.indexOf('#{')
-
-			var re = body.replace(HEREGEX_OMIT, '').replace(/\//g, '\\/')
-
-			if re.match(/^\*/)
-				error 'regular expressions cannot begin with `*`'
-
-			token 'REGEX', "/{ re or '(?:)' }/{flags}", heregex:length
+			# var re = body.replace(HEREGEX_OMIT, '').replace(/\//g, '\\/')
+			# if re.match(/^\*/)
+			# 	error 'regular expressions cannot begin with `*`'
+			token 'REGEX', heregex, heregex:length
+			# token 'REGEX', "/{ re or '(?:)' }/{flags}", heregex:length
+			# set raw value of HEREGEX here
 			return heregex:length
 
 		# use more basic regex type

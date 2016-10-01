@@ -58,4 +58,14 @@ dette"
 		eq :one:two, 'one:two'
 		eq :one-two, 'oneTwo'
 		eq :one_two, 'one_two'
+	
+	test "regex" do
+		var reg = /\w\d/
+		ok reg.test('a1')
+		
+		var hereg = ///
+			\w\d
+		///
+		
+		ok hereg.test('a1')
 		
