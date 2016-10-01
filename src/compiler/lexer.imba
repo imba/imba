@@ -36,16 +36,6 @@ var IMBA_KEYWORDS = [
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','static','local','export','global','prop']
 
-# should not rewrite the actual tokens
-var IMBA_ALIAS_MAP =
-	'and'  : '&&'
-	'or'   : '||'
-	'is'   : '=='
-	'isnt' : '!='
-
-var IMBA_ALIASES  = Object.keys(IMBA_ALIAS_MAP)
-IMBA_KEYWORDS = IMBA_KEYWORDS.concat(IMBA_ALIASES)
-
 # FixedArray for performance
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
 export var ALL_KEYWORDS = [
@@ -199,7 +189,7 @@ var COMPOUND_ASSIGN = [ '-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=',
 var UNARY = ['!', '~', 'NEW', 'TYPEOF', 'DELETE']
 
 # Logical tokens.
-var LOGIC   = ['&&', '||', '&', '|', '^']
+var LOGIC   = ['&&', '||', '&', '|', '^','and','or']
 
 # Bit-shifting tokens.
 var SHIFT   = ['<<', '>>', '>>>']
@@ -970,13 +960,11 @@ export class Lexer
 				tTs(prev,'EXPORT')
 				typ = 'DEFAULT'
 
-			# could use lookup-hash instead
-			id = IMBA_ALIAS_MAP[id] if isKeyword and IMBA_ALIASES.indexOf(id) >= 0
 			# these really should not go here?!?
 			switch id
 				when '!','not'                            then typ = 'UNARY'
-				when '==', '!=', '===', '!=='             then typ = 'COMPARE'
-				when '&&', '||'                           then typ = 'LOGIC'
+				when '==', '!=', '===', '!==','is','isnt' then typ = 'COMPARE'
+				when '&&', '||','and','or'                then typ = 'LOGIC'
 				when 'break', 'continue', 'debugger','arguments' then typ = id.toUpperCase
 				# when 'true', 'false', 'null', 'undefined' then typ = 'BOOL'
 				# really?

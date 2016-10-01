@@ -3174,6 +3174,17 @@ export class Op < Node
 		@invert = no
 		@opToken = o
 		@op = o and o.@value or o
+		
+		if @op == 'and'
+			@op = '&&'
+		elif @op == 'or'
+			@op = '||'
+		elif @op == 'is'
+			@op = '=='
+		elif @op == 'isnt'
+			@op = '!='
+		
+			
 		@left = l
 		@right = r
 		return self

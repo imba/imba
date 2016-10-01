@@ -46,6 +46,12 @@ export var TOK =
 	THEN: 'THEN'
 	CATCH: 'CATCH'
 	
+export var OPERATOR_ALIASES =
+	and: '&&'
+	or: '||'
+	is: '=='
+	isnt: '!='
+	isa: 'instanceof' 
 
 export var HEREGEX_OMIT = /\s+(?:#.*)?/g
 export var HEREGEX = /// ^ /{3} ([\s\S]+?) /{3} ([imgy]{0,4}) (?!\w) ///

@@ -25,6 +25,13 @@ class Group
 # should test if/unless inversions
 
 describe 'Syntax - Operators' do
+	
+	test "&&" do
+		var a = 10 && 20
+		eq a, 20
+		
+		var b = 10 and 20
+		eq b, 20
 
 	test "union and intersect" do
 
