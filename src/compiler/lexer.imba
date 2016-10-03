@@ -201,7 +201,7 @@ var COMPARE = ['===', '!==', '==', '!=', '<', '>', '<=', '>=','===','!==']
 var OP_METHODS = ['<=>','<<','..']
 
 # Mathematical tokens.
-var MATH = ['*', '/', '%', '∪', '∩','√']
+var MATH = ['*', '/', '%', '∪', '∩', '√']
 
 # Relational tokens that are negatable with `not` prefix.
 var RELATION = ['IN', 'OF', 'INSTANCEOF','ISA']
@@ -1057,7 +1057,7 @@ export class Lexer
 		# is this a property-access?
 		# should invert this -- only allow when prev IS .. 
 		# : should be a token itself, with a specification of spacing (LR,R,L,NONE)
-		if prev and !prev:spaced and tT(prev) !in ['(','{','[','.','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR']
+		if prev and !prev:spaced and tT(prev) !in ['(','{','[','.','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR','VALUE_START']
 			token '.:',':', 1
 			var access = symbol.split(':')[1] # really?
 			token 'IDENTIFIER', access, access:length, 1

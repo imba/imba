@@ -5974,6 +5974,14 @@
 
 	describe('Syntax - Operators',function() {
 		
+		test("&&",function() {
+			var a = 10 && 20;
+			eq(a,20);
+			
+			var b = 10 && 20;
+			return eq(b,20);
+		});
+		
 		test("union and intersect",function() {
 			
 			// union regular arrays
@@ -7032,13 +7040,22 @@
 			return eq(str,'ac');
 		});
 		
-		return test("symbols",function() {
+		test("symbols",function() {
 			var sym = 'one';
 			
 			eq('one','one');
 			eq('one:two','one:two');
 			eq('oneTwo','oneTwo');
 			return eq('one_two','one_two');
+		});
+		
+		return test("regex",function() {
+			var reg = /\w\d/;
+			ok(reg.test('a1'));
+			
+			var hereg = /\w\d/;
+			
+			return ok(hereg.test('a1'));
 		});
 	});
 
