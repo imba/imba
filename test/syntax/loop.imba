@@ -132,6 +132,35 @@ describe 'Syntax - Loops' do
 			a = for i in [0 ... 3]
 				i * 2
 			eq a, [0,2,4]
+			
+		test "dynamic" do
+			var a = 10
+			var b = 15
+			
+			var res = for i in [a .. b]
+				i
+			
+			eq res, [10,11,12,13,14,15]
+			
+		test "with index" do
+			var a = 10
+			var b = 15
+			
+			var res = for val,idx in [a .. b]
+				idx
+			
+			eq res, [0,1,2,3,4,5]
+		
+		test "negative" do
+			var a = 15
+			var b = 10
+			
+			var res = []
+			for val,idx in [a .. b]
+				res.push(val,idx)
+			
+			eq res, [15,0,14,1,13,2,12,3,11,4,10,5]
+			
 
 
 	describe "For Of" do

@@ -1556,8 +1556,8 @@
 		
 		if (!dataset) {
 			dataset = {};
-			for (var i = 0, ary = Imba.iterable(this.dom().attributes), len = ary.length, atr; i < len; i++) {
-				atr = ary[i];
+			for (var i1 = 0, ary = Imba.iterable(this.dom().attributes), len = ary.length, atr; i1 < len; i1++) {
+				atr = ary[i1];
 				if (atr.name.substr(0,5) == 'data-') {
 					dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
 				};
@@ -4031,8 +4031,8 @@
 			this.root().addEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var i = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; i < len; i++) {
-			item = ary[i];
+		for (var j = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; j < len; j++) {
+			item = ary[j];
 			this.root().addEventListener(item[0],item[1],item[2]);
 		};
 		return this;
@@ -4043,8 +4043,8 @@
 			this.root().removeEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var i = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; i < len; i++) {
-			item = ary[i];
+		for (var j = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; j < len; j++) {
+			item = ary[j];
 			this.root().removeEventListener(item[0],item[1],item[2]);
 		};
 		return this;
@@ -4462,8 +4462,8 @@
 		};
 		
 		// possible to do this in reversed order instead?
-		for (var idx1 = 0, ary = Imba.iterable(new$), len = ary.length, node1; idx1 < len; idx1++) {
-			node1 = ary[idx1];
+		for (var idx1 = 0, items = Imba.iterable(new$), len_ = items.length, node1; idx1 < len_; idx1++) {
+			node1 = items[idx1];
 			if (!stickyNodes[idx1]) {
 				// create textnode for string, and update the array
 				if (!((node1 instanceof Imba.Tag))) {

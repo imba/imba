@@ -805,6 +805,7 @@ export class Lexer
 
 			token(typ, id, id:length)
 			moveCaret(id:length)
+			# console.log "MATCH",match
 			token ':', ':', match[3]:length
 			moveCaret(-id:length)
 			return match[0]:length
@@ -1014,9 +1015,13 @@ export class Lexer
 				typ = 'KEY'
 
 			token(typ, id, idlen)
-			moveCaret(idlen)
-			token(':', ':',colon:length)
-			moveCaret(-idlen)
+			var colonOffset = colon.indexOf(':')
+
+			moveCaret(idlen + colonOffset)
+			# TODO Stop moving caret back and forth
+			# console.log idlen,colon,colonOffset
+			token(':', ':',1)
+			moveCaret(-(idlen + colonOffset))
 		else
 			token(typ, id, idlen)
 

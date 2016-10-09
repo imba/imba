@@ -1625,8 +1625,8 @@
 		
 		if (!dataset) {
 			dataset = {};
-			for (var i = 0, ary = Imba.iterable(this.dom().attributes), len = ary.length, atr; i < len; i++) {
-				atr = ary[i];
+			for (var i1 = 0, ary = Imba.iterable(this.dom().attributes), len = ary.length, atr; i1 < len; i1++) {
+				atr = ary[i1];
 				if (atr.name.substr(0,5) == 'data-') {
 					dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
 				};
@@ -4100,8 +4100,8 @@
 			this.root().addEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var i = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; i < len; i++) {
-			item = ary[i];
+		for (var j = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; j < len; j++) {
+			item = ary[j];
 			this.root().addEventListener(item[0],item[1],item[2]);
 		};
 		return this;
@@ -4112,8 +4112,8 @@
 			this.root().removeEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var i = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; i < len; i++) {
-			item = ary[i];
+		for (var j = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; j < len; j++) {
+			item = ary[j];
 			this.root().removeEventListener(item[0],item[1],item[2]);
 		};
 		return this;
@@ -4531,8 +4531,8 @@
 		};
 		
 		// possible to do this in reversed order instead?
-		for (var idx1 = 0, ary = Imba.iterable(new$), len = ary.length, node1; idx1 < len; idx1++) {
-			node1 = ary[idx1];
+		for (var idx1 = 0, items = Imba.iterable(new$), len_ = items.length, node1; idx1 < len_; idx1++) {
+			node1 = items[idx1];
 			if (!stickyNodes[idx1]) {
 				// create textnode for string, and update the array
 				if (!((node1 instanceof Imba.Tag))) {
@@ -4818,8 +4818,8 @@
 		
 		console.log(logs.join(" | "));
 		
-		for (var i = 0, len = failed.length, item; i < len; i++) {
-			item = failed[i];
+		for (var j = 0, len_ = failed.length, item; j < len_; j++) {
+			item = failed[j];
 			console.log(item.fullName());
 			console.log("    " + item.details());
 		};
@@ -5225,7 +5225,7 @@
 					eq(br,0);
 				};
 				
-				for (var i1 = 0, len = breaks.length, x; i1 < len; i1++) {
+				for (var i1 = 0, len_ = breaks.length, x; i1 < len_; i1++) {
 					x = breaks[i1];
 					x = 0;
 				};
@@ -5271,8 +5271,8 @@
 				
 				eq(ret,1,String);
 				
-				if ($1 = obj.value()) { for (var i = 0, len = ary.length, res1 = []; i < len; i++) {
-					res1.push(ary[i] * 1);
+				if ($1 = obj.value()) { for (var j = 0, len_ = ary.length, res1 = []; j < len_; j++) {
+					res1.push(ary[j] * 1);
 				};
 				ret = (obj.setValue(res1),res1); } else {
 					ret = $1
@@ -5317,7 +5317,7 @@
 			return test("variable collisions",function() {
 				
 				var res = [];
-				for (var len1 = 2, a = 0; a <= len1; a++) {
+				for (var a = 0; a <= 2; a++) {
 					var len = 10;
 					res.push(a);
 				};
@@ -5342,25 +5342,60 @@
 			
 			test("statement",function() {
 				var ary = [];
-				for (var len = 3, i = 0; i <= len; i++) {
+				for (var i = 0; i <= 3; i++) {
 					ary.push(i);
 				};
 				return eq(ary,[0,1,2,3]);
 			});
 			
-			return test("expression",function() {
-				for (var a = [], len = 3, i = 0; i <= len; i++) {
+			test("expression",function() {
+				for (var a = [], i = 0; i <= 3; i++) {
 					a.push(i * 2);
 				};
 				eq(a,[0,2,4,6]);
 				
-				for (var len1 = 3, i1 = 0, res = []; i1 < len1; i1++) {
+				for (var i1 = 0, res = []; i1 < 3; i1++) {
 					res.push(i1 * 2);
 				};
 				a = res;
 				return eq(a,[0,2,4]);
 			});
+			
+			test("dynamic",function() {
+				var a = 10;
+				var b = 15;
+				
+				for (var res = [], len = b, i = a, rd = len - i; rd > 0 ? (i <= len) : (i >= len); rd > 0 ? (i++) : (i--)) {
+					res.push(i);
+				};
+				
+				return eq(res,[10,11,12,13,14,15]);
+			});
+			
+			test("with index",function() {
+				var a = 10;
+				var b = 15;
+				
+				for (var res = [], len = b, val = a, idx = 0, rd = len - val; rd > 0 ? (val <= len) : (val >= len); rd > 0 ? (val++) : (val--),idx++) {
+					res.push(idx);
+				};
+				
+				return eq(res,[0,1,2,3,4,5]);
+			});
+			
+			return test("negative",function() {
+				var a = 15;
+				var b = 10;
+				
+				var res = [];
+				for (var len = b, val = a, idx = 0, rd = len - val; rd > 0 ? (val <= len) : (val >= len); rd > 0 ? (val++) : (val--),idx++) {
+					res.push(val,idx);
+				};
+				
+				return eq(res,[15,0,14,1,13,2,12,3,11,4,10,5]);
+			});
 		});
+		
 		
 		
 		describe("For Of",function() {
@@ -5403,12 +5438,12 @@
 				};
 				eq(keys,['a','b','c','d'],String);
 				
-				for (var i = 0, keys2 = Object.keys(dict2), l2 = keys2.length, res = []; i < l2; i++){
-					res.push(keys2[i]);
+				for (var j = 0, keys2 = Object.keys(dict2), l2 = keys2.length, res = []; j < l2; j++){
+					res.push(keys2[j]);
 				};
 				keys = res;
-				for (var vals = [], i = 0, keys3 = Object.keys(dict2), l3 = keys3.length; i < l3; i++){
-					vals.push(dict2[keys3[i]]);
+				for (var vals = [], i_ = 0, keys3 = Object.keys(dict2), l3 = keys3.length; i_ < l3; i_++){
+					vals.push(dict2[keys3[i_]]);
 				};
 				eq(keys,['e']);
 				eq(vals,[10]);
@@ -5421,8 +5456,8 @@
 				};
 				
 				function m(o){
-					for (var o1 = d().obj, i = 0, keys4 = Object.keys(o1), l4 = keys4.length; i < l4; i++){
-						o.push(keys4[i],o1[keys4[i]]);
+					for (var o1 = d().obj, i__ = 0, keys4 = Object.keys(o1), l4 = keys4.length; i__ < l4; i__++){
+						o.push(keys4[i__],o1[keys4[i__]]);
 					};
 					return;
 				};
@@ -6240,10 +6275,36 @@
 			return eq(list,[1,2,[nonce]]);
 		});
 		
-		return test("special #len method",function() {
+		test("special #len method",function() {
 			var a = [1,2,3];
 			eq(a.length,3);
 			return eq(Imba.len(a),3);
+		});
+		
+		return test("nested arrays",function() {
+			var res = [];
+			for (var i = 0, ary = [1,2], len = ary.length; i < len; i++) {
+				for (var j = 0, items = [1,2], len_ = items.length; j < len_; j++) {
+					res.push(ary[i],items[j]);
+				};
+			};
+			eq(res,[1,1,1,2,2,1,2,2]);
+			
+			res = [];
+			for (var k = 0, array = [1,2], len__ = array.length; k < len__; k++) {
+				for (var i1 = 1; i1 <= 2; i1++) {
+					res.push(array[k],i1);
+				};
+			};
+			eq(res,[1,1,1,2,2,1,2,2]);
+			
+			res = [];
+			for (var i_ = 0, coll = [1,2], length_ = coll.length; i_ < length_; i_++) {
+				for (var i2 = 1; i2 < 3; i2++) {
+					res.push(coll[i_],i2);
+				};
+			};
+			return eq(res,[1,1,1,2,2,1,2,2]);
 		});
 	});
 
@@ -6793,14 +6854,14 @@
 		
 		return test("allow statements as arguments",function() {
 			
-			var fn = function() { var $0 = arguments, i = $0.length;
-			var pars = new Array(i>0 ? i : 0);
-			while(i>0) pars[i-1] = $0[--i];
+			var fn = function() { var $0 = arguments, j = $0.length;
+			var pars = new Array(j>0 ? j : 0);
+			while(j>0) pars[j-1] = $0[--j];
 			return pars; };
 			var ary = [1,2,3,4];
 			var res = fn(10,((function() {
-				for (var i = 0, len = ary.length, res1 = []; i < len; i++) {
-					res1.push(ary[i] * 2);
+				for (var j = 0, len_ = ary.length, res1 = []; j < len_; j++) {
+					res1.push(ary[j] * 2);
 				};
 				return res1;
 			})()),20);
@@ -6812,8 +6873,8 @@
 			// up to cache it before.
 			
 			res = fn(union$(ary,((function() {
-				for (var i = 0, len = ary.length, res2 = []; i < len; i++) {
-					res2.push(ary[i] * 2);
+				for (var k = 0, len__ = ary.length, res2 = []; k < len__; k++) {
+					res2.push(ary[k] * 2);
 				};
 				return res2;
 			})())));
@@ -7183,19 +7244,19 @@
 		eq(i,1);
 		
 		
-		for (var i2 = 0, len_ = ary.length; i2 < len_; i2++) {
+		for (var i2 = 0, len__ = ary.length; i2 < len__; i2++) {
 			i2;
 		};
 		eq(i,1);
 		
 		
-		for (var r = [], j = 0, len_ = ary.length; j < len_; j++) {
+		for (var r = [], j = 0, length_ = ary.length; j < length_; j++) {
 			r.push(ary[j]);
 		};
 		
 		r.length;
 		
-		for (var j = 0, len_ = ary.length; j < len_; j++) {
+		for (var k = 0, $1 = ary.length; k < $1; k++) {
 			var l = 1;
 			var a1 = 2;
 			var b1 = 2;
@@ -7204,7 +7265,7 @@
 			a1 + b1 + c;
 		};
 		
-		for (var j = 0, len_ = ary.length; j < len_; j++) {
+		for (var i_ = 0, $1 = ary.length; i_ < $1; i_++) {
 			var a2 = 3;
 			var b2 = 3;
 			var c1 = 3;
@@ -7222,7 +7283,7 @@
 		var b4 = 5;
 		
 		
-		for (var e = [], i4 = 0, len_ = ary.length; i4 < len_; i4++) {
+		for (var e = [], i4 = 0, $1 = ary.length; i4 < $1; i4++) {
 			eq(a3,4);
 			e.push(i4);
 		};
@@ -7232,7 +7293,7 @@
 		
 		
 		
-		for (var j = 0, len_ = ary.length; j < len_; j++) {
+		for (var i__ = 0, $1 = ary.length; i__ < $1; i__++) {
 			true;
 		};
 		var z = 4;
@@ -7870,7 +7931,7 @@
 		
 		test('a,b,c = 1,2,3',function(_0,_1,_2) {
 			
-			var $1, $2, items, array, len, i, coll, len_, j, tmp, ary_, ary__, $3, len__, k, tmplist;
+			var $1, $2, items, array, len, i, coll, len_, j, tmp, ary_, ary__, $3, $4, $5, tmplist;
 			var ary = [1,2,3,4,5];
 			var obj = new O();
 			
@@ -7925,24 +7986,24 @@
 			
 			eq(x,[2,4,6,8,10]);
 			
-			for (var k = 0, len__ = ary.length, res = []; k < len__; k++) {
-				res.push(ary[k] * 2);
+			for (var i_ = 0, length_ = ary.length, res = []; i_ < length_; i_++) {
+				res.push(ary[i_] * 2);
 			};
 			var ary_ = Imba.iterable(res);var x = ary_[0];var y = ary_[1];
 			
 			eq([x,y],[2,4]);
 			
-			for (var k = 0, len__ = ary.length, res1 = []; k < len__; k++) {
-				res1.push(ary[k] * 2);
+			for (var i__ = 0, $1 = ary.length, res1 = []; i__ < $1; i__++) {
+				res1.push(ary[i__] * 2);
 			};
 			var ary__ = Imba.iterable(res1);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
 			eq([x,y,obj.z()],[2,4,6]);
 			
-			for (var k = 0, len__ = ary.length, res2 = []; k < len__; k++) {
-				res2.push(ary[k] * 2);
+			for (var $1 = 0, $2 = ary.length, res2 = []; $1 < $2; $1++) {
+				res2.push(ary[$1] * 2);
 			};
-			var $3 = Imba.iterable(res2),len__ = $3.length,k = 0,tmplist = new Array(len__ - 2);x = $3[k++];y = $3[k++];while (k < len__){
-				tmplist[k - 2] = $3[k++]
+			var $3 = Imba.iterable(res2),$4 = $3.length,$5 = 0,tmplist = new Array($4 - 2);x = $3[$5++];y = $3[$5++];while ($5 < $4){
+				tmplist[$5 - 2] = $3[$5++]
 			};obj.setZ(tmplist);
 			eq([x,y,obj.z()],[2,4,[6,8,10]]);
 			
@@ -8226,8 +8287,8 @@
 				};
 			};
 			
-			for (var i = 0, ary = [b], len = ary.length; i < len; i++) {
-				var proto1 = ary[i];
+			for (var i1 = 0, items = [b], len_ = items.length; i1 < len_; i1++) {
+				var proto1 = items[i1];
 				proto1.last = function (){
 					return true;
 				};

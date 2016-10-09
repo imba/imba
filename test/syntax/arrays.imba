@@ -60,3 +60,19 @@ describe 'Syntax - Arrays' do
 		var a = [1,2,3]
 		eq a:length, 3
 		eq a.len, 3
+	
+	test "nested arrays" do
+		var res = []
+		for a in [1, 2]
+			res.push(a,i) for i in [1,2]
+		eq res, [1,1,1,2,2,1,2,2]
+		
+		var res = []
+		for a in [1, 2]
+			res.push(a,i) for i in [1 .. 2]
+		eq res, [1,1,1,2,2,1,2,2]
+		
+		var res = []
+		for a in [1, 2]
+			res.push(a,i) for i in [1 ... 3]
+		eq res, [1,1,1,2,2,1,2,2]

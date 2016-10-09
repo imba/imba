@@ -1282,8 +1282,8 @@ export class Parens < ValueNode
 export class ExpressionBlock < ListNode
 
 
-	def c
-		map(|item| item.c).join(",")
+	def c o
+		map(|item| item.c(o) ).join(",")
 
 	def consume node
 		value.consume(node)
@@ -5172,19 +5172,29 @@ export class For < Loop
 
 		# what about a range where we also include an index?
 		if src isa Range
+			
+			let from = src.left
+			let to = src.right
+			let dynamic = from !isa Num or to !isa Num
 
-			vars:len = scope.declare('len',src.right,type: 'let',system: yes) # util.len(o,yes).predeclare
-			# make the scope be the declarator
-			# TODO would like to be able to have counter in range as well
-			vars:index = scope.register(o:name,scope,type: 'let', declared: yes)
-			scope.vars.push(vars:index.assignment(src.left))
-			# scope.declare(options:name,src.left)
-			vars:value = vars:index
+			if to isa Num
+				vars:len = to
+			else
+				vars:len = to.cache(force: yes, pool: 'len').predeclare
+				
+			# scope.vars.push(vars:index.assignment(src.left))
+			vars:value = scope.declare(o:name,from,type: 'let')
+			vars:value.addReference(o:name) if o:name
+			
+			if o:index
+				vars:index = scope.declare(o:index,0,type: 'let')
+				vars:index.addReference(o:index)
+				
+			if dynamic
+				vars:diff = scope.declare('rd',OP('-',to,vars:value),type: 'let')
+
 		else
-			# vars:value = scope.declare(options:name,null,let: yes)
 			# we are using automatic caching far too much here
-
-			# we should simply change how declare works
 			var i = vars:index = oi ? scope.declare(oi,0,type: 'let') : util.counter(0,yes,scope).predeclare
 
 			vars:source = bare ? src : util.iterable(src,yes).predeclare
@@ -5283,34 +5293,44 @@ export class For < Loop
 
 	def js o
 		var vars = options:vars
-		var i = vars:index
+		var idx = vars:index
 		var val = vars:value
-		var cond = OP('<',i,vars:len)
 		var src = options:source
-
-		var final = if options:step
-			OP('=',i,OP('+',i,options:step))
-		else
-			OP('++',i)
-
-		# if there are few references to the value - we can drop
-		# the actual variable and instead make it proxy through the index
+		
+		var cond
+		var final
+		
+		
 		if src isa Range
-			cond.op = '<=' if src.inclusive
+			let a = src.left
+			let b = src.right
+			let inc = src.inclusive
 
-		elif val.refcount < 3 and val.assignments:length == 0
-			val.proxy(vars:source,i)
+			cond = OP(inc ? '<=' : '<',val,vars:len)
+			final = OP('++',val)
+
+			if vars:diff
+				cond = If.ternary( OP('>',vars:diff,Num.new(0)), cond, OP(inc ? '>=' : '>',val,vars:len))
+				final = If.ternary( OP('>',vars:diff,Num.new(0)),OP('++',val),OP('--',val))
+			
+			if idx
+				final = ExpressionBlock.new([final,OP('++',idx)])
+			
 		else
-			body.unshift(OP('=',val,OP('.',vars:source,i)), BR)
-			# body.unshift(head)
-			# TODO check lengths - intelligently decide whether to brace and indent
-		var head = "{mark__(options:keyword)}for ({scope.vars.c}; {cond.c}; {final.c}) "
-		head + body.c(braces: yes, indent: yes) # .wrap
+			cond = OP('<',idx,vars:len)
+			
+			if val.refcount < 3 and val.assignments:length == 0
+				val.proxy(vars:source,idx)
+			else
+				body.unshift(OP('=',val,OP('.',vars:source,idx)), BR)
 
+			if options:step
+				final = OP('=',idx,OP('+',idx,options:step))
+			else
+				final = OP('++',idx)
 
-	def head
-		var vars = options:vars
-		OP('=',vars:value,OP('.',vars:source,vars:index))
+		var head = "{mark__(options:keyword)}for ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
+		return head + body.c(braces: yes, indent: yes)
 
 
 
@@ -6934,7 +6954,7 @@ export class Scope
 		var item = Variable.new(self,name,decl,o)
 		# need to check for duplicates, and handle this gracefully -
 		# going to refactor later
-		@varmap[name] = item unless o:system # dont even add to the varmap if it is a sysvar
+		@varmap[name] = item unless o:system
 		return item
 
 	def annotate obj
@@ -6960,11 +6980,9 @@ export class Scope
 				if v.pool == o:pool && v.declarator == null
 					return v.reuse(refnode)
 
-		# should only 'register' as ahidden variable, no?
-		# if there are real nodes inside that tries to refer to vars
-		# defined in outer scopes, we need to make sure they are not named after this
 		var item = SystemVariable.new(self,name,refnode,o)
-		@varpool.push(item) # WHAT? It should not be in the pool unless explicitly put there?
+		
+		@varpool.push(item) # It should not be in the pool unless explicitly put there?
 		@vars.push(item) # WARN variables should not go directly into a declaration-list
 		return item
 
@@ -7187,7 +7205,6 @@ export class FlowScope < Scope
 					# TODO should throw error instead
 					decl.warn "Variable already exists in block" if decl
 					# root.warn message: "Holy shit"
-
 			closure.register(name,decl,o)
 		else
 			super(name,decl,o)
@@ -7321,7 +7338,6 @@ export class Variable < Node
 				while scope.lookup(@name)
 					@name = "{orig}{i += 1}"
 
-		# inefficient double setting
 		scope.varmap[@name] = self
 		closure.varmap[@name] = self
 		return self
@@ -7481,7 +7497,9 @@ export class SystemVariable < Variable
 			@name = alt unless scope.lookup(alt)
 
 		@name ||= "${scope.counter += 1}"
+		
 		scope.varmap[@name] = self
+		closure.varmap[@name] = self
 		self
 
 	def name
