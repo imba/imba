@@ -79,7 +79,7 @@ var IDENTIFIER = /// ^
 
 var OBJECT_KEY = /// ^
 	( (\$|@@|@|)[$A-Za-z_\x7f-\uffff\-][$\w\x7f-\uffff\-]*)
-	( [^\n\S\s]* : (?![\*\=:$\w\x7f-\uffff]) )  # Is this a property name?
+	( [^\n\S\s]* : (?![\*\=:$A-Za-z\_\x7f-\uffff]) )  # Is this a property name?
 ///
 
 var TAG = /// ^
@@ -1063,8 +1063,10 @@ export class Lexer
 		# should invert this -- only allow when prev IS .. 
 		# : should be a token itself, with a specification of spacing (LR,R,L,NONE)
 		if prev and !prev:spaced and tT(prev) !in ['(','{','[','.','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR','VALUE_START']
-			token '.:',':', 1
 			var access = symbol.split(':')[1] # really?
+			
+			token '.:',':', 1
+			
 			token 'IDENTIFIER', access, access:length, 1
 			return access:length + 1
 		else
