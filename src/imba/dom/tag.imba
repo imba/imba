@@ -85,18 +85,11 @@ class Imba.Tag
 	###
 	def optimizeTagStructure
 		var base = Imba.Tag:prototype
-		# var has = do |k| self:hasOwnProperty(k)
-		# if has(:commit) or has(:render) or has(:mount) or has(:build)
-		# var hasBuild  = self:build  != base:build
-
 		var hasSetup  = self:setup  != base:setup
 		var hasCommit = self:commit != base:commit
 		var hasRender = self:render != base:render
 		var hasMount  = self:mount
 
-		# if hasBuild
-		#	console.warn "<{self:constructor.@name}> tag#build must be renamed to tag#setup"
-		
 		if hasCommit or hasRender or hasMount or hasSetup
 
 			self:end = do
@@ -110,6 +103,10 @@ class Imba.Tag
 				this.commit
 
 				return this
+
+		if $web$
+			for item in [:mousemove,:mouseenter,:mouseleave]
+				Imba.Events.register(item) if this["on{item}"]
 		self
 
 

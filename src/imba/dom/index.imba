@@ -31,6 +31,12 @@ if $web$
 		:beforecut, :cut
 	])
 
+	# should listen to dragdrop events by default
+	Imba.Events.register([
+		:dragstart,:drag,:dragend,
+		:dragenter,:dragover,:dragleave,:dragexit,:drop
+	])
+
 	var hasTouchEvents = window && window:ontouchstart !== undefined
 
 	if hasTouchEvents
