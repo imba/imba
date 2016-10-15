@@ -3,6 +3,13 @@ extern _T
 
 Imba.CSSKeyMap = {}
 
+Imba.TAG_BUILT = 1
+Imba.TAG_SETUP = 2
+Imba.TAG_MOUNTING = 4
+Imba.TAG_MOUNTED = 8
+Imba.TAG_SCHEDULED = 16
+Imba.TAG_AWAKENED = 32
+
 ###
 Get the current document
 ###
@@ -93,11 +100,11 @@ class Imba.Tag
 		if hasCommit or hasRender or hasMount or hasSetup
 
 			self:end = do
-				if this:mount and !this.@mounted
+				if this:mount and !(this.FLAGS & Imba.TAG_MOUNTED)
 					Imba.TagManager.mount(this)
 
-				unless this.@initialized
-					this.@initialized = yes
+				unless this.FLAGS & Imba.TAG_SETUP
+					this.FLAGS |= Imba.TAG_SETUP
 					this.setup
 				
 				this.commit
@@ -113,6 +120,7 @@ class Imba.Tag
 	def initialize dom
 		self.dom = dom
 		self.@_ = {}
+		self.FLAGS = 0
 		build
 		self
 
@@ -1110,7 +1118,6 @@ def Imba.getTagForDom dom
 
 
 _T = Imba.TAGS
-t$ = Imba:tag
 id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom
 

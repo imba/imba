@@ -25,7 +25,7 @@ class Imba.TagManagerClass
 		return if $node$
 		# is this happening inside the runloop?
 		unless @mountable.indexOf(node) >= 0
-			node.@mounted = 2
+			item.FLAGS |= Imba.TAG_MOUNTING
 			@mountable.push(node)
 
 	def refresh
@@ -50,7 +50,7 @@ class Imba.TagManagerClass
 		for item,i in @mountable
 			if item and document:body.contains(item.@dom)
 				@mounted.push(item)
-				item.@mounted = 1
+				item.FLAGS |= Imba.TAG_MOUNTED
 				item.mount
 				@mountable[i] = null
 				count++
@@ -65,7 +65,7 @@ class Imba.TagManagerClass
 		var root = document:body
 		for item, i in @mounted
 			unless document:body.contains(item.dom)
-				item.@mounted = 0
+				item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED
 				if item:unmount
 					item.unmount
 				elif item.@scheduler
