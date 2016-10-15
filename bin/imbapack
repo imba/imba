@@ -47,8 +47,15 @@ if(require.main !== module){
 		if(r.extensions){
 			r.extensions.splice(1,0,'.imba')
 		} else {
-			r.extensions = conf.resolve.extensions
+			r.extensions = conf.resolve.extensions.slice(0)
 		}
+
+		if(!obj.target){
+			r.extensions.splice(1,0,'.web.imba')
+		} else if (obj.target) {
+			r.extensions.splice(1,0,'.'+obj.target+'.imba')
+		}
+
 		// Set correct alias
 		r.alias = r.alias || {}
 		r.alias.imba$ = dir + "src/imba/index.imba"
