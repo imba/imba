@@ -25,7 +25,7 @@ class Imba.TagManagerClass
 		return if $node$
 		# is this happening inside the runloop?
 		unless @mountable.indexOf(node) >= 0
-			item.FLAGS |= Imba.TAG_MOUNTING
+			node.FLAGS |= Imba.TAG_MOUNTING
 			@mountable.push(node)
 
 	def refresh
