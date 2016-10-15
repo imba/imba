@@ -800,6 +800,12 @@
 		'beforecut','cut'
 	]});
 
+	// should listen to dragdrop events by default
+	Imba.Events.register([
+		'dragstart','drag','dragend',
+		'dragenter','dragover','dragleave','dragexit','drop'
+	]);
+
 	var hasTouchEvents = window && window.ontouchstart !== undefined;
 
 	if (hasTouchEvents) {
@@ -888,7 +894,7 @@
 		
 		// is this happening inside the runloop?
 		if (this._mountable.indexOf(node) < 0) {
-			node._mounted = 2;
+			node.FLAGS |= Imba.TAG_MOUNTING;
 			return this._mountable.push(node);
 		};
 	};
@@ -920,7 +926,7 @@
 			item = ary[i];
 			if (item && document.body.contains(item._dom)) {
 				this._mounted.push(item);
-				item._mounted = 1;
+				item.FLAGS |= Imba.TAG_MOUNTED;
 				item.mount();
 				this._mountable[i] = null;
 				count++;
@@ -940,7 +946,7 @@
 		for (var i = 0, ary = Imba.iterable(this._mounted), len = ary.length, item; i < len; i++) {
 			item = ary[i];
 			if (!document.body.contains(item.dom())) {
-				item._mounted = 0;
+				item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED;
 				if (item.unmount) {
 					item.unmount();
 				} else if (item._scheduler) {
@@ -967,6 +973,13 @@
 	// externs;
 
 	Imba.CSSKeyMap = {};
+
+	Imba.TAG_BUILT = 1;
+	Imba.TAG_SETUP = 2;
+	Imba.TAG_MOUNTING = 4;
+	Imba.TAG_MOUNTED = 8;
+	Imba.TAG_SCHEDULED = 16;
+	Imba.TAG_AWAKENED = 32;
 
 	/*
 	Get the current document
@@ -1019,6 +1032,7 @@
 	Imba.Tag = function Tag(dom){
 		this.setDom(dom);
 		this.__ = {};
+		this.FLAGS = 0;
 		this.build();
 		this;
 	};
@@ -1074,27 +1088,20 @@
 
 	Imba.Tag.prototype.optimizeTagStructure = function (){
 		var base = Imba.Tag.prototype;
-		// var has = do |k| self:hasOwnProperty(k)
-		// if has(:commit) or has(:render) or has(:mount) or has(:build)
-		// var hasBuild  = self:build  != base:build
-		
 		var hasSetup = this.setup != base.setup;
 		var hasCommit = this.commit != base.commit;
 		var hasRender = this.render != base.render;
 		var hasMount = this.mount;
 		
-		// if hasBuild
-		//	console.warn "<{self:constructor.@name}> tag#build must be renamed to tag#setup"
-		
 		if (hasCommit || hasRender || hasMount || hasSetup) {
 			
 			this.end = function() {
-				if (this.mount && !this._mounted) {
+				if (this.mount && !(this.FLAGS & Imba.TAG_MOUNTED)) {
 					Imba.TagManager.mount(this);
 				};
 				
-				if (!this._initialized) {
-					this._initialized = true;
+				if (!(this.FLAGS & Imba.TAG_SETUP)) {
+					this.FLAGS |= Imba.TAG_SETUP;
 					this.setup();
 				};
 				
@@ -1103,6 +1110,13 @@
 				return this;
 			};
 		};
+		
+		
+		for (var i = 0, ary = ['mousemove','mouseenter','mouseleave'], len = ary.length, item; i < len; i++) {
+			item = ary[i];
+			if (this[("on" + item)]) { Imba.Events.register(item) };
+		};
+		
 		return this;
 	};
 
@@ -2356,7 +2370,6 @@
 
 
 	_T = Imba.TAGS;
-	t$ = Imba.tag;
 	id$ = Imba.getTagSingleton;
 	tag$wrap = Imba.getTagForDom;
 
