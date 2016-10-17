@@ -5921,7 +5921,7 @@ export class Tag < Node
 				cacheStatics && pcache ? statics.push(pjs) : calls.push(pjs)
 
 		if object
-			calls.push(".setObject({object.c})")
+			calls.push(".setData({object.c})")
 
 		# we need to trigger our own reference before the body does
 		# but we do not need a reference if we have no body

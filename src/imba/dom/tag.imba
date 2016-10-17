@@ -129,8 +129,6 @@ class Imba.Tag
 	attr role
 	attr name
 
-	prop object
-
 	def dom
 		@dom
 		
@@ -157,6 +155,27 @@ class Imba.Tag
 		flag(@ref = ref)
 		@owner = ctx
 		self
+
+
+	###
+	Set the data object for node
+	@return {self}
+	###
+	def data= data
+		@data = data
+
+	###
+	Get the data object for node
+	###
+	def data
+		@data
+
+	def object= value
+		console.warn 'Tag#object= deprecated. Use Tag#data='
+		data = value
+
+	def object
+		data
 
 	###
 	Set inner html of node

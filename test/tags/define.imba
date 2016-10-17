@@ -237,6 +237,11 @@ describe 'Tags - Define' do
 		catch e
 			ok false
 
+	test "data syntax" do
+		var data = {a: 1,b : 2}
+		var el = <div[data]>
+		eq el.data,data
+
 	test "build order" do
 		var order = []
 		tag Custom
