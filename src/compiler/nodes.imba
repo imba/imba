@@ -4923,7 +4923,7 @@ export class If < ControlFlow
 			code = '(' + code + ')' # if code.indexOf(',') >= 0
 
 			if alt
-				return "{cond} ? {code} : ({alt.c})"
+				return "({cond}) ? {code} : ({alt.c})"
 			else
 				# again - we need a better way to decide what needs parens
 				# maybe better if we rewrite this to an OP('&&'), and put

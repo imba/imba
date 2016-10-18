@@ -12,3 +12,20 @@ describe "Syntax - Conditionals" do
 
 		eq (t ? '.' + f : ''), '.false'
 		# e.event:metaKey ? pane?.show : pane?.maximize
+		
+	test "unary precedence" do
+		var m
+		var a = null
+		var b = 2
+		var res
+		var block = do yes
+		
+		block
+			if m = a
+				res = 1
+			elif m = b
+				res = m
+			else
+				null
+		
+		eq res,2
