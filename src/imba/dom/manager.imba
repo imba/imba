@@ -48,7 +48,7 @@ class Imba.TagManagerClass
 		var count = 0
 
 		for item,i in @mountable
-			if item and document:body.contains(item.@dom)
+			if item and document:documentElement.contains(item.@dom)
 				@mounted.push(item)
 				item.FLAGS |= Imba.TAG_MOUNTED
 				item.mount
@@ -64,7 +64,7 @@ class Imba.TagManagerClass
 		var count = 0
 		var root = document:body
 		for item, i in @mounted
-			unless document:body.contains(item.dom)
+			unless document:documentElement.contains(item.dom)
 				item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED
 				if item:unmount
 					item.unmount
