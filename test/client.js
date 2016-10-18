@@ -1098,10 +1098,11 @@
 	@iname node
 	*/
 
-	Imba.Tag = function Tag(dom){
+	Imba.Tag = function Tag(dom,ctx){
 		this.setDom(dom);
 		this.__ = {};
 		this.FLAGS = 0;
+		
 		this.build();
 		this;
 	};
@@ -1120,8 +1121,8 @@
 		return proto.cloneNode(false);
 	};
 
-	Imba.Tag.build = function (){
-		return new this(this.createNode());
+	Imba.Tag.build = function (ctx){
+		return new this(this.createNode(),ctx);
 	};
 
 	Imba.Tag.dom = function (){
@@ -1199,9 +1200,6 @@
 	Imba.Tag.prototype.name = function(v){ return this.getAttribute('name'); }
 	Imba.Tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
 
-	Imba.Tag.prototype.object = function(v){ return this._object; }
-	Imba.Tag.prototype.setObject = function(v){ this._object = v; return this; };
-
 	Imba.Tag.prototype.dom = function (){
 		return this._dom;
 	};
@@ -1212,27 +1210,51 @@
 		return this;
 	};
 
-	/*
-		Setting references for tags like
-		`<div@header>` will compile to `tag('div').setRef('header',this).end()`
-		By default it adds the reference as a className to the tag.
-		@return {self}
-		*/
-
-	Imba.Tag.prototype.setRef = function (ref,ctx){
-		this.flag(this._ref = ref);
-		return this;
-	};
-
 	Imba.Tag.prototype.ref = function (){
 		return this._ref;
 	};
 
-	Imba.Tag.prototype.__ref = function (ref,ctx){
+	/*
+		Setting references for tags like
+		`<div@header>` will compile to `tag('div').ref_('header',this).end()`
+		By default it adds the reference as a className to the tag.
+		@return {self}
+		*/
+
+	Imba.Tag.prototype.ref_ = function (ref,ctx){
 		ctx['_' + ref] = this;
 		this.flag(this._ref = ref);
 		this._owner = ctx;
 		return this;
+	};
+
+
+	/*
+		Set the data object for node
+		@return {self}
+		*/
+
+	Imba.Tag.prototype.setData = function (data){
+		this._data = data;
+		return this;
+	};
+
+	/*
+		Get the data object for node
+		*/
+
+	Imba.Tag.prototype.data = function (){
+		return this._data;
+	};
+
+	Imba.Tag.prototype.setObject = function (value){
+		console.warn('Tag#object= deprecated. Use Tag#data=');
+		this.setData(value);
+		return this;
+	};
+
+	Imba.Tag.prototype.object = function (){
+		return this.data();
 	};
 
 	/*
@@ -1538,7 +1560,7 @@
 		var after = pars.after !== undefined ? pars.after : null;
 		if (after) { before = after.next() };
 		if (node instanceof Array) {
-			node = (_T.FRAGMENT().setContent(node,0).end());
+			node = (_T.FRAGMENT(this).setContent(node,0).end());
 		};
 		if (before) {
 			this.insertBefore(node,before.dom());
@@ -2216,14 +2238,14 @@
 	};
 
 	function Tag(){
-		return function(dom) {
-			this.initialize(dom);
+		return function(dom,ctx) {
+			this.initialize(dom,ctx);
 			return this;
 		};
 	};
 
 	function TagSpawner(type){
-		return function() { return type.build(); };
+		return function(zone) { return type.build(zone); };
 	};
 
 	Imba.Tags = function Tags(){
@@ -8317,12 +8339,13 @@
 /* 42 */
 /***/ function(module, exports) {
 
+	var self = this;
 	// externs;
 
-	_T.A().end();
-	_T.A().flag('a').flag('b').end();
-	_T.A().flag('b').setHref("").end();
-	_T.A().flag('b').flag('c',true).end();
+	_T.A(this).end();
+	_T.A(this).flag('a').flag('b').end();
+	_T.A(this).flag('b').setHref("").end();
+	_T.A(this).flag('b').flag('c',true).end();
 
 	var buildCount = 0;
 
@@ -8351,7 +8374,7 @@
 				(function() {
 					var $A = (__.A = __.A || {});
 					for (var i = 0, ary = Imba.iterable(self._ary), len = ary.length, res = []; i < len; i++) {
-						res.push(($A[ary[i]] = $A[ary[i]] || _T.DIV().setText("v")).end());
+						res.push(($A[ary[i]] = $A[ary[i]] || _T.DIV(self).setText("v")).end());
 					};
 					return res;
 				})()
@@ -8391,7 +8414,7 @@
 	describe('Tags - Define',function() {
 		
 		test("basic",function() {
-			var el = _T.CUSTOM().end();
+			var el = _T.CUSTOM(self).end();
 			eq(el.hello(),true);
 			return eq(el.toString(),'<div class="_custom"></div>');
 		});
@@ -8399,7 +8422,7 @@
 		
 		test("caching",function() {
 			var ary;
-			var el = _T.CACHED().end();
+			var el = _T.CACHED(self).end();
 			var els = toArray(el.dom().children);
 			var ary = Imba.iterable(els);var a = ary[0],b = ary[1],c = ary[2];
 			eq(els.length,3);
@@ -8415,7 +8438,7 @@
 			var obj;
 			return obj = {
 				name: 'something',
-				node: _T.A().setHref('#').end()
+				node: _T.A(self).setHref('#').end()
 			};
 		});
 		
@@ -8423,17 +8446,17 @@
 			var el;
 			var num = 1;
 			// not yet caching with switch
-			return el = _T.DIV().setContent(
-				_T.DIV().flag('inner').setContent(
+			return el = _T.DIV(self).setContent(
+				_T.DIV(self).flag('inner').setContent(
 					(function() {
 						switch (num) {
 							case 1:
-								return _T.DIV().flag('one').end();
+								return _T.DIV(this).flag('one').end();
 								break;
 							
 							default:
 							
-								return _T.DIV().flag('other').end();
+								return _T.DIV(this).flag('other').end();
 						
 						};
 					})()
@@ -8447,22 +8470,22 @@
 					return true;
 				};
 			});
-			return _T.DIV().setId('try').end();
+			return _T.DIV(self).setId('try').end();
 		});
 		
 		test("cache for in",function() {
 			buildCount = 0;
-			var root = _T.DIV().end();
+			var root = _T.DIV(self).end();
 			
 			root.render = function (){
 				var self = this, __ = self.__;
 				var ary = ['a','b','c','d'];
 				return this.setChildren([
-					(__.A = __.A || _T.H1().setText('heading')).end(),
+					(__.A = __.A || _T.H1(this).setText('heading')).end(),
 					(function() {
 						var t0, _$ = (__.B = __.B || []);
 						for (var i = 0, len = ary.length, res = []; i < len; i++) {
-							res.push((t0 = _$[i] = _$[i] || _T.CUSTOM()).setContent(ary[i],3).end());
+							res.push((t0 = _$[i] = _$[i] || _T.CUSTOM(self)).setContent(ary[i],3).end());
 						};
 						return res;
 					})()
@@ -8481,19 +8504,19 @@
 		
 		test("cache double for in",function() {
 			buildCount = 0;
-			var root = _T.DIV().end();
+			var root = _T.DIV(self).end();
 			
 			root.render = function (){
 				var self = this, __ = self.__;
 				var ary = ['a','b','c','d'];
 				return this.setChildren([
-					(__.A = __.A || _T.H1().setText('heading')).end(),
+					(__.A = __.A || _T.H1(this).setText('heading')).end(),
 					(function() {
 						var t0, _$ = (__.B = __.B || []), t1, _$1 = (__.C = __.C || []);
 						for (var i = 0, len = ary.length, v, res = []; i < len; i++) {
 							v = ary[i];
-							res.push((t0 = _$[i] = _$[i] || _T.CUSTOM().flag('one')).setContent(v,3).end());
-							res.push((t1 = _$1[i] = _$1[i] || _T.CUSTOM().flag('two')).setContent(v,3).end());
+							res.push((t0 = _$[i] = _$[i] || _T.CUSTOM(self).flag('one')).setContent(v,3).end());
+							res.push((t1 = _$1[i] = _$1[i] || _T.CUSTOM(self).flag('two')).setContent(v,3).end());
 						};
 						return res;
 					})()
@@ -8512,7 +8535,7 @@
 		
 		test("dynamic flags",function() {
 			var val = 'hello';
-			var div = _T.DIV().end();
+			var div = _T.DIV(self).end();
 			div.render = function (){
 				return this.setFlag(1,val).synced();
 			};
@@ -8524,12 +8547,12 @@
 		});
 		
 		test("void elements",function() {
-			var el = _T.INPUT().end();
+			var el = _T.INPUT(self).end();
 			return eq(el.toString(),'<input>');
 		});
 		
 		test("idn attributes",function() {
-			var el = _T.INPUT().setType('checkbox').setRequired(true).setDisabled(false).setChecked(true).setValue("a").end();
+			var el = _T.INPUT(self).setType('checkbox').setRequired(true).setDisabled(false).setChecked(true).setValue("a").end();
 			var html = el.dom().outerHTML;
 			
 			eq(el.dom().required,true);
@@ -8542,14 +8565,14 @@
 		
 		
 		test("style attribute",function() {
-			var el = _T.DIV().setStyle('display: block;').end();
+			var el = _T.DIV(self).setStyle('display: block;').end();
 			
 			return eq(el.dom().getAttribute('style'),'display: block;');
 			
 		});
 		
 		test("class",function() {
-			var el = CustomClass.build().end();
+			var el = CustomClass.build(self).end();
 			
 			eq(el.dom().className,'one two');
 			return document.body.appendChild(el.dom());
@@ -8562,10 +8585,10 @@
 		
 		
 		test("initialize",function() {
-			var a = _T.CUSTOM_INIT().end();
+			var a = _T.CUSTOM_INIT(self).end();
 			eq(a._custom,true);
 			
-			var b = _T.SUPER_INIT().end();
+			var b = _T.SUPER_INIT(self).end();
 			return eq(b._custom,true);
 		});
 		
@@ -8577,14 +8600,14 @@
 				};
 			});
 			
-			var node = LocalTag.build().end();
+			var node = LocalTag.build(self).end();
 			eq(node.toString(),'<canvas class="LocalTag"></canvas>');
 			eq(node._local,true);
 			
 			
 			var SubTag = _T.defineTag('SubTag', LocalTag);
 			
-			var sub = SubTag.build().end();
+			var sub = SubTag.build(self).end();
 			return eq(node._local,true);
 		});
 		
@@ -8592,11 +8615,11 @@
 			var Cache = _T.defineTag('Cache', function(tag){
 				tag.prototype.render = function (){
 					var self = this;
-					return self.setChildren((self._body || _T.DIV().__ref('body',self).setHandler('tap',function(e) { return self.title(); },self)).end(),2).synced();
+					return self.setChildren((self._body || _T.DIV(self).ref_('body',self).setHandler('tap',function(e) { return self.title(); },self)).end(),2).synced();
 				};
 			});
 			
-			var node = Cache.build().end();
+			var node = Cache.build(self).end();
 			var fn = node._body.ontap;
 			node.render();
 			eq(node._body.ontap,fn);
@@ -8605,11 +8628,11 @@
 			// of its scope we dont cache it on first render
 			var NoCache = _T.defineTag('NoCache', function(tag){
 				tag.prototype.render = function (arg){
-					return this.setChildren((this._body || _T.DIV().__ref('body',this)).setHandler('tap',function(e) { return arg; },this).end(),2).synced();
+					return this.setChildren((this._body || _T.DIV(this).ref_('body',this)).setHandler('tap',function(e) { return arg; },this).end(),2).synced();
 				};
 			});
 			
-			node = NoCache.build().end();
+			node = NoCache.build(self).end();
 			fn = node._body.ontap;
 			node.render();
 			return ok(node._body.ontap != fn);
@@ -8617,7 +8640,7 @@
 		
 		test("parsing correctly",function() {
 			try {
-				return _T.DIV().dataset('date',new Date()).end();
+				return _T.DIV(self).dataset('date',new Date()).end();
 			} catch (e) {
 				return ok(false);
 			};
@@ -8630,10 +8653,16 @@
 			});
 			
 			try {
-				return Custom.build().setMy_title("hello").end();
+				return Custom.build(self).setMy_title("hello").end();
 			} catch (e) {
 				return ok(false);
 			};
+		});
+		
+		test("data syntax",function() {
+			var data = {a: 1,b: 2};
+			var el = _T.DIV(self).setData(data).end();
+			return eq(el.data(),data);
 		});
 		
 		return test("build order",function() {
@@ -8655,7 +8684,7 @@
 				};
 			});
 			
-			var node = Custom.build().setName("custom").end();
+			var node = Custom.build(self).setName("custom").end();
 			return eq(order,['build','name','setup']);
 		});
 	});
@@ -8666,6 +8695,7 @@
 /* 43 */
 /***/ function(module, exports) {
 
+	var self = this;
 	// externs;
 
 	var a = 0;
@@ -8678,17 +8708,17 @@
 			
 			tag.prototype.header = function (){
 				var t0;
-				return (t0 = this._header || _T.DIV().__ref('header',this)).setContent((t0.__.$A = t0.__.$A || _T.DIV().setText('H')).end(),2).end();
+				return (t0 = this._header || _T.DIV(this).ref_('header',this)).setContent((t0.__.$A = t0.__.$A || _T.DIV(this).setText('H')).end(),2).end();
 			};
 			
 			tag.prototype.body = function (){
-				return _T.DIV().end();
+				return _T.DIV(this).end();
 			};
 			
 			tag.prototype.render = function (){
 				var self = this, __ = self.__;
 				return this.setChildren([
-					(__.A = __.A || _T.DIV().setText('P')).end(),
+					(__.A = __.A || _T.DIV(this).setText('P')).end(),
 					self.header(),
 					self.body()
 				],1).synced();
@@ -8699,7 +8729,7 @@
 			
 			tag.prototype.header = function (){
 				var t0;
-				return (t0 = this._header || _T.DIV().__ref('header',this)).setContent((t0.__.$A = t0.__.$A || _T.DIV().setText('X')).end(),2).end();
+				return (t0 = this._header || _T.DIV(this).ref_('header',this)).setContent((t0.__.$A = t0.__.$A || _T.DIV(this).setText('X')).end(),2).end();
 			};
 		});
 		
@@ -8710,7 +8740,7 @@
 			tag.prototype.render = function (){
 				var self = this, __ = self.__;
 				return this.setChildren([
-					(__.A = __.A || _T.DIV().setText('W')).end(),
+					(__.A = __.A || _T.DIV(this).setText('W')).end(),
 					self._content
 				],1).synced();
 			};
@@ -8721,20 +8751,20 @@
 			if(o === undefined) o = {};
 			return this.setChildren([
 				(o.a) ? (
-					(__.A = __.A || _T.DIV().setText('A')).end()
+					(__.A = __.A || _T.DIV(this).setText('A')).end()
 				) : void(0),
-				o.b && (__.B = __.B || _T.DIV().setText('B')).end(),
+				o.b && (__.B = __.B || _T.DIV(self).setText('B')).end(),
 				(o.c) ? (
-					(__.C = __.C || _T.WRAPPED()).setContent([
-						(__.CA = __.CA || _T.DIV().setText('B')).end(),
-						(__.CB = __.CB || _T.DIV().setText('C')).end()
+					(__.C = __.C || _T.WRAPPED(self)).setContent([
+						(__.CA = __.CA || _T.DIV(self).setText('B')).end(),
+						(__.CB = __.CB || _T.DIV(self).setText('C')).end()
 					],2).end()
 				) : void(0),
 				
 				(function() {
 					var t0, _$ = (__.D = __.D || []);
 					for (var i = 0, ary = Imba.iterable(o.letters), len = ary.length, res = []; i < len; i++) {
-						res.push((t0 = _$[i] = _$[i] || _T.DIV()).setContent(ary[i],3).end());
+						res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(ary[i],3).end());
 					};
 					return res;
 				})()
@@ -8759,7 +8789,7 @@
 
 
 	describe('Tags - Cache',function() {
-		var node = _T.CACHETEST().end();
+		var node = _T.CACHETEST(self).end();
 		test("basic",function() {
 			return eq(node.test(),"[]");
 		});
@@ -8893,39 +8923,39 @@
 			var str = pars.str !== undefined ? pars.str : null;
 			var list2 = pars.list2 !== undefined ? pars.list2 : null;
 			return this.setChildren([
-				(__.A = __.A || _T.EL().flag('a')).setContent(this.name(),3).end(),
+				(__.A = __.A || _T.EL(this).flag('a')).setContent(this.name(),3).end(),
 				str,
-				(__.B = __.B || _T.EL().flag('b').setText("ok")).end(),
+				(__.B = __.B || _T.EL(self).flag('b').setText("ok")).end(),
 				(a) ? (Imba.static([
-					(__.C = __.C || _T.EL().flag('header')).end(),
-					(__.D = __.D || _T.EL().flag('title').setText("Header")).end(),
-					(__.E = __.E || _T.EL().flag('tools')).end(),
+					(__.C = __.C || _T.EL(self).flag('header')).end(),
+					(__.D = __.D || _T.EL(self).flag('title').setText("Header")).end(),
+					(__.E = __.E || _T.EL(self).flag('tools')).end(),
 					b ? (Imba.static([
-						(__.F = __.F || _T.EL().flag('long')).end(),
-						(__.G = __.G || _T.EL().flag('long')).end()
+						(__.F = __.F || _T.EL(self).flag('long')).end(),
+						(__.G = __.G || _T.EL(self).flag('long')).end()
 					],2)) : (Imba.static([
-						(__.H = __.H || _T.EL().flag('short')).end(),
-						(__.I = __.I || _T.EL().flag('short')).end(),
-						(__.J = __.J || _T.EL().flag('short')).end()
+						(__.H = __.H || _T.EL(self).flag('short')).end(),
+						(__.I = __.I || _T.EL(self).flag('short')).end(),
+						(__.J = __.J || _T.EL(self).flag('short')).end()
 					],3)),
-					(__.K = __.K || _T.EL().flag('ruler')).end()
+					(__.K = __.K || _T.EL(self).flag('ruler')).end()
 				],4)) : void(0),
 				(c) ? (Imba.static([
-					(__.L = __.L || _T.DIV().flag('c1').setText("long")).end(),
-					(__.M = __.M || _T.DIV().flag('c2').setText("loong")).end()
+					(__.L = __.L || _T.DIV(self).flag('c1').setText("long")).end(),
+					(__.M = __.M || _T.DIV(self).flag('c2').setText("loong")).end()
 				],5)) : void(0),
 				d && e ? (Imba.static([
-					(__.N = __.N || _T.EL().flag('long')).end(),
-					(__.O = __.O || _T.EL().flag('footer')).end(),
-					(__.P = __.P || _T.EL().flag('bottom')).end()
+					(__.N = __.N || _T.EL(self).flag('long')).end(),
+					(__.O = __.O || _T.EL(self).flag('footer')).end(),
+					(__.P = __.P || _T.EL(self).flag('bottom')).end()
 				],6)) : (e ? (Imba.static([
-					(__.Q = __.Q || _T.EL().flag('footer')).end(),
-					(__.R = __.R || _T.EL().flag('bottom')).end()
+					(__.Q = __.Q || _T.EL(self).flag('footer')).end(),
+					(__.R = __.R || _T.EL(self).flag('bottom')).end()
 				],7)) : (
-					(__.S = __.S || _T.EL().setText("!d and !e")).end()
+					(__.S = __.S || _T.EL(self).setText("!d and !e")).end()
 				)),
 				list,
-				(__.T = __.T || _T.EL().flag('x').setText("very last")).end(),
+				(__.T = __.T || _T.EL(self).flag('x').setText("very last")).end(),
 				list2
 			],1).synced();
 		};
@@ -8939,7 +8969,7 @@
 			return this.setChildren((function() {
 				var t0, _$ = (__.A = __.A || []);
 				for (var i = 0, ary = Imba.iterable(self.items()), len = ary.length, res = []; i < len; i++) {
-					res.push((t0 = _$[i] = _$[i] || _T.LI()).setContent(ary[i],3).end());
+					res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setContent(ary[i],3).end());
 				};
 				return res;
 			})(),3).synced();
@@ -8966,12 +8996,12 @@
 			var a = pars.a !== undefined ? pars.a : false;
 			return this.setChildren([
 				a ? (Imba.static([
-					(__.A = __.A || _T.EL().flag('a')).end(),
-					(__.B = __.B || _T.EL().flag('b')).end(),
-					(__.C = __.C || _T.EL().flag('c')).end()
+					(__.A = __.A || _T.EL(this).flag('a')).end(),
+					(__.B = __.B || _T.EL(self).flag('b')).end(),
+					(__.C = __.C || _T.EL(self).flag('c')).end()
 				],2)) : (Imba.static([
-					(__.D = __.D || _T.EL().flag('d')).end(),
-					(__.E = __.E || _T.EL().flag('e')).end()
+					(__.D = __.D || _T.EL(self).flag('d')).end(),
+					(__.E = __.E || _T.EL(self).flag('e')).end()
 				],3))
 			],1).synced();
 		};
@@ -8984,7 +9014,7 @@
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
 			return this.setChildren([
-				(__.A = __.A || _T.EL().flag('a')).end(),
+				(__.A = __.A || _T.EL(this).flag('a')).end(),
 				a ? ("items") : ("item")
 			],1).synced();
 		};
@@ -8997,12 +9027,12 @@
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
 			return this.setChildren([
-				(__.A = __.A || _T.EL().flag('a')).end(),
+				(__.A = __.A || _T.EL(this).flag('a')).end(),
 				a ? (
 					"text"
 				) : (Imba.static([
-					(__.B = __.B || _T.EL().flag('b')).end(),
-					(__.C = __.C || _T.EL().flag('c')).end()
+					(__.B = __.B || _T.EL(self).flag('b')).end(),
+					(__.C = __.C || _T.EL(self).flag('c')).end()
 				],2))
 			],1).synced();
 		};
@@ -9017,7 +9047,7 @@
 			return this.setChildren([
 				"a",
 				"b",
-				a ? ((__.A = __.A || _T.EL().flag('c').setText("c")).end()) : ("d")
+				a ? ((__.A = __.A || _T.EL(this).flag('c').setText("c")).end()) : ("d")
 			],1).synced();
 		};
 	});
@@ -9043,24 +9073,24 @@
 				10,
 				"20",
 				"30",
-				(__.A = __.A || _T.DIV().flag('hello')).end(),
-				(__.B = __.B || _T.DIV().flag('hello')).setContent((__.BA = __.BA || _T.B()).end(),2).end(),
-				(__.C = __.C || _T.DIV().flag('int')).setContent(10,3).end(),
-				(__.D = __.D || _T.DIV().flag('date')).setContent(new Date(),3).end(),
-				(__.E = __.E || _T.DIV().flag('str').setText("string")).end(),
-				(__.F = __.F || _T.DIV().flag('list')).setContent(self.list(),3).end(),
-				(__.G = __.G || _T.DIV().flag('item')).setContent(self.tast(),3).end(),
-				(__.H = __.H || _T.DIV().flag('if')).setContent([
+				(__.A = __.A || _T.DIV(this).flag('hello')).end(),
+				(__.B = __.B || _T.DIV(self).flag('hello')).setContent((__.BA = __.BA || _T.B(self)).end(),2).end(),
+				(__.C = __.C || _T.DIV(self).flag('int')).setContent(10,3).end(),
+				(__.D = __.D || _T.DIV(self).flag('date')).setContent(new Date(),3).end(),
+				(__.E = __.E || _T.DIV(self).flag('str').setText("string")).end(),
+				(__.F = __.F || _T.DIV(self).flag('list')).setContent(self.list(),3).end(),
+				(__.G = __.G || _T.DIV(self).flag('item')).setContent(self.tast(),3).end(),
+				(__.H = __.H || _T.DIV(self).flag('if')).setContent([
 					(
 					self.list()
 					)
 				],1).end(),
 				
-				(__.I = __.I || _T.DIV().flag('if')).setContent([
-					(__.IA = __.IA || _T.B()).end(),
-					(__.IB = __.IB || _T.B()).end(),
+				(__.I = __.I || _T.DIV(self).flag('if')).setContent([
+					(__.IA = __.IA || _T.B(self)).end(),
+					(__.IB = __.IB || _T.B(self)).end(),
 					self.tast(),
-					(__.IC = __.IC || _T.B()).end()
+					(__.IC = __.IC || _T.B(self)).end()
 				],1).end()
 			],1).synced();
 		};
@@ -9069,7 +9099,7 @@
 		tag.prototype.list = function (){
 			var __ = (this.__._list = this.__._list || {});
 			for (var i = 0, ary = [1,2,3], len = ary.length, res = []; i < len; i++) {
-				res.push((__[ary[i]] = __[ary[i]] || _T.DIV().flag('x')).end());
+				res.push((__[ary[i]] = __[ary[i]] || _T.DIV(this).flag('x')).end());
 			};
 			return res;
 		};
@@ -9079,31 +9109,31 @@
 		tag.prototype.render = function (){
 			var self = this, __ = self.__;
 			return this.setChildren([
-				(__.A = __.A || _T.DIV().flag('hello')).end(),
-				(__.B = __.B || _T.UL().flag('other')).setContent([
-					(__.BA = __.BA || _T.LI().flag('a')).end(),
-					(__.BB = __.BB || _T.LI().flag('b')).end()
+				(__.A = __.A || _T.DIV(this).flag('hello')).end(),
+				(__.B = __.B || _T.UL(self).flag('other')).setContent([
+					(__.BA = __.BA || _T.LI(self).flag('a')).end(),
+					(__.BB = __.BB || _T.LI(self).flag('b')).end()
 				],2).end(),
-				(__.C = __.C || _T.DIV().flag('again')).end()
+				(__.C = __.C || _T.DIV(self).flag('again')).end()
 			],2).synced();
 		};
 	});
 
 	describe("Tags",function() {
 		
-		var a = _T.EL().flag('a').setText("a").end();
-		var b = _T.EL().flag('b').setText("b").end();
-		var c = _T.EL().flag('c').setText("c").end();
-		var d = _T.EL().flag('d').setText("d").end();
-		var e = _T.EL().flag('e').setText("e").end();
-		var f = _T.EL().flag('f').setText("f").end();
+		var a = _T.EL(self).flag('a').setText("a").end();
+		var b = _T.EL(self).flag('b').setText("b").end();
+		var c = _T.EL(self).flag('c').setText("c").end();
+		var d = _T.EL(self).flag('d').setText("d").end();
+		var e = _T.EL(self).flag('e').setText("e").end();
+		var f = _T.EL(self).flag('f').setText("f").end();
 		
-		var g = _T.EL().flag('g').setText("g").end();
-		var h = _T.EL().flag('h').setText("h").end();
-		var i = _T.EL().flag('i').setText("i").end();
-		var j = _T.EL().flag('j').setText("j").end();
+		var g = _T.EL(self).flag('g').setText("g").end();
+		var h = _T.EL(self).flag('h').setText("h").end();
+		var i = _T.EL(self).flag('i').setText("i").end();
+		var j = _T.EL(self).flag('j').setText("j").end();
 		
-		var group = _T.GROUP().end();
+		var group = _T.GROUP(self).end();
 		document.body.appendChild(group.dom());
 		
 		// test "first render with string" do
@@ -9154,7 +9184,7 @@
 		});
 		
 		test("toplevel conditionals",function() {
-			var node = _T.GROUP2().end();
+			var node = _T.GROUP2(self).end();
 			node.render({a: true});
 			eq(node.opstr(),"AAA");
 			
@@ -9164,7 +9194,7 @@
 		});
 		
 		test("conditionals with strings",function() {
-			var node = _T.GROUP3().end();
+			var node = _T.GROUP3(self).end();
 			node.render({a: true});
 			eq(node.opstr(),"AA");
 			
@@ -9174,7 +9204,7 @@
 		});
 		
 		test("conditionals with strings II",function() {
-			var node = _T.GROUP4().end();
+			var node = _T.GROUP4(self).end();
 			node.render({a: true});
 			eq(node.opstr(),"AA");
 			
@@ -9187,7 +9217,7 @@
 		describe("group5",function() {
 			
 			return test("conditions",function() {
-				var node = _T.GROUP5().end();
+				var node = _T.GROUP5(self).end();
 				document.body.appendChild(node.dom());
 				node.render({a: false});
 				eq(node.opstr(),"AAA");
@@ -9202,7 +9232,7 @@
 		});
 		
 		test("unknowns",function() {
-			var node = _T.UNKNOWNS().end();
+			var node = _T.UNKNOWNS(self).end();
 			document.body.appendChild(node.dom());
 			return node.render({a: false});
 			// eq node.opstr, "AAA"
@@ -9269,7 +9299,7 @@
 		});
 		
 		return describe("text lists",function() {
-			var node = _T.TEXTLIST().end();
+			var node = _T.TEXTLIST(self).end();
 			document.body.appendChild(node.dom());
 			
 			return test("render",function() {
@@ -10847,6 +10877,7 @@
 /* 46 */
 /***/ function(module, exports) {
 
+	var self = this;
 	// to run these tests, simply open the imbadir/test/dom.html in your browser and
 	// open the console / developer tools.
 
@@ -10855,22 +10886,22 @@
 	describe("Tags - SVG",function() {
 		
 		return test("basics",function() {
-			var item = _T._SVG.SVG().setContent([
-				_T._SVG.G().end(),
-				_T._SVG.CIRCLE().setR(20).end()
+			var item = _T._SVG.SVG(self).setContent([
+				_T._SVG.G(self).end(),
+				_T._SVG.CIRCLE(self).setR(20).end()
 			],2).end();
 			
 			Imba.root().append(item);
 			
 			try {
-				_T._SVG.DIV().end();
+				_T._SVG.DIV(self).end();
 				eq(1,0);
 			} catch (e) {
 				true;
 			};
 			
 			ok(item.dom() instanceof SVGElement);
-			return ok((_T._SVG.CIRCLE().end()).dom() instanceof SVGCircleElement);
+			return ok((_T._SVG.CIRCLE(self).end()).dom() instanceof SVGCircleElement);
 		});
 	});
 
@@ -10879,6 +10910,7 @@
 /* 47 */
 /***/ function(module, exports) {
 
+	var self = this;
 	// externs;
 
 	describe("HTML",function() {
@@ -10886,20 +10918,20 @@
 		return describe("select",function() {
 			
 			test("automatic value",function() {
-				var el = _T.SELECT().setContent([
-					_T.OPTION().setText("a").end(),
-					_T.OPTION().setText("b").end(),
-					_T.OPTION().setText("c").end()
+				var el = _T.SELECT(self).setContent([
+					_T.OPTION(self).setText("a").end(),
+					_T.OPTION(self).setText("b").end(),
+					_T.OPTION(self).setText("c").end()
 				],2).end();
 				
 				return eq(el.value(),"a");
 			});
 			
 			return test("setting value",function() {
-				var el = _T.SELECT().setValue("c").setContent([
-					_T.OPTION().setText("a").end(),
-					_T.OPTION().setText("b").end(),
-					_T.OPTION().setText("c").end()
+				var el = _T.SELECT(self).setValue("c").setContent([
+					_T.OPTION(self).setText("a").end(),
+					_T.OPTION(self).setText("b").end(),
+					_T.OPTION(self).setText("c").end()
 				],2).end();
 				
 				return eq(el.value(),"c");
@@ -10930,42 +10962,42 @@
 	});
 
 	AA = [1,2,3,4,5];
-	TT = _T.DIV().setTemplate(function() {
+	TT = _T.DIV(this).setTemplate(function() {
 		var __ = this.__;
 		return Imba.static([
-			(__.$A = __.$A || _T.UL().flag('x')).setContent([
-				(__.$AA = __.$AA || _T.LI().setText("Hello")).end(),
-				(__.$AB = __.$AB || _T.LI()).setContent(Date.now(),3).end(),
-				(__.$AC = __.$AC || _T.LI()).setContent([
-					(__.$ACA = __.$ACA || _T.XUL()).setTemplate(function() {
+			(__.$A = __.$A || _T.UL(this).flag('x')).setContent([
+				(__.$AA = __.$AA || _T.LI(this).setText("Hello")).end(),
+				(__.$AB = __.$AB || _T.LI(this)).setContent(Date.now(),3).end(),
+				(__.$AC = __.$AC || _T.LI(this)).setContent([
+					(__.$ACA = __.$ACA || _T.XUL(this)).setTemplate(function() {
 						var __ = this.__;
 						return Imba.static([
-							(__.$A = __.$A || _T.LI().setText("Inner")).end(),
-							(__.$B = __.$B || _T.LI()).setContent(Date.now(),3).end()
+							(__.$A = __.$A || _T.LI(this).setText("Inner")).end(),
+							(__.$B = __.$B || _T.LI(this)).setContent(Date.now(),3).end()
 						],1);
 					}).end(),
-					(__.$ACB = __.$ACB || _T.XNO()).setTemplate(function() {
+					(__.$ACB = __.$ACB || _T.XNO(this)).setTemplate(function() {
 						var self = this, __ = self.__;
 						return this.dataset('stamp',Date.now()).setChildren([
-							(__.$AA = __.$AA || _T.LI().setText("Inner")).end(),
-							(__.$AB = __.$AB || _T.LI()).setContent(Date.now(),3).end(),
+							(__.$AA = __.$AA || _T.LI(this).setText("Inner")).end(),
+							(__.$AB = __.$AB || _T.LI(self)).setContent(Date.now(),3).end(),
 							(function() {
 								var t0, _$ = (__.$AC = __.$AC || []);
 								for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
-									res.push((t0 = _$[i] = _$[i] || _T.LI()).setContent(ary[i],3).end());
+									res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setContent(ary[i],3).end());
 								};
 								return res;
 							})()
 						],1).synced();
 					}).end(),
-					(__.$ACC = __.$ACC || _T.WRAPS()).setTemplate(function() {
-						var __ = this.__;
+					(__.$ACC = __.$ACC || _T.WRAPS(this)).setTemplate(function() {
+						var __ = this.__, self = this;
 						return Imba.static([
-							(__.$A = __.$A || _T.DIV()).setContent(("This is inside " + (Date.now())),3).end(),
+							(__.$A = __.$A || _T.DIV(this)).setContent(("This is inside " + (Date.now())),3).end(),
 							(function() {
 								var t0, _$ = (__.$B = __.$B || []);
 								for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
-									res.push((t0 = _$[i] = _$[i] || _T.DIV()).setContent(ary[i],3).end());
+									res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(ary[i],3).end());
 								};
 								return res;
 							})()
@@ -10973,7 +11005,7 @@
 					}).end()
 				],2).end()
 			],2).end(),
-			(__.$B = __.$B || _T.SPAN()).end()
+			(__.$B = __.$B || _T.SPAN(this)).end()
 		],1);
 	}).end();
 
@@ -10982,13 +11014,13 @@
 		tag.prototype.render = function (){
 			var self = this, __ = self.__;
 			return this.setChildren(
-				(__.A = __.A || _T.DIV()).setContent([
-					(__.AA = __.AA || _T.H2().setText("content of template:")).end(),
-					(__.AB = __.AB || _T.DIV()).setContent(("This is inside " + (Date.now())),3).end(),
+				(__.A = __.A || _T.DIV(this)).setContent([
+					(__.AA = __.AA || _T.H2(this).setText("content of template:")).end(),
+					(__.AB = __.AB || _T.DIV(self)).setContent(("This is inside " + (Date.now())),3).end(),
 					(function() {
 						var t0, _$ = (__.AC = __.AC || []);
 						for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
-							res.push((t0 = _$[i] = _$[i] || _T.DIV()).setContent(ary[i],3).end());
+							res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(ary[i],3).end());
 						};
 						return res;
 					})()
@@ -10997,7 +11029,7 @@
 		};
 	});
 
-	HE = _T.HELLO().end();
+	HE = _T.HELLO(this).end();
 	document.body.appendChild(TT.dom());
 	document.body.appendChild(HE.dom());
 

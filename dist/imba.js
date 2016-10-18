@@ -1029,10 +1029,11 @@
 	@iname node
 	*/
 
-	Imba.Tag = function Tag(dom){
+	Imba.Tag = function Tag(dom,ctx){
 		this.setDom(dom);
 		this.__ = {};
 		this.FLAGS = 0;
+		
 		this.build();
 		this;
 	};
@@ -1051,8 +1052,8 @@
 		return proto.cloneNode(false);
 	};
 
-	Imba.Tag.build = function (){
-		return new this(this.createNode());
+	Imba.Tag.build = function (ctx){
+		return new this(this.createNode(),ctx);
 	};
 
 	Imba.Tag.dom = function (){
@@ -1130,9 +1131,6 @@
 	Imba.Tag.prototype.name = function(v){ return this.getAttribute('name'); }
 	Imba.Tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
 
-	Imba.Tag.prototype.object = function(v){ return this._object; }
-	Imba.Tag.prototype.setObject = function(v){ this._object = v; return this; };
-
 	Imba.Tag.prototype.dom = function (){
 		return this._dom;
 	};
@@ -1143,27 +1141,51 @@
 		return this;
 	};
 
-	/*
-		Setting references for tags like
-		`<div@header>` will compile to `tag('div').setRef('header',this).end()`
-		By default it adds the reference as a className to the tag.
-		@return {self}
-		*/
-
-	Imba.Tag.prototype.setRef = function (ref,ctx){
-		this.flag(this._ref = ref);
-		return this;
-	};
-
 	Imba.Tag.prototype.ref = function (){
 		return this._ref;
 	};
 
-	Imba.Tag.prototype.__ref = function (ref,ctx){
+	/*
+		Setting references for tags like
+		`<div@header>` will compile to `tag('div').ref_('header',this).end()`
+		By default it adds the reference as a className to the tag.
+		@return {self}
+		*/
+
+	Imba.Tag.prototype.ref_ = function (ref,ctx){
 		ctx['_' + ref] = this;
 		this.flag(this._ref = ref);
 		this._owner = ctx;
 		return this;
+	};
+
+
+	/*
+		Set the data object for node
+		@return {self}
+		*/
+
+	Imba.Tag.prototype.setData = function (data){
+		this._data = data;
+		return this;
+	};
+
+	/*
+		Get the data object for node
+		*/
+
+	Imba.Tag.prototype.data = function (){
+		return this._data;
+	};
+
+	Imba.Tag.prototype.setObject = function (value){
+		console.warn('Tag#object= deprecated. Use Tag#data=');
+		this.setData(value);
+		return this;
+	};
+
+	Imba.Tag.prototype.object = function (){
+		return this.data();
 	};
 
 	/*
@@ -1469,7 +1491,7 @@
 		var after = pars.after !== undefined ? pars.after : null;
 		if (after) { before = after.next() };
 		if (node instanceof Array) {
-			node = (_T.FRAGMENT().setContent(node,0).end());
+			node = (_T.FRAGMENT(this).setContent(node,0).end());
 		};
 		if (before) {
 			this.insertBefore(node,before.dom());
@@ -2147,14 +2169,14 @@
 	};
 
 	function Tag(){
-		return function(dom) {
-			this.initialize(dom);
+		return function(dom,ctx) {
+			this.initialize(dom,ctx);
 			return this;
 		};
 	};
 
 	function TagSpawner(type){
-		return function() { return type.build(); };
+		return function(zone) { return type.build(zone); };
 	};
 
 	Imba.Tags = function Tags(){
