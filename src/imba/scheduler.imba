@@ -67,16 +67,11 @@ class Ticker
 
 Imba.TICKER = Ticker.new
 
-def Imba.tick d
-	return
-
 def Imba.commit
 	Imba.TagManager.refresh
 
 def Imba.ticker
-	@ticker ||= do |e|
-		Imba.SCHEDULED = no
-		Imba.tick(e)
+	Imba.TICKER
 
 def Imba.requestAnimationFrame callback
 	requestAnimationFrame(callback)
@@ -95,8 +90,6 @@ def Imba.setTimeout delay, &block
 	setTimeout(&,delay) do
 		block()
 		Imba.commit
-		# Imba.Scheduler.markDirty
-		# Imba.emit(Imba,'timeout',[block])
 
 ###
 
@@ -109,8 +102,6 @@ def Imba.setInterval interval, &block
 	setInterval(&,interval) do
 		block()
 		Imba.commit
-		# Imba.Scheduler.markDirty
-		# Imba.emit(Imba,'interval',[block])
 
 ###
 Clear interval with specified id
@@ -130,34 +121,6 @@ def Imba.clearTimeout timeout
 
 ###
 
-Global alternative to requestAnimationFrame. Schedule a target
-to tick every frame. You can specify which method to call on the
-target (defaults to tick).
-
-###
-def Imba.schedule target, method = 'tick'
-	listen(self,'tick',target,method)
-	# start scheduling now if this was the first one
-	unless @scheduled
-		@scheduled = yes
-		requestAnimationFrame(Imba.ticker)
-	self
-
-###
-
-Unschedule a previously scheduled target
-
-###
-def Imba.unschedule target, method
-	unlisten(self,'tick',target,method)
-	var cbs = self:__listeners__ ||= {}
-	if !cbs:tick or !cbs:tick:next or !cbs:tick:next:listener
-		@scheduled = no
-	self
-
-
-###
-
 Instances of Imba.Scheduler manages when to call `tick()` on their target,
 at a specified framerate or when certain events occur. Root-nodes in your
 applications will usually have a scheduler to make sure they rerender when
@@ -168,24 +131,8 @@ own schedulers to control when they render.
 
 ###
 class Imba.Scheduler
+	
 	var counter = 0
-	def self.markDirty
-		@dirty = yes
-		self
-
-	def self.isDirty
-		!!@dirty
-
-	def self.willRun
-		@active = yes
-
-	def self.didRun
-		@active = no
-		@dirty = no
-		Imba.TagManager.refresh
-
-	def self.isActive
-		!!@active
 
 	def self.event e
 		Imba.emit(Imba,'event',e)
