@@ -62,8 +62,8 @@ class Imba.Tag
 		var proto = (@protoDom ||= buildNode)
 		proto.cloneNode(false)
 
-	def self.build
-		self.new(self.createNode)
+	def self.build ctx
+		self.new(self.createNode,ctx)
 
 	def self.dom
 		@protoDom ||= buildNode
@@ -117,10 +117,12 @@ class Imba.Tag
 		self
 
 
-	def initialize dom
+	def initialize dom,ctx
 		self.dom = dom
 		self.@_ = {}
 		self.FLAGS = 0
+		if $node$
+			@owner_ = ctx
 		build
 		self
 
@@ -137,20 +139,16 @@ class Imba.Tag
 		@dom = dom
 		self
 
-	###
-	Setting references for tags like
-	`<div@header>` will compile to `tag('div').setRef('header',this).end()`
-	By default it adds the reference as a className to the tag.
-	@return {self}
-	###
-	def setRef ref, ctx
-		flag(@ref = ref)
-		self
-
 	def ref
 		@ref
 
-	def __ref ref, ctx
+	###
+	Setting references for tags like
+	`<div@header>` will compile to `tag('div').ref_('header',this).end()`
+	By default it adds the reference as a className to the tag.
+	@return {self}
+	###
+	def ref_ ref, ctx
 		ctx['_' + ref] = self
 		flag(@ref = ref)
 		@owner = ctx
@@ -955,12 +953,12 @@ def extender obj, sup
 	return obj
 
 def Tag
-	return do |dom|
-		this.initialize(dom)
+	return do |dom,ctx|
+		this.initialize(dom,ctx)
 		return this
 
 def TagSpawner type
-	return do type.build
+	return do |zone| type.build(zone)
 
 class Imba.Tags
 

@@ -5824,6 +5824,7 @@ export class Tag < Node
 		var id = o:id isa Node ? o:id.c : (o:id and quote(o:id.c))
 		var tree = @tree or null
 		var parent = self.parent
+		var c_zone = scope.context.c
 
 		var out = if isSelf
 			commit = "synced"
@@ -5832,9 +5833,9 @@ export class Tag < Node
 			scope.context.c
 
 		elif type.isClass
-			"{mark__(o:open)}{type.name}.build()"
+			"{mark__(o:open)}{type.name}.build({c_zone})"
 		else
-			"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}()"
+			"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}({c_zone})"
 
 		if o:id
 			statics.push(".setId({quote(o:id)})")
@@ -5842,7 +5843,7 @@ export class Tag < Node
 		# this is reactive if it has an ivar
 		if o:ivar
 			reactive = yes
-			statics.push(".__ref({quote(o:ivar.name)},{scope.context.c})")
+			statics.push(".ref_({quote(o:ivar.name)},{c_zone})")
 
 		if o:body isa Func
 			bodySetter = "setTemplate"
