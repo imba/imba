@@ -70,7 +70,19 @@ global class ImbaNodeClassList
 	def toString
 		# beware of perf
 		@classes.join(" ").trim
+
+class CSSStyleDeclaration
+
+	def initialize dom
+		@dom = dom
+		self
 		
+	def toString
+		var items = []
+		for own k,v of self
+			unless k[0] == '_'
+				items.push("{k}: {v}")
+		return items.join(';')
 
 global class ImbaServerElement
 
@@ -151,6 +163,9 @@ global class ImbaServerElement
 		sel += " required" if self:required
 		sel += " readonly" if self:readOnly
 		sel += " autofocus" if self:autofocus
+		
+		if @style
+			sel += " style=\"{@style}\""
 
 		if voidElements[typ]
 			return "<{sel}>"
@@ -175,6 +190,9 @@ global class ImbaServerElement
 
 	getter 'lastElementChild' do
 		this:children and this:children[this:children:length - 1]
+		
+	getter 'style' do
+		this:_style ||= CSSStyleDeclaration.new(this)
 
 var el = ImbaServerElement:prototype
 

@@ -259,5 +259,13 @@ describe 'Tags - Define' do
 
 		var node = <Custom name="custom">
 		eq order, ['build','name','setup']
+	
+	test "css" do
+		tag Custom
+
+			def build
+				css opacity: 0
 		
-					
+		var node = <Custom>
+		eq node.dom:style:opacity,0
+		ok node.toString.match(/opacity\:\s*0/)
