@@ -196,7 +196,7 @@
 	*/
 
 	Imba.iterable = function (o){
-		return o ? ((o.toArray ? (o.toArray()) : (o))) : ([]);
+		return (o) ? (((o.toArray) ? (o.toArray()) : (o))) : ([]);
 	};
 
 	/*
@@ -228,11 +228,11 @@
 	};
 
 	Imba.indexOf = function (a,b){
-		return (b && b.indexOf) ? (b.indexOf(a)) : ([].indexOf.call(a,b));
+		return ((b && b.indexOf)) ? (b.indexOf(a)) : ([].indexOf.call(a,b));
 	};
 
 	Imba.len = function (a){
-		return a && (a.len instanceof Function ? (a.len.call(a)) : (a.length)) || 0;
+		return a && ((a.len instanceof Function) ? (a.len.call(a)) : (a.length)) || 0;
 	};
 
 	Imba.prop = function (scope,name,opts){
@@ -280,10 +280,10 @@
 		while ((prev = node) && (node = node.next)){
 			if (cb = node.listener) {
 				if (node.path && cb[node.path]) {
-					ret = args ? (cb[node.path].apply(cb,args)) : (cb[node.path]());
+					ret = (args) ? (cb[node.path].apply(cb,args)) : (cb[node.path]());
 				} else {
 					// check if it is a method?
-					ret = args ? (cb.apply(node,args)) : (cb.call(node));
+					ret = (args) ? (cb.apply(node,args)) : (cb.call(node));
 				};
 			};
 			
@@ -443,19 +443,12 @@
 
 	Imba.TICKER = new Ticker();
 
-	Imba.tick = function (d){
-		return;
-	};
-
 	Imba.commit = function (){
 		return Imba.TagManager.refresh();
 	};
 
 	Imba.ticker = function (){
-		return this._ticker || (this._ticker = function(e) {
-			Imba.SCHEDULED = false;
-			return Imba.tick(e);
-		});
+		return Imba.TICKER;
 	};
 
 	Imba.requestAnimationFrame = function (callback){
@@ -478,8 +471,6 @@
 		return setTimeout(function() {
 			block();
 			return Imba.commit();
-			// Imba.Scheduler.markDirty
-			// Imba.emit(Imba,'timeout',[block])
 		},delay);
 	};
 
@@ -495,8 +486,6 @@
 		return setInterval(function() {
 			block();
 			return Imba.commit();
-			// Imba.Scheduler.markDirty
-			// Imba.emit(Imba,'interval',[block])
 		},interval);
 	};
 
@@ -518,41 +507,6 @@
 
 	// should add an Imba.run / setImmediate that
 	// pushes listener onto the tick-queue with times - once
-
-
-	/*
-
-	Global alternative to requestAnimationFrame. Schedule a target
-	to tick every frame. You can specify which method to call on the
-	target (defaults to tick).
-
-	*/
-
-	Imba.schedule = function (target,method){
-		if(method === undefined) method = 'tick';
-		this.listen(this,'tick',target,method);
-		// start scheduling now if this was the first one
-		if (!this._scheduled) {
-			this._scheduled = true;
-			requestAnimationFrame(Imba.ticker());
-		};
-		return this;
-	};
-
-	/*
-
-	Unschedule a previously scheduled target
-
-	*/
-
-	Imba.unschedule = function (target,method){
-		this.unlisten(this,'tick',target,method);
-		var cbs = this.__listeners__ || (this.__listeners__ = {});
-		if (!cbs.tick || !cbs.tick.next || !cbs.tick.next.listener) {
-			this._scheduled = false;
-		};
-		return this;
-	};
 
 
 	/*
@@ -587,28 +541,6 @@
 	};
 
 	var counter = 0;
-	Imba.Scheduler.markDirty = function (){
-		this._dirty = true;
-		return this;
-	};
-
-	Imba.Scheduler.isDirty = function (){
-		return !!this._dirty;
-	};
-
-	Imba.Scheduler.willRun = function (){
-		return this._active = true;
-	};
-
-	Imba.Scheduler.didRun = function (){
-		this._active = false;
-		this._dirty = false;
-		return Imba.TagManager.refresh();
-	};
-
-	Imba.Scheduler.isActive = function (){
-		return !!this._active;
-	};
 
 	Imba.Scheduler.event = function (e){
 		return Imba.emit(Imba,'event',e);
@@ -993,7 +925,7 @@
 		
 		for (var i = 0, ary = Imba.iterable(this._mountable), len = ary.length, item; i < len; i++) {
 			item = ary[i];
-			if (item && document.body.contains(item._dom)) {
+			if (item && document.documentElement.contains(item._dom)) {
 				this._mounted.push(item);
 				item.FLAGS |= Imba.TAG_MOUNTED;
 				item.mount();
@@ -1014,7 +946,7 @@
 		var root = document.body;
 		for (var i = 0, ary = Imba.iterable(this._mounted), len = ary.length, item; i < len; i++) {
 			item = ary[i];
-			if (!document.body.contains(item.dom())) {
+			if (!document.documentElement.contains(item.dom())) {
 				item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED;
 				if (item.unmount) {
 					item.unmount();
@@ -1410,7 +1342,7 @@
 		*/
 
 	Imba.Tag.prototype.setChildren = function (nodes,type){
-		this._empty ? (this.append(nodes)) : (this.empty().append(nodes));
+		(this._empty) ? (this.append(nodes)) : (this.empty().append(nodes));
 		this._children = null;
 		return this;
 	};
@@ -1466,7 +1398,7 @@
 
 	Imba.Tag.prototype.removeChild = function (child){
 		var par = this.dom();
-		var el = child instanceof Imba.Tag ? (child.dom()) : (child);
+		var el = (child instanceof Imba.Tag) ? (child.dom()) : (child);
 		
 		if (el && el.parentNode == par) {
 			par.removeChild(el);
@@ -1585,7 +1517,7 @@
 
 	Imba.Tag.prototype.prepend = function (item){
 		var first = this._dom.childNodes[0];
-		first ? (this.insertBefore(item,first)) : (this.appendChild(item));
+		(first) ? (this.insertBefore(item,first)) : (this.appendChild(item));
 		return this;
 	};
 
@@ -1619,7 +1551,7 @@
 
 	Imba.Tag.prototype.setText = function (txt){
 		this._empty = false;
-		this._dom.textContent = txt == null ? (txt = "") : (txt);
+		this._dom.textContent = (txt == null) ? (txt = "") : (txt);
 		this;
 		return this;
 	};
@@ -1878,7 +1810,7 @@
 		*/
 
 	Imba.Tag.prototype.scheduler = function (){
-		return this._scheduler == null ? (this._scheduler = new Imba.Scheduler(this)) : (this._scheduler);
+		return (this._scheduler == null) ? (this._scheduler = new Imba.Scheduler(this)) : (this._scheduler);
 	};
 
 	/*
@@ -1933,7 +1865,7 @@
 	Imba.Tag.prototype.children = function (sel){
 		// DEPRECATE this is overridden by reconciler
 		var nodes = new Imba.Selector(null,this,this._dom.children);
-		return sel ? (nodes.filter(sel)) : (nodes);
+		return (sel) ? (nodes.filter(sel)) : (nodes);
 	};
 
 
@@ -1977,7 +1909,7 @@
 	Imba.Tag.prototype.parents = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
 		var par = this.parent();
-		return par ? (par.path(sel)) : ([]);
+		return (par) ? (par.path(sel)) : ([]);
 	};
 
 	/*
@@ -2030,7 +1962,7 @@
 
 	Imba.Tag.prototype.first = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
-		return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
+		return (sel) ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
 	};
 
 	/*
@@ -2045,7 +1977,7 @@
 
 	Imba.Tag.prototype.last = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
-		return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
+		return (sel) ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
 	};
 
 
@@ -2227,7 +2159,7 @@
 
 	function extender(obj,sup){
 		for (var i = 0, keys = Object.keys(sup), l = keys.length; i < l; i++){
-			obj[($1 = keys[i])] == null ? (obj[$1] = sup[keys[i]]) : (obj[$1]);
+			(obj[($1 = keys[i])] == null) ? (obj[$1] = sup[keys[i]]) : (obj[$1]);
 		};
 		
 		obj.prototype = Object.create(sup.prototype);
@@ -2271,7 +2203,7 @@
 	};
 
 	Imba.Tags.prototype.baseType = function (name){
-		return Imba.indexOf(name,Imba.HTML_TAGS) >= 0 ? ('element') : ('div');
+		return (Imba.indexOf(name,Imba.HTML_TAGS) >= 0) ? ('element') : ('div');
 	};
 
 	Imba.Tags.prototype.defineTag = function (name,supr,body){
@@ -2284,7 +2216,7 @@
 		
 		supr || (supr = this.baseType(name));
 		
-		var supertype = (typeof supr=='string'||supr instanceof String) ? (this[supr]) : (supr);
+		var supertype = ((typeof supr=='string'||supr instanceof String)) ? (this[supr]) : (supr);
 		var tagtype = Tag();
 		var norm = name.replace(/\-/g,'_');
 		
@@ -2329,7 +2261,7 @@
 	Imba.Tags.prototype.extendTag = function (name,supr,body){
 		if(body==undefined && typeof supr == 'function') body = supr,supr = '';
 		if(supr==undefined) supr = '';
-		var klass = ((typeof name=='string'||name instanceof String) ? (this[name]) : (name));
+		var klass = (((typeof name=='string'||name instanceof String)) ? (this[name]) : (name));
 		// allow for private tags here as well?
 		if (body) { body && body.call(klass,klass,klass.prototype) };
 		if (klass.extended) { klass.extended() };
@@ -2456,7 +2388,7 @@
 		};
 		
 		spawner || (spawner = tags[native$]);
-		return spawner ? (new spawner(dom).awaken(dom)) : (null);
+		return (spawner) ? (new spawner(dom).awaken(dom)) : (null);
 	};
 
 
@@ -2496,7 +2428,7 @@
 			
 			tag.prototype.addFlag = function (ref){
 				if (this.hasFlag(ref)) { return this };
-				this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
+				this._dom.className += ((this._dom.className) ? (' ') : ('')) + ref;
 				return this;
 			};
 			
@@ -2508,7 +2440,7 @@
 			};
 			
 			tag.prototype.toggleFlag = function (ref){
-				return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
+				return (this.hasFlag(ref)) ? (this.unflag(ref)) : (this.flag(ref));
 			};
 			
 			tag.prototype.flag = function (ref,bool){
@@ -3940,7 +3872,7 @@
 				if (node[meth] instanceof Function) {
 					this._responder || (this._responder = node);
 					// should autostop bubble here?
-					args ? (node[meth].apply(node,args)) : (node[meth](this,this.data()));
+					(args) ? (node[meth].apply(node,args)) : (node[meth](this,this.data()));
 				};
 				
 				if (node.onevent) {
@@ -3949,7 +3881,7 @@
 			};
 			
 			// add node.nextEventResponder as a separate method here?
-			if (!(this.bubble() && (domnode = (this._redirect || (node ? (node.parent()) : (domnode.parentNode)))))) {
+			if (!(this.bubble() && (domnode = (this._redirect || ((node) ? (node.parent()) : (domnode.parentNode)))))) {
 				break;
 			};
 		};
@@ -4056,7 +3988,7 @@
 	Imba.EventManager.prototype.setDelegator = function(v){ this._delegator = v; return this; };
 
 	Imba.EventManager.prototype.enabledDidSet = function (bool){
-		bool ? (this.onenable()) : (this.ondisable());
+		(bool) ? (this.onenable()) : (this.ondisable());
 		return this;
 	};
 
@@ -4080,7 +4012,7 @@
 		
 		if (this.delegators()[name]) { return this };
 		// console.log("register for event {name}")
-		var fn = this.delegators()[name] = handler instanceof Function ? (handler) : (this.delegator());
+		var fn = this.delegators()[name] = (handler instanceof Function) ? (handler) : (this.delegator());
 		if (this.enabled()) { return this.root().addEventListener(name,fn,true) };
 	};
 
@@ -4168,7 +4100,7 @@
 
 	Imba.Selector = function Selector(sel,scope,nodes){
 		
-		this._query = sel instanceof Imba.Selector ? (sel.query()) : (sel);
+		this._query = (sel instanceof Imba.Selector) ? (sel.query()) : (sel);
 		this._context = scope;
 		
 		if (nodes) {
@@ -4203,7 +4135,7 @@
 		var ctx;
 		if (this._scope) { return this._scope };
 		if (!(ctx = this._context)) { return Imba.document() };
-		return this._scope = ctx.toScope ? (ctx.toScope()) : (ctx);
+		return this._scope = (ctx.toScope) ? (ctx.toScope()) : (ctx);
 	};
 
 	/*
@@ -4412,7 +4344,7 @@
 		} else if (node != null) {
 			// what if this is not null?!?!?
 			// take a chance and remove a text-elementng
-			var next = caret ? (caret.nextSibling) : (root._dom.firstChild);
+			var next = (caret) ? (caret.nextSibling) : (root._dom.firstChild);
 			if ((next instanceof Text) && next.textContent == node) {
 				root.removeChild(next);
 			} else {
@@ -4458,7 +4390,7 @@
 
 	// after must be an actual domnode
 	function insertNestedAfter(root,node,after){
-		var before = after ? (after.nextSibling) : (root._dom.firstChild);
+		var before = (after) ? (after.nextSibling) : (root._dom.firstChild);
 		
 		if (before) {
 			insertNestedBefore(root,node,before);
@@ -4541,7 +4473,7 @@
 			
 			prevChain.push(prevIdx);
 			
-			var currLength = (prevIdx == -1) ? (0) : (lengthChain[prevIdx] + 1);
+			var currLength = ((prevIdx == -1)) ? (0) : (lengthChain[prevIdx] + 1);
 			
 			if (currLength > maxChainLength) {
 				maxChainLength = currLength;
@@ -4624,7 +4556,7 @@
 			} else if (new$ && new$._dom) {
 				return new$._dom;
 			} else {
-				return caret ? (caret.nextSibling) : (root._dom.firstChild);
+				return (caret) ? (caret.nextSibling) : (root._dom.firstChild);
 			};
 		} else if (new$ instanceof Array) {
 			if (old instanceof Array) {
@@ -4649,7 +4581,7 @@
 				root.removeChild(old);
 			} else if (!oldIsNull) {
 				// old was a string-like object?
-				root.removeChild(caret ? (caret.nextSibling) : (root._dom.firstChild));
+				root.removeChild((caret) ? (caret.nextSibling) : (root._dom.firstChild));
 			};
 			
 			return insertNestedAfter(root,new$,caret);
@@ -4670,7 +4602,7 @@
 				root.removeChild(old);
 			} else if (!oldIsNull) {
 				// ...
-				nextNode = caret ? (caret.nextSibling) : (root._dom.firstChild);
+				nextNode = (caret) ? (caret.nextSibling) : (root._dom.firstChild);
 				if ((nextNode instanceof Text) && nextNode.textContent != new$) {
 					nextNode.textContent = new$;
 					return nextNode;
@@ -4742,7 +4674,7 @@
 		tag.prototype.setText = function (text){
 			if (text != this._children) {
 				this._children = text;
-				this.dom().textContent = text == null || text === false ? ('') : (text);
+				this.dom().textContent = (text == null || text === false) ? ('') : (text);
 			};
 			this;
 			return this;
@@ -4842,7 +4774,7 @@
 		
 		for (var i = 0, ary = Imba.iterable(this.assertions()), len = ary.length, test1; i < len; i++) {
 			test1 = ary[i];
-			test1.success() ? (ok.push(test1)) : (failed.push(test1));
+			(test1.success()) ? (ok.push(test1)) : (failed.push(test1));
 		};
 		
 		var logs = [
@@ -4859,7 +4791,7 @@
 			console.log("    " + item.details());
 		};
 		
-		var exitCode = (failed.length == 0 ? (0) : (1));
+		var exitCode = ((failed.length == 0) ? (0) : (1));
 		
 		return Imba.emit(this,'done',[exitCode]);
 	};
@@ -4897,7 +4829,7 @@
 
 	global.SpecCaller = SpecCaller; // global class 
 	SpecCaller.prototype.run = function (){
-		return this._value == null ? (this._value = this._scope[this._method].apply(this._scope,this._args)) : (this._value);
+		return (this._value == null) ? (this._value = this._scope[this._method].apply(this._scope,this._args)) : (this._value);
 	};
 
 	function SpecGroup(name,blk,parent){
@@ -5087,7 +5019,7 @@
 			var args = new Array(i>0 ? i : 0);
 			while(i>0) args[i-1] = $0[--i];
 			Imba.clearTimeout(self._timeout);
-			return args.equals(self._args[0]) ? (self.passed()) : (self.failed());
+			return (args.equals(self._args[0])) ? (self.passed()) : (self.failed());
 		};
 		
 		self;
@@ -5115,19 +5047,19 @@
 	Imba.subclass(SpecAssert,SpecCondition);
 	global.SpecAssert = SpecAssert; // global class 
 	SpecAssert.prototype.run = function (){
-		var value = this._actual instanceof SpecCaller ? (this._actual.run()) : (this._actual);
+		var value = (this._actual instanceof SpecCaller) ? (this._actual.run()) : (this._actual);
 		return this.test(this._value = value);
 	};
 
 	SpecAssert.prototype.test = function (value){
 		if (value && value.equals) {
-			return value.equals(this.expected()) ? (this.passed()) : (this.failed());
+			return (value.equals(this.expected())) ? (this.passed()) : (this.failed());
 		} else if (this._format) {
 			this._left = this._format(value);
 			this._right = this._format(this._expected);
-			return this._left == this._right ? (this.passed()) : (this.failed());
+			return (this._left == this._right) ? (this.passed()) : (this.failed());
 		} else {
-			return (value == this._expected) ? (this.passed()) : (this.failed());
+			return ((value == this._expected)) ? (this.passed()) : (this.failed());
 		};
 	};
 
@@ -5159,7 +5091,7 @@
 	Imba.subclass(SpecAssertTruthy,SpecAssert);
 	global.SpecAssertTruthy = SpecAssertTruthy; // global class 
 	SpecAssertTruthy.prototype.test = function (value){
-		return !(!(value)) ? (this.passed()) : (this.failed());
+		return (!(!(value))) ? (this.passed()) : (this.failed());
 	};
 
 	function SpecAssertFalsy(example,value){
@@ -5171,7 +5103,7 @@
 	Imba.subclass(SpecAssertFalsy,SpecAssert);
 	global.SpecAssertFalsy = SpecAssertFalsy; // global class 
 	SpecAssertFalsy.prototype.test = function (value){
-		return !(value) ? (this.passed()) : (this.failed());
+		return (!(value)) ? (this.passed()) : (this.failed());
 	};
 
 
@@ -5400,7 +5332,7 @@
 				var a = 10;
 				var b = 15;
 				
-				for (var res = [], len = b, i = a, rd = len - i; rd > 0 ? (i <= len) : (i >= len); rd > 0 ? (i++) : (i--)) {
+				for (var res = [], len = b, i = a, rd = len - i; (rd > 0) ? (i <= len) : (i >= len); (rd > 0) ? (i++) : (i--)) {
 					res.push(i);
 				};
 				
@@ -5411,7 +5343,7 @@
 				var a = 10;
 				var b = 15;
 				
-				for (var res = [], len = b, val = a, idx = 0, rd = len - val; rd > 0 ? (val <= len) : (val >= len); rd > 0 ? (val++) : (val--),idx++) {
+				for (var res = [], len = b, val = a, idx = 0, rd = len - val; (rd > 0) ? (val <= len) : (val >= len); (rd > 0) ? (val++) : (val--),idx++) {
 					res.push(idx);
 				};
 				
@@ -5423,7 +5355,7 @@
 				var b = 10;
 				
 				var res = [];
-				for (var len = b, val = a, idx = 0, rd = len - val; rd > 0 ? (val <= len) : (val >= len); rd > 0 ? (val++) : (val--),idx++) {
+				for (var len = b, val = a, idx = 0, rd = len - val; (rd > 0) ? (val <= len) : (val >= len); (rd > 0) ? (val++) : (val--),idx++) {
 					res.push(val,idx);
 				};
 				
@@ -5506,7 +5438,7 @@
 		
 		test("implicit return from assignment",function() {
 			var c = 1;
-			var f = function() { return c ? (true) : (false); };
+			var f = function() { return (c) ? (true) : (false); };
 			return eq(f(),true);
 		});
 		
@@ -6141,10 +6073,10 @@
 		});
 		
 		test("ternary",function() {
-			var x =  true ? (true) : (false);
+			var x = ( true) ? (true) : (false);
 			eq(x,true);
 			
-			x =  true ? (false) : (true);
+			x = ( true) ? (false) : (true);
 			eq(x,false);
 			
 			if (x = 2) {
@@ -6705,7 +6637,7 @@
 			};
 			
 			var inner = function(blk) {
-				return blk ? (blk()) : (null);
+				return (blk) ? (blk()) : (null);
 			};
 			
 			// block precedence
@@ -6720,7 +6652,7 @@
 		
 		
 		test("block-argument position",function() {
-			var fn = function(a,b,c) { return [a instanceof Function ? (a()) : (a),b instanceof Function ? (b()) : (b),c instanceof Function ? (c()) : (c)]; };
+			var fn = function(a,b,c) { return [(a instanceof Function) ? (a()) : (a),(b instanceof Function) ? (b()) : (b),(c instanceof Function) ? (c()) : (c)]; };
 			var res;
 			
 			res = fn(1,2,function() { return 3; });
@@ -7132,7 +7064,7 @@
 			eq(str,'<?xml " version="1.0" { encoding="UTF-8"?>');
 			
 			var v = 1;
-			str = ("" + (v ? ('a') : ('b')) + "c");
+			str = ("" + ((v) ? ('a') : ('b')) + "c");
 			return eq(str,'ac');
 		});
 		
@@ -7837,7 +7769,7 @@
 		test("indexes",function() {
 			var a = {};
 			var b = false;
-			a[b ? ('yes') : ('no')] = true;
+			a[(b) ? ('yes') : ('no')] = true;
 			return eq(a.no,true);
 		});
 		
@@ -7886,11 +7818,11 @@
 			var count = 0;
 			var list = [];
 			
-			list[($1 = ++count)] == null ? (list[$1] = 1) : (list[$1]);
+			(list[($1 = ++count)] == null) ? (list[$1] = 1) : (list[$1]);
 			eq(1,list[1]);
 			eq(1,count);
 			
-			list[($2 = ++count)] == null ? (list[$2] = 2) : (list[$2]);
+			(list[($2 = ++count)] == null) ? (list[$2] = 2) : (list[$2]);
 			eq(2,list[2]);
 			eq(2,count);
 			
@@ -7907,18 +7839,18 @@
 				return base;
 			};
 			
-			($4 = base()).four == null ? ($4.four = 4) : ($4.four);
+			(($4 = base()).four == null) ? ($4.four = 4) : ($4.four);
 			eq(4,base.four);
 			eq(4,count);
 			
-			($5 = base()).five == null ? ($5.five = 5) : ($5.five);
+			(($5 = base()).five == null) ? ($5.five = 5) : ($5.five);
 			eq(5,base.five);
 			return eq(5,count);
 		});
 		
 		test("compound assignment with implicit objects",function() {
 			var obj = undefined;
-			obj == null ? (obj = {one: 1}) : (obj);
+			(obj == null) ? (obj = {one: 1}) : (obj);
 			
 			eq(obj.one,1);
 			
@@ -7958,8 +7890,8 @@
 			
 			var c = {};
 			val = null;
-			val == null ? (val = c) : (val);
-			val == null ? (val = true) : (val);
+			(val == null) ? (val = c) : (val);
+			(val == null) ? (val = true) : (val);
 			return eq(c,val);
 		});
 		
@@ -8181,17 +8113,37 @@
 
 	describe("Syntax - Conditionals",function() {
 		
-		return test("unary",function() {
+		test("unary",function() {
 			var $1, $2;
 			var t = true,f = false;
 			var obj = {on: function() { return true; },off: function() { return false; }};
 			
-			eq((t ? (10) : (20)),10);
-			eq((f !== undefined ? (!f) : (undefined)),true);
-			eq((t ? (($1 = obj) && $1.on  &&  $1.on()) : (($2 = obj) && $2.off  &&  $2.off())),true);
+			eq(((t) ? (10) : (20)),10);
+			eq(((f !== undefined) ? (!f) : (undefined)),true);
+			eq(((t) ? (($1 = obj) && $1.on  &&  $1.on()) : (($2 = obj) && $2.off  &&  $2.off())),true);
 			
-			return eq((t ? ('.' + f) : ('')),'.false');
+			return eq(((t) ? ('.' + f) : ('')),'.false');
 			// e.event:metaKey ? pane?.show : pane?.maximize
+		});
+		
+		return test("unary precedence",function() {
+			var m;
+			var a = null;
+			var b = 2;
+			var res;
+			var block = function() { return true; };
+			
+			block(
+				(m = a) ? (
+					res = 1
+				) : ((m = b) ? (
+					res = m
+				) : (
+					null
+				))
+			);
+			
+			return eq(res,2);
 		});
 	});
 
@@ -8665,7 +8617,7 @@
 			return eq(el.data(),data);
 		});
 		
-		return test("build order",function() {
+		test("build order",function() {
 			var order = [];
 			var Custom = _T.defineTag('Custom', function(tag){
 				
@@ -8687,8 +8639,20 @@
 			var node = Custom.build(self).setName("custom").end();
 			return eq(order,['build','name','setup']);
 		});
+		
+		return test("css",function() {
+			var Custom = _T.defineTag('Custom', function(tag){
+				
+				tag.prototype.build = function (){
+					return this.css({opacity: 0});
+				};
+			});
+			
+			var node = Custom.build(self).end();
+			eq(node.dom().style.opacity,0);
+			return ok(node.toString().match(/opacity\:\s*0/));
+		});
 	});
-
 
 
 /***/ },
@@ -8775,7 +8739,7 @@
 			var html = this.dom().outerHTML;
 			// strip away all tags
 			return html = html.replace(/\<[^\>]+\>/g,function(m) {
-				return m[1] == '/' ? (']') : ('[');
+				return (m[1] == '/') ? (']') : ('[');
 			});
 			// html = html.replace(/\[(\w+)\]/g,'$1')
 		};
@@ -8855,7 +8819,7 @@
 				// 	continue if child:textContent == expected[i]
 				
 				child = ary[i];
-				var el = child instanceof Text ? (child.textContent) : (tag$wrap(child));
+				var el = (child instanceof Text) ? (child.textContent) : (tag$wrap(child));
 				if (el != this.expected()[i]) {
 					this._errors || (this._errors = []);
 					// log "not the same as expected at i",child,expected[i].@dom
@@ -8930,7 +8894,7 @@
 					(__.C = __.C || _T.EL(self).flag('header')).end(),
 					(__.D = __.D || _T.EL(self).flag('title').setText("Header")).end(),
 					(__.E = __.E || _T.EL(self).flag('tools')).end(),
-					b ? (Imba.static([
+					(b) ? (Imba.static([
 						(__.F = __.F || _T.EL(self).flag('long')).end(),
 						(__.G = __.G || _T.EL(self).flag('long')).end()
 					],2)) : (Imba.static([
@@ -8944,11 +8908,11 @@
 					(__.L = __.L || _T.DIV(self).flag('c1').setText("long")).end(),
 					(__.M = __.M || _T.DIV(self).flag('c2').setText("loong")).end()
 				],5)) : void(0),
-				d && e ? (Imba.static([
+				(d && e) ? (Imba.static([
 					(__.N = __.N || _T.EL(self).flag('long')).end(),
 					(__.O = __.O || _T.EL(self).flag('footer')).end(),
 					(__.P = __.P || _T.EL(self).flag('bottom')).end()
-				],6)) : (e ? (Imba.static([
+				],6)) : ((e) ? (Imba.static([
 					(__.Q = __.Q || _T.EL(self).flag('footer')).end(),
 					(__.R = __.R || _T.EL(self).flag('bottom')).end()
 				],7)) : (
@@ -8995,7 +8959,7 @@
 			if(!pars||pars.constructor !== Object) pars = {};
 			var a = pars.a !== undefined ? pars.a : false;
 			return this.setChildren([
-				a ? (Imba.static([
+				(a) ? (Imba.static([
 					(__.A = __.A || _T.EL(this).flag('a')).end(),
 					(__.B = __.B || _T.EL(self).flag('b')).end(),
 					(__.C = __.C || _T.EL(self).flag('c')).end()
@@ -9015,7 +8979,7 @@
 			var a = pars.a !== undefined ? pars.a : false;
 			return this.setChildren([
 				(__.A = __.A || _T.EL(this).flag('a')).end(),
-				a ? ("items") : ("item")
+				(a) ? ("items") : ("item")
 			],1).synced();
 		};
 	});
@@ -9028,7 +8992,7 @@
 			var a = pars.a !== undefined ? pars.a : false;
 			return this.setChildren([
 				(__.A = __.A || _T.EL(this).flag('a')).end(),
-				a ? (
+				(a) ? (
 					"text"
 				) : (Imba.static([
 					(__.B = __.B || _T.EL(self).flag('b')).end(),
@@ -9047,7 +9011,7 @@
 			return this.setChildren([
 				"a",
 				"b",
-				a ? ((__.A = __.A || _T.EL(this).flag('c').setText("c")).end()) : ("d")
+				(a) ? ((__.A = __.A || _T.EL(this).flag('c').setText("c")).end()) : ("d")
 			],1).synced();
 		};
 	});

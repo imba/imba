@@ -127,7 +127,7 @@
 	*/
 
 	Imba.iterable = function (o){
-		return o ? ((o.toArray ? (o.toArray()) : (o))) : ([]);
+		return (o) ? (((o.toArray) ? (o.toArray()) : (o))) : ([]);
 	};
 
 	/*
@@ -159,11 +159,11 @@
 	};
 
 	Imba.indexOf = function (a,b){
-		return (b && b.indexOf) ? (b.indexOf(a)) : ([].indexOf.call(a,b));
+		return ((b && b.indexOf)) ? (b.indexOf(a)) : ([].indexOf.call(a,b));
 	};
 
 	Imba.len = function (a){
-		return a && (a.len instanceof Function ? (a.len.call(a)) : (a.length)) || 0;
+		return a && ((a.len instanceof Function) ? (a.len.call(a)) : (a.length)) || 0;
 	};
 
 	Imba.prop = function (scope,name,opts){
@@ -211,10 +211,10 @@
 		while ((prev = node) && (node = node.next)){
 			if (cb = node.listener) {
 				if (node.path && cb[node.path]) {
-					ret = args ? (cb[node.path].apply(cb,args)) : (cb[node.path]());
+					ret = (args) ? (cb[node.path].apply(cb,args)) : (cb[node.path]());
 				} else {
 					// check if it is a method?
-					ret = args ? (cb.apply(node,args)) : (cb.call(node));
+					ret = (args) ? (cb.apply(node,args)) : (cb.call(node));
 				};
 			};
 			
@@ -374,19 +374,12 @@
 
 	Imba.TICKER = new Ticker();
 
-	Imba.tick = function (d){
-		return;
-	};
-
 	Imba.commit = function (){
 		return Imba.TagManager.refresh();
 	};
 
 	Imba.ticker = function (){
-		return this._ticker || (this._ticker = function(e) {
-			Imba.SCHEDULED = false;
-			return Imba.tick(e);
-		});
+		return Imba.TICKER;
 	};
 
 	Imba.requestAnimationFrame = function (callback){
@@ -409,8 +402,6 @@
 		return setTimeout(function() {
 			block();
 			return Imba.commit();
-			// Imba.Scheduler.markDirty
-			// Imba.emit(Imba,'timeout',[block])
 		},delay);
 	};
 
@@ -426,8 +417,6 @@
 		return setInterval(function() {
 			block();
 			return Imba.commit();
-			// Imba.Scheduler.markDirty
-			// Imba.emit(Imba,'interval',[block])
 		},interval);
 	};
 
@@ -449,41 +438,6 @@
 
 	// should add an Imba.run / setImmediate that
 	// pushes listener onto the tick-queue with times - once
-
-
-	/*
-
-	Global alternative to requestAnimationFrame. Schedule a target
-	to tick every frame. You can specify which method to call on the
-	target (defaults to tick).
-
-	*/
-
-	Imba.schedule = function (target,method){
-		if(method === undefined) method = 'tick';
-		this.listen(this,'tick',target,method);
-		// start scheduling now if this was the first one
-		if (!this._scheduled) {
-			this._scheduled = true;
-			requestAnimationFrame(Imba.ticker());
-		};
-		return this;
-	};
-
-	/*
-
-	Unschedule a previously scheduled target
-
-	*/
-
-	Imba.unschedule = function (target,method){
-		this.unlisten(this,'tick',target,method);
-		var cbs = this.__listeners__ || (this.__listeners__ = {});
-		if (!cbs.tick || !cbs.tick.next || !cbs.tick.next.listener) {
-			this._scheduled = false;
-		};
-		return this;
-	};
 
 
 	/*
@@ -518,28 +472,6 @@
 	};
 
 	var counter = 0;
-	Imba.Scheduler.markDirty = function (){
-		this._dirty = true;
-		return this;
-	};
-
-	Imba.Scheduler.isDirty = function (){
-		return !!this._dirty;
-	};
-
-	Imba.Scheduler.willRun = function (){
-		return this._active = true;
-	};
-
-	Imba.Scheduler.didRun = function (){
-		this._active = false;
-		this._dirty = false;
-		return Imba.TagManager.refresh();
-	};
-
-	Imba.Scheduler.isActive = function (){
-		return !!this._active;
-	};
 
 	Imba.Scheduler.event = function (e){
 		return Imba.emit(Imba,'event',e);
@@ -924,7 +856,7 @@
 		
 		for (var i = 0, ary = Imba.iterable(this._mountable), len = ary.length, item; i < len; i++) {
 			item = ary[i];
-			if (item && document.body.contains(item._dom)) {
+			if (item && document.documentElement.contains(item._dom)) {
 				this._mounted.push(item);
 				item.FLAGS |= Imba.TAG_MOUNTED;
 				item.mount();
@@ -945,7 +877,7 @@
 		var root = document.body;
 		for (var i = 0, ary = Imba.iterable(this._mounted), len = ary.length, item; i < len; i++) {
 			item = ary[i];
-			if (!document.body.contains(item.dom())) {
+			if (!document.documentElement.contains(item.dom())) {
 				item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED;
 				if (item.unmount) {
 					item.unmount();
@@ -1341,7 +1273,7 @@
 		*/
 
 	Imba.Tag.prototype.setChildren = function (nodes,type){
-		this._empty ? (this.append(nodes)) : (this.empty().append(nodes));
+		(this._empty) ? (this.append(nodes)) : (this.empty().append(nodes));
 		this._children = null;
 		return this;
 	};
@@ -1397,7 +1329,7 @@
 
 	Imba.Tag.prototype.removeChild = function (child){
 		var par = this.dom();
-		var el = child instanceof Imba.Tag ? (child.dom()) : (child);
+		var el = (child instanceof Imba.Tag) ? (child.dom()) : (child);
 		
 		if (el && el.parentNode == par) {
 			par.removeChild(el);
@@ -1516,7 +1448,7 @@
 
 	Imba.Tag.prototype.prepend = function (item){
 		var first = this._dom.childNodes[0];
-		first ? (this.insertBefore(item,first)) : (this.appendChild(item));
+		(first) ? (this.insertBefore(item,first)) : (this.appendChild(item));
 		return this;
 	};
 
@@ -1550,7 +1482,7 @@
 
 	Imba.Tag.prototype.setText = function (txt){
 		this._empty = false;
-		this._dom.textContent = txt == null ? (txt = "") : (txt);
+		this._dom.textContent = (txt == null) ? (txt = "") : (txt);
 		this;
 		return this;
 	};
@@ -1809,7 +1741,7 @@
 		*/
 
 	Imba.Tag.prototype.scheduler = function (){
-		return this._scheduler == null ? (this._scheduler = new Imba.Scheduler(this)) : (this._scheduler);
+		return (this._scheduler == null) ? (this._scheduler = new Imba.Scheduler(this)) : (this._scheduler);
 	};
 
 	/*
@@ -1864,7 +1796,7 @@
 	Imba.Tag.prototype.children = function (sel){
 		// DEPRECATE this is overridden by reconciler
 		var nodes = new Imba.Selector(null,this,this._dom.children);
-		return sel ? (nodes.filter(sel)) : (nodes);
+		return (sel) ? (nodes.filter(sel)) : (nodes);
 	};
 
 
@@ -1908,7 +1840,7 @@
 	Imba.Tag.prototype.parents = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
 		var par = this.parent();
-		return par ? (par.path(sel)) : ([]);
+		return (par) ? (par.path(sel)) : ([]);
 	};
 
 	/*
@@ -1961,7 +1893,7 @@
 
 	Imba.Tag.prototype.first = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
-		return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
+		return (sel) ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
 	};
 
 	/*
@@ -1976,7 +1908,7 @@
 
 	Imba.Tag.prototype.last = function (sel){
 		// DEPRECATE extract into imba-tag-helpers
-		return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
+		return (sel) ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
 	};
 
 
@@ -2158,7 +2090,7 @@
 
 	function extender(obj,sup){
 		for (var i = 0, keys = Object.keys(sup), l = keys.length; i < l; i++){
-			obj[($1 = keys[i])] == null ? (obj[$1] = sup[keys[i]]) : (obj[$1]);
+			(obj[($1 = keys[i])] == null) ? (obj[$1] = sup[keys[i]]) : (obj[$1]);
 		};
 		
 		obj.prototype = Object.create(sup.prototype);
@@ -2202,7 +2134,7 @@
 	};
 
 	Imba.Tags.prototype.baseType = function (name){
-		return Imba.indexOf(name,Imba.HTML_TAGS) >= 0 ? ('element') : ('div');
+		return (Imba.indexOf(name,Imba.HTML_TAGS) >= 0) ? ('element') : ('div');
 	};
 
 	Imba.Tags.prototype.defineTag = function (name,supr,body){
@@ -2215,7 +2147,7 @@
 		
 		supr || (supr = this.baseType(name));
 		
-		var supertype = (typeof supr=='string'||supr instanceof String) ? (this[supr]) : (supr);
+		var supertype = ((typeof supr=='string'||supr instanceof String)) ? (this[supr]) : (supr);
 		var tagtype = Tag();
 		var norm = name.replace(/\-/g,'_');
 		
@@ -2260,7 +2192,7 @@
 	Imba.Tags.prototype.extendTag = function (name,supr,body){
 		if(body==undefined && typeof supr == 'function') body = supr,supr = '';
 		if(supr==undefined) supr = '';
-		var klass = ((typeof name=='string'||name instanceof String) ? (this[name]) : (name));
+		var klass = (((typeof name=='string'||name instanceof String)) ? (this[name]) : (name));
 		// allow for private tags here as well?
 		if (body) { body && body.call(klass,klass,klass.prototype) };
 		if (klass.extended) { klass.extended() };
@@ -2387,7 +2319,7 @@
 		};
 		
 		spawner || (spawner = tags[native$]);
-		return spawner ? (new spawner(dom).awaken(dom)) : (null);
+		return (spawner) ? (new spawner(dom).awaken(dom)) : (null);
 	};
 
 
@@ -2427,7 +2359,7 @@
 			
 			tag.prototype.addFlag = function (ref){
 				if (this.hasFlag(ref)) { return this };
-				this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
+				this._dom.className += ((this._dom.className) ? (' ') : ('')) + ref;
 				return this;
 			};
 			
@@ -2439,7 +2371,7 @@
 			};
 			
 			tag.prototype.toggleFlag = function (ref){
-				return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
+				return (this.hasFlag(ref)) ? (this.unflag(ref)) : (this.flag(ref));
 			};
 			
 			tag.prototype.flag = function (ref,bool){
@@ -3871,7 +3803,7 @@
 				if (node[meth] instanceof Function) {
 					this._responder || (this._responder = node);
 					// should autostop bubble here?
-					args ? (node[meth].apply(node,args)) : (node[meth](this,this.data()));
+					(args) ? (node[meth].apply(node,args)) : (node[meth](this,this.data()));
 				};
 				
 				if (node.onevent) {
@@ -3880,7 +3812,7 @@
 			};
 			
 			// add node.nextEventResponder as a separate method here?
-			if (!(this.bubble() && (domnode = (this._redirect || (node ? (node.parent()) : (domnode.parentNode)))))) {
+			if (!(this.bubble() && (domnode = (this._redirect || ((node) ? (node.parent()) : (domnode.parentNode)))))) {
 				break;
 			};
 		};
@@ -3987,7 +3919,7 @@
 	Imba.EventManager.prototype.setDelegator = function(v){ this._delegator = v; return this; };
 
 	Imba.EventManager.prototype.enabledDidSet = function (bool){
-		bool ? (this.onenable()) : (this.ondisable());
+		(bool) ? (this.onenable()) : (this.ondisable());
 		return this;
 	};
 
@@ -4011,7 +3943,7 @@
 		
 		if (this.delegators()[name]) { return this };
 		// console.log("register for event {name}")
-		var fn = this.delegators()[name] = handler instanceof Function ? (handler) : (this.delegator());
+		var fn = this.delegators()[name] = (handler instanceof Function) ? (handler) : (this.delegator());
 		if (this.enabled()) { return this.root().addEventListener(name,fn,true) };
 	};
 
@@ -4099,7 +4031,7 @@
 
 	Imba.Selector = function Selector(sel,scope,nodes){
 		
-		this._query = sel instanceof Imba.Selector ? (sel.query()) : (sel);
+		this._query = (sel instanceof Imba.Selector) ? (sel.query()) : (sel);
 		this._context = scope;
 		
 		if (nodes) {
@@ -4134,7 +4066,7 @@
 		var ctx;
 		if (this._scope) { return this._scope };
 		if (!(ctx = this._context)) { return Imba.document() };
-		return this._scope = ctx.toScope ? (ctx.toScope()) : (ctx);
+		return this._scope = (ctx.toScope) ? (ctx.toScope()) : (ctx);
 	};
 
 	/*
@@ -4343,7 +4275,7 @@
 		} else if (node != null) {
 			// what if this is not null?!?!?
 			// take a chance and remove a text-elementng
-			var next = caret ? (caret.nextSibling) : (root._dom.firstChild);
+			var next = (caret) ? (caret.nextSibling) : (root._dom.firstChild);
 			if ((next instanceof Text) && next.textContent == node) {
 				root.removeChild(next);
 			} else {
@@ -4389,7 +4321,7 @@
 
 	// after must be an actual domnode
 	function insertNestedAfter(root,node,after){
-		var before = after ? (after.nextSibling) : (root._dom.firstChild);
+		var before = (after) ? (after.nextSibling) : (root._dom.firstChild);
 		
 		if (before) {
 			insertNestedBefore(root,node,before);
@@ -4472,7 +4404,7 @@
 			
 			prevChain.push(prevIdx);
 			
-			var currLength = (prevIdx == -1) ? (0) : (lengthChain[prevIdx] + 1);
+			var currLength = ((prevIdx == -1)) ? (0) : (lengthChain[prevIdx] + 1);
 			
 			if (currLength > maxChainLength) {
 				maxChainLength = currLength;
@@ -4555,7 +4487,7 @@
 			} else if (new$ && new$._dom) {
 				return new$._dom;
 			} else {
-				return caret ? (caret.nextSibling) : (root._dom.firstChild);
+				return (caret) ? (caret.nextSibling) : (root._dom.firstChild);
 			};
 		} else if (new$ instanceof Array) {
 			if (old instanceof Array) {
@@ -4580,7 +4512,7 @@
 				root.removeChild(old);
 			} else if (!oldIsNull) {
 				// old was a string-like object?
-				root.removeChild(caret ? (caret.nextSibling) : (root._dom.firstChild));
+				root.removeChild((caret) ? (caret.nextSibling) : (root._dom.firstChild));
 			};
 			
 			return insertNestedAfter(root,new$,caret);
@@ -4601,7 +4533,7 @@
 				root.removeChild(old);
 			} else if (!oldIsNull) {
 				// ...
-				nextNode = caret ? (caret.nextSibling) : (root._dom.firstChild);
+				nextNode = (caret) ? (caret.nextSibling) : (root._dom.firstChild);
 				if ((nextNode instanceof Text) && nextNode.textContent != new$) {
 					nextNode.textContent = new$;
 					return nextNode;
@@ -4673,7 +4605,7 @@
 		tag.prototype.setText = function (text){
 			if (text != this._children) {
 				this._children = text;
-				this.dom().textContent = text == null || text === false ? ('') : (text);
+				this.dom().textContent = (text == null || text === false) ? ('') : (text);
 			};
 			this;
 			return this;
