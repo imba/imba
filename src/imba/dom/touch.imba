@@ -267,7 +267,7 @@ class Imba.Touch
 		self
 
 	def update
-		return self unless @active
+		return self if !@active or @cancelled
 
 		var dr = Math.sqrt(dx*dx + dy*dy)
 		@maxdr = dr if dr > @dr
@@ -292,7 +292,7 @@ class Imba.Touch
 		self
 
 	def move
-		return self unless @active
+		return self if !@active or @cancelled
 
 		if @gestures
 			for g in @gestures
@@ -302,7 +302,7 @@ class Imba.Touch
 		self
 
 	def ended
-		return self unless @active
+		return self if !@active or @cancelled
 
 		@updates++
 
