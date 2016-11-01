@@ -130,7 +130,10 @@ class Imba.Touch
 
 	def capture
 		@captured = yes
-		@event and @event.preventDefault
+		@event and @event.stopPropagation
+		unless @selblocker
+			@selblocker = do |e| e.preventDefault
+			Imba.document.addEventListener('selectstart',@selblocker,yes)
 		self
 
 	def isCaptured
@@ -164,6 +167,7 @@ class Imba.Touch
 	def suppress
 		# collision with the suppress property
 		@active = no
+		
 		self
 
 	def suppress= value
@@ -236,8 +240,6 @@ class Imba.Touch
 		@x = t:clientX
 		@y = t:clientY
 		ended
-		Imba.document.removeEventListener('mousemove',@mousemove,yes)
-		@mousemove = null
 		self
 
 	def idle
@@ -310,14 +312,14 @@ class Imba.Touch
 			g.ontouchend(self) for g in @gestures
 
 		target?.ontouchend(self)
-
+		cleanup_
 		self
 
 	def cancel
 		unless @cancelled
 			@cancelled = yes
 			cancelled
-			Imba.document.removeEventListener('mousemove',@mousemove,yes) if @mousemove
+			cleanup_
 		self
 
 	def cancelled
@@ -331,6 +333,17 @@ class Imba.Touch
 				g.ontouchcancel(self) if g:ontouchcancel
 
 		target?.ontouchcancel(self)
+		self
+		
+	def cleanup_
+		if @mousemove
+			Imba.document.removeEventListener('mousemove',@mousemove,yes)
+			@mousemove = null
+		
+		if @selblocker
+			Imba.document.removeEventListener('selectstart',@selblocker,yes)
+			@selblocker = null
+		
 		self
 
 	###
