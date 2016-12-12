@@ -112,7 +112,7 @@ class Imba.Tag
 				return this
 
 		if $web$
-			for item in [:mousemove,:mouseenter,:mouseleave]
+			for item in [:mousemove,:mouseenter,:mouseleave,:mouseover,:mouseout,:selectstart]
 				Imba.Events.register(item) if this["on{item}"]
 		self
 
