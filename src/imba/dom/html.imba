@@ -109,6 +109,8 @@ tag input
 	attr type
 
 	prop autofocus dom: yes
+	prop autocomplete dom: yes
+	prop autocorrect dom: yes
 	prop value dom: yes
 	prop placeholder dom: yes
 	prop required dom: yes
@@ -246,6 +248,8 @@ tag textarea
 	attr cols
 
 	prop autofocus dom: yes
+	prop autocomplete dom: yes
+	prop autocorrect dom: yes
 	prop value dom: yes
 	prop disabled dom: yes
 	prop required dom: yes
