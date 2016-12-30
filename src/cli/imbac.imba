@@ -252,7 +252,7 @@ class CLI
 
 		src:output = out
 
-		if src:targetPath and out:js
+		if src:targetPath and out:js !== undefined
 			ensureDir(src:targetPath)
 			fs.writeFileSync(src:targetPath,out:js,'utf8')
 			log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"

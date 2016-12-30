@@ -58,6 +58,10 @@ export def parse code, o = {}
 
 export def compile code, o = {}
 	try
+		# check if code is completely blank
+		unless /\S/.test(code)
+			return {js: ""}
+
 		var tokens = tokenize(code, o)
 		var ast = parse(tokens, o)
 		return ast.compile(o)
