@@ -732,6 +732,14 @@
 		'beforecut','cut'
 	]});
 
+	Imba.Events.AUTOREGISTER = {
+		mouseover: 1,
+		mouseenter: 1,
+		mouseleave: 1,
+		mouseout: 1
+	};
+
+
 	// should listen to dragdrop events by default
 	Imba.Events.register([
 		'dragstart','drag','dragend',
@@ -1045,7 +1053,7 @@
 		};
 		
 		
-		for (var i = 0, ary = ['mousemove','mouseenter','mouseleave'], len = ary.length, item; i < len; i++) {
+		for (var i = 0, ary = ['mousemove','mouseenter','mouseleave','mouseover','mouseout'], len = ary.length, item; i < len; i++) {
 			item = ary[i];
 			if (this[("on" + item)]) { Imba.Events.register(item) };
 		};
@@ -2554,6 +2562,12 @@
 		tag.prototype.__autofocus = {dom: true,name: 'autofocus'};
 		tag.prototype.autofocus = function(v){ return this.dom().autofocus; }
 		tag.prototype.setAutofocus = function(v){ if (v != this.dom().autofocus) { this.dom().autofocus = v }; return this; };
+		tag.prototype.__autocomplete = {dom: true,name: 'autocomplete'};
+		tag.prototype.autocomplete = function(v){ return this.dom().autocomplete; }
+		tag.prototype.setAutocomplete = function(v){ if (v != this.dom().autocomplete) { this.dom().autocomplete = v }; return this; };
+		tag.prototype.__autocorrect = {dom: true,name: 'autocorrect'};
+		tag.prototype.autocorrect = function(v){ return this.dom().autocorrect; }
+		tag.prototype.setAutocorrect = function(v){ if (v != this.dom().autocorrect) { this.dom().autocorrect = v }; return this; };
 		tag.prototype.__value = {dom: true,name: 'value'};
 		tag.prototype.value = function(v){ return this.dom().value; }
 		tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
@@ -3176,7 +3190,11 @@
 
 	Imba.Touch.prototype.capture = function (){
 		this._captured = true;
-		this._event && this._event.preventDefault();
+		this._event && this._event.stopPropagation();
+		if (!this._selblocker) {
+			this._selblocker = function(e) { return e.preventDefault(); };
+			Imba.document().addEventListener('selectstart',this._selblocker,true);
+		};
 		return this;
 	};
 
@@ -3217,6 +3235,7 @@
 	Imba.Touch.prototype.suppress = function (){
 		// collision with the suppress property
 		this._active = false;
+		
 		return this;
 	};
 
@@ -3301,8 +3320,6 @@
 		this._x = t.clientX;
 		this._y = t.clientY;
 		this.ended();
-		Imba.document().removeEventListener('mousemove',this._mousemove,true);
-		this._mousemove = null;
 		return this;
 	};
 
@@ -3338,7 +3355,7 @@
 
 	Imba.Touch.prototype.update = function (){
 		var target_;
-		if (!this._active) { return this };
+		if (!this._active || this._cancelled) { return this };
 		
 		var dr = Math.sqrt(this.dx() * this.dx() + this.dy() * this.dy());
 		if (dr > this._dr) { this._maxdr = dr };
@@ -3370,7 +3387,7 @@
 
 	Imba.Touch.prototype.move = function (){
 		var target_;
-		if (!this._active) { return this };
+		if (!this._active || this._cancelled) { return this };
 		
 		if (this._gestures) {
 			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length, g; i < len; i++) {
@@ -3385,7 +3402,7 @@
 
 	Imba.Touch.prototype.ended = function (){
 		var target_;
-		if (!this._active) { return this };
+		if (!this._active || this._cancelled) { return this };
 		
 		this._updates++;
 		
@@ -3396,7 +3413,7 @@
 		};
 		
 		(target_ = this.target()) && target_.ontouchend  &&  target_.ontouchend(this);
-		
+		this.cleanup_();
 		return this;
 	};
 
@@ -3404,7 +3421,7 @@
 		if (!this._cancelled) {
 			this._cancelled = true;
 			this.cancelled();
-			if (this._mousemove) { Imba.document().removeEventListener('mousemove',this._mousemove,true) };
+			this.cleanup_();
 		};
 		return this;
 	};
@@ -3424,6 +3441,20 @@
 		};
 		
 		(target_ = this.target()) && target_.ontouchcancel  &&  target_.ontouchcancel(this);
+		return this;
+	};
+
+	Imba.Touch.prototype.cleanup_ = function (){
+		if (this._mousemove) {
+			Imba.document().removeEventListener('mousemove',this._mousemove,true);
+			this._mousemove = null;
+		};
+		
+		if (this._selblocker) {
+			Imba.document().removeEventListener('selectstart',this._selblocker,true);
+			this._selblocker = null;
+		};
+		
 		return this;
 	};
 
