@@ -89,6 +89,8 @@ class Imba.Tag
 	###
 	Internal method called after a tag class has
 	been declared or extended.
+	
+	@private
 	###
 	def optimizeTagStructure
 		var base = Imba.Tag:prototype
@@ -146,7 +148,9 @@ class Imba.Tag
 	Setting references for tags like
 	`<div@header>` will compile to `tag('div').ref_('header',this).end()`
 	By default it adds the reference as a className to the tag.
+
 	@return {self}
+	@private
 	###
 	def ref_ ref, ctx
 		ctx['_' + ref] = self
