@@ -570,6 +570,9 @@ export class Node
 	def shouldParenthesize
 		false
 
+	def shouldParenthesizeInTernary
+		yes
+
 	def block
 		Block.wrap([self])
 
@@ -1147,6 +1150,12 @@ export class Block < ListNode
 	def isExpression
 
 		option(:express) || @expression
+
+	def shouldParenthesizeInTernary
+		if count == 1
+			return first.shouldParenthesizeInTernary
+
+		yes
 
 
 # this is almost like the old VarDeclarations but without the values
@@ -2674,6 +2683,9 @@ export class Literal < ValueNode
 	def hasSideEffects
 		false
 
+	def shouldParenthesizeInTernary
+		no
+
 
 export class Bool < Literal
 
@@ -3488,6 +3500,8 @@ export class Access < Op
 	def cache o
 		(right isa Ivar && !left) ? self : super(o)
 
+	def shouldParenthesizeInTernary
+		@parens or @cache
 
 
 # Should change this to just refer directly to the variable? Or VarReference
@@ -3716,6 +3730,9 @@ export class VarOrAccess < ValueNode
 
 	def region
 		@identifier.region
+
+	def shouldParenthesizeInTernary
+		@cache or (@value and @value.@cache) or @parens
 
 	def toString
 		"VarOrAccess({value})"
@@ -4494,6 +4511,9 @@ export class Identifier < Node
 	def namepath
 		toString
 
+	def shouldParenthesizeInTernary
+		@parens or @cache
+
 export class TagId < Identifier
 
 	def initialize v
@@ -4670,6 +4690,9 @@ export class Call < Node
 	def safechain
 		callee.safechain # really?
 
+	def shouldParenthesizeInTernary
+		@parens or safechain or @cache
+
 	def js o
 		var opt = expression: yes
 		var rec = null
@@ -4710,6 +4733,7 @@ export class Call < Node
 			# rewrite a.len(..) to len$(a)
 
 		if callee.safechain
+			# Does this affect shouldParenthesizeInTernary?
 			# if lft isa Call
 			# if lft isa Call # could be a property access as well - it is the same?
 			# if it is a local var access we simply check if it is a function, then call
@@ -4915,27 +4939,40 @@ export class If < ControlFlow
 				js = helpers.normalizeIndentation(js)
 
 			return js
-
-		var cond = test.c(expression: yes) # the condition is always an expression
+		
 
 		if o.isExpression
+
+			if test?.shouldParenthesizeInTernary
+				test.@parens = yes
+
+			var cond = test.c(expression: yes) # the condition is always an expression
+
 			var code = body ? body.c : 'true' # (braces: yes)
-			code = '(' + code + ')' # if code.indexOf(',') >= 0
+
+			if body and body.shouldParenthesizeInTernary
+				code = '(' + code + ')' # if code.indexOf(',') >= 0
 
 			if alt
-				return "({cond}) ? {code} : ({alt.c})"
+				var altbody = alt.c
+				if alt.shouldParenthesizeInTernary
+					altbody = '(' + altbody + ')'
+
+				return "{cond} ? {code} : {altbody}"
 			else
 				# again - we need a better way to decide what needs parens
 				# maybe better if we rewrite this to an OP('&&'), and put
 				# the parens logic there
 				# cond should possibly have parens - but where do we decide?
 				if @tagtree
-					return "({cond}) ? {code} : void(0)"
+					return "{cond} ? {code} : void(0)"
 				else
-					return "({cond}) && {code}"
+					return "{cond} && {code}"
 		else
 			# if there is only a single item - and it is an expression?
 			var code = null
+			var cond = test.c(expression: yes) # the condition is always an expression
+
 			# if body.count == 1 # dont indent by ourselves?
 
 			if body isa Block and body.count == 1 and !(body.first isa LoopFlowStatement)
