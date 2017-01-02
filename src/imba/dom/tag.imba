@@ -1137,7 +1137,7 @@ def Imba.getTagForDom dom
 	spawner ||= tags[native]
 	spawner ? spawner.new(dom).awaken(dom) : null
 
-
+# TODO drop these globals
 _T = Imba.TAGS
 id$ = Imba:getTagSingleton
 tag$wrap = Imba:getTagForDom

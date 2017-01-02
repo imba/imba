@@ -2202,6 +2202,8 @@ export class TagDeclaration < Code
 		@body = blk__(body || [])
 
 	def visit
+		scope.root.requires('imba')
+
 		if String(name).match(/^[A-Z]/)
 			set(isClass: yes)
 
@@ -5786,6 +5788,7 @@ export class Tag < Node
 
 
 	def visit
+		scope__.root.requires('imba')
 
 		var o = @options
 
@@ -6943,7 +6946,7 @@ export class Scope
 
 	def tagContextPath
 		# bypassing for now
-		@tagContextPath ||= "_T" # parent.tagContextPath
+		@tagContextPath ||= "_T" # "_T" # parent.tagContextPath
 
 	def tagContextCache
 		@tagContextCache ||= closure.declare("__",OP('.',context.reference,'__'))
@@ -6975,6 +6978,8 @@ export class Scope
 		self
 
 	def root
+		return STACK.ROOT
+
 		var scope = self
 		while scope
 			return scope if scope isa RootScope
@@ -7146,8 +7151,8 @@ export class RootScope < Scope
 	def context
 		@context ||= RootScopeContext.new(self)
 
-	def tagContextPath
-		@tagContextPath ||= "_T"
+	# def tagContextPath
+	# 	@tagContextPath ||= "_T"
 
 	def lookup name
 		name = helpers.symbolize(name)
@@ -7186,6 +7191,22 @@ export class RootScope < Scope
 			obj:entities = @entities
 
 		return obj
+
+	# not yet used
+	def requires path, name = ''
+		@requires ||= {}
+		if @requires[path]
+			return @requires[path]
+
+		var req = Require.new(Str.new("'" + path + "'"))
+
+		if name
+			var val = @requires[path] = declare(name or "unnamed",req)
+			return val
+		else
+			# @head.push(@requires[path] = req)
+			return req
+
 
 
 export class ClassScope < Scope
