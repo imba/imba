@@ -88,7 +88,10 @@ tag html
 tag i
 
 tag iframe
+	attr referrerpolicy
 	attr src
+	attr srcdoc
+	attr sandbox
 
 tag img
 	attr src
