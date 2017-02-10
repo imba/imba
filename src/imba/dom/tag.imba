@@ -350,7 +350,7 @@ class Imba.Tag
 
 		if el and el:parentNode == par
 			par.removeChild(el)
-			Imba.TagManager.remove(el.@tag,self) if el.@tag
+			Imba.TagManager.remove(el.@tag or el,self)
 		self
 
 
