@@ -885,16 +885,17 @@ class Imba.Tag
 			css(k,v) for own k,v of key
 			return self
 
-		key = Imba.CSSKeyMap[key] or key
+		var name = Imba.CSSKeyMap[key] or key
 
 		if val == null
-			dom:style.removeProperty(key)
+			dom:style.removeProperty(name)
 		elif val == undefined and arguments:length == 1
-			return dom:style[key]
+			return dom:style[name]
 		else
-			if val isa Number and key.match(/width|height|left|right|top|bottom/)
-				val = val + "px"
-			dom:style[key] = val
+			if val isa Number and name.match(/width|height|left|right|top|bottom/)
+				dom:style[name] = val + "px"
+			else
+				dom:style[name] = val
 		self
 
 	def trigger event, data = {}
