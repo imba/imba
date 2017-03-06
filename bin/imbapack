@@ -10,13 +10,20 @@ if(require.main !== module){
 		"test": /\.imba$/,
 		"loader": dir + "loader.js"
 	}
+	
+	var webpack = require(path.join(require.main.filename, '../..'));
+
+	var WebpackOptionsDefaulter = webpack.WebpackOptionsDefaulter;
+	var options = {};
+	var defaulter = new WebpackOptionsDefaulter;
+	defaulter.process(options);
 
 	var conf = {
 		module: {
 			loaders: [loader]
 		},
 		resolve: {
-			extensions: ["", ".imba", ".webpack.js", ".web.js", ".js",".css"],
+			extensions: options.resolve.extensions,
 			alias: {
 				imba$: dir + "/src/imba/index.imba",
 				imba: dir
@@ -26,31 +33,32 @@ if(require.main !== module){
 
 	function mergeConfig(obj){
 		var m = (obj.module = obj.module || {loaders: []})
-		var r = (obj.resolve = obj.resolve || {})
+		var r = (obj.resolve = obj.resolve || {});
 		// TODO merge instead of overriding module/resolve
 
-		if(m.loaders) {
+		var loaders = m.loaders || m.rules;
+
+		if (loaders) {
 			// add the imba loader
 			var l = null;
-			m.loaders.forEach(function(loader){
+			loaders.forEach(function(loader){
 				if(String(loader.test) == '/\\.imba/'){
 					l = loader;
 					l.loader = loader.loader; // update path
 				}
 			});
 			// push our loader of we have one
-			if(!l) m.loaders.unshift(loader)
+			if (!l) loaders.unshift(loader)
 		} else {
 			m.loaders = [loader];
 		}
 
-		if(r.extensions){
-			r.extensions.splice(1,0,'.imba')
-		} else {
+		if (!r.extensions) {
 			r.extensions = conf.resolve.extensions.slice(0)
 		}
+		r.extensions.splice(1,0,'.imba')
 
-		if(!obj.target){
+		if (!obj.target){
 			r.extensions.splice(1,0,'.web.imba')
 		} else if (obj.target) {
 			r.extensions.splice(1,0,'.'+obj.target+'.imba')
@@ -65,18 +73,14 @@ if(require.main !== module){
 	}
 
 	// check for existing config
-	var idx = process.argv.indexOf('--baseconf') + 1;
-	if(idx){
-		// should run the file
-		var cfgPath = process.argv[idx];
+	var cfgPath = process.env.IMBAPACK_BASECONF;
+	if (cfgPath){
 		var baseconf = require(cfgPath);
-
-		if(baseconf instanceof Array){
+		if (baseconf instanceof Array){
 			baseconf.forEach(function(v){ mergeConfig(v); })
 		} else {
 			mergeConfig(baseconf);
 		}
-
 		module.exports = baseconf;
 	} else {
 		module.exports = conf;	
@@ -86,6 +90,7 @@ if(require.main !== module){
 
 var cp = require('child_process');
 var args = process.argv.slice(2);
+var env = Object.assign({}, process.env);
 var cwd = process.cwd();
 
 var cfgIdx = args.indexOf('--config') + 1;
@@ -95,29 +100,25 @@ var cfg = path.resolve(cwd,cfgPath);
 // console.log('arguments',args,__dirname,process.cwd(),cfgPath,cfg);
 // TODO drop default config if input/output is declared in process args
 
-if(fs.existsSync(cfg)){
-	if(cfgIdx){
-		args[cfgIdx] = dir + 'bin/imbapack'
-	} else {
-		args.push("--config " + dir + 'bin/imbapack');
-	}
-	args.push("--baseconf " + cfg);
-
-} else {
-	args.push("--config " + dir + 'bin/imbapack');
+if (fs.existsSync(cfg)){
+	env.IMBAPACK_BASECONF = cfg;
 }
 
+if (cfgIdx){
+	args[cfgIdx] = dir + 'bin/imbapack'
+} else {
+	args.push("--config");
+	args.push(dir + 'bin/imbapack');
+}
 
-
-cp.exec('which webpack',function(e,stdout,stderr){
-
-	if(stdout.length == 0){
+cp.exec('which webpack', function(e,stdout,stderr){
+	if (stdout.length == 0) {
 		process.stdout.write("Webpack need to be installed:\n");
 		process.stdout.write("\tnpm install -g webpack");
 		process.exit(0);
 	}
 
-	var packer = cp.exec('webpack ' + args.join(' '));
+	var packer = cp.spawn('webpack', args, { env: env });
 	packer.stderr.pipe(process.stderr);
 	packer.stdout.pipe(process.stdout);
 	
