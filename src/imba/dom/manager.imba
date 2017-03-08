@@ -64,9 +64,9 @@ class Imba.TagManagerClass
 		var count = 0
 		var root = document:body
 		for item, i in @mounted
-			unless document:documentElement.contains(item.dom)
+			unless document:documentElement.contains(item.@dom)
 				item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED
-				if item:unmount
+				if item:unmount and item.@dom
 					item.unmount
 				elif item.@scheduler
 					item.unschedule
