@@ -1,13 +1,13 @@
 
 if typeof Imba !== 'undefined'
-	console.warn "Imba v{Imba.VERSION} is already loaded"
+	console.warn "Imba v{Imba.VERSION} is already loaded."
+else
+	require './imba'
 
-require './imba'
-
-unless $webworker$
-	require './scheduler'
-	require './dom/index'
-	
-if $node$
-	unless $webpack$
-		require '../../register.js'
+	unless $webworker$
+		require './scheduler'
+		require './dom/index'
+		
+	if $node$
+		unless $webpack$
+			require '../../register.js'
