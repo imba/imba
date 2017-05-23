@@ -103,6 +103,7 @@ class Imba.Tag
 
 			self:end = do
 				if this:mount and !(this.FLAGS & Imba.TAG_MOUNTED)
+					# just activate 
 					Imba.TagManager.mount(this)
 
 				unless this.FLAGS & Imba.TAG_SETUP
@@ -114,6 +115,10 @@ class Imba.Tag
 				return this
 
 		if $web$
+			if hasMount
+				let dom = self:constructor.dom
+				dom:classList.add('__mount')
+
 			for item in [:mousemove,:mouseenter,:mouseleave,:mouseover,:mouseout,:selectstart]
 				Imba.Events.register(item) if this["on{item}"]
 		self

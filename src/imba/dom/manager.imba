@@ -3,15 +3,15 @@ class Imba.TagManagerClass
 	prop inserts
 	prop spawns
 	prop removes
-	prop mountable
 	prop mounted
 
 	def initialize
 		@spawns = 0
 		@inserts = 0
 		@removes = 0
-		@mountable = []
 		@mounted = []
+		@hasMountables = no
+		self
 
 	def insert node, parent
 		@inserts++
@@ -21,22 +21,22 @@ class Imba.TagManagerClass
 		@removes++
 		return
 
+	def changes
+		@inserts + @removes
+
 	def mount node
 		return if $node$
-		# is this happening inside the runloop?
-		unless @mountable.indexOf(node) >= 0
-			node.FLAGS |= Imba.TAG_MOUNTING
-			@mountable.push(node)
+		@hasMountables = yes
 
-	def refresh
+	def refresh force = no
 		return if $node$
-
-		if @inserts and @mountable:length
+		# console.time('resolveMounts')
+		if @inserts and @hasMountables
 			tryMount
 
-		if @removes and @mounted:length
+		if (@removes or force) and @mounted:length
 			tryUnmount
-
+		# console.timeEnd('resolveMounts')
 		@inserts = 0
 		@removes = 0
 		self
@@ -46,19 +46,20 @@ class Imba.TagManagerClass
 
 	def tryMount
 		var count = 0
+		var root = document:body
+		var items = root.querySelectorAll('.__mount')
+		# what if we end up creating additional mountables by mounting?
+		for el in items
+			if el and el.@tag
+				if @mounted.indexOf(el.@tag) == -1
+					mountNode(el.@tag)
+		return self
 
-		for item,i in @mountable
-			if item and document:documentElement.contains(item.@dom)
-				@mounted.push(item)
-				item.FLAGS |= Imba.TAG_MOUNTED
-				item.mount
-				@mountable[i] = null
-				count++
-		
-		if count
-			@mountable = @mountable.filter do |item| item
-
-		self
+	def mountNode node
+		@mounted.push(node)
+		node.FLAGS |= Imba.TAG_MOUNTED
+		node.mount if node:mount
+		return
 
 	def tryUnmount
 		var count = 0
@@ -69,11 +70,11 @@ class Imba.TagManagerClass
 				if item:unmount and item.@dom
 					item.unmount
 				elif item.@scheduler
+					# MAYBE FIX THIS?
 					item.unschedule
 				@mounted[i] = null
 				count++
 		
 		if count
 			@mounted = @mounted.filter do |item| item
-
 		self

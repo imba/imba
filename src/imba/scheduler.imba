@@ -49,12 +49,14 @@ class Ticker
 					item.tick(@dt,self)
 		@stage = 2
 		after
-		@stage = 0
+		@stage = @scheduled ? 0 : -1
 		self
 
 	def schedule
 		if !@scheduled
 			@scheduled = yes
+			if @stage == -1
+				@stage = 0
 			requestAnimationFrame(@ticker)
 		self
 
