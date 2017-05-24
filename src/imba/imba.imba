@@ -3,7 +3,7 @@
 Imba is the namespace for all runtime related utilities
 @namespace
 ###
-Imba = {VERSION: '1.0.0-rc.1'}
+Imba = {VERSION: '1.0.0-rc.2'}
 
 if $web$
 	window:global ||= window

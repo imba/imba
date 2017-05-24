@@ -69,7 +69,7 @@
 	@namespace
 	*/
 
-	Imba = {VERSION: '1.0.0-rc.1'};
+	Imba = {VERSION: '1.0.0-rc.2'};
 
 
 	window.global || (window.global = window);
@@ -1033,6 +1033,8 @@
 		var hasRender = this.render != base.render;
 		var hasMount = this.mount;
 		
+		var ctor = this.constructor;
+		
 		if (hasCommit || hasRender || hasMount || hasSetup) {
 			
 			this.end = function() {
@@ -1054,8 +1056,13 @@
 		
 		
 		if (hasMount) {
-			var dom = this.constructor.dom();
-			dom.classList.add('__mount');
+			if (ctor._classes && ctor._classes.indexOf('__mount') == -1) {
+				ctor._classes.push('__mount');
+			};
+			
+			if (ctor._protoDom) {
+				ctor._protoDom.classList.add('__mount');
+			};
 		};
 		
 		for (var i = 0, ary = ['mousemove','mouseenter','mouseleave','mouseover','mouseout','selectstart'], len = ary.length, item; i < len; i++) {
