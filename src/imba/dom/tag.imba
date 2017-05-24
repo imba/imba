@@ -99,6 +99,8 @@ class Imba.Tag
 		var hasRender = self:render != base:render
 		var hasMount  = self:mount
 
+		var ctor = self:constructor
+
 		if hasCommit or hasRender or hasMount or hasSetup
 
 			self:end = do
@@ -116,8 +118,11 @@ class Imba.Tag
 
 		if $web$
 			if hasMount
-				let dom = self:constructor.dom
-				dom:classList.add('__mount')
+				if ctor.@classes and ctor.@classes.indexOf('__mount')  == -1
+					ctor.@classes.push('__mount')
+
+				if ctor.@protoDom
+					ctor.@protoDom:classList.add('__mount')
 
 			for item in [:mousemove,:mouseenter,:mouseleave,:mouseover,:mouseout,:selectstart]
 				Imba.Events.register(item) if this["on{item}"]
