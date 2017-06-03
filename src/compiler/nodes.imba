@@ -6416,6 +6416,7 @@ export class Await < ValueNode
 		func = AsyncFunc.new([],[])
 		# now we move this node up to the block
 		func.body.nodes = block.defers(outer,self)
+		func.scope.visit
 
 		# if the outer is a var-assignment, we can simply set the params
 		if par isa Assign
@@ -6439,12 +6440,12 @@ export class Await < ValueNode
 					# make sure it is a var assignment?
 					par.right = ARGUMENTS
 					func.body.unshift(par)
+					func.scope.context
 			else
 				# regular setters
 				par.right = func.params.at(0,yes)
 				func.body.unshift(par)
-
-
+				func.scope.context
 
 		# If it is an advance tuple or something, it should be possible to
 		# feed in the paramlist, and let the tuple handle it as if it was any

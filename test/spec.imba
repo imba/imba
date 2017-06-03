@@ -42,10 +42,17 @@ global class Spec
 
 	def eval block, ctx
 		@stack.push(@context = ctx)
-		block()
-		@stack.pop
-		@context = @stack[@stack[:length] - 1]
-		self
+		var res = block()
+		var after = do
+			@stack.pop
+			@context = @stack[@stack[:length] - 1]
+			self
+
+		if res and res:then
+			return res.then(after,after)
+		else
+			after()
+			return Promise.resolve(self)
 
 	def describe name, blk
 		if @context == self
@@ -182,13 +189,15 @@ global class SpecExample
 
 	def assertion ass
 		@assertions.push ass
-		Imba.once(ass, :done) do finish if @evaluated && @assertions.every(|a| a.done )
+		Imba.once(ass, :done) do
+			finish if @evaluated && @assertions.every(|a| a.done )
 		ass
 	
 	def run
-		SPEC.eval(@block, self) if @block
-		@evaluated = yes
-		finish if @assertions.every(|a| a.done)
+		var promise = (@block ? SPEC.eval(@block, self) : Promise.resolve({}))
+		promise.then do
+			@evaluated = yes
+			finish if @assertions.every(|a| a.done)
 	
 	def finish
 		var details = []
