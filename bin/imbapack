@@ -10,9 +10,8 @@ if(require.main !== module){
 		"test": /\.imba$/,
 		"loader": dir + "loader.js"
 	}
-	
-	var webpack = require(path.join(require.main.filename, '../..'));
 
+	var webpack = require(path.join(require.main.filename, '../..'));
 	var WebpackOptionsDefaulter = webpack.WebpackOptionsDefaulter;
 	var options = {};
 	var defaulter = new WebpackOptionsDefaulter;
@@ -88,6 +87,8 @@ if(require.main !== module){
 	return;
 }
 
+
+
 var cp = require('child_process');
 var args = process.argv.slice(2);
 var env = Object.assign({}, process.env);
@@ -97,6 +98,9 @@ var cfgIdx = args.indexOf('--config') + 1;
 var cfgPath = cfgIdx > 0 ? args[cfgIdx] : 'webpack.config.js';
 var cfg = path.resolve(cwd,cfgPath);
 
+var webpackBin = 'webpack';
+var imbapackBin = dir + 'bin/imbapack';
+
 // console.log('arguments',args,__dirname,process.cwd(),cfgPath,cfg);
 // TODO drop default config if input/output is declared in process args
 
@@ -104,22 +108,37 @@ if (fs.existsSync(cfg)){
 	env.IMBAPACK_BASECONF = cfg;
 }
 
-if (cfgIdx){
-	args[cfgIdx] = dir + 'bin/imbapack'
-} else {
-	args.push("--config");
-	args.push(dir + 'bin/imbapack');
-}
+// possibly use the local imbapack instead?
+cp.exec('npm bin', function(e,stdout,stderr){
+	var binDir = stdout.split('\n')[0];
 
-cp.exec('which webpack', function(e,stdout,stderr){
-	if (stdout.length == 0) {
-		process.stdout.write("Webpack need to be installed:\n");
-		process.stdout.write("\tnpm install -g webpack");
-		process.exit(0);
+	// if there is a local installation of imbapack
+	// make sure it is the file generating the config
+	if(fs.existsSync(binDir + '/imbapack')){
+		imbapackBin = binDir + '/imbapack';
 	}
 
-	var packer = cp.spawn('webpack', args, { env: env });
-	packer.stderr.pipe(process.stderr);
-	packer.stdout.pipe(process.stdout);
-	
+	if (cfgIdx){
+		args[cfgIdx] = imbapackBin
+	} else {
+		args.push("--config");
+		args.push(imbapackBin);
+	}
+
+	if(fs.existsSync(binDir + '/webpack')){
+		webpackBin = binDir + '/webpack';
+	}
+
+	cp.exec('which '+webpackBin, function(e,stdout,stderr){
+		if (stdout.length == 0) {
+			process.stdout.write("Webpack need to be installed:\n");
+			process.stdout.write("\tnpm install -g webpack");
+			process.exit(0);
+		}
+
+		var packer = cp.spawn(webpackBin, args, { env: env });
+		packer.stderr.pipe(process.stderr);
+		packer.stdout.pipe(process.stdout);
+	});
 });
+
