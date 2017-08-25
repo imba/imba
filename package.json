@@ -49,8 +49,7 @@
     "node": ">=0.8.0"
   },
   "directories": {},
-  "main": "./index.js",
-  "webpack": "./index.webpack.js",
+  "main": "./index",
   "bin": {
     "imba": "./bin/imba",
     "imbac": "./bin/imbac",
