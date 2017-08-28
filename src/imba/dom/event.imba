@@ -1,4 +1,5 @@
-# regular event stuff
+# imba$nolib=1
+
 Imba.KEYMAP = {
 	"8": 'backspace'
 	"9": 'tab'

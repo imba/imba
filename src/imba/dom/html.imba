@@ -1,3 +1,4 @@
+# imba$nolib=1
 
 # predefine all supported html tags
 tag fragment < element

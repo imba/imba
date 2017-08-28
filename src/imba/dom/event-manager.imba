@@ -1,3 +1,5 @@
+# imba$nolib=1
+
 ###
 
 Manager for listening to and delegating events in Imba. A single instance

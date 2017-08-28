@@ -311,7 +311,8 @@ class Imba.Scheduler
 		if @events isa Function
 			mark if @events(event)	
 		elif @events isa Array
-			mark if event?.type in @events
+			if @events.indexOf(event?.type) >= 0
+				mark
 		else
 			mark
 		self

@@ -1,3 +1,5 @@
+# imba$nolib=1
+
 class Imba.Pointer
 
 	prop phase

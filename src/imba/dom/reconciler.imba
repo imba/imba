@@ -1,3 +1,5 @@
+# imba$nolib=1
+
 def removeNested root, node, caret
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements

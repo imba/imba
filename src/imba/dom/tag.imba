@@ -1,3 +1,4 @@
+# imba$nolib=1
 
 extern _T
 
