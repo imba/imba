@@ -1144,6 +1144,14 @@ export class Lexer
 		moveHead(heredoc)
 		return heredoc:length
 
+	def parseMagicalOptions str
+		if str.indexOf('imba$') >= 0
+			str.replace(/imba\$(\w+)\=(.*)\b/g) do |m,name,val|
+				if (/^\d+$/).test(val)
+					val = parseInt(val)
+				@opts[name] = val
+		self
+
 	# Matches and consumes comments.
 	def commentToken
 		var match, length, comment, indent, prev
@@ -1159,6 +1167,8 @@ export class Lexer
 			prev = last(@tokens)
 			var pt = prev and tT(prev)
 			var note = '//' + comment.substr(1)
+
+			parseMagicalOptions(note)
 
 			if @last and @last:spaced
 				note = ' ' + note
