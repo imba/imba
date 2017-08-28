@@ -2202,7 +2202,7 @@ export class TagDeclaration < Code
 		@body = blk__(body || [])
 
 	def visit
-		scope.root.requires('imba')
+		scope.requires('imba')
 
 		if String(name).match(/^[A-Z]/)
 			set(isClass: yes)
@@ -5788,7 +5788,7 @@ export class Tag < Node
 
 
 	def visit
-		scope__.root.requires('imba')
+		scope__.requires('imba')
 
 		var o = @options
 
@@ -6763,7 +6763,6 @@ export class Util.IndexOf < Util
 		function idx$(a,b){
 			return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
 		};
-
 		'''
 
 	def js o
@@ -6772,6 +6771,7 @@ export class Util.IndexOf < Util
 			# When this is triggered, we need to add it to the top of file?
 			"idx$({args.map(|v| v.c ).join(',')})"
 		else
+			scope__.requires('imba')
 			"Imba.indexOf({args.map(|v| v.c ).join(',')})"
 
 export class Util.Len < Util
@@ -6781,15 +6781,16 @@ export class Util.Len < Util
 		function len$(a){
 			return a && (a.len instanceof Function ? a.len() : a.length) || 0;
 		};
-
 		'''
 
 	def js o
-		if isStandalone
+		# 
+		if true # isStandalone
 			scope__.root.helper(self,helper)
 			# When this is triggered, we need to add it to the top of file?
 			"len$({args.map(|v| v.c ).join(',')})"
 		else
+			scope__.requires('imba')
 			"Imba.len({args.map(|v| v.c ).join(',')})"
 
 
@@ -6817,6 +6818,7 @@ export class Util.Subclass < Util
 			scope__.root.helper(self,helper)
 			"subclass$({args.map(|v| v.c).join(',')});\n"
 		else
+			scope__.requires('imba')
 			"Imba.subclass({args.map(|v| v.c).join(',')});\n"
 
 export class Util.Promisify < Util
@@ -6831,6 +6833,7 @@ export class Util.Promisify < Util
 			scope__.root.helper(self,helper)
 			"promise$({args.map(|v| v.c).join(',')})"
 		else
+			scope__.requires('imba')
 			"Imba.await({args.map(|v| v.c).join(',')})"
 
 # TODO deprecated: can remove
@@ -6850,10 +6853,11 @@ export class Util.Iterable < Util
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
 
-		if isStandalone
+		if true # isStandalone
 			scope__.root.helper(self,helper)
 			return "iter$({args[0].c})"
 		else
+			scope__.requires('imba')
 			return "Imba.iterable({args[0].c})"
 
 export class Util.IsFunction < Util
@@ -7047,6 +7051,9 @@ export class Scope
 				@nonlocals[name] = ret
 		ret
 
+	def requires path, name = ''
+		root.requires(path,name)
+
 	def autodeclare variable
 		vars.push(variable) # only if it does not exist here!!!
 
@@ -7143,6 +7150,7 @@ export class RootScope < Scope
 		register '_', self, type: 'global'
 
 		# preregister global special variables here
+		@requires = {}
 		@warnings = []
 		@scopes   = []
 		@helpers  = []
@@ -7195,18 +7203,32 @@ export class RootScope < Scope
 
 	# not yet used
 	def requires path, name = ''
-		@requires ||= {}
 		if @requires[path]
 			return @requires[path]
 
 		var req = Require.new(Str.new("'" + path + "'"))
 
 		if name
-			var val = @requires[path] = declare(name or "unnamed",req)
+			var val = @requires[path] = declare(name,req)
 			return val
 		else
+			@requires[path] = req # what if there is a conflict?
 			# @head.push(@requires[path] = req)
 			return req
+
+	def c o = {}
+		o:expression = no
+		# need to fix this
+		node.body.head = head
+		var body = node.body.c(o)
+
+		var reqs = for own k,v of @requires
+			v.c(o) + ';'
+
+		if reqs:length and !OPTS:nolib
+			body = reqs.join("\n") + '\n' + body
+
+		return body
 
 
 
