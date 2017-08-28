@@ -13,7 +13,6 @@ var parseOpts =
 		o: 'output'
 		h: 'help'
 		s: 'stdio'
-		b: 'bare'
 		p: 'print'
 		m: 'sourceMap'
 		a: 'analyze'
@@ -33,7 +32,6 @@ var help = """
 Usage: imbac [options] path/to/script.imba
 
   -a, --analyze          print out the scopes and variables of your script
-  -b, --bare             compile without a top-level function wrapper
   -h, --help             display this help message
   -m, --source-map       generate source map and add inline to .js files
   -o, --output [dir]     set the output directory for compiled JavaScript
@@ -43,6 +41,7 @@ Usage: imbac [options] path/to/script.imba
       --target [target]  explicitly compile for node/web/webworker
   -v, --version          display the version number
   -w, --watch            recompile files on change
+      --wrap             compile with top-level function wrapper
 
 """
 

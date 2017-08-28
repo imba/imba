@@ -1993,7 +1993,7 @@ export class Root < Code
 
 	def js o
 		var out
-		if @options:bare
+		unless @options:wrap
 			out = scope.c
 		else
 			body.consume(ImplicitReturn.new)
