@@ -29,23 +29,7 @@ function pkg(options){
 
 module.exports = [pkg({
 	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.dev.js" },
-	debug: true
-}),pkg({
-	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.js" }
-}),pkg({
-	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.min.js" },
-	plugins: [minify]
-}),pkg({
-	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.edge.js" },
-	loader: {env: {drop_deprecated: true}}
-}),pkg({
-	entry: "./src/imba/index.imba",
-	output: { filename: "./dist/imba.edge.min.js" },
-	loader: {env: {drop_deprecated: true}},
+	output: { filename: "./imba.js" },
 	plugins: [minify]
 }),pkg({
 	entry: "./test/index.imba",
