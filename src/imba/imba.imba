@@ -8,9 +8,10 @@ Imba = {VERSION: '1.0.0-rc.3'}
 
 if typeof window !== 'undefined'
 	window:imba = Imba
-
-if $web$
 	window:global ||= window
+
+	if window:define and window:define:amd
+		window.define("imba",[]) do return Imba
 
 ###
 True if running in client environment.
@@ -180,4 +181,4 @@ def Imba.observeProperty observer, key, trigger, target, prev
 		Imba.listen(target,'all',observer,trigger)
 	self
 
-Imba
+module:exports = Imba

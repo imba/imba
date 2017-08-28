@@ -13,11 +13,11 @@ var loaders = [{
 function pkg(options){
 	var pkg = {
 		module: {loaders: loaders},
-		resolve: {extensions: ['', '.imba', '.js']},
+		resolve: {extensions: ['*', '.imba', '.js']},
 		entry: "./src/imba/index.imba",
 		target: 'web',
-		output: { filename: "./dist/imba.js" },
-		node: {fs: "empty", process: "empty", global: false}
+		output: { filename: "./imba.js" },
+		node: {fs: false, process: false, global: false}
 	}
 
 	Object.keys(options).map(function(key){
@@ -29,10 +29,9 @@ function pkg(options){
 
 module.exports = [pkg({
 	entry: "./src/imba/index.imba",
-	output: { filename: "./imba.js" },
+	output: { filename: "./imba.js"},
 	plugins: [minify]
 }),pkg({
 	entry: "./test/index.imba",
 	output: { filename: "./test/client.js"}
 })]
-
