@@ -49,8 +49,6 @@
 	__webpack_require__(2);
 	__webpack_require__(17);
 
-	__webpack_require__(18);
-	__webpack_require__(19);
 	__webpack_require__(20);
 	__webpack_require__(21);
 	__webpack_require__(22);
@@ -66,22 +64,25 @@
 	__webpack_require__(32);
 	__webpack_require__(33);
 	__webpack_require__(34);
+	__webpack_require__(35);
 	__webpack_require__(36);
-	__webpack_require__(37);
 	__webpack_require__(38);
-
 	__webpack_require__(39);
 	__webpack_require__(40);
 	__webpack_require__(41);
 
 	__webpack_require__(42);
 	__webpack_require__(43);
-
-
 	__webpack_require__(44);
+
+	__webpack_require__(45);
 	__webpack_require__(46);
+
+
 	__webpack_require__(47);
-	__webpack_require__(48);
+	__webpack_require__(49);
+	__webpack_require__(50);
+	__webpack_require__(51);
 
 
 	// externs;
@@ -132,13 +133,18 @@
 /* 4 */
 /***/ function(module, exports) {
 
-	
+	// imba$nolib=1
+
 	/*
 	Imba is the namespace for all runtime related utilities
 	@namespace
 	*/
 
-	Imba = {VERSION: '1.0.0-rc.2'};
+	Imba = {VERSION: '1.0.0-rc.3'};
+
+	if (typeof window !== 'undefined') {
+		window.imba = Imba;
+	};
 
 
 	window.global || (window.global = window);
@@ -361,7 +367,8 @@
 /* 5 */
 /***/ function(module, exports) {
 
-	
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+
 	var requestAnimationFrame; // very simple raf polyfill
 	var cancelAnimationFrame;
 
@@ -409,7 +416,7 @@
 		this._stage = 1;
 		this.before();
 		if (items.length) {
-			for (var i = 0, ary = Imba.iterable(items), len = ary.length, item; i < len; i++) {
+			for (var i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
 				item = ary[i];
 				if (item instanceof Function) {
 					item(this._dt,this);
@@ -758,7 +765,9 @@
 		if (this._events instanceof Function) {
 			if (this._events(event)) this.mark();
 		} else if (this._events instanceof Array) {
-			if (Imba.indexOf(($1 = event) && $1.type  &&  $1.type(),this._events) >= 0) this.mark();
+			if (this._events.indexOf(($1 = event) && $1.type  &&  $1.type()) >= 0) {
+				this.mark();
+			};
 		} else {
 			this.mark();
 		};
@@ -865,6 +874,7 @@
 /* 7 */
 /***/ function(module, exports) {
 
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	Imba.TagManagerClass = function TagManagerClass(){
 		this._spawns = 0;
 		this._inserts = 0;
@@ -928,7 +938,7 @@
 		var root = document.body;
 		var items = root.querySelectorAll('.__mount');
 		// what if we end up creating additional mountables by mounting?
-		for (var i = 0, ary = Imba.iterable(items), len = ary.length, el; i < len; i++) {
+		for (var i = 0, ary = iter$(items), len = ary.length, el; i < len; i++) {
 			el = ary[i];
 			if (el && el._tag) {
 				if (this._mounted.indexOf(el._tag) == -1) {
@@ -949,7 +959,7 @@
 	Imba.TagManagerClass.prototype.tryUnmount = function (){
 		var count = 0;
 		var root = document.body;
-		for (var i = 0, ary = Imba.iterable(this._mounted), len = ary.length, item; i < len; i++) {
+		for (var i = 0, ary = iter$(this._mounted), len = ary.length, item; i < len; i++) {
 			item = ary[i];
 			if (!document.documentElement.contains(item._dom)) {
 				item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED;
@@ -975,7 +985,12 @@
 /* 8 */
 /***/ function(module, exports) {
 
-	
+	function idx$(a,b){
+		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+	};
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	// imba$nolib=1
+
 	// externs;
 
 	Imba.CSSKeyMap = {};
@@ -1487,7 +1502,7 @@
 		if (!item) { return this };
 		
 		if (item instanceof Array) {
-			for (var i = 0, ary = Imba.iterable(item), len = ary.length, member; i < len; i++) {
+			for (var i = 0, ary = iter$(item), len = ary.length, member; i < len; i++) {
 				member = ary[i];
 				member && this.append(member);
 			};
@@ -1615,7 +1630,7 @@
 		
 		if (!dataset) {
 			dataset = {};
-			for (var i1 = 0, ary = Imba.iterable(this.dom().attributes), len = ary.length, atr; i1 < len; i1++) {
+			for (var i1 = 0, ary = iter$(this.dom().attributes), len = ary.length, atr; i1 < len; i1++) {
 				atr = ary[i1];
 				if (atr.name.substr(0,5) == 'data-') {
 					dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
@@ -2226,7 +2241,7 @@
 	};
 
 	Imba.Tags.prototype.baseType = function (name){
-		return (Imba.indexOf(name,Imba.HTML_TAGS) >= 0) ? 'element' : 'div';
+		return (idx$(name,Imba.HTML_TAGS) >= 0) ? 'element' : 'div';
 	};
 
 	Imba.Tags.prototype.defineTag = function (name,supr,body){
@@ -2422,7 +2437,7 @@
 	Imba.generateCSSPrefixes = function (){
 		var styles = window.getComputedStyle(document.documentElement,'');
 		
-		for (var i = 0, ary = Imba.iterable(styles), len = ary.length, prefixed; i < len; i++) {
+		for (var i = 0, ary = iter$(styles), len = ary.length, prefixed; i < len; i++) {
 			prefixed = ary[i];
 			var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'');
 			var camelCase = unprefixed.replace(/-(\w)/g,function(m,a) { return a.toUpperCase(); });
@@ -2483,7 +2498,8 @@
 /* 9 */
 /***/ function(module, exports) {
 
-	
+	// imba$nolib=1
+
 	// predefine all supported html tags
 	_T.defineTag('fragment', 'element', function(tag){
 		
@@ -2914,7 +2930,11 @@
 /* 10 */
 /***/ function(module, exports) {
 
-	
+	function idx$(a,b){
+		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+	};
+	// imba$nolib=1
+
 	_T.ns('svg').defineTag('element', function(tag){
 		
 		tag.namespaceURI = function (){
@@ -2931,7 +2951,7 @@
 		tag.inherit = function (child){
 			child._protoDom = null;
 			
-			if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0) {
+			if (idx$(child._name,Imba.SVG_TAGS) >= 0) {
 				child._nodeType = child._name;
 				return child._classes = [];
 			} else {
@@ -3036,6 +3056,8 @@
 /* 11 */
 /***/ function(module, exports) {
 
+	// imba$nolib=1
+
 	Imba.Pointer = function Pointer(){
 		this.setButton(-1);
 		this.setEvent({x: 0,y: 0,type: 'uninitialized'});
@@ -3114,6 +3136,7 @@
 /* 12 */
 /***/ function(module, exports) {
 
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// Imba.Touch
 	// Began	A finger touched the screen.
 	// Moved	A finger moved on the screen.
@@ -3185,7 +3208,7 @@
 	};
 
 	Imba.Touch.ontouchstart = function (e){
-		for (var i = 0, ary = Imba.iterable(e.changedTouches), len = ary.length, t; i < len; i++) {
+		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (this.lookup(t)) { continue; };
 			var touch = identifiers[t.identifier] = new this(e); // (e)
@@ -3199,7 +3222,7 @@
 
 	Imba.Touch.ontouchmove = function (e){
 		var touch;
-		for (var i = 0, ary = Imba.iterable(e.changedTouches), len = ary.length, t; i < len; i++) {
+		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchmove(e,t);
@@ -3211,7 +3234,7 @@
 
 	Imba.Touch.ontouchend = function (e){
 		var touch;
-		for (var i = 0, ary = Imba.iterable(e.changedTouches), len = ary.length, t; i < len; i++) {
+		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchend(e,t);
@@ -3228,7 +3251,7 @@
 
 	Imba.Touch.ontouchcancel = function (e){
 		var touch;
-		for (var i = 0, ary = Imba.iterable(e.changedTouches), len = ary.length, t; i < len; i++) {
+		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchcancel(e,t);
@@ -3471,7 +3494,7 @@
 		
 		this._updates++;
 		if (this._gestures) {
-			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
 				ary[i].ontouchupdate(this);
 			};
 		};
@@ -3486,7 +3509,7 @@
 		if (!this._active || this._cancelled) { return this };
 		
 		if (this._gestures) {
-			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length, g; i < len; i++) {
+			for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
 				g = ary[i];
 				if (g.ontouchmove) { g.ontouchmove(this,this._event) };
 			};
@@ -3503,7 +3526,7 @@
 		this._updates++;
 		
 		if (this._gestures) {
-			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
 				ary[i].ontouchend(this);
 			};
 		};
@@ -3530,7 +3553,7 @@
 		this._updates++;
 		
 		if (this._gestures) {
-			for (var i = 0, ary = Imba.iterable(this._gestures), len = ary.length, g; i < len; i++) {
+			for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
 				g = ary[i];
 				if (g.ontouchcancel) { g.ontouchcancel(this) };
 			};
@@ -3680,7 +3703,8 @@
 /* 13 */
 /***/ function(module, exports) {
 
-	// regular event stuff
+	// imba$nolib=1
+
 	Imba.KEYMAP = {
 		"8": 'backspace',
 		"9": 'tab',
@@ -4001,6 +4025,9 @@
 /* 14 */
 /***/ function(module, exports) {
 
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	// imba$nolib=1
+
 	/*
 
 	Manager for listening to and delegating events in Imba. A single instance
@@ -4026,7 +4053,7 @@
 			return true;
 		});
 		
-		for (var i = 0, ary = Imba.iterable(events), len = ary.length; i < len; i++) {
+		for (var i = 0, ary = iter$(events), len = ary.length; i < len; i++) {
 			self.register(ary[i]);
 		};
 		
@@ -4070,7 +4097,7 @@
 	Imba.EventManager.prototype.register = function (name,handler){
 		if(handler === undefined) handler = true;
 		if (name instanceof Array) {
-			for (var i = 0, ary = Imba.iterable(name), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(name), len = ary.length; i < len; i++) {
 				this.register(ary[i],handler);
 			};
 			return this;
@@ -4133,7 +4160,7 @@
 			this.root().addEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var j = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; j < len; j++) {
+		for (var j = 0, ary = iter$(this.listeners()), len = ary.length, item; j < len; j++) {
 			item = ary[j];
 			this.root().addEventListener(item[0],item[1],item[2]);
 		};
@@ -4145,7 +4172,7 @@
 			this.root().removeEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var j = 0, ary = Imba.iterable(this.listeners()), len = ary.length, item; j < len; j++) {
+		for (var j = 0, ary = iter$(this.listeners()), len = ary.length, item; j < len; j++) {
 			item = ary[j];
 			this.root().removeEventListener(item[0],item[1],item[2]);
 		};
@@ -4157,7 +4184,9 @@
 /* 15 */
 /***/ function(module, exports) {
 
-	
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	// imba$nolib=1
+
 
 	/*
 		The special syntax for selectors in Imba creates Imba.Selector
@@ -4170,7 +4199,7 @@
 		this._context = scope;
 		
 		if (nodes) {
-			for (var i = 0, ary = Imba.iterable(nodes), len = ary.length, res = []; i < len; i++) {
+			for (var i = 0, ary = iter$(nodes), len = ary.length, res = []; i < len; i++) {
 				res.push(tag$wrap(ary[i]));
 			};
 			this._nodes = res;
@@ -4229,7 +4258,7 @@
 	Imba.Selector.prototype.nodes = function (){
 		if (this._nodes) { return this._nodes };
 		var items = this.scope().querySelectorAll(this.query());
-		for (var i = 0, ary = Imba.iterable(items), len = ary.length, res = []; i < len; i++) {
+		for (var i = 0, ary = iter$(items), len = ary.length, res = []; i < len; i++) {
 			res.push(tag$wrap(ary[i]));
 		};
 		this._nodes = res;
@@ -4397,6 +4426,9 @@
 /* 16 */
 /***/ function(module, exports) {
 
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+	// imba$nolib=1
+
 	function removeNested(root,node,caret){
 		// if node/nodes isa String
 		// 	we need to use the caret to remove elements
@@ -4404,7 +4436,7 @@
 		if (node instanceof Imba.Tag) {
 			root.removeChild(node);
 		} else if (node instanceof Array) {
-			for (var i = 0, ary = Imba.iterable(node), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
 				removeNested(root,ary[i],caret);
 			};
 		} else if (node != null) {
@@ -4425,7 +4457,7 @@
 		if (node instanceof Imba.Tag) {
 			root.appendChild(node);
 		} else if (node instanceof Array) {
-			for (var i = 0, ary = Imba.iterable(node), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
 				appendNested(root,ary[i]);
 			};
 		} else if (node != null && node !== false) {
@@ -4444,7 +4476,7 @@
 		if (node instanceof Imba.Tag) {
 			root.insertBefore(node,before);
 		} else if (node instanceof Array) {
-			for (var i = 0, ary = Imba.iterable(node), len = ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
 				insertNestedBefore(root,ary[i],before);
 			};
 		} else if (node != null && node !== false) {
@@ -4502,7 +4534,7 @@
 		var hasTextNodes = false;
 		var newPos;
 		
-		for (var idx = 0, ary = Imba.iterable(old), len = ary.length, node; idx < len; idx++) {
+		for (var idx = 0, ary = iter$(old), len = ary.length, node; idx < len; idx++) {
 			// special case for Text nodes
 			node = ary[idx];
 			if (node && node.nodeType == 3) {
@@ -4564,7 +4596,7 @@
 		};
 		
 		// possible to do this in reversed order instead?
-		for (var idx1 = 0, items = Imba.iterable(new$), len_ = items.length, node1; idx1 < len_; idx1++) {
+		for (var idx1 = 0, items = iter$(new$), len_ = items.length, node1; idx1 < len_; idx1++) {
 			node1 = items[idx1];
 			if (!stickyNodes[idx1]) {
 				// create textnode for string, and update the array
@@ -4630,7 +4662,7 @@
 					// if the static is not nested - we could get a hint from compiler
 					// and just skip it
 					if (new$.static == old.static) {
-						for (var i = 0, ary = Imba.iterable(new$), len = ary.length; i < len; i++) {
+						for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
 							// this is where we could do the triple equal directly
 							caret = reconcileNested(root,ary[i],old[i],caret);
 						};
@@ -4699,7 +4731,7 @@
 				// here we _know _that it is an array with the same shape
 				// every time
 				var caret = null;
-				for (var i = 0, ary = Imba.iterable(new$), len = ary.length; i < len; i++) {
+				for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
 					// prev = old[i]
 					caret = reconcileNested(this,ary[i],old[i],caret);
 				};
@@ -4750,9 +4782,11 @@
 
 /***/ },
 /* 17 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	__webpack_require__(18);
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+
 	var TERMINAL_COLOR_CODES = {
 		bold: 1,
 		underline: 4,
@@ -4802,11 +4836,21 @@
 	};
 
 	Spec.prototype.eval = function (block,ctx){
-		this._stack.push(this._context = ctx);
-		block();
-		this._stack.pop();
-		this._context = this._stack[this._stack.length - 1];
-		return this;
+		var self = this;
+		self._stack.push(self._context = ctx);
+		var res = block();
+		var after = function() {
+			self._stack.pop();
+			self._context = self._stack[self._stack.length - 1];
+			return self;
+		};
+		
+		if (res && res.then) {
+			return res.then(after,after);
+		} else {
+			after();
+			return Promise.resolve(self);
+		};
 	};
 
 	Spec.prototype.describe = function (name,blk){
@@ -4838,7 +4882,7 @@
 		var ok = [];
 		var failed = [];
 		
-		for (var i = 0, ary = Imba.iterable(this.assertions()), len = ary.length, test1; i < len; i++) {
+		for (var i = 0, ary = iter$(this.assertions()), len = ary.length, test1; i < len; i++) {
 			test1 = ary[i];
 			test1.success() ? ok.push(test1) : failed.push(test1);
 		};
@@ -4989,14 +5033,19 @@
 	SpecExample.prototype.assertion = function (ass){
 		var self = this;
 		self._assertions.push(ass);
-		Imba.once(ass,'done',function() { if (self._evaluated && self._assertions.every(function(a) { return a.done(); })) { return self.finish() }; });
+		Imba.once(ass,'done',function() {
+			if (self._evaluated && self._assertions.every(function(a) { return a.done(); })) { return self.finish() };
+		});
 		return ass;
 	};
 
 	SpecExample.prototype.run = function (){
-		if (this._block) { SPEC.eval(this._block,this) };
-		this._evaluated = true;
-		if (this._assertions.every(function(a) { return a.done(); })) { return this.finish() };
+		var self = this;
+		var promise = (self._block ? SPEC.eval(self._block,self) : Promise.resolve({}));
+		return promise.then(function() {
+			self._evaluated = true;
+			if (self._assertions.every(function(a) { return a.done(); })) { return self.finish() };
+		});
 	};
 
 	SpecExample.prototype.finish = function (){
@@ -5207,8 +5256,23 @@
 
 /***/ },
 /* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(19);
+
+
+/***/ },
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var imba = exports.imba = __webpack_require__(3);
+
+
+/***/ },
+/* 20 */
 /***/ function(module, exports) {
 
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// externs;
 
 	function SyntaxLoopsObj(){ };
@@ -5333,7 +5397,7 @@
 			
 			test("custom iterable objects",function() {
 				var item = new IterableObject();
-				for (var res = [], i = 0, items = Imba.iterable(item), len = items.length; i < len; i++) {
+				for (var res = [], i = 0, items = iter$(item), len = items.length; i < len; i++) {
 					res.push(items[i] * 2);
 				};
 				return eq(res,[2,4,6,8,10]);
@@ -5576,9 +5640,10 @@
 
 
 /***/ },
-/* 19 */
-/***/ function(module, exports) {
+/* 21 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
 	// externs;
 
 	function Organism(){
@@ -5831,9 +5896,10 @@
 
 
 /***/ },
-/* 20 */
-/***/ function(module, exports) {
+/* 22 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
 	// externs;
 
 	function Organism(){
@@ -5984,9 +6050,10 @@
 
 
 /***/ },
-/* 21 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
 	function intersect$(a,b){
 		if(a && a.__intersect) return a.__intersect(b);
 		var res = [];
@@ -6180,7 +6247,7 @@
 
 
 /***/ },
-/* 22 */
+/* 24 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -6243,9 +6310,12 @@
 
 
 /***/ },
-/* 23 */
+/* 25 */
 /***/ function(module, exports) {
 
+	function len$(a){
+		return a && (a.len instanceof Function ? a.len() : a.length) || 0;
+	};
 	// externs;
 
 	describe('Syntax - Arrays',function() {
@@ -6311,7 +6381,7 @@
 		test("special #len method",function() {
 			var a = [1,2,3];
 			eq(a.length,3);
-			return eq(Imba.len(a),3);
+			return eq(len$(a),3);
 		});
 		
 		return test("nested arrays",function() {
@@ -6343,7 +6413,7 @@
 
 
 /***/ },
-/* 24 */
+/* 26 */
 /***/ function(module, exports) {
 
 	var self = this;
@@ -6430,9 +6500,10 @@
 
 
 /***/ },
-/* 25 */
-/***/ function(module, exports) {
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
 	// externs;
 
 	function Paramer(){ return SpecObject.apply(this,arguments) };
@@ -6817,7 +6888,7 @@
 	// 		eq change, 10
 
 /***/ },
-/* 26 */
+/* 28 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -6862,7 +6933,7 @@
 
 
 /***/ },
-/* 27 */
+/* 29 */
 /***/ function(module, exports) {
 
 	function union$(a,b){
@@ -6934,7 +7005,7 @@
 
 
 /***/ },
-/* 28 */
+/* 30 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -7085,7 +7156,7 @@
 
 
 /***/ },
-/* 29 */
+/* 31 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -7155,7 +7226,7 @@
 
 
 /***/ },
-/* 30 */
+/* 32 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -7186,7 +7257,7 @@
 
 
 /***/ },
-/* 31 */
+/* 33 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -7404,7 +7475,7 @@
 
 
 /***/ },
-/* 32 */
+/* 34 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -7422,7 +7493,7 @@
 
 
 /***/ },
-/* 33 */
+/* 35 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -7447,16 +7518,17 @@
 
 
 /***/ },
-/* 34 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
 	// externs;
 
 	// import two specific items from module
-	var module$ = __webpack_require__(35), Item = module$.Item, hello = module$.hello;
+	var module$ = __webpack_require__(37), Item = module$.Item, hello = module$.hello;
 
 	// import everything from module into a local namespace/variable 'm'
-	var m = __webpack_require__(35);
+	var m = __webpack_require__(37);
 
 	function Sub(){ return Item.apply(this,arguments) };
 
@@ -7495,9 +7567,10 @@
 
 
 /***/ },
-/* 35 */
-/***/ function(module, exports) {
+/* 37 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
 	// externs;
 
 	function hello(){
@@ -7530,7 +7603,7 @@
 
 
 /***/ },
-/* 36 */
+/* 38 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -7567,9 +7640,10 @@
 
 
 /***/ },
-/* 37 */
+/* 39 */
 /***/ function(module, exports) {
 
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	function intersect$(a,b){
 		if(a && a.__intersect) return a.__intersect(b);
 		var res = [];
@@ -7995,10 +8069,10 @@
 			$1 = [30,a],a = 10,b = 20,c = $1;
 			eq([a,b,c],[10,20,[30,3]]);
 			
-			var items = Imba.iterable(ary);var a = items[0],b = items[1],c = items[2];
+			var items = iter$(ary);var a = items[0],b = items[1],c = items[2];
 			eq([a,b,c],[1,2,3]);
 			
-			var array = Imba.iterable(ary),len = array.length,i = 0;var a = array[i++],b = array[i++],c = new Array(len - 2);while (i < len){
+			var array = iter$(ary),len = array.length,i = 0;var a = array[i++],b = array[i++],c = new Array(len - 2);while (i < len){
 				c[i - 2] = array[i++]
 			};
 			eq([a,b,c],[1,2,[3,4,5]]);
@@ -8008,7 +8082,7 @@
 			$1 = list[1],$2 = list[0],list[0] = $1,list[1] = $2;
 			eq(list,[20,10,30]);
 			
-			var coll = Imba.iterable(ary),len_ = coll.length,j = 0,tmp = new Array(len_ - 2);list[0] = coll[j++];while (j < len_ - 1){
+			var coll = iter$(ary),len_ = coll.length,j = 0,tmp = new Array(len_ - 2);list[0] = coll[j++];while (j < len_ - 1){
 				tmp[j - 1] = coll[j++]
 			};list[1] = tmp;list[2] = coll[j++];
 			eq(list,[1,[2,3,4],5]);
@@ -8022,20 +8096,20 @@
 			for (var i_ = 0, length_ = ary.length, res = []; i_ < length_; i_++) {
 				res.push(ary[i_] * 2);
 			};
-			var ary_ = Imba.iterable(res);var x = ary_[0];var y = ary_[1];
+			var ary_ = iter$(res);var x = ary_[0];var y = ary_[1];
 			
 			eq([x,y],[2,4]);
 			
 			for (var i__ = 0, $1 = ary.length, res1 = []; i__ < $1; i__++) {
 				res1.push(ary[i__] * 2);
 			};
-			var ary__ = Imba.iterable(res1);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
+			var ary__ = iter$(res1);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
 			eq([x,y,obj.z()],[2,4,6]);
 			
 			for (var $1 = 0, $2 = ary.length, res2 = []; $1 < $2; $1++) {
 				res2.push(ary[$1] * 2);
 			};
-			var $3 = Imba.iterable(res2),$4 = $3.length,$5 = 0,tmplist = new Array($4 - 2);x = $3[$5++];y = $3[$5++];while ($5 < $4){
+			var $3 = iter$(res2),$4 = $3.length,$5 = 0,tmplist = new Array($4 - 2);x = $3[$5++];y = $3[$5++];while ($5 < $4){
 				tmplist[$5 - 2] = $3[$5++]
 			};obj.setZ(tmplist);
 			eq([x,y,obj.z()],[2,4,[6,8,10]]);
@@ -8172,7 +8246,7 @@
 
 
 /***/ },
-/* 38 */
+/* 40 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -8215,7 +8289,45 @@
 
 
 /***/ },
-/* 39 */
+/* 41 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(18);
+	// externs;
+
+	describe('Await',function() {
+		
+		return test('issue#93',function() {
+			var val = Promise.resolve(100);
+			function A(){ };
+			
+			A.prototype.x = function(v){ return this._x; }
+			A.prototype.setX = function(v){ this._x = v; return this; };
+			A.prototype.__y = {'default': 100,name: 'y'};
+			A.prototype.y = function(v){ return this._y; }
+			A.prototype.setY = function(v){ this._y = v; return this; }
+			A.prototype._y = 100;
+			
+			A.prototype.fetch = function (){
+				var self = this;
+				return Imba.await(self.y()).then(function(_0) {
+					var v_;
+					return (self.setX(v_ = _0),v_);
+				});
+			};
+			
+			var item = new A();
+			return Imba.await(item.fetch()).then(function() {
+				
+				return eq(item.x(),100);
+			});
+		});
+	});
+
+
+
+/***/ },
+/* 42 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -8240,7 +8352,7 @@
 
 
 /***/ },
-/* 40 */
+/* 43 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -8261,7 +8373,7 @@
 
 
 /***/ },
-/* 41 */
+/* 44 */
 /***/ function(module, exports) {
 
 	// externs;
@@ -8354,9 +8466,11 @@
 
 
 /***/ },
-/* 42 */
-/***/ function(module, exports) {
+/* 45 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	var self = this;
 	// externs;
 
@@ -8391,7 +8505,7 @@
 			return this.setChildren(
 				(function() {
 					var $A = (__.A = __.A || {});
-					for (var i = 0, ary = Imba.iterable(self._ary), len = ary.length, res = []; i < len; i++) {
+					for (var i = 0, ary = iter$(self._ary), len = ary.length, res = []; i < len; i++) {
 						res.push(($A[ary[i]] = $A[ary[i]] || _T.DIV(self).setText("v")).end());
 					};
 					return res;
@@ -8442,7 +8556,7 @@
 			var ary;
 			var el = _T.CACHED(self).end();
 			var els = toArray(el.dom().children);
-			var ary = Imba.iterable(els);var a = ary[0],b = ary[1],c = ary[2];
+			var ary = iter$(els);var a = ary[0],b = ary[1],c = ary[2];
 			eq(els.length,3);
 			eq(els,[a,b,c]);
 			
@@ -8722,9 +8836,11 @@
 
 
 /***/ },
-/* 43 */
-/***/ function(module, exports) {
+/* 46 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	var self = this;
 	// externs;
 
@@ -8793,7 +8909,7 @@
 				
 				(function() {
 					var t0, _$ = (__.D = __.D || []);
-					for (var i = 0, ary = Imba.iterable(o.letters), len = ary.length, res = []; i < len; i++) {
+					for (var i = 0, ary = iter$(o.letters), len = ary.length, res = []; i < len; i++) {
 						res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(ary[i],3).end());
 					};
 					return res;
@@ -8835,16 +8951,18 @@
 
 
 /***/ },
-/* 44 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	var self = this;
 	// to run these tests, simply open the imbadir/test/dom.html in your browser and
 	// open the console / developer tools.
 
 	// externs;
 
-	var _ = __webpack_require__(45);
+	var _ = __webpack_require__(48);
 
 	_T.defineTag('el', function(tag){
 		
@@ -8878,7 +8996,7 @@
 			// log "setStaticChildren",nodes,expected
 			tag.__super__.setChildren.call(this,nodes,typ);
 			
-			for (var i = 0, ary = Imba.iterable(this._dom.childNodes), len = ary.length, child; i < len; i++) {
+			for (var i = 0, ary = iter$(this._dom.childNodes), len = ary.length, child; i < len; i++) {
 				// how would this work on server?
 				// if child isa Text
 				// 	actual.push( child:textContent )
@@ -8998,7 +9116,7 @@
 			var self = this, __ = self.__;
 			return this.setChildren((function() {
 				var t0, _$ = (__.A = __.A || []);
-				for (var i = 0, ary = Imba.iterable(self.items()), len = ary.length, res = []; i < len; i++) {
+				for (var i = 0, ary = iter$(self.items()), len = ary.length, res = []; i < len; i++) {
 					res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setContent(ary[i],3).end());
 				};
 				return res;
@@ -9010,7 +9128,7 @@
 		tag.prototype.render = function (texts){
 			if(texts === undefined) texts = [];
 			return this.setChildren((function() {
-				for (var i = 0, ary = Imba.iterable(texts), len = ary.length, res = []; i < len; i++) {
+				for (var i = 0, ary = iter$(texts), len = ary.length, res = []; i < len; i++) {
 					res.push(ary[i]);
 				};
 				return res;
@@ -9350,7 +9468,7 @@
 
 
 /***/ },
-/* 45 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -10904,9 +11022,10 @@
 
 
 /***/ },
-/* 46 */
-/***/ function(module, exports) {
+/* 49 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
 	var self = this;
 	// to run these tests, simply open the imbadir/test/dom.html in your browser and
 	// open the console / developer tools.
@@ -10937,9 +11056,10 @@
 
 
 /***/ },
-/* 47 */
-/***/ function(module, exports) {
+/* 50 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
 	var self = this;
 	// externs;
 
@@ -10972,9 +11092,11 @@
 
 
 /***/ },
-/* 48 */
-/***/ function(module, exports) {
+/* 51 */
+/***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(18);
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	// externs;
 
 	_T.defineTag('xul', 'ul');
@@ -11013,7 +11135,7 @@
 							(__.$AB = __.$AB || _T.LI(self)).setContent(Date.now(),3).end(),
 							(function() {
 								var t0, _$ = (__.$AC = __.$AC || []);
-								for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
+								for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
 									res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setContent(ary[i],3).end());
 								};
 								return res;
@@ -11026,7 +11148,7 @@
 							(__.$A = __.$A || _T.DIV(this)).setContent(("This is inside " + (Date.now())),3).end(),
 							(function() {
 								var t0, _$ = (__.$B = __.$B || []);
-								for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
+								for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
 									res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(ary[i],3).end());
 								};
 								return res;
@@ -11049,7 +11171,7 @@
 					(__.AB = __.AB || _T.DIV(self)).setContent(("This is inside " + (Date.now())),3).end(),
 					(function() {
 						var t0, _$ = (__.AC = __.AC || []);
-						for (var i = 0, ary = Imba.iterable(AA), len = ary.length, res = []; i < len; i++) {
+						for (var i = 0, ary = iter$(AA), len = ary.length, res = []; i < len; i++) {
 							res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(ary[i],3).end());
 						};
 						return res;
