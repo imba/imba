@@ -12,8 +12,16 @@ module.exports = function(content) {
 		standalone: false,
 		bare: true
 	};
+
 	if(this.env){
 		opts.env = this.env;
+	}
+
+	if(this.options.loader && this.options.loader.imba) {
+		var iopts = this.options.loader.imba;
+		Object.keys(iopts).forEach(function(k){
+			opts[k] = iopts[k];
+		})
 	}
 
 	try {
@@ -24,5 +32,4 @@ module.exports = function(content) {
 		this.emitError(e.prettyMessage());
 		// this.callback(null,"");
 	}
-	
 }

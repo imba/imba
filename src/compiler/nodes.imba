@@ -6703,7 +6703,7 @@ export class Util < Node
 		CALL(CLASSDEF,[name or initor,sup])
 
 	def isStandalone
-		OPTS:standalone !== no
+		!!OPTS:nolib # !== no
 
 	def js o
 		"helper"

@@ -50,6 +50,7 @@
   },
   "directories": {},
   "main": "./index",
+  "browser": "./imba",
   "bin": {
     "imba": "./bin/imba",
     "imbac": "./bin/imbac",
