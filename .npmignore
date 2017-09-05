@@ -8,3 +8,7 @@ tmp
 .gitignore
 *.tgz
 *.log
+scripts/
+screenshot.png
+.gitattributes
+.editorconfig
