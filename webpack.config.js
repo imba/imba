@@ -2,7 +2,10 @@ var path = require('path');
 var webpack = require('webpack');
 
 var minify = new webpack.optimize.UglifyJsPlugin({
-	minimize: true, compress: { warnings: false }
+	minimize: true, compress: { warnings: false }, output: {
+    semicolons: false,
+    indent_level: 0
+  }
 });
 
 var loaders = [{
