@@ -79,8 +79,8 @@ if (typeof Imba !== 'undefined') {
 	console.warn(("Imba v" + (Imba.VERSION) + " is already loaded."));
 	module.exports = Imba;
 } else {
-	var Imba = __webpack_require__(5);
-	module.exports = Imba;
+	var imba = __webpack_require__(5);
+	module.exports = imba;
 	
 	
 	__webpack_require__(6);
@@ -229,6 +229,54 @@ True if running in server environment.
 Imba.isServer = function (){
 	return false;
 };
+
+
+/*
+
+Light wrapper around native setTimeout that expects the block / function
+as last argument (instead of first). It also triggers an event to Imba
+after the timeout to let schedulers update (to rerender etc) afterwards.
+
+*/
+
+Imba.setTimeout = function (delay,block){
+	return setTimeout(function() {
+		block();
+		return Imba.commit();
+	},delay);
+};
+
+/*
+
+Light wrapper around native setInterval that expects the block / function
+as last argument (instead of first). It also triggers an event to Imba
+after every interval to let schedulers update (to rerender etc) afterwards.
+
+*/
+
+Imba.setInterval = function (interval,block){
+	return setInterval(function() {
+		block();
+		return Imba.commit();
+	},interval);
+};
+
+/*
+Clear interval with specified id
+*/
+
+Imba.clearInterval = function (id){
+	return clearInterval(id);
+};
+
+/*
+Clear timeout with specified id
+*/
+
+Imba.clearTimeout = function (id){
+	return clearTimeout(id);
+};
+
 
 Imba.subclass = function (obj,sup){
 	;
@@ -529,52 +577,6 @@ Imba.requestAnimationFrame = function (callback){
 
 Imba.cancelAnimationFrame = function (id){
 	return cancelAnimationFrame(id);
-};
-
-/*
-
-Light wrapper around native setTimeout that expects the block / function
-as last argument (instead of first). It also triggers an event to Imba
-after the timeout to let schedulers update (to rerender etc) afterwards.
-
-*/
-
-Imba.setTimeout = function (delay,block){
-	return setTimeout(function() {
-		block();
-		return Imba.commit();
-	},delay);
-};
-
-/*
-
-Light wrapper around native setInterval that expects the block / function
-as last argument (instead of first). It also triggers an event to Imba
-after every interval to let schedulers update (to rerender etc) afterwards.
-
-*/
-
-Imba.setInterval = function (interval,block){
-	return setInterval(function() {
-		block();
-		return Imba.commit();
-	},interval);
-};
-
-/*
-Clear interval with specified id
-*/
-
-Imba.clearInterval = function (interval){
-	return clearInterval(interval);
-};
-
-/*
-Clear timeout with specified id
-*/
-
-Imba.clearTimeout = function (timeout){
-	return clearTimeout(timeout);
 };
 
 // should add an Imba.run / setImmediate that
@@ -1470,7 +1472,7 @@ Imba.Tag.prototype.template = function (){
 
 /*
 	If no custom render-method is defined, and the node
-	has a template, this method will used to render
+	has a template, this method will be used to render
 	@return {self}
 	*/
 

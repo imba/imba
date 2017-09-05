@@ -3,8 +3,8 @@ if typeof Imba !== 'undefined'
 	console.warn "Imba v{Imba.VERSION} is already loaded."
 	module:exports = Imba
 else
-	var Imba = require './imba'
-	module:exports = Imba
+	var imba = require './imba'
+	module:exports = imba
 
 	unless $webworker$
 		require './scheduler'
