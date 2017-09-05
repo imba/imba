@@ -38,7 +38,7 @@
     "test-phantom": "phantomjs test/client.js"
   },
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "1.0.0-rc.3",
+  "version": "1.0.0-rc.4",
   "licenses": [
     {
       "type": "MIT",
