@@ -81,42 +81,6 @@ def Imba.requestAnimationFrame callback
 def Imba.cancelAnimationFrame id
 	cancelAnimationFrame(id)
 
-###
-
-Light wrapper around native setTimeout that expects the block / function
-as last argument (instead of first). It also triggers an event to Imba
-after the timeout to let schedulers update (to rerender etc) afterwards.
-
-###
-def Imba.setTimeout delay, &block
-	setTimeout(&,delay) do
-		block()
-		Imba.commit
-
-###
-
-Light wrapper around native setInterval that expects the block / function
-as last argument (instead of first). It also triggers an event to Imba
-after every interval to let schedulers update (to rerender etc) afterwards.
-
-###
-def Imba.setInterval interval, &block
-	setInterval(&,interval) do
-		block()
-		Imba.commit
-
-###
-Clear interval with specified id
-###
-def Imba.clearInterval interval
-	clearInterval(interval)
-
-###
-Clear timeout with specified id
-###
-def Imba.clearTimeout timeout
-	clearTimeout(timeout)
-
 # should add an Imba.run / setImmediate that
 # pushes listener onto the tick-queue with times - once
 

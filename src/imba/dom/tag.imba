@@ -335,7 +335,7 @@ class Imba.Tag
 
 	###
 	If no custom render-method is defined, and the node
-	has a template, this method will used to render
+	has a template, this method will be used to render
 	@return {self}
 	###
 	def renderTemplate
