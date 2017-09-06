@@ -261,11 +261,13 @@ class Imba.Tag
 			dom.removeAttribute(name)
 
 	def setNestedAttr ns, name, value
-		if self[ns] isa Function and self[ns]:length > 1
-			self[ns](name,value)
-			return self
-
-		return setAttributeNS(ns, name,value)
+		if ns == 'css'
+			css(name,value)
+		elif self[ns+'SetAttribute']
+			self[ns+'SetAttribute'](name,value)
+		else
+			setAttributeNS(ns, name,value)
+		return self
 
 	def setAttributeNS ns, name, value
 		var old = getAttributeNS(ns,name)
