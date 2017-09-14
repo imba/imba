@@ -37,6 +37,7 @@ def Imba.static items, nr
 def Imba.mount node, into
 	into ||= Imba.document:body
 	into.appendChild(node.dom)
+	Imba.TagManager.insert(node,into)
 	Imba.commit
 	return node
 
@@ -753,6 +754,7 @@ class Imba.Tag
 		@return {Array}
 		###
 		def path sel
+			console.warn "Tag#path is deprecated"
 			# DEPRECATE extract into imba-tag-helpers
 			var node = self
 			var nodes = []
@@ -912,11 +914,15 @@ class Imba.Tag
 		self
 
 	def trigger event, data = {}
-		Imba.Events.trigger(event,self,data: data)
+		if $web$
+			Imba.Events.trigger(event,self,data: data)
+		else
+			self
 
 	def emit name, data: null, bubble: yes
 		console.warn('tag#emit is deprecated -> use tag#trigger')
-		Imba.Events.trigger name, self, data: data, bubble: bubble
+		if $web$
+			Imba.Events.trigger name, self, data: data, bubble: bubble
 		return self
 
 	def transform= value
