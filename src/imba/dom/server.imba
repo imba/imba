@@ -142,6 +142,14 @@ global class ImbaServerElement
 	def removeAttribute key
 		console.log "removeAttribute not implemented on server"
 		true
+	
+	# noop
+	def addEventListener
+		self
+	
+	# noop
+	def removeEventListener
+		self
 
 	def __innerHTML
 		return self:innerHTML || self:textContent || (self:children and self:children.join("")) or ''
