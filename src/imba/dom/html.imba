@@ -148,6 +148,7 @@ tag menu
 tag menuitem
 
 tag meta
+	attr property
 	attr content
 	attr charset
 
