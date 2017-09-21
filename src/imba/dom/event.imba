@@ -98,6 +98,10 @@ class Imba.Event
 		bubble = no
 		self
 
+
+	def stopPropagation
+		halt
+
 	###
 	Cancel the event (if cancelable). In the case of native events it
 	will call `preventDefault` on the wrapped event object.
@@ -107,6 +111,9 @@ class Imba.Event
 		event.preventDefault if event:preventDefault
 		@cancel = yes
 		self
+
+	def preventDefault
+		cancel
 
 	def silence
 		@silenced = yes
