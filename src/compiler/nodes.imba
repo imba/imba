@@ -5231,6 +5231,8 @@ export class For < Loop
 			if o:index
 				vars:index = scope.declare(o:index,0,type: 'let')
 				vars:index.addReference(o:index)
+			else
+				vars:index = vars:value
 				
 			if dynamic
 				vars:diff = scope.declare('rd',OP('-',vars:len,vars:value),type: 'let')
@@ -5355,7 +5357,7 @@ export class For < Loop
 				cond = If.ternary( OP('>',vars:diff,Num.new(0)), cond, OP(inc ? '>=' : '>',val,vars:len))
 				final = If.ternary( OP('>',vars:diff,Num.new(0)),OP('++',val),OP('--',val))
 			
-			if idx
+			if idx and idx != val
 				final = ExpressionBlock.new([final,OP('++',idx)])
 			
 		else
