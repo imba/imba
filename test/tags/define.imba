@@ -237,6 +237,16 @@ describe 'Tags - Define' do
 		catch e
 			ok false
 
+	test "forin range" do
+		tag Custom
+			def render
+				<self>
+					for v in [0..2]
+						<div> v
+
+		var node = <Custom>
+		eq node.toString, '<div class="Custom"><div>0</div><div>1</div><div>2</div></div>'
+
 	test "data syntax" do
 		var data = {a: 1,b : 2}
 		var el = <div[data]>
