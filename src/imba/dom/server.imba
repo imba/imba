@@ -1,5 +1,7 @@
 # imba$nolib=1
 
+var Imba = require("../imba")
+
 # TODO classes should not be global,
 # rather imported where they are needed
 

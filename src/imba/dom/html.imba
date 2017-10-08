@@ -1,5 +1,7 @@
 # imba$nolib=1
 
+var Imba = require("../imba")
+
 # predefine all supported html tags
 tag fragment < element
 

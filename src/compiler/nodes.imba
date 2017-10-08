@@ -430,8 +430,6 @@ export class Stack
 # Lots of globals -- really need to deal with one stack per file / context
 export var STACK = Stack.new
 
-GLOBSTACK = STACK
-
 # use a bitmask for these
 
 export class Node
@@ -1110,7 +1108,7 @@ export class Block < ListNode
 				@indentation = null
 
 				if node.reactive
-					@nodes = [Util.callImba("static",[arr,Num.new(nr)])]
+					@nodes = [Util.callImba(scope__, "static",[arr,Num.new(nr)])]
 				else
 					@nodes = [arr]
 
@@ -2202,18 +2200,10 @@ export class TagDeclaration < Code
 		@body = blk__(body || [])
 
 	def visit
-		scope.requires('imba')
-
 		if String(name).match(/^[A-Z]/)
 			set(isClass: yes)
 
 		ROOT.entities.register(self) # what if this is not local?
-
-		for scope,i in STACK.scopes
-			if i > 0 and scope isa TagScope
-				scope.node.option(:hasLocalTags,yes)
-				option(:parent,scope.node)
-				break
 
 		# replace with some advanced lookup?
 		scope.visit
@@ -2245,10 +2235,7 @@ export class TagDeclaration < Code
 			params.push(supname)
 
 		if body.count
-			if option(:hasLocalTags)
-				params.push("function({@ctx.c},{scope.closure.tagContextPath})\{{cbody}\}")
-			else
-				params.push("function({@ctx.c})\{{cbody}\}")
+			params.push("function({@ctx.c})\{{cbody}\}")
 
 		var meth = option(:extension) ? 'extendTag' : 'defineTag'
 
@@ -2583,7 +2570,7 @@ export class PropertyDeclaration < Node
 		if pars:inline
 			if pars:inline isa Bool and !pars:inline.isTruthy
 				o.remove('inline')
-				return "Imba.{@token}({js:scope},'{name.value}',{o.c})".replace(',{})',')')
+				return "{scope__.imba.c}.{@token}({js:scope},'{name.value}',{o.c})".replace(',{})',')')
 
 		var tpl = propTemplate
 
@@ -2606,7 +2593,7 @@ export class PropertyDeclaration < Node
 				let fn = OP('.',This.new,wfn)
 				js:ondirty = OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 			else
-				js:ondirty = "Imba.propDidSet(this,this.__{key},v,a)"
+				js:ondirty = "{scope__.imba.c}.propDidSet(this,this.__{key},v,a)"
 
 
 		if pars:observe
@@ -2614,7 +2601,7 @@ export class PropertyDeclaration < Node
 				o.key(:observe).value = Symbol.new("{key}DidEmit")
 
 			tpl = propWatchTemplate
-			js:ondirty = "Imba.observeProperty(this,'{key}',{o.key(:observe).value.c},v,a);" + (js:ondirty or '')
+			js:ondirty = "{scope__.imba.c}.observeProperty(this,'{key}',{o.key(:observe).value.c},v,a);" + (js:ondirty or '')
 			# OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 
 		if !isAttr and o.key(:dom)
@@ -4588,7 +4575,7 @@ export class TagTypeIdentifier < Identifier
 		return @str
 
 	def js o
-		return "Imba.TAGS.{@str.replace(":","$")}"
+		return "{scope__.tagContextPath}.{@str.replace(":","$")}"
 
 	def c
 		js
@@ -5664,8 +5651,8 @@ export class Splat < ValueNode
 
 # TAGS
 
-TAG_TYPES = {}
-TAG_ATTRS = {}
+var TAG_TYPES = {}
+var TAG_ATTRS = {}
 
 TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br
  button canvas caption cite code col colgroup data datalist dd del details dfn
@@ -5790,8 +5777,6 @@ export class Tag < Node
 
 
 	def visit
-		scope__.requires('imba')
-
 		var o = @options
 
 		if o:ivar or o:key
@@ -6185,7 +6170,7 @@ export class TagTree < ListNode
 
 		if !single or single isa If
 			if shouldMarkArray
-				"Imba.static([{out}],1)"
+				"{scope__.imba.c}.static([{out}],1)"
 			else
 				"[{out}]"
 		else
@@ -6312,13 +6297,14 @@ export class Selector < ListNode
 	def js o
 		var typ = option(:type)
 		var q = c__(query)
+		var imba = scope__.imba.c
 
 		if typ == '%'
-			"q$({q},{o.scope.context.c(explicit: yes)})" # explicit context
+			"{imba}.q$({q},{o.scope.context.c(explicit: yes)})" # explicit context
 		elif typ == '%%'
-			"q$$({q},{o.scope.context.c(explicit: yes)})"
+			"{imba}.q$$({q},{o.scope.context.c(explicit: yes)})"
 		else
-			"q{typ}({q})"
+			"{imba}.q{typ}({q})"
 
 		# return "{typ} {scoped} - {all}"
 
@@ -6638,8 +6624,8 @@ export class Util < Node
 	def self.extend a,b
 		Util.Extend.new([a,b])
 
-	def self.callImba meth, args
-		CALL(OP('.',Const.new("Imba"),Identifier.new(meth)),args)
+	def self.callImba scope, meth, args
+		CALL(OP('.',scope.imba,Identifier.new(meth)),args)
 
 	def self.repeat str, times
 		var res = ''
@@ -6773,8 +6759,7 @@ export class Util.IndexOf < Util
 			# When this is triggered, we need to add it to the top of file?
 			"idx$({args.map(|v| v.c ).join(',')})"
 		else
-			scope__.requires('imba')
-			"Imba.indexOf({args.map(|v| v.c ).join(',')})"
+			"{scope__.imba.c}.indexOf({args.map(|v| v.c ).join(',')})"
 
 export class Util.Len < Util
 
@@ -6792,8 +6777,7 @@ export class Util.Len < Util
 			# When this is triggered, we need to add it to the top of file?
 			"len$({args.map(|v| v.c ).join(',')})"
 		else
-			scope__.requires('imba')
-			"Imba.len({args.map(|v| v.c ).join(',')})"
+			"{scope__.imba.c}.len({args.map(|v| v.c ).join(',')})"
 
 
 export class Util.Subclass < Util
@@ -6820,8 +6804,7 @@ export class Util.Subclass < Util
 			scope__.root.helper(self,helper)
 			"subclass$({args.map(|v| v.c).join(',')});\n"
 		else
-			scope__.requires('imba')
-			"Imba.subclass({args.map(|v| v.c).join(',')});\n"
+			"{scope__.imba.c}.subclass({args.map(|v| v.c).join(',')});\n"
 
 export class Util.Promisify < Util
 
@@ -6835,8 +6818,7 @@ export class Util.Promisify < Util
 			scope__.root.helper(self,helper)
 			"promise$({args.map(|v| v.c).join(',')})"
 		else
-			scope__.requires('imba')
-			"Imba.await({args.map(|v| v.c).join(',')})"
+			"{scope__.imba.c}.await({args.map(|v| v.c).join(',')})"
 
 # TODO deprecated: can remove
 export class Util.Class < Util
@@ -6859,8 +6841,7 @@ export class Util.Iterable < Util
 			scope__.root.helper(self,helper)
 			return "iter$({args[0].c})"
 		else
-			scope__.requires('imba')
-			return "Imba.iterable({args[0].c})"
+			return "{scope__.imba.c}.iterable({args[0].c})"
 
 export class Util.IsFunction < Util
 
@@ -6951,9 +6932,12 @@ export class Scope
 	def namepath
 		'?'
 
+	def imbaTags
+		"{imba.c}.TAGS"
+
 	def tagContextPath
 		# bypassing for now
-		@tagContextPath ||= "_T" # "_T" # parent.tagContextPath
+		@tagContextPath ||= imbaTags
 
 	def tagContextCache
 		@tagContextCache ||= closure.declare("__",OP('.',context.reference,'__'))
@@ -7055,6 +7039,9 @@ export class Scope
 
 	def requires path, name = ''
 		root.requires(path,name)
+
+	def imba
+		root.requires('imba', 'Imba')
 
 	def autodeclare variable
 		vars.push(variable) # only if it does not exist here!!!
@@ -7204,31 +7191,28 @@ export class RootScope < Scope
 		return obj
 
 	# not yet used
-	def requires path, name = ''
-		if @requires[path]
-			return @requires[path]
+	def requires path, name
+		if var variable = lookup(name)
+			return variable
+
+		if var variable = @requires[name]
+			if variable.@requirePath != path
+				throw Error.new("{name} is already defined as require('{variable.@requirePath}')")
+			return variable
 
 		var req = Require.new(Str.new("'" + path + "'"))
-
-		if name
-			var val = @requires[path] = declare(name,req)
-			return val
-		else
-			@requires[path] = req # what if there is a conflict?
-			# @head.push(@requires[path] = req)
-			return req
+		var variable = Variable.new(self,name,null,system: yes)
+		var dec = @vars.add(variable, req)
+		variable.declarator ||= dec
+		variable.@requirePath = path
+		@requires[name] = variable
+		return variable
 
 	def c o = {}
 		o:expression = no
 		# need to fix this
 		node.body.head = head
 		var body = node.body.c(o)
-
-		var reqs = for own k,v of @requires
-			v.c(o) + ';'
-
-		if reqs:length and !OPTS:nolib
-			body = reqs.join("\n") + '\n' + body
 
 		return body
 
@@ -7681,7 +7665,6 @@ export var UNION = Const.new('union$')
 export var INTERSECT = Const.new('intersect$')
 export var CLASSDEF = Const.new('imba$class')
 export var TAGDEF = Const.new('Imba.TAGS.define')
-export var NEWTAG = Identifier.new("_T")
 
 
 

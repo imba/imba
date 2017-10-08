@@ -1,5 +1,7 @@
 # imba$nolib=1
 
+var Imba = require("../imba")
+
 class Imba.Pointer
 
 	prop phase

@@ -1,5 +1,7 @@
 # imba$nolib=1
 
+var Imba = require("../imba")
+
 unless $drop_deprecated$
 	###
 	The special syntax for selectors in Imba creates Imba.Selector
@@ -157,10 +159,10 @@ unless $drop_deprecated$
 
 
 	# def Imba.querySelectorAll
-	q$ = do |sel,scope| Imba.Selector.new(sel, scope)
+	Imba:q$ = do |sel,scope| Imba.Selector.new(sel, scope)
 
 	# def Imba.Selector.one
-	q$$ = do |sel,scope| 
+	Imba:q$$ = do |sel,scope| 
 		var el = (scope || Imba.document).querySelector(sel)
 		el && tag(el) || nil
 

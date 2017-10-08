@@ -1,5 +1,7 @@
 # imba$nolib=1
 
+var Imba = require("../imba")
+
 tag svg:element
 
 	def self.namespaceURI

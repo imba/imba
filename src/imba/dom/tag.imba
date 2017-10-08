@@ -1,6 +1,6 @@
 # imba$nolib=1
 
-extern _T
+var Imba = require("../imba")
 
 Imba.CSSKeyMap = {}
 
@@ -1158,9 +1158,9 @@ def Imba.getTagForDom dom
 	spawner ? spawner.new(dom).awaken(dom) : null
 
 # TODO drop these globals
-_T = Imba.TAGS
-id$ = Imba:getTagSingleton
-tag$wrap = Imba:getTagForDom
+var _T = Imba.TAGS
+# id$ = Imba:getTagSingleton
+# tag$wrap = Imba:getTagForDom
 
 def Imba.generateCSSPrefixes
 	var styles = window.getComputedStyle(document:documentElement, '')

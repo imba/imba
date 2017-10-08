@@ -1,3 +1,5 @@
+var Imba = require("../imba")
+
 class Imba.TagManagerClass
 
 	prop inserts
