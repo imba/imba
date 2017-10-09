@@ -20,6 +20,12 @@ describe "Syntax - Variables" do
 		var a
 		var b
 
+	test "lookup let variables" do
+		let Hello = 10
+		if 100 > 10
+			let Hello = 20
+			eq Hello, 20
+
 	test "allow predeclaring multiple variables" do
 		var [a,b,c] = 1,2,3
 		var x,y,z
