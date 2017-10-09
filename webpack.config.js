@@ -26,8 +26,8 @@ module.exports = [{
 		},
 		libraryTarget: "umd"
 	},
-	node: {fs: false, process: false, global: false}
-	// plugins: [minify]
+	node: {fs: false, process: false, global: false},
+	plugins: [minify]
 },{
 	module: {loaders: loaders},
 	resolve: {extensions: ['*', '.imba', '.js']},
