@@ -9,7 +9,6 @@ module.exports = function(content) {
 		target: this.target,
 		ENV_DEBUG: this.debug,
 		ENV_WEBPACK: true,
-		standalone: false,
 		bare: true
 	};
 

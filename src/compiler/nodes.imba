@@ -2149,7 +2149,8 @@ export class ClassDeclaration < Code
 
 		# only if it is not namespaced
 		if o:global and !namespaced # option(:global)
-			head.push("global.{cname} = {cpath}; // global class \n")
+			let globalName = STACK.platform == 'web' ? "window" : "global"
+			head.push("{globalName}.{cname} = {cpath}; // global class \n")
 
 		if o:export and !namespaced
 			head.push("exports.{o:default ? 'default' : cname} = {cpath}; // export class \n")
@@ -4509,7 +4510,7 @@ export class TagId < Identifier
 		self
 
 	def c
-		"id$('{value.c.substr(1)}')"
+		"{scope__.imba.c}.getTagSingleton('{value.c.substr(1)}')"
 
 
 # This is not an identifier - it is really a string
@@ -6213,8 +6214,7 @@ export class TagWrapper < ValueNode
 		self
 
 	def c
-		"tag$wrap({value.c(expression: yes)})"
-
+		"{scope__.imba.c}.getTagForDom({value.c(expression: yes)})"
 
 export class TagAttributes < ListNode
 
