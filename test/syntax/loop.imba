@@ -165,6 +165,14 @@ describe 'Syntax - Loops' do
 
 	describe "For Of" do
 
+		test "dont override value" do
+			var obj = {a: 1,b: 2}
+			for own k,v of obj
+				v = 3
+
+			eq obj:a,1
+			eq obj:b,2
+
 		test "all keys assignment" do
 			var o = 0
 			var l = 0
@@ -209,6 +217,17 @@ describe 'Syntax - Loops' do
 			var v = []
 			m(v)
 			eq v, [:a,1,:b,2,:c,3]
+
+		test "for own of global bug" do
+
+			var obj = {a: 1, b: 2}
+			def hello
+				for own forOfKeyVar,v of obj
+					forOfKeyVar
+					forOfKeyVar
+					forOfKeyVar
+			hello
+			ok `typeof forOfKeyVar === 'undefined'`
 
 
 	test "implicit return from assignment" do
