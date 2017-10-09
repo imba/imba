@@ -17,9 +17,17 @@ module.exports = [{
 	module: {loaders: loaders},
 	resolve: {extensions: ['*', '.imba', '.js']},
 	entry: "./src/imba/index.imba",
-	output: { filename: "./imba.js"},
-	node: {fs: false, process: false, global: false},
-	plugins: [minify]
+	output: {
+		filename: "./imba.js",
+		library: {
+			root: "Imba",
+			amd: "imba",
+			commonjs: "imba"
+		},
+		libraryTarget: "umd"
+	},
+	node: {fs: false, process: false, global: false}
+	// plugins: [minify]
 },{
 	module: {loaders: loaders},
 	resolve: {extensions: ['*', '.imba', '.js']},
