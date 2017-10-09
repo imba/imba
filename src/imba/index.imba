@@ -6,6 +6,8 @@ if typeof window !== 'undefined'
 		Imba = window.Imba
 	else
 		window.Imba = Imba
+		if window:define and window:define:amd
+			window.define("imba",[]) do return Imba
 
 module.exports = Imba
 

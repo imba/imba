@@ -452,6 +452,9 @@ if (typeof window !== 'undefined') {
 		Imba = window.Imba;
 	} else {
 		window.Imba = Imba;
+		if (window.define && window.define.amd) {
+			window.define("imba",[],function() { return Imba; });
+		};
 	};
 };
 
