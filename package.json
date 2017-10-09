@@ -1,4 +1,4 @@
- {
+{
   "name": "imba",
   "description": "A rich language for the web",
   "keywords": [
@@ -38,7 +38,7 @@
     "test-phantom": "phantomjs test/client.js"
   },
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "1.0.0-rc.6",
+  "version": "1.0.0-rc.7",
   "licenses": [
     {
       "type": "MIT",
@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "underscore": "^1.8.3",
-    "webpack": "^1.13.2"
+    "webpack": "^3.6.0"
   },
   "dependencies": {}
 }
