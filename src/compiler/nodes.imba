@@ -776,6 +776,9 @@ export class Newline < Terminator
 # weird place?
 export class Index < ValueNode
 
+	def cache o = {}
+		@value.cache(o)
+
 	def js o
 		@value.c
 
@@ -2786,7 +2789,6 @@ export class Num < Literal
 
 	def js o
 		var num = String(@value)
-		# console.log "compiled num to {num}"
 		return num
 
 	def c o
@@ -2795,7 +2797,6 @@ export class Num < Literal
 		var par = STACK.current
 		var paren = par isa Access and par.left == self
 		# only if this is the right part of teh acces
-		# console.log "should paren?? {shouldParenthesize}"
 		paren ? "({mark__(@value)}" + js + ")" : (mark__(@value) + js)
 		# @cache ? super(o) : String(@value)
 
@@ -3710,8 +3711,6 @@ export class VarOrAccess < ValueNode
 
 	def cache o = {}
 		@variable ? (o:force and super(o)) : value.cache(o)
-		# should we really cache this?
-		# value.cache(o)
 
 	def decache
 		@variable ? super() : value.decache
@@ -5395,11 +5394,13 @@ export class ForOf < For
 
 		if o:own
 			# var i = vars:index = scope.declare('i',0,system: true, type: 'let') # mark as a counter?
-			var i = vars:index = util.counter(0,yes,scope).predeclare
+			# var i = vars:index = util.counter(0,yes,scope).predeclare
+			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'counter', unique: yes)
+
 			# systemvariable -- should not really be added to the map
 			var keys = vars:keys = scope.declare('keys',Util.keys(src.accessor),system: yes, type: 'let') # the outer one should resolve first
 			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
-			var k = vars:key = scope.register(o:name,o:name,type: 'let') # scope.declare(o:name,null,system: yes)
+			var k = vars:key = scope.declare(o:name,null,type: 'let') # scope.declare(o:name,null,system: yes)
 		else
 			# we set the var -- why even declare it
 			# no need to declare -- it will declare itself in the loop - no?
@@ -5419,23 +5420,26 @@ export class ForOf < For
 		var v = vars:value
 		var i = vars:index
 
+		var code
 
 		if v
 			# set value as proxy of object[key]
 			# possibly make it a ref? what is happening?
-			v.refcount < 3 ? v.proxy(o,k) : body.unshift(OP('=',v,OP('.',o,k)))
+			# v.refcount < 3 ? v.proxy(o,k) : 
+			if v.refcount > 0
+				body.unshift(OP('=',v,OP('.',o,k)))
 
 		if options:own
 
-			if k.refcount < 3 # should probably adjust these
-				k.proxy(vars:keys,i)
-			else
-				body.unshift(OP('=',k,OP('.',vars:keys,i)))
-
+			# if k.refcount < 3 # should probably adjust these
+			#	k.proxy(vars:keys,i)
+			# else
+			body.unshift(OP('=',k,OP('.',vars:keys,i)))
+			code = body.c(indent: yes, braces: yes) # .wrap
 			var head = "{mark__(options:keyword)}for ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
-			return head + body.c(indent: yes, braces: yes) # .wrap
+			return head + code
 
-		var code = body.c(braces: yes, indent: yes)
+		code = body.c(braces: yes, indent: yes)
 		# it is really important that this is a treated as a statement
 		scope.vars.c + ";\n{mark__(options:keyword)}for (var {k.c} in {o.c})" + code
 
@@ -7002,12 +7006,12 @@ export class Scope
 
 		# also look at outer scopes if this is not closed?
 		var existing = @varmap.hasOwnProperty(name) && @varmap[name]
-		return existing if existing
+		return existing if existing and !o:unique
 
 		var item = Variable.new(self,name,decl,o)
 		# need to check for duplicates, and handle this gracefully -
 		# going to refactor later
-		@varmap[name] = item unless o:system
+		@varmap[name] = item if !o:system and !existing
 		return item
 
 	def annotate obj
@@ -7433,6 +7437,9 @@ export class Variable < Node
 		self
 
 	def node
+		self
+
+	def cache
 		self
 
 	def traverse
