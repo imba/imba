@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -345,11 +345,91 @@ module.exports = Imba;
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(5);
+module.exports = __webpack_require__(6);
 
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Imba = __webpack_require__(1);
+
+Imba.Pointer = function Pointer(){
+	this.setButton(-1);
+	this.setEvent({x: 0,y: 0,type: 'uninitialized'});
+	return this;
+};
+
+Imba.Pointer.prototype.phase = function(v){ return this._phase; }
+Imba.Pointer.prototype.setPhase = function(v){ this._phase = v; return this; };
+Imba.Pointer.prototype.prevEvent = function(v){ return this._prevEvent; }
+Imba.Pointer.prototype.setPrevEvent = function(v){ this._prevEvent = v; return this; };
+Imba.Pointer.prototype.button = function(v){ return this._button; }
+Imba.Pointer.prototype.setButton = function(v){ this._button = v; return this; };
+Imba.Pointer.prototype.event = function(v){ return this._event; }
+Imba.Pointer.prototype.setEvent = function(v){ this._event = v; return this; };
+Imba.Pointer.prototype.dirty = function(v){ return this._dirty; }
+Imba.Pointer.prototype.setDirty = function(v){ this._dirty = v; return this; };
+Imba.Pointer.prototype.events = function(v){ return this._events; }
+Imba.Pointer.prototype.setEvents = function(v){ this._events = v; return this; };
+Imba.Pointer.prototype.touch = function(v){ return this._touch; }
+Imba.Pointer.prototype.setTouch = function(v){ this._touch = v; return this; };
+
+Imba.Pointer.prototype.update = function (e){
+	this.setEvent(e);
+	this.setDirty(true);
+	return this;
+};
+
+// this is just for regular mouse now
+Imba.Pointer.prototype.process = function (){
+	var e1 = this.event();
+	
+	if (this.dirty()) {
+		this.setPrevEvent(e1);
+		this.setDirty(false);
+		
+		// button should only change on mousedown etc
+		if (e1.type == 'mousedown') {
+			this.setButton(e1.button);
+			
+			// do not create touch for right click
+			if (this.button() == 2 || (this.touch() && this.button() != 0)) {
+				return;
+			};
+			
+			// cancel the previous touch
+			if (this.touch()) { this.touch().cancel() };
+			this.setTouch(new Imba.Touch(e1,this));
+			this.touch().mousedown(e1,e1);
+		} else if (e1.type == 'mousemove') {
+			if (this.touch()) { this.touch().mousemove(e1,e1) };
+		} else if (e1.type == 'mouseup') {
+			this.setButton(-1);
+			
+			if (this.touch() && this.touch().button() == e1.button) {
+				this.touch().mouseup(e1,e1);
+				this.setTouch(null);
+			};
+			// trigger pointerup
+		};
+	} else {
+		if (this.touch()) { this.touch().idle() };
+	};
+	return this;
+};
+
+Imba.Pointer.prototype.x = function (){
+	return this.event().x;
+};
+
+Imba.Pointer.prototype.y = function (){
+	return this.event().y;
+};
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0);
@@ -385,7 +465,7 @@ exports.A = A,exports.B = B;
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -441,17 +521,18 @@ SPEC.run(function(exitCode) {
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(1);
-
+var activate = false;
 if (typeof window !== 'undefined') {
 	if (window.Imba) {
 		console.warn(("Imba v" + (Imba.VERSION) + " is already loaded."));
 		Imba = window.Imba;
 	} else {
 		window.Imba = Imba;
+		activate = true;
 		if (window.define && window.define.amd) {
 			window.define("imba",[],function() { return Imba; });
 		};
@@ -461,15 +542,19 @@ if (typeof window !== 'undefined') {
 module.exports = Imba;
 
 
-__webpack_require__(6);
 __webpack_require__(7);
+__webpack_require__(8);
 
+
+if (activate) {
+	Imba.EventManager.activate();
+};
 
 
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -836,20 +921,19 @@ Imba.Scheduler.prototype.onevent = function (event){
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba_;
 var Imba = __webpack_require__(1);
 
-__webpack_require__(8);
+__webpack_require__(9);
 
 Imba.TagManager = new Imba.TagManagerClass();
 
-__webpack_require__(9);
 __webpack_require__(10);
 __webpack_require__(11);
 __webpack_require__(12);
+__webpack_require__(3);
 __webpack_require__(13);
 __webpack_require__(14);
 __webpack_require__(15);
@@ -862,78 +946,8 @@ __webpack_require__(17);
 
 
 
-Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
-
-Imba.Events = new Imba.EventManager(Imba.document(),{events: [
-	'keydown','keyup','keypress',
-	'textInput','input','change','submit',
-	'focusin','focusout','focus','blur',
-	'contextmenu','dblclick',
-	'mousewheel','wheel','scroll',
-	'beforecopy','copy',
-	'beforepaste','paste',
-	'beforecut','cut'
-]});
-
-// should listen to dragdrop events by default
-Imba.Events.register([
-	'dragstart','drag','dragend',
-	'dragenter','dragover','dragleave','dragexit','drop'
-]);
-
-var hasTouchEvents = window && window.ontouchstart !== undefined;
-
-if (hasTouchEvents) {
-	Imba.Events.listen('touchstart',function(e) {
-		return Imba.Touch.ontouchstart(e);
-	});
-	
-	Imba.Events.listen('touchmove',function(e) {
-		return Imba.Touch.ontouchmove(e);
-	});
-	
-	Imba.Events.listen('touchend',function(e) {
-		return Imba.Touch.ontouchend(e);
-	});
-	
-	Imba.Events.listen('touchcancel',function(e) {
-		return Imba.Touch.ontouchcancel(e);
-	});
-};
-
-Imba.Events.register('click',function(e) {
-	// Only for main mousebutton, no?
-	if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-		var tap = new Imba.Event(e);
-		tap.setType('tap');
-		tap.process();
-		if (tap._responder) {
-			return e.preventDefault();
-		};
-	};
-	// delegate the real click event
-	return Imba.Events.delegate(e);
-});
-
-Imba.Events.listen('mousedown',function(e) {
-	if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-		if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-	};
-});
-
-Imba.Events.listen('mouseup',function(e) {
-	if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-		if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-	};
-});
-
-Imba.Events.register(['mousedown','mouseup']);
-Imba.Events.setEnabled(true);
-
-
-
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -1046,7 +1060,7 @@ Imba.TagManagerClass.prototype.tryUnmount = function (){
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -2562,7 +2576,7 @@ Imba.Tag;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(1);
@@ -2996,7 +3010,7 @@ true;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(1);
@@ -3116,86 +3130,6 @@ Imba.TAGS.ns('svg').defineTag('tspan', function(tag){
 	Imba.attr(tag,'textLength');
 	Imba.attr(tag,'lengthAdjust');
 });
-
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Imba = __webpack_require__(1);
-
-Imba.Pointer = function Pointer(){
-	this.setButton(-1);
-	this.setEvent({x: 0,y: 0,type: 'uninitialized'});
-	return this;
-};
-
-Imba.Pointer.prototype.phase = function(v){ return this._phase; }
-Imba.Pointer.prototype.setPhase = function(v){ this._phase = v; return this; };
-Imba.Pointer.prototype.prevEvent = function(v){ return this._prevEvent; }
-Imba.Pointer.prototype.setPrevEvent = function(v){ this._prevEvent = v; return this; };
-Imba.Pointer.prototype.button = function(v){ return this._button; }
-Imba.Pointer.prototype.setButton = function(v){ this._button = v; return this; };
-Imba.Pointer.prototype.event = function(v){ return this._event; }
-Imba.Pointer.prototype.setEvent = function(v){ this._event = v; return this; };
-Imba.Pointer.prototype.dirty = function(v){ return this._dirty; }
-Imba.Pointer.prototype.setDirty = function(v){ this._dirty = v; return this; };
-Imba.Pointer.prototype.events = function(v){ return this._events; }
-Imba.Pointer.prototype.setEvents = function(v){ this._events = v; return this; };
-Imba.Pointer.prototype.touch = function(v){ return this._touch; }
-Imba.Pointer.prototype.setTouch = function(v){ this._touch = v; return this; };
-
-Imba.Pointer.prototype.update = function (e){
-	this.setEvent(e);
-	this.setDirty(true);
-	return this;
-};
-
-// this is just for regular mouse now
-Imba.Pointer.prototype.process = function (){
-	var e1 = this.event();
-	
-	if (this.dirty()) {
-		this.setPrevEvent(e1);
-		this.setDirty(false);
-		
-		// button should only change on mousedown etc
-		if (e1.type == 'mousedown') {
-			this.setButton(e1.button);
-			
-			// do not create touch for right click
-			if (this.button() == 2 || (this.touch() && this.button() != 0)) {
-				return;
-			};
-			
-			// cancel the previous touch
-			if (this.touch()) { this.touch().cancel() };
-			this.setTouch(new Imba.Touch(e1,this));
-			this.touch().mousedown(e1,e1);
-		} else if (e1.type == 'mousemove') {
-			if (this.touch()) { this.touch().mousemove(e1,e1) };
-		} else if (e1.type == 'mouseup') {
-			this.setButton(-1);
-			
-			if (this.touch() && this.touch().button() == e1.button) {
-				this.touch().mouseup(e1,e1);
-				this.setTouch(null);
-			};
-			// trigger pointerup
-		};
-	} else {
-		if (this.touch()) { this.touch().idle() };
-	};
-	return this;
-};
-
-Imba.Pointer.prototype.x = function (){
-	return this.event().x;
-};
-
-Imba.Pointer.prototype.y = function (){
-	return this.event().y;
-};
 
 
 /***/ }),
@@ -4104,6 +4038,7 @@ Imba.Event.prototype.which = function (){
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(1);
+__webpack_require__(3);
 
 /*
 
@@ -4161,6 +4096,83 @@ Imba.EventManager.prototype.enabledDidSet = function (bool){
 	bool ? this.onenable() : this.ondisable();
 	return this;
 };
+
+Imba.EventManager.activate = function (){
+	var Imba_;
+	if (Imba.Events) { return Imba.Events };
+	
+	
+	Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
+	
+	Imba.Events = new Imba.EventManager(Imba.document(),{events: [
+		'keydown','keyup','keypress',
+		'textInput','input','change','submit',
+		'focusin','focusout','focus','blur',
+		'contextmenu','dblclick',
+		'mousewheel','wheel','scroll',
+		'beforecopy','copy',
+		'beforepaste','paste',
+		'beforecut','cut'
+	]});
+	
+	// should listen to dragdrop events by default
+	Imba.Events.register([
+		'dragstart','drag','dragend',
+		'dragenter','dragover','dragleave','dragexit','drop'
+	]);
+	
+	var hasTouchEvents = window && window.ontouchstart !== undefined;
+	
+	if (hasTouchEvents) {
+		Imba.Events.listen('touchstart',function(e) {
+			return Imba.Touch.ontouchstart(e);
+		});
+		
+		Imba.Events.listen('touchmove',function(e) {
+			return Imba.Touch.ontouchmove(e);
+		});
+		
+		Imba.Events.listen('touchend',function(e) {
+			return Imba.Touch.ontouchend(e);
+		});
+		
+		Imba.Events.listen('touchcancel',function(e) {
+			return Imba.Touch.ontouchcancel(e);
+		});
+	};
+	
+	Imba.Events.register('click',function(e) {
+		// Only for main mousebutton, no?
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			var tap = new Imba.Event(e);
+			tap.setType('tap');
+			tap.process();
+			if (tap._responder) {
+				return e.preventDefault();
+			};
+		};
+		// delegate the real click event
+		return Imba.Events.delegate(e);
+	});
+	
+	Imba.Events.listen('mousedown',function(e) {
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		};
+	});
+	
+	Imba.Events.listen('mouseup',function(e) {
+		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		};
+	});
+	
+	Imba.Events.register(['mousedown','mouseup']);
+	Imba.Events.setEnabled(true);
+	return Imba.Events;
+	
+};
+
 
 /*
 
@@ -7622,10 +7634,10 @@ var Imba = __webpack_require__(0);
 // externs;
 
 // import two specific items from module
-var module$ = __webpack_require__(3), Item = module$.Item, hello = module$.hello;
+var module$ = __webpack_require__(4), Item = module$.Item, hello = module$.hello;
 
 // import everything from module into a local namespace/variable 'm'
-var m = __webpack_require__(3);
+var m = __webpack_require__(4);
 
 function Sub(){ return Item.apply(this,arguments) };
 
@@ -11105,7 +11117,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 /* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var self = this, Imba = __webpack_require__(0);
+var Imba = __webpack_require__(0), self = this;
 // to run these tests, simply open the imbadir/test/dom.html in your browser and
 // open the console / developer tools.
 
