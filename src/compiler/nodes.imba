@@ -4560,13 +4560,17 @@ export class Const < Identifier
 		@symbol ||= sym__(value)
 
 	def js o
-		symbol
+		@variable ? @variable.c : symbol
+
+	def traverse
+		@variable = scope__.lookup(value)
+		super
 
 	def c
 		if option(:export)
-			"exports.{@value} = " + mark__(@value) + symbol
+			"exports.{@value} = " + mark__(@value) + js
 		else
-			mark__(@value) + symbol
+			mark__(@value) + js
 
 
 export class TagTypeIdentifier < Identifier
