@@ -34,7 +34,7 @@ Usage: imbac [options] path/to/script.imba
   -a, --analyze          print out the scopes and variables of your script
   -h, --help             display this help message
   -m, --source-map       generate source map and add inline to .js files
-      --nolib            inline helpers to not depend on imba.js
+      --inline-helpers   inline helpers to not depend on imba.js
   -o, --output [dir]     set the output directory for compiled JavaScript
   -p, --print            print out the compiled JavaScript
   -s, --stdio            listen for and compile scripts over stdio

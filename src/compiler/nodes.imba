@@ -6698,8 +6698,8 @@ export class Util < Node
 	def self.defineClass name, supr, initor
 		CALL(CLASSDEF,[name or initor,sup])
 
-	def isStandalone
-		!!OPTS:nolib # !== no
+	def inlineHelpers
+		!!OPTS:inlineHelpers
 
 	def js o
 		"helper"
@@ -6762,7 +6762,7 @@ export class Util.IndexOf < Util
 		'''
 
 	def js o
-		if isStandalone
+		if inlineHelpers
 			scope__.root.helper(self,helper)
 			# When this is triggered, we need to add it to the top of file?
 			"idx$({args.map(|v| v.c ).join(',')})"
@@ -6807,7 +6807,7 @@ export class Util.Subclass < Util
 		'''
 
 	def js o
-		if isStandalone
+		if inlineHelpers
 			# When this is triggered, we need to add it to the top of file?
 			scope__.root.helper(self,helper)
 			"subclass$({args.map(|v| v.c).join(',')});\n"
@@ -6821,7 +6821,7 @@ export class Util.Promisify < Util
 		"function promise$(a)\{ return a instanceof Array ? Promise.all(a) : (a && a.then ? a : Promise.resolve(a)); \}"
 
 	def js o
-		if isStandalone
+		if inlineHelpers
 			# When this is triggered, we need to add it to the top of file?
 			scope__.root.helper(self,helper)
 			"promise$({args.map(|v| v.c).join(',')})"
