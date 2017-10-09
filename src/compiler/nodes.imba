@@ -4551,8 +4551,17 @@ export class Const < Identifier
 		@variable ? @variable.c : symbol
 
 	def traverse
-		@variable = scope__.lookup(value)
-		super
+		if @traversed
+			return
+
+		@traversed = true
+		var curr = STACK.current
+		if !(curr isa Access) or curr.left == self
+			if symbol == "Imba"
+				@variable = scope__.imba
+			else
+				@variable = scope__.lookup(value)
+		self
 
 	def c
 		if option(:export)
