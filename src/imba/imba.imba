@@ -4,14 +4,7 @@
 Imba is the namespace for all runtime related utilities
 @namespace
 ###
-Imba = {VERSION: '1.0.0-rc.4'}
-
-if typeof window !== 'undefined'
-	window:imba = Imba
-	window:global ||= window
-
-	if window:define and window:define:amd
-		window.define("imba",[]) do return Imba
+var Imba = {VERSION: '1.0.0-rc.4'}
 
 ###
 True if running in client environment.

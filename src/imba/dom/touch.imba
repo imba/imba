@@ -1,3 +1,5 @@
+var Imba = require("../imba")
+
 # Imba.Touch
 # Began	A finger touched the screen.
 # Moved	A finger moved on the screen.

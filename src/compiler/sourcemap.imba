@@ -118,10 +118,10 @@ export class SourceMap
 		# source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
 		return map
 
-	VLQ_SHIFT = 5
-	VLQ_CONTINUATION_BIT = 1 << VLQ_SHIFT
-	VLQ_VALUE_MASK = VLQ_CONTINUATION_BIT - 1
-	BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+	var VLQ_SHIFT = 5
+	var VLQ_CONTINUATION_BIT = 1 << VLQ_SHIFT
+	var VLQ_VALUE_MASK = VLQ_CONTINUATION_BIT - 1
+	var BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 	# borrowed from CoffeeScript
 	def encodeVlq value

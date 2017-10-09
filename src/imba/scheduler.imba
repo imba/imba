@@ -1,3 +1,4 @@
+var Imba = require("./imba")
 
 var requestAnimationFrame # very simple raf polyfill
 var cancelAnimationFrame

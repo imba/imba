@@ -1,5 +1,7 @@
 # imba$nolib=1
 
+var Imba = require("../imba")
+
 Imba.KEYMAP = {
 	"8": 'backspace'
 	"9": 'tab'

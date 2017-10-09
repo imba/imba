@@ -1,5 +1,7 @@
 # imba$nolib=1
 
+var Imba = require("../imba")
+
 ###
 
 Manager for listening to and delegating events in Imba. A single instance
