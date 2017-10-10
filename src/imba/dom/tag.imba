@@ -193,7 +193,8 @@ class Imba.Tag
 	Set inner html of node
 	###
 	def html= html
-		@dom:innerHTML = html
+		if self.html != html
+			@dom:innerHTML = html
 
 	###
 	Get inner html of node
