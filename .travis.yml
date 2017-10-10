@@ -1,17 +1,19 @@
 ---
 language: node_js
 node_js:
-  - "5.7"
-  - "4.3"
+  - "node"
+  - "lts/*"
 
 env:
   - NPM_SCRIPT=test
 
-before_script: npm run build
+before_script:
+  - npm run build
+  - test "$INSTALL_PUPPETEER" && npm i GoogleChrome/puppeteer#f1aa18af4e7 || true
 
 script: npm run $NPM_SCRIPT
 
 matrix:
   include:
-    - node_js: "5.7"
-      env: NPM_SCRIPT=test-phantom
+    - node_js: "node"
+      env: NPM_SCRIPT=test-chrome INSTALL_PUPPETEER=1

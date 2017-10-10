@@ -35,7 +35,7 @@
     "build": "webpack --progress --colors --display-modules",
     "watch": "webpack --watch --progress --colors --display-modules",
     "test": "bin/imba test/index.imba",
-    "test-phantom": "phantomjs test/client.js"
+    "test-chrome": "bin/imba test/run-chrome.imba"
   },
   "bugs": "https://github.com/somebee/imba/issues",
   "version": "1.0.0-rc.7",
