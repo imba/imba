@@ -795,17 +795,17 @@ class Imba.Tag
 				dom:style[name] = val
 		self
 
-	def trigger event, data = {}
+	###
+	Trigger an event from current node. Dispatched through the Imba event manager.
+	To dispatch actual dom events, use dom.dispatchEvent instead.
+
+	@return {Imba.Event}
+	###
+	def trigger name, data = {}
 		if $web$
-			Imba.Events.trigger(event,self,data: data)
+			Imba.Events.trigger(name,self,data: data)
 		else
 			self
-
-	def emit name, data: null, bubble: yes
-		console.warn('tag#emit is deprecated -> use tag#trigger')
-		if $web$
-			Imba.Events.trigger name, self, data: data, bubble: bubble
-		return self
 
 	def style= style
 		setAttribute('style',style)
@@ -1030,11 +1030,6 @@ def Imba.getTagForDom dom
 
 	spawner ||= tags[native]
 	spawner ? spawner.new(dom).awaken(dom) : null
-
-# TODO drop these globals
-var _T = Imba.TAGS
-# id$ = Imba:getTagSingleton
-# tag$wrap = Imba:getTagForDom
 
 def Imba.generateCSSPrefixes
 	var styles = window.getComputedStyle(document:documentElement, '')
