@@ -1,3 +1,4 @@
+# imba$inlineHelpers=1
 
 import 'path' as path
 import './helpers' as util

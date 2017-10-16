@@ -1,3 +1,4 @@
+# imba$inlineHelpers=1
 
 var T = require './token'
 var Token = T.Token

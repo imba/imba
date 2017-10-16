@@ -1,3 +1,4 @@
+# imba$inlineHelpers=1
 # List of the token pairs that must be balanced.
 export var BALANCED_PAIRS = [
 	['(', ')']

@@ -1,3 +1,4 @@
+# imba$inlineHelpers=1
 # TODO Create Expression - make all expressions inherit from these?
 
 var helpers = require './helpers'

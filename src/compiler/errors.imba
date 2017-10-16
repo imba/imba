@@ -1,3 +1,4 @@
+# imba$inlineHelpers=1
 # create separate error-types with all the logic
 
 var util = require './helpers'
