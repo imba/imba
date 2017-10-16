@@ -204,17 +204,21 @@ class Imba.Tag
 
 
 	###
+	@deprecated
 	Get width of node (offsetWidth)
 	@return {number}
 	###
 	def width
+		console.warn 'Tag#width deprecated. Use dom:offsetWidth'
 		@dom:offsetWidth
 
 	###
+	@deprecated
 	Get height of node (offsetHeight)
 	@return {number}
 	###
 	def height
+		console.warn 'Tag#height deprecated. Use dom:offsetHeight'
 		@dom:offsetHeight
 
 	###
@@ -389,68 +393,53 @@ class Imba.Tag
 			# FIXME ensure these are not called for text nodes
 		self
 
+	###
+	The .append method inserts the specified content as the last child
+	of the target node. If the content is already a child of node it
+	will be moved to the end.
+	
+		var root = <div.root>
+		var item = <div.item> "This is an item"
+		root.append item # appends item to the end of root
 
-	unless $drop_deprecated$
-		###
-		The .append method inserts the specified content as the last child
-		of the target node. If the content is already a child of node it
-		will be moved to the end.
-		
-		    var root = <div.root>
-		    var item = <div.item> "This is an item"
-		    root.append item # appends item to the end of root
+		root.append "some text" # append text
+		root.append [<ul>,<ul>] # append array
+	###
+	def append item
+		# possible to append blank
+		# possible to simplify on server?
+		return self unless item
 
-		    root.prepend "some text" # append text
-		    root.prepend [<ul>,<ul>] # append array
-		###
-		def append item
-			# possible to append blank
-			# possible to simplify on server?
-			return self unless item
+		if item isa Array
+			member && append(member) for member in item
 
-			if item isa Array
-				member && append(member) for member in item
+		elif item isa String or item isa Number
+			var node = Imba.document.createTextNode(item)
+			@dom.appendChild(node)
+			@empty = no if @empty			
+		else
+			# should delegate to self.appendChild
+			appendChild(item)
+			@empty = no if @empty
 
-			elif item isa String or item isa Number
-				var node = Imba.document.createTextNode(item)
-				@dom.appendChild(node)
-				@empty = no if @empty			
-			else
-				# should delegate to self.appendChild
-				appendChild(item)
-				@empty = no if @empty
+		return self
 
-			return self
+	###
+	@todo Should support multiple arguments like append
 
-		###
-		@deprecated
-		###
-		def insert node, before: null, after: null
-			before = after.next if after
-			if node isa Array
-				node = (<fragment> node)
-			if before
-				insertBefore(node,before.dom)
-			else
-				appendChild(node)
-			self
+	The .prepend method inserts the specified content as the first
+	child of the target node. If the content is already a child of 
+	node it will be moved to the start.
+	
+		node.prepend <div.top> # prepend node
+		node.prepend "some text" # prepend text
+		node.prepend [<ul>,<ul>] # prepend array
 
-		###
-		@todo Should support multiple arguments like append
-
-		The .prepend method inserts the specified content as the first
-		child of the target node. If the content is already a child of 
-		node it will be moved to the start.
-		
-	    	node.prepend <div.top> # prepend node
-	    	node.prepend "some text" # prepend text
-	    	node.prepend [<ul>,<ul>] # prepend array
-
-		###
-		def prepend item
-			var first = @dom:childNodes[0]
-			first ? insertBefore(item, first) : appendChild(item)
-			self
+	###
+	def prepend item
+		var first = @dom:childNodes[0]
+		first ? insertBefore(item, first) : appendChild(item)
+		self
 
 
 	###
@@ -850,7 +839,6 @@ Imba.Tag:prototype:initialize = Imba.Tag
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ")
 Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
-
 
 def extender obj, sup
 	for own k,v of sup
