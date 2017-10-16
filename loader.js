@@ -1,9 +1,11 @@
 var compiler = require('./lib/compiler');
+var path = require('path');
 
 module.exports = function(content) {
 	this.cacheable();
 	
 	var opts = {
+		filename: path.basename(this.resourcePath),
 		sourceMap: this.sourceMap,
 		sourcePath: this.resourcePath,
 		target: this.target,
