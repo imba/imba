@@ -38,7 +38,7 @@
     "test-chrome": "bin/imba test/run-chrome.imba"
   },
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "1.0.0-rc.7",
+  "version": "1.0.0",
   "licenses": [
     {
       "type": "MIT",
