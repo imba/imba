@@ -321,6 +321,9 @@ export class Stack
 	def filename
 		@options:filename
 
+	def sourcePath
+		@options:sourcePath
+
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
@@ -6304,7 +6307,7 @@ export class Selector < ListNode
 		self
 
 	def visit
-		console.warn "{STACK.filename}: {option(:type)} selectors deprecated - will be removed in Imba 1.1.0"
+		console.warn "{STACK.sourcePath}: {option(:type)} selectors deprecated - will be removed in Imba 1.1.0"
 		super
 
 	def query
