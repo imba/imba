@@ -347,13 +347,6 @@ class Imba.Tag
 
 
 	###
-	@deprecated
-	Remove specified child from current node.
-	###
-	def remove child
-		removeChild(child)
-
-	###
 	Remove specified child from current node.
 	@return {self}
 	###
@@ -718,14 +711,7 @@ class Imba.Tag
 	@return {Imba.Tag} 
 	###
 	def parent
-		tag(dom:parentNode)
-
-	###
-	Get the child at index
-	###
-	def child i
-		tag(dom:children[i or 0])
-
+		Imba.getTagForDom(dom:parentNode)
 
 	###
 	Get the children of node
@@ -735,97 +721,15 @@ class Imba.Tag
 		# DEPRECATE this is overridden by reconciler
 		var nodes = Imba.Selector.new(null, self, @dom:children)
 		sel ? nodes.filter(sel) : nodes
+	
+	def querySelector q
+		Imba.getTagForDom(@dom.querySelector(q))
 
-	unless $drop_deprecated$
-		###
-		Get the siblings of node
-		@return {Imba.Selector}
-		###
-		def siblings sel
-			# DEPRECATE extract into imba-tag-helpers
-			return [] unless var par = parent # FIXME
-			var ary = dom:parentNode:children
-			var nodes = Imba.Selector.new(null, self, ary)
-			nodes.filter(|n| n != self && (!sel || n.matches(sel)))
-
-		###
-		Get node and its ascendents
-		@return {Array}
-		###
-		def path sel
-			console.warn "Tag#path is deprecated"
-			# DEPRECATE extract into imba-tag-helpers
-			var node = self
-			var nodes = []
-			sel = sel.query if sel and sel:query
-
-			while node
-				nodes.push(node) if !sel or node.matches(sel)
-				node = node.parent
-			return nodes
-
-		###
-		Get ascendents of node
-		@return {Array}
-		###
-		def parents sel
-			# DEPRECATE extract into imba-tag-helpers
-			var par = parent
-			par ? par.path(sel) : []
-
-		###
-		Get the immediately following sibling of node.
-		###
-		def next sel
-			# DEPRECATE extract into imba-tag-helpers
-			if sel
-				var el = self
-				while el = el.next
-					return el if el.matches(sel)
-				return null
-			tag(dom:nextElementSibling)
-
-		###
-		Get the immediately preceeding sibling of node.
-		###
-		def prev sel
-			# DEPRECATE extract into imba-tag-helpers
-			if sel
-				var el = self
-				while el = el.prev
-					return el if el.matches(sel)
-				return null
-			tag(dom:previousElementSibling)
-
-		###
-		Get descendants of current node, optionally matching selector
-		@return {Imba.Selector}
-		###
-		def find sel
-			# DEPRECATE extract into imba-tag-helpers
-			Imba.Selector.new(sel,self)
-
-		###
-		Get the first matching child of node
-
-		@return {Imba.Tag}
-		###
-		def first sel
-			# DEPRECATE extract into imba-tag-helpers
-			sel ? find(sel).first : tag(dom:firstElementChild)
-
-		###
-		Get the last matching child of node
-
-			node.last # returns the last child of node
-			node.last %span # returns the last span inside node
-			node.last do |el| el.text == 'Hi' # return last node with text Hi
-
-		@return {Imba.Tag}
-		###
-		def last sel
-			# DEPRECATE extract into imba-tag-helpers
-			sel ? find(sel).last : tag(dom:lastElementChild)
+	def querySelectorAll q
+		var items = []
+		@dom.querySelectorAll(q).forEach do |item|
+			items.push( Imba.getTagForDom(item) )
+		return items
 
 	###
 	Check if this node matches a selector
@@ -835,7 +739,7 @@ class Imba.Tag
 		if sel isa Function
 			return sel(self)
 
-		sel = sel.query if sel:query
+		sel = sel.query if sel:query isa Function
 		if var fn = (@dom:matches or @dom:matchesSelector or @dom:webkitMatchesSelector or @dom:msMatchesSelector or @dom:mozMatchesSelector)
 			return fn.call(@dom,sel)
 
@@ -854,16 +758,6 @@ class Imba.Tag
 			return node if node.matches(sel)
 			node = node.parent
 		return null
-
-	###
-	Get the closest ancestor of node that matches
-	specified selector / matcher.
-
-	@return {Imba.Tag}
-	###
-	def up sel
-		return parent unless sel
-		parent and parent.closest(sel)
 
 	###
 	Get the index of node.
@@ -923,13 +817,6 @@ class Imba.Tag
 		if $web$
 			Imba.Events.trigger name, self, data: data, bubble: bubble
 		return self
-
-	def transform= value
-		css(:transform, value)
-		self
-
-	def transform
-		css(:transform)
 
 	def style= style
 		setAttribute('style',style)

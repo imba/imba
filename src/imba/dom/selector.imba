@@ -163,15 +163,3 @@ unless $drop_deprecated$
 	Imba:q$$ = do |sel,scope| 
 		var el = (scope || Imba.document).querySelector(sel)
 		el && tag(el) || nil
-
-
-	# extending tags with query-methods
-	# must be a better way to reopen classes
-	extend tag element
-		def querySelectorAll q do @dom.querySelectorAll q
-		def querySelector q do @dom.querySelector q
-
-		# should be moved to Imba.Tag instead?
-		# or we should implement all of them here
-		def find sel do Imba.Selector.new(sel,self)
-
