@@ -318,6 +318,9 @@ export class Stack
 	def platform
 		@options:target
 
+	def filename
+		@options:filename
+
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
@@ -6299,6 +6302,10 @@ export class Selector < ListNode
 		# how would this work for dst?
 		@nodes.push(SelectorGroup.new(","))
 		self
+
+	def visit
+		console.warn "{STACK.filename}: {option(:type)} selectors deprecated - will be removed in Imba 1.1.0"
+		super
 
 	def query
 		var str = ""

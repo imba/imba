@@ -24,8 +24,6 @@ require './syntax/switch'
 require './syntax/assignment'
 require './syntax/conditionals'
 require './syntax/await'
-
-require './syntax/selectors'
 require './syntax/formatting'
 require './syntax/issues'
 
