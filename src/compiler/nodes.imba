@@ -639,12 +639,6 @@ export class Node
 			@cache = null
 		self
 
-	# is this without side-effects? hmm - what does it even do?
-	def predeclare
-		if @cache
-			scope__.vars.swap(@cache:var,self)
-		self
-
 	# the "name-suggestion" for nodes if they need to be cached
 	def alias
 		null
@@ -3819,7 +3813,7 @@ export class VarReference < ValueNode
 		# should be possible to have a VarReference without a name as well? for a system-variable
 		# name should not set this way.
 		var v = @variable ||= scope__.register(value.toString, self, type: @type)
-		
+
 		# FIXME -- should not simply override the declarator here(!)
 		if !v.declarator
 			v.declarator = self
@@ -5240,15 +5234,17 @@ export class For < Loop
 				vars:diff = scope.declare('rd',OP('-',vars:len,vars:value),type: 'let')
 
 		else
-			# we are using automatic caching far too much here
-			var i = vars:index = oi ? scope.declare(oi,0,type: 'let') : util.counter(0,yes,scope).predeclare
+			if oi
+				vars:index = scope.declare(oi,0,type: 'let')
+			else
+				vars:index = scope.declare('i',Num.new(0),system: yes, type: 'counter', unique: yes)
 
-			vars:source = bare ? src : util.iterable(src,yes).predeclare
-			vars:len    = util.len(vars:source,yes).predeclare
+			vars:source = bare ? src : scope.declare('ary',util.iterable(src),system: yes, type: 'iter', unique: yes)
+			vars:len = scope.declare('len',util.len(vars:source),system: yes, type: 'len', unique: yes)
 
 			vars:value = scope.declare(o:name,null,type: 'let')
 			vars:value.addReference(o:name) # adding reference!
-			i.addReference(oi) if oi
+			vars:index.addReference(oi) if oi
 
 		return self
 
@@ -5375,8 +5371,9 @@ export class For < Loop
 			else
 				final = OP('++',idx)
 
+		var code = body.c(braces: yes, indent: yes)
 		var head = "{mark__(options:keyword)}for ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
-		return head + body.c(braces: yes, indent: yes)
+		return head + code
 
 
 
@@ -5396,8 +5393,6 @@ export class ForOf < For
 		# possibly proxy the index-variable?
 
 		if o:own
-			# var i = vars:index = scope.declare('i',0,system: true, type: 'let') # mark as a counter?
-			# var i = vars:index = util.counter(0,yes,scope).predeclare
 			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'counter', unique: yes)
 
 			# systemvariable -- should not really be added to the map
@@ -6092,6 +6087,8 @@ export class Tag < Node
 			if o:ivar
 				out = "{acc.c} || {out}"
 			else
+				key.cache if key:cache isa Function
+				# console.log("compile",scope__.toString)
 				out = "{acc.c} = {acc.c} || {out}"
 
 			if @reference
