@@ -9,6 +9,7 @@ if(require.extensions) {
 	require.extensions['.imba'] = function (mod,filename){
 		var content = imba.compile(fs.readFileSync(filename,'utf8'),{
 			filename: filename,
+			sourcePath: filename,
 			target: 'node'
 		});
 		return mod._compile(content.js,filename);
