@@ -704,12 +704,11 @@ class Imba.Tag
 
 	###
 	Get the children of node
-	@return {Imba.Selector}
+	@return {Imba.Tag[]}
 	###
 	def children sel
-		# DEPRECATE this is overridden by reconciler
-		var nodes = Imba.Selector.new(null, self, @dom:children)
-		sel ? nodes.filter(sel) : nodes
+		for item in @dom:children
+			item.@tag or Imba.getTagForDom(item)
 	
 	def querySelector q
 		Imba.getTagForDom(@dom.querySelector(q))
