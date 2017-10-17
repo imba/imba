@@ -7293,7 +7293,7 @@ export class FlowScope < Scope
 		if o:type != 'let' and (closure != self)
 			if var found = lookup(name)
 				if found.type == 'let'
-					p "{name} already exists as a block-variable {decl}"
+					# p "{name} already exists as a block-variable {decl}"
 					# TODO should throw error instead
 					decl.warn "Variable already exists in block" if decl
 					# root.warn message: "Holy shit"
