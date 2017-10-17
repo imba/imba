@@ -5237,10 +5237,10 @@ export class For < Loop
 			if oi
 				vars:index = scope.declare(oi,0,type: 'let')
 			else
-				vars:index = scope.declare('i',Num.new(0),system: yes, type: 'counter', unique: yes)
+				vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 
-			vars:source = bare ? src : scope.declare('ary',util.iterable(src),system: yes, type: 'iter', unique: yes)
-			vars:len = scope.declare('len',util.len(vars:source),system: yes, type: 'len', unique: yes)
+			vars:source = bare ? src : scope.declare('items',util.iterable(src),system: yes, type: 'let', pool: 'iter')
+			vars:len = scope.declare('len',util.len(vars:source),type: 'let', pool: 'len', system: yes)
 
 			vars:value = scope.declare(o:name,null,type: 'let')
 			vars:value.addReference(o:name) # adding reference!
@@ -5393,7 +5393,7 @@ export class ForOf < For
 		# possibly proxy the index-variable?
 
 		if o:own
-			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'counter', unique: yes)
+			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 
 			# systemvariable -- should not really be added to the map
 			var keys = vars:keys = scope.declare('keys',Util.keys(src.accessor),system: yes, type: 'let') # the outer one should resolve first
@@ -7002,13 +7002,20 @@ export class Scope
 		# Again, here we should not really have to deal with system-generated vars
 		# But again, it is important
 
+		if !name
+			o:system = yes
+
+		if o:system
+			return SystemVariable.new(self,name,decl,o)
+
 		name = helpers.symbolize(name)
 
 		# also look at outer scopes if this is not closed?
 		var existing = @varmap.hasOwnProperty(name) && @varmap[name]
 		return existing if existing and !o:unique
-
+		# var type = o:system ? SystemVariable : Variable
 		var item = Variable.new(self,name,decl,o)
+		# var item = Variable.new(self,name,decl,o)
 		# need to check for duplicates, and handle this gracefully -
 		# going to refactor later
 		@varmap[name] = item if !o:system and !existing
@@ -7031,14 +7038,14 @@ export class Scope
 	# what are the differences here? omj
 	# we only need a temporary thing with defaults -- that is all
 	# change these values, no?
-	def temporary refnode, o = {}, name = null
+	def temporary decl, o = {}, name = null
 
 		if o:pool
 			for v in @varpool
 				if v.pool == o:pool && v.declarator == null
-					return v.reuse(refnode)
+					return v.reuse(decl)
 
-		var item = SystemVariable.new(self,name,refnode,o)
+		var item = SystemVariable.new(self,name,decl,o)
 		
 		@varpool.push(item) # It should not be in the pool unless explicitly put there?
 		@vars.push(item) # WARN variables should not go directly into a declaration-list
@@ -7539,17 +7546,20 @@ export class SystemVariable < Variable
 		self
 
 	def resolve
-		return self if @resolved || @name
+		return self if @resolved
 		@resolved = yes
+
 		# unless @name
 		# adds a very random initial name
 		# the auto-magical goes last, or at least, possibly reuse other names
 		# "${Math.floor(Math.random * 1000)}"
-
+		var alias = @name
 		var typ = @options:pool
 		var names = [].concat(@options:names)
 		var alt = null
 		var node = null
+
+		@name = null
 
 		var scope = self.scope
 
@@ -7581,15 +7591,27 @@ export class SystemVariable < Variable
 			names = ['tmplist_','tmplist','tmp']
 		# or if type placeholder / cacher (add 0)
 
+		if alias
+			names.push(alias)
+
 		while !@name && alt = names.pop
 			@name = alt unless scope.lookup(alt)
 
 		if !@name and @declarator
 			if node = declarator.node
-				names.push(alias + "_") if var alias = node.alias
+				if var nodealias = node.alias
+					names.push(nodealias + "_")
 
 		while !@name && alt = names.pop
 			@name = alt unless scope.lookup(alt)
+
+		# go through alias proxies
+		if alias and !@name
+			var i = 0
+			@name = alias
+			# it is the closure that we should use
+			while scope.lookup(@name)
+				@name = "{alias}{i += 1}"
 
 		@name ||= "${scope.counter += 1}"
 		
