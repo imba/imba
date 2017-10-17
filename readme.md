@@ -1,4 +1,4 @@
-This is the readme for v1.0.0-beta. For other versions, see [npmjs.com](https://www.npmjs.com/package/imba). Visit [imba.io](http://imba.io) for more information!
+Visit [imba.io](http://imba.io) for more information!
 
 # Imba
 
