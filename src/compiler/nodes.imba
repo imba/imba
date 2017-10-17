@@ -6952,9 +6952,6 @@ export class Scope
 	def namepath
 		'?'
 
-	def imbaTags
-		"{imba.c}.TAGS"
-
 	def tagContextPath
 		# bypassing for now
 		@tagContextPath ||= imbaTags
@@ -7070,6 +7067,9 @@ export class Scope
 
 	def imba
 		root.requires('imba', 'Imba')
+
+	def imbaTags
+		root.imbaTags
 
 	def autodeclare variable
 		vars.push(variable) # only if it does not exist here!!!
@@ -7235,6 +7235,15 @@ export class RootScope < Scope
 		variable.@requirePath = path
 		@requires[name] = variable
 		return variable
+
+	def imbaTags
+		return @imbaTags if @imbaTags
+		var imbaRef = self.imba
+		# don't add if we cannot be certain that imba is required on top
+		if @requires.Imba
+			@imbaTags = declare('_T',OP('.',imbaRef,'TAGS'))
+		else
+			@imbaTags = "{imbaRef.c}.TAGS"
 
 	def c o = {}
 		o:expression = no
