@@ -53,7 +53,7 @@ export def run
 	src = lookup(src)
 	src = path.resolve(process.cwd,src)
 	var body = fs.readFileSync(src,'utf8')
-	imbac.run(body, filename: src, target: 'node')
+	imbac.run(body, filename: src, sourcePath: src, target: 'node')
 
 	
 

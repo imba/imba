@@ -233,6 +233,8 @@ class CLI
 	def compileFile src
 		var opts = Object.create(o)
 		opts:filename = src:filename
+		opts:sourcePath = src:sourcePath
+		
 		var out = {}
 		var t = Date.now
 		var at = Date.new.toTimeString.substr(0,8)
