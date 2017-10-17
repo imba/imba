@@ -22,7 +22,12 @@ if(require.main !== module){
 			loaders: [loader]
 		},
 		resolve: {
-			extensions: options.resolve.extensions
+			extensions: options.resolve.extensions,
+			alias: {
+				imba$: dir + "imba.imba",
+				imba: dir
+			}
+
 		}
 	}
 
@@ -60,6 +65,11 @@ if(require.main !== module){
 		} else if (obj.target) {
 			r.extensions.splice(idx,0,'.'+obj.target+'.imba')
 		}
+
+		// Set correct alias
+		r.alias = r.alias || {}
+		r.alias.imba$ = dir + "imba.imba"
+		r.alias.imba = dir
 
 		return obj;
 	}
