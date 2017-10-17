@@ -303,6 +303,7 @@ export class Stack
 		@loglevel = 3
 		@counter  = 0
 		@counters = {}
+		@options = {}
 		self
 
 	def incr name
@@ -3815,17 +3816,11 @@ export class VarReference < ValueNode
 		self
 
 	def visit
-
-		# console.log "value type for VarReference {@value} {@value.@loc} {@value:constructor}"
-
 		# should be possible to have a VarReference without a name as well? for a system-variable
 		# name should not set this way.
-		var name = value.c
-
-		# what about looking up? - on register we want to mark
-		var v = @variable ||= scope__.register(name, self, type: @type)
+		var v = @variable ||= scope__.register(value.toString, self, type: @type)
+		
 		# FIXME -- should not simply override the declarator here(!)
-
 		if !v.declarator
 			v.declarator = self
 
@@ -7029,6 +7024,7 @@ export class Scope
 	# just like register, but we automatically
 	def declare name, init = null, o = {}
 		var variable = register(name,null,o)
+		
 		# TODO create the variabledeclaration here instead?
 		# if this is a sysvar we need it to be renameable
 		var dec = @vars.add(variable,init)
