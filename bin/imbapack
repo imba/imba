@@ -22,11 +22,7 @@ if(require.main !== module){
 			loaders: [loader]
 		},
 		resolve: {
-			extensions: options.resolve.extensions,
-			alias: {
-				imba$: dir + "/src/imba/index.imba",
-				imba: dir
-			}
+			extensions: options.resolve.extensions
 		}
 	}
 
@@ -55,18 +51,15 @@ if(require.main !== module){
 		if (!r.extensions) {
 			r.extensions = conf.resolve.extensions.slice(0)
 		}
-		r.extensions.splice(1,0,'.imba')
+
+		var idx = r.extensions[0] == '' ? 1 : 0;
+		r.extensions.splice(idx,0,'.imba')
 
 		if (!obj.target){
-			r.extensions.splice(1,0,'.web.imba')
+			r.extensions.splice(idx,0,'.web.imba')
 		} else if (obj.target) {
-			r.extensions.splice(1,0,'.'+obj.target+'.imba')
+			r.extensions.splice(idx,0,'.'+obj.target+'.imba')
 		}
-
-		// Set correct alias
-		r.alias = r.alias || {}
-		r.alias.imba$ = dir + "src/imba/index.imba"
-		r.alias.imba = dir
 
 		return obj;
 	}
