@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.0.0-rc.7'};
+var Imba = {VERSION: '1.0.0'};
 
 /*
 True if running in client environment.
@@ -494,19 +494,17 @@ __webpack_require__(36);
 __webpack_require__(37);
 __webpack_require__(38);
 __webpack_require__(39);
-
 __webpack_require__(40);
 __webpack_require__(41);
+
 __webpack_require__(42);
-
 __webpack_require__(43);
+
+
 __webpack_require__(44);
-
-
-__webpack_require__(45);
+__webpack_require__(46);
 __webpack_require__(47);
 __webpack_require__(48);
-__webpack_require__(49);
 
 
 // externs;
@@ -1305,7 +1303,9 @@ Imba.Tag.prototype.object = function (){
 	*/
 
 Imba.Tag.prototype.setHtml = function (html){
-	this._dom.innerHTML = html;
+	if (this.html() != html) {
+		this._dom.innerHTML = html;
+	};
 	return this;
 };
 
@@ -1319,20 +1319,24 @@ Imba.Tag.prototype.html = function (){
 
 
 /*
+	@deprecated
 	Get width of node (offsetWidth)
 	@return {number}
 	*/
 
 Imba.Tag.prototype.width = function (){
+	console.warn('Tag#width deprecated. Use dom:offsetWidth');
 	return this._dom.offsetWidth;
 };
 
 /*
+	@deprecated
 	Get height of node (offsetHeight)
 	@return {number}
 	*/
 
 Imba.Tag.prototype.height = function (){
+	console.warn('Tag#height deprecated. Use dom:offsetHeight');
 	return this._dom.offsetHeight;
 };
 
@@ -1496,15 +1500,6 @@ Imba.Tag.prototype.renderTemplate = function (){
 
 
 /*
-	@deprecated
-	Remove specified child from current node.
-	*/
-
-Imba.Tag.prototype.remove = function (child){
-	return this.removeChild(child);
-};
-
-/*
 	Remove specified child from current node.
 	@return {self}
 	*/
@@ -1557,20 +1552,18 @@ Imba.Tag.prototype.insertBefore = function (node,rel){
 	return this;
 };
 
-
-
 /*
-		The .append method inserts the specified content as the last child
-		of the target node. If the content is already a child of node it
-		will be moved to the end.
-		
-		    var root = <div.root>
-		    var item = <div.item> "This is an item"
-		    root.append item # appends item to the end of root
+	The .append method inserts the specified content as the last child
+	of the target node. If the content is already a child of node it
+	will be moved to the end.
+	
+		var root = <div.root>
+		var item = <div.item> "This is an item"
+		root.append item # appends item to the end of root
 
-		    root.prepend "some text" # append text
-		    root.prepend [<ul>,<ul>] # append array
-		*/
+		root.append "some text" # append text
+		root.append [<ul>,<ul>] # append array
+	*/
 
 Imba.Tag.prototype.append = function (item){
 	// possible to append blank
@@ -1596,44 +1589,23 @@ Imba.Tag.prototype.append = function (item){
 };
 
 /*
-		@deprecated
-		*/
+	@todo Should support multiple arguments like append
 
-Imba.Tag.prototype.insert = function (node,pars){
-	if(!pars||pars.constructor !== Object) pars = {};
-	var before = pars.before !== undefined ? pars.before : null;
-	var after = pars.after !== undefined ? pars.after : null;
-	if (after) { before = after.next() };
-	if (node instanceof Array) {
-		node = (Imba.TAGS.FRAGMENT(this).setContent(node,0).end());
-	};
-	if (before) {
-		this.insertBefore(node,before.dom());
-	} else {
-		this.appendChild(node);
-	};
-	return this;
-};
+	The .prepend method inserts the specified content as the first
+	child of the target node. If the content is already a child of 
+	node it will be moved to the start.
+	
+		node.prepend <div.top> # prepend node
+		node.prepend "some text" # prepend text
+		node.prepend [<ul>,<ul>] # prepend array
 
-/*
-		@todo Should support multiple arguments like append
-
-		The .prepend method inserts the specified content as the first
-		child of the target node. If the content is already a child of 
-		node it will be moved to the start.
-		
-	    	node.prepend <div.top> # prepend node
-	    	node.prepend "some text" # prepend text
-	    	node.prepend [<ul>,<ul>] # prepend array
-
-		*/
+	*/
 
 Imba.Tag.prototype.prepend = function (item){
 	var first = this._dom.childNodes[0];
 	first ? this.insertBefore(item,first) : this.appendChild(item);
 	return this;
 };
-
 
 
 /*
@@ -1962,138 +1934,29 @@ Imba.Tag.prototype.parent = function (){
 };
 
 /*
-	Get the child at index
-	*/
-
-Imba.Tag.prototype.child = function (i){
-	return Imba.getTagForDom(this.dom().children[i || 0]);
-};
-
-
-/*
 	Get the children of node
-	@return {Imba.Selector}
+	@return {Imba.Tag[]}
 	*/
 
 Imba.Tag.prototype.children = function (sel){
-	// DEPRECATE this is overridden by reconciler
-	var nodes = new Imba.Selector(null,this,this._dom.children);
-	return sel ? nodes.filter(sel) : nodes;
-};
-
-
-/*
-		Get the siblings of node
-		@return {Imba.Selector}
-		*/
-
-Imba.Tag.prototype.siblings = function (sel){
-	// DEPRECATE extract into imba-tag-helpers
-	var self = this, par;
-	if (!(par = self.parent())) { return [] }; // FIXME
-	var ary = self.dom().parentNode.children;
-	var nodes = new Imba.Selector(null,self,ary);
-	return nodes.filter(function(n) { return n != self && (!sel || n.matches(sel)); });
-};
-
-/*
-		Get node and its ascendents
-		@return {Array}
-		*/
-
-Imba.Tag.prototype.path = function (sel){
-	console.warn("Tag#path is deprecated");
-	// DEPRECATE extract into imba-tag-helpers
-	var node = this;
-	var nodes = [];
-	if (sel && sel.query) { sel = sel.query() };
-	
-	while (node){
-		if (!sel || node.matches(sel)) { nodes.push(node) };
-		node = node.parent();
+	for (var i = 0, ary = iter$(this._dom.children), len = ary.length, item, res = []; i < len; i++) {
+		item = ary[i];
+		res.push(item._tag || Imba.getTagForDom(item));
 	};
-	return nodes;
+	return res;
 };
 
-/*
-		Get ascendents of node
-		@return {Array}
-		*/
-
-Imba.Tag.prototype.parents = function (sel){
-	// DEPRECATE extract into imba-tag-helpers
-	var par = this.parent();
-	return par ? par.path(sel) : [];
+Imba.Tag.prototype.querySelector = function (q){
+	return Imba.getTagForDom(this._dom.querySelector(q));
 };
 
-/*
-		Get the immediately following sibling of node.
-		*/
-
-Imba.Tag.prototype.next = function (sel){
-	// DEPRECATE extract into imba-tag-helpers
-	if (sel) {
-		var el = this;
-		while (el = el.next()){
-			if (el.matches(sel)) { return el };
-		};
-		return null;
-	};
-	return Imba.getTagForDom(this.dom().nextElementSibling);
+Imba.Tag.prototype.querySelectorAll = function (q){
+	var items = [];
+	this._dom.querySelectorAll(q).forEach(function(item) {
+		return items.push(Imba.getTagForDom(item));
+	});
+	return items;
 };
-
-/*
-		Get the immediately preceeding sibling of node.
-		*/
-
-Imba.Tag.prototype.prev = function (sel){
-	// DEPRECATE extract into imba-tag-helpers
-	if (sel) {
-		var el = this;
-		while (el = el.prev()){
-			if (el.matches(sel)) { return el };
-		};
-		return null;
-	};
-	return Imba.getTagForDom(this.dom().previousElementSibling);
-};
-
-/*
-		Get descendants of current node, optionally matching selector
-		@return {Imba.Selector}
-		*/
-
-Imba.Tag.prototype.find = function (sel){
-	// DEPRECATE extract into imba-tag-helpers
-	return new Imba.Selector(sel,this);
-};
-
-/*
-		Get the first matching child of node
-
-		@return {Imba.Tag}
-		*/
-
-Imba.Tag.prototype.first = function (sel){
-	// DEPRECATE extract into imba-tag-helpers
-	return sel ? this.find(sel).first() : (Imba.getTagForDom(this.dom().firstElementChild));
-};
-
-/*
-		Get the last matching child of node
-
-			node.last # returns the last child of node
-			node.last %span # returns the last span inside node
-			node.last do |el| el.text == 'Hi' # return last node with text Hi
-
-		@return {Imba.Tag}
-		*/
-
-Imba.Tag.prototype.last = function (sel){
-	// DEPRECATE extract into imba-tag-helpers
-	return sel ? this.find(sel).last() : (Imba.getTagForDom(this.dom().lastElementChild));
-};
-
 
 /*
 	Check if this node matches a selector
@@ -2106,7 +1969,7 @@ Imba.Tag.prototype.matches = function (sel){
 		return sel(this);
 	};
 	
-	if (sel.query) { sel = sel.query() };
+	if (sel.query instanceof Function) { sel = sel.query() };
 	if (fn = (this._dom.matches || this._dom.matchesSelector || this._dom.webkitMatchesSelector || this._dom.msMatchesSelector || this._dom.mozMatchesSelector)) {
 		return fn.call(this._dom,sel);
 	};
@@ -2129,18 +1992,6 @@ Imba.Tag.prototype.closest = function (sel){
 		node = node.parent();
 	};
 	return null;
-};
-
-/*
-	Get the closest ancestor of node that matches
-	specified selector / matcher.
-
-	@return {Imba.Tag}
-	*/
-
-Imba.Tag.prototype.up = function (sel){
-	if (!sel) { return this.parent() };
-	return this.parent() && this.parent().closest(sel);
 };
 
 /*
@@ -2206,32 +2057,18 @@ Imba.Tag.prototype.css = function (key,val){
 	return this;
 };
 
-Imba.Tag.prototype.trigger = function (event,data){
+/*
+	Trigger an event from current node. Dispatched through the Imba event manager.
+	To dispatch actual dom events, use dom.dispatchEvent instead.
+
+	@return {Imba.Event}
+	*/
+
+Imba.Tag.prototype.trigger = function (name,data){
 	if(data === undefined) data = {};
 	
-	return Imba.Events.trigger(event,this,{data: data});
+	return Imba.Events.trigger(name,this,{data: data});
 	
-};
-
-Imba.Tag.prototype.emit = function (name,pars){
-	if(!pars||pars.constructor !== Object) pars = {};
-	var data = pars.data !== undefined ? pars.data : null;
-	var bubble = pars.bubble !== undefined ? pars.bubble : true;
-	console.warn('tag#emit is deprecated -> use tag#trigger');
-	
-	Imba.Events.trigger(name,this,{data: data,bubble: bubble});
-	
-	return this;
-};
-
-Imba.Tag.prototype.setTransform = function (value){
-	this.css('transform',value);
-	this;
-	return this;
-};
-
-Imba.Tag.prototype.transform = function (){
-	return this.css('transform');
 };
 
 Imba.Tag.prototype.setStyle = function (style){
@@ -2274,7 +2111,6 @@ Imba.Tag.prototype.initialize = Imba.Tag;
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ");
 Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
-
 
 function extender(obj,sup){
 	for (var v, i = 0, keys = Object.keys(sup), l = keys.length, k; i < l; i++){
@@ -2509,11 +2345,6 @@ Imba.getTagForDom = function (dom){
 	spawner || (spawner = tags[native$]);
 	return spawner ? new spawner(dom).awaken(dom) : null;
 };
-
-// TODO drop these globals
-var _T = Imba.TAGS;
-// id$ = Imba:getTagSingleton
-// tag$wrap = Imba:getTagForDom
 
 Imba.generateCSSPrefixes = function (){
 	var styles = window.getComputedStyle(document.documentElement,'');
@@ -4276,11 +4107,10 @@ Imba.EventManager.prototype.ondisable = function (){
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(1);
 
-
 /*
-	The special syntax for selectors in Imba creates Imba.Selector
-	instances.
-	*/
+The special syntax for selectors in Imba creates Imba.Selector
+instances.
+*/
 
 Imba.Selector = function Selector(sel,scope,nodes){
 	
@@ -4296,11 +4126,6 @@ Imba.Selector = function Selector(sel,scope,nodes){
 	
 	this._lazy = !nodes;
 	return this;
-};
-
-Imba.Selector.one = function (sel,scope){
-	var el = (scope || Imba.document()).querySelector(sel);
-	return el && Imba.getTagForDom(el) || null;
 };
 
 Imba.Selector.all = function (sel,scope){
@@ -4323,26 +4148,24 @@ Imba.Selector.prototype.scope = function (){
 };
 
 /*
-		@returns {Imba.Tag} first node matching this selector
-		*/
+	@returns {Imba.Tag} first node matching this selector
+	*/
 
 Imba.Selector.prototype.first = function (){
-	if (this._lazy) { return Imba.getTagForDom(this._first || (this._first = this.scope().querySelector(this.query()))) } else {
-		return this.nodes()[0];
-	};
+	return this._lazy ? Imba.getTagForDom(this._first || (this._first = this.scope().querySelector(this.query()))) : this.nodes()[0];
 };
 
 /*
-		@returns {Imba.Tag} last node matching this selector
-		*/
+	@returns {Imba.Tag} last node matching this selector
+	*/
 
 Imba.Selector.prototype.last = function (){
 	return this.nodes()[this._nodes.length - 1];
 };
 
 /*
-		@returns [Imba.Tag] all nodes matching this selector
-		*/
+	@returns [Imba.Tag] all nodes matching this selector
+	*/
 
 Imba.Selector.prototype.nodes = function (){
 	if (this._nodes) { return this._nodes };
@@ -4356,8 +4179,8 @@ Imba.Selector.prototype.nodes = function (){
 };
 
 /*
-		The number of nodes matching this selector
-		*/
+	The number of nodes matching this selector
+	*/
 
 Imba.Selector.prototype.count = function (){
 	return this.nodes().length;
@@ -4368,24 +4191,24 @@ Imba.Selector.prototype.len = function (){
 };
 
 /*
-		@todo Add support for block or selector?
-		*/
+	@todo Add support for block or selector?
+	*/
 
 Imba.Selector.prototype.some = function (){
 	return this.count() >= 1;
 };
 
 /*
-		Get node at index
-		*/
+	Get node at index
+	*/
 
 Imba.Selector.prototype.at = function (idx){
 	return this.nodes()[idx];
 };
 
 /*
-		Loop through nodes
-		*/
+	Loop through nodes
+	*/
 
 Imba.Selector.prototype.forEach = function (block){
 	this.nodes().forEach(block);
@@ -4393,36 +4216,20 @@ Imba.Selector.prototype.forEach = function (block){
 };
 
 /*
-		Map nodes
-		*/
+	Map nodes
+	*/
 
 Imba.Selector.prototype.map = function (block){
 	return this.nodes().map(block);
 };
 
 /*
-		Returns a plain array containing nodes. Implicitly called
-		when iterating over a selector in Imba `(node for node in $(selector))`
-		*/
+	Returns a plain array containing nodes. Implicitly called
+	when iterating over a selector in Imba `(node for node in $(selector))`
+	*/
 
 Imba.Selector.prototype.toArray = function (){
 	return this.nodes();
-};
-
-// Get the first element that matches the selector, 
-// beginning at the current element and progressing up through the DOM tree
-Imba.Selector.prototype.closest = function (sel){
-	// seems strange that we alter this selector?
-	this._nodes = this.map(function(node) { return node.closest(sel); });
-	return this;
-};
-
-// Get the siblings of each element in the set of matched elements, 
-// optionally filtered by a selector.
-// TODO remove duplicates?
-Imba.Selector.prototype.siblings = function (sel){
-	this._nodes = this.map(function(node) { return node.siblings(sel); });
-	return this;
 };
 
 // Get the descendants of each element in the current set of matched 
@@ -4432,20 +4239,15 @@ Imba.Selector.prototype.find = function (sel){
 	return this;
 };
 
-Imba.Selector.prototype.reject = function (blk){
-	return this.filter(blk,false);
-};
-
 /*
-		Filter the nodes in selector by a function or other selector
-		*/
+	Filter the nodes in selector by a function or other selector
+	*/
 
 Imba.Selector.prototype.filter = function (blk,bool){
 	if(bool === undefined) bool = true;
 	var fn = (blk instanceof Function) && blk || function(n) { return n.matches(blk); };
 	var ary = this.nodes().filter(function(n) { return fn(n) == bool; });
 	// if we want to return a new selector for this, we should do that for
-	// others as well
 	return new Imba.Selector("",this._scope,ary);
 };
 
@@ -4465,16 +4267,16 @@ Imba.Selector.prototype.__matches__ = function (){
 };
 
 /*
-		Add specified flag to all nodes in selector
-		*/
+	Add specified flag to all nodes in selector
+	*/
 
 Imba.Selector.prototype.flag = function (flag){
 	return this.forEach(function(n) { return n.flag(flag); });
 };
 
 /*
-		Remove specified flag from all nodes in selector
-		*/
+	Remove specified flag from all nodes in selector
+	*/
 
 Imba.Selector.prototype.unflag = function (flag){
 	return this.forEach(function(n) { return n.unflag(flag); });
@@ -4489,26 +4291,6 @@ Imba.q$$ = function(sel,scope) {
 	var el = (scope || Imba.document()).querySelector(sel);
 	return el && Imba.getTagForDom(el) || null;
 };
-
-
-// extending tags with query-methods
-// must be a better way to reopen classes
-Imba.TAGS.extendTag('element', function(tag){
-	tag.prototype.querySelectorAll = function (q){
-		return this._dom.querySelectorAll(q);
-	};
-	tag.prototype.querySelector = function (q){
-		return this._dom.querySelector(q);
-	};
-	
-	// should be moved to Imba.Tag instead?
-	// or we should implement all of them here
-	tag.prototype.find = function (sel){
-		return new Imba.Selector(sel,this);
-	};
-});
-
-
 
 
 /***/ }),
@@ -8401,32 +8183,6 @@ describe('Await',function() {
 
 /***/ }),
 /* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Imba = __webpack_require__(0);
-// externs;
-
-function check(sel,query){
-	return eq(sel.query(),query);
-};
-
-describe("Syntax - Selectors",function() {
-	
-	return test("variations",function() {
-		var a = 1;
-		var s = "ok";
-		
-		check(Imba.q$('ul li .item'),"ul li .item");
-		check(Imba.q$('ul ._custom.hello'),"ul ._custom.hello");
-		check(Imba.q$('ul>li div[name="'+s+'"]'),'ul>li div[name="ok"]');
-		check(Imba.q$('ul>li div[tabindex="'+a+'"]'),'ul>li div[tabindex="1"]');
-		return check(Imba.q$('._mycanvas,._other'),'._mycanvas,._other');
-	});
-});
-
-
-/***/ }),
-/* 41 */
 /***/ (function(module, exports) {
 
 // externs;
@@ -8447,7 +8203,7 @@ describe("Formatting",function() {
 
 
 /***/ }),
-/* 42 */
+/* 41 */
 /***/ (function(module, exports) {
 
 // externs;
@@ -8540,7 +8296,7 @@ describe('Issues',function() {
 
 
 /***/ }),
-/* 43 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -8929,7 +8685,7 @@ describe('Tags - Define',function() {
 
 
 /***/ }),
-/* 44 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -9043,7 +8799,7 @@ describe('Tags - Cache',function() {
 
 
 /***/ }),
-/* 45 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -9053,7 +8809,7 @@ var self = this, Imba = __webpack_require__(0);
 
 // externs;
 
-var _ = __webpack_require__(46);
+var _ = __webpack_require__(45);
 
 Imba.TAGS.defineTag('el', function(tag){
 	
@@ -9559,7 +9315,7 @@ describe("Tags",function() {
 
 
 /***/ }),
-/* 46 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -11114,7 +10870,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
 
 /***/ }),
-/* 47 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0), self = this;
@@ -11147,7 +10903,7 @@ describe("Tags - SVG",function() {
 
 
 /***/ }),
-/* 48 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var self = this, Imba = __webpack_require__(0);
@@ -11182,7 +10938,7 @@ describe("HTML",function() {
 
 
 /***/ }),
-/* 49 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
