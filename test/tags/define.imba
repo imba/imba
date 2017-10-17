@@ -269,6 +269,18 @@ describe 'Tags - Define' do
 
 		var node = <Custom name="custom">
 		eq order, ['build','name','setup']
+
+	test "issue #89" do
+		tag Custom
+			def render
+				@items = ["a","b","c"]
+				@k = 0
+				<self>
+					for item in @items
+						<div@{@k++}> item
+
+		var node = <Custom>
+		eq node.@k,3
 	
 	test "css" do
 		tag Custom
