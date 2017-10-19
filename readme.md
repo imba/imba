@@ -1,5 +1,3 @@
-Visit [imba.io](http://imba.io) for more information!
-
 # Imba
 
 [![Join the chat at https://gitter.im/somebee/imba](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/somebee/imba?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -12,16 +10,23 @@ and rendering dom nodes. For a semi-complex application like
 [TodoMVC](http://todomvc.com), it is more than **[20 times faster than React](https://github.com/somebee/todomvc-render-benchmark)**
 with less code, and a much smaller library.
 
-## Learn
+## Documentation
 
-To get started with Imba, we recommend reading through the [official guide](http://imba.io/guides). All snippets are editable and executable. If you have any questions, please join our [gitter channel](https://gitter.im/somebee/imba).
+To get started with Imba, we recommend reading through the [official guide](http://imba.io/guides).
+
+## Questions
+
+For questions and support please use our [community chat](https://gitter.im/somebee/imba).
+
+## Plugins
+
+* Sublime Text: [sublime-imba](http://github.com/somebee/sublime-imba) can be installed through Sublime Package Manager.
+* VSCode: [vscode-imba](http://github.com/somebee/vscode-imba) can be installed through VSCode / Marketplace.
 
 ## Installation
 Get [Node.js](http://nodejs.org) and [npm](http://npmjs.org), then:
 
 - `npm install -g imba`
-
-Regular code will run fine without any dependencies, but if you intend to use tags and selectors, remember to include the Imba library. On the server you should do `npm install imba --save` in your project, and `require 'imba'` in your application. For a simple example see [hello-world](https://github.com/somebee/hello-world-imba)
 
 ## Usage
 
@@ -43,8 +48,6 @@ The `imbapack` utility is a convenient wrapper around `webpack`, which preproces
 
 The `imbac` utility is for compiling your scripts to js. When working on client-side projects you should rather use `imbapack` (see above). Call `imbac` without arguments to see available options. If you are not able to use `imba` to run your project, or you really need to precompile the code (for running on node), you can use `imbac`.
 
-## Plugins
-We currently recommend Sublime Text for Imba, since this is the only editor with a solid plugin so far. The [sublime-plugin](http://github.com/somebee/sublime-imba) can be installed through Sublime Package Manager. It is highly recommended to use [Sublime Text 3](http://sublimetext.com/3) for best highlighting and annotations.
+## License
 
-## Contribute
-Contributors are always welcome. To start with, you should clone the repository and try to get somewhat familiar with the codebase. Please shoot me a message on github if you have any comments or questions, and I will try to get back to you asap.
+[MIT](http://opensource.org/licenses/MIT)
