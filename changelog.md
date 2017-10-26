@@ -1,3 +1,8 @@
+## Master
+
+* Add `--es6` option allowing compiler to generate es6 compatible code
+* Add support for native es6 async/await. methods are marked as `async` implicitly if they contain await expressions
+
 ## 1.0.0
 * Require 'imba' in each file - no longer depending on Imba being global
 * Introduced imbapack as intelligent wrapper around webpack

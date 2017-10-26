@@ -15,6 +15,7 @@ var help = """
 Usage: imba [options] [ -e script | script.imba ] [arguments]
 
   -e, --eval script      evaluate script
+      --es6              compile files for es6
   -h, --help             display this help message
   -v, --version          display the version number
 
@@ -47,13 +48,19 @@ export def run
 	elif (!o:main and !o:eval) or o:help
 		return console.log help
 
+	if o:es6
+		process:env.IMBA_ES6 = yes
+
 	if o:eval
-		return imbac.run(o:eval, target: 'node')
+		o:target = 'node'
+		return imbac.run(o:eval, o)
 
 	src = lookup(src)
 	src = path.resolve(process.cwd,src)
 	var body = fs.readFileSync(src,'utf8')
-	imbac.run(body, filename: src, sourcePath: src, target: 'node')
+	o:target = 'node'
+	o:sourcePath = o:filename = src
+	imbac.run(body,o)
 
 	
 

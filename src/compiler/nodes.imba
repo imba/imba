@@ -304,6 +304,7 @@ export class Stack
 		@counter  = 0
 		@counters = {}
 		@options = {}
+		@es6 = null
 		self
 
 	def incr name
@@ -325,9 +326,16 @@ export class Stack
 	def sourcePath
 		@options:sourcePath
 
+	def es6
+		@es6 ?= !!(@options:es6 or @options:es2015 or env('IMBA_ES6'))
+
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
+
+		# temporary shorthand
+		if key.toLowerCase == 'es6'
+			return self.es6
 
 		if platform and key in ['WEB','NODE','WEBWORKER']
 			return platform.toUpperCase == key
@@ -2303,6 +2311,10 @@ export class Func < Code
 		@params.traverse
 		@body.traverse # so soon?
 
+	def funcKeyword
+		let str = "function"
+		str = "async {str}" if option(:async)
+		return str
 
 	def js o
 		body.consume(ImplicitReturn.new) unless option(:noreturn)
@@ -2319,7 +2331,8 @@ export class Func < Code
 		# and possibly dealing with it
 		var name = typeof @name == 'string' ? @name : @name.c
 		var name = name ? ' ' + name.replace(/\./g,'_') : ''
-		var out = "function{name}({params.c}) " + code
+		var out = "{funcKeyword}{name}({params.c}) " + code
+		# out = "async {out}" if option(:async)
 		out = "({out})()" if option(:eval)
 		return out
 
@@ -2476,24 +2489,24 @@ export class MethodDeclaration < Func
 
 		if ctx isa ClassScope and !target
 			if type == :constructor
-				out = "{mark}function {fname}{func}"
+				out = "{mark}{funcKeyword} {fname}{func}"
 			elif option(:static)
-				out = "{mark}{ctx.context.c}.{fname} = function {func}"
+				out = "{mark}{ctx.context.c}.{fname} = {funcKeyword} {func}"
 			else
-				out = "{mark}{ctx.context.c}.prototype.{fname} = function {func}"
+				out = "{mark}{ctx.context.c}.prototype.{fname} = {funcKeyword} {func}"
 
 		elif ctx isa RootScope and !target
 			# register method as a root-function, but with auto-call? hmm
 			# should probably set using variable directly instead, no?
-			out = "{mark}function {fdecl}{func}"
+			out = "{mark}{funcKeyword} {fdecl}{func}"
 
 		elif target and option(:static)
-			out = "{mark}{target.c}.{fname} = function {func}"
+			out = "{mark}{target.c}.{fname} = {funcKeyword} {func}"
 
 		elif target
-			out = "{mark}{target.c}.prototype.{fname} = function {func}"
+			out = "{mark}{target.c}.prototype.{fname} = {funcKeyword} {func}"
 		else
-			out = "{mark}function {fdecl}{func}"
+			out = "{mark}{funcKeyword} {fdecl}{func}"
 
 		if option(:global)
 			out = "{fname} = {out}"
@@ -4572,10 +4585,12 @@ export class TagTypeIdentifier < Identifier
 	prop ns
 
 	def initialize value
+		@token = value
 		@value = load(value)
 		self
 
 	def load val
+
 		@str = ("" + val)
 		var parts = @str.split(":")
 		@raw = val
@@ -6408,14 +6423,26 @@ export class Await < ValueNode
 	prop func
 
 	def js o
+		return "await {value.c}" if option(:native)
 		# introduce a util here, no?
 		CALL(OP('.',Util.Promisify.new([value]),'then'),[func]).c
-		# value.c
 
 	def visit o
 		# things are now traversed in a somewhat chaotic order. Need to tighten
 		# Create await function - push this value up to block, take the outer
 		value.traverse
+
+		var fnscope = o.up(Func) # do |item| item isa MethodDeclaration or item isa Fun
+
+		if o.es6
+			if fnscope
+				set(native: yes)
+				fnscope.set(async: yes)
+				return self
+			else
+				# add warning
+				# should add as diagnostics - no?
+				warn "toplevel await not allowed in es6"
 
 		var block = o.up(Block) # or up to the closest FUNCTION?
 		var outer = o.relative(block,1)
