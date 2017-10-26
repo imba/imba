@@ -97,6 +97,7 @@ await syntax.
 ###
 def Imba.await value
 	if value isa Array
+		console.warn("await (Array) is deprecated - use await Promise.all(Array)")
 		Promise.all(value)
 	elif value and value:then
 		value

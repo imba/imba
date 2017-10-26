@@ -194,6 +194,7 @@ await syntax.
 
 Imba.await = function (value){
 	if (value instanceof Array) {
+		console.warn("await (Array) is deprecated - use await Promise.all(Array)");
 		return Promise.all(value);
 	} else if (value && value.then) {
 		return value;

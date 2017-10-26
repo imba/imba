@@ -6857,7 +6857,15 @@ export class Util.Promisify < Util
 
 	def helper
 		# should also check if it is a real promise
-		"function promise$(a)\{ return a instanceof Array ? Promise.all(a) : (a && a.then ? a : Promise.resolve(a)); \}"
+		'''
+		function promise$(a){
+			if(a instanceof Array){
+				console.warn("await (Array) is deprecated - use await Promise.all(Array)");
+				return Promise.all(a);
+			} else {
+				return (a && a.then ? a : Promise.resolve(a));
+			}
+		'''
 
 	def js o
 		if inlineHelpers
