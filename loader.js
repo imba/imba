@@ -4,18 +4,25 @@ var path = require('path');
 module.exports = function(content) {
 	this.cacheable();
 	
+	var query = this.query;
+
 	var opts = {
 		filename: path.basename(this.resourcePath),
 		sourceMap: this.sourceMap,
 		sourcePath: this.resourcePath,
 		target: this.target,
 		ENV_DEBUG: this.debug,
-		ENV_WEBPACK: true,
-		bare: true
+		ENV_WEBPACK: true
 	};
 
 	if(this.env){
 		opts.env = this.env;
+	}
+
+	if(query instanceof Object) {
+		Object.keys(this.query).forEach(function(key){
+			opts[key] = this.query[key];
+		});
 	}
 
 	if(this.options.loader && this.options.loader.imba) {
