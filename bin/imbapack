@@ -4,6 +4,8 @@ var path = require('path');
 var fs = require('fs');
 var dir = path.join(path.dirname(fs.realpathSync(__filename)), '../');
 
+var enableDebugLog = false;
+
 // Return the module for webpack
 if(require.main !== module){
 	var loader = {
@@ -85,7 +87,7 @@ if(require.main !== module){
 		}
 		module.exports = baseconf;
 	} else {
-		module.exports = conf;	
+		module.exports = conf;
 	}
 	return;
 }
@@ -102,14 +104,15 @@ var cfgPath = cfgIdx > 0 ? args[cfgIdx] : 'webpack.config.js';
 var cfg = path.resolve(cwd,cfgPath);
 
 var webpackBin = 'webpack';
-var imbapackBin = dir + 'bin/imbapack';
+var imbapackBin = path.join(dir,'bin','imbapack');
 
-// console.log('arguments',args,__dirname,process.cwd(),cfgPath,cfg);
+if(enableDebugLog) console.log('arguments',args,__dirname,process.cwd(),cfgPath,cfg);
 // TODO drop default config if input/output is declared in process args
 
 if (fs.existsSync(cfg)){
 	env.IMBAPACK_BASECONF = cfg;
 }
+
 
 // possibly use the local imbapack instead?
 cp.exec('npm bin', function(e,stdout,stderr){
@@ -117,8 +120,8 @@ cp.exec('npm bin', function(e,stdout,stderr){
 
 	// if there is a local installation of imbapack
 	// make sure it is the file generating the config
-	if(fs.existsSync(binDir + '/imbapack')){
-		imbapackBin = binDir + '/imbapack';
+	if(fs.existsSync(path.join(binDir,'imbapack'))){
+		imbapackBin = path.join(binDir,'imbapack');
 	}
 
 	if (cfgIdx){
@@ -128,11 +131,33 @@ cp.exec('npm bin', function(e,stdout,stderr){
 		args.push(imbapackBin);
 	}
 
-	if(fs.existsSync(binDir + '/webpack')){
-		webpackBin = binDir + '/webpack';
+
+    // use path.join() for safe file path checking checking
+    var existsSyncSafe = fs.existsSync(path.join(binDir,'webpack'));
+
+	if(existsSyncSafe){
+		webpackBin = path.join(binDir,'webpack',);
 	}
 
-	cp.exec('which '+webpackBin, function(e,stdout,stderr){
+    // Determine if Windows, to use WHICH vs DIR in find
+    var isWindows = /^win/.test(process.platform);
+    var findOperator = isWindows ? "DIR" : "WHICH";
+
+    // Use path.normalize to escape double slashes in file path encoding on Windows
+    // and then use .cmd to invoke instead of no file extension if Windows
+     if (isWindows) webpackBin = `${path.normalize(webpackBin)}.cmd`
+
+    // Now generate an OS-safe find command
+    var checkWebpackCommand = `${findOperator} ${webpackBin}`;
+
+    if(enableDebugLog) {
+        console.log(`Operating System: ${process.platform}`);
+        console.log(`NPM Bin Directory: ${binDir}`);
+        console.log(`Local imbapack detected: ${fs.existsSync(path.join(binDir,'imbapack'))}`);
+        console.log(`Safe find command: ${checkWebpackCommand}`);
+    }
+
+	cp.exec(checkWebpackCommand, function(e,stdout,stderr){
 		if (stdout.length == 0) {
 			process.stdout.write("Webpack need to be installed:\n");
 			process.stdout.write("\tnpm install -g webpack");
@@ -144,4 +169,3 @@ cp.exec('npm bin', function(e,stdout,stderr){
 		packer.stdout.pipe(process.stdout);
 	});
 });
-
