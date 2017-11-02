@@ -1,6 +1,6 @@
 module.exports = {
 	entry: "./index.imba",
-	output: { filename: "./es6.webpack.tmp.js" },
+	output: {  path: __dirname, filename: "es6.webpack.tmp.js" },
 	resolve: {
 		extensions: [".imba",".js", ".json"]
 	},
