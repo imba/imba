@@ -7,3 +7,4 @@ npm-debug.log
 dist/imba.edge.*
 /determinator.json
 test/webpack/js/**/*.js
+*.tmp.js

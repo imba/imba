@@ -20,8 +20,8 @@ module.exports = function(content) {
 	}
 
 	if(query instanceof Object) {
-		Object.keys(this.query).forEach(function(key){
-			opts[key] = this.query[key];
+		Object.keys(query).forEach(function(key){
+			opts[key] = query[key];
 		});
 	}
 
