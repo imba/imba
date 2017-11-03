@@ -175,6 +175,8 @@ export def parseArgs argv, o = {}
 			curr = key
 
 		else
+			var desc = schema[curr]
+
 			unless curr and schema[curr]
 				curr = 'main'
 
@@ -190,7 +192,9 @@ export def parseArgs argv, o = {}
 				val.push(arg)
 			else
 				options[curr] = arg
-
+			
+			unless desc and desc:multi
+				curr = 'main'
 
 	if options:env isa String
 		options["ENV_{options:env}"] = yes
