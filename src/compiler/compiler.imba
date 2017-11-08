@@ -60,7 +60,10 @@ export def compile code, o = {}
 	try
 		# check if code is completely blank
 		unless /\S/.test(code)
-			return {js: ""}
+			return {
+				js: "",
+				toString: do this:js
+			}
 
 		var tokens = tokenize(code, o)
 		var ast = parse(tokens, o)

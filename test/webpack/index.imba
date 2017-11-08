@@ -1,5 +1,7 @@
 import trim,asyncTrim from './utils'
 
+require './empty'
+
 export tag App
 	
 	def setup
