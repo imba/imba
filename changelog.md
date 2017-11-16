@@ -4,8 +4,8 @@
 * Made Imba.mount schedule the target by default (fix)
 * Compiler returns correct location for classes and constants
 * Enable experimental native async/await behind —es6 option
-* Make imbapack commands platform-safe [[GavinRay97]([Make imbapack commands platform-safe by GavinRay97 · Pull Request #102 · somebee/imba · GitHub](https://github.com/somebee/imba/pull/102))]
-* * Deprecated implicit `Promise.all` wrapping of expr in `await *expr*` if expr instanceof Array
+* Make imbapack commands platform-safe ([GavinRay97 · pr#102](https://github.com/somebee/imba/pull/102))
+* Deprecated implicit `Promise.all` wrapping of expr in `await *expr*` if expr instanceof Array
 
 ## 1.0.0
 * Require 'imba' in each file - no longer depending on Imba being global
