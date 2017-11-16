@@ -715,7 +715,7 @@ class Imba.Tag
 
 	def querySelectorAll q
 		var items = []
-		@dom.querySelectorAll(q).forEach do |item|
+		for item in @dom.querySelectorAll(q)
 			items.push( Imba.getTagForDom(item) )
 		return items
 
