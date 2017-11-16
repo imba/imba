@@ -1,8 +1,11 @@
-## Master
 
-* Add `--es6` option allowing compiler to generate es6 compatible code
-* Add support for native es6 async/await. methods are marked as `async` implicitly if they contain await expressions
-* Deprecated implicit `Promise.all` wrapping of expr in `await *expr*` if expr instanceof Array
+## 1.0.1-beta
+* Made Imbapack read options using the recommended way in Webpack 3.
+* Made Imba.mount schedule the target by default (fix)
+* Compiler returns correct location for classes and constants
+* Enable experimental native async/await behind —es6 option
+* Make imbapack commands platform-safe [[GavinRay97]([Make imbapack commands platform-safe by GavinRay97 · Pull Request #102 · somebee/imba · GitHub](https://github.com/somebee/imba/pull/102))]
+* * Deprecated implicit `Promise.all` wrapping of expr in `await *expr*` if expr instanceof Array
 
 ## 1.0.0
 * Require 'imba' in each file - no longer depending on Imba being global

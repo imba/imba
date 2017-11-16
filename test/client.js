@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.0.0'};
+var Imba = {VERSION: '1.0.1-beta'};
 
 /*
 True if running in client environment.
@@ -1106,6 +1106,7 @@ Imba.mount = function (node,into){
 	into || (into = Imba.document().body);
 	into.appendChild(node.dom());
 	Imba.TagManager.insert(node,into);
+	node.scheduler().configure({events: true});
 	Imba.commit();
 	return node;
 };
@@ -1953,9 +1954,9 @@ Imba.Tag.prototype.querySelector = function (q){
 
 Imba.Tag.prototype.querySelectorAll = function (q){
 	var items = [];
-	this._dom.querySelectorAll(q).forEach(function(item) {
-		return items.push(Imba.getTagForDom(item));
-	});
+	for (var i = 0, ary = iter$(this._dom.querySelectorAll(q)), len = ary.length; i < len; i++) {
+		items.push(Imba.getTagForDom(ary[i]));
+	};
 	return items;
 };
 
@@ -3776,6 +3777,7 @@ Imba.Event.prototype.process = function (){
 	
 	var domnode = domtarget._responder || domtarget;
 	// @todo need to stop infinite redirect-rules here
+	var result;
 	
 	while (domnode){
 		this._redirect = null;
@@ -3797,7 +3799,7 @@ Imba.Event.prototype.process = function (){
 			if (node[meth] instanceof Function) {
 				this._responder || (this._responder = node);
 				// should autostop bubble here?
-				args ? node[meth].apply(node,args) : node[meth](this,this.data());
+				result = args ? node[meth].apply(node,args) : node[meth](this,this.data());
 			};
 			
 			if (node.onevent) {
@@ -3812,6 +3814,13 @@ Imba.Event.prototype.process = function (){
 	};
 	
 	this.processed();
+	
+	// if a handler returns a promise, notify schedulers
+	// about this after promise has finished processing
+	if (result && (result.then instanceof Function)) {
+		result.then(this.processed.bind(this));
+	};
+	
 	return this;
 };
 
