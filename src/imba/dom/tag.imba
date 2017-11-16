@@ -36,6 +36,7 @@ def Imba.mount node, into
 	into ||= Imba.document:body
 	into.appendChild(node.dom)
 	Imba.TagManager.insert(node,into)
+	node.scheduler.configure(events: yes)
 	Imba.commit
 	return node
 
