@@ -194,6 +194,7 @@ class Imba.Event
 
 		var domnode = domtarget:_responder or domtarget
 		# @todo need to stop infinite redirect-rules here
+		var result
 
 		while domnode
 			@redirect = null
@@ -213,7 +214,7 @@ class Imba.Event
 				if node[meth] isa Function
 					@responder ||= node
 					# should autostop bubble here?
-					args ? node[meth].apply(node,args) : node[meth](self,data)
+					result = args ? node[meth].apply(node,args) : node[meth](self,data)
 
 				if node:onevent
 					node.onevent(self)
@@ -223,6 +224,12 @@ class Imba.Event
 				break
 
 		processed
+
+		# if a handler returns a promise, notify schedulers
+		# about this after promise has finished processing
+		if result and result:then isa Function
+			result.then(self:processed.bind(self))
+
 		return self
 
 
