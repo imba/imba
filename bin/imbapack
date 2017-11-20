@@ -136,7 +136,7 @@ cp.exec('npm bin', function(e,stdout,stderr){
     var existsSyncSafe = fs.existsSync(path.join(binDir,'webpack'));
 
 	if(existsSyncSafe){
-		webpackBin = path.join(binDir,'webpack',);
+		webpackBin = path.join(binDir,'webpack');
 	}
 
     // Determine if Windows, to use WHICH vs DIR in find
