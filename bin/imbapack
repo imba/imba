@@ -161,7 +161,7 @@ cp.exec('npm bin', function(e,stdout,stderr){
 		if (stdout.length == 0) {
 			process.stdout.write("Webpack need to be installed:\n");
 			process.stdout.write("\tnpm install -g webpack");
-			process.exit(0);
+			process.exit(1);
 		}
 
 		var packer = cp.spawn(webpackBin, args, { env: env });
