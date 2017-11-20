@@ -136,12 +136,12 @@ cp.exec('npm bin', function(e,stdout,stderr){
     var existsSyncSafe = fs.existsSync(path.join(binDir,'webpack'));
 
 	if(existsSyncSafe){
-		webpackBin = path.join(binDir,'webpack',);
+		webpackBin = path.join(binDir,'webpack');
 	}
 
     // Determine if Windows, to use WHICH vs DIR in find
     var isWindows = /^win/.test(process.platform);
-    var findOperator = isWindows ? "DIR" : "WHICH";
+    var findOperator = isWindows ? "DIR" : "which";
 
     // Use path.normalize to escape double slashes in file path encoding on Windows
     // and then use .cmd to invoke instead of no file extension if Windows
@@ -161,7 +161,7 @@ cp.exec('npm bin', function(e,stdout,stderr){
 		if (stdout.length == 0) {
 			process.stdout.write("Webpack need to be installed:\n");
 			process.stdout.write("\tnpm install -g webpack");
-			process.exit(0);
+			process.exit(1);
 		}
 
 		var packer = cp.spawn(webpackBin, args, { env: env });

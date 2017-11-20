@@ -8,6 +8,7 @@ env:
   - NPM_SCRIPT=test
 
 before_script:
+  - export PATH="$PWD/bin:$PATH"
   - npm run build
   - test "$INSTALL_PUPPETEER" && npm i GoogleChrome/puppeteer#f1aa18af4e7 || true
 
@@ -17,3 +18,7 @@ matrix:
   include:
     - node_js: "node"
       env: NPM_SCRIPT=test-chrome INSTALL_PUPPETEER=1
+
+matrix:
+  include:
+    - env: NPM_SCRIPT=test-webpack
