@@ -9,6 +9,7 @@ tmp
 *.tgz
 *.log
 scripts/
+attic/*
 screenshot.png
 .gitattributes
 .editorconfig
