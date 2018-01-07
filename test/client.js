@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.0.1-beta'};
+var Imba = {VERSION: '1.0.1'};
 
 /*
 True if running in client environment.
@@ -3985,6 +3985,7 @@ Imba.EventManager.activate = function (){
 	Imba.Events.register('click',function(e) {
 		// Only for main mousebutton, no?
 		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+			e._imbaSimulatedTap = true;
 			var tap = new Imba.Event(e);
 			tap.setType('tap');
 			tap.process();

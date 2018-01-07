@@ -1,5 +1,5 @@
 
-## 1.0.1-beta
+## 1.0.1
 * Made Imbapack read options using the recommended way in Webpack 3.
 * Made Imba.mount schedule the target by default (fix)
 * Compiler returns correct location for classes and constants
