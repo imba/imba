@@ -66,6 +66,7 @@ class Imba.EventManager
 			Imba.Events.register(:click) do |e|
 				# Only for main mousebutton, no?
 				if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
+					e.@imbaSimulatedTap = yes
 					var tap = Imba.Event.new(e)
 					tap.type = 'tap'
 					tap.process
