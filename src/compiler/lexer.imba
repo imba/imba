@@ -909,7 +909,7 @@ export class Lexer
 			addLoc = true
 			
 			if typ == 'MODULE'
-				unless (/^module [a-zA-Z]/).test(@chunk)
+				if !(/^module [a-zA-Z]/).test(@chunk) or ctx0 == 'TAG_ATTR'
 					typ = 'IDENTIFIER'
 
 			# clumsy - but testing performance
