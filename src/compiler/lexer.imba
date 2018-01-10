@@ -32,7 +32,7 @@ var JS_KEYWORDS = [
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','self','await','import','require'
+	'when','def','tag','do','elif','begin','var','let','self','await','import','require','module'
 ]
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','static','local','export','global','prop']
@@ -47,7 +47,7 @@ export var ALL_KEYWORDS = [
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','self','await','import',
-	'and','or','is','isnt','not','yes','no','isa','case','nil','require'
+	'and','or','is','isnt','not','yes','no','isa','case','nil','require','module'
 ]
 
 # The list of keywords that are reserved by JavaScript, but not used, or are
@@ -750,7 +750,7 @@ export class Lexer
 	def isKeyword id
 		if (id == 'attr' or id == 'prop')
 			var scop = getScope
-			var incls = scop == 'CLASS' or scop == 'TAG'
+			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'MODULE'
 			return true if incls
 
 		if @lastTyp == 'ATTR' or @lastTyp == 'PROP'
@@ -892,14 +892,17 @@ export class Lexer
 		else
 			typ = 'IDENTIFIER'
 
-
-
 		# this catches all 
 		if !forcedIdentifier and isKeyword = self.isKeyword(id)
 			# (id in JS_KEYWORDS or id in IMBA_KEYWORDS)
 
 			typ = id.toUpperCase
 			addLoc = true
+			
+			if typ == 'MODULE'
+				let nextChar = @chunk[id:length]
+				if (nextChar != ' ' and nextChar != '\n')
+					typ = 'IDENTIFIER'
 
 			# clumsy - but testing performance
 			if typ == 'YES'
@@ -975,7 +978,7 @@ export class Lexer
 		var len = input:length
 
 		# should be strict about the order, check this manually instead
-		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG'
+		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == 'MODULE'
 			queueScope(typ)
 
 			var i = @tokens:length

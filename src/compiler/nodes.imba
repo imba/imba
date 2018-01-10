@@ -1075,6 +1075,7 @@ export class Block < ListNode
 			return super(o,nodes: ast)
 
 		var str = ""
+
 		for v in ast
 			str += cpart(v)
 
@@ -1085,6 +1086,10 @@ export class Block < ListNode
 				var hv = cpart(v)
 				prefix += hv + '\n' if hv
 			str = prefix + str
+			
+		if option(:strict)
+			str = cpart('"use strict";\n') + str
+
 		return str
 
 
@@ -2181,6 +2186,55 @@ export class ClassDeclaration < Code
 
 		return out
 
+export class ModuleDeclaration < Code
+
+	prop name
+	
+	def initialize name, body
+		# what about the namespace?
+		@traversed = no
+		@name = name
+		@scope = ModuleScope.new(self)
+		@body = blk__(body)
+		self
+		
+	def visit
+		ROOT.entities.register(self) # what if this is not local?
+		# replace with some advanced lookup?
+		
+		scope.visit
+		
+		if @name
+			scope.parent.register(name.c, self, type: 'var')
+			# scope.parent.declare(@name,null,system: yes)
+			
+		body.traverse
+	
+	def js o
+		scope.context.value = @ctx = scope.declare('$module',null,system: yes)
+		
+		var mark = mark__(option('keyword'))
+		
+		body.add(ImplicitReturn.new(@ctx))
+		
+		var cbody = body.c
+
+		var js = "(function({@ctx.c})\{{cbody}\})(\{\})"
+
+		let cname = name.c
+		# declare variable
+		js = "var {cname} = {js}"
+		# only if it is not namespaced
+		# if o:global and !namespaced # option(:global)
+		#	js.push("global.{cname} = {cpath}; // global class \n")
+		if option(:export)
+			js = "{js}\nexports.{option(:default) ? 'default' : cname} = {cname};"
+
+		if option(:return)
+			js += "\nreturn {cname};"
+				
+		return js
+
 
 export class TagDeclaration < Code
 
@@ -2429,6 +2483,12 @@ export class MethodDeclaration < Func
 			# register as class-method?
 			# should register for this
 			# console.log "context is classscope {@name}"
+			if context isa ModuleScope
+				body.set(strict: yes)
+				# let op = OP('==',This.new,LIT('window'))
+				let op = OP('||',This.new,context.context)
+				scope.context.@reference = scope.declare("self",op)
+
 
 		if !@target
 			# should not be registered on the outermost closure?
@@ -2459,7 +2519,9 @@ export class MethodDeclaration < Func
 				body.consume(GreedyReturn.new)
 			else
 				body.consume(ImplicitReturn.new)
-
+		
+		
+		
 		var code = scope.c(indent: yes, braces: yes)
 
 		# same for Func -- should generalize
@@ -2490,7 +2552,7 @@ export class MethodDeclaration < Func
 		if ctx isa ClassScope and !target
 			if type == :constructor
 				out = "{mark}{funcKeyword} {fname}{func}"
-			elif option(:static)
+			elif option(:static) or ctx isa ModuleScope
 				out = "{mark}{ctx.context.c}.{fname} = {funcKeyword} {func}"
 			else
 				out = "{mark}{ctx.context.c}.prototype.{fname} = {funcKeyword} {func}"
@@ -2592,6 +2654,9 @@ export class PropertyDeclaration < Node
 				return "{scope__.imba.c}.{@token}({js:scope},'{name.value}',{o.c})".replace(',{})',')')
 
 		var tpl = propTemplate
+		
+		if scope isa ModuleScope
+			js:path = js:scope
 
 		o.add('name',Symbol.new(key))
 
@@ -2648,7 +2713,7 @@ export class PropertyDeclaration < Node
 				# if this is not a primitive - it MUST be included in the
 				# getter / setter instead
 				# FIXME throw warning if the default is not a primitive object
-				js:init = "{js:scope}.prototype._{key} = {pars:default.c};"
+				js:init = "{js:path}._{key} = {pars:default.c};"
 
 		if o.key(:chainable)
 			js:get = "v !== undefined ? (this.{js:setter}(v),this) : {js:get}"
@@ -7309,6 +7374,8 @@ export class ClassScope < Scope
 	def isClosed
 		yes
 
+export class ModuleScope < ClassScope
+
 export class TagScope < ClassScope
 
 export class ClosureScope < Scope
@@ -7700,6 +7767,9 @@ export class ScopeContext < Node
 
 	def cache
 		self
+		
+	def proto
+		"{self.c}.prototype"
 
 export class RootScopeContext < ScopeContext
 

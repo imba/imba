@@ -648,8 +648,8 @@ var grammar =
 
 	# should be removed - not used
 	Module: [
-		o 'MODULE SimpleAssignable' do Module.new A2
-		o 'MODULE SimpleAssignable Block' do Module.new A2, null, A3
+		o 'MODULE SimpleAssignable' do ModuleDeclaration.new(A2).set(keyword: A1)
+		o 'MODULE SimpleAssignable Block' do ModuleDeclaration.new(A2, A3).set(keyword: A1)
 	]
 
 	# Ordinary function invocation, or a chained series of calls.
