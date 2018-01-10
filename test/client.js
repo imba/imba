@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.0.1'};
+var Imba = {VERSION: '1.1.0-beta'};
 
 /*
 True if running in client environment.
@@ -434,7 +434,6 @@ Imba.Pointer.prototype.y = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0);
-// externs;
 
 function hello(){
 	return "world";
@@ -450,6 +449,7 @@ Item.prototype.name = function (){
 
 function A(){ };
 
+exports.A = A; // export class 
 A.prototype.name = function (){
 	return "a";
 };
@@ -457,12 +457,31 @@ A.prototype.name = function (){
 function B(){ return A.apply(this,arguments) };
 
 Imba.subclass(B,A);
+exports.B = B; // export class 
 B.prototype.name = function (){
 	return "b";
 };
 
-
-exports.A = A,exports.B = B;
+var service = (function($module){
+	$module._counter = 0;
+	
+	$module.name = function(v){ return this._name; }
+	$module.setName = function(v){ this._name = v; return this; };
+	
+	$module.inc = function (){
+		"use strict";
+		var self = this || $module;
+		return ++self._counter;
+	};
+	
+	$module.decr = function (){
+		"use strict";
+		var self = this || $module;
+		return --self._counter;
+	};
+	return $module;
+})({})
+exports.service = service;
 
 
 /***/ }),
@@ -7427,7 +7446,7 @@ var Imba = __webpack_require__(0);
 // externs;
 
 // import two specific items from module
-var module$ = __webpack_require__(4), Item = module$.Item, hello = module$.hello;
+var module$ = __webpack_require__(4), Item = module$.Item, hello = module$.hello, myService = module$.service;
 
 // import everything from module into a local namespace/variable 'm'
 var m = __webpack_require__(4);
@@ -7460,7 +7479,13 @@ describe("Syntax - Modules",function() {
 		
 		
 		eq(new (m.A)().name(),"a");
-		return eq(new (m.B)().name(),"b");
+		eq(new (m.B)().name(),"b");
+		
+		eq(myService.inc(),1);
+		eq(myService.decr(),0);
+		
+		myService.setName("Service");
+		return eq(myService.name(),"Service");
 	});
 });
 
