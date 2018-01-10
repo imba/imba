@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.1.0-beta'};
+var Imba = {VERSION: '1.1.0-beta.1'};
 
 /*
 True if running in client environment.
