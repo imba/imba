@@ -909,8 +909,7 @@ export class Lexer
 			addLoc = true
 			
 			if typ == 'MODULE'
-				let nextChar = @chunk[id:length]
-				if (nextChar != ' ' and nextChar != '\n')
+				unless (/^module [a-zA-Z]/).test(@chunk)
 					typ = 'IDENTIFIER'
 
 			# clumsy - but testing performance

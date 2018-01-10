@@ -28,3 +28,8 @@ export module service
 	
 	def decr
 		--@counter
+		
+	def handle module = {a: 1}
+		# module is only a keyword when followed by identifier (for now)
+		var module = {}
+		return module
