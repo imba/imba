@@ -1,7 +1,7 @@
 extern describe, test, ok, eq, it
 
 # import two specific items from module
-import Item,hello from './module'
+import Item,hello,Service from './module'
 
 # import everything from module into a local namespace/variable 'm'
 import './module' as m
@@ -33,6 +33,9 @@ describe "Syntax - Modules" do
 
 		eq m.A.new.name, "a"
 		eq m.B.new.name, "b"
+		
+		eq Service.inc, 1
+		eq Service.decr, 0
 
 
 export Item

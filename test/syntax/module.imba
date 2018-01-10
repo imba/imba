@@ -19,6 +19,15 @@ class B < A
 	def name
 		"b"
 
+export module Service
+	@counter = 0
+	
+	def inc
+		++@counter
+	
+	def decr
+		--@counter
+
 
 export A, B
 		
