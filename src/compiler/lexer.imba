@@ -78,6 +78,10 @@ var IDENTIFIER = /// ^
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
 ///
 
+var IMPORTS = /// ^
+	import ([^\"\']+)(?= from )
+///
+
 var OBJECT_KEY = /// ^
 	( (\$|@@|@|)[$A-Za-z_\x7f-\uffff\-][$\w\x7f-\uffff\-]*)
 	( [^\n\S\s]* : (?![\*\=:$A-Za-z\_\x7f-\uffff]) )  # Is this a property name?
@@ -509,6 +513,11 @@ export class Lexer
 
 		return 0
 
+	def importsToken
+		if var match = IMPORTS.exec(@chunk)
+			token('IMPORTS',match[1],match[1]:length,7)
+			return match[0]:length
+		return 0
 
 	def tagToken
 		return 0 unless var match = TAG.exec(@chunk)
@@ -997,6 +1006,8 @@ export class Lexer
 		elif typ == 'IMPORT'
 			# could manually parse the whole ting here?
 			pushEnd('IMPORT')
+			token(typ, id, idlen)
+			return importsToken or len
 
 		elif id == 'from' and ctx0 == 'IMPORT'
 			typ = 'FROM'

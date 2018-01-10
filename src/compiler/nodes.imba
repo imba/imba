@@ -6575,13 +6575,43 @@ export class ImportStatement < Statement
 	prop ns
 	prop imports
 	prop source
+	
+	def self.parse str, startPos = 0
+		var named = []
+		var parts = str.trim.split(",") # /\s*,\s*/
 
+		let pos = startPos
+		
+		let id = do |name,loc = 0|
+			# slow
+			while name[0] == ' '
+				loc++
+				name = name.substr(1)
+			name = name.trim
+			Identifier.new(Token.new('IDENTIFIER',name,loc,name:length))
+		
+		for part in parts
+			let asIdx = part.indexOf(" as ")
+			if asIdx > 0
+				var [name,value] = part.split(" as ")
+				named.push([id(name,pos),id(value,pos + asIdx + 4)])
+			else
+				named.push([id(part,pos)])
+			pos += part:length + 1
+		return named
+		
 
 	def initialize imports, source, ns
 		@traversed = no
 		@imports = imports
 		@source = source
 		@ns = ns
+		
+		if imports and imports.@type == 'IMPORTS'
+			@imports = ImportStatement.parse(imports.@value,imports.@loc)
+			# console.log "parsed imports",imports.@value,imports.@loc
+		elif imports isa Array
+			@imports = imports.map(|item| [item])
 		self
 
 	def visit
@@ -6597,8 +6627,9 @@ export class ImportStatement < Statement
 			var dec = @declarations = VariableDeclaration.new([])
 
 			if @imports:length == 1
-				@alias = @imports[0]
-				dec.add(@alias,OP('.',Require.new(source),@alias))
+				let extName = @imports[0][0]
+				@alias = @imports[0][1] or extName
+				dec.add(@alias,OP('.',Require.new(source),extName))
 				dec.traverse
 				return self
 
@@ -6609,8 +6640,8 @@ export class ImportStatement < Statement
 
 			if @imports:length > 1
 				for imp in @imports
-					@declarations.add(imp,OP('.',@moduledecl.variable,imp))
-
+					let name = imp[1] or imp[0]
+					dec.add(name,OP('.',@moduledecl.variable,imp[0]))
 			dec.traverse
 		self
 

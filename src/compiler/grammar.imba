@@ -134,9 +134,9 @@ var grammar =
 	]
 
 	ImportStatement: [
-		o 'IMPORT ImportArgList FROM ImportFrom' do ImportStatement.new(A2,A4)
-		o 'IMPORT ImportFrom AS ImportArg' do ImportStatement.new(null,A2,A4)
-		o 'IMPORT ImportFrom' do ImportStatement.new(null,A2)
+		o 'IMPORT ImportArgList FROM ImportFrom' do ImportStatement.new(A2,A4).set(keyword: A1, from: A3)
+		o 'IMPORT ImportFrom AS ImportArg' do ImportStatement.new(null,A2,A4).set(keyword: A1)
+		o 'IMPORT ImportFrom' do ImportStatement.new(null,A2).set(keyword: A1)
 	]
 
 	ImportFrom: [
@@ -144,8 +144,9 @@ var grammar =
 	]
 
 	ImportArgList: [
+		o 'IMPORTS'
 		o 'ImportArg' do [A1]
-		o 'ImportArgList , ImportArg' do A1.concat A3
+		o 'ImportArgList , ImportArg' do A1.concat(A3)
 	]
 
 	# Valid arguments are Blocks or Splats.
