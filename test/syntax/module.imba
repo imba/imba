@@ -1,4 +1,3 @@
-extern describe, test, ok, eq, it
 
 export def hello
 	return "world"
@@ -9,25 +8,23 @@ export class Item
 		"item"
 
 
-class A
+export class A
 
 	def name
 		"a"
 
-class B < A
+export class B < A
 
 	def name
 		"b"
 
-export module Service
+export module service
 	@counter = 0
+	
+	prop name
 	
 	def inc
 		++@counter
 	
 	def decr
 		--@counter
-
-
-export A, B
-		
