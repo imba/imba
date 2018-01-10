@@ -6962,6 +6962,7 @@ export class Util.Promisify < Util
 			} else {
 				return (a && a.then ? a : Promise.resolve(a));
 			}
+		}
 		'''
 
 	def js o

@@ -479,6 +479,15 @@ var service = (function($module){
 		var self = this || $module;
 		return --self._counter;
 	};
+	
+	$module.handle = function (module){
+		// module is only a keyword when followed by identifier (for now)
+		"use strict";
+		var self = this || $module;
+		if(module === undefined) module = {a: 1};
+		var module = {};
+		return module;
+	};
 	return $module;
 })({})
 exports.service = service;
