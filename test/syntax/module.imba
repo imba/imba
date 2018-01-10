@@ -18,6 +18,8 @@ export class B < A
 	def name
 		"b"
 
+export module emptyModule
+
 export module service
 	@counter = 0
 	

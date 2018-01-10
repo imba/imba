@@ -2196,7 +2196,7 @@ export class ModuleDeclaration < Code
 		@traversed = no
 		@name = name
 		@scope = ModuleScope.new(self)
-		@body = blk__(body)
+		@body = blk__(body or [])
 		self
 		
 	def visit
