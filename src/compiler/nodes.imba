@@ -1836,13 +1836,14 @@ export class VariableDeclaration < ListNode
 		out ? "var {out}" : ""
 
 export class VariableDeclarator < Param
-
+	
+	prop type
 	# can possibly create the variable immediately but wait with scope-declaring
 	# What if this is merely the declaration of a system/temporary variable?
 	def visit
 		# even if we should traverse the defaults as if this variable does not exist
 		# we need to preregister it and then activate it later
-		self.variable ||= scope__.register(name,null)
+		self.variable ||= scope__.register(name,null, type: @type or 'var')
 		defaults.traverse if defaults
 		# WARN what if it is already declared?
 		self.variable.declarator = self
@@ -6629,7 +6630,7 @@ export class ImportStatement < Statement
 			if @imports:length == 1
 				let extName = @imports[0][0]
 				@alias = @imports[0][1] or extName
-				dec.add(@alias,OP('.',Require.new(source),extName))
+				dec.add(@alias,OP('.',Require.new(source),extName)).type = 'import'
 				dec.traverse
 				return self
 
@@ -6641,7 +6642,7 @@ export class ImportStatement < Statement
 			if @imports:length > 1
 				for imp in @imports
 					let name = imp[1] or imp[0]
-					dec.add(name,OP('.',@moduledecl.variable,imp[0]))
+					dec.add(name,OP('.',@moduledecl.variable,imp[0])).type = 'import'
 			dec.traverse
 		self
 
