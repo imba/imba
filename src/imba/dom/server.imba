@@ -35,6 +35,27 @@ global class ImbaServerDocument
 
 def Imba.document
 	@document ||= ImbaServerDocument.new
+	
+	
+def escapeAttributeValue val
+	var str = typeof val == 'string' ? val : String(val)
+	if str.indexOf('"') >= 0
+		str = str.replace(/\"/g,"&quot;")
+	return str
+	
+def escapeTextContent val, nodeName
+	var str = typeof val == 'string' ? val : String(val)
+	
+	if nodeName == 'script'
+		return str
+
+	if str.indexOf('"') >= 0
+		str = str.replace(/\"/g,"&quot;")
+	if str.indexOf('<') >= 0
+		str = str.replace(/\</g,"&lt;")
+	if str.indexOf('>') >= 0
+		str = str.replace(/\>/g,"&gt;")
+	return str
 
 # could optimize by using a dictionary in addition to keys
 # where we cache the indexes?
@@ -102,7 +123,7 @@ global class ImbaServerElement
 		self:nodeName  = type
 		self:classList = ImbaNodeClassList.new(self)
 		self:children  = []
-
+			
 		self
 
 	def cloneNode deep
@@ -115,7 +136,11 @@ global class ImbaServerElement
 
 	def appendChild child
 		# again, could be optimized much more
-		self:children.push(child)
+		if typeof child === 'string'
+			self:children.push(escapeTextContent(child,self:nodeName))
+		else
+			self:children.push(child)
+
 		return child
 
 	def insertBefore node, before
@@ -125,7 +150,7 @@ global class ImbaServerElement
 
 	def setAttribute key, value
 		@attributes ||= []
-		@attributes.push("{key}=\"{value}\"")
+		@attributes.push("{key}=\"{escapeAttributeValue(value)}\"")
 		@attributes[key] = value
 		self
 
@@ -152,20 +177,20 @@ global class ImbaServerElement
 		self
 
 	def __innerHTML
-		return self:innerHTML || self:textContent || (self:children and self:children.join("")) or ''
+		return self:innerHTML || (self:textContent and escapeTextContent(self:textContent,self:nodeName)) || (self:children and self:children.join("")) or ''
 	
 	def __outerHTML
 		var typ = self:nodeName
 		var sel = "{typ}"
 
-		sel += " id=\"{v}\"" if var v = self:id
-		sel += " class=\"{v}\"" if var v = self:classList.toString
+		sel += " id=\"{escapeAttributeValue(v)}\"" if var v = self:id
+		sel += " class=\"{escapeAttributeValue(v)}\"" if var v = self:classList.toString
 		sel += " {@attributes.join(" ")}" if var v = @attributes
 
 		# temporary workaround for IDL attributes
 		# needs support for placeholder etc
-		sel += " placeholder=\"{v}\"" if v = self:placeholder
-		sel += " value=\"{v}\"" if v = self:value
+		sel += " placeholder=\"{escapeAttributeValue(v)}\"" if v = self:placeholder
+		sel += " value=\"{escapeAttributeValue(v)}\"" if v = self:value
 		sel += " checked" if self:checked
 		sel += " disabled" if self:disabled
 		sel += " required" if self:required
@@ -173,7 +198,7 @@ global class ImbaServerElement
 		sel += " autofocus" if self:autofocus
 		
 		if @style
-			sel += " style=\"{@style}\""
+			sel += " style=\"{escapeAttributeValue(@style)}\""
 
 		if voidElements[typ]
 			return "<{sel}>"

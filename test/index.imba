@@ -35,6 +35,9 @@ if $web$
 	require './tags/svg'
 	require './tags/html'
 	require './tags/templates'
+	
+if $node$
+	require './tags/escaping'
 
 extern phantom
 

@@ -462,6 +462,9 @@ B.prototype.name = function (){
 	return "b";
 };
 
+var emptyModule = (function($module){return $module;})({})
+exports.emptyModule = emptyModule;
+
 var service = (function($module){
 	$module._counter = 0;
 	
@@ -534,6 +537,8 @@ __webpack_require__(44);
 __webpack_require__(46);
 __webpack_require__(47);
 __webpack_require__(48);
+
+
 
 
 // externs;
