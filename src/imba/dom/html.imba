@@ -86,6 +86,9 @@ tag head
 tag header
 tag hr
 tag html
+	def parent
+		null
+
 tag i
 
 tag iframe
