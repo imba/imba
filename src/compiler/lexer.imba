@@ -79,7 +79,7 @@ var IDENTIFIER = /// ^
 ///
 
 var IMPORTS = /// ^
-	import ([^\"\']+)(?= from )
+	import\s+(\{?[^\"\'\}]+\}?)(?=\s+from\s+)
 ///
 
 var OBJECT_KEY = /// ^

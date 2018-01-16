@@ -1,7 +1,7 @@
 extern describe, test, ok, eq, it
 
 # import two specific items from module
-import Item,hello,service as myService from './module'
+import {Item,hello,service as myService} from './module'
 
 # import everything from module into a local namespace/variable 'm'
 import './module' as m

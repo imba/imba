@@ -6578,9 +6578,15 @@ export class ImportStatement < Statement
 	
 	def self.parse str, startPos = 0
 		var named = []
+		
+		let pos = startPos
+		if str[0] == '{'
+			pos += 1
+			str = str.slice(1,-1)
+
 		var parts = str.trim.split(",") # /\s*,\s*/
 
-		let pos = startPos
+		
 		
 		let id = do |name,loc = 0|
 			# slow
