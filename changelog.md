@@ -1,6 +1,7 @@
-## 1.1.0-beta
+## 1.1.0
 * Introduce `module` keyword for singleton classes
 * Allow aliasing imports with `import x as y from ...`
+* Always escape attributes textContent when rendering on server
 
 ## 1.0.1
 * Made Imbapack read options using the recommended way in Webpack 3.
