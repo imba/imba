@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.1.0-beta.2'};
+var Imba = {VERSION: '1.1.0'};
 
 /*
 True if running in client environment.
@@ -2565,7 +2565,12 @@ Imba.TAGS.defineTag('h6');
 Imba.TAGS.defineTag('head');
 Imba.TAGS.defineTag('header');
 Imba.TAGS.defineTag('hr');
-Imba.TAGS.defineTag('html');
+Imba.TAGS.defineTag('html', function(tag){
+	tag.prototype.parent = function (){
+		return null;
+	};
+});
+
 Imba.TAGS.defineTag('i');
 
 Imba.TAGS.defineTag('iframe', function(tag){
