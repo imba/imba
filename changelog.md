@@ -1,3 +1,6 @@
+## master
+* Fix fat-arrow template parsing `<div.item => ...`
+
 ## 1.1.1
 * Make `imbapack input.imba output.js` work without a config
 
