@@ -207,7 +207,7 @@ var grammar =
 	]
 
 	Const: [
-		o 'CONST' do Const.new A1
+		o 'CONST_ID' do Const.new A1
 	]
 
 	Argvar: [
@@ -312,7 +312,7 @@ var grammar =
 		# o 'IDENTIFIER' do Tag.new(type: TagTypeIdentifier.new(A1))
 		o 'TagOptions INDEX_START Expression INDEX_END' do A1.addIndex(A3)
 		o 'TagOptions . IDENTIFIER' do A1.addClass(A3)
-		o 'TagOptions . CONST' do A1.addClass(A3)
+		o 'TagOptions . CONST_ID' do A1.addClass(A3)
 		o 'TagOptions . { Expression }' do A1.addClass(A4)
 		o 'TagOptions @ { Expression }' do A1.set(key: A4)
 		o 'TagOptions # IDENTIFIER' do A1.set(id: A3)
@@ -536,6 +536,7 @@ var grammar =
 		o 'VAR VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
 		o 'LET VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
 		o 'LET SPLAT VarAssignable' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
+		o 'CONST VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
 	]
 
 	VarIdentifier: [

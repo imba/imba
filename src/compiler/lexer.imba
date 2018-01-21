@@ -32,7 +32,7 @@ var JS_KEYWORDS = [
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','self','await','import','require','module'
+	'when','def','tag','do','elif','begin','var','let','const','self','await','import','require','module'
 ]
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','static','local','export','global','prop']
@@ -46,7 +46,7 @@ export var ALL_KEYWORDS = [
 	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally',
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','self','await','import',
+	'when','def','tag','do','elif','begin','var','let','const','self','await','import',
 	'and','or','is','isnt','not','yes','no','isa','case','nil','require','module'
 ]
 
@@ -229,11 +229,11 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
-var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST','NEW','ARGVAR','SYMBOL','RETURN']
+var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN']
 
 # optimize for FixedArray
 var INDEXABLE = [
-	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST','NEW','ARGVAR','SYMBOL','RETURN'
+	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN'
 	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID'
 ]
 
@@ -734,10 +734,10 @@ export class Lexer
 		elif CONST_IDENTIFIER.test(pre) or id == 'global' or id == 'exports'
 			# really? seems very strange
 			# console.log('global!!',typ,id)
-			typ = 'CONST'
+			typ = 'CONST_ID'
 		
 		# what is this really for?
-		if match[5] and ['IDENTIFIER','CONST','GVAR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING'].indexOf(ltyp) >= 0
+		if match[5] and ['IDENTIFIER','CONST_ID','GVAR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING'].indexOf(ltyp) >= 0
 			token('.','.',0)
 	
 		token(typ, id, length)
@@ -891,7 +891,7 @@ export class Lexer
 
 		elif CONST_IDENTIFIER.test(id) or id == 'global' or id == 'exports'
 			# thous should really be handled by the ast instead
-			typ = 'CONST'
+			typ = 'CONST_ID'
 
 		elif id == 'elif'
 			token 'ELSE', 'elif', id:length

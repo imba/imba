@@ -91,7 +91,7 @@ var IMPLICIT_FUNC_MAP =
 	'TAG_END': 1
 	'IVAR': 1
 	'GVAR': 1
-	'CONST': 1
+	'CONST_ID': 1
 	'ARGVAR': 1
 	'NEW': 1
 	'BREAK': 1
@@ -122,7 +122,7 @@ var IMPLICIT_CALL_MAP =
 	'SUPER': 1
 	'IVAR': 1
 	'GVAR': 1
-	'CONST': 1
+	'CONST_ID': 1
 	'ARGVAR': 1
 	'SELF': 1
 	'@': 1
@@ -146,20 +146,20 @@ var IMPLICIT_CALL_MAP =
 	'BREAK': 1
 
 
-var IDENTIFIERS = ['IDENTIFIER', 'GVAR', 'IVAR', 'CVAR', 'CONST', 'ARGVAR']
+var IDENTIFIERS = ['IDENTIFIER', 'GVAR', 'IVAR', 'CVAR', 'CONST_ID', 'ARGVAR']
 
 
 
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
 var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 
-	'GVAR', 'CONST', 'ARGVAR', 'NEW', 'BREAK', 'CONTINUE','RETURN'
+	'GVAR', 'CONST_ID', 'ARGVAR', 'NEW', 'BREAK', 'CONTINUE','RETURN'
 ]
 
 # If preceded by an `IMPLICIT_FUNC`, indicates a function invocation.
 var IMPLICIT_CALL    = [
 	'SELECTOR','IDENTIFIER', 'NUMBER', 'STRING', 'SYMBOL', 'JS', 'REGEX', 'NEW', 'PARAM_START', 'CLASS'
-	'IF', 'UNLESS', 'TRY', 'SWITCH', 'THIS', 'BOOL', 'TRUE','FALSE', 'NULL', 'UNDEFINED', 'UNARY', 'SUPER', 'IVAR', 'GVAR', 'CONST', 'ARGVAR','SELF', 
+	'IF', 'UNLESS', 'TRY', 'SWITCH', 'THIS', 'BOOL', 'TRUE','FALSE', 'NULL', 'UNDEFINED', 'UNARY', 'SUPER', 'IVAR', 'GVAR', 'CONST_ID', 'ARGVAR','SELF', 
 	'@', '[', '(', '{', '--', '++','SELECTOR', 'TAG_START', 'TAGID', '#', 'SELECTOR_START', 'IDREF', 'SPLAT', 'DO', 'BLOCK_ARG'
 	'FOR', 'STRING_START','CONTINUE','BREAK'
 ] # '->', '=>', why does it not work with symbol?

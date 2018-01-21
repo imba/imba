@@ -329,6 +329,9 @@ export class Stack
 	def es6
 		@es6 ?= !!(@options:es6 or @options:es2015 or env('IMBA_ES6'))
 
+	def es5
+		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
+
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
@@ -3860,6 +3863,9 @@ export class VarReference < ValueNode
 		# what about resolving?
 		var ref = @variable
 		var out = "{mark__(@value)}{ref.c}"
+		var keyword = o.es5 ? 'var' : (@type or 'var')
+		# let might still not work perfectly
+		keyword = 'var' if keyword == 'let'
 
 		if ref && !ref.@declared # .option(:declared)
 			if o.up(VarBlock) # up varblock??
@@ -3869,7 +3875,7 @@ export class VarReference < ValueNode
 			elif o.isExpression or @export # why?
 				ref.autodeclare
 			else
-				out = "var {out}"
+				out = "{keyword} {out}"
 				ref.@declared = yes
 				# ref.set(declared: yes)
 
