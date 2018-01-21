@@ -6076,6 +6076,11 @@ export class Tag < Node
 				calls.push ".{bodySetter}({body},{typ})"
 			elif bodySetter == 'setText'
 				statics.push ".{bodySetter}({body})"
+			elif bodySetter == 'setTemplate'
+				if o:body.nonlocals
+					calls.push ".{bodySetter}({body})"
+				else
+					statics.push ".{bodySetter}({body})"
 			else
 				calls.push ".{bodySetter}({body})"
 
