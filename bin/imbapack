@@ -21,7 +21,7 @@ if(require.main !== module){
 
 	var conf = {
 		module: {
-			loaders: [loader]
+			loaders: []
 		},
 		resolve: {
 			extensions: options.resolve.extensions,
@@ -44,7 +44,7 @@ if(require.main !== module){
 			// add the imba loader
 			var l = null;
 			loaders.forEach(function(loader){
-				if(String(loader.test) == '/\\.imba/'){
+				if(String(loader.test).replace('$','') == '/\\.imba/'){
 					l = loader;
 					l.loader = loader.loader; // update path
 				}
@@ -77,6 +77,7 @@ if(require.main !== module){
 	}
 
 	// check for existing config
+	
 	var cfgPath = process.env.IMBAPACK_BASECONF;
 	if (cfgPath){
 		var baseconf = require(cfgPath);
@@ -87,6 +88,7 @@ if(require.main !== module){
 		}
 		module.exports = baseconf;
 	} else {
+		mergeConfig(conf);
 		module.exports = conf;
 	}
 	return;
