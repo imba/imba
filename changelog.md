@@ -1,3 +1,6 @@
+## 1.1.1
+* Make `imbapack input.imba output.js` work without a config
+
 ## 1.1.0
 * Introduce `module` keyword for singleton classes
 * Allow aliasing imports with `import x as y from ...`
