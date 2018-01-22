@@ -365,7 +365,7 @@ export class Stack
 			elif e.hasOwnProperty(key.toLowerCase)
 				return e[key.toLowerCase]
 
-		if process:env
+		if $node$ and typeof process != 'undefined' and process:env
 			val = process:env[key.toUpperCase]
 			if val != undefined
 				return val
