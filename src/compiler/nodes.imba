@@ -3767,16 +3767,25 @@ export class VarOrAccess < ValueNode
 			# in the same scope - we should not treat this as a var-lookup
 			# ie.  var x = x would resolve to var x = this.x() if x
 			# was not previously defined
+			if variable.scope == scope and !variable.@initialized
+				# here we need to check if the variable exists outside
+				# if it does - we need to ensure that the inner variable does not collide
+				let outerVar = scope.parent.lookup(value)
+				if outerVar
+					variable.@virtual = yes
+					variable.@shadowing = outerVar
+					variable = outerVar
 
 			# should do this even if we are not in the same scope?
 			# we only need to be in the same closure(!)
 
-			if variable.@initialized or (scope.closure != variable.scope.closure)
+			if variable and variable.@initialized or (scope.closure != variable.scope.closure)
 				@variable = variable
 				variable.addReference(self)
 				@value = variable # variable.accessor(self)
 				@token.@variable = variable
 				return self
+
 			# FIX
 			# @value.safechain = safechain
 
@@ -7640,7 +7649,7 @@ export class Variable < Node
 		@resolved = yes
 		var es5 = STACK.es5
 		var closure = @scope.closure
-		var item = scope.lookup(@name)
+		var item = @shadowing or scope.lookup(@name)
 
 		# if this is a let-definition inside a virtual scope we do need
 		#
@@ -7661,7 +7670,7 @@ export class Variable < Node
 			if item.scope != scope && (options:let or @type == 'let')
 				scope.varmap[@name] = self
 				# if we allow native let we dont need to rewrite scope?
-				return self if (!es5 and !@virtual)
+				return self if (!es5 and !@virtual and !@shadowing)
 					
 
 			# different rules for different variables?

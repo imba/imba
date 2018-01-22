@@ -140,6 +140,25 @@ class A
 
 		eq a,1
 
+	def letShadow
+		let v = 1
+		if true
+			let v = v * 2
+			eq v, 2
+		eq v, 1
+
+		if true
+			let c = c * 2
+			eq c, 2
+
+	def varShadow
+		var x = 10
+		var y = do
+			var x = x * 2
+			eq x, 20
+
+		y()
+
 	def caching
 
 		if var f = f
@@ -163,8 +182,7 @@ describe "Syntax - Scope" do
 		item.innerDef
 
 	test "let" do
-		item.letVar
-		item.letIf
+		
 
 	test "class" do
 		var x = 10
@@ -181,11 +199,18 @@ describe "Syntax - Scope" do
 		eq x, 10
 
 	test "let" do
+		item.letVar
+		item.letIf
+		item.letShadow
+
 		var a = 0
 		if true
 			let a = 1
 			eq a, 1
 		eq a, 0
+
+	test "var shadowing" do
+		item.varShadow
 
 	test "caching" do
 		A.new.caching
