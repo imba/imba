@@ -30,7 +30,6 @@ describe 'Syntax - Loops' do
 					setTimeout(&,1) do
 						res.push(item)
 						if res:length == ary:length
-							console.log("got here")
 							eq res, [1,2,3,4,5]
 							resolve(yes)
 
@@ -278,6 +277,15 @@ describe 'Syntax - Loops' do
 				(x * @v for x in [1,2,3]).join("-")
 
 		eq A.new.map, "1-2-3"
+
+	test "issue with multi-let" do
+			var items = ["12","22","32"]
+			var res = for item in items
+				var [a,b] = item.split('')
+				b + a
+
+			eq res.join(''), "212223"
+
 
 	describe "Loop" do
 

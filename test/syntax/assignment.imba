@@ -487,3 +487,14 @@ describe 'Syntax - Assignment' do
 		var obj = {counter: 0}
 		eq fn(obj,10), 11
 		yes
+
+	test 'tupes - let' do
+		var a = 1, b = 2, str = 'ab'
+
+		if true
+			let [a,b] = str.split('')
+			eq a, 'a'
+			eq b, 'b'
+
+		eq a, 1
+		eq b, 2

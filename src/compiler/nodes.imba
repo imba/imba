@@ -1232,9 +1232,12 @@ export class VarBlock < ListNode
 		var code = compact__(flatten__(cary__(nodes)))
 		code = code.filter(|n| n != null && n != undefined && n != EMPTY)
 		var out = code.join(",")
+
+		# are we sure?
+		var keyword = o.es5 ? 'var' : (@type or 'var')
 		# we just need to trust that the variables have been autodeclared beforehand
 		# if we are inside an expression
-		out = "var " + out unless o.isExpression
+		out = "{keyword} " + out unless o.isExpression
 		return out
 
 
@@ -4259,7 +4262,7 @@ export class TupleAssign < Assign
 		# if the first is a var-reference, they should all be(!) .. or splats?
 		# this is really a hacky wao to do it though
 		if left.first.node isa VarReference
-			self.type = 'var'
+			self.type = left.first.node.type or 'var' # what about let?
 			# should possibly allow real vars as well, no?
 			@vars = left.nodes.filter(|n| n isa VarReference)
 			# collect the vars for tuple for easy access
@@ -4296,6 +4299,7 @@ export class TupleAssign < Assign
 		var lft = self.left
 		var rgt = self.right
 		var typ = self.type
+		var vartype = typ
 		var via = null
 
 		var li   = 0
@@ -4418,6 +4422,7 @@ export class TupleAssign < Assign
 			# for now it is not worth the added compiler complexity
 
 			# iter.cache(force: yes, type: 'iter')
+			# FIXME iter will now be explicitly declared in ast AND in scope?
 			var top = VarBlock.new
 			var iter = util.iterable(rgt, yes)
 			# could set the vars inside -- most likely
@@ -4436,8 +4441,12 @@ export class TupleAssign < Assign
 			# ast.push(blk = VarBlock.new)
 			# blk = null
 
-			var blktype = typ == 'var' ? VarBlock : Block
+			var blktype = (vartype) ? VarBlock : Block
 			var blk = blktype.new([])
+
+			if vartype
+				blk.@type = vartype
+
 			# blk = top if typ == 'var'
 			ast.push(blk)
 
@@ -4448,7 +4457,7 @@ export class TupleAssign < Assign
 					var lvar = l.node
 					var rem = llen - i - 1 # remaining after splat
 
-					if typ != 'var'
+					if !vartype
 						var arr = util.array(OP('-',len, num__(i + rem) ),yes)
 						top.push(arr)
 						lvar = arr.cachevar
@@ -4473,7 +4482,7 @@ export class TupleAssign < Assign
 
 					ast.push(WHILE(OP('<',idx,test), set))
 
-					if typ != 'var'
+					if !vartype
 						ast.push(blk = Block.new)
 						blk.push(OP('=',l.node,lvar))
 					else
@@ -4490,7 +4499,7 @@ export class TupleAssign < Assign
 					ast.push(blk = blktype.new) unless blk
 					blk.push(OP('=',l,OP('.',iter,num__(i) )))
 
-		# if we are in an expression we really need to
+		# if we are in an expression we need to autodecare vars
 		if o.isExpression and @vars
 			for v in @vars
 				v.variable.autodeclare
@@ -7530,8 +7539,15 @@ export class WhileScope < FlowScope
 
 export class ForScope < FlowScope
 
+	# def register
+	#	console.log "ForScope.register"
+	#	super
+
 	def autodeclare variable
 		vars.push(variable)
+
+	def temporary refnode, o = {}, name = null
+		parent.temporary(refnode,o,name)
 
 export class IfScope < FlowScope
 
