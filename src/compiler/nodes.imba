@@ -5531,24 +5531,24 @@ export class ForOf < For
 	def declare
 		var o = options
 		var vars = o:vars = {}
-
-		var src = vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
 		var k
 		var v
 
 		# possibly proxy the index-variable?
 
 		if o:own
+			vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
 			v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
 			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 
 			# systemvariable -- should not really be added to the map
-			var keys = vars:keys = scope.declare('keys',Util.keys(src.accessor),system: yes, type: 'let') # the outer one should resolve first
+			var keys = vars:keys = scope.declare('keys',Util.keys(vars:source.accessor),system: yes, type: 'let') # the outer one should resolve first
 			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
 			k = vars:key = scope.declare(o:name,null,type: 'let') # scope.declare(o:name,null,system: yes)
 		else
 			# we set the var -- why even declare it
 			# no need to declare -- it will declare itself in the loop - no?
+			vars:source = o:source.@variable || scope.temporary(o:source, system: yes, pool: 'dict', type: 'let')
 			v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
 			k = vars:key = scope.register(o:name,o:name,type: 'let')
 
@@ -5560,7 +5560,7 @@ export class ForOf < For
 
 	def js o
 		var vars = options:vars
-
+		var osrc = options:source
 		var src = vars:source
 		var k = vars:key
 		var v = vars:value
@@ -5585,8 +5585,9 @@ export class ForOf < For
 				body.unshift(OP('=',v,OP('.',src,k)))
 
 			code = scope.c(braces: yes, indent: yes)
+			let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
-			"{mark__(options:keyword)}for ({o.es5 ? 'var' : 'let'} {k.c} in {src.c})" + code
+			"{mark__(options:keyword)}for ({o.es5 ? 'var' : 'let'} {k.c} in {inCode.c(expression: yes)})" + code
 
 	def head
 		var v = options:vars
@@ -7810,6 +7811,9 @@ export class SystemVariable < Variable
 		elif typ == 'iter'
 			names = ['ary__','ary_','coll','array','items','ary']
 
+		elif typ == 'dict'
+			names = ['dict']
+
 		elif typ == 'val'
 			names = ['v_']
 
@@ -7835,7 +7839,7 @@ export class SystemVariable < Variable
 		while !@name && alt = names.pop
 			let foundAlt = scope.lookup(alt)
 			# check if higher level?
-			if !foundAlt or (foundAlt.scope != scope and type == 'let' and !STACK.es5)
+			if !foundAlt # or (foundAlt.scope != scope and type == 'let' and !STACK.es5)
 				@name = alt # unless scope.lookup(alt)
 
 		if !@name and @declarator
@@ -7857,7 +7861,9 @@ export class SystemVariable < Variable
 		@name ||= "${scope.counter += 1}"
 		
 		scope.varmap[@name] = self
-		closure.varmap[@name] = self
+
+		if type != 'let' or STACK.es5 or @virtual
+			closure.varmap[@name] = self
 		self
 
 	def name

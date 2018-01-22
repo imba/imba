@@ -23,6 +23,16 @@ describe 'Syntax - Loops' do
 
 	describe "For In" do
 
+		test "issue with shadowing items var" do
+			var ret = []
+			def iterate items
+				items
+				for item,i in items
+					ret.push(item)
+
+			eq [1,2,3], iterate([1,2,3])
+
+
 		test "scoped let" do
 			Promise.new do |resolve|
 				var res = []
@@ -226,6 +236,14 @@ describe 'Syntax - Loops' do
 			var v = []
 			m(v)
 			eq v, [:a,1,:b,2,:c,3]
+
+		test "for of" do
+
+			var items = {x: {a: 1, b: 2, c: 3}}
+			var out = []
+			for k,v of items:x
+				out.push(k,v)
+			eq out, ['a',1,'b',2,'c',3]
 
 		test "for own of global bug" do
 
