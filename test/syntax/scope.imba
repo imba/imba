@@ -127,6 +127,19 @@ class A
 		eq a + b + c + d + e + f, 6
 		return
 
+	def letIf
+		var v = 2
+
+		if let v = 3
+			eq v,3
+
+		eq v,2
+
+		if let a = 2
+			eq a, 2
+
+		eq a,1
+
 	def caching
 
 		if var f = f
@@ -149,12 +162,13 @@ describe "Syntax - Scope" do
 	test "def inside method" do
 		item.innerDef
 
-	test "blocklocal variables (let)" do
+	test "let" do
 		item.letVar
+		item.letIf
 
 	test "class" do
 		var x = 10
-		local class A
+		class A
 			var x = 20
 
 			def test

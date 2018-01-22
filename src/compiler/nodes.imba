@@ -1829,14 +1829,30 @@ export class VariableDeclaration < ListNode
 	def js o
 		return EMPTY if count == 0
 
+		# When is this needed?
 		if count == 1 && !isExpressable
 			first.variable.autodeclare
 			var node = first.assignment
 			return node.c
 
+		
+		var keyword = 'var'
+		var groups = {}
+
+		nodes.forEach do |item|
+			let typ = item.@variable and item.@variable.type
+			groups[typ] ||= []
+			groups[typ].push(item.@variable)
+
+		if groups['let'] and (groups['var'] or groups['const'])
+			console.warn "VariableDeclaration with both var and let"
+			groups['let'].forEach do |item| item.@virtual = yes
+		elif groups['let'] and !o.es5
+			keyword = 'let'
+
 		# FIX PERFORMANCE
 		var out = compact__(cary__(nodes)).join(", ")
-		out ? "var {out}" : ""
+		out ? "{keyword} {out}" : ""
 
 export class VariableDeclarator < Param
 	
@@ -3841,11 +3857,15 @@ export class VarReference < ValueNode
 	def initialize value, type
 		if value isa VarOrAccess
 			value = value.value
+			@variable = null
+		elif value isa Variable
+			@variable = value
+			value = ""
+
 		# for now - this can happen
 		super(value)
 		@export = no
 		@type = type and String(type)
-		@variable = null
 		@declared = yes # just testing now
 
 
@@ -3865,7 +3885,7 @@ export class VarReference < ValueNode
 		var out = "{mark__(@value)}{ref.c}"
 		var keyword = o.es5 ? 'var' : (@type or 'var')
 		# let might still not work perfectly
-		keyword = 'var' if keyword == 'let'
+		# keyword = 'var' if keyword == 'let'
 
 		if ref && !ref.@declared # .option(:declared)
 			if o.up(VarBlock) # up varblock??
@@ -4975,6 +4995,15 @@ export class If < ControlFlow
 		@scope.visit if @scope
 		test.traverse if test
 
+		# console.log "vars in if",Object.keys(@scope.varmap)
+		for own name, variable of @scope.varmap
+			if variable.type == 'let'
+				variable.@virtual = yes
+
+		# the let-variables declared in if(*test*) should be
+		# local to the inner scope, but will technically be
+		# declared in the outer scope. Must get unique name
+
 		unless stack.isAnalyzing
 			@pretest = truthy__(test)
 
@@ -5004,7 +5033,7 @@ export class If < ControlFlow
 		# would possibly want to look up / out
 		var brace = braces: yes, indent: yes
 
-		if @pretest === true
+		if @pretest === true and false
 			# what if it is inside expression?
 			let js = body ? body.c(braces: !!prevIf) : 'true'
 
@@ -5016,7 +5045,7 @@ export class If < ControlFlow
 
 			return js
 
-		elif @pretest === false
+		elif @pretest === false and false
 			alt.prevIf = prevIf if alt isa If
 			let js = alt ? alt.c(braces: !!prevIf) : ''
 
@@ -5377,7 +5406,7 @@ export class For < Loop
 		# WARN Optimization - might have untended side-effects
 		# if we are assigning directly to a local variable, we simply
 		# use said variable for the inner res
-		if reuseable and assignee
+		if reuseable and assignee and false
 			# instead of declaring it in the scope - why not declare it outside?
 			# it might already exist in the outer scope no?
 			# assignee.resolve
@@ -5389,17 +5418,17 @@ export class For < Loop
 			# resvar = @resvar = scope.declare(assignee,Arr.new([]),proxy: yes)
 
 			# dont declare it - simply push an assign into the vardecl of scope
-			scope.vars.unshift(OP('=',assignee,Arr.new([])))
+			# this must be available from outside the loop
+			# scope.vars.unshift(OP('=',assignee,Arr.new([])))
 			resvar = @resvar = assignee
-			
-
 			node.@consumer = self
 			node = null
 
 		else
 			# declare the variable we will use to soak up results
 			# what about a pool here?
-			resvar = @resvar ||= scope.declare(:res,Arr.new([]),system: yes, type: 'let')
+			# TODO virtual let here(!)
+			resvar = @resvar ||= scope.register(:res,null,system: yes, type: 'var')
 
 		if @tagtree
 			@catcher = TagPushAssign.new("push",resvar,null)
@@ -5409,7 +5438,13 @@ export class For < Loop
 		body.consume(@catcher) # should still return the same body
 
 		if node
-			var ast = Block.new([self,BR,resvar.accessor.consume(node)])
+			# add the variable declaration to the top here?
+			let block = [self,BR,resvar.accessor.consume(node)]
+			if @resvar
+				block.unshift(BR)
+				block.unshift(OP('=',VarReference.new(@resvar,'let'),Arr.new([])))
+
+			var ast = Block.new(block)
 			return ast
 		# var ast = Block.new([self,BR,resvar.accessor])
 		# ast.consume(node) if node
@@ -5448,7 +5483,7 @@ export class For < Loop
 		else
 			cond = OP('<',idx,vars:len)
 			
-			if val.refcount < 3 and val.assignments:length == 0
+			if val.refcount < 3 and val.assignments:length == 0 and !val.@noproxy
 				val.proxy(vars:source,idx)
 			else
 				body.unshift(OP('=',val,OP('.',vars:source,idx)), BR)
@@ -5475,21 +5510,24 @@ export class ForOf < For
 		var vars = o:vars = {}
 
 		var src = vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
-		var v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
+		var k
+		var v
 
 		# possibly proxy the index-variable?
 
 		if o:own
+			v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
 			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 
 			# systemvariable -- should not really be added to the map
 			var keys = vars:keys = scope.declare('keys',Util.keys(src.accessor),system: yes, type: 'let') # the outer one should resolve first
 			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
-			var k = vars:key = scope.declare(o:name,null,type: 'let') # scope.declare(o:name,null,system: yes)
+			k = vars:key = scope.declare(o:name,null,type: 'let') # scope.declare(o:name,null,system: yes)
 		else
 			# we set the var -- why even declare it
 			# no need to declare -- it will declare itself in the loop - no?
-			var k = vars:key = scope.register(o:name,o:name,type: 'let')
+			v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
+			k = vars:key = scope.register(o:name,o:name,type: 'let')
 
 		# TODO use util - why add references already? Ah -- this is for the highlighting
 		v.addReference(o:index) if v and o:index
@@ -5507,14 +5545,9 @@ export class ForOf < For
 
 		var code
 
-		if v
-			# set value as proxy of object[key]
-			# possibly make it a ref? what is happening?
-			# v.refcount < 3 ? v.proxy(o,k) : 
-			if v.refcount > 0
-				body.unshift(OP('=',v,OP('.',o,k)))
-
 		if options:own
+			if v and v.refcount > 0
+				body.unshift(OP('=',v,OP('.',o,k)))
 
 			# if k.refcount < 3 # should probably adjust these
 			#	k.proxy(vars:keys,i)
@@ -5524,9 +5557,13 @@ export class ForOf < For
 			var head = "{mark__(options:keyword)}for ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
 			return head + code
 
-		code = body.c(braces: yes, indent: yes)
-		# it is really important that this is a treated as a statement
-		scope.vars.c + ";\n{mark__(options:keyword)}for (var {k.c} in {o.c})" + code
+		else
+			if v and v.refcount > 0
+				body.unshift(OP('=',v,OP('.',o,k)))
+
+			code = scope.c(braces: yes, indent: yes)
+			# it is really important that this is a treated as a statement
+			"{mark__(options:keyword)}for (let {k.c} in {o.c})" + code
 
 	def head
 		var v = options:vars
@@ -7158,6 +7195,7 @@ export class Scope
 
 		# also look at outer scopes if this is not closed?
 		var existing = @varmap.hasOwnProperty(name) && @varmap[name]
+		# FIXME check if existing is required to be unique as well?
 		return existing if existing and !o:unique
 		# var type = o:system ? SystemVariable : Variable
 		var item = Variable.new(self,name,decl,o)
@@ -7497,6 +7535,10 @@ export class ForScope < FlowScope
 
 export class IfScope < FlowScope
 
+	# def register
+	#	console.log "IfScope.register"
+	#	super
+
 	def temporary refnode, o = {}, name = null
 		parent.temporary(refnode,o,name)
 
@@ -7565,12 +7607,13 @@ export class Variable < Node
 		return self if @resolved and !force
 
 		@resolved = yes
+		var es5 = STACK.es5
 		var closure = @scope.closure
 		var item = scope.lookup(@name)
 
 		# if this is a let-definition inside a virtual scope we do need
 		#
-		if @scope != closure and @type == 'let' # or if it is a system-variable
+		if @scope != closure and @type == 'let' and (es5 or @virtual) # or if it is a system-variable
 			item = closure.lookup(@name)
 
 			# we now need to ensure that this variable is unique inside
@@ -7586,6 +7629,9 @@ export class Variable < Node
 			# if the item is defined in an outer scope - we reserve the
 			if item.scope != scope && (options:let or @type == 'let')
 				scope.varmap[@name] = self
+				# if we allow native let we dont need to rewrite scope?
+				return self if (!es5 and !@virtual)
+					
 
 			# different rules for different variables?
 			if @options:proxy
@@ -7666,6 +7712,8 @@ export class Variable < Node
 
 		if ref:region and ref.region
 			@references.push(ref)
+			if ref.scope__ != @scope
+				@noproxy = yes
 
 		self
 
@@ -7755,7 +7803,10 @@ export class SystemVariable < Variable
 			names.push(alias)
 
 		while !@name && alt = names.pop
-			@name = alt unless scope.lookup(alt)
+			let foundAlt = scope.lookup(alt)
+			# check if higher level?
+			if !foundAlt or (foundAlt.scope != scope and type == 'let' and !STACK.es5)
+				@name = alt # unless scope.lookup(alt)
 
 		if !@name and @declarator
 			if node = declarator.node

@@ -23,6 +23,19 @@ describe 'Syntax - Loops' do
 
 	describe "For In" do
 
+		test "scoped let" do
+			Promise.new do |resolve|
+				var res = []
+				for item,i in ary
+					setTimeout(&,1) do
+						res.push(item)
+						if res:length == ary:length
+							console.log("got here")
+							eq res, [1,2,3,4,5]
+							resolve(yes)
+
+				yes
+
 		test "quirks" do
 			var i = 10
 			var a = [1,2,3]
@@ -37,12 +50,9 @@ describe 'Syntax - Loops' do
 		test "redefining var inside" do
 
 			var breaks = [1,2,3]
-			for br,i in breaks
-				let br = 0
-				eq br, 0
-
 			for x,i in breaks
 				x = 0
+				eq x, 0
 
 			eq breaks, [1,2,3]
 

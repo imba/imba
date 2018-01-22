@@ -1,11 +1,18 @@
 var path = require('path');
 var webpack = require('webpack');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
-var minify = new webpack.optimize.UglifyJsPlugin({
-	minimize: true, compress: { warnings: false }, output: {
-    semicolons: false,
-    indent_level: 0
-  }
+var minify = new UglifyJsPlugin({
+	uglifyOptions: {
+		ecma: 6,
+		minimize: true,
+		compress: { warnings: false },
+		output: {
+			semicolons: false,
+			indent_level: 0
+		}
+	}
+	
 });
 
 var loaders = [{

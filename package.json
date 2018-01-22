@@ -69,6 +69,9 @@
   },
   "devDependencies": {
     "underscore": "^1.8.3",
+    "uglify-es": "^3.3.8",
+    "uglifyes-webpack-plugin": "^0.4.3",
+    "uglifyjs-webpack-plugin": "^1.0.0-rc.0",
     "webpack": "^3.6.0"
   },
   "dependencies": {}
