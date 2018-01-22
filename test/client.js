@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.1.1'};
+var Imba = {VERSION: '1.2.0-beta.1'};
 
 /*
 True if running in client environment.
@@ -148,8 +148,8 @@ Imba.clearTimeout = function (id){
 
 
 Imba.subclass = function (obj,sup){
-	var v;
-	for (var k in sup){
+	for (let k in sup){
+		let v;
 		v = sup[k];if (sup.hasOwnProperty(k)) { obj[k] = v };
 	};
 	
@@ -233,8 +233,8 @@ Imba.attr = function (scope,name,opts){
 		return scope.defineAttribute(name,opts);
 	};
 	
-	var getName = Imba.toCamelCase(name);
-	var setName = Imba.toCamelCase('set-' + name);
+	let getName = Imba.toCamelCase(name);
+	let setName = Imba.toCamelCase('set-' + name);
 	
 	scope.prototype[getName] = function() {
 		return this.getAttribute(name);
@@ -248,7 +248,7 @@ Imba.attr = function (scope,name,opts){
 };
 
 Imba.propDidSet = function (object,property,val,prev){
-	var fn = property.watch;
+	let fn = property.watch;
 	if (fn instanceof Function) {
 		fn.call(object,val,prev,property);
 	} else if ((typeof fn=='string'||fn instanceof String) && object[fn]) {
@@ -532,14 +532,14 @@ __webpack_require__(41);
 __webpack_require__(42);
 __webpack_require__(43);
 
+if (true) {
+	__webpack_require__(44);
+	__webpack_require__(46);
+	__webpack_require__(47);
+	__webpack_require__(48);
+};
 
-__webpack_require__(44);
-__webpack_require__(46);
-__webpack_require__(47);
-__webpack_require__(48);
-
-
-
+if (false) {};
 
 // externs;
 
@@ -573,16 +573,16 @@ if (typeof window !== 'undefined') {
 
 module.exports = Imba;
 
-
-__webpack_require__(7);
-__webpack_require__(8);
-
+if (true) {
+	__webpack_require__(7);
+	__webpack_require__(8);
+};
 
 if (activate) {
 	Imba.EventManager.activate();
 };
 
-
+if (false) {};
 
 
 /***/ }),
@@ -595,15 +595,15 @@ var Imba = __webpack_require__(1);
 var requestAnimationFrame; // very simple raf polyfill
 var cancelAnimationFrame;
 
+if (false) {};
 
-
-
-cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitRequestAnimationFrame;
-requestAnimationFrame = window.requestAnimationFrame;
-requestAnimationFrame || (requestAnimationFrame = window.webkitRequestAnimationFrame);
-requestAnimationFrame || (requestAnimationFrame = window.mozRequestAnimationFrame);
-requestAnimationFrame || (requestAnimationFrame = function(blk) { return setTimeout(blk,1000 / 60); });
-
+if (true) {
+	cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitRequestAnimationFrame;
+	requestAnimationFrame = window.requestAnimationFrame;
+	requestAnimationFrame || (requestAnimationFrame = window.webkitRequestAnimationFrame);
+	requestAnimationFrame || (requestAnimationFrame = window.mozRequestAnimationFrame);
+	requestAnimationFrame || (requestAnimationFrame = function(blk) { return setTimeout(blk,1000 / 60); });
+};
 
 function Ticker(){
 	var self = this;
@@ -639,8 +639,8 @@ Ticker.prototype.tick = function (timestamp){
 	this._stage = 1;
 	this.before();
 	if (items.length) {
-		for (var i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
-			item = ary[i];
+		for (let i = 0, items = iter$(items), len = items.length, item; i < len; i++) {
+			item = items[i];
 			if (item instanceof Function) {
 				item(this._dt,this);
 			} else if (item.tick) {
@@ -971,11 +971,11 @@ __webpack_require__(14);
 __webpack_require__(15);
 __webpack_require__(16);
 
+if (true) {
+	__webpack_require__(17);
+};
 
-__webpack_require__(17);
-
-
-
+if (false) {};
 
 
 /***/ }),
@@ -1018,13 +1018,13 @@ Imba.TagManagerClass.prototype.changes = function (){
 };
 
 Imba.TagManagerClass.prototype.mount = function (node){
-	
+	if (false) {};
 	return this._hasMountables = true;
 };
 
 Imba.TagManagerClass.prototype.refresh = function (force){
 	if(force === undefined) force = false;
-	
+	if (false) {};
 	// console.time('resolveMounts')
 	if (this._inserts && this._hasMountables) {
 		this.tryMount();
@@ -1048,8 +1048,8 @@ Imba.TagManagerClass.prototype.tryMount = function (){
 	var root = document.body;
 	var items = root.querySelectorAll('.__mount');
 	// what if we end up creating additional mountables by mounting?
-	for (var i = 0, ary = iter$(items), len = ary.length, el; i < len; i++) {
-		el = ary[i];
+	for (let i = 0, items = iter$(items), len = items.length, el; i < len; i++) {
+		el = items[i];
 		if (el && el._tag) {
 			if (this._mounted.indexOf(el._tag) == -1) {
 				this.mountNode(el._tag);
@@ -1069,7 +1069,7 @@ Imba.TagManagerClass.prototype.mountNode = function (node){
 Imba.TagManagerClass.prototype.tryUnmount = function (){
 	var count = 0;
 	var root = document.body;
-	for (var i = 0, items = iter$(this._mounted), len = items.length, item; i < len; i++) {
+	for (let i = 0, items = iter$(this._mounted), len = items.length, item; i < len; i++) {
 		item = items[i];
 		if (!document.documentElement.contains(item._dom)) {
 			item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED;
@@ -1112,9 +1112,9 @@ Get the current document
 */
 
 Imba.document = function (){
-	
-	return window.document;
-	
+	if (true) {
+		return window.document;
+	};
 };
 
 /*
@@ -1161,7 +1161,7 @@ Imba.Tag = function Tag(dom,ctx){
 	this.setDom(dom);
 	this.__ = {};
 	this.FLAGS = 0;
-	
+	if (false) {};
 	this.build();
 	this;
 };
@@ -1245,22 +1245,22 @@ Imba.Tag.prototype.optimizeTagStructure = function (){
 		};
 	};
 	
-	
-	if (hasMount) {
-		if (ctor._classes && ctor._classes.indexOf('__mount') == -1) {
-			ctor._classes.push('__mount');
+	if (true) {
+		if (hasMount) {
+			if (ctor._classes && ctor._classes.indexOf('__mount') == -1) {
+				ctor._classes.push('__mount');
+			};
+			
+			if (ctor._protoDom) {
+				ctor._protoDom.classList.add('__mount');
+			};
 		};
 		
-		if (ctor._protoDom) {
-			ctor._protoDom.classList.add('__mount');
+		for (let i = 0, items = ['mousemove','mouseenter','mouseleave','mouseover','mouseout','selectstart'], len = items.length, item; i < len; i++) {
+			item = items[i];
+			if (this[("on" + item)]) { Imba.Events.register(item) };
 		};
 	};
-	
-	for (var i = 0, items = ['mousemove','mouseenter','mouseleave','mouseover','mouseout','selectstart'], len = items.length, item; i < len; i++) {
-		item = items[i];
-		if (this[("on" + item)]) { Imba.Events.register(item) };
-	};
-	
 	return this;
 };
 
@@ -1606,7 +1606,7 @@ Imba.Tag.prototype.append = function (item){
 	if (!item) { return this };
 	
 	if (item instanceof Array) {
-		for (var i = 0, items = iter$(item), len = items.length, member; i < len; i++) {
+		for (let i = 0, items = iter$(item), len = items.length, member; i < len; i++) {
 			member = items[i];
 			member && this.append(member);
 		};
@@ -1694,7 +1694,7 @@ Imba.Tag.prototype.setText = function (txt){
 
 Imba.Tag.prototype.dataset = function (key,val){
 	if (key instanceof Object) {
-		for (var v, i = 0, keys = Object.keys(key), l = keys.length, k; i < l; i++){
+		for (let v, i = 0, keys = Object.keys(key), l = keys.length, k; i < l; i++){
 			k = keys[i];v = key[k];this.dataset(k,v);
 		};
 		return this;
@@ -1713,8 +1713,8 @@ Imba.Tag.prototype.dataset = function (key,val){
 	
 	if (!dataset) {
 		dataset = {};
-		for (var i1 = 0, items = iter$(this.dom().attributes), len = items.length, atr; i1 < len; i1++) {
-			atr = items[i1];
+		for (let i = 0, items = iter$(this.dom().attributes), len = items.length, atr; i < len; i++) {
+			atr = items[i];
 			if (atr.name.substr(0,5) == 'data-') {
 				dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
 			};
@@ -1912,7 +1912,7 @@ Imba.Tag.prototype.hasFlag = function (name){
 
 Imba.Tag.prototype.setFlag = function (name,value){
 	this._namedFlags || (this._namedFlags = []);
-	var prev = this._namedFlags[name];
+	let prev = this._namedFlags[name];
 	if (prev != value) {
 		if (prev) { this.unflag(prev) };
 		if (value) { this.flag(value) };
@@ -1974,7 +1974,8 @@ Imba.Tag.prototype.parent = function (){
 	*/
 
 Imba.Tag.prototype.children = function (sel){
-	for (var i = 0, items = iter$(this._dom.children), len = items.length, item, res = []; i < len; i++) {
+	let res = [];
+	for (let i = 0, items = iter$(this._dom.children), len = items.length, item; i < len; i++) {
 		item = items[i];
 		res.push(item._tag || Imba.getTagForDom(item));
 	};
@@ -1987,8 +1988,8 @@ Imba.Tag.prototype.querySelector = function (q){
 
 Imba.Tag.prototype.querySelectorAll = function (q){
 	var items = [];
-	for (var i = 0, ary = iter$(this._dom.querySelectorAll(q)), len = ary.length; i < len; i++) {
-		items.push(Imba.getTagForDom(ary[i]));
+	for (let i = 0, items = iter$(this._dom.querySelectorAll(q)), len = items.length; i < len; i++) {
+		items.push(Imba.getTagForDom(items[i]));
 	};
 	return items;
 };
@@ -2070,7 +2071,7 @@ Imba.Tag.prototype.log = function (){
 
 Imba.Tag.prototype.css = function (key,val){
 	if (key instanceof Object) {
-		for (var v, i = 0, keys = Object.keys(key), l = keys.length, k; i < l; i++){
+		for (let v, i = 0, keys = Object.keys(key), l = keys.length, k; i < l; i++){
 			k = keys[i];v = key[k];this.css(k,v);
 		};
 		return this;
@@ -2101,9 +2102,9 @@ Imba.Tag.prototype.css = function (key,val){
 
 Imba.Tag.prototype.trigger = function (name,data){
 	if(data === undefined) data = {};
-	
-	return Imba.Events.trigger(name,this,{data: data});
-	
+	if (true) {
+		return Imba.Events.trigger(name,this,{data: data});
+	};
 };
 
 Imba.Tag.prototype.setStyle = function (style){
@@ -2148,7 +2149,7 @@ Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ");
 Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
 
 function extender(obj,sup){
-	for (var v, i = 0, keys = Object.keys(sup), l = keys.length, k; i < l; i++){
+	for (let v, i = 0, keys = Object.keys(sup), l = keys.length, k; i < l; i++){
 		k = keys[i];v = sup[k];(obj[k] == null) ? (obj[k] = v) : obj[k];
 	};
 	
@@ -2206,9 +2207,9 @@ Imba.Tags.prototype.defineTag = function (name,supr,body){
 	
 	supr || (supr = this.baseType(name));
 	
-	var supertype = ((typeof supr=='string'||supr instanceof String)) ? this[supr] : supr;
-	var tagtype = Tag();
-	var norm = name.replace(/\-/g,'_');
+	let supertype = ((typeof supr=='string'||supr instanceof String)) ? this[supr] : supr;
+	let tagtype = Tag();
+	let norm = name.replace(/\-/g,'_');
 	
 	tagtype._name = name;
 	tagtype._flagName = null;
@@ -2357,11 +2358,11 @@ Imba.getTagForDom = function (dom){
 		// there can be several matches here - should choose the last
 		// should fall back to less specific later? - otherwise things may fail
 		// TODO rework this
-		var flags = cls.split(' ');
-		var nr = flags.length;
+		let flags = cls.split(' ');
+		let nr = flags.length;
 		
 		while (--nr >= 0){
-			var flag = flags[nr];
+			let flag = flags[nr];
 			if (flag[0] == '_') {
 				if (spawner = tags[flag.slice(1)]) {
 					break;
@@ -2384,7 +2385,7 @@ Imba.getTagForDom = function (dom){
 Imba.generateCSSPrefixes = function (){
 	var styles = window.getComputedStyle(document.documentElement,'');
 	
-	for (var i = 0, items = iter$(styles), len = items.length, prefixed; i < len; i++) {
+	for (let i = 0, items = iter$(styles), len = items.length, prefixed; i < len; i++) {
 		prefixed = items[i];
 		var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'');
 		var camelCase = unprefixed.replace(/-(\w)/g,function(m,a) { return a.toUpperCase(); });
@@ -2400,43 +2401,43 @@ Imba.generateCSSPrefixes = function (){
 	return;
 };
 
-
-if (document) { Imba.generateCSSPrefixes() };
-
-// Ovverride classList
-if (document && !document.documentElement.classList) {
-	Imba.TAGS.extendTag('element', function(tag){
-		
-		tag.prototype.hasFlag = function (ref){
-			return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
-		};
-		
-		tag.prototype.addFlag = function (ref){
-			if (this.hasFlag(ref)) { return this };
-			this._dom.className += (this._dom.className ? ' ' : '') + ref;
-			return this;
-		};
-		
-		tag.prototype.unflag = function (ref){
-			if (!this.hasFlag(ref)) { return this };
-			var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
-			this._dom.className = this._dom.className.replace(regex,'');
-			return this;
-		};
-		
-		tag.prototype.toggleFlag = function (ref){
-			return this.hasFlag(ref) ? this.unflag(ref) : this.flag(ref);
-		};
-		
-		tag.prototype.flag = function (ref,bool){
-			if (arguments.length == 2 && !!bool === false) {
-				return this.unflag(ref);
+if (true) {
+	if (document) { Imba.generateCSSPrefixes() };
+	
+	// Ovverride classList
+	if (document && !document.documentElement.classList) {
+		Imba.TAGS.extendTag('element', function(tag){
+			
+			tag.prototype.hasFlag = function (ref){
+				return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
 			};
-			return this.addFlag(ref);
-		};
-	});
+			
+			tag.prototype.addFlag = function (ref){
+				if (this.hasFlag(ref)) { return this };
+				this._dom.className += (this._dom.className ? ' ' : '') + ref;
+				return this;
+			};
+			
+			tag.prototype.unflag = function (ref){
+				if (!this.hasFlag(ref)) { return this };
+				var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
+				this._dom.className = this._dom.className.replace(regex,'');
+				return this;
+			};
+			
+			tag.prototype.toggleFlag = function (ref){
+				return this.hasFlag(ref) ? this.unflag(ref) : this.flag(ref);
+			};
+			
+			tag.prototype.flag = function (ref,bool){
+				if (arguments.length == 2 && !!bool === false) {
+					return this.unflag(ref);
+				};
+				return this.addFlag(ref);
+			};
+		});
+	};
 };
-
 
 Imba.Tag;
 
@@ -3081,7 +3082,7 @@ Imba.Touch.release = function (item,touch){
 };
 
 Imba.Touch.ontouchstart = function (e){
-	for (var i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
+	for (let i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
 		t = items[i];
 		if (this.lookup(t)) { continue; };
 		var touch = identifiers[t.identifier] = new this(e); // (e)
@@ -3095,7 +3096,7 @@ Imba.Touch.ontouchstart = function (e){
 
 Imba.Touch.ontouchmove = function (e){
 	var touch;
-	for (var i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
+	for (let i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
 		t = items[i];
 		if (touch = this.lookup(t)) {
 			touch.touchmove(e,t);
@@ -3107,7 +3108,7 @@ Imba.Touch.ontouchmove = function (e){
 
 Imba.Touch.ontouchend = function (e){
 	var touch;
-	for (var i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
+	for (let i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
 		t = items[i];
 		if (touch = this.lookup(t)) {
 			touch.touchend(e,t);
@@ -3124,7 +3125,7 @@ Imba.Touch.ontouchend = function (e){
 
 Imba.Touch.ontouchcancel = function (e){
 	var touch;
-	for (var i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
+	for (let i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
 		t = items[i];
 		if (touch = this.lookup(t)) {
 			touch.touchcancel(e,t);
@@ -3367,7 +3368,7 @@ Imba.Touch.prototype.update = function (){
 	
 	this._updates++;
 	if (this._gestures) {
-		for (var i = 0, items = iter$(this._gestures), len = items.length; i < len; i++) {
+		for (let i = 0, items = iter$(this._gestures), len = items.length; i < len; i++) {
 			items[i].ontouchupdate(this);
 		};
 	};
@@ -3382,7 +3383,7 @@ Imba.Touch.prototype.move = function (){
 	if (!this._active || this._cancelled) { return this };
 	
 	if (this._gestures) {
-		for (var i = 0, items = iter$(this._gestures), len = items.length, g; i < len; i++) {
+		for (let i = 0, items = iter$(this._gestures), len = items.length, g; i < len; i++) {
 			g = items[i];
 			if (g.ontouchmove) { g.ontouchmove(this,this._event) };
 		};
@@ -3399,7 +3400,7 @@ Imba.Touch.prototype.ended = function (){
 	this._updates++;
 	
 	if (this._gestures) {
-		for (var i = 0, items = iter$(this._gestures), len = items.length; i < len; i++) {
+		for (let i = 0, items = iter$(this._gestures), len = items.length; i < len; i++) {
 			items[i].ontouchend(this);
 		};
 	};
@@ -3426,7 +3427,7 @@ Imba.Touch.prototype.cancelled = function (){
 	this._updates++;
 	
 	if (this._gestures) {
-		for (var i = 0, items = iter$(this._gestures), len = items.length, g; i < len; i++) {
+		for (let i = 0, items = iter$(this._gestures), len = items.length, g; i < len; i++) {
 			g = items[i];
 			if (g.ontouchcancel) { g.ontouchcancel(this) };
 		};
@@ -3944,7 +3945,7 @@ Imba.EventManager = function EventManager(node,pars){
 		return true;
 	});
 	
-	for (var i = 0, items = iter$(events), len = items.length; i < len; i++) {
+	for (let i = 0, items = iter$(events), len = items.length; i < len; i++) {
 		self.register(items[i]);
 	};
 	
@@ -3980,77 +3981,77 @@ Imba.EventManager.activate = function (){
 	var Imba_;
 	if (Imba.Events) { return Imba.Events };
 	
-	
-	Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
-	
-	Imba.Events = new Imba.EventManager(Imba.document(),{events: [
-		'keydown','keyup','keypress',
-		'textInput','input','change','submit',
-		'focusin','focusout','focus','blur',
-		'contextmenu','dblclick',
-		'mousewheel','wheel','scroll',
-		'beforecopy','copy',
-		'beforepaste','paste',
-		'beforecut','cut'
-	]});
-	
-	// should listen to dragdrop events by default
-	Imba.Events.register([
-		'dragstart','drag','dragend',
-		'dragenter','dragover','dragleave','dragexit','drop'
-	]);
-	
-	var hasTouchEvents = window && window.ontouchstart !== undefined;
-	
-	if (hasTouchEvents) {
-		Imba.Events.listen('touchstart',function(e) {
-			return Imba.Touch.ontouchstart(e);
-		});
+	if (true) {
+		Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
 		
-		Imba.Events.listen('touchmove',function(e) {
-			return Imba.Touch.ontouchmove(e);
-		});
+		Imba.Events = new Imba.EventManager(Imba.document(),{events: [
+			'keydown','keyup','keypress',
+			'textInput','input','change','submit',
+			'focusin','focusout','focus','blur',
+			'contextmenu','dblclick',
+			'mousewheel','wheel','scroll',
+			'beforecopy','copy',
+			'beforepaste','paste',
+			'beforecut','cut'
+		]});
 		
-		Imba.Events.listen('touchend',function(e) {
-			return Imba.Touch.ontouchend(e);
-		});
+		// should listen to dragdrop events by default
+		Imba.Events.register([
+			'dragstart','drag','dragend',
+			'dragenter','dragover','dragleave','dragexit','drop'
+		]);
 		
-		Imba.Events.listen('touchcancel',function(e) {
-			return Imba.Touch.ontouchcancel(e);
-		});
-	};
-	
-	Imba.Events.register('click',function(e) {
-		// Only for main mousebutton, no?
-		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-			e._imbaSimulatedTap = true;
-			var tap = new Imba.Event(e);
-			tap.setType('tap');
-			tap.process();
-			if (tap._responder) {
-				return e.preventDefault();
+		var hasTouchEvents = window && window.ontouchstart !== undefined;
+		
+		if (hasTouchEvents) {
+			Imba.Events.listen('touchstart',function(e) {
+				return Imba.Touch.ontouchstart(e);
+			});
+			
+			Imba.Events.listen('touchmove',function(e) {
+				return Imba.Touch.ontouchmove(e);
+			});
+			
+			Imba.Events.listen('touchend',function(e) {
+				return Imba.Touch.ontouchend(e);
+			});
+			
+			Imba.Events.listen('touchcancel',function(e) {
+				return Imba.Touch.ontouchcancel(e);
+			});
+		};
+		
+		Imba.Events.register('click',function(e) {
+			// Only for main mousebutton, no?
+			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+				e._imbaSimulatedTap = true;
+				var tap = new Imba.Event(e);
+				tap.setType('tap');
+				tap.process();
+				if (tap._responder) {
+					return e.preventDefault();
+				};
 			};
-		};
-		// delegate the real click event
-		return Imba.Events.delegate(e);
-	});
-	
-	Imba.Events.listen('mousedown',function(e) {
-		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-		};
-	});
-	
-	Imba.Events.listen('mouseup',function(e) {
-		if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
-			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-		};
-	});
-	
-	Imba.Events.register(['mousedown','mouseup']);
-	Imba.Events.setEnabled(true);
-	return Imba.Events;
-	
+			// delegate the real click event
+			return Imba.Events.delegate(e);
+		});
+		
+		Imba.Events.listen('mousedown',function(e) {
+			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+				if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+			};
+		});
+		
+		Imba.Events.listen('mouseup',function(e) {
+			if ((e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout) {
+				if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+			};
+		});
+		
+		Imba.Events.register(['mousedown','mouseup']);
+		Imba.Events.setEnabled(true);
+		return Imba.Events;
+	};
 };
 
 
@@ -4066,7 +4067,7 @@ Imba.EventManager.activate = function (){
 Imba.EventManager.prototype.register = function (name,handler){
 	if(handler === undefined) handler = true;
 	if (name instanceof Array) {
-		for (var i = 0, items = iter$(name), len = items.length; i < len; i++) {
+		for (let i = 0, items = iter$(name), len = items.length; i < len; i++) {
 			this.register(items[i],handler);
 		};
 		return this;
@@ -4125,24 +4126,24 @@ Imba.EventManager.prototype.trigger = function (){
 };
 
 Imba.EventManager.prototype.onenable = function (){
-	for (var o = this.delegators(), handler, i = 0, keys = Object.keys(o), l = keys.length, name; i < l; i++){
+	for (let o = this.delegators(), handler, i = 0, keys = Object.keys(o), l = keys.length, name; i < l; i++){
 		name = keys[i];handler = o[name];this.root().addEventListener(name,handler,true);
 	};
 	
-	for (var j = 0, items = iter$(this.listeners()), len = items.length, item; j < len; j++) {
-		item = items[j];
+	for (let i = 0, items = iter$(this.listeners()), len = items.length, item; i < len; i++) {
+		item = items[i];
 		this.root().addEventListener(item[0],item[1],item[2]);
 	};
 	return this;
 };
 
 Imba.EventManager.prototype.ondisable = function (){
-	for (var o = this.delegators(), handler, i = 0, keys = Object.keys(o), l = keys.length, name; i < l; i++){
+	for (let o = this.delegators(), handler, i = 0, keys = Object.keys(o), l = keys.length, name; i < l; i++){
 		name = keys[i];handler = o[name];this.root().removeEventListener(name,handler,true);
 	};
 	
-	for (var j = 0, items = iter$(this.listeners()), len = items.length, item; j < len; j++) {
-		item = items[j];
+	for (let i = 0, items = iter$(this.listeners()), len = items.length, item; i < len; i++) {
+		item = items[i];
 		this.root().removeEventListener(item[0],item[1],item[2]);
 	};
 	return this;
@@ -4167,7 +4168,8 @@ Imba.Selector = function Selector(sel,scope,nodes){
 	this._context = scope;
 	
 	if (nodes) {
-		for (var i = 0, items = iter$(nodes), len = items.length, res = []; i < len; i++) {
+		let res = [];
+		for (let i = 0, items = iter$(nodes), len = items.length; i < len; i++) {
 			res.push(Imba.getTagForDom(items[i]));
 		};
 		this._nodes = res;
@@ -4219,8 +4221,9 @@ Imba.Selector.prototype.last = function (){
 Imba.Selector.prototype.nodes = function (){
 	if (this._nodes) { return this._nodes };
 	var items = this.scope().querySelectorAll(this.query());
-	for (var i = 0, ary = iter$(items), len = ary.length, res = []; i < len; i++) {
-		res.push(Imba.getTagForDom(ary[i]));
+	let res = [];
+	for (let i = 0, items = iter$(items), len = items.length; i < len; i++) {
+		res.push(Imba.getTagForDom(items[i]));
 	};
 	this._nodes = res;
 	this._lazy = false;
@@ -4356,13 +4359,13 @@ function removeNested(root,node,caret){
 	if (node instanceof Imba.Tag) {
 		root.removeChild(node);
 	} else if (node instanceof Array) {
-		for (var i = 0, items = iter$(node), len = items.length; i < len; i++) {
+		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
 			removeNested(root,items[i],caret);
 		};
 	} else if (node != null) {
 		// what if this is not null?!?!?
 		// take a chance and remove a text-elementng
-		var next = caret ? caret.nextSibling : root._dom.firstChild;
+		let next = caret ? caret.nextSibling : root._dom.firstChild;
 		if ((next instanceof Text) && next.textContent == node) {
 			root.removeChild(next);
 		} else {
@@ -4377,7 +4380,7 @@ function appendNested(root,node){
 	if (node instanceof Imba.Tag) {
 		root.appendChild(node);
 	} else if (node instanceof Array) {
-		for (var i = 0, items = iter$(node), len = items.length; i < len; i++) {
+		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
 			appendNested(root,items[i]);
 		};
 	} else if (node != null && node !== false) {
@@ -4396,7 +4399,7 @@ function insertNestedBefore(root,node,before){
 	if (node instanceof Imba.Tag) {
 		root.insertBefore(node,before);
 	} else if (node instanceof Array) {
-		for (var i = 0, items = iter$(node), len = items.length; i < len; i++) {
+		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
 			insertNestedBefore(root,items[i],before);
 		};
 	} else if (node != null && node !== false) {
@@ -4454,7 +4457,7 @@ function reconcileCollectionChanges(root,new$,old,caret){
 	var hasTextNodes = false;
 	var newPos;
 	
-	for (var idx = 0, items = iter$(old), len = items.length, node; idx < len; idx++) {
+	for (let idx = 0, items = iter$(old), len = items.length, node; idx < len; idx++) {
 		// special case for Text nodes
 		node = items[idx];
 		if (node && node.nodeType == 3) {
@@ -4516,19 +4519,19 @@ function reconcileCollectionChanges(root,new$,old,caret){
 	};
 	
 	// possible to do this in reversed order instead?
-	for (var idx1 = 0, ary = iter$(new$), len_ = ary.length, node1; idx1 < len_; idx1++) {
-		node1 = ary[idx1];
-		if (!stickyNodes[idx1]) {
+	for (let idx = 0, items = iter$(new$), len = items.length, node; idx < len; idx++) {
+		node = items[idx];
+		if (!stickyNodes[idx]) {
 			// create textnode for string, and update the array
-			if (!((node1 instanceof Imba.Tag))) {
-				node1 = new$[idx1] = Imba.createTextNode(node1);
+			if (!((node instanceof Imba.Tag))) {
+				node = new$[idx] = Imba.createTextNode(node);
 			};
 			
-			var after = new$[idx1 - 1];
-			insertNestedAfter(root,node1,(after && after._dom || after || caret));
+			var after = new$[idx - 1];
+			insertNestedAfter(root,node,(after && after._dom || after || caret));
 		};
 		
-		caret = node1._dom || (caret && caret.nextSibling || root._dom.firstChild);
+		caret = node._dom || (caret && caret.nextSibling || root._dom.firstChild);
 	};
 	
 	// should trust that the last item in new list is the caret
@@ -4582,7 +4585,7 @@ function reconcileNested(root,new$,old,caret){
 				// if the static is not nested - we could get a hint from compiler
 				// and just skip it
 				if (new$.static == old.static) {
-					for (var i = 0, items = iter$(new$), len = items.length; i < len; i++) {
+					for (let i = 0, items = iter$(new$), len = items.length; i < len; i++) {
 						// this is where we could do the triple equal directly
 						caret = reconcileNested(root,items[i],old[i],caret);
 					};
@@ -4612,7 +4615,7 @@ function reconcileNested(root,new$,old,caret){
 		return caret;
 	} else {
 		// if old did not exist we need to add a new directly
-		var nextNode;
+		let nextNode;
 		// if old was array or imbatag we need to remove it and then add
 		if (old instanceof Array) {
 			removeNested(root,old,caret);
@@ -4650,8 +4653,8 @@ Imba.TAGS.extendTag('element', function(tag){
 		} else if (typ == 1) {
 			// here we _know _that it is an array with the same shape
 			// every time
-			var caret = null;
-			for (var i = 0, items = iter$(new$), len = items.length; i < len; i++) {
+			let caret = null;
+			for (let i = 0, items = iter$(new$), len = items.length; i < len; i++) {
 				// prev = old[i]
 				caret = reconcileNested(this,items[i],old[i],caret);
 			};
@@ -4802,9 +4805,9 @@ Spec.prototype.finish = function (){
 	var ok = [];
 	var failed = [];
 	
-	for (var i = 0, items = iter$(this.assertions()), len = items.length, test1; i < len; i++) {
-		test1 = items[i];
-		test1.success() ? ok.push(test1) : failed.push(test1);
+	for (let i = 0, items = iter$(this.assertions()), len = items.length, test; i < len; i++) {
+		test = items[i];
+		test.success() ? ok.push(test) : failed.push(test);
 	};
 	
 	var logs = [
@@ -4815,8 +4818,8 @@ Spec.prototype.finish = function (){
 	
 	console.log(logs.join(" | "));
 	
-	for (var j = 0, len_ = failed.length, item; j < len_; j++) {
-		item = failed[j];
+	for (let i = 0, len = failed.length, item; i < len; i++) {
+		item = failed[i];
 		console.log(item.fullName());
 		console.log("    " + item.details());
 	};
@@ -5206,14 +5209,32 @@ describe('Syntax - Loops',function() {
 	
 	describe("For In",function() {
 		
+		test("scoped let",function() {
+			return new Promise(function(resolve) {
+				var res = [];
+				for (let i = 0, len = ary.length, item; i < len; i++) {
+					item = ary[i];
+					setTimeout(function() {
+						res.push(item);
+						if (res.length == ary.length) {
+							eq(res,[1,2,3,4,5]);
+							return resolve(true);
+						};
+					},1);
+				};
+				
+				return true;
+			});
+		});
+		
 		test("quirks",function() {
 			var i = 10;
 			var a = [1,2,3];
 			var sum = 0;
 			
 			// i should be local here - or at least be reset
-			for (var i1 = 0, len = a.length; i1 < len; i1++) {
-				sum += i1;
+			for (let i = 0, len = a.length; i < len; i++) {
+				sum += i;
 			};
 			
 			return eq(sum,0 + 1 + 2);
@@ -5222,15 +5243,10 @@ describe('Syntax - Loops',function() {
 		test("redefining var inside",function() {
 			
 			var breaks = [1,2,3];
-			for (var i = 0, len = breaks.length, br; i < len; i++) {
-				br = breaks[i];
-				var br = 0;
-				eq(br,0);
-			};
-			
-			for (var i1 = 0, len_ = breaks.length, x; i1 < len_; i1++) {
-				x = breaks[i1];
+			for (let i = 0, len = breaks.length, x; i < len; i++) {
+				x = breaks[i];
 				x = 0;
+				eq(x,0);
 			};
 			
 			eq(breaks,[1,2,3]);
@@ -5241,9 +5257,11 @@ describe('Syntax - Loops',function() {
 		
 		test("basic assignment",function() {
 			var o = 0,l = 0,i = 0,len = 0;
-			for (var rets = [], j = 0, len_ = ary.length; j < len_; j++) {
-				rets.push(ary[j] + 1);
+			let res = [];
+			for (let i = 0, len = ary.length; i < len; i++) {
+				res.push(ary[i] + 1);
 			};
+			var rets = res;
 			eq(rets,[2,3,4,5,6],String);
 			return eq(o + l + i + len,0);
 		});
@@ -5251,11 +5269,13 @@ describe('Syntax - Loops',function() {
 		test("guarded",function() {
 			var items = [1,2,3,4];
 			
-			for (var ret = [], i = 0, len = items.length, v; i < len; i++) {
+			let res = [];
+			for (let i = 0, len = items.length, v; i < len; i++) {
 				v = items[i];
 				if (!(v % 2)) { continue; };
-				ret.push(v);
+				res.push(v);
 			};
+			var ret = res;
 			return eq(ret,[1,3]);
 		});
 		
@@ -5265,7 +5285,8 @@ describe('Syntax - Loops',function() {
 			
 			obj.setValue(1);
 			
-			if (!(value_ = obj.value())) { for (var i = 0, len = ary.length, res = []; i < len; i++) {
+			if (!(value_ = obj.value())) { let res = [];
+			for (let i = 0, len = ary.length; i < len; i++) {
 				res.push(ary[i] + 1);
 			};
 			ret = (obj.setValue(res),res); } else {
@@ -5274,8 +5295,9 @@ describe('Syntax - Loops',function() {
 			
 			eq(ret,1,String);
 			
-			if ($1 = obj.value()) { for (var j = 0, len_ = ary.length, res1 = []; j < len_; j++) {
-				res1.push(ary[j] * 1);
+			if ($1 = obj.value()) { let res1 = [];
+			for (let i = 0, len = ary.length; i < len; i++) {
+				res1.push(ary[i] * 1);
 			};
 			ret = (obj.setValue(res1),res1); } else {
 				ret = $1
@@ -5288,12 +5310,13 @@ describe('Syntax - Loops',function() {
 		test("inside statement",function() {
 			var value_;
 			obj.setValue(null);
-			if ((value_ = obj.value()) == null) { 
-			for (var i = 0, len = ary.length, res = []; i < len; i++) {
-				res.push(ary[i] * 2);
-			};
-			var ret = (obj.setValue(res),res);
-			 } else {
+			if ((value_ = obj.value()) == null) { if (1) {
+				let res = [];
+				for (let i = 0, len = ary.length; i < len; i++) {
+					res.push(ary[i] * 2);
+				};
+				var ret = (obj.setValue(res),res);
+			} } else {
 				ret = value_
 			};
 			
@@ -5303,24 +5326,28 @@ describe('Syntax - Loops',function() {
 		
 		test("custom iterable objects",function() {
 			var item = new IterableObject();
-			for (var res = [], i = 0, items = iter$(item), len = items.length; i < len; i++) {
-				res.push(items[i] * 2);
+			let res1 = [];
+			for (let i = 0, items = iter$(item), len = items.length; i < len; i++) {
+				res1.push(items[i] * 2);
 			};
+			var res = res1;
 			return eq(res,[2,4,6,8,10]);
 		});
 		
 		test("forin by",function() {
 			var ary = [1,2,3,4,5,6];
-			for (var res = [], i = 0, len = ary.length; i < len; i = i + 2) {
-				res.push(ary[i]);
+			let res1 = [];
+			for (let i = 0, len = ary.length; i < len; i = i + 2) {
+				res1.push(ary[i]);
 			};
+			var res = res1;
 			return eq(res,[1,3,5]);
 		});
 		
 		return test("variable collisions",function() {
 			
 			var res = [];
-			for (var a = 0; a <= 2; a++) {
+			for (let a = 0; a <= 2; a++) {
 				var len = 10;
 				res.push(a);
 			};
@@ -5330,7 +5357,8 @@ describe('Syntax - Loops',function() {
 			function hello(){
 				var res;
 				var ary = [1,2,3];
-				for (var i = 0, len_ = ary.length, res1 = []; i < len_; i++) {
+				let res1 = [];
+				for (let i = 0, len = ary.length; i < len; i++) {
 					res1.push((res = ary[i] * 2));
 				};
 				return res1;
@@ -5345,22 +5373,25 @@ describe('Syntax - Loops',function() {
 		
 		test("statement",function() {
 			var ary = [];
-			for (var i = 0; i <= 3; i++) {
+			for (let i = 0; i <= 3; i++) {
 				ary.push(i);
 			};
 			return eq(ary,[0,1,2,3]);
 		});
 		
 		test("expression",function() {
-			for (var a = [], i = 0; i <= 3; i++) {
-				a.push(i * 2);
+			let res = [];
+			for (let i = 0; i <= 3; i++) {
+				res.push(i * 2);
 			};
+			var a = res;
 			eq(a,[0,2,4,6]);
 			
-			for (var i1 = 0, res = []; i1 < 3; i1++) {
-				res.push(i1 * 2);
+			let res1 = [];
+			for (let i = 0; i < 3; i++) {
+				res1.push(i * 2);
 			};
-			a = res;
+			a = res1;
 			return eq(a,[0,2,4]);
 		});
 		
@@ -5368,9 +5399,11 @@ describe('Syntax - Loops',function() {
 			var a = 10;
 			var b = 15;
 			
-			for (var res = [], len = b, i = a, rd = len - i; (rd > 0) ? (i <= len) : (i >= len); (rd > 0) ? (i++) : (i--)) {
-				res.push(i);
+			let res1 = [];
+			for (let len = b, i = a, rd = len - i; (rd > 0) ? (i <= len) : (i >= len); (rd > 0) ? (i++) : (i--)) {
+				res1.push(i);
 			};
+			var res = res1;
 			
 			return eq(res,[10,11,12,13,14,15]);
 		});
@@ -5379,9 +5412,11 @@ describe('Syntax - Loops',function() {
 			var a = 10;
 			var b = 15;
 			
-			for (var res = [], len = b, val = a, idx = 0, rd = len - val; (rd > 0) ? (val <= len) : (val >= len); (rd > 0) ? (val++) : (val--),idx++) {
-				res.push(idx);
+			let res1 = [];
+			for (let len = b, val = a, idx = 0, rd = len - val; (rd > 0) ? (val <= len) : (val >= len); (rd > 0) ? (val++) : (val--),idx++) {
+				res1.push(idx);
 			};
+			var res = res1;
 			
 			return eq(res,[0,1,2,3,4,5]);
 		});
@@ -5391,7 +5426,7 @@ describe('Syntax - Loops',function() {
 			var b = 10;
 			
 			var res = [];
-			for (var len = b, val = a, idx = 0, rd = len - val; (rd > 0) ? (val <= len) : (val >= len); (rd > 0) ? (val++) : (val--),idx++) {
+			for (let len = b, val = a, idx = 0, rd = len - val; (rd > 0) ? (val <= len) : (val >= len); (rd > 0) ? (val++) : (val--),idx++) {
 				res.push(val,idx);
 			};
 			
@@ -5405,7 +5440,7 @@ describe('Syntax - Loops',function() {
 		
 		test("dont override value",function() {
 			var obj = {a: 1,b: 2};
-			for (var v, i = 0, keys = Object.keys(obj), l = keys.length, k; i < l; i++){
+			for (let v, i = 0, keys = Object.keys(obj), l = keys.length, k; i < l; i++){
 				k = keys[i];v = obj[k];v = 3;
 			};
 			
@@ -5418,26 +5453,31 @@ describe('Syntax - Loops',function() {
 			var l = 0;
 			var len = 0;
 			
-			var keys = [], v;
-			for (var k in dict){
-				v = dict[k];keys.push(k);
+			let res = [];
+			for (let k in dict){
+				let v;
+				v = dict[k];res.push(k);
 			};
+			var keys = res;
 			eq(keys,['a','b','c','d'],String);
 			
-			var vals = [], v1;
-			for (var k1 in dict){
-				v1 = dict[k1];vals.push(v1);
+			let res1 = [];
+			for (let k in dict){
+				let v;
+				v = dict[k];res1.push(v);
 			};
+			var vals = res1;
 			eq(vals,[2,4,6,8]);
 			
 			// The order of the keys are based on assignment-order,
 			// prototype-keys always come at the end (as if they were assigned
 			// after all other keys=
-			var v2, res = [];
-			for (var k2 in dict2){
-				v2 = dict2[k2];res.push(k2);
+			let res2 = [];
+			for (let k in dict2){
+				let v;
+				v = dict2[k];res2.push(k);
 			};
-			keys = res;
+			keys = res2;
 			eq(keys,['e','a','b','c','d']);
 			
 			eq(o,0);
@@ -5446,31 +5486,36 @@ describe('Syntax - Loops',function() {
 		});
 		
 		test("for own of",function() {
-			for (var keys = [], v1, i = 0, keys1 = Object.keys(dict), l1 = keys1.length, k; i < l1; i++){
-				k = keys1[i];v1 = dict[k];keys.push(k);
+			let res = [];
+			for (let v, i = 0, keys = Object.keys(dict), l = keys.length, k; i < l; i++){
+				k = keys[i];v = dict[k];res.push(k);
 			};
-			eq(keys,['a','b','c','d'],String);
+			var keys1 = res;
+			eq(keys1,['a','b','c','d'],String);
 			
-			for (var v2, j = 0, keys2 = Object.keys(dict2), l2 = keys2.length, k1, res = []; j < l2; j++){
-				k1 = keys2[j];v2 = dict2[k1];res.push(k1);
+			let res1 = [];
+			for (let v, i = 0, keys = Object.keys(dict2), l = keys.length, k; i < l; i++){
+				k = keys[i];v = dict2[k];res1.push(k);
 			};
-			keys = res;
-			for (var vals = [], val, i_ = 0, keys3 = Object.keys(dict2), l3 = keys3.length, k2; i_ < l3; i_++){
-				k2 = keys3[i_];val = dict2[k2];vals.push(val);
+			keys1 = res1;
+			let res2 = [];
+			for (let val, i = 0, keys = Object.keys(dict2), l = keys.length, k; i < l; i++){
+				k = keys[i];val = dict2[k];res2.push(val);
 			};
-			eq(keys,['e']);
+			var vals = res2;
+			eq(keys1,['e']);
 			eq(vals,[10]);
 			
-			var l = 0;
+			var l1 = 0;
 			var len = 0;
 			
 			function d(){
 				return {obj: {a: 1,b: 2,c: 3}};
 			};
 			
-			function m(o){
-				for (var o1 = d().obj, v3, i__ = 0, keys4 = Object.keys(o1), l4 = keys4.length, k3; i__ < l4; i__++){
-					k3 = keys4[i__];v3 = o1[k3];o.push(k3,v3);
+			function m(o1){
+				for (let o = d().obj, v, i = 0, keys = Object.keys(o), l = keys.length, k; i < l; i++){
+					k = keys[i];v = o[k];o1.push(k,v);
 				};
 				return;
 			};
@@ -5484,7 +5529,8 @@ describe('Syntax - Loops',function() {
 			
 			var obj = {a: 1,b: 2};
 			function hello(){
-				for (var v, i = 0, keys = Object.keys(obj), l = keys.length, forOfKeyVar, res = []; i < l; i++){
+				let res = [];
+				for (let v, i = 0, keys = Object.keys(obj), l = keys.length, forOfKeyVar; i < l; i++){
 					forOfKeyVar = keys[i];v = obj[forOfKeyVar];forOfKeyVar;
 					forOfKeyVar;
 					res.push(forOfKeyVar);
@@ -5521,12 +5567,12 @@ describe('Syntax - Loops',function() {
 		var res = [];
 		var people = [{name: 'John',meta: {a: 1}},{name: 'Jane',meta: {b: 2}}];
 		
-		for (var i = 0, len = people.length, person; i < len; i++) {
+		for (let i = 0, len = people.length, person; i < len; i++) {
 			person = people[i];
 			var name = person.name;
 			
-			for (var o = person.meta, v, j = 0, keys = Object.keys(o), l = keys.length, k; j < l; j++){
-				k = keys[j];v = o[k];res.push(k);
+			for (let o = person.meta, v, i = 0, keys = Object.keys(o), l = keys.length, k; i < l; i++){
+				k = keys[i];v = o[k];res.push(k);
 			};
 		};
 		
@@ -5542,7 +5588,8 @@ describe('Syntax - Loops',function() {
 		A.prototype.map = function (){
 			var self = this;
 			return ((function() {
-				for (var i = 0, items = [1,2,3], len = items.length, res = []; i < len; i++) {
+				let res = [];
+				for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
 					res.push(items[i] * self._v);
 				};
 				return res;
@@ -5551,6 +5598,20 @@ describe('Syntax - Loops',function() {
 		
 		return eq(new A().map(),"1-2-3");
 	});
+	
+	test("issue with multi-let",function() {
+		var array;
+		var items = ["12","22","32"];
+		let res1 = [];
+		for (let i = 0, len = items.length; i < len; i++) {
+			var array = iter$(items[i].split(''));var a = array[0],b = array[1];
+			res1.push(b + a);
+		};
+		var res = res1;
+		
+		return eq(res.join(''),"212223");
+	});
+	
 	
 	return describe("Loop",function() {
 		
@@ -6188,11 +6249,11 @@ describe("Syntax - Variables",function() {
 	test("allow in expression",function() {
 		
 		function x(){
-			
-			var a = 1;
-			var b = 2;
-			return 3;
-			
+			if (true) {
+				var a = 1;
+				var b = 2;
+				return 3;
+			};
 		};
 		
 		try {
@@ -6213,10 +6274,10 @@ describe("Syntax - Variables",function() {
 	});
 	
 	test("lookup let variables",function() {
-		var Hello = 10;
+		let Hello = 10;
 		if (100 > 10) {
-			var Hello1 = 20;
-			return eq(Hello1,20);
+			let Hello = 20;
+			return eq(Hello,20);
 		};
 	});
 	
@@ -6233,7 +6294,7 @@ describe("Syntax - Variables",function() {
 	return test("allow implicit returns from var declaration",function() {
 		// var hey, ho
 		
-		var hey = (5);
+		var hey = 10 && 5;
 		var blank = function() { return true; };
 		
 		var fn = function(a) {
@@ -6325,25 +6386,28 @@ describe('Syntax - Arrays',function() {
 	
 	return test("nested arrays",function() {
 		var res = [];
-		for (var i = 0, items = [1,2], len_ = items.length; i < len_; i++) {
-			for (var j = 0, ary = [1,2], len = ary.length; j < len; j++) {
-				res.push(items[i],ary[j]);
+		for (let i = 0, items = [1,2], len = items.length, a; i < len; i++) {
+			a = items[i];
+			for (let j = 0, items = [1,2], len = items.length; j < len; j++) {
+				res.push(a,items[j]);
 			};
 		};
 		eq(res,[1,1,1,2,2,1,2,2]);
 		
 		res = [];
-		for (var k = 0, array = [1,2], len__ = array.length; k < len__; k++) {
-			for (var i1 = 1; i1 <= 2; i1++) {
-				res.push(array[k],i1);
+		for (let i = 0, items = [1,2], len = items.length, a; i < len; i++) {
+			a = items[i];
+			for (let i = 1; i <= 2; i++) {
+				res.push(a,i);
 			};
 		};
 		eq(res,[1,1,1,2,2,1,2,2]);
 		
 		res = [];
-		for (var i_ = 0, coll = [1,2], len1 = coll.length; i_ < len1; i_++) {
-			for (var i2 = 1; i2 < 3; i2++) {
-				res.push(coll[i_],i2);
+		for (let i = 0, items = [1,2], len = items.length, a; i < len; i++) {
+			a = items[i];
+			for (let i = 1; i < 3; i++) {
+				res.push(a,i);
 			};
 		};
 		return eq(res,[1,1,1,2,2,1,2,2]);
@@ -6849,7 +6913,7 @@ describe('Syntax - Return',function() {
 	};
 	
 	SyntaxReturn.prototype.d = function (){
-		return;
+		if (true) { return };
 		return 1;
 	};
 	
@@ -6886,9 +6950,11 @@ function union$(a,b){
 // externs;
 
 var ary = [1,2,3];
-for (var rets = [], i = 0, len = ary.length; i < len; i++) {
-	rets.push(ary[i] + 1);
+let res = [];
+for (let i = 0, len = ary.length; i < len; i++) {
+	res.push(ary[i] + 1);
 };
+var rets = res;
 
 var str = ("" + (ary[0]) + " " + (ary[1]) + " " + (ary[2]));
 
@@ -6903,8 +6969,9 @@ describe("Syntax - Statements",function() {
 		return pars; };
 		var ary = [1,2,3,4];
 		var res = fn(10,((function() {
-			for (var j = 0, len_ = ary.length, res1 = []; j < len_; j++) {
-				res1.push(ary[j] * 2);
+			let res1 = [];
+			for (let i = 0, len = ary.length; i < len; i++) {
+				res1.push(ary[i] * 2);
 			};
 			return res1;
 		})()),20);
@@ -6916,8 +6983,9 @@ describe("Syntax - Statements",function() {
 		// up to cache it before.
 		
 		res = fn(union$(ary,((function() {
-			for (var k = 0, len__ = ary.length, res2 = []; k < len__; k++) {
-				res2.push(ary[k] * 2);
+			let res2 = [];
+			for (let i = 0, len = ary.length; i < len; i++) {
+				res2.push(ary[i] * 2);
 			};
 			return res2;
 		})())));
@@ -7027,7 +7095,7 @@ describe('Syntax - Properties',function() {
 	});
 	
 	test("watch: yes",function() {
-		var track = null;
+		let track = null;
 		function Example(){ };
 		
 		Example.prototype.__name = {watch: 'nameDidSet',name: 'name'};
@@ -7048,7 +7116,7 @@ describe('Syntax - Properties',function() {
 	});
 	
 	test("watch: String",function() {
-		var track = null;
+		let track = null;
 		function Example(){ };
 		
 		Example.prototype.__name = {watch: 'tracker',name: 'name'};
@@ -7078,7 +7146,7 @@ describe('Syntax - Properties',function() {
 	});
 	
 	return test("watch: function",function() {
-		var track = null;
+		let track = null;
 		function Example(){ };
 		
 		Example.prototype.__name = {watch: function(v) { return track = v; },name: 'name'};
@@ -7238,7 +7306,8 @@ A.prototype.test = function (){
 		res.push(this.a());
 		// loops create their own scope, but should still
 		// have the outermost closed scope as their implicit context
-		for (var i = 0, items = [1], len = items.length, res1 = []; i < len; i++) {
+		let res1 = [];
+		for (let i = 0, items = [1], len = items.length; i < len; i++) {
 			res.push(self.a());
 			res1.push(res.push(this.a()));
 		};
@@ -7280,74 +7349,95 @@ A.prototype.letVar = function (){
 	var i = 1;
 	var v = 1;
 	
-	for (var i1 = 0, len_ = ary.length; i1 < len_; i1++) {
-		ary[i1] + 2;
-		i1;
+	for (let i = 0, len = ary.length; i < len; i++) {
+		ary[i] + 2;
+		i;
 	};
 	
 	eq(i,1);
 	
-	
-	for (var i2 = 0, len__ = ary.length; i2 < len__; i2++) {
-		i2;
+	if (true) {
+		for (let i = 0, len = ary.length; i < len; i++) {
+			i;
+		};
+		eq(i,1);
 	};
-	eq(i,1);
 	
-	
-	for (var r = [], j = 0, len1 = ary.length; j < len1; j++) {
-		r.push(ary[j]);
+	let res = [];
+	for (let i = 0, len = ary.length; i < len; i++) {
+		res.push(ary[i]);
 	};
+	var r = res;
 	
 	r.length;
 	
-	for (var k = 0, len2 = ary.length; k < len2; k++) {
-		var l = 1;
-		var a1 = 2;
-		var b1 = 2;
-		var c = 2;
-		var h = 0;
-		a1 + b1 + c;
+	for (let i = 0, len = ary.length; i < len; i++) {
+		let l = 1;
+		let a = 2;
+		let b = 2;
+		let c = 2;
+		let h = 0;
+		a + b + c;
 	};
 	
-	for (var i_ = 0, len3 = ary.length; i_ < len3; i_++) {
-		var a2 = 3;
-		var b2 = 3;
-		var c1 = 3;
+	for (let i = 0, len = ary.length; i < len; i++) {
+		let a = 3;
+		let b = 3;
+		let c = 3;
 		this.f();
 	};
 	
-	
-	var a3 = 4;
-	var b3 = 4;
-	var i3 = 0;
-	var len4 = 10;
-	
-	
-	var a4 = 5;
-	var b4 = 5;
-	
-	
-	for (var e = [], i4 = 0, len5 = ary.length; i4 < len5; i4++) {
-		eq(a3,4);
-		e.push(i4);
+	if (true) {
+		let a = 4;
+		let b = 4;
+		let i = 0;
+		let len = 10;
+		
+		if (true) {
+			let a = 5;
+			let b = 5;
+		};
+		
+		let res1 = [];
+		for (let i = 0, len = ary.length; i < len; i++) {
+			eq(a,4);
+			res1.push(i);
+		};
+		let e = res1;
+		
+		eq(a,4);
+		eq(i,0);
 	};
 	
-	eq(a3,4);
-	eq(i3,0);
-	
-	
-	
-	for (var i__ = 0, len6 = ary.length; i__ < len6; i__++) {
-		true;
+	if (1) {
+		for (let i = 0, len = ary.length; i < len; i++) {
+			true;
+		};
+		var z = 4;
 	};
-	var z = 4;
-	
 	
 	eq(v,1);
 	eq(i,1);
 	eq(len,1);
 	eq(a + b + this.c() + this.d() + this.e() + this.f(),6);
 	return;
+};
+
+A.prototype.letIf = function (){
+	var v1, a;
+	var v = 2;
+	
+	if (v1 = 3) {
+		eq(v1,3);
+	};
+	
+	eq(v,2);
+	
+	if (a = 2) {
+		eq(a,2);
+	};
+	
+	return eq(this.a(),1);
 };
 
 A.prototype.caching = function (){
@@ -7377,8 +7467,9 @@ describe("Syntax - Scope",function() {
 		return item.innerDef();
 	});
 	
-	test("blocklocal variables (let)",function() {
-		return item.letVar();
+	test("let",function() {
+		item.letVar();
+		return item.letIf();
 	});
 	
 	test("class",function() {
@@ -7400,10 +7491,10 @@ describe("Syntax - Scope",function() {
 	
 	test("let",function() {
 		var a = 0;
-		
-		var a1 = 1;
-		eq(a1,1);
-		
+		if (true) {
+			let a = 1;
+			eq(a,1);
+		};
 		return eq(a,0);
 	});
 	
@@ -7948,7 +8039,7 @@ describe('Syntax - Assignment',function() {
 	
 	test('a,b,c = 1,2,3',function(_0,_1,_2) {
 		
-		var $1, $2, items, array, len, i, coll, len_, j, tmp, ary_, ary__, $3, length_, $4, tmplist;
+		var $1, $2, items, array, len, i, coll, len_, j, tmp, ary_, ary__, $3, len__, k, tmplist;
 		var ary = [1,2,3,4,5];
 		var obj = new O();
 		
@@ -7997,30 +8088,35 @@ describe('Syntax - Assignment',function() {
 		};list[1] = tmp;list[2] = coll[j++];
 		eq(list,[1,[2,3,4],5]);
 		
-		for (var x = [], k = 0, len__ = ary.length; k < len__; k++) {
-			x.push(ary[k] * 2);
+		let res = [];
+		for (let i = 0, len = ary.length; i < len; i++) {
+			res.push(ary[i] * 2);
 		};
+		var x = res;
 		
 		eq(x,[2,4,6,8,10]);
 		
-		for (var i_ = 0, len1 = ary.length, res = []; i_ < len1; i_++) {
-			res.push(ary[i_] * 2);
+		let res1 = [];
+		for (let i = 0, len = ary.length; i < len; i++) {
+			res1.push(ary[i] * 2);
 		};
-		var ary_ = iter$(res);var x = ary_[0];var y = ary_[1];
+		var ary_ = iter$(res1);x = ary_[0];var y = ary_[1];
 		
 		eq([x,y],[2,4]);
 		
-		for (var i__ = 0, len2 = ary.length, res1 = []; i__ < len2; i__++) {
-			res1.push(ary[i__] * 2);
+		let res2 = [];
+		for (let i = 0, len = ary.length; i < len; i++) {
+			res2.push(ary[i] * 2);
 		};
-		var ary__ = iter$(res1);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
+		var ary__ = iter$(res2);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
 		eq([x,y,obj.z()],[2,4,6]);
 		
-		for (var i1 = 0, len3 = ary.length, res2 = []; i1 < len3; i1++) {
-			res2.push(ary[i1] * 2);
+		let res3 = [];
+		for (let i = 0, len = ary.length; i < len; i++) {
+			res3.push(ary[i] * 2);
 		};
-		var $3 = iter$(res2),length_ = $3.length,$4 = 0,tmplist = new Array(length_ - 2);x = $3[$4++];y = $3[$4++];while ($4 < length_){
-			tmplist[$4 - 2] = $3[$4++]
+		var $3 = iter$(res3),len__ = $3.length,k = 0,tmplist = new Array(len__ - 2);x = $3[k++];y = $3[k++];while (k < len__){
+			tmplist[k - 2] = $3[k++]
 		};obj.setZ(tmplist);
 		eq([x,y,obj.z()],[2,4,[6,8,10]]);
 		
@@ -8141,7 +8237,7 @@ describe('Syntax - Assignment',function() {
 		return eq([a,b,c],[11,12,13]);
 	});
 	
-	return test('hoisting',function() {
+	test('hoisting',function() {
 		var fn = function(o,i) {
 			if (i > 0) { fn(o,i - 1) };
 			o.counter++;
@@ -8151,6 +8247,20 @@ describe('Syntax - Assignment',function() {
 		var obj = {counter: 0};
 		eq(fn(obj,10),11);
 		return true;
+	});
+	
+	return test('tupes - let',function() {
+		var ary;
+		var a = 1,b = 2,str = 'ab';
+		
+		if (true) {
+			var ary = iter$(str.split(''));let a = ary[0],b = ary[1];
+			eq(a,'a');
+			eq(b,'b');
+		};
+		
+		eq(a,1);
+		return eq(b,2);
 	});
 });
 
@@ -8202,7 +8312,6 @@ describe("Syntax - Conditionals",function() {
 /* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0);
 // externs;
 
 function delay(ret){
@@ -8220,7 +8329,7 @@ function delay(ret){
 
 describe('Await',function() {
 	
-	test('issue#93',function() {
+	test('issue#93',async function() {
 		var val = Promise.resolve(100);
 		function A(){ };
 		
@@ -8231,23 +8340,39 @@ describe('Await',function() {
 		A.prototype.setY = function(v){ this._y = v; return this; }
 		A.prototype._y = 100;
 		
-		A.prototype.fetch = function (){
-			var self = this;
-			return Imba.await(self.y()).then(function(_0) {
-				var v_;
-				return (self.setX(v_ = _0),v_);
-			});
+		A.prototype.fetch = async function (){
+			var v_;
+			return (this.setX(v_ = await this.y()),v_);
 		};
 		
 		var item = new A();
-		return Imba.await(item.fetch()).then(function() {
-			
-			return eq(item.x(),100);
-		});
+		await item.fetch();
+		return eq(item.x(),100);
 	});
 	
 	
-	
+	if (true) {
+		test('es6',function() {
+			async function add2(x){
+				let p_a = delay(20);
+				let p_b = delay(30);
+				return x + await p_a + await p_b;
+			};
+			
+			return add2(10).then(function(val) {
+				return eq(val,60);
+			});
+		});
+		
+		return test('try-catch',async function() {
+			try {
+				var z = await Promise.reject(30);
+				return eq(1,2);
+			} catch (e) {
+				return eq(e,30);
+			};
+		});
+	};
 });
 
 
@@ -8314,10 +8439,11 @@ describe('Issues',function() {
 	
 	test('var hoisting with loops',function() {
 		
-		var a = 0;
+		let a = 0;
 		
 		function method(){
-			for (var i = 0, items = [1,2,3], len = items.length, res = []; i < len; i++) {
+			let res = [];
+			for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
 				res.push(items[i] * 2);
 			};
 			a = res;
@@ -8331,7 +8457,8 @@ describe('Issues',function() {
 	
 	test('missing var alias in loop',function() {
 		try {
-			for (var i = 0, items = [{}], len = items.length, res = []; i < len; i++) {
+			let res = [];
+			for (let i = 0, items = [{}], len = items.length; i < len; i++) {
 				res.push(items[i].first = function (){
 					return true;
 				});
@@ -8346,16 +8473,16 @@ describe('Issues',function() {
 		var a = {};
 		var b = {};
 		
-		for (var i = 0, items = [a], len = items.length; i < len; i++) {
-			var proto = items[i];
+		for (let i = 0, items = [a], len = items.length; i < len; i++) {
+			let proto = items[i];
 			proto.first = function (){
 				return true;
 			};
 		};
 		
-		for (var i1 = 0, ary = [b], len_ = ary.length; i1 < len_; i1++) {
-			var proto1 = ary[i1];
-			proto1.last = function (){
+		for (let i = 0, items = [b], len = items.length; i < len; i++) {
+			let proto = items[i];
+			proto.last = function (){
 				return true;
 			};
 		};
@@ -8405,7 +8532,8 @@ _T.defineTag('cached', function(tag){
 		return this.setChildren(
 			(function() {
 				var $A = (__.A = __.A || {});
-				for (var i = 0, items = iter$(self._ary), len = items.length, res = []; i < len; i++) {
+				let res = [];
+				for (let i = 0, items = iter$(self._ary), len = items.length; i < len; i++) {
 					res.push(($A[items[i]] = $A[items[i]] || _T.DIV(self).setText("v")).end());
 				};
 				return res;
@@ -8516,7 +8644,8 @@ describe('Tags - Define',function() {
 				(__.A = __.A || _T.H1(this).setText('heading')).end(),
 				(function() {
 					var t0, _$ = (__.B = __.B || []);
-					for (var i = 0, len = ary.length, res = []; i < len; i++) {
+					let res = [];
+					for (let i = 0, len = ary.length; i < len; i++) {
 						res.push((t0 = _$[i] = _$[i] || _T.CUSTOM(self)).setContent(ary[i],3).end());
 					};
 					return res;
@@ -8545,7 +8674,8 @@ describe('Tags - Define',function() {
 				(__.A = __.A || _T.H1(this).setText('heading')).end(),
 				(function() {
 					var t0, _$ = (__.B = __.B || []), t1, _$1 = (__.C = __.C || []);
-					for (var i = 0, len = ary.length, v, res = []; i < len; i++) {
+					let res = [];
+					for (let i = 0, len = ary.length, v; i < len; i++) {
 						v = ary[i];
 						res.push((t0 = _$[i] = _$[i] || _T.CUSTOM(self).flag('one')).setContent(v,3).end());
 						res.push((t1 = _$1[i] = _$1[i] || _T.CUSTOM(self).flag('two')).setContent(v,3).end());
@@ -8566,7 +8696,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("dynamic flags",function() {
-		var val = 'hello';
+		let val = 'hello';
 		var div = _T.DIV(self).end();
 		div.render = function (){
 			return this.setFlag(1,val).synced();
@@ -8598,17 +8728,17 @@ describe('Tags - Define',function() {
 	
 	test("style attribute",function() {
 		var el = _T.DIV(self).setStyle('display: block;').end();
-		
-		return eq(el.dom().getAttribute('style'),'display: block;');
-		
+		if (true) {
+			return eq(el.dom().getAttribute('style'),'display: block;');
+		};
 	});
 	
 	test("class",function() {
 		var el = CustomClass.build(self).end();
-		
-		eq(el.dom().className,'one two');
-		return document.body.appendChild(el.dom());
-		
+		if (true) {
+			eq(el.dom().className,'one two');
+			return document.body.appendChild(el.dom());
+		};
 	});
 	
 	// test "namespaced attributes" do
@@ -8698,7 +8828,8 @@ describe('Tags - Define',function() {
 				return this.setChildren(
 					(function() {
 						var t0, _$ = (__.A = __.A || []);
-						for (var v = 1, res = []; v <= 2; v++) {
+						let res = [];
+						for (let v = 1; v <= 2; v++) {
 							res.push((t0 = _$[v] = _$[v] || _T.DIV(self)).setContent(v,3).end());
 						};
 						return res;
@@ -8748,8 +8879,9 @@ describe('Tags - Define',function() {
 				this._k = 0;
 				return this.setChildren(
 					(function() {
-						var t0, $A = (__.A = __.A || {});
-						for (var i = 0, items = iter$(self._items), len = items.length, res = [], $1; i < len; i++) {
+						var t0, $A = (__.A = __.A || {}), $1;
+						let res = [];
+						for (let i = 0, items = iter$(self._items), len = items.length; i < len; i++) {
 							res.push((t0 = $A[($1 = self._k++)] = $A[$1] || _T.DIV(self)).setContent(items[i],3).end());
 						};
 						return res;
@@ -8850,7 +8982,8 @@ _T.defineTag('cachetest', function(tag){
 			
 			(function() {
 				var t0, _$ = (__.D = __.D || []);
-				for (var i = 0, items = iter$(o.letters), len = items.length, res = []; i < len; i++) {
+				let res = [];
+				for (let i = 0, items = iter$(o.letters), len = items.length; i < len; i++) {
 					res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(items[i],3).end());
 				};
 				return res;
@@ -8859,7 +8992,7 @@ _T.defineTag('cachetest', function(tag){
 	};
 	
 	tag.prototype.toString = function (){
-		var html = this.dom().outerHTML;
+		let html = this.dom().outerHTML;
 		// strip away all tags
 		return html = html.replace(/\<[^\>]+\>/g,function(m) {
 			return (m[1] == '/') ? ']' : '[';
@@ -8936,7 +9069,7 @@ _T.defineTag('group', function(tag){
 		// log "setStaticChildren",nodes,expected
 		tag.__super__.setChildren.call(this,nodes,typ);
 		
-		for (var i = 0, items = iter$(this._dom.childNodes), len = items.length, child; i < len; i++) {
+		for (let i = 0, items = iter$(this._dom.childNodes), len = items.length, child; i < len; i++) {
 			// how would this work on server?
 			// if child isa Text
 			// 	actual.push( child:textContent )
@@ -9056,7 +9189,8 @@ _T.defineTag('other', function(tag){
 		var self = this, __ = self.__;
 		return this.setChildren((function() {
 			var t0, _$ = (__.A = __.A || []);
-			for (var i = 0, items = iter$(self.items()), len = items.length, res = []; i < len; i++) {
+			let res = [];
+			for (let i = 0, items = iter$(self.items()), len = items.length; i < len; i++) {
 				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setContent(items[i],3).end());
 			};
 			return res;
@@ -9068,7 +9202,8 @@ _T.defineTag('textlist', function(tag){
 	tag.prototype.render = function (texts){
 		if(texts === undefined) texts = [];
 		return this.setChildren((function() {
-			for (var i = 0, items = iter$(texts), len = items.length, res = []; i < len; i++) {
+			let res = [];
+			for (let i = 0, items = iter$(texts), len = items.length; i < len; i++) {
 				res.push(items[i]);
 			};
 			return res;
@@ -9169,9 +9304,9 @@ _T.defineTag('unknowns', 'div', function(tag){
 			(__.F = __.F || _T.DIV(self).flag('list')).setContent(self.list(),3).end(),
 			(__.G = __.G || _T.DIV(self).flag('item')).setContent(self.tast(),3).end(),
 			(__.H = __.H || _T.DIV(self).flag('if')).setContent([
-				(
-				self.list()
-				)
+				true ? (
+					self.list()
+				) : void(0)
 			],1).end(),
 			
 			(__.I = __.I || _T.DIV(self).flag('if')).setContent([
@@ -9186,7 +9321,8 @@ _T.defineTag('unknowns', 'div', function(tag){
 	
 	tag.prototype.list = function (){
 		var __ = (this.__._list = this.__._list || {});
-		for (var i = 0, items = [1,2,3], len = items.length, res = []; i < len; i++) {
+		let res = [];
+		for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
 			res.push((__[items[i]] = __[items[i]] || _T.DIV(this).flag('x')).end());
 		};
 		return res;
@@ -11060,40 +11196,42 @@ TT = _T.DIV(this).setTemplate(function() {
 			(__.$AA = __.$AA || _T.LI(this).setText("Hello")).end(),
 			(__.$AB = __.$AB || _T.LI(this)).setContent(Date.now(),3).end(),
 			(__.$AC = __.$AC || _T.LI(this)).setContent([
-				(__.$ACA = __.$ACA || _T.XUL(this)).setTemplate(function() {
+				(__.$ACA = __.$ACA || _T.XUL(this).setTemplate(function() {
 					var __ = this.__;
 					return Imba.static([
 						(__.$A = __.$A || _T.LI(this).setText("Inner")).end(),
 						(__.$B = __.$B || _T.LI(this)).setContent(Date.now(),3).end()
 					],1);
-				}).end(),
-				(__.$ACB = __.$ACB || _T.XNO(this)).setTemplate(function() {
+				})).end(),
+				(__.$ACB = __.$ACB || _T.XNO(this).setTemplate(function() {
 					var self = this, __ = self.__;
 					return this.dataset('stamp',Date.now()).setChildren([
 						(__.$AA = __.$AA || _T.LI(this).setText("Inner")).end(),
 						(__.$AB = __.$AB || _T.LI(self)).setContent(Date.now(),3).end(),
 						(function() {
 							var t0, _$ = (__.$AC = __.$AC || []);
-							for (var i = 0, items = iter$(AA), len = items.length, res = []; i < len; i++) {
+							let res = [];
+							for (let i = 0, items = iter$(AA), len = items.length; i < len; i++) {
 								res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setContent(items[i],3).end());
 							};
 							return res;
 						})()
 					],1).synced();
-				}).end(),
-				(__.$ACC = __.$ACC || _T.WRAPS(this)).setTemplate(function() {
+				})).end(),
+				(__.$ACC = __.$ACC || _T.WRAPS(this).setTemplate(function() {
 					var __ = this.__, self = this;
 					return Imba.static([
 						(__.$A = __.$A || _T.DIV(this)).setContent(("This is inside " + (Date.now())),3).end(),
 						(function() {
 							var t0, _$ = (__.$B = __.$B || []);
-							for (var i = 0, items = iter$(AA), len = items.length, res = []; i < len; i++) {
+							let res = [];
+							for (let i = 0, items = iter$(AA), len = items.length; i < len; i++) {
 								res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(items[i],3).end());
 							};
 							return res;
 						})()
 					],1);
-				}).end()
+				})).end()
 			],2).end()
 		],2).end(),
 		(__.$B = __.$B || _T.SPAN(this)).end()
@@ -11110,7 +11248,8 @@ _T.defineTag('hello', function(tag){
 				(__.AB = __.AB || _T.DIV(self)).setContent(("This is inside " + (Date.now())),3).end(),
 				(function() {
 					var t0, _$ = (__.AC = __.AC || []);
-					for (var i = 0, items = iter$(AA), len = items.length, res = []; i < len; i++) {
+					let res = [];
+					for (let i = 0, items = iter$(AA), len = items.length; i < len; i++) {
 						res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(items[i],3).end());
 					};
 					return res;
