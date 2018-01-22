@@ -37,7 +37,7 @@
   "scripts": {
     "build-parser": "imba scripts/build-parser.imba",
     "build": "webpack --progress --colors --display-modules",
-    "watch": "webpack --watch --progress --colors --display-modules",
+    "watch": "bin/imbac -w --es5 -o lib/ src/",
     "test": "bin/imba test/index.imba",
     "test-webpack": "bin/imba test/webpack/test.imba",
     "test-chrome": "bin/imba test/run-chrome.imba"
