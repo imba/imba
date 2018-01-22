@@ -32,7 +32,7 @@ var help = """
 Usage: imbac [options] path/to/script.imba
 
   -a, --analyze          print out the scopes and variables of your script
-      --es6              compile files for es6
+      --es5              compile without native let/var/await
   -h, --help             display this help message
   -m, --source-map       generate source map and add inline to .js files
       --inline-helpers   inline helpers to not depend on imba.js

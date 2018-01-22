@@ -15,7 +15,7 @@ var help = """
 Usage: imba [options] [ -e script | script.imba ] [arguments]
 
   -e, --eval script      evaluate script
-      --es6              compile files for es6
+      --es5              evaluate without native let/var/await
   -h, --help             display this help message
   -v, --version          display the version number
 
@@ -50,6 +50,9 @@ export def run
 
 	if o:es6
 		process:env.IMBA_ES6 = yes
+
+	if o:es5
+		process:env.IMBA_ES5 = yes
 
 	if o:eval
 		o:target = 'node'

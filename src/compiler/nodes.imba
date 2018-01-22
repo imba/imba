@@ -305,6 +305,12 @@ export class Stack
 		@counters = {}
 		@options = {}
 		@es6 = null
+
+		if $node$ and @es5 == undefined
+			let v = (process:version or 'v0').match(/^v?(\d+)/)
+			if parseInt(v[0]) < 5
+				console.log "Imba compiles to es5 due to old version of node({process:version})"
+				@es5 = true
 		self
 
 	def incr name
@@ -339,6 +345,9 @@ export class Stack
 		# temporary shorthand
 		if key.toLowerCase == 'es6'
 			return self.es6
+
+		if key.toLowerCase == 'es5'
+			return self.es5
 
 		if platform and key in ['WEB','NODE','WEBWORKER']
 			return platform.toUpperCase == key
@@ -6556,7 +6565,7 @@ export class Await < ValueNode
 
 		var fnscope = o.up(Func) # do |item| item isa MethodDeclaration or item isa Fun
 
-		if o.es6
+		if !o.es5
 			if fnscope
 				set(native: yes)
 				fnscope.set(async: yes)
@@ -6564,7 +6573,7 @@ export class Await < ValueNode
 			else
 				# add warning
 				# should add as diagnostics - no?
-				warn "toplevel await not allowed in es6"
+				warn "toplevel await not allowed"
 
 		var block = o.up(Block) # or up to the closest FUNCTION?
 		var outer = o.relative(block,1)
@@ -6589,7 +6598,7 @@ export class Await < ValueNode
 				# if this an unfancy tuple, with only vars
 				# we can just use arguments
 
-				if par.type == 'var' && !lft.hasSplat
+				if (par.type == 'var' or par.type == 'let') && !lft.hasSplat
 					lft.map do |el,i|
 						func.params.at(i,yes,el.value)
 				else

@@ -1,4 +1,5 @@
 ## master
+* Compile to native `let`,`const` and `await` unless `--es5` is specified
 * Fix fat-arrow template parsing `<div.item => ...`
 
 ## 1.1.1

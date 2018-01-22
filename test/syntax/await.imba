@@ -24,7 +24,7 @@ describe 'Await' do
 		eq item.x,100
 
 
-	if $es6$
+	unless $es5$
 		test 'es6' do
 			def add2 x
 				let p_a = delay(20)
