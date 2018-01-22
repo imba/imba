@@ -1,4 +1,4 @@
-<a href="https://imba.io" target="_blank"><img width="74" src="http://imba.io/images/logo.svg"></a>
+<a href="https://imba.io" target="_blank"><img width="80" src="http://imba.io/art/logo.svg"></a>
 
 # Imba
 
