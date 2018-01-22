@@ -15,13 +15,16 @@ var minify = new UglifyJsPlugin({
 	
 });
 
-var loaders = [{
-	"test": /\.imba$/,
-	"loader": path.join(__dirname, "./loader")
-}];
-
 module.exports = [{
-	module: {loaders: loaders},
+	module: {
+		rules: [
+			{
+				test: /.imba$/,
+				loader: path.join(__dirname, "./loader"),
+				options: {es5: true}
+			}
+		]
+	},
 	resolve: {extensions: ['*', '.imba', '.js']},
 	entry: "./src/imba/index.imba",
 	output: {
@@ -36,7 +39,14 @@ module.exports = [{
 	node: {fs: false, process: false, global: false},
 	plugins: [minify]
 },{
-	module: {loaders: loaders},
+	module: {
+		rules: [
+			{
+				test: /.imba$/,
+				loader: path.join(__dirname, "./loader")
+			}
+		]
+	},
 	resolve: {extensions: ['*', '.imba', '.js']},
 	entry: "./test/index.imba",
 	output: { filename: "./test/client.js"},

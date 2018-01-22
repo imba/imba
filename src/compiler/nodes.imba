@@ -3,10 +3,17 @@
 
 var helpers = require './helpers'
 var constants = require './constants'
+var NODE_MAJOR_VERSION = null
 
 import ImbaParseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
+
+if $node$
+	let v = (process:version or 'v0').match(/^v?(\d+)/)
+	NODE_MAJOR_VERSION = parseInt(v[0])
+	if NODE_MAJOR_VERSION < 5
+		console.log "Imba compiles to es5 due to old version of node({process:version})"
 
 export var AST = {}
 
@@ -305,12 +312,10 @@ export class Stack
 		@counters = {}
 		@options = {}
 		@es6 = null
+		@es5 = null
 
-		if $node$ and @es5 == undefined
-			let v = (process:version or 'v0').match(/^v?(\d+)/)
-			if parseInt(v[0]) < 5
-				console.log "Imba compiles to es5 due to old version of node({process:version})"
-				@es5 = true
+		if NODE_MAJOR_VERSION and NODE_MAJOR_VERSION < 5
+			@es5 = true
 		self
 
 	def incr name
