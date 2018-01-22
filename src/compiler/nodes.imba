@@ -5556,7 +5556,7 @@ export class ForOf < For
 	def js o
 		var vars = options:vars
 
-		var o = vars:source
+		var src = vars:source
 		var k = vars:key
 		var v = vars:value
 		var i = vars:index
@@ -5565,7 +5565,7 @@ export class ForOf < For
 
 		if options:own
 			if v and v.refcount > 0
-				body.unshift(OP('=',v,OP('.',o,k)))
+				body.unshift(OP('=',v,OP('.',src,k)))
 
 			# if k.refcount < 3 # should probably adjust these
 			#	k.proxy(vars:keys,i)
@@ -5577,11 +5577,11 @@ export class ForOf < For
 
 		else
 			if v and v.refcount > 0
-				body.unshift(OP('=',v,OP('.',o,k)))
+				body.unshift(OP('=',v,OP('.',src,k)))
 
 			code = scope.c(braces: yes, indent: yes)
 			# it is really important that this is a treated as a statement
-			"{mark__(options:keyword)}for (let {k.c} in {o.c})" + code
+			"{mark__(options:keyword)}for ({o.es5 ? 'var' : 'let'} {k.c} in {src.c})" + code
 
 	def head
 		var v = options:vars
