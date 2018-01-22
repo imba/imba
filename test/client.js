@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.2.0-beta.1'};
+var Imba = {VERSION: '1.2.0-beta.2'};
 
 /*
 True if running in client environment.
@@ -639,8 +639,8 @@ Ticker.prototype.tick = function (timestamp){
 	this._stage = 1;
 	this.before();
 	if (items.length) {
-		for (let i = 0, items = iter$(items), len = items.length, item; i < len; i++) {
-			item = items[i];
+		for (let i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
+			item = ary[i];
 			if (item instanceof Function) {
 				item(this._dt,this);
 			} else if (item.tick) {
@@ -1048,8 +1048,8 @@ Imba.TagManagerClass.prototype.tryMount = function (){
 	var root = document.body;
 	var items = root.querySelectorAll('.__mount');
 	// what if we end up creating additional mountables by mounting?
-	for (let i = 0, items = iter$(items), len = items.length, el; i < len; i++) {
-		el = items[i];
+	for (let i = 0, ary = iter$(items), len = ary.length, el; i < len; i++) {
+		el = ary[i];
 		if (el && el._tag) {
 			if (this._mounted.indexOf(el._tag) == -1) {
 				this.mountNode(el._tag);
@@ -1988,8 +1988,8 @@ Imba.Tag.prototype.querySelector = function (q){
 
 Imba.Tag.prototype.querySelectorAll = function (q){
 	var items = [];
-	for (let i = 0, items = iter$(this._dom.querySelectorAll(q)), len = items.length; i < len; i++) {
-		items.push(Imba.getTagForDom(items[i]));
+	for (let i = 0, ary = iter$(this._dom.querySelectorAll(q)), len = ary.length; i < len; i++) {
+		items.push(Imba.getTagForDom(ary[i]));
 	};
 	return items;
 };
@@ -4222,8 +4222,8 @@ Imba.Selector.prototype.nodes = function (){
 	if (this._nodes) { return this._nodes };
 	var items = this.scope().querySelectorAll(this.query());
 	let res = [];
-	for (let i = 0, items = iter$(items), len = items.length; i < len; i++) {
-		res.push(Imba.getTagForDom(items[i]));
+	for (let i = 0, ary = iter$(items), len = ary.length; i < len; i++) {
+		res.push(Imba.getTagForDom(ary[i]));
 	};
 	this._nodes = res;
 	this._lazy = false;
@@ -5209,6 +5209,21 @@ describe('Syntax - Loops',function() {
 	
 	describe("For In",function() {
 		
+		test("issue with shadowing items var",function() {
+			var ret = [];
+			function iterate(items){
+				items;
+				let res = [];
+				for (let i = 0, array = iter$(items), len = array.length; i < len; i++) {
+					res.push(ret.push(array[i]));
+				};
+				return res;
+			};
+			
+			return eq([1,2,3],iterate([1,2,3]));
+		});
+		
+		
 		test("scoped let",function() {
 			return new Promise(function(resolve) {
 				var res = [];
@@ -5258,8 +5273,8 @@ describe('Syntax - Loops',function() {
 		test("basic assignment",function() {
 			var o = 0,l = 0,i = 0,len = 0;
 			let res = [];
-			for (let i = 0, len = ary.length; i < len; i++) {
-				res.push(ary[i] + 1);
+			for (let j = 0, len_ = ary.length; j < len_; j++) {
+				res.push(ary[j] + 1);
 			};
 			var rets = res;
 			eq(rets,[2,3,4,5,6],String);
@@ -5358,7 +5373,7 @@ describe('Syntax - Loops',function() {
 				var res;
 				var ary = [1,2,3];
 				let res1 = [];
-				for (let i = 0, len = ary.length; i < len; i++) {
+				for (let i = 0, len_ = ary.length; i < len_; i++) {
 					res1.push((res = ary[i] * 2));
 				};
 				return res1;
@@ -5487,35 +5502,35 @@ describe('Syntax - Loops',function() {
 		
 		test("for own of",function() {
 			let res = [];
-			for (let v, i = 0, keys = Object.keys(dict), l = keys.length, k; i < l; i++){
-				k = keys[i];v = dict[k];res.push(k);
+			for (let v, i = 0, keys1 = Object.keys(dict), l1 = keys1.length, k; i < l1; i++){
+				k = keys1[i];v = dict[k];res.push(k);
 			};
-			var keys1 = res;
-			eq(keys1,['a','b','c','d'],String);
+			var keys = res;
+			eq(keys,['a','b','c','d'],String);
 			
 			let res1 = [];
-			for (let v, i = 0, keys = Object.keys(dict2), l = keys.length, k; i < l; i++){
-				k = keys[i];v = dict2[k];res1.push(k);
+			for (let v, i = 0, keys1 = Object.keys(dict2), l1 = keys1.length, k; i < l1; i++){
+				k = keys1[i];v = dict2[k];res1.push(k);
 			};
-			keys1 = res1;
+			keys = res1;
 			let res2 = [];
-			for (let val, i = 0, keys = Object.keys(dict2), l = keys.length, k; i < l; i++){
-				k = keys[i];val = dict2[k];res2.push(val);
+			for (let val, i = 0, keys1 = Object.keys(dict2), l1 = keys1.length, k; i < l1; i++){
+				k = keys1[i];val = dict2[k];res2.push(val);
 			};
 			var vals = res2;
-			eq(keys1,['e']);
+			eq(keys,['e']);
 			eq(vals,[10]);
 			
-			var l1 = 0;
+			var l = 0;
 			var len = 0;
 			
 			function d(){
 				return {obj: {a: 1,b: 2,c: 3}};
 			};
 			
-			function m(o1){
-				for (let o = d().obj, v, i = 0, keys = Object.keys(o), l = keys.length, k; i < l; i++){
-					k = keys[i];v = o[k];o1.push(k,v);
+			function m(o){
+				for (let o1 = d().obj, v, i = 0, keys1 = Object.keys(o1), l1 = keys1.length, k; i < l1; i++){
+					k = keys1[i];v = o1[k];o.push(k,v);
 				};
 				return;
 			};
@@ -5523,6 +5538,18 @@ describe('Syntax - Loops',function() {
 			var v = [];
 			m(v);
 			return eq(v,['a',1,'b',2,'c',3]);
+		});
+		
+		test("for of",function() {
+			
+			var x_;
+			var items = {x: {a: 1,b: 2,c: 3}};
+			var out = [];
+			for (let k in x_ = items.x){
+				let v;
+				v = x_[k];out.push(k,v);
+			};
+			return eq(out,['a',1,'b',2,'c',3]);
 		});
 		
 		return test("for own of global bug",function() {
@@ -5571,8 +5598,8 @@ describe('Syntax - Loops',function() {
 			person = people[i];
 			var name = person.name;
 			
-			for (let o = person.meta, v, i = 0, keys = Object.keys(o), l = keys.length, k; i < l; i++){
-				k = keys[i];v = o[k];res.push(k);
+			for (let o = person.meta, v, j = 0, keys = Object.keys(o), l = keys.length, k; j < l; j++){
+				k = keys[j];v = o[k];res.push(k);
 			};
 		};
 		
@@ -6388,8 +6415,8 @@ describe('Syntax - Arrays',function() {
 		var res = [];
 		for (let i = 0, items = [1,2], len = items.length, a; i < len; i++) {
 			a = items[i];
-			for (let j = 0, items = [1,2], len = items.length; j < len; j++) {
-				res.push(a,items[j]);
+			for (let j = 0, ary = [1,2], len = ary.length; j < len; j++) {
+				res.push(a,ary[j]);
 			};
 		};
 		eq(res,[1,1,1,2,2,1,2,2]);
@@ -6963,9 +6990,9 @@ describe("Syntax - Statements",function() {
 	
 	return test("allow statements as arguments",function() {
 		
-		var fn = function() { var $0 = arguments, j = $0.length;
-		var pars = new Array(j>0 ? j : 0);
-		while(j>0) pars[j-1] = $0[--j];
+		var fn = function() { var $0 = arguments, i = $0.length;
+		var pars = new Array(i>0 ? i : 0);
+		while(i>0) pars[i-1] = $0[--i];
 		return pars; };
 		var ary = [1,2,3,4];
 		var res = fn(10,((function() {
@@ -7349,7 +7376,7 @@ A.prototype.letVar = function (){
 	var i = 1;
 	var v = 1;
 	
-	for (let i = 0, len = ary.length; i < len; i++) {
+	for (let i = 0, len_ = ary.length; i < len_; i++) {
 		ary[i] + 2;
 		i;
 	};
@@ -7357,21 +7384,21 @@ A.prototype.letVar = function (){
 	eq(i,1);
 	
 	if (true) {
-		for (let i = 0, len = ary.length; i < len; i++) {
+		for (let i = 0, len_ = ary.length; i < len_; i++) {
 			i;
 		};
 		eq(i,1);
 	};
 	
 	let res = [];
-	for (let i = 0, len = ary.length; i < len; i++) {
-		res.push(ary[i]);
+	for (let j = 0, len_ = ary.length; j < len_; j++) {
+		res.push(ary[j]);
 	};
 	var r = res;
 	
 	r.length;
 	
-	for (let i = 0, len = ary.length; i < len; i++) {
+	for (let j = 0, len_ = ary.length; j < len_; j++) {
 		let l = 1;
 		let a = 2;
 		let b = 2;
@@ -7380,7 +7407,7 @@ A.prototype.letVar = function (){
 		a + b + c;
 	};
 	
-	for (let i = 0, len = ary.length; i < len; i++) {
+	for (let j = 0, len_ = ary.length; j < len_; j++) {
 		let a = 3;
 		let b = 3;
 		let c = 3;
@@ -7399,7 +7426,7 @@ A.prototype.letVar = function (){
 		};
 		
 		let res1 = [];
-		for (let i = 0, len = ary.length; i < len; i++) {
+		for (let i = 0, len_ = ary.length; i < len_; i++) {
 			eq(a,4);
 			res1.push(i);
 		};
@@ -7410,7 +7437,7 @@ A.prototype.letVar = function (){
 	};
 	
 	if (1) {
-		for (let i = 0, len = ary.length; i < len; i++) {
+		for (let j = 0, len_ = ary.length; j < len_; j++) {
 			true;
 		};
 		var z = 4;
@@ -7440,6 +7467,30 @@ A.prototype.letIf = function (){
 	return eq(this.a(),1);
 };
 
+A.prototype.letShadow = function (){
+	let v = 1;
+	if (true) {
+		let v1 = v * 2;
+		eq(v1,2);
+	};
+	eq(v,1);
+	
+	if (true) {
+		let c = this.c() * 2;
+		return eq(c,2);
+	};
+};
+
+A.prototype.varShadow = function (){
+	var x = 10;
+	var y = function() {
+		var x1 = x * 2;
+		return eq(x1,20);
+	};
+	
+	return y();
+};
+
 A.prototype.caching = function (){
 	
 	var f;
@@ -7467,10 +7518,8 @@ describe("Syntax - Scope",function() {
 		return item.innerDef();
 	});
 	
-	test("let",function() {
-		item.letVar();
-		return item.letIf();
-	});
+	test("let",function() {  });
+	
 	
 	test("class",function() {
 		var x = 10;
@@ -7490,12 +7539,20 @@ describe("Syntax - Scope",function() {
 	});
 	
 	test("let",function() {
+		item.letVar();
+		item.letIf();
+		item.letShadow();
+		
 		var a = 0;
 		if (true) {
 			let a = 1;
 			eq(a,1);
 		};
 		return eq(a,0);
+	});
+	
+	test("var shadowing",function() {
+		return item.varShadow();
 	});
 	
 	return test("caching",function() {
@@ -8089,31 +8146,31 @@ describe('Syntax - Assignment',function() {
 		eq(list,[1,[2,3,4],5]);
 		
 		let res = [];
-		for (let i = 0, len = ary.length; i < len; i++) {
-			res.push(ary[i] * 2);
+		for (let k = 0, len__ = ary.length; k < len__; k++) {
+			res.push(ary[k] * 2);
 		};
 		var x = res;
 		
 		eq(x,[2,4,6,8,10]);
 		
 		let res1 = [];
-		for (let i = 0, len = ary.length; i < len; i++) {
-			res1.push(ary[i] * 2);
+		for (let k = 0, len__ = ary.length; k < len__; k++) {
+			res1.push(ary[k] * 2);
 		};
 		var ary_ = iter$(res1);x = ary_[0];var y = ary_[1];
 		
 		eq([x,y],[2,4]);
 		
 		let res2 = [];
-		for (let i = 0, len = ary.length; i < len; i++) {
-			res2.push(ary[i] * 2);
+		for (let k = 0, len__ = ary.length; k < len__; k++) {
+			res2.push(ary[k] * 2);
 		};
 		var ary__ = iter$(res2);x = ary__[0];y = ary__[1];obj.setZ(ary__[2]);
 		eq([x,y,obj.z()],[2,4,6]);
 		
 		let res3 = [];
-		for (let i = 0, len = ary.length; i < len; i++) {
-			res3.push(ary[i] * 2);
+		for (let k = 0, len__ = ary.length; k < len__; k++) {
+			res3.push(ary[k] * 2);
 		};
 		var $3 = iter$(res3),len__ = $3.length,k = 0,tmplist = new Array(len__ - 2);x = $3[k++];y = $3[k++];while (k < len__){
 			tmplist[k - 2] = $3[k++]
@@ -8353,6 +8410,10 @@ describe('Await',function() {
 	
 	if (true) {
 		test('es6',function() {
+			// await x && y -> await(x) && y
+			// await x + await y -> await(x) + await(y)
+			
+			
 			async function add2(x){
 				let p_a = delay(20);
 				let p_b = delay(30);
