@@ -945,6 +945,7 @@ var operators = [
 	# ['left', 'STRING_START','STRING_END']
 	['nonassoc',  '++', '--']
 	['right',     'UNARY','THROW','SQRT','NOT']
+	['right','AWAIT']
 	['left',      'MATH']
 	['left',      '+', '-']
 	['left',      'SHIFT']
@@ -952,7 +953,7 @@ var operators = [
 	['left',      'COMPARE']
 	['left',      'LOGIC']
 	['left',      '?']
-	['left','AWAIT'] # not really sure?
+	
 	['nonassoc',  'INDENT', 'OUTDENT']
 	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN', 'THROW', 'EXTENDS']
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']
