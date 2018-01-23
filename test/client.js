@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.2.0-beta.2'};
+var Imba = {VERSION: '1.2.0-beta.3'};
 
 /*
 True if running in client environment.
@@ -7481,6 +7481,31 @@ A.prototype.letShadow = function (){
 	};
 };
 
+A.prototype.letSwitch = function (val){
+	if(val === undefined) val = 10;
+	let x = val;
+	let y = 20;
+	
+	switch (x) {
+		case 10: {
+			let y = 30;
+			let z = 30;
+			eq(y,30);
+			break;
+		}
+		case 20: {
+			let y = 40;
+			let z = 40;
+			eq(z,40);
+			break;
+		}
+	};
+	
+	return eq(y,20);
+};
+
+
+
 A.prototype.varShadow = function (){
 	var x = 10;
 	var y = function() {
@@ -7542,6 +7567,8 @@ describe("Syntax - Scope",function() {
 		item.letVar();
 		item.letIf();
 		item.letShadow();
+		item.letSwitch(10);
+		item.letSwitch(20);
 		
 		var a = 0;
 		if (true) {
@@ -7671,10 +7698,10 @@ describe('Syntax - Switch',function() {
 	return test("general",function() {
 		var type = 1;
 		switch (type) {
-			case 1:
+			case 1: {
 				value = 'A';
 				break;
-			
+			}
 			default:
 			
 				var value = 'B';
@@ -7684,9 +7711,9 @@ describe('Syntax - Switch',function() {
 		
 		// compact
 		switch (type) {
-			case 1:
+			case 1: {
 				value = 'A';break;
-			
+			}
 			default:
 			
 				value = 'B';
@@ -8410,10 +8437,6 @@ describe('Await',function() {
 	
 	if (true) {
 		test('es6',function() {
-			// await x && y -> await(x) && y
-			// await x + await y -> await(x) + await(y)
-			
-			
 			async function add2(x){
 				let p_a = delay(20);
 				let p_b = delay(30);
@@ -8671,10 +8694,10 @@ describe('Tags - Define',function() {
 			_T.DIV(self).flag('inner').setContent(
 				(function() {
 					switch (num) {
-						case 1:
-							return _T.DIV(this).flag('one').end();
+						case 1: {
+							return _T.DIV(self).flag('one').end();
 							break;
-						
+						}
 						default:
 						
 							return _T.DIV(this).flag('other').end();
