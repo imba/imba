@@ -5680,10 +5680,11 @@ export class SwitchCase < ControlFlowStatement
 		@traversed = no
 		@test = test
 		@body = blk__(body)
+		@scope = BlockScope.new(self)
 
 	def visit
+		scope__.visit
 		body.traverse
-
 
 	def consume node
 		body.consume(node)
@@ -5697,8 +5698,8 @@ export class SwitchCase < ControlFlowStatement
 
 	def js o
 		@test = [@test] unless @test isa Array
-		var cases = @test.map do |item| "case {item.c}:"
-		cases.join("\n") + body.c(indent: yes) # .indent
+		var cases = @test.map do |item| "case {item.c}: "
+		cases.join("\n") + body.c(indent: yes, braces: yes)
 
 
 
@@ -7563,10 +7564,6 @@ export class WhileScope < FlowScope
 
 export class ForScope < FlowScope
 
-	# def register
-	#	console.log "ForScope.register"
-	#	super
-
 	def autodeclare variable
 		vars.push(variable)
 
@@ -7574,10 +7571,6 @@ export class ForScope < FlowScope
 		parent.temporary(refnode,o,name)
 
 export class IfScope < FlowScope
-
-	# def register
-	#	console.log "IfScope.register"
-	#	super
 
 	def temporary refnode, o = {}, name = null
 		parent.temporary(refnode,o,name)

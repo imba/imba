@@ -151,6 +151,24 @@ class A
 			let c = c * 2
 			eq c, 2
 
+	def letSwitch val = 10
+		let x = val
+		let y = 20
+
+		switch x
+			when 10
+				let y = 30
+				let z = 30
+				eq y, 30
+			when 20
+				let y = 40
+				let z = 40
+				eq z, 40
+
+		eq y, 20
+
+
+
 	def varShadow
 		var x = 10
 		var y = do
@@ -202,6 +220,8 @@ describe "Syntax - Scope" do
 		item.letVar
 		item.letIf
 		item.letShadow
+		item.letSwitch(10)
+		item.letSwitch(20)
 
 		var a = 0
 		if true
