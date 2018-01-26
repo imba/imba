@@ -6461,7 +6461,7 @@ export class Selector < ListNode
 		self
 
 	def visit
-		console.warn "{STACK.sourcePath}: {option(:type)} selectors deprecated - will be removed in Imba 1.2.0"
+		console.warn "{STACK.sourcePath}: {option(:type)} selectors deprecated"
 		super
 
 	def query

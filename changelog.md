@@ -1,5 +1,7 @@
-## 1.2.0-beta.1
+## 1.2.0
 * Compile to native `let`,`const` and `await` unless `--es5` is specified
+* Align `await` precedence with js
+* Support variable shadowing
 * Fix fat-arrow template parsing `<div.item => ...`
 
 ## 1.1.1
