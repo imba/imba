@@ -11,7 +11,7 @@ import SourceMap from './sourcemap'
 
 if $node$
 	let v = (process:version or 'v0').match(/^v?(\d+)/)
-	NODE_MAJOR_VERSION = parseInt(v[0])
+	NODE_MAJOR_VERSION = parseInt(v[1])
 	if NODE_MAJOR_VERSION < 5
 		console.log "Imba compiles to es5 due to old version of node({process:version})"
 
