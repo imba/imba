@@ -357,8 +357,7 @@ class Imba.Tag
 	###
 	def removeChild child
 		var par = dom
-		var el = child isa Imba.Tag ? child.dom : child
-
+		var el = child.@dom or child
 		if el and el:parentNode == par
 			par.removeChild(el)
 			Imba.TagManager.remove(el.@tag or el,self)

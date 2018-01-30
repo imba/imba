@@ -4,10 +4,10 @@ def removeNested root, node, caret
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements
 	# 	for now we will simply not support this
-	if node isa Imba.Tag
-		root.removeChild(node)
-	elif node isa Array
+	if node isa Array
 		removeNested(root,member,caret) for member in node
+	elif node and node.@dom
+		root.removeChild(node)
 	elif node != null
 		# what if this is not null?!?!?
 		# take a chance and remove a text-elementng
@@ -20,12 +20,10 @@ def removeNested root, node, caret
 	return caret
 
 def appendNested root, node
-	if node isa Imba.Tag
-		root.appendChild(node)
-
-	elif node isa Array
+	if node isa Array
 		appendNested(root,member) for member in node
-
+	elif node and node.@dom
+		root.appendChild(node)
 	elif node != null and node !== false
 		root.appendChild Imba.createTextNode(node)
 
@@ -37,10 +35,10 @@ def appendNested root, node
 # will still be correct there
 # before must be an actual domnode
 def insertNestedBefore root, node, before
-	if node isa Imba.Tag
-		root.insertBefore(node,before)
-	elif node isa Array
+	if node isa Array
 		insertNestedBefore(root,member,before) for member in node
+	elif node and node.@dom
+		root.insertBefore(node,before)
 	elif node != null and node !== false
 		root.insertBefore(Imba.createTextNode(node),before)
 
@@ -148,7 +146,7 @@ def reconcileCollectionChanges root, new, old, caret
 	for node, idx in new
 		if !stickyNodes[idx]
 			# create textnode for string, and update the array
-			unless node isa Imba.Tag
+			unless node and node.@dom
 				node = new[idx] = Imba.createTextNode(node)
 
 			var after = new[idx - 1]
@@ -191,7 +189,7 @@ def reconcileNested root, new, old, caret
 		# we should instead move the actual caret? - trust
 		if newIsNull
 			return caret
-		elif new and new.@dom
+		elif new.@dom
 			return new.@dom
 		else
 			return caret ? caret:nextSibling : root.@dom:firstChild
@@ -212,17 +210,17 @@ def reconcileNested root, new, old, caret
 				# if they are not the same we continue through to the default
 			else
 				return reconcileCollection(root,new,old,caret)
-
-		elif old isa Imba.Tag
-			root.removeChild(old)
 		elif !oldIsNull
-			# old was a string-like object?
-			root.removeChild(caret ? caret:nextSibling : root.@dom:firstChild)			
+			if old.@dom
+				root.removeChild(old)
+			else
+				# old was a string-like object?
+				root.removeChild(caret ? caret:nextSibling : root.@dom:firstChild)
 
 		return insertNestedAfter(root,new,caret)
 		# remove old
 
-	elif new isa Imba.Tag
+	elif !newIsNull and new.@dom
 		removeNested(root,old,caret) unless oldIsNull
 		return insertNestedAfter(root,new,caret)
 
@@ -235,7 +233,7 @@ def reconcileNested root, new, old, caret
 		# if old was array or imbatag we need to remove it and then add
 		if old isa Array
 			removeNested(root,old,caret)
-		elif old isa Imba.Tag
+		elif old and old.@dom
 			root.removeChild(old)
 		elif !oldIsNull
 			# ...
@@ -276,7 +274,7 @@ extend tag element
 			# but the old or new could be static while the other is not
 			# this is not handled now
 			# what if it was previously a static array? edgecase - but must work
-			if new isa Imba.Tag
+			if new and new.@dom
 				empty
 				appendChild(new)
 
