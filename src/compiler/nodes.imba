@@ -2242,7 +2242,8 @@ export class ModuleDeclaration < Code
 		scope.visit
 		
 		if @name
-			scope.parent.register(name.c, self, type: 'var')
+			let modname = String(name.@value or name)
+			scope.parent.register(modname, self, type: 'var')
 			# scope.parent.declare(@name,null,system: yes)
 			
 		body.traverse

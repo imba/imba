@@ -3,6 +3,7 @@
 * Allow reconciler to work with tag-like objects
 * Make Imba.commit notify schedulers
 * Make sure schedulers are correctly activated and deactivated
+* * Fix variable naming issue when compiling with sourceMaps
 
 ## 1.2.0
 * Compile to native `let`,`const` and `await` unless `--es5` is specified
