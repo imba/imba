@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.2.0'};
+var Imba = {VERSION: '1.2.1'};
 
 /*
 True if running in client environment.
@@ -98,7 +98,6 @@ True if running in server environment.
 Imba.isServer = function (){
 	return false;
 };
-
 
 /*
 
@@ -124,10 +123,7 @@ after every interval to let schedulers update (to rerender etc) afterwards.
 */
 
 Imba.setInterval = function (interval,block){
-	return setInterval(function() {
-		block();
-		return Imba.commit();
-	},interval);
+	return setInterval(block,interval);
 };
 
 /*
@@ -670,15 +666,14 @@ Ticker.prototype.before = function (){
 };
 
 Ticker.prototype.after = function (){
-	Imba.commit();
+	if (Imba.TagManager) {
+		Imba.TagManager.refresh();
+	};
 	return this;
 };
 
 Imba.TICKER = new Ticker();
-
-Imba.commit = function (){
-	return Imba.TagManager.refresh();
-};
+Imba.SCHEDULERS = [];
 
 Imba.ticker = function (){
 	return Imba.TICKER;
@@ -695,6 +690,17 @@ Imba.cancelAnimationFrame = function (id){
 // should add an Imba.run / setImmediate that
 // pushes listener onto the tick-queue with times - once
 
+var commitQueue = 0;
+
+Imba.commit = function (params){
+	commitQueue++;
+	// Imba.TagManager.refresh
+	Imba.emit(Imba,'commit',(params != undefined) ? [params] : undefined);
+	if (--commitQueue == 0) {
+		Imba.TagManager && Imba.TagManager.refresh();
+	};
+	return;
+};
 
 /*
 
@@ -719,11 +725,12 @@ Imba.Scheduler = function Scheduler(target){
 	
 	self._dt = 0;
 	self._frame = {};
-	self._state = {raf: false,event: false,interval: false};
 	self._scheduled = false;
 	self._timestamp = 0;
 	self._ticks = 0;
 	self._flushes = 0;
+	
+	self.onevent = self.onevent.bind(self);
 	self;
 };
 
@@ -766,24 +773,24 @@ Imba.Scheduler.prototype.marked = function(v){ return this._marked; }
 Imba.Scheduler.prototype.setMarked = function(v){ this._marked = v; return this; };
 
 Imba.Scheduler.prototype.rafDidSet = function (bool){
-	this._state.raf = bool;
-	if (bool) this.requestTick();
+	if (bool && this._active) this.requestTick();
 	return this;
 };
 
 Imba.Scheduler.prototype.intervalDidSet = function (time){
-	this._state.interval = time;
 	clearInterval(this._intervalId);
-	if (time) { this._intervalId = Imba.setInterval(time,this._ticker) };
+	this._intervalId = null;
+	if (time && this._active) {
+		this._intervalId = setInterval(this.oninterval.bind(this),time);
+	};
 	return this;
 };
 
 Imba.Scheduler.prototype.eventsDidSet = function (new$,prev){
-	this._state.events = new$;
-	if (new$) {
-		return Imba.listen(Imba,'event',this,'onevent');
-	} else {
-		return Imba.unlisten(Imba,'event',this,'onevent');
+	if (this._active && new$ && !prev) {
+		return Imba.listen(Imba,'commit',this,'onevent');
+	} else if (!(new$) && prev) {
+		return Imba.unlisten(Imba,'commit',this,'onevent');
 	};
 };
 
@@ -810,7 +817,7 @@ Imba.Scheduler.prototype.dt = function (){
 	@return {self}
 	*/
 
-Imba.Scheduler.prototype.configure = function (options){ // fps: 1, events: yes
+Imba.Scheduler.prototype.configure = function (options){
 	var v_;
 	if(options === undefined) options = {};
 	if (options.raf != undefined) { (this.setRaf(v_ = options.raf),v_) };
@@ -876,7 +883,7 @@ Imba.Scheduler.prototype.tick = function (delta,ticker){
 	
 	this.flush();
 	
-	if (this._raf) {
+	if (this._raf && this._active) {
 		this.requestTick();
 	};
 	return this;
@@ -899,15 +906,29 @@ Imba.Scheduler.prototype.requestTick = function (){
 	this automatic rendering.
 	*/
 
-Imba.Scheduler.prototype.activate = function (){
+Imba.Scheduler.prototype.activate = function (immediate){
+	if(immediate === undefined) immediate = true;
 	if (!this._active) {
 		this._active = true;
 		this._commit = this._target.commit;
 		this._target.commit = function() { return this; };
 		this._target && this._target.flag  &&  this._target.flag('scheduled_');
-		this.tick(0);
+		Imba.SCHEDULERS.push(this);
+		
+		if (this._events) {
+			Imba.listen(Imba,'commit',this,'onevent');
+		};
+		
+		if (this._interval && !this._intervalId) {
+			this._intervalId = setInterval(this.oninterval.bind(this),this._interval);
+		};
+		
+		if (immediate) {
+			this.tick(0);
+		} else if (this._raf) {
+			this.requestTick();
+		};
 	};
-	
 	return this;
 };
 
@@ -916,16 +937,23 @@ Imba.Scheduler.prototype.activate = function (){
 	*/
 
 Imba.Scheduler.prototype.deactivate = function (){
-	this._restoreState = {events: this.events(),raf: this.raf(),interval: this.interval()};
-	this.setEvents(false);
-	this.setRaf(false);
-	this.setInterval(0);
-	
 	if (this._active) {
 		this._active = false;
 		this._target.commit = this._commit;
-		// Imba.unschedule(self)
-		// Imba.unlisten(Imba,'event',self)
+		let idx = Imba.SCHEDULERS.indexOf(this);
+		if (idx >= 0) {
+			Imba.SCHEDULERS.splice(idx,1);
+		};
+		
+		if (this._events) {
+			Imba.unlisten(Imba,'commit',this,'onevent');
+		};
+		
+		if (this._intervalId) {
+			clearInterval(this._intervalId);
+			this._intervalId = null;
+		};
+		
 		this._target && this._target.unflag  &&  this._target.unflag('scheduled_');
 	};
 	return this;
@@ -935,14 +963,19 @@ Imba.Scheduler.prototype.track = function (){
 	return this._marker;
 };
 
+Imba.Scheduler.prototype.oninterval = function (){
+	this.tick();
+	Imba.TagManager.refresh();
+	return this;
+};
+
 Imba.Scheduler.prototype.onevent = function (event){
-	var $1;
-	if (!this._events) { return this };
+	if (!this._events || this._marked) { return this };
 	
 	if (this._events instanceof Function) {
-		if (this._events(event)) this.mark();
+		if (this._events(event,this)) this.mark();
 	} else if (this._events instanceof Array) {
-		if (this._events.indexOf(($1 = event) && $1.type  &&  $1.type()) >= 0) {
+		if (this._events.indexOf((event && event.type) || event) >= 0) {
 			this.mark();
 		};
 	} else {
@@ -1025,8 +1058,9 @@ Imba.TagManagerClass.prototype.mount = function (node){
 Imba.TagManagerClass.prototype.refresh = function (force){
 	if(force === undefined) force = false;
 	if (false) {};
+	if (!force && this.changes() == 0) { return };
 	// console.time('resolveMounts')
-	if (this._inserts && this._hasMountables) {
+	if ((this._inserts && this._hasMountables) || force) {
 		this.tryMount();
 	};
 	
@@ -1139,8 +1173,8 @@ Imba.mount = function (node,into){
 	into || (into = Imba.document().body);
 	into.appendChild(node.dom());
 	Imba.TagManager.insert(node,into);
-	node.scheduler().configure({events: true});
-	Imba.commit();
+	node.scheduler().configure({events: true}).activate(false);
+	Imba.TagManager.refresh();
 	return node;
 };
 
@@ -1541,8 +1575,7 @@ Imba.Tag.prototype.renderTemplate = function (){
 
 Imba.Tag.prototype.removeChild = function (child){
 	var par = this.dom();
-	var el = (child instanceof Imba.Tag) ? child.dom() : child;
-	
+	var el = child._dom || child;
 	if (el && el.parentNode == par) {
 		par.removeChild(el);
 		Imba.TagManager.remove(el._tag || el,this);
@@ -1829,8 +1862,6 @@ Imba.Tag.prototype.synced = function (){
 Imba.Tag.prototype.awaken = function (){
 	return this;
 };
-
-
 
 /*
 	List of flags for this node. 
@@ -3866,13 +3897,8 @@ Imba.Event.prototype.process = function (){
 
 Imba.Event.prototype.processed = function (){
 	if (!this._silenced && this._responder) {
-		// if there has been inserts/removals during
-		// theprocessing of this event - schedule Imba.commit
-		if (Imba.TagManager.changes()) {
-			Imba.ticker().schedule();
-		};
-		
 		Imba.emit(Imba,'event',[this]);
+		Imba.commit(this.event());
 	};
 	return this;
 };
@@ -4356,12 +4382,12 @@ function removeNested(root,node,caret){
 	// if node/nodes isa String
 	// 	we need to use the caret to remove elements
 	// 	for now we will simply not support this
-	if (node instanceof Imba.Tag) {
-		root.removeChild(node);
-	} else if (node instanceof Array) {
+	if (node instanceof Array) {
 		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
 			removeNested(root,items[i],caret);
 		};
+	} else if (node && node._dom) {
+		root.removeChild(node);
 	} else if (node != null) {
 		// what if this is not null?!?!?
 		// take a chance and remove a text-elementng
@@ -4377,12 +4403,12 @@ function removeNested(root,node,caret){
 };
 
 function appendNested(root,node){
-	if (node instanceof Imba.Tag) {
-		root.appendChild(node);
-	} else if (node instanceof Array) {
+	if (node instanceof Array) {
 		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
 			appendNested(root,items[i]);
 		};
+	} else if (node && node._dom) {
+		root.appendChild(node);
 	} else if (node != null && node !== false) {
 		root.appendChild(Imba.createTextNode(node));
 	};
@@ -4396,12 +4422,12 @@ function appendNested(root,node){
 // will still be correct there
 // before must be an actual domnode
 function insertNestedBefore(root,node,before){
-	if (node instanceof Imba.Tag) {
-		root.insertBefore(node,before);
-	} else if (node instanceof Array) {
+	if (node instanceof Array) {
 		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
 			insertNestedBefore(root,items[i],before);
 		};
+	} else if (node && node._dom) {
+		root.insertBefore(node,before);
 	} else if (node != null && node !== false) {
 		root.insertBefore(Imba.createTextNode(node),before);
 	};
@@ -4523,7 +4549,7 @@ function reconcileCollectionChanges(root,new$,old,caret){
 		node = items[idx];
 		if (!stickyNodes[idx]) {
 			// create textnode for string, and update the array
-			if (!((node instanceof Imba.Tag))) {
+			if (!(node && node._dom)) {
 				node = new$[idx] = Imba.createTextNode(node);
 			};
 			
@@ -4574,7 +4600,7 @@ function reconcileNested(root,new$,old,caret){
 		// we should instead move the actual caret? - trust
 		if (newIsNull) {
 			return caret;
-		} else if (new$ && new$._dom) {
+		} else if (new$._dom) {
 			return new$._dom;
 		} else {
 			return caret ? caret.nextSibling : root._dom.firstChild;
@@ -4598,16 +4624,18 @@ function reconcileNested(root,new$,old,caret){
 			} else {
 				return reconcileCollection(root,new$,old,caret);
 			};
-		} else if (old instanceof Imba.Tag) {
-			root.removeChild(old);
 		} else if (!oldIsNull) {
-			// old was a string-like object?
-			root.removeChild(caret ? caret.nextSibling : root._dom.firstChild);
+			if (old._dom) {
+				root.removeChild(old);
+			} else {
+				// old was a string-like object?
+				root.removeChild(caret ? caret.nextSibling : root._dom.firstChild);
+			};
 		};
 		
 		return insertNestedAfter(root,new$,caret);
 		// remove old
-	} else if (new$ instanceof Imba.Tag) {
+	} else if (!newIsNull && new$._dom) {
 		if (!oldIsNull) { removeNested(root,old,caret) };
 		return insertNestedAfter(root,new$,caret);
 	} else if (newIsNull) {
@@ -4619,7 +4647,7 @@ function reconcileNested(root,new$,old,caret){
 		// if old was array or imbatag we need to remove it and then add
 		if (old instanceof Array) {
 			removeNested(root,old,caret);
-		} else if (old instanceof Imba.Tag) {
+		} else if (old && old._dom) {
 			root.removeChild(old);
 		} else if (!oldIsNull) {
 			// ...
@@ -4663,7 +4691,7 @@ Imba.TAGS.extendTag('element', function(tag){
 			// but the old or new could be static while the other is not
 			// this is not handled now
 			// what if it was previously a static array? edgecase - but must work
-			if (new$ instanceof Imba.Tag) {
+			if (new$ && new$._dom) {
 				this.empty();
 				this.appendChild(new$);
 			} else if (new$ instanceof Array) {

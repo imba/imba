@@ -1,3 +1,9 @@
+## 1.2.1
+* Fix issue where process.version was not parsed correctly
+* Allow reconciler to work with tag-like objects
+* Make Imba.commit notify schedulers
+* Make sure schedulers are correctly activated and deactivated
+
 ## 1.2.0
 * Compile to native `let`,`const` and `await` unless `--es5` is specified
 * Align `await` precedence with js
