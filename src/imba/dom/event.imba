@@ -235,12 +235,8 @@ class Imba.Event
 
 	def processed
 		if !@silenced and @responder
-			# if there has been inserts/removals during
-			# theprocessing of this event - schedule Imba.commit
-			if Imba.TagManager.changes
-				Imba.ticker.schedule
-
 			Imba.emit(Imba,'event',[self])
+			Imba.commit(event)
 		self
 
 	###

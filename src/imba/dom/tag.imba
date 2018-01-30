@@ -36,8 +36,8 @@ def Imba.mount node, into
 	into ||= Imba.document:body
 	into.appendChild(node.dom)
 	Imba.TagManager.insert(node,into)
-	node.scheduler.configure(events: yes)
-	Imba.commit
+	node.scheduler.configure(events: yes).activate(no)
+	Imba.TagManager.refresh
 	return node
 
 
@@ -589,8 +589,6 @@ class Imba.Tag
 	# tag for a domnode that has been rendered on the server
 	def awaken
 		self
-
-
 
 	###
 	List of flags for this node. 

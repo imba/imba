@@ -18,7 +18,6 @@ True if running in server environment.
 def Imba.isServer
 	return $node$
 
-
 ###
 
 Light wrapper around native setTimeout that expects the block / function
@@ -39,9 +38,7 @@ after every interval to let schedulers update (to rerender etc) afterwards.
 
 ###
 def Imba.setInterval interval, &block
-	setInterval(&,interval) do
-		block()
-		Imba.commit
+	setInterval(block,interval)
 
 ###
 Clear interval with specified id

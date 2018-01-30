@@ -32,8 +32,9 @@ class Imba.TagManagerClass
 
 	def refresh force = no
 		return if $node$
+		return if !force and changes == 0
 		# console.time('resolveMounts')
-		if @inserts and @hasMountables
+		if (@inserts and @hasMountables) or force
 			tryMount
 
 		if (@removes or force) and @mounted:length
