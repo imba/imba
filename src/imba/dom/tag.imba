@@ -231,7 +231,7 @@ class Imba.Tag
 	def setHandler event, handler, ctx, slot, mods
 		var on = self:_on_ ||= {}
 		on[event] ||= []
-		on[event][slot] = [handler, mods]
+		on[event][slot] = [handler, mods or []]
 		return self
 
 		var key = 'on' + event

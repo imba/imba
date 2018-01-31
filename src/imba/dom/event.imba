@@ -251,16 +251,25 @@ class Imba.Event
 		var params = [self,data]
 		
 		if handler isa Array
-			handler = handler[0]
 			params = handler.slice(1)
+			handler = handler[0]
+			
 			
 		if handler isa String
-			if node.@owner_[handler]
-				handler = node.@owner_[handler]
-				context = node.@owner_
+			let el = node
+			while el
+				# should lookup actions?
+				if el[handler]
+					context = el
+					handler = el[handler]
+					break
+				el = el.parent
+			# if node.@owner_[handler]
+			# 	handler = node.@owner_[handler]
+			# 	context = node.@owner_
 			
 		if handler isa Function
-			handler.call(context,params)
+			handler.apply(context,params)
 		
 		# the default behaviour is that if a handler actually
 		# processes the event - we stop propagation. That's usually
@@ -290,9 +299,8 @@ class Imba.Event
 			let node = domnode.@dom ? domnode : domnode.@tag
 			if node
 				if node:_on_ and handlers = node:_on_[name]
-					for handler in handlers when handler
-						# should they all be handled?
-						if bubble
+					for handler in handlers
+						if handler and bubble
 							let handled = processHandler(node,handler[0],handler[1] or [])
 
 				# FIXME No longer used? 
