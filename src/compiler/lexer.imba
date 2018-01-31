@@ -878,6 +878,9 @@ export class Lexer
 
 		elif typ == '@'
 			typ = 'IVAR'
+			if lastTyp in ['IDENTIFIER','IVAR','CONST_ID'] and !prev:spaced
+				token ".","."
+
 			# id:reserved = yes if colon
 		elif typ == '#'
 			typ = 'TAGID'

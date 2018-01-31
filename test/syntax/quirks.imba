@@ -1,6 +1,5 @@
 extern describe, test, ok, eq, it
 
-# a place to test weird bugs
 describe "Syntax - Quirks" do
 	
 	test "ivar in object" do
@@ -13,6 +12,7 @@ describe "Syntax - Quirks" do
 			ovar: 10
 		
 		eq object.@ivar, 10
+		eq object@ivar, 10
 		
 	test "let item = try" do
 		var item = 20

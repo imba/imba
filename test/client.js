@@ -8613,8 +8613,21 @@ describe('Issues',function() {
 
 // externs;
 
-// a place to test weird bugs
 describe("Syntax - Quirks",function() {
+	
+	test("ivar in object",function() {
+		let object = {
+			_ivar: 10
+		};
+		
+		let other = {
+			_ivar: 100,
+			ovar: 10
+		};
+		
+		eq(object._ivar,10);
+		return eq(object._ivar,10);
+	});
 	
 	test("let item = try",function() {
 		var item = 20;
