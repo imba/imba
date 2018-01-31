@@ -3225,7 +3225,13 @@ export class ObjAttr < Node
 		value.traverse
 
 	def js o
+		let key = self.key
+
+		if key isa Identifier and String(key.@value)[0] == '@'
+			key = Ivar.new(key)
+
 		var k = key.isReserved ? "'{key.c}'" : key.c
+
 		"{k}: {value.c}"
 
 	def hasSideEffects
@@ -7639,6 +7645,7 @@ export class Variable < Node
 		else
 			@isArray = no
 		self
+	
 
 	def resolve scope = scope, force = no
 		return self if @resolved and !force
