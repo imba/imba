@@ -133,9 +133,8 @@ class Imba.Tag
 	def initialize dom,ctx
 		self.dom = dom
 		self.@_ = {}
+		@owner_ = ctx
 		self.FLAGS = 0
-		if $node$
-			@owner_ = ctx
 		build
 		self
 
@@ -229,8 +228,13 @@ class Imba.Tag
 	where this refers to the context in which the tag is created.
 	@return {self}
 	###
-	def setHandler event, handler, ctx
+	def setHandler event, handler, ctx, mods
 		var key = 'on' + event
+		
+		var on = self:_on_ ||= {}
+		
+		on[event] = [handler, mods]
+		return self
 
 		if handler isa Function
 			self[key] = handler

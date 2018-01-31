@@ -6082,15 +6082,23 @@ export class Tag < Node
 			if part isa TagAttr
 				var akey = String(part.key)
 				var aval = part.value
-
+				let modifiers = null
 				pcache = aval.isPrimitive
-
+				
+				if akey.indexOf('.',1) >= 0
+					modifiers = akey.slice(1).split('.').slice(1)
+					akey = akey.substr(0,akey.indexOf('.',1))
 
 				if akey[0] == '.'
 					pcache = no
 					pjs = ".flag({quote(akey.substr(1))},{aval.c})"
 				elif akey[0] == ':'
-					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c})"
+					let add = ""
+					if modifiers
+						# add = ',{' + modifiers.map(|mod| "{mod}:1" ).join(',') + '}'
+						add = ',[' + modifiers.map(|mod| "'{mod}'" ).join(',') + ']'
+						
+					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c}{add})"
 
 				elif akey.substr(0,5) == 'data-'
 					pjs = ".dataset('{akey.slice(5)}',{aval.c})"

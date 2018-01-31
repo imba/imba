@@ -33,6 +33,25 @@ Imba.CHARMAP = {
 	".": 'dot'
 }
 
+const MOUSE_EVENTS = {
+	mousedown: 1
+	mouseup: 1
+	mousemove: 1
+	click: 1
+	dblclick: 1
+	tap: 1
+}
+
+# return false to skip handler
+export var Modifiers =
+	"self":  do |node| this.event:target == node.@dom
+	left:    do this:button === 0
+	right:   do this:button === 2
+	middle:  do this:button === 1
+	halt:    do this.stopPropagation
+	prevent: do this.preventDefault
+	silence: do this.silence
+
 ###
 Imba handles all events in the dom through a single manager,
 listening at the root of your document. If Imba finds a tag
@@ -183,9 +202,52 @@ class Imba.Event
 		combo.push(:cmd) if e:metaKey
 		combo.push(sym)
 		combo.join("_").toLowerCase
+		
+	def processHandler node, handler, mods = []
+		
+		# go through modifiers
+		for mod in mods
+			if Modifiers[mod].call(self,node) == false
+				return
 
+		# return if mods:self and event:target != node.@dom
+		
+		# if MOUSE_EVENTS[type]
+		# 	console.log "mouseevent",mods:right,event:button
+		# 	return if mods:left and event:button != 0
+		# 	return if mods:right and event:button != 2
+		# 	return if mods:middle and event:button != 1
+			
+		# if mods:halt
+		# 	stopPropagation
+			
+		# if mods:prevent
+		# 	preventDefault
+
+		var context = node
+		var params = [self,data]
+		
+		if handler isa Array
+			handler = handler[0]
+			params = handler.slice(1)
+			
+		if handler isa String
+			if node.@owner_[handler]
+				handler = node.@owner_[handler]
+				context = node.@owner_
+			
+		if handler isa Function
+			handler.call(context,params)
+		
+		@responder ||= node
+			
+		if mods:silent
+			silence
+
+		self
 
 	def process
+		var name = self.name
 		var meth = "on{@prefix or ''}{name}"
 		var args = null
 		var domtarget = event:_target or event:target		
@@ -195,10 +257,14 @@ class Imba.Event
 		var domnode = domtarget:_responder or domtarget
 		# @todo need to stop infinite redirect-rules here
 		var result
+		var handler
 
 		while domnode
 			@redirect = null
-			if var node = tag(domnode) # not only tag 
+			let node = domnode.@dom ? domnode : domnode.@tag
+			if node
+				if node:_on_ and handler = node:_on_[name]
+					processHandler(node,handler[0] or handler, handler[1] or [])
 
 				# FIXME No longer used? 
 				if node[meth] isa String
@@ -218,9 +284,12 @@ class Imba.Event
 
 				if node:onevent
 					node.onevent(self)
+				
+				# console.log "continue downwards?",domnode,name
 					
 			# add node.nextEventResponder as a separate method here?
 			unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
+				# console.log "break?"
 				break
 
 		processed
