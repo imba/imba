@@ -1195,8 +1195,8 @@ This is the baseclass that all tags in imba inherit from.
 Imba.Tag = function Tag(dom,ctx){
 	this.setDom(dom);
 	this.__ = {};
+	this._owner_ = ctx;
 	this.FLAGS = 0;
-	if (false) {};
 	this.build();
 	this;
 };
@@ -1418,9 +1418,13 @@ Imba.Tag.prototype.height = function (){
 	@return {self}
 	*/
 
-Imba.Tag.prototype.setHandler = function (event,handler,ctx){
-	var key = 'on' + event;
+Imba.Tag.prototype.setHandler = function (event,handler,ctx,slot,mods){
+	var on = this._on_ || (this._on_ = {});
+	on[event] || (on[event] = []);
+	on[event][slot] = [handler,mods || []];
+	return this;
 	
+	var key = 'on' + event;
 	if (handler instanceof Function) {
 		this[key] = handler;
 	} else if (handler instanceof Array) {
@@ -3609,6 +3613,7 @@ Imba.TouchGesture.prototype.ontouchend = function (e){
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
+function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(1);
 
 Imba.KEYMAP = {
@@ -3643,6 +3648,46 @@ Imba.CHARMAP = {
 	"/": 'divide',
 	".": 'dot'
 };
+
+var keyCodes = {
+	esc: 27,
+	tab: 9,
+	enter: 13,
+	space: 32,
+	up: 38,
+	left: 37,
+	right: 39,
+	down: 40
+};
+
+var checkKeycode = function(_0,_1,_2) { return _0.keyCode ? ((_0.keyCode !== _2)) : false; };
+
+// return true to skip handler
+var Modifiers = exports.Modifiers = {
+	halt: function() { return this.stopPropagation() && false; },
+	prevent: function() { return this.preventDefault() && false; },
+	silence: function() { return this.silence() && false; },
+	bubble: function() { return false; },
+	self: function(_0,_1) { return _0.target != _1._dom; },
+	left: function(_0,_1) { return (_0.button != undefined) ? ((_0.button !== 0)) : checkKeycode(_0,_1,keyCodes.left); },
+	right: function(_0,_1) { return (_0.button != undefined) ? ((_0.button !== 2)) : checkKeycode(_0,_1,keyCodes.right); },
+	middle: function(_0) { return (_0.button != undefined) ? ((_0.button !== 1)) : false; },
+	ctrl: function(_0) { return _0.ctrlKey != true; },
+	shift: function(_0) { return _0.shiftKey != true; },
+	alt: function(_0) { return _0.altKey != true; },
+	meta: function(_0) { return _0.metaKey != true; },
+	keycode: function(_0,_1,_2) { return _0.keyCode ? ((_0.keyCode !== _2)) : false; }
+};
+
+// 	.enter
+// .tab
+// .delete (captures both “Delete” and “Backspace” keys)
+// .esc
+// .space
+// .up
+// .down
+// .left
+// .right
 
 /*
 Imba handles all events in the dom through a single manager,
@@ -3837,10 +3882,82 @@ Imba.Event.prototype.keycombo = function (){
 	return combo.join("_").toLowerCase();
 };
 
+Imba.Event.prototype.processHandler = function (node,handler,mods){
+	
+	if(mods === undefined) mods = [];
+	let autoBubble = false;
+	// go through modifiers
+	for (let i = 0, items = iter$(mods), len = items.length, mod; i < len; i++) {
+		mod = items[i];
+		if (mod == 'bubble') {
+			autoBubble = true;
+			continue;
+		};
+		
+		let guard = Modifiers[mod];
+		if (!guard) {
+			if (keyCodes[mod]) {
+				mod = keyCodes[mod];
+			};
+			if (/^\d+$/.test(mod)) {
+				mod = parseInt(mod);
+				guard = Modifiers.keycode;
+			} else {
+				console.warn(("" + mod + " is not a valid event-modifier"));
+				continue;
+			};
+		};
+		
+		// skipping this handler?
+		if (guard.call(this,this.event(),node,mod) == true) {
+			return;
+		};
+	};
+	
+	var context = node;
+	var params = [this,this.data()];
+	
+	if (handler instanceof Array) {
+		params = handler.slice(1);
+		handler = handler[0];
+	};
+	
+	
+	if ((typeof handler=='string'||handler instanceof String)) {
+		let el = node;
+		while (el){
+			// should lookup actions?
+			if (el[handler]) {
+				context = el;
+				handler = el[handler];
+				break;
+			};
+			el = el.parent();
+		};
+		// if node.@owner_[handler]
+		// 	handler = node.@owner_[handler]
+		// 	context = node.@owner_
+	};
+	
+	if (handler instanceof Function) {
+		handler.apply(context,params);
+	};
+	
+	// the default behaviour is that if a handler actually
+	// processes the event - we stop propagation. That's usually
+	// what you would want
+	if (!autoBubble) {
+		this.stopPropagation();
+	};
+	
+	this._responder || (this._responder = node);
+	
+	return this;
+};
 
 Imba.Event.prototype.process = function (){
-	var node;
-	var meth = ("on" + (this._prefix || '') + this.name());
+	var name = this.name();
+	var meth = ("on" + (this._prefix || '') + name);
 	var args = null;
 	var domtarget = this.event()._target || this.event().target;
 	// var node = <{domtarget:_responder or domtarget}>
@@ -3849,10 +3966,20 @@ Imba.Event.prototype.process = function (){
 	var domnode = domtarget._responder || domtarget;
 	// @todo need to stop infinite redirect-rules here
 	var result;
+	var handlers;
 	
 	while (domnode){
 		this._redirect = null;
-		if (node = Imba.getTagForDom(domnode)) { // not only tag 
+		let node = domnode._dom ? domnode : domnode._tag;
+		if (node) {
+			if (node._on_ && (handlers = node._on_[name])) {
+				for (let i = 0, items = iter$(handlers), len = items.length, handler; i < len; i++) {
+					handler = items[i];
+					if (handler && this.bubble()) {
+						let handled = this.processHandler(node,handler[0],handler[1] || []);
+					};
+				};
+			};
 			
 			// FIXME No longer used? 
 			if ((typeof node[meth]=='string'||node[meth] instanceof String)) {
@@ -3876,6 +4003,8 @@ Imba.Event.prototype.process = function (){
 			if (node.onevent) {
 				node.onevent(this);
 			};
+			
+			// console.log "continue downwards?",domnode,name
 		};
 		
 		// add node.nextEventResponder as a separate method here?
@@ -8962,27 +9091,29 @@ describe('Tags - Define',function() {
 		var Cache = _T.defineTag('Cache', function(tag){
 			tag.prototype.render = function (){
 				var self = this;
-				return self.setChildren((self._body || _T.DIV(self).ref_('body',self).setHandler('tap',function(e) { return self.title(); },self)).end(),2).synced();
+				return self.setChildren((self._body || _T.DIV(self).ref_('body',self).setHandler('tap',function(e) { return self.title(); },self,0)).end(),2).synced();
 			};
 		});
 		
 		var node = Cache.build(self).end();
-		var fn = node._body.ontap;
+		
+		var fn = node._body._on_.tap[0];
+		var handler = node._body._on_.tap[0];
 		node.render();
-		eq(node._body.ontap,fn);
+		eq(node._body._on_.tap[0],handler);
 		
 		// if the handler references variables outside
 		// of its scope we dont cache it on first render
 		var NoCache = _T.defineTag('NoCache', function(tag){
 			tag.prototype.render = function (arg){
-				return this.setChildren((this._body || _T.DIV(this).ref_('body',this)).setHandler('tap',function(e) { return arg; },this).end(),2).synced();
+				return this.setChildren((this._body || _T.DIV(this).ref_('body',this)).setHandler('tap',function(e) { return arg; },this,0).end(),2).synced();
 			};
 		});
 		
 		node = NoCache.build(self).end();
-		fn = node._body.ontap;
+		fn = node._body._on_.tap[0];
 		node.render();
-		return ok(node._body.ontap != fn);
+		return ok(node._body._on_.tap[0] != fn);
 	});
 	
 	test("parsing correctly",function() {

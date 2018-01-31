@@ -207,9 +207,11 @@ describe 'Tags - Define' do
 				<self> <@body :tap=(|e| title )>
 
 		var node = <Cache>
-		var fn = node.@body:ontap
+		
+		var fn = node.@body.@on_:tap[0]
+		var handler = node.@body.@on_:tap[0]
 		node.render
-		eq node.@body:ontap, fn
+		eq node.@body.@on_:tap[0], handler
 
 		# if the handler references variables outside
 		# of its scope we dont cache it on first render
@@ -218,9 +220,9 @@ describe 'Tags - Define' do
 				<self> <@body :tap=(|e| arg )>
 
 		var node = <NoCache>
-		var fn = node.@body:ontap
+		var fn = node.@body.@on_:tap[0]
 		node.render
-		ok node.@body:ontap != fn
+		ok node.@body.@on_:tap[0] != fn
 
 	test "parsing correctly" do
 		try

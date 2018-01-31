@@ -326,7 +326,6 @@ class Imba.Event
 					
 			# add node.nextEventResponder as a separate method here?
 			unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
-				# console.log "break?"
 				break
 
 		processed
