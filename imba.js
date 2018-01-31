@@ -132,17 +132,15 @@ return e||(e="U+"==t.substr(0,2)?String.fromCharCode(parseInt(t.substr(2),16)):t
 if(t=this.keychar()){t=o.CHARMAP[t]||t
 var e=[],n=this.event()
 return n.ctrlKey&&e.push("ctrl"),n.shiftKey&&e.push("shift"),n.altKey&&e.push("alt"),n.metaKey&&e.push("cmd"),e.push(t),e.join("_").toLowerCase()}},o.Event.prototype.processHandler=function(t,e,n){void 0===n&&(n=[])
-for(var o,s=!1,a=0,h=r(n),c=h.length;a<c;a++)if("bubble"!=(o=h[a])){var p=u[o]
-if(!p){if(i[o]&&(o=i[o]),!/^\d+$/.test(o)){console.warn(o+" is not a valid event-modifier")
-continue}o=parseInt(o),p=u.keycode}if(1==p.call(this,this.event(),t,o))return}else s=!0
-var d=t,f=[this,this.data()]
-if(e instanceof Array&&(f=e.slice(1),e=e[0]),"string"==typeof e||e instanceof String)for(var l=t;l;){if(l[e]){d=l,e=l[e]
-break}l=l.parent()}return e instanceof Function&&e.apply(d,f),s||this.stopPropagation(),this._responder||(this._responder=t),this},o.Event.prototype.process=function(){for(var t,e,n=this.name(),o="on"+(this._prefix||"")+n,i=null,s=this.event()._target||this.event().target,u=s._responder||s;u;){this._redirect=null
-var a=u._dom?u:u._tag
-if(a){if(a._on_&&(e=a._on_[n]))for(var h,c=0,p=r(e),d=p.length;c<d;c++)if((h=p[c])&&this.bubble())this.processHandler(a,h[0],h[1]||[])
-if("string"==typeof a[o]||a[o]instanceof String){o=a[o]
-continue}if(a[o]instanceof Array){o=(i=a[o].concat(a)).shift()
-continue}a[o]instanceof Function&&(this._responder||(this._responder=a),t=i?a[o].apply(a,i):a[o](this,this.data())),a.onevent&&a.onevent(this)}if(!this.bubble()||!(u=this._redirect||(a?a.parent():u.parentNode)))break}return this.processed(),t&&t.then instanceof Function&&t.then(this.processed.bind(this)),this},o.Event.prototype.processed=function(){return!this._silenced&&this._responder&&(o.emit(o,"event",[this]),o.commit(this.event())),this},o.Event.prototype.x=function(){return this.event().x},o.Event.prototype.y=function(){return this.event().y},o.Event.prototype.which=function(){return this.event().which}},function(t,e,n){function r(t){return t?t.toArray?t.toArray():t:[]}var o=n(0)
+for(var s,a=!1,h=0,c=r(n),p=c.length;h<p;h++)if("bubble"!=(s=c[h])){var d=u[s]
+if(!d){if(i[s]&&(s=i[s]),!/^\d+$/.test(s)){console.warn(s+" is not a valid event-modifier")
+continue}s=parseInt(s),d=u.keycode}if(1==d.call(this,this.event(),t,s))return}else a=!0
+var f,l=t,y=[this,this.data()]
+if(e instanceof Array&&(y=e.slice(1),e=e[0]),"string"==typeof e||e instanceof String)for(var m=t;m;){if(m[e]){l=m,e=m[e]
+break}m=m.parent()}return e instanceof Function&&(f=e.apply(l,y)),a||this.stopPropagation(),this._responder||(this._responder=t),f&&!this._silenced&&f.then instanceof Function&&f.then(o.commit),f},o.Event.prototype.process=function(){for(var t,e,n=this.name(),o="on"+(this._prefix||"")+n,i=this.event()._target||this.event().target,s=i._responder||i;s;){this._redirect=null
+var u=s._dom?s:s._tag
+if(u){if(u._on_&&(e=u._on_[n])){for(var a,h=0,c=r(e),p=c.length;h<p;h++)(a=c[h])&&this.bubble()&&this.processHandler(u,a[0],a[1]||[])
+if(!this.bubble())break}u[o]instanceof Function&&(this._responder||(this._responder=u),t=u[o](this,this.data())),u.onevent&&u.onevent(this)}if(!this.bubble()||!(s=this._redirect||(u?u.parent():s.parentNode)))break}return this.processed(),t&&t.then instanceof Function&&t.then(this.processed.bind(this)),this},o.Event.prototype.processed=function(){return!this._silenced&&this._responder&&(o.emit(o,"event",[this]),o.commit(this.event())),this},o.Event.prototype.x=function(){return this.event().x},o.Event.prototype.y=function(){return this.event().y},o.Event.prototype.which=function(){return this.event().which}},function(t,e,n){function r(t){return t?t.toArray?t.toArray():t:[]}var o=n(0)
 n(1),o.EventManager=function(t,e){var n=this
 e&&e.constructor===Object||(e={})
 var o=void 0!==e.events?e.events:[]

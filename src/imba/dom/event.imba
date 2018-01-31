@@ -249,6 +249,7 @@ class Imba.Event
 
 		var context = node
 		var params = [self,data]
+		var result
 		
 		if handler isa Array
 			params = handler.slice(1)
@@ -264,12 +265,9 @@ class Imba.Event
 					handler = el[handler]
 					break
 				el = el.parent
-			# if node.@owner_[handler]
-			# 	handler = node.@owner_[handler]
-			# 	context = node.@owner_
 			
 		if handler isa Function
-			handler.apply(context,params)
+			result = handler.apply(context,params)
 		
 		# the default behaviour is that if a handler actually
 		# processes the event - we stop propagation. That's usually
@@ -279,16 +277,17 @@ class Imba.Event
 		
 		@responder ||= node
 		
-		self
+		# if result is a promise and we're not silenced, schedule Imba.commit
+		if result and !@silenced and result:then isa Function
+			result.then(Imba:commit)
+
+		return result
 
 	def process
 		var name = self.name
 		var meth = "on{@prefix or ''}{name}"
 		var args = null
 		var domtarget = event:_target or event:target		
-		# var node = <{domtarget:_responder or domtarget}>
-		# need to clean up and document this behaviour
-
 		var domnode = domtarget:_responder or domtarget
 		# @todo need to stop infinite redirect-rules here
 		var result
@@ -301,18 +300,20 @@ class Imba.Event
 				if node:_on_ and handlers = node:_on_[name]
 					for handler in handlers
 						if handler and bubble
-							let handled = processHandler(node,handler[0],handler[1] or [])
+							processHandler(node,handler[0],handler[1] or [])
+					break unless bubble
 
-				# FIXME No longer used? 
-				if node[meth] isa String
-					# should remember the receiver of the event
-					meth = node[meth]
-					continue # should not continue?
-
-				if node[meth] isa Array
-					args = node[meth].concat(node)
-					meth = args.shift
-					continue # should not continue?
+				# No longer used
+				# if node[meth] isa String
+				# 	# should remember the receiver of the event
+				# 	meth = node[meth]
+				# 	continue # should not continue?
+				
+				# No longer used
+				# if node[meth] isa Array
+				# 	args = node[meth].concat(node)
+				# 	meth = args.shift
+				# 	continue # should not continue?
 
 				if node[meth] isa Function
 					@responder ||= node
@@ -334,7 +335,6 @@ class Imba.Event
 		# about this after promise has finished processing
 		if result and result:then isa Function
 			result.then(self:processed.bind(self))
-
 		return self
 
 

@@ -3916,6 +3916,7 @@ Imba.Event.prototype.processHandler = function (node,handler,mods){
 	
 	var context = node;
 	var params = [this,this.data()];
+	var result;
 	
 	if (handler instanceof Array) {
 		params = handler.slice(1);
@@ -3934,13 +3935,10 @@ Imba.Event.prototype.processHandler = function (node,handler,mods){
 			};
 			el = el.parent();
 		};
-		// if node.@owner_[handler]
-		// 	handler = node.@owner_[handler]
-		// 	context = node.@owner_
 	};
 	
 	if (handler instanceof Function) {
-		handler.apply(context,params);
+		result = handler.apply(context,params);
 	};
 	
 	// the default behaviour is that if a handler actually
@@ -3952,7 +3950,12 @@ Imba.Event.prototype.processHandler = function (node,handler,mods){
 	
 	this._responder || (this._responder = node);
 	
-	return this;
+	// if result is a promise and we're not silenced, schedule Imba.commit
+	if (result && !this._silenced && (result.then instanceof Function)) {
+		result.then(Imba.commit);
+	};
+	
+	return result;
 };
 
 Imba.Event.prototype.process = function (){
@@ -3960,9 +3963,6 @@ Imba.Event.prototype.process = function (){
 	var meth = ("on" + (this._prefix || '') + name);
 	var args = null;
 	var domtarget = this.event()._target || this.event().target;
-	// var node = <{domtarget:_responder or domtarget}>
-	// need to clean up and document this behaviour
-	
 	var domnode = domtarget._responder || domtarget;
 	// @todo need to stop infinite redirect-rules here
 	var result;
@@ -3976,23 +3976,23 @@ Imba.Event.prototype.process = function (){
 				for (let i = 0, items = iter$(handlers), len = items.length, handler; i < len; i++) {
 					handler = items[i];
 					if (handler && this.bubble()) {
-						let handled = this.processHandler(node,handler[0],handler[1] || []);
+						this.processHandler(node,handler[0],handler[1] || []);
 					};
 				};
+				if (!(this.bubble())) { break; };
 			};
 			
-			// FIXME No longer used? 
-			if ((typeof node[meth]=='string'||node[meth] instanceof String)) {
-				// should remember the receiver of the event
-				meth = node[meth];
-				continue; // should not continue?
-			};
+			// No longer used
+			// if node[meth] isa String
+			// 	# should remember the receiver of the event
+			// 	meth = node[meth]
+			// 	continue # should not continue?
 			
-			if (node[meth] instanceof Array) {
-				args = node[meth].concat(node);
-				meth = args.shift();
-				continue; // should not continue?
-			};
+			// No longer used
+			// if node[meth] isa Array
+			// 	args = node[meth].concat(node)
+			// 	meth = args.shift
+			// 	continue # should not continue?
 			
 			if (node[meth] instanceof Function) {
 				this._responder || (this._responder = node);
@@ -4020,7 +4020,6 @@ Imba.Event.prototype.process = function (){
 	if (result && (result.then instanceof Function)) {
 		result.then(this.processed.bind(this));
 	};
-	
 	return this;
 };
 
