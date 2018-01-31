@@ -4053,6 +4053,9 @@ export class Assign < Op
 
 	def c o
 		unless right.isExpressable
+			if left isa VarReference and left.type == 'let'
+				return Block.new([left,BR,right.consume(self)]).c(o)
+				
 			return right.consume(self).c(o)
 		# testing this
 		return super(o)

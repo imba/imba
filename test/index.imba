@@ -26,6 +26,7 @@ require './syntax/conditionals'
 require './syntax/await'
 require './syntax/formatting'
 require './syntax/issues'
+require './syntax/quirks'
 
 require './tags/define'
 require './tags/caching'

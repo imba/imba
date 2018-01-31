@@ -524,15 +524,16 @@ __webpack_require__(38);
 __webpack_require__(39);
 __webpack_require__(40);
 __webpack_require__(41);
-
 __webpack_require__(42);
+
 __webpack_require__(43);
+__webpack_require__(44);
 
 if (true) {
-	__webpack_require__(44);
-	__webpack_require__(46);
+	__webpack_require__(45);
 	__webpack_require__(47);
 	__webpack_require__(48);
+	__webpack_require__(49);
 };
 
 if (false) {};
@@ -7453,12 +7454,13 @@ A.prototype.letVar = function (){
 			let b = 5;
 		};
 		
+		let e;
 		let res1 = [];
 		for (let i = 0, len_ = ary.length; i < len_; i++) {
 			eq(a,4);
 			res1.push(i);
 		};
-		let e = res1;
+		e = res1;
 		
 		eq(a,4);
 		eq(i,0);
@@ -8607,6 +8609,64 @@ describe('Issues',function() {
 
 /***/ }),
 /* 42 */
+/***/ (function(module, exports) {
+
+// externs;
+
+// a place to test weird bugs
+describe("Syntax - Quirks",function() {
+	
+	test("let item = try",function() {
+		var item = 20;
+		item;
+		try {
+			item = 1000;
+		} catch (e) { };
+		return eq(item,1000);
+	});
+	
+	test("let item = try catch",function() {
+		
+		let item;
+		try {
+			Math.rendom(); // error
+			item = 1000;
+		} catch (e) {
+			item = 2000;
+		};
+		
+		return eq(item,2000);
+	});
+	
+	test("let if",function() {
+		let item;
+		if (Math.random()) {
+			for (let i = 0, items = [1,2,3], len = items.length, item; i < len; i++) {
+				item = items[i];
+				item * item * item;
+			};
+			item = 1000;
+		} else {
+			item = 1000;
+		};
+		
+		return eq(item,1000);
+	});
+	
+	return test("let item = forin",function() {
+		let item;
+		let res = [];
+		for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
+			res.push(items[i] * 2);
+		};
+		item = res;
+		return eq(item,[2,4,6]);
+	});
+});
+
+
+/***/ }),
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -9022,7 +9082,7 @@ describe('Tags - Define',function() {
 
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -9137,7 +9197,7 @@ describe('Tags - Cache',function() {
 
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -9147,7 +9207,7 @@ var self = this, Imba = __webpack_require__(0), _T = Imba.TAGS;
 
 // externs;
 
-var _ = __webpack_require__(45);
+var _ = __webpack_require__(46);
 
 _T.defineTag('el', function(tag){
 	
@@ -9656,7 +9716,7 @@ describe("Tags",function() {
 
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -11211,7 +11271,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0), self = this, _T = Imba.TAGS;
@@ -11244,7 +11304,7 @@ describe("Tags - SVG",function() {
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var self = this, Imba = __webpack_require__(0), _T = Imba.TAGS;
@@ -11279,7 +11339,7 @@ describe("HTML",function() {
 
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
