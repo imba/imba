@@ -6074,10 +6074,12 @@ export class Tag < Node
 			tree.resolve
 
 		var dynamicFlagIndex = isSelf ? 1 : 0
+		let handlerIndex = 0
 
 		for part in @parts
 			var pjs
 			var pcache = no
+			
 
 			if part isa TagAttr
 				var akey = String(part.key)
@@ -6098,7 +6100,7 @@ export class Tag < Node
 						# add = ',{' + modifiers.map(|mod| "{mod}:1" ).join(',') + '}'
 						add = ',[' + modifiers.map(|mod| "'{mod}'" ).join(',') + ']'
 						
-					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c}{add})"
+					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c},{handlerIndex++}{add})"
 
 				elif akey.substr(0,5) == 'data-'
 					pjs = ".dataset('{akey.slice(5)}',{aval.c})"

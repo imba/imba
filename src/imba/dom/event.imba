@@ -33,15 +33,6 @@ Imba.CHARMAP = {
 	".": 'dot'
 }
 
-const MOUSE_EVENTS = {
-	mousedown: 1
-	mouseup: 1
-	mousemove: 1
-	click: 1
-	dblclick: 1
-	tap: 1
-}
-
 var keyCodes = {
 	esc: 27,
 	tab: 9,
@@ -60,7 +51,7 @@ export var Modifiers =
 	halt:    do this.stopPropagation and false
 	prevent: do this.preventDefault and false
 	silence: do this.silence and false
-
+	bubble: do false
 	self:   do $1:target != $2.@dom
 	left:    do $1:button != undefined ? ($1:button !== 0) : checkKeycode($1,$2,keyCodes:left)
 	right:   do $1:button != undefined ? ($1:button !== 2) : checkKeycode($1,$2,keyCodes:right)
@@ -234,8 +225,13 @@ class Imba.Event
 		
 	def processHandler node, handler, mods = []
 		
+		let autoBubble = no
 		# go through modifiers
 		for mod in mods
+			if mod == 'bubble'
+				autoBubble = yes
+				continue
+
 			let guard = Modifiers[mod]
 			unless guard
 				if keyCodes[mod]
@@ -246,7 +242,8 @@ class Imba.Event
 				else
 					console.warn "{mod} is not a valid event-modifier"
 					continue
-
+			
+			# skipping this handler?
 			if guard.call(self,event,node,mod) == true
 				return
 
@@ -265,11 +262,14 @@ class Imba.Event
 		if handler isa Function
 			handler.call(context,params)
 		
+		# the default behaviour is that if a handler actually
+		# processes the event - we stop propagation. That's usually
+		# what you would want
+		if !autoBubble
+			stopPropagation
+		
 		@responder ||= node
-			
-		if mods:silent
-			silence
-
+		
 		self
 
 	def process
@@ -283,14 +283,17 @@ class Imba.Event
 		var domnode = domtarget:_responder or domtarget
 		# @todo need to stop infinite redirect-rules here
 		var result
-		var handler
+		var handlers
 
 		while domnode
 			@redirect = null
 			let node = domnode.@dom ? domnode : domnode.@tag
 			if node
-				if node:_on_ and handler = node:_on_[name]
-					processHandler(node,handler[0] or handler, handler[1] or [])
+				if node:_on_ and handlers = node:_on_[name]
+					for handler in handlers when handler
+						# should they all be handled?
+						if bubble
+							let handled = processHandler(node,handler[0],handler[1] or [])
 
 				# FIXME No longer used? 
 				if node[meth] isa String

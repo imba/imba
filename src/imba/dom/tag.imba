@@ -228,14 +228,13 @@ class Imba.Tag
 	where this refers to the context in which the tag is created.
 	@return {self}
 	###
-	def setHandler event, handler, ctx, mods
-		var key = 'on' + event
-		
+	def setHandler event, handler, ctx, slot, mods
 		var on = self:_on_ ||= {}
-		
-		on[event] = [handler, mods]
+		on[event] ||= []
+		on[event][slot] = [handler, mods]
 		return self
 
+		var key = 'on' + event
 		if handler isa Function
 			self[key] = handler
 		elif handler isa Array
