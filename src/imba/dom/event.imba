@@ -42,15 +42,44 @@ const MOUSE_EVENTS = {
 	tap: 1
 }
 
-# return false to skip handler
+var keyCodes = {
+	esc: 27,
+	tab: 9,
+	enter: 13,
+	space: 32,
+	up: 38,
+	left: 37,
+	right: 39,
+	down: 40
+}
+
+var checkKeycode = do $1:keyCode ? ($1:keyCode !== $3) : false
+
+# return true to skip handler
 export var Modifiers =
-	"self":  do |node| this.event:target == node.@dom
-	left:    do this:button === 0
-	right:   do this:button === 2
-	middle:  do this:button === 1
-	halt:    do this.stopPropagation
-	prevent: do this.preventDefault
-	silence: do this.silence
+	halt:    do this.stopPropagation and false
+	prevent: do this.preventDefault and false
+	silence: do this.silence and false
+
+	self:   do $1:target != $2.@dom
+	left:    do $1:button != undefined ? ($1:button !== 0) : checkKeycode($1,$2,keyCodes:left)
+	right:   do $1:button != undefined ? ($1:button !== 2) : checkKeycode($1,$2,keyCodes:right)
+	middle:  do $1:button != undefined ? ($1:button !== 1) : false
+	ctrl:    do $1:ctrlKey != true
+	shift:   do $1:shiftKey != true
+	alt:     do $1:altKey != true
+	meta:    do $1:metaKey != true
+	keycode: do $1:keyCode ? ($1:keyCode !== $3) : false
+	
+# 	.enter
+# .tab
+# .delete (captures both “Delete” and “Backspace” keys)
+# .esc
+# .space
+# .up
+# .down
+# .left
+# .right
 
 ###
 Imba handles all events in the dom through a single manager,
@@ -207,22 +236,19 @@ class Imba.Event
 		
 		# go through modifiers
 		for mod in mods
-			if Modifiers[mod].call(self,node) == false
-				return
+			let guard = Modifiers[mod]
+			unless guard
+				if keyCodes[mod]
+					mod = keyCodes[mod]
+				if /^\d+$/.test(mod)
+					mod = parseInt(mod)
+					guard = Modifiers:keycode
+				else
+					console.warn "{mod} is not a valid event-modifier"
+					continue
 
-		# return if mods:self and event:target != node.@dom
-		
-		# if MOUSE_EVENTS[type]
-		# 	console.log "mouseevent",mods:right,event:button
-		# 	return if mods:left and event:button != 0
-		# 	return if mods:right and event:button != 2
-		# 	return if mods:middle and event:button != 1
-			
-		# if mods:halt
-		# 	stopPropagation
-			
-		# if mods:prevent
-		# 	preventDefault
+			if guard.call(self,event,node,mod) == true
+				return
 
 		var context = node
 		var params = [self,data]
