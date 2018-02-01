@@ -37,7 +37,7 @@ module.exports = function(content) {
 		var js = result.toString();
 		this.callback(null, js, result.sourcemap);
 	} catch(e) {
-		this.emitError(e.prettyMessage());
+		this.emitError(e.prettyMessage ? e.prettyMessage() : e.message);
 		// this.callback(null,"");
 	}
 }

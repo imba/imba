@@ -1,4 +1,10 @@
-## 1.2.1 - beta
+## 1.3.0-beta.1
+* Remove deprecated selector-syntax
+* Remove deprecated Tag#object, Tag#width, Tag#height
+* Add support for event modifiers (e.g. `<div :keydown.enter.halt=...>`)
+* Performance improvements
+
+## 1.2.1
 * Allow reconciler to work with tag-like objects
 * Make Imba.commit notify schedulers
 * Make sure schedulers are correctly activated and deactivated
