@@ -254,7 +254,7 @@ extend tag element
 		if new === old
 			return self
 
-		if !old
+		if !old and typ != 3
 			empty
 			appendNested(self,new)
 
@@ -301,9 +301,17 @@ extend tag element
 
 	def content
 		@content or children.toArray
-
-	def text= text
-		if text != @children
-			@children = text
-			dom:textContent = text == null or text === false ? '' : text
+	
+	def setText text
+		if text != @text
+			let val = text == null or text === false ? '' : text
+			if $web$
+				if @_:text
+					@_:text:textContent = val
+				else
+					dom:textContent = val
+					@_:text = dom:firstChild
+			else
+				dom:textContent = val
+			@text = @children = text
 		self

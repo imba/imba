@@ -4,6 +4,17 @@ var a = 0
 var b = 0
 var c = 0
 
+tag Tester
+	def toString
+		let html = dom:outerHTML
+		html = html.replace(/\<[^\>]+\>/g) do |m|
+			m[1] == '/' ? ']' : '['
+
+	def test options
+		@o = options
+		render(options)
+		toString
+		
 tag cachetest
 
 	tag panel
@@ -57,8 +68,6 @@ tag cachetest
 		render(options)
 		toString
 
-			
-
 describe 'Tags - Cache' do
 	var node = <cachetest>
 	test "basic" do
@@ -78,5 +87,21 @@ describe 'Tags - Cache' do
 		has('setText') do <div> "title {dyn}"
 		has('setText') do <div> "title" + dyn
 		
+	test "alternate text and dom" do
+		return if $node$
+		var items = ["A",<div> "B"]
+		var flip = do
+			items.reverse
+			return items[0]
 		
-		# let node = <>
+		var el = <Tester -> <li> items[@o]
+		# items = ["A",<div> "B"]
+		eq el.test(0), '[[A]]'
+		eq el.test(1), '[[[B]]]'
+		eq el.test(0), '[[A]]'
+		
+		
+		
+		
+		
+		

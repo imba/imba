@@ -350,8 +350,11 @@ class Imba.Tag
 	@return {self}
 	###
 	def setChildren nodes, type
-		@empty ? append(nodes) : empty.append(nodes)
-		@children = null
+		if $node$
+			@children = nodes
+		else
+			@empty ? append(nodes) : empty.append(nodes)
+			@children = null # ?
 		self
 
 	###
@@ -541,10 +544,11 @@ class Imba.Tag
 	###
 	def empty
 		if @dom:firstChild
+			@_:text = null
 			@dom.removeChild(@dom:firstChild) while @dom:firstChild
 			Imba.TagManager.remove(null,self)
-
-		@children = null
+			
+		@children = @text = null
 		@empty = yes
 		self
 

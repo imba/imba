@@ -51,6 +51,18 @@ apps:arrays = <div.app -> <ul>
 		<li :tap.prevent=[actions:tap,item]>
 			<span> "" + COUNTER
 			<span.title> item:title
+			
+apps:textA = <div.app -> <ul>
+	for item,i in store:items
+		<li> "a" + COUNTER
+			
+apps:textB = <div.app -> <ul>
+	for item,i in store:items
+		<li> "b" + COUNTER
+
+apps:textC = <div.app -> <ul>
+	for item,i in store:items
+		<li> "c" + COUNTER
 
 var logs = []
 

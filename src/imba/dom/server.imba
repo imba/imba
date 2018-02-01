@@ -118,11 +118,10 @@ global class ImbaServerElement
 		# slowing things down -- be careful
 		# should only need to copy from the outer element
 		# when we optimize - do it some other way
-
 		# should somehow be linked to their owner, no?
 		self:nodeName  = type
 		self:classList = ImbaNodeClassList.new(self)
-		self:children  = []
+		@children = []
 			
 		self
 
@@ -137,14 +136,23 @@ global class ImbaServerElement
 	def appendChild child
 		# again, could be optimized much more
 		if typeof child === 'string'
-			self:children.push(escapeTextContent(child,self:nodeName))
+			@children.push(escapeTextContent(child,self:nodeName))
 		else
-			self:children.push(child)
+			@children.push(child)
 
 		return child
+	
+	def appendNested child
+		if child isa Array
+			for member in child
+				appendNested(member)
+
+		elif child != null and child != undefined
+			appendChild(child.@dom or child)
+		return
 
 	def insertBefore node, before
-		var idx = self:children.indexOf(before)
+		var idx = @children.indexOf(before)
 		arr.splice(idx, 0, node)
 		self
 
@@ -175,14 +183,23 @@ global class ImbaServerElement
 	# noop
 	def removeEventListener
 		self
+		
+	def resolve
+		if @resolvedChildren != @tag.@children
+			var content = @tag.@children
+			@resolvedChildren = content
+			@children = []
+			appendNested(content)
+		self
 
 	def __innerHTML
-		return self:innerHTML || (self:textContent and escapeTextContent(self:textContent,self:nodeName)) || (self:children and self:children.join("")) or ''
+		resolve
+		return self:innerHTML || (self:textContent and escapeTextContent(self:textContent,self:nodeName)) || (@children and @children.join("")) or ''
 	
 	def __outerHTML
 		var typ = self:nodeName
 		var sel = "{typ}"
-
+		
 		sel += " id=\"{escapeAttributeValue(v)}\"" if var v = self:id
 		sel += " class=\"{escapeAttributeValue(v)}\"" if var v = self:classList.toString
 		sel += " {@attributes.join(" ")}" if var v = @attributes
@@ -214,15 +231,14 @@ global class ImbaServerElement
 
 	getter 'outerHTML' do
 		this.__outerHTML
+		
+	getter 'children' do
+		this.resolve
+		this.@children
 
-	getter 'firstChild' do
-		this:children and this:children[0]
-
-	getter 'firstElementChild' do
-		this:children and this:children[0]
-
-	getter 'lastElementChild' do
-		this:children and this:children[this:children:length - 1]
+	getter 'firstChild' do this:children[0]
+	getter 'firstElementChild' do this:children[0]
+	getter 'lastElementChild' do this:children[this:children:length - 1]
 		
 	getter 'style' do
 		this:_style ||= CSSStyleDeclaration.new(this)
