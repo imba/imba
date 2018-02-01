@@ -1,4 +1,4 @@
-## 1.2.1 - beta
+## 1.2.1
 * Allow reconciler to work with tag-like objects
 * Make Imba.commit notify schedulers
 * Make sure schedulers are correctly activated and deactivated
