@@ -825,6 +825,26 @@ Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blo
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ")
 Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
 
+Imba.HTML_ATTRS =
+	a: "href target hreflang media download rel type"
+	form: "method action enctype autocomplete target"
+	button: "autofocus"
+	input: "accept disabled form list max maxlength min pattern required size step type"
+	label: "accesskey for form"
+	img: "src srcset"
+	link: "rel type href media"
+	iframe: "referrerpolicy src srcdoc sandbox"
+	meta: "property content charset desc"
+	optgroup: "label"
+	option: "label"
+	output: "for form"
+	object: "type data width height"
+	param: "name value"
+	progress: "max"
+	script: "src type async defer crossorigin integrity nonce language"
+	select: "size form multiple"
+	textarea: "rows cols"
+
 def extender obj, sup
 	for own k,v of sup
 		obj[k] ?= v
@@ -890,8 +910,6 @@ class Imba.Tags
 			tagtype.@flagName = "_" + name.replace(/_/g, '-')
 			self[name] = tagtype
 			self[norm.toUpperCase] = TagSpawner(tagtype)
-			# '$'+
-
 
 		extender(tagtype,supertype)
 
@@ -920,13 +938,27 @@ class Imba.Tags
 	def optimizeTag tagtype
 		tagtype:prototype?.optimizeTagStructure
 		self
+		
+	def findTagType type
+		let klass = self[type]
+		unless klass
+			if Imba.HTML_TAGS.indexOf(type) >= 0
+				klass = defineTag(type,'element')
+				let attrs = Imba.HTML_ATTRS[type]
+				console.log "autocreate html tag type",type,attrs
+				if attrs
+					for attribute in attrs.split(" ")
+						Imba.attr(klass,attribute)
+				
+		return klass
+		
+	def $ typ, owner
+		findTagType(typ).build(owner)
 
 
 Imba.SINGLETONS = {}
 Imba.TAGS = Imba.Tags.new
 Imba.TAGS[:element] = Imba.TAGS[:htmlelement] = Imba.Tag
-
-
 var html = Imba.TAGS.defineNamespace('html')
 var svg = Imba.TAGS.defineNamespace('svg')
 Imba.TAGS = html # make the html namespace the root

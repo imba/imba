@@ -6075,7 +6075,10 @@ export class Tag < Node
 		elif type.isClass
 			"{mark__(o:open)}{type.name}.build({c_zone})"
 		else
-			"{mark__(o:open)}{scope.tagContextPath}.{type.spawner}({c_zone})"
+			let start = "{mark__(o:open)}{scope.tagContextPath}"
+			start += "._{type.@ns.toUpperCase}" if type.@ns
+			start += ".$('{type.@name}',{c_zone})"
+			start
 
 		if o:id
 			statics.push(".setId({quote(o:id)})")
