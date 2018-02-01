@@ -69,3 +69,14 @@ describe 'Tags - Cache' do
 
 	test "with list" do
 		eq node.test(letters: ['A','B','C']), "[[A][B][C]]"
+		
+	test "setText" do
+		let has = do |text,fn|
+			ok String(fn).indexOf(text) >= 0
+		let dyn = 10
+		has('setText') do <div> "title"
+		has('setText') do <div> "title {dyn}"
+		
+		
+		
+		# let node = <>

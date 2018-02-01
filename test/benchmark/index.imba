@@ -10,32 +10,47 @@ for i in [0..20]
 
 const actions = {
 	add: do store:items.push({title: "Another item"})
+	tap: do
+		console.log "tap",$0
+
 	reverse: do store:items.reverse
-	rename: do |item| item:name = "Something"
+	rename: do |item|
+		item:name = "Something"
 }
 
 var apps = {}
+var COUNTER = 0
 
 apps:no-events = <div.app -> <ul>
 	for item,i in store:items
-		<li .{"item{i}"}> <span.title> item:title
+		<li>
+			<span> "" + COUNTER
+			<span.title> item:title
 
 # will be cached?
 apps:strings = <div.app -> <ul>
 	for item,i in store:items
-		<li .{"item{i}"} :tap.prevent='addSomething'> <span.title> item:title
+		<li :tap.prevent='addSomething'>
+			<span> "" + COUNTER
+			<span.title> item:title
 
 apps:functions = <div.app -> <ul>
 	for item,i in store:items
-		<li .{"item{i}"} :tap.prevent=actions:rename> <span.title> item:title
+		<li :tap.prevent=actions:tap>
+			<span> "" + COUNTER
+			<span.title> item:title
 		
 apps:functions-no-mod = <div.app -> <ul>
 	for item,i in store:items
-		<li .{"item{i}"} :tap=actions:rename> <span.title> item:title
+		<li :tap=actions:tap>
+			<span> "" + COUNTER
+			<span.title> item:title
 			
 apps:arrays = <div.app -> <ul>
 	for item,i in store:items
-		<li .{"item{i}"} :tap.prevent=[actions:rename,item]> <span.title> item:title
+		<li :tap.prevent=[actions:tap,item]>
+			<span> "" + COUNTER
+			<span.title> item:title
 
 var logs = []
 
@@ -48,6 +63,7 @@ var run = do |app,name|
 	console.time(name)
 	let t0 = window:performance.now
 	var i = 0
+	COUNTER = 0
 	while i < times
 		app.render
 		i++

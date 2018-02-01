@@ -2974,18 +2974,17 @@ export class InterpolatedString < Node
 		for node in @nodes
 			node.traverse
 		self
+		
+	def isString
+		yes
 
 	def escapeString str
-		# var idx = 0
-		# var len = str:length
-		# var chr
-		# while chr = str[idx++]
 		str = str.replace(/\n/g, '\\\n')
 
 	def js o
 		# creating the string
 		var parts = []
-		var str = '('
+		var str = @noparen ? '' : '('
 
 		@nodes.map do |part,i|
 			if part isa Token and part.@type == 'NEOSTRING'
@@ -2999,7 +2998,7 @@ export class InterpolatedString < Node
 				parts.push(part.c(expression: yes))
 
 		str += parts.join(" + ")
-		str += ')'
+		str += ')' unless @noparen
 		return str
 
 
@@ -6060,6 +6059,7 @@ export class Tag < Node
 
 		elif o:body
 			if o:body isa ArgList and o:body.count == 1 and o:body.first.isString
+				o:body.first.@noparen = yes
 				bodySetter = "setText"
 
 			else
@@ -6075,6 +6075,7 @@ export class Tag < Node
 
 		var dynamicFlagIndex = isSelf ? 1 : 0
 		let handlerIndices = {}
+		let onIndex = isSelf ? -1 : 0
 
 		for part in @parts
 			var pjs
@@ -6100,7 +6101,8 @@ export class Tag < Node
 					let slot = handlerIndices[ename] ||= (isSelf ? 1 : 0)
 					# if modifiers
 					#	add = ',[' + modifiers.map(|mod| "'{mod}'" ).join(',') + ']'
-					pjs = ".on({quote(akey.substr(1))},{aval.c},{slot})"
+					pjs = ".on({quote(akey.substr(1))},{aval.c},{onIndex})"
+					isSelf ? (onIndex--) : (onIndex++)
 					handlerIndices[ename] += 2
 					# old version
 					# pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c},{handlerIndex++}{add})"

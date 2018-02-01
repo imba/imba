@@ -430,11 +430,18 @@ for (let i = 0; i <= 20; i++) {
 
 const actions = {
 	add: function() { return store.items.push({title: "Another item"}); },
+	tap: function() {
+		return console.log("tap",arguments);
+	},
+	
 	reverse: function() { return store.items.reverse(); },
-	rename: function(item) { return item.name = "Something"; }
+	rename: function(item) {
+		return item.name = "Something";
+	}
 };
 
 var apps = {};
+var COUNTER = 0;
 
 apps.noEvents = _T.DIV(this).flag('app').setTemplate(function() {
 	var self = this, __ = this.__;
@@ -443,7 +450,10 @@ apps.noEvents = _T.DIV(this).flag('app').setTemplate(function() {
 			var t0, _$ = (__.$AA = __.$AA || []);
 			let res = [];
 			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setFlag(0,("item" + i)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end());
+				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setContent([
+					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setContent("" + COUNTER,3).end(),
+					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end()
+				],2).end());
 			};
 			return res;
 		})()
@@ -458,7 +468,10 @@ apps.strings = _T.DIV(this).flag('app').setTemplate(function() {
 			var t0, _$ = (__.$AA = __.$AA || []);
 			let res = [];
 			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self).on('tap.prevent','addSomething',0)).setFlag(0,("item" + i)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end());
+				res.push((t0 = _$[i] = _$[i] || _T.LI(self).on('tap.prevent','addSomething',0)).setContent([
+					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setContent("" + COUNTER,3).end(),
+					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end()
+				],2).end());
 			};
 			return res;
 		})()
@@ -472,7 +485,10 @@ apps.functions = _T.DIV(this).flag('app').setTemplate(function() {
 			var t0, _$ = (__.$AA = __.$AA || []);
 			let res = [];
 			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setFlag(0,("item" + i)).on('tap.prevent',actions.rename,0).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end());
+				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).on('tap.prevent',actions.tap,0).setContent([
+					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setText("" + COUNTER).end(),
+					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end()
+				],2).end());
 			};
 			return res;
 		})()
@@ -486,7 +502,10 @@ apps.functionsNoMod = _T.DIV(this).flag('app').setTemplate(function() {
 			var t0, _$ = (__.$AA = __.$AA || []);
 			let res = [];
 			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setFlag(0,("item" + i)).on('tap',actions.rename,0).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end());
+				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).on('tap',actions.tap,0).setContent([
+					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setContent("" + COUNTER,3).end(),
+					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end()
+				],2).end());
 			};
 			return res;
 		})()
@@ -501,7 +520,10 @@ apps.arrays = _T.DIV(this).flag('app').setTemplate(function() {
 			let res = [];
 			for (let i = 0, items = iter$(store.items), len = items.length, item; i < len; i++) {
 				item = items[i];
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setFlag(0,("item" + i)).on('tap.prevent',[actions.rename,item],0).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(item.title,3).end(),2).end());
+				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).on('tap.prevent',[actions.tap,item],0).setContent([
+					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setContent("" + COUNTER,3).end(),
+					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(item.title,3).end()
+				],2).end());
 			};
 			return res;
 		})()
@@ -519,6 +541,7 @@ var run = function(app,name) {
 	console.time(name);
 	let t0 = window.performance.now();
 	var i = 0;
+	COUNTER = 0;
 	while (i < times){
 		app.render();
 		i++;
@@ -1460,13 +1483,29 @@ Imba.Tag.prototype.setHandler = function (event,handler,ctx){
 };
 
 Imba.Tag.prototype.on = function (event,handler,slot){
+	let handlers = this._on_ || (this._on_ = []);
+	
+	if (slot != undefined) {
+		let prev = handlers[slot];
+		if (prev) {
+			prev[1] = handler;
+		} else {
+			handlers[slot] = [event,handler];
+			if (slot < 0) { handlers.push(handlers[slot]) };
+			handlers._dirty = true;
+		};
+	} else {
+		handlers.push([event,handler]);
+	};
+	
+	return this;
+	
 	let type = event;
 	let modIndex = event.indexOf('.');
 	if (modIndex > 0) {
-		type = event.substr(0,modIndex);
+		type = event.slice(0,modIndex);
 	};
 	
-	let handlers = this._on_ || (this._on_ = {});
 	let slots = handlers[type] || (handlers[type] = []);
 	
 	if (slot != undefined) {
@@ -4022,11 +4061,13 @@ Imba.Event.prototype.process = function (){
 		this._redirect = null;
 		let node = domnode._dom ? domnode : domnode._tag;
 		if (node) {
-			if (node._on_ && (handlers = node._on_[name])) {
+			if (handlers = node._on_) {
 				for (let i = 0, items = iter$(handlers), len = items.length, handler; i < len; i++) {
 					handler = items[i];
-					if (handler && this.bubble()) {
-						this.processHandler(node,handler[0],handler[1] || []);
+					if (!handler) { continue; };
+					let hname = handler[0];
+					if (hname.indexOf(name) == 0 && this.bubble() && (hname.length == name.length || hname[name.length] == '.')) {
+						this.processHandler(node,hname,handler[1] || []);
 					};
 				};
 				if (!(this.bubble())) { break; };

@@ -304,10 +304,11 @@ class Imba.Event
 			@redirect = null
 			let node = domnode.@dom ? domnode : domnode.@tag
 			if node
-				if node:_on_ and handlers = node:_on_[name]
-					for handler in handlers
-						if handler and bubble
-							processHandler(node,handler[0],handler[1] or [])
+				if handlers = node:_on_
+					for handler in handlers when handler
+						let hname = handler[0]
+						if hname.indexOf(name) == 0 and bubble and (hname:length == name:length or hname[name:length] == '.')
+							processHandler(node,hname,handler[1] or [])
 					break unless bubble
 
 				# No longer used

@@ -241,12 +241,26 @@ class Imba.Tag
 		self
 		
 	def on event, handler, slot
+		let handlers = @on_ ||= []
+		
+		if slot != undefined
+			let prev = handlers[slot]
+			if prev
+				prev[1] = handler
+			else
+				handlers[slot] = [event,handler]
+				handlers.push(handlers[slot]) if slot < 0
+				handlers.@dirty = yes
+		else
+			handlers.push([event,handler])
+
+		return self
+
 		let type = event
 		let modIndex = event.indexOf('.')
 		if modIndex > 0
-			type = event.substr(0,modIndex)
-		
-		let handlers = @on_ ||= {}
+			type = event.slice(0,modIndex)
+
 		let slots = handlers[type] ||= []
 
 		if slot != undefined
