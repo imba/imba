@@ -223,29 +223,36 @@ class Imba.Event
 		combo.push(sym)
 		combo.join("_").toLowerCase
 		
-	def processHandler node, handler, mods = []
+	def processHandler node, name, handler # , mods = []
 		
 		let autoBubble = no
-		# go through modifiers
-		for mod in mods
-			if mod == 'bubble'
-				autoBubble = yes
-				continue
-
-			let guard = Modifiers[mod]
-			unless guard
-				if keyCodes[mod]
-					mod = keyCodes[mod]
-				if /^\d+$/.test(mod)
-					mod = parseInt(mod)
-					guard = Modifiers:keycode
-				else
-					console.warn "{mod} is not a valid event-modifier"
+		
+		# go through 
+		let modIndex = name.indexOf('.')
+		
+		if modIndex >= 0
+			# could be optimized
+			let mods = name.split(".").slice(1)
+			# go through modifiers
+			for mod in mods
+				if mod == 'bubble'
+					autoBubble = yes
 					continue
-			
-			# skipping this handler?
-			if guard.call(self,event,node,mod) == true
-				return
+
+				let guard = Modifiers[mod]
+				unless guard
+					if keyCodes[mod]
+						mod = keyCodes[mod]
+					if /^\d+$/.test(mod)
+						mod = parseInt(mod)
+						guard = Modifiers:keycode
+					else
+						console.warn "{mod} is not a valid event-modifier"
+						continue
+				
+				# skipping this handler?
+				if guard.call(self,event,node,mod) == true
+					return
 
 		var context = node
 		var params = [self,data]
@@ -265,7 +272,7 @@ class Imba.Event
 					handler = el[handler]
 					break
 				el = el.parent
-			
+
 		if handler isa Function
 			result = handler.apply(context,params)
 		

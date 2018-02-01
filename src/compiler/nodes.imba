@@ -6074,7 +6074,7 @@ export class Tag < Node
 			tree.resolve
 
 		var dynamicFlagIndex = isSelf ? 1 : 0
-		let handlerIndex = 0
+		let handlerIndices = {}
 
 		for part in @parts
 			var pjs
@@ -6085,22 +6085,25 @@ export class Tag < Node
 				var akey = String(part.key)
 				var aval = part.value
 				let modifiers = null
+				let modsIdx = akey.indexOf('.',1)
 				pcache = aval.isPrimitive
-				
-				if akey.indexOf('.',1) >= 0
-					modifiers = akey.slice(1).split('.').slice(1)
-					akey = akey.substr(0,akey.indexOf('.',1))
+				# if modsIdx >= 0
+				# 	modifiers = akey.slice(1).split('.').slice(1)
+				# 	akey = akey.substr(0,modsIdx)
 
 				if akey[0] == '.'
 					pcache = no
 					pjs = ".flag({quote(akey.substr(1))},{aval.c})"
 				elif akey[0] == ':'
 					let add = ""
-					if modifiers
-						# add = ',{' + modifiers.map(|mod| "{mod}:1" ).join(',') + '}'
-						add = ',[' + modifiers.map(|mod| "'{mod}'" ).join(',') + ']'
-						
-					pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c},{handlerIndex++}{add})"
+					let ename = modsIdx > 0 ? akey.slice(1, modsIdx) : akey.substr(1)
+					let slot = handlerIndices[ename] ||= (isSelf ? 1 : 0)
+					# if modifiers
+					#	add = ',[' + modifiers.map(|mod| "'{mod}'" ).join(',') + ']'
+					pjs = ".on({quote(akey.substr(1))},{aval.c},{slot})"
+					handlerIndices[ename] += 2
+					# old version
+					# pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c},{handlerIndex++}{add})"
 
 				elif akey.substr(0,5) == 'data-'
 					pjs = ".dataset('{akey.slice(5)}',{aval.c})"

@@ -228,13 +228,9 @@ class Imba.Tag
 	where this refers to the context in which the tag is created.
 	@return {self}
 	###
-	def setHandler event, handler, ctx, slot, mods
-		var on = self:_on_ ||= {}
-		on[event] ||= []
-		on[event][slot] = [handler, mods or []]
-		return self
-
+	def setHandler event, handler, ctx
 		var key = 'on' + event
+
 		if handler isa Function
 			self[key] = handler
 		elif handler isa Array
@@ -243,6 +239,24 @@ class Imba.Tag
 		else
 			self[key] = do |e| ctx[handler](e)
 		self
+		
+	def on event, handler, slot
+		let type = event
+		let modIndex = event.indexOf('.')
+		if modIndex > 0
+			type = event.substr(0,modIndex)
+		
+		let on = @on_ ||= {}
+		on[type] ||= []
+
+		if slot != undefined
+			let prev = on[type][slot]
+			# should check if the previous is slotted
+			on[type][slot] = [event,handler]
+		else
+			on[type].push([event,handler])
+
+		return self
 
 	def id= id
 		if id != null
