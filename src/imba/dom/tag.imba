@@ -168,7 +168,6 @@ class Imba.Tag
 		@owner = ctx
 		self
 
-
 	###
 	Set the data object for node
 	@return {self}
@@ -182,13 +181,6 @@ class Imba.Tag
 	def data
 		@data
 
-	def object= value
-		console.warn 'Tag#object= deprecated. Use Tag#data='
-		data = value
-
-	def object
-		data
-
 	###
 	Set inner html of node
 	###
@@ -201,25 +193,6 @@ class Imba.Tag
 	###
 	def html
 		@dom:innerHTML
-
-
-	###
-	@deprecated
-	Get width of node (offsetWidth)
-	@return {number}
-	###
-	def width
-		console.warn 'Tag#width deprecated. Use dom:offsetWidth'
-		@dom:offsetWidth
-
-	###
-	@deprecated
-	Get height of node (offsetHeight)
-	@return {number}
-	###
-	def height
-		console.warn 'Tag#height deprecated. Use dom:offsetHeight'
-		@dom:offsetHeight
 
 	###
 	Method that is called by the compiled tag-chains, for
@@ -253,23 +226,6 @@ class Imba.Tag
 				handlers.@dirty = yes
 		else
 			handlers.push([event,handler])
-
-		return self
-
-		let type = event
-		let modIndex = event.indexOf('.')
-		if modIndex > 0
-			type = event.slice(0,modIndex)
-
-		let slots = handlers[type] ||= []
-
-		if slot != undefined
-			let prev = slots[slot]
-			# should check if the previous is slotted
-			slots[slot] = [event,handler]
-		else
-			slots.push([event,handler])
-
 		return self
 
 	def id= id
@@ -286,7 +242,6 @@ class Imba.Tag
 	@return {self}
 	###
 	def setAttribute name, value
-		# should this not return self?
 		var old = dom.getAttribute(name)
 
 		if old == value
@@ -295,11 +250,10 @@ class Imba.Tag
 			dom.setAttribute(name,value)
 		else
 			dom.removeAttribute(name)
+		return self
 
 	def setNestedAttr ns, name, value
-		if ns == 'css'
-			css(name,value)
-		elif self[ns+'SetAttribute']
+		if self[ns+'SetAttribute']
 			self[ns+'SetAttribute'](name,value)
 		else
 			setAttributeNS(ns, name,value)
@@ -308,13 +262,11 @@ class Imba.Tag
 	def setAttributeNS ns, name, value
 		var old = getAttributeNS(ns,name)
 
-		if old == value
-			value
-		elif value != null && value !== false
-			dom.setAttributeNS(ns,name,value)
-		else
-			dom.removeAttributeNS(ns,name)
-
+		if old != value
+			if value != null && value !== false 
+				dom.setAttributeNS(ns,name,value)
+			else
+				dom.removeAttributeNS(ns,name)
 		return self
 
 
@@ -381,6 +333,7 @@ class Imba.Tag
 	###
 	def renderTemplate
 		var body = template
+		# is it dynamic?
 		setChildren(body) if body != self
 		self
 
