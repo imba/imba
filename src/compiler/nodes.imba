@@ -6163,8 +6163,9 @@ export class Tag < Node
 			o:treeRef = parent.tree.nextCacheKey(self)
 			if parent.option(:treeRef) and !parent.explicitKey and !parent.option(:loop) and !(parent.tree isa TagFragmentTree)
 				o:treeRef = parent.option(:treeRef) + o:treeRef
-
-		if var body = content and content.c(expression: yes)
+		
+		var body = content and content.c(expression: yes)
+		if body
 			let typ = 0
 
 			if tree
@@ -6180,7 +6181,8 @@ export class Tag < Node
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
 				calls.push ".{bodySetter}({body},{typ})"
 			elif bodySetter == 'setText'
-				statics.push ".{bodySetter}({body})"
+				let typ = content isa Str ? statics : calls
+				typ.push ".{bodySetter}({body})"
 			elif bodySetter == 'setTemplate'
 				if o:body.nonlocals
 					calls.push ".{bodySetter}({body})"

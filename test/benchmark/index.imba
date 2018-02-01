@@ -65,6 +65,7 @@ var run = do |app,name|
 	var i = 0
 	COUNTER = 0
 	while i < times
+		COUNTER++
 		app.render
 		i++
 	let t1 = window:performance.now
