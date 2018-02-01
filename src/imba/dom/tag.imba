@@ -246,15 +246,15 @@ class Imba.Tag
 		if modIndex > 0
 			type = event.substr(0,modIndex)
 		
-		let on = @on_ ||= {}
-		on[type] ||= []
+		let handlers = @on_ ||= {}
+		let slots = handlers[type] ||= []
 
 		if slot != undefined
-			let prev = on[type][slot]
+			let prev = slots[slot]
 			# should check if the previous is slotted
-			on[type][slot] = [event,handler]
+			slots[slot] = [event,handler]
 		else
-			on[type].push([event,handler])
+			slots.push([event,handler])
 
 		return self
 
