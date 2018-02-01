@@ -3340,6 +3340,9 @@ export class Op < Node
 			out = "{mark__(@opToken)}{op}{l}"
 		# out = out.parenthesize if up isa Op # really?
 		out
+		
+	def isString
+		@op == '+' and @left and @left.isString
 
 	def shouldParenthesize
 		@parens

@@ -76,7 +76,7 @@ describe 'Tags - Cache' do
 		let dyn = 10
 		has('setText') do <div> "title"
 		has('setText') do <div> "title {dyn}"
-		
+		has('setText') do <div> "title" + dyn
 		
 		
 		# let node = <>
