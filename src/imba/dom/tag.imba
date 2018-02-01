@@ -828,7 +828,7 @@ Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern pol
 Imba.HTML_ATTRS =
 	a: "href target hreflang media download rel type"
 	form: "method action enctype autocomplete target"
-	button: "autofocus"
+	button: "autofocus type"
 	input: "accept disabled form list max maxlength min pattern required size step type"
 	label: "accesskey for form"
 	img: "src srcset"
@@ -844,6 +844,20 @@ Imba.HTML_ATTRS =
 	script: "src type async defer crossorigin integrity nonce language"
 	select: "size form multiple"
 	textarea: "rows cols"
+
+
+Imba.HTML_PROPS =
+	input: "autofocus autocomplete autocorrect value placeholder required disabled multiple checked readOnly"
+	textarea: "autofocus autocomplete autocorrect value placeholder required disabled multiple checked readOnly"
+	form: "novalidate"
+	fieldset: "disabled"
+	button: "disabled"
+	select: "autofocus disabled required"
+	option: "disabled selected value"
+	optgroup: "disabled"
+	progress: "value"
+	fieldset: "disabled"
+	canvas: "width height"
 
 def extender obj, sup
 	for own k,v of sup
@@ -893,9 +907,8 @@ class Imba.Tags
 
 		supr ||= baseType(name)
 
-		let supertype = supr isa String ? self[supr] : supr
+		let supertype = supr isa String ? findTagType(supr) : supr
 		let tagtype = Tag()
-		let norm = name.replace(/\-/g,'_')
 
 		tagtype.@name = name
 		tagtype.@flagName = null
@@ -905,11 +918,9 @@ class Imba.Tags
 			Imba.SINGLETONS[name.slice(1)] = tagtype
 		elif name[0] == name[0].toUpperCase
 			tagtype.@flagName = name
-			true
 		else
 			tagtype.@flagName = "_" + name.replace(/_/g, '-')
 			self[name] = tagtype
-			self[norm.toUpperCase] = TagSpawner(tagtype)
 
 		extender(tagtype,supertype)
 
@@ -928,7 +939,8 @@ class Imba.Tags
 		defineTag(name,supr,body)
 
 	def extendTag name, supr = '', &body
-		var klass = (name isa String ? self[name] : name)
+		console.log "extend tag",name
+		var klass = (name isa String ? findTagType(name) : name)
 		# allow for private tags here as well?
 		body and body.call(klass,klass,klass:prototype) if body
 		klass.extended if klass:extended
@@ -944,11 +956,14 @@ class Imba.Tags
 		unless klass
 			if Imba.HTML_TAGS.indexOf(type) >= 0
 				klass = defineTag(type,'element')
-				let attrs = Imba.HTML_ATTRS[type]
-				console.log "autocreate html tag type",type,attrs
-				if attrs
-					for attribute in attrs.split(" ")
-						Imba.attr(klass,attribute)
+				console.log "autocreate html tag type",type
+				if let attrs = Imba.HTML_ATTRS[type]
+					for name in attrs.split(" ")
+						Imba.attr(klass,name)
+						
+				if let props = Imba.HTML_PROPS[type]
+					for name in props.split(" ")
+						Imba.attr(klass,name,dom: yes)
 				
 		return klass
 		

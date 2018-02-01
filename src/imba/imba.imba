@@ -120,19 +120,25 @@ def Imba.prop scope, name, opts
 		return scope.defineProperty(name,opts)
 	return
 
-def Imba.attr scope, name, opts
+def Imba.attr scope, name, opts = {}
 	if scope:defineAttribute
 		return scope.defineAttribute(name,opts)
 
 	let getName = Imba.toCamelCase(name)
 	let setName = Imba.toCamelCase('set-' + name)
+	let proto = scope:prototype
 
-	scope:prototype[getName] = do
-		return this.getAttribute(name)
-
-	scope:prototype[setName] = do |value|
-		this.setAttribute(name,value)
-		return this
+	if opts:dom
+		proto[getName] = do this.dom[name]
+		proto[setName] = do |value|
+			if value != this[name]()
+				this.dom[name] = value
+			return this
+	else
+		proto[getName] = do this.getAttribute(name)
+		proto[setName] = do |value|
+			this.setAttribute(name,value)
+			return this
 	return
 
 def Imba.propDidSet object, property, val, prev
