@@ -72,7 +72,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.2.1'};
+var Imba = {VERSION: '1.3.0-beta.1'};
 
 /*
 True if running in client environment.
@@ -416,7 +416,7 @@ Imba.Pointer.prototype.y = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(3), _T = Imba.TAGS;
+var Imba = __webpack_require__(3), _T = Imba.TAGS, self = this;
 const store = {
 	items: [
 		{title: "Create example"},
@@ -447,17 +447,12 @@ apps.noEvents = _T.DIV(this).flag('app').setTemplate(function() {
 	var self = this, __ = this.__;
 	return (__.$A = __.$A || _T.UL(this)).setContent(
 		(function() {
-			var t0, _$ = (__.$AA = __.$AA || []);
-			let res = [];
-			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).setContent([
-					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setContent("" + COUNTER,3).end(),
-					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end()
-				],2).end());
-			};
-			return res;
+			var t0, $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				(t0 = $[i] = $[i] || _T.LI(self)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end();
+			};return $;
 		})()
-	,3).end();
+	,4).end();
 }).end();
 
 // will be cached?
@@ -465,132 +460,261 @@ apps.strings = _T.DIV(this).flag('app').setTemplate(function() {
 	var self = this, __ = this.__;
 	return (__.$A = __.$A || _T.UL(this)).setContent(
 		(function() {
-			var t0, _$ = (__.$AA = __.$AA || []);
-			let res = [];
-			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self).on('tap.prevent','addSomething',0)).setContent([
-					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setContent("" + COUNTER,3).end(),
-					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end()
-				],2).end());
-			};
-			return res;
+			var t0, $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				(t0 = $[i] = $[i] || _T.LI(self).on('tap.prevent','addSomething',0)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end();
+			};return $;
 		})()
-	,3).end();
+	,4).end();
 }).end();
 
 apps.functions = _T.DIV(this).flag('app').setTemplate(function() {
 	var self = this, __ = this.__;
 	return (__.$A = __.$A || _T.UL(this)).setContent(
 		(function() {
-			var t0, _$ = (__.$AA = __.$AA || []);
-			let res = [];
-			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).on('tap.prevent',actions.tap,0).setContent([
-					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setText("" + COUNTER).end(),
-					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end()
-				],2).end());
-			};
-			return res;
+			var t0, $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				(t0 = $[i] = $[i] || _T.LI(self)).on('tap.prevent',actions.tap,0).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end();
+			};return $;
 		})()
-	,3).end();
+	,4).end();
 }).end();
 
 apps.functionsNoMod = _T.DIV(this).flag('app').setTemplate(function() {
 	var self = this, __ = this.__;
 	return (__.$A = __.$A || _T.UL(this)).setContent(
 		(function() {
-			var t0, _$ = (__.$AA = __.$AA || []);
-			let res = [];
-			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).on('tap',actions.tap,0).setContent([
-					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setContent("" + COUNTER,3).end(),
-					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end()
-				],2).end());
-			};
-			return res;
+			var t0, $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				(t0 = $[i] = $[i] || _T.LI(self)).on('tap',actions.tap,0).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end();
+			};return $;
 		})()
-	,3).end();
+	,4).end();
 }).end();
 
 apps.arrays = _T.DIV(this).flag('app').setTemplate(function() {
 	var self = this, __ = this.__;
 	return (__.$A = __.$A || _T.UL(this)).setContent(
 		(function() {
-			var t0, _$ = (__.$AA = __.$AA || []);
-			let res = [];
-			for (let i = 0, items = iter$(store.items), len = items.length, item; i < len; i++) {
+			var t0, $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length, item; i < len; i++) {
 				item = items[i];
-				res.push((t0 = _$[i] = _$[i] || _T.LI(self)).on('tap.prevent',[actions.tap,item],0).setContent([
-					(t0.__.$A = t0.__.$A || _T.SPAN(self)).setContent("" + COUNTER,3).end(),
-					(t0.__.$B = t0.__.$B || _T.SPAN(self).flag('title')).setContent(item.title,3).end()
-				],2).end());
+				(t0 = $[i] = $[i] || _T.LI(self)).on('tap.prevent',[actions.tap,item],0).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(item.title,3).end(),2).end();
+			};return $;
+		})()
+	,4).end();
+}).end();
+
+apps.textA = _T.DIV(this).flag('app').setTemplate(function() {
+	var self = this, __ = this.__;
+	return (__.$A = __.$A || _T.UL(this)).setContent(
+		(function() {
+			var $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				($[i] = $[i] || _T.LI(self)).setText("a" + COUNTER).end();
+			};return $;
+		})()
+	,4).end();
+}).end();
+
+apps.textB = _T.DIV(this).flag('app').setTemplate(function() {
+	var self = this, __ = this.__;
+	return (__.$A = __.$A || _T.UL(this)).setContent(
+		(function() {
+			var $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				($[i] = $[i] || _T.LI(self)).setText("b" + COUNTER).end();
+			};return $;
+		})()
+	,4).end();
+}).end();
+
+apps.textC = _T.DIV(this).flag('app').setTemplate(function() {
+	var self = this, __ = this.__;
+	return (__.$A = __.$A || _T.UL(this)).setContent(
+		(function() {
+			var $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				($[i] = $[i] || _T.LI(self)).setText("c" + COUNTER).end();
+			};return $;
+		})()
+	,4).end();
+}).end();
+
+apps.loop = _T.DIV(this).flag('app').setTemplate(function() {
+	var self = this, __ = this.__;
+	return (__.$A = __.$A || _T.UL(this)).setContent(
+		(function() {
+			var t0, $ = (__.$AA = __.$AA || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				(t0 = $[i] = $[i] || _T.LI(self)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end();
+			};return $;
+		})()
+	,4).end();
+}).end();
+
+apps.loopInner = _T.DIV(this).flag('app').setTemplate(function() {
+	var __ = this.__, self = this;
+	return (__.$A = __.$A || _T.UL(this)).setContent([
+		(__.$AA = __.$AA || _T.LI(this)).setText("First item").end(),
+		(function() {
+			var t0, $ = (__.$AB = __.$AB || []);
+			for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+				(t0 = $[i] = $[i] || _T.LI(self)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end();
+			};return $;
+		})(),
+		(__.$AC = __.$AC || _T.LI(self)).setText("Last item").end()
+	],1).end();
+}).end();
+
+apps.loopKeys = _T.DIV(this).flag('app').setTemplate(function() {
+	var self = this, __ = this.__;
+	return (__.$A = __.$A || _T.UL(this)).setContent(
+		(function() {
+			var t0, $$AA = (__.$AA = __.$AA || {});
+			let res = [];
+			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
+				res.push((t0 = $$AA[i] = $$AA[i] || _T.LI(self)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end());
 			};
 			return res;
 		})()
 	,3).end();
 }).end();
 
+apps.loopTrue = _T.DIV(this).flag('app').setTemplate(function() {
+	var self = this, __ = this.__;
+	return (__.$A = __.$A || _T.UL(this)).setContent([
+		true ? (
+			(function() {
+				var t0, $ = (__.$AA = __.$AA || []);
+				for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+					(t0 = $[i] = $[i] || _T.LI(self)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end();
+				};return $;
+			})()
+		) : void(0)
+	],1).end();
+}).end();
+
+apps.loopWeird = _T.DIV(this).flag('app').setTemplate(function() {
+	var __ = this.__, self = this;
+	return (__.$A = __.$A || _T.UL(this)).setContent([
+		(COUNTER % 3 == 0) ? (
+			(__.$AA = __.$AA || _T.LI(this)).setText("Single").end()
+		) : (
+			(function() {
+				var t0, $ = (__.$AB = __.$AB || []);
+				for (let i = 0, items = iter$(store.items), len = $.taglen = items.length; i < len; i++) {
+					(t0 = $[i] = $[i] || _T.LI(self)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(items[i].title,3).end(),2).end();
+				};return $;
+			})()
+		)
+	],1).end();
+}).end();
+
+
+
 var logs = [];
 
 window.APPS = apps;
+var currentApp;
 
-var run = function(app,name) {
-	let times = 100000;
+var run = function(app,name,times) {
+	let item = {title: "Push/pop item"};
 	window.app.innerHTML = '';
 	window.app.appendChild(app.dom());
 	console.time(name);
+	let itemCount = store.items.length;
 	let t0 = window.performance.now();
 	var i = 0;
 	COUNTER = 0;
 	while (i < times){
+		COUNTER++;
+		if (i % 2) {
+			store.items.pop();
+		} else {
+			store.items.push(item);
+		};
 		app.render();
 		i++;
 	};
 	let t1 = window.performance.now();
+	store.items.length = itemCount;
 	console.timeEnd(name);
 	logs.push(("" + name + " x" + times + " took " + (t1 - t0).toFixed(2) + "ms"));
+	currentApp = app;
 	return Imba.commit();
+};
+
+var testWeird = function() {
+	let bool = true;
+	let item = _T.DIV(self).setText("BOOL").end();
+	let items = store.items.slice(0);
+	let dyn = function() { return item; };
+	let app = _T.DIV(self).flag('app').setTemplate(function() {
+		var __ = this.__, self = this;
+		return (__.$A = __.$A || _T.DIV(this)).setContent([
+			(__.$AA = __.$AA || _T.DIV(this)).setText("before").end(),
+			bool ? Imba.static([
+				dyn(),
+				(function() {
+					var t0, $ = (__.$AB = __.$AB || []);
+					for (let i = 0, ary = iter$(items), len = $.taglen = ary.length; i < len; i++) {
+						(t0 = $[i] = $[i] || _T.LI(self)).setContent((t0.__.$A = t0.__.$A || _T.SPAN(self).flag('title')).setContent(ary[i].title,3).end(),2).end();
+					};return $;
+				})()
+			],2) : void(0),
+			(__.$AC = __.$AC || _T.DIV(self)).setText("after").end()
+		],1).end();
+	}).end();
+	run(app,'bug',1);
+	bool = false;
+	app.render();
+	bool = true;
+	app.render();
+	let par = item.dom().parentNode;
+	par.removeChild(item.dom());
+	// par.removeChild(item.dom)
+	bool = false;
+	return app.render();
+	
+	// add a bunch of items
 };
 
 var RunButton = _T.defineTag('RunButton', 'button', function(tag){
 	
 	tag.prototype.ontap = function (){
-		return run(this.data(),this.dom().textContent);
+		return run(this.data(),this.dom().textContent,100001);
 	};
 });
 
-var controls = _T.DIV(this).flag('controls').setTemplate(function() {
+var controls = _T.DIV(self).flag('controls').setTemplate(function() {
 	var self = this, __ = this.__;
 	return Imba.static([
-		(__.$A = __.$A || _T.DIV(this).flag('header')).setContent(
+		(__.$A = __.$A || _T.DIV(this).flag('header')).setContent([
 			(function() {
-				var t0, _$ = (__.$AA = __.$AA || []);
-				let res = [];
-				for (let app, i = 0, keys = Object.keys(apps), l = keys.length, name; i < l; i++){
-					name = keys[i];app = apps[name];res.push((t0 = _$[i] = _$[i] || RunButton.build(self)).setData(app).setContent(("" + name),3).end());
-				};
-				return res;
-			})()
-		,3).end(),
+				var $ = (__.$AA = __.$AA || []);
+				for (let app, i = 0, keys = Object.keys(apps), l = $.taglen = keys.length, name; i < l; i++){
+					name = keys[i];app = apps[name];($[i] = $[i] || RunButton.build(self)).setData(app).setText("" + name).end();
+				};return $;
+			})(),
+			(__.$AB = __.$AB || _T.BUTTON(self)).on('tap',function(e) { var $1;
+			return ($1 = currentApp) && $1.render  &&  $1.render(); },0).setText("render").end(),
+			(__.$AC = __.$AC || _T.BUTTON(self)).on('tap',testWeird,0).setText("weird").end()
+		],1).end(),
 		(__.$B = __.$B || _T.DIV(self).flag('logs')).setContent((function() {
-			var t0, _$ = (__.$BA = __.$BA || []);
-			let res = [];
-			for (let i = 0, len = logs.length; i < len; i++) {
-				res.push((t0 = _$[i] = _$[i] || _T.DIV(self)).setContent(logs[i],3).end());
-			};
-			return res;
-		})(),3).end()
+			var $1 = (__.$BA = __.$BA || []);
+			for (let i = 0, len = $1.taglen = logs.length; i < len; i++) {
+				($1[i] = $1[i] || _T.DIV(self)).setContent(logs[i],3).end();
+			};return $1;
+		})(),4).end()
 	],1);
 }).end();
 
+
+
+
 Imba.mount(controls,window.controls);
 
-// Imba.mount <div.app ->
-// 	<div.header>
-// 		<button :tap=actions:add> 'add item'
-// 		<button :tap=actions:reverse> 'reverse items'
-// 	<ul.grow> for item in data:items
-// 		<li> item:title
 
 /***/ }),
 /* 3 */
@@ -1053,10 +1177,9 @@ __webpack_require__(1);
 __webpack_require__(11);
 __webpack_require__(12);
 __webpack_require__(13);
-__webpack_require__(14);
 
 if (true) {
-	__webpack_require__(15);
+	__webpack_require__(14);
 };
 
 if (false) {};
@@ -1389,7 +1512,6 @@ Imba.Tag.prototype.ref_ = function (ref,ctx){
 	return this;
 };
 
-
 /*
 	Set the data object for node
 	@return {self}
@@ -1406,16 +1528,6 @@ Imba.Tag.prototype.setData = function (data){
 
 Imba.Tag.prototype.data = function (){
 	return this._data;
-};
-
-Imba.Tag.prototype.setObject = function (value){
-	console.warn('Tag#object= deprecated. Use Tag#data=');
-	this.setData(value);
-	return this;
-};
-
-Imba.Tag.prototype.object = function (){
-	return this.data();
 };
 
 /*
@@ -1435,29 +1547,6 @@ Imba.Tag.prototype.setHtml = function (html){
 
 Imba.Tag.prototype.html = function (){
 	return this._dom.innerHTML;
-};
-
-
-/*
-	@deprecated
-	Get width of node (offsetWidth)
-	@return {number}
-	*/
-
-Imba.Tag.prototype.width = function (){
-	console.warn('Tag#width deprecated. Use dom:offsetWidth');
-	return this._dom.offsetWidth;
-};
-
-/*
-	@deprecated
-	Get height of node (offsetHeight)
-	@return {number}
-	*/
-
-Imba.Tag.prototype.height = function (){
-	console.warn('Tag#height deprecated. Use dom:offsetHeight');
-	return this._dom.offsetHeight;
 };
 
 /*
@@ -1497,25 +1586,6 @@ Imba.Tag.prototype.on = function (event,handler,slot){
 	} else {
 		handlers.push([event,handler]);
 	};
-	
-	return this;
-	
-	let type = event;
-	let modIndex = event.indexOf('.');
-	if (modIndex > 0) {
-		type = event.slice(0,modIndex);
-	};
-	
-	let slots = handlers[type] || (handlers[type] = []);
-	
-	if (slot != undefined) {
-		let prev = slots[slot];
-		// should check if the previous is slotted
-		slots[slot] = [event,handler];
-	} else {
-		slots.push([event,handler]);
-	};
-	
 	return this;
 };
 
@@ -1538,22 +1608,20 @@ Imba.Tag.prototype.id = function (){
 	*/
 
 Imba.Tag.prototype.setAttribute = function (name,value){
-	// should this not return self?
 	var old = this.dom().getAttribute(name);
 	
 	if (old == value) {
-		return value;
+		value;
 	} else if (value != null && value !== false) {
-		return this.dom().setAttribute(name,value);
+		this.dom().setAttribute(name,value);
 	} else {
-		return this.dom().removeAttribute(name);
+		this.dom().removeAttribute(name);
 	};
+	return this;
 };
 
 Imba.Tag.prototype.setNestedAttr = function (ns,name,value){
-	if (ns == 'css') {
-		this.css(name,value);
-	} else if (this[ns + 'SetAttribute']) {
+	if (this[ns + 'SetAttribute']) {
 		this[ns + 'SetAttribute'](name,value);
 	} else {
 		this.setAttributeNS(ns,name,value);
@@ -1564,14 +1632,13 @@ Imba.Tag.prototype.setNestedAttr = function (ns,name,value){
 Imba.Tag.prototype.setAttributeNS = function (ns,name,value){
 	var old = this.getAttributeNS(ns,name);
 	
-	if (old == value) {
-		value;
-	} else if (value != null && value !== false) {
-		this.dom().setAttributeNS(ns,name,value);
-	} else {
-		this.dom().removeAttributeNS(ns,name);
+	if (old != value) {
+		if (value != null && value !== false) {
+			this.dom().setAttributeNS(ns,name,value);
+		} else {
+			this.dom().removeAttributeNS(ns,name);
+		};
 	};
-	
 	return this;
 };
 
@@ -1616,8 +1683,10 @@ Imba.Tag.prototype.setContent = function (content,type){
 	*/
 
 Imba.Tag.prototype.setChildren = function (nodes,type){
-	this._empty ? this.append(nodes) : this.empty().append(nodes);
-	this._children = null;
+	if (false) {} else {
+		this._empty ? this.append(nodes) : this.empty().append(nodes);
+		this._children = null; // ?
+	};
 	return this;
 };
 
@@ -1651,6 +1720,7 @@ Imba.Tag.prototype.template = function (){
 
 Imba.Tag.prototype.renderTemplate = function (){
 	var body = this.template();
+	// is it dynamic?
 	if (body != this) { this.setChildren(body) };
 	return this;
 };
@@ -1852,13 +1922,14 @@ Imba.Tag.prototype.dataset = function (key,val){
 
 Imba.Tag.prototype.empty = function (){
 	if (this._dom.firstChild) {
+		this.__.text = null;
 		while (this._dom.firstChild){
 			this._dom.removeChild(this._dom.firstChild);
 		};
 		Imba.TagManager.remove(null,this);
 	};
 	
-	this._children = null;
+	this._children = this._text = null;
 	this._empty = true;
 	return this;
 };
@@ -4403,200 +4474,10 @@ Imba.EventManager.prototype.ondisable = function (){
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(0);
 
-/*
-The special syntax for selectors in Imba creates Imba.Selector
-instances.
-*/
-
-Imba.Selector = function Selector(sel,scope,nodes){
-	
-	this._query = (sel instanceof Imba.Selector) ? sel.query() : sel;
-	this._context = scope;
-	
-	if (nodes) {
-		let res = [];
-		for (let i = 0, items = iter$(nodes), len = items.length; i < len; i++) {
-			res.push(Imba.getTagForDom(items[i]));
-		};
-		this._nodes = res;
-	};
-	
-	this._lazy = !nodes;
-	return this;
-};
-
-Imba.Selector.all = function (sel,scope){
-	return new Imba.Selector(sel,scope);
-};
-
-Imba.Selector.prototype.query = function(v){ return this._query; }
-Imba.Selector.prototype.setQuery = function(v){ this._query = v; return this; };
-
-Imba.Selector.prototype.reload = function (){
-	this._nodes = null;
-	return this;
-};
-
-Imba.Selector.prototype.scope = function (){
-	var ctx;
-	if (this._scope) { return this._scope };
-	if (!(ctx = this._context)) { return Imba.document() };
-	return this._scope = ctx.toScope ? ctx.toScope() : ctx;
-};
-
-/*
-	@returns {Imba.Tag} first node matching this selector
-	*/
-
-Imba.Selector.prototype.first = function (){
-	return this._lazy ? Imba.getTagForDom(this._first || (this._first = this.scope().querySelector(this.query()))) : this.nodes()[0];
-};
-
-/*
-	@returns {Imba.Tag} last node matching this selector
-	*/
-
-Imba.Selector.prototype.last = function (){
-	return this.nodes()[this._nodes.length - 1];
-};
-
-/*
-	@returns [Imba.Tag] all nodes matching this selector
-	*/
-
-Imba.Selector.prototype.nodes = function (){
-	if (this._nodes) { return this._nodes };
-	var items = this.scope().querySelectorAll(this.query());
-	let res = [];
-	for (let i = 0, ary = iter$(items), len = ary.length; i < len; i++) {
-		res.push(Imba.getTagForDom(ary[i]));
-	};
-	this._nodes = res;
-	this._lazy = false;
-	return this._nodes;
-};
-
-/*
-	The number of nodes matching this selector
-	*/
-
-Imba.Selector.prototype.count = function (){
-	return this.nodes().length;
-};
-
-Imba.Selector.prototype.len = function (){
-	return this.nodes().length;
-};
-
-/*
-	@todo Add support for block or selector?
-	*/
-
-Imba.Selector.prototype.some = function (){
-	return this.count() >= 1;
-};
-
-/*
-	Get node at index
-	*/
-
-Imba.Selector.prototype.at = function (idx){
-	return this.nodes()[idx];
-};
-
-/*
-	Loop through nodes
-	*/
-
-Imba.Selector.prototype.forEach = function (block){
-	this.nodes().forEach(block);
-	return this;
-};
-
-/*
-	Map nodes
-	*/
-
-Imba.Selector.prototype.map = function (block){
-	return this.nodes().map(block);
-};
-
-/*
-	Returns a plain array containing nodes. Implicitly called
-	when iterating over a selector in Imba `(node for node in $(selector))`
-	*/
-
-Imba.Selector.prototype.toArray = function (){
-	return this.nodes();
-};
-
-// Get the descendants of each element in the current set of matched 
-// elements, filtered by a selector.
-Imba.Selector.prototype.find = function (sel){
-	this._nodes = this.__query__(sel.query(),this.nodes());
-	return this;
-};
-
-/*
-	Filter the nodes in selector by a function or other selector
-	*/
-
-Imba.Selector.prototype.filter = function (blk,bool){
-	if(bool === undefined) bool = true;
-	var fn = (blk instanceof Function) && blk || function(n) { return n.matches(blk); };
-	var ary = this.nodes().filter(function(n) { return fn(n) == bool; });
-	// if we want to return a new selector for this, we should do that for
-	return new Imba.Selector("",this._scope,ary);
-};
-
-Imba.Selector.prototype.__query__ = function (query,contexts){
-	var nodes = [];
-	var i = 0;
-	var l = contexts.length;
-	
-	while (i < l){
-		nodes.push.apply(nodes,contexts[i++].querySelectorAll(query));
-	};
-	return nodes;
-};
-
-Imba.Selector.prototype.__matches__ = function (){
-	return true;
-};
-
-/*
-	Add specified flag to all nodes in selector
-	*/
-
-Imba.Selector.prototype.flag = function (flag){
-	return this.forEach(function(n) { return n.flag(flag); });
-};
-
-/*
-	Remove specified flag from all nodes in selector
-	*/
-
-Imba.Selector.prototype.unflag = function (flag){
-	return this.forEach(function(n) { return n.unflag(flag); });
-};
-
-
-// def Imba.querySelectorAll
-Imba.q$ = function(sel,scope) { return new Imba.Selector(sel,scope); };
-
-// def Imba.Selector.one
-Imba.q$$ = function(sel,scope) {
-	var el = (scope || Imba.document()).querySelector(sel);
-	return el && Imba.getTagForDom(el) || null;
-};
-
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0);
+// 1 - static shape - unknown content
+// 2 - static shape and static children
+// 3 - single item
+// 4 - optimized array - only length will change
 
 function removeNested(root,node,caret){
 	// if node/nodes isa String
@@ -4624,8 +4505,11 @@ function removeNested(root,node,caret){
 
 function appendNested(root,node){
 	if (node instanceof Array) {
-		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
-			appendNested(root,items[i]);
+		let i = 0;
+		let c = node.taglen;
+		let k = (c != null) ? ((node.domlen = c)) : node.length;
+		while (i < k){
+			appendNested(root,node[i++]);
 		};
 	} else if (node && node._dom) {
 		root.appendChild(node);
@@ -4643,8 +4527,11 @@ function appendNested(root,node){
 // before must be an actual domnode
 function insertNestedBefore(root,node,before){
 	if (node instanceof Array) {
-		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
-			insertNestedBefore(root,items[i],before);
+		let i = 0;
+		let c = node.taglen;
+		let k = (c != null) ? ((node.domlen = c)) : node.length;
+		while (i < k){
+			insertNestedBefore(root,node[i++],before);
 		};
 	} else if (node && node._dom) {
 		root.insertBefore(node,before);
@@ -4806,6 +4693,34 @@ function reconcileCollection(root,new$,old,caret){
 	};
 };
 
+// expects a flat non-sparse array of nodes in both new and old, always
+function reconcileIndexedArray(root,array,old,caret){
+	var newLen = array.taglen;
+	var prevLen = array.domlen || 0;
+	var last = newLen ? array[newLen - 1] : null;
+	// console.log "reconcile optimized array(!)",caret,newLen,prevLen,array
+	
+	if (prevLen > newLen) {
+		while (prevLen > newLen){
+			var item = array[--prevLen];
+			root.removeChild(item._dom);
+		};
+	} else if (newLen > prevLen) {
+		// find the item to insert before
+		let prevLast = prevLen ? array[prevLen - 1]._dom : caret;
+		let before = prevLast ? prevLast.nextSibling : root._dom.firstChild;
+		
+		while (prevLen < newLen){
+			let node = array[prevLen++];
+			before ? root.insertBefore(node._dom,before) : root.appendChild(node._dom);
+		};
+	};
+	
+	array.domlen = newLen;
+	return last ? last._dom : caret;
+};
+
+
 // the general reconciler that respects conditions etc
 // caret is the current node we want to insert things after
 function reconcileNested(root,new$,old,caret){
@@ -4822,6 +4737,8 @@ function reconcileNested(root,new$,old,caret){
 			return caret;
 		} else if (new$._dom) {
 			return new$._dom;
+		} else if ((new$ instanceof Array) && new$.taglen != null) {
+			return reconcileIndexedArray(root,new$,old,caret);
 		} else {
 			return caret ? caret.nextSibling : root._dom.firstChild;
 		};
@@ -4889,15 +4806,13 @@ Imba.TAGS.extendTag('element', function(tag){
 	tag.prototype.setChildren = function (new$,typ){
 		var old = this._children;
 		
-		if (new$ === old) {
+		if (new$ === old && new$ && new$.taglen == undefined) {
 			return this;
 		};
 		
-		if (!old) {
+		if (!old && typ != 3) {
 			this.empty();
 			appendNested(this,new$);
-		} else if (typ == 2) {
-			return this;
 		} else if (typ == 1) {
 			// here we _know _that it is an array with the same shape
 			// every time
@@ -4906,11 +4821,14 @@ Imba.TAGS.extendTag('element', function(tag){
 				// prev = old[i]
 				caret = reconcileNested(this,items[i],old[i],caret);
 			};
+		} else if (typ == 2) {
+			return this;
 		} else if (typ == 3) {
 			// this is possibly fully dynamic. It often is
 			// but the old or new could be static while the other is not
 			// this is not handled now
 			// what if it was previously a static array? edgecase - but must work
+			// could we simply do replace-child?
 			if (new$ && new$._dom) {
 				this.empty();
 				this.appendChild(new$);
@@ -4925,6 +4843,8 @@ Imba.TAGS.extendTag('element', function(tag){
 				this.setText(new$);
 				return this;
 			};
+		} else if (typ == 4) {
+			reconcileIndexedArray(this,new$,old,null);
 		} else if ((new$ instanceof Array) && (old instanceof Array)) {
 			reconcileNested(this,new$,old,null);
 		} else {
@@ -4941,11 +4861,18 @@ Imba.TAGS.extendTag('element', function(tag){
 	};
 	
 	tag.prototype.setText = function (text){
-		if (text != this._children) {
-			this._children = text;
-			this.dom().textContent = (text == null || text === false) ? '' : text;
+		if (text != this._text) {
+			let val = (text == null || text === false) ? '' : text;
+			if (true) {
+				if (this.__.text) {
+					this.__.text.textContent = val;
+				} else {
+					this.dom().textContent = val;
+					this.__.text = this.dom().firstChild;
+				};
+			};
+			this._text = this._children = text;
 		};
-		this;
 		return this;
 	};
 });

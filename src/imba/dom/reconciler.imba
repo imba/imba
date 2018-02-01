@@ -1,5 +1,10 @@
 var Imba = require("../imba")
 
+# 1 - static shape - unknown content
+# 2 - static shape and static children
+# 3 - single item
+# 4 - optimized array - only length will change
+
 def removeNested root, node, caret
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements
@@ -21,7 +26,10 @@ def removeNested root, node, caret
 
 def appendNested root, node
 	if node isa Array
-		appendNested(root,member) for member in node
+		let i = 0
+		let c = node:taglen
+		let k = c != null ? (node:domlen = c) : node:length
+		appendNested(root,node[i++]) while i < k
 	elif node and node.@dom
 		root.appendChild(node)
 	elif node != null and node !== false
@@ -36,7 +44,11 @@ def appendNested root, node
 # before must be an actual domnode
 def insertNestedBefore root, node, before
 	if node isa Array
-		insertNestedBefore(root,member,before) for member in node
+		let i = 0
+		let c = node:taglen
+		let k = c != null ? (node:domlen = c) : node:length
+		insertNestedBefore(root,node[i++],before) while i < k
+
 	elif node and node.@dom
 		root.insertBefore(node,before)
 	elif node != null and node !== false
@@ -175,6 +187,31 @@ def reconcileCollection root, new, old, caret
 	else
 		return reconcileCollectionChanges(root,new,old,caret)
 
+# expects a flat non-sparse array of nodes in both new and old, always
+def reconcileIndexedArray root, array, old, caret
+	var newLen = array:taglen
+	var prevLen = array:domlen or 0
+	var last = newLen ? array[newLen - 1] : null
+	# console.log "reconcile optimized array(!)",caret,newLen,prevLen,array
+
+	if prevLen > newLen
+		while prevLen > newLen
+			var item = array[--prevLen]
+			root.removeChild(item.@dom)
+
+	elif newLen > prevLen
+		# find the item to insert before
+		let prevLast = prevLen ? array[prevLen - 1].@dom : caret
+		let before = prevLast ? prevLast:nextSibling : root.@dom:firstChild
+		
+		while prevLen < newLen
+			let node = array[prevLen++]
+			before ? root.insertBefore(node.@dom,before) : root.appendChild(node.@dom)
+			
+	array:domlen = newLen
+	return last ? last.@dom : caret
+
+
 # the general reconciler that respects conditions etc
 # caret is the current node we want to insert things after
 def reconcileNested root, new, old, caret
@@ -191,6 +228,8 @@ def reconcileNested root, new, old, caret
 			return caret
 		elif new.@dom
 			return new.@dom
+		elif new isa Array and new:taglen != null
+			return reconcileIndexedArray(root,new,old,caret)
 		else
 			return caret ? caret:nextSibling : root.@dom:firstChild
 
@@ -251,15 +290,12 @@ extend tag element
 	def setChildren new, typ
 		var old = @children
 
-		if new === old
+		if new === old and new and new:taglen == undefined
 			return self
 
 		if !old and typ != 3
 			empty
 			appendNested(self,new)
-
-		elif typ == 2
-			return self
 
 		elif typ == 1
 			# here we _know _that it is an array with the same shape
@@ -268,12 +304,16 @@ extend tag element
 			for item,i in new
 				# prev = old[i]
 				caret = reconcileNested(self,item,old[i],caret)
+		
+		elif typ == 2
+			return self
 
 		elif typ == 3
 			# this is possibly fully dynamic. It often is
 			# but the old or new could be static while the other is not
 			# this is not handled now
 			# what if it was previously a static array? edgecase - but must work
+			# could we simply do replace-child?
 			if new and new.@dom
 				empty
 				appendChild(new)
@@ -289,6 +329,9 @@ extend tag element
 			else
 				text = new
 				return self
+				
+		elif typ == 4
+			reconcileIndexedArray(self,new,old,null)
 
 		elif new isa Array and old isa Array
 			reconcileNested(self,new,old,null)

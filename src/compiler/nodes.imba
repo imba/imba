@@ -5417,14 +5417,42 @@ export class For < Loop
 		# other cases as well, no?
 		if node isa TagTree
 			scope.closeScope
-
+	
 			node.@loop = self
 			@tagtree = node
+			let tagChild = null
+			let block = [self]
+			let vars = @options:vars
+			let canOptimize = vars:len and !vars:diff and !vars:step and !options:guard and !(options:source isa Range)
+			
+			if self isa ForOf and !options:own
+				console.warn "for ... of is not supported inside tag tree - use for own ... of instead"
+				canOptimize = no
 
 			body.consume(node)
+			
+			if canOptimize
+				for item in body.@nodes
+					if item isa Tag and !tagChild
+						tagChild = item
+					elif item isa Meta
+						continue
+					else
+						tagChild = null
+						break
+
+			if tagChild and !tagChild.option(:key) and canOptimize and STACK.platform == 'web' and vars:len.declarator
+				let cacheVar = scope.register('$',null,system: yes, type: 'var')
+				let lenDecl = vars:len.declarator
+				if lenDecl
+					lenDecl.defaults = OP('=',OP('.',cacheVar,'taglen'),lenDecl.defaults)
+				tagChild.set(loopVar: cacheVar, loopIndex: vars:index)
+				block = [self,Return.new(cacheVar)]
+				node.set(staticloop: yes)
 
 			node.@loop = null
-			let fn = Lambda.new([],[self])
+			
+			let fn = Lambda.new([],block)
 			fn.scope.wrap(scope)
 			# TODO Scope of generated lambda should be added into stack for
 			# variable naming / resolution
@@ -6154,13 +6182,14 @@ export class Tag < Node
 
 		# we need to trigger our own reference before the body does
 		# but we do not need a reference if we have no body
-		if reactive and tree and (explicitKey or o:loop)
+		if reactive and tree and (explicitKey or o:loop) and (o:body isa Func or tree.hasTags) # only if we have inner
+			# do we really need a reference when in loop?
 			reference
 			# self
 
 		if reactive and parent and parent.tree and !option(:ivar)
 			# not if it has a separate tag?
-			o:treeRef = parent.tree.nextCacheKey(self)
+			o:treeRef ||= parent.tree.nextCacheKey(self)
 			if parent.option(:treeRef) and !parent.explicitKey and !parent.option(:loop) and !(parent.tree isa TagFragmentTree)
 				o:treeRef = parent.option(:treeRef) + o:treeRef
 		
@@ -6174,6 +6203,8 @@ export class Tag < Node
 				elif reactive or tree.reactive
 					if !tree.single or tree.single isa If
 						typ = 1
+					elif tree.single and tree.option(:staticloop)
+						typ = 4
 					else
 						typ = 3
 
@@ -6247,6 +6278,12 @@ export class Tag < Node
 
 				if o:key
 					key = o:key
+				elif o:loopVar
+					kvar = o:loopVar
+					key = o:loopIndex or o:loop.option(:vars)[:index]
+					cacheDefault = LIT('[]')
+					
+					# fix ne
 				else
 					kvar = '_$'
 					if o:loop
@@ -6259,9 +6296,10 @@ export class Tag < Node
 					let idx = o:loop.option(:vars)[:index]
 					cacheDefault = LIT('[]')
 					key = idx
-
+		
 				let setter = OP('=',path,OP('||',path,cacheDefault))
 				# dont redeclare?
+				
 				ctx = s.declare(kvar,Parens.new(setter))
 			else
 				# or the tree-cache no?
@@ -7275,8 +7313,7 @@ export class Scope
 
 	# just like register, but we automatically
 	def declare name, init = null, o = {}
-		var variable = register(name,null,o)
-		
+		var variable = name isa Variable ? name : register(name,null,o)
 		# TODO create the variabledeclaration here instead?
 		# if this is a sysvar we need it to be renameable
 		var dec = @vars.add(variable,init)
