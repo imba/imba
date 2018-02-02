@@ -6,7 +6,6 @@ Imba.TagManager = Imba.TagManagerClass.new
 
 require './tag'
 require './html'
-require './svg'
 require './pointer'
 require './touch'
 require './event'

@@ -67,6 +67,10 @@ tag cachetest
 	def test options
 		render(options)
 		toString
+		
+let has = do |text,fn|
+	ok String(fn).indexOf(text) >= 0
+			
 
 describe 'Tags - Cache' do
 	var node = <cachetest>
@@ -86,6 +90,9 @@ describe 'Tags - Cache' do
 		has('setText') do <div> "title"
 		has('setText') do <div> "title {dyn}"
 		has('setText') do <div> "title" + dyn
+			
+	test "svg dynamic set" do
+		has('set(') do <svg:rect fill='red'>
 		
 	test "alternate text and dom" do
 		return if $node$

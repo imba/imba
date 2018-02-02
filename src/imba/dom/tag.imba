@@ -287,6 +287,15 @@ class Imba.Tag
 
 	def getAttributeNS ns, name
 		dom.getAttributeNS(ns,name)
+	
+	
+	def set key, value
+		@dom:setAttribute(key,value)
+		self
+	
+	
+	def get key
+		@dom:getAttribute(key)
 
 	###
 	Override this to provide special wrapping etc.
@@ -904,6 +913,9 @@ class Imba.Tags
 		if body and body.@nodeType
 			supr = body
 			body = null
+			
+		if self[name]
+			console.log "tag already exists?",name
 
 		supr ||= baseType(name)
 
@@ -939,7 +951,6 @@ class Imba.Tags
 		defineTag(name,supr,body)
 
 	def extendTag name, supr = '', &body
-		console.log "extend tag",name
 		var klass = (name isa String ? findTagType(name) : name)
 		# allow for private tags here as well?
 		body and body.call(klass,klass,klass:prototype) if body
@@ -954,9 +965,9 @@ class Imba.Tags
 	def findTagType type
 		let klass = self[type]
 		unless klass
-			if Imba.HTML_TAGS.indexOf(type) >= 0
+			if @nodeNames.indexOf(type) >= 0
 				klass = defineTag(type,'element')
-				console.log "autocreate html tag type",type
+
 				if let attrs = Imba.HTML_ATTRS[type]
 					for name in attrs.split(" ")
 						Imba.attr(klass,name)
@@ -975,11 +986,38 @@ Imba.SINGLETONS = {}
 Imba.TAGS = Imba.Tags.new
 Imba.TAGS[:element] = Imba.TAGS[:htmlelement] = Imba.Tag
 var html = Imba.TAGS.defineNamespace('html')
+html.@nodeNames = Imba.HTML_TAGS
+
+class Imba.SVGTag < Imba.Tag
+
+	def self.namespaceURI
+		"http://www.w3.org/2000/svg"
+
+	def self.buildNode
+		var dom = Imba.document.createElementNS(namespaceURI,@nodeType)
+		var cls = @classes.join(" ")
+		dom:className:baseVal = cls if cls
+		dom
+
+	def self.inherit child
+		child.@protoDom = null
+
+		if child.@name in Imba.SVG_TAGS
+			child.@nodeType = child.@name
+			child.@classes = []
+		else
+			child.@nodeType = @nodeType
+			var className = "_" + child.@name.replace(/_/g, '-')
+			child.@classes = @classes.concat(className)
+
+
 var svg = Imba.TAGS.defineNamespace('svg')
+svg.@nodeNames = Imba.SVG_TAGS
+svg:baseType = do 'element'
+svg:element = Imba.SVGTag
+
 Imba.TAGS = html # make the html namespace the root
 
-def svg.baseType name
-	'element'
 
 def Imba.defineTag name, supr = '', &body
 	return Imba.TAGS.defineTag(name,supr,body)
@@ -1014,54 +1052,26 @@ def Imba.getTagSingleton id
 
 var svgSupport = typeof SVGElement !== 'undefined'
 
+# shuold be phased out
 def Imba.getTagForDom dom
 	return null unless dom
 	return dom if dom.@dom # could use inheritance instead
 	return dom.@tag if dom.@tag
 	return null unless dom:nodeName
 
-	var ns   = null
-	var id   = dom:id
-	var type = dom:nodeName.toLowerCase
-	var tags = Imba.TAGS
-	var native = type
-	var cls  = dom:className
+	var name = dom:nodeName.toLowerCase
+	var ns = svgSupport and dom isa SVGElement ? Imba.TAGS:_SVG : Imba.TAGS
 
-	if id and Imba.SINGLETONS[id]
-		# FIXME control that it is the same singleton?
-		# might collide -- not good?
-		return Imba.getTagSingleton(id)
-	# look for id - singleton
+	if dom:id and Imba.SINGLETONS[dom:id]
+		return Imba.getTagSingleton(dom:id)
 
-	# need better test here
-	if svgSupport and dom isa SVGElement
-		ns = "svg" 
-		cls = dom:className:baseVal
-		tags = tags:_SVG
+	var type = ns:element
 
-	var spawner
+	if ns.@nodeNames.indexOf(name) >= 0
+		type = ns.findTagType(name)
 
-	if cls
-		# there can be several matches here - should choose the last
-		# should fall back to less specific later? - otherwise things may fail
-		# TODO rework this
-		let flags = cls.split(' ')
-		let nr = flags:length 
+	return type.new(dom,null).awaken(dom)
 
-		while --nr >= 0
-			let flag = flags[nr]
-			if flag[0] == '_'
-				if spawner = tags[flag.slice(1)]
-					break
-
-		# if var m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)
-		# 	type = m[1] # .replace(/-/g,'_')
-
-		if let m = cls.match(/\b([A-Z\-]+)_\b/)
-			ns = m[1]
-
-	spawner ||= tags[native]
-	spawner ? spawner.new(dom).awaken(dom) : null
 
 def Imba.generateCSSPrefixes
 	var styles = window.getComputedStyle(document:documentElement, '')

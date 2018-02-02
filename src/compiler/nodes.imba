@@ -6047,6 +6047,7 @@ export class Tag < Node
 		var scope = scope__
 		var commit = "end"
 		var content = o:body
+		var ns = type.@ns
 
 		var isSelf = type isa Self
 		var bodySetter = isSelf ? "setChildren" : "setContent"
@@ -6117,42 +6118,53 @@ export class Tag < Node
 			
 
 			if part isa TagAttr
+				
 				var akey = String(part.key)
 				var aval = part.value
+				let aname = akey
 				let modifiers = null
 				let modsIdx = akey.indexOf('.',1)
 				pcache = aval.isPrimitive
-				# if modsIdx >= 0
-				# 	modifiers = akey.slice(1).split('.').slice(1)
-				# 	akey = akey.substr(0,modsIdx)
+				if modsIdx >= 0
+					modifiers = akey.slice(1).split('.').slice(1)
+					aname = akey.substr(0,modsIdx)
 
 				if akey[0] == '.'
 					pcache = no
-					pjs = ".flag({quote(akey.substr(1))},{aval.c})"
+					pjs = "flag({quote(akey.substr(1))},{aval.c})"
 				elif akey[0] == ':'
 					let add = ""
 					let ename = modsIdx > 0 ? akey.slice(1, modsIdx) : akey.substr(1)
 					let slot = handlerIndices[ename] ||= (isSelf ? 1 : 0)
 					# if modifiers
 					#	add = ',[' + modifiers.map(|mod| "'{mod}'" ).join(',') + ']'
-					pjs = ".on({quote(akey.substr(1))},{aval.c},{onIndex})"
+					pjs = "on({quote(akey.substr(1))},{aval.c},{onIndex})"
 					isSelf ? (onIndex--) : (onIndex++)
 					handlerIndices[ename] += 2
 					# old version
 					# pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c},{handlerIndex++}{add})"
 
 				elif akey.substr(0,5) == 'data-'
-					pjs = ".dataset('{akey.slice(5)}',{aval.c})"
+					pjs = "dataset('{akey.slice(5)}',{aval.c})"
+
 				elif part.isNamespaced
 					let ns = akey.split(":")[0]
 					let k = akey.split(":")[1]
 
 					if ns == 'css'
-						pjs = ".{mark__(part.key)}css('{k}',{aval.c})"
+						pjs = "css('{k}',{aval.c})"
 					else
-						pjs = ".{mark__(part.key)}setNestedAttr('{ns}','{k}',{aval.c})"
+						pjs = "setNestedAttr('{ns}','{k}',{aval.c})"
 				else
-					pjs = ".{mark__(part.key)}{helpers.setterSym(akey)}({aval.c})"
+					if modifiers
+						pjs = "set('{akey}',{aval.c}" + ',{' + modifiers.map(|mod| "{mod}:1" ).join(',') + '})'
+					elif ns
+						pjs = "set('{akey}',{aval.c})"
+					else
+						pjs = "{helpers.setterSym(akey)}({aval.c})"
+						
+						
+				pjs = ".{mark__(part.key)}" + pjs
 
 				if aval isa Parens
 					aval = aval.value
