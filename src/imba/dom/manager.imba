@@ -1,27 +1,21 @@
 var Imba = require("../imba")
 
 class Imba.TagManagerClass
-
-	prop inserts
-	prop spawns
-	prop removes
-	prop mounted
-
 	def initialize
-		@spawns = 0
 		@inserts = 0
 		@removes = 0
 		@mounted = []
 		@hasMountables = no
 		self
 
+	def mounted
+		@mounted
+
 	def insert node, parent
 		@inserts++
-		return
 
 	def remove node, parent
 		@removes++
-		return
 
 	def changes
 		@inserts + @removes

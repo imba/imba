@@ -159,11 +159,11 @@ describe 'Tags - Define' do
 
 
 	test "style attribute" do
-		var el = <div style='display: block;'>
+		var el = <div css:display='inline'>
 		if $web$
-			eq el.dom.getAttribute('style'), 'display: block;'
+			eq el.dom:style:display, 'inline'
 		else
-			eq el.toString, '<div style="display: block;"></div>'
+			eq el.toString, '<div style="display: inline"></div>'
 	
 	test "class" do
 		var el = <CustomClass>

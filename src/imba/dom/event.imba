@@ -1,38 +1,5 @@
 var Imba = require("../imba")
 
-Imba.KEYMAP = {
-	"8": 'backspace'
-	"9": 'tab'
-	"13": 'enter'
-	"16": 'shift'
-	"17": 'ctrl'
-	"18": 'alt'
-	"19": 'break'
-	"20": 'caps'
-	"27": 'esc'
-	"32": 'space'
-	"35": 'end'
-	"36": 'home'
-	"37": 'larr'
-	"38": 'uarr'
-	"39": 'rarr'
-	"40": 'darr'
-	"45": 'insert'
-	"46": 'delete'
-	"107": 'plus'
-	"106": 'mult'
-	"91": 'meta'
-}
-
-Imba.CHARMAP = {
-	"%": 'modulo'
-	"*": 'multiply'
-	"+": 'add'
-	"-": 'sub'
-	"/": 'divide'
-	".": 'dot'
-}
-
 var keyCodes = {
 	esc: 27,
 	tab: 9,
@@ -51,8 +18,8 @@ export var Modifiers =
 	halt:    do this.stopPropagation and false
 	prevent: do this.preventDefault and false
 	silence: do this.silence and false
-	bubble: do false
-	self:   do $1:target != $2.@dom
+	bubble:  do false
+	self:    do $1:target != $2.@dom
 	left:    do $1:button != undefined ? ($1:button !== 0) : checkKeycode($1,$2,keyCodes:left)
 	right:   do $1:button != undefined ? ($1:button !== 2) : checkKeycode($1,$2,keyCodes:right)
 	middle:  do $1:button != undefined ? ($1:button !== 1) : false
@@ -61,16 +28,6 @@ export var Modifiers =
 	alt:     do $1:altKey != true
 	meta:    do $1:metaKey != true
 	keycode: do $1:keyCode ? ($1:keyCode !== $3) : false
-	
-# 	.enter
-# .tab
-# .delete (captures both “Delete” and “Backspace” keys)
-# .esc
-# .space
-# .up
-# .down
-# .left
-# .right
 
 ###
 Imba handles all events in the dom through a single manager,
@@ -90,15 +47,6 @@ class Imba.Event
 	prop prefix
 
 	prop data
-
-	###
-	should remove this alltogether?
-	@deprecated
-	###
-	prop source
-
-	### A {Boolean} indicating whether the event bubbles up or not ###
-	prop bubble type: Boolean, chainable: yes
 
 	prop responder
 
@@ -129,6 +77,10 @@ class Imba.Event
 			return self
 		return @bubble
 
+	def bubble= v
+		@bubble = v
+		return self
+
 	###
 	Prevents further propagation of the current event.
 	@return {self}
@@ -141,25 +93,18 @@ class Imba.Event
 	def stopPropagation
 		halt
 
-	###
-	Cancel the event (if cancelable). In the case of native events it
-	will call `preventDefault` on the wrapped event object.
-	@return {self}
-	###
-	def cancel
-		event.preventDefault if event:preventDefault
-		@cancel = yes
+	# migrate from cancel to prevent
+	def prevent
+		if event:preventDefault
+			event.preventDefault
+		else
+			event:defaultPrevented = yes
+		self:defaultPrevented = yes
 		self
 
 	def preventDefault
-		cancel
-
-	def silence
-		@silenced = yes
-		self
-
-	def isSilenced
-		!!@silenced
+		console.warn "Event#preventDefault is deprecated - use Event#prevent"
+		prevent
 
 	###
 	Indicates whether or not event.cancel has been called.
@@ -168,6 +113,22 @@ class Imba.Event
 	###
 	def isPrevented
 		event and event:defaultPrevented or @cancel
+
+	###
+	Cancel the event (if cancelable). In the case of native events it
+	will call `preventDefault` on the wrapped event object.
+	@return {self}
+	###
+	def cancel
+		console.warn "Event#cancel is deprecated - use Event#prevent"
+		prevent
+
+	def silence
+		@silenced = yes
+		self
+
+	def isSilenced
+		!!@silenced
 
 	###
 	A reference to the initial target of the event.
@@ -187,41 +148,6 @@ class Imba.Event
 	def redirect node
 		@redirect = node
 		self
-
-	###
-	Get the normalized character for KeyboardEvent/TextEvent
-	@return {String}
-	###
-	def keychar
-		if event isa KeyboardEvent
-			var ki = event:keyIdentifier or event:key
-			var sym = Imba.KEYMAP[event:keyCode]
-
-			if !sym 
-				if ki.substr(0,2) == "U+"
-					sym = String.fromCharCode(parseInt(ki.substr(2), 16))
-				else
-					sym = ki
-			return sym
-
-		elif event isa (window.TextEvent or window.InputEvent)
-			return event:data
-
-		return null
-
-	###
-	@deprecated
-	###
-	def keycombo
-		return unless var sym = keychar
-		sym = Imba.CHARMAP[sym] or sym
-		var combo = [], e = event
-		combo.push(:ctrl) if e:ctrlKey
-		combo.push(:shift) if e:shiftKey
-		combo.push(:alt) if e:altKey
-		combo.push(:cmd) if e:metaKey
-		combo.push(sym)
-		combo.join("_").toLowerCase
 		
 	def processHandler node, name, handler # , mods = []
 		
@@ -311,28 +237,13 @@ class Imba.Event
 							processHandler(node,hname,handler[1] or [])
 					break unless bubble
 
-				# No longer used
-				# if node[meth] isa String
-				# 	# should remember the receiver of the event
-				# 	meth = node[meth]
-				# 	continue # should not continue?
-				
-				# No longer used
-				# if node[meth] isa Array
-				# 	args = node[meth].concat(node)
-				# 	meth = args.shift
-				# 	continue # should not continue?
-
 				if node[meth] isa Function
 					@responder ||= node
-					# should autostop bubble here?
 					result = args ? node[meth].apply(node,args) : node[meth](self,data)
 
 				if node:onevent
 					node.onevent(self)
-				
-				# console.log "continue downwards?",domnode,name
-					
+
 			# add node.nextEventResponder as a separate method here?
 			unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
 				break

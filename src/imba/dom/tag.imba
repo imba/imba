@@ -24,7 +24,6 @@ Get the body element wrapped in an Imba.Tag
 def Imba.root
 	tag(Imba.document:body)
 
-
 def Imba.static items, nr
 	items:static = nr
 	return items
@@ -138,10 +137,10 @@ class Imba.Tag
 		build
 		self
 
-	attr tabindex
+	attr name inline: no
+	attr role inline: no
+	attr tabindex inline: no
 	attr title
-	attr role
-	attr name
 
 	def dom
 		@dom
@@ -193,25 +192,6 @@ class Imba.Tag
 	###
 	def html
 		@dom:innerHTML
-
-	###
-	Method that is called by the compiled tag-chains, for
-	binding events on tags to methods etc.
-	`<a :tap=fn>` compiles to `tag('a').setHandler('tap',fn,this).end()`
-	where this refers to the context in which the tag is created.
-	@return {self}
-	###
-	def setHandler event, handler, ctx
-		var key = 'on' + event
-
-		if handler isa Function
-			self[key] = handler
-		elif handler isa Array
-			var fn = handler.shift
-			self[key] = do |e| ctx[fn].apply(ctx,handler.concat(e))
-		else
-			self[key] = do |e| ctx[handler](e)
-		self
 		
 	def on event, handler, slot
 		let handlers = @on_ ||= []
@@ -342,7 +322,6 @@ class Imba.Tag
 	###
 	def renderTemplate
 		var body = template
-		# is it dynamic?
 		setChildren(body) if body != self
 		self
 
@@ -387,54 +366,6 @@ class Imba.Tag
 			dom.insertBefore( (node.@dom or node), (rel.@dom or rel) )
 			Imba.TagManager.insert(node.@tag or node, self)
 			# FIXME ensure these are not called for text nodes
-		self
-
-	###
-	The .append method inserts the specified content as the last child
-	of the target node. If the content is already a child of node it
-	will be moved to the end.
-	
-		var root = <div.root>
-		var item = <div.item> "This is an item"
-		root.append item # appends item to the end of root
-
-		root.append "some text" # append text
-		root.append [<ul>,<ul>] # append array
-	###
-	def append item
-		# possible to append blank
-		# possible to simplify on server?
-		return self unless item
-
-		if item isa Array
-			member && append(member) for member in item
-
-		elif item isa String or item isa Number
-			var node = Imba.document.createTextNode(item)
-			@dom.appendChild(node)
-			@empty = no if @empty			
-		else
-			# should delegate to self.appendChild
-			appendChild(item)
-			@empty = no if @empty
-
-		return self
-
-	###
-	@todo Should support multiple arguments like append
-
-	The .prepend method inserts the specified content as the first
-	child of the target node. If the content is already a child of 
-	node it will be moved to the start.
-	
-		node.prepend <div.top> # prepend node
-		node.prepend "some text" # prepend text
-		node.prepend [<ul>,<ul>] # prepend array
-
-	###
-	def prepend item
-		var first = @dom:childNodes[0]
-		first ? insertBefore(item, first) : appendChild(item)
 		self
 
 
@@ -594,12 +525,6 @@ class Imba.Tag
 		@dom:classList
 
 	###
-	@deprecated
-	###
-	def classes
-		throw "Imba.Tag#classes is removed. Use Imba.Tag#flags"
-
-	###
 	Add speficied flag to current node.
 	If a second argument is supplied, it will be coerced into a Boolean,
 	and used to indicate whether we should remove the flag instead.
@@ -651,12 +576,12 @@ class Imba.Tag
 	@return {self}
 	###
 	def setFlag name, value
-		@namedFlags ||= []
-		let prev = @namedFlags[name]
+		let flags = @_:flags ||= []
+		let prev = flags[name]
 		if prev != value
 			unflag(prev) if prev
 			flag(value) if value
-			@namedFlags[name] = value
+			flags[name] = value
 		return self
 
 
@@ -732,34 +657,14 @@ class Imba.Tag
 	@return {Imba.Tag}
 	###
 	def closest sel
-		# FIXME use native implementation if supported
-		return parent unless sel # should return self?!
-		var node = self
-		sel = sel.query if sel:query
-
-		while node
-			return node if node.matches(sel)
-			node = node.parent
-		return null
-
-	###
-	Get the index of node.
-	@return {Number}
-	###
-	def index
-		var i = 0
-		var el = dom
-		while el:previousSibling
-			el = el:previousSibling
-			i++
-		return i
+		Imba.getTagForDom(@dom.closest(sel))
 
 	###
 	Check if node contains other node
 	@return {Boolean} 
 	###
 	def contains node
-		dom.contains(node and node.@dom or node)
+		dom.contains(node.@dom or node)
 
 
 	###
@@ -796,17 +701,7 @@ class Imba.Tag
 	@return {Imba.Event}
 	###
 	def trigger name, data = {}
-		if $web$
-			Imba.Events.trigger(name,self,data: data)
-		else
-			self
-
-	def style= style
-		setAttribute('style',style)
-		self
-
-	def style
-		getAttribute('style')
+		$web$ ? Imba.Events.trigger(name,self,data: data) : null
 
 	###
 	Focus on current node
@@ -937,6 +832,7 @@ class Imba.Tags
 		extender(tagtype,supertype)
 
 		if body
+			# deprecate
 			if body:length == 2
 				# create clone
 				unless tagtype.hasOwnProperty('TAGS')
@@ -1018,7 +914,6 @@ svg:element = Imba.SVGTag
 
 Imba.TAGS = html # make the html namespace the root
 
-
 def Imba.defineTag name, supr = '', &body
 	return Imba.TAGS.defineTag(name,supr,body)
 
@@ -1072,7 +967,7 @@ def Imba.getTagForDom dom
 
 	return type.new(dom,null).awaken(dom)
 
-
+# deprecate
 def Imba.generateCSSPrefixes
 	var styles = window.getComputedStyle(document:documentElement, '')
 

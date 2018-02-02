@@ -10,7 +10,7 @@ describe "Tags - SVG" do
 			<svg:g>
 			<svg:circle r=20>
 
-		Imba.root.append item
+		Imba.root.appendChild item
 
 		try
 			<svg:div>
