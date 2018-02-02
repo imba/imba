@@ -1,7 +1,9 @@
 ## 1.3.0-beta.1
 * Remove deprecated selector-syntax
 * Remove deprecated Tag#object, Tag#width, Tag#height
+* Remove deprecated Imba.isClient and Imba.isServer
 * Add support for event modifiers (e.g. `<div :keydown.enter.halt=...>`)
+* Allow all attributes on svg elements
 * Performance improvements
 
 ## 1.2.1
