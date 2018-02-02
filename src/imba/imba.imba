@@ -5,20 +5,6 @@ Imba is the namespace for all runtime related utilities
 var Imba = {VERSION: '1.3.0-beta.1'}
 
 ###
-True if running in client environment.
-@return {bool}
-###
-def Imba.isClient
-	return $web$
-
-###
-True if running in server environment.
-@return {bool}
-###
-def Imba.isServer
-	return $node$
-
-###
 
 Light wrapper around native setTimeout that expects the block / function
 as last argument (instead of first). It also triggers an event to Imba
