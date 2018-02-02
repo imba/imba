@@ -349,11 +349,11 @@ extend tag element
 		if text != @text
 			let val = text == null or text === false ? '' : text
 			if $web$
-				if @_:text
-					@_:text:textContent = val
+				if this:$:text
+					this:$:text:textContent = val
 				else
 					dom:textContent = val
-					@_:text = dom:firstChild
+					this:$:text = dom:firstChild
 			else
 				dom:textContent = val
 			@text = @children = text

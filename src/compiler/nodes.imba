@@ -5907,6 +5907,22 @@ export class TagDesc < Node
 		p 'TagDescClasses',$0
 		self
 
+export class TagCache < Node
+
+	def initialize root, value
+		@root = root
+		@value = value
+		@counter = 0
+
+	def nextRef
+		let ref = counterToShortRef(@counter++)
+		# console.log "next ref {root}"
+		option(:lowercase) ? ref.toLowerCase : ref
+
+	def c
+		"{@value.c}"
+
+
 export class Tag < Node
 
 	prop parts
@@ -6023,12 +6039,13 @@ export class Tag < Node
 
 
 	def staticCache
+		return @staticCache if @staticCache
 		if @fragment
-			@staticCache ||= @fragment.scope.declare("__",OP('.',This.new,'__')) # .tagContextCache
+			@staticCache ||= TagCache.new(self,@fragment.scope.declare("$",OP('.',This.new,'$'))).set(lowercase: yes)
 		elif type isa Self
 			@staticCache ||= @tagScope.tagContextCache
-		elif explicitKey or option(:loop)
-			@staticCache ||= OP('.',reference,'__')
+		elif explicitKey or option(:loop) 
+			@staticCache ||= TagCache.new(self,OP('.',reference,'$')).set(lowercase: yes)
 		elif @parent
 			@staticCache ||= @parent.staticCache
 
@@ -6094,7 +6111,8 @@ export class Tag < Node
 
 		elif o:body
 			if o:body isa ArgList and o:body.count == 1 and o:body.first.isString
-				o:body.first.@noparen = yes
+				content = o:body.first
+				content.@noparen = yes
 				bodySetter = "setText"
 
 			else
@@ -6204,9 +6222,11 @@ export class Tag < Node
 
 		if reactive and parent and parent.tree and !option(:ivar)
 			# not if it has a separate tag?
-			o:treeRef ||= parent.tree.nextCacheKey(self)
-			if parent.option(:treeRef) and !parent.explicitKey and !parent.option(:loop) and !(parent.tree isa TagFragmentTree)
-				o:treeRef = parent.option(:treeRef) + o:treeRef
+			# let cache = parent.staticCache # : closureCache
+			o:treeRef ||= parent.staticCache.nextRef # counterToShortRef(cache.@counter = (cache.@counter || 0) + 1)
+			# o:treeRef ||= parent.tree.nextCacheKey(self)
+			# if parent.option(:treeRef) and !parent.explicitKey and !parent.option(:loop) and !(parent.tree isa TagFragmentTree)
+			# 	o:treeRef = parent.option(:treeRef) + o:treeRef
 		
 		var body = content and content.c(expression: yes)
 		if body
@@ -6269,9 +6289,9 @@ export class Tag < Node
 			elif o:key and !o:treeRef
 				# p "has dynamic key but not inside any node",o:key.c
 				let method = STACK.method
-				let paths = OP('.',OP('.',Self.new,'__'),'_' + method.name)
+				let paths = OP('.',OP('.',Self.new,'$'),'_' + method.name)
 				let setter = OP('=',paths,OP('||',paths,LIT('{}')))
-				ctx = scope.closure.declare('__',Parens.new(setter))
+				ctx = scope.closure.declare('$',Parens.new(setter))
 				key = o:key
 
 			elif o:key and !o:loop
@@ -6317,8 +6337,9 @@ export class Tag < Node
 				
 				ctx = s.declare(kvar,Parens.new(setter))
 			else
-				# or the tree-cache no?
 				ctx = parent ? parent.staticCache : closureCache
+
+
 
 			# unless ctx
 			# 	if parent
@@ -6335,7 +6356,7 @@ export class Tag < Node
 			else
 				key.cache if key:cache isa Function
 				# console.log("compile",scope__.toString)
-				out = "{acc.c} = {acc.c} || {out}"
+				out = "{acc.c}={acc.c} || {out}"
 
 			if @reference
 				out = "{reference.c} = {out}"
@@ -6379,12 +6400,15 @@ export class TagTree < ListNode
 		var ref = counterToShortRef(num)
 
 		if ref:length > 1
+			# what?
 			ref = ref + ref:length
 
-		# if @owner.explicitKey or @owner.option(:loop)
-		ref = cachePrefix + ref
-		# ref = ref.toLowerCase unless @owner.type isa Self
+		unless altCache
+			ref = ref.toLowerCase
 		return ref
+
+	def altCache
+		@owner.explicitKey or @owner.option(:loop)
 
 	def cachePrefix
 		if @owner.explicitKey or @owner.option(:loop)
@@ -6443,6 +6467,9 @@ export class TagTree < ListNode
 		no
 
 export class TagFragmentTree < TagTree
+	
+	def altCache
+		yes
 
 	def cachePrefix
 		'$'
@@ -7260,7 +7287,7 @@ export class Scope
 		@tagContextPath ||= imbaTags
 
 	def tagContextCache
-		@tagContextCache ||= closure.declare("__",OP('.',context.reference,'__'))
+		@tagContextCache ||= TagCache.new(self,closure.declare("$",OP('.',context.reference,'$')))
 
 	def context
 		@context ||= ScopeContext.new(self)
@@ -7592,7 +7619,7 @@ export class MethodScope < Scope
 		yes
 
 	def tagContext
-		@tagContext ||= self.declare("$",OP('.',This.new,'__'))
+		@tagContext ||= self.declare("$",OP('.',This.new,'$'))
 
 export class LambdaScope < Scope
 

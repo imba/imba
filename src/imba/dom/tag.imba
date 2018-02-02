@@ -131,7 +131,7 @@ class Imba.Tag
 
 	def initialize dom,ctx
 		self.dom = dom
-		self.@_ = {}
+		self:$ = {}
 		@owner_ = ctx
 		self.FLAGS = 0
 		build
@@ -437,7 +437,7 @@ class Imba.Tag
 	###
 	def empty
 		if @dom:firstChild
-			@_:text = null
+			this:$:text = null
 			@dom.removeChild(@dom:firstChild) while @dom:firstChild
 			Imba.TagManager.remove(null,self)
 			
@@ -576,7 +576,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def setFlag name, value
-		let flags = @_:flags ||= []
+		let flags = this:$:flags ||= []
 		let prev = flags[name]
 		if prev != value
 			unflag(prev) if prev
