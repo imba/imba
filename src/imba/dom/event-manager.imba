@@ -160,6 +160,8 @@ class Imba.EventManager
 
 		for item in listeners
 			root.addEventListener(item[0],item[1],item[2])
+			
+		window.addEventListener('hashchange',Imba:commit)
 		self
 
 	def ondisable
@@ -168,4 +170,6 @@ class Imba.EventManager
 
 		for item in listeners
 			root.removeEventListener(item[0],item[1],item[2])
+
+		window.removeEventListener('hashchange',Imba:commit)
 		self
