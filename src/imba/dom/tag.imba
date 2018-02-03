@@ -132,6 +132,7 @@ class Imba.Tag
 	def initialize dom,ctx
 		self.dom = dom
 		self:$ = {}
+		@tree_ = null
 		@owner_ = ctx
 		self.FLAGS = 0
 		build
@@ -292,10 +293,10 @@ class Imba.Tag
 	###
 	def setChildren nodes, type
 		if $node$
-			@children = nodes
+			@tree_ = nodes
 		else
 			@empty ? append(nodes) : empty.append(nodes)
-			@children = null # ?
+			@tree_ = null
 		self
 
 	###
@@ -391,7 +392,7 @@ class Imba.Tag
 	###
 	def text= txt
 		@empty = no
-		@dom:textContent = txt ?= ""
+		@dom:textContent = (txt == null or text === false) ? '' : txt
 		self
 
 
@@ -441,7 +442,7 @@ class Imba.Tag
 			@dom.removeChild(@dom:firstChild) while @dom:firstChild
 			Imba.TagManager.remove(null,self)
 			
-		@children = @text = null
+		@nodes_ = @text_ = null
 		@empty = yes
 		self
 
@@ -871,7 +872,6 @@ class Imba.Tags
 				if let props = Imba.HTML_PROPS[type]
 					for name in props.split(" ")
 						Imba.attr(klass,name,dom: yes)
-				
 		return klass
 		
 	def $ typ, owner

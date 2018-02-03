@@ -1,3 +1,5 @@
+extern navigator
+
 var Imba = require("../imba")
 
 # 1 - static shape - unknown content
@@ -288,7 +290,7 @@ def reconcileNested root, new, old, caret
 extend tag element
 
 	def setChildren new, typ
-		var old = @children
+		var old = @tree_
 
 		if new === old and new and new:taglen == undefined
 			return self
@@ -339,22 +341,28 @@ extend tag element
 			empty
 			appendNested(self,new)
 
-		@children = new
+		@tree_ = new
 		return self
 
 	def content
 		@content or children.toArray
 	
 	def setText text
-		if text != @text
-			let val = text == null or text === false ? '' : text
-			if $web$
-				if this:$:text
-					this:$:text:textContent = val
-				else
-					dom:textContent = val
-					this:$:text = dom:firstChild
-			else
-				dom:textContent = val
-			@text = @children = text
+		if text != @tree_
+			var val = text === null or text === false ? '' : text
+			(@text_ or @dom):textContent = val
+			@text_ ||= @dom:firstChild
+			@tree_ = text
 		self
+
+# if $web$
+# optimization for setText
+var proto = Imba.Tag:prototype
+var apple = typeof navigator != 'undefined' and (navigator:vendor or '').indexOf('Apple') == 0
+if apple
+	def proto.setText text
+		if text != @tree_
+			@dom:textContent = (text === null or text === false ? '' : text)
+			@tree_ = text
+		return self
+# optimization

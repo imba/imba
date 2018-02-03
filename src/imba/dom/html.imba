@@ -6,13 +6,14 @@ tag fragment < element
 	def self.createNode
 		Imba.document.createDocumentFragment
 
+extend tag html
+	def parent
+		null
+
+
 extend tag canvas
 	def context type = '2d'
 		dom.getContext(type)
-
-tag html
-	def parent
-		null
 
 extend tag select
 	def value= value
@@ -39,4 +40,3 @@ extend tag select
 		super
 		syncValue
 
-yes

@@ -185,8 +185,8 @@ global class ImbaServerElement
 		self
 		
 	def resolve
-		if @resolvedChildren != @tag.@children
-			var content = @tag.@children
+		if @resolvedChildren != @tag.@tree_
+			var content = @tag.@tree_
 			@resolvedChildren = content
 			@children = []
 			appendNested(content)
@@ -262,17 +262,9 @@ extend tag element
 	def empty
 		@dom:children = []
 		@dom:innerHTML = null
+		@tree_ = null
 		@empty = yes
 		self
-
-	def first
-		@dom:children[0]
-	
-	def last
-		@dom:children[@dom:children:length - 1]
-
-	def prepend item
-		@dom:children.unshift(item)
 
 	def toString
 		dom.toString
