@@ -27,6 +27,8 @@ var store = {
 	choices:
 		one: {title: "One"}
 		two: {title: "Two"}
+	
+	callSomething: do console.log "callSomething"
 }
 
 var update = do
@@ -38,7 +40,10 @@ var update = do
 
 var app = Imba.mount <div[store].app ->
 	<form>
-		<input type='text' model='title'>
+		<div>
+			<h2> "Event modifiers"
+			
+		<input type='text' model='title' :keydown.esc=store:callSomething :keydown.del=store:callSomething>
 		<input type='text' model.trim='name'>
 		<input type='text' model.lazy='subtitle'>
 		<input type='text' model.number='price'>

@@ -16,6 +16,7 @@ var checkKeycode = do $1:keyCode ? ($1:keyCode !== $3) : false
 # return true to skip handler
 export var Modifiers =
 	halt:    do this.stopPropagation and false
+	stop:    do this.stopPropagation and false
 	prevent: do this.preventDefault and false
 	silence: do this.silence and false
 	bubble:  do false
@@ -28,6 +29,7 @@ export var Modifiers =
 	alt:     do $1:altKey != true
 	meta:    do $1:metaKey != true
 	keycode: do $1:keyCode ? ($1:keyCode !== $3) : false
+	del:     do $1:keyCode ? ($1:keyCode !== 8 and $1:keyCode !== 46) : false
 
 ###
 Imba handles all events in the dom through a single manager,

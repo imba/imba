@@ -433,7 +433,9 @@ var store = {
 	choices: {
 		one: {title: "One"},
 		two: {title: "Two"}
-	}
+	},
+	
+	callSomething: function() { return console.log("callSomething"); }
 };
 
 var update = function() {
@@ -448,82 +450,86 @@ var app = Imba.mount(_T.$('div',this).flag('app').setData(store).setTemplate(fun
 	var $ = this.$, self = this;
 	return Imba.static([
 		($.a=$.a || _T.$('form',this)).setContent([
-			($.b=$.b || _T.$('input',this).setType('text').setModel('title')).end(),
-			($.c=$.c || _T.$('input',this).setType('text').set('model','name',{trim:1})).end(),
-			($.d=$.d || _T.$('input',this).setType('text').set('model','subtitle',{lazy:1})).end(),
-			($.e=$.e || _T.$('input',this).setType('text').set('model','price',{number:1})).end(),
+			($.b=$.b || _T.$('div',this)).setContent(
+				($.c=$.c || _T.$('h2',this).setText("Event modifiers")).end()
+			,2).end(),
 			
-			($.f=$.f || _T.$('div',this)).setContent([
-				($.g=$.g || _T.$('input',this).setType('range').setMin(0).setMax(1000).setStep(1).set('model','price',{number:1,lazy:1})).end(),
-				($.h=$.h || _T.$('input',this).setType('range').setMin(0).setMax(1000).setStep(1).set('model','price',{number:1})).end()
+			($.d=$.d || _T.$('input',this).setType('text').setModel('title')).on('keydown.esc',store.callSomething,0).on('keydown.del',store.callSomething,1).end(),
+			($.e=$.e || _T.$('input',this).setType('text').set('model','name',{trim:1})).end(),
+			($.f=$.f || _T.$('input',this).setType('text').set('model','subtitle',{lazy:1})).end(),
+			($.g=$.g || _T.$('input',this).setType('text').set('model','price',{number:1})).end(),
+			
+			($.h=$.h || _T.$('div',this)).setContent([
+				($.i=$.i || _T.$('input',this).setType('range').setMin(0).setMax(1000).setStep(1).set('model','price',{number:1,lazy:1})).end(),
+				($.j=$.j || _T.$('input',this).setType('range').setMin(0).setMax(1000).setStep(1).set('model','price',{number:1})).end()
 			],2).end(),
 			
-			($.i=$.i || _T.$('select',this).setModel("selected")).setContent([
-				($.j=$.j || _T.$('option',this).setDisabled(true).setValue("").setText("Please select one")).end(),
-				($.k=$.k || _T.$('option',this).setText("A")).end(),
-				($.l=$.l || _T.$('option',this).setText("B")).end(),
-				($.m=$.m || _T.$('option',this).setText("C")).end()
+			($.k=$.k || _T.$('select',this).setModel("selected")).setContent([
+				($.l=$.l || _T.$('option',this).setDisabled(true).setValue("").setText("Please select one")).end(),
+				($.m=$.m || _T.$('option',this).setText("A")).end(),
+				($.n=$.n || _T.$('option',this).setText("B")).end(),
+				($.o=$.o || _T.$('option',this).setText("C")).end()
 			],2).end(),
 			
-			($.n=$.n || _T.$('select',this).setModel("multiple").setMultiple(true)).setContent([
-				($.o=$.o || _T.$('option',this).setDisabled(true).setValue("").setText("Please select one")).end(),
-				($.p=$.p || _T.$('option',this).setText("A")).end(),
-				($.q=$.q || _T.$('option',this).setText("B")).end(),
-				($.r=$.r || _T.$('option',this).setText("C")).end()
+			($.p=$.p || _T.$('select',this).setModel("multiple").setMultiple(true)).setContent([
+				($.q=$.q || _T.$('option',this).setDisabled(true).setValue("").setText("Please select one")).end(),
+				($.r=$.r || _T.$('option',this).setText("A")).end(),
+				($.s=$.s || _T.$('option',this).setText("B")).end(),
+				($.t=$.t || _T.$('option',this).setText("C")).end()
 			],2).end(),
 			
-			($.s=$.s || _T.$('select',this).set('model',"quantity",{number:1})).setContent([
-				($.t=$.t || _T.$('option',this).setText("1")).end(),
-				($.u=$.u || _T.$('option',this).setText("2")).end(),
-				($.v=$.v || _T.$('option',this).setText("3")).end(),
-				($.w=$.w || _T.$('option',this).setText("4")).end(),
-				($.x=$.x || _T.$('option',this).setText("5")).end()
+			($.u=$.u || _T.$('select',this).set('model',"quantity",{number:1})).setContent([
+				($.v=$.v || _T.$('option',this).setText("1")).end(),
+				($.w=$.w || _T.$('option',this).setText("2")).end(),
+				($.x=$.x || _T.$('option',this).setText("3")).end(),
+				($.y=$.y || _T.$('option',this).setText("4")).end(),
+				($.z=$.z || _T.$('option',this).setText("5")).end()
 			],2).end(),
 			
-			($.y=$.y || _T.$('select',this).set('model',"numbers",{number:1}).setMultiple(true)).setContent([
-				($.z=$.z || _T.$('option',this).setText("1")).end(),
-				($.aa=$.aa || _T.$('option',this).setText("2")).end(),
-				($.ab=$.ab || _T.$('option',this).setText("3")).end(),
-				($.ac=$.ac || _T.$('option',this).setText("4")).end(),
-				($.ad=$.ad || _T.$('option',this).setText("5")).end()
+			($.aa=$.aa || _T.$('select',this).set('model',"numbers",{number:1}).setMultiple(true)).setContent([
+				($.ab=$.ab || _T.$('option',this).setText("1")).end(),
+				($.ac=$.ac || _T.$('option',this).setText("2")).end(),
+				($.ad=$.ad || _T.$('option',this).setText("3")).end(),
+				($.ae=$.ae || _T.$('option',this).setText("4")).end(),
+				($.af=$.af || _T.$('option',this).setText("5")).end()
 			],2).end(),
 			
-			($.ae=$.ae || _T.$('div',this)).setContent(
-				($.af=$.af || _T.$('label',this)).setContent([
-					($.ag=$.ag || _T.$('input',this).setType('checkbox').setModel('completed')).end(),
-					($.ah=$.ah || _T.$('span',this).setText("Completed")).end()
+			($.ag=$.ag || _T.$('div',this)).setContent(
+				($.ah=$.ah || _T.$('label',this)).setContent([
+					($.ai=$.ai || _T.$('input',this).setType('checkbox').setModel('completed')).end(),
+					($.aj=$.aj || _T.$('span',this).setText("Completed")).end()
 				],2).end()
 			,2).end(),
 			
-			($.ai=$.ai || _T.$('div',this)).setContent([
-				($.aj=$.aj || _T.$('label',this)).setContent([
-					($.ak=$.ak || _T.$('input',this).setType("radio").setValue("One").setModel("picked")).end(),
-					($.al=$.al || _T.$('span',this).setText("One")).end()
+			($.ak=$.ak || _T.$('div',this)).setContent([
+				($.al=$.al || _T.$('label',this)).setContent([
+					($.am=$.am || _T.$('input',this).setType("radio").setValue("One").setModel("picked")).end(),
+					($.an=$.an || _T.$('span',this).setText("One")).end()
 				],2).end(),
-				($.am=$.am || _T.$('label',this)).setContent([
-					($.an=$.an || _T.$('input',this).setType("radio").setValue("Two").setModel("picked")).end(),
-					($.ao=$.ao || _T.$('span',this).setText("Two")).end()
+				($.ao=$.ao || _T.$('label',this)).setContent([
+					($.ap=$.ap || _T.$('input',this).setType("radio").setValue("Two").setModel("picked")).end(),
+					($.aq=$.aq || _T.$('span',this).setText("Two")).end()
 				],2).end(),
-				($.ap=$.ap || _T.$('div',this)).setText("Picked: " + (this.data().picked)).end()
+				($.ar=$.ar || _T.$('div',this)).setText("Picked: " + (this.data().picked)).end()
 			],2).end(),
 			
-			($.aq=$.aq || _T.$('div',this)).setContent([
-				($.ar=$.ar || _T.$('h2',this).setText("Rich radios")).end(),
-				($.as=$.as || _T.$('label',this)).setContent([
-					($.at=$.at || _T.$('input',this).setType("radio").setModel("choice")).setValue(this.data().choices.one).end(),
-					($.au=$.au || _T.$('span',this).setText("One")).end()
+			($.as=$.as || _T.$('div',this)).setContent([
+				($.at=$.at || _T.$('h2',this).setText("Rich radios")).end(),
+				($.au=$.au || _T.$('label',this)).setContent([
+					($.av=$.av || _T.$('input',this).setType("radio").setModel("choice")).setValue(this.data().choices.one).end(),
+					($.aw=$.aw || _T.$('span',this).setText("One")).end()
 				],2).end(),
-				($.av=$.av || _T.$('label',this)).setContent([
-					($.aw=$.aw || _T.$('input',this).setType("radio").setModel("choice")).setValue(this.data().choices.two).end(),
-					($.ax=$.ax || _T.$('span',this).setText("Two")).end()
+				($.ax=$.ax || _T.$('label',this)).setContent([
+					($.ay=$.ay || _T.$('input',this).setType("radio").setModel("choice")).setValue(this.data().choices.two).end(),
+					($.az=$.az || _T.$('span',this).setText("Two")).end()
 				],2).end(),
-				($.ay=$.ay || _T.$('div',this)).setText("Picked: " + JSON.stringify(this.data().choice || null)).end()
+				($.ba=$.ba || _T.$('div',this)).setText("Picked: " + JSON.stringify(this.data().choice || null)).end()
 			],2).end(),
 			
 			
-			($.az=$.az || _T.$('div',this)).setContent(
+			($.bb=$.bb || _T.$('div',this)).setContent(
 				(function() {
-					var t0, $1 = ($.ba = $.ba || []);
+					var t0, $1 = ($.bc = $.bc || []);
 					for (let i = 0, items = [1,2,3,4,5], len = $1.taglen = items.length, item; i < len; i++) {
 						item = items[i];
 						(t0 = $1[i]=$1[i] || _T.$('label',self)).setContent([
@@ -533,32 +539,32 @@ var app = Imba.mount(_T.$('div',this).flag('app').setData(store).setTemplate(fun
 					};return $1;
 				})()
 			,4).end(),
-			($.bb=$.bb || _T.$('div',self)).setContent([
-				($.bc=$.bc || _T.$('label',self)).setContent([
-					($.bd=$.bd || _T.$('input',self).setType('checkbox').setValue("Beginner").setModel('labels')).end(),
-					($.be=$.be || _T.$('span',self).setText("Beginner")).end()
+			($.bd=$.bd || _T.$('div',self)).setContent([
+				($.be=$.be || _T.$('label',self)).setContent([
+					($.bf=$.bf || _T.$('input',self).setType('checkbox').setValue("Beginner").setModel('labels')).end(),
+					($.bg=$.bg || _T.$('span',self).setText("Beginner")).end()
 				],2).end(),
-				($.bf=$.bf || _T.$('label',self)).setContent([
-					($.bg=$.bg || _T.$('input',self).setType('checkbox').setValue("Intermediate").setModel('labels')).end(),
-					($.bh=$.bh || _T.$('span',self).setText("Intermediate")).end()
+				($.bh=$.bh || _T.$('label',self)).setContent([
+					($.bi=$.bi || _T.$('input',self).setType('checkbox').setValue("Intermediate").setModel('labels')).end(),
+					($.bj=$.bj || _T.$('span',self).setText("Intermediate")).end()
 				],2).end(),
-				($.bi=$.bi || _T.$('label',self)).setContent([
-					($.bj=$.bj || _T.$('input',self).setType('checkbox').setValue("Expert").setModel('labels')).end(),
-					($.bk=$.bk || _T.$('span',self).setText("Expert")).end()
+				($.bk=$.bk || _T.$('label',self)).setContent([
+					($.bl=$.bl || _T.$('input',self).setType('checkbox').setValue("Expert").setModel('labels')).end(),
+					($.bm=$.bm || _T.$('span',self).setText("Expert")).end()
 				],2).end(),
-				($.bl=$.bl || _T.$('label',self)).setContent([
-					($.bm=$.bm || _T.$('input',self).setType("checkbox").setModel("labels")).setValue(self.data().choices.one).end(),
-					($.bn=$.bn || _T.$('span',self).setText("Rich 1")).end()
+				($.bn=$.bn || _T.$('label',self)).setContent([
+					($.bo=$.bo || _T.$('input',self).setType("checkbox").setModel("labels")).setValue(self.data().choices.one).end(),
+					($.bp=$.bp || _T.$('span',self).setText("Rich 1")).end()
 				],2).end(),
-				($.bo=$.bo || _T.$('label',self)).setContent([
-					($.bp=$.bp || _T.$('input',self).setType("checkbox").setModel("labels")).setValue(self.data().choices.two).end(),
-					($.bq=$.bq || _T.$('span',self).setText("Rich 2")).end()
+				($.bq=$.bq || _T.$('label',self)).setContent([
+					($.br=$.br || _T.$('input',self).setType("checkbox").setModel("labels")).setValue(self.data().choices.two).end(),
+					($.bs=$.bs || _T.$('span',self).setText("Rich 2")).end()
 				],2).end()
 			],2).end(),
 			
-			($.br=$.br || _T.$('div',self)).setContent([
+			($.bt=$.bt || _T.$('div',self)).setContent([
 				(function() {
-					var t0, $2 = ($.bs = $.bs || []);
+					var t0, $2 = ($.bu = $.bu || []);
 					for (let i = 0, items = iter$(self.data().multiple), len = $2.taglen = items.length, item; i < len; i++) {
 						item = items[i];
 						(t0 = $2[i]=$2[i] || _T.$('label',self)).setContent([
@@ -567,29 +573,29 @@ var app = Imba.mount(_T.$('div',this).flag('app').setData(store).setTemplate(fun
 						],2).end();
 					};return $2;
 				})(),
-				($.bt=$.bt || _T.$('p',self).setText("Remove by unchecking?")).end()
+				($.bv=$.bv || _T.$('p',self).setText("Remove by unchecking?")).end()
 			],1).end(),
 			
-			($.bu=$.bu || _T.$('div',self)).setContent([
-				($.bv=$.bv || _T.$('textarea',self).setName("stuff").setModel("description")).end(),
-				($.bw=$.bw || _T.$('textarea',self).setName("other")).setValue(self.data().description).end()
+			($.bw=$.bw || _T.$('div',self)).setContent([
+				($.bx=$.bx || _T.$('textarea',self).setName("stuff").setModel("description")).end(),
+				($.by=$.by || _T.$('textarea',self).setName("other")).setValue(self.data().description).end()
 			],2).end(),
 			
-			($.bx=$.bx || _T.$('div',self)).setContent([
-				($.by=$.by || _T.$('h2',self).setText("Select categories")).end(),
-				($.bz=$.bz || _T.$('h3',self).setText("Main category")).end(),
-				($.ca=$.ca || _T.$('select',self).setModel('mainCategory')).setContent(
+			($.bz=$.bz || _T.$('div',self)).setContent([
+				($.ca=$.ca || _T.$('h2',self).setText("Select categories")).end(),
+				($.cb=$.cb || _T.$('h3',self).setText("Main category")).end(),
+				($.cc=$.cc || _T.$('select',self).setModel('mainCategory')).setContent(
 					(function() {
-						var $3 = ($.cb = $.cb || []);
+						var $3 = ($.cd = $.cd || []);
 						for (let i = 0, len = $3.taglen = categories.length, item; i < len; i++) {
 							item = categories[i];
 							($3[i]=$3[i] || _T.$('option',self)).setValue(item).setContent(item.name,3).end();
 						};return $3;
 					})()
 				,4).end(),
-				($.cc=$.cc || _T.$('select',self).setModel('categories').setMultiple(true)).setContent(
+				($.ce=$.ce || _T.$('select',self).setModel('categories').setMultiple(true)).setContent(
 					(function() {
-						var $4 = ($.cd = $.cd || []);
+						var $4 = ($.cf = $.cf || []);
 						for (let i = 0, len = $4.taglen = categories.length, item; i < len; i++) {
 							item = categories[i];
 							($4[i]=$4[i] || _T.$('option',self)).setValue(item).setContent(item.name,3).end();
@@ -597,7 +603,7 @@ var app = Imba.mount(_T.$('div',this).flag('app').setData(store).setTemplate(fun
 					})()
 				,4).end(),
 				(function() {
-					var t0, $5 = ($.ce = $.ce || []);
+					var t0, $5 = ($.cg = $.cg || []);
 					for (let i = 0, len = $5.taglen = categories.length, item; i < len; i++) {
 						item = categories[i];
 						(t0 = $5[i]=$5[i] || _T.$('label',self)).setContent([
@@ -608,16 +614,16 @@ var app = Imba.mount(_T.$('div',this).flag('app').setData(store).setTemplate(fun
 				})()
 			],1).end(),
 			
-			($.cf=$.cf || _T.$('button',self).setType('button').setText("Update")).on('tap',update,0).end()
+			($.ch=$.ch || _T.$('button',self).setType('button').setText("Update")).on('tap',update,0).end()
 		],2).end(),
-		($.cg=$.cg || _T.$('section',self)).setContent([
-			($.ch=$.ch || _T.$('div',self)).setText("Rendered " + (self.data().counter++) + " times").end(),
-			($.ci=$.ci || _T.$('h3',self)).setContent(self.data().name,3).end(),
-			($.cj=$.cj || _T.$('h1',self)).setContent(self.data().title,3).end(),
-			($.ck=$.ck || _T.$('h2',self)).setContent(self.data().subtitle,3).end(),
-			($.cl=$.cl || _T.$('p',self)).setContent(self.data().description,3).end(),
-			($.cm=$.cm || _T.$('div',self)).setText("Is completed? " + (self.data().completed)).end(),
-			($.cn=$.cn || _T.$('div',self)).setContent(JSON.stringify(store),3).end()
+		($.ci=$.ci || _T.$('section',self)).setContent([
+			($.cj=$.cj || _T.$('div',self)).setText("Rendered " + (self.data().counter++) + " times").end(),
+			($.ck=$.ck || _T.$('h3',self)).setContent(self.data().name,3).end(),
+			($.cl=$.cl || _T.$('h1',self)).setContent(self.data().title,3).end(),
+			($.cm=$.cm || _T.$('h2',self)).setContent(self.data().subtitle,3).end(),
+			($.cn=$.cn || _T.$('p',self)).setContent(self.data().description,3).end(),
+			($.co=$.co || _T.$('div',self)).setText("Is completed? " + (self.data().completed)).end(),
+			($.cp=$.cp || _T.$('div',self)).setContent(JSON.stringify(store),3).end()
 		],2).end()
 	],1);
 }).end());
@@ -3364,6 +3370,7 @@ var checkKeycode = function(_0,_1,_2) { return _0.keyCode ? ((_0.keyCode !== _2)
 // return true to skip handler
 var Modifiers = exports.Modifiers = {
 	halt: function() { return this.stopPropagation() && false; },
+	stop: function() { return this.stopPropagation() && false; },
 	prevent: function() { return this.preventDefault() && false; },
 	silence: function() { return this.silence() && false; },
 	bubble: function() { return false; },
@@ -3375,7 +3382,8 @@ var Modifiers = exports.Modifiers = {
 	shift: function(_0) { return _0.shiftKey != true; },
 	alt: function(_0) { return _0.altKey != true; },
 	meta: function(_0) { return _0.metaKey != true; },
-	keycode: function(_0,_1,_2) { return _0.keyCode ? ((_0.keyCode !== _2)) : false; }
+	keycode: function(_0,_1,_2) { return _0.keyCode ? ((_0.keyCode !== _2)) : false; },
+	del: function(_0) { return _0.keyCode ? ((_0.keyCode !== 8 && _0.keyCode !== 46)) : false; }
 };
 
 /*
