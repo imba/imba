@@ -88,12 +88,16 @@ def Imba.await value
 		Promise.resolve(value)
 
 var dashRegex = /-./g
+var setterCache = {}
 
 def Imba.toCamelCase str
 	if str.indexOf('-') >= 0
 		str.replace(dashRegex) do |m| m.charAt(1).toUpperCase
 	else
 		str
+		
+def Imba.toSetter str
+	setterCache[str] ||= Imba.toCamelCase('set-' + str)
 
 def Imba.indexOf a,b
 	return (b && b:indexOf) ? b.indexOf(a) : []:indexOf.call(a,b)

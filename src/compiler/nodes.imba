@@ -6175,9 +6175,9 @@ export class Tag < Node
 						pjs = "setNestedAttr('{ns}','{k}',{aval.c})"
 				else
 					if modifiers
-						pjs = "set('{akey}',{aval.c}" + ',{' + modifiers.map(|mod| "{mod}:1" ).join(',') + '})'
+						pjs = "set('{aname}',{aval.c}" + ',{' + modifiers.map(|mod| "{mod}:1" ).join(',') + '})'
 					elif ns
-						pjs = "set('{akey}',{aval.c})"
+						pjs = "set('{aname}',{aval.c})"
 					else
 						pjs = "{helpers.setterSym(akey)}({aval.c})"
 						

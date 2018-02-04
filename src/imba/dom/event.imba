@@ -187,8 +187,7 @@ class Imba.Event
 		if handler isa Array
 			params = handler.slice(1)
 			handler = handler[0]
-			
-			
+
 		if handler isa String
 			let el = node
 			while el
@@ -198,8 +197,9 @@ class Imba.Event
 					handler = el[handler]
 					break
 				el = el.parent
-
+		
 		if handler isa Function
+			@silenced = no
 			result = handler.apply(context,params)
 		
 		# the default behaviour is that if a handler actually
@@ -230,16 +230,17 @@ class Imba.Event
 			@redirect = null
 			let node = domnode.@dom ? domnode : domnode.@tag
 			if node
+				if node[meth] isa Function
+					@responder ||= node
+					@silenced = no
+					result = args ? node[meth].apply(node,args) : node[meth](self,data)
+
 				if handlers = node:_on_
 					for handler in handlers when handler
 						let hname = handler[0]
 						if hname.indexOf(name) == 0 and bubble and (hname:length == name:length or hname[name:length] == '.')
 							processHandler(node,hname,handler[1] or [])
 					break unless bubble
-
-				if node[meth] isa Function
-					@responder ||= node
-					result = args ? node[meth].apply(node,args) : node[meth](self,data)
 
 				if node:onevent
 					node.onevent(self)

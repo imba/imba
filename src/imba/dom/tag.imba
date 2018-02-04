@@ -270,8 +270,12 @@ class Imba.Tag
 		dom.getAttributeNS(ns,name)
 	
 	
-	def set key, value
-		@dom:setAttribute(key,value)
+	def set key, value, mods
+		let setter = Imba.toSetter(key)
+		if self[setter] isa Function
+			self[setter](value,mods)
+		else
+			@dom:setAttribute(key,value)
 		self
 	
 	
