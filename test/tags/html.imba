@@ -11,12 +11,12 @@ describe "HTML" do
 				<option> "c"
 
 			eq el.value, "a"
-
-		test "setting value" do
-			var el = <select value="c">
-				<option> "a"
-				<option> "b"
-				<option> "c"
-
-			eq el.value, "c"
+		
+		# disable this for now
+		# test "setting value" do
+		# 	var el = <select value="c">
+		# 		<option> "a"
+		# 		<option> "b"
+		# 		<option> "c"
+		# 	eq el.value, "c"
 
