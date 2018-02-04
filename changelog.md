@@ -1,10 +1,13 @@
 ## 1.3.0-beta.1
-* Remove deprecated selector-syntax
-* Remove deprecated Tag#object, Tag#width, Tag#height
-* Remove deprecated Imba.isClient and Imba.isServer
 * Add support for event modifiers (e.g. `<div :keydown.enter.halt=...>`)
+* Add support for form input bindings (e.g. `<input[data] model='myField'>`)
 * Allow all attributes on svg elements
-* Performance improvements
+* Remove deprecated selector-syntax
+* Remove deprecated methods on Imba.Tag (object,width,height,append,prepend,style,setStyle)
+* Remove deprecated methods on Imba.Event (keychar,keycombo,source)
+* Remove deprecated Imba.isClient and Imba.isServer
+* Improve performance of setText
+* Improve performance of non-keyed tag lists
 
 ## 1.2.1
 * Allow reconciler to work with tag-like objects
