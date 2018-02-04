@@ -30,8 +30,7 @@ class Imba.Pointer
 			if e1:type == 'mousedown'
 				@button = e1:button
 
-				# do not create touch for right click
-				if @button == 2 or (touch and @button != 0)
+				if (@touch and @button != 0)
 					return
 
 				# cancel the previous touch
