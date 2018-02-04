@@ -365,8 +365,7 @@ Imba.Pointer.prototype.process = function (){
 		if (e1.type == 'mousedown') {
 			this._button = e1.button;
 			
-			// do not create touch for right click
-			if (this._button == 2 || (this.touch() && this._button != 0)) {
+			if ((this._touch && this._button != 0)) {
 				return;
 			};
 			
@@ -639,7 +638,7 @@ var Imba = __webpack_require__(0);
 var activate = false;
 if (typeof window !== 'undefined') {
 	if (window.Imba) {
-		console.warn(("Imba v" + (Imba.VERSION) + " is already loaded."));
+		console.warn(("Imba v" + (window.Imba.VERSION) + " is already loaded."));
 		Imba = window.Imba;
 	} else {
 		window.Imba = Imba;
@@ -657,7 +656,7 @@ if (true) {
 	__webpack_require__(6);
 };
 
-if (activate) {
+if (true && activate) {
 	Imba.EventManager.activate();
 };
 
