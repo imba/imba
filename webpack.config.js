@@ -2,6 +2,8 @@ var path = require('path');
 var webpack = require('webpack');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
+var package = require('./package.json');
+var loader = path.join(__dirname, "./loader");
 var minify = new UglifyJsPlugin({
 	uglifyOptions: {
 		ecma: 6,
@@ -17,13 +19,7 @@ var minify = new UglifyJsPlugin({
 
 module.exports = [{
 	module: {
-		rules: [
-			{
-				test: /.imba$/,
-				loader: path.join(__dirname, "./loader"),
-				options: {es5: true}
-			}
-		]
+		rules: [{test: /.imba$/, loader: loader, options: {es5: true}}]
 	},
 	resolve: {extensions: ['*', '.imba', '.js']},
 	entry: "./src/imba/index.imba",
@@ -40,12 +36,20 @@ module.exports = [{
 	plugins: [minify]
 },{
 	module: {
-		rules: [
-			{
-				test: /.imba$/,
-				loader: path.join(__dirname, "./loader")
-			}
-		]
+		rules: [{test: /.imba$/, loader: loader, options: {es5: true}}]
+	},
+	resolve: {extensions: ['*', '.imba', '.js']},
+	entry: "./src/compiler/compiler.imba",
+	output: {
+		filename: "./imbac.js",
+		library: "imbac",
+		libraryTarget: "umd"
+	},
+	node: {fs: false, process: false, global: false},
+	plugins: [minify]
+},{
+	module: {
+		rules: [{test: /.imba$/, loader: loader}]
 	},
 	resolve: {extensions: ['*', '.imba', '.js']},
 	entry: "./test/index.imba",
