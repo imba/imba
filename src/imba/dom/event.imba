@@ -19,7 +19,6 @@ export var Modifiers =
 	stop:    do this.stopPropagation and false
 	prevent: do this.preventDefault and false
 	silence: do this.silence and false
-	bubble:  do false
 	self:    do $1:target != $2.@dom
 	left:    do $1:button != undefined ? ($1:button !== 0) : checkKeycode($1,$2,keyCodes:left)
 	right:   do $1:button != undefined ? ($1:button !== 2) : checkKeycode($1,$2,keyCodes:right)
@@ -30,6 +29,8 @@ export var Modifiers =
 	meta:    do $1:metaKey != true
 	keycode: do $1:keyCode ? ($1:keyCode !== $3) : false
 	del:     do $1:keyCode ? ($1:keyCode !== 8 and $1:keyCode !== 46) : false
+	data:    do ($4:data = yes) and false
+	bubble:  do ($4:bubble = yes) and false
 
 ###
 Imba handles all events in the dom through a single manager,
@@ -152,21 +153,17 @@ class Imba.Event
 		self
 		
 	def processHandler node, name, handler # , mods = []
-		
-		let autoBubble = no
-		
+
 		# go through 
 		let modIndex = name.indexOf('.')
+		
+		var o = {}
 		
 		if modIndex >= 0
 			# could be optimized
 			let mods = name.split(".").slice(1)
 			# go through modifiers
 			for mod in mods
-				if mod == 'bubble'
-					autoBubble = yes
-					continue
-
 				let guard = Modifiers[mod]
 				unless guard
 					if keyCodes[mod]
@@ -179,7 +176,7 @@ class Imba.Event
 						continue
 				
 				# skipping this handler?
-				if guard.call(self,event,node,mod) == true
+				if guard.call(self,event,node,mod,o) == true
 					return
 
 		var context = node
@@ -189,15 +186,29 @@ class Imba.Event
 		if handler isa Array
 			params = handler.slice(1)
 			handler = handler[0]
+		
+		if o:data
+			let el = node
+			while el
+				if el.@data
+					params = [el.@data]
+					break
+				el = el.parent
 
 		if handler isa String
 			let el = node
-			while el
+			while el					
 				# should lookup actions?
 				if el[handler]
 					context = el
 					handler = el[handler]
 					break
+				
+				if el.@data and el.@data[handler] isa Function
+					context = el.@data
+					handler = el.@data[handler]
+					break
+					
 				el = el.parent
 		
 		if handler isa Function
@@ -207,7 +218,7 @@ class Imba.Event
 		# the default behaviour is that if a handler actually
 		# processes the event - we stop propagation. That's usually
 		# what you would want
-		if !autoBubble
+		if !o:bubble
 			stopPropagation
 		
 		@responder ||= node

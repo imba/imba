@@ -36,6 +36,7 @@ if $web$
 	require './tags/svg'
 	require './tags/html'
 	require './tags/templates'
+	require './tags/events'
 	
 if $node$
 	require './tags/escaping'

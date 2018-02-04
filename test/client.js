@@ -521,6 +521,7 @@ if (true) {
 	__webpack_require__(45);
 	__webpack_require__(46);
 	__webpack_require__(47);
+	__webpack_require__(48);
 };
 
 if (false) {};
@@ -3270,9 +3271,9 @@ var checkKeycode = function(_0,_1,_2) { return _0.keyCode ? ((_0.keyCode !== _2)
 // return true to skip handler
 var Modifiers = exports.Modifiers = {
 	halt: function() { return this.stopPropagation() && false; },
+	stop: function() { return this.stopPropagation() && false; },
 	prevent: function() { return this.preventDefault() && false; },
 	silence: function() { return this.silence() && false; },
-	bubble: function() { return false; },
 	self: function(_0,_1) { return _0.target != _1._dom; },
 	left: function(_0,_1) { return (_0.button != undefined) ? ((_0.button !== 0)) : checkKeycode(_0,_1,keyCodes.left); },
 	right: function(_0,_1) { return (_0.button != undefined) ? ((_0.button !== 2)) : checkKeycode(_0,_1,keyCodes.right); },
@@ -3281,7 +3282,10 @@ var Modifiers = exports.Modifiers = {
 	shift: function(_0) { return _0.shiftKey != true; },
 	alt: function(_0) { return _0.altKey != true; },
 	meta: function(_0) { return _0.metaKey != true; },
-	keycode: function(_0,_1,_2) { return _0.keyCode ? ((_0.keyCode !== _2)) : false; }
+	keycode: function(_0,_1,_2) { return _0.keyCode ? ((_0.keyCode !== _2)) : false; },
+	del: function(_0) { return _0.keyCode ? ((_0.keyCode !== 8 && _0.keyCode !== 46)) : false; },
+	data: function(_0,_1,_2,_3) { return (_3.data = true) && false; },
+	bubble: function(_0,_1,_2,_3) { return (_3.bubble = true) && false; }
 };
 
 /*
@@ -3439,10 +3443,9 @@ Imba.Event.prototype.redirect = function (node){
 };
 
 Imba.Event.prototype.processHandler = function (node,name,handler){ // , mods = []
-	let autoBubble = false;
-	
-	// go through 
 	let modIndex = name.indexOf('.');
+	
+	var o = {};
 	
 	if (modIndex >= 0) {
 		// could be optimized
@@ -3450,11 +3453,6 @@ Imba.Event.prototype.processHandler = function (node,name,handler){ // , mods = 
 		// go through modifiers
 		for (let i = 0, items = iter$(mods), len = items.length, mod; i < len; i++) {
 			mod = items[i];
-			if (mod == 'bubble') {
-				autoBubble = true;
-				continue;
-			};
-			
 			let guard = Modifiers[mod];
 			if (!guard) {
 				if (keyCodes[mod]) {
@@ -3470,7 +3468,7 @@ Imba.Event.prototype.processHandler = function (node,name,handler){ // , mods = 
 			};
 			
 			// skipping this handler?
-			if (guard.call(this,this.event(),node,mod) == true) {
+			if (guard.call(this,this.event(),node,mod,o) == true) {
 				return;
 			};
 		};
@@ -3485,6 +3483,17 @@ Imba.Event.prototype.processHandler = function (node,name,handler){ // , mods = 
 		handler = handler[0];
 	};
 	
+	if (o.data) {
+		let el = node;
+		while (el){
+			if (el._data) {
+				params = [el._data];
+				break;
+			};
+			el = el.parent();
+		};
+	};
+	
 	if ((typeof handler=='string'||handler instanceof String)) {
 		let el = node;
 		while (el){
@@ -3494,6 +3503,13 @@ Imba.Event.prototype.processHandler = function (node,name,handler){ // , mods = 
 				handler = el[handler];
 				break;
 			};
+			
+			if (el._data && (el._data[handler] instanceof Function)) {
+				context = el._data;
+				handler = el._data[handler];
+				break;
+			};
+			
 			el = el.parent();
 		};
 	};
@@ -3506,7 +3522,7 @@ Imba.Event.prototype.processHandler = function (node,name,handler){ // , mods = 
 	// the default behaviour is that if a handler actually
 	// processes the event - we stop propagation. That's usually
 	// what you would want
-	if (!autoBubble) {
+	if (!o.bubble) {
 		this.stopPropagation();
 	};
 	
@@ -11038,6 +11054,147 @@ _T.defineTag('hello', function(tag){
 HE = _T.$('hello',this).end();
 document.body.appendChild(TT.dom());
 document.body.appendChild(HE.dom());
+
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Imba = __webpack_require__(0), _T = Imba.TAGS, self = this;
+// externs;
+
+var value = null;
+var counter = 0;
+var emits = [];
+
+var store = {
+	title: "Something",
+	counter: 0,
+	update: function(val) { if(val === undefined) val = true;
+	return value = val; },
+	inc: function() {
+		this.counter++;
+		return counter++;
+	},
+	
+	reset: function() {
+		emits = [];
+		store.counter = counter = 0;
+		return value = null;
+	},
+	
+	a: function() { return emits.push('a'); },
+	b: function() { return emits.push('b'); },
+	c: function() { return emits.push('c'); },
+	d: function() { return emits.push('d'); },
+	arg: function() { var $0 = arguments, i = $0.length;
+	var args = new Array(i>0 ? i : 0);
+	while(i>0) args[i-1] = $0[--i];
+	return emits.push.apply(emits,args); },
+	dataAction: function() { return emits.push(this); }
+};
+
+_T.extendTag('element', function(tag){
+	
+	tag.prototype.click = function (o){
+		if(o === undefined) o = {};
+		return this.dispatch('click',o);
+	};
+	
+	tag.prototype.dispatch = function (name,opts){
+		if(opts === undefined) opts = {};
+		emits = []; // reset emits every time
+		let type = MouseEvent;
+		let desc = {
+			bubbles: true,
+			cancelable: true
+		};
+		for (let v, i = 0, keys = Object.keys(opts), l = keys.length, k; i < l; i++){
+			k = keys[i];v = opts[k];desc[k] = v;
+		};
+		let event = new type(name,desc);
+		this.dom().dispatchEvent(event);
+		return emits;
+	};
+});
+
+var Button = _T.defineTag('Button', function(tag){
+	tag.prototype.test = function (handler,params,o){
+		if(o === undefined) o = {};
+		this._on_ || (this._on_ = []);
+		this._on_[0] = [handler,params];
+		return this.click(o);
+	};
+});
+
+var Example = _T.defineTag('Example', function(tag){
+	
+	tag.prototype.render = function (){
+		var t0, t1, t2;
+		return this.setChildren([
+			(this._btn || Button.build(this).ref_('btn',this).setText("Button")).setData({a: 1,b: 2}).end(),
+			(t0 = this._a || _T.$('div',this).ref_('a',this).on('tap','a',0)).setContent([
+				(this._tap || _T.$('button',this).ref_('tap',this).on('tap','b',0).setText("Increment")).end(),
+				(this._incbubble || _T.$('button',this).ref_('incbubble',this).on('tap.bubble','b',0).setText("Increment")).end(),
+				(this._stopshift || _T.$('button',this).ref_('stopshift',this).on('tap.stop.shift','b',0).setText("Increment")).end(),
+				(this._shiftbubble || _T.$('button',this).ref_('shiftbubble',this).on('tap.shift.bubble','b',0).setText("Increment")).end(),
+				(t1 = this._stopself || _T.$('button',this).ref_('stopself',this).on('tap.stop.self','b',0)).setContent((this._stopselfinner || _T.$('b',this).ref_('stopselfinner',this).setText("Increment")).end(),2).end(),
+				(t2 = this._selfstop || _T.$('button',this).ref_('selfstop',this).on('tap.self.stop','b',0)).setContent((this._selfstopinner || _T.$('b',this).ref_('selfstopinner',this).setText("Increment")).end(),2).end()
+			],2).end()
+		],2).synced();
+	};
+	
+	tag.prototype.tagAction = function (){
+		emits.push(this);
+		return this;
+	};
+	
+	tag.prototype.testModifiers = function (){
+		eq(this._tap.click(),['b']);
+		eq(this._incbubble.click(),['b','a']);
+		
+		// event should be stopped - but not triggered because shift is not pressed
+		eq(this._stopshift.click(),[]);
+		eq(this._stopshift.click({shiftKey: true}),['b']);
+		// will bubble through to parent - but not click
+		eq(this._shiftbubble.click(),['a']);
+		// handled - and then bubble	
+		eq(this._stopself.click(),['b']);
+		// click inside
+		eq(this._stopselfinner.click(),[]);
+		eq(this._selfstopinner.click(),['a']);
+		
+		// .data - will include the closest tag-data as the argument
+		return eq(this._btn.test('tap.data','arg'),[this._btn.data()]);
+	};
+	
+	tag.prototype.testArguments = function (){
+		// supply arguments with array
+		eq(this._btn.test('tap',['arg',1,2,3]),[1,2,3]);
+		
+		// no arguments should send the event itself as argument
+		ok(this._btn.test('tap','arg')[0] instanceof Imba.Event);
+		
+		// the action will be called on the object it is found
+		eq(this._btn.test('tap','dataAction'),[store]);
+		return eq(this._btn.test('tap','tagAction'),[this]);
+		// allow arguments inline - experimental
+	};
+});
+
+
+
+describe("Tags - Events",function() {
+	
+	var node = Example.build(self).setData(store).end();
+	document.body.appendChild(node.dom());
+	test("modifiers",function() { return node.testModifiers(); });
+	return test("arguments",function() { return node.testArguments(); });
+});
+
+
+
+
 
 
 /***/ })
