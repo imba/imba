@@ -1,3 +1,6 @@
+## 1.3.0-beta.2
+* Events will try to resolve string actions (e.g. `<div :tap='myAction'>`) on ascending tags and their data.
+
 ## 1.3.0-beta.1
 * Add support for event modifiers (e.g. `<div :keydown.enter.halt=...>`)
 * Add support for form input bindings (e.g. `<input[data] model='myField'>`)
