@@ -8,6 +8,7 @@
 * Remove deprecated Imba.isClient and Imba.isServer
 * Improve performance of setText
 * Improve performance of non-keyed tag lists
+* 30% smaller library (now 53k minified, 14k gzipped)
 
 ## 1.2.1
 * Allow reconciler to work with tag-like objects
