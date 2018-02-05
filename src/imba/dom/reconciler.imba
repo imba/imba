@@ -6,6 +6,7 @@ var Imba = require("../imba")
 # 2 - static shape and static children
 # 3 - single item
 # 4 - optimized array - only length will change
+# 5 - optimized collection
 
 def removeNested root, node, caret
 	# if node/nodes isa String
@@ -189,6 +190,47 @@ def reconcileCollection root, new, old, caret
 	else
 		return reconcileCollectionChanges(root,new,old,caret)
 
+# TYPE 5 - we know that we are dealing with a single array of
+# keyed tags - and root has no other children
+def reconcileLoop root, new, old, caret
+	var nl = new:length
+	var ol = old:length
+	var i = 0, d = nl - ol
+	# find the first index that is different
+	i++ while i < ol and i < nl and new[i] === old[i]
+	
+	if d > 0 and i == ol
+		# added at end
+		root.appendChild(new[i++]) while i < nl
+		return
+	
+	elif d > 0
+		let i1 = nl
+		i1-- while i1 > i and new[i1 - 1] === old[i1 - 1 - d]
+
+		if d == (i1 - i)
+			# console.log "added in chunk",i,i1
+			let before = old[i].@dom
+			root.insertBefore(new[i++],before) while i < i1
+			return
+			
+	elif d < 0 and i == nl
+		# removed at end
+		root.removeChild(old[i++]) while i < ol
+		return
+	elif d < 0
+		let i1 = ol
+		i1-- while i1 > i and new[i1 - 1 + d] === old[i1 - 1]
+
+		if d == (i - i1)
+			root.removeChild(old[i++]) while i < i1
+			return
+
+	elif i == nl
+		return
+
+	return reconcileCollectionChanges(root,new,old,caret)
+
 # expects a flat non-sparse array of nodes in both new and old, always
 def reconcileIndexedArray root, array, old, caret
 	var newLen = array:taglen
@@ -334,6 +376,9 @@ extend tag element
 				
 		elif typ == 4
 			reconcileIndexedArray(self,new,old,null)
+			
+		elif typ == 5
+			reconcileLoop(self,new,old,null)
 
 		elif new isa Array and old isa Array
 			reconcileNested(self,new,old,null)

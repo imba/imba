@@ -17,6 +17,14 @@ if $node$
 
 export var AST = {}
 
+var TREE_TYPE =
+	DYNAMIC: 1
+	STATIC: 2
+	SINGLE: 3
+	OPTLOOP: 4
+	LOOP: 5
+	
+
 # Helpers for operators
 export var OP = do |op, l, r|
 	var o = String(op)
@@ -5417,7 +5425,6 @@ export class For < Loop
 		# other cases as well, no?
 		if node isa TagTree
 			scope.closeScope
-	
 			node.@loop = self
 			@tagtree = node
 			let tagChild = null
@@ -5440,8 +5447,18 @@ export class For < Loop
 					else
 						tagChild = null
 						break
+						
+			if tagChild and tagChild.option(:key)
+				let key = tagChild.option(:key)
+				if key.@variable != vars:index
+					node.set(treeType: TREE_TYPE.LOOP)
+					tagChild = null
+				else
+					tagChild.set(key: vars:index)
+				
 
-			if tagChild and !tagChild.option(:key) and canOptimize and STACK.platform == 'web' and vars:len.declarator
+			if tagChild and canOptimize and STACK.platform == 'web' and vars:len.declarator
+				node.set(treeType: TREE_TYPE.OPTLOOP)
 				let cacheVar = scope.register('$',null,system: yes, type: 'var')
 				let lenDecl = vars:len.declarator
 				if lenDecl
@@ -6233,7 +6250,9 @@ export class Tag < Node
 			let typ = 0
 
 			if tree
-				if tree.static
+				if tree.option(:treeType)
+					typ = tree.option(:treeType)
+				elif tree.static
 					typ = 2
 				elif reactive or tree.reactive
 					if !tree.single or tree.single isa If
@@ -6311,7 +6330,7 @@ export class Tag < Node
 				let kvar = "${key}"
 				let cacheDefault = LIT('{}')
 
-				if o:key
+				if o:key and o:key != o:loopIndex
 					key = o:key
 				elif o:loopVar
 					kvar = o:loopVar
