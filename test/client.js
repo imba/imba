@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.2'};
+var Imba = {VERSION: '1.3.0-beta.3'};
 
 /*
 
@@ -2216,6 +2216,41 @@ Imba.Tags.prototype.$ = function (typ,owner){
 	return this.findTagType(typ).build(owner);
 };
 
+Imba.Tags.prototype.$set = function (cache,slot){
+	return cache[slot] = new TagSet(cache,slot);
+};
+
+function TagSet(parent,slot){
+	this.i$ = 0;
+	this.s$ = slot;
+	this.c$ = parent;
+};
+
+TagSet.prototype.$ = function (key,node){
+	this.i$++;
+	node.k$ = key;
+	return this[key] = node;
+};
+
+TagSet.prototype.$iter = function (){
+	var item = [];
+	item.static = 5;
+	item.cache = this;
+	return item;
+};
+
+TagSet.prototype.$prune = function (items){
+	let par = this.c$;
+	let slot = this.s$;
+	let clone = new TagSet(par,slot);
+	for (let i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
+		item = ary[i];
+		clone[item.k$] = item;
+	};
+	clone.i$ = items.length;
+	return par[slot] = clone;
+};
+
 
 Imba.SINGLETONS = {};
 Imba.TAGS = new Imba.Tags();
@@ -3888,6 +3923,7 @@ var Imba = __webpack_require__(1);
 // 2 - static shape and static children
 // 3 - single item
 // 4 - optimized array - only length will change
+// 5 - optimized collection
 
 function removeNested(root,node,caret){
 	// if node/nodes isa String
@@ -4103,6 +4139,69 @@ function reconcileCollection(root,new$,old,caret){
 	};
 };
 
+// TYPE 5 - we know that we are dealing with a single array of
+// keyed tags - and root has no other children
+function reconcileLoop(root,new$,old,caret){
+	var nl = new$.length;
+	var ol = old.length;
+	var cl = new$.cache.i$; // cache-length
+	var i = 0,d = nl - ol;
+	
+	// find the first index that is different
+	while (i < ol && i < nl && new$[i] === old[i]){
+		i++;
+	};
+	
+	// conditionally prune cache
+	if (cl > 1000 && (cl - nl) > 500) {
+		new$.cache.$prune(new$);
+	};
+	
+	if (d > 0 && i == ol) {
+		// added at end
+		while (i < nl){
+			root.appendChild(new$[i++]);
+		};
+		return;
+	} else if (d > 0) {
+		let i1 = nl;
+		while (i1 > i && new$[i1 - 1] === old[i1 - 1 - d]){
+			i1--;
+		};
+		
+		if (d == (i1 - i)) {
+			// console.log "added in chunk",i,i1
+			let before = old[i]._dom;
+			while (i < i1){
+				root.insertBefore(new$[i++],before);
+			};
+			return;
+		};
+	} else if (d < 0 && i == nl) {
+		// removed at end
+		while (i < ol){
+			root.removeChild(old[i++]);
+		};
+		return;
+	} else if (d < 0) {
+		let i1 = ol;
+		while (i1 > i && new$[i1 - 1 + d] === old[i1 - 1]){
+			i1--;
+		};
+		
+		if (d == (i - i1)) {
+			while (i < i1){
+				root.removeChild(old[i++]);
+			};
+			return;
+		};
+	} else if (i == nl) {
+		return;
+	};
+	
+	return reconcileCollectionChanges(root,new$,old,caret);
+};
+
 // expects a flat non-sparse array of nodes in both new and old, always
 function reconcileIndexedArray(root,array,old,caret){
 	var newLen = array.taglen;
@@ -4154,10 +4253,11 @@ function reconcileNested(root,new$,old,caret){
 		};
 	} else if (new$ instanceof Array) {
 		if (old instanceof Array) {
-			if (new$.static || old.static) {
+			let typ = new$.static;
+			if (typ || old.static) {
 				// if the static is not nested - we could get a hint from compiler
 				// and just skip it
-				if (new$.static == old.static) {
+				if (typ == old.static) {
 					for (let i = 0, items = iter$(new$), len = items.length; i < len; i++) {
 						// this is where we could do the triple equal directly
 						caret = reconcileNested(root,items[i],old[i],caret);
@@ -4243,7 +4343,9 @@ Imba.TAGS.extendTag('element', function(tag){
 				this.empty();
 				this.appendChild(new$);
 			} else if (new$ instanceof Array) {
-				if (old instanceof Array) {
+				if (new$.static == 5 && old && old.static == 5) {
+					reconcileLoop(this,new$,old,null);
+				} else if (old instanceof Array) {
 					reconcileNested(this,new$,old,null);
 				} else {
 					this.empty();
@@ -4255,6 +4357,8 @@ Imba.TAGS.extendTag('element', function(tag){
 			};
 		} else if (typ == 4) {
 			reconcileIndexedArray(this,new$,old,null);
+		} else if (typ == 5) {
+			reconcileLoop(this,new$,old,null);
 		} else if ((new$ instanceof Array) && (old instanceof Array)) {
 			reconcileNested(this,new$,old,null);
 		} else {
@@ -8281,14 +8385,14 @@ _T.defineTag('cached', function(tag){
 		var self = this, $ = self.$;
 		return this.setChildren(
 			(function() {
-				var $A = ($.A = $.A || {});
-				let res = [];
+				var $$ = ($.A || _T.$set($,'A'));
+				let res = $$.$iter();
 				for (let i = 0, items = iter$(self._ary), len = items.length; i < len; i++) {
-					res.push(($A[items[i]]=$A[items[i]] || _T.$('div',self).setText("v")).end());
+					res.push(($$[items[i]] || $$.$(items[i],_T.$('div',self).setText("v"))).end());
 				};
 				return res;
 			})()
-		,3).synced();
+		,5).synced();
 	};
 });
 
@@ -8393,10 +8497,10 @@ describe('Tags - Define',function() {
 			return this.setChildren([
 				($.A=$.A || _T.$('h1',this).setText('heading')).end(),
 				(function() {
-					var $1 = ($.B = $.B || []);
-					for (let i = 0, len = $1.taglen = ary.length; i < len; i++) {
-						($1[i]=$1[i] || _T.$('custom',self)).setContent(ary[i],3).end();
-					};return $1;
+					var $$ = ($.B = $.B || []);
+					for (let i = 0, len = $$.taglen = ary.length; i < len; i++) {
+						($$[i]=$$[i] || _T.$('custom',self)).setContent(ary[i],3).end();
+					};return $$;
 				})()
 			],1).synced();
 		};
@@ -8421,12 +8525,12 @@ describe('Tags - Define',function() {
 			return this.setChildren([
 				($.A=$.A || _T.$('h1',this).setText('heading')).end(),
 				(function() {
-					var _$ = ($.B = $.B || []), _$1 = ($.C = $.C || []);
+					var $$ = ($.B = $.B || []), $$11 = ($.C = $.C || []);
 					let res = [];
 					for (let i = 0, len = ary.length, v; i < len; i++) {
 						v = ary[i];
-						res.push((_$[i]=_$[i] || _T.$('custom',self).flag('one')).setContent(v,3).end());
-						res.push((_$1[i]=_$1[i] || _T.$('custom',self).flag('two')).setContent(v,3).end());
+						res.push(($$[i]=$$[i] || _T.$('custom',self).flag('one')).setContent(v,3).end());
+						res.push(($$11[i]=$$11[i] || _T.$('custom',self).flag('two')).setContent(v,3).end());
 					};
 					return res;
 				})()
@@ -8576,10 +8680,10 @@ describe('Tags - Define',function() {
 				var self = this, $ = self.$;
 				return this.setChildren(
 					(function() {
-						var _$ = ($.A = $.A || []);
-						let res = [];
+						var $$ = ($.A || _T.$set($,'A'));
+						let res = $$.$iter();
 						for (let v = 1; v <= 2; v++) {
-							res.push((_$[v]=_$[v] || _T.$('div',self)).setContent(v,3).end());
+							res.push(($$[v] || $$.$(v,_T.$('div',self))).setContent(v,3).end());
 						};
 						return res;
 					})()
@@ -8628,14 +8732,14 @@ describe('Tags - Define',function() {
 				this._k = 0;
 				return this.setChildren(
 					(function() {
-						var $A = ($.A = $.A || {}), $1;
-						let res = [];
+						var $$ = ($.A || _T.$set($,'A')), $1;
+						let res = $$.$iter();
 						for (let i = 0, items = iter$(self._items), len = items.length; i < len; i++) {
-							res.push(($A[($1 = self._k++)]=$A[$1] || _T.$('div',self)).setContent(items[i],3).end());
+							res.push(($$[($1 = self._k++)] || $$.$($1,_T.$('div',self))).setContent(items[i],3).end());
 						};
 						return res;
 					})()
-				,3).synced();
+				,5).synced();
 			};
 		});
 		
@@ -8745,10 +8849,10 @@ _T.defineTag('cachetest', function(tag){
 			) : void(0),
 			
 			(function() {
-				var $1 = ($.F = $.F || []);
-				for (let i = 0, items = iter$(o.letters), len = $1.taglen = items.length; i < len; i++) {
-					($1[i]=$1[i] || _T.$('div',self)).setContent(items[i],3).end();
-				};return $1;
+				var $$ = ($.F = $.F || []);
+				for (let i = 0, items = iter$(o.letters), len = $$.taglen = items.length; i < len; i++) {
+					($$[i]=$$[i] || _T.$('div',self)).setContent(items[i],3).end();
+				};return $$;
 			})()
 		],1).synced();
 	};
@@ -8990,10 +9094,10 @@ _T.defineTag('other', function(tag){
 	tag.prototype.render = function (){
 		var self = this, $ = self.$;
 		return this.setChildren((function() {
-			var $1 = ($.A = $.A || []);
-			for (let i = 0, items = iter$(self.items()), len = $1.taglen = items.length; i < len; i++) {
-				($1[i]=$1[i] || _T.$('li',self)).setContent(items[i],3).end();
-			};return $1;
+			var $$ = ($.A = $.A || []);
+			for (let i = 0, items = iter$(self.items()), len = $$.taglen = items.length; i < len; i++) {
+				($$[i]=$$[i] || _T.$('li',self)).setContent(items[i],3).end();
+			};return $$;
 		})(),4).synced();
 	};
 });
@@ -9120,10 +9224,10 @@ _T.defineTag('unknowns', 'div', function(tag){
 	
 	
 	tag.prototype.list = function (){
-		var $ = (this.$._list = this.$._list || {});
-		let res = [];
+		var $$ = (this.$._list || _T.$set(this.$,'_list'));
+		let res = $$.$iter();
 		for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
-			res.push(($[items[i]]=$[items[i]] || _T.$('div',this).flag('x')).end());
+			res.push(($$[items[i]] || $$.$(items[i],_T.$('div',this).flag('x'))).end());
 		};
 		return res;
 	};
@@ -11001,31 +11105,31 @@ TT = _T.$('div',this).setTemplate(function() {
 						($.b=$.b || _T.$('li',this)).setContent(Date.now(),3).end()
 					],1);
 				})).end(),
-				($.f=$.f || _T.$('xno',this)).setTemplate(function() {
+				($.f=$.f || _T.$('xno',this).setTemplate(function() {
 					var $ = this.$, self = this, $ = self.$;
 					return this.dataset('stamp',Date.now()).setChildren([
 						($.A=$.A || _T.$('li',this).setText("Inner")).end(),
 						($.B=$.B || _T.$('li',self)).setContent(Date.now(),3).end(),
 						(function() {
-							var $1 = ($.C = $.C || []);
-							for (let i = 0, items = iter$(AA), len = $1.taglen = items.length; i < len; i++) {
-								($1[i]=$1[i] || _T.$('li',self)).setContent(items[i],3).end();
-							};return $1;
+							var $$ = ($.C = $.C || []);
+							for (let i = 0, items = iter$(AA), len = $$.taglen = items.length; i < len; i++) {
+								($$[i]=$$[i] || _T.$('li',self)).setContent(items[i],3).end();
+							};return $$;
 						})()
 					],1).synced();
-				}).end(),
-				($.g=$.g || _T.$('wraps',this)).setTemplate(function() {
+				})).end(),
+				($.g=$.g || _T.$('wraps',this).setTemplate(function() {
 					var $ = this.$, self = this;
 					return Imba.static([
 						($.a=$.a || _T.$('div',this)).setText("This is inside " + (Date.now())).end(),
 						(function() {
-							var $1 = ($.b = $.b || []);
-							for (let i = 0, items = iter$(AA), len = $1.taglen = items.length; i < len; i++) {
-								($1[i]=$1[i] || _T.$('div',self)).setContent(items[i],3).end();
-							};return $1;
+							var $$ = ($.b = $.b || []);
+							for (let i = 0, items = iter$(AA), len = $$.taglen = items.length; i < len; i++) {
+								($$[i]=$$[i] || _T.$('div',self)).setContent(items[i],3).end();
+							};return $$;
 						})()
 					],1);
-				}).end()
+				})).end()
 			],2).end()
 		],2).end(),
 		($.h=$.h || _T.$('span',this)).end()
@@ -11041,10 +11145,10 @@ _T.defineTag('hello', function(tag){
 				($.B=$.B || _T.$('h2',self).setText("content of template:")).end(),
 				($.C=$.C || _T.$('div',self)).setText("This is inside " + (Date.now())).end(),
 				(function() {
-					var $1 = ($.D = $.D || []);
-					for (let i = 0, items = iter$(AA), len = $1.taglen = items.length; i < len; i++) {
-						($1[i]=$1[i] || _T.$('div',self)).setContent(items[i],3).end();
-					};return $1;
+					var $$ = ($.D = $.D || []);
+					for (let i = 0, items = iter$(AA), len = $$.taglen = items.length; i < len; i++) {
+						($$[i]=$$[i] || _T.$('div',self)).setContent(items[i],3).end();
+					};return $$;
 				})()
 			],1).end()
 		,2).synced();

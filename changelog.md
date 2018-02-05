@@ -1,3 +1,7 @@
+## 1.3.0-beta.3
+* Add automatic cache pruning for loops
+* Improve rendering performance
+
 ## 1.3.0-beta.2
 * Events will try to resolve string actions (e.g. `<div :tap='myAction'>`) on ascending tags and their data.
 
