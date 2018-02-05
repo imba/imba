@@ -195,9 +195,15 @@ def reconcileCollection root, new, old, caret
 def reconcileLoop root, new, old, caret
 	var nl = new:length
 	var ol = old:length
+	var cl = new:cache:i$ # cache-length
 	var i = 0, d = nl - ol
+
 	# find the first index that is different
 	i++ while i < ol and i < nl and new[i] === old[i]
+	
+	# conditionally prune cache
+	if cl > 1000 and (cl - nl) > 500
+		new:cache:$prune(new)
 	
 	if d > 0 and i == ol
 		# added at end
@@ -279,10 +285,11 @@ def reconcileNested root, new, old, caret
 
 	elif new isa Array
 		if old isa Array
-			if new:static or old:static
+			let typ = new:static
+			if typ or old:static
 				# if the static is not nested - we could get a hint from compiler
 				# and just skip it
-				if new:static == old:static
+				if typ == old:static
 					for item,i in new
 						# this is where we could do the triple equal directly
 						caret = reconcileNested(root,item,old[i],caret)
@@ -364,7 +371,9 @@ extend tag element
 
 			# check if old and new isa array
 			elif new isa Array
-				if old isa Array
+				if new:static == 5 and old and old:static == 5
+					reconcileLoop(self,new,old,null)
+				elif old isa Array
 					reconcileNested(self,new,old,null)
 				else
 					empty

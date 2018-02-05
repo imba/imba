@@ -880,6 +880,36 @@ class Imba.Tags
 		
 	def $ typ, owner
 		findTagType(typ).build(owner)
+		
+	def $set cache, slot
+		return cache[slot] = TagSet.new(cache,slot)
+
+class TagSet
+	
+	def initialize parent, slot
+		self:i$ = 0
+		self:s$ = slot
+		self:c$ = parent
+	
+	def $ key, node
+		self:i$++
+		node:k$ = key
+		self[key] = node
+		
+	def $iter
+		var item = []
+		item:static = 5
+		item:cache = self
+		return item
+		
+	def $prune items
+		let par = self:c$
+		let slot = self:s$		
+		let clone = TagSet.new(par,slot)
+		for item in items
+			clone[item:k$] = item
+		clone:i$ = items:length
+		return par[slot] = clone
 
 
 Imba.SINGLETONS = {}

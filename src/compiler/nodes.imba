@@ -5415,7 +5415,18 @@ export class For < Loop
 			vars:index.addReference(oi) if oi
 
 		return self
-
+	
+	
+	def singleTagInBody
+		var singleTag = null
+		for child in body.@nodes
+			if child isa Tag and !singleTag
+				singleTag = child
+			elif child isa Meta
+				continue
+			else
+				return
+		return singleTag
 
 	def consume node
 
@@ -5427,43 +5438,35 @@ export class For < Loop
 			scope.closeScope
 			node.@loop = self
 			@tagtree = node
-			let tagChild = null
 			let block = [self]
 			let vars = @options:vars
 			let canOptimize = vars:len and !vars:diff and !vars:step and !options:guard and !(options:source isa Range)
-			
+			let singleTag = singleTagInBody
+
 			if self isa ForOf and !options:own
 				console.warn "for ... of is not supported inside tag tree - use for own ... of instead"
 				canOptimize = no
 
 			body.consume(node)
-			
-			if canOptimize
-				for item in body.@nodes
-					if item isa Tag and !tagChild
-						tagChild = item
-					elif item isa Meta
-						continue
-					else
-						tagChild = null
-						break
 						
-			if tagChild and tagChild.option(:key)
-				let key = tagChild.option(:key)
+			if singleTag and singleTag.option(:key)
+				let key = singleTag.option(:key)
 				if key.@variable != vars:index
-					node.set(treeType: TREE_TYPE.LOOP)
-					tagChild = null
+					# let cacheVar = scope.register('$',null,system: yes, type: 'var')
+					# wrong node?!
+					node.set(treeType: TREE_TYPE.LOOP, loopVar: singleTag.explicitCacheVar(scope), cacheType: '$set')
+					singleTag = null
 				else
-					tagChild.set(key: vars:index)
+					singleTag.set(key: vars:index)
 				
 
-			if tagChild and canOptimize and STACK.platform == 'web' and vars:len.declarator
+			if singleTag and canOptimize and STACK.platform == 'web' and vars:len.declarator
 				node.set(treeType: TREE_TYPE.OPTLOOP)
-				let cacheVar = scope.register('$',null,system: yes, type: 'var')
+				let cacheVar = singleTag.explicitCacheVar(scope) # scope.register('$',null,system: yes, type: 'var')
 				let lenDecl = vars:len.declarator
 				if lenDecl
 					lenDecl.defaults = OP('=',OP('.',cacheVar,'taglen'),lenDecl.defaults)
-				tagChild.set(loopVar: cacheVar, loopIndex: vars:index)
+				singleTag.set(loopVar: cacheVar, loopIndex: vars:index)
 				block = [self,Return.new(cacheVar)]
 				node.set(staticloop: yes)
 
@@ -5523,15 +5526,28 @@ export class For < Loop
 			@catcher = TagPushAssign.new("push",resvar,null)
 		else
 			@catcher = PushAssign.new("push",resvar,null) # the value is not preset
-
+		
+		let resval = Arr.new([])
+		
+		let singleTag = singleTagInBody
+		if singleTag
+			# console.log "is single tag",singleTag.option(:loop)
+			singleTag.set(cacheType: '$set', loop: self, treeType: TREE_TYPE.LOOP)
+			# resval = CALL(OP('.',scope__.tagContextPath,'$loop'),[singleTag.explicitCacheVar])
+			resval = CALL(OP('.',singleTag.explicitCacheVar,'$iter'),[])
+			# resval = Util.callImba(scope__, "static",[Arr.new([]),Num.new(TREE_TYPE.LOOP)])
+		
 		body.consume(@catcher) # should still return the same body
 
 		if node
+			# let resval = singleTagInBody ? Util.callImba(scope__, "static",[Arr.new([]),Num.new(TREE_TYPE.LOOP)]) : Arr.new([])
 			# add the variable declaration to the top here?
 			let block = [self,BR,resvar.accessor.consume(node)]
+			
+			
 			if @resvar
 				block.unshift(BR)
-				block.unshift(OP('=',VarReference.new(@resvar,'let'),Arr.new([])))
+				block.unshift(OP('=',VarReference.new(@resvar,'let'),resval))
 
 			var ast = Block.new(block)
 			return ast
@@ -5930,11 +5946,16 @@ export class TagCache < Node
 		@root = root
 		@value = value
 		@counter = 0
+		@index = 0
 
 	def nextRef
 		let ref = counterToShortRef(@counter++)
 		# console.log "next ref {root}"
 		option(:lowercase) ? ref.toLowerCase : ref
+		
+	def nextSlot
+		@index++
+		Num.new(@index - 1)
 
 	def c
 		"{@value.c}"
@@ -6065,6 +6086,9 @@ export class Tag < Node
 			@staticCache ||= TagCache.new(self,OP('.',reference,'$')).set(lowercase: yes)
 		elif @parent
 			@staticCache ||= @parent.staticCache
+			
+	def explicitCacheVar scope
+		@explicitCacheVar = options:cacheVar ||= (scope or @tagScope).register('$$',null,system: yes, type: 'var')
 
 	def explicitKey
 		option(:ivar) or option(:key)
@@ -6237,20 +6261,18 @@ export class Tag < Node
 			reference
 			# self
 
-		if reactive and parent and parent.tree and !option(:ivar)
-			# not if it has a separate tag?
-			# let cache = parent.staticCache # : closureCache
-			o:treeRef ||= parent.staticCache.nextRef # counterToShortRef(cache.@counter = (cache.@counter || 0) + 1)
-			# o:treeRef ||= parent.tree.nextCacheKey(self)
-			# if parent.option(:treeRef) and !parent.explicitKey and !parent.option(:loop) and !(parent.tree isa TagFragmentTree)
-			# 	o:treeRef = parent.option(:treeRef) + o:treeRef
+		if reactive and parent and parent.tree and !o:ivar
+			# if o:treeType == TREE_TYPE.LOOP
+			# 	o:treeRef = parent.staticCache.nextSlot
+			# else
+			o:treeRef = parent.staticCache.nextRef
 		
 		var body = content and content.c(expression: yes)
 		if body
 			let typ = 0
 
 			if tree
-				if tree.option(:treeType)
+				if tree.option(:treeType) and tree.single
 					typ = tree.option(:treeType)
 				elif tree.static
 					typ = 2
@@ -6282,13 +6304,6 @@ export class Tag < Node
 		let lineLen = out:length
 
 		if statics:length
-			# for item in statics
-			# 	if lineLen > 40
-			# 		out += "\n\t\t\t"
-			# 		lineLen = 0
-			# 	out += item
-			# 	lineLen += item:length
-
 			out = out + statics.join("")
 
 		if (o:ivar or o:key or reactive) and !(type isa Self)
@@ -6307,10 +6322,20 @@ export class Tag < Node
 
 			elif o:key and !o:treeRef
 				# p "has dynamic key but not inside any node",o:key.c
-				let method = STACK.method
-				let paths = OP('.',OP('.',Self.new,'$'),'_' + method.name)
-				let setter = OP('=',paths,OP('||',paths,LIT('{}')))
-				ctx = scope.closure.declare('$',Parens.new(setter))
+				let method = '_' + STACK.method.name
+				let parCache = OP('.',Self.new,'$')
+				let paths = OP('.',parCache,method)
+				let setter
+				let cache
+				
+				if o:treeType == 5
+					cache = CALL(OP('.',scope.tagContextPath,o:cacheType),[parCache,"'" + method + "'"])
+					setter = OP('||',paths,cache)
+				else
+					cache = LIT('{}') # o:cacheType ? CALL(OP('.',scope.tagContextPath,o:cacheType),[]) : LIT('{}')
+					setter = OP('=',paths,OP('||',paths,cache))
+
+				ctx = scope.closure.declare(explicitCacheVar,Parens.new(setter))
 				key = o:key
 
 			elif o:key and !o:loop
@@ -6326,56 +6351,56 @@ export class Tag < Node
 
 				# ctx = parent and parent.reference
 				let s = scope.closure
+				let pathKey = key
 				let path = OP('.',ctx,key)
-				let kvar = "${key}"
-				let cacheDefault = LIT('{}')
+				let kvar = explicitCacheVar # "${key}"
+				
+				let cache = LIT('{}')
+				let setter
 
 				if o:key and o:key != o:loopIndex
-					key = o:key
+					key = o:key # ?
 				elif o:loopVar
 					kvar = o:loopVar
 					key = o:loopIndex or o:loop.option(:vars)[:index]
-					cacheDefault = LIT('[]')
-					
-					# fix ne
+					cache = LIT('[]')
 				else
-					kvar = '_$'
+					# kvar = '_$'
 					if o:loop
 						o:loop.@tagCount ||= 0
-
 						if o:loop.@tagCount > 0
 							kvar += o:loop.@tagCount
 						o:loop.@tagCount++
 
 					let idx = o:loop.option(:vars)[:index]
-					cacheDefault = LIT('[]')
+					cache = LIT('[]')
 					key = idx
+					
+				if o:treeType == 5
+					cache = CALL(OP('.',scope.tagContextPath,'$set'),[ctx,"'" + o:treeRef + "'"])
+					setter = OP('||',path,cache)
+					
+				else
+					setter = OP('=',path,OP('||',path,cache))
 		
-				let setter = OP('=',path,OP('||',path,cacheDefault))
-				# dont redeclare?
-				
 				ctx = s.declare(kvar,Parens.new(setter))
+				
 			else
 				ctx = parent ? parent.staticCache : closureCache
 
+			# if o:cacheType == '$set'
+			# 	out = "++{ctx}.$i && {out}"
 
-
-			# unless ctx
-			# 	if parent
-			# 		var tree = parent.tree
-			# 		console.log 'no context!',tree
-			# 		ctx = parent.tree.staticCache
-
-			# need the context -- might be better to rewrite it for real?
-			# parse the whole thing into calls etc
-			acc ||= OP('.',ctx,key) # .c
+			acc ||= OP('.',ctx,key)
 
 			if o:ivar
 				out = "{acc.c} || {out}"
 			else
 				key.cache if key:cache isa Function
-				# console.log("compile",scope__.toString)
-				out = "{acc.c}={acc.c} || {out}"
+				if o:treeType == 5
+					out = "{acc.c} || {ctx}.$({key.c},{out})"
+				else
+					out = "{acc.c}={acc.c} || {out}"
 
 			if @reference
 				out = "{reference.c} = {out}"
