@@ -15,38 +15,13 @@ extend tag canvas
 	def context type = '2d'
 		dom.getContext(type)
 
-# extend tag select
-# 	def value= value
-# 		value = String(value)
-# 	
-# 		if dom:value != value
-# 			dom:value = value
-# 		
-# 			if dom:value != value
-# 				@delayedValue = value
-# 
-# 		self
-# 	
-# 	def value
-# 		dom:value
-# 	
-# 	def syncValue
-# 		if @delayedValue != undefined
-# 			dom:value = @delayedValue
-# 			@delayedValue = undefined
-# 		self
-# 	
-# 	def setChildren
-# 		super
-# 		syncValue
-
-
 class DataValue
 	
 	def initialize node, path, mods
 		@node = node
 		@path = path
 		@mods = mods or {}
+		@setter = Imba.toSetter(@path)
 		let valueFn = node:value
 		node:value = do mod(valueFn.call(this))
 
@@ -57,9 +32,17 @@ class DataValue
 		@mods:lazy
 		
 	def get
-		@value != undefined ? @value : data[@path]
+		let data = self.data
+		let val = data[@path]
+		return data[@setter] and val isa Function ? data[@path]() : val
 		
 	def set value
+		let data = self.data
+		let prev = data[@path]
+		if prev isa Function
+			if data[@setter] isa Function
+				data[@setter](value)
+				return self
 		data[@path] = value
 		
 	def isArray val = get
