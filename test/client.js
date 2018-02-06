@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.3'};
+var Imba = {VERSION: '1.3.0-beta.4'};
 
 /*
 
@@ -2450,37 +2450,12 @@ Imba.TAGS.extendTag('canvas', function(tag){
 	};
 });
 
-// extend tag select
-// 	def value= value
-// 		value = String(value)
-// 	
-// 		if dom:value != value
-// 			dom:value = value
-// 		
-// 			if dom:value != value
-// 				@delayedValue = value
-// 
-// 		self
-// 	
-// 	def value
-// 		dom:value
-// 	
-// 	def syncValue
-// 		if @delayedValue != undefined
-// 			dom:value = @delayedValue
-// 			@delayedValue = undefined
-// 		self
-// 	
-// 	def setChildren
-// 		super
-// 		syncValue
-
-
 function DataValue(node,path,mods){
 	var self = this;
 	self._node = node;
 	self._path = path;
 	self._mods = mods || {};
+	self._setter = Imba.toSetter(self._path);
 	let valueFn = node.value;
 	node.value = function() { return self.mod(valueFn.call(this)); };
 };
@@ -2494,11 +2469,21 @@ DataValue.prototype.lazy = function (){
 };
 
 DataValue.prototype.get = function (){
-	return (this._value != undefined) ? this._value : this.data()[this._path];
+	let data = this.data();
+	let val = data[this._path];
+	return (data[this._setter] && (val instanceof Function)) ? data[this._path]() : val;
 };
 
 DataValue.prototype.set = function (value){
-	return this.data()[this._path] = value;
+	let data = this.data();
+	let prev = data[this._path];
+	if (prev instanceof Function) {
+		if (data[this._setter] instanceof Function) {
+			data[this._setter](value);
+			return this;
+		};
+	};
+	return data[this._path] = value;
 };
 
 DataValue.prototype.isArray = function (val){
@@ -6896,6 +6881,50 @@ describe('Syntax - Properties',function() {
 
 describe("Syntax - Literals",function() {
 	
+	test("object",function() {
+		var o = {
+			a: 1,
+			b: 2
+		};
+		eq(o.a,1);
+		eq(o.b,2);
+		
+		o = {a: 1};
+		{b: 2};
+		eq(o.a,1);
+		return eq(o.b,undefined);
+	});
+	
+	test("objects with methods",function() {
+		var obj = {
+			num: 1,
+			meth: function(){
+				return 2;
+			},
+			other: 3
+		};
+		eq(obj.meth(),2);
+		
+		var implicit = {
+			_num: 1,
+			meth: function(){
+				return this._num;
+			},
+			other: 3
+		};
+		
+		eq(implicit.meth(),1);
+		eq(implicit.other,3);
+		
+		implicit = {
+			meth: function(){
+				return this._num;
+			},
+			_num: 2
+		};
+		
+		return eq(implicit.meth(),2);
+	});
 	
 	test("hashes with dynamic keys",function() {
 		var $1;

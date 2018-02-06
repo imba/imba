@@ -1,3 +1,8 @@
+## 1.3.0-beta.4
+* Correctly allow `def` inside object literals
+* Better error reporting from parser when running through `imba` cli
+* Make Form model bindings check for property definition on data
+
 ## 1.3.0-beta.3
 * Add automatic cache pruning for loops
 * Improve rendering performance
