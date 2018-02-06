@@ -392,6 +392,7 @@ var grammar =
 	# Assignment when it happens within an object literal. The difference from
 	# the ordinary **Assign** is that these allow numbers and strings as keys.
 	AssignObj: [
+		o 'MethodDeclaration' do A1.set(inObject: yes)
 		o 'ObjAssignable' do ObjAttr.new A1
 		o 'ObjAssignable : Expression' do ObjAttr.new A1, A3, 'object'
 		o 'ObjAssignable : INDENT Expression Outdent' do ObjAttr.new A1, A4.indented(A3,A5), 'object'

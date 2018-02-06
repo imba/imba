@@ -1363,18 +1363,21 @@ export class Lexer
 
 			var diff = size - @indent + @outdebt
 			closeDef()
-
+			
+			var expectScope = @scopes[@indents:length]
 			var immediate = last(@tokens)
 
 			if immediate and tT(immediate) == 'TERMINATOR'
 				tTs(immediate,'INDENT')
 				# should add terminator inside indent?
 				immediate.@meta ||= {pre: tV(immediate), post: ''}
-
+				immediate:scope = expectScope
 				# should rather add to meta somehow?!?
 				# tVs(immediate,tV(immediate) + '%|%') # crazy
 			else
+				# console.log "set indent {expectScope}"
 				token('INDENT', "" + diff,0)
+				@last:scope = expectScope
 
 			# console.log "indenting", prev, last(@tokens,1)
 			# if prev and prev[0] == 'TERMINATOR'

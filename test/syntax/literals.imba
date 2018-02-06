@@ -1,7 +1,43 @@
 extern describe, test, ok, eq, it
 
 describe "Syntax - Literals" do
-
+	
+	test "object" do
+		var o =
+			a: 1
+			b: 2
+		eq o:a, 1
+		eq o:b, 2
+		
+		var o = a: 1
+		b: 2
+		eq o:a, 1
+		eq o:b, undefined
+	
+	test "objects with methods" do
+		var obj = {
+			num: 1
+			def meth
+				2
+			other: 3
+		}
+		eq obj.meth, 2
+		
+		var implicit =
+			@num: 1
+			def meth
+				@num
+			other: 3
+		
+		eq implicit.meth,1
+		eq implicit:other, 3
+		
+		var implicit =
+			def meth
+				@num
+			@num: 2
+		
+		eq implicit.meth,2
 
 	test "hashes with dynamic keys" do
 		var key = "b"

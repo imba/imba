@@ -451,29 +451,40 @@ export class Rewriter
 
 	def addLeftBrace
 		self
-
+		
 	def addImplicitBraces
+		# Worst mess every written. Shuold be redone
 		var stack       = []
+		var prevStack = null
 		var start       = null
 		var startIndent = 0
 		var startIdx = null
 		var baseCtx = ['ROOT',0]
-
-		var noBraceContext = ['IF','TERNARY','FOR']
+		
+		var defType = 'DEF'
+		var noBraceContext = ['IF','TERNARY','FOR',defType]
 
 		var noBrace = no
 
 		var action = do |token,i|
 			@tokens.splice i, 0, T.RBRACKET
 
-		var open = do |token,i|
-			@tokens.splice i, 0, T.LBRACKET
+		var open = do |token,i,scope|
+			let tok = Token.new('{','{',0,0,0) # : T.LBRACKET
+			tok:generated = yes
+			tok:scope = scope
+			@tokens.splice i, 0, tok # T.LBRACKET
 
-		var close = do |token,i|
-			@tokens.splice i, 0, T.RBRACKET
+		var close = do |token,i,scope|
+			let tok = Token.new('}','}',0,0,0) # : T.LBRACKET
+			tok:generated = yes
+			tok:scope = scope
+			@tokens.splice i, 0, tok # T.RBRACKET
 
 		var stackToken = do |a,b|
 			return [a,b]
+			
+		var indents = []
 
 		# method is called so many times
 		scanTokens do |token,i,tokens|
@@ -482,14 +493,26 @@ export class Rewriter
 
 			var ctx = stack:length ? stack[stack:length - 1] : baseCtx
 			var idx
+			
+			
+			if type == 'INDENT'
+				indents.unshift(token:scope)
+			
+			elif type == 'OUTDENT'
+				indents.shift
 
-			if noBraceContext.indexOf(type) >= 0
+			if noBraceContext.indexOf(type) >= 0 and type != defType
 				stack.push stackToken(type,i)
 				return 1
 
 			if v == '?'
 				stack.push stackToken('TERNARY',i)
 				return 1
+				
+			# if type == 'DEF'
+			# 	let prevTyp = T.typ(tokens[i - 1])
+			# 	console.log "found def -- should push to stack!",prevTyp,ctx[0]
+			# 	stack.push(stackToken('DEF',i))
 			
 			# no need to test for this here as well as in
 			if EXPRESSION_START[type]
@@ -528,53 +551,96 @@ export class Rewriter
 
 			if type == ','
 				if ctx[0] == '{' and ctx:generated
-					tokens.splice(i, 0, T.RBRACKET)
-					stack.pop
+					close(token,i,stack.pop)
 					return 2
 				else
 					return 1
 				true
+			
+			
 
 			# found a type
-			if type == ':' and ctx[0] != '{' and ctx[0] != 'TERNARY' and (noBraceContext.indexOf(ctx[0]) == -1)
+			let isDefInObject = (type == defType) and indents[0] not in ['CLASS','DEF','MODULE','TAG']
+			# isDefInObject = isDefInObject and 
+			if (type == ':' or isDefInObject) and ctx[0] != '{' and ctx[0] != 'TERNARY' and (noBraceContext.indexOf(ctx[0]) == -1 or ctx[0] == defType)
 				# could just check if the end was right before this?
 				
-				if start and start[2] == i - 1
+				var tprev = tokens[i - 2]
+				let autoClose = no
+				
+				if type == defType
+					idx = i - 1
+					tprev = tokens[idx]
+
+				elif start and start[2] == i - 1
 					idx = start[1] - 1 # these are the stackTokens
 				else
 					idx = i - 2 # if start then start[1] - 1 else i - 2
-					# idx = idx - 1 if tokenType(idx) is TERMINATOR
 
 				while tokenType(idx - 1) === 'HERECOMMENT'
 					idx -= 2
 
 				var t0 = tokens[idx - 1]
+				var t1 = tokens[idx]
+				
+				# console.log "{tokens[i - 1].@value} : (after {t0.@value}) ({tokenType(i - 2)}) [{indents[0]}] {t0 and t0:scope and t0:scope:autoClose} {t1.@type}"
+				
+				# now what about interpolated stuff?
+				# different for def
+				if !tprev or (tprev.@type not in ['INDENT','TERMINATOR'])
+					autoClose = yes
+					
+				if indents[0] and indents[0] in ['CLASS','DEF','MODULE','TAG']
+					autoClose = yes
 
-				if t0 and T.typ(t0) == '}' and t0:generated
+				if t0 and T.typ(t0) == '}' and t0:generated and ((t1.@type == ',' and !t1:generated) or !(t0:scope and t0:scope:autoClose)) #  and !autoClose
+					# console.log "merge with previous"
+					# if we find a closing token inserted here -- move it
 					tokens.splice(idx - 1,1)
-					var s = stackToken('{')
+					var s = stackToken('{',i - 1)
 					s:generated = yes
+					
 					stack.push s
+					if type == defType
+						stack.push stackToken(defType,i)
+						return 1
 					return 0
 
 				# hacky edgecase for indents
 				elif t0 and T.typ(t0) == ',' and tokenType(idx - 2) == '}'
+					# console.log "comma",tokens[idx - 2]:scope
 					tokens.splice(idx - 2,1)
 					var s = stackToken('{')
 					s:generated = yes
+					# s:autoClose = 
 					stack.push s
+					
+					if type == defType
+						stack.push stackToken(defType,i)
+						return 1
+
 					return 0
 
 				else
+					if type == defType and (!t0 or t0.@type != '=')
+						stack.push stackToken(defType,i)
+						return 1
+					
 					var s = stackToken('{')
 					s:generated = yes
+					s:autoClose = autoClose
 					stack.push s
-					open(token,idx + 1)
+					open(token,idx + 1) # should rather open at i - 2?
+					
+					if type == defType
+						stack.push stackToken(defType,i)
+						return 3
+
 					return 2
 
 			# we probably need to run through autocall first?!
 
-			if type == 'DO' # and ctx:generated
+			if type == 'DO' # and ctx:generated"
 				var prev = T.typ(tokens[i - 1])
 				if ['NUMBER','STRING','REGEX','SYMBOL',']','}',')','STRING_END'].indexOf(prev) >= 0
 
@@ -588,8 +654,8 @@ export class Rewriter
 						return 2
 
 			if ctx:generated and (type === TERMINATOR or type === OUTDENT or type === 'DEF_BODY')
-				close(token,i)
-				stack.pop
+				prevStack = stack.pop
+				close(token,i,prevStack)
 				return 2
 
 			return 1

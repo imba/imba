@@ -2514,6 +2514,10 @@ export class MethodDeclaration < Func
 
 		@context = scope.parent.closure
 		@params.traverse
+		
+		if option(:inObject)
+			@body.traverse
+			return self
 
 		if String(name) == 'initialize'
 			if (context isa ClassScope) and !(context isa TagScope)
@@ -2583,19 +2587,18 @@ export class MethodDeclaration < Func
 		var decl = !option(:global) and !option(:export)
 
 		if target isa ScopeContext
-			# the target is a scope context
 			target = null
 
 		var ctx = context
 		var out = ""
 		var mark = mark__(option('def'))
-		# if ctx
-
 		var fname = sym__(self.name)
-		# console.log "symbolize {self.name} -- {fname}"
 		var fdecl = fname # decl ? fname : ''
+		
+		if option(:inObject)
+			out = "{fname}: {mark}{funcKeyword}{func}"
 
-		if ctx isa ClassScope and !target
+		elif ctx isa ClassScope and !target
 			if type == :constructor
 				out = "{mark}{funcKeyword} {fname}{func}"
 			elif option(:static) or ctx isa ModuleScope
