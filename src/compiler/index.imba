@@ -39,7 +39,6 @@ export def run code, filename: null
 
 if require:extensions
 	require:extensions['.imba'] = do |mod, filename|
-		# console.log 'run code via require extensions in index',filename
 		var body = fs.readFileSync(filename, 'utf8')
 		var content = compiler.compile(body, filename: filename, target: 'node')
 		return mod._compile (content:js), filename

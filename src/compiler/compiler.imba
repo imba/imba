@@ -64,7 +64,7 @@ export def compile code, o = {}
 				js: "",
 				toString: do this:js
 			}
-
+		
 		var tokens = tokenize(code, o)
 		var ast = parse(tokens, o)
 		return ast.compile(o)
@@ -72,7 +72,14 @@ export def compile code, o = {}
 		err:_code = code
 		err:_filename = o:filename if o:filename
 		if o:evaling
-			console.log "error during compile",o:filename
+			console.log "error compiling {o:filename}"
+			if err:excerpt
+				console.log "   " + err.excerpt(colors: true)
+			else
+				console.log "   " + err:message
+				console.log "   " + "in file {err:_filename}"
+				console.log err:stack if err:stack	
+			# console.log "error during compile",o:filename
 		throw err
 
 export def analyze code, o = {}

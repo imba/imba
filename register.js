@@ -10,8 +10,10 @@ if(require.extensions) {
 		var content = imba.compile(fs.readFileSync(filename,'utf8'),{
 			filename: filename,
 			sourcePath: filename,
-			target: 'node'
+			target: 'node',
+			evaling: true
 		});
+		
 		return mod._compile(content.js,filename);
 	};
 	
