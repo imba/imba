@@ -169,8 +169,8 @@ class Imba.Event
 			
 			if typeof handler == 'string'
 				if keyCodes[handler]
-					handler = 'key'
 					params = [keyCodes[handler]]
+					handler = 'key'
 					
 				let mod = "on$" + handler
 
