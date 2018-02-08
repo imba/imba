@@ -72,7 +72,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.4'};
+var Imba = {VERSION: '1.3.0-beta.5'};
 
 /*
 
@@ -3708,8 +3708,8 @@ Imba.Event.prototype.processHandlers = function (node,handlers){
 		
 		if (typeof handler == 'string') {
 			if (keyCodes[handler]) {
-				handler = 'key';
 				params = [keyCodes[handler]];
+				handler = 'key';
 			};
 			
 			let mod = "on$" + handler;

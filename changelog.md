@@ -1,3 +1,7 @@
+## 1.3.0-beta.5
+* Reintroduce style,setStyle on Imba.Tag
+* Introduce new event syntax allowing for custom event modifiers
+
 ## 1.3.0-beta.4
 * Correctly allow `def` inside object literals
 * Better error reporting from parser when running through `imba` cli
