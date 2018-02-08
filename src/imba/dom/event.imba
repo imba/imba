@@ -212,7 +212,7 @@ class Imba.Event
 			if typeof handler == 'string'
 				let el = node
 				let fn = null
-				while el and !fn
+				while el and (!fn or !(fn isa Function))
 					if fn = el.getHandler(handler)
 						handler = fn
 						context = el

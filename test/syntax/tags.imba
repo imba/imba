@@ -15,6 +15,7 @@ describe 'Syntax - Tags' do
 		check "setId('one')" do <div#one>
 
 	test 'flags' do
+		check "flag('only')" do <.only>
 		check "flag('two')" do <div.two>
 		check "flag('two',numvar)" do <div .two=numvar>
 		check "setFlag(0,strvar)" do <div .{strvar}>
@@ -36,6 +37,7 @@ describe 'Syntax - Tags' do
 
 	test 'data' do
 		check "setData(objvar)" do <div[objvar]>
+		check "setData(objvar)" do <.only[objvar]>
 	
 	test 'ref' do
 		check "ref_('main',self)" do <div[objvar]@main>

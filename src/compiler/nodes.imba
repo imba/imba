@@ -6054,6 +6054,10 @@ export class TagModifier < TagPart
 	
 	def isPrimitive
 		!params or params.every do |param| param.isPrimitive
+			
+	def visit
+		@params.traverse if @params
+		self
 		
 	def js
 		if params
