@@ -193,6 +193,9 @@ class Imba.Tag
 	###
 	def html
 		@dom:innerHTML
+	
+	def on$ event, handler, slot
+		on(event, handler, slot)
 		
 	def on event, handler, slot
 		let handlers = @on_ ||= []
@@ -581,7 +584,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def setFlag name, value
-		let flags = this:$:flags ||= []
+		let flags = this:$:flags ||= {}
 		let prev = flags[name]
 		if prev != value
 			unflag(prev) if prev
@@ -698,6 +701,12 @@ class Imba.Tag
 			else
 				dom:style[name] = val
 		self
+		
+	def setStyle style
+		setAttribute('style',style)
+
+	def style
+		getAttribute('style')
 
 	###
 	Trigger an event from current node. Dispatched through the Imba event manager.

@@ -5932,17 +5932,6 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
  spreadMethod stopColor stopOpacity stroke strokeDasharray strokeLinecap
  strokeOpacity strokeWidth textAnchor transform version viewBox x1 x2 x y1 y2 y"
 
-
-export class TagDesc < Node
-
-	def initialize
-		p 'TagDesc!!!',$0
-		self
-
-	def classes
-		p 'TagDescClasses',$0
-		self
-
 export class TagCache < Node
 
 	def initialize root, value
@@ -5963,58 +5952,190 @@ export class TagCache < Node
 	def c
 		"{@value.c}"
 
+export class TagPart < Node
+
+	prop name
+	prop value
+	
+	def initialize value, owner
+		@name = value
+		@tag = owner
+		@chain = []
+		self
+		
+	def visit
+		@chain.map(|v| v.traverse )
+		@value.traverse if @value
+		@name.traverse if @name:traverse
+		self
+	
+	def quoted
+		@quoted ||= helpers.singlequote(@name)
+		
+	def isStatic
+		!value or value.isPrimitive
+		
+	def add item, type
+		if type == TagArgList
+			@last.params = item
+		else
+			@chain.push(@last = TagModifier.new(item))
+		return self
+		
+	def js
+		""
+
+export class TagId < TagPart
+
+	def js
+		"setId({quoted})"
+
+export class TagFlag < TagPart
+	def js
+		value ? "flag({quoted},{value.c})" : "flag({quoted})"
+
+export class TagFlagExpr < TagFlag
+	def slot
+		@slot ?= @tag.nextSlot('flag')
+		
+	def visit
+		@name.traverse
+	
+	def js
+		"setFlag({slot},{name.c})"
+	
+export class TagSep < TagPart
+	
+export class TagArgList < TagPart
+	
+export class TagAttr < TagPart
+
+	def js
+		let ns = null
+		let key = String(@name)
+		let i = key.indexOf(':')
+		
+		if i >= 0
+			ns = key.slice(0,i)
+			key = key.slice(i + 1)
+		
+		let dyn = @chain:length or @tag.type.@ns
+		let val = value ? value.js : quoted
+		let add = ''
+		
+		if @chain:length
+			add = ',{' + @chain.map(|mod| "{mod.name}:1" ).join(',') + '}'
+		
+		if ns == 'css'
+			"css('{key}',{val}{add})"
+		elif ns
+			# should be setPath instead?
+			"setNestedAttr('{ns}','{key}',{val}{add})"
+		elif key.indexOf("data-") == 0
+			"dataset('{key.slice(5)}',{val})"
+		elif dyn
+			"set({quoted},{val}{add})"
+		else
+			"{helpers.setterSym(name)}({val}{add})"
+	
+export class TagAttrValue < TagPart
+	
+	def isPrimitive
+		value.isPrimitive
+
+	def value
+		name
+
+	def js
+		value.c
+	
+export class TagModifier < TagPart	
+	prop params
+	
+	def isPrimitive
+		!params or params.every do |param| param.isPrimitive
+		
+	def js
+		if params
+			"[{quoted},{params.c}]"
+		else
+			quoted
+
+export class TagData < TagPart
+
+	def js
+		"setData({name.c})"
+
+export class TagHandler < TagPart
+
+	def slot
+		@slot ?= @tag.nextSlot('handler')
+		
+	def isStatic
+		(!value or value.isPrimitive) and @chain.every(do |item|
+			let val = item isa Parens ? item.value : item
+			val isa Func ? !val.nonlocals : val.isPrimitive
+		)
+	
+	def add item, type
+		if type == TagArgList
+			@last.params = item
+		elif type == TagAttrValue
+			# really?
+			if item isa Parens
+				item = item.value
+			# console.log "push Value to chain {item} {item.isPrimitive}"
+			@chain.push(item)
+			@last = null
+		else
+			# console.log "TagHandler add",item
+			@chain.push(@last = TagModifier.new(item))
+		return self
+		
+	def js o
+		"on$({quoted},[{cary__(@chain)}],{slot})"
 
 export class Tag < Node
 
-	prop parts
-	prop object
 	prop reactive
 	prop parent
 	prop tree
 
 	def initialize o = {}
 		@traversed = no
-		@parts = []
-		o:classes ||= []
-		o:attributes ||= []
-		o:classes ||= []
 		@options = o
 		@reference = null
-		@object = null
 		@tree = null
+		@slots = {
+			flag: isSelf ? -1 : 0
+			handler: isSelf ? -1 : 0
+		}
+		@attributes = []
+		@currAttr = 0
 		self
+		
+	def nextSlot type
+		let slot = @slots[type]
+		@slots[type] += (isSelf ? -1 : 1)
+		return slot
 
-	def set obj
-		for own k,v of obj
-			if k == 'attributes'
-				addAttribute(atr) for atr in v
-				continue
-
-			@options[k] = v
-		self
-
-	def addClass node
-		unless node isa TagFlag
-			node = TagFlag.new(node)
-		@options:classes.push(node)
-		@parts.push(node)
-		self
-
-	def addIndex node
-		@parts.push(node)
-		@object = node
-		self
-
-	def addSymbol node
-		if @parts:length == 0
-			@parts.push(node)
-			@options:ns = node
-		self
-
-
-	def addAttribute atr
-		@parts.push(atr)
-		@options:attributes.push(atr)
+	def addPart part, type
+		let curr = @attributes.CURRENT
+		
+		if type == TagId
+			set(id: part)
+		# console.log "TagParts.add {type:name}"
+		if type == TagSep
+			@attributes.CURRENT = null
+		elif curr isa TagHandler
+			curr.add(part,type)
+		elif type == TagAttrValue
+			if curr
+				curr.value = type.new(part,@self)
+		elif curr isa TagAttr
+			curr.add(part,type)
+		else
+			@attributes.push(@attributes.CURRENT = type.new(part,self))
 		self
 
 	def enclosing
@@ -6025,7 +6146,6 @@ export class Tag < Node
 
 	def consume node
 		var o = @options
-
 
 		if node isa TagTree
 			parent = node.root
@@ -6060,16 +6180,11 @@ export class Tag < Node
 
 		o:key.traverse if o:key
 		o:body.traverse if o:body
-		o:id.traverse if o:id
 
-		for part in @parts
+		for part in @attributes
 			part.traverse
 
-		# remember scope
 		@tagScope = scope__
-		# if typ == '->' or typ == '=>'
-		# 	@tagScope = o:body.scope
-
 		self
 
 	def reference
@@ -6095,10 +6210,12 @@ export class Tag < Node
 
 	def explicitKey
 		option(:ivar) or option(:key)
+		
+	def isSelf
+		type isa Self
 
 	def js jso
 		var o = @options
-		var a = {}
 		var enc = enclosing
 
 		var setup = []
@@ -6112,18 +6229,10 @@ export class Tag < Node
 
 		var isSelf = type isa Self
 		var bodySetter = isSelf ? "setChildren" : "setContent"
-
-		# if we are reactive - find the
-
+		
 		# should not cache statics if the node itself is not cached
 		# that would only mangle the order in which we set the properties
-		var cacheStatics = yes
-
-		for atr in o:attributes
-			a[atr.key] = atr.value
-
 		var quote = do |str| helpers.singlequote(str)
-		var id = o:id isa Node ? o:id.c : (o:id and quote(o:id.c))
 		var tree = @tree or null
 		var parent = self.parent
 		var c_zone = scope.context.c
@@ -6135,15 +6244,13 @@ export class Tag < Node
 			scope.context.c
 
 		elif type.isClass
+			# console.log "type.name called?"
 			"{mark__(o:open)}{type.name}.build({c_zone})"
 		else
 			let start = "{mark__(o:open)}{scope.tagContextPath}"
 			start += "._{type.@ns.toUpperCase}" if type.@ns
 			start += ".$('{type.@name}',{c_zone})"
 			start
-
-		if o:id
-			statics.push(".setId({quote(o:id)})")
 
 		# this is reactive if it has an ivar
 		if o:ivar
@@ -6167,96 +6274,14 @@ export class Tag < Node
 
 		if tree
 			# this is the point where we traverse the inner nodes with our tree
-			# should rather happen in visit - long before.
 			tree.resolve
+		
 
-		var dynamicFlagIndex = isSelf ? 1 : 0
-		let handlerIndices = {}
-		let onIndex = isSelf ? -1 : 0
-
-		for part in @parts
-			var pjs
-			var pcache = no
-			
-
-			if part isa TagAttr
-				
-				var akey = String(part.key)
-				var aval = part.value
-				let aname = akey
-				let modifiers = null
-				let modsIdx = akey.indexOf('.',1)
-				pcache = aval.isPrimitive
-				if modsIdx >= 0
-					modifiers = akey.slice(1).split('.').slice(1)
-					aname = akey.substr(0,modsIdx)
-
-				if akey[0] == '.'
-					pcache = no
-					pjs = "flag({quote(akey.substr(1))},{aval.c})"
-				elif akey[0] == ':'
-					let add = ""
-					let ename = modsIdx > 0 ? akey.slice(1, modsIdx) : akey.substr(1)
-					let slot = handlerIndices[ename] ||= (isSelf ? 1 : 0)
-					# if modifiers
-					#	add = ',[' + modifiers.map(|mod| "'{mod}'" ).join(',') + ']'
-					pjs = "on({quote(akey.substr(1))},{aval.c},{onIndex})"
-					isSelf ? (onIndex--) : (onIndex++)
-					handlerIndices[ename] += 2
-					# old version
-					# pjs = ".setHandler({quote(akey.substr(1))},{aval.c},{scope.context.c},{handlerIndex++}{add})"
-
-				elif akey.substr(0,5) == 'data-'
-					pjs = "dataset('{akey.slice(5)}',{aval.c})"
-
-				elif part.isNamespaced
-					let ns = akey.split(":")[0]
-					let k = akey.split(":")[1]
-
-					if ns == 'css'
-						pjs = "css('{k}',{aval.c})"
-					else
-						pjs = "setNestedAttr('{ns}','{k}',{aval.c})"
-				else
-					if modifiers
-						pjs = "set('{aname}',{aval.c}" + ',{' + modifiers.map(|mod| "{mod}:1" ).join(',') + '})'
-					elif ns
-						pjs = "set('{aname}',{aval.c})"
-					else
-						pjs = "{helpers.setterSym(akey)}({aval.c})"
-						
-						
-				pjs = ".{mark__(part.key)}" + pjs
-
-				if aval isa Parens
-					aval = aval.value
-
-				# if the value is a function which does not refer to any outer
-				# variables (besides self), we can make it static, so as to not
-				# recreate the function on every render
-				if aval isa Func and !aval.nonlocals
-					pcache = yes
-
-
-			elif part isa TagFlag
-				if part.value isa Node
-					if reactive
-						let idx = dynamicFlagIndex
-						pjs = ".setFlag({idx},{part.value.c})"
-						dynamicFlagIndex = idx + 2
-					else
-						pjs = part.c
-
-				else
-					pjs = part.c
-					pcache = yes
-
-			if pjs
-				cacheStatics && pcache ? statics.push(pjs) : calls.push(pjs)
-
-		if object
-			calls.push(".setData({object.c})")
-
+		for part in @attributes
+			let out = part.js(jso)
+			out = ".{mark__(part.name)}" + out
+			part.isStatic ? statics.push(out) : calls.push(out)
+		
 		# we need to trigger our own reference before the body does
 		# but we do not need a reference if we have no body
 		if reactive and tree and (explicitKey or o:loop) and (o:body isa Func or tree.hasTags) # only if we have inner
@@ -6301,7 +6326,6 @@ export class Tag < Node
 			else
 				calls.push ".{bodySetter}({body})"
 
-
 		calls.push ".{commit}()"
 
 		let lineLen = out:length
@@ -6324,7 +6348,6 @@ export class Tag < Node
 				key = o:ivar
 
 			elif o:key and !o:treeRef
-				# p "has dynamic key but not inside any node",o:key.c
 				let method = '_' + STACK.method.name
 				let parCache = OP('.',Self.new,'$')
 				let paths = OP('.',parCache,method)
@@ -6543,59 +6566,6 @@ export class TagWrapper < ValueNode
 
 	def c
 		"{scope__.imba.c}.getTagForDom({value.c(expression: yes)})"
-
-export class TagAttributes < ListNode
-
-	def get name
-		for node in nodes
-			return node if node.key == name
-
-
-export class TagAttr < Node
-
-	prop key
-	prop value
-
-	def visit
-		value.traverse if value
-		self
-
-	def initialize k, v
-		@traversed = no
-		@key = k
-		@value = v
-
-	def populate obj
-		obj.add(key, value)
-		self
-
-	def isNamespaced
-		String(key).indexOf(':') > 0
-
-	def c
-		"attribute"
-
-
-export class TagFlag < Node
-
-	prop value
-	prop toggler
-
-	def initialize value
-		@traversed = no
-		@value = value
-		self
-
-	def visit
-		unless @value isa String
-			@value.traverse
-		self
-
-	def c
-		if value isa Node
-			".flag({value.c})"
-		else
-			".flag({helpers.singlequote(value)})"
 
 
 # SELECTORS

@@ -308,22 +308,19 @@ var grammar =
 
 	TagOptions: [
 		o 'TagTypeName' do Tag.new(type: A1)
-		o 'TagOptions . SYMBOL' do A1.addSymbol(A3)
-		# o 'IDENTIFIER' do Tag.new(type: TagTypeIdentifier.new(A1))
-		o 'TagOptions INDEX_START Expression INDEX_END' do A1.addIndex(A3)
-		o 'TagOptions . IDENTIFIER' do A1.addClass(A3)
-		o 'TagOptions . CONST_ID' do A1.addClass(A3)
-		o 'TagOptions . { Expression }' do A1.addClass(A4)
+		o 'TagOptions INDEX_START Expression INDEX_END' do A1.addPart(A3,AST.TagData)
+		o 'TagOptions TAG_ID' do A1.addPart(A2,AST.TagId)
+		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
+		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
+		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
+		o 'TagOptions . { Expression }' do A1.addPart(A4,AST.TagFlagExpr)
 		o 'TagOptions @ { Expression }' do A1.set(key: A4)
-		o 'TagOptions # IDENTIFIER' do A1.set(id: A3)
-		o 'TagOptions Ivar' do A1.set(ivar: A2)
 		o 'TagOptions # { Expression }' do A1.set(id: A4) # need to add info about the tokens
-		o 'TagOptions TagAttr' do A1.addAttribute(A2)
-	]
-
-	TagAttr: [
-		o 'TAG_ATTR' do TagAttr.new(A1,A1)
-		o 'TAG_ATTR = TagAttrValue' do TagAttr.new(A1,A3,A2)
+		o 'TagOptions ( ArgList )' do A1.addPart(A3,AST.TagArgList)
+		o 'TagOptions TAG_WS' do A1.addPart(A2,AST.TagSep)
+		o 'TagOptions Ivar' do A1.set(ivar: A2)
+		o 'TagOptions = TagAttrValue' do A1.addPart(A3,AST.TagAttrValue)
+		
 	]
 
 	TagAttrValue: [
@@ -334,11 +331,6 @@ var grammar =
 		o 'INDENT ArgList OUTDENT' do A2.indented(A1,A3)
 		o 'CALL_START ArgList CALL_END' do A2
 		o 'Tag' do ArgList.new([A1])
-	]
-
-	TagTypeDef: [
-		o 'Identifier' do TagDesc.new(A1)
-		o 'TagTypeDef . Identifier' do A1.classes(A3)
 	]
 	
 	ExportStatement: [

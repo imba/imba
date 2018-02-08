@@ -93,8 +93,9 @@ var TAG = /// ^
 
 var TAG_TYPE = /^(\w[\w\d]*:)?(\w[\w\d]*)(-[\w\d]+)*/
 var TAG_ID = /^#((\w[\w\d]*)(-[\w\d]+)*)/
-
+var TAG_PART = /^[\:\.\#]?([A-Za-z\_][\w\-]*)(\:[A-Za-z\_][\w\-]*)?/
 var TAG_ATTR = /^([\.\:]?[\w\_]+([\-\:\.][\w]+)*)(\s)*\=(?!\>)/
+
 
 var SELECTOR = /^([%\$]{1,2})([\(\w\#\.\[])/
 var SELECTOR_PART = /^(\#|\.|:|::)?([\w]+(\-[\w]+)*)/
@@ -483,18 +484,38 @@ export class Lexer
 		return
 
 	def tagContextToken
-		if @chunk[0] == '#'
-			token('#','#',1)
-			return 1
+		let chr = @chunk[0]
 
-		if var match = TAG_ATTR.exec(@chunk)
-			var l = match[0]:length
+		let m = TAG_PART.exec(@chunk)
+		
+		if m
+			let tok = m[1]
+			let typ = 'TAG_ATTR'
+			let len = m[0]:length
 
-			token 'TAG_ATTR',match[1],l - 1  # add to loc?
-			@loc += l - 1
+			if chr == ':'
+				typ = 'TAG_ON'
+			elif chr == '.'
+				typ = 'TAG_FLAG'
+			elif chr == '#'
+				typ = 'TAG_ID'
+			else
+				tok = m[0]
+				typ = tok == 'self' ? 'SELF' : 'TAG_ATTR'
+			
+			token(typ,tok,len)
+			return len
+
+		elif chr == ' ' or chr == '\n' or chr == '\t'
+			# add whitespace inside tag
+			let m = /^[\n\s\t]+/.exec(@chunk)
+			token 'TAG_WS', m[0], m[0]:length
+			return m[0]:length
+			
+		elif chr == '=' and @chunk[1] != '>'
 			token '=','=',1
-			pushEnd('TAG_ATTR',id: 'VALUE', pop: /^[\s\n\>]/) #  [' ','\n','>']
-			return l
+			pushEnd('TAG_ATTR',id: 'VALUE', pop: /^[\s\n\>]/)
+			return 1
 		return 0
 
 	def tagDefContextToken
@@ -655,6 +676,7 @@ export class Lexer
 		if @end == ')'
 			if @ends:length > 1
 				var outerctx = @ends[@ends:length - 2]
+				# selectors should be removed
 				if outerctx == '%' and match = TAG_ATTR.exec(@chunk)
 					token('TAG_ATTR_SET',match[1])
 					return match[0]:length
@@ -1439,7 +1461,7 @@ export class Lexer
 
 	# Matches and consumes non-meaningful whitespace. tokid the previous token
 	# as being "spaced", because there are some cases where it makes a difference.
-	def whitespaceToken
+	def whitespaceToken type
 		var match, nline, prev
 		return 0 unless (match = WHITESPACE.exec(@chunk)) || (nline = @chunk.charAt(0) is '\n')
 		prev = last @tokens
