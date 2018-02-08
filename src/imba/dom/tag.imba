@@ -206,6 +206,7 @@ class Imba.Tag
 			prev = handlers[slot]
 		
 		handlers[slot] = handler
+		handler:state = prev:state if prev
 		return self
 
 

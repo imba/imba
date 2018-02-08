@@ -10,20 +10,20 @@ var keyCodes = {
 }
 
 var el = Imba.Tag:prototype
-def el.on$stop e do e.stop || true
-def el.on$prevent e do e.prevent || true
-def el.on$silence e do e.silence || true
-def el.on$bubble e do e.bubble(yes) || true
-def el.on$ctrl e do e.event:ctrlKey == true
-def el.on$alt e do e.event:altKey == true
-def el.on$shift e do e.event:shiftKey == true
-def el.on$meta e do e.event:metaKey == true
-def el.on$key key, e do e.keyCode ? (e.keyCode == key) : true
-def el.on$del e do e.keyCode ? (e.keyCode == 8 or e.keyCode == 46) : true
-def el.on$self e do e.event:target == @dom
-def el.on$left e do e.button != undefined ? (e.button === 0) : el.on$key(37,e)
-def el.on$right e do e.button != undefined ? (e.button === 2) : el.on$key(39,e)
-def el.on$middle e do e.button != undefined ? (e.button === 1) : true
+def el.stopModifier e do e.stop || true
+def el.preventModifier e do e.prevent || true
+def el.silenceModifier e do e.silence || true
+def el.bubbleModifier e do e.bubble(yes) || true
+def el.ctrlModifier e do e.event:ctrlKey == true
+def el.altModifier e do e.event:altKey == true
+def el.shiftModifier e do e.event:shiftKey == true
+def el.metaModifier e do e.event:metaKey == true
+def el.keyModifier key, e do e.keyCode ? (e.keyCode == key) : true
+def el.delModifier e do e.keyCode ? (e.keyCode == 8 or e.keyCode == 46) : true
+def el.selfModifier e do e.event:target == @dom
+def el.leftModifier e do e.button != undefined ? (e.button === 0) : el.on$key(37,e)
+def el.rightModifier e do e.button != undefined ? (e.button === 2) : el.on$key(39,e)
+def el.middleModifier e do e.button != undefined ? (e.button === 1) : true
 def el.getHandler str do self[str]
 
 ###
@@ -152,6 +152,7 @@ class Imba.Event
 		let i = 1
 		let l = handlers:length
 		let bubble = @bubble
+		let state = handlers:state ||= {}
 		let result 
 		
 		if bubble
@@ -172,11 +173,11 @@ class Imba.Event
 					params = [keyCodes[handler]]
 					handler = 'key'
 					
-				let mod = "on$" + handler
+				let mod = handler + 'Modifier'
 
 				if node[mod]
 					isMod = yes
-					params.push(self) if params
+					params = (params or []).concat([self,state])
 					handler = node[mod]
 			
 			# if it is still a string - call getHandler on
