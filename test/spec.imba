@@ -216,8 +216,8 @@ global class SpecExample
 
 global class SpecObject
 
-	def ok actual
-		SPEC.ok(actual)
+	def ok actual, message
+		SPEC.ok(actual, message)
 
 global class SpecCondition
 

@@ -29,6 +29,10 @@ apps:no-events = <div.app -> <ul>
 apps:strings = <div.app -> <ul>
 	for item,i in store:items
 		<li :tap.prevent='addSomething'> <span.title> item:title
+		
+apps:chainSyntax = <div.app -> <ul>
+	for item,i in store:items
+		<li :tap.prevent.addSomething> <span.title> item:title
 
 apps:functions = <div.app -> <ul>
 	for item,i in store:items

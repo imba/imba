@@ -6084,13 +6084,19 @@ export class TagHandler < TagPart
 	
 	def add item, type
 		if type == TagArgList
+			# could be dynamic
 			@last.params = item
+			# unless @last.isPrimitive
+			# 	@dyn ||= []
+			# 	@dyn.push(@chain:length)
+
 		elif type == TagAttrValue
 			# really?
 			if item isa Parens
 				item = item.value
 			
 			value = item
+			# value.@isStatic = value.isPrimitive or (value isa Func and !value.nonlocals)
 			# console.log "push Value to chain {item} {item.isPrimitive}"
 			# @chain.push(item)
 			@last = null
@@ -6102,7 +6108,18 @@ export class TagHandler < TagPart
 	def js o
 		let parts = [quoted].concat(@chain)
 		parts.push(value) if value
-		"on$({slot},[{cary__(parts)}])"
+		# if !value.isPrimitive and !(value isa Func and !value.nonlocals)
+		# 	@dyn ||= []
+		# 	@dyn.push(parts:length)
+		return "on$({slot},[{cary__(parts)}])"
+		#		let dl = @dyn and @dyn:length
+		#
+		#		if dl == 1
+		#			"on$({slot},[{cary__(parts)}],{@dyn[0]})"
+		#		elif dl > 1
+		#			"on$({slot},[{cary__(parts)}],-1)"
+		#		else
+		#			"on$({slot},[{cary__(parts)}],0)"
 
 export class Tag < Node
 

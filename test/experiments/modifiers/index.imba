@@ -1,9 +1,13 @@
 # <div ->
+<.only[objvar]>
+<.only[objvar] :tap.test()>
+
 var v = "hello"
 
 tag cached
 	def render
 		<self>
+			<.tool[data].neg uxa:action='notediscard'> <i.sicon data-name='circlecross'>
 			for v in @ary
 				<div@{v}> "v"
 
@@ -11,6 +15,7 @@ var bool = false
 var fn = do console.log "called!"
 
 <div ->
+	<.tool[data].neg uxa:action='notediscard'> <i.sicon data-name='circlecross'>
 	<button title="Something" css:display='block'>
 	<button x:hello='block'>
 
@@ -82,11 +87,15 @@ tag Inner
 	def myMethod a,b
 		console.log "Inner#myMethod",a,b
 
+var fn = do yes
+
 Imba.mount <App ->
 	<button :tap.stop.myMethod> "myMethod"
 	<button :tap.myMethod(10)> "myMethod(10)"
 	<button :tap.myMethod(10,20)> "myMethod(10,20)"
 	<button :tap.alt.myMethod(10)> "alt.myMethod(10)"
+	<button :tap.alt.myMethod(10,data)> "alt.myMethod(10,data)"
+	<button :tap.alt=fn> "alt.myMethod(10)"
 	<button :tap.alt.bubble.myMethod(10)> "alt.bubble.myMethod(10)"
 	<button :tap.self.stop.alt.myMethod(10)>
 		"self.stop.alt.myMethod(10)"

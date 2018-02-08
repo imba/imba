@@ -197,13 +197,17 @@ class Imba.Tag
 	def on$ slot,handler
 		let handlers = @on_ ||= []
 		let prev = handlers[slot]
-		if prev
-			handlers[slot] = handler
-		else
-			handlers[slot] = handler
-			handlers.push(handler) if slot < 0
-			handlers.@dirty = yes
-		self
+		# self-bound handlers
+		if slot < 0
+			if prev == undefined
+				slot = handlers[slot] = handlers:length
+			else
+				slot = prev
+			prev = handlers[slot]
+		
+		handlers[slot] = handler
+		return self
+
 
 	def id= id
 		if id != null
