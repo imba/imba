@@ -29,6 +29,11 @@ extend tag element
 	
 	def click o = {}
 		dispatch('click',o)
+		
+	def on *params
+		@on_ ||= []
+		@on_[0] = params
+		self
 
 	def dispatch name, opts = {}
 		emits = [] # reset emits every time
@@ -42,68 +47,72 @@ extend tag element
 		let event = type.new(name,desc)
 		dom.dispatchEvent(event)
 		return emits
+	
+	def mark *params
+		if params[0] isa Imba.Event
+			emits.push(@ref)
+		else
+			emits.push(*params)
 
-tag Button
-	def test handler, params, o = {}
-		@on_ ||= []
-		@on_[0] = [handler,params]
-		click(o)
-
+tag Custom
+	def meth
+		emits.push('Custom')
+	
 tag Example
+	
+	def meth
+		emits.push('Example')
+		
+	def emeth
+		emits.push('Example')
+		
+	def ontap
+		emits.push('tapa')
 	
 	def render
 		<self>
-			<Button@btn[{a: 1, b: 2}]> "Button"
-			<div@a :tap='a'>
-				<button@tap :tap='b'> "Increment"
-				<button@incbubble :tap.bubble='b'> "Increment"
-				<button@stopshift :tap.stop.shift='b'> "Increment"
-				<button@shiftbubble :tap.shift.bubble='b'> "Increment"
-				<button@stopself :tap.stop.self='b'> <b@stopselfinner> "Increment"
-				<button@selfstop :tap.self.stop='b'> <b@selfstopinner> "Increment"
+			"A"
+			<div@b>
+				"B"
+				<Custom@c>
+					"C"
+					<div@d> "D"
 				
 	def tagAction
 		emits.push(this)
 		self
 
 	def testModifiers
-		eq @tap.click, ['b']
-		eq @incbubble.click, ['b','a']
-	
-		# event should be stopped - but not triggered because shift is not pressed
-		eq @stopshift.click, []
-		eq @stopshift.click(shiftKey: true), ['b']
-		# will bubble through to parent - but not click
-		eq @shiftbubble.click, ['a']
-		# handled - and then bubble	
-		eq @stopself.click, ['b']
-		# click inside
-		eq @stopselfinner.click, []
-		eq @selfstopinner.click, ['a']
 		
-		# .data - will include the closest tag-data as the argument
-		eq @btn.test('tap.data','arg'), [@btn.data]
-	
-	def testArguments
-		# supply arguments with array
-		eq @btn.test('tap',['arg',1,2,3]), [1,2,3]
+		# test self
+		@c.on('tap','mark')
+		eq @d.click, ['c']
 		
-		# no arguments should send the event itself as argument
-		ok @btn.test('tap','arg')[0] isa Imba.Event
-	
-		# the action will be called on the object it is found
-		eq @btn.test('tap','dataAction'), [store]
-		eq @btn.test('tap','tagAction'), [self]
-		# allow arguments inline - experimental
+		@c.on('tap','self','mark')
+		eq @d.click, ['tapa']
+
+		@c.on('tap','emeth')
+		eq @d.click, ['Example']
 		
+		eq @b.on('tap','mark').click, ['b']
+		eq @b.on('tap',['mark',1,2]).click, [1,2]
 		
+		# fall through
+		eq @b.on('tap','bubble','mark').click, ['b','tapa']
+		
+		# alt modifier
+		eq @b.on('tap','alt','mark').click, ['tapa']
+		eq @b.on('tap','stop','alt','mark').click, []
+		eq @b.on('tap','stop','alt',['mark',true]).click(altKey: yes), [true]
+		eq @b.on('tap','mark').click, ['b']
+		
+		self
 
 describe "Tags - Events" do
-	
 	var node = <Example[store]>
 	document:body.appendChild(node.dom)
 	test "modifiers" do node.testModifiers
-	test "arguments" do node.testArguments
+	# test "arguments" do node.testArguments
 
 	
 		
