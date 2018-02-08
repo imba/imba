@@ -6072,7 +6072,8 @@ export class TagHandler < TagPart
 		@slot ?= @tag.nextSlot('handler')
 		
 	def isStatic
-		(!value or value.isPrimitive) and @chain.every(do |item|
+		let valStatic = !value or value.isPrimitive or (value isa Func and !value.nonlocals)
+		valStatic and @chain.every(do |item|
 			let val = item isa Parens ? item.value : item
 			val isa Func ? !val.nonlocals : val.isPrimitive
 		)
@@ -6084,8 +6085,10 @@ export class TagHandler < TagPart
 			# really?
 			if item isa Parens
 				item = item.value
+			
+			value = item
 			# console.log "push Value to chain {item} {item.isPrimitive}"
-			@chain.push(item)
+			# @chain.push(item)
 			@last = null
 		else
 			# console.log "TagHandler add",item
@@ -6093,7 +6096,9 @@ export class TagHandler < TagPart
 		return self
 		
 	def js o
-		"on$({quoted},[{cary__(@chain)}],{slot})"
+		let parts = [quoted].concat(@chain)
+		parts.push(value) if value
+		"on$({slot},[{cary__(parts)}])"
 
 export class Tag < Node
 
@@ -6272,9 +6277,9 @@ export class Tag < Node
 				content = tree
 				self.tree = tree
 
-		if tree
-			# this is the point where we traverse the inner nodes with our tree
-			tree.resolve
+		
+		# this is the point w here we traverse the inner nodes with our tree
+		tree.resolve if tree
 		
 
 		for part in @attributes
@@ -6284,18 +6289,15 @@ export class Tag < Node
 		
 		# we need to trigger our own reference before the body does
 		# but we do not need a reference if we have no body
-		if reactive and tree and (explicitKey or o:loop) and (o:body isa Func or tree.hasTags) # only if we have inner
-			# do we really need a reference when in loop?
+		if reactive and tree and (explicitKey or o:loop) and (o:body isa Func or tree.hasTags)
 			reference
-			# self
 
 		if reactive and parent and parent.tree and !o:ivar
-			# if o:treeType == TREE_TYPE.LOOP
-			# 	o:treeRef = parent.staticCache.nextSlot
-			# else
 			o:treeRef = parent.staticCache.nextRef
 		
+		# compile body		
 		var body = content and content.c(expression: yes)
+
 		if body
 			let typ = 0
 
@@ -6414,9 +6416,6 @@ export class Tag < Node
 			else
 				ctx = parent ? parent.staticCache : closureCache
 
-			# if o:cacheType == '$set'
-			# 	out = "++{ctx}.$i && {out}"
-
 			acc ||= OP('.',ctx,key)
 
 			if o:ivar
@@ -6432,11 +6431,6 @@ export class Tag < Node
 				out = "{reference.c} = {out}"
 
 			out = "({out})"
-
-			#
-			# 	out = "({reference.c} = {acc.c}={acc.c} || {out})"
-			# else
-			# 	out = "({acc.c} = {acc.c} || {out})"
 
 		return out + calls.join("")
 

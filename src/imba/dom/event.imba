@@ -6,9 +6,10 @@ var keyCodes = {
 	enter: 13,
 	space: 32,
 	up: 38,
-	left: 37,
-	right: 39,
 	down: 40
+	# left: 37,
+	# right: 39,
+	
 }
 
 var checkKeycode = do $1:keyCode ? ($1:keyCode !== $3) : false
@@ -31,6 +32,27 @@ export var Modifiers =
 	del:     do $1:keyCode ? ($1:keyCode !== 8 and $1:keyCode !== 46) : false
 	data:    do ($4:data = yes) and false
 	bubble:  do ($4:bubble = yes) and false
+		
+
+var el = Imba.Tag:prototype
+	
+def el.on$stop e do e.stop || true
+def el.on$prevent e do e.prevent || true
+def el.on$silence e do e.silence || true
+def el.on$bubble e do e.bubble(yes) || true
+def el.on$ctrl e do e.event:ctrlKey == true
+def el.on$alt e do e.event:altKey == true
+def el.on$shift e do e.event:shiftKey == true
+def el.on$meta e do e.event:metaKey == true
+def el.on$key key, e do e.keyCode ? (e.keyCode == key) : true
+def el.on$del e do e.keyCode ? (e.keyCode == 8 or e.keyCode == 46) : true
+def el.on$self e do e.event:target == @dom
+def el.on$left e do e.button != undefined ? (e.button === 0) : el.on$key(37,e)
+def el.on$right e do e.button != undefined ? (e.button === 2) : el.on$key(39,e)
+def el.on$middle e do e.button != undefined ? (e.button === 1) : true
+
+def el.getHandler str
+	self[str] # or (parent?.getHandler(str))
 
 ###
 Imba handles all events in the dom through a single manager,
@@ -58,7 +80,7 @@ class Imba.Event
 	
 	def initialize e
 		event = e
-		bubble = yes
+		@bubble = yes
 
 	def type= type
 		@type = type
@@ -69,6 +91,9 @@ class Imba.Event
 	###
 	def type
 		@type || event:type
+	
+	def button do event:button
+	def keyCode do event:keyCode
 
 	def name
 		@name ||= type.toLowerCase.replace(/\:/g,'')
@@ -88,13 +113,12 @@ class Imba.Event
 	Prevents further propagation of the current event.
 	@return {self}
 	###
-	def halt
+	def stop
 		bubble = no
 		self
 
-
-	def stopPropagation
-		halt
+	def stopPropagation do stop
+	def halt do stop
 
 	# migrate from cancel to prevent
 	def prevent
@@ -151,6 +175,75 @@ class Imba.Event
 	def redirect node
 		@redirect = node
 		self
+		
+	def processHandlers node, handlers
+		let i = 1
+		let l = handlers:length
+		let bubble = @bubble
+		let result 
+		
+		if bubble
+			@bubble = 1
+
+		while i < l
+			let isMod = false
+			let handler = handlers[i++]
+			let params  = null
+			let context = node
+			
+			if handler isa Array
+				params = handler.slice(1)
+				handler = handler[0]
+			
+			if typeof handler == 'string'
+				if keyCodes[handler]
+					handler = 'key'
+					params = [keyCodes[handler]]
+					
+				let mod = "on$" + handler
+
+				if node[mod]
+					isMod = yes
+					params.push(self) if params
+					handler = node[mod]
+			
+			# if it is still a string - call getHandler on
+			# ancestor of node to see if we get a handler for this name
+			if typeof handler == 'string'
+				let el = node
+				let fn = null
+				while el and !fn
+					if fn = el.getHandler(handler)
+						handler = fn
+						context = el
+					else
+						el = el.parent
+					
+			if handler isa Function
+				# what if we actually call stop inside function?
+				# do we still want to continue the chain?
+				let res = handler.apply(context,params or [self])
+				
+				# should we take awaits into account?
+				# was bubbling before - has not been modified
+				if !isMod
+					bubble = no # stop propagation by default
+					@responder ||= node
+
+				if res == false
+					# console.log "returned false - breaking"
+					break
+
+				if res and !@silenced and res:then isa Function
+					res.then(Imba:commit)
+		
+		# if we havent stopped or dealt with bubble while handling
+		if @bubble === 1
+			@bubble = bubble
+
+		return null
+		
+		# loop through the handlers
 		
 	def processHandler node, name, handler # , mods = []
 
@@ -242,6 +335,7 @@ class Imba.Event
 		while domnode
 			@redirect = null
 			let node = domnode.@dom ? domnode : domnode.@tag
+
 			if node
 				if node[meth] isa Function
 					@responder ||= node
@@ -251,8 +345,8 @@ class Imba.Event
 				if handlers = node:_on_
 					for handler in handlers when handler
 						let hname = handler[0]
-						if hname.indexOf(name) == 0 and bubble and (hname:length == name:length or hname[name:length] == '.')
-							processHandler(node,hname,handler[1] or [])
+						if name == handler[0] and bubble # and (hname:length == name:length or hname[name:length] == '.')
+							processHandlers(node,handler)
 					break unless bubble
 
 				if node:onevent

@@ -30,9 +30,9 @@ describe 'Syntax - Tags' do
 		
 	# events
 	test 'events' do
-		check "('tap',['prevent','after'],0)" do <div.two :tap.prevent.after>
-		check "('tap',[['incr',10]],0)" do <div.two :tap.incr(10)>
-		check "('tap',[fnvar],0)" do <div.two :tap=fnvar>
+		check "(0,['tap','prevent','after'])" do <div.two :tap.prevent.after>
+		check "(0,['tap',['incr',10]])" do <div.two :tap.incr(10)>
+		check "(0,['tap',fnvar])" do <div.two :tap=fnvar>
 
 	test 'data' do
 		check "setData(objvar)" do <div[objvar]>

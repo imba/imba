@@ -194,8 +194,16 @@ class Imba.Tag
 	def html
 		@dom:innerHTML
 	
-	def on$ event, handler, slot
-		on(event, handler, slot)
+	def on$ slot,handler
+		let handlers = @on_ ||= []
+		let prev = handlers[slot]
+		if prev
+			handlers[slot] = handler
+		else
+			handlers[slot] = handler
+			handlers.push(handler) if slot < 0
+			handlers.@dirty = yes
+		self
 		
 	def on event, handler, slot
 		let handlers = @on_ ||= []
