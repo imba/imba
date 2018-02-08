@@ -204,21 +204,6 @@ class Imba.Tag
 			handlers.push(handler) if slot < 0
 			handlers.@dirty = yes
 		self
-		
-	def on event, handler, slot
-		let handlers = @on_ ||= []
-		
-		if slot != undefined
-			let prev = handlers[slot]
-			if prev
-				prev[1] = handler
-			else
-				handlers[slot] = [event,handler]
-				handlers.push(handlers[slot]) if slot < 0
-				handlers.@dirty = yes
-		else
-			handlers.push([event,handler])
-		return self
 
 	def id= id
 		if id != null

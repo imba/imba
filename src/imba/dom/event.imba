@@ -7,35 +7,9 @@ var keyCodes = {
 	space: 32,
 	up: 38,
 	down: 40
-	# left: 37,
-	# right: 39,
-	
 }
 
-var checkKeycode = do $1:keyCode ? ($1:keyCode !== $3) : false
-
-# return true to skip handler
-export var Modifiers =
-	halt:    do this.stopPropagation and false
-	stop:    do this.stopPropagation and false
-	prevent: do this.preventDefault and false
-	silence: do this.silence and false
-	self:    do $1:target != $2.@dom
-	left:    do $1:button != undefined ? ($1:button !== 0) : checkKeycode($1,$2,keyCodes:left)
-	right:   do $1:button != undefined ? ($1:button !== 2) : checkKeycode($1,$2,keyCodes:right)
-	middle:  do $1:button != undefined ? ($1:button !== 1) : false
-	ctrl:    do $1:ctrlKey != true
-	shift:   do $1:shiftKey != true
-	alt:     do $1:altKey != true
-	meta:    do $1:metaKey != true
-	keycode: do $1:keyCode ? ($1:keyCode !== $3) : false
-	del:     do $1:keyCode ? ($1:keyCode !== 8 and $1:keyCode !== 46) : false
-	data:    do ($4:data = yes) and false
-	bubble:  do ($4:bubble = yes) and false
-		
-
 var el = Imba.Tag:prototype
-	
 def el.on$stop e do e.stop || true
 def el.on$prevent e do e.prevent || true
 def el.on$silence e do e.silence || true
@@ -50,9 +24,7 @@ def el.on$self e do e.event:target == @dom
 def el.on$left e do e.button != undefined ? (e.button === 0) : el.on$key(37,e)
 def el.on$right e do e.button != undefined ? (e.button === 2) : el.on$key(39,e)
 def el.on$middle e do e.button != undefined ? (e.button === 1) : true
-
-def el.getHandler str
-	self[str] # or (parent?.getHandler(str))
+def el.getHandler str do self[str]
 
 ###
 Imba handles all events in the dom through a single manager,
@@ -242,85 +214,6 @@ class Imba.Event
 			@bubble = bubble
 
 		return null
-		
-		# loop through the handlers
-		
-	def processHandler node, name, handler # , mods = []
-
-		# go through 
-		let modIndex = name.indexOf('.')
-		
-		var o = {}
-		
-		if modIndex >= 0
-			# could be optimized
-			let mods = name.split(".").slice(1)
-			# go through modifiers
-			for mod in mods
-				let guard = Modifiers[mod]
-				unless guard
-					if keyCodes[mod]
-						mod = keyCodes[mod]
-					if /^\d+$/.test(mod)
-						mod = parseInt(mod)
-						guard = Modifiers:keycode
-					else
-						console.warn "{mod} is not a valid event-modifier"
-						continue
-				
-				# skipping this handler?
-				if guard.call(self,event,node,mod,o) == true
-					return
-
-		var context = node
-		var params = [self,data]
-		var result
-		
-		if handler isa Array
-			params = handler.slice(1)
-			handler = handler[0]
-		
-		if o:data
-			let el = node
-			while el
-				if el.@data
-					params = [el.@data]
-					break
-				el = el.parent
-
-		if handler isa String
-			let el = node
-			while el					
-				# should lookup actions?
-				if el[handler]
-					context = el
-					handler = el[handler]
-					break
-				
-				if el.@data and el.@data[handler] isa Function
-					context = el.@data
-					handler = el.@data[handler]
-					break
-					
-				el = el.parent
-		
-		if handler isa Function
-			@silenced = no
-			result = handler.apply(context,params)
-		
-		# the default behaviour is that if a handler actually
-		# processes the event - we stop propagation. That's usually
-		# what you would want
-		if !o:bubble
-			stopPropagation
-		
-		@responder ||= node
-		
-		# if result is a promise and we're not silenced, schedule Imba.commit
-		if result and !@silenced and result:then isa Function
-			result.then(Imba:commit)
-
-		return result
 
 	def process
 		var name = self.name
