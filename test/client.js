@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.5'};
+var Imba = {VERSION: '1.3.0-beta.6'};
 
 /*
 
@@ -8272,7 +8272,7 @@ describe('Syntax - Tags',function() {
 	});
 	
 	return test('ref',function() {
-		return check("ref_('main',self)",function() { return (self._main || _T.$('div',self).ref_('main',self).setData(objvar)).end(); });
+		return check("ref_('main',self)",function() { return (self._main || _T.$('div',self).ref_('main',self)).setData(objvar).end(); });
 	});
 });
 

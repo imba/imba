@@ -6066,6 +6066,9 @@ export class TagModifier < TagPart
 			quoted
 
 export class TagData < TagPart
+	
+	def isStatic
+		!name or name.isPrimitive
 
 	def js
 		"setData({name.c})"

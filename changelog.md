@@ -1,3 +1,6 @@
+## 1.3.0-beta.6
+* Fix regression in beta.5 where dynamic setData would be cached
+
 ## 1.3.0-beta.5
 * Reintroduce style,setStyle on Imba.Tag
 * Introduce new event syntax allowing for custom event modifiers
