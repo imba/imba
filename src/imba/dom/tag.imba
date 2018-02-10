@@ -131,7 +131,7 @@ class Imba.Tag
 
 	def initialize dom,ctx
 		self.dom = dom
-		self:$ = {}
+		self:$ = TagCache.new(self)
 		@tree_ = null
 		@owner_ = ctx
 		self.FLAGS = 0
@@ -888,7 +888,7 @@ class Imba.Tags
 						Imba.attr(klass,name,dom: yes)
 		return klass
 		
-	def $ name, owner
+	def createElement name, owner
 		if $debug$
 			throw("cannot find tag-type {name}") unless findTagType(name)
 		var typ = findTagType(name)
@@ -900,6 +900,56 @@ class Imba.Tags
 	def $set cache, slot
 		return cache[slot] = TagSet.new(cache,slot)
 
+
+
+# use array instead?
+class TagCache
+	def initialize owner
+		self.@tag = owner
+		# self[0] = owner
+		self
+	
+	# to get a new cache
+	def $$ name
+		self[name] ||= TagCache.new(self[0])
+	
+	# returns a new fast list
+	def a$ type,slot,par
+		var item = []
+		item:static = type
+		item.@tag = self.@tag
+		self[slot] = item
+		return item
+		
+	# returns a new 
+	def l$ slot
+		var item = []
+		item:static = 5
+		item:cache = self
+		return item
+
+	def $ type, key, par
+		var cache = this
+		var node
+		var ctx = par != undefined ? cache[par] : cache.@tag
+
+		if typeof type == 'string'
+			node = Imba.TAGS.createElement(type,ctx)
+		elif typeof type == 'number'
+			# create a slot
+			node = []
+			node:static = type
+			node.@tag = ctx
+		else
+			node = type.build(ctx)
+		# could check if already added?
+		if typeof key == 'string'
+			cache[0][key] = node
+			node.flag(node.@ref = key.slice(1))
+		else
+			cache[key] = node
+		return node
+		
 class TagSet
 	
 	def initialize parent, slot
