@@ -403,7 +403,7 @@ Imba.Pointer.prototype.y = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(3), self = this, _T = Imba.TAGS;
+var Imba = __webpack_require__(3), _T = Imba.TAGS;
 const store = {
 	items: [
 		{title: "Create example"},
@@ -431,7 +431,7 @@ var apps = {};
 var COUNTER = 0;
 
 apps.noEvents = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
@@ -444,7 +444,7 @@ apps.noEvents = (_T.$('div').flag('app')).setTemplate(function() {
 
 // will be cached?
 apps.strings = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
@@ -456,7 +456,7 @@ apps.strings = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.chainSyntax = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
@@ -468,7 +468,7 @@ apps.chainSyntax = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.functions = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
@@ -480,7 +480,7 @@ apps.functions = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.functionsNoMod = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
@@ -492,7 +492,7 @@ apps.functionsNoMod = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.arrays = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
@@ -505,7 +505,7 @@ apps.arrays = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.textA = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
@@ -516,7 +516,7 @@ apps.textA = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.textB = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
@@ -527,7 +527,7 @@ apps.textB = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.textC = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
@@ -538,7 +538,7 @@ apps.textC = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.loop = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
@@ -550,7 +550,7 @@ apps.loop = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.loopInner = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent([
 		($[1]||$.$('li',1,0).setText("First item")).end(),
 		(function($0) {
@@ -564,7 +564,7 @@ apps.loopInner = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.loopKeys = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var i_, t0, $$ = $0.$iter();
@@ -576,7 +576,7 @@ apps.loopKeys = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.loopTrue = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent([
 		true ? (
 			(function($0) {
@@ -590,7 +590,7 @@ apps.loopTrue = (_T.$('div').flag('app')).setTemplate(function() {
 }).end();
 
 apps.loopWeird = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent([
 		(COUNTER % 3 == 0) ? (
 			($[1]||$.$('li',1,0).setText("Single")).end()
@@ -608,7 +608,7 @@ apps.loopWeird = (_T.$('div').flag('app')).setTemplate(function() {
 
 var pruneId = 0;
 apps.loopPrune = (_T.$('div').flag('app')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var $1, $$ = $0.$iter();
@@ -654,11 +654,11 @@ var run = function(app,name,times) {
 
 var testWeird = function() {
 	let bool = true;
-	let item = _T.$('div').end();
+	let item = (_T.$('div').setText("BOOL")).end();
 	let items = store.items.slice(0);
 	let dyn = function() { return item; };
 	let app = (_T.$('div').flag('app')).setTemplate(function() {
-		var $ = this.$, self = this;
+		var $ = this.$;
 		return ($[0]||$.$('div',0)).setContent([
 			($[1]||$.$('div',1,0).setText("before")).end(),
 			bool ? Imba.static([
@@ -696,7 +696,7 @@ var RunButton = _T.defineTag('RunButton', 'button', function(tag){
 });
 
 var controls = (_T.$('div').flag('controls')).setTemplate(function() {
-	var $ = this.$, self = this;
+	var $ = this.$;
 	return Imba.static([
 		($[0]||$.$('div',0).flag('header')).setContent([
 			(function($0) {

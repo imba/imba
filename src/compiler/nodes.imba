@@ -1155,17 +1155,13 @@ export class Block < ListNode
 				else
 					@nodes = [arr]
 
-
-
 			return self
 
 		elif node isa TagPushAssign
-			# console.log 'TagPushAssign'
 			let real = expressions
 
 			@nodes = @nodes.map do |child|
 				if child in real and !(child isa Assign)
-					# console.log "{child}"
 					child.consume(node)
 				else
 					child
@@ -2474,25 +2470,29 @@ export class TagLoopFunc < Func
 			param.visit(stack)
 		
 		if @tags.len == 1 and !@tags[0].option(:key)
-			let lenDecl = @loop.options:vars:len.declarator
-			if lenDecl
-				lenDecl.defaults = OP('=',OP('.',@params.at(0),'taglen'),lenDecl.defaults)
+			let len = @loop.options:vars:len
+			console.log "find vars?!?",len
+			# let lenDecl = len.declarator
+			if len and len:declarator
+				let defs = len.declarator.defaults
+				len.declarator.defaults = OP('=',OP('.',@params.at(0),'taglen'),defs)
 			@body.push(Return.new(@params.at(0)))
 			set(treeType: 4)
+			return self
+
+		if @tags.len == 1
+			let op = CALL(OP('.',@params.at(0),'$iter'),[])
+			# op =OP('=',VarReference.new(@resvar,'let'),resval)
+			@resultVar = scope.declare('$$',op, system: yes)
 		else
-			if @tags.len == 1
-				let op = CALL(OP('.',@params.at(0),'$iter'),[])
-				# op =OP('=',VarReference.new(@resvar,'let'),resval)
-				@resultVar = scope.declare('$$',op, system: yes)
-			else
-				@resultVar = @params.at(@tags.len,true,'$$') # visiting?
-				@resultVar.visit(stack)
-				@args.push(Arr.new([]))
-			
-			let collector = TagPushAssign.new("push",@resultVar,null)
-			@loop.body.consume(collector)
-			@body.push(Return.new(@resultVar))
-			set(treeType: 5)
+			@resultVar = @params.at(@tags.len,true,'$$') # visiting?
+			@resultVar.visit(stack)
+			@args.push(Arr.new([]))
+		
+		let collector = TagPushAssign.new("push",@resultVar,null)
+		@loop.body.consume(collector)
+		@body.push(Return.new(@resultVar))
+		set(treeType: 5)
 		self
 		
 	def capture node
@@ -2516,7 +2516,9 @@ export class TagLoopFunc < Func
 		# add the argument creating this 
 		# the cache needs to have a reference to the outer node though
 		let typ = Num.new(key ? 5 : 4)
-		@args.push(OP('||',OP('.',gen,oref),CALL( OP('.',gen,'$'),[typ,oref,@tag.cacheRef])))
+		let factoryParams = [typ,oref]
+		factoryParams.push(@tag.childRef) if @tag.childRef
+		@args.push(OP('||',OP('.',gen,oref),CALL( OP('.',gen,'$'),factoryParams)))
 		self
 	
 	def js o
@@ -6231,9 +6233,11 @@ export class Tag < Node
 			self
 
 		elif o:ivar and !prevTag
-			var meth = STACK.method
+			# it should cache itself
+			o:factory = "_T"
 			
-			if meth
+			var meth = STACK.method
+			if meth and false
 				let key = "'" + meth.name + "'" # what if there are more?
 				let op = CALL(OP('.',OP('.',This.new,'$'),'$$'),[key])
 				@staticCache = TagCache.new(self,scope.declare("$",op)) # .set(lowercase: yes)
@@ -6316,7 +6320,7 @@ export class Tag < Node
 		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : staticCache.nextRef)
 	
 	def childRef
-		@options:loop ? null : cacheRef
+		(@options:loop or @options:factory) ? null : cacheRef
 
 	def js jso
 		var o = @options
@@ -6336,6 +6340,7 @@ export class Tag < Node
 
 		# var c_zone = o:isRoot ? o:body.c(expression: yes) : scope.tagContext.c
 		var out = ""
+		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
 
 		if isSelf
 			commit = "synced"
@@ -6344,12 +6349,18 @@ export class Tag < Node
 			@reference = scope.context
 			out = scope.context.c
 		elif o:isRoot
-			let typ = type.isClass ? type.name : "'" + type.@value + "'"
+			# let typ = type.isClass ? type.name : "'" + type.@value + "'"
 			# if o:template
 			return "_T.$({typ},{o:body.c(expression: yes)}).end()"
+		elif o:ivar and o:factory
+			# at the root
+			o:path = OP('.',scope.context,o:ivar).c
+			out = "{o:path}={o:path}||_T.$({typ},{scope.context.c},'{o:ivar.@value.slice(1)}')"
+		elif o:factory
+			self
 		else
 			let ref = cacheRef
-			let typ = type.isClass ? type.name : "'" + type.@value + "'"
+			# let typ = type.isClass ? type.name : "'" + type.@value + "'"
 
 			if o:ivar
 				o:path = OP('.',scope.context,o:ivar).c
