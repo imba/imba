@@ -1504,10 +1504,10 @@ Imba.Tag.prototype.root = function (){
 	@private
 	*/
 
-Imba.Tag.prototype.ref_ = function (ref,ctx){
-	ctx['_' + ref] = this;
+Imba.Tag.prototype.ref_ = function (ref){
+	this._owner_['_' + ref] = this;
 	this.flag(this._ref = ref);
-	this._owner = ctx;
+	// @owner = ctx
 	return this;
 };
 
@@ -2419,13 +2419,19 @@ Imba.Tags.prototype.findTagType = function (type){
 };
 
 Imba.Tags.prototype.createElement = function (name,owner){
-	if (null) {};
-	var typ = this.findTagType(name);
-	if (owner instanceof Function) {
-		return typ.build(null);
+	var typ;
+	if (name instanceof Function) {
+		typ = name;
 	} else {
-		return typ.build(owner);
+		if (null) {};
+		typ = this.findTagType(name);
 	};
+	return typ.build(owner);
+	
+	// if owner isa Function
+	// 	typ.build(null)
+	// else
+	// 	typ.build(owner)
 };
 
 Imba.Tags.prototype.$set = function (cache,slot){
@@ -2459,7 +2465,8 @@ var createElement = function(type,key,par) {
 	};
 	// could check if already added?
 	if (typeof key == 'string') {
-		cache[0][key] = node;
+		// hack for ivars - they should be special cased
+		cache._tag[key] = node;
 		node.flag(node._ref = key.slice(1));
 	} else {
 		cache[key] = node;

@@ -6234,7 +6234,7 @@ export class Tag < Node
 
 		elif o:ivar and !prevTag
 			# it should cache itself
-			o:factory = "_T"
+			o:factory = scope.imbaTags
 			
 			var meth = STACK.method
 			if meth and false
@@ -6351,11 +6351,11 @@ export class Tag < Node
 		elif o:isRoot
 			# let typ = type.isClass ? type.name : "'" + type.@value + "'"
 			# if o:template
-			return "_T.$({typ},{o:body.c(expression: yes)}).end()"
+			return "{scope.imbaTags}.$({typ},{o:body.c(expression: yes)}).end()"
 		elif o:ivar and o:factory
 			# at the root
 			o:path = OP('.',scope.context,o:ivar).c
-			out = "{o:path}={o:path}||_T.$({typ},{scope.context.c},'{o:ivar.@value.slice(1)}')"
+			out = "{o:path}={o:path}||{scope.imbaTags}.$({typ},{scope.context.c}).ref_('{o:ivar.@value.slice(1)}')"
 		elif o:factory
 			self
 		else
@@ -6377,7 +6377,7 @@ export class Tag < Node
 			else
 				if o:ivar and o:path
 					out += o:path + "="
-				out += "_T.$({typ})"
+				out += "{scope.imbaTags}.$({typ})"
 		
 		if o:body isa Func
 			bodySetter = "setTemplate"

@@ -166,10 +166,10 @@ class Imba.Tag
 	@return {self}
 	@private
 	###
-	def ref_ ref, ctx
-		ctx['_' + ref] = self
+	def ref_ ref
+		@owner_['_' + ref] = self
 		flag(@ref = ref)
-		@owner = ctx
+		# @owner = ctx
 		self
 
 	###
@@ -890,13 +890,19 @@ class Imba.Tags
 		return klass
 		
 	def createElement name, owner
-		if $debug$
-			throw("cannot find tag-type {name}") unless findTagType(name)
-		var typ = findTagType(name)
-		if owner isa Function
-			typ.build(null)
-		else
-			typ.build(owner)
+		var typ
+		if name isa Function
+			typ = name
+		else			
+			if $debug$
+				throw("cannot find tag-type {name}") unless findTagType(name)
+			typ = findTagType(name)
+		typ.build(owner)
+
+		# if owner isa Function
+		# 	typ.build(null)
+		# else
+		# 	typ.build(owner)
 		
 	def $set cache, slot
 		return cache[slot] = TagSet.new(cache,slot)
@@ -926,7 +932,8 @@ var createElement = do |type,key,par|
 		node = type.build(ctx)
 	# could check if already added?
 	if typeof key == 'string'
-		cache[0][key] = node
+		# hack for ivars - they should be special cased
+		cache.@tag[key] = node
 		node.flag(node.@ref = key.slice(1))
 	else
 		cache[key] = node
