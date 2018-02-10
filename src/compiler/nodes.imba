@@ -2474,23 +2474,30 @@ export class TagLoopFunc < Func
 			param.visit(stack)
 		
 		if @tags.len == 1 and !@tags[0].option(:key)
-			console.log "CAN OPTIMIZE LOOP!"
 			let lenDecl = @loop.options:vars:len.declarator
 			if lenDecl
 				lenDecl.defaults = OP('=',OP('.',@params.at(0),'taglen'),lenDecl.defaults)
 			@body.push(Return.new(@params.at(0)))
+			set(treeType: 4)
 		else
-			@resultVar = @params.at(@tags.len,true,'$$') # visiting?
-			@resultVar.visit(stack)
+			if @tags.len == 1
+				let op = CALL(OP('.',@params.at(0),'$iter'),[])
+				# op =OP('=',VarReference.new(@resvar,'let'),resval)
+				@resultVar = scope.declare('$$',op, system: yes)
+			else
+				@resultVar = @params.at(@tags.len,true,'$$') # visiting?
+				@resultVar.visit(stack)
+				@args.push(Arr.new([]))
+			
 			let collector = TagPushAssign.new("push",@resultVar,null)
 			@loop.body.consume(collector)
 			@body.push(Return.new(@resultVar))
-			@args.push(Arr.new([]))
+			set(treeType: 5)
 		self
 		
 	def capture node
 		console.log "TagLoop capture"
-		node.set(par: null)
+		node.set(par: null, loop: self)
 		let gen = @tag.staticCache
 		let oref = gen.nextRef
 		let nr = @tags.push(node) - 1
@@ -2514,7 +2521,7 @@ export class TagLoopFunc < Func
 	
 	def js o
 		var out = super
-		out + "({cary__(@args)})"
+		"(" + out + ")({cary__(@args)})"
 
 export class MethodDeclaration < Func
 
@@ -6398,10 +6405,12 @@ export class Tag < Node
 			return null
 		
 		if o:par
-			console.log "trigger cacheRef on par"
-			o:par.cacheRef
+			o:par.childRef
 
 		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : staticCache.nextRef)
+	
+	def childRef
+		@options:loop ? null : cacheRef
 
 	def js jso
 		var o = @options
@@ -6419,6 +6428,7 @@ export class Tag < Node
 		var quote = do |str| helpers.singlequote(str)
 		var tree = @tree or null
 		var parent = self.parent
+		let contentType = 0
 
 		var c_zone = o:isRoot ? o:body.c(expression: yes) : scope.tagContext.c
 		var out = ""
@@ -6432,18 +6442,18 @@ export class Tag < Node
 			let ref = cacheRef
 			let gen = staticCache
 			let typ = type.isClass ? type.name : "'" + type.@value + "'"
-		
-			console.log "build here(!)",typ,gen,ref
-			if !o:ivar and ref
+
+			if o:ivar
+				out = OP('.',scope.context,o:ivar).c + '||'
+			elif ref
 				out = "{gen.c}[{ref.c}]||"
-			# let ref = o:ivar ? "'{o:ivar}'" : cacheRef.c
-			if o:par and o:par.cacheRef # there is always a parent?
-				out += "{gen.c}.$({typ},{ref.c},{o:par.cacheRef.c})"
-			else
-				out += "{gen.c}.$({typ},{ref.c})"
 				
-			# unless o:ivar
-			# 	out = "{gen.c}[{ref}]||{out}"
+			if o:par and o:par.childRef
+				out += "{gen.c}.$({typ},{ref.c},{o:par.childRef.c})"
+			elif ref
+				out += "{gen.c}.$({typ},{ref.c})"
+			else
+				out = "_T.$({typ})"
 
 		if o:isRoot
 			return out + ".end()"
@@ -6452,11 +6462,20 @@ export class Tag < Node
 			bodySetter = "setTemplate"
 
 		elif o:body
-			if o:body isa ArgList and o:body.count == 1 and o:body.first.isString
-				content = o:body.first
-				content.@noparen = yes
-				bodySetter = "setText"
-
+			if o:body isa ArgList and o:body.count == 1
+				let body = o:body.first
+				if body.isString
+					content = body
+					content.@noparen = yes
+					bodySetter = "setText"
+					contentType = 6
+				elif body isa TagLoopFunc
+					console.log "TAGLOOP IS BODY(!)",body.option(:treeType)
+					contentType = body.option(:treeType) or 3
+				else
+					tree = TagTree.new(self, o:body, root: self, reactive: reactive)
+					content = tree
+					self.tree = tree
 			else
 				# would probably be better to convert to a tagtree during the initial visit
 				tree = TagTree.new(self, o:body, root: self, reactive: reactive)
@@ -6483,23 +6502,22 @@ export class Tag < Node
 		var body = content and content.c(expression: yes)
 
 		if body
-			let typ = 0
-
 			if tree
 				if tree.option(:treeType) and tree.single
-					typ = tree.option(:treeType)
+					contentType = tree.option(:treeType)
 				elif tree.static
-					typ = 2
+					contentType = 2
 				elif reactive or tree.reactive
 					if !tree.single or tree.single isa If
-						typ = 1
+						contentType = 1
 					elif tree.single and tree.option(:staticloop)
-						typ = 4
+						console.log "should never happen"
+						contentType = 4
 					else
-						typ = 3
+						contentType = 3
 
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
-				calls.push ".{bodySetter}({body},{typ})"
+				calls.push ".{bodySetter}({body},{contentType})"
 			elif bodySetter == 'setText'
 				let typ = content isa Str ? statics : calls
 				typ.push ".{bodySetter}({body})"
@@ -6519,115 +6537,10 @@ export class Tag < Node
 		if statics:length
 			out = out + statics.join("")
 		
-		unless isSelf
-			if o:ivar
-				out = "{OP('.',scope.context,o:ivar).c}||{out}"
-			# else
-			# 	out = "{@staticCache.c}[{cacheRef.c}]||{out}"
-			if @reference
-				out = "{reference.c} = {out}"
+		if @reference and !isSelf
+			out = "{reference.c} = {out}"
 
 		return "({out})" + calls.join("")
-		
-
-		if (o:ivar or o:key or reactive) and !(type isa Self)
-			# if this is an ivar, we should set the reference relative
-			# to the outer reference, or possibly right on context?
-			var partree = parent and parent.tree
-			var acc
-
-			let nr = STACK.incr('tagCacheKey')
-			let key = o:treeRef or counterToShortRef(nr) + '__'
-			let ctx
-
-			if o:ivar
-				ctx = scope.context
-				key = o:ivar
-
-			elif o:key and !o:treeRef
-				let method = '_' + STACK.method.name
-				let parCache = OP('.',Self.new,'$')
-				let paths = OP('.',parCache,method)
-				let setter
-				let cache
-				
-				if o:treeType == 5
-					cache = CALL(OP('.',scope.tagContextPath,o:cacheType),[parCache,"'" + method + "'"])
-					setter = OP('||',paths,cache)
-				else
-					cache = LIT('{}') # o:cacheType ? CALL(OP('.',scope.tagContextPath,o:cacheType),[]) : LIT('{}')
-					setter = OP('=',paths,OP('||',paths,cache))
-
-				ctx = scope.closure.declare(explicitCacheVar,Parens.new(setter))
-				key = o:key
-
-			elif o:key and !o:loop
-				key = OP('+',"'{key}$$'",o:key)
-				key.cache()
-				ctx = parent ? parent.staticCache : closureCache
-
-			elif o:loop or o:key
-				if parent
-					ctx = parent.staticCache
-				else
-					ctx = closureCache
-
-				# ctx = parent and parent.reference
-				let s = scope.closure
-				let pathKey = key
-				let path = OP('.',ctx,key)
-				let kvar = explicitCacheVar # "${key}"
-				
-				let cache = LIT('{}')
-				let setter
-
-				if o:key and o:key != o:loopIndex
-					key = o:key # ?
-				elif o:loopVar
-					kvar = o:loopVar
-					key = o:loopIndex or o:loop.option(:vars)[:index]
-					cache = LIT('[]')
-				else
-					# kvar = '_$'
-					if o:loop
-						o:loop.@tagCount ||= 0
-						if o:loop.@tagCount > 0
-							kvar += o:loop.@tagCount
-						o:loop.@tagCount++
-
-					let idx = o:loop.option(:vars)[:index]
-					cache = LIT('[]')
-					key = idx
-					
-				if o:treeType == 5
-					cache = CALL(OP('.',scope.tagContextPath,'$set'),[ctx,"'" + o:treeRef + "'"])
-					setter = OP('||',path,cache)
-					
-				else
-					setter = OP('=',path,OP('||',path,cache))
-		
-				ctx = s.declare(kvar,Parens.new(setter))
-				
-			else
-				ctx = parent ? parent.staticCache : closureCache
-
-			acc ||= OP('.',ctx,key)
-
-			if o:ivar
-				out = "{acc.c} || {out}"
-			else
-				key.cache if key:cache isa Function
-				if o:treeType == 5
-					out = "{acc.c} || {ctx}.$({key.c},{out})"
-				else
-					out = "{acc.c}||{out}"
-
-			if @reference
-				out = "{reference.c} = {out}"
-
-			out = "({out})"
-
-		return out + calls.join("")
 
 # This is a helper-node
 # Should probably use the same type of listnode everywhere

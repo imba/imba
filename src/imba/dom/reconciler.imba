@@ -7,6 +7,7 @@ var Imba = require("../imba")
 # 3 - single item
 # 4 - optimized array - only length will change
 # 5 - optimized collection
+# 6 - text only
 
 def removeNested root, node, caret
 	# if node/nodes isa String

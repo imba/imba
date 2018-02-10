@@ -131,9 +131,10 @@ class Imba.Tag
 
 	def initialize dom,ctx
 		self.dom = dom
-		self:$ = TagCache.new(self)
+		self:$ = TagCache.build(self)
+		self:$up = @owner_ = ctx
 		@tree_ = null
-		@owner_ = ctx
+		# @owner_ = ctx
 		self.FLAGS = 0
 		build
 		self
@@ -900,66 +901,71 @@ class Imba.Tags
 	def $set cache, slot
 		return cache[slot] = TagSet.new(cache,slot)
 
+Imba.Tags:prototype['$'] = Imba.Tags:prototype:createElement
 
+
+var createElement = do |type,key,par|
+	var node
+	var cache = this
+	var ctx = par != undefined ? cache[par] : cache.@tag
+
+	if typeof type == 'string'
+		node = Imba.TAGS.createElement(type,ctx)
+	elif typeof type == 'number'
+		# create a slot
+		
+		if type == 5
+			console.log "create parset"
+			node = TagSet.new(cache,key,ctx)
+		else
+			node = []
+			node:static = type
+			node.@tag = ctx
+			node:$ = createElement
+	else
+		node = type.build(ctx)
+	# could check if already added?
+	if typeof key == 'string'
+		cache[0][key] = node
+		node.flag(node.@ref = key.slice(1))
+	else
+		cache[key] = node
+	return node
 
 # use array instead?
 class TagCache
+	def self.build owner
+		var item = []
+		item.@tag = owner
+		item:$ = createElement
+		# tag-cache is its own type?
+		return item
+
 	def initialize owner
 		self.@tag = owner
-		# self[0] = owner
 		self
 	
 	# to get a new cache
 	def $$ name
-		self[name] ||= TagCache.new(self[0])
+		self[name] ||= TagCache.build(@tag)
 	
-	# returns a new fast list
-	def a$ type,slot,par
-		var item = []
-		item:static = type
-		item.@tag = self.@tag
-		self[slot] = item
-		return item
-		
-	# returns a new 
-	def l$ slot
-		var item = []
-		item:static = 5
-		item:cache = self
-		return item
-
-	def $ type, key, par
-		var cache = this
-		var node
-		var ctx = par != undefined ? cache[par] : cache.@tag
-
-		if typeof type == 'string'
-			node = Imba.TAGS.createElement(type,ctx)
-		elif typeof type == 'number'
-			# create a slot
-			node = []
-			node:static = type
-			node.@tag = ctx
-		else
-			node = type.build(ctx)
-		# could check if already added?
-		if typeof key == 'string'
-			cache[0][key] = node
-			node.flag(node.@ref = key.slice(1))
-		else
-			cache[key] = node
-		return node
-		
 class TagSet
 	
-	def initialize parent, slot
+	def initialize cache, slot, par
+		self:par$ = par
+		self:cache$ = cache
+		self:key$ = slot
 		self:i$ = 0
-		self:s$ = slot
-		self:c$ = parent
 	
-	def $ key, node
+	def $ type, key, par
+		var node
+		var ctx = self:par$
+		if typeof type == 'string'
+			node = Imba.TAGS.createElement(type,ctx)
+		else
+			node = type.build(ctx)
 		self:i$++
-		node:k$ = key
+		node:$key = key
 		self[key] = node
 		
 	def $iter
@@ -969,13 +975,14 @@ class TagSet
 		return item
 		
 	def $prune items
-		let par = self:c$
-		let slot = self:s$		
-		let clone = TagSet.new(par,slot)
+		console.log "prune TagSet"
+		let par = self:cache$
+		let key = self:key$
+		let clone = TagSet.new(par,key,self:par$)
 		for item in items
-			clone[item:k$] = item
+			clone[item:key$] = item
 		clone:i$ = items:length
-		return par[slot] = clone
+		return par[key] = clone
 
 
 Imba.SINGLETONS = {}
