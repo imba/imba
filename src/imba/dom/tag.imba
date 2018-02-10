@@ -153,6 +153,9 @@ class Imba.Tag
 
 	def ref
 		@ref
+		
+	def root
+		@owner_ ? @owner_.root : self
 
 	###
 	Setting references for tags like
@@ -885,8 +888,14 @@ class Imba.Tags
 						Imba.attr(klass,name,dom: yes)
 		return klass
 		
-	def $ typ, owner
-		findTagType(typ).build(owner)
+	def $ name, owner
+		if $debug$
+			throw("cannot find tag-type {name}") unless findTagType(name)
+		var typ = findTagType(name)
+		if owner isa Function
+			typ.build(null)
+		else
+			typ.build(owner)
 		
 	def $set cache, slot
 		return cache[slot] = TagSet.new(cache,slot)

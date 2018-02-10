@@ -5941,16 +5941,33 @@ export class TagCache < Node
 		@index = 0
 
 	def nextRef
+		TagCacheKey.new(self)
+	
+	def nextValue
 		let ref = counterToShortRef(@counter++)
-		# console.log "next ref {root}"
 		option(:lowercase) ? ref.toLowerCase : ref
+		
 		
 	def nextSlot
 		@index++
 		Num.new(@index - 1)
-
+		
 	def c
 		"{@value.c}"
+		
+export class TagCacheKey < Node
+	
+	def initialize cache
+		@owner = cache
+		self
+		
+	def cache
+		self
+		
+	def c
+		@value ||= @owner.nextSlot
+		return @value
+
 
 export class TagPart < Node
 
@@ -6139,7 +6156,7 @@ export class Tag < Node
 			flag: isSelf ? -1 : 0
 			handler: isSelf ? -1 : 0
 		}
-		@attributes = []
+		@attributes = o:attributes or []
 		@currAttr = 0
 		self
 		
@@ -6195,26 +6212,50 @@ export class Tag < Node
 		super
 
 
-	def visit
+	def visit stack
 		var o = @options
+		var scope = @tagScope = scope__
+		let prevTag = stack.@tag
 
 		if o:ivar or o:key
 			reactive = yes
 
 		var typ = enclosing
 
+		# move self into template
 		if typ == '->' or typ == '=>'
-			@tree = TagFragmentTree.new(self,o:body, root: self, reactive: yes)
-			@fragment = o:body = TagFragmentFunc.new([],Block.wrap([@tree]),null,null,closed: typ == '->')
+			console.log "was not reactive?"
+			makeFragment(typ == '->')
+			
+		elif (!stack.@tag and !o:key and !reactive and !isSelf)
+			# why not just set all classes?
+			o:isRoot = yes
+			console.log "make root! {scope} {type} {scope.@reactive}"
+			let dynamics = @attributes
+			let inner = Tag.new(type: This.new, body: o:body, attributes: dynamics)
+			@attributes = []
+			var param = RequiredParam.new(Identifier.new('$$'))
+			o:body = TagFragmentFunc.new([param],Block.wrap([inner],[]),null,null,closed: true)
+			o:body.scope.@tagContext = o:body.scope.declare('$',OP('.',This.new,'$')) # param
+		
+		stack.@tag = self
+		
+		for part in @attributes
+			part.traverse
 
 		o:key.traverse if o:key
 		o:body.traverse if o:body
 
-		for part in @attributes
-			part.traverse
-
-		@tagScope = scope__
+		stack.@tag = prevTag
 		self
+		
+	def makeFragment closed = false
+		return @fragment if @fragment
+		var o = @options
+		@tree = TagFragmentTree.new(self,o:body, root: self, reactive: yes)
+		@fragment = o:body = TagFragmentFunc.new([],Block.wrap([@tree]),null,null,closed: closed)
+		o:body.scope.@tagContext = This.new
+		return @fragment
 
 	def reference
 		@reference ||= @tagScope.closure.temporary(self,pool: 'tag').resolve
@@ -6241,7 +6282,7 @@ export class Tag < Node
 		option(:ivar) or option(:key)
 		
 	def isSelf
-		type isa Self
+		type isa Self or type isa This
 
 	def js jso
 		var o = @options
@@ -6255,8 +6296,6 @@ export class Tag < Node
 		var commit = "end"
 		var content = o:body
 		var ns = type.@ns
-
-		var isSelf = type isa Self
 		var bodySetter = isSelf ? "setChildren" : "setContent"
 		
 		# should not cache statics if the node itself is not cached
@@ -6264,7 +6303,8 @@ export class Tag < Node
 		var quote = do |str| helpers.singlequote(str)
 		var tree = @tree or null
 		var parent = self.parent
-		var c_zone = scope.context.c
+		# var c_zone = scope.context.c
+		var c_zone = o:isRoot ? o:body.c(expression: yes) : scope.tagContext.c
 
 		var out = if isSelf
 			commit = "synced"
@@ -6280,6 +6320,10 @@ export class Tag < Node
 			start += "._{type.@ns.toUpperCase}" if type.@ns
 			start += ".$('{type.@name}',{c_zone})"
 			start
+		
+		if o:isRoot
+			# direct - ok
+			return out + ".end()"
 
 		# this is reactive if it has an ivar
 		if o:ivar
@@ -6300,17 +6344,15 @@ export class Tag < Node
 				tree = TagTree.new(self, o:body, root: self, reactive: reactive)
 				content = tree
 				self.tree = tree
-
 		
 		# this is the point w here we traverse the inner nodes with our tree
 		tree.resolve if tree
-		
 
 		for part in @attributes
 			let out = part.js(jso)
 			out = ".{mark__(part.name)}" + out
 			part.isStatic ? statics.push(out) : calls.push(out)
-		
+
 		# we need to trigger our own reference before the body does
 		# but we do not need a reference if we have no body
 		if reactive and tree and (explicitKey or o:loop) and (o:body isa Func or tree.hasTags)
@@ -6319,7 +6361,7 @@ export class Tag < Node
 		if reactive and parent and parent.tree and !o:ivar
 			o:treeRef = parent.staticCache.nextRef
 		
-		# compile body		
+	
 		var body = content and content.c(expression: yes)
 
 		if body
@@ -6351,6 +6393,7 @@ export class Tag < Node
 					statics.push ".{bodySetter}({body})"
 			else
 				calls.push ".{bodySetter}({body})"
+		
 
 		calls.push ".{commit}()"
 
@@ -7320,9 +7363,14 @@ export class Scope
 	def tagContextPath
 		# bypassing for now
 		@tagContextPath ||= imbaTags
+		
+	def tagContext
+		@tagContext ||= (context.reference) # @parent ? @parent.tagContext : {})
 
 	def tagContextCache
-		@tagContextCache ||= TagCache.new(self,closure.declare("$",OP('.',context.reference,'$')))
+		@tagContextCache ||= TagCache.new(self,closure.declare("$",OP('.',tagContext,'$')))
+	
+	
 
 	def context
 		@context ||= ScopeContext.new(self)
@@ -7649,12 +7697,12 @@ export class FunctionScope < Scope
 
 export class MethodScope < Scope
 
-
 	def isClosed
 		yes
 
-	def tagContext
-		@tagContext ||= self.declare("$",OP('.',This.new,'$'))
+	# def tagContext
+	# 	console.log "declaring tagContext?"
+	# 	@tagContext ||= self.declare("$",OP('.',This.new,'$'))
 
 export class LambdaScope < Scope
 
