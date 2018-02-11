@@ -24,7 +24,8 @@ Get the body element wrapped in an Imba.Tag
 def Imba.root
 	tag(Imba.document:body)
 
-def Imba.static items, nr
+def Imba.static items, typ, nr
+	items.@type = typ
 	items:static = nr
 	return items
 

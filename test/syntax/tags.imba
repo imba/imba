@@ -60,7 +60,7 @@ describe 'Syntax - Tags' do
 				<div title="tag" -> <h1> title
 			
 			def open
-				<div title="tag" -> <h1> title
+				<div title="tag" => <h1> title
 		
 		var instance = Local.new
 		htmleq "<h1>tag</h1>", instance.closed

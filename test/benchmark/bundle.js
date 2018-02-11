@@ -713,7 +713,7 @@ var controls = (_1('div').flag('controls')).setTemplate(function() {
 				($0[i] || _1('div',$0,i)).setContent(logs[i],3).end();
 			};return $0;
 		})($[5] || _2($,5,4)),4).end()
-	],1,2);
+	],2,1);
 }).end();
 
 
@@ -1330,7 +1330,8 @@ Imba.root = function (){
 	return Imba.getTagForDom(Imba.document().body);
 };
 
-Imba.static = function (items,nr){
+Imba.static = function (items,typ,nr){
+	items._type = typ;
 	items.static = nr;
 	return items;
 };

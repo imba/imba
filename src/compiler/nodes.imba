@@ -1039,7 +1039,7 @@ export class Block < ListNode
 				set(treeType: typ)
 				@indentation = null
 				if true or @tag.reactive
-					@nodes = [Util.callImba(scope__, "static",[arr,nr,Num.new(typ)])]
+					@nodes = [Util.callImba(scope__, "static",[arr,Num.new(typ),nr])]
 				else
 					@nodes = [arr]
 		self
@@ -1154,34 +1154,7 @@ export class Block < ListNode
 
 
 	def consume node
-		if node isa TagTree # special case?!?
-			console.log "Blck consume TagTree"
-			return self
-
-			@nodes = @nodes.map do |child|
-				child.consume(node)
-
-			let real = expressions
-			# console.log 'Block.consume TagTree',node.@loop
-			# FIXME should not include terminators and comments when counting
-			# should only wrap the content in array (returning all parts)
-			# for if/else blocks -- not loops
-
-			# we need to compare the real length
-			if !node.@loop && real:length > 1
-				let nr = node.blocks.push(self)
-				var arr = Arr.new(ArgList.new( @nodes ))
-				arr.indented(@indentation)
-				@indentation = null
-
-				if node.reactive
-					@nodes = [Util.callImba(scope__, "static",[arr,Num.new(nr)])]
-				else
-					@nodes = [arr]
-
-			return self
-
-		elif node isa TagPushAssign
+		if node isa TagPushAssign
 			let real = expressions
 
 			@nodes = @nodes.map do |child|
@@ -2491,8 +2464,6 @@ export class TagLoopFunc < Func
 		
 		if @tags.len == 1 and !@tags[0].option(:key)
 			let len = @loop.options:vars:len
-			console.log "find vars?!?",len
-			# let lenDecl = len.declarator
 			if len and len:declarator
 				let defs = len.declarator.defaults
 				len.declarator.defaults = OP('=',OP('.',@params.at(0),'taglen'),defs)
@@ -6227,10 +6198,11 @@ export class Tag < Node
 		# move self into template
 		if typ == '->' or typ == '=>'
 			let close = typ == '->'
-			console.log "content of fragment {o:body}"
+			# console.log "content of fragment {o:body}",close
 			let body = Block.wrap(o:body.@nodes or [o:body])
 			@fragment = o:body = TagFragmentFunc.new([],body,null,null,closed: close)
 			@tagScope = @fragment.scope
+			
 			
 		# elif false and (!stack.@tag and !o:key and !reactive and !isSelf and !o:ivar)
 		# 	# create fully dynamic tag
@@ -6248,17 +6220,12 @@ export class Tag < Node
 			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
 			o:treeRef = o:key
 			o:key.cache
-			# what if we are in loop?
-			# @trunk = TagCache.new(self,scope.declare("$",op))
 
 		elif o:ivar and !o:par
-			# it should cache itself
-			# o:factory = scope.imbaTags
 			var meth = STACK.method
 			if meth and false
 				let key = "'" + meth.name + "'" # what if there are more?
 				let op = CALL(OP('.',OP('.',This.new,'$'),'$$'),[key])
-				# @staticCache = TagCache.new(self,scope.declare("$",op)) # .set(lowercase: yes)
 
 		# for scope should be wrapped immediately?
 		if scope isa ForScope and o:par
