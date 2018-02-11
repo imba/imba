@@ -932,7 +932,7 @@ class Imba.Tags
 		return cache[slot] = TagSet.new(cache,slot)
 
 
-def Imba.createElement name, context, ref, pref
+def Imba.createElement name, ctx, ref, pref
 	var type = name
 	if name isa Function
 		type = name
@@ -941,14 +941,30 @@ def Imba.createElement name, context, ref, pref
 			throw("cannot find tag-type {name}") unless Imba.TAGS.findTagType(name)
 		type = Imba.TAGS.findTagType(name)
 	
-	console.log "createElement",name,ref,pref
+	# console.log "createElement",name,ref,pref
 	# find the parent tag
-	var parent = pref != undefined ? context[pref] : (context.@tag or context)
+	var parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.@tag or ctx)
 	var node = type.build(parent)
-	node:$ref = ref
+	node:$ref = ref if ref
 	# context:i$++ # only if it is not an array?
-	context[ref] = node
+	ctx[ref] = node if ctx
 	return node
+	
+def Imba.createTagMap ctx, ref, pref
+	var par = (pref != undefined ? ctx[pref] : ctx.@tag)
+	var node = TagSet.new(ctx,ref,par)
+	ctx[ref] = node
+	return node
+
+def Imba.createTagList ctx, ref, pref
+	var node = []
+	node:static = 4
+	node.@tag = (pref != undefined ? ctx[pref] : ctx.@tag)
+	ctx[ref] = node
+	return node
+	# node:$ = createElement
+	# var node = TagSet.new(ctx,ref,pref or ctx.@tag)
+	# return node
 
 Imba.Tags:prototype['$'] = Imba.Tags:prototype:createElement
 
@@ -1001,10 +1017,10 @@ class TagCache
 	
 class TagSet
 	
-	def initialize cache, slot, par
-		self:par$ = par
+	def initialize cache, ref, pref
 		self:cache$ = cache
-		self:key$ = slot
+		self:key$ = ref
+		self:par$ = pref
 		self:i$ = 0
 	
 	def $ type, key, par

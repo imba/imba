@@ -286,11 +286,12 @@ def reconcileNested root, new, old, caret
 
 	elif new isa Array
 		if old isa Array
+			# look for slot instead?
 			let typ = new:static
 			if typ or old:static
 				# if the static is not nested - we could get a hint from compiler
 				# and just skip it
-				if typ == old:static
+				if typ == old:static # should also include a reference?
 					for item,i in new
 						# this is where we could do the triple equal directly
 						caret = reconcileNested(root,item,old[i],caret)
@@ -373,6 +374,7 @@ extend tag element
 			# check if old and new isa array
 			elif new isa Array
 				if new:static == 5 and old and old:static == 5
+					console.log "reconcile inner loop"
 					reconcileLoop(self,new,old,null)
 				elif old isa Array
 					reconcileNested(self,new,old,null)

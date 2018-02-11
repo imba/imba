@@ -880,6 +880,10 @@ export class ListNode < Node
 		for node in @nodes
 			return no unless cb(node)
 		return yes
+	
+	# filtered list of items
+	def values
+		@nodes.filter do |item| !(item isa Meta)
 
 	def filter cb
 		@nodes.filter(cb)
@@ -1016,11 +1020,28 @@ export class Block < ListNode
 			throw SyntaxError.new("what")
 		ary:length == 1 && ary[0] isa Block ? ary[0] : Block.new(ary)
 
-	def visit
+	def visit stack
 		@scope.visit if @scope
 
 		for node,i in @nodes
 			node and node.traverse
+
+		if stack and stack.@tag
+			@tag = stack.@tag
+			let real = expressions
+			# we need to compare the real length
+			if real:length > 1
+				let nr = @tag.childCacher.nextBlock #  @tag.blocks.push(self)
+				var arr = Arr.new(ArgList.new( @nodes ))
+				arr.indented(@indentation)
+				var isStatic = real.every do |item| item isa Tag
+				var typ = isStatic ? 2 : 1
+				set(treeType: typ)
+				@indentation = null
+				if true or @tag.reactive
+					@nodes = [Util.callImba(scope__, "static",[arr,nr,Num.new(typ)])]
+				else
+					@nodes = [arr]
 		self
 
 	def block
@@ -1134,6 +1155,9 @@ export class Block < ListNode
 
 	def consume node
 		if node isa TagTree # special case?!?
+			console.log "Blck consume TagTree"
+			return self
+
 			@nodes = @nodes.map do |child|
 				child.consume(node)
 
@@ -2322,10 +2346,6 @@ export class TagDeclaration < Code
 	def id
 		name.id
 
-	def tagspace
-		var ctx = scope.closure.tagContextPath
-		# name.ns ? "{ctx}.ns({helpers.singlequote name.ns})" : ctx
-
 	def js o
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
 
@@ -2498,27 +2518,41 @@ export class TagLoopFunc < Func
 	def capture node
 		# console.log "TagLoop capture"
 		node.set(par: null, loop: self)
-		let gen = @tag.staticCache
+		let gen = @tag.childCacher
 		let oref = gen.nextRef
 		let nr = @tags.push(node) - 1
 		let ref = @loop.option(:vars)['index']
 		let key = node.option(:key)
 		let param = @params.at(nr,true,'$'+nr)
 		# param.visit
-		node.@staticCache = TagCache.new(self,param)
+		# node.@trunk = TagCache.new(self,param)
 		# node.set(treeRef: ref) unless key
+		node.set(cacher: TagCache.new(self,param))
 		
 		if key
 			node.set(treeRef: key)
 			key.cache
 		else
 			node.set(treeRef: ref)
+			
+		# [gen,oref] @tag.cacheVar
 		# add the argument creating this 
 		# the cache needs to have a reference to the outer node though
 		let typ = Num.new(key ? 5 : 4)
-		let factoryParams = [typ,oref]
-		factoryParams.push(@tag.childRef) if @tag.childRef
-		@args.push(OP('||',OP('.',gen,oref),CALL( OP('.',gen,'$'),factoryParams)))
+		# let factoryParams = [typ,oref]
+		# factoryParams.push(@tag.cacheRef) if @tag.cacheRef
+		let fn = key ? 'createTagMap' : 'createTagList'
+		let get = CALL(scope__.imbaRef(fn),@tag.cacheRef ? [gen,oref,@tag.cacheRef] : [gen,oref])
+		
+		# if key
+		let op = OP('||',OP('.',gen,oref),get)
+		@args.push(op)
+			
+		# else
+		# 	let op = OP('||=',OP('.',gen,oref),scope__.imbaRef('createTagList'))
+		# 	@args.push(op)
+
+		# @args.push(OP('||',OP('.',gen,oref),CALL( OP('.',gen,'$'),factoryParams)))
 		self
 	
 	def js o
@@ -2576,13 +2610,6 @@ export class MethodDeclaration < Func
 
 		if String(name).match(/\=$/)
 			set(chainable: yes)
-
-		if option(:greedy)
-			warn "deprecated"
-			# set(greedy: true)
-			var tree = TagTree.new
-			@body = body.consume(tree)
-			# body.nodes = [Arr.new(body.nodes)]
 
 		@context = scope.parent.closure
 		@params.traverse
@@ -3437,11 +3464,13 @@ export class Op < Node
 	def consume node
 		# if it is possible, convert into expression
 		if node isa TagTree
+			console.log "OP CONSUME TagTree"
+			return self
 			@left.consume(node) if @left
 			@right.consume(node) if @right
 			# @body = @body.consume(node)
 			# @alt = @alt.consume(node) if @alt
-			return self
+			
 		return super if isExpressable
 
 		# TODO can rather use global caching?
@@ -4819,7 +4848,6 @@ export class TagTypeIdentifier < Identifier
 
 	def js o
 		return "'" + @str + "'"
-		return "{scope__.tagContextPath}.{@str.replace(":","$")}"
 
 	def c
 		js
@@ -5119,11 +5147,13 @@ export class If < ControlFlow
 		else
 			@test = UnaryOp.new('!',@test,null)
 
-	def visit
+	def visit stack
 		var alt = alt
 
 		@scope.visit if @scope
 		test.traverse if test
+		
+		@tag = stack.@tag
 
 		# console.log "vars in if",Object.keys(@scope.varmap)
 		for own name, variable of @scope.varmap
@@ -5208,7 +5238,7 @@ export class If < ControlFlow
 				# maybe better if we rewrite this to an OP('&&'), and put
 				# the parens logic there
 				# cond should possibly have parens - but where do we decide?
-				if @tagtree
+				if @tag
 					return "{cond} ? {code} : void(0)"
 				else
 					return "{cond} && {code}"
@@ -5242,9 +5272,6 @@ export class If < ControlFlow
 	def consume node
 		# if it is possible, convert into expression
 		if node isa TagTree
-			@body = @body.consume(node) if @body
-			@alt = @alt.consume(node) if @alt
-			@tagtree = node
 			return self
 
 		if node isa TagPushAssign
@@ -5372,6 +5399,7 @@ export class While < Loop
 		return super if isExpressable
 
 		if node isa TagTree
+			console.log "While.consume TagTree"
 			# WARN this is a hack to allow references coming through the wrapping scope
 			# will result in unneeded self-declarations and other oddities
 			scope.closeScope
@@ -5923,6 +5951,7 @@ export class TagCache < Node
 		@value = value
 		@counter = 0
 		@index = 0
+		@blocks = 1
 
 	def nextRef
 		TagCacheKey.new(self)
@@ -5934,6 +5963,10 @@ export class TagCache < Node
 	def nextSlot
 		@index++
 		Num.new(@index - 1)
+	
+	def nextBlock
+		@blocks++
+		Num.new(@blocks - 1)
 		
 	def c
 		"{@value.c}"
@@ -6132,14 +6165,12 @@ export class TagHandler < TagPart
 export class Tag < Node
 
 	prop reactive
-	prop parent
 	prop tree
 
 	def initialize o = {}
 		@traversed = no
 		@options = o
 		@reference = null
-		@tree = null
 		@slots = {
 			flag: isSelf ? -1 : 0
 			handler: isSelf ? -1 : 0
@@ -6158,7 +6189,6 @@ export class Tag < Node
 		
 		if type == TagId
 			set(id: part)
-		# console.log "TagParts.add {type:name}"
 		if type == TagSep
 			@attributes.CURRENT = null
 		elif curr isa TagHandler
@@ -6177,29 +6207,12 @@ export class Tag < Node
 
 	def type
 		@options:type || :div
-
-	def consume node
-		var o = @options
-
-		if node isa TagTree
-			parent = node.root
-			# console.log "CONSUME TAG TREE",parent == o:par
-
-			if node.@loop
-				# alwatys make items in loop reactive
-				reactive = node.reactive or option(:key)
-				option(:loop,node.@loop)
-
-				if option(:ivar)
-					warn "Tag inside loop can not have a static reference {option(:ivar)}", type: 'error', token: option(:ivar).value
-
-			else
-				reactive = node.reactive or !!option(:ivar)
-
-			return self
-
-		super
-
+		
+	def parent
+		@options:par
+		
+	def isSelf
+		type isa Self or type isa This
 
 	def visit stack
 		var o = @options
@@ -6213,55 +6226,46 @@ export class Tag < Node
 
 		# move self into template
 		if typ == '->' or typ == '=>'
-			# console.log "Create template"
-			makeFragment(typ == '->')
+			let close = typ == '->'
+			console.log "content of fragment {o:body}"
+			let body = Block.wrap(o:body.@nodes or [o:body])
+			@fragment = o:body = TagFragmentFunc.new([],body,null,null,closed: close)
+			@tagScope = @fragment.scope
 			
-		elif (!stack.@tag and !o:key and !reactive and !isSelf and !o:ivar)
-			if false
-				o:isRoot = yes
-				let dynamics = @attributes
-				let inner = Tag.new(type: This.new, body: o:body, attributes: dynamics)
-				@attributes = []
-				var param = RequiredParam.new(Identifier.new('$$'))
-				o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
-		
-		# make sure we create a cache for this - or use the main one?
+		# elif false and (!stack.@tag and !o:key and !reactive and !isSelf and !o:ivar)
+		# 	# create fully dynamic tag
+		# 	o:isRoot = yes
+		# 	let dynamics = @attributes
+		# 	let inner = Tag.new(type: This.new, body: o:body, attributes: dynamics)
+		# 	@attributes = []
+		# 	var param = RequiredParam.new(Identifier.new('$$'))
+		# 	o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
+
 		if isSelf
-			# @staticCache = TagCache.new(self,scope.declare("$",OP('.',This.new,'$')))
 			self
 			
 		elif o:key and !o:par
-			console.log "special with key and par"
-			# let r = 
 			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
-			# OP('||',OP('.',This.new,'$$'),OP('=',scope.context,'$'),factoryParams))
 			o:treeRef = o:key
 			o:key.cache
 			# what if we are in loop?
-			@trunk = TagCache.new(self,scope.declare("$",op))
+			# @trunk = TagCache.new(self,scope.declare("$",op))
 
-		elif o:ivar and !prevTag
+		elif o:ivar and !o:par
 			# it should cache itself
-			o:factory = scope.imbaTags
-
+			# o:factory = scope.imbaTags
 			var meth = STACK.method
 			if meth and false
 				let key = "'" + meth.name + "'" # what if there are more?
 				let op = CALL(OP('.',OP('.',This.new,'$'),'$$'),[key])
-				@staticCache = TagCache.new(self,scope.declare("$",op)) # .set(lowercase: yes)
-			else
-				yes
-				
+				# @staticCache = TagCache.new(self,scope.declare("$",op)) # .set(lowercase: yes)
+
 		# for scope should be wrapped immediately?
-		if scope isa ForScope and prevTag
-			if prevTag.@tagScope != scope
+		if scope isa ForScope and o:par
+			if o:par.@tagScope != scope
 				o:loop ||= scope.@tagLoop
 				o:loop.capture(self)
-			else
-				# static-cache must be a reference to parent
-				# console.log "staticCache must be reference to parent"
-				@staticCache = TagCache.new(self,OP('.',prevTag.reference,'$'))
-
+				o:ownCache = yes
 		stack.@tag = self
 
 		for part in @attributes
@@ -6274,95 +6278,72 @@ export class Tag < Node
 
 		stack.@tag = prevTag
 		self
-		
-	def makeFragment closed = false
-		return @fragment if @fragment
-		var o = @options
-		@trunk = o:par ? o:par.staticCache : null
-		@tree = TagFragmentTree.new(self,o:body, root: self, reactive: yes)
-		@fragment = o:body = TagFragmentFunc.new([],Block.wrap([@tree]),null,null,closed: closed)
-		return @fragment
 
 	def reference
+		# Not needed for fragment?
 		@reference ||= @tagScope.closure.temporary(self,pool: 'tag').resolve
 	
 	def factory
 		scope__.imbaRef('createElement')
-		
-	# The cache / tree on which this tag should be cached / generated
-	def trunk
-		@trunk or (@options:par ? @options:par.staticCache : staticCache)
-
-	def staticCache
-		return @staticCache if @staticCache
-		if @fragment
-			# should really not happen this way?
-			console.log "set static cache!"
-			@staticCache = TagCache.new(self,@fragment.scope.declare("$",OP('.',This.new,'$'))) # .set(lowercase: yes)
-		elif type isa Self
-			@staticCache = TagCache.new(self,@tagScope.declare("$",OP('.',This.new,'$')))
-			# @staticCache ||= @tagScope.tagContextCache
-		elif option(:loop) # weird case?
-			throw "should never hit? staticCach loop"
-			@staticCache = TagCache.new(self,OP('.',reference,'$'))
-		elif @options:par
-			@staticCache = @options:par.staticCache
-		elif @parent
-			@staticCache = @parent.staticCache
+	
+	# reference to the cache-object this tag will try to register with
+	def cacher
+		@options:cacher ?= if parent
+			parent.childCacher
+		elif @options:ivar or @options:key
+			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
+			TagCache.new(self,@tagScope.declare("$",op))
 		else
-			@staticCache = TagCache.new(self,OP('.',reference,'$'))
+			null
+		
+	def childCacher
+		@options:childCacher ||= if @fragment or isSelf
+			# if this is a fragment we create a reference to the cache in scope
+			TagCache.new(self,@tagScope.declare("$",OP('.',This.new,'$')))
+		elif !parent or @options:ownCache
+			# if it has no parent we force a reference
+			TagCache.new(self,OP('.',reference,'$'))
+		else
+			parent.childCacher
 
-	def explicitKey
-		option(:ivar) or option(:key)
-		
-	def isSelf
-		type isa Self or type isa This
-		
 	def cacheRef
 		var o = @options
 		return o:treeRef if o:treeRef
 
-		if isSelf or (!o:par and !o:ivar and !o:key)
+		if isSelf or !cacher
 			return null
 		
 		if o:par
-			o:par.childRef
+			o:par.cacheRef
 
-		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : trunk.nextRef)
+		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : cacher.nextRef)
 	
 	def childRef
 		(@options:loop or @options:factory) ? null : cacheRef
 
 	def js jso
 		var o = @options
-		var enc = enclosing
-
+		var scope = scope__
 		var calls = []
 		var statics = []
-
-		var scope = scope__
-		var commit = "end"
+		
+		var parent = o:par # self.parent
 		var content = o:body
 		var bodySetter = isSelf ? "setChildren" : "setContent"
-		var quote = do |str| helpers.singlequote(str)
-		var tree = @tree or null
-		var parent = o:par # self.parent
+		
 		let contentType = 0
 
-		# var c_zone = o:isRoot ? o:body.c(expression: yes) : scope.tagContext.c
 		var out = ""
 		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
 
 		if isSelf
-			commit = "synced"
 			reactive = yes
-			# really reference?
 			@reference = scope.context
 			out = scope.context.c
+
 		elif o:isRoot
-			# let typ = type.isClass ? type.name : "'" + type.@value + "'"
-			# if o:template
 			return "{scope.imbaTags}.$({typ},{o:body.c(expression: yes)}).end()"
+
 		elif o:ivar and o:factory
 			# at the root
 			o:path = OP('.',scope.context,o:ivar).c
@@ -6370,6 +6351,7 @@ export class Tag < Node
 		elif o:factory
 			self
 		else
+			let cacher = cacher
 			let ref = cacheRef
 			let pars = [typ]
 			
@@ -6377,23 +6359,26 @@ export class Tag < Node
 				o:path = OP('.',scope.context,o:ivar).c
 				out = o:path + '= ' + o:path + '||'
 			elif ref
-				out = "{trunk.c}[{ref.c}] || "
+				out = "{cacher.c}[{ref.c}] || "
 			
-			if trunk
-				pars.push(trunk.c)
+			if cacher
+				pars.push(cacher.c)
 				pars.push(ref.c) if ref
-				if ref and parent and parent.childRef
-					pars.push(parent.childRef.c)
+				if parent and parent.cacher == cacher
+					# if ref and parent and parent.childRef
+					pars.push(parent.cacheRef.c)
 
-			# let typ = type.isClass ? type.name : "'" + type.@value + "'"
 			out += "{factory.c}({pars.join(',')})"
 		
 		if o:body isa Func
 			bodySetter = "setTemplate"
 
-		elif o:body
-			if o:body isa ArgList and o:body.count == 1
-				let body = o:body.first
+		elif o:body isa ArgList
+			var children = o:body.values
+
+			if children.len == 1
+				contentType = 3
+				let body = children[0]
 				if body.isString
 					content = body
 					content.@noparen = yes
@@ -6401,69 +6386,43 @@ export class Tag < Node
 					contentType = 6
 				elif body isa TagLoopFunc
 					contentType = body.option(:treeType) or 3
-				else
-					tree = TagTree.new(self, o:body, root: self, reactive: reactive)
-					content = tree
-					self.tree = tree
 			else
-				# would probably be better to convert to a tagtree during the initial visit
-				tree = TagTree.new(self, o:body, root: self, reactive: reactive)
-				content = tree
-				self.tree = tree
-
-		# this is the point w here we traverse the inner nodes with our tree
-		tree.resolve if tree
+				# console.log "body is arglist(!)" + o:body.map(do |item| String(item)).join(",")
+				contentType = children.every(do |item| item isa Tag or item.option(:treeType) == 2) ? 2 : 1
+				content = TagTree.new(self,o:body)
+				# content = Arr.new(o:body.@nodes)
 
 		for part in @attributes
 			let out = part.js(jso)
-			# console.log "attribute",part
 			out = ".{mark__(part.name)}" + out
 			part.isStatic ? statics.push(out) : calls.push(out)
 		
-		# we need to trigger our own reference before the body does
-		# but we do not need a reference if we have no body
-		if reactive and tree and (o:loop) and (o:body isa Func or tree.hasTags)
-			reference
-
-
+		# compile body
 		var body = content and content.c(expression: yes)
-
+	
 		if body
-			if tree
-				if tree.option(:treeType) and tree.single
-					contentType = tree.option(:treeType)
-				elif tree.static
-					contentType = 2
-				elif reactive or tree.reactive
-					if !tree.single or tree.single isa If
-						contentType = 1
-					elif tree.single and tree.option(:staticloop)
-						console.log "should never happen"
-						contentType = 4
-					else
-						contentType = 3
-
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
 				calls.push ".{bodySetter}({body},{contentType})"
 			elif bodySetter == 'setText'
 				let typ = content isa Str ? statics : calls
 				typ.push ".{bodySetter}({body})"
 			elif bodySetter == 'setTemplate'
-				if o:body.nonlocals
+				if o:body.nonlocals # check?
 					calls.push ".{bodySetter}({body})"
 				else
 					statics.push ".{bodySetter}({body})"
 			else
 				calls.push ".{bodySetter}({body})"
-		
-
-		calls.push ".{commit}()"
+	
+		calls.push ".{isSelf ? "synced" : "end"}()"
 
 		if statics:length
 			out = out + statics.join("")
 		
 		if @reference and !isSelf
 			out = "{reference.c} = {out}"
+		
+		# if calls != statics
 
 		return "({out})" + calls.join("")
 
@@ -6489,34 +6448,8 @@ export class TagTree < ListNode
 	def parent
 		@parent ||= @owner.parent
 
-	def staticCache
-		@owner.staticCache
-
-	def nextCacheKey
-		var num = @counter++
-		var ref = counterToShortRef(num)
-
-		if ref:length > 1
-			# what?
-			ref = ref + ref:length
-
-		unless altCache
-			ref = ref.toLowerCase
-		return ref
-
-	def altCache
-		@owner.explicitKey or @owner.option(:loop)
-
-	def cachePrefix
-		if @owner.explicitKey or @owner.option(:loop)
-			'$'
-		else
-			''
-
 	def load list
 		if list isa ListNode
-			# we still want the indentation if we are not in a template
-			# or, rather - we want the block to get the indentation - not the tree
 			@indentation ||= list.@indentation # if list.count > 1
 			list.nodes
 		else
@@ -6554,6 +6487,7 @@ export class TagTree < ListNode
 
 		if !single or single isa If
 			if shouldMarkArray
+				console.log "shouldMarkArray?"
 				"{scope__.imba.c}.static([{out}],1)"
 			else
 				"[{out}]"
@@ -6575,10 +6509,7 @@ export class TagFragmentTree < TagTree
 		super
 		@closure = scope__
 		self
-
-	def staticCache
-		@owner.staticCache
-
+		
 	def shouldMarkArray
 		yes
 
@@ -7325,18 +7256,9 @@ export class Scope
 
 	def namepath
 		'?'
-
-	def tagContextPath
-		# bypassing for now
-		@tagContextPath ||= imbaTags
 		
 	def tagContext
 		@tagContext ||= (context.reference) # @parent ? @parent.tagContext : {})
-
-	def tagContextCache
-		@tagContextCache ||= TagCache.new(self,closure.declare("$",OP('.',tagContext,'$')))
-	
-	
 
 	def context
 		@context ||= ScopeContext.new(self)
@@ -7559,9 +7481,6 @@ export class RootScope < Scope
 	def context
 		@context ||= RootScopeContext.new(self)
 
-	# def tagContextPath
-	# 	@tagContextPath ||= "_T"
-
 	def lookup name
 		name = helpers.symbolize(name)
 		@varmap[name] if @varmap.hasOwnProperty(name)
@@ -7680,10 +7599,6 @@ export class MethodScope < Scope
 
 	def isClosed
 		yes
-
-	# def tagContext
-	# 	console.log "declaring tagContext?"
-	# 	@tagContext ||= self.declare("$",OP('.',This.new,'$'))
 
 export class LambdaScope < Scope
 
