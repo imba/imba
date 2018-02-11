@@ -6217,9 +6217,6 @@ export class Tag < Node
 			makeFragment(typ == '->')
 			
 		elif (!stack.@tag and !o:key and !reactive and !isSelf and !o:ivar)
-			# why not just set all classes?
-			# o:isRoot = yes
-			# console.log "make root! {scope} {type} {scope.@reactive}"
 			if false
 				o:isRoot = yes
 				let dynamics = @attributes
@@ -6284,14 +6281,10 @@ export class Tag < Node
 		@trunk = o:par ? o:par.staticCache : null
 		@tree = TagFragmentTree.new(self,o:body, root: self, reactive: yes)
 		@fragment = o:body = TagFragmentFunc.new([],Block.wrap([@tree]),null,null,closed: closed)
-		# o:body.scope.@tagContext = This.new
 		return @fragment
 
 	def reference
 		@reference ||= @tagScope.closure.temporary(self,pool: 'tag').resolve
-
-	def closureCache
-		@closureCache ||= @tagScope.tagContextCache
 	
 	def factory
 		scope__.imbaRef('createElement')
@@ -6318,7 +6311,6 @@ export class Tag < Node
 			@staticCache = @parent.staticCache
 		else
 			@staticCache = TagCache.new(self,OP('.',reference,'$'))
-		
 
 	def explicitKey
 		option(:ivar) or option(:key)
@@ -6379,25 +6371,22 @@ export class Tag < Node
 			self
 		else
 			let ref = cacheRef
-			# let typ = type.isClass ? type.name : "'" + type.@value + "'"
-
+			let pars = [typ]
+			
 			if o:ivar
 				o:path = OP('.',scope.context,o:ivar).c
-				out = o:path + '||'
+				out = o:path + '= ' + o:path + '||'
 			elif ref
-				out = "{trunk.c}[{ref.c}]||"
+				out = "{trunk.c}[{ref.c}] || "
 			
-			
-			if o:par and o:par.childRef
-				out += "{factory.c}({typ},{trunk.c},{ref.c},{o:par.childRef.c})"
-				# out += "{trunk.c}.$({typ},{ref.c},{o:par.childRef.c})"
+			if trunk
+				pars.push(trunk.c)
+				pars.push(ref.c) if ref
+				if ref and parent and parent.childRef
+					pars.push(parent.childRef.c)
 
-			elif ref and trunk
-				out += "{trunk.c}.$({typ},{ref.c})"
-			else
-				if o:ivar and o:path
-					out += o:path + "="
-				out += "{scope.imbaTags}.$({typ})"
+			# let typ = type.isClass ? type.name : "'" + type.@value + "'"
+			out += "{factory.c}({pars.join(',')})"
 		
 		if o:body isa Func
 			bodySetter = "setTemplate"

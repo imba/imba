@@ -941,16 +941,16 @@ def Imba.createElement name, context, ref, pref
 			throw("cannot find tag-type {name}") unless Imba.TAGS.findTagType(name)
 		type = Imba.TAGS.findTagType(name)
 	
+	console.log "createElement",name,ref,pref
 	# find the parent tag
 	var parent = pref != undefined ? context[pref] : (context.@tag or context)
 	var node = type.build(parent)
 	node:$ref = ref
+	# context:i$++ # only if it is not an array?
 	context[ref] = node
 	return node
 
 Imba.Tags:prototype['$'] = Imba.Tags:prototype:createElement
-
-
 
 
 var createElement = do |type,key,par|
