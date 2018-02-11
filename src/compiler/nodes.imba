@@ -1476,8 +1476,6 @@ export class Param < Node
 			@name.@value.@type = "PARAMVAR" if @name.@value
 			@name.references(@variable)
 			@variable.addReference(@name)
-			# console.log @name.c, "got here!! {@name:constructor}"
-			# @name.@token.@variable = @variable if @name.@token
 
 		self
 
@@ -2453,15 +2451,12 @@ export class TagLoopFunc < Func
 		@tag = stack.@tag
 		@tags = []
 		@args = []
+
 		super
-		
-		# loop through tag params
-		# for item,i in @tags
-		# 	let param = 
-		# push collector into the loop
+
 		for param in @params
 			param.visit(stack)
-		
+
 		if @tags.len == 1 and !@tags[0].option(:key)
 			let len = @loop.options:vars:len
 			if len and len:declarator
@@ -2469,9 +2464,11 @@ export class TagLoopFunc < Func
 				len.declarator.defaults = OP('=',OP('.',@params.at(0),'taglen'),defs)
 			@body.push(Return.new(@params.at(0)))
 			set(treeType: 4)
+			
 			return self
 
 		if @tags.len == 1
+			
 			let op = CALL(OP('.',@params.at(0),'$iter'),[])
 			# op =OP('=',VarReference.new(@resvar,'let'),resval)
 			@resultVar = scope.declare('$$',op, system: yes)
@@ -2479,11 +2476,11 @@ export class TagLoopFunc < Func
 			@resultVar = @params.at(@tags.len,true,'$$') # visiting?
 			@resultVar.visit(stack)
 			@args.push(Arr.new([]))
-		
+
 		let collector = TagPushAssign.new("push",@resultVar,null)
 		@loop.body.consume(collector)
 		@body.push(Return.new(@resultVar))
-		set(treeType: 5)
+		set(treeType: @tags.len == 0 ? 3 : 5)
 		self
 		
 	def capture node
@@ -3433,15 +3430,6 @@ export class Op < Node
 		10
 
 	def consume node
-		# if it is possible, convert into expression
-		if node isa TagTree
-			console.log "OP CONSUME TagTree"
-			return self
-			@left.consume(node) if @left
-			@right.consume(node) if @right
-			# @body = @body.consume(node)
-			# @alt = @alt.consume(node) if @alt
-			
 		return super if isExpressable
 
 		# TODO can rather use global caching?
@@ -5241,10 +5229,6 @@ export class If < ControlFlow
 		!!@parens
 
 	def consume node
-		# if it is possible, convert into expression
-		if node isa TagTree
-			return self
-
 		if node isa TagPushAssign
 			@body = @body.consume(node) if @body
 			@alt = @alt.consume(node) if @alt
@@ -5508,10 +5492,6 @@ export class For < Loop
 
 		if isExpressable
 			return super
-
-		# other cases as well, no?
-		if node isa TagTree
-			throw "tagTree trying to consume?"
 
 		if @resvar
 			var ast = Block.new([self,BR,@resvar.accessor])
@@ -6354,10 +6334,8 @@ export class Tag < Node
 				elif body isa TagLoopFunc
 					contentType = body.option(:treeType) or 3
 			else
-				# console.log "body is arglist(!)" + o:body.map(do |item| String(item)).join(",")
 				contentType = children.every(do |item| item isa Tag or item.option(:treeType) == 2) ? 2 : 1
 				content = TagTree.new(self,o:body)
-				# content = Arr.new(o:body.@nodes)
 
 		for part in @attributes
 			let out = part.js(jso)
@@ -6463,22 +6441,6 @@ export class TagTree < ListNode
 
 	def shouldMarkArray
 		no
-
-export class TagFragmentTree < TagTree
-	
-	def altCache
-		yes
-
-	def cachePrefix
-		'$'
-
-	def visit
-		super
-		@closure = scope__
-		self
-		
-	def shouldMarkArray
-		yes
 
 export class TagWrapper < ValueNode
 

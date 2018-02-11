@@ -9,6 +9,7 @@ var Imba = require("../imba")
 # 5 - optimized collection
 # 6 - text only
 
+
 def removeNested root, node, caret
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements
@@ -204,6 +205,7 @@ def reconcileLoop root, new, old, caret
 	
 	# conditionally prune cache
 	if cl > 1000 and (cl - nl) > 500
+		console.log "SHOULD PRUNE!!"
 		new:cache:$prune(new)
 	
 	if d > 0 and i == ol
@@ -373,15 +375,14 @@ extend tag element
 
 			# check if old and new isa array
 			elif new isa Array
-				if new:static == 5 and old and old:static == 5
-					console.log "reconcile inner loop"
+				if new.@type == 5 and old and old.@type == 5
+					# console.log "reconcile inner loop"
 					reconcileLoop(self,new,old,null)
 				elif old isa Array
 					reconcileNested(self,new,old,null)
 				else
 					empty
 					appendNested(self,new)
-				
 			else
 				text = new
 				return self
@@ -395,6 +396,7 @@ extend tag element
 		elif new isa Array and old isa Array
 			reconcileNested(self,new,old,null)
 		else
+			# what if text?
 			empty
 			appendNested(self,new)
 

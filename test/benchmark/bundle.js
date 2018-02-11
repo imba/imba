@@ -2463,10 +2463,6 @@ Imba.Tags.prototype.createElement = function (name,owner){
 	return typ.build(owner);
 };
 
-Imba.Tags.prototype.$set = function (cache,slot){
-	return cache[slot] = new TagSet(cache,slot);
-};
-
 
 Imba.createElement = function (name,ctx,ref,pref){
 	var type = name;
@@ -2477,11 +2473,15 @@ Imba.createElement = function (name,ctx,ref,pref){
 		type = Imba.TAGS.findTagType(name);
 	};
 	
-	// console.log "createElement",name,ref,pref
-	// find the parent tag
 	var parent = (ctx && pref != undefined) ? ctx[pref] : ((ctx && ctx._tag || ctx));
 	var node = type.build(parent);
-	if (ref) { node.$ref = ref };
+	
+	if (ctx instanceof TagMap) {
+		ctx.i$++;
+		node.$key = ref;
+	};
+	
+	// node:$ref = ref if ref
 	// context:i$++ # only if it is not an array?
 	if (ctx) { ctx[ref] = node };
 	return node;
@@ -2489,55 +2489,16 @@ Imba.createElement = function (name,ctx,ref,pref){
 
 Imba.createTagMap = function (ctx,ref,pref){
 	var par = ((pref != undefined) ? ctx[pref] : ctx._tag);
-	var node = new TagSet(ctx,ref,par);
+	var node = new TagMap(ctx,ref,par);
 	ctx[ref] = node;
 	return node;
 };
 
 Imba.createTagList = function (ctx,ref,pref){
 	var node = [];
-	node.static = 4;
+	node._type = 4;
 	node._tag = ((pref != undefined) ? ctx[pref] : ctx._tag);
 	ctx[ref] = node;
-	return node;
-	// node:$ = createElement
-	// var node = TagSet.new(ctx,ref,pref or ctx.@tag)
-	// return node
-};
-
-Imba.Tags.prototype.$ = Imba.Tags.prototype.createElement;
-
-
-var createElement = function(type,key,par) {
-	var node;
-	var cache = this;
-	var ctx = (par != undefined) ? cache[par] : cache._tag;
-	
-	if (typeof type == 'string') {
-		node = Imba.TAGS.createElement(type,ctx);
-	} else if (typeof type == 'number') {
-		// create a slot
-		
-		if (type == 5) {
-			console.log("create parset");
-			node = new TagSet(cache,key,ctx);
-		} else {
-			node = [];
-			node.static = type;
-			node._tag = ctx;
-			node.$ = createElement;
-		};
-	} else {
-		node = type.build(ctx);
-	};
-	// could check if already added?
-	if (typeof key == 'string') {
-		// hack for ivars - they should be special cased
-		cache._tag[key] = node;
-		node.flag(node._ref = key.slice(1));
-	} else {
-		cache[key] = node;
-	};
 	return node;
 };
 
@@ -2546,61 +2507,44 @@ function TagCache(owner){
 	this._tag = owner;
 	this;
 };
-
-// to get a new cache
 TagCache.build = function (owner){
 	var item = [];
 	item._tag = owner;
-	item.$ = createElement;
-	// tag-cache is its own type?
 	return item;
 };
 
-TagCache.prototype.$$ = function (name){
-	return this[name] || (this[name] = TagCache.build(this._tag));
-};
 
-function TagSet(cache,ref,pref){
+
+function TagMap(cache,ref,par){
 	this.cache$ = cache;
 	this.key$ = ref;
-	this.par$ = pref;
+	this.par$ = par;
 	this.i$ = 0;
 };
 
-TagSet.prototype.$ = function (type,key,par){
-	var node;
-	var ctx = this.par$;
-	if (typeof type == 'string') {
-		node = Imba.TAGS.createElement(type,ctx);
-	} else {
-		node = type.build(ctx);
-	};
-	this.i$++;
-	node.$key = key;
-	return this[key] = node;
-};
-
-TagSet.prototype.$iter = function (){
+TagMap.prototype.$iter = function (){
 	var item = [];
+	item._type = 5;
 	item.static = 5;
 	item.cache = this;
 	return item;
 };
 
-TagSet.prototype.$prune = function (items){
+TagMap.prototype.$prune = function (items){
 	console.log("prune TagSet");
-	let par = this.cache$;
+	let cache = this.cache$;
 	let key = this.key$;
-	let clone = new TagSet(par,key,this.par$);
+	let clone = new TagMap(cache,key,this.par$);
 	for (let i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
 		item = ary[i];
 		clone[item.key$] = item;
 	};
 	clone.i$ = items.length;
-	return par[key] = clone;
+	return cache[key] = clone;
 };
 
-
+Imba.TagMap = TagMap;
+Imba.TagCache = TagCache;
 Imba.SINGLETONS = {};
 Imba.TAGS = new Imba.Tags();
 Imba.TAGS.element = Imba.TAGS.htmlelement = Imba.Tag;
@@ -4252,6 +4196,7 @@ var Imba = __webpack_require__(0);
 // 5 - optimized collection
 // 6 - text only
 
+
 function removeNested(root,node,caret){
 	// if node/nodes isa String
 	// 	we need to use the caret to remove elements
@@ -4481,6 +4426,7 @@ function reconcileLoop(root,new$,old,caret){
 	
 	// conditionally prune cache
 	if (cl > 1000 && (cl - nl) > 500) {
+		console.log("SHOULD PRUNE!!");
 		new$.cache.$prune(new$);
 	};
 	
@@ -4671,8 +4617,8 @@ Imba.extendTag('element', function(tag){
 				this.empty();
 				this.appendChild(new$);
 			} else if (new$ instanceof Array) {
-				if (new$.static == 5 && old && old.static == 5) {
-					console.log("reconcile inner loop");
+				if (new$._type == 5 && old && old._type == 5) {
+					// console.log "reconcile inner loop"
 					reconcileLoop(this,new$,old,null);
 				} else if (old instanceof Array) {
 					reconcileNested(this,new$,old,null);
@@ -4691,6 +4637,7 @@ Imba.extendTag('element', function(tag){
 		} else if ((new$ instanceof Array) && (old instanceof Array)) {
 			reconcileNested(this,new$,old,null);
 		} else {
+			// what if text?
 			this.empty();
 			appendNested(this,new$);
 		};

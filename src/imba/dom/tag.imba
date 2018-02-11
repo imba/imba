@@ -928,9 +928,6 @@ class Imba.Tags
 				throw("cannot find tag-type {name}") unless findTagType(name)
 			typ = findTagType(name)
 		typ.build(owner)
-		
-	def $set cache, slot
-		return cache[slot] = TagSet.new(cache,slot)
 
 
 def Imba.createElement name, ctx, ref, pref
@@ -941,62 +938,30 @@ def Imba.createElement name, ctx, ref, pref
 		if $debug$
 			throw("cannot find tag-type {name}") unless Imba.TAGS.findTagType(name)
 		type = Imba.TAGS.findTagType(name)
-	
-	# console.log "createElement",name,ref,pref
-	# find the parent tag
+		
 	var parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.@tag or ctx)
 	var node = type.build(parent)
-	node:$ref = ref if ref
+	
+	if ctx isa TagMap
+		ctx:i$++
+		node:$key = ref
+
+	# node:$ref = ref if ref
 	# context:i$++ # only if it is not an array?
 	ctx[ref] = node if ctx
 	return node
 	
 def Imba.createTagMap ctx, ref, pref
 	var par = (pref != undefined ? ctx[pref] : ctx.@tag)
-	var node = TagSet.new(ctx,ref,par)
+	var node = TagMap.new(ctx,ref,par)
 	ctx[ref] = node
 	return node
 
 def Imba.createTagList ctx, ref, pref
 	var node = []
-	node:static = 4
+	node.@type = 4
 	node.@tag = (pref != undefined ? ctx[pref] : ctx.@tag)
 	ctx[ref] = node
-	return node
-	# node:$ = createElement
-	# var node = TagSet.new(ctx,ref,pref or ctx.@tag)
-	# return node
-
-Imba.Tags:prototype['$'] = Imba.Tags:prototype:createElement
-
-
-var createElement = do |type,key,par|
-	var node
-	var cache = this
-	var ctx = par != undefined ? cache[par] : cache.@tag
-
-	if typeof type == 'string'
-		node = Imba.TAGS.createElement(type,ctx)
-	elif typeof type == 'number'
-		# create a slot
-		
-		if type == 5
-			console.log "create parset"
-			node = TagSet.new(cache,key,ctx)
-		else
-			node = []
-			node:static = type
-			node.@tag = ctx
-			node:$ = createElement
-	else
-		node = type.build(ctx)
-	# could check if already added?
-	if typeof key == 'string'
-		# hack for ivars - they should be special cased
-		cache.@tag[key] = node
-		node.flag(node.@ref = key.slice(1))
-	else
-		cache[key] = node
 	return node
 
 # use array instead?
@@ -1004,54 +969,39 @@ class TagCache
 	def self.build owner
 		var item = []
 		item.@tag = owner
-		item:$ = createElement
-		# tag-cache is its own type?
 		return item
 
 	def initialize owner
 		self.@tag = owner
 		self
 	
-	# to get a new cache
-	def $$ name
-		self[name] ||= TagCache.build(@tag)
+class TagMap
 	
-class TagSet
-	
-	def initialize cache, ref, pref
+	def initialize cache, ref, par
 		self:cache$ = cache
 		self:key$ = ref
-		self:par$ = pref
+		self:par$ = par
 		self:i$ = 0
-	
-	def $ type, key, par
-		var node
-		var ctx = self:par$
-		if typeof type == 'string'
-			node = Imba.TAGS.createElement(type,ctx)
-		else
-			node = type.build(ctx)
-		self:i$++
-		node:$key = key
-		self[key] = node
 		
 	def $iter
 		var item = []
+		item.@type = 5
 		item:static = 5
 		item:cache = self
 		return item
 		
 	def $prune items
 		console.log "prune TagSet"
-		let par = self:cache$
+		let cache = self:cache$
 		let key = self:key$
-		let clone = TagSet.new(par,key,self:par$)
+		let clone = TagMap.new(cache,key,self:par$)
 		for item in items
 			clone[item:key$] = item
 		clone:i$ = items:length
-		return par[key] = clone
+		return cache[key] = clone
 
-
+Imba.TagMap = TagMap
+Imba.TagCache = TagCache
 Imba.SINGLETONS = {}
 Imba.TAGS = Imba.Tags.new
 Imba.TAGS[:element] = Imba.TAGS[:htmlelement] = Imba.Tag
