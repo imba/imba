@@ -2324,16 +2324,16 @@ export class TagDeclaration < Code
 
 	def tagspace
 		var ctx = scope.closure.tagContextPath
-		name.ns ? "{ctx}.ns({helpers.singlequote name.ns})" : ctx
+		# name.ns ? "{ctx}.ns({helpers.singlequote name.ns})" : ctx
 
 	def js o
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
 
-		var ns = name.ns
+		# var ns = name.ns
 		var mark = mark__(option('keyword'))
 		var params = []
 
-		params.push(helpers.singlequote(name.name))
+		params.push(name.c)
 		var cbody = body.c
 
 		if superclass
@@ -2341,18 +2341,18 @@ export class TagDeclaration < Code
 			# what if it is a regular class?
 			let supname = superclass.name
 			if !supname[0].match(/[A-Z]/)
-				supname = helpers.singlequote(supname)
-			params.push(supname)
+				params.push(superclass.c)
+				# supname = helpers.singlequote(supname)
+			else
+				params.push(supname)
 
 		if body.count
 			params.push("function({@ctx.c})\{{cbody}\}")
 
 		var meth = option(:extension) ? 'extendTag' : 'defineTag'
+		var js = "{mark}{scope__.imba.c}.{meth}({params.join(', ')})"
 
-		var js = "{mark}{tagspace}.{meth}({params.join(', ')})"
-
-
-		if option(:isClass)
+		if name.isClass
 			let cname = name.name
 			# declare variable
 			js = "var {cname} = {js}"
@@ -4818,6 +4818,7 @@ export class TagTypeIdentifier < Identifier
 		return @str
 
 	def js o
+		return "'" + @str + "'"
 		return "{scope__.tagContextPath}.{@str.replace(":","$")}"
 
 	def c
@@ -4829,9 +4830,11 @@ export class TagTypeIdentifier < Identifier
 		name
 
 	def isClass
-		@name[0] == @name[0].toUpperCase
+		!!@str.match(/^[A-Z]/)
+		# @name[0] == @name[0].toUpperCase and 
 
 	def spawner
+		console.log "TagTypeIdentifier shuold never be used"
 		if @ns
 			"_{@ns.toUpperCase}.{@name.replace(/-/g,'_').toUpperCase}"
 		else
@@ -6180,7 +6183,7 @@ export class Tag < Node
 
 		if node isa TagTree
 			parent = node.root
-			console.log "CONSUME TAG TREE",parent == o:par
+			# console.log "CONSUME TAG TREE",parent == o:par
 
 			if node.@loop
 				# alwatys make items in loop reactive
@@ -6224,18 +6227,26 @@ export class Tag < Node
 				@attributes = []
 				var param = RequiredParam.new(Identifier.new('$$'))
 				o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
-				
-				# inner.@staticCache = o:body.scope.declare('$',OP('.',This.new,'$')) # param
 		
 		# make sure we create a cache for this - or use the main one?
 		if isSelf
 			# @staticCache = TagCache.new(self,scope.declare("$",OP('.',This.new,'$')))
 			self
+			
+		elif o:key and !o:par
+			console.log "special with key and par"
+			# let r = 
+			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
+			# OP('||',OP('.',This.new,'$$'),OP('=',scope.context,'$'),factoryParams))
+			o:treeRef = o:key
+			o:key.cache
+			# what if we are in loop?
+			@trunk = TagCache.new(self,scope.declare("$",op))
 
 		elif o:ivar and !prevTag
 			# it should cache itself
 			o:factory = scope.imbaTags
-			
+
 			var meth = STACK.method
 			if meth and false
 				let key = "'" + meth.name + "'" # what if there are more?
@@ -6270,6 +6281,7 @@ export class Tag < Node
 	def makeFragment closed = false
 		return @fragment if @fragment
 		var o = @options
+		@trunk = o:par ? o:par.staticCache : null
 		@tree = TagFragmentTree.new(self,o:body, root: self, reactive: yes)
 		@fragment = o:body = TagFragmentFunc.new([],Block.wrap([@tree]),null,null,closed: closed)
 		# o:body.scope.@tagContext = This.new
@@ -6280,6 +6292,13 @@ export class Tag < Node
 
 	def closureCache
 		@closureCache ||= @tagScope.tagContextCache
+	
+	def factory
+		scope__.imbaRef('createElement')
+		
+	# The cache / tree on which this tag should be cached / generated
+	def trunk
+		@trunk or (@options:par ? @options:par.staticCache : staticCache)
 
 	def staticCache
 		return @staticCache if @staticCache
@@ -6317,7 +6336,7 @@ export class Tag < Node
 		if o:par
 			o:par.childRef
 
-		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : staticCache.nextRef)
+		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : trunk.nextRef)
 	
 	def childRef
 		(@options:loop or @options:factory) ? null : cacheRef
@@ -6366,14 +6385,15 @@ export class Tag < Node
 				o:path = OP('.',scope.context,o:ivar).c
 				out = o:path + '||'
 			elif ref
-				out = "{staticCache.c}[{ref.c}]||"
+				out = "{trunk.c}[{ref.c}]||"
 			
 			
 			if o:par and o:par.childRef
-				out += "{staticCache.c}.$({typ},{ref.c},{o:par.childRef.c})"
-				
-			elif ref and staticCache
-				out += "{staticCache.c}.$({typ},{ref.c})"
+				out += "{factory.c}({typ},{trunk.c},{ref.c},{o:par.childRef.c})"
+				# out += "{trunk.c}.$({typ},{ref.c},{o:par.childRef.c})"
+
+			elif ref and trunk
+				out += "{trunk.c}.$({typ},{ref.c})"
 			else
 				if o:ivar and o:path
 					out += o:path + "="
@@ -7440,6 +7460,9 @@ export class Scope
 
 	def imbaTags
 		root.imbaTags
+		
+	def imbaRef name, shorthand = '_'
+		root.imbaRef(name,shorthand)
 
 	def autodeclare variable
 		vars.push(variable) # only if it does not exist here!!!
@@ -7614,6 +7637,18 @@ export class RootScope < Scope
 			@imbaTags = declare('_T',OP('.',imbaRef,'TAGS'))
 		else
 			@imbaTags = "{imbaRef.c}.TAGS"
+			
+	def imbaRef name, shorthand = '_'
+		var map = @imbaRefs ||= {}
+		return map[name] if map[name]
+
+		var imbaRef = self.imba
+		
+		if @requires.Imba
+			map[name] = declare(shorthand,OP('.',imba,name), system: yes)
+		else
+			map[name] = "{imbaRef.c}.{name}"
+		
 
 	def c o = {}
 		o:expression = no

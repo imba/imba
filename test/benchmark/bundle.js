@@ -2237,6 +2237,33 @@ Imba.Tag.prototype.toString = function (){
 
 Imba.Tag.prototype.initialize = Imba.Tag;
 
+Imba.SVGTag = function SVGTag(){ return Imba.Tag.apply(this,arguments) };
+
+Imba.subclass(Imba.SVGTag,Imba.Tag);
+Imba.SVGTag.namespaceURI = function (){
+	return "http://www.w3.org/2000/svg";
+};
+
+Imba.SVGTag.buildNode = function (){
+	var dom = Imba.document().createElementNS(this.namespaceURI(),this._nodeType);
+	var cls = this._classes.join(" ");
+	if (cls) { dom.className.baseVal = cls };
+	return dom;
+};
+
+Imba.SVGTag.inherit = function (child){
+	child._protoDom = null;
+	console.log("SVGTag inherit",child,child._name);
+	if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0) {
+		child._nodeType = child._name;
+		return child._classes = [];
+	} else {
+		child._nodeType = this._nodeType;
+		var className = "_" + child._name.replace(/_/g,'-');
+		return child._classes = this._classes.concat(className);
+	};
+};
+
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ");
 Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
@@ -2300,6 +2327,7 @@ function TagSpawner(type){
 	return function(zone) { return type.build(zone); };
 };
 
+
 Imba.Tags = function Tags(){
 	this;
 };
@@ -2322,11 +2350,11 @@ Imba.Tags.prototype.defineNamespace = function (name){
 	return clone;
 };
 
-Imba.Tags.prototype.baseType = function (name){
+Imba.Tags.prototype.baseType = function (name,ns){
 	return (Imba.indexOf(name,Imba.HTML_TAGS) >= 0) ? 'element' : 'div';
 };
 
-Imba.Tags.prototype.defineTag = function (name,supr,body){
+Imba.Tags.prototype.defineTag = function (fullName,supr,body){
 	if(body==undefined && typeof supr == 'function') body = supr,supr = '';
 	if(supr==undefined) supr = '';
 	if (body && body._nodeType) {
@@ -2334,11 +2362,23 @@ Imba.Tags.prototype.defineTag = function (name,supr,body){
 		body = null;
 	};
 	
-	if (this[name]) {
-		console.log("tag already exists?",name);
+	if (this[fullName]) {
+		console.log("tag already exists?",fullName);
 	};
 	
-	supr || (supr = this.baseType(name));
+	// if it is namespaced
+	var ns;
+	var name = fullName;
+	let nsidx = name.indexOf(':');
+	if (nsidx >= 0) {
+		ns = fullName.substr(0,nsidx);
+		name = fullName.substr(nsidx + 1);
+		if (ns == 'svg' && !supr) {
+			supr = 'svg:element';
+		};
+	};
+	
+	supr || (supr = this.baseType(fullName));
 	
 	let supertype = ((typeof supr=='string'||supr instanceof String)) ? this.findTagType(supr) : supr;
 	let tagtype = Tag();
@@ -2347,26 +2387,18 @@ Imba.Tags.prototype.defineTag = function (name,supr,body){
 	tagtype._flagName = null;
 	
 	if (name[0] == '#') {
-		this[name] = tagtype;
 		Imba.SINGLETONS[name.slice(1)] = tagtype;
+		this[name] = tagtype;
 	} else if (name[0] == name[0].toUpperCase()) {
 		tagtype._flagName = name;
 	} else {
-		tagtype._flagName = "_" + name.replace(/_/g,'-');
-		this[name] = tagtype;
+		tagtype._flagName = "_" + fullName.replace(/[_\:]/g,'-');
+		this[fullName] = tagtype;
 	};
 	
 	extender(tagtype,supertype);
 	
 	if (body) {
-		// deprecate
-		if (body.length == 2) {
-			// create clone
-			if (!tagtype.hasOwnProperty('TAGS')) {
-				tagtype.TAGS = (supertype.TAGS || this).__clone();
-			};
-		};
-		
 		body.call(tagtype,tagtype,tagtype.TAGS || this);
 		if (tagtype.defined) { tagtype.defined() };
 		this.optimizeTag(tagtype);
@@ -2391,15 +2423,16 @@ Imba.Tags.prototype.extendTag = function (name,supr,body){
 
 Imba.Tags.prototype.optimizeTag = function (tagtype){
 	var prototype_;
-	(prototype_ = tagtype.prototype) && prototype_.optimizeTagStructure  &&  prototype_.optimizeTagStructure();
-	return this;
+	return (prototype_ = tagtype.prototype) && prototype_.optimizeTagStructure  &&  prototype_.optimizeTagStructure();
 };
 
 Imba.Tags.prototype.findTagType = function (type){
 	var attrs, props;
 	let klass = this[type];
 	if (!klass) {
-		if (this._nodeNames.indexOf(type) >= 0) {
+		if (type.substr(0,4) == 'svg:') {
+			klass = this.defineTag(type,'svg:element');
+		} else if (Imba.HTML_TAGS.indexOf(type) >= 0) {
 			klass = this.defineTag(type,'element');
 			
 			if (attrs = Imba.HTML_ATTRS[type]) {
@@ -2427,18 +2460,33 @@ Imba.Tags.prototype.createElement = function (name,owner){
 		typ = this.findTagType(name);
 	};
 	return typ.build(owner);
-	
-	// if owner isa Function
-	// 	typ.build(null)
-	// else
-	// 	typ.build(owner)
 };
 
 Imba.Tags.prototype.$set = function (cache,slot){
 	return cache[slot] = new TagSet(cache,slot);
 };
 
+
+Imba.createElement = function (name,context,ref,pref){
+	var type = name;
+	if (name instanceof Function) {
+		type = name;
+	} else {
+		if (null) {};
+		type = Imba.TAGS.findTagType(name);
+	};
+	
+	// find the parent tag
+	var parent = (pref != undefined) ? context[pref] : ((context._tag || context));
+	var node = type.build(parent);
+	node.$ref = ref;
+	context[ref] = node;
+	return node;
+};
+
 Imba.Tags.prototype.$ = Imba.Tags.prototype.createElement;
+
+
 
 
 var createElement = function(type,key,par) {
@@ -2537,43 +2585,8 @@ TagSet.prototype.$prune = function (items){
 Imba.SINGLETONS = {};
 Imba.TAGS = new Imba.Tags();
 Imba.TAGS.element = Imba.TAGS.htmlelement = Imba.Tag;
-var html = Imba.TAGS.defineNamespace('html');
-html._nodeNames = Imba.HTML_TAGS;
+Imba.TAGS['svg:element'] = Imba.SVGTag;
 
-Imba.SVGTag = function SVGTag(){ return Imba.Tag.apply(this,arguments) };
-
-Imba.subclass(Imba.SVGTag,Imba.Tag);
-Imba.SVGTag.namespaceURI = function (){
-	return "http://www.w3.org/2000/svg";
-};
-
-Imba.SVGTag.buildNode = function (){
-	var dom = Imba.document().createElementNS(this.namespaceURI(),this._nodeType);
-	var cls = this._classes.join(" ");
-	if (cls) { dom.className.baseVal = cls };
-	return dom;
-};
-
-Imba.SVGTag.inherit = function (child){
-	child._protoDom = null;
-	
-	if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0) {
-		child._nodeType = child._name;
-		return child._classes = [];
-	} else {
-		child._nodeType = this._nodeType;
-		var className = "_" + child._name.replace(/_/g,'-');
-		return child._classes = this._classes.concat(className);
-	};
-};
-
-
-var svg = Imba.TAGS.defineNamespace('svg');
-svg._nodeNames = Imba.SVG_TAGS;
-svg.baseType = function() { return 'element'; };
-svg.element = Imba.SVGTag;
-
-Imba.TAGS = html; // make the html namespace the root
 
 Imba.defineTag = function (name,supr,body){
 	if(body==undefined && typeof supr == 'function') body = supr,supr = '';
@@ -2627,17 +2640,22 @@ Imba.getTagForDom = function (dom){
 	if (!dom.nodeName) { return null };
 	
 	var name = dom.nodeName.toLowerCase();
-	var ns = (svgSupport && (dom instanceof SVGElement)) ? Imba.TAGS._SVG : Imba.TAGS;
+	var type = name;
+	var ns = Imba.TAGS; //  svgSupport and dom isa SVGElement ? Imba.TAGS:_SVG : Imba.TAGS
 	
 	if (dom.id && Imba.SINGLETONS[dom.id]) {
 		return Imba.getTagSingleton(dom.id);
 	};
 	
-	var type = ns.element;
-	
-	if (ns._nodeNames.indexOf(name) >= 0) {
+	if (svgSupport && (dom instanceof SVGElement)) {
+		type = ns.findTagType("svg:" + name);
+	} else if (Imba.HTML_TAGS.indexOf(name) >= 0) {
 		type = ns.findTagType(name);
+	} else {
+		type = Imba.Tag;
 	};
+	// if ns.@nodeNames.indexOf(name) >= 0
+	//	type = ns.findTagType(name)
 	
 	return new type(dom,null).awaken(dom);
 };
