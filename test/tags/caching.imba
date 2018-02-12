@@ -106,7 +106,21 @@ describe 'Tags - Cache' do
 		eq el.test(0), '[[A]]'
 		eq el.test(1), '[[[B]]]'
 		eq el.test(0), '[[A]]'
-		
+	
+	$web$ and test "parent" do
+		tag Local
+			def header
+				<div@header>
+					<h1>
+					<h2>
+					<ul@b>
+						<li@c>
+						<li>
+		var node = <Local>
+		var nodes = node.header.dom
+		for node in nodes.querySelectorAll("*")
+			eq node.@tag.@owner_, node:parentNode.@tag
+		return
 		
 	$web$ and test "pruning" do
 		var counter = 0

@@ -24,20 +24,35 @@ class DataValue
 		@setter = Imba.toSetter(@path)
 		let valueFn = node:value
 		node:value = do mod(valueFn.call(this))
-
+	
+	def context
+		return @context if @context
+		# caching can lead to weird behaviour
+		let el = @node
+		while el
+			if el.data
+				@context = el
+				break
+			el = el.@owner_
+		return @context
+		
 	def data
-		@node.data or @node.@owner_.data
+		var ctx = context
+		ctx ? ctx.data : null
 		
 	def lazy
 		@mods:lazy
 		
 	def get
 		let data = self.data
+		return null unless data
 		let val = data[@path]
 		return data[@setter] and val isa Function ? data[@path]() : val
 		
 	def set value
 		let data = self.data
+		return unless data
+
 		let prev = data[@path]
 		if prev isa Function
 			if data[@setter] isa Function

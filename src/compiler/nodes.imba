@@ -1038,7 +1038,7 @@ export class Block < ListNode
 				var typ = isStatic ? 2 : 1
 				set(treeType: typ)
 				@indentation = null
-				if true or @tag.reactive
+				if true
 					@nodes = [Util.callImba(scope__, "static",[arr,Num.new(typ),nr])]
 				else
 					@nodes = [arr]
@@ -6115,19 +6115,17 @@ export class TagHandler < TagPart
 
 export class Tag < Node
 
-	prop reactive
 	prop tree
 
 	def initialize o = {}
 		@traversed = no
 		@options = o
 		@reference = null
+		@attributes = o:attributes or []
 		@slots = {
 			flag: isSelf ? -1 : 0
 			handler: isSelf ? -1 : 0
 		}
-		@attributes = o:attributes or []
-		@currAttr = 0
 		self
 		
 	def nextSlot type
@@ -6170,20 +6168,13 @@ export class Tag < Node
 		var scope = @tagScope = scope__
 		let prevTag = o:par = stack.@tag
 
-		if o:ivar or o:key
-			reactive = yes
-
 		var typ = enclosing
 
-		# move self into template
 		if typ == '->' or typ == '=>'
-			let close = typ == '->'
-			# console.log "content of fragment {o:body}",close
 			let body = Block.wrap(o:body.@nodes or [o:body])
-			@fragment = o:body = TagFragmentFunc.new([],body,null,null,closed: close)
+			@fragment = o:body = TagFragmentFunc.new([],body,null,null,closed: typ == '->')
 			@tagScope = @fragment.scope
 
-		# elif false and (!stack.@tag and !o:key and !reactive and !isSelf and !o:ivar)
 		# 	# create fully dynamic tag
 		# 	o:isRoot = yes
 		# 	let dynamics = @attributes
@@ -6191,16 +6182,15 @@ export class Tag < Node
 		# 	@attributes = []
 		# 	var param = RequiredParam.new(Identifier.new('$$'))
 		# 	o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
-
-		if isSelf
-			self
-			
-		elif o:key and !o:par
+		
+		# if node is root and has dynamic key we need to register cache
+		if o:key and !o:par
 			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
 			o:treeRef = o:key
 			o:key.cache
 
 		elif o:ivar and !o:par
+			# should use the ca
 			var meth = STACK.method
 			if meth and false
 				let key = "'" + meth.name + "'" # what if there are more?
@@ -6226,7 +6216,6 @@ export class Tag < Node
 		self
 
 	def reference
-		# Not needed for fragment?
 		@reference ||= @tagScope.closure.temporary(self,pool: 'tag').resolve
 	
 	def factory
@@ -6253,19 +6242,18 @@ export class Tag < Node
 			parent.childCacher
 
 	def cacheRef
-		var o = @options
-		return o:treeRef if o:treeRef
-
 		if isSelf or !cacher
 			return null
+
+		var o = @options
+
+		if o:treeRef
+			return o:treeRef
 		
 		if o:par
 			o:par.cacheRef
 
 		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : cacher.nextRef)
-	
-	def childRef
-		(@options:loop or @options:factory) ? null : cacheRef
 
 	def js jso
 		var o = @options
@@ -6283,20 +6271,9 @@ export class Tag < Node
 		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
 
 		if isSelf
-			reactive = yes
 			@reference = scope.context
 			out = scope.context.c
-
-		elif o:isRoot
-			return "{scope.imbaTags}.$({typ},{o:body.c(expression: yes)}).end()"
-
-		elif o:ivar and o:factory
-			# at the root - should
-			throw "should not get here o:ivar o:factory"
-			o:path = OP('.',scope.context,o:ivar).c
-			out = "{o:path}={o:path}||{scope.imbaTags}.$({typ},{scope.context.c}).ref_('{o:ivar.@value.slice(1)}')"
-		elif o:factory
-			self
+			calls = statics
 		else
 			let cacher = cacher
 			let ref = cacheRef
@@ -6315,8 +6292,9 @@ export class Tag < Node
 			elif cacher
 				pars.push(cacher.c)
 				pars.push(ref.c) if ref
-				if parent and parent.cacher == cacher
-					# if ref and parent and parent.childRef
+				if parent and parent.@reference
+					pars.push(parent.reference.c)
+				elif parent and parent.cacher == cacher
 					pars.push(parent.cacheRef.c)
 				elif parent
 					pars.push(parent.reference.c)
@@ -6375,9 +6353,10 @@ export class Tag < Node
 		if @reference and !isSelf
 			out = "{reference.c} = {out}"
 		
-		# if calls != statics
-
-		return "({out})" + calls.join("")
+		if calls != statics
+			out = "({out})" + calls.join("")
+		
+		return out
 
 # This is a helper-node
 # Should probably use the same type of listnode everywhere
@@ -6411,9 +6390,6 @@ export class TagTree < ListNode
 	def root
 		option(:root)
 
-	def reactive
-		option(:reactive)
-
 	def resolve
 		remap do |c| c.consume(self)
 		self
@@ -6429,9 +6405,7 @@ export class TagTree < ListNode
 		some do |c| c isa Tag
 
 	def c o
-		# FIXME TEST what about comments???
 		var single = single
-
 		# no indentation if this should return
 		if single and STACK.current isa Return
 			@indentation = null
@@ -6439,16 +6413,9 @@ export class TagTree < ListNode
 		var out = super(o)
 
 		if !single or single isa If
-			if shouldMarkArray
-				console.log "shouldMarkArray?"
-				"{scope__.imba.c}.static([{out}],1)"
-			else
-				"[{out}]"
+			"[{out}]"
 		else
 			out
-
-	def shouldMarkArray
-		no
 
 export class TagWrapper < ValueNode
 
