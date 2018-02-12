@@ -85,9 +85,16 @@ apps:loopWeird = <div.app ->
 		else
 			for item in store:items
 				<li> <span.title> item:title
-		
-		
 
+
+var pruneId = 0
+apps:loopPrune = <div.app ->
+	# should definitely prune at some point
+	<ul>
+		for item in store:items
+			<li@{pruneId++}> item:title
+
+apps:loopPrune.RUNCOUNT = 10000
 var logs = []
 
 window.APPS = apps
@@ -146,7 +153,8 @@ var testWeird = do
 tag RunButton < button
 	
 	def ontap
-		run(data,dom:textContent,100001)
+		# run(data,dom:textContent,100001)
+		run(data,dom:textContent,data.RUNCOUNT or 100001)
 
 var controls = <div.controls ->
 	<div.header>

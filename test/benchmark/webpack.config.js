@@ -1,4 +1,4 @@
 module.exports = {
 	entry: "./index.imba",
-	output: { filename: "./index.js" }
+	output: { filename: "./bundle.js" }
 };

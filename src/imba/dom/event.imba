@@ -21,8 +21,8 @@ def el.metaModifier e do e.event:metaKey == true
 def el.keyModifier key, e do e.keyCode ? (e.keyCode == key) : true
 def el.delModifier e do e.keyCode ? (e.keyCode == 8 or e.keyCode == 46) : true
 def el.selfModifier e do e.event:target == @dom
-def el.leftModifier e do e.button != undefined ? (e.button === 0) : el.on$key(37,e)
-def el.rightModifier e do e.button != undefined ? (e.button === 2) : el.on$key(39,e)
+def el.leftModifier e do e.button != undefined ? (e.button === 0) : el.keyModifier(37,e)
+def el.rightModifier e do e.button != undefined ? (e.button === 2) : el.keyModifier(39,e)
 def el.middleModifier e do e.button != undefined ? (e.button === 1) : true
 def el.getHandler str do self[str]
 

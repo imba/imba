@@ -1,7 +1,16 @@
-extern describe, test, ok
+extern describe, test, ok, eq
 
-def check find, &blk
+def jseq find, &blk
 	let val = String(blk)
+	ok(val.indexOf(find) >= 0, "'{find}' not found in {val}")
+	
+def htmleq find, val
+	if val isa Function
+		val = val()
+	
+	if val isa Imba.Tag
+		val = val.toString
+
 	ok(val.indexOf(find) >= 0, "'{find}' not found in {val}")
 	
 describe 'Syntax - Tags' do
@@ -12,32 +21,81 @@ describe 'Syntax - Tags' do
 	var objvar = {a: 1, b: 2}
 
 	test 'id' do
-		check "setId('one')" do <div#one>
+		jseq "setId('one')" do <div#one>
 
 	test 'flags' do
-		check "flag('only')" do <.only>
-		check "flag('two')" do <div.two>
-		check "flag('two',numvar)" do <div .two=numvar>
-		check "setFlag(0,strvar)" do <div .{strvar}>
-		check "setFlag(0,self.name())" do <div .{name}>
+		jseq "flag('only')" do <.only>
+		jseq "flag('two')" do <div.two>
+		jseq "flagIf('two',numvar)" do <div .two=numvar>
+		jseq "setFlag(0,strvar)" do <div .{strvar}>
+		jseq "setFlag(0,self.name())" do <div .{name}>
 			
 	# attributes
 	test 'attributes' do
-		check "setTitle(strvar)" do <div title=strvar>
-		check "css('display','block')" do <div css:display='block'>
-		check "setDisabled('disabled')" do <input disabled>
-		check "setDisabled('disabled').setReadonly('readonly')" do <input disabled readonly>
-		check "set('model',strvar,\{number:1\})" do <div model.number=strvar>
+		jseq "setTitle(strvar)" do <div title=strvar>
+		jseq "css('display','block')" do <div css:display='block'>
+		jseq "setDisabled('disabled')" do <input disabled>
+		jseq "setDisabled('disabled').setReadonly('readonly')" do <input disabled readonly>
+		jseq "set('model',strvar,\{number:1\})" do <div model.number=strvar>
 		
 	# events
 	test 'events' do
-		check "(0,['tap','prevent','after'])" do <div.two :tap.prevent.after>
-		check "(0,['tap',['incr',10]])" do <div.two :tap.incr(10)>
-		check "(0,['tap',fnvar])" do <div.two :tap=fnvar>
+		jseq "(0,['tap','prevent','after'])" do <div.two :tap.prevent.after>
+		jseq "(0,['tap',['incr',10]])" do <div.two :tap.incr(10)>
+		jseq "(0,['tap',fnvar])" do <div.two :tap=fnvar>
 
 	test 'data' do
-		check "setData(objvar)" do <div[objvar]>
-		check "setData(objvar)" do <.only[objvar]>
+		jseq "setData(objvar)" do <div[objvar]>
+		jseq "setData(objvar)" do <.only[objvar]>
 	
 	test 'ref' do
-		check "ref_('main',self)" do <div[objvar]@main>
+		jseq "._main =" do <div[objvar]@main>
+			
+			
+	test 'template' do
+		class Local
+			prop title default: "class"
+			
+			def closed
+				<div title="tag" -> <h1> title
+			
+			def open
+				<div title="tag" => <h1> title
+		
+		var instance = Local.new
+		htmleq "<h1>tag</h1>", instance.closed
+		htmleq "<h1>class</h1>", instance.open
+	
+	test  'root' do
+		let a,b,c,d,e
+		var item = <div>
+			<div.b>
+			<div.c>
+			<div.d>
+				e = <div.e>
+		
+		eq e.root,item
+		
+	test 'multiple self' do
+		tag Something
+		tag Local
+			def render
+				<self> <div> "ready"
+			
+			def loading
+				<self> <span> "loading"
+				
+			def flip bool = no
+				if bool
+					<self> <Something> "bold"
+				else
+					<self> <i> "italic"
+				
+		var node = <Local>
+		htmleq '<div>ready</div>', node
+		node.loading
+		htmleq '<span>loading</span>', node
+		node.render
+		htmleq '<div>ready</div>', node
+
+			

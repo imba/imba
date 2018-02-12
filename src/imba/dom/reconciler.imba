@@ -2,12 +2,6 @@ extern navigator
 
 var Imba = require("../imba")
 
-# 1 - static shape - unknown content
-# 2 - static shape and static children
-# 3 - single item
-# 4 - optimized array - only length will change
-# 5 - optimized collection
-
 def removeNested root, node, caret
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements
@@ -285,11 +279,12 @@ def reconcileNested root, new, old, caret
 
 	elif new isa Array
 		if old isa Array
+			# look for slot instead?
 			let typ = new:static
 			if typ or old:static
 				# if the static is not nested - we could get a hint from compiler
 				# and just skip it
-				if typ == old:static
+				if typ == old:static # should also include a reference?
 					for item,i in new
 						# this is where we could do the triple equal directly
 						caret = reconcileNested(root,item,old[i],caret)
@@ -299,6 +294,7 @@ def reconcileNested root, new, old, caret
 					
 				# if they are not the same we continue through to the default
 			else
+				# Could use optimized loop if we know that it only consists of nodes
 				return reconcileCollection(root,new,old,caret)
 		elif !oldIsNull
 			if old.@dom
@@ -337,8 +333,17 @@ def reconcileNested root, new, old, caret
 
 
 extend tag element
+	
+	# 1 - static shape - unknown content
+	# 2 - static shape and static children
+	# 3 - single item
+	# 4 - optimized array - only length will change
+	# 5 - optimized collection
+	# 6 - text only
 
 	def setChildren new, typ
+		# if typeof new == 'string'
+		# 	return self.text = new
 		var old = @tree_
 
 		if new === old and new and new:taglen == undefined
@@ -349,36 +354,29 @@ extend tag element
 			appendNested(self,new)
 
 		elif typ == 1
-			# here we _know _that it is an array with the same shape
-			# every time
 			let caret = null
 			for item,i in new
-				# prev = old[i]
 				caret = reconcileNested(self,item,old[i],caret)
 		
 		elif typ == 2
 			return self
 
 		elif typ == 3
-			# this is possibly fully dynamic. It often is
-			# but the old or new could be static while the other is not
-			# this is not handled now
-			# what if it was previously a static array? edgecase - but must work
-			# could we simply do replace-child?
+			let ntyp = typeof new
+
 			if new and new.@dom
 				empty
 				appendChild(new)
 
 			# check if old and new isa array
 			elif new isa Array
-				if new:static == 5 and old and old:static == 5
+				if new.@type == 5 and old and old.@type == 5
 					reconcileLoop(self,new,old,null)
 				elif old isa Array
 					reconcileNested(self,new,old,null)
 				else
 					empty
 					appendNested(self,new)
-				
 			else
 				text = new
 				return self
@@ -392,6 +390,7 @@ extend tag element
 		elif new isa Array and old isa Array
 			reconcileNested(self,new,old,null)
 		else
+			# what if text?
 			empty
 			appendNested(self,new)
 

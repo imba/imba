@@ -106,6 +106,47 @@ describe 'Tags - Cache' do
 		eq el.test(0), '[[A]]'
 		eq el.test(1), '[[[B]]]'
 		eq el.test(0), '[[A]]'
+	
+	$web$ and test "parent" do
+		tag Local
+			def header
+				<div@header>
+					<h1>
+					<h2>
+					<ul@b>
+						<li@c>
+						<li>
+		var node = <Local>
+		var nodes = node.header.dom
+		for node in nodes.querySelectorAll("*")
+			eq node.@tag.@owner_, node:parentNode.@tag
+		return
+		
+	$web$ and test "pruning" do
+		var counter = 0
+		var items = []
+		for i in [0..10]
+			items.push({id: counter++, name: "Item"})
+		
+		var node = <div ->
+			<ul> for item in items
+				<li@{item:id}> item:name
+		
+		let prevFn = Imba.TagMap:prototype:$prune
+		var pruned = no
+
+		Imba.TagMap:prototype:$prune = do |items|
+			pruned = yes
+			prevFn.call(this,items)
+			
+		for i in [0..2000]
+			items.shift
+			items.push({id: counter++, name: "Item"})
+			node.render
+		
+		let map = node:$[1]
+		eq pruned, yes
+		self
 		
 		
 		

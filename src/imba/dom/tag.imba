@@ -24,7 +24,8 @@ Get the body element wrapped in an Imba.Tag
 def Imba.root
 	tag(Imba.document:body)
 
-def Imba.static items, nr
+def Imba.static items, typ, nr
+	items.@type = typ
 	items:static = nr
 	return items
 
@@ -131,9 +132,9 @@ class Imba.Tag
 
 	def initialize dom,ctx
 		self.dom = dom
-		self:$ = {}
+		self:$ = TagCache.build(self)
+		self:$up = @owner_ = ctx
 		@tree_ = null
-		@owner_ = ctx
 		self.FLAGS = 0
 		build
 		self
@@ -153,6 +154,9 @@ class Imba.Tag
 
 	def ref
 		@ref
+		
+	def root
+		@owner_ ? @owner_.root : self
 
 	###
 	Setting references for tags like
@@ -162,10 +166,8 @@ class Imba.Tag
 	@return {self}
 	@private
 	###
-	def ref_ ref, ctx
-		ctx['_' + ref] = self
+	def ref_ ref
 		flag(@ref = ref)
-		@owner = ctx
 		self
 
 	###
@@ -509,6 +511,13 @@ class Imba.Tag
 	###
 	def end
 		self
+		
+	# called on <self> to check if self is called from other places
+	def $open context
+		if context != @context_
+			@tree_ = null
+			@context_ = context
+		self
 
 	###
 	This is called instead of Imba.Tag#end for `<self>` tag chains.
@@ -570,7 +579,20 @@ class Imba.Tag
 	def hasFlag name
 		@dom:classList.contains(name)
 
+	
+	def flagIf flag, bool
+		var f = this:$
+		let prev = f[flag]
 
+		if bool and !prev
+			@dom:classList.add(flag)
+			f[flag] = yes
+		elif prev and !bool
+			@dom:classList.remove(flag)
+			f[flag] = no
+
+		return self
+		
 	###
 	Set/update a named flag. It remembers the previous
 	value of the flag, and removes it before setting the new value.
@@ -737,6 +759,27 @@ class Imba.Tag
 
 Imba.Tag:prototype:initialize = Imba.Tag
 
+class Imba.SVGTag < Imba.Tag
+
+	def self.namespaceURI
+		"http://www.w3.org/2000/svg"
+
+	def self.buildNode
+		var dom = Imba.document.createElementNS(namespaceURI,@nodeType)
+		var cls = @classes.join(" ")
+		dom:className:baseVal = cls if cls
+		dom
+
+	def self.inherit child
+		child.@protoDom = null
+		if child.@name in Imba.SVG_TAGS
+			child.@nodeType = child.@name
+			child.@classes = []
+		else
+			child.@nodeType = @nodeType
+			var className = "_" + child.@name.replace(/_/g, '-')
+			child.@classes = @classes.concat(className)
+
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ")
 Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
@@ -793,6 +836,7 @@ def Tag
 def TagSpawner type
 	return do |zone| type.build(zone)
 
+
 class Imba.Tags
 
 	def initialize
@@ -813,18 +857,28 @@ class Imba.Tags
 		self['_' + name.toUpperCase] = clone
 		return clone
 
-	def baseType name
+	def baseType name, ns
 		name in Imba.HTML_TAGS ? 'element' : 'div'
 
-	def defineTag name, supr = '', &body
+	def defineTag fullName, supr = '', &body
 		if body and body.@nodeType
 			supr = body
 			body = null
 			
-		if self[name]
-			console.log "tag already exists?",name
+		if self[fullName]
+			console.log "tag already exists?",fullName
+		
+		# if it is namespaced
+		var ns
+		var name = fullName
+		let nsidx = name.indexOf(':')
+		if  nsidx >= 0
+			ns = fullName.substr(0,nsidx)
+			name = fullName.substr(nsidx + 1)
+			if ns == 'svg' and !supr
+				supr = 'svg:element'
 
-		supr ||= baseType(name)
+		supr ||= baseType(fullName)
 
 		let supertype = supr isa String ? findTagType(supr) : supr
 		let tagtype = Tag()
@@ -833,23 +887,17 @@ class Imba.Tags
 		tagtype.@flagName = null
 
 		if name[0] == '#'
-			self[name] = tagtype
 			Imba.SINGLETONS[name.slice(1)] = tagtype
+			self[name] = tagtype
 		elif name[0] == name[0].toUpperCase
 			tagtype.@flagName = name
 		else
-			tagtype.@flagName = "_" + name.replace(/_/g, '-')
-			self[name] = tagtype
+			tagtype.@flagName = "_" + fullName.replace(/[_\:]/g, '-')
+			self[fullName] = tagtype
 
 		extender(tagtype,supertype)
 
 		if body
-			# deprecate
-			if body:length == 2
-				# create clone
-				unless tagtype.hasOwnProperty('TAGS')
-					tagtype.TAGS = (supertype.TAGS or self).__clone
-
 			body.call(tagtype,tagtype, tagtype.TAGS or self)
 			tagtype.defined if tagtype:defined
 			optimizeTag(tagtype)
@@ -868,12 +916,14 @@ class Imba.Tags
 
 	def optimizeTag tagtype
 		tagtype:prototype?.optimizeTagStructure
-		self
 		
 	def findTagType type
 		let klass = self[type]
 		unless klass
-			if @nodeNames.indexOf(type) >= 0
+			if type.substr(0,4) == 'svg:'
+				klass = defineTag(type,'svg:element')
+
+			elif Imba.HTML_TAGS.indexOf(type) >= 0
 				klass = defineTag(type,'element')
 
 				if let attrs = Imba.HTML_ATTRS[type]
@@ -885,75 +935,122 @@ class Imba.Tags
 						Imba.attr(klass,name,dom: yes)
 		return klass
 		
-	def $ typ, owner
-		findTagType(typ).build(owner)
-		
-	def $set cache, slot
-		return cache[slot] = TagSet.new(cache,slot)
+	def createElement name, owner
+		var typ
+		if name isa Function
+			typ = name
+		else			
+			if $debug$
+				throw("cannot find tag-type {name}") unless findTagType(name)
+			typ = findTagType(name)
+		typ.build(owner)
 
-class TagSet
+
+def Imba.createElement name, ctx, ref, pref
+	var type = name
+	var parent
+	if name isa Function
+		type = name
+	else
+		if $debug$
+			throw("cannot find tag-type {name}") unless Imba.TAGS.findTagType(name)
+		type = Imba.TAGS.findTagType(name)
 	
-	def initialize parent, slot
+	if pref isa Imba.Tag
+		parent = pref
+	else
+		parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.@tag or ctx)
+
+	var node = type.build(parent)
+	
+	if ctx isa TagMap
+		ctx:i$++
+		node:$key = ref
+
+	# node:$ref = ref if ref
+	# context:i$++ # only if it is not an array?
+	if ctx and ref != undefined
+		ctx[ref] = node
+
+	return node
+
+def Imba.createTagCache owner
+	var item = []
+	item.@tag = owner
+	return item
+
+	var par = (pref != undefined ? ctx[pref] : ctx.@tag)
+	var node = TagMap.new(ctx,ref,par)
+	ctx[ref] = node
+	return node
+	
+def Imba.createTagMap ctx, ref, pref
+	var par = (pref != undefined ? ctx[pref] : ctx.@tag)
+	var node = TagMap.new(ctx,ref,par)
+	ctx[ref] = node
+	return node
+
+def Imba.createTagList ctx, ref, pref
+	var node = []
+	node.@type = 4
+	node.@tag = (pref != undefined ? ctx[pref] : ctx.@tag)
+	ctx[ref] = node
+	return node
+
+# use array instead?
+class TagCache
+	def self.build owner
+		var item = []
+		item.@tag = owner
+		return item
+
+	def initialize owner
+		self.@tag = owner
+		self
+	
+class TagMap
+	
+	def initialize cache, ref, par
+		self:cache$ = cache
+		self:key$ = ref
+		self:par$ = par
 		self:i$ = 0
-		self:s$ = slot
-		self:c$ = parent
+		# self:curr$ = self:$iternew()
+		# self:next$ = self:$iternew()
 	
-	def $ key, node
-		self:i$++
-		node:k$ = key
-		self[key] = node
-		
 	def $iter
 		var item = []
+		item.@type = 5
 		item:static = 5
 		item:cache = self
 		return item
 		
+	def $iter2
+		let next = self:next$
+		self:next$ = self:curr$
+		next:length = 0
+		return self:curr$ = next
+		# var item = []
+		# item.@type = 5
+		# item:static = 5
+		# item:cache = self
+		# return item
+		
 	def $prune items
-		let par = self:c$
-		let slot = self:s$		
-		let clone = TagSet.new(par,slot)
+		let cache = self:cache$
+		let key = self:key$
+		let clone = TagMap.new(cache,key,self:par$)
 		for item in items
-			clone[item:k$] = item
+			clone[item:key$] = item
 		clone:i$ = items:length
-		return par[slot] = clone
+		return cache[key] = clone
 
-
+Imba.TagMap = TagMap
+Imba.TagCache = TagCache
 Imba.SINGLETONS = {}
 Imba.TAGS = Imba.Tags.new
 Imba.TAGS[:element] = Imba.TAGS[:htmlelement] = Imba.Tag
-var html = Imba.TAGS.defineNamespace('html')
-html.@nodeNames = Imba.HTML_TAGS
-
-class Imba.SVGTag < Imba.Tag
-
-	def self.namespaceURI
-		"http://www.w3.org/2000/svg"
-
-	def self.buildNode
-		var dom = Imba.document.createElementNS(namespaceURI,@nodeType)
-		var cls = @classes.join(" ")
-		dom:className:baseVal = cls if cls
-		dom
-
-	def self.inherit child
-		child.@protoDom = null
-
-		if child.@name in Imba.SVG_TAGS
-			child.@nodeType = child.@name
-			child.@classes = []
-		else
-			child.@nodeType = @nodeType
-			var className = "_" + child.@name.replace(/_/g, '-')
-			child.@classes = @classes.concat(className)
-
-
-var svg = Imba.TAGS.defineNamespace('svg')
-svg.@nodeNames = Imba.SVG_TAGS
-svg:baseType = do 'element'
-svg:element = Imba.SVGTag
-
-Imba.TAGS = html # make the html namespace the root
+Imba.TAGS['svg:element'] = Imba.SVGTag
 
 def Imba.defineTag name, supr = '', &body
 	return Imba.TAGS.defineTag(name,supr,body)
@@ -996,15 +1093,20 @@ def Imba.getTagForDom dom
 	return null unless dom:nodeName
 
 	var name = dom:nodeName.toLowerCase
-	var ns = svgSupport and dom isa SVGElement ? Imba.TAGS:_SVG : Imba.TAGS
+	var type = name
+	var ns = Imba.TAGS #  svgSupport and dom isa SVGElement ? Imba.TAGS:_SVG : Imba.TAGS
 
 	if dom:id and Imba.SINGLETONS[dom:id]
 		return Imba.getTagSingleton(dom:id)
-
-	var type = ns:element
-
-	if ns.@nodeNames.indexOf(name) >= 0
+		
+	if svgSupport and dom isa SVGElement
+		type = ns.findTagType("svg:" + name)
+	elif Imba.HTML_TAGS.indexOf(name) >= 0
 		type = ns.findTagType(name)
+	else
+		type = Imba.Tag
+	# if ns.@nodeNames.indexOf(name) >= 0
+	#	type = ns.findTagType(name)
 
 	return type.new(dom,null).awaken(dom)
 
