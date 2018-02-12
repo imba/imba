@@ -953,6 +953,16 @@ def Imba.createElement name, ctx, ref, pref
 		ctx[ref] = node
 
 	return node
+
+def Imba.createTagCache owner
+	var item = []
+	item.@tag = owner
+	return item
+
+	var par = (pref != undefined ? ctx[pref] : ctx.@tag)
+	var node = TagMap.new(ctx,ref,par)
+	ctx[ref] = node
+	return node
 	
 def Imba.createTagMap ctx, ref, pref
 	var par = (pref != undefined ? ctx[pref] : ctx.@tag)

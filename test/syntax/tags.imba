@@ -75,4 +75,24 @@ describe 'Syntax - Tags' do
 				e = <div.e>
 		
 		eq e.root,item
+		
+	test 'multiple self' do
+		tag Local
+			def render
+				<self> <div> "ready"
+			
+			def loading
+				<self> <span> "loading"
+				
+			def flip bool = no
+				if bool
+					<self> <b> "bold"
+				else
+					<self> <i> "italic"
+				
+		var node = <Local>
+		htmleq '<div>ready</div>', node
+		node.loading
+		htmleq '<span>loading</span>', node
+
 			

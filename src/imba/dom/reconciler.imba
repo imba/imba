@@ -2,14 +2,6 @@ extern navigator
 
 var Imba = require("../imba")
 
-# 1 - static shape - unknown content
-# 2 - static shape and static children
-# 3 - single item
-# 4 - optimized array - only length will change
-# 5 - optimized collection
-# 6 - text only
-
-
 def removeNested root, node, caret
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements
@@ -340,6 +332,13 @@ def reconcileNested root, new, old, caret
 
 
 extend tag element
+	
+	# 1 - static shape - unknown content
+	# 2 - static shape and static children
+	# 3 - single item
+	# 4 - optimized array - only length will change
+	# 5 - optimized collection
+	# 6 - text only
 
 	def setChildren new, typ
 		var old = @tree_
@@ -363,11 +362,6 @@ extend tag element
 			return self
 
 		elif typ == 3
-			# this is possibly fully dynamic. It often is
-			# but the old or new could be static while the other is not
-			# this is not handled now
-			# what if it was previously a static array? edgecase - but must work
-			# could we simply do replace-child?
 			if new and new.@dom
 				empty
 				appendChild(new)

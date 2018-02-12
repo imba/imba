@@ -4819,6 +4819,12 @@ export class TagTypeIdentifier < Identifier
 	def isClass
 		!!@str.match(/^[A-Z]/)
 		# @name[0] == @name[0].toUpperCase and 
+		
+	def isNative
+		!@ns and TAG_TYPES.HTML.indexOf(@str) >= 0
+	
+	def isSimpleNative
+		isNative and !(/input|textarea|select|form|iframe/).test(@str)
 
 	def spawner
 		console.log "TagTypeIdentifier shuold never be used"
@@ -5113,6 +5119,9 @@ export class If < ControlFlow
 		test.traverse if test
 		
 		@tag = stack.@tag
+		
+		if @tag
+			@tag.set(hasConditionals: yes)
 
 		# console.log "vars in if",Object.keys(@scope.varmap)
 		for own name, variable of @scope.varmap
@@ -5397,7 +5406,6 @@ export class While < Loop
 # should rather
 export class For < Loop
 
-
 	def initialize o = {}
 		@traversed = no
 		@options = o
@@ -5411,12 +5419,13 @@ export class For < Loop
 	def traverse
 		let stack = STACK
 		if stack.@tag and !@scope.@tagLoop
+			stack.@tag.set(hasLoops: yes)
 			let fn = @scope.@tagLoop = TagLoopFunc.new([],[self])
 			stack.current.swap(self,fn)
 			fn.traverse
 		else
 			super
-			
+
 
 	def visit stack
 		scope.visit
@@ -5874,6 +5883,15 @@ TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blo
  output p param pre progress q rp rt ruby s samp script section select small
  source span strong style sub summary sup table tbody td textarea tfoot th
  thead time title tr track u ul var video wbr".split(" ")
+ 
+TAG_TYPES.HTML_OPT = "abbr address area article aside audio b base bdi bdo big blockquote body br
+ button canvas caption cite code col colgroup dd del details dfn
+ div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
+ head header hr html i img ins kbd keygen label legend li link
+ main mark meta meter nav noscript object ol optgroup option
+ output p param pre q rp rt ruby s samp script section small
+ source span strong style sub summary sup table tbody td tfoot th
+ thead time title tr track u ul wbr".split(" ")
 
 TAG_TYPES.SVG = "circle defs ellipse g line linearGradient mask path pattern polygon polyline
 radialGradient rect stop svg text tspan".split(" ")
@@ -5903,9 +5921,12 @@ export class TagCache < Node
 		@counter = 0
 		@index = 0
 		@blocks = 1
+		@refs = []
 
-	def nextRef
-		TagCacheKey.new(self)
+	def nextRef node
+		let item = TagCacheKey.new(self,node)
+		@refs.push(item)
+		return item
 	
 	def nextValue
 		let ref = counterToShortRef(@counter++)
@@ -5924,9 +5945,10 @@ export class TagCache < Node
 		
 export class TagCacheKey < Node
 	
-	def initialize cache
+	def initialize cache, node
 		@owner = cache
 		@value = cache.nextSlot
+		@node = node
 		@type = null
 		self
 		
@@ -6162,6 +6184,9 @@ export class Tag < Node
 		
 	def isSelf
 		type isa Self or type isa This
+		
+	def isNative
+		type isa TagTypeIdentifier and type.isSimpleNative
 
 	def visit stack
 		var o = @options
@@ -6172,16 +6197,16 @@ export class Tag < Node
 
 		if typ == '->' or typ == '=>'
 			let body = Block.wrap(o:body.@nodes or [o:body])
-			@fragment = o:body = TagFragmentFunc.new([],body,null,null,closed: typ == '->')
+			@fragment = o:body = o:template = TagFragmentFunc.new([],body,null,null,closed: typ == '->')
 			@tagScope = @fragment.scope
 
-		# 	# create fully dynamic tag
-		# 	o:isRoot = yes
-		# 	let dynamics = @attributes
-		# 	let inner = Tag.new(type: This.new, body: o:body, attributes: dynamics)
-		# 	@attributes = []
-		# 	var param = RequiredParam.new(Identifier.new('$$'))
-		# 	o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
+		# # create fully dynamic tag
+		# o:isRoot = yes
+		# let dynamics = @attributes
+		# let inner = Tag.new(type: This.new, body: o:body, attributes: dynamics)
+		# @attributes = []
+		# var param = RequiredParam.new(Identifier.new('$$'))
+		# o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
 		
 		# if node is root and has dynamic key we need to register cache
 		if o:key and !o:par
@@ -6227,14 +6252,27 @@ export class Tag < Node
 			parent.childCacher
 		elif @options:ivar or @options:key
 			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
-			TagCache.new(self,@tagScope.declare("$",op, system: yes, type: 'let'))
+			TagCache.new(self,@tagScope.closure.declare("$",op, system: yes, type: 'let'))
 		else
 			null
 		
 	def childCacher
 		@options:childCacher ||= if @fragment or isSelf
+			console.log "create special thing for self"
+			let scop = @tagScope.closure
+			let nr = scop.incr('selfTag')
+			let meth = scop isa MethodScope ? scop.node.name : ''
+			let key = "${nr}"
+			if meth and meth != 'render'
+				key += meth
+			let ctor = scope__.imbaRef('createTagCache')
 			# if this is a fragment we create a reference to the cache in scope
-			TagCache.new(self,@tagScope.declare("$",OP('.',This.new,'$')))
+			# let op = OP('.',This.new,'$')
+			@typeNum = Num.new(2)
+			let op = OP('||=',OP('.',This.new,key),CALL(ctor,[This.new,@typeNum]))
+			# TagCache.new(self,@tagScope.closure.declare("$",op,system: yes))
+			TagCache.new(self,@tagScope.closure.declare("$",OP('.',This.new,'$'),system: yes))
+
 		elif !parent or @options:ownCache
 			# if it has no parent we force a reference
 			TagCache.new(self,OP('.',reference,'$'))
@@ -6253,7 +6291,7 @@ export class Tag < Node
 		if o:par
 			o:par.cacheRef
 
-		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : cacher.nextRef)
+		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : cacher.nextRef(self))
 
 	def js jso
 		var o = @options
@@ -6344,8 +6382,9 @@ export class Tag < Node
 					statics.push ".{bodySetter}({body})"
 			else
 				calls.push ".{bodySetter}({body})"
-	
-		calls.push ".{isSelf ? "synced" : "end"}()"
+		
+		if !isNative or o:template
+			calls.push ".{isSelf ? "synced" : "end"}()"
 
 		if statics:length
 			out = out + statics.join("")
@@ -6356,6 +6395,10 @@ export class Tag < Node
 		if calls != statics
 			out = "({out})" + calls.join("")
 		
+		if @typeNum
+			@typeNum.value = contentType
+			
+		set(treeType: contentType)
 		return out
 
 # This is a helper-node
@@ -7150,7 +7193,13 @@ export class Scope
 		@virtual = no
 		@counter = 0
 		@varmap  = {}
+		@counters = {}
 		@varpool = []
+		
+	def incr name = 'i'
+		var val = @counters[name] ||= 0
+		@counters[name]++
+		return val
 
 	def meta key, value
 		if value != undefined
