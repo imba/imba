@@ -26,7 +26,7 @@ describe 'Syntax - Tags' do
 	test 'flags' do
 		jseq "flag('only')" do <.only>
 		jseq "flag('two')" do <div.two>
-		jseq "flag('two',numvar)" do <div .two=numvar>
+		jseq "flagIf('two',numvar)" do <div .two=numvar>
 		jseq "setFlag(0,strvar)" do <div .{strvar}>
 		jseq "setFlag(0,self.name())" do <div .{name}>
 			
@@ -77,6 +77,7 @@ describe 'Syntax - Tags' do
 		eq e.root,item
 		
 	test 'multiple self' do
+		tag Something
 		tag Local
 			def render
 				<self> <div> "ready"
@@ -86,7 +87,7 @@ describe 'Syntax - Tags' do
 				
 			def flip bool = no
 				if bool
-					<self> <b> "bold"
+					<self> <Something> "bold"
 				else
 					<self> <i> "italic"
 				

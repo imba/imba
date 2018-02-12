@@ -321,6 +321,7 @@ export class Stack
 		@options = {}
 		@es6 = null
 		@es5 = null
+		@optlevel = null
 
 		if NODE_MAJOR_VERSION and NODE_MAJOR_VERSION < 5
 			@es5 = true
@@ -352,7 +353,7 @@ export class Stack
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
 		
 	def optlevel
-		@optlevel ?= (@options:conservative or env('IMBA_CONSERVATIVE') ? 0 : 9) # stack.option(:conservative)
+		@optlevel ?= (@options:conservative or env('IMBA_CONSERVATIVE') ? 0 : (@options:optlevel or 9)) # stack.option(:conservative)
 
 	def env key
 		var val = @options["ENV_{key}"]
@@ -2030,7 +2031,6 @@ export class Root < Code
 	def compile o
 		STACK.reset # -- nested compilation does not work now
 		OPTS = STACK.@options = @options = o or {}
-
 		traverse
 
 		var out = c
@@ -6007,7 +6007,7 @@ export class TagId < TagPart
 
 export class TagFlag < TagPart
 	def js
-		value ? "flag({quoted},{value.c})" : "flag({quoted})"
+		value ? "flagIf({quoted},{value.c})" : "flag({quoted})"
 
 export class TagFlagExpr < TagFlag
 	def slot
@@ -6262,7 +6262,7 @@ export class Tag < Node
 		o:body.traverse if o:body
 
 		# see if we are dynamic
-		if o:body isa ListNode and stack.optlevel > 0 # and stack.env('TAG_OPTIM')
+		if o:body isa ListNode and stack.optlevel > 1 # and stack.env('TAG_OPTIM')
 			let canOptimize = o:body.values.every do |item|
 				item isa Tag and item.isStatic
 				
@@ -6279,7 +6279,7 @@ export class Tag < Node
 				elif !co:loop
 					co:optim = self
 		
-		if stack.optlevel == 0
+		if stack.optlevel < 2
 			o:optim = no
 		stack.@tag = prevTag
 		self
@@ -6369,7 +6369,7 @@ export class Tag < Node
 				pre = o:path + ' = ' + o:path + '||'
 			elif ref
 				o:path = "{cacher.c}[{ref.c}]"
-				if !o:optim or o:optim == self or parentType != 2
+				if !o:optim or o:optim == self or parentType != 2 or parent.@children.len == 1
 					pre = "{o:path} || "
 			
 			if o:ivar

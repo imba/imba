@@ -294,6 +294,7 @@ def reconcileNested root, new, old, caret
 					
 				# if they are not the same we continue through to the default
 			else
+				# Could use optimized loop if we know that it only consists of nodes
 				return reconcileCollection(root,new,old,caret)
 		elif !oldIsNull
 			if old.@dom
@@ -341,6 +342,8 @@ extend tag element
 	# 6 - text only
 
 	def setChildren new, typ
+		# if typeof new == 'string'
+		# 	return self.text = new
 		var old = @tree_
 
 		if new === old and new and new:taglen == undefined
@@ -351,17 +354,16 @@ extend tag element
 			appendNested(self,new)
 
 		elif typ == 1
-			# here we _know _that it is an array with the same shape
-			# every time
 			let caret = null
 			for item,i in new
-				# prev = old[i]
 				caret = reconcileNested(self,item,old[i],caret)
 		
 		elif typ == 2
 			return self
 
 		elif typ == 3
+			let ntyp = typeof new
+
 			if new and new.@dom
 				empty
 				appendChild(new)
@@ -369,7 +371,6 @@ extend tag element
 			# check if old and new isa array
 			elif new isa Array
 				if new.@type == 5 and old and old.@type == 5
-					# console.log "reconcile inner loop"
 					reconcileLoop(self,new,old,null)
 				elif old isa Array
 					reconcileNested(self,new,old,null)

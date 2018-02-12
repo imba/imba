@@ -47,7 +47,7 @@ class DataValue
 		let data = self.data
 		return null unless data
 		let val = data[@path]
-		return data[@setter] and val isa Function ? data[@path]() : val
+		return val isa Function and data[@setter] ? data[@path]() : val
 		
 	def set value
 		let data = self.data

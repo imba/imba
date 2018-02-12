@@ -572,7 +572,20 @@ class Imba.Tag
 	def hasFlag name
 		@dom:classList.contains(name)
 
+	
+	def flagIf flag, bool
+		var f = this:$
+		let prev = f[flag]
 
+		if bool and !prev
+			@dom:classList.add(flag)
+			f[flag] = yes
+		elif prev and !bool
+			@dom:classList.remove(flag)
+			f[flag] = no
+
+		return self
+		
 	###
 	Set/update a named flag. It remembers the previous
 	value of the flag, and removes it before setting the new value.
@@ -995,7 +1008,9 @@ class TagMap
 		self:key$ = ref
 		self:par$ = par
 		self:i$ = 0
-		
+		# self:curr$ = self:$iternew()
+		# self:next$ = self:$iternew()
+	
 	def $iter
 		var item = []
 		item.@type = 5
@@ -1003,8 +1018,18 @@ class TagMap
 		item:cache = self
 		return item
 		
+	def $iter2
+		let next = self:next$
+		self:next$ = self:curr$
+		next:length = 0
+		return self:curr$ = next
+		# var item = []
+		# item.@type = 5
+		# item:static = 5
+		# item:cache = self
+		# return item
+		
 	def $prune items
-		console.log "prune TagSet"
 		let cache = self:cache$
 		let key = self:key$
 		let clone = TagMap.new(cache,key,self:par$)
@@ -1019,7 +1044,6 @@ Imba.SINGLETONS = {}
 Imba.TAGS = Imba.Tags.new
 Imba.TAGS[:element] = Imba.TAGS[:htmlelement] = Imba.Tag
 Imba.TAGS['svg:element'] = Imba.SVGTag
-
 
 def Imba.defineTag name, supr = '', &body
 	return Imba.TAGS.defineTag(name,supr,body)
