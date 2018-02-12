@@ -167,11 +167,7 @@ class Imba.Tag
 	@private
 	###
 	def ref_ ref
-		# 
-		# @owner_['_' + ref] = self
-		console.log "really?"
 		flag(@ref = ref)
-		# @owner = ctx
 		self
 
 	###
@@ -932,14 +928,19 @@ class Imba.Tags
 
 def Imba.createElement name, ctx, ref, pref
 	var type = name
+	var parent
 	if name isa Function
 		type = name
 	else
 		if $debug$
 			throw("cannot find tag-type {name}") unless Imba.TAGS.findTagType(name)
 		type = Imba.TAGS.findTagType(name)
-		
-	var parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.@tag or ctx)
+	
+	if pref isa Imba.Tag
+		parent = pref
+	else
+		parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.@tag or ctx)
+
 	var node = type.build(parent)
 	
 	if ctx isa TagMap

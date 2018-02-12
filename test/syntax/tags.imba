@@ -1,4 +1,4 @@
-extern describe, test, ok
+extern describe, test, ok, eq
 
 def jseq find, &blk
 	let val = String(blk)
@@ -65,3 +65,14 @@ describe 'Syntax - Tags' do
 		var instance = Local.new
 		htmleq "<h1>tag</h1>", instance.closed
 		htmleq "<h1>class</h1>", instance.open
+	
+	test  'root' do
+		let a,b,c,d,e
+		var item = <div>
+			<div.b>
+			<div.c>
+			<div.d>
+				e = <div.e>
+		
+		eq e.root,item
+			
