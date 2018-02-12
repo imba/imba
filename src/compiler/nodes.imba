@@ -6227,7 +6227,7 @@ export class Tag < Node
 			parent.childCacher
 		elif @options:ivar or @options:key
 			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
-			TagCache.new(self,@tagScope.declare("$",op))
+			TagCache.new(self,@tagScope.declare("$",op, system: yes, type: 'let'))
 		else
 			null
 		
@@ -6338,7 +6338,7 @@ export class Tag < Node
 				let typ = content isa Str ? statics : calls
 				typ.push ".{bodySetter}({body})"
 			elif bodySetter == 'setTemplate'
-				if o:body.nonlocals # check?
+				if o:body.nonlocals
 					calls.push ".{bodySetter}({body})"
 				else
 					statics.push ".{bodySetter}({body})"
