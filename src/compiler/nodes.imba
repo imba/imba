@@ -5943,8 +5943,9 @@ export class TagCache < Node
 	def c
 		"{@value.c}"
 		
-export class TagCacheKey < Node
-	
+export class TagCacheKey < Node	
+	prop node
+
 	def initialize cache, node
 		@owner = cache
 		@value = cache.nextSlot
@@ -6144,6 +6145,7 @@ export class Tag < Node
 		@options = o
 		@reference = null
 		@attributes = o:attributes or []
+		@children = []
 		@slots = {
 			flag: isSelf ? -1 : 0
 			handler: isSelf ? -1 : 0
@@ -6172,6 +6174,10 @@ export class Tag < Node
 		else
 			@attributes.push(@attributes.CURRENT = type.new(part,self))
 		self
+		
+	def addChild child
+		@children.push(child)
+		self
 
 	def enclosing
 		(@options:close and @options:close.value)
@@ -6187,6 +6193,10 @@ export class Tag < Node
 		
 	def isNative
 		type isa TagTypeIdentifier and type.isSimpleNative
+		
+	def isStatic
+		let o = @options
+		!o:hasConditionals and !o:hasLoops and !o:ivar and !o:key
 
 	def visit stack
 		var o = @options
@@ -6207,6 +6217,12 @@ export class Tag < Node
 		# @attributes = []
 		# var param = RequiredParam.new(Identifier.new('$$'))
 		# o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
+		if o:par
+			o:optim = o:par.option(:optim)
+		elif o:template
+			o:optim = no
+		else
+			o:optim = self
 		
 		# if node is root and has dynamic key we need to register cache
 		if o:key and !o:par
@@ -6227,6 +6243,11 @@ export class Tag < Node
 				o:loop ||= scope.@tagLoop
 				o:loop.capture(self)
 				o:ownCache = yes
+				o:optim = self
+				
+		if prevTag
+			prevTag.addChild(self)
+			
 		stack.@tag = self
 
 		for part in @attributes
@@ -6237,6 +6258,29 @@ export class Tag < Node
 		o:key.traverse if o:key
 		o:body.traverse if o:body
 
+		# o:optim = no
+		
+		# see if we are dynamic
+		if o:body isa ListNode # and stack.env('TAG_OPTIM')
+			let canOptimize = o:body.values.every do |item|
+				item isa Tag and item.isStatic
+				
+			if o:canOptimize = canOptimize
+				console.log "canOptimize?"
+				o:optim = self
+				# should not happen to items inside the loop
+			
+			# optimizations should be gone over at the very end.
+			# for all tags connected to this?
+			for child in @children
+				let co = child.@options
+				if o:hasConditionals and co:optim
+					console.log "optim child special?"
+					co:optim = child
+				elif !co:loop
+					co:optim = self
+				# unless child.option(:loop)
+				#	child.set(optim: self)
 		stack.@tag = prevTag
 		self
 
@@ -6304,24 +6348,30 @@ export class Tag < Node
 		var bodySetter = isSelf ? "setChildren" : "setContent"
 		
 		let contentType = 0
+		let parentType = parent and parent.option(:treeType)
 
 		var out = ""
+		var ctor = ""
+		var pre = ""
 		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
 
 		if isSelf
 			@reference = scope.context
 			out = scope.context.c
 			calls = statics
+			# not always?
 		else
 			let cacher = cacher
 			let ref = cacheRef
 			let pars = [typ]
-			
+			let varRef = null
 			if o:ivar
 				o:path = OP('.',scope.context,o:ivar).c
-				out = o:path + ' = ' + o:path + '||'
+				pre = o:path + ' = ' + o:path + '||'
 			elif ref
-				out = "{cacher.c}[{ref.c}] || "
+				o:path = "{cacher.c}[{ref.c}]"
+				if !o:optim or o:optim == self or parentType != 2
+					pre = "{o:path} || "
 			
 			if o:ivar
 				pars.push(parent ? parent.reference.c : scope.context.c)
@@ -6331,14 +6381,14 @@ export class Tag < Node
 				pars.push(cacher.c)
 				pars.push(ref.c) if ref
 				if parent and parent.@reference
-					pars.push(parent.reference.c)
+					pars.push(varRef = parent.reference.c)
 				elif parent and parent.cacher == cacher
 					pars.push(parent.cacheRef.c)
 				elif parent
 					pars.push(parent.reference.c)
 
-			out += "{factory.c}({pars.join(',')})"
-		
+			ctor = "{factory.c}({pars.join(',')})"
+
 		if o:body isa Func
 			bodySetter = "setTemplate"
 
@@ -6355,11 +6405,17 @@ export class Tag < Node
 					contentType = 6
 				elif body isa TagLoopFunc
 					contentType = body.option(:treeType) or 3
+				elif body isa Tag and !body.option(:key)
+					# single tag which is always the same should default to 2
+					# never needs to be set
+					contentType = 2
 			else
 				contentType = children.every(do |item| 
 					item isa Tag or item.option(:treeType) == 2 or item.isPrimitive
 				) ? 2 : 1
 				content = TagTree.new(self,o:body)
+		
+		set(treeType: contentType)
 
 		for part in @attributes
 			let out = part.js(jso)
@@ -6367,38 +6423,70 @@ export class Tag < Node
 			part.isStatic ? statics.push(out) : calls.push(out)
 		
 		# compile body
+	
 		var body = content and content.c(expression: yes)
 	
 		if body
+			let target = (o:optim and contentType == 2) ? statics : calls
+			
+			# cache the body setter itself
+			if isSelf and o:optim
+				let k = childCacher.c
+				# can skip body-type as well
+				body = "{k}.$ = {k}.$ || {body}"
+
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
-				calls.push ".{bodySetter}({body},{contentType})"
+				target.push ".{bodySetter}({body},{contentType})"
 			elif bodySetter == 'setText'
 				let typ = content isa Str ? statics : calls
 				typ.push ".{bodySetter}({body})"
 			elif bodySetter == 'setTemplate'
 				if o:body.nonlocals
-					calls.push ".{bodySetter}({body})"
+					target.push ".{bodySetter}({body})"
 				else
 					statics.push ".{bodySetter}({body})"
 			else
-				calls.push ".{bodySetter}({body})"
+				target.push ".{bodySetter}({body})"
 		
-		if !isNative or o:template
-			calls.push ".{isSelf ? "synced" : "end"}()"
-
+		if !isNative or o:template or calls:length > 0 or @children:length
+			var commits = @children.map(|child| child.option(:commit) ).filter(|item| item)
+			let args = o:optim and commits:length ? '(' + INDENT.wrap(commits.join(',\n')) + ',true)' : ''
+			calls.push ".{isSelf ? "synced" : "end"}({args})"
+		
+		if @reference and !isSelf
+			out = "{reference.c} = {pre}({reference.c}={ctor})"
+		else
+			out ||= "{pre}{ctor}"
+			
 		if statics:length
 			out = out + statics.join("")
 		
-		if @reference and !isSelf
-			out = "{reference.c} = {out}"
-		
 		if calls != statics
-			out = "({out})" + calls.join("")
+			if o:optim and o:optim != self
+				console.log "setting optim!"
+				set(commit: "{o:path}{calls.join("")}") if calls:length
+			else
+				out = "({out})" + calls.join("")
 		
 		if @typeNum
 			@typeNum.value = contentType
 			
 		set(treeType: contentType)
+		
+		if isSelf and false
+			let apply = []
+			# check for the mega-optimizing
+			
+			for item in childCacher.@refs
+				let io = item.node.@options
+				let typ = io:treeType
+				let calls = io:calls
+				console.log "found ref",typ
+				if io:calls
+					apply.push(io:path + calls.join(''))
+			
+			out += "(" + apply.join(",") + ")"
+				
 		return out
 
 # This is a helper-node
