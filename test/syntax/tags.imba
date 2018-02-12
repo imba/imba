@@ -98,4 +98,23 @@ describe 'Syntax - Tags' do
 		node.render
 		htmleq '<div>ready</div>', node
 
-			
+	
+	test 'lists' do
+		let types = [1,2,3,4]
+		tag Radio
+			prop value
+			prop label
+			prop desc
+
+		tag Local
+			def render
+				<self>
+					<.Radios.group.xl>
+						for item in types
+							if item % 2 == 0
+								continue
+							<Radio name='type' tabindex=1 value=item>
+						
+		var node = <Local>
+						
+					

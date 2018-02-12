@@ -854,7 +854,7 @@ for(var n,r=void 0!==e.nodes?e.nodes:this._nodes,i=this.last(),s=(r.length,""),a
 s+=h,!h||n==i||n instanceof U||(s+=",")}return s},Y.prototype.indented=function(t,e){return t instanceof L?(this._indentation=t,this):(this._indentation||(this._indentation=t&&e?new L(t,e):C),this)},i(q,Y),e.ArgList=q,i(K,q),e.AssignList=K,K.prototype.concat=function(t){return 0==this._nodes.length&&t instanceof K?t:(K.__super__.concat.call(this,t),this)},i(W,Y),e.Block=W,W.prototype.head=function(t){return this._head},W.prototype.setHead=function(t){return this._head=t,this},W.wrap=function(t){if(!(t instanceof Array))throw new SyntaxError("what")
 return 1==t.length&&t[0]instanceof W?t[0]:new W(t)},W.prototype.visit=function(t){this._scope&&this._scope.visit()
 for(var e,n=0,r=o(this._nodes),i=r.length;n<i;n++)(e=r[n])&&e.traverse()
-if(t&&t._tag){this._tag=t._tag
+if(t&&t._tag&&!t._tag._tagLoop){this._tag=t._tag
 var s=this.expressions()
 if(s.length>1){var a=this._tag.childCacher().nextBlock(),p=new qt(new q(this._nodes))
 p.indented(this._indentation)
@@ -971,18 +971,23 @@ var n=this.scope().c({indent:!e||!e.isGenerated(),braces:!0}),r="string"==typeof
 r=r?" "+r.replace(/\./g,"_"):""
 var i=""+this.funcKeyword()+r+"("+this.params().c()+") "+n
 return this.option("eval")&&(i="("+i+")()"),i},At.prototype.shouldParenthesize=function(t){return void 0===t&&(t=this.up()),t instanceof De&&t.callee()==this},i(xt,At),e.Lambda=xt,xt.prototype.scopetype=function(){var t=this.option("keyword")
-return t&&"ƒ"==t._value?zn:Hn},i(Rt,At),e.TagFragmentFunc=Rt,Rt.prototype.scopetype=function(){return this.option("closed")?zn:Hn},i(Ot,At),e.TagLoopFunc=Ot,Ot.prototype.scopetype=function(){return this.option("closed")?zn:Hn},Ot.prototype.visit=function(t){this._loop=this._body.first(),this._tag=t._tag,this._tags=[],this._args=[],Ot.__super__.visit.apply(this,arguments)
-for(var e=0,n=o(this._params),i=n.length;e<i;e++)n[e].visit(t)
-if(1==r(this._tags)&&!this._tags[0].option("key")){var s=this._loop.options().vars.len
-if(s&&s.declarator){var a=s.declarator().defaults()
-s.declarator().setDefaults(f("=",f(".",this._params.at(0),"taglen"),a))}return this._body.push(new Q(this._params.at(0))),this.set({treeType:4}),this}if(1==r(this._tags)){var p=m(f(".",this._params.at(0),"$iter"),[])
-this._resultVar=this.scope().declare("$$",p,{system:!0})}else this._resultVar=this._params.at(r(this._tags),!0,"$$"),this._resultVar.visit(t),this._args.push(new qt([]))
-var c=new Te("push",this._resultVar,null)
-return this._loop.body().consume(c),this._body.push(new Q(this._resultVar)),this.set({treeType:0==r(this._tags)?3:5}),this},Ot.prototype.capture=function(t){t.set({par:null,loop:this})
+return t&&"ƒ"==t._value?zn:Hn},i(Rt,At),e.TagFragmentFunc=Rt,Rt.prototype.scopetype=function(){return this.option("closed")?zn:Hn},i(Ot,At),e.TagLoopFunc=Ot,Ot.prototype.scopetype=function(){return this.option("closed")?zn:Hn},Ot.prototype.visit=function(t){this._loop=this._body.first(),this._tag=t._tag,this._tags=[],this._args=[]
+var e=this._tag._tagLoop
+this._tag._tagLoop=this,this._isFast=!0,this._loop&&this._loop.body().values().every(function(t){return t instanceof _n}),Ot.__super__.visit.apply(this,arguments),this._tag._tagLoop=e
+var n=this._loop.options()
+if((n.step||n.diff||n.guard||!this._loop.body().values().every(function(t){return t instanceof _n}))&&(this._isFast=!1),!this._isFast)for(var i=0,s=o(this._tags),a=s.length;i<a;i++)s[i]._loopCache._callee=this.scope__().imbaRef("createTagMap")
+for(var p=0,c=o(this._params),h=c.length;p<h;p++)c[p].visit(t)
+if(1==r(this._tags)&&!this._tags[0].option("key")&&this._isFast){var u=this._loop.options().vars.len
+if(u&&u.declarator){var l=u.declarator().defaults()
+u.declarator().setDefaults(f("=",f(".",this._params.at(0),"taglen"),l))}return this._body.push(new Q(this._params.at(0))),this.set({treeType:4}),this}if(1==r(this._tags)){var _=m(f(".",this._params.at(0),"$iter"),[])
+this._resultVar=this.scope().declare("$$",_,{system:!0})}else this._resultVar=this._params.at(r(this._tags),!0,"$$"),this._resultVar.visit(t),this._args.push(new qt([]))
+var y=new Te("push",this._resultVar,null)
+return this._loop.body().consume(y),this._body.push(new Q(this._resultVar)),this.set({treeType:0==r(this._tags)?3:5}),this},Ot.prototype.capture=function(t){t.set({par:null,loop:this})
 var e=this._tag.childCacher(),n=e.nextRef(),r=this._tags.push(t)-1,i=this._loop.option("vars").index,s=t.option("key"),o=this._params.at(r,!0,"$"+r)
 t.set({cacher:new en(this,o)}),s?(t.set({treeRef:s}),s.cache()):t.set({treeRef:i})
-new Gt(s?5:4)
-var a=s?"createTagMap":"createTagList",p=m(this.scope__().imbaRef(a),this._tag.cacheRef()?[e,n,this._tag.cacheRef()]:[e,n]),c=f("||",f(".",e,n),p)
+var a=s?"createTagMap":"createTagList",p=m(this.scope__().imbaRef(a),this._tag.cacheRef()?[e,n,this._tag.cacheRef()]:[e,n])
+t._loopCache=p
+var c=f("||",f(".",e,n),p)
 return this._args.push(c),this},Ot.prototype.js=function(t){return"("+Ot.__super__.js.apply(this,arguments)+")("+x(this._args)+")"},i(Nt,At),e.MethodDeclaration=Nt,Nt.prototype.variable=function(t){return this._variable},Nt.prototype.setVariable=function(t){return this._variable=t,this},Nt.prototype.scopetype=function(){return zn},Nt.prototype.consume=function(t){return t instanceof Q?(this.option("return",!0),this):Nt.__super__.consume.apply(this,arguments)},Nt.prototype.metadata=function(){return{type:"method",name:""+this.name(),namepath:this.namepath(),params:this._params.metadata(),desc:this._desc,scopenr:this.scope()._nr,loc:this.loc()}},Nt.prototype.loc=function(){var t
 return(t=this.option("def"))?[t._loc,this.body().loc()[1]]:[0,0]},Nt.prototype.toJSON=function(){return this.metadata()},Nt.prototype.namepath=function(){if(this._namepath)return this._namepath
 var t=String(this.name()),e=this.option("static")?".":"#"

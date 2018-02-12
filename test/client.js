@@ -8373,7 +8373,7 @@ describe('Await',function() {
 /* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0), self = this, _2 = Imba.createTagCache, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), self = this, _2 = Imba.createTagCache, _4 = Imba.createTagList, _3 = Imba.createTagMap, _1 = Imba.createElement;
 // externs;
 
 function jseq(find,blk){
@@ -8483,7 +8483,7 @@ describe('Syntax - Tags',function() {
 		return eq(e.root(),item);
 	});
 	
-	return test('multiple self',function() {
+	test('multiple self',function() {
 		var Something = Imba.defineTag('Something');
 		var Local = Imba.defineTag('Local', function(tag){
 			tag.prototype.render = function (){
@@ -8515,6 +8515,44 @@ describe('Syntax - Tags',function() {
 		htmleq('<span>loading</span>',node);
 		node.render();
 		return htmleq('<div>ready</div>',node);
+	});
+	
+	
+	return test('lists',function() {
+		var node;
+		let types = [1,2,3,4];
+		var Radio = Imba.defineTag('Radio', function(tag){
+			tag.prototype.value = function(v){ return this._value; }
+			tag.prototype.setValue = function(v){ this._value = v; return this; };
+			tag.prototype.label = function(v){ return this._label; }
+			tag.prototype.setLabel = function(v){ this._label = v; return this; };
+			tag.prototype.desc = function(v){ return this._desc; }
+			tag.prototype.setDesc = function(v){ this._desc = v; return this; };
+		});
+		
+		var Local = Imba.defineTag('Local', function(tag){
+			tag.prototype.render = function (){
+				var $ = this.$;
+				return this.$open(0).setChildren(
+					$[0] || _1('div',$,0,this).flag('Radios').flag('group').flag('xl')
+				,2).synced((
+					$[0].setContent(
+						(function($0) {
+							var $$ = $0.$iter();
+							for (let i = 0, len = types.length, item; i < len; i++) {
+								item = types[i];
+								if (item % 2 == 0) {
+									continue;
+								};
+								$$.push(($0[i] || _1(Radio,$0,i).setName('type').setTabindex(1)).setValue(item).end());
+							};return $$;
+						})($[1] || _3($,1,0))
+					,5).end()
+				,true));
+			};
+		});
+		
+		return node = (_1(Local)).end();
 	});
 });
 
@@ -8886,10 +8924,8 @@ describe('Tags - Define',function() {
 				(function($0,$1,$$) {
 					for (let i = 0, len = ary.length, v; i < len; i++) {
 						v = ary[i];
-						$$.push(Imba.static([
-							($0[i] || _1('custom',$0,i).flag('one')).setContent(v,3).end(),
-							($1[i] || _1('custom',$1,i).flag('two')).setContent(v,3).end()
-						],2,1));
+						$$.push(($0[i] || _1('custom',$0,i).flag('one')).setContent(v,3).end());
+						$$.push(($1[i] || _1('custom',$1,i).flag('two')).setContent(v,3).end());
 					};return $$;
 				})($[1] || _3($,1),$[2] || _3($,2),[])
 			],1).synced();

@@ -1030,7 +1030,7 @@ export class Block < ListNode
 		for node,i in @nodes
 			node and node.traverse
 
-		if stack and stack.@tag
+		if stack and stack.@tag and !stack.@tag.@tagLoop
 			@tag = stack.@tag
 			let real = expressions
 			# we need to compare the real length
@@ -2454,20 +2454,37 @@ export class TagLoopFunc < Func
 		@tag = stack.@tag
 		@tags = []
 		@args = []
+		
+		var prevLoop = @tag.@tagLoop
+		@tag.@tagLoop = self
+		
+		@isFast = yes
+		if @loop
+			@loop.body.values.every(|v| v isa Tag )
 
 		super
+
+		@tag.@tagLoop = prevLoop
+		# see if we are optimized
+		var lo = @loop.options
+		
+		if lo:step or lo:diff or lo:guard or !@loop.body.values.every(|v| v isa Tag )
+			@isFast = no
+			
+		unless @isFast
+			for item in @tags
+				item.@loopCache.@callee = scope__.imbaRef('createTagMap')
 
 		for param in @params
 			param.visit(stack)
 
-		if @tags.len == 1 and !@tags[0].option(:key)
+		if @tags.len == 1 and !@tags[0].option(:key) and @isFast
 			let len = @loop.options:vars:len
 			if len and len:declarator
 				let defs = len.declarator.defaults
 				len.declarator.defaults = OP('=',OP('.',@params.at(0),'taglen'),defs)
 			@body.push(Return.new(@params.at(0)))
 			set(treeType: 4)
-			
 			return self
 
 		if @tags.len == 1
@@ -2484,6 +2501,7 @@ export class TagLoopFunc < Func
 		@loop.body.consume(collector)
 		@body.push(Return.new(@resultVar))
 		set(treeType: @tags.len == 0 ? 3 : 5)
+
 		self
 		
 	def capture node
@@ -2495,9 +2513,6 @@ export class TagLoopFunc < Func
 		let ref = @loop.option(:vars)['index']
 		let key = node.option(:key)
 		let param = @params.at(nr,true,'$'+nr)
-		# param.visit
-		# node.@trunk = TagCache.new(self,param)
-		# node.set(treeRef: ref) unless key
 		node.set(cacher: TagCache.new(self,param))
 		
 		if key
@@ -2505,25 +2520,12 @@ export class TagLoopFunc < Func
 			key.cache
 		else
 			node.set(treeRef: ref)
-			
-		# [gen,oref] @tag.cacheVar
-		# add the argument creating this 
-		# the cache needs to have a reference to the outer node though
-		let typ = Num.new(key ? 5 : 4)
-		# let factoryParams = [typ,oref]
-		# factoryParams.push(@tag.cacheRef) if @tag.cacheRef
+
 		let fn = key ? 'createTagMap' : 'createTagList'
 		let get = CALL(scope__.imbaRef(fn),@tag.cacheRef ? [gen,oref,@tag.cacheRef] : [gen,oref])
-		
-		# if key
+		node.@loopCache = get
 		let op = OP('||',OP('.',gen,oref),get)
 		@args.push(op)
-			
-		# else
-		# 	let op = OP('||=',OP('.',gen,oref),scope__.imbaRef('createTagList'))
-		# 	@args.push(op)
-
-		# @args.push(OP('||',OP('.',gen,oref),CALL( OP('.',gen,'$'),factoryParams)))
 		self
 	
 	def js o
