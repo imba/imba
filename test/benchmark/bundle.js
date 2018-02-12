@@ -403,7 +403,7 @@ Imba.Pointer.prototype.y = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(3), _2 = Imba.createTagList, _3 = Imba.createTagMap, _1 = Imba.createElement;
+var Imba = __webpack_require__(3), _T = Imba.TAGS;
 const store = {
 	items: [
 		{title: "Create example"},
@@ -430,192 +430,192 @@ const actions = {
 var apps = {};
 var COUNTER = 0;
 
-apps.noEvents = (_1('div').flag('app')).setTemplate(function() {
+apps.noEvents = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				(t0 = $0[i] || _1('li',$0,i)).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
+				(t0 = $0[i]||$0.$('li',i)).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
 // will be cached?
-apps.strings = (_1('div').flag('app')).setTemplate(function() {
+apps.strings = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				(t0 = $0[i] || _1('li',$0,i).on$(0,['tap','prevent','addSomething'])).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
+				(t0 = $0[i]||$0.$('li',i).on$(0,['tap','prevent','addSomething'])).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
-apps.chainSyntax = (_1('div').flag('app')).setTemplate(function() {
+apps.chainSyntax = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				(t0 = $0[i] || _1('li',$0,i).on$(0,['tap','prevent','addSomething'])).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
+				(t0 = $0[i]||$0.$('li',i).on$(0,['tap','prevent','addSomething'])).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
-apps.functions = (_1('div').flag('app')).setTemplate(function() {
+apps.functions = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				(t0 = $0[i] || _1('li',$0,i)).on$(0,['tap','prevent',actions.tap]).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
+				(t0 = $0[i]||$0.$('li',i)).on$(0,['tap','prevent',actions.tap]).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
-apps.functionsNoMod = (_1('div').flag('app')).setTemplate(function() {
+apps.functionsNoMod = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				(t0 = $0[i] || _1('li',$0,i)).on$(0,['tap',actions.tap]).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
+				(t0 = $0[i]||$0.$('li',i)).on$(0,['tap',actions.tap]).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
-apps.arrays = (_1('div').flag('app')).setTemplate(function() {
+apps.arrays = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length, item; i < len; i++) {
 				item = items[i];
-				(t0 = $0[i] || _1('li',$0,i)).on$(0,['tap','prevent',[actions.tap,item]]).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(item.title,3).end(),3).end();
+				(t0 = $0[i]||$0.$('li',i)).on$(0,['tap','prevent',[actions.tap,item]]).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(item.title,0).end(),2).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
-apps.textA = (_1('div').flag('app')).setTemplate(function() {
+apps.textA = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				($0[i] || _1('li',$0,i)).setText("a" + COUNTER).end();
+				($0[i]||$0.$('li',i)).setText("a" + COUNTER).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
-apps.textB = (_1('div').flag('app')).setTemplate(function() {
+apps.textB = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				($0[i] || _1('li',$0,i)).setText("b" + COUNTER).end();
+				($0[i]||$0.$('li',i)).setText("b" + COUNTER).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
-apps.textC = (_1('div').flag('app')).setTemplate(function() {
+apps.textC = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				($0[i] || _1('li',$0,i)).setText("c" + COUNTER).end();
+				($0[i]||$0.$('li',i)).setText("c" + COUNTER).end();
 			};return $0;
-		})($[1] || _2($,1,0))
+		})($[1] || $.$(4,1,0))
 	,4).end();
 }).end();
 
-apps.loop = (_1('div').flag('app')).setTemplate(function() {
+apps.loop = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
-		(function($0) {
-			var t0;
-			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				(t0 = $0[i] || _1('li',$0,i)).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
-			};return $0;
-		})($[1] || _2($,1,0))
-	,4).end();
-}).end();
-
-apps.loopInner = (_1('div').flag('app')).setTemplate(function() {
-	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent([
-		($[1] || _1('li',$,1,0).setText("First item")).end(),
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var t0;
 			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-				(t0 = $0[i] || _1('li',$0,i)).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
+				(t0 = $0[i]||$0.$('li',i)).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
 			};return $0;
-		})($[2] || _2($,2,0)),
-		($[3] || _1('li',$,3,0).setText("Last item")).end()
+		})($[1] || $.$(4,1,0))
+	,4).end();
+}).end();
+
+apps.loopInner = (_T.$('div').flag('app')).setTemplate(function() {
+	var $ = this.$;
+	return ($[0]||$.$('ul',0)).setContent([
+		($[1]||$.$('li',1,0).setText("First item")).end(),
+		(function($0) {
+			var t0;
+			for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
+				(t0 = $0[i]||$0.$('li',i)).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
+			};return $0;
+		})($[2] || $.$(4,2,0)),
+		($[3]||$.$('li',3,0).setText("Last item")).end()
 	],1).end();
 }).end();
 
-apps.loopKeys = (_1('div').flag('app')).setTemplate(function() {
+apps.loopKeys = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var i_, t0, $$ = $0.$iter();
 			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				$$.push((t0 = $0[i] || _1('li',$0,i)).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end());
+				$$.push((t0 = $0[i]||$0.$('li',i)).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,3).end(),2).end());
 			};return $$;
-		})($[1] || _3($,1,0))
+		})($[1] || $.$(5,1,0))
 	,5).end();
 }).end();
 
-apps.loopTrue = (_1('div').flag('app')).setTemplate(function() {
+apps.loopTrue = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent([
 		true ? (
 			(function($0) {
 				var t0;
 				for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-					(t0 = $0[i] || _1('li',$0,i)).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
+					(t0 = $0[i]||$0.$('li',i)).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
 				};return $0;
-			})($[1] || _2($,1,0))
+			})($[1] || $.$(4,1,0))
 		) : void(0)
-	,3).end();
+	],1).end();
 }).end();
 
-apps.loopWeird = (_1('div').flag('app')).setTemplate(function() {
+apps.loopWeird = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent([
 		(COUNTER % 3 == 0) ? (
-			($[1] || _1('li',$,1,0).setText("Single")).end()
+			($[1]||$.$('li',1,0).setText("Single")).end()
 		) : (
 			(function($0) {
 				var t0;
 				for (let i = 0, items = iter$(store.items), len = $0.taglen = items.length; i < len; i++) {
-					(t0 = $0[i] || _1('li',$0,i)).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(items[i].title,3).end(),3).end();
+					(t0 = $0[i]||$0.$('li',i)).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(items[i].title,0).end(),2).end();
 				};return $0;
-			})($[2] || _2($,2,0))
+			})($[2] || $.$(4,2,0))
 		)
-	,3).end();
+	],1).end();
 }).end();
 
 
 var pruneId = 0;
-apps.loopPrune = (_1('div').flag('app')).setTemplate(function() {
+apps.loopPrune = (_T.$('div').flag('app')).setTemplate(function() {
 	var $ = this.$;
-	return ($[0] || _1('ul',$,0)).setContent(
+	return ($[0]||$.$('ul',0)).setContent(
 		(function($0) {
 			var $1, $$ = $0.$iter();
 			for (let i = 0, items = iter$(store.items), len = items.length; i < len; i++) {
-				$$.push(($0[$1 = pruneId++] || _1('li',$0,$1)).setContent(items[i].title,3).end());
+				$$.push(($0[$1 = pruneId++]||$0.$('li',$1)).setContent(items[i].title,3).end());
 			};return $$;
-		})($[1] || _3($,1,0))
+		})($[1] || $.$(5,1,0))
 	,5).end();
 }).end();
 
@@ -654,23 +654,23 @@ var run = function(app,name,times) {
 
 var testWeird = function() {
 	let bool = true;
-	let item = (_1('div').setText("BOOL")).end();
+	let item = (_T.$('div').setText("BOOL")).end();
 	let items = store.items.slice(0);
 	let dyn = function() { return item; };
-	let app = (_1('div').flag('app')).setTemplate(function() {
+	let app = (_T.$('div').flag('app')).setTemplate(function() {
 		var $ = this.$;
-		return ($[0] || _1('div',$,0)).setContent([
-			($[1] || _1('div',$,1,0).setText("before")).end(),
+		return ($[0]||$.$('div',0)).setContent([
+			($[1]||$.$('div',1,0).setText("before")).end(),
 			bool ? Imba.static([
 				dyn(),
 				(function($0) {
 					var t0;
 					for (let i = 0, ary = iter$(items), len = $0.taglen = ary.length; i < len; i++) {
-						(t0 = $0[i] || _1('li',$0,i)).setContent((t0.$[0] || _1('span',t0.$,0).flag('title')).setContent(ary[i].title,3).end(),3).end();
+						(t0 = $0[i]||$0.$('li',i)).setContent((t0.$[0]||t0.$.$('span',0).flag('title')).setContent(ary[i].title,0).end(),2).end();
 					};return $0;
-				})($[2] || _2($,2,0))
-			],1,1) : void(0),
-			($[3] || _1('div',$,3,0).setText("after")).end()
+				})($[2] || $.$(4,2,0))
+			],2) : void(0),
+			($[3]||$.$('div',3,0).setText("after")).end()
 		],1).end();
 	}).end();
 	run(app,'bug',1);
@@ -687,7 +687,7 @@ var testWeird = function() {
 	// add a bunch of items
 };
 
-var RunButton = Imba.defineTag('RunButton', 'button', function(tag){
+var RunButton = _T.defineTag('RunButton', 'button', function(tag){
 	
 	tag.prototype.ontap = function (){
 		// run(data,dom:textContent,100001)
@@ -695,25 +695,25 @@ var RunButton = Imba.defineTag('RunButton', 'button', function(tag){
 	};
 });
 
-var controls = (_1('div').flag('controls')).setTemplate(function() {
+var controls = (_T.$('div').flag('controls')).setTemplate(function() {
 	var $ = this.$;
 	return Imba.static([
-		($[0] || _1('div',$,0).flag('header')).setContent([
+		($[0]||$.$('div',0).flag('header')).setContent([
 			(function($0) {
 				for (let app, i = 0, keys = Object.keys(apps), l = $0.taglen = keys.length, name; i < l; i++){
-					name = keys[i];app = apps[name];($0[i] || _1(RunButton,$0,i)).setData(app).setText("" + name).end();
+					name = keys[i];app = apps[name];($0[i]||$0.$(RunButton,i)).setData(app).setText("" + name).end();
 				};return $0;
-			})($[1] || _2($,1,0)),
-			($[2] || _1('button',$,2,0).setText("render")).on$(0,['tap',function(e) { var $1;
+			})($[1] || $.$(4,1,0)),
+			($[2]||$.$('button',2,0).setText("render")).on$(0,['tap',function(e) { var $1;
 			return ($1 = currentApp) && $1.render  &&  $1.render(); }]).end(),
-			($[3] || _1('button',$,3,0).setText("weird")).on$(0,['tap',testWeird]).end()
+			($[3]||$.$('button',3,0).setText("weird")).on$(0,['tap',testWeird]).end()
 		],1).end(),
-		($[4] || _1('div',$,4).flag('logs')).setContent((function($0) {
+		($[4]||$.$('div',4).flag('logs')).setContent((function($0) {
 			for (let i = 0, len = $0.taglen = logs.length; i < len; i++) {
-				($0[i] || _1('div',$0,i)).setContent(logs[i],3).end();
+				($0[i]||$0.$('div',i)).setContent(logs[i],0).end();
 			};return $0;
-		})($[5] || _2($,5,4)),4).end()
-	],2,1);
+		})($[5] || $.$(4,5,4)),4).end()
+	],1);
 }).end();
 
 
@@ -1367,7 +1367,6 @@ Imba.Tag = function Tag(dom,ctx){
 	this.$ = TagCache.build(this);
 	this.$up = this._owner_ = ctx;
 	this._tree_ = null;
-	// @owner_ = ctx
 	this.FLAGS = 0;
 	this.build();
 	this;
@@ -1506,7 +1505,9 @@ Imba.Tag.prototype.root = function (){
 	*/
 
 Imba.Tag.prototype.ref_ = function (ref){
-	this._owner_['_' + ref] = this;
+	// 
+	// @owner_['_' + ref] = self
+	console.log("really?");
 	this.flag(this._ref = ref);
 	// @owner = ctx
 	return this;
@@ -2254,7 +2255,6 @@ Imba.SVGTag.buildNode = function (){
 
 Imba.SVGTag.inherit = function (child){
 	child._protoDom = null;
-	console.log("SVGTag inherit",child,child._name);
 	if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0) {
 		child._nodeType = child._name;
 		return child._classes = [];
@@ -2483,7 +2483,10 @@ Imba.createElement = function (name,ctx,ref,pref){
 	
 	// node:$ref = ref if ref
 	// context:i$++ # only if it is not an array?
-	if (ctx) { ctx[ref] = node };
+	if (ctx && ref != undefined) {
+		ctx[ref] = node;
+	};
+	
 	return node;
 };
 
@@ -2648,7 +2651,7 @@ if (true) {
 	
 	// Ovverride classList
 	if (document && !document.documentElement.classList) {
-		Imba.extendTag('element', function(tag){
+		Imba.TAGS.extendTag('element', function(tag){
 			
 			tag.prototype.hasFlag = function (ref){
 				return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
@@ -2692,21 +2695,21 @@ function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(0);
 
 // predefine all supported html tags
-Imba.defineTag('fragment', 'element', function(tag){
+Imba.TAGS.defineTag('fragment', 'element', function(tag){
 	
 	tag.createNode = function (){
 		return Imba.document().createDocumentFragment();
 	};
 });
 
-Imba.extendTag('html', function(tag){
+Imba.TAGS.extendTag('html', function(tag){
 	tag.prototype.parent = function (){
 		return null;
 	};
 });
 
 
-Imba.extendTag('canvas', function(tag){
+Imba.TAGS.extendTag('canvas', function(tag){
 	tag.prototype.context = function (type){
 		if(type === undefined) type = '2d';
 		return this.dom().getContext(type);
@@ -2768,7 +2771,7 @@ DataValue.prototype.mod = function (value){
 	return value;
 };
 
-Imba.extendTag('input', function(tag){
+Imba.TAGS.extendTag('input', function(tag){
 	tag.prototype.model = function (){
 		return this._model;
 	};
@@ -2844,7 +2847,7 @@ Imba.extendTag('input', function(tag){
 	};
 });
 
-Imba.extendTag('textarea', function(tag){
+Imba.TAGS.extendTag('textarea', function(tag){
 	tag.prototype.model = function (){
 		return this._model;
 	};
@@ -2880,7 +2883,7 @@ Imba.extendTag('textarea', function(tag){
 	};
 });
 
-Imba.extendTag('option', function(tag){
+Imba.TAGS.extendTag('option', function(tag){
 	tag.prototype.setValue = function (value){
 		if (value != this._value) {
 			this.dom().value = this._value = value;
@@ -2893,7 +2896,7 @@ Imba.extendTag('option', function(tag){
 	};
 });
 
-Imba.extendTag('select', function(tag){
+Imba.TAGS.extendTag('select', function(tag){
 	tag.prototype.model = function (){
 		return this._model;
 	};
@@ -4426,7 +4429,6 @@ function reconcileLoop(root,new$,old,caret){
 	
 	// conditionally prune cache
 	if (cl > 1000 && (cl - nl) > 500) {
-		console.log("SHOULD PRUNE!!");
 		new$.cache.$prune(new$);
 	};
 	
@@ -4585,7 +4587,7 @@ function reconcileNested(root,new$,old,caret){
 };
 
 
-Imba.extendTag('element', function(tag){
+Imba.TAGS.extendTag('element', function(tag){
 	
 	tag.prototype.setChildren = function (new$,typ){
 		var old = this._tree_;

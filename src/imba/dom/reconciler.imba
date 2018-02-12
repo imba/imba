@@ -205,7 +205,6 @@ def reconcileLoop root, new, old, caret
 	
 	# conditionally prune cache
 	if cl > 1000 and (cl - nl) > 500
-		console.log "SHOULD PRUNE!!"
 		new:cache:$prune(new)
 	
 	if d > 0 and i == ol

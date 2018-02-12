@@ -1176,7 +1176,6 @@ Imba.Tag = function Tag(dom,ctx){
 	this.$ = TagCache.build(this);
 	this.$up = this._owner_ = ctx;
 	this._tree_ = null;
-	// @owner_ = ctx
 	this.FLAGS = 0;
 	this.build();
 	this;
@@ -1315,7 +1314,9 @@ Imba.Tag.prototype.root = function (){
 	*/
 
 Imba.Tag.prototype.ref_ = function (ref){
-	this._owner_['_' + ref] = this;
+	// 
+	// @owner_['_' + ref] = self
+	console.log("really?");
 	this.flag(this._ref = ref);
 	// @owner = ctx
 	return this;
@@ -2063,7 +2064,6 @@ Imba.SVGTag.buildNode = function (){
 
 Imba.SVGTag.inherit = function (child){
 	child._protoDom = null;
-	console.log("SVGTag inherit",child,child._name);
 	if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0) {
 		child._nodeType = child._name;
 		return child._classes = [];
@@ -2292,7 +2292,10 @@ Imba.createElement = function (name,ctx,ref,pref){
 	
 	// node:$ref = ref if ref
 	// context:i$++ # only if it is not an array?
-	if (ctx) { ctx[ref] = node };
+	if (ctx && ref != undefined) {
+		ctx[ref] = node;
+	};
+	
 	return node;
 };
 
@@ -4625,8 +4628,8 @@ Spec.prototype.eq = function (actual,expected,format){
 Spec.prototype.match = function (actual,expected,format){
 	return SPEC.context().match(actual,expected,format);
 };
-Spec.prototype.ok = function (actual){
-	return SPEC.context().assertion(new SpecAssertTruthy(SPEC.context(),actual));
+Spec.prototype.ok = function (actual,msg){
+	return SPEC.context().assertion(new SpecAssertTruthy(SPEC.context(),actual,msg));
 };
 Spec.prototype.assert = function (expression){
 	return SPEC.context().assert(expression);
@@ -4903,9 +4906,10 @@ SpecAssert.prototype.details = function (){
 	};
 };
 
-function SpecAssertTruthy(example,value){
+function SpecAssertTruthy(example,value,message){
 	this._example = example;
 	this._actual = value;
+	this._message = message;
 	this.run();
 };
 
@@ -4913,6 +4917,21 @@ Imba.subclass(SpecAssertTruthy,SpecAssert);
 window.SpecAssertTruthy = SpecAssertTruthy; // global class 
 SpecAssertTruthy.prototype.test = function (value){
 	return (!(!(value))) ? this.passed() : this.failed();
+};
+
+SpecAssertTruthy.prototype.failed = function (){
+	if (console.group) {
+		console.error("failed",this._message,this);
+	};
+	return SpecAssertTruthy.__super__.failed.call(this);
+};
+
+SpecAssertTruthy.prototype.details = function (){
+	if (!this._success) {
+		return fmt('red',("assertion failed: " + (this._message)));
+	} else {
+		return "passed test";
+	};
 };
 
 function SpecAssertFalsy(example,value){
@@ -4946,8 +4965,8 @@ eq = function eq(actual,expected,format){
 match = function match(actual,expected,format){
 	return SPEC.context().match(actual,expected,format);
 };
-ok = function ok(actual){
-	return SPEC.context().assertion(new SpecAssertTruthy(SPEC.context(),actual));
+ok = function ok(actual,message){
+	return SPEC.context().assertion(new SpecAssertTruthy(SPEC.context(),actual,message));
 };
 assert = function assert(expression){
 	return SPEC.context().assert(expression);
@@ -8354,8 +8373,8 @@ describe('Syntax - Tags',function() {
 	});
 	
 	test('ref',function() {
-		return jseq("._main=",function() { var $ = this.$$ || (this.$$ = {});
-		return (self._main= self._main||_1('div',$,'_main')).setData(objvar).end(); });
+		return jseq("._main =",function() { var $ = this.$$ || (this.$$ = {});
+		return (self._main = self._main||_1('div',self).flag('main')).setData(objvar).end(); });
 	});
 	
 	
@@ -8368,17 +8387,17 @@ describe('Syntax - Tags',function() {
 		Local.prototype._title = "class";
 		
 		Local.prototype.closed = function (){
-			return (_1('div').setTitle("tag").setTemplate(function() {
-				var $ = this.$;
-				return ($[0] || _1('h1',$,0)).setContent(this.title(),3).end();
+			return (t0 = _1('div').setTitle("tag").setTemplate(function() {
+				var $ = this.$, t0;
+				return ($[0] || _1('h1',$,0,t0)).setContent(this.title(),3).end();
 			})).end();
 		};
 		
 		Local.prototype.open = function (){
 			var self = this;
-			return (_1('div').setTitle("tag").setTemplate(function() {
-				var $ = this.$;
-				return ($[0] || _1('h1',$,0)).setContent(self.title(),3).end();
+			return (t0 = _1('div').setTitle("tag").setTemplate(function() {
+				var $ = this.$, t0;
+				return ($[0] || _1('h1',$,0,t0)).setContent(self.title(),3).end();
 			})).end();
 		};
 		
@@ -8688,7 +8707,7 @@ describe('Tags - Define',function() {
 		var num = 1;
 		// not yet caching with switch
 		return el = (t0 = _1('div')).setContent(
-			(t0.$[0] || _1('div',t0.$,0).flag('inner')).setContent(
+			(t0.$[0] || _1('div',t0.$,0,t0).flag('inner')).setContent(
 				(function() {
 					switch (num) {
 						case 1: {
@@ -8722,7 +8741,7 @@ describe('Tags - Define',function() {
 			var $ = this.$;
 			var ary = ['a','b','c','d'];
 			return (this).setChildren([
-				($[0] || _1('h1',$,0).setText('heading')).end(),
+				($[0] || _1('h1',$,0,this).setText('heading')).end(),
 				(function($0) {
 					for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 						($0[i] || _1('custom',$0,i)).setContent(ary[i],3).end();
@@ -8749,7 +8768,7 @@ describe('Tags - Define',function() {
 			var $ = this.$;
 			var ary = ['a','b','c','d'];
 			return (this).setChildren([
-				($[0] || _1('h1',$,0).setText('heading')).end(),
+				($[0] || _1('h1',$,0,this).setText('heading')).end(),
 				(function($0,$1,$$) {
 					for (let i = 0, len = ary.length, v; i < len; i++) {
 						v = ary[i];
@@ -8854,7 +8873,7 @@ describe('Tags - Define',function() {
 		var Cache = Imba.defineTag('Cache', function(tag){
 			tag.prototype.render = function (){
 				var self = this, $ = this.$;
-				return (self).setChildren((self._body= self._body||_1('div',$,'_body').on$(0,['tap',function(e) { return self.title(); }])).end(),3).synced();
+				return (self).setChildren((self._body = self._body||_1('div',self).flag('body').on$(0,['tap',function(e) { return self.title(); }])).end(),3).synced();
 			};
 		});
 		
@@ -8869,7 +8888,7 @@ describe('Tags - Define',function() {
 		var NoCache = Imba.defineTag('NoCache', function(tag){
 			tag.prototype.render = function (arg){
 				var $ = this.$;
-				return (this).setChildren((this._body= this._body||_1('div',$,'_body')).on$(0,['tap',function(e) { return arg; }]).end(),3).synced();
+				return (this).setChildren((this._body = this._body||_1('div',this).flag('body')).on$(0,['tap',function(e) { return arg; }]).end(),3).synced();
 			};
 		});
 		
@@ -9016,7 +9035,7 @@ Imba.defineTag('cachetest', function(tag){
 		
 		tag.prototype.header = function (){
 			var $ = this.$$ || (this.$$ = {}), t0;
-			return (t0 = this._header= this._header||_1('div',$,'_header')).setContent((t0.$[0] || _1('div',t0.$,0).setText('H')).end(),3).end();
+			return (t0 = this._header = this._header||_1('div',this).flag('header')).setContent((t0.$[0] || _1('div',t0.$,0,t0).setText('H')).end(),3).end();
 		};
 		
 		tag.prototype.body = function (){
@@ -9026,7 +9045,7 @@ Imba.defineTag('cachetest', function(tag){
 		tag.prototype.render = function (){
 			var $ = this.$;
 			return (this).setChildren([
-				($[0] || _1('div',$,0).setText('P')).end(),
+				($[0] || _1('div',$,0,this).setText('P')).end(),
 				this.header(),
 				this.body()
 			],1).synced();
@@ -9037,7 +9056,7 @@ Imba.defineTag('cachetest', function(tag){
 		
 		tag.prototype.header = function (){
 			var $ = this.$$ || (this.$$ = {}), t0;
-			return (t0 = this._header= this._header||_1('div',$,'_header')).setContent((t0.$[0] || _1('div',t0.$,0).setText('X')).end(),3).end();
+			return (t0 = this._header = this._header||_1('div',this).flag('header')).setContent((t0.$[0] || _1('div',t0.$,0,t0).setText('X')).end(),3).end();
 		};
 	});
 	
@@ -9048,7 +9067,7 @@ Imba.defineTag('cachetest', function(tag){
 		tag.prototype.render = function (){
 			var $ = this.$;
 			return (this).setChildren([
-				($[0] || _1('div',$,0).setText('W')).end(),
+				($[0] || _1('div',$,0,this).setText('W')).end(),
 				this._content
 			],1).synced();
 		};
@@ -9059,11 +9078,11 @@ Imba.defineTag('cachetest', function(tag){
 		if(o === undefined) o = {};
 		return (this).setChildren([
 			o.a ? (
-				($[0] || _1('div',$,0).setText('A')).end()
+				($[0] || _1('div',$,0,this).setText('A')).end()
 			) : void(0),
-			o.b && ($[1] || _1('div',$,1).setText('B')).end(),
+			o.b && ($[1] || _1('div',$,1,this).setText('B')).end(),
 			o.c ? (
-				($[2] || _1('wrapped',$,2)).setContent([
+				($[2] || _1('wrapped',$,2,this)).setContent([
 					($[3] || _1('div',$,3,2).setText('B')).end(),
 					($[4] || _1('div',$,4,2).setText('C')).end()
 				],2).end()
@@ -9133,9 +9152,9 @@ describe('Tags - Cache',function() {
 			return items[0];
 		};
 		
-		var el = (_1(Tester)).setTemplate(function() {
-			var $ = this.$;
-			return ($[0] || _1('li',$,0)).setContent(items[this._o],3).end();
+		var el = (t0 = _1(Tester)).setTemplate(function() {
+			var $ = this.$, t0;
+			return ($[0] || _1('li',$,0,t0)).setContent(items[this._o],3).end();
 		}).end();
 		// items = ["A",<div> "B"]
 		eq(el.test(0),'[[A]]');
@@ -9151,9 +9170,9 @@ describe('Tags - Cache',function() {
 			items.push({id: counter++,name: "Item"});
 		};
 		
-		var node = (_1('div')).setTemplate(function() {
-			var $ = this.$;
-			return ($[0] || _1('ul',$,0)).setContent((function($0) {
+		var node = (t0 = _1('div')).setTemplate(function() {
+			var $ = this.$, t0;
+			return ($[0] || _1('ul',$,0,t0)).setContent((function($0) {
 				var id_, $$ = $0.$iter();
 				for (let i = 0, len = items.length, item; i < len; i++) {
 					item = items[i];
@@ -9308,39 +9327,39 @@ Imba.defineTag('group', function(tag){
 		var str = pars.str !== undefined ? pars.str : null;
 		var list2 = pars.list2 !== undefined ? pars.list2 : null;
 		return (this).setChildren([
-			($[0] || _1('el',$,0).flag('a')).setContent(this.name(),3).end(),
+			($[0] || _1('el',$,0,this).flag('a')).setContent(this.name(),3).end(),
 			str,
-			($[1] || _1('el',$,1).flag('b').setText("ok")).end(),
+			($[1] || _1('el',$,1,this).flag('b').setText("ok")).end(),
 			a ? Imba.static([
-				($[2] || _1('el',$,2).flag('header')).end(),
-				($[3] || _1('el',$,3).flag('title').setText("Header")).end(),
-				($[4] || _1('el',$,4).flag('tools')).end(),
+				($[2] || _1('el',$,2,this).flag('header')).end(),
+				($[3] || _1('el',$,3,this).flag('title').setText("Header")).end(),
+				($[4] || _1('el',$,4,this).flag('tools')).end(),
 				b ? Imba.static([
-					($[5] || _1('el',$,5).flag('long')).end(),
-					($[6] || _1('el',$,6).flag('long')).end()
+					($[5] || _1('el',$,5,this).flag('long')).end(),
+					($[6] || _1('el',$,6,this).flag('long')).end()
 				],2,1) : Imba.static([
-					($[7] || _1('el',$,7).flag('short')).end(),
-					($[8] || _1('el',$,8).flag('short')).end(),
-					($[9] || _1('el',$,9).flag('short')).end()
+					($[7] || _1('el',$,7,this).flag('short')).end(),
+					($[8] || _1('el',$,8,this).flag('short')).end(),
+					($[9] || _1('el',$,9,this).flag('short')).end()
 				],2,2),
-				($[10] || _1('el',$,10).flag('ruler')).end()
+				($[10] || _1('el',$,10,this).flag('ruler')).end()
 			],1,3) : void(0),
 			c ? Imba.static([
-				($[11] || _1('div',$,11).flag('c1').setText("long")).end(),
-				($[12] || _1('div',$,12).flag('c2').setText("loong")).end()
+				($[11] || _1('div',$,11,this).flag('c1').setText("long")).end(),
+				($[12] || _1('div',$,12,this).flag('c2').setText("loong")).end()
 			],2,4) : void(0),
 			(d && e) ? Imba.static([
-				($[13] || _1('el',$,13).flag('long')).end(),
-				($[14] || _1('el',$,14).flag('footer')).end(),
-				($[15] || _1('el',$,15).flag('bottom')).end()
+				($[13] || _1('el',$,13,this).flag('long')).end(),
+				($[14] || _1('el',$,14,this).flag('footer')).end(),
+				($[15] || _1('el',$,15,this).flag('bottom')).end()
 			],2,5) : (e ? Imba.static([
-				($[16] || _1('el',$,16).flag('footer')).end(),
-				($[17] || _1('el',$,17).flag('bottom')).end()
+				($[16] || _1('el',$,16,this).flag('footer')).end(),
+				($[17] || _1('el',$,17,this).flag('bottom')).end()
 			],2,6) : (
-				($[18] || _1('el',$,18).setText("!d and !e")).end()
+				($[18] || _1('el',$,18,this).setText("!d and !e")).end()
 			)),
 			list,
-			($[19] || _1('el',$,19).flag('x').setText("very last")).end(),
+			($[19] || _1('el',$,19,this).flag('x').setText("very last")).end(),
 			list2
 		],1).synced();
 	};
@@ -9378,12 +9397,12 @@ Imba.defineTag('group2', 'group', function(tag){
 		var a = pars.a !== undefined ? pars.a : false;
 		return (this).setChildren(
 			a ? Imba.static([
-				($[0] || _1('el',$,0).flag('a')).end(),
-				($[1] || _1('el',$,1).flag('b')).end(),
-				($[2] || _1('el',$,2).flag('c')).end()
+				($[0] || _1('el',$,0,this).flag('a')).end(),
+				($[1] || _1('el',$,1,this).flag('b')).end(),
+				($[2] || _1('el',$,2,this).flag('c')).end()
 			],2,1) : Imba.static([
-				($[3] || _1('el',$,3).flag('d')).end(),
-				($[4] || _1('el',$,4).flag('e')).end()
+				($[3] || _1('el',$,3,this).flag('d')).end(),
+				($[4] || _1('el',$,4,this).flag('e')).end()
 			],2,2)
 		,3).synced();
 	};
@@ -9396,7 +9415,7 @@ Imba.defineTag('group3', 'group', function(tag){
 		if(!pars||pars.constructor !== Object) pars = {};
 		var a = pars.a !== undefined ? pars.a : false;
 		return (this).setChildren([
-			($[0] || _1('el',$,0).flag('a')).end(),
+			($[0] || _1('el',$,0,this).flag('a')).end(),
 			a ? "items" : "item"
 		],1).synced();
 	};
@@ -9409,12 +9428,12 @@ Imba.defineTag('group4', 'group', function(tag){
 		if(!pars||pars.constructor !== Object) pars = {};
 		var a = pars.a !== undefined ? pars.a : false;
 		return (this).setChildren([
-			($[0] || _1('el',$,0).flag('a')).end(),
+			($[0] || _1('el',$,0,this).flag('a')).end(),
 			a ? (
 				"text"
 			) : Imba.static([
-				($[1] || _1('el',$,1).flag('b')).end(),
-				($[2] || _1('el',$,2).flag('c')).end()
+				($[1] || _1('el',$,1,this).flag('b')).end(),
+				($[2] || _1('el',$,2,this).flag('c')).end()
 			],2,1)
 		],1).synced();
 	};
@@ -9429,7 +9448,7 @@ Imba.defineTag('group5', 'group', function(tag){
 		return (this).setChildren([
 			"a",
 			"b",
-			a ? ((($[0] || _1('el',$,0).flag('c').setText("c")).end())) : "d"
+			a ? ((($[0] || _1('el',$,0,this).flag('c').setText("c")).end())) : "d"
 		],1).synced();
 	};
 });
@@ -9455,20 +9474,20 @@ Imba.defineTag('unknowns', 'div', function(tag){
 			10,
 			"20",
 			"30",
-			($[0] || _1('div',$,0).flag('hello')).end(),
-			($[1] || _1('div',$,1).flag('hello')).setContent(($[2] || _1('b',$,2,1)).end(),3).end(),
-			($[3] || _1('div',$,3).flag('int')).setContent(10,3).end(),
-			($[4] || _1('div',$,4).flag('date')).setContent(new Date(),3).end(),
-			($[5] || _1('div',$,5).flag('str').setText("string")).end(),
-			($[6] || _1('div',$,6).flag('list')).setContent(this.list(),3).end(),
-			($[7] || _1('div',$,7).flag('item')).setContent(this.tast(),3).end(),
-			($[8] || _1('div',$,8).flag('if')).setContent(
+			($[0] || _1('div',$,0,this).flag('hello')).end(),
+			($[1] || _1('div',$,1,this).flag('hello')).setContent(($[2] || _1('b',$,2,1)).end(),3).end(),
+			($[3] || _1('div',$,3,this).flag('int')).setContent(10,3).end(),
+			($[4] || _1('div',$,4,this).flag('date')).setContent(new Date(),3).end(),
+			($[5] || _1('div',$,5,this).flag('str').setText("string")).end(),
+			($[6] || _1('div',$,6,this).flag('list')).setContent(this.list(),3).end(),
+			($[7] || _1('div',$,7,this).flag('item')).setContent(this.tast(),3).end(),
+			($[8] || _1('div',$,8,this).flag('if')).setContent(
 				true ? (
 					this.list()
 				) : void(0)
 			,3).end(),
 			
-			($[9] || _1('div',$,9).flag('if')).setContent([
+			($[9] || _1('div',$,9,this).flag('if')).setContent([
 				($[10] || _1('b',$,10,9)).end(),
 				($[11] || _1('b',$,11,9)).end(),
 				this.tast(),
@@ -9492,12 +9511,12 @@ Imba.defineTag('stat', 'group', function(tag){
 	tag.prototype.render = function (){
 		var $ = this.$;
 		return (this).setChildren([
-			($[0] || _1('div',$,0).flag('hello')).end(),
-			($[1] || _1('ul',$,1).flag('other')).setContent([
+			($[0] || _1('div',$,0,this).flag('hello')).end(),
+			($[1] || _1('ul',$,1,this).flag('other')).setContent([
 				($[2] || _1('li',$,2,1).flag('a')).end(),
 				($[3] || _1('li',$,3,1).flag('b')).end()
 			],2).end(),
-			($[4] || _1('div',$,4).flag('again')).end()
+			($[4] || _1('div',$,4,this).flag('again')).end()
 		],2).synced();
 	};
 });
@@ -11272,8 +11291,8 @@ describe("Tags - SVG",function() {
 	return test("basics",function() {
 		var t0;
 		var item = (t0 = _1('svg:svg')).setContent([
-			(t0.$[0] || _1('svg:g',t0.$,0)).end(),
-			(t0.$[1] || _1('svg:circle',t0.$,1).set('r',20)).end()
+			(t0.$[0] || _1('svg:g',t0.$,0,t0)).end(),
+			(t0.$[1] || _1('svg:circle',t0.$,1,t0).set('r',20)).end()
 		],2).end();
 		
 		Imba.root().appendChild(item);
@@ -11305,9 +11324,9 @@ describe("HTML",function() {
 		return test("automatic value",function() {
 			var t0;
 			var el = (t0 = _1('select')).setContent([
-				(t0.$[0] || _1('option',t0.$,0).setText("a")).end(),
-				(t0.$[1] || _1('option',t0.$,1).setText("b")).end(),
-				(t0.$[2] || _1('option',t0.$,2).setText("c")).end()
+				(t0.$[0] || _1('option',t0.$,0,t0).setText("a")).end(),
+				(t0.$[1] || _1('option',t0.$,1,t0).setText("b")).end(),
+				(t0.$[2] || _1('option',t0.$,2,t0).setText("c")).end()
 			],2).end();
 			
 			return eq(el.value(),"a");
@@ -11348,25 +11367,25 @@ Imba.defineTag('wraps', function(tag){
 });
 
 AA = [1,2,3,4,5];
-TT = (_1('div').setTemplate(function() {
-	var $ = this.$;
+TT = (t0 = _1('div').setTemplate(function() {
+	var $ = this.$, t0;
 	return Imba.static([
-		($[0] || _1('ul',$,0).flag('x')).setContent([
+		($[0] || _1('ul',$,0,t0).flag('x')).setContent([
 			($[1] || _1('li',$,1,0).setText("Hello")).end(),
 			($[2] || _1('li',$,2,0)).setContent(Date.now(),3).end(),
 			($[3] || _1('li',$,3,0)).setContent([
-				($[4] || _1('xul',$,4,3).setTemplate(function() {
-					var $ = this.$;
+				(t1 = $[4] || _1('xul',$,4,3)).setTemplate(function() {
+					var $ = this.$, t1;
 					return Imba.static([
-						($[0] || _1('li',$,0).setText("Inner")).end(),
-						($[1] || _1('li',$,1)).setContent(Date.now(),3).end()
+						($[0] || _1('li',$,0,t1).setText("Inner")).end(),
+						($[1] || _1('li',$,1,t1)).setContent(Date.now(),3).end()
 					],2,1);
-				})).end(),
+				}).end(),
 				($[5] || _1('xno',$,5,3).setTemplate(function() {
 					var $ = this.$, $ = this.$;
 					return (this).dataset('stamp',Date.now()).setChildren([
-						($[0] || _1('li',$,0).setText("Inner")).end(),
-						($[1] || _1('li',$,1)).setContent(Date.now(),3).end(),
+						($[0] || _1('li',$,0,this).setText("Inner")).end(),
+						($[1] || _1('li',$,1,this)).setContent(Date.now(),3).end(),
 						(function($0) {
 							for (let i = 0, items = iter$(AA), len = $0.taglen = items.length; i < len; i++) {
 								($0[i] || _1('li',$0,i)).setContent(items[i],3).end();
@@ -11374,20 +11393,20 @@ TT = (_1('div').setTemplate(function() {
 						})($[2] || _2($,2))
 					],1).synced();
 				})).end(),
-				($[6] || _1('wraps',$,6,3).setTemplate(function() {
-					var $ = this.$;
+				(t1 = $[6] || _1('wraps',$,6,3)).setTemplate(function() {
+					var $ = this.$, t1;
 					return Imba.static([
-						($[0] || _1('div',$,0)).setText("This is inside " + (Date.now())).end(),
+						($[0] || _1('div',$,0,t1)).setText("This is inside " + (Date.now())).end(),
 						(function($0) {
 							for (let i = 0, items = iter$(AA), len = $0.taglen = items.length; i < len; i++) {
 								($0[i] || _1('div',$0,i)).setContent(items[i],3).end();
 							};return $0;
 						})($[1] || _2($,1,6))
 					],1,1);
-				})).end()
+				}).end()
 			],2).end()
 		],2).end(),
-		($[7] || _1('span',$,7)).end()
+		($[7] || _1('span',$,7,t0)).end()
 	],2,1);
 })).end();
 
@@ -11396,7 +11415,7 @@ Imba.defineTag('hello', function(tag){
 	tag.prototype.render = function (){
 		var $ = this.$;
 		return (this).setChildren(
-			($[0] || _1('div',$,0)).setContent([
+			($[0] || _1('div',$,0,this)).setContent([
 				($[1] || _1('h2',$,1,0).setText("content of template:")).end(),
 				($[2] || _1('div',$,2,0)).setText("This is inside " + (Date.now())).end(),
 				(function($0) {
@@ -11453,6 +11472,8 @@ var store = {
 };
 
 Imba.extendTag('element', function(tag){
+	tag.prototype.ref = function(v){ return this._ref; }
+	tag.prototype.setRef = function(v){ this._ref = v; return this; };
 	
 	tag.prototype.click = function (o){
 		if(o === undefined) o = {};
@@ -11517,17 +11538,17 @@ var Example = Imba.defineTag('Example', function(tag){
 	};
 	
 	tag.prototype.render = function (){
-		var $ = this.$;
+		var $ = this.$, t0, t1;
 		return (this).setChildren([
 			"A",
-			(this._b= this._b||_1('div',$,'_b')).setContent([
+			(t0 = this._b = this._b||_1('div',this).flag('b').setRef('b')).setContent([
 				"B",
-				(this._c= this._c||_1(Custom,$,'_c','_b')).setContent([
+				(t1 = this._c = this._c||_1(Custom,t0).flag('c').setRef('c')).setContent([
 					"C",
-					(this._d= this._d||_1('div',$,'_d','_c').setText("D")).end()
-				],1).end()
-			],1).end()
-		],1).synced();
+					(this._d = this._d||_1('div',t1).flag('d').setRef('d').setText("D")).end()
+				],2).end()
+			],2).end()
+		],2).synced();
 	};
 	
 	tag.prototype.tagAction = function (){

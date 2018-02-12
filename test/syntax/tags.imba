@@ -49,7 +49,7 @@ describe 'Syntax - Tags' do
 		jseq "setData(objvar)" do <.only[objvar]>
 	
 	test 'ref' do
-		jseq "._main=" do <div[objvar]@main>
+		jseq "._main =" do <div[objvar]@main>
 			
 			
 	test 'template' do

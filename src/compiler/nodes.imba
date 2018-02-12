@@ -6182,8 +6182,7 @@ export class Tag < Node
 			let body = Block.wrap(o:body.@nodes or [o:body])
 			@fragment = o:body = TagFragmentFunc.new([],body,null,null,closed: close)
 			@tagScope = @fragment.scope
-			
-			
+
 		# elif false and (!stack.@tag and !o:key and !reactive and !isSelf and !o:ivar)
 		# 	# create fully dynamic tag
 		# 	o:isRoot = yes
@@ -6292,7 +6291,8 @@ export class Tag < Node
 			return "{scope.imbaTags}.$({typ},{o:body.c(expression: yes)}).end()"
 
 		elif o:ivar and o:factory
-			# at the root
+			# at the root - should
+			throw "should not get here o:ivar o:factory"
 			o:path = OP('.',scope.context,o:ivar).c
 			out = "{o:path}={o:path}||{scope.imbaTags}.$({typ},{scope.context.c}).ref_('{o:ivar.@value.slice(1)}')"
 		elif o:factory
@@ -6304,16 +6304,22 @@ export class Tag < Node
 			
 			if o:ivar
 				o:path = OP('.',scope.context,o:ivar).c
-				out = o:path + '= ' + o:path + '||'
+				out = o:path + ' = ' + o:path + '||'
 			elif ref
 				out = "{cacher.c}[{ref.c}] || "
 			
-			if cacher
+			if o:ivar
+				pars.push(parent ? parent.reference.c : scope.context.c)
+				let flag = String(o:ivar.@value).substr(1)
+				statics.push(".flag('{flag}')")
+			elif cacher
 				pars.push(cacher.c)
 				pars.push(ref.c) if ref
 				if parent and parent.cacher == cacher
 					# if ref and parent and parent.childRef
 					pars.push(parent.cacheRef.c)
+				elif parent
+					pars.push(parent.reference.c)
 
 			out += "{factory.c}({pars.join(',')})"
 		
@@ -6334,7 +6340,9 @@ export class Tag < Node
 				elif body isa TagLoopFunc
 					contentType = body.option(:treeType) or 3
 			else
-				contentType = children.every(do |item| item isa Tag or item.option(:treeType) == 2) ? 2 : 1
+				contentType = children.every(do |item| 
+					item isa Tag or item.option(:treeType) == 2 or item.isPrimitive
+				) ? 2 : 1
 				content = TagTree.new(self,o:body)
 
 		for part in @attributes

@@ -26,6 +26,7 @@ var store = {
 }
 
 extend tag element
+	prop ref
 	
 	def click o = {}
 		dispatch('click',o)
@@ -72,11 +73,11 @@ tag Example
 	def render
 		<self>
 			"A"
-			<div@b>
+			<div@b ref='b'>
 				"B"
-				<Custom@c>
+				<Custom@c ref='c'>
 					"C"
-					<div@d> "D"
+					<div@d ref='d'> "D"
 				
 	def tagAction
 		emits.push(this)

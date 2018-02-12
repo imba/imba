@@ -135,7 +135,6 @@ class Imba.Tag
 		self:$ = TagCache.build(self)
 		self:$up = @owner_ = ctx
 		@tree_ = null
-		# @owner_ = ctx
 		self.FLAGS = 0
 		build
 		self
@@ -168,7 +167,9 @@ class Imba.Tag
 	@private
 	###
 	def ref_ ref
-		@owner_['_' + ref] = self
+		# 
+		# @owner_['_' + ref] = self
+		console.log "really?"
 		flag(@ref = ref)
 		# @owner = ctx
 		self
@@ -755,7 +756,6 @@ class Imba.SVGTag < Imba.Tag
 
 	def self.inherit child
 		child.@protoDom = null
-		console.log "SVGTag inherit",child,child.@name
 		if child.@name in Imba.SVG_TAGS
 			child.@nodeType = child.@name
 			child.@classes = []
@@ -948,7 +948,9 @@ def Imba.createElement name, ctx, ref, pref
 
 	# node:$ref = ref if ref
 	# context:i$++ # only if it is not an array?
-	ctx[ref] = node if ctx
+	if ctx and ref != undefined
+		ctx[ref] = node
+
 	return node
 	
 def Imba.createTagMap ctx, ref, pref

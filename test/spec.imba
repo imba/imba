@@ -101,7 +101,7 @@ global class Spec
 	def test name, blk do SPEC.context.it(name,blk)
 	def eq actual, expected, format do  SPEC.context.eq(actual, expected, format)
 	def match actual, expected, format do  SPEC.context.match(actual, expected, format)
-	def ok actual do SPEC.context.assertion( SpecAssertTruthy.new(SPEC.context, actual) )
+	def ok actual, msg do SPEC.context.assertion( SpecAssertTruthy.new(SPEC.context, actual, msg) )
 	def assert expression do SPEC.context.assert(expression)
 	def await do SPEC.context.await(*arguments)
 
@@ -322,13 +322,25 @@ global class SpecAssert < SpecCondition
 
 global class SpecAssertTruthy < SpecAssert
 
-	def initialize example, value
+	def initialize example, value, message
 		@example = example
 		@actual = value
+		@message = message
 		run
 
 	def test value
 		!!(value) ? passed : failed
+		
+	def failed
+		if console:group
+			console.error("failed",@message,self)
+		super.failed
+
+	def details
+		unless @success
+			fmt(:red,"assertion failed: {@message}")
+		else
+			"passed test"
 
 global class SpecAssertFalsy < SpecAssert
 
@@ -349,7 +361,7 @@ global def it name, blk do SPEC.context.it(name,blk)
 global def test name, blk do SPEC.context.it(name,blk)
 global def eq actual, expected, format do  SPEC.context.eq(actual, expected, format)
 global def match actual, expected, format do  SPEC.context.match(actual, expected, format)
-global def ok actual do SPEC.context.assertion( SpecAssertTruthy.new(SPEC.context, actual) )
+global def ok actual, message do SPEC.context.assertion( SpecAssertTruthy.new(SPEC.context, actual, message) )
 global def assert expression do SPEC.context.assert(expression)
 global def await do SPEC.context.await(*arguments)
 
