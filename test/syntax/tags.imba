@@ -97,7 +97,17 @@ describe 'Syntax - Tags' do
 		htmleq '<span>loading</span>', node
 		node.render
 		htmleq '<div>ready</div>', node
-
+	
+	test 'owner' do
+		var key = 100
+		var obj =
+			str: 1
+			def header
+				<div@{key}> "hello"
+		
+		var node = <div>
+		var header = obj:header.call(node)
+		eq header.@owner_,node
 	
 	test 'lists' do
 		let types = [1,2,3,4]

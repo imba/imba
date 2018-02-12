@@ -1226,7 +1226,7 @@ var g=v.incr("selfTag"),m=v instanceof zn?v.node().name():"",b=new Gt(g)
 m&&"render"!=m&&(b=new Ut("'"+m+g+"'")),s.push(".$open("+b.c()+")"),i=s}else{var T=this.cacher(),E=this.cacheRef(),w=[d]
 if(e.ivar?(e.path=f(".",n.context(),e.ivar).c(),y=e.path+" = "+e.path+"||"):E&&(e.path=T.c()+"["+E.c()+"]",e.optim&&e.optim!=this&&2==u&&1!=r(a._children)||(y=e.path+" || ")),e.ivar){w.push(a?a.reference().c():n.context().c())
 var S=String(e.ivar._value).substr(1)
-s.push(".flag('"+S+"')")}else T&&(w.push(T.c()),E&&w.push(E.c()),a&&a._reference?w.push(a.reference().c()):a&&a.cacher()==T?w.push(a.cacheRef().c()):a&&w.push(a.reference().c()))
+s.push(".flag('"+S+"')")}else T&&(w.push(T.c()),E&&w.push(E.c()),a&&a._reference?w.push(a.reference().c()):a&&a.cacher()==T?w.push(a.cacheRef().c()):a?w.push(a.reference().c()):(e.ivar||e.key)&&w.push(n.context().c()))
 _=this.factory().c()+"("+w.join(",")+")"}if(e.body instanceof At)c="setTemplate"
 else if(e.body instanceof q){var A=e.body.values()
 if(1==r(A)){h=3

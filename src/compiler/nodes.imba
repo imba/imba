@@ -6298,6 +6298,7 @@ export class Tag < Node
 			parent.childCacher
 		elif @options:ivar or @options:key
 			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
+			# MAKE SURE WE REFER TO THE OUTER
 			TagCache.new(self,@tagScope.closure.declare("$",op, system: yes, type: 'let'))
 		else
 			null
@@ -6391,6 +6392,7 @@ export class Tag < Node
 				pars.push(parent ? parent.reference.c : scope.context.c)
 				let flag = String(o:ivar.@value).substr(1)
 				statics.push(".flag('{flag}')")
+				
 			elif cacher
 				pars.push(cacher.c)
 				pars.push(ref.c) if ref
@@ -6400,6 +6402,8 @@ export class Tag < Node
 					pars.push(parent.cacheRef.c)
 				elif parent
 					pars.push(parent.reference.c)
+				elif o:ivar or o:key
+					pars.push(scope.context.c)
 
 			ctor = "{factory.c}({pars.join(',')})"
 

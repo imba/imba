@@ -8517,6 +8517,20 @@ describe('Syntax - Tags',function() {
 		return htmleq('<div>ready</div>',node);
 	});
 	
+	test('owner',function() {
+		var key = 100;
+		var obj = {
+			str: 1,
+			header: function(){
+				let key_, $ = this.$$ || (this.$$ = {});
+				return ($[key] || _1('div',$,key,this).setText("hello"));
+			}
+		};
+		
+		var node = (_1('div'));
+		var header = obj.header.call(node);
+		return eq(header._owner_,node);
+	});
 	
 	return test('lists',function() {
 		var node;
@@ -8785,7 +8799,7 @@ Imba.defineTag('cached', function(tag){
 			(function($0) {
 				var v_, $$ = $0.$iter();
 				for (let i = 0, items = iter$(self._ary), len = items.length; i < len; i++) {
-					$$.push(($0[items[i]] || _1('div',$0,items[i]).setText("v")));
+					$$.push(($0[items[i]] || _1('div',$0,items[i],self).setText("v")));
 				};return $$;
 			})($[0] || _2($,0))
 		,5).synced();
@@ -9128,7 +9142,7 @@ describe('Tags - Define',function() {
 					(function($0) {
 						var $1, $$ = $0.$iter();
 						for (let i = 0, items = iter$(self._items), len = items.length; i < len; i++) {
-							$$.push(($0[$1 = self._k++] || _1('div',$0,$1)).setContent(items[i],3).end());
+							$$.push(($0[$1 = self._k++] || _1('div',$0,$1,self)).setContent(items[i],3).end());
 						};return $$;
 					})($[0] || _2($,0))
 				,5).synced();
@@ -9347,12 +9361,12 @@ describe('Tags - Cache',function() {
 		};
 		
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
-			var $ = this.$, t0;
+			var $ = this.$, t0, self = this;
 			return ($[0] || _1('ul',$,0,t0)).setContent((function($0) {
 				var id_, $$ = $0.$iter();
 				for (let i = 0, len = items.length, item; i < len; i++) {
 					item = items[i];
-					$$.push(($0[id_ = item.id] || _1('li',$0,id_)).setContent(item.name,3).end());
+					$$.push(($0[id_ = item.id] || _1('li',$0,id_,self)).setContent(item.name,3).end());
 				};return $$;
 			})($[1] || _3($,1,0)),5).end();
 		}).end();
@@ -9685,7 +9699,7 @@ Imba.defineTag('unknowns', 'div', function(tag){
 		let x_, $ = this.$$ || (this.$$ = {});
 		let res = [];
 		for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
-			res.push(($[items[i]] || _1('div',$,items[i]).flag('x')));
+			res.push(($[items[i]] || _1('div',$,items[i],this).flag('x')));
 		};
 		return res;
 	};
