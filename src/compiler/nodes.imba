@@ -6301,20 +6301,23 @@ export class Tag < Node
 			null
 		
 	def childCacher
-		@options:childCacher ||= if @fragment or isSelf
+		@options:childCacher ||= if @fragment
 			let scop = @tagScope.closure
-			let nr = scop.incr('selfTag')
-			let meth = scop isa MethodScope ? scop.node.name : ''
-			let key = "${nr}"
-			if meth and meth != 'render'
-				key += meth
-			let ctor = scope__.imbaRef('createTagCache')
-			# if this is a fragment we create a reference to the cache in scope
-			# let op = OP('.',This.new,'$')
-			@typeNum = Num.new(2)
-			let op = OP('||=',OP('.',This.new,key),CALL(ctor,[This.new,@typeNum]))
 			# TagCache.new(self,@tagScope.closure.declare("$",op,system: yes))
 			TagCache.new(self,@tagScope.closure.declare("$",OP('.',This.new,'$'),system: yes))
+
+		elif isSelf
+			let scop = @tagScope.closure
+			let op = OP('.',This.new,'$')
+			# let nr = scop.incr('selfTag')
+			let meth = scop isa MethodScope ? scop.node.name : ''
+			# let key = "${nr}"
+			if meth and meth != 'render'
+				let key = '$' + meth + '$'
+				let ctor = scope__.imbaRef('createTagCache')
+				op = OP('||=',OP('.',op,key),CALL(ctor,[This.new]))
+
+			scop.@tagCache ||= TagCache.new(self,scop.declare("$",op,system: yes))
 
 		elif !parent or @options:ownCache
 			# if it has no parent we force a reference
@@ -6355,8 +6358,18 @@ export class Tag < Node
 		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
 
 		if isSelf
+			let closure = scope.closure
 			@reference = scope.context
 			out = scope.context.c
+			let nr = closure.incr('selfTag')
+			let meth = closure isa MethodScope ? closure.node.name : ''
+			let key = Num.new(nr)
+			if meth and meth != 'render'
+				key = Str.new("'" + meth + nr + "'")
+			# let key = "${nr}"
+			# let op = OP('.',This.new,'$')
+			# if meth and meth != 'render'
+			statics.push(".$open({key.c})")
 			calls = statics
 			# not always?
 		else

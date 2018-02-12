@@ -95,5 +95,7 @@ describe 'Syntax - Tags' do
 		htmleq '<div>ready</div>', node
 		node.loading
 		htmleq '<span>loading</span>', node
+		node.render
+		htmleq '<div>ready</div>', node
 
 			

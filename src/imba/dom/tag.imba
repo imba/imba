@@ -511,6 +511,13 @@ class Imba.Tag
 	###
 	def end
 		self
+		
+	# called on <self> to check if self is called from other places
+	def $open context
+		if context != @context_
+			@tree_ = null
+			@context_ = context
+		self
 
 	###
 	This is called instead of Imba.Tag#end for `<self>` tag chains.
