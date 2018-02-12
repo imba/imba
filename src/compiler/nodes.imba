@@ -350,6 +350,9 @@ export class Stack
 
 	def es5
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
+		
+	def optlevel
+		@optlevel ?= (@options:conservative or env('IMBA_CONSERVATIVE') ? 0 : 9) # stack.option(:conservative)
 
 	def env key
 		var val = @options["ENV_{key}"]
@@ -6258,29 +6261,26 @@ export class Tag < Node
 		o:key.traverse if o:key
 		o:body.traverse if o:body
 
-		# o:optim = no
-		
 		# see if we are dynamic
-		if o:body isa ListNode # and stack.env('TAG_OPTIM')
+		if o:body isa ListNode and stack.optlevel > 0 # and stack.env('TAG_OPTIM')
 			let canOptimize = o:body.values.every do |item|
 				item isa Tag and item.isStatic
 				
 			if o:canOptimize = canOptimize
-				console.log "canOptimize?"
 				o:optim = self
-				# should not happen to items inside the loop
-			
+			# should not happen to items inside the loop
 			# optimizations should be gone over at the very end.
 			# for all tags connected to this?
 			for child in @children
 				let co = child.@options
 				if o:hasConditionals and co:optim
-					console.log "optim child special?"
+					# console.log "optim child special?"
 					co:optim = child
 				elif !co:loop
 					co:optim = self
-				# unless child.option(:loop)
-				#	child.set(optim: self)
+		
+		if stack.optlevel == 0
+			o:optim = no
 		stack.@tag = prevTag
 		self
 
@@ -6302,7 +6302,6 @@ export class Tag < Node
 		
 	def childCacher
 		@options:childCacher ||= if @fragment or isSelf
-			console.log "create special thing for self"
 			let scop = @tagScope.closure
 			let nr = scop.incr('selfTag')
 			let meth = scop isa MethodScope ? scop.node.name : ''
@@ -6430,7 +6429,7 @@ export class Tag < Node
 			let target = (o:optim and contentType == 2) ? statics : calls
 			
 			# cache the body setter itself
-			if isSelf and o:optim
+			if isSelf and o:optim and contentType == 2 and content isa TagTree
 				let k = childCacher.c
 				# can skip body-type as well
 				body = "{k}.$ = {k}.$ || {body}"
@@ -6463,7 +6462,7 @@ export class Tag < Node
 		
 		if calls != statics
 			if o:optim and o:optim != self
-				console.log "setting optim!"
+				# console.log "setting optim!"
 				set(commit: "{o:path}{calls.join("")}") if calls:length
 			else
 				out = "({out})" + calls.join("")
