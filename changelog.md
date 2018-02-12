@@ -1,3 +1,6 @@
+## master
+* Implement radically improved inline caching strategy
+
 ## 1.3.0-beta.6
 * Fix regression in beta.5 where dynamic setData would be cached
 
