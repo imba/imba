@@ -1865,7 +1865,7 @@ export class VariableDeclaration < ListNode
 			groups[typ].push(item.@variable)
 
 		if groups['let'] and (groups['var'] or groups['const'])
-			console.warn "VariableDeclaration with both var and let"
+			# console.warn "VariableDeclaration with both var and let",nodes.map(|v| v.@variable and v.@variable.c )
 			groups['let'].forEach do |item| item.@virtual = yes
 		elif groups['let'] and !o.es5
 			keyword = 'let'
@@ -2468,6 +2468,7 @@ export class TagLoopFunc < Func
 		# see if we are optimized
 		var lo = @loop.options
 		
+		# as long as there is only a single item to push
 		if lo:step or lo:diff or lo:guard or !@loop.body.values.every(|v| v isa Tag )
 			@isFast = no
 			
@@ -2488,14 +2489,13 @@ export class TagLoopFunc < Func
 			return self
 
 		if @tags.len == 1
-			
 			let op = CALL(OP('.',@params.at(0),'$iter'),[])
-			# op =OP('=',VarReference.new(@resvar,'let'),resval)
 			@resultVar = scope.declare('$$',op, system: yes)
 		else
 			@resultVar = @params.at(@tags.len,true,'$$') # visiting?
 			@resultVar.visit(stack)
 			@args.push(Arr.new([]))
+			# if there are only tags we should still optimize
 
 		let collector = TagPushAssign.new("push",@resultVar,null)
 		@loop.body.consume(collector)
