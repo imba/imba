@@ -2467,26 +2467,41 @@ export class TagLoopFunc < Func
 		@tag.@tagLoop = prevLoop
 		# see if we are optimized
 		var lo = @loop.options
-		
+		var single = @tags[0]
 		# as long as there is only a single item to push
 		if lo:step or lo:diff or lo:guard or !@loop.body.values.every(|v| v isa Tag )
 			@isFast = no
 			
-		unless @isFast
-			for item in @tags
-				item.@loopCache.@callee = scope__.imbaRef('createTagMap')
+		
 
 		for param in @params
 			param.visit(stack)
 
-		if @tags.len == 1 and !@tags[0].option(:key) and @isFast
-			let len = @loop.options:vars:len
-			if len and len:declarator
-				let defs = len.declarator.defaults
-				len.declarator.defaults = OP('=',OP('.',@params.at(0),'taglen'),defs)
-			@body.push(Return.new(@params.at(0)))
-			set(treeType: 4)
-			return self
+		if @tags.len == 1 and !single.option(:key)
+			if @isFast
+				let len = @loop.options:vars:len
+				if len and len:declarator
+					let defs = len.declarator.defaults
+					len.declarator.defaults = OP('=',OP('.',@params.at(0),'taglen'),defs)
+				@body.push(Return.new(@params.at(0)))
+				set(treeType: 4)
+				return self
+			elif false
+				# optional optimization
+				let resvar = @params.at(0)
+				let counter = scope__.declare('k',Num.new(0),system: yes)
+				single.set(treeRef: counter)
+				# let collector = TagPushAssign.new("push",resvar,null)
+				@loop.body.push(OP('++',counter))
+				@body.push(OP('=',OP('.',resvar,'taglen'),counter))
+				@body.push(Return.new(resvar))
+				# console.log "optimize"
+				set(treeType: 4)
+				return self
+		
+		unless @isFast
+			for item in @tags
+				item.@loopCache.@callee = scope__.imbaRef('createTagMap')
 
 		if @tags.len == 1
 			let op = CALL(OP('.',@params.at(0),'$iter'),[])
