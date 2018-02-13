@@ -978,7 +978,7 @@ def Imba.createTagCache owner
 	return node
 	
 def Imba.createTagMap ctx, ref, pref
-	var par = (pref != undefined ? ctx[pref] : ctx.@tag)
+	var par = (pref != undefined ? pref : ctx.@tag)
 	var node = TagMap.new(ctx,ref,par)
 	ctx[ref] = node
 	return node
@@ -986,7 +986,7 @@ def Imba.createTagMap ctx, ref, pref
 def Imba.createTagList ctx, ref, pref
 	var node = []
 	node.@type = 4
-	node.@tag = (pref != undefined ? ctx[pref] : ctx.@tag)
+	node.@tag = (pref != undefined ? pref : ctx.@tag)
 	ctx[ref] = node
 	return node
 

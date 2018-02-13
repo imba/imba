@@ -117,10 +117,21 @@ describe 'Syntax - Tags' do
 						<li@{item}> item
 					<ul> for item in ary
 						<li> item
+					<@named>
+						for item,i in ary
+							<li[item]>
 						
 			def list2
 				for item in ary
 					<li@{item}> item
+			
+			def render
+				<self>
+					<ul@itemlist>
+						for item,i in ary
+							<li[item]>
+					<div@other>
+						<ul> <li> 1
 		
 		var list = <div>
 			<ul> for item in ary

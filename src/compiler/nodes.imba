@@ -2522,7 +2522,8 @@ export class TagLoopFunc < Func
 			node.set(treeRef: ref)
 
 		let fn = key ? 'createTagMap' : 'createTagList'
-		let get = CALL(scope__.imbaRef(fn),@tag.cacheRef ? [gen,oref,@tag.cacheRef] : [gen,oref])
+		let parentRef = @tag.cachePath
+		let get = CALL(scope__.imbaRef(fn),parentRef ? [gen,oref,parentRef] : [gen,oref])
 		node.@loopCache = get
 		let op = OP('||',OP('.',gen,oref),get)
 		@args.push(op)
@@ -6336,11 +6337,25 @@ export class Tag < Node
 		
 		if o:par
 			o:par.cacheRef
+			
+		if o:ivar
+			return o:treeRef = Str.new("'" + o:ivar.c + "'") # OP('.',scope.context,o:ivar)
 
-		o:treeRef = (o:ivar ? Str.new("'" + o:ivar.c + "'") : cacher.nextRef(self))
+		# cacher.nextRef(self) # 
+		o:treeRef = cacher.nextRef(self)
+		
+	def cachePath
+		var o = @options
+		o:cachePath ?= if o:ivar
+			OP('.',@tagScope.context,o:ivar)
+		elif cacheRef
+			OP('.',cacher,cacheRef.@value or cacheRef)
+			
+		# var ref = cacheRef
 
 	def js jso
 		var o = @options
+		var po = o:par ? o:par.@options : {}
 		var scope = scope__
 		var calls = []
 		var statics = []
@@ -6377,11 +6392,13 @@ export class Tag < Node
 			let ref = cacheRef
 			let pars = [typ]
 			let varRef = null
+			let path = cachePath
+
 			if o:ivar
-				o:path = OP('.',scope.context,o:ivar).c
+				o:path = path.c # OP('.',scope.context,o:ivar).c
 				pre = o:path + ' = ' + o:path + '||'
 			elif ref
-				o:path = OP('.',cacher,ref.@value or ref).c
+				o:path = path.c # OP('.',cacher,ref.@value or ref).c
 				# o:path = "{cacher.c}[{ref.c}]"
 				if !o:optim or o:optim == self or parentType != 2 or parent.@children.len == 1
 					pre = "{o:path} || "
@@ -6396,6 +6413,8 @@ export class Tag < Node
 				pars.push(ref.c) if ref
 				if parent and parent.@reference
 					pars.push(varRef = parent.reference.c)
+				elif parent and po:ivar
+					pars.push(po:path)
 				elif parent and parent.cacher == cacher
 					pars.push(parent.cacheRef.c)
 				elif parent
