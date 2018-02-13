@@ -5920,7 +5920,8 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
 
 export class TagCache < Node
 
-	def initialize root, value
+	def initialize root, value, o = {}
+		@options = o
 		@root = root
 		@value = value
 		@counter = 0
@@ -5939,7 +5940,10 @@ export class TagCache < Node
 
 	def nextSlot
 		@index++
-		Num.new(@index - 1)
+		if @options:keys
+			Str.new("'" + counterToShortRef(@index - 1) + "'")
+		else
+			Num.new(@index - 1)
 	
 	def nextBlock
 		@blocks++
@@ -5950,6 +5954,7 @@ export class TagCache < Node
 		
 export class TagCacheKey < Node	
 	prop node
+	prop value
 
 	def initialize cache, node
 		@owner = cache
@@ -6235,13 +6240,6 @@ export class Tag < Node
 			o:treeRef = o:key
 			o:key.cache
 
-		elif o:ivar and !o:par
-			# should use the ca
-			var meth = STACK.method
-			if meth and false
-				let key = "'" + meth.name + "'" # what if there are more?
-				let op = CALL(OP('.',OP('.',This.new,'$'),'$$'),[key])
-
 		# for scope should be wrapped immediately?
 		if scope isa ForScope and o:par
 			if o:par.@tagScope != scope
@@ -6307,7 +6305,7 @@ export class Tag < Node
 		@options:childCacher ||= if @fragment
 			let scop = @tagScope.closure
 			# TagCache.new(self,@tagScope.closure.declare("$",op,system: yes))
-			TagCache.new(self,@tagScope.closure.declare("$",OP('.',This.new,'$'),system: yes))
+			TagCache.new(self,scop.declare("$",OP('.',This.new,'$'),system: yes))
 
 		elif isSelf
 			let scop = @tagScope.closure
@@ -6323,8 +6321,7 @@ export class Tag < Node
 			scop.@tagCache ||= TagCache.new(self,scop.declare("$",op,system: yes))
 
 		elif !parent or @options:ownCache
-			# if it has no parent we force a reference
-			TagCache.new(self,OP('.',reference,'$'))
+			TagCache.new(self,OP('.',reference,'$'), keys: yes) # .set(keys: yes)
 		else
 			parent.childCacher
 
@@ -6384,7 +6381,8 @@ export class Tag < Node
 				o:path = OP('.',scope.context,o:ivar).c
 				pre = o:path + ' = ' + o:path + '||'
 			elif ref
-				o:path = "{cacher.c}[{ref.c}]"
+				o:path = OP('.',cacher,ref.@value or ref).c
+				# o:path = "{cacher.c}[{ref.c}]"
 				if !o:optim or o:optim == self or parentType != 2 or parent.@children.len == 1
 					pre = "{o:path} || "
 			
@@ -6402,7 +6400,7 @@ export class Tag < Node
 					pars.push(parent.cacheRef.c)
 				elif parent
 					pars.push(parent.reference.c)
-				elif o:ivar or o:key
+				elif o:ivar or (o:key and !o:loop)
 					pars.push(scope.context.c)
 
 			ctor = "{factory.c}({pars.join(',')})"
@@ -6481,7 +6479,6 @@ export class Tag < Node
 		
 		if calls != statics
 			if o:optim and o:optim != self
-				# console.log "setting optim!"
 				set(commit: "{o:path}{calls.join("")}") if calls:length
 			else
 				out = "({out})" + calls.join("")
@@ -6490,21 +6487,7 @@ export class Tag < Node
 			@typeNum.value = contentType
 			
 		set(treeType: contentType)
-		
-		if isSelf and false
-			let apply = []
-			# check for the mega-optimizing
-			
-			for item in childCacher.@refs
-				let io = item.node.@options
-				let typ = io:treeType
-				let calls = io:calls
-				console.log "found ref",typ
-				if io:calls
-					apply.push(io:path + calls.join(''))
-			
-			out += "(" + apply.join(",") + ")"
-				
+
 		return out
 
 # This is a helper-node

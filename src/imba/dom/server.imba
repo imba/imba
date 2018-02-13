@@ -259,11 +259,10 @@ Object.defineProperty(el, 'className',
 
 extend tag element
 	
-	def empty
+	def removeAllChildren
 		@dom:children = []
 		@dom:innerHTML = null
-		@tree_ = null
-		@empty = yes
+		@tree_ = @text_ = null
 		self
 
 	def toString

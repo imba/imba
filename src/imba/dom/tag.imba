@@ -73,7 +73,6 @@ class Imba.Tag
 	Called when a tag type is being subclassed.
 	###
 	def self.inherit child
-		child:prototype.@empty = yes
 		child.@protoDom = null
 
 		if @nodeType
@@ -299,11 +298,8 @@ class Imba.Tag
 	@return {self}
 	###
 	def setChildren nodes, type
-		if $node$
-			@tree_ = nodes
-		else
-			@empty ? append(nodes) : empty.append(nodes)
-			@tree_ = null
+		# overridden on client by reconciler
+		@tree_ = nodes
 		self
 
 	###
@@ -345,7 +341,16 @@ class Imba.Tag
 			par.removeChild(el)
 			Imba.TagManager.remove(el.@tag or el,self)
 		self
-
+	
+	###
+	Remove all content inside node
+	###
+	def removeAllChildren
+		if @dom:firstChild
+			@dom.removeChild(@dom:firstChild) while @dom:firstChild
+			Imba.TagManager.remove(null,self) # should register each child?
+		@tree_ = @text_ = null
+		self
 
 	###
 	Append a single item (node or string) to the current node.
@@ -398,7 +403,7 @@ class Imba.Tag
 	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
 	###
 	def text= txt
-		@empty = no
+		@tree_ = txt
 		@dom:textContent = (txt == null or text === false) ? '' : txt
 		self
 
@@ -438,20 +443,6 @@ class Imba.Tag
 					dataset[Imba.toCamelCase(atr:name.slice(5))] = atr:value
 
 		return dataset
-
-
-	###
-	Remove all content inside node
-	###
-	def empty
-		if @dom:firstChild
-			this:$:text = null
-			@dom.removeChild(@dom:firstChild) while @dom:firstChild
-			Imba.TagManager.remove(null,self)
-			
-		@nodes_ = @text_ = null
-		@empty = yes
-		self
 
 	###
 	Empty placeholder. Override to implement custom render behaviour.
@@ -581,7 +572,7 @@ class Imba.Tag
 
 	
 	def flagIf flag, bool
-		var f = this:$
+		var f = @flags_ ||= {}
 		let prev = f[flag]
 
 		if bool and !prev
@@ -604,7 +595,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def setFlag name, value
-		let flags = this:$:flags ||= {}
+		let flags = @namedFlags_ ||= {}
 		let prev = flags[name]
 		if prev != value
 			unflag(prev) if prev
@@ -956,7 +947,9 @@ def Imba.createElement name, ctx, ref, pref
 			throw("cannot find tag-type {name}") unless Imba.TAGS.findTagType(name)
 		type = Imba.TAGS.findTagType(name)
 	
-	if pref isa Imba.Tag
+	if ctx isa TagMap
+		parent = ctx:par$
+	elif pref isa Imba.Tag
 		parent = pref
 	else
 		parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.@tag or ctx)

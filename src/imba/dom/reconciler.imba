@@ -350,7 +350,7 @@ extend tag element
 			return self
 
 		if !old and typ != 3
-			empty
+			removeAllChildren
 			appendNested(self,new)
 
 		elif typ == 1
@@ -365,7 +365,7 @@ extend tag element
 			let ntyp = typeof new
 
 			if new and new.@dom
-				empty
+				removeAllChildren
 				appendChild(new)
 
 			# check if old and new isa array
@@ -375,7 +375,7 @@ extend tag element
 				elif old isa Array
 					reconcileNested(self,new,old,null)
 				else
-					empty
+					removeAllChildren
 					appendNested(self,new)
 			else
 				text = new
@@ -391,7 +391,7 @@ extend tag element
 			reconcileNested(self,new,old,null)
 		else
 			# what if text?
-			empty
+			removeAllChildren
 			appendNested(self,new)
 
 		@tree_ = new
@@ -408,9 +408,11 @@ extend tag element
 			@tree_ = text
 		self
 
-# if $web$
-# optimization for setText
+# alias setContent to setChildren
 var proto = Imba.Tag:prototype
+proto:setContent = proto:setChildren
+
+# optimization for setText
 var apple = typeof navigator != 'undefined' and (navigator:vendor or '').indexOf('Apple') == 0
 if apple
 	def proto.setText text
@@ -418,4 +420,3 @@ if apple
 			@dom:textContent = (text === null or text === false ? '' : text)
 			@tree_ = text
 		return self
-# optimization

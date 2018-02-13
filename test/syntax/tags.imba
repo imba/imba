@@ -100,6 +100,7 @@ describe 'Syntax - Tags' do
 	
 	test 'owner' do
 		var key = 100
+		var ary = [1,2,3]
 		var obj =
 			str: 1
 			def header
@@ -108,7 +109,43 @@ describe 'Syntax - Tags' do
 		var node = <div>
 		var header = obj:header.call(node)
 		eq header.@owner_,node
-	
+		
+		tag Local
+			def list
+				<div>
+					<ul> for item in ary
+						<li@{item}> item
+					<ul> for item in ary
+						<li> item
+						
+			def list2
+				for item in ary
+					<li@{item}> item
+		
+		var list = <div>
+			<ul> for item in ary
+				<li@{item}> item
+			<ul> for item in ary
+				<li> item
+		
+		var checkParents = do |dom|
+			for child in dom:children
+				continue unless child.@tag
+				checkParents(child)
+				eq child.@tag.@owner_, dom.@tag
+			return
+			
+		# var par = null
+		checkParents(list.dom)
+		var localNode = <Local>
+		list = localNode.list
+		checkParents(list.dom)
+		
+		var list2 = localNode.list2
+		for item in list2
+			eq item.@owner_, localNode
+		return
+
 	test 'lists' do
 		let types = [1,2,3,4]
 		tag Radio
@@ -127,4 +164,40 @@ describe 'Syntax - Tags' do
 						
 		var node = <Local>
 						
+	test 'wrapping' do
+		var str = "str"
+		tag Local
+			prop content
+			
+			def dyn
+				"yes"
+
+			def render
+				<self>
+					dyn
+					<h1>
+					<section> @content
+		
+		var node = <Local>
+			<p> "one"
+			<p> "two"
+		node.render
+		htmleq '<h1></h1><section><p>one</p><p>two</p></section>', node
+		
+		tag Other
+			def header
+				<Local@header>
+					<p> "one"
+					<p> "two"
+					str
+
+			def render
+				<self>
+					header
+					<h1>
+		
+		var node = <Other>
+		node.render
+		htmleq '<h1></h1><section><p>one</p><p>two</p>str</section></div><h1>', node
+					
 					
