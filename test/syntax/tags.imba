@@ -203,6 +203,23 @@ describe 'Syntax - Tags' do
 		node2.render
 		htmleq "<h1>a</h1><hr><ul><li>a</li><li>b</li>", node2
 		htmleq "<h1>b</h1><hr><ul><li>d</li><li>e</li>", node2
+		
+	test "multiloops" do
+		var data = [
+			{id: 'a', items: ['a','b','c']},
+			{id: 'b', items: ['d','e','f']},
+			{id: 'b', items: ['d','e','f']},
+		]
+		
+		var node = <div ->
+			<.content>
+				for item in data
+					if item:id == 'a'
+						<a> item:id
+					else
+						<b> item:id
+						
+		htmleq "<a>a</a><b>b</b><b>b</b>", node
 
 	test 'wrapping' do
 		var str = "str"

@@ -6101,6 +6101,9 @@ export class TagFlagExpr < TagFlag
 		
 	def visit
 		@name.traverse
+		
+	def isStatic
+		!@name or @name.isPrimitive
 	
 	def js
 		"setFlag({slot},{name.c})"
@@ -6306,6 +6309,7 @@ export class Tag < Node
 		# @attributes = []
 		# var param = RequiredParam.new(Identifier.new('$$'))
 		# o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
+
 		if o:par
 			o:optim = o:par.option(:optim)
 		elif o:template
@@ -6313,16 +6317,19 @@ export class Tag < Node
 		else
 			o:optim = self
 		
-		# if node is root and has dynamic key we need to register cache
-		
-
-		# for scope should be wrapped immediately?
-		if scope isa ForScope and o:par
-			if o:par.@tagScope != scope
-				o:loop ||= scope.@tagLoop
-				o:loop.capture(self)
-				o:ownCache = yes
-				o:optim = self
+		if o:par and o:par.@tagLoop
+			# console.log "parent has tagLoop!!!"
+			o:loop ||= o:par.@tagLoop # scope.@tagLoop
+			o:loop.capture(self)
+			o:ownCache = yes
+			o:optim = self
+			# # for scope should be wrapped immediately?
+			# if scope isa ForScope and o:par
+			# if o:par.@tagScope != scope
+			# 	o:loop ||= o:par.@tagLoop # scope.@tagLoop
+			# 	o:loop.capture(self)
+			# 	o:ownCache = yes
+			# 	o:optim = self
 		
 		if o:key and !o:par
 			o:treeRef = o:key

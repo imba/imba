@@ -3458,7 +3458,11 @@ el.middleModifier = function (e){
 	return (e.button() != undefined) ? ((e.button() === 1)) : true;
 };
 el.getHandler = function (str){
-	return this[str];
+	if (this[str]) {
+		return this;
+	} else if (this._data && (this._data[str] instanceof Function)) {
+		return this._data;
+	};
 };
 
 /*
@@ -3668,8 +3672,13 @@ Imba.Event.prototype.processHandlers = function (node,handlers){
 			let fn = null;
 			while (el && (!fn || !(fn instanceof Function))){
 				if (fn = el.getHandler(handler)) {
-					handler = fn;
-					context = el;
+					if (fn[handler] instanceof Function) {
+						handler = fn[handler];
+						context = fn;
+					} else if (fn instanceof Function) {
+						handler = fn;
+						context = el;
+					};
 				} else {
 					el = el.parent();
 				};
@@ -8398,8 +8407,8 @@ describe('Syntax - Tags',function() {
 		jseq("flag('only')",function() { return (_1('div').flag('only')); });
 		jseq("flag('two')",function() { return (_1('div').flag('two')); });
 		jseq("flagIf('two',numvar)",function() { return (_1('div')).flagIf('two',numvar).end(); });
-		jseq("setFlag(0,strvar)",function() { return (_1('div').setFlag(0,strvar)); });
-		return jseq("setFlag(0,self.name())",function() { return (_1('div').setFlag(0,self.name())); });
+		jseq("setFlag(0,strvar)",function() { return (_1('div')).setFlag(0,strvar).end(); });
+		return jseq("setFlag(0,self.name())",function() { return (_1('div')).setFlag(0,self.name()).end(); });
 	});
 	
 	// attributes
@@ -8714,6 +8723,32 @@ describe('Syntax - Tags',function() {
 		node2.render();
 		htmleq("<h1>a</h1><hr><ul><li>a</li><li>b</li>",node2);
 		return htmleq("<h1>b</h1><hr><ul><li>d</li><li>e</li>",node2);
+	});
+	
+	test("multiloops",function() {
+		var data = [
+			{id: 'a',items: ['a','b','c']},
+			{id: 'b',items: ['d','e','f']},
+			{id: 'b',items: ['d','e','f']}
+		];
+		
+		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
+			var $ = this.$, t0;
+			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
+				(function($0,$1,$$) {
+					for (let i = 0, len = data.length, item; i < len; i++) {
+						item = data[i];
+						if (item.id == 'a') {
+							$$.push(($0[i] || _1('a',$0,i)).setContent(item.id,3).end());
+						} else {
+							$$.push(($1[i] || _1('b',$1,i)).setContent(item.id,3).end());
+						};
+					};return $$;
+				})($[1] || _3($,1,$[0]),$[2] || _3($,2,$[0]),_5())
+			,5).end();
+		}).end();
+		
+		return htmleq("<a>a</a><b>b</b><b>b</b>",node);
 	});
 	
 	return test('wrapping',function() {

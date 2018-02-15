@@ -24,7 +24,11 @@ def el.selfModifier e do e.event:target == @dom
 def el.leftModifier e do e.button != undefined ? (e.button === 0) : el.keyModifier(37,e)
 def el.rightModifier e do e.button != undefined ? (e.button === 2) : el.keyModifier(39,e)
 def el.middleModifier e do e.button != undefined ? (e.button === 1) : true
-def el.getHandler str do self[str]
+def el.getHandler str do
+	if self[str]
+		return self
+	elif @data and @data[str] isa Function
+		return @data
 
 ###
 Imba handles all events in the dom through a single manager,
@@ -187,8 +191,12 @@ class Imba.Event
 				let fn = null
 				while el and (!fn or !(fn isa Function))
 					if fn = el.getHandler(handler)
-						handler = fn
-						context = el
+						if fn[handler] isa Function
+							handler = fn[handler]
+							context = fn
+						elif fn isa Function
+							handler = fn
+							context = el
 					else
 						el = el.parent
 					
