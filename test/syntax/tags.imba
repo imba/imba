@@ -174,7 +174,23 @@ describe 'Syntax - Tags' do
 							<Radio name='type' tabindex=1 value=item>
 						
 		var node = <Local>
+	
+	test "nested loops" do
+		var data = [
+			{id: 'a', items: ['a','b','c']},
+			{id: 'b', items: ['d','e','f']}
+		]
+		
+		var node = <div ->
+			<.content>
+				for item in data
+					<h1> item:id
+					for child in item:items
+						<div> child
 						
+		htmleq "<h1>a</h1><div>a</div>", node
+		htmleq "<h1>b</h1><div>d</div>", node
+
 	test 'wrapping' do
 		var str = "str"
 		tag Local

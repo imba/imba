@@ -2455,10 +2455,16 @@ export class TagLoopFunc < Func
 		@tags = []
 		@args = []
 		
+		
 		var prevLoop = @tag.@tagLoop
+
+		if prevLoop
+			@parentLoop = prevLoop
+
 		@tag.@tagLoop = self
 		
-		@isFast = yes
+		@isFast = prevLoop ? false : true
+
 		if @loop
 			@loop.body.values.every(|v| v isa Tag )
 
@@ -2472,8 +2478,6 @@ export class TagLoopFunc < Func
 		if lo:step or lo:diff or lo:guard or !@loop.body.values.every(|v| v isa Tag )
 			@isFast = no
 			
-		
-
 		for param in @params
 			param.visit(stack)
 
@@ -2502,46 +2506,80 @@ export class TagLoopFunc < Func
 		unless @isFast
 			for item in @tags
 				item.@loopCache.@callee = scope__.imbaRef('createTagMap')
+		
+		unless @parentLoop
+			if @tags.len == 1
+				let op = CALL(OP('.',@params.at(0),'$iter'),[])
+				@resultVar = scope.declare('$$',op, system: yes)
+			else
+				@resultVar = @params.at(@tags.len,true,'$$') # visiting?
+				@resultVar.visit(stack)
+				@args.push(Arr.new([]))
 
-		if @tags.len == 1
-			let op = CALL(OP('.',@params.at(0),'$iter'),[])
-			@resultVar = scope.declare('$$',op, system: yes)
+			let collector = TagPushAssign.new("push",@resultVar,null)
+			@loop.body.consume(collector)
+			@body.push(Return.new(@resultVar))
+			set(treeType: @tags.len == 0 ? 3 : 5)
 		else
-			@resultVar = @params.at(@tags.len,true,'$$') # visiting?
-			@resultVar.visit(stack)
-			@args.push(Arr.new([]))
-			# if there are only tags we should still optimize
-
-		let collector = TagPushAssign.new("push",@resultVar,null)
-		@loop.body.consume(collector)
-		@body.push(Return.new(@resultVar))
-		set(treeType: @tags.len == 0 ? 3 : 5)
-
+			set(noreturn: yes)
+		self
+		
+	def consume other
+		if other isa TagPushAssign
+			@loop.body.consume(other)
 		self
 		
 	def capture node
-		# console.log "TagLoop capture"
-		node.set(par: null, loop: self)
-		let gen = @tag.childCacher
-		let oref = gen.nextRef
-		let nr = @tags.push(node) - 1
-		let ref = @loop.option(:vars)['index']
-		let key = node.option(:key)
-		let param = @params.at(nr,true,'$'+nr)
-		node.set(cacher: TagCache.new(self,param))
+		let o = node.@options
 		
-		if key
-			node.set(treeRef: key)
-			key.cache
-		else
-			node.set(treeRef: ref)
+		o:loop ||= self
+		o:parRef ||= o:rootRef = @tag.childCacher.nextRef
+		o:par = null
 
-		let fn = key ? 'createTagMap' : 'createTagList'
-		let parentRef = @tag.cachePath
-		let get = CALL(scope__.imbaRef(fn),parentRef ? [gen,oref,parentRef] : [gen,oref])
-		node.@loopCache = get
-		let op = OP('||',OP('.',gen,oref),get)
-		@args.push(op)
+		if @parentLoop
+			@parentLoop.capture(node)
+		
+		if o:loop == self
+
+			let gen = o:loopCacher || @tag.childCacher
+			let oref = o:parRef || @tag.childCacher.nextRef
+
+			let nr = @tags.push(node) - 1
+			let ref = @loop.option(:vars)['index']
+			let param = @params.at(@params.count,true,'$'+nr)
+
+			node.set(cacher: TagCache.new(self,param))
+			
+			if o:key
+				node.set(treeRef: o:key)
+				o:key.cache
+			else
+				node.set(treeRef: ref)
+
+			let fn = o:key ? 'createTagMap' : 'createTagList'
+			let parentRef = @tag.cachePath # will be correct even if nested loops
+
+			let get = CALL(scope__.imbaRef(fn),parentRef ? [gen,oref,parentRef] : [gen,oref])
+			node.@loopCache = get
+			let op = OP('||',OP('.',gen,oref),get)
+			@args.push(op)
+		else
+			let ref = @loop.option(:vars)['index']
+			let param = @params.at(@params.count,true,"${@params.count}")
+			param.variable = scope__.register("${@params.count}",self,system: true)
+
+			if @parentLoop
+				@args.push(OP('||=',OP('.',o:loopCacher,o:parRef),Arr.new([]) ))
+				# @args.push( OP('||=',OP('.',@tag.childCacher,o:parRef),Arr.new([])) )
+			else
+				@args.push( OP('||=',OP('.',@tag.childCacher,o:parRef),Arr.new([])) )
+				
+				
+			o:loopCacher = param
+			o:parRef = ref
+			
+			# if this is the first time we are registering this loop
+
 		self
 	
 	def js o
@@ -6262,8 +6300,6 @@ export class Tag < Node
 				o:optim = self
 		
 		if o:key and !o:par
-			# not loop?
-			# let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
 			o:treeRef = o:key
 			o:key.cache
 			
@@ -6406,9 +6442,7 @@ export class Tag < Node
 			let key = Num.new(nr)
 			if meth and meth != 'render'
 				key = Str.new("'" + meth + nr + "'")
-			# let key = "${nr}"
-			# let op = OP('.',This.new,'$')
-			# if meth and meth != 'render'
+
 			statics.push(".$open({key.c})")
 			calls = statics
 			# not always?

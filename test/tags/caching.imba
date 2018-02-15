@@ -126,7 +126,6 @@ describe 'Tags - Cache' do
 		ok items:a:node
 		ok items:b:node
 		ok items:a:node != items:b:node
-
 	
 	$web$ and test "parent" do
 		tag Local

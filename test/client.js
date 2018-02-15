@@ -8670,6 +8670,34 @@ describe('Syntax - Tags',function() {
 		return node = (_1(Local)).end();
 	});
 	
+	test("nested loops",function() {
+		var data = [
+			{id: 'a',items: ['a','b','c']},
+			{id: 'b',items: ['d','e','f']}
+		];
+		
+		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
+			var $ = this.$, t0;
+			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
+				(function($0,$2) {
+					var $$ = $0.$iter();
+					for (let i = 0, len = data.length, item; i < len; i++) {
+						item = data[i];
+						$$.push(($0[i] || _1('h1',$0,i)).setContent(item.id,3).end());
+						(function($0) {
+							for (let j = 0, items = iter$(item.items), len = items.length; j < len; j++) {
+								$$.push(($0[j] || _1('div',$0,j)).setContent(items[j],3).end());
+							};
+						})($2[i] || _3($2,i,$[0]));
+					};return $$;
+				})($[1] || _3($,1,$[0]),$[2] || ($[2] = []))
+			,5).end();
+		}).end();
+		
+		htmleq("<h1>a</h1><div>a</div>",node);
+		return htmleq("<h1>b</h1><div>d</div>",node);
+	});
+	
 	return test('wrapping',function() {
 		var t0;
 		var str = "str";
@@ -9508,7 +9536,6 @@ describe('Tags - Cache',function() {
 		ok(items.b.node);
 		return ok(items.a.node != items.b.node);
 	});
-	
 	
 	true && test("parent",function() {
 		var Local = Imba.defineTag('Local', function(tag){
