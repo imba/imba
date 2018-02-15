@@ -6251,10 +6251,7 @@ export class Tag < Node
 			o:optim = self
 		
 		# if node is root and has dynamic key we need to register cache
-		if o:key and !o:par
-			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
-			o:treeRef = o:key
-			o:key.cache
+		
 
 		# for scope should be wrapped immediately?
 		if scope isa ForScope and o:par
@@ -6263,7 +6260,13 @@ export class Tag < Node
 				o:loop.capture(self)
 				o:ownCache = yes
 				o:optim = self
-				
+		
+		if o:key and !o:par
+			# not loop?
+			# let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
+			o:treeRef = o:key
+			o:key.cache
+			
 		if prevTag
 			prevTag.addChild(self)
 			
@@ -6308,9 +6311,16 @@ export class Tag < Node
 	
 	# reference to the cache-object this tag will try to register with
 	def cacher
-		@options:cacher ?= if parent
+		var o = @options
+		o:cacher ?= if o:key and parent and false
+			# declare 
+			let tagmap = scope__.imbaRef('createTagMap')
+			# if parent childCacher is declared inline this will not work(!)
+			let op = OP('||=',OP('.',parent.childCacher,'$$'),LIT('{}'))
+			TagCache.new(self,@tagScope.closure.declare("$",op, system: yes, type: 'let'))
+		elif parent
 			parent.childCacher
-		elif @options:ivar or @options:key
+		elif o:ivar or o:key
 			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
 			# MAKE SURE WE REFER TO THE OUTER
 			TagCache.new(self,@tagScope.closure.declare("$",op, system: yes, type: 'let'))
@@ -6414,9 +6424,20 @@ export class Tag < Node
 				pre = o:path + ' = ' + o:path + '||'
 			elif ref
 				o:path = path.c # OP('.',cacher,ref.@value or ref).c
+				
+				# if we have a dynamic key we need to change the path
+				if o:key and !o:loop
+					o:cachePath = scope.temporary(self,{})
+					let str = "'{ref.@value}$'"
+					o:path = OP('.',cacher,OP('=',o:cachePath,OP('+',Str.new(str),o:key))).c
+					ref = o:cacheRef = o:cachePath
+				
 				# o:path = "{cacher.c}[{ref.c}]"
 				if !o:optim or o:optim == self or parentType != 2 or parent.@children.len == 1
 					pre = "{o:path} || "
+				
+				if o:key and !o:loop
+					o:path = o:cachePath.c
 			
 			if o:ivar
 				pars.push(parent ? parent.reference.c : scope.context.c)
@@ -6461,7 +6482,7 @@ export class Tag < Node
 					contentType = 2
 			else
 				contentType = children.every(do |item| 
-					item isa Tag or item.option(:treeType) == 2 or item.isPrimitive
+					(item isa Tag and !item.option(:key)) or item.option(:treeType) == 2 or item.isPrimitive
 				) ? 2 : 1
 				content = TagTree.new(self,o:body)
 		

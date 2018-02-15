@@ -8519,8 +8519,8 @@ describe('Syntax - Tags',function() {
 		var obj = {
 			str: 1,
 			header: function(){
-				let key_, $ = this.$$ || (this.$$ = {});
-				return ($[key] || _1('div',$,key,this).setText("hello"));
+				let key_, $ = this.$$ || (this.$$ = {}), $1;
+				return ($[($1 = 'key$' + key)] || _1('div',$,$1,this).setText("hello"));
 			}
 		};
 		
@@ -8537,7 +8537,7 @@ describe('Syntax - Tags',function() {
 					this._named = this._named||_1('div',t0).flag('named')
 				],2)).end((
 					t0.$.A.setContent((function($0) {
-						var item_, $$ = $0.$iter();
+						var item_, $1, $$ = $0.$iter();
 						for (let i = 0, len = ary.length, item; i < len; i++) {
 							item = ary[i];
 							$$.push(($0[item] || _1('li',$0,item)).setContent(item,3).end());
@@ -8559,11 +8559,11 @@ describe('Syntax - Tags',function() {
 			};
 			
 			tag.prototype.list2 = function (){
-				let item_, $ = this.$$ || (this.$$ = {});
+				let item_, $ = this.$$ || (this.$$ = {}), $1;
 				let res = [];
 				for (let i = 0, len = ary.length, item; i < len; i++) {
 					item = ary[i];
-					res.push(($[item] || _1('li',$,item,this)).setContent(item,3).end());
+					res.push(($[($1 = 'item$' + item)] || _1('li',$,$1,this)).setContent(item,3).end());
 				};
 				return res;
 			};
@@ -8597,7 +8597,7 @@ describe('Syntax - Tags',function() {
 			_1('ul',t0.$,'C',t0)
 		],2)).end((
 			t0.$.A.setContent((function($0) {
-				var item_, $$ = $0.$iter();
+				var item_, $1, $$ = $0.$iter();
 				for (let i = 0, len = ary.length, item; i < len; i++) {
 					item = ary[i];
 					$$.push(($0[item] || _1('li',$0,item)).setContent(item,3).end());
@@ -8952,7 +8952,7 @@ Imba.defineTag('cached', function(tag){
 		var self = this, $ = this.$;
 		return self.$open(0).setChildren(
 			(function($0) {
-				var v_, $$ = $0.$iter();
+				var v_, $1, $$ = $0.$iter();
 				for (let i = 0, items = iter$(self._ary), len = items.length; i < len; i++) {
 					$$.push(($0[items[i]] || _1('div',$0,items[i]).setText("v")));
 				};return $$;
@@ -9295,7 +9295,7 @@ describe('Tags - Define',function() {
 				self._k = 0;
 				return self.$open(0).setChildren(
 					(function($0) {
-						var $1, $$ = $0.$iter();
+						var $2, $1, $$ = $0.$iter();
 						for (let i = 0, items = iter$(self._items), len = items.length; i < len; i++) {
 							$$.push(($0[($1 = self._k++)] || _1('div',$0,$1)).setContent(items[i],3).end());
 						};return $$;
@@ -9483,6 +9483,33 @@ describe('Tags - Cache',function() {
 		return eq(el.test(0),'[[A]]');
 	});
 	
+	
+	test("dynamic caching",function() {
+		var items = {
+			a: {id: 1,title: "A"},
+			b: {id: 2,title: "B"}
+		};
+		
+		var Local = Imba.defineTag('Local', function(tag){
+			tag.prototype.setup = function (){
+				return this.data().node = this;
+			};
+		});
+		
+		var item = items.a;
+		var root = (t0 = (t0=_1('div'))).setTemplate(function() {
+			var $ = this.$, $1, t0;
+			return ($[($1 = '0$' + item.id)] || _1(Local,$,$1,t0)).setData(item).end();
+		}).end();
+		item = items.b;
+		root.render();
+		
+		ok(items.a.node);
+		ok(items.b.node);
+		return ok(items.a.node != items.b.node);
+	});
+	
+	
 	true && test("parent",function() {
 		var Local = Imba.defineTag('Local', function(tag){
 			tag.prototype.header = function (){
@@ -9518,7 +9545,7 @@ describe('Tags - Cache',function() {
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
 			return ($[0] || _1('ul',$,0,t0)).setContent((function($0) {
-				var id_, $$ = $0.$iter();
+				var $1, id_, $$ = $0.$iter();
 				for (let i = 0, len = items.length, item; i < len; i++) {
 					item = items[i];
 					$$.push(($0[(id_ = item.id)] || _1('li',$0,id_)).setContent(item.name,3).end());
@@ -9851,10 +9878,10 @@ Imba.defineTag('unknowns', 'div', function(tag){
 	
 	
 	tag.prototype.list = function (){
-		let x_, $ = this.$$ || (this.$$ = {});
+		let x_, $ = this.$$ || (this.$$ = {}), $1;
 		let res = [];
 		for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
-			res.push(($[items[i]] || _1('div',$,items[i],this).flag('x')));
+			res.push(($[($1 = 'x$' + items[i])] || _1('div',$,$1,this).flag('x')));
 		};
 		return res;
 	};

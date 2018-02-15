@@ -106,6 +106,27 @@ describe 'Tags - Cache' do
 		eq el.test(0), '[[A]]'
 		eq el.test(1), '[[[B]]]'
 		eq el.test(0), '[[A]]'
+		
+		
+	test "dynamic caching" do
+		var items = {
+			a: {id: 1, title: "A"}
+			b: {id: 2, title: "B"}
+		}
+		
+		tag Local
+			def setup
+				data:node = self
+		
+		var item = items:a
+		var root = <div-> <Local@{item:id}[item]>
+		item = items:b
+		root.render
+		
+		ok items:a:node
+		ok items:b:node
+		ok items:a:node != items:b:node
+
 	
 	$web$ and test "parent" do
 		tag Local
