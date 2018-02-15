@@ -84,10 +84,10 @@ var a=u.build(o)
 return e instanceof s&&(e.i$++,a.$key=n),e&&void 0!=n&&(e[n]=a),a},i.createTagCache=function(t){var e=[]
 return e._tag=t,e},i.createTagMap=function(t,e,n){var r=new s(t,e,void 0!=n?n:t._tag)
 return t[e]=r,r},i.createTagList=function(t,e,n){var r=[]
-return r._type=4,r._tag=void 0!=n?n:t._tag,t[e]=r,r},o.build=function(t){var e=[]
+return r._type=4,r._tag=void 0!=n?n:t._tag,t[e]=r,r},i.createTagLoopResult=function(t,e,n){var r=[]
+return r._type=5,r.cache={i$:0},r},o.build=function(t){var e=[]
 return e._tag=t,e},s.prototype.$iter=function(){var t=[]
-return t._type=5,t.static=5,t.cache=this,t},s.prototype.$iter2=function(){var t=this.next$
-return this.next$=this.curr$,t.length=0,this.curr$=t},s.prototype.$prune=function(t){for(var e,n=this.cache$,i=this.key$,o=new s(n,i,this.par$),u=0,a=r(t),h=a.length;u<h;u++)o[(e=a[u]).key$]=e
+return t._type=5,t.static=5,t.cache=this,t},s.prototype.$prune=function(t){for(var e,n=this.cache$,i=this.key$,o=new s(n,i,this.par$),u=0,a=r(t),h=a.length;u<h;u++)o[(e=a[u]).key$]=e
 return o.i$=t.length,n[i]=o},i.TagMap=s,i.TagCache=o,i.SINGLETONS={},i.TAGS=new i.Tags,i.TAGS.element=i.TAGS.htmlelement=i.Tag,i.TAGS["svg:element"]=i.SVGTag,i.defineTag=function(t,e,n){return void 0==n&&"function"==typeof e&&(n=e,e=""),void 0==e&&(e=""),i.TAGS.defineTag(t,e,n)},i.defineSingletonTag=function(t,e,n){return void 0==n&&"function"==typeof e&&(n=e,e="div"),void 0==e&&(e="div"),i.TAGS.defineTag(this.name(),e,n)},i.extendTag=function(t,e){return i.TAGS.extendTag(t,e)},i.getTagSingleton=function(t){var e,n,r
 return(e=i.SINGLETONS[t])?e&&e.Instance?e.Instance:(n=i.document().getElementById(t))?((r=e.Instance=new e(n)).awaken(n),r):((n=e.createNode()).id=t,(r=e.Instance=new e(n)).end().awaken(n),r):(n=i.document().getElementById(t))?i.getTagForDom(n):void 0}
 var u="undefined"!=typeof SVGElement
@@ -203,8 +203,8 @@ g=p[g]}p.push(g)
 var y=-1==g?0:l[g]+1
 y>d&&(d=y,f=_),l.push(y)}else t.removeChild(a),p.push(-1),l.push(-1)
 for(var T=[],b=c.length-1;b>=0;)b==f&&-1!=c[b]&&(T[c[b]]=!0,f=p[f]),b-=1
-for(var S,x=0,E=r(e),A=E.length;x<A;x++){if(S=E[x],!T[x]){S&&S._dom||(S=e[x]=i.createTextNode(S))
-var w=e[x-1]
+for(var S,E=0,x=r(e),A=x.length;E<A;E++){if(S=x[E],!T[E]){S&&S._dom||(S=e[E]=i.createTextNode(S))
+var w=e[E-1]
 u(t,S,w&&w._dom||w||o)}o=S._dom||o&&o.nextSibling||t._dom.firstChild}return h&&h._dom||o}function h(t,e,n,r){for(var i=e.length,o=n.length,s=e.cache.i$,u=0,h=i-o;u<o&&u<i&&e[u]===n[u];)u++
 if(s>1e3&&s-i>500&&e.cache.$prune(e),!(h>0&&u==o)){if(h>0){for(var c=i;c>u&&e[c-1]===n[c-1-h];)c--
 if(h==c-u){for(var p=n[u]._dom;u<c;)t.insertBefore(e[u++],p)

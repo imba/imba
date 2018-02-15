@@ -990,6 +990,12 @@ def Imba.createTagList ctx, ref, pref
 	ctx[ref] = node
 	return node
 
+def Imba.createTagLoopResult ctx, ref, pref
+	var node = []
+	node.@type = 5
+	node:cache = {i$: 0}
+	return node
+
 # use array instead?
 class TagCache
 	def self.build owner
@@ -1014,20 +1020,9 @@ class TagMap
 	def $iter
 		var item = []
 		item.@type = 5
-		item:static = 5
+		item:static = 5 # wrong(!)
 		item:cache = self
 		return item
-		
-	def $iter2
-		let next = self:next$
-		self:next$ = self:curr$
-		next:length = 0
-		return self:curr$ = next
-		# var item = []
-		# item.@type = 5
-		# item:static = 5
-		# item:cache = self
-		# return item
 		
 	def $prune items
 		let cache = self:cache$

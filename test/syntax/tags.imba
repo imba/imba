@@ -190,6 +190,19 @@ describe 'Syntax - Tags' do
 						
 		htmleq "<h1>a</h1><div>a</div>", node
 		htmleq "<h1>b</h1><div>d</div>", node
+		
+		var node2 = <div ->
+			<.content>
+				for item in data
+					<h1> item:id
+					<hr>
+					<ul> for child in item:items
+						<li> child
+	
+		node2.render
+		node2.render
+		htmleq "<h1>a</h1><hr><ul><li>a</li><li>b</li>", node2
+		htmleq "<h1>b</h1><hr><ul><li>d</li><li>e</li>", node2
 
 	test 'wrapping' do
 		var str = "str"

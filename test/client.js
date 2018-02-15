@@ -2344,6 +2344,13 @@ Imba.createTagList = function (ctx,ref,pref){
 	return node;
 };
 
+Imba.createTagLoopResult = function (ctx,ref,pref){
+	var node = [];
+	node._type = 5;
+	node.cache = {i$: 0};
+	return node;
+};
+
 // use array instead?
 function TagCache(owner){
 	this._tag = owner;
@@ -2369,21 +2376,9 @@ function TagMap(cache,ref,par){
 TagMap.prototype.$iter = function (){
 	var item = [];
 	item._type = 5;
-	item.static = 5;
+	item.static = 5; // wrong(!)
 	item.cache = this;
 	return item;
-};
-
-TagMap.prototype.$iter2 = function (){
-	let next = this.next$;
-	this.next$ = this.curr$;
-	next.length = 0;
-	return this.curr$ = next;
-	// var item = []
-	// item.@type = 5
-	// item:static = 5
-	// item:cache = self
-	// return item
 };
 
 TagMap.prototype.$prune = function (items){
@@ -8368,7 +8363,7 @@ describe('Await',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), self = this, _2 = Imba.createTagCache, _3 = Imba.createTagMap, _4 = Imba.createTagList, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), self = this, _2 = Imba.createTagCache, _3 = Imba.createTagMap, _4 = Imba.createTagList, _5 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
 function jseq(find,blk){
@@ -8679,8 +8674,7 @@ describe('Syntax - Tags',function() {
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
 			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
-				(function($0,$2) {
-					var $$ = $0.$iter();
+				(function($0,$2,$$) {
 					for (let i = 0, len = data.length, item; i < len; i++) {
 						item = data[i];
 						$$.push(($0[i] || _1('h1',$0,i)).setContent(item.id,3).end());
@@ -8690,12 +8684,36 @@ describe('Syntax - Tags',function() {
 							};
 						})($2[i] || _3($2,i,$[0]));
 					};return $$;
-				})($[1] || _3($,1,$[0]),$[2] || ($[2] = []))
+				})($[1] || _3($,1,$[0]),$[2] || ($[2] = []),_5())
 			,5).end();
 		}).end();
 		
 		htmleq("<h1>a</h1><div>a</div>",node);
-		return htmleq("<h1>b</h1><div>d</div>",node);
+		htmleq("<h1>b</h1><div>d</div>",node);
+		
+		var node2 = (t0 = (t0=_1('div'))).setTemplate(function() {
+			var $ = this.$, t0;
+			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
+				(function($0,$1,$2,$$) {
+					var t0;
+					for (let i = 0, len = data.length, item; i < len; i++) {
+						item = data[i];
+						$$.push(($0[i] || _1('h1',$0,i)).setContent(item.id,3).end());
+						$$.push(($1[i] || _1('hr',$1,i)));
+						$$.push((t0 = $2[i] || (t0=_1('ul',$2,i))).setContent((function($0) {
+							for (let j = 0, items = iter$(item.items), len = $0.taglen = items.length; j < len; j++) {
+								($0[j] || _1('li',$0,j)).setContent(items[j],3).end();
+							};return $0;
+						})(t0.$['A'] || _4(t0.$,'A',$2[i])),4).end());
+					};return $$;
+				})($[1] || _4($,1,$[0]),$[2] || _4($,2,$[0]),$[3] || _4($,3,$[0]),_5())
+			,5).end();
+		}).end();
+		
+		node2.render();
+		node2.render();
+		htmleq("<h1>a</h1><hr><ul><li>a</li><li>b</li>",node2);
+		return htmleq("<h1>b</h1><hr><ul><li>d</li><li>e</li>",node2);
 	});
 	
 	return test('wrapping',function() {
@@ -8947,7 +8965,7 @@ describe("Syntax - Quirks",function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagMap, _3 = Imba.createTagList, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagMap, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
 (_1('a'));
@@ -9124,7 +9142,7 @@ describe('Tags - Define',function() {
 						$$.push(($0[i] || _1('custom',$0,i).flag('one')).setContent(v,3).end());
 						$$.push(($1[i] || _1('custom',$1,i).flag('two')).setContent(v,3).end());
 					};return $$;
-				})($[1] || _3($,1),$[2] || _3($,2),[])
+				})($[1] || _3($,1),$[2] || _3($,2),_4())
 			],1).synced();
 		};
 		

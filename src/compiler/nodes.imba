@@ -579,6 +579,7 @@ export class Node
 	# swallow might be better name
 	def consume node
 		if node isa PushAssign
+			node.register(self)
 			return PushAssign.new(node.op,node.left,self)
 
 		if node isa Assign
@@ -2480,6 +2481,8 @@ export class TagLoopFunc < Func
 			
 		for param in @params
 			param.visit(stack)
+			
+		# we must be certain that we are only consuming one tag?
 
 		if @tags.len == 1 and !single.option(:key)
 			if @isFast
@@ -2508,18 +2511,33 @@ export class TagLoopFunc < Func
 				item.@loopCache.@callee = scope__.imbaRef('createTagMap')
 		
 		unless @parentLoop
-			if @tags.len == 1
+			let collectInto = ValueNode.new("val")
+			let collector = TagPushAssign.new("push",collectInto,null)
+			@loop.body.consume(collector)
+			let collected = collector.consumed
+			let treeType = 3
+			
+			if collected.len == 1 and collected[0] isa Tag
 				let op = CALL(OP('.',@params.at(0),'$iter'),[])
 				@resultVar = scope.declare('$$',op, system: yes)
+				treeType = 5
 			else
-				@resultVar = @params.at(@tags.len,true,'$$') # visiting?
+				@resultVar = @params.at(@params.count,true,'$$') # visiting?
 				@resultVar.visit(stack)
-				@args.push(Arr.new([]))
-
-			let collector = TagPushAssign.new("push",@resultVar,null)
-			@loop.body.consume(collector)
-			@body.push(Return.new(@resultVar))
-			set(treeType: @tags.len == 0 ? 3 : 5)
+				if collected.every(|item| item isa Tag)
+					# let op = CALL(scope__.imbaRef('createTagLoopResult'),[])
+					treeType = 5
+					@args.push CALL(scope__.imbaRef('createTagLoopResult'),[])
+				else
+					@args.push Arr.new([])
+			
+			collectInto.value = @resultVar
+			@body.push(Return.new(collectInto))
+			# let collector = TagPushAssign.new("push",@resultVar,null)
+			# @loop.body.consume(collector)
+			# @body.push(Return.new(@resultVar))
+			# check if everything that is pushed is an assign?
+			set(treeType: treeType)
 		else
 			set(noreturn: yes)
 		self
@@ -2546,7 +2564,7 @@ export class TagLoopFunc < Func
 
 			let nr = @tags.push(node) - 1
 			let ref = @loop.option(:vars)['index']
-			let param = @params.at(@params.count,true,'$'+nr)
+			let param = @params.at(@params.count,true,"${@params.count}")
 
 			node.set(cacher: TagCache.new(self,param))
 			
@@ -4268,7 +4286,14 @@ export class Assign < Op
 
 
 export class PushAssign < Assign
-
+	
+	prop consumed
+	
+	def register node
+		@consumed ||= []
+		@consumed.push(node)
+		self
+		
 	def js o
 		"{left.c}.push({right.c})"
 
