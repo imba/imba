@@ -6339,7 +6339,6 @@ export class Tag < Node
 		var o = @options
 		var scope = @tagScope = scope__
 		let prevTag = o:par = stack.@tag
-
 		var typ = enclosing
 
 		if typ == '->' or typ == '=>'
@@ -6362,8 +6361,10 @@ export class Tag < Node
 		else
 			o:optim = self
 		
+		if o:par
+			o:par.addChild(self)
+		
 		if o:par and o:par.@tagLoop
-			# console.log "parent has tagLoop!!!"
 			o:loop ||= o:par.@tagLoop # scope.@tagLoop
 			o:loop.capture(self)
 			o:ownCache = yes
@@ -6373,13 +6374,14 @@ export class Tag < Node
 			o:treeRef = o:key
 			o:key.cache
 			
-		if prevTag
-			prevTag.addChild(self)
+		
 			
-		stack.@tag = self
+		stack.@tag = null
 
 		for part in @attributes
 			part.traverse
+			
+		stack.@tag = self
 			
 		cacheRef
 
