@@ -239,17 +239,17 @@ class Imba.Event
 			let node = domnode.@dom ? domnode : domnode.@tag
 
 			if node
-				if node[meth] isa Function
-					@responder ||= node
-					@silenced = no
-					result = args ? node[meth].apply(node,args) : node[meth](self,data)
-
 				if handlers = node:_on_
 					for handler in handlers when handler
 						let hname = handler[0]
 						if name == handler[0] and bubble # and (hname:length == name:length or hname[name:length] == '.')
 							processHandlers(node,handler)
 					break unless bubble
+
+				if bubble and node[meth] isa Function
+					@responder ||= node
+					@silenced = no
+					result = args ? node[meth].apply(node,args) : node[meth](self,data)
 
 				if node:onevent
 					node.onevent(self)
