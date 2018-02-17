@@ -371,7 +371,7 @@ var grammar =
 
 	
 	TagId: [
-		o 'TAGID' do TagId.new(A1)
+		o 'TAGID' do TagIdRef.new(A1)
 	]
 
 	

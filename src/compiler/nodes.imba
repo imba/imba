@@ -4803,7 +4803,7 @@ export class Identifier < Node
 	def shouldParenthesizeInTernary
 		@parens or @cache
 
-export class TagId < Identifier
+export class TagIdRef < Identifier
 
 	def initialize v
 		@value = v isa Identifier ? v.value : v
