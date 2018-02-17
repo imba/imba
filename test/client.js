@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.9'};
+var Imba = {VERSION: '1.3.0-beta.10'};
 
 /*
 
@@ -3722,12 +3722,6 @@ Imba.Event.prototype.process = function (){
 		let node = domnode._dom ? domnode : domnode._tag;
 		
 		if (node) {
-			if (node[meth] instanceof Function) {
-				this._responder || (this._responder = node);
-				this._silenced = false;
-				result = args ? node[meth].apply(node,args) : node[meth](this,this.data());
-			};
-			
 			if (handlers = node._on_) {
 				for (let i = 0, items = iter$(handlers), len = items.length, handler; i < len; i++) {
 					handler = items[i];
@@ -3738,6 +3732,12 @@ Imba.Event.prototype.process = function (){
 					};
 				};
 				if (!(this.bubble())) { break; };
+			};
+			
+			if (this.bubble() && (node[meth] instanceof Function)) {
+				this._responder || (this._responder = node);
+				this._silenced = false;
+				result = args ? node[meth].apply(node,args) : node[meth](this,this.data());
 			};
 			
 			if (node.onevent) {
