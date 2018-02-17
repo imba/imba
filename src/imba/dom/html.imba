@@ -141,7 +141,9 @@ extend tag textarea
 		
 	def render
 		return if @localValue != undefined or !@data
-		@dom:value = @data.getFormValue(self) if @data
+		if @data
+			let dval = @data.getFormValue(self)
+			@dom:value = dval if dval != undefined
 		@initialValue = @dom:value
 		self
 

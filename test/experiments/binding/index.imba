@@ -56,6 +56,7 @@ tag App
 				<input[store:name] type='text'>
 				<input[store:subtitle] type='text' lazy=yes>
 				<input[store:price] type='text'>
+				<input[store:blank] type='text'>
 				
 				<div>
 					<input[store:price] type='range' min=0 max=1000 step=1>
@@ -152,6 +153,7 @@ tag App
 				<div>
 					<textarea[data:description] name="stuff">
 					<textarea[data:description] name="other" lazy=yes>
+					<textarea[data:blank] name="stuff">
 					
 				<div>
 					<h2> "Select categories"
