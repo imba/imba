@@ -143,7 +143,7 @@ extend tag textarea
 		return if @localValue != undefined or !@data
 		if @data
 			let dval = @data.getFormValue(self)
-			@dom:value = dval if dval != undefined
+			@dom:value = dval != undefined ? dval : ''
 		@initialValue = @dom:value
 		self
 
