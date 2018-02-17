@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.10'};
+var Imba = {VERSION: '1.3.0-beta.11'};
 
 /*
 
@@ -3681,10 +3681,7 @@ Imba.Event.prototype.processHandlers = function (node,handlers){
 			// do we still want to continue the chain?
 			let res = handler.apply(context,params || [this]);
 			
-			// should we take awaits into account?
-			// was bubbling before - has not been modified
 			if (!isMod) {
-				bubble = false; // stop propagation by default
 				this._responder || (this._responder = node);
 			};
 			
@@ -3727,7 +3724,7 @@ Imba.Event.prototype.process = function (){
 					handler = items[i];
 					if (!handler) { continue; };
 					let hname = handler[0];
-					if (name == handler[0] && this.bubble()) { // and (hname:length == name:length or hname[name:length] == '.')
+					if (name == handler[0] && this.bubble()) {
 						this.processHandlers(node,handler);
 					};
 				};

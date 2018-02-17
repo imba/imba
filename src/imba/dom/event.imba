@@ -204,11 +204,8 @@ class Imba.Event
 				# what if we actually call stop inside function?
 				# do we still want to continue the chain?
 				let res = handler.apply(context,params or [self])
-				
-				# should we take awaits into account?
-				# was bubbling before - has not been modified
+
 				if !isMod
-					bubble = no # stop propagation by default
 					@responder ||= node
 
 				if res == false
@@ -242,7 +239,7 @@ class Imba.Event
 				if handlers = node:_on_
 					for handler in handlers when handler
 						let hname = handler[0]
-						if name == handler[0] and bubble # and (hname:length == name:length or hname[name:length] == '.')
+						if name == handler[0] and bubble
 							processHandlers(node,handler)
 					break unless bubble
 
