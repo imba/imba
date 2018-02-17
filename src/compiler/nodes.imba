@@ -6215,8 +6215,9 @@ export class TagData < TagPart
 			if val isa PropertyAccess
 				pars.push('[]')
 				
-			unless right isa Str
+			if right isa Identifier
 				pars[1] = "'" + pars[1] + "'"
+
 			"bindData({pars.join(',')})"
 		else
 			"setData({val.c})"
