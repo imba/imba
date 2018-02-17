@@ -6062,7 +6062,11 @@ export class TagPart < Node
 		@name = value
 		@tag = owner
 		@chain = []
+		@special = no
 		self
+		
+	def isSpecial
+		@special
 		
 	def visit
 		@chain.map(|v| v.traverse )
@@ -6114,6 +6118,9 @@ export class TagArgList < TagPart
 	
 export class TagAttr < TagPart
 
+	def isSpecial
+		String(@name) == 'value'
+
 	def js
 		let ns = null
 		let key = String(@name)
@@ -6129,6 +6136,9 @@ export class TagAttr < TagPart
 		
 		if @chain:length
 			add = ',{' + @chain.map(|mod| "{mod.name}:1" ).join(',') + '}'
+			
+		if key == 'value' and !ns
+			add += ',1'
 		
 		if ns == 'css'
 			"css('{key}',{val}{add})"
@@ -6171,11 +6181,45 @@ export class TagModifier < TagPart
 
 export class TagData < TagPart
 	
+	def value
+		name
+
 	def isStatic
-		!name or name.isPrimitive
+		!value or value.isPrimitive
+	
+	def isSpecial
+		true
 
 	def js
-		"setData({name.c})"
+		var val = value
+
+		if val isa ArgList
+			val = val.values[0]
+			
+		if val isa Parens
+			val = val.value
+		
+		if val isa VarOrAccess
+			val = val.@variable or val.value
+		# console.log "TagData value {val}"
+
+		if val isa Access
+			let left = val.left
+			let right = val.right isa Index ? val.right.value : val.right
+			
+			if val isa IvarAccess
+				left ||= val.scope__.context
+			
+			let pars = [left.c,right.c]
+			
+			if val isa PropertyAccess
+				pars.push('[]')
+				
+			unless right isa Str
+				pars[1] = "'" + pars[1] + "'"
+			"bindData({pars.join(',')})"
+		else
+			"setData({val.c})"
 
 export class TagHandler < TagPart
 
@@ -6323,13 +6367,6 @@ export class Tag < Node
 			o:loop.capture(self)
 			o:ownCache = yes
 			o:optim = self
-			# # for scope should be wrapped immediately?
-			# if scope isa ForScope and o:par
-			# if o:par.@tagScope != scope
-			# 	o:loop ||= o:par.@tagLoop # scope.@tagLoop
-			# 	o:loop.capture(self)
-			# 	o:ownCache = yes
-			# 	o:optim = self
 		
 		if o:key and !o:par
 			o:treeRef = o:key
@@ -6553,11 +6590,17 @@ export class Tag < Node
 				content = TagTree.new(self,o:body)
 		
 		set(treeType: contentType)
-
+		
+		var specials = []
 		for part in @attributes
 			let out = part.js(jso)
 			out = ".{mark__(part.name)}" + out
-			part.isStatic ? statics.push(out) : calls.push(out)
+			# if part.isSpecial
+			#	specials.push(out)
+			if part.isStatic
+				statics.push(out)
+			else
+				calls.push(out)
 		
 		# compile body
 	
@@ -6585,6 +6628,9 @@ export class Tag < Node
 			else
 				target.push ".{bodySetter}({body})"
 		
+		if specials.len		
+			calls.push(*specials)
+
 		if !isNative or o:template or calls:length > 0 or @children:length
 			var commits = @children.map(|child| child.option(:commit) ).filter(|item| item)
 			let args = o:optim and commits:length ? '(' + INDENT.wrap(commits.join(',\n')) + ',true)' : ''

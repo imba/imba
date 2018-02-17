@@ -181,6 +181,10 @@ class Imba.Tag
 	###
 	def data
 		@data
+		
+		
+	def bindData target, path, args
+		setData(args ? target[path].apply(target,args) : target[path])
 
 	###
 	Set inner html of node

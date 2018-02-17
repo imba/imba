@@ -37,125 +37,143 @@ var update = do
 	store:multiple = ["C"]
 	store:subtitle = "Subtitle"
 	store:name = "Unbound"
+	
+module api
+	prop counter
+	
+	@counter = 1
+	
+	def add
+		console.log "added!"
 
-var app = Imba.mount <div[store].app ->
-	<form>
-		<div>
-			<h2> "Event modifiers"
-			
-		<input type='text' model='title' :keydown.esc=store:callSomething :keydown.del=store:callSomething>
-		<input type='text' model.trim='name'>
-		<input type='text' model.lazy='subtitle'>
-		<input type='text' model.number='price'>
-		
-		<div>
-			<input type='range' min=0 max=1000 step=1 model.number.lazy='price'>
-			<input type='range' min=0 max=1000 step=1 model.number='price'>
-
-		<select model="selected">
-			<option disabled=yes value=""> "Please select one"
-			<option> "A"
-			<option> "B"
-			<option> "C"
-			
-		<select model="multiple" multiple=yes>
-			<option disabled=yes value=""> "Please select one"
-			<option> "A"
-			<option> "B"
-			<option> "C"
-			
-		<select model.number="quantity">
-			<option> "1"
-			<option> "2"
-			<option> "3"
-			<option> "4"
-			<option> "5"
-			
-		<select model.number="numbers" multiple=yes>
-			<option> "1"
-			<option> "2"
-			<option> "3"
-			<option> "4"
-			<option> "5"
-		
-		<div>
-			<label>
-				<input type='checkbox' model='completed'>
-				<span> "Completed"
+tag App
+	prop counter default: 0
+	
+	def render
+		<self>
+			<form>
+				<input[store:title] type='text' :keydown.esc=store:callSomething :keydown.del=store:callSomething>
+				<input[store:name] type='text'>
+				<input[store:subtitle] type='text' lazy=yes>
+				<input[store:price] type='text'>
 				
-		<div>
-			<label>
-				<input type="radio" value="One" model="picked">
-				<span> "One"
-			<label>
-				<input type="radio" value="Two" model="picked">
-				<span> "Two"
-			<div> "Picked: {data:picked}"
-			
-		<div>
-			<h2> "Rich radios"
-			<label>
-				<input type="radio" value=data:choices:one model="choice">
-				<span> "One"
-			<label>
-				<input type="radio" value=data:choices:two model="choice">
-				<span> "Two"
-			<div> "Picked: {JSON.stringify(data:choice or null)}"
+				<div>
+					<input[store:price] type='range' min=0 max=1000 step=1>
+					<input[counter] type='range' min=0 max=1000 step=1>
+					<input[@counter] type='range' min=0 max=1000 step=1 lazy=true>
 
-			
-		<div>
-			for item in [1,2,3,4,5]
-				<label>
-					<input type='checkbox' value=item model.number='numbers'>
-					<span> "{item}"
-		<div>
-			<label>
-				<input type='checkbox' value="Beginner" model='labels'>
-				<span> "Beginner"
-			<label>
-				<input type='checkbox' value="Intermediate" model='labels'>
-				<span> "Intermediate"
-			<label>
-				<input type='checkbox' value="Expert" model='labels'>
-				<span> "Expert"
-			<label>
-				<input type="checkbox" value=data:choices:one model="labels">
-				<span> "Rich 1"
-			<label>
-				<input type="checkbox" value=data:choices:two model="labels">
-				<span> "Rich 2"
+				<select[store:selected]>
+					<option disabled=yes value=""> "Please select one"
+					<option> "A"
+					<option> "B"
+					<option> "C"
+				<button type='button' :tap=update> "Update"
 				
-		<div>
-			for item in data:multiple
-				<label>
-					<input type='checkbox' value=item model='multiple'>
-					<span> item
-			<p> "Remove by unchecking?"
-			
-		<div>
-			<textarea name="stuff" model="description">
-			<textarea name="other" value=data:description>
-			
-		<div>
-			<h2> "Select categories"
-			<h3> "Main category"
-			<select model='mainCategory'>
-				for item in categories
-					<option value=item> item:name
-			<select model='categories' multiple=yes>
-				for item in categories
-					<option value=item> item:name
-			for item in categories
-				<label>
-					<input type='checkbox' value=item model='categories'>
-					<span> item:name
-			
-		<button type='button' :tap=update> "Update"
-	<section>
-		<div> "Rendered {data:counter++} times"
-		<h3> data:name
-		<h1> data:title
-		<h2> data:subtitle
-		<p> data:description
-		<div> "Is completed? {data:completed}"
-		<div> JSON.stringify(store)
+				<select value="B">
+					<option disabled=yes value=""> "Please select one"
+					<option> "A"
+					<option> "B"
+					<option> "C"
+					
+				<select[store:multiple] multiple=yes>
+					<option disabled=yes value=""> "Please select one"
+					<option> "A"
+					<option> "B"
+					<option> "C"
+					
+				<select[store:quantity]>
+					<option value=1> "1"
+					<option value=2> "2"
+					<option value=3> "3"
+					<option value=4> "4"
+					<option value=5> "5"
+					
+				<select[data:numbers] multiple=yes>
+					<option value=1> "1"
+					<option value=2> "2"
+					<option value=3> "3"
+					<option value=4> "4"
+					<option value=5> "5"
+				
+				<div>
+					<label>
+						<input[data:completed] type='checkbox'>
+						<span> "Completed"
+						
+				<div>
+					<label>
+						<input[data:picked] type="radio" value="One">
+						<span> "One"
+					<label>
+						<input[data:picked] type="radio" value="Two">
+						<span> "Two"
+					<div> "Picked: {data:picked}"
+					
+				<div>
+					<h2> "Rich radios"
+					<label>
+						<input[data:choice] type="radio" value=data:choices:one>
+						<span> "One"
+					<label>
+						<input[data:choice] type="radio" value=data:choices:two>
+						<span> "Two"
+					<div> "Picked: {JSON.stringify(data:choice or null)}"
+
+					
+				<div>
+					for item in [1,2,3,4,5]
+						<label>
+							<input[data:numbers] type='checkbox' value=item>
+							<span> "{item}"
+				<div>
+					<label>
+						<input[data:labels] type='checkbox' value="Beginner">
+						<span> "Beginner"
+					<label>
+						<input[data:labels] type='checkbox' value="Intermediate">
+						<span> "Intermediate"
+					<label>
+						<input[data:labels] type='checkbox' value="Expert">
+						<span> "Expert"
+					<label>
+						<input[data:labels] type="checkbox" value=data:choices:one>
+						<span> "Rich 1"
+					<label>
+						<input[data:labels] type="checkbox" value=data:choices:two>
+						<span> "Rich 2"
+						
+				<div>
+					for item in data:multiple
+						<label>
+							<input[data:multiple] type='checkbox' value=item>
+							<span> item
+					<p> "Remove by unchecking?"
+					
+				<div>
+					<textarea[data:description] name="stuff">
+					<textarea[data:description] name="other" lazy=yes>
+					
+				<div>
+					<h2> "Select categories"
+					<h3> "Main category"
+					<select[data:mainCategory]>
+						for item in categories
+							<option value=item> item:name
+					<select[data:categories] multiple=yes>
+						for item in categories
+							<option value=item> item:name
+					for item in categories
+						<label>
+							<input[data:categories] type='checkbox' value=item>
+							<span> item:name
+			<section>
+				<div> "Rendered {data:counter++} times"
+				<div> "App.counter ({counter})"
+				<h3> data:name
+				<h1> data:title
+				<h2> data:subtitle
+				<p> data:description
+				<div> "Is completed? {data:completed}"
+				<div> JSON.stringify(store,null,2)
+
+Imba.mount(APP = <App[store]>)

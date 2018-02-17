@@ -15,69 +15,49 @@ extend tag canvas
 	def context type = '2d'
 		dom.getContext(type)
 
-class DataValue
-	
-	def initialize node, path, mods
+class DataProxy	
+	def self.bind receiver, data, path, args
+		let proxy = receiver.@data ||= self.new(receiver,path,args)
+		proxy.bind(data,path,args)
+		return receiver
+
+	def initialize node, path, args
 		@node = node
 		@path = path
-		@mods = mods or {}
-		@setter = Imba.toSetter(@path)
-		let valueFn = node:value
-		node:value = do mod(valueFn.call(this))
-	
-	def context
-		return @context if @context
-		# caching can lead to weird behaviour
-		let el = @node
-		while el
-			if el.data
-				@context = el
-				break
-			el = el.@owner_
-		return @context
+		@args = args
+		@setter = Imba.toSetter(@path) if @args
 		
-	def data
-		var ctx = context
-		ctx ? ctx.data : null
+	def bind data, key, args
+		if data != @data
+			@data = data
+		self
 		
-	def lazy
-		@mods:lazy
-		
-	def get
-		let data = self.data
-		return null unless data
-		let val = data[@path]
-		return val isa Function and data[@setter] ? data[@path]() : val
-		
-	def set value
-		let data = self.data
-		return unless data
+	def getFormValue
+		@setter ? @data[@path]() : @data[@path]
 
-		let prev = data[@path]
-		if prev isa Function
-			if data[@setter] isa Function
-				data[@setter](value)
-				return self
-		data[@path] = value
-		
-	def isArray val = get
-		val and val:splice and val:sort
-	
-	def mod value
-		if value isa Array
-			return value.map do mod($1)
-		if @mods:trim and value isa String
-			value = value.trim
-		if @mods:number
-			value = parseFloat(value)
-		return value
+	def setFormValue value
+		@setter ? @data[@setter](value) : (@data[@path] = value)
+
+
+var isArray = do |val|
+	val and val:splice and val:sort
+
+var isSimilarArray = do |a,b|
+	let l = a:length, i = 0
+	return no unless l == b:length
+	while i++ < l
+		return no if a[i] != b[i]
+	return yes
 
 extend tag input
-	def model
-		@model
+	prop lazy
+
+	def setModel
+		console.warn "setModel removed. Use <input[data:path]>"
+		return self
 	
-	def setModel value, mods
-		@model ||= DataValue.new(self,value,mods)
+	def bindData target, path, args
+		DataProxy.bind(self,target,path,args)
 		self
 		
 	def setValue value
@@ -87,43 +67,42 @@ extend tag input
 	def oninput e
 		let val = @dom:value
 		@localValue = @initialValue != val ? val : undefined
-		model and !model.lazy ? model.set(value) : e.silence		
+		@data and !lazy ? @data.setFormValue(value,self) : e.silence
 		
 	def onchange e
 		@modelValue = @localValue = undefined
-		return e.silence unless model
+		return e.silence unless data
 		
 		if type == 'radio' or type == 'checkbox'
 			let checked = @dom:checked
-			let mval = model.get
+			let mval = @data.getFormValue(self)
 			let dval = @value != undefined ? @value : value
-			# console.log "change",type,checked,dval
 
 			if type == 'radio'
-				model.set(dval,true)
+				@data.setFormValue(dval,self)
 			elif dom:value == 'on'
-				model.set(!!checked,true)
-			elif model.isArray
+				@data.setFormValue(!!checked,self)
+			elif isArray(mval)
 				let idx = mval.indexOf(dval)
 				if checked and idx == -1
 					mval.push(dval)
 				elif !checked and idx >= 0
 					mval.splice(idx,1)
 			else
-				model.set(dval)
+				@data.setFormValue(dval,self)
 		else
-			model.set(value)
+			@data.setFormValue(value)
 	
 	# overriding end directly for performance
 	def end
-		return self if !@model or @localValue !== undefined
-		let mval = @model.get
+		return self if !@data or @localValue !== undefined
+		let mval = @data.getFormValue(self)
 		return self if mval == @modelValue
-		@modelValue = mval unless model.isArray
+		@modelValue = mval unless isArray(mval)
 
 		if type == 'radio' or type == 'checkbox'
 			let dval = @value
-			let checked = if model.isArray
+			let checked = if isArray(mval)
 				mval.indexOf(dval) >= 0
 			elif dom:value == 'on'
 				!!mval
@@ -137,12 +116,15 @@ extend tag input
 		self
 
 extend tag textarea
-	def model
-		@model
+	prop lazy
 
 	def setModel value, mods
-		@model ||= DataValue.new(self,value,mods)
+		console.warn "setModel removed. Use <textarea[data:path]>"
 		return self
+		
+	def bindData target, path, args
+		DataProxy.bind(self,target,path,args)
+		self
 	
 	def setValue value
 		dom:value = value if @localValue == undefined
@@ -151,16 +133,15 @@ extend tag textarea
 	def oninput e
 		let val = @dom:value
 		@localValue = @initialValue != val ? val : undefined
-		model and !model.lazy ? model.set(value) : e.silence
+		@data and !lazy ? @data.setFormValue(value,self) : e.silence
 
 	def onchange e
 		@localValue = undefined
-		model ? model.set(value) : e.silence
+		@data ? @data.setFormValue(value,self) : e.silence
 		
 	def render
-		return if @localValue != undefined or !model
-		if model
-			@dom:value = model.get
+		return if @localValue != undefined or !@data
+		@dom:value = @data.getFormValue(self) if @data
 		@initialValue = @dom:value
 		self
 
@@ -174,25 +155,44 @@ extend tag option
 		@value or dom:value
 
 extend tag select
-	def model
-		@model
-
+	def bindData target, path, args
+		DataProxy.bind(self,target,path,args)
+		self
+		
 	def setModel value, mods
-		@model ||= DataValue.new(self,value,mods)
+		console.warn "setModel removed. Use <select[data:path]>"
 		return self
 		
-	def setValue value
-		if value != @value
-			@value = value
-			if typeof value == 'object'
-				for opt,i in dom:options
-					let oval = (opt.@tag ? opt.@tag.value : opt:value)
-					if value == oval
-						dom:selectedIndex = i
-						break
-			else
-				dom:value = value
+	def setValue value, syncing
+		let prev = @value
+		@value = value
+		syncValue(value) unless syncing
 		return self
+		
+	def syncValue value
+		let prev = @syncValue
+		# check if value has changed
+		if multiple and value isa Array
+			if prev isa Array and isSimilarArray(prev,value)
+				return self
+			# create a copy for syncValue
+			value = value.slice
+
+		@syncValue = value
+		# support array for multiple?
+		if typeof value == 'object'
+			let mult = multiple and value isa Array
+			
+			for opt,i in dom:options
+				let oval = (opt.@tag ? opt.@tag.value : opt:value)
+				if mult
+					opt:selected = value.indexOf(oval) >= 0
+				elif value == oval
+					dom:selectedIndex = i
+					break
+		else
+			dom:value = value
+		self
 		
 	def value
 		if multiple
@@ -203,20 +203,12 @@ extend tag select
 			opt ? (opt.@tag ? opt.@tag.value : opt:value) : null
 	
 	def onchange e
-		model ? model.set(value) : e.silence
+		@data ? @data.setFormValue(value,self) : e.silence
 		
-	def render
-		return unless model
+	def end
+		if @data
+			setValue(@data.getFormValue(self),1)
 
-		let mval = model.get
-		# sync dom value
-		if multiple
-			for option in dom:options
-				let oval = model.mod(option.@tag ? option.@tag.value : option:value)
-				let sel = mval.indexOf(oval) >= 0
-				option:selected = sel
-		else
-			setValue(mval)
-			# what if mval is rich? Would be nice with some mapping
-			# dom:value = mval
+		if @value != @syncValue
+			syncValue(@value)
 		self

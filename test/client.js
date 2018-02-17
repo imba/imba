@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.7'};
+var Imba = {VERSION: '1.3.0-beta.9'};
 
 /*
 
@@ -1335,6 +1335,11 @@ Imba.Tag.prototype.data = function (){
 	return this._data;
 };
 
+
+Imba.Tag.prototype.bindData = function (target,path,args){
+	return this.setData(args ? target[path].apply(target,args) : target[path]);
+};
+
 /*
 	Set inner html of node
 	*/
@@ -2562,86 +2567,59 @@ Imba.extendTag('canvas', function(tag){
 	};
 });
 
-function DataValue(node,path,mods){
-	var self = this;
-	self._node = node;
-	self._path = path;
-	self._mods = mods || {};
-	self._setter = Imba.toSetter(self._path);
-	let valueFn = node.value;
-	node.value = function() { return self.mod(valueFn.call(this)); };
+function DataProxy(node,path,args){
+	this._node = node;
+	this._path = path;
+	this._args = args;
+	if (this._args) { this._setter = Imba.toSetter(this._path) };
 };
 
-DataValue.prototype.context = function (){
-	if (this._context) { return this._context };
-	// caching can lead to weird behaviour
-	let el = this._node;
-	while (el){
-		if (el.data()) {
-			this._context = el;
-			break;
-		};
-		el = el._owner_;
+DataProxy.bind = function (receiver,data,path,args){
+	let proxy = receiver._data || (receiver._data = new this(receiver,path,args));
+	proxy.bind(data,path,args);
+	return receiver;
+};
+
+DataProxy.prototype.bind = function (data,key,args){
+	if (data != this._data) {
+		this._data = data;
 	};
-	return this._context;
+	return this;
 };
 
-DataValue.prototype.data = function (){
-	var ctx = this.context();
-	return ctx ? ctx.data() : null;
+DataProxy.prototype.getFormValue = function (){
+	return this._setter ? this._data[this._path]() : this._data[this._path];
 };
 
-DataValue.prototype.lazy = function (){
-	return this._mods.lazy;
+DataProxy.prototype.setFormValue = function (value){
+	return this._setter ? this._data[this._setter](value) : ((this._data[this._path] = value));
 };
 
-DataValue.prototype.get = function (){
-	let data = this.data();
-	if (!data) { return null };
-	let val = data[this._path];
-	return ((val instanceof Function) && data[this._setter]) ? data[this._path]() : val;
-};
 
-DataValue.prototype.set = function (value){
-	let data = this.data();
-	if (!data) { return };
-	
-	let prev = data[this._path];
-	if (prev instanceof Function) {
-		if (data[this._setter] instanceof Function) {
-			data[this._setter](value);
-			return this;
-		};
-	};
-	return data[this._path] = value;
-};
-
-DataValue.prototype.isArray = function (val){
-	if(val === undefined) val = this.get();
+var isArray = function(val) {
 	return val && val.splice && val.sort;
 };
 
-DataValue.prototype.mod = function (value){
-	var self = this;
-	if (value instanceof Array) {
-		return value.map(function(_0) { return self.mod(_0); });
+var isSimilarArray = function(a,b) {
+	let l = a.length,i = 0;
+	if (l != b.length) { return false };
+	while (i++ < l){
+		if (a[i] != b[i]) { return false };
 	};
-	if (self._mods.trim && (typeof value=='string'||value instanceof String)) {
-		value = value.trim();
-	};
-	if (self._mods.number) {
-		value = parseFloat(value);
-	};
-	return value;
+	return true;
 };
 
 Imba.extendTag('input', function(tag){
-	tag.prototype.model = function (){
-		return this._model;
+	tag.prototype.lazy = function(v){ return this._lazy; }
+	tag.prototype.setLazy = function(v){ this._lazy = v; return this; };
+	
+	tag.prototype.setModel = function (){
+		console.warn("setModel removed. Use <input[data:path]>");
+		return this;
 	};
 	
-	tag.prototype.setModel = function (value,mods){
-		this._model || (this._model = new DataValue(this,value,mods));
+	tag.prototype.bindData = function (target,path,args){
+		DataProxy.bind(this,target,path,args);
 		return this;
 	};
 	
@@ -2653,24 +2631,23 @@ Imba.extendTag('input', function(tag){
 	tag.prototype.oninput = function (e){
 		let val = this._dom.value;
 		this._localValue = (this._initialValue != val) ? val : undefined;
-		return (this.model() && !this.model().lazy()) ? this.model().set(this.value()) : e.silence();
+		return (this._data && !(this.lazy())) ? this._data.setFormValue(this.value(),this) : e.silence();
 	};
 	
 	tag.prototype.onchange = function (e){
 		this._modelValue = this._localValue = undefined;
-		if (!(this.model())) { return e.silence() };
+		if (!(this.data())) { return e.silence() };
 		
 		if (this.type() == 'radio' || this.type() == 'checkbox') {
 			let checked = this._dom.checked;
-			let mval = this.model().get();
+			let mval = this._data.getFormValue(this);
 			let dval = (this._value != undefined) ? this._value : this.value();
-			// console.log "change",type,checked,dval
 			
 			if (this.type() == 'radio') {
-				return this.model().set(dval,true);
+				return this._data.setFormValue(dval,this);
 			} else if (this.dom().value == 'on') {
-				return this.model().set(!!checked,true);
-			} else if (this.model().isArray()) {
+				return this._data.setFormValue(!!checked,this);
+			} else if (isArray(mval)) {
 				let idx = mval.indexOf(dval);
 				if (checked && idx == -1) {
 					return mval.push(dval);
@@ -2678,23 +2655,23 @@ Imba.extendTag('input', function(tag){
 					return mval.splice(idx,1);
 				};
 			} else {
-				return this.model().set(dval);
+				return this._data.setFormValue(dval,this);
 			};
 		} else {
-			return this.model().set(this.value());
+			return this._data.setFormValue(this.value());
 		};
 	};
 	
 	// overriding end directly for performance
 	tag.prototype.end = function (){
-		if (!this._model || this._localValue !== undefined) { return this };
-		let mval = this._model.get();
+		if (!this._data || this._localValue !== undefined) { return this };
+		let mval = this._data.getFormValue(this);
 		if (mval == this._modelValue) { return this };
-		if (!this.model().isArray()) { this._modelValue = mval };
+		if (!isArray(mval)) { this._modelValue = mval };
 		
 		if (this.type() == 'radio' || this.type() == 'checkbox') {
 			let dval = this._value;
-			let checked = this.model().isArray() ? (
+			let checked = isArray(mval) ? (
 				mval.indexOf(dval) >= 0
 			) : ((this.dom().value == 'on') ? (
 				!!mval
@@ -2712,12 +2689,16 @@ Imba.extendTag('input', function(tag){
 });
 
 Imba.extendTag('textarea', function(tag){
-	tag.prototype.model = function (){
-		return this._model;
-	};
+	tag.prototype.lazy = function(v){ return this._lazy; }
+	tag.prototype.setLazy = function(v){ this._lazy = v; return this; };
 	
 	tag.prototype.setModel = function (value,mods){
-		this._model || (this._model = new DataValue(this,value,mods));
+		console.warn("setModel removed. Use <textarea[data:path]>");
+		return this;
+	};
+	
+	tag.prototype.bindData = function (target,path,args){
+		DataProxy.bind(this,target,path,args);
 		return this;
 	};
 	
@@ -2729,19 +2710,17 @@ Imba.extendTag('textarea', function(tag){
 	tag.prototype.oninput = function (e){
 		let val = this._dom.value;
 		this._localValue = (this._initialValue != val) ? val : undefined;
-		return (this.model() && !this.model().lazy()) ? this.model().set(this.value()) : e.silence();
+		return (this._data && !(this.lazy())) ? this._data.setFormValue(this.value(),this) : e.silence();
 	};
 	
 	tag.prototype.onchange = function (e){
 		this._localValue = undefined;
-		return this.model() ? this.model().set(this.value()) : e.silence();
+		return this._data ? this._data.setFormValue(this.value(),this) : e.silence();
 	};
 	
 	tag.prototype.render = function (){
-		if (this._localValue != undefined || !(this.model())) { return };
-		if (this.model()) {
-			this._dom.value = this.model().get();
-		};
+		if (this._localValue != undefined || !this._data) { return };
+		if (this._data) { this._dom.value = this._data.getFormValue(this) };
 		this._initialValue = this._dom.value;
 		return this;
 	};
@@ -2761,30 +2740,51 @@ Imba.extendTag('option', function(tag){
 });
 
 Imba.extendTag('select', function(tag){
-	tag.prototype.model = function (){
-		return this._model;
-	};
-	
-	tag.prototype.setModel = function (value,mods){
-		this._model || (this._model = new DataValue(this,value,mods));
+	tag.prototype.bindData = function (target,path,args){
+		DataProxy.bind(this,target,path,args);
 		return this;
 	};
 	
-	tag.prototype.setValue = function (value){
-		if (value != this._value) {
-			this._value = value;
-			if (typeof value == 'object') {
-				for (let i = 0, items = iter$(this.dom().options), len = items.length, opt; i < len; i++) {
-					opt = items[i];
-					let oval = (opt._tag ? opt._tag.value() : opt.value);
-					if (value == oval) {
-						this.dom().selectedIndex = i;
-						break;
-					};
-				};
-			} else {
-				this.dom().value = value;
+	tag.prototype.setModel = function (value,mods){
+		console.warn("setModel removed. Use <select[data:path]>");
+		return this;
+	};
+	
+	tag.prototype.setValue = function (value,syncing){
+		let prev = this._value;
+		this._value = value;
+		if (!syncing) { this.syncValue(value) };
+		return this;
+	};
+	
+	tag.prototype.syncValue = function (value){
+		let prev = this._syncValue;
+		// check if value has changed
+		if (this.multiple() && (value instanceof Array)) {
+			if ((prev instanceof Array) && isSimilarArray(prev,value)) {
+				return this;
 			};
+			// create a copy for syncValue
+			value = value.slice();
+		};
+		
+		this._syncValue = value;
+		// support array for multiple?
+		if (typeof value == 'object') {
+			let mult = this.multiple() && (value instanceof Array);
+			
+			for (let i = 0, items = iter$(this.dom().options), len = items.length, opt; i < len; i++) {
+				opt = items[i];
+				let oval = (opt._tag ? opt._tag.value() : opt.value);
+				if (mult) {
+					opt.selected = value.indexOf(oval) >= 0;
+				} else if (value == oval) {
+					this.dom().selectedIndex = i;
+					break;
+				};
+			};
+		} else {
+			this.dom().value = value;
 		};
 		return this;
 	};
@@ -2804,25 +2804,16 @@ Imba.extendTag('select', function(tag){
 	};
 	
 	tag.prototype.onchange = function (e){
-		return this.model() ? this.model().set(this.value()) : e.silence();
+		return this._data ? this._data.setFormValue(this.value(),this) : e.silence();
 	};
 	
-	tag.prototype.render = function (){
-		if (!(this.model())) { return };
+	tag.prototype.end = function (){
+		if (this._data) {
+			this.setValue(this._data.getFormValue(this),1);
+		};
 		
-		let mval = this.model().get();
-		// sync dom value
-		if (this.multiple()) {
-			for (let i = 0, items = iter$(this.dom().options), len = items.length, option; i < len; i++) {
-				option = items[i];
-				let oval = this.model().mod(option._tag ? option._tag.value() : option.value);
-				let sel = mval.indexOf(oval) >= 0;
-				option.selected = sel;
-			};
-		} else {
-			this.setValue(mval);
-			// what if mval is rich? Would be nice with some mapping
-			// dom:value = mval
+		if (this._value != this._syncValue) {
+			this.syncValue(this._value);
 		};
 		return this;
 	};
@@ -8663,7 +8654,7 @@ describe('Syntax - Tags',function() {
 								if (item % 2 == 0) {
 									continue;
 								};
-								$$.push(($0[i] || _1(Radio,$0,i).setName('type').setTabindex(1)).setValue(item).end());
+								$$.push(($0[i] || _1(Radio,$0,i).setName('type').setTabindex(1)).setValue(item,1).end());
 							};return $$;
 						})($[1] || _3($,1,$[0]))
 					,5).end()
@@ -9210,7 +9201,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("idn attributes",function() {
-		var el = (_1('input').setType('checkbox').setRequired(true).setDisabled(false).setChecked(true).setValue("a")).end();
+		var el = (_1('input').setType('checkbox').setRequired(true).setDisabled(false).setChecked(true).setValue("a",1)).end();
 		var html = el.dom().outerHTML;
 		
 		eq(el.dom().required,true);
