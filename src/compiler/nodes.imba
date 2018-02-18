@@ -6263,7 +6263,9 @@ export class TagHandler < TagPart
 		# if !value.isPrimitive and !(value isa Func and !value.nonlocals)
 		# 	@dyn ||= []
 		# 	@dyn.push(parts:length)
-		return "on$({slot},[{cary__(parts)}])"
+		# find the context
+		return "on$({slot},[{cary__(parts)}],{scope__.context.c})"
+
 		#		let dl = @dyn and @dyn:length
 		#
 		#		if dl == 1

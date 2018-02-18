@@ -60,15 +60,13 @@ tag Custom
 		emits.push('Custom')
 	
 tag Example
-	
-	def meth
-		emits.push('Example')
-		
-	def emeth
-		emits.push('Example')
-		
+	# if nothing stops tap before reaching Example
+	# ontap will be triggered
 	def ontap
-		emits.push('tapa')
+		emits.push(0)
+		
+	def mark *pars
+		emits.push(*pars)
 	
 	def render
 		<self>
@@ -78,36 +76,36 @@ tag Example
 				<Custom@c ref='c'>
 					"C"
 					<div@d ref='d'> "D"
+
+			<div :tap.mark(1)>
+				<div@ctrl :tap.stop.ctrl.mark(2)>
+				<div@shift :tap.stop.ctrl.mark(2)>
+				<div@alt :tap.alt.stop.mark(2)>
+				<div@stops :tap.stop.mark(2)>
+				<div@bubbles :tap.mark(2)>
+				<div@self1 :tap.self.mark(2)> <b@inner1> "Label"
+				<div@self2 :tap.stop.self.mark(2)> <b@inner2> "Label"
+				
 				
 	def tagAction
 		emits.push(this)
 		self
 
 	def testModifiers
+		eq @stops.click, [2]
+		eq @bubbles.click, [2,1,0]
+		eq @ctrl.click,[]
+		eq @ctrl.click(ctrlKey: yes),[2]
 		
-		# test self
-		@c.on('tap','mark')
-		eq @d.click, ['c']
+		eq @alt.click, [1,0]
+		eq @alt.click(altKey: yes), [2]
 		
-		@c.on('tap','self','mark')
-		eq @d.click, ['tapa']
-
-		@c.on('tap','emeth')
-		eq @d.click, ['Example']
-		
-		eq @b.on('tap','mark').click, ['b']
-		eq @b.on('tap',['mark',1,2]).click, [1,2]
-		
-		# fall through
-		eq @b.on('tap','bubble','mark').click, ['b','tapa']
-		
-		# alt modifier
-		eq @b.on('tap','alt','mark').click, ['tapa']
-		eq @b.on('tap','stop','alt','mark').click, []
-		eq @b.on('tap','stop','alt',['mark',true]).click(altKey: yes), [true]
-		eq @b.on('tap','mark').click, ['b']
-		
-		self
+		# test .self modifier
+		eq @self1.click, [2,1,0]
+		eq @self2.click, [2]
+		eq @inner1.click, [1,0]
+		eq @inner2.click, []
+		return
 
 describe "Tags - Events" do
 	var node = <Example[store]>

@@ -40,9 +40,9 @@ describe 'Syntax - Tags' do
 		
 	# events
 	test 'events' do
-		jseq "(0,['tap','prevent','after'])" do <div.two :tap.prevent.after>
-		jseq "(0,['tap',['incr',10]])" do <div.two :tap.incr(10)>
-		jseq "(0,['tap',fnvar])" do <div.two :tap=fnvar>
+		jseq "(0,['tap','prevent','after'],self)" do <div.two :tap.prevent.after>
+		jseq "(0,['tap',['incr',10]],self)" do <div.two :tap.incr(10)>
+		jseq "(0,['tap',fnvar],self)" do <div.two :tap=fnvar>
 
 	test 'data' do
 		jseq "setData(objvar)" do <div[objvar]>

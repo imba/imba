@@ -24,11 +24,9 @@ def el.selfModifier e do e.event:target == @dom
 def el.leftModifier e do e.button != undefined ? (e.button === 0) : el.keyModifier(37,e)
 def el.rightModifier e do e.button != undefined ? (e.button === 2) : el.keyModifier(39,e)
 def el.middleModifier e do e.button != undefined ? (e.button === 1) : true
-def el.getHandler str do
-	if self[str]
-		return self
-	elif @data and @data[str] isa Function
-		return @data
+	
+def el.getHandler str, event
+	return self if self[str]
 
 ###
 Imba handles all events in the dom through a single manager,
@@ -189,16 +187,29 @@ class Imba.Event
 			if typeof handler == 'string'
 				let el = node
 				let fn = null
-				while el and (!fn or !(fn isa Function))
-					if fn = el.getHandler(handler)
-						if fn[handler] isa Function
-							handler = fn[handler]
-							context = fn
-						elif fn isa Function
-							handler = fn
-							context = el
-					else
-						el = el.parent
+				let ctx = state:context
+	
+				if ctx
+					if ctx:getHandler isa Function
+						ctx = ctx.getHandler(handler,self)
+					
+					if ctx[handler] isa Function
+						handler = fn = ctx[handler]
+						context = ctx
+
+				unless fn
+					console.warn "event {type}: could not find '{handler}' in context",ctx
+
+				# while el and (!fn or !(fn isa Function))
+				# 	if fn = el.getHandler(handler)
+				# 		if fn[handler] isa Function
+				# 			handler = fn[handler]
+				# 			context = fn
+				# 		elif fn isa Function
+				# 			handler = fn
+				# 			context = el
+				# 	else
+				# 		el = el.parent
 					
 			if handler isa Function
 				# what if we actually call stop inside function?

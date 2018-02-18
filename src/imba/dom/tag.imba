@@ -199,7 +199,7 @@ class Imba.Tag
 	def html
 		@dom:innerHTML
 	
-	def on$ slot,handler
+	def on$ slot,handler,context
 		let handlers = @on_ ||= []
 		let prev = handlers[slot]
 		# self-bound handlers
@@ -211,7 +211,10 @@ class Imba.Tag
 			prev = handlers[slot]
 		
 		handlers[slot] = handler
-		handler:state = prev:state if prev
+		if prev
+			handler:state = prev:state
+		else
+			handler:state = {context: context}
 		return self
 
 

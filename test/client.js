@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.11'};
+var Imba = {VERSION: '1.3.0-beta.12'};
 
 /*
 
@@ -1359,7 +1359,7 @@ Imba.Tag.prototype.html = function (){
 	return this._dom.innerHTML;
 };
 
-Imba.Tag.prototype.on$ = function (slot,handler){
+Imba.Tag.prototype.on$ = function (slot,handler,context){
 	let handlers = this._on_ || (this._on_ = []);
 	let prev = handlers[slot];
 	// self-bound handlers
@@ -1373,7 +1373,11 @@ Imba.Tag.prototype.on$ = function (slot,handler){
 	};
 	
 	handlers[slot] = handler;
-	if (prev) { handler.state = prev.state };
+	if (prev) {
+		handler.state = prev.state;
+	} else {
+		handler.state = {context: context};
+	};
 	return this;
 };
 
@@ -2720,7 +2724,10 @@ Imba.extendTag('textarea', function(tag){
 	
 	tag.prototype.render = function (){
 		if (this._localValue != undefined || !this._data) { return };
-		if (this._data) { this._dom.value = this._data.getFormValue(this) };
+		if (this._data) {
+			let dval = this._data.getFormValue(this);
+			this._dom.value = (dval != undefined) ? dval : '';
+		};
 		this._initialValue = this._dom.value;
 		return this;
 	};
@@ -3448,12 +3455,9 @@ el.rightModifier = function (e){
 el.middleModifier = function (e){
 	return (e.button() != undefined) ? ((e.button() === 1)) : true;
 };
-el.getHandler = function (str){
-	if (this[str]) {
-		return this;
-	} else if (this._data && (this._data[str] instanceof Function)) {
-		return this._data;
-	};
+
+el.getHandler = function (str,event){
+	if (this[str]) { return this };
 };
 
 /*
@@ -3661,19 +3665,33 @@ Imba.Event.prototype.processHandlers = function (node,handlers){
 		if (typeof handler == 'string') {
 			let el = node;
 			let fn = null;
-			while (el && (!fn || !(fn instanceof Function))){
-				if (fn = el.getHandler(handler)) {
-					if (fn[handler] instanceof Function) {
-						handler = fn[handler];
-						context = fn;
-					} else if (fn instanceof Function) {
-						handler = fn;
-						context = el;
-					};
-				} else {
-					el = el.parent();
+			let ctx = state.context;
+			
+			if (ctx) {
+				if (ctx.getHandler instanceof Function) {
+					ctx = ctx.getHandler(handler,this);
+				};
+				
+				if (ctx[handler] instanceof Function) {
+					handler = fn = ctx[handler];
+					context = ctx;
 				};
 			};
+			
+			if (!fn) {
+				console.warn(("event " + this.type() + ": could not find '" + handler + "' in context"),ctx);
+			};
+			
+			// while el and (!fn or !(fn isa Function))
+			// 	if fn = el.getHandler(handler)
+			// 		if fn[handler] isa Function
+			// 			handler = fn[handler]
+			// 			context = fn
+			// 		elif fn isa Function
+			// 			handler = fn
+			// 			context = el
+			// 	else
+			// 		el = el.parent
 		};
 		
 		if (handler instanceof Function) {
@@ -8410,9 +8428,9 @@ describe('Syntax - Tags',function() {
 	
 	// events
 	test('events',function() {
-		jseq("(0,['tap','prevent','after'])",function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'])); });
-		jseq("(0,['tap',['incr',10]])",function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]])); });
-		return jseq("(0,['tap',fnvar])",function() { return (_1('div').flag('two')).on$(0,['tap',fnvar]).end(); });
+		jseq("(0,['tap','prevent','after'],self)",function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],self)); });
+		jseq("(0,['tap',['incr',10]],self)",function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],self)); });
+		return jseq("(0,['tap',fnvar],self)",function() { return (_1('div').flag('two')).on$(0,['tap',fnvar],self).end(); });
 	});
 	
 	test('data',function() {
@@ -9261,7 +9279,7 @@ describe('Tags - Define',function() {
 		var Cache = Imba.defineTag('Cache', function(tag){
 			tag.prototype.render = function (){
 				var self = this, $ = this.$;
-				return self.$open(0).setChildren(self._body = self._body||_1('div',self).flag('body').on$(0,['tap',function(e) { return self.title(); }]),2).synced();
+				return self.$open(0).setChildren(self._body = self._body||_1('div',self).flag('body').on$(0,['tap',function(e) { return self.title(); }],self),2).synced();
 			};
 		});
 		
@@ -9277,7 +9295,7 @@ describe('Tags - Define',function() {
 			tag.prototype.render = function (arg){
 				var $ = this.$;
 				return this.$open(0).setChildren(this._body = this._body||_1('div',this).flag('body'),2).synced((
-					this._body.on$(0,['tap',function(e) { return arg; }]).end()
+					this._body.on$(0,['tap',function(e) { return arg; }],this).end()
 				,true));
 			};
 		});
@@ -11988,21 +12006,21 @@ var Custom = Imba.defineTag('Custom', function(tag){
 });
 
 var Example = Imba.defineTag('Example', function(tag){
-	
-	tag.prototype.meth = function (){
-		return emits.push('Example');
-	};
-	
-	tag.prototype.emeth = function (){
-		return emits.push('Example');
-	};
-	
+	// if nothing stops tap before reaching Example
+	// ontap will be triggered
 	tag.prototype.ontap = function (){
-		return emits.push('tapa');
+		return emits.push(0);
+	};
+	
+	tag.prototype.mark = function (){
+		var $0 = arguments, i = $0.length;
+		var pars = new Array(i>0 ? i : 0);
+		while(i>0) pars[i-1] = $0[--i];
+		return emits.push.apply(emits,pars);
 	};
 	
 	tag.prototype.render = function (){
-		var $ = this.$, t0, t1;
+		var $ = this.$, t0, t1, t2, t3, t4;
 		return this.$open(0).setChildren($.$ = $.$ || [
 			"A",
 			t0 = this._b = this._b||(t0=_1('div',this)).flag('b').setRef('b').setContent([
@@ -12011,13 +12029,28 @@ var Example = Imba.defineTag('Example', function(tag){
 					"C",
 					this._d = this._d||_1('div',t1).flag('d').setRef('d').setText("D")
 				],2)
+			],2),
+			
+			t2 = (t2=_1('div',$,0,this)).on$(0,['tap',['mark',1]],this).setContent([
+				this._ctrl = this._ctrl||_1('div',t2).flag('ctrl').on$(0,['tap','stop','ctrl',['mark',2]],this),
+				this._shift = this._shift||_1('div',t2).flag('shift').on$(0,['tap','stop','ctrl',['mark',2]],this),
+				this._alt = this._alt||_1('div',t2).flag('alt').on$(0,['tap','alt','stop',['mark',2]],this),
+				this._stops = this._stops||_1('div',t2).flag('stops').on$(0,['tap','stop',['mark',2]],this),
+				this._bubbles = this._bubbles||_1('div',t2).flag('bubbles').on$(0,['tap',['mark',2]],this),
+				t3 = this._self1 = this._self1||(t3=_1('div',t2)).flag('self1').on$(0,['tap','self',['mark',2]],this).setContent(this._inner1 = this._inner1||_1('b',t3).flag('inner1').setText("Label"),2),
+				t4 = this._self2 = this._self2||(t4=_1('div',t2)).flag('self2').on$(0,['tap','stop','self',['mark',2]],this).setContent(this._inner2 = this._inner2||_1('b',t4).flag('inner2').setText("Label"),2)
 			],2)
 		],2).synced((
 			this._b.end((
 				this._c.end()
+			,true)),
+			$[0].end((
+				this._self1.end(),
+				this._self2.end()
 			,true))
 		,true));
 	};
+	
 	
 	tag.prototype.tagAction = function (){
 		emits.push(this);
@@ -12025,30 +12058,20 @@ var Example = Imba.defineTag('Example', function(tag){
 	};
 	
 	tag.prototype.testModifiers = function (){
+		eq(this._stops.click(),[2]);
+		eq(this._bubbles.click(),[2,1,0]);
+		eq(this._ctrl.click(),[]);
+		eq(this._ctrl.click({ctrlKey: true}),[2]);
 		
-		// test self
-		this._c.on('tap','mark');
-		eq(this._d.click(),['c']);
+		eq(this._alt.click(),[1,0]);
+		eq(this._alt.click({altKey: true}),[2]);
 		
-		this._c.on('tap','self','mark');
-		eq(this._d.click(),['tapa']);
-		
-		this._c.on('tap','emeth');
-		eq(this._d.click(),['Example']);
-		
-		eq(this._b.on('tap','mark').click(),['b']);
-		eq(this._b.on('tap',['mark',1,2]).click(),[1,2]);
-		
-		// fall through
-		eq(this._b.on('tap','bubble','mark').click(),['b','tapa']);
-		
-		// alt modifier
-		eq(this._b.on('tap','alt','mark').click(),['tapa']);
-		eq(this._b.on('tap','stop','alt','mark').click(),[]);
-		eq(this._b.on('tap','stop','alt',['mark',true]).click({altKey: true}),[true]);
-		eq(this._b.on('tap','mark').click(),['b']);
-		
-		return this;
+		// test .self modifier
+		eq(this._self1.click(),[2,1,0]);
+		eq(this._self2.click(),[2]);
+		eq(this._inner1.click(),[1,0]);
+		eq(this._inner2.click(),[]);
+		return;
 	};
 });
 
