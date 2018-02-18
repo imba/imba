@@ -3485,6 +3485,9 @@ Imba.Event.prototype.setEvent = function(v){ this._event = v; return this; };
 Imba.Event.prototype.prefix = function(v){ return this._prefix; }
 Imba.Event.prototype.setPrefix = function(v){ this._prefix = v; return this; };
 
+Imba.Event.prototype.source = function(v){ return this._source; }
+Imba.Event.prototype.setSource = function(v){ this._source = v; return this; };
+
 Imba.Event.prototype.data = function(v){ return this._data; }
 Imba.Event.prototype.setData = function(v){ this._data = v; return this; };
 
@@ -12038,7 +12041,9 @@ var Example = Imba.defineTag('Example', function(tag){
 				this._stops = this._stops||_1('div',t2).flag('stops').on$(0,['tap','stop',['mark',2]],this),
 				this._bubbles = this._bubbles||_1('div',t2).flag('bubbles').on$(0,['tap',['mark',2]],this),
 				t3 = this._self1 = this._self1||(t3=_1('div',t2)).flag('self1').on$(0,['tap','self',['mark',2]],this).setContent(this._inner1 = this._inner1||_1('b',t3).flag('inner1').setText("Label"),2),
-				t4 = this._self2 = this._self2||(t4=_1('div',t2)).flag('self2').on$(0,['tap','stop','self',['mark',2]],this).setContent(this._inner2 = this._inner2||_1('b',t4).flag('inner2').setText("Label"),2)
+				t4 = this._self2 = this._self2||(t4=_1('div',t2)).flag('self2').on$(0,['tap','stop','self',['mark',2]],this).setContent(this._inner2 = this._inner2||_1('b',t4).flag('inner2').setText("Label"),2),
+				
+				this._redir = this._redir||_1('div',t2).flag('redir').on$(0,['tap','stop',['trigger','redir']],this).setText("Label")
 			],2)
 		],2).synced((
 			this._b.end((
@@ -12049,6 +12054,10 @@ var Example = Imba.defineTag('Example', function(tag){
 				this._self2.end()
 			,true))
 		,true));
+	};
+	
+	tag.prototype.onredir = function (){
+		return emits.push('redir');
 	};
 	
 	
@@ -12071,6 +12080,8 @@ var Example = Imba.defineTag('Example', function(tag){
 		eq(this._self2.click(),[2]);
 		eq(this._inner1.click(),[1,0]);
 		eq(this._inner2.click(),[]);
+		
+		eq(this._redir.click(),['redir']);
 		return;
 	};
 });

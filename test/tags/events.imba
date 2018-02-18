@@ -85,6 +85,11 @@ tag Example
 				<div@bubbles :tap.mark(2)>
 				<div@self1 :tap.self.mark(2)> <b@inner1> "Label"
 				<div@self2 :tap.stop.self.mark(2)> <b@inner2> "Label"
+			
+				<div@redir :tap.stop.trigger(:redir)> "Label"
+				
+	def onredir
+		emits.push('redir')
 				
 				
 	def tagAction
@@ -105,6 +110,8 @@ tag Example
 		eq @self2.click, [2]
 		eq @inner1.click, [1,0]
 		eq @inner2.click, []
+		
+		eq @redir.click, ['redir']
 		return
 
 describe "Tags - Events" do

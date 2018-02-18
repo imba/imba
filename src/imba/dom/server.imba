@@ -185,7 +185,7 @@ global class ImbaServerElement
 		self
 		
 	def resolve
-		if @resolvedChildren != @tag.@tree_
+		if @tag and @resolvedChildren != @tag.@tree_
 			var content = @tag.@tree_
 			@resolvedChildren = content
 			@children = []
