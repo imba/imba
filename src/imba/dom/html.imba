@@ -1,15 +1,12 @@
 var Imba = require("../imba")
 
-# predefine all supported html tags
 tag fragment < element
-
 	def self.createNode
 		Imba.document.createDocumentFragment
 
 extend tag html
 	def parent
 		null
-
 
 extend tag canvas
 	def context type = '2d'
@@ -52,10 +49,6 @@ var isSimilarArray = do |a,b|
 extend tag input
 	prop lazy
 
-	def setModel
-		console.warn "setModel removed. Use <input[data:path]>"
-		return self
-	
 	def bindData target, path, args
 		DataProxy.bind(self,target,path,args)
 		self
@@ -118,10 +111,6 @@ extend tag input
 extend tag textarea
 	prop lazy
 
-	def setModel value, mods
-		console.warn "setModel removed. Use <textarea[data:path]>"
-		return self
-		
 	def bindData target, path, args
 		DataProxy.bind(self,target,path,args)
 		self
@@ -160,11 +149,7 @@ extend tag select
 	def bindData target, path, args
 		DataProxy.bind(self,target,path,args)
 		self
-		
-	def setModel value, mods
-		console.warn "setModel removed. Use <select[data:path]>"
-		return self
-		
+
 	def setValue value, syncing
 		let prev = @value
 		@value = value

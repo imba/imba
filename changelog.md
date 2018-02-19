@@ -1,36 +1,19 @@
-## master
-* Implement radically improved inline caching strategy
-
-## 1.3.0-beta.6
-* Fix regression in beta.5 where dynamic setData would be cached
-
-## 1.3.0-beta.5
-* Reintroduce style,setStyle on Imba.Tag
-* Introduce new event syntax allowing for custom event modifiers
-
-## 1.3.0-beta.4
-* Correctly allow `def` inside object literals
+## 1.3.0
+* Add support for event modifiers (e.g. `<div :keydown.enter.myHandler>`)
+* Add support for form input bindings (e.g. `<input[data:myField]>`)
+* Allow method definitions inside object literals
 * Better error reporting from parser when running through `imba` cli
-* Make Form model bindings check for property definition on data
-
-## 1.3.0-beta.3
 * Add automatic cache pruning for loops
-* Improve rendering performance
-
-## 1.3.0-beta.2
-* Events will try to resolve string actions (e.g. `<div :tap='myAction'>`) on ascending tags and their data.
-
-## 1.3.0-beta.1
-* Add support for event modifiers (e.g. `<div :keydown.enter.halt=...>`)
-* Add support for form input bindings (e.g. `<input[data] model='myField'>`)
-* Allow all attributes on svg elements
-* Remove deprecated selector-syntax
-* Remove deprecated methods on Imba.Tag (object,width,height,append,prepend,style,setStyle)
-* Remove deprecated methods on Imba.Event (keychar,keycombo,source)
-* Remove deprecated Imba.isClient and Imba.isServer
 * Improve performance of setText
 * Improve performance of non-keyed tag lists
-* 30% smaller library (now 53k minified, 14k gzipped)
+* Implement radically improved inline caching strategy
+* Improve overall rendering performance
+* Allow all attributes on svg elements
+* 25% smaller library (now 57k minified, 15k gzipped)
+* Remove deprecated selector-syntax
+* Remove deprecated methods on Imba.Tag (object,width,height,append,prepend)
+* Remove deprecated methods on Imba.Event (keychar,keycombo)
+* Remove deprecated Imba.isClient and Imba.isServer
 
 ## 1.2.1
 * Allow reconciler to work with tag-like objects

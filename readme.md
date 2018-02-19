@@ -8,13 +8,11 @@
 Imba is a new programming language for the web that compiles
 to performant and readable JavaScript. It has language level
 support for defining, extending, subclassing, instantiating
-and rendering dom nodes. For a semi-complex application like
-[TodoMVC](http://todomvc.com), it is more than **[20 times faster than React](https://github.com/somebee/todomvc-render-benchmark)**
-with less code, and a much smaller library.
+and rendering dom nodes.
 
 ## Documentation
 
-To get started with Imba, we recommend reading through the [official guide](http://imba.io/guides).
+To get started with Imba, we recommend reading through the [official guide](http://imba.io/guide). If you just want to get going, clone [hello-world-imba](https://github.com/somebee/hello-world-imba) and follow the readme.
 
 ## Questions
 
@@ -31,7 +29,6 @@ Get **[Node.js](http://nodejs.org)** and **[npm](http://npmjs.org)**, or **[Yarn
 
 - `npm install -g imba`
 - `yarn add --global imba`
-
 
 ## Usage
 
@@ -52,11 +49,11 @@ The `imbapack` utility is a convenient wrapper around `webpack`, which preproces
 ### Webpack Config
 
 The following should be sufficient in most cases:
-```json
+```js
 {
   test: /\.imba$/,
-  loader: 'imba/loader',
-},
+  loader: 'imba/loader'
+}
 ```
 
 ### imbac

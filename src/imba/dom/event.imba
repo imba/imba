@@ -42,7 +42,6 @@ class Imba.Event
 	### reference to the native event ###
 	prop event
 
-	### reference to the native event ###
 	prop prefix
 	
 	prop source

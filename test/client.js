@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.0-beta.12'};
+var Imba = {VERSION: '1.3.0'};
 
 /*
 
@@ -2549,9 +2549,7 @@ Imba.Tag;
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(1);
 
-// predefine all supported html tags
 Imba.defineTag('fragment', 'element', function(tag){
-	
 	tag.createNode = function (){
 		return Imba.document().createDocumentFragment();
 	};
@@ -2562,7 +2560,6 @@ Imba.extendTag('html', function(tag){
 		return null;
 	};
 });
-
 
 Imba.extendTag('canvas', function(tag){
 	tag.prototype.context = function (type){
@@ -2616,11 +2613,6 @@ var isSimilarArray = function(a,b) {
 Imba.extendTag('input', function(tag){
 	tag.prototype.lazy = function(v){ return this._lazy; }
 	tag.prototype.setLazy = function(v){ this._lazy = v; return this; };
-	
-	tag.prototype.setModel = function (){
-		console.warn("setModel removed. Use <input[data:path]>");
-		return this;
-	};
 	
 	tag.prototype.bindData = function (target,path,args){
 		DataProxy.bind(this,target,path,args);
@@ -2696,11 +2688,6 @@ Imba.extendTag('textarea', function(tag){
 	tag.prototype.lazy = function(v){ return this._lazy; }
 	tag.prototype.setLazy = function(v){ this._lazy = v; return this; };
 	
-	tag.prototype.setModel = function (value,mods){
-		console.warn("setModel removed. Use <textarea[data:path]>");
-		return this;
-	};
-	
 	tag.prototype.bindData = function (target,path,args){
 		DataProxy.bind(this,target,path,args);
 		return this;
@@ -2749,11 +2736,6 @@ Imba.extendTag('option', function(tag){
 Imba.extendTag('select', function(tag){
 	tag.prototype.bindData = function (target,path,args){
 		DataProxy.bind(this,target,path,args);
-		return this;
-	};
-	
-	tag.prototype.setModel = function (value,mods){
-		console.warn("setModel removed. Use <select[data:path]>");
 		return this;
 	};
 	
@@ -3479,8 +3461,6 @@ Imba.Event = function Event(e){
 
 Imba.Event.prototype.event = function(v){ return this._event; }
 Imba.Event.prototype.setEvent = function(v){ this._event = v; return this; };
-
-/* reference to the native event */
 
 Imba.Event.prototype.prefix = function(v){ return this._prefix; }
 Imba.Event.prototype.setPrefix = function(v){ this._prefix = v; return this; };
