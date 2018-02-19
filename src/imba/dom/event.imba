@@ -65,11 +65,8 @@ class Imba.Event
 	###
 	@return {String} The name of the event (case-insensitive)
 	###
-	def type
-		@type || event:type
-	
-	def button do event:button
-	def keyCode do event:keyCode
+	def type do @type || event:type
+	def native do @event
 
 	def name
 		@name ||= type.toLowerCase.replace(/\:/g,'')
@@ -287,13 +284,21 @@ class Imba.Event
 	Return the x/left coordinate of the mouse / pointer for this event
 	@return {Number} x coordinate of mouse / pointer for event
 	###
-	def x do event:x
+	def x do native:x
 
 	###
 	Return the y/top coordinate of the mouse / pointer for this event
 	@return {Number} y coordinate of mouse / pointer for event
 	###
-	def y do event:y
+	def y do native:y
+		
+	def button do native:button
+	def keyCode do native:keyCode
+	def ctrl do native:ctrlKey
+	def alt do native:altKey
+	def shift do native:shiftKey
+	def meta do native:metaKey
+	def key do native:key
 
 	###
 	Returns a Number representing a system and implementation

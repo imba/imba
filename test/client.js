@@ -3511,12 +3511,8 @@ Imba.Event.prototype.setType = function (type){
 Imba.Event.prototype.type = function (){
 	return this._type || this.event().type;
 };
-
-Imba.Event.prototype.button = function (){
-	return this.event().button;
-};
-Imba.Event.prototype.keyCode = function (){
-	return this.event().keyCode;
+Imba.Event.prototype.native = function (){
+	return this._event;
 };
 
 Imba.Event.prototype.name = function (){
@@ -3794,7 +3790,7 @@ Imba.Event.prototype.processed = function (){
 	*/
 
 Imba.Event.prototype.x = function (){
-	return this.event().x;
+	return this.native().x;
 };
 
 /*
@@ -3803,7 +3799,29 @@ Imba.Event.prototype.x = function (){
 	*/
 
 Imba.Event.prototype.y = function (){
-	return this.event().y;
+	return this.native().y;
+};
+
+Imba.Event.prototype.button = function (){
+	return this.native().button;
+};
+Imba.Event.prototype.keyCode = function (){
+	return this.native().keyCode;
+};
+Imba.Event.prototype.ctrl = function (){
+	return this.native().ctrlKey;
+};
+Imba.Event.prototype.alt = function (){
+	return this.native().altKey;
+};
+Imba.Event.prototype.shift = function (){
+	return this.native().shiftKey;
+};
+Imba.Event.prototype.meta = function (){
+	return this.native().metaKey;
+};
+Imba.Event.prototype.key = function (){
+	return this.native().key;
 };
 
 /*
