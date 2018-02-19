@@ -87,7 +87,7 @@ return t[e]=r,r},i.createTagList=function(t,e,n){var r=[]
 return r._type=4,r._tag=void 0!=n?n:t._tag,t[e]=r,r},i.createTagLoopResult=function(t,e,n){var r=[]
 return r._type=5,r.cache={i$:0},r},o.build=function(t){var e=[]
 return e._tag=t,e},s.prototype.$iter=function(){var t=[]
-return t._type=5,t.static=5,t.cache=this,t},s.prototype.$prune=function(t){for(var e,n=this.cache$,i=this.key$,o=new s(n,i,this.par$),u=0,a=r(t),h=a.length;u<h;u++)o[(e=a[u]).key$]=e
+return t._type=5,t.cache=this,t},s.prototype.$prune=function(t){for(var e,n=this.cache$,i=this.key$,o=new s(n,i,this.par$),u=0,a=r(t),h=a.length;u<h;u++)o[(e=a[u]).key$]=e
 return o.i$=t.length,n[i]=o},i.TagMap=s,i.TagCache=o,i.SINGLETONS={},i.TAGS=new i.Tags,i.TAGS.element=i.TAGS.htmlelement=i.Tag,i.TAGS["svg:element"]=i.SVGTag,i.defineTag=function(t,e,n){return void 0==n&&"function"==typeof e&&(n=e,e=""),void 0==e&&(e=""),i.TAGS.defineTag(t,e,n)},i.defineSingletonTag=function(t,e,n){return void 0==n&&"function"==typeof e&&(n=e,e="div"),void 0==e&&(e="div"),i.TAGS.defineTag(this.name(),e,n)},i.extendTag=function(t,e){return i.TAGS.extendTag(t,e)},i.getTagSingleton=function(t){var e,n,r
 return(e=i.SINGLETONS[t])?e&&e.Instance?e.Instance:(n=i.document().getElementById(t))?((r=e.Instance=new e(n)).awaken(n),r):((n=e.createNode()).id=t,(r=e.Instance=new e(n)).end().awaken(n),r):(n=i.document().getElementById(t))?i.getTagForDom(n):void 0}
 var u="undefined"!=typeof SVGElement

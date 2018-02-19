@@ -1027,7 +1027,6 @@ class TagMap
 	def $iter
 		var item = []
 		item.@type = 5
-		item:static = 5 # wrong(!)
 		item:cache = self
 		return item
 		
