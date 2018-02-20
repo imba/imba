@@ -32,10 +32,12 @@ global class ImbaServerDocument
 
 	def createTextNode value
 		return value
+		
+	def createComment value
+		return ImbaServerCommentNode.new(value)
 
 def Imba.document
 	@document ||= ImbaServerDocument.new
-	
 	
 def escapeAttributeValue val
 	var str = typeof val == 'string' ? val : String(val)
@@ -104,6 +106,20 @@ class CSSStyleDeclaration
 			unless k[0] == '_'
 				items.push("{k}: {v}")
 		return items.join(';')
+
+global class ImbaServerCommentNode
+	
+	def initialize value
+		@value = value
+		
+	def __outerHTML
+		"<!-- {escapeTextContent @value} -->"
+		
+	def toString
+		if @tag and @tag:toNodeString
+			return @tag.toNodeString
+		__outerHTML
+	
 
 global class ImbaServerElement
 
@@ -266,7 +282,7 @@ extend tag element
 		self
 
 	def toString
-		dom.toString
+		@slot_.toString
 
 extend tag html
 

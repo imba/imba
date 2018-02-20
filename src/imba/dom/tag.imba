@@ -148,7 +148,7 @@ class Imba.Tag
 		
 	def setDom dom
 		dom.@tag = self
-		@dom = dom
+		@dom = @slot_ = dom
 		self
 
 	def ref
@@ -343,7 +343,7 @@ class Imba.Tag
 	###
 	def removeChild child
 		var par = dom
-		var el = child.@dom or child
+		var el = child.@slot_ or child
 		if el and el:parentNode == par
 			par.removeChild(el)
 			Imba.TagManager.remove(el.@tag or el,self)
@@ -355,7 +355,7 @@ class Imba.Tag
 	def removeAllChildren
 		if @dom:firstChild
 			@dom.removeChild(@dom:firstChild) while @dom:firstChild
-			Imba.TagManager.remove(null,self) # should register each child?
+			Imba.TagManager.remove(null,self)
 		@tree_ = @text_ = null
 		self
 
@@ -369,7 +369,7 @@ class Imba.Tag
 		if node isa String
 			dom.appendChild(Imba.document.createTextNode(node))
 		elif node
-			dom.appendChild(node.@dom or node)
+			dom.appendChild(node.@slot_ or node)
 			Imba.TagManager.insert(node.@tag or node, self)
 			# FIXME ensure these are not called for text nodes
 		self
@@ -383,11 +383,29 @@ class Imba.Tag
 			node = Imba.document.createTextNode(node)
 
 		if node and rel
-			dom.insertBefore( (node.@dom or node), (rel.@dom or rel) )
+			dom.insertBefore( (node.@slot_ or node), (rel.@slot_ or rel) )
 			Imba.TagManager.insert(node.@tag or node, self)
 			# FIXME ensure these are not called for text nodes
 		self
+	
+	def detachFromParent
+		if @slot_ == @dom
+			@slot_ = (@dom.@placeholder_ ||= Imba.document.createComment("node"))
+			@slot_.@tag ||= self
 
+			if @dom:parentNode
+				Imba.TagManager.remove(self)
+				@dom:parentNode.replaceChild(@slot_,@dom)
+		self
+		
+	def attachToParent
+		if @slot_ != @dom
+			let prev = @slot_
+			@slot_ = @dom
+			if prev and prev:parentNode
+				Imba.TagManager.insert(self)
+				prev:parentNode.replaceChild(@dom,prev)
+		self
 
 	###
 	Remove node from the dom tree

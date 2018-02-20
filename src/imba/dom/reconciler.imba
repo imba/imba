@@ -8,7 +8,7 @@ def removeNested root, node, caret
 	# 	for now we will simply not support this
 	if node isa Array
 		removeNested(root,member,caret) for member in node
-	elif node and node.@dom
+	elif node and node.@slot_
 		root.removeChild(node)
 	elif node != null
 		# what if this is not null?!?!?
@@ -159,12 +159,12 @@ def reconcileCollectionChanges root, new, old, caret
 				node = new[idx] = Imba.createTextNode(node)
 
 			var after = new[idx - 1]
-			insertNestedAfter(root, node, (after and after.@dom or after or caret))
+			insertNestedAfter(root, node, (after and after.@slot_ or after or caret))
 
-		caret = node.@dom or (caret and caret:nextSibling or root.@dom:firstChild)
+		caret = node.@slot_ or (caret and caret:nextSibling or root.@dom:firstChild)
 
 	# should trust that the last item in new list is the caret
-	return lastNew and lastNew.@dom or caret
+	return lastNew and lastNew.@slot_ or caret
 
 
 # expects a flat non-sparse array of nodes in both new and old, always
@@ -180,7 +180,7 @@ def reconcileCollection root, new, old, caret
 			break if new[i] !== old[i]
 
 	if i == -1
-		return last and last.@dom or last or caret
+		return last and last.@slot_ or last or caret
 	else
 		return reconcileCollectionChanges(root,new,old,caret)
 
@@ -191,6 +191,8 @@ def reconcileLoop root, new, old, caret
 	var ol = old:length
 	var cl = new:cache:i$ # cache-length
 	var i = 0, d = nl - ol
+	
+	# TODO support caret
 
 	# find the first index that is different
 	i++ while i < ol and i < nl and new[i] === old[i]
@@ -209,8 +211,7 @@ def reconcileLoop root, new, old, caret
 		i1-- while i1 > i and new[i1 - 1] === old[i1 - 1 - d]
 
 		if d == (i1 - i)
-			# console.log "added in chunk",i,i1
-			let before = old[i].@dom
+			let before = old[i].@slot_
 			root.insertBefore(new[i++],before) while i < i1
 			return
 			
@@ -241,19 +242,19 @@ def reconcileIndexedArray root, array, old, caret
 	if prevLen > newLen
 		while prevLen > newLen
 			var item = array[--prevLen]
-			root.removeChild(item.@dom)
+			root.removeChild(item.@slot_)
 
 	elif newLen > prevLen
 		# find the item to insert before
-		let prevLast = prevLen ? array[prevLen - 1].@dom : caret
+		let prevLast = prevLen ? array[prevLen - 1].@slot_ : caret
 		let before = prevLast ? prevLast:nextSibling : root.@dom:firstChild
 		
 		while prevLen < newLen
 			let node = array[prevLen++]
-			before ? root.insertBefore(node.@dom,before) : root.appendChild(node.@dom)
+			before ? root.insertBefore(node.@slot_,before) : root.appendChild(node.@slot_)
 			
 	array:domlen = newLen
-	return last ? last.@dom : caret
+	return last ? last.@slot_ : caret
 
 
 # the general reconciler that respects conditions etc
@@ -270,8 +271,8 @@ def reconcileNested root, new, old, caret
 		# we should instead move the actual caret? - trust
 		if newIsNull
 			return caret
-		elif new.@dom
-			return new.@dom
+		elif new.@slot_
+			return new.@slot_
 		elif new isa Array and new:taglen != null
 			return reconcileIndexedArray(root,new,old,caret)
 		else
@@ -297,7 +298,7 @@ def reconcileNested root, new, old, caret
 				# Could use optimized loop if we know that it only consists of nodes
 				return reconcileCollection(root,new,old,caret)
 		elif !oldIsNull
-			if old.@dom
+			if old.@slot_
 				root.removeChild(old)
 			else
 				# old was a string-like object?
@@ -306,7 +307,7 @@ def reconcileNested root, new, old, caret
 		return insertNestedAfter(root,new,caret)
 		# remove old
 
-	elif !newIsNull and new.@dom
+	elif !newIsNull and new.@slot_
 		removeNested(root,old,caret) unless oldIsNull
 		return insertNestedAfter(root,new,caret)
 
@@ -319,7 +320,7 @@ def reconcileNested root, new, old, caret
 		# if old was array or imbatag we need to remove it and then add
 		if old isa Array
 			removeNested(root,old,caret)
-		elif old and old.@dom
+		elif old and old.@slot_
 			root.removeChild(old)
 		elif !oldIsNull
 			# ...
