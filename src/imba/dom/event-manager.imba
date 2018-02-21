@@ -162,6 +162,7 @@ class Imba.EventManager
 			root.addEventListener(item[0],item[1],item[2])
 			
 		window.addEventListener('hashchange',Imba:commit)
+		window.addEventListener('popstate',Imba:commit)
 		self
 
 	def ondisable
@@ -172,4 +173,5 @@ class Imba.EventManager
 			root.removeEventListener(item[0],item[1],item[2])
 
 		window.removeEventListener('hashchange',Imba:commit)
+		window.removeEventListener('popstate',Imba:commit)
 		self
