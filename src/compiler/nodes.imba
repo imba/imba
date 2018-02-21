@@ -6284,6 +6284,7 @@ export class Tag < Node
 		@options = o
 		@reference = null
 		@attributes = o:attributes or []
+		@attrmap = {}
 		@children = []
 		@slots = {
 			flag: isSelf ? -1 : 0
@@ -6298,9 +6299,10 @@ export class Tag < Node
 
 	def addPart part, type
 		let curr = @attributes.CURRENT
-		
+
 		if type == TagId
 			set(id: part)
+
 		if type == TagSep
 			@attributes.CURRENT = null
 		elif curr isa TagHandler
@@ -6312,6 +6314,9 @@ export class Tag < Node
 			curr.add(part,type)
 		else
 			@attributes.push(@attributes.CURRENT = type.new(part,self))
+			
+			if type == TagAttr
+				@attrmap[String(part)] = @attributes.CURRENT
 		self
 		
 	def addChild child
@@ -6635,11 +6640,24 @@ export class Tag < Node
 		
 		if specials.len		
 			calls.push(*specials)
+			
+		let shouldEnd = !isNative or o:template or calls:length > 0
+		
+		if Object.keys(@attrmap):length
+			shouldEnd = yes
 
-		if !isNative or o:template or calls:length > 0 or @children:length
+		# @children:length
+		if shouldEnd or @children:length
+			
 			var commits = @children.map(|child| child.option(:commit) ).filter(|item| item)
-			let args = o:optim and commits:length ? '(' + INDENT.wrap(commits.join(',\n')) + ',true)' : ''
-			calls.push ".{isSelf ? "synced" : "end"}({args})"
+			let patches = INDENT.wrap(commits.join(',\n'))
+			let args = o:optim and commits:length ? '(' + patches + ',true)' : ''
+
+			# if optim == self we need to fix
+			if !shouldEnd and o:optim and o:optim != self
+				set(commit: commits.len ? patches : '')
+			else
+				calls.push ".{isSelf ? "synced" : "end"}({args})"
 		
 		if @reference and !isSelf
 			out = "{reference.c} = {pre}({reference.c}={ctor})"
@@ -6651,7 +6669,7 @@ export class Tag < Node
 		
 		if calls != statics
 			if o:optim and o:optim != self
-				set(commit: "{o:path}{calls.join("")}") if calls:length
+				set(commit: "{o:path}{calls.join("")}") if calls:length and o:commit == undefined
 			else
 				out = "({out})" + calls.join("")
 		

@@ -1,6 +1,7 @@
 
 class Router
 	
+	# support redirects
 	def initialize
 		self
 	
@@ -29,9 +30,8 @@ class Route
 		var url = document:location:hash.slice(1)
 		if @regex
 			let match = url.match(@regex)
-			
+
 			if match
-				console.log "matching?",match,@groups
 				for item,i in match
 					if let name = @groups[i - 1]
 						@params[name] = self[name] = item
@@ -48,7 +48,6 @@ extend tag element
 	# 	setupRouting
 		
 	def setRoute route, mods
-		console.log "setRoute",route,mods
 		if route != @route
 			if !@route or @route.raw != route
 				@route = Route.new(route,mods)
