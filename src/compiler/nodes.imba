@@ -6642,8 +6642,9 @@ export class Tag < Node
 			calls.push(*specials)
 			
 		let shouldEnd = !isNative or o:template or calls:length > 0
+		let hasAttrs = Object.keys(@attrmap):length
 		
-		if Object.keys(@attrmap):length
+		if hasAttrs
 			shouldEnd = yes
 
 		# @children:length
@@ -6657,7 +6658,8 @@ export class Tag < Node
 			if !shouldEnd and o:optim and o:optim != self
 				set(commit: commits.len ? patches : '')
 			else
-				calls.push ".{isSelf ? "synced" : "end"}({args})"
+				if (commits.len and o:optim) or !isNative or hasAttrs or o:template
+					calls.push ".{isSelf ? "synced" : "end"}({args})"
 		
 		if @reference and !isSelf
 			out = "{reference.c} = {pre}({reference.c}={ctor})"
