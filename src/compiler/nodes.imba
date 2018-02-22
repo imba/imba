@@ -6650,13 +6650,21 @@ export class Tag < Node
 		# @children:length
 		if shouldEnd or @children:length
 			
-			var commits = @children.map(|child| child.option(:commit) ).filter(|item| item)
+			var commits = []
+			
+			for child,i in @children
+				let c = child.option(:commit)
+				if c isa Array
+					commits.push(*c)
+				elif c
+					commits.push(c)
+
 			let patches = INDENT.wrap(commits.join(',\n'))
 			let args = o:optim and commits:length ? '(' + patches + ',true)' : ''
 
 			# if optim == self we need to fix
 			if !shouldEnd and o:optim and o:optim != self
-				set(commit: commits.len ? patches : '')
+				set(commit: commits.len ? commits : '')
 			else
 				if (commits.len and o:optim) or !isNative or hasAttrs or o:template
 					calls.push ".{isSelf ? "synced" : "end"}({args})"
