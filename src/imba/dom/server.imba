@@ -164,7 +164,7 @@ global class ImbaServerElement
 				appendNested(member)
 
 		elif child != null and child != undefined
-			appendChild(child.@dom or child)
+			appendChild(child.@slot_ or child)
 		return
 
 	def insertBefore node, before
@@ -174,7 +174,17 @@ global class ImbaServerElement
 
 	def setAttribute key, value
 		@attributes ||= []
-		@attributes.push("{key}=\"{escapeAttributeValue(value)}\"")
+		@attrmap ||= {}
+		
+		let idx = @attrmap[key]
+		let str = "{key}=\"{escapeAttributeValue(value)}\""
+
+		if idx != null
+			@attributes[idx] = str
+		else
+			@attributes.push(str)
+			@attrmap[key] = @attributes:length - 1
+
 		@attributes[key] = value
 		self
 
