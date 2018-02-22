@@ -105,7 +105,6 @@ class Imba.Tag
 
 			self:end = do
 				if this:mount and !(this.FLAGS & Imba.TAG_MOUNTED)
-					# just activate 
 					Imba.TagManager.mount(this)
 
 				unless this.FLAGS & Imba.TAG_SETUP
@@ -405,6 +404,7 @@ class Imba.Tag
 			if prev and prev:parentNode
 				Imba.TagManager.insert(self)
 				prev:parentNode.replaceChild(@dom,prev)
+				
 		self
 
 	###
@@ -526,6 +526,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def end
+		commit
 		self
 		
 	# called on <self> to check if self is called from other places
