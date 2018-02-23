@@ -46,6 +46,8 @@ def Imba.createTextNode node
 		return node
 	return Imba.document.createTextNode(node)
 
+
+
 ###
 This is the baseclass that all tags in imba inherit from.
 @iname node
@@ -68,6 +70,9 @@ class Imba.Tag
 
 	def self.dom
 		@protoDom ||= buildNode
+		
+	def self.end
+		commit(0)
 
 	###
 	Called when a tag type is being subclassed.
@@ -94,26 +99,11 @@ class Imba.Tag
 	###
 	def optimizeTagStructure
 		var base = Imba.Tag:prototype
-		var hasSetup  = self:setup  != base:setup
-		var hasCommit = self:commit != base:commit
-		var hasRender = self:render != base:render
+		# var hasSetup  = self:setup  != base:setup
+		# var hasCommit = self:commit != base:commit
+		# var hasRender = self:render != base:render
 		var hasMount  = self:mount
-
 		var ctor = self:constructor
-
-		if hasCommit or hasRender or hasMount or hasSetup
-
-			self:end = do
-				if this:mount and !(this.FLAGS & Imba.TAG_MOUNTED)
-					Imba.TagManager.mount(this)
-
-				unless this.FLAGS & Imba.TAG_SETUP
-					this.FLAGS |= Imba.TAG_SETUP
-					this.setup
-				
-				this.commit
-
-				return this
 
 		if $web$
 			if hasMount
@@ -314,10 +304,8 @@ class Imba.Tag
 	###
 	def setTemplate template
 		unless @template
-			# override the basic
 			if self:render == Imba.Tag:prototype:render
 				self:render = self:renderTemplate # do setChildren(renderTemplate)
-			self.optimizeTagStructure
 
 		self:template = @template = template
 		self
@@ -500,7 +488,10 @@ class Imba.Tag
 	@return {self}
 	###
 	def commit
-		render
+		render if beforeRender !== false
+		self
+		
+	def beforeRender
 		self
 
 	###
@@ -526,8 +517,10 @@ class Imba.Tag
 	@return {self}
 	###
 	def end
-		commit
-		self
+		setup
+		commit(0)
+		this:end = Imba.Tag:end
+		return self
 		
 	# called on <self> to check if self is called from other places
 	def $open context

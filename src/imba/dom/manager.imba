@@ -13,6 +13,9 @@ class Imba.TagManagerClass
 
 	def insert node, parent
 		@inserts++
+		if node and node:mount
+			@hasMountables = yes
+		return
 
 	def remove node, parent
 		@removes++
