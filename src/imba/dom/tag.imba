@@ -98,23 +98,19 @@ class Imba.Tag
 	@private
 	###
 	def optimizeTagStructure
-		var base = Imba.Tag:prototype
-		# var hasSetup  = self:setup  != base:setup
-		# var hasCommit = self:commit != base:commit
-		# var hasRender = self:render != base:render
-		var hasMount  = self:mount
+		return unless $web$
 		var ctor = self:constructor
+		let keys = Object.keys(self)
 
-		if $web$
-			if hasMount
-				if ctor.@classes and ctor.@classes.indexOf('__mount')  == -1
-					ctor.@classes.push('__mount')
+		if keys.indexOf('mount') >= 0
+			if ctor.@classes and ctor.@classes.indexOf('__mount')  == -1
+				ctor.@classes.push('__mount')
 
-				if ctor.@protoDom
-					ctor.@protoDom:classList.add('__mount')
+			if ctor.@protoDom
+				ctor.@protoDom:classList.add('__mount')
 
-			for item in [:mousemove,:mouseenter,:mouseleave,:mouseover,:mouseout,:selectstart]
-				Imba.Events.register(item) if this["on{item}"]
+		for key in keys
+			Imba.EventManager.bind(key.slice(2)) if (/^on/).test(key)
 		self
 
 
@@ -204,6 +200,7 @@ class Imba.Tag
 			handler:state = prev:state
 		else
 			handler:state = {context: context}
+			Imba.EventManager.bind(handler[0]) if $web$
 		return self
 
 

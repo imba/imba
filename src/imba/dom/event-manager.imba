@@ -1,6 +1,17 @@
 var Imba = require("../imba")
 require("./pointer")
 
+var native = [
+	:keydown, :keyup, :keypress,
+	:textInput, :input, :change, :submit,
+	:focusin, :focusout, :focus, :blur,
+	:contextmenu, :selectstart, :dblclick,
+	:mousewheel, :wheel, :scroll,
+	:beforecopy, :copy, :beforepaste, :paste, :beforecut, :cut, 
+	:dragstart,:drag,:dragend, :dragenter,:dragover,:dragleave,:dragexit, :drop,
+	:mouseup, :mousedown, :mouseenter, :mouseleave, :mouseout, :mouseover, :mousemove,
+]
+
 ###
 
 Manager for listening to and delegating events in Imba. A single instance
@@ -20,72 +31,65 @@ class Imba.EventManager
 	prop listeners
 	prop delegators
 	prop delegator
+	
+	var initialBind = []
 
 	def enabled-did-set bool
 		bool ? onenable : ondisable
 		self
+		
+	def self.bind name
+		if Imba.Events
+			Imba.Events.autoregister(name)
+		elif initialBind.indexOf(name) == -1 and native.indexOf(name) >= 0
+			initialBind.push(name)
 
 	def self.activate
 		return Imba.Events if Imba.Events
+		return unless $web$
 
-		if $web$
-			Imba.POINTER ||= Imba.Pointer.new
+		Imba.POINTER ||= Imba.Pointer.new
+		Imba.Events = Imba.EventManager.new(Imba.document, events: [])
 
-			Imba.Events = Imba.EventManager.new(Imba.document, events: [
-				:keydown, :keyup, :keypress,
-				:textInput, :input, :change, :submit,
-				:focusin, :focusout, :focus, :blur,
-				:contextmenu, :dblclick,
-				:mousewheel, :wheel, :scroll,
-				:beforecopy, :copy,
-				:beforepaste, :paste,
-				:beforecut, :cut
-			])
+		var hasTouchEvents = window && window:ontouchstart !== undefined
 
-			# should listen to dragdrop events by default
-			Imba.Events.register([
-				:dragstart,:drag,:dragend,
-				:dragenter,:dragover,:dragleave,:dragexit,:drop
-			])
+		if hasTouchEvents
+			Imba.Events.listen(:touchstart) do |e|
+				Imba.Touch.ontouchstart(e)
 
-			var hasTouchEvents = window && window:ontouchstart !== undefined
+			Imba.Events.listen(:touchmove) do |e|
+				Imba.Touch.ontouchmove(e)
 
-			if hasTouchEvents
-				Imba.Events.listen(:touchstart) do |e|
-					Imba.Touch.ontouchstart(e)
+			Imba.Events.listen(:touchend) do |e|
+				Imba.Touch.ontouchend(e)
 
-				Imba.Events.listen(:touchmove) do |e|
-					Imba.Touch.ontouchmove(e)
+			Imba.Events.listen(:touchcancel) do |e|
+				Imba.Touch.ontouchcancel(e)
 
-				Imba.Events.listen(:touchend) do |e|
-					Imba.Touch.ontouchend(e)
+		Imba.Events.register(:click) do |e|
+			# Only for main mousebutton, no?
+			if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
+				e.@imbaSimulatedTap = yes
+				var tap = Imba.Event.new(e)
+				tap.type = 'tap'
+				tap.process
+				if tap.@responder
+					return e.preventDefault
+			# delegate the real click event
+			Imba.Events.delegate(e)
 
-				Imba.Events.listen(:touchcancel) do |e|
-					Imba.Touch.ontouchcancel(e)
+		Imba.Events.listen(:mousedown) do |e|
+			if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
+				Imba.POINTER.update(e).process if Imba.POINTER
 
-			Imba.Events.register(:click) do |e|
-				# Only for main mousebutton, no?
-				if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
-					e.@imbaSimulatedTap = yes
-					var tap = Imba.Event.new(e)
-					tap.type = 'tap'
-					tap.process
-					if tap.@responder
-						return e.preventDefault
-				# delegate the real click event
-				Imba.Events.delegate(e)
+		Imba.Events.listen(:mouseup) do |e|
+			if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
+				Imba.POINTER.update(e).process if Imba.POINTER
 
-			Imba.Events.listen(:mousedown) do |e|
-				if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
-					Imba.POINTER.update(e).process if Imba.POINTER
-
-			Imba.Events.listen(:mouseup) do |e|
-				if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
-					Imba.POINTER.update(e).process if Imba.POINTER
-
-			Imba.Events.register([:mousedown,:mouseup])
-			Imba.Events.enabled = yes
-			return Imba.Events
+		Imba.Events.register([:mousedown,:mouseup])
+		Imba.Events.register(initialBind)
+		Imba.Events.enabled = yes
+		return Imba.Events
 
 
 	def initialize node, events: []
@@ -116,9 +120,14 @@ class Imba.EventManager
 			return self
 
 		return self if delegators[name]
+		
 		# console.log("register for event {name}")
 		var fn = delegators[name] = handler isa Function ? handler : delegator
 		root.addEventListener(name,fn,yes) if enabled
+		
+	def autoregister name
+		return self if native.indexOf(name) == -1
+		register(name)
 
 	def listen name, handler, capture = yes
 		listeners.push([name,handler,capture])

@@ -1,6 +1,7 @@
 var Imba = require("../imba")
 
 require './manager'
+require './event-manager'
 
 Imba.TagManager = Imba.TagManagerClass.new
 
@@ -9,7 +10,6 @@ require './html'
 require './pointer'
 require './touch'
 require './event'
-require './event-manager'
 
 if $web$
 	require './reconciler'
