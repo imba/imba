@@ -1,3 +1,9 @@
+## 1.3.1
+* Fix duplicate attributes in serverside rendering
+* Make popstate event notify schedulers
+* Make event manager delay adding listeners until needed
+* Optimize tag tree syncing
+
 ## 1.3.0
 * Add support for event modifiers (e.g. `<div :keydown.enter.myHandler>`)
 * Add support for form input bindings (e.g. `<input[data:myField]>`)

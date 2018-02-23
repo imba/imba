@@ -9,7 +9,7 @@ var native = [
 	:mousewheel, :wheel, :scroll,
 	:beforecopy, :copy, :beforepaste, :paste, :beforecut, :cut, 
 	:dragstart,:drag,:dragend, :dragenter,:dragover,:dragleave,:dragexit, :drop,
-	:mouseup, :mousedown, :mouseenter, :mouseleave, :mouseout, :mouseover, :mousemove,
+	:mouseup, :mousedown, :mouseenter, :mouseleave, :mouseout, :mouseover, :mousemove
 ]
 
 ###
