@@ -502,7 +502,7 @@ class Imba.Tag
 
 	###
 	def tick
-		render
+		render if beforeRender !== false
 		self
 
 	###
