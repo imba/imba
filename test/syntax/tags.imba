@@ -256,5 +256,16 @@ describe 'Syntax - Tags' do
 		var node = <Other>
 		node.render
 		htmleq '<h1></h1><section><p>one</p><p>two</p>str</section></div><h1>', node
+	
+	test 'template' do
+		tag Local
+			def render
+				var title = title
+				<self>
+					<div ->
+						<span> title
+						
+		htmleq '<div><span>Local</span></div>', <Local title='Local'>
 					
+		
 					

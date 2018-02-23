@@ -282,6 +282,12 @@ describe 'Tags - Define' do
 
 		var node = <Custom>
 		eq node.@k,3
+		
+	test "setting attributes multiple times" do
+		var a = <a href='#'>
+		a.href = '#1'
+		a.href = '#2'
+		eq a.toString, '<a href="#2"></a>'
 	
 	test "css" do
 		tag Custom

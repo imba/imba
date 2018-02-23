@@ -6346,12 +6346,23 @@ export class Tag < Node
 		var o = @options
 		var scope = @tagScope = scope__
 		let prevTag = o:par = stack.@tag
+		let po = prevTag and prevTag.@options
 		var typ = enclosing
+		
+		if o:par
+			o:optim = po:optim
+		elif o:template
+			o:optim = no
+		else
+			o:optim = self
 
 		if typ == '->' or typ == '=>'
 			let body = Block.wrap(o:body.@nodes or [o:body])
 			@fragment = o:body = o:template = TagFragmentFunc.new([],body,null,null,closed: typ == '->')
+			# could insert generated <self> inside to simplify and optimize this?
+			# template uses wrong cache as well
 			@tagScope = @fragment.scope
+			o:optim = self
 
 		# # create fully dynamic tag
 		# o:isRoot = yes
@@ -6360,28 +6371,22 @@ export class Tag < Node
 		# @attributes = []
 		# var param = RequiredParam.new(Identifier.new('$$'))
 		# o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
-
-		if o:par
-			o:optim = o:par.option(:optim)
-		elif o:template
-			o:optim = no
-		else
-			o:optim = self
 		
 		if o:par
 			o:par.addChild(self)
 		
-		if o:par and o:par.@tagLoop
-			o:loop ||= o:par.@tagLoop # scope.@tagLoop
-			o:loop.capture(self)
-			o:ownCache = yes
-			o:optim = self
+			if o:par.@tagLoop
+				o:loop ||= o:par.@tagLoop # scope.@tagLoop
+				o:loop.capture(self)
+				o:ownCache = yes
+				o:optim = self
+				
+			if po:template
+				o:optim = self
 		
 		if o:key and !o:par
 			o:treeRef = o:key
 			o:key.cache
-			
-		
 			
 		stack.@tag = null
 
