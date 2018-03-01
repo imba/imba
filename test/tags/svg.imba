@@ -4,19 +4,21 @@
 extern describe, test, ok, eq, it
 
 describe "Tags - SVG" do
+	
+	
+	if $web$
+		test "basics" do
+			var item = <svg:svg>
+				<svg:g>
+				<svg:circle r=20>
 
-	test "basics" do
-		var item = <svg:svg>
-			<svg:g>
-			<svg:circle r=20>
-
-		Imba.root.appendChild item
-
-		try
-			<svg:div>
-			eq 1,0
-		catch e
-			yes
-
-		ok item.dom isa SVGElement
-		ok (<svg:circle>).dom isa SVGCircleElement
+			Imba.root.appendChild item
+			ok item.dom isa SVGElement
+			ok (<svg:circle>).dom isa SVGCircleElement
+			
+		test "native types" do
+			eq (<svg:animateMotion>).dom:constructor, SVGAnimateMotionElement
+			ok (<svg:circle>).dom isa SVGCircleElement
+			ok (<svg:someCustomElement>).dom isa SVGElement
+		
+		

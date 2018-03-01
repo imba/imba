@@ -773,23 +773,25 @@ class Imba.SVGTag < Imba.Tag
 
 	def self.buildNode
 		var dom = Imba.document.createElementNS(namespaceURI,@nodeType)
-		var cls = @classes.join(" ")
-		dom:className:baseVal = cls if cls
+		if @classes
+			var cls = @classes.join(" ")
+			dom:className:baseVal = cls if cls
 		dom
 
 	def self.inherit child
 		child.@protoDom = null
-		if child.@name in Imba.SVG_TAGS
+		
+		if child.@name in Imba.SVG_TAGS or self == Imba.SVGTag
 			child.@nodeType = child.@name
 			child.@classes = []
 		else
 			child.@nodeType = @nodeType
 			var className = "_" + child.@name.replace(/_/g, '-')
-			child.@classes = @classes.concat(className)
+			child.@classes = (@classes or []).concat(className)
 
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ")
-Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
+Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan image".split(" ")
 
 Imba.HTML_ATTRS =
 	a: "href target hreflang media download rel type"

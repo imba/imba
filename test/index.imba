@@ -31,10 +31,10 @@ require './syntax/quirks'
 
 require './tags/define'
 require './tags/caching'
+require './tags/svg'
 
 if $web$
 	require './tags/virtual'
-	require './tags/svg'
 	require './tags/html'
 	require './tags/templates'
 	require './tags/events'

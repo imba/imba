@@ -1,5 +1,6 @@
 ## master
 * Fix webpack4 compatibility
+* Improve svg support
 
 ## 1.3.1
 * Fix duplicate attributes in serverside rendering
