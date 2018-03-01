@@ -54,14 +54,15 @@ extend tag input
 		self
 		
 	def setValue value
-		dom:value = @value = value
+		if @localValue == undefined
+			dom:value = @value = value
 		self
 
 	def oninput e
 		let val = @dom:value
-		@localValue = @initialValue != val ? val : undefined
+		@localValue = val
 		@data and !lazy ? @data.setFormValue(value,self) : e.silence
-		
+
 	def onchange e
 		@modelValue = @localValue = undefined
 		return e.silence unless data
@@ -85,10 +86,15 @@ extend tag input
 				@data.setFormValue(dval,self)
 		else
 			@data.setFormValue(value)
+			
+	def onblur e
+		@localValue = undefined
 	
 	# overriding end directly for performance
 	def end
-		return self if !@data or @localValue !== undefined
+		if @localValue !== undefined or !@data
+			return self
+
 		let mval = @data.getFormValue(self)
 		return self if mval == @modelValue
 		@modelValue = mval unless isArray(mval)
@@ -105,7 +111,6 @@ extend tag input
 			@dom:checked = checked
 		else
 			@dom:value = mval
-			@initialValue = @dom:value
 		self
 
 extend tag textarea
@@ -121,19 +126,21 @@ extend tag textarea
 	
 	def oninput e
 		let val = @dom:value
-		@localValue = @initialValue != val ? val : undefined
+		@localValue = val
 		@data and !lazy ? @data.setFormValue(value,self) : e.silence
 
 	def onchange e
 		@localValue = undefined
 		@data ? @data.setFormValue(value,self) : e.silence
 		
+	def onblur e
+		@localValue = undefined
+
 	def render
 		return if @localValue != undefined or !@data
 		if @data
 			let dval = @data.getFormValue(self)
 			@dom:value = dval != undefined ? dval : ''
-		@initialValue = @dom:value
 		self
 
 extend tag option

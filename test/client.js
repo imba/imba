@@ -2893,13 +2893,15 @@ Imba.extendTag('input', function(tag){
 	};
 	
 	tag.prototype.setValue = function (value){
-		this.dom().value = this._value = value;
+		if (this._localValue == undefined) {
+			this.dom().value = this._value = value;
+		};
 		return this;
 	};
 	
 	tag.prototype.oninput = function (e){
 		let val = this._dom.value;
-		this._localValue = (this._initialValue != val) ? val : undefined;
+		this._localValue = val;
 		return (this._data && !(this.lazy())) ? this._data.setFormValue(this.value(),this) : e.silence();
 	};
 	
@@ -2931,9 +2933,16 @@ Imba.extendTag('input', function(tag){
 		};
 	};
 	
+	tag.prototype.onblur = function (e){
+		return this._localValue = undefined;
+	};
+	
 	// overriding end directly for performance
 	tag.prototype.end = function (){
-		if (!this._data || this._localValue !== undefined) { return this };
+		if (this._localValue !== undefined || !this._data) {
+			return this;
+		};
+		
 		let mval = this._data.getFormValue(this);
 		if (mval == this._modelValue) { return this };
 		if (!isArray(mval)) { this._modelValue = mval };
@@ -2951,7 +2960,6 @@ Imba.extendTag('input', function(tag){
 			this._dom.checked = checked;
 		} else {
 			this._dom.value = mval;
-			this._initialValue = this._dom.value;
 		};
 		return this;
 	};
@@ -2973,7 +2981,7 @@ Imba.extendTag('textarea', function(tag){
 	
 	tag.prototype.oninput = function (e){
 		let val = this._dom.value;
-		this._localValue = (this._initialValue != val) ? val : undefined;
+		this._localValue = val;
 		return (this._data && !(this.lazy())) ? this._data.setFormValue(this.value(),this) : e.silence();
 	};
 	
@@ -2982,13 +2990,16 @@ Imba.extendTag('textarea', function(tag){
 		return this._data ? this._data.setFormValue(this.value(),this) : e.silence();
 	};
 	
+	tag.prototype.onblur = function (e){
+		return this._localValue = undefined;
+	};
+	
 	tag.prototype.render = function (){
 		if (this._localValue != undefined || !this._data) { return };
 		if (this._data) {
 			let dval = this._data.getFormValue(this);
 			this._dom.value = (dval != undefined) ? dval : '';
 		};
-		this._initialValue = this._dom.value;
 		return this;
 	};
 });

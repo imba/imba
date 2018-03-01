@@ -1,6 +1,7 @@
 ## 1.3.2
 * Fix webpack4 compatibility
 * Improve svg support
+* Suppress setValue for input and textarea while editing
 
 ## 1.3.1
 * Fix duplicate attributes in serverside rendering
