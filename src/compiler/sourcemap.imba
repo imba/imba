@@ -1,7 +1,12 @@
 # imba$inlineHelpers=1
 
-import 'path' as path
-import './helpers' as util
+var path = require 'path'
+var util = require './helpers'
+
+var VLQ_SHIFT = 5
+var VLQ_CONTINUATION_BIT = 1 << VLQ_SHIFT
+var VLQ_VALUE_MASK = VLQ_CONTINUATION_BIT - 1
+var BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 export class SourceMap
 
@@ -118,11 +123,6 @@ export class SourceMap
 		# var base64 = Buffer.new(JSON.stringify(map)).toString("base64")
 		# source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
 		return map
-
-	var VLQ_SHIFT = 5
-	var VLQ_CONTINUATION_BIT = 1 << VLQ_SHIFT
-	var VLQ_VALUE_MASK = VLQ_CONTINUATION_BIT - 1
-	var BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 	# borrowed from CoffeeScript
 	def encodeVlq value
