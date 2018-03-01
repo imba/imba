@@ -21,7 +21,7 @@ if(require.main !== module){
 
 	var conf = {
 		module: {
-			loaders: []
+			rules: []
 		},
 		resolve: {
 			extensions: options.resolve.extensions,
@@ -34,25 +34,26 @@ if(require.main !== module){
 	}
 
 	function mergeConfig(obj){
-		var m = (obj.module = obj.module || {loaders: []})
+		var m = (obj.module = obj.module || {rules: []})
 		var r = (obj.resolve = obj.resolve || {});
 		// TODO merge instead of overriding module/resolve
 
-		var loaders = m.loaders || m.rules;
+		var imbaLoader = Object.assign({},loader);
+		var loaders = m.rules || m.loaders;
 
 		if (loaders) {
 			// add the imba loader
 			var l = null;
 			loaders.forEach(function(loader){
 				if(String(loader.test).replace('$','') == '/\\.imba/'){
-					l = loader;
-					l.loader = loader.loader; // update path
+					l = imbaLoader = loader;
+					l.loader = loader.loader;
 				}
 			});
 			// push our loader of we have one
-			if (!l) loaders.unshift(loader)
+			if (!l){ loaders.unshift(imbaLoader) }
 		} else {
-			m.loaders = [loader];
+			m.rules = [imbaLoader];
 		}
 
 		if (!r.extensions) {
@@ -72,6 +73,16 @@ if(require.main !== module){
 		r.alias = r.alias || {}
 		r.alias.imba$ = dir + "imba.imba"
 		r.alias.imba = dir
+
+		if(obj.loader && obj.loader.imba) {
+			console.log("using loader.imba to pass options is deprecated");
+			imbaLoader.options = Object.assign(imbaLoader.options || {}, obj.loader.imba);
+			console.log(imbaLoader.options);
+			delete obj.loader.imba;
+			if(Object.keys(obj.loader).length == 0){
+				delete obj.loader;
+			}
+		}
 
 		return obj;
 	}

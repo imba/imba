@@ -1,3 +1,6 @@
+## master
+* Fix webpack4 compatibility
+
 ## 1.3.1
 * Fix duplicate attributes in serverside rendering
 * Make popstate event notify schedulers

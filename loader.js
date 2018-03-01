@@ -25,13 +25,6 @@ module.exports = function(content) {
 		});
 	}
 
-	if(this.options.loader && this.options.loader.imba) {
-		var iopts = this.options.loader.imba;
-		Object.keys(iopts).forEach(function(k){
-			opts[k] = iopts[k];
-		})
-	}
-
 	try {
 		var result = compiler.compile(content, opts);
 		var js = result.toString();
