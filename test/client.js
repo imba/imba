@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.1'};
+var Imba = {VERSION: '1.3.2'};
 
 /*
 
@@ -516,10 +516,10 @@ __webpack_require__(41);
 
 __webpack_require__(42);
 __webpack_require__(43);
+__webpack_require__(44);
 
 if (true) {
-	__webpack_require__(44);
-	__webpack_require__(46);
+	__webpack_require__(45);
 	__webpack_require__(47);
 	__webpack_require__(48);
 	__webpack_require__(49);
@@ -2348,26 +2348,29 @@ Imba.SVGTag.namespaceURI = function (){
 
 Imba.SVGTag.buildNode = function (){
 	var dom = Imba.document().createElementNS(this.namespaceURI(),this._nodeType);
-	var cls = this._classes.join(" ");
-	if (cls) { dom.className.baseVal = cls };
+	if (this._classes) {
+		var cls = this._classes.join(" ");
+		if (cls) { dom.className.baseVal = cls };
+	};
 	return dom;
 };
 
 Imba.SVGTag.inherit = function (child){
 	child._protoDom = null;
-	if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0) {
+	
+	if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0 || this == Imba.SVGTag) {
 		child._nodeType = child._name;
 		return child._classes = [];
 	} else {
 		child._nodeType = this._nodeType;
 		var className = "_" + child._name.replace(/_/g,'-');
-		return child._classes = this._classes.concat(className);
+		return child._classes = (this._classes || []).concat(className);
 	};
 };
 
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ");
-Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
+Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan image".split(" ");
 
 Imba.HTML_ATTRS = {
 	a: "href target hreflang media download rel type",
@@ -9720,6 +9723,45 @@ describe('Tags - Cache',function() {
 /* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var Imba = __webpack_require__(0), _1 = Imba.createElement;
+// to run these tests, simply open the imbadir/test/dom.html in your browser and
+// open the console / developer tools.
+
+// externs;
+
+describe("Tags - SVG",function() {
+	
+	
+	if (true) {
+		test("basics",function() {
+			var t0;
+			var item = (t0 = (t0=_1('svg:svg')).setContent([
+				_1('svg:g',t0.$,'A',t0),
+				_1('svg:circle',t0.$,'B',t0).set('r',20)
+			],2)).end((
+				t0.$.A.end(),
+				t0.$.B.end()
+			,true));
+			
+			Imba.root().appendChild(item);
+			ok(item.dom() instanceof SVGElement);
+			return ok(((_1('svg:circle')).end()).dom() instanceof SVGCircleElement);
+		});
+		
+		return test("native types",function() {
+			eq(((_1('svg:animateMotion')).end()).dom().constructor,SVGAnimateMotionElement);
+			ok(((_1('svg:circle')).end()).dom() instanceof SVGCircleElement);
+			return ok(((_1('svg:someCustomElement')).end()).dom() instanceof SVGElement);
+		});
+	};
+});
+
+
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(0), _2 = Imba.createTagList, self = this, _1 = Imba.createElement;
 // to run these tests, simply open the imbadir/test/dom.html in your browser and
@@ -9727,7 +9769,7 @@ var Imba = __webpack_require__(0), _2 = Imba.createTagList, self = this, _1 = Im
 
 // externs;
 
-var _ = __webpack_require__(45);
+var _ = __webpack_require__(46);
 
 Imba.defineTag('el', function(tag){
 	
@@ -10238,7 +10280,7 @@ describe("Tags",function() {
 
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -11790,43 +11832,6 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
   }
 }.call(this));
-
-
-/***/ }),
-/* 46 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Imba = __webpack_require__(0), _1 = Imba.createElement;
-// to run these tests, simply open the imbadir/test/dom.html in your browser and
-// open the console / developer tools.
-
-// externs;
-
-describe("Tags - SVG",function() {
-	
-	return test("basics",function() {
-		var t0;
-		var item = (t0 = (t0=_1('svg:svg')).setContent([
-			_1('svg:g',t0.$,'A',t0),
-			_1('svg:circle',t0.$,'B',t0).set('r',20)
-		],2)).end((
-			t0.$.A.end(),
-			t0.$.B.end()
-		,true));
-		
-		Imba.root().appendChild(item);
-		
-		try {
-			(_1('svg:div')).end();
-			eq(1,0);
-		} catch (e) {
-			true;
-		};
-		
-		ok(item.dom() instanceof SVGElement);
-		return ok(((_1('svg:circle')).end()).dom() instanceof SVGCircleElement);
-	});
-});
 
 
 /***/ }),

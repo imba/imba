@@ -1,4 +1,4 @@
-## master
+## 1.3.2
 * Fix webpack4 compatibility
 * Improve svg support
 
