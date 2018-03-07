@@ -69,11 +69,11 @@ extend tag input
 	def oninput e
 		let val = @dom:value
 		@localValue = val
-		@data and !lazy ? @data.setFormValue(value,self) : e.silence
+		@data.setFormValue(value,self) if @data and !lazy
 
 	def onchange e
 		@modelValue = @localValue = undefined
-		return e.silence unless data
+		return unless data
 		
 		if type == 'radio' or type == 'checkbox'
 			let checked = @dom:checked
@@ -135,11 +135,11 @@ extend tag textarea
 	def oninput e
 		let val = @dom:value
 		@localValue = val
-		@data and !lazy ? @data.setFormValue(value,self) : e.silence
+		@data.setFormValue(value,self) if @data and !lazy
 
 	def onchange e
 		@localValue = undefined
-		@data ? @data.setFormValue(value,self) : e.silence
+		@data.setFormValue(value,self) if @data
 		
 	def onblur e
 		@localValue = undefined
@@ -205,7 +205,7 @@ extend tag select
 			opt ? (opt.@tag ? opt.@tag.value : opt:value) : null
 	
 	def onchange e
-		@data ? @data.setFormValue(value,self) : e.silence
+		@data.setFormValue(value,self) if @data
 		
 	def end
 		if @data
