@@ -1,3 +1,8 @@
+## 1.3.3
+* Don't silence input events for form elements
+* Implement style.removeProperty on server
+* Improve mount/unmount performance
+
 ## 1.3.2
 * Fix webpack4 compatibility
 * Improve svg support

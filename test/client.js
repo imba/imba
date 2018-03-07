@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.2'};
+var Imba = {VERSION: '1.3.3'};
 
 /*
 
@@ -1010,7 +1010,8 @@ Imba.TagManagerClass = function TagManagerClass(){
 	this._inserts = 0;
 	this._removes = 0;
 	this._mounted = [];
-	this._hasMountables = false;
+	this._mountables = 0;
+	this._unmountables = 0;
 	this;
 };
 
@@ -1021,7 +1022,10 @@ Imba.TagManagerClass.prototype.mounted = function (){
 Imba.TagManagerClass.prototype.insert = function (node,parent){
 	this._inserts++;
 	if (node && node.mount) {
-		this._hasMountables = true;
+		if (!(node.FLAGS & Imba.TAG_MOUNTABLE)) {
+			node.FLAGS |= Imba.TAG_MOUNTABLE;
+			this._mountables++;
+		};
 	};
 	return;
 };
@@ -1030,13 +1034,13 @@ Imba.TagManagerClass.prototype.remove = function (node,parent){
 	return this._removes++;
 };
 
+
 Imba.TagManagerClass.prototype.changes = function (){
 	return this._inserts + this._removes;
 };
 
 Imba.TagManagerClass.prototype.mount = function (node){
-	if (false) {};
-	return this._hasMountables = true;
+	return;
 };
 
 Imba.TagManagerClass.prototype.refresh = function (force){
@@ -1044,7 +1048,7 @@ Imba.TagManagerClass.prototype.refresh = function (force){
 	if (false) {};
 	if (!force && this.changes() == 0) { return };
 	// console.time('resolveMounts')
-	if ((this._inserts && this._hasMountables) || force) {
+	if ((this._inserts && this._mountables > this._mounted.length) || force) {
 		this.tryMount();
 	};
 	
@@ -1078,9 +1082,18 @@ Imba.TagManagerClass.prototype.tryMount = function (){
 };
 
 Imba.TagManagerClass.prototype.mountNode = function (node){
-	this._mounted.push(node);
-	node.FLAGS |= Imba.TAG_MOUNTED;
-	if (node.mount) { node.mount() };
+	if (this._mounted.indexOf(node) == -1) {
+		this._mounted.push(node);
+		node.FLAGS |= Imba.TAG_MOUNTED;
+		if (node.mount) { node.mount() };
+		// Mark all parents as mountable for faster unmount
+		let el = node.dom().parentNode;
+		while (el && el._tag && !el._tag.mount && !(el._tag.FLAGS & Imba.TAG_MOUNTABLE)){
+			el._tag.FLAGS |= Imba.TAG_MOUNTABLE;
+			el = el.parentNode;
+		};
+	};
+	
 	return;
 };
 
@@ -1379,6 +1392,7 @@ Imba.TAG_MOUNTING = 4;
 Imba.TAG_MOUNTED = 8;
 Imba.TAG_SCHEDULED = 16;
 Imba.TAG_AWAKENED = 32;
+Imba.TAG_MOUNTABLE = 64;
 
 /*
 Get the current document
@@ -1780,8 +1794,8 @@ Imba.Tag.prototype.removeChild = function (child){
 	var par = this.dom();
 	var el = child._slot_ || child;
 	if (el && el.parentNode == par) {
-		par.removeChild(el);
 		Imba.TagManager.remove(el._tag || el,this);
+		par.removeChild(el);
 	};
 	return this;
 };
@@ -1792,10 +1806,11 @@ Imba.Tag.prototype.removeChild = function (child){
 
 Imba.Tag.prototype.removeAllChildren = function (){
 	if (this._dom.firstChild) {
-		while (this._dom.firstChild){
-			this._dom.removeChild(this._dom.firstChild);
+		var el;
+		while (el = this._dom.firstChild){
+			true && Imba.TagManager.remove(el._tag || el,this);
+			this._dom.removeChild(el);
 		};
-		Imba.TagManager.remove(null,this);
 	};
 	this._tree_ = this._text_ = null;
 	return this;
@@ -1843,7 +1858,7 @@ Imba.Tag.prototype.detachFromParent = function (){
 		this._slot_._tag || (this._slot_._tag = this);
 		
 		if (this._dom.parentNode) {
-			Imba.TagManager.remove(this);
+			Imba.TagManager.remove(this,this._dom.parentNode);
 			this._dom.parentNode.replaceChild(this._slot_,this._dom);
 		};
 	};
@@ -2892,6 +2907,17 @@ Imba.extendTag('input', function(tag){
 		return this;
 	};
 	
+	tag.prototype.checked = function (){
+		return this._dom.checked;
+	};
+	
+	tag.prototype.setChecked = function (value){
+		if (!!value != this._dom.checked) {
+			this._dom.checked = !!value;
+		};
+		return this;
+	};
+	
 	tag.prototype.setValue = function (value){
 		if (this._localValue == undefined) {
 			this.dom().value = this._value = value;
@@ -2902,12 +2928,12 @@ Imba.extendTag('input', function(tag){
 	tag.prototype.oninput = function (e){
 		let val = this._dom.value;
 		this._localValue = val;
-		return (this._data && !(this.lazy())) ? this._data.setFormValue(this.value(),this) : e.silence();
+		if (this._data && !(this.lazy())) { return this._data.setFormValue(this.value(),this) };
 	};
 	
 	tag.prototype.onchange = function (e){
 		this._modelValue = this._localValue = undefined;
-		if (!(this.data())) { return e.silence() };
+		if (!(this.data())) { return };
 		
 		if (this.type() == 'radio' || this.type() == 'checkbox') {
 			let checked = this._dom.checked;
@@ -2982,12 +3008,12 @@ Imba.extendTag('textarea', function(tag){
 	tag.prototype.oninput = function (e){
 		let val = this._dom.value;
 		this._localValue = val;
-		return (this._data && !(this.lazy())) ? this._data.setFormValue(this.value(),this) : e.silence();
+		if (this._data && !(this.lazy())) { return this._data.setFormValue(this.value(),this) };
 	};
 	
 	tag.prototype.onchange = function (e){
 		this._localValue = undefined;
-		return this._data ? this._data.setFormValue(this.value(),this) : e.silence();
+		if (this._data) { return this._data.setFormValue(this.value(),this) };
 	};
 	
 	tag.prototype.onblur = function (e){
@@ -3077,7 +3103,7 @@ Imba.extendTag('select', function(tag){
 	};
 	
 	tag.prototype.onchange = function (e){
-		return this._data ? this._data.setFormValue(this.value(),this) : e.silence();
+		if (this._data) { return this._data.setFormValue(this.value(),this) };
 	};
 	
 	tag.prototype.end = function (){
@@ -4517,7 +4543,7 @@ Imba.extendTag('element', function(tag){
 		// 	return self.text = new
 		var old = this._tree_;
 		
-		if (new$ === old && new$ && new$.taglen == undefined) {
+		if (new$ === old && (!(new$) || new$.taglen == undefined)) {
 			return this;
 		};
 		
@@ -4534,6 +4560,10 @@ Imba.extendTag('element', function(tag){
 		} else if (typ == 3) {
 			let ntyp = typeof new$;
 			
+			if (ntyp != 'object') {
+				return this.setText(new$);
+			};
+			
 			if (new$ && new$._dom) {
 				this.removeAllChildren();
 				this.appendChild(new$);
@@ -4547,8 +4577,7 @@ Imba.extendTag('element', function(tag){
 					appendNested(this,new$);
 				};
 			} else {
-				this.setText(new$);
-				return this;
+				return this.setText(new$);
 			};
 		} else if (typ == 4) {
 			reconcileIndexedArray(this,new$,old,null);
@@ -8590,20 +8619,20 @@ describe('Syntax - Tags',function() {
 					_1('ul',t0.$,'C',t0),
 					this._named = this._named||_1('div',t0).flag('named')
 				],2)).end((
-					t0.$.A.setContent((function($0) {
+					t0.$.A.setContent((function tagLoop($0) {
 						var item_, $1, $$ = $0.$iter();
 						for (let i = 0, len = ary.length, item; i < len; i++) {
 							item = ary[i];
 							$$.push(($0[item] || _1('li',$0,item)).setContent(item,3));
 						};return $$;
 					})(t0.$['B'] || _3(t0.$,'B',t0.$.A)),5),
-					t0.$.C.setContent((function($0) {
+					t0.$.C.setContent((function tagLoop($0) {
 						for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 							($0[i] || _1('li',$0,i)).setContent(ary[i],3);
 						};return $0;
 					})(t0.$['D'] || _4(t0.$,'D',t0.$.C)),4),
 					this._named.setContent(
-						(function($0) {
+						(function tagLoop($0) {
 							for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 								($0[i] || _1('li',$0,i)).setData(ary[i]);
 							};return $0;
@@ -8631,7 +8660,7 @@ describe('Syntax - Tags',function() {
 					,2)
 				],2).synced((
 					this._itemlist.setContent(
-						(function($0) {
+						(function tagLoop($0) {
 							for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 								($0[i] || _1('li',$0,i)).setData(ary[i]);
 							};return $0;
@@ -8646,14 +8675,14 @@ describe('Syntax - Tags',function() {
 			_1('ul',t0.$,'A',t0),
 			_1('ul',t0.$,'C',t0)
 		],2)).end((
-			t0.$.A.setContent((function($0) {
+			t0.$.A.setContent((function tagLoop($0) {
 				var item_, $1, $$ = $0.$iter();
 				for (let i = 0, len = ary.length, item; i < len; i++) {
 					item = ary[i];
 					$$.push(($0[item] || _1('li',$0,item)).setContent(item,3));
 				};return $$;
 			})(t0.$['B'] || _3(t0.$,'B',t0.$.A)),5),
-			t0.$.C.setContent((function($0) {
+			t0.$.C.setContent((function tagLoop($0) {
 				for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 					($0[i] || _1('li',$0,i)).setContent(ary[i],3);
 				};return $0;
@@ -8702,7 +8731,7 @@ describe('Syntax - Tags',function() {
 					$[0] || _1('div',$,0,this).flag('Radios').flag('group').flag('xl')
 				,2).synced((
 					$[0].setContent(
-						(function($0) {
+						(function tagLoop($0) {
 							var $$ = $0.$iter();
 							for (let i = 0, len = types.length, item; i < len; i++) {
 								item = types[i];
@@ -8729,11 +8758,11 @@ describe('Syntax - Tags',function() {
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
 			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
-				(function($0,$2,$$) {
+				(function tagLoop($0,$2,$$) {
 					for (let i = 0, len = data.length, item; i < len; i++) {
 						item = data[i];
 						$$.push(($0[i] || _1('h1',$0,i)).setContent(item.id,3));
-						(function($0) {
+						(function tagLoop($0) {
 							for (let j = 0, items = iter$(item.items), len = items.length; j < len; j++) {
 								$$.push(($0[j] || _1('div',$0,j)).setContent(items[j],3));
 							};
@@ -8749,13 +8778,13 @@ describe('Syntax - Tags',function() {
 		var node2 = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
 			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
-				(function($0,$1,$2,$$) {
+				(function tagLoop($0,$1,$2,$$) {
 					var t0;
 					for (let i = 0, len = data.length, item; i < len; i++) {
 						item = data[i];
 						$$.push(($0[i] || _1('h1',$0,i)).setContent(item.id,3));
 						$$.push(($1[i] || _1('hr',$1,i)));
-						$$.push((t0 = $2[i] || (t0=_1('ul',$2,i))).setContent((function($0) {
+						$$.push((t0 = $2[i] || (t0=_1('ul',$2,i))).setContent((function tagLoop($0) {
 							for (let j = 0, items = iter$(item.items), len = $0.taglen = items.length; j < len; j++) {
 								($0[j] || _1('li',$0,j)).setContent(items[j],3);
 							};return $0;
@@ -8781,7 +8810,7 @@ describe('Syntax - Tags',function() {
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
 			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
-				(function($0,$1,$$) {
+				(function tagLoop($0,$1,$$) {
 					for (let i = 0, len = data.length, item; i < len; i++) {
 						item = data[i];
 						if (item.id == 'a') {
@@ -9098,7 +9127,7 @@ Imba.defineTag('cached', function(tag){
 	tag.prototype.render = function (){
 		var self = this, $ = this.$;
 		return self.$open(0).setChildren(
-			(function($0) {
+			(function tagLoop($0) {
 				var v_, $1, $$ = $0.$iter();
 				for (let i = 0, items = iter$(self._ary), len = items.length; i < len; i++) {
 					$$.push(($0[items[i]] || _1('div',$0,items[i]).setText("v")));
@@ -9210,7 +9239,7 @@ describe('Tags - Define',function() {
 			var ary = ['a','b','c','d'];
 			return this.$open(0).setChildren([
 				$[0] || _1('h1',$,0,this).setText('heading'),
-				(function($0) {
+				(function tagLoop($0) {
 					for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 						($0[i] || _1('custom',$0,i)).setContent(ary[i],3).end();
 					};return $0;
@@ -9237,7 +9266,7 @@ describe('Tags - Define',function() {
 			var ary = ['a','b','c','d'];
 			return this.$open(0).setChildren([
 				$[0] || _1('h1',$,0,this).setText('heading'),
-				(function($0,$1,$$) {
+				(function tagLoop($0,$1,$$) {
 					for (let i = 0, len = ary.length, v; i < len; i++) {
 						v = ary[i];
 						$$.push(($0[i] || _1('custom',$0,i).flag('one')).setContent(v,3).end());
@@ -9392,7 +9421,7 @@ describe('Tags - Define',function() {
 			tag.prototype.render = function (){
 				var $ = this.$;
 				return this.$open(0).setChildren(
-					(function($0) {
+					(function tagLoop($0) {
 						for (let v = 1; v <= 2; v++) {
 							($0[v] || _1('div',$0,v)).setContent(v,3);
 						};return $0;
@@ -9441,7 +9470,7 @@ describe('Tags - Define',function() {
 				self._items = ["a","b","c"];
 				self._k = 0;
 				return self.$open(0).setChildren(
-					(function($0) {
+					(function tagLoop($0) {
 						var $2, $1, $$ = $0.$iter();
 						for (let i = 0, items = iter$(self._items), len = items.length; i < len; i++) {
 							$$.push(($0[($1 = self._k++)] || _1('div',$0,$1)).setContent(items[i],3));
@@ -9563,7 +9592,7 @@ Imba.defineTag('cachetest', function(tag){
 				],2)).end()
 			) : void(0),
 			
-			(function($0) {
+			(function tagLoop($0) {
 				for (let i = 0, items = iter$(o.letters), len = $0.taglen = items.length; i < len; i++) {
 					($0[i] || _1('div',$0,i)).setContent(items[i],3);
 				};return $0;
@@ -9695,7 +9724,7 @@ describe('Tags - Cache',function() {
 		
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
-			return ($[0] || _1('ul',$,0,t0)).setContent((function($0) {
+			return ($[0] || _1('ul',$,0,t0)).setContent((function tagLoop($0) {
 				var $1, id_, $$ = $0.$iter();
 				for (let i = 0, len = items.length, item; i < len; i++) {
 					item = items[i];
@@ -9932,7 +9961,7 @@ Imba.defineTag('other', function(tag){
 	
 	tag.prototype.render = function (){
 		var self = this, $ = this.$;
-		return self.$open(0).setChildren((function($0) {
+		return self.$open(0).setChildren((function tagLoop($0) {
 			for (let i = 0, items = iter$(self.items()), len = $0.taglen = items.length; i < len; i++) {
 				($0[i] || _1('li',$0,i)).setContent(items[i],3);
 			};return $0;
@@ -9943,7 +9972,7 @@ Imba.defineTag('other', function(tag){
 Imba.defineTag('textlist', function(tag){
 	tag.prototype.render = function (texts){
 		if(texts === undefined) texts = [];
-		return this.$open(0).setChildren((function($$) {
+		return this.$open(0).setChildren((function tagLoop($$) {
 			for (let i = 0, items = iter$(texts), len = items.length; i < len; i++) {
 				$$.push(items[i]);
 			};return $$;
@@ -11927,7 +11956,7 @@ TT = (t0 = (t0=_1('div')).setTemplate(function() {
 				return this.$open(0).dataset('stamp',Date.now()).setChildren([
 					$1[0] || _1('li',$1,0,this).setText("Inner"),
 					$1[1] || _1('li',$1,1,this),
-					(function($0) {
+					(function tagLoop($0) {
 						for (let i = 0, items = iter$(AA), len = $0.taglen = items.length; i < len; i++) {
 							($0[i] || _1('li',$0,i)).setContent(items[i],3);
 						};return $0;
@@ -11940,7 +11969,7 @@ TT = (t0 = (t0=_1('div')).setTemplate(function() {
 				var $1 = this.$, t1;
 				return Imba.static([
 					($1[0] || _1('div',$1,0,t1)).setText("This is inside " + (Date.now())),
-					(function($0) {
+					(function tagLoop($0) {
 						for (let i = 0, items = iter$(AA), len = $0.taglen = items.length; i < len; i++) {
 							($0[i] || _1('div',$0,i)).setContent(items[i],3);
 						};return $0;
@@ -11962,7 +11991,7 @@ Imba.defineTag('hello', function(tag){
 			$[0].setContent([
 				$[1] || _1('h2',$,1,0).setText("content of template:"),
 				$[2] || _1('div',$,2,0),
-				(function($0) {
+				(function tagLoop($0) {
 					for (let i = 0, items = iter$(AA), len = $0.taglen = items.length; i < len; i++) {
 						($0[i] || _1('div',$0,i)).setContent(items[i],3);
 					};return $0;
