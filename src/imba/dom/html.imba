@@ -52,6 +52,14 @@ extend tag input
 	def bindData target, path, args
 		DataProxy.bind(self,target,path,args)
 		self
+
+	def checked
+		@dom:checked
+		
+	def setChecked value
+		if !!value != @dom:checked
+			@dom:checked = !!value
+		self
 		
 	def setValue value
 		if @localValue == undefined
