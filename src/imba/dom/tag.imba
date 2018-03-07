@@ -8,6 +8,7 @@ Imba.TAG_MOUNTING = 4
 Imba.TAG_MOUNTED = 8
 Imba.TAG_SCHEDULED = 16
 Imba.TAG_AWAKENED = 32
+Imba.TAG_MOUNTABLE = 64
 
 ###
 Get the current document
@@ -329,8 +330,8 @@ class Imba.Tag
 		var par = dom
 		var el = child.@slot_ or child
 		if el and el:parentNode == par
-			par.removeChild(el)
 			Imba.TagManager.remove(el.@tag or el,self)
+			par.removeChild(el)
 		self
 	
 	###
@@ -338,8 +339,10 @@ class Imba.Tag
 	###
 	def removeAllChildren
 		if @dom:firstChild
-			@dom.removeChild(@dom:firstChild) while @dom:firstChild
-			Imba.TagManager.remove(null,self)
+			var el
+			while el = @dom:firstChild
+				$web$ and Imba.TagManager.remove(el.@tag or el,self)
+				@dom.removeChild(el)
 		@tree_ = @text_ = null
 		self
 
@@ -378,7 +381,7 @@ class Imba.Tag
 			@slot_.@tag ||= self
 
 			if @dom:parentNode
-				Imba.TagManager.remove(self)
+				Imba.TagManager.remove(self,@dom:parentNode)
 				@dom:parentNode.replaceChild(@slot_,@dom)
 		self
 		
