@@ -2606,6 +2606,7 @@ export class TagLoopFunc < Func
 		self
 	
 	def js o
+		@name = 'tagLoop'
 		var out = super
 		"(" + out + ")({cary__(@args)})"
 
