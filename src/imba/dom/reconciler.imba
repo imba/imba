@@ -347,7 +347,7 @@ extend tag element
 		# 	return self.text = new
 		var old = @tree_
 
-		if new === old and new and new:taglen == undefined
+		if new === old and (!new or new:taglen == undefined)
 			return self
 
 		if !old and typ != 3
@@ -364,6 +364,9 @@ extend tag element
 
 		elif typ == 3
 			let ntyp = typeof new
+			
+			if ntyp != 'object'
+				return setText(new)
 
 			if new and new.@dom
 				removeAllChildren
@@ -379,8 +382,7 @@ extend tag element
 					removeAllChildren
 					appendNested(self,new)
 			else
-				text = new
-				return self
+				return setText(new)
 				
 		elif typ == 4
 			reconcileIndexedArray(self,new,old,null)
