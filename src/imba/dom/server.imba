@@ -100,6 +100,9 @@ class CSSStyleDeclaration
 		@dom = dom
 		self
 		
+	def removeProperty key
+		delete self[key]
+		
 	def toString
 		var items = []
 		for own k,v of self
