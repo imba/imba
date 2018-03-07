@@ -5,7 +5,8 @@ class Imba.TagManagerClass
 		@inserts = 0
 		@removes = 0
 		@mounted = []
-		@hasMountables = no
+		@mountables = 0
+		@unmountables = 0
 		self
 
 	def mounted
@@ -14,24 +15,26 @@ class Imba.TagManagerClass
 	def insert node, parent
 		@inserts++
 		if node and node:mount
-			@hasMountables = yes
+			unless node.FLAGS & Imba.TAG_MOUNTABLE
+				node.FLAGS |= Imba.TAG_MOUNTABLE
+				@mountables++
 		return
 
 	def remove node, parent
 		@removes++
+		
 
 	def changes
 		@inserts + @removes
 
 	def mount node
-		return if $node$
-		@hasMountables = yes
+		return
 
 	def refresh force = no
 		return if $node$
 		return if !force and changes == 0
 		# console.time('resolveMounts')
-		if (@inserts and @hasMountables) or force
+		if (@inserts and @mountables > @mounted:length) or force
 			tryMount
 
 		if (@removes or force) and @mounted:length
@@ -56,9 +59,16 @@ class Imba.TagManagerClass
 		return self
 
 	def mountNode node
-		@mounted.push(node)
-		node.FLAGS |= Imba.TAG_MOUNTED
-		node.mount if node:mount
+		if @mounted.indexOf(node) == -1
+			@mounted.push(node)
+			node.FLAGS |= Imba.TAG_MOUNTED
+			node.mount if node:mount
+			# Mark all parents as mountable for faster unmount
+			let el = node.dom:parentNode
+			while el and el.@tag and !el.@tag:mount and !(el.@tag.FLAGS & Imba.TAG_MOUNTABLE)
+				el.@tag.FLAGS |= Imba.TAG_MOUNTABLE
+				el = el:parentNode
+
 		return
 
 	def tryUnmount
