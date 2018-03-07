@@ -358,12 +358,17 @@ export class Stack
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
+		
+		var lowercased = key.toLowerCase
+		
+		if @options[lowercased] != undefined
+			return @options[lowercased]
 
 		# temporary shorthand
-		if key.toLowerCase == 'es6'
+		if lowercased == 'es6'
 			return self.es6
 
-		if key.toLowerCase == 'es5'
+		if lowercased == 'es5'
 			return self.es5
 
 		if platform and key in ['WEB','NODE','WEBWORKER']
