@@ -945,7 +945,7 @@ export class Lexer
 			elif typ == 'NIL'
 				typ = 'NULL'
 
-			elif typ == 'VAR'
+			elif typ == 'VAR' or typ == 'CONST' or typ == 'LET'
 				if @lastVal == 'export'
 					tTs(prev,'EXPORT')
 

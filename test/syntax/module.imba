@@ -35,3 +35,6 @@ export module service
 		# module is only a keyword when followed by identifier (for now)
 		var module = {}
 		return module
+
+export var exportedVariable = 10
+export const exportedConst = 20

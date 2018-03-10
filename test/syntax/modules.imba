@@ -1,7 +1,7 @@
 extern describe, test, ok, eq, it
 
 # import two specific items from module
-import {Item,hello,service as myService} from './module'
+import {Item,hello,service as myService,exportedVariable,exportedConst} from './module'
 
 # import everything from module into a local namespace/variable 'm'
 import './module' as m
@@ -39,6 +39,9 @@ describe "Syntax - Modules" do
 		
 		myService.name = "Service"
 		eq myService.name, "Service"
+		
+		eq exportedVariable, 10
+		eq exportedConst, 20
 
 
 export Item
