@@ -79,7 +79,7 @@ Imba is the namespace for all runtime related utilities
 @namespace
 */
 
-var Imba = {VERSION: '1.3.3'};
+var Imba = {VERSION: '1.3.4'};
 
 /*
 
@@ -477,6 +477,9 @@ var service = (function($module){
 	return $module;
 })({})
 exports.service = service;
+
+var exportedVariable = exports.exportedVariable = 10;
+const exportedConst = exports.exportedConst = 20;
 
 
 /***/ }),
@@ -7625,7 +7628,7 @@ var Imba = __webpack_require__(0);
 // externs;
 
 // import two specific items from module
-var module$ = __webpack_require__(4), Item = module$.Item, hello = module$.hello, myService = module$.service;
+var module$ = __webpack_require__(4), Item = module$.Item, hello = module$.hello, myService = module$.service, exportedVariable = module$.exportedVariable, exportedConst = module$.exportedConst;
 
 // import everything from module into a local namespace/variable 'm'
 var m = __webpack_require__(4);
@@ -7664,7 +7667,10 @@ describe("Syntax - Modules",function() {
 		eq(myService.decr(),0);
 		
 		myService.setName("Service");
-		return eq(myService.name(),"Service");
+		eq(myService.name(),"Service");
+		
+		eq(exportedVariable,10);
+		return eq(exportedConst,20);
 	});
 });
 
