@@ -2904,6 +2904,8 @@ var isSimilarArray = function(a,b) {
 Imba.extendTag('input', function(tag){
 	tag.prototype.lazy = function(v){ return this._lazy; }
 	tag.prototype.setLazy = function(v){ this._lazy = v; return this; };
+	tag.prototype.number = function(v){ return this._number; }
+	tag.prototype.setNumber = function(v){ this._number = v; return this; };
 	
 	tag.prototype.bindData = function (target,path,args){
 		DataProxy.bind(this,target,path,args);
@@ -2926,6 +2928,16 @@ Imba.extendTag('input', function(tag){
 			this.dom().value = this._value = value;
 		};
 		return this;
+	};
+	
+	tag.prototype.setType = function (value){
+		this.dom().type = this._type = value;
+		return this;
+	};
+	
+	tag.prototype.value = function (){
+		let val = this._dom.value;
+		return (this._number && val) ? parseFloat(val) : val;
 	};
 	
 	tag.prototype.oninput = function (e){
@@ -9084,7 +9096,7 @@ describe("Syntax - Quirks",function() {
 		return eq(item,1000);
 	});
 	
-	return test("let item = forin",function() {
+	test("let item = forin",function() {
 		let item;
 		let res = [];
 		for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
@@ -9092,6 +9104,28 @@ describe("Syntax - Quirks",function() {
 		};
 		item = res;
 		return eq(item,[2,4,6]);
+	});
+	
+	return test("new precedence",function() {
+		var item;
+		function Collection(type){
+			this._type = type;
+		};
+		
+		Collection.prototype.type = function(v){ return this._type; }
+		Collection.prototype.setType = function(v){ this._type = v; return this; };
+		Collection.prototype.create = function (value){
+			return new this.type(value);
+		};
+		
+		function Item(){ };
+		
+		Item.prototype.hello = function (){
+			return this;
+		};
+		
+		var factory = new Collection(Item);
+		return item = factory.create("item");
 	});
 });
 
