@@ -48,6 +48,7 @@ var isSimilarArray = do |a,b|
 
 extend tag input
 	prop lazy
+	prop number
 
 	def bindData target, path, args
 		DataProxy.bind(self,target,path,args)
@@ -65,6 +66,14 @@ extend tag input
 		if @localValue == undefined
 			dom:value = @value = value
 		self
+	
+	def setType value
+		dom:type = @type = value
+		self
+		
+	def value
+		let val = @dom:value
+		@number and val ? parseFloat(val) : val
 
 	def oninput e
 		let val = @dom:value

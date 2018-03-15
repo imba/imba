@@ -43,3 +43,20 @@ describe "Syntax - Quirks" do
 		let item = for v in [1,2,3]
 			v * 2
 		eq item, [2,4,6]
+		
+	test "new precedence" do
+		class Collection
+			prop type
+			def initialize type
+				@type = type
+				
+			def create value
+				type.new value
+				
+		class Item
+			def hello
+				self
+				
+		var factory = Collection.new(Item)
+		var item = factory.create("item")
+			
