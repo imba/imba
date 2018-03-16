@@ -20,7 +20,7 @@ For questions and support please use our [community chat](https://gitter.im/some
 
 ## Plugins
 
-* Atom: **[language-imba](http://github.com/somebee/sublime-imba)** can be installed through Atom Package Manager. File icon support is available via the File Icons package and the code pending in this **[issue](https://github.com/file-icons/atom/issues/664)** until integrated with the base package.
+* Atom: **[language-imba](http://github.com/somebee/language-imba)** can be installed through Atom Package Manager. File icon support is available via the File Icons package and the code pending in this **[issue](https://github.com/file-icons/atom/issues/664)** until integrated with the base package.
 * Sublime Text: **[sublime-imba](http://github.com/somebee/sublime-imba)** can be installed through Sublime Package Manager.
 * VSCode: **[vscode-imba](http://github.com/somebee/vscode-imba)** can be installed through VSCode / Marketplace.
 
