@@ -74,6 +74,7 @@ module.exports = __webpack_require__(2);
 /* 1 */
 /***/ (function(module, exports) {
 
+var __root = {};
 /*
 Imba is the namespace for all runtime related utilities
 @namespace
@@ -251,7 +252,7 @@ Imba.propDidSet = function (object,property,val,prev){
 
 
 // Basic events
-function emit__(event,args,node){
+__root.emit__ = function (event,args,node){
 	// var node = cbs[event]
 	var prev,cb,ret;
 	
@@ -315,8 +316,8 @@ Imba.unlisten = function (obj,event,cb,meth){
 Imba.emit = function (obj,event,params){
 	var cb;
 	if (cb = obj.__listeners__) {
-		if (cb[event]) { emit__(event,params,cb[event]) };
-		if (cb.all) { emit__(event,[event,params],cb.all) }; // and event != 'all'
+		if (cb[event]) { __root.emit__(event,params,cb[event]) };
+		if (cb.all) { __root.emit__(event,[event,params],cb.all) }; // and event != 'all'
 	};
 	return;
 };
@@ -416,11 +417,11 @@ Imba.Pointer.prototype.y = function (){
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0);
+var __root = {}, Imba = __webpack_require__(0);
 
-function hello(){
+__root.hello = function (){
 	return "world";
-}; exports.hello = hello;
+}; exports.hello = __root.hello;
 
 function Item(){ };
 
@@ -486,6 +487,7 @@ const exportedConst = exports.exportedConst = 20;
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var __root = {};
 
 // require imba ( ensure local version )
 __webpack_require__(2);
@@ -579,6 +581,7 @@ if (false) {};
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+var __root = {};
 var Imba = __webpack_require__(1);
 
 var requestAnimationFrame; // very simple raf polyfill
@@ -1246,7 +1249,7 @@ Imba.EventManager.activate = function (){
 			var tap = new Imba.Event(e);
 			tap.setType('tap');
 			tap.process();
-			if (tap._responder) {
+			if (tap._responder && tap.defaultPrevented) {
 				return e.preventDefault();
 			};
 		};
@@ -1385,6 +1388,7 @@ Imba.EventManager.prototype.ondisable = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+var __root = {};
 var Imba = __webpack_require__(1);
 
 Imba.CSSKeyMap = {};
@@ -2426,7 +2430,7 @@ Imba.HTML_PROPS = {
 	canvas: "width height"
 };
 
-function extender(obj,sup){
+__root.extender = function (obj,sup){
 	for (let v, i = 0, keys = Object.keys(sup), l = keys.length, k; i < l; i++){
 		k = keys[i];v = sup[k];(obj[k] == null) ? (obj[k] = v) : obj[k];
 	};
@@ -2438,14 +2442,14 @@ function extender(obj,sup){
 	return obj;
 };
 
-function Tag(){
+__root.Tag = function (){
 	return function(dom,ctx) {
 		this.initialize(dom,ctx);
 		return this;
 	};
 };
 
-function TagSpawner(type){
+__root.TagSpawner = function (type){
 	return function(zone) { return type.build(zone); };
 };
 
@@ -2503,7 +2507,7 @@ Imba.Tags.prototype.defineTag = function (fullName,supr,body){
 	supr || (supr = this.baseType(fullName));
 	
 	let supertype = ((typeof supr=='string'||supr instanceof String)) ? this.findTagType(supr) : supr;
-	let tagtype = Tag();
+	let tagtype = __root.Tag();
 	
 	tagtype._name = name;
 	tagtype._flagName = null;
@@ -2518,7 +2522,7 @@ Imba.Tags.prototype.defineTag = function (fullName,supr,body){
 		this[fullName] = tagtype;
 	};
 	
-	extender(tagtype,supertype);
+	__root.extender(tagtype,supertype);
 	
 	if (body) {
 		body.call(tagtype,tagtype,tagtype.TAGS || this);
@@ -3879,7 +3883,7 @@ Imba.Event.prototype.preventDefault = function (){
 	*/
 
 Imba.Event.prototype.isPrevented = function (){
-	return this.event() && this.event().defaultPrevented || this._cancel;
+	return this.event() && this.event().defaultPrevented;
 };
 
 /*
@@ -4151,17 +4155,18 @@ Imba.Event.prototype.which = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+var __root = {};
 // externs;
 
 var Imba = __webpack_require__(1);
 
-function removeNested(root,node,caret){
+__root.removeNested = function (root,node,caret){
 	// if node/nodes isa String
 	// 	we need to use the caret to remove elements
 	// 	for now we will simply not support this
 	if (node instanceof Array) {
 		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
-			removeNested(root,items[i],caret);
+			__root.removeNested(root,items[i],caret);
 		};
 	} else if (node && node._slot_) {
 		root.removeChild(node);
@@ -4179,13 +4184,13 @@ function removeNested(root,node,caret){
 	return caret;
 };
 
-function appendNested(root,node){
+__root.appendNested = function (root,node){
 	if (node instanceof Array) {
 		let i = 0;
 		let c = node.taglen;
 		let k = (c != null) ? ((node.domlen = c)) : node.length;
 		while (i < k){
-			appendNested(root,node[i++]);
+			__root.appendNested(root,node[i++]);
 		};
 	} else if (node && node._dom) {
 		root.appendChild(node);
@@ -4201,13 +4206,13 @@ function appendNested(root,node){
 // does not need to return any tail, as before
 // will still be correct there
 // before must be an actual domnode
-function insertNestedBefore(root,node,before){
+__root.insertNestedBefore = function (root,node,before){
 	if (node instanceof Array) {
 		let i = 0;
 		let c = node.taglen;
 		let k = (c != null) ? ((node.domlen = c)) : node.length;
 		while (i < k){
-			insertNestedBefore(root,node[i++],before);
+			__root.insertNestedBefore(root,node[i++],before);
 		};
 	} else if (node && node._dom) {
 		root.insertBefore(node,before);
@@ -4219,19 +4224,19 @@ function insertNestedBefore(root,node,before){
 };
 
 // after must be an actual domnode
-function insertNestedAfter(root,node,after){
+__root.insertNestedAfter = function (root,node,after){
 	var before = after ? after.nextSibling : root._dom.firstChild;
 	
 	if (before) {
-		insertNestedBefore(root,node,before);
+		__root.insertNestedBefore(root,node,before);
 		return before.previousSibling;
 	} else {
-		appendNested(root,node);
+		__root.appendNested(root,node);
 		return root._dom.lastChild;
 	};
 };
 
-function reconcileCollectionChanges(root,new$,old,caret){
+__root.reconcileCollectionChanges = function (root,new$,old,caret){
 	
 	var newLen = new$.length;
 	var lastNew = new$[newLen - 1];
@@ -4337,7 +4342,7 @@ function reconcileCollectionChanges(root,new$,old,caret){
 			};
 			
 			var after = new$[idx - 1];
-			insertNestedAfter(root,node,(after && after._slot_ || after || caret));
+			__root.insertNestedAfter(root,node,(after && after._slot_ || after || caret));
 		};
 		
 		caret = node._slot_ || (caret && caret.nextSibling || root._dom.firstChild);
@@ -4349,7 +4354,7 @@ function reconcileCollectionChanges(root,new$,old,caret){
 
 
 // expects a flat non-sparse array of nodes in both new and old, always
-function reconcileCollection(root,new$,old,caret){
+__root.reconcileCollection = function (root,new$,old,caret){
 	var k = new$.length;
 	var i = k;
 	var last = new$[k - 1];
@@ -4365,13 +4370,13 @@ function reconcileCollection(root,new$,old,caret){
 	if (i == -1) {
 		return last && last._slot_ || last || caret;
 	} else {
-		return reconcileCollectionChanges(root,new$,old,caret);
+		return __root.reconcileCollectionChanges(root,new$,old,caret);
 	};
 };
 
 // TYPE 5 - we know that we are dealing with a single array of
 // keyed tags - and root has no other children
-function reconcileLoop(root,new$,old,caret){
+__root.reconcileLoop = function (root,new$,old,caret){
 	var nl = new$.length;
 	var ol = old.length;
 	var cl = new$.cache.i$; // cache-length
@@ -4430,11 +4435,11 @@ function reconcileLoop(root,new$,old,caret){
 		return;
 	};
 	
-	return reconcileCollectionChanges(root,new$,old,caret);
+	return __root.reconcileCollectionChanges(root,new$,old,caret);
 };
 
 // expects a flat non-sparse array of nodes in both new and old, always
-function reconcileIndexedArray(root,array,old,caret){
+__root.reconcileIndexedArray = function (root,array,old,caret){
 	var newLen = array.taglen;
 	var prevLen = array.domlen || 0;
 	var last = newLen ? array[newLen - 1] : null;
@@ -4463,7 +4468,7 @@ function reconcileIndexedArray(root,array,old,caret){
 
 // the general reconciler that respects conditions etc
 // caret is the current node we want to insert things after
-function reconcileNested(root,new$,old,caret){
+__root.reconcileNested = function (root,new$,old,caret){
 	
 	// var skipnew = new == null or new === false or new === true
 	var newIsNull = new$ == null || new$ === false;
@@ -4478,7 +4483,7 @@ function reconcileNested(root,new$,old,caret){
 		} else if (new$._slot_) {
 			return new$._slot_;
 		} else if ((new$ instanceof Array) && new$.taglen != null) {
-			return reconcileIndexedArray(root,new$,old,caret);
+			return __root.reconcileIndexedArray(root,new$,old,caret);
 		} else {
 			return caret ? caret.nextSibling : root._dom.firstChild;
 		};
@@ -4492,17 +4497,17 @@ function reconcileNested(root,new$,old,caret){
 				if (typ == old.static) { // should also include a reference?
 					for (let i = 0, items = iter$(new$), len = items.length; i < len; i++) {
 						// this is where we could do the triple equal directly
-						caret = reconcileNested(root,items[i],old[i],caret);
+						caret = __root.reconcileNested(root,items[i],old[i],caret);
 					};
 					return caret;
 				} else {
-					removeNested(root,old,caret);
+					__root.removeNested(root,old,caret);
 				};
 				
 				// if they are not the same we continue through to the default
 			} else {
 				// Could use optimized loop if we know that it only consists of nodes
-				return reconcileCollection(root,new$,old,caret);
+				return __root.reconcileCollection(root,new$,old,caret);
 			};
 		} else if (!oldIsNull) {
 			if (old._slot_) {
@@ -4513,20 +4518,20 @@ function reconcileNested(root,new$,old,caret){
 			};
 		};
 		
-		return insertNestedAfter(root,new$,caret);
+		return __root.insertNestedAfter(root,new$,caret);
 		// remove old
 	} else if (!newIsNull && new$._slot_) {
-		if (!oldIsNull) { removeNested(root,old,caret) };
-		return insertNestedAfter(root,new$,caret);
+		if (!oldIsNull) { __root.removeNested(root,old,caret) };
+		return __root.insertNestedAfter(root,new$,caret);
 	} else if (newIsNull) {
-		if (!oldIsNull) { removeNested(root,old,caret) };
+		if (!oldIsNull) { __root.removeNested(root,old,caret) };
 		return caret;
 	} else {
 		// if old did not exist we need to add a new directly
 		let nextNode;
 		// if old was array or imbatag we need to remove it and then add
 		if (old instanceof Array) {
-			removeNested(root,old,caret);
+			__root.removeNested(root,old,caret);
 		} else if (old && old._slot_) {
 			root.removeChild(old);
 		} else if (!oldIsNull) {
@@ -4539,7 +4544,7 @@ function reconcileNested(root,new$,old,caret){
 		};
 		
 		// now add the textnode
-		return insertNestedAfter(root,new$,caret);
+		return __root.insertNestedAfter(root,new$,caret);
 	};
 };
 
@@ -4564,11 +4569,11 @@ Imba.extendTag('element', function(tag){
 		
 		if (!old && typ != 3) {
 			this.removeAllChildren();
-			appendNested(this,new$);
+			__root.appendNested(this,new$);
 		} else if (typ == 1) {
 			let caret = null;
 			for (let i = 0, items = iter$(new$), len = items.length; i < len; i++) {
-				caret = reconcileNested(this,items[i],old[i],caret);
+				caret = __root.reconcileNested(this,items[i],old[i],caret);
 			};
 		} else if (typ == 2) {
 			return this;
@@ -4584,26 +4589,26 @@ Imba.extendTag('element', function(tag){
 				this.appendChild(new$);
 			} else if (new$ instanceof Array) {
 				if (new$._type == 5 && old && old._type == 5) {
-					reconcileLoop(this,new$,old,null);
+					__root.reconcileLoop(this,new$,old,null);
 				} else if (old instanceof Array) {
-					reconcileNested(this,new$,old,null);
+					__root.reconcileNested(this,new$,old,null);
 				} else {
 					this.removeAllChildren();
-					appendNested(this,new$);
+					__root.appendNested(this,new$);
 				};
 			} else {
 				return this.setText(new$);
 			};
 		} else if (typ == 4) {
-			reconcileIndexedArray(this,new$,old,null);
+			__root.reconcileIndexedArray(this,new$,old,null);
 		} else if (typ == 5) {
-			reconcileLoop(this,new$,old,null);
+			__root.reconcileLoop(this,new$,old,null);
 		} else if ((new$ instanceof Array) && (old instanceof Array)) {
-			reconcileNested(this,new$,old,null);
+			__root.reconcileNested(this,new$,old,null);
 		} else {
 			// what if text?
 			this.removeAllChildren();
-			appendNested(this,new$);
+			__root.appendNested(this,new$);
 		};
 		
 		this._tree_ = new$;
@@ -4647,7 +4652,7 @@ if (apple) {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0);
+var __root = {}, Imba = __webpack_require__(0);
 
 var TERMINAL_COLOR_CODES = {
 	bold: 1,
@@ -4663,7 +4668,7 @@ var TERMINAL_COLOR_CODES = {
 	white: 37
 };
 
-function fmt(code,string){
+__root.fmt = function (code,string){
 	if (console.group) { return string.toString() };
 	code = TERMINAL_COLOR_CODES[code];
 	var resetStr = "\x1B[0m";
@@ -4750,8 +4755,8 @@ Spec.prototype.finish = function (){
 	};
 	
 	var logs = [
-		fmt('green',("" + (ok.length) + " OK")),
-		fmt('red',("" + (failed.length) + " FAILED")),
+		__root.fmt('green',("" + (ok.length) + " OK")),
+		__root.fmt('red',("" + (failed.length) + " FAILED")),
 		("" + (this.assertions().length) + " TOTAL")
 	];
 	
@@ -4911,21 +4916,22 @@ SpecExample.prototype.run = function (){
 };
 
 SpecExample.prototype.finish = function (){
+	var self = this;
 	var details = [];
-	var dots = this._assertions.map(function(v,i) {
+	var dots = self._assertions.map(function(v,i) {
 		Spec.CURRENT.assertions().push(v);
 		if (v.success()) {
-			return fmt('green',"✔");
+			return __root.fmt('green',"✔");
 		} else {
 			details.push((" - " + (v.details())));
-			return fmt('red',"✘");
+			return __root.fmt('red',"✘");
 		};
 	});
 	
-	var str = ("" + (this._name) + " " + dots.join(" "));
+	var str = ("" + (self._name) + " " + dots.join(" "));
 	console.log(str);
 	if (details.length > 0) { console.log(details.join("\n")) };
-	return this.emit('done',[this]);
+	return self.emit('done',[self]);
 };
 
 function SpecObject(){ };
@@ -5050,9 +5056,9 @@ SpecAssert.prototype.failed = function (){
 SpecAssert.prototype.details = function (){
 	if (!this._success) {
 		if (this._format) {
-			return fmt('red',("expected " + (this._right) + " got " + (this._left)));
+			return __root.fmt('red',("expected " + (this._right) + " got " + (this._left)));
 		} else {
-			return fmt('red',("expected " + (this._expected) + " got " + (this._value)));
+			return __root.fmt('red',("expected " + (this._expected) + " got " + (this._value)));
 		};
 	} else {
 		return "passed test";
@@ -5081,7 +5087,7 @@ SpecAssertTruthy.prototype.failed = function (){
 
 SpecAssertTruthy.prototype.details = function (){
 	if (!this._success) {
-		return fmt('red',("assertion failed: " + (this._message)));
+		return __root.fmt('red',("assertion failed: " + (this._message)));
 	} else {
 		return "passed test";
 	};
@@ -5103,28 +5109,28 @@ SpecAssertFalsy.prototype.test = function (value){
 SPEC = new Spec();
 
 // global def p do console.log(*arguments)
-describe = function describe(name,blk){
+describe = __root.describe = function (name,blk){
 	return SPEC.context().describe(name,blk);
 };
-it = function it(name,blk){
+it = __root.it = function (name,blk){
 	return SPEC.context().it(name,blk);
 };
-test = function test(name,blk){
+test = __root.test = function (name,blk){
 	return SPEC.context().it(name,blk);
 };
-eq = function eq(actual,expected,format){
+eq = __root.eq = function (actual,expected,format){
 	return SPEC.context().eq(actual,expected,format);
 };
-match = function match(actual,expected,format){
+match = __root.match = function (actual,expected,format){
 	return SPEC.context().match(actual,expected,format);
 };
-ok = function ok(actual,message){
+ok = __root.ok = function (actual,message){
 	return SPEC.context().assertion(new SpecAssertTruthy(SPEC.context(),actual,message));
 };
-assert = function assert(expression){
+assert = __root.assert = function (expression){
 	return SPEC.context().assert(expression);
 };
-await = function await(){
+await = __root.await = function (){
 	var context_;
 	return (context_ = SPEC.context()).await.apply(context_,arguments);
 };
@@ -5137,6 +5143,7 @@ await = function await(){
 /***/ (function(module, exports) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+var __root = {};
 // externs;
 
 function SyntaxLoopsObj(){ };
@@ -5617,7 +5624,7 @@ describe('Syntax - Loops',function() {
 /* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0);
+var __root = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Organism(){
@@ -5873,7 +5880,7 @@ describe('Syntax - Class',function() {
 /* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0);
+var __root = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Organism(){
@@ -6045,7 +6052,7 @@ function union$(a,b){
 	return u;
 };
 
-var Imba = __webpack_require__(0);
+var __root = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Cache(val){
@@ -6224,6 +6231,7 @@ describe('Syntax - Operators',function() {
 /* 21 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe("Syntax - Variables",function() {
@@ -6298,6 +6306,7 @@ describe("Syntax - Variables",function() {
 function len$(a){
 	return a && (a.len instanceof Function ? a.len() : a.length) || 0;
 };
+var __root = {};
 // externs;
 
 describe('Syntax - Arrays',function() {
@@ -6401,7 +6410,7 @@ describe('Syntax - Arrays',function() {
 /* 23 */
 /***/ (function(module, exports) {
 
-var self = this;
+var __root = {};
 // externs;
 
 function ThrowClass(){ };
@@ -6429,7 +6438,7 @@ describe('Syntax - Catch',function() {
 		var after = false;
 		
 		try {
-			self.nometh() * 10;
+			__root.nometh() * 10;
 		} catch (e) {
 			res = 1;
 		};
@@ -6437,7 +6446,7 @@ describe('Syntax - Catch',function() {
 		
 		// also works with statements
 		try {
-			res = self.nometh();
+			res = __root.nometh();
 		} catch (e) {
 			res = 2;
 		};
@@ -6446,7 +6455,7 @@ describe('Syntax - Catch',function() {
 		// finally is executed after the result of
 		// expression is evaluated
 		try {
-			res = self.nometh();
+			res = __root.nometh();
 		} catch (e) {
 			res = 2;
 		} finally {
@@ -6488,7 +6497,7 @@ describe('Syntax - Catch',function() {
 /* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0);
+var __root = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Paramer(){ return SpecObject.apply(this,arguments) };
@@ -6876,6 +6885,7 @@ describe('Syntax - Functions',function() {
 /* 25 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe('Syntax - Return',function() {
@@ -6929,6 +6939,7 @@ function union$(a,b){
 	return u;
 };
 
+var __root = {};
 // externs;
 
 var ary = [1,2,3];
@@ -6997,7 +7008,7 @@ describe("Syntax - Statements",function() {
 /* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0);
+var __root = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Model(nestings){
@@ -7149,6 +7160,7 @@ describe('Syntax - Properties',function() {
 /* 28 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe("Syntax - Literals",function() {
@@ -7263,6 +7275,7 @@ describe("Syntax - Literals",function() {
 /* 29 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe('Syntax - Existential operator',function() {
@@ -7294,6 +7307,7 @@ describe('Syntax - Existential operator',function() {
 /* 30 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 function A(a,b){
@@ -7507,6 +7521,7 @@ A.prototype.letSwitch = function (val){
 
 
 A.prototype.varShadow = function (){
+	var self = this;
 	var x = 10;
 	var y = function() {
 		var x1 = x * 2;
@@ -7593,6 +7608,7 @@ describe("Syntax - Scope",function() {
 /* 31 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe('Syntax - Delete',function() {
@@ -7611,20 +7627,21 @@ describe('Syntax - Delete',function() {
 /* 32 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
-function fn(blk,time){
+__root.fn = function (blk,time){
 	return blk(time);
 };
 
 describe('Syntax - Blockparam',function() {
 	test('specify position',function() {
-		var res = fn(function(mult) { return 10 * mult; },2);
+		var res = __root.fn(function(mult) { return 10 * mult; },2);
 		return eq(res,20);
 	});
 	
 	return test('specify position using &',function() {
-		var res = fn(function(mult) { return 10 * mult; },2);
+		var res = __root.fn(function(mult) { return 10 * mult; },2);
 		return eq(res,20);
 	});
 });
@@ -7636,7 +7653,7 @@ describe('Syntax - Blockparam',function() {
 /* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0);
+var __root = {}, Imba = __webpack_require__(0);
 // externs;
 
 // import two specific items from module
@@ -7694,6 +7711,7 @@ exports.Item = Item;
 /* 34 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe('Syntax - Switch',function() {
@@ -7750,7 +7768,7 @@ function union$(a,b){
 	return u;
 };
 
-var self = this;
+var __root = {};
 // externs;
 
 function O(){ };
@@ -7915,7 +7933,7 @@ describe('Syntax - Assignment',function() {
 			
 			if (truthy) {
 				try {
-					localvar = (obj.setIvar(v_ = self.nomethod()),v_);
+					localvar = (obj.setIvar(v_ = __root.nomethod()),v_);
 				} catch (e) {
 					localvar = (obj.setIvar($1 = 3),$1);
 				};
@@ -7932,7 +7950,7 @@ describe('Syntax - Assignment',function() {
 			obj.setIvar(0);
 			if (!(ivar_ = obj.ivar())) { if (truthy) {
 				try {
-					var l = (obj.setIvar(v_ = self.nomethod()),v_);
+					var l = (obj.setIvar(v_ = __root.nomethod()),v_);
 				} catch (e) {
 					l = (obj.setIvar($1 = 3),$1);
 				};
@@ -7957,7 +7975,7 @@ describe('Syntax - Assignment',function() {
 			// 
 			if (!l1) { if (l3) { if (truthy) {
 				try {
-					l0 = l1 = (obj.setIvar(v_ = obj.ivar() + (l3 = self.nomethod())),v_);
+					l0 = l1 = (obj.setIvar(v_ = obj.ivar() + (l3 = __root.nomethod())),v_);
 				} catch (e) {
 					l0 = l1 = (obj.setIvar($1 = obj.ivar() + (l3 = 3)),$1);
 				};
@@ -8356,6 +8374,7 @@ describe('Syntax - Assignment',function() {
 /* 36 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe("Syntax - Conditionals",function() {
@@ -8399,9 +8418,10 @@ describe("Syntax - Conditionals",function() {
 /* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var __root = {};
 // externs;
 
-function delay(ret){
+__root.delay = function (ret){
 	if(ret === undefined) ret = 1;
 	return new Promise(function(resolve,reject) {
 		return setTimeout(function() {
@@ -8441,8 +8461,8 @@ describe('Await',function() {
 	if (true) {
 		test('es6',function() {
 			async function add2(x){
-				let p_a = delay(20);
-				let p_b = delay(30);
+				let p_a = __root.delay(20);
+				let p_b = __root.delay(30);
 				return x + await p_a + await p_b;
 			};
 			
@@ -8469,15 +8489,15 @@ describe('Await',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), self = this, _2 = Imba.createTagCache, _3 = Imba.createTagMap, _4 = Imba.createTagList, _5 = Imba.createTagLoopResult, _1 = Imba.createElement;
+var __root = {}, Imba = __webpack_require__(0), _2 = Imba.createTagCache, _3 = Imba.createTagMap, _4 = Imba.createTagList, _5 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
-function jseq(find,blk){
+__root.jseq = function (find,blk){
 	let val = String(blk);
 	return ok(val.indexOf(find) >= 0,("'" + find + "' not found in " + val));
 };
 
-function htmleq(find,val){
+__root.htmleq = function (find,val){
 	if (val instanceof Function) {
 		val = val();
 	};
@@ -8495,43 +8515,44 @@ describe('Syntax - Tags',function() {
 	var numvar = 1;
 	var fnvar = function() { return true; };
 	var objvar = {a: 1,b: 2};
+	var scope = "__root";
 	
 	test('id',function() {
-		return jseq("setId('one')",function() { return (_1('div').setId('one')); });
+		return __root.jseq("setId('one')",function() { return (_1('div').setId('one')); });
 	});
 	
 	test('flags',function() {
-		jseq("flag('only')",function() { return (_1('div').flag('only')); });
-		jseq("flag('two')",function() { return (_1('div').flag('two')); });
-		jseq("flagIf('two',numvar)",function() { return (_1('div')).flagIf('two',numvar); });
-		jseq("setFlag(0,strvar)",function() { return (_1('div')).setFlag(0,strvar); });
-		return jseq("setFlag(0,self.name())",function() { return (_1('div')).setFlag(0,self.name()); });
+		__root.jseq("flag('only')",function() { return (_1('div').flag('only')); });
+		__root.jseq("flag('two')",function() { return (_1('div').flag('two')); });
+		__root.jseq("flagIf('two',numvar)",function() { return (_1('div')).flagIf('two',numvar); });
+		__root.jseq("setFlag(0,strvar)",function() { return (_1('div')).setFlag(0,strvar); });
+		return __root.jseq(("setFlag(0," + scope + ".name())"),function() { return (_1('div')).setFlag(0,__root.name()); });
 	});
 	
 	// attributes
 	test('attributes',function() {
-		jseq("setTitle(strvar)",function() { return (_1('div')).setTitle(strvar).end(); });
-		jseq("css('display','block')",function() { return (_1('div').css('display','block')).end(); });
-		jseq("setDisabled('disabled')",function() { return (_1('input').setDisabled('disabled')).end(); });
-		jseq("setDisabled('disabled').setReadonly('readonly')",function() { return (_1('input').setDisabled('disabled').setReadonly('readonly')).end(); });
-		return jseq(("set('model',strvar,\{number:1\})"),function() { return (_1('div')).set('model',strvar,{number:1}).end(); });
+		__root.jseq("setTitle(strvar)",function() { return (_1('div')).setTitle(strvar).end(); });
+		__root.jseq("css('display','block')",function() { return (_1('div').css('display','block')).end(); });
+		__root.jseq("setDisabled('disabled')",function() { return (_1('input').setDisabled('disabled')).end(); });
+		__root.jseq("setDisabled('disabled').setReadonly('readonly')",function() { return (_1('input').setDisabled('disabled').setReadonly('readonly')).end(); });
+		return __root.jseq(("set('model',strvar,\{number:1\})"),function() { return (_1('div')).set('model',strvar,{number:1}).end(); });
 	});
 	
 	// events
 	test('events',function() {
-		jseq("(0,['tap','prevent','after'],self)",function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],self)); });
-		jseq("(0,['tap',['incr',10]],self)",function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],self)); });
-		return jseq("(0,['tap',fnvar],self)",function() { return (_1('div').flag('two')).on$(0,['tap',fnvar],self); });
+		__root.jseq(("(0,['tap','prevent','after']," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],__root)); });
+		__root.jseq(("(0,['tap',['incr',10]]," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],__root)); });
+		return __root.jseq(("(0,['tap',fnvar]," + scope + ")"),function() { return (_1('div').flag('two')).on$(0,['tap',fnvar],__root); });
 	});
 	
 	test('data',function() {
-		jseq("setData(objvar)",function() { return (_1('div')).setData(objvar); });
-		return jseq("setData(objvar)",function() { return (_1('div').flag('only')).setData(objvar); });
+		__root.jseq("setData(objvar)",function() { return (_1('div')).setData(objvar); });
+		return __root.jseq("setData(objvar)",function() { return (_1('div').flag('only')).setData(objvar); });
 	});
 	
 	test('ref',function() {
-		return jseq("._main =",function() { let $ = this.$$ || (this.$$ = {});
-		return (self._main = self._main||_1('div',self).flag('main')).setData(objvar); });
+		return __root.jseq("._main =",function() { let $ = this.$$ || (this.$$ = {});
+		return (__root._main = __root._main||_1('div',__root).flag('main')).setData(objvar); });
 	});
 	
 	
@@ -8559,8 +8580,8 @@ describe('Syntax - Tags',function() {
 		};
 		
 		var instance = new Local();
-		htmleq("<h1>tag</h1>",instance.closed());
-		return htmleq("<h1>class</h1>",instance.open());
+		__root.htmleq("<h1>tag</h1>",instance.closed());
+		return __root.htmleq("<h1>class</h1>",instance.open());
 	});
 	
 	test('root',function() {
@@ -8606,11 +8627,11 @@ describe('Syntax - Tags',function() {
 		});
 		
 		var node = (_1(Local)).end();
-		htmleq('<div>ready</div>',node);
+		__root.htmleq('<div>ready</div>',node);
 		node.loading();
-		htmleq('<span>loading</span>',node);
+		__root.htmleq('<span>loading</span>',node);
 		node.render();
-		return htmleq('<div>ready</div>',node);
+		return __root.htmleq('<div>ready</div>',node);
 	});
 	
 	test('owner',function() {
@@ -8790,8 +8811,8 @@ describe('Syntax - Tags',function() {
 			,5);
 		}).end();
 		
-		htmleq("<h1>a</h1><div>a</div>",node);
-		htmleq("<h1>b</h1><div>d</div>",node);
+		__root.htmleq("<h1>a</h1><div>a</div>",node);
+		__root.htmleq("<h1>b</h1><div>d</div>",node);
 		
 		var node2 = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
@@ -8814,8 +8835,8 @@ describe('Syntax - Tags',function() {
 		
 		node2.render();
 		node2.render();
-		htmleq("<h1>a</h1><hr><ul><li>a</li><li>b</li>",node2);
-		return htmleq("<h1>b</h1><hr><ul><li>d</li><li>e</li>",node2);
+		__root.htmleq("<h1>a</h1><hr><ul><li>a</li><li>b</li>",node2);
+		return __root.htmleq("<h1>b</h1><hr><ul><li>d</li><li>e</li>",node2);
 	});
 	
 	test("multiloops",function() {
@@ -8841,7 +8862,7 @@ describe('Syntax - Tags',function() {
 			,5);
 		}).end();
 		
-		return htmleq("<a>a</a><b>b</b><b>b</b>",node);
+		return __root.htmleq("<a>a</a><b>b</b><b>b</b>",node);
 	});
 	
 	test('wrapping',function() {
@@ -8872,7 +8893,7 @@ describe('Syntax - Tags',function() {
 			_1('p',t0.$,'B',t0).setText("two")
 		],2)).end();
 		node.render();
-		htmleq('<h1></h1><section><p>one</p><p>two</p></section>',node);
+		__root.htmleq('<h1></h1><section><p>one</p><p>two</p></section>',node);
 		
 		var Other = Imba.defineTag('Other', function(tag){
 			tag.prototype.header = function (){
@@ -8895,7 +8916,7 @@ describe('Syntax - Tags',function() {
 		
 		node = (_1(Other)).end();
 		node.render();
-		return htmleq('<h1></h1><section><p>one</p><p>two</p>str</section></div><h1>',node);
+		return __root.htmleq('<h1></h1><section><p>one</p><p>two</p>str</section></div><h1>',node);
 	});
 	
 	return test('template',function() {
@@ -8914,7 +8935,7 @@ describe('Syntax - Tags',function() {
 			};
 		});
 		
-		return htmleq('<div><span>Local</span></div>',(_1(Local).setTitle('Local')).end());
+		return __root.htmleq('<div><span>Local</span></div>',(_1(Local).setTitle('Local')).end());
 	});
 });
 
@@ -8925,9 +8946,10 @@ describe('Syntax - Tags',function() {
 /* 39 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
-function chk(str,fn){
+__root.chk = function (str,fn){
 	var stripped = fn.toString().replace(/^function\s?\(\)\s?\{\s*(return )?/,'').replace(/\;?\s*\}\s*$/,'');
 	return eq(stripped,str);
 };
@@ -8936,8 +8958,8 @@ describe("Formatting",function() {
 	
 	// some basic tests to make sure we dont add nested parens all over the place
 	return test("test",function() {
-		chk("!!true",function() { return !!true; });
-		return chk("1 + 2",function() { return 1 + 2; });
+		__root.chk("!!true",function() { return !!true; });
+		return __root.chk("1 + 2",function() { return 1 + 2; });
 	});
 });
 
@@ -8946,6 +8968,7 @@ describe("Formatting",function() {
 /* 40 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe('Issues',function() {
@@ -9041,6 +9064,7 @@ describe('Issues',function() {
 /* 41 */
 /***/ (function(module, exports) {
 
+var __root = {};
 // externs;
 
 describe("Syntax - Quirks",function() {
@@ -9135,7 +9159,7 @@ describe("Syntax - Quirks",function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagMap, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagMap, __root = {}, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
 (_1('a'));
@@ -9551,7 +9575,7 @@ describe('Tags - Define',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagList, _3 = Imba.createTagMap, self = this, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagList, __root = {}, _3 = Imba.createTagMap, _1 = Imba.createElement;
 // externs;
 
 var a = 0;
@@ -9789,7 +9813,7 @@ describe('Tags - Cache',function() {
 		
 		let map = node.$[1];
 		eq(pruned,true);
-		return self;
+		return __root;
 	});
 });
 
@@ -9803,7 +9827,7 @@ describe('Tags - Cache',function() {
 /* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0), _1 = Imba.createElement;
+var Imba = __webpack_require__(0), __root = {}, _1 = Imba.createElement;
 // to run these tests, simply open the imbadir/test/dom.html in your browser and
 // open the console / developer tools.
 
@@ -9843,7 +9867,7 @@ describe("Tags - SVG",function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagList, self = this, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagList, __root = {}, _1 = Imba.createElement;
 // to run these tests, simply open the imbadir/test/dom.html in your browser and
 // open the console / developer tools.
 
@@ -10230,7 +10254,7 @@ describe("Tags",function() {
 		
 		node.render({a: false});
 		eq(node.opstr(),"RRRAA");
-		return self;
+		return __root;
 	});
 	
 	test("conditionals with strings",function() {
@@ -10240,7 +10264,7 @@ describe("Tags",function() {
 		
 		node.render({a: false});
 		eq(node.opstr(),"");
-		return self;
+		return __root;
 	});
 	
 	test("conditionals with strings II",function() {
@@ -10251,7 +10275,7 @@ describe("Tags",function() {
 		// string should simply be replaced
 		node.render({a: false});
 		eq(node.opstr(),"RAA");
-		return self;
+		return __root;
 	});
 	
 	describe("group5",function() {
@@ -11918,7 +11942,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 /* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0), _1 = Imba.createElement;
+var __root = {}, Imba = __webpack_require__(0), _1 = Imba.createElement;
 // externs;
 
 describe("HTML",function() {
@@ -12052,7 +12076,7 @@ document.body.appendChild(HE.dom());
 /* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0), _1 = Imba.createElement;
+var __root = {}, Imba = __webpack_require__(0), _1 = Imba.createElement;
 // externs;
 
 var value = null;

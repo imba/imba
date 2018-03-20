@@ -1,4 +1,46 @@
 
+var ansiMap =
+	reset: [0, 0],
+	bold: [1, 22],
+	dim: [2, 22],
+	italic: [3, 23],
+	underline: [4, 24],
+	inverse: [7, 27],
+	hidden: [8, 28],
+	strikethrough: [9, 29]
+	
+	black: [30, 39],
+	red: [31, 39],
+	green: [32, 39],
+	yellow: [33, 39],
+	blue: [34, 39],
+	magenta: [35, 39],
+	cyan: [36, 39],
+	white: [37, 39],
+	gray: [90, 39],
+	
+	redBright: [91, 39],
+	greenBright: [92, 39],
+	yellowBright: [93, 39],
+	blueBright: [94, 39],
+	magentaBright: [95, 39],
+	cyanBright: [96, 39],
+	whiteBright: [97, 39]
+
+export var ansi =
+	bold: do |text| '\u001b[1m' + text + '\u001b[22m'
+	red: do |text| '\u001b[31m' + text + '\u001b[39m'
+	green: do |text| '\u001b[32m' + text + '\u001b[39m'
+	yellow: do |text| '\u001b[33m' + text + '\u001b[39m'
+	gray: do |text| '\u001b[90m' + text + '\u001b[39m'
+	white: do |text| '\u001b[37m' + text + '\u001b[39m'
+	f: do |name,text|
+		let pair = ansiMap[name]
+		return '\u001b['+pair[0]+'m' + text + '\u001b['+pair[1]+'m'
+
+ansi:warn = ansi:yellow
+ansi:error = ansi:red
+
 export def brace str
 	var lines = str.match(/\n/)
 	# what about indentation?
@@ -200,12 +242,46 @@ export def parseArgs argv, o = {}
 		options["ENV_{options:env}"] = yes
 
 	return options
+	
+export def printExcerpt code, loc, hl: no, gutter: yes, type: 'warn', pad: 2
+	var lines  = code.split(/\n/g)
+	var locmap = locationToLineColMap(code)
+	var lc = locmap[loc[0]] or [0,0]
+	var ln = lc[0]
+	var col = lc[1]
+	var line = lines[ln]
 
-export var ansi =
-	bold: do |text| '\u001b[1m' + text + '\u001b[22m'
-	red: do |text| '\u001b[31m' +text + '\u001b[39m'
-	green: do |text| '\u001b[32m' +text + '\u001b[39m'
-	gray: do |text| '\u001b[90m' +text + '\u001b[39m'
-	white: do |text| '\u001b[37m' +text + '\u001b[39m'
+	var ln0 = Math.max(0,ln - pad)
+	var ln1 = Math.min(ln0 + pad + 1 + pad,lines:length)
+	let lni = ln - ln0
+	var l = ln0
+
+	var out = while l < ln1
+		lines[l++]
+
+	if gutter
+		out = out.map do |line,i|
+			let prefix =  "{ln0 + i + 1}"
+			let str
+			while prefix:length < String(ln1):length
+				prefix = " {prefix}"
+			if i == lni
+				str = "   -> {prefix} | {line}"
+				str = ansi.f(hl,str) if hl
+			else
+				str = "      {prefix} | {line}"
+				str = ansi.f('gray',str) if hl
+			return str
+
+	# if colors isa String
+	# 	out[lni] = ansi.f(colors,out[lni])
+	# elif colors
+	# 	let color = ansi[type] or ansi:red
+	# 	out[lni] = color(out[lni])
+
+	let res = out.join('\n')
+	return res
+
+
 
 

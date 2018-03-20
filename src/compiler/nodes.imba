@@ -2765,7 +2765,7 @@ export class MethodDeclaration < Func
 
 		elif target and option(:static)
 			fref = "{target.c}.{fname}"
-			out = "{mark}{fref} = {funcKeyword} {fname}{func}"
+			out = "{mark}{fref} = {funcKeyword} {func}"
 
 		elif target
 			out = "{mark}{target.c}.prototype.{fname} = {funcKeyword} {func}"

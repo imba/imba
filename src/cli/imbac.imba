@@ -42,6 +42,7 @@ Usage: imbac [options] path/to/script.imba
   -t, --tokenize         print out the tokens that the lexer/rewriter produce
       --target [target]  explicitly compile for node/web/webworker
   -v, --version          display the version number
+      --silent			 only print out errors (skip warnings)
   -w, --watch            recompile files on change
       --wrap             compile with top-level function wrapper
 
@@ -176,6 +177,9 @@ class CLI
 
 	def green text
 		o:colors ? ansi.green(text) : text
+	
+	def yellow text
+		o:colors ? ansi.yellow(text) : text
 
 	def rel src
 		src = src:sourcePath or src
@@ -269,6 +273,18 @@ class CLI
 					log "   " + out:error:message
 					log "   " + "in file {srcp}"
 					log out:error:stack if out:error:stack
+					
+		if out:warnings and !o:silent and !o:print
+			# log "   {out:warnings:length} warnings"
+			for warn in out:warnings
+				let hl = o:colors and 'whiteBright'
+				let excerpt = helpers.printExcerpt(src:sourceBody,warn:loc, hl: hl, type: 'warn', pad: 1)
+				let msg = b("{yellow('warn: ')}") + yellow(warn:message)
+				log "   " + msg
+				log gray(excerpt)
+
+			# helpers
+			
 
 		if o:watch and !src:watcher
 			var now = Date.now
