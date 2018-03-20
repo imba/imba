@@ -111,7 +111,7 @@ class Imba.Event
 	@return {Boolean}
 	###
 	def isPrevented
-		event and event:defaultPrevented or @cancel
+		event and event:defaultPrevented
 
 	###
 	Cancel the event (if cancelable). In the case of native events it

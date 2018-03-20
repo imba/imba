@@ -73,7 +73,7 @@ class Imba.EventManager
 				var tap = Imba.Event.new(e)
 				tap.type = 'tap'
 				tap.process
-				if tap.@responder
+				if tap.@responder and tap:defaultPrevented
 					return e.preventDefault
 			# delegate the real click event
 			Imba.Events.delegate(e)

@@ -1,6 +1,7 @@
 ## 1.3.4
 * Fix export const
 * Add `<input number=bool>` for numeric inputs
+* Only prevent native click if tap was prevented
 
 ## 1.3.3
 * Don't silence input events for form elements
