@@ -1,3 +1,76 @@
+var __root = {}, Imba = require('imba');
+
+__root._one = 100;
+
+var one = require('./test').one;
+
+var util = (function($module){
+	
+	$module.render = function (){
+		"use strict";
+		var self = this || $module;
+		return self;
+	};
+	return $module;
+})({});
+
+var root = __root;
+
+__root.hello = function hello(){
+	return __root.rnd() + __root.rnd();
+};
+
+__root.Caller = function Caller(){
+	return __root;
+};
+
+__root.rnd = function rnd(){
+	return Math.random();
+}; exports.rnd = __root.rnd;
+
+__root.access = function access(){
+	return __root._one;
+};
+
+function Animal(){ };
+
+Animal.prototype.hello = function (){
+	true;
+	function something(){
+		return console.log("something inside hello");
+	};
+	something();
+	__root.rnd(10);
+	__root.Caller(10);
+	one.test();
+	util.render();
+	return false;
+};
+
+root.hello;
+
+__root.test = function test(find,val){
+	if (val instanceof Function) {
+		val = val();
+	};
+	
+	if (val instanceof Imba.Tag) {
+		val = val.toString();
+	};
+	
+	return __root.ok(val.indexOf(find) >= 0,("'" + find + "' not found in " + val));
+};
+
+__root.describe('Syntax - Tags',function() {
+	return __root.test('id',function() { return true; });
+});
+
+__root.hello();
+__root.rnd();
+__root.test;
+__root.another();
+
+/*
 extern describe, test, ok, eq
 
 def jseq find, &blk
@@ -19,7 +92,6 @@ describe 'Syntax - Tags' do
 	var numvar = 1
 	var fnvar = do yes
 	var objvar = {a: 1, b: 2}
-	var scope = "__root"
 
 	test 'id' do
 		jseq "setId('one')" do <div#one>
@@ -29,7 +101,7 @@ describe 'Syntax - Tags' do
 		jseq "flag('two')" do <div.two>
 		jseq "flagIf('two',numvar)" do <div .two=numvar>
 		jseq "setFlag(0,strvar)" do <div .{strvar}>
-		jseq "setFlag(0,{scope}.name())" do <div .{name}>
+		# jseq "setFlag(0,self.name())" do <div .{name}>
 			
 	# attributes
 	test 'attributes' do
@@ -41,9 +113,9 @@ describe 'Syntax - Tags' do
 		
 	# events
 	test 'events' do
-		jseq "(0,['tap','prevent','after'],{scope})" do <div.two :tap.prevent.after>
-		jseq "(0,['tap',['incr',10]],{scope})" do <div.two :tap.incr(10)>
-		jseq "(0,['tap',fnvar],{scope})" do <div.two :tap=fnvar>
+		jseq "(0,['tap','prevent','after'],self)" do <div.two :tap.prevent.after>
+		jseq "(0,['tap',['incr',10]],self)" do <div.two :tap.incr(10)>
+		jseq "(0,['tap',fnvar],self)" do <div.two :tap=fnvar>
 
 	test 'data' do
 		jseq "setData(objvar)" do <div[objvar]>
@@ -269,4 +341,4 @@ describe 'Syntax - Tags' do
 		htmleq '<div><span>Local</span></div>', <Local title='Local'>
 					
 		
-					
+*/

@@ -2692,7 +2692,14 @@ export class MethodDeclaration < Func
 
 		if !@target
 			# should not be registered on the outermost closure?
-			@variable = context.register(name, self, type: 'meth')
+			if context isa RootScope
+				set(static: yes, root: yes)
+				@target = context.context.reference
+				scope.context.@reference = @target # scope.declare("self",op)
+				@variable = context.register(name, self, type: 'meth')
+				@variable.proxy(OP('.',@target,name))
+			else
+				@variable = context.register(name, self, type: 'meth')
 
 		if target isa Identifier
 			if let variable = scope.lookup(target.toString)
@@ -2738,12 +2745,13 @@ export class MethodDeclaration < Func
 
 		if target isa ScopeContext
 			target = null
-
+			
 		var ctx = context
 		var out = ""
 		var mark = mark__(option('def'))
 		var fname = sym__(self.name)
 		var fdecl = fname # decl ? fname : ''
+		let fref = fname
 		
 		if option(:inObject)
 			out = "{fname}: {mark}{funcKeyword}{func}"
@@ -2762,7 +2770,8 @@ export class MethodDeclaration < Func
 			out = "{mark}{funcKeyword} {fdecl}{func}"
 
 		elif target and option(:static)
-			out = "{mark}{target.c}.{fname} = {funcKeyword} {func}"
+			fref = "{target.c}.{fname}"
+			out = "{mark}{fref} = {funcKeyword} {fname}{func}"
 
 		elif target
 			out = "{mark}{target.c}.prototype.{fname} = {funcKeyword} {func}"
@@ -2773,7 +2782,7 @@ export class MethodDeclaration < Func
 			out = "{fname} = {out}"
 
 		if option(:export)
-			out = "{out}; exports.{option(:default) ? 'default' : fname} = {fname};"
+			out = "{out}; exports.{option(:default) ? 'default' : fname} = {fref};"
 			out = "{out}; return {fname};" if option(:return)
 
 		elif option(:return)
@@ -2947,7 +2956,11 @@ export class Literal < ValueNode
 		@expression = yes
 		@cache = null
 		@raw = null
-		@value = v
+		@value = load(v)
+		
+	def load value
+		value
+		
 
 	def toString
 		"" + value
@@ -3360,6 +3373,8 @@ export class Obj < Literal
 				v = Arr.wrap(v)
 			elif v:constructor == Object
 				v = Obj.wrap(v)
+			# if k isa String
+			#	k = LIT(k)
 			attrs.push(ObjAttr.new(k,v))
 		return Obj.new(attrs)
 
@@ -3925,12 +3940,13 @@ export class VarOrAccess < ValueNode
 		# does not really need to have a declarator already? -- tricky
 		if variable && variable.declarator
 			# var decl = variable.declarator
+			let vscope = variable.scope
 
 			# if the variable is not initialized just yet and we are
 			# in the same scope - we should not treat this as a var-lookup
 			# ie.  var x = x would resolve to var x = this.x() if x
 			# was not previously defined
-			if variable.scope == scope and !variable.@initialized
+			if vscope == scope and !variable.@initialized
 				# here we need to check if the variable exists outside
 				# if it does - we need to ensure that the inner variable does not collide
 				let outerVar = scope.parent.lookup(value)
@@ -3942,11 +3958,15 @@ export class VarOrAccess < ValueNode
 			# should do this even if we are not in the same scope?
 			# we only need to be in the same closure(!)
 
-			if variable and variable.@initialized or (scope.closure != variable.scope.closure)
+			if variable and variable.@initialized or (scope.closure != vscope.closure)
 				@variable = variable
 				variable.addReference(self)
 				@value = variable # variable.accessor(self)
 				@token.@variable = variable
+				
+				if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
+					warn "calling top-level {value} is deprecated - use __root.{value}"
+					
 				return self
 
 			# FIX
@@ -7567,6 +7587,11 @@ export class Scope
 		return existing if existing and !o:unique
 		# var type = o:system ? SystemVariable : Variable
 		var item = Variable.new(self,name,decl,o)
+		
+		# register 
+		# if o:type == 'meth' and self isa RootScope
+		# 	console.log "add to object",name
+		# 	@object.add(name,item)
 		# var item = Variable.new(self,name,decl,o)
 		# need to check for duplicates, and handle this gracefully -
 		# going to refactor later
@@ -7700,6 +7725,7 @@ export class RootScope < Scope
 	prop warnings
 	prop scopes
 	prop entities
+	prop object
 
 	def initialize
 		super
@@ -7722,6 +7748,7 @@ export class RootScope < Scope
 		register '__dirname', self, type: 'global'
 		register '__filename', self, type: 'global'
 		register '_', self, type: 'global'
+		# register '__root', self, type: 'global'
 
 		# preregister global special variables here
 		@requires = {}
@@ -7729,6 +7756,7 @@ export class RootScope < Scope
 		@scopes   = []
 		@helpers  = []
 		@entities = Entities.new(self)
+		@object = Obj.wrap({})
 		@head = [@vars]
 
 	def context
@@ -7818,7 +7846,6 @@ export class RootScope < Scope
 		var body = node.body.c(o)
 
 		return body
-
 
 
 export class ClassScope < Scope
@@ -8053,7 +8080,9 @@ export class Variable < Node
 		return @c if @c
 		# options - proxy??
 		if @proxy
-			@c = @proxy[0].c + '[' + @proxy[1].c + ']'
+			@c = @proxy[0].c
+			if @proxy[1]
+				@c += '[' + @proxy[1].c + ']'
 		else
 			resolve unless @resolved
 			var v = (alias or name)
@@ -8252,6 +8281,9 @@ export class ScopeContext < Node
 		"{self.c}.prototype"
 
 export class RootScopeContext < ScopeContext
+
+	def reference
+		@reference ||= scope.declare("__root",scope.object, type: 'global')
 
 	def c o
 		# return "" if o and o:explicit

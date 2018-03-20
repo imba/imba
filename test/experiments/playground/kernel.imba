@@ -1,3 +1,58 @@
+
+@one = 100
+
+import {one} from './test'
+
+module util
+	
+	def render
+		self
+
+var root = self
+
+def hello
+	rnd + rnd
+	
+def Caller
+	self
+	
+export def rnd
+	Math.random
+
+def access
+	@one
+
+class Animal
+	def hello
+		yes
+		def something
+			console.log "something inside hello"
+		something
+		rnd 10
+		Caller(10)
+		one.test
+		util.render
+		return no
+
+root:hello
+
+def test find, val
+	if val isa Function
+		val = val()
+	
+	if val isa Imba.Tag
+		val = val.toString
+
+	ok(val.indexOf(find) >= 0, "'{find}' not found in {val}")
+	
+describe 'Syntax - Tags' do
+	test 'id' do yes
+
+hello
+rnd
+another
+
+###
 extern describe, test, ok, eq
 
 def jseq find, &blk
@@ -19,7 +74,6 @@ describe 'Syntax - Tags' do
 	var numvar = 1
 	var fnvar = do yes
 	var objvar = {a: 1, b: 2}
-	var scope = "__root"
 
 	test 'id' do
 		jseq "setId('one')" do <div#one>
@@ -29,7 +83,7 @@ describe 'Syntax - Tags' do
 		jseq "flag('two')" do <div.two>
 		jseq "flagIf('two',numvar)" do <div .two=numvar>
 		jseq "setFlag(0,strvar)" do <div .{strvar}>
-		jseq "setFlag(0,{scope}.name())" do <div .{name}>
+		# jseq "setFlag(0,self.name())" do <div .{name}>
 			
 	# attributes
 	test 'attributes' do
@@ -41,9 +95,9 @@ describe 'Syntax - Tags' do
 		
 	# events
 	test 'events' do
-		jseq "(0,['tap','prevent','after'],{scope})" do <div.two :tap.prevent.after>
-		jseq "(0,['tap',['incr',10]],{scope})" do <div.two :tap.incr(10)>
-		jseq "(0,['tap',fnvar],{scope})" do <div.two :tap=fnvar>
+		jseq "(0,['tap','prevent','after'],self)" do <div.two :tap.prevent.after>
+		jseq "(0,['tap',['incr',10]],self)" do <div.two :tap.incr(10)>
+		jseq "(0,['tap',fnvar],self)" do <div.two :tap=fnvar>
 
 	test 'data' do
 		jseq "setData(objvar)" do <div[objvar]>
