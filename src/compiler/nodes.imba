@@ -145,53 +145,47 @@ export def parseError str, o
 	e:options = o
 	throw e
 
-def c__ obj
+def C__ obj
 	typeof obj == 'string' ? obj : obj.c
 
-def mark__ tok
+def MARK__ tok
 	if tok and (OPTS:sourceMapInline or OPTS:sourceMap) and tok:sourceMapMarker
 		tok.sourceMapMarker
 	else
 		''
 
-def num__ num
-	Num.new(num)
-
-def str__ str
-	# should pack in token?!?
-	Str.new(str)
-
-def blk__ obj
+def BLK__ obj
 	obj isa Array ? Block.wrap(obj) : obj
 
-def sym__ obj
+def SYM__ obj
 	# console.log "sym {obj}"
 	helpers.symbolize(String(obj))
 
-def cary__ ary
+def CARY__ ary
 	ary.map(|v| typeof v == 'string' ? v : v.c )
 
-def dump__ obj, key
+def DUMP__ obj, key
 	if obj isa Array
 		obj.map do |v| v && v:dump ? v.dump(key) : v
 	elif obj and obj:dump
 		obj.dump
 
-def compact__ ary
+def COMPACT__ ary
 	if ary isa ListNode
 		return ary.compact
 
+
 	ary.filter do |v| v != undefined && v != null
 
-def reduce__ res,ary
+def REDUCE__ res,ary
 	for v in ary
-		v isa Array ? reduce__(res,v) : res.push(v)
+		v isa Array ? REDUCE__(res,v) : res.push(v)
 	return
 
-def flatten__ ary, compact = no
+def FLATTEN__ ary, compact = no
 	var out = []
 	for v in ary
-		v isa Array ? reduce__(out,v) : out.push(v)
+		v isa Array ? REDUCE__(out,v) : out.push(v)
 	return out
 
 def AST.parse str, opts = {}
@@ -208,15 +202,15 @@ def AST.node typ, pars
 			pars[0] = 'tata'
 		Call.new(pars[0],pars[1],pars[2])
 
-
 def AST.escapeComments str
 	return '' unless str
 	return str
 
 
+
 var shortRefCache = []
 
-def counterToShortRef nr
+def CounterToShortRef nr
 	var base = "A".charCodeAt(0)
 
 	while shortRefCache:length <= nr
@@ -232,7 +226,7 @@ def counterToShortRef nr
 		shortRefCache.push(str)
 	return shortRefCache[nr]
 
-def truthy__ node
+def TRUTHY__ node
 
 	if node isa True
 		return true
@@ -813,7 +807,7 @@ export class Newline < Terminator
 		@value = v or '\n'
 
 	def c
-		c__(@value)
+		C__(@value)
 
 
 # weird place?
@@ -839,7 +833,7 @@ export class ListNode < Node
 		@nodes
 
 	def compact
-		@nodes = compact__(@nodes)
+		@nodes = COMPACT__(@nodes)
 		self
 
 	def load list
@@ -1254,7 +1248,7 @@ export class VarBlock < ListNode
 		no
 
 	def js o
-		var code = compact__(flatten__(cary__(nodes)))
+		var code = COMPACT__(FLATTEN__(CARY__(nodes)))
 		code = code.filter(|n| n != null && n != undefined && n != EMPTY)
 		var out = code.join(",")
 
@@ -1300,9 +1294,9 @@ export class Parens < ValueNode
 		if par isa Block
 			# is it worth it?
 			@noparen = yes unless o.isExpression
-			str = v isa Array ? cary__(v) : v.c(expression: o.isExpression)
+			str = v isa Array ? CARY__(v) : v.c(expression: o.isExpression)
 		else
-			str = v isa Array ? cary__(v) : v.c(expression: yes)
+			str = v isa Array ? CARY__(v) : v.c(expression: yes)
 
 		# check if we really need parens here?
 		return str
@@ -1670,10 +1664,10 @@ export class ParamList < ListNode
 			var pars = nodes
 			# pars = filter(|arg| arg != @splat && !(arg isa BlockParam)) if @splat
 			pars = filter(|arg| arg isa RequiredParam or arg isa OptionalParam) if @splat
-			compact__(pars.map(|arg| c__(arg.varname) )).join(",")
+			COMPACT__(pars.map(|arg| C__(arg.varname) )).join(",")
 		else
 			throw "not implemented paramlist js"
-			"ta" + compact__(map(|arg| arg.c )).join(",")
+			"ta" + COMPACT__(map(|arg| arg.c )).join(",")
 
 	def head o
 		var reg = []
@@ -1877,7 +1871,7 @@ export class VariableDeclaration < ListNode
 			keyword = 'let'
 
 		# FIX PERFORMANCE
-		var out = compact__(cary__(nodes)).join(", ")
+		var out = COMPACT__(CARY__(nodes)).join(", ")
 		out ? "{keyword} {out}" : ""
 
 export class VariableDeclarator < Param
@@ -1987,7 +1981,7 @@ export class VarList < Node
 					else
 						v = util.slice(r,i,-(ll - i) + 1)
 				else
-					v = OP('.',r,num__(i))
+					v = OP('.',r,Num.new(i))
 
 				pairs.push(OP('=',l,v))
 
@@ -2022,7 +2016,7 @@ export class Root < Code
 
 	def initialize body, opts
 		@traversed = no
-		@body = blk__(body)
+		@body = BLK__(body)
 		@scope = RootScope.new(self,null)
 		@options = {}
 
@@ -2131,7 +2125,7 @@ export class ClassDeclaration < Code
 		@name = name
 		@superclass = superclass
 		@scope = ClassScope.new(self)
-		@body = blk__(body)
+		@body = BLK__(body)
 		self
 
 	def visit
@@ -2158,7 +2152,7 @@ export class ClassDeclaration < Code
 
 		var bodyindex = -1
 		var spaces = body.filter do |item| item isa Terminator
-		var mark = mark__(option('keyword'))
+		var mark = MARK__(option('keyword'))
 
 		body.map do |c,i|
 			if c isa MethodDeclaration && c.type == :constructor
@@ -2240,7 +2234,7 @@ export class ModuleDeclaration < Code
 		@traversed = no
 		@name = name
 		@scope = ModuleScope.new(self)
-		@body = blk__(body or [])
+		@body = BLK__(body or [])
 		self
 		
 	def visit
@@ -2259,7 +2253,7 @@ export class ModuleDeclaration < Code
 	def js o
 		scope.context.value = @ctx = scope.declare('$module',null,system: yes)
 		
-		var mark = mark__(option('keyword'))
+		var mark = MARK__(option('keyword'))
 		
 		body.add(ImplicitReturn.new(@ctx))
 		
@@ -2311,7 +2305,7 @@ export class TagDeclaration < Code
 		@name = name
 		@superclass = superclass
 		@scope = TagScope.new(self)
-		@body = blk__(body || [])
+		@body = BLK__(body || [])
 
 	def visit
 		if String(name).match(/^[A-Z]/)
@@ -2330,7 +2324,7 @@ export class TagDeclaration < Code
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
 
 		# var ns = name.ns
-		var mark = mark__(option('keyword'))
+		var mark = MARK__(option('keyword'))
 		var params = []
 
 		params.push(name.c)
@@ -2389,7 +2383,7 @@ export class Func < Code
 		@options = o
 		var typ = scopetype
 		@traversed = no
-		@body = blk__(body)
+		@body = BLK__(body)
 		@scope ||= (o and o:scope) || typ.new(self)
 		@scope.params = @params = ParamList.new(params)
 		@name = name || ''
@@ -2421,7 +2415,7 @@ export class Func < Code
 
 		# args = params.map do |par| par.name
 		# head = params.map do |par| par.c
-		# code = [head,body.c(expression: no)].flatten__.compact.join("\n").wrap
+		# code = [head,body.c(expression: no)].FLATTEN__.compact.join("\n").wrap
 		# FIXME creating the function-name this way is prone to create naming-collisions
 		# will need to wrap the value in a FunctionName which takes care of looking up scope
 		# and possibly dealing with it
@@ -2608,7 +2602,7 @@ export class TagLoopFunc < Func
 	def js o
 		@name = 'tagLoop'
 		var out = super
-		"(" + out + ")({cary__(@args)})"
+		"(" + out + ")({CARY__(@args)})"
 
 export class MethodDeclaration < Func
 
@@ -2748,8 +2742,8 @@ export class MethodDeclaration < Func
 			
 		var ctx = context
 		var out = ""
-		var mark = mark__(option('def'))
-		var fname = sym__(self.name)
+		var mark = MARK__(option('def'))
+		var fname = SYM__(self.name)
 		var fdecl = fname # decl ? fname : ''
 		let fref = fname
 		
@@ -2846,7 +2840,7 @@ export class PropertyDeclaration < Node
 			key: key
 			getter: key
 			getterKey: RESERVED_TEST.test(key) ? "['{key}']" : ".{key}"
-			setter: sym__("set-{key}")
+			setter: SYM__("set-{key}")
 			scope: "{scope.context.c}"
 			path: '${scope}.prototype'
 			set: "this._{key} = v"
@@ -3013,7 +3007,7 @@ export class Undefined < Literal
 		no
 
 	def c
-		mark__(@value) + "undefined"
+		MARK__(@value) + "undefined"
 
 export class Nil < Literal
 
@@ -3024,7 +3018,7 @@ export class Nil < Literal
 		no
 
 	def c
-		mark__(@value) + "null"
+		MARK__(@value) + "null"
 
 export class True < Bool
 
@@ -3035,7 +3029,7 @@ export class True < Bool
 		yes
 
 	def c
-		mark__(@value) + "true"
+		MARK__(@value) + "true"
 
 export class False < Bool
 
@@ -3046,7 +3040,7 @@ export class False < Bool
 		no
 
 	def c
-		mark__(@value) + "false"
+		MARK__(@value) + "false"
 
 export class Num < Literal
 
@@ -3077,7 +3071,7 @@ export class Num < Literal
 		var par = STACK.current
 		var paren = par isa Access and par.left == self
 		# only if this is the right part of teh acces
-		paren ? "({mark__(@value)}" + js + ")" : (mark__(@value) + js)
+		paren ? "({MARK__(@value)}" + js + ")" : (MARK__(@value) + js)
 		# @cache ? super(o) : String(@value)
 
 	def cache o
@@ -3202,10 +3196,10 @@ export class Symbol < Literal
 		yes
 
 	def raw
-		@raw ||= sym__(value.toString.replace(/^\:/,''))
+		@raw ||= SYM__(value.toString.replace(/^\:/,''))
 
 	def js o
-		"'{sym__(raw)}'"
+		"'{SYM__(raw)}'"
 
 export class RegExp < Literal
 
@@ -3276,13 +3270,13 @@ export class Arr < Literal
 					slices.push(group = Arr.new([])) unless group
 					group.push(v)
 
-			"[].concat({cary__(slices).join(", ")})"
+			"[].concat({CARY__(slices).join(", ")})"
 		else
 			# very temporary. need a more generic way to prettify code
 			# should depend on the length of the inner items etc
 			# if @indented or option(:indent) or value.@indented
 			#	"[\n{value.c.join(",\n").indent}\n]"
-			var out = val isa Array ? cary__(val) : val.c
+			var out = val isa Array ? CARY__(val) : val.c
 			"[{out}]"
 
 	def hasSideEffects
@@ -3511,9 +3505,9 @@ export class Op < Node
 		r = r.c if r isa Node
 
 		if l && r
-			out = "{l} {mark__(@opToken)}{op} {r}"
+			out = "{l} {MARK__(@opToken)}{op} {r}"
 		elif l
-			out = "{mark__(@opToken)}{op}{l}"
+			out = "{MARK__(@opToken)}{op}{l}"
 		# out = out.parenthesize if up isa Op # really?
 		out
 		
@@ -3564,7 +3558,7 @@ export class ComparisonOp < Op
 
 		l = l.c if l isa Node
 		r = r.c if r isa Node
-		return "{l} {mark__(@opToken)}{op} {r}"
+		return "{l} {MARK__(@opToken)}{op} {r}"
 
 
 export class MathOp < Op
@@ -3587,7 +3581,7 @@ export class UnaryOp < Op
 			super # regular invert
 
 	def isTruthy
-		var val = truthy__(left)
+		var val = TRUTHY__(left)
 		return val !== undefined ? (!val) : (undefined)
 
 	def js o
@@ -3648,7 +3642,7 @@ export class InstanceOf < Op
 		if right isa Const
 			# WARN otherwise - what do we do? does not work with dynamic
 			# classes etc? Should probably send to utility function isa$
-			var name = c__(right.value)
+			var name = C__(right.value)
 			var obj = left.node
 			# TODO also check for primitive-constructor
 			if name in ['String','Number','Boolean']
@@ -3746,7 +3740,7 @@ export class Access < Op
 			raw = rgt.raw
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
-			mark = mark__(rgt.@value)
+			mark = MARK__(rgt.@value)
 			raw = rgt.c
 
 		if safechain and ctx
@@ -3989,7 +3983,7 @@ export class VarOrAccess < ValueNode
 		self
 
 	def c
-		mark__(@token) + (@variable ? super() : value.c)
+		MARK__(@token) + (@variable ? super() : value.c)
 
 	def js o
 
@@ -4091,7 +4085,7 @@ export class VarReference < ValueNode
 
 		# what about resolving?
 		var ref = @variable
-		var out = "{mark__(@value)}{ref.c}"
+		var out = "{MARK__(@value)}{ref.c}"
 		var keyword = o.es5 ? 'var' : (@type or 'var')
 		# let might still not work perfectly
 		# keyword = 'var' if keyword == 'let'
@@ -4266,7 +4260,7 @@ export class Assign < Op
 				# dont cache it again if it is already cached(!)
 				right.cache(pool: 'val', uses: 1) unless right.cachevar #
 				# this is only when used.. should be more clever about it
-				ast = Parens.new(blk__([ast,right]))
+				ast = Parens.new(BLK__([ast,right]))
 
 			# should check the up-value no?
 			return ast.c(expression: yes)
@@ -4280,9 +4274,9 @@ export class Assign < Op
 
 		if option(:export)
 			let ename = l isa VarReference ? l.variable.c : lc
-			return "{lc} {mark__(@opToken)}{op} exports.{ename} = {right.c(expression: true)}"
+			return "{lc} {MARK__(@opToken)}{op} exports.{ename} = {right.c(expression: true)}"
 		else
-			return "{lc} {mark__(@opToken)}{op} {right.c(expression: true)}"
+			return "{lc} {MARK__(@opToken)}{op} {right.c(expression: true)}"
 		# return out
 
 	# FIXME op is a token? _FIX_
@@ -4674,12 +4668,12 @@ export class TupleAssign < Assign
 					var rem = llen - i - 1 # remaining after splat
 
 					if !vartype
-						var arr = util.array(OP('-',len, num__(i + rem) ),yes)
+						var arr = util.array(OP('-',len, Num.new(i + rem) ),yes)
 						top.push(arr)
 						lvar = arr.cachevar
 					else
 						ast.push(blk = blktype.new) unless blk
-						var arr = util.array( OP('-',len,num__(i + rem) ) )
+						var arr = util.array( OP('-',len,Num.new(i + rem) ) )
 						blk.push(OP('=',lvar,arr))
 
 					# if !lvar:variable || !lvar.variable # lvar =
@@ -4692,7 +4686,7 @@ export class TupleAssign < Assign
 					var test = rem ? OP('-',len,rem) : len
 
 					var set = OP('=',
-						OP('.',lvar,OP('-',idx,num__(i))),
+						OP('.',lvar,OP('-',idx,Num.new(i))),
 						OP('.',iter,OP('++',idx))
 					)
 
@@ -4713,7 +4707,7 @@ export class TupleAssign < Assign
 					blk.push(OP('=',l,OP('.',iter,OP('++',idx))))
 				else
 					ast.push(blk = blktype.new) unless blk
-					blk.push(OP('=',l,OP('.',iter,num__(i) )))
+					blk.push(OP('=',l,OP('.',iter,Num.new(i) )))
 
 		# if we are in an expression we need to autodecare vars
 		if o.isExpression and @vars
@@ -4796,12 +4790,12 @@ export class Identifier < Node
 
 	def symbol
 		# console.log "Identifier#symbol {value}"
-		@symbol ||= sym__(value)
+		@symbol ||= SYM__(value)
 
 	def setter
 		# console.log "Identifier#setter"
 		@setter ||= if true
-			var tok = Token.new('IDENTIFIER',sym__('set-' + @value),@value.@loc or -1)
+			var tok = Token.new('IDENTIFIER',SYM__('set-' + @value),@value.@loc or -1)
 			Identifier.new(tok)
 			# Identifier.new("set-{symbol}")
 
@@ -4812,13 +4806,13 @@ export class Identifier < Node
 		toString
 
 	def alias
-		sym__(@value)
+		SYM__(@value)
 
 	def js o
 		symbol
 
 	def c
-		return '' + symbol # mark__(@value) +
+		return '' + symbol # MARK__(@value) +
 
 	def dump
 		{ loc: region }
@@ -4861,7 +4855,7 @@ export class Ivar < Identifier
 		'_' + name
 
 	def c
-		'_' + helpers.dashToCamelCase(@value).slice(1) # .replace(/^@/,'') # mark__(@value) +
+		'_' + helpers.dashToCamelCase(@value).slice(1) # .replace(/^@/,'') # MARK__(@value) +
 
 
 
@@ -4871,7 +4865,7 @@ export class Const < Identifier
 
 	def symbol
 		# console.log "Identifier#symbol {value}"
-		@symbol ||= sym__(value)
+		@symbol ||= SYM__(value)
 
 	def js o
 		@variable ? @variable.c : symbol
@@ -4891,9 +4885,9 @@ export class Const < Identifier
 
 	def c
 		if option(:export)
-			"exports.{@value} = " + mark__(@value) + js
+			"exports.{@value} = " + MARK__(@value) + js
 		else
-			mark__(@value) + js
+			MARK__(@value) + js
 
 
 export class TagTypeIdentifier < Identifier
@@ -4969,7 +4963,7 @@ export class Argvar < ValueNode
 		var s = scope__
 		# params need to go up to the closeste method-scope
 		var par = s.params.at(v - 1,yes)
-		"{c__(par.name)}" # c
+		"{C__(par.name)}" # c
 
 
 # CALL
@@ -5034,7 +5028,7 @@ export class Call < Node
 	def js o
 		var opt = expression: yes
 		var rec = null
-		# var args = compact__(args) # really?
+		# var args = COMPACT__(args) # really?
 		var args = args
 
 		# drop this?
@@ -5243,7 +5237,7 @@ export class If < ControlFlow
 		# declared in the outer scope. Must get unique name
 
 		unless stack.isAnalyzing
-			@pretest = truthy__(test)
+			@pretest = TRUTHY__(test)
 
 			if @pretest === true
 				alt = @alt = null
@@ -5337,7 +5331,7 @@ export class If < ControlFlow
 			code = body ? body.c(braces: yes) : '{}' # (braces: yes)
 
 			# don't wrap if it is only a single expression?
-			var out = "{mark__(@type)}if ({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
+			var out = "{MARK__(@type)}if ({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
 			out += " else {alt.c(alt isa If ? {} : brace)}" if alt
 			out
 
@@ -5409,7 +5403,7 @@ export class Loop < Statement
 
 
 	def addBody body
-		self.body = blk__(body)
+		self.body = BLK__(body)
 		self
 
 
@@ -5684,7 +5678,7 @@ export class For < Loop
 				final = OP('++',idx)
 
 		var code = body.c(braces: yes, indent: yes)
-		var head = "{mark__(options:keyword)}for ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
+		var head = "{MARK__(options:keyword)}for ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
 		return head + code
 
 
@@ -5744,7 +5738,7 @@ export class ForOf < For
 			# else
 			body.unshift(OP('=',k,OP('.',vars:keys,i)))
 			code = body.c(indent: yes, braces: yes) # .wrap
-			var head = "{mark__(options:keyword)}for ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
+			var head = "{MARK__(options:keyword)}for ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
 			return head + code
 
 		else
@@ -5754,7 +5748,7 @@ export class ForOf < For
 			code = scope.c(braces: yes, indent: yes)
 			let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
-			"{mark__(options:keyword)}for ({o.es5 ? 'var' : 'let'} {k.c} in {inCode.c(expression: yes)})" + code
+			"{MARK__(options:keyword)}for ({o.es5 ? 'var' : 'let'} {k.c} in {inCode.c(expression: yes)})" + code
 
 	def head
 		var v = options:vars
@@ -5769,7 +5763,7 @@ export class Begin < Block
 
 
 	def initialize body
-		@nodes = blk__(body).nodes
+		@nodes = BLK__(body).nodes
 
 
 	def shouldParenthesize
@@ -5823,7 +5817,7 @@ export class Switch < ControlFlowStatement
 		if fallback
 			body.push("default:\n" + fallback.c(indent: yes))
 
-		"switch ({source.c}) " + helpers.bracketize(cary__(body).join("\n"),yes)
+		"switch ({source.c}) " + helpers.bracketize(CARY__(body).join("\n"),yes)
 
 
 
@@ -5837,7 +5831,7 @@ export class SwitchCase < ControlFlowStatement
 	def initialize test, body
 		@traversed = no
 		@test = test
-		@body = blk__(body)
+		@body = BLK__(body)
 		@scope = BlockScope.new(self)
 
 	def visit
@@ -5870,7 +5864,7 @@ export class Try < ControlFlowStatement
 
 	def initialize body, c, f
 		@traversed = no
-		@body = blk__(body)
+		@body = BLK__(body)
 		@catch = c
 		@finally = f
 
@@ -5907,7 +5901,7 @@ export class Catch < ControlFlowStatement
 
 	def initialize body, varname
 		@traversed = no
-		@body = blk__(body or [])
+		@body = BLK__(body or [])
 		@scope = CatchScope.new(self)
 		@varname = varname
 		self
@@ -5936,7 +5930,7 @@ export class Finally < ControlFlowStatement
 
 	def initialize body
 		@traversed = no
-		@body = blk__(body or [])
+		@body = BLK__(body or [])
 
 
 	def visit
@@ -6040,13 +6034,13 @@ export class TagCache < Node
 		return item
 	
 	def nextValue
-		let ref = counterToShortRef(@counter++)
+		let ref = CounterToShortRef(@counter++)
 		option(:lowercase) ? ref.toLowerCase : ref
 
 	def nextSlot
 		@index++
 		if @options:keys
-			Str.new("'" + counterToShortRef(@index - 1) + "'")
+			Str.new("'" + CounterToShortRef(@index - 1) + "'")
 		else
 			Num.new(@index - 1)
 	
@@ -6290,16 +6284,16 @@ export class TagHandler < TagPart
 		# 	@dyn ||= []
 		# 	@dyn.push(parts:length)
 		# find the context
-		return "on$({slot},[{cary__(parts)}],{scope__.context.c})"
+		return "on$({slot},[{CARY__(parts)}],{scope__.context.c})"
 
 		#		let dl = @dyn and @dyn:length
 		#
 		#		if dl == 1
-		#			"on$({slot},[{cary__(parts)}],{@dyn[0]})"
+		#			"on$({slot},[{CARY__(parts)}],{@dyn[0]})"
 		#		elif dl > 1
-		#			"on$({slot},[{cary__(parts)}],-1)"
+		#			"on$({slot},[{CARY__(parts)}],-1)"
 		#		else
-		#			"on$({slot},[{cary__(parts)}],0)"
+		#			"on$({slot},[{CARY__(parts)}],0)"
 
 export class Tag < Node
 
@@ -6635,7 +6629,7 @@ export class Tag < Node
 		var specials = []
 		for part in @attributes
 			let out = part.js(jso)
-			out = ".{mark__(part.name)}" + out
+			out = ".{MARK__(part.name)}" + out
 			# if part.isSpecial
 			#	specials.push(out)
 			if part.isStatic
@@ -6748,7 +6742,7 @@ export class TagTree < ListNode
 			@indentation ||= list.@indentation # if list.count > 1
 			list.nodes
 		else
-			compact__(list isa Array ? list : [list])
+			COMPACT__(list isa Array ? list : [list])
 
 	def root
 		option(:root)
@@ -6830,7 +6824,7 @@ export class Selector < ListNode
 
 	def js o
 		var typ = option(:type)
-		var q = c__(query)
+		var q = C__(query)
 		var imba = scope__.imba.c
 
 		if typ == '%'
@@ -6846,7 +6840,7 @@ export class Selector < ListNode
 export class SelectorPart < ValueNode
 
 	def c
-		c__(@value)
+		C__(@value)
 
 export class SelectorGroup < SelectorPart
 
@@ -6874,7 +6868,7 @@ export class SelectorClass < SelectorPart
 		if @value isa Node
 			".'+{@value.c}+'"
 		else
-			".{c__(@value)}"
+			".{C__(@value)}"
 
 export class SelectorId < SelectorPart
 
@@ -6882,12 +6876,12 @@ export class SelectorId < SelectorPart
 		if @value isa Node
 			"#'+{@value.c}+'"
 		else
-			"#{c__(@value)}"
+			"#{C__(@value)}"
 
 export class SelectorCombinator < SelectorPart
 
 	def c
-		"{c__(@value)}"
+		"{C__(@value)}"
 
 export class SelectorPseudoClass < SelectorPart
 
@@ -6906,7 +6900,7 @@ export class SelectorAttribute < SelectorPart
 			"[{@left.c}{@op}{@right.c}]"
 		elif @right
 			# this is not at all good
-			"[{@left.c}{@op}\"'+{c__(@right)}+'\"]"
+			"[{@left.c}{@op}\"'+{C__(@right)}+'\"]"
 		else
 			"[{@left.c}]"
 
@@ -7240,7 +7234,7 @@ export class Util < Node
 	def self.slice obj, a, b
 		var slice = Identifier.new("slice")
 		console.log "slice {a} {b}"
-		return CALL(OP('.',obj,slice),compact__([a,b]))
+		return CALL(OP('.',obj,slice),COMPACT__([a,b]))
 
 	def self.iterable obj, cache
 		var node = Util.Iterable.new([obj])
@@ -7325,7 +7319,7 @@ export class Util.Extend < Util
 
 	def js o
 		# When this is triggered, we need to add it to the top of file?
-		"extend$({compact__(cary__(args)).join(',')})"
+		"extend$({COMPACT__(CARY__(args)).join(',')})"
 
 export class Util.IndexOf < Util
 
@@ -7697,14 +7691,14 @@ export class Scope
 			var v = @varmap[k]
 			# unless v.@declarator isa Scope
 			# 	console.log v.name, v.@declarator:constructor:name
-			# dump__(v)
-			v.references:length ? dump__(v) : null
+			# DUMP__(v)
+			v.references:length ? DUMP__(v) : null
 
 		var desc =
 			nr: @nr
 			type: self:constructor:name
 			level: (level or 0)
-			vars: compact__(vars)
+			vars: COMPACT__(vars)
 			loc: loc
 
 		return desc
@@ -7788,7 +7782,7 @@ export class RootScope < Scope
 		self
 
 	def dump
-		var obj = {warnings: dump__(@warnings)}
+		var obj = {warnings: DUMP__(@warnings)}
 
 		if OPTS:analysis:scopes
 			var scopes = @scopes.map(|s| s.dump)
@@ -8143,7 +8137,7 @@ export class Variable < Node
 		return {
 			type: type
 			name: name
-			refs: dump__(@references, typ)
+			refs: DUMP__(@references, typ)
 		}
 
 
@@ -8309,7 +8303,7 @@ export class Super < Node
 		else
 			out = "{m.target.c}.__super__"
 			unless up isa Access
-				out += ".{c__(m.supername)}"
+				out += ".{C__(m.supername)}"
 				unless up isa Call # autocall?
 					out += ".apply({m.scope.context.c},arguments)"
 		out
