@@ -14,10 +14,7 @@ Imba.TAG_MOUNTABLE = 64
 Get the current document
 ###
 def Imba.document
-	if $web$
-		window:document
-	else
-		@document ||= ImbaServerDocument.new
+	window:document
 
 ###
 Get the body element wrapped in an Imba.Tag

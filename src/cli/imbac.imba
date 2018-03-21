@@ -48,75 +48,6 @@ Usage: imbac [options] path/to/script.imba
 
 """
 
-def ensureDir src
-	return yes if fs.existsSync(src)
-	var parts = path.normalize(src).split(path:sep)
-	for part,i in parts
-		continue if i < 1
-		# what about relative paths here? no good? might be important for symlinks etc no?
-		var dir = parts.slice(0,i + 1).join(path:sep)
-
-		if fs.existsSync(dir)
-			var stat = fs.statSync(dir)
-		elif part.match(/\.(imba|js)$/)
-			yes
-		else
-			fs.mkdirSync(dir)
-			console.log ansi.green("+ mkdir {dir}")
-	return
-
-def findRecursive root, pattern = /\.imba$/
-	var results = []
-	root = path.relative(process.cwd,root)
-	root = path.normalize(root)
-
-	var read = do |src,depth|
-		src = path.normalize(src)
-		var stat = fs.statSync(src)
-
-		if stat.isDirectory and depth > 0
-			var files = fs.readdirSync(src)
-			read(src + '/' + file,depth - 1) for file in files
-
-		elif src.match(pattern)
-			results.push(src)
-
-	if root.match(/\/\*\.imba$/)
-		root = root.slice(0,-7)
-		read(root,1)
-	else
-		read(root,10)
-
-	return results
-
-def pathToSource src,coll,o,root = null
-	var abs = path.resolve(process.cwd,src)
-	var stat = fs.statSync(abs)
-
-	if stat.isDirectory
-		# console.log "is directory",findRecursive(abs)
-		var files = findRecursive(abs)
-		pathToSource(fsrc,coll,o,abs) for fsrc in files
-		return
-
-	var file = {
-		filename: path.basename(src)
-		sourcePath: abs
-		sourceBody: fs.readFileSync(abs,'utf8')
-	}
-
-	if o:output
-		var rel = root ? path.relative(root,abs) : file:filename
-		file:targetPath = path.resolve(o:output,rel)
-
-	elif !o:print and !o:stdio
-		file:targetPath = file:sourcePath
-
-	if file:targetPath
-		file:targetPath = file:targetPath.replace(/\.imba$/,'.js')
-
-	coll.push(file)
-
 
 class CLI
 
@@ -127,6 +58,77 @@ class CLI
 		@sources = []
 		@current = null
 		self
+			
+		
+	def ensureDir src
+		return yes if fs.existsSync(src)
+		var parts = path.normalize(src).split(path:sep)
+		for part,i in parts
+			continue if i < 1
+			# what about relative paths here? no good? might be important for symlinks etc no?
+			var dir = parts.slice(0,i + 1).join(path:sep)
+
+			if fs.existsSync(dir)
+				var stat = fs.statSync(dir)
+			elif part.match(/\.(imba|js)$/)
+				yes
+			else
+				fs.mkdirSync(dir)
+				console.log ansi.green("+ mkdir {dir}")
+		return
+
+	def findRecursive root, pattern = /\.imba$/
+		var results = []
+		root = path.relative(process.cwd,root)
+		root = path.normalize(root)
+
+		var read = do |src,depth|
+			src = path.normalize(src)
+			var stat = fs.statSync(src)
+
+			if stat.isDirectory and depth > 0
+				var files = fs.readdirSync(src)
+				read(src + '/' + file,depth - 1) for file in files
+
+			elif src.match(pattern)
+				results.push(src)
+
+		if root.match(/\/\*\.imba$/)
+			root = root.slice(0,-7)
+			read(root,1)
+		else
+			read(root,10)
+
+		return results
+
+	def pathToSource src,coll,o,root = null
+		var abs = path.resolve(process.cwd,src)
+		var stat = fs.statSync(abs)
+
+		if stat.isDirectory
+			# console.log "is directory",findRecursive(abs)
+			var files = findRecursive(abs)
+			pathToSource(fsrc,coll,o,abs) for fsrc in files
+			return
+
+		var file = {
+			filename: path.basename(src)
+			sourcePath: abs
+			sourceBody: fs.readFileSync(abs,'utf8')
+		}
+
+		if o:output
+			var rel = root ? path.relative(root,abs) : file:filename
+			file:targetPath = path.resolve(o:output,rel)
+
+		elif !o:print and !o:stdio
+			file:targetPath = file:sourcePath
+
+		if file:targetPath
+			file:targetPath = file:targetPath.replace(/\.imba$/,'.js')
+
+		coll.push(file)
+
 
 	def cwd
 		process.cwd

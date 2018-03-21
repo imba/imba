@@ -1405,9 +1405,7 @@ Get the current document
 */
 
 Imba.document = function (){
-	if (true) {
-		return window.document;
-	};
+	return window.document;
 };
 
 /*

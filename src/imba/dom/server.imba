@@ -22,7 +22,7 @@ var voidElements = {
 }
 
 # could create a fake document 
-global class ImbaServerDocument
+class ImbaServerDocument
 
 	def createElement type
 		return ImbaServerElement.new(type)
@@ -39,13 +39,13 @@ global class ImbaServerDocument
 def Imba.document
 	@document ||= ImbaServerDocument.new
 	
-def escapeAttributeValue val
+var escapeAttributeValue = do |val|
 	var str = typeof val == 'string' ? val : String(val)
 	if str.indexOf('"') >= 0
 		str = str.replace(/\"/g,"&quot;")
 	return str
 	
-def escapeTextContent val, nodeName
+var escapeTextContent = do |val, nodeName|
 	var str = typeof val == 'string' ? val : String(val)
 	
 	if nodeName == 'script'
@@ -61,7 +61,7 @@ def escapeTextContent val, nodeName
 
 # could optimize by using a dictionary in addition to keys
 # where we cache the indexes?
-global class ImbaNodeClassList
+class ImbaNodeClassList
 
 	def initialize dom, classes
 		@classes = classes or []
@@ -110,7 +110,7 @@ class CSSStyleDeclaration
 				items.push("{k}: {v}")
 		return items.join(';')
 
-global class ImbaServerCommentNode
+class ImbaServerCommentNode
 	
 	def initialize value
 		@value = value
@@ -124,7 +124,7 @@ global class ImbaServerCommentNode
 		__outerHTML
 	
 
-global class ImbaServerElement
+class ImbaServerElement
 
 	def self.getter name, fn
 		Object.defineProperty(self:prototype, name, {
@@ -305,5 +305,3 @@ extend tag html
 	def toString
 		doctype + super
 
-
-# global:document ||= Imba.document
