@@ -2037,6 +2037,7 @@ export class Root < Code
 		var result = {
 			js: out,
 			ast: self,
+			source: o.@source,
 			warnings: scope.warnings,
 			options: o,
 			toString: (do this:js)

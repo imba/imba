@@ -282,6 +282,11 @@ export def printExcerpt code, loc, hl: no, gutter: yes, type: 'warn', pad: 2
 	let res = out.join('\n')
 	return res
 
+export def printWarning code, warn
+	let msg = warn:message # b("{yellow('warn: ')}") + yellow(warn:message)
+	let excerpt = printExcerpt(code,warn:loc, hl: 'whiteBright', type: 'warn', pad: 1)
+	return msg + '\n' + excerpt
+	
 
 
 
