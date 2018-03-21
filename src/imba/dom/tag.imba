@@ -781,7 +781,7 @@ class Imba.SVGTag < Imba.Tag
 	def self.inherit child
 		child.@protoDom = null
 		
-		if child.@name in Imba.SVG_TAGS or self == Imba.SVGTag
+		if self == Imba.SVGTag
 			child.@nodeType = child.@name
 			child.@classes = []
 		else
@@ -791,7 +791,6 @@ class Imba.SVGTag < Imba.Tag
 
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ")
-Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan image".split(" ")
 
 Imba.HTML_ATTRS =
 	a: "href target hreflang media download rel type"
@@ -943,17 +942,6 @@ class Imba.Tags
 					for name in props.split(" ")
 						Imba.attr(klass,name,dom: yes)
 		return klass
-		
-	def createElement name, owner
-		var typ
-		if name isa Function
-			typ = name
-		else			
-			if $debug$
-				throw("cannot find tag-type {name}") unless findTagType(name)
-			typ = findTagType(name)
-		typ.build(owner)
-
 
 def Imba.createElement name, ctx, ref, pref
 	var type = name
@@ -978,8 +966,6 @@ def Imba.createElement name, ctx, ref, pref
 		ctx:i$++
 		node:$key = ref
 
-	# node:$ref = ref if ref
-	# context:i$++ # only if it is not an array?
 	if ctx and ref != undefined
 		ctx[ref] = node
 
@@ -1032,8 +1018,6 @@ class TagMap
 		self:key$ = ref
 		self:par$ = par
 		self:i$ = 0
-		# self:curr$ = self:$iternew()
-		# self:next$ = self:$iternew()
 	
 	def $iter
 		var item = []
@@ -1093,13 +1077,13 @@ var svgSupport = typeof SVGElement !== 'undefined'
 # shuold be phased out
 def Imba.getTagForDom dom
 	return null unless dom
-	return dom if dom.@dom # could use inheritance instead
+	return dom if dom.@dom
 	return dom.@tag if dom.@tag
 	return null unless dom:nodeName
 
 	var name = dom:nodeName.toLowerCase
 	var type = name
-	var ns = Imba.TAGS #  svgSupport and dom isa SVGElement ? Imba.TAGS:_SVG : Imba.TAGS
+	var ns = Imba.TAGS
 
 	if dom:id and Imba.SINGLETONS[dom:id]
 		return Imba.getTagSingleton(dom:id)
@@ -1110,13 +1094,11 @@ def Imba.getTagForDom dom
 		type = ns.findTagType(name)
 	else
 		type = Imba.Tag
-	# if ns.@nodeNames.indexOf(name) >= 0
-	#	type = ns.findTagType(name)
 
 	return type.new(dom,null).awaken(dom)
 
-# deprecate
-def Imba.generateCSSPrefixes
+
+if $web$ and $es5$ and document
 	var styles = window.getComputedStyle(document:documentElement, '')
 
 	for prefixed in styles
@@ -1129,13 +1111,9 @@ def Imba.generateCSSPrefixes
 
 		# register the prefixes
 		Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed
-	return
-
-if $web$
-	Imba.generateCSSPrefixes if document
 
 	# Ovverride classList
-	if document and !document:documentElement:classList
+	if !document:documentElement:classList
 		extend tag element
 
 			def hasFlag ref
