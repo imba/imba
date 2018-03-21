@@ -26,7 +26,7 @@ describe 'Await' do
 
 	unless $es5$
 		test 'es6' do
-			def add2 x
+			var add2 = do |x|
 				let p_a = delay(20)
 				let p_b = delay(30)
 				return x + await p_a + await p_b

@@ -74,7 +74,6 @@ module.exports = __webpack_require__(2);
 /* 1 */
 /***/ (function(module, exports) {
 
-var __root = {};
 /*
 Imba is the namespace for all runtime related utilities
 @namespace
@@ -252,7 +251,7 @@ Imba.propDidSet = function (object,property,val,prev){
 
 
 // Basic events
-__root.emit__ = function (event,args,node){
+var emit__ = function(event,args,node) {
 	// var node = cbs[event]
 	var prev,cb,ret;
 	
@@ -316,8 +315,8 @@ Imba.unlisten = function (obj,event,cb,meth){
 Imba.emit = function (obj,event,params){
 	var cb;
 	if (cb = obj.__listeners__) {
-		if (cb[event]) { __root.emit__(event,params,cb[event]) };
-		if (cb.all) { __root.emit__(event,[event,params],cb.all) }; // and event != 'all'
+		if (cb[event]) { emit__(event,params,cb[event]) };
+		if (cb.all) { emit__(event,[event,params],cb.all) }; // and event != 'all'
 	};
 	return;
 };
@@ -2430,7 +2429,7 @@ Imba.HTML_PROPS = {
 	canvas: "width height"
 };
 
-__root.extender = function (obj,sup){
+var extender = function(obj,sup) {
 	for (let v, i = 0, keys = Object.keys(sup), l = keys.length, k; i < l; i++){
 		k = keys[i];v = sup[k];(obj[k] == null) ? (obj[k] = v) : obj[k];
 	};
@@ -2522,7 +2521,7 @@ Imba.Tags.prototype.defineTag = function (fullName,supr,body){
 		this[fullName] = tagtype;
 	};
 	
-	__root.extender(tagtype,supertype);
+	extender(tagtype,supertype);
 	
 	if (body) {
 		body.call(tagtype,tagtype,tagtype.TAGS || this);
@@ -4668,7 +4667,7 @@ var TERMINAL_COLOR_CODES = {
 	white: 37
 };
 
-__root.fmt = function (code,string){
+var fmt = function(code,string) {
 	if (console.group) { return string.toString() };
 	code = TERMINAL_COLOR_CODES[code];
 	var resetStr = "\x1B[0m";
@@ -4755,8 +4754,8 @@ Spec.prototype.finish = function (){
 	};
 	
 	var logs = [
-		__root.fmt('green',("" + (ok.length) + " OK")),
-		__root.fmt('red',("" + (failed.length) + " FAILED")),
+		fmt('green',("" + (ok.length) + " OK")),
+		fmt('red',("" + (failed.length) + " FAILED")),
 		("" + (this.assertions().length) + " TOTAL")
 	];
 	
@@ -4921,10 +4920,10 @@ SpecExample.prototype.finish = function (){
 	var dots = self._assertions.map(function(v,i) {
 		Spec.CURRENT.assertions().push(v);
 		if (v.success()) {
-			return __root.fmt('green',"✔");
+			return fmt('green',"✔");
 		} else {
 			details.push((" - " + (v.details())));
-			return __root.fmt('red',"✘");
+			return fmt('red',"✘");
 		};
 	});
 	
@@ -5056,9 +5055,9 @@ SpecAssert.prototype.failed = function (){
 SpecAssert.prototype.details = function (){
 	if (!this._success) {
 		if (this._format) {
-			return __root.fmt('red',("expected " + (this._right) + " got " + (this._left)));
+			return fmt('red',("expected " + (this._right) + " got " + (this._left)));
 		} else {
-			return __root.fmt('red',("expected " + (this._expected) + " got " + (this._value)));
+			return fmt('red',("expected " + (this._expected) + " got " + (this._value)));
 		};
 	} else {
 		return "passed test";
@@ -5087,7 +5086,7 @@ SpecAssertTruthy.prototype.failed = function (){
 
 SpecAssertTruthy.prototype.details = function (){
 	if (!this._success) {
-		return __root.fmt('red',("assertion failed: " + (this._message)));
+		return fmt('red',("assertion failed: " + (this._message)));
 	} else {
 		return "passed test";
 	};
@@ -8460,7 +8459,7 @@ describe('Await',function() {
 	
 	if (true) {
 		test('es6',function() {
-			async function add2(x){
+			var add2 = async function(x) {
 				let p_a = __root.delay(20);
 				let p_b = __root.delay(30);
 				return x + await p_a + await p_b;

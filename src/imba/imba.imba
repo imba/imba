@@ -141,7 +141,7 @@ def Imba.propDidSet object, property, val, prev
 
 
 # Basic events
-def emit__ event, args, node
+var emit__ = do |event, args, node|
 	# var node = cbs[event]
 	var prev, cb, ret
 

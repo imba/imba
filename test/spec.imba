@@ -12,7 +12,7 @@ var TERMINAL_COLOR_CODES =
 	cyan: 36
 	white: 37
 
-def fmt code, string
+var fmt = do |code,string|
 	return string.toString if console:group
 	code = TERMINAL_COLOR_CODES[code]
 	var resetStr = "\x1B[0m"

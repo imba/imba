@@ -2246,7 +2246,7 @@ export class ModuleDeclaration < Code
 		
 		if @name
 			let modname = String(name.@value or name)
-			scope.parent.register(modname, self, type: 'var')
+			scope.parent.register(modname, self, type: 'module')
 			# scope.parent.declare(@name,null,system: yes)
 			
 		body.traverse
@@ -2690,7 +2690,9 @@ export class MethodDeclaration < Func
 			if context isa RootScope
 				set(static: yes, root: yes)
 				@target = context.context.reference
-				scope.context.@reference = @target # scope.declare("self",op)
+				# change the inner context of this scope?
+				scope.@context = context.context
+				# scope.context.@reference = @target # scope.declare("self",op)
 				@variable = context.register(name, self, type: 'meth')
 				@variable.proxy(OP('.',@target,name))
 			else

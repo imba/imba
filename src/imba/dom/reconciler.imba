@@ -352,12 +352,12 @@ extend tag element
 
 		if !old and typ != 3
 			removeAllChildren
-			appendNested(self,new)
+			__root.appendNested(self,new)
 
 		elif typ == 1
 			let caret = null
 			for item,i in new
-				caret = reconcileNested(self,item,old[i],caret)
+				caret = __root.reconcileNested(self,item,old[i],caret)
 		
 		elif typ == 2
 			return self
@@ -375,27 +375,27 @@ extend tag element
 			# check if old and new isa array
 			elif new isa Array
 				if new.@type == 5 and old and old.@type == 5
-					reconcileLoop(self,new,old,null)
+					__root.reconcileLoop(self,new,old,null)
 				elif old isa Array
-					reconcileNested(self,new,old,null)
+					__root.reconcileNested(self,new,old,null)
 				else
 					removeAllChildren
-					appendNested(self,new)
+					__root.appendNested(self,new)
 			else
 				return setText(new)
 				
 		elif typ == 4
-			reconcileIndexedArray(self,new,old,null)
+			__root.reconcileIndexedArray(self,new,old,null)
 			
 		elif typ == 5
-			reconcileLoop(self,new,old,null)
+			__root.reconcileLoop(self,new,old,null)
 
 		elif new isa Array and old isa Array
-			reconcileNested(self,new,old,null)
+			__root.reconcileNested(self,new,old,null)
 		else
 			# what if text?
 			removeAllChildren
-			appendNested(self,new)
+			__root.appendNested(self,new)
 
 		@tree_ = new
 		return self

@@ -258,15 +258,27 @@ class CLI
 			out:js = out:js + "\n//# sourceMappingURL=data:application/json;base64," + base64
 
 		src:output = out
+		
+		let status = "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
+		
+		if out:error
+			status += red(" [1 error]")
+			
+		if out:warnings and out:warnings:length
+			let count = out:warnings:length
+			status += yellow(" [{count} warning{count > 1 ? 's' : ''}]")
 
 		if src:targetPath and out:js !== undefined
 			ensureDir(src:targetPath)
 			fs.writeFileSync(src:targetPath,out:js,'utf8')
-			log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
+			log(status) unless o:print
+				
+			# log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
 
 		elif out:error
 			unless o:print
-				log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
+				log(status)
+				# log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
 				if out:error:excerpt
 					log "   " + out:error.excerpt(colors: o:colors)
 				else

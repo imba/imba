@@ -257,13 +257,14 @@ export class LexerError < SyntaxError
 		return self
 
 
-def last array, back = 0
+
+var last = do |array, back = 0|
 	array[array:length - back - 1]
 
-def count str, substr
+var count = do |str, substr|
 	return str.split(substr):length - 1
-	
-def repeatString str, times
+
+var repeatString = do |str,times|
 	var res = ''
 	while times > 0
 		if times % 2 == 1

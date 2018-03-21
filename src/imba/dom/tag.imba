@@ -830,7 +830,7 @@ Imba.HTML_PROPS =
 	fieldset: "disabled"
 	canvas: "width height"
 
-def extender obj, sup
+var extender = do |obj, sup|
 	for own k,v of sup
 		obj[k] ?= v
 

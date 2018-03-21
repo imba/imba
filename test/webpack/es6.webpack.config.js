@@ -7,7 +7,7 @@ module.exports = {
 	module: {
 		rules: [
 			{
-				test: /.imba$/,
+				test: /\.imba$/,
 				loader: 'imba/loader',
 				options: {es6: true}
 			}
