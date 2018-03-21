@@ -13,6 +13,7 @@ module.exports = function(content) {
 		sourceMap: this.sourceMap,
 		sourcePath: this.resourcePath,
 		target: this.target,
+		comments: false,
 		ENV_DEBUG: this.debug,
 		ENV_WEBPACK: true
 	};

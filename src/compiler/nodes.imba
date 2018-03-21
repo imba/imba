@@ -779,6 +779,7 @@ export class Comment < Meta
 		helpers.normalizeIndentation("" + @value.@value)
 
 	def c o
+		return "" if STACK.option(:comments) == false
 		var v = @value.@value
 		if o and o:expression or v.match(/\n/) or @value.type == 'HERECOMMENT' # multiline?
 			"/*{v}*/"
@@ -798,7 +799,10 @@ export class Terminator < Meta
 		[@value.@loc,@value.@loc + @value.@value:length]
 
 	def c
-		return @value.c
+		let val = @value.c
+		if STACK.option(:comments) == false
+			val = val.replace(/\/\/.*$/gm,'')
+		return val
 
 export class Newline < Terminator
 
