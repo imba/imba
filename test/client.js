@@ -74,20 +74,11 @@ module.exports = __webpack_require__(2);
 /* 1 */
 /***/ (function(module, exports) {
 
-/*
-Imba is the namespace for all runtime related utilities
-@namespace
-*/
+
 
 var Imba = {VERSION: '1.3.4-beta.1'};
 
-/*
 
-Light wrapper around native setTimeout that expects the block / function
-as last argument (instead of first). It also triggers an event to Imba
-after the timeout to let schedulers update (to rerender etc) afterwards.
-
-*/
 
 Imba.setTimeout = function (delay,block){
 	return setTimeout(function() {
@@ -96,29 +87,19 @@ Imba.setTimeout = function (delay,block){
 	},delay);
 };
 
-/*
 
-Light wrapper around native setInterval that expects the block / function
-as last argument (instead of first). It also triggers an event to Imba
-after every interval to let schedulers update (to rerender etc) afterwards.
-
-*/
 
 Imba.setInterval = function (interval,block){
 	return setInterval(block,interval);
 };
 
-/*
-Clear interval with specified id
-*/
+
 
 Imba.clearInterval = function (id){
 	return clearInterval(id);
 };
 
-/*
-Clear timeout with specified id
-*/
+
 
 Imba.clearTimeout = function (id){
 	return clearTimeout(id);
@@ -137,38 +118,13 @@ Imba.subclass = function (obj,sup){
 	return obj;
 };
 
-/*
-Lightweight method for making an object iterable in imbas for/in loops.
-If the compiler cannot say for certain that a target in a for loop is an
-array, it will cache the iterable version before looping.
 
-```imba
-# this is the whole method
-def Imba.iterable o
-	return o ? (o:toArray ? o.toArray : o) : []
-
-class CustomIterable
-	def toArray
-		[1,2,3]
-
-# will return [2,4,6]
-for x in CustomIterable.new
-	x * 2
-
-```
-*/
 
 Imba.iterable = function (o){
 	return o ? ((o.toArray ? o.toArray() : o)) : [];
 };
 
-/*
-Coerces a value into a promise. If value is array it will
-call `Promise.all(value)`, or if it is not a promise it will
-wrap the value in `Promise.resolve(value)`. Used for experimental
-await syntax.
-@return {Promise}
-*/
+
 
 Imba.await = function (value){
 	if (value instanceof Array) {
@@ -250,7 +206,7 @@ Imba.propDidSet = function (object,property,val,prev){
 };
 
 
-// Basic events
+
 var emit__ = function(event,args,node) {
 	// var node = cbs[event]
 	var prev,cb,ret;
@@ -273,7 +229,7 @@ var emit__ = function(event,args,node) {
 	return;
 };
 
-// method for registering a listener on object
+
 Imba.listen = function (obj,event,listener,path){
 	var cbs,list,tail;
 	cbs = obj.__listeners__ || (obj.__listeners__ = {});
@@ -285,14 +241,14 @@ Imba.listen = function (obj,event,listener,path){
 	return tail;
 };
 
-// register a listener once
+
 Imba.once = function (obj,event,listener){
 	var tail = Imba.listen(obj,event,listener);
 	tail.times = 1;
 	return tail;
 };
 
-// remove a listener
+
 Imba.unlisten = function (obj,event,cb,meth){
 	var node,prev;
 	var meta = obj.__listeners__;
@@ -302,7 +258,7 @@ Imba.unlisten = function (obj,event,cb,meth){
 		while ((prev = node) && (node = node.next)){
 			if (node == cb || node.listener == cb) {
 				prev.next = node.next;
-				// check for correct path as well?
+				
 				node.listener = null;
 				break;
 			};
@@ -311,12 +267,12 @@ Imba.unlisten = function (obj,event,cb,meth){
 	return;
 };
 
-// emit event
+
 Imba.emit = function (obj,event,params){
 	var cb;
 	if (cb = obj.__listeners__) {
 		if (cb[event]) { emit__(event,params,cb[event]) };
-		if (cb.all) { emit__(event,[event,params],cb.all) }; // and event != 'all'
+		if (cb.all) { emit__(event,[event,params],cb.all) }; 
 	};
 	return;
 };
@@ -367,7 +323,7 @@ Imba.Pointer.prototype.update = function (e){
 	return this;
 };
 
-// this is just for regular mouse now
+
 Imba.Pointer.prototype.process = function (){
 	var e1 = this._event;
 	
@@ -375,7 +331,7 @@ Imba.Pointer.prototype.process = function (){
 		this._prevEvent = e1;
 		this._dirty = false;
 		
-		// button should only change on mousedown etc
+		
 		if (e1.type == 'mousedown') {
 			this._button = e1.button;
 			
@@ -383,7 +339,7 @@ Imba.Pointer.prototype.process = function (){
 				return;
 			};
 			
-			// cancel the previous touch
+			
 			if (this._touch) { this._touch.cancel() };
 			this._touch = new Imba.Touch(e1,this);
 			this._touch.mousedown(e1,e1);
@@ -396,7 +352,7 @@ Imba.Pointer.prototype.process = function (){
 				this._touch.mouseup(e1,e1);
 				this._touch = null;
 			};
-			// trigger pointerup
+			
 		};
 	} else if (this._touch) {
 		this._touch.idle();
@@ -488,7 +444,7 @@ const exportedConst = exports.exportedConst = 20;
 
 var __root = {};
 
-// require imba ( ensure local version )
+
 __webpack_require__(2);
 __webpack_require__(16);
 
@@ -583,7 +539,7 @@ function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var __root = {};
 var Imba = __webpack_require__(1);
 
-var requestAnimationFrame; // very simple raf polyfill
+var requestAnimationFrame; 
 var cancelAnimationFrame;
 
 if (false) {};
@@ -682,14 +638,14 @@ Imba.cancelAnimationFrame = function (id){
 	return cancelAnimationFrame(id);
 };
 
-// should add an Imba.run / setImmediate that
-// pushes listener onto the tick-queue with times - once
+
+
 
 var commitQueue = 0;
 
 Imba.commit = function (params){
 	commitQueue++;
-	// Imba.TagManager.refresh
+	
 	Imba.emit(Imba,'commit',(params != undefined) ? [params] : undefined);
 	if (--commitQueue == 0) {
 		Imba.TagManager && Imba.TagManager.refresh();
@@ -697,17 +653,7 @@ Imba.commit = function (params){
 	return;
 };
 
-/*
 
-Instances of Imba.Scheduler manages when to call `tick()` on their target,
-at a specified framerate or when certain events occur. Root-nodes in your
-applications will usually have a scheduler to make sure they rerender when
-something changes. It is also possible to make inner components use their
-own schedulers to control when they render.
-
-@iname scheduler
-
-*/
 
 Imba.Scheduler = function Scheduler(target){
 	var self = this;
@@ -735,10 +681,7 @@ Imba.Scheduler.event = function (e){
 	return Imba.emit(Imba,'event',e);
 };
 
-/*
-	Create a new Imba.Scheduler for specified target
-	@return {Imba.Scheduler}
-	*/
+
 
 Imba.Scheduler.prototype.__raf = {watch: 'rafDidSet',name: 'raf'};
 Imba.Scheduler.prototype.raf = function(v){ return this._raf; }
@@ -789,28 +732,19 @@ Imba.Scheduler.prototype.eventsDidSet = function (new$,prev){
 	};
 };
 
-/*
-	Check whether the current scheduler is active or not
-	@return {bool}
-	*/
+
 
 Imba.Scheduler.prototype.active = function (){
 	return this._active;
 };
 
-/*
-	Delta time between the two last ticks
-	@return {Number}
-	*/
+
 
 Imba.Scheduler.prototype.dt = function (){
 	return this._dt;
 };
 
-/*
-	Configure the scheduler
-	@return {self}
-	*/
+
 
 Imba.Scheduler.prototype.configure = function (options){
 	var v_;
@@ -821,11 +755,7 @@ Imba.Scheduler.prototype.configure = function (options){
 	return this;
 };
 
-/*
-	Mark the scheduler as dirty. This will make sure that
-	the scheduler calls `target.tick` on the next frame
-	@return {self}
-	*/
+
 
 Imba.Scheduler.prototype.mark = function (){
 	this._marked = true;
@@ -835,12 +765,7 @@ Imba.Scheduler.prototype.mark = function (){
 	return this;
 };
 
-/*
-	Instantly trigger target.tick and mark scheduler as clean (not dirty/marked).
-	This is called implicitly from tick, but can also be called manually if you
-	really want to force a tick without waiting for the next frame.
-	@return {self}
-	*/
+
 
 Imba.Scheduler.prototype.flush = function (){
 	this._flushes++;
@@ -849,24 +774,7 @@ Imba.Scheduler.prototype.flush = function (){
 	return this;
 };
 
-/*
-	@fixme this expects raf to run at 60 fps 
 
-	Called automatically on every frame while the scheduler is active.
-	It will only call `target.tick` if the scheduler is marked dirty,
-	or when according to @fps setting.
-
-	If you have set up a scheduler with an fps of 1, tick will still be
-	called every frame, but `target.tick` will only be called once every
-	second, and it will *make sure* each `target.tick` happens in separate
-	seconds according to Date. So if you have a node that renders a clock
-	based on Date.now (or something similar), you can schedule it with 1fps,
-	never needing to worry about two ticks happening within the same second.
-	The same goes for 4fps, 10fps etc.
-
-	@protected
-	@return {self}
-	*/
 
 Imba.Scheduler.prototype.tick = function (delta,ticker){
 	this._ticks++;
@@ -892,14 +800,7 @@ Imba.Scheduler.prototype.requestTick = function (){
 	return this;
 };
 
-/*
-	Start the scheduler if it is not already active.
-	**While active**, the scheduler will override `target.commit`
-	to do nothing. By default Imba.tag#commit calls render, so
-	that rendering is cascaded through to children when rendering
-	a node. When a scheduler is active (for a node), Imba disables
-	this automatic rendering.
-	*/
+
 
 Imba.Scheduler.prototype.activate = function (immediate){
 	if(immediate === undefined) immediate = true;
@@ -927,9 +828,7 @@ Imba.Scheduler.prototype.activate = function (immediate){
 	return this;
 };
 
-/*
-	Stop the scheduler if it is active.
-	*/
+
 
 Imba.Scheduler.prototype.deactivate = function (){
 	if (this._active) {
@@ -1052,7 +951,7 @@ Imba.TagManagerClass.prototype.refresh = function (force){
 	if(force === undefined) force = false;
 	if (false) {};
 	if (!force && this.changes() == 0) { return };
-	// console.time('resolveMounts')
+	
 	if ((this._inserts && this._mountables > this._mounted.length) || force) {
 		this.tryMount();
 	};
@@ -1060,7 +959,7 @@ Imba.TagManagerClass.prototype.refresh = function (force){
 	if ((this._removes || force) && this._mounted.length) {
 		this.tryUnmount();
 	};
-	// console.timeEnd('resolveMounts')
+	
 	this._inserts = 0;
 	this._removes = 0;
 	return this;
@@ -1074,7 +973,7 @@ Imba.TagManagerClass.prototype.tryMount = function (){
 	var count = 0;
 	var root = document.body;
 	var items = root.querySelectorAll('.__mount');
-	// what if we end up creating additional mountables by mounting?
+	
 	for (let i = 0, ary = iter$(items), len = ary.length, el; i < len; i++) {
 		el = ary[i];
 		if (el && el._tag) {
@@ -1091,7 +990,7 @@ Imba.TagManagerClass.prototype.mountNode = function (node){
 		this._mounted.push(node);
 		node.FLAGS |= Imba.TAG_MOUNTED;
 		if (node.mount) { node.mount() };
-		// Mark all parents as mountable for faster unmount
+		
 		let el = node.dom().parentNode;
 		while (el && el._tag && !el._tag.mount && !(el._tag.FLAGS & Imba.TAG_MOUNTABLE)){
 			el._tag.FLAGS |= Imba.TAG_MOUNTABLE;
@@ -1146,17 +1045,7 @@ var native$ = [
 	'mouseup','mousedown','mouseenter','mouseleave','mouseout','mouseover','mousemove'
 ];
 
-/*
 
-Manager for listening to and delegating events in Imba. A single instance
-is always created by Imba (as `Imba.Events`), which handles and delegates all
-events at the very root of the document. Imba does not capture all events
-by default, so if you want to make sure exotic or custom DOMEvents are delegated
-in Imba you will need to register them in `Imba.Events.register(myCustomEventName)`
-
-@iname manager
-
-*/
 
 Imba.EventManager = function EventManager(node,pars){
 	var self = this;
@@ -1252,7 +1141,7 @@ Imba.EventManager.activate = function (){
 				return e.preventDefault();
 			};
 		};
-		// delegate the real click event
+		
 		return Imba.Events.delegate(e);
 	});
 	
@@ -1275,14 +1164,7 @@ Imba.EventManager.activate = function (){
 };
 
 
-/*
 
-	Tell the current EventManager to intercept and handle event of a certain name.
-	By default, Imba.Events will register interceptors for: *keydown*, *keyup*, 
-	*keypress*, *textInput*, *input*, *change*, *submit*, *focusin*, *focusout*, 
-	*blur*, *contextmenu*, *dblclick*, *mousewheel*, *wheel*
-
-	*/
 
 Imba.EventManager.prototype.register = function (name,handler){
 	if(handler === undefined) handler = true;
@@ -1295,7 +1177,7 @@ Imba.EventManager.prototype.register = function (name,handler){
 	
 	if (this.delegators()[name]) { return this };
 	
-	// console.log("register for event {name}")
+	
 	var fn = this.delegators()[name] = (handler instanceof Function) ? handler : this.delegator();
 	if (this.enabled()) { return this.root().addEventListener(name,fn,true) };
 };
@@ -1325,11 +1207,7 @@ Imba.EventManager.prototype.delegate = function (e){
 	return this;
 };
 
-/*
 
-	Create a new Imba.Event
-
-	*/
 
 Imba.EventManager.prototype.create = function (type,target,pars){
 	if(!pars||pars.constructor !== Object) pars = {};
@@ -1341,11 +1219,7 @@ Imba.EventManager.prototype.create = function (type,target,pars){
 	return event;
 };
 
-/*
 
-	Trigger / process an Imba.Event.
-
-	*/
 
 Imba.EventManager.prototype.trigger = function (){
 	return this.create.apply(this,arguments).process();
@@ -1400,17 +1274,13 @@ Imba.TAG_SCHEDULED = 16;
 Imba.TAG_AWAKENED = 32;
 Imba.TAG_MOUNTABLE = 64;
 
-/*
-Get the current document
-*/
+
 
 Imba.document = function (){
 	return window.document;
 };
 
-/*
-Get the body element wrapped in an Imba.Tag
-*/
+
 
 Imba.root = function (){
 	return Imba.getTagForDom(Imba.document().body);
@@ -1422,9 +1292,7 @@ Imba.static = function (items,typ,nr){
 	return items;
 };
 
-/*
 
-*/
 
 Imba.mount = function (node,into){
 	into || (into = Imba.document().body);
@@ -1445,10 +1313,7 @@ Imba.createTextNode = function (node){
 
 
 
-/*
-This is the baseclass that all tags in imba inherit from.
-@iname node
-*/
+
 
 Imba.Tag = function Tag(dom,ctx){
 	this.setDom(dom);
@@ -1486,9 +1351,7 @@ Imba.Tag.end = function (){
 	return this.commit(0);
 };
 
-/*
-	Called when a tag type is being subclassed.
-	*/
+
 
 Imba.Tag.inherit = function (child){
 	child._protoDom = null;
@@ -1507,12 +1370,7 @@ Imba.Tag.inherit = function (child){
 	};
 };
 
-/*
-	Internal method called after a tag class has
-	been declared or extended.
-	
-	@private
-	*/
+
 
 Imba.Tag.prototype.optimizeTagStructure = function (){
 	if (false) {};
@@ -1561,33 +1419,21 @@ Imba.Tag.prototype.root = function (){
 	return this._owner_ ? this._owner_.root() : this;
 };
 
-/*
-	Setting references for tags like
-	`<div@header>` will compile to `tag('div').ref_('header',this).end()`
-	By default it adds the reference as a className to the tag.
 
-	@return {self}
-	@private
-	*/
 
 Imba.Tag.prototype.ref_ = function (ref){
 	this.flag(this._ref = ref);
 	return this;
 };
 
-/*
-	Set the data object for node
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.setData = function (data){
 	this._data = data;
 	return this;
 };
 
-/*
-	Get the data object for node
-	*/
+
 
 Imba.Tag.prototype.data = function (){
 	return this._data;
@@ -1598,9 +1444,7 @@ Imba.Tag.prototype.bindData = function (target,path,args){
 	return this.setData(args ? target[path].apply(target,args) : target[path]);
 };
 
-/*
-	Set inner html of node
-	*/
+
 
 Imba.Tag.prototype.setHtml = function (html){
 	if (this.html() != html) {
@@ -1609,9 +1453,7 @@ Imba.Tag.prototype.setHtml = function (html){
 	return this;
 };
 
-/*
-	Get inner html of node
-	*/
+
 
 Imba.Tag.prototype.html = function (){
 	return this._dom.innerHTML;
@@ -1620,7 +1462,7 @@ Imba.Tag.prototype.html = function (){
 Imba.Tag.prototype.on$ = function (slot,handler,context){
 	let handlers = this._on_ || (this._on_ = []);
 	let prev = handlers[slot];
-	// self-bound handlers
+	
 	if (slot < 0) {
 		if (prev == undefined) {
 			slot = handlers[slot] = handlers.length;
@@ -1652,12 +1494,7 @@ Imba.Tag.prototype.id = function (){
 	return this.dom().id;
 };
 
-/*
-	Adds a new attribute or changes the value of an existing attribute
-	on the specified tag. If the value is null or false, the attribute
-	will be removed.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.setAttribute = function (name,value){
 	var old = this.dom().getAttribute(name);
@@ -1695,19 +1532,13 @@ Imba.Tag.prototype.setAttributeNS = function (ns,name,value){
 };
 
 
-/*
-	removes an attribute from the specified tag
-	*/
+
 
 Imba.Tag.prototype.removeAttribute = function (name){
 	return this.dom().removeAttribute(name);
 };
 
-/*
-	returns the value of an attribute on the tag.
-	If the given attribute does not exist, the value returned
-	will either be null or "" (the empty string)
-	*/
+
 
 Imba.Tag.prototype.getAttribute = function (name){
 	return this.dom().getAttribute(name);
@@ -1734,21 +1565,14 @@ Imba.Tag.prototype.get = function (key){
 	return this._dom.getAttribute(key);
 };
 
-/*
-	Override this to provide special wrapping etc.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.setContent = function (content,type){
 	this.setChildren(content,type);
 	return this;
 };
 
-/*
-	Set the children of node. type param is optional,
-	and should only be used by Imba when compiling tag trees. 
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.setChildren = function (nodes,type){
 	// overridden on client by reconciler
@@ -1756,15 +1580,12 @@ Imba.Tag.prototype.setChildren = function (nodes,type){
 	return this;
 };
 
-/*
-	Set the template that will render the content of node.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.setTemplate = function (template){
 	if (!this._template) {
 		if (this.render == Imba.Tag.prototype.render) {
-			this.render = this.renderTemplate; // do setChildren(renderTemplate)
+			this.render = this.renderTemplate; 
 		};
 	};
 	
@@ -1776,11 +1597,7 @@ Imba.Tag.prototype.template = function (){
 	return null;
 };
 
-/*
-	If no custom render-method is defined, and the node
-	has a template, this method will be used to render
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.renderTemplate = function (){
 	var body = this.template();
@@ -1789,10 +1606,7 @@ Imba.Tag.prototype.renderTemplate = function (){
 };
 
 
-/*
-	Remove specified child from current node.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.removeChild = function (child){
 	var par = this.dom();
@@ -1804,9 +1618,7 @@ Imba.Tag.prototype.removeChild = function (child){
 	return this;
 };
 
-/*
-	Remove all content inside node
-	*/
+
 
 Imba.Tag.prototype.removeAllChildren = function (){
 	if (this._dom.firstChild) {
@@ -1820,12 +1632,7 @@ Imba.Tag.prototype.removeAllChildren = function (){
 	return this;
 };
 
-/*
-	Append a single item (node or string) to the current node.
-	If supplied item is a string it will automatically. This is used
-	by Imba internally, but will practically never be used explicitly.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.appendChild = function (node){
 	if ((typeof node=='string'||node instanceof String)) {
@@ -1833,15 +1640,12 @@ Imba.Tag.prototype.appendChild = function (node){
 	} else if (node) {
 		this.dom().appendChild(node._slot_ || node);
 		Imba.TagManager.insert(node._tag || node,this);
-		// FIXME ensure these are not called for text nodes
+		
 	};
 	return this;
 };
 
-/*
-	Insert a node into the current node (self), before another.
-	The relative node must be a child of current node. 
-	*/
+
 
 Imba.Tag.prototype.insertBefore = function (node,rel){
 	if ((typeof node=='string'||node instanceof String)) {
@@ -1851,7 +1655,7 @@ Imba.Tag.prototype.insertBefore = function (node,rel){
 	if (node && rel) {
 		this.dom().insertBefore((node._slot_ || node),(rel._slot_ || rel));
 		Imba.TagManager.insert(node._tag || node,this);
-		// FIXME ensure these are not called for text nodes
+		
 	};
 	return this;
 };
@@ -1882,10 +1686,7 @@ Imba.Tag.prototype.attachToParent = function (){
 	return this;
 };
 
-/*
-	Remove node from the dom tree
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.orphanize = function (){
 	var par;
@@ -1893,20 +1694,13 @@ Imba.Tag.prototype.orphanize = function (){
 	return this;
 };
 
-/*
-	Get text of node. Uses textContent behind the scenes (not innerText)
-	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
-	@return {string} inner text of node
-	*/
+
 
 Imba.Tag.prototype.text = function (v){
 	return this._dom.textContent;
 };
 
-/*
-	Set text of node. Uses textContent behind the scenes (not innerText)
-	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
-	*/
+
 
 Imba.Tag.prototype.setText = function (txt){
 	this._tree_ = txt;
@@ -1916,20 +1710,7 @@ Imba.Tag.prototype.setText = function (txt){
 };
 
 
-/*
-	Method for getting and setting data-attributes. When called with zero
-	arguments it will return the actual dataset for the tag.
 
-		var node = <div data-name='hello'>
-		# get the whole dataset
-		node.dataset # {name: 'hello'}
-		# get a single value
-		node.dataset('name') # 'hello'
-		# set a single value
-		node.dataset('name','newname') # self
-
-
-	*/
 
 Imba.Tag.prototype.dataset = function (key,val){
 	if (key instanceof Object) {
@@ -1963,42 +1744,25 @@ Imba.Tag.prototype.dataset = function (key,val){
 	return dataset;
 };
 
-/*
-	Empty placeholder. Override to implement custom render behaviour.
-	Works much like the familiar render-method in React.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.render = function (){
 	return this;
 };
 
-/*
-	Called implicitly while tag is initializing. No initial props
-	will have been set at this point.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.build = function (){
 	return this;
 };
 
-/*
-	Called once, implicitly through Imba.Tag#end. All initial props
-	and children will have been set before setup is called.
-	setContent.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.setup = function (){
 	return this;
 };
 
-/*
-	Called implicitly through Imba.Tag#end, for tags that are part of
-	a tag tree (that are rendered several times).
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.commit = function (){
 	if (this.beforeRender() !== false) this.render();
@@ -2009,30 +1773,14 @@ Imba.Tag.prototype.beforeRender = function (){
 	return this;
 };
 
-/*
 
-	Called by the tag-scheduler (if this tag is scheduled)
-	By default it will call this.render. Do not override unless
-	you really understand it.
-
-	*/
 
 Imba.Tag.prototype.tick = function (){
 	if (this.beforeRender() !== false) this.render();
 	return this;
 };
 
-/*
-	
-	A very important method that you will practically never manually.
-	The tag syntax of Imba compiles to a chain of setters, which always
-	ends with .end. `<a.large>` compiles to `tag('a').flag('large').end()`
-	
-	You are highly adviced to not override its behaviour. The first time
-	end is called it will mark the tag as initialized and call Imba.Tag#setup,
-	and call Imba.Tag#commit every time.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.end = function (){
 	this.setup();
@@ -2041,7 +1789,7 @@ Imba.Tag.prototype.end = function (){
 	return this;
 };
 
-// called on <self> to check if self is called from other places
+
 Imba.Tag.prototype.$open = function (context){
 	if (context != this._context_) {
 		this._tree_ = null;
@@ -2050,37 +1798,26 @@ Imba.Tag.prototype.$open = function (context){
 	return this;
 };
 
-/*
-	This is called instead of Imba.Tag#end for `<self>` tag chains.
-	Defaults to noop
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.synced = function (){
 	return this;
 };
 
-// called when the node is awakened in the dom - either automatically
-// upon attachment to the dom-tree, or the first time imba needs the
-// tag for a domnode that has been rendered on the server
+
+
+
 Imba.Tag.prototype.awaken = function (){
 	return this;
 };
 
-/*
-	List of flags for this node. 
-	*/
+
 
 Imba.Tag.prototype.flags = function (){
 	return this._dom.classList;
 };
 
-/*
-	Add speficied flag to current node.
-	If a second argument is supplied, it will be coerced into a Boolean,
-	and used to indicate whether we should remove the flag instead.
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.flag = function (name,toggler){
 	// it is most natural to treat a second undefined argument as a no-switch
@@ -2096,30 +1833,21 @@ Imba.Tag.prototype.flag = function (name,toggler){
 	return this;
 };
 
-/*
-	Remove specified flag from node
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.unflag = function (name){
 	this._dom.classList.remove(name);
 	return this;
 };
 
-/*
-	Toggle specified flag on node
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.toggleFlag = function (name){
 	this._dom.classList.toggle(name);
 	return this;
 };
 
-/*
-	Check whether current node has specified flag
-	@return {bool}
-	*/
+
 
 Imba.Tag.prototype.hasFlag = function (name){
 	return this._dom.classList.contains(name);
@@ -2141,16 +1869,7 @@ Imba.Tag.prototype.flagIf = function (flag,bool){
 	return this;
 };
 
-/*
-	Set/update a named flag. It remembers the previous
-	value of the flag, and removes it before setting the new value.
 
-		node.setFlag('type','todo')
-		node.setFlag('type','project')
-		# todo is removed, project is added.
-
-	@return {self}
-	*/
 
 Imba.Tag.prototype.setFlag = function (name,value){
 	let flags = this._namedFlags_ || (this._namedFlags_ = {});
@@ -2164,25 +1883,13 @@ Imba.Tag.prototype.setFlag = function (name,value){
 };
 
 
-/*
-	Get the scheduler for this node. A new scheduler will be created
-	if it does not already exist.
 
-	@return {Imba.Scheduler}
-	*/
 
 Imba.Tag.prototype.scheduler = function (){
 	return (this._scheduler == null) ? (this._scheduler = new Imba.Scheduler(this)) : this._scheduler;
 };
 
-/*
 
-	Shorthand to start scheduling a node. The method will basically
-	proxy the arguments through to scheduler.configure, and then
-	activate the scheduler.
-	
-	@return {self}
-	*/
 
 Imba.Tag.prototype.schedule = function (options){
 	if(options === undefined) options = {events: true};
@@ -2190,10 +1897,7 @@ Imba.Tag.prototype.schedule = function (options){
 	return this;
 };
 
-/*
-	Shorthand for deactivating scheduler (if tag has one).
-	@deprecated
-	*/
+
 
 Imba.Tag.prototype.unschedule = function (){
 	if (this._scheduler) { this.scheduler().deactivate() };
@@ -2201,19 +1905,13 @@ Imba.Tag.prototype.unschedule = function (){
 };
 
 
-/*
-	Get the parent of current node
-	@return {Imba.Tag} 
-	*/
+
 
 Imba.Tag.prototype.parent = function (){
 	return Imba.getTagForDom(this.dom().parentNode);
 };
 
-/*
-	Get the children of node
-	@return {Imba.Tag[]}
-	*/
+
 
 Imba.Tag.prototype.children = function (sel){
 	let res = [];
@@ -2236,10 +1934,7 @@ Imba.Tag.prototype.querySelectorAll = function (q){
 	return items;
 };
 
-/*
-	Check if this node matches a selector
-	@return {Boolean}
-	*/
+
 
 Imba.Tag.prototype.matches = function (sel){
 	var fn;
@@ -2253,30 +1948,20 @@ Imba.Tag.prototype.matches = function (sel){
 	};
 };
 
-/*
-	Get the first element matching supplied selector / filter
-	traversing upwards, but including the node itself.
-	@return {Imba.Tag}
-	*/
+
 
 Imba.Tag.prototype.closest = function (sel){
 	return Imba.getTagForDom(this._dom.closest(sel));
 };
 
-/*
-	Check if node contains other node
-	@return {Boolean} 
-	*/
+
 
 Imba.Tag.prototype.contains = function (node){
 	return this.dom().contains(node._dom || node);
 };
 
 
-/*
-	Shorthand for console.log on elements
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.log = function (){
 	var $0 = arguments, i = $0.length;
@@ -2319,32 +2004,21 @@ Imba.Tag.prototype.style = function (){
 	return this.getAttribute('style');
 };
 
-/*
-	Trigger an event from current node. Dispatched through the Imba event manager.
-	To dispatch actual dom events, use dom.dispatchEvent instead.
 
-	@return {Imba.Event}
-	*/
 
 Imba.Tag.prototype.trigger = function (name,data){
 	if(data === undefined) data = {};
 	return true && Imba.Events.trigger(name,this,{data: data});
 };
 
-/*
-	Focus on current node
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.focus = function (){
 	this.dom().focus();
 	return this;
 };
 
-/*
-	Remove focus from current node
-	@return {self}
-	*/
+
 
 Imba.Tag.prototype.blur = function (){
 	this.dom().blur();
@@ -2377,7 +2051,7 @@ Imba.SVGTag.buildNode = function (){
 Imba.SVGTag.inherit = function (child){
 	child._protoDom = null;
 	
-	if (Imba.indexOf(child._name,Imba.SVG_TAGS) >= 0 || this == Imba.SVGTag) {
+	if (this == Imba.SVGTag) {
 		child._nodeType = child._name;
 		return child._classes = [];
 	} else {
@@ -2389,7 +2063,6 @@ Imba.SVGTag.inherit = function (child){
 
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ");
-Imba.SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan image".split(" ");
 
 Imba.HTML_ATTRS = {
 	a: "href target hreflang media download rel type",
@@ -2489,7 +2162,7 @@ Imba.Tags.prototype.defineTag = function (fullName,supr,body){
 		console.log("tag already exists?",fullName);
 	};
 	
-	// if it is namespaced
+	
 	var ns;
 	var name = fullName;
 	let nsidx = name.indexOf(':');
@@ -2537,7 +2210,7 @@ Imba.Tags.prototype.extendTag = function (name,supr,body){
 	if(body==undefined && typeof supr == 'function') body = supr,supr = '';
 	if(supr==undefined) supr = '';
 	var klass = (((typeof name=='string'||name instanceof String)) ? this.findTagType(name) : name);
-	// allow for private tags here as well?
+	
 	if (body) { body && body.call(klass,klass,klass.prototype) };
 	if (klass.extended) { klass.extended() };
 	this.optimizeTag(klass);
@@ -2574,18 +2247,6 @@ Imba.Tags.prototype.findTagType = function (type){
 	return klass;
 };
 
-Imba.Tags.prototype.createElement = function (name,owner){
-	var typ;
-	if (name instanceof Function) {
-		typ = name;
-	} else {
-		if (null) {};
-		typ = this.findTagType(name);
-	};
-	return typ.build(owner);
-};
-
-
 Imba.createElement = function (name,ctx,ref,pref){
 	var type = name;
 	var parent;
@@ -2611,8 +2272,6 @@ Imba.createElement = function (name,ctx,ref,pref){
 		node.$key = ref;
 	};
 	
-	// node:$ref = ref if ref
-	// context:i$++ # only if it is not an array?
 	if (ctx && ref != undefined) {
 		ctx[ref] = node;
 	};
@@ -2653,7 +2312,7 @@ Imba.createTagLoopResult = function (ctx,ref,pref){
 	return node;
 };
 
-// use array instead?
+
 function TagCache(owner){
 	this._tag = owner;
 	this;
@@ -2671,8 +2330,6 @@ function TagMap(cache,ref,par){
 	this.key$ = ref;
 	this.par$ = par;
 	this.i$ = 0;
-	// self:curr$ = self:$iternew()
-	// self:next$ = self:$iternew()
 };
 
 TagMap.prototype.$iter = function (){
@@ -2724,12 +2381,12 @@ Imba.getTagSingleton = function (id){
 	if (klass = Imba.SINGLETONS[id]) {
 		if (klass && klass.Instance) { return klass.Instance };
 		
-		// no instance - check for element
+		
 		if (dom = Imba.document().getElementById(id)) {
 			// we have a live instance - when finding it through a selector we should awake it, no?
 			// console.log('creating the singleton from existing node in dom?',id,type)
 			node = klass.Instance = new klass(dom);
-			node.awaken(dom); // should only awaken
+			node.awaken(dom); 
 			return node;
 		};
 		
@@ -2745,16 +2402,16 @@ Imba.getTagSingleton = function (id){
 
 var svgSupport = typeof SVGElement !== 'undefined';
 
-// shuold be phased out
+
 Imba.getTagForDom = function (dom){
 	if (!dom) { return null };
-	if (dom._dom) { return dom }; // could use inheritance instead
+	if (dom._dom) { return dom };
 	if (dom._tag) { return dom._tag };
 	if (!dom.nodeName) { return null };
 	
 	var name = dom.nodeName.toLowerCase();
 	var type = name;
-	var ns = Imba.TAGS; //  svgSupport and dom isa SVGElement ? Imba.TAGS:_SVG : Imba.TAGS
+	var ns = Imba.TAGS;
 	
 	if (dom.id && Imba.SINGLETONS[dom.id]) {
 		return Imba.getTagSingleton(dom.id);
@@ -2767,14 +2424,12 @@ Imba.getTagForDom = function (dom){
 	} else {
 		type = Imba.Tag;
 	};
-	// if ns.@nodeNames.indexOf(name) >= 0
-	//	type = ns.findTagType(name)
 	
 	return new type(dom,null).awaken(dom);
 };
 
-// deprecate
-Imba.generateCSSPrefixes = function (){
+
+if (false) {
 	var styles = window.getComputedStyle(document.documentElement,'');
 	
 	for (let i = 0, items = iter$(styles), len = items.length, prefixed; i < len; i++) {
@@ -2782,22 +2437,17 @@ Imba.generateCSSPrefixes = function (){
 		var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'');
 		var camelCase = unprefixed.replace(/-(\w)/g,function(m,a) { return a.toUpperCase(); });
 		
-		// if there exists an unprefixed version -- always use this
+		
 		if (prefixed != unprefixed) {
 			if (styles.hasOwnProperty(unprefixed)) { continue; };
 		};
 		
-		// register the prefixes
+		
 		Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed;
 	};
-	return;
-};
-
-if (true) {
-	if (document) { Imba.generateCSSPrefixes() };
 	
-	// Ovverride classList
-	if (document && !document.documentElement.classList) {
+	
+	if (!document.documentElement.classList) {
 		Imba.extendTag('element', function(tag){
 			
 			tag.prototype.hasFlag = function (ref){
@@ -2979,7 +2629,7 @@ Imba.extendTag('input', function(tag){
 		return this._localValue = undefined;
 	};
 	
-	// overriding end directly for performance
+	
 	tag.prototype.end = function (){
 		if (this._localValue !== undefined || !this._data) {
 			return this;
@@ -3074,17 +2724,17 @@ Imba.extendTag('select', function(tag){
 	
 	tag.prototype.syncValue = function (value){
 		let prev = this._syncValue;
-		// check if value has changed
+		
 		if (this.multiple() && (value instanceof Array)) {
 			if ((prev instanceof Array) && isSimilarArray(prev,value)) {
 				return this;
 			};
-			// create a copy for syncValue
+			
 			value = value.slice();
 		};
 		
 		this._syncValue = value;
-		// support array for multiple?
+		
 		if (typeof value == 'object') {
 			let mult = this.multiple() && (value instanceof Array);
 			
@@ -3142,37 +2792,14 @@ Imba.extendTag('select', function(tag){
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(1);
 
-// Imba.Touch
-// Began	A finger touched the screen.
-// Moved	A finger moved on the screen.
-// Stationary	A finger is touching the screen but hasn't moved.
-// Ended	A finger was lifted from the screen. This is the final phase of a touch.
-// Canceled The system cancelled tracking for the touch.
 
-/*
-Consolidates mouse and touch events. Touch objects persist across a touch,
-from touchstart until end/cancel. When a touch starts, it will traverse
-down from the innermost target, until it finds a node that responds to
-ontouchstart. Unless the touch is explicitly redirected, the touch will
-call ontouchmove and ontouchend / ontouchcancel on the responder when appropriate.
 
-	tag draggable
-		# called when a touch starts
-		def ontouchstart touch
-			flag 'dragging'
-			self
-		
-		# called when touch moves - same touch object
-		def ontouchmove touch
-			# move the node with touch
-			css top: touch.dy, left: touch.dx
-		
-		# called when touch ends
-		def ontouchend touch
-			unflag 'dragging'
 
-@iname touch
-*/
+
+
+
+
+
 
 Imba.Touch = function Touch(event,pointer){
 	// @native  = false
@@ -3180,7 +2807,7 @@ Imba.Touch = function Touch(event,pointer){
 	this.setData({});
 	this.setActive(true);
 	this._button = event && event.button || 0;
-	this._suppress = false; // deprecated
+	this._suppress = false; 
 	this._captured = false;
 	this.setBubble(false);
 	pointer = pointer;
@@ -3191,7 +2818,7 @@ Imba.Touch = function Touch(event,pointer){
 Imba.Touch.LastTimestamp = 0;
 Imba.Touch.TapTimeout = 50;
 
-// var lastNativeTouchTimeout = 50
+
 
 var touches = [];
 var count = 0;
@@ -3216,7 +2843,7 @@ Imba.Touch.ontouchstart = function (e){
 	for (let i = 0, items = iter$(e.changedTouches), len = items.length, t; i < len; i++) {
 		t = items[i];
 		if (this.lookup(t)) { continue; };
-		var touch = identifiers[t.identifier] = new this(e); // (e)
+		var touch = identifiers[t.identifier] = new this(e); 
 		t.__touch__ = touch;
 		touches.push(touch);
 		count++;
@@ -3248,9 +2875,9 @@ Imba.Touch.ontouchend = function (e){
 		};
 	};
 	
-	// e.preventDefault
-	// not always supported!
-	// touches = touches.filter(||)
+	
+	
+	
 	return this;
 };
 
@@ -3307,10 +2934,7 @@ Imba.Touch.prototype.setTimestamp = function(v){ this._timestamp = v; return thi
 Imba.Touch.prototype.gestures = function(v){ return this._gestures; }
 Imba.Touch.prototype.setGestures = function(v){ this._gestures = v; return this; };
 
-/*
-	@internal
-	@constructor
-	*/
+
 
 Imba.Touch.prototype.capture = function (){
 	this._captured = true;
@@ -3326,12 +2950,7 @@ Imba.Touch.prototype.isCaptured = function (){
 	return !!this._captured;
 };
 
-/*
-	Extend the touch with a plugin / gesture. 
-	All events (touchstart,move etc) for the touch
-	will be triggered on the plugins in the order they
-	are added.
-	*/
+
 
 Imba.Touch.prototype.extend = function (plugin){
 	// console.log "added gesture!!!"
@@ -3340,21 +2959,14 @@ Imba.Touch.prototype.extend = function (plugin){
 	return this;
 };
 
-/*
-	Redirect touch to specified target. ontouchstart will always be
-	called on the new target.
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.redirect = function (target){
 	this._redirect = target;
 	return this;
 };
 
-/*
-	Suppress the default behaviour. Will call preventDefault for
-	all native events that are part of the touch.
-	*/
+
 
 Imba.Touch.prototype.suppress = function (){
 	// collision with the suppress property
@@ -3485,7 +3097,7 @@ Imba.Touch.prototype.update = function (){
 	if (dr > this._dr) { this._maxdr = dr };
 	this._dr = dr;
 	
-	// catching a touch-redirect?!?
+	
 	if (this._redirect) {
 		if (this._target && this._target.ontouchcancel) {
 			this._target.ontouchcancel(this);
@@ -3493,7 +3105,7 @@ Imba.Touch.prototype.update = function (){
 		this.setTarget(this._redirect);
 		this._redirect = null;
 		if (this.target().ontouchstart) { this.target().ontouchstart(this) };
-		if (this._redirect) { return this.update() }; // possibly redirecting again
+		if (this._redirect) { return this.update() }; 
 	};
 	
 	
@@ -3582,97 +3194,67 @@ Imba.Touch.prototype.cleanup_ = function (){
 	return this;
 };
 
-/*
-	The absolute distance the touch has moved from starting position 
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.dr = function (){
 	return this._dr;
 };
 
-/*
-	The distance the touch has moved horizontally
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.dx = function (){
 	return this._x - this._x0;
 };
 
-/*
-	The distance the touch has moved vertically
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.dy = function (){
 	return this._y - this._y0;
 };
 
-/*
-	Initial horizontal position of touch
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.x0 = function (){
 	return this._x0;
 };
 
-/*
-	Initial vertical position of touch
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.y0 = function (){
 	return this._y0;
 };
 
-/*
-	Horizontal position of touch
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.x = function (){
 	return this._x;
 };
 
-/*
-	Vertical position of touch
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.y = function (){
 	return this._y;
 };
 
-/*
-	Horizontal position of touch relative to target
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.tx = function (){
 	this._targetBox || (this._targetBox = this._target.dom().getBoundingClientRect());
 	return this._x - this._targetBox.left;
 };
 
-/*
-	Vertical position of touch relative to target
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.ty = function (){
 	this._targetBox || (this._targetBox = this._target.dom().getBoundingClientRect());
 	return this._y - this._targetBox.top;
 };
 
-/*
-	Button pressed in this touch. Native touches defaults to left-click (0)
-	@return {Number}
-	*/
+
 
 Imba.Touch.prototype.button = function (){
 	return this._button;
-}; // @pointer ? @pointer.button : 0
+}; 
 
 Imba.Touch.prototype.sourceTarget = function (){
 	return this._sourceTarget;
@@ -3768,22 +3350,14 @@ el.getHandler = function (str,event){
 	if (this[str]) { return this };
 };
 
-/*
-Imba handles all events in the dom through a single manager,
-listening at the root of your document. If Imba finds a tag
-that listens to a certain event, the event will be wrapped 
-in an `Imba.Event`, which normalizes some of the quirks and 
-browser differences.
 
-@iname event
-*/
 
 Imba.Event = function Event(e){
 	this.setEvent(e);
 	this._bubble = true;
 };
 
-/* reference to the native event */
+
 
 Imba.Event.prototype.event = function(v){ return this._event; }
 Imba.Event.prototype.setEvent = function(v){ this._event = v; return this; };
@@ -3810,9 +3384,7 @@ Imba.Event.prototype.setType = function (type){
 	return this;
 };
 
-/*
-	@return {String} The name of the event (case-insensitive)
-	*/
+
 
 Imba.Event.prototype.type = function (){
 	return this._type || this.event().type;
@@ -3825,7 +3397,7 @@ Imba.Event.prototype.name = function (){
 	return this._name || (this._name = this.type().toLowerCase().replace(/\:/g,''));
 };
 
-// mimc getset
+
 Imba.Event.prototype.bubble = function (v){
 	if (v != undefined) {
 		this.setBubble(v);
@@ -3840,10 +3412,7 @@ Imba.Event.prototype.setBubble = function (v){
 	return this;
 };
 
-/*
-	Prevents further propagation of the current event.
-	@return {self}
-	*/
+
 
 Imba.Event.prototype.stop = function (){
 	this.setBubble(false);
@@ -3857,7 +3426,7 @@ Imba.Event.prototype.halt = function (){
 	return this.stop();
 };
 
-// migrate from cancel to prevent
+
 Imba.Event.prototype.prevent = function (){
 	if (this.event().preventDefault) {
 		this.event().preventDefault();
@@ -3873,21 +3442,13 @@ Imba.Event.prototype.preventDefault = function (){
 	return this.prevent();
 };
 
-/*
-	Indicates whether or not event.cancel has been called.
 
-	@return {Boolean}
-	*/
 
 Imba.Event.prototype.isPrevented = function (){
 	return this.event() && this.event().defaultPrevented;
 };
 
-/*
-	Cancel the event (if cancelable). In the case of native events it
-	will call `preventDefault` on the wrapped event object.
-	@return {self}
-	*/
+
 
 Imba.Event.prototype.cancel = function (){
 	console.warn("Event#cancel is deprecated - use Event#prevent");
@@ -3903,25 +3464,19 @@ Imba.Event.prototype.isSilenced = function (){
 	return !!this._silenced;
 };
 
-/*
-	A reference to the initial target of the event.
-	*/
+
 
 Imba.Event.prototype.target = function (){
 	return Imba.getTagForDom(this.event()._target || this.event().target);
 };
 
-/*
-	A reference to the object responding to the event.
-	*/
+
 
 Imba.Event.prototype.responder = function (){
 	return this._responder;
 };
 
-/*
-	Redirect the event to new target
-	*/
+
 
 Imba.Event.prototype.redirect = function (node){
 	this._redirect = node;
@@ -3965,8 +3520,8 @@ Imba.Event.prototype.processHandlers = function (node,handlers){
 			};
 		};
 		
-		// if it is still a string - call getHandler on
-		// ancestor of node to see if we get a handler for this name
+		
+		
 		if (typeof handler == 'string') {
 			let el = node;
 			let fn = null;
@@ -3987,16 +3542,16 @@ Imba.Event.prototype.processHandlers = function (node,handlers){
 				console.warn(("event " + this.type() + ": could not find '" + handler + "' in context"),ctx);
 			};
 			
-			// while el and (!fn or !(fn isa Function))
-			// 	if fn = el.getHandler(handler)
-			// 		if fn[handler] isa Function
-			// 			handler = fn[handler]
-			// 			context = fn
-			// 		elif fn isa Function
-			// 			handler = fn
-			// 			context = el
-			// 	else
-			// 		el = el.parent
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 		};
 		
 		if (handler instanceof Function) {
@@ -4019,7 +3574,7 @@ Imba.Event.prototype.processHandlers = function (node,handlers){
 		};
 	};
 	
-	// if we havent stopped or dealt with bubble while handling
+	
 	if (this._bubble === 1) {
 		this._bubble = bubble;
 	};
@@ -4033,7 +3588,7 @@ Imba.Event.prototype.process = function (){
 	var args = null;
 	var domtarget = this.event()._target || this.event().target;
 	var domnode = domtarget._responder || domtarget;
-	// @todo need to stop infinite redirect-rules here
+	
 	var result;
 	var handlers;
 	
@@ -4065,7 +3620,7 @@ Imba.Event.prototype.process = function (){
 			};
 		};
 		
-		// add node.nextEventResponder as a separate method here?
+		
 		if (!(this.bubble() && (domnode = (this._redirect || (node ? node.parent() : domnode.parentNode))))) {
 			break;
 		};
@@ -4073,8 +3628,8 @@ Imba.Event.prototype.process = function (){
 	
 	this.processed();
 	
-	// if a handler returns a promise, notify schedulers
-	// about this after promise has finished processing
+	
+	
 	if (result && (result.then instanceof Function)) {
 		result.then(this.processed.bind(this));
 	};
@@ -4090,19 +3645,13 @@ Imba.Event.prototype.processed = function (){
 	return this;
 };
 
-/*
-	Return the x/left coordinate of the mouse / pointer for this event
-	@return {Number} x coordinate of mouse / pointer for event
-	*/
+
 
 Imba.Event.prototype.x = function (){
 	return this.native().x;
 };
 
-/*
-	Return the y/top coordinate of the mouse / pointer for this event
-	@return {Number} y coordinate of mouse / pointer for event
-	*/
+
 
 Imba.Event.prototype.y = function (){
 	return this.native().y;
@@ -4130,16 +3679,7 @@ Imba.Event.prototype.key = function (){
 	return this.native().key;
 };
 
-/*
-	Returns a Number representing a system and implementation
-	dependent numeric code identifying the unmodified value of the
-	pressed key; this is usually the same as keyCode.
 
-	For mouse-events, the returned value indicates which button was
-	pressed on the mouse to trigger the event.
-
-	@return {Number}
-	*/
 
 Imba.Event.prototype.which = function (){
 	return this.event().which;
@@ -4199,10 +3739,10 @@ __root.appendNested = function (root,node){
 };
 
 
-// insert nodes before a certain node
-// does not need to return any tail, as before
-// will still be correct there
-// before must be an actual domnode
+
+
+
+
 __root.insertNestedBefore = function (root,node,before){
 	if (node instanceof Array) {
 		let i = 0;
@@ -4220,7 +3760,7 @@ __root.insertNestedBefore = function (root,node,before){
 	return before;
 };
 
-// after must be an actual domnode
+
 __root.insertNestedAfter = function (root,node,after){
 	var before = after ? after.nextSibling : root._dom.firstChild;
 	
@@ -4238,30 +3778,30 @@ __root.reconcileCollectionChanges = function (root,new$,old,caret){
 	var newLen = new$.length;
 	var lastNew = new$[newLen - 1];
 	
-	// This re-order algorithm is based on the following principle:
-	// 
-	// We build a "chain" which shows which items are already sorted.
-	// If we're going from [1, 2, 3] -> [2, 1, 3], the tree looks like:
-	//
-	// 	3 ->  0 (idx)
-	// 	2 -> -1 (idx)
-	// 	1 -> -1 (idx)
-	//
-	// This tells us that we have two chains of ordered items:
-	// 
-	// 	(1, 3) and (2)
-	// 
-	// The optimal re-ordering then becomes to keep the longest chain intact,
-	// and move all the other items.
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	var newPosition = [];
 	
-	// The tree/graph itself
+	
 	var prevChain = [];
-	// The length of the chain
+	
 	var lengthChain = [];
 	
-	// Keep track of the longest chain
+	
 	var maxChainLength = 0;
 	var maxChainEnd = 0;
 	
@@ -4290,7 +3830,7 @@ __root.reconcileCollectionChanges = function (root,new$,old,caret){
 		
 		var prevIdx = newPosition.length - 2;
 		
-		// Build the chain:
+		
 		while (prevIdx >= 0){
 			if (newPosition[prevIdx] == -1) {
 				prevIdx--;
@@ -4317,8 +3857,8 @@ __root.reconcileCollectionChanges = function (root,new$,old,caret){
 	
 	var stickyNodes = [];
 	
-	// Now we can walk the longest chain backwards and mark them as "sticky",
-	// which implies that they should not be moved
+	
+	
 	var cursor = newPosition.length - 1;
 	while (cursor >= 0){
 		if (cursor == maxChainEnd && newPosition[cursor] != -1) {
@@ -4329,7 +3869,7 @@ __root.reconcileCollectionChanges = function (root,new$,old,caret){
 		cursor -= 1;
 	};
 	
-	// possible to do this in reversed order instead?
+	
 	for (let idx = 0, items = iter$(new$), len = items.length, node; idx < len; idx++) {
 		node = items[idx];
 		if (!stickyNodes[idx]) {
@@ -4345,12 +3885,12 @@ __root.reconcileCollectionChanges = function (root,new$,old,caret){
 		caret = node._slot_ || (caret && caret.nextSibling || root._dom.firstChild);
 	};
 	
-	// should trust that the last item in new list is the caret
+	
 	return lastNew && lastNew._slot_ || caret;
 };
 
 
-// expects a flat non-sparse array of nodes in both new and old, always
+
 __root.reconcileCollection = function (root,new$,old,caret){
 	var k = new$.length;
 	var i = k;
@@ -4371,22 +3911,22 @@ __root.reconcileCollection = function (root,new$,old,caret){
 	};
 };
 
-// TYPE 5 - we know that we are dealing with a single array of
-// keyed tags - and root has no other children
+
+
 __root.reconcileLoop = function (root,new$,old,caret){
 	var nl = new$.length;
 	var ol = old.length;
-	var cl = new$.cache.i$; // cache-length
+	var cl = new$.cache.i$; 
 	var i = 0,d = nl - ol;
 	
-	// TODO support caret
 	
-	// find the first index that is different
+	
+	
 	while (i < ol && i < nl && new$[i] === old[i]){
 		i++;
 	};
 	
-	// conditionally prune cache
+	
 	if (cl > 1000 && (cl - nl) > 500) {
 		new$.cache.$prune(new$);
 	};
@@ -4435,12 +3975,12 @@ __root.reconcileLoop = function (root,new$,old,caret){
 	return __root.reconcileCollectionChanges(root,new$,old,caret);
 };
 
-// expects a flat non-sparse array of nodes in both new and old, always
+
 __root.reconcileIndexedArray = function (root,array,old,caret){
 	var newLen = array.taglen;
 	var prevLen = array.domlen || 0;
 	var last = newLen ? array[newLen - 1] : null;
-	// console.log "reconcile optimized array(!)",caret,newLen,prevLen,array
+	
 	
 	if (prevLen > newLen) {
 		while (prevLen > newLen){
@@ -4463,8 +4003,8 @@ __root.reconcileIndexedArray = function (root,array,old,caret){
 };
 
 
-// the general reconciler that respects conditions etc
-// caret is the current node we want to insert things after
+
+
 __root.reconcileNested = function (root,new$,old,caret){
 	
 	// var skipnew = new == null or new === false or new === true
@@ -4501,7 +4041,7 @@ __root.reconcileNested = function (root,new$,old,caret){
 					__root.removeNested(root,old,caret);
 				};
 				
-				// if they are not the same we continue through to the default
+				
 			} else {
 				// Could use optimized loop if we know that it only consists of nodes
 				return __root.reconcileCollection(root,new$,old,caret);
@@ -4516,7 +4056,7 @@ __root.reconcileNested = function (root,new$,old,caret){
 		};
 		
 		return __root.insertNestedAfter(root,new$,caret);
-		// remove old
+		
 	} else if (!newIsNull && new$._slot_) {
 		if (!oldIsNull) { __root.removeNested(root,old,caret) };
 		return __root.insertNestedAfter(root,new$,caret);
@@ -4526,7 +4066,7 @@ __root.reconcileNested = function (root,new$,old,caret){
 	} else {
 		// if old did not exist we need to add a new directly
 		let nextNode;
-		// if old was array or imbatag we need to remove it and then add
+		
 		if (old instanceof Array) {
 			__root.removeNested(root,old,caret);
 		} else if (old && old._slot_) {
@@ -4540,7 +4080,7 @@ __root.reconcileNested = function (root,new$,old,caret){
 			};
 		};
 		
-		// now add the textnode
+		
 		return __root.insertNestedAfter(root,new$,caret);
 	};
 };
@@ -4627,11 +4167,11 @@ Imba.extendTag('element', function(tag){
 	};
 });
 
-// alias setContent to setChildren
+
 var proto = Imba.Tag.prototype;
 proto.setContent = proto.setChildren;
 
-// optimization for setText
+
 var apple = typeof navigator != 'undefined' && (navigator.vendor || '').indexOf('Apple') == 0;
 if (apple) {
 	proto.setText = function (text){
@@ -4673,7 +4213,7 @@ var fmt = function(code,string) {
 	var codeRegex = /\x1B\[\d+m/g;
 	var tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i;
 	var numRegex = /\d+/;
-	var str = ('' + string).replace(resetRegex,("" + resetStr + "\x1B[" + code + "m")); // allow nesting
+	var str = ('' + string).replace(resetRegex,("" + resetStr + "\x1B[" + code + "m")); 
 	str = ("\x1B[" + code + "m" + str + resetStr);
 	return str;
 };
@@ -4733,7 +4273,7 @@ Spec.prototype.run = function (i,blk){
 	Spec.CURRENT = self;
 	var block = self._blocks[i];
 	
-	// we need the notifications
+	
 	if (!block) { return self.finish() };
 	Imba.once(block,'done',function() { return self.run(i + 1); });
 	return block.run();
@@ -4770,7 +4310,7 @@ Spec.prototype.finish = function (){
 	return Imba.emit(this,'done',[exitCode]);
 };
 
-// def describe name, blk do SPEC.context.describe(name,blk)
+
 Spec.prototype.it = function (name,blk){
 	return SPEC.context().it(name,blk);
 };
@@ -4842,7 +4382,7 @@ SpecGroup.prototype.run = function (i){
 	var block = self._blocks[i];
 	if (!block) { return self.finish() };
 	Imba.once(block,'done',function() { return self.run(i + 1); });
-	// block.once :done do run(i+1)
+	
 	return block.run();
 };
 
@@ -4960,7 +4500,7 @@ SpecCondition.prototype.failed = function (){
 	this._done = true;
 	this._success = false;
 	this.emit('done',[false]);
-	// process:stdout.write(fmt(:red,"✘"))
+	
 	return true;
 };
 
@@ -4968,7 +4508,7 @@ SpecCondition.prototype.passed = function (){
 	this._done = true;
 	this._success = true;
 	this.emit('done',[true]);
-	// process:stdout.write(fmt(:green,"✔"))
+	
 	return true;
 };
 
@@ -4989,8 +4529,8 @@ function SpecAwait(example,args){
 	self._example = example;
 	self._args = args;
 	
-	// TODO extract options
-	// TODO extract times the method should be called
+	
+	
 	
 	self._timeout = Imba.delay(100,function() { return self.failed(); });
 	
@@ -5105,7 +4645,7 @@ SpecAssertFalsy.prototype.test = function (value){
 
 SPEC = new Spec();
 
-// global def p do console.log(*arguments)
+
 describe = __root.describe = function (name,blk){
 	return SPEC.context().describe(name,blk);
 };
@@ -5206,7 +4746,7 @@ describe('Syntax - Loops',function() {
 			var a = [1,2,3];
 			var sum = 0;
 			
-			// i should be local here - or at least be reset
+			
 			for (let i = 0, len = a.length; i < len; i++) {
 				sum += i;
 			};
@@ -5443,9 +4983,9 @@ describe('Syntax - Loops',function() {
 			var vals = res1;
 			eq(vals,[2,4,6,8]);
 			
-			// The order of the keys are based on assignment-order,
-			// prototype-keys always come at the end (as if they were assigned
-			// after all other keys=
+			
+			
+			
 			let res2 = [];
 			for (let k in dict2){
 				let v;
@@ -5654,12 +5194,12 @@ Organism.prototype.lvar = function (){
 	return lvar;
 };
 
-// hmm, maybe we shouldnt allow this?
-//	class Other
-//
-//		def inner
-//			yes
-;
+
+
+
+
+
+
 
 function Virus(){
 	this._ivar = 2;
@@ -5749,9 +5289,9 @@ describe('Syntax - Class',function() {
 			return eq(Virus.type,Organism.type);
 		});
 		
-		// it 'should call super in class methods' do
-		//   eq Dog.type, "dog.animal.organism"
-		//   eq Cat.type, "cat.animal.organism"
+		
+		
+		
 	});
 	
 	describe('Instance',function() {
@@ -5764,7 +5304,7 @@ describe('Syntax - Class',function() {
 		it('should define instance methods',function() {
 			var obj = new Organism();
 			var val = obj.alive();
-			// eq val, true
+			
 			ok(obj.alive());
 			return eq(obj.speak(),'ghaarg');
 		});
@@ -6081,9 +5621,9 @@ Group.prototype.__intersect = function (other){
 	return new Group(intersect$(this._items,other.items()));
 };
 
-// x if 3 > i > 0
-// x unless 3 > i > 0
-// should test if/unless inversions
+
+
+
 
 describe('Syntax - Operators',function() {
 	
@@ -6103,7 +5643,7 @@ describe('Syntax - Operators',function() {
 		eq(union$(a,b),[1,2,3,6,4,5]);
 		eq(intersect$(a,b),[3,6]);
 		
-		// union custom objects
+		
 		var ga = new Group([4,5,6]);
 		var gb = new Group([5,6,7]);
 		var gc = new Group([8,9]);
@@ -6118,13 +5658,13 @@ describe('Syntax - Operators',function() {
 		
 		eq((intersect$(gb,gc)).items(),[]);
 		
-		// precedence
-		gd = union$(intersect$(ga,gb),gc); // precedence right
-		// gd = ((ga ∩ gb) ∪ gc)
+		
+		gd = union$(intersect$(ga,gb),gc); 
+		
 		eq(gd,[5,6,8,9]);
 		
 		gd = union$(intersect$(ga,gb),gc) && ga;
-		// gd = ((ga ∩ gb) ∪ gc) && true
+		
 		return eq(gd,ga);
 	});
 	
@@ -6148,7 +5688,7 @@ describe('Syntax - Operators',function() {
 		var $1, value_, $2;
 		var a = 50;
 		ok(100 > a && a > 10);
-		eq(100 > ($1 = (a = 10)) && $1 > 10,false); // not elegant
+		eq(100 > ($1 = (a = 10)) && $1 > 10,false); 
 		ok(100 > a && a < 50);
 		
 		var b = new Cache(10);
@@ -6159,7 +5699,7 @@ describe('Syntax - Operators',function() {
 		return ok(b.gets() == 2);
 	});
 	
-	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
+	
 	test("precedence",function() {
 		
 		ok(10 + 10 * 2,30);
@@ -6318,13 +5858,13 @@ describe('Syntax - Arrays',function() {
 			7,8,9
 		];
 		
-		// really?
-		// (sum = (sum or 0) + n) for n in ary
-		// a = [((x) -> x), ((x) -> x * x)]
-		// ok a:length is 2
+		
+		
+		
+		
 	});
 	
-	// Splats in Array Literals
+	
 	
 	test("array splat expansions with assignments",function() {
 		var nums = [1,2,3];
@@ -6441,7 +5981,7 @@ describe('Syntax - Catch',function() {
 		};
 		ok(res);
 		
-		// also works with statements
+		
 		try {
 			res = __root.nometh();
 		} catch (e) {
@@ -6449,8 +5989,8 @@ describe('Syntax - Catch',function() {
 		};
 		eq(res,2);
 		
-		// finally is executed after the result of
-		// expression is evaluated
+		
+		
 		try {
 			res = __root.nometh();
 		} catch (e) {
@@ -6462,7 +6002,7 @@ describe('Syntax - Catch',function() {
 		eq(res,2);
 		eq(after,3);
 		
-		// check that throw works as expected
+		
 		try {
 			2;
 			throw 10;
@@ -6472,7 +6012,7 @@ describe('Syntax - Catch',function() {
 		
 		eq(res,20);
 		
-		// try works alone - adds automatic catch
+		
 		try {
 			res = 10;
 		} catch (e) { };
@@ -6564,7 +6104,7 @@ Paramer.prototype.req_key_blk = function (name,pars,blk){
 	var age = pars.age !== undefined ? pars.age : 18;
 	return [name,gender,age,blk];
 };
-// if the arg is an actual options-block I guess we should check for this first
+
 
 Paramer.prototype.opt_key_blk = function (name,pars,blk){
 	// m(age: 20)
@@ -6625,22 +6165,22 @@ describe('Syntax - Functions',function() {
 		
 		eq(obj.req_blk('john',blk),['john',blk]);
 		
-		// options will be set to default, blk will be correctly set
+		
 		eq(obj.req_opt_blk('john',blk),['john',{},blk]);
 		
-		// if we supply options to method, blk is still specified
+		
 		eq(obj.req_opt_blk('john',{opt: 10},blk),['john',{opt: 10},blk]);
 		
-		// hmmm
+		
 		eq(obj.req_opt_blk('john',undefined,blk),['john',{},blk]);
 		
-		// only set blk if it is a function
+		
 		eq(obj.req_opt_blk('john',{opt: 10}),['john',{opt: 10},undefined]);
 		
-		// should work for two optionals as well
+		
 		eq(obj.opt_opt_blk(blk),['anon',{},blk]);
 		
-		// should work for two optionals as well
+		
 		eq(obj.opt_opt_blk('john',blk),['john',{},blk]);
 		eq(obj.opt_opt_blk('john',{opt: 10},blk),['john',{opt: 10},blk]);
 		
@@ -6659,13 +6199,13 @@ describe('Syntax - Functions',function() {
 		res = obj.req_splat('john',1,2,3);
 		eq(res,['john',[1,2,3]]);
 		
-		// optional arguments
+		
 		eq(obj.opt(),'anon');
 		
-		// null overrides the default argument
+		
 		eq(obj.opt(null),null);
 		
-		// undefined is like sending on argument
+		
 		return eq(obj.opt(undefined),'anon');
 	});
 	
@@ -6677,15 +6217,15 @@ describe('Syntax - Functions',function() {
 		res = obj.req_key('john');
 		eq(res,['john',0,18]);
 		
-		// keywords are optional, and block is greedy
-		// req_key_blk name, gender: 0, age: 18, &blk
+		
+		
 		res = obj.req_key_blk('john',blk);
 		eq(res,['john',0,18,blk]);
 		
 		res = obj.req_key_blk('john',{gender: 1},blk);
 		eq(res,['john',1,18,blk]);
 		
-		// opt_key_blk name = 'anon', gender: 0, age: 18, &blk
+		
 		res = obj.opt_key_blk({gender: 1},blk);
 		eq(res,['anon',1,18,blk]);
 		
@@ -6695,7 +6235,7 @@ describe('Syntax - Functions',function() {
 		res = obj.opt_key_blk('john',{age: 20});
 		eq(res,['john',0,20,null]);
 		
-		// splat_key_blk *tags, gender: 0, age: 18, &blk
+		
 		res = obj.splat_key_blk(1,2,3,{age: 20});
 		eq(res,[[1,2,3],0,20,null]);
 		
@@ -6722,7 +6262,7 @@ describe('Syntax - Functions',function() {
 		var fn = function() { return 1; };
 		eq(fn(),1);
 		
-		// arguments are defined in do | args |
+		
 		fn = function(a) {
 			return 1 + a;
 		};
@@ -6730,7 +6270,7 @@ describe('Syntax - Functions',function() {
 		eq(fn(0),1);
 		eq(fn(1),2);
 		
-		// multiple arguments
+		
 		fn = function(a,b) {
 			return a + b;
 		};
@@ -6738,7 +6278,7 @@ describe('Syntax - Functions',function() {
 		eq(fn(1,1),2);
 		eq(fn(2,3),5);
 		
-		// we support default arguments
+		
 		fn = function(a,b,c) {
 			if(c === undefined) c = 2;
 			return a + b + c;
@@ -6747,7 +6287,7 @@ describe('Syntax - Functions',function() {
 		eq(fn(1,1),4);
 		eq(fn(1,1,1),3);
 		
-		// splat arguments
+		
 		fn = function(a,b,c) {
 			var $0 = arguments, i = $0.length;
 			var d = new Array(i>3 ? i-3 : 0);
@@ -6768,8 +6308,8 @@ describe('Syntax - Functions',function() {
 			return blk ? blk() : null;
 		};
 		
-		// block precedence
-		// f1 f2 do 10 -> f1(f2(10))
+		
+		
 		var v = outer(5,inner(function() { return 10; }));
 		return eq(v,[5,10]);
 	});
@@ -6804,79 +6344,79 @@ describe('Syntax - Functions',function() {
 });
 
 
-// 	describe 'argvars' do
-// 		test '$0 refers to arguments' do
-// 			var fn = do $0:length
-// 			eq fn(yes,yes,yes), 3
-// 
-// 		test '$i refers to arguments[i-1]' do
-// 			fn = do $1+$2
-// 			eq fn(10,20), 30
-// 
-// 			fn = do |a,b,c|
-// 				eq a, $1
-// 				eq b, $2
-// 				eq c, $3
-// 
-// 			fn()
-// 
-// 	describe 'default arguments' do
-// 
-// 		it 'should work for numbers' do
-// 			fn = do |a,b=1| return b
-// 			eq fn(), 1
-// 			eq fn(0), 1
-// 			eq fn(0,2), 2
-// 
-// 		it 'should work for strings' do
-// 			fn = do |a,b="b"| return b
-// 			eq fn(), "b"
-// 			eq fn(0), "b"
-// 			eq fn(0,"x"), "x"
-// 			eq fn(0,2), 2
-// 
-// 		it 'should work for arrays' do
-// 			fn = do |a,b=[1,2,3]| return b
-// 			eq fn(), [1,2,3]
-// 			eq fn(0,"x"), "x"
-// 			eq fn(0,2), 2
-// 			eq fn(0,[0,1,2]), [0,1,2]
-// 
-// 		it 'should only override null/undefined' do
-// 			fn = do |a,b=1| return b
-// 			eq fn(0,0), 0
-// 			eq fn(0,""), ""
-// 
-// 	
-// 
-// 	describe 'splats' do
-// 
-// 		test 'do |a,...b|' do
-// 			fn = do|a,...b| return [a,b]
-// 			eq fn(0,1,2,3), [0,[1,2,3]]
-// 
-// 			# other syntax
-// 			fn = (|a,...b| return [a,b])
-// 			eq fn(0,1,2,3), [0,[1,2,3]]
-// 
-// 		test 'do |a,...b,c|' do
-// 			fn = do|a,...b,c| return [a,b,c]
-// 			eq fn(0,1,2,3,4), [0,[1,2,3],4]
-// 
-// 			fn = (|a,...b,c| return [a,b,c])
-// 			eq fn(0,1,2,3,4), [0,[1,2,3],4]
-// 
-// 	test 'callbacks' do
-// 		res = [1,2,3].map do |a| a*2
-// 		eq res, [2,4,6]
-// 
-// 		res = [1,2,3].map(|a| a*2)
-// 		eq res, [2,4,6]
-// 
-// 	test 'self-referencing functions' do
-// 		change = do change = 10
-// 		change()
-// 		eq change, 10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /***/ }),
 /* 25 */
@@ -6967,10 +6507,10 @@ describe("Syntax - Statements",function() {
 		})()),20);
 		eq(res,[10,[2,4,6,8],20]);
 		
-		// unsure
-		// 10 + try 10 catch e 10
-		// since ary and fn are local, we can go all the way
-		// up to cache it before.
+		
+		
+		
+		
 		
 		res = fn(union$(ary,((function() {
 			let res2 = [];
@@ -6981,9 +6521,9 @@ describe("Syntax - Statements",function() {
 		})())));
 		
 		var outer = 0;
-		// when using statements as arguments, they might be
-		// moved up into the statement and cache, but it needs
-		// to happen in the expected order
+		
+		
+		
 		function Obj(){ };
 		
 		Obj.obj = function (){
@@ -6994,7 +6534,7 @@ describe("Syntax - Statements",function() {
 		};
 		return Obj;
 		
-		// res = Obj.new.test ((outer = v) for v in ary)
+		
 	});
 });
 
@@ -7068,14 +6608,14 @@ Model.prototype.testmeth1 = function (){
 };
 
 
-// Assignment
-// ----------
 
-// * Assignment
-// * Compound Assignment
-// * Destructuring Assignment
-// * Context Property (@) Assignment
-// * Existential Assignment (?=)
+
+
+
+
+
+
+
 describe('Syntax - Properties',function() {
 	
 	test("default values",function() {
@@ -7294,8 +6834,8 @@ describe('Syntax - Existential operator',function() {
 		
 		return chain = new Chainable();
 		
-		// eq chain.a.b.a, chain
-		// ok chain?.a?.n?.err or yes
+		
+		
 	});
 });
 
@@ -7341,8 +6881,8 @@ A.prototype.test = function (){
 	self.call(function() {
 		res.push(self.a());
 		res.push(this.a());
-		// loops create their own scope, but should still
-		// have the outermost closed scope as their implicit context
+		
+		
 		let res1 = [];
 		for (let i = 0, items = [1], len = items.length; i < len; i++) {
 			res.push(self.a());
@@ -7356,8 +6896,8 @@ A.prototype.test = function (){
 A.prototype.innerDef = function (){
 	var ary = [];
 	
-	// def inside a method scope creates a local function
-	// which is implicitly called.
+	
+	
 	
 	function recur(i){
 		ary.push(i);
@@ -7539,7 +7079,7 @@ A.prototype.caching = function (){
 	return this;
 };
 
-// console.log A.new.test
+
 
 
 describe("Syntax - Scope",function() {
@@ -7653,10 +7193,10 @@ describe('Syntax - Blockparam',function() {
 var __root = {}, Imba = __webpack_require__(0);
 // externs;
 
-// import two specific items from module
+
 var module$ = __webpack_require__(4), Item = module$.Item, hello = module$.hello, myService = module$.service, exportedVariable = module$.exportedVariable, exportedConst = module$.exportedConst;
 
-// import everything from module into a local namespace/variable 'm'
+
 var m = __webpack_require__(4);
 
 function Sub(){ return Item.apply(this,arguments) };
@@ -7681,7 +7221,7 @@ describe("Syntax - Modules",function() {
 		eq(hello(),"world");
 		
 		
-		// subclassing an imported class
+		
 		var sub = new Sub();
 		eq(sub.name(),"subitem");
 		
@@ -7727,7 +7267,7 @@ describe('Syntax - Switch',function() {
 		};
 		eq(value,'A');
 		
-		// compact
+		
 		switch (type) {
 			case 1: {
 				value = 'A';break;
@@ -7833,14 +7373,14 @@ SyntaxAssignment.prototype.testmeth1 = function (){
 };
 
 
-// Assignment
-// ----------
 
-// * Assignment
-// * Compound Assignment
-// * Destructuring Assignment
-// * Context Property (@) Assignment
-// * Existential Assignment (?=)
+
+
+
+
+
+
+
 describe('Syntax - Assignment',function() {
 	
 	describe("properties",function() {
@@ -7900,7 +7440,7 @@ describe('Syntax - Assignment',function() {
 			return eq(o1.calls(),2);
 		});
 		
-		// test "var is not defined during set" do
+		
 	});
 	
 	
@@ -7969,7 +7509,7 @@ describe('Syntax - Assignment',function() {
 			var l3 = 1;
 			obj.setIvar(1);
 			
-			// 
+			
 			if (!l1) { if (l3) { if (truthy) {
 				try {
 					l0 = l1 = (obj.setIvar(v_ = obj.ivar() + (l3 = __root.nomethod())),v_);
@@ -7987,7 +7527,7 @@ describe('Syntax - Assignment',function() {
 			eq(l0,l1);
 			eq(l1,obj.ivar());
 			return eq(obj.ivar(),4);
-			// eq obj.ivar, 4
+			
 		});
 		
 		return test("caching access for compound assigns",function() {
@@ -8002,7 +7542,7 @@ describe('Syntax - Assignment',function() {
 			eq(o1.calls(),1);
 			o1.reset();
 			
-			// on a compound access we should cache the left-side
+			
 			(ivar_ = (child_ = o1.child()).ivar()) && ((child_.setIvar(v_ = 2),v_));
 			eq(o2.ivar(),2);
 			return eq(o1.calls(),1);
@@ -8016,7 +7556,7 @@ describe('Syntax - Assignment',function() {
 		return eq(a.no,true);
 	});
 	
-	// Compound Assignment
+	
 	test("boolean operators",function() {
 		var nonce = {};
 		
@@ -8028,8 +7568,8 @@ describe('Syntax - Assignment',function() {
 		b || (b = nonce);
 		eq(1,b);
 		
-		// want to change this syntax later, or at least
-		// introduce another one for value != null ...
+		
+		
 		var c = 0;
 		c && (c = nonce);
 		eq(0,c);
@@ -8049,13 +7589,13 @@ describe('Syntax - Assignment',function() {
 		var i = intersect$(a,b);
 		return eq(i,[3,4]);
 		
-		// ensure that RHS is treated as a group
-		// e = f = false
-		// e and= f or true
-		// eq false, e
+		
+		
+		
+		
 	});
 	
-	// *note: this test could still use refactoring*
+	
 	test("compound assignment should be careful about caching variables",function() {
 		var $1, $2, $3, $4, $5;
 		var count = 0;
@@ -8073,8 +7613,8 @@ describe('Syntax - Assignment',function() {
 		eq(6,list[2]);
 		eq(3,count);
 		
-		// TODO inside the inner scope - the outer variable sound
-		// already exist -- unless we've auto-called the function?
+		
+		
 		var base;
 		
 		base = function() {
@@ -8150,20 +7690,20 @@ describe('Syntax - Assignment',function() {
 		var b = 2,c = 3;
 		eq([a,b,c],[1,2,3]);
 		
-		var a = 2,b = [4],c = 6; // should result in error, no?
+		var a = 2,b = [4],c = 6; 
 		eq([a,b,c],[2,[4],6]);
 		
 		
-		var a = 2,b = 4,c = [6]; // should result in error, no?
+		var a = 2,b = 4,c = [6]; 
 		eq([a,b,c],[2,4,[6]]);
 		
-		var a = 1,b = [2,3],c = 4,d = 5; // should result in error, no?
+		var a = 1,b = [2,3],c = 4,d = 5; 
 		eq([a,b,c,d],[1,[2,3],4,5]);
 		
-		var a = 1,b = 2,c = 3,d = [4,5]; // should result in error, no?
+		var a = 1,b = 2,c = 3,d = [4,5]; 
 		eq([a,b,c,d],[1,2,3,[4,5]]);
 		
-		var a = [1,2],b = 3,c = 4,d = 5; // should result in error, no?
+		var a = [1,2],b = 3,c = 4,d = 5; 
 		eq([a,b,c,d],[[1,2],3,4,5]);
 		
 		$1 = b,$2 = a,a = $1,b = $2;
@@ -8222,7 +7762,7 @@ describe('Syntax - Assignment',function() {
 		};obj.setZ(tmplist);
 		eq([x,y,obj.z()],[2,4,[6,8,10]]);
 		
-		// special case for arguments
+		
 		a = _0,b = _1,c = _2;
 		return;
 	});
@@ -8233,7 +7773,7 @@ describe('Syntax - Assignment',function() {
 		var a = o.x,b = o.y,c = o.z;
 		eq([a,b,c],[0,1,2]);
 		
-		// tuples should be preevaluated
+		
 		var v = 0;
 		var $1 = (v = 5),$2 = v,$3 = v,a = $1,b = $2,c = $3;
 		eq([a,b,c],[5,5,5]);
@@ -8251,7 +7791,7 @@ describe('Syntax - Assignment',function() {
 			return 10;
 		};
 		
-		// how are we supposed to handle this?
+		
 		x = 10,y = 20;
 		$1 = fn(),$2 = x,x = $1,y = $2;
 		return eq([x,y],[10,100]);
@@ -8266,9 +7806,9 @@ describe('Syntax - Assignment',function() {
 			this._z = 0;
 		};
 		
-		// accessing x will increment y
-		// def x
-		// 	@x
+		
+		
+		
 		
 		A.prototype.x = function(v){ return this._x; }
 		A.prototype.setX = function(v){ this._x = v; return this; };
@@ -8288,7 +7828,7 @@ describe('Syntax - Assignment',function() {
 			var y_, x_;
 			this.setX(1);
 			this.setY(2);
-			// switching them
+			
 			y_ = this.y(),x_ = this.x(),this.setX(y_),this.setY(x_);
 			
 			eq(this.y(),1);
@@ -8296,13 +7836,13 @@ describe('Syntax - Assignment',function() {
 		};
 		
 		
-		// o.x should not be set before we get o.z
-		// if the left side was vars however, we could do it the easy way
+		
+		
 		var o = new A();
 		z_ = o.z(),o.setX(1),o.setY(z_);
 		eq([o.x(),o.y()],[1,0]);
 		
-		// now predefine local variables
+		
 		var a = 0,b = 0,c = 0,i = 0;
 		var m = function() { return a + b + c; };
 		z_ = m(),$1 = m(),$2 = m(),a = z_,b = $1,c = $2;
@@ -8317,8 +7857,8 @@ describe('Syntax - Assignment',function() {
 		var b = 0,c = 0,i = 0;
 		var m = function() { return (++i) + b + c; };
 		
-		// since a is not predefined, it is safe to evaluate this directly
-		// while the values for b and c must be precached before assignment
+		
+		
 		var a = m(),$1 = m(),$2 = m(),b = $1,c = $2;
 		return eq([a,b,c],[1,2,3]);
 	});
@@ -8332,9 +7872,9 @@ describe('Syntax - Assignment',function() {
 			return (++i) + a + c;
 		};
 		
-		// since a is not predefined, it is safe to evaluate this directly
-		// while the values for b and c must be precached before assignment
-		// here a is predefined AND evals to a value
+		
+		
+		
 		var $1 = m(),$2 = m(),$3 = m(),a = $1,b = $2,c = $3;
 		return eq([a,b,c],[11,12,13]);
 	});
@@ -8386,7 +7926,7 @@ describe("Syntax - Conditionals",function() {
 		eq((t ? ($1 = obj) && $1.on  &&  $1.on() : ($2 = obj) && $2.off  &&  $2.off()),true);
 		
 		return eq((t ? ('.' + f) : ''),'.false');
-		// e.event:metaKey ? pane?.show : pane?.maximize
+		
 	});
 	
 	return test("unary precedence",function() {
@@ -8526,7 +8066,7 @@ describe('Syntax - Tags',function() {
 		return __root.jseq(("setFlag(0," + scope + ".name())"),function() { return (_1('div')).setFlag(0,__root.name()); });
 	});
 	
-	// attributes
+	
 	test('attributes',function() {
 		__root.jseq("setTitle(strvar)",function() { return (_1('div')).setTitle(strvar).end(); });
 		__root.jseq("css('display','block')",function() { return (_1('div').css('display','block')).end(); });
@@ -8535,7 +8075,7 @@ describe('Syntax - Tags',function() {
 		return __root.jseq(("set('model',strvar,\{number:1\})"),function() { return (_1('div')).set('model',strvar,{number:1}).end(); });
 	});
 	
-	// events
+	
 	test('events',function() {
 		__root.jseq(("(0,['tap','prevent','after']," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],__root)); });
 		__root.jseq(("(0,['tap',['incr',10]]," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],__root)); });
@@ -8735,7 +8275,7 @@ describe('Syntax - Tags',function() {
 			return;
 		};
 		
-		// var par = null
+		
 		checkParents(list.dom());
 		var localNode = (_1(Local)).end();
 		list = localNode.list();
@@ -9014,7 +8554,7 @@ describe('Issues',function() {
 			return;
 		};
 		
-		method(); // call the method
+		method(); 
 		
 		return eq(a,[2,4,6]);
 	});
@@ -9093,7 +8633,7 @@ describe("Syntax - Quirks",function() {
 		
 		let item;
 		try {
-			Math.rendom(); // error
+			Math.rendom(); 
 			item = 1000;
 		} catch (e) {
 			item = 2000;
@@ -9245,11 +8785,11 @@ describe('Tags - Define',function() {
 		eq(els,[a,b,c]);
 		
 		el.render();
-		// children should remain the same after rerender
+		
 		return eq(toArray(el.dom().children),[a,b,c]);
 	});
 	
-	// bug
+	
 	test("as part of object",function() {
 		var obj;
 		return obj = {
@@ -9261,7 +8801,7 @@ describe('Tags - Define',function() {
 	test("with switch",function() {
 		var t0, el;
 		var num = 1;
-		// not yet caching with switch
+		
 		return el = (t0 = (t0=_1('div')).setContent(
 			t0.$.A || _1('div',t0.$,'A',t0).flag('inner')
 		,2)).end((
@@ -9393,9 +8933,9 @@ describe('Tags - Define',function() {
 		};
 	});
 	
-	// test "namespaced attributes" do
-	// 	var el = <div cust:title="one">
-	// 	eq el.toString, '<div cust:title="one"></div>'
+	
+	
+	
 	
 	
 	test("initialize",function() {
@@ -9439,8 +8979,8 @@ describe('Tags - Define',function() {
 		node.render();
 		eq(node._body._on_[0][1],fn);
 		
-		// if the handler references variables outside
-		// of its scope we dont cache it on first render
+		
+		
 		var NoCache = Imba.defineTag('NoCache', function(tag){
 			tag.prototype.render = function (arg){
 				var $ = this.$;
@@ -9663,11 +9203,11 @@ Imba.defineTag('cachetest', function(tag){
 	
 	tag.prototype.toString = function (){
 		let html = this.dom().outerHTML;
-		// strip away all tags
+		
 		return html = html.replace(/\<[^\>]+\>/g,function(m) {
 			return (m[1] == '/') ? ']' : '[';
 		});
-		// html = html.replace(/\[(\w+)\]/g,'$1')
+		
 	};
 	
 	tag.prototype.test = function (options){
@@ -9721,7 +9261,7 @@ describe('Tags - Cache',function() {
 			var $ = this.$, t0;
 			return ($[0] || _1('li',$,0,t0)).setContent(items[this._o],3);
 		}).end();
-		// items = ["A",<div> "B"]
+		
 		eq(el.test(0),'[[A]]');
 		eq(el.test(1),'[[[B]]]');
 		return eq(el.test(0),'[[A]]');
@@ -9825,8 +9365,8 @@ describe('Tags - Cache',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0), __root = {}, _1 = Imba.createElement;
-// to run these tests, simply open the imbadir/test/dom.html in your browser and
-// open the console / developer tools.
+
+
 
 // externs;
 
@@ -9865,8 +9405,8 @@ describe("Tags - SVG",function() {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(0), _2 = Imba.createTagList, __root = {}, _1 = Imba.createElement;
-// to run these tests, simply open the imbadir/test/dom.html in your browser and
-// open the console / developer tools.
+
+
 
 // externs;
 
@@ -9897,11 +9437,11 @@ Imba.defineTag('group', function(tag){
 		this._errors = null;
 		this.setExpected(_.flatten(nodes).filter(function(n) {
 			return (typeof n=='string'||n instanceof String) || (n && n._dom);
-			// n isa String ? n : (n and n.@dom)
-			// n and n.@dom
+			
+			
 		}));
 		this.setActual([]);
-		// log "setStaticChildren",nodes,expected
+		
 		tag.__super__.setChildren.call(this,nodes,typ);
 		
 		for (let i = 0, items = iter$(this._dom.childNodes), len = items.length, child; i < len; i++) {
@@ -9914,13 +9454,13 @@ Imba.defineTag('group', function(tag){
 			var el = (child instanceof Text) ? child.textContent : (Imba.getTagForDom(child));
 			if (el != this.expected()[i]) {
 				this._errors || (this._errors = []);
-				// log "not the same as expected at i",child,expected[i].@dom
+				
 				this._errors.push([el,this.expected()[i],i]);
 			};
 			
 			this.actual().push(el);
 		};
-		// log actual
+		
 		
 		if (this._errors) {
 			console.log('got errors');
@@ -9958,7 +9498,7 @@ Imba.defineTag('group', function(tag){
 	};
 	
 	tag.prototype.commit = function (){
-		return this; // dont render automatically
+		return this; 
 	};
 	
 	tag.prototype.name = function (){
@@ -10197,9 +9737,9 @@ describe("Tags",function() {
 	var group = (_1('group')).end();
 	document.body.appendChild(group.dom());
 	
-	// test "first render with string" do
-	// 	group.render str: "Hello"
-	// 	eq group.opstr, "AAAAA"
+	
+	
+	
 	
 	test("first render",function() {
 		group.render();
@@ -10226,12 +9766,12 @@ describe("Tags",function() {
 		group.render({str: "Hello there"});
 		eq(group.opstr(),"I");
 		
-		// changing the string only - should not be any
-		// dom operations on the parent
+		
+		
 		group.render({str: "Changed string"});
 		eq(group.opstr(),"");
 		
-		// removing string, expect a single removeChild
+		
 		group.render({str: null});
 		return eq(group.opstr(),"R");
 	});
@@ -10269,7 +9809,7 @@ describe("Tags",function() {
 		node.render({a: true});
 		eq(node.opstr(),"AA");
 		
-		// string should simply be replaced
+		
 		node.render({a: false});
 		eq(node.opstr(),"RAA");
 		return __root;
@@ -10283,7 +9823,7 @@ describe("Tags",function() {
 			node.render({a: false});
 			eq(node.opstr(),"AAA");
 			
-			// string should simply be replaced
+			
 			node.render({a: true});
 			eq(node.opstr(),"RA");
 			
@@ -10296,7 +9836,7 @@ describe("Tags",function() {
 		var node = (_1('unknowns')).end();
 		document.body.appendChild(node.dom());
 		return node.render({a: false});
-		// eq node.opstr, "AAA"
+		
 	});
 	
 	describe("dynamic lists",function() {
@@ -10312,21 +9852,21 @@ describe("Tags",function() {
 			eq(group.opstr(),"A");
 			
 			return group.render();
-			// render full regular again
+			
 		});
 		
 		test("adding dynamic list items",function() {
 			group.render({list: full});
 			eq(group.opstr(),"IIIIII");
 			
-			// append one
+			
 			group.render({list: [a,b,c,d,e,f,g]});
 			eq(group.opstr(),"I");
-			// remove again
+			
 			group.render({list: full});
 			eq(group.opstr(),"R");
 			
-			// add first element last
+			
 			group.render({list: [b,c,d,e,f,a]});
 			eq(group.opstr(),"I");
 			
@@ -10343,16 +9883,16 @@ describe("Tags",function() {
 		
 		return test("should be reorderable",function() {
 			
-			group.render({list: full}); // render with the regular list
+			group.render({list: full}); 
 			group.render({list: [b,a,c,d,e,f]});
 			eq(group.opstr(),"I");
 			
-			// reordering two elements
+			
 			group.render({list: full});
 			group.render({list: [c,d,a,b,e,f]});
 			eq(group.opstr(),"II");
 			
-			// reordering two elements
+			
 			group.render({list: full});
 			group.render({list: [c,d,e,f,a,b],str: "Added string again as well"});
 			return eq(group.opstr(),"III");
@@ -11957,13 +11497,13 @@ describe("HTML",function() {
 			return eq(el.value(),"a");
 		});
 		
-		// disable this for now
-		// test "setting value" do
-		// 	var el = <select value="c">
-		// 		<option> "a"
-		// 		<option> "b"
-		// 		<option> "c"
-		// 	eq el.value, "c"
+		
+		
+		
+		
+		
+		
+		
 	});
 });
 
@@ -12127,7 +11667,7 @@ Imba.extendTag('element', function(tag){
 	
 	tag.prototype.dispatch = function (name,opts){
 		if(opts === undefined) opts = {};
-		emits = []; // reset emits every time
+		emits = []; 
 		let type = MouseEvent;
 		let desc = {
 			bubbles: true,
@@ -12224,7 +11764,7 @@ var Example = Imba.defineTag('Example', function(tag){
 		eq(this._alt.click(),[1,0]);
 		eq(this._alt.click({altKey: true}),[2]);
 		
-		// test .self modifier
+		
 		eq(this._self1.click(),[2,1,0]);
 		eq(this._self2.click(),[2]);
 		eq(this._inner1.click(),[1,0]);
@@ -12239,7 +11779,7 @@ describe("Tags - Events",function() {
 	var node = (_1(Example)).setData(store).end();
 	document.body.appendChild(node.dom());
 	return test("modifiers",function() { return node.testModifiers(); });
-	// test "arguments" do node.testArguments
+	
 });
 
 
