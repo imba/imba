@@ -199,7 +199,7 @@ var grammar =
 	# A literal identifier, a variable name or property.
 	Ivar: [
 		o 'IVAR' do Ivar.new A1
-		o 'CVAR' do Ivar.new A1 # kinda hacky, should be defined as something else
+		
 	]
 
 	Gvar: [
@@ -217,7 +217,11 @@ var grammar =
 	Symbol: [
 		o 'SYMBOL' do Symbol.new A1
 	]
-
+	
+	Decorator: [
+		o 'DECORATOR' do Decorator.new A1 # kinda hacky, should be defined as something else
+	]
+	
 
 	# Alphanumerics are separated from the other **Literal** matchers because
 	# they can also serve as keys in object literals.
@@ -598,6 +602,7 @@ var grammar =
 		o 'This'
 		o 'TagId'
 		o 'Selector'
+		o 'Decorator'
 		o 'Invocation'
 		o 'Require'
 	]

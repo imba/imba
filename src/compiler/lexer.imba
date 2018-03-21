@@ -760,7 +760,7 @@ export class Lexer
 			typ = 'CONST_ID'
 		
 		# what is this really for?
-		if match[5] and ['IDENTIFIER','CONST_ID','GVAR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING'].indexOf(ltyp) >= 0
+		if match[5] and ['IDENTIFIER','CONST_ID','GVAR','DECORATOR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING'].indexOf(ltyp) >= 0
 			token('.','.',0)
 	
 		token(typ, id, length)
@@ -909,7 +909,7 @@ export class Lexer
 			typ = 'TAGID'
 
 		elif typ == '@@'
-			typ = 'CVAR'
+			typ = 'DECORATOR'
 
 		elif typ == '$' and !colon
 			typ = 'IDENTIFIER'

@@ -1054,6 +1054,11 @@ export class Block < ListNode
 
 	def block
 		self
+		
+	def collectDecorators
+		if let decorators = @decorators
+			@decorators = null
+			return decorators
 
 	def loc
 		# rather indents, no?
@@ -2460,7 +2465,6 @@ export class TagLoopFunc < Func
 		@tags = []
 		@args = []
 		
-		
 		var prevLoop = @tag.@tagLoop
 
 		if prevLoop
@@ -2656,6 +2660,14 @@ export class MethodDeclaration < Func
 		# @desc = stack.stash.pluck(Comment)
 		# @desc = stack.stash.pluck(Comment)
 		# prebreak # make sure this has a break?
+		
+		# find closest block
+		console.log "collect decorators? {up} {up.@decorators}"
+		@decorators = up?.collectDecorators
+		
+		if @decorators
+			console.log "found decorators for method!!!",@decorators
+		
 		scope.visit
 
 		if String(name).match(/\=$/)
@@ -4864,6 +4876,20 @@ export class Ivar < Identifier
 	def c
 		'_' + helpers.dashToCamelCase(@value).slice(1) # .replace(/^@/,'') # MARK__(@value) +
 
+export class Decorator < ValueNode
+	
+	def visit
+		if let block = up
+			console.log "visited decorator!!",block
+			# add decorator to this scope -- let method empty it
+			block.@decorators ||= []
+			block.@decorators.push(self)
+			# let idx = block.indexOf(self) + 1
+			# idx += 1 if block.index(idx) isa Terminator
+			# if var next = block.index(idx)
+			#	next.@desc = self
+		
+		
 
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
@@ -5007,7 +5033,12 @@ export class Call < Node
 
 		if args isa Array
 			@args = ArgList.new(args)
-		self
+			
+		if callee isa Decorator
+			callee.@call = self
+			return callee
+
+		return self
 
 	def visit
 		args.traverse
