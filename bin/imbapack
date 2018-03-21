@@ -177,8 +177,6 @@ cp.exec('npm bin', function(e,stdout,stderr){
 			process.exit(1);
 		}
 
-		var packer = cp.spawn(webpackBin, args, { env: env });
-		packer.stderr.pipe(process.stderr);
-		packer.stdout.pipe(process.stdout);
+		var packer = cp.spawn(webpackBin, args, { env: env, stdio: 'inherit' });
 	});
 });
