@@ -102,6 +102,7 @@ describe 'Syntax - super' do
 		var fakedog = FakeDog.new
 		var human = Human.new
 		var zombie = Zombie.new
+		var child = Human.Child.new
 
 		eq virus.lineage, 'virus.organism'
 		eq cat.lineage, 'cat.animal.organism'

@@ -76,7 +76,7 @@ module.exports = __webpack_require__(2);
 
 
 
-var Imba = {VERSION: '1.3.4-beta.1'};
+var Imba = {VERSION: '1.4.0'};
 
 
 
@@ -442,7 +442,6 @@ const exportedConst = exports.exportedConst = 20;
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {};
 
 
 __webpack_require__(2);
@@ -537,7 +536,6 @@ if (false) {};
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var $root$ = {};
 var Imba = __webpack_require__(1);
 
 var requestAnimationFrame; 
@@ -1262,7 +1260,6 @@ Imba.EventManager.prototype.ondisable = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var $root$ = {};
 var Imba = __webpack_require__(1);
 
 Imba.CSSKeyMap = {};
@@ -2113,17 +2110,13 @@ var extender = function(obj,sup) {
 	return obj;
 };
 
-$root$.Tag = function (){
+
+function Tag(){
 	return function(dom,ctx) {
 		this.initialize(dom,ctx);
 		return this;
 	};
 };
-
-$root$.TagSpawner = function (type){
-	return function(zone) { return type.build(zone); };
-};
-
 
 Imba.Tags = function Tags(){
 	this;
@@ -4190,7 +4183,7 @@ if (apple) {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var $root$ = {}, Imba = __webpack_require__(0);
+var Imba = __webpack_require__(0), $root$ = {};
 
 var TERMINAL_COLOR_CODES = {
 	bold: 1,
@@ -4454,9 +4447,8 @@ SpecExample.prototype.run = function (){
 };
 
 SpecExample.prototype.finish = function (){
-	var self = this;
 	var details = [];
-	var dots = self._assertions.map(function(v,i) {
+	var dots = this._assertions.map(function(v,i) {
 		Spec.CURRENT.assertions().push(v);
 		if (v.success()) {
 			return fmt('green',"✔");
@@ -4466,10 +4458,10 @@ SpecExample.prototype.finish = function (){
 		};
 	});
 	
-	var str = ("" + (self._name) + " " + dots.join(" "));
+	var str = ("" + (this._name) + " " + dots.join(" "));
 	console.log(str);
 	if (details.length > 0) { console.log(details.join("\n")) };
-	return self.emit('done',[self]);
+	return this.emit('done',[this]);
 };
 
 function SpecObject(){ };
@@ -4681,7 +4673,6 @@ await = $root$.await = function (){
 /***/ (function(module, exports) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var $root$ = {};
 // externs;
 
 function SyntaxLoopsObj(){ };
@@ -5162,7 +5153,7 @@ describe('Syntax - Loops',function() {
 /* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {}, Imba = __webpack_require__(0);
+var Imba = __webpack_require__(0);
 // externs;
 
 function Organism(){
@@ -5418,7 +5409,7 @@ describe('Syntax - Class',function() {
 /* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {}, Imba = __webpack_require__(0);
+var Imba = __webpack_require__(0);
 // externs;
 
 function Organism(){
@@ -5551,6 +5542,7 @@ describe('Syntax - super',function() {
 		var fakedog = new FakeDog();
 		var human = new Human();
 		var zombie = new Zombie();
+		var child = new Human.Child();
 		
 		eq(virus.lineage(),'virus.organism');
 		eq(cat.lineage(),'cat.animal.organism');
@@ -5590,7 +5582,7 @@ function union$(a,b){
 	return u;
 };
 
-var $root$ = {}, Imba = __webpack_require__(0);
+var Imba = __webpack_require__(0);
 // externs;
 
 function Cache(val){
@@ -5844,7 +5836,6 @@ describe("Syntax - Variables",function() {
 function len$(a){
 	return a && (a.len instanceof Function ? a.len() : a.length) || 0;
 };
-var $root$ = {};
 // externs;
 
 describe('Syntax - Arrays',function() {
@@ -6035,7 +6026,7 @@ describe('Syntax - Catch',function() {
 /* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {}, Imba = __webpack_require__(0);
+var Imba = __webpack_require__(0);
 // externs;
 
 function Paramer(){ return SpecObject.apply(this,arguments) };
@@ -6423,7 +6414,6 @@ describe('Syntax - Functions',function() {
 /* 25 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
 // externs;
 
 describe('Syntax - Return',function() {
@@ -6477,7 +6467,6 @@ function union$(a,b){
 	return u;
 };
 
-var $root$ = {};
 // externs;
 
 var ary = [1,2,3];
@@ -6546,7 +6535,7 @@ describe("Syntax - Statements",function() {
 /* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {}, Imba = __webpack_require__(0);
+var Imba = __webpack_require__(0);
 // externs;
 
 function Model(nestings){
@@ -6698,7 +6687,6 @@ describe('Syntax - Properties',function() {
 /* 28 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
 // externs;
 
 describe("Syntax - Literals",function() {
@@ -6813,7 +6801,6 @@ describe("Syntax - Literals",function() {
 /* 29 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
 // externs;
 
 describe('Syntax - Existential operator',function() {
@@ -6845,7 +6832,6 @@ describe('Syntax - Existential operator',function() {
 /* 30 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
 // externs;
 
 function A(a,b){
@@ -7060,7 +7046,6 @@ A.prototype.letSwitch = function (val){
 
 
 A.prototype.varShadow = function (){
-	var self = this;
 	var x = 10;
 	var y = function() {
 		var x1 = x * 2;
@@ -7147,7 +7132,6 @@ describe("Syntax - Scope",function() {
 /* 31 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
 // externs;
 
 describe('Syntax - Delete',function() {
@@ -7192,7 +7176,7 @@ describe('Syntax - Blockparam',function() {
 /* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {}, Imba = __webpack_require__(0);
+var Imba = __webpack_require__(0);
 // externs;
 
 
@@ -7250,7 +7234,6 @@ exports.Item = Item;
 /* 34 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
 // externs;
 
 describe('Syntax - Switch',function() {
@@ -7913,7 +7896,6 @@ describe('Syntax - Assignment',function() {
 /* 36 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
 // externs;
 
 describe("Syntax - Conditionals",function() {
@@ -8744,7 +8726,6 @@ describe('Issues',function() {
 /* 42 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
 // externs;
 
 describe("Syntax - Quirks",function() {
@@ -8839,7 +8820,7 @@ describe("Syntax - Quirks",function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagMap, $root$ = {}, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagMap, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
 (_1('a'));
@@ -9255,7 +9236,7 @@ describe('Tags - Define',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagList, $root$ = {}, _3 = Imba.createTagMap, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagList, _3 = Imba.createTagMap, $root$ = {}, _1 = Imba.createElement;
 // externs;
 
 var a = 0;
@@ -9507,7 +9488,7 @@ describe('Tags - Cache',function() {
 /* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0), $root$ = {}, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _1 = Imba.createElement;
 
 
 
@@ -11622,7 +11603,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 /* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {}, Imba = __webpack_require__(0), _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _1 = Imba.createElement;
 // externs;
 
 describe("HTML",function() {
@@ -11756,7 +11737,7 @@ document.body.appendChild(HE.dom());
 /* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {}, Imba = __webpack_require__(0), _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _1 = Imba.createElement;
 // externs;
 
 var value = null;

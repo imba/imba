@@ -836,14 +836,11 @@ var extender = do |obj, sup|
 	sup.inherit(obj) if sup:inherit
 	return obj
 
-def Tag
+
+var def Tag
 	return do |dom,ctx|
 		this.initialize(dom,ctx)
 		return this
-
-def TagSpawner type
-	return do |zone| type.build(zone)
-
 
 class Imba.Tags
 

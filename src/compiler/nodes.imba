@@ -2688,17 +2688,14 @@ export class MethodDeclaration < Func
 				target = variable
 			# should be changed to VarOrAccess?!
 
-		if String(name) == 'initialize'
-			if (closure isa ClassScope) and !(closure isa TagScope) # and not ModuleScope?
-				self.type = :constructor
-				# if closure.@protoref
-					
+		if String(name) == 'initialize' and (closure isa ClassScope) and !(closure isa TagScope) # and not ModuleScope?
+			self.type = :constructor
 		
 		# instance-method / member
 		if closure isa ClassScope and !target
-			@target = closure.prototype # ||= ValueNode.new(OP('.',closure.context,'prototype'))
-			# .cache({scope: closure}) # wrong scope
+			@target = closure.prototype
 			set(prototype: @target)
+			closure.annotate(self)
 
 		if target isa Self
 			@target = closure.context
@@ -3956,8 +3953,8 @@ export class VarOrAccess < ValueNode
 				@value = variable # variable.accessor(self)
 				@token.@variable = variable
 				
-				if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
-					warn "calling method from root scope {value} is deprecated - see issue #112"
+				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
+				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
 
 				return self
 
