@@ -3973,8 +3973,8 @@ export class VarOrAccess < ValueNode
 				@token.@variable = variable
 				
 				if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
-					warn "calling top-level {value} is deprecated - use __root.{value}"
-					
+					warn "calling method from root scope {value} is deprecated - see issue #112"
+
 				return self
 
 			# FIX
@@ -7777,7 +7777,6 @@ export class RootScope < Scope
 		register '__dirname', self, type: 'global'
 		register '__filename', self, type: 'global'
 		register '_', self, type: 'global'
-		# register '__root', self, type: 'global'
 
 		# preregister global special variables here
 		@requires = {}
@@ -8312,7 +8311,8 @@ export class ScopeContext < Node
 export class RootScopeContext < ScopeContext
 
 	def reference
-		@reference ||= scope.declare("__root",scope.object, type: 'global')
+		# should be a 
+		@reference ||= scope.declare("$root$",scope.object, type: 'global')
 
 	def c o
 		# return "" if o and o:explicit
