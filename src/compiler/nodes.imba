@@ -2657,17 +2657,8 @@ export class MethodDeclaration < Func
 			@namepath = '&' + name
 
 	def visit
-		# @desc = stack.stash.pluck(Comment)
-		# @desc = stack.stash.pluck(Comment)
-		# prebreak # make sure this has a break?
-		
-		# find closest block
-		console.log "collect decorators? {up} {up.@decorators}"
 		@decorators = up?.collectDecorators
-		
-		if @decorators
-			console.log "found decorators for method!!!",@decorators
-		
+
 		scope.visit
 
 		if String(name).match(/\=$/)
@@ -2739,11 +2730,9 @@ export class MethodDeclaration < Func
 				body.consume(GreedyReturn.new)
 			else
 				body.consume(ImplicitReturn.new)
-		
-		
-		
-		var code = scope.c(indent: yes, braces: yes)
 
+
+		var code = scope.c(indent: yes, braces: yes)
 		# same for Func -- should generalize
 		var name = typeof @name == 'string' ? @name : @name.c
 		name = name.replace(/\./g,'_')
@@ -2767,6 +2756,8 @@ export class MethodDeclaration < Func
 		let fref = fname
 		
 		if option(:inObject)
+			# if decorators we need to wrap the whole object in a function-call,
+			# move the whole decorator-change to after
 			out = "{fname}: {mark}{funcKeyword}{func}"
 
 		elif ctx isa ClassScope and !target
@@ -2791,10 +2782,13 @@ export class MethodDeclaration < Func
 		else
 			out = "{mark}{funcKeyword} {fdecl}{func}"
 
+
+
 		if option(:global)
 			out = "{fname} = {out}"
 
 		if option(:export)
+			# warn if method is not toplevel
 			out = "{out}; exports.{option(:default) ? 'default' : fname} = {fref};"
 			out = "{out}; return {fname};" if option(:return)
 
@@ -4879,8 +4873,10 @@ export class Ivar < Identifier
 export class Decorator < ValueNode
 	
 	def visit
+		@call.traverse if @call
+
 		if let block = up
-			console.log "visited decorator!!",block
+			# console.log "visited decorator!!",block
 			# add decorator to this scope -- let method empty it
 			block.@decorators ||= []
 			block.@decorators.push(self)
