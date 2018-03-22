@@ -453,6 +453,7 @@ var grammar =
 	# FIXME clean up method
 	Method: [
 		o 'MethodDeclaration' do A1
+		o 'VarKeyword MethodDeclaration' do A2.set(variable: A1)
 		o 'GLOBAL MethodDeclaration' do A2.set(global: A1)
 	]
 
@@ -528,6 +529,12 @@ var grammar =
 	# A splat that occurs outside of a parameter list.
 	Splat: [
 		o 'SPLAT Expression' do AST.SPLAT(A2)
+	]
+	
+	VarKeyword: [
+		o 'VAR'
+		o 'LET'
+		o 'CONST'
 	]
 
 	VarReference: [

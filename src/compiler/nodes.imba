@@ -2658,7 +2658,7 @@ export class MethodDeclaration < Func
 
 	def visit
 		@decorators = up?.collectDecorators
-
+		var o = @options
 		scope.visit
 
 		if String(name).match(/\=$/)
@@ -2691,10 +2691,11 @@ export class MethodDeclaration < Func
 				let op = OP('||',This.new,context.context)
 				scope.context.@reference = scope.declare("self",op)
 
-
 		if !@target
-			# should not be registered on the outermost closure?
-			if context isa RootScope
+			if o:variable
+				# console.log "found method with variable {String(o:variable)}"
+				@variable = context.register(name, self, type: String(o:variable))
+			elif context isa RootScope
 				set(static: yes, root: yes)
 				@target = context.context.reference
 				# change the inner context of this scope?

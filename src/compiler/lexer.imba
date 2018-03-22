@@ -959,7 +959,6 @@ export class Lexer
 			# FIXME @ends is not used the way it is supposed to..
 			# what we want is a context-stack
 			elif typ == 'DEF'
-				# should probably shift context and optimize this
 				openDef
 
 			elif typ == 'DO'
