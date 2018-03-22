@@ -372,9 +372,9 @@ Imba.Pointer.prototype.y = function (){
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {}, Imba = __webpack_require__(0);
+var self = {}, Imba = __webpack_require__(0);
 
-exports.hello = $root$.hello = function (){
+exports.hello = self.hello = function (){
 	return "world";
 };
 
@@ -3686,7 +3686,7 @@ Imba.Event.prototype.which = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var $root$ = {};
+var self = {};
 // externs;
 
 var Imba = __webpack_require__(1);
@@ -3755,7 +3755,7 @@ var insertNestedBefore = function(root,node,before) {
 };
 
 
-$root$.insertNestedAfter = function (root,node,after){
+self.insertNestedAfter = function (root,node,after){
 	var before = after ? after.nextSibling : root._dom.firstChild;
 	
 	if (before) {
@@ -3873,7 +3873,7 @@ var reconcileCollectionChanges = function(root,new$,old,caret) {
 			};
 			
 			var after = new$[idx - 1];
-			$root$.insertNestedAfter(root,node,(after && after._slot_ || after || caret));
+			self.insertNestedAfter(root,node,(after && after._slot_ || after || caret));
 		};
 		
 		caret = node._slot_ || (caret && caret.nextSibling || root._dom.firstChild);
@@ -4049,11 +4049,11 @@ var reconcileNested = function(root,new$,old,caret) {
 			};
 		};
 		
-		return $root$.insertNestedAfter(root,new$,caret);
+		return self.insertNestedAfter(root,new$,caret);
 		
 	} else if (!newIsNull && new$._slot_) {
 		if (!oldIsNull) { removeNested(root,old,caret) };
-		return $root$.insertNestedAfter(root,new$,caret);
+		return self.insertNestedAfter(root,new$,caret);
 	} else if (newIsNull) {
 		if (!oldIsNull) { removeNested(root,old,caret) };
 		return caret;
@@ -4075,7 +4075,7 @@ var reconcileNested = function(root,new$,old,caret) {
 		};
 		
 		
-		return $root$.insertNestedAfter(root,new$,caret);
+		return self.insertNestedAfter(root,new$,caret);
 	};
 };
 
@@ -4183,7 +4183,7 @@ if (apple) {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), $root$ = {};
+var Imba = __webpack_require__(0), self = {};
 
 var TERMINAL_COLOR_CODES = {
 	bold: 1,
@@ -4639,28 +4639,28 @@ SpecAssertFalsy.prototype.test = function (value){
 SPEC = new Spec();
 
 
-describe = $root$.describe = function (name,blk){
+describe = self.describe = function (name,blk){
 	return SPEC.context().describe(name,blk);
 };
-it = $root$.it = function (name,blk){
+it = self.it = function (name,blk){
 	return SPEC.context().it(name,blk);
 };
-test = $root$.test = function (name,blk){
+test = self.test = function (name,blk){
 	return SPEC.context().it(name,blk);
 };
-eq = $root$.eq = function (actual,expected,format){
+eq = self.eq = function (actual,expected,format){
 	return SPEC.context().eq(actual,expected,format);
 };
-match = $root$.match = function (actual,expected,format){
+match = self.match = function (actual,expected,format){
 	return SPEC.context().match(actual,expected,format);
 };
-ok = $root$.ok = function (actual,message){
+ok = self.ok = function (actual,message){
 	return SPEC.context().assertion(new SpecAssertTruthy(SPEC.context(),actual,message));
 };
-assert = $root$.assert = function (expression){
+assert = self.assert = function (expression){
 	return SPEC.context().assert(expression);
 };
-await = $root$.await = function (){
+await = self.await = function (){
 	var context_;
 	return (context_ = SPEC.context()).await.apply(context_,arguments);
 };
@@ -5761,14 +5761,14 @@ describe('Syntax - Operators',function() {
 /* 21 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
+var self = {};
 // externs;
 
 describe("Syntax - Variables",function() {
 	
 	test("allow in expression",function() {
 		
-		$root$.x = function (){
+		self.x = function (){
 			if (true) {
 				var a = 1;
 				var b = 2;
@@ -5777,12 +5777,12 @@ describe("Syntax - Variables",function() {
 		};
 		
 		try {
-			var res = $root$.x();
+			var res = self.x();
 		} catch (e) {
 			res = 0;
 		};
 		
-		return eq($root$.x(),3);
+		return eq(self.x(),3);
 	});
 	
 	
@@ -5939,7 +5939,7 @@ describe('Syntax - Arrays',function() {
 /* 23 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
+var self = {};
 // externs;
 
 function ThrowClass(){ };
@@ -5967,7 +5967,7 @@ describe('Syntax - Catch',function() {
 		var after = false;
 		
 		try {
-			$root$.nometh() * 10;
+			self.nometh() * 10;
 		} catch (e) {
 			res = 1;
 		};
@@ -5975,7 +5975,7 @@ describe('Syntax - Catch',function() {
 		
 		
 		try {
-			res = $root$.nometh();
+			res = self.nometh();
 		} catch (e) {
 			res = 2;
 		};
@@ -5984,7 +5984,7 @@ describe('Syntax - Catch',function() {
 		
 		
 		try {
-			res = $root$.nometh();
+			res = self.nometh();
 		} catch (e) {
 			res = 2;
 		} finally {
@@ -7150,21 +7150,21 @@ describe('Syntax - Delete',function() {
 /* 32 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
+var self = {};
 // externs;
 
-$root$.fn = function (blk,time){
+self.fn = function (blk,time){
 	return blk(time);
 };
 
 describe('Syntax - Blockparam',function() {
 	test('specify position',function() {
-		var res = $root$.fn(function(mult) { return 10 * mult; },2);
+		var res = self.fn(function(mult) { return 10 * mult; },2);
 		return eq(res,20);
 	});
 	
 	return test('specify position using &',function() {
-		var res = $root$.fn(function(mult) { return 10 * mult; },2);
+		var res = self.fn(function(mult) { return 10 * mult; },2);
 		return eq(res,20);
 	});
 });
@@ -7290,7 +7290,7 @@ function union$(a,b){
 	return u;
 };
 
-var $root$ = {};
+var self = {};
 // externs;
 
 function O(){ };
@@ -7455,7 +7455,7 @@ describe('Syntax - Assignment',function() {
 			
 			if (truthy) {
 				try {
-					localvar = (obj.setIvar(v_ = $root$.nomethod()),v_);
+					localvar = (obj.setIvar(v_ = self.nomethod()),v_);
 				} catch (e) {
 					localvar = (obj.setIvar($1 = 3),$1);
 				};
@@ -7472,7 +7472,7 @@ describe('Syntax - Assignment',function() {
 			obj.setIvar(0);
 			if (!(ivar_ = obj.ivar())) { if (truthy) {
 				try {
-					var l = (obj.setIvar(v_ = $root$.nomethod()),v_);
+					var l = (obj.setIvar(v_ = self.nomethod()),v_);
 				} catch (e) {
 					l = (obj.setIvar($1 = 3),$1);
 				};
@@ -7497,7 +7497,7 @@ describe('Syntax - Assignment',function() {
 			
 			if (!l1) { if (l3) { if (truthy) {
 				try {
-					l0 = l1 = (obj.setIvar(v_ = obj.ivar() + (l3 = $root$.nomethod())),v_);
+					l0 = l1 = (obj.setIvar(v_ = obj.ivar() + (l3 = self.nomethod())),v_);
 				} catch (e) {
 					l0 = l1 = (obj.setIvar($1 = obj.ivar() + (l3 = 3)),$1);
 				};
@@ -7939,10 +7939,10 @@ describe("Syntax - Conditionals",function() {
 /* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $root$ = {};
+var self = {};
 // externs;
 
-$root$.delay = function (ret){
+self.delay = function (ret){
 	if(ret === undefined) ret = 1;
 	return new Promise(function(resolve,reject) {
 		return setTimeout(function() {
@@ -7982,8 +7982,8 @@ describe('Await',function() {
 	if (true) {
 		test('es6',function() {
 			var add2 = async function(x) {
-				let p_a = $root$.delay(20);
-				let p_b = $root$.delay(30);
+				let p_a = self.delay(20);
+				let p_b = self.delay(30);
 				return x + await p_a + await p_b;
 			};
 			
@@ -8010,15 +8010,15 @@ describe('Await',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var $root$ = {}, Imba = __webpack_require__(0), _2 = Imba.createTagCache, _3 = Imba.createTagMap, _4 = Imba.createTagList, _5 = Imba.createTagLoopResult, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), self = {}, _2 = Imba.createTagCache, _3 = Imba.createTagMap, _4 = Imba.createTagList, _5 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
-$root$.jseq = function (find,blk){
+self.jseq = function (find,blk){
 	let val = String(blk);
 	return ok(val.indexOf(find) >= 0,("'" + find + "' not found in " + val));
 };
 
-$root$.htmleq = function (find,val){
+self.htmleq = function (find,val){
 	if (val instanceof Function) {
 		val = val();
 	};
@@ -8036,44 +8036,44 @@ describe('Syntax - Tags',function() {
 	var numvar = 1;
 	var fnvar = function() { return true; };
 	var objvar = {a: 1,b: 2};
-	var scope = "$root$";
+	var scope = "self";
 	
 	test('id',function() {
-		return $root$.jseq("setId('one')",function() { return (_1('div').setId('one')); });
+		return self.jseq("setId('one')",function() { return (_1('div').setId('one')); });
 	});
 	
 	test('flags',function() {
-		$root$.jseq("flag('only')",function() { return (_1('div').flag('only')); });
-		$root$.jseq("flag('two')",function() { return (_1('div').flag('two')); });
-		$root$.jseq("flagIf('two',numvar)",function() { return (_1('div')).flagIf('two',numvar); });
-		$root$.jseq("setFlag(0,strvar)",function() { return (_1('div')).setFlag(0,strvar); });
-		return $root$.jseq(("setFlag(0," + scope + ".name())"),function() { return (_1('div')).setFlag(0,$root$.name()); });
+		self.jseq("flag('only')",function() { return (_1('div').flag('only')); });
+		self.jseq("flag('two')",function() { return (_1('div').flag('two')); });
+		self.jseq("flagIf('two',numvar)",function() { return (_1('div')).flagIf('two',numvar); });
+		self.jseq("setFlag(0,strvar)",function() { return (_1('div')).setFlag(0,strvar); });
+		return self.jseq(("setFlag(0," + scope + ".name())"),function() { return (_1('div')).setFlag(0,self.name()); });
 	});
 	
 	
 	test('attributes',function() {
-		$root$.jseq("setTitle(strvar)",function() { return (_1('div')).setTitle(strvar).end(); });
-		$root$.jseq("css('display','block')",function() { return (_1('div').css('display','block')).end(); });
-		$root$.jseq("setDisabled('disabled')",function() { return (_1('input').setDisabled('disabled')).end(); });
-		$root$.jseq("setDisabled('disabled').setReadonly('readonly')",function() { return (_1('input').setDisabled('disabled').setReadonly('readonly')).end(); });
-		return $root$.jseq(("set('model',strvar,\{number:1\})"),function() { return (_1('div')).set('model',strvar,{number:1}).end(); });
+		self.jseq("setTitle(strvar)",function() { return (_1('div')).setTitle(strvar).end(); });
+		self.jseq("css('display','block')",function() { return (_1('div').css('display','block')).end(); });
+		self.jseq("setDisabled('disabled')",function() { return (_1('input').setDisabled('disabled')).end(); });
+		self.jseq("setDisabled('disabled').setReadonly('readonly')",function() { return (_1('input').setDisabled('disabled').setReadonly('readonly')).end(); });
+		return self.jseq(("set('model',strvar,\{number:1\})"),function() { return (_1('div')).set('model',strvar,{number:1}).end(); });
 	});
 	
 	
 	test('events',function() {
-		$root$.jseq(("(0,['tap','prevent','after']," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],$root$)); });
-		$root$.jseq(("(0,['tap',['incr',10]]," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],$root$)); });
-		return $root$.jseq(("(0,['tap',fnvar]," + scope + ")"),function() { return (_1('div').flag('two')).on$(0,['tap',fnvar],$root$); });
+		self.jseq(("(0,['tap','prevent','after']," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],self)); });
+		self.jseq(("(0,['tap',['incr',10]]," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],self)); });
+		return self.jseq(("(0,['tap',fnvar]," + scope + ")"),function() { return (_1('div').flag('two')).on$(0,['tap',fnvar],self); });
 	});
 	
 	test('data',function() {
-		$root$.jseq("setData(objvar)",function() { return (_1('div')).setData(objvar); });
-		return $root$.jseq("setData(objvar)",function() { return (_1('div').flag('only')).setData(objvar); });
+		self.jseq("setData(objvar)",function() { return (_1('div')).setData(objvar); });
+		return self.jseq("setData(objvar)",function() { return (_1('div').flag('only')).setData(objvar); });
 	});
 	
 	test('ref',function() {
-		return $root$.jseq("._main =",function() { let $ = this.$$ || (this.$$ = {});
-		return ($root$._main = $root$._main||_1('div',$root$).flag('main')).setData(objvar); });
+		return self.jseq("._main =",function() { let $ = this.$$ || (this.$$ = {});
+		return (self._main = self._main||_1('div',self).flag('main')).setData(objvar); });
 	});
 	
 	
@@ -8101,8 +8101,8 @@ describe('Syntax - Tags',function() {
 		};
 		
 		var instance = new Local();
-		$root$.htmleq("<h1>tag</h1>",instance.closed());
-		return $root$.htmleq("<h1>class</h1>",instance.open());
+		self.htmleq("<h1>tag</h1>",instance.closed());
+		return self.htmleq("<h1>class</h1>",instance.open());
 	});
 	
 	test('root',function() {
@@ -8148,11 +8148,11 @@ describe('Syntax - Tags',function() {
 		});
 		
 		var node = (_1(Local)).end();
-		$root$.htmleq('<div>ready</div>',node);
+		self.htmleq('<div>ready</div>',node);
 		node.loading();
-		$root$.htmleq('<span>loading</span>',node);
+		self.htmleq('<span>loading</span>',node);
 		node.render();
-		return $root$.htmleq('<div>ready</div>',node);
+		return self.htmleq('<div>ready</div>',node);
 	});
 	
 	test('owner',function() {
@@ -8332,8 +8332,8 @@ describe('Syntax - Tags',function() {
 			,5);
 		}).end();
 		
-		$root$.htmleq("<h1>a</h1><div>a</div>",node);
-		$root$.htmleq("<h1>b</h1><div>d</div>",node);
+		self.htmleq("<h1>a</h1><div>a</div>",node);
+		self.htmleq("<h1>b</h1><div>d</div>",node);
 		
 		var node2 = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
@@ -8356,8 +8356,8 @@ describe('Syntax - Tags',function() {
 		
 		node2.render();
 		node2.render();
-		$root$.htmleq("<h1>a</h1><hr><ul><li>a</li><li>b</li>",node2);
-		return $root$.htmleq("<h1>b</h1><hr><ul><li>d</li><li>e</li>",node2);
+		self.htmleq("<h1>a</h1><hr><ul><li>a</li><li>b</li>",node2);
+		return self.htmleq("<h1>b</h1><hr><ul><li>d</li><li>e</li>",node2);
 	});
 	
 	test("multiloops",function() {
@@ -8383,7 +8383,7 @@ describe('Syntax - Tags',function() {
 			,5);
 		}).end();
 		
-		return $root$.htmleq("<a>a</a><b>b</b><b>b</b>",node);
+		return self.htmleq("<a>a</a><b>b</b><b>b</b>",node);
 	});
 	
 	test('wrapping',function() {
@@ -8414,7 +8414,7 @@ describe('Syntax - Tags',function() {
 			_1('p',t0.$,'B',t0).setText("two")
 		],2)).end();
 		node.render();
-		$root$.htmleq('<h1></h1><section><p>one</p><p>two</p></section>',node);
+		self.htmleq('<h1></h1><section><p>one</p><p>two</p></section>',node);
 		
 		var Other = Imba.defineTag('Other', function(tag){
 			tag.prototype.header = function (){
@@ -8437,7 +8437,7 @@ describe('Syntax - Tags',function() {
 		
 		node = (_1(Other)).end();
 		node.render();
-		return $root$.htmleq('<h1></h1><section><p>one</p><p>two</p>str</section></div><h1>',node);
+		return self.htmleq('<h1></h1><section><p>one</p><p>two</p>str</section></div><h1>',node);
 	});
 	
 	return test('template',function() {
@@ -8456,7 +8456,7 @@ describe('Syntax - Tags',function() {
 			};
 		});
 		
-		return $root$.htmleq('<div><span>Local</span></div>',(_1(Local).setTitle('Local')).end());
+		return self.htmleq('<div><span>Local</span></div>',(_1(Local).setTitle('Local')).end());
 	});
 });
 
@@ -8467,10 +8467,10 @@ describe('Syntax - Tags',function() {
 /* 39 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
+var self = {};
 // externs;
 
-$root$.chk = function (str,fn){
+self.chk = function (str,fn){
 	var stripped = fn.toString().replace(/^function\s?\(\)\s?\{\s*(return )?/,'').replace(/\;?\s*\}\s*$/,'');
 	return eq(stripped,str);
 };
@@ -8479,8 +8479,8 @@ describe("Formatting",function() {
 	
 	// some basic tests to make sure we dont add nested parens all over the place
 	return test("test",function() {
-		$root$.chk("!!true",function() { return !!true; });
-		return $root$.chk("1 + 2",function() { return 1 + 2; });
+		self.chk("!!true",function() { return !!true; });
+		return self.chk("1 + 2",function() { return 1 + 2; });
 	});
 });
 
@@ -8489,22 +8489,22 @@ describe("Formatting",function() {
 /* 40 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
+var self = {};
 // externs;
 
 
 
 
 
-$root$.rootMethod = function (){
-	return $root$;
+self.rootMethod = function (){
+	return self;
 };
 
 
-$root$.rootMethod(); 
+self.rootMethod(); 
 
 
-$root$.rootMethod;
+self.rootMethod;
 
 
 
@@ -8566,14 +8566,13 @@ Item.prototype.letDef = function (){
 Item.prototype.nestedDef = function (){
 	// defining a method inside a def will work the same as on root
 	// it actually defines a method on the self
-	var self = this;
-	self.definedDef = function (){
+	this.definedDef = function (){
 		return true;
 	};
 	
 	
-	ok(self.definedDef() == true);
-	ok(self.definedDef instanceof Function);
+	ok(this.definedDef() == true);
+	ok(this.definedDef instanceof Function);
 	
 	
 	function varDef(){
@@ -8582,7 +8581,7 @@ Item.prototype.nestedDef = function (){
 	
 	ok(varDef instanceof Function);
 	ok(varDef() == true);
-	return ok(self.varDef == undefined);
+	return ok(this.varDef == undefined);
 };
 
 Item.prototype.defineInBlock = function (){
@@ -8630,14 +8629,14 @@ describe('Syntax - Defs',function() {
 /* 41 */
 /***/ (function(module, exports) {
 
-var $root$ = {};
+var self = {};
 // externs;
 
 describe('Issues',function() {
 	
 	test('dynamic new',function() {
 		
-		$root$.a = function (){
+		self.a = function (){
 			return A;
 		};
 		
@@ -8663,14 +8662,14 @@ describe('Issues',function() {
 		
 		ok(new (A.b().C)() instanceof A.B.C);
 		ok(new (A.b().C)() instanceof A.B.C);
-		return ok(new ($root$.a().B)() instanceof A.B);
+		return ok(new (self.a().B)() instanceof A.B);
 	});
 	
 	test('var hoisting with loops',function() {
 		
 		let a = 0;
 		
-		$root$.method = function (){
+		self.method = function (){
 			let res = [];
 			for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
 				res.push(items[i] * 2);
@@ -8679,7 +8678,7 @@ describe('Issues',function() {
 			return;
 		};
 		
-		$root$.method(); 
+		self.method(); 
 		
 		return eq(a,[2,4,6]);
 	});
@@ -9236,7 +9235,7 @@ describe('Tags - Define',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagList, _3 = Imba.createTagMap, $root$ = {}, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagList, _3 = Imba.createTagMap, self = {}, _1 = Imba.createElement;
 // externs;
 
 var a = 0;
@@ -9474,7 +9473,7 @@ describe('Tags - Cache',function() {
 		
 		let map = node.$[1];
 		eq(pruned,true);
-		return $root$;
+		return self;
 	});
 });
 
@@ -9528,7 +9527,7 @@ describe("Tags - SVG",function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagList, $root$ = {}, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagList, self = {}, _1 = Imba.createElement;
 
 
 
@@ -9915,7 +9914,7 @@ describe("Tags",function() {
 		
 		node.render({a: false});
 		eq(node.opstr(),"RRRAA");
-		return $root$;
+		return self;
 	});
 	
 	test("conditionals with strings",function() {
@@ -9925,7 +9924,7 @@ describe("Tags",function() {
 		
 		node.render({a: false});
 		eq(node.opstr(),"");
-		return $root$;
+		return self;
 	});
 	
 	test("conditionals with strings II",function() {
@@ -9936,7 +9935,7 @@ describe("Tags",function() {
 		
 		node.render({a: false});
 		eq(node.opstr(),"RAA");
-		return $root$;
+		return self;
 	});
 	
 	describe("group5",function() {

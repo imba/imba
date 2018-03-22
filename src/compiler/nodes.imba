@@ -2707,14 +2707,17 @@ export class MethodDeclaration < Func
 			warn "{String(o:variable)} def cannot have a target" if target
 
 		elif !target
+			@target = closure.context
+
 			if closure isa ModuleScope
 				closure.annotate(self)
-				@target = closure.context
 				body.set(strict: yes)
 				scope.context.@reference = scope.declare("self",OP('||',This.new,@target))
 			else
-				@target = closure.context.reference
-				scope.@context = closure.context
+				# what if scope context has already been triggered?
+				# method should pre-inherit the outer self?
+				scope.@selfless = yes
+				# @context = @target
 		
 		if o:export and !(closure isa RootScope)
 			warn("cannot export non-root method", loc: o:export.loc)
@@ -7533,6 +7536,10 @@ export class Scope
 		@varmap  = {}
 		@counters = {}
 		@varpool = []
+		setup
+		
+	def setup
+		@selfless = yes
 		
 	def incr name = 'i'
 		var val = @counters[name] ||= 0
@@ -7551,8 +7558,18 @@ export class Scope
 	def tagContext
 		@tagContext ||= (context.reference) # @parent ? @parent.tagContext : {})
 
+	# def context
+	# 	@context ||= ScopeContext.new(self)
+		
 	def context
-		@context ||= ScopeContext.new(self)
+		# why do we need to make sure it is referenced?
+		unless @context
+			if selfless
+				@context = parent.context
+				@context.reference(self)
+			else
+				@context = ScopeContext.new(self)
+		return @context
 
 	def traverse
 		self
@@ -7679,8 +7696,8 @@ export class Scope
 		# @varpool.push(variable)
 		self
 
-	def isClosed
-		no
+	def selfless
+		!!@selfless
 
 	def closure
 		@closure
@@ -7772,9 +7789,11 @@ export class RootScope < Scope
 		@warnings = []
 		@scopes   = []
 		@helpers  = []
+		@selfless = no
 		@entities = Entities.new(self)
 		@object = Obj.wrap({})
 		@head = [@vars]
+		
 
 	def context
 		@context ||= RootScopeContext.new(self)
@@ -7866,13 +7885,16 @@ export class RootScope < Scope
 
 export class ModuleScope < Scope
 
+	def setup
+		@selfless = no
+
 	def namepath
 		@node.namepath
-	
-	def isClosed
-		yes		
 
 export class ClassScope < Scope
+	
+	def setup
+		@selfless = no
 
 	def namepath
 		@node.namepath
@@ -7890,9 +7912,6 @@ export class ClassScope < Scope
 	def prototype
 		@prototype ||= ValueNode.new(OP('.',context,'prototype'))
 
-	def isClosed
-		yes
-
 export class TagScope < ClassScope
 
 export class ClosureScope < Scope
@@ -7901,8 +7920,8 @@ export class FunctionScope < Scope
 
 export class MethodScope < Scope
 
-	def isClosed
-		yes
+	def setup
+		@selfless = no
 
 export class LambdaScope < Scope
 
@@ -8308,11 +8327,12 @@ export class RootScopeContext < ScopeContext
 
 	def reference
 		# should be a 
-		@reference ||= scope.declare("$root$",scope.object, type: 'global')
+		@reference ||= scope.declare("self",scope.object, type: 'global')
 
 	def c o
+		# @reference ||= scope.declare("self",scope.object, type: 'global')
 		# return "" if o and o:explicit
-		var val = @value || @reference
+		var val = reference # @value || @reference
 		return (val and val != this) ? val.c : "this"
 		# should be the other way around, no?
 		# o and o:explicit ? super : ""

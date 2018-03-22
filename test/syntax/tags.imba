@@ -19,7 +19,7 @@ describe 'Syntax - Tags' do
 	var numvar = 1
 	var fnvar = do yes
 	var objvar = {a: 1, b: 2}
-	var scope = "$root$"
+	var scope = "self"
 
 	test 'id' do
 		jseq "setId('one')" do <div#one>
