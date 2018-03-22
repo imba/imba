@@ -97,11 +97,11 @@ function s(t){this._tag=t}function u(t,e,n){this.cache$=t,this.key$=e,this.par$=
 return e._parent=this,e},o.Tags.prototype.ns=function(t){return this["_"+t.toUpperCase()]||this.defineNamespace(t)},o.Tags.prototype.defineNamespace=function(t){var e=Object.create(this)
 return e._parent=this,e._ns=t,this["_"+t.toUpperCase()]=e,e},o.Tags.prototype.baseType=function(t,e){return o.indexOf(t,o.HTML_TAGS)>=0?"element":"div"},o.Tags.prototype.defineTag=function(t,e,n){var r
 void 0==n&&"function"==typeof e&&(n=e,e=""),void 0==e&&(e=""),n&&n._nodeType&&(e=n,n=null),this[t]&&console.log("tag already exists?",t)
-var s=t,u=s.indexOf(":")
-u>=0&&(r=t.substr(0,u),s=t.substr(u+1),"svg"!=r||e||(e="svg:element")),e||(e=this.baseType(t))
-var a="string"==typeof e||e instanceof String?this.findTagType(e):e,h=i.Tag()
-return h._name=s,h._flagName=null,"#"==s[0]?(o.SINGLETONS[s.slice(1)]=h,this[s]=h):s[0]==s[0].toUpperCase()?h._flagName=s:(h._flagName="_"+t.replace(/[_\:]/g,"-"),this[t]=h),function(t,e){for(var n,r,i=0,o=Object.keys(e),s=o.length;i<s;i++)n=e[r=o[i]],null==t[r]?t[r]=n:t[r]
-t.prototype=Object.create(e.prototype),t.__super__=t.prototype.__super__=e.prototype,t.prototype.constructor=t,e.inherit&&e.inherit(t)}(h,a),n&&(n.call(h,h,h.TAGS||this),h.defined&&h.defined(),this.optimizeTag(h)),h},o.Tags.prototype.defineSingleton=function(t,e,n){return this.defineTag(t,e,n)},o.Tags.prototype.extendTag=function(t,e,n){void 0==n&&"function"==typeof e&&(n=e,e=""),void 0==e&&(e="")
+var i=t,s=i.indexOf(":")
+s>=0&&(r=t.substr(0,s),i=t.substr(s+1),"svg"!=r||e||(e="svg:element")),e||(e=this.baseType(t))
+var u="string"==typeof e||e instanceof String?this.findTagType(e):e,a=Tag()
+return a._name=i,a._flagName=null,"#"==i[0]?(o.SINGLETONS[i.slice(1)]=a,this[i]=a):i[0]==i[0].toUpperCase()?a._flagName=i:(a._flagName="_"+t.replace(/[_\:]/g,"-"),this[t]=a),function(t,e){for(var n,r,i=0,o=Object.keys(e),s=o.length;i<s;i++)n=e[r=o[i]],null==t[r]?t[r]=n:t[r]
+t.prototype=Object.create(e.prototype),t.__super__=t.prototype.__super__=e.prototype,t.prototype.constructor=t,e.inherit&&e.inherit(t)}(a,u),n&&(n.call(a,a,a.TAGS||this),a.defined&&a.defined(),this.optimizeTag(a)),a},o.Tags.prototype.defineSingleton=function(t,e,n){return this.defineTag(t,e,n)},o.Tags.prototype.extendTag=function(t,e,n){void 0==n&&"function"==typeof e&&(n=e,e=""),void 0==e&&(e="")
 var r="string"==typeof t||t instanceof String?this.findTagType(t):t
 return n&&n&&n.call(r,r,r.prototype),r.extended&&r.extended(),this.optimizeTag(r),r},o.Tags.prototype.optimizeTag=function(t){var e
 return(e=t.prototype)&&e.optimizeTagStructure&&e.optimizeTagStructure()},o.Tags.prototype.findTagType=function(t){var e,n,i=this[t]
@@ -195,16 +195,17 @@ if(a||this._responder||(this._responder=t),0==_)break
 _&&!this._silenced&&_.then instanceof Function&&_.then(r.commit)}}return 1===this._bubble&&(this._bubble=s),null},r.Event.prototype.process=function(){for(var t,e,n,r=this.name(),i="on"+(this._prefix||"")+r,o=this.event()._target||this.event().target,s=o._responder||o;s;){this._redirect=null
 var u=s._dom?s:s._tag
 if(u){if(e=u._on_){for(var a,h=0,c=(n=e)?n.toArray?n.toArray():n:[],p=c.length;h<p;h++)if(a=c[h]){a[0]
-r==a[0]&&this.bubble()&&this.processHandlers(u,a)}if(!this.bubble())break}this.bubble()&&u[i]instanceof Function&&(this._responder||(this._responder=u),this._silenced=!1,t=u[i](this,this.data())),u.onevent&&u.onevent(this)}if(!this.bubble()||!(s=this._redirect||(u?u.parent():s.parentNode)))break}return this.processed(),t&&t.then instanceof Function&&t.then(this.processed.bind(this)),this},r.Event.prototype.processed=function(){return!this._silenced&&this._responder&&(r.emit(r,"event",[this]),r.commit(this.event())),this},r.Event.prototype.x=function(){return this.native().x},r.Event.prototype.y=function(){return this.native().y},r.Event.prototype.button=function(){return this.native().button},r.Event.prototype.keyCode=function(){return this.native().keyCode},r.Event.prototype.ctrl=function(){return this.native().ctrlKey},r.Event.prototype.alt=function(){return this.native().altKey},r.Event.prototype.shift=function(){return this.native().shiftKey},r.Event.prototype.meta=function(){return this.native().metaKey},r.Event.prototype.key=function(){return this.native().key},r.Event.prototype.which=function(){return this.event().which}},function(t,e,n){function r(t){return t?t.toArray?t.toArray():t:[]}var i={},o=n(0)
-i.removeNested=function(t,e,n){if(e instanceof Array)for(var o=0,s=r(e),u=s.length;o<u;o++)i.removeNested(t,s[o],n)
+r==a[0]&&this.bubble()&&this.processHandlers(u,a)}if(!this.bubble())break}this.bubble()&&u[i]instanceof Function&&(this._responder||(this._responder=u),this._silenced=!1,t=u[i](this,this.data())),u.onevent&&u.onevent(this)}if(!this.bubble()||!(s=this._redirect||(u?u.parent():s.parentNode)))break}return this.processed(),t&&t.then instanceof Function&&t.then(this.processed.bind(this)),this},r.Event.prototype.processed=function(){return!this._silenced&&this._responder&&(r.emit(r,"event",[this]),r.commit(this.event())),this},r.Event.prototype.x=function(){return this.native().x},r.Event.prototype.y=function(){return this.native().y},r.Event.prototype.button=function(){return this.native().button},r.Event.prototype.keyCode=function(){return this.native().keyCode},r.Event.prototype.ctrl=function(){return this.native().ctrlKey},r.Event.prototype.alt=function(){return this.native().altKey},r.Event.prototype.shift=function(){return this.native().shiftKey},r.Event.prototype.meta=function(){return this.native().metaKey},r.Event.prototype.key=function(){return this.native().key},r.Event.prototype.which=function(){return this.event().which}},function(t,e,n){function r(t){return t?t.toArray?t.toArray():t:[]}var i={},o=n(0),s=function(t,e,n){if(e instanceof Array)for(var i=0,o=r(e),u=o.length;i<u;i++)s(t,o[i],n)
 else if(e&&e._slot_)t.removeChild(e)
 else if(null!=e){var a=n?n.nextSibling:t._dom.firstChild
 if(!(a instanceof Text&&a.textContent==e))throw"cannot remove string"
-t.removeChild(a)}return n},i.appendNested=function(t,e){if(e instanceof Array)for(var n=0,r=e.taglen,s=null!=r?e.domlen=r:e.length;n<s;)i.appendNested(t,e[n++])
-else e&&e._dom?t.appendChild(e):null!=e&&!1!==e&&t.appendChild(o.createTextNode(e))},i.insertNestedBefore=function(t,e,n){if(e instanceof Array)for(var r=0,s=e.taglen,u=null!=s?e.domlen=s:e.length;r<u;)i.insertNestedBefore(t,e[r++],n)
+t.removeChild(a)}return n},u=function(t,e){if(e instanceof Array)for(var n=0,r=e.taglen,i=null!=r?e.domlen=r:e.length;n<i;)u(t,e[n++])
+else e&&e._dom?t.appendChild(e):null!=e&&!1!==e&&t.appendChild(o.createTextNode(e))},a=function(t,e,n){if(e instanceof Array)for(var r=0,i=e.taglen,s=null!=i?e.domlen=i:e.length;r<s;)a(t,e[r++],n)
 else e&&e._dom?t.insertBefore(e,n):null!=e&&!1!==e&&t.insertBefore(o.createTextNode(e),n)
-return n},i.insertNestedAfter=function(t,e,n){var r=n?n.nextSibling:t._dom.firstChild
-return r?(i.insertNestedBefore(t,e,r),r.previousSibling):(i.appendNested(t,e),t._dom.lastChild)},i.reconcileCollectionChanges=function(t,e,n,s){for(var u,a,h=e[e.length-1],c=[],p=[],l=[],d=0,f=0,_=0,v=r(n),g=v.length;_<g;_++)if((a=v[_])&&3==a.nodeType?((u=e.indexOf(a.textContent))>=0&&(e[u]=a),!0):u=e.indexOf(a),c.push(u),-1!=u){for(var m=c.length-2;m>=0;)if(-1==c[m])m--
+return n}
+i.insertNestedAfter=function(t,e,n){var r=n?n.nextSibling:t._dom.firstChild
+return r?(a(t,e,r),r.previousSibling):(u(t,e),t._dom.lastChild)}
+var h=function(t,e,n,s){for(var u,a,h=e[e.length-1],c=[],p=[],l=[],d=0,f=0,_=0,v=r(n),g=v.length;_<g;_++)if((a=v[_])&&3==a.nodeType?((u=e.indexOf(a.textContent))>=0&&(e[u]=a),!0):u=e.indexOf(a),c.push(u),-1!=u){for(var m=c.length-2;m>=0;)if(-1==c[m])m--
 else{if(u>c[m])break
 m=p[m]}p.push(m)
 var y=-1==m?0:l[m]+1
@@ -212,35 +213,36 @@ y>d&&(d=y,f=_),l.push(y)}else t.removeChild(a),p.push(-1),l.push(-1)
 for(var T=[],b=c.length-1;b>=0;)b==f&&-1!=c[b]&&(T[c[b]]=!0,f=p[f]),b-=1
 for(var E,S=0,x=r(e),A=x.length;S<A;S++){if(E=x[S],!T[S]){E&&E._dom||(E=e[S]=o.createTextNode(E))
 var w=e[S-1]
-i.insertNestedAfter(t,E,w&&w._slot_||w||s)}s=E._slot_||s&&s.nextSibling||t._dom.firstChild}return h&&h._slot_||s},i.reconcileCollection=function(t,e,n,r){var o=e.length,s=o,u=e[o-1]
-if(o==n.length&&e[0]===n[0])for(;s--&&e[s]===n[s];);return-1==s?u&&u._slot_||u||r:i.reconcileCollectionChanges(t,e,n,r)},i.reconcileLoop=function(t,e,n,r){for(var o=e.length,s=n.length,u=e.cache.i$,a=0,h=o-s;a<s&&a<o&&e[a]===n[a];)a++
-if(u>1e3&&u-o>500&&e.cache.$prune(e),!(h>0&&a==s)){if(h>0){for(var c=o;c>a&&e[c-1]===n[c-1-h];)c--
-if(h==c-a){for(var p=n[a]._slot_;a<c;)t.insertBefore(e[a++],p)
-return}}else{if(h<0&&a==o){for(;a<s;)t.removeChild(n[a++])
-return}if(h<0){for(var l=s;l>a&&e[l-1+h]===n[l-1];)l--
-if(h==a-l){for(;a<l;)t.removeChild(n[a++])
-return}}else if(a==o)return}return i.reconcileCollectionChanges(t,e,n,r)}for(;a<o;)t.appendChild(e[a++])},i.reconcileIndexedArray=function(t,e,n,r){var i=e.taglen,o=e.domlen||0,s=i?e[i-1]:null
+i.insertNestedAfter(t,E,w&&w._slot_||w||s)}s=E._slot_||s&&s.nextSibling||t._dom.firstChild}return h&&h._slot_||s},c=function(t,e,n,r){for(var i=e.length,o=n.length,s=e.cache.i$,u=0,a=i-o;u<o&&u<i&&e[u]===n[u];)u++
+if(s>1e3&&s-i>500&&e.cache.$prune(e),!(a>0&&u==o)){if(a>0){for(var c=i;c>u&&e[c-1]===n[c-1-a];)c--
+if(a==c-u){for(var p=n[u]._slot_;u<c;)t.insertBefore(e[u++],p)
+return}}else{if(a<0&&u==i){for(;u<o;)t.removeChild(n[u++])
+return}if(a<0){for(var l=o;l>u&&e[l-1+a]===n[l-1];)l--
+if(a==u-l){for(;u<l;)t.removeChild(n[u++])
+return}}else if(u==i)return}return h(t,e,n,r)}for(;u<i;)t.appendChild(e[u++])},p=function(t,e,n,r){var i=e.taglen,o=e.domlen||0,s=i?e[i-1]:null
 if(o>i)for(;o>i;){var u=e[--o]
 t.removeChild(u._slot_)}else if(i>o)for(var a=o?e[o-1]._slot_:r,h=a?a.nextSibling:t._dom.firstChild;o<i;){var c=e[o++]
-h?t.insertBefore(c._slot_,h):t.appendChild(c._slot_)}return e.domlen=i,s?s._slot_:r},i.reconcileNested=function(t,e,n,o){var s,u=null==e||!1===e,a=null==n||!1===n
-if(e===n)return u?o:e._slot_?e._slot_:e instanceof Array&&null!=e.taglen?i.reconcileIndexedArray(t,e,n,o):o?o.nextSibling:t._dom.firstChild
-if(e instanceof Array){if(n instanceof Array){var h=e.static
-if(!h&&!n.static)return i.reconcileCollection(t,e,n,o)
-if(h==n.static){for(var c=0,p=r(e),l=p.length;c<l;c++)o=i.reconcileNested(t,p[c],n[c],o)
-return o}i.removeNested(t,n,o)}else a||(n._slot_?t.removeChild(n):t.removeChild(o?o.nextSibling:t._dom.firstChild))
-return i.insertNestedAfter(t,e,o)}if(!u&&e._slot_)return a||i.removeNested(t,n,o),i.insertNestedAfter(t,e,o)
-if(u)return a||i.removeNested(t,n,o),o
-if(n instanceof Array)i.removeNested(t,n,o)
+h?t.insertBefore(c._slot_,h):t.appendChild(c._slot_)}return e.domlen=i,s?s._slot_:r},l=function(t,e,n,o){var u,a=null==e||!1===e,c=null==n||!1===n
+if(e===n)return a?o:e._slot_?e._slot_:e instanceof Array&&null!=e.taglen?p(t,e,0,o):o?o.nextSibling:t._dom.firstChild
+if(e instanceof Array){if(n instanceof Array){var d=e.static
+if(!d&&!n.static)return function(t,e,n,r){var i=e.length,o=i,s=e[i-1]
+if(i==n.length&&e[0]===n[0])for(;o--&&e[o]===n[o];);return-1==o?s&&s._slot_||s||r:h(t,e,n,r)}(t,e,n,o)
+if(d==n.static){for(var f=0,_=r(e),v=_.length;f<v;f++)o=l(t,_[f],n[f],o)
+return o}s(t,n,o)}else c||(n._slot_?t.removeChild(n):t.removeChild(o?o.nextSibling:t._dom.firstChild))
+return i.insertNestedAfter(t,e,o)}if(!a&&e._slot_)return c||s(t,n,o),i.insertNestedAfter(t,e,o)
+if(a)return c||s(t,n,o),o
+if(n instanceof Array)s(t,n,o)
 else if(n&&n._slot_)t.removeChild(n)
-else if(!a&&(s=o?o.nextSibling:t._dom.firstChild)instanceof Text&&s.textContent!=e)return s.textContent=e,s
-return i.insertNestedAfter(t,e,o)},o.extendTag("element",function(t){t.prototype.setChildren=function(t,e){var n=this._tree_
+else if(!c&&(u=o?o.nextSibling:t._dom.firstChild)instanceof Text&&u.textContent!=e)return u.textContent=e,u
+return i.insertNestedAfter(t,e,o)}
+o.extendTag("element",function(t){t.prototype.setChildren=function(t,e){var n=this._tree_
 if(t===n&&(!t||void 0==t.taglen))return this
-if(n||3==e)if(1==e)for(var o=null,s=0,u=r(t),a=u.length;s<a;s++)o=i.reconcileNested(this,u[s],n[s],o)
+if(n||3==e)if(1==e)for(var i=null,o=0,s=r(t),a=s.length;o<a;o++)i=l(this,s[o],n[o],i)
 else{if(2==e)return this
 if(3==e){if("object"!=typeof t)return this.setText(t)
 if(t&&t._dom)this.removeAllChildren(),this.appendChild(t)
 else{if(!(t instanceof Array))return this.setText(t)
-5==t._type&&n&&5==n._type?i.reconcileLoop(this,t,n,null):n instanceof Array?i.reconcileNested(this,t,n,null):(this.removeAllChildren(),i.appendNested(this,t))}}else 4==e?i.reconcileIndexedArray(this,t,n,null):5==e?i.reconcileLoop(this,t,n,null):t instanceof Array&&n instanceof Array?i.reconcileNested(this,t,n,null):(this.removeAllChildren(),i.appendNested(this,t))}else this.removeAllChildren(),i.appendNested(this,t)
+5==t._type&&n&&5==n._type?c(this,t,n,null):n instanceof Array?l(this,t,n,null):(this.removeAllChildren(),u(this,t))}}else 4==e?p(this,t,0,null):5==e?c(this,t,n,null):t instanceof Array&&n instanceof Array?l(this,t,n,null):(this.removeAllChildren(),u(this,t))}else this.removeAllChildren(),u(this,t)
 return this._tree_=t,this},t.prototype.content=function(){return this._content||this.children().toArray()},t.prototype.setText=function(t){if(t!=this._tree_){var e=null===t||!1===t?"":t;(this._text_||this._dom).textContent=e,this._text_||(this._text_=this._dom.firstChild),this._tree_=t}return this}})
-var s=o.Tag.prototype
-s.setContent=s.setChildren,"undefined"!=typeof navigator&&0==(navigator.vendor||"").indexOf("Apple")&&(s.setText=function(t){return t!=this._tree_&&(this._dom.textContent=null===t||!1===t?"":t,this._tree_=t),this})}])})
+var d=o.Tag.prototype
+d.setContent=d.setChildren,"undefined"!=typeof navigator&&0==(navigator.vendor||"").indexOf("Apple")&&(d.setText=function(t){return t!=this._tree_&&(this._dom.textContent=null===t||!1===t?"":t,this._tree_=t),this})}])})

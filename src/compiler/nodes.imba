@@ -188,6 +188,14 @@ def FLATTEN__ ary, compact = no
 		v isa Array ? REDUCE__(out,v) : out.push(v)
 	return out
 
+def AST.loc item
+	if !item
+		[0,0]
+	elif item isa Token
+		item.region
+	elif item isa Node
+		item.loc
+	
 def AST.parse str, opts = {}
 	var indent = str.match(/\t+/)[0]
 	# really? Require the compiler, not this
@@ -663,7 +671,7 @@ export class Node
 
 	def cache o = {}
 		@cache = o
-		o:var = scope__.temporary(self,o)
+		o:var = (o:scope or scope__).temporary(self,o)
 		o:lookups = 0
 		self
 
@@ -2189,6 +2197,7 @@ export class ClassDeclaration < Code
 		else
 			initor.name = cname
 			initor = initor.c + ';'
+			
 
 		# if we are defining a class inside a namespace etc -- how should we set up the class?
 
@@ -2202,14 +2211,16 @@ export class ClassDeclaration < Code
 			# add the space after initor?
 			if body.index(bodyindex) isa Terminator
 				head.push(body.removeAt(bodyindex))
-		else
-			# head.push(Terminator.new('\n\n'))
-			true
 
 		if sup
 			# console.log "deal with superclass!"
 			# head.push("// extending the superclass\nimba$class({name.c},{sup.c});\n\n")
 			head.push(Util.Subclass.new([name,sup]))
+			
+		# now create a reference
+		# let protoref = scope__.parent.temporary(self, pool: 'proto')
+		# head.push("var {protoref} = {scope__.prototype.c}")
+		# scope__.prototype.@value = protoref
 
 		# only if it is not namespaced
 		if o:global and !namespaced # option(:global)
@@ -2256,13 +2267,12 @@ export class ModuleDeclaration < Code
 		if @name
 			let modname = String(name.@value or name)
 			scope.parent.register(modname, self, type: 'module')
-			# scope.parent.declare(@name,null,system: yes)
-			
+			# set the context of this here already?
+			# scope.parent.declare(@name,null,system: yes)		
+		scope.context.value = scope.context.@reference = @ctx = scope.declare('$mod$',null,system: yes)
 		body.traverse
 	
 	def js o
-		scope.context.value = @ctx = scope.declare('$module',null,system: yes)
-		
 		var mark = MARK__(option('keyword'))
 		
 		body.add(ImplicitReturn.new(@ctx))
@@ -2660,58 +2670,60 @@ export class MethodDeclaration < Func
 		@decorators = up?.collectDecorators
 		var o = @options
 		scope.visit
-
+		
+		# setters should always return self
 		if String(name).match(/\=$/)
 			set(chainable: yes)
 
-		@context = scope.parent.closure
+		var closure = @context = scope.parent.closure
+
 		@params.traverse
 		
 		if option(:inObject)
 			@body.traverse
 			return self
-
-		if String(name) == 'initialize'
-			if (context isa ClassScope) and !(context isa TagScope)
-				self.type = :constructor
-
-		if target isa Self
-			@target = @context.context
-			set(static: yes)
-
-		if context isa ClassScope
-			context.annotate(self)
-			@target ||= context.context
-			# register as class-method?
-			# should register for this
-			# console.log "context is classscope {@name}"
-			if context isa ModuleScope
-				body.set(strict: yes)
-				# let op = OP('==',This.new,LIT('window'))
-				let op = OP('||',This.new,context.context)
-				scope.context.@reference = scope.declare("self",op)
-
-		if !@target
-			if o:variable
-				# console.log "found method with variable {String(o:variable)}"
-				@variable = context.register(name, self, type: String(o:variable))
-			elif context isa RootScope
-				set(static: yes, root: yes)
-				@target = context.context.reference
-				# change the inner context of this scope?
-				scope.@context = context.context
-				# scope.context.@reference = @target # scope.declare("self",op)
-				@variable = context.register(name, self, type: 'meth')
-				@variable.proxy(OP('.',@target,name))
-			else
-				@variable = context.register(name, self, type: 'meth')
-
+			
 		if target isa Identifier
 			if let variable = scope.lookup(target.toString)
 				target = variable
+			# should be changed to VarOrAccess?!
+
+		if String(name) == 'initialize'
+			if (closure isa ClassScope) and !(closure isa TagScope) # and not ModuleScope?
+				self.type = :constructor
+				# if closure.@protoref
+					
+		
+		# instance-method / member
+		if closure isa ClassScope and !target
+			@target = closure.prototype # ||= ValueNode.new(OP('.',closure.context,'prototype'))
+			# .cache({scope: closure}) # wrong scope
+			set(prototype: @target)
+
+		if target isa Self
+			@target = closure.context
+			closure.annotate(self)
+			set(static: yes)
+			
+		elif o:variable
+			@variable = scope.parent.register(name, self, type: String(o:variable))
+			warn "{String(o:variable)} def cannot have a target" if target
+
+		elif !target
+			if closure isa ModuleScope
+				closure.annotate(self)
+				@target = closure.context
+				body.set(strict: yes)
+				scope.context.@reference = scope.declare("self",OP('||',This.new,@target))
+			else
+				@target = closure.context.reference
+				scope.@context = closure.context
+		
+		if o:export and !(closure isa RootScope)
+			warn("cannot export non-root method", loc: o:export.loc)
 
 		ROOT.entities.add(namepath,self)
-		@body.traverse # so soon?
+		@body.traverse
 		self
 
 	def supername
@@ -2722,6 +2734,7 @@ export class MethodDeclaration < Func
 	# the outermost scope (root)
 
 	def js o
+		var o = @options
 		# FIXME Do this in the grammar - remnants of old implementation
 		unless type == :constructor or option(:noreturn)
 			if option(:chainable)
@@ -2732,71 +2745,42 @@ export class MethodDeclaration < Func
 			else
 				body.consume(ImplicitReturn.new)
 
-
 		var code = scope.c(indent: yes, braces: yes)
+
 		# same for Func -- should generalize
 		var name = typeof @name == 'string' ? @name : @name.c
-		name = name.replace(/\./g,'_')
+		name = name.replace(/\./g,'_') # not used?!
 
-		# var name = self.name.c.replace(/\./g,'_') # WHAT?
-		var foot = []
-
-		var left = ""
-		var func = "({params.c})" + code # .wrap
-		var target = self.target
-		var decl = !option(:global) and !option(:export)
-
-		if target isa ScopeContext
-			target = null
-			
+		var func = "({params.c})" + code
 		var ctx = context
 		var out = ""
 		var mark = MARK__(option('def'))
 		var fname = SYM__(self.name)
-		var fdecl = fname # decl ? fname : ''
-		let fref = fname
-		
+
 		if option(:inObject)
-			# if decorators we need to wrap the whole object in a function-call,
-			# move the whole decorator-change to after
 			out = "{fname}: {mark}{funcKeyword}{func}"
-
-		elif ctx isa ClassScope and !target
-			if type == :constructor
-				out = "{mark}{funcKeyword} {fname}{func}"
-			elif option(:static) or ctx isa ModuleScope
-				out = "{mark}{ctx.context.c}.{fname} = {funcKeyword} {func}"
-			else
-				out = "{mark}{ctx.context.c}.prototype.{fname} = {funcKeyword} {func}"
-
-		elif ctx isa RootScope and !target
-			# register method as a root-function, but with auto-call? hmm
-			# should probably set using variable directly instead, no?
-			out = "{mark}{funcKeyword} {fdecl}{func}"
-
-		elif target and option(:static)
-			fref = "{target.c}.{fname}"
-			out = "{mark}{fref} = {funcKeyword} {func}"
+			
+		elif type == :constructor
+			out = "{mark}{funcKeyword} {fname}{func}"
+			# add shorthand for prototype now
 
 		elif target
-			out = "{mark}{target.c}.prototype.{fname} = {funcKeyword} {func}"
+			out = "{mark}{target.c}.{fname} = {funcKeyword} {func}"
+			if o:export
+				out = "exports.{o:default ? 'default' : fname} = {out}"
 		else
-			out = "{mark}{funcKeyword} {fdecl}{func}"
+			out = "{mark}{funcKeyword} {fname}{func}"
+			if o:export
+				out = "{out}; exports.{o:default ? 'default' : fname} = {fname};"
 
-
-
-		if option(:global)
+		if o:global
+			warn("global def is deprecated", loc: o:global.region)
 			out = "{fname} = {out}"
-
-		if option(:export)
-			# warn if method is not toplevel
-			out = "{out}; exports.{option(:default) ? 'default' : fname} = {fref};"
-			out = "{out}; return {fname};" if option(:return)
-
-		elif option(:return)
+		
+		if option(:return)
 			out = "return {out}"
-
-		out
+			
+		return out
 
 
 export class TagFragmentDeclaration < MethodDeclaration
@@ -7170,16 +7154,24 @@ export class Export < ValueNode
 	def addExpression expr
 		value = value.addExpression(expr)
 		return self
+		
+	def loc
+		let kw = option(:keyword)
+		kw and kw:region ? kw.region : super
 
 	def consume node
 		if node isa Return
 			option('return',yes)
 			return self
 		super
+		
+	def visit
+		value.set(export: self, return: option(:return), default: option(:default))
+		super
 
 	def js o
 		# p "Export {value}"
-		value.set export: self, return: option(:return), default: option(:default)
+		# value.set export: self, return: option(:return), default: option(:default)
 
 		if value isa VarOrAccess
 			return "exports.{value.c} = {value.c};"
@@ -7875,12 +7867,18 @@ export class RootScope < Scope
 
 		return body
 
+export class ModuleScope < Scope
+
+	def namepath
+		@node.namepath
+	
+	def isClosed
+		yes		
 
 export class ClassScope < Scope
 
 	def namepath
 		@node.namepath
-
 
 	# called for scopes that are not real scopes in js
 	# must ensure that the local variables inside of the scopes do not
@@ -7891,11 +7889,12 @@ export class ClassScope < Scope
 		for own k,v of @varmap
 			v.resolve(up,yes) # force new resolve
 		self
+		
+	def prototype
+		@prototype ||= ValueNode.new(OP('.',context,'prototype'))
 
 	def isClosed
 		yes
-
-export class ModuleScope < ClassScope
 
 export class TagScope < ClassScope
 

@@ -2,7 +2,7 @@ extern navigator
 
 var Imba = require("../imba")
 
-def removeNested root, node, caret
+var removeNested = do |root, node, caret|
 	# if node/nodes isa String
 	# 	we need to use the caret to remove elements
 	# 	for now we will simply not support this
@@ -21,7 +21,7 @@ def removeNested root, node, caret
 
 	return caret
 
-def appendNested root, node
+var appendNested = do |root, node|
 	if node isa Array
 		let i = 0
 		let c = node:taglen
@@ -39,7 +39,7 @@ def appendNested root, node
 # does not need to return any tail, as before
 # will still be correct there
 # before must be an actual domnode
-def insertNestedBefore root, node, before
+var insertNestedBefore = do |root, node, before|
 	if node isa Array
 		let i = 0
 		let c = node:taglen
@@ -64,7 +64,7 @@ def insertNestedAfter root, node, after
 		appendNested(root,node)
 		return root.@dom:lastChild
 
-def reconcileCollectionChanges root, new, old, caret
+var reconcileCollectionChanges = do |root, new, old, caret|
 
 	var newLen = new:length
 	var lastNew = new[newLen - 1]
@@ -168,7 +168,7 @@ def reconcileCollectionChanges root, new, old, caret
 
 
 # expects a flat non-sparse array of nodes in both new and old, always
-def reconcileCollection root, new, old, caret
+var reconcileCollection = do |root, new, old, caret|
 	var k = new:length
 	var i = k
 	var last = new[k - 1]
@@ -186,7 +186,7 @@ def reconcileCollection root, new, old, caret
 
 # TYPE 5 - we know that we are dealing with a single array of
 # keyed tags - and root has no other children
-def reconcileLoop root, new, old, caret
+var reconcileLoop = do |root, new, old, caret|
 	var nl = new:length
 	var ol = old:length
 	var cl = new:cache:i$ # cache-length
@@ -233,7 +233,7 @@ def reconcileLoop root, new, old, caret
 	return reconcileCollectionChanges(root,new,old,caret)
 
 # expects a flat non-sparse array of nodes in both new and old, always
-def reconcileIndexedArray root, array, old, caret
+var reconcileIndexedArray = do |root, array, old, caret|
 	var newLen = array:taglen
 	var prevLen = array:domlen or 0
 	var last = newLen ? array[newLen - 1] : null
@@ -259,7 +259,7 @@ def reconcileIndexedArray root, array, old, caret
 
 # the general reconciler that respects conditions etc
 # caret is the current node we want to insert things after
-def reconcileNested root, new, old, caret
+var reconcileNested = do |root, new, old, caret|
 
 	# var skipnew = new == null or new === false or new === true
 	var newIsNull = new == null or new === false
@@ -352,12 +352,12 @@ extend tag element
 
 		if !old and typ != 3
 			removeAllChildren
-			__root.appendNested(self,new)
+			appendNested(self,new)
 
 		elif typ == 1
 			let caret = null
 			for item,i in new
-				caret = __root.reconcileNested(self,item,old[i],caret)
+				caret = reconcileNested(self,item,old[i],caret)
 		
 		elif typ == 2
 			return self
@@ -375,27 +375,27 @@ extend tag element
 			# check if old and new isa array
 			elif new isa Array
 				if new.@type == 5 and old and old.@type == 5
-					__root.reconcileLoop(self,new,old,null)
+					reconcileLoop(self,new,old,null)
 				elif old isa Array
-					__root.reconcileNested(self,new,old,null)
+					reconcileNested(self,new,old,null)
 				else
 					removeAllChildren
-					__root.appendNested(self,new)
+					appendNested(self,new)
 			else
 				return setText(new)
 				
 		elif typ == 4
-			__root.reconcileIndexedArray(self,new,old,null)
+			reconcileIndexedArray(self,new,old,null)
 			
 		elif typ == 5
-			__root.reconcileLoop(self,new,old,null)
+			reconcileLoop(self,new,old,null)
 
 		elif new isa Array and old isa Array
-			__root.reconcileNested(self,new,old,null)
+			reconcileNested(self,new,old,null)
 		else
 			# what if text?
 			removeAllChildren
-			__root.appendNested(self,new)
+			appendNested(self,new)
 
 		@tree_ = new
 		return self

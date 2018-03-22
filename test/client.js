@@ -372,11 +372,11 @@ Imba.Pointer.prototype.y = function (){
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {}, Imba = __webpack_require__(0);
+var $root$ = {}, Imba = __webpack_require__(0);
 
-__root.hello = function (){
+exports.hello = $root$.hello = function (){
 	return "world";
-}; exports.hello = __root.hello;
+};
 
 function Item(){ };
 
@@ -401,36 +401,36 @@ B.prototype.name = function (){
 	return "b";
 };
 
-var emptyModule = (function($module){return $module;})({})
+var emptyModule = (function($mod$){return $mod$;})({})
 exports.emptyModule = emptyModule;
 
-var service = (function($module){
-	$module._counter = 0;
+var service = (function($mod$){
+	$mod$._counter = 0;
 	
-	$module.name = function(v){ return this._name; }
-	$module.setName = function(v){ this._name = v; return this; };
+	$mod$.name = function(v){ return this._name; }
+	$mod$.setName = function(v){ this._name = v; return this; };
 	
-	$module.inc = function (){
+	$mod$.inc = function (){
 		"use strict";
-		var self = this || $module;
+		var self = this || $mod$;
 		return ++self._counter;
 	};
 	
-	$module.decr = function (){
+	$mod$.decr = function (){
 		"use strict";
-		var self = this || $module;
+		var self = this || $mod$;
 		return --self._counter;
 	};
 	
-	$module.handle = function (module){
+	$mod$.handle = function (module){
 		// module is only a keyword when followed by identifier (for now)
 		"use strict";
-		var self = this || $module;
+		var self = this || $mod$;
 		if(module === undefined) module = {a: 1};
 		var module = {};
 		return module;
 	};
-	return $module;
+	return $mod$;
 })({})
 exports.service = service;
 
@@ -442,7 +442,7 @@ const exportedConst = exports.exportedConst = 20;
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {};
+var $root$ = {};
 
 
 __webpack_require__(2);
@@ -473,16 +473,17 @@ __webpack_require__(38);
 __webpack_require__(39);
 __webpack_require__(40);
 __webpack_require__(41);
-
 __webpack_require__(42);
+
 __webpack_require__(43);
 __webpack_require__(44);
+__webpack_require__(45);
 
 if (true) {
-	__webpack_require__(45);
-	__webpack_require__(47);
+	__webpack_require__(46);
 	__webpack_require__(48);
 	__webpack_require__(49);
+	__webpack_require__(50);
 };
 
 if (false) {};
@@ -536,7 +537,7 @@ if (false) {};
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var __root = {};
+var $root$ = {};
 var Imba = __webpack_require__(1);
 
 var requestAnimationFrame; 
@@ -1261,7 +1262,7 @@ Imba.EventManager.prototype.ondisable = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var __root = {};
+var $root$ = {};
 var Imba = __webpack_require__(1);
 
 Imba.CSSKeyMap = {};
@@ -2112,14 +2113,14 @@ var extender = function(obj,sup) {
 	return obj;
 };
 
-__root.Tag = function (){
+$root$.Tag = function (){
 	return function(dom,ctx) {
 		this.initialize(dom,ctx);
 		return this;
 	};
 };
 
-__root.TagSpawner = function (type){
+$root$.TagSpawner = function (type){
 	return function(zone) { return type.build(zone); };
 };
 
@@ -2177,7 +2178,7 @@ Imba.Tags.prototype.defineTag = function (fullName,supr,body){
 	supr || (supr = this.baseType(fullName));
 	
 	let supertype = ((typeof supr=='string'||supr instanceof String)) ? this.findTagType(supr) : supr;
-	let tagtype = __root.Tag();
+	let tagtype = Tag();
 	
 	tagtype._name = name;
 	tagtype._flagName = null;
@@ -3692,18 +3693,18 @@ Imba.Event.prototype.which = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var __root = {};
+var $root$ = {};
 // externs;
 
 var Imba = __webpack_require__(1);
 
-__root.removeNested = function (root,node,caret){
+var removeNested = function(root,node,caret) {
 	// if node/nodes isa String
 	// 	we need to use the caret to remove elements
 	// 	for now we will simply not support this
 	if (node instanceof Array) {
 		for (let i = 0, items = iter$(node), len = items.length; i < len; i++) {
-			__root.removeNested(root,items[i],caret);
+			removeNested(root,items[i],caret);
 		};
 	} else if (node && node._slot_) {
 		root.removeChild(node);
@@ -3721,13 +3722,13 @@ __root.removeNested = function (root,node,caret){
 	return caret;
 };
 
-__root.appendNested = function (root,node){
+var appendNested = function(root,node) {
 	if (node instanceof Array) {
 		let i = 0;
 		let c = node.taglen;
 		let k = (c != null) ? ((node.domlen = c)) : node.length;
 		while (i < k){
-			__root.appendNested(root,node[i++]);
+			appendNested(root,node[i++]);
 		};
 	} else if (node && node._dom) {
 		root.appendChild(node);
@@ -3743,13 +3744,13 @@ __root.appendNested = function (root,node){
 
 
 
-__root.insertNestedBefore = function (root,node,before){
+var insertNestedBefore = function(root,node,before) {
 	if (node instanceof Array) {
 		let i = 0;
 		let c = node.taglen;
 		let k = (c != null) ? ((node.domlen = c)) : node.length;
 		while (i < k){
-			__root.insertNestedBefore(root,node[i++],before);
+			insertNestedBefore(root,node[i++],before);
 		};
 	} else if (node && node._dom) {
 		root.insertBefore(node,before);
@@ -3761,19 +3762,19 @@ __root.insertNestedBefore = function (root,node,before){
 };
 
 
-__root.insertNestedAfter = function (root,node,after){
+$root$.insertNestedAfter = function (root,node,after){
 	var before = after ? after.nextSibling : root._dom.firstChild;
 	
 	if (before) {
-		__root.insertNestedBefore(root,node,before);
+		insertNestedBefore(root,node,before);
 		return before.previousSibling;
 	} else {
-		__root.appendNested(root,node);
+		appendNested(root,node);
 		return root._dom.lastChild;
 	};
 };
 
-__root.reconcileCollectionChanges = function (root,new$,old,caret){
+var reconcileCollectionChanges = function(root,new$,old,caret) {
 	
 	var newLen = new$.length;
 	var lastNew = new$[newLen - 1];
@@ -3879,7 +3880,7 @@ __root.reconcileCollectionChanges = function (root,new$,old,caret){
 			};
 			
 			var after = new$[idx - 1];
-			__root.insertNestedAfter(root,node,(after && after._slot_ || after || caret));
+			$root$.insertNestedAfter(root,node,(after && after._slot_ || after || caret));
 		};
 		
 		caret = node._slot_ || (caret && caret.nextSibling || root._dom.firstChild);
@@ -3891,7 +3892,7 @@ __root.reconcileCollectionChanges = function (root,new$,old,caret){
 
 
 
-__root.reconcileCollection = function (root,new$,old,caret){
+var reconcileCollection = function(root,new$,old,caret) {
 	var k = new$.length;
 	var i = k;
 	var last = new$[k - 1];
@@ -3907,13 +3908,13 @@ __root.reconcileCollection = function (root,new$,old,caret){
 	if (i == -1) {
 		return last && last._slot_ || last || caret;
 	} else {
-		return __root.reconcileCollectionChanges(root,new$,old,caret);
+		return reconcileCollectionChanges(root,new$,old,caret);
 	};
 };
 
 
 
-__root.reconcileLoop = function (root,new$,old,caret){
+var reconcileLoop = function(root,new$,old,caret) {
 	var nl = new$.length;
 	var ol = old.length;
 	var cl = new$.cache.i$; 
@@ -3972,11 +3973,11 @@ __root.reconcileLoop = function (root,new$,old,caret){
 		return;
 	};
 	
-	return __root.reconcileCollectionChanges(root,new$,old,caret);
+	return reconcileCollectionChanges(root,new$,old,caret);
 };
 
 
-__root.reconcileIndexedArray = function (root,array,old,caret){
+var reconcileIndexedArray = function(root,array,old,caret) {
 	var newLen = array.taglen;
 	var prevLen = array.domlen || 0;
 	var last = newLen ? array[newLen - 1] : null;
@@ -4005,7 +4006,7 @@ __root.reconcileIndexedArray = function (root,array,old,caret){
 
 
 
-__root.reconcileNested = function (root,new$,old,caret){
+var reconcileNested = function(root,new$,old,caret) {
 	
 	// var skipnew = new == null or new === false or new === true
 	var newIsNull = new$ == null || new$ === false;
@@ -4020,7 +4021,7 @@ __root.reconcileNested = function (root,new$,old,caret){
 		} else if (new$._slot_) {
 			return new$._slot_;
 		} else if ((new$ instanceof Array) && new$.taglen != null) {
-			return __root.reconcileIndexedArray(root,new$,old,caret);
+			return reconcileIndexedArray(root,new$,old,caret);
 		} else {
 			return caret ? caret.nextSibling : root._dom.firstChild;
 		};
@@ -4034,17 +4035,17 @@ __root.reconcileNested = function (root,new$,old,caret){
 				if (typ == old.static) { // should also include a reference?
 					for (let i = 0, items = iter$(new$), len = items.length; i < len; i++) {
 						// this is where we could do the triple equal directly
-						caret = __root.reconcileNested(root,items[i],old[i],caret);
+						caret = reconcileNested(root,items[i],old[i],caret);
 					};
 					return caret;
 				} else {
-					__root.removeNested(root,old,caret);
+					removeNested(root,old,caret);
 				};
 				
 				
 			} else {
 				// Could use optimized loop if we know that it only consists of nodes
-				return __root.reconcileCollection(root,new$,old,caret);
+				return reconcileCollection(root,new$,old,caret);
 			};
 		} else if (!oldIsNull) {
 			if (old._slot_) {
@@ -4055,20 +4056,20 @@ __root.reconcileNested = function (root,new$,old,caret){
 			};
 		};
 		
-		return __root.insertNestedAfter(root,new$,caret);
+		return $root$.insertNestedAfter(root,new$,caret);
 		
 	} else if (!newIsNull && new$._slot_) {
-		if (!oldIsNull) { __root.removeNested(root,old,caret) };
-		return __root.insertNestedAfter(root,new$,caret);
+		if (!oldIsNull) { removeNested(root,old,caret) };
+		return $root$.insertNestedAfter(root,new$,caret);
 	} else if (newIsNull) {
-		if (!oldIsNull) { __root.removeNested(root,old,caret) };
+		if (!oldIsNull) { removeNested(root,old,caret) };
 		return caret;
 	} else {
 		// if old did not exist we need to add a new directly
 		let nextNode;
 		
 		if (old instanceof Array) {
-			__root.removeNested(root,old,caret);
+			removeNested(root,old,caret);
 		} else if (old && old._slot_) {
 			root.removeChild(old);
 		} else if (!oldIsNull) {
@@ -4081,7 +4082,7 @@ __root.reconcileNested = function (root,new$,old,caret){
 		};
 		
 		
-		return __root.insertNestedAfter(root,new$,caret);
+		return $root$.insertNestedAfter(root,new$,caret);
 	};
 };
 
@@ -4106,11 +4107,11 @@ Imba.extendTag('element', function(tag){
 		
 		if (!old && typ != 3) {
 			this.removeAllChildren();
-			__root.appendNested(this,new$);
+			appendNested(this,new$);
 		} else if (typ == 1) {
 			let caret = null;
 			for (let i = 0, items = iter$(new$), len = items.length; i < len; i++) {
-				caret = __root.reconcileNested(this,items[i],old[i],caret);
+				caret = reconcileNested(this,items[i],old[i],caret);
 			};
 		} else if (typ == 2) {
 			return this;
@@ -4126,26 +4127,26 @@ Imba.extendTag('element', function(tag){
 				this.appendChild(new$);
 			} else if (new$ instanceof Array) {
 				if (new$._type == 5 && old && old._type == 5) {
-					__root.reconcileLoop(this,new$,old,null);
+					reconcileLoop(this,new$,old,null);
 				} else if (old instanceof Array) {
-					__root.reconcileNested(this,new$,old,null);
+					reconcileNested(this,new$,old,null);
 				} else {
 					this.removeAllChildren();
-					__root.appendNested(this,new$);
+					appendNested(this,new$);
 				};
 			} else {
 				return this.setText(new$);
 			};
 		} else if (typ == 4) {
-			__root.reconcileIndexedArray(this,new$,old,null);
+			reconcileIndexedArray(this,new$,old,null);
 		} else if (typ == 5) {
-			__root.reconcileLoop(this,new$,old,null);
+			reconcileLoop(this,new$,old,null);
 		} else if ((new$ instanceof Array) && (old instanceof Array)) {
-			__root.reconcileNested(this,new$,old,null);
+			reconcileNested(this,new$,old,null);
 		} else {
 			// what if text?
 			this.removeAllChildren();
-			__root.appendNested(this,new$);
+			appendNested(this,new$);
 		};
 		
 		this._tree_ = new$;
@@ -4189,7 +4190,7 @@ if (apple) {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var __root = {}, Imba = __webpack_require__(0);
+var $root$ = {}, Imba = __webpack_require__(0);
 
 var TERMINAL_COLOR_CODES = {
 	bold: 1,
@@ -4587,7 +4588,7 @@ SpecAssert.prototype.failed = function (){
 	if (console.group) {
 		console.error("expected",this._expected,"got",this._actual,this);
 	};
-	return SpecAssert.__super__.failed.call(this);
+	return SpecAssert.prototype.__super__.failed.call(this);
 };
 
 SpecAssert.prototype.details = function (){
@@ -4619,7 +4620,7 @@ SpecAssertTruthy.prototype.failed = function (){
 	if (console.group) {
 		console.error("failed",this._message,this);
 	};
-	return SpecAssertTruthy.__super__.failed.call(this);
+	return SpecAssertTruthy.prototype.__super__.failed.call(this);
 };
 
 SpecAssertTruthy.prototype.details = function (){
@@ -4646,28 +4647,28 @@ SpecAssertFalsy.prototype.test = function (value){
 SPEC = new Spec();
 
 
-describe = __root.describe = function (name,blk){
+describe = $root$.describe = function (name,blk){
 	return SPEC.context().describe(name,blk);
 };
-it = __root.it = function (name,blk){
+it = $root$.it = function (name,blk){
 	return SPEC.context().it(name,blk);
 };
-test = __root.test = function (name,blk){
+test = $root$.test = function (name,blk){
 	return SPEC.context().it(name,blk);
 };
-eq = __root.eq = function (actual,expected,format){
+eq = $root$.eq = function (actual,expected,format){
 	return SPEC.context().eq(actual,expected,format);
 };
-match = __root.match = function (actual,expected,format){
+match = $root$.match = function (actual,expected,format){
 	return SPEC.context().match(actual,expected,format);
 };
-ok = __root.ok = function (actual,message){
+ok = $root$.ok = function (actual,message){
 	return SPEC.context().assertion(new SpecAssertTruthy(SPEC.context(),actual,message));
 };
-assert = __root.assert = function (expression){
+assert = $root$.assert = function (expression){
 	return SPEC.context().assert(expression);
 };
-await = __root.await = function (){
+await = $root$.await = function (){
 	var context_;
 	return (context_ = SPEC.context()).await.apply(context_,arguments);
 };
@@ -4680,7 +4681,7 @@ await = __root.await = function (){
 /***/ (function(module, exports) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var __root = {};
+var $root$ = {};
 // externs;
 
 function SyntaxLoopsObj(){ };
@@ -5023,11 +5024,11 @@ describe('Syntax - Loops',function() {
 			var l = 0;
 			var len = 0;
 			
-			function d(){
+			var d = function() {
 				return {obj: {a: 1,b: 2,c: 3}};
 			};
 			
-			function m(o){
+			var m = function(o) {
 				for (let o1 = d().obj, v, i = 0, keys1 = Object.keys(o1), l1 = keys1.length, k; i < l1; i++){
 					k = keys1[i];v = o1[k];o.push(k,v);
 				};
@@ -5161,7 +5162,7 @@ describe('Syntax - Loops',function() {
 /* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {}, Imba = __webpack_require__(0);
+var $root$ = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Organism(){
@@ -5207,7 +5208,7 @@ function Virus(){
 
 Imba.subclass(Virus,Organism);
 Virus.prototype.lineage = function (){
-	return ("" + this.name() + "." + (Virus.__super__.lineage.call(this)));
+	return ("" + this.name() + "." + (Virus.prototype.__super__.lineage.call(this)));
 };
 
 Virus.prototype.name = function (){
@@ -5218,14 +5219,14 @@ function Animal(){ return Organism.apply(this,arguments) };
 
 Imba.subclass(Animal,Organism);
 Animal.prototype.lineage = function (){
-	return ("animal." + (Animal.__super__.lineage.call(this)));
+	return ("animal." + (Animal.prototype.__super__.lineage.call(this)));
 };
 
 function Cat(){ return Animal.apply(this,arguments) };
 
 Imba.subclass(Cat,Animal);
 Cat.prototype.lineage = function (){
-	return ("cat." + (Cat.__super__.lineage.call(this)));
+	return ("cat." + (Cat.prototype.__super__.lineage.call(this)));
 };
 
 Cat.prototype.speak = function (){
@@ -5236,7 +5237,7 @@ function Dog(){ return Animal.apply(this,arguments) };
 
 Imba.subclass(Dog,Animal);
 Dog.prototype.lineage = function (){
-	return ("dog." + (Dog.__super__.lineage.call(this)));
+	return ("dog." + (Dog.prototype.__super__.lineage.call(this)));
 };
 
 Dog.prototype.speak = function (){
@@ -5248,7 +5249,7 @@ function Human(){ return Animal.apply(this,arguments) };
 
 Imba.subclass(Human,Animal);
 Human.prototype.lineage = function (){
-	return ("human." + (Human.__super__.lineage.call(this)));
+	return ("human." + (Human.prototype.__super__.lineage.call(this)));
 };
 
 Human.prototype.speak = function (){
@@ -5259,7 +5260,7 @@ function Zombie(){ return Human.apply(this,arguments) };
 
 Imba.subclass(Zombie,Human);
 Zombie.prototype.lineage = function (){
-	return ("zombie." + (Zombie.__super__.lineage.call(this)));
+	return ("zombie." + (Zombie.prototype.__super__.lineage.call(this)));
 };
 
 Zombie.prototype.alive = function (){
@@ -5417,7 +5418,7 @@ describe('Syntax - Class',function() {
 /* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {}, Imba = __webpack_require__(0);
+var $root$ = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Organism(){
@@ -5452,7 +5453,7 @@ function Virus(){
 
 Imba.subclass(Virus,Organism);
 Virus.prototype.lineage = function (){
-	return ("" + this.name() + "." + (Virus.__super__.lineage.call(this)));
+	return ("" + this.name() + "." + (Virus.prototype.__super__.lineage.call(this)));
 };
 
 Virus.prototype.name = function (){
@@ -5466,7 +5467,7 @@ function Animal(){
 Imba.subclass(Animal,Organism);
 Animal.prototype.lineage = function (){
 	// super should do the same as super.lineage(*arguments)
-	return ("animal." + Animal.__super__.lineage.apply(this,arguments));
+	return ("animal." + Animal.prototype.__super__.lineage.apply(this,arguments));
 };
 
 function Cat(){
@@ -5475,7 +5476,7 @@ function Cat(){
 
 Imba.subclass(Cat,Animal);
 Cat.prototype.lineage = function (){
-	return ("cat." + (Cat.__super__.lineage.call(this)));
+	return ("cat." + (Cat.prototype.__super__.lineage.call(this)));
 };
 
 Cat.prototype.speak = function (){
@@ -5484,7 +5485,7 @@ Cat.prototype.speak = function (){
 
 Cat.prototype.cloak = function (){
 	// call the initialize of animal
-	return Cat.__super__.initialize.call(this);
+	return Cat.prototype.__super__.initialize.call(this);
 };
 
 
@@ -5492,7 +5493,7 @@ function Dog(){ return Animal.apply(this,arguments) };
 
 Imba.subclass(Dog,Animal);
 Dog.prototype.lineage = function (){
-	return ("dog." + Dog.__super__.lineage.call(this));
+	return ("dog." + Dog.prototype.__super__.lineage.call(this));
 };
 
 Dog.prototype.speak = function (){
@@ -5503,8 +5504,8 @@ function FakeDog(){ return Dog.apply(this,arguments) };
 
 Imba.subclass(FakeDog,Dog);
 FakeDog.prototype.lineage = function (){
-	("fakedog." + (FakeDog.__super__.__super__.lineage.apply(this,arguments)));
-	return ("fakedog." + FakeDog.__super__.__super__.lineage.call(this));
+	("fakedog." + (FakeDog.prototype.__super__.__super__.lineage.apply(this,arguments)));
+	return ("fakedog." + FakeDog.prototype.__super__.__super__.lineage.call(this));
 };
 
 function Human(){
@@ -5513,7 +5514,7 @@ function Human(){
 
 Imba.subclass(Human,Animal);
 Human.prototype.lineage = function (){
-	return ("human." + (Human.__super__.lineage.call(this)));
+	return ("human." + (Human.prototype.__super__.lineage.call(this)));
 };
 
 Human.prototype.speak = function (){
@@ -5524,7 +5525,7 @@ function Zombie(){ return Human.apply(this,arguments) };
 
 Imba.subclass(Zombie,Human);
 Zombie.prototype.lineage = function (){
-	return ("zombie." + Zombie.__super__.lineage.apply(this,arguments));
+	return ("zombie." + Zombie.prototype.__super__.lineage.apply(this,arguments));
 };
 
 Zombie.prototype.alive = function (){
@@ -5532,7 +5533,7 @@ Zombie.prototype.alive = function (){
 };
 
 Human.Child = function Child(){
-	Human.Child.__super__.constructor.apply(this,arguments);
+	Human.Child.prototype.__super__.constructor.apply(this,arguments);
 };
 Imba.subclass(Human.Child,Human);
 
@@ -5589,7 +5590,7 @@ function union$(a,b){
 	return u;
 };
 
-var __root = {}, Imba = __webpack_require__(0);
+var $root$ = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Cache(val){
@@ -5768,14 +5769,14 @@ describe('Syntax - Operators',function() {
 /* 21 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe("Syntax - Variables",function() {
 	
 	test("allow in expression",function() {
 		
-		function x(){
+		$root$.x = function (){
 			if (true) {
 				var a = 1;
 				var b = 2;
@@ -5784,12 +5785,12 @@ describe("Syntax - Variables",function() {
 		};
 		
 		try {
-			var res = x();
+			var res = $root$.x();
 		} catch (e) {
 			res = 0;
 		};
 		
-		return eq(x(),3);
+		return eq($root$.x(),3);
 	});
 	
 	
@@ -5843,7 +5844,7 @@ describe("Syntax - Variables",function() {
 function len$(a){
 	return a && (a.len instanceof Function ? a.len() : a.length) || 0;
 };
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe('Syntax - Arrays',function() {
@@ -5947,7 +5948,7 @@ describe('Syntax - Arrays',function() {
 /* 23 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 function ThrowClass(){ };
@@ -5975,7 +5976,7 @@ describe('Syntax - Catch',function() {
 		var after = false;
 		
 		try {
-			__root.nometh() * 10;
+			$root$.nometh() * 10;
 		} catch (e) {
 			res = 1;
 		};
@@ -5983,7 +5984,7 @@ describe('Syntax - Catch',function() {
 		
 		
 		try {
-			res = __root.nometh();
+			res = $root$.nometh();
 		} catch (e) {
 			res = 2;
 		};
@@ -5992,7 +5993,7 @@ describe('Syntax - Catch',function() {
 		
 		
 		try {
-			res = __root.nometh();
+			res = $root$.nometh();
 		} catch (e) {
 			res = 2;
 		} finally {
@@ -6034,7 +6035,7 @@ describe('Syntax - Catch',function() {
 /* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {}, Imba = __webpack_require__(0);
+var $root$ = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Paramer(){ return SpecObject.apply(this,arguments) };
@@ -6422,7 +6423,7 @@ describe('Syntax - Functions',function() {
 /* 25 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe('Syntax - Return',function() {
@@ -6476,7 +6477,7 @@ function union$(a,b){
 	return u;
 };
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 var ary = [1,2,3];
@@ -6545,7 +6546,7 @@ describe("Syntax - Statements",function() {
 /* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {}, Imba = __webpack_require__(0);
+var $root$ = {}, Imba = __webpack_require__(0);
 // externs;
 
 function Model(nestings){
@@ -6697,7 +6698,7 @@ describe('Syntax - Properties',function() {
 /* 28 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe("Syntax - Literals",function() {
@@ -6812,7 +6813,7 @@ describe("Syntax - Literals",function() {
 /* 29 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe('Syntax - Existential operator',function() {
@@ -6844,7 +6845,7 @@ describe('Syntax - Existential operator',function() {
 /* 30 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 function A(a,b){
@@ -6894,26 +6895,27 @@ A.prototype.test = function (){
 };
 
 A.prototype.innerDef = function (){
+	var self = this;
 	var ary = [];
 	
 	
 	
 	
-	function recur(i){
+	self.recur = function (i){
 		ary.push(i);
-		if (i < 5) { return recur(i + 1) };
+		if (i < 5) { return self.recur(i + 1) };
 	};
 	
-	recur(0);
+	self.recur(0);
 	eq(ary,[0,1,2,3,4,5]);
 	
 	var k = 0;
-	function implicit(){
+	self.implicit = function (){
 		ary.push(k);
-		if (++k < 6) { return implicit() };
+		if (++k < 6) { return self.implicit() };
 	};
 	
-	implicit();
+	self.implicit();
 	return eq(ary,[0,1,2,3,4,5,0,1,2,3,4,5]);
 };
 
@@ -7145,7 +7147,7 @@ describe("Syntax - Scope",function() {
 /* 31 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe('Syntax - Delete',function() {
@@ -7164,21 +7166,21 @@ describe('Syntax - Delete',function() {
 /* 32 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
-__root.fn = function (blk,time){
+$root$.fn = function (blk,time){
 	return blk(time);
 };
 
 describe('Syntax - Blockparam',function() {
 	test('specify position',function() {
-		var res = __root.fn(function(mult) { return 10 * mult; },2);
+		var res = $root$.fn(function(mult) { return 10 * mult; },2);
 		return eq(res,20);
 	});
 	
 	return test('specify position using &',function() {
-		var res = __root.fn(function(mult) { return 10 * mult; },2);
+		var res = $root$.fn(function(mult) { return 10 * mult; },2);
 		return eq(res,20);
 	});
 });
@@ -7190,7 +7192,7 @@ describe('Syntax - Blockparam',function() {
 /* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {}, Imba = __webpack_require__(0);
+var $root$ = {}, Imba = __webpack_require__(0);
 // externs;
 
 
@@ -7203,7 +7205,7 @@ function Sub(){ return Item.apply(this,arguments) };
 
 Imba.subclass(Sub,Item);
 Sub.prototype.name = function (){
-	return "sub" + Sub.__super__.name.apply(this,arguments);
+	return "sub" + Sub.prototype.__super__.name.apply(this,arguments);
 };
 
 
@@ -7248,7 +7250,7 @@ exports.Item = Item;
 /* 34 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe('Syntax - Switch',function() {
@@ -7305,7 +7307,7 @@ function union$(a,b){
 	return u;
 };
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 function O(){ };
@@ -7470,7 +7472,7 @@ describe('Syntax - Assignment',function() {
 			
 			if (truthy) {
 				try {
-					localvar = (obj.setIvar(v_ = __root.nomethod()),v_);
+					localvar = (obj.setIvar(v_ = $root$.nomethod()),v_);
 				} catch (e) {
 					localvar = (obj.setIvar($1 = 3),$1);
 				};
@@ -7487,7 +7489,7 @@ describe('Syntax - Assignment',function() {
 			obj.setIvar(0);
 			if (!(ivar_ = obj.ivar())) { if (truthy) {
 				try {
-					var l = (obj.setIvar(v_ = __root.nomethod()),v_);
+					var l = (obj.setIvar(v_ = $root$.nomethod()),v_);
 				} catch (e) {
 					l = (obj.setIvar($1 = 3),$1);
 				};
@@ -7512,7 +7514,7 @@ describe('Syntax - Assignment',function() {
 			
 			if (!l1) { if (l3) { if (truthy) {
 				try {
-					l0 = l1 = (obj.setIvar(v_ = obj.ivar() + (l3 = __root.nomethod())),v_);
+					l0 = l1 = (obj.setIvar(v_ = obj.ivar() + (l3 = $root$.nomethod())),v_);
 				} catch (e) {
 					l0 = l1 = (obj.setIvar($1 = obj.ivar() + (l3 = 3)),$1);
 				};
@@ -7911,7 +7913,7 @@ describe('Syntax - Assignment',function() {
 /* 36 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe("Syntax - Conditionals",function() {
@@ -7955,10 +7957,10 @@ describe("Syntax - Conditionals",function() {
 /* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
-__root.delay = function (ret){
+$root$.delay = function (ret){
 	if(ret === undefined) ret = 1;
 	return new Promise(function(resolve,reject) {
 		return setTimeout(function() {
@@ -7998,8 +8000,8 @@ describe('Await',function() {
 	if (true) {
 		test('es6',function() {
 			var add2 = async function(x) {
-				let p_a = __root.delay(20);
-				let p_b = __root.delay(30);
+				let p_a = $root$.delay(20);
+				let p_b = $root$.delay(30);
 				return x + await p_a + await p_b;
 			};
 			
@@ -8026,15 +8028,15 @@ describe('Await',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var __root = {}, Imba = __webpack_require__(0), _2 = Imba.createTagCache, _3 = Imba.createTagMap, _4 = Imba.createTagList, _5 = Imba.createTagLoopResult, _1 = Imba.createElement;
+var $root$ = {}, Imba = __webpack_require__(0), _2 = Imba.createTagCache, _3 = Imba.createTagMap, _4 = Imba.createTagList, _5 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
-__root.jseq = function (find,blk){
+$root$.jseq = function (find,blk){
 	let val = String(blk);
 	return ok(val.indexOf(find) >= 0,("'" + find + "' not found in " + val));
 };
 
-__root.htmleq = function (find,val){
+$root$.htmleq = function (find,val){
 	if (val instanceof Function) {
 		val = val();
 	};
@@ -8052,44 +8054,44 @@ describe('Syntax - Tags',function() {
 	var numvar = 1;
 	var fnvar = function() { return true; };
 	var objvar = {a: 1,b: 2};
-	var scope = "__root";
+	var scope = "$root$";
 	
 	test('id',function() {
-		return __root.jseq("setId('one')",function() { return (_1('div').setId('one')); });
+		return $root$.jseq("setId('one')",function() { return (_1('div').setId('one')); });
 	});
 	
 	test('flags',function() {
-		__root.jseq("flag('only')",function() { return (_1('div').flag('only')); });
-		__root.jseq("flag('two')",function() { return (_1('div').flag('two')); });
-		__root.jseq("flagIf('two',numvar)",function() { return (_1('div')).flagIf('two',numvar); });
-		__root.jseq("setFlag(0,strvar)",function() { return (_1('div')).setFlag(0,strvar); });
-		return __root.jseq(("setFlag(0," + scope + ".name())"),function() { return (_1('div')).setFlag(0,__root.name()); });
+		$root$.jseq("flag('only')",function() { return (_1('div').flag('only')); });
+		$root$.jseq("flag('two')",function() { return (_1('div').flag('two')); });
+		$root$.jseq("flagIf('two',numvar)",function() { return (_1('div')).flagIf('two',numvar); });
+		$root$.jseq("setFlag(0,strvar)",function() { return (_1('div')).setFlag(0,strvar); });
+		return $root$.jseq(("setFlag(0," + scope + ".name())"),function() { return (_1('div')).setFlag(0,$root$.name()); });
 	});
 	
 	
 	test('attributes',function() {
-		__root.jseq("setTitle(strvar)",function() { return (_1('div')).setTitle(strvar).end(); });
-		__root.jseq("css('display','block')",function() { return (_1('div').css('display','block')).end(); });
-		__root.jseq("setDisabled('disabled')",function() { return (_1('input').setDisabled('disabled')).end(); });
-		__root.jseq("setDisabled('disabled').setReadonly('readonly')",function() { return (_1('input').setDisabled('disabled').setReadonly('readonly')).end(); });
-		return __root.jseq(("set('model',strvar,\{number:1\})"),function() { return (_1('div')).set('model',strvar,{number:1}).end(); });
+		$root$.jseq("setTitle(strvar)",function() { return (_1('div')).setTitle(strvar).end(); });
+		$root$.jseq("css('display','block')",function() { return (_1('div').css('display','block')).end(); });
+		$root$.jseq("setDisabled('disabled')",function() { return (_1('input').setDisabled('disabled')).end(); });
+		$root$.jseq("setDisabled('disabled').setReadonly('readonly')",function() { return (_1('input').setDisabled('disabled').setReadonly('readonly')).end(); });
+		return $root$.jseq(("set('model',strvar,\{number:1\})"),function() { return (_1('div')).set('model',strvar,{number:1}).end(); });
 	});
 	
 	
 	test('events',function() {
-		__root.jseq(("(0,['tap','prevent','after']," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],__root)); });
-		__root.jseq(("(0,['tap',['incr',10]]," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],__root)); });
-		return __root.jseq(("(0,['tap',fnvar]," + scope + ")"),function() { return (_1('div').flag('two')).on$(0,['tap',fnvar],__root); });
+		$root$.jseq(("(0,['tap','prevent','after']," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],$root$)); });
+		$root$.jseq(("(0,['tap',['incr',10]]," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],$root$)); });
+		return $root$.jseq(("(0,['tap',fnvar]," + scope + ")"),function() { return (_1('div').flag('two')).on$(0,['tap',fnvar],$root$); });
 	});
 	
 	test('data',function() {
-		__root.jseq("setData(objvar)",function() { return (_1('div')).setData(objvar); });
-		return __root.jseq("setData(objvar)",function() { return (_1('div').flag('only')).setData(objvar); });
+		$root$.jseq("setData(objvar)",function() { return (_1('div')).setData(objvar); });
+		return $root$.jseq("setData(objvar)",function() { return (_1('div').flag('only')).setData(objvar); });
 	});
 	
 	test('ref',function() {
-		return __root.jseq("._main =",function() { let $ = this.$$ || (this.$$ = {});
-		return (__root._main = __root._main||_1('div',__root).flag('main')).setData(objvar); });
+		return $root$.jseq("._main =",function() { let $ = this.$$ || (this.$$ = {});
+		return ($root$._main = $root$._main||_1('div',$root$).flag('main')).setData(objvar); });
 	});
 	
 	
@@ -8117,8 +8119,8 @@ describe('Syntax - Tags',function() {
 		};
 		
 		var instance = new Local();
-		__root.htmleq("<h1>tag</h1>",instance.closed());
-		return __root.htmleq("<h1>class</h1>",instance.open());
+		$root$.htmleq("<h1>tag</h1>",instance.closed());
+		return $root$.htmleq("<h1>class</h1>",instance.open());
 	});
 	
 	test('root',function() {
@@ -8164,11 +8166,11 @@ describe('Syntax - Tags',function() {
 		});
 		
 		var node = (_1(Local)).end();
-		__root.htmleq('<div>ready</div>',node);
+		$root$.htmleq('<div>ready</div>',node);
 		node.loading();
-		__root.htmleq('<span>loading</span>',node);
+		$root$.htmleq('<span>loading</span>',node);
 		node.render();
-		return __root.htmleq('<div>ready</div>',node);
+		return $root$.htmleq('<div>ready</div>',node);
 	});
 	
 	test('owner',function() {
@@ -8348,8 +8350,8 @@ describe('Syntax - Tags',function() {
 			,5);
 		}).end();
 		
-		__root.htmleq("<h1>a</h1><div>a</div>",node);
-		__root.htmleq("<h1>b</h1><div>d</div>",node);
+		$root$.htmleq("<h1>a</h1><div>a</div>",node);
+		$root$.htmleq("<h1>b</h1><div>d</div>",node);
 		
 		var node2 = (t0 = (t0=_1('div'))).setTemplate(function() {
 			var $ = this.$, t0;
@@ -8372,8 +8374,8 @@ describe('Syntax - Tags',function() {
 		
 		node2.render();
 		node2.render();
-		__root.htmleq("<h1>a</h1><hr><ul><li>a</li><li>b</li>",node2);
-		return __root.htmleq("<h1>b</h1><hr><ul><li>d</li><li>e</li>",node2);
+		$root$.htmleq("<h1>a</h1><hr><ul><li>a</li><li>b</li>",node2);
+		return $root$.htmleq("<h1>b</h1><hr><ul><li>d</li><li>e</li>",node2);
 	});
 	
 	test("multiloops",function() {
@@ -8399,7 +8401,7 @@ describe('Syntax - Tags',function() {
 			,5);
 		}).end();
 		
-		return __root.htmleq("<a>a</a><b>b</b><b>b</b>",node);
+		return $root$.htmleq("<a>a</a><b>b</b><b>b</b>",node);
 	});
 	
 	test('wrapping',function() {
@@ -8430,7 +8432,7 @@ describe('Syntax - Tags',function() {
 			_1('p',t0.$,'B',t0).setText("two")
 		],2)).end();
 		node.render();
-		__root.htmleq('<h1></h1><section><p>one</p><p>two</p></section>',node);
+		$root$.htmleq('<h1></h1><section><p>one</p><p>two</p></section>',node);
 		
 		var Other = Imba.defineTag('Other', function(tag){
 			tag.prototype.header = function (){
@@ -8453,7 +8455,7 @@ describe('Syntax - Tags',function() {
 		
 		node = (_1(Other)).end();
 		node.render();
-		return __root.htmleq('<h1></h1><section><p>one</p><p>two</p>str</section></div><h1>',node);
+		return $root$.htmleq('<h1></h1><section><p>one</p><p>two</p>str</section></div><h1>',node);
 	});
 	
 	return test('template',function() {
@@ -8472,7 +8474,7 @@ describe('Syntax - Tags',function() {
 			};
 		});
 		
-		return __root.htmleq('<div><span>Local</span></div>',(_1(Local).setTitle('Local')).end());
+		return $root$.htmleq('<div><span>Local</span></div>',(_1(Local).setTitle('Local')).end());
 	});
 });
 
@@ -8483,10 +8485,10 @@ describe('Syntax - Tags',function() {
 /* 39 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
-__root.chk = function (str,fn){
+$root$.chk = function (str,fn){
 	var stripped = fn.toString().replace(/^function\s?\(\)\s?\{\s*(return )?/,'').replace(/\;?\s*\}\s*$/,'');
 	return eq(stripped,str);
 };
@@ -8495,8 +8497,8 @@ describe("Formatting",function() {
 	
 	// some basic tests to make sure we dont add nested parens all over the place
 	return test("test",function() {
-		__root.chk("!!true",function() { return !!true; });
-		return __root.chk("1 + 2",function() { return 1 + 2; });
+		$root$.chk("!!true",function() { return !!true; });
+		return $root$.chk("1 + 2",function() { return 1 + 2; });
 	});
 });
 
@@ -8505,14 +8507,155 @@ describe("Formatting",function() {
 /* 40 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
+// externs;
+
+
+
+
+
+$root$.rootMethod = function (){
+	return $root$;
+};
+
+
+$root$.rootMethod(); 
+
+
+$root$.rootMethod;
+
+
+
+
+function varMethod(){
+	return true;
+};
+
+
+function Item(){
+	this;
+};
+
+Item.prototype.test = function (){
+	// previously, Imba would lookup method definitions
+	// from outer scopes, so the following code would work:
+	try {
+		this.rootMethod();
+		ok(true == false);
+	} catch (e) {
+		ok(true);
+	};
+	
+	
+	varMethod; 
+	varMethod(); 
+	
+	ok(varMethod instanceof Function);
+	return ok(varMethod() == true);
+};
+
+Item.prototype.method = function (){
+	return this;
+};
+
+Item.prototype.letDef = function (){
+	if (true) {
+		function method(){
+			return true;
+		};
+		ok(method instanceof Function);
+		ok(method() == true);
+	};
+	
+	if (true) {
+		function method(){
+			return false;
+		};
+		ok(method instanceof Function);
+		ok(method() == false);
+	};
+	
+	
+	
+	
+	return ok(this.method() == this); 
+};
+
+Item.prototype.nestedDef = function (){
+	// defining a method inside a def will work the same as on root
+	// it actually defines a method on the self
+	var self = this;
+	self.definedDef = function (){
+		return true;
+	};
+	
+	
+	ok(self.definedDef() == true);
+	ok(self.definedDef instanceof Function);
+	
+	
+	function varDef(){
+		return true;
+	};
+	
+	ok(varDef instanceof Function);
+	ok(varDef() == true);
+	return ok(self.varDef == undefined);
+};
+
+Item.prototype.defineInBlock = function (){
+	var self = this;
+	var instance = self;
+	
+	
+	
+	self.defInMethod = function (){
+		return true;
+	};
+	
+	return [1,2,3].map(function() {
+		// a blocklevel function does not introduce a new self
+		// self is still the same self as inside the outer function
+		// so here we are defining defInBlock on the Item instance three times
+		self.defInBlock = function (){
+			return true;
+		};
+		
+		ok(self == instance);
+		ok(self.defInBlock instanceof Function);
+		return ok(self.defInMethod() == true);
+	});
+};
+
+
+
+
+
+describe('Syntax - Defs',function() {
+	test('root',function() { return new Item().test(); });
+	test('nested',function() { return new Item().nestedDef(); });
+	test('let',function() {
+		return new Item().letDef();
+	});
+	
+	return test('scoping',function() {
+		return new Item().defineInBlock();
+	});
+});
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports) {
+
+var $root$ = {};
 // externs;
 
 describe('Issues',function() {
 	
 	test('dynamic new',function() {
 		
-		function a(){
+		$root$.a = function (){
 			return A;
 		};
 		
@@ -8538,14 +8681,14 @@ describe('Issues',function() {
 		
 		ok(new (A.b().C)() instanceof A.B.C);
 		ok(new (A.b().C)() instanceof A.B.C);
-		return ok(new (a().B)() instanceof A.B);
+		return ok(new ($root$.a().B)() instanceof A.B);
 	});
 	
 	test('var hoisting with loops',function() {
 		
 		let a = 0;
 		
-		function method(){
+		$root$.method = function (){
 			let res = [];
 			for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
 				res.push(items[i] * 2);
@@ -8554,7 +8697,7 @@ describe('Issues',function() {
 			return;
 		};
 		
-		method(); 
+		$root$.method(); 
 		
 		return eq(a,[2,4,6]);
 	});
@@ -8598,10 +8741,10 @@ describe('Issues',function() {
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports) {
 
-var __root = {};
+var $root$ = {};
 // externs;
 
 describe("Syntax - Quirks",function() {
@@ -8692,11 +8835,11 @@ describe("Syntax - Quirks",function() {
 
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagMap, __root = {}, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagMap, $root$ = {}, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
 (_1('a'));
@@ -8709,7 +8852,7 @@ var buildCount = 0;
 Imba.defineTag('custom', function(tag){
 	
 	tag.prototype.setup = function (){
-		tag.__super__.setup.apply(this,arguments);
+		tag.prototype.__super__.setup.apply(this,arguments);
 		return buildCount++;
 	};
 	
@@ -8759,7 +8902,7 @@ Imba.defineTag('super-init', function(tag){
 	
 	tag.prototype.initialize = function (dom){
 		this._custom = true;
-		return tag.__super__.initialize.apply(this,arguments);
+		return tag.prototype.__super__.initialize.apply(this,arguments);
 	};
 });
 
@@ -8950,7 +9093,7 @@ describe('Tags - Define',function() {
 		var LocalTag = Imba.defineTag('LocalTag', 'canvas', function(tag){
 			tag.prototype.initialize = function (){
 				this._local = true;
-				return tag.__super__.initialize.apply(this,arguments);
+				return tag.prototype.__super__.initialize.apply(this,arguments);
 			};
 		});
 		
@@ -9108,11 +9251,11 @@ describe('Tags - Define',function() {
 
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagList, __root = {}, _3 = Imba.createTagMap, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagList, $root$ = {}, _3 = Imba.createTagMap, _1 = Imba.createElement;
 // externs;
 
 var a = 0;
@@ -9350,7 +9493,7 @@ describe('Tags - Cache',function() {
 		
 		let map = node.$[1];
 		eq(pruned,true);
-		return __root;
+		return $root$;
 	});
 });
 
@@ -9361,10 +9504,10 @@ describe('Tags - Cache',function() {
 
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Imba = __webpack_require__(0), __root = {}, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), $root$ = {}, _1 = Imba.createElement;
 
 
 
@@ -9400,23 +9543,23 @@ describe("Tags - SVG",function() {
 
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagList, __root = {}, _1 = Imba.createElement;
+var Imba = __webpack_require__(0), _2 = Imba.createTagList, $root$ = {}, _1 = Imba.createElement;
 
 
 
 // externs;
 
-var _ = __webpack_require__(46);
+var _ = __webpack_require__(47);
 
 Imba.defineTag('el', function(tag){
 	
 	tag.prototype.flag = function (ref){
 		this._flagged = ref;
-		return tag.__super__.flag.apply(this,arguments);
+		return tag.prototype.__super__.flag.apply(this,arguments);
 	};
 });
 
@@ -9442,7 +9585,7 @@ Imba.defineTag('group', function(tag){
 		}));
 		this.setActual([]);
 		
-		tag.__super__.setChildren.call(this,nodes,typ);
+		tag.prototype.__super__.setChildren.call(this,nodes,typ);
 		
 		for (let i = 0, items = iter$(this._dom.childNodes), len = items.length, child; i < len; i++) {
 			// how would this work on server?
@@ -9476,21 +9619,21 @@ Imba.defineTag('group', function(tag){
 		// log "appendChild",node
 		this.ops().push(["appendChild",node]);
 		this._opstr += "A";
-		return tag.__super__.appendChild.apply(this,arguments);
+		return tag.prototype.__super__.appendChild.apply(this,arguments);
 	};
 	
 	tag.prototype.removeChild = function (node){
 		// log "removeChild",node
 		this.ops().push(["removeChild",node]);
 		this._opstr += "R";
-		return tag.__super__.removeChild.apply(this,arguments);
+		return tag.prototype.__super__.removeChild.apply(this,arguments);
 	};
 	
 	tag.prototype.insertBefore = function (node,rel){
 		// log "insertBefore"
 		this.ops().push(["insertBefore",node,rel]);
 		this._opstr += "I";
-		return tag.__super__.insertBefore.apply(this,arguments);
+		return tag.prototype.__super__.insertBefore.apply(this,arguments);
 	};
 	
 	tag.prototype.reset = function (){
@@ -9791,7 +9934,7 @@ describe("Tags",function() {
 		
 		node.render({a: false});
 		eq(node.opstr(),"RRRAA");
-		return __root;
+		return $root$;
 	});
 	
 	test("conditionals with strings",function() {
@@ -9801,7 +9944,7 @@ describe("Tags",function() {
 		
 		node.render({a: false});
 		eq(node.opstr(),"");
-		return __root;
+		return $root$;
 	});
 	
 	test("conditionals with strings II",function() {
@@ -9812,7 +9955,7 @@ describe("Tags",function() {
 		
 		node.render({a: false});
 		eq(node.opstr(),"RAA");
-		return __root;
+		return $root$;
 	});
 	
 	describe("group5",function() {
@@ -9921,7 +10064,7 @@ describe("Tags",function() {
 
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -11476,10 +11619,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {}, Imba = __webpack_require__(0), _1 = Imba.createElement;
+var $root$ = {}, Imba = __webpack_require__(0), _1 = Imba.createElement;
 // externs;
 
 describe("HTML",function() {
@@ -11510,7 +11653,7 @@ describe("HTML",function() {
 
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -11610,10 +11753,10 @@ document.body.appendChild(HE.dom());
 
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __root = {}, Imba = __webpack_require__(0), _1 = Imba.createElement;
+var $root$ = {}, Imba = __webpack_require__(0), _1 = Imba.createElement;
 // externs;
 
 var value = null;

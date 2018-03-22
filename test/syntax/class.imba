@@ -193,7 +193,7 @@ describe 'Syntax - Class' do
 
 	test 'issue #71' do
 		var res
-		def ping cb
+		var def ping cb
 			res = cb()
 
 		class A

@@ -25,7 +25,7 @@ describe 'Syntax - Loops' do
 
 		test "issue with shadowing items var" do
 			var ret = []
-			def iterate items
+			var def iterate items
 				items
 				for item,i in items
 					ret.push(item)
@@ -127,12 +127,12 @@ describe 'Syntax - Loops' do
 
 			eq res:length, 3
 
-			def hello
+			var def hello
 				var ary = [1,2,3]
 				for item in ary
 					var res = item * 2
 
-			eq hello, [2,4,6]
+			eq hello(), [2,4,6]
 			return
 
 	describe "For In with ranges" do
@@ -225,11 +225,11 @@ describe 'Syntax - Loops' do
 			var l = 0
 			var len = 0
 
-			def d
+			var d = do
 				return {obj: {a: 1, b: 2, c: 3}}
 
-			def m o
-				for own k,v of d:obj
+			var m = do |o|
+				for own k,v of d():obj
 					o.push(k,v)
 				return		
 
@@ -248,12 +248,12 @@ describe 'Syntax - Loops' do
 		test "for own of global bug" do
 
 			var obj = {a: 1, b: 2}
-			def hello
+			var def hello
 				for own forOfKeyVar,v of obj
 					forOfKeyVar
 					forOfKeyVar
 					forOfKeyVar
-			hello
+			hello()
 			ok `typeof forOfKeyVar === 'undefined'`
 
 

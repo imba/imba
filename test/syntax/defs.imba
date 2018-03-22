@@ -1,64 +1,4 @@
-
-def one a,b,c
-	self
-	
-var def hello a,b,c
-	self
-	
-	
-export def three a,b,c
-	hello
-	one
-	self
-	
-export let def four a,b,c
-	self
-	
-class Something
-	def self.staticMethod
-		true
-
-	def again
-		one
-		hello
-		
-	def cache o
-		(right isa Ivar && !left) ? self : super(o)
-
-class Something2
-	def self.staticMethod
-		true
-
-	def again
-		one
-		hello
-		
-	def cache o
-		(right isa Ivar && !left) ? self : super(o)
-		
 extern describe, test, ok
-
-
-export module utils
-	
-	def random
-		yes
-		
-	def clamp a,b,c
-		Math.round(a,b,c)
-		
-class SomeClass
-	
-	def self.staticMethod
-		yes
-		
-	def initialize value
-		@value = value
-		utils.clamp(1,2,3)
-		
-		
-	def instanceMethod
-		yes
 
 # self in root is an actual object, on which
 # we can define methods etc.
@@ -82,20 +22,44 @@ var def varMethod
 
 class Item
 	def initialize
+		self
+
+	def test
 		# previously, Imba would lookup method definitions
 		# from outer scopes, so the following code would work:
-		rootMethod
-		
+		try
+			rootMethod
+			ok true == false
+		catch e
+			ok true
+
 		# varMethod is like any other variable
 		varMethod # just a reference to varMethod
 		varMethod() # calling the varMethod
-		
-	def test
+
 		ok varMethod isa Function
 		ok varMethod() == true
 	
 	def method
 		self
+		
+	def letDef
+		if true
+			let def method
+				true
+			ok method isa Function
+			ok method() == true
+		
+		if true
+			let def method
+				false
+			ok method isa Function
+			ok method() == false
+			
+		
+		# outside of the block, method does not exist as a variable
+		# and it is implicitly called on self, as expected
+		ok method == self # self.method() == self
 		
 	def nestedDef
 		# defining a method inside a def will work the same as on root
@@ -112,7 +76,7 @@ class Item
 			true
 		
 		ok varDef isa Function
-		ok varDef == true
+		ok varDef() == true
 		ok self:varDef == undefined
 		
 	def defineInBlock
@@ -135,16 +99,7 @@ class Item
 			ok defInMethod == true
 
 		
-	def letDef
-		if true
-			let def method
-				true
-			ok method isa Function
-			ok method() == true
-		
-		# outside of the block, method does not exist as a variable
-		# and it is implicitly called on self, as expected
-		ok method == self # self.method() == self
+	
 
 
 describe 'Syntax - Defs' do
