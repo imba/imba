@@ -811,6 +811,8 @@ Imba.HTML_ATTRS =
 	script: "src type async defer crossorigin integrity nonce language"
 	select: "size form multiple"
 	textarea: "rows cols"
+	td: "colspan rowspan"
+	th: "colspan rowspan"
 
 
 Imba.HTML_PROPS =

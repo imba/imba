@@ -2080,7 +2080,9 @@ Imba.HTML_ATTRS = {
 	progress: "max",
 	script: "src type async defer crossorigin integrity nonce language",
 	select: "size form multiple",
-	textarea: "rows cols"
+	textarea: "rows cols",
+	td: "colspan rowspan",
+	th: "colspan rowspan"
 };
 
 
