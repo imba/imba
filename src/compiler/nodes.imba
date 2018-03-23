@@ -215,10 +215,9 @@ def AST.escapeComments str
 	return str
 
 
-
 var shortRefCache = []
 
-def CounterToShortRef nr
+def AST.counterToShortRef nr
 	var base = "A".charCodeAt(0)
 
 	while shortRefCache:length <= nr
@@ -234,7 +233,7 @@ def CounterToShortRef nr
 		shortRefCache.push(str)
 	return shortRefCache[nr]
 
-def TRUTHY__ node
+def AST.truthy node
 
 	if node isa True
 		return true
@@ -3579,7 +3578,7 @@ export class UnaryOp < Op
 			super # regular invert
 
 	def isTruthy
-		var val = TRUTHY__(left)
+		var val = AST.truthy(left)
 		return val !== undefined ? (!val) : (undefined)
 
 	def js o
@@ -5256,7 +5255,7 @@ export class If < ControlFlow
 		# declared in the outer scope. Must get unique name
 
 		unless stack.isAnalyzing
-			@pretest = TRUTHY__(test)
+			@pretest = AST.truthy(test)
 
 			if @pretest === true
 				alt = @alt = null
@@ -6053,13 +6052,13 @@ export class TagCache < Node
 		return item
 	
 	def nextValue
-		let ref = CounterToShortRef(@counter++)
+		let ref = AST.counterToShortRef(@counter++)
 		option(:lowercase) ? ref.toLowerCase : ref
 
 	def nextSlot
 		@index++
 		if @options:keys
-			Str.new("'" + CounterToShortRef(@index - 1) + "'")
+			Str.new("'" + AST.counterToShortRef(@index - 1) + "'")
 		else
 			Num.new(@index - 1)
 	
