@@ -2570,9 +2570,10 @@ Imba.extendTag('input', function(tag){
 		return this;
 	};
 	
-	tag.prototype.setValue = function (value){
-		if (this._localValue == undefined) {
+	tag.prototype.setValue = function (value,source){
+		if (this._localValue == undefined || source == undefined) {
 			this.dom().value = this._value = value;
+			this._localValue = undefined;
 		};
 		return this;
 	};
@@ -2662,8 +2663,11 @@ Imba.extendTag('textarea', function(tag){
 		return this;
 	};
 	
-	tag.prototype.setValue = function (value){
-		if (this._localValue == undefined) { this.dom().value = value };
+	tag.prototype.setValue = function (value,source){
+		if (this._localValue == undefined || source == undefined) {
+			this.dom().value = value;
+			this._localValue = undefined;
+		};
 		return this;
 	};
 	

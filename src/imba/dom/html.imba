@@ -62,9 +62,10 @@ extend tag input
 			@dom:checked = !!value
 		self
 		
-	def setValue value
-		if @localValue == undefined
+	def setValue value, source
+		if @localValue == undefined or source == undefined
 			dom:value = @value = value
+			@localValue = undefined
 		self
 	
 	def setType value
@@ -137,8 +138,10 @@ extend tag textarea
 		DataProxy.bind(self,target,path,args)
 		self
 	
-	def setValue value
-		dom:value = value if @localValue == undefined
+	def setValue value, source
+		if @localValue == undefined or source == undefined
+			dom:value = value
+			@localValue = undefined
 		return self
 	
 	def oninput e
