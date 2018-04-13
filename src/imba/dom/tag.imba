@@ -226,9 +226,9 @@ class Imba.Tag
 			dom.removeAttribute(name)
 		return self
 
-	def setNestedAttr ns, name, value
+	def setNestedAttr ns, name, value, modifiers
 		if self[ns+'SetAttribute']
-			self[ns+'SetAttribute'](name,value)
+			self[ns+'SetAttribute'](name,value, modifiers)
 		else
 			setAttributeNS(ns, name,value)
 		return self
