@@ -1,14 +1,15 @@
 var Imba = require("./imba")
 var activate = no
-if typeof window !== 'undefined'
-	if window.Imba
-		console.warn "Imba v{window.Imba.VERSION} is already loaded."
-		Imba = window.Imba
-	else
-		window.Imba = Imba
-		activate = yes
-		if window:define and window:define:amd
-			window.define("imba",[]) do return Imba
+var ns = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
+
+if ns and ns.Imba
+	console.warn "Imba v{ns.Imba.VERSION} is already loaded."
+	Imba = ns.Imba
+elif ns
+	ns.Imba = Imba
+	activate = yes
+	if ns:define and ns:define:amd
+		ns.define("imba",[]) do Imba
 
 module.exports = Imba
 
