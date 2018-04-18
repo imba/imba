@@ -796,7 +796,7 @@ Imba.HTML_ATTRS =
 	a: "href target hreflang media download rel type"
 	form: "method action enctype autocomplete target"
 	button: "autofocus type"
-	input: "accept disabled form list max maxlength min pattern required size step type"
+	input: "accept disabled form list max maxlength min minlength pattern required size step type"
 	label: "accesskey for form"
 	img: "src srcset"
 	link: "rel type href media"
@@ -810,7 +810,7 @@ Imba.HTML_ATTRS =
 	progress: "max"
 	script: "src type async defer crossorigin integrity nonce language"
 	select: "size form multiple"
-	textarea: "rows cols"
+	textarea: "rows cols minlength maxlength"
 	td: "colspan rowspan"
 	th: "colspan rowspan"
 
