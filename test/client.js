@@ -504,16 +504,16 @@ SPEC.run(function(exitCode) {
 
 var Imba = __webpack_require__(1);
 var activate = false;
-if (typeof window !== 'undefined') {
-	if (window.Imba) {
-		console.warn(("Imba v" + (window.Imba.VERSION) + " is already loaded."));
-		Imba = window.Imba;
-	} else {
-		window.Imba = Imba;
-		activate = true;
-		if (window.define && window.define.amd) {
-			window.define("imba",[],function() { return Imba; });
-		};
+var ns = ((typeof window !== 'undefined') ? window : (((typeof global !== 'undefined') ? global : null)));
+
+if (ns && ns.Imba) {
+	console.warn(("Imba v" + (ns.Imba.VERSION) + " is already loaded."));
+	Imba = ns.Imba;
+} else if (ns) {
+	ns.Imba = Imba;
+	activate = true;
+	if (ns.define && ns.define.amd) {
+		ns.define("imba",[],function() { return Imba; });
 	};
 };
 
@@ -1507,9 +1507,9 @@ Imba.Tag.prototype.setAttribute = function (name,value){
 	return this;
 };
 
-Imba.Tag.prototype.setNestedAttr = function (ns,name,value){
+Imba.Tag.prototype.setNestedAttr = function (ns,name,value,modifiers){
 	if (this[ns + 'SetAttribute']) {
-		this[ns + 'SetAttribute'](name,value);
+		this[ns + 'SetAttribute'](name,value,modifiers);
 	} else {
 		this.setAttributeNS(ns,name,value);
 	};
@@ -2066,7 +2066,7 @@ Imba.HTML_ATTRS = {
 	a: "href target hreflang media download rel type",
 	form: "method action enctype autocomplete target",
 	button: "autofocus type",
-	input: "accept disabled form list max maxlength min pattern required size step type",
+	input: "accept disabled form list max maxlength min minlength pattern required size step type",
 	label: "accesskey for form",
 	img: "src srcset",
 	link: "rel type href media",
@@ -2080,7 +2080,7 @@ Imba.HTML_ATTRS = {
 	progress: "max",
 	script: "src type async defer crossorigin integrity nonce language",
 	select: "size form multiple",
-	textarea: "rows cols",
+	textarea: "rows cols minlength maxlength",
 	td: "colspan rowspan",
 	th: "colspan rowspan"
 };
