@@ -524,7 +524,7 @@ if (true) {
 	__webpack_require__(8);
 };
 
-if (true && activate) {
+if (activate) {
 	Imba.EventManager.activate();
 };
 
@@ -1037,7 +1037,7 @@ var native$ = [
 	'keydown','keyup','keypress',
 	'textInput','input','change','submit',
 	'focusin','focusout','focus','blur',
-	'contextmenu','selectstart','dblclick',
+	'contextmenu','selectstart','dblclick','selectionchange',
 	'mousewheel','wheel','scroll',
 	'beforecopy','copy','beforepaste','paste','beforecut','cut',
 	'dragstart','drag','dragend','dragenter','dragover','dragleave','dragexit','drop',
@@ -1104,10 +1104,10 @@ Imba.EventManager.bind = function (name){
 Imba.EventManager.activate = function (){
 	var Imba_;
 	if (Imba.Events) { return Imba.Events };
+	Imba.Events = new Imba.EventManager(Imba.document(),{events: []});
 	if (false) {};
 	
 	Imba.POINTER || (Imba.POINTER = new Imba.Pointer());
-	Imba.Events = new Imba.EventManager(Imba.document(),{events: []});
 	
 	var hasTouchEvents = window && window.ontouchstart !== undefined;
 	
@@ -1234,8 +1234,10 @@ Imba.EventManager.prototype.onenable = function (){
 		this.root().addEventListener(item[0],item[1],item[2]);
 	};
 	
-	window.addEventListener('hashchange',Imba.commit);
-	window.addEventListener('popstate',Imba.commit);
+	if (true) {
+		window.addEventListener('hashchange',Imba.commit);
+		window.addEventListener('popstate',Imba.commit);
+	};
 	return this;
 };
 
@@ -1249,8 +1251,11 @@ Imba.EventManager.prototype.ondisable = function (){
 		this.root().removeEventListener(item[0],item[1],item[2]);
 	};
 	
-	window.removeEventListener('hashchange',Imba.commit);
-	window.removeEventListener('popstate',Imba.commit);
+	if (true) {
+		window.removeEventListener('hashchange',Imba.commit);
+		window.removeEventListener('popstate',Imba.commit);
+	};
+	
 	return this;
 };
 
@@ -1970,7 +1975,7 @@ Imba.Tag.prototype.log = function (){
 	return this;
 };
 
-Imba.Tag.prototype.css = function (key,val){
+Imba.Tag.prototype.css = function (key,val,mod){
 	if (key instanceof Object) {
 		for (let v, i = 0, keys = Object.keys(key), l = keys.length, k; i < l; i++){
 			k = keys[i];v = key[k];this.css(k,v);
@@ -1984,8 +1989,10 @@ Imba.Tag.prototype.css = function (key,val){
 		this.dom().style.removeProperty(name);
 	} else if (val == undefined && arguments.length == 1) {
 		return this.dom().style[name];
+	} else if (name.match(/^--/)) {
+		this.dom().style.setProperty(name,val);
 	} else {
-		if ((typeof val=='number'||val instanceof Number) && name.match(/width|height|left|right|top|bottom/)) {
+		if ((typeof val=='number'||val instanceof Number) && (name.match(/width|height|left|right|top|bottom/) || (mod && mod.px))) {
 			this.dom().style[name] = val + "px";
 		} else {
 			this.dom().style[name] = val;

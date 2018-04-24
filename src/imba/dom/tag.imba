@@ -725,7 +725,7 @@ class Imba.Tag
 		elif name.match(/^--/)
 			dom:style.setProperty(name,val)
 		else
-			if val isa Number and (name.match(/width|height|left|right|top|bottom/) or (mod and mod:px)
+			if val isa Number and (name.match(/width|height|left|right|top|bottom/) or (mod and mod:px))
 				dom:style[name] = val + "px"
 			else
 				dom:style[name] = val
