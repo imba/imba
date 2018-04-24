@@ -102,6 +102,9 @@ class CSSStyleDeclaration
 		
 	def removeProperty key
 		delete self[key]
+	
+	def setProperty name, value
+		self[name] = value
 		
 	def toString
 		var items = []

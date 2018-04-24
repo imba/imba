@@ -17,7 +17,7 @@ unless $webworker$
 	require './scheduler'
 	require './dom/index'
 
-if $web$ and activate
+if activate
 	Imba.EventManager.activate
 	
 if $node$

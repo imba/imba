@@ -5,7 +5,7 @@ var native = [
 	:keydown, :keyup, :keypress,
 	:textInput, :input, :change, :submit,
 	:focusin, :focusout, :focus, :blur,
-	:contextmenu, :selectstart, :dblclick,
+	:contextmenu, :selectstart, :dblclick,:selectionchange
 	:mousewheel, :wheel, :scroll,
 	:beforecopy, :copy, :beforepaste, :paste, :beforecut, :cut, 
 	:dragstart,:drag,:dragend, :dragenter,:dragover,:dragleave,:dragexit, :drop,
@@ -46,10 +46,10 @@ class Imba.EventManager
 
 	def self.activate
 		return Imba.Events if Imba.Events
-		return unless $web$
-
-		Imba.POINTER ||= Imba.Pointer.new
 		Imba.Events = Imba.EventManager.new(Imba.document, events: [])
+		return unless $web$
+		
+		Imba.POINTER ||= Imba.Pointer.new
 
 		var hasTouchEvents = window && window:ontouchstart !== undefined
 
@@ -169,9 +169,10 @@ class Imba.EventManager
 
 		for item in listeners
 			root.addEventListener(item[0],item[1],item[2])
-			
-		window.addEventListener('hashchange',Imba:commit)
-		window.addEventListener('popstate',Imba:commit)
+		
+		if $web$
+			window.addEventListener('hashchange',Imba:commit)
+			window.addEventListener('popstate',Imba:commit)
 		self
 
 	def ondisable
@@ -180,7 +181,9 @@ class Imba.EventManager
 
 		for item in listeners
 			root.removeEventListener(item[0],item[1],item[2])
+		
+		if $web$
+			window.removeEventListener('hashchange',Imba:commit)
+			window.removeEventListener('popstate',Imba:commit)
 
-		window.removeEventListener('hashchange',Imba:commit)
-		window.removeEventListener('popstate',Imba:commit)
 		self
