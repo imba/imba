@@ -711,7 +711,7 @@ class Imba.Tag
 		Function:prototype:call.apply(console:log, args)
 		self
 
-	def css key, val
+	def css key, val, mod
 		if key isa Object
 			css(k,v) for own k,v of key
 			return self
@@ -722,8 +722,10 @@ class Imba.Tag
 			dom:style.removeProperty(name)
 		elif val == undefined and arguments:length == 1
 			return dom:style[name]
+		elif name.match(/^--/)
+			dom:style.setProperty(name,val)
 		else
-			if val isa Number and name.match(/width|height|left|right|top|bottom/)
+			if val isa Number and (name.match(/width|height|left|right|top|bottom/) or (mod and mod:px)
 				dom:style[name] = val + "px"
 			else
 				dom:style[name] = val
