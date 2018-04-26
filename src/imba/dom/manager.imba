@@ -7,6 +7,7 @@ class Imba.TagManagerClass
 		@mounted = []
 		@mountables = 0
 		@unmountables = 0
+		@unmounting = 0
 		self
 
 	def mounted
@@ -68,23 +69,27 @@ class Imba.TagManagerClass
 			while el and el.@tag and !el.@tag:mount and !(el.@tag.FLAGS & Imba.TAG_MOUNTABLE)
 				el.@tag.FLAGS |= Imba.TAG_MOUNTABLE
 				el = el:parentNode
-
 		return
 
 	def tryUnmount
-		var count = 0
+		@unmounting++
+		
+		var unmount = []
 		var root = document:body
 		for item, i in @mounted
+			continue unless item
 			unless document:documentElement.contains(item.@dom)
+				unmount.push(item)				
+				@mounted[i] = null
+
+		@unmounting--
+		
+		if unmount:length
+			@mounted = @mounted.filter do |item| item and unmount.indexOf(item) == -1
+			for item in unmount
 				item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED
 				if item:unmount and item.@dom
 					item.unmount
 				elif item.@scheduler
-					# MAYBE FIX THIS?
 					item.unschedule
-				@mounted[i] = null
-				count++
-		
-		if count
-			@mounted = @mounted.filter do |item| item
 		self

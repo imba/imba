@@ -915,6 +915,7 @@ Imba.TagManagerClass = function TagManagerClass(){
 	this._mounted = [];
 	this._mountables = 0;
 	this._unmountables = 0;
+	this._unmounting = 0;
 	this;
 };
 
@@ -996,30 +997,36 @@ Imba.TagManagerClass.prototype.mountNode = function (node){
 			el = el.parentNode;
 		};
 	};
-	
 	return;
 };
 
 Imba.TagManagerClass.prototype.tryUnmount = function (){
-	var count = 0;
+	this._unmounting++;
+	
+	var unmount = [];
 	var root = document.body;
 	for (let i = 0, items = iter$(this._mounted), len = items.length, item; i < len; i++) {
 		item = items[i];
+		if (!item) { continue; };
 		if (!document.documentElement.contains(item._dom)) {
+			unmount.push(item);
+			this._mounted[i] = null;
+		};
+	};
+	
+	this._unmounting--;
+	
+	if (unmount.length) {
+		this._mounted = this._mounted.filter(function(item) { return item && unmount.indexOf(item) == -1; });
+		for (let i = 0, len = unmount.length, item; i < len; i++) {
+			item = unmount[i];
 			item.FLAGS = item.FLAGS & ~Imba.TAG_MOUNTED;
 			if (item.unmount && item._dom) {
 				item.unmount();
 			} else if (item._scheduler) {
-				// MAYBE FIX THIS?
 				item.unschedule();
 			};
-			this._mounted[i] = null;
-			count++;
 		};
-	};
-	
-	if (count) {
-		this._mounted = this._mounted.filter(function(item) { return item; });
 	};
 	return this;
 };
