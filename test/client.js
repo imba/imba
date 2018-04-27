@@ -76,7 +76,7 @@ module.exports = __webpack_require__(2);
 
 
 
-var Imba = {VERSION: '1.4.0-beta.1'};
+var Imba = {VERSION: '1.4.0'};
 
 
 
