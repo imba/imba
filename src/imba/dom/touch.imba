@@ -208,7 +208,6 @@ class Imba.Touch
 			var tap = Imba.Event.new(e)
 			tap.type = 'tap'
 			tap.process
-			e.preventDefault if tap.@responder	
 
 		if e and isCaptured
 			e.preventDefault
