@@ -3029,7 +3029,6 @@ Imba.Touch.prototype.touchend = function (e,t){
 		var tap = new Imba.Event(e);
 		tap.setType('tap');
 		tap.process();
-		if (tap._responder) { e.preventDefault() };
 	};
 	
 	if (e && this.isCaptured()) {

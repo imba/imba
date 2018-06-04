@@ -85,5 +85,3 @@ export class ImbaParseError < Error
 
 	def prettyMessage
 		var excerpt = self.excerpt
-		
-export class ImbaParseError < Error
