@@ -15,10 +15,10 @@ class Imba.TagManagerClass
 
 	def insert node, parent
 		@inserts++
-		if node and node:mount
-			unless node.FLAGS & Imba.TAG_MOUNTABLE
-				node.FLAGS |= Imba.TAG_MOUNTABLE
-				@mountables++
+		regMountable(node) if node and node:mount
+		# unless node.FLAGS & Imba.TAG_MOUNTABLE
+		# 	node.FLAGS |= Imba.TAG_MOUNTABLE
+		# 	@mountables++
 		return
 
 	def remove node, parent
@@ -47,6 +47,12 @@ class Imba.TagManagerClass
 
 	def unmount node
 		self
+	
+	def regMountable node
+		unless node.FLAGS & Imba.TAG_MOUNTABLE
+			node.FLAGS |= Imba.TAG_MOUNTABLE
+			@mountables++
+		
 
 	def tryMount
 		var count = 0
@@ -61,14 +67,16 @@ class Imba.TagManagerClass
 
 	def mountNode node
 		if @mounted.indexOf(node) == -1
+			regMountable(node)
 			@mounted.push(node)
+				
 			node.FLAGS |= Imba.TAG_MOUNTED
 			node.mount if node:mount
 			# Mark all parents as mountable for faster unmount
-			let el = node.dom:parentNode
-			while el and el.@tag and !el.@tag:mount and !(el.@tag.FLAGS & Imba.TAG_MOUNTABLE)
-				el.@tag.FLAGS |= Imba.TAG_MOUNTABLE
-				el = el:parentNode
+			# let el = node.dom:parentNode
+			# while el and el.@tag and !el.@tag:mount and !(el.@tag.FLAGS & Imba.TAG_MOUNTABLE)
+			# 	el.@tag.FLAGS |= Imba.TAG_MOUNTABLE
+			# 	el = el:parentNode
 		return
 
 	def tryUnmount
