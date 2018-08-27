@@ -925,12 +925,10 @@ Imba.TagManagerClass.prototype.mounted = function (){
 
 Imba.TagManagerClass.prototype.insert = function (node,parent){
 	this._inserts++;
-	if (node && node.mount) {
-		if (!(node.FLAGS & Imba.TAG_MOUNTABLE)) {
-			node.FLAGS |= Imba.TAG_MOUNTABLE;
-			this._mountables++;
-		};
-	};
+	if (node && node.mount) { this.regMountable(node) };
+	
+	
+	
 	return;
 };
 
@@ -969,6 +967,14 @@ Imba.TagManagerClass.prototype.unmount = function (node){
 	return this;
 };
 
+Imba.TagManagerClass.prototype.regMountable = function (node){
+	if (!(node.FLAGS & Imba.TAG_MOUNTABLE)) {
+		node.FLAGS |= Imba.TAG_MOUNTABLE;
+		return this._mountables++;
+	};
+};
+
+
 Imba.TagManagerClass.prototype.tryMount = function (){
 	var count = 0;
 	var root = document.body;
@@ -987,15 +993,16 @@ Imba.TagManagerClass.prototype.tryMount = function (){
 
 Imba.TagManagerClass.prototype.mountNode = function (node){
 	if (this._mounted.indexOf(node) == -1) {
+		this.regMountable(node);
 		this._mounted.push(node);
+		
 		node.FLAGS |= Imba.TAG_MOUNTED;
 		if (node.mount) { node.mount() };
 		
-		let el = node.dom().parentNode;
-		while (el && el._tag && !el._tag.mount && !(el._tag.FLAGS & Imba.TAG_MOUNTABLE)){
-			el._tag.FLAGS |= Imba.TAG_MOUNTABLE;
-			el = el.parentNode;
-		};
+		
+		
+		
+		
 	};
 	return;
 };
