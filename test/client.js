@@ -2612,7 +2612,10 @@ Imba.extendTag('input', function(tag){
 	tag.prototype.oninput = function (e){
 		let val = this._dom.value;
 		this._localValue = val;
-		if (this._data && !(this.lazy())) { return this._data.setFormValue(this.value(),this) };
+		if (this._data && !(this.lazy()) && this.type() != 'radio' && this.type() != 'checkbox') {
+			this._data.setFormValue(this.value(),this);
+		};
+		return;
 	};
 	
 	tag.prototype.onchange = function (e){

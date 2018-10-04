@@ -79,7 +79,9 @@ extend tag input
 	def oninput e
 		let val = @dom:value
 		@localValue = val
-		@data.setFormValue(value,self) if @data and !lazy
+		if @data and !lazy and type != 'radio' and type != 'checkbox'
+			@data.setFormValue(value,self)
+		return
 
 	def onchange e
 		@modelValue = @localValue = undefined
