@@ -406,7 +406,7 @@ extend tag element
 	def setText text
 		if text != @tree_
 			var val = text === null or text === false ? '' : text
-			(@text_ or @dom):textContent = val
+			(@text_ or @dom):textContent = val if (@text_ or @dom):outerHTML != undefined
 			@text_ ||= @dom:firstChild
 			@tree_ = text
 		self
