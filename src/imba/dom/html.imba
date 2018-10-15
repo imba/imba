@@ -88,13 +88,13 @@ extend tag input
 		return unless data
 		
 		if type == 'radio' or type == 'checkbox'
-			let checked = @dom:checked
+			let checked = self.checked
 			let mval = @data.getFormValue(self)
 			let dval = @value != undefined ? @value : value
 
 			if type == 'radio'
 				@data.setFormValue(dval,self)
-			elif dom:value == 'on'
+			elif dom:value == 'on' or dom:value == undefined
 				@data.setFormValue(!!checked,self)
 			elif isArray(mval)
 				let idx = mval.indexOf(dval)
@@ -123,12 +123,12 @@ extend tag input
 			let dval = @value
 			let checked = if isArray(mval)
 				mval.indexOf(dval) >= 0
-			elif dom:value == 'on'
+			elif dom:value == 'on' or dom:value == undefined
 				!!mval
 			else
 				mval == @value
 
-			@dom:checked = checked
+			self.checked = checked
 		else
 			@dom:value = mval
 		self
