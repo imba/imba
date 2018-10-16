@@ -28,7 +28,7 @@ For questions and support please use our [community chat](https://gitter.im/some
 Get **[Node.js](http://nodejs.org)** and **[npm](http://npmjs.org)**, or **[Yarn](http://yarnpkg.org)**, then:
 
 - `npm install -g imba`
-- `yarn add --global imba`
+- `yarn add global imba`
 
 ## Usage
 
