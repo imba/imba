@@ -2084,36 +2084,45 @@ Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blo
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ");
 
 Imba.HTML_ATTRS = {
-	a: "href target hreflang media download rel type",
+	a: "href target hreflang media download rel type ping referrerpolicy",
+	audio: "autoplay controls crossorigin loop muted preload src",
+	area: "alt coords download href hreflang ping referrerpolicy rel shape target",
+	base: "href target",
+	video: "autoplay buffered controls crossorigin height loop muted preload poster src width playsinline",
+	fieldset: "disabled form name",
 	form: "method action enctype autocomplete target",
-	button: "autofocus type",
+	button: "autofocus type form formaction formenctype formmethod formnovalidate formtarget value name",
+	embed: "height src type width",
 	input: "accept disabled form list max maxlength min minlength pattern required size step type",
 	label: "accesskey for form",
-	img: "src srcset",
+	img: "alt src srcset crossorigin decoding height importance intrinsicsize ismap referrerpolicy sizes width usemap",
 	link: "rel type href media",
-	iframe: "referrerpolicy src srcdoc sandbox",
+	iframe: "allow allowfullscreen allowpaymentrequest height importance name referrerpolicy sandbox src srcdoc width",
 	meta: "property content charset desc",
+	map: "name",
 	optgroup: "label",
 	option: "label",
 	output: "for form",
 	object: "type data width height",
-	param: "name value",
+	param: "name type value valuetype",
 	progress: "max",
-	script: "src type async defer crossorigin integrity nonce language",
+	script: "src type async defer crossorigin integrity nonce language nomodule",
 	select: "size form multiple",
-	textarea: "rows cols minlength maxlength",
-	td: "colspan rowspan",
+	source: "sizes src srcset type media",
+	textarea: "rows cols minlength maxlength form wrap",
+	track: "default kind label src srclang",
+	td: "colspan rowspan headers",
 	th: "colspan rowspan"
 };
 
 
 Imba.HTML_PROPS = {
-	input: "autofocus autocomplete autocorrect value placeholder required disabled multiple checked readOnly",
-	textarea: "autofocus autocomplete autocorrect value placeholder required disabled multiple checked readOnly",
+	input: "autofocus autocomplete autocapitalize autocorrect value placeholder required disabled multiple checked readOnly spellcheck",
+	textarea: "autofocus autocomplete autocapitalize autocorrect value placeholder required disabled multiple checked readOnly spellcheck",
 	form: "novalidate",
 	fieldset: "disabled",
 	button: "disabled",
-	select: "autofocus disabled required",
+	select: "autofocus disabled required readOnly multiple",
 	option: "disabled selected value",
 	optgroup: "disabled",
 	progress: "value",
@@ -2623,13 +2632,13 @@ Imba.extendTag('input', function(tag){
 		if (!(this.data())) { return };
 		
 		if (this.type() == 'radio' || this.type() == 'checkbox') {
-			let checked = this._dom.checked;
+			let checked = this.checked();
 			let mval = this._data.getFormValue(this);
 			let dval = (this._value != undefined) ? this._value : this.value();
 			
 			if (this.type() == 'radio') {
 				return this._data.setFormValue(dval,this);
-			} else if (this.dom().value == 'on') {
+			} else if (this.dom().value == 'on' || this.dom().value == undefined) {
 				return this._data.setFormValue(!!checked,this);
 			} else if (isArray(mval)) {
 				let idx = mval.indexOf(dval);
@@ -2664,13 +2673,13 @@ Imba.extendTag('input', function(tag){
 			let dval = this._value;
 			let checked = isArray(mval) ? (
 				mval.indexOf(dval) >= 0
-			) : ((this.dom().value == 'on') ? (
+			) : ((this.dom().value == 'on' || this.dom().value == undefined) ? (
 				!!mval
 			) : (
 				mval == this._value
 			));
 			
-			this._dom.checked = checked;
+			this.setChecked(checked);
 		} else {
 			this._dom.value = mval;
 		};
