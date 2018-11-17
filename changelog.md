@@ -1,5 +1,4 @@
-## 1.3.4-beta.1
-* Deprecate cross-scope calling of root 'def' functions
+## 1.4.0
 * Introduce new root scope per file for more consistent self
 * Fix export const
 * Add `<input number=bool>` for numeric inputs
@@ -7,6 +6,7 @@
 * Print out compiler warnings in imbac and webpack loader
 * Pass through stdio configuration from imbapack to webpack
 * Don't include comments by default in webpack loader
+* Disallow cross-scope calling of root 'def' functions (breaking change)
 
 ## 1.3.3
 * Don't silence input events for form elements
