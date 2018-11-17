@@ -12,7 +12,7 @@ extend tag canvas
 	def context type = '2d'
 		dom.getContext(type)
 
-class DataProxy	
+class DataProxy
 	def self.bind receiver, data, path, args
 		let proxy = receiver.@data ||= self.new(receiver,path,args)
 		proxy.bind(data,path,args)
