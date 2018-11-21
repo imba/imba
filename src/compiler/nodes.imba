@@ -3473,9 +3473,9 @@ export class Op < Node
 		elif @op == 'or'
 			@op = '||'
 		elif @op == 'is'
-			@op = '=='
+			@op = '==='
 		elif @op == 'isnt'
-			@op = '!='
+			@op = '!=='
 		
 			
 		@left = l
