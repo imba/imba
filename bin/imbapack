@@ -75,9 +75,7 @@ if(require.main !== module){
 		r.alias.imba = dir
 
 		if(obj.loader && obj.loader.imba) {
-			console.log("using loader.imba to pass options is deprecated");
 			imbaLoader.options = Object.assign(imbaLoader.options || {}, obj.loader.imba);
-			console.log(imbaLoader.options);
 			delete obj.loader.imba;
 			if(Object.keys(obj.loader).length == 0){
 				delete obj.loader;
