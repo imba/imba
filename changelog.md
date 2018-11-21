@@ -1,3 +1,6 @@
+## 1.4.1-beta
+* Make Imba.setInterval automatically commit on each interval
+
 ## 1.4.0
 * Introduce new root scope per file for more consistent self
 * Fix export const
