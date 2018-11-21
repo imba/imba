@@ -90,7 +90,10 @@ Imba.setTimeout = function (delay,block){
 
 
 Imba.setInterval = function (interval,block){
-	return setInterval(block,interval);
+	return setInterval(function() {
+		block();
+		return Imba.commit();
+	},interval);
 };
 
 
@@ -5880,7 +5883,7 @@ describe('Syntax - Arrays',function() {
 	
 	test("trailing commas",function() {
 		var ary = [1,2,3];
-		ok((ary[0] == 1) && (ary[2] == 3) && (ary.length == 3));
+		ok((ary[0] === 1) && (ary[2] === 3) && (ary.length === 3));
 		
 		return ary = [
 			1,2,3,
@@ -5908,8 +5911,8 @@ describe('Syntax - Arrays',function() {
 			'b',
 			{c: 1}
 		];
-		ok(ary.length == 3);
-		ok(ary[2].c == 1);
+		ok(ary.length === 3);
+		ok(ary[2].c === 1);
 		
 		ary = [{b: 1,a: 2},100];
 		eq(ary[1],100);

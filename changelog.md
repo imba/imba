@@ -1,7 +1,8 @@
-## 1.4.1-beta
+## 1.4.1
 * Make Imba.setInterval automatically commit on each interval
 * Compile is to === (instead of ==)
 * Compile isnt to !== (instead of !=)
+* Require Node >=8.0.0
 
 ## 1.4.0
 * Introduce new root scope per file for more consistent self

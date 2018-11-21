@@ -44,7 +44,7 @@
     "test-chrome": "bin/imba test/run-chrome.imba"
   },
   "bugs": "https://github.com/somebee/imba/issues",
-  "version": "1.4.1-beta",
+  "version": "1.4.1",
   "licenses": [
     {
       "type": "MIT",
@@ -52,7 +52,7 @@
     }
   ],
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=8.0.0"
   },
   "directories": {},
   "main": "./index",
