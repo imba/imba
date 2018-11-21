@@ -2,7 +2,7 @@
 
 var path = require('path');
 var fs = require('fs');
-var dir = path.join(path.dirname(fs.realpathSync(__filename)), '../');
+var dir = path.join(path.dirname(fs.realpathSync(__filename)), '..',path.sep);
 
 var enableDebugLog = false;
 
@@ -13,7 +13,7 @@ if(require.main !== module){
 		"loader": dir + "loader.js"
 	}
 
-	var webpack = require(path.join(require.main.filename, '../..'));
+	var webpack = require(path.join(require.main.filename, '..','..'));
 	var WebpackOptionsDefaulter = webpack.WebpackOptionsDefaulter;
 	var options = {};
 	var defaulter = new WebpackOptionsDefaulter;
