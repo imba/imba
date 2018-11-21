@@ -7779,6 +7779,8 @@ export class RootScope < Scope
 		register 'clearTimeout', self, type: 'global'
 		register 'clearInterval', self, type: 'global'
 		register 'clearImmediate', self, type: 'global'
+		register 'isNaN', self, type: 'global'
+		register 'isFinite', self, type: 'global'
 		register '__dirname', self, type: 'global'
 		register '__filename', self, type: 'global'
 		register '_', self, type: 'global'
