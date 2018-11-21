@@ -1,4 +1,5 @@
 .DS_Store
+.cache
 /node_modules
 tmp
 test/perf
@@ -7,4 +8,5 @@ npm-debug.log
 dist/imba.edge.*
 /determinator.json
 test/webpack/js/**/*.js
+test/attic
 *.tmp.js
