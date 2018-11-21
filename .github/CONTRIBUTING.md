@@ -64,7 +64,7 @@ by discussion, compromise on the proposed change, or withdrawal of the proposed 
 
 If a contribution is controversial and committers cannot agree about how to get it to land
 or if it should land then it should be escalated to any of the Project Maintainers, 
-[@somebee](https://github.com/refinedblessing) , [@erikguntner](https://github.com/erikguntner).
+[@somebee](https://github.com/somebee/) .
 
 Project Maintainers should regularly discuss pending contributions in order to find a resolution. It is expected that only a
 small minority of issues be brought to the Project Maintainers for resolution and that discussion and compromise among 
