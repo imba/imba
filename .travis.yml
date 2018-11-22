@@ -4,7 +4,6 @@ node_js:
   - "node"
   - "10"
   - "8"
-  - "6"
 
 env:
   - NPM_SCRIPT=test
