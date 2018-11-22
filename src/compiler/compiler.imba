@@ -55,7 +55,6 @@ export def parse code, o = {}
 		err:_filename = o:filename if o:filename
 		throw err
 
-
 export def compile code, o = {}
 	try
 		# check if code is completely blank
@@ -64,7 +63,6 @@ export def compile code, o = {}
 				js: "",
 				toString: do this:js
 			}
-		
 		var tokens = tokenize(code, o)
 		var ast = parse(tokens, o)
 		return ast.compile(o)
@@ -80,6 +78,9 @@ export def compile code, o = {}
 				console.log "   " + "in file {err:_filename}"
 				console.log err:stack if err:stack	
 			# console.log "error during compile",o:filename
+		else
+			console.log "error compiling {o:filename}"
+
 		throw err
 
 export def analyze code, o = {}

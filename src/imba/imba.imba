@@ -24,7 +24,9 @@ after every interval to let schedulers update (to rerender etc) afterwards.
 
 ###
 def Imba.setInterval interval, &block
-	setInterval(block,interval)
+	setInterval(&,interval) do
+		block()
+		Imba.commit
 
 ###
 Clear interval with specified id

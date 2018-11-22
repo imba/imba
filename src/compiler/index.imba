@@ -21,10 +21,9 @@ export def analyze code, o = {}
 	compiler.analyze(code,o)
 
 export def run code, filename: null
-	# console.log 'run code via run in index',filename
 	var main = require:main
 	main:filename = process:argv[1] = (filename ? fs.realpathSync(filename) : '.')
-	main:moduleCache &&= {} # removing all cache?!?
+	main:moduleCache &&= {}
 
 	var Module = require('module').Module
 	main:paths = Module._nodeModulePaths(path.dirname(filename))
@@ -39,6 +38,8 @@ export def run code, filename: null
 
 if require:extensions
 	require:extensions['.imba'] = do |mod, filename|
+		var options = {filename: filename, target: 'node'}
+		
 		var body = fs.readFileSync(filename, 'utf8')
-		var content = compiler.compile(body, filename: filename, target: 'node')
+		var content = compile(body, options)
 		return mod._compile (content:js), filename
