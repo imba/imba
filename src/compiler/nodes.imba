@@ -6212,8 +6212,10 @@ export class TagModifier < TagPart
 		self
 		
 	def js
-		if params
+		if params and params.count > 0
 			"[{quoted},{params.c}]"
+		elif params
+			"[{quoted}]"
 		else
 			quoted
 
@@ -6275,7 +6277,7 @@ export class TagHandler < TagPart
 	def add item, type
 		if type == TagArgList
 			# could be dynamic
-			@last.params = item
+			@last.params = item or ListNode.new([])
 			# unless @last.isPrimitive
 			# 	@dyn ||= []
 			# 	@dyn.push(@chain:length)
@@ -6302,6 +6304,7 @@ export class TagHandler < TagPart
 		# 	@dyn ||= []
 		# 	@dyn.push(parts:length)
 		# find the context
+
 		return "on$({slot},[{AST.cary(parts)}],{scope__.context.c})"
 
 		#		let dl = @dyn and @dyn:length

@@ -320,7 +320,7 @@ var grammar =
 		o 'TagOptions . { Expression }' do A1.addPart(A4,AST.TagFlagExpr)
 		o 'TagOptions @ { Expression }' do A1.set(key: A4)
 		o 'TagOptions # { Expression }' do A1.set(id: A4) # need to add info about the tokens
-		o 'TagOptions ( )' do A1
+		o 'TagOptions ( )' do A1.addPart(null,AST.TagArgList)
 		o 'TagOptions ( ArgList )' do A1.addPart(A3,AST.TagArgList)
 		o 'TagOptions [ ArgList ]' do A1.addPart(A3,AST.TagData)
 		o 'TagOptions TAG_WS' do A1.addPart(A2,AST.TagSep)

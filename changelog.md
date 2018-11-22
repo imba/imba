@@ -1,3 +1,6 @@
+## In development
+* Respect empty parens in event handlers (`<div :tap.someMethod()>`)
+
 ## 1.4.1
 * Make Imba.setInterval automatically commit on each interval
 * Compile is to === (instead of ==)

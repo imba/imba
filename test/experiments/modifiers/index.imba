@@ -1,6 +1,6 @@
 # <div ->
-<.only[objvar]>
-<.only[objvar] :tap.test()>
+# <.only[objvar]>
+# <.only[objvar] :tap.test()>
 
 var v = "hello"
 
@@ -78,7 +78,7 @@ if false # test
 tag App
 	
 	def myMethod a,b
-		console.log "App#myMethod {dom:className}",a,b
+		console.log "App#myMethod {dom:className}",*arguments
 		
 	def ontap
 		console.log "App#ontap"
@@ -91,6 +91,7 @@ var fn = do yes
 
 Imba.mount <App ->
 	<button :tap.stop.myMethod> "myMethod"
+	<button :tap.myMethod()> "myMethod()"
 	<button :tap.myMethod(10)> "myMethod(10)"
 	<button :tap.myMethod(10,20)> "myMethod(10,20)"
 	<button :tap.alt.myMethod(10)> "alt.myMethod(10)"
