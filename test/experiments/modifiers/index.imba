@@ -78,7 +78,7 @@ if false # test
 tag App
 	
 	def myMethod a,b
-		console.log "App#myMethod {dom:className}",*arguments
+		console.log "App#myMethod {dom:className}",[].concat(*arguments)
 		
 	def ontap
 		console.log "App#ontap"
@@ -94,6 +94,8 @@ Imba.mount <App ->
 	<button :tap.myMethod()> "myMethod()"
 	<button :tap.myMethod(10)> "myMethod(10)"
 	<button :tap.myMethod(10,20)> "myMethod(10,20)"
+	<button :tap.myMethod(10,$event)> "myMethod(10,$event)"
+	<button[100] :tap.myMethod(10,$event,$data)> "myMethod(10,$event,$data)"
 	<button :tap.alt.myMethod(10)> "alt.myMethod(10)"
 	<button :tap.alt.myMethod(10,data)> "alt.myMethod(10,data)"
 	<button :tap.alt=fn> "alt.myMethod(10)"

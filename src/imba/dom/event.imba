@@ -163,9 +163,11 @@ class Imba.Event
 			let handler = handlers[i++]
 			let params  = null
 			let context = node
+			let checkSpecial = false
 			
 			if handler isa Array
 				params = handler.slice(1)
+				checkSpecial = yes
 				handler = handler[0]
 			
 			if typeof handler == 'string'
@@ -212,6 +214,21 @@ class Imba.Event
 			if handler isa Function
 				# what if we actually call stop inside function?
 				# do we still want to continue the chain?
+
+				# loop through special variables from params?
+
+				if checkSpecial
+					# replacing special params
+					for param,i in params
+						if typeof param == 'string' && param[0] == '~' && param[1] == '$'
+							let name = param.slice(2)
+							if name == 'event'
+								params[i] = self
+							elif node[name] isa Function
+								params[i] = node[name]()
+							else
+								console.warn("Missing special handler ${name}")
+
 				let res = handler.apply(context,params or [self])
 
 				if !isMod

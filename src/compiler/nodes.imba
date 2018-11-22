@@ -6200,6 +6200,13 @@ export class TagAttrValue < TagPart
 
 	def js
 		value.c
+
+export class TagHandlerSpecialArg < ValueNode
+	def isPrimitive
+		yes
+
+	def c
+		"'~{value}'"
 	
 export class TagModifier < TagPart	
 	prop params
@@ -6209,6 +6216,11 @@ export class TagModifier < TagPart
 			
 	def visit
 		@params.traverse if @params
+
+		for param in @params when param isa VarOrAccess
+			if param.value isa GlobalVarAccess
+				let special = TagHandlerSpecialArg.new(param.value.c)
+				@params.swap(param,special)
 		self
 		
 	def js

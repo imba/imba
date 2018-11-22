@@ -1,5 +1,6 @@
 ## In development
 * Respect empty parens in event handlers (`<div :tap.someMethod()>`)
+* Allow special variables in event handlers (`<div :tap.someMethod($event,$data)>`)
 
 ## 1.4.1
 * Make Imba.setInterval automatically commit on each interval
