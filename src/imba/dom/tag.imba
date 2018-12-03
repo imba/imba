@@ -9,6 +9,9 @@ Imba.TAG_MOUNTED = 8
 Imba.TAG_SCHEDULED = 16
 Imba.TAG_AWAKENED = 32
 Imba.TAG_MOUNTABLE = 64
+Imba.TAG_AUTOCLASS_GLOBALS = yes
+Imba.TAG_AUTOCLASS_LOCALS = yes
+Imba.TAG_AUTOCLASS_SVG = yes
 
 ###
 Get the current document
@@ -788,8 +791,11 @@ class Imba.SVGTag < Imba.Tag
 			child.@classes = []
 		else
 			child.@nodeType = @nodeType
-			var className = "_" + child.@name.replace(/_/g, '-')
-			child.@classes = (@classes or []).concat(className)
+			var classes = (@classes or []).slice(0)
+			if Imba.TAG_AUTOCLASS_SVG
+				classes.push("_" + child.@name.replace(/_/g, '-'))
+			child.@classes = classes
+
 
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 Imba.HTML_TAGS_UNSAFE = "article aside header section".split(" ")
@@ -908,9 +914,11 @@ class Imba.Tags
 			Imba.SINGLETONS[name.slice(1)] = tagtype
 			self[name] = tagtype
 		elif name[0] == name[0].toUpperCase
-			tagtype.@flagName = name
+			if Imba.TAG_AUTOCLASS_LOCALS
+				tagtype.@flagName = name
 		else
-			tagtype.@flagName = "_" + fullName.replace(/[_\:]/g, '-')
+			if Imba.TAG_AUTOCLASS_GLOBALS
+				tagtype.@flagName = "_" + fullName.replace(/[_\:]/g, '-')
 			self[fullName] = tagtype
 
 		extender(tagtype,supertype)
