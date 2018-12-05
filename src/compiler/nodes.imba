@@ -6185,6 +6185,8 @@ export class TagAttr < TagPart
 			"setNestedAttr('{ns}','{key}',{val}{add})"
 		elif key.indexOf("data-") == 0
 			"dataset('{key.slice(5)}',{val})"
+		elif key.indexOf("aria-") == 0
+			"set({quoted},{val}{add})"
 		elif dyn
 			"set({quoted},{val}{add})"
 		else

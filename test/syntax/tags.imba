@@ -38,6 +38,7 @@ describe 'Syntax - Tags' do
 		jseq "setDisabled('disabled')" do <input disabled>
 		jseq "setDisabled('disabled').setReadonly('readonly')" do <input disabled readonly>
 		jseq "set('model',strvar,\{number:1\})" do <div model.number=strvar>
+		jseq "set('aria-hidden','true')" do <div aria-hidden='true'>
 		
 	# events
 	test 'events' do
