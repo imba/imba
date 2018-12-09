@@ -1,4 +1,4 @@
-!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports.imba=e():t.Imba=e()}("undefined"!=typeof self?self:this,function(){return function(t){var e={}
+!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports.imba=e():t.Imba=e()}(this,function(){return function(t){var e={}
 function n(r){if(e[r])return e[r].exports
 var i=e[r]={i:r,l:!1,exports:{}}
 return t[r].call(i.exports,i,i.exports,n),i.l=!0,i.exports}return n.m=t,n.c=e,n.d=function(t,e,r){n.o(t,e)||Object.defineProperty(t,e,{configurable:!1,enumerable:!0,get:r})},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t}
