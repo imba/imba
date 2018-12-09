@@ -79,7 +79,6 @@ class Imba.Event
 
 	def bubble= v
 		@bubble = v
-		return self
 
 	###
 	Prevents further propagation of the current event.
