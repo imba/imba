@@ -6019,7 +6019,7 @@ export class Splat < ValueNode
 	def js o
 		var par = stack.parent
 		if par isa ArgList or par isa Arr
-			"[].slice.call({value.c})"
+			"Array.from({value.c})"
 		else
 			p "what is the parent? {par}"
 			"SPLAT"
