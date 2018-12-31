@@ -307,6 +307,7 @@ var grammar =
 		o 'Self' do A1
 		o 'IDENTIFIER' do TagTypeIdentifier.new(A1)
 		o 'TAG_TYPE' do TagTypeIdentifier.new(A1)
+		o 'TAG_SLOT' do TagSlot.new(A1)
 		o '' do TagTypeIdentifier.new('div')
 	]
 

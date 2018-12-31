@@ -287,6 +287,21 @@ class Imba.Tag
 		self
 
 	###
+	Override this to provide special wrapping for the slot
+	@return {self}
+	###
+	def setSlot	nodes
+		@slotForChild_ = nodes
+		self
+
+	###
+	To call child components that has beend set with setSlot
+	@return @slotForChild_
+	###
+	def child
+		@slotForChild_
+
+	###
 	Set the children of node. type param is optional,
 	and should only be used by Imba when compiling tag trees. 
 	@return {self}

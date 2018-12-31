@@ -88,10 +88,11 @@ var OBJECT_KEY = /// ^
 ///
 
 var TAG = /// ^
-	(\<|%)(?=[A-Za-z\#\.\{\@\>])
+	(\<|%|\<\!|%\!)(?=[A-Za-z\#\.\{\@\>])
 ///
 
-var TAG_TYPE = /^(\w[\w\d]*:)?(\w[\w\d]*)(-[\w\d]+)*/
+var TAG_TYPE = /^(?:!|)(\w[\w\d]*:)?(\w[\w\d]*)(-[\w\d]+)*/
+
 var TAG_ID = /^#((\w[\w\d]*)(-[\w\d]+)*)/
 var TAG_PART = /^[\:\.\#]?([A-Za-z\_][\w\-]*)(\:[A-Za-z\_][\w\-]*)?/
 var TAG_ATTR = /^([\.\:]?[\w\_]+([\-\:\.][\w]+)*)(\s)*\=(?!\>)/
@@ -543,15 +544,20 @@ export class Lexer
 
 	def tagToken
 		return 0 unless var match = TAG.exec(@chunk)
-		var [input, type, identifier] = match
-
+		var [input, types, identifier] = match
+		var type = types[1][0]
+		var slotSym = type[1][1]
 		if type == '<'
 			token('TAG_START', '<',1)
 			pushEnd(INVERSES['TAG_START'])
 
 			if match = TAG_TYPE.exec(@chunk.substr(1,40))
 				# special case should probably be handled in AST
-				if match[0] != 'self'
+				if slotSym === '!'
+					token('TAG_SLOT',match[2],match[2]:length,1)
+					return input:length + match[2]:length
+
+				if match[0] != 'self' && match[0][0] !== '!'
 					token('TAG_TYPE',match[0],match[0]:length,1)
 					return input:length + match[0]:length
 

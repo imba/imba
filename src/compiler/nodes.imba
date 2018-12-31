@@ -4964,6 +4964,13 @@ export class TagTypeIdentifier < Identifier
 	def string
 		value
 
+# Make sure Custom Tag is different with Normal Tag
+export class TagSlot < TagTypeIdentifier
+
+	def initialize value
+		@token = value
+		@value = load(value)
+		self
 
 export class Argvar < ValueNode
 
@@ -6387,6 +6394,9 @@ export class Tag < Node
 	def parent
 		@options:par
 		
+	def isSlot
+		type isa TagSlot
+		
 	def isSelf
 		type isa Self or type isa This
 		
@@ -6562,7 +6572,7 @@ export class Tag < Node
 		
 		var parent = o:par # self.parent
 		var content = o:body
-		var bodySetter = isSelf ? "setChildren" : "setContent"
+		var bodySetter = isSelf ? "setChildren" : isSlot ? "setSlot" : "setContent"
 		
 		let contentType = 0
 		let parentType = parent and parent.option(:treeType)
@@ -6686,6 +6696,8 @@ export class Tag < Node
 				body = "{k}.$ = {k}.$ || {body}"
 
 			if bodySetter == 'setChildren' or bodySetter == 'setContent'
+				target.push ".{bodySetter}({body},{contentType})"
+			elif bodySetter == 'setSlot'
 				target.push ".{bodySetter}({body},{contentType})"
 			elif bodySetter == 'setText'
 				let typ = content isa Str ? statics : calls

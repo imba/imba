@@ -24,6 +24,11 @@ describe 'Syntax - Tags' do
 	test 'id' do
 		jseq "setId('one')" do <div#one>
 
+	test 'slot' do
+		jseq "setSlot" do 
+			<!Custom>
+				<div>
+
 	test 'flags' do
 		jseq "flag('only')" do <.only>
 		jseq "flag('two')" do <div.two>
