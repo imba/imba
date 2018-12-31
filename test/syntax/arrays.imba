@@ -56,6 +56,11 @@ describe 'Syntax - Arrays' do
 		list = [1, 2, *a]
 		eq list, [1, 2, [nonce]]
 
+	test "splats and array-like objects" do
+		var set = Set.new([2, 3])
+		var ary = [1, *set, 4]
+		eq ary, [1, 2, 3, 4]
+
 	test "special #len method" do
 		var a = [1,2,3]
 		eq a:length, 3
