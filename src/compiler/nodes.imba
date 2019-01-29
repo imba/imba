@@ -323,6 +323,7 @@ export class Stack
 		@es6 = null
 		@es5 = null
 		@optlevel = null
+		@tag = null
 
 		if NODE_MAJOR_VERSION and NODE_MAJOR_VERSION < 5
 			@es5 = true
