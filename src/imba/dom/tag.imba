@@ -616,7 +616,11 @@ class Imba.Tag
 	def setFlag name, value
 		let flags = @namedFlags_ ||= {}
 		let prev = flags[name]
-		if prev != value
+		if value isa Array
+			setFlag --name, key for key in value
+		else if value isa Object
+			setFlag --name, key for key, val of value when val
+		else if prev != value
 			unflag(prev) if prev
 			flag(value) if value
 			flags[name] = value
