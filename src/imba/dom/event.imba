@@ -26,7 +26,10 @@ def el.rightModifier e do e.button != undefined ? (e.button === 2) : el.keyModif
 def el.middleModifier e do e.button != undefined ? (e.button === 1) : true
 	
 def el.getHandler str, event
-	return self if self[str]
+	if self[str]
+		return self
+	if @owner_ and @owner_:getHandler
+		return @owner_.getHandler(str,event)
 
 ###
 Imba handles all events in the dom through a single manager,
