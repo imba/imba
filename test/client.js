@@ -76,7 +76,7 @@ module.exports = __webpack_require__(2);
 
 
 
-var Imba = {VERSION: '1.4.0'};
+var Imba = {VERSION: '1.4.2'};
 
 
 
@@ -3390,7 +3390,12 @@ el.middleModifier = function (e){
 };
 
 el.getHandler = function (str,event){
-	if (this[str]) { return this };
+	if (this[str]) {
+		return this;
+	};
+	if (this._owner_ && this._owner_.getHandler) {
+		return this._owner_.getHandler(str,event);
+	};
 };
 
 

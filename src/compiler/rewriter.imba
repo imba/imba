@@ -234,6 +234,8 @@ export class Rewriter
 		self
 
 	def reset
+		@starter = null
+		@len = 0
 		self
 	
 	def tokens

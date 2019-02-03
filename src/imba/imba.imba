@@ -2,7 +2,7 @@
 Imba is the namespace for all runtime related utilities
 @namespace
 ###
-var Imba = {VERSION: '1.4.0'}
+var Imba = {VERSION: '1.4.2'}
 
 ###
 
