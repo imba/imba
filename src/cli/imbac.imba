@@ -201,7 +201,7 @@ class CLI
 			present(JSON.stringify(out))
 
 	def tokenize
-		# should prettyprint tikens
+		# should prettyprint tokens
 		traverse do |src|
 			var o2 = Object.create(o)
 			o2:filename = src:filename
