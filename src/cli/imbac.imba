@@ -245,7 +245,7 @@ class CLI
 		var out = {}
 		var t = Date.now
 		var at = Date.new.toTimeString.substr(0,8)
-		var srcp = path.relative(process.cwd,src:sourcePath)
+		var srcp = o:stdio ? src:filename : path.relative(process.cwd,src:sourcePath)
 		var dstp = src:targetPath and path.relative(process.cwd,src:targetPath)
 
 		try
@@ -342,7 +342,7 @@ export def run
 
 	if o:version
 		console.log package:version
-	elif !o:main or o:help
+	elif !(o:main or o:stdio) or o:help
 		console.log help
 	else
 		CLI.new(o).run
