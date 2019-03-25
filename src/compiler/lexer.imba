@@ -124,6 +124,7 @@ var OPERATOR = /// ^ (
 	 | ->
 	 | =>
 	 | !==
+	 | \*\*=?            # exponentation
 	 | [-+*/%<>&|^!?=]=  # compound assign / compare
 	 | =<
 	 | >>>=?             # zero-fill right shift
@@ -189,7 +190,7 @@ var ENV_FLAG = /^\$\w+\$/
 var ARGVAR = /^\$\d$/
 
 # Compound assignment tokens.
-var COMPOUND_ASSIGN = [ '-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=', '>>=', '>>>=', '&=', '^=', '|=','=<']
+var COMPOUND_ASSIGN = [ '-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=', '>>=', '>>>=', '&=', '^=', '|=', '=<', '**=']
 
 # Unary tokens.
 var UNARY = ['!', '~', 'NEW', 'TYPEOF', 'DELETE']
@@ -227,7 +228,7 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 # of a function invocation or indexing operation.
 # really?!
 
-var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
+var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
 var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN']
@@ -1627,6 +1628,8 @@ export class Lexer
 			tokid = 'SQRT'
 		elif value == 'ƒ'
 			tokid = 'DO'
+		elif value == '**'
+			tokid = 'EXP'
 		elif value in MATH
 			tokid = 'MATH'
 		elif value in COMPARE

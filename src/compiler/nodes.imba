@@ -39,7 +39,7 @@ export var OP = do |op, l, r|
 
 		when '?=','||=','&&='
 			ConditionalAssign.new(op,l,r)
-		when '+=','-=','*=','/=','^=','%='
+		when '+=','-=','*=','/=','^=','%=','**='
 			CompoundAssign.new(op,l,r)
 
 		when '?.'

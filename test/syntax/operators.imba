@@ -116,6 +116,9 @@ describe 'Syntax - Operators' do
 		a = 10 unless true or true
 		eq a, 0
 
+		eq 4**3**2, 262144
+		eq 5*4**3**2*6, 7864320
+
 	test "ternary" do
 		var x = 0 or 1 ? true : false
 		eq x, true
