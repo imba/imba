@@ -15,9 +15,8 @@ if(require.main !== module){
 
 	var webpack = require(path.join(require.main.filename, '..','..'));
 	var WebpackOptionsDefaulter = webpack.WebpackOptionsDefaulter;
-	var options = {};
 	var defaulter = new WebpackOptionsDefaulter;
-	defaulter.process(options);
+	var options = defaulter.process({});
 
 	var conf = {
 		module: {
