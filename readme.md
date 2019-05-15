@@ -3,7 +3,7 @@
 
 # Imba
 
-[![Join the chat at https://gitter.im/somebee/imba](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/somebee/imba?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Knowledge Base & New Chat](https://img.shields.io/badge/knowledgebase_and_chat-spectrum-blueviolet.svg)](https://spectrum.chat/imba) [![Join the chat at https://gitter.im/somebee/imba](https://img.shields.io/badge/old_chat-gitter-fb0061.svg)](https://gitter.im/imba/Lobby) 
 
 *if ruby and react had an indentation-based child, what would it look like?*
 Imba is a new programming language for the web that compiles
