@@ -924,6 +924,7 @@ var grammar =
 		o 'Expression +  Expression' do Op.new(A2,A1,A3)
 		o 'Expression -  Expression' do Op.new(A2,A1,A3)
 
+		o 'Expression EXP      Expression' do AST.OP A2, A1, A3
 		o 'Expression MATH     Expression' do AST.OP A2, A1, A3
 		o 'Expression SHIFT    Expression' do AST.OP A2, A1, A3
 		o 'Expression COMPARE  Expression' do AST.OP A2, A1, A3
@@ -953,6 +954,7 @@ var operators = [
 	['nonassoc',  '++', '--']
 	['right',     'UNARY','THROW','SQRT','NOT']
 	['right','AWAIT']
+	['right',     'EXP']
 	['left',      'MATH']
 	['left',      '+', '-']
 	['left',      'SHIFT']
