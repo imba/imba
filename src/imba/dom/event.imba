@@ -226,6 +226,8 @@ class Imba.Event
 							let name = param.slice(2)
 							if name == 'event'
 								params[i] = self
+							elif self[name] isa Function
+								params[i] = self[name]()
 							elif node[name] isa Function
 								params[i] = node[name]()
 							else
@@ -329,4 +331,3 @@ class Imba.Event
 	@return {Number}
 	###
 	def which do event:which
-
