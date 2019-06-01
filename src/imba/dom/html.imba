@@ -116,7 +116,7 @@ extend tag input
 			return self
 
 		let mval = @data.getFormValue(self)
-		return self if mval == @modelValue
+		return self if mval === @modelValue
 		@modelValue = mval unless isArray(mval)
 
 		if type == 'radio' or type == 'checkbox'
