@@ -1,3 +1,6 @@
+## 1.4.4
+* Fix bugs in analyzer returning incorrect locations for classes and methods
+
 ## 1.4.3
 * Support for ** and **= operators (#192 by @taw)
 * Fix imbapack crash with newer webpack (#194 by @gdamjan)

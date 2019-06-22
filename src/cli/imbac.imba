@@ -196,9 +196,10 @@ class CLI
 		traverse do |src|
 			var o2 = Object.create(o)
 			o2:filename = src:filename
+			o2:entities = yes
 			var out = compiler.analyze(src:sourceBody,o2)
 			src:analysis = out
-			present(JSON.stringify(out))
+			present(JSON.stringify(out,null,2))
 
 	def tokenize
 		# should prettyprint tokens

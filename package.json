@@ -43,12 +43,12 @@
     "test-webpack": "bin/imba test/webpack/test.imba",
     "test-chrome": "bin/imba test/run-chrome.imba"
   },
-  "bugs": "https://github.com/somebee/imba/issues",
-  "version": "1.4.3",
+  "bugs": "https://github.com/imba/imba/issues",
+  "version": "1.4.4",
   "licenses": [
     {
       "type": "MIT",
-      "url": "http://github.com/somebee/imba/raw/master/LICENSE"
+      "url": "http://github.com/imba/imba/raw/master/LICENSE"
     }
   ],
   "engines": {
@@ -66,7 +66,7 @@
   "homepage": "http://imba.io",
   "repository": {
     "type": "git",
-    "url": "git://github.com/somebee/imba.git"
+    "url": "git://github.com/imba/imba.git"
   },
   "devDependencies": {
     "underscore": "^1.8.3",

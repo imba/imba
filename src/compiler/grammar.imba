@@ -485,7 +485,7 @@ var grammar =
 	MethodBody: [
 		o 'DEF_BODY Block' do A2
 		o 'DEF_BODY Do' do A2.body
-		o 'DEF_EMPTY' do []
+		o 'DEF_EMPTY' do Block.new([]).set(end: A1.@loc)
 	]
 
 	# should support much more

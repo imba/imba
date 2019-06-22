@@ -1077,14 +1077,15 @@ export class Block < ListNode
 			p "no loc for {opt[0]}" unless a
 			p "no loc for {opt[1]}" unless b
 
-			[a[0],b[1]]
-		elif var ind = @indentation
-			[ind.aloc,ind.bloc]
-		else
-			# first node
-			let a = @nodes[0]
-			let b = @nodes[@nodes:length - 1]
-			[a and a.loc[0] or 0,b and b.loc[1] or 0]
+			return [a[0],b[1]]
+
+		if var ind = @indentation
+			if ind.aloc != -1
+				return [ind.aloc,ind.bloc]
+
+		let a = @nodes[0]
+		let b = @nodes[@nodes:length - 1]
+		[a and a.loc[0] or 0,b and b.loc[1] or 0]
 
 	# go through children and unwrap inner nodes
 	def unwrap
@@ -2133,6 +2134,15 @@ export class ClassDeclaration < Code
 			desc: @desc
 			loc: loc
 		}
+		
+	def loc
+		if let d = option(:keyword)
+			[d.@loc,body.loc[1]]
+		else
+			super
+		
+	# def loc
+	#	@body.loc
 
 	def toJSON
 		metadata
@@ -2319,6 +2329,12 @@ export class TagDeclaration < Code
 			option('return',yes)
 			return self
 		super
+		
+	def loc
+		if let d = option(:keyword)
+			[d.@loc,body.loc[1]]
+		else
+			super
 
 	def initialize name, superclass, body
 		@traversed = no
@@ -2648,7 +2664,8 @@ export class MethodDeclaration < Func
 
 	def loc
 		if let d = option(:def)
-			[d.@loc,body.loc[1]]
+			let end = body.option(:end) or body.loc[1]
+			[d.@loc,end]
 		else
 			[0,0]
 
@@ -2662,7 +2679,12 @@ export class MethodDeclaration < Func
 		var name = String(name)
 		var sep = (option('static') ? '.' : '#')
 		if target
-			@namepath = @target.namepath + sep + name
+			let ctx = target
+			# console.log "target?? {@target.@parent} {@context.node}"
+			if ctx.namepath == "ValueNode"
+				ctx = @context.node
+
+			@namepath = ctx.namepath + sep + name
 		else
 			@namepath = '&' + name
 
