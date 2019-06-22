@@ -124,10 +124,29 @@ class Imba.Tag
 		build
 		self
 
+	
+	attr accesskey inline: no
+	attr autocapitalize inline: no
+	attr contenteditable inline: no
+	attr contextmenu inline: no
+	attr dir inline: no
+	attr draggable inline: no
+	attr dropzone inline: no
+	attr hidden inline: no
+	attr inputmode inline: no
+	attr itemid inline: no
+	attr itemprop inline: no
+	attr itemref inline: no
+	attr itemscope inline: no
+	attr itemtype inline: no
+	attr lang inline: no
 	attr name inline: no
 	attr role inline: no
+	attr slot inline: no
+	attr spellcheck inline: no
 	attr tabindex inline: no
 	attr title
+	attr translate inline: no
 
 	def dom
 		@dom
@@ -814,8 +833,8 @@ Imba.HTML_ATTRS =
 	label: "accesskey for form"
 	img: "alt src srcset crossorigin decoding height importance intrinsicsize ismap referrerpolicy sizes width usemap"
 	link: "rel type href media"
-	iframe: "allow allowfullscreen allowpaymentrequest height importance name referrerpolicy sandbox src srcdoc width"
-	meta: "property content charset desc"
+	iframe: "allow allowfullscreen allowpaymentrequest height importance name referrerpolicy sandbox src srcdoc width frameborder align longdesc scrolling"
+	meta: "property content charset desc http-equiv color-scheme name scheme"
 	map: "name"
 	optgroup: "label"
 	option: "label"
@@ -854,6 +873,7 @@ var extender = do |obj, sup|
 	obj:prototype:constructor = obj
 	sup.inherit(obj) if sup:inherit
 	return obj
+
 
 
 var def Tag
@@ -1053,6 +1073,8 @@ Imba.SINGLETONS = {}
 Imba.TAGS = Imba.Tags.new
 Imba.TAGS[:element] = Imba.TAGS[:htmlelement] = Imba.Tag
 Imba.TAGS['svg:element'] = Imba.SVGTag
+
+Imba.attr(Imba.Tag,'is')
 
 def Imba.defineTag name, supr = '', &body
 	return Imba.TAGS.defineTag(name,supr,body)

@@ -1,3 +1,10 @@
+## 1.4.3
+* Support for ** and **= operators (#192 by @taw)
+* Fix imbapack crash with newer webpack (#194 by @gdamjan)
+* Fix --stdio/-s option for imbac (#178 by @shreeve)
+* Make special variables in event handlers default to event methods
+* Include all global attributes on Imba.Tag
+
 ## 1.4.2
 * Respect empty parens in event handlers (`<div :tap.someMethod()>`)
 * Allow special variables in event handlers (`<div :tap.someMethod($event,$data)>`)

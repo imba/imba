@@ -76,7 +76,7 @@ module.exports = __webpack_require__(2);
 
 
 
-var Imba = {VERSION: '1.4.2'};
+var Imba = {VERSION: '1.4.3'};
 
 
 
@@ -480,12 +480,13 @@ __webpack_require__(42);
 __webpack_require__(43);
 __webpack_require__(44);
 __webpack_require__(45);
+__webpack_require__(46);
 
 if (true) {
-	__webpack_require__(46);
-	__webpack_require__(48);
+	__webpack_require__(47);
 	__webpack_require__(49);
 	__webpack_require__(50);
+	__webpack_require__(51);
 };
 
 if (false) {};
@@ -1350,6 +1351,7 @@ Imba.Tag = function Tag(dom,ctx){
 	this;
 };
 
+
 Imba.Tag.buildNode = function (){
 	var dom = Imba.document().createElement(this._nodeType || 'div');
 	if (this._classes) {
@@ -1420,11 +1422,29 @@ Imba.Tag.prototype.optimizeTagStructure = function (){
 };
 
 
+Imba.attr(Imba.Tag,'accesskey');
+Imba.attr(Imba.Tag,'autocapitalize');
+Imba.attr(Imba.Tag,'contenteditable');
+Imba.attr(Imba.Tag,'contextmenu');
+Imba.attr(Imba.Tag,'dir');
+Imba.attr(Imba.Tag,'draggable');
+Imba.attr(Imba.Tag,'dropzone');
+Imba.attr(Imba.Tag,'hidden');
+Imba.attr(Imba.Tag,'inputmode');
+Imba.attr(Imba.Tag,'itemid');
+Imba.attr(Imba.Tag,'itemprop');
+Imba.attr(Imba.Tag,'itemref');
+Imba.attr(Imba.Tag,'itemscope');
+Imba.attr(Imba.Tag,'itemtype');
+Imba.attr(Imba.Tag,'lang');
 Imba.attr(Imba.Tag,'name');
 Imba.attr(Imba.Tag,'role');
+Imba.attr(Imba.Tag,'slot');
+Imba.attr(Imba.Tag,'spellcheck');
 Imba.attr(Imba.Tag,'tabindex');
 Imba.Tag.prototype.title = function(v){ return this.getAttribute('title'); }
 Imba.Tag.prototype.setTitle = function(v){ this.setAttribute('title',v); return this; };
+Imba.attr(Imba.Tag,'translate');
 
 Imba.Tag.prototype.dom = function (){
 	return this._dom;
@@ -2109,8 +2129,8 @@ Imba.HTML_ATTRS = {
 	label: "accesskey for form",
 	img: "alt src srcset crossorigin decoding height importance intrinsicsize ismap referrerpolicy sizes width usemap",
 	link: "rel type href media",
-	iframe: "allow allowfullscreen allowpaymentrequest height importance name referrerpolicy sandbox src srcdoc width",
-	meta: "property content charset desc",
+	iframe: "allow allowfullscreen allowpaymentrequest height importance name referrerpolicy sandbox src srcdoc width frameborder align longdesc scrolling",
+	meta: "property content charset desc http-equiv color-scheme name scheme",
 	map: "name",
 	optgroup: "label",
 	option: "label",
@@ -2153,6 +2173,7 @@ var extender = function(obj,sup) {
 	if (sup.inherit) { sup.inherit(obj) };
 	return obj;
 };
+
 
 
 function Tag(){
@@ -2394,6 +2415,8 @@ Imba.SINGLETONS = {};
 Imba.TAGS = new Imba.Tags();
 Imba.TAGS.element = Imba.TAGS.htmlelement = Imba.Tag;
 Imba.TAGS['svg:element'] = Imba.SVGTag;
+
+Imba.attr(Imba.Tag,'is');
 
 Imba.defineTag = function (name,supr,body){
 	if(body==undefined && typeof supr == 'function') body = supr,supr = '';
@@ -2677,7 +2700,7 @@ Imba.extendTag('input', function(tag){
 		};
 		
 		let mval = this._data.getFormValue(this);
-		if (mval == this._modelValue) { return this };
+		if (mval === this._modelValue) { return this };
 		if (!isArray(mval)) { this._modelValue = mval };
 		
 		if (this.type() == 'radio' || this.type() == 'checkbox') {
@@ -3617,6 +3640,8 @@ Imba.Event.prototype.processHandlers = function (node,handlers){
 						let name = param.slice(2);
 						if (name == 'event') {
 							params[i] = this;
+						} else if (this[name] instanceof Function) {
+							params[i] = this[name]();
 						} else if (node[name] instanceof Function) {
 							params[i] = node[name]();
 						} else {
@@ -3753,7 +3778,6 @@ Imba.Event.prototype.key = function (){
 Imba.Event.prototype.which = function (){
 	return this.event().which;
 };
-
 
 
 /***/ }),
@@ -5788,7 +5812,10 @@ describe('Syntax - Operators',function() {
 		
 		a = 0;
 		if (false) { a = 10 };
-		return eq(a,0);
+		eq(a,0);
+		
+		eq(4 ** 3 ** 2,262144);
+		return eq(5 * 4 ** 3 ** 2 * 6,7864320);
 	});
 	
 	test("ternary",function() {
@@ -9564,6 +9591,25 @@ describe('Tags - Cache',function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0), _1 = Imba.createElement;
+// externs;
+
+describe("HTML",function() {
+	
+	return describe("attributes",function() {
+		return test("globals",function() {
+			var el = (_1('div').setAccesskey("s").setIs("something")).end();
+			eq(el.accesskey(),"s");
+			return eq(el.is(),"something");
+		});
+	});
+});
+
+
+/***/ }),
+/* 46 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Imba = __webpack_require__(0), _1 = Imba.createElement;
 
 
 
@@ -9599,7 +9645,7 @@ describe("Tags - SVG",function() {
 
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -9609,7 +9655,7 @@ var Imba = __webpack_require__(0), _2 = Imba.createTagList, self = {}, _1 = Imba
 
 // externs;
 
-var _ = __webpack_require__(47);
+var _ = __webpack_require__(48);
 
 Imba.defineTag('el', function(tag){
 	
@@ -10120,7 +10166,7 @@ describe("Tags",function() {
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
@@ -11675,7 +11721,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0), _1 = Imba.createElement;
@@ -11684,6 +11730,7 @@ var Imba = __webpack_require__(0), _1 = Imba.createElement;
 describe("HTML",function() {
 	
 	return describe("select",function() {
+		
 		
 		return test("automatic value",function() {
 			var t0;
@@ -11709,7 +11756,7 @@ describe("HTML",function() {
 
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -11809,7 +11856,7 @@ document.body.appendChild(HE.dom());
 
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0), _1 = Imba.createElement;

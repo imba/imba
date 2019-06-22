@@ -32,6 +32,7 @@ require './syntax/quirks'
 
 require './tags/define'
 require './tags/caching'
+require './tags/attributes'
 require './tags/svg'
 
 if $web$
