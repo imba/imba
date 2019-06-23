@@ -1,5 +1,6 @@
-## 1.4.4
+## 1.4.4 (development)
 * Fix bugs in analyzer returning incorrect locations for classes and methods
+* Include properties in analyzer entity output
 
 ## 1.4.3
 * Support for ** and **= operators (#192 by @taw)

@@ -1085,6 +1085,7 @@ export class Block < ListNode
 
 		let a = @nodes[0]
 		let b = @nodes[@nodes:length - 1]
+
 		[a and a.loc[0] or 0,b and b.loc[1] or 0]
 
 	# go through children and unwrap inner nodes
@@ -2133,6 +2134,7 @@ export class ClassDeclaration < Code
 			path: name.c.toString
 			desc: @desc
 			loc: loc
+			symbols: @scope.entities
 		}
 		
 	def loc
@@ -2140,9 +2142,6 @@ export class ClassDeclaration < Code
 			[d.@loc,body.loc[1]]
 		else
 			super
-		
-	# def loc
-	#	@body.loc
 
 	def toJSON
 		metadata
@@ -2320,6 +2319,7 @@ export class TagDeclaration < Code
 			type: 'tag'
 			namepath: namepath
 			inherits: superclass ? "<{superclass.name}>" : null
+			symbols: @scope.entities
 			loc: loc
 			desc: @desc
 		}
@@ -2840,7 +2840,20 @@ export class PropertyDeclaration < Node
 
 	def visit
 		@options.traverse
+		scope__.entities.add(name,self)
+		# ROOT.entities.add(name,self)
 		self
+	
+	def toJSON
+		{
+			type: "prop"
+			name: "" + name
+			desc: @desc
+			loc: loc
+		}
+	
+	def loc
+		[@token.@loc,@name.region[1]]
 
 	# This will soon support bindings / listeners etc, much more
 	# advanced generated code based on options passed in.
@@ -5042,6 +5055,9 @@ export class Call < Node
 			return callee
 
 		return self
+		
+	def loc
+		@callee.loc
 
 	def visit
 		args.traverse
@@ -7513,6 +7529,30 @@ class Entities
 
 	def initialize root
 		@root = root
+		@map = []
+		return self
+
+	def add path, object
+		@map[path] = object
+		unless @map.indexOf(object) >= 0
+			@map.push(object)
+		self
+
+	# def register entity
+	# 	var path = entity.namepath
+	# 	@map[path] ||= entity
+	# 	self
+
+	def plain
+		JSON.parse(JSON.stringify(@map))
+
+	def toJSON
+		@map
+
+class RootEntities
+	
+	def initialize root
+		@root = root
 		@map = {}
 		return self
 
@@ -7530,7 +7570,7 @@ class Entities
 
 	def toJSON
 		@map
-
+	
 # SCOPES
 
 # handles local variables, self etc. Should create references to outer scopes
@@ -7552,6 +7592,7 @@ export class Scope
 	prop head
 	prop vars
 	prop counter
+	prop entities
 
 	def p
 		if STACK.loglevel > 0
@@ -7567,6 +7608,7 @@ export class Scope
 		@node = node
 		@parent = parent
 		@vars = VariableDeclaration.new([])
+		@entities = Entities.new(self)
 		@meta = {}
 		@annotations = []
 		@closure = self
@@ -7831,7 +7873,7 @@ export class RootScope < Scope
 		@scopes   = []
 		@helpers  = []
 		@selfless = no
-		@entities = Entities.new(self)
+		@entities = RootEntities.new(self)
 		@object = Obj.wrap({})
 		@head = [@vars]
 		
