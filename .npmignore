@@ -10,6 +10,7 @@ tmp
 *.log
 scripts/
 attic/*
+.cache
 screenshot.png
 .gitattributes
 .editorconfig
