@@ -1,3 +1,6 @@
+## 1.4.5
+* Fix crash when packaging for webworker
+
 ## 1.4.4
 * Fix bugs in analyzer returning incorrect locations for classes and methods
 * Include properties in analyzer entity output

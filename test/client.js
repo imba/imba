@@ -76,7 +76,7 @@ module.exports = __webpack_require__(2);
 
 
 
-var Imba = {VERSION: '1.4.4'};
+var Imba = {VERSION: '1.4.5'};
 
 
 
@@ -526,10 +526,10 @@ module.exports = Imba;
 if (true) {
 	__webpack_require__(7);
 	__webpack_require__(8);
-};
-
-if (activate) {
-	Imba.EventManager.activate();
+	
+	if (activate) {
+		Imba.EventManager.activate();
+	};
 };
 
 if (false) {};
