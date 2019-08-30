@@ -1,4 +1,4 @@
-## 1.4.5
+## 1.4.6
 * Fix crash when packaging for webworker
 
 ## 1.4.4
