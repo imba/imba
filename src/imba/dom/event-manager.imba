@@ -153,7 +153,7 @@ class Imba.EventManager
 	###
 	def create type, target, data: null, source: null
 		var event = Imba.Event.wrap type: type, target: target
-		event.data = data if data
+		event.data = data if data != undefined
 		event.source = source if source
 		event
 
