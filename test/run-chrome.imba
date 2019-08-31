@@ -11,11 +11,11 @@ var consoleMapping = {
 }
 
 page.on 'console' do |msg|
-	var stringArgs = msg:args.map(do $1.toString)
-	var key = consoleMapping[msg:type] or msg:type
+	var stringArgs = msg:args().filter(Boolean).map do |x| x.toString
+	var key = consoleMapping[msg:type()] or msg:type()
 	console[key].apply(console, stringArgs)
 
-	if var m = msg:text.match(/(\d+) OK.* (\d+) FAILED.*(\d+) TOTAL/)
+	if var m = msg:text().match(/(\d+) OK.* (\d+) FAILED.*(\d+) TOTAL/)
 		var failed = Number(m[2])
 		process:exit(failed == 0 ? 0 : 1)
 
