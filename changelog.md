@@ -1,3 +1,7 @@
+## 1.4.7
+* Make puppeteer tests work again
+* Fixed #203 (trigger data is null when supposed to be 0)
+
 ## 1.4.6
 * Fix crash when packaging for webworker
 
