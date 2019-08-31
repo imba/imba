@@ -76,7 +76,7 @@ module.exports = __webpack_require__(2);
 
 
 
-var Imba = {VERSION: '1.4.6'};
+var Imba = {VERSION: '1.4.7'};
 
 
 
@@ -1233,7 +1233,7 @@ Imba.EventManager.prototype.create = function (type,target,pars){
 	var data = pars.data !== undefined ? pars.data : null;
 	var source = pars.source !== undefined ? pars.source : null;
 	var event = Imba.Event.wrap({type: type,target: target});
-	if (data) { (event.setData(data),data) };
+	if (data != undefined) { (event.setData(data),data) };
 	if (source) { (event.setSource(source),source) };
 	return event;
 };
@@ -11979,8 +11979,8 @@ var Example = Imba.defineTag('Example', function(tag){
 				this._bubbles = this._bubbles||_1('div',t2).flag('bubbles').on$(0,['tap',['mark',2]],this),
 				t3 = this._self1 = this._self1||(t3=_1('div',t2)).flag('self1').on$(0,['tap','self',['mark',2]],this).setContent(this._inner1 = this._inner1||_1('b',t3).flag('inner1').setText("Label"),2),
 				t4 = this._self2 = this._self2||(t4=_1('div',t2)).flag('self2').on$(0,['tap','stop','self',['mark',2]],this).setContent(this._inner2 = this._inner2||_1('b',t4).flag('inner2').setText("Label"),2),
-				
-				this._redir = this._redir||_1('div',t2).flag('redir').on$(0,['tap','stop',['trigger','redir']],this).setText("Label")
+				this._redir = this._redir||_1('div',t2).flag('redir').on$(0,['tap','stop',['trigger','redir']],this).setText("Label"),
+				this._zero = this._zero||_1('div',t2).flag('zero').on$(0,['tap','stop','zeroHandler'],this).setText("Checking zero value")
 			],2)
 		],2).synced((
 			this._b.end((
@@ -11991,8 +11991,16 @@ var Example = Imba.defineTag('Example', function(tag){
 		,true));
 	};
 	
+	tag.prototype.zeroHandler = function (){
+		return this.trigger('zero',0);
+	};
+	
 	tag.prototype.onredir = function (){
 		return emits.push('redir');
+	};
+	
+	tag.prototype.onzero = function (e){
+		return emits.push(e.data());
 	};
 	
 	
@@ -12017,6 +12025,7 @@ var Example = Imba.defineTag('Example', function(tag){
 		eq(this._inner2.click(),[]);
 		
 		eq(this._redir.click(),['redir']);
+		eq(this._zero.click(),[0]);
 		return;
 	};
 });
