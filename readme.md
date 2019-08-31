@@ -15,7 +15,20 @@ and rendering dom nodes.
 
 To get started with Imba, we recommend reading through the [official guide](http://imba.io/guides). If you just want to get going, clone [hello-world-imba](https://github.com/somebee/hello-world-imba) and follow the readme. Check out the [awesome-imba](https://github.com/koolamusic/awesome-imba) list for more resources.
 
-## Questions
+## Community
+
+### Bi-Weekly Imba Community Meeting
+
+Everyone is welcome! The developer meetings are usually on Monday's every 2
+weeks. This is a great place to report your issues, hangout and talk about your
+project using Imba. If you have an open pull request which has not seen
+attention, you can ping during the meeting.
+
+- Attend physically at the Scrimba [office](https://www.meetup.com/Imba-Oslo-Meetup/events/chnlhryzmbdb/).
+- Join via [Zoom](https://us04web.zoom.us/j/230170873)
+- [Meeting notes](https://docs.google.com/document/d/1ABGjOJut9eXrajYjdN4G4-UGGU4gvKznLk5CAaXYjso/edit?usp=sharing)
+
+### Chat
 
 For questions and support please use our [community chat](https://gitter.im/somebee/imba).
 
