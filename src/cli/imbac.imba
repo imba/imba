@@ -246,8 +246,8 @@ class CLI
 		var out = {}
 		var t = Date.now
 		var at = Date.new.toTimeString.substr(0,8)
-		var srcp = o:stdio ? src:filename : path.relative(process.cwd,src:sourcePath)
-		var dstp = src:targetPath and path.relative(process.cwd,src:targetPath)
+		var srcp = path.resolve(o:stdio ? src:filename : path.relative(process.cwd,src:sourcePath))
+		var dstp = path.resolve(src:targetPath and path.relative(process.cwd,src:targetPath))
 
 		try
 			out = compiler.compile(src:sourceBody,opts)
