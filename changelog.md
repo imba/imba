@@ -1,3 +1,6 @@
+## dev
+* Made splats compatible with ES6 containers like Set (#167)
+
 ## 1.4.7
 * Make puppeteer tests work again
 * Fixed #203 (trigger data is null when supposed to be 0)
