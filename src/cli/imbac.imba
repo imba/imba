@@ -246,8 +246,15 @@ class CLI
 		var out = {}
 		var t = Date.now
 		var at = Date.new.toTimeString.substr(0,8)
-		var srcp = path.resolve(o:stdio ? src:filename : path.relative(process.cwd,src:sourcePath))
-		var dstp = path.resolve(src:targetPath and path.relative(process.cwd,src:targetPath))
+		var srcp = o:stdio ? src:filename : path.relative(process.cwd,src:sourcePath)
+		var dstp = src:targetPath and path.relative(process.cwd,src:targetPath)
+
+		var srcpAbs = path.resolve(srcp)
+		var dstpAbs = path.resolve(dstp)
+
+		if srcp.indexOf("../") >= 0
+			srcp = srcpAbs
+			dstp = dstpAbs
 
 		try
 			out = compiler.compile(src:sourceBody,opts)
