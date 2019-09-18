@@ -3,20 +3,62 @@ var path = require('path');
 var cp = require('child_process');
 var imba = require('./lib/compiler');
 
-if(require.extensions) {
-	var Module = require('module');
-	
-	require.extensions['.imba'] = function (mod,filename){
-		var content = imba.compile(fs.readFileSync(filename,'utf8'),{
+var cacheDir = process.env.IMBA_CACHE_DIR;
+var cachePrefix
+
+if(cacheDir){
+	cacheDir = path.resolve(process.cwd(),cacheDir);
+	cachePrefix = require('./package.json').version
+}
+
+function cacheFile(filename) {	
+	var content;
+
+	if(cacheDir) {
+		var cacheName = cachePrefix + '-' + filename.replace(/\//g,'__') + '.js';
+		var cachePath = path.join(cacheDir,cacheName);
+
+		try {
+			var cacheTime = fs.statSync(cachePath).mtime;
+			var sourceTime = fs.statSync(filename).mtime;
+			if (cacheTime > sourceTime) {
+				content = fs.readFileSync(cachePath, 'utf8');
+			}
+		} catch (err) {
+			
+		}
+	}
+
+	if (!content) {
+		var compiled = imba.compile(fs.readFileSync(filename,'utf8'),{
 			filename: filename,
 			sourcePath: filename,
 			target: 'node',
 			evaling: true
 		});
-		
-		return mod._compile(content.js,filename);
-	};
+
+		content = compiled.js;
+
+		if(cacheDir){
+			try {
+				fs.writeFileSync(cachePath, content, 'utf8');
+			} catch (err) {
+				console.warn("Imba could not cache file in ",cachePath);
+			}
+		}
+	}
+
+	return content;
+}
+
+
+if(require.extensions) {
+	var Module = require('module');
 	
+	require.extensions['.imba'] = function (mod,filename){
+		var content = cacheFile(filename);
+		return mod._compile(content,filename);
+	};
 	
 	var findExtension = function (filename){
 		var curExtension,extensions;
@@ -33,7 +75,7 @@ if(require.extensions) {
 		};
 		return '.js';
 	};
-	
+
 	Module.prototype.load = function (filename){
 		this.filename = filename;
 		this.paths = Module._nodeModulePaths(path.dirname(filename));
@@ -41,6 +83,7 @@ if(require.extensions) {
 		Module._extensions[ext](this,filename);
 		return this.loaded = true;
 	};
+
 } else if(require.registerExtension) {
 	require.registerExtension('.imba',function (content){
 		return imba.compile(content, {target: 'node'}).js;
