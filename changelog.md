@@ -1,5 +1,6 @@
-## dev
+## 1.4.8
 * Made splats compatible with ES6 containers like Set (#167)
+* Cache compilation for node runtime when 'IMBA_CACHE_DIR' process variable is set
 
 ## 1.4.7
 * Make puppeteer tests work again
