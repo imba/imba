@@ -3,6 +3,7 @@ name: "\U0001F41BBug report"
 about: Something isn't working right
 ---
 
+<!-- For improvements to the documentation, please use https://github.com/imba/imba.io instead -->
 ### Imba Version: x.x.x
 
 <!--- Provide the exact version of Imba in which you see the bug.  -->
