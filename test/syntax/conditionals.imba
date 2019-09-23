@@ -29,3 +29,13 @@ describe "Syntax - Conditionals" do
 				null
 		
 		eq res,2
+
+	test "negative branch without paranthesis" do
+		def condition
+			true
+		def test_condition
+			if not condition
+				no
+			else
+				yes
+		eq test_condition, true
