@@ -3512,7 +3512,8 @@ export class Op < Node
 			@op = '==='
 		elif @op == 'isnt'
 			@op = '!=='
-		
+		elif @op == 'not'
+			@op = '!'
 			
 		@left = l
 		@right = r
