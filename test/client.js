@@ -914,8 +914,8 @@ function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(1);
 
 Imba.TagManagerClass = function TagManagerClass(){
-	this._mountableInserts = 0;
-	this._mountableRemoves = 0;
+	this._tryMounting = false;
+	this._tryUnmounting = false;
 	this._mounted = [];
 	this._mountables = 0;
 	this._unmountables = 0;
@@ -928,7 +928,7 @@ Imba.TagManagerClass.prototype.mounted = function (){
 };
 
 Imba.TagManagerClass.prototype.insert = function (node,parent){
-	if (node && node.mount) { this._mountableInserts++ };
+	if (node && node.mount) { this._tryMounting = true };
 	if (node && node.mount) { this.regMountable(node) };
 	
 	
@@ -937,11 +937,11 @@ Imba.TagManagerClass.prototype.insert = function (node,parent){
 };
 
 Imba.TagManagerClass.prototype.remove = function (node,parent){
-	if (node && node.mount) { return this._mountableRemoves++ };
+	if (node && node.mount) { return this._tryUnmounting = true };
 };
 
 Imba.TagManagerClass.prototype.changes = function (){
-	return this._mountableInserts + this._mountableRemoves;
+	return this._tryMounting || this._tryUnmounting;
 };
 
 Imba.TagManagerClass.prototype.mount = function (node){
@@ -951,20 +951,17 @@ Imba.TagManagerClass.prototype.mount = function (node){
 Imba.TagManagerClass.prototype.refresh = function (force){
 	if(force === undefined) force = false;
 	if (false) {};
-	if (!force && this.changes() == 0) { return };
+	if (!force && this.changes() === false) { return };
 	
-	var mountablesInserts = this._mountableInserts;
-	var mountablesRemoves = this._mountableRemoves;
-	if ((this._mountableInserts && this._mountables > this._mounted.length) || force) {
+	if ((this._tryMounting && this._mountables > this._mounted.length) || force) {
 		this.tryMount();
 	};
 	
-	if ((this._mountableRemoves || force) && this._mounted.length) {
+	if ((this._tryUnmounting || force) && this._mounted.length) {
 		this.tryUnmount();
 	};
 	
-	this._mountableInserts -= mountablesInserts;
-	this._mountableRemoves -= mountablesRemoves;
+	
 	return this;
 };
 
@@ -981,6 +978,7 @@ Imba.TagManagerClass.prototype.regMountable = function (node){
 
 
 Imba.TagManagerClass.prototype.tryMount = function (){
+	this._tryMounting = false; 
 	var count = 0;
 	var root = document.body;
 	var items = root.querySelectorAll('.__mount');
@@ -1013,6 +1011,7 @@ Imba.TagManagerClass.prototype.mountNode = function (node){
 };
 
 Imba.TagManagerClass.prototype.tryUnmount = function (){
+	this._tryUnmounting = false; 
 	this._unmounting++;
 	
 	var unmount = [];

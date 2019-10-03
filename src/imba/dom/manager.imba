@@ -2,8 +2,8 @@ var Imba = require("../imba")
 
 class Imba.TagManagerClass
 	def initialize
-		@mountableInserts = 0
-		@mountableRemoves = 0
+		@tryMounting = no
+		@tryUnmounting = no
 		@mounted = []
 		@mountables = 0
 		@unmountables = 0
@@ -14,7 +14,7 @@ class Imba.TagManagerClass
 		@mounted
 
 	def insert node, parent
-		@mountableInserts++ if node and node:mount
+		@tryMounting = yes if node and node:mount
 		regMountable(node) if node and node:mount
 		# unless node.FLAGS & Imba.TAG_MOUNTABLE
 		# 	node.FLAGS |= Imba.TAG_MOUNTABLE
@@ -22,28 +22,25 @@ class Imba.TagManagerClass
 		return
 
 	def remove node, parent
-		@mountableRemoves++ if node and node:mount
+		@tryUnmounting = yes if node and node:mount
 
 	def changes
-		@mountableInserts + @mountableRemoves
+		@tryMounting or @tryUnmounting
 
 	def mount node
 		return
 
 	def refresh force = no
 		return if $node$
-		return if !force and changes == 0
+		return if !force and changes === no
 		# console.time('resolveMounts')
-		var mountablesInserts = @mountableInserts
-		var mountablesRemoves = @mountableRemoves
-		if (@mountableInserts and @mountables > @mounted:length) or force
+		if (@tryMounting and @mountables > @mounted:length) or force
 			tryMount
 
-		if (@mountableRemoves or force) and @mounted:length
+		if (@tryUnmounting or force) and @mounted:length
 			tryUnmount
 		# console.timeEnd('resolveMounts')
-		@mountableInserts -= mountablesInserts
-		@mountableRemoves -= mountablesRemoves	
+
 		self
 
 	def unmount node
@@ -56,6 +53,7 @@ class Imba.TagManagerClass
 		
 
 	def tryMount
+		@tryMounting = no # Ensure new unmount Requests are processed on next refresh
 		var count = 0
 		var root = document:body
 		var items = root.querySelectorAll('.__mount')
@@ -81,6 +79,7 @@ class Imba.TagManagerClass
 		return
 
 	def tryUnmount
+		@tryUnmounting = no # Ensure new unmount Requests are processed on next refresh
 		@unmounting++
 		
 		var unmount = []
