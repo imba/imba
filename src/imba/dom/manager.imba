@@ -2,8 +2,8 @@ var Imba = require("../imba")
 
 class Imba.TagManagerClass
 	def initialize
-		@inserts = 0
-		@removes = 0
+		@mountableInserts = 0
+		@mountableRemoves = 0
 		@mounted = []
 		@mountables = 0
 		@unmountables = 0
@@ -14,7 +14,7 @@ class Imba.TagManagerClass
 		@mounted
 
 	def insert node, parent
-		@inserts++
+		@mountableInserts++ if node and node:mount
 		regMountable(node) if node and node:mount
 		# unless node.FLAGS & Imba.TAG_MOUNTABLE
 		# 	node.FLAGS |= Imba.TAG_MOUNTABLE
@@ -22,11 +22,10 @@ class Imba.TagManagerClass
 		return
 
 	def remove node, parent
-		@removes++
-		
+		@mountableRemoves++ if node and node:mount
 
 	def changes
-		@inserts + @removes
+		@mountableInserts + @mountableRemoves
 
 	def mount node
 		return
@@ -35,14 +34,16 @@ class Imba.TagManagerClass
 		return if $node$
 		return if !force and changes == 0
 		# console.time('resolveMounts')
-		if (@inserts and @mountables > @mounted:length) or force
+		var mountablesInserts = @mountableInserts
+		var mountablesRemoves = @mountableRemoves
+		if (@mountableInserts and @mountables > @mounted:length) or force
 			tryMount
 
-		if (@removes or force) and @mounted:length
+		if (@mountableRemoves or force) and @mounted:length
 			tryUnmount
 		# console.timeEnd('resolveMounts')
-		@inserts = 0
-		@removes = 0
+		@mountableInserts -= mountablesInserts
+		@mountableRemoves -= mountablesRemoves	
 		self
 
 	def unmount node
