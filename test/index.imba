@@ -40,6 +40,7 @@ if $web$
 	require './tags/html'
 	require './tags/templates'
 	require './tags/events'
+	require './tags/mounting'
 	
 if $node$
 	require './tags/escaping'
