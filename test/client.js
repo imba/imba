@@ -487,6 +487,7 @@ if (true) {
 	__webpack_require__(50);
 	__webpack_require__(51);
 	__webpack_require__(52);
+	__webpack_require__(53);
 };
 
 if (false) {};
@@ -12233,6 +12234,112 @@ describe("Tags - Events",function() {
 
 
 
+
+
+
+/***/ }),
+/* 53 */
+/***/ (function(module, exports, __webpack_require__) {
+
+function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+var Imba = __webpack_require__(0), _2 = Imba.createTagList, self = {}, _1 = Imba.createElement;
+
+
+
+// externs;
+
+
+var totalMountables = 0;
+var totalMounted = 0;
+
+var MultiLevelMountableTag = Imba.defineTag('MultiLevelMountableTag', function(tag){
+	
+	tag.prototype.setup = function (){
+		return totalMountables++;
+	};
+	
+	tag.prototype.mount = function (){
+		return totalMounted++;
+	};
+});
+
+var MountableTag = Imba.defineTag('MountableTag', function(tag){
+	
+	tag.prototype.setup = function (){
+		totalMountables++;
+		return this._showSecondLevel = false;
+	};
+	
+	tag.prototype.mount = function (){
+		totalMounted++;
+		return this.schedule({raf: true});
+	};
+	
+	tag.prototype.tick = function (){
+		this._showSecondLevel = true;
+		return tag.prototype.__super__.tick.apply(this,arguments);
+	};
+	
+	tag.prototype.render = function (){
+		var $ = this.$;
+		return this.$open(0).setChildren([
+			($[0] || _1(MultiLevelMountableTag,$,0,this)).end(),
+			this._showSecondLevel ? Imba.static([
+				($[1] || _1(MultiLevelMountableTag,$,1,this)).end(),
+				($[2] || _1('div',$,2,this).setContent($[3] || _1('div',$,3,2).setContent($[4] || _1('div',$,4,3).setContent($[5] || _1('div',$,5,4).setContent($[6] || _1('div',$,6,5).setContent(
+					$[7] || _1(MultiLevelMountableTag,$,7,6)
+				,2),2),2),2),2)).end((
+					$[7].end()
+				,true))
+			],2,1) : void(0)
+		],1).synced();
+	};
+});
+
+var MountableContainer = Imba.defineTag('MountableContainer', function(tag){
+	
+	tag.prototype.setup = function (){
+		return this._mountableTagsCount = 1;
+		
+		
+		
+	};
+	
+	tag.prototype.mount = function (){
+		return this.schedule({raf: true});
+	};
+	
+	tag.prototype.render = function (){
+		var self = this, $ = this.$;
+		return self.$open(0).setChildren(
+			(function tagLoop($0) {
+				for (let i = 0, items = iter$(new Array(self._mountableTagsCount)), len = $0.taglen = items.length; i < len; i++) {
+					($0[i] || _1(MountableTag,$0,i)).end();
+				};return $0;
+			})($[0] || _2($,0))
+		,4).synced();
+	};
+});
+
+self.sleep = function (pars){
+	if(!pars||pars.constructor !== Object) pars = {};
+	var ms = pars.ms !== undefined ? pars.ms : 0;
+	return new Promise(function(resolve) {
+		return setTimeout(function() {
+			return resolve();
+		},ms);
+	});
+};
+
+describe("Tags - Mount",function() {
+	
+	return test("mounting",async function() {
+		var item = (_1(MountableContainer)).end();
+		Imba.mount(item);
+		await self.sleep(100);
+		return eq(totalMounted,totalMountables);
+	});
+});
 
 
 

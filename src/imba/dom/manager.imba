@@ -53,7 +53,7 @@ class Imba.TagManagerClass
 		
 
 	def tryMount
-		@tryMounting = no # Ensure new unmount Requests are processed on next refresh
+		@tryMounting = no # Ensure new mount Requests are processed on next refresh
 		var count = 0
 		var root = document:body
 		var items = root.querySelectorAll('.__mount')
