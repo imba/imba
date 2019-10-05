@@ -812,7 +812,7 @@ class Imba.SVGTag < Imba.Tag
 			child.@nodeType = @nodeType
 			var classes = (@classes or []).slice(0)
 			if Imba.TAG_AUTOCLASS_SVG
-				classes.push("_" + child.@name.replace(/_/g, '-'))
+				classes.push(child.@name.replace(/_/g, '-'))
 			child.@classes = classes
 
 
