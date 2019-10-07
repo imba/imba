@@ -2669,6 +2669,11 @@ export class MethodDeclaration < Func
 		else
 			[0,0]
 
+	def isGetter
+		@type == 'get'
+
+	def isSetter
+		@type == 'set'
 
 	def toJSON
 		metadata
@@ -2689,6 +2694,8 @@ export class MethodDeclaration < Func
 			@namepath = '&' + name
 
 	def visit
+		@type = option(:def)?.@value or 'def'
+
 		@decorators = up?.collectDecorators
 		var o = @options
 		scope.visit
@@ -2787,7 +2794,12 @@ export class MethodDeclaration < Func
 			# add shorthand for prototype now
 
 		elif target
-			out = "{mark}{target.c}.{fname} = {funcKeyword} {func}"
+			if isGetter
+				out = "Object.defineProperty({target.c},'{fname}',\{get: {funcKeyword}{func}, configurable: true\})"
+			elif isSetter
+				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
+			else
+				out = "{mark}{target.c}.{fname} = {funcKeyword} {func}"
 			if o:export
 				out = "exports.{o:default ? 'default' : fname} = {out}"
 		else
@@ -2826,6 +2838,31 @@ export class PropertyDeclaration < Node
 		if(v != a) { ${ondirty} }
 		return this;
 	}
+	${init}
+	'''
+
+	var propTemplate = '''
+	${headers}
+	Object.defineProperty(${path},\'${getter}\',{
+		configurable: true,
+		get: function(){ return ${get}; },
+		set: function(v){ ${set}; return this; }
+	});
+	${init}
+	'''
+
+	var propWatchTemplate = '''
+	${headers}
+	Object.defineProperty(${path},\'${getter}\',{
+		configurable: true,
+		get: function(){ return ${get}; },
+		set: function(v){
+			var a = ${get};
+			if(v != a) { ${set}; }
+			if(v != a) { ${ondirty} }
+			return this;
+		}
+	});
 	${init}
 	'''
 
