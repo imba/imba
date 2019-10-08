@@ -698,7 +698,6 @@ export class Lexer
 		# drop match 4??
 
 		if id == 'new' and !(ltyp == '.' and inTag)
-			console.log 'NEW here?'
 			if ltyp == '.:'
 				@last.@type = '.'
 			token('NEW', id, length)
@@ -1672,7 +1671,6 @@ export class Lexer
 		#   console.log("found comma")
 
 		if value == '.' and tokid == '.'
-			console.log "token dot",value,tokid
 			tokid = '.:'
 
 		token(tokid, value, value:length)

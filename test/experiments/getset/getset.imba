@@ -4,34 +4,27 @@ class Person
 	prop role watch: yes
 
 	def initialize name
-		@data = {
-			name: name
-		}
+		self.data = {name: name}
+		@inspect 123
 
-	def age
-		20
-
-	def height
-		20
-
-	def setProperty key, value, options
-		self
-
-	def getProperty key, value, options
-		self
+	def inspect value
+		console.log("Hello",value)
 
 	get name
-		@data.name
+		self.data.name
 
 	set name val
-		@data.name = val
 		self.data.name = val
 
 var p1 = Person.new("Mark")
+
 console.log p1.name
+
 p1.name = "Jane"
+
+
+
 console.log p1.name
-console.log p1:name
 
 extend class Person
 	get name
