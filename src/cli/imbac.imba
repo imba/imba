@@ -121,7 +121,7 @@ class CLI
 			var rel = root ? path.relative(root,abs) : file:filename
 			file:targetPath = path.resolve(o:output,rel)
 
-		elif !o:print and !o:stdio
+		elif !o:stdio
 			file:targetPath = file:sourcePath
 
 		if file:targetPath
@@ -278,7 +278,7 @@ class CLI
 			let count = out:warnings:length
 			status += yellow(" [{count} warning{count > 1 ? 's' : ''}]")
 
-		if src:targetPath and out:js !== undefined
+		if src:targetPath and out:js !== undefined and !o:print
 			ensureDir(src:targetPath)
 			fs.writeFileSync(src:targetPath,out:js,'utf8')
 			log(status) unless o:print

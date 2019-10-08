@@ -333,6 +333,10 @@ export class Stack
 		@counters[name] ||= 0
 		@counters[name] += 1
 
+	def decr name
+		@counters[name] ||= 0
+		@counters[name] -= 1
+
 	def stash
 		@stash
 
@@ -2846,7 +2850,7 @@ export class PropertyDeclaration < Node
 	Object.defineProperty(${path},\'${getter}\',{
 		configurable: true,
 		get: function(){ return ${get}; },
-		set: function(v){ ${set}; return this; }
+		set: function(v){ ${set}; }
 	});
 	${init}
 	'''
@@ -2860,7 +2864,6 @@ export class PropertyDeclaration < Node
 			var a = ${get};
 			if(v != a) { ${set}; }
 			if(v != a) { ${ondirty} }
-			return this;
 		}
 	});
 	${init}
@@ -4909,7 +4912,8 @@ export class TagIdRef < Identifier
 
 # FIXME Rename to IvarLiteral? or simply Literal with type Ivar
 export class Ivar < Identifier
-
+	
+	var prefix = '' # '_'
 	def initialize v
 		@value = v isa Identifier ? v.value : v
 		self
@@ -4919,14 +4923,15 @@ export class Ivar < Identifier
 		# value.c.camelCase.replace(/^@/,'')
 
 	def alias
-		'_' + name
+		prefix + name
 
 	# the @ should possibly be gone from the start?
 	def js o
-		'_' + name
+		return name
+		prefix + name
 
 	def c
-		'_' + helpers.dashToCamelCase(@value).slice(1) # .replace(/^@/,'') # AST.mark(@value) +
+		prefix + name # helpers.dashToCamelCase(@value).slice(1) # .replace(/^@/,'') # AST.mark(@value) +
 
 export class Decorator < ValueNode
 	
@@ -4934,17 +4939,8 @@ export class Decorator < ValueNode
 		@call.traverse if @call
 
 		if let block = up
-			# console.log "visited decorator!!",block
-			# add decorator to this scope -- let method empty it
 			block.@decorators ||= []
 			block.@decorators.push(self)
-			# let idx = block.indexOf(self) + 1
-			# idx += 1 if block.index(idx) isa Terminator
-			# if var next = block.index(idx)
-			#	next.@desc = self
-		
-		
-
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
@@ -6475,11 +6471,15 @@ export class Tag < Node
 		!o:hasConditionals and !o:hasLoops and !o:ivar and !o:key
 
 	def visit stack
+
 		var o = @options
 		var scope = @tagScope = scope__
 		let prevTag = o:par = stack.@tag
 		let po = prevTag and prevTag.@options
 		var typ = enclosing
+
+		@level = stack.@nodes.filter(|el| el isa Tag):length
+		@tempvar = scope.closure.temporary(self,{reuse: yes},"_t{@level}")
 		
 		if o:par
 			o:optim = po:optim
@@ -6806,19 +6806,25 @@ export class Tag < Node
 				if (commits.len and o:optim) or !isNative or hasAttrs or o:template
 					calls.push ".{isSelf ? "synced" : "end"}({args})"
 		
+
+		let tvar = @tempvar.c
 		if @reference and !isSelf
 			out = "{reference.c} = {pre}({reference.c}={ctor})"
 		else
 			out ||= "{pre}{ctor}"
 			
 		if statics:length
-			out = out + statics.join("")
+			# out = out + statics.join("")
+			out = "({tvar} = {out},{tvar}{statics.join(",{tvar}")},{tvar})"
 		
 		if calls != statics
 			if o:optim and o:optim != self
-				set(commit: "{o:path}{calls.join("")}") if calls:length and o:commit == undefined
+				let commit = "({tvar}={o:path},{tvar}{calls.join(",{tvar}")},{tvar})"
+				# "{o:path}{calls.join("")}"
+				set(commit: commit) if calls:length and o:commit == undefined
 			else
-				out = "({out})" + calls.join("")
+				out = "({out},{tvar}{calls.join(",{tvar}")},{tvar})"
+				# out = "({out})" + calls.join("")
 		
 		if @typeNum
 			@typeNum.value = contentType
@@ -7769,6 +7775,8 @@ export class Scope
 	# we only need a temporary thing with defaults -- that is all
 	# change these values, no?
 	def temporary decl, o = {}, name = null
+		if name and o:reuse and @vars["_temp_{name}"]
+			return @vars["_temp_{name}"]
 
 		if o:pool
 			for v in @varpool
@@ -7779,6 +7787,8 @@ export class Scope
 		
 		@varpool.push(item) # It should not be in the pool unless explicitly put there?
 		@vars.push(item) # WARN variables should not go directly into a declaration-list
+		if name and o:reuse
+			@vars["_temp_{name}"] = item
 		return item
 
 	def lookup name
