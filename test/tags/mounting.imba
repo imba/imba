@@ -7,6 +7,8 @@ extern describe, test, ok, eq, it
 var totalMountables = 0
 var totalMounted = 0
 
+tag UnMountableTag
+
 tag MultiLevelMountableTag
 
 	def setup
@@ -14,6 +16,9 @@ tag MultiLevelMountableTag
 
 	def mount
 		totalMounted++
+	
+	def unmount
+		totalMounted--
 	
 tag MountableTag
 	
@@ -25,33 +30,34 @@ tag MountableTag
 		totalMounted++
 		schedule(raf: true)
 	
+	def unmount
+		totalMounted--
+	
 	def tick
 		@showSecondLevel = true
 		super
 	
 	def render
 		<self>
-			<MultiLevelMountableTag>
 			if @showSecondLevel
-				<MultiLevelMountableTag>
 				<div><div><div><div><div>
 					<MultiLevelMountableTag>
+				<UnMountableTag>
+					<MultiLevelMountableTag>
 
-tag MountableContainer
+tag Container
 
 	def setup
-		@mountableTagsCount = 1 
+		@mountableTagsCount = 2
 		# Can be any number doesn't really matter but make sure to update 
 		# sleep time in test to give imba ample time to try mounting all 
 		# the tags if the number is very large
 
-	def mount
-		schedule( raf: true )
-
 	def render
 		<self>
 			for _ in Array.new @mountableTagsCount
-				<MountableTag>
+				<UnMountableTag>
+					<MountableTag>
 
 def sleep ms: 0
 	Promise.new do |resolve|
@@ -59,10 +65,15 @@ def sleep ms: 0
 			resolve()
 
 describe "Tags - Mount" do
+	
+	var item = <Container>
 
 	test "mounting" do
-		var item = <MountableContainer>
 		Imba.mount item
 		await sleep 100
 		eq totalMounted, totalMountables
 
+	test "unmounting" do
+		item.removeAllChildren
+		Imba.TagManager.refresh
+		eq totalMounted, 0

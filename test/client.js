@@ -929,7 +929,7 @@ Imba.TagManagerClass.prototype.mounted = function (){
 };
 
 Imba.TagManagerClass.prototype.insert = function (node,parent){
-	if (node && node.mount) { this._tryMounting = true };
+	this._tryMounting = node && node.querySelector && (node.mount || node.querySelector(".__mount"));
 	if (node && node.mount) { this.regMountable(node) };
 	
 	
@@ -938,7 +938,7 @@ Imba.TagManagerClass.prototype.insert = function (node,parent){
 };
 
 Imba.TagManagerClass.prototype.remove = function (node,parent){
-	if (node && node.mount) { return this._tryUnmounting = true };
+	return this._tryUnmounting = node && node.querySelector && (node.mount || node.querySelector(".__mount"));
 };
 
 Imba.TagManagerClass.prototype.changes = function (){
@@ -12252,6 +12252,8 @@ var Imba = __webpack_require__(0), _2 = Imba.createTagList, self = {}, _1 = Imba
 var totalMountables = 0;
 var totalMounted = 0;
 
+var UnMountableTag = Imba.defineTag('UnMountableTag');
+
 var MultiLevelMountableTag = Imba.defineTag('MultiLevelMountableTag', function(tag){
 	
 	tag.prototype.setup = function (){
@@ -12260,6 +12262,10 @@ var MultiLevelMountableTag = Imba.defineTag('MultiLevelMountableTag', function(t
 	
 	tag.prototype.mount = function (){
 		return totalMounted++;
+	};
+	
+	tag.prototype.unmount = function (){
+		return totalMounted--;
 	};
 });
 
@@ -12275,6 +12281,10 @@ var MountableTag = Imba.defineTag('MountableTag', function(tag){
 		return this.schedule({raf: true});
 	};
 	
+	tag.prototype.unmount = function (){
+		return totalMounted--;
+	};
+	
 	tag.prototype.tick = function (){
 		this._showSecondLevel = true;
 		return tag.prototype.__super__.tick.apply(this,arguments);
@@ -12282,39 +12292,43 @@ var MountableTag = Imba.defineTag('MountableTag', function(tag){
 	
 	tag.prototype.render = function (){
 		var $ = this.$;
-		return this.$open(0).setChildren([
-			($[0] || _1(MultiLevelMountableTag,$,0,this)).end(),
+		return this.$open(0).setChildren(
 			this._showSecondLevel ? Imba.static([
-				($[1] || _1(MultiLevelMountableTag,$,1,this)).end(),
-				($[2] || _1('div',$,2,this).setContent($[3] || _1('div',$,3,2).setContent($[4] || _1('div',$,4,3).setContent($[5] || _1('div',$,5,4).setContent($[6] || _1('div',$,6,5).setContent(
-					$[7] || _1(MultiLevelMountableTag,$,7,6)
+				($[0] || _1('div',$,0,this).setContent($[1] || _1('div',$,1,0).setContent($[2] || _1('div',$,2,1).setContent($[3] || _1('div',$,3,2).setContent($[4] || _1('div',$,4,3).setContent(
+					$[5] || _1(MultiLevelMountableTag,$,5,4)
 				,2),2),2),2),2)).end((
+					$[5].end()
+				,true)),
+				($[6] || _1(UnMountableTag,$,6,this).setContent(
+					$[7] || _1(MultiLevelMountableTag,$,7,6)
+				,2)).end((
 					$[7].end()
 				,true))
 			],2,1) : void(0)
-		],1).synced();
+		,3).synced();
 	};
 });
 
-var MountableContainer = Imba.defineTag('MountableContainer', function(tag){
+var Container = Imba.defineTag('Container', function(tag){
 	
 	tag.prototype.setup = function (){
-		return this._mountableTagsCount = 1;
+		return this._mountableTagsCount = 2;
 		
 		
 		
-	};
-	
-	tag.prototype.mount = function (){
-		return this.schedule({raf: true});
 	};
 	
 	tag.prototype.render = function (){
 		var self = this, $ = this.$;
 		return self.$open(0).setChildren(
 			(function tagLoop($0) {
+				var t0;
 				for (let i = 0, items = iter$(new Array(self._mountableTagsCount)), len = $0.taglen = items.length; i < len; i++) {
-					($0[i] || _1(MountableTag,$0,i)).end();
+					(t0 = $0[i] || (t0=_1(UnMountableTag,$0,i)).setContent(
+						t0.$.A || _1(MountableTag,t0.$,'A',t0)
+					,2)).end((
+						t0.$.A.end()
+					,true));
 				};return $0;
 			})($[0] || _2($,0))
 		,4).synced();
@@ -12333,14 +12347,20 @@ self.sleep = function (pars){
 
 describe("Tags - Mount",function() {
 	
-	return test("mounting",async function() {
-		var item = (_1(MountableContainer)).end();
+	var item = (_1(Container)).end();
+	
+	test("mounting",async function() {
 		Imba.mount(item);
 		await self.sleep(100);
 		return eq(totalMounted,totalMountables);
 	});
+	
+	return test("unmounting",function() {
+		item.removeAllChildren();
+		Imba.TagManager.refresh();
+		return eq(totalMounted,0);
+	});
 });
-
 
 
 /***/ })
