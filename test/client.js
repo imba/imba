@@ -929,7 +929,7 @@ Imba.TagManagerClass.prototype.mounted = function (){
 };
 
 Imba.TagManagerClass.prototype.insert = function (node,parent){
-	this._tryMounting = node && node.querySelector && (node.mount || node.querySelector(".__mount"));
+	if (node && node.querySelector && (node.mount || node.querySelector(".__mount"))) { this._tryMounting = true };
 	if (node && node.mount) { this.regMountable(node) };
 	
 	
@@ -938,7 +938,7 @@ Imba.TagManagerClass.prototype.insert = function (node,parent){
 };
 
 Imba.TagManagerClass.prototype.remove = function (node,parent){
-	return this._tryUnmounting = node && node.querySelector && (node.mount || node.querySelector(".__mount"));
+	if (node && node.querySelector && (node.mount || node.querySelector(".__mount"))) { return this._tryUnmounting = true };
 };
 
 Imba.TagManagerClass.prototype.changes = function (){
