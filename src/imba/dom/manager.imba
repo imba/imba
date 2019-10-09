@@ -14,7 +14,7 @@ class Imba.TagManagerClass
 		@mounted
 
 	def insert node, parent
-		@tryMounting = node and node:querySelector and (node:mount or node.querySelector ".__mount")	
+		@tryMounting = yes if node and node:querySelector and (node:mount or node.querySelector ".__mount")
 		regMountable(node) if node and node:mount
 		# unless node.FLAGS & Imba.TAG_MOUNTABLE
 		# 	node.FLAGS |= Imba.TAG_MOUNTABLE
@@ -22,7 +22,7 @@ class Imba.TagManagerClass
 		return
 
 	def remove node, parent
-		@tryUnmounting = node and node:querySelector and (node:mount or node.querySelector ".__mount")
+		@tryUnmounting = yes if node and node:querySelector and (node:mount or node.querySelector ".__mount")
 
 	def changes
 		@tryMounting or @tryUnmounting
