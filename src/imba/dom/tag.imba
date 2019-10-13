@@ -811,8 +811,8 @@ class Imba.SVGTag < Imba.Tag
 		else
 			child.@nodeType = @nodeType
 			var classes = (@classes or []).slice(0)
-			if Imba.TAG_AUTOCLASS_SVG
-				classes.push(child.@name.replace(/_/g, '-'))
+			if Imba.TAG_AUTOCLASS_SVG && child.@flagName
+				classes.push(child.@flagName)
 			child.@classes = classes
 
 
