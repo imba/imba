@@ -1670,8 +1670,9 @@ export class Lexer
 		#   # token "TUPLE", "tuple" # should rather insert it somewhere else, no?
 		#   console.log("found comma")
 
-		if value == '.' and tokid == '.'
-			tokid = '.:'
+		# Breaking change that will make dot behave as in js
+		# if value == '.' and tokid == '.'
+		# 	tokid = '.:'
 
 		token(tokid, value, value:length)
 		return value:length
