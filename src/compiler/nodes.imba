@@ -4057,6 +4057,7 @@ export class VarOrAccess < ValueNode
 
 		# really? what about just mimicking the two diffrent instead?
 		# Should we not return a call directly instead?
+		scope.root.@implicitAccessors.push(self)
 		@value = PropertyAccess.new(".",scope.context,value)
 		# mark the scope / context -- so we can show correct implicit
 		@token.@meta = {type: 'ACCESS'}
@@ -7931,6 +7932,7 @@ export class RootScope < Scope
 		@scopes   = []
 		@helpers  = []
 		@selfless = no
+		@implicitAccessors = []
 		@entities = RootEntities.new(self)
 		@object = Obj.wrap({})
 		@head = [@vars]
@@ -7965,7 +7967,10 @@ export class RootScope < Scope
 		self
 
 	def dump
-		var obj = {warnings: AST.dump(@warnings)}
+		var obj = {
+			warnings: AST.dump(@warnings)
+			autoself: @implicitAccessors.map(|s| s.dump)
+		}
 
 		if OPTS:analysis:scopes
 			var scopes = @scopes.map(|s| s.dump)
