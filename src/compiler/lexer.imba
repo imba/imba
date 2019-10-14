@@ -697,11 +697,11 @@ export class Lexer
 		var m4 = match[4] # might be out of bounds? should rather check charAt
 		# drop match 4??
 
-		if id == 'new' and !(ltyp == '.' and inTag)
-			if ltyp == '.:'
-				@last.@type = '.'
-			token('NEW', id, length)
-			return length
+		# if id == 'new' and !(ltyp == '.' and inTag)
+		# 	if ltyp == '.:'
+		# 		@last.@type = '.'
+		# 	token('NEW', id, length)
+		# 	return length
 
 		# should this not quit here in practically all cases?
 		unless (ltyp == '.' or (ltyp == 'DEF' or ltyp == 'GET' or ltyp == 'SET') ) or (m4 == '!') or match[5]

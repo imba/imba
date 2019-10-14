@@ -76,7 +76,7 @@ module.exports = __webpack_require__(2);
 
 
 
-var Imba = {VERSION: '1.4.8'};
+var Imba = {VERSION: '1.5.0'};
 
 
 
@@ -484,9 +484,9 @@ __webpack_require__(46);
 
 if (true) {
 	__webpack_require__(47);
-	__webpack_require__(49);
 	__webpack_require__(50);
 	__webpack_require__(51);
+	__webpack_require__(52);
 };
 
 if (false) {};
@@ -7421,6 +7421,13 @@ function SyntaxAssignment(nestings){
 	this;
 };
 
+SyntaxAssignment.prototype.__newprop = {native: true,name: 'newprop'};
+Object.defineProperty(SyntaxAssignment.prototype,'newprop',{
+	configurable: true,
+	get: function(){ return this._newprop; },
+	set: function(v){ this._newprop = v; }
+});
+
 SyntaxAssignment.prototype.setIvar = function (val){
 	this._sets = this._sets + 1;
 	this._ivar = val;
@@ -7464,6 +7471,15 @@ SyntaxAssignment.prototype.testmeth1 = function (){
 	ivar;
 	return this;
 };
+
+Object.defineProperty(SyntaxAssignment.prototype,'caption',{get: function(){
+	return this._caption.toUpperCase();
+}, configurable: true});
+
+Object.defineProperty(SyntaxAssignment.prototype,'caption',{set: function(value){
+	return this._caption = value;
+}, configurable: true});
+
 
 
 
@@ -7532,10 +7548,21 @@ describe('Syntax - Assignment',function() {
 			eq(o3.ivar(),4);
 			return eq(o1.calls(),2);
 		});
-		
-		
 	});
 	
+	describe("getset",function() {
+		var obj = new SyntaxAssignment();
+		
+		return test("=",function() {
+			obj.caption = 'hello';
+			eq(obj.caption,'HELLO');
+			
+			
+			ok(!(obj.newprop instanceof Function),'newprop should not be a function');
+			obj.newprop = 'hello';
+			return eq(obj.newprop,'hello');
+		});
+	});
 	
 	describe("statements",function() {
 		var obj = new SyntaxAssignment();
@@ -8004,6 +8031,7 @@ describe('Syntax - Assignment',function() {
 /* 36 */
 /***/ (function(module, exports) {
 
+var self = {};
 // externs;
 
 describe("Syntax - Conditionals",function() {
@@ -8021,7 +8049,7 @@ describe("Syntax - Conditionals",function() {
 		
 	});
 	
-	return test("unary precedence",function() {
+	test("unary precedence",function() {
 		var m;
 		var a = null;
 		var b = 2;
@@ -8039,6 +8067,20 @@ describe("Syntax - Conditionals",function() {
 		);
 		
 		return eq(res,2);
+	});
+	
+	return test("negative branch without paranthesis",function() {
+		self.condition = function (){
+			return true;
+		};
+		self.test_condition = function (){
+			if (!(self.condition())) {
+				return false;
+			} else {
+				return true;
+			};
+		};
+		return eq(self.test_condition(),true);
 	});
 });
 
@@ -8147,41 +8189,58 @@ describe('Syntax - Tags',function() {
 	var scope = "self";
 	
 	test('id',function() {
-		return self.jseq("setId('one')",function() { return (_1('div').setId('one')); });
+		return self.jseq("setId('one')",function() { var _t1;
+		return (_1('div').setId('one')); });
 	});
 	
 	test('flags',function() {
-		self.jseq("flag('only')",function() { return (_1('div').flag('only')); });
-		self.jseq("flag('two')",function() { return (_1('div').flag('two')); });
-		self.jseq("flagIf('two',numvar)",function() { return (_1('div')).flagIf('two',numvar); });
-		self.jseq("setFlag(0,strvar)",function() { return (_1('div')).setFlag(0,strvar); });
-		return self.jseq(("setFlag(0," + scope + ".name())"),function() { return (_1('div')).setFlag(0,self.name()); });
+		self.jseq("flag('only')",function() { var _t1;
+		return (_1('div').flag('only')); });
+		self.jseq("flag('two')",function() { var _t1;
+		return (_1('div').flag('two')); });
+		self.jseq("flagIf('two',numvar)",function() { var _t1;
+		return (_1('div')).flagIf('two',numvar); });
+		self.jseq("setFlag(0,strvar)",function() { var _t1;
+		return (_1('div')).setFlag(0,strvar); });
+		return self.jseq(("setFlag(0," + scope + ".name())"),function() { var _t1;
+		return (_1('div')).setFlag(0,self.name()); });
 	});
 	
 	
 	test('attributes',function() {
-		self.jseq("setTitle(strvar)",function() { return (_1('div')).setTitle(strvar).end(); });
-		self.jseq("css('display','block')",function() { return (_1('div').css('display','block')).end(); });
-		self.jseq("setDisabled('disabled')",function() { return (_1('input').setDisabled('disabled')).end(); });
-		self.jseq("setDisabled('disabled').setReadonly('readonly')",function() { return (_1('input').setDisabled('disabled').setReadonly('readonly')).end(); });
-		self.jseq(("set('model',strvar,\{number:1\})"),function() { return (_1('div')).set('model',strvar,{number:1}).end(); });
-		return self.jseq("set('aria-hidden','true')",function() { return (_1('div').set('aria-hidden','true')).end(); });
+		self.jseq("setTitle(strvar)",function() { var _t1;
+		return (_1('div')).setTitle(strvar).end(); });
+		self.jseq("css('display','block')",function() { var _t1;
+		return (_1('div').css('display','block')).end(); });
+		self.jseq("setDisabled('disabled')",function() { var _t1;
+		return (_1('input').setDisabled('disabled')).end(); });
+		self.jseq("setDisabled('disabled').setReadonly('readonly')",function() { var _t1;
+		return (_1('input').setDisabled('disabled').setReadonly('readonly')).end(); });
+		self.jseq(("set('model',strvar,\{number:1\})"),function() { var _t1;
+		return (_1('div')).set('model',strvar,{number:1}).end(); });
+		return self.jseq("set('aria-hidden','true')",function() { var _t1;
+		return (_1('div').set('aria-hidden','true')).end(); });
 	});
 	
 	
 	test('events',function() {
-		self.jseq(("(0,['tap','prevent','after']," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap','prevent','after'],self)); });
-		self.jseq(("(0,['tap',['incr',10]]," + scope + ")"),function() { return (_1('div').flag('two').on$(0,['tap',['incr',10]],self)); });
-		return self.jseq(("(0,['tap',fnvar]," + scope + ")"),function() { return (_1('div').flag('two')).on$(0,['tap',fnvar],self); });
+		self.jseq(("(0,['tap','prevent','after']," + scope + ")"),function() { var _t1;
+		return (_1('div').flag('two').on$(0,['tap','prevent','after'],self)); });
+		self.jseq(("(0,['tap',['incr',10]]," + scope + ")"),function() { var _t1;
+		return (_1('div').flag('two').on$(0,['tap',['incr',10]],self)); });
+		return self.jseq(("(0,['tap',fnvar]," + scope + ")"),function() { var _t1;
+		return (_1('div').flag('two')).on$(0,['tap',fnvar],self); });
 	});
 	
 	test('data',function() {
-		self.jseq("setData(objvar)",function() { return (_1('div')).setData(objvar); });
-		return self.jseq("setData(objvar)",function() { return (_1('div').flag('only')).setData(objvar); });
+		self.jseq("setData(objvar)",function() { var _t1;
+		return (_1('div')).setData(objvar); });
+		return self.jseq("setData(objvar)",function() { var _t1;
+		return (_1('div').flag('only')).setData(objvar); });
 	});
 	
 	test('ref',function() {
-		return self.jseq("._main =",function() { let $ = this.$$ || (this.$$ = {});
+		return self.jseq("._main =",function() { let _t1, $ = this.$$ || (this.$$ = {});
 		return (self._main = self._main||_1('div',self).flag('main')).setData(objvar); });
 	});
 	
@@ -8195,16 +8254,17 @@ describe('Syntax - Tags',function() {
 		Local.prototype._title = "class";
 		
 		Local.prototype.closed = function (){
+			var _t1;
 			return (t0 = (t0=_1('div')).setTitle("tag").setTemplate(function() {
-				var $ = this.$, t0;
+				var _t2, $ = this.$, t0;
 				return ($[0] || _1('h1',$,0,t0)).setContent(this.title(),3);
 			})).end();
 		};
 		
 		Local.prototype.open = function (){
-			var self = this;
+			var _t1, self = this;
 			return (t0 = (t0=_1('div')).setTitle("tag").setTemplate(function() {
-				var $ = this.$, t0;
+				var _t2, $ = this.$, t0;
 				return ($[0] || _1('h1',$,0,t0)).setContent(self.title(),3);
 			})).end();
 		};
@@ -8215,7 +8275,7 @@ describe('Syntax - Tags',function() {
 	});
 	
 	test('root',function() {
-		var t0;
+		var _t1, _t2, t0, _t3;
 		let a,b,c,d,e;
 		var item = (t0 = (t0=_1('div')).setContent([
 			_1('div',t0.$,'A',t0).flag('b'),
@@ -8231,20 +8291,21 @@ describe('Syntax - Tags',function() {
 	});
 	
 	test('multiple self',function() {
+		var _t1;
 		var Something = Imba.defineTag('Something');
 		var Local = Imba.defineTag('Local', function(tag){
 			tag.prototype.render = function (){
-				var $ = this.$;
+				var _t1, _t2, $ = this.$;
 				return this.$open(0).setChildren($[0] || _1('div',$,0,this).setText("ready"),2).synced();
 			};
 			
 			tag.prototype.loading = function (){
-				var $ = ($_ = this.$).$loading$ || ($_.$loading$ = _2(this));
+				var _t1, _t2, $ = ($_ = this.$).$loading$ || ($_.$loading$ = _2(this));
 				return this.$open('loading0').setChildren($[0] || _1('span',$,0,this).setText("loading"),2).synced();
 			};
 			
 			tag.prototype.flip = function (bool){
-				var $ = ($_ = this.$).$flip$ || ($_.$flip$ = _2(this));
+				var _t1, _t2, $ = ($_ = this.$).$flip$ || ($_.$flip$ = _2(this));
 				if(bool === undefined) bool = false;
 				if (bool) {
 					return this.$open('flip0').setChildren($[0] || _1(Something,$,0,this).setText("bold"),2).synced((
@@ -8265,13 +8326,13 @@ describe('Syntax - Tags',function() {
 	});
 	
 	test('owner',function() {
-		var t0;
+		var _t1, _t2, t0;
 		var key = 100;
 		var ary = [1,2,3];
 		var obj = {
 			str: 1,
 			header: function(){
-				let key_, $ = this.$$ || (this.$$ = {}), $1;
+				let _t1, key_, $ = this.$$ || (this.$$ = {}), $1;
 				return ($[($1 = 'key$' + key)] || _1('div',$,$1,this).setText("hello"));
 			}
 		};
@@ -8282,26 +8343,28 @@ describe('Syntax - Tags',function() {
 		
 		var Local = Imba.defineTag('Local', function(tag){
 			tag.prototype.list = function (){
-				var t0;
+				var _t11, _t2, t0;
 				return (t0 = (t0=_1('div')).setContent([
 					_1('ul',t0.$,'A',t0),
 					_1('ul',t0.$,'C',t0),
 					this._named = this._named||_1('div',t0).flag('named')
 				],2)).end((
 					t0.$.A.setContent((function tagLoop($0) {
-						var item_, $1, $$ = $0.$iter();
+						var _t3, item_, $1, $$ = $0.$iter();
 						for (let i = 0, len = ary.length, item; i < len; i++) {
 							item = ary[i];
 							$$.push(($0[item] || _1('li',$0,item)).setContent(item,3));
 						};return $$;
 					})(t0.$['B'] || _3(t0.$,'B',t0.$.A)),5),
 					t0.$.C.setContent((function tagLoop($0) {
+						var _t3;
 						for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 							($0[i] || _1('li',$0,i)).setContent(ary[i],3);
 						};return $0;
 					})(t0.$['D'] || _4(t0.$,'D',t0.$.C)),4),
 					this._named.setContent(
 						(function tagLoop($0) {
+							var _t3;
 							for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 								($0[i] || _1('li',$0,i)).setData(ary[i]);
 							};return $0;
@@ -8311,7 +8374,7 @@ describe('Syntax - Tags',function() {
 			};
 			
 			tag.prototype.list2 = function (){
-				let item_, $ = this.$$ || (this.$$ = {}), $1;
+				let _t11, item_, $ = this.$$ || (this.$$ = {}), $1;
 				let res = [];
 				for (let i = 0, len = ary.length, item; i < len; i++) {
 					item = ary[i];
@@ -8321,7 +8384,7 @@ describe('Syntax - Tags',function() {
 			};
 			
 			tag.prototype.render = function (){
-				var $ = this.$;
+				var _t11, _t2, $ = this.$, _t3, _t4;
 				return this.$open(0).setChildren($.$ = $.$ || [
 					this._itemlist = this._itemlist||_1('ul',this).flag('itemlist'),
 					this._other = this._other||_1('div',this).flag('other').setContent(
@@ -8330,6 +8393,7 @@ describe('Syntax - Tags',function() {
 				],2).synced((
 					this._itemlist.setContent(
 						(function tagLoop($0) {
+							var _t3;
 							for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 								($0[i] || _1('li',$0,i)).setData(ary[i]);
 							};return $0;
@@ -8345,13 +8409,14 @@ describe('Syntax - Tags',function() {
 			_1('ul',t0.$,'C',t0)
 		],2)).end((
 			t0.$.A.setContent((function tagLoop($0) {
-				var item_, $1, $$ = $0.$iter();
+				var _t3, item_, $1, $$ = $0.$iter();
 				for (let i = 0, len = ary.length, item; i < len; i++) {
 					item = ary[i];
 					$$.push(($0[item] || _1('li',$0,item)).setContent(item,3));
 				};return $$;
 			})(t0.$['B'] || _3(t0.$,'B',t0.$.A)),5),
 			t0.$.C.setContent((function tagLoop($0) {
+				var _t3;
 				for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 					($0[i] || _1('li',$0,i)).setContent(ary[i],3);
 				};return $0;
@@ -8382,7 +8447,7 @@ describe('Syntax - Tags',function() {
 	});
 	
 	test('lists',function() {
-		var node;
+		var _t1, node;
 		let types = [1,2,3,4];
 		var Radio = Imba.defineTag('Radio', function(tag){
 			tag.prototype.value = function(v){ return this._value; }
@@ -8395,13 +8460,13 @@ describe('Syntax - Tags',function() {
 		
 		var Local = Imba.defineTag('Local', function(tag){
 			tag.prototype.render = function (){
-				var $ = this.$;
+				var _t1, _t2, $ = this.$;
 				return this.$open(0).setChildren(
 					$[0] || _1('div',$,0,this).flag('Radios').flag('group').flag('xl')
 				,2).synced((
 					$[0].setContent(
 						(function tagLoop($0) {
-							var $$ = $0.$iter();
+							var _t3, $$ = $0.$iter();
 							for (let i = 0, len = types.length, item; i < len; i++) {
 								item = types[i];
 								if (item % 2 == 0) {
@@ -8419,19 +8484,22 @@ describe('Syntax - Tags',function() {
 	});
 	
 	test("nested loops",function() {
+		var _t1;
 		var data = [
 			{id: 'a',items: ['a','b','c']},
 			{id: 'b',items: ['d','e','f']}
 		];
 		
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
-			var $ = this.$, t0;
+			var _t2, $ = this.$, t0;
 			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
 				(function tagLoop($0,$2,$$) {
+					var _t3;
 					for (let i = 0, len = data.length, item; i < len; i++) {
 						item = data[i];
 						$$.push(($0[i] || _1('h1',$0,i)).setContent(item.id,3));
 						(function tagLoop($0) {
+							var _t31;
 							for (let j = 0, items = iter$(item.items), len = items.length; j < len; j++) {
 								$$.push(($0[j] || _1('div',$0,j)).setContent(items[j],3));
 							};
@@ -8445,15 +8513,16 @@ describe('Syntax - Tags',function() {
 		self.htmleq("<h1>b</h1><div>d</div>",node);
 		
 		var node2 = (t0 = (t0=_1('div'))).setTemplate(function() {
-			var $ = this.$, t0;
+			var _t2, $ = this.$, t0;
 			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
 				(function tagLoop($0,$1,$2,$$) {
-					var t0;
+					var _t3, t0;
 					for (let i = 0, len = data.length, item; i < len; i++) {
 						item = data[i];
 						$$.push(($0[i] || _1('h1',$0,i)).setContent(item.id,3));
 						$$.push(($1[i] || _1('hr',$1,i)));
 						$$.push((t0 = $2[i] || (t0=_1('ul',$2,i))).setContent((function tagLoop($0) {
+							var _t4;
 							for (let j = 0, items = iter$(item.items), len = $0.taglen = items.length; j < len; j++) {
 								($0[j] || _1('li',$0,j)).setContent(items[j],3);
 							};return $0;
@@ -8470,6 +8539,7 @@ describe('Syntax - Tags',function() {
 	});
 	
 	test("multiloops",function() {
+		var _t1;
 		var data = [
 			{id: 'a',items: ['a','b','c']},
 			{id: 'b',items: ['d','e','f']},
@@ -8477,9 +8547,10 @@ describe('Syntax - Tags',function() {
 		];
 		
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
-			var $ = this.$, t0;
+			var _t2, $ = this.$, t0;
 			return ($[0] || _1('div',$,0,t0).flag('content')).setContent(
 				(function tagLoop($0,$1,$$) {
+					var _t3;
 					for (let i = 0, len = data.length, item; i < len; i++) {
 						item = data[i];
 						if (item.id == 'a') {
@@ -8496,7 +8567,7 @@ describe('Syntax - Tags',function() {
 	});
 	
 	test('wrapping',function() {
-		var t0;
+		var _t1, _t2, t0;
 		var str = "str";
 		var Local = Imba.defineTag('Local', function(tag){
 			tag.prototype.content = function(v){ return this._content; }
@@ -8507,7 +8578,7 @@ describe('Syntax - Tags',function() {
 			};
 			
 			tag.prototype.render = function (){
-				var $ = this.$;
+				var _t1, _t2, $ = this.$;
 				return this.$open(0).setChildren([
 					this.dyn(),
 					$[0] || _1('h1',$,0,this),
@@ -8527,7 +8598,7 @@ describe('Syntax - Tags',function() {
 		
 		var Other = Imba.defineTag('Other', function(tag){
 			tag.prototype.header = function (){
-				let $ = this.$$ || (this.$$ = {}), t1;
+				let _t11, $ = this.$$ || (this.$$ = {}), _t21, t1;
 				return (t1 = this._header = this._header||(t1=_1(Local,this)).flag('header')).setContent([
 					t1.$.A || _1('p',t1.$,'A',t1).setText("one"),
 					t1.$.B || _1('p',t1.$,'B',t1).setText("two"),
@@ -8536,7 +8607,7 @@ describe('Syntax - Tags',function() {
 			};
 			
 			tag.prototype.render = function (){
-				var $ = this.$;
+				var _t11, _t21, $ = this.$;
 				return this.$open(0).setChildren([
 					this.header(),
 					$[0] || _1('h1',$,0,this)
@@ -8550,15 +8621,16 @@ describe('Syntax - Tags',function() {
 	});
 	
 	return test('template',function() {
+		var _t1;
 		var Local = Imba.defineTag('Local', function(tag){
 			tag.prototype.render = function (){
-				var $ = this.$;
+				var _t1, _t2, $ = this.$;
 				var title = this.title();
 				return this.$open(0).setChildren(
 					t0 = $[0] || (t0=_1('div',$,0,this))
 				,2).synced((
 					$[0].setTemplate(function() {
-						var $1 = this.$, t0;
+						var _t3, $1 = this.$, t0;
 						return ($1[0] || _1('span',$1,0,t0)).setContent(title,3);
 					}).end()
 				,true));
@@ -8928,7 +9000,7 @@ describe("Syntax - Quirks",function() {
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagMap, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
+var _t1, Imba = __webpack_require__(0), _2 = Imba.createTagMap, _3 = Imba.createTagList, _4 = Imba.createTagLoopResult, _1 = Imba.createElement;
 // externs;
 
 (_1('a'));
@@ -8958,10 +9030,10 @@ Imba.defineTag('cached', function(tag){
 	};
 	
 	tag.prototype.render = function (){
-		var self = this, $ = this.$;
+		var _t11, self = this, $ = this.$;
 		return self.$open(0).setChildren(
 			(function tagLoop($0) {
-				var v_, $1, $$ = $0.$iter();
+				var _t2, v_, $1, $$ = $0.$iter();
 				for (let i = 0, items = iter$(self._ary), len = items.length; i < len; i++) {
 					$$.push(($0[items[i]] || _1('div',$0,items[i]).setText("v")));
 				};return $$;
@@ -8974,6 +9046,7 @@ function CustomClass(){ return Imba.Tag.apply(this,arguments) };
 
 Imba.subclass(CustomClass,Imba.Tag);
 CustomClass.prototype.end = function (){
+	var _t11;
 	return this.$open('end0').flag('one').flag('two').setText("Custom").synced();
 };
 
@@ -9002,6 +9075,7 @@ var toArray = function(list) {
 describe('Tags - Define',function() {
 	
 	test("basic",function() {
+		var _t11;
 		var el = (_1('custom')).end();
 		eq(el.hello(),true);
 		return eq(el.toString(),'<div class="_custom"></div>');
@@ -9009,7 +9083,7 @@ describe('Tags - Define',function() {
 	
 	
 	test("caching",function() {
-		var ary;
+		var _t11, ary;
 		var el = (_1('cached')).end();
 		var els = toArray(el.dom().children);
 		var ary = iter$(els);var a = ary[0],b = ary[1],c = ary[2];
@@ -9023,7 +9097,7 @@ describe('Tags - Define',function() {
 	
 	
 	test("as part of object",function() {
-		var obj;
+		var _t11, obj;
 		return obj = {
 			name: 'something',
 			node: (_1('a').setHref('#')).end()
@@ -9031,7 +9105,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("with switch",function() {
-		var t0, el;
+		var _t11, _t2, t0, _t3, el;
 		var num = 1;
 		
 		return el = (t0 = (t0=_1('div')).setContent(
@@ -9055,6 +9129,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("singleton with reserved names",function() {
+		var _t11;
 		Imba.defineTag('#try', function(tag){
 			tag.prototype.hello = function (){
 				return true;
@@ -9064,15 +9139,17 @@ describe('Tags - Define',function() {
 	});
 	
 	test("cache for in",function() {
+		var _t11;
 		buildCount = 0;
 		var root = (_1('div'));
 		
 		root.render = function (){
-			var $ = this.$;
+			var _t12, _t2, $ = this.$;
 			var ary = ['a','b','c','d'];
 			return this.$open(0).setChildren([
 				$[0] || _1('h1',$,0,this).setText('heading'),
 				(function tagLoop($0) {
+					var _t21;
 					for (let i = 0, len = $0.taglen = ary.length; i < len; i++) {
 						($0[i] || _1('custom',$0,i)).setContent(ary[i],3).end();
 					};return $0;
@@ -9091,15 +9168,17 @@ describe('Tags - Define',function() {
 	});
 	
 	test("cache double for in",function() {
+		var _t11;
 		buildCount = 0;
 		var root = (_1('div'));
 		
 		root.render = function (){
-			var $ = this.$;
+			var _t12, _t2, $ = this.$;
 			var ary = ['a','b','c','d'];
 			return this.$open(0).setChildren([
 				$[0] || _1('h1',$,0,this).setText('heading'),
 				(function tagLoop($0,$1,$$) {
+					var _t21;
 					for (let i = 0, len = ary.length, v; i < len; i++) {
 						v = ary[i];
 						$$.push(($0[i] || _1('custom',$0,i).flag('one')).setContent(v,3).end());
@@ -9120,9 +9199,11 @@ describe('Tags - Define',function() {
 	});
 	
 	test("dynamic flags",function() {
+		var _t11;
 		let val = 'hello';
 		var div = (_1('div'));
 		div.render = function (){
+			var _t12;
 			return this.$open(0).setFlag(-1,val).synced();
 		};
 		
@@ -9133,11 +9214,13 @@ describe('Tags - Define',function() {
 	});
 	
 	test("void elements",function() {
+		var _t11;
 		var el = (_1('input')).end();
 		return eq(el.toString(),'<input>');
 	});
 	
 	test("idn attributes",function() {
+		var _t11;
 		var el = (_1('input').setType('checkbox').setRequired(true).setDisabled(false).setChecked(true).setValue("a",1)).end();
 		var html = el.dom().outerHTML;
 		
@@ -9151,6 +9234,7 @@ describe('Tags - Define',function() {
 	
 	
 	test("style attribute",function() {
+		var _t11;
 		var el = (_1('div').css('display','inline')).end();
 		if (true) {
 			return eq(el.dom().style.display,'inline');
@@ -9158,6 +9242,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("class",function() {
+		var _t11;
 		var el = (_1(CustomClass)).end();
 		if (true) {
 			eq(el.dom().className,'one two');
@@ -9171,6 +9256,7 @@ describe('Tags - Define',function() {
 	
 	
 	test("initialize",function() {
+		var _t11;
 		var a = (_1('custom-init')).end();
 		eq(a._custom,true);
 		
@@ -9179,6 +9265,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("local tag",function() {
+		var _t11;
 		var LocalTag = Imba.defineTag('LocalTag', 'canvas', function(tag){
 			tag.prototype.initialize = function (){
 				this._local = true;
@@ -9198,9 +9285,10 @@ describe('Tags - Define',function() {
 	});
 	
 	test("caching event-handlers",function() {
+		var _t11;
 		var Cache = Imba.defineTag('Cache', function(tag){
 			tag.prototype.render = function (){
-				var self = this, $ = this.$;
+				var _t11, _t2, self = this, $ = this.$;
 				return self.$open(0).setChildren(self._body = self._body||_1('div',self).flag('body').on$(0,['tap',function(e) { return self.title(); }],self),2).synced();
 			};
 		});
@@ -9215,7 +9303,7 @@ describe('Tags - Define',function() {
 		
 		var NoCache = Imba.defineTag('NoCache', function(tag){
 			tag.prototype.render = function (arg){
-				var $ = this.$;
+				var _t12, _t2, $ = this.$;
 				return this.$open(0).setChildren(this._body = this._body||_1('div',this).flag('body'),2).synced((
 					this._body.on$(0,['tap',function(e) { return arg; }],this)
 				,true));
@@ -9229,6 +9317,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("parsing correctly",function() {
+		var _t11;
 		try {
 			return (_1('div')).dataset('date',new Date()).end();
 		} catch (e) {
@@ -9237,6 +9326,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("snake_case properties",function() {
+		var _t11;
 		var Custom = Imba.defineTag('Custom', function(tag){
 			tag.prototype.my_title = function(v){ return this._my_title; }
 			tag.prototype.setMy_title = function(v){ this._my_title = v; return this; };
@@ -9250,11 +9340,13 @@ describe('Tags - Define',function() {
 	});
 	
 	test("forin range",function() {
+		var _t11;
 		var Custom = Imba.defineTag('Custom', function(tag){
 			tag.prototype.render = function (){
-				var $ = this.$;
+				var _t11, $ = this.$;
 				return this.$open(0).setChildren(
 					(function tagLoop($0) {
+						var _t2;
 						for (let v = 1; v <= 2; v++) {
 							($0[v] || _1('div',$0,v)).setContent(v,3);
 						};return $0;
@@ -9268,12 +9360,14 @@ describe('Tags - Define',function() {
 	});
 	
 	test("data syntax",function() {
+		var _t11;
 		var data = {a: 1,b: 2};
 		var el = (_1('div')).setData(data);
 		return eq(el.data(),data);
 	});
 	
 	test("build order",function() {
+		var _t11;
 		var order = [];
 		var Custom = Imba.defineTag('Custom', function(tag){
 			
@@ -9297,14 +9391,15 @@ describe('Tags - Define',function() {
 	});
 	
 	test("issue #89",function() {
+		var _t11;
 		var Custom = Imba.defineTag('Custom', function(tag){
 			tag.prototype.render = function (){
-				var self = this, $ = this.$;
+				var _t11, self = this, $ = this.$;
 				self._items = ["a","b","c"];
 				self._k = 0;
 				return self.$open(0).setChildren(
 					(function tagLoop($0) {
-						var $2, $1, $$ = $0.$iter();
+						var _t2, $2, $1, $$ = $0.$iter();
 						for (let i = 0, items = iter$(self._items), len = items.length; i < len; i++) {
 							$$.push(($0[($1 = self._k++)] || _1('div',$0,$1)).setContent(items[i],3));
 						};return $$;
@@ -9318,6 +9413,7 @@ describe('Tags - Define',function() {
 	});
 	
 	test("setting attributes multiple times",function() {
+		var _t11;
 		var a = (_1('a').setHref('#')).end();
 		a.setHref('#1');
 		a.setHref('#2');
@@ -9325,6 +9421,7 @@ describe('Tags - Define',function() {
 	});
 	
 	return test("css",function() {
+		var _t11;
 		var Custom = Imba.defineTag('Custom', function(tag){
 			
 			tag.prototype.build = function (){
@@ -9371,16 +9468,17 @@ Imba.defineTag('cachetest', function(tag){
 	Imba.defineTag('panel', function(tag){
 		
 		tag.prototype.header = function (){
-			let $ = this.$$ || (this.$$ = {}), t0;
+			let _t1, $ = this.$$ || (this.$$ = {}), _t2, t0;
 			return (t0 = this._header = this._header||(t0=_1('div',this)).flag('header').setContent(t0.$.A || _1('div',t0.$,'A',t0).setText('H'),2));
 		};
 		
 		tag.prototype.body = function (){
+			var _t1;
 			return (_1('div'));
 		};
 		
 		tag.prototype.render = function (){
-			var $ = this.$;
+			var _t1, _t2, $ = this.$;
 			return this.$open(0).setChildren([
 				$[0] || _1('div',$,0,this).setText('P'),
 				this.header(),
@@ -9392,7 +9490,7 @@ Imba.defineTag('cachetest', function(tag){
 	Imba.defineTag('subpanel', 'panel', function(tag){
 		
 		tag.prototype.header = function (){
-			let $ = this.$$ || (this.$$ = {}), t0;
+			let _t1, $ = this.$$ || (this.$$ = {}), _t2, t0;
 			return (t0 = this._header = this._header||(t0=_1('div',this)).flag('header').setContent(t0.$.A || _1('div',t0.$,'A',t0).setText('X'),2));
 		};
 	});
@@ -9402,7 +9500,7 @@ Imba.defineTag('cachetest', function(tag){
 		tag.prototype.setContent = function(v){ this._content = v; return this; };
 		
 		tag.prototype.render = function (){
-			var $ = this.$;
+			var _t1, _t2, $ = this.$;
 			return this.$open(0).setChildren([
 				$[0] || _1('div',$,0,this).setText('W'),
 				this._content
@@ -9411,7 +9509,7 @@ Imba.defineTag('cachetest', function(tag){
 	});
 	
 	tag.prototype.render = function (o){
-		var $ = this.$;
+		var _t1, _t2, $ = this.$, _t3;
 		if(o === undefined) o = {};
 		return this.$open(0).setChildren([
 			o.a ? (
@@ -9426,6 +9524,7 @@ Imba.defineTag('cachetest', function(tag){
 			) : void(0),
 			
 			(function tagLoop($0) {
+				var _t21;
 				for (let i = 0, items = iter$(o.letters), len = $0.taglen = items.length; i < len; i++) {
 					($0[i] || _1('div',$0,i)).setContent(items[i],3);
 				};return $0;
@@ -9454,6 +9553,7 @@ let has = function(text,fn) {
 
 
 describe('Tags - Cache',function() {
+	var _t1;
 	var node = (_1('cachetest')).end();
 	test("basic",function() {
 		return eq(node.test(),"[]");
@@ -9472,16 +9572,21 @@ describe('Tags - Cache',function() {
 			return ok(String(fn).indexOf(text) >= 0);
 		};
 		let dyn = 10;
-		has('setText',function() { return (_1('div').setText("title")); });
-		has('setText',function() { return (_1('div')).setText("title " + dyn); });
-		return has('setText',function() { return (_1('div')).setText("title" + dyn); });
+		has('setText',function() { var _t11;
+		return (_1('div').setText("title")); });
+		has('setText',function() { var _t11;
+		return (_1('div')).setText("title " + dyn); });
+		return has('setText',function() { var _t11;
+		return (_1('div')).setText("title" + dyn); });
 	});
 	
 	test("svg dynamic set",function() {
-		return has('set(',function() { return (_1('svg:rect').set('fill','red')).end(); });
+		return has('set(',function() { var _t11;
+		return (_1('svg:rect').set('fill','red')).end(); });
 	});
 	
 	test("alternate text and dom",function() {
+		var _t11;
 		if (false) {};
 		var items = ["A",(_1('div').setText("B"))];
 		var flip = function() {
@@ -9490,7 +9595,7 @@ describe('Tags - Cache',function() {
 		};
 		
 		var el = (t0 = (t0=_1(Tester))).setTemplate(function() {
-			var $ = this.$, t0;
+			var _t2, $ = this.$, t0;
 			return ($[0] || _1('li',$,0,t0)).setContent(items[this._o],3);
 		}).end();
 		
@@ -9501,6 +9606,7 @@ describe('Tags - Cache',function() {
 	
 	
 	test("dynamic caching",function() {
+		var _t11;
 		var items = {
 			a: {id: 1,title: "A"},
 			b: {id: 2,title: "B"}
@@ -9514,7 +9620,7 @@ describe('Tags - Cache',function() {
 		
 		var item = items.a;
 		var root = (t0 = (t0=_1('div'))).setTemplate(function() {
-			var $ = this.$, $1, t0;
+			var _t2, $ = this.$, $1, t0;
 			return ($[($1 = '0$' + item.id)] || _1(Local,$,$1,t0)).setData(item).end();
 		}).end();
 		item = items.b;
@@ -9526,9 +9632,10 @@ describe('Tags - Cache',function() {
 	});
 	
 	true && test("parent",function() {
+		var _t11;
 		var Local = Imba.defineTag('Local', function(tag){
 			tag.prototype.header = function (){
-				let $ = this.$$ || (this.$$ = {}), t0, t1;
+				let _t11, $ = this.$$ || (this.$$ = {}), _t2, t0, _t3, t1;
 				return (t0 = this._header = this._header||(t0=_1('div',this)).flag('header').setContent([
 					_1('h1',t0.$,'A',t0),
 					_1('h2',t0.$,'B',t0),
@@ -9549,6 +9656,7 @@ describe('Tags - Cache',function() {
 	});
 	
 	return true && test("pruning",function() {
+		var _t11;
 		var counter = 0;
 		var items = [];
 		for (let i = 0; i <= 10; i++) {
@@ -9556,9 +9664,9 @@ describe('Tags - Cache',function() {
 		};
 		
 		var node = (t0 = (t0=_1('div'))).setTemplate(function() {
-			var $ = this.$, t0;
+			var _t2, $ = this.$, t0;
 			return ($[0] || _1('ul',$,0,t0)).setContent((function tagLoop($0) {
-				var $1, id_, $$ = $0.$iter();
+				var _t3, $1, id_, $$ = $0.$iter();
 				for (let i = 0, len = items.length, item; i < len; i++) {
 					item = items[i];
 					$$.push(($0[(id_ = item.id)] || _1('li',$0,id_)).setContent(item.name,3));
@@ -9603,6 +9711,7 @@ describe("HTML",function() {
 	
 	return describe("attributes",function() {
 		return test("globals",function() {
+			var _t1;
 			var el = (_1('div').setAccesskey("s").setIs("something")).end();
 			eq(el.accesskey(),"s");
 			return eq(el.is(),"something");
@@ -9626,7 +9735,7 @@ describe("Tags - SVG",function() {
 	
 	if (true) {
 		test("basics",function() {
-			var t0;
+			var _t1, _t2, t0;
 			var item = (t0 = (t0=_1('svg:svg')).setContent([
 				_1('svg:g',t0.$,'A',t0),
 				_1('svg:circle',t0.$,'B',t0).set('r',20)
@@ -9641,6 +9750,7 @@ describe("Tags - SVG",function() {
 		});
 		
 		return test("native types",function() {
+			var _t1;
 			eq(((_1('svg:animateMotion')).end()).dom().constructor,SVGAnimateMotionElement);
 			ok(((_1('svg:circle')).end()).dom() instanceof SVGCircleElement);
 			return ok(((_1('svg:someCustomElement')).end()).dom() instanceof SVGElement);
@@ -9759,7 +9869,7 @@ Imba.defineTag('group', function(tag){
 	tag.prototype.render = function (pars){
 		// no need for nested stuff here - we're testing setStaticChildren
 		// if it works on the flat level it should work everywhere
-		var $ = this.$;
+		var _t1, _t2, $ = this.$;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var a = pars.a !== undefined ? pars.a : false;
 		var b = pars.b !== undefined ? pars.b : false;
@@ -9812,8 +9922,9 @@ Imba.defineTag('group', function(tag){
 Imba.defineTag('other', function(tag){
 	
 	tag.prototype.render = function (){
-		var self = this, $ = this.$;
+		var _t1, self = this, $ = this.$;
 		return self.$open(0).setChildren((function tagLoop($0) {
+			var _t2;
 			for (let i = 0, items = iter$(self.items()), len = $0.taglen = items.length; i < len; i++) {
 				($0[i] || _1('li',$0,i)).setContent(items[i],3);
 			};return $0;
@@ -9823,6 +9934,7 @@ Imba.defineTag('other', function(tag){
 
 Imba.defineTag('textlist', function(tag){
 	tag.prototype.render = function (texts){
+		var _t1;
 		if(texts === undefined) texts = [];
 		return this.$open(0).setChildren((function tagLoop($$) {
 			for (let i = 0, items = iter$(texts), len = items.length; i < len; i++) {
@@ -9835,7 +9947,7 @@ Imba.defineTag('textlist', function(tag){
 Imba.defineTag('group2', 'group', function(tag){
 	
 	tag.prototype.render = function (pars){
-		var $ = this.$;
+		var _t1, _t2, $ = this.$;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var a = pars.a !== undefined ? pars.a : false;
 		return this.$open(0).setChildren(
@@ -9854,7 +9966,7 @@ Imba.defineTag('group2', 'group', function(tag){
 Imba.defineTag('group3', 'group', function(tag){
 	
 	tag.prototype.render = function (pars){
-		var $ = this.$;
+		var _t1, _t2, $ = this.$;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var a = pars.a !== undefined ? pars.a : false;
 		return this.$open(0).setChildren([
@@ -9867,7 +9979,7 @@ Imba.defineTag('group3', 'group', function(tag){
 Imba.defineTag('group4', 'group', function(tag){
 	
 	tag.prototype.render = function (pars){
-		var $ = this.$;
+		var _t1, _t2, $ = this.$;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var a = pars.a !== undefined ? pars.a : false;
 		return this.$open(0).setChildren([
@@ -9885,7 +9997,7 @@ Imba.defineTag('group4', 'group', function(tag){
 Imba.defineTag('group5', 'group', function(tag){
 	
 	tag.prototype.render = function (pars){
-		var $ = this.$;
+		var _t1, _t2, $ = this.$;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var a = pars.a !== undefined ? pars.a : false;
 		return this.$open(0).setChildren([
@@ -9910,7 +10022,7 @@ Imba.defineTag('unknowns', 'div', function(tag){
 	};
 	
 	tag.prototype.render = function (){
-		var $ = this.$;
+		var _t1, _t2, $ = this.$, _t3;
 		return this.$open(0).setChildren([
 			5,
 			new Date().toString(),
@@ -9948,7 +10060,7 @@ Imba.defineTag('unknowns', 'div', function(tag){
 	
 	
 	tag.prototype.list = function (){
-		let x_, $ = this.$$ || (this.$$ = {}), $1;
+		let _t1, x_, $ = this.$$ || (this.$$ = {}), $1;
 		let res = [];
 		for (let i = 0, items = [1,2,3], len = items.length; i < len; i++) {
 			res.push(($[($1 = 'x$' + items[i])] || _1('div',$,$1,this).flag('x')));
@@ -9959,7 +10071,7 @@ Imba.defineTag('unknowns', 'div', function(tag){
 
 Imba.defineTag('stat', 'group', function(tag){
 	tag.prototype.render = function (){
-		var $ = this.$;
+		var _t1, _t2, $ = this.$, _t3;
 		return this.$open(0).setChildren($.$ = $.$ || [
 			_1('div',$,0,this).flag('hello'),
 			_1('ul',$,1,this).flag('other').setContent([
@@ -9973,6 +10085,7 @@ Imba.defineTag('stat', 'group', function(tag){
 
 describe("Tags",function() {
 	
+	var _t1;
 	var a = (_1('el').flag('a').setText("a")).end();
 	var b = (_1('el').flag('b').setText("b")).end();
 	var c = (_1('el').flag('c').setText("c")).end();
@@ -10036,6 +10149,7 @@ describe("Tags",function() {
 	});
 	
 	test("toplevel conditionals",function() {
+		var _t11;
 		var node = (_1('group2')).end();
 		node.render({a: true});
 		eq(node.opstr(),"AAA");
@@ -10046,6 +10160,7 @@ describe("Tags",function() {
 	});
 	
 	test("conditionals with strings",function() {
+		var _t11;
 		var node = (_1('group3')).end();
 		node.render({a: true});
 		eq(node.opstr(),"AA");
@@ -10056,6 +10171,7 @@ describe("Tags",function() {
 	});
 	
 	test("conditionals with strings II",function() {
+		var _t11;
 		var node = (_1('group4')).end();
 		node.render({a: true});
 		eq(node.opstr(),"AA");
@@ -10069,6 +10185,7 @@ describe("Tags",function() {
 	describe("group5",function() {
 		
 		return test("conditions",function() {
+			var _t11;
 			var node = (_1('group5')).end();
 			document.body.appendChild(node.dom());
 			node.render({a: false});
@@ -10084,6 +10201,7 @@ describe("Tags",function() {
 	});
 	
 	test("unknowns",function() {
+		var _t11;
 		var node = (_1('unknowns')).end();
 		document.body.appendChild(node.dom());
 		return node.render({a: false});
@@ -10151,6 +10269,7 @@ describe("Tags",function() {
 	});
 	
 	return describe("text lists",function() {
+		var _t11;
 		var node = (_1('textlist')).end();
 		document.body.appendChild(node.dom());
 		
@@ -10175,9 +10294,9 @@ describe("Tags",function() {
 /* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
+/* WEBPACK VAR INJECTION */(function(module) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.9.1
 //     http://underscorejs.org
-//     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+//     (c) 2009-2018 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
 
 (function() {
@@ -10185,29 +10304,32 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // Baseline setup
   // --------------
 
-  // Establish the root object, `window` in the browser, or `exports` on the server.
-  var root = this;
+  // Establish the root object, `window` (`self`) in the browser, `global`
+  // on the server, or `this` in some virtual machines. We use `self`
+  // instead of `window` for `WebWorker` support.
+  var root = typeof self == 'object' && self.self === self && self ||
+            typeof global == 'object' && global.global === global && global ||
+            this ||
+            {};
 
   // Save the previous value of the `_` variable.
   var previousUnderscore = root._;
 
   // Save bytes in the minified (but not gzipped) version:
-  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
+  var ArrayProto = Array.prototype, ObjProto = Object.prototype;
+  var SymbolProto = typeof Symbol !== 'undefined' ? Symbol.prototype : null;
 
   // Create quick reference variables for speed access to core prototypes.
-  var
-    push             = ArrayProto.push,
-    slice            = ArrayProto.slice,
-    toString         = ObjProto.toString,
-    hasOwnProperty   = ObjProto.hasOwnProperty;
+  var push = ArrayProto.push,
+      slice = ArrayProto.slice,
+      toString = ObjProto.toString,
+      hasOwnProperty = ObjProto.hasOwnProperty;
 
   // All **ECMAScript 5** native function implementations that we hope to use
   // are declared here.
-  var
-    nativeIsArray      = Array.isArray,
-    nativeKeys         = Object.keys,
-    nativeBind         = FuncProto.bind,
-    nativeCreate       = Object.create;
+  var nativeIsArray = Array.isArray,
+      nativeKeys = Object.keys,
+      nativeCreate = Object.create;
 
   // Naked function reference for surrogate-prototype-swapping.
   var Ctor = function(){};
@@ -10220,10 +10342,12 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   };
 
   // Export the Underscore object for **Node.js**, with
-  // backwards-compatibility for the old `require()` API. If we're in
+  // backwards-compatibility for their old module API. If we're in
   // the browser, add `_` as a global object.
-  if (true) {
-    if (typeof module !== 'undefined' && module.exports) {
+  // (`nodeType` is checked to ensure that `module`
+  // and `exports` are not HTML elements.)
+  if (typeof exports != 'undefined' && !exports.nodeType) {
+    if (typeof module != 'undefined' && !module.nodeType && module.exports) {
       exports = module.exports = _;
     }
     exports._ = _;
@@ -10232,7 +10356,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   }
 
   // Current version.
-  _.VERSION = '1.8.3';
+  _.VERSION = '1.9.1';
 
   // Internal function that returns an efficient (for current engines) version
   // of the passed-in callback, to be repeatedly applied in other Underscore
@@ -10243,9 +10367,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       case 1: return function(value) {
         return func.call(context, value);
       };
-      case 2: return function(value, other) {
-        return func.call(context, value, other);
-      };
+      // The 2-argument case is omitted because we’re not using it.
       case 3: return function(value, index, collection) {
         return func.call(context, value, index, collection);
       };
@@ -10258,34 +10380,51 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     };
   };
 
-  // A mostly-internal function to generate callbacks that can be applied
-  // to each element in a collection, returning the desired result — either
-  // identity, an arbitrary callback, a property matcher, or a property accessor.
+  var builtinIteratee;
+
+  // An internal function to generate callbacks that can be applied to each
+  // element in a collection, returning the desired result — either `identity`,
+  // an arbitrary callback, a property matcher, or a property accessor.
   var cb = function(value, context, argCount) {
+    if (_.iteratee !== builtinIteratee) return _.iteratee(value, context);
     if (value == null) return _.identity;
     if (_.isFunction(value)) return optimizeCb(value, context, argCount);
-    if (_.isObject(value)) return _.matcher(value);
+    if (_.isObject(value) && !_.isArray(value)) return _.matcher(value);
     return _.property(value);
   };
-  _.iteratee = function(value, context) {
+
+  // External wrapper for our callback generator. Users may customize
+  // `_.iteratee` if they want additional predicate/iteratee shorthand styles.
+  // This abstraction hides the internal-only argCount argument.
+  _.iteratee = builtinIteratee = function(value, context) {
     return cb(value, context, Infinity);
   };
 
-  // An internal function for creating assigner functions.
-  var createAssigner = function(keysFunc, undefinedOnly) {
-    return function(obj) {
-      var length = arguments.length;
-      if (length < 2 || obj == null) return obj;
-      for (var index = 1; index < length; index++) {
-        var source = arguments[index],
-            keys = keysFunc(source),
-            l = keys.length;
-        for (var i = 0; i < l; i++) {
-          var key = keys[i];
-          if (!undefinedOnly || obj[key] === void 0) obj[key] = source[key];
-        }
+  // Some functions take a variable number of arguments, or a few expected
+  // arguments at the beginning and then a variable number of values to operate
+  // on. This helper accumulates all remaining arguments past the function’s
+  // argument length (or an explicit `startIndex`), into an array that becomes
+  // the last argument. Similar to ES6’s "rest parameter".
+  var restArguments = function(func, startIndex) {
+    startIndex = startIndex == null ? func.length - 1 : +startIndex;
+    return function() {
+      var length = Math.max(arguments.length - startIndex, 0),
+          rest = Array(length),
+          index = 0;
+      for (; index < length; index++) {
+        rest[index] = arguments[index + startIndex];
       }
-      return obj;
+      switch (startIndex) {
+        case 0: return func.call(this, rest);
+        case 1: return func.call(this, arguments[0], rest);
+        case 2: return func.call(this, arguments[0], arguments[1], rest);
+      }
+      var args = Array(startIndex + 1);
+      for (index = 0; index < startIndex; index++) {
+        args[index] = arguments[index];
+      }
+      args[startIndex] = rest;
+      return func.apply(this, args);
     };
   };
 
@@ -10299,18 +10438,31 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return result;
   };
 
-  var property = function(key) {
+  var shallowProperty = function(key) {
     return function(obj) {
       return obj == null ? void 0 : obj[key];
     };
   };
 
+  var has = function(obj, path) {
+    return obj != null && hasOwnProperty.call(obj, path);
+  }
+
+  var deepGet = function(obj, path) {
+    var length = path.length;
+    for (var i = 0; i < length; i++) {
+      if (obj == null) return void 0;
+      obj = obj[path[i]];
+    }
+    return length ? obj : void 0;
+  };
+
   // Helper for collection methods to determine whether a collection
-  // should be iterated as an array or as an object
+  // should be iterated as an array or as an object.
   // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
   // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
-  var getLength = property('length');
+  var getLength = shallowProperty('length');
   var isArrayLike = function(collection) {
     var length = getLength(collection);
     return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
@@ -10352,30 +10504,29 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   };
 
   // Create a reducing function iterating left or right.
-  function createReduce(dir) {
-    // Optimized iterator function as using arguments.length
-    // in the main function will deoptimize the, see #1991.
-    function iterator(obj, iteratee, memo, keys, index, length) {
+  var createReduce = function(dir) {
+    // Wrap code that reassigns argument variables in a separate function than
+    // the one that accesses `arguments.length` to avoid a perf hit. (#1991)
+    var reducer = function(obj, iteratee, memo, initial) {
+      var keys = !isArrayLike(obj) && _.keys(obj),
+          length = (keys || obj).length,
+          index = dir > 0 ? 0 : length - 1;
+      if (!initial) {
+        memo = obj[keys ? keys[index] : index];
+        index += dir;
+      }
       for (; index >= 0 && index < length; index += dir) {
         var currentKey = keys ? keys[index] : index;
         memo = iteratee(memo, obj[currentKey], currentKey, obj);
       }
       return memo;
-    }
+    };
 
     return function(obj, iteratee, memo, context) {
-      iteratee = optimizeCb(iteratee, context, 4);
-      var keys = !isArrayLike(obj) && _.keys(obj),
-          length = (keys || obj).length,
-          index = dir > 0 ? 0 : length - 1;
-      // Determine the initial value if none is provided.
-      if (arguments.length < 3) {
-        memo = obj[keys ? keys[index] : index];
-        index += dir;
-      }
-      return iterator(obj, iteratee, memo, keys, index, length);
+      var initial = arguments.length >= 3;
+      return reducer(obj, optimizeCb(iteratee, context, 4), memo, initial);
     };
-  }
+  };
 
   // **Reduce** builds up a single result from a list of values, aka `inject`,
   // or `foldl`.
@@ -10386,12 +10537,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   // Return the first value which passes a truth test. Aliased as `detect`.
   _.find = _.detect = function(obj, predicate, context) {
-    var key;
-    if (isArrayLike(obj)) {
-      key = _.findIndex(obj, predicate, context);
-    } else {
-      key = _.findKey(obj, predicate, context);
-    }
+    var keyFinder = isArrayLike(obj) ? _.findIndex : _.findKey;
+    var key = keyFinder(obj, predicate, context);
     if (key !== void 0 && key !== -1) return obj[key];
   };
 
@@ -10446,14 +10593,26 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   };
 
   // Invoke a method (with arguments) on every item in a collection.
-  _.invoke = function(obj, method) {
-    var args = slice.call(arguments, 2);
-    var isFunc = _.isFunction(method);
-    return _.map(obj, function(value) {
-      var func = isFunc ? method : value[method];
-      return func == null ? func : func.apply(value, args);
+  _.invoke = restArguments(function(obj, path, args) {
+    var contextPath, func;
+    if (_.isFunction(path)) {
+      func = path;
+    } else if (_.isArray(path)) {
+      contextPath = path.slice(0, -1);
+      path = path[path.length - 1];
+    }
+    return _.map(obj, function(context) {
+      var method = func;
+      if (!method) {
+        if (contextPath && contextPath.length) {
+          context = deepGet(context, contextPath);
+        }
+        if (context == null) return void 0;
+        method = context[path];
+      }
+      return method == null ? method : method.apply(context, args);
     });
-  };
+  });
 
   // Convenience version of a common use case of `map`: fetching a property.
   _.pluck = function(obj, key) {
@@ -10476,20 +10635,20 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   _.max = function(obj, iteratee, context) {
     var result = -Infinity, lastComputed = -Infinity,
         value, computed;
-    if (iteratee == null && obj != null) {
+    if (iteratee == null || typeof iteratee == 'number' && typeof obj[0] != 'object' && obj != null) {
       obj = isArrayLike(obj) ? obj : _.values(obj);
       for (var i = 0, length = obj.length; i < length; i++) {
         value = obj[i];
-        if (value > result) {
+        if (value != null && value > result) {
           result = value;
         }
       }
     } else {
       iteratee = cb(iteratee, context);
-      _.each(obj, function(value, index, list) {
-        computed = iteratee(value, index, list);
+      _.each(obj, function(v, index, list) {
+        computed = iteratee(v, index, list);
         if (computed > lastComputed || computed === -Infinity && result === -Infinity) {
-          result = value;
+          result = v;
           lastComputed = computed;
         }
       });
@@ -10501,20 +10660,20 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   _.min = function(obj, iteratee, context) {
     var result = Infinity, lastComputed = Infinity,
         value, computed;
-    if (iteratee == null && obj != null) {
+    if (iteratee == null || typeof iteratee == 'number' && typeof obj[0] != 'object' && obj != null) {
       obj = isArrayLike(obj) ? obj : _.values(obj);
       for (var i = 0, length = obj.length; i < length; i++) {
         value = obj[i];
-        if (value < result) {
+        if (value != null && value < result) {
           result = value;
         }
       }
     } else {
       iteratee = cb(iteratee, context);
-      _.each(obj, function(value, index, list) {
-        computed = iteratee(value, index, list);
+      _.each(obj, function(v, index, list) {
+        computed = iteratee(v, index, list);
         if (computed < lastComputed || computed === Infinity && result === Infinity) {
-          result = value;
+          result = v;
           lastComputed = computed;
         }
       });
@@ -10522,21 +10681,13 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return result;
   };
 
-  // Shuffle a collection, using the modern version of the
-  // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
+  // Shuffle a collection.
   _.shuffle = function(obj) {
-    var set = isArrayLike(obj) ? obj : _.values(obj);
-    var length = set.length;
-    var shuffled = Array(length);
-    for (var index = 0, rand; index < length; index++) {
-      rand = _.random(0, index);
-      if (rand !== index) shuffled[index] = shuffled[rand];
-      shuffled[rand] = set[index];
-    }
-    return shuffled;
+    return _.sample(obj, Infinity);
   };
 
-  // Sample **n** random values from a collection.
+  // Sample **n** random values from a collection using the modern version of the
+  // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
   // If **n** is not specified, returns a single random element.
   // The internal `guard` argument allows it to work with `map`.
   _.sample = function(obj, n, guard) {
@@ -10544,17 +10695,28 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       if (!isArrayLike(obj)) obj = _.values(obj);
       return obj[_.random(obj.length - 1)];
     }
-    return _.shuffle(obj).slice(0, Math.max(0, n));
+    var sample = isArrayLike(obj) ? _.clone(obj) : _.values(obj);
+    var length = getLength(sample);
+    n = Math.max(Math.min(n, length), 0);
+    var last = length - 1;
+    for (var index = 0; index < n; index++) {
+      var rand = _.random(index, last);
+      var temp = sample[index];
+      sample[index] = sample[rand];
+      sample[rand] = temp;
+    }
+    return sample.slice(0, n);
   };
 
   // Sort the object's values by a criterion produced by an iteratee.
   _.sortBy = function(obj, iteratee, context) {
+    var index = 0;
     iteratee = cb(iteratee, context);
-    return _.pluck(_.map(obj, function(value, index, list) {
+    return _.pluck(_.map(obj, function(value, key, list) {
       return {
         value: value,
-        index: index,
-        criteria: iteratee(value, index, list)
+        index: index++,
+        criteria: iteratee(value, key, list)
       };
     }).sort(function(left, right) {
       var a = left.criteria;
@@ -10568,9 +10730,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   };
 
   // An internal function used for aggregate "group by" operations.
-  var group = function(behavior) {
+  var group = function(behavior, partition) {
     return function(obj, iteratee, context) {
-      var result = {};
+      var result = partition ? [[], []] : {};
       iteratee = cb(iteratee, context);
       _.each(obj, function(value, index) {
         var key = iteratee(value, index, obj);
@@ -10583,7 +10745,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // Groups the object's values by a criterion. Pass either a string attribute
   // to group by, or a function that returns the criterion.
   _.groupBy = group(function(result, value, key) {
-    if (_.has(result, key)) result[key].push(value); else result[key] = [value];
+    if (has(result, key)) result[key].push(value); else result[key] = [value];
   });
 
   // Indexes the object's values by a criterion, similar to `groupBy`, but for
@@ -10596,13 +10758,18 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // either a string attribute to count by, or a function that returns the
   // criterion.
   _.countBy = group(function(result, value, key) {
-    if (_.has(result, key)) result[key]++; else result[key] = 1;
+    if (has(result, key)) result[key]++; else result[key] = 1;
   });
 
+  var reStrSymbol = /[^\ud800-\udfff]|[\ud800-\udbff][\udc00-\udfff]|[\ud800-\udfff]/g;
   // Safely create a real, live array from anything iterable.
   _.toArray = function(obj) {
     if (!obj) return [];
     if (_.isArray(obj)) return slice.call(obj);
+    if (_.isString(obj)) {
+      // Keep surrogate pair characters together
+      return obj.match(reStrSymbol);
+    }
     if (isArrayLike(obj)) return _.map(obj, _.identity);
     return _.values(obj);
   };
@@ -10615,14 +10782,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   // Split a collection into two arrays: one whose elements all satisfy the given
   // predicate, and one whose elements all do not satisfy the predicate.
-  _.partition = function(obj, predicate, context) {
-    predicate = cb(predicate, context);
-    var pass = [], fail = [];
-    _.each(obj, function(value, key, obj) {
-      (predicate(value, key, obj) ? pass : fail).push(value);
-    });
-    return [pass, fail];
-  };
+  _.partition = group(function(result, value, pass) {
+    result[pass ? 0 : 1].push(value);
+  }, true);
 
   // Array Functions
   // ---------------
@@ -10631,7 +10793,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // values in the array. Aliased as `head` and `take`. The **guard** check
   // allows it to work with `_.map`.
   _.first = _.head = _.take = function(array, n, guard) {
-    if (array == null) return void 0;
+    if (array == null || array.length < 1) return n == null ? void 0 : [];
     if (n == null || guard) return array[0];
     return _.initial(array, array.length - n);
   };
@@ -10646,7 +10808,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // Get the last element of an array. Passing **n** will return the last N
   // values in the array.
   _.last = function(array, n, guard) {
-    if (array == null) return void 0;
+    if (array == null || array.length < 1) return n == null ? void 0 : [];
     if (n == null || guard) return array[array.length - 1];
     return _.rest(array, Math.max(0, array.length - n));
   };
@@ -10660,21 +10822,23 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   // Trim out all falsy values from an array.
   _.compact = function(array) {
-    return _.filter(array, _.identity);
+    return _.filter(array, Boolean);
   };
 
   // Internal implementation of a recursive `flatten` function.
-  var flatten = function(input, shallow, strict, startIndex) {
-    var output = [], idx = 0;
-    for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
+  var flatten = function(input, shallow, strict, output) {
+    output = output || [];
+    var idx = output.length;
+    for (var i = 0, length = getLength(input); i < length; i++) {
       var value = input[i];
       if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
-        //flatten current level of array or arguments object
-        if (!shallow) value = flatten(value, shallow, strict);
-        var j = 0, len = value.length;
-        output.length += len;
-        while (j < len) {
-          output[idx++] = value[j++];
+        // Flatten current level of array or arguments object.
+        if (shallow) {
+          var j = 0, len = value.length;
+          while (j < len) output[idx++] = value[j++];
+        } else {
+          flatten(value, shallow, strict, output);
+          idx = output.length;
         }
       } else if (!strict) {
         output[idx++] = value;
@@ -10689,12 +10853,15 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   };
 
   // Return a version of the array that does not contain the specified value(s).
-  _.without = function(array) {
-    return _.difference(array, slice.call(arguments, 1));
-  };
+  _.without = restArguments(function(array, otherArrays) {
+    return _.difference(array, otherArrays);
+  });
 
   // Produce a duplicate-free version of the array. If the array has already
   // been sorted, you have the option of using a faster algorithm.
+  // The faster algorithm will not work with an iteratee if the iteratee
+  // is not a one-to-one function, so providing an iteratee will disable
+  // the faster algorithm.
   // Aliased as `unique`.
   _.uniq = _.unique = function(array, isSorted, iteratee, context) {
     if (!_.isBoolean(isSorted)) {
@@ -10708,7 +10875,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     for (var i = 0, length = getLength(array); i < length; i++) {
       var value = array[i],
           computed = iteratee ? iteratee(value, i, array) : value;
-      if (isSorted) {
+      if (isSorted && !iteratee) {
         if (!i || seen !== computed) result.push(value);
         seen = computed;
       } else if (iteratee) {
@@ -10725,9 +10892,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   // Produce an array that contains the union: each distinct element from all of
   // the passed-in arrays.
-  _.union = function() {
-    return _.uniq(flatten(arguments, true, true));
-  };
+  _.union = restArguments(function(arrays) {
+    return _.uniq(flatten(arrays, true, true));
+  });
 
   // Produce an array that contains every item shared between all the
   // passed-in arrays.
@@ -10737,7 +10904,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     for (var i = 0, length = getLength(array); i < length; i++) {
       var item = array[i];
       if (_.contains(result, item)) continue;
-      for (var j = 1; j < argsLength; j++) {
+      var j;
+      for (j = 1; j < argsLength; j++) {
         if (!_.contains(arguments[j], item)) break;
       }
       if (j === argsLength) result.push(item);
@@ -10747,21 +10915,15 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
-  _.difference = function(array) {
-    var rest = flatten(arguments, true, true, 1);
+  _.difference = restArguments(function(array, rest) {
+    rest = flatten(rest, true, true);
     return _.filter(array, function(value){
       return !_.contains(rest, value);
     });
-  };
-
-  // Zip together multiple lists into a single array -- elements that share
-  // an index go together.
-  _.zip = function() {
-    return _.unzip(arguments);
-  };
+  });
 
   // Complement of _.zip. Unzip accepts an array of arrays and groups
-  // each array's elements on shared indices
+  // each array's elements on shared indices.
   _.unzip = function(array) {
     var length = array && _.max(array, getLength).length || 0;
     var result = Array(length);
@@ -10772,9 +10934,13 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return result;
   };
 
+  // Zip together multiple lists into a single array -- elements that share
+  // an index go together.
+  _.zip = restArguments(_.unzip);
+
   // Converts lists into objects. Pass either a single array of `[key, value]`
   // pairs, or two parallel arrays of the same length -- one of keys, and one of
-  // the corresponding values.
+  // the corresponding values. Passing by pairs is the reverse of _.pairs.
   _.object = function(list, values) {
     var result = {};
     for (var i = 0, length = getLength(list); i < length; i++) {
@@ -10787,8 +10953,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return result;
   };
 
-  // Generator function to create the findIndex and findLastIndex functions
-  function createPredicateIndexFinder(dir) {
+  // Generator function to create the findIndex and findLastIndex functions.
+  var createPredicateIndexFinder = function(dir) {
     return function(array, predicate, context) {
       predicate = cb(predicate, context);
       var length = getLength(array);
@@ -10798,9 +10964,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       }
       return -1;
     };
-  }
+  };
 
-  // Returns the first index on an array-like that passes a predicate test
+  // Returns the first index on an array-like that passes a predicate test.
   _.findIndex = createPredicateIndexFinder(1);
   _.findLastIndex = createPredicateIndexFinder(-1);
 
@@ -10817,15 +10983,15 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return low;
   };
 
-  // Generator function to create the indexOf and lastIndexOf functions
-  function createIndexFinder(dir, predicateFind, sortedIndex) {
+  // Generator function to create the indexOf and lastIndexOf functions.
+  var createIndexFinder = function(dir, predicateFind, sortedIndex) {
     return function(array, item, idx) {
       var i = 0, length = getLength(array);
       if (typeof idx == 'number') {
         if (dir > 0) {
-            i = idx >= 0 ? idx : Math.max(idx + length, i);
+          i = idx >= 0 ? idx : Math.max(idx + length, i);
         } else {
-            length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
+          length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
         }
       } else if (sortedIndex && idx && length) {
         idx = sortedIndex(array, item);
@@ -10840,7 +11006,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       }
       return -1;
     };
-  }
+  };
 
   // Return the position of the first occurrence of an item in an array,
   // or -1 if the item is not included in the array.
@@ -10857,7 +11023,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       stop = start || 0;
       start = 0;
     }
-    step = step || 1;
+    if (!step) {
+      step = stop < start ? -1 : 1;
+    }
 
     var length = Math.max(Math.ceil((stop - start) / step), 0);
     var range = Array(length);
@@ -10869,11 +11037,23 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return range;
   };
 
+  // Chunk a single array into multiple arrays, each containing `count` or fewer
+  // items.
+  _.chunk = function(array, count) {
+    if (count == null || count < 1) return [];
+    var result = [];
+    var i = 0, length = array.length;
+    while (i < length) {
+      result.push(slice.call(array, i, i += count));
+    }
+    return result;
+  };
+
   // Function (ahem) Functions
   // ------------------
 
   // Determines whether to execute a function as a constructor
-  // or a normal function with the provided arguments
+  // or a normal function with the provided arguments.
   var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
     if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args);
     var self = baseCreate(sourceFunc.prototype);
@@ -10885,52 +11065,53 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // Create a function bound to a given object (assigning `this`, and arguments,
   // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
   // available.
-  _.bind = function(func, context) {
-    if (nativeBind && func.bind === nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
+  _.bind = restArguments(function(func, context, args) {
     if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function');
-    var args = slice.call(arguments, 2);
-    var bound = function() {
-      return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
-    };
+    var bound = restArguments(function(callArgs) {
+      return executeBound(func, bound, context, this, args.concat(callArgs));
+    });
     return bound;
-  };
+  });
 
   // Partially apply a function by creating a version that has had some of its
   // arguments pre-filled, without changing its dynamic `this` context. _ acts
-  // as a placeholder, allowing any combination of arguments to be pre-filled.
-  _.partial = function(func) {
-    var boundArgs = slice.call(arguments, 1);
+  // as a placeholder by default, allowing any combination of arguments to be
+  // pre-filled. Set `_.partial.placeholder` for a custom placeholder argument.
+  _.partial = restArguments(function(func, boundArgs) {
+    var placeholder = _.partial.placeholder;
     var bound = function() {
       var position = 0, length = boundArgs.length;
       var args = Array(length);
       for (var i = 0; i < length; i++) {
-        args[i] = boundArgs[i] === _ ? arguments[position++] : boundArgs[i];
+        args[i] = boundArgs[i] === placeholder ? arguments[position++] : boundArgs[i];
       }
       while (position < arguments.length) args.push(arguments[position++]);
       return executeBound(func, bound, this, this, args);
     };
     return bound;
-  };
+  });
+
+  _.partial.placeholder = _;
 
   // Bind a number of an object's methods to that object. Remaining arguments
   // are the method names to be bound. Useful for ensuring that all callbacks
   // defined on an object belong to it.
-  _.bindAll = function(obj) {
-    var i, length = arguments.length, key;
-    if (length <= 1) throw new Error('bindAll must be passed function names');
-    for (i = 1; i < length; i++) {
-      key = arguments[i];
+  _.bindAll = restArguments(function(obj, keys) {
+    keys = flatten(keys, false, false);
+    var index = keys.length;
+    if (index < 1) throw new Error('bindAll must be passed function names');
+    while (index--) {
+      var key = keys[index];
       obj[key] = _.bind(obj[key], obj);
     }
-    return obj;
-  };
+  });
 
   // Memoize an expensive function by storing its results.
   _.memoize = function(func, hasher) {
     var memoize = function(key) {
       var cache = memoize.cache;
       var address = '' + (hasher ? hasher.apply(this, arguments) : key);
-      if (!_.has(cache, address)) cache[address] = func.apply(this, arguments);
+      if (!has(cache, address)) cache[address] = func.apply(this, arguments);
       return cache[address];
     };
     memoize.cache = {};
@@ -10939,12 +11120,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   // Delays a function for the given number of milliseconds, and then calls
   // it with the arguments supplied.
-  _.delay = function(func, wait) {
-    var args = slice.call(arguments, 2);
-    return setTimeout(function(){
+  _.delay = restArguments(function(func, wait, args) {
+    return setTimeout(function() {
       return func.apply(null, args);
     }, wait);
-  };
+  });
 
   // Defers a function, scheduling it to run after the current call stack has
   // cleared.
@@ -10956,17 +11136,18 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // but if you'd like to disable the execution on the leading edge, pass
   // `{leading: false}`. To disable execution on the trailing edge, ditto.
   _.throttle = function(func, wait, options) {
-    var context, args, result;
-    var timeout = null;
+    var timeout, context, args, result;
     var previous = 0;
     if (!options) options = {};
+
     var later = function() {
       previous = options.leading === false ? 0 : _.now();
       timeout = null;
       result = func.apply(context, args);
       if (!timeout) context = args = null;
     };
-    return function() {
+
+    var throttled = function() {
       var now = _.now();
       if (!previous && options.leading === false) previous = now;
       var remaining = wait - (now - previous);
@@ -10985,6 +11166,14 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       }
       return result;
     };
+
+    throttled.cancel = function() {
+      clearTimeout(timeout);
+      previous = 0;
+      timeout = context = args = null;
+    };
+
+    return throttled;
   };
 
   // Returns a function, that, as long as it continues to be invoked, will not
@@ -10992,35 +11181,32 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // N milliseconds. If `immediate` is passed, trigger the function on the
   // leading edge, instead of the trailing.
   _.debounce = function(func, wait, immediate) {
-    var timeout, args, context, timestamp, result;
+    var timeout, result;
 
-    var later = function() {
-      var last = _.now() - timestamp;
-
-      if (last < wait && last >= 0) {
-        timeout = setTimeout(later, wait - last);
-      } else {
-        timeout = null;
-        if (!immediate) {
-          result = func.apply(context, args);
-          if (!timeout) context = args = null;
-        }
-      }
+    var later = function(context, args) {
+      timeout = null;
+      if (args) result = func.apply(context, args);
     };
 
-    return function() {
-      context = this;
-      args = arguments;
-      timestamp = _.now();
-      var callNow = immediate && !timeout;
-      if (!timeout) timeout = setTimeout(later, wait);
-      if (callNow) {
-        result = func.apply(context, args);
-        context = args = null;
+    var debounced = restArguments(function(args) {
+      if (timeout) clearTimeout(timeout);
+      if (immediate) {
+        var callNow = !timeout;
+        timeout = setTimeout(later, wait);
+        if (callNow) result = func.apply(this, args);
+      } else {
+        timeout = _.delay(later, wait, this, args);
       }
 
       return result;
+    });
+
+    debounced.cancel = function() {
+      clearTimeout(timeout);
+      timeout = null;
     };
+
+    return debounced;
   };
 
   // Returns the first function passed as an argument to the second,
@@ -11075,22 +11261,24 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // often you call it. Useful for lazy initialization.
   _.once = _.partial(_.before, 2);
 
+  _.restArguments = restArguments;
+
   // Object Functions
   // ----------------
 
   // Keys in IE < 9 that won't be iterated by `for key in ...` and thus missed.
   var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
   var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
-                      'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
+    'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
 
-  function collectNonEnumProps(obj, keys) {
+  var collectNonEnumProps = function(obj, keys) {
     var nonEnumIdx = nonEnumerableProps.length;
     var constructor = obj.constructor;
-    var proto = (_.isFunction(constructor) && constructor.prototype) || ObjProto;
+    var proto = _.isFunction(constructor) && constructor.prototype || ObjProto;
 
     // Constructor is a special case.
     var prop = 'constructor';
-    if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
+    if (has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
 
     while (nonEnumIdx--) {
       prop = nonEnumerableProps[nonEnumIdx];
@@ -11098,15 +11286,15 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
         keys.push(prop);
       }
     }
-  }
+  };
 
   // Retrieve the names of an object's own properties.
-  // Delegates to **ECMAScript 5**'s native `Object.keys`
+  // Delegates to **ECMAScript 5**'s native `Object.keys`.
   _.keys = function(obj) {
     if (!_.isObject(obj)) return [];
     if (nativeKeys) return nativeKeys(obj);
     var keys = [];
-    for (var key in obj) if (_.has(obj, key)) keys.push(key);
+    for (var key in obj) if (has(obj, key)) keys.push(key);
     // Ahem, IE < 9.
     if (hasEnumBug) collectNonEnumProps(obj, keys);
     return keys;
@@ -11133,22 +11321,22 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return values;
   };
 
-  // Returns the results of applying the iteratee to each element of the object
-  // In contrast to _.map it returns an object
+  // Returns the results of applying the iteratee to each element of the object.
+  // In contrast to _.map it returns an object.
   _.mapObject = function(obj, iteratee, context) {
     iteratee = cb(iteratee, context);
-    var keys =  _.keys(obj),
-          length = keys.length,
-          results = {},
-          currentKey;
-      for (var index = 0; index < length; index++) {
-        currentKey = keys[index];
-        results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
-      }
-      return results;
+    var keys = _.keys(obj),
+        length = keys.length,
+        results = {};
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys[index];
+      results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
+    }
+    return results;
   };
 
   // Convert an object into a list of `[key, value]` pairs.
+  // The opposite of _.object.
   _.pairs = function(obj) {
     var keys = _.keys(obj);
     var length = keys.length;
@@ -11170,7 +11358,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   };
 
   // Return a sorted list of the function names available on the object.
-  // Aliased as `methods`
+  // Aliased as `methods`.
   _.functions = _.methods = function(obj) {
     var names = [];
     for (var key in obj) {
@@ -11179,14 +11367,33 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return names.sort();
   };
 
+  // An internal function for creating assigner functions.
+  var createAssigner = function(keysFunc, defaults) {
+    return function(obj) {
+      var length = arguments.length;
+      if (defaults) obj = Object(obj);
+      if (length < 2 || obj == null) return obj;
+      for (var index = 1; index < length; index++) {
+        var source = arguments[index],
+            keys = keysFunc(source),
+            l = keys.length;
+        for (var i = 0; i < l; i++) {
+          var key = keys[i];
+          if (!defaults || obj[key] === void 0) obj[key] = source[key];
+        }
+      }
+      return obj;
+    };
+  };
+
   // Extend a given object with all the properties in passed-in object(s).
   _.extend = createAssigner(_.allKeys);
 
-  // Assigns a given object with all the own properties in the passed-in object(s)
+  // Assigns a given object with all the own properties in the passed-in object(s).
   // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
   _.extendOwn = _.assign = createAssigner(_.keys);
 
-  // Returns the first key on an object that passes a predicate test
+  // Returns the first key on an object that passes a predicate test.
   _.findKey = function(obj, predicate, context) {
     predicate = cb(predicate, context);
     var keys = _.keys(obj), key;
@@ -11196,16 +11403,21 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     }
   };
 
+  // Internal pick helper function to determine if `obj` has key `key`.
+  var keyInObj = function(value, key, obj) {
+    return key in obj;
+  };
+
   // Return a copy of the object only containing the whitelisted properties.
-  _.pick = function(object, oiteratee, context) {
-    var result = {}, obj = object, iteratee, keys;
+  _.pick = restArguments(function(obj, keys) {
+    var result = {}, iteratee = keys[0];
     if (obj == null) return result;
-    if (_.isFunction(oiteratee)) {
+    if (_.isFunction(iteratee)) {
+      if (keys.length > 1) iteratee = optimizeCb(iteratee, keys[1]);
       keys = _.allKeys(obj);
-      iteratee = optimizeCb(oiteratee, context);
     } else {
-      keys = flatten(arguments, false, false, 1);
-      iteratee = function(value, key, obj) { return key in obj; };
+      iteratee = keyInObj;
+      keys = flatten(keys, false, false);
       obj = Object(obj);
     }
     for (var i = 0, length = keys.length; i < length; i++) {
@@ -11214,20 +11426,22 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       if (iteratee(value, key, obj)) result[key] = value;
     }
     return result;
-  };
+  });
 
-   // Return a copy of the object without the blacklisted properties.
-  _.omit = function(obj, iteratee, context) {
+  // Return a copy of the object without the blacklisted properties.
+  _.omit = restArguments(function(obj, keys) {
+    var iteratee = keys[0], context;
     if (_.isFunction(iteratee)) {
       iteratee = _.negate(iteratee);
+      if (keys.length > 1) context = keys[1];
     } else {
-      var keys = _.map(flatten(arguments, false, false, 1), String);
+      keys = _.map(flatten(keys, false, false), String);
       iteratee = function(value, key) {
         return !_.contains(keys, key);
       };
     }
     return _.pick(obj, iteratee, context);
-  };
+  });
 
   // Fill in a given object with default properties.
   _.defaults = createAssigner(_.allKeys, true);
@@ -11269,12 +11483,23 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
 
   // Internal recursive comparison function for `isEqual`.
-  var eq = function(a, b, aStack, bStack) {
+  var eq, deepEq;
+  eq = function(a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.
     // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
     if (a === b) return a !== 0 || 1 / a === 1 / b;
-    // A strict comparison is necessary because `null == undefined`.
-    if (a == null || b == null) return a === b;
+    // `null` or `undefined` only equal to itself (strict comparison).
+    if (a == null || b == null) return false;
+    // `NaN`s are equivalent, but non-reflexive.
+    if (a !== a) return b !== b;
+    // Exhaust primitive checks
+    var type = typeof a;
+    if (type !== 'function' && type !== 'object' && typeof b != 'object') return false;
+    return deepEq(a, b, aStack, bStack);
+  };
+
+  // Internal recursive comparison function for `isEqual`.
+  deepEq = function(a, b, aStack, bStack) {
     // Unwrap any wrapped objects.
     if (a instanceof _) a = a._wrapped;
     if (b instanceof _) b = b._wrapped;
@@ -11291,7 +11516,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
         return '' + a === '' + b;
       case '[object Number]':
         // `NaN`s are equivalent, but non-reflexive.
-        // Object(NaN) is equivalent to NaN
+        // Object(NaN) is equivalent to NaN.
         if (+a !== +a) return +b !== +b;
         // An `egal` comparison is performed for other numeric values.
         return +a === 0 ? 1 / +a === 1 / b : +a === +b;
@@ -11301,6 +11526,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
         // millisecond representations. Note that invalid dates with millisecond representations
         // of `NaN` are not equivalent.
         return +a === +b;
+      case '[object Symbol]':
+        return SymbolProto.valueOf.call(a) === SymbolProto.valueOf.call(b);
     }
 
     var areArrays = className === '[object Array]';
@@ -11352,7 +11579,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       while (length--) {
         // Deep compare each member
         key = keys[length];
-        if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack))) return false;
+        if (!(has(b, key) && eq(a[key], b[key], aStack, bStack))) return false;
       }
     }
     // Remove the first object from the stack of traversed objects.
@@ -11391,8 +11618,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return type === 'function' || type === 'object' && !!obj;
   };
 
-  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp, isError.
-  _.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Error'], function(name) {
+  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp, isError, isMap, isWeakMap, isSet, isWeakSet.
+  _.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Error', 'Symbol', 'Map', 'WeakMap', 'Set', 'WeakSet'], function(name) {
     _['is' + name] = function(obj) {
       return toString.call(obj) === '[object ' + name + ']';
     };
@@ -11402,13 +11629,14 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // there isn't any inspectable "Arguments" type.
   if (!_.isArguments(arguments)) {
     _.isArguments = function(obj) {
-      return _.has(obj, 'callee');
+      return has(obj, 'callee');
     };
   }
 
   // Optimize `isFunction` if appropriate. Work around some typeof bugs in old v8,
-  // IE 11 (#1621), and in Safari 8 (#1929).
-  if (typeof /./ != 'function' && typeof Int8Array != 'object') {
+  // IE 11 (#1621), Safari 8 (#1929), and PhantomJS (#2236).
+  var nodelist = root.document && root.document.childNodes;
+  if (typeof /./ != 'function' && typeof Int8Array != 'object' && typeof nodelist != 'function') {
     _.isFunction = function(obj) {
       return typeof obj == 'function' || false;
     };
@@ -11416,12 +11644,12 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   // Is a given object a finite number?
   _.isFinite = function(obj) {
-    return isFinite(obj) && !isNaN(parseFloat(obj));
+    return !_.isSymbol(obj) && isFinite(obj) && !isNaN(parseFloat(obj));
   };
 
-  // Is the given value `NaN`? (NaN is the only number which does not equal itself).
+  // Is the given value `NaN`?
   _.isNaN = function(obj) {
-    return _.isNumber(obj) && obj !== +obj;
+    return _.isNumber(obj) && isNaN(obj);
   };
 
   // Is a given value a boolean?
@@ -11441,8 +11669,19 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   // Shortcut function for checking if an object has a given property directly
   // on itself (in other words, not on a prototype).
-  _.has = function(obj, key) {
-    return obj != null && hasOwnProperty.call(obj, key);
+  _.has = function(obj, path) {
+    if (!_.isArray(path)) {
+      return has(obj, path);
+    }
+    var length = path.length;
+    for (var i = 0; i < length; i++) {
+      var key = path[i];
+      if (obj == null || !hasOwnProperty.call(obj, key)) {
+        return false;
+      }
+      obj = obj[key];
+    }
+    return !!length;
   };
 
   // Utility Functions
@@ -11469,12 +11708,24 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
   _.noop = function(){};
 
-  _.property = property;
+  // Creates a function that, when passed an object, will traverse that object’s
+  // properties down the given `path`, specified as an array of keys or indexes.
+  _.property = function(path) {
+    if (!_.isArray(path)) {
+      return shallowProperty(path);
+    }
+    return function(obj) {
+      return deepGet(obj, path);
+    };
+  };
 
   // Generates a function for a given object that returns a given property.
   _.propertyOf = function(obj) {
-    return obj == null ? function(){} : function(key) {
-      return obj[key];
+    if (obj == null) {
+      return function(){};
+    }
+    return function(path) {
+      return !_.isArray(path) ? obj[path] : deepGet(obj, path);
     };
   };
 
@@ -11509,7 +11760,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     return new Date().getTime();
   };
 
-   // List of HTML entities for escaping.
+  // List of HTML entities for escaping.
   var escapeMap = {
     '&': '&amp;',
     '<': '&lt;',
@@ -11525,7 +11776,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     var escaper = function(match) {
       return map[match];
     };
-    // Regexes for identifying a key that needs to be escaped
+    // Regexes for identifying a key that needs to be escaped.
     var source = '(?:' + _.keys(map).join('|') + ')';
     var testRegexp = RegExp(source);
     var replaceRegexp = RegExp(source, 'g');
@@ -11537,14 +11788,24 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   _.escape = createEscaper(escapeMap);
   _.unescape = createEscaper(unescapeMap);
 
-  // If the value of the named `property` is a function then invoke it with the
-  // `object` as context; otherwise, return it.
-  _.result = function(object, property, fallback) {
-    var value = object == null ? void 0 : object[property];
-    if (value === void 0) {
-      value = fallback;
+  // Traverses the children of `obj` along `path`. If a child is a function, it
+  // is invoked with its parent as context. Returns the value of the final
+  // child, or `fallback` if any child is undefined.
+  _.result = function(obj, path, fallback) {
+    if (!_.isArray(path)) path = [path];
+    var length = path.length;
+    if (!length) {
+      return _.isFunction(fallback) ? fallback.call(obj) : fallback;
     }
-    return _.isFunction(value) ? value.call(object) : value;
+    for (var i = 0; i < length; i++) {
+      var prop = obj == null ? void 0 : obj[path[i]];
+      if (prop === void 0) {
+        prop = fallback;
+        i = length; // Ensure we don't continue iterating.
+      }
+      obj = _.isFunction(prop) ? prop.call(obj) : prop;
+    }
+    return obj;
   };
 
   // Generate a unique integer id (unique within the entire client session).
@@ -11558,9 +11819,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // By default, Underscore uses ERB-style template delimiters, change the
   // following template settings to use alternative delimiters.
   _.templateSettings = {
-    evaluate    : /<%([\s\S]+?)%>/g,
-    interpolate : /<%=([\s\S]+?)%>/g,
-    escape      : /<%-([\s\S]+?)%>/g
+    evaluate: /<%([\s\S]+?)%>/g,
+    interpolate: /<%=([\s\S]+?)%>/g,
+    escape: /<%-([\s\S]+?)%>/g
   };
 
   // When customizing `templateSettings`, if you don't want to define an
@@ -11571,15 +11832,15 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // Certain characters need to be escaped so that they can be put into a
   // string literal.
   var escapes = {
-    "'":      "'",
-    '\\':     '\\',
-    '\r':     'r',
-    '\n':     'n',
+    "'": "'",
+    '\\': '\\',
+    '\r': 'r',
+    '\n': 'n',
     '\u2028': 'u2028',
     '\u2029': 'u2029'
   };
 
-  var escaper = /\\|'|\r|\n|\u2028|\u2029/g;
+  var escapeRegExp = /\\|'|\r|\n|\u2028|\u2029/g;
 
   var escapeChar = function(match) {
     return '\\' + escapes[match];
@@ -11604,7 +11865,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
     var index = 0;
     var source = "__p+='";
     text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
-      source += text.slice(index, offset).replace(escaper, escapeChar);
+      source += text.slice(index, offset).replace(escapeRegExp, escapeChar);
       index = offset + match.length;
 
       if (escape) {
@@ -11615,7 +11876,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
         source += "';\n" + evaluate + "\n__p+='";
       }
 
-      // Adobe VMs need the match returned to produce the correct offest.
+      // Adobe VMs need the match returned to produce the correct offset.
       return match;
     });
     source += "';\n";
@@ -11627,8 +11888,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       "print=function(){__p+=__j.call(arguments,'');};\n" +
       source + 'return __p;\n';
 
+    var render;
     try {
-      var render = new Function(settings.variable || 'obj', '_', source);
+      render = new Function(settings.variable || 'obj', '_', source);
     } catch (e) {
       e.source = source;
       throw e;
@@ -11659,7 +11921,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // underscore functions. Wrapped objects may be chained.
 
   // Helper function to continue chaining intermediate results.
-  var result = function(instance, obj) {
+  var chainResult = function(instance, obj) {
     return instance._chain ? _(obj).chain() : obj;
   };
 
@@ -11670,9 +11932,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       _.prototype[name] = function() {
         var args = [this._wrapped];
         push.apply(args, arguments);
-        return result(this, func.apply(_, args));
+        return chainResult(this, func.apply(_, args));
       };
     });
+    return _;
   };
 
   // Add all of the Underscore functions to the wrapper object.
@@ -11685,7 +11948,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
       var obj = this._wrapped;
       method.apply(obj, arguments);
       if ((name === 'shift' || name === 'splice') && obj.length === 0) delete obj[0];
-      return result(this, obj);
+      return chainResult(this, obj);
     };
   });
 
@@ -11693,7 +11956,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   _.each(['concat', 'join', 'slice'], function(name) {
     var method = ArrayProto[name];
     _.prototype[name] = function() {
-      return result(this, method.apply(this._wrapped, arguments));
+      return chainResult(this, method.apply(this._wrapped, arguments));
     };
   });
 
@@ -11707,7 +11970,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   _.prototype.valueOf = _.prototype.toJSON = _.prototype.value;
 
   _.prototype.toString = function() {
-    return '' + this._wrapped;
+    return String(this._wrapped);
   };
 
   // AMD registration happens at the end for compatibility with AMD loaders
@@ -11718,16 +11981,45 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
   // an AMD load request. Those cases could generate an error when an
   // anonymous define() is called outside of a loader request.
   if (true) {
-    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() {
+    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = (function() {
       return _;
-    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+    }).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
   }
-}.call(this));
+}());
 
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(49)(module)))
 
 /***/ }),
 /* 49 */
+/***/ (function(module, exports) {
+
+module.exports = function(module) {
+	if(!module.webpackPolyfill) {
+		module.deprecate = function() {};
+		module.paths = [];
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0), _1 = Imba.createElement;
@@ -11739,7 +12031,7 @@ describe("HTML",function() {
 		
 		
 		return test("automatic value",function() {
-			var t0;
+			var _t1, _t2, t0;
 			var el = (t0 = (t0=_1('select')).setContent([
 				_1('option',t0.$,'A',t0).setText("a"),
 				_1('option',t0.$,'B',t0).setText("b"),
@@ -11762,11 +12054,11 @@ describe("HTML",function() {
 
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(0), _2 = Imba.createTagList, _1 = Imba.createElement;
+var _t1, Imba = __webpack_require__(0), _2 = Imba.createTagList, _1 = Imba.createElement;
 // externs;
 
 Imba.defineTag('xul', 'ul');
@@ -11775,6 +12067,7 @@ Imba.defineTag('xno');
 Imba.defineTag('wraps', function(tag){
 	
 	tag.prototype.render = function (){
+		var _t1;
 		return this.$open(0).setChildren(
 			// <div>
 			// <h2> "content of template:"
@@ -11785,7 +12078,7 @@ Imba.defineTag('wraps', function(tag){
 
 AA = [1,2,3,4,5];
 TT = (t0 = (t0=_1('div')).setTemplate(function() {
-	var $ = this.$, t0;
+	var _t2, $ = this.$, _t3, _t4, t0;
 	return Imba.static([
 		($[0] || _1('ul',$,0,t0).flag('x').setContent([
 			_1('li',$,1,0).setText("Hello"),
@@ -11798,18 +12091,19 @@ TT = (t0 = (t0=_1('div')).setTemplate(function() {
 		],2)).end((
 			$[2].setContent(Date.now(),3),
 			$[4].setTemplate(function() {
-				var $1 = this.$, t1;
+				var _t5, $1 = this.$, t1;
 				return Imba.static([
 					($1[0] || _1('li',$1,0,t1).setText("Inner")),
 					($1[1] || _1('li',$1,1,t1)).setContent(Date.now(),3)
 				],2,1);
 			}).end(),
 			$[5].setTemplate(function() {
-				var $1 = this.$;
+				var _t5, _t6, $1 = this.$;
 				return this.$open(0).dataset('stamp',Date.now()).setChildren([
 					$1[0] || _1('li',$1,0,this).setText("Inner"),
 					$1[1] || _1('li',$1,1,this),
 					(function tagLoop($0) {
+						var _t61;
 						for (let i = 0, items = iter$(AA), len = $0.taglen = items.length; i < len; i++) {
 							($0[i] || _1('li',$0,i)).setContent(items[i],3);
 						};return $0;
@@ -11819,10 +12113,11 @@ TT = (t0 = (t0=_1('div')).setTemplate(function() {
 				,true));
 			}).end(),
 			$[6].setTemplate(function() {
-				var $1 = this.$, t1;
+				var _t5, $1 = this.$, t1;
 				return Imba.static([
 					($1[0] || _1('div',$1,0,t1)).setText("This is inside " + (Date.now())),
 					(function tagLoop($0) {
+						var _t51;
 						for (let i = 0, items = iter$(AA), len = $0.taglen = items.length; i < len; i++) {
 							($0[i] || _1('div',$0,i)).setContent(items[i],3);
 						};return $0;
@@ -11837,7 +12132,7 @@ TT = (t0 = (t0=_1('div')).setTemplate(function() {
 Imba.defineTag('hello', function(tag){
 	
 	tag.prototype.render = function (){
-		var $ = this.$;
+		var _t11, _t2, $ = this.$, _t3;
 		return this.$open(0).setChildren(
 			$[0] || _1('div',$,0,this)
 		,2).synced((
@@ -11845,6 +12140,7 @@ Imba.defineTag('hello', function(tag){
 				$[1] || _1('h2',$,1,0).setText("content of template:"),
 				$[2] || _1('div',$,2,0),
 				(function tagLoop($0) {
+					var _t31;
 					for (let i = 0, items = iter$(AA), len = $0.taglen = items.length; i < len; i++) {
 						($0[i] || _1('div',$0,i)).setContent(items[i],3);
 					};return $0;
@@ -11862,7 +12158,7 @@ document.body.appendChild(HE.dom());
 
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(0), _1 = Imba.createElement;
@@ -11966,7 +12262,7 @@ var Example = Imba.defineTag('Example', function(tag){
 	};
 	
 	tag.prototype.render = function (){
-		var $ = this.$, t0, t1, t2, t3, t4;
+		var _t1, _t2, $ = this.$, _t3, _t4, t0, t1, t2, t3, t4;
 		return this.$open(0).setChildren($.$ = $.$ || [
 			"A",
 			t0 = this._b = this._b||(t0=_1('div',this)).flag('b').setRef('b').setContent([
@@ -12037,6 +12333,7 @@ var Example = Imba.defineTag('Example', function(tag){
 });
 
 describe("Tags - Events",function() {
+	var _t1;
 	var node = (_1(Example)).setData(store).end();
 	document.body.appendChild(node.dom());
 	return test("modifiers",function() { return node.testModifiers(); });
