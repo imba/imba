@@ -2845,7 +2845,7 @@ export class PropertyDeclaration < Node
 	${init}
 	'''
 
-	var propTemplate = '''
+	var propTemplateNext = '''
 	${headers}
 	Object.defineProperty(${path},\'${getter}\',{
 		configurable: true,
@@ -2855,7 +2855,7 @@ export class PropertyDeclaration < Node
 	${init}
 	'''
 
-	var propWatchTemplate = '''
+	var propWatchTemplateNext = '''
 	${headers}
 	Object.defineProperty(${path},\'${getter}\',{
 		configurable: true,
@@ -2992,6 +2992,13 @@ export class PropertyDeclaration < Node
 
 		if o.key(:chainable)
 			js:get = "v !== undefined ? (this.{js:setter}(v),this) : {js:get}"
+
+
+		if pars:native
+			if tpl == propWatchTemplate
+				tpl = propWatchTemplateNext
+			else
+				tpl = propTemplateNext
 
 
 		js:options = o.c
@@ -4913,7 +4920,8 @@ export class TagIdRef < Identifier
 # FIXME Rename to IvarLiteral? or simply Literal with type Ivar
 export class Ivar < Identifier
 	
-	var prefix = '' # '_'
+	var prefix = '_' # '_'
+
 	def initialize v
 		@value = v isa Identifier ? v.value : v
 		self
@@ -6814,17 +6822,19 @@ export class Tag < Node
 			out ||= "{pre}{ctor}"
 			
 		if statics:length
-			# out = out + statics.join("")
-			out = "({tvar} = {out},{tvar}{statics.join(",{tvar}")},{tvar})"
+			out = out + statics.join("")
+			# To drop chaining params
+			# out = "({tvar} = {out},{tvar}{statics.join(",{tvar}")},{tvar})"
 		
 		if calls != statics
 			if o:optim and o:optim != self
-				let commit = "({tvar}={o:path},{tvar}{calls.join(",{tvar}")},{tvar})"
-				# "{o:path}{calls.join("")}"
+				let commit = "{o:path}{calls.join("")}"
+				# let commit = "({tvar}={o:path},{tvar}{calls.join(",{tvar}")},{tvar})"
+				
 				set(commit: commit) if calls:length and o:commit == undefined
 			else
-				out = "({out},{tvar}{calls.join(",{tvar}")},{tvar})"
-				# out = "({out})" + calls.join("")
+				# out = "({out},{tvar}{calls.join(",{tvar}")},{tvar})"
+				out = "({out})" + calls.join("")
 		
 		if @typeNum
 			@typeNum.value = contentType

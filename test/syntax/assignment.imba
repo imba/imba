@@ -8,6 +8,9 @@ class O
 
 class SyntaxAssignment
 
+	# prop newprop defineAsProperty: yes
+	prop newprop native: yes
+
 	def initialize nestings = 0
 		@gets = 0
 		@sets = 0
@@ -50,6 +53,13 @@ class SyntaxAssignment
 		var ivar = ivar
 		ivar
 		self
+
+	get caption
+		@caption.toUpperCase
+
+	set caption value
+		@caption = value
+
 
 
 # Assignment
@@ -110,8 +120,17 @@ describe 'Syntax - Assignment' do
 			eq o3.ivar,4
 			eq o1.calls,2
 
-		# test "var is not defined during set" do
+	describe "getset" do
+		var obj = SyntaxAssignment.new
 
+		test "=" do
+			obj:caption = 'hello'
+			eq obj:caption, 'HELLO'
+
+			# the property is defined as native get/set pair
+			ok !(obj:newprop isa Function), 'newprop should not be a function'
+			obj:newprop = 'hello'
+			eq obj:newprop, 'hello'
 
 	describe "statements" do
 		var obj = SyntaxAssignment.new

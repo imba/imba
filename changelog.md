@@ -1,3 +1,7 @@
+## master
+* Add support for declaring native getters and setters using `get/set` instead of `def` keyword
+* Add support for compiling props to native getters and setters using `native` option (`prop name native: yes`)
+
 ## 1.4.8
 * Made splats compatible with ES6 containers like Set (#167)
 * Cache compilation for node runtime when 'IMBA_CACHE_DIR' process variable is set
