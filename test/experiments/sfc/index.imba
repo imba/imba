@@ -1,17 +1,17 @@
 
-### css
+### css scoped
 p {
 	color: blue;
 }
 ###
 
 ### less scoped
-@size: 20px;
 
-p {
-	font-size: @size;
-}
+p {  }
 ###
+
+
+require './test.css'
 
 import {Section} from './section'
 
@@ -44,3 +44,13 @@ export var app = <div -> <self>
 		<p> "Something"
 		<button.button> 'Submit'
 	<Section>
+
+### less scoped
+
+@size: 20px;
+
+p {
+	font-size: @size;
+}
+
+###

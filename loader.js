@@ -46,6 +46,10 @@ module.exports = function(content,inMap) {
 		ENV_WEBPACK: true
 	};
 
+	if(!opts.filename.match(/\.imba$/)){
+		return this.callback(null,content);
+	}
+
 	opts.id = shorthash(this.resourcePath);
 
 	if(options.type == 'style' && options.body){
@@ -93,7 +97,7 @@ module.exports = function(content,inMap) {
 
 		// import './file.js.css!=!extract-style-loader/getStyles!./file.js';
 
-		if(result.styles && result.styles.length) {
+		if(result.styles && result.styles.length && this.target == 'web') {
 			// check if we have scoped styles -- should be scoped by default?
 			// js = `const $TagScopeId$ = "data-i-${opts.id}" ;\n` + js;
 			js = js.replace(/\/\*SCOPEID\*\//g,'"' + opts.id + '"');
