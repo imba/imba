@@ -776,6 +776,21 @@ export class Meta < ValueNode
 export class Comment < Meta
 
 	def visit
+		if @value.type == 'HERECOMMENT'
+			
+			let raw = @value.@value
+			let line = raw.slice(0,raw.indexOf('\n')).trim
+
+			if let m = line.match(/style(\.\w+)*/)
+				var style = {
+					content: raw.slice(raw.indexOf('\n'))
+					scoped: true
+					attrs: {}
+				}
+				for key in line.split('.').slice(1)
+					style:attrs[key] = yes
+				scope__.root.styles.push(style)
+
 		if var block = up
 			var idx = block.indexOf(self) + 1
 			idx += 1 if block.index(idx) isa Terminator
@@ -2064,6 +2079,7 @@ export class Root < Code
 			warnings: scope.warnings,
 			options: o,
 			toString: (do this:js)
+			styles: scope.styles
 		}
 		if o:sourceMapInline or o:sourceMap
 			result:sourcemap = SourceMap.new(result).generate
@@ -6568,7 +6584,7 @@ export class Tag < Node
 		@reference ||= @tagScope.closure.temporary(self,pool: 'tag').resolve
 	
 	def factory
-		scope__.imbaRef('createElement')
+		scope__.imbaRef('createElementFactory(/*SCOPEID*/)')
 	
 	# reference to the cache-object this tag will try to register with
 	def cacher
@@ -7901,6 +7917,7 @@ export class RootScope < Scope
 	prop scopes
 	prop entities
 	prop object
+	prop styles
 
 	def initialize
 		super
@@ -7931,6 +7948,7 @@ export class RootScope < Scope
 		@warnings = []
 		@scopes   = []
 		@helpers  = []
+		@styles = []
 		@selfless = no
 		@implicitAccessors = []
 		@entities = RootEntities.new(self)

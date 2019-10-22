@@ -73,10 +73,11 @@
     "url": "git://github.com/imba/imba.git"
   },
   "devDependencies": {
+    "@vue/component-compiler-utils": "^3.0.0",
     "puppeteer": "^1.19.0",
     "uglifyjs-webpack-plugin": "^1.0.0-rc.0",
     "underscore": "^1.8.3",
-    "webpack": "^3.6.0"
+    "webpack": "^4.41.2"
   },
   "dependencies": {}
 }

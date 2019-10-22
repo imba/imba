@@ -1009,6 +1009,14 @@ def Imba.createElement name, ctx, ref, pref
 
 	return node
 
+def Imba.createElementFactory ns
+	return Imba:createElement unless ns
+
+	return do |name,ctx,ref,pref|
+		var node = Imba.createElement(name,ctx,ref,pref)
+		node.@dom and node.@dom.setAttribute("data-i-{ns}",'')
+		return node
+
 def Imba.createTagCache owner
 	var item = []
 	item.@tag = owner

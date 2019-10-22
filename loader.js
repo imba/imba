@@ -1,12 +1,31 @@
+
+const qs = require('querystring');
+const { compileStyle } = require('@vue/component-compiler-utils');
+
 var compiler = require('./lib/compiler');
 var helpers = require('./lib/compiler/helpers');
 var path = require('path');
 
-module.exports = function(content) {
+const crypto = require('crypto');
+const utils = require('loader-utils');
+const stringifyRequest = utils.stringifyRequest;
+const getRemainingRequest = utils.getRemainingRequest;
+
+function shorthash(str){
+	var shasum = crypto.createHash('sha1');
+	shasum.update(str);
+	return shasum.digest('hex').slice(0, 8);
+}
+
+module.exports = function(content,inMap) {
 	this.cacheable();
-	
+
+	const options = utils.getOptions(this) || {};
+
 	var self = this;
 	var query = this.query;
+
+	const resourceQuery = qs.parse(this.resourceQuery.slice(1));
 
 	var opts = {
 		filename: path.basename(this.resourcePath),
@@ -17,6 +36,30 @@ module.exports = function(content) {
 		ENV_DEBUG: this.debug,
 		ENV_WEBPACK: true
 	};
+
+	opts.id = shorthash(this.resourcePath);
+
+	if(options.type == 'style' && options.body){
+		return this.callback(null,options.body);
+	}
+
+	// style post-processor
+	if(resourceQuery && resourceQuery.type == 'style'){
+		const { code, map, errors } = compileStyle({
+			source: content,
+			filename: this.resourcePath + '.css',
+			id: `data-i-${resourceQuery.id}`,
+			map: inMap,
+			scoped: !!resourceQuery.id,
+			trim: true
+		});
+
+		if (errors.length) {
+			return this.callback(errors[0])
+		} else {
+			return this.callback(null, code, map)
+		}
+	}
 
 	if(this.env){
 		opts.env = this.env;
@@ -38,6 +81,32 @@ module.exports = function(content) {
 				self.emitWarning(err);
 			});
 		}
+
+		// import './file.js.css!=!extract-style-loader/getStyles!./file.js';
+
+		if(result.styles && result.styles.length) {
+			// check if we have scoped styles -- should be scoped by default?
+			// js = `const $TagScopeId$ = "data-i-${opts.id}" ;\n` + js;
+			js = js.replace(/\/\*SCOPEID\*\//g,'"' + opts.id + '"');
+
+			result.styles.forEach((style,i) => {
+				const ext = style.attrs.less ? 'less' : 'css';
+				const src = style.src || (self.resourcePath + '.' + i + '.' + ext);
+				const inheritQuery = self.resourceQuery.slice(1)
+				const body = encodeURIComponent(style.content);
+				const remReq = getRemainingRequest(self);
+				let pars = '?type=style';
+
+				if(style.scoped){
+					pars = pars + "&id=" + opts.id;
+				}
+
+				// const query = `-!style-loader!css-loader!${src}!=!imba/loader?type=style&index=${i}&body=${body}!${self.resourcePath}?type=style`
+				const query = `${src}!=!imba/loader?type=style&index=${i}&body=${body}!${remReq}${pars}`
+				js += "\nrequire('" + query + "');"
+			})
+		}
+
 		this.callback(null, js, result.sourcemap);
 		
 	} catch(e) {
