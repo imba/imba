@@ -10,3 +10,5 @@ dist/imba.edge.*
 test/webpack/js/**/*.js
 test/attic
 *.tmp.js
+test/node_modules
+!test/node_modules/imba
