@@ -1,4 +1,18 @@
 
+### css
+p {
+	color: blue;
+}
+###
+
+### less scoped
+@size: 20px;
+
+p {
+	font-size: @size;
+}
+###
+
 import {Section} from './section'
 
 export tag App
@@ -13,26 +27,20 @@ export tag App
 
 Imba.mount(<App>)
 
-### style
-p {
-	color: blue;
-}
+export def render
+	<div>
+		<header>
+			<h1> "Hello"
+		<section>
+			<p> "Something"
+			<button.button> 'Submit'
+		<Section>
 
-.App >>> p { text-decoration: underline; }
 
-###
-
-console.log "welcome"
-
-### style
-button {
-	background: #ccc;
-}
-###
-
-### style.less
-@a: 20px;
-button {
-	font-size: @a;
-}
-###
+export var app = <div -> <self>
+	<header>
+		<h1> "Hello"
+	<section>
+		<p> "Something"
+		<button.button> 'Submit'
+	<Section>

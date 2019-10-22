@@ -781,14 +781,13 @@ export class Comment < Meta
 			let raw = @value.@value
 			let line = raw.slice(0,raw.indexOf('\n')).trim
 
-			if let m = line.match(/style(\.\w+)*/)
+			if let m = line.match(/^(css|less|stylus|sass|scss)( scoped)?/)
 				var style = {
 					content: raw.slice(raw.indexOf('\n'))
-					scoped: true
+					scoped: !!m[2]
+					type: m[1]
 					attrs: {}
 				}
-				for key in line.split('.').slice(1)
-					style:attrs[key] = yes
 				scope__.root.styles.push(style)
 
 		if var block = up

@@ -6,7 +6,8 @@ export tag Section
 				<h1> "This is a section"
 			<section>
 				<p> "Section paragraph is red"
-### style
+
+### css scoped
 p {
 	color: red;
 }

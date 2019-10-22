@@ -11,6 +11,15 @@ const utils = require('loader-utils');
 const stringifyRequest = utils.stringifyRequest;
 const getRemainingRequest = utils.getRemainingRequest;
 
+const isESLintLoader = l => /(\/|\\|@)eslint-loader/.test(l.path)
+const isNullLoader = l => /(\/|\\|@)null-loader/.test(l.path)
+const isCSSLoader = l => /(\/|\\|@)css-loader/.test(l.path)
+const isImbaLoader = l => /(\/|\\|@)imba\/loader/.test(l.path)
+const isCacheLoader = l => /(\/|\\|@)cache-loader/.test(l.path)
+
+const isPreLoader = l => !l.pitchExecuted
+const isPostLoader = l => l.pitchExecuted
+
 function shorthash(str){
 	var shasum = crypto.createHash('sha1');
 	shasum.update(str);
@@ -90,7 +99,7 @@ module.exports = function(content,inMap) {
 			js = js.replace(/\/\*SCOPEID\*\//g,'"' + opts.id + '"');
 
 			result.styles.forEach((style,i) => {
-				const ext = style.attrs.less ? 'less' : 'css';
+				const ext = style.type || 'css';
 				const src = style.src || (self.resourcePath + '.' + i + '.' + ext);
 				const inheritQuery = self.resourceQuery.slice(1)
 				const body = encodeURIComponent(style.content);
@@ -100,8 +109,6 @@ module.exports = function(content,inMap) {
 				if(style.scoped){
 					pars = pars + "&id=" + opts.id;
 				}
-
-				// const query = `-!style-loader!css-loader!${src}!=!imba/loader?type=style&index=${i}&body=${body}!${self.resourcePath}?type=style`
 				const query = `${src}!=!imba/loader?type=style&index=${i}&body=${body}!${remReq}${pars}`
 				js += "\nrequire('" + query + "');"
 			})
