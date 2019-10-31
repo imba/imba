@@ -1,3 +1,4 @@
+var sha1 = require '../../vendor/sha1'
 
 var ansiMap =
 	reset: [0, 0],
@@ -62,7 +63,6 @@ export def normalizeIndentation str
 
 	str = str.replace(RegExp("\\n{ind}","g"), '\n') if ind
 	return str
-
 
 export def flatten arr
 	var out = []
@@ -286,7 +286,8 @@ export def printWarning code, warn
 	let msg = warn:message # b("{yellow('warn: ')}") + yellow(warn:message)
 	let excerpt = printExcerpt(code,warn:loc, hl: 'whiteBright', type: 'warn', pad: 1)
 	return msg + '\n' + excerpt
-	
 
-
-
+export def identifierForPath str
+	var hash = sha1.create()
+	hash.update(str)
+	return hash.hex().slice(0, 8)

@@ -3,6 +3,7 @@
 
 var helpers = require './helpers'
 var constants = require './constants'
+var csscompiler = require './css'
 var NODE_MAJOR_VERSION = null
 
 import ImbaParseError from './errors'
@@ -2080,6 +2081,22 @@ export class Root < Code
 			toString: (do this:js)
 			styles: scope.styles
 		}
+
+		result:fileScopeId = o:sourcePath and helpers.identifierForPath(o:sourcePath)
+
+		var stylebody = ""
+		for style in result:styles
+			if style:type == 'css'
+				style:processed = csscompiler.compile(style:content,scope: '_' + result:fileScopeId)
+				stylebody += style:processed + '\n'
+
+		if stylebody and (o:inline-css or (!STACK.env('WEBPACK') && o:target == 'web'))
+			result:js = """
+			var styles = document.createElement('style');
+			styles.textContent = {JSON.stringify(stylebody)};
+			document.head.appendChild(styles);\n""" + out
+			result:js = result:js.replace(/\/\*SCOPEID\*\//g,'"' + result:fileScopeId + '"')
+
 		if o:sourceMapInline or o:sourceMap
 			result:sourcemap = SourceMap.new(result).generate
 

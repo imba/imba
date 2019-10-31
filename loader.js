@@ -52,7 +52,17 @@ module.exports = function(content,inMap) {
 
 	opts.id = shorthash(this.resourcePath);
 
+
 	if(options.type == 'style' && options.body){
+		if(this.loaders.length == 1){
+			// There are no additional style loaders -- we will need to process it directly
+			let scope = '_' + resourceQuery.id;
+			var css = csscompiler.compile(options.body,{scope: scope});
+			let out = "var styles = document.createElement('style');"
+			out = out + "styles.textContent = " + JSON.stringify(css) + ";\n"
+			out = out + "document.head.appendChild(styles);"
+			return this.callback(null, out, inMap);
+		}
 		return this.callback(null,options.body);
 	}
 
