@@ -31,6 +31,8 @@ module.exports = [{
 			amd: "imba",
 			commonjs: "imba"
 		},
+		globalObject: 'typeof self !== \'undefined\' ? self : this',
+		path: path.resolve(__dirname),
 		libraryTarget: "umd"
 	},
 	node: {fs: false, process: false, global: false},
@@ -44,7 +46,9 @@ module.exports = [{
 	output: {
 		filename: "./imbac.js",
 		library: "imbac",
-		libraryTarget: "umd"
+		libraryTarget: "umd",
+		globalObject: 'typeof self !== \'undefined\' ? self : this',
+		path: path.resolve(__dirname)
 	},
 	node: {fs: false, process: false, global: false},
 	plugins: [minify]
@@ -54,6 +58,10 @@ module.exports = [{
 	},
 	resolve: {extensions: ['*', '.imba', '.js']},
 	entry: "./test/index.imba",
-	output: { filename: "./test/client.js"},
+	output: {
+		filename: "./test/client.js",
+		globalObject: 'typeof self !== \'undefined\' ? self : this',
+		path: path.resolve(__dirname)
+	},
 	node: {fs: false, process: false, global: false}
 }]
