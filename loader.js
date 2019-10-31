@@ -1,8 +1,8 @@
 
 const qs = require('querystring');
-const { compileStyle } = require('@vue/component-compiler-utils');
 
 var compiler = require('./lib/compiler');
+var csscompiler = require('./lib/compiler/css');
 var helpers = require('./lib/compiler/helpers');
 var path = require('path');
 
@@ -58,20 +58,9 @@ module.exports = function(content,inMap) {
 
 	// style post-processor
 	if(resourceQuery && resourceQuery.type == 'style'){
-		const { code, map, errors } = compileStyle({
-			source: content,
-			filename: this.resourcePath + '.css',
-			id: `data-i-${resourceQuery.id}`,
-			map: inMap,
-			scoped: !!resourceQuery.id,
-			trim: true
-		});
-
-		if (errors.length) {
-			return this.callback(errors[0])
-		} else {
-			return this.callback(null, code, map)
-		}
+		let scope = '_' + resourceQuery.id;
+		var css = csscompiler.compile(content,{scope: scope})
+		return this.callback(null, css, inMap);
 	}
 
 	if(this.env){
@@ -95,11 +84,7 @@ module.exports = function(content,inMap) {
 			});
 		}
 
-		// import './file.js.css!=!extract-style-loader/getStyles!./file.js';
-
-		if(result.styles && result.styles.length && this.target == 'web') {
-			// check if we have scoped styles -- should be scoped by default?
-			// js = `const $TagScopeId$ = "data-i-${opts.id}" ;\n` + js;
+		if(result.styles && result.styles.length && this.target == 'web' && this.rootContext) {
 			js = js.replace(/\/\*SCOPEID\*\//g,'"' + opts.id + '"');
 
 			result.styles.forEach((style,i) => {

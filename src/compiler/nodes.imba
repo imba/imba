@@ -2399,7 +2399,9 @@ export class TagDeclaration < Code
 			params.push("function({@ctx.c})\{{cbody}\}")
 
 		var meth = option(:extension) ? 'extendTag' : 'defineTag'
-		var js = "{mark}{scope__.imba.c}.{meth}({params.join(', ')})"
+		# var js = "{mark}{scope__.imba.c}.{meth}({params.join(', ')})"
+		var caller = scope__.imbaRef('tagscope') # scope__.imba.c
+		var js = "{mark}{caller}.{meth}({params.join(', ')})"
 
 		if name.isClass
 			let cname = name.name
@@ -6582,7 +6584,7 @@ export class Tag < Node
 	def reference
 		@reference ||= @tagScope.closure.temporary(self,pool: 'tag').resolve
 	
-	def factory
+	def tagfactory
 		scope__.imbaRef('createElementFactory(/*SCOPEID*/)')
 	
 	# reference to the cache-object this tag will try to register with
@@ -6732,7 +6734,7 @@ export class Tag < Node
 				elif o:ivar or (o:key and !o:loop)
 					pars.push(scope.context.c)
 
-			ctor = "{factory.c}({pars.join(',')})"
+			ctor = "{tagfactory.c}({pars.join(',')})"
 
 		if o:body isa Func
 			bodySetter = "setTemplate"
@@ -8027,6 +8029,11 @@ export class RootScope < Scope
 			@imbaTags = "{imbaRef.c}.TAGS"
 			
 	def imbaRef name, shorthand = '_'
+		if name == 'tagscope'
+			name = 'createTagScope(/*SCOPEID*/)'
+		elif name == 'tagfactory'
+			name = 'createElementFactory(/*SCOPEID*/)'
+
 		var map = @imbaRefs ||= {}
 		return map[name] if map[name]
 

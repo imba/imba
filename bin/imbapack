@@ -55,7 +55,9 @@ if(require.main !== module){
 				}
 				if(rule.use && rule.use.indexOf('css-loader') >= 0){
 					let index = rule.use.indexOf('css-loader');
-					rule.use.splice(index + 1,0,'imba/loader');
+					if(rule.use.indexOf('imba/loader') == -1){
+						rule.use.splice(index + 1,0,'imba/loader');	
+					}
 				}
 			});
 			// push our loader of we have one
