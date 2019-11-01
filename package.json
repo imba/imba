@@ -38,7 +38,6 @@
       "url": "http://github.com/scanf/"
     }
   ],
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
   "scripts": {
     "build-parser": "bin/imba scripts/build-parser.imba",
     "build": "webpack --progress --colors --display-modules --mode production",
