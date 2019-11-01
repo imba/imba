@@ -904,7 +904,7 @@ class Imba.Tags
 	def baseType name, ns
 		name in Imba.HTML_TAGS ? 'element' : 'div'
 
-	def defineTag fullName, supr = '', &body
+	def defineTag o, fullName, supr = '', &body
 		if body and body.@nodeType
 			supr = body
 			body = null
@@ -943,16 +943,16 @@ class Imba.Tags
 
 		extender(tagtype,supertype)
 
+		if(o && o:scope && o:scope.flags)
+			tagtype.@classes.push(*o:scope.flags)
+
 		if body
 			body.call(tagtype,tagtype, tagtype.TAGS or self)
 			tagtype.defined if tagtype:defined
 			optimizeTag(tagtype)
 		return tagtype
 
-	def defineSingleton name, supr, &body
-		defineTag(name,supr,body)
-
-	def extendTag name, supr = '', &body
+	def extendTag o, name, supr = '', &body
 		var klass = (name isa String ? findTagType(name) : name)
 		# allow for private tags here as well?
 		body and body.call(klass,klass,klass:prototype) if body
@@ -967,10 +967,10 @@ class Imba.Tags
 		let klass = self[type]
 		unless klass
 			if type.substr(0,4) == 'svg:'
-				klass = defineTag(type,'svg:element')
+				klass = defineTag(null,type,'svg:element')
 
 			elif Imba.HTML_TAGS.indexOf(type) >= 0
-				klass = defineTag(type,'element')
+				klass = defineTag(null,type,'element')
 
 				if let attrs = Imba.HTML_ATTRS[type]
 					for name in attrs.split(" ")
@@ -979,6 +979,7 @@ class Imba.Tags
 				if let props = Imba.HTML_PROPS[type]
 					for name in props.split(" ")
 						Imba.attr(klass,name,dom: yes)
+
 		return klass
 
 def Imba.createElement name, ctx, ref, pref
@@ -1008,6 +1009,17 @@ def Imba.createElement name, ctx, ref, pref
 		ctx[ref] = node
 
 	return node
+
+def Imba.createElementFactory ns
+	return Imba:createElement unless ns
+
+	return do |name,ctx,ref,pref|
+		var node = Imba.createElement(name,ctx,ref,pref)
+		node.@dom:classList.add('_' + ns)
+		return node
+
+def Imba.createTagScope ns
+	return TagScope.new(ns)
 
 def Imba.createTagCache owner
 	var item = []
@@ -1067,6 +1079,20 @@ class TagMap
 		clone:i$ = items:length
 		return cache[key] = clone
 
+class TagScope
+	prop ns
+	prop flags
+
+	def initialize ns
+		@ns = ns
+		@flags = ns ? ['_'+ns] : []
+
+	def defineTag name, supr = '', &body
+		return Imba.TAGS.defineTag({scope: self},name,supr,body)
+
+	def extendTag name, body
+		return Imba.TAGS.extendTag({scope: self},name,body)
+
 Imba.TagMap = TagMap
 Imba.TagCache = TagCache
 Imba.SINGLETONS = {}
@@ -1077,13 +1103,10 @@ Imba.TAGS['svg:element'] = Imba.SVGTag
 Imba.attr(Imba.Tag,'is')
 
 def Imba.defineTag name, supr = '', &body
-	return Imba.TAGS.defineTag(name,supr,body)
-
-def Imba.defineSingletonTag id, supr = 'div', &body
-	return Imba.TAGS.defineTag(name,supr,body)
+	return Imba.TAGS.defineTag({},name,supr,body)
 
 def Imba.extendTag name, body
-	return Imba.TAGS.extendTag(name,body)
+	return Imba.TAGS.extendTag({},name,body)
 
 def Imba.getTagSingleton id	
 	var dom, node

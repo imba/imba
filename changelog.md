@@ -2,6 +2,7 @@
 * Add support for declaring native getters and setters using `get/set` instead of `def` keyword
 * Add support for compiling props to native getters and setters using `native` option (`prop name native: yes`)
 * Make svg tags and non-svg tags use same class naming scheme (#230)
+* Add experimental support for single-file-components
 
 ## 1.4.8
 * Made splats compatible with ES6 containers like Set (#167)

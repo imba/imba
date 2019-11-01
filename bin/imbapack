@@ -48,10 +48,16 @@ if(require.main !== module){
 		if (loaders) {
 			// add the imba loader
 			var l = null;
-			loaders.forEach(function(loader){
-				if(String(loader.test).replace('$','') == '/\\.imba/'){
-					l = imbaLoader = loader;
-					l.loader = loader.loader;
+			loaders.forEach(function(rule){
+				if(String(rule.test).replace('$','') == '/\\.imba/'){
+					l = imbaLoader = rule;
+					l.loader = rule.loader;
+				}
+				if(rule.use && rule.use.indexOf('css-loader') >= 0){
+					let index = rule.use.indexOf('css-loader');
+					if(rule.use.indexOf('imba/loader') == -1){
+						rule.use.splice(index + 1,0,'imba/loader');	
+					}
 				}
 			});
 			// push our loader of we have one

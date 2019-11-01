@@ -40,7 +40,7 @@
   ],
   "scripts": {
     "build-parser": "bin/imba scripts/build-parser.imba",
-    "build": "webpack --progress --colors --display-modules",
+    "build": "webpack --progress --colors --display-modules --mode production",
     "build-watch": "webpack --progress --colors --display-modules --watch",
     "watch": "bin/imbac -w --es5 -o lib/ src/",
     "test": "bin/imba test/index.imba",
@@ -76,7 +76,8 @@
     "puppeteer": "^1.19.0",
     "uglifyjs-webpack-plugin": "^1.0.0-rc.0",
     "underscore": "^1.8.3",
-    "webpack": "^3.6.0"
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
   },
   "dependencies": {}
 }

@@ -4,6 +4,13 @@ Imba is the namespace for all runtime related utilities
 ###
 var Imba = {VERSION: '1.5.0'}
 
+
+def Imba.createElementFactory
+	return do yes
+
+def Imba.createTagScope
+	return Imba
+
 ###
 
 Light wrapper around native setTimeout that expects the block / function
