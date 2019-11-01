@@ -56,7 +56,7 @@ module.exports = function(content,inMap) {
 	if(options.type == 'style' && options.body){
 		if(this.loaders.length == 1){
 			// There are no additional style loaders -- we will need to process it directly
-			let scope = '_' + resourceQuery.id;
+			let scope = resourceQuery.id ? '_' + resourceQuery.id : null;
 			var css = csscompiler.compile(options.body,{scope: scope});
 			let out = "var styles = document.createElement('style');"
 			out = out + "styles.textContent = " + JSON.stringify(css) + ";\n"
@@ -68,7 +68,7 @@ module.exports = function(content,inMap) {
 
 	// style post-processor
 	if(resourceQuery && resourceQuery.type == 'style'){
-		let scope = '_' + resourceQuery.id;
+		let scope = resourceQuery.id ? '_' + resourceQuery.id : null;
 		var css = csscompiler.compile(content,{scope: scope})
 		return this.callback(null, css, inMap);
 	}

@@ -2087,7 +2087,8 @@ export class Root < Code
 		var stylebody = ""
 		for style in result:styles
 			if style:type == 'css'
-				style:processed = csscompiler.compile(style:content,scope: '_' + result:fileScopeId)
+				let scoping = style:scoped ? '_' + result:fileScopeId : null
+				style:processed = csscompiler.compile(style:content,scope: scoping)
 				stylebody += style:processed + '\n'
 
 		if stylebody and (o:inline-css or (!STACK.env('WEBPACK') && o:target == 'web'))

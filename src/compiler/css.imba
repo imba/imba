@@ -2,7 +2,7 @@ var Stylis = require('../../vendor/stylis')
 var selparser = require('../../vendor/css-selector-parser')
 var cssparser = Stylis.new(compress: false,semicolons: false)
 
-var context = null
+var selScope = null
 
 var def rewriteSelector str
 	var sel = selparser.parse(str)
@@ -18,13 +18,13 @@ var def rewriteSelector str
 		rule = rule:rule
 
 	if rule
-		rule:classNames = [].concat(rule:classNames or []).concat([context])
+		rule:classNames = [].concat(rule:classNames or []).concat([selScope])
 
 	return selparser.render(sel)
 
 var def plugin context, content, selectors, parent, line, column, length
 
-	if context == 2
+	if context == 2 and selScope
 		for selector,i in selectors
 			selectors[i] = rewriteSelector(selector)
 		return content
@@ -34,5 +34,5 @@ cssparser.use(plugin)
 
 
 export def compile css, o = {}
-	context = o:scope
+	selScope = o:scope
 	return cssparser('',css)
