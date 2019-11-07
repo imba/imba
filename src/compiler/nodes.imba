@@ -3042,7 +3042,7 @@ export class PropertyDeclaration < Node
 			js:get = "v !== undefined ? (this.{js:setter}(v),this) : {js:get}"
 
 
-		if isNative == true or (STACK.option(:nativeProps) and isNative !== false)
+		if isNative == true or (STACK.v2 and isNative !== false)
 			if tpl == propWatchTemplate
 				tpl = propWatchTemplateNext
 			else
