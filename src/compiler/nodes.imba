@@ -6321,7 +6321,7 @@ export class TagAttr < TagPart
 			"dataset('{key.slice(5)}',{val})"
 		elif key.indexOf("aria-") == 0
 			"set({quoted},{val}{add})"
-		elif dyn
+		elif dyn or STACK.v2
 			"set({quoted},{val}{add})"
 		else
 			"{helpers.setterSym(name)}({val}{add})"
