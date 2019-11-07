@@ -5,6 +5,8 @@ var compiler = require('./lib/compiler');
 var csscompiler = require('./lib/compiler/css');
 var helpers = require('./lib/compiler/helpers');
 var path = require('path');
+var fs = require('fs');
+var loaderPath = fs.realpathSync(__filename); // path.join(path.dirname(fs.realpathSync(__filename)), '..',path.sep);
 
 const crypto = require('crypto');
 const utils = require('loader-utils');
@@ -108,7 +110,7 @@ module.exports = function(content,inMap) {
 				if(style.scoped){
 					pars = pars + "&id=" + opts.id;
 				}
-				const query = `${src}!=!imba/loader?type=style&index=${i}&body=${body}!${remReq}${pars}`
+				const query = `${src}!=!${loaderPath}?type=style&index=${i}&body=${body}!${remReq}${pars}`
 				js += "\nrequire('" + query + "');"
 			})
 		}
