@@ -1,5 +1,5 @@
 {
-  "name": "imba",
+  "name": "imba2",
   "description": "Intuitive and powerful language for building webapps that fly",
   "keywords": [
     "javascript",
@@ -48,7 +48,7 @@
     "test-chrome": "bin/imba test/run-chrome.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "1.5.1",
+  "version": "2.0.0-alpha.1",
   "licenses": [
     {
       "type": "MIT",
@@ -62,9 +62,9 @@
   "main": "./index",
   "browser": "./imba",
   "bin": {
-    "imba": "./bin/imba",
-    "imbac": "./bin/imbac",
-    "imbapack": "./bin/imbapack"
+    "imba2": "./bin/imba",
+    "imbac2": "./bin/imbac",
+    "imbapack2": "./bin/imbapack"
   },
   "preferGlobal": true,
   "homepage": "http://imba.io",

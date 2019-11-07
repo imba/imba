@@ -2,7 +2,7 @@
 Imba is the namespace for all runtime related utilities
 @namespace
 ###
-var Imba = {VERSION: '1.5.1'}
+var Imba = {VERSION: '2.0.0'}
 
 
 def Imba.createElementFactory
