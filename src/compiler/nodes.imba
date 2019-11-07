@@ -359,6 +359,12 @@ export class Stack
 	def es5
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
 
+	def v2
+		!!option(:v2)
+
+	def v1
+		!v2
+
 	def autocall
 		!option(:explicitParens)
 		# !@options:explicitParens
@@ -3967,7 +3973,7 @@ export class PropertyAccess < Access
 
 		var up = up
 
-		if !(up isa Call) and STACK.autocall
+		if !(up isa Call) and STACK.v1
 			var ast = CALL(Access.new(op,left,right),[])
 			return ast.c
 
@@ -3975,7 +3981,7 @@ export class PropertyAccess < Access
 		# should be possible for the function to remove this this instead?
 		var js = "{super(o)}"
 
-		unless STACK.autocall
+		if STACK.v2
 			return js
 
 		unless (up isa Call or up isa Util.IsFunction)
@@ -4025,7 +4031,7 @@ export class SuperAccess < Access
 
 		unless up isa Access
 			out += ".{m.supername.c}"
-			unless up isa Call # autocall?
+			unless up isa Call
 				out += ".apply({m.scope.context.c},arguments)"
 
 		return out
@@ -4378,7 +4384,8 @@ export class Assign < Op
 			l = ctx.reference
 
 
-		if l isa PropertyAccess
+		# should add optional check that wraps this 
+		if l isa PropertyAccess and STACK.v1
 			var ast = CALL(OP('.',l.left,l.right.setter),[right])
 			ast.receiver = l.receiver
 
