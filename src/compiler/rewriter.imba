@@ -1,4 +1,5 @@
 # imba$inlineHelpers=1
+# imba$v2=0
 # The Imba language has a good deal of optional syntax, implicit syntax,
 # and shorthand syntax. This can greatly complicate a grammar and bloat
 # the resulting parse table. Instead of making the parser handle it all, we take

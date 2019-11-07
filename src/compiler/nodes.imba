@@ -1,4 +1,5 @@
 # imba$inlineHelpers=1
+# imba$v2=0
 # TODO Create Expression - make all expressions inherit from these?
 
 var helpers = require './helpers'
@@ -2080,6 +2081,7 @@ export class Root < Code
 		STACK.reset # -- nested compilation does not work now
 		OPTS = STACK.@options = @options = o or {}
 		traverse
+		console.log @options:v2
 
 		var out = c
 		var result = {

@@ -1,4 +1,5 @@
 # imba$inlineHelpers=1
+# imba$v2=0
 
 var path = require 'path'
 var util = require './helpers'

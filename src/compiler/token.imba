@@ -1,4 +1,5 @@
 # imba$inlineHelpers=1
+# imba$v2=0
 
 export var TOK = {}
 var TTERMINATOR = TOK.TERMINATOR = 1

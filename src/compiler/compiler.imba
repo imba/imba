@@ -1,4 +1,6 @@
 # imba$inlineHelpers=1
+# imba$v2=0
+
 # var imba = require '../imba'
 var T = require './token'
 var util = require './helpers'

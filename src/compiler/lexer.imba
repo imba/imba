@@ -1,4 +1,5 @@
 # imba$inlineHelpers=1
+# imba$v2=0
 
 var T = require './token'
 var Token = T.Token
@@ -1193,7 +1194,7 @@ export class Lexer
 
 	def parseMagicalOptions str
 		if str.indexOf('imba$') >= 0
-			str.replace(/imba\$(\w+)\=(.*)\b/g) do |m,name,val|
+			str.replace(/imba\$(\w+)\=(\S*)\b/g) do |m,name,val|
 				if (/^\d+$/).test(val)
 					val = parseInt(val)
 				@opts[name] = val

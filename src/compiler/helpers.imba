@@ -1,3 +1,5 @@
+# imba$v2=0
+
 var sha1 = require '../../vendor/sha1'
 
 var ansiMap =
