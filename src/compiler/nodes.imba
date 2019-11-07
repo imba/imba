@@ -358,6 +358,10 @@ export class Stack
 
 	def es5
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
+
+	def autocall
+		!option(:explicitParens)
+		# !@options:explicitParens
 		
 	def optlevel
 		@optlevel ?= (@options:conservative or env('IMBA_CONSERVATIVE') ? 0 : (@options:optlevel or 9)) # stack.option(:conservative)
@@ -2943,6 +2947,7 @@ export class PropertyDeclaration < Node
 		var pars = o.hash
 
 		var isAttr = (@token and String(@token) == 'attr') or o.key(:attr)
+		var isNative = pars:native isa Bool ? pars:native.isTruthy : undefined
 
 		var js =
 			key: key
@@ -3029,7 +3034,7 @@ export class PropertyDeclaration < Node
 			js:get = "v !== undefined ? (this.{js:setter}(v),this) : {js:get}"
 
 
-		if pars:native
+		if isNative == true or (STACK.option(:nativeProps) and isNative !== false)
 			if tpl == propWatchTemplate
 				tpl = propWatchTemplateNext
 			else
@@ -3953,6 +3958,7 @@ export class PropertyAccess < Access
 	# to create a call and regular access instead
 
 	def js o
+		
 
 		if var rec = receiver
 			var ast = CALL(OP('.',left,right),[]) # convert to ArgList or null
@@ -3961,13 +3967,16 @@ export class PropertyAccess < Access
 
 		var up = up
 
-		unless up isa Call
+		if !(up isa Call) and STACK.autocall
 			var ast = CALL(Access.new(op,left,right),[])
 			return ast.c
 
 		# really need to fix this - for sure
 		# should be possible for the function to remove this this instead?
 		var js = "{super(o)}"
+
+		unless STACK.autocall
+			return js
 
 		unless (up isa Call or up isa Util.IsFunction)
 			js += "()"
