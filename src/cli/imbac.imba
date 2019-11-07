@@ -46,6 +46,9 @@ Usage: imbac [options] path/to/script.imba
       --silent			 only print out errors (skip warnings)
   -w, --watch            recompile files on change
       --wrap             compile with top-level function wrapper
+      --experimental     compile with experimental features (Imba 2.0)
+      --native-props     compile props to native es6 getters and setters
+      --explicit-parens  require explicit parens to call functions
 
 """
 
@@ -243,7 +246,6 @@ class CLI
 		var opts = Object.create(o)
 		opts:filename = src:filename
 		opts:sourcePath = src:sourcePath
-		
 		var out = {}
 		var t = Date.now
 		var at = Date.new.toTimeString.substr(0,8)
