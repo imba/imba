@@ -1,3 +1,5 @@
+# imba$v2=0
+
 var Imba = require("../imba")
 
 tag fragment < element
@@ -85,7 +87,7 @@ extend tag input
 
 	def onchange e
 		@modelValue = @localValue = undefined
-		return unless data
+		return unless @data
 		
 		if type == 'radio' or type == 'checkbox'
 			let checked = self.checked

@@ -101,7 +101,7 @@ var setterCache = {}
 
 def Imba.toCamelCase str
 	if str.indexOf('-') >= 0
-		str.replace(dashRegex) do |m| m.charAt(1).toUpperCase
+		str.replace(dashRegex) do |m| m.charAt(1).toUpperCase()
 	else
 		str
 		

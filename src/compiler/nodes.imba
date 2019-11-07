@@ -2081,7 +2081,6 @@ export class Root < Code
 		STACK.reset # -- nested compilation does not work now
 		OPTS = STACK.@options = @options = o or {}
 		traverse
-		console.log @options:v2
 
 		var out = c
 		var result = {
@@ -6401,7 +6400,7 @@ export class TagData < TagPart
 			
 			let pars = [left.c,right.c]
 			
-			if val isa PropertyAccess
+			if val isa PropertyAccess and STACK.v1
 				pars.push('[]')
 				
 			if right isa Identifier

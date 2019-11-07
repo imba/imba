@@ -1,3 +1,4 @@
+# imba$v2=0
 var Imba = require("../imba")
 
 Imba.CSSKeyMap = {}
@@ -38,7 +39,7 @@ def Imba.mount node, into
 	into.appendChild(node.dom)
 	Imba.TagManager.insert(node,into)
 	node.scheduler.configure(events: yes).activate(no)
-	Imba.TagManager.refresh
+	Imba.TagManager.refresh()
 	return node
 
 
@@ -83,7 +84,7 @@ class Imba.Tag
 
 		if @nodeType
 			child.@nodeType = @nodeType
-			child.@classes = @classes.slice
+			child.@classes = @classes.slice(0)
 
 			if child.@flagName
 				child.@classes.push(child.@flagName)
@@ -178,18 +179,28 @@ class Imba.Tag
 	Set the data object for node
 	@return {self}
 	###
-	def data= data
-		@data = data
+	# def data= data
+	# 	@data = data
+
+	set data value
+		@data = value
+
+	get data
+		@data
+
+	def setData data
+		self:data = data
+		self
 
 	###
 	Get the data object for node
 	###
-	def data
-		@data
-		
-		
+	# def data
+	# 	@data
+			
 	def bindData target, path, args
-		setData(args ? target[path].apply(target,args) : target[path])
+		self:data = args ? target[path].apply(target,args) : target[path]
+		# setData(args ? target[path].apply(target,args) : target[path])
 
 	###
 	Set inner html of node

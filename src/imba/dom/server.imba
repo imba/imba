@@ -1,3 +1,5 @@
+# imba$v2=0
+
 var Imba = require("../imba")
 
 # TODO classes should not be global,

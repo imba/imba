@@ -1,3 +1,5 @@
+# imba$v2=0
+
 var Imba = require("./imba")
 var activate = no
 var ns = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
@@ -18,7 +20,7 @@ unless $webworker$
 	require './dom/index'
 
 	if activate
-		Imba.EventManager.activate
+		Imba.EventManager.activate()
 	
 if $node$
 	unless $webpack$
