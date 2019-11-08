@@ -1,5 +1,3 @@
-# imba$v2=0
-
 extern navigator
 
 var Imba = require("../imba")
@@ -10,13 +8,14 @@ var removeNested = do |root, node, caret|
 	# 	for now we will simply not support this
 	if node isa Array
 		removeNested(root,member,caret) for member in node
-	elif node and node.@slot_
+	elif node and node.slot_
+		# TODO fix slot_ private thingine
 		root.removeChild(node)
 	elif node != null
 		# what if this is not null?!?!?
 		# take a chance and remove a text-elementng
-		let next = caret ? caret:nextSibling : root.@dom:firstChild
-		if next isa Text and next:textContent == node
+		let next = caret ? caret.nextSibling : root.dom.firstChild
+		if next isa Text and next.textContent == node
 			root.removeChild(next)
 		else
 			throw 'cannot remove string'
@@ -26,10 +25,10 @@ var removeNested = do |root, node, caret|
 var appendNested = do |root, node|
 	if node isa Array
 		let i = 0
-		let c = node:taglen
-		let k = c != null ? (node:domlen = c) : node:length
+		let c = node.taglen
+		let k = c != null ? (node.domlen = c) : node.length
 		appendNested(root,node[i++]) while i < k
-	elif node and node.@dom
+	elif node and node.dom
 		root.appendChild(node)
 	elif node != null and node !== false
 		root.appendChild Imba.createTextNode(node)
@@ -44,11 +43,11 @@ var appendNested = do |root, node|
 var insertNestedBefore = do |root, node, before|
 	if node isa Array
 		let i = 0
-		let c = node:taglen
-		let k = c != null ? (node:domlen = c) : node:length
+		let c = node.taglen
+		let k = c != null ? (node.domlen = c) : node.length
 		insertNestedBefore(root,node[i++],before) while i < k
 
-	elif node and node.@dom
+	elif node and node.dom
 		root.insertBefore(node,before)
 	elif node != null and node !== false
 		root.insertBefore(Imba.createTextNode(node),before)
@@ -57,18 +56,18 @@ var insertNestedBefore = do |root, node, before|
 
 # after must be an actual domnode
 def insertNestedAfter root, node, after
-	var before = after ? after:nextSibling : root.@dom:firstChild
+	var before = after ? after.nextSibling : root.dom.firstChild
 
 	if before
 		insertNestedBefore(root,node,before)
-		return before:previousSibling
+		return before.previousSibling
 	else
 		appendNested(root,node)
-		return root.@dom:lastChild
+		return root.dom.lastChild
 
 var reconcileCollectionChanges = do |root, new, old, caret|
 
-	var newLen = new:length
+	var newLen = new.length
 	var lastNew = new[newLen - 1]
 
 	# This re-order algorithm is based on the following principle:
@@ -103,8 +102,8 @@ var reconcileCollectionChanges = do |root, new, old, caret|
 
 	for node, idx in old
 		# special case for Text nodes
-		if node and node:nodeType == 3
-			newPos = new.indexOf(node:textContent)
+		if node and node.nodeType == 3
+			newPos = new.indexOf(node.textContent)
 			new[newPos] = node if newPos >= 0
 			hasTextNodes = yes
 		else
@@ -118,7 +117,7 @@ var reconcileCollectionChanges = do |root, new, old, caret|
 			lengthChain.push(-1)
 			continue
 
-		var prevIdx = newPosition:length - 2
+		var prevIdx = newPosition.length - 2
 
 		# Build the chain:
 		while prevIdx >= 0
@@ -145,7 +144,7 @@ var reconcileCollectionChanges = do |root, new, old, caret|
 
 	# Now we can walk the longest chain backwards and mark them as "sticky",
 	# which implies that they should not be moved
-	var cursor = newPosition:length - 1
+	var cursor = newPosition.length - 1
 	while cursor >= 0
 		if cursor == maxChainEnd and newPosition[cursor] != -1
 			stickyNodes[newPosition[cursor]] = true
@@ -161,28 +160,28 @@ var reconcileCollectionChanges = do |root, new, old, caret|
 				node = new[idx] = Imba.createTextNode(node)
 
 			var after = new[idx - 1]
-			insertNestedAfter(root, node, (after and after.@slot_ or after or caret))
+			insertNestedAfter(root, node, (after and after.slot_ or after or caret))
 
-		caret = node.@slot_ or (caret and caret:nextSibling or root.@dom:firstChild)
+		caret = node.slot_ or (caret and caret.nextSibling or root.dom.firstChild)
 
 	# should trust that the last item in new list is the caret
-	return lastNew and lastNew.@slot_ or caret
+	return lastNew and lastNew.slot_ or caret
 
 
 # expects a flat non-sparse array of nodes in both new and old, always
 var reconcileCollection = do |root, new, old, caret|
-	var k = new:length
+	var k = new.length
 	var i = k
 	var last = new[k - 1]
 
 
-	if k == old:length and new[0] === old[0]
+	if k == old.length and new[0] === old[0]
 		# running through to compare
 		while i--
 			break if new[i] !== old[i]
 
 	if i == -1
-		return last and last.@slot_ or last or caret
+		return last and last.slot_ or last or caret
 	else
 		return reconcileCollectionChanges(root,new,old,caret)
 
@@ -213,7 +212,7 @@ var reconcileLoop = do |root, new, old, caret|
 		i1-- while i1 > i and new[i1 - 1] === old[i1 - 1 - d]
 
 		if d == (i1 - i)
-			let before = old[i].@slot_
+			let before = old[i].slot_
 			root.insertBefore(new[i++],before) while i < i1
 			return
 			
@@ -236,27 +235,27 @@ var reconcileLoop = do |root, new, old, caret|
 
 # expects a flat non-sparse array of nodes in both new and old, always
 var reconcileIndexedArray = do |root, array, old, caret|
-	var newLen = array:taglen
-	var prevLen = array:domlen or 0
+	var newLen = array.taglen
+	var prevLen = array.domlen or 0
 	var last = newLen ? array[newLen - 1] : null
 	# console.log "reconcile optimized array(!)",caret,newLen,prevLen,array
 
 	if prevLen > newLen
 		while prevLen > newLen
 			var item = array[--prevLen]
-			root.removeChild(item.@slot_)
+			root.removeChild(item.slot_)
 
 	elif newLen > prevLen
 		# find the item to insert before
-		let prevLast = prevLen ? array[prevLen - 1].@slot_ : caret
-		let before = prevLast ? prevLast:nextSibling : root.@dom:firstChild
+		let prevLast = prevLen ? array[prevLen - 1].slot_ : caret
+		let before = prevLast ? prevLast.nextSibling : root.dom.firstChild
 		
 		while prevLen < newLen
 			let node = array[prevLen++]
-			before ? root.insertBefore(node.@slot_,before) : root.appendChild(node.@slot_)
+			before ? root.insertBefore(node.slot_,before) : root.appendChild(node.slot_)
 			
 	array:domlen = newLen
-	return last ? last.@slot_ : caret
+	return last ? last.slot_ : caret
 
 
 # the general reconciler that respects conditions etc
@@ -273,21 +272,21 @@ var reconcileNested = do |root, new, old, caret|
 		# we should instead move the actual caret? - trust
 		if newIsNull
 			return caret
-		elif new.@slot_
-			return new.@slot_
-		elif new isa Array and new:taglen != null
+		elif new.slot_
+			return new.slot_
+		elif new isa Array and new.taglen != null
 			return reconcileIndexedArray(root,new,old,caret)
 		else
-			return caret ? caret:nextSibling : root.@dom:firstChild
+			return caret ? caret.nextSibling : root.dom.firstChild
 
 	elif new isa Array
 		if old isa Array
 			# look for slot instead?
-			let typ = new:static
-			if typ or old:static
+			let typ = new.static
+			if typ or old.static
 				# if the static is not nested - we could get a hint from compiler
 				# and just skip it
-				if typ == old:static # should also include a reference?
+				if typ == old.static # should also include a reference?
 					for item,i in new
 						# this is where we could do the triple equal directly
 						caret = reconcileNested(root,item,old[i],caret)
@@ -300,16 +299,16 @@ var reconcileNested = do |root, new, old, caret|
 				# Could use optimized loop if we know that it only consists of nodes
 				return reconcileCollection(root,new,old,caret)
 		elif !oldIsNull
-			if old.@slot_
+			if old.slot_
 				root.removeChild(old)
 			else
 				# old was a string-like object?
-				root.removeChild(caret ? caret:nextSibling : root.@dom:firstChild)
+				root.removeChild(caret ? caret.nextSibling : root.dom.firstChild)
 
 		return insertNestedAfter(root,new,caret)
 		# remove old
 
-	elif !newIsNull and new.@slot_
+	elif !newIsNull and new.slot_
 		removeNested(root,old,caret) unless oldIsNull
 		return insertNestedAfter(root,new,caret)
 
@@ -322,13 +321,13 @@ var reconcileNested = do |root, new, old, caret|
 		# if old was array or imbatag we need to remove it and then add
 		if old isa Array
 			removeNested(root,old,caret)
-		elif old and old.@slot_
+		elif old and old.slot_
 			root.removeChild(old)
 		elif !oldIsNull
 			# ...
-			nextNode = caret ? caret:nextSibling : root.@dom:firstChild
-			if nextNode isa Text and nextNode:textContent != new
-				nextNode:textContent = new
+			nextNode = caret ? caret.nextSibling : root.dom.firstChild
+			if nextNode isa Text and nextNode.textContent != new
+				nextNode.textContent = new
 				return nextNode
 
 		# now add the textnode
@@ -347,13 +346,13 @@ extend tag element
 	def setChildren new, typ
 		# if typeof new == 'string'
 		# 	return self.text = new
-		var old = @tree_
+		var old = #tree_
 
-		if new === old and (!new or new:taglen == undefined)
+		if new === old and (!new or new.taglen == undefined)
 			return self
 
 		if !old and typ != 3
-			removeAllChildren
+			@removeAllChildren()
 			appendNested(self,new)
 
 		elif typ == 1
@@ -368,23 +367,23 @@ extend tag element
 			let ntyp = typeof new
 			
 			if ntyp != 'object'
-				return setText(new)
+				return @setText(new)
 
 			if new and new.@dom
-				removeAllChildren
-				appendChild(new)
+				@removeAllChildren()
+				@appendChild(new)
 
 			# check if old and new isa array
 			elif new isa Array
-				if new.@type == 5 and old and old.@type == 5
+				if new.type == 5 and old and old.type == 5
 					reconcileLoop(self,new,old,null)
 				elif old isa Array
 					reconcileNested(self,new,old,null)
 				else
-					removeAllChildren
+					@removeAllChildren()
 					appendNested(self,new)
 			else
-				return setText(new)
+				return @setText(new)
 				
 		elif typ == 4
 			reconcileIndexedArray(self,new,old,null)
@@ -396,32 +395,34 @@ extend tag element
 			reconcileNested(self,new,old,null)
 		else
 			# what if text?
-			removeAllChildren
+			@removeAllChildren()
 			appendNested(self,new)
 
-		@tree_ = new
+		#tree_ = new
 		return self
 
 	def content
-		@content or children.toArray
+		@content or @children.toArray()
+
+	# TODO change to an actual setter
 	
 	def setText text
-		if text != @tree_
+		if text != #tree_
 			var val = text === null or text === false ? '' : text
-			(@text_ or @dom):textContent = val
-			@text_ ||= @dom:firstChild
-			@tree_ = text
+			(@text_ or @dom).textContent = val
+			@text_ ||= @dom.firstChild
+			#tree_ = text
 		self
 
 # alias setContent to setChildren
-var proto = Imba.Tag:prototype
-proto:setContent = proto:setChildren
+var proto = Imba.Tag.prototype
+proto.setContent = proto.setChildren
 
 # optimization for setText
-var apple = typeof navigator != 'undefined' and (navigator:vendor or '').indexOf('Apple') == 0
+var apple = typeof navigator != 'undefined' and (navigator.vendor or '').indexOf('Apple') == 0
 if apple
 	def proto.setText text
-		if text != @tree_
-			@dom:textContent = (text === null or text === false ? '' : text)
-			@tree_ = text
+		if text != #tree_
+			@dom.textContent = (text === null or text === false ? '' : text)
+			#tree_ = text
 		return self

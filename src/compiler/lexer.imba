@@ -73,7 +73,7 @@ var METHOD_IDENTIFIER = /// ^
 # added hyphens to identifiers now - to test
 var IDENTIFIER = /// ^
 	(
-		(\$|@@|@|\#)[\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* |
+		(\$|@@|@|\#)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)*
 	)
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
@@ -758,9 +758,8 @@ export class Lexer
 		elif pre == '$'
 			yes
 
-
 		elif pre == '#'
-			typ = 'TAGID'
+			typ = 'IVAR'
 
 		elif CONST_IDENTIFIER.test(pre) or id == 'global' or id == 'exports'
 			# really? seems very strange
@@ -914,7 +913,7 @@ export class Lexer
 
 			# id:reserved = yes if colon
 		elif typ == '#'
-			typ = 'TAGID'
+			typ = 'IVAR'
 
 		elif typ == '@@'
 			typ = 'DECORATOR'

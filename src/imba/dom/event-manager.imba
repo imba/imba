@@ -1,5 +1,3 @@
-# imba$v2=0
-
 var Imba = require("../imba")
 require("./pointer")
 
@@ -29,17 +27,12 @@ in Imba you will need to register them in `Imba.Events.register(myCustomEventNam
 ###
 class Imba.EventManager
 
-	prop root
-	prop count
 	prop enabled default: no, watch: yes
-	prop listeners
-	prop delegators
-	prop delegator
 	
 	var initialBind = []
 
 	def enabled-did-set bool
-		bool ? onenable : ondisable
+		bool ? @onenable() : @ondisable()
 		self
 		
 	def self.bind name
@@ -55,7 +48,7 @@ class Imba.EventManager
 		
 		Imba.POINTER ||= Imba.Pointer.new
 
-		var hasTouchEvents = window && window:ontouchstart !== undefined
+		var hasTouchEvents = window && window.ontouchstart !== undefined
 
 		if hasTouchEvents
 			Imba.Events.listen(:touchstart) do |e|
@@ -73,22 +66,23 @@ class Imba.EventManager
 		Imba.Events.register(:click) do |e|
 			# Only for main mousebutton, no?
 			if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
-				e.@imbaSimulatedTap = yes
+				e.imbaSimulatedTap = yes
 				var tap = Imba.Event.new(e)
 				tap.type = 'tap'
-				tap.process
-				if tap.@responder and tap:defaultPrevented
-					return e.preventDefault
+				tap.process()
+				if tap.responder and tap.defaultPrevented
+					return e.preventDefault()
+
 			# delegate the real click event
 			Imba.Events.delegate(e)
 
 		Imba.Events.listen(:mousedown) do |e|
-			if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
-				Imba.POINTER.update(e).process if Imba.POINTER
+			if (e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
+				Imba.POINTER.update(e).process() if Imba.POINTER
 
 		Imba.Events.listen(:mouseup) do |e|
-			if (e:timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
-				Imba.POINTER.update(e).process if Imba.POINTER
+			if (e.timeStamp - Imba.Touch.LastTimestamp) > Imba.Touch.TapTimeout
+				Imba.POINTER.update(e).process() if Imba.POINTER
 
 		Imba.Events.register([:mousedown,:mouseup])
 		Imba.Events.register(initialBind)
@@ -97,16 +91,16 @@ class Imba.EventManager
 
 
 	def initialize node, events: []
-		@shimFocusEvents = $web$ && window:netscape && node:onfocusin === undefined
-		root = node
-		listeners = []
-		delegators = {}
-		delegator = do |e| 
-			delegate(e)
+		@shimFocusEvents = $web$ && window.netscape && node.onfocusin === undefined
+		@root = node
+		@listeners = []
+		@delegators = {}
+		@delegator = do |e| 
+			@delegate(e)
 			return true
 
 		for event in events
-			register(event)
+			@register(event)
 
 		return self
 
@@ -120,32 +114,32 @@ class Imba.EventManager
 	###
 	def register name, handler = true
 		if name isa Array
-			register(v,handler) for v in name
+			@register(v,handler) for v in name
 			return self
 
-		return self if delegators[name]
+		return self if @delegators[name]
 		
 		# console.log("register for event {name}")
-		var fn = delegators[name] = handler isa Function ? handler : delegator
-		root.addEventListener(name,fn,yes) if enabled
+		var fn = @delegators[name] = handler isa Function ? handler : @delegator
+		@root.addEventListener(name,fn,yes) if @enabled
 		
 	def autoregister name
 		return self if native.indexOf(name) == -1
-		register(name)
+		@register(name)
 
 	def listen name, handler, capture = yes
-		listeners.push([name,handler,capture])
-		root.addEventListener(name,handler,capture) if enabled
+		@listeners.push([name,handler,capture])
+		@root.addEventListener(name,handler,capture) if @enabled
 		self
 
 	def delegate e
 		var event = Imba.Event.wrap(e)
-		event.process
+		event.process()
 		if @shimFocusEvents
-			if e:type == 'focus'
-				Imba.Event.wrap(e).setType('focusin').process
-			elif e:type == 'blur'
-				Imba.Event.wrap(e).setType('focusout').process
+			if e.type == 'focus'
+				Imba.Event.wrap(e).setType('focusin').process()
+			elif e.type == 'blur'
+				Imba.Event.wrap(e).setType('focusout').process()
 		self
 
 	###
@@ -164,30 +158,31 @@ class Imba.EventManager
 	Trigger / process an Imba.Event.
 
 	###
-	def trigger
-		create(*arguments).process
+	def trigger *params
+		# TODO @create(*arguments) results in bug
+		self.create(*params).process()
 
 	def onenable
-		for own name,handler of delegators
-			root.addEventListener(name,handler,yes)
+		for own name,handler of @delegators
+			@root.addEventListener(name,handler,yes)
 
-		for item in listeners
-			root.addEventListener(item[0],item[1],item[2])
+		for item in @listeners
+			@root.addEventListener(item[0],item[1],item[2])
 		
 		if $web$
-			window.addEventListener('hashchange',Imba:commit)
-			window.addEventListener('popstate',Imba:commit)
+			window.addEventListener('hashchange',Imba.commit)
+			window.addEventListener('popstate',Imba.commit)
 		self
 
 	def ondisable
-		for own name,handler of delegators
-			root.removeEventListener(name,handler,yes)
+		for own name,handler of @delegators
+			@root.removeEventListener(name,handler,yes)
 
-		for item in listeners
-			root.removeEventListener(item[0],item[1],item[2])
+		for item in @listeners
+			@root.removeEventListener(item[0],item[1],item[2])
 		
 		if $web$
-			window.removeEventListener('hashchange',Imba:commit)
-			window.removeEventListener('popstate',Imba:commit)
+			window.removeEventListener('hashchange',Imba.commit)
+			window.removeEventListener('popstate',Imba.commit)
 
 		self

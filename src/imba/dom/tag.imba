@@ -1,5 +1,6 @@
-# imba$v2=0
 var Imba = require("../imba")
+
+# TODO Make parent a getter?
 
 Imba.CSSKeyMap = {}
 
@@ -17,25 +18,19 @@ Imba.TAG_AUTOCLASS_SVG = yes
 ###
 Get the current document
 ###
-def Imba.document
-	window:document
-
-###
-Get the body element wrapped in an Imba.Tag
-###
-def Imba.root
-	tag(Imba.document:body)
+if $web$
+	Imba.document = window.document
 
 def Imba.static items, typ, nr
-	items.@type = typ
-	items:static = nr
+	items.type = typ
+	items.static = nr
 	return items
 
 ###
 
 ###
 def Imba.mount node, into
-	into ||= Imba.document:body
+	into ||= Imba.document.body
 	into.appendChild(node.dom)
 	Imba.TagManager.insert(node,into)
 	node.scheduler.configure(events: yes).activate(no)
@@ -44,7 +39,7 @@ def Imba.mount node, into
 
 
 def Imba.createTextNode node
-	if node and node:nodeType == 3
+	if node and node.nodeType == 3
 		return node
 	return Imba.document.createTextNode(node)
 
@@ -58,40 +53,41 @@ class Imba.Tag
 
 	def self.buildNode
 		var dom = Imba.document.createElement(@nodeType or 'div')
-		if @classes
-			var cls = @classes.join(" ")
-			dom:className = cls if cls
+		# TODO rename @classes to something internal
+		if @classes_
+			var cls = @classes_.join(" ")
+			dom.className = cls if cls
 		dom
 
 	def self.createNode
-		var proto = (@protoDom ||= buildNode)
+		var proto = (@protoDom ||= @buildNode())
 		proto.cloneNode(false)
 
 	def self.build ctx
-		self.new(self.createNode,ctx)
+		self.new(@createNode(),ctx)
 
 	def self.dom
-		@protoDom ||= buildNode
+		@protoDom ||= @buildNode()
 		
 	def self.end
-		commit(0)
+		@commit(0)
 
 	###
 	Called when a tag type is being subclassed.
 	###
 	def self.inherit child
-		child.@protoDom = null
+		child.protoDom = null
 
 		if @nodeType
-			child.@nodeType = @nodeType
-			child.@classes = @classes.slice(0)
+			child.nodeType = @nodeType
+			child.classes_ = @classes_.slice(0)
 
-			if child.@flagName
-				child.@classes.push(child.@flagName)
+			if child.flagName
+				child.classes_.push(child.flagName)
 		else
-			child.@nodeType = child.@name
-			child.@flagName = null
-			child.@classes = []
+			child.nodeType = child.tagName
+			child.flagName = null
+			child.classes_ = []
 
 	###
 	Internal method called after a tag class has
@@ -101,15 +97,15 @@ class Imba.Tag
 	###
 	def optimizeTagStructure
 		return unless $web$
-		var ctor = self:constructor
+		var ctor = self.constructor
 		let keys = Object.keys(self)
 
 		if keys.indexOf('mount') >= 0
-			if ctor.@classes and ctor.@classes.indexOf('__mount')  == -1
-				ctor.@classes.push('__mount')
+			if ctor.classes_ and ctor.classes_.indexOf('__mount')  == -1
+				ctor.classes_.push('__mount')
 
-			if ctor.@protoDom
-				ctor.@protoDom:classList.add('__mount')
+			if ctor.protoDom
+				ctor.protoDom.classList.add('__mount')
 
 		for key in keys
 			Imba.EventManager.bind(key.slice(2)) if (/^on/).test(key)
@@ -117,50 +113,22 @@ class Imba.Tag
 
 
 	def initialize dom,ctx
-		self.dom = dom
-		self:$ = TagCache.build(self)
-		self:$up = @owner_ = ctx
-		@tree_ = null
-		self.FLAGS = 0
-		build
-		self
+		@dom = dom
+		dom.tag = self
+		@slot_ = dom
+		#tree_ = null # TODO rename to tree_ again?
+		@owner_ = ctx
 
+		@$ = TagCache.build(self)
+
+		@FLAGS = 0
+		@build()
+		self
 	
-	attr accesskey inline: no
-	attr autocapitalize inline: no
-	attr contenteditable inline: no
-	attr contextmenu inline: no
-	attr dir inline: no
-	attr draggable inline: no
-	attr dropzone inline: no
-	attr hidden inline: no
-	attr inputmode inline: no
-	attr itemid inline: no
-	attr itemprop inline: no
-	attr itemref inline: no
-	attr itemscope inline: no
-	attr itemtype inline: no
-	attr lang inline: no
-	attr name inline: no
-	attr role inline: no
-	attr slot inline: no
-	attr spellcheck inline: no
-	attr tabindex inline: no
-	attr title
-	attr translate inline: no
-
-	def dom
-		@dom
-		
-	def setDom dom
-		dom.@tag = self
-		@dom = @slot_ = dom
-		self
-
 	def ref
-		@ref
+		#ref
 		
-	def root
+	get root
 		@owner_ ? @owner_.root : self
 
 	###
@@ -172,7 +140,7 @@ class Imba.Tag
 	@private
 	###
 	def ref_ ref
-		flag(@ref = ref)
+		@flag(#ref = ref)
 		self
 
 	###
@@ -181,15 +149,8 @@ class Imba.Tag
 	###
 	# def data= data
 	# 	@data = data
-
-	set data value
-		@data = value
-
-	get data
-		@data
-
 	def setData data
-		self:data = data
+		@data = data
 		self
 
 	###
@@ -199,11 +160,11 @@ class Imba.Tag
 	# 	@data
 			
 	def bindData target, path, args
-		self:data = args ? target[path].apply(target,args) : target[path]
-		# setData(args ? target[path].apply(target,args) : target[path])
+		@data = args ? target[path].apply(target,args) : target[path]
 
 	###
 	Set inner html of node
+	@deprecated
 	###
 	def html= html
 		if self.html != html
@@ -211,6 +172,7 @@ class Imba.Tag
 
 	###
 	Get inner html of node
+	@deprecated
 	###
 	def html
 		@dom:innerHTML
@@ -221,27 +183,18 @@ class Imba.Tag
 		# self-bound handlers
 		if slot < 0
 			if prev == undefined
-				slot = handlers[slot] = handlers:length
+				slot = handlers[slot] = handlers.length
 			else
 				slot = prev
 			prev = handlers[slot]
 		
 		handlers[slot] = handler
 		if prev
-			handler:state = prev:state
+			handler.state = prev.state
 		else
-			handler:state = {context: context}
+			handler.state = {context: context}
 			Imba.EventManager.bind(handler[0]) if $web$
 		return self
-
-
-	def id= id
-		if id != null
-			dom:id = id
-
-	def id
-		dom:id
-
 	###
 	Adds a new attribute or changes the value of an existing attribute
 	on the specified tag. If the value is null or false, the attribute
@@ -249,31 +202,31 @@ class Imba.Tag
 	@return {self}
 	###
 	def setAttribute name, value
-		var old = dom.getAttribute(name)
+		var old = @dom.getAttribute(name)
 
 		if old == value
 			value
 		elif value != null && value !== false
-			dom.setAttribute(name,value)
+			@dom.setAttribute(name,value)
 		else
-			dom.removeAttribute(name)
+			@dom.removeAttribute(name)
 		return self
 
 	def setNestedAttr ns, name, value, modifiers
 		if self[ns+'SetAttribute']
 			self[ns+'SetAttribute'](name,value, modifiers)
 		else
-			setAttributeNS(ns, name,value)
+			@setAttributeNS(ns, name,value)
 		return self
 
 	def setAttributeNS ns, name, value
-		var old = getAttributeNS(ns,name)
+		var old = @getAttributeNS(ns,name)
 
 		if old != value
 			if value != null && value !== false 
-				dom.setAttributeNS(ns,name,value)
+				@dom.setAttributeNS(ns,name,value)
 			else
-				dom.removeAttributeNS(ns,name)
+				@dom.removeAttributeNS(ns,name)
 		return self
 
 
@@ -281,7 +234,7 @@ class Imba.Tag
 	removes an attribute from the specified tag
 	###
 	def removeAttribute name
-		dom.removeAttribute(name)
+		@dom.removeAttribute(name)
 
 	###
 	returns the value of an attribute on the tag.
@@ -289,31 +242,48 @@ class Imba.Tag
 	will either be null or "" (the empty string)
 	###
 	def getAttribute name
-		dom.getAttribute(name)
-
+		@dom.getAttribute(name)
 
 	def getAttributeNS ns, name
-		dom.getAttributeNS(ns,name)
+		@dom.getAttributeNS(ns,name)
 	
-	
+
 	def set key, value, mods
-		let setter = Imba.toSetter(key)
-		if self[setter] isa Function
-			self[setter](value,mods)
+		# should somehow cache the setter lookup
+		# so that we don't need to do it multiple times
+		let cachedSetter = @$[key]
+
+		if cachedSetter isa Function
+			cachedSetter.call(this,value,mods)
+			return self
+		elif cachedSetter
+			@dom[key] = value
+			return self
+
+		let descriptor = Imba.getPropertyDescriptor(self,key)
+
+		if descriptor and descriptor.set
+			@$[key] = descriptor.set
+			descriptor.set.call(this,value,mods)
 		else
-			@dom:setAttribute(key,value)
+			@$[key] = true
+			let setter = Imba.toSetter(key)
+			if self[setter] isa Function
+				self[setter](value,mods)
+			else
+				@dom[key] = value
 		self
 	
-	
+	# TODO should be more in line with the regular setter -- for sure
 	def get key
-		@dom:getAttribute(key)
+		@dom.getAttribute(key)
 
 	###
 	Override this to provide special wrapping etc.
 	@return {self}
 	###
 	def setContent content, type
-		setChildren content, type
+		@setChildren(content, type)
 		self
 
 	###
@@ -323,7 +293,7 @@ class Imba.Tag
 	###
 	def setChildren nodes, type
 		# overridden on client by reconciler
-		@tree_ = nodes
+		#tree_ = nodes
 		self
 
 	###
@@ -331,15 +301,12 @@ class Imba.Tag
 	@return {self}
 	###
 	def setTemplate template
-		unless @template
-			if self:render == Imba.Tag:prototype:render
-				self:render = self:renderTemplate # do setChildren(renderTemplate)
+		unless #template
+			if self.render == Imba.Tag.prototype.render
+				self.render = self.renderTemplate
 
-		self:template = @template = template
+		@template = #template = template
 		self
-
-	def template
-		null
 
 	###
 	If no custom render-method is defined, and the node
@@ -347,8 +314,8 @@ class Imba.Tag
 	@return {self}
 	###
 	def renderTemplate
-		var body = template
-		setChildren(body) if body != self
+		var body = @template()
+		@setChildren(body) if body != self
 		self
 
 
@@ -357,10 +324,10 @@ class Imba.Tag
 	@return {self}
 	###
 	def removeChild child
-		var par = dom
-		var el = child.@slot_ or child
-		if el and el:parentNode == par
-			Imba.TagManager.remove(el.@tag or el,self)
+		var par = @dom
+		var el = child.slot_ or child
+		if el and el.parentNode == par
+			Imba.TagManager.remove(el.tag or el,self)
 			par.removeChild(el)
 		self
 	
@@ -368,12 +335,12 @@ class Imba.Tag
 	Remove all content inside node
 	###
 	def removeAllChildren
-		if @dom:firstChild
+		if @dom.firstChild
 			var el
-			while el = @dom:firstChild
-				$web$ and Imba.TagManager.remove(el.@tag or el,self)
+			while el = @dom.firstChild
+				$web$ and Imba.TagManager.remove(el.tag or el,self)
 				@dom.removeChild(el)
-		@tree_ = @text_ = null
+		#tree_ = #text_ = null
 		self
 
 	###
@@ -384,10 +351,10 @@ class Imba.Tag
 	###
 	def appendChild node
 		if node isa String
-			dom.appendChild(Imba.document.createTextNode(node))
+			@dom.appendChild(Imba.document.createTextNode(node))
 		elif node
-			dom.appendChild(node.@slot_ or node)
-			Imba.TagManager.insert(node.@tag or node, self)
+			@dom.appendChild(node.slot_ or node)
+			Imba.TagManager.insert(node.tag or node, self)
 			# FIXME ensure these are not called for text nodes
 		self
 
@@ -400,29 +367,28 @@ class Imba.Tag
 			node = Imba.document.createTextNode(node)
 
 		if node and rel
-			dom.insertBefore( (node.@slot_ or node), (rel.@slot_ or rel) )
-			Imba.TagManager.insert(node.@tag or node, self)
+			@dom.insertBefore( (node.slot_ or node), (rel.slot_ or rel) )
+			Imba.TagManager.insert(node.tag or node, self)
 			# FIXME ensure these are not called for text nodes
 		self
 	
 	def detachFromParent
 		if @slot_ == @dom
-			@slot_ = (@dom.@placeholder_ ||= Imba.document.createComment("node"))
-			@slot_.@tag ||= self
+			@slot_ = (@dom.placeholder_ ||= Imba.document.createComment("node"))
+			@slot_.tag ||= self
 
-			if @dom:parentNode
-				Imba.TagManager.remove(self,@dom:parentNode)
-				@dom:parentNode.replaceChild(@slot_,@dom)
+			if @dom.parentNode
+				Imba.TagManager.remove(self,@dom.parentNode)
+				@dom.parentNode.replaceChild(@slot_,@dom)
 		self
 		
 	def attachToParent
 		if @slot_ != @dom
 			let prev = @slot_
 			@slot_ = @dom
-			if prev and prev:parentNode
+			if prev and prev.parentNode
 				Imba.TagManager.insert(self)
-				prev:parentNode.replaceChild(@dom,prev)
-				
+				prev.parentNode.replaceChild(@dom,prev)
 		self
 
 	###
@@ -430,7 +396,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def orphanize
-		par.removeChild(self) if let par = parent
+		par.removeChild(self) if let par = @parent
 		return self
 
 	###
@@ -438,16 +404,21 @@ class Imba.Tag
 	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
 	@return {string} inner text of node
 	###
-	def text v
-		@dom:textContent
+	get text v
+		@dom.textContent
 
 	###
 	Set text of node. Uses textContent behind the scenes (not innerText)
 	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
 	###
-	def text= txt
-		@tree_ = txt
-		@dom:textContent = (txt == null or text === false) ? '' : txt
+	set text txt
+		# TODO fix get/set combined into a single thing
+		#tree_ = txt
+		@dom.textContent = (txt == null or text === false) ? '' : txt
+		self
+
+	def setText txt
+		@text = txt
 		self
 
 
@@ -467,23 +438,23 @@ class Imba.Tag
 	###
 	def dataset key, val
 		if key isa Object
-			dataset(k,v) for own k,v of key
+			@dataset(k,v) for own k,v of key
 			return self
 
-		if arguments:length == 2
-			setAttribute("data-{key}",val)
+		if arguments.length == 2
+			@setAttribute("data-{key}",val)
 			return self
 
 		if key
-			return getAttribute("data-{key}")
+			return @getAttribute("data-{key}")
 
-		var dataset = dom:dataset
+		var dataset = @dom.dataset
 
 		unless dataset
 			dataset = {}
-			for atr,i in dom:attributes
-				if atr:name.substr(0,5) == 'data-'
-					dataset[Imba.toCamelCase(atr:name.slice(5))] = atr:value
+			for atr,i in @dom.attributes
+				if atr.name.substr(0,5) == 'data-'
+					dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value
 
 		return dataset
 
@@ -518,7 +489,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def commit
-		render if beforeRender !== false
+		@render() if @beforeRender() !== false
 		self
 		
 	def beforeRender
@@ -532,7 +503,7 @@ class Imba.Tag
 
 	###
 	def tick
-		render if beforeRender !== false
+		@render() if @beforeRender() !== false
 		self
 
 	###
@@ -547,16 +518,16 @@ class Imba.Tag
 	@return {self}
 	###
 	def end
-		setup
-		commit(0)
-		this:end = Imba.Tag:end
+		@setup()
+		@commit(0)
+		@end = Imba.Tag.end
 		return self
 		
 	# called on <self> to check if self is called from other places
 	def $open context
-		if context != @context_
-			@tree_ = null
-			@context_ = context
+		if context != #context_
+			#tree_ = null
+			#context_ = context
 		self
 
 	###
@@ -576,8 +547,8 @@ class Imba.Tag
 	###
 	List of flags for this node. 
 	###
-	def flags
-		@dom:classList
+	get flags
+		@dom.classList
 
 	###
 	Add speficied flag to current node.
@@ -588,12 +559,12 @@ class Imba.Tag
 	def flag name, toggler
 		# it is most natural to treat a second undefined argument as a no-switch
 		# so we need to check the arguments-length
-		if arguments:length == 2
-			if @dom:classList.contains(name) != !!toggler
-				@dom:classList.toggle(name)
+		if arguments.length == 2
+			if @dom.classList.contains(name) != !!toggler
+				@dom.classList.toggle(name)
 		else
 			# firefox will trigger a change if adding existing class
-			@dom:classList.add(name) unless @dom:classList.contains(name)
+			@dom.classList.add(name) unless @dom.classList.contains(name)
 		return self
 
 	###
@@ -601,7 +572,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def unflag name
-		@dom:classList.remove(name)
+		@dom.classList.remove(name)
 		self
 
 	###
@@ -609,7 +580,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def toggleFlag name
-		@dom:classList.toggle(name)
+		@dom.classList.toggle(name)
 		self
 
 	###
@@ -617,18 +588,18 @@ class Imba.Tag
 	@return {bool}
 	###
 	def hasFlag name
-		@dom:classList.contains(name)
+		@dom.classList.contains(name)
 
-	
+	# TODO optimize
 	def flagIf flag, bool
-		var f = @flags_ ||= {}
+		var f = #flags_ ||= {}
 		let prev = f[flag]
 
 		if bool and !prev
-			@dom:classList.add(flag)
+			@dom.classList.add(flag)
 			f[flag] = yes
 		elif prev and !bool
-			@dom:classList.remove(flag)
+			@dom.classList.remove(flag)
 			f[flag] = no
 
 		return self
@@ -644,11 +615,11 @@ class Imba.Tag
 	@return {self}
 	###
 	def setFlag name, value
-		let flags = @namedFlags_ ||= {}
+		let flags = #namedFlags_ ||= {}
 		let prev = flags[name]
 		if prev != value
-			unflag(prev) if prev
-			flag(value) if value
+			@unflag(prev) if prev
+			@flag(value) if value
 			flags[name] = value
 		return self
 
@@ -659,8 +630,8 @@ class Imba.Tag
 
 	@return {Imba.Scheduler}
 	###
-	def scheduler
-		@scheduler ?= Imba.Scheduler.new(self)
+	get scheduler
+		#scheduler ?= Imba.Scheduler.new(self)
 
 	###
 
@@ -671,7 +642,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def schedule options = {events: yes}
-		scheduler.configure(options).activate
+		@scheduler.configure(options).activate()
 		self
 
 	###
@@ -679,7 +650,7 @@ class Imba.Tag
 	@deprecated
 	###
 	def unschedule
-		scheduler.deactivate if @scheduler
+		@scheduler.deactivate() if #scheduler
 		self
 
 
@@ -687,16 +658,16 @@ class Imba.Tag
 	Get the parent of current node
 	@return {Imba.Tag} 
 	###
-	def parent
-		Imba.getTagForDom(dom:parentNode)
+	get parent
+		Imba.getTagForDom(@dom.parentNode)
 
 	###
 	Get the children of node
 	@return {Imba.Tag[]}
 	###
 	def children sel
-		for item in @dom:children
-			item.@tag or Imba.getTagForDom(item)
+		for item in @dom.children
+			item.tag or Imba.getTagForDom(item)
 	
 	def querySelector q
 		Imba.getTagForDom(@dom.querySelector(q))
@@ -715,8 +686,8 @@ class Imba.Tag
 		if sel isa Function
 			return sel(self)
 
-		sel = sel.query if sel:query isa Function
-		if var fn = (@dom:matches or @dom:matchesSelector or @dom:webkitMatchesSelector or @dom:msMatchesSelector or @dom:mozMatchesSelector)
+		sel = sel.query() if sel.query isa Function # FIXME when is this relevant?
+		if var fn = (@dom.matches or @dom.matchesSelector or @dom.webkitMatchesSelector or @dom.msMatchesSelector or @dom.mozMatchesSelector)
 			return fn.call(@dom,sel)
 
 	###
@@ -732,7 +703,7 @@ class Imba.Tag
 	@return {Boolean} 
 	###
 	def contains node
-		dom.contains(node.@dom or node)
+		@dom.contains(node.dom or node)
 
 
 	###
@@ -741,34 +712,35 @@ class Imba.Tag
 	###
 	def log *args
 		args.unshift(console)
-		Function:prototype:call.apply(console:log, args)
+		Function.prototype.call.apply(console.log, args)
 		self
 
 	def css key, val, mod
 		if key isa Object
-			css(k,v) for own k,v of key
+			@css(k,v) for own k,v of key
 			return self
 
 		var name = Imba.CSSKeyMap[key] or key
 
 		if val == null
-			dom:style.removeProperty(name)
-		elif val == undefined and arguments:length == 1
-			return dom:style[name]
+			@dom.style.removeProperty(name)
+		elif val == undefined and arguments.length == 1
+			return @dom.style[name]
 		elif name.match(/^--/)
-			dom:style.setProperty(name,val)
+			@dom.style.setProperty(name,val)
 		else
+			# TODO remove for v2
 			if val isa Number and (name.match(/width|height|left|right|top|bottom/) or (mod and mod:px))
-				dom:style[name] = val + "px"
+				@dom.style[name] = val + "px"
 			else
-				dom:style[name] = val
+				@dom.style[name] = val
 		self
 		
 	def setStyle style
-		setAttribute('style',style)
+		@setAttribute('style',style)
 
 	def style
-		getAttribute('style')
+		@getAttribute('style')
 
 	###
 	Trigger an event from current node. Dispatched through the Imba event manager.
@@ -784,7 +756,7 @@ class Imba.Tag
 	@return {self}
 	###
 	def focus
-		dom.focus
+		@dom.focus()
 		self
 
 	###
@@ -792,14 +764,14 @@ class Imba.Tag
 	@return {self}
 	###
 	def blur
-		dom.blur
+		@dom.blur()
 		self
 
 	def toString
-		dom:outerHTML
+		@dom.outerHTML
 	
 
-Imba.Tag:prototype:initialize = Imba.Tag
+Imba.Tag.prototype.initialize = Imba.Tag
 
 class Imba.SVGTag < Imba.Tag
 
@@ -807,24 +779,24 @@ class Imba.SVGTag < Imba.Tag
 		"http://www.w3.org/2000/svg"
 
 	def self.buildNode
-		var dom = Imba.document.createElementNS(namespaceURI,@nodeType)
-		if @classes
-			var cls = @classes.join(" ")
+		var dom = Imba.document.createElementNS(@namespaceURI(),@nodeType)
+		if @classes_
+			var cls = @classes_.join(" ")
 			dom:className:baseVal = cls if cls
 		dom
 
 	def self.inherit child
-		child.@protoDom = null
+		child.protoDom = null
 		
 		if self == Imba.SVGTag
-			child.@nodeType = child.@name
-			child.@classes = []
+			child.nodeType = child.tagName
+			child.classes_ = []
 		else
-			child.@nodeType = @nodeType
-			var classes = (@classes or []).slice(0)
-			if Imba.TAG_AUTOCLASS_SVG && child.@flagName
-				classes.push(child.@flagName)
-			child.@classes = classes
+			child.nodeType = @nodeType
+			var classes = (@classes_ or []).slice(0)
+			if Imba.TAG_AUTOCLASS_SVG && child.flagName
+				classes.push(child.flagName)
+			child.classes_ = classes
 
 
 Imba.HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
@@ -879,10 +851,12 @@ var extender = do |obj, sup|
 	for own k,v of sup
 		obj[k] ?= v
 
-	obj:prototype = Object.create(sup:prototype)
-	obj:__super__ = obj:prototype:__super__ = sup:prototype
-	obj:prototype:constructor = obj
-	sup.inherit(obj) if sup:inherit
+	obj.prototype = Object.create(sup.prototype)
+	obj.__super__ = obj.prototype.__super__ = sup.prototype
+	obj.prototype.constructor = obj
+	sup.inherit(obj) if sup.inherit
+	# if sup.inherit
+	# 	console.log("inheriting now",sup,obj)
 	return obj
 
 
@@ -899,24 +873,24 @@ class Imba.Tags
 
 	def __clone ns
 		var clone = Object.create(self)
-		clone.@parent = self
+		clone.parent = self
 		return clone
 
 	def ns name
-		self['_' + name.toUpperCase] || defineNamespace(name)
+		self['_' + name.toUpperCase()] || @defineNamespace(name)
 
 	def defineNamespace name
 		var clone = Object.create(self)
-		clone.@parent = self
-		clone.@ns = name
-		self['_' + name.toUpperCase] = clone
+		clone.parent = self
+		clone.ns = name
+		self['_' + name.toUpperCase()] = clone
 		return clone
 
 	def baseType name, ns
 		name in Imba.HTML_TAGS ? 'element' : 'div'
 
 	def defineTag o, fullName, supr = '', &body
-		if body and body.@nodeType
+		if body and body.nodeType
 			supr = body
 			body = null
 			
@@ -933,63 +907,63 @@ class Imba.Tags
 			if ns == 'svg' and !supr
 				supr = 'svg:element'
 
-		supr ||= baseType(fullName)
+		supr ||= @baseType(fullName)
 
-		let supertype = supr isa String ? findTagType(supr) : supr
+		let supertype = supr isa String ? @findTagType(supr) : supr
 		let tagtype = Tag()
 
-		tagtype.@name = name
-		tagtype.@flagName = null
+		tagtype.tagName = name
+		tagtype.flagName = null
 
 		if name[0] == '#'
 			Imba.SINGLETONS[name.slice(1)] = tagtype
 			self[name] = tagtype
-		elif name[0] == name[0].toUpperCase
+		elif name[0] == name[0].toUpperCase()
 			if Imba.TAG_AUTOCLASS_LOCALS
-				tagtype.@flagName = name
+				tagtype.flagName = name
 		else
 			if Imba.TAG_AUTOCLASS_GLOBALS
-				tagtype.@flagName = "_" + fullName.replace(/[_\:]/g, '-')
+				tagtype.flagName = "_" + fullName.replace(/[_\:]/g, '-')
 			self[fullName] = tagtype
 
 		extender(tagtype,supertype)
 
-		if(o && o:scope && o:scope.flags)
-			tagtype.@classes.push(*o:scope.flags)
+		if(o && o.scope && o.scope.flags)
+			tagtype.@classes_.push(*o.scope.flags)
 
 		if body
 			body.call(tagtype,tagtype, tagtype.TAGS or self)
-			tagtype.defined if tagtype:defined
-			optimizeTag(tagtype)
+			tagtype.defined() if tagtype.defined
+			@optimizeTag(tagtype)
 		return tagtype
 
 	def extendTag o, name, supr = '', &body
-		var klass = (name isa String ? findTagType(name) : name)
+		var klass = (name isa String ? @findTagType(name) : name)
 		# allow for private tags here as well?
-		body and body.call(klass,klass,klass:prototype) if body
-		klass.extended if klass:extended
-		optimizeTag(klass)
+		body and body.call(klass,klass,klass.prototype) if body
+		klass.extended() if klass.extended
+		@optimizeTag(klass)
 		return klass
 
 	def optimizeTag tagtype
-		tagtype:prototype?.optimizeTagStructure
+		tagtype.prototype?.optimizeTagStructure()
 		
 	def findTagType type
 		let klass = self[type]
 		unless klass
 			if type.substr(0,4) == 'svg:'
-				klass = defineTag(null,type,'svg:element')
+				klass = @defineTag(null,type,'svg:element')
 
 			elif Imba.HTML_TAGS.indexOf(type) >= 0
-				klass = defineTag(null,type,'element')
-
-				if let attrs = Imba.HTML_ATTRS[type]
-					for name in attrs.split(" ")
-						Imba.attr(klass,name)
+				klass = @defineTag(null,type,'element')
+				console.log "create the class for html",type
+				# if let attrs = Imba.HTML_ATTRS[type]
+				# 	for name in attrs.split(" ")
+				# 		Imba.attr(klass,name)
 						
-				if let props = Imba.HTML_PROPS[type]
-					for name in props.split(" ")
-						Imba.attr(klass,name,dom: yes)
+				# if let props = Imba.HTML_PROPS[type]
+				# 	for name in props.split(" ")
+				# 		Imba.attr(klass,name,dom: yes)
 
 		return klass
 
@@ -999,22 +973,23 @@ def Imba.createElement name, ctx, ref, pref
 	if name isa Function
 		type = name
 	else
-		if $debug$
-			throw("cannot find tag-type {name}") unless Imba.TAGS.findTagType(name)
+		
 		type = Imba.TAGS.findTagType(name)
+		if $debug$
+			throw("cannot find tag-type {name}") if !type
 	
 	if ctx isa TagMap
-		parent = ctx:par$
+		parent = ctx.par$
 	elif pref isa Imba.Tag
 		parent = pref
 	else
-		parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.@tag or ctx)
+		parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.tag or ctx)
 
 	var node = type.build(parent)
 	
 	if ctx isa TagMap
-		ctx:i$++
-		node:$key = ref
+		ctx.i$++
+		node.$key = ref
 
 	if ctx and ref != undefined
 		ctx[ref] = node
@@ -1022,11 +997,11 @@ def Imba.createElement name, ctx, ref, pref
 	return node
 
 def Imba.createElementFactory ns
-	return Imba:createElement unless ns
+	return Imba.createElement unless ns
 
 	return do |name,ctx,ref,pref|
 		var node = Imba.createElement(name,ctx,ref,pref)
-		node.@dom:classList.add('_' + ns)
+		node.dom.classList.add('_' + ns)
 		return node
 
 def Imba.createTagScope ns
@@ -1034,66 +1009,64 @@ def Imba.createTagScope ns
 
 def Imba.createTagCache owner
 	var item = []
-	item.@tag = owner
+	item.tag = owner
 	return item
 	
 def Imba.createTagMap ctx, ref, pref
-	var par = (pref != undefined ? pref : ctx.@tag)
+	var par = (pref != undefined ? pref : ctx.tag)
 	var node = TagMap.new(ctx,ref,par)
 	ctx[ref] = node
 	return node
 
 def Imba.createTagList ctx, ref, pref
 	var node = []
-	node.@type = 4
-	node.@tag = (pref != undefined ? pref : ctx.@tag)
+	node.type = 4
+	node.tag = (pref != undefined ? pref : ctx.tag)
 	ctx[ref] = node
 	return node
 
 def Imba.createTagLoopResult ctx, ref, pref
 	var node = []
-	node.@type = 5
-	node:cache = {i$: 0}
+	node.type = 5
+	node.cache = {i$: 0}
 	return node
 
 # use array instead?
 class TagCache
 	def self.build owner
 		var item = []
-		item.@tag = owner
+		item.tag = owner
 		return item
 
+	# Cleanup?
 	def initialize owner
-		self.@tag = owner
+		self.tag = owner
 		self
 	
 class TagMap
 	
 	def initialize cache, ref, par
-		self:cache$ = cache
-		self:key$ = ref
-		self:par$ = par
-		self:i$ = 0
+		self.cache$ = cache
+		self.key$ = ref
+		self.par$ = par
+		self.i$ = 0
 	
 	def $iter
 		var item = []
-		item.@type = 5
-		item:cache = self
+		item.type = 5
+		item.cache = self
 		return item
 		
 	def $prune items
-		let cache = self:cache$
-		let key = self:key$
-		let clone = TagMap.new(cache,key,self:par$)
+		let cache = self.cache$
+		let key = self.key$
+		let clone = TagMap.new(cache,key,self.par$)
 		for item in items
-			clone[item:key$] = item
-		clone:i$ = items:length
+			clone[item.key$] = item
+		clone.i$ = items.length
 		return cache[key] = clone
 
 class TagScope
-	prop ns
-	prop flags
-
 	def initialize ns
 		@ns = ns
 		@flags = ns ? ['_'+ns] : []
@@ -1133,10 +1106,10 @@ def Imba.getTagSingleton id
 			node.awaken(dom) # should only awaken
 			return node
 
-		dom = klass.createNode
-		dom:id = id
+		dom = klass.createNode()
+		dom.id = id
 		node = klass.Instance = klass.new(dom)
-		node.end.awaken(dom)
+		node.end().awaken(dom)
 		return node
 	elif dom = Imba.document.getElementById(id)
 		return Imba.getTagForDom(dom)
@@ -1146,16 +1119,17 @@ var svgSupport = typeof SVGElement !== 'undefined'
 # shuold be phased out
 def Imba.getTagForDom dom
 	return null unless dom
-	return dom if dom.@dom
-	return dom.@tag if dom.@tag
-	return null unless dom:nodeName
+	return dom if dom.dom
+	return dom.tag if dom.tag
+	return null unless dom.nodeName
 
-	var name = dom:nodeName.toLowerCase
+	var name = dom.nodeName.toLowerCase()
 	var type = name
 	var ns = Imba.TAGS
 
-	if dom:id and Imba.SINGLETONS[dom:id]
-		return Imba.getTagSingleton(dom:id)
+	# TODO remove SINGLETONS as a concept from v2
+	if dom.id and Imba.SINGLETONS[dom.id]
+		return Imba.getTagSingleton(dom.id)
 		
 	if svgSupport and dom isa SVGElement
 		type = ns.findTagType("svg:" + name)
@@ -1168,11 +1142,11 @@ def Imba.getTagForDom dom
 
 
 if $web$ and $es5$ and document
-	var styles = window.getComputedStyle(document:documentElement, '')
+	var styles = window.getComputedStyle(document.documentElement, '')
 
 	for prefixed in styles
 		var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'')
-		var camelCase = unprefixed.replace(/-(\w)/g) do |m,a| a.toUpperCase
+		var camelCase = unprefixed.replace(/-(\w)/g) do |m,a| a.toUpperCase()
 
 		# if there exists an unprefixed version -- always use this
 		if prefixed != unprefixed
@@ -1182,29 +1156,30 @@ if $web$ and $es5$ and document
 		Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed
 
 	# Ovverride classList
-	if !document:documentElement:classList
+	# TODO should not add this?
+	if !document.documentElement:classList
 		extend tag element
 
 			def hasFlag ref
-				return RegExp.new('(^|\\s)' + ref + '(\\s|$)').test(@dom:className)
+				return RegExp.new('(^|\\s)' + ref + '(\\s|$)').test(@dom.className)
 
 			def addFlag ref
-				return self if hasFlag(ref)
-				@dom:className += (@dom:className ? ' ' : '') + ref
+				return self if @hasFlag(ref)
+				@dom.className += (@dom.className ? ' ' : '') + ref
 				return self
 
 			def unflag ref
-				return self unless hasFlag(ref)
+				return self unless @hasFlag(ref)
 				var regex = RegExp.new('(^|\\s)*' + ref + '(\\s|$)*', 'g')
-				@dom:className = @dom:className.replace(regex, '')
+				@dom.className = @dom.className.replace(regex, '')
 				return self
 
 			def toggleFlag ref
-				hasFlag(ref) ? unflag(ref) : flag(ref)
+				@hasFlag(ref) ? @unflag(ref) : @flag(ref)
 
 			def flag ref, bool
-				if arguments:length == 2 and !!bool === no
-					return unflag(ref)
-				return addFlag(ref)
+				if arguments.length == 2 and !!bool === no
+					return @unflag(ref)
+				return @addFlag(ref)
 
 Imba.Tag

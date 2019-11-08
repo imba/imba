@@ -1,5 +1,3 @@
-# imba$v2=0
-
 var Imba = require("./imba")
 var activate = no
 var ns = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
@@ -10,7 +8,7 @@ if ns and ns.Imba
 elif ns
 	ns.Imba = Imba
 	activate = yes
-	if ns:define and ns:define:amd
+	if ns.define and ns.define.amd
 		ns.define("imba",[]) do Imba
 
 module.exports = Imba

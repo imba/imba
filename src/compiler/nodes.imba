@@ -360,12 +360,6 @@ export class Stack
 	def es5
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
 
-	def v2
-		!!option(:v2)
-
-	def v1
-		!v2
-
 	def autocall
 		!option(:explicitParens)
 		# !@options:explicitParens
@@ -3011,8 +3005,8 @@ export class PropertyDeclaration < Node
 			# OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 
 		if !isAttr and o.key(:dom)
-			js:set = "if (v != this.dom().{name.value}) \{ this.dom().{name.value} = v \}"
-			js:get = "this.dom().{name.value}"
+			js:set = "if (v != this._dom.{name.value}) \{ this._dom.{name.value} = v \}"
+			js:get = "this._dom.{name.value}"
 
 		if isAttr # (@token and String(@token) == 'attr') or o.key(:dom) or o.key(:attr)
 			let attrKey = o.key(:dom) isa Str ? o.key(:dom) : name.value
@@ -3030,7 +3024,7 @@ export class PropertyDeclaration < Node
 		if pars:default
 			if o.key(:dom)
 				# FIXME go through class-method setAttribute instead
-				js:init = "{js:scope}.dom().setAttribute('{key}',{pars:default.c});"
+				js:init = "{js:scope}._dom.setAttribute('{key}',{pars:default.c});"
 			else
 				# if this is not a primitive - it MUST be included in the
 				# getter / setter instead
@@ -3041,7 +3035,7 @@ export class PropertyDeclaration < Node
 			js:get = "v !== undefined ? (this.{js:setter}(v),this) : {js:get}"
 
 
-		if isNative == true or (STACK.v2 and isNative !== false)
+		if (isNative !== false)
 			if tpl == propWatchTemplate
 				tpl = propWatchTemplateNext
 			else
@@ -3965,29 +3959,15 @@ export class PropertyAccess < Access
 	# to create a call and regular access instead
 
 	def js o
-		
-
 		if var rec = receiver
 			var ast = CALL(OP('.',left,right),[]) # convert to ArgList or null
 			ast.receiver = rec
 			return ast.c
 
 		var up = up
-
-		if !(up isa Call) and STACK.v1
-			var ast = CALL(Access.new(op,left,right),[])
-			return ast.c
-
 		# really need to fix this - for sure
 		# should be possible for the function to remove this this instead?
 		var js = "{super(o)}"
-
-		if STACK.v2
-			return js
-
-		unless (up isa Call or up isa Util.IsFunction)
-			js += "()"
-
 		return js
 
 
@@ -4386,7 +4366,7 @@ export class Assign < Op
 
 
 		# should add optional check that wraps this 
-		if l isa PropertyAccess and STACK.v1
+		if l isa PropertyAccess and false # STACK.v1
 			var ast = CALL(OP('.',l.left,l.right.setter),[right])
 			ast.receiver = l.receiver
 
@@ -4977,22 +4957,28 @@ export class Ivar < Identifier
 
 	def initialize v
 		@value = v isa Identifier ? v.value : v
+		@private = String(@value)[0] == '#'
 		self
 
+	def isPrivate
+		!!@private
+
 	def name
-		helpers.dashToCamelCase(@value).replace(/^@/,'')
+		(@private ? '__' : '') + helpers.dashToCamelCase(@value).replace(/^[@\#]/,'')
 		# value.c.camelCase.replace(/^@/,'')
 
+	def prefixed
+		name # (@private ? '__' : '') + name
+
 	def alias
-		prefix + name
+		prefixed
 
 	# the @ should possibly be gone from the start?
 	def js o
-		return name
-		prefix + name
+		return prefixed
 
 	def c
-		prefix + name # helpers.dashToCamelCase(@value).slice(1) # .replace(/^@/,'') # AST.mark(@value) +
+		return prefixed
 
 export class Decorator < ValueNode
 	
@@ -6265,7 +6251,7 @@ export class TagPart < Node
 export class TagId < TagPart
 
 	def js
-		"setId({quoted})"
+		"set('id',{quoted})"
 
 export class TagFlag < TagPart
 	def js
@@ -6321,7 +6307,7 @@ export class TagAttr < TagPart
 			"dataset('{key.slice(5)}',{val})"
 		elif key.indexOf("aria-") == 0
 			"set({quoted},{val}{add})"
-		elif dyn or STACK.v2
+		elif dyn or true
 			"set({quoted},{val}{add})"
 		else
 			"{helpers.setterSym(name)}({val}{add})"
@@ -6400,7 +6386,7 @@ export class TagData < TagPart
 			
 			let pars = [left.c,right.c]
 			
-			if val isa PropertyAccess and STACK.v1
+			if val isa PropertyAccess and false # STACK.v1
 				pars.push('[]')
 				
 			if right isa Identifier
@@ -7872,7 +7858,7 @@ export class Scope
 		root.requires(path,name)
 
 	def imba
-		root.requires('imba', 'Imba')
+		root.requires('imba2', 'Imba')
 
 	def imbaTags
 		root.imbaTags

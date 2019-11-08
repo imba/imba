@@ -1,5 +1,3 @@
-# imba$v2=0
-
 var Imba = require("./imba")
 
 var requestAnimationFrame # very simple raf polyfill
@@ -17,24 +15,20 @@ if $web$
 	requestAnimationFrame ||= do |blk| setTimeout(blk,1000 / 60)
 
 class Ticker
-
-	prop stage
-	prop queue
-
 	def initialize
 		@queue = []
 		@stage = -1
 		@scheduled = no
-		@ticker = do |e|
+		#ticker = do |e|
 			@scheduled = no
-			tick(e)
+			@tick(e)
 		self
 
 	def add item, force
 		if force or @queue.indexOf(item) == -1
 			@queue.push(item)
 
-		schedule unless @scheduled
+		@schedule() unless @scheduled
 
 	def tick timestamp
 		var items = @queue
@@ -43,15 +37,15 @@ class Ticker
 		@ts = timestamp
 		@queue = []
 		@stage = 1
-		before
-		if items:length
+		@before()
+		if items.length
 			for item,i in items
 				if item isa Function
 					item(@dt,self)
-				elif item:tick
+				elif item.tick
 					item.tick(@dt,self)
 		@stage = 2
-		after
+		@after()
 		@stage = @scheduled ? 0 : -1
 		self
 
@@ -60,7 +54,7 @@ class Ticker
 			@scheduled = yes
 			if @stage == -1
 				@stage = 0
-			requestAnimationFrame(@ticker)
+			requestAnimationFrame(#ticker)
 		self
 
 	def before
@@ -68,10 +62,10 @@ class Ticker
 
 	def after
 		if Imba.TagManager
-			Imba.TagManager.refresh
+			Imba.TagManager.refresh()
 		self
 
-Imba.TICKER = Ticker.new
+Imba.TICKER = Ticker.new()
 Imba.SCHEDULERS = []
 
 def Imba.ticker
@@ -93,7 +87,7 @@ def Imba.commit params
 	# Imba.TagManager.refresh
 	Imba.emit(Imba,'commit',params != undefined ? [params] : undefined)
 	if --commitQueue == 0
-		Imba.TagManager and Imba.TagManager.refresh
+		Imba.TagManager and Imba.TagManager.refresh()
 	return
 
 ###
@@ -123,8 +117,8 @@ class Imba.Scheduler
 		@target = target
 		@marked = no
 		@active = no
-		@marker = do mark
-		@ticker = do |e| tick(e)
+		@marker = do @mark()
+		@ticker = do |e| @tick(e)
 
 		@dt = 0
 		@frame = {}
@@ -133,7 +127,7 @@ class Imba.Scheduler
 		@ticks = 0
 		@flushes = 0
 
-		self:onevent = self:onevent.bind(self)
+		@onevent = @onevent.bind(self)
 		self
 
 	prop raf watch: yes
@@ -142,14 +136,14 @@ class Imba.Scheduler
 	prop marked
 
 	def rafDidSet bool
-		requestTick if bool and @active
+		@requestTick() if bool and @active
 		self
 
 	def intervalDidSet time
 		clearInterval(@intervalId)
 		@intervalId = null
 		if time and @active
-			@intervalId = setInterval(self:oninterval.bind(self),time)
+			@intervalId = setInterval(@oninterval.bind(self),time)
 		self
 
 	def eventsDidSet new, prev
@@ -162,24 +156,24 @@ class Imba.Scheduler
 	Check whether the current scheduler is active or not
 	@return {bool}
 	###
-	def active
-		@active
+	# def active
+	# 	@active
 
 	###
 	Delta time between the two last ticks
 	@return {Number}
 	###
-	def dt
-		@dt
+	# def dt
+	# 	@dt
 
 	###
 	Configure the scheduler
 	@return {self}
 	###
 	def configure options = {}
-		raf = options:raf if options:raf != undefined
-		interval = options:interval if options:interval != undefined
-		events = options:events if options:events != undefined
+		@raf = options.raf if options.raf != undefined
+		@interval = options.interval if options.interval != undefined
+		@events = options.events if options.events != undefined
 		self
 
 	###
@@ -190,7 +184,7 @@ class Imba.Scheduler
 	def mark
 		@marked = yes
 		if !@scheduled
-			requestTick
+			@requestTick()
 		self
 
 	###
@@ -230,10 +224,10 @@ class Imba.Scheduler
 		if ticker
 			@scheduled = no
 
-		flush
+		@flush()
 
 		if @raf and @active
-			requestTick
+			@requestTick()
 		self
 
 	def requestTick
@@ -253,8 +247,8 @@ class Imba.Scheduler
 	def activate immediate = yes
 		unless @active
 			@active = yes
-			@commit = @target:commit
-			@target:commit = do this
+			@commit = @target.commit
+			@target.commit = do this
 			@target?.flag('scheduled_')
 			Imba.SCHEDULERS.push(self)
 			
@@ -262,12 +256,12 @@ class Imba.Scheduler
 				Imba.listen(Imba,'commit',self,'onevent')
 				
 			if @interval and !@intervalId
-				@intervalId = setInterval(self:oninterval.bind(self),@interval)
+				@intervalId = setInterval(@oninterval.bind(self),@interval)
 
 			if immediate
-				tick(0)
+				@tick(0)
 			elif @raf
-				requestTick
+				@requestTick()
 		return self
 
 	###
@@ -276,7 +270,7 @@ class Imba.Scheduler
 	def deactivate
 		if @active
 			@active = no
-			@target:commit = @commit
+			@target.commit = @commit
 			let idx = Imba.SCHEDULERS.indexOf(self)
 			if idx >= 0
 				Imba.SCHEDULERS.splice(idx,1)
@@ -295,18 +289,18 @@ class Imba.Scheduler
 		@marker
 		
 	def oninterval
-		tick
-		Imba.TagManager.refresh
+		@tick()
+		Imba.TagManager.refresh()
 		self
 
 	def onevent event
 		return self if !@events or @marked
 
 		if @events isa Function
-			mark if @events(event,self)
+			@mark() if @events(event,self)
 		elif @events isa Array
-			if @events.indexOf((event and event:type) or event) >= 0
-				mark
+			if @events.indexOf((event and event.type) or event) >= 0
+				@mark()
 		else
-			mark
+			@mark()
 		self

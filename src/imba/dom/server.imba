@@ -172,7 +172,7 @@ class ImbaServerElement
 				appendNested(member)
 
 		elif child != null and child != undefined
-			appendChild(child.@slot_ or child)
+			appendChild(child.slot_ or child)
 		return
 
 	def insertBefore node, before
@@ -219,11 +219,11 @@ class ImbaServerElement
 		self
 		
 	def resolve
-		if @tag and @resolvedChildren != @tag.@tree_
-			var content = @tag.@tree_
+		if @tag and @resolvedChildren != @tag.__tree_
+			var content = @tag.__tree_
 			@resolvedChildren = content
 			@children = []
-			appendNested(content)
+			@appendNested(content)
 		self
 
 	def __innerHTML

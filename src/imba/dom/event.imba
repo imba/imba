@@ -1,5 +1,3 @@
-# imba$v2=0
-
 var Imba = require("../imba")
 
 var keyCodes = {
@@ -11,18 +9,18 @@ var keyCodes = {
 	down: 40
 }
 
-var el = Imba.Tag:prototype
-def el.stopModifier e do e.stop || true
-def el.preventModifier e do e.prevent || true
-def el.silenceModifier e do e.silence || true
+var el = Imba.Tag.prototype
+def el.stopModifier e do e.stop() || true
+def el.preventModifier e do e.prevent() || true
+def el.silenceModifier e do e.silence() || true
 def el.bubbleModifier e do e.bubble(yes) || true
-def el.ctrlModifier e do e.event:ctrlKey == true
-def el.altModifier e do e.event:altKey == true
-def el.shiftModifier e do e.event:shiftKey == true
-def el.metaModifier e do e.event:metaKey == true
+def el.ctrlModifier e do e.event.ctrlKey == true
+def el.altModifier e do e.event.altKey == true
+def el.shiftModifier e do e.event.shiftKey == true
+def el.metaModifier e do e.event.metaKey == true
 def el.keyModifier key, e do e.keyCode ? (e.keyCode == key) : true
 def el.delModifier e do e.keyCode ? (e.keyCode == 8 or e.keyCode == 46) : true
-def el.selfModifier e do e.event:target == @dom
+def el.selfModifier e do e.event.target == @dom
 def el.leftModifier e do e.button != undefined ? (e.button === 0) : el.keyModifier(37,e)
 def el.rightModifier e do e.button != undefined ? (e.button === 2) : el.keyModifier(39,e)
 def el.middleModifier e do e.button != undefined ? (e.button === 1) : true
@@ -30,7 +28,7 @@ def el.middleModifier e do e.button != undefined ? (e.button === 1) : true
 def el.getHandler str, event
 	if self[str]
 		return self
-	if @owner_ and @owner_:getHandler
+	if @owner_ and @owner_.getHandler
 		return @owner_.getHandler(str,event)
 
 ###
@@ -43,39 +41,29 @@ browser differences.
 @iname event
 ###
 class Imba.Event
-
-	### reference to the native event ###
-	prop event
-
 	prop prefix
-	
 	prop source
-
 	prop data
-
 	prop responder
 
 	def self.wrap e
 		self.new(e)
 	
 	def initialize e
-		event = e
+		@event = @native = e
 		@bubble = yes
 
-	def type= type
-		@type = type
-		self
+	set type value
+		#type = value
 
-	###
-	@return {String} The name of the event (case-insensitive)
-	###
-	def type do @type || event:type
-	def native do @event
+	get type
+		#type || @event.type
 
-	def name
-		@name ||= type.toLowerCase.replace(/\:/g,'')
+	get name
+		#name ||= @type.toLowerCase().replace(/\:/g,'')
 
 	# mimc getset
+	# TODO fix getset form?
 	def bubble v
 		if v != undefined
 			self.bubble = v
@@ -90,24 +78,27 @@ class Imba.Event
 	@return {self}
 	###
 	def stop
-		bubble = no
+		@bubble = no
 		self
 
-	def stopPropagation do stop
-	def halt do stop
+	def stopPropagation
+		@stop()
+
+	def halt
+		@stop()
 
 	# migrate from cancel to prevent
 	def prevent
-		if event:preventDefault
-			event.preventDefault
+		if @event.preventDefault
+			@event.preventDefault()
 		else
-			event:defaultPrevented = yes
-		self:defaultPrevented = yes
+			@event.defaultPrevented = yes
+		@defaultPrevented = yes
 		self
 
 	def preventDefault
 		console.warn "Event#preventDefault is deprecated - use Event#prevent"
-		prevent
+		@prevent()
 
 	###
 	Indicates whether or not event.cancel has been called.
@@ -115,7 +106,7 @@ class Imba.Event
 	@return {Boolean}
 	###
 	def isPrevented
-		event and event:defaultPrevented
+		@event ? @event.defaultPrevented : @defaultPrevented
 
 	###
 	Cancel the event (if cancelable). In the case of native events it
@@ -124,7 +115,7 @@ class Imba.Event
 	###
 	def cancel
 		console.warn "Event#cancel is deprecated - use Event#prevent"
-		prevent
+		@prevent()
 
 	def silence
 		@silenced = yes
@@ -136,27 +127,21 @@ class Imba.Event
 	###
 	A reference to the initial target of the event.
 	###
-	def target
-		tag(event:_target or event:target)
-
-	###
-	A reference to the object responding to the event.
-	###
-	def responder
-		@responder
+	get target
+		tag(@event._target or @event.target)
 
 	###
 	Redirect the event to new target
 	###
 	def redirect node
-		@redirect = node
+		#redirect = node
 		self
 		
 	def processHandlers node, handlers
 		let i = 1
-		let l = handlers:length
+		let l = handlers.length
 		let bubble = @bubble
-		let state = handlers:state ||= {}
+		let state = handlers.state ||= {}
 		let result 
 		
 		if bubble
@@ -191,10 +176,10 @@ class Imba.Event
 			if typeof handler == 'string'
 				let el = node
 				let fn = null
-				let ctx = state:context
+				let ctx = state.context
 	
 				if ctx
-					if ctx:getHandler isa Function
+					if ctx.getHandler isa Function
 						ctx = ctx.getHandler(handler,self)
 					
 					if ctx[handler] isa Function
@@ -241,11 +226,10 @@ class Imba.Event
 					@responder ||= node
 
 				if res == false
-					# console.log "returned false - breaking"
 					break
 
-				if res and !@silenced and res:then isa Function
-					res.then(Imba:commit)
+				if res and !@silenced and res.then isa Function
+					res.then(Imba.commit)
 		
 		# if we havent stopped or dealt with bubble while handling
 		if @bubble === 1
@@ -257,42 +241,43 @@ class Imba.Event
 		var name = self.name
 		var meth = "on{@prefix or ''}{name}"
 		var args = null
-		var domtarget = event:_target or event:target		
-		var domnode = domtarget:_responder or domtarget
+		# FIXME _target and _responder on event
+		var domtarget = @event._target or @event.target		
+		var domnode = domtarget._responder or domtarget
 		# @todo need to stop infinite redirect-rules here
 		var result
 		var handlers
 
 		while domnode
-			@redirect = null
-			let node = domnode.@dom ? domnode : domnode.@tag
+			#redirect = null
+			let node = domnode.dom ? domnode : domnode.tag
 
 			if node
 				if handlers = node:_on_
 					for handler in handlers when handler
 						let hname = handler[0]
-						if name == handler[0] and bubble
-							processHandlers(node,handler)
-					break unless bubble
+						if name == handler[0] and @bubble
+							@processHandlers(node,handler)
+					break unless @bubble
 
-				if bubble and node[meth] isa Function
+				if @bubble and node[meth] isa Function
 					@responder ||= node
 					@silenced = no
-					result = args ? node[meth].apply(node,args) : node[meth](self,data)
+					result = args ? node[meth].apply(node,args) : node[meth](self,@data)
 
-				if node:onevent
+				if node.onevent
 					node.onevent(self)
 
 			# add node.nextEventResponder as a separate method here?
-			unless bubble and domnode = (@redirect or (node ? node.parent : domnode:parentNode))
+			unless @bubble and domnode = (#redirect or (node ? node.parent : domnode.parentNode))
 				break
 
-		processed
+		@processed()
 
 		# if a handler returns a promise, notify schedulers
 		# about this after promise has finished processing
-		if result and result:then isa Function
-			result.then(self:processed.bind(self))
+		if result and result.then isa Function
+			result.then(@processed.bind(self))
 		return self
 
 
@@ -306,21 +291,36 @@ class Imba.Event
 	Return the x/left coordinate of the mouse / pointer for this event
 	@return {Number} x coordinate of mouse / pointer for event
 	###
-	def x do native:x
+	get x
+		@event.x
 
 	###
 	Return the y/top coordinate of the mouse / pointer for this event
 	@return {Number} y coordinate of mouse / pointer for event
 	###
-	def y do native:y
-		
-	def button do native:button
-	def keyCode do native:keyCode
-	def ctrl do native:ctrlKey
-	def alt do native:altKey
-	def shift do native:shiftKey
-	def meta do native:metaKey
-	def key do native:key
+	get y
+		@event.y
+
+	get button
+		@event.button
+
+	get keyCode
+		@event.keyCode
+
+	get ctrl
+		@event.ctrlKey
+
+	get alt
+		@event.altKey
+
+	get shift
+		@event.shiftKey
+
+	get meta
+		@event.metaKey
+
+	get key
+		@event.key
 
 	###
 	Returns a Number representing a system and implementation
@@ -332,4 +332,5 @@ class Imba.Event
 
 	@return {Number}
 	###
-	def which do event:which
+	get which
+		@event.which

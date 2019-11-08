@@ -21,7 +21,7 @@ after the timeout to let schedulers update (to rerender etc) afterwards.
 def Imba.setTimeout delay, &block
 	setTimeout(&,delay) do
 		block()
-		Imba.commit
+		Imba.commit()
 
 ###
 
@@ -33,7 +33,7 @@ after every interval to let schedulers update (to rerender etc) afterwards.
 def Imba.setInterval interval, &block
 	setInterval(&,interval) do
 		block()
-		Imba.commit
+		Imba.commit()
 
 ###
 Clear interval with specified id
@@ -52,9 +52,9 @@ def Imba.subclass obj, sup
 	for k,v of sup
 		obj[k] = v if sup.hasOwnProperty(k)
 
-	obj:prototype = Object.create(sup:prototype)
-	obj:__super__ = obj:prototype:__super__ = sup:prototype
-	obj:prototype:initialize = obj:prototype:constructor = obj
+	obj.prototype = Object.create(sup.prototype)
+	obj.__super__ = obj.prototype.__super__ = sup.prototype
+	obj.prototype.initialize = obj.prototype.constructor = obj
 	return obj
 
 ###
@@ -78,7 +78,7 @@ for x in CustomIterable.new
 ```
 ###
 def Imba.iterable o
-	return o ? (o:toArray ? o.toArray : o) : []
+	return o ? (o.toArray ? o.toArray() : o) : []
 
 ###
 Coerces a value into a promise. If value is array it will
@@ -91,7 +91,7 @@ def Imba.await value
 	if value isa Array
 		console.warn("await (Array) is deprecated - use await Promise.all(Array)")
 		Promise.all(value)
-	elif value and value:then
+	elif value and value.then
 		value
 	else
 		Promise.resolve(value)
@@ -109,29 +109,26 @@ def Imba.toSetter str
 	setterCache[str] ||= Imba.toCamelCase('set-' + str)
 
 def Imba.indexOf a,b
-	return (b && b:indexOf) ? b.indexOf(a) : []:indexOf.call(a,b)
-
-def Imba.len a
-	return a && (a:len isa Function ? a:len.call(a) : a:length) or 0
+	return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b)
 
 def Imba.prop scope, name, opts
-	if scope:defineProperty
+	if scope.defineProperty
 		return scope.defineProperty(name,opts)
 	return
 
 def Imba.attr scope, name, opts = {}
-	if scope:defineAttribute
+	if scope.defineAttribute
 		return scope.defineAttribute(name,opts)
 
 	let getName = Imba.toCamelCase(name)
 	let setName = Imba.toCamelCase('set-' + name)
-	let proto = scope:prototype
+	let proto = scope.prototype
 
-	if opts:dom
-		proto[getName] = do this.dom[name]
+	if opts.dom
+		proto[getName] = do this.@dom[name]
 		proto[setName] = do |value|
 			if value != this[name]()
-				this.dom[name] = value
+				this.@dom[name] = value
 			return this
 	else
 		proto[getName] = do this.getAttribute(name)
@@ -140,8 +137,12 @@ def Imba.attr scope, name, opts = {}
 			return this
 	return
 
+def Imba.getPropertyDescriptor obj, key
+	return undefined unless obj
+	Object.getOwnPropertyDescriptor(obj, key) || Imba.getPropertyDescriptor(Object.getPrototypeOf(obj), key)
+
 def Imba.propDidSet object, property, val, prev
-	let fn = property:watch
+	let fn = property.watch
 	if fn isa Function
 		fn.call(object,val,prev,property)
 	elif fn isa String and object[fn]
@@ -154,56 +155,56 @@ var emit__ = do |event, args, node|
 	# var node = cbs[event]
 	var prev, cb, ret
 
-	while (prev = node) and (node = node:next)
-		if cb = node:listener
-			if node:path and cb[node:path]
-				ret = args ? cb[node:path].apply(cb,args) : cb[node:path]()
+	while (prev = node) and (node = node.next)
+		if cb = node.listener
+			if node.path and cb[node.path]
+				ret = args ? cb[node.path].apply(cb,args) : cb[node.path]()
 			else
 				# check if it is a method?
 				ret = args ? cb.apply(node, args) : cb.call(node)
 
-		if node:times && --node:times <= 0
-			prev:next = node:next
-			node:listener = null
+		if node.times && --node.times <= 0
+			prev.next = node.next
+			node.listener = null
 	return
 
 # method for registering a listener on object
 def Imba.listen obj, event, listener, path
 	var cbs, list, tail
-	cbs = obj:__listeners__ ||= {}
+	cbs = obj.__listeners__ ||= {}
 	list = cbs[event] ||= {}
-	tail = list:tail || (list:tail = (list:next = {}))
-	tail:listener = listener
-	tail:path = path
-	list:tail = tail:next = {}
+	tail = list.tail || (list.tail = (list.next = {}))
+	tail.listener = listener
+	tail.path = path
+	list.tail = tail.next = {}
 	return tail
 
 # register a listener once
 def Imba.once obj, event, listener
 	var tail = Imba.listen(obj,event,listener)
-	tail:times = 1
+	tail.times = 1
 	return tail
 
 # remove a listener
 def Imba.unlisten obj, event, cb, meth
 	var node, prev
-	var meta = obj:__listeners__
+	var meta = obj.__listeners__
 	return unless meta
 
 	if node = meta[event]
-		while (prev = node) and (node = node:next)
-			if node == cb || node:listener == cb
-				prev:next = node:next
+		while (prev = node) and (node = node.next)
+			if node == cb || node.listener == cb
+				prev.next = node.next
 				# check for correct path as well?
-				node:listener = null
+				node.listener = null
 				break
 	return
 
 # emit event
 def Imba.emit obj, event, params
-	if var cb = obj:__listeners__
+	if var cb = obj.__listeners__
 		emit__(event,params,cb[event]) if cb[event]
-		emit__(event,[event,params],cb:all) if cb:all # and event != 'all'
+		emit__(event,[event,params],cb:all) if cb.all # and event != 'all'
 	return
 
 def Imba.observeProperty observer, key, trigger, target, prev
@@ -213,4 +214,4 @@ def Imba.observeProperty observer, key, trigger, target, prev
 		Imba.listen(target,'all',observer,trigger)
 	self
 
-module:exports = Imba
+module.exports = Imba
