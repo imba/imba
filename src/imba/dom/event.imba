@@ -238,7 +238,7 @@ class Imba.Event
 		return null
 
 	def process
-		var name = self.name
+		var name = @name
 		var meth = "on{@prefix or ''}{name}"
 		var args = null
 		# FIXME _target and _responder on event
@@ -253,7 +253,7 @@ class Imba.Event
 			let node = domnode.dom ? domnode : domnode.tag
 
 			if node
-				if handlers = node:_on_
+				if handlers = node.on_
 					for handler in handlers when handler
 						let hname = handler[0]
 						if name == handler[0] and @bubble

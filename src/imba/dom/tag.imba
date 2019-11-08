@@ -956,7 +956,7 @@ class Imba.Tags
 
 			elif Imba.HTML_TAGS.indexOf(type) >= 0
 				klass = @defineTag(null,type,'element')
-				console.log "create the class for html",type
+
 				# if let attrs = Imba.HTML_ATTRS[type]
 				# 	for name in attrs.split(" ")
 				# 		Imba.attr(klass,name)

@@ -204,7 +204,7 @@ def Imba.unlisten obj, event, cb, meth
 def Imba.emit obj, event, params
 	if var cb = obj.__listeners__
 		emit__(event,params,cb[event]) if cb[event]
-		emit__(event,[event,params],cb:all) if cb.all # and event != 'all'
+		emit__(event,[event,params],cb.all) if cb.all # and event != 'all'
 	return
 
 def Imba.observeProperty observer, key, trigger, target, prev
