@@ -2576,23 +2576,6 @@ export class TagLoopFunc < Func
 				@body.push(Return.new(@params.at(0)))
 				set(treeType: 4)
 				return self
-			elif false
-				# optional optimization
-				let resvar = @params.at(0)
-				let counter = scope__.declare('k',Num.new(0),system: yes)
-				single.set(treeRef: counter)
-				# let collector = TagPushAssign.new("push",resvar,null)
-				@loop.body.push(OP('++',counter))
-				@body.push(OP('=',OP('.',resvar,'taglen'),counter))
-				@body.push(Return.new(resvar))
-				# console.log "optimize"
-				set(treeType: 4)
-				return self
-
-		elif @tags.len == 1 and single.option(:key) and @isFast
-			# keyed single
-
-			yes
 		
 		unless @isFast
 			for item in @tags
@@ -2626,10 +2609,6 @@ export class TagLoopFunc < Func
 			
 			collectInto.value = @resultVar
 			@body.push(Return.new(collectInto))
-			# let collector = TagPushAssign.new("push",@resultVar,null)
-			# @loop.body.consume(collector)
-			# @body.push(Return.new(@resultVar))
-			# check if everything that is pushed is an assign?
 			set(treeType: treeType)
 		else
 			set(noreturn: yes)
@@ -6414,7 +6393,7 @@ export class TagData < TagPart
 
 			"bindData({pars.join(',')})"
 		else
-			"setData({val.c})"
+			"data=({val.c})"
 
 export class TagHandler < TagPart
 
@@ -6564,14 +6543,6 @@ export class Tag < Node
 			@tagScope = @fragment.scope
 			o:optim = self
 
-		# # create fully dynamic tag
-		# o:isRoot = yes
-		# let dynamics = @attributes
-		# let inner = Tag.new(type: This.new, body: o:body, attributes: dynamics)
-		# @attributes = []
-		# var param = RequiredParam.new(Identifier.new('$$'))
-		# o:body = o:template = TagFragmentFunc.new([],Block.wrap([inner],[]),null,null,closed: true)
-		
 		if o:par
 			o:par.addChild(self)
 		
@@ -6810,7 +6781,7 @@ export class Tag < Node
 
 		# dont compile these just yet
 		for part,i in @attributes
-			if part.isStatic
+			if part.isStatic or part isa TagData
 				let out = part.js(jso)
 				out = "{tvar}.{AST.mark(part.name)}" + out
 				statics.push(out)
