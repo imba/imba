@@ -411,11 +411,11 @@ class Imba.Tag
 	Set text of node. Uses textContent behind the scenes (not innerText)
 	[https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
 	###
-	set text txt
-		# TODO fix get/set combined into a single thing
-		#tree_ = txt
-		@dom.textContent = (txt == null or text === false) ? '' : txt
-		self
+	# set text txt
+	# 	# TODO fix get/set combined into a single thing
+	# 	#tree_ = txt
+	# 	@dom.textContent = (txt == null or text === false) ? '' : txt
+	# 	self
 
 	def setText txt
 		@text = txt
@@ -592,16 +592,7 @@ class Imba.Tag
 
 	# TODO optimize
 	def flagIf flag, bool
-		var f = #flags_ ||= {}
-		let prev = f[flag]
-
-		if bool and !prev
-			@dom.classList.add(flag)
-			f[flag] = yes
-		elif prev and !bool
-			@dom.classList.remove(flag)
-			f[flag] = no
-
+		@dom.classList.toggle(flag,bool)
 		return self
 		
 	###
@@ -1042,7 +1033,28 @@ class TagCache
 	def initialize owner
 		self.tag = owner
 		self
-	
+
+class TagFragmentLoop
+	def initialize owner
+		@array = []
+		@prev = []
+		@index = 0
+		@taglen = 0
+
+	def reset
+		@index = 0
+		var curr = @array
+		@array = @prev
+		@prev = curr
+		@index = 0
+		return self
+
+	def push item
+		@array[@index] = item
+
+	get length
+		@taglen
+
 class TagMap
 	
 	def initialize cache, ref, par
@@ -1050,7 +1062,7 @@ class TagMap
 		self.key$ = ref
 		self.par$ = par
 		self.i$ = 0
-	
+
 	def $iter
 		var item = []
 		item.type = 5

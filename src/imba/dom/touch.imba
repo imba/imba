@@ -7,6 +7,10 @@ var Imba = require("../imba")
 # Ended	A finger was lifted from the screen. This is the final phase of a touch.
 # Canceled The system cancelled tracking for the touch.
 
+var touches = []
+var count = 0
+var identifiers = {}
+
 ###
 Consolidates mouse and touch events. Touch objects persist across a touch,
 from touchstart until end/cancel. When a touch starts, it will traverse
@@ -32,14 +36,6 @@ call ontouchmove and ontouchend / ontouchcancel on the responder when appropriat
 @iname touch
 ###
 class Imba.Touch
-	self.LastTimestamp = 0
-	self.TapTimeout = 50
-
-	# var lastNativeTouchTimeout = 50
-
-	var touches = []
-	var count = 0
-	var identifiers = {}
 
 	def self.count
 		count
@@ -403,6 +399,9 @@ class Imba.Touch
 	def elapsed
 		Date.now - @timestamp
 
+
+Imba.Touch.LastTimestamp = 0
+Imba.Touch.TapTimeout = 50
 
 class Imba.TouchGesture
 

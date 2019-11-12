@@ -2195,6 +2195,7 @@ export class ClassDeclaration < Code
 		@superclass = superclass
 		@scope = ClassScope.new(self)
 		@body = AST.blk(body)
+		@entities = {} # items should register the entities as they come
 		self
 
 	def visit
@@ -2288,7 +2289,9 @@ export class ClassDeclaration < Code
 		if option('return')
 			body.push("return {cpath};")
 
-		body.unshift(part) for part in head.reverse
+		for part in head.reverse
+			body.unshift(part)
+
 		body.@indentation = null
 		var end = body.index(body.count - 1)
 		body.pop if end isa Terminator and end.c:length == 1
@@ -2563,6 +2566,8 @@ export class TagLoopFunc < Func
 		# we must be certain that we are only consuming one tag?
 
 		if @tags.len == 1 and !single.option(:key)
+			@name = 'nonkeyedTagLoop'
+
 			if @isFast
 				let len = @loop.options:vars:len
 				if len and len:declarator
@@ -2583,6 +2588,11 @@ export class TagLoopFunc < Func
 				# console.log "optimize"
 				set(treeType: 4)
 				return self
+
+		elif @tags.len == 1 and single.option(:key) and @isFast
+			# keyed single
+
+			yes
 		
 		unless @isFast
 			for item in @tags
@@ -2599,6 +2609,11 @@ export class TagLoopFunc < Func
 				let op = CALL(OP('.',@params.at(0),'$iter'),[])
 				@resultVar = scope.declare('$$',op, system: yes)
 				treeType = 5
+				@name = 'keyedTagLoop'
+				let len = @loop.options:vars:len
+				if len and len:declarator
+					let defs = len.declarator.defaults
+					len.declarator.defaults = OP('=',OP('.',@resultVar,'taglen'),defs)
 			else
 				@resultVar = @params.at(@params.count,true,'$$') # visiting?
 				@resultVar.visit(stack)
@@ -2679,7 +2694,7 @@ export class TagLoopFunc < Func
 		self
 	
 	def js o
-		@name = 'tagLoop'
+		@name ||= 'tagLoop'
 		var out = super
 		"(" + out + ")({AST.cary(@args)})"
 
@@ -2767,6 +2782,7 @@ export class MethodDeclaration < Func
 		# instance-method / member
 		if closure isa ClassScope and !target
 			@target = closure.prototype
+
 			set(prototype: @target)
 			closure.annotate(self)
 
@@ -2824,11 +2840,18 @@ export class MethodDeclaration < Func
 		var name = typeof @name == 'string' ? @name : @name.c
 		name = name.replace(/\./g,'_') # not used?!
 
-		var func = "({params.c})" + code
-		var ctx = context
+		
 		var out = ""
 		var mark = AST.mark(option('def'))
 		var fname = AST.sym(self.name)
+
+		if option(:inClassBody)
+			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
+			out = "{prefix} {fname}: {mark}({params.c}){code}"
+			return out
+
+		var func = "({params.c})" + code
+		var ctx = context
 
 		if option(:inObject)
 			out = "{fname}: {mark}{funcKeyword}{func}"
@@ -6385,9 +6408,6 @@ export class TagData < TagPart
 				left ||= val.scope__.context
 			
 			let pars = [left.c,right.c]
-			
-			if val isa PropertyAccess and false # STACK.v1
-				pars.push('[]')
 				
 			if right isa Identifier
 				pars[1] = "'" + pars[1] + "'"
@@ -6527,6 +6547,7 @@ export class Tag < Node
 
 		@level = stack.@nodes.filter(|el| el isa Tag):length
 		@tempvar = scope.closure.temporary(self,{reuse: yes},"_t{@level}")
+		@valvar = scope.closure.temporary(self,{reuse: yes},"_v")
 		
 		if o:par
 			o:optim = po:optim
@@ -6611,13 +6632,7 @@ export class Tag < Node
 	# reference to the cache-object this tag will try to register with
 	def cacher
 		var o = @options
-		o:cacher ?= if o:key and parent and false
-			# declare 
-			let tagmap = scope__.imbaRef('createTagMap')
-			# if parent childCacher is declared inline this will not work(!)
-			let op = OP('||=',OP('.',parent.childCacher,'$$'),LIT('{}'))
-			TagCache.new(self,@tagScope.closure.declare("$",op, system: yes, type: 'let'))
-		elif parent
+		o:cacher ?= if parent
 			parent.childCacher
 		elif o:ivar or o:key
 			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
@@ -6646,6 +6661,7 @@ export class Tag < Node
 			scop.@tagCache ||= TagCache.new(self,scop.declare("$",op,system: yes))
 
 		elif !parent or @options:ownCache
+			# difference between this and cacher?
 			TagCache.new(self,OP('.',reference,'$'), keys: yes) # .set(keys: yes)
 		else
 			parent.childCacher
@@ -6667,6 +6683,10 @@ export class Tag < Node
 
 		# cacher.nextRef(self) # 
 		o:treeRef = cacher.nextRef(self)
+
+	def generateCacheSlot
+		let v = childCacher.nextValue
+		"{childCacher.c}.{v}"
 		
 	def cachePath
 		var o = @options
@@ -6696,6 +6716,9 @@ export class Tag < Node
 		var pre = ""
 		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
 
+		let tvar = @tempvar.c
+		let vvar = @valvar.c
+
 		if isSelf
 			let closure = scope.closure
 			@reference = scope.context
@@ -6706,7 +6729,7 @@ export class Tag < Node
 			if meth and meth != 'render'
 				key = Str.new("'" + meth + nr + "'")
 
-			statics.push(".$open({key.c})")
+			statics.push("{tvar}.$open({key.c})")
 			calls = statics
 			# not always?
 		else
@@ -6739,7 +6762,7 @@ export class Tag < Node
 			if o:ivar
 				pars.push(parent ? parent.reference.c : scope.context.c)
 				let flag = String(o:ivar.@value).substr(1)
-				statics.push(".flag('{flag}')")
+				statics.push("{tvar}.flag('{flag}')")
 				
 			elif cacher
 				pars.push(cacher.c)
@@ -6784,46 +6807,51 @@ export class Tag < Node
 				content = TagTree.new(self,o:body)
 		
 		set(treeType: contentType)
-		
-		var specials = []
-		for part in @attributes
-			let out = part.js(jso)
-			out = ".{AST.mark(part.name)}" + out
-			# if part.isSpecial
-			#	specials.push(out)
+
+		# dont compile these just yet
+		for part,i in @attributes
 			if part.isStatic
+				let out = part.js(jso)
+				out = "{tvar}.{AST.mark(part.name)}" + out
 				statics.push(out)
 			else
+				let val = part.value
+				let out = "{@valvar.c()}={val.c()}"
+				let cachekey = self.generateCacheSlot() # "{tvar}.$.v{i}"
+				part.value = OP('=',LIT(cachekey),@valvar)
+				out = out + ",{vvar}==={cachekey} || {tvar}." + part.js(jso)
+				# out = ".{AST.mark(part.name)}" + out
 				calls.push(out)
-		
-		# compile body
 	
 		var body = content and content.c(expression: yes)
 	
 		if body
-			let target = (o:optim and contentType == 2) ? statics : calls
+			let optim = o:optim and contentType == 2
+			let target = optim ? statics : calls
 			
 			# cache the body setter itself
-			if isSelf and o:optim and contentType == 2 and content isa TagTree
+			if isSelf and optim and content isa TagTree
 				let k = childCacher.c
 				# can skip body-type as well
-				body = "{k}.$ = {k}.$ || {body}"
-
-			if bodySetter == 'setChildren' or bodySetter == 'setContent'
-				target.push ".{bodySetter}({body},{contentType})"
+				# body = "{k}.$ = {body}"
+				target.push "{k}.$ || {tvar}.setChildren({k}.$={body},{contentType})"
 			elif bodySetter == 'setText'
-				let typ = content isa Str ? statics : calls
-				typ.push ".{bodySetter}({body})"
+				if content isa Str
+					statics.push "{tvar}.setText({body})"
+				else
+					let k = self.generateCacheSlot()
+					calls.push("{vvar}=({body}),{vvar}==={k}||{tvar}.setText({k}={vvar})")
+
 			elif bodySetter == 'setTemplate'
 				if o:body.nonlocals
-					target.push ".{bodySetter}({body})"
+					target.push "{tvar}.setTemplate({body})"
 				else
-					statics.push ".{bodySetter}({body})"
+					statics.push "{tvar}.setTemplate({body})"
+			elif o:optim and contentType == 3
+				let k = self.generateCacheSlot()
+				target.push "{vvar}=({body}),{vvar}==={k}||{tvar}.{bodySetter}({k}={vvar},{contentType})"
 			else
-				target.push ".{bodySetter}({body})"
-		
-		if specials.len		
-			calls.push(*specials)
+				target.push "{tvar}.{bodySetter}({body},{contentType})"
 			
 		let shouldEnd = !isNative or o:template or calls:length > 0
 		let hasAttrs = Object.keys(@attrmap):length
@@ -6851,29 +6879,28 @@ export class Tag < Node
 				set(commit: commits.len ? commits : '')
 			else
 				if (commits.len and o:optim) or !isNative or hasAttrs or o:template
-					calls.push ".{isSelf ? "synced" : "end"}({args})"
+					calls.push "{tvar}.{isSelf ? "synced" : "end"}({args})"
 		
 
-		let tvar = @tempvar.c
+		
 		if @reference and !isSelf
 			out = "{reference.c} = {pre}({reference.c}={ctor})"
 		else
 			out ||= "{pre}{ctor}"
 			
 		if statics:length
-			out = out + statics.join("")
+			# out = out + statics.join("")
 			# To drop chaining params
-			# out = "({tvar} = {out},{tvar}{statics.join(",{tvar}")},{tvar})"
+			out = "({tvar} = {out},{statics.join(",")},{tvar})"
 		
 		if calls != statics
 			if o:optim and o:optim != self
-				let commit = "{o:path}{calls.join("")}"
-				# let commit = "({tvar}={o:path},{tvar}{calls.join(",{tvar}")},{tvar})"
-				
+				# let commit = "{o:path}{calls.join("")}"
+				let commit = "({tvar}={o:path},\n{calls.join(",\n")},\n{tvar})"
 				set(commit: commit) if calls:length and o:commit == undefined
 			else
 				# out = "({out},{tvar}{calls.join(",{tvar}")},{tvar})"
-				out = "({out})" + calls.join("")
+				out = "({tvar} = ({out}),\n" + calls.join(",\n") + ",\n{tvar})"
 		
 		if @typeNum
 			@typeNum.value = contentType
@@ -7631,6 +7658,9 @@ class Entities
 			@map.push(object)
 		self
 
+	def lookup path
+		@map[path]
+
 	# def register entity
 	# 	var path = entity.namepath
 	# 	@map[path] ||= entity
@@ -8329,6 +8359,9 @@ export class Variable < Node
 			# 	# get around naming conventions
 			@c = "{c}$" if RESERVED_REGEX.test(@c) # @c.match(/^(default)$/)
 		return @c
+
+	def js
+		self.c()
 
 	# variables should probably inherit from node(!)
 	def consume node

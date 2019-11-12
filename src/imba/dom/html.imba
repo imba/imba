@@ -112,6 +112,7 @@ extend tag input
 		@localValue = undefined
 	
 	# overriding end directly for performance
+	# should this not call setup as usual?
 	def end
 		if @localValue !== undefined or !@data
 			return self
@@ -120,7 +121,7 @@ extend tag input
 		return self if mval === @modelValue
 		@modelValue = mval unless isArray(mval)
 
-		if @dom:type == 'radio' or @dom:type == 'checkbox'
+		if @dom.type == 'radio' or @dom.type == 'checkbox'
 			let dval = @value()
 			let checked = if isArray(mval)
 				mval.indexOf(dval) >= 0

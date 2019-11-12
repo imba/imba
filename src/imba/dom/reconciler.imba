@@ -253,8 +253,8 @@ var reconcileIndexedArray = do |root, array, old, caret|
 		while prevLen < newLen
 			let node = array[prevLen++]
 			before ? root.insertBefore(node.slot_,before) : root.appendChild(node.slot_)
-			
-	array:domlen = newLen
+
+	array.domlen = newLen
 	return last ? last.slot_ : caret
 
 
@@ -401,7 +401,8 @@ extend tag element
 		#tree_ = new
 		return self
 
-	def content
+	def getContent
+		# TODO fix for v2
 		@content or @children.toArray()
 
 	# TODO change to an actual setter
@@ -409,8 +410,8 @@ extend tag element
 	def setText text
 		if text != #tree_
 			var val = text === null or text === false ? '' : text
-			(@text_ or @dom).textContent = val
-			@text_ ||= @dom.firstChild
+			(#text_ or self.dom).textContent = val
+			#text_ ||= self.dom.firstChild
 			#tree_ = text
 		self
 

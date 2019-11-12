@@ -14,6 +14,8 @@ var native = [
 	:animationstart, :animationiteration, :animationend
 ]
 
+var initialBind = []
+
 ###
 
 Manager for listening to and delegating events in Imba. A single instance
@@ -29,8 +31,6 @@ class Imba.EventManager
 
 	prop enabled default: no, watch: yes
 	
-	var initialBind = []
-
 	def enabled-did-set bool
 		bool ? @onenable() : @ondisable()
 		self

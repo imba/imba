@@ -1,5 +1,3 @@
-# imba$v2=0
-
 var Imba = require("../imba")
 
 # TODO classes should not be global,
@@ -66,40 +64,40 @@ var escapeTextContent = do |val, nodeName|
 class ImbaNodeClassList
 
 	def initialize dom, classes
-		@classes = classes or []
-		@dom = dom
+		this.classes = classes or []
+		this.dom = dom
 
 	def add flag
-		@classes.push(flag) unless @classes.indexOf(flag) >= 0
+		self.classes.push(flag) unless self.classes.indexOf(flag) >= 0
 		self
 
 	def remove flag
 		# TODO implement!
 		# @classes.push(flag) unless @classes.indexOf(flag) >= 0
-		var idx = @classes.indexOf(flag)
+		var idx = self.classes.indexOf(flag)
 		if idx >= 0
-			@classes[idx] = ''
+			self.classes[idx] = ''
 		self
 
 	def toggle flag
-		contains(flag) ? remove(flag) : add(flag)
+		self.contains(flag) ? self.remove(flag) : self.add(flag)
 		self
 
 	def contains flag
-		@classes.indexOf(flag) >= 0
+		self.classes.indexOf(flag) >= 0
 
 	def clone dom
-		var clone = ImbaNodeClassList.new(dom,@classes.slice(0))
+		var clone = ImbaNodeClassList.new(dom,self.classes.slice(0))
 		return clone
 		
 	def toString
 		# beware of perf
-		@classes.join(" ").trim
+		self.classes.join(" ").trim()
 
 class CSSStyleDeclaration
 
 	def initialize dom
-		@dom = dom
+		self.dom = dom
 		self
 		
 	def removeProperty key
@@ -118,15 +116,15 @@ class CSSStyleDeclaration
 class ImbaServerCommentNode
 	
 	def initialize value
-		@value = value
+		self.value = value
 		
-	def __outerHTML
-		"<!-- {escapeTextContent @value} -->"
+	get outerHTML
+		"<!-- {escapeTextContent(self.value)} -->"
 		
 	def toString
-		if @tag and @tag:toNodeString
-			return @tag.toNodeString
-		__outerHTML
+		if self.tag and self.tag.toNodeString
+			return self.tag.toNodeString()
+		self.outerHTML
 	
 
 class ImbaServerElement
@@ -143,16 +141,16 @@ class ImbaServerElement
 		# should only need to copy from the outer element
 		# when we optimize - do it some other way
 		# should somehow be linked to their owner, no?
-		self:nodeName  = type
-		self:classList = ImbaNodeClassList.new(self)
-		@children = []
+		self.nodeName  = type
+		self.classList = ImbaNodeClassList.new(self)
+		self.children = []
 			
 		self
 
 	def cloneNode deep
 		# need to include classes as well
-		var el = ImbaServerElement.new(self:nodeName)
-		el:classList = self:classList.clone(self)
+		var el = ImbaServerElement.new(self.nodeName)
+		self.classList =self.classList.clone(self)
 		# FIXME clone the attributes as well
 		# el:className = self:className
 		return el
@@ -160,51 +158,51 @@ class ImbaServerElement
 	def appendChild child
 		# again, could be optimized much more
 		if typeof child === 'string'
-			@children.push(escapeTextContent(child,self:nodeName))
+			self.children.push(escapeTextContent(child,self.nodeName))
 		else
-			@children.push(child)
+			self.children.push(child)
 
 		return child
 	
 	def appendNested child
 		if child isa Array
 			for member in child
-				appendNested(member)
+				self.appendNested(member)
 
 		elif child != null and child != undefined
-			appendChild(child.slot_ or child)
+			self.appendChild(child.slot_ or child)
 		return
 
 	def insertBefore node, before
-		var idx = @children.indexOf(before)
-		arr.splice(idx, 0, node)
+		var idx = self.children.indexOf(before)
+		self.children.splice(idx, 0, node)
 		self
 
 	def setAttribute key, value
-		@attributes ||= []
-		@attrmap ||= {}
+		self.attributes ||= []
+		self.attrmap ||= {}
 		
-		let idx = @attrmap[key]
+		let idx = self.attrmap[key]
 		let str = "{key}=\"{escapeAttributeValue(value)}\""
 
 		if idx != null
-			@attributes[idx] = str
+			self.attributes[idx] = str
 		else
-			@attributes.push(str)
-			@attrmap[key] = @attributes:length - 1
+			self.attributes.push(str)
+			self.attrmap[key] = self.attributes.length - 1
 
-		@attributes[key] = value
+		self.attributes[key] = value
 		self
 
 	def setAttributeNS ns, key, value
-		setAttribute(ns + ':' + key,value)
+		self.setAttribute(ns + ':' + key,value)
 
 	def getAttribute key
 		# console.log "getAttribute not implemented on server"
-		@attributes ? @attributes[key] : undefined
+		self.attributes ? self.attributes[key] : undefined
 
 	def getAttributeNS ns, key
-		getAttribute(ns + ':' + key)
+		self.getAttribute(ns + ':' + key)
 
 	def removeAttribute key
 		console.log "removeAttribute not implemented on server"
@@ -219,66 +217,76 @@ class ImbaServerElement
 		self
 		
 	def resolve
-		if @tag and @resolvedChildren != @tag.__tree_
-			var content = @tag.__tree_
-			@resolvedChildren = content
-			@children = []
-			@appendNested(content)
+		if self.tag and self.resolvedChildren != self.tag.__tree_
+			var content = self.tag.__tree_
+			self.resolvedChildren = content
+			self.children = []
+			self.appendNested(content)
 		self
 
-	def __innerHTML
-		resolve
-		return self:innerHTML || (self:textContent and escapeTextContent(self:textContent,self:nodeName)) || (@children and @children.join("")) or ''
+	set innerHTML value
+		#innerHTML = value
+
+
+	get innerHTML
+		self.resolve()
+		return #innerHTML || (self.textContent and escapeTextContent(self.textContent,self.nodeName)) || (self.children and self.children.join("")) or ''
 	
-	def __outerHTML
-		var typ = self:nodeName
+	get outerHTML
+		var typ = self.nodeName
 		var sel = "{typ}"
 		
-		sel += " id=\"{escapeAttributeValue(v)}\"" if var v = self:id
-		sel += " class=\"{escapeAttributeValue(v)}\"" if var v = self:classList.toString
-		sel += " {@attributes.join(" ")}" if var v = @attributes
+		sel += " id=\"{escapeAttributeValue(v)}\"" if var v = self.id
+		sel += " class=\"{escapeAttributeValue(v)}\"" if var v = self.classList.toString()
+		sel += " {self.attributes.join(" ")}" if var v = self.attributes
 
 		# temporary workaround for IDL attributes
 		# needs support for placeholder etc
-		sel += " placeholder=\"{escapeAttributeValue(v)}\"" if v = self:placeholder
-		sel += " value=\"{escapeAttributeValue(v)}\"" if v = self:value
-		sel += " checked" if self:checked
-		sel += " disabled" if self:disabled
-		sel += " required" if self:required
-		sel += " readonly" if self:readOnly
-		sel += " autofocus" if self:autofocus
+		sel += " placeholder=\"{escapeAttributeValue(v)}\"" if v = self.placeholder
+		sel += " value=\"{escapeAttributeValue(v)}\"" if v = self.value
+		sel += " checked" if  self.checked
+		sel += " disabled" if self.disabled
+		sel += " required" if self.required
+		sel += " readonly" if self.readOnly
+		sel += " autofocus" if self.autofocus
 		
-		if @style
-			sel += " style=\"{escapeAttributeValue(@style)}\""
+		if self.style
+			sel += " style=\"{escapeAttributeValue(self.style)}\""
 
 		if voidElements[typ]
 			return "<{sel}>"
 		else
-			return "<{sel}>{__innerHTML}</{typ}>"
+			return "<{sel}>{self.innerHTML}</{typ}>"
 
 	def toString
-		if @tag and @tag:toNodeString
+		if self.tag and self.tag.toNodeString
 			# console.log "tag has custom string {@nodeType}" # ,self:children
-			return @tag.toNodeString
+			return self.tag.toNodeString()
 			# return @tag.toNodeString
-		__outerHTML
+		self.outerHTML
 
-	getter 'outerHTML' do
-		this.__outerHTML
-		
-	getter 'children' do
-		this.resolve
-		this.@children
+	set children value
+		#children = value
 
-	getter 'firstChild' do this:children[0]
-	getter 'firstElementChild' do this:children[0]
-	getter 'lastElementChild' do this:children[this:children:length - 1]
-		
-	getter 'style' do
-		this:_style ||= CSSStyleDeclaration.new(this)
+	get children
+		self.resolve()
+		return #children
+
+	get firstChild
+		self.children[0]
+
+	get firstElementChild
+		self.children[0]
+
+	get lastElementChild
+		self.children[self.children.length - 1]
+	
+	get style
+		#style ||= CSSStyleDeclaration.new(this)
 
 var el = ImbaServerElement:prototype
 
+# TODO fixme
 Object.defineProperty(el, 'className',
 	enumerable: true
 	configurable: true
@@ -294,9 +302,9 @@ Object.defineProperty(el, 'className',
 extend tag element
 	
 	def removeAllChildren
-		@dom:children = []
-		@dom:innerHTML = null
-		@tree_ = @text_ = null
+		@dom.children = []
+		@dom.innerHTML = null
+		#tree_ = #text_ = null
 		self
 
 	def toString
