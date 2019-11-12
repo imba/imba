@@ -1004,10 +1004,13 @@ def Imba.createTagCache owner
 	return item
 	
 def Imba.createTagMap ctx, ref, pref
-	var par = (pref != undefined ? pref : ctx.tag)
-	var node = TagMap.new(ctx,ref,par)
+	var par = (pref != undefined ? pref : (ctx and ctx.tag))
+	var node = TagFragmentLoop.new(ctx,ref,par)
 	ctx[ref] = node
 	return node
+
+def Imba.createTagFragment
+	return TagFragmentLoop.new()
 
 def Imba.createTagList ctx, ref, pref
 	var node = []
@@ -1034,23 +1037,38 @@ class TagCache
 		self.tag = owner
 		self
 
-class TagFragmentLoop
-	def initialize owner
+export class TagFragmentLoop
+	def initialize owner, key, par
+		@cache = owner
+		@key = key
+		@parent = par
 		@array = []
 		@prev = []
 		@index = 0
 		@taglen = 0
+		@map = {}
 
 	def reset
 		@index = 0
 		var curr = @array
 		@array = @prev
 		@prev = curr
+		@prev.taglen = @taglen
 		@index = 0
+
+		return self
+
+	def $iter
+		@reset()
+
+	def prune items
 		return self
 
 	def push item
+		let prev = @prev[@index]
 		@array[@index] = item
+		@index++
+		return
 
 	get length
 		@taglen

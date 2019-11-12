@@ -1,6 +1,7 @@
 extern navigator
 
 var Imba = require("../imba")
+import {TagFragmentLoop} from './tag'
 
 var removeNested = do |root, node, caret|
 	# if node/nodes isa String
@@ -233,6 +234,68 @@ var reconcileLoop = do |root, new, old, caret|
 
 	return reconcileCollectionChanges(root,new,old,caret)
 
+# TYPE 5 - we know that we are dealing with a single array of
+# keyed tags - and root has no other children
+var reconcileLoopFragment = do |root, frag, old, caret|
+	var old = frag.prev
+	var new = frag.array
+
+	var nl = frag.taglen
+	var ol = old.taglen or 0
+
+	# var cl = new:cache:i$ # cache-length
+	var i = 0, d = nl - ol
+
+	
+	
+	# TODO support caret
+
+	# find the first index that is different
+	i++ while i < ol and i < nl and new[i] === old[i]
+	
+	# conditionally prune cache
+	# if cl > 1000 and (cl - nl) > 500
+	# 	new:cache:$prune(new)
+
+	# console.log('reconcile loop',old,new,nl,ol,d,i,[].slice.call(root.dom.children,0))
+	
+	if d > 0 and i == ol
+		# added at end
+		while i < nl
+			root.appendChild(new[i++])
+		return
+	
+	elif d > 0
+		let i1 = nl
+		i1-- while i1 > i and new[i1 - 1] === old[i1 - 1 - d]
+
+		if d == (i1 - i)
+			# new items added at start
+			let before = old[i].slot_
+			root.insertBefore(new[i++],before) while i < i1
+			return
+			
+	elif d < 0 and i == nl
+		# removed at end
+		root.removeChild(old[i++]) while i < ol
+		return
+	elif d < 0
+		let i1 = ol
+		i1-- while i1 > i and new[i1 - 1 + d] === old[i1 - 1]
+
+		if d == (i - i1)
+			root.removeChild(old[i++]) while i < i1
+			return
+
+	elif i == nl
+		return
+
+	# console.log("reconcileCollectionChanges")
+	new.length = nl
+	return reconcileCollectionChanges(root,new,old,caret)
+
+
+
 # expects a flat non-sparse array of nodes in both new and old, always
 var reconcileIndexedArray = do |root, array, old, caret|
 	var newLen = array.taglen
@@ -351,7 +414,10 @@ extend tag element
 		if new === old and (!new or new.taglen == undefined)
 			return self
 
-		if !old and typ != 3
+		if new isa TagFragmentLoop
+			reconcileLoopFragment(self,new,old,null)
+
+		elif !old and typ != 3
 			@removeAllChildren()
 			appendNested(self,new)
 
