@@ -36,8 +36,7 @@ class ImbaServerDocument
 	def createComment value
 		return ImbaServerCommentNode.new(value)
 
-def Imba.document
-	@document ||= ImbaServerDocument.new
+Imba.document = ImbaServerDocument.new
 	
 var escapeAttributeValue = do |val|
 	var str = typeof val == 'string' ? val : String(val)
@@ -217,8 +216,8 @@ class ImbaServerElement
 		self
 		
 	def resolve
-		if self.tag and self.resolvedChildren != self.tag.__tree_
-			var content = self.tag.__tree_
+		if self.tag and self.resolvedChildren != self.tag.__slots_
+			var content = self.tag.__slots_
 			self.resolvedChildren = content
 			self.children = []
 			self.appendNested(content)
@@ -227,10 +226,18 @@ class ImbaServerElement
 	set innerHTML value
 		#innerHTML = value
 
-
 	get innerHTML
-		self.resolve()
-		return #innerHTML || (self.textContent and escapeTextContent(self.textContent,self.nodeName)) || (self.children and self.children.join("")) or ''
+		var o = ""
+		for item,i in self.tag.__slots_
+			if item isa String
+				o += escapeTextContent(item,self.nodeName)
+			elif item isa Number
+				o += "" + item
+			elif item
+				o += item.outerHTML
+		return o
+		# self.resolve()
+		# return #innerHTML || (self.textContent and escapeTextContent(self.textContent,self.nodeName)) || (self.children and self.children.join("")) or ''
 	
 	get outerHTML
 		var typ = self.nodeName
@@ -250,20 +257,22 @@ class ImbaServerElement
 		sel += " readonly" if self.readOnly
 		sel += " autofocus" if self.autofocus
 		
-		if self.style
-			sel += " style=\"{escapeAttributeValue(self.style)}\""
+		# console.log("generating outer html",sel)
+
+		if #style
+			sel += " style=\"{escapeAttributeValue(#style.toString())}\""
 
 		if voidElements[typ]
 			return "<{sel}>"
 		else
 			return "<{sel}>{self.innerHTML}</{typ}>"
 
-	def toString
-		if self.tag and self.tag.toNodeString
-			# console.log "tag has custom string {@nodeType}" # ,self:children
-			return self.tag.toNodeString()
-			# return @tag.toNodeString
-		self.outerHTML
+	# def toString
+	# 	if self.tag and self.tag.toNodeString
+	# 		# console.log "tag has custom string {@nodeType}" # ,self:children
+	# 		return self.tag.toNodeString()
+	# 		# return @tag.toNodeString
+	# 	self.outerHTML
 
 	set children value
 		#children = value
@@ -284,20 +293,13 @@ class ImbaServerElement
 	get style
 		#style ||= CSSStyleDeclaration.new(this)
 
-var el = ImbaServerElement:prototype
+	get className
+		self.classList.toString()
 
-# TODO fixme
-Object.defineProperty(el, 'className',
-	enumerable: true
-	configurable: true
+	set className value
+		self.classList.classes = (value or '').split(' ')
+		self.classList.toString()
 
-	get: do
-		this:classList.toString
-
-	set: do |v|
-		this:classList.@classes = (v or '').split(' ')
-		this:classList.toString		
-)
 
 extend tag element
 	
@@ -308,7 +310,7 @@ extend tag element
 		self
 
 	def toString
-		@slot_.toString
+		@dom.outerHTML
 
 extend tag html
 

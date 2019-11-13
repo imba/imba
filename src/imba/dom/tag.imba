@@ -112,36 +112,21 @@ class Imba.Tag
 		self
 
 
-	def initialize dom,ctx
+	def initialize dom, parent
 		@dom = dom
 		dom.tag = self
 		@slot_ = dom
 		#tree_ = null # TODO rename to tree_ again?
-		@owner_ = ctx
+		#slots_ = []
+		#parent_ = parent
 
 		@$ = TagCache.build(self)
-
 		@FLAGS = 0
 		@build()
 		self
 	
-	def ref
-		#ref
-		
 	get root
-		@owner_ ? @owner_.root : self
-
-	###
-	Setting references for tags like
-	`<div@header>` will compile to `tag('div').ref_('header',this).end()`
-	By default it adds the reference as a className to the tag.
-
-	@return {self}
-	@private
-	###
-	def ref_ ref
-		@flag(#ref = ref)
-		self
+		#parent_ ? #parent_.root : self
 
 	###
 	Set the data object for node
@@ -760,6 +745,26 @@ class Imba.Tag
 
 	def toString
 		@dom.outerHTML
+
+	get outerHTML
+		@dom.outerHTML
+
+	get innerHTML
+		@dom.innerHTML
+
+	def render_ item, index
+		if $web$
+			var prev = #slots_[index]
+			# appendChild?
+			if prev === undefined
+				if item.dom isa Element
+					@dom.appendChild(item.dom)
+				elif item isa String
+					@dom.appendChild(document.createTextNode(item))
+			#slots_[index] = item
+		else
+			console.log "render",item,index
+			#slots_[index] = item
 	
 
 Imba.Tag.prototype.initialize = Imba.Tag
@@ -958,9 +963,10 @@ class Imba.Tags
 
 		return klass
 
-def Imba.createElement name, ctx, ref, pref
+def Imba.createElement name, parent, index, flags
 	var type = name
-	var parent
+	console.log("create element!!",name)
+
 	if name isa Function
 		type = name
 	else
@@ -968,22 +974,16 @@ def Imba.createElement name, ctx, ref, pref
 		type = Imba.TAGS.findTagType(name)
 		if $debug$
 			throw("cannot find tag-type {name}") if !type
-	
-	if ctx isa TagMap
-		parent = ctx.par$
-	elif pref isa Imba.Tag
-		parent = pref
-	else
-		parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.tag or ctx)
 
 	var node = type.build(parent)
-	
-	if ctx isa TagMap
-		ctx.i$++
-		node.$key = ref
 
-	if ctx and ref != undefined
-		ctx[ref] = node
+	if flags
+		node.dom.className = flags
+
+	# immediately add to parent
+	if parent and index != null
+		parent.render_(node,index)
+
 
 	return node
 

@@ -232,7 +232,8 @@ def AST.counterToShortRef nr
 			num = Math.floor(num / 26)
 			break unless num > 0
 
-		shortRefCache.push(str)
+		shortRefCache.push(str.toLowerCase())
+
 	return shortRefCache[nr]
 
 def AST.truthy node
@@ -338,6 +339,9 @@ export class Stack
 	def decr name
 		@counters[name] ||= 0
 		@counters[name] -= 1
+
+	def generateId ns = 'oid'
+		AST.counterToShortRef(STACK.incr('oid'))
 
 	def stash
 		@stash
@@ -502,6 +506,9 @@ export class Node
 
 	def safechain
 		no
+
+	def oid
+		@oid ||= STACK.generateId('')
 
 	def p
 		# allow controlling this from CLI
@@ -6250,6 +6257,9 @@ export class TagPart < Node
 	def js
 		""
 
+	def ref
+		"c$.{oid}"
+
 export class TagId < TagPart
 
 	def js
@@ -6440,15 +6450,6 @@ export class TagHandler < TagPart
 
 		return "on$({slot},[{AST.cary(parts)}],{scope__.context.c})"
 
-		#		let dl = @dyn and @dyn:length
-		#
-		#		if dl == 1
-		#			"on$({slot},[{AST.cary(parts)}],{@dyn[0]})"
-		#		elif dl > 1
-		#			"on$({slot},[{AST.cary(parts)}],-1)"
-		#		else
-		#			"on$({slot},[{AST.cary(parts)}],0)"
-
 export class Tag < Node
 
 	prop tree
@@ -6505,6 +6506,9 @@ export class Tag < Node
 		
 	def parent
 		@options:par
+
+	def body
+		@options:body
 		
 	def isSelf
 		type isa Self or type isa This
@@ -6517,158 +6521,101 @@ export class Tag < Node
 		!o:hasConditionals and !o:hasLoops and !o:ivar and !o:key
 
 	def visit stack
-
 		var o = @options
 		var scope = @tagScope = scope__
 		let prevTag = o:par = stack.@tag
-		let po = prevTag and prevTag.@options
-		var typ = enclosing
 
-		@level = stack.@nodes.filter(|el| el isa Tag):length
-		@tempvar = scope.closure.temporary(self,{reuse: yes},"_t{@level}")
-		@valvar = scope.closure.temporary(self,{reuse: yes},"_v")
-		
-		if o:par
-			o:optim = po:optim
-		elif o:template
-			o:optim = no
-		else
-			o:optim = self
+		@parent = stack.@tag
+		@level = (@parent && @parent.@level or 0) + 1
 
-		if typ == '->' or typ == '=>'
-			let body = Block.wrap(o:body.@nodes or [o:body])
-			@fragment = o:body = o:template = TagFragmentFunc.new([],body,null,null,closed: typ == '->')
-			# could insert generated <self> inside to simplify and optimize this?
-			# template uses wrong cache as well
-			@tagScope = @fragment.scope
-			o:optim = self
-
-		if o:par
-			o:par.addChild(self)
-		
-			if o:par.@tagLoop
-				o:loop ||= o:par.@tagLoop # scope.@tagLoop
-				o:loop.capture(self)
-				o:ownCache = yes
-				o:optim = self
-				
-			if po:template
-				o:optim = self
-		
-		if o:key and !o:par
-			o:treeRef = o:key
-			o:key.cache
-			
 		stack.@tag = null
 
 		for part in @attributes
 			part.traverse
-			
+
 		stack.@tag = self
-			
-		cacheRef
-
-		o:key.traverse if o:key
-		o:body.traverse if o:body
-
-		# see if we are dynamic
-		if o:body isa ListNode and stack.optlevel > 1 # and stack.env('TAG_OPTIM')
-			let canOptimize = o:body.values.every do |item|
-				item isa Tag and item.isStatic
-				
-			if o:canOptimize = canOptimize
-				o:optim = self
-			# should not happen to items inside the loop
-			# optimizations should be gone over at the very end.
-			# for all tags connected to this?
-			for child in @children
-				let co = child.@options
-				if o:hasConditionals and co:optim
-					# console.log "optim child special?"
-					co:optim = child
-				elif !co:loop
-					co:optim = self
 		
-		if stack.optlevel < 2
-			o:optim = no
-		stack.@tag = prevTag
+		if o:key
+			o:key.traverse
+
+		if o:body
+			o:body.traverse
+
+		stack.@tag = @parent
 		self
-
-	def reference
-		@reference ||= @tagScope.closure.temporary(self,pool: 'tag').resolve
 	
-	def tagfactory
-		scope__.imbaRef('createElementFactory(/*SCOPEID*/)')
-	
-	# reference to the cache-object this tag will try to register with
-	def cacher
-		var o = @options
-		o:cacher ?= if parent
-			parent.childCacher
-		elif o:ivar or o:key
-			let op = OP('||=',OP('.',This.new,'$$'),LIT('{}'))
-			# MAKE SURE WE REFER TO THE OUTER
-			TagCache.new(self,@tagScope.closure.declare("$",op, system: yes, type: 'let'))
+	def create_
+		scope__.imbaRef('createElementFactory(/*SCOPEID*/)').c
+
+	def ref
+		"c$.{oid}"
+
+	def js o
+		var out = []
+		var add = do |val|
+			out.push(val)
+
+		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
+		# var ctor = "{tagfactory.c}()"
+		var ctor = [typ,(@parent ? @parent.ref : 'null'),@slot !== null ? @slot : 'null']
+		var commit = no
+
+		var staticFlags = []
+		var dynamicFlags = []
+
+		for item in @attributes when item isa TagFlag
+			if item.value
+				dynamicFlags.push(item)
+			else
+				staticFlags.push(item.name)
+
+		# add the static flags immediately
+		ctor.push(helpers.singlequote(staticFlags.join(" ")))
+
+		if @level == 1
+			if isSelf
+				add "t$ = this"
+			else
+				add "t$ = this.{oid}$ || (this.{oid}$ = {create_}({ctor.join(',')}))"
+			add "c$ = t$.$"
+			add "{ref}=t$"
+			# create a unique reference
+
 		else
-			null
+			add "{ref} || ({ref} = {create_}({ctor.join(',')}))"
+
+
+		for item in @attributes
+			if item.isStatic
+				continue if item isa TagFlag
+				let js = "({ref}.{item.c(o)})"
+				add js
+			else
+				let val = item.value
+				item.value = LIT("{item.ref}=v$")
+				add "v$={val.c(o)}"
+				add "v$==={item.ref} || ({ref}.{item.js(o)})"
+
+		# When there is only one value and that value is a static string or num - include it in ctor
+		# loop through attributes etc
+		# add 
+		let nodes = body and body.values
+
+		let slot = 0
+		for item in nodes
+			if item isa Tag
+				item.@slot = slot++
+				add item.c(o)
+			elif item isa Str and false
+				add "{ref}.render_({item.c(o)},{slot++})"
+			else
+				add "{ref}.render_({item.c(o)},{slot++})"
 		
-	def childCacher
-		@options:childCacher ||= if @fragment
-			let scop = @tagScope.closure
-			# TagCache.new(self,@tagScope.closure.declare("$",op,system: yes))
-			TagCache.new(self,scop.declare("$",OP('.',This.new,'$'),system: yes))
+		if @level == 1
+			add "t$"
+		return out.join(";\n")
 
-		elif isSelf
-			let scop = @tagScope.closure
-			let op = OP('.',This.new,'$')
-			# let nr = scop.incr('selfTag')
-			let meth = scop isa MethodScope ? scop.node.name : ''
-			# let key = "${nr}"
-			if meth and meth != 'render'
-				let key = '$' + meth + '$'
-				let ctor = scope__.imbaRef('createTagCache')
-				op = OP('||=',OP('.',op,key),CALL(ctor,[This.new]))
-
-			scop.@tagCache ||= TagCache.new(self,scop.declare("$",op,system: yes))
-
-		elif !parent or @options:ownCache
-			# difference between this and cacher?
-			TagCache.new(self,OP('.',reference,'$'), keys: yes) # .set(keys: yes)
-		else
-			parent.childCacher
-
-	def cacheRef
-		if isSelf or !cacher
-			return null
-
-		var o = @options
-
-		if o:treeRef
-			return o:treeRef
-		
-		if o:par
-			o:par.cacheRef
-			
-		if o:ivar
-			return o:treeRef = Str.new("'" + o:ivar.c + "'") # OP('.',scope.context,o:ivar)
-
-		# cacher.nextRef(self) # 
-		o:treeRef = cacher.nextRef(self)
-
-	def generateCacheSlot
-		let v = childCacher.nextValue
-		"{childCacher.c}.{v}"
-		
-	def cachePath
-		var o = @options
-		o:cachePath ?= if o:ivar
-			OP('.',@tagScope.context,o:ivar)
-		elif cacheRef
-			OP('.',cacher,cacheRef.@value or cacheRef)
-			
-		# var ref = cacheRef
-
-	def js jso
+	def jsold jso
 		var o = @options
 		var po = o:par ? o:par.@options : {}
 		var scope = scope__
@@ -7711,6 +7658,7 @@ export class Scope
 		@varmap  = {}
 		@counters = {}
 		@varpool = []
+		@refcounter = 0
 		setup
 		
 	def setup
@@ -7720,6 +7668,9 @@ export class Scope
 		var val = @counters[name] ||= 0
 		@counters[name]++
 		return val
+
+	def nextShortRef
+		AST.counterToShortRef(@refcounter++)
 
 	def meta key, value
 		if value != undefined
