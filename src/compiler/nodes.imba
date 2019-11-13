@@ -809,7 +809,8 @@ export class Comment < Meta
 		return "" if STACK.option(:comments) == false
 		var v = @value.@value
 		if o and o:expression or v.match(/\n/) or @value.type == 'HERECOMMENT' # multiline?
-			"/*{v}*/"
+			var out = v.replace(/\*\//g, '\\*\\/').replace(/\/\*/g, '\\/\\*')
+			"/*{out}*/"
 		else
 			"// {v}"
 

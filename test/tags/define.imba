@@ -298,3 +298,22 @@ describe 'Tags - Define' do
 		var node = <Custom>
 		eq node.dom:style:opacity,0
 		ok node.toString.match(/opacity\:\s*0/)
+	test "css comment" do
+		tag MyCoolButton < button
+			### css scoped
+			/* Typography */
+			button {
+			  font-weight: bold;
+			  font-size: 2rem;
+			}
+			
+			/* Misc */
+			button {
+			  background: red;
+			  color: white;
+			  border-radius: 0.3rem;
+			  border-color: yellow;
+			  width: 200px;
+			  height: 48px;
+			}
+			###
