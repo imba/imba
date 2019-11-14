@@ -3,6 +3,10 @@
 </head>
 <body>
   <script src="./imba.js" type="text/javascript"></script>
-  <script src="./plain.js" type="text/javascript"></script>
+  <script>require = function(name){
+  	if(name == 'imba2'){ return Imba; }
+  }</script>
+
+  <script src="./forin.js" type="text/javascript"></script>
 </body>
 </html>

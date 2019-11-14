@@ -83,7 +83,7 @@ var App = _2.defineTag('App', function(tag){
 });
 
 // create an instance of the app (with id app)
-var app = t$ = this.y$ || (this.y$ = _1(App,null,,'todoapp'));
+var app = t$ = this.y$ || (this.y$ = _1(App,null,0,'todoapp'));
 c$ = t$.$;
 c$.y=t$;
 v$=self.store;

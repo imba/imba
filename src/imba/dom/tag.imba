@@ -119,8 +119,7 @@ class Imba.Tag
 		#tree_ = null # TODO rename to tree_ again?
 		#slots_ = []
 		#parent_ = parent
-
-		@$ = TagCache.build(self)
+		@$ = {}
 		@FLAGS = 0
 		@build()
 		self
@@ -755,13 +754,28 @@ class Imba.Tag
 	def render_ item, index
 		if $web$
 			var prev = #slots_[index]
+			var node = item
 			# appendChild?
+
 			if prev === undefined
+				if item isa TagFragment
+					# console.log "rendering TagFragment"
+					# what if this is the same tag fragment as before?
+					# should probably just add it manually?
+					item.insertInto(self,index,#slots_)
+					# @dom.appendChild(item.fragment)
+
 				if item.dom isa Element
 					@dom.appendChild(item.dom)
-				elif item isa String
-					@dom.appendChild(document.createTextNode(item))
-			#slots_[index] = item
+				elif typeof item == 'string' or typeof item == 'number'
+					@dom.appendChild(node = document.createTextNode(item))
+			else
+				# need to check if this is a magic slot or not?
+				if prev isa Text
+					prev.textContent = item
+					return
+
+			#slots_[index] = node
 		else
 			console.log "render",item,index
 			#slots_[index] = item
@@ -963,9 +977,8 @@ class Imba.Tags
 
 		return klass
 
-def Imba.createElement name, parent, index, flags
+def Imba.createElement name, parent, index, flags, text
 	var type = name
-	console.log("create element!!",name)
 
 	if name isa Function
 		type = name
@@ -978,10 +991,15 @@ def Imba.createElement name, parent, index, flags
 	var node = type.build(parent)
 
 	if flags
+		# need to include the base classnames for tag as well
 		node.dom.className = flags
 
+	if text !== null
+		# escape on server?
+		node.dom.textContent = text
+
 	# immediately add to parent
-	if parent and index != null
+	if parent and index != null  and parent isa Imba.Tag
 		parent.render_(node,index)
 
 
@@ -1002,27 +1020,18 @@ def Imba.createTagCache owner
 	var item = []
 	item.tag = owner
 	return item
-	
-def Imba.createTagMap ctx, ref, pref
-	var par = (pref != undefined ? pref : (ctx and ctx.tag))
-	var node = TagFragmentLoop.new(ctx,ref,par)
-	ctx[ref] = node
-	return node
 
-def Imba.createTagFragment
-	return TagFragmentLoop.new()
+def Imba.createFragment type, parent, slot, options
+	if type == 2
+		return KeyedTagFragment.new(parent,slot,options)
+	elif type == 1
+		return IndexedTagFragment.new(parent,slot,options)
 
 def Imba.createTagList ctx, ref, pref
 	var node = []
 	node.type = 4
 	node.tag = (pref != undefined ? pref : ctx.tag)
 	ctx[ref] = node
-	return node
-
-def Imba.createTagLoopResult ctx, ref, pref
-	var node = []
-	node.type = 5
-	node.cache = {i$: 0}
 	return node
 
 # use array instead?
@@ -1037,16 +1046,19 @@ class TagCache
 		self.tag = owner
 		self
 
-export class TagFragmentLoop
-	def initialize owner, key, par
-		@cache = owner
-		@key = key
-		@parent = par
+export class TagFragment
+	
+export class KeyedTagFragment < TagFragment
+	def initialize parent, slot
+		@parent = parent
+		@slot = slot
+		@$ = {} # this is the map
 		@array = []
 		@prev = []
 		@index = 0
 		@taglen = 0
-		@map = {}
+		@starter = Imba.document.createComment('')
+		@reconciled = no
 
 	def reset
 		@index = 0
@@ -1070,31 +1082,64 @@ export class TagFragmentLoop
 		@index++
 		return
 
+	def insertInto parent, index
+		# console.log "inserting into!!",parent,index
+		var fragment = Imba.document.createDocumentFragment()
+		var i = 0
+		var len = @index
+		while i < len
+			let item = @array[i++]
+			fragment.appendChild(item.dom)
+
+		parent.dom.appendChild(fragment)
+		self
+
+	def reconcile parent, siblings, index
+		console.log "reconciling fragment!",self
+		# reconcile this now?
+		self
+
 	get length
 		@taglen
 
-class TagMap
-	
-	def initialize cache, ref, par
-		self.cache$ = cache
-		self.key$ = ref
-		self.par$ = par
-		self.i$ = 0
+export class IndexedTagFragment < TagFragment
+	def initialize parent, slot
+		@parent = parent
+		@$ = []
+		@length = 0
 
-	def $iter
-		var item = []
-		item.type = 5
-		item.cache = self
-		return item
-		
-	def $prune items
-		let cache = self.cache$
-		let key = self.key$
-		let clone = TagMap.new(cache,key,self.par$)
-		for item in items
-			clone[item.key$] = item
-		clone.i$ = items.length
-		return cache[key] = clone
+	def push item, idx
+		@$[idx] = item
+		return
+
+	def reconcile len
+		let from = @length
+		return if from == len
+		let array = @$
+
+		if from > len
+			# items should have been added automatically
+			while from > len
+				var item = array[--from]
+				@removeChild(item,from)
+		elif len > from
+			while len > from
+				let node = array[from++]
+				@appendChild(node,from - 1)
+		@length = len
+		return
+
+	def insertInto parent, slot
+		self
+
+	def appendChild item, index
+		@parent.appendChild(item)
+		return
+
+	def removeChild item, index
+		let dom = item.slot_
+		dom.parentNode.removeChild(dom)
+		return
 
 class TagScope
 	def initialize ns
@@ -1107,7 +1152,6 @@ class TagScope
 	def extendTag name, body
 		return Imba.TAGS.extendTag({scope: self},name,body)
 
-Imba.TagMap = TagMap
 Imba.TagCache = TagCache
 Imba.SINGLETONS = {}
 Imba.TAGS = Imba.Tags.new
@@ -1121,6 +1165,7 @@ def Imba.defineTag name, supr = '', &body
 
 def Imba.extendTag name, body
 	return Imba.TAGS.extendTag({},name,body)
+
 
 def Imba.getTagSingleton id	
 	var dom, node

@@ -1236,8 +1236,7 @@ Imba.Tag = function Tag(dom,parent){
 	this.__tree_ = null; 
 	this.__slots_ = [];
 	this.__parent_ = parent;
-	
-	this.$ = TagCache.build(this);
+	this.$ = {};
 	this.FLAGS = 0;
 	this.build();
 	this;
@@ -1931,15 +1930,32 @@ Object.defineProperty(Imba.Tag.prototype,'innerHTML',{get: function(){
 Imba.Tag.prototype.render_ = function (item,index){
 	if (true) {
 		var prev = this.__slots_[index];
+		var node = item;
+		
 		
 		if (prev === undefined) {
+			if (item instanceof TagFragment) {
+				// console.log "rendering TagFragment"
+				// what if this is the same tag fragment as before?
+				// should probably just add it manually?
+				item.insertInto(this,index,this.__slots_);
+				
+			};
+			
 			if (item.dom instanceof Element) {
 				this.dom.appendChild(item.dom);
-			} else if ((typeof item=='string'||item instanceof String)) {
-				this.dom.appendChild(document.createTextNode(item));
+			} else if (typeof item == 'string' || typeof item == 'number') {
+				this.dom.appendChild(node = document.createTextNode(item));
+			};
+		} else {
+			// need to check if this is a magic slot or not?
+			if (prev instanceof Text) {
+				prev.textContent = item;
+				return;
 			};
 		};
-		return this.__slots_[index] = item;
+		
+		return this.__slots_[index] = node;
 	};
 };
 
@@ -2176,9 +2192,8 @@ Imba.Tags.prototype.findTagType = function (type){
 	return klass;
 };
 
-Imba.createElement = function (name,parent,index,flags){
+Imba.createElement = function (name,parent,index,flags,text){
 	var type = name;
-	console.log("create element!!",name);
 	
 	if (name instanceof Function) {
 		type = name;
@@ -2191,11 +2206,17 @@ Imba.createElement = function (name,parent,index,flags){
 	var node = type.build(parent);
 	
 	if (flags) {
+		// need to include the base classnames for tag as well
 		node.dom.className = flags;
 	};
 	
+	if (text !== null) {
+		// escape on server?
+		node.dom.textContent = text;
+	};
 	
-	if (parent && index != null) {
+	
+	if (parent && index != null && (parent instanceof Imba.Tag)) {
 		parent.render_(node,index);
 	};
 	
@@ -2223,15 +2244,12 @@ Imba.createTagCache = function (owner){
 	return item;
 };
 
-Imba.createTagMap = function (ctx,ref,pref){
-	var par = ((pref != undefined) ? pref : ((ctx && ctx.tag)));
-	var node = new TagFragmentLoop(ctx,ref,par);
-	ctx[ref] = node;
-	return node;
-};
-
-Imba.createTagFragment = function (){
-	return new TagFragmentLoop();
+Imba.createFragment = function (type,parent,slot,options){
+	if (type == 2) {
+		return new KeyedTagFragment(parent,slot,options);
+	} else if (type == 1) {
+		return new IndexedTagFragment(parent,slot,options);
+	};
 };
 
 Imba.createTagList = function (ctx,ref,pref){
@@ -2239,13 +2257,6 @@ Imba.createTagList = function (ctx,ref,pref){
 	node.type = 4;
 	node.tag = ((pref != undefined) ? pref : ctx.tag);
 	ctx[ref] = node;
-	return node;
-};
-
-Imba.createTagLoopResult = function (ctx,ref,pref){
-	var node = [];
-	node.type = 5;
-	node.cache = {i$: 0};
 	return node;
 };
 
@@ -2263,19 +2274,26 @@ TagCache.build = function (owner){
 
 
 
-function TagFragmentLoop(owner,key,par){
-	this.cache = owner;
-	this.key = key;
-	this.parent = par;
+function TagFragment(){ };
+
+exports.TagFragment = TagFragment; // export class 
+
+
+function KeyedTagFragment(parent,slot){
+	this.parent = parent;
+	this.slot = slot;
+	this.$ = {}; 
 	this.array = [];
 	this.prev = [];
 	this.index = 0;
 	this.taglen = 0;
-	this.map = {};
+	this.starter = Imba.document.createComment('');
+	this.reconciled = false;
 };
 
-exports.TagFragmentLoop = TagFragmentLoop; // export class 
-TagFragmentLoop.prototype.reset = function (){
+Imba.subclass(KeyedTagFragment,TagFragment);
+exports.KeyedTagFragment = KeyedTagFragment; // export class 
+KeyedTagFragment.prototype.reset = function (){
 	this.index = 0;
 	var curr = this.array;
 	this.array = this.prev;
@@ -2286,49 +2304,92 @@ TagFragmentLoop.prototype.reset = function (){
 	return this;
 };
 
-TagFragmentLoop.prototype.$iter = function (){
+KeyedTagFragment.prototype.$iter = function (){
 	return this.reset();
 };
 
-TagFragmentLoop.prototype.prune = function (items){
+KeyedTagFragment.prototype.prune = function (items){
 	return this;
 };
 
-TagFragmentLoop.prototype.push = function (item){
+KeyedTagFragment.prototype.push = function (item){
 	let prev = this.prev[this.index];
 	this.array[this.index] = item;
 	this.index++;
 	return;
 };
 
-Object.defineProperty(TagFragmentLoop.prototype,'length',{get: function(){
+KeyedTagFragment.prototype.insertInto = function (parent,index){
+	// console.log "inserting into!!",parent,index
+	var fragment = Imba.document.createDocumentFragment();
+	var i = 0;
+	var len = this.index;
+	while (i < len){
+		let item = this.array[i++];
+		fragment.appendChild(item.dom);
+	};
+	
+	parent.dom.appendChild(fragment);
+	return this;
+};
+
+KeyedTagFragment.prototype.reconcile = function (parent,siblings,index){
+	console.log("reconciling fragment!",this);
+	
+	return this;
+};
+
+Object.defineProperty(KeyedTagFragment.prototype,'length',{get: function(){
 	return this.taglen;
 }, configurable: true});
 
-function TagMap(cache,ref,par){
-	this.cache$ = cache;
-	this.key$ = ref;
-	this.par$ = par;
-	this.i$ = 0;
+function IndexedTagFragment(parent,slot){
+	this.parent = parent;
+	this.$ = [];
+	this.length = 0;
 };
 
-TagMap.prototype.$iter = function (){
-	var item = [];
-	item.type = 5;
-	item.cache = this;
-	return item;
+Imba.subclass(IndexedTagFragment,TagFragment);
+exports.IndexedTagFragment = IndexedTagFragment; // export class 
+IndexedTagFragment.prototype.push = function (item,idx){
+	this.$[idx] = item;
+	return;
 };
 
-TagMap.prototype.$prune = function (items){
-	let cache = this.cache$;
-	let key = this.key$;
-	let clone = new TagMap(cache,key,this.par$);
-	for (let i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
-		item = ary[i];
-		clone[item.key$] = item;
+IndexedTagFragment.prototype.reconcile = function (len){
+	let from = this.length;
+	if (from == len) { return };
+	let array = this.$;
+	
+	if (from > len) {
+		// items should have been added automatically
+		while (from > len){
+			var item = array[--from];
+			this.removeChild(item,from);
+		};
+	} else if (len > from) {
+		while (len > from){
+			let node = array[from++];
+			this.appendChild(node,from - 1);
+		};
 	};
-	clone.i$ = items.length;
-	return cache[key] = clone;
+	this.length = len;
+	return;
+};
+
+IndexedTagFragment.prototype.insertInto = function (parent,slot){
+	return this;
+};
+
+IndexedTagFragment.prototype.appendChild = function (item,index){
+	this.parent.appendChild(item);
+	return;
+};
+
+IndexedTagFragment.prototype.removeChild = function (item,index){
+	let dom = item.slot_;
+	dom.parentNode.removeChild(dom);
+	return;
 };
 
 function TagScope(ns){
@@ -2346,7 +2407,6 @@ TagScope.prototype.extendTag = function (name,body){
 	return Imba.TAGS.extendTag({scope: this},name,body);
 };
 
-Imba.TagMap = TagMap;
 Imba.TagCache = TagCache;
 Imba.SINGLETONS = {};
 Imba.TAGS = new Imba.Tags();
@@ -2364,6 +2424,7 @@ Imba.defineTag = function (name,supr,body){
 Imba.extendTag = function (name,body){
 	return Imba.TAGS.extendTag({},name,body);
 };
+
 
 Imba.getTagSingleton = function (id){
 	var klass;
