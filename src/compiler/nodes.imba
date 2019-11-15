@@ -17,6 +17,54 @@ if $node$
 	if NODE_MAJOR_VERSION < 5
 		console.log "Imba compiles to es5 due to old version of node({process:version})"
 
+
+var HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
+var HTML_TAGS_UNSAFE = "article aside header section".split(" ")
+
+var HTML_ATTRS =
+	a: "href target hreflang media download rel type ping referrerpolicy"
+	audio: "autoplay controls crossorigin loop muted preload src"
+	area: "alt coords download href hreflang ping referrerpolicy rel shape target"
+	base: "href target"
+	video: "autoplay buffered controls crossorigin height loop muted preload poster src width playsinline"
+	fieldset: "disabled form name"
+	form: "method action enctype autocomplete target"
+	button: "autofocus type form formaction formenctype formmethod formnovalidate formtarget value name"
+	embed: "height src type width"
+	input: "accept disabled form list max maxlength min minlength pattern required size step type"
+	label: "accesskey for form"
+	img: "alt src srcset crossorigin decoding height importance intrinsicsize ismap referrerpolicy sizes width usemap"
+	link: "rel type href media"
+	iframe: "allow allowfullscreen allowpaymentrequest height importance name referrerpolicy sandbox src srcdoc width frameborder align longdesc scrolling"
+	meta: "property content charset desc http-equiv color-scheme name scheme"
+	map: "name"
+	optgroup: "label"
+	option: "label"
+	output: "for form"
+	object: "type data width height"
+	param: "name type value valuetype"
+	progress: "max"
+	script: "src type async defer crossorigin integrity nonce language nomodule"
+	select: "size form multiple"
+	source: "sizes src srcset type media"
+	textarea: "rows cols minlength maxlength form wrap"
+	track: "default kind label src srclang"
+	td: "colspan rowspan headers"
+	th: "colspan rowspan"
+
+var HTML_PROPS =
+	input: "autofocus autocomplete autocapitalize autocorrect value placeholder required disabled multiple checked readOnly spellcheck"
+	textarea: "autofocus autocomplete autocapitalize autocorrect value placeholder required disabled multiple checked readOnly spellcheck"
+	form: "novalidate"
+	fieldset: "disabled"
+	button: "disabled"
+	select: "autofocus disabled required readOnly multiple"
+	option: "disabled selected value"
+	optgroup: "disabled"
+	progress: "value"
+	fieldset: "disabled"
+	canvas: "width height"
+
 export var AST = {}
 
 var TREE_TYPE =
@@ -6298,11 +6346,20 @@ export class TagPart < Node
 export class TagId < TagPart
 
 	def js
-		"set('id',{quoted})"
+		"id={quoted}"
+		# "set('id',{quoted})"
 
 export class TagFlag < TagPart
+
+	def isConditional
+		!!@value
+
 	def js
 		value ? "flagIf({quoted},{value.c})" : "flag({quoted})"
+
+export class TagFlagIf < TagFlag
+	def js
+		"flagIf({quoted},{value.c})"
 
 export class TagFlagExpr < TagFlag
 	def slot
@@ -6349,18 +6406,19 @@ export class TagAttr < TagPart
 			add += ',1'
 		
 		if ns == 'css'
-			"css('{key}',{val}{add})"
+			"css$('{key}',{val}{add})"
 		elif ns
 			# should be setPath instead?
 			"setNestedAttr('{ns}','{key}',{val}{add})"
 		elif key.indexOf("data-") == 0
-			"dataset('{key.slice(5)}',{val})"
-		elif key.indexOf("aria-") == 0
-			"set({quoted},{val}{add})"
-		elif dyn or true
-			"set({quoted},{val}{add})"
+			# "dataset('{key.slice(5)}',{val})"
+			"dataset.{key.slice(5)}={val}"
 		else
-			"{helpers.setterSym(name)}({val}{add})"
+			"{helpers.dashToCamelCase(key)}={val}"
+		# elif dyn or true
+		# 	"set({quoted},{val}{add})"
+		# else
+		# 	"{helpers.setterSym(name)}({val}{add})"
 	
 export class TagAttrValue < TagPart
 	
@@ -6623,6 +6681,8 @@ export class Tag < Node
 		# if tag contains no static attributes (except className / text)
 		# we don't need to mark when built
 		var markWhenBuilt = yes
+		var hasTemplate = no
+		var canInline = no
 
 		var ctor = [
 			typ,
@@ -6662,18 +6722,26 @@ export class Tag < Node
 		# add the static flags immediately
 		ctor[3] = (helpers.singlequote(staticFlags.join(" ")))
 
+		var vars = "t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0,el$,bel$"
 		if !@parent
 			# FIXME change oid to actual unique id based on file
 
 			if isSelf
 				# should do it for everything
-				add "var t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0"
+				add "var {vars}"
+				add "b$ = 1"
 				add "t$ = this"
 				add "t$.open$()"
+				add "c$ = t$.$ || (b$=0,t$.$=\{\})"
 			else
-				add "t$ = this.{oid}$ || (this.{oid}$ = {create_}({ctor.join(',')}))"
-			add "c$ = t$.$"
-			add "b$ = c$.built === true"
+				add "var {vars}"
+				add "b$ = 1"
+				add "t$ = this.{oid}$$ || (b$=0,this.{oid}$$ = {create_}({ctor.join(',')}))"
+				# add "b$ || (t$.template$ = function()\{ var {vars}; t$ = this;\n"
+				# hasTemplate = yes
+				add "c$ = t$.$ || (t$.$=\{\})"
+				# add "b$ = c$.built === true"
+				
 			# add "{ref}=t$"
 			@ref = "t$"
 			# create a unique reference
@@ -6691,14 +6759,25 @@ export class Tag < Node
 			add "b$=1" # only if we have dynamic stuff?
 			add "t$ = {ref} || (b$=0,{ref} = {create_}({ctor.join(',')}))"
 			@ref = "t$"
-			add "c$=t$.$"
+			add "c$=t$.$ || (t$.$=\{\})"
 		else
-			# if this item is the root of a fragment and has children --
-			# stack as if it was on another level
-			if markWhenBuilt
-				add "b$=1"
 
-			add "{ref} || ({markWhenBuilt ? 'b$=0,' : ''}{ref} = {create_}({ctor.join(',')}))"
+			if nodes:length == 0 and dynamics:length == 0 and dynamicFlags:length == 0
+				canInline = yes
+
+
+			if canInline
+				var parts = for item in statics
+					"el$.{item.c(o)}"
+				parts.unshift('') if parts:length > 0
+				return "b$ || (el$={create_}({ctor.join(',')}){parts.join(",")})"
+			else
+				# if this item is the root of a fragment and has children --
+				# stack as if it was on another level
+				if markWhenBuilt
+					add "bel$=1"
+
+				add "{ref} || ({markWhenBuilt ? 'bel$=0,' : ''}{ref} = {create_}({ctor.join(',')}))"
 
 		
 		var optimizeFlag = no
@@ -6718,6 +6797,11 @@ export class Tag < Node
 
 				if item isa TagFlagExpr and optimizeFlag
 					add "v$==={item.ref} || {ref}.flag$({item.value.c(o)})"
+				elif item isa TagFlag
+					if optimizeFlag
+						add "v$==={item.ref} || {ref}.flag$(v$ ? {item.quoted} : '',{item.value.c(o)})"
+					else
+						add "v$==={item.ref} || {ref}.flagIf$({item.quoted},{item.value.c(o)})"
 				else
 					add "v$==={item.ref} || ({ref}.{item.js(o)})"
 
@@ -6727,24 +6811,37 @@ export class Tag < Node
 		# add 
 
 		let slot = 0
+		let count = nodes:length
+
 		for item in nodes
 			if item isa Tag
 				item.@slot = slot++
 				add item.c(o)
-			elif item isa Str
-				# should do a basic init check
-				add "b$ || {ref}.render$({item.c(o)},{slot++})"
 			elif item isa Loop
 				# shouldnt the loop setup its own stuff?
 				# loop should know about its own slot
 				# console.log "is expression?",STACK.isExpression,self.isExpression
 				item.@slot = slot++
 				add item.c(o)
+			elif item isa Str # static for sure
+				# should do a basic init check
+				add "b$ || {ref}.insert$({item.c(o)},{slot++})"
 			else
+				# not if variable declaration etc
+				# if this is the single child - things are different
 				let id = item.oid
+				let key = "c$.{id}"
+
 				add "v$={item.c(o)}"
 				# add special case for strings?
-				add "v$===c$.{id} || {ref}.render$(c$.{id}=v$,{slot++})"
+				# should reference the previous slot?
+				# don't know if this is a tag or not
+				if count == 1 and item isa InterpolatedString
+					add "v$==={key} || {ref}.text$({key}=v$)"
+				elif count == 1
+					add "v$==={key} || {ref}.insert$({key}=v$,-1,{key}_)"
+				else
+					add "v$==={key} || ({key}_ = {ref}.insert$({key}=v$,{slot++},{key}_))"
 		
 		if @parent isa Loop
 			# not for all?
@@ -6756,9 +6853,19 @@ export class Tag < Node
 		elif !@parent
 			# call setup?
 			# add "b$ || (c$._ = true);"
-			add "c$.built = true;"
+			# if built
+			# add "c$.built = true;" 
 			if isSelf
 				add "t$.close$()"
+
+			if hasTemplate
+				add '})'
+				add 'b$ || t$.render()'
+
+			if option(:return)
+				add "return t$"
+
+			
 		# if returning
 
 		return out.join(";\n")

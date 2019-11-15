@@ -126,7 +126,7 @@ class ImbaServerCommentNode
 		self.outerHTML
 	
 
-class ImbaServerElement
+export class ImbaServerElement
 
 	def self.getter name, fn
 		Object.defineProperty(self:prototype, name, {

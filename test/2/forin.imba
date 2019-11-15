@@ -1,9 +1,19 @@
 var items = [1,2,3,4,5,6]
+var name = "hello"
+
 
 tag App
 	def render
 		<self tabindex=0>
-			<h1 title="test"> "Hello" 
+			<h1 title="test"> "Hello"
+			<h2 .{name}> "Subtitle"
+			<div>
+				@one
+				@two
+			<div>
+				@three
+			<div>
+				"{@four}"
 			<ul>
 				for item,i in items
 					<li@{item} data=item>

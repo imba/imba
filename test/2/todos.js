@@ -1,99 +1,73 @@
-var Imba = require('imba2'), _1 = Imba.createElementFactory(/*SCOPEID*/), _2 = Imba.createTagScope(/*SCOPEID*/), self = {};
-
-var App = _2.defineTag('App', function(tag){
-	tag.prototype.addItem = function (){
-		console.log("addItem!!",this.__newTodoTitle);
-		if (this.__newTodoTitle) {
-			API.addTodo(this.__newTodoTitle);
-			return this.__newTodoTitle = "";
-		};
-	};
+function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+var Imba = require('imba2'), _1 = Imba.createElementFactory(/*SCOPEID*/), fragment$ = Imba.createFragment, self = {};
+self.main = function (){
+	var all = API.todos();
+	var items = all;
+	var done = API.completed();
+	var active = API.remaining();
 	
-	tag.prototype.clearCompleted = function (){
-		return API.clearCompleted();
-	};
-	
-	tag.prototype.mount = function (){
-		var self = this;
-		self.__newTodoTitle = '';
-		return window.addEventListener('hashchange',function() {
-			return self.route = window.location.hash;
-		});
-	};
-	
-	tag.prototype.render = function (){
-		var all = API.todos();
-		var items = all;
-		var done = API.completed();
-		var active = API.remaining();
-		
-		if (this.route == '#/completed') {
-			items = done;
-		} else if (this.route == '#/active') {
-			items = active;
-		};
-		
-		return t$ = this;
-		c$ = t$.$;
-		c$.b=t$;
-		c$.c || (c$.c = _1('header',c$.b,0,'header'));
-		c$.d || (c$.d = _1('input',c$.c,0,'new-todo'));
-		v$=this.__newTodoTitle;
-		v$===c$.e || (c$.d.bindData(this,'__newTodoTitle'));
-		(c$.d.set('type','text'));
-		(c$.d.set('placeholder','What to do?'));
-		(c$.d.set('autofocus',true));
-		(c$.d.on$(0,['keyup','enter',['addItem']],this));
-		c$.f || (c$.f = _1('section',c$.b,1,'main'));
-		c$.g || (c$.g = _1('ul',c$.f,0,'todo-list'));
-		c$.h || (c$.h = _1('footer',c$.b,2,'footer'));
-		v$=(!all.length);
-		v$===c$.i || (c$.h.flagIf('hidden',c$.i=v$));
-		c$.j || (c$.j = _1('span',c$.h,0,'todo-count'));
-		c$.k || (c$.k = _1('strong',c$.j,0,''));
-		c$.k.render_(active.length,0);
-		c$.l || (c$.l = _1('span',c$.j,1,''));
-		c$.l.render_((" item" + ((active.length != 1) ? 's' : '') + " left"),0);
-		c$.m || (c$.m = _1('ul',c$.h,1,'filters'));
-		c$.n || (c$.n = _1('li',c$.m,0,''));
-		c$.o || (c$.o = _1('a',c$.n,0,''));
-		v$=(items == all);
-		v$===c$.p || (c$.o.flagIf('selected',c$.p=v$));
-		(c$.o.set('href','#/'));
-		c$.o.render_("All",0);
-		c$.q || (c$.q = _1('li',c$.m,1,''));
-		c$.r || (c$.r = _1('a',c$.q,0,''));
-		v$=(items == active);
-		v$===c$.s || (c$.r.flagIf('selected',c$.s=v$));
-		(c$.r.set('href','#/active'));
-		c$.r.render_("Active",0);
-		c$.t || (c$.t = _1('li',c$.m,2,''));
-		c$.u || (c$.u = _1('a',c$.t,0,''));
-		v$=(items == done);
-		v$===c$.v || (c$.u.flagIf('selected',c$.v=v$));
-		(c$.u.set('href','#/completed'));
-		c$.u.render_("Completed",0);
-		c$.w || (c$.w = _1('button',c$.h,2,'clear-completed'));
-		v$=(!done.length);
-		v$===c$.x || (c$.w.flagIf('hidden',c$.x=v$));
-		(c$.w.on$(0,['tap','clearCompleted'],this));
-		c$.w.render_('Clear completed',0);
-		t$;
-	};
-});
-
-// create an instance of the app (with id app)
-var app = t$ = this.y$ || (this.y$ = _1(App,null,0,'todoapp'));
-c$ = t$.$;
-c$.y=t$;
-v$=self.store;
-v$===c$.z || (c$.y.bindData(self,'store'));
-(c$.y.set('id','app'));
-t$;
-
-api.render = function (){
-	return app.render();
+	b$ = 1;
+	t$ = this.b$$ || (b$=0,this.b$$ = _1('div',null,0,'todoapp',null));
+	c$ = t$.$ || (t$.$={});
+	b$ || (t$.id='app');
+	c$.c || (c$.c = _1('header',t$,0,'header',null));
+	b$ || (el$=_1('input',c$.c,0,'new-todo',null),el$.type='text',el$.placeholder='What to do?',el$.autofocus=true);
+	c$.d || (c$.d = _1('section',t$,1,'main',null));
+	c$.e || (c$.e = _1('ul',c$.d,0,'todo-list',null));
+	f$ = c$.f || (c$.f = fragment$(1,c$.e,0));
+	f$i = 0;
+	c$0=c$;
+	t$0=t$;
+	c$f=f$.$;
+	for (let i = 0, ary = iter$(items), len = ary.length, todo; i < len; i++) {
+		todo = ary[i];
+		b$=1;
+		t$ = c$f[f$i] || (b$=0,c$f[f$i] = _1('li',f$,f$i,'todo',null));
+		c$=t$.$ || (t$.$={});
+		v$=(todo.completed);
+		v$===c$.g || t$.flagIf$('completed',c$.g=v$);
+		c$.h || (c$.h = _1('div',t$,0,'view',null));
+		c$.i || (c$.i = _1('label',c$.h,0,'',null));
+		v$=todo.title;
+		v$===c$.j || c$.i.insert$(c$.j=v$,-1,c$.j_);
+		f$i++;
+	};c$=c$0;t$=t$0;f$.reconcile(f$i);
+	c$.k || (c$.k = _1('footer',t$,2,'footer',null));
+	v$=(!all.length);
+	v$===c$.l || c$.k.flagIf$('hidden',c$.l=v$);
+	c$.m || (c$.m = _1('span',c$.k,0,'todo-count',null));
+	c$.n || (c$.n = _1('strong',c$.m,0,'',null));
+	v$=active.length;
+	v$===c$.o || c$.n.insert$(c$.o=v$,-1,c$.o_);
+	c$.p || (c$.p = _1('span',c$.m,1,'',null));
+	v$=(" item" + ((active.length != 1) ? 's' : '') + " left");
+	v$===c$.q || c$.p.text$(c$.q=v$);
+	c$.r || (c$.r = _1('ul',c$.k,1,'filters',null));
+	c$.s || (c$.s = _1('li',c$.r,0,'',null));
+	bel$=1;
+	c$.t || (bel$=0,c$.t = _1('a',c$.s,0,'',"All"));
+	v$=(items == all);
+	v$===c$.u || c$.t.flag$(v$ ? 'selected' : '',c$.u=v$);
+	b$ || (c$.t.href='#/');
+	c$.v || (c$.v = _1('li',c$.r,1,'',null));
+	bel$=1;
+	c$.w || (bel$=0,c$.w = _1('a',c$.v,0,'',"Active"));
+	v$=(items == active);
+	v$===c$.x || c$.w.flag$(v$ ? 'selected' : '',c$.x=v$);
+	b$ || (c$.w.href='#/active');
+	c$.y || (c$.y = _1('li',c$.r,2,'',null));
+	bel$=1;
+	c$.z || (bel$=0,c$.z = _1('a',c$.y,0,'',"Completed"));
+	v$=(items == done);
+	v$===c$.aa || c$.z.flag$(v$ ? 'selected' : '',c$.aa=v$);
+	b$ || (c$.z.href='#/completed');
+	bel$=1;
+	c$.ab || (bel$=0,c$.ab = _1('button',c$.k,2,'clear-completed','Clear completed'));
+	v$=(!done.length);
+	v$===c$.ac || c$.ab.flagIf$('hidden',c$.ac=v$);
+	b$ || (c$.ab.on$(0,['tap','clearCompleted'],self));
+	c$.built = true;;
+	return t$;
 };
 
-Imba.mount(app);
-self.api.reset(6);
+var el = self.main();

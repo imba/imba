@@ -137,10 +137,6 @@ def Imba.attr scope, name, opts = {}
 			return this
 	return
 
-def Imba.getPropertyDescriptor obj, key
-	return undefined unless obj
-	Object.getOwnPropertyDescriptor(obj, key) || Imba.getPropertyDescriptor(Object.getPrototypeOf(obj), key)
-
 def Imba.propDidSet object, property, val, prev
 	let fn = property.watch
 	if fn isa Function
@@ -150,7 +146,7 @@ def Imba.propDidSet object, property, val, prev
 	return
 
 
-# Basic events
+# Basic events - move to separate file?
 var emit__ = do |event, args, node|
 	# var node = cbs[event]
 	var prev, cb, ret

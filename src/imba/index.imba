@@ -16,9 +16,8 @@ module.exports = Imba
 unless $webworker$
 	require './scheduler'
 	require './dom/index'
-
-	if activate
-		Imba.EventManager.activate()
+	# if activate
+	# 	Imba.EventManager.activate()
 	
 if $node$
 	unless $webpack$
