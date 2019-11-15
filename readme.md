@@ -1,7 +1,7 @@
+<p align="center">
 <a href="http://imba.io" target="_blank">
 <img width="300" src="https://raw.githubusercontent.com/imba/brand/master/images/logo/png/logo-black.png"></a>
-
-# Imba
+</p>
 
 [![install size](https://packagephobia.now.sh/badge?p=imba)](https://packagephobia.now.sh/result?p=imba)
 [![Build Status](https://travis-ci.org/imba/imba.svg?branch=master)](https://travis-ci.org/imba/imba) [![Downloads](https://img.shields.io/npm/dm/imba.svg)](https://npmcharts.com/compare/imba?minimal=true) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![License](https://img.shields.io/npm/l/imba.svg)](https://www.npmjs.com/package/imba) [![Knowledge Base & New Chat](https://img.shields.io/badge/knowledgebase_and_chat-spectrum-blueviolet.svg)](https://spectrum.chat/imba) [![Join the chat at https://gitter.im/somebee/imba](https://img.shields.io/badge/old_chat-gitter-fb0061.svg)](https://gitter.im/imba/Lobby)
