@@ -38,6 +38,20 @@ extend class Element
 			self.template$()
 		return
 
+	def open$
+		self
+
+	def close$
+		self
+
+	def end$
+		@render()
+		return
+
+	def on$
+		console.log "define listener"
+		return
+
 def Imba.createElement name, parent, index, flags, text
 	var type = name
 	var el
@@ -171,8 +185,33 @@ class TagScope
 		@ns = ns
 		@flags = ns ? ['_'+ns] : []
 
-	def defineTag name, supr = '', &body
-		return Imba.TAGS.defineTag({scope: self},name,supr,body)
+	def defineTag name, supr, &body
+		var superklass = HTMLElement
+
+		if supr isa String
+			superklass = window.customElements.get(supr)
+			console.log "get new superclass",supr,superklass
+
+		var klass = `class extends superklass {
+
+			constructor(){
+				super();
+				if(this.initialize) this.initialize();
+			}
+
+			}`
+		if body
+			body(klass)
+
+		if klass.prototype.$mount
+			klass.prototype.connectedCallback = klass.prototype.$mount
+
+		if klass.prototype.$unmount
+			klass.prototype.disconnectedCallback = klass.prototype.$unmount
+
+		window.customElements.define(name,klass)
+		return klass
+		# return Imba.TAGS.defineTag({scope: self},name,supr,body)
 
 	def extendTag name, body
 		return Imba.TAGS.extendTag({scope: self},name,body)

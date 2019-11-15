@@ -1,15 +1,15 @@
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var self = {}, Imba = require('imba2'), _1 = Imba.createElementFactory(/*SCOPEID*/), fragment$ = Imba.createFragment;
+document.body.appendChild(((el$ = _1('todo-app',null,0,'',null)),el$));
+
 var items = [1,2,3,4,5,6];
 var name = "hello";
 
 self.test = function (data){
+	var t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0,el$,bel$;
 	b$ = 1;
-	t$ = this.b$ || (b$=0,this.b$ = _1('div',null,0,'',null));
-	b$ || (t$.template$ = function(){ var t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0,el$,bel$; t$ = this;
-	;
+	t$ = this.b$$ || (b$=0,this.b$$ = _1('div',null,0,'',null));
 	c$ = t$.$ || (t$.$={});
-	b$ = c$.built === true;
 	c$.c || (c$.c = _1('p',t$,0,'',null));
 	v$=data.msg;
 	v$===c$.d || c$.c.insert$(c$.d=v$,-1,c$.d_);
@@ -21,7 +21,7 @@ self.test = function (data){
 	c$f=f$.$;
 	for (let i = 0, ary = iter$(data.list), len = ary.length; i < len; i++) {
 		b$=1;
-		t$ = c$f[f$i] || (b$=0,c$f[f$i] = _1('div',f$,f$i,'',null));
+		t$ = c$f[f$i] || (b$=0,c$f[f$i] = _1('div',f$,0,'',null));
 		c$=t$.$ || (t$.$={});
 		v$=data.msg + i;
 		v$===c$.g || (t$.title=c$.g=v$);
@@ -44,19 +44,14 @@ self.test = function (data){
 		v$===c$.n || c$.m.flag$(c$.n=v$);
 		f$i++;
 	};c$=c$0;t$=t$0;f$.reconcile(f$i);
-	c$.built = true;;
-	});
-	b$ || t$.render();
 	return t$;
 };
 
 self.main = function (){
+	var t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0,el$,bel$;
 	b$ = 1;
-	t$ = this.o$ || (b$=0,this.o$ = _1('div',null,0,'',null));
-	b$ || (t$.template$ = function(){ var t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0,el$,bel$; t$ = this;
-	;
+	t$ = this.o$$ || (b$=0,this.o$$ = _1('div',null,0,'',null));
 	c$ = t$.$ || (t$.$={});
-	b$ = c$.built === true;
 	b$ || (t$.tabindex=0);
 	b$ || (el$=_1('h1',t$,0,'',"Hello"),el$.title="test");
 	c$.p || (c$.p = _1('h2',t$,1,'',"Subtitle"));
@@ -81,16 +76,13 @@ self.main = function (){
 	c$f=f$.$;
 	for (let i = 0, len = items.length; i < len; i++) {
 		b$=1;
-		t$ = c$f[f$i] || (b$=0,c$f[f$i] = _1('li',f$,f$i,'',null));
+		t$ = c$f[f$i] || (b$=0,c$f[f$i] = _1('li',f$,0,'',null));
 		c$=t$.$ || (t$.$={});
 		c$.aa || (c$.aa = _1('span',t$,0,'',null));
 		v$=("indexed " + i);
 		v$===c$.ab || c$.aa.text$(c$.ab=v$);
 		f$i++;
 	};c$=c$0;t$=t$0;f$.reconcile(f$i);
-	c$.built = true;;
-	});
-	b$ || t$.render();
 	return t$;
 };
 

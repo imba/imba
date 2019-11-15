@@ -2,6 +2,16 @@
 <head>
 </head>
 <body>
+	<style>
+		.completed {
+			text-decoration: line-through;
+		}
+		todo-item {
+			display: block;
+			margin: 3px;
+			border: 1px solid black;
+		}
+	</style>
   <script src="./imba.js" type="text/javascript"></script>
   <script>require = function(name){
   	if(name == 'imba2'){ return Imba; }
@@ -11,5 +21,8 @@
   <my-item></my-item>
   <custom-bar></custom-bar>
   <imba-bar></imba-bar>
+  <inherited-bar></inherited-bar>
+  <script src="./custom.js" type="text/javascript"></script>
+  <app-root test="hello"></app-root>
 </body>
 </html>

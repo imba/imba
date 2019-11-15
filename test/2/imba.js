@@ -773,6 +773,24 @@ if (false) {};
 		};
 		return;
 	};
+	
+	Element.prototype.open$ = function (){
+		return this;
+	};
+	
+	Element.prototype.close$ = function (){
+		return this;
+	};
+	
+	Element.prototype.end$ = function (){
+		this.render();
+		return;
+	};
+	
+	Element.prototype.on$ = function (){
+		console.log("define listener");
+		return;
+	};
 
 
 Imba.createElement = function (name,parent,index,flags,text){
@@ -941,9 +959,36 @@ function TagScope(ns){
 };
 
 TagScope.prototype.defineTag = function (name,supr,body){
-	if(body==undefined && typeof supr == 'function') body = supr,supr = '';
-	if(supr==undefined) supr = '';
-	return Imba.TAGS.defineTag({scope: this},name,supr,body);
+	var superklass = HTMLElement;
+	
+	if ((typeof supr=='string'||supr instanceof String)) {
+		superklass = window.customElements.get(supr);
+		console.log("get new superclass",supr,superklass);
+	};
+	
+	var klass = class extends superklass {
+	
+				constructor(){
+					super();
+					if(this.initialize) this.initialize();
+				}
+	
+				};
+	if (body) {
+		body(klass);
+	};
+	
+	if (klass.prototype.$mount) {
+		klass.prototype.connectedCallback = klass.prototype.$mount;
+	};
+	
+	if (klass.prototype.$unmount) {
+		klass.prototype.disconnectedCallback = klass.prototype.$unmount;
+	};
+	
+	window.customElements.define(name,klass);
+	return klass;
+	
 };
 
 TagScope.prototype.extendTag = function (name,body){

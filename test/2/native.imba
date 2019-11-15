@@ -1,3 +1,5 @@
+document.body.appendChild(<todo-app todos=todos>)
+
 var items = [1,2,3,4,5,6]
 var name = "hello"
 

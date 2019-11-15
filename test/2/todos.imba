@@ -1,29 +1,58 @@
-def main
-	var all    = API.todos()
-	var items  = all
-	var done   = API.completed()
-	var active = API.remaining()
+tag todo-app
+	def render
+		var remaining = @todos.filter do |todo| !todo.completed
 
-	<div#app.todoapp>
-		<header.header>
-			# <h1> "{@data.counter}"
-			<input.new-todo
-				type='text'
-				placeholder='What to do?'
-				autofocus=true>
-		<section.main>
-			<ul.todo-list>
-				for todo in items
-					<li.todo .completed=(todo.completed)>
-						<div.view> <label> todo.title
-		<footer.footer .hidden=(!all.length)>
-			<span.todo-count>
-				<strong> active.length
-				<span> " item{active.length != 1 ? 's' : ''} left"
-			<ul.filters>
-				<li> <a .selected=(items == all)    href='#/'> "All"
-				<li> <a .selected=(items == active) href='#/active'> "Active"
-				<li> <a .selected=(items == done)   href='#/completed'> "Completed"
-			<button.clear-completed .hidden=(!done.length) :tap='clearCompleted'> 'Clear completed'
+		<self#app.todoapp>
+			<header.header>
+				<input[@newtitle].new-todo
+					type='text'
+					placeholder='What to do?'
+					autofocus=true
+					:keyup.enter.addtodo>
+			<section.main>
+				<ul.todo-list>
+					for todo in @todos
+						<todo-item[todo]>
+			<footer.footer .hidden=(!@todos.length)>
+				<span.todo-count>
+					<strong> remaining.length
+					<span> " item{remaining.length != 1 ? 's' : ''} left"
+				<button :tap.clearCompleted> 'Clear completed'
 
-var el = main()
+	def add-todo
+		@todos.push {
+			title: @newtitle
+			completed: no
+		}
+		@newtitle = ''
+
+	def clear-completed
+		@todos = @todos.filter do |todo| !todo.completed
+
+tag todo-item
+
+	def drop-item
+		api.removeTodo(data)
+
+	def render
+		<self .completed=(data.completed)>
+			<div.view>
+				<label :dblclick.edit> data.title
+				# <input.toggle type='checkbox' checked=@data.completed :tap.prevent.toggle>
+				<input[data.completed] type='checkbox'>
+				<button.destroy :tap.dropItem>
+			<input.edit type='text' :keydown.enter.submit :keydown.esc.cancel>
+
+	def submit
+		self
+
+	def cancel
+		self
+
+var todos = [
+	{title: "Remember milk"},
+	{title: "Do something here"},
+	{title: "Go again", completed: yes}
+]
+
+document.body.appendChild(<todo-app todos=todos>)

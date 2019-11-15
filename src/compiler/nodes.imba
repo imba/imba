@@ -2482,6 +2482,8 @@ export class TagDeclaration < Code
 				# supname = helpers.singlequote(supname)
 			else
 				params.push(supname)
+		else
+			params.push(LIT('null'))
 
 		if body.count
 			params.push("function({@ctx.c})\{{cbody}\}")
@@ -5580,6 +5582,16 @@ export class Loop < Statement
 	prop body
 	prop catcher
 
+	# should be added more generally to nodes?
+	def tagvar name
+		@tagvars ||= {}
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"t{name}${@level}")
+
+	def tvar do tagvar('t')
+	def bvar do tagvar('b')
+	def cvar do tagvar('c')
+	def vvar do tagvar('v')
+
 	def loc
 		var a = @options:keyword
 		var b = @body
@@ -5740,6 +5752,7 @@ export class For < Loop
 			@tag = parent
 			stack.@fragment = self
 			stack.@tag = self
+			@level = (@tag && @tag.@level or 0) + 1
 
 		body.traverse
 		stack.@tag = parent
@@ -6666,27 +6679,44 @@ export class Tag < Node
 	def ref
 		@ref || "c$.{oid}"
 
+	def tagvar name
+		@tagvars ||= {}
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"t{name}${@level}")
+
+	def tvar do tagvar('t')
+	def bvar do tagvar('b')
+	def cvar do tagvar('c')
+	def vvar do tagvar('v')
+
+	def fragment
+		@fragment = (isSelf or !@parent or @parent isa Loop) ? self : (@parent.fragment)
+
 	def js o
+		var isExpression = STACK.isExpression
+		
 		var out = []
 		var add = do |val|
+			if val isa Variable
+				val = val.toString
 			out.push(val)
 
 		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
-		# var ctor = "{tagfactory.c}()"
-		
-		var commit = no
-		var text
-		var shouldEnd = no
 
 		# if tag contains no static attributes (except className / text)
 		# we don't need to mark when built
+		var isCustom = isSelf or typ.indexOf('-') >= 0 # or custom attributes
 		var markWhenBuilt = yes
 		var hasTemplate = no
 		var canInline = no
+		var isReactive = yes
+		var shouldEnd = isCustom
 
-		var ctor = [
+		if !@parent and isExpression
+			isReactive = no
+
+		var params = [
 			typ,
-			(@parent ? @parent.ref : 'null'),
+			(@parent ? @parent.tvar : 'null'),
 			@slot !== null ? (@slot or 0) : 'null',
 			'null',
 			'null'
@@ -6695,9 +6725,8 @@ export class Tag < Node
 		var nodes = body ? body.values : []
 
 		if nodes:length == 1 and nodes[0] isa Str
-			text = nodes[0]
+			params[4] = nodes[0].c
 			nodes = []
-			ctor[4] = text.c
 
 		var statics = []
 		var dynamics = []
@@ -6719,29 +6748,49 @@ export class Tag < Node
 		if statics:length == 0
 			markWhenBuilt = no
 
-		# add the static flags immediately
-		ctor[3] = (helpers.singlequote(staticFlags.join(" ")))
 
-		var vars = "t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0,el$,bel$"
+
+		# add the static flags immediately
+		params[3] = (helpers.singlequote(staticFlags.join(" ")))
+
+		# variables for parents
+		# var $el = scope__.closure.temporary(null,{reuse: yes},"t{@level}$")
+		# var vars = "t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0,el$,bel$"
+
+		var ctor = "{tvar}={create_}({params.join(',')})"
+
 		if !@parent
 			# FIXME change oid to actual unique id based on file
 
 			if isSelf
 				# should do it for everything
-				add "var {vars}"
-				add "b$ = 1"
-				add "t$ = this"
-				add "t$.open$()"
-				add "c$ = t$.$ || (b$=0,t$.$=\{\})"
-			else
-				add "var {vars}"
-				add "b$ = 1"
-				add "t$ = this.{oid}$$ || (b$=0,this.{oid}$$ = {create_}({ctor.join(',')}))"
+				# add "var {vars}"
+				add "{bvar} = 1"
+				add "{tvar} = this"
+				add "{tvar}.open$()"
+				add "{cvar} = {tvar}.$ || ({bvar}=0,{tvar}.$=\{\})"
+			elif isReactive
+				# add "var {vars}"
+				add "{bvar} = 1"
+				add "{tvar} = this.{oid}$$ || ({bvar}=0,this.{oid}$$ = {ctor})"
+				add "{cvar} = {tvar}.$ || ({bvar}=0,{tvar}.$=\{\})"
 				# add "b$ || (t$.template$ = function()\{ var {vars}; t$ = this;\n"
 				# hasTemplate = yes
-				add "c$ = t$.$ || (t$.$=\{\})"
+				# add "c$ = t$.$ || (t$.$=\{\})"
 				# add "b$ = c$.built === true"
-				
+			else
+				add "({ctor})"
+				# mark whether we have changes?
+				@ref = "{tvar}"
+
+				for item in @attributes
+					add "{tvar}.{item.c(o)}"
+
+				add "{tvar}.end$()"
+				add tvar
+
+				return "(" + out.join(",") + ")"
+
 			# add "{ref}=t$"
 			@ref = "t$"
 			# create a unique reference
@@ -6757,7 +6806,7 @@ export class Tag < Node
 				ctor[2] = 'f$i'
 
 			add "b$=1" # only if we have dynamic stuff?
-			add "t$ = {ref} || (b$=0,{ref} = {create_}({ctor.join(',')}))"
+			add "t$ = {ref} || (b$=0,{ref} = {ctor})"
 			@ref = "t$"
 			add "c$=t$.$ || (t$.$=\{\})"
 		else
@@ -6768,16 +6817,17 @@ export class Tag < Node
 
 			if canInline
 				var parts = for item in statics
-					"el$.{item.c(o)}"
+					"{tvar}.{item.c(o)}"
 				parts.unshift('') if parts:length > 0
-				return "b$ || (el$={create_}({ctor.join(',')}){parts.join(",")})"
+				# check if parent is built - not caching?
+				return "b$ || ({ctor}{parts.join(",")})"
 			else
 				# if this item is the root of a fragment and has children --
 				# stack as if it was on another level
 				if markWhenBuilt
-					add "bel$=1"
-
-				add "{ref} || ({markWhenBuilt ? 'bel$=0,' : ''}{ref} = {create_}({ctor.join(',')}))"
+					add "{bvar}=1"
+				let ref = "{fragment.cvar}.{oid}"
+				add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
 
 		
 		var optimizeFlag = no
@@ -6786,6 +6836,7 @@ export class Tag < Node
 			optimizeFlag = yes
 
 		for item in @attributes
+
 			if item.isStatic
 				continue if item isa TagFlag
 				let js = "b$ || ({ref}.{item.c(o)})"
@@ -6843,6 +6894,10 @@ export class Tag < Node
 				else
 					add "v$==={key} || ({key}_ = {ref}.insert$({key}=v$,{slot++},{key}_))"
 		
+		if shouldEnd
+			# include some dynamic params?
+			add "el$.end$()"
+
 		if @parent isa Loop
 			# not for all?
 			if @parent.option(:indexed)
@@ -6865,7 +6920,6 @@ export class Tag < Node
 			if option(:return)
 				add "return t$"
 
-			
 		# if returning
 
 		return out.join(";\n")
