@@ -5853,8 +5853,10 @@ export class For < Loop
 			before += "c$f={ref}.$;\n"
 			after += ";c$=c$0"
 			after += ";t$=t$0"
-			after += ";f$.reconcile(f$i)" if indexed
-			after += ";{@tag.ref}.render_({ref},{@slot or '0'})" if !indexed
+			if indexed
+				after += ";f$.reconcile(f$i)"
+			else
+				after += ";{@tag.ref}.render$({ref},{@slot or '0'})"
 
 		var code = body.c(braces: yes, indent: yes)
 		var head = "{AST.mark(options:keyword)}for ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
@@ -6311,9 +6313,12 @@ export class TagFlagExpr < TagFlag
 		
 	def isStatic
 		!@name or @name.isPrimitive
+
+	def value
+		@value or @name
 	
 	def js
-		"setFlag({slot},{name.c})"
+		"setFlag({slot},{value.c})"
 	
 export class TagSep < TagPart
 	
@@ -6613,6 +6618,11 @@ export class Tag < Node
 		
 		var commit = no
 		var text
+		var shouldEnd = no
+
+		# if tag contains no static attributes (except className / text)
+		# we don't need to mark when built
+		var markWhenBuilt = yes
 
 		var ctor = [
 			typ,
@@ -6625,19 +6635,29 @@ export class Tag < Node
 		var nodes = body ? body.values : []
 
 		if nodes:length == 1 and nodes[0] isa Str
-			console.log "found string!!"
 			text = nodes[0]
 			nodes = []
 			ctor[4] = text.c
 
+		var statics = []
+		var dynamics = []
+
 		var staticFlags = []
 		var dynamicFlags = []
-
-		for item in @attributes when item isa TagFlag
-			if item.value
-				dynamicFlags.push(item)
+		
+		for item in @attributes
+			if item isa TagFlag
+				if item.value
+					dynamicFlags.push(item)
+				else
+					staticFlags.push(item.name)
+			elif item.isStatic
+				statics.push(item)
 			else
-				staticFlags.push(item.name)
+				dynamics.push(item)
+
+		if statics:length == 0
+			markWhenBuilt = no
 
 		# add the static flags immediately
 		ctor[3] = (helpers.singlequote(staticFlags.join(" ")))
@@ -6649,10 +6669,11 @@ export class Tag < Node
 				# should do it for everything
 				add "var t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0"
 				add "t$ = this"
+				add "t$.open$()"
 			else
 				add "t$ = this.{oid}$ || (this.{oid}$ = {create_}({ctor.join(',')}))"
 			add "c$ = t$.$"
-			add "b$ = c$._"
+			add "b$ = c$.built === true"
 			# add "{ref}=t$"
 			@ref = "t$"
 			# create a unique reference
@@ -6674,11 +6695,16 @@ export class Tag < Node
 		else
 			# if this item is the root of a fragment and has children --
 			# stack as if it was on another level
-			add "b$=1"
-			add "{ref} || (b$=0,{ref} = {create_}({ctor.join(',')}))"
+			if markWhenBuilt
+				add "b$=1"
+
+			add "{ref} || ({markWhenBuilt ? 'b$=0,' : ''}{ref} = {create_}({ctor.join(',')}))"
 
 		
+		var optimizeFlag = no
 
+		if dynamicFlags:length == 1 and staticFlags:length == 0
+			optimizeFlag = yes
 
 		for item in @attributes
 			if item.isStatic
@@ -6689,7 +6715,12 @@ export class Tag < Node
 				let val = item.value
 				item.value = LIT("{item.ref}=v$")
 				add "v$={val.c(o)}"
-				add "v$==={item.ref} || ({ref}.{item.js(o)})"
+
+				if item isa TagFlagExpr and optimizeFlag
+					add "v$==={item.ref} || {ref}.flag$({item.value.c(o)})"
+				else
+					add "v$==={item.ref} || ({ref}.{item.js(o)})"
+
 
 		# When there is only one value and that value is a static string or num - include it in ctor
 		# loop through attributes etc
@@ -6702,7 +6733,7 @@ export class Tag < Node
 				add item.c(o)
 			elif item isa Str
 				# should do a basic init check
-				add "b$ || {ref}.render_({item.c(o)},{slot++})"
+				add "b$ || {ref}.render$({item.c(o)},{slot++})"
 			elif item isa Loop
 				# shouldnt the loop setup its own stuff?
 				# loop should know about its own slot
@@ -6713,17 +6744,21 @@ export class Tag < Node
 				let id = item.oid
 				add "v$={item.c(o)}"
 				# add special case for strings?
-				add "v$===c$.{id} || {ref}.render_(c$.{id}=v$,{slot++})"
-				# add "{ref}.render_({item.c(o)},{slot++})"
+				add "v$===c$.{id} || {ref}.render$(c$.{id}=v$,{slot++})"
 		
 		if @parent isa Loop
 			# not for all?
-			add "{@parent.ref}.push({ref},f$i++)"
+			if @parent.option(:indexed)
+				add "f$i++"
+			else
+				add "{@parent.ref}.push({ref},f$i++)"
 
 		elif !@parent
 			# call setup?
 			# add "b$ || (c$._ = true);"
-			add "c$._ = true;"
+			add "c$.built = true;"
+			if isSelf
+				add "t$.close$()"
 		# if returning
 
 		return out.join(";\n")

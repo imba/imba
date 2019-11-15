@@ -751,7 +751,21 @@ class Imba.Tag
 	get innerHTML
 		@dom.innerHTML
 
-	def render_ item, index
+	def flag$ str
+		@dom.className = str
+		return
+
+	def open$
+		return
+
+	def close$
+		return
+
+	def text$ item
+		@dom.textContent = item
+		self
+
+	def render$ item, index
 		if $web$
 			var prev = #slots_[index]
 			var node = item
@@ -983,7 +997,6 @@ def Imba.createElement name, parent, index, flags, text
 	if name isa Function
 		type = name
 	else
-		
 		type = Imba.TAGS.findTagType(name)
 		if $debug$
 			throw("cannot find tag-type {name}") if !type
@@ -1000,7 +1013,7 @@ def Imba.createElement name, parent, index, flags, text
 
 	# immediately add to parent
 	if parent and index != null  and parent isa Imba.Tag
-		parent.render_(node,index)
+		parent.render$(node,index)
 
 
 	return node
