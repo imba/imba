@@ -1,3 +1,7 @@
+## master
+
+* Fixed #237 (CSS comments not working in SFC)
+
 ## 1.5.0
 * Add support for declaring native getters and setters using `get/set` instead of `def` keyword
 * Add support for compiling props to native getters and setters using `native` option (`prop name native: yes`)
