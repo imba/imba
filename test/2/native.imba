@@ -20,24 +20,23 @@ def test data
 						<span.baz> "seven"
 						<span.{data.msg}> "eight"
 
-def main
-	<div tabindex=0>
-		<h1 title="test"> "Hello"
-		<h2 .{name}> "Subtitle"
-		<div>
-			@one
-			@two
-		<div>
-			@three
-		<div>
-			"{@four}"
-		# <ul>
-		# 	for item,i in items
-		# 		<li@{item} data=item>
-		# 			<span> "hello {i}"
-		<ul>
-			for item,i in items
-				<li> <span> "indexed {i}"
+tag app-root
+	def render
+		<self>
+			<p> data.msg
+			for obj,i in data.list
+				<div title=data.msg+i>
+					<span.{datavmsg}> "{obj.text}"
+					<span.baz> "one"
+					<span.qux> "two"
+					<div>
+						<span.qux> "three"
+						<span.qux> "four"
+						<span.baz> "five"
+						<div>
+							<span.qux> "six"
+							<span.baz> "seven"
+							<span.{data.msg}> "eight"
 
 var el = main()
 document.body.appendChild(el)

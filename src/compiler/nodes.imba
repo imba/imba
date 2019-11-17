@@ -5585,7 +5585,8 @@ export class Loop < Statement
 	# should be added more generally to nodes?
 	def tagvar name
 		@tagvars ||= {}
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"t{name}${@level}")
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"t{@level}${name}")
+
 
 	def tvar do tagvar('t')
 	def bvar do tagvar('b')
@@ -5732,7 +5733,7 @@ export class For < Loop
 		helpers.unionOfLocations(o:keyword,@body,o:guard,o:step,o:source)
 	
 	def ref
-		@ref || "c$.{oid}"
+		@ref || "{@tag.fragment.cvar}.{oid}"
 
 	def visit stack
 		scope.visit
@@ -5906,16 +5907,16 @@ export class For < Loop
 			option(:indexed,!!indexed)
 
 			# should know how many inner slots this fragment has?
-			before += "f$ = {ref} || ({ref} = {iref}({typ},{@tag.ref},{@slot or '0'}));\n"
-			@ref = "f$"
-			before += "f$i = 0;\n"
-			before += "c$0=c$;\n"
-			before += "t$0=t$;\n"
-			before += "c$f={ref}.$;\n"
-			after += ";c$=c$0"
-			after += ";t$=t$0"
+			let cache = @tag.fragment.cvar
+			let counter = tagvar('i')
+			before += "{tvar} = {cache}.{oid} || ({cache}.{oid} = {tvar} = {iref}({typ},{@tag.tvar},{@slot or '0'}));\n"
+			@ref = "{tvar}"
+			before += "{counter} = 0;\n"
+			before += "{cvar}={tvar}.$;\n"
+			# after += ";c$=c$0"
+			# after += ";t$=t$0"
 			if indexed
-				after += ";f$.reconcile(f$i)"
+				after += ";{tvar}.reconcile({counter})"
 			else
 				after += ";{@tag.ref}.render$({ref},{@slot or '0'})"
 
@@ -6677,16 +6678,17 @@ export class Tag < Node
 		scope__.imbaRef('createElementFactory(/*SCOPEID*/)').c
 
 	def ref
-		@ref || "c$.{oid}"
+		@ref || (@cachedRef = "{fragment ? fragment.cvar : ''}.{oid}")
 
 	def tagvar name
 		@tagvars ||= {}
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"t{name}${@level}")
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"t{@level}${name}")
 
-	def tvar do tagvar('t')
-	def bvar do tagvar('b')
-	def cvar do tagvar('c')
-	def vvar do tagvar('v')
+	def tvar do tagvar('t') # tag variable
+	def bvar do tagvar('b') # built variable
+	def cvar do tagvar('c') # cache variable
+	def vvar do tagvar('v') # value variable
+	def kvar do tagvar('k') # key variable
 
 	def fragment
 		@fragment = (isSelf or !@parent or @parent isa Loop) ? self : (@parent.fragment)
@@ -6792,23 +6794,24 @@ export class Tag < Node
 				return "(" + out.join(",") + ")"
 
 			# add "{ref}=t$"
-			@ref = "t$"
+			# @ref = "t$"
 			# create a unique reference
 
 		elif @parent isa Loop
 			if option(:key)
-				add "k$={option(:key).c}"
-				@ref = "c$f[k$]"
+				add "{kvar}={option(:key).c}"
+
+				@ref = "{@parent.cvar}[{kvar}]"
 
 			elif @parent.option(:indexed)
 				# this is plainly indexed
-				@ref = "c$f[f$i]"
-				ctor[2] = 'f$i'
+				@ref = "{@parent.cvar}[{@parent.tagvar('i')}]"
+				# ctor[2] = '{f$i}'
 
-			add "b$=1" # only if we have dynamic stuff?
-			add "t$ = {ref} || (b$=0,{ref} = {ctor})"
-			@ref = "t$"
-			add "c$=t$.$ || (t$.$=\{\})"
+			add "{bvar}=1" # only if we have dynamic stuff?
+			add "{tvar} = {ref} || ({bvar}=0,{ref} = {ctor})"
+			@ref = "{tvar}"
+			add "{cvar}={ref}.$ || ({ref}.$=\{\})"
 		else
 
 			if nodes:length == 0 and dynamics:length == 0 and dynamicFlags:length == 0
@@ -6820,7 +6823,7 @@ export class Tag < Node
 					"{tvar}.{item.c(o)}"
 				parts.unshift('') if parts:length > 0
 				# check if parent is built - not caching?
-				return "b$ || ({ctor}{parts.join(",")})"
+				return "{fragment.bvar} || ({ctor}{parts.join(",")})"
 			else
 				# if this item is the root of a fragment and has children --
 				# stack as if it was on another level
@@ -6839,22 +6842,23 @@ export class Tag < Node
 
 			if item.isStatic
 				continue if item isa TagFlag
-				let js = "b$ || ({ref}.{item.c(o)})"
+				let js = "{bvar} || ({tvar}.{item.c(o)})"
 				add js
 			else
 				let val = item.value
-				item.value = LIT("{item.ref}=v$")
-				add "v$={val.c(o)}"
+				let iref = "{fragment.cvar}.{item.oid}"
+				item.value = LIT("{iref}={vvar}")
+				add "{vvar}={val.c(o)}"
 
 				if item isa TagFlagExpr and optimizeFlag
-					add "v$==={item.ref} || {ref}.flag$({item.value.c(o)})"
+					add "{vvar}==={iref} || {ref}.flag$({item.value.c(o)})"
 				elif item isa TagFlag
 					if optimizeFlag
-						add "v$==={item.ref} || {ref}.flag$(v$ ? {item.quoted} : '',{item.value.c(o)})"
+						add "{vvar}==={iref} || {ref}.flag$({vvar} ? {item.quoted} : '',{item.value.c(o)})"
 					else
-						add "v$==={item.ref} || {ref}.flagIf$({item.quoted},{item.value.c(o)})"
+						add "{vvar}==={iref} || {ref}.flagIf$({item.quoted},{item.value.c(o)})"
 				else
-					add "v$==={item.ref} || ({ref}.{item.js(o)})"
+					add "{vvar}==={iref} || ({ref}.{item.js(o)})"
 
 
 		# When there is only one value and that value is a static string or num - include it in ctor
@@ -6881,44 +6885,48 @@ export class Tag < Node
 				# not if variable declaration etc
 				# if this is the single child - things are different
 				let id = item.oid
-				let key = "c$.{id}"
+				let key = "{fragment.cvar}.{id}"
 
-				add "v$={item.c(o)}"
+				add "{vvar}={item.c(o)}"
 				# add special case for strings?
 				# should reference the previous slot?
 				# don't know if this is a tag or not
 				if count == 1 and item isa InterpolatedString
-					add "v$==={key} || {ref}.text$({key}=v$)"
+					add "{vvar}==={key} || {ref}.text$({key}={vvar})"
 				elif count == 1
-					add "v$==={key} || {ref}.insert$({key}=v$,-1,{key}_)"
+					add "{vvar}==={key} || {ref}.insert$({key}={vvar},-1,{key}_)"
 				else
-					add "v$==={key} || ({key}_ = {ref}.insert$({key}=v$,{slot++},{key}_))"
+					add "{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{slot++},{key}_))"
 		
 		if shouldEnd
 			# include some dynamic params?
-			add "el$.end$()"
+			if isSelf
+				add "{tvar}.close$()"
+			else
+				add "{tvar}.end$()"
 
 		if @parent isa Loop
 			# not for all?
+			let i = @parent.tagvar('i')
 			if @parent.option(:indexed)
-				add "f$i++"
+				add "{i}++"
 			else
-				add "{@parent.ref}.push({ref},f$i++)"
+				add "{@parent.tvar}.push({tvar},{i}++)"
 
 		elif !@parent
 			# call setup?
 			# add "b$ || (c$._ = true);"
 			# if built
 			# add "c$.built = true;" 
-			if isSelf
-				add "t$.close$()"
+			# if isSelf
+			# 	add "{tvar}.close$()"
 
 			if hasTemplate
 				add '})'
 				add 'b$ || t$.render()'
 
 			if option(:return)
-				add "return t$"
+				add "return {tvar}"
 
 		# if returning
 
