@@ -964,6 +964,9 @@ class Imba.Tags
 		tagtype:prototype?.optimizeTagStructure
 		
 	def findTagType type
+		if !type
+			throw("Expected a valid tag but got falsy type, did you forget to export it?")
+
 		let klass = self[type]
 		unless klass
 			if type.substr(0,4) == 'svg:'
