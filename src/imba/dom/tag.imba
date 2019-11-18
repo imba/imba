@@ -178,8 +178,8 @@ export class KeyedTagFragment < TagFragment
 		# do nothing
 		if prev === item
 			# console.log "is at same position",item
-			if @remove.has(item)
-				@remove.delete(item)
+			# if @remove.has(item)
+			# 	@remove.delete(item)
 			yes
 		else
 			let lastIndex = @array.indexOf(item) # @map.get(item) #  @array.indexOf(item)
@@ -200,11 +200,11 @@ export class KeyedTagFragment < TagFragment
 			else
 				@array[idx] = item
 				@appendChild(item,idx)
+				@remove.add(prev) if prev
 
 			# mark previous element as something to remove?
 			# if prev is now further ahead - dont care?
-			if prev
-				@remove.add(prev)
+			
 		return
 
 	def appendChild item, index
