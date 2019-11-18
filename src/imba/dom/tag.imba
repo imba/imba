@@ -5,7 +5,6 @@ if $node$
 	var Element = ImbaServerElement
 	var document = ImbaServerDocument.new
 
-
 var keyCodes = {
 	esc: [27],
 	tab: [9],
@@ -16,25 +15,6 @@ var keyCodes = {
 	del: [8,46]
 }
 
-var el = Element.prototype
-
-# add the modifiers to event instead of Element?
-extend class Event
-	def stopModifier e do e.stopPropagation() || true
-	def preventModifier e do e.prevent() || true
-	def silenceModifier e do e.silence() || true
-	def bubbleModifier e do e.bubble(yes) || true
-	def ctrlModifier e do e.event.ctrlKey == true
-	def altModifier e do e.event.altKey == true
-	def shiftModifier e do e.event.shiftKey == true
-	def metaModifier e do e.event.metaKey == true
-	def keyModifier key, e do e.keyCode ? (e.keyCode == key) : true
-	def delModifier e do e.keyCode ? (e.keyCode == 8 or e.keyCode == 46) : true
-	def selfModifier e do e.event.target == @dom
-	def leftModifier e do e.button != undefined ? (e.button === 0) : el.keyModifier(37,e)
-	def rightModifier e do e.button != undefined ? (e.button === 2) : el.keyModifier(39,e)
-	def middleModifier e do e.button != undefined ? (e.button === 1) : true
-
 # could cache similar event handlers with the same parts
 class EventHandler
 	def initialize params
@@ -43,12 +23,11 @@ class EventHandler
 	def getHandlerForMethod path, name
 		for item,i in path
 			if item[name]
-				console.log "found handler",name,item
 				return item
 		return null
 
 	def handleEvent event
-		console.log "handling event!",event,@params
+		# console.log "handling event!",event,@params
 
 		var target = event.target
 		var parts = @params
@@ -57,12 +36,10 @@ class EventHandler
 		for part,i in @params
 			let handler = part
 			let args = [event]
-			let checkSpecial = false
 
 			if handler isa Array
 				args = handler.slice(1)
 				handler = handler[0]
-				checkSpecial = yes
 
 				for param,i in args
 					# what about fully nested arrays and objects?
@@ -80,7 +57,6 @@ class EventHandler
 				event.stopPropagation()
 
 			elif handler == 'prevent'
-				console.log "preventing default!"
 				event.preventDefault()
 
 			elif handler == 'ctrl'
@@ -99,16 +75,14 @@ class EventHandler
 			elif typeof handler == 'string'
 				let context = @getHandlerForMethod(event.path,handler)
 				if context
-					console.log "found context?!"
+					# console.log "found context?!"
 					let res = context[handler].apply(context,args)
 		return
-
 
 
 extend class Element
 
 	def on$ type, parts
-		console.log "add listener",type,parts
 		var handler = EventHandler.new(parts)
 		@addEventListener(type,handler)
 		return handler
@@ -140,11 +114,6 @@ extend class Element
 		bool ? @classList.add(flag) : @classList.remove(flag)
 		return
 
-	def render
-		if self.template$
-			self.template$()
-		return
-
 	def open$
 		self
 
@@ -152,7 +121,7 @@ extend class Element
 		self
 
 	def end$
-		@render()
+		@render() if @render
 		return
 
 def Imba.createElement name, parent, index, flags, text
@@ -196,55 +165,84 @@ export class KeyedTagFragment < TagFragment
 	def initialize parent, slot
 		@parent = parent
 		@slot = slot
-		@$ = {} # this is the map
 		@array = []
-		@prev = []
-		@index = 0
-		@taglen = 0
-		@starter = Imba.document.createComment('')
-		@reconciled = no
+		@remove = Set.new
+		@map = WeakMap.new
+		@$ = {}
 
-	def reset
-		@index = 0
-		var curr = @array
-		@array = @prev
-		@prev = curr
-		@prev.taglen = @taglen
-		@index = 0
+	def push item, idx
+		let prev = @array[idx]
 
-		return self
+		# console.log("push dom item")
 
-	def $iter
-		@reset()
+		# do nothing
+		if prev === item
+			# console.log "is at same position",item
+			if @remove.has(item)
+				@remove.delete(item)
+			yes
+		else
+			let lastIndex = @array.indexOf(item) # @map.get(item) #  @array.indexOf(item)
+	
+			if @remove.has(item)
+				@remove.delete(item)
 
-	def prune items
-		return self
+			# this is a new item to be inserted
+			if lastIndex == -1
+				# console.log 'was not in loop before'
+				@array.splice(idx,0,item)
+				@appendChild(item,idx)
 
-	def push item
-		let prev = @prev[@index]
-		@array[@index] = item
-		@index++
+			elif lastIndex == idx + 1
+				# console.log 'was originally one step ahead'
+				@array.splice(idx,1) # just remove the previous slot?
+				# mark previous index of previous item?
+			else
+				@array[idx] = item
+				@appendChild(item,idx)
+
+			# mark previous element as something to remove?
+			# if prev is now further ahead - dont care?
+			if prev
+				@remove.add(prev)
 		return
 
-	def insertInto parent, index
-		# console.log "inserting into!!",parent,index
-		var fragment = Imba.document.createDocumentFragment()
-		var i = 0
-		var len = @index
-		while i < len
-			let item = @array[i++]
-			fragment.appendChild(item.dom)
+	def appendChild item, index
+		# we know that these items are dom elements
+		# console.log "append child",item,index
+		@map.set(item,index)
 
-		parent.dom.appendChild(fragment)
-		self
+		if index > 0
+			let other = @array[index - 1]
+			other.insertAdjacentElement('afterend',item)
+		else
+			@parent.insertAdjacentElement('afterbegin',item)
+			# if there are no new items?
+			# @parent.appendChild(item)
+		return
 
-	def reconcile parent, siblings, index
-		console.log "reconciling fragment!",self
-		# reconcile this now?
-		self
+	def removeChild item, index
+		@map.delete(item)
+		@parent.removeChild(item) if item.parentNode == @parent
+		return
 
-	get length
-		@taglen
+	def open$
+		return self
+
+	def close$ index
+		if @remove.size
+			# console.log('remove items from keyed tag',@remove.entries())
+			@remove.forEach do |item| @removeChild(item)
+			@remove.clear()
+
+		if @array.length > index
+			# remove the children below
+			while @array.length > index
+				let item = @array.pop()
+				# console.log("remove child",item.data.id)
+				@removeChild(item)
+			# @array.length = index
+		return self
 
 export class IndexedTagFragment < TagFragment
 	def initialize parent, slot

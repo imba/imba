@@ -5755,7 +5755,7 @@ export class For < Loop
 			else
 				typ = keyed
 
-			option(:indexed,!!indexed)
+			option(:indexed,typ == indexed)
 
 			# should know how many inner slots this fragment has?
 			let cache = @tag.fragment.cvar
@@ -5766,10 +5766,13 @@ export class For < Loop
 			before += "{cvar}={tvar}.$;\n"
 			# after += ";c$=c$0"
 			# after += ";t$=t$0"
-			if indexed
+			if typ == indexed
 				after += ";{tvar}.reconcile({counter})"
+				# here we could just do the whole reconciliation inline
 			else
-				after += ";{@tag.ref}.render$({ref},{@slot or '0'})"
+				before += "{tvar}.open$();\n"
+				# after += ";{@tag.ref}.render$({ref},{@slot or '0'})"
+				after += ";{tvar}.close$({counter})"
 
 		var code = body.c(braces: yes, indent: yes)
 		var head = "{AST.mark(options:keyword)}for ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
@@ -6676,7 +6679,7 @@ export class Tag < Node
 			if @parent.option(:indexed)
 				add "{i}++"
 			else
-				add "{@parent.tvar}.push({tvar},{i}++)"
+				add "{@parent.tvar}.push({tvar},{i}++,{kvar})"
 
 		if shouldEnd
 			foot.push(isSelf ? "{tvar}.close$()" : "{tvar}.end$()")
