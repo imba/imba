@@ -5,7 +5,114 @@ if $node$
 	var Element = ImbaServerElement
 	var document = ImbaServerDocument.new
 
+
+var keyCodes = {
+	esc: [27],
+	tab: [9],
+	enter: [13],
+	space: [32],
+	up: [38],
+	down: [40],
+	del: [8,46]
+}
+
+var el = Element.prototype
+
+# add the modifiers to event instead of Element?
+extend class Event
+	def stopModifier e do e.stopPropagation() || true
+	def preventModifier e do e.prevent() || true
+	def silenceModifier e do e.silence() || true
+	def bubbleModifier e do e.bubble(yes) || true
+	def ctrlModifier e do e.event.ctrlKey == true
+	def altModifier e do e.event.altKey == true
+	def shiftModifier e do e.event.shiftKey == true
+	def metaModifier e do e.event.metaKey == true
+	def keyModifier key, e do e.keyCode ? (e.keyCode == key) : true
+	def delModifier e do e.keyCode ? (e.keyCode == 8 or e.keyCode == 46) : true
+	def selfModifier e do e.event.target == @dom
+	def leftModifier e do e.button != undefined ? (e.button === 0) : el.keyModifier(37,e)
+	def rightModifier e do e.button != undefined ? (e.button === 2) : el.keyModifier(39,e)
+	def middleModifier e do e.button != undefined ? (e.button === 1) : true
+
+# could cache similar event handlers with the same parts
+class EventHandler
+	def initialize params
+		@params = params
+
+	def getHandlerForMethod path, name
+		for item,i in path
+			if item[name]
+				console.log "found handler",name,item
+				return item
+		return null
+
+	def handleEvent event
+		console.log "handling event!",event,@params
+
+		var target = event.target
+		var parts = @params
+		var i = 0
+
+		for part,i in @params
+			let handler = part
+			let args = [event]
+			let checkSpecial = false
+
+			if handler isa Array
+				args = handler.slice(1)
+				handler = handler[0]
+				checkSpecial = yes
+
+				for param,i in args
+					# what about fully nested arrays and objects?
+					if typeof param == 'string' && param[0] == '~' && param[1] == '$'
+						let name = param.slice(2)
+						if name == 'event'
+							args[i] = event
+						elif name == 'this'
+							args[i] = @element
+						else
+							args[i] = event[name]
+
+			# check if it is an array?
+			if handler == 'stop'
+				event.stopPropagation()
+
+			elif handler == 'prevent'
+				console.log "preventing default!"
+				event.preventDefault()
+
+			elif handler == 'ctrl'
+				break unless event.ctrlKey
+			elif handler == 'alt'
+				break unless event.altKey
+			elif handler == 'shift'
+				break unless event.shiftKey
+			elif handler == 'meta'
+				break unless event.metaKey
+
+			elif keyCodes[handler]
+				unless keyCodes[handler].indexOf(event.keyCode) >= 0
+					break
+
+			elif typeof handler == 'string'
+				let context = @getHandlerForMethod(event.path,handler)
+				if context
+					console.log "found context?!"
+					let res = context[handler].apply(context,args)
+		return
+
+
+
 extend class Element
+
+	def on$ type, parts
+		console.log "add listener",type,parts
+		var handler = EventHandler.new(parts)
+		@addEventListener(type,handler)
+		return handler
+
 	def text$ item
 		@textContent = item
 		self
@@ -48,10 +155,6 @@ extend class Element
 		@render()
 		return
 
-	def on$
-		console.log "define listener"
-		return
-
 def Imba.createElement name, parent, index, flags, text
 	var type = name
 	var el
@@ -60,6 +163,7 @@ def Imba.createElement name, parent, index, flags, text
 		type = name
 	else
 		el = document.createElement(name)
+		# console.log 'created element',name,el
 
 	if el
 		el.className = flags if flags

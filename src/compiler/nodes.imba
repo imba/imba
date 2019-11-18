@@ -2589,157 +2589,6 @@ export class TagFragmentFunc < Func
 	def scopetype
 		# caching still needs to be local no matter what?
 		option(:closed) ? (MethodScope) : (LambdaScope)
-		
-export class TagLoopFunc < Func
-
-	def scopetype
-		# caching still needs to be local no matter what?
-		option(:closed) ? (MethodScope) : (LambdaScope)
-		
-	def visit stack
-		@loop = @body.first
-		@tag = stack.@tag
-		@tags = []
-		@args = []
-		
-		var prevLoop = @tag.@tagLoop
-
-		if prevLoop
-			@parentLoop = prevLoop
-
-		@tag.@tagLoop = self
-		
-		@isFast = prevLoop ? false : true
-
-		if @loop
-			@loop.body.values.every(|v| v isa Tag )
-
-		super
-
-		@tag.@tagLoop = prevLoop
-		# see if we are optimized
-		var lo = @loop.options
-		var single = @tags[0]
-		# as long as there is only a single item to push
-		if lo:step or lo:diff or lo:guard or !@loop.body.values.every(|v| v isa Tag )
-			@isFast = no
-			
-		for param in @params
-			param.visit(stack)
-			
-		# we must be certain that we are only consuming one tag?
-
-		if @tags.len == 1 and !single.option(:key)
-			@name = 'nonkeyedTagLoop'
-
-			if @isFast
-				let len = @loop.options:vars:len
-				if len and len:declarator
-					let defs = len.declarator.defaults
-					len.declarator.defaults = OP('=',OP('.',@params.at(0),'taglen'),defs)
-				@body.push(Return.new(@params.at(0)))
-				set(treeType: 4)
-				return self
-		
-		unless @isFast
-			for item in @tags
-				item.@loopCache.@callee = scope__.imbaRef('createTagMap')
-		
-		unless @parentLoop
-			let collectInto = ValueNode.new("val")
-			let collector = TagPushAssign.new("push",collectInto,null)
-			@loop.body.consume(collector)
-			let collected = collector.consumed
-			let treeType = 3
-			
-			if collected.len == 1 and collected[0] isa Tag
-				let op = CALL(OP('.',@params.at(0),'$iter'),[])
-				@resultVar = scope.declare('$$',op, system: yes)
-				treeType = 5
-				@name = 'keyedTagLoop'
-				let len = @loop.options:vars:len
-				if len and len:declarator
-					let defs = len.declarator.defaults
-					len.declarator.defaults = OP('=',OP('.',@resultVar,'taglen'),defs)
-			else
-				@resultVar = @params.at(@params.count,true,'$$') # visiting?
-				@resultVar.visit(stack)
-				if collected.every(|item| item isa Tag)
-					# let op = CALL(scope__.imbaRef('createTagLoopResult'),[])
-					treeType = 5
-					@args.push CALL(scope__.imbaRef('createTagLoopResult'),[])
-				else
-					@args.push Arr.new([])
-			
-			collectInto.value = @resultVar
-			@body.push(Return.new(collectInto))
-			set(treeType: treeType)
-		else
-			set(noreturn: yes)
-		self
-		
-	def consume other
-		if other isa TagPushAssign
-			@loop.body.consume(other)
-		self
-		
-	def capture node
-		let o = node.@options
-		
-		o:loop ||= self
-		o:parRef ||= o:rootRef = @tag.childCacher.nextRef
-		o:par = null
-
-		if @parentLoop
-			@parentLoop.capture(node)
-		
-		if o:loop == self
-
-			let gen = o:loopCacher || @tag.childCacher
-			let oref = o:parRef || @tag.childCacher.nextRef
-
-			let nr = @tags.push(node) - 1
-			let ref = @loop.option(:vars)['index']
-			let param = @params.at(@params.count,true,"${@params.count}")
-
-			node.set(cacher: TagCache.new(self,param))
-			
-			if o:key
-				node.set(treeRef: o:key)
-				o:key.cache
-			else
-				node.set(treeRef: ref)
-
-			let fn = o:key ? 'createTagMap' : 'createTagList'
-			let parentRef = @tag.cachePath # will be correct even if nested loops
-
-			let get = CALL(scope__.imbaRef(fn),parentRef ? [gen,oref,parentRef] : [gen,oref])
-			node.@loopCache = get
-			let op = OP('||',OP('.',gen,oref),get)
-			@args.push(op)
-		else
-			let ref = @loop.option(:vars)['index']
-			let param = @params.at(@params.count,true,"${@params.count}")
-			param.variable = scope__.register("${@params.count}",self,system: true)
-
-			if @parentLoop
-				@args.push(OP('||=',OP('.',o:loopCacher,o:parRef),Arr.new([]) ))
-				# @args.push( OP('||=',OP('.',@tag.childCacher,o:parRef),Arr.new([])) )
-			else
-				@args.push( OP('||=',OP('.',@tag.childCacher,o:parRef),Arr.new([])) )
-				
-				
-			o:loopCacher = param
-			o:parRef = ref
-			
-			# if this is the first time we are registering this loop
-
-		self
-	
-	def js o
-		@name ||= 'tagLoop'
-		var out = super
-		"(" + out + ")({AST.cary(@args)})"
 
 export class MethodDeclaration < Func
 
@@ -5626,6 +5475,8 @@ export class Loop < Statement
 		self.body = AST.blk(body)
 		self
 
+	def isReactive
+		@tag and @tag.fragment.isReactive
 
 	def c o
 
@@ -6261,62 +6112,6 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
  spreadMethod stopColor stopOpacity stroke strokeDasharray strokeLinecap
  strokeOpacity strokeWidth textAnchor transform version viewBox x1 x2 x y1 y2 y"
 
-export class TagCache < Node
-
-	def initialize root, value, o = {}
-		@options = o
-		@root = root
-		@value = value
-		@counter = 0
-		@index = 0
-		@blocks = 1
-		@refs = []
-
-	def nextRef node
-		let item = TagCacheKey.new(self,node)
-		@refs.push(item)
-		return item
-	
-	def nextValue
-		let ref = AST.counterToShortRef(@counter++)
-		option(:lowercase) ? ref.toLowerCase : ref
-
-	def nextSlot
-		@index++
-		if @options:keys
-			Str.new("'" + AST.counterToShortRef(@index - 1) + "'")
-		else
-			Num.new(@index - 1)
-	
-	def nextBlock
-		@blocks++
-		Num.new(@blocks - 1)
-		
-	def c
-		"{@value.c}"
-		
-export class TagCacheKey < Node	
-	prop node
-	prop value
-
-	def initialize cache, node
-		@owner = cache
-		@value = cache.nextSlot
-		@node = node
-		@type = null
-		self
-		
-	def cache
-		self
-		
-	def c
-		@value ||= @owner.nextSlot
-		return @value
-		
-	def arg
-		@arg ||= OP('||',OP('.',@owner,@value),CALL(OP('.',@owner,'$'+@type),[]))
-
-
 export class TagPart < Node
 
 	prop name
@@ -6369,11 +6164,11 @@ export class TagFlag < TagPart
 		!!@value
 
 	def js
-		value ? "flagIf({quoted},{value.c})" : "flag({quoted})"
+		value ? "flagIf$({quoted},{value.c})" : "flag$({quoted})"
 
 export class TagFlagIf < TagFlag
 	def js
-		"flagIf({quoted},{value.c})"
+		"flagIf$({quoted},{value.c})"
 
 export class TagFlagExpr < TagFlag
 	def slot
@@ -6389,7 +6184,7 @@ export class TagFlagExpr < TagFlag
 		@value or @name
 	
 	def js
-		"setFlag({slot},{value.c})"
+		"setFlag$({slot},{value.c})"
 	
 export class TagSep < TagPart
 	
@@ -6529,11 +6324,7 @@ export class TagHandler < TagPart
 	
 	def add item, type
 		if type == TagArgList
-			# could be dynamic
 			@last.params = item or ListNode.new([])
-			# unless @last.isPrimitive
-			# 	@dyn ||= []
-			# 	@dyn.push(@chain:length)
 
 		elif type == TagAttrValue
 			# really?
@@ -6541,9 +6332,6 @@ export class TagHandler < TagPart
 				item = item.value
 			
 			value = item
-			# value.@isStatic = value.isPrimitive or (value isa Func and !value.nonlocals)
-			# console.log "push Value to chain {item} {item.isPrimitive}"
-			# @chain.push(item)
 			@last = null
 		else
 			# console.log "TagHandler add",item
@@ -6552,13 +6340,10 @@ export class TagHandler < TagPart
 		
 	def js o
 		let parts = [quoted].concat(@chain)
-		parts.push(value) if value
-		# if !value.isPrimitive and !(value isa Func and !value.nonlocals)
-		# 	@dyn ||= []
-		# 	@dyn.push(parts:length)
-		# find the context
-
-		return "on$({slot},[{AST.cary(parts)}],{scope__.context.c})"
+		let parts = [].concat(@chain)
+		# parts.push(value) if value
+		return "on$({quoted},[{AST.cary(parts)}],{scope__.context.c})"
+		# return "on$({slot},[{AST.cary(parts)}],{scope__.context.c})"
 
 export class Tag < Node
 
@@ -6691,12 +6476,21 @@ export class Tag < Node
 	def kvar do tagvar('k') # key variable
 
 	def fragment
-		@fragment = (isSelf or !@parent or @parent isa Loop) ? self : (@parent.fragment)
+		@fragment ||= (isSelf or !@parent or @parent isa Loop) ? self : (@parent.fragment)
+
+	def isReactive
+		# be careful
+		@parent ? @parent.isReactive : !!isSelf
+		# (!!isSelf or (@parent isa Loop and @parent.isReactive)
 
 	def js o
 		var isExpression = STACK.isExpression
-		
+
+		var head = []
+		# var body = []
 		var out = []
+		var foot = []
+
 		var add = do |val|
 			if val isa Variable
 				val = val.toString
@@ -6706,15 +6500,15 @@ export class Tag < Node
 
 		# if tag contains no static attributes (except className / text)
 		# we don't need to mark when built
+		var wasInline = o:inline
+		var wasReactive = o:reactive
+		var isReactive = self.isReactive # fragment.isReactive
 		var isCustom = isSelf or typ.indexOf('-') >= 0 # or custom attributes
 		var markWhenBuilt = yes
 		var hasTemplate = no
 		var canInline = no
-		var isReactive = yes
+		var optimizeFlag = no
 		var shouldEnd = isCustom
-
-		if !@parent and isExpression
-			isReactive = no
 
 		var params = [
 			typ,
@@ -6750,100 +6544,73 @@ export class Tag < Node
 		if statics:length == 0
 			markWhenBuilt = no
 
-
-
 		# add the static flags immediately
 		params[3] = (helpers.singlequote(staticFlags.join(" ")))
 
-		# variables for parents
-		# var $el = scope__.closure.temporary(null,{reuse: yes},"t{@level}$")
-		# var vars = "t$,t$0,c$,c$0,c$f,v$,v$0,f$,f$i,k$,b$,b$0,el$,bel$"
+		if dynamicFlags:length == 1 and staticFlags:length == 0
+			optimizeFlag = yes
+
+		if dynamics:length == 0 and dynamicFlags:length == 0
+			if nodes.every(|v| v isa Tag or v isa Str)
+				canInline = yes
 
 		var ctor = "{tvar}={create_}({params.join(',')})"
 
 		if !@parent
 			# FIXME change oid to actual unique id based on file
+			# Dont know whether we need builtvar yet - depends on children?
+			@ref = "{tvar}"
 
 			if isSelf
-				# should do it for everything
-				# add "var {vars}"
 				add "{bvar} = 1"
 				add "{tvar} = this"
 				add "{tvar}.open$()"
 				add "{cvar} = {tvar}.$ || ({bvar}=0,{tvar}.$=\{\})"
 			elif isReactive
-				# add "var {vars}"
 				add "{bvar} = 1"
 				add "{tvar} = this.{oid}$$ || ({bvar}=0,this.{oid}$$ = {ctor})"
-				add "{cvar} = {tvar}.$ || ({bvar}=0,{tvar}.$=\{\})"
-				# add "b$ || (t$.template$ = function()\{ var {vars}; t$ = this;\n"
-				# hasTemplate = yes
-				# add "c$ = t$.$ || (t$.$=\{\})"
-				# add "b$ = c$.built === true"
+				add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
 			else
 				add "({ctor})"
-				# mark whether we have changes?
-				@ref = "{tvar}"
-
-				for item in @attributes
-					add "{tvar}.{item.c(o)}"
-
-				add "{tvar}.end$()"
-				add tvar
-
-				return "(" + out.join(",") + ")"
-
-			# add "{ref}=t$"
-			# @ref = "t$"
-			# create a unique reference
+				option(:inline,canInline = yes)
+				o:inline = yes
 
 		elif @parent isa Loop
+			# what if we are not reactive at all?
+
 			if option(:key)
 				add "{kvar}={option(:key).c}"
 
 				@ref = "{@parent.cvar}[{kvar}]"
 
 			elif @parent.option(:indexed)
-				# this is plainly indexed
 				@ref = "{@parent.cvar}[{@parent.tagvar('i')}]"
-				# ctor[2] = '{f$i}'
 
 			add "{bvar}=1" # only if we have dynamic stuff?
 			add "{tvar} = {ref} || ({bvar}=0,{ref} = {ctor})"
 			@ref = "{tvar}"
-			add "{cvar}={ref}.$ || ({ref}.$=\{\})"
+			add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
+
+		elif !isReactive
+			add "({ctor})"
+		elif canInline
+			add "{fragment.bvar} || ({ctor})"
 		else
+			if markWhenBuilt
+				add "{bvar}=1"
+			let ref = "{fragment.cvar}.{oid}"
+			add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
 
-			if nodes:length == 0 and dynamics:length == 0 and dynamicFlags:length == 0
-				canInline = yes
-
-
-			if canInline
-				var parts = for item in statics
-					"{tvar}.{item.c(o)}"
-				parts.unshift('') if parts:length > 0
-				# check if parent is built - not caching?
-				return "{fragment.bvar} || ({ctor}{parts.join(",")})"
-			else
-				# if this item is the root of a fragment and has children --
-				# stack as if it was on another level
-				if markWhenBuilt
-					add "{bvar}=1"
-				let ref = "{fragment.cvar}.{oid}"
-				add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
-
-		
-		var optimizeFlag = no
-
-		if dynamicFlags:length == 1 and staticFlags:length == 0
-			optimizeFlag = yes
 
 		for item in @attributes
-
-			if item.isStatic
+			if !isReactive
+				continue if item isa TagFlag and item.isStatic
+				add "{tvar}.{item.c(o)}"
+				# "{bvar} || ({tvar}.{item.c(o)})"
+			elif item.isStatic
 				continue if item isa TagFlag
-				let js = "{bvar} || ({tvar}.{item.c(o)})"
-				add js
+				# what about whether our own tag is built or not?
+				add "{fragment.bvar} || ({tvar}.{item.c(o)})"
 			else
 				let val = item.value
 				let iref = "{fragment.cvar}.{item.oid}"
@@ -6880,7 +6647,10 @@ export class Tag < Node
 				add item.c(o)
 			elif item isa Str # static for sure
 				# should do a basic init check
-				add "b$ || {ref}.insert$({item.c(o)},{slot++})"
+				if isReactive
+					add "{fragment.bvar} || {ref}.insert$({item.c(o)},{slot++})"
+				else
+					add "{ref}.insert$({item.c(o)},{slot++})"
 			else
 				# not if variable declaration etc
 				# if this is the single child - things are different
@@ -6898,12 +6668,7 @@ export class Tag < Node
 				else
 					add "{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{slot++},{key}_))"
 		
-		if shouldEnd
-			# include some dynamic params?
-			if isSelf
-				add "{tvar}.close$()"
-			else
-				add "{tvar}.end$()"
+		
 
 		if @parent isa Loop
 			# not for all?
@@ -6913,23 +6678,21 @@ export class Tag < Node
 			else
 				add "{@parent.tvar}.push({tvar},{i}++)"
 
-		elif !@parent
-			# call setup?
-			# add "b$ || (c$._ = true);"
-			# if built
-			# add "c$.built = true;" 
-			# if isSelf
-			# 	add "{tvar}.close$()"
+		if shouldEnd
+			foot.push(isSelf ? "{tvar}.close$()" : "{tvar}.end$()")
 
-			if hasTemplate
-				add '})'
-				add 'b$ || t$.render()'
-
+		if !@parent
 			if option(:return)
-				add "return {tvar}"
+				foot.push "return {tvar}"
+			elif !isReactive
+				foot.push "{tvar}"
 
-		# if returning
+		out = out.concat(foot)
 
+		if o:inline
+			o:inline = wasInline
+			return '(' + out.join(',\n') + ')'
+		o:inline = wasInline
 		return out.join(";\n")
 
 

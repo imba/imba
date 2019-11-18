@@ -143,7 +143,21 @@ export class ImbaServerElement
 		self.nodeName  = type
 		self.classList = ImbaNodeClassList.new(self)
 		self.children = []
-			
+		self
+
+	def flag$
+		self
+
+	def flagIf$
+		self
+
+	def end$
+		self
+
+	def close$
+		self
+
+	def open$
 		self
 
 	def cloneNode deep
