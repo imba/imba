@@ -1,6 +1,8 @@
 ## master
 
 * Fixed #237 (CSS comments not working in SFC)
+* Fixed #240 (Build issues with font-properties in SFC)
+* Fixed #239 (Module not found: Error: Can't resolve 'important[...] in SFC)
 
 ## 1.5.0
 * Add support for declaring native getters and setters using `get/set` instead of `def` keyword
