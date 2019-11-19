@@ -290,6 +290,13 @@ describe 'Tags - Define' do
 		eq a.toString, '<a href="#2"></a>'
 	
 	test "css" do
+		### css scoped
+		:focus { outline: none !important; }
+		* {
+			font-family: 'Sawarabi Mincho', sans-serif;
+			content: 'Check for encoding issues in the loader';
+		}
+		###
 		tag Custom
 
 			def build

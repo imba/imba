@@ -26,6 +26,8 @@ function shorthash(str){
 	return shasum.digest('hex').slice(0, 8);
 }
 
+var cachedStyleBodies = new Map();
+
 module.exports = function(content,inMap) {
 	this.cacheable();
 
@@ -53,17 +55,18 @@ module.exports = function(content,inMap) {
 	opts.id = shorthash(this.resourcePath);
 
 
-	if(options.type == 'style' && options.body){
+	const body = cachedStyleBodies.get(`${opts.id}-${options.index}`);
+	if(options.type == 'style' && body){ 
 		if(this.loaders.length == 1){
 			// There are no additional style loaders -- we will need to process it directly
 			let scope = resourceQuery.id ? '_' + resourceQuery.id : null;
-			var css = csscompiler.compile(options.body,{scope: scope});
+			var css = csscompiler.compile(body,{scope: scope});
 			let out = "var styles = document.createElement('style');"
 			out = out + "styles.textContent = " + JSON.stringify(css) + ";\n"
 			out = out + "document.head.appendChild(styles);"
 			return this.callback(null, out, inMap);
 		}
-		return this.callback(null,options.body);
+		return this.callback(null,body);
 	}
 
 	// style post-processor
@@ -101,14 +104,9 @@ module.exports = function(content,inMap) {
 				const ext = style.type || 'css';
 				const src = style.src || (self.resourcePath + '.' + i + '.' + ext);
 				const inheritQuery = self.resourceQuery.slice(1)
-				const body = encodeURIComponent(style.content);
 				const remReq = getRemainingRequest(self);
-				let pars = '?type=style';
-
-				if(style.scoped){
-					pars = pars + "&id=" + opts.id;
-				}
-				const query = `${src}!=!imba/loader?type=style&index=${i}&body=${body}!${remReq}${pars}`
+				cachedStyleBodies.set(`${opts.id}-${i}`, style.content);
+				const query = `${src}!=!imba/loader?type=style&index=${i}!${remReq}`
 				js += "\nrequire('" + query + "');"
 			})
 		}
