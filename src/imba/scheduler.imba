@@ -14,10 +14,13 @@ if $web$
 	requestAnimationFrame ||= window:mozRequestAnimationFrame
 	requestAnimationFrame ||= do |blk| setTimeout(blk,1000 / 60)
 
+var scheduled = Imba.scheduled ||= Set.new()
+
 class Ticker
 	def initialize
 		@queue = []
 		@stage = -1
+		@batch = 0
 		@scheduled = no
 		#ticker = do |e|
 			@scheduled = no
@@ -38,8 +41,16 @@ class Ticker
 		@queue = []
 		@stage = 1
 		@before()
+		@batch++
+
 		if items.length
 			for item,i in items
+				if item == 'commit'
+					Imba.scheduled.forEach do |item|
+						if item.tick isa Function
+							item.tick(self)
+						elif item isa Function
+							item(self)
 				if item isa Function
 					item(@dt,self)
 				elif item.tick
@@ -61,15 +72,10 @@ class Ticker
 		self
 
 	def after
-		if Imba.TagManager
-			Imba.TagManager.refresh()
 		self
 
-Imba.TICKER = Ticker.new()
+Imba.ticker = Ticker.new()
 Imba.SCHEDULERS = []
-
-def Imba.ticker
-	Imba.TICKER
 
 def Imba.requestAnimationFrame callback
 	requestAnimationFrame(callback)
@@ -80,14 +86,13 @@ def Imba.cancelAnimationFrame id
 # should add an Imba.run / setImmediate that
 # pushes listener onto the tick-queue with times - once
 
-var commitQueue = 0
-
 def Imba.commit params
-	commitQueue++
+	# return if committed
+	Imba.ticker.add('commit')
 	# Imba.TagManager.refresh
-	Imba.emit(Imba,'commit',params != undefined ? [params] : undefined)
-	if --commitQueue == 0
-		Imba.TagManager and Imba.TagManager.refresh()
+	# Imba.emit(Imba,'commit',params != undefined ? [params] : undefined)
+	# if --commitQueue == 0
+	# 	Imba.TagManager and Imba.TagManager.refresh()
 	return
 
 ###

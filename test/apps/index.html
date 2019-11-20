@@ -23,6 +23,11 @@
   <script src="../imbac.js" type="text/javascript"></script>
   <script src="../imba.js" type="text/javascript"></script>
   <script>
+    require = function(name){ if(name == 'imba2'){ return Imba; } }
+    this.global = this;
+  </script>
+  <script src="../runner.js" type="text/javascript"></script>
+  <script>
   SELF = {}
   var self = SELF;
 
@@ -35,7 +40,6 @@
   	var url = './' + src;
   	var req = await fetch(url,{mode: 'no-cors'});
   	var res = await req.text();
-  	console.log(res);
 
     if(src.indexOf('.js') > 0){
       // run(res);
@@ -57,9 +61,9 @@
   var run = function(js){
     js = js.replace(/require\(["']imba2?["']\)/g,'window.Imba');
   	js = js.replace('var self = {}','var self = SELF');
-    console.log('running',js);
+    // console.log('running',js);
   	eval(js);
-    console.log('self is',SELF);
+    // console.log('self is',SELF);
     // var panel = document.createElement('inspect');
     for(let key of Object.keys(self)) {
       let val = self[key];
@@ -67,7 +71,10 @@
       if(val instanceof Function){
         var button = document.createElement('button');
         button.textContent = key;
-        button.onclick = function(){ val.call(self); }
+        button.onclick = function(){
+          val.call(self);
+          Imba.commit();
+        }
         window.appDebugPanel.appendChild(button);
       }
     }

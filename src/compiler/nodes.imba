@@ -6333,8 +6333,10 @@ export class TagHandler < TagPart
 	def js o
 		let parts = [quoted].concat(@chain)
 		let parts = [].concat(@chain)
+		let scope = scope__
+		let scopes = scope.root.context.reference(scope).c
 		# parts.push(value) if value
-		return "on$({quoted},[{AST.cary(parts)}],{scope__.context.c})"
+		return "on$({quoted},[{AST.cary(parts)}],{scope.context.c},{scopes})"
 		# return "on$({slot},[{AST.cary(parts)}],{scope__.context.c})"
 
 export class Tag < Node
@@ -6415,12 +6417,12 @@ export class Tag < Node
 
 		if node isa Assign
 			# node.right = self
-			console.log "node is assigned to"
+			# console.log "node is assigned to"
 			return OP(node.op,node.left,self)
 		elif node isa Op
 			return OP(node.op,node.left,self)
 		elif node isa Return
-			console.log "return is consuming tag"
+			# console.log "return is consuming tag"
 			option('return',yes)
 			return self
 		return self
@@ -7471,6 +7473,7 @@ export class Scope
 		@counters = {}
 		@varpool = []
 		@refcounter = 0
+		@level = (parent ? parent.@level : -1) + 1
 		setup
 		
 	def setup
@@ -8273,7 +8276,7 @@ export class ScopeContext < Node
 	# name of the variable etc?
 
 	def reference
-		@reference ||= scope.declare("self",This.new)
+		@reference ||= scope.declare("self{@scope.@level}",This.new)
 
 	def c
 		var val = @value || @reference

@@ -44,6 +44,7 @@
     "build-watch": "webpack --progress --colors --display-modules --watch",
     "watch-compiler": "imbac -w --es5 -o lib/compiler src/compiler",
     "watch-lib": "bin/imbac -w -o lib/imba src/imba",
+    "watch-umd": "webpack --progress --colors --display-modules --mode production --watch",
     "test": "bin/imba test/index.imba",
     "test-webpack": "bin/imba test/webpack/test.imba",
     "test-chrome": "bin/imba test/run-chrome.imba"

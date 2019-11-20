@@ -5,6 +5,9 @@ if $node$
 	var Element = ImbaServerElement
 	var document = ImbaServerDocument.new
 
+def Imba.mount element, parent
+	(parent || document.body).appendChild(element)
+
 var keyCodes = {
 	esc: [27],
 	tab: [9],
@@ -17,10 +20,16 @@ var keyCodes = {
 
 # could cache similar event handlers with the same parts
 class EventHandler
-	def initialize params
+	def initialize params,closure,file
 		@params = params
+		@closure = closure
+		@file = file
 
 	def getHandlerForMethod path, name
+		if @closure && @closure[name]
+			return @closure
+		if @file && @file[name]
+			return @file
 		for item,i in path
 			if item[name]
 				return item
@@ -77,13 +86,15 @@ class EventHandler
 				if context
 					# console.log "found context?!"
 					let res = context[handler].apply(context,args)
+
+		Imba.commit()
 		return
 
 
 extend class Element
 
-	def on$ type, parts
-		var handler = EventHandler.new(parts)
+	def on$ type, parts, scope, file
+		var handler = EventHandler.new(parts,scope,file)
 		@addEventListener(type,handler)
 		return handler
 
@@ -91,10 +102,14 @@ extend class Element
 		@textContent = item
 		self
 
+	def schedule
+		Imba.scheduled.add(self)
+
+	def unschedule
+		Imba.scheduled.remove(self)
+
 	def insert$ item, index, prev
 		let type = typeof item
-
-		console.log('insert$',item,prev,type)
 
 		if type === 'undefined' or item === null
 			let el = document.createComment('')
@@ -305,6 +320,31 @@ export class IndexedTagFragment < TagFragment
 		@parent.removeChild(item)
 		return
 
+# Create custom tag with support for scheduling and unscheduling etc
+var TagComponent = `class extends HTMLElement { }`
+extend class TagComponent
+	def connectedCallback
+		this.mount()
+
+	def disconnectedCallback
+		this.unmount()
+
+	def mount
+		this.schedule()
+
+	def unmount
+		this.unschedule()
+
+	def tick
+		this.render && this.render()
+
+if $web$
+	window.customElements.define('imba-component',TagComponent)
+
+# TagComponent.prototype.mount = do this.schedule()
+# TagComponent.prototype.unmount = do this.unschedule()
+# TagComponent.prototype.tick = do this.render && this.render()
+
 class TagScope
 	def initialize ns
 		@ns = ns
@@ -314,8 +354,10 @@ class TagScope
 		var superklass = HTMLElement
 
 		if supr isa String
+			if supr == 'component'
+				supr = 'imba-component'
+
 			superklass = window.customElements.get(supr)
-			console.log "get new superclass",supr,superklass
 
 		var klass = `class extends superklass {
 
@@ -328,11 +370,14 @@ class TagScope
 		if body
 			body(klass)
 
-		if klass.prototype.$mount
-			klass.prototype.connectedCallback = klass.prototype.$mount
+		var proto = klass.prototype
 
-		if klass.prototype.$unmount
-			klass.prototype.disconnectedCallback = klass.prototype.$unmount
+		if proto.mount
+			proto.connectedCallback ||= do this.mount()
+
+		if proto.unmount
+			proto.disconnectedCallback ||= do this.unmount()
+			# proto.unmount
 
 		window.customElements.define(name,klass)
 		return klass
