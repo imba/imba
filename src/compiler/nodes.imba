@@ -6415,6 +6415,7 @@ export class Tag < Node
 
 		if node isa Assign
 			# node.right = self
+			console.log "node is assigned to"
 			return OP(node.op,node.left,self)
 		elif node isa Op
 			return OP(node.op,node.left,self)
@@ -6472,7 +6473,7 @@ export class Tag < Node
 
 	def isReactive
 		# be careful
-		@parent ? @parent.isReactive : !!isSelf
+		@parent ? @parent.isReactive : !(scope__ isa RootScope) # isSelf
 		# (!!isSelf or (@parent isa Loop and @parent.isReactive)
 
 	def js o
@@ -6559,8 +6560,12 @@ export class Tag < Node
 				add "{tvar}.open$()"
 				add "{cvar} = {tvar}.$ || ({bvar}=0,{tvar}.$=\{\})"
 			elif isReactive
+				let scop = scope__.closure
+
 				add "{bvar} = 1"
-				add "{tvar} = this.{oid}$$ || ({bvar}=0,this.{oid}$$ = {ctor})"
+				# add "{tvar} = this.{oid}$$ || ({bvar}=0,this.{oid}$$ = {ctor})"
+				# add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
+				add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
 				add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
 			else
 				add "({ctor})"
@@ -6647,7 +6652,12 @@ export class Tag < Node
 				# not if variable declaration etc
 				# if this is the single child - things are different
 				let id = item.oid
+				let cache = "{fragment.cvar}"
 				let key = "{fragment.cvar}.{id}"
+
+				if item isa Call
+					# global
+					add "Imba.$c=({key}$ || ({key}$=\{\}))"
 
 				add "{vvar}={item.c(o)}"
 				# add special case for strings?
@@ -7483,9 +7493,13 @@ export class Scope
 	def namepath
 		'?'
 		
-	def tagContext
-		@tagContext ||= (context.reference) # @parent ? @parent.tagContext : {})
-
+	def tagCache
+		# deal with root instead?
+		@tagCache ||= declare('t0$c',
+			# LIT('(Imba.$c ? (Imba.$c[Imba.$k] || (Imba.$c[Imba.$k] = {})) : {})'),
+			LIT('(Imba.$c||{})'),
+			system: yes
+		)
 	# def context
 	# 	@context ||= ScopeContext.new(self)
 		

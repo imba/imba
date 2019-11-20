@@ -1,0 +1,46 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="./test.css">
+</head>
+<body>
+  <script src="../imbac.js" type="text/javascript"></script>
+  <script src="../imba.js" type="text/javascript"></script>
+  <script>
+  var load = async function(src){
+  	// console.log('start with',src);
+  	// document.write(`<script id='aba' src='${src}.js'><\/script>`);
+  	// document.write(`<link rel='import' id='a2ba' href='${src}.js'><\/link>`);
+  	// var root = document.location.href.split('index.html')[0];
+  	// var url = 'http://localhost:8125/' + src + '.imba'
+  	var url = './' + src;
+  	var req = await fetch(url,{mode: 'no-cors'});
+  	var res = await req.text();
+  	console.log(res);
+
+    if(src.indexOf('.js') > 0){
+      // run(res);
+      var script = document.createElement('script');
+      script.src = url;
+      document.head.appendChild(script);
+      // document.write(`<script src=${url}><\/script>`);
+    } else {
+      compileAndRun(src,res);  
+    }
+  }
+
+  var compileAndRun = async function(src, body){
+    var result = imbac.compile(body);
+    var js = result.js;
+    run(js);
+  }
+
+  var run = function(js){
+  	js = js.replace(/require\(["']imba2?["']\)/g,'window.Imba');
+    console.log('running',js);
+  	eval(js);
+  }
+  var hash = (document.location.hash || '').slice(1);
+  if(hash){ load(hash) }
+</script>
+</body>
+</html>

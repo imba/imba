@@ -94,16 +94,31 @@ extend class Element
 	def insert$ item, index, prev
 		let type = typeof item
 
+		# what if this is null or undefined -- add comment and return? Or blank text node?
 		if type !== 'object'
 			let res
 			let txt = item === undefined or item === null ? '' : item
+
 			if index == -1
 				@textContent = txt
+				return
+
+			if prev
+				if prev isa Text
+					prev.textContent = txt
+					return prev
+				else
+					res = document.createTextNode(txt)
+					@replaceChild(res,prev)
+					return res
 			else
 				@appendChild(res = document.createTextNode(txt))
 				return res
+
 		elif item isa Element
-			@appendChild(item)
+			prev ? @replaceChild(item,prev) : @appendChild(item)
+			return item
+
 		return
 
 	def flag$ str
