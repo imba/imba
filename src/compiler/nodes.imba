@@ -5,18 +5,10 @@
 var helpers = require './helpers'
 var constants = require './constants'
 var csscompiler = require './css'
-var NODE_MAJOR_VERSION = null
 
 import ImbaParseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
-
-if $node$
-	let v = (process:version or 'v0').match(/^v?(\d+)/)
-	NODE_MAJOR_VERSION = parseInt(v[1])
-	if NODE_MAJOR_VERSION < 5
-		console.log "Imba compiles to es5 due to old version of node({process:version})"
-
 
 var HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 var HTML_TAGS_UNSAFE = "article aside header section".split(" ")
@@ -379,9 +371,6 @@ export class Stack
 		@es5 = null
 		@optlevel = null
 		@tag = null
-
-		if NODE_MAJOR_VERSION and NODE_MAJOR_VERSION < 5
-			@es5 = true
 		self
 
 	def incr name
