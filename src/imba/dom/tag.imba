@@ -94,10 +94,17 @@ extend class Element
 	def insert$ item, index, prev
 		let type = typeof item
 
+		console.log('insert$',item,prev,type)
+
+		if type === 'undefined' or item === null
+			let el = document.createComment('')
+			prev ? @replaceChild(el,prev) : @appendChild(el)
+			return el
+
 		# what if this is null or undefined -- add comment and return? Or blank text node?
-		if type !== 'object'
+		elif type !== 'object'
 			let res
-			let txt = item === undefined or item === null ? '' : item
+			let txt = item
 
 			if index == -1
 				@textContent = txt
@@ -116,6 +123,7 @@ extend class Element
 				return res
 
 		elif item isa Element
+			# if we are the only child we want to replace it?
 			prev ? @replaceChild(item,prev) : @appendChild(item)
 			return item
 
