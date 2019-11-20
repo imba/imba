@@ -37,31 +37,31 @@ module.exports = [{
 	},
 	node: {fs: false, process: false, global: false},
 	plugins: [minify]
-},{
-	module: {
-		rules: [{test: /\.imba$/, loader: loader, options: {es5: true}}]
-	},
-	resolve: {extensions: ['*', '.imba', '.js']},
-	entry: "./src/compiler/compiler.imba",
-	output: {
-		filename: "./imbac.js",
-		library: "imbac",
-		libraryTarget: "umd",
-		globalObject: 'typeof self !== \'undefined\' ? self : this',
-		path: path.resolve(__dirname)
-	},
-	node: {fs: false, process: false, global: false},
-	plugins: [minify]
-},{
-	module: {
-		rules: [{test: /\.imba$/, loader: loader}]
-	},
-	resolve: {extensions: ['*', '.imba', '.js']},
-	entry: "./test/index.imba",
-	output: {
-		filename: "./test/client.js",
-		globalObject: 'typeof self !== \'undefined\' ? self : this',
-		path: path.resolve(__dirname)
-	},
-	node: {fs: false, process: false, global: false}
+//},{
+//	module: {
+//		rules: [{test: /\.imba$/, loader: 'imba/imba', options: {es5: true}}]
+//	},
+//	resolve: {extensions: ['*', '.imba', '.js']},
+//	entry: "./src/compiler/compiler.imba",
+//	output: {
+//		filename: "./imbac.js",
+//		library: "imbac",
+//		libraryTarget: "umd",
+//		globalObject: 'typeof self !== \'undefined\' ? self : this',
+//		path: path.resolve(__dirname)
+//	},
+//	node: {fs: false, process: false, global: false},
+//	plugins: [minify]
+// },{
+// 	module: {
+// 		rules: [{test: /\.imba$/, loader: loader}]
+// 	},
+// 	resolve: {extensions: ['*', '.imba', '.js']},
+// 	entry: "./test/index.imba",
+// 	output: {
+// 		filename: "./test/client.js",
+// 		globalObject: 'typeof self !== \'undefined\' ? self : this',
+// 		path: path.resolve(__dirname)
+// 	},
+// 	node: {fs: false, process: false, global: false}
 }]

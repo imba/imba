@@ -1,13 +1,93 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
-  <title>Imba</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no,minimum-scale=1.0,maximum-scale=1.0"/>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <meta name="format-detection" content="telephone=no">
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta charset="UTF-8">
+  <style>
+    #appDebugPanel {
+      position: sticky;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      top: 0px;
+      padding: 8px;
+      background: whitesmoke;
+    }
+    html,body {
+      padding: 0px;
+      margin: 0px;
+    }
+  </style>
+	<link rel="stylesheet" type="text/css" href="./test.css">
 </head>
 <body>
-  <script src="./client.js" type="text/javascript"></script>
+  <inspect id="appDebugPanel"></inspect>
+  <script src="imbac.js" type="text/javascript"></script>
+  <script src="imba.js" type="text/javascript"></script>
+  <script>
+    require = function(name){ if(name == 'imba2'){ return Imba; } }
+    this.global = this;
+  </script>
+  <script src="runner.js" type="text/javascript"></script>
+  <script>
+  SELF = {
+    test: window.test,
+    describe: window.describe,
+    eq: window.eq
+  }
+  console.log("SELF is",SELF);
+
+  window.onerror = function(e){
+    console.log("ERROR",e);
+  }
+
+  window.onunhandledrejection = function(e){
+    console.log('page:error',{message: e.reason.message});
+  }
+  var self = SELF;
+
+  var load = async function(src){
+  	var url = './' + src;
+  	var req = await fetch(url,{mode: 'no-cors'});
+  	var res = await req.text();
+
+    if(src.indexOf('.js') > 0){
+      // run(res);
+      var script = document.createElement('script');
+      script.src = url;
+      document.head.appendChild(script);
+      // document.write(`<script src=${url}><\/script>`);
+    } else {
+      compileAndRun(src,res);  
+    }
+  }
+
+  var compileAndRun = async function(src, body){
+    var result = imbac.compile(body);
+    var js = result.js;
+    run(js);
+  }
+
+  var run = function(js){
+    js = js.replace(/require\(["']imba2?["']\)/g,'window.Imba');
+  	js = js.replace('self = {}','self = SELF');
+  	eval(js);
+    for(let key of Object.keys(self)) {
+      let val = self[key];
+      console.log(key);
+      if(val instanceof Function){
+        var button = document.createElement('button');
+        button.textContent = key;
+        button.onclick = function(){
+          val.call(self);
+          Imba.commit();
+        }
+        window.appDebugPanel.appendChild(button);
+      }
+    }
+    console.log('example:loaded',10);
+  }
+  var hash = (document.location.hash || '').slice(1);
+  if(hash){ load(hash) }
+</script>
 </body>
 </html>

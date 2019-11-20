@@ -188,7 +188,7 @@ export def parseArgs argv, o = {}
 		var arg = argv[i]
 		i++
 
-		if m = arg.match(/^\-([a-zA-Z]+)$/)
+		if m = arg.match(/^\-([a-zA-Z]+)(\=\S+)?$/)
 			curr = null
 			let chars = m[1].split('')
 
@@ -201,7 +201,9 @@ export def parseArgs argv, o = {}
 			if chars:length == 1
 				curr = chars
 
-		elif m = arg.match(/^\-\-([a-z0-9\-\_A-Z]+)$/)
+			continue
+
+		elif m = arg.match(/^\-\-([a-z0-9\-\_A-Z]+)(\=\S+)?$/)
 			var val = true
 			var key = m[1]
 
@@ -215,8 +217,12 @@ export def parseArgs argv, o = {}
 
 			key = dashToCamelCase(key)
 
+			if m[2]
+				val = m[2].slice(1)
+
 			options[key] = val
 			curr = key
+			continue
 
 		else
 			var desc = schema[curr]

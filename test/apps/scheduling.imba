@@ -1,9 +1,4 @@
-extern describe, test, ok, eq, it
-
 var counter = 0
-
-def test fn
-	fn()
 
 def toggleList
 	counter += 3
@@ -11,14 +6,11 @@ def toggleList
 
 tag custom-item
 
+def incr
+	counter++
+
 tag app-root < component
-	def incr
-		counter++
-
-	def mount
-		schedule()
-		console.log "mounted"
-
+	
 	def render
 		<self>
 			<div :click.incr> "Count is {counter}"
@@ -26,9 +18,7 @@ tag app-root < component
 			<custom-item> "one"
 			<custom-item> "two"
 
-Imba.mount(<app-root>)
+document.body.appendChild( <app-root> )
 
-# 
-describe "something" do
-	test "basic" do
-		eq 10,10
+test "hello" do
+	eq 10,10

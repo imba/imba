@@ -378,16 +378,16 @@ if (true) {
 var scheduled = (scheduled_ = Imba.scheduled) || (Imba.scheduled = new Set());
 
 function Ticker(){
-	var self = this;
-	self.queue = [];
-	self.stage = -1;
-	self.batch = 0;
-	self.scheduled = false;
-	self.__ticker = function(e) {
-		self.scheduled = false;
-		return self.tick(e);
+	var self2 = this;
+	self2.queue = [];
+	self2.stage = -1;
+	self2.batch = 0;
+	self2.scheduled = false;
+	self2.__ticker = function(e) {
+		self2.scheduled = false;
+		return self2.tick(e);
 	};
-	self;
+	self2;
 };
 
 Ticker.prototype.add = function (item,force){
@@ -399,15 +399,15 @@ Ticker.prototype.add = function (item,force){
 };
 
 Ticker.prototype.tick = function (timestamp){
-	var self = this;
-	var items = self.queue;
-	if (!self.ts) { self.ts = timestamp };
-	self.dt = timestamp - self.ts;
-	self.ts = timestamp;
-	self.queue = [];
-	self.stage = 1;
-	self.before();
-	self.batch++;
+	var self2 = this;
+	var items = self2.queue;
+	if (!self2.ts) { self2.ts = timestamp };
+	self2.dt = timestamp - self2.ts;
+	self2.ts = timestamp;
+	self2.queue = [];
+	self2.stage = 1;
+	self2.before();
+	self2.batch++;
 	
 	if (items.length) {
 		for (var i = 0, ary = iter$(items), len = ary.length, item; i < len; i++) {
@@ -415,23 +415,23 @@ Ticker.prototype.tick = function (timestamp){
 			if (item == 'commit') {
 				Imba.scheduled.forEach(function(item) {
 					if (item.tick instanceof Function) {
-						return item.tick(self);
+						return item.tick(self2);
 					} else if (item instanceof Function) {
-						return item(self);
+						return item(self2);
 					};
 				});
 			};
 			if (item instanceof Function) {
-				item(self.dt,self);
+				item(self2.dt,self2);
 			} else if (item.tick) {
-				item.tick(self.dt,self);
+				item.tick(self2.dt,self2);
 			};
 		};
 	};
-	self.stage = 2;
-	self.after();
-	self.stage = self.scheduled ? 0 : (-1);
-	return self;
+	self2.stage = 2;
+	self2.after();
+	self2.stage = self2.scheduled ? 0 : (-1);
+	return self2;
 };
 
 Ticker.prototype.schedule = function (){
@@ -480,23 +480,23 @@ Imba.commit = function (params){
 
 
 Imba.Scheduler = function Scheduler(target){
-	var self = this;
-	self.id = counter++;
-	self.target = target;
-	self.marked = false;
-	self.active = false;
-	self.marker = function() { return self.mark(); };
-	self.ticker = function(e) { return self.tick(e); };
+	var self2 = this;
+	self2.id = counter++;
+	self2.target = target;
+	self2.marked = false;
+	self2.active = false;
+	self2.marker = function() { return self2.mark(); };
+	self2.ticker = function(e) { return self2.tick(e); };
 	
-	self.dt = 0;
-	self.frame = {};
-	self.scheduled = false;
-	self.timestamp = 0;
-	self.ticks = 0;
-	self.flushes = 0;
+	self2.dt = 0;
+	self2.frame = {};
+	self2.scheduled = false;
+	self2.timestamp = 0;
+	self2.ticks = 0;
+	self2.flushes = 0;
 	
-	self.onevent = self.onevent.bind(self);
-	self;
+	self2.onevent = self2.onevent.bind(self2);
+	self2;
 };
 
 var counter = 0;
@@ -1047,23 +1047,23 @@ KeyedTagFragment.prototype.open$ = function (){
 };
 
 KeyedTagFragment.prototype.close$ = function (index){
-	var self = this;
-	if (self.remove.size) {
+	var self2 = this;
+	if (self2.remove.size) {
 		// console.log('remove items from keyed tag',@remove.entries())
-		self.remove.forEach(function(item) { return self.removeChild(item); });
-		self.remove.clear();
+		self2.remove.forEach(function(item) { return self2.removeChild(item); });
+		self2.remove.clear();
 	};
 	
-	if (self.array.length > index) {
+	if (self2.array.length > index) {
 		// remove the children below
-		while (self.array.length > index){
-			var item = self.array.pop();
+		while (self2.array.length > index){
+			var item = self2.array.pop();
 			
-			self.removeChild(item);
+			self2.removeChild(item);
 		};
 		
 	};
-	return self;
+	return self2;
 };
 
 function IndexedTagFragment(parent,slot){
