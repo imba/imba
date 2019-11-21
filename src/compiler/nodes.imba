@@ -6647,9 +6647,9 @@ export class Tag < Node
 			elif item isa Str # static for sure
 				# should do a basic init check
 				if isReactive
-					add "{fragment.bvar} || {ref}.insert$({item.c(o)},{slot++})"
+					add "{fragment.bvar} || {tvar}.insert$({item.c(o)},{slot++})"
 				else
-					add "{ref}.insert$({item.c(o)},{slot++})"
+					add "{tvar}.insert$({item.c(o)},{slot++})"
 			else
 				# not if variable declaration etc
 				# if this is the single child - things are different

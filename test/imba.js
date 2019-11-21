@@ -781,8 +781,6 @@ EventHandler.prototype.getHandlerForMethod = function (path,name){
 };
 
 EventHandler.prototype.handleEvent = function (event){
-	// console.log "handling event!",event,@params
-	
 	var target = event.target;
 	var parts = this.params;
 	var i = 0;
@@ -813,7 +811,7 @@ EventHandler.prototype.handleEvent = function (event){
 		
 		
 		if (handler == 'stop') {
-			event.stopPropagation();
+			event.stopImmediatePropagation();
 		} else if (handler == 'prevent') {
 			event.preventDefault();
 		} else if (handler == 'ctrl') {
@@ -824,6 +822,8 @@ EventHandler.prototype.handleEvent = function (event){
 			if (!event.shiftKey) { break; };
 		} else if (handler == 'meta') {
 			if (!event.metaKey) { break; };
+		} else if (handler == 'self') {
+			if (target != event.currentTarget) { break; };
 		} else if (keyCodes[handler]) {
 			if (keyCodes[handler].indexOf(event.keyCode) < 0) {
 				break;

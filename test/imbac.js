@@ -13593,9 +13593,9 @@ Tag.prototype.js = function (o){
 		} else if (item2 instanceof Str) { // static for sure
 			// should do a basic init check
 			if (isReactive) {
-				add(("" + (this.fragment().bvar()) + " || " + this.ref() + ".insert$(" + item2.c(o) + "," + (slot++) + ")"));
+				add(("" + (this.fragment().bvar()) + " || " + this.tvar() + ".insert$(" + item2.c(o) + "," + (slot++) + ")"));
 			} else {
-				add(("" + this.ref() + ".insert$(" + item2.c(o) + "," + (slot++) + ")"));
+				add(("" + this.tvar() + ".insert$(" + item2.c(o) + "," + (slot++) + ")"));
 			};
 		} else {
 			// not if variable declaration etc

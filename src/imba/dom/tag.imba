@@ -36,8 +36,6 @@ class EventHandler
 		return null
 
 	def handleEvent event
-		# console.log "handling event!",event,@params
-
 		var target = event.target
 		var parts = @params
 		var i = 0
@@ -63,7 +61,7 @@ class EventHandler
 
 			# check if it is an array?
 			if handler == 'stop'
-				event.stopPropagation()
+				event.stopImmediatePropagation()
 
 			elif handler == 'prevent'
 				event.preventDefault()
@@ -76,6 +74,8 @@ class EventHandler
 				break unless event.shiftKey
 			elif handler == 'meta'
 				break unless event.metaKey
+			elif handler == 'self'
+				break unless target == event.currentTarget
 
 			elif keyCodes[handler]
 				unless keyCodes[handler].indexOf(event.keyCode) >= 0

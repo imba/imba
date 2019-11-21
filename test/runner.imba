@@ -236,10 +236,17 @@ global class SpecAssert < SpecComponent
 		@expected = expected
 		@actual = actual
 		@options = options
-		@message = options.message || options.warn
+		@message = (options.message || options.warn) || "expected %1 - got %2"
 		parent.assertions.push(self)
-		@expected == @actual ? @pass() : @fail()
+		compare(@expected,@actual) ? @pass() : @fail()
 		self
+
+	def compare a,b
+		if a === b
+			return true
+		if a isa Array and b isa Array
+			return JSON.stringify(a) == JSON.stringify(b)
+		return false
 
 	get critical
 		@failed && !@options.warn
@@ -259,8 +266,8 @@ global class SpecAssert < SpecComponent
 	def toString
 		if @failed and @message isa String
 			let str = @message
-			str = str.replace('%1',@actual)
-			str = str.replace('%2',@expected)
+			str = str.replace('%1',@expected)
+			str = str.replace('%2',@actual)
 			return str
 		else
 			"failed"

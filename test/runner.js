@@ -267,9 +267,9 @@ SpecExample.prototype.finish = function (){
 		ass = items[i];
 		if (ass.failed) {
 			if (ass.options.warn) {
-				console.dir("spec:warn",{message: ass.toString()});
+				console.log("spec:warn",{message: ass.toString()});
 			} else {
-				console.dir("spec:fail",{message: ass.toString()});
+				console.log("spec:fail",{message: ass.toString()});
 			};
 		};
 	};
@@ -300,14 +300,24 @@ function SpecAssert(parent,actual,expected,options){
 	this.expected = expected;
 	this.actual = actual;
 	this.options = options;
-	this.message = options.message || options.warn;
+	this.message = (options.message || options.warn) || "expected %1 - got %2";
 	parent.assertions.push(this);
-	(this.expected == this.actual) ? this.pass() : this.fail();
+	this.compare(this.expected,this.actual) ? this.pass() : this.fail();
 	this;
 };
 
 Imba.subclass(SpecAssert,SpecComponent);
 global.SpecAssert = SpecAssert; // global class 
+SpecAssert.prototype.compare = function (a,b){
+	if (a === b) {
+		return true;
+	};
+	if ((a instanceof Array) && (b instanceof Array)) {
+		return JSON.stringify(a) == JSON.stringify(b);
+	};
+	return false;
+};
+
 Object.defineProperty(SpecAssert.prototype,'critical',{get: function(){
 	return this.failed && !this.options.warn;
 }, configurable: true});
@@ -317,9 +327,6 @@ SpecAssert.prototype.fail = function (){
 	if (this.options.warn) {
 		this.root.warnings.push(this);
 	};
-	//	console.dir("spec:warn",message: @toString())
-	// else
-	// 	console.dir("spec:fail",message: @toString())
 	
 	console.log("failed",this,this.parent.state);
 	return this;
@@ -333,8 +340,8 @@ SpecAssert.prototype.pass = function (){
 SpecAssert.prototype.toString = function (){
 	if (this.failed && (typeof this.message=='string'||this.message instanceof String)) {
 		let str = this.message;
-		str = str.replace('%1',this.actual);
-		str = str.replace('%2',this.expected);
+		str = str.replace('%1',this.expected);
+		str = str.replace('%2',this.actual);
 		return str;
 	} else {
 		return "failed";
