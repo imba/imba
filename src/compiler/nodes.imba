@@ -6547,7 +6547,8 @@ export class Tag < Node
 
 		if dynamics:length == 0 and dynamicFlags:length == 0
 			if nodes.every(|v| v isa Tag or v isa Str)
-				canInline = yes
+				if !shouldEnd
+					canInline = yes
 
 		var ctor = "{tvar}={create_}({params.join(',')})"
 

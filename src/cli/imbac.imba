@@ -2,6 +2,7 @@
 
 var helpers = require "../compiler/helpers"
 var compiler = require "../compiler/compiler"
+var imbac1
 
 var path = require "path"
 var fs = require "fs"
@@ -73,14 +74,14 @@ class CLI
 
 			if fs.existsSync(dir)
 				var stat = fs.statSync(dir)
-			elif part.match(/\.(imba|js)$/)
+			elif part.match(/\.(imba\d?|js)$/)
 				yes
 			else
 				fs.mkdirSync(dir)
 				console.log ansi.green("+ mkdir {dir}")
 		return
 
-	def findRecursive root, pattern = /\.imba$/
+	def findRecursive root, pattern = /\.imba\d?$/
 		var results = []
 		root = path.relative(process.cwd,root)
 		root = path.normalize(root)
@@ -96,8 +97,8 @@ class CLI
 			elif src.match(pattern)
 				results.push(src)
 
-		if root.match(/\/\*\.imba$/)
-			root = root.slice(0,-7)
+		if let m = root.match(/\/\*\.imba\d?$/)
+			root = root.slice(0,-m[0]:length)
 			read(root,1)
 		else
 			read(root,10)
@@ -128,7 +129,7 @@ class CLI
 			file:targetPath = file:sourcePath
 
 		if file:targetPath
-			file:targetPath = file:targetPath.replace(/\.imba$/,'.js')
+			file:targetPath = file:targetPath.replace(/\.imba\d?$/,'.js')
 
 		coll.push(file)
 
@@ -259,7 +260,11 @@ class CLI
 			dstp = dstpAbs
 
 		try
-			out = compiler.compile(src:sourceBody,opts)
+			if src:filename.match(/\.imba1$/)
+				imbac1 ||= require("../../vendor/imbac-1.5.0.js")
+				out = imbac1.compile(src:sourceBody,opts)
+			else
+				out = compiler.compile(src:sourceBody,opts)
 		catch e
 			out = {error: e}
 
