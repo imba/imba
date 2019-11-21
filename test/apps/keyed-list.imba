@@ -1,7 +1,7 @@
 var pool = [
-	{id: 5, title: "Five"}
-	{id: 6, title: "Six"}
 	{id: 7, title: "Seven"}
+	{id: 8, title: "Eight"}
+	{id: 9, title: "Nine"}
 ]
 
 var todos = [
@@ -9,35 +9,13 @@ var todos = [
 	{id: 2, title: "Two"}
 	{id: 3, title: "Three"}
 	{id: 4, title: "Four"}
+	{id: 5, title: "Five"}
+	{id: 6, title: "Six"}
 ]
 
 tag app-root < component
-
-	def pop
-		pool.push(todos.pop())
-
-	def push
-		todos.push(pool.pop())
-
-	def unshift
-		todos.unshift(pool.pop())
-
-	def reorder
-		todos.unshift(todos.pop())
-
-	def replace
-		var idx = 2
-		pool.push(todos[idx])
-		todos[idx] = pool.shift()
-
 	def render
 		<self>
-			<div>
-				<button.push :click.push> "Add"
-				<button.pop :click.pop> "Remove"
-				<button.unshift :click.unshift> "Unshift"
-				<button.replace :click.replace> "Replace"
-				<button.reorder :click.reorder> "Reorder"
 			<ul> for item in todos
 				<li@{item.id}> <span> item.title
 
@@ -49,27 +27,57 @@ var ordered = do
 	eq actual, titles, message: "expected order to be %1 - was %2"
 
 var mutated = do |state,count|
-	eq count, state.mutations.length,warn: "expected %1 mutations - had %2"
+	eq count, state.mutations.length,warn: "expected %1 mutations - got %2"
 
 test "remove" do
-	await spec.click('.pop')
+	pool.push(todos.pop())
+	await spec.tick()
 	ordered()
 	mutations($1,1)
 
 test "add" do
-	await spec.click('.push')
+	todos.push(pool.pop())
+	await spec.tick()
 	ordered()
 	mutated($1,1)
 
 test "replace" do
-	await spec.click('.replace')
+	var idx = 2
+	pool.push(todos[idx])
+	todos[idx] = pool.shift()
+	await spec.tick()
 	ordered()
 	mutated($1,2)
 
 test "move last todo to top" do
-	await spec.click('.reorder')
+	todos.unshift(todos.pop())
+	await spec.tick()
 	ordered()
 	mutated($1,2)
+
+test "move two items to end" do
+	todos.push(*todos.splice(1,2))
+	await spec.tick()
+	ordered()
+	mutated($1,2)
+
+test "rename item" do
+	todos[2].title = "New title"
+	await spec.tick()
+	ordered()
+	mutated($1,1)
+
+test "change id" do
+	todos[3].id = 100
+	await spec.tick()
+	ordered()
+	mutated($1,2)
+
+test "reverse" do
+	todos.reverse()
+	await spec.tick()
+	ordered()
+	mutated($1,(todos.length - 1) * 2)
 
 # test "rename todo" do
 #	await spec.click('.reorder')

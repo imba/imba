@@ -78,6 +78,9 @@
 
     if(SPEC.blocks.length){
       exposed = {test: SPEC.run.bind(SPEC) }
+      SPEC.blocks.forEach(function(v){
+        exposed[v.name] = v.run.bind(v);
+      })
     }
 
     for(let key of Object.keys(exposed)) {

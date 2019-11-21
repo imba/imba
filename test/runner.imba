@@ -210,9 +210,9 @@ global class SpecExample < SpecComponent
 		for ass in @assertions
 			if ass.failed
 				if ass.options.warn
-					console.dir("spec:warn",message: ass.toString())
+					console.log("spec:warn",message: ass.toString())
 				else
-					console.dir("spec:fail",message: ass.toString())
+					console.log("spec:fail",message: ass.toString())
 		@emit(:done,[self])
 
 	def fail
@@ -248,9 +248,6 @@ global class SpecAssert < SpecComponent
 		@failed = yes
 		if @options.warn
 			@root.warnings.push(self)
-		#	console.dir("spec:warn",message: @toString())
-		# else
-		# 	console.dir("spec:fail",message: @toString())
 
 		console.log("failed",self,@parent.state)		
 		self
