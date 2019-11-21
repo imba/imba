@@ -206,39 +206,61 @@ export class KeyedTagFragment < TagFragment
 		@array = []
 		@remove = Set.new
 		@map = WeakMap.new
+
 		@$ = {}
 
 	def push item, idx
-		let prev = @array[idx]
+		let toReplace = @array[idx]
 
-		# console.log("push dom item")
+		# console.log("push dom item",item,idx,item.innerHTML,toReplace && toReplace.innerHTML,toReplace === item)
 
 		# do nothing
-		if prev === item
-			# console.log "is at same position",item
-			# if @remove.has(item)
-			# 	@remove.delete(item)
+		if toReplace === item
 			yes
 		else
-			let lastIndex = @array.indexOf(item) # @map.get(item) #  @array.indexOf(item)
-	
-			if @remove.has(item)
-				@remove.delete(item)
+			let prevIndex = @map.get(item)
 
-			# this is a new item to be inserted
-			if lastIndex == -1
-				# console.log 'was not in loop before'
+			if prevIndex === undefined
+				# this is a new item
+				console.log "added item"
+				@array.splice(idx,0,item)
+				@appendChild(item,idx)
+			elif true
+				# console.log("moving item?!",idx,prevIndex,item)
+				let prev = @array.indexOf(item)
+				@array.splice(prev,1) if prev >= 0
 				@array.splice(idx,0,item)
 				@appendChild(item,idx)
 
-			elif lastIndex == idx + 1
-				# console.log 'was originally one step ahead'
-				@array.splice(idx,1) # just remove the previous slot?
-				# mark previous index of previous item?
-			else
-				@array[idx] = item
+
+			elif prevIndex < idx
+				# this already existed earlier in the list
+				# no need to do anything?
+				@map.set(item,idx)
+
+			elif prevIndex > idx
+				# was further ahead
+				@array.splice(prevIndex,1)
 				@appendChild(item,idx)
-				@remove.add(prev) if prev
+				@array.splice(idx,0,item)
+
+			# if @remove.has(item)
+			# 	@remove.delete(item)
+
+			# this is a new item to be inserted
+			# if prevIndex == -1
+			# 	console.log 'was not in loop before',item,idx
+			# 	@array.splice(idx,0,item)
+			# 	@appendChild(item,idx)
+
+			# elif lastIndex == idx + 1
+			# 	# console.log 'was originally one step ahead'
+			# 	@array.splice(idx,1) # just remove the previous slot?
+			# 	# mark previous index of previous item?
+			# else
+			# 	@array[idx] = item
+			# 	@appendChild(item,idx)
+			# 	@remove.add(prev) if prev
 
 			# mark previous element as something to remove?
 			# if prev is now further ahead - dont care?
@@ -261,7 +283,9 @@ export class KeyedTagFragment < TagFragment
 
 	def removeChild item, index
 		@map.delete(item)
-		@parent.removeChild(item) if item.parentNode == @parent
+		if item.parentNode == @parent
+			@parent.removeChild(item)
+
 		return
 
 	def open$
@@ -273,6 +297,7 @@ export class KeyedTagFragment < TagFragment
 			@remove.forEach do |item| @removeChild(item)
 			@remove.clear()
 
+		# there are some items we should remove now
 		if @array.length > index
 			# remove the children below
 			while @array.length > index

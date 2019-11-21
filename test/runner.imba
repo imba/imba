@@ -31,12 +31,22 @@ class SpecComponent
 
 	def emit ev, pars
 		Imba.emit(self,ev,pars)
-		# emitting to some spec
 
 	get root
 		@parent ? @parent.root : self
 
+
 global class Spec < SpecComponent
+	
+	def click sel
+		let el = document.querySelector(sel)
+		el.click()
+		await @tick()
+
+	def tick commit = true
+		Imba.commit() if commit
+		await Imba.ticker.promise
+		@observer.takeRecords()
 
 	def initialize
 		@console = console
@@ -44,6 +54,12 @@ global class Spec < SpecComponent
 		@assertions = []
 		@stack = [@context = self]
 		@tests = []
+		@warnings = []
+		@state = {info: [], mutations: [], log: []}
+
+		@observer = MutationObserver.new do |muts|
+			@context.state.mutations.push(*muts)
+
 		self
 
 	get fullName
@@ -51,10 +67,11 @@ global class Spec < SpecComponent
 
 	def eval block, ctx
 		@stack.push(@context = ctx)
-		var res = block()
+		var res = block(@context.state)
 		var after = do
 			@stack.pop
 			@context = @stack[@stack[:length] - 1]
+			@observer.takeRecords()
 			self
 
 		if res and res:then
@@ -68,7 +85,10 @@ global class Spec < SpecComponent
 	
 	def test name, blk
 		@blocks.push SpecExample.new(name, blk, self)
-		
+
+	def eq actual, expected, options
+		SpecAssert.new(@context, actual,expected, options)
+	
 	def step i = 0, &blk
 		Spec.CURRENT = self
 		var block = @blocks[i]
@@ -78,8 +98,21 @@ global class Spec < SpecComponent
 
 	def run
 		Promise.new do |resolve,reject|
+			var prevInfo = console.info
+			@observer.observe(document.body,{
+				attributes: true,
+				childList: true,
+				characterData: true,
+				subtree: true
+			})
+			console.info = do |*params|
+				@context.state.info.push(params)
+				@context.state.log.push(params[0])
+
 			Imba.once(self,'done') do
-				resolve([1,2,3,4])
+				@observer.disconnect()
+				console.info = prevInfo
+				resolve()
 			step(0)
 
 	def finish
@@ -97,13 +130,11 @@ global class Spec < SpecComponent
 
 		console.log logs.join(" | ")
 
-		console.log("spec:done",{failed: failed.length, passed: ok.length})
-
-		# for item in failed
-		# 	console.log item.fullName
-		# 	if item.details
-		# 		console.log "    " + item.details
-
+		console.dir("spec:done",{
+			failed: failed.length,
+			passed: ok.length,
+			warnings: @warnings
+		})
 		var exitCode = (failed.length == 0 ? 0 : 1)
 		@emit(:done, [exitCode])
 
@@ -153,19 +184,11 @@ global class SpecExample < SpecComponent
 		@block = block
 		@assertions = []
 		@root.tests.push(self)
+		@state = {info: [], mutations: [], log: []}
 		self
 
 	get fullName
 		"{@parent.fullName}{@name}"
-
-	def emit ev, pars
-		Imba.emit(self,ev,pars)
-	
-	def eq actual, expected, format = null
-		assert(actual == expected,["expected",expected,"got",actual])
-
-	def assert expression, *msg		
-		SpecAssert.new(self, expression, msg)
 
 	def run
 		@start()
@@ -184,11 +207,16 @@ global class SpecExample < SpecComponent
 	def finish
 		@failed ? @fail() : @pass()
 		@log("spec:test", name: @fullName, failed: @failed)
+		for ass in @assertions
+			if ass.failed
+				if ass.options.warn
+					console.dir("spec:warn",message: ass.toString())
+				else
+					console.dir("spec:fail",message: ass.toString())
 		@emit(:done,[self])
 
 	def fail
-
-		@log("%c✘ {@fullName}", "color:red")
+		@log("%c✘ {@fullName}", "color:red",@state)
 		# @print("✘")
 
 	def pass
@@ -196,44 +224,57 @@ global class SpecExample < SpecComponent
 		# @print("✔")
 
 	get failed
-		@assertions.some do |ass| ass.failed
+		@assertions.some do |ass| ass.critical
 
 	get passed
 		!@failed()
 
 global class SpecAssert < SpecComponent
 
-	def initialize parent,assertion,message
+	def initialize parent,actual,expected,options = {}
 		@parent = parent
-		@assertion = assertion
-		@message = message
+		@expected = expected
+		@actual = actual
+		@options = options
+		@message = options.message || options.warn
 		parent.assertions.push(self)
-		!!@assertion ? @pass() : @fail()
+		@expected == @actual ? @pass() : @fail()
 		self
 
-	get failed
-		!@assertion
-
-	get passed
-		!!@assertion
+	get critical
+		@failed && !@options.warn
 	
 	def fail
+		@failed = yes
+		if @options.warn
+			@root.warnings.push(self)
+		#	console.dir("spec:warn",message: @toString())
+		# else
+		# 	console.dir("spec:fail",message: @toString())
+
+		console.log("failed",self,@parent.state)		
 		self
-		# console.log("%c✘", "color:red")
-		# console.assert(@assertion,*@message)
-		# @print("✘")
 
 	def pass
+		@passed = yes
 		self
-		# console.log("%c✔", "color:green")
-		# @print("✔")
+
+	def toString
+		if @failed and @message isa String
+			let str = @message
+			str = str.replace('%1',@actual)
+			str = str.replace('%2',@expected)
+			return str
+		else
+			"failed"
+			
 
 SPEC = Spec.new
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
 global def test name, blk do SPEC.context.test(name,blk)
-global def eq actual, expected, format do  SPEC.context.eq(actual, expected, format)
-global def ok actual, message do SPEC.context.eq(!!actual, true, message)
-global def assert expression do SPEC.context.assert(expression)
+global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
+global def ok actual, o do SPEC.eq(!!actual, true, o)
+
 

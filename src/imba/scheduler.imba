@@ -33,6 +33,9 @@ class Ticker
 
 		@schedule() unless @scheduled
 
+	get promise
+		Promise.new do |resolve| @add(resolve)
+
 	def tick timestamp
 		var items = @queue
 		@ts = timestamp unless @ts

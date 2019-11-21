@@ -398,6 +398,11 @@ Ticker.prototype.add = function (item,force){
 	if (!this.scheduled) { return this.schedule() };
 };
 
+Object.defineProperty(Ticker.prototype,'promise',{get: function(){
+	var self2 = this;
+	return new Promise(function(resolve) { return self2.add(resolve); });
+}, configurable: true});
+
 Ticker.prototype.tick = function (timestamp){
 	var self2 = this;
 	var items = self2.queue;
@@ -975,43 +980,53 @@ function KeyedTagFragment(parent,slot){
 	this.array = [];
 	this.remove = new Set();
 	this.map = new WeakMap();
+	
 	this.$ = {};
 };
 
 Imba.subclass(KeyedTagFragment,TagFragment);
 exports.KeyedTagFragment = KeyedTagFragment; // export class 
 KeyedTagFragment.prototype.push = function (item,idx){
-	var prev = this.array[idx];
+	var toReplace = this.array[idx];
 	
 	
 	
 	
-	if (prev === item) {
-		// console.log "is at same position",item
-		// if @remove.has(item)
-		// 	@remove.delete(item)
+	if (toReplace === item) {
 		true;
 	} else {
-		var lastIndex = this.array.indexOf(item); 
+		var prevIndex = this.map.get(item);
 		
-		if (this.remove.has(item)) {
-			this.remove.delete(item);
-		};
-		
-		
-		if (lastIndex == -1) {
-			// console.log 'was not in loop before'
+		if (prevIndex === undefined) {
+			// this is a new item
+			console.log("added item");
 			this.array.splice(idx,0,item);
 			this.appendChild(item,idx);
-		} else if (lastIndex == idx + 1) {
-			// console.log 'was originally one step ahead'
-			this.array.splice(idx,1); 
-			
-		} else {
-			this.array[idx] = item;
+		} else if (true) {
+			// console.log("moving item?!",idx,prevIndex,item)
+			var prev = this.array.indexOf(item);
+			if (prev >= 0) { this.array.splice(prev,1) };
+			this.array.splice(idx,0,item);
 			this.appendChild(item,idx);
-			if (prev) { this.remove.add(prev) };
 		};
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		
 		
@@ -1038,7 +1053,10 @@ KeyedTagFragment.prototype.appendChild = function (item,index){
 
 KeyedTagFragment.prototype.removeChild = function (item,index){
 	this.map.delete(item);
-	if (item.parentNode == this.parent) { this.parent.removeChild(item) };
+	if (item.parentNode == this.parent) {
+		this.parent.removeChild(item);
+	};
+	
 	return;
 };
 
@@ -1053,6 +1071,7 @@ KeyedTagFragment.prototype.close$ = function (index){
 		self2.remove.forEach(function(item) { return self2.removeChild(item); });
 		self2.remove.clear();
 	};
+	
 	
 	if (self2.array.length > index) {
 		// remove the children below

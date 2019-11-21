@@ -35,6 +35,3 @@ test "scoped css" do
 	var p2 = document.querySelector('p:not(.scoped)')
 	eq window.getComputedStyle(p1).fontSize, '16px'
 	eq window.getComputedStyle(p2).fontSize, '8px'
-
-test "hello" do
-	eq 2,2

@@ -46,17 +46,40 @@ Object.defineProperty(SpecComponent.prototype,'root',{get: function(){
 	return this.parent ? this.parent.root : this;
 }, configurable: true});
 
+
 function Spec(){
-	this.console = console;
-	this.blocks = [];
-	this.assertions = [];
-	this.stack = [this.context = this];
-	this.tests = [];
-	this;
+	var self2 = this;
+	self2.console = console;
+	self2.blocks = [];
+	self2.assertions = [];
+	self2.stack = [self2.context = self2];
+	self2.tests = [];
+	self2.warnings = [];
+	self2.state = {info: [],mutations: [],log: []};
+	
+	self2.observer = new MutationObserver(function(muts) {
+		var mutations_;
+		return (mutations_ = self2.context.state.mutations).push.apply(mutations_,muts);
+	});
+	
+	self2;
 };
 
 Imba.subclass(Spec,SpecComponent);
 global.Spec = Spec; // global class 
+Spec.prototype.click = async function (sel){
+	let el = document.querySelector(sel);
+	el.click();
+	return await this.tick();
+};
+
+Spec.prototype.tick = async function (commit){
+	if(commit === undefined) commit = true;
+	if (commit) { Imba.commit() };
+	await Imba.ticker.promise;
+	return this.observer.takeRecords();
+};
+
 Object.defineProperty(Spec.prototype,'fullName',{get: function(){
 	return "";
 }, configurable: true});
@@ -64,10 +87,11 @@ Object.defineProperty(Spec.prototype,'fullName',{get: function(){
 Spec.prototype.eval = function (block,ctx){
 	var self2 = this;
 	self2.stack.push(self2.context = ctx);
-	var res = block();
+	var res = block(self2.context.state);
 	var after = function() {
 		self2.stack.pop;
 		self2.context = self2.stack[self2.stack.length - 1];
+		self2.observer.takeRecords();
 		return self2;
 	};
 	
@@ -87,6 +111,10 @@ Spec.prototype.test = function (name,blk){
 	return this.blocks.push(new SpecExample(name,blk,this));
 };
 
+Spec.prototype.eq = function (actual,expected,options){
+	return new SpecAssert(this.context,actual,expected,options);
+};
+
 Spec.prototype.step = function (i,blk){
 	var self2 = this;
 	if(blk==undefined && typeof i == 'function') blk = i,i = 0;
@@ -101,8 +129,25 @@ Spec.prototype.step = function (i,blk){
 Spec.prototype.run = function (){
 	var self2 = this;
 	return new Promise(function(resolve,reject) {
+		var prevInfo = console.info;
+		self2.observer.observe(document.body,{
+			attributes: true,
+			childList: true,
+			characterData: true,
+			subtree: true
+		});
+		console.info = function() {
+			var $0 = arguments, i = $0.length;
+			var params = new Array(i>0 ? i : 0);
+			while(i>0) params[i-1] = $0[--i];
+			self2.context.state.info.push(params);
+			return self2.context.state.log.push(params[0]);
+		};
+		
 		Imba.once(self2,'done',function() {
-			return resolve([1,2,3,4]);
+			self2.observer.disconnect();
+			console.info = prevInfo;
+			return resolve();
 		});
 		return self2.step(0);
 	});
@@ -125,13 +170,11 @@ Spec.prototype.finish = function (){
 	
 	console.log(logs.join(" | "));
 	
-	console.log("spec:done",{failed: failed.length,passed: ok.length});
-	
-	// for item in failed
-	// 	console.log item.fullName
-	// 	if item.details
-	// 		console.log "    " + item.details
-	
+	console.dir("spec:done",{
+		failed: failed.length,
+		passed: ok.length,
+		warnings: this.warnings
+	});
 	var exitCode = ((failed.length == 0) ? 0 : 1);
 	return this.emit('done',[exitCode]);
 };
@@ -190,6 +233,7 @@ function SpecExample(name,block,parent){
 	this.block = block;
 	this.assertions = [];
 	this.root.tests.push(this);
+	this.state = {info: [],mutations: [],log: []};
 	this;
 };
 
@@ -198,22 +242,6 @@ global.SpecExample = SpecExample; // global class
 Object.defineProperty(SpecExample.prototype,'fullName',{get: function(){
 	return ("" + (this.parent.fullName) + (this.name));
 }, configurable: true});
-
-SpecExample.prototype.emit = function (ev,pars){
-	return Imba.emit(this,ev,pars);
-};
-
-SpecExample.prototype.eq = function (actual,expected,format){
-	if(format === undefined) format = null;
-	return this.assert(actual == expected,["expected",expected,"got",actual]);
-};
-
-SpecExample.prototype.assert = function (expression){
-	var $0 = arguments, i = $0.length;
-	var msg = new Array(i>1 ? i-1 : 0);
-	while(i>1) msg[--i - 1] = $0[i];
-	return new SpecAssert(this,expression,msg);
-};
 
 SpecExample.prototype.run = async function (){
 	this.start();
@@ -235,12 +263,21 @@ SpecExample.prototype.start = function (){
 SpecExample.prototype.finish = function (){
 	this.failed ? this.fail() : this.pass();
 	this.log("spec:test",{name: this.fullName,failed: this.failed});
+	for (let i = 0, items = iter$(this.assertions), len = items.length, ass; i < len; i++) {
+		ass = items[i];
+		if (ass.failed) {
+			if (ass.options.warn) {
+				console.dir("spec:warn",{message: ass.toString()});
+			} else {
+				console.dir("spec:fail",{message: ass.toString()});
+			};
+		};
+	};
 	return this.emit('done',[this]);
 };
 
 SpecExample.prototype.fail = function (){
-	
-	return this.log(("%c✘ " + (this.fullName)),"color:red");
+	return this.log(("%c✘ " + (this.fullName)),"color:red",this.state);
 	// @print("✘")
 };
 
@@ -250,44 +287,60 @@ SpecExample.prototype.pass = function (){
 };
 
 Object.defineProperty(SpecExample.prototype,'failed',{get: function(){
-	return this.assertions.some(function(ass) { return ass.failed; });
+	return this.assertions.some(function(ass) { return ass.critical; });
 }, configurable: true});
 
 Object.defineProperty(SpecExample.prototype,'passed',{get: function(){
 	return !this.failed();
 }, configurable: true});
 
-function SpecAssert(parent,assertion,message){
+function SpecAssert(parent,actual,expected,options){
+	if(options === undefined) options = {};
 	this.parent = parent;
-	this.assertion = assertion;
-	this.message = message;
+	this.expected = expected;
+	this.actual = actual;
+	this.options = options;
+	this.message = options.message || options.warn;
 	parent.assertions.push(this);
-	(!!this.assertion) ? this.pass() : this.fail();
+	(this.expected == this.actual) ? this.pass() : this.fail();
 	this;
 };
 
 Imba.subclass(SpecAssert,SpecComponent);
 global.SpecAssert = SpecAssert; // global class 
-Object.defineProperty(SpecAssert.prototype,'failed',{get: function(){
-	return !this.assertion;
-}, configurable: true});
-
-Object.defineProperty(SpecAssert.prototype,'passed',{get: function(){
-	return !!this.assertion;
+Object.defineProperty(SpecAssert.prototype,'critical',{get: function(){
+	return this.failed && !this.options.warn;
 }, configurable: true});
 
 SpecAssert.prototype.fail = function (){
+	this.failed = true;
+	if (this.options.warn) {
+		this.root.warnings.push(this);
+	};
+	//	console.dir("spec:warn",message: @toString())
+	// else
+	// 	console.dir("spec:fail",message: @toString())
+	
+	console.log("failed",this,this.parent.state);
 	return this;
-	// console.log("%c✘", "color:red")
-	// console.assert(@assertion,*@message)
-	// @print("✘")
 };
 
 SpecAssert.prototype.pass = function (){
+	this.passed = true;
 	return this;
-	// console.log("%c✔", "color:green")
-	// @print("✔")
 };
+
+SpecAssert.prototype.toString = function (){
+	if (this.failed && (typeof this.message=='string'||this.message instanceof String)) {
+		let str = this.message;
+		str = str.replace('%1',this.actual);
+		str = str.replace('%2',this.expected);
+		return str;
+	} else {
+		return "failed";
+	};
+};
+
 
 SPEC = new Spec();
 
@@ -298,13 +351,11 @@ describe = self.describe = function (name,blk){
 test = self.test = function (name,blk){
 	return SPEC.context.test(name,blk);
 };
-eq = self.eq = function (actual,expected,format){
-	return SPEC.context.eq(actual,expected,format);
+eq = self.eq = function (actual,expected,o){
+	return SPEC.eq(actual,expected,o);
 };
-ok = self.ok = function (actual,message){
-	return SPEC.context.eq(!!actual,true,message);
+ok = self.ok = function (actual,o){
+	return SPEC.eq(!!actual,true,o);
 };
-assert = self.assert = function (expression){
-	return SPEC.context.assert(expression);
-};
+
 

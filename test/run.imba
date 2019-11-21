@@ -20,7 +20,7 @@ var tests = []
 var parseRemoteObject = do |obj|
 	let result = obj.value or obj
 	if obj.type == 'object'
-		# console.log("object",obj)
+		# console.log("object",obj,obj.preview)
 		if obj.value
 			return obj.value
 		result = {}
@@ -37,22 +37,30 @@ def run item
 		var src =  "http://localhost:8125/index.html#{item}"
 		var page = await browser.newPage()
 
-		console.log(helpers.ansi.bold(item))
+		console.log(helpers.ansi.bold(item) + ' ' + src)
 
 		var handlers =
 			'example:loaded': do |e|
 				page.evaluate(do await SPEC.run())
 
 			'spec:done': do |e|
+				# console.log("spec done", e)
 				e.failed == 0 ? resolve(e) : reject(e)
 
 			'spec:test': do |e|
+				
 				e.file = item
 				tests.push(e)
 				if e.failed
-					console.log helpers.ansi.f(:redBright,"✘ {e.name}")
+					console.log helpers.ansi.f(:redBright,"  ✘ {e.name}")
 				else
-					console.log helpers.ansi.f(:greenBright,"✔ {e.name}")
+					console.log helpers.ansi.f(:greenBright,"  ✔ {e.name}")
+
+			'spec:warn': do |e|
+				console.log helpers.ansi.f(:yellowBright,"    - {e.message}")
+
+			'spec:fail': do |e|
+				console.log helpers.ansi.f(:redBright,"    ✘ {e.message}")
 
 			'page:error': do |e|
 				console.log helpers.ansi.f(:redBright,"error {e.message}")
@@ -66,7 +74,6 @@ def run item
 
 		page.on 'console' do |msg|
 			# console.log("page on console",msg._type,msg)
-
 			var params = msg.args().filter(Boolean).map do |x|
 				parseRemoteObject(x._remoteObject)
 
@@ -107,9 +114,13 @@ def main
 	var passed = tests.filter do !$1.failed
 	var failed = tests.filter do $1.failed
 
+	if passed.length
+		console.log helpers.ansi.f(:greenBright,"{passed.length} test{passed.length == 1 ? '' : 's'} passed")
+
 	if failed.length
 		console.log helpers.ansi.f(:redBright,"{failed.length} test{failed.length == 1 ? '' : 's'} failed")
-	console.log('')
-	process.exit(0)
+		process.exit(1)
+	else
+		process.exit(0)
 
 main()

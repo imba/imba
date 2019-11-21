@@ -7,6 +7,14 @@ var state =
 
 var hideList = false
 
+def flip
+	state.bool = !state.bool
+	app.render()
+
+def toggleList
+	hideList = !hideList
+	app.render()
+
 var footer = do |title|
 	if state.bool
 		<footer>
@@ -17,7 +25,16 @@ var footer = do |title|
 			<div> title
 			<span> "bool is false"
 
-tag app-root
+tag app-root < component
+
+	def addNumber
+		state.numbers.push("" + state.numbers.length)
+		console.info('added')
+
+	def addName name
+		state.names.push(name)
+		console.info('added')
+
 	def list items
 		return null if hideList
 
@@ -26,8 +43,12 @@ tag app-root
 
 	def render
 		<self>
+			<div>
+				<button.add-number :click.addNumber> "Add number"
+				<button.add-name :click.addName("Name")> "Add name"
+
 			<div> "Count is there"
-			footer("First footer {Math.random()}")
+			footer("First footer}")
 			footer("Second footer")
 			<div> state.title
 			list(state.numbers)
@@ -35,15 +56,12 @@ tag app-root
 
 var app = <app-root>
 document.body.appendChild(app)
-# these are exposed to root(!)
-def flip
-	state.bool = !state.bool
-	app.render()
 
-def addNumber
-	state.numbers.push("" + state.numbers.length)
-	app.render()
+test "add number" do
+	await spec.click('.add-number')
+	eq $1.mutations.length,1,"mutations error"
 
-def toggleList
-	hideList = !hideList
-	app.render()
+test "add name" do
+	await spec.click('.add-name')
+	eq $1.mutations.length,1,"mutations error"
+
