@@ -11,10 +11,6 @@
 var T = require './token'
 var Token = T.Token
 
-var v8
-if $v8prof$
-	v8 = require 'v8-natives'	
-
 import INVERSES,BALANCED_PAIRS,TOK from './constants'
 
 # var TERMINATOR = TERMINATOR
@@ -285,25 +281,7 @@ export class Rewriter
 		step("addImplicitParentheses")
 
 	def step fn
-		if $imbac_profile$
-			console.time(fn)
-
 		this[fn]()
-
-		if v8
-			var opt = v8.getOptimizationStatus(this[fn])
-			if opt != 1
-				process:stdout.write "{fn}: {opt}\n" 
-				v8.optimizeFunctionOnNextCall(this[fn])
-
-			# if opt == 2
-			# v8.optimizeFunctionOnNextCall(this[fn])
-			#	v8:helpers.printStatus(this[fn])
-			# console.log v8.getOptimizationStatus(this[fn])
-
-		if $imbac_profile$
-			console.timeEnd(fn)
-
 		return
 
 	# Rewrite the token stream, looking one token ahead and behind.
