@@ -1,7 +1,13 @@
+
+tag nested-item
+
+	def ping ref
+		console.log("nested-{ref}")
+
 tag app-root < component
 
-	def ping name
-		console.info(name)
+	def ping ref
+		console.info(ref)
 
 	def render
 		<self>
@@ -16,6 +22,15 @@ tag app-root < component
 					"self"
 					<b> "inside"
 
+				<button.f :click.ping(:f1).ping(:f2)> "Multiple"
+				<nested-item>
+					<button.g :click.ping(:g)> 'g'
+
+			<div.capturing :click.capture.ping(:captured)>
+				<button :click.ping(:button)> 'button'
+
+			<button.once :click.once(:once)> 'once button'
+
 document.body.appendChild(<app-root>)
 
 var click = do |state,sel,result|
@@ -29,19 +44,27 @@ test "click" do
 
 test "click.stop" do
 	await click($1,'.c','c')
-	# button.c stops the event from travelling up to div.a
-	# await spec.click('.c')
-	# eq $1.log,['c']
 
 test "click.self" do
 	await click($1,'.d','d')
 	await click($1,'.d b','de,a')
-	# button.c stops the event from travelling up to div.a
-	# await spec.click('.c')
-	# eq $1.log,['c']
 
 test "stop even if not self" do
 	await click($1,'.e','e')
 	# button.e should stop the event but not execute ping
 	# because we check self after stop
 	await click($1,'.e b','')
+
+test "multiple calls" do
+	await click($1,'button.f','f1,f2,a')
+
+test "intercepted method" do
+	# we walk up the whole path of elements to find potential
+	# handlers for our method. since button.g is inside nested-item
+	# it will trigger the ping-method on this element instead
+	await click($1,'button.g','nested-g,a')
+
+test "click.once" do
+	await click($1,'button.once','once')
+	await click($1,'button.once','')
+

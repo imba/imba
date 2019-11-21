@@ -34,7 +34,7 @@ var parseRemoteObject = do |obj|
 
 def run item
 	Promise.new do |resolve,reject|
-		var src =  "http://localhost:8125/index.html#{item}"
+		var src =  "http://localhost:8125/test/index.html#{item}"
 		var page = await browser.newPage()
 
 		console.log(helpers.ansi.bold(item) + ' ' + src)
@@ -92,7 +92,7 @@ def main
 	# console.log('run with options',options)
 	browser = await puppeteer.launch()
 
-	var entries = fs.readdirSync(path.resolve(__dirname,"apps"), withFileTypes: true)
+	var entries = fs.readdirSync(path.resolve(__dirname,"..","test","apps"), withFileTypes: true)
 	entries = entries.filter do |src|
 		return no unless src.name.indexOf('.imba') >= 0
 		if options.main

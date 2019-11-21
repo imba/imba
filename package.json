@@ -42,10 +42,9 @@
     "build-parser": "bin/imba scripts/build-parser.imba",
     "build": "webpack --progress --colors --display-modules --mode production",
     "build-watch": "webpack --progress --colors --display-modules --watch",
-    "watch-compiler": "imbac -w --es5 -o lib/compiler src/compiler",
     "watch": "bin/imbac -w -o lib src",
     "watch-umd": "webpack --progress --colors --display-modules --mode production --watch",
-    "test": "bin/imba test/run.imba"
+    "test": "bin/imba scripts/test-runner.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.1",

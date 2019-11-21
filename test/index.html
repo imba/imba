@@ -21,13 +21,13 @@
 </head>
 <body>
   <inspect id="appDebugPanel"></inspect>
-  <script src="imbac.js" type="text/javascript"></script>
-  <script src="imba.js" type="text/javascript"></script>
+  <script src="../dist/imbac.js" type="text/javascript"></script>
+  <script src="../dist/imba.development.js" type="text/javascript"></script>
   <script>
     require = function(name){ if(name == 'imba2'){ return Imba; } }
     this.global = this;
   </script>
-  <script src="runner.js" type="text/javascript"></script>
+  <script src="spec.js" type="text/javascript"></script>
   <script>
   SELF = {
     test: window.test,

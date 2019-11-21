@@ -31,8 +31,8 @@ http.createServer(function (request, response) {
             contentType = 'audio/wav';
             break;
     }
-
-    fs.readFile(filePath, function(error, content) {
+    let realpath = path.resolve(__dirname,'..',filePath);
+    fs.readFile(realpath, function(error, content) {
         if (error) {
             if(error.code == 'ENOENT'){
                 fs.readFile('./404.html', function(error, content) {
