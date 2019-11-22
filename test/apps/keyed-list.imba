@@ -27,7 +27,7 @@ var ordered = do
 	eq actual, titles, message: "expected order to be %1 - was %2"
 
 var mutated = do |state,count|
-	eq count, state.mutations.length,warn: "expected %1 mutations - got %2"
+	eq count, state.mutations.length, warn: "expected %1 mutations - got %2"
 
 test "remove" do
 	pool.push(todos.pop())

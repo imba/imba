@@ -236,7 +236,7 @@ global class SpecAssert < SpecComponent
 		@expected = expected
 		@actual = actual
 		@options = options
-		@message = (options.message || options.warn) || "expected %1 - got %2"
+		@message = (options.message || options.warn) || "expected %2 - got %1"
 		parent.assertions.push(self)
 		compare(@expected,@actual) ? @pass() : @fail()
 		self
@@ -266,8 +266,8 @@ global class SpecAssert < SpecComponent
 	def toString
 		if @failed and @message isa String
 			let str = @message
-			str = str.replace('%1',@expected)
-			str = str.replace('%2',@actual)
+			str = str.replace('%1',@actual)
+			str = str.replace('%2',@expected)
 			return str
 		else
 			"failed"
