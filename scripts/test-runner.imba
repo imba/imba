@@ -109,8 +109,6 @@ def main
 		return yes
 
 	var files = entries.map(|v| "apps/{v.name}" )
-	# console.log "run examples",entries,tests
-	# return
 
 	for item in files
 		try

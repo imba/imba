@@ -179,13 +179,13 @@ root.$render = do root.$scheduler.add('render')
 
 imba.commit = root.$render
 imba.scheduler = root.$scheduler
+
+
 ###
 DOM
 ###
 
 def root.createImbaElement name, parent, index, flags, text
-	# could this essentially be inlined in every file?
-	# console.log("Create element",name)
 	var el = root.document.createElement(name)
 	el.className = flags if flags
 	el.text$(text) if text !== null
@@ -413,7 +413,6 @@ class KeyedTagFragment < TagFragment
 
 			if prevIndex === undefined
 				# this is a new item
-				console.log "added item"
 				@array.splice(idx,0,item)
 				@appendChild(item,idx)
 			elif true
