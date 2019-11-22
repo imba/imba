@@ -42,8 +42,8 @@
   "scripts": {
     "bootstrap": "node scripts/bootstrap.js",
     "build-parser": "bin/imba scripts/build-parser.imba",
-    "test": "bin/imba scripts/test-runner.imba",
-    "build": "webpack --module-bind imba1=./scripts/bootstrap.loader.js --module-bind imba=./loader.js --resolve-extensions '.imba1,.imba,.js,.json'",
+    "test": "npm run bootstrap && bin/imba scripts/test-runner.imba",
+    "build": "npm run bootstrap && webpack --module-bind imba1=./scripts/bootstrap.loader.js --module-bind imba=./loader.js --resolve-extensions '.imba1,.imba,.js,.json' --mode=none",
     "watch": "npm run build -- --watch"
   },
   "bugs": "https://github.com/imba/imba/issues",

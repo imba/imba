@@ -6,6 +6,8 @@ var dist = path.resolve(__dirname,'..','dist');
 var tmp = path.resolve(__dirname,'..','build');
 var src = path.resolve(__dirname,'..','src');
 
+
+
 function pack(opts){
 	return new Promise(function(resolve,reject){
 		opts = Object.assign({
@@ -20,12 +22,12 @@ function pack(opts){
 			path: dist
 		},opts.output);
 		webpack(opts).run(function(err,stats){
-			console.log('from webpack',err,stats);
 			resolve();
 		});
 	});
 }
 async function main(){
+	if(fs.existsSync(dist)){ process.exit(0); };
 	try{ fs.mkdirSync(dist); } catch(e) {}
 	try{ fs.mkdirSync(tmp); } catch(e) {}
 	// make sure we generate the initial parser and all that
@@ -48,7 +50,7 @@ async function main(){
 			output: {filename: './compiler.js'}
 		});
 
-		process.exit(1);
+		process.exit(0);
 	};
 }
 

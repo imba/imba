@@ -23,5 +23,5 @@ module.exports = (env, argv) =>[{
 	node: {fs: false, process: false, global: false},
 },{
 	entry: "./test/index.imba",
-	output: {filename: `./test/index.js`}
+	output: {filename: `./test/index.js`, path: __dirname}
 }]
