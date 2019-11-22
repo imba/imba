@@ -72,8 +72,6 @@
   },
   "devDependencies": {
     "puppeteer": "^1.19.0",
-    "uglifyjs-webpack-plugin": "^1.0.0-rc.0",
-    "underscore": "^1.8.3",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.9.0"
