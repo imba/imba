@@ -17,3 +17,4 @@ test/node_modules
 lib/
 build/
 dist/
+test/index.js
