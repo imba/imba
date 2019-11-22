@@ -6652,7 +6652,7 @@ export class Tag < Node
 
 				if item isa Call
 					# global
-					add "Imba.$c=({key}$ || ({key}$=\{\}))"
+					add "$imba.ctx=({key}$ || ({key}$=\{\}))"
 
 				add "{vvar}={item.c(o)}"
 				# add special case for strings?
@@ -7490,7 +7490,7 @@ export class Scope
 		# deal with root instead?
 		@tagCache ||= declare('t0$c',
 			# LIT('(Imba.$c ? (Imba.$c[Imba.$k] || (Imba.$c[Imba.$k] = {})) : {})'),
-			LIT('(Imba.$c||{})'),
+			LIT('($imba.ctx||{})'),
 			system: yes
 		)
 	# def context

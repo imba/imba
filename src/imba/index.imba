@@ -1,8 +1,13 @@
 
 var root = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
 
-root.imba = {version: '2.0.0', global: root}
+root.imba = {
+	version: '2.0.0',
+	global: root,
+	ctx: null 
+}
 root.$imba = root.imba
+
 
 
 var raf = root.requestAnimationFrame || (do |blk| setTimeout(blk,1000 / 60))

@@ -48,7 +48,7 @@ tag app-root < component
 				<button.add-name :click.addName("Name")> "Add name"
 
 			<div> "Count is there"
-			footer("First footer}")
+			footer("First footer")
 			footer("Second footer")
 			<div> state.title
 			list(state.numbers)
