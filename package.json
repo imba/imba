@@ -1,5 +1,5 @@
 {
-  "name": "imba2",
+  "name": "imba",
   "description": "Intuitive and powerful language for building webapps that fly",
   "keywords": [
     "javascript",
@@ -9,6 +9,7 @@
   ],
   "author": "Sindre Aarsaether",
   "license": "MIT",
+  "browserlist": ["last 1 Chrome version"],
   "contributors": [
     {
       "name": "Sindre Aarsaether",
@@ -44,7 +45,14 @@
     "build-watch": "webpack --progress --colors --display-modules --watch",
     "watch": "bin/imbac -w -o lib src",
     "watch-umd": "webpack --progress --colors --display-modules --mode production --watch",
-    "test": "bin/imba scripts/test-runner.imba"
+    "test": "bin/imba scripts/test-runner.imba",
+    "dev": "webpack imba=src/imba/index.imba imbac=lib/compiler/compiler.js -o dist/imba.development.js --module-bind imba=./loader.js --mode=none",
+    "build-dev": "webpack imba=./src/imba/index.imba imbac=./lib/compiler/compiler.js --output-path='./dist' --output-filename='[name].development.js' --module-bind imba=./loader.js --mode=none",
+    "watch-dev": "npm run build-dev -- --watch",
+    "build-prod": "webpack imba=./src/imba/index.imba imbac=./lib/compiler/compiler.js --output-path='./dist' --output-filename='[name].production.js' --module-bind imba=./loader.js --mode=production",
+    "test-watch": "webpack ./test/index.imba -o ./test/index.js --module-bind imba=./loader.js --mode=none",
+    "watch-compiler": "webpack ./src/compiler/compiler.imba1 -o ./dist/compiler.js --module-bind imba1=./vendor/imba1-loader.js --mode=production --resolve-extensions '.imba1,.imba,.js,.json' --output-library-target=umd",
+    "pack": "webpack --module-bind imba1=./scripts/bootstrap.loader.js --module-bind imba=./loader.js --resolve-extensions '.imba1,.imba,.js,.json'"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.1",
@@ -59,11 +67,11 @@
   },
   "directories": {},
   "main": "./index",
-  "browser": "./imba",
+  "browser": "./dist/imba.production.js",
   "bin": {
-    "imba2": "./bin/imba",
-    "imbac2": "./bin/imbac",
-    "imbapack2": "./bin/imbapack"
+    "imba": "./bin/imba",
+    "imbac": "./bin/imbac",
+    "imbapack": "./bin/imbapack"
   },
   "preferGlobal": true,
   "homepage": "http://imba.io",

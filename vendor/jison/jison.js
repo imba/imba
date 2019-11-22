@@ -1152,16 +1152,6 @@ var nextVariableId = 0;
 var variableTokens = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$';
 var variableTokensLength = variableTokens.length;
 
-// default main method for generated commonjs modules
-function commonjsMain (args) {
-    if (!args[1]) {
-        console.log('Usage: '+args[0]+' FILE');
-        process.exit(1);
-    }
-    var source = require('fs').readFileSync(require('path').normalize(args[1]), "utf8");
-    return exports.parser.parse(source);
-}
-
 // debug mixin for LR parser generators
 
 function printAction (a, gen) {

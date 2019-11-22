@@ -18,7 +18,7 @@
 
 # The only dependency is on the **Jison.Parser**.
 
-var jison = require '../jison/jison'
+var jison = require '../../vendor/jison/jison'
 var Parser = jison.Parser
 
 # Jison DSL

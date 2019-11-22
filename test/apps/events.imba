@@ -31,6 +31,9 @@ tag app-root < component
 
 			<button.once :click.once(:once)> 'once button'
 
+			<button.h :click.ping(:h)>
+				<nested-item>
+
 document.body.appendChild(<app-root>)
 
 var click = do |state,sel,result|
@@ -57,6 +60,9 @@ test "stop even if not self" do
 
 test "multiple calls" do
 	await click($1,'button.f','f1,f2,a')
+
+test "click traversal" do
+	await click($1,'.h','h')
 
 test "intercepted method" do
 	# we walk up the whole path of elements to find potential

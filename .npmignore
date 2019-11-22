@@ -11,6 +11,9 @@ tmp
 *.log
 scripts/
 attic/*
+build/
+vendor/
+src/compiler
 .cache
 screenshot.png
 .gitattributes

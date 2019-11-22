@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var cp = require('child_process');
-var imba = require('./lib/compiler');
+var compiler = require('./dist/compiler');
 
 var cacheDir = process.env.IMBA_CACHE_DIR;
 var cachePrefix
@@ -30,7 +30,7 @@ function cacheFile(filename) {
 	}
 
 	if (!content) {
-		var compiled = imba.compile(fs.readFileSync(filename,'utf8'),{
+		var compiled = compiler.compile(fs.readFileSync(filename,'utf8'),{
 			filename: filename,
 			sourcePath: filename,
 			target: 'node',
@@ -86,7 +86,7 @@ if(require.extensions) {
 
 } else if(require.registerExtension) {
 	require.registerExtension('.imba',function (content){
-		return imba.compile(content, {target: 'node'}).js;
+		return compiler.compile(content, {target: 'node'}).js;
 	});
 };
 

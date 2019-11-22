@@ -1,9 +1,9 @@
 
 const qs = require('querystring');
 
-var compiler = require('./lib/compiler');
-var csscompiler = require('./lib/compiler/css');
-var helpers = require('./lib/compiler/helpers');
+var compiler = require('./dist/compiler');
+var helpers = compiler.helpers;
+
 var path = require('path');
 var fs = require('fs');
 var loaderPath = fs.realpathSync(__filename); // path.join(path.dirname(fs.realpathSync(__filename)), '..',path.sep);
@@ -59,7 +59,7 @@ module.exports = function(content,inMap) {
 		if(this.loaders.length == 1){
 			// There are no additional style loaders -- we will need to process it directly
 			let scope = resourceQuery.id ? '_' + resourceQuery.id : null;
-			var css = csscompiler.compile(options.body,{scope: scope});
+			var css = compiler.css.compile(options.body,{scope: scope});
 			let out = "var styles = document.createElement('style');"
 			out = out + "styles.textContent = " + JSON.stringify(css) + ";\n"
 			out = out + "document.head.appendChild(styles);"
@@ -71,7 +71,7 @@ module.exports = function(content,inMap) {
 	// style post-processor
 	if(resourceQuery && resourceQuery.type == 'style'){
 		let scope = resourceQuery.id ? '_' + resourceQuery.id : null;
-		var css = csscompiler.compile(content,{scope: scope})
+		var css = compiler.css.compile(content,{scope: scope})
 		return this.callback(null, css, inMap);
 	}
 

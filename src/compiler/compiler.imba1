@@ -6,14 +6,16 @@ var T = require './token'
 var util = require './helpers'
 var lexer = require './lexer'
 var rewriter = require './rewriter'
-export var parser = require('../../lib/compiler/parser')['parser']
+export var parser = require('../../build/parser')['parser']
 var ast = require './nodes'
 
 import ImbaParseError from './errors'
 
 # Instantiate a Lexer for our use here.
 export var lex = lexer.Lexer.new
+export var css = require './css'
 export var Rewriter = rewriter.Rewriter
+export var helpers = util
 var rewriter = Rewriter.new
 
 parser:lexer = lex.jisonBridge

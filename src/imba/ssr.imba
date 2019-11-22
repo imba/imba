@@ -1,7 +1,7 @@
-var Imba = require("../imba")
-
 # TODO classes should not be global,
 # rather imported where they are needed
+
+var root = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
 
 var voidElements = {
 	area: yes
@@ -21,23 +21,18 @@ var voidElements = {
 	wbr: yes
 }
 
-# could create a fake document 
-class ImbaServerDocument
 
-	def createElement type
-		return ImbaServerElement.new(type)
+class CustomElementRegistry
 
-	def createElementNS ns, type
-		return ImbaServerElement.new(type)
+	def define
+		self
 
-	def createTextNode value
-		return value
-		
-	def createComment value
-		return ImbaServerCommentNode.new(value)
+	def get
+		self
 
-Imba.document = ImbaServerDocument.new
-	
+root.customElements ||= CustomElementRegistry.new()
+
+
 var escapeAttributeValue = do |val|
 	var str = typeof val == 'string' ? val : String(val)
 	if str.indexOf('"') >= 0
@@ -58,9 +53,25 @@ var escapeTextContent = do |val, nodeName|
 		str = str.replace(/\>/g,"&gt;")
 	return str
 
+# could create a fake document 
+export class root.Document
+
+	def createElement type
+		return Element.new(type)
+
+	def createElementNS ns, type
+		return ns == 'svg' ? SVGElement.new(type) : HTMLElement.new(type)
+
+	def createTextNode value
+		return Text.new(value)
+		
+	def createComment value
+		return Comment.new(value)
+
+
 # could optimize by using a dictionary in addition to keys
 # where we cache the indexes?
-class ImbaNodeClassList
+export class DOMTokenList
 
 	def initialize dom, classes
 		this.classes = classes or []
@@ -86,14 +97,14 @@ class ImbaNodeClassList
 		self.classes.indexOf(flag) >= 0
 
 	def clone dom
-		var clone = ImbaNodeClassList.new(dom,self.classes.slice(0))
+		var clone = DOMTokenList.new(dom,self.classes.slice(0))
 		return clone
 		
 	def toString
 		# beware of perf
 		self.classes.join(" ").trim()
 
-class CSSStyleDeclaration
+export class StyleDeclaration
 
 	def initialize dom
 		self.dom = dom
@@ -112,38 +123,23 @@ class CSSStyleDeclaration
 				items.push("{k}: {v}")
 		return items.join(';')
 
-class ImbaServerCommentNode
-	
-	def initialize value
-		self.value = value
-		
-	get outerHTML
-		"<!-- {escapeTextContent(self.value)} -->"
-		
-	def toString
-		if self.tag and self.tag.toNodeString
-			return self.tag.toNodeString()
-		self.outerHTML
-	
+export class root.Node
 
-export class ImbaServerElement
+	# appendChild
+	# removeChild etc
 
-	def self.getter name, fn
-		Object.defineProperty(self:prototype, name, {
-			get: fn,
-			enumerable: true,
-			configurable: true
-		})
+export class root.Element < root.Node
 
 	def initialize type
-		# slowing things down -- be careful
-		# should only need to copy from the outer element
-		# when we optimize - do it some other way
-		# should somehow be linked to their owner, no?
 		self.nodeName  = type
-		self.classList = ImbaNodeClassList.new(self)
 		self.children = []
 		self
+
+	get classList
+		#classList ||= DOMTokenList.new(self)
+
+	get style
+		#style ||= StyleDeclaration.new(this)
 
 	def flag$
 		self
@@ -159,14 +155,6 @@ export class ImbaServerElement
 
 	def open$
 		self
-
-	def cloneNode deep
-		# need to include classes as well
-		var el = ImbaServerElement.new(self.nodeName)
-		self.classList =self.classList.clone(self)
-		# FIXME clone the attributes as well
-		# el:className = self:className
-		return el
 
 	def appendChild child
 		# again, could be optimized much more
@@ -281,13 +269,6 @@ export class ImbaServerElement
 		else
 			return "<{sel}>{self.innerHTML}</{typ}>"
 
-	# def toString
-	# 	if self.tag and self.tag.toNodeString
-	# 		# console.log "tag has custom string {@nodeType}" # ,self:children
-	# 		return self.tag.toNodeString()
-	# 		# return @tag.toNodeString
-	# 	self.outerHTML
-
 	set children value
 		#children = value
 
@@ -304,8 +285,7 @@ export class ImbaServerElement
 	get lastElementChild
 		self.children[self.children.length - 1]
 	
-	get style
-		#style ||= CSSStyleDeclaration.new(this)
+	
 
 	get className
 		self.classList.toString()
@@ -314,23 +294,21 @@ export class ImbaServerElement
 		self.classList.classes = (value or '').split(' ')
 		self.classList.toString()
 
+export class root.HTMLElement < root.Element
 
-extend tag element
+export class root.SVGElement < root.Element
+
+export class root.Text < root.Element
+
+export class root.Comment < root.Element
 	
-	def removeAllChildren
-		@dom.children = []
-		@dom.innerHTML = null
-		#tree_ = #text_ = null
-		self
-
+	def initialize value
+		self.value = value
+		
+	get outerHTML
+		"<!-- {escapeTextContent(self.value)} -->"
+		
 	def toString
-		@dom.outerHTML
-
-extend tag html
-
-	def doctype
-		@doctype || "<!doctype html>"
-
-	def toString
-		doctype + super
-
+		if self.tag and self.tag.toNodeString
+			return self.tag.toNodeString()
+		self.outerHTML

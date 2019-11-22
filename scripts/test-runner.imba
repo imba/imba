@@ -34,17 +34,20 @@ var parseRemoteObject = do |obj|
 
 def run item
 	Promise.new do |resolve,reject|
-		var src =  "http://localhost:8125/test/index.html#{item}"
+		# var src =  "http://localhost:1234/index.html#{item}"
+		var root = path.resolve(__dirname,"..","test")
+		var src =  "file://{root}/index.html#{item}"
 		var page = await browser.newPage()
 
 		console.log(helpers.ansi.bold(item) + ' ' + src)
 
 		var handlers =
 			'example:loaded': do |e|
+				console.log 'example loaded'
 				page.evaluate(do await SPEC.run())
 
 			'spec:done': do |e|
-				# console.log("spec done", e)
+				console.log("spec done", e)
 				e.failed == 0 ? resolve(e) : reject(e)
 
 			'spec:test': do |e|
@@ -90,7 +93,15 @@ def run item
 
 def main
 	# console.log('run with options',options)
-	browser = await puppeteer.launch()
+	# browser = await puppeteer.launch(ignoreDefaultArgs: true,args: ['--disable-web-security'], headless: true)
+	var args = [
+		'--disable-web-security',
+		'--allow-file-access-from-file',
+		'--no-sandbox',
+		'--enable-local-file-accesses'
+	]
+
+	browser = await puppeteer.launch(args: args, headless: true)
 
 	var entries = fs.readdirSync(path.resolve(__dirname,"..","test","apps"), withFileTypes: true)
 	entries = entries.filter do |src|

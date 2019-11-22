@@ -2477,9 +2477,9 @@ export class TagDeclaration < Code
 		if body.count
 			params.push("function({@ctx.c})\{{cbody}\}")
 
-		var meth = option(:extension) ? 'extendTag' : 'defineTag'
+		var meth = option(:extension) ? 'extend' : 'define'
 		# var js = "{mark}{scope__.imba.c}.{meth}({params.join(', ')})"
-		var caller = scope__.imbaRef('tagscope') # scope__.imba.c
+		var caller = LIT('imbaElements') #  scope__.imbaRef('tagscope')
 		var js = "{mark}{caller}.{meth}({params.join(', ')})"
 
 		if name.isClass
@@ -2898,15 +2898,6 @@ export class PropertyDeclaration < Node
 				js:ondirty = OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 			else
 				js:ondirty = "{scope__.imba.c}.propDidSet(this,this.__{key},v,a)"
-
-
-		if pars:observe
-			if pars:observe isa Bool
-				o.key(:observe).value = Symbol.new("{key}DidEmit")
-
-			tpl = propWatchTemplate
-			js:ondirty = "{scope__.imba.c}.observeProperty(this,'{key}',{o.key(:observe).value.c},v,a);" + (js:ondirty or '')
-			# OP('&&',fn,CALL(fn,['v','a',"this.__{key}"])).c
 
 		if !isAttr and o.key(:dom)
 			js:set = "if (v != this._dom.{name.value}) \{ this._dom.{name.value} = v \}"
@@ -5734,7 +5725,7 @@ export class For < Loop
 		var after = ""
 
 		if @tag and @childTags
-			let iref = scope__.imbaRef('createFragment','fragment$').c
+			let iref = LIT('createImbaFragment') # scope__.imbaRef('createFragment','fragment$').c
 			var indexed = FLAGS.IMBA_FRAG_INDEXED
 			var keyed = FLAGS.IMBA_FRAG_KEYED
 			let typ
@@ -6455,7 +6446,8 @@ export class Tag < Node
 		self
 	
 	def create_
-		scope__.imbaRef('createElementFactory(/*SCOPEID*/)').c
+		LIT('createImbaElement')
+		# scope__.imbaRef('createElementFactory(/*SCOPEID*/)').c
 
 	def ref
 		@ref || (@cachedRef = "{fragment ? fragment.cvar : ''}.{oid}")
@@ -7311,7 +7303,7 @@ export class Util.Subclass < Util
 		'''
 
 	def js o
-		if inlineHelpers
+		if inlineHelpers or true
 			# When this is triggered, we need to add it to the top of file?
 			scope__.root.helper(self,helper)
 			"subclass$({args.map(|v| v.c).join(',')});\n"
@@ -7358,11 +7350,8 @@ export class Util.Iterable < Util
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
 
-		if true # isStandalone
-			scope__.root.helper(self,helper)
-			return "iter$({args[0].c})"
-		else
-			return "{scope__.imba.c}.iterable({args[0].c})"
+		scope__.root.helper(self,helper)
+		return "iter$({args[0].c})"
 
 export class Util.IsFunction < Util
 
@@ -7630,7 +7619,7 @@ export class Scope
 		root.requires(path,name)
 
 	def imba
-		root.requires('imba2', 'Imba')
+		root.imba # requires('imba2', 'Imba')
 
 	def imbaTags
 		root.imbaTags
@@ -7811,6 +7800,10 @@ export class RootScope < Scope
 		variable.@requirePath = path
 		@requires[name] = variable
 		return variable
+
+	def imba
+		LIT('$imba')
+		# root.requires('imba2', 'Imba')
 
 	def imbaTags
 		return @imbaTags if @imbaTags

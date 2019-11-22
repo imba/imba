@@ -1,0 +1,18 @@
+#appDebugPanel {
+	position: sticky;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	top: 0px;
+	padding: 8px;
+	background: whitesmoke;
+}
+html,body {
+	padding: 0px;
+	margin: 0px;
+}
+
+body {
+	background: whitesmoke;
+}

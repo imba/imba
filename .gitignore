@@ -3,6 +3,7 @@
 /node_modules
 tmp
 test/perf
+test/dist
 attic/*
 npm-debug.log
 dist/imba.edge.*
@@ -13,3 +14,6 @@ test/attic
 test/node_modules
 !test/node_modules/imba
 !test/node_modules/imba2
+lib/
+build/
+dist/
