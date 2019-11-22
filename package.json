@@ -9,7 +9,6 @@
   ],
   "author": "Sindre Aarsaether",
   "license": "MIT",
-  "browserlist": ["last 1 Chrome version"],
   "contributors": [
     {
       "name": "Sindre Aarsaether",
