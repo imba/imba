@@ -15,7 +15,12 @@ module.exports = (env, argv) =>[{
 	node: {fs: false, process: false, global: false},
 },{
 	entry: "./src/imba/index.imba",
-	output: Object.assign({library: 'imba'},umd,{filename: `./dist/imba.js`}),
+	// output: Object.assign({library: 'imba'},umd,{filename: `./dist/imba.js`}),
+	output: {
+		filename: './dist/imba.js',
+		globalObject: 'typeof self !== \'undefined\' ? self : this',
+		path: __dirname
+	},
 	node: {fs: false, process: false, global: false},
 },{
 	entry: "./src/compiler/grammar.imba1",

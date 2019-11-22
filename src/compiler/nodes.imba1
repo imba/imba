@@ -2756,7 +2756,7 @@ export class MethodDeclaration < Func
 				out = "{out}; exports.{o:default ? 'default' : fname} = {fname};"
 
 		if o:global
-			warn("global def is deprecated", loc: o:global.region)
+			# warn("global def is deprecated", loc: o:global.region)
 			out = "{fname} = {out}"
 		
 		if option(:return)
