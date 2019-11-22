@@ -310,6 +310,7 @@ class EventHandler
 					let res = context[handler].apply(context,args)
 
 		$render()
+
 		return
 
 # what if this is in a webworker?

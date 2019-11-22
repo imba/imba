@@ -1,7 +1,8 @@
 require('../src/imba/index.imba')
 require('./spec.imba')
 
-var compiler = require('../lib/compiler/compiler')
+var compiler = window.imbac
+# var compiler = require('../dist/compiler')
 
 window.SELF = {
 	test: window.test,
@@ -11,7 +12,7 @@ window.SELF = {
 	spec: SPEC
 }
 
-window.imbac = compiler
+# window.imbac = compiler
 # console.log("SELF is",SELF);
 
 window.onerror = do |e|

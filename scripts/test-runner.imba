@@ -1,8 +1,8 @@
 var puppeteer = require "puppeteer"
 var path = require "path"
 var fs = require "fs"
-var helpers = require "../lib/compiler/helpers"
-var Imba = {}
+var compiler = require "../dist/compiler"
+var helpers = compiler.helpers
 var browser
 
 

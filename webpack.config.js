@@ -21,4 +21,7 @@ module.exports = (env, argv) =>[{
 	entry: "./src/compiler/grammar.imba1",
 	output: Object.assign({library: 'grammar'},umd,{filename: `./build/grammar.js`}),
 	node: {fs: false, process: false, global: false},
+},{
+	entry: "./test/index.imba",
+	output: {filename: `./test/index.js`}
 }]
