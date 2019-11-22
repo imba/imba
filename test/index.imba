@@ -4,10 +4,10 @@ var examples = {}
 
 for src in paths.keys()
 	var example = {
-		path: src
+		path: src.slice(2)
 		body: paths(src).default
 	}
-	examples[src] = example
+	examples[src.slice(2)] = example
 
 require('../src/imba/index.imba')
 require('./spec.imba')
@@ -22,6 +22,8 @@ window.SELF = {
 	spec: SPEC
 }
 
+var exposed = {}
+
 window.onerror = do |e|
 	console.log('page:error',{message: e.message})
 
@@ -29,25 +31,18 @@ window.onunhandledrejection = do |e|
 	console.log('page:error',{message: e.reason.message})
 
 var run = do |js|
+	# hack until we changed implicit self behaviour
 	js = js.replace('self = {}','self = SELF')
 	window.eval(js)
 
-	var exposed = SELF
-
 	if SPEC.blocks.length
-		exposed = {test: SPEC.run.bind(SPEC)}
+		exposed.test = SPEC.run.bind(SPEC)
 
 		for block in SPEC.blocks
-			exposed[block.name] = block.run.bind(block)
+			# FIXME spec runner need to setup observer
+			exposed[block.name] = do block.run()
 
-		for own k,v of exposed
-			if v isa Function
-				var button = document.createElement('button')
-				button.textContent = k
-				button.onclick = do
-					v.call(SELF)
-					$render()
-				window.appDebugPanel.appendChild(button)
+	$render()
 	console.log('example:loaded',10)
 
 var compileAndRun = do |src, body|
@@ -56,33 +51,29 @@ var compileAndRun = do |src, body|
 	run(js)
 
 var load = do |src|
-	var url = './' + src
-
-	if var example = examples[url]
+	if var example = examples[src]
 		compileAndRun(src,example.body)
 		return
-	
-	elif src.indexOf('.js') > 0
-		var script = document.createElement('script')
-		script.src = url
-		document.head.appendChild(script)
-	else
-		console.log("load",url,src)
-		# console.log('page:error',message: url)
-		try
-			var xhr = XMLHttpRequest.new()
-			def xhr.onload
-				compileAndRun(src,xhr.responseText)
 
-			def xhr.onerror
-				console.log("Failed with xmlhttprequest")
+tag test-runner < component
 
-			xhr.open('GET', url)
-			xhr.send(null)
-		catch e
-			console.log('error?!',e.message)
+	def go e
+		document.location.hash = "#{e.target.value}"
+		document.location.reload()
 
-	
-var hash = (document.location.hash || '').slice(1)
-load(hash) if hash
+	def call e
+		exposed[e.target.value]()
+		self
 
+	def render
+		<self>
+			<select :change.go>
+				for src in Object.keys(examples)
+					<option> src
+
+			for name in Object.keys(exposed)
+				<button value=name :click.call> name
+
+window.onload = do
+	var hash = (document.location.hash || '').slice(1)
+	load(hash) if hash

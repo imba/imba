@@ -1,14 +1,13 @@
 
 var root = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
 
-root.imba = {
+var imba = {
 	version: '2.0.0',
 	global: root,
 	ctx: null 
 }
-root.$imba = root.imba
 
-
+root.imba = root.$imba = imba
 
 var raf = root.requestAnimationFrame || (do |blk| setTimeout(blk,1000 / 60))
 
@@ -178,6 +177,8 @@ class Scheduler
 root.$scheduler = Scheduler.new()
 root.$render = do root.$scheduler.add('render')
 
+imba.commit = root.$render
+imba.scheduler = root.$scheduler
 ###
 DOM
 ###
@@ -521,15 +522,14 @@ var ImbaComponent = `class extends ImbaElement { }`
 
 extend class ImbaComponent
 	def connectedCallback
-		console.log('mounted!')
 		this.mount()
 
 	def disconnectedCallback
-		console.log('unmounted!')
 		this.unmount()
 
 	def mount
 		this.schedule()
+		this.tick()
 
 	def unmount
 		this.unschedule()
