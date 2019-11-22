@@ -9,12 +9,24 @@ var umd = {
 	path: path.resolve(__dirname)
 };
 
+var modules = {
+  rules: [
+    { test: /\.imba$/, use: './loader.js', exclude: /test\/\w+\// },
+    { test: /\.imba1$/, use: './scripts/bootstrap.loader.js' },
+    { test: /\.html$/, use: 'raw-loader' }
+  ]
+}
+
 module.exports = (env, argv) =>[{
 	entry: "./src/compiler/compiler.imba1",
+	resolve: { extensions: [".imba1",".js",".json"] },
+	module: modules,
 	output: Object.assign({library: 'imbac'},umd,{filename: `./dist/compiler.js`}),
 	node: {fs: false, process: false, global: false},
 },{
 	entry: "./src/imba/index.imba",
+	resolve: { extensions: [".imba",".js"] },
+	module: modules,
 	// output: Object.assign({library: 'imba'},umd,{filename: `./dist/imba.js`}),
 	output: {
 		filename: './dist/imba.js',
@@ -24,9 +36,13 @@ module.exports = (env, argv) =>[{
 	node: {fs: false, process: false, global: false},
 },{
 	entry: "./src/compiler/grammar.imba1",
+	resolve: { extensions: [".imba1",".js"] },
+	module: modules,
 	output: Object.assign({library: 'grammar'},umd,{filename: `./build/grammar.js`}),
 	node: {fs: false, process: false, global: false},
 },{
 	entry: "./test/index.imba",
+	resolve: { extensions: [".imba",".imba1",".js",".json"] },
+	module: modules,
 	output: {filename: `./test/index.js`, path: __dirname}
 }]

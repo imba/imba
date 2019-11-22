@@ -1,8 +1,18 @@
+
+var paths = require.context('raw-loader!./', true, /apps\/[\w\-]+\.imba$/)
+var examples = {}
+
+for src in paths.keys()
+	var example = {
+		path: src
+		body: paths(src).default
+	}
+	examples[src] = example
+
 require('../src/imba/index.imba')
 require('./spec.imba')
 
 var compiler = window.imbac
-# var compiler = require('../dist/compiler')
 
 window.SELF = {
 	test: window.test,
@@ -12,9 +22,6 @@ window.SELF = {
 	spec: SPEC
 }
 
-# window.imbac = compiler
-# console.log("SELF is",SELF);
-
 window.onerror = do |e|
 	console.log('page:error',{message: e.message})
 
@@ -22,9 +29,7 @@ window.onunhandledrejection = do |e|
 	console.log('page:error',{message: e.reason.message})
 
 var run = do |js|
-	# js = js.replace(/require\(["']imba2?["']\)/g,'window.Imba')
 	js = js.replace('self = {}','self = SELF')
-	console.log('running',js)
 	window.eval(js)
 
 	var exposed = SELF
@@ -46,15 +51,18 @@ var run = do |js|
 	console.log('example:loaded',10)
 
 var compileAndRun = do |src, body|
-	console.log('compiling',src)
 	var result = compiler.compile(body)
 	var js = result.js
 	run(js)
 
 var load = do |src|
 	var url = './' + src
+
+	if var example = examples[url]
+		compileAndRun(src,example.body)
+		return
 	
-	if src.indexOf('.js') > 0
+	elif src.indexOf('.js') > 0
 		var script = document.createElement('script')
 		script.src = url
 		document.head.appendChild(script)
@@ -71,15 +79,8 @@ var load = do |src|
 
 			xhr.open('GET', url)
 			xhr.send(null)
-
-			# let req = await window.fetch(url,{mode: 'no-cors'})
-			# let body = await req.text()
-			# compileAndRun(src,body)
 		catch e
 			console.log('error?!',e.message)
-
-
-
 
 	
 var hash = (document.location.hash || '').slice(1)

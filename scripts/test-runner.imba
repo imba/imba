@@ -43,11 +43,9 @@ def run item
 
 		var handlers =
 			'example:loaded': do |e|
-				console.log 'example loaded'
 				page.evaluate(do await SPEC.run())
 
 			'spec:done': do |e|
-				console.log("spec done", e)
 				e.failed == 0 ? resolve(e) : reject(e)
 
 			'spec:test': do |e|

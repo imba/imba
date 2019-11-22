@@ -32,7 +32,8 @@ tag app-root < component
 			<button.once :click.once(:once)> 'once button'
 
 			<button.h :click.ping(:h)>
-				<nested-item>
+				"h"
+				<nested-item> "nested"
 
 document.body.appendChild(<app-root>)
 
@@ -74,3 +75,5 @@ test "click.once" do
 	await click($1,'button.once','once')
 	await click($1,'button.once','')
 
+test "click.capture" do
+	await click($1,'div.capturing button','captured,button')

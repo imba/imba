@@ -40,7 +40,7 @@ global class Spec < SpecComponent
 	
 	def click sel
 		let el = document.querySelector(sel)
-		el.click()
+		el && el.click()
 		await @tick()
 
 	def tick commit = true
