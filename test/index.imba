@@ -57,7 +57,7 @@ var load = do |src|
 	if examples[src]
 		compileAndRun(examples[src])
 
-tag test-runner < component
+tag test-runner
 
 	def go e
 		document.location.hash = "#{e.target.value}"
@@ -75,6 +75,8 @@ tag test-runner < component
 
 			for name in Object.keys(exposed)
 				<button value=name :click.call> name
+
+imba.mount(<test-runner>)
 
 window.onload = do
 	var hash = (document.location.hash || '').slice(1)

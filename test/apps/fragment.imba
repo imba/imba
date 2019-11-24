@@ -7,14 +7,6 @@ var state =
 
 var hideList = false
 
-def flip
-	state.bool = !state.bool
-	app.render()
-
-def toggleList
-	hideList = !hideList
-	app.render()
-
 var footer = do |title|
 	if state.bool
 		<footer>
@@ -56,8 +48,7 @@ tag app-root < component
 			list(state.numbers)
 			list(state.names)
 
-var app = <app-root>
-document.body.appendChild(app)
+imba.mount(<app-root>)
 
 test "add number" do
 	await spec.click('.add-number')

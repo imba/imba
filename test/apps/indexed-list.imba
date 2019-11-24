@@ -8,7 +8,7 @@ var todos = [
 	{id: 3, title: "Three"}
 ]
 
-tag app-root < component
+tag app-root
 
 	def pop
 		pool.push(todos.pop())
@@ -29,7 +29,7 @@ tag app-root < component
 			<ul> for item in todos
 				<li> <span> item.title
 
-document.body.appendChild(<app-root>)
+imba.mount(<app-root>)
 
 test "pop item" do
 	await spec.click('.pop')

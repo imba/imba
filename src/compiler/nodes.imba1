@@ -6567,6 +6567,8 @@ export class Tag < Node
 				# add "{tvar} = this.{oid}$$ || ({bvar}=0,this.{oid}$$ = {ctor})"
 				# add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
 				add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
+				# FIXME no need for cvar if we have no children and no dynamic attributes
+				o:inline = yes if isExpression
 				add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
 			else
 				add "({ctor})"
@@ -6687,7 +6689,7 @@ export class Tag < Node
 		if !@parent
 			if option(:return)
 				foot.push "return {tvar}"
-			elif !isReactive
+			elif !isReactive or o:inline
 				foot.push "{tvar}"
 
 		out = out.concat(foot)

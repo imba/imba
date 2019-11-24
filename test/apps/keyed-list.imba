@@ -13,13 +13,13 @@ var todos = [
 	{id: 6, title: "Six"}
 ]
 
-tag app-root < component
+tag app-root
 	def render
 		<self>
 			<ul> for item in todos
 				<li@{item.id}> <span> item.title
 
-document.body.appendChild(<app-root>)
+imba.mount(<app-root>)
 
 var ordered = do
 	var titles = todos.map(|t| t.title).join("")

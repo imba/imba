@@ -4,7 +4,7 @@ tag nested-item
 	def ping ref
 		console.log("nested-{ref}")
 
-tag app-root < component
+tag app-root
 
 	def ping ref
 		console.info(ref)
@@ -35,7 +35,7 @@ tag app-root < component
 				"h"
 				<nested-item> "nested"
 
-document.body.appendChild(<app-root>)
+imba.mount(<app-root>)
 
 var click = do |state,sel,result|
 	state.log = []

@@ -18,7 +18,7 @@ tag app-root < component
 			<custom-item> "one"
 			<custom-item> "two"
 
-document.body.appendChild( <app-root> )
+imba.mount( <app-root> )
 
 test "hello" do
 	eq 10,10

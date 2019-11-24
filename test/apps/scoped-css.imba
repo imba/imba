@@ -11,13 +11,13 @@ p {
 }
 ###
 
-tag app-root < component
+tag app-root
 	
 	def render
 		<self>
 			<p.scoped> "Scoped"
 
-document.body.appendChild( <app-root> )
+imba.mount( <app-root> )
 
 var p = document.createElement('p')
 p.textContent = "Regular"

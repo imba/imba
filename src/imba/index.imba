@@ -214,6 +214,11 @@ def imba.createFragment type, parent, slot, options
 		return IndexedTagFragment.new(parent,slot,options)
 
 
+def imba.mount element, into
+	# automatic scheduling of element - even before
+	element.__schedule = yes
+	(into or document.body).appendChild(element)
+
 class ImbaElementRegistry
 
 	def get name
@@ -347,9 +352,12 @@ extend class Element
 
 	def schedule
 		imba.scheduler.listen('render',self)
+		#scheduled = yes
+		@tick()
 
 	def unschedule
 		imba.scheduler.unlisten('render',self)
+		#scheduled = no
 
 	def insert$ item, index, prev
 		let type = typeof item
@@ -540,19 +548,14 @@ var ImbaComponent = `class extends ImbaElement {
 	
 }`
 
-extend class ImbaComponent
+extend class ImbaElement
 	def connectedCallback
-		this.mount()
+		this.schedule() if #schedule
+		this.mount() if this.mount
 
 	def disconnectedCallback
-		this.unmount()
-
-	def mount
-		this.schedule()
-		this.tick()
-
-	def unmount
-		this.unschedule()
+		this.unschedule() if #scheduled
+		this.unmount() if this.unmount
 
 	def tick
 		this.render && this.render()
