@@ -7,7 +7,7 @@ var imba = {
 	ctx: null 
 }
 
-root.imba = root.$imba = imba
+root.imba = imba
 
 var raf = root.requestAnimationFrame || (do |blk| setTimeout(blk,1000 / 60))
 
@@ -16,18 +16,18 @@ root.customElements ||= {
 	get: do console.log('no custom elements')
 }
 
-root.$setTimeout = do |fn,ms|
+imba.setTimeout = do |fn,ms|
 	setTimeout(&,ms) do
 		fn()
-		$render()
+		imba.commit()
 
-root.$setInterval = do |fn,ms|
+imba.setInterval = do |fn,ms|
 	setInterval(&,ms) do
 		fn()
-		$render()
+		imba.commit()
 
-root.$clearInterval = root.clearInterval
-root.$clearTimeout = root.clearTimeout
+imba.clearInterval = root.clearInterval
+imba.clearTimeout = root.clearTimeout
 
 # remove
 def root.$subclass obj, sup
@@ -40,16 +40,17 @@ def root.$subclass obj, sup
 	return obj
 
 var dashRegex = /-./g
-var setterCache = {}
 
-def root.$toCamelCase str
+def imba.toCamelCase str
 	if str.indexOf('-') >= 0
 		str.replace(dashRegex) do |m| m.charAt(1).toUpperCase()
 	else
 		str
 
+var setterCache = {}
+
 # not to be used anymore?
-def root.$toSetter str
+def imba.toSetter str
 	setterCache[str] ||= Imba.toCamelCase('set-' + str)
 
 # Basic events - move to separate file?
@@ -71,7 +72,7 @@ var emit__ = do |event, args, node|
 	return
 
 # method for registering a listener on object
-def root.$listen obj, event, listener, path
+def imba.listen obj, event, listener, path
 	var cbs, list, tail
 	cbs = obj.__listeners__ ||= {}
 	list = cbs[event] ||= {}
@@ -82,13 +83,13 @@ def root.$listen obj, event, listener, path
 	return tail
 
 # register a listener once
-def root.$once obj, event, listener
-	var tail = $listen(obj,event,listener)
+def imba.once obj, event, listener
+	var tail = imba.listen(obj,event,listener)
 	tail.times = 1
 	return tail
 
 # remove a listener
-def root.$unlisten obj, event, cb, meth
+def imba.unlisten obj, event, cb, meth
 	var node, prev
 	var meta = obj.__listeners__
 	return unless meta
@@ -103,7 +104,7 @@ def root.$unlisten obj, event, cb, meth
 	return
 
 # emit event
-def root.$emit obj, event, params
+def imba.emit obj, event, params
 	if var cb = obj.__listeners__
 		emit__(event,params,cb[event]) if cb[event]
 		emit__(event,[event,params],cb.all) if cb.all
@@ -174,12 +175,8 @@ class Scheduler
 			raf(#ticker)
 		self
 
-root.$scheduler = Scheduler.new()
-root.$render = do root.$scheduler.add('render')
-
-imba.commit = root.$render
-imba.scheduler = root.$scheduler
-
+imba.scheduler = Scheduler.new()
+imba.commit = do imba.scheduler.add('render')
 
 ###
 DOM
@@ -315,7 +312,7 @@ class EventHandler
 				if context
 					let res = context[handler].apply(context,args)
 
-		$render()
+		imba.commit()
 
 		return
 
@@ -333,10 +330,10 @@ extend class Element
 		self
 
 	def schedule
-		$scheduler.listen('render',self)
+		imba.scheduler.listen('render',self)
 
 	def unschedule
-		$scheduler.unlisten('render',self)
+		imba.scheduler.unlisten('render',self)
 
 	def insert$ item, index, prev
 		let type = typeof item

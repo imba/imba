@@ -30,7 +30,7 @@ class SpecComponent
 		@root.console.log(*params)
 
 	def emit ev, pars
-		$emit(self,ev,pars)
+		imba.emit(self,ev,pars)
 
 	get root
 		@parent ? @parent.root : self
@@ -44,8 +44,8 @@ global class Spec < SpecComponent
 		await @tick()
 
 	def tick commit = true
-		$render() if commit
-		await $scheduler.promise
+		imba.commit() if commit
+		await imba.scheduler.promise
 		@observer.takeRecords()
 
 	def initialize
@@ -93,7 +93,7 @@ global class Spec < SpecComponent
 		Spec.CURRENT = self
 		var block = @blocks[i]
 		return @finish() unless block
-		$once(block,'done') do step(i+1)
+		imba.once(block,'done') do step(i+1)
 		block.run()
 
 	def run
@@ -109,7 +109,7 @@ global class Spec < SpecComponent
 				@context.state.info.push(params)
 				@context.state.log.push(params[0])
 
-			$once(self,'done') do
+			imba.once(self,'done') do
 				@observer.disconnect()
 				console.info = prevInfo
 				resolve()
@@ -160,7 +160,7 @@ global class SpecGroup < SpecComponent
 		@start() if i == 0
 		var block = @blocks[i]
 		return @finish() unless block
-		$once(block,'done') do @run(i+1)
+		imba.once(block,'done') do @run(i+1)
 		block.run() # this is where we wan to await?
 	
 	def start

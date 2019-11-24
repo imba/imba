@@ -42,7 +42,7 @@ var run = do |js|
 			# FIXME spec runner need to setup observer
 			exposed[block.name] = do block.run()
 
-	$render()
+	imba.commit()
 	console.log('example:loaded',10)
 
 var compileAndRun = do |src, body|
