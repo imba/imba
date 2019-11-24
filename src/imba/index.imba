@@ -420,47 +420,44 @@ class KeyedTagFragment < TagFragment
 		@parent = parent
 		@slot = slot
 		@array = []
-		@remove = Set.new
-		@map = WeakMap.new
+		@changes = Map.new
+		@dirty = no
 		@$ = {}
 
 	def push item, idx
 		let toReplace = @array[idx]
-		# do nothing
+
 		if toReplace === item
 			yes
 		else
-			let prevIndex = @map.get(item)
+			@dirty = yes
+			# if this is a new item
+			let prevIndex = @array.indexOf(item)
+			let changed = @changes.get(item)
 
-			if prevIndex === undefined
-				# this is a new item
-				@array.splice(idx,0,item)
-				@appendChild(item,idx)
-			elif true
-				# console.log("moving item?!",idx,prevIndex,item)
-				let prev = @array.indexOf(item)
-				@array.splice(prev,1) if prev >= 0
+			if prevIndex === -1
+				# should we mark the one currently in slot as removed?
 				@array.splice(idx,0,item)
 				@appendChild(item,idx)
 
+			elif prevIndex === idx + 1
+				if toReplace
+					@changes.set(toReplace,-1)
+				@array.splice(idx,1)
 
-			elif prevIndex < idx
-				# this already existed earlier in the list
-				# no need to do anything?
-				@map.set(item,idx)
-
-			elif prevIndex > idx
-				# was further ahead
-				@array.splice(prevIndex,1)
-				@appendChild(item,idx)
+			else
+				@array.splice(prevIndex,1) if prevIndex >= 0
 				@array.splice(idx,0,item)
-			
+				@appendChild(item,idx)
+
+			if changed == -1
+				@changes.delete(item)
 		return
 
 	def appendChild item, index
 		# we know that these items are dom elements
 		# console.log "append child",item,index
-		@map.set(item,index)
+		# @map.set(item,index)
 
 		if index > 0
 			let other = @array[index - 1]
@@ -472,27 +469,28 @@ class KeyedTagFragment < TagFragment
 		return
 
 	def removeChild item, index
-		@map.delete(item)
+		# @map.delete(item)
 		if item.parentNode == @parent
 			@parent.removeChild(item)
-
 		return
 
 	def open$
 		return self
 
 	def close$ index
-		if @remove.size
-			# console.log('remove items from keyed tag',@remove.entries())
-			@remove.forEach do |item| @removeChild(item)
-			@remove.clear()
+		if @dirty
+			@changes.forEach do |pos,item|
+				if pos == -1
+					@removeChild(item)
+			@changes.clear()
+			@dirty = no
 
 		# there are some items we should remove now
 		if @array.length > index
+			
 			# remove the children below
 			while @array.length > index
 				let item = @array.pop()
-				# console.log("remove child",item.data.id)
 				@removeChild(item)
 			# @array.length = index
 		return self
