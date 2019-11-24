@@ -74,8 +74,12 @@ global class Spec < SpecComponent
 			@observer.takeRecords()
 			self
 
-		if res and res:then
-			return res.then(after,after)
+		var err = do |e|
+			ctx.error = e
+			after()
+
+		if res and res.then
+			return res.then(after,err)
 		else
 			after()
 			return Promise.resolve(self)
@@ -197,7 +201,7 @@ global class SpecExample < SpecComponent
 		try
 			var res = await promise
 		catch e
-			console.log "error from run!"
+			console.log "error from run!",e
 		@evaluated = yes
 		@finish()
 
@@ -224,7 +228,7 @@ global class SpecExample < SpecComponent
 		# @print("✔")
 
 	get failed
-		@assertions.some do |ass| ass.critical
+		@error or @assertions.some do |ass| ass.critical
 
 	get passed
 		!@failed()

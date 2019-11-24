@@ -29,14 +29,39 @@ var ordered = do
 var mutated = do |state,count|
 	eq count, state.mutations.length, warn: "expected %1 mutations - got %2"
 
-test "remove" do
+test "remove from end" do
 	pool.push(todos.pop())
 	await spec.tick()
 	ordered()
-	mutations($1,1)
+	mutated($1,1)
 
-test "add" do
+test "add to end" do
 	todos.push(pool.pop())
+	await spec.tick()
+	ordered()
+	mutated($1,1)
+
+test "remove from start" do
+	pool.push(todos.shift())
+	await spec.tick()
+	ordered()
+	mutated($1,1)
+	# todos.unshift(pool.pop())
+
+test "add to start" do
+	todos.unshift(pool.pop())
+	await spec.tick()
+	ordered()
+	mutated($1,1)
+
+test "remove from middle" do
+	pool.push(todos.splice(2,1))
+	await spec.tick()
+	ordered()
+	mutated($1,1)
+
+test "add to middle" do
+	todos.splice(2,0,pool.pop())
 	await spec.tick()
 	ordered()
 	mutated($1,1)
