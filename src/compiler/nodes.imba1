@@ -2142,7 +2142,7 @@ export class Root < Code
 		}
 
 
-		result:js = result:js.replace('{/*$sfc$*/}',JSON.stringify(result:sfc))
+		
 
 		var stylebody = ""
 		for style in result:styles
@@ -2153,6 +2153,7 @@ export class Root < Code
 
 		# if stylebody and (o:inline-css or (!STACK.env('WEBPACK') && o:target == 'web'))
 		if stylebody
+			result:js = result:js.replace('{/*$sfc$*/}',JSON.stringify(result:sfc))
 			result:js = "imba.inlineStyles({JSON.stringify(stylebody)});\n{result:js}"
 
 		if o:sourceMapInline or o:sourceMap
