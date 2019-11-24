@@ -2127,6 +2127,8 @@ export class Root < Code
 		OPTS = STACK.@options = @options = o or {}
 		traverse
 
+		@scope.options = STACK.@options
+
 		var out = c
 		var result = {
 			js: out,
@@ -2135,24 +2137,23 @@ export class Root < Code
 			warnings: scope.warnings,
 			options: o,
 			toString: (do this:js)
-			styles: scope.styles
+			styles: scope.styles,
+			sfc: {id: @scope.sfcid}
 		}
 
-		result:fileScopeId = o:sourcePath and helpers.identifierForPath(o:sourcePath)
+
+		result:js = result:js.replace('{/*$sfc$*/}',JSON.stringify(result:sfc))
 
 		var stylebody = ""
 		for style in result:styles
 			if style:type == 'css'
-				let scoping = style:scoped ? '_' + result:fileScopeId : null
+				let scoping = style:scoped ? result:sfc:id : null
 				style:processed = csscompiler.compile(style:content,scope: scoping)
 				stylebody += style:processed + '\n'
 
-		if stylebody and (o:inline-css or (!STACK.env('WEBPACK') && o:target == 'web'))
-			result:js = """
-			var styles = document.createElement('style');
-			styles.textContent = {JSON.stringify(stylebody)};
-			document.head.appendChild(styles);\n""" + out
-			result:js = result:js.replace(/\/\*SCOPEID\*\//g,'"' + result:fileScopeId + '"')
+		# if stylebody and (o:inline-css or (!STACK.env('WEBPACK') && o:target == 'web'))
+		if stylebody
+			result:js = "imba.inlineStyles({JSON.stringify(stylebody)});\n{result:js}"
 
 		if o:sourceMapInline or o:sourceMap
 			result:sourcemap = SourceMap.new(result).generate
@@ -2476,6 +2477,10 @@ export class TagDeclaration < Code
 
 		if body.count
 			params.push("function({@ctx.c})\{{cbody}\}")
+		else
+			params.push(LIT('null'))
+
+		params.push(@scope.root.sfco)
 
 		var meth = option(:extension) ? 'extend' : 'define'
 		# var js = "{mark}{scope__.imba.c}.{meth}({params.join(', ')})"
@@ -5725,7 +5730,7 @@ export class For < Loop
 		var after = ""
 
 		if @tag and @childTags
-			let iref = LIT('createImbaFragment') # scope__.imbaRef('createFragment','fragment$').c
+			let iref = LIT('imba.createFragment') # scope__.imbaRef('createFragment','fragment$').c
 			var indexed = FLAGS.IMBA_FRAG_INDEXED
 			var keyed = FLAGS.IMBA_FRAG_KEYED
 			let typ
@@ -6446,7 +6451,7 @@ export class Tag < Node
 		self
 	
 	def create_
-		LIT('createImbaElement')
+		LIT('imba.createElement')
 		# scope__.imbaRef('createElementFactory(/*SCOPEID*/)').c
 
 	def ref
@@ -6502,7 +6507,8 @@ export class Tag < Node
 			(@parent ? @parent.tvar : 'null'),
 			@slot !== null ? (@slot or 0) : 'null',
 			'null',
-			'null'
+			'null',
+			scope__.root.sfco.c
 		]
 
 		var nodes = body ? body.values : []
@@ -7701,6 +7707,7 @@ export class RootScope < Scope
 	prop entities
 	prop object
 	prop styles
+	prop options
 
 	def initialize
 		super
@@ -7738,7 +7745,15 @@ export class RootScope < Scope
 		@entities = RootEntities.new(self)
 		@object = Obj.wrap({})
 		@head = [@vars]
-		
+
+		self.sfco()
+		self
+
+	def sfcid
+		@sfcid ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
+	# single-file-component options
+	def sfco
+		@sfco ||= declare('sfc$',LIT('{/*$sfc$*/}'))
 
 	def context
 		@context ||= RootScopeContext.new(self)
@@ -7783,6 +7798,8 @@ export class RootScope < Scope
 			obj:entities = @entities
 
 		return obj
+
+	
 
 	# not yet used
 	def requires path, name

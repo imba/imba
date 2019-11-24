@@ -18,7 +18,8 @@ var def rewriteSelector str
 		rule = rule:rule
 
 	if rule
-		rule:classNames = [].concat(rule:classNames or []).concat([selScope])
+		rule:attrs = [].concat(rule:attrs or []).concat({name: 'data-'+selScope})
+		# rule:classNames = [].concat(rule:classNames or []).concat([selScope])
 
 	return selparser.render(sel)
 

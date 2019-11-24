@@ -29,6 +29,12 @@ imba.setInterval = do |fn,ms|
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
+def imba.inlineStyles styles
+	var el = document.createElement('style')
+	el.textContent = styles
+	document.head.appendChild(el)
+	return
+
 # remove
 def root.$subclass obj, sup
 	for k,v of sup
@@ -182,15 +188,26 @@ imba.commit = do imba.scheduler.add('render')
 DOM
 ###
 
-def root.createImbaElement name, parent, index, flags, text
+def imba.createElement name, parent, index, flags, text, sfc
 	var el = root.document.createElement(name)
+
+	# only for custom elements
+	if el.__sfc
+		el.setAttribute('data-'+el.__sfc,'')
+
 	el.className = flags if flags
-	el.text$(text) if text !== null
+
+	if sfc and sfc.id
+		el.setAttribute('data-'+sfc.id,'')
+
+	if text !== null
+		el.text$(text)
+
 	if parent and index != null  and parent isa Element
 		parent.insert$(el,index)
 	return el
 
-def root.createImbaFragment type, parent, slot, options
+def imba.createFragment type, parent, slot, options
 	if type == 2
 		return KeyedTagFragment.new(parent,slot,options)
 	elif type == 1
@@ -202,7 +219,7 @@ class ImbaElementRegistry
 	def get name
 		root.customElements.get(name)
 
-	def define name, supr, &body
+	def define name, supr, body, options
 		supr ||= 'imba-element'
 
 		var superklass = HTMLElement
@@ -213,17 +230,16 @@ class ImbaElementRegistry
 
 			superklass = self.get(supr)
 
-		var klass = `class extends superklass {
-			constructor(){
-				super();
-				if(this.initialize) this.initialize();
-			}
-		}`
+		var klass = `class extends superklass {}`
 
 		# call supplied body
 		body(klass) if body
 
 		var proto = klass.prototype
+
+		# sfc stuff
+		# if options and options.id
+		proto.__sfc = options && options.id || null
 
 		if proto.mount
 			proto.connectedCallback ||= do this.mount()
@@ -512,9 +528,17 @@ class IndexedTagFragment < TagFragment
 		return
 
 # Create custom tag with support for scheduling and unscheduling etc
-var ImbaElement = `class extends HTMLElement { }`
+var ImbaElement = `class extends HTMLElement {
+	constructor(){
+		super();
+		if(this.initialize) this.initialize();
+		if(this.build) this.build();
+	}
+}`
 
-var ImbaComponent = `class extends ImbaElement { }`
+var ImbaComponent = `class extends ImbaElement {
+	
+}`
 
 extend class ImbaComponent
 	def connectedCallback

@@ -45,15 +45,17 @@ var run = do |js|
 	imba.commit()
 	console.log('example:loaded',10)
 
-var compileAndRun = do |src, body|
-	var result = compiler.compile(body)
+var compileAndRun = do |example|
+	var result = compiler.compile(example.body,{
+		sourcePath: example.path,
+		target: 'web'
+	})
 	var js = result.js
 	run(js)
 
 var load = do |src|
-	if var example = examples[src]
-		compileAndRun(src,example.body)
-		return
+	if examples[src]
+		compileAndRun(examples[src])
 
 tag test-runner < component
 
