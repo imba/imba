@@ -207,6 +207,7 @@ global class SpecExample < SpecComponent
 
 	def start
 		@emit(:start)
+		console.group(@fullName)
 	
 	def finish
 		@failed ? @fail() : @pass()
@@ -217,6 +218,7 @@ global class SpecExample < SpecComponent
 					console.log("spec:warn",message: ass.toString())
 				else
 					console.log("spec:fail",message: ass.toString())
+		console.groupEnd(@fullName)
 		@emit(:done,[self])
 
 	def fail
