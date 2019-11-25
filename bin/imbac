@@ -309,6 +309,9 @@ CLI.prototype.compileFile = function (src){
 			out = imbac1.compile(src.sourceBody,opts);
 		} else {
 			out = compiler.compile(src.sourceBody,opts);
+			if(opts.standalone){
+				out.js = fs.readFileSync(path.resolve(__dirname,'..','dist','imba.js'),'utf8') + '\n' + out.js;
+			}
 		};
 	} catch (e) {
 		out = {error: e};
