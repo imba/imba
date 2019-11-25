@@ -16,7 +16,7 @@ tag app-root
 	def push
 		todos.push(pool.pop())
 
-	def unshift
+	def reorder
 		todos.unshift(todos.pop())
 
 	def render
@@ -24,7 +24,7 @@ tag app-root
 			<div>
 				<button.pop :click.pop> "Pop"
 				<button.push :click.push> "Push"
-				<button.reorder :click.pop.push> "Reorder"
+				<button.reorder :click.reorder> "Reorder"
 
 			<ul> for item in todos
 				<li> <span> item.title

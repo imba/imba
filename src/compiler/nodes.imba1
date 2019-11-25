@@ -4932,7 +4932,6 @@ export class TagTypeIdentifier < Identifier
 		self
 
 	def load val
-
 		@str = ("" + val)
 		var parts = @str.split(":")
 		@raw = val
@@ -6160,9 +6159,6 @@ export class TagFlagIf < TagFlag
 		"flagIf$({quoted},{value.c})"
 
 export class TagFlagExpr < TagFlag
-	def slot
-		@slot ?= @tag.nextSlot('flag')
-		
 	def visit
 		@name.traverse
 		
@@ -6173,7 +6169,7 @@ export class TagFlagExpr < TagFlag
 		@value or @name
 	
 	def js
-		"setFlag$({slot},{value.c})"
+		"setFlag$({value.c})"
 	
 export class TagSep < TagPart
 	
@@ -6361,17 +6357,8 @@ export class Tag < Node
 		@attributes = o:attributes or []
 		@attrmap = {}
 		@children = []
-		@slots = {
-			flag: isSelf ? -1 : 0
-			handler: isSelf ? -1 : 0
-		}
 		self
 		
-	def nextSlot type
-		let slot = @slots[type]
-		@slots[type] += (isSelf ? -1 : 1)
-		return slot
-
 	def addPart part, type
 		let curr = @attributes.CURRENT
 
@@ -6403,7 +6390,7 @@ export class Tag < Node
 		(@options:close and @options:close.value)
 
 	def type
-		@options:type || :div
+		@options:type || (@attributes:length == 0 ? :fragment : :div)
 		
 	def parent
 		@options:par
@@ -6466,7 +6453,7 @@ export class Tag < Node
 		self
 	
 	def create_
-		LIT('imba.createElement')
+		isFragment ? LIT('imba.createDocumentFragment') : LIT('imba.createElement')
 		# scope__.imbaRef('createElementFactory(/*SCOPEID*/)').c
 
 	def ref
@@ -6490,6 +6477,9 @@ export class Tag < Node
 		@parent ? @parent.isReactive : !(scope__ isa RootScope) # isSelf
 		# (!!isSelf or (@parent isa Loop and @parent.isReactive)
 
+	def isFragment
+		self.type() == 'fragment'
+
 	def js o
 		var isExpression = STACK.isExpression
 
@@ -6503,7 +6493,7 @@ export class Tag < Node
 				val = val.toString
 			out.push(val)
 
-		let typ = isSelf ? "self" : (type.isClass ? type.name : "'" + type.@value + "'")
+		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type.isClass ? type.name : "'" + type.@value + "'"))
 
 		# if tag contains no static attributes (except className / text)
 		# we don't need to mark when built
@@ -6563,6 +6553,9 @@ export class Tag < Node
 				if !shouldEnd
 					canInline = yes
 
+		if isFragment
+			params = params.slice(1,3)
+
 		var ctor = "{tvar}={create_}({params.join(',')})"
 
 		if !@parent
@@ -6584,7 +6577,8 @@ export class Tag < Node
 				add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
 				# FIXME no need for cvar if we have no children and no dynamic attributes
 				o:inline = yes if isExpression
-				add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
+				if !canInline or nodes:length
+					add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
 			else
 				add "({ctor})"
 				option(:inline,canInline = yes)

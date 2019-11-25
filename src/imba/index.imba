@@ -188,6 +188,11 @@ imba.commit = do imba.scheduler.add('render')
 DOM
 ###
 
+def imba.createDocumentFragment parent, index
+	var el = root.document.createDocumentFragment()
+	el.open$(parent,index)
+	return el
+
 def imba.createElement name, parent, index, flags, text, sfc
 	var el = root.document.createElement(name)
 
@@ -203,7 +208,8 @@ def imba.createElement name, parent, index, flags, text, sfc
 	if text !== null
 		el.text$(text)
 
-	if parent and index != null  and parent isa Element
+	if parent and index != null  and parent isa Node
+		# what if parent is a IndexedTagFragment?
 		parent.insert$(el,index)
 	return el
 
@@ -344,6 +350,16 @@ class EventHandler
 
 		return
 
+extend class Node
+	# replace this with something else
+	def replaceWith$ other
+		@parentNode.replaceChild(other,this)
+		return other
+
+	def insertInto$ parent
+		parent.appendChild(this)
+		return this
+
 # what if this is in a webworker?
 extend class Element
 	
@@ -371,7 +387,7 @@ extend class Element
 
 		if type === 'undefined' or item === null
 			let el = document.createComment('')
-			prev ? @replaceChild(el,prev) : @appendChild(el)
+			prev ? prev.replaceWith$(el) : el.insertInto$(this)
 			return el
 
 		# what if this is null or undefined -- add comment and return? Or blank text node?
@@ -380,6 +396,7 @@ extend class Element
 			let txt = item
 
 			if index == -1
+				# FIXME what if the previous one was not text? Possibly dangerous
 				@textContent = txt
 				return
 
@@ -389,18 +406,15 @@ extend class Element
 					return prev
 				else
 					res = document.createTextNode(txt)
-					@replaceChild(res,prev)
+					prev.replaceWith$(item,self)
 					return res
 			else
-				@appendChild(res = document.createTextNode(txt))
+				@appendChild$(res = document.createTextNode(txt))
 				return res
 
-		elif item isa Element
-			# if we are the only child we want to replace it?
-			prev ? @replaceChild(item,prev) : @appendChild(item)
+		elif item isa Node
+			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
 			return item
-
-
 		return
 
 	def flag$ str
@@ -420,6 +434,45 @@ extend class Element
 	def end$
 		@render() if @render
 		return
+
+Element.prototype.appendChild$ = Element.prototype.appendChild
+Element.prototype.insertBefore$ = Element.prototype.insertBefore
+Element.prototype.replaceChild$ = Element.prototype.replaceChild$
+
+extend class DocumentFragment
+	
+	def insert$ item, index, prev
+		if #parentNode
+			#parentNode.insert$(item,index,prev)
+		else
+			Element.prototype.insert$.call(self,item,index,prev)
+
+	def text$ text
+		self
+
+	def open$ parent
+		@appendChild(#start = document.createComment(''))
+		@appendChild(#end = document.createComment(''))
+
+		if parent
+			#parentNode = parent
+			parent.appendChild(self)
+		self
+
+	def replaceWith$ other
+		#start.parentNode.insertBefore(other,#start)
+		var el = #start
+		while el
+			let next = el.nextElementSibling
+			@appendChild(el)
+			break if el == #end
+			el = next
+			
+		return other
+
+	def appendChild$ child
+		#end.parentNode.insertBefore(child,#end)
+		return child
 
 class TagFragment
 
@@ -463,12 +516,9 @@ class KeyedTagFragment < TagFragment
 		return
 
 	def appendChild item, index
-		# we know that these items are dom elements
-		# console.log "append child",item,index
-		# @map.set(item,index)
-
 		if index > 0
 			let other = @array[index - 1]
+			# will fail with text nodes
 			other.insertAdjacentElement('afterend',item)
 		else
 			@parent.insertAdjacentElement('afterbegin',item)

@@ -19,7 +19,7 @@ var footer = do |title|
 
 
 
-tag app-root < component
+tag app-root
 
 	def addNumber
 		state.numbers.push("" + state.numbers.length)
