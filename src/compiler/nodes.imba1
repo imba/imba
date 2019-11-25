@@ -6234,7 +6234,14 @@ export class TagHandlerSpecialArg < ValueNode
 		yes
 
 	def c
-		"'~{value}'"
+		"'~@{value}'"
+
+export class TagDynamicArg < ValueNode
+	def isPrimitive
+		yes
+
+	def c
+		"'~${value}'"
 	
 export class TagModifier < TagPart	
 	prop params
@@ -6300,9 +6307,6 @@ export class TagData < TagPart
 			"data=({val.c})"
 
 export class TagHandler < TagPart
-
-	def slot
-		@slot ?= @tag.nextSlot('handler')
 		
 	def isStatic
 		let valStatic = !value or value.isPrimitive or (value isa Func and !value.nonlocals)
@@ -6310,6 +6314,16 @@ export class TagHandler < TagPart
 			let val = item isa Parens ? item.value : item
 			val isa Func ? !val.nonlocals : val.isPrimitive
 		)
+
+	def extractDynamicParts
+		var dynamics = []
+		for part in @chain when part isa TagModifier
+			for param in part.params
+				if !param.isPrimitive
+					let nr = dynamics.push(param)
+					let ref = TagDynamicArg.new(String(nr - 1))
+					part.params.swap(param,ref)
+		return dynamics
 	
 	def add item, type
 		if type == TagArgList
@@ -6331,9 +6345,9 @@ export class TagHandler < TagPart
 		let parts = [quoted].concat(@chain)
 		let parts = [].concat(@chain)
 		let scope = scope__
-		let scopes = scope.root.context.reference(scope).c
+		# let scopes = scope.root.context.reference(scope).c
 		# parts.push(value) if value
-		return "on$({quoted},[{AST.cary(parts)}],{scope.context.c},{scopes})"
+		return "on$({quoted},[{AST.cary(parts)}],{scope.context.c})"
 		# return "on$({slot},[{AST.cary(parts)}],{scope__.context.c})"
 
 export class Tag < Node
@@ -6612,6 +6626,17 @@ export class Tag < Node
 				continue if item isa TagFlag
 				# what about whether our own tag is built or not?
 				add "{fragment.bvar} || ({tvar}.{item.c(o)})"
+
+			elif item isa TagHandler
+				# add without dynamic attrs
+				let iref = "{fragment.cvar}.{item.oid}"
+				let specials = item.extractDynamicParts()
+				add "{vvar} = {iref} || ({iref}={ref}.{item.js(o)})"
+				for special,i in specials
+					# add "{fragment.cvar}.{special.oid}_$ = {special.c(o)}"
+					add "{vvar}[{i}]={special.c(o)}"
+					# add "{ref}.{special.oid}_$ = {special.c(o)}"
+
 			else
 				let val = item.value
 				let iref = "{fragment.cvar}.{item.oid}"

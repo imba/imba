@@ -1,13 +1,21 @@
+var items = [
+	{id: 1, title: "One"}
+	{id: 2, title: "Two"}
+	{id: 3, title: "Three"}
+]
 
 tag nested-item
 
 	def ping ref
-		console.log("nested-{ref}")
+		console.info("nested-{ref}")
 
 tag app-root
 
 	def ping ref
 		console.info(ref)
+
+	def call item
+		console.info(item)
 
 	def render
 		<self>
@@ -35,6 +43,11 @@ tag app-root
 				"h"
 				<nested-item> "nested"
 
+			<button.i :click.ping(items[0].title)>
+			
+			<ul> for item,i in items
+				<li :click.call(item)>
+
 imba.mount(<app-root>)
 
 var click = do |state,sel,result|
@@ -61,6 +74,9 @@ test "stop even if not self" do
 
 test "multiple calls" do
 	await click($1,'button.f','f1,f2,a')
+
+test "dynamic arguments" do
+	await click($1,'button.i','One')
 
 test "click traversal" do
 	await click($1,'.h','h')

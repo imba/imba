@@ -269,20 +269,13 @@ var keyCodes = {
 
 # could cache similar event handlers with the same parts
 class EventHandler
-	def initialize params,closure,file
+	def initialize params,closure
 		@params = params
 		@closure = closure
-		@file = file
 
-	def getHandlerForMethod path, name
-		if @closure && @closure[name]
-			return @closure
-		if @file && @file[name]
-			return @file
-		for item,i in path
-			if item[name]
-				return item
-		return null
+	def getHandlerForMethod el, name
+		return null unless el
+		el[name] ? el : @getHandlerForMethod(el.parentNode,name)
 
 	def handleEvent event
 		var target = event.target
@@ -292,6 +285,8 @@ class EventHandler
 		for part,i in @params
 			let handler = part
 			let args = [event]
+			let res
+			let context = null
 
 			if handler isa Array
 				args = handler.slice(1)
@@ -299,14 +294,21 @@ class EventHandler
 
 				for param,i in args
 					# what about fully nested arrays and objects?
-					if typeof param == 'string' && param[0] == '~' && param[1] == '$'
+					# ought to redirect this
+					if typeof param == 'string' && param[0] == '~'
 						let name = param.slice(2)
-						if name == 'event'
-							args[i] = event
-						elif name == 'this'
-							args[i] = @element
-						else
-							args[i] = event[name]
+
+						if param[1] == '$'
+							# reference to a cache slot
+							args[i] = this[name]
+
+						elif param[1] == '@'
+							if name == 'event'
+								args[i] = event
+							elif name == 'this'
+								args[i] = @element
+							else
+								args[i] = event[name]
 
 			# check if it is an array?
 			if handler == 'stop'
@@ -329,9 +331,14 @@ class EventHandler
 					break
 
 			elif typeof handler == 'string'
-				let context = @getHandlerForMethod(event.path,handler)
-				if context
-					let res = context[handler].apply(context,args)
+				if handler[0] == '@'
+					handler = handler.slice(1)
+					context = closure
+				else
+					context = @getHandlerForMethod(event.currentTarget,handler)
+
+			if context
+				res = context[handler].apply(context,args)
 
 		imba.commit()
 
@@ -340,8 +347,8 @@ class EventHandler
 # what if this is in a webworker?
 extend class Element
 	
-	def on$ type, parts, scope, file
-		var handler = EventHandler.new(parts,scope,file)
+	def on$ type, parts, scope
+		var handler = EventHandler.new(parts,scope)
 		@addEventListener(type,handler)
 		return handler
 
@@ -392,6 +399,7 @@ extend class Element
 			# if we are the only child we want to replace it?
 			prev ? @replaceChild(item,prev) : @appendChild(item)
 			return item
+
 
 		return
 
