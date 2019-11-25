@@ -6686,6 +6686,7 @@ export class Tag < Node
 
 				if item isa Call
 					# global
+					fragment.option(:fragmented,1)
 					add "imba.ctx=({key}$ || ({key}$=\{\}))"
 
 				add "{vvar}={item.c(o)}"
@@ -6711,6 +6712,9 @@ export class Tag < Node
 
 		if shouldEnd
 			foot.push(isSelf ? "{tvar}.close$()" : "{tvar}.end$()")
+
+		if option(:fragmented)
+			add "imba.ctx=null"
 
 		if !@parent
 			if option(:return)

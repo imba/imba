@@ -1,8 +1,12 @@
 var string = "one"
 
+var nested = do
+	<div> string
+
 var fragment = do
 	<footer>
 		<p> string
+		nested()
 
 tag app-root
 	def render
