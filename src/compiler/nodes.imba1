@@ -69,7 +69,11 @@ var TREE_TYPE =
 export var FLAGS =
 	IMBA_FRAG_INDEXED: 1
 	IMBA_FRAG_KEYED: 2
-	
+	IMBA_TAG_CUSTOM: 4
+	IMBA_TAG_AWAKENED: 8
+	IMBA_TAG_MOUNTED: 16
+	IMBA_TAG_SCHEDULE: 32
+	IMBA_TAG_SCHEDULED: 64
 
 # Helpers for operators
 export var OP = do |op, l, r|
@@ -6506,6 +6510,10 @@ export class Tag < Node
 		var canInline = no
 		var optimizeFlag = no
 		var shouldEnd = isCustom
+		var nodeFlags = 0
+
+		if isCustom
+			nodeFlags |= FLAGS.IMBA_TAG_CUSTOM
 
 		var params = [
 			typ,
@@ -6552,6 +6560,8 @@ export class Tag < Node
 			if nodes.every(|v| v isa Tag or v isa Str)
 				if !shouldEnd
 					canInline = yes
+
+		params[6] = nodeFlags
 
 		if isFragment
 			params = params.slice(1,3)

@@ -193,7 +193,7 @@ def imba.createDocumentFragment parent, index
 	el.open$(parent,index)
 	return el
 
-def imba.createElement name, parent, index, flags, text, sfc
+def imba.createElement name, parent, index, flags, text, sfc, bits
 	var el = root.document.createElement(name)
 
 	# only for custom elements
@@ -204,6 +204,9 @@ def imba.createElement name, parent, index, flags, text, sfc
 
 	if sfc and sfc.id
 		el.setAttribute('data-'+sfc.id,'')
+
+	if bits
+		el.__bits = bits
 
 	if text !== null
 		el.text$(text)
@@ -606,6 +609,9 @@ var ImbaComponent = `class extends ImbaElement {
 
 extend class ImbaElement
 	def connectedCallback
+		unless this.__bits
+			this.__bits = 8
+			this.awaken()
 		this.schedule() if #schedule
 		this.mount() if this.mount
 
@@ -615,6 +621,9 @@ extend class ImbaElement
 
 	def tick
 		this.render && this.render()
+
+	def awaken
+		#schedule = true
 
 root.customElements.define('imba-element',ImbaElement)
 root.customElements.define('imba-component',ImbaComponent)

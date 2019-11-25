@@ -76,7 +76,7 @@ tag test-runner
 			for name in Object.keys(exposed)
 				<button value=name :click.call> name
 
-imba.mount(<test-runner>)
+# imba.mount(<test-runner>)
 
 window.onload = do
 	var hash = (document.location.hash || '').slice(1)
