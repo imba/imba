@@ -188,9 +188,9 @@ imba.commit = do imba.scheduler.add('render')
 DOM
 ###
 
-def imba.createDocumentFragment parent, index
+def imba.createDocumentFragment bitflags
 	var el = root.document.createDocumentFragment()
-	el.open$(parent,index)
+	el.setup$(bitflags)
 	return el
 
 def imba.createElement name, bitflags, parent, flags, text, sfc
@@ -365,11 +365,23 @@ extend class Node
 		return other
 
 	def insertInto$ parent
-		parent.appendChild(this)
+		parent.appendChild$(this)
 		return this
+
+	def insertAdjacent$ pos, other
+		if pos == 'beforebegin'
+			@parentNode.insertBefore(other,this)
+		elif pos == 'afterend'
+			if @nextSibling
+				@nextSibling.insertAdjacent$('beforebegin',other)
+			else
+				@parentNode.appendChild$(other)
 
 # what if this is in a webworker?
 extend class Element
+
+	def insertAdjacent$ pos, other
+		@insertAdjacentElement(pos,other)
 	
 	def on$ type, parts, scope
 		var handler = EventHandler.new(parts,scope)
@@ -422,7 +434,7 @@ extend class Element
 			let res
 			let txt = item
 
-			if bitflags & $TAG_ONLY_CHILD$
+			if (bitflags & $TAG_FIRST_CHILD$) && (bitflags & $TAG_LAST_CHILD$)
 				# FIXME what if the previous one was not text? Possibly dangerous
 				@textContent = txt
 				return
@@ -468,29 +480,33 @@ Element.prototype.replaceChild$ = Element.prototype.replaceChild$
 
 extend class DocumentFragment
 	
-	def insert$ item, index, prev
+	def setup$
+		#start = document.createComment('start')
+		#end = document.createComment('end')
+		#start.__fragment = this
+		#end.__fragment = this
+
+		#end.replaceWith$ = do |other|
+			this.parentNode.insertBefore(other,this)
+			return other
+
+		@appendChild(#start)
+		@appendChild(#end)
+
+	def insert$ item, options, prev
 		if #parentNode
-			#parentNode.insert$(item,index,prev)
+			#parentNode.insert$(item,options,prev or #end)
 		else
-			Element.prototype.insert$.call(self,item,index,prev)
+			Element.prototype.insert$.call(self,item,options,prev or #end)
 
 	def text$ text
 		self
 
-	def open$ parent
-		@appendChild(#start = document.createComment(''))
-		@appendChild(#end = document.createComment(''))
-
-		if parent
-			#parentNode = parent
-			parent.appendChild(self)
-		self
-
 	def replaceWith$ other
-		#start.parentNode.insertBefore(other,#start)
+		#start.insertAdjacent$('beforebegin',other)
 		var el = #start
 		while el
-			let next = el.nextElementSibling
+			let next = el.nextSibling
 			@appendChild(el)
 			break if el == #end
 			el = next
@@ -503,7 +519,6 @@ extend class DocumentFragment
 
 	def removeChild$ child
 		child.parentNode && child.parentNode.removeChild(child)
-		# #end.parentNode.removeChild(child)
 		self
 
 

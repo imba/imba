@@ -27,6 +27,7 @@ tag app-root
 				flipper()
 			<div>
 			fragif()
+			<em> "Here" 
 			if value
 				<button.flipping> "flipping"
 			<div>

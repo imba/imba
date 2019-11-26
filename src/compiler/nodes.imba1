@@ -673,7 +673,6 @@ export class Node
 	# swallow might be better name
 	def consume node
 		if node isa TagLike
-			console.log "list node consumes"
 			return node.register(self)
 
 		if node isa PushAssign
@@ -5452,17 +5451,6 @@ export class Loop < Statement
 	prop body
 	prop catcher
 
-	# should be added more generally to nodes?
-	def tagvar name
-		@tagvars ||= {}
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"t{@level}${name}")
-
-
-	def tvar do tagvar('t')
-	def bvar do tagvar('b')
-	def cvar do tagvar('c')
-	def vvar do tagvar('v')
-
 	def loc
 		var a = @options:keyword
 		var b = @body
@@ -5477,11 +5465,6 @@ export class Loop < Statement
 		@traversed = no
 		@options = options
 		@body = null
-		self
-
-	def addChildTag child
-		@childTags ||= []
-		@childTags.push(child)
 		self
 
 	def set obj
@@ -6392,7 +6375,7 @@ class TagLike < Node
 			flag(F.TAG_HAS_DYNAMICS)
 			node = TagContent.new(value: node)
 		elif node isa Tag
-			console.log 'register tag!!',String(node.type)
+			self
 		@consumed.push(node)
 		node.@parent = self
 		return node
@@ -6410,7 +6393,7 @@ class TagLike < Node
 		@flags & key
 
 	def isOnlyChild
-		hasFlag(F.TAG_ONLY_CHILD)
+		isFirstChild && isLastChild
 
 	def isFirstChild
 		hasFlag(F.TAG_FIRST_CHILD)
@@ -6422,10 +6405,10 @@ class TagLike < Node
 		hasFlag(F.TAG_INDEXED)
 
 	def tagvar name
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{tagvarprefix}${name}")
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{name}${tagvarprefix}")
 
 	def tagvarprefix
-		"t{level}"
+		"{level}"
 
 	def level
 		@level
@@ -6447,15 +6430,14 @@ class TagLike < Node
 	def vvar do tagvar('v') # value variable
 	def kvar do tagvar('k') # key variable
 
+	def ref
+		@ref || (@cachedRef = "{parent ? parent.cvar : ''}.{oid}")
+
 	def visit stack
 		var o = @options
 		var scope = @tagScope = scope__
 		let prevTag = @parent = stack.@tag
 		@level = (@parent && @parent.@level or 0) + 1
-
-		if @parent
-			@parent.addChildTag(self)
-
 		stack.@tag = null
 
 		for part in @attributes
@@ -6478,7 +6460,6 @@ class TagLike < Node
 
 	def consumeChildren
 		return if @consumed:length
-		console.log "consume children {String(type)}"
 		body && body.consume(self)
 		let first = @consumed[0]
 		let last = @consumed[@consumed:length - 1]
@@ -6525,8 +6506,6 @@ export class TagContent < TagLike
 	def bvar
 		parent.bvar
 
-	
-
 	def ref
 		parent.ref
 
@@ -6535,16 +6514,33 @@ export class TagContent < TagLike
 
 	def js
 		let value = self.value
-		console.log "TagContent! {value}"
+		let parts = []
+
 		if isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
+
 		elif value isa InterpolatedString and isOnlyChild
 			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$({key}={vvar}))"
-		elif isOnlyChild and false # what if we are not trying to cache?
-			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.insert$({key}={vvar},-1,{key}_))"
-		elif isOnlyChild # what if we are not trying to cache?
+
+		else
+			parts.push("{vvar}={value.c(o)}")
+
+			if value isa Call
+				parts.unshift("imba.ctx=({key}$ || ({key}$=\{\}))")
+
+			if isOnlyChild
+				let k = "{ref}.body$"
+				parts.push("{vvar}==={k} || {ref}.render$({k},{k}={vvar},{@flags})")
+			else
+				parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_))")
+			# return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.insert$({key}={vvar},-1,{key}_))"
+
+		return "(" + parts.join(',') + ')'
+
+		if isOnlyChild # what if we are not trying to cache?
 			let k = "{ref}.body$"
 			return "({vvar}={value.c(o)},{vvar}==={k} || {ref}.render$({k},{k}={vvar},{@flags}))"
+
 		else
 			return "({vvar}={value.c(o)},{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_)))"
 
@@ -6556,9 +6552,6 @@ export class TagBranchFragment < TagLike
 		parent.tvar
 
 	def js o
-		console.log "compile branch fragment"
-		# let toset = ""
-		# share the same slots across branches?
 		let inserts = []
 
 		for item in @consumed when TagLike
@@ -6568,7 +6561,7 @@ export class TagBranchFragment < TagLike
 		var out = body.c(o)
 		for item in inserts
 			let key = "{cvar}.{item}"
-			out += "\n({key}_ = {tvar}.insert$({item},{@flags},{key}_))"
+			out += "\n({key}_ = {tvar}.insert$({item},{@flags},{key}_));"
 		return out
 
 export class TagLoopFragment < TagLike
@@ -6637,11 +6630,6 @@ export class Tag < TagLike
 			if type == TagAttr
 				@attrmap[String(part)] = @attributes.CURRENT
 		self
-		
-	def addChildTag child
-		@childTags ||= []
-		@childTags.push(child)
-		self
 
 	def type
 		@options:type || (@attributes:length == 0 ? :fragment : :div)
@@ -6654,9 +6642,6 @@ export class Tag < TagLike
 	
 	def create_
 		isFragment ? LIT('imba.createDocumentFragment') : LIT('imba.createElement')
-
-	def ref
-		@ref || (@cachedRef = "{fragment ? fragment.cvar : ''}.{oid}")
 
 	def fragment
 		@fragment ||= (isSelf or !@parent or @parent isa Loop) ? self : (@parent.fragment)
@@ -6761,12 +6746,9 @@ export class Tag < TagLike
 				add "{cvar} = {tvar}.$ || ({bvar}=0,{tvar}.$=\{\})"
 			elif isReactive
 				let scop = scope__.closure
-
 				add "{bvar} = 1"
-				# add "{tvar} = this.{oid}$$ || ({bvar}=0,this.{oid}$$ = {ctor})"
-				# add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
 				add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
-				# FIXME no need for cvar if we have no children and no dynamic attributes
+				@ref = tvar
 				o:inline = yes if isExpression
 				if @consumed:length or dynamics:length
 					add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
@@ -6806,16 +6788,15 @@ export class Tag < TagLike
 
 			let ref = "{cvar}.{oid}"
 			add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
+			@ref = tvar
 
 
 		for item in @attributes
 			if !isReactive
 				continue if item isa TagFlag and item.isStatic
 				add "{tvar}.{item.c(o)}"
-				# "{bvar} || ({tvar}.{item.c(o)})"
 			elif item.isStatic
 				continue if item isa TagFlag
-				# what about whether our own tag is built or not?
 				add "{bvar} || ({tvar}.{item.c(o)})"
 
 			elif item isa TagHandler
@@ -6855,10 +6836,6 @@ export class Tag < TagLike
 			if item isa Tag
 				add item.c(o)
 			elif item isa Loop
-				# shouldnt the loop setup its own stuff?
-				# loop should know about its own slot
-				# console.log "is expression?",STACK.isExpression,self.isExpression
-				# item.@slot = slot++
 				add item.c(o)
 			elif item isa Str # static for sure
 				# should do a basic init check
@@ -6900,8 +6877,12 @@ export class Tag < TagLike
 				add "{parent.kvar}++"
 			else
 				add "{parent.ref}.push({tvar},{parent.kvar}++,{kvar})"
+
 		if shouldEnd
 			foot.push(isSelf ? "{tvar}.close$()" : "{tvar}.end$()")
+
+		if isFragment and parent
+			add "{parent.ref}.insert$({tvar},{@flags})"
 
 		if option(:fragmented)
 			add "imba.ctx=null"
@@ -7716,7 +7697,7 @@ export class Scope
 		
 	def tagCache
 		# deal with root instead?
-		@tagCache ||= declare('t0$c',
+		@tagCache ||= declare('c$$',
 			# LIT('(Imba.$c ? (Imba.$c[Imba.$k] || (Imba.$c[Imba.$k] = {})) : {})'),
 			LIT('(imba.ctx||{})'),
 			system: yes
