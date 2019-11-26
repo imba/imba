@@ -1,13 +1,16 @@
 
-var paths = require.context('raw-loader!./', true, /apps\/[\w\-]+\.imba$/)
+var paths = require.context('raw-loader!./apps', true, /[\w\-]+\.imba$/)
 var examples = {}
 
 for src in paths.keys()
+	let path = "apps/" + src.slice(2)
 	var example = {
-		path: src.slice(2)
+		path: path
 		body: paths(src).default
 	}
-	examples[src.slice(2)] = example
+	examples[path] = example
+
+console.log "examples",examples
 
 require('../src/imba/index.imba')
 require('./spec.imba')

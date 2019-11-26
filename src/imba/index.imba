@@ -193,7 +193,7 @@ def imba.createDocumentFragment parent, index
 	el.open$(parent,index)
 	return el
 
-def imba.createElement name, parent, index, flags, text, sfc, bits
+def imba.createElement name, bitflags, parent, flags, text, sfc
 	var el = root.document.createElement(name)
 
 	# only for custom elements
@@ -205,22 +205,27 @@ def imba.createElement name, parent, index, flags, text, sfc, bits
 	if sfc and sfc.id
 		el.setAttribute('data-'+sfc.id,'')
 
-	if bits
-		el.__bits = bits
+	if bitflags
+		el.__bits = bitflags
 
 	if text !== null
 		el.text$(text)
 
-	if parent and index != null  and parent isa Node
+	if parent and parent isa Node
+		# not working well with the 
 		# what if parent is a IndexedTagFragment?
-		parent.insert$(el,index)
+		parent.insert$(el,bitflags)
 	return el
 
-def imba.createFragment type, parent, slot, options
-	if type == 2
-		return KeyedTagFragment.new(parent,slot,options)
-	elif type == 1
-		return IndexedTagFragment.new(parent,slot,options)
+def imba.createFragment bitflags, parent
+	if bitflags & $TAG_INDEXED$
+		return IndexedTagFragment.new(bitflags,parent)
+	else
+		return KeyedTagFragment.new(bitflags,parent)
+	# elif type == 1
+	# 	return IndexedTagFragment.new(parent,slot,options)
+	# elif type == 4
+	# 	return BranchedTagFragment.new(parent,slot,options)
 
 
 def imba.mount element, into
@@ -376,6 +381,25 @@ extend class Element
 		@textContent = item
 		self
 
+	def render$ prev, item, options
+		let type = typeof item
+
+		if type === 'undefined' or item === null
+			while self.firstChild
+				self.removeChild(self.firstChild)
+			return
+
+		elif type !== 'object'
+			if prev and prev.replaceWith$
+				return prev.replaceWith$(item)
+
+			self.textContent = item
+
+		elif item isa Node
+			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
+
+		return
+
 	def schedule
 		imba.scheduler.listen('render',self)
 		#scheduled = yes
@@ -385,7 +409,7 @@ extend class Element
 		imba.scheduler.unlisten('render',self)
 		#scheduled = no
 
-	def insert$ item, index, prev
+	def insert$ item, bitflags, prev
 		let type = typeof item
 
 		if type === 'undefined' or item === null
@@ -398,7 +422,7 @@ extend class Element
 			let res
 			let txt = item
 
-			if index == -1
+			if bitflags & $TAG_ONLY_CHILD$
 				# FIXME what if the previous one was not text? Possibly dangerous
 				@textContent = txt
 				return
@@ -413,7 +437,7 @@ extend class Element
 					return res
 			else
 				@appendChild$(res = document.createTextNode(txt))
-				return res
+				return res	
 
 		elif item isa Node
 			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
@@ -477,12 +501,49 @@ extend class DocumentFragment
 		#end.parentNode.insertBefore(child,#end)
 		return child
 
+	def removeChild$ child
+		child.parentNode && child.parentNode.removeChild(child)
+		# #end.parentNode.removeChild(child)
+		self
+
+
 class TagFragment
 
+class BranchedTagFragment < TagFragment
+	def initialize parent
+		#parent = parent
+		@array = []
+
+	def push item, idx
+		let toReplace = @array[idx]
+		if item === toReplace
+			return
+		else
+			@array[idx] = item
+		self
+
+	def close$ len
+		let from = @length
+		return if from == len
+		let array = @array
+
+		if from > len
+			while from > len
+				var item = array[--from]
+				# what if this is a 
+				@removeChild(item,from)
+		elif len > from
+			while len > from
+				let node = array[from++]
+				@appendChild(node,from - 1)
+		@length = len
+		return
+		self
+
+
 class KeyedTagFragment < TagFragment
-	def initialize parent, slot
+	def initialize bitflags,parent
 		@parent = parent
-		@slot = slot
 		@array = []
 		@changes = Map.new
 		@dirty = no
@@ -535,10 +596,7 @@ class KeyedTagFragment < TagFragment
 			@parent.removeChild(item)
 		return
 
-	def open$
-		return self
-
-	def close$ index
+	def end$ index
 		if @dirty
 			@changes.forEach do |pos,item|
 				if pos == -1
@@ -557,7 +615,7 @@ class KeyedTagFragment < TagFragment
 		return self
 
 class IndexedTagFragment < TagFragment
-	def initialize parent, slot
+	def initialize bitflags,parent
 		@parent = parent
 		@$ = []
 		@length = 0
@@ -565,7 +623,7 @@ class IndexedTagFragment < TagFragment
 	def push item, idx
 		return
 
-	def reconcile len
+	def end$ len
 		let from = @length
 		return if from == len
 		let array = @$

@@ -74,6 +74,25 @@ export var FLAGS =
 	IMBA_TAG_MOUNTED: 16
 	IMBA_TAG_SCHEDULE: 32
 	IMBA_TAG_SCHEDULED: 64
+	IMBA_TAG_FIRST_CHILD: 128
+	IMBA_TAG_LAST_CHILD: 256
+
+export var F = 
+	# TAGS
+	TAG_INDEXED: 1
+	TAG_KEYED: 2
+	TAG_CUSTOM: 4
+	TAG_AWAKENED: 8
+	TAG_MOUNTED: 16
+	TAG_SCHEDULE: 32
+	TAG_SCHEDULED: 64
+	TAG_FIRST_CHILD: 128
+	TAG_LAST_CHILD: 256
+	TAG_ONLY_CHILD: 384
+	TAG_HAS_BRANCHES: 512
+	TAG_HAS_LOOPS: 1024
+	TAG_HAS_DYNAMICS: 2048
+	TAG_IN_BRANCH: 4096
 
 # Helpers for operators
 export var OP = do |op, l, r|
@@ -419,6 +438,9 @@ export class Stack
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
+
+		if F[key] != undefined
+			return F[key]
 		
 		var lowercased = key.toLowerCase
 		
@@ -449,7 +471,7 @@ export class Stack
 				return val
 			return null
 
-		return undefined
+		return undefined	
 
 
 	def addScope scope
@@ -650,6 +672,10 @@ export class Node
 
 	# swallow might be better name
 	def consume node
+		if node isa TagLike
+			console.log "list node consumes"
+			return node.register(self)
+
 		if node isa PushAssign
 			node.register(self)
 			return PushAssign.new(node.op,node.left,self)
@@ -1088,6 +1114,16 @@ export class ListNode < Node
 
 export class ArgList < ListNode
 
+	def consume node
+		if node isa TagLike
+			@nodes = @nodes.map do |child|
+				if !(child isa Meta) and !(child isa Assign)
+					child.consume(node)
+				else
+					child
+			return self
+		super
+
 export class AssignList < ArgList
 
 	def concat other
@@ -1118,25 +1154,12 @@ export class Block < ListNode
 	def visit stack
 		@scope.visit if @scope
 
+		if stack and stack.@tag
+			@tag = stack.@tag
+
 		for node,i in @nodes
 			node and node.traverse
-
-		if stack and stack.@tag and !stack.@tag.@tagLoop
-			@tag = stack.@tag
-			let real = expressions
-			# we need to compare the real length
-			if real:length > 1
-				let nr = @tag.childCacher.nextBlock #  @tag.blocks.push(self)
-				var arr = Arr.new(ArgList.new( @nodes ))
-				arr.indented(@indentation)
-				var isStatic = real.every do |item| item isa Tag
-				var typ = isStatic ? 2 : 1
-				set(treeType: typ)
-				@indentation = null
-				if true
-					@nodes = [Util.callImba(scope__, "static",[arr,Num.new(typ),nr])]
-				else
-					@nodes = [arr]
+		
 		self
 
 	def block
@@ -1256,7 +1279,7 @@ export class Block < ListNode
 
 
 	def consume node
-		if node isa TagPushAssign
+		if node isa TagLike
 			let real = expressions
 
 			@nodes = @nodes.map do |child|
@@ -1264,7 +1287,6 @@ export class Block < ListNode
 					child.consume(node)
 				else
 					child
-
 			return self
 
 		# can also return super if it is expressable, but should we really?
@@ -5029,7 +5051,7 @@ export class Call < Node
 			if str == 'export'
 				return Export.new(args)
 
-		@callee = callee
+		@callee = callee	
 		@args = args or ArgList.new([])
 
 		if args isa Array
@@ -5215,7 +5237,6 @@ export class ControlFlowStatement < ControlFlow
 		no
 
 
-
 export class If < ControlFlow
 
 	prop test
@@ -5384,7 +5405,18 @@ export class If < ControlFlow
 		!!@parens
 
 	def consume node
-		if node isa TagPushAssign
+		if node isa TagLike
+			# now we are reconsuming this
+			if node.body == self
+				@body = @body.consume(node) if @body
+				@alt = @alt.consume(node) if @alt
+				return self
+			else
+				return node.register(self)
+			return self
+
+		if node isa TagPushAssign or node isa TagFragment
+			node.register(self)
 			@body = @body.consume(node) if @body
 			@alt = @alt.consume(node) if @alt
 			return self
@@ -5522,6 +5554,7 @@ export class While < Loop
 	# force-declares the inner variables in the scope
 
 	def consume node
+
 		# This is never expressable, but at some point
 		# we might want to wrap it in a function (like CS)
 		return super if isExpressable
@@ -5656,6 +5689,9 @@ export class For < Loop
 		return self
 
 	def consume node
+		if node isa TagLike
+			return node.register(self)
+
 		if isExpressable
 			return super
 
@@ -5732,36 +5768,6 @@ export class For < Loop
 
 		var before = ""
 		var after = ""
-
-		if @tag and @childTags
-			let iref = LIT('imba.createFragment') # scope__.imbaRef('createFragment','fragment$').c
-			var indexed = FLAGS.IMBA_FRAG_INDEXED
-			var keyed = FLAGS.IMBA_FRAG_KEYED
-			let typ
-
-			if @childTags:length == 1 and !@childTags[0].option(:key)
-				typ = indexed
-			else
-				typ = keyed
-
-			option(:indexed,typ == indexed)
-
-			# should know how many inner slots this fragment has?
-			let cache = @tag.fragment.cvar
-			let counter = tagvar('i')
-			before += "{tvar} = {cache}.{oid} || ({cache}.{oid} = {tvar} = {iref}({typ},{@tag.tvar},{@slot or '0'}));\n"
-			@ref = "{tvar}"
-			before += "{counter} = 0;\n"
-			before += "{cvar}={tvar}.$;\n"
-			# after += ";c$=c$0"
-			# after += ";t$=t$0"
-			if typ == indexed
-				after += ";{tvar}.reconcile({counter})"
-				# here we could just do the whole reconciliation inline
-			else
-				before += "{tvar}.open$();\n"
-				# after += ";{@tag.ref}.render$({ref},{@slot or '0'})"
-				after += ";{tvar}.close$({counter})"
 
 		var code = body.c(braces: yes, indent: yes)
 		var head = "{AST.mark(options:keyword)}for ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
@@ -6350,19 +6356,266 @@ export class TagHandler < TagPart
 		return "on$({quoted},[{AST.cary(parts)}],{scope.context.c})"
 		# return "on$({slot},[{AST.cary(parts)}],{scope__.context.c})"
 
-export class Tag < Node
 
-	prop tree
+class TagLike < Node
 
 	def initialize o = {}
-		@traversed = no
 		@options = o
-		@reference = null
-		@attributes = o:attributes or []
-		@attrmap = {}
-		@children = []
+		@flags = 0
+		@tagvars = {}
+		setup(o)
 		self
+
+	def body
+		@body || @options:body
+
+	def value
+		@options:value
+
+	def isReactive
+		yes
+
+	def setup
+		@traversed = no
+		@consumed = []
+		self
+
+	def register node
+		if node isa If
+			flag(F.TAG_HAS_BRANCHES | F.TAG_HAS_DYNAMICS)
+			node = TagBranchFragment.new(body: node)
+		elif node isa Loop
+			flag(F.TAG_HAS_LOOPS | F.TAG_HAS_DYNAMICS)
+			node = TagLoopFragment.new(body: node.body, value: node)
+
+		elif !(node isa Tag) and !(node isa Str)
+			flag(F.TAG_HAS_DYNAMICS)
+			node = TagContent.new(value: node)
+		elif node isa Tag
+			console.log 'register tag!!',String(node.type)
+		@consumed.push(node)
+		node.@parent = self
+		return node
+
+	def flag key
+		@flags |= key
+
+	def type
+		"frag"
+
+	def unflag key
+		@flags = @flags & ~key
+
+	def hasFlag key
+		@flags & key
+
+	def isOnlyChild
+		hasFlag(F.TAG_ONLY_CHILD)
+
+	def isFirstChild
+		hasFlag(F.TAG_FIRST_CHILD)
+
+	def isLastChild
+		hasFlag(F.TAG_LAST_CHILD)
+
+	def isIndexed
+		hasFlag(F.TAG_INDEXED)
+
+	def tagvar name
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{tagvarprefix}${name}")
+
+	def tagvarprefix
+		"t{level}"
+
+	def level
+		@level
+
+	def parent
+		@parent ||= option(:parent)
+
+	def tvar
+		@tvar or tagvar('t')
+
+	# built variable
+	def bvar
+		@bvar or (@parent ? @parent.bvar : tagvar('b'))
+
+	# cache variable
+	def cvar
+		@cvar or (@parent ? @parent.cvar : tagvar('c'))
+
+	def vvar do tagvar('v') # value variable
+	def kvar do tagvar('k') # key variable
+
+	def visit stack
+		var o = @options
+		var scope = @tagScope = scope__
+		let prevTag = @parent = stack.@tag
+		@level = (@parent && @parent.@level or 0) + 1
+
+		if @parent
+			@parent.addChildTag(self)
+
+		stack.@tag = null
+
+		for part in @attributes
+			part.traverse
+
+		stack.@tag = self
 		
+		if o:key
+			o:key.traverse
+
+		if body
+			body.traverse
+
+		stack.@tag = @parent
+
+		unless @parent
+			@level = 0
+			consumeChildren
+		self
+
+	def consumeChildren
+		return if @consumed:length
+		console.log "consume children {String(type)}"
+		body && body.consume(self)
+		let first = @consumed[0]
+		let last = @consumed[@consumed:length - 1]
+
+		if first isa TagLike
+			first.flag(F.TAG_FIRST_CHILD)
+
+		if last isa TagLike
+			last.flag(F.TAG_LAST_CHILD)
+
+		for item in @consumed when item isa TagLike
+			item.@parent = self
+			item.@level = (@level + 1)
+			item.consumeChildren
+		self
+
+	def consume node
+		if node isa TagLike
+			return node.register(self)
+
+		if node isa Variable
+			option('assignToVar',node)
+			return self
+
+		if node isa PushAssign
+			node.register(self)
+			return PushAssign.new(node.op,node.left,self)
+
+		if node isa Assign
+			return OP(node.op,node.left,self)
+		elif node isa Op
+			return OP(node.op,node.left,self)
+		elif node isa Return
+			# console.log "return is consuming tag"
+			option('return',yes)
+			return self
+		return self
+
+export class TagContent < TagLike
+	
+	def vvar
+		parent.vvar
+
+	def bvar
+		parent.bvar
+
+	
+
+	def ref
+		parent.ref
+
+	def key
+		@key ||= "{parent.cvar}.{oid}"
+
+	def js
+		let value = self.value
+		console.log "TagContent! {value}"
+		if isOnlyChild and (value isa Str or value isa Num)
+			return "{bvar} || {ref}.text$({value.c(o)})"
+		elif value isa InterpolatedString and isOnlyChild
+			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$({key}={vvar}))"
+		elif isOnlyChild and false # what if we are not trying to cache?
+			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.insert$({key}={vvar},-1,{key}_))"
+		elif isOnlyChild # what if we are not trying to cache?
+			let k = "{ref}.body$"
+			return "({vvar}={value.c(o)},{vvar}==={k} || {ref}.render$({k},{k}={vvar},{@flags}))"
+		else
+			return "({vvar}={value.c(o)},{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_)))"
+
+export class TagFragment < TagLike
+
+export class TagBranchFragment < TagLike
+
+	def tvar
+		parent.tvar
+
+	def js o
+		console.log "compile branch fragment"
+		# let toset = ""
+		# share the same slots across branches?
+		let inserts = []
+
+		for item in @consumed when TagLike
+			item.@tvar = tagvar(item.oid + '$')
+			inserts.push(item.@tvar)
+
+		var out = body.c(o)
+		for item in inserts
+			let key = "{cvar}.{item}"
+			out += "\n({key}_ = {tvar}.insert$({item},{@flags},{key}_))"
+		return out
+
+export class TagLoopFragment < TagLike
+	def consumeChildren
+		super
+
+		if @consumed:length == 1
+			flag(@consumed[0].option(:key) ? F.TAG_KEYED : F.TAG_INDEXED)
+
+	def js o
+		# if @tag and @childTags
+		let iref = LIT('imba.createFragment')
+		# should know how many inner slots this fragment has?
+		let cache = parent.cvar
+		let out = ""
+		out += "{tvar} = {cache}.{oid} || ({cache}.{oid} = {tvar} = {iref}({@flags},{parent.tvar}));\n"
+		@ref = "{tvar}"
+		out += "{kvar} = 0;\n"
+		out += "{cvar}={tvar}.$;\n"
+		out += value.c(o)
+		# after += ";c$=c$0"
+		# after += ";t$=t$0"
+		# if typ == indexed
+		# 	after += ";{tvar}.reconcile({counter})"
+		# 	# here we could just do the whole reconciliation inline
+		# else
+		# 	before += "{tvar}.open$();\n"
+		# 	# after += ";{@tag.ref}.render$({ref},{@slot or '0'})"
+		out += ";{tvar}.end$({kvar})"
+		return out
+
+export class TagIndexedFragment < TagLike
+
+export class TagKeyedFragment < TagLike
+
+export class Tag < TagLike	
+	
+	def setup
+		super
+		@attributes = @options:attributes or []
+		@attrmap = {}
+
+	def visit stack
+		if isSelf or (String(type).indexOf('-') >= 0)
+			flag(F.TAG_CUSTOM)
+		super
+
 	def addPart part, type
 		let curr = @attributes.CURRENT
 
@@ -6390,96 +6643,26 @@ export class Tag < Node
 		@childTags.push(child)
 		self
 
-	def enclosing
-		(@options:close and @options:close.value)
-
 	def type
 		@options:type || (@attributes:length == 0 ? :fragment : :div)
-		
-	def parent
-		@options:par
-
-	def body
-		@options:body
 		
 	def isSelf
 		type isa Self or type isa This
 		
 	def isNative
 		type isa TagTypeIdentifier and type.isSimpleNative
-		
-	def isStatic
-		let o = @options
-		!o:hasConditionals and !o:hasLoops and !o:ivar and !o:key
-
-	def consume node
-		if node isa PushAssign
-			node.register(self)
-			return PushAssign.new(node.op,node.left,self)
-
-		if node isa Assign
-			# node.right = self
-			# console.log "node is assigned to"
-			return OP(node.op,node.left,self)
-		elif node isa Op
-			return OP(node.op,node.left,self)
-		elif node isa Return
-			# console.log "return is consuming tag"
-			option('return',yes)
-			return self
-		return self
-
-	def visit stack
-		var o = @options
-		var scope = @tagScope = scope__
-		let prevTag = o:par = stack.@tag
-
-		@parent = stack.@tag
-		@level = (@parent && @parent.@level or 0) + 1
-
-		if @parent
-			@parent.addChildTag(self)
-
-		stack.@tag = null
-
-		for part in @attributes
-			part.traverse
-
-		stack.@tag = self
-		
-		if o:key
-			o:key.traverse
-
-		if o:body
-			o:body.traverse
-
-		stack.@tag = @parent
-		self
 	
 	def create_
 		isFragment ? LIT('imba.createDocumentFragment') : LIT('imba.createElement')
-		# scope__.imbaRef('createElementFactory(/*SCOPEID*/)').c
 
 	def ref
 		@ref || (@cachedRef = "{fragment ? fragment.cvar : ''}.{oid}")
-
-	def tagvar name
-		@tagvars ||= {}
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"t{@level}${name}")
-
-	def tvar do tagvar('t') # tag variable
-	def bvar do tagvar('b') # built variable
-	def cvar do tagvar('c') # cache variable
-	def vvar do tagvar('v') # value variable
-	def kvar do tagvar('k') # key variable
 
 	def fragment
 		@fragment ||= (isSelf or !@parent or @parent isa Loop) ? self : (@parent.fragment)
 
 	def isReactive
-		# be careful
-		@parent ? @parent.isReactive : !(scope__ isa RootScope) # isSelf
-		# (!!isSelf or (@parent isa Loop and @parent.isReactive)
+		@parent ? @parent.isReactive : !(scope__ isa RootScope)
 
 	def isFragment
 		self.type() == 'fragment'
@@ -6497,6 +6680,7 @@ export class Tag < Node
 				val = val.toString
 			out.push(val)
 
+		var parent = self.parent
 		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type.isClass ? type.name : "'" + type.@value + "'"))
 
 		# if tag contains no static attributes (except className / text)
@@ -6504,21 +6688,19 @@ export class Tag < Node
 		var wasInline = o:inline
 		var wasReactive = o:reactive
 		var isReactive = self.isReactive # fragment.isReactive
-		var isCustom = isSelf or typ.indexOf('-') >= 0 # or custom attributes
 		var markWhenBuilt = yes
 		var hasTemplate = no
 		var canInline = no
 		var optimizeFlag = no
-		var shouldEnd = isCustom
+		var shouldEnd = hasFlag(F.TAG_CUSTOM)
 		var nodeFlags = 0
 
-		if isCustom
-			nodeFlags |= FLAGS.IMBA_TAG_CUSTOM
+		var inCondition = parent && parent.option(:condition)
 
 		var params = [
 			typ,
-			(@parent ? @parent.tvar : 'null'),
-			@slot !== null ? (@slot or 0) : 'null',
+			0,
+			(parent ? parent.tvar : 'null'),
 			'null',
 			'null',
 			scope__.root.sfco.c
@@ -6557,20 +6739,19 @@ export class Tag < Node
 			optimizeFlag = yes
 
 		if dynamics:length == 0 and dynamicFlags:length == 0
+			# should check this based
 			if nodes.every(|v| v isa Tag or v isa Str)
-				if !shouldEnd
+				if !shouldEnd and !hasFlag(F.TAG_HAS_DYNAMICS) and (parent isa Tag)
 					canInline = yes
 
-		params[6] = nodeFlags
+		params[1] = @flags
 
 		if isFragment
 			params = params.slice(1,3)
 
 		var ctor = "{tvar}={create_}({params.join(',')})"
 
-		if !@parent
-			# FIXME change oid to actual unique id based on file
-			# Dont know whether we need builtvar yet - depends on children?
+		if !parent
 			@ref = "{tvar}"
 
 			if isSelf
@@ -6587,37 +6768,43 @@ export class Tag < Node
 				add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
 				# FIXME no need for cvar if we have no children and no dynamic attributes
 				o:inline = yes if isExpression
-				if !canInline or nodes:length
+				if @consumed:length or dynamics:length
 					add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
 			else
 				add "({ctor})"
 				option(:inline,canInline = yes)
 				o:inline = yes
 
-		elif @parent isa Loop
+		elif parent isa TagLoopFragment
 			# what if we are not reactive at all?
 
 			if option(:key)
 				add "{kvar}={option(:key).c}"
+				@ref = "{parent.cvar}[{kvar}]"
 
-				@ref = "{@parent.cvar}[{kvar}]"
+			elif parent.isIndexed
+				@ref = "{parent.cvar}[{parent.kvar}]"
 
-			elif @parent.option(:indexed)
-				@ref = "{@parent.cvar}[{@parent.tagvar('i')}]"
+			# if we add our own bvar?
+			@bvar = tagvar(:b)
 
 			add "{bvar}=1" # only if we have dynamic stuff?
 			add "{tvar} = {ref} || ({bvar}=0,{ref} = {ctor})"
 			@ref = "{tvar}"
+			# dont add cvar always!
+			@cvar = tagvar(:c)
 			add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
 
 		elif !isReactive
 			add "({ctor})"
 		elif canInline
-			add "{fragment.bvar} || ({ctor})"
+			add "{parent.bvar} || ({ctor})"
 		else
 			if markWhenBuilt
+				@bvar = tagvar(:b)
 				add "{bvar}=1"
-			let ref = "{fragment.cvar}.{oid}"
+
+			let ref = "{cvar}.{oid}"
 			add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
 
 
@@ -6629,11 +6816,11 @@ export class Tag < Node
 			elif item.isStatic
 				continue if item isa TagFlag
 				# what about whether our own tag is built or not?
-				add "{fragment.bvar} || ({tvar}.{item.c(o)})"
+				add "{bvar} || ({tvar}.{item.c(o)})"
 
 			elif item isa TagHandler
 				# add without dynamic attrs
-				let iref = "{fragment.cvar}.{item.oid}"
+				let iref = "{cvar}.{item.oid}"
 				let specials = item.extractDynamicParts()
 				add "{vvar} = {iref} || ({iref}={ref}.{item.js(o)})"
 				for special,i in specials
@@ -6643,7 +6830,7 @@ export class Tag < Node
 
 			else
 				let val = item.value
-				let iref = "{fragment.cvar}.{item.oid}"
+				let iref = "{cvar}.{item.oid}"
 				item.value = LIT("{iref}={vvar}")
 				add "{vvar}={val.c(o)}"
 
@@ -6662,25 +6849,28 @@ export class Tag < Node
 		# loop through attributes etc
 		# add 
 
-		let slot = 0
 		let count = nodes:length
 
 		for item in nodes
 			if item isa Tag
-				item.@slot = slot++
 				add item.c(o)
 			elif item isa Loop
 				# shouldnt the loop setup its own stuff?
 				# loop should know about its own slot
 				# console.log "is expression?",STACK.isExpression,self.isExpression
-				item.@slot = slot++
+				# item.@slot = slot++
 				add item.c(o)
 			elif item isa Str # static for sure
 				# should do a basic init check
 				if isReactive
-					add "{fragment.bvar} || {tvar}.insert$({item.c(o)},{slot++})"
+					add "{bvar} || {tvar}.insert$({item.c(o)})"
 				else
-					add "{tvar}.insert$({item.c(o)},{slot++})"
+					add "{tvar}.insert$({item.c(o)})"
+
+			elif true
+				add item.c(o)
+				# add item.c(o)
+				# option(:condition,null)
 			else
 				# not if variable declaration etc
 				# if this is the single child - things are different
@@ -6689,7 +6879,6 @@ export class Tag < Node
 				let key = "{fragment.cvar}.{id}"
 
 				if item isa Call
-					# global
 					fragment.option(:fragmented,1)
 					add "imba.ctx=({key}$ || ({key}$=\{\}))"
 
@@ -6706,21 +6895,18 @@ export class Tag < Node
 		
 		
 
-		if @parent isa Loop
-			# not for all?
-			let i = @parent.tagvar('i')
-			if @parent.option(:indexed)
-				add "{i}++"
+		if parent isa TagLoopFragment
+			if parent.isIndexed
+				add "{parent.kvar}++"
 			else
-				add "{@parent.tvar}.push({tvar},{i}++,{kvar})"
-
+				add "{parent.ref}.push({tvar},{parent.kvar}++,{kvar})"
 		if shouldEnd
 			foot.push(isSelf ? "{tvar}.close$()" : "{tvar}.end$()")
 
 		if option(:fragmented)
 			add "imba.ctx=null"
 
-		if !@parent
+		if !parent
 			if option(:return)
 				foot.push "return {tvar}"
 			elif !isReactive or o:inline

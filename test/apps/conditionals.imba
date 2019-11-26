@@ -9,7 +9,6 @@ var flipper = do
 var fragif = do
 	if value
 		<div> "single item"
-		
 	else
 		<>
 			<span> "frag 1"
@@ -28,14 +27,18 @@ tag app-root
 				flipper()
 			<div>
 			fragif()
-			# if value
-			# 	<button>
+			if value
+				<button.flipping> "flipping"
 			<div>
+			if value
+				<button.ontrue> "ontrue"
+			else
+				<button.onfalse> "onfalse"
 
 imba.mount(var app = <app-root>)
 
 test "check" do
-	ok app.querySelector('button')
+	ok app.querySelector('button.flipping')
 	value = 0
 	app.render()
-	ok !app.querySelector('button')
+	ok !app.querySelector('button.flipping')
