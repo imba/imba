@@ -5029,6 +5029,9 @@ export class TagTypeIdentifier < Identifier
 	def isSimpleNative
 		isNative and !(/input|textarea|select|form|iframe/).test(@str)
 
+	def toFunctionalType
+		LIT(@str)
+
 	def spawner
 		console.log "TagTypeIdentifier shuold never be used"
 		if @ns
@@ -6520,7 +6523,7 @@ class TagLike < Node
 
 	# cache variable
 	def cvar
-		@cvar or (@parent ? @parent.cvar : tagvar('c'))
+		@cvar or (@parent ? @parent.cvar :  tagvar('c'))
 
 	def vvar do tagvar('v') # value variable
 	def kvar do tagvar('k') # key variable
@@ -6602,7 +6605,7 @@ export class TagContent < TagLike
 		parent.bvar
 
 	def ref
-		parent.ref
+		parent.tvar # 
 
 	def key
 		@key ||= "{parent.cvar}.{oid}"
@@ -6701,6 +6704,12 @@ export class Tag < TagLike
 		if type == TagId
 			set(id: part)
 
+		if type == TagArgList
+			if @attributes:length == 0
+				set(args: part)
+				# this is like a call
+				return self
+
 		if type == TagSep
 			@attributes.CURRENT = null
 		elif curr isa TagHandler
@@ -6710,16 +6719,14 @@ export class Tag < TagLike
 				curr.value = type.new(part)
 		elif curr isa TagAttr
 			curr.add(part,type)
+		elif type == TagData
+			let bind = String(self.type) in ['input','textarea','select','button','option']
+			curr = TagAttr.new(bind ? 'bind:model' : 'model')
+			curr.value = part.first
+			@attributes.push(curr)
+			@attributes.CURRENT = null
 		else
-			if type == TagData
-				let bind = String(self.type) in ['input','textarea','select','button','option']
-				# console.log "bind?",self.type,bind
-				curr = TagAttr.new(bind ? 'bind:model' : 'model')
-				curr.value = part.first
-			else
-				curr = type.new(part,self)
-
-			@attributes.push(@attributes.CURRENT = curr)
+			@attributes.push(@attributes.CURRENT = type.new(part,self))
 		self
 
 	def type
@@ -6736,6 +6743,10 @@ export class Tag < TagLike
 
 	def fragment
 		@fragment ||= (isSelf or !@parent or @parent isa Loop) ? self : (@parent.fragment)
+
+	def bodyScope
+		let v = (@options:close and @options:close.value)
+		v == '->' ? 'open' : (v == '=>' ? 'closed' : null)
 
 	def isReactive
 		@parent ? @parent.isReactive : !(scope__ isa RootScope)
@@ -6758,11 +6769,8 @@ export class Tag < TagLike
 		var parent = self.parent
 		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type.isClass ? type.name : "'" + type.@value + "'"))
 
-		# if tag contains no static attributes (except className / text)
-		# we don't need to mark when built
 		var wasInline = o:inline
-		var wasReactive = o:reactive
-		var isReactive = self.isReactive # fragment.isReactive
+		var isReactive = self.isReactive
 		var markWhenBuilt = yes
 		var hasTemplate = no
 		var canInline = no
@@ -6825,6 +6833,8 @@ export class Tag < TagLike
 
 		var ctor = "{tvar}={create_}({params.join(',')})"
 
+		# compiling the construction / opening
+
 		if !parent
 			@ref = "{tvar}"
 
@@ -6833,6 +6843,7 @@ export class Tag < TagLike
 				add "{tvar} = this"
 				add "{tvar}.open$()"
 				add "{cvar} = {tvar}.$ || ({bvar}=0,{tvar}.$=\{\})"
+
 			elif isReactive
 				let scop = scope__.closure
 				add "{bvar} = 1"
@@ -6842,42 +6853,54 @@ export class Tag < TagLike
 				if @consumed:length or dynamics:length
 					add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
 			else
+				@cvar = tvar
 				add "({ctor})"
 				option(:inline,canInline = yes)
 				o:inline = yes
 
-		elif parent isa TagLoopFragment
-			# what if we are not reactive at all?
-
-			if option(:key)
-				add "{kvar}={option(:key).c}"
-				@ref = "{parent.cvar}[{kvar}]"
-
-			elif parent.isIndexed
-				@ref = "{parent.cvar}[{parent.kvar}]"
-
-			# if we add our own bvar?
-			@bvar = tagvar(:b)
-
-			add "{bvar}=1" # only if we have dynamic stuff?
-			add "{tvar} = {ref} || ({bvar}=0,{ref} = {ctor})"
-			@ref = "{tvar}"
-			# dont add cvar always!
-			@cvar = tagvar(:c)
-			add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
-
-		elif !isReactive
-			add "({ctor})"
-		elif canInline
-			add "{parent.bvar} || ({ctor})"
 		else
-			if markWhenBuilt
-				@bvar = tagvar(:b)
-				add "{bvar}=1"
+			# this is a functional tag component
+			if option(:args)
+				let key = "{cvar}.{oid}"
+				add("imba.ctx=({key}$c || ({key}$c=\{\}))")
+				let call = CALL(option(:type).toFunctionalType,option(:args))
+				add("{tvar}={call.c(o)}")
+				add("{tvar}==={ref} || ({key}_ = {parent.tvar}.insert$({ref}={tvar},{@flags},{key}_))")
+				# call the tag - type?
 
-			let ref = "{cvar}.{oid}"
-			add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
-			@ref = tvar
+			elif parent isa TagLoopFragment
+				# what if we are not reactive at all?
+
+				if option(:key)
+					add "{kvar}={option(:key).c}"
+					@ref = "{parent.cvar}[{kvar}]"
+
+				elif parent.isIndexed
+					@ref = "{parent.cvar}[{parent.kvar}]"
+
+				# if we add our own bvar?
+				@bvar = tagvar(:b)
+
+				add "{bvar}=1" # only if we have dynamic stuff?
+				add "{tvar} = {ref} || ({bvar}=0,{ref} = {ctor})"
+				@ref = "{tvar}"
+				# dont add cvar always!
+				@cvar = tagvar(:c)
+				add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
+
+			elif !isReactive
+				add "({ctor})"
+
+			elif canInline
+				add "{parent.bvar} || ({ctor})"
+			else
+				if markWhenBuilt
+					@bvar = tagvar(:b)
+					add "{bvar}=1"
+
+				let ref = "{cvar}.{oid}"
+				add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
+				@ref = tvar
 
 
 		for item in @attributes

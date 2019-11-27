@@ -726,9 +726,9 @@ var isGroup = do |obj|
 var bindHas = do |object,value|
 	if object isa Array
 		object.indexOf(value) >= 0
-	elif object.has isa Function
+	elif object and object.has isa Function
 		object.has(value)
-	elif object.contains isa Function
+	elif object and object.contains isa Function
 		object.contains(value)
 	elif object == value
 		return true
@@ -738,14 +738,14 @@ var bindHas = do |object,value|
 var bindAdd = do |object,value|
 	if object isa Array
 		object.push(value)
-	elif object.add isa Function
+	elif object and object.add isa Function
 		object.add(value)
 
 var bindRemove = do |object,value|
 	if object isa Array
 		let idx = object.indexOf(value)
 		object.splice(idx,1) if idx >= 0
-	elif object.delete isa Function
+	elif object and object.delete isa Function
 		object.delete(value)
 
 ###
@@ -765,7 +765,7 @@ extend class Element
 			unless #f & $TAG_BIND_MODEL$
 				#f |= $TAG_BIND_MODEL$
 				@on$('change',[@change$],this) if @change$
-				@on$('input',['capture',@input$],this) if @nodeName == 'INPUT'
+				@on$('input',['capture',@input$],this) if @input$
 
 		Object.defineProperty(self,key,o isa Array ? imba.createProxyProperty(o) : o)
 		return o
@@ -839,6 +839,22 @@ extend class HTMLOptionElement
 			return #richValue
 		return self.value
 
+extend class HTMLTextAreaElement
+	def setRichValue value
+		#richValue = value
+		self.value = value
+
+	def getRichValue
+		if #richValue !== undefined
+			return #richValue
+		return self.value
+
+	def input$ e
+		@model = @value
+
+	def end$
+		@value = @model
+
 extend class HTMLInputElement
 	
 	def input$ e
@@ -862,7 +878,7 @@ extend class HTMLInputElement
 			if isGroup(model)
 				checked ? bindAdd(model,val) : bindRemove(model,val)
 			else
-				@model = val
+				@model = checked ? val : false
 
 	def setRichValue value
 		#richValue = value
