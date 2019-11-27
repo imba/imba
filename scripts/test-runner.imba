@@ -5,7 +5,15 @@ var compiler = require "../dist/compiler"
 var helpers = compiler.helpers
 var browser
 
-
+var def getFiles dir, o = []
+	fs.readdirSync(dir, withFileTypes: true).filter do |src|
+		let fullpath = path.resolve(dir, src.name)
+		if fullpath.indexOf('.imba') >= 0
+			o.push(fullpath)
+		elif src.isDirectory()
+			getFiles(fullpath,o)
+	return o
+	
 var options = helpers.parseArgs(process.argv.slice(2),{
 	alias: {g: 'grep',c: 'console'}
 })
@@ -113,14 +121,11 @@ def main
 
 	browser = await puppeteer.launch(args: args, headless: true)
 
-	var entries = fs.readdirSync(path.resolve(__dirname,"..","test","apps"), withFileTypes: true)
-	entries = entries.filter do |src|
-		return no unless src.name.indexOf('.imba') >= 0
-		if options.main
-			return no unless src.name.indexOf(options.main) >= 0
-		return yes
+	var testFolder = path.resolve(__dirname,"..","test","apps")
+	var entries = getFiles(testFolder).filter do |item|
+		!options.main or item.indexOf(options.main) >= 0
 
-	var files = entries.map(|v| "apps/{v.name}" )
+	var files = entries.map(|v| v.replace(testFolder,"apps"))
 
 	if options.concurrent
 		var promises = for item in files
