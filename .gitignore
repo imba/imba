@@ -19,4 +19,4 @@ lib/
 build/
 dist/
 test/index.js
-test/apps/*.js
+test/apps/**/*.js
