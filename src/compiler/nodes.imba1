@@ -168,7 +168,7 @@ var PATHIFY = do |val|
 			left ||= val.scope__.context
 
 		if right isa Identifier
-			right = helpers.singlequote(String(right))
+			right = helpers.singlequote(String(right.js))
 			right = Str.new(right)
 		
 		return [left,right]
@@ -6248,10 +6248,22 @@ export class TagAttr < TagPart
 		@mods
 
 	def js o
+		let mods = AST.compileRaw(@mods or null)
 		let val = value.c(o)
+		let bval = val
 		if ns == 'css'
 			"css$('{key}',{val})"
+		elif ns == 'bind'
+			let path = PATHIFY(value)
 
+			if path isa Variable
+				let getter = "function()\{ return {val} \}"
+				let setter = "function(v$)\{ {val} = v$ \}"
+				bval = "\{get:{getter},set:{setter}\}"
+			elif path isa Array
+				bval = "[{val[0].c(o)},{val[1].c(o)}]"
+
+			"bind$('{key}',{mods},{bval})"
 		elif ns
 			# should be setPath instead?
 			"setNestedAttr('{ns}','{key}',{val}{add})"

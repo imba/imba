@@ -73,6 +73,7 @@ tag test-runner
 	def render
 		<self>
 			<select :change.go>
+				<option disabled=yes value=""> "Jump to example"
 				for src in Object.keys(examples)
 					<option> src
 
