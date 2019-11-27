@@ -66,33 +66,26 @@ var TREE_TYPE =
 	OPTLOOP: 4
 	LOOP: 5
 
-export var FLAGS =
-	IMBA_FRAG_INDEXED: 1
-	IMBA_FRAG_KEYED: 2
-	IMBA_TAG_CUSTOM: 4
-	IMBA_TAG_AWAKENED: 8
-	IMBA_TAG_MOUNTED: 16
-	IMBA_TAG_SCHEDULE: 32
-	IMBA_TAG_SCHEDULED: 64
-	IMBA_TAG_FIRST_CHILD: 128
-	IMBA_TAG_LAST_CHILD: 256
-
 export var F = 
-	# TAGS
-	TAG_INDEXED: 1
-	TAG_KEYED: 2
-	TAG_CUSTOM: 4
-	TAG_AWAKENED: 8
-	TAG_MOUNTED: 16
-	TAG_SCHEDULE: 32
-	TAG_SCHEDULED: 64
-	TAG_FIRST_CHILD: 128
-	TAG_LAST_CHILD: 256
-	TAG_ONLY_CHILD: 384
-	TAG_HAS_BRANCHES: 512
-	TAG_HAS_LOOPS: 1024
-	TAG_HAS_DYNAMICS: 2048
-	TAG_IN_BRANCH: 4096
+	# add TAG_INITED 
+	TAG_CUSTOM: 2 ** 2
+	TAG_AWAKENED: 2 ** 3
+	TAG_MOUNTED: 2 ** 4
+	TAG_SCHEDULE: 2 ** 5
+	TAG_SCHEDULED: 2 ** 6
+	TAG_FIRST_CHILD: 2 ** 7
+	TAG_LAST_CHILD: 2 ** 8
+	TAG_ONLY_CHILD: 2 ** 9
+	TAG_HAS_BRANCHES: 2 ** 10
+	TAG_HAS_LOOPS: 2 ** 11
+	TAG_HAS_DYNAMICS: 2 ** 12
+	TAG_IN_BRANCH: 2 ** 13
+	TAG_BIND_MODEL: 2 ** 14
+
+
+	TAG_INDEXED: 2 ** 0
+	TAG_KEYED: 2 ** 1
+
 
 # Helpers for operators
 export var OP = do |op, l, r|
@@ -146,6 +139,41 @@ export var OP_COMPOUND = do |sym,op,l,r|
 		return ConditionalAssign.new(op,l,r)
 	else
 		return CompoundAssign.new(op,l,r)
+
+var PATHIFY = do |val|
+	if val isa TagAttrValue
+		val = val.value
+
+	if val isa ArgList
+		val = val.values[0]
+		
+	while val isa Parens
+		val = val.value
+	
+	if val isa VarOrAccess
+		val = val.@variable or val.value
+	# console.log "TagData value {val}"
+
+	if val isa Access
+		let left = val.left
+		let right = val.right isa Index ? val.right.value : val.right
+
+		if left isa VarOrAccess
+			left = left.@variable or left.value
+
+		if right isa VarOrAccess
+			right = right.@variable or right.value
+		
+		if val isa IvarAccess
+			left ||= val.scope__.context
+
+		if right isa Identifier
+			right = helpers.singlequote(String(right))
+			right = Str.new(right)
+		
+		return [left,right]
+
+	return val
 
 var OPTS = {}
 var ROOT = null
@@ -216,6 +244,24 @@ export def parseError str, o
 
 def AST.c obj
 	typeof obj == 'string' ? obj : obj.c
+
+def AST.compileRaw item
+	let o = ''
+	if item isa Array
+		o = '['
+		for v in item
+			o += AST.compileRaw(v) + ','
+		o = o.slice(0,-1) + ']'
+
+	elif item isa Object
+		o = '{'
+		for own k,v of item
+			# maybe quote?
+			o =+ "{k}:{AST.compileRaw(v)},"
+		o = o.slice(0,-1) + '}'
+	else
+		o = JSON.stringify(item)
+	return o
 
 def AST.mark tok
 	if tok and (OPTS:sourceMapInline or OPTS:sourceMap) and tok:sourceMapMarker
@@ -2930,13 +2976,7 @@ export class PropertyDeclaration < Node
 			else
 				js:ondirty = "{scope__.imba.c}.propDidSet(this,this.__{key},v,a)"
 
-		if !isAttr and o.key(:dom)
-			js:set = "if (v != this._dom.{name.value}) \{ this._dom.{name.value} = v \}"
-			js:get = "this._dom.{name.value}"
-
 		if isAttr # (@token and String(@token) == 'attr') or o.key(:dom) or o.key(:attr)
-			let attrKey = o.key(:dom) isa Str ? o.key(:dom) : name.value
-			# need to make sure o has a key for attr then - so that the delegate can know?
 			js:set = "this.setAttribute('{attrKey}',v)"
 			js:get = "this.getAttribute('{attrKey}')"
 
@@ -2945,17 +2985,21 @@ export class PropertyDeclaration < Node
 			js:set = "v = this.__{key}.delegate.set(this,'{key}',v,this.__{key})"
 			js:get = "this.__{key}.delegate.get(this,'{key}',this.__{key})"
 
+		if pars:get isa Str
+			js:get = "this.{pars:get.raw}()"
 
+		if pars:set isa Str
+			js:set = "this.{pars:set.raw}(v)"
 
 		if pars:default
-			if o.key(:dom)
-				# FIXME go through class-method setAttribute instead
-				js:init = "{js:scope}._dom.setAttribute('{key}',{pars:default.c});"
-			else
-				# if this is not a primitive - it MUST be included in the
-				# getter / setter instead
-				# FIXME throw warning if the default is not a primitive object
-				js:init = "{js:path}._{key} = {pars:default.c};"
+			# if o.key(:dom)
+			# 	# FIXME go through class-method setAttribute instead
+			# 	js:init = "{js:scope}._dom.setAttribute('{key}',{pars:default.c});"
+			# else
+			# if this is not a primitive - it MUST be included in the
+			# getter / setter instead
+			# FIXME throw warning if the default is not a primitive object
+			js:init = "{js:path}._{key} = {pars:default.c};"
 
 		if o.key(:chainable)
 			js:get = "v !== undefined ? (this.{js:setter}(v),this) : {js:get}"
@@ -6119,6 +6163,9 @@ export class TagPart < Node
 		
 	def isStatic
 		!value or value.isPrimitive
+
+	def isProxy
+		false
 		
 	def add item, type
 		if type == TagArgList
@@ -6173,32 +6220,42 @@ export class TagAttr < TagPart
 	def isSpecial
 		String(@name) == 'value'
 
-	def js
-		let ns = null
-		let key = String(@name)
+	def visit
+		@chain.map(|v| v.traverse )
+		@value.traverse if @value
+		@name.traverse if @name:traverse
+
+		let key = @key = String(@name)
 		let i = key.indexOf(':')
-		
+
 		if i >= 0
-			ns = key.slice(0,i)
-			key = key.slice(i + 1)
-		
-		let dyn = @chain:length or @tag.type.@ns
-		let val = value ? value.js : quoted
-		let add = ''
-		
+			@ns = key.slice(0,i)
+			@key = key.slice(i + 1)
+
 		if @chain:length
-			add = ',{' + @chain.map(|mod| "{mod.name}:1" ).join(',') + '}'
-			
-		if key == 'value' and !ns
-			add += ',1'
-		
+			@mods = {}
+			for m in @chain
+				@mods[m.name] = 1
+		self
+
+	def ns
+		@ns
+
+	def key
+		@key
+
+	def mods
+		@mods
+
+	def js o
+		let val = value.c(o)
 		if ns == 'css'
-			"css$('{key}',{val}{add})"
+			"css$('{key}',{val})"
+
 		elif ns
 			# should be setPath instead?
 			"setNestedAttr('{ns}','{key}',{val}{add})"
 		elif key.indexOf("data-") == 0
-			# "dataset('{key.slice(5)}',{val})"
 			"dataset.{key.slice(5)}={val}"
 		else
 			"{helpers.dashToCamelCase(key)}={val}"
@@ -6266,6 +6323,32 @@ export class TagData < TagPart
 	def isSpecial
 		true
 
+	def isProxy
+		proxyParts isa Array
+
+	def proxyParts
+		var val = value
+
+		if val isa ArgList
+			val = val.values[0]
+			
+		if val isa Parens
+			val = val.value
+		
+		if val isa VarOrAccess
+			val = val.@variable or val.value
+		# console.log "TagData value {val}"
+
+		if val isa Access
+			let left = val.left
+			let right = val.right isa Index ? val.right.value : val.right
+			
+			if val isa IvarAccess
+				left ||= val.scope__.context
+			
+			return [left,right]
+		return val
+
 	def js
 		var val = value
 
@@ -6291,7 +6374,7 @@ export class TagData < TagPart
 			if right isa Identifier
 				pars[1] = "'" + pars[1] + "'"
 
-			"bindData({pars.join(',')})"
+			"bind$('data',[{pars.join(',')}])"
 		else
 			"data=({val.c})"
 
@@ -6582,14 +6665,6 @@ export class TagLoopFragment < TagLike
 		out += "{kvar} = 0;\n"
 		out += "{cvar}={tvar}.$;\n"
 		out += value.c(o)
-		# after += ";c$=c$0"
-		# after += ";t$=t$0"
-		# if typ == indexed
-		# 	after += ";{tvar}.reconcile({counter})"
-		# 	# here we could just do the whole reconciliation inline
-		# else
-		# 	before += "{tvar}.open$();\n"
-		# 	# after += ";{@tag.ref}.render$({ref},{@slot or '0'})"
 		out += ";{tvar}.end$({kvar})"
 		return out
 
@@ -6602,7 +6677,6 @@ export class Tag < TagLike
 	def setup
 		super
 		@attributes = @options:attributes or []
-		@attrmap = {}
 
 	def visit stack
 		if isSelf or (String(type).indexOf('-') >= 0)
@@ -6621,14 +6695,19 @@ export class Tag < TagLike
 			curr.add(part,type)
 		elif type == TagAttrValue
 			if curr
-				curr.value = type.new(part,@self)
+				curr.value = type.new(part)
 		elif curr isa TagAttr
 			curr.add(part,type)
 		else
-			@attributes.push(@attributes.CURRENT = type.new(part,self))
-			
-			if type == TagAttr
-				@attrmap[String(part)] = @attributes.CURRENT
+			if type == TagData
+				let bind = String(self.type) in ['input','textarea','select','button','option']
+				# console.log "bind?",self.type,bind
+				curr = TagAttr.new(bind ? 'bind:model' : 'model')
+				curr.value = part.first
+			else
+				curr = type.new(part,self)
+
+			@attributes.push(@attributes.CURRENT = curr)
 		self
 
 	def type
@@ -6656,7 +6735,6 @@ export class Tag < TagLike
 		var isExpression = STACK.isExpression
 
 		var head = []
-		# var body = []
 		var out = []
 		var foot = []
 
@@ -6678,7 +6756,6 @@ export class Tag < TagLike
 		var canInline = no
 		var optimizeFlag = no
 		var shouldEnd = hasFlag(F.TAG_CUSTOM)
-		var nodeFlags = 0
 
 		var inCondition = parent && parent.option(:condition)
 
@@ -6798,32 +6875,50 @@ export class Tag < TagLike
 			elif item.isStatic
 				continue if item isa TagFlag
 				add "{bvar} || ({tvar}.{item.c(o)})"
-
-			elif item isa TagHandler
-				# add without dynamic attrs
-				let iref = "{cvar}.{item.oid}"
-				let specials = item.extractDynamicParts()
-				add "{vvar} = {iref} || ({iref}={ref}.{item.js(o)})"
-				for special,i in specials
-					# add "{fragment.cvar}.{special.oid}_$ = {special.c(o)}"
-					add "{vvar}[{i}]={special.c(o)}"
-					# add "{ref}.{special.oid}_$ = {special.c(o)}"
-
+				# need to be able to compile the way we want yes
 			else
-				let val = item.value
 				let iref = "{cvar}.{item.oid}"
-				item.value = LIT("{iref}={vvar}")
-				add "{vvar}={val.c(o)}"
 
-				if item isa TagFlagExpr and optimizeFlag
-					add "{vvar}==={iref} || {ref}.flag$({item.value.c(o)})"
-				elif item isa TagFlag
-					if optimizeFlag
-						add "{vvar}==={iref} || {ref}.flag$({vvar} ? {item.quoted} : '',{item.value.c(o)})"
-					else
-						add "{vvar}==={iref} || {ref}.flagIf$({item.quoted},{item.value.c(o)})"
+				if item isa TagHandler
+					let specials = item.extractDynamicParts()
+					add "{vvar} = {iref} || ({iref}={ref}.{item.js(o)})"
+					for special,i in specials
+						# add "{fragment.cvar}.{special.oid}_$ = {special.c(o)}"
+						add "{vvar}[{i}]={special.c(o)}"
+						# add "{ref}.{special.oid}_$ = {special.c(o)}"
+				elif item isa TagAttr and item.ns == 'bind'
+					let rawVal = item.value
+					let val = PATHIFY(rawVal)
+					let mods = AST.compileRaw(item.mods or null)
+					shouldEnd = yes
+					if val isa Array
+						let key = val[1]
+						let bval = key isa Literal ? "[null,{key.c(o)}]" : "[]"
+						add "{vvar}={iref} || ({iref}={ref}.bind$('{item.key}',{mods},{bval}))"
+						for part,i in val
+							unless part isa Literal
+								add "{vvar}[{i}]={part.c(o)}"
+						# add "({vvar}={rawVal.c(o)},{vvar}=={ref}.value || ({iref}={ref}.bind$('{item.key}',{mods},{bval}))"
+					elif val isa Variable
+						let getter = "function()\{ return {val.c(o)} \}"
+						let setter = "function(v$)\{ {val.c(o)} = v$ \}"
+						let bval = "\{get:{getter},set:{setter}\}"
+						add "{bvar} || {ref}.bind$('{item.key}',{mods},{bval})"
+
 				else
-					add "{vvar}==={iref} || ({ref}.{item.js(o)})"
+					let val = item.value
+					item.value = LIT("{iref}={vvar}")
+					add "{vvar}={val.c(o)}"
+
+					if item isa TagFlagExpr and optimizeFlag
+						add "{vvar}==={iref} || {ref}.flag$({item.value.c(o)})"
+					elif item isa TagFlag
+						if optimizeFlag
+							add "{vvar}==={iref} || {ref}.flag$({vvar} ? {item.quoted} : '',{item.value.c(o)})"
+						else
+							add "{vvar}==={iref} || {ref}.flagIf$({item.quoted},{item.value.c(o)})"
+					else
+						add "{vvar}==={iref} || ({ref}.{item.js(o)})"
 
 
 		# When there is only one value and that value is a static string or num - include it in ctor
@@ -6869,8 +6964,6 @@ export class Tag < TagLike
 					add "{vvar}==={key} || {ref}.insert$({key}={vvar},-1,{key}_)"
 				else
 					add "{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{slot++},{key}_))"
-		
-		
 
 		if parent isa TagLoopFragment
 			if parent.isIndexed

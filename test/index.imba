@@ -1,5 +1,5 @@
 
-var paths = require.context('raw-loader!./apps', true, /[\w\-]+\.imba$/)
+var paths = require.context('raw-loader!./apps', true, /[\w\-\/]+\.imba$/)
 var examples = {}
 
 for src in paths.keys()

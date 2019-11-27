@@ -2,7 +2,7 @@ var value = 1
 
 var flipper = do
 	if value
-		<b> "one"
+		<b.flipper> "one"
 	else
 		null
 
@@ -40,6 +40,8 @@ imba.mount(var app = <app-root>)
 
 test "check" do
 	ok app.querySelector('button.flipping')
+	ok app.querySelector('b.flipper')
 	value = 0
 	app.render()
 	ok !app.querySelector('button.flipping')
+	ok !app.querySelector('b.flipper')
