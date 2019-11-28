@@ -184,11 +184,6 @@ imba.commit = do imba.scheduler.add('render')
 DOM
 ###
 
-def imba.createLiveFragment bitflags, options
-	var el = root.document.createDocumentFragment()
-	el.setup$(bitflags, options)
-	return el
-
 def imba.createElement name, bitflags, parent, flags, text, sfc
 	var el = root.document.createElement(name)
 
@@ -211,11 +206,7 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 		el.insertInto$(parent)
 	return el
 
-def imba.createFragment bitflags, parent
-	if bitflags & $TAG_INDEXED$
-		return IndexedTagFragment.new(bitflags,parent)
-	else
-		return KeyedTagFragment.new(bitflags,parent)
+
 
 
 def imba.mount element, into
@@ -463,155 +454,6 @@ Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
 
 require './fragment'
-
-class TagFragment
-
-class BranchedTagFragment < TagFragment
-	def initialize parent
-		#parent = parent
-		@array = []
-
-	def push item, idx
-		let toReplace = @array[idx]
-		if item === toReplace
-			return
-		else
-			@array[idx] = item
-		self
-
-	def close$ len
-		let from = @length
-		return if from == len
-		let array = @array
-
-		if from > len
-			while from > len
-				var item = array[--from]
-				# what if this is a 
-				@removeChild(item,from)
-		elif len > from
-			while len > from
-				let node = array[from++]
-				@appendChild(node,from - 1)
-		@length = len
-		return
-		self
-
-
-class KeyedTagFragment < TagFragment
-	def initialize bitflags,parent
-		@parent = parent
-		@array = []
-		@changes = Map.new
-		@dirty = no
-		@$ = {}
-
-	def push item, idx
-		let toReplace = @array[idx]
-
-		if toReplace === item
-			yes
-		else
-			@dirty = yes
-			# if this is a new item
-			let prevIndex = @array.indexOf(item)
-			let changed = @changes.get(item)
-
-			if prevIndex === -1
-				# should we mark the one currently in slot as removed?
-				@array.splice(idx,0,item)
-				@appendChild(item,idx)
-
-			elif prevIndex === idx + 1
-				if toReplace
-					@changes.set(toReplace,-1)
-				@array.splice(idx,1)
-
-			else
-				@array.splice(prevIndex,1) if prevIndex >= 0
-				@array.splice(idx,0,item)
-				@appendChild(item,idx)
-
-			if changed == -1
-				@changes.delete(item)
-		return
-
-	def appendChild item, index
-		if index > 0
-			let other = @array[index - 1]
-			# will fail with text nodes
-			other.insertAdjacentElement('afterend',item)
-		else
-			@parent.insertAdjacentElement('afterbegin',item)
-			# if there are no new items?
-			# @parent.appendChild(item)
-		return
-
-	def removeChild item, index
-		# @map.delete(item)
-		if item.parentNode == @parent
-			@parent.removeChild(item)
-		return
-
-	def end$ index
-		if @dirty
-			@changes.forEach do |pos,item|
-				if pos == -1
-					@removeChild(item)
-			@changes.clear()
-			@dirty = no
-
-		# there are some items we should remove now
-		if @array.length > index
-			
-			# remove the children below
-			while @array.length > index
-				let item = @array.pop()
-				@removeChild(item)
-			# @array.length = index
-		return self
-
-class IndexedTagFragment < TagFragment
-	def initialize flags,parent
-		@parent = parent
-		@$ = []
-		@length = 0
-		unless flags & $TAG_LAST_CHILD$
-			#end = document.createComment('end')
-			parent && parent.appendChild(#end)
-
-	def push item, idx
-		return
-
-	def end$ len
-		let from = @length
-		return if from == len
-		let array = @$
-
-		if from > len
-			while from > len
-				@removeChild(array[--from])
-		elif len > from
-			while len > from
-				@appendChild(array[from++])
-		@length = len
-		return
-
-	def insertInto parent, slot
-		self
-
-	def appendChild item, index
-		# we know that these items are dom elements
-		if #end
-			#end.parentNode.insertBefore(item,#end)
-		else
-			@parent.appendChild(item)
-		return
-
-	def removeChild item, index
-		# item need to be able to be added
-		@parent.removeChild(item)
-		return
 
 # Create custom tag with support for scheduling and unscheduling etc
 var ImbaElement = `class extends HTMLElement {

@@ -18,16 +18,16 @@ extend class DocumentFragment
 
 	
 	def insert$ item, options, toReplace
-		if #parentNode
+		if #parent
 			# if the fragment is attached to a parent
 			# we can just proxy the call through
-			#parentNode.insert$(item,options,toReplace or #end)
+			#parent.insert$(item,options,toReplace or #end)
 		else
 			Element.prototype.insert$.call(self,item,options,toReplace or #end)
 
 	def insertInto$ parent		
-		unless #parentNode
-			#parentNode = parent
+		unless #parent
+			#parent = parent
 			parent.appendChild$(this)
 		return this
 
@@ -46,9 +46,169 @@ extend class DocumentFragment
 		return other
 
 	def appendChild$ child
-		#end.parentNode.insertBefore(child,#end)
+		#end.insertBeforeBegin$(child)
 		return child
 
 	def removeChild$ child
 		child.parentNode && child.parentNode.removeChild(child)
 		self
+
+def imba.createLiveFragment bitflags, options
+	var el = root.document.createDocumentFragment()
+	el.setup$(bitflags, options)
+	return el
+
+
+class TagFragment
+
+	def initialize flags, parent
+		#f = flags
+		#parent = parent
+		unless flags & $TAG_LAST_CHILD$
+			#end = document.createComment('end')
+			parent.appendChild(#end) if parent
+
+		self.setup()
+
+	def appendChild$ item, index
+		# we know that these items are dom elements
+		if #end
+			#end.insertBeforeBegin$(item)
+		else
+			#parent.appendChild(item)
+		return
+
+	def setup
+		self
+
+class KeyedTagFragment < TagFragment
+	def setup
+		@array = []
+		@changes = Map.new
+		@dirty = no
+		@$ = {}
+
+	def push item, idx
+		# on first iteration we can merely run through
+		unless #f & $TAG_AWAKENED$
+			@array.push(item)
+			self.appendChild$(item)
+			return
+
+		let toReplace = @array[idx]
+
+		if toReplace === item
+			yes
+		else
+			@dirty = yes
+			# if this is a new item
+			let prevIndex = @array.indexOf(item)
+			let changed = @changes.get(item)
+
+			if prevIndex === -1
+				# should we mark the one currently in slot as removed?
+				@array.splice(idx,0,item)
+				self.insertChild(item,idx)
+
+			elif prevIndex === idx + 1
+				if toReplace
+					@changes.set(toReplace,-1)
+				@array.splice(idx,1)
+
+			else
+				@array.splice(prevIndex,1) if prevIndex >= 0
+				@array.splice(idx,0,item)
+				self.insertChild(item,idx)
+
+			if changed == -1
+				@changes.delete(item)
+		return
+
+	def insertChild item, index
+		if index > 0
+			let other = @array[index - 1]
+			# will fail with text nodes
+			other.insertAdjacentElement('afterend',item)
+		else
+			#parent.insertAdjacentElement('afterbegin',item)
+			# if there are no new items?
+			# @parent.appendChild(item)
+		return
+
+	def removeChild item, index
+		# @map.delete(item)
+		# what if this is a fragment or virtual node?
+		if item.parentNode == #parent
+			#parent.removeChild(item)
+		return
+
+	def end$ index
+		unless #f & $TAG_AWAKENED$
+			#f |= $TAG_AWAKENED$
+			return
+
+		if @dirty
+			@changes.forEach do |pos,item|
+				if pos == -1
+					@removeChild(item)
+			@changes.clear()
+			@dirty = no
+
+		# there are some items we should remove now
+		if @array.length > index
+			
+			# remove the children below
+			while @array.length > index
+				let item = @array.pop()
+				@removeChild(item)
+			# @array.length = index
+		return
+
+class IndexedTagFragment < TagFragment
+
+	def setup
+		@$ = []
+		@length = 0
+
+	def push item, idx
+		return
+
+	def end$ len
+		let from = @length
+		return if from == len
+		let array = @$
+
+		if from > len
+			while from > len
+				@removeChild(array[--from])
+		elif len > from
+			while len > from
+				@appendChild$(array[from++])
+		@length = len
+		return
+
+	def insertInto parent, slot
+		self
+
+	# def appendChild item, index
+	# 	# we know that these items are dom elements
+	# 	if #end
+	# 		#end.insertBeforeBegin$(item)
+	# 	else
+	# 		#parent.appendChild(item)
+	# 	return
+
+	def removeChild item, index
+		# item need to be able to be added
+		#parent.removeChild(item)
+		return
+
+
+
+def imba.createFragment bitflags, parent
+	if bitflags & $TAG_INDEXED$
+		return IndexedTagFragment.new(bitflags,parent)
+	else
+		return KeyedTagFragment.new(bitflags,parent)
+
+
