@@ -15,7 +15,7 @@ var def getFiles dir, o = []
 	return o
 	
 var options = helpers.parseArgs(process.argv.slice(2),{
-	alias: {g: 'grep',c: 'console'}
+	alias: {g: 'grep',c: 'concurrent'}
 })
 
 var consoleMapping = {
