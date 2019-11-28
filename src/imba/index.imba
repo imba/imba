@@ -208,9 +208,7 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 		el.text$(text)
 
 	if parent and parent isa Node
-		# not working well with the 
-		# what if parent is a IndexedTagFragment?
-		parent.insert$(el,bitflags)
+		el.insertInto$(parent)
 	return el
 
 def imba.createFragment bitflags, parent
@@ -218,10 +216,6 @@ def imba.createFragment bitflags, parent
 		return IndexedTagFragment.new(bitflags,parent)
 	else
 		return KeyedTagFragment.new(bitflags,parent)
-	# elif type == 1
-	# 	return IndexedTagFragment.new(parent,slot,options)
-	# elif type == 4
-	# 	return BranchedTagFragment.new(parent,slot,options)
 
 
 def imba.mount element, into
@@ -466,7 +460,7 @@ extend class Element
 
 Element.prototype.appendChild$ = Element.prototype.appendChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
-Element.prototype.replaceChild$ = Element.prototype.replaceChild$
+Element.prototype.replaceChild$ = Element.prototype.replaceChild
 
 require './fragment'
 
