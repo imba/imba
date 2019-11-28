@@ -41,16 +41,6 @@ def imba.inlineStyles styles
 	document.head.appendChild(el)
 	return
 
-# remove
-def root.$subclass obj, sup
-	for k,v of sup
-		obj[k] = v if sup.hasOwnProperty(k)
-
-	obj.prototype = Object.create(sup.prototype)
-	obj.__super__ = obj.prototype.__super__ = sup.prototype
-	obj.prototype.initialize = obj.prototype.constructor = obj
-	return obj
-
 var dashRegex = /-./g
 
 def imba.toCamelCase str
