@@ -123,8 +123,6 @@ export var OP = do |op, l, r|
 			UnaryOp.new(op,l,r)
 		when '>','<','>=','<=','==','===','!=','!=='
 			ComparisonOp.new(op,l,r)
-		when '∩','∪'
-			MathOp.new(op,l,r)
 		when '..','...'
 			Range.new(op,l,r)
 		else
@@ -3651,17 +3649,6 @@ export class ComparisonOp < Op
 		l = l.c if l isa Node
 		r = r.c if r isa Node
 		return "{l} {AST.mark(@opToken)}{op} {r}"
-
-
-export class MathOp < Op
-	# BUG if we have a statement in left or right we need
-	# to FORCE it into an expression, and register warning
-	# should not at all consume anything like a regular Op
-	def c
-		if op == '∪'
-			return util.union(left,right).c
-		elif op == '∩'
-			return util.intersect(left,right).c
 
 
 export class UnaryOp < Op
@@ -7562,14 +7549,6 @@ export class Util < Node
 		node.cache(force: yes, pool: 'iter') if cache
 		return node
 
-
-
-	def self.union a,b
-		Util.Union.new([a,b])
-
-	def self.intersect a,b
-		Util.Intersect.new([a,b])
-
 	def self.counter start, cache
 		# should it not rather be a variable?!?
 		var node = Num.new(start) # make sure it really is a number
@@ -7593,48 +7572,6 @@ export class Util < Node
 
 	def js o
 		"helper"
-
-# TODO Deprecate and remove
-export class Util.Union < Util
-
-	def helper
-		'''
-		function union$(a,b){
-			if(a && a.__union) return a.__union(b);
-
-			var u = a.slice(0);
-			for(var i=0,l=b.length;i<l;i++) if(u.indexOf(b[i]) == -1) u.push(b[i]);
-			return u;
-		};
-
-		'''
-
-	def js o
-		scope__.root.helper(self,helper)
-		# When this is triggered, we need to add it to the top of file?
-		"union$({args.map(|v| v.c ).join(',')})"
-
-# TODO Deprecate and remove
-export class Util.Intersect < Util
-
-	def helper
-		'''
-		function intersect$(a,b){
-			if(a && a.__intersect) return a.__intersect(b);
-			var res = [];
-			for(var i=0, l=a.length; i<l; i++) {
-				var v = a[i];
-				if(b.indexOf(v) != -1) res.push(v);
-			}
-			return res;
-		};
-
-		'''
-
-	def js o
-		# When this is triggered, we need to add it to the top of file?
-		scope__.root.helper(self,helper)
-		"intersect$({args.map(|v| v.c ).join(',')})"
 
 export class Util.Extend < Util
 
