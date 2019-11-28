@@ -36,7 +36,7 @@ test do
 	ordered()
 
 test "remove from end" do
-	items.pop()
+	pool.push(todos.pop())
 	await spec.tick()
 	ordered()
 	mutated($1,1)

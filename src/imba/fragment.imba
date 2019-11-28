@@ -61,10 +61,15 @@ def imba.createLiveFragment bitflags, options
 
 class TagFragment
 
-	def initialize flags, parent
-		#f = flags
+	def initialize f, parent
+		#f = f
 		#parent = parent
-		unless flags & $TAG_LAST_CHILD$
+		unless f & $TAG_FIRST_CHILD$
+			# FIXME no need for indexed list?
+			#start = document.createComment('start')
+			parent.appendChild(#start) if parent
+
+		unless f & $TAG_LAST_CHILD$
 			#end = document.createComment('end')
 			parent.appendChild(#end) if parent
 
@@ -129,10 +134,10 @@ class KeyedTagFragment < TagFragment
 			let other = @array[index - 1]
 			# will fail with text nodes
 			other.insertAdjacentElement('afterend',item)
+		elif #start
+			#start.insertAfterEnd$(item)
 		else
 			#parent.insertAdjacentElement('afterbegin',item)
-			# if there are no new items?
-			# @parent.appendChild(item)
 		return
 
 	def removeChild item, index
