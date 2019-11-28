@@ -34,8 +34,8 @@ tag app-root
 imba.mount <app-root>
 
 test do
-	ok $(.one em.slotted)
-	ok %(.one em.slotted)
-	ok $(.two em.fallback)
+	ok $$(.one em.slotted)
+	ok $$(.one em.slotted)
+	ok $$(.two em.fallback)
 	ok $$(.three .div2)
-	ok $(.four div)
+	ok $$(.four div)

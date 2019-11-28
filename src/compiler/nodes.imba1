@@ -7167,6 +7167,7 @@ export class SelectorType < SelectorPart
 		# at least be very conservative about which tags we
 		# can drop the tag for?
 		# out in TAG_TYPES.HTML ?
+		return name
 		name in TAG_TYPES.HTML ? name : value.sel
 
 

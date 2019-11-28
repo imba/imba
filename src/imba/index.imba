@@ -345,7 +345,8 @@ class EventHandler
 				break unless event.metaKey
 			elif handler == 'self'
 				break unless target == event.currentTarget
-
+			elif handler == 'once'
+				event.currentTarget.removeEventListener(event.type,self)
 			elif keyCodes[handler]
 				unless keyCodes[handler].indexOf(event.keyCode) >= 0
 					break
@@ -393,7 +394,9 @@ extend class Element
 	
 	def on$ type, parts, scope
 		var handler = EventHandler.new(parts,scope)
-		@addEventListener(type,handler)
+		var capture = parts.indexOf('capture') >= 0
+
+		@addEventListener(type,handler,capture)
 		return handler
 
 	# inline in files or remove all together?

@@ -37,7 +37,7 @@ tag app-root
 			<div.capturing :click.capture.ping(:captured)>
 				<button :click.ping(:button)> 'button'
 
-			<button.once :click.once(:once)> 'once button'
+			<button.once :click.once.ping(:once)> 'once button'
 
 			<button.h :click.ping(:h)>
 				"h"
