@@ -88,6 +88,9 @@ global class Spec < SpecComponent
 		@blocks.push SpecGroup.new(name, blk, self)
 	
 	def test name, blk
+		if name isa Function
+			blk = name
+			name = @blocks.length + 1
 		@blocks.push SpecExample.new(name, blk, self)
 
 	def eq actual, expected, options

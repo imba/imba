@@ -5053,6 +5053,9 @@ export class TagTypeIdentifier < Identifier
 	def string
 		value
 
+	def toString
+		value
+
 
 export class Argvar < ValueNode
 
@@ -5642,7 +5645,6 @@ export class For < Loop
 		scope.visit
 
 		var parent = stack.@tag
-		var fragment = stack.@fragment
 
 		options[:source].traverse # what about awakening the vars here?
 		declare
@@ -5654,13 +5656,11 @@ export class For < Loop
 		
 		if parent
 			@tag = parent
-			stack.@fragment = self
 			stack.@tag = self
 			@level = (@tag && @tag.@level or 0) + 1
 
 		body.traverse
 		stack.@tag = parent
-		stack.@fragment = fragment
 		self
 
 	def isBare src
@@ -6290,6 +6290,11 @@ export class TagAttrValue < TagPart
 	def js
 		value.c
 
+	def toRaw
+		if value isa Str
+			return value.raw
+		return null
+
 export class TagHandlerSpecialArg < ValueNode
 	def isPrimitive
 		yes
@@ -6461,6 +6466,9 @@ class TagLike < Node
 		@consumed = []
 		self
 
+	def root
+		@parent ? @parent.root : self
+
 	def register node
 		if node isa If
 			flag(F.TAG_HAS_BRANCHES | F.TAG_HAS_DYNAMICS)
@@ -6502,6 +6510,9 @@ class TagLike < Node
 	def isIndexed
 		hasFlag(F.TAG_INDEXED)
 
+	def isCustom
+		hasFlag(F.TAG_CUSTOM)		
+
 	def tagvar name
 		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{name}${tagvarprefix}")
 
@@ -6513,6 +6524,9 @@ class TagLike < Node
 
 	def parent
 		@parent ||= option(:parent)
+
+	def fragment
+		@fragment || parent
 
 	def tvar
 		@tvar or tagvar('t')
@@ -6546,14 +6560,24 @@ class TagLike < Node
 		if o:key
 			o:key.traverse
 
+		visitBeforeBody(stack)
+
 		if body
 			body.traverse
+
+		visitAfterBody(stack)
 
 		stack.@tag = @parent
 
 		unless @parent
 			@level = 0
 			consumeChildren
+		self
+
+	def visitBeforeBody
+		self
+
+	def visitAfterBody
 		self
 
 	def consumeChildren
@@ -6581,10 +6605,6 @@ class TagLike < Node
 		if node isa Variable
 			option('assignToVar',node)
 			return self
-
-		if node isa PushAssign
-			node.register(self)
-			return PushAssign.new(node.op,node.left,self)
 
 		if node isa Assign
 			return OP(node.op,node.left,self)
@@ -6687,62 +6707,104 @@ export class TagIndexedFragment < TagLike
 
 export class TagKeyedFragment < TagLike
 
+export class TagSlotProxy < TagLike
+
+	def tagvarprefix
+		oid+'S'
+
 export class Tag < TagLike	
 	
 	def setup
 		super
 		@attributes = @options:attributes or []
 
-	def visit stack
-		if isSelf or (String(type).indexOf('-') >= 0)
+	def attrs
+		@attributes
+
+	def visitBeforeBody stack
+		@options:type && @options:type.traverse
+
+		# Need to potentially resolve tagname to variables first?
+		if isSelf or (tagName.indexOf('-') >= 0)
 			flag(F.TAG_CUSTOM)
+
+		if attrs:length == 0 && !@options:type
+			@options:type = 'fragment'
+
 		super
 
+	def register node
+		if node isa Tag and (isCustom and !isSelf)
+			let slotKey = node.attrs:slot
+			let name = slotKey ? slotKey.value.toRaw : '__'
+			let slot = getSlot(name)
+			node.@fragment = slot
+
+		super
+
+	def visitAfterBody stack
+		self
+
+	def getSlot name
+		@slots ||= {}
+		@slots[name] ||= TagSlotProxy.new(parent: self, name: name)
+
 	def addPart part, type
-		let curr = @attributes.CURRENT
+		let attrs = @attributes
+		let curr = attrs.CURRENT
 
 		if type == TagId
 			set(id: part)
 
 		if type == TagArgList
-			if @attributes:length == 0
+			if attrs:length == 0
 				set(args: part)
-				# this is like a call
 				return self
 
 		if type == TagSep
-			@attributes.CURRENT = null
+			curr = null
+
 		elif curr isa TagHandler
 			curr.add(part,type)
+
 		elif type == TagAttrValue
 			if curr
 				curr.value = type.new(part)
 		elif curr isa TagAttr
 			curr.add(part,type)
+
 		elif type == TagData
 			let bind = String(self.type) in ['input','textarea','select','button','option']
 			curr = TagAttr.new(bind ? 'bind:model' : 'model')
 			curr.value = part.first
-			@attributes.push(curr)
-			@attributes.CURRENT = null
+			attrs.push(curr)
+			curr = null
 		else
-			@attributes.push(@attributes.CURRENT = type.new(part,self))
+			attrs.push(curr = type.new(part,self))
+			if curr isa TagAttr
+				attrs[String(curr.name)] = curr
+
+		attrs.CURRENT = curr
 		self
 
 	def type
 		@options:type || (@attributes:length == 0 ? :fragment : :div)
+
+	def tagName
+		String(@options:type)
 		
 	def isSelf
 		type isa Self or type isa This
+
+	def isSlot
+		tagName == 'slot'
 		
 	def isNative
 		type isa TagTypeIdentifier and type.isSimpleNative
 	
 	def create_
-		isFragment ? LIT('imba.createDocumentFragment') : LIT('imba.createElement')
+		isFragment ? LIT('imba.createLiveFragment') : LIT('imba.createElement')
 
-	def fragment
-		@fragment ||= (isSelf or !@parent or @parent isa Loop) ? self : (@parent.fragment)
 
 	def bodyScope
 		let v = (@options:close and @options:close.value)
@@ -6752,7 +6814,7 @@ export class Tag < TagLike
 		@parent ? @parent.isReactive : !(scope__ isa RootScope)
 
 	def isFragment
-		self.type() == 'fragment'
+		tagName == 'fragment'
 
 	def js o
 		var isExpression = STACK.isExpression
@@ -6767,12 +6829,13 @@ export class Tag < TagLike
 			out.push(val)
 
 		var parent = self.parent
+		var fragment = self.fragment
+
 		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type.isClass ? type.name : "'" + type.@value + "'"))
 
 		var wasInline = o:inline
 		var isReactive = self.isReactive
 		var markWhenBuilt = yes
-		var hasTemplate = no
 		var canInline = no
 		var optimizeFlag = no
 		var shouldEnd = hasFlag(F.TAG_CUSTOM)
@@ -6782,7 +6845,7 @@ export class Tag < TagLike
 		var params = [
 			typ,
 			0,
-			(parent ? parent.tvar : 'null'),
+			(fragment ? fragment.tvar : 'null'),
 			'null',
 			'null',
 			scope__.root.sfco.c
@@ -6859,13 +6922,30 @@ export class Tag < TagLike
 				o:inline = yes
 
 		else
+			if isSlot
+				# render the name of the slot 
+				# console.log "slot {attrs:name and attrs:name.value}"
+				let name = attrs:name ? attrs:name.value.toRaw : '__'
+				# add("{tvar}={fragment.root.tvar}.slot$('{name}')")
+				add("{vvar}={fragment.root.tvar}.__slots.{name}")
+				add("if({vvar})\{ {vvar}.insertInto$({fragment.tvar}) \}")
+
+				if @consumed:length > 0
+					# have children
+					@tvar = @parent.tvar
+					add("if(!{vvar})\{")
+					foot.push('}')
+				# should not render any attributes
+				@attributes = []
+				# add("{tvar}.insertInto$({fragment.tvar})")
+				# add("{fragment.tvar}.insert$({ref}={tvar},{@flags},{key}_))")
 			# this is a functional tag component
-			if option(:args)
+			elif option(:args)
 				let key = "{cvar}.{oid}"
 				add("imba.ctx=({key}$c || ({key}$c=\{\}))")
 				let call = CALL(option(:type).toFunctionalType,option(:args))
 				add("{tvar}={call.c(o)}")
-				add("{tvar}==={ref} || ({key}_ = {parent.tvar}.insert$({ref}={tvar},{@flags},{key}_))")
+				add("{tvar}==={ref} || ({key}_ = {fragment.tvar}.insert$({ref}={tvar},{@flags},{key}_))")
 				# call the tag - type?
 
 			elif parent isa TagLoopFragment
@@ -6902,6 +6982,10 @@ export class Tag < TagLike
 				add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
 				@ref = tvar
 
+		if @slots
+			for own name, slot of @slots
+				# TODO Make sure slot is not already used
+				add "{slot.tvar} = {tvar}.slot$('{name}',{cvar})"
 
 		for item in @attributes
 			if !isReactive
@@ -6963,42 +7047,14 @@ export class Tag < TagLike
 		let count = nodes:length
 
 		for item in nodes
-			if item isa Tag
-				add item.c(o)
-			elif item isa Loop
-				add item.c(o)
-			elif item isa Str # static for sure
-				# should do a basic init check
+			if item isa Str # static for sure
+				# should this not go into a TagLike?
 				if isReactive
 					add "{bvar} || {tvar}.insert$({item.c(o)})"
 				else
 					add "{tvar}.insert$({item.c(o)})"
-
-			elif true
-				add item.c(o)
-				# add item.c(o)
-				# option(:condition,null)
 			else
-				# not if variable declaration etc
-				# if this is the single child - things are different
-				let id = item.oid
-				let cache = "{fragment.cvar}"
-				let key = "{fragment.cvar}.{id}"
-
-				if item isa Call
-					fragment.option(:fragmented,1)
-					add "imba.ctx=({key}$ || ({key}$=\{\}))"
-
-				add "{vvar}={item.c(o)}"
-				# add special case for strings?
-				# should reference the previous slot?
-				# don't know if this is a tag or not
-				if count == 1 and item isa InterpolatedString
-					add "{vvar}==={key} || {ref}.text$({key}={vvar})"
-				elif count == 1
-					add "{vvar}==={key} || {ref}.insert$({key}={vvar},-1,{key}_)"
-				else
-					add "{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{slot++},{key}_))"
+				add item.c(o)
 
 		if parent isa TagLoopFragment
 			if parent.isIndexed
@@ -7010,7 +7066,7 @@ export class Tag < TagLike
 			foot.push(isSelf ? "{tvar}.close$()" : "{tvar}.end$()")
 
 		if isFragment and parent
-			add "{parent.ref}.insert$({tvar},{@flags})"
+			add "{fragment.ref}.insert$({tvar},{@flags})"
 
 		if option(:fragmented)
 			add "imba.ctx=null"
@@ -7062,9 +7118,9 @@ export class Selector < ListNode
 		@nodes.push(SelectorGroup.new(","))
 		self
 
-	def visit
-		console.warn "{STACK.sourcePath}: {option(:type)} selectors deprecated"
-		super
+	# def visit
+	#	console.warn "{STACK.sourcePath}: {option(:type)} selectors deprecated"
+	#	super
 
 	def query
 		var str = ""

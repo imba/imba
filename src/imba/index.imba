@@ -29,6 +29,12 @@ imba.setInterval = do |fn,ms|
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
+def imba.q$ query, ctx
+	(ctx isa Element ? ctx : document).querySelectorAll(query)
+
+def imba.q$$ query, ctx
+	(ctx isa Element ? ctx : document).querySelector(query)
+
 def imba.inlineStyles styles
 	var el = document.createElement('style')
 	el.textContent = styles
@@ -188,9 +194,9 @@ imba.commit = do imba.scheduler.add('render')
 DOM
 ###
 
-def imba.createDocumentFragment bitflags
+def imba.createLiveFragment bitflags, options
 	var el = root.document.createDocumentFragment()
-	el.setup$(bitflags)
+	el.setup$(bitflags, options)
 	return el
 
 def imba.createElement name, bitflags, parent, flags, text, sfc
@@ -396,6 +402,7 @@ extend class Element
 		self
 
 	def render$ prev, item, options
+		# TODO merge with insert$?
 		let type = typeof item
 
 		if type === 'undefined' or item === null
@@ -413,15 +420,6 @@ extend class Element
 			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
 
 		return
-
-	def schedule
-		imba.scheduler.listen('render',self)
-		#scheduled = yes
-		@tick()
-
-	def unschedule
-		imba.scheduler.unlisten('render',self)
-		#scheduled = no
 
 	def insert$ item, bitflags, prev
 		let type = typeof item
@@ -480,49 +478,7 @@ Element.prototype.appendChild$ = Element.prototype.appendChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild$
 
-extend class DocumentFragment
-	
-	def setup$
-		#start = document.createComment('start')
-		#end = document.createComment('end')
-		#start.__fragment = this
-		#end.__fragment = this
-
-		#end.replaceWith$ = do |other|
-			this.parentNode.insertBefore(other,this)
-			return other
-
-		@appendChild(#start)
-		@appendChild(#end)
-
-	def insert$ item, options, prev
-		if #parentNode
-			#parentNode.insert$(item,options,prev or #end)
-		else
-			Element.prototype.insert$.call(self,item,options,prev or #end)
-
-	def text$ text
-		self
-
-	def replaceWith$ other
-		#start.insertAdjacent$('beforebegin',other)
-		var el = #start
-		while el
-			let next = el.nextSibling
-			@appendChild(el)
-			break if el == #end
-			el = next
-			
-		return other
-
-	def appendChild$ child
-		#end.parentNode.insertBefore(child,#end)
-		return child
-
-	def removeChild$ child
-		child.parentNode && child.parentNode.removeChild(child)
-		self
-
+require './fragment'
 
 class TagFragment
 
@@ -646,14 +602,11 @@ class IndexedTagFragment < TagFragment
 		let array = @$
 
 		if from > len
-			# items should have been added automatically
 			while from > len
-				var item = array[--from]
-				@removeChild(item,from)
+				@removeChild(array[--from])
 		elif len > from
 			while len > from
-				let node = array[from++]
-				@appendChild(node,from - 1)
+				@appendChild(array[from++])
 		@length = len
 		return
 
@@ -673,6 +626,7 @@ class IndexedTagFragment < TagFragment
 var ImbaElement = `class extends HTMLElement {
 	constructor(){
 		super();
+		this.setup$();
 		if(this.initialize) this.initialize();
 		if(this.build) this.build();
 	}
@@ -683,6 +637,27 @@ var ImbaComponent = `class extends ImbaElement {
 }`
 
 extend class ImbaElement
+	def setup$
+		#slots = {}
+
+	# returns the named slot - for context
+	def slot$ name, ctx
+		# if the component has no render method
+		# we can simply pass through
+		if name == '__' and !self.render
+			return self
+
+		#slots[name] ||= imba.createLiveFragment()
+
+	def schedule
+		imba.scheduler.listen('render',self)
+		#scheduled = yes
+		@tick()
+
+	def unschedule
+		imba.scheduler.unlisten('render',self)
+		#scheduled = no
+
 	def connectedCallback
 		unless #f
 			# FIXME
