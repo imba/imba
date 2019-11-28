@@ -24,7 +24,7 @@ tag app-root
 				<button.c :click.stop.ping(:c)> "c"
 				<button.d :click.self.stop.ping(:d) :click.ping(:de)>
 					"self"
-					<b> "inside"
+					<b> "-"
 
 				<button.e :click.stop.self.ping(:e)>
 					"self"
@@ -50,10 +50,10 @@ tag app-root
 
 imba.mount(<app-root>)
 
-var click = do |state,sel,result|
+var click = do |state,sel,expect|
 	state.log = []
-	await spec.click(sel)
-	eq(state.log.join(','),result)
+	await spec.click(sel,no)
+	eq(state.log.join(','),expect)
 
 test "click" do
 	# click will cascade from button.b to div.a
@@ -64,6 +64,8 @@ test "click.stop" do
 
 test "click.self" do
 	await click($1,'.d','d')
+
+test "click.self inside" do
 	await click($1,'.d b','de,a')
 
 test "stop even if not self" do

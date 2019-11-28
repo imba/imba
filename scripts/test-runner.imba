@@ -52,11 +52,20 @@ def run item
 			test.log.push(params)
 			unless options.concurrent
 				console.log(*params)
-
 		# var src =  "http://localhost:1234/index.html#{item}"
 		var root = path.resolve(__dirname,"..","test")
 		var src =  "file://{root}/index.html#{item}"
 		var page = await browser.newPage()
+
+		await page.exposeFunction('puppy') do |str,params|
+			# console.log('puppy', str,params)
+			let receiver = page
+			let path = str.split('.')
+			let meth = path.pop()
+			while path.length
+				receiver = receiver[path.shift()]
+			# console.log 'calling',meth,params
+			return receiver[meth].apply(receiver,params)
 
 		print(helpers.ansi.bold(item) + ' ' + src)
 

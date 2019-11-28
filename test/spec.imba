@@ -1,3 +1,18 @@
+var puppy = window.puppy
+
+class PupKeyboard
+	def type text, options = {}
+		await puppy('keyboard.type',[text,options])
+	def down text, options = {}
+		await puppy('keyboard.down',[text,options])
+	def up text, options = {}
+		await puppy('keyboard.up',[text,options])
+	def press text, options = {}
+		await puppy('keyboard.press',[text,options])
+
+class PupMouse
+	def type text, options
+		puppy('keyboard.type',[text,options])
 
 var TERMINAL_COLOR_CODES =
 	bold: 1
@@ -24,6 +39,8 @@ var fmt = do |code,string|
 	str = "\x1B[{code}m{str}{resetStr}"
 	return str
 
+
+
 class SpecComponent
 
 	def log *params
@@ -37,10 +54,23 @@ class SpecComponent
 
 
 global class Spec < SpecComponent
+
+	get puppeteer
+
 	
-	def click sel
-		let el = document.querySelector(sel)
-		el && el.click()
+	get keyboard
+		#keyboard ||= PupKeyboard.new
+
+	get mouse
+		#mouse ||= PupMouse.new
+	
+	def click sel, trusted = yes
+		if puppy and trusted
+			# console.log "click with puppeteer!!",sel
+			await puppy('click',[sel])
+		else
+			let el = document.querySelector(sel)
+			el && el.click()
 		await @tick()
 
 	def tick commit = true
