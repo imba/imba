@@ -64,10 +64,10 @@ class TagFragment
 	def initialize f, parent
 		#f = f
 		#parent = parent
-		unless f & $TAG_FIRST_CHILD$
-			# FIXME no need for indexed list?
+
+		if !(f & $TAG_FIRST_CHILD$) and self isa KeyedTagFragment
 			#start = document.createComment('start')
-			parent.appendChild(#start) if parent
+			#parent.appendChild(#start) if #parent
 
 		unless f & $TAG_LAST_CHILD$
 			#end = document.createComment('end')

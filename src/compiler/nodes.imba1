@@ -67,7 +67,7 @@ var TREE_TYPE =
 	LOOP: 5
 
 export var F = 
-	# add TAG_INITED 
+	TAG_INITED: 2 ** 0 
 	TAG_CUSTOM: 2 ** 2
 	TAG_AWAKENED: 2 ** 3
 	TAG_MOUNTED: 2 ** 4
@@ -75,16 +75,20 @@ export var F =
 	TAG_SCHEDULED: 2 ** 6
 	TAG_FIRST_CHILD: 2 ** 7
 	TAG_LAST_CHILD: 2 ** 8
-	TAG_ONLY_CHILD: 2 ** 9
+	TAG_HAS_DYNAMIC_FLAGS: 2 ** 9
 	TAG_HAS_BRANCHES: 2 ** 10
 	TAG_HAS_LOOPS: 2 ** 11
-	TAG_HAS_DYNAMICS: 2 ** 12
+	TAG_HAS_DYNAMIC_CHILDREN: 2 ** 12
 	TAG_IN_BRANCH: 2 ** 13
 	TAG_BIND_MODEL: 2 ** 14
+	TAG_INDEXED: 2 ** 15
+	TAG_KEYED: 2 ** 16
 
-
-	TAG_INDEXED: 2 ** 0
-	TAG_KEYED: 2 ** 1
+	# render marks
+	DIFF_BUILT: 2 ** 0
+	DIFF_FLAGS: 2 ** 1
+	DIFF_ATTRS: 2 ** 2
+	DIFF_CHILDREN: 2 ** 3
 
 
 # Helpers for operators
@@ -6177,26 +6181,27 @@ export class TagId < TagPart
 		# "set('id',{quoted})"
 
 export class TagFlag < TagPart
-
-	def isConditional
-		!!@value
-
-	def js
-		value ? "flagIf$({quoted},{value.c})" : "flag$({quoted})"
-
-export class TagFlagIf < TagFlag
-	def js
-		"flagIf$({quoted},{value.c})"
-
-export class TagFlagExpr < TagFlag
-	def visit
-		@name.traverse
-		
-	def isStatic
-		!@name or @name.isPrimitive
+	prop condition
 
 	def value
-		@value or @name
+		@name
+
+	def isStatic
+		!isConditional
+
+	def isConditional
+		!!condition
+
+	def quoted
+		@quoted ||= helpers.singlequote(value)
+
+	def js
+		condition ? "flagIf$({quoted},{condition.c})" : "flag$({quoted})"
+
+export class TagFlagExpr < TagFlag
+		
+	def isStatic
+		(!value or value.isPrimitive) and !isConditional
 	
 	def js
 		"setFlag$({value.c})"
@@ -6458,14 +6463,14 @@ class TagLike < Node
 
 	def register node
 		if node isa If
-			flag(F.TAG_HAS_BRANCHES | F.TAG_HAS_DYNAMICS)
+			flag(F.TAG_HAS_BRANCHES)
 			node = TagBranchFragment.new(body: node)
 		elif node isa Loop
-			flag(F.TAG_HAS_LOOPS | F.TAG_HAS_DYNAMICS)
+			flag(F.TAG_HAS_LOOPS)
 			node = TagLoopFragment.new(body: node.body, value: node)
 
 		elif !(node isa Tag) and !(node isa Str)
-			flag(F.TAG_HAS_DYNAMICS)
+			flag(F.TAG_HAS_DYNAMIC_CHILDREN)
 			node = TagContent.new(value: node)
 		elif node isa Tag
 			self
@@ -6498,7 +6503,22 @@ class TagLike < Node
 		hasFlag(F.TAG_INDEXED)
 
 	def isCustom
-		hasFlag(F.TAG_CUSTOM)		
+		hasFlag(F.TAG_CUSTOM)
+
+	def hasLoops
+		hasFlag(F.TAG_HAS_LOOPS)
+
+	def hasBranches
+		hasFlag(F.TAG_HAS_BRANCHES)
+
+	def hasDynamicChildren
+		hasFlag(F.TAG_HAS_DYNAMIC_CHILDREN)
+
+	def hasDynamicFlags
+		hasFlag(F.TAG_HAS_DYNAMIC_FLAGS)
+
+	def hasNonTagChildren
+		hasLoops or hasBranches or hasDynamicChildren
 
 	def tagvar name
 		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{name}${tagvarprefix}")
@@ -6528,6 +6548,10 @@ class TagLike < Node
 
 	def vvar do tagvar('v') # value variable
 	def kvar do tagvar('k') # key variable
+
+	# for tracking specific changes -- included in end
+	# shuold maybe link it with built
+	def dvar do tagvar('d') # value variable
 
 	def ref
 		@ref || (@cachedRef = "{parent ? parent.cvar : ''}.{oid}")
@@ -6704,6 +6728,8 @@ export class Tag < TagLike
 	def setup
 		super
 		@attributes = @options:attributes or []
+		@classNames = []
+		@className = null
 
 	def attrs
 		@attributes
@@ -6718,6 +6744,20 @@ export class Tag < TagLike
 		if attrs:length == 0 && !@options:type
 			@options:type = 'fragment'
 
+		@dynamics = []
+		@attributes = @attributes.filter do |item|
+
+			if item isa TagFlag and item.isStatic
+				@classNames.push(item.value)
+				return false
+
+			if !item.isStatic
+				@dynamics.push(item)
+
+			return true
+
+		if @classNames:length
+			@className = "'{@classNames.join(' ')}'"
 		super
 
 	def register node
@@ -6739,6 +6779,7 @@ export class Tag < TagLike
 	def addPart part, type
 		let attrs = @attributes
 		let curr = attrs.CURRENT
+		let next = curr
 
 		if type == TagId
 			set(id: part)
@@ -6749,14 +6790,19 @@ export class Tag < TagLike
 				return self
 
 		if type == TagSep
-			curr = null
+			next = null
 
 		elif curr isa TagHandler
 			curr.add(part,type)
 
 		elif type == TagAttrValue
-			if curr
+			if curr isa TagFlag
+				curr.condition = part
+				flag(F.TAG_HAS_DYNAMIC_FLAGS)
+
+			elif curr
 				curr.value = type.new(part)
+
 		elif curr isa TagAttr
 			curr.add(part,type)
 
@@ -6765,13 +6811,19 @@ export class Tag < TagLike
 			curr = TagAttr.new(bind ? 'bind:model' : 'model')
 			curr.value = part.first
 			attrs.push(curr)
-			curr = null
+			next = null
 		else
-			attrs.push(curr = type.new(part,self))
-			if curr isa TagAttr
-				attrs[String(curr.name)] = curr
+			if type isa TagFlagExpr
+				flag(F.TAG_HAS_DYNAMIC_FLAGS)
 
-		attrs.CURRENT = curr
+			attrs.push(next = type.new(part,self))
+			if next isa TagAttr
+				attrs[String(next.name)] = next
+
+		if next != curr
+			# if curr isa TagFlag and !curr.isStatic
+			# 	flag(F.TAG_HAS_DYNAMIC_FLAGS)
+			attrs.CURRENT = next
 		self
 
 	def type
@@ -6822,18 +6874,23 @@ export class Tag < TagLike
 
 		var wasInline = o:inline
 		var isReactive = self.isReactive
-		var markWhenBuilt = yes
+
 		var canInline = no
-		var optimizeFlag = no
 		var shouldEnd = hasFlag(F.TAG_CUSTOM)
+
+		# whether this tag should set a variable indicating
+		# whether this was built now or not
+		# basically whether we need a reference at all?
+		var markWhenBuilt = shouldEnd or hasDynamicFlags or attrs:length
+		# when it has any attributes? - but not text or
 
 		var inCondition = parent && parent.option(:condition)
 
 		var params = [
 			typ,
-			0,
+			@flags,
 			(fragment ? fragment.tvar : 'null'),
-			'null',
+			@className or 'null',
 			'null',
 			scope__.root.sfco.c
 		]
@@ -6844,60 +6901,28 @@ export class Tag < TagLike
 			params[4] = nodes[0].c
 			nodes = []
 
-		var statics = []
-		var dynamics = []
-
-		var staticFlags = []
-		var dynamicFlags = []
-		
-		for item in @attributes
-			if item isa TagFlag
-				if item.value
-					dynamicFlags.push(item)
-				else
-					staticFlags.push(item.name)
-			elif item.isStatic
-				statics.push(item)
-			else
-				dynamics.push(item)
-
-		if statics:length == 0
-			markWhenBuilt = no
-
-		# add the static flags immediately
-		params[3] = (helpers.singlequote(staticFlags.join(" ")))
-
-		if dynamicFlags:length == 1 and staticFlags:length == 0
-			optimizeFlag = yes
-
-		if dynamics:length == 0 and dynamicFlags:length == 0
-			# should check this based
+		if @dynamics:length == 0 and !hasDynamicFlags
 			if nodes.every(|v| v isa Tag or v isa Str)
-				if !shouldEnd and !hasFlag(F.TAG_HAS_DYNAMICS) and (parent isa Tag)
+				if !shouldEnd and !hasNonTagChildren and (parent isa Tag)
 					canInline = yes
-
-		params[1] = @flags
 
 		if isFragment
 			params = params.slice(1,3)
 
 		var ctor = "{tvar}={create_}({params.join(',')})"
 
-		# compiling the construction / opening
-
 		if !parent
 			@ref = "{tvar}"
 
 			if isSelf
-				add "{bvar} = 1"
-				add "{tvar} = this"
+				add "{tvar}=this"
 				add "{tvar}.open$()"
-				add "{cvar} = {tvar}.$ || ({bvar}=0,{tvar}.$=\{\})"
+				add "{cvar} = ({bvar}={dvar}=1,{tvar}.$) || ({bvar}={dvar}=0,{tvar}.$=\{\})"
 
 			elif isReactive
 				let scop = scope__.closure
-				add "{bvar} = 1"
-				add "{tvar} = {scop.tagCache}.{oid} || ({bvar}=0,{scop.tagCache}.{oid} = {ctor})"
+				# add "{bvar}={dvar}=1"
+				add "{tvar}=({bvar}={dvar}=1,{scop.tagCache}.{oid}) || ({bvar}={dvar}=0,{scop.tagCache}.{oid}={ctor})"
 				@ref = tvar
 				o:inline = yes if isExpression
 				if @consumed:length or dynamics:length
@@ -6947,9 +6972,8 @@ export class Tag < TagLike
 
 				# if we add our own bvar?
 				@bvar = tagvar(:b)
-
-				add "{bvar}=1" # only if we have dynamic stuff?
-				add "{tvar} = {ref} || ({bvar}=0,{ref} = {ctor})"
+				add "{bvar}={dvar}=1" # only if we have dynamic stuff?
+				add "{tvar} = {ref} || ({bvar}={dvar}=0,{ref} = {ctor})"
 				@ref = "{tvar}"
 				# dont add cvar always!
 				@cvar = tagvar(:c)
@@ -6961,12 +6985,13 @@ export class Tag < TagLike
 			elif canInline
 				add "{parent.bvar} || ({ctor})"
 			else
+				let ref = "{cvar}.{oid}"
+
 				if markWhenBuilt
 					@bvar = tagvar(:b)
-					add "{bvar}=1"
-
-				let ref = "{cvar}.{oid}"
-				add "{tvar} = {ref} || ({markWhenBuilt ? "{bvar}=0," : ''}{ref} = {ctor})"
+					add "{tvar} = ({bvar}={dvar}=1,{ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
+				else
+					add "{tvar} = {ref} || ({ref} = {ctor})"
 				@ref = tvar
 
 		if @slots
@@ -6974,18 +6999,50 @@ export class Tag < TagLike
 				# TODO Make sure slot is not already used
 				add "{slot.tvar} = {tvar}.slot$('{name}',{cvar})"
 
+		let flagsToConcat = []
+
 		for item in @attributes
 			if !isReactive
-				continue if item isa TagFlag and item.isStatic
+				# buggy
 				add "{tvar}.{item.c(o)}"
 			elif item.isStatic
-				continue if item isa TagFlag
 				add "{bvar} || ({tvar}.{item.c(o)})"
-				# need to be able to compile the way we want yes
 			else
 				let iref = "{cvar}.{item.oid}"
 
-				if item isa TagHandler
+				if item isa TagFlagExpr
+					let val = item.value
+					# item.value = LIT("{iref}={vvar}")
+					add "({vvar}={val.c(o)},{vvar}==={iref}||({dvar}|={F.DIFF_FLAGS},{iref}={vvar}))"
+					flagsToConcat.push("({iref}||'')")
+
+				elif item isa TagFlag
+					let cond = item.condition
+					let val = item.value
+					let cref
+					let vref
+
+					if cond and !cond.isPrimitive
+						cref = "{cvar}.{cond.oid}"
+						add "({vvar}={cond.c(o)},{vvar}==={cref}||({dvar}|={F.DIFF_FLAGS},{cref}={vvar}))"
+					console.log "Flag value {val}"
+					if val and !(val isa Token) and !val.isPrimitive
+						vref = "{cvar}.{val.oid}"
+						add "({vvar}={val.c(o)},{vvar}==={vref}||({dvar}|={F.DIFF_FLAGS},{vref}={vvar}))"
+
+					if cref and vref
+						flagsToConcat.push("({cref} ? ({vref}||'') : '')")
+					elif cref
+						flagsToConcat.push("({cref} ? '{val.c}' : '')")
+					elif vref
+						flagsToConcat.push("({vref}||'')")
+					else
+						flagsToConcat.push("'{val.c}'")
+
+					# item.value = LIT("{iref}={vvar}")
+					# add "({vvar}={val.c(o)},{vvar}==={iref}||({dvar}|={F.DIFF_FLAGS},{iref}={vvar}))"
+
+				elif item isa TagHandler
 					let specials = item.extractDynamicParts()
 					add "{vvar} = {iref} || ({iref}={ref}.{item.js(o)})"
 					for special,i in specials
@@ -7014,18 +7071,13 @@ export class Tag < TagLike
 				else
 					let val = item.value
 					item.value = LIT("{iref}={vvar}")
-					add "{vvar}={val.c(o)}"
+					add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{item.js(o)}))"
 
-					if item isa TagFlagExpr and optimizeFlag
-						add "{vvar}==={iref} || {ref}.flag$({item.value.c(o)})"
-					elif item isa TagFlag
-						if optimizeFlag
-							add "{vvar}==={iref} || {ref}.flag$({vvar} ? {item.quoted} : '',{item.value.c(o)})"
-						else
-							add "{vvar}==={iref} || {ref}.flagIf$({item.quoted},{item.value.c(o)})"
-					else
-						add "{vvar}==={iref} || ({ref}.{item.js(o)})"
-
+		if flagsToConcat:length
+			flagsToConcat.unshift(@className) if @className
+			add "({dvar}&{F.DIFF_FLAGS} && {tvar}.flag$({flagsToConcat.join("+' '+")}))"
+		elif isSelf and @className
+			add "{bvar} || {tvar}.flag$({@className})"
 
 		# When there is only one value and that value is a static string or num - include it in ctor
 		# loop through attributes etc
@@ -7050,7 +7102,7 @@ export class Tag < TagLike
 				add "{parent.ref}.push({tvar},{parent.kvar}++,{kvar})"
 
 		if shouldEnd
-			foot.push(isSelf ? "{tvar}.close$()" : "{tvar}.end$()")
+			foot.push(isSelf ? "{tvar}.close$({dvar})" : "{tvar}.end$({dvar})")
 
 		if isFragment and parent
 			add "{fragment.ref}.insert$({tvar},{@flags})"
