@@ -377,21 +377,18 @@ extend class Node
 		parent.appendChild$(this)
 		return this
 
-	def insertAdjacent$ pos, other
-		if pos == 'beforebegin'
-			@parentNode.insertBefore(other,this)
-		elif pos == 'afterend'
-			if @nextSibling
-				@nextSibling.insertAdjacent$('beforebegin',other)
-			else
-				@parentNode.appendChild$(other)
+	def insertBeforeBegin$ other
+		@parentNode.insertBefore(other,this)
+
+	def insertAfterEnd$ other
+		if @nextSibling
+			@nextSibling.insertBeforeBegin$(other)
+		else
+			@parentNode.appendChild(other)
 
 # what if this is in a webworker?
 extend class Element
 
-	def insertAdjacent$ pos, other
-		@insertAdjacentElement(pos,other)
-	
 	def on$ type, parts, scope
 		var handler = EventHandler.new(parts,scope)
 		var capture = parts.indexOf('capture') >= 0
@@ -591,10 +588,13 @@ class KeyedTagFragment < TagFragment
 		return self
 
 class IndexedTagFragment < TagFragment
-	def initialize bitflags,parent
+	def initialize flags,parent
 		@parent = parent
 		@$ = []
 		@length = 0
+		unless flags & $TAG_LAST_CHILD$
+			#end = document.createComment('end')
+			parent && parent.appendChild(#end)
 
 	def push item, idx
 		return
@@ -618,10 +618,14 @@ class IndexedTagFragment < TagFragment
 
 	def appendChild item, index
 		# we know that these items are dom elements
-		@parent.appendChild(item)
+		if #end
+			#end.parentNode.insertBefore(item,#end)
+		else
+			@parent.appendChild(item)
 		return
 
 	def removeChild item, index
+		# item need to be able to be added
 		@parent.removeChild(item)
 		return
 

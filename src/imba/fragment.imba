@@ -35,7 +35,7 @@ extend class DocumentFragment
 		self
 
 	def replaceWith$ other
-		#start.insertAdjacent$('beforebegin',other)
+		#start.insertBeforeBegin$(other)
 		var el = #start
 		while el
 			let next = el.nextSibling
