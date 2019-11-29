@@ -188,23 +188,22 @@ DOM
 def imba.createElement name, bitflags, parent, flags, text, sfc
 	var el = root.document.createElement(name)
 
-	# only for custom elements
-	if el.__sfc
-		el.setAttribute('data-'+el.__sfc,'')
+	if bitflags & $TAG_CUSTOM$
+		if el.__sfc
+			el.setAttribute('data-'+el.__sfc,'')
+		el.__f = bitflags
 
 	el.className = flags if flags
 
 	if sfc and sfc.id
 		el.setAttribute('data-'+sfc.id,'')
 
-	if bitflags
-		el.__f = bitflags
-
 	if text !== null
 		el.text$(text)
 
 	if parent and parent isa Node
 		el.insertInto$(parent)
+
 	return el
 
 
