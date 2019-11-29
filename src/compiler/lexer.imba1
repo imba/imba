@@ -572,73 +572,36 @@ export class Lexer
 		# special handling if we are in this context
 		if @end == '%'
 			var chr = @chunk[0]
-			var open = inContext('open')
+			var ctx = @context
 
-			# should add for +, ~ etc
-			# should maybe rather look for the correct type of character?
-		
-			if open and (chr == ' ' or chr == '\n' or chr == ',' or chr == '+' or chr == '~' or chr == ')' or chr == ']')
-				# console.log "close this selector directly"
-				token('SELECTOR_END','%',0)
+			var i = 0
+			var part = ''
+			var ending = no
+
+			while chr = @chunk[i++]
+				if chr == ')' and ctx:parens == 0
+					ending = yes
+					break
+
+				elif chr == '('
+					ctx:parens++
+					part += '('
+				elif chr == ')' 
+					ctx:parens--
+					part += ')'
+				elif chr == '{'
+					break
+				else
+					part += chr
+
+
+			if part
+				token('SELECTOR_PART',part,i - 1)
+			if ending
+				token('SELECTOR_END',')',1,i - 1)
 				pair '%'
-				return 0
-
-			if match = SELECTOR_COMBINATOR.exec(@chunk)
-				# spaces between? -- include the whole
-				token 'SELECTOR_COMBINATOR', match[1] || " ", match[0]:length
-				return match[0]:length
-			
-			elif match = SELECTOR_PART.exec(@chunk)
-				var type = match[1]
-				var id = match[2]
-
-				var tokid = switch type
-					when '.' then 'SELECTOR_CLASS'
-					when '#' then 'SELECTOR_ID'
-					when ':' then 'SELECTOR_PSEUDO_CLASS'
-					when '::' then 'SELECTOR_PSEUDO_CLASS'
-					else 'SELECTOR_TAG'
-
-				token tokid, match[2], match[0]:length
-				return match[0]:length
-
-			# elif match = SELECTOR_PSEUDO_CLASS.exec(@chunk)
-			#  token tokid, match[2]
-			#  return match[0]:length
-			
-			elif chr == '['
-				token('[','[',1)
-				self.pushEnd(']')
-				if match = SELECTOR_ATTR.exec(@chunk)
-					# fuck this length shit
-					var idoffset = match[0].indexOf(match[1])
-					var opoffset = match[0].indexOf(match[2])
-					token('IDENTIFIER', match[1], match[1]:length, idoffset)
-					token('SELECTOR_ATTR_OP', match[2], match[2]:length, opoffset)
-					return match[0]:length
-				return 1
-
-			elif chr == '|'
-				var tok = @tokens[@tokens:length - 1]
-				tTs(tok,'SELECTOR_NS')
-				# tok[0] = 'SELECTOR_NS' # FIX
-				return 1
-
-			elif chr == ','
-				token('SELECTOR_GROUP',',',1)
-				return 1
-			elif chr == '*'
-				token('UNIVERSAL_SELECTOR','*',1)
-				return 1
-			
-			elif chr == ')'
-				pair '%'
-				token('SELECTOR_END',')',1)
-				return 1
-
-			elif chr in [')','}',']','']
-				pair '%'
-				return 0
+				return i
+			return i - 1
 
 		return 0 unless match = SELECTOR.exec(@chunk)
 
@@ -648,7 +611,7 @@ export class Lexer
 		if kind == '('
 			# token '(','('
 			token 'SELECTOR_START', id, id:length + 1
-			pushEnd('%')
+			pushEnd('%', parens: 0)
 			return id:length + 1
 
 		elif id == '%'

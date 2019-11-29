@@ -266,35 +266,11 @@ var grammar =
 		o 'RETURN' do Return.new
 	]
 
-	TagSelector: [
-		o 'SELECTOR_START' do Selector.new([],type: A1)
-		o 'TagSelector TagSelectorType' do A1.add SelectorType.new(A2), 'tag'
-		o 'TagSelector SELECTOR_NS' do A1.add SelectorNamespace.new(A2), 'ns'
-		o 'TagSelector SELECTOR_ID' do A1.add SelectorId.new(A2), 'id'
-		o 'TagSelector SELECTOR_CLASS' do A1.add SelectorClass.new(A2), 'class'
-		o 'TagSelector . { Expression }' do A1.add SelectorClass.new(A4), 'class'
-		o 'TagSelector # { Expression }' do A1.add SelectorId.new(A4), 'id'
-		o 'TagSelector SELECTOR_COMBINATOR' do A1.add SelectorCombinator.new(A2), 'sep'
-		o 'TagSelector SELECTOR_PSEUDO_CLASS' do A1.add SelectorPseudoClass.new(A2), 'pseudoclass'
-		o 'TagSelector SELECTOR_GROUP' do A1.group()
-		o 'TagSelector UNIVERSAL_SELECTOR' do A1.add SelectorUniversal.new(A2), 'universal'
-		o 'TagSelector [ Identifier ]' do A1.add SelectorAttribute.new(A3), 'attr'
-		o 'TagSelector [ Identifier SELECTOR_ATTR_OP TagSelectorAttrValue ]' do
-			A1.add SelectorAttribute.new(A3,A4,A5), 'attr'
-	]
-
-	TagSelectorType: [
-		o 'SELECTOR_TAG' do TagTypeIdentifier.new(A1)
-	]
-
 	Selector: [
-		o 'TagSelector SELECTOR_END' do A1
-	]
-
-	TagSelectorAttrValue: [
-		o 'IDENTIFIER' do A1
-		o 'AlphaNumeric' do A1
-		o '{ Expression }' do A2
+		o 'SELECTOR_START' do Selector.new([],type: A1,open: A1)
+		o 'Selector SELECTOR_PART' do A1.add A2
+		o 'Selector { Expression }' do A1.add(A3)
+		o 'Selector SELECTOR_END' do A1.option('close',A2)
 	]
 
 	Tag: [
