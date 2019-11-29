@@ -22,3 +22,9 @@ test 'class added in self' do
 test 'static class in child' do
 	ok $$(div.child-class)
 
+test 'multiple dynamic' do
+	ok $$(div.one.m1.m2)
+	mult = ''
+	await spec.tick()
+	ok %%(div.one:not(.m2))
+
