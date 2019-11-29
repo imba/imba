@@ -6929,8 +6929,9 @@ export class Tag < TagLike
 				add "{tvar}=({bvar}={dvar}=1,{scop.tagCache}.{oid}) || ({bvar}={dvar}=0,{scop.tagCache}.{oid}={ctor})"
 				@ref = tvar
 				o:inline = yes if isExpression
-				if @consumed:length or dynamics:length
-					add "{cvar} = {tvar}.${oid} || ({bvar}=0,{tvar}.${oid}=\{\})"
+
+				if @consumed:length or @dynamics:length
+					add "{cvar} = {tvar}.${oid} || ({tvar}.${oid}=\{\})"
 			else
 				@cvar = tvar
 				add "({ctor})"
