@@ -188,7 +188,7 @@ DOM
 def imba.createElement name, bitflags, parent, flags, text, sfc
 	var el = root.document.createElement(name)
 
-	if bitflags & $TAG_CUSTOM$
+	if (bitflags & $TAG_CUSTOM$) or (bitflags === undefined and el.__f != undefined)
 		if el.__sfc
 			el.setAttribute('data-'+el.__sfc,'')
 		el.__f = bitflags
@@ -472,6 +472,7 @@ var ImbaComponent = `class extends ImbaElement {
 extend class ImbaElement
 	def setup$
 		#slots = {}
+		#f = 0
 
 	# returns the named slot - for context
 	def slot$ name, ctx

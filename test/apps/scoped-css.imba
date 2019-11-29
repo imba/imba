@@ -33,8 +33,8 @@ test "scoped css" do
 	)
 	eq 2,2
 
-	var p1 = document.querySelector('p.scoped')
-	var p2 = document.querySelector('p:not(.scoped)')
+	var p1 = $$(p.scoped)
+	var p2 = $$(p:not(.scoped))
 	eq window.getComputedStyle(p1).fontSize, '16px'
 	eq window.getComputedStyle(p2).fontSize, '8px'
 
