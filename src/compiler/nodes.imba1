@@ -6262,6 +6262,8 @@ export class TagAttr < TagPart
 		elif ns
 			# should be setPath instead?
 			"setNestedAttr('{ns}','{key}',{val}{add})"
+		elif key.indexOf("aria-") == 0
+			"setAttribute('{key}',{val})"
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}={val}"
 		else
@@ -6644,11 +6646,13 @@ export class TagContent < TagLike
 	def js
 		let value = self.value
 		let parts = []
+		let isText = (value isa Str or value isa Num or value isa InterpolatedString)
 
 		if isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
 
 		elif value isa InterpolatedString and isOnlyChild
+			value = value.@nodes[0] if value.@nodes:length == 1
 			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$({key}={vvar}))"
 
 		else
@@ -7024,8 +7028,8 @@ export class Tag < TagLike
 
 					if cond and !cond.isPrimitive
 						cref = "{cvar}.{cond.oid}"
-						add "({vvar}={cond.c(o)},{vvar}==={cref}||({dvar}|={F.DIFF_FLAGS},{cref}={vvar}))"
-					console.log "Flag value {val}"
+						add "({vvar}=({cond.c(o)}||undefined),{vvar}==={cref}||({dvar}|={F.DIFF_FLAGS},{cref}={vvar}))"
+
 					if val and !(val isa Token) and !val.isPrimitive
 						vref = "{cvar}.{val.oid}"
 						add "({vvar}={val.c(o)},{vvar}==={vref}||({dvar}|={F.DIFF_FLAGS},{vref}={vvar}))"
