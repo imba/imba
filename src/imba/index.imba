@@ -4,7 +4,8 @@ var root = (typeof window !== 'undefined' ? window : (typeof global !== 'undefin
 var imba = {
 	version: '2.0.0',
 	global: root,
-	ctx: null 
+	ctx: null,
+	document: root.document
 }
 
 root.imba = imba
