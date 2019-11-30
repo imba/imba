@@ -7078,11 +7078,12 @@ export class Tag < TagLike
 					item.value = LIT("{iref}={vvar}")
 					add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{item.js(o)}))"
 
-		if flagsToConcat:length
+		if flagsToConcat:length or (isSelf && @className)
 			flagsToConcat.unshift(@className) if @className
-			add "({dvar}&{F.DIFF_FLAGS} && {tvar}.flag$({flagsToConcat.join("+' '+")}))"
-		elif isSelf and @className
-			add "{bvar} || {tvar}.flag$({@className})"
+			let meth = isSelf ? 'flagSelf$' : 'flag$'
+			let cond = "{dvar}&{F.DIFF_FLAGS}"
+			cond = "(!{bvar}||{cond})" if isSelf
+			add "({cond} && {tvar}.{meth}({flagsToConcat.join("+' '+")}))"
 
 		# When there is only one value and that value is a static string or num - include it in ctor
 		# loop through attributes etc
