@@ -6635,10 +6635,10 @@ export class TagContent < TagLike
 		parent.vvar
 
 	def bvar
-		parent.bvar
+		fragment.bvar
 
 	def ref
-		parent.tvar # 
+		fragment.tvar
 
 	def key
 		@key ||= "{parent.cvar}.{oid}"
@@ -6659,23 +6659,12 @@ export class TagContent < TagLike
 			parts.push("{vvar}={value.c(o)}")
 
 			if value isa Call
+				# mark parent to reset imba.ctx at the end
 				parts.unshift("imba.ctx=({key}$ || ({key}$=\{\}))")
 
-			if isOnlyChild
-				let k = "{ref}.body$"
-				parts.push("{vvar}==={k} || {ref}.render$({k},{k}={vvar},{@flags})")
-			else
-				parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_))")
-			# return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.insert$({key}={vvar},-1,{key}_))"
+			parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_))")
 
 		return "(" + parts.join(',') + ')'
-
-		if isOnlyChild # what if we are not trying to cache?
-			let k = "{ref}.body$"
-			return "({vvar}={value.c(o)},{vvar}==={k} || {ref}.render$({k},{k}={vvar},{@flags}))"
-
-		else
-			return "({vvar}={value.c(o)},{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_)))"
 
 export class TagFragment < TagLike
 
@@ -6765,13 +6754,14 @@ export class Tag < TagLike
 		super
 
 	def register node
-		if node isa Tag and (isCustom and !isSelf)
-			let slotKey = node.attrs:slot
+		node = super(node)
+		# should go for any taglike!
+		if node isa TagLike and (isCustom and !isSelf)
+			let slotKey = node isa Tag ? node.attrs:slot : null
 			let name = slotKey ? slotKey.value.toRaw : '__'
 			let slot = getSlot(name)
 			node.@fragment = slot
-
-		super
+		return node
 
 	def visitAfterBody stack
 		self

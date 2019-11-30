@@ -193,6 +193,10 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 			el.setAttribute('data-'+el.__sfc,'')
 		el.__f = bitflags
 
+		if text !== null
+			el.slot$('__').text$(text)
+			text = null
+
 	el.className = flags if flags
 
 	if sfc and sfc.id
@@ -376,27 +380,7 @@ extend class Element
 		@textContent = item
 		self
 
-	def render$ prev, item, options
-		# TODO merge with insert$?
-		let type = typeof item
-
-		if type === 'undefined' or item === null
-			while self.firstChild
-				self.removeChild(self.firstChild)
-			return
-
-		elif type !== 'object'
-			if prev and prev.replaceWith$
-				return prev.replaceWith$(item)
-
-			self.textContent = item
-
-		elif item isa Node
-			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
-
-		return
-
-	def insert$ item, bitflags, prev
+	def insert$ item, f, prev
 		let type = typeof item
 
 		if type === 'undefined' or item === null
@@ -409,8 +393,10 @@ extend class Element
 			let res
 			let txt = item
 
-			if (bitflags & $TAG_FIRST_CHILD$) && (bitflags & $TAG_LAST_CHILD$)
+			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$)
 				# FIXME what if the previous one was not text? Possibly dangerous
+				# when we set this on a fragment - it essentially replaces the whole
+				# fragment?
 				@textContent = txt
 				return
 
@@ -420,7 +406,7 @@ extend class Element
 					return prev
 				else
 					res = document.createTextNode(txt)
-					prev.replaceWith$(item,self)
+					prev.replaceWith$(res,self)
 					return res
 			else
 				@appendChild$(res = document.createTextNode(txt))
@@ -472,10 +458,6 @@ var ImbaElement = `class extends HTMLElement {
 	}
 }`
 
-var ImbaComponent = `class extends ImbaElement {
-	
-}`
-
 extend class ImbaElement
 	def setup$
 		#slots = {}
@@ -501,7 +483,6 @@ extend class ImbaElement
 
 	def connectedCallback
 		unless #f
-			# FIXME
 			#f = 8
 			this.awaken()
 		this.schedule() if #schedule
@@ -516,6 +497,10 @@ extend class ImbaElement
 
 	def awaken
 		#schedule = true
+
+var ImbaComponent = `class extends ImbaElement {
+	
+}`
 
 root.customElements.define('imba-element',ImbaElement)
 root.customElements.define('imba-component',ImbaComponent)

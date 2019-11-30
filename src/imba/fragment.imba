@@ -13,9 +13,17 @@ extend class DocumentFragment
 			this.parentNode.insertBefore(other,this)
 			return other
 
-		@appendChild(#start)
-		@appendChild(#end)
-
+		this.appendChild(#start)
+		this.appendChild(#end)
+	
+	# when we for sure know that the only content should be
+	# a single text node
+	def text$ item
+		unless #text
+			#text = this.insert$(item)
+		else
+			#text.textContent = item
+		return
 	
 	def insert$ item, options, toReplace
 		if #parent
@@ -23,16 +31,13 @@ extend class DocumentFragment
 			# we can just proxy the call through
 			#parent.insert$(item,options,toReplace or #end)
 		else
-			Element.prototype.insert$.call(self,item,options,toReplace or #end)
+			Element.prototype.insert$.call(this,item,options,toReplace or #end)
 
-	def insertInto$ parent		
+	def insertInto$ parent
 		unless #parent
 			#parent = parent
 			parent.appendChild$(this)
 		return this
-
-	def text$ text
-		self
 
 	def replaceWith$ other
 		#start.insertBeforeBegin$(other)
@@ -194,14 +199,6 @@ class IndexedTagFragment < TagFragment
 
 	def insertInto parent, slot
 		self
-
-	# def appendChild item, index
-	# 	# we know that these items are dom elements
-	# 	if #end
-	# 		#end.insertBeforeBegin$(item)
-	# 	else
-	# 		#parent.appendChild(item)
-	# 	return
 
 	def removeChild item, index
 		# item need to be able to be added
