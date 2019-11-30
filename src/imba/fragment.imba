@@ -6,8 +6,6 @@ extend class DocumentFragment
 	def setup$ flags, options
 		#start = imba.document.createComment('start')
 		#end = imba.document.createComment('end')
-		#start.__fragment = this
-		#end.__fragment = this
 
 		#end.replaceWith$ = do |other|
 			this.parentNode.insertBefore(other,this)
