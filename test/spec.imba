@@ -1,5 +1,9 @@
 var puppy = window.puppy
 
+var pup = do |ns,*params|
+	if puppy
+		await puppy(ns,params)
+
 class PupKeyboard
 	def type text, options = {}
 		await puppy('keyboard.type',[text,options])
@@ -167,7 +171,7 @@ global class Spec < SpecComponent
 
 		console.log logs.join(" | ")
 
-		console.dir("spec:done",{
+		pup("spec:done",{
 			failed: failed.length,
 			passed: ok.length,
 			warnings: @warnings
@@ -244,22 +248,21 @@ global class SpecExample < SpecComponent
 	
 	def finish
 		@failed ? @fail() : @pass()
-		@log("spec:test", name: @fullName, failed: @failed)
+		pup("spec:test", name: @fullName, failed: @failed)
 		for ass in @assertions
 			if ass.failed
 				if ass.options.warn
-					console.log("spec:warn",message: ass.toString())
+					pup("spec:warn",message: ass.toString())
 				else
-					console.log("spec:fail",message: ass.toString())
+					pup("spec:fail",message: ass.toString())
 		console.groupEnd(@fullName)
 		@emit(:done,[self])
 
 	def fail
-		@log("%c✘ {@fullName}", "color:red",@state)
-		# @print("✘")
+		console.log("%c✘ {@fullName}", "color:orangered",@state)
 
 	def pass
-		@log("%c✔ {@fullName}", "color:green")
+		console.log("%c✔ {@fullName}", "color:forestgreen")
 		# @print("✔")
 
 	get failed
@@ -295,7 +298,7 @@ global class SpecAssert < SpecComponent
 		if @options.warn
 			@root.warnings.push(self)
 
-		console.log("failed",self,@parent.state)		
+		# console.log("failed",self,@parent.state)	
 		self
 
 	def pass

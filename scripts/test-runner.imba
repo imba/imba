@@ -57,18 +57,6 @@ def run item
 		var src =  "file://{root}/index.html#{item}"
 		var page = await browser.newPage()
 
-		await page.exposeFunction('puppy') do |str,params|
-			# console.log('puppy', str,params)
-			let receiver = page
-			let path = str.split('.')
-			let meth = path.pop()
-			while path.length
-				receiver = receiver[path.shift()]
-			# console.log 'calling',meth,params
-			return receiver[meth].apply(receiver,params)
-
-		print(helpers.ansi.bold(item) + ' ' + src)
-
 		var handlers =
 			'example:loaded': do |e|
 				page.evaluate(do await SPEC.run())
@@ -95,6 +83,24 @@ def run item
 				print(helpers.ansi.f(:redBright,"error {e.message}"))
 				test.error = e
 				resolve(test)
+
+		await page.exposeFunction('puppy') do |str,params|
+			# console.log('puppy', str,params)
+			let receiver = page
+			let path = str.split('.')
+			let meth = path.pop()
+
+			if handlers[meth]
+				return handlers[meth].apply(self,params)
+
+			while path.length
+				receiver = receiver[path.shift()]
+			# console.log 'calling',meth,params
+			return receiver[meth].apply(receiver,params)
+
+		print(helpers.ansi.bold(item) + ' ' + src)
+
+		
 					
 				
 
