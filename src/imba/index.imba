@@ -31,10 +31,10 @@ imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
 def imba.q$ query, ctx
-	(ctx isa Element ? ctx : document).querySelectorAll(query)
+	(ctx isa Element ? ctx : document).querySelector(query)
 
 def imba.q$$ query, ctx
-	(ctx isa Element ? ctx : document).querySelector(query)
+	(ctx isa Element ? ctx : document).querySelectorAll(query)
 
 def imba.inlineStyles styles
 	var el = document.createElement('style')

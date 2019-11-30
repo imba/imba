@@ -9,7 +9,7 @@ tag app-root
 imba.mount(<app-root>)
 
 test do
-	let el = $$(.textfield)
+	let el = $(.textfield)
 	await spec.tick()
 	eq el.value,name
 	el.focus()

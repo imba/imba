@@ -14,5 +14,5 @@ tag app-root
 imba.mount <app-root>
 
 test do
-	ok $$(.checkbox).textContent == 'Labeled'
-	ok $$(.checkbox input).nextSibling isa Text
+	ok $(.checkbox).textContent == 'Labeled'
+	ok $(.checkbox input).nextSibling isa Text

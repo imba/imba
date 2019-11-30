@@ -41,7 +41,7 @@ test "reorder item" do
 	eq $1.mutations.length,items.length
 
 describe "with siblings" do
-	let div = $$(.with-siblings)
+	let div = $(.with-siblings)
 	test "advanced" do
 		eq div.innerText, 'a123b'
 		numbers.push(4)
