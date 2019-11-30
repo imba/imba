@@ -28,18 +28,18 @@ test 'class added in self' do
 	ok el.classList.contains('custom-class')
 
 test 'static class in child' do
-	ok $$(div.child-class)
+	ok $(div.child-class)
 
 test 'multiple dynamic' do
-	ok $$(div.one.m1.m2)
+	ok $(div.one.m1.m2)
 	mult = ''
 	await spec.tick()
-	ok %%(div.one:not(.m2))
+	ok $(div.one:not(.m2))
 
 test 'combined outer and inner flags' do
-	ok %%(.outer.inner)
+	ok $(.outer.inner)
 
 test 'combined outer and inner flags' do
 	flip = true
 	await spec.tick()
-	ok %%(.outerflip.innerflip)
+	ok $(.outerflip.innerflip)
