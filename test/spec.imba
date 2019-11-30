@@ -133,7 +133,7 @@ global class Spec < SpecComponent
 	def step i = 0, &blk
 		Spec.CURRENT = self
 		var block = @blocks[i]
-		return @finish() unless block
+		return self.finish() unless block
 		imba.once(block,'done') do step(i+1)
 		block.run()
 
@@ -174,7 +174,7 @@ global class Spec < SpecComponent
 		pup("spec:done",{
 			failed: failed.length,
 			passed: ok.length,
-			warnings: @warnings
+			warnings: @warnings.length
 		})
 		var exitCode = (failed.length == 0 ? 0 : 1)
 		@emit(:done, [exitCode])
