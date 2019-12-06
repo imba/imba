@@ -6717,10 +6717,12 @@ export class TagSlotProxy < TagLike
 		oid+'S'
 
 export class Tag < TagLike	
-	
+	prop attrmap
+
 	def setup
 		super
 		@attributes = @options:attributes or []
+		@attrmap = {}
 		@classNames = []
 		@className = null
 
@@ -6738,6 +6740,7 @@ export class Tag < TagLike
 			@options:type = 'fragment'
 
 		@dynamics = []
+
 		@attributes = @attributes.filter do |item|
 
 			if item isa TagFlag and item.isStatic
@@ -6757,7 +6760,7 @@ export class Tag < TagLike
 		node = super(node)
 		# should go for any taglike!
 		if node isa TagLike and (isCustom and !isSelf)
-			let slotKey = node isa Tag ? node.attrs:slot : null
+			let slotKey = node isa Tag ? node.@attrmap:slot : null
 			let name = slotKey ? slotKey.value.toRaw : '__'
 			let slot = getSlot(name)
 			node.@fragment = slot
@@ -6811,8 +6814,9 @@ export class Tag < TagLike
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
 
 			attrs.push(next = type.new(part,self))
+
 			if next isa TagAttr
-				attrs[String(next.name)] = next
+				@attrmap[String(next.name)] = next
 
 		if next != curr
 			# if curr isa TagFlag and !curr.isStatic
@@ -6931,8 +6935,7 @@ export class Tag < TagLike
 		else
 			if isSlot
 				# render the name of the slot 
-				# console.log "slot {attrs:name and attrs:name.value}"
-				let name = attrs:name ? attrs:name.value.toRaw : '__'
+				let name = @attrmap:name ? @attrmap:name.value.toRaw : '__'
 				# add("{tvar}={fragment.root.tvar}.slot$('{name}')")
 				add("{vvar}={fragment.root.tvar}.__slots.{name}")
 				add("if({vvar})\{ {vvar}.insertInto$({fragment.tvar}) \}")

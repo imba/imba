@@ -5,17 +5,23 @@ box-element {
 	margin: 10px;
 	display: block;
 }
+header {
+	color: green;
+}
+
+footer {
+	color: red;
+}
 ###
 
 
 tag box-element
 	def render
 		<self>
-			<slot name="header"> <b.empty> "empty header"
+			<header> <slot name="header"> <b.empty> "empty header"
 			<div> "This is a box"
-			<slot> <b> "no content inside box"
+			<slot> <b.main.empty> "no content inside box"
 			<footer>
-				<div> "Custom footer content:"
 				<slot name="footer"> <b.empty> "empty footer"
 			#	<em> "no content was provided"
 
@@ -24,12 +30,20 @@ tag app-root
 		<self>
 			<div> "This is the app"
 			<box-element.one>
-				<em> "content inside box"
+				<em.main> "custom content only"
 			<box-element.two>
 			<box-element.three>
-				<div> "multiple tags inside box"
-				<div> "multiple items inside box"
+				<div.d1> "multiple tags inside box"
+				<div.d2> "multiple items inside box"
 				<div slot="footer">
-					<em> "Stuff inside footer here!"
+					<em> "custum footer"
+			<box-element.four>
+				<div slot="header">
+					<em> "custom header only"
 
 imba.mount <app-root>
+
+test do
+	ok $(.one div + em.main)
+	ok $(.three > .d1)
+	ok $(.three > .d2)
