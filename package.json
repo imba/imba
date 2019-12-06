@@ -40,7 +40,7 @@
   ],
   "scripts": {
     "bootstrap": "node scripts/bootstrap.js",
-    "build-parser": "bin/imba scripts/build-parser.imba",
+    "build-parser": "node scripts/generate-parser.js",
     "test": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba -c",
     "build": "node scripts/bootstrap.js && webpack --mode=none",
     "watch": "npm run build -- --watch"
