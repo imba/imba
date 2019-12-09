@@ -73,6 +73,7 @@ global class Spec < SpecComponent
 			# console.log "click with puppeteer!!",sel
 			await puppy('click',[sel])
 		else
+
 			let el = document.querySelector(sel)
 			el && el.click()
 		await @tick()
@@ -146,6 +147,7 @@ global class Spec < SpecComponent
 				characterData: true,
 				subtree: true
 			})
+			console.log 'running spec'
 			console.info = do |*params|
 				@context.state.info.push(params)
 				@context.state.log.push(params[0])
@@ -313,9 +315,8 @@ global class SpecAssert < SpecComponent
 			return str
 		else
 			"failed"
-			
 
-SPEC = Spec.new
+window.spec = SPEC = Spec.new
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)

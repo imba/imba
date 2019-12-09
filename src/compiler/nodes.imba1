@@ -2791,17 +2791,17 @@ export class MethodDeclaration < Func
 			warn "{String(o:variable)} def cannot have a target" if target
 
 		elif !target
-			@target = closure.context
-
-			if closure isa ModuleScope
-				closure.annotate(self)
-				body.set(strict: yes)
-				scope.context.@reference = scope.declare("self",OP('||',This.new,@target))
-			else
-				# what if scope context has already been triggered?
-				# method should pre-inherit the outer self?
-				scope.@selfless = yes
-				# @context = @target
+			yes
+			# @target = closure.context
+			# if closure isa ModuleScope
+			# 	closure.annotate(self)
+			# 	body.set(strict: yes)
+			# 	scope.context.@reference = scope.declare("self",OP('||',This.new,@target))
+			# else
+			# 	# what if scope context has already been triggered?
+			# 	# method should pre-inherit the outer self?
+			# 	scope.@selfless = yes
+			# 	# @context = @target
 		
 		if o:export and !(closure isa RootScope)
 			warn("cannot export non-root method", loc: o:export.loc)
@@ -2871,7 +2871,7 @@ export class MethodDeclaration < Func
 
 		if o:global
 			# warn("global def is deprecated", loc: o:global.region)
-			out = "{fname} = {out}"
+			out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
 		
 		if option(:return)
 			out = "return {out}"
@@ -4031,7 +4031,6 @@ export class VarOrAccess < ValueNode
 		# @identifier = value # this is not a real identifier?
 		# console.log "VarOrAccess {@identifier}"
 
-
 		var scope = scope__
 
 		var variable = scope.lookup(value)
@@ -4072,7 +4071,7 @@ export class VarOrAccess < ValueNode
 			# @value.safechain = safechain
 
 		# TODO deprecate and remove
-		if value.symbol.indexOf('$') >= 0
+		if value.symbol.indexOf('$') >= 0 or true
 			# big hack - should disable
 			# major hack here, no?
 			# console.log "GlobalVarAccess"
@@ -8163,6 +8162,10 @@ export class RootScope < Scope
 
 	def context
 		@context ||= RootScopeContext.new(self)
+
+	def globalRef
+		let js = "(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))"
+		@globalRef ||= declare('global$',LIT(js))
 
 	def lookup name
 		name = helpers.symbolize(name)
