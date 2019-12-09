@@ -33,10 +33,10 @@ var JS_KEYWORDS = [
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','const','self','await','import','require','module'
+	'when','def','tag','do','elif','begin','var','let','const','self','await','import','require','module','export'
 ]
 
-var IMBA_CONTEXTUAL_KEYWORDS = ['extend','static','local','export','global','prop']
+var IMBA_CONTEXTUAL_KEYWORDS = ['extend','static','local','global','prop']
 
 # FixedArray for performance
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
@@ -48,7 +48,7 @@ export var ALL_KEYWORDS = [
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','const','self','await','import',
-	'and','or','is','isnt','not','yes','no','isa','case','nil','require','module'
+	'and','or','is','isnt','not','yes','no','isa','case','nil','require','module','export'
 ]
 
 # The list of keywords that are reserved by JavaScript, but not used, or are
@@ -917,8 +917,13 @@ export class Lexer
 				typ = 'NULL'
 
 			elif typ == 'VAR' or typ == 'CONST' or typ == 'LET'
+				let ltyp = @lastTyp
+				console.log "last val before var,const,let {@lastTyp}"
+				if ltyp != 'TERMINATOR' and ltyp != 'INDENT' and ltyp != 'EXPORT'
+					typ = "INLINE_{typ}"
+
 				if @lastVal == 'export'
-					tTs(prev,'EXPORT')
+					tTs(prev,'EXPORT_VAR')
 
 			# skipping 
 			elif typ == 'IF' or typ == 'ELSE' or typ == 'TRUE' or typ == 'FALSE' or typ == 'NULL'
@@ -1002,17 +1007,31 @@ export class Lexer
 			# could manually parse the whole ting here?
 			pushEnd('IMPORT')
 			token(typ, id, idlen)
-			return importsToken or len
+			# return importsToken or len
+			return len
+
+		elif typ == 'EXPORT'
+			console.log 'typ is export'
+			pushEnd('EXPORT')
+			token(typ, id, idlen)
+			return len
 
 		elif id == 'from' and ctx0 == 'IMPORT'
 			typ = 'FROM'
 			pair 'IMPORT'
 
+		elif id == 'from' and ctx0 == 'EXPORT'
+			typ = 'FROM'
+			pair 'EXPORT'
+
+		elif id == 'as' and (ctx0 == 'IMPORT' or @lastTyp == 'IDENTIFIER')
+			typ = 'AS'
+
 		# will be much cleaner with the new handmade combined lexer+parser
 		# for now we need to do some testing
-		elif id == 'as' and ctx0 == 'IMPORT'
-			typ = 'AS'
-			pair 'IMPORT'
+		# elif id == 'as' and ctx0 == 'IMPORT'
+		# 	typ = 'AS'
+		# 	pair 'IMPORT'
 
 		if typ == 'IDENTIFIER'
 			# see if previous was catch -- belongs in rewriter?
@@ -1504,7 +1523,7 @@ export class Lexer
 
 		var ctx = context
 		# WARN now import cannot go over multiple lines
-		pair(ctx) if ctx == 'TAG' or ctx == 'IMPORT'
+		pair(ctx) if ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT'
 		closeDef()  # close def -- really?
 		this
 
@@ -1593,6 +1612,15 @@ export class Lexer
 		# elif value.match()
 		elif value == '*' and @chunk.charAt(1).match(/[A-Za-z\_\@\[]/) and (prev:spaced or [',','(','[','{','|','\n','\t'].indexOf(pv) >= 0)
 			tokid = "SPLAT"
+
+		elif value == '*' and context == 'IMPORT'
+			tokid = "IMPORT_ALL"
+
+		elif value == ',' and context == 'IMPORT'
+			tokid = "IMPORT_COMMA"
+
+		elif value == '*' and context == 'EXPORT'
+			tokid = "EXPORT_ALL"
 
 		elif value == '√'
 			tokid = 'SQRT'
