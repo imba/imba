@@ -105,17 +105,19 @@ var grammar =
 
 	# Block and statements, which make up a line in a body.
 	Line: [
-		o 'Splat'
+		o 'VarBlock'
+		# o 'Splat'
 		o 'Expression'
 		# o 'HEADER' do Terminator.new(A1)
-		o 'Line , Expression' do A1.addExpression(A3) # Onto something??
-		o 'Line , Splat' do A1.addExpression(A3) # Onto something?? # why is not splat an expression?
+		# o 'Line , Expression' do A1.addExpression(A3)
+		# o 'Line , Splat' do A1.addExpression(A3) # why is not splat an expression?
 		o 'Comment'
 		o 'Statement'
-
-		# should work inside preprocessed nesting(!)
+		o 'ImportDeclaration'
 		o 'ExportStatement'
 	]
+
+
 
 	# Pure statements which cannot be expressions.
 	Statement: [
@@ -130,28 +132,61 @@ var grammar =
 		o 'CONTINUE CALL_START Expression CALL_END' do ContinueStatement.new A1,A3
 
 		o 'DEBUGGER' do DebuggerStatement.new A1
-		o 'ImportStatement'
+		# o 'ImportDeclaration'
+		# o 'ExportStatement'
 	]
 
-	ImportStatement: [
-		o 'IMPORT ImportArgList FROM ImportFrom' do ImportStatement.new(A2,A4).set(keyword: A1, from: A3)
-		o 'IMPORT ImportFrom AS ImportArg' do ImportStatement.new(null,A2,A4).set(keyword: A1)
-		o 'IMPORT ImportFrom' do ImportStatement.new(null,A2).set(keyword: A1)
+	ExportStatement: [
+		o 'EXPORT { ImportSpecifierList }' do ExportNamedDeclaration.new(A3).set(keyword: A1)
+		o 'EXPORT { ImportSpecifierList } FROM String' do ExportNamedDeclaration.new(A3,A6).set(keyword: A1)
+		o 'EXPORT MethodDeclaration' do A2.set(export: A1)
+		o 'EXPORT Class' do A2.set(export: A1)
+		o 'EXPORT Tag' do A2.set(export: A1)
+		o 'EXPORT_VAR VarBlock' do A2.set(export: A1)
+		# o 'EXPORT DEFAULT Expression' do Export.new(A3).set(default: A2, keyword: A1)
+		# o 'EXPORT Expression' do Export.new(A2).set(keyword: A1)
+		# o 'EXPORT EXPORT_ALL FROM String',                       -> new ExportAllDeclaration new Literal($2), $4
+		# o 'EXPORT { ExportSpecifierList OptComma } FROM String', -> new ExportNamedDeclaration new ExportSpecifierList($3), $7
+	]
+
+	ImportDeclaration: [
+		o 'IMPORT String' do
+			ImportDeclaration.new(null, null, A2)
+		o 'IMPORT Identifier FROM String' do
+			ImportDeclaration.new(A2, null, A4)
+		o 'IMPORT ImportNamespaceSpecifier FROM String' do
+			ImportDeclaration.new(null, [A2], A4)
+		o 'IMPORT { } FROM String' do
+			ImportDeclaration.new(null, [], A5)
+		o 'IMPORT { ImportSpecifierList } FROM String' do
+			ImportDeclaration.new(null, A3, A6)
+		o 'IMPORT Identifier IMPORT_COMMA ImportNamespaceSpecifier FROM String' do
+			ImportDeclaration.new(A2, [A4], A6)
+		o 'IMPORT Identifier IMPORT_COMMA { ImportSpecifierList } FROM String' do
+			ImportDeclaration.new(A2, A5, A8)
 	]
 
 	ImportFrom: [
 		o 'STRING'
 	]
 
-	ImportArgList: [
-		o 'IMPORTS'
-		o 'ImportArg' do [A1]
-		o 'ImportArgList , ImportArg' do A1.concat(A3)
+	ImportNamespaceSpecifier: [
+		o 'IMPORT_ALL AS Identifier' do ImportNamespaceSpecifier.new(Literal.new(A1),A3)
 	]
 
-	# Valid arguments are Blocks or Splats.
-	ImportArg: [
-		o 'VarIdentifier'
+	ImportSpecifierList: [
+		o 'ImportSpecifier' do [A1]
+		o 'ImportSpecifierList , ImportSpecifier' do A1.concat(A3)
+		o 'ImportSpecifierList OptComma TERMINATOR ImportSpecifier' do A1.concat A4
+		o 'INDENT ImportSpecifierList OptComma OUTDENT' do A2
+		o 'ImportSpecifierList OptComma INDENT ImportSpecifierList OptComma OUTDENT' do A1.concat A4
+	]
+
+	ImportSpecifier: [
+		o 'Identifier' do ImportSpecifier.new(A1)
+		o 'Identifier AS Identifier' do ImportSpecifier.new(A1, A3)
+		o 'DEFAULT' do ImportSpecifier.new(Literal.new(A1))
+		o 'DEFAULT AS Identifier' do ImportSpecifier.new(Literal.new(A1), A3)
 	]
 
 	Require: [
@@ -230,6 +265,10 @@ var grammar =
 		o 'STRING' do Str.new A1
 		o 'Symbol'
 		o 'InterpolatedString'
+	]
+
+	String: [
+		o 'STRING' do Str.new A1
 	]
 
 	InterpolatedString: [
@@ -316,11 +355,6 @@ var grammar =
 		o 'Tag' do ArgList.new([A1])
 	]
 	
-	ExportStatement: [
-		o 'EXPORT DEFAULT Expression' do Export.new(A3).set(default: A2, keyword: A1)
-		o 'EXPORT Expression' do Export.new(A2).set(keyword: A1)
-	]
-	
 
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
@@ -360,6 +394,7 @@ var grammar =
 	# Assignment of a variable, property, or index to a value.
 	Assign: [
 		# o 'SimpleAssignable , Assign' do A3
+		o 'InlineVar = Expression' do Assign.new A2, A1, A3
 		o 'Assignable = Expression' do Assign.new A2, A1, A3
 		o 'Assignable = INDENT Expression Outdent' do Assign.new A2, A1, A4.indented(A3,A5)
 	]
@@ -514,23 +549,34 @@ var grammar =
 		o 'CONST'
 	]
 
-	VarReference: [
-		o 'VAR SPLAT VarAssignable' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
-		o 'VAR VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
-		o 'LET VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
-		o 'LET SPLAT VarAssignable' do AST.SPLAT(VarReference.new(A3,A1),A2) # LocalIdentifier.new(A1)
-		o 'CONST VarAssignable' do VarReference.new(A2,A1) # LocalIdentifier.new(A1)
+	InlineVarKeyword: [
+		o 'INLINE_VAR'
+		o 'INLINE_LET'
 	]
 
-	VarIdentifier: [
-		o 'Const'
-		o 'Identifier'
+	VarReference: [
+		o 'VarKeyword VarAssignable' do VarReference.new(A2,A1)
 	]
 
 	VarAssignable: [
 		o 'Const'
 		o 'Identifier'
 		o 'Array' # all kinds?
+	]
+
+	VarBlockAssign: [
+		o 'VarAssignable' do VarBlockParam.new(A1)
+		# o 'VarAssignable = InlinePostIf' do VarBlockParam.new(A1,A3)
+		o 'VarAssignable = Expression' do VarBlockParam.new(A1,A3)
+	]
+
+	VarBlock: [
+		o 'VarKeyword VarBlockAssign' do VarDeclList.new([A2]).set(keyword: A1,type: A1.value)
+		o 'VarBlock , VarBlockAssign' do A1.add(A3)
+	]
+
+	InlineVar: [
+		o 'InlineVarKeyword VarAssignable' do VarReference.new(A2,A1)
 	]
 
 	# Variables and properties that can be assigned to.
@@ -541,7 +587,6 @@ var grammar =
 		o 'Gvar'
 		o 'Argvar'
 		o 'Self' # not sure if self should be assignable really
-		o 'VarReference'
 		o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
 		o 'Value . NEW' do New.new(A1)
 		o 'Value . Super' do SuperAccess.new('.',A1,A3)
@@ -612,6 +657,16 @@ var grammar =
 		# this is strange
 		o 'AssignList OptComma INDENT AssignList OptComma Outdent' do  A1.concat(A4.indented(A3,A6))
 	]
+
+	ExpressionList: [
+		# o '' do ExpressionList.new([])
+		o 'Expression' do ExpressionList.new([A1])
+		o 'ExpressionList , Expression' do A1.add A3
+		o 'ExpressionList OptComma Terminator Expression' do A1.add(A3).add(A4) # A4.prebreak(A3)
+		# this is strange
+		# o 'AssignList OptComma INDENT AssignList OptComma Outdent' do  A1.concat(A4.indented(A3,A6))
+	]
+
 
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
@@ -749,9 +804,10 @@ var grammar =
 	# where only values are accepted, wrapping it in parentheses will always do
 	# the trick.
 	Parenthetical: [
-		o '( Body )' do Parens.new(A2,A1,A3)
-		o '( INDENT Body OUTDENT )' do Parens.new(A3,A1,A5)
+		o '( ExpressionList )' do Parens.new(A2,A1,A3)
+		o '( INDENT ExpressionList Terminator OUTDENT )' do Parens.new(A3,A1,A5)
 	]
+
 	# The condition portion of a while loop.
 	WhileSource: [
 		o 'WHILE Expression' do While.new(A2, keyword: A1)
@@ -874,8 +930,12 @@ var grammar =
 	# *if* and *unless*.
 	If: [
 		o 'IfBlock'
-		o 'Statement  POST_IF Expression' do If.new A3, Block.new([A1]), type: A2, statement: true
+		# o 'Statement  POST_IF Expression' do If.new A3, Block.new([A1]), type: A2, statement: true
 		o 'Expression POST_IF Expression' do If.new A3, Block.new([A1]), type: A2 # , statement: true # why is this a statement?!?
+	]
+
+	InlinePostIf: [
+		o 'Value POST_IF Expression' do If.new A3, Block.new([A1]), type: A2
 	]
 
 	Ternary: [
@@ -923,7 +983,6 @@ var grammar =
 # ----------
 
 var operators = [
-	['left',      'MSET']
 	['left',      '.', '?.', '?:', '::','.:']
 	['left',      'CALL_START', 'CALL_END']
 	# ['left',      '{{', '}}']
@@ -944,12 +1003,13 @@ var operators = [
 	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN', 'THROW', 'EXTENDS']
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']
 	['right',     'TAG_END']
-	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER', 'CLASS', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END']
+	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER', 'CLASS', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END', 'IMPORT', 'EXPORT']
 	['right',     'POST_IF','POST_FOR']
 	['right', 'NEW_TAG']
 	['right', 'TAG_ATTR_SET']
 	['right', 'SPLAT']
 	['left', 'SELECTOR_START']
+	# ['left','POST_IF']
 ]
 
 # Wrapping Up

@@ -895,6 +895,28 @@ export class ValueNode < Node
 	def region
 		[@value.@loc,@value.@loc + @value.@len]
 
+export class AssertionNode < ValueNode
+	def js o
+		let op = @value
+		let out = []
+
+		if op isa Op and !(op isa Access)
+			let l = op.left
+			let r = op.right
+
+			out.push(l.cache.c(o))
+			out.push(helpers.singlequote(op.@op))
+			out.push(r.cache.c(o))
+			out = ["imba.$a=[{out.join(',')}]"]
+			out.push(op.c(o))
+			# op.cache
+			# out.push('imba.$asrt=undefined')
+			# out.push(op.c(o))
+		else
+			out.push('imba.$a=null')
+			out.push(op.c(o))
+		return '(' + out.join(',') + ")" # ,{op.c(o)})
+		# "('assert',{super})"
 
 export class Statement < ValueNode
 
@@ -1362,6 +1384,50 @@ export class Block < ListNode
 
 		yes
 
+export class ExpressionList < Block
+
+export class VarBlockParam < Node
+	
+	def initialize name, value
+		@name = name
+		@value = value
+
+	def visit
+		if @value
+			@value.traverse
+			@value.forceExpression
+
+		@variable ||= scope__.register(@name,self)
+
+	def js
+		if @value
+			return "{@name.c} = {@value.c}"
+		else
+			return @name.c
+
+
+export class VarDeclList < ListNode
+	
+	def type
+		option(:type) or 'var'
+
+	def add expr
+		# console.log "add item to varBlock!",expr
+		push(expr)
+
+	def js o
+		var code = AST.compact(AST.flatten(AST.cary(nodes)))
+		code = code.filter(|n| n != null && n != undefined && n != EMPTY)
+		var out = code.join(",")
+		console.log "compiling list {type}"
+		# are we sure?
+		var keyword = o.es5 ? 'var' : type
+		# we just need to trust that the variables have been autodeclared beforehand
+		# if we are inside an expression
+		out = "{keyword} " + out unless o.isExpression
+
+		# now - how do we support import and export here?
+		return out
 
 # this is almost like the old VarDeclarations but without the values
 export class VarBlock < ListNode
@@ -1380,6 +1446,12 @@ export class VarBlock < ListNode
 	# TODO All these inner items should rather be straight up literals
 	# or basic localvars - without any care whatsoever about adding var to the
 	# beginning etc.
+
+	def add expr
+		# console.log "add item to varBlock!",expr
+		push(expr)
+		# addExpression(expr)
+
 	def addExpression expr
 
 		if expr isa Assign
@@ -3685,9 +3757,6 @@ export class UnaryOp < Op
 			# l.set(parens: yes) # sure?
 			"{op}{str}"
 
-		elif op == '√'
-			"Math.sqrt({l.c})"
-
 		elif left
 			"{l.c}{op}"
 
@@ -3695,7 +3764,7 @@ export class UnaryOp < Op
 			"{op}{r.c}"
 
 	def normalize
-		return self if op == '!' or op == '√'
+		return self if op == '!'
 		var node = (left || right).node
 		# for property-accessors we need to rewrite the ast
 		return self unless node isa PropertyAccess
@@ -5091,6 +5160,7 @@ export class Call < Node
 			if str == 'export'
 				return Export.new(args)
 
+
 		@callee = callee	
 		@args = args or ArgList.new([])
 
@@ -5165,6 +5235,13 @@ export class Call < Node
 
 		if rgt isa Identifier and rgt.value == 'len' and args.count == 0
 			return Util.Len.new([lft or callee]).c
+
+		elif rgt isa Identifier and rgt.value == 'assert' and !splat
+			let arg = args.first
+			# if arg isa Op
+			arg.option(:assertion,yes)
+			args.@nodes[0] = AssertionNode.new(arg)
+			# console.log "Special assert call!! {arg.c}",arg isa Op
 
 			# rewrite a.len(..) to len$(a)
 
@@ -7272,10 +7349,73 @@ export class AsyncFunc < Func
 
 
 # IMPORTS
+export class ImportSpecifier < Node
+	prop alias
+	prop name
+
+	def initialize name, alias
+		@name = name
+		@alias = alias
+
+export class ImportNamespaceSpecifier < ImportSpecifier
+
+export class ImportDeclaration < Statement
+
+	def initialize defaults, specifiers, source
+		setup
+		@defaults = defaults
+		@specifiers = specifiers
+		@source = source
+
+		if specifiers && specifiers[0] isa ImportNamespaceSpecifier
+			@ns = specifiers[0]
+
+	def visit
+		var dec = @declarations = VariableDeclaration.new([])
+
+		var src = @source.c
+		var m = src.match(/([\w\_\-]+)(\.js|imba)?[\"\']$/)
+		@alias = m ? m[1].replace(/[\/\-]/g,'_') + '_$' : 'mod$'
+		@alias = @ns && @ns.alias || @alias
+
+		let req = Require.new(@source)
+		if @defaults
+			req = Util.RequireDefault.new([req])
+
+		@require = dec.add(@alias,req)
+		@require.traverse
+		# register the default variable
+		if @defaults
+			let op = OP('.',@require.variable,Identifier.new('default'))
+			dec.add(@defaults,op).type = 'import'
+
+		for specifier in @specifiers
+			if specifier isa ImportNamespaceSpecifier
+
+				yes
+			else
+				let name = specifier.alias or specifier.name
+				dec.add(name,OP('.',@require.variable,specifier.name)).type = 'import'
+
+		dec.traverse
+		self
+
+	def js
+		return @declarations.c
+		return "/*imports*/"
+
+export class ExportDeclaration < Statement
+
+export class ExportNamedDeclaration < ExportDeclaration
+	def initialize specifiers, source
+		setup
+		@specifiers = specifiers
+		@source = source
+
+	def js
+		"/* exports */"
 
 export class ImportStatement < Statement
-
-
 	prop ns
 	prop imports
 	prop source
@@ -7546,8 +7686,9 @@ export class Util < Node
 	def inlineHelpers
 		!!OPTS:inlineHelpers
 
-	def js o
-		"helper"
+	def js
+		scope__.root.helper(self,helper)
+		"requireDefault$({@args.map(|v| v.c).join(',')})"
 
 export class Util.Extend < Util
 
@@ -7655,6 +7796,17 @@ export class Util.Iterable < Util
 
 		scope__.root.helper(self,helper)
 		return "iter$({args[0].c})"
+
+export class Util.RequireDefault < Util
+	
+	def helper
+		# now we want to allow null values as well - just return as empty collection
+		# should be the same for for own of I guess
+		'''function requireDefault$(obj){
+			return obj && obj.__esModule ? obj : { default: obj };
+		};'''
+
+	# function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 export class Util.IsFunction < Util
 
