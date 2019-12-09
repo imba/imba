@@ -394,7 +394,7 @@ var grammar =
 	# Assignment of a variable, property, or index to a value.
 	Assign: [
 		# o 'SimpleAssignable , Assign' do A3
-		o 'InlineVar = Expression' do Assign.new A2, A1, A3
+		# o 'InlineVar = Expression' do Assign.new A2, A1, A3
 		o 'Assignable = Expression' do Assign.new A2, A1, A3
 		o 'Assignable = INDENT Expression Outdent' do Assign.new A2, A1, A4.indented(A3,A5)
 	]
@@ -552,10 +552,7 @@ var grammar =
 	InlineVarKeyword: [
 		o 'INLINE_VAR'
 		o 'INLINE_LET'
-	]
-
-	VarReference: [
-		o 'VarKeyword VarAssignable' do VarReference.new(A2,A1)
+		o 'INLINE_CONST'
 	]
 
 	VarAssignable: [
@@ -565,13 +562,13 @@ var grammar =
 	]
 
 	VarBlockAssign: [
-		o 'VarAssignable' do VarBlockParam.new(A1)
-		# o 'VarAssignable = InlinePostIf' do VarBlockParam.new(A1,A3)
-		o 'VarAssignable = Expression' do VarBlockParam.new(A1,A3)
+		o 'VarAssignable' do [A1]
+		o 'VarAssignable = Expression' do [A1,A3]
+		o 'VarAssignable = INDENT Expression Outdent' do [A1,A4.indented(A3,A5)]
 	]
 
 	VarBlock: [
-		o 'VarKeyword VarBlockAssign' do VarDeclList.new([A2]).set(keyword: A1,type: A1.value)
+		o 'VarKeyword VarBlockAssign' do VarDeclList.new([]).set(keyword: A1,type: A1.value).add(A2)
 		o 'VarBlock , VarBlockAssign' do A1.add(A3)
 	]
 
@@ -611,6 +608,7 @@ var grammar =
 	# Everything that can be assigned to.
 	Assignable: [
 		o 'SimpleAssignable'
+		o 'InlineVar'
 		o 'Array' #  do A1
 		o 'Object' # not supported anymore
 	]
@@ -659,14 +657,12 @@ var grammar =
 	]
 
 	ExpressionList: [
-		# o '' do ExpressionList.new([])
-		o 'Expression' do ExpressionList.new([A1])
+		o 'Expression' do ExpressionList.new([]).add(A1)
 		o 'ExpressionList , Expression' do A1.add A3
-		o 'ExpressionList OptComma Terminator Expression' do A1.add(A3).add(A4) # A4.prebreak(A3)
-		# this is strange
-		# o 'AssignList OptComma INDENT AssignList OptComma Outdent' do  A1.concat(A4.indented(A3,A6))
+		o 'ExpressionList OptComma Terminator Expression' do A1.add(A3).add(A4)
+		o 'INDENT ExpressionList OptComma Outdent' do A2.indented(A1,A4)
+		o 'ExpressionList OptComma INDENT ExpressionList OptComma Outdent' do A1.concat(A4)
 	]
-
 
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
@@ -805,7 +801,7 @@ var grammar =
 	# the trick.
 	Parenthetical: [
 		o '( ExpressionList )' do Parens.new(A2,A1,A3)
-		o '( INDENT ExpressionList Terminator OUTDENT )' do Parens.new(A3,A1,A5)
+		# o '( INDENT ExpressionList OUTDENT )' do Parens.new(A3,A1,A5)
 	]
 
 	# The condition portion of a while loop.
@@ -932,10 +928,6 @@ var grammar =
 		o 'IfBlock'
 		# o 'Statement  POST_IF Expression' do If.new A3, Block.new([A1]), type: A2, statement: true
 		o 'Expression POST_IF Expression' do If.new A3, Block.new([A1]), type: A2 # , statement: true # why is this a statement?!?
-	]
-
-	InlinePostIf: [
-		o 'Value POST_IF Expression' do If.new A3, Block.new([A1]), type: A2
 	]
 
 	Ternary: [

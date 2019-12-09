@@ -100,10 +100,6 @@ def run item
 
 		print(helpers.ansi.bold(item) + ' ' + src)
 
-		
-					
-				
-
 		page.on 'load' do |msg|
 			self
 
