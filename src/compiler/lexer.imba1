@@ -142,8 +142,8 @@ var OPERATOR = /// ^ (
 var WHITESPACE = /^[^\n\S]+/
 
 var COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|(?:###)?$)/
-# COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|(?:###)?$)|^(?:\s*(#\s.*|#\s*$))+/
-var INLINE_COMMENT = /^(\s*)(#[ \t\!](.*)|#[ \t]?(?=\n|$))+/
+# var INLINE_COMMENT = /^(\s*)((#[ \t\!]||\/\/)(.*)|#[ \t]?(?=\n|$))+/
+var INLINE_COMMENT = /^(\s*)((#[ \t\!]|\/\/)(.*)|#[ \t]?(?=\n|$))+/
 
 var CODE       = /^[-=]=>/
 
@@ -1192,10 +1192,13 @@ export class Lexer
 			length = match[0]:length
 			indent = match[1]
 			comment = match[2]
+			let commentBody = match[4]
+			if comment[0] == '#'
+				commentBody = ' ' + commentBody
 
 			prev = last(@tokens)
 			var pt = prev and tT(prev)
-			var note = '//' + comment.substr(1)
+			var note = '//' + commentBody # comment.substr(1)
 
 			parseMagicalOptions(note)
 
