@@ -1386,52 +1386,21 @@ export class Block < ListNode
 
 export class ExpressionList < Block
 
-export class VarBlockParam < Node
-	
-	def initialize name, value
-		@name = name
-		@value = value
-
-	def visit
-		if @value
-			@value.traverse
-			@value.forceExpression
-
-		@variable ||= scope__.register(@name,self)
-
-	def js
-		if @value
-			return "{@name.c} = {@value.c}"
-		else
-			return @name.c
-
-
-export class VarDeclList < ListNode
+export class VarDeclList < Block
 	
 	def type
 		option(:type) or 'var'
 
-	def add expr
-		# console.log "add item to varBlock!",expr
-		push(expr)
+	def add part
+		push(BR) if @nodes:length
+		let expr = VarReference.new(part[0],type)
+		push(part[1] ? Assign.new('=',expr,part[1]) : expr)
 
-	def js o
-		var code = AST.compact(AST.flatten(AST.cary(nodes)))
-		code = code.filter(|n| n != null && n != undefined && n != EMPTY)
-		var out = code.join(",")
-		console.log "compiling list {type}"
-		# are we sure?
-		var keyword = o.es5 ? 'var' : type
-		# we just need to trust that the variables have been autodeclared beforehand
-		# if we are inside an expression
-		out = "{keyword} " + out unless o.isExpression
-
-		# now - how do we support import and export here?
-		return out
+	def consume node
+		return self
 
 # this is almost like the old VarDeclarations but without the values
 export class VarBlock < ListNode
-
 
 	def load list
 		var first = list[0]
@@ -1461,12 +1430,6 @@ export class VarBlock < ListNode
 				expr.left = VarReference.new(expr.left.value,@type)
 
 			push(expr)
-
-		elif expr isa Assign
-			addExpression(expr.left) # make sure this is a valid thing?
-			# make this into a tuple instead
-			# does not need to be a tuple?
-			return TupleAssign.new('=',Tuple.new(nodes),expr.right)
 
 		elif expr isa VarOrAccess
 			# this is really a VarReference
@@ -4234,11 +4197,12 @@ export class VarReference < ValueNode
 		# keyword = 'var' if keyword == 'let'
 
 		if ref && !ref.@declared # .option(:declared)
-			if o.up(VarBlock) # up varblock??
+			if o.up(VarBlock) # or o.up(VarDeclList) # up varblock??
 				ref.@declared = yes
 
 				# ref.set(declared: yes)
 			elif o.isExpression or @export # why?
+				console.log "autodeclare {@value}"
 				ref.autodeclare
 			else
 				out = "{keyword} {out}"
@@ -4374,7 +4338,6 @@ export class Assign < Op
 		unless right.isExpressable
 			if left isa VarReference and left.type == 'let'
 				return Block.new([left,BR,right.consume(self)]).c(o)
-				
 			return right.consume(self).c(o)
 		# testing this
 		return super(o)
@@ -4575,12 +4538,6 @@ export class CompoundAssign < Assign
 			# an alternative would be to just pass
 			up.replace(self,ast)
 		ast.c
-
-
-export class AsyncAssign < Assign
-
-	# this will transform the tree by a decent amount.
-	# Need to adjust Block to allow this
 
 
 export class TupleAssign < Assign
