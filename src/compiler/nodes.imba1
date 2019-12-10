@@ -2853,6 +2853,9 @@ export class MethodDeclaration < Func
 		# if !(@name isa Identifier)
 		# 	console.log "Method name is dynamic!!"
 
+		# hack
+		# if @target and (fname == 'iterator' or fname == 'asyncIterator')
+		# 	fname = LIT('Symbol.' + fname)
 
 		if option(:inClassBody)
 			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
@@ -2882,7 +2885,8 @@ export class MethodDeclaration < Func
 		else
 			out = "{mark}{funcKeyword} {fname}{func}"
 			if o:export
-				out = "{out}; exports.{o:default ? 'default' : fname} = {fname};"
+				out = "export {o:default ? 'default ' : ''}{out}"
+				# out = "{out}; exports.{o:default ? 'default' : fname} = {fname};"
 
 		if o:global
 			# warn("global def is deprecated", loc: o:global.region)
@@ -2890,7 +2894,7 @@ export class MethodDeclaration < Func
 		
 		if option(:return)
 			out = "return {out}"
-			
+
 		return out
 
 
@@ -7330,7 +7334,7 @@ export class AsyncFunc < Func
 
 
 # IMPORTS
-export class ImportSpecifier < Node
+export class ESMSpecifier < Node
 	prop alias
 	prop name
 
@@ -7338,20 +7342,55 @@ export class ImportSpecifier < Node
 		@name = name
 		@alias = alias
 
+	def js
+		if @alias
+			"{@name.c()} as {@alias.c()}"
+		else
+			"{@name.c()}"
+
+
+export class ImportSpecifier < ESMSpecifier
+export class ExportSpecifier < ESMSpecifier
+
+export class ESMSpecifierList < ListNode
+	
+	def js
+		'{' + super + '}'
+
 export class ImportNamespaceSpecifier < ImportSpecifier
 
-export class ImportDeclaration < Statement
-
-	def initialize defaults, specifiers, source
+export class ESMDeclaration < Statement
+	def initialize keyword, specifiers, source
 		setup
-		@defaults = defaults
+		@keyword = keyword
 		@specifiers = specifiers
 		@source = source
 
-		if specifiers && specifiers[0] isa ImportNamespaceSpecifier
-			@ns = specifiers[0]
+	def isExport
+		String(keyword) == 'export'
+
+	def keyword
+		@keyword or option(:keyword)
+
+	def js
+		if @specifiers and @source
+			"{keyword.c} {AST.cary(@specifiers).join(',')} from {@source.c}"
+		elif @specifiers
+			"{keyword.c} {AST.cary(@specifiers).join(',')}"
+		elif @source
+			"{keyword.c} {@source.c}"
+
+export class ImportDeclaration < ESMDeclaration
+
+	def js
+		if @specifiers and @source
+			"{keyword.c} {AST.cary(@specifiers).join(',')} from {@source.c}"
+		else
+			"{keyword.c} {@source.c}"
 
 	def visit
+		return
+
 		var dec = @declarations = VariableDeclaration.new([])
 
 		var src = @source.c
@@ -7381,20 +7420,20 @@ export class ImportDeclaration < Statement
 		dec.traverse
 		self
 
-	def js
+	def js2
 		return @declarations.c
 		return "/*imports*/"
 
-export class ExportDeclaration < Statement
 
+export class ExportDeclaration < ESMDeclaration
+
+# def js
+# 	if @source
+# 		"{keyword} {@specifiers.c} from {@source.c}"
+
+export class ExportAllDeclaration < ExportDeclaration
 export class ExportNamedDeclaration < ExportDeclaration
-	def initialize specifiers, source
-		setup
-		@specifiers = specifiers
-		@source = source
 
-	def js
-		"/* exports */"
 
 export class ImportStatement < Statement
 	prop ns
