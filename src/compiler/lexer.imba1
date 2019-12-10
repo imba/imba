@@ -1024,7 +1024,7 @@ export class Lexer
 			typ = 'FROM'
 			pair 'EXPORT'
 
-		elif id == 'as' and (ctx0 == 'IMPORT' or @lastTyp == 'IDENTIFIER')
+		elif id == 'as' and (ctx0 == 'IMPORT' or @lastTyp == 'IDENTIFIER' or ctx0 == 'EXPORT')
 			typ = 'AS'
 
 		# will be much cleaner with the new handmade combined lexer+parser
