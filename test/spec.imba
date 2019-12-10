@@ -104,8 +104,8 @@ global class Spec < SpecComponent
 		@stack.push(@context = ctx)
 		var res = block(@context.state)
 		var after = do
-			@stack.pop
-			@context = @stack[@stack[:length] - 1]
+			@stack.pop()
+			@context = @stack[@stack.length - 1]
 			@observer.takeRecords()
 			self
 
