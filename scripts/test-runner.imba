@@ -48,7 +48,7 @@ def run item
 			log: []
 		}
 
-		var print = do |*params|
+		var print = do |...params|
 			test.log.push(params)
 			unless options.concurrent
 				console.log(*params)

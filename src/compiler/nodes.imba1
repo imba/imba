@@ -1653,11 +1653,16 @@ export class Param < Node
 	prop defaults
 	prop splat
 	prop variable
+	prop value
 
-	def initialize name, defaults, typ
+	def initialize value, defaults, typ
 		# could have introduced bugs by moving back to identifier here
+		if typeof value == 'string'
+			value = Identifier.new(value)
+
 		@traversed = no
-		@name = name
+		@name = value
+		@value = value
 		@defaults = defaults
 		@typ = typ
 		@variable = null
@@ -1666,7 +1671,17 @@ export class Param < Node
 		@variable ? @variable.c : name
 
 	def js o
+		if @defaults
+			return "{@value.c} = {@defaults.c}"
+		elif option(:splat)
+			return "..." + @value.c
+		else
+			return @value.c
+
 		return @variable.c if @variable
+
+		
+
 
 		if defaults
 			# should not include any source-mapping here?
@@ -1704,6 +1719,10 @@ export class Param < Node
 			defaults: defaults
 		}
 
+
+export class ObjectParam < Param
+
+export class ArrayParam < Param
 
 export class SplatParam < Param
 
@@ -1855,18 +1874,21 @@ export class ParamList < ListNode
 
 	def js o
 		return EMPTY if count == 0
-		return head(o) if o.parent isa Block
+
+		if o.parent isa Block
+			return head(o)
 
 		# items = map(|arg| arg.name.c ).compact
 		# return null unless items[0]
 
 		if o.parent isa Code
+			# return "params_here"
 			# remove the splat, for sure.. need to handle the other items as well
 			# this is messy with references to argvars etc etc. Fix
 			var pars = nodes
 			# pars = filter(|arg| arg != @splat && !(arg isa BlockParam)) if @splat
-			pars = filter(|arg| arg isa RequiredParam or arg isa OptionalParam) if @splat
-			AST.compact(pars.map(|arg| AST.c(arg.varname) )).join(",")
+			# pars = filter(|arg| arg isa RequiredParam or arg isa OptionalParam) if @splat
+			AST.compact(nodes.map(|param| param.c() )).join(",")
 		else
 			throw "not implemented paramlist js"
 			"ta" + AST.compact(map(|arg| arg.c )).join(",")
