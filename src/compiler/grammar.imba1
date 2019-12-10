@@ -880,8 +880,8 @@ var grammar =
 	# This enables support for pattern matching.
 	ForValue: [
 		o 'Identifier'
-		o 'Array' do ValueNode.new A1
-		o 'Object' do ValueNode.new A1
+		o 'Array' # do ValueNode.new A1
+		o 'Object' # do ValueNode.new A1
 	]
 
 	# An array or range comprehension has variables for the current element
@@ -943,7 +943,7 @@ var grammar =
 	# *if* and *unless*.
 	If: [
 		o 'IfBlock'
-		# o 'Statement  POST_IF Expression' do If.new A3, Block.new([A1]), type: A2, statement: true
+		o 'Statement  POST_IF Expression' do If.new A3, Block.new([A1]), type: A2, statement: true
 		o 'Expression POST_IF Expression' do If.new A3, Block.new([A1]), type: A2 # , statement: true # why is this a statement?!?
 	]
 
