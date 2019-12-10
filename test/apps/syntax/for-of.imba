@@ -36,7 +36,7 @@ describe 'For ... of' do
 		class Iterable
 			def hello
 				yes
-			def iterator
+			def [Symbol.iterator]
 				return {
 					i: 0
 					next: do

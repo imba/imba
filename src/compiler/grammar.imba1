@@ -502,6 +502,7 @@ var grammar =
 		o 'Identifier'
 		o 'Const'
 		o '{ Expression }' do A2
+		o '[ Expression ]' do A2
 	]
 
 	MethodBody: [

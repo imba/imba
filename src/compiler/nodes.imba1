@@ -2850,9 +2850,8 @@ export class MethodDeclaration < Func
 		var mark = AST.mark(option('def'))
 		var fname = AST.sym(self.name)
 
-		# hack
-		if fname == 'iterator' and @target
-			fname = LIT('Symbol.iterator')
+		# if !(@name isa Identifier)
+		# 	console.log "Method name is dynamic!!"
 
 
 		if option(:inClassBody)
