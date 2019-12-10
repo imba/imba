@@ -96,6 +96,8 @@ var IMPLICIT_FUNC_MAP =
 	'BREAK': 1
 	'CONTINUE': 1
 	'RETURN': 1
+	'INDEX_END': 1
+	']': 1
 
 var IMPLICIT_CALL_MAP =
 	'SELECTOR': 1
