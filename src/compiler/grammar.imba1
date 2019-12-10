@@ -403,23 +403,33 @@ var grammar =
 	# the ordinary **Assign** is that these allow numbers and strings as keys.
 	AssignObj: [
 		o 'MethodDeclaration' do A1.set(inObject: yes)
-		o 'ObjAssignable' do ObjAttr.new A1
-		o 'ObjAssignable : Expression' do ObjAttr.new A1, A3, 'object'
-		o 'ObjAssignable : INDENT Expression Outdent' do ObjAttr.new A1, A4.indented(A3,A5), 'object'
+		o 'ObjAssignable' do ObjAttr.new(A1)
+		o 'ObjAssignable : Expression' do ObjAttr.new(A1, A3)
+		o 'ObjAssignable : INDENT Expression Outdent' do ObjAttr.new(A1, A4.indented(A3,A5))
+		o 'SimpleObjAssignable = Expression' do ObjAttr.new(A1, null, A3)
+		o 'SimpleObjAssignable = INDENT Expression Outdent' do ObjAttr.new(A1, null, A4.indented(A3,A5))
 		o 'Comment'
 	]
 
-	ObjAssignable: [
+	SimpleObjAssignable: [
 		o 'Identifier'
 		o 'Const'
 		o 'Key'
-		o 'AlphaNumeric'
-		o 'Ivar' # rly?
-		o 'Gvar' # rly?
-		# this is the interpolated string
-		o '( Expression )' do A2
+		o 'Ivar'
+		o 'Gvar'
 	]
 
+	ObjAssignable: [
+		o 'SimpleObjAssignable'
+		# this is the interpolated string
+		o '( Expression )' do A2
+		o 'AlphaNumeric'
+	]
+
+	# wip
+	ObjRestValue: [
+		o '... SimpleObjAssignable' do Splat.new(A2).set(keyword: A1)
+	]
 	
 
 	# A block comment.
@@ -559,6 +569,7 @@ var grammar =
 		o 'Const'
 		o 'Identifier'
 		o 'Array' # all kinds?
+		o 'Object' # not supported anymore
 	]
 
 	VarBlockAssign: [

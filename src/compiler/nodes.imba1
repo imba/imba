@@ -3509,17 +3509,19 @@ export class ObjAttr < Node
 	prop value
 	prop options
 
-	def initialize key, value
+	def initialize key, value, defaults
 		@traversed = no
 		@key = key
 		@value = value
 		@dynamic = key isa Op
+		@defaults = defaults
 		self
 
 	def visit
 		# should probably traverse key as well, unless it is a dead simple identifier
 		key.traverse
-		value.traverse
+		value.traverse if value
+		@defaults.traverse if @defaults
 
 	def js o
 		let key = self.key
@@ -3529,7 +3531,12 @@ export class ObjAttr < Node
 
 		var k = key.isReserved ? "'{key.c}'" : key.c
 
-		"{k}: {value.c}"
+		if @defaults
+			"{k} = {@defaults.c}"
+		elif value
+			"{k}: {value.c}"
+		else
+			"{k}"
 
 	def hasSideEffects
 		true
@@ -4190,6 +4197,9 @@ export class VarReference < ValueNode
 
 		# what about resolving?
 		var ref = @variable
+		if value isa Obj
+			ref = value
+
 		var out = "{AST.mark(@value)}{ref.c}"
 		var keyword = o.es5 ? 'var' : (@type or 'var')
 		# let might still not work perfectly
@@ -4251,7 +4261,6 @@ export class VarReference < ValueNode
 export class Assign < Op
 
 	def initialize o, l, r
-
 		# workaround until we complete transition from lua-style assignments
 		# to always use explicit tuples - then we can move assignments out etc
 		# this will not be needed after we remove support for var a,b,c = 1,2,3
@@ -4356,33 +4365,18 @@ export class Assign < Op
 			var ctx = scope__.context
 			l = ctx.reference
 
-
-		# should add optional check that wraps this 
-		if l isa PropertyAccess and false # STACK.v1
-			var ast = CALL(OP('.',l.left,l.right.setter),[right])
-			ast.receiver = l.receiver
-
-			if isUsed
-				# dont cache it again if it is already cached(!)
-				right.cache(pool: 'val', uses: 1) unless right.cachevar #
-				# this is only when used.. should be more clever about it
-				ast = Parens.new(AST.blk([ast,right]))
-
-			# should check the up-value no?
-			return ast.c(expression: yes)
-
-		# if l isa VarReference
-		# 	p "assign var-ref"
-		# 	l.@variable.assigned(r)
-
-		# FIXME -- does not always need to be an expression?
 		var lc = l.c
+		var out = "{lc} {AST.mark(@opToken)}{op} {right.c(expression: true)}"
 
 		if option(:export)
 			let ename = l isa VarReference ? l.variable.c : lc
-			return "{lc} {AST.mark(@opToken)}{op} exports.{ename} = {right.c(expression: true)}"
-		else
-			return "{lc} {AST.mark(@opToken)}{op} {right.c(expression: true)}"
+			out = "exports.{ename} = {out}"
+			# return "{lc} {AST.mark(@opToken)}{op} exports.{ename} = {right.c(expression: true)}"
+
+		if l isa Obj
+			out = "({out})"
+
+		return out
 		# return out
 
 	# FIXME op is a token? _FIX_

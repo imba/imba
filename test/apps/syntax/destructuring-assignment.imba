@@ -40,3 +40,34 @@ describe 'Array destructuring' do
 		eq a, 1
 		eq b, [2,3]
 ###
+
+describe 'Object destructuring' do
+	test 'Basic assignment' do
+		let o = {p: 42, q: true}
+		let {p,q} = o
+
+		ok p == 42 and q == true
+
+	test 'Assignment without declaration' do
+		let a,b
+		{a,b} = {a: 1, b: 2}
+		ok a == 1 and b == 2
+
+	test 'Assigning to new variable names' do
+		const o = {p: 42, q: true}
+		const {p: foo, q: bar} = o
+		ok foo == 42 and bar == true
+
+	test 'Default values' do
+		const {a = 10, b = 5} = {a: 3}
+		ok a == 3 and b == 5
+
+	test 'Assigning to new variables names and providing default values' do
+		const {a: aa = 10, b: bb = 5} = {a: 3}
+		ok aa == 3 and bb == 5
+
+	test 'Assigning to object' do
+		const target = {}
+		const o = {a: 1, b: 2}
+		{a: target.x, b: target.y} = o
+		ok target.x == 1 and target.y == 2
