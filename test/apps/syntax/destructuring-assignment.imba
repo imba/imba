@@ -80,8 +80,18 @@ describe 'Object destructuring' do
 				firstName: 'John'
 				lastName: 'Doe'
 
+		def userId {id}
+			return id
+
 		def whois {displayName, fullName: {firstName: name}}
 			return "{displayName} is {name}"
 
 		ok whois(user) == "jdoe is John"
+		ok userId(user) == 42
 
+	test 'Setting a function parameter\'s default value' do
+
+		def drawChart({size = 'big', coords = {x: 0, y: 0}, radius = 25} = {})
+			return [size,coords.x,coords.y,radius]
+		
+		eq drawChart(coords: {x: 18, y: 30}, radius: 30), ['big',18,30,30]
