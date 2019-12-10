@@ -2875,7 +2875,7 @@ export class MethodDeclaration < Func
 			elif isSetter
 				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
 			else
-				let k = OP('.',target,fname)
+				let k = OP('.',target,@name)
 				out = "{mark}{k.c} = {funcKeyword} {func}"
 			if o:export
 				out = "exports.{o:default ? 'default' : fname} = {out}"
