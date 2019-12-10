@@ -137,15 +137,17 @@ var grammar =
 	]
 
 	ExportStatement: [
-		o 'EXPORT { ImportSpecifierList }' do ExportNamedDeclaration.new(A3).set(keyword: A1)
-		o 'EXPORT { ImportSpecifierList } FROM String' do ExportNamedDeclaration.new(A3,A6).set(keyword: A1)
+		o 'EXPORT { ImportSpecifierList }' do ExportNamedDeclaration.new(A1,[A3])
+		o 'EXPORT { ImportSpecifierList } FROM String' do
+			ExportNamedDeclaration.new(A1,[A3], A6)
+
 		o 'EXPORT EXPORT_ALL FROM String' do
-			ExportAllDeclaration.new(null,A4).set(keyword: A1)
+			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2)],A4)
 		o 'EXPORT EXPORT_ALL AS Identifier FROM String' do
-			ExportAllDeclaration.new(A4,A6).set(keyword: A1)
-		o 'EXPORT MethodDeclaration' do A2.set(export: A1)
-		o 'EXPORT Class' do A2.set(export: A1)
-		o 'EXPORT Tag' do A2.set(export: A1)
+			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2,A4)],A6)
+		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A2) # A2.set(export: A1)
+		# o 'EXPORT Class' do Export.new(A2) A2.set(export: A1)
+		# o 'EXPORT Tag' do A2.set(export: A1)
 		o 'EXPORT_VAR VarBlock' do A2.set(export: A1)
 		# o 'EXPORT DEFAULT Expression' do Export.new(A3).set(default: A2, keyword: A1)
 		# o 'EXPORT Expression' do Export.new(A2).set(keyword: A1)
@@ -153,21 +155,32 @@ var grammar =
 		# o 'EXPORT { ExportSpecifierList OptComma } FROM String', -> new ExportNamedDeclaration new ExportSpecifierList($3), $7
 	]
 
+	Exportable: [
+		o 'MethodDeclaration'
+		o 'Class'
+		o 'Tag'
+	]
+
+	ImportOrExport: [
+		o 'IMPORT'
+		o 'EXPORT'
+	]
+
 	ImportDeclaration: [
 		o 'IMPORT String' do
-			ImportDeclaration.new(null, null, A2)
+			ImportDeclaration.new(A1,null, A2)
 		o 'IMPORT Identifier FROM String' do
-			ImportDeclaration.new(A2, null, A4)
+			ImportDeclaration.new(A1,[A2], A4)
 		o 'IMPORT ImportNamespaceSpecifier FROM String' do
-			ImportDeclaration.new(null, [A2], A4)
+			ImportDeclaration.new(A1,[A2], A4)
 		o 'IMPORT { } FROM String' do
-			ImportDeclaration.new(null, [], A5)
+			ImportDeclaration.new(A1,null, A5)
 		o 'IMPORT { ImportSpecifierList } FROM String' do
-			ImportDeclaration.new(null, A3, A6)
+			ImportDeclaration.new(A1,[A3], A6)
 		o 'IMPORT Identifier IMPORT_COMMA ImportNamespaceSpecifier FROM String' do
-			ImportDeclaration.new(A2, [A4], A6)
+			ImportDeclaration.new(A1,[A2,A4], A6)
 		o 'IMPORT Identifier IMPORT_COMMA { ImportSpecifierList } FROM String' do
-			ImportDeclaration.new(A2, A5, A8)
+			ImportDeclaration.new(A1,[A2,A5], A8)
 	]
 
 	ImportFrom: [
@@ -179,9 +192,9 @@ var grammar =
 	]
 
 	ImportSpecifierList: [
-		o 'ImportSpecifier' do [A1]
-		o 'ImportSpecifierList , ImportSpecifier' do A1.concat(A3)
-		o 'ImportSpecifierList OptComma TERMINATOR ImportSpecifier' do A1.concat A4
+		o 'ImportSpecifier' do ESMSpecifierList.new([]).add(A1)
+		o 'ImportSpecifierList , ImportSpecifier' do A1.add(A3)
+		o 'ImportSpecifierList OptComma TERMINATOR ImportSpecifier' do A1.add A4
 		o 'INDENT ImportSpecifierList OptComma OUTDENT' do A2
 		o 'ImportSpecifierList OptComma INDENT ImportSpecifierList OptComma OUTDENT' do A1.concat A4
 	]
