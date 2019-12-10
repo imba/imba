@@ -2850,6 +2850,11 @@ export class MethodDeclaration < Func
 		var mark = AST.mark(option('def'))
 		var fname = AST.sym(self.name)
 
+		# hack
+		if fname == 'iterator' and @target
+			fname = LIT('Symbol.iterator')
+
+
 		if option(:inClassBody)
 			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
 			out = "{prefix} {fname}: {mark}({params.c}){code}"
@@ -2871,7 +2876,8 @@ export class MethodDeclaration < Func
 			elif isSetter
 				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
 			else
-				out = "{mark}{target.c}.{fname} = {funcKeyword} {func}"
+				let k = OP('.',target,fname)
+				out = "{mark}{k.c} = {funcKeyword} {func}"
 			if o:export
 				out = "exports.{o:default ? 'default' : fname} = {out}"
 		else
@@ -5846,9 +5852,8 @@ export class For < Loop
 
 export class ForIn < For
 
-
-
 export class ForOf < For
+	prop source
 
 	def declare
 		var o = options
@@ -5875,9 +5880,12 @@ export class ForOf < For
 		else
 			# we set the var -- why even declare it
 			# no need to declare -- it will declare itself in the loop - no?
-			vars:source = o:source.@variable || scope.temporary(o:source, system: yes, pool: 'dict', type: 'let')
-			v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
-			k = vars:key = scope.register(o:name,o:name,type: 'let')
+			source = vars:source = util.iterable(o:source)
+			o:value = vars:value = o:name
+			# vars:source = o:source.@variable || scope.temporary(o:source, system: yes, pool: 'dict', type: 'let')
+			# vars:source
+			# v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
+			# k = vars:key = scope.register(o:name,o:name,type: 'let')
 
 		# TODO use util - why add references already? Ah -- this is for the highlighting
 		v.addReference(o:index) if v and o:index
@@ -5908,13 +5916,12 @@ export class ForOf < For
 			return head + code
 
 		else
-			if v and v.refcount > 0
-				body.unshift(OP('=',v,OP('.',src,k)))
-
+			# if v and v.refcount > 0
+			# 	body.unshift(OP('=',v,OP('.',src,k)))
 			code = scope.c(braces: yes, indent: yes)
-			let inCode = osrc.@variable ? src : (OP('=',src,osrc))
+			# let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
-			"{AST.mark(options:keyword)}for ({o.es5 ? 'var' : 'let'} {k.c} in {inCode.c(expression: yes)})" + code
+			"{AST.mark(options:keyword)}for ({o.es5 ? 'var' : 'let'} {v.c} of {src.c(expression: yes)})" + code
 
 	def head
 		var v = options:vars
@@ -7661,9 +7668,12 @@ export class Util < Node
 	def inlineHelpers
 		!!OPTS:inlineHelpers
 
+	def name
+		'requireDefault$'
+
 	def js
 		scope__.root.helper(self,helper)
-		"requireDefault$({@args.map(|v| v.c).join(',')})"
+		"{name}({@args.map(|v| v.c).join(',')})"
 
 export class Util.Extend < Util
 
@@ -7764,7 +7774,7 @@ export class Util.Iterable < Util
 	def helper
 		# now we want to allow null values as well - just return as empty collection
 		# should be the same for for own of I guess
-		"function iter$(a)\{ return a ? (a.toArray ? a.toArray() : a) : []; \};"
+		"function iter$(a)\{ return a ? (a.toIterable ? a.toIterable() : a) : []; \};"
 
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
