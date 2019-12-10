@@ -534,8 +534,8 @@ var grammar =
 	# A single parameter in a function definition can be ordinary, or a splat
 	# that hoovers up the remaining arguments.
 	Param: [
-		o 'Object' do ObjectParam.new(A1)
-		o 'Array' do ArrayParam.new(A1)
+		o 'Object' do Param.new(A1)
+		o 'Array' do Param.new(A1)
 		o 'ParamVar' # do RequiredParam.new A1
 		# o 'SPLAT ParamVar' do SplatParam.new A2, null, A1
 		o '... ParamVar' do A2.set(splat: A1)
@@ -543,6 +543,8 @@ var grammar =
 		o 'BLOCK_ARG ParamVar' do A2.set(blk: A1)
 		# BlockParam.new A2, null, A1
 		o 'ParamVar = Expression' do Param.new(A1.value,A3)
+		o 'Object = Expression' do Param.new(A1,A3)
+		o 'Array = Expression' do Param.new(A1,A3)
 		# OptionalParam.new A1, A3, A2
 	]
 

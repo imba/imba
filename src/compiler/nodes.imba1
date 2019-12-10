@@ -1680,15 +1680,8 @@ export class Param < Node
 
 		return @variable.c if @variable
 
-		
-
-
-		if defaults
-			# should not include any source-mapping here?
-			"if({name.c} == null) {name.c} = {defaults.c}"
-		# see if this is the initial declarator?
-
 	def visit
+		@value.traverse if @value
 		@defaults.traverse if @defaults
 		self.variable ||= scope__.register(name,self)
 
@@ -1718,11 +1711,6 @@ export class Param < Node
 			name: name
 			defaults: defaults
 		}
-
-
-export class ObjectParam < Param
-
-export class ArrayParam < Param
 
 export class SplatParam < Param
 
