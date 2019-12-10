@@ -5683,6 +5683,7 @@ export class For < Loop
 			body.unshift(op,BR)
 		
 		if parent
+			# TODO remove
 			@tag = parent
 			stack.@tag = self
 			@level = (@tag && @tag.@level or 0) + 1
@@ -5702,6 +5703,8 @@ export class For < Loop
 		var oi   = o:index
 
 		var bare = isBare(src)
+
+		# if the name parameter is array or object we move this inside?
 
 		# what about a range where we also include an index?
 		if src isa Range
@@ -5740,8 +5743,12 @@ export class For < Loop
 			vars:source = bare ? src : scope.declare('items',util.iterable(src),system: yes, type: 'let', pool: 'iter')
 			vars:len = scope.declare('len',util.len(vars:source),type: 'let', pool: 'len', system: yes)
 
-			vars:value = scope.declare(o:name,null,type: 'let')
-			vars:value.addReference(o:name) # adding reference!
+			if o:name isa Identifier # also Const etc?
+				vars:value = scope.declare(o:name,null,type: 'let')
+				vars:value.addReference(o:name) # adding reference!
+			elif o:name isa Obj or o:name isa Arr
+				vars:value = o:name
+
 			vars:index.addReference(oi) if oi
 
 		return self
@@ -5814,8 +5821,11 @@ export class For < Loop
 		else
 			cond = OP('<',idx,vars:len)
 			
-			if val.refcount < 3 and val.assignments:length == 0 and !val.@noproxy
+			if false and val.refcount < 3 and val.assignments:length == 0 and !val.@noproxy and false
 				val.proxy(vars:source,idx)
+			elif val isa Obj or val isa Arr
+				# should run through an visit? VarReference.new(val,'let')
+				body.unshift(OP('=', VarReference.new(val,'let'),OP('.',vars:source,idx)), BR)
 			else
 				body.unshift(OP('=',val,OP('.',vars:source,idx)), BR)
 
@@ -5850,9 +5860,14 @@ export class ForOf < For
 
 		if o:own
 			vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
-			v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
-			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
+			o:value = o:index
 
+			if o:value isa Obj or o:value isa Arr
+				vars:value = null
+			else
+				v = vars:value = scope.declare(o:value,null,let: yes, type: 'let') if o:value
+
+			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 			# systemvariable -- should not really be added to the map
 			var keys = vars:keys = scope.declare('keys',Util.keys(vars:source.accessor),system: yes, type: 'let') # the outer one should resolve first
 			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
@@ -5881,12 +5896,12 @@ export class ForOf < For
 		var code
 
 		if options:own
-			if v and v.refcount > 0
+			unless v
+				let ref = VarReference.new(options:value,'let')
+				body.unshift(OP('=',ref,OP('.',src,k)))
+			elif v and v.refcount > 0
 				body.unshift(OP('=',v,OP('.',src,k)))
 
-			# if k.refcount < 3 # should probably adjust these
-			#	k.proxy(vars:keys,i)
-			# else
 			body.unshift(OP('=',k,OP('.',vars:keys,i)))
 			code = body.c(indent: yes, braces: yes) # .wrap
 			var head = "{AST.mark(options:keyword)}for ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
