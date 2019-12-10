@@ -45,8 +45,8 @@ tag app-root
 			footer("First footer")
 			footer("Second footer")
 			<div> state.title
-			list(state.numbers)
-			list(state.names)
+			self.list(state.numbers)
+			self.list(state.names)
 
 imba.mount(<app-root>)
 
