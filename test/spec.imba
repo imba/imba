@@ -1,6 +1,6 @@
 var puppy = window.puppy
 
-var pup = do |ns,*params|
+var pup = do |ns,...params|
 	if puppy
 		await puppy(ns,params)
 
@@ -47,7 +47,7 @@ var fmt = do |code,string|
 
 class SpecComponent
 
-	def log *params
+	def log ...params
 		@root.console.log(*params)
 
 	def emit ev, pars
@@ -135,7 +135,7 @@ global class Spec < SpecComponent
 		Spec.CURRENT = self
 		var block = @blocks[i]
 		return self.finish() unless block
-		imba.once(block,'done') do step(i+1)
+		imba.once(block,'done') do self.step(i+1)
 		block.run()
 
 	def run
@@ -148,7 +148,7 @@ global class Spec < SpecComponent
 				subtree: true
 			})
 			console.log 'running spec'
-			console.info = do |*params|
+			console.info = do |...params|
 				@context.state.info.push(params)
 				@context.state.log.push(params[0])
 
@@ -156,7 +156,7 @@ global class Spec < SpecComponent
 				@observer.disconnect()
 				console.info = prevInfo
 				resolve()
-			step(0)
+			self.step(0)
 
 	def finish
 		var ok = []
@@ -282,7 +282,7 @@ global class SpecAssert < SpecComponent
 		@options = options
 		@message = (options.message || options.warn) || "expected %2 - got %1"
 		parent.assertions.push(self)
-		compare(@expected,@actual) ? @pass() : @fail()
+		self.compare(@expected,@actual) ? @pass() : @fail()
 		self
 
 	def compare a,b
