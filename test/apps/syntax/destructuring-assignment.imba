@@ -95,3 +95,29 @@ describe 'Object destructuring' do
 			return [size,coords.x,coords.y,radius]
 		
 		eq drawChart(coords: {x: 18, y: 30}, radius: 30), ['big',18,30,30]
+
+	test 'Nested object and array destructuring' do
+		const metadata = {
+			title: 'Scratchpad',
+			translations: [
+				{
+					locale: 'de',
+					localization_tags: [],
+					last_edit: '2014-04-14T08:43:37',
+					url: '/de/docs/Tools/Scratchpad',
+					title: 'JavaScript-Umgebung'
+				}
+			],
+			url: '/en-US/docs/Tools/Scratchpad'
+		}
+
+		let {
+			title: englishTitle
+			translations: [
+				{
+					title: localeTitle
+				}
+			]
+		} = metadata
+
+		ok englishTitle == "Scratchpad" and localeTitle == "JavaScript-Umgebung"
