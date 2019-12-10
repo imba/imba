@@ -71,3 +71,17 @@ describe 'Object destructuring' do
 		const o = {a: 1, b: 2}
 		{a: target.x, b: target.y} = o
 		ok target.x == 1 and target.y == 2
+
+	test 'Unpacking fields from objects passed as function parameter' do
+		const user =
+			id: 42
+			displayName: 'jdoe'
+			fullName:
+				firstName: 'John'
+				lastName: 'Doe'
+
+		def whois {displayName, fullName: {firstName: name}}
+			return "{displayName} is {name}"
+
+		ok whois(user) == "jdoe is John"
+
