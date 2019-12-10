@@ -17,14 +17,6 @@ require('./spec.imba')
 
 var compiler = window.imbac
 
-window.SELF = {
-	test: window.test,
-	describe: window.describe,
-	eq: window.eq,
-	ok: window.ok,
-	spec: SPEC
-}
-
 var exposed = {}
 
 window.onerror = do |e|
@@ -35,7 +27,10 @@ window.onunhandledrejection = do |e|
 
 var run = do |js|
 	# hack until we changed implicit self behaviour
-	js = js.replace('self = {}','self = SELF')
+	# js = js.replace('self = {}','self = SELF')
+	# let script = document.createElement('script')
+	# script.innerHTML = js
+	# document.head.appendChild(script)
 	window.eval(js)
 
 	if SPEC.blocks.length
