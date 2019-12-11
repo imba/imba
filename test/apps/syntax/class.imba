@@ -1,4 +1,5 @@
 
+
 class Item
 	prop hello
 
@@ -23,6 +24,23 @@ extend class Todo
 	
 	def extended
 		yes
+
+describe 'Defining classes' do
+
+	test 'Class declarations' do
+		class Rectangle
+			def constructor height, width
+				@height = height
+				@width = width
+
+		ok Rectangle.new
+
+	test 'Class expressions' do
+		var tmpclass = class
+			def constructor height, width
+				@height = height
+				@width = width
+		ok tmpclass.new
 
 describe 'Class' do
 

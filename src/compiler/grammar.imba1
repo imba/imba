@@ -233,7 +233,6 @@ var grammar =
 		o 'For'
 		o 'Switch'
 		o 'Class' # statement, no?
-		o 'Module'
 		o 'TagDeclaration'
 		o 'Tag'
 		o 'Property'
@@ -721,14 +720,15 @@ var grammar =
 	ClassStart: [
 		o 'CLASS SimpleAssignable' do ClassDeclaration.new(A2, null, []).set(keyword: A1)
 		o 'CLASS SimpleAssignable Block' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'CLASS Block' do ClassDeclaration.new(null, null, A2).set(keyword: A1)
 		o 'CLASS SimpleAssignable COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
 		o 'CLASS SimpleAssignable COMPARE Expression Block' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
+		o 'CLASS COMPARE Expression Block' do ClassDeclaration.new(null, A3, A4).set(keyword: A1)
 	]
 
-	# should be removed - not used
-	Module: [
-		o 'MODULE SimpleAssignable' do ModuleDeclaration.new(A2).set(keyword: A1)
-		o 'MODULE SimpleAssignable Block' do ModuleDeclaration.new(A2, A3).set(keyword: A1)
+	ClassIdentifier: [
+		o '' do null
+		o 'SimpleAssignable'
 	]
 
 	# Ordinary function invocation, or a chained series of calls.
