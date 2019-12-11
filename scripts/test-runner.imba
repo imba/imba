@@ -5,7 +5,7 @@ var compiler = require "../dist/compiler"
 var helpers = compiler.helpers
 var browser
 
-var def getFiles dir, o = []
+def getFiles(dir, o = [])
 	fs.readdirSync(dir, withFileTypes: true).filter do |src|
 		let fullpath = path.resolve(dir, src.name)
 		if fullpath.indexOf('.imba') >= 0

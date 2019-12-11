@@ -116,7 +116,7 @@ def imba.emit obj, event, params
 
 # Scheduler
 class Scheduler
-	def initialize
+	def constructor
 		@queue = []
 		@stage = -1
 		@batch = 0
@@ -189,9 +189,8 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 	var el = root.document.createElement(name)
 
 	if (bitflags & $TAG_CUSTOM$) or (bitflags === undefined and el.__f != undefined)
-		if el.__sfc
-			el.setAttribute('data-'+el.__sfc,'')
 		el.__f = bitflags
+		el.init$()
 
 		if text !== null
 			el.slot$('__').text$(text)
@@ -221,9 +220,16 @@ def imba.mount element, into
 class ImbaElementRegistry
 
 	def get name
+		return ImbaElement unless name
 		root.customElements.get(name)
 
-	def define name, supr, body, options
+	def define name, klass
+		# console.log "define element",name,klass
+		root.customElements.define(name,klass)
+		# klass.prototype.__sfc = options && options.id || null
+		return klass
+
+	def define2 name, supr, body, options
 		supr ||= 'imba-element'
 
 		var superklass = HTMLElement
@@ -268,7 +274,7 @@ var keyCodes = {
 
 # could cache similar event handlers with the same parts
 class EventHandler
-	def initialize params,closure
+	def constructor params,closure
 		@params = params
 		@closure = closure
 
@@ -459,9 +465,13 @@ var ImbaElement = `class extends HTMLElement {
 }`
 
 extend class ImbaElement
+
 	def setup$
 		#slots = {}
 		#f = 0
+
+	def init$
+		self
 
 	# returns the named slot - for context
 	def slot$ name, ctx
@@ -507,10 +517,10 @@ root.customElements.define('imba-component',ImbaComponent)
 
 
 def imba.createProxyProperty target
-	var def getter
+	def getter
 		target[0] ? target[0][target[1]] : undefined
 
-	var def setter v
+	def setter v
 		target[0] ? (target[0][target[1]] = v) : null
 
 	return {

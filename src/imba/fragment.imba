@@ -64,7 +64,7 @@ def imba.createLiveFragment bitflags, options
 
 class TagFragment
 
-	def initialize f, parent
+	def constructor f, parent
 		#f = f
 		#parent = parent
 

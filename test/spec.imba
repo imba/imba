@@ -44,7 +44,6 @@ var fmt = do |code,string|
 	return str
 
 
-
 class SpecComponent
 
 	def log ...params
@@ -58,9 +57,6 @@ class SpecComponent
 
 
 global class Spec < SpecComponent
-
-	get puppeteer
-
 	
 	get keyboard
 		#keyboard ||= PupKeyboard.new
@@ -83,7 +79,8 @@ global class Spec < SpecComponent
 		await imba.scheduler.promise
 		@observer.takeRecords()
 
-	def initialize
+	def constructor
+		super()
 		@console = console
 		@blocks = []
 		@assertions = []
@@ -183,7 +180,8 @@ global class Spec < SpecComponent
 
 global class SpecGroup < SpecComponent
 
-	def initialize name, blk, parent
+	def constructor name, blk, parent
+		super()
 		@parent = parent
 		@name = name
 		@blocks = []
@@ -220,7 +218,8 @@ global class SpecGroup < SpecComponent
 
 global class SpecExample < SpecComponent
 
-	def initialize name, block, parent
+	def constructor name, block, parent
+		super()
 		@parent = parent
 		@evaluated = no
 		@name = name
@@ -275,7 +274,9 @@ global class SpecExample < SpecComponent
 
 global class SpecAssert < SpecComponent
 
-	def initialize parent,actual,expected,options = {}
+	def constructor parent,actual,expected,options = {}
+		super()
+
 		@parent = parent
 		@expected = expected
 		@actual = actual

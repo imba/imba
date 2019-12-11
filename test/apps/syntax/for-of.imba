@@ -53,7 +53,7 @@ describe 'For ... of' do
 
 	test 'returning custom iterator' do
 		class Iterable
-			def initialize items
+			def constructor items
 				@items = items
 
 			def toIterable

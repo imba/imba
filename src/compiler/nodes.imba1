@@ -589,6 +589,9 @@ export class Stack
 	def block
 		up(Block)
 
+	def blockpart
+		up do |node| relative(node,-1) isa Block
+
 	def isExpression
 		var i = @nodes:length - 1
 		while i >= 0
@@ -666,6 +669,9 @@ export class Node
 			return self
 
 		@options && @options[key]
+
+	def keyword
+		option(:keyword)
 
 	def configure obj
 		set(obj)
@@ -853,7 +859,7 @@ export class Node
 
 		# should move this somewhere else really
 		out = "({out})" if paren
-		if o and o:braces
+		if (o and o:braces) or (@options and @options:braces)
 			if indent
 				out = '{' + out + '}'
 			else
@@ -1274,7 +1280,10 @@ export class Block < ListNode
 		self
 
 	def add item
-		@nodes.push(item)
+		if item isa Array
+			@nodes.push(*item)
+		else
+			@nodes.push(item)
 		self
 
 	# This is just to work as an inplace replacement of nodes.coffee
@@ -1301,8 +1310,11 @@ export class Block < ListNode
 			return str
 
 		var hasSemiColon = SEMICOLON_TEST.test(out)
-		out += ";" unless hasSemiColon or node isa Meta
+		out += delimiter unless hasSemiColon or node isa Meta
 		return out
+
+	def delimiter
+		@delimiter == undefined ? ';' : @delimiter
 
 	def js o, opts
 		var ast = @nodes
@@ -2371,6 +2383,7 @@ export class ClassDeclaration < Code
 
 	def visit
 		# replace with some advanced lookup?
+		@body.@delimiter = ''
 		ROOT.entities.add(namepath,self)
 		scope.visit
 		body.traverse
@@ -2380,146 +2393,38 @@ export class ClassDeclaration < Code
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
+
 		# should probably also warn about stuff etc
 		if option(:extension)
-			return body.c
+			@body.@delimiter = ','
+			@body.set(braces: yes)
+			return util.extend(name,body).c
+			# return body.c
 
-		var head = []
 		var o = @options or {}
 		var cname = name isa Access ? name.right : name
-		var namespaced = name != cname
+		# var namespaced = name != cname
 		var initor = null
 		var sup = superclass
+		var mark = AST.mark(keyword)
 
-		var bodyindex = -1
-		var spaces = body.filter do |item| item isa Terminator
-		var mark = AST.mark(option('keyword'))
+		unless typeof cname == 'string'
+			cname = cname.c
 
-		body.map do |c,i|
-			if c isa MethodDeclaration && c.type == :constructor
-				bodyindex = i
-
-		if bodyindex >= 0
-			initor = body.removeAt(bodyindex)
-
-		# var initor = body.pluck do |c| c isa MethodDeclaration && c.type == :constructor
-		# compile the cname
-		cname = cname.c unless typeof cname == 'string'
-
-		var cpath = typeof name  == 'string' ? name : name.c
+		var cpath = typeof name == 'string' ? name : name.c
 
 		@cname = cname
 		@cpath = cpath
 
-		if !initor
-			if sup
-				initor = "{mark}function {cname}()\{ return {sup.c}.apply(this,arguments) \};\n\n"
-			else
-				initor = "{mark}function {cname}()" + '{ };\n\n'
-
-		else
-			initor.name = cname
-			initor = initor.c + ';'
-			
-
-		# if we are defining a class inside a namespace etc -- how should we set up the class?
-
-		if namespaced
-			# should use Nodes to build this instead
-			initor = "{cpath} = {initor}" # OP('=',name,initor)
-
-		head.push(initor) # // @class {cname}\n
-
-		if bodyindex >= 0
-			# add the space after initor?
-			if body.index(bodyindex) isa Terminator
-				head.push(body.removeAt(bodyindex))
-
-		if sup
-			# console.log "deal with superclass!"
-			# head.push("// extending the superclass\nimba$class({name.c},{sup.c});\n\n")
-			head.push(Util.Subclass.new([name,sup]))
-			
-		# now create a reference
-		# let protoref = scope__.parent.temporary(self, pool: 'proto')
-		# head.push("var {protoref} = {scope__.prototype.c}")
-		# scope__.prototype.@value = protoref
-
-		# only if it is not namespaced
-		if o:global and !namespaced # option(:global)
-			let globalName = STACK.platform == 'web' ? "window" : "global"
-			head.push("{globalName}.{cname} = {cpath}; // global class \n")
-
-		if o:export and !namespaced
-			head.push("exports.{o:default ? 'default' : cname} = {cpath}; // export class \n")
-
-		# FIXME
-		# if namespaced and (o:local or o:export)
-		# 	console.log "namespaced classes are implicitly local/global depending on the namespace"
-
-		if option('return')
-			body.push("return {cpath};")
-
-		for part in head.reverse
-			body.unshift(part)
-
-		body.@indentation = null
-		var end = body.index(body.count - 1)
-		body.pop if end isa Terminator and end.c:length == 1
-
-		var out = body.c
-
-		return out
-
-export class ModuleDeclaration < Code
-
-	prop name
-	
-	def initialize name, body
-		# what about the namespace?
-		@traversed = no
-		@name = name
-		@scope = ModuleScope.new(self)
-		@body = AST.blk(body or [])
-		self
-		
-	def visit
-		ROOT.entities.register(self) # what if this is not local?
-		# replace with some advanced lookup?
-		
-		scope.visit
-		
-		if @name
-			let modname = String(name.@value or name)
-			scope.parent.register(modname, self, type: 'module')
-			# set the context of this here already?
-			# scope.parent.declare(@name,null,system: yes)		
-		scope.context.value = scope.context.@reference = @ctx = scope.declare('$mod$',null,system: yes)
-		body.traverse
-	
-	def js o
-		var mark = AST.mark(option('keyword'))
-		
-		body.add(ImplicitReturn.new(@ctx))
-		
-		var cbody = body.c
-
-		var js = "(function({@ctx.c})\{{cbody}\})(\{\})"
-
-		let cname = name.c
-		# declare variable
-		js = "var {cname} = {js}"
-		# only if it is not namespaced
-		# if o:global and !namespaced # option(:global)
-		#	js.push("global.{cname} = {cpath}; // global class \n")
-		if option(:export)
-			js = "{js}\nexports.{option(:default) ? 'default' : cname} = {cname};"
-
-		if option(:return)
-			js += "\nreturn {cname};"
-				
+		let jsbody = '{' + body.c() + '}'
+		let jshead = "{keyword}"
+		jshead += " {@cname}" if @cname
+		jshead += " extends {sup.c}" if sup
+		jshead = "export {jshead}" if option(:export)
+		let js = "{jshead} {jsbody}"
+		if option(:global)
+			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname};"
 		return js
-
 
 export class TagDeclaration < Code
 
@@ -2558,6 +2463,7 @@ export class TagDeclaration < Code
 		@superclass = superclass
 		@scope = TagScope.new(self)
 		@body = AST.blk(body || [])
+		@body.@delimiter = ''
 
 	def visit
 		if String(name).match(/^[A-Z]/)
@@ -2565,14 +2471,66 @@ export class TagDeclaration < Code
 
 		ROOT.entities.register(self) # what if this is not local?
 
+
+		@initor = MethodDeclaration.new([],[],Identifier.new('init$'),null,{})
+		@inits = @initor.body
+
+		
+
 		# replace with some advanced lookup?
+		let sfc = @scope.root.sfco
 		scope.visit
+		body.add(@initor)
 		body.traverse
+		@inits.add LIT("super.init$()") # if superclass
 
 	def id
 		name.id
 
 	def js o
+		scope.virtualize # is this always needed?
+		scope.context.value = name
+		scope.context.reference = name
+
+		# should probably also warn about stuff etc
+		let sup = CALL(LIT('imbaElements.get'),[superclass or LIT('')])
+
+		if option(:extension)
+			return body.c
+
+		if @scope.root.styles:length > 0
+			@inits.add LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
+
+		# var o = @options or {}
+		# var cname = name isa Access ? name.right : name
+		# var namespaced = name != cname
+		# var initor = null
+		# var sup = superclass
+		var mark = AST.mark(keyword)
+
+		# unless typeof cname == 'string'
+		# 	cname = cname.c
+
+		# var cpath = typeof name == 'string' ? name : name.c
+
+		# @cname = cname
+		# @cpath = cpath
+
+
+		let closure = scope__.parent
+		let clsvar = closure.reusevar('class$')
+		let jsbody = '{' + body.c() + '}'
+		let jshead = "{clsvar.c} = {mark}class extends {sup.c}"
+		# jshead += " {@cname}" if @cname
+		# jshead += " extends {sup.c}" if sup
+		# jshead = "export {jshead}" if option(:export)
+		let js = "{jshead} {jsbody}"
+		js += "; imbaElements.define({name.c},{clsvar.c})"
+
+
+		return js
+
+	def js2 o
 		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
 
 		# var ns = name.ns
@@ -2610,9 +2568,7 @@ export class TagDeclaration < Code
 			let cname = name.name
 			# declare variable
 			js = "var {cname} = {js}"
-			# only if it is not namespaced
-			# if o:global and !namespaced # option(:global)
-			#	js.push("global.{cname} = {cpath}; // global class \n")
+
 			if option(:export)
 				js = "{js}\nexports.{option(:default) ? 'default' : cname} = {cname};"
 
@@ -2739,13 +2695,16 @@ export class MethodDeclaration < Func
 	def isSetter
 		@type == 'set'
 
+	def isConstructor
+		String(name) == 'constructor'
+
 	def toJSON
 		metadata
 
 	def namepath
 		return @namepath if @namepath
 
-		var name = String(name)
+		var name = String(name.c)
 		var sep = (option('static') ? '.' : '#')
 		if target
 			let ctx = target
@@ -2763,10 +2722,6 @@ export class MethodDeclaration < Func
 		@decorators = up?.collectDecorators
 		var o = @options
 		scope.visit
-		
-		# setters should always return self
-		if String(name).match(/\=$/)
-			set(chainable: yes)
 
 		var closure = @context = scope.parent.closure
 
@@ -2783,12 +2738,14 @@ export class MethodDeclaration < Func
 
 		if String(name) == 'initialize' and (closure isa ClassScope) and !(closure isa TagScope) # and not ModuleScope?
 			self.type = :constructor
+
+		if String(name) == 'constructor' or isConstructor
+			set(noreturn: yes)
 		
 		# instance-method / member
 		if closure isa ClassScope and !target
 			@target = closure.prototype
-
-			set(prototype: @target)
+			set(prototype: @target,inClassBody: yes)
 			closure.annotate(self)
 
 		if target isa Self
@@ -2802,22 +2759,25 @@ export class MethodDeclaration < Func
 
 		elif !target
 			yes
-			# @target = closure.context
-			# if closure isa ModuleScope
-			# 	closure.annotate(self)
-			# 	body.set(strict: yes)
-			# 	scope.context.@reference = scope.declare("self",OP('||',This.new,@target))
-			# else
-			# 	# what if scope context has already been triggered?
-			# 	# method should pre-inherit the outer self?
-			# 	scope.@selfless = yes
-			# 	# @context = @target
 		
 		if o:export and !(closure isa RootScope)
 			warn("cannot export non-root method", loc: o:export.loc)
 
 		ROOT.entities.add(namepath,self)
 		@body.traverse
+
+		if isConstructor and option(:supr)
+			let ref = scope__.context.@reference
+			let supr = option(:supr)
+			let node = supr:node
+			let block = supr:block
+			# console.log "isConstructor with super!"
+			if ref
+				ref.declarator.@defaults = null
+				let op = OP('=',ref,This.new)
+				# console.log "move before?! {block} {op.c}"
+				block.replace node, [node,op]
+
 		self
 
 	def supername
@@ -2840,39 +2800,28 @@ export class MethodDeclaration < Func
 				body.consume(ImplicitReturn.new)
 
 		var code = scope.c(indent: yes, braces: yes)
-
-		# same for Func -- should generalize
 		var name = typeof @name == 'string' ? @name : @name.c
-		name = name.replace(/\./g,'_') # not used?!
 
-		
 		var out = ""
 		var mark = AST.mark(option('def'))
 		var fname = AST.sym(self.name)
 
-		# if !(@name isa Identifier)
-		# 	console.log "Method name is dynamic!!"
-
-		# hack
-		# if @target and (fname == 'iterator' or fname == 'asyncIterator')
-		# 	fname = LIT('Symbol.' + fname)
-
-		if option(:inClassBody)
+		if option(:inClassBody) or option(:inObject)
+			# what if this is async?
 			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
-			out = "{prefix} {fname}: {mark}({params.c}){code}"
+			prefix = "static {prefix}" if option(:static)
+			prefix = "async {prefix}" if option(:async)
+			out = "{prefix}{name}{mark}({params.c}){code}"
 			return out
 
 		var func = "({params.c})" + code
 		var ctx = context
 
-		if option(:inObject)
-			out = "{fname}: {mark}{funcKeyword}{func}"
-			
-		elif type == :constructor
-			out = "{mark}{funcKeyword} {fname}{func}"
-			# add shorthand for prototype now
-
-		elif target
+		if target
+			if fname[0] == '['
+				fname = fname.slice(1,-1)
+			else
+				fname = "'{fname}'"
 			if isGetter
 				out = "Object.defineProperty({target.c},'{fname}',\{get: {funcKeyword}{func}, configurable: true\})"
 			elif isSetter
@@ -2886,10 +2835,8 @@ export class MethodDeclaration < Func
 			out = "{mark}{funcKeyword} {fname}{func}"
 			if o:export
 				out = "export {o:default ? 'default ' : ''}{out}"
-				# out = "{out}; exports.{o:default ? 'default' : fname} = {fname};"
 
 		if o:global
-			# warn("global def is deprecated", loc: o:global.region)
 			out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
 		
 		if option(:return)
@@ -2902,48 +2849,21 @@ export class TagFragmentDeclaration < MethodDeclaration
 
 
 export class PropertyDeclaration < Node
-
 	var propTemplate = '''
-	${headers}
-	${path}${getterKey} = function(v){ return ${get}; }
-	${path}.${setter} = function(v){ ${set}; return this; }
-	${init}
+
+	get ${getter}(){ return ${get}; }
+	set ${getter}(v){ ${set}; }
+	${meta}
 	'''
 
 	var propWatchTemplate = '''
-	${headers}
-	${path}${getterKey} = function(v){ return ${get}; }
-	${path}.${setter} = function(v){
-		var a = this.${getter}();
+	get ${getter}(){ return ${get}; }
+	set ${getter}(v){
+		var a = ${get};
 		if(v != a) { ${set}; }
 		if(v != a) { ${ondirty} }
-		return this;
 	}
-	${init}
-	'''
-
-	var propTemplateNext = '''
-	${headers}
-	Object.defineProperty(${path},\'${getter}\',{
-		configurable: true,
-		get: function(){ return ${get}; },
-		set: function(v){ ${set}; }
-	});
-	${init}
-	'''
-
-	var propWatchTemplateNext = '''
-	${headers}
-	Object.defineProperty(${path},\'${getter}\',{
-		configurable: true,
-		get: function(){ return ${get}; },
-		set: function(v){
-			var a = ${get};
-			if(v != a) { ${set}; }
-			if(v != a) { ${ondirty} }
-		}
-	});
-	${init}
+	${meta}
 	'''
 
 	prop name
@@ -2958,7 +2878,6 @@ export class PropertyDeclaration < Node
 	def visit
 		@options.traverse
 		scope__.entities.add(name,self)
-		# ROOT.entities.add(name,self)
 		self
 	
 	def toJSON
@@ -2984,32 +2903,21 @@ export class PropertyDeclaration < Node
 
 		var pars = o.hash
 
-		var isAttr = (@token and String(@token) == 'attr') or o.key(:attr)
+		var isAttr = (@token and String(@token) == 'attr')
 		var isNative = pars:native isa Bool ? pars:native.isTruthy : undefined
 
 		var js =
 			key: key
 			getter: key
-			getterKey: RESERVED_TEST.test(key) ? "['{key}']" : ".{key}"
-			setter: AST.sym("set-{key}")
 			scope: "{scope.context.c}"
 			path: '${scope}.prototype'
-			set: "this._{key} = v"
-			get: "this._{key}"
+			set: "this.__{key} = v"
+			get: "this.__{key}"
 			init: ""
 			headers: ""
 			ondirty: ""
 
-
-		if pars:inline
-			if pars:inline isa Bool and !pars:inline.isTruthy
-				o.remove('inline')
-				return "{scope__.imba.c}.{@token}({js:scope},'{name.value}',{o.c})".replace(',{})',')')
-
 		var tpl = propTemplate
-		
-		if scope isa ModuleScope
-			js:path = js:scope
 
 		o.add('name',Symbol.new(key))
 
@@ -3033,13 +2941,13 @@ export class PropertyDeclaration < Node
 				js:ondirty = "{scope__.imba.c}.propDidSet(this,this.__{key},v,a)"
 
 		if isAttr # (@token and String(@token) == 'attr') or o.key(:dom) or o.key(:attr)
-			js:set = "this.setAttribute('{attrKey}',v)"
-			js:get = "this.getAttribute('{attrKey}')"
+			js:set = 'this.setAttribute("${key}",v,${desc})'
+			js:get = 'this.getAttribute("${key}",${desc})'
 
 		elif o.key(:delegate)
 			# if we have a delegate
-			js:set = "v = this.__{key}.delegate.set(this,'{key}',v,this.__{key})"
-			js:get = "this.__{key}.delegate.get(this,'{key}',this.__{key})"
+			js:set = "v = this.__{key}.delegate.set('{key}',v,this,$\{desc\})"
+			js:get = "this.__{key}.delegate.get('{key}',this,$\{desc\})"
 
 		if pars:get isa Str
 			js:get = "this.{pars:get.raw}()"
@@ -3048,36 +2956,21 @@ export class PropertyDeclaration < Node
 			js:set = "this.{pars:set.raw}(v)"
 
 		if pars:default
-			# if o.key(:dom)
-			# 	# FIXME go through class-method setAttribute instead
-			# 	js:init = "{js:scope}._dom.setAttribute('{key}',{pars:default.c});"
-			# else
-			# if this is not a primitive - it MUST be included in the
-			# getter / setter instead
-			# FIXME throw warning if the default is not a primitive object
+			# how can we support this with new syntax?
 			js:init = "{js:path}._{key} = {pars:default.c};"
-
-		if o.key(:chainable)
-			js:get = "v !== undefined ? (this.{js:setter}(v),this) : {js:get}"
-
-
-		if (isNative !== false)
-			if tpl == propWatchTemplate
-				tpl = propWatchTemplateNext
-			else
-				tpl = propTemplateNext
-
 
 		js:options = o.c
 
 		if addDesc
-			js:headers = "{js:path}.__{js:getter} = {js:options};"
+			let tmpvar = scope__.root.declare(null,o)
+			js:desc = tmpvar.c
+			js:meta = 'get ___${key}(){ return ${desc} }'
 
 		var reg = /\$\{(\w+)\}/gm
 		# var tpl = o.key(:watch) ? propWatchTemplate : propTemplate
-		var out = tpl.replace(reg) do |m,a| js[a]
+		var out = tpl.replace(reg) do |m,a| js[a] or ''
 		# run another time for nesting. hacky
-		out = out.replace(reg) do |m,a| js[a]
+		out = out.replace(reg) do |m,a| js[a] or ''
 		# out = out.replace(/\n\s*$/,'')
 		out = out.replace(/^\s+|\s+$/g, '')
 
@@ -5085,6 +4978,9 @@ export class TagTypeIdentifier < Identifier
 	def toString
 		value
 
+export class InterpolatedIdentifier < ValueNode
+	def js
+		"[{value.c}]"
 
 export class Argvar < ValueNode
 
@@ -5193,7 +5089,8 @@ export class Call < Node
 			rgt = callee.right
 
 		if callee isa Super or callee isa SuperAccess
-			@receiver = scope__.context
+			# @receiver = scope__.context
+			self
 			# return "supercall"
 
 		# never call the property-access directly?
@@ -7714,9 +7611,20 @@ export class Util < Node
 		"{name}({@args.map(|v| v.c).join(',')})"
 
 export class Util.Extend < Util
+	def helper
+		'''
+		function extend$(target,ext){
+			var descriptors = Object.getOwnPropertyDescriptors(ext);
+			Object.defineProperties(target.prototype,descriptors);
+			// var keys = Object.keys(descriptors);
+			// for(const key of keys){ let desc = descriptors[key]; }
+			return target;
+		};
+		'''
 
 	def js o
 		# When this is triggered, we need to add it to the top of file?
+		scope__.root.helper(self,helper)
 		"extend$({AST.compact(AST.cary(args)).join(',')})"
 
 export class Util.IndexOf < Util
@@ -7978,8 +7886,8 @@ export class Scope
 		# why do we need to make sure it is referenced?
 		unless @context
 			if selfless
-				@context = parent.context
-				@context.reference(self)
+				@context = parent.context.fromScope(self)
+				# @context.reference(self)
 			else
 				@context = ScopeContext.new(self)
 		return @context
@@ -8058,6 +7966,10 @@ export class Scope
 		var dec = @vars.add(variable,init)
 		variable.declarator ||= dec
 		return variable
+
+	
+	def reusevar name
+		temporary(null,{reuse: yes},name)
 
 	# what are the differences here? omj
 	# we only need a temporary thing with defaults -- that is all
@@ -8378,8 +8290,7 @@ export class LambdaScope < Scope
 	def context
 		# why do we need to make sure it is referenced?
 		unless @context
-			@context = parent.context
-			@context.reference(self)
+			@context = parent.context.fromScope(self)
 		@context
 
 
@@ -8413,6 +8324,7 @@ export class FlowScope < Scope
 		@context ||= parent.context
 
 	def closeScope
+		# FIXME
 		@context.reference if @context
 		self
 
@@ -8764,10 +8676,14 @@ export class ScopeContext < Node
 	# name of the variable etc?
 
 	def reference
-		@reference ||= scope.declare("self{@scope.@level}",This.new)
+		# if we are in  constructor we do want to declare it after super
+		@reference ||= scope.declare("self",This.new) # {@scope.@level}_
+
+	def fromScope other
+		IndirectScopeContext.new(other,self)
 
 	def c
-		var val = @value || @reference
+		var val = @value # || @reference
 		(val ? val.c : "this")
 
 	def cache
@@ -8775,6 +8691,20 @@ export class ScopeContext < Node
 		
 	def proto
 		"{self.c}.prototype"
+
+export class IndirectScopeContext < ScopeContext
+	
+	def initialize scope, parent
+		@scope = scope
+		@parent = parent
+		@reference = parent.reference
+
+	def reference
+		@reference # parent.reference
+
+	def c
+		reference.c
+
 
 export class RootScopeContext < ScopeContext
 
@@ -8792,7 +8722,13 @@ export class RootScopeContext < ScopeContext
 
 export class Super < Node
 
+	def visit
+		if var m = STACK.method
+			m.set(supr: {node: STACK.blockpart, block: STACK.block})
+		self
+
 	def c
+		return "super"
 		# need to find the stuff here
 		# this is really not that good8
 		var m = STACK.method
@@ -8817,7 +8753,7 @@ export class Super < Node
 export var BR = Newline.new('\n')
 export var BR2 = Newline.new('\n\n')
 export var SELF = Self.new
-export var SUPER = Super.new
+# export var SUPER = Super.new
 
 export var TRUE = True.new('true')
 export var FALSE = False.new('false')
