@@ -2349,14 +2349,14 @@ export class ClassDeclaration < Code
 		super
 
 	def namepath
-		@namepath ||= "{name.c}"
+		@namepath ||= "{name ? name.c : '--'}"
 
 	def metadata
 		{
 			type: 'class'
 			namepath: namepath
 			inherits: superclass?.namepath
-			path: name.c.toString
+			path: name and name.c.toString
 			desc: @desc
 			loc: loc
 			symbols: @scope.entities
@@ -2374,7 +2374,7 @@ export class ClassDeclaration < Code
 	def initialize name, superclass, body
 		# what about the namespace?
 		@traversed = no
-		@name = name
+		@name = name or LIT('')
 		@superclass = superclass
 		@scope = ClassScope.new(self)
 		@body = AST.blk(body)
