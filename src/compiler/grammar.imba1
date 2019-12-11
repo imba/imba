@@ -492,8 +492,9 @@ var grammar =
 	# FIXME clean up method
 	Method: [
 		o 'MethodDeclaration' do A1
-		o 'VarKeyword MethodDeclaration' do A2.set(variable: A1)
+		# o 'VarKeyword MethodDeclaration' do A2.set(variable: A1)
 		o 'GLOBAL MethodDeclaration' do A2.set(global: A1)
+		o 'STATIC MethodDeclaration' do A2.set(static: A1)
 	]
 
 	MethodDeclaration: [
@@ -517,8 +518,7 @@ var grammar =
 	MethodIdentifier: [
 		o 'Identifier'
 		o 'Const'
-		o '{ Expression }' do A2
-		o '[ Expression ]' do A2
+		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
 	]
 
 	MethodBody: [
@@ -646,7 +646,7 @@ var grammar =
 	]
 
 	Super: [
-		o 'SUPER' do AST.SUPER
+		o 'SUPER' do Super.new(A1)
 	]
 
 	# Everything that can be assigned to.

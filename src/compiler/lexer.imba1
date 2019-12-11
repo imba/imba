@@ -688,6 +688,7 @@ export class Lexer
 			# hacky way to implement this
 			# with new lexer we'll use { ... } instead, and assume object-context,
 			# then go back and correct when we see the context is invalid
+
 			if ltyp == '(' or ltyp == 'CALL_START'
 				token('DO', 'DO',0)
 				self.pushEnd('|')
