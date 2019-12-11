@@ -116,3 +116,26 @@ test 'Super class calls with super' do
 	lion.speak()
 	eq $1.log, ['Fuzzy makes a noise.','Fuzzy roars.']
 
+test 'Reopen class' do
+	class Cat
+		def constructor name
+			@name = name
+
+		get age
+			10
+
+
+	extend class Cat
+
+		get health
+			100
+
+		def speak
+			console.info "{@name} makes a noise."
+
+	let cat = Cat.new('Cosinus')
+	cat.speak()
+	eq $1.log, ['Cosinus makes a noise.']
+
+	ok cat.age == 10
+	ok cat.health == 100
