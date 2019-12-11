@@ -1,30 +1,4 @@
 
-
-class Item
-	prop hello
-
-	def constructor title
-		@title = title
-
-	def archive
-		@archived = yes
-
-	# static def type
-	# 	'Item'
-
-class Todo < Item
-	def due
-		yes
-
-global class GlobalTodo < Todo
-	def due
-		yes
-
-extend class Todo
-	
-	def extended
-		yes
-
 describe 'Defining classes' do
 
 	test 'Class declarations' do
@@ -103,6 +77,42 @@ describe 'Class body and method definitions' do
 		ok Example.new.hello() == 'member'
 		ok Example.hello() == 'static'
 
-describe 'Subclassing' do
-	test do
-		yes
+test 'Subclassing' do
+
+	class Animal
+		def constructor name
+			@name = name
+
+		def speak
+			"{@name} makes a noise"
+
+	class Dog < Animal
+		def constructor name
+			super(name)
+
+		def speak
+			"{@name} barks."
+
+	let dog = Dog.new 'Mitzie'
+
+	eq dog.speak(), 'Mitzie barks.'
+
+test 'Super class calls with super' do
+
+	class Cat
+		def constructor name
+			@name = name
+
+		def speak
+			console.info "{@name} makes a noise."
+
+	class Lion < Cat
+		def speak
+			super.speak()
+			console.info "{@name} roars."
+
+	let lion = Lion.new('Fuzzy')
+
+	lion.speak()
+	eq $1.log, ['Fuzzy makes a noise.','Fuzzy roars.']
+
