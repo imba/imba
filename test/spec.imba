@@ -122,8 +122,8 @@ global class Spec < SpecComponent
 	def test name, blk
 		if name isa Function
 			blk = name
-			name = @blocks.length + 1
-		@blocks.push SpecExample.new(name, blk, self)
+			name = @context.blocks.length + 1
+		@context.blocks.push SpecExample.new(name, blk, @context)
 
 	def eq actual, expected, options
 		SpecAssert.new(@context, actual,expected, options)
@@ -321,7 +321,7 @@ window.spec = SPEC = Spec.new
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
-global def test name, blk do SPEC.context.test(name,blk)
+global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
 
