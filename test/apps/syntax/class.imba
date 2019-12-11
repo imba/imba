@@ -36,18 +36,73 @@ describe 'Defining classes' do
 		ok Rectangle.new
 
 	test 'Class expressions' do
-		var tmpclass = class
+		# unnamed
+		var expr = class
 			def constructor height, width
 				@height = height
 				@width = width
-		ok tmpclass.new
+		ok expr.new
+		ok expr.name == 'expr'
 
-describe 'Class' do
+		# named
+		var expr = class NamedClass
+			def constructor height, width
+				@height = height
+				@width = width
+		ok expr.new
+		ok expr.name == 'NamedClass'
 
-	test 'dynamic methods' do
+describe 'Class body and method definitions' do
+
+	test 'Prototype methods' do
+
+		class Rectangle
+			# constructor
+			def constructor height, width
+				@height = height
+				@width = width
+
+			# Getter
+			get area
+				@calcArea()
+
+			# Method
+			def calcArea
+				return @height * @width
+
+	test 'Static methods' do
+
+		class Point
+			# constructor
+			def constructor x, y
+				@x = x
+				@y = y
+
+
+			static def distance a,b
+				const dx = a.x - b.x
+				const dy = a.y - b.y
+				Math.hypot(dx, dy)
+
+		const p1 = Point.new(5, 5)
+		const p2 = Point.new(10, 10)
+
+		eq Point.distance(p2,p1), Math.hypot(5,5)
+
+
+	test 'Dynamic methods' do
 		let method = 'hello'
 		class Example
-			def [method]
-				return true
 
-		ok Example.new.hello() == true
+			static def [method]
+				return 'static'
+
+			def [method]
+				return 'member'
+
+		ok Example.new.hello() == 'member'
+		ok Example.hello() == 'static'
+
+describe 'Subclassing' do
+	test do
+		yes
