@@ -16,7 +16,6 @@ describe 'Array destructuring' do
 		ok a == 1
 		ok b == 2
 
-###
 	test 'Default values' do
 		let a, b
 		[a=5, b=7] = [1]
@@ -39,7 +38,6 @@ describe 'Array destructuring' do
 		const [a, ...b] = [1, 2, 3]
 		eq a, 1
 		eq b, [2,3]
-###
 
 describe 'Object destructuring' do
 	test 'Basic assignment' do
@@ -121,3 +119,29 @@ describe 'Object destructuring' do
 		} = metadata
 
 		ok englishTitle == "Scratchpad" and localeTitle == "JavaScript-Umgebung"
+
+	test 'For from iteration and destructuring' do
+		const people = [
+			{
+				name: 'Mike Smith',
+				family: {
+					mother: 'Jane Smith',
+					father: 'Harry Smith',
+					sister: 'Samantha Smith'
+				},
+				age: 35
+			},
+			{
+				name: 'Tom Jones',
+				family: {
+					mother: 'Norah Jones',
+					father: 'Richard Jones',
+					brother: 'Howard Jones'
+				},
+				age: 25
+			}
+		]
+
+		# var results = for ({name: n, family: {father: f}} of people)
+		# 	console.log('Name: ' + n + ', Father: ' + f);
+

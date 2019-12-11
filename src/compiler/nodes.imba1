@@ -100,7 +100,6 @@ export var OP = do |op, l, r|
 			# r = r.value if r isa VarOrAccess
 			Access.new(op,l,r)
 		when '='
-			return TupleAssign.new(op,l,r) if l isa Tuple
 			Assign.new(op,l,r)
 
 		when '?=','||=','&&='
@@ -211,11 +210,12 @@ var WHILE = do |test,code|
 	While.new(test).addBody(code)
 
 export var SPLAT = do |value|
-	if value isa Assign
-		value.left = Splat.new(value.left)
-		return value
-	else
-		Splat.new(value)
+	Splat.new(value)
+	# if value isa Assign
+	#	value.left = Splat.new(value.left)
+	#	return value
+	# else
+	#	Splat.new(value)
 
 var SEMICOLON_TEST = /;(\s*\/\/.*)?[\n\s\t]*$/
 var RESERVED_TEST = /^(default|char|for)$/
@@ -1405,11 +1405,15 @@ export class VarDeclList < Block
 
 	def add part
 		push(BR) if @nodes:length
-		let expr = VarReference.new(part[0],type)
+		let expr = VarReference.new(part[0],type).set(decl: self)
 		push(part[1] ? Assign.new('=',expr,part[1]) : expr)
 
 	def consume node
 		return self
+
+	# def js
+	# 	let out = super
+
 
 # this is almost like the old VarDeclarations but without the values
 export class VarBlock < ListNode
@@ -1553,14 +1557,7 @@ export class ExpressionBlock < ListNode
 		value.consume(node)
 
 	def addExpression expr
-		# Need to take care of the splat here to.. hazzle
-		if expr.node isa Assign
-			push(expr.left)
-			# make this into a tuple instead
-			# possibly fix this as well?!?
-			return TupleAssign.new('=',Tuple.new(nodes),expr.right)
-		else
-			push(expr)
+		push(expr)
 		self
 
 
@@ -3209,23 +3206,6 @@ export class InterpolatedString < Node
 		str += ')' unless @noparen
 		return str
 
-
-export class Tuple < ListNode
-
-	def c
-		# compiles as an array
-		Arr.new(nodes).c
-
-	def hasSplat
-		filter(|v| v isa Splat )[0]
-
-	def consume node
-		if count == 1
-			return first.consume(node)
-		else
-			throw "multituple cannot consume"
-
-
 # Because we've dropped the Str-wrapper it is kinda difficult
 export class Symbol < Literal
 
@@ -3285,39 +3265,11 @@ export class Arr < Literal
 		!value.some(|v| !v.isPrimitive(yes) )
 
 	def js o
-
 		var val = @value
 		return "[]" unless val
-
-		var splat = splat
 		var nodes = val isa Array ? val : val.nodes
-
-		# for v in @value
-		# 	break splat = yes if v isa Splat
-		# var splat = value.some(|v| v isa Splat)
-
-		if splat
-			# "SPLATTED ARRAY!"
-			# if we know for certain that the splats are arrays we can drop the slice?
-			var slices = []
-			var group = null
-
-			for v in nodes
-				if v isa Splat
-					slices.push(v)
-					group = null
-				else
-					slices.push(group = Arr.new([])) unless group
-					group.push(v)
-
-			"[].concat({AST.cary(slices).join(", ")})"
-		else
-			# very temporary. need a more generic way to prettify code
-			# should depend on the length of the inner items etc
-			# if @indented or option(:indent) or value.@indented
-			#	"[\n{value.c.join(",\n").indent}\n]"
-			var out = val isa Array ? AST.cary(val) : val.c
-			"[{out}]"
+		var out = val isa Array ? AST.cary(val) : val.c
+		"[{out}]"
 
 	def hasSideEffects
 		value.some(|v| v.hasSideEffects )
@@ -4099,31 +4051,29 @@ export class VarReference < ValueNode
 	def loc
 		@value.region
 
-	def set o
-		# hack - workaround for hidden classes perf
-		@export = yes if o:export
-		return self
+	# def set o
+	# 	# hack - workaround for hidden classes perf
+	# 	@export = yes if o:export
+	# 	return self
 
 	def js o
 		# experimental fix
 
 		# what about resolving?
 		var ref = @variable
-		if value isa Obj
+		if value isa Obj or value isa Arr
 			ref = value
 
 		var out = "{AST.mark(@value)}{ref.c}"
 		var keyword = o.es5 ? 'var' : (@type or 'var')
-		# let might still not work perfectly
-		# keyword = 'var' if keyword == 'let'
 
 		if ref && !ref.@declared # .option(:declared)
 			if o.up(VarBlock) # or o.up(VarDeclList) # up varblock??
 				ref.@declared = yes
 
 				# ref.set(declared: yes)
-			elif o.isExpression or @export # why?
-				console.log "autodeclare {@value}"
+			elif o.isExpression or @export
+				# console.log "autodeclare {@value}"
 				ref.autodeclare
 			else
 				out = "{keyword} {out}"
@@ -4132,8 +4082,11 @@ export class VarReference < ValueNode
 
 		# need to think the export through -- like registering somehow
 		# should register in scope - export on analysis++
-		if @export
-			out = "module.exports.{ref.c} = {ref.c}"
+		if option(:decl) and option(:decl).option(:export)
+			out = "export {out}"
+
+		# if @export
+		# 	out = "module.exports.{ref.c} = {ref.c}"
 
 		return out
 
@@ -4173,33 +4126,6 @@ export class VarReference < ValueNode
 export class Assign < Op
 
 	def initialize o, l, r
-		# workaround until we complete transition from lua-style assignments
-		# to always use explicit tuples - then we can move assignments out etc
-		# this will not be needed after we remove support for var a,b,c = 1,2,3
-		if l isa VarReference and l.value isa Arr
-			# converting all nodes to var-references ?
-			# do we need to keep it in a varblock at all?
-			var vars = l.value.nodes.map do |v|
-				# what about inner tuples etc?
-				# keep the splats -- clumsy but true
-				if v isa Splat
-					v.value = VarReference.new(v.value,l.type) unless v.value isa VarReference
-				elif v isa VarReference
-					true
-				else
-					# what about retaining location?
-					# v = v.value if v isa VarOrAccess
-					v = VarReference.new(v,l.type)
-
-				return v
-
-				# v isa VarReference ? v : VarReference.new(v)
-
-			return TupleAssign.new(o,Tuple.new(vars),r)
-
-		if l isa Arr
-			return TupleAssign.new(o,Tuple.new(l.nodes),r)
-
 		# set expression yes, no?
 		@expression = no
 		@traversed = no
@@ -4280,16 +4206,10 @@ export class Assign < Op
 		var lc = l.c
 		var out = "{lc} {AST.mark(@opToken)}{op} {right.c(expression: true)}"
 
-		if option(:export)
-			let ename = l isa VarReference ? l.variable.c : lc
-			out = "exports.{ename} = {out}"
-			# return "{lc} {AST.mark(@opToken)}{op} exports.{ename} = {right.c(expression: true)}"
-
 		if l isa Obj
 			out = "({out})"
 
 		return out
-		# return out
 
 	# FIXME op is a token? _FIX_
 	# this (and similar cases) is broken when called from
@@ -4443,306 +4363,6 @@ export class CompoundAssign < Assign
 			# an alternative would be to just pass
 			up.replace(self,ast)
 		ast.c
-
-
-export class TupleAssign < Assign
-
-	prop op
-	prop left
-	prop right
-	prop type
-
-	def initialize a,b,c
-		@traversed = no
-		@op = a
-		@left = b
-		@right = c
-		@temporary = []
-
-	def isExpressable
-		right.isExpressable
-
-	def addExpression expr
-		if right isa Tuple
-			right.push(expr)
-		else
-			self.right = Tuple.new([right,expr])
-
-		return self
-
-	def visit
-		# if the first left-value is a var-reference, then
-		# all the variables should be declared as variables.
-		# but if we have complex items in the other list - it does become much harder
-
-		# if the first is a var-reference, they should all be(!) .. or splats?
-		# this is really a hacky wao to do it though
-		if left.first.node isa VarReference
-			self.type = left.first.node.type or 'var' # what about let?
-			# should possibly allow real vars as well, no?
-			@vars = left.nodes.filter(|n| n isa VarReference)
-			# collect the vars for tuple for easy access
-
-			# NOTE can improve.. should rather make the whole left be a VarBlock or TupleVarBlock
-
-		right.traverse
-		left.traverse
-		self
-
-	def js o
-		# only for actual inner expressions, otherwise cache the whole array, no?
-		unless right.isExpressable
-
-			return right.consume(self).c
-
-		### a,b,c = arguments ###
-		# - direct. no matter if lvalues are variables or not. Make fake arguments up to the same count as tuple
-
-		### a,*b,b = arguments ###
-		# Need to convert arguments to an array. IF arguments is not referenced anywhere else in scope,
-		# we can do the assignment directly while rolling through arguments
-
-		### a,b = b,a ###
-		# ideally we only need to cache the first value (or n - 1), assign directly when possible.
-
-		### a,b,c = (method | expression) ###
-		# convert res into array, assign from array. Can cache the variable when assigning first value
-
-		# First we need to find out whether we are required to store the result in an array before assigning
-		# If this needs to be an expression (returns?, we need to fall back to the CS-wa)
-
-		var ast = Block.new([])
-		var lft = self.left
-		var rgt = self.right
-		var typ = self.type
-		var vartype = typ
-		var via = null
-
-		var li   = 0
-		var ri   = lft.count
-		var llen = ri
-
-
-		# if @vars
-		# 	p "tuple has {@vars:length} vars"
-
-		# if we have a splat on the left it is much more likely that we need to store right
-		# in a temporary array, but if the right side has a known length, it should still not be needed
-		var lsplat = lft.filter(|v| v isa Splat )[0]
-
-		# if right is an array without any splats (or inner tuples?), normalize it to tuple
-		rgt = Tuple.new(rgt.nodes) if rgt isa Arr && !rgt.splat
-		var rlen = rgt isa Tuple ? rgt.count : null
-
-		# if any values are statements we need to handle this before continuing
-
-		### a,b,c = 10,20,ary ###
-		# ideally we only need to cache the first value (or n - 1), assign directly when possible.
-		# only if the variables are not predefined or predeclared can be we certain that we can do it without caching
-		# if rlen && typ == 'var' && !lsplat
-		# 	# this can be dangerous in edgecases that are very hard to detect
-		# 	# if it becomes an issue, fall back to simpler versions
-		# 	# does not even matter if there is a splat?
-
-		# special case for arguments(!)
-		if !lsplat && rgt == ARGUMENTS
-
-			var pars = scope__.params
-			# forcing the arguments to be named
-			lft.map do |l,i| ast.push OP('=',l.node,pars.at(i,yes).visit.variable) # s.params.at(value - 1,yes)
-
-
-		elif rlen
-			# we have several items in the right part. what about splats here?
-
-			# pre-evaluate rvalues that might be reference from other assignments
-			# we need to check if the rightside values has no side-effects. Cause if
-			# they dont, we really do not need temporary variables.
-
-			# some of these optimizations are quite petty - makes things more complicated
-			# in the compiler only to get around adding a few temp-variables here and there
-
-			# var firstUnsafe = 0
-			# lft.map do |v,i|
-			# 	if v isa VarReference
-			# 		p "left side {i} {v} {v.refnr}"
-
-			# rgt.map do |v,i|
-			# 	if v.hasSideEffects
-			# 		# return if i == 0 or !v.hasSideEffects
-			# 		# return if v isa Num || v isa Str || i == 0
-			# 		# we could explicitly create a temporary variable and adding nodes for accessing etc
-			# 		# but the builtin caching should really take care of this for us
-			# 		# we need to really force the caching though -- since we need a copy of it even if it is a local
-			# 		# we need to predeclare the variables at the top of scope if this does not take care of it
-			#
-			# 		# these are the declarations -- we need to add them somewhere smart
-			# 		@temporary.push(v) # need a generalized way to do this type of thing
-			# 		ast.push(v.cache(force: yes, type: 'swap', declared: typ == 'var'))
-			# 		# they do need to be declared, no?
-
-			# now we can free the cached variables
-			# ast.map do |n| n.decache
-
-			var pre = []
-			var rest = []
-
-			var pairs = lft.map do |l,i|
-				var v = null
-				# determine if this needs to be precached?
-				# if l isa VarReference
-				# 	# this is the first time the variable is referenced
-				# 	# should also count even if it is predeclared at the top
-				# 	if l.refnr == 0
-
-				if l == lsplat
-					v = ArgList.new([])
-					var to = (rlen - (ri - i))
-					v.push(rgt.index(li++)) while li <= to
-					v = Arr.new(v)
-					# ast.push OP('=',l.node,Arr.new(v))
-				else
-					v = rgt.index(li++)
-				[l.node,v]
-
-				# if l isa VarReference && l.refnr
-			var clean = true
-
-			pairs.map do |v,i|
-				var l = v[0]
-				var r = v[1]
-
-				if clean
-					if l isa VarReference && l.refnr == 0
-						# still clean
-						clean = yes
-					else
-						clean = no
-						pairs.slice(i).map do |part|
-							if part[1].hasSideEffects
-								@temporary.push(part[1]) # need a generalized way to do this type of thing
-								ast.push(part[1].cache(force: yes, pool: 'swap', declared: typ == 'var'))
-
-				# if the previous value in ast is a reference to our value - the caching was not needed
-				if ast.last == r
-					r.decache
-					# simple assign
-					ast.replace(r,OP('=',l,r))
-				else
-					ast.push OP('=',l,r)
-
-			# WARN FIXME Is there not an issue with VarBlock vs not here?
-		else
-			# this is where we need to cache the right side before assigning
-			# if the right side is a for loop, we COULD try to be extra clever, but
-			# for now it is not worth the added compiler complexity
-
-			# iter.cache(force: yes, type: 'iter')
-			# FIXME iter will now be explicitly declared in ast AND in scope?
-			var top = VarBlock.new
-			var iter = util.iterable(rgt, yes)
-			# could set the vars inside -- most likely
-			ast.push(top)
-			top.push(iter)
-
-			if lsplat
-				var len = util.len(iter, yes)
-				var idx = util.counter(0, yes)
-				# cache the length of the array
-				top.push(len) # preassign the length
-				# cache counter to loop through
-				top.push(idx)
-
-			# only if the block is variable based, no?
-			# ast.push(blk = VarBlock.new)
-			# blk = null
-
-			var blktype = (vartype) ? VarBlock : Block
-			var blk = blktype.new([])
-
-			if vartype
-				blk.@type = vartype
-
-			# blk = top if typ == 'var'
-			ast.push(blk)
-
-			# if the lvals are not variables - we need to preassign
-			# can also use slice here for simplicity, but try with while now
-			lft.map do |l,i|
-				if l == lsplat
-					var lvar = l.node
-					var rem = llen - i - 1 # remaining after splat
-
-					if !vartype
-						var arr = util.array(OP('-',len, Num.new(i + rem) ),yes)
-						top.push(arr)
-						lvar = arr.cachevar
-					else
-						ast.push(blk = blktype.new) unless blk
-						var arr = util.array( OP('-',len,Num.new(i + rem) ) )
-						blk.push(OP('=',lvar,arr))
-
-					# if !lvar:variable || !lvar.variable # lvar =
-					# 	top.push()
-					#	p "has variable - no need to create a temp"
-					# blk.push(OP('=',lvar,Arr.new([]))) # dont precalculate size now
-					# max = to = (rlen - (llen - i))
-
-
-					var test = rem ? OP('-',len,rem) : len
-
-					var set = OP('=',
-						OP('.',lvar,OP('-',idx,Num.new(i))),
-						OP('.',iter,OP('++',idx))
-					)
-
-					ast.push(WHILE(OP('<',idx,test), set))
-
-					if !vartype
-						ast.push(blk = Block.new)
-						blk.push(OP('=',l.node,lvar))
-					else
-						blk = null
-
-					# not if splat was last?
-					# ast.push(blk = VarBlock.new)
-
-				elif lsplat
-					ast.push(blk = blktype.new) unless blk
-					# we could cache the raw code of this node for better performance
-					blk.push(OP('=',l,OP('.',iter,OP('++',idx))))
-				else
-					ast.push(blk = blktype.new) unless blk
-					blk.push(OP('=',l,OP('.',iter,Num.new(i) )))
-
-		# if we are in an expression we need to autodecare vars
-		if o.isExpression and @vars
-			for v in @vars
-				v.variable.autodeclare
-
-		elif @vars
-			for v in @vars
-				v.variable.predeclared
-
-		# is there any reason to make it into an expression?
-		if ast.isExpressable # NO!
-			# if this is an expression
-			var out = ast.c(expression: yes)
-			out = "{typ} {out}" if typ and !o.isExpression # not in expression
-			return out
-		else
-			var out = ast.c
-			# if this is a varblock
-			return out
-
-
-	def c o
-		var out = super(o)
-		# this is only used in tuple -- better to let the tuple hav a separate #c
-		if @temporary && @temporary:length
-			@temporary.map do |temp| temp.decache
-		return out
-
 
 
 # IDENTIFIERS
@@ -6033,6 +5653,8 @@ export class Range < Op
 export class Splat < ValueNode
 
 	def js o
+		return "...{value.c}"
+
 		var par = stack.parent
 		if par isa ArgList or par isa Arr
 			"Array.from({value.c})"
@@ -7191,21 +6813,7 @@ export class Await < ValueNode
 				# should not force the name already??
 				# beware of bugs
 				func.params.at(0,yes,lft.variable.name)
-			elif lft isa Tuple
-				# if this an unfancy tuple, with only vars
-				# we can just use arguments
-
-				if (par.type == 'var' or par.type == 'let') && !lft.hasSplat
-					lft.map do |el,i|
-						func.params.at(i,yes,el.value)
-				else
-					# otherwise, do the whole tuple
-					# make sure it is a var assignment?
-					par.right = ARGUMENTS
-					func.body.unshift(par)
-					func.scope.context
 			else
-				# regular setters
 				par.right = func.params.at(0,yes)
 				func.body.unshift(par)
 				func.scope.context
@@ -7487,8 +7095,8 @@ export class Export < ValueNode
 		# p "Export {value}"
 		# value.set export: self, return: option(:return), default: option(:default)
 
-		if value isa VarOrAccess
-			return "exports.{value.c} = {value.c};"
+		# if value isa VarOrAccess
+		# 	return "exports.{value.c} = {value.c};"
 
 		if value isa ListNode
 			value.map do |item| item.set export: self
