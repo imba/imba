@@ -6476,7 +6476,7 @@ export class Tag < TagLike
 
 		var nodes = body ? body.values : []
 
-		if nodes:length == 1 and nodes[0] isa Str
+		if nodes:length == 1 and nodes[0] isa Str and !isSelf
 			params[4] = nodes[0].c
 			nodes = []
 
