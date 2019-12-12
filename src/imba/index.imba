@@ -30,6 +30,23 @@ imba.setInterval = do |fn,ms|
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
+
+def activateSelectionHandler
+	imba.document.addEventListener('selectionchange') do |e|
+		return if e.handled$
+		e.handled$ = yes
+		
+		let target = imba.document.activeElement
+		if target and target.matches('input,textarea')
+			let custom = CustomEvent.new('selecting',{
+				detail: {
+					start: target.selectionStart
+					end: target.selectionEnd
+				}
+			})
+			target.dispatchEvent(custom)
+	activateSelectionHandler = do yes
+
 def imba.q$ query, ctx
 	(ctx isa Element ? ctx : document).querySelector(query)
 
@@ -38,7 +55,11 @@ def imba.q$$ query, ctx
 
 def imba.inlineStyles styles
 	var el = document.createElement('style')
+	# styles = styles.replace(/\}/g,'}\n')
+	# console.log "add styles",styles,JSON.stringify(styles)
 	el.textContent = styles
+	# el.innerHTML = styles
+	# el.appendChild(document.createTextNode(styles))
 	document.head.appendChild(el)
 	return
 
@@ -286,6 +307,9 @@ class EventHandler
 		var target = event.target
 		var parts = @params
 		var i = 0
+		let commit = @params.length == 0
+
+		# console.log 'handle event',event.type,@params
 
 		for part,i in @params
 			let handler = part
@@ -303,17 +327,21 @@ class EventHandler
 					if typeof param == 'string' && param[0] == '~'
 						let name = param.slice(2)
 
-						if param[1] == '$'
+						if param[1] == '&'
 							# reference to a cache slot
 							args[i] = this[name]
 
-						elif param[1] == '@'
-							if name == 'event'
-								args[i] = event
-							elif name == 'this'
-								args[i] = @element
+						elif param[1] == '$'
+							let target = event
+
+							if name[0] == '$'
+								target = target.detail
+								name = name.slice(1)
+
+							if name == ''
+								args[i] = target
 							else
-								args[i] = event[name]
+								args[i] = target ? target[name] : null
 
 			# check if it is an array?
 			if handler == 'stop'
@@ -322,6 +350,10 @@ class EventHandler
 				event.preventDefault()
 			elif handler == 'ctrl'
 				break unless event.ctrlKey
+			elif handler == 'commit'
+				commit = yes
+			elif handler == 'silence'
+				commit = no
 			elif handler == 'alt'
 				break unless event.altKey
 			elif handler == 'shift'
@@ -340,15 +372,25 @@ class EventHandler
 				if handler[0] == '@'
 					handler = handler.slice(1)
 					context = closure
+				elif handler == 'trigger'
+					
+					let name = args[0]
+					let detail = args[1]
+					let e = detail ? CustomEvent.new(name, bubbles: true, detail: detail) : Event.new(name)
+					let customRes = event.currentTarget.dispatchEvent(e)
+
 				else
 					context = @getHandlerForMethod(event.currentTarget,handler)
 
 			if context
+				commit = yes
 				res = context[handler].apply(context,args)
 			elif handler isa Function
+				commit = yes
 				res = handler.apply(event.currentTarget,args)
 
-		imba.commit()
+		imba.commit() if commit
+		# what if the result is a promise
 
 		return
 
@@ -377,6 +419,9 @@ extend class Element
 	def on$ type, parts, scope
 		var handler = EventHandler.new(parts,scope)
 		var capture = parts.indexOf('capture') >= 0
+
+		if type == 'selecting'
+			activateSelectionHandler()
 
 		@addEventListener(type,handler,capture)
 		return handler
