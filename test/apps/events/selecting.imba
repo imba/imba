@@ -1,0 +1,20 @@
+var name = "Jo"
+
+tag app-root
+
+	def log ...args
+		console.info(args)
+
+	def render
+		<self>
+			<input[name] type='text' :selecting.log($$start,$$end)>
+
+imba.mount(<app-root>)
+
+test do
+	let el = $(input)
+	await spec.tick()
+	eq el.value,name
+	el.focus()
+	await spec.keyboard.type('e')
+	eq $1.log, [[2,2],[3,3]]
