@@ -38,7 +38,7 @@ def activateSelectionHandler
 		
 		let target = imba.document.activeElement
 		if target and target.matches('input,textarea')
-			let custom = CustomEvent.new('selecting',{
+			let custom = CustomEvent.new('selection',{
 				detail: {
 					start: target.selectionStart
 					end: target.selectionEnd
@@ -371,7 +371,8 @@ class EventHandler
 			elif typeof handler == 'string'
 				if handler[0] == '@'
 					handler = handler.slice(1)
-					context = closure
+					context = @closure
+
 				elif handler == 'trigger'
 					
 					let name = args[0]
@@ -420,7 +421,7 @@ extend class Element
 		var handler = EventHandler.new(parts,scope)
 		var capture = parts.indexOf('capture') >= 0
 
-		if type == 'selecting'
+		if type == 'selection'
 			activateSelectionHandler()
 
 		@addEventListener(type,handler,capture)
