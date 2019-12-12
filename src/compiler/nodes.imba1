@@ -6507,6 +6507,9 @@ export class Tag < TagLike
 
 		if option(:assign)
 			ctor = OP('=',option(:assign),LIT(ctor)).c()
+		if option(:ivar)
+
+			ctor = OP('=',OP('.',scope__.context,option(:ivar)),LIT(ctor)).c()
 
 		if !parent
 			@ref = "{tvar}"
