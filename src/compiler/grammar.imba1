@@ -400,7 +400,6 @@ var grammar =
 	# Going to move back to fewer custom tokens
 	TagType: [
 		o 'TAG_TYPE' do TagTypeIdentifier.new(A1)
-		o 'TAG_ID' do TagTypeIdentifier.new(A1)
 	]
 
 	

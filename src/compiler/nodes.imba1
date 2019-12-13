@@ -2527,20 +2527,10 @@ export class TagDeclaration < Code
 		# var initor = null
 		# var sup = superclass
 		var mark = AST.mark(keyword)
-
-		# unless typeof cname == 'string'
-		# 	cname = cname.c
-
-		# var cpath = typeof name == 'string' ? name : name.c
-
-		# @cname = cname
-		# @cpath = cpath
-
-
 		let closure = scope__.parent
 		let clsvar = closure.reusevar('class$')
 		let jsbody = '{' + body.c() + '}'
-		let jshead = "{clsvar.c} = {mark}class extends {sup.c}"
+		let jshead = "{clsvar.c} = {mark}class {name.toClassName} extends {sup.c}"
 		# jshead += " {@cname}" if @cname
 		# jshead += " extends {sup.c}" if sup
 		# jshead = "export {jshead}" if option(:export)
@@ -2549,60 +2539,6 @@ export class TagDeclaration < Code
 
 
 		return js
-
-	def js2 o
-		scope.context.value = @ctx = scope.declare('tag',null,system: yes)
-
-		# var ns = name.ns
-		var mark = AST.mark(option('keyword'))
-		var params = []
-
-		params.push(name.c)
-		var cbody = body.c
-
-		if superclass
-			# WARN what if the superclass has a namespace?
-			# what if it is a regular class?
-			let supname = superclass.name
-			if !supname[0].match(/[A-Z]/)
-				params.push(superclass.c)
-				# supname = helpers.singlequote(supname)
-			else
-				params.push(supname)
-		else
-			params.push(LIT('null'))
-
-		if body.count
-			params.push("function({@ctx.c})\{{cbody}\}")
-		else
-			params.push(LIT('null'))
-
-		params.push(@scope.root.sfco)
-
-		var meth = option(:extension) ? 'extend' : 'define'
-		# var js = "{mark}{scope__.imba.c}.{meth}({params.join(', ')})"
-		var caller = LIT('imbaElements') #  scope__.imbaRef('tagscope')
-		var js = "{mark}{caller}.{meth}({params.join(', ')})"
-
-		if name.isClass
-			let cname = name.name
-			# declare variable
-			js = "var {cname} = {js}"
-
-			if option(:export)
-				js = "{js}\nexports.{option(:default) ? 'default' : cname} = {cname};"
-
-			if option(:return)
-				js += "\nreturn {cname};"
-
-		else
-			if option(:return)
-				js = "return " + js
-
-
-		return js
-
-		# return out
 
 export class Func < Code
 
@@ -4597,7 +4533,6 @@ export class TagTypeIdentifier < Identifier
 
 	def isClass
 		!!@str.match(/^[A-Z]/)
-		# @name[0] == @name[0].toUpperCase and 
 		
 	def isNative
 		!@ns and TAG_TYPES.HTML.indexOf(@str) >= 0
@@ -4607,6 +4542,9 @@ export class TagTypeIdentifier < Identifier
 
 	def toFunctionalType
 		LIT(@str)
+
+	def toClassName
+		helpers.pascalCase(@str)
 
 	def spawner
 		console.log "TagTypeIdentifier shuold never be used"
