@@ -182,7 +182,7 @@ var ROOT = null
 export var NODES = []
 
 var LIT = do |val|
-	Literal.new(val)
+	RawScript.new(val)
 
 var SYM = do |val|
 	Symbol.new(val)
@@ -1900,6 +1900,9 @@ export class ParamList < ListNode
 		var idx = 0
 
 		nodes.forEach do |par,i|
+			if par isa RawScript
+				return
+
 			par.index = idx
 			if par isa NamedParams
 				signature.push('named')
@@ -2383,8 +2386,24 @@ export class ClassDeclaration < Code
 		@body.@delimiter = ''
 		ROOT.entities.add(namepath,self)
 		scope.visit
+
 		body.traverse
+
+		if @superclass and !option(:extension)
+			addMethod('super$',[LIT('k')],'super[k]')
+			addMethod('super$set',[LIT('k,v')],'super[k] = v')
 		self
+
+	def addMethod name, params, mbody, options
+		mbody = [LIT(mbody)] if mbody isa String
+		let func = MethodDeclaration.new(params,mbody or [],Identifier.new(name),null,{})
+		self.body.unshift(func,yes)
+		func.traverse
+		return func
+
+	# def addGetter name, body
+
+	# def addSetter name, body
 
 	def js o
 		scope.virtualize # is this always needed?
@@ -2397,6 +2416,10 @@ export class ClassDeclaration < Code
 			@body.set(braces: yes)
 			return util.extend(name,body).c
 			# return body.c
+
+		# if there are superclasses - add to the body
+		# addMethod('super$set','return super[k] = v')
+
 
 		var o = @options or {}
 		var cname = name isa Access ? name.right : name
@@ -2714,7 +2737,7 @@ export class MethodDeclaration < Func
 			@namepath = '&' + name
 
 	def visit
-		@type = option(:def)?.@value or 'def'
+		@type = option(:type) or (option(:def)?.@value or 'def')
 
 		@decorators = up?.collectDecorators
 		var o = @options
@@ -2742,7 +2765,11 @@ export class MethodDeclaration < Func
 		# instance-method / member
 		if closure isa ClassScope and !target
 			@target = closure.prototype
-			set(prototype: @target,inClassBody: yes)
+			set(
+				prototype: @target,
+				inClassBody: yes,
+				inExtension: closure.node.option('extension')
+			)
 			closure.annotate(self)
 
 		if target isa Self
@@ -2768,11 +2795,10 @@ export class MethodDeclaration < Func
 			let supr = option(:supr)
 			let node = supr:node
 			let block = supr:block
-			# console.log "isConstructor with super!"
+
 			if ref
 				ref.declarator.@defaults = null
 				let op = OP('=',ref,This.new)
-				# console.log "move before?! {block} {op.c}"
 				block.replace node, [node,op]
 
 		self
@@ -3002,6 +3028,7 @@ export class Literal < ValueNode
 	def shouldParenthesizeInTernary
 		no
 
+export class RawScript < Literal
 
 export class Bool < Literal
 
@@ -3709,6 +3736,12 @@ export class Access < Op
 		# if safechain
 		#	p "Access is safechained {rgt.c}"
 
+		if left isa Super and STACK.method and STACK.method.option('inExtension')
+			return CALL(
+				OP('.',scope__.context,'super$'),
+				[rgt isa Identifier ? rgt.toStr : rgt]
+			).c()
+
 
 		if rgt isa Num
 			return ctx.c + "[" + rgt.c + "]"
@@ -3836,7 +3869,7 @@ export class PropertyAccess < Access
 
 
 	def receiver
-		if left isa SuperAccess || left isa Super
+		if left isa Super
 			SELF
 		else
 			null
@@ -3863,26 +3896,6 @@ export class IndexAccess < Access
 		return super if o:force
 		right.cache
 		self
-
-
-export class SuperAccess < Access
-
-	def js o
-		var m = o.method
-		var up = o.parent
-		var deep = o.parent isa Access
-
-		var out = "{left.c}.__super__"
-
-		unless up isa Access
-			out += ".{m.supername.c}"
-			unless up isa Call
-				out += ".apply({m.scope.context.c},arguments)"
-
-		return out
-
-	def receiver
-		SELF
 
 
 export class VarOrAccess < ValueNode
@@ -4197,6 +4210,17 @@ export class Assign < Op
 		var l = left.node
 		var r = right
 
+		if l isa Access and l.left isa Super
+			if let m = STACK.method
+				if m.option('inExtension')
+					let key = l.right
+					key = key.toStr if key isa Identifier
+					# return "{scope.__context.c}.super$set('{l.right.c}')"
+					let op = CALL(
+						OP('.',scope__.context,'super$set'),
+						[key,right]
+					)
+					return op.c(expression: true)
 		# We are setting self(!)
 		# TODO document functionality
 		if l isa Self
@@ -4434,6 +4458,9 @@ export class Identifier < Node
 
 	def toString
 		String(@value)
+
+	def toStr
+		return Str.new("'" + toString + "'")
 
 	def toJSON
 		toString
@@ -4715,7 +4742,14 @@ export class Call < Node
 			lft = callee.left
 			rgt = callee.right
 
-		if callee isa Super or callee isa SuperAccess
+		if callee isa Super
+			if let m = STACK.method
+				# console.log "in method {m} {m.name} {m.option('inExtension')}"
+				if m.option('inExtension')
+					callee = OP('.',callee,m.name)
+					@receiver = scope__.context
+					# callee = @callee = OP('.',scope__.context,'super$')
+					# args.unshift(m.name.toStr) # = ArgList.new
 			# @receiver = scope__.context
 			self
 			# return "supercall"
@@ -8355,17 +8389,28 @@ export class Super < Node
 		let up = @up
 		let sup = LIT('super')
 		let op
+		let virtual = m and m.option('inExtension')
+		# need to know if our method is in the initial declaration
+
+
 		# when super is written all by itself - it means to do the default action
 		unless (up isa Access) or (up isa Call)
 			if m and m.isConstructor
 				op = LIT('super(...arguments)')
+			elif m and virtual
+				op = CALL(OP('.',scope__.context,'super$'),[m.name.toStr])
+				if m.isSetter
+					op = OP('.',scope__.context,'super$set',[m.name.toStr,m.params.at(0)])
+				elif !m.isGetter
+					op = CALL(OP('.',op,'apply'),[scope__.context,LIT('arguments')])
 			elif m
+				# op = virtual ? OP('.',sup,sup) : 
 				op = OP('.',sup,m.name)
 				if m.isSetter
 					op = OP('=',op,m.params.at(0))
 				elif !m.isGetter
 					op = CALL(op,[LIT('...arguments')])
-			return op.c()
+			return op ? op.c() : '/**/'
 
 		if up isa Call and m and !m.isConstructor
 			return OP('.',sup,m.name).c
