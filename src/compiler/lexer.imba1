@@ -369,7 +369,6 @@ export class Lexer
 		o.@tokens = @tokens 
 
 		parse(code)
-
 		closeIndentation unless o:inline
 
 		if !o:silent and @ends:length
@@ -1447,10 +1446,9 @@ export class Lexer
 		token('TERMINATOR','\n',0) unless lastTokenType == 'TERMINATOR' or noNewlines
 		# capping scopes so they dont hang around 
 		@scopes:length = @indents:length
-
-		var ctx = context
-		pair(ctx) if ctx == '%' or ctx == 'TAG' # really?
 		closeDef
+		var ctx = context
+		pair(ctx) if ctx == '%' or ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT' # really?
 		return this
 
 	# Matches and consumes non-meaningful whitespace. tokid the previous token
@@ -1524,11 +1522,11 @@ export class Lexer
 		#	@tokens.pop
 
 		addLinebreaks(lines)
-
-		var ctx = context
 		# WARN now import cannot go over multiple lines
-		pair(ctx) if ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT'
 		closeDef()  # close def -- really?
+		var ctx = context
+		pair(ctx) if ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT'
+		# closeDef()  # close def -- really?
 		this
 
 	# Use a `\` at a line-ending to suppress the newline.
