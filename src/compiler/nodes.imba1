@@ -939,7 +939,6 @@ export class Comment < Meta
 
 	def visit
 		if @value.type == 'HERECOMMENT'
-			
 			let raw = @value.@value
 			let line = raw.slice(0,raw.indexOf('\n')).trim
 
@@ -3824,10 +3823,10 @@ export class PropertyAccess < Access
 	# to create a call and regular access instead
 
 	def js o
-		if var rec = receiver
-			var ast = CALL(OP('.',left,right),[]) # convert to ArgList or null
-			ast.receiver = rec
-			return ast.c
+		# if var rec = receiver
+		# 	var ast = CALL(OP('.',left,right),[]) # convert to ArgList or null
+		# 	ast.receiver = rec
+		# 	return ast.c
 
 		var up = up
 		# really need to fix this - for sure
@@ -4727,10 +4726,7 @@ export class Call < Node
 			callee = @callee = Access.new(callee.op,callee.left,callee.right)
 			# console.log "unwrapping the propertyAccess"
 
-		if rgt isa Identifier and rgt.value == 'len' and args.count == 0
-			return Util.Len.new([lft or callee]).c
-
-		elif rgt isa Identifier and rgt.value == 'assert' and !splat
+		if rgt isa Identifier and rgt.value == 'assert' and !splat
 			let arg = args.first
 			# if arg isa Op
 			arg.option(:assertion,yes)
@@ -4754,11 +4750,13 @@ export class Call < Node
 			# callee should already be cached now -
 
 		# should just force expression from the start, no?
-		if splat
+		if splat and false
 			# important to wrap the single value in a value, to keep implicit call
 			# this is due to the way we check for an outer Call without checking if
 			# we are the receiver (in PropertyAccess). Should rather wrap in CallArguments
 			let rec = receiver
+			if receiver isa Super
+				rec = scope__.context
 			var ary = (args.count == 1 ? ValueNode.new(args.first.value) : Arr.new(args.list))
 
 			rec.cache # need to cache the context as it will be referenced in apply
@@ -4809,15 +4807,6 @@ export class New < Call
 		var out = "new {callee.c}"
 		out += '()' unless o.parent isa Call
 		out
-
-export class SuperCall < Call
-
-	def js o
-		var m = o.method
-		self.receiver = SELF
-		self.callee = "{m.target.c}.super$.prototype.{m.name.c}"
-		super
-
 
 
 export class ExternDeclaration < ListNode
@@ -6312,7 +6301,7 @@ export class TagSlotProxy < TagLike
 	def tagvarprefix
 		oid+'S'
 
-export class Tag < TagLike	
+export class Tag < TagLike
 	prop attrmap
 
 	def setup
@@ -6506,6 +6495,8 @@ export class Tag < TagLike
 		var ctor = "{tvar}={create_}({params.join(',')})"
 
 		if option(:assign)
+			# push it into ctor if it is not a variable assignment
+			# otherwise we always want to assign it
 			ctor = OP('=',option(:assign),LIT(ctor)).c()
 		if option(:ivar)
 
@@ -8352,11 +8343,33 @@ export class RootScopeContext < ScopeContext
 export class Super < Node
 
 	def visit
+		@method = STACK.method
+		@up = STACK.parent
 		if var m = STACK.method
 			m.set(supr: {node: STACK.blockpart, block: STACK.block})
 		self
 
+
 	def c
+		let m = @method
+		let up = @up
+		let sup = LIT('super')
+		let op
+		# when super is written all by itself - it means to do the default action
+		unless (up isa Access) or (up isa Call)
+			if m and m.isConstructor
+				op = LIT('super(...arguments)')
+			elif m
+				op = OP('.',sup,m.name)
+				if m.isSetter
+					op = OP('=',op,m.params.at(0))
+				elif !m.isGetter
+					op = CALL(op,[LIT('...arguments')])
+			return op.c()
+
+		if up isa Call and m and !m.isConstructor
+			return OP('.',sup,m.name).c
+
 		return "super"
 		# need to find the stuff here
 		# this is really not that good8
