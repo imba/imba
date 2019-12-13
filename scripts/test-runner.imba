@@ -8,7 +8,7 @@ var browser
 def getFiles(dir, o = [])
 	fs.readdirSync(dir, withFileTypes: true).filter do |src|
 		let fullpath = path.resolve(dir, src.name)
-		if fullpath.indexOf('.imba') >= 0
+		if fullpath.match(/\.imba$/)
 			o.push(fullpath)
 		elif src.isDirectory()
 			getFiles(fullpath,o)
