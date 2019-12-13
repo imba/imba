@@ -3150,6 +3150,7 @@ export class InterpolatedString < Node
 		str = str.replace(/\n/g, '\\\n')
 
 	def js o
+		var kind = String(option("open") or '"')
 		# creating the string
 		var parts = []
 		var str = @noparen ? '' : '('
@@ -3157,7 +3158,7 @@ export class InterpolatedString < Node
 		@nodes.map do |part,i|
 			if part isa Token and part.@type == 'NEOSTRING'
 				# esca
-				parts.push('"' + escapeString(part.@value) + '"')
+				parts.push(kind + escapeString(part.@value) + kind)
 			elif part
 				if i == 0
 					# force first part to be string
