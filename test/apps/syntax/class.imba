@@ -106,7 +106,13 @@ test 'Super class calls with super' do
 		def speak
 			console.info "{@name} makes a noise."
 
+		get alias
+			@name
+
 	class Lion < Cat
+		get alias
+			'Lion ' + super.alias
+
 		def speak
 			super.speak()
 			console.info "{@name} roars."
@@ -115,6 +121,7 @@ test 'Super class calls with super' do
 
 	lion.speak()
 	eq $1.log, ['Fuzzy makes a noise.','Fuzzy roars.']
+	eq lion.alias, 'Lion Fuzzy'
 
 test 'Reopen class' do
 	class Cat
@@ -124,6 +131,8 @@ test 'Reopen class' do
 		get age
 			10
 
+	# add test for
+	# calling super is not allowed inside class extend
 
 	extend class Cat
 
@@ -139,3 +148,4 @@ test 'Reopen class' do
 
 	ok cat.age == 10
 	ok cat.health == 100
+
