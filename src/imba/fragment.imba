@@ -56,10 +56,6 @@ extend class DocumentFragment
 		child.parentNode && child.parentNode.removeChild(child)
 		self
 
-def imba.createLiveFragment bitflags, options
-	var el = imba.document.createDocumentFragment()
-	el.setup$(bitflags, options)
-	return el
 
 
 class TagFragment
@@ -203,9 +199,12 @@ class IndexedTagFragment < TagFragment
 		#parent.removeChild(item)
 		return
 
+export def createLiveFragment bitflags, options
+	var el = imba.document.createDocumentFragment()
+	el.setup$(bitflags, options)
+	return el
 
-
-def imba.createFragment bitflags, parent
+export def createFragment bitflags, parent
 	if bitflags & $TAG_INDEXED$
 		return IndexedTagFragment.new(bitflags,parent)
 	else

@@ -71,6 +71,11 @@ def imba.toCamelCase str
 	else
 		str
 
+def imba.createLiveFragment bitflags, options
+	var el = imba.document.createDocumentFragment()
+	el.setup$(bitflags, options)
+	return el
+
 var setterCache = {}
 
 # not to be used anymore?
@@ -231,8 +236,6 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 	return el
 
 
-
-
 def imba.mount element, into
 	# automatic scheduling of element - even before
 	element.__schedule = yes
@@ -248,37 +251,6 @@ class ImbaElementRegistry
 		# console.log "define element",name,klass
 		root.customElements.define(name,klass)
 		# klass.prototype.__sfc = options && options.id || null
-		return klass
-
-	def define2 name, supr, body, options
-		supr ||= 'imba-element'
-
-		var superklass = HTMLElement
-
-		if supr isa String
-			if supr == 'component'
-				supr = 'imba-component'
-
-			superklass = self.get(supr)
-
-		var klass = `class extends superklass {}`
-
-		# call supplied body
-		body(klass) if body
-
-		var proto = klass.prototype
-
-		# sfc stuff
-		# if options and options.id
-		proto.__sfc = options && options.id || null
-
-		if proto.mount
-			proto.connectedCallback ||= do this.mount()
-
-		if proto.unmount
-			proto.disconnectedCallback ||= do this.unmount()
-
-		root.customElements.define(name,klass)
 		return klass
 
 root.imbaElements = ImbaElementRegistry.new()
@@ -498,19 +470,19 @@ Element.prototype.appendChild$ = Element.prototype.appendChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
 
-require './fragment'
+# import './fragment'
+import {createLiveFragment,createFragment} from './fragment'
+
+imba.createLiveFragment = createLiveFragment
+imba.createFragment = createFragment
 
 # Create custom tag with support for scheduling and unscheduling etc
-var ImbaElement = `class extends HTMLElement {
-	constructor(){
-		super();
-		this.setup$();
-		if(this.initialize) this.initialize();
-		if(this.build) this.build();
-	}
-}`
 
-extend class ImbaElement
+class ImbaElement < HTMLElement
+	def constructor
+		super()
+		this.setup$()
+		this.build() if this.build
 
 	def setup$
 		#slots = {}
@@ -554,12 +526,7 @@ extend class ImbaElement
 	def awaken
 		#schedule = true
 
-var ImbaComponent = `class extends ImbaElement {
-	
-}`
-
 root.customElements.define('imba-element',ImbaElement)
-root.customElements.define('imba-component',ImbaComponent)
 
 
 def imba.createProxyProperty target
