@@ -13,6 +13,8 @@ import SourceMap from './sourcemap'
 var HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 var HTML_TAGS_UNSAFE = "article aside header section".split(" ")
 
+var SVG_TAGS = "svg g rect circle line polygon path".split(" ")
+
 var HTML_ATTRS =
 	a: "href target hreflang media download rel type ping referrerpolicy"
 	audio: "autoplay controls crossorigin loop muted preload src"
@@ -4537,6 +4539,9 @@ export class TagTypeIdentifier < Identifier
 		
 	def isNative
 		!@ns and TAG_TYPES.HTML.indexOf(@str) >= 0
+
+	def isSVG
+		!@ns and TAG_TYPES.SVG.indexOf(@str) >= 0
 	
 	def isSimpleNative
 		isNative and !(/input|textarea|select|form|iframe/).test(@str)
@@ -5813,7 +5818,7 @@ export class TagAttr < TagPart
 		elif ns
 			# should be setPath instead?
 			"setNestedAttr('{ns}','{key}',{val}{add})"
-		elif key.indexOf("aria-") == 0
+		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG)
 			"setAttribute('{key}',{val})"
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}={val}"
@@ -6398,7 +6403,12 @@ export class Tag < TagLike
 		type isa TagTypeIdentifier and type.isSimpleNative
 	
 	def create_
-		isFragment ? LIT('imba.createLiveFragment') : LIT('imba.createElement')
+		if isFragment
+			LIT('imba.createLiveFragment')
+		elif isSVG
+			LIT('imba.createSVGElement')
+		else
+			LIT('imba.createElement')
 
 
 	def bodyScope
@@ -6410,6 +6420,9 @@ export class Tag < TagLike
 
 	def isFragment
 		tagName == 'fragment'
+
+	def isSVG
+		type isa TagTypeIdentifier and type.isSVG
 
 	def js o
 		var isExpression = STACK.isExpression
@@ -6429,6 +6442,7 @@ export class Tag < TagLike
 		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type.isClass ? type.name : "'" + type.@value + "'"))
 
 		var wasInline = o:inline
+		var isSVG = self.isSVG
 		var isReactive = self.isReactive
 
 		var canInline = no
@@ -6633,6 +6647,7 @@ export class Tag < TagLike
 						add "{bvar} || {ref}.bind$('{item.key}',{mods},{bval})"
 
 				else
+					item.option(svg: true) if isSVG
 					let val = item.value
 					item.value = LIT("{iref}={vvar}")
 					add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{item.js(o)}))"

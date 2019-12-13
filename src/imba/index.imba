@@ -210,31 +210,7 @@ imba.commit = do imba.scheduler.add('render')
 ###
 DOM
 ###
-
-def imba.createElement name, bitflags, parent, flags, text, sfc
-	var el = root.document.createElement(name)
-
-	if (bitflags & $TAG_CUSTOM$) or (bitflags === undefined and el.__f != undefined)
-		el.__f = bitflags
-		el.init$()
-
-		if text !== null
-			el.slot$('__').text$(text)
-			text = null
-
-	el.className = flags if flags
-
-	if sfc and sfc.id
-		el.setAttribute('data-'+sfc.id,'')
-
-	if text !== null
-		el.text$(text)
-
-	if parent and parent isa Node
-		el.insertInto$(parent)
-
-	return el
-
+		
 
 def imba.mount element, into
 	# automatic scheduling of element - even before
@@ -730,3 +706,37 @@ extend class HTMLInputElement
 			else
 				@richValue = @model
 
+
+
+def imba.createElement name, bitflags, parent, flags, text, sfc
+	var el = root.document.createElement(name)
+
+	if (bitflags & $TAG_CUSTOM$) or (bitflags === undefined and el.__f != undefined)
+		el.__f = bitflags
+		el.init$()
+
+		if text !== null
+			el.slot$('__').text$(text)
+			text = null
+
+	el.className = flags if flags
+
+	if sfc and sfc.id
+		el.setAttribute('data-'+sfc.id,'')
+
+	if text !== null
+		el.text$(text)
+
+	if parent and parent isa Node
+		el.insertInto$(parent)
+
+	return el
+
+import './svg'
+
+def imba.createSVGElement name, bitflags, parent, flags, text, sfc
+	var el = root.document.createElementNS("http://www.w3.org/2000/svg",name)
+	el.className.baseVal = flags if flags
+	if parent and parent isa Node
+		el.insertInto$(parent)
+	return el
