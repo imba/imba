@@ -15,6 +15,9 @@ class Animal
 	def test ...params
 		return params
 
+	def something
+		yes
+
 class Cat < Animal
 
 	def constructor
@@ -50,3 +53,19 @@ test do
 
 test do
 	eq Dog.new(1,2,3).params, [1]
+
+# should still work when extending class
+test do
+	extend class Cat
+		set alias value
+			super
+
+		def something
+			eq super, true
+			eq super(), true
+			eq super.test(1,2,3), [1,2,3]
+			super.test
+			super.alias = 4
+			eq #alias, 4
+
+	Cat.new.something()
