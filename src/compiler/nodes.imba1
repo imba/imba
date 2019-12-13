@@ -6256,6 +6256,8 @@ export class TagLoopFragment < TagLike
 		@cvar || tagvar('c')
 
 	def js o
+		if stack.isExpression
+			return CALL(FN([],[self]),[]).c
 		# if @tag and @childTags
 		let iref = LIT('imba.createFragment')
 		# should know how many inner slots this fragment has?
