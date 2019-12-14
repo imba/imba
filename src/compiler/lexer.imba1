@@ -1146,13 +1146,13 @@ export class Lexer
 					var len = string:length
 					# if this has no interpolation?
 					# we are now messing with locations - beware
-					token 'STRING_START', string.charAt(0), 1
-					interpolateString(string.slice 1, -1)
+					token('STRING_START', string.charAt(0), 1)
+					interpolateString(string.slice(1, -1),heredoc: true)
 					token 'STRING_END', string.charAt(len - 1), 1, string:length - 1
 				else
 					var len = string:length
 					# string = string.replace(MULTILINER, '\\\n')
-					token 'STRING', escapeStr(string), len
+					token 'STRING', escapeStr(string,true), len
 			else
 				return 0
 
