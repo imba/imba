@@ -4985,7 +4985,8 @@ export class If < ControlFlow
 	def consume node
 		if node isa TagLike
 			# now we are reconsuming this
-			if node.body == self
+			node.flag(F.TAG_HAS_BRANCHES)
+			if node.body == self or node isa TagLoopFragment
 				@body = @body.consume(node) if @body
 				@alt = @alt.consume(node) if @alt
 				return self
@@ -5818,7 +5819,8 @@ export class TagAttr < TagPart
 		elif ns
 			# should be setPath instead?
 			"setNestedAttr('{ns}','{key}',{val}{add})"
-		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG)
+		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
+			# how do we remove attribute then?
 			"setAttribute('{key}',{val})"
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}={val}"
@@ -6246,11 +6248,18 @@ export class TagBranchFragment < TagLike
 		return out
 
 export class TagLoopFragment < TagLike
+
+	def isKeyed
+		hasFlag(F.TAG_KEYED) or hasFlag(F.TAG_HAS_BRANCHES)
+
 	def consumeChildren
 		super
 
-		if @consumed:length == 1
-			flag(@consumed[0].option(:key) ? F.TAG_KEYED : F.TAG_INDEXED)
+		# determine if the order of elements will ever change inside loop
+		if @consumed.every(do $1 isa Tag and !$1.option(:key)) and !hasFlag(F.TAG_HAS_BRANCHES)
+			flag(F.TAG_INDEXED)
+		else
+			flag(F.TAG_KEYED)
 
 	def cvar
 		@cvar || tagvar('c')
@@ -6506,6 +6515,7 @@ export class Tag < TagLike
 				@ref = tvar
 				o:inline = yes if isExpression
 
+				# TODO better determination re. if we need a cache or not
 				if @consumed:length or @dynamics:length
 					add "{cvar} = {tvar}.${oid} || ({tvar}.${oid}=\{\})"
 			else
@@ -6542,6 +6552,9 @@ export class Tag < TagLike
 
 			elif parent isa TagLoopFragment
 				# what if we are not reactive at all?
+				if parent.isKeyed and !option(:key)
+					option(:key,OP('+',LIT("'{oid}$'"),parent.kvar))
+					# @ref = "{parent.cvar}[{parent.kvar}]"
 
 				if option(:key)
 					add "{kvar}={option(:key).c}"
@@ -6552,12 +6565,13 @@ export class Tag < TagLike
 
 				# if we add our own bvar?
 				@bvar = tagvar(:b)
-				add "{bvar}={dvar}=1" # only if we have dynamic stuff?
-				add "{tvar} = {ref} || ({bvar}={dvar}=0,{ref} = {ctor})"
+				add "{tvar} = ({bvar}={dvar}=1,{ref}) || ({bvar}={dvar}=0,{ref} = {ctor})"
 				@ref = "{tvar}"
 				# dont add cvar always!
-				@cvar = tagvar(:c)
-				add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
+				if @dynamics:length or (@consumed:length and nodes:length)
+					# console.log "has dynamics? {@dynamics:length}",@consumed.map(|v| v:constructor:name)
+					@cvar = tagvar(:c)
+					add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
 
 			elif !isReactive
 				add "({ctor})"
@@ -6678,10 +6692,11 @@ export class Tag < TagLike
 				add item.c(o)
 
 		if parent isa TagLoopFragment
-			if parent.isIndexed
-				add "{parent.kvar}++"
-			else
+			
+			if parent.isKeyed
 				add "{parent.ref}.push({tvar},{parent.kvar}++,{kvar})"
+			elif parent.isIndexed
+				add "{parent.kvar}++"
 
 		if shouldEnd
 			foot.push(isSelf ? "{tvar}.close$({dvar})" : "{tvar}.end$({dvar})")
