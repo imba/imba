@@ -97,6 +97,12 @@ export var F =
 # Helpers for operators
 export var OP = do |op, l, r|
 	var o = String(op)
+	if o == '-' and !r and l isa Num
+		l.@value = -l.toNumber
+		return l
+	elif o == '+' and !r and l isa Num
+		return l
+
 	switch o
 		when '.'
 			r = Identifier.new(r) if r isa String
@@ -3054,6 +3060,9 @@ export class Num < Literal
 
 	def toString
 		String(@value)
+
+	def toNumber
+		parseFloat(String(@value))
 
 	def isPrimitive deep
 		yes

@@ -981,8 +981,8 @@ var grammar =
 	Operation: [
 		o 'UNARY Expression' do AST.OP A1, A2
 		o 'SQRT Expression' do AST.OP A1, A2
-		o('-     Expression', &, prec: 'UNARY') do Op.new '-', A2
-		o('+     Expression', &, prec: 'UNARY') do Op.new '+', A2
+		o('-     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # Op.new '-', A2
+		o('+     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # do Op.new '+', A2
 		o '-- SimpleAssignable' do UnaryOp.new '--', null, A2
 		o '++ SimpleAssignable' do UnaryOp.new '++', null, A2
 		o 'SimpleAssignable --' do UnaryOp.new '--', A1, null, true
