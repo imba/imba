@@ -13,7 +13,8 @@ import SourceMap from './sourcemap'
 var HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
 var HTML_TAGS_UNSAFE = "article aside header section".split(" ")
 
-var SVG_TAGS = "svg g rect circle line polygon path".split(" ")
+# var SVG_TAGS = "svg g rect circle line polygon path".split(" ")
+var SVG_TAGS = " a animate animateMotion animateTransform circle clipPath color-profile defs desc discard ellipse feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feDropShadow feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feImage feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence filter foreignObject g hatch hatchpath image line linearGradient marker mask mesh meshgradient meshpatch meshrow metadata mpath path pattern polygon polyline radialGradient rect script set solidcolor stop style svg switch symbol text textPath title tspan unknown use view".split(" ")
 
 var HTML_ATTRS =
 	a: "href target hreflang media download rel type ping referrerpolicy"
@@ -4541,7 +4542,7 @@ export class TagTypeIdentifier < Identifier
 		!@ns and TAG_TYPES.HTML.indexOf(@str) >= 0
 
 	def isSVG
-		!@ns and TAG_TYPES.SVG.indexOf(@str) >= 0
+		@ns == 'svg' or (!isNative and !@ns and TAG_TYPES.SVG.indexOf(@str) >= 0)
 	
 	def isSimpleNative
 		isNative and !(/input|textarea|select|form|iframe/).test(@str)
@@ -6016,6 +6017,15 @@ class TagLike < Node
 	def isReactive
 		yes
 
+	def isSVG
+		@isSVG ?= (@parent ? @parent.isSVG : false)
+
+	def parentTag
+		let el = @parent
+		while el and !(el isa Tag)
+			el = el.@parent
+		return el
+
 	def setup
 		@traversed = no
 		@consumed = []
@@ -6037,7 +6047,7 @@ class TagLike < Node
 			node = TagContent.new(value: node)
 		elif node isa Tag
 			self
-		@consumed.push(node)
+		@consumed.push(node) # why consume if node isa String?
 		node.@parent = self
 		return node
 
@@ -6412,6 +6422,9 @@ export class Tag < TagLike
 		
 	def isNative
 		type isa TagTypeIdentifier and type.isSimpleNative
+
+	def isSVG
+		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or @parent and @parent.isSVG)
 	
 	def create_
 		if isFragment
@@ -6421,19 +6434,12 @@ export class Tag < TagLike
 		else
 			LIT('imba.createElement')
 
-
-	def bodyScope
-		let v = (@options:close and @options:close.value)
-		v == '->' ? 'open' : (v == '=>' ? 'closed' : null)
-
 	def isReactive
 		@parent ? @parent.isReactive : !(scope__ isa RootScope)
 
 	def isFragment
 		tagName == 'fragment'
 
-	def isSVG
-		type isa TagTypeIdentifier and type.isSVG
 
 	def js o
 		var isExpression = STACK.isExpression
