@@ -919,7 +919,7 @@ export class Lexer
 			elif typ == 'VAR' or typ == 'CONST' or typ == 'LET'
 				let ltyp = @lastTyp
 				# console.log "last val before var,const,let {@lastTyp}"
-				if ltyp != 'TERMINATOR' and ltyp != 'INDENT' and ltyp != 'EXPORT'
+				if ltyp != 'TERMINATOR' and ltyp != 'INDENT' and ltyp != 'EXPORT' and ltyp
 					typ = "INLINE_{typ}"
 
 				if @lastVal == 'export'

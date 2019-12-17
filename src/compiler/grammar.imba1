@@ -143,7 +143,7 @@ var grammar =
 
 		o 'EXPORT EXPORT_ALL FROM String' do
 			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2)],A4)
-		o 'EXPORT EXPORT_ALL AS Identifier FROM String' do
+		o 'EXPORT EXPORT_ALL AS AnyIdentifier FROM String' do
 			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2,A4)],A6)
 		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A1) # A2.set(export: A1)
 		# o 'EXPORT Class' do Export.new(A2) A2.set(export: A1)
@@ -169,7 +169,7 @@ var grammar =
 	ImportDeclaration: [
 		o 'IMPORT String' do
 			ImportDeclaration.new(A1,null, A2)
-		o 'IMPORT Identifier FROM String' do
+		o 'IMPORT AnyIdentifier FROM String' do
 			ImportDeclaration.new(A1,[A2], A4)
 		o 'IMPORT ImportNamespaceSpecifier FROM String' do
 			ImportDeclaration.new(A1,[A2], A4)
@@ -177,9 +177,9 @@ var grammar =
 			ImportDeclaration.new(A1,null, A5)
 		o 'IMPORT { ImportSpecifierList } FROM String' do
 			ImportDeclaration.new(A1,[A3], A6)
-		o 'IMPORT Identifier IMPORT_COMMA ImportNamespaceSpecifier FROM String' do
+		o 'IMPORT AnyIdentifier IMPORT_COMMA ImportNamespaceSpecifier FROM String' do
 			ImportDeclaration.new(A1,[A2,A4], A6)
-		o 'IMPORT Identifier IMPORT_COMMA { ImportSpecifierList } FROM String' do
+		o 'IMPORT AnyIdentifier IMPORT_COMMA { ImportSpecifierList } FROM String' do
 			ImportDeclaration.new(A1,[A2,A5], A8)
 	]
 
@@ -188,7 +188,7 @@ var grammar =
 	]
 
 	ImportNamespaceSpecifier: [
-		o 'IMPORT_ALL AS Identifier' do ImportNamespaceSpecifier.new(Literal.new(A1),A3)
+		o 'IMPORT_ALL AS AnyIdentifier' do ImportNamespaceSpecifier.new(Literal.new(A1),A3)
 	]
 
 	ImportSpecifierList: [
@@ -200,10 +200,10 @@ var grammar =
 	]
 
 	ImportSpecifier: [
-		o 'Identifier' do ImportSpecifier.new(A1)
-		o 'Identifier AS Identifier' do ImportSpecifier.new(A1, A3)
+		o 'AnyIdentifier' do ImportSpecifier.new(A1)
+		o 'AnyIdentifier AS AnyIdentifier' do ImportSpecifier.new(A1, A3)
 		o 'DEFAULT' do ImportSpecifier.new(Literal.new(A1))
-		o 'DEFAULT AS Identifier' do ImportSpecifier.new(Literal.new(A1), A3)
+		o 'DEFAULT AS AnyIdentifier' do ImportSpecifier.new(Literal.new(A1), A3)
 	]
 
 	Require: [
@@ -241,6 +241,11 @@ var grammar =
 	# A literal identifier, a variable name or property.
 	Identifier: [
 		o 'IDENTIFIER' do Identifier.new A1
+	]
+
+	AnyIdentifier: [
+		o 'CONST_ID' do Identifier.new(A1)
+		o 'IDENTIFIER' do Identifier.new(A1)
 	]
 
 	Key: [
@@ -873,15 +878,12 @@ var grammar =
 		o 'Statement  ForBody' do A2.addBody([A1])
 		o 'Expression ForBody' do A2.addBody([A1])
 		o 'ForBody    Block' do A1.addBody(A2)
+		o 'ForBody    Block ELSE Block' do A1.addBody(A2).addElse(A4)
 	]
 
 	ForKeyword: [
 		o 'FOR'
 		o 'POST_FOR'
-	]
-
-	ForBlock: [
-		o 'ForBody Block' do A1.addBody(A2)
 	]
 
 	ForBody: [
