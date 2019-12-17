@@ -5040,6 +5040,7 @@ export class Loop < Statement
 	prop options
 	prop body
 	prop catcher
+	prop elseBody
 
 	def loc
 		var a = @options:keyword
@@ -5067,6 +5068,10 @@ export class Loop < Statement
 
 	def addBody body
 		self.body = AST.blk(body)
+		self
+
+	def addElse block
+		self.elseBody = block
 		self
 
 	def isReactive
@@ -6257,6 +6262,7 @@ export class TagBranchFragment < TagLike
 		let inserts = []
 
 		for item in @consumed when TagLike
+			# we need to get nested items as well?
 			item.@tvar = tagvar(item.oid + '$')
 			inserts.push(item.@tvar)
 
@@ -6290,9 +6296,10 @@ export class TagLoopFragment < TagLike
 		let iref = LIT('imba.createFragment')
 		# should know how many inner slots this fragment has?
 		let cache = parent.cvar
+		let parentRef = parent isa TagBranchFragment ? LIT('null') : parent.tvar
 
 		let out = ""
-		out += "{tvar} = {cache}.{oid} || ({cache}.{oid} = {tvar} = {iref}({@flags},{parent.tvar}));\n"
+		out += "{tvar} = {cache}.{oid} || ({cache}.{oid} = {tvar} = {iref}({@flags},{parentRef}));\n"
 		@ref = "{tvar}"
 		out += "{kvar} = 0;\n"
 		out += "{cvar}={tvar}.$;\n"
@@ -6574,9 +6581,11 @@ export class Tag < TagLike
 				if option(:key)
 					add "{kvar}={option(:key).c}"
 					@ref = "{parent.cvar}[{kvar}]"
-
 				elif parent.isIndexed
 					@ref = "{parent.cvar}[{parent.kvar}]"
+				# else
+				#	add "{kvar}='{oid.c}$'={parent.kvar}"
+				#	@ref = "{parent.cvar}[{parent.kvar}]"
 
 				# if we add our own bvar?
 				@bvar = tagvar(:b)
@@ -6713,11 +6722,14 @@ export class Tag < TagLike
 			elif parent.isIndexed
 				add "{parent.kvar}++"
 
+		elif isFragment and parent and !(parent isa TagBranchFragment)
+			add "{fragment.ref}.insert$({tvar},{@flags})"
+
 		if shouldEnd
+			foot.push("{bvar} || !{tvar}.setup || {tvar}.setup({dvar})") unless isSelf
 			foot.push(isSelf ? "{tvar}.close$({dvar})" : "{tvar}.end$({dvar})")
 
-		if isFragment and parent
-			add "{fragment.ref}.insert$({tvar},{@flags})"
+
 
 		if option(:fragmented)
 			add "imba.ctx=null"
