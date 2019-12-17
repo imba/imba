@@ -31,7 +31,7 @@ extend class DocumentFragment
 		else
 			Element.prototype.insert$.call(this,item,options,toReplace or #end)
 
-	def insertInto$ parent
+	def insertInto$ parent, before
 		unless #parent
 			#parent = parent
 			parent.appendChild$(this)
@@ -56,8 +56,6 @@ extend class DocumentFragment
 		child.parentNode && child.parentNode.removeChild(child)
 		self
 
-
-
 class TagFragment
 
 	def constructor f, parent
@@ -66,7 +64,7 @@ class TagFragment
 
 		if !(f & $TAG_FIRST_CHILD$) and self isa KeyedTagFragment
 			#start = imba.document.createComment('start')
-			#parent.appendChild(#start) if #parent
+			#parent.appendChild(#start) if parent # not if inside tagbranch
 
 		unless f & $TAG_LAST_CHILD$
 			#end = imba.document.createComment('end')
@@ -76,11 +74,29 @@ class TagFragment
 
 	def appendChild$ item, index
 		# we know that these items are dom elements
-		if #end
+		if #end and #parent
 			#end.insertBeforeBegin$(item)
-		else
+		elif #parent
 			#parent.appendChild(item)
 		return
+
+	def replaceWith$ other
+		@detachNodes()
+		#end.insertBeforeBegin$(other)
+		#parent.removeChild(#end)
+		#parent = null
+		console.log "replace TagFragment with other!",other,self
+		return
+
+	def joinBefore$ before
+		@insertInto$(before.parentNode,before)
+
+	def insertInto$ parent, before
+		unless #parent
+			#parent = parent
+			before ? before.insertBeforeBegin$(#end) : parent.appendChild$(#end)
+			@attachNodes()
+		return this
 
 	def setup
 		self
@@ -132,7 +148,7 @@ class KeyedTagFragment < TagFragment
 		if index > 0
 			let other = @array[index - 1]
 			# will fail with text nodes
-			other.insertAdjacentElement('afterend',item)
+			other.insertAfterEnd$(item)
 		elif #start
 			#start.insertAfterEnd$(item)
 		else
@@ -143,6 +159,16 @@ class KeyedTagFragment < TagFragment
 		# @map.delete(item)
 		# what if this is a fragment or virtual node?
 		if item.parentNode == #parent
+			#parent.removeChild(item)
+		return
+
+	def attachNodes
+		for item,i in @array
+			#end.insertBeforeBegin$(item)
+		return
+
+	def detachNodes
+		for item in @array
 			#parent.removeChild(item)
 		return
 
@@ -174,12 +200,9 @@ class IndexedTagFragment < TagFragment
 		@$ = []
 		@length = 0
 
-	def push item, idx
-		return
-
 	def end$ len
 		let from = @length
-		return if from == len
+		return if from == len or !#parent
 		let array = @$
 
 		if from > len
@@ -189,6 +212,19 @@ class IndexedTagFragment < TagFragment
 			while len > from
 				@appendChild$(array[from++])
 		@length = len
+		return
+
+	def attachNodes
+		for item,i in @$
+			break if i == @length
+			#end.insertBeforeBegin$(item)
+		return
+
+	def detachNodes
+		let i = 0
+		while i < @length
+			let item = @$[i++]
+			#parent.removeChild(item)
 		return
 
 	def insertInto parent, slot
