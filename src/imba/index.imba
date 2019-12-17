@@ -30,7 +30,6 @@ imba.setInterval = do |fn,ms|
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
-
 def activateSelectionHandler
 	imba.document.addEventListener('selectionchange') do |e|
 		return if e.handled$
@@ -46,6 +45,7 @@ def activateSelectionHandler
 			})
 			target.dispatchEvent(custom)
 	activateSelectionHandler = do yes
+
 
 def imba.q$ query, ctx
 	(ctx isa Element ? ctx : document).querySelector(query)
@@ -217,6 +217,8 @@ def imba.mount element, into
 	element.__schedule = yes
 	(into or document.body).appendChild(element)
 
+
+
 class ImbaElementRegistry
 
 	def get name
@@ -231,117 +233,7 @@ class ImbaElementRegistry
 
 root.imbaElements = ImbaElementRegistry.new()
 
-var keyCodes = {
-	esc: [27],
-	tab: [9],
-	enter: [13],
-	space: [32],
-	up: [38],
-	down: [40],
-	del: [8,46]
-}
-
-# could cache similar event handlers with the same parts
-class EventHandler
-	def constructor params,closure
-		@params = params
-		@closure = closure
-
-	def getHandlerForMethod el, name
-		return null unless el
-		el[name] ? el : @getHandlerForMethod(el.parentNode,name)
-
-	def handleEvent event
-		var target = event.target
-		var parts = @params
-		var i = 0
-		let commit = @params.length == 0
-
-		# console.log 'handle event',event.type,@params
-
-		for part,i in @params
-			let handler = part
-			let args = [event]
-			let res
-			let context = null
-
-			if handler isa Array
-				args = handler.slice(1)
-				handler = handler[0]
-
-				for param,i in args
-					# what about fully nested arrays and objects?
-					# ought to redirect this
-					if typeof param == 'string' && param[0] == '~'
-						let name = param.slice(2)
-
-						if param[1] == '&'
-							# reference to a cache slot
-							args[i] = this[name]
-
-						elif param[1] == '$'
-							let target = event
-
-							if name[0] == '$'
-								target = target.detail
-								name = name.slice(1)
-
-							if name == ''
-								args[i] = target
-							else
-								args[i] = target ? target[name] : null
-
-			# check if it is an array?
-			if handler == 'stop'
-				event.stopImmediatePropagation()
-			elif handler == 'prevent'
-				event.preventDefault()
-			elif handler == 'ctrl'
-				break unless event.ctrlKey
-			elif handler == 'commit'
-				commit = yes
-			elif handler == 'silence'
-				commit = no
-			elif handler == 'alt'
-				break unless event.altKey
-			elif handler == 'shift'
-				break unless event.shiftKey
-			elif handler == 'meta'
-				break unless event.metaKey
-			elif handler == 'self'
-				break unless target == event.currentTarget
-			elif handler == 'once'
-				event.currentTarget.removeEventListener(event.type,self)
-			elif keyCodes[handler]
-				unless keyCodes[handler].indexOf(event.keyCode) >= 0
-					break
-
-			elif typeof handler == 'string'
-				if handler[0] == '@'
-					handler = handler.slice(1)
-					context = @closure
-
-				elif handler == 'trigger'
-					
-					let name = args[0]
-					let detail = args[1]
-					let e = detail ? CustomEvent.new(name, bubbles: true, detail: detail) : Event.new(name)
-					let customRes = event.currentTarget.dispatchEvent(e)
-
-				else
-					context = @getHandlerForMethod(event.currentTarget,handler)
-
-			if context
-				commit = yes
-				res = context[handler].apply(context,args)
-			elif handler isa Function
-				commit = yes
-				res = handler.apply(event.currentTarget,args)
-
-		imba.commit() if commit
-		# what if the result is a promise
-
-		return
+import {EventHandler} from './events'
 
 extend class Node
 	# replace this with something else
@@ -353,6 +245,9 @@ extend class Node
 		parent.appendChild$(this)
 		return this
 
+	def insertBefore$ el, prev
+		this.insertBefore(el,prev)
+
 	def insertBeforeBegin$ other
 		@parentNode.insertBefore(other,this)
 
@@ -362,17 +257,54 @@ extend class Node
 		else
 			@parentNode.appendChild(other)
 
+extend class Comment
+	# replace this with something else
+	def replaceWith$ other
+		if other and other.joinBefore$
+			other.joinBefore$(this)
+		else
+			@parentNode.insertBefore$(other,this)
+		# other.insertBeforeBegin$(this)
+		@parentNode.removeChild(this)
+		# @parentNode.replaceChild(other,this)
+		return other
+
 # what if this is in a webworker?
 extend class Element
 
 	def on$ type, parts, scope
 		var handler = EventHandler.new(parts,scope)
 		var capture = parts.indexOf('capture') >= 0
+		var passive = parts.indexOf('passive') >= 0
+		var o = capture
+
+		if passive
+			o = {passive: passive, capture: capture}
 
 		if type == 'selection'
 			activateSelectionHandler()
 
-		@addEventListener(type,handler,capture)
+		elif type == 'resize'
+			unless #resizeObserver
+				#resizeObserver ||= ResizeObserver.new do |entries|
+					console.log "was resized",entries
+					# let name = args[0]
+					# let detail = args[1]
+					# let e = detail ? CustomEvent.new(name, bubbles: true, detail: detail) : Event.new(name)
+					# let customRes = event.currentTarget.dispatchEvent(e)
+				#resizeObserver.observe(this)
+
+		elif type == 'intersect'
+			unless #intersectObserver
+				#intersectObserver ||= IntersectionObserver.new do |entries|
+					
+					for entry of entries
+						let e = CustomEvent.new('intersect', bubbles: false, detail: entry)
+						self.dispatchEvent(e)
+				#intersectObserver.observe(this)
+
+
+		@addEventListener(type,handler,o)
 		return handler
 
 	# inline in files or remove all together?
@@ -384,9 +316,17 @@ extend class Element
 		let type = typeof item
 
 		if type === 'undefined' or item === null
+			# what if the prev value was the same?
+			if prev and prev isa Comment
+				return prev
+
 			let el = document.createComment('')
 			prev ? prev.replaceWith$(el) : el.insertInto$(this)
 			return el
+
+		# dont reinsert again
+		if item === prev
+			return item
 
 		# what if this is null or undefined -- add comment and return? Or blank text node?
 		elif type !== 'object'
@@ -412,7 +352,7 @@ extend class Element
 				@appendChild$(res = document.createTextNode(txt))
 				return res	
 
-		elif item isa Node
+		else
 			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
 			return item
 		return
@@ -441,6 +381,9 @@ extend class Element
 	def end$
 		@render() if @render
 		return
+
+	def css$ key, value, mods
+		@style[key] = value
 
 Element.prototype.appendChild$ = Element.prototype.appendChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
