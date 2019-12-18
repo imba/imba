@@ -664,8 +664,8 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 
 	el.className = flags if flags
 
-	if sfc and sfc.id
-		el.setAttribute('data-'+sfc.id,'')
+	if sfc
+		el.setAttribute('data-'+sfc,'')
 
 	if text !== null
 		el.text$(text)
