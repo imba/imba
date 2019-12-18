@@ -84,7 +84,6 @@ tag multi-input
 				type="text"
 				:beforeinput.@onbeforeinput
 				:selection.commit
-				:input.@oninput
 				:keydown.enter.prevent.submit()
 				:keydown.esc.blur
 				:change.stop
