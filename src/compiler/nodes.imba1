@@ -196,6 +196,10 @@ var LIT = do |val|
 var SYM = do |val|
 	Symbol.new(val)
 
+var STR = do |val|
+	return val if val isa Str
+	return Str.new(helpers.singlequote(String(val)))
+
 var IF = do |cond,body,alt|
 	var node = If.new(cond,body)
 	node.addElse(alt) if alt
@@ -434,6 +438,7 @@ export class Stack
 	prop loglevel
 	prop nodes
 	prop scopes
+	prop root
 
 	def initialize
 		reset
@@ -464,11 +469,26 @@ export class Stack
 	def generateId ns = 'oid'
 		AST.counterToShortRef(STACK.incr('oid'))
 
+	def sfcid
+		@sfcid ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
+
 	def stash
 		@stash
 
-	def option key
-		@options and @options[key]
+	def set obj
+		@options ||= {}
+		for own k,v of obj
+			@options[k] = v
+		self
+
+	# get and set
+	def option key, val
+		if val != undefined
+			@options ||= {}
+			@options[key] = val
+			return self
+
+		@options && @options[key]
 
 	def platform
 		@options:target
@@ -958,7 +978,9 @@ export class Comment < Meta
 					type: m[1]
 					attrs: {}
 				}
+				# compile style directly here?
 				scope__.root.styles.push(style)
+				stack.set(hasScopedStyles: yes) if m[2]
 
 		if var block = up
 			var idx = block.indexOf(self) + 1
@@ -2264,7 +2286,7 @@ export class Root < Code
 		STACK.reset # -- nested compilation does not work now
 		OPTS = STACK.@options = @options = o or {}
 		traverse
-
+		STACK.root = @scope
 		@scope.options = STACK.@options
 
 		var out = c
@@ -2276,7 +2298,7 @@ export class Root < Code
 			options: o,
 			toString: (do this:js)
 			styles: scope.styles,
-			sfc: {id: @scope.sfcid}
+			sfcid: @scope.sfcid
 		}
 
 
@@ -2286,7 +2308,7 @@ export class Root < Code
 		for style in result:styles
 			if style:type == 'css'
 				# should just compile the styles directly?
-				let scoping = style:scoped ? result:sfc:id : null
+				let scoping = style:scoped ? result:sfcid : null
 				style:processed = csscompiler.compile(style:content,scope: scoping)
 				stylebody += style:processed + '\n'
 
@@ -2507,7 +2529,6 @@ export class TagDeclaration < Code
 		
 
 		# replace with some advanced lookup?
-		let sfc = @scope.root.sfco
 		scope.visit
 		body.add(@initor)
 		body.traverse
@@ -6495,7 +6516,7 @@ export class Tag < TagLike
 			(fragment ? fragment.tvar : 'null'),
 			@className or 'null',
 			'null',
-			scope__.root.sfco.c
+			stack.option(:hasScopedStyles) ? STR(stack.sfcid) : LIT('null')
 		]
 
 		var nodes = body ? body.values : []
@@ -7781,8 +7802,6 @@ export class RootScope < Scope
 		@entities = RootEntities.new(self)
 		@object = Obj.wrap({})
 		@head = [@vars]
-
-		self.sfco()
 		self
 
 	def sfcid
