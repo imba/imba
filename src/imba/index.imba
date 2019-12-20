@@ -284,26 +284,6 @@ extend class Element
 		if type == 'selection'
 			activateSelectionHandler()
 
-		elif type == 'resize'
-			unless #resizeObserver
-				#resizeObserver ||= ResizeObserver.new do |entries|
-					console.log "was resized",entries
-					# let name = args[0]
-					# let detail = args[1]
-					# let e = detail ? CustomEvent.new(name, bubbles: true, detail: detail) : Event.new(name)
-					# let customRes = event.currentTarget.dispatchEvent(e)
-				#resizeObserver.observe(this)
-
-		elif type == 'intersect'
-			unless #intersectObserver
-				#intersectObserver ||= IntersectionObserver.new do |entries|
-					
-					for entry of entries
-						let e = CustomEvent.new('intersect', bubbles: false, detail: entry)
-						self.dispatchEvent(e)
-				#intersectObserver.observe(this)
-
-
 		@addEventListener(type,handler,o)
 		return handler
 

@@ -18,20 +18,31 @@ export class EventHandler
 		return null unless el
 		el[name] ? el : @getHandlerForMethod(el.parentNode,name)
 
+	def emit name, ...params do imba.emit(self,name,params)
+	def on name, ...params do imba.listen(self,name,...params)
+	def once name, ...params do imba.once(self,name,...params)
+	def un name, ...params do imba.unlisten(self,name,...params)
+
 	def handleEvent event
 		var target = event.target
+		var element = event.currentTarget
 		var parts = @params
 		var i = 0
 		let commit = yes # @params.length == 0
+		let awaited = no
+		let prevRes = undefined
 
 		# console.log 'handle event',event.type,@params
+		@currentEvents ||= Set.new
+		@currentEvents.add(event)
 
 		for part,i in @params
 			let handler = part
 			let args = [event]
-			let res
+			let res = undefined
 			let context = null
 
+			# parse the arguments
 			if handler isa Array
 				args = handler.slice(1)
 				handler = handler[0]
@@ -44,6 +55,8 @@ export class EventHandler
 
 						if param[1] == '&'
 							# reference to a cache slot
+							# the cache-slot should really be set on the array
+							# the alternative would be for 
 							args[i] = this[name]
 
 						elif param[1] == '$'
@@ -53,11 +66,14 @@ export class EventHandler
 								target = target.detail
 								name = name.slice(1)
 
-							if name == ''
+							if name == 'el' and target == event
+								args[i] = element
+							elif name == ''
 								args[i] = target
 							else
 								args[i] = target ? target[name] : null
 
+			# console.log "handle part",i,handler,event.currentTarget
 			# check if it is an array?
 			if handler == 'stop'
 				event.stopImmediatePropagation()
@@ -76,35 +92,55 @@ export class EventHandler
 			elif handler == 'meta'
 				break unless event.metaKey
 			elif handler == 'self'
-				break unless target == event.currentTarget
+				break unless target == element
 			elif handler == 'once'
 				event.currentTarget.removeEventListener(event.type,self)
 			elif keyCodes[handler]
 				unless keyCodes[handler].indexOf(event.keyCode) >= 0
 					break
+			elif handler == 'trigger'
+				let name = args[0]
+				let detail = args[1] # is custom event if not?
+				let e = true ? CustomEvent.new(name, bubbles: true, detail: detail) : Event.new(name)
+				e.originalEvent = event
+				let customRes = element.dispatchEvent(e)
+				# console.log 'triggering event',element,name,detail,e
+				# wait for this handling as well?
 
 			elif typeof handler == 'string'
-				if handler[0] == '@'
+				let mod = handler + '$mod'
+
+				if event[mod] isa Function
+					# console.log "found modifier!",mod
+					handler = mod
+					context = event
+					args = [this,event,args,i]
+
+				# should default to first look at closure - no?
+				elif handler[0] == '@'
 					handler = handler.slice(1)
 					context = @closure
-
-				elif handler == 'trigger'
-					
-					let name = args[0]
-					let detail = args[1]
-					let e = detail ? CustomEvent.new(name, bubbles: true, detail: detail) : Event.new(name)
-					let customRes = event.currentTarget.dispatchEvent(e)
-
 				else
-					context = @getHandlerForMethod(event.currentTarget,handler)
+					context = @getHandlerForMethod(element,handler)
+
 
 			if context
-				# commit = yes
 				res = context[handler].apply(context,args)
+
 			elif handler isa Function
-				# commit = yes
-				res = handler.apply(event.currentTarget,args)
+				res = handler.apply(element,args)
+
+			if res and res.then
+				imba.commit() if commit
+				awaited = yes
+				res = await res
+
+			if res === false
+				break
 
 		imba.commit() if commit
+		@currentEvents.delete(event)
+		if @currentEvents.size == 0
+			@emit(:idle)
 		# what if the result is a promise
 		return
