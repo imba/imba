@@ -26,7 +26,7 @@ export class EventHandler
 	def handleEvent event
 		var target = event.target
 		var element = event.currentTarget
-		var parts = @params
+		var mods = @params
 		var i = 0
 		let commit = yes # @params.length == 0
 		let awaited = no
@@ -36,42 +36,45 @@ export class EventHandler
 		@currentEvents ||= Set.new
 		@currentEvents.add(event)
 
-		for part,i in @params
-			let handler = part
-			let args = [event]
+		let state = {
+			element: element
+			event: event
+			modifiers: mods
+			handler: this
+		}
+
+		for own handler,val of mods
+			# let handler = part
+			if handler.indexOf('~') > 0
+				handler = handler.split('~')[0]
+
+			let args = [event,self]
 			let res = undefined
 			let context = null
 
 			# parse the arguments
-			if handler isa Array
-				args = handler.slice(1)
-				handler = handler[0]
+			if val isa Array
+				args = val.slice()
 
-				for param,i in args
+				for par,i in args
 					# what about fully nested arrays and objects?
 					# ought to redirect this
-					if typeof param == 'string' && param[0] == '~'
-						let name = param.slice(2)
+					if typeof par == 'string' && par[0] == '~' and par[1] == '$'
+						let name = par.slice(2)
+						let target = event
 
-						if param[1] == '&'
-							# reference to a cache slot
-							# the cache-slot should really be set on the array
-							# the alternative would be for 
-							args[i] = this[name]
+						if name[0] == '$'
+							target = target.detail
+							name = name.slice(1)
 
-						elif param[1] == '$'
-							let target = event
-
-							if name[0] == '$'
-								target = target.detail
-								name = name.slice(1)
-
-							if name == 'el' and target == event
-								args[i] = element
-							elif name == ''
-								args[i] = target
-							else
-								args[i] = target ? target[name] : null
+						if name == 'el' and target == event
+							args[i] = element
+						elif name == 'value' and target == event
+							args[i] = state.value
+						elif name == ''
+							args[i] = target
+						else
+							args[i] = target ? target[name] : null
 
 			# console.log "handle part",i,handler,event.currentTarget
 			# check if it is an array?
@@ -94,18 +97,19 @@ export class EventHandler
 			elif handler == 'self'
 				break unless target == element
 			elif handler == 'once'
-				event.currentTarget.removeEventListener(event.type,self)
+				# clean up bound data as well
+				element.removeEventListener(event.type,self)
+
 			elif keyCodes[handler]
 				unless keyCodes[handler].indexOf(event.keyCode) >= 0
 					break
+
 			elif handler == 'trigger'
 				let name = args[0]
 				let detail = args[1] # is custom event if not?
 				let e = true ? CustomEvent.new(name, bubbles: true, detail: detail) : Event.new(name)
 				e.originalEvent = event
 				let customRes = element.dispatchEvent(e)
-				# console.log 'triggering event',element,name,detail,e
-				# wait for this handling as well?
 
 			elif typeof handler == 'string'
 				let mod = handler + '$mod'
@@ -114,7 +118,7 @@ export class EventHandler
 					# console.log "found modifier!",mod
 					handler = mod
 					context = event
-					args = [this,event,args,i]
+					args = [state,args]
 
 				# should default to first look at closure - no?
 				elif handler[0] == '@'
@@ -130,13 +134,16 @@ export class EventHandler
 			elif handler isa Function
 				res = handler.apply(element,args)
 
-			if res and res.then
+			if res and res.then isa Function
 				imba.commit() if commit
 				awaited = yes
+				# TODO what if await fails?
 				res = await res
 
 			if res === false
 				break
+
+			state.value = res
 
 		imba.commit() if commit
 		@currentEvents.delete(event)

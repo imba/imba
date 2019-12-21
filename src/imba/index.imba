@@ -272,10 +272,19 @@ extend class Comment
 # what if this is in a webworker?
 extend class Element
 
-	def on$ type, parts, scope
-		var handler = EventHandler.new(parts,scope)
-		var capture = parts.indexOf('capture') >= 0
-		var passive = parts.indexOf('passive') >= 0
+	def on$ type, mods, scope
+
+		var check = 'on$' + type
+		var handler
+
+		# check if a custom handler exists for this type?
+		if self[check] isa Function
+			handler = self[check](mods,scope)
+
+		handler = EventHandler.new(mods,scope)
+		var capture = mods.capture
+		var passive = mods.passive
+
 		var o = capture
 
 		if passive
@@ -487,8 +496,8 @@ extend class Element
 		if key == 'model'
 			unless #f & $TAG_BIND_MODEL$
 				#f |= $TAG_BIND_MODEL$
-				@on$('change',[@change$],this) if @change$
-				@on$('input',['capture',@input$],this) if @input$
+				@on$('change',{'@change$': true},this) if @change$
+				@on$('input',{capture: true,'@input$': true},this) if @input$
 
 		Object.defineProperty(self,key,o isa Array ? imba.createProxyProperty(o) : o)
 		return o

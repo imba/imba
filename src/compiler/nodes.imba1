@@ -196,6 +196,17 @@ var LIT = do |val|
 var SYM = do |val|
 	Symbol.new(val)
 
+var KEY = do |val|
+	val = val.value if val isa Token
+	if val isa String
+		if val.match(/^[a-zA-Z\$\_]+[\d\w\$\_]*$/)
+			val = Identifier.new(val)
+		else
+			val = Str.new(helpers.singlequote(String(val)))
+	return val
+
+
+
 var STR = do |val|
 	return val if val isa Str
 	return Str.new(helpers.singlequote(String(val)))
@@ -3315,7 +3326,7 @@ export class Obj < Literal
 		'{' + value.c + '}'
 
 	def add k, v
-		k = Identifier.new(k) if k isa String
+		k = Identifier.new(k) if k isa String or k isa Token
 		var kv = ObjAttr.new(k,v)
 		value.push(kv)
 		return kv
@@ -3698,15 +3709,22 @@ export class Access < Op
 
 	def js o
 		var raw = null
+		var lft = left
 		var rgt = right
-		var ctx = (left || scope__.context)
+
+		if rgt isa Token
+			rgt = Identifier.new(rgt)
+
+		var ctx = (lft || scope__.context)
 		var pre = ""
 		var mark = ''
+
+
 
 		# if safechain
 		#	p "Access is safechained {rgt.c}"
 
-		if left isa Super and STACK.method and STACK.method.option('inExtension')
+		if lft isa Super and STACK.method and STACK.method.option('inExtension')
 			return CALL(
 				OP('.',scope__.context,'super$'),
 				[rgt isa Identifier ? rgt.toStr : rgt]
@@ -5760,6 +5778,9 @@ export class TagPart < Node
 		else
 			@chain.push(@last = TagModifier.new(item))
 		return self
+
+	def modifiers
+		@modifiers ||= TagModifiers.new(@chain).traverse
 		
 	def js
 		""
@@ -5889,6 +5910,42 @@ export class TagHandlerSpecialArg < ValueNode
 
 	def c
 		"'~${value}'"
+
+export class TagModifiers < ListNode
+	
+	def visit
+		var keys = {}
+		for node,i in nodes
+			let key = String(node.name)
+			if keys[key]
+				node.name = key + '~' + (keys[key]++)
+			else
+				keys[key] = 1
+		self
+
+	def extractDynamics
+		return @dynamics if @dynamics
+		@dynamics = []
+
+		for part,i in nodes when part isa TagModifier
+			for param,k in part.params
+				if !param.isPrimitive
+					let ref = TagDynamicArg.new(param).set(
+						key: KEY(part.name),
+						index: k
+					)
+					part.params.swap(param,LIT('null'))
+					@dynamics.push(ref)
+		return @dynamics
+
+	def c
+		let obj = Obj.new([])
+		for part in nodes
+			let val = part.params ? Arr.new(part.params) : LIT('true')
+			obj.add(KEY(part.name),val)
+		return obj.c
+		# Arr.new(@nodes).c
+
 	
 export class TagModifier < TagPart	
 	prop params
@@ -5990,20 +6047,11 @@ export class TagHandler < TagPart
 
 	def isStatic
 		let valStatic = !value or value.isPrimitive or (value isa Func and !value.nonlocals)
+		# check modifiers directly?
 		valStatic and @chain.every(do |item|
 			let val = item isa Parens ? item.value : item
 			val isa Func ? !val.nonlocals : val.isPrimitive
 		)
-
-	def extractDynamicParts
-		var dynamics = []
-		for part,i in @chain when part isa TagModifier
-			for param,k in part.params
-				if !param.isPrimitive
-					let ref = TagDynamicArg.new(param).set(path: [i,k + 1])
-					part.params.swap(param,LIT('null'))
-					dynamics.push(ref)
-		return dynamics
 	
 	def add item, type
 		if type == TagArgList
@@ -6021,12 +6069,10 @@ export class TagHandler < TagPart
 		return self
 		
 	def js o
-		let parts = @chain
-
-		if parts isa Array
-			parts = Arr.new(parts)
-
-		return "on$({quoted},{parts.c},{scope__.context.c})"
+		# let parts = modifiers
+		# if parts isa Array
+		#	parts = Arr.new(parts)
+		return "on$({quoted},{modifiers.c},{scope__.context.c})"
 
 
 class TagLike < Node
@@ -6677,14 +6723,19 @@ export class Tag < TagLike
 					# add "({vvar}={val.c(o)},{vvar}==={iref}||({dvar}|={F.DIFF_FLAGS},{iref}={vvar}))"
 
 				elif item isa TagHandler
-					let specials = item.extractDynamicParts()
+					let mods = item.modifiers
+					let specials = mods.extractDynamics()
 					# first create the reference to the array
-					let parts = Arr.new(item.@chain)
-					add "{vvar} = {iref}E || ({iref}E={parts.c(o)})"
-					for special,i in specials
-						let p = special.option(:path)
-						add "{vvar}[{p[0]}][{p[1]}]={special.c(o)}"
-					item.@chain = vvar
+					# let parts = Arr.new(item.@chain)
+
+					add "{vvar} = {iref}E || ({iref}E={mods.c(o)})"
+					for special in specials
+						let k = special.option(:key)
+						let i = special.option(:index)
+						add "{OP('.',vvar,k).c}[{i}]={special.c(o)}"
+						# add "{vvar}[{p[0]}][{p[1]}]={special.c(o)}"
+
+					item.@modifiers = vvar
 					add "{bvar} || {ref}.{item.js(o)}"
 
 				elif item isa TagAttr and item.ns == 'bind'
