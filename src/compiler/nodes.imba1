@@ -5889,13 +5889,6 @@ export class TagHandlerSpecialArg < ValueNode
 
 	def c
 		"'~${value}'"
-
-export class TagDynamicArg < ValueNode
-	def isPrimitive
-		yes
-
-	def c
-		"'~&{value}'"
 	
 export class TagModifier < TagPart	
 	prop params
@@ -5989,8 +5982,12 @@ export class TagData < TagPart
 		else
 			"data=({val.c})"
 
+export class TagDynamicArg < ValueNode
+	def c
+		value.c
+
 export class TagHandler < TagPart
-		
+
 	def isStatic
 		let valStatic = !value or value.isPrimitive or (value isa Func and !value.nonlocals)
 		valStatic and @chain.every(do |item|
@@ -6000,12 +5997,12 @@ export class TagHandler < TagPart
 
 	def extractDynamicParts
 		var dynamics = []
-		for part in @chain when part isa TagModifier
-			for param in part.params
+		for part,i in @chain when part isa TagModifier
+			for param,k in part.params
 				if !param.isPrimitive
-					let nr = dynamics.push(param)
-					let ref = TagDynamicArg.new(String(nr - 1))
-					part.params.swap(param,ref)
+					let ref = TagDynamicArg.new(param).set(path: [i,k + 1])
+					part.params.swap(param,LIT('null'))
+					dynamics.push(ref)
 		return dynamics
 	
 	def add item, type
@@ -6020,18 +6017,16 @@ export class TagHandler < TagPart
 			value = item
 			@last = null
 		else
-			# console.log "TagHandler add",item
 			@chain.push(@last = TagModifier.new(item))
 		return self
 		
 	def js o
-		let parts = [quoted].concat(@chain)
-		let parts = [].concat(@chain)
-		let scope = scope__
-		# let scopes = scope.root.context.reference(scope).c
-		# parts.push(value) if value
-		return "on$({quoted},[{AST.cary(parts)}],{scope.context.c})"
-		# return "on$({slot},[{AST.cary(parts)}],{scope__.context.c})"
+		let parts = @chain
+
+		if parts isa Array
+			parts = Arr.new(parts)
+
+		return "on$({quoted},{parts.c},{scope__.context.c})"
 
 
 class TagLike < Node
@@ -6683,11 +6678,15 @@ export class Tag < TagLike
 
 				elif item isa TagHandler
 					let specials = item.extractDynamicParts()
-					add "{vvar} = {iref} || ({iref}={ref}.{item.js(o)})"
+					# first create the reference to the array
+					let parts = Arr.new(item.@chain)
+					add "{vvar} = {iref}E || ({iref}E={parts.c(o)})"
 					for special,i in specials
-						# add "{fragment.cvar}.{special.oid}_$ = {special.c(o)}"
-						add "{vvar}[{i}]={special.c(o)}"
-						# add "{ref}.{special.oid}_$ = {special.c(o)}"
+						let p = special.option(:path)
+						add "{vvar}[{p[0]}][{p[1]}]={special.c(o)}"
+					item.@chain = vvar
+					add "{bvar} || {ref}.{item.js(o)}"
+
 				elif item isa TagAttr and item.ns == 'bind'
 					let rawVal = item.value
 					let val = PATHIFY(rawVal)
