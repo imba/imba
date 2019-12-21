@@ -5765,9 +5765,12 @@ export class TagPart < Node
 	
 	def quoted
 		@quoted ||= helpers.singlequote(@name)
-		
+	
+	def valueIsStatic
+		!value or value.isPrimitive or (value isa Func and !value.nonlocals)
+
 	def isStatic
-		!value or value.isPrimitive
+		valueIsStatic
 
 	def isProxy
 		false
@@ -5829,6 +5832,12 @@ export class TagAttr < TagPart
 	def isSpecial
 		String(@name) == 'value'
 
+	def isStatic
+		super and @chain.every(do |item|
+			let val = item isa Parens ? item.value : item
+			val isa Func ? !val.nonlocals : val.isPrimitive
+		)
+
 	def visit
 		@chain.map(|v| v.traverse )
 		@value.traverse if @value
@@ -5840,6 +5849,9 @@ export class TagAttr < TagPart
 		if i >= 0
 			@ns = key.slice(0,i)
 			@key = key.slice(i + 1)
+
+		unless @value
+			@value = STR(key)
 
 		if @chain:length
 			@mods = {}
@@ -5856,8 +5868,14 @@ export class TagAttr < TagPart
 	def mods
 		@mods
 
+	def nameIdentifier
+		@nameIdentifier ||= Identifier.new(helpers.dashToCamelCase(key))
+
+	def modsIdentifier
+		@modsIdentifier ||= Identifier.new(helpers.dashToCamelCase(key) + '__')
+
 	def js o
-		let mods = AST.compileRaw(@mods or null)
+		# let mods = AST.compileRaw(@mods or null)
 		let val = value.c(o)
 		let bval = val
 		if ns == 'css'
@@ -5872,10 +5890,7 @@ export class TagAttr < TagPart
 			elif path isa Array
 				bval = "[{val[0].c(o)},{val[1].c(o)}]"
 
-			"bind$('{key}',{mods},{bval})"
-		elif ns
-			# should be setPath instead?
-			"setNestedAttr('{ns}','{key}',{val}{add})"
+			"bind$('{key}',{modifiers.c},{bval})"
 		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
 			# how do we remove attribute then?
 			"setAttribute('{key}',{val})"
@@ -5913,6 +5928,12 @@ export class TagHandlerSpecialArg < ValueNode
 
 export class TagModifiers < ListNode
 	
+	def isStatic
+		@nodes.every(do |item|
+			let val = item isa Parens ? item.value : item
+			val isa Func ? !val.nonlocals : val.isPrimitive
+		)
+
 	def visit
 		var keys = {}
 		for node,i in nodes
@@ -6067,6 +6088,9 @@ export class TagHandler < TagPart
 		else
 			@chain.push(@last = TagModifier.new(item))
 		return self
+
+	def modsIdentifier
+		null
 		
 	def js o
 		# let parts = modifiers
@@ -6645,9 +6669,6 @@ export class Tag < TagLike
 					@ref = "{parent.cvar}[{kvar}]"
 				elif parent.isIndexed
 					@ref = "{parent.cvar}[{parent.kvar}]"
-				# else
-				#	add "{kvar}='{oid.c}$'={parent.kvar}"
-				#	@ref = "{parent.cvar}[{parent.kvar}]"
 
 				# if we add our own bvar?
 				@bvar = tagvar(:b)
@@ -6682,6 +6703,24 @@ export class Tag < TagLike
 		let flagsToConcat = []
 
 		for item in @attributes
+			if item.@chain and item.@chain:length and !(item isa TagHandler)
+				let mods = item.modifiers
+				let dyn = !mods.isStatic
+
+				let specials = mods.extractDynamics()
+				let modid = item.modsIdentifier
+				let modpath = modid ? OP('.',tvar,modid).c : "{cvar}.{mods.oid}"
+
+				if dyn
+					add "{vvar} = {modpath} || ({mods.c(o)})"
+					for special in specials
+						let k = special.option(:key)
+						let i = special.option(:index)
+						add "{OP('.',vvar,k).c}[{i}]={special.c(o)}"
+					add "{bvar} || ({modpath}={vvar})"
+				else
+					add "{bvar} || ({modpath}={mods.c(o)})"
+
 			if !isReactive
 				# buggy
 				add "{tvar}.{item.c(o)}"
@@ -6719,34 +6758,27 @@ export class Tag < TagLike
 					else
 						flagsToConcat.push("'{val.c}'")
 
-					# item.value = LIT("{iref}={vvar}")
-					# add "({vvar}={val.c(o)},{vvar}==={iref}||({dvar}|={F.DIFF_FLAGS},{iref}={vvar}))"
-
 				elif item isa TagHandler
 					let mods = item.modifiers
 					let specials = mods.extractDynamics()
-					# first create the reference to the array
-					# let parts = Arr.new(item.@chain)
-
-					add "{vvar} = {iref}E || ({iref}E={mods.c(o)})"
+	
+					add "{vvar} = {iref} || ({iref}={mods.c(o)})"
 					for special in specials
 						let k = special.option(:key)
 						let i = special.option(:index)
 						add "{OP('.',vvar,k).c}[{i}]={special.c(o)}"
-						# add "{vvar}[{p[0]}][{p[1]}]={special.c(o)}"
 
-					item.@modifiers = vvar
-					add "{bvar} || {ref}.{item.js(o)}"
+					mods = vvar
+					add "{bvar} || {ref}.on$({item.quoted},{mods.c},{scope__.context.c})"
 
 				elif item isa TagAttr and item.ns == 'bind'
 					let rawVal = item.value
 					let val = PATHIFY(rawVal)
-					let mods = AST.compileRaw(item.mods or null)
 					shouldEnd = yes
 					if val isa Array
 						let key = val[1]
 						let bval = key isa Literal ? "[null,{key.c(o)}]" : "[]"
-						add "{vvar}={iref} || ({iref}={ref}.bind$('{item.key}',{mods},{bval}))"
+						add "{vvar}={iref} || ({iref}={ref}.bind$('{item.key}',{bval}))"
 						for part,i in val
 							unless part isa Literal
 								add "{vvar}[{i}]={part.c(o)}"
@@ -6755,8 +6787,7 @@ export class Tag < TagLike
 						let getter = "function()\{ return {val.c(o)} \}"
 						let setter = "function(v$)\{ {val.c(o)} = v$ \}"
 						let bval = "\{get:{getter},set:{setter}\}"
-						add "{bvar} || {ref}.bind$('{item.key}',{mods},{bval})"
-
+						add "{bvar} || {ref}.bind$('{item.key}',{bval})"
 				else
 					item.option(svg: true) if isSVG
 					let val = item.value

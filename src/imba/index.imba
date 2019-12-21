@@ -490,7 +490,7 @@ extend class Element
 	def setRichValue value
 		@value = value
 	
-	def bind$ key, mods, value
+	def bind$ key, value
 		let o = value or []
 
 		if key == 'model'
