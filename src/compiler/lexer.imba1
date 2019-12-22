@@ -228,12 +228,12 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
-var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END']
+var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END']
 
 # optimize for FixedArray
 var INDEXABLE = [
 	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN'
-	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID','INDEX_END'
+	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID','INDEX_END','CALL_END'
 ]
 
 var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:','+','-','*']

@@ -173,6 +173,6 @@ export class EventHandler
 		imba.commit() if commit
 		@currentEvents.delete(event)
 		if @currentEvents.size == 0
-			@emit(:idle)
+			@emit('idle')
 		# what if the result is a promise
 		return

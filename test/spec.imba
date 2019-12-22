@@ -163,8 +163,8 @@ global class Spec < SpecComponent
 			test.failed ? failed.push(test) : ok.push(test)
 		
 		var logs = [
-			fmt(:green,"{ok.length} OK")
-			fmt(:red,"{failed.length} FAILED")
+			fmt('green',"{ok.length} OK")
+			fmt('red',"{failed.length} FAILED")
 			"{@tests.length} TOTAL"
 		]
 
@@ -176,7 +176,7 @@ global class Spec < SpecComponent
 			warnings: @warnings.length
 		})
 		var exitCode = (failed.length == 0 ? 0 : 1)
-		@emit(:done, [exitCode])
+		@emit('done', [exitCode])
 
 global class SpecGroup < SpecComponent
 
@@ -205,7 +205,7 @@ global class SpecGroup < SpecComponent
 		block.run() # this is where we wan to await?
 	
 	def start
-		@emit(:start, [self])
+		@emit('start', [self])
 
 		if console.group
 			console.group(@name)
@@ -214,7 +214,7 @@ global class SpecGroup < SpecComponent
 		
 	def finish
 		# console.groupEnd() if console.groupEnd
-		@emit(:done, [self])
+		@emit('done', [self])
 
 global class SpecExample < SpecComponent
 
@@ -244,7 +244,7 @@ global class SpecExample < SpecComponent
 		@finish()
 
 	def start
-		@emit(:start)
+		@emit('start')
 		console.group(@fullName)
 	
 	def finish
@@ -257,7 +257,7 @@ global class SpecExample < SpecComponent
 				else
 					pup("spec:fail",message: ass.toString())
 		console.groupEnd(@fullName)
-		@emit(:done,[self])
+		@emit('done',[self])
 
 	def fail
 		console.log("%c✘ {@fullName}", "color:orangered",@state)

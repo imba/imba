@@ -493,8 +493,8 @@ extend class Element
 		if key == 'model'
 			unless #f & $TAG_BIND_MODEL$
 				#f |= $TAG_BIND_MODEL$
-				@on$('change',{'@change$': true},this) if @change$
-				@on$('input',{capture: true,'@input$': true},this) if @input$
+				@on$('change',{_change$: true},this) if @change$
+				@on$('input',{capture: true,_input$: true},this) if @input$
 
 		Object.defineProperty(self,key,o isa Array ? imba.createProxyProperty(o) : o)
 		return o
