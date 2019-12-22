@@ -3165,6 +3165,14 @@ export class Str < Literal
 	def c o
 		@cache ? super(o) : String(@value)
 
+export class TemplateString < ListNode
+
+	def js
+		let parts = @nodes.map do |node|
+			node isa String ? node : node.c()
+
+		let out = '`' + parts.join('') + '`'
+		return out
 
 export class Interpolation < ValueNode
 
@@ -4396,12 +4404,20 @@ export class Identifier < Node
 	def initialize value
 		@value = load(value)
 		@symbol = null
-		@setter = null
 
 		if ("" + value).indexOf("?") >= 0
 			@safechain = yes
 		# @safechain = ("" + value).indexOf("?") >= 0
 		self
+
+	def isStatic
+		yes
+
+	def toRaw
+		@value.@value or @value
+
+	def add part
+		IdentifierExpression.new(self).add(part)
 
 	def references variable
 		@value.@variable = variable if @value
@@ -4434,15 +4450,7 @@ export class Identifier < Node
 		@value:reserved or RESERVED_TEST.test(String(@value))
 
 	def symbol
-		# console.log "Identifier#symbol {value}"
 		@symbol ||= AST.sym(value)
-
-	def setter
-		# console.log "Identifier#setter"
-		@setter ||= if true
-			var tok = Token.new('IDENTIFIER',AST.sym('set-' + @value),@value.@loc or -1)
-			Identifier.new(tok)
-			# Identifier.new("set-{symbol}")
 
 	def toString
 		String(@value)
@@ -5742,17 +5750,80 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
  spreadMethod stopColor stopOpacity stroke strokeDasharray strokeLinecap
  strokeOpacity strokeWidth textAnchor transform version viewBox x1 x2 x y1 y2 y"
 
+
+export class IdentifierExpression < Node
+	def initialize value
+		super
+		@static = yes
+		@nodes = [@single = value]
+
+	def add part
+		@nodes.push(part)
+		@single = null
+		self
+
+	def isPrimitive
+		@single and @single isa Token
+
+	def isStatic
+		isPrimitive
+
+	def visit
+		for node in @nodes when node isa Node
+			node.traverse
+		self
+
+	def asObjectKey
+		@single ? "[{@single.c()}]" : "[{asString}]"
+
+	def asIdentifier
+		@single ? "[{@single.c()}]" : "[{asString}]"
+
+	def asString
+		# what if a part is a string?	
+		let s = '`'
+		for node in @nodes
+			if node isa Token
+				s += node.value
+			else
+				s += '${'
+				s += node.c()
+				s += '}'
+		s += '`'
+		return s
+
+	def toRaw
+		@single ? @single.c : ''
+
+	def toString
+		toRaw
+
+	def c o = {}
+		if o:as == 'string'
+			return asString
+		elif o:as == 'key'
+			return asObjectKey
+		elif o:as == 'access'
+			yes
+		elif @single and @single isa Node
+			return @single.c(o)
+		else
+			asString
+
 export class TagPart < Node
 
 	prop name
 	prop value
 	
 	def initialize value, owner
-		@name = value
+		@name = load(value)
 		@tag = owner
 		@chain = []
 		@special = no
 		self
+
+	def load value
+		value
 		
 	def isSpecial
 		@special
@@ -5764,7 +5835,7 @@ export class TagPart < Node
 		self
 	
 	def quoted
-		@quoted ||= helpers.singlequote(@name)
+		@quoted ||= (@name isa IdentifierExpression ? @name.asString : helpers.singlequote(@name))
 	
 	def valueIsStatic
 		!value or value.isPrimitive or (value isa Func and !value.nonlocals)
@@ -5777,7 +5848,7 @@ export class TagPart < Node
 		
 	def add item, type
 		if type == TagArgList
-			@last.params = item
+			@last.params = item or ListNode.new([])
 		else
 			@chain.push(@last = TagModifier.new(item))
 		return self
@@ -5795,7 +5866,6 @@ export class TagId < TagPart
 
 	def js
 		"id={quoted}"
-		# "set('id',{quoted})"
 
 export class TagFlag < TagPart
 	prop condition
@@ -5804,24 +5874,14 @@ export class TagFlag < TagPart
 		@name
 
 	def isStatic
-		!isConditional
+		!isConditional and (@name isa Token or @name.isStatic)
 
 	def isConditional
 		!!condition
 
-	def quoted
-		@quoted ||= helpers.singlequote(value)
-
 	def js
-		condition ? "flagIf$({quoted},{condition.c})" : "flag$({quoted})"
-
-export class TagFlagExpr < TagFlag
-		
-	def isStatic
-		(!value or value.isPrimitive) and !isConditional
-	
-	def js
-		"setFlag$({value.c})"
+		let val = value.c(as: 'string')
+		condition ? "flags.toggle({val},{condition.c})" : "classList.add({val})"
 	
 export class TagSep < TagPart
 	
@@ -5878,6 +5938,7 @@ export class TagAttr < TagPart
 		# let mods = AST.compileRaw(@mods or null)
 		let val = value.c(o)
 		let bval = val
+
 		if ns == 'css'
 			"css$('{key}',{val})"
 		elif ns == 'bind'
@@ -5929,6 +5990,7 @@ export class TagHandlerSpecialArg < ValueNode
 export class TagModifiers < ListNode
 	
 	def isStatic
+		# the check should be for the params, no?
 		@nodes.every(do |item|
 			let val = item isa Parens ? item.value : item
 			val isa Func ? !val.nonlocals : val.isPrimitive
@@ -5970,6 +6032,12 @@ export class TagModifiers < ListNode
 	
 export class TagModifier < TagPart	
 	prop params
+
+	def load value
+		if value isa IdentifierExpression
+			# console.log "not allowed!"
+			return value.@single
+		return value
 	
 	def isPrimitive
 		!params or params.every do |param| param.isPrimitive
@@ -6074,28 +6142,10 @@ export class TagHandler < TagPart
 			val isa Func ? !val.nonlocals : val.isPrimitive
 		)
 	
-	def add item, type
-		if type == TagArgList
-			@last.params = item or ListNode.new([])
-
-		elif type == TagAttrValue
-			# really?
-			if item isa Parens
-				item = item.value
-			
-			value = item
-			@last = null
-		else
-			@chain.push(@last = TagModifier.new(item))
-		return self
-
 	def modsIdentifier
 		null
 		
 	def js o
-		# let parts = modifiers
-		# if parts isa Array
-		#	parts = Arr.new(parts)
 		return "on$({quoted},{modifiers.c},{scope__.context.c})"
 
 
@@ -6430,7 +6480,11 @@ export class Tag < TagLike
 		@attributes = @attributes.filter do |item|
 
 			if item isa TagFlag and item.isStatic
-				@classNames.push(item.value)
+				@classNames.push(item.name.toRaw)
+				return false
+
+			if item == @attrmap:$key
+				self.set(key: item.value)
 				return false
 
 			if !item.isStatic
@@ -6447,7 +6501,11 @@ export class Tag < TagLike
 		# should go for any taglike!
 		if node isa TagLike and (isCustom and !isSelf)
 			let slotKey = node isa Tag ? node.@attrmap:slot : null
-			let name = slotKey ? slotKey.value.toRaw : '__'
+			let name = '__'
+			if slotKey
+				if slotKey.value isa Str
+					name = slotKey.value.raw
+			# let name = slotKey ? slotKey.value .toRaw : '__'
 			let slot = getSlot(name)
 			node.@fragment = slot
 		return node
@@ -6475,18 +6533,18 @@ export class Tag < TagLike
 		if type == TagSep
 			next = null
 
-		elif curr isa TagHandler
-			curr.add(part,type)
-
 		elif type == TagAttrValue
+			if part isa Parens
+				part = part.value
+
 			if curr isa TagFlag
 				curr.condition = part
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
 
 			elif curr
-				curr.value = type.new(part)
+				curr.value = part
 
-		elif curr isa TagAttr
+		elif curr isa TagHandler or curr isa TagAttr
 			curr.add(part,type)
 
 		elif type == TagData
@@ -6496,17 +6554,16 @@ export class Tag < TagLike
 			attrs.push(curr)
 			next = null
 		else
-			if type isa TagFlagExpr
+			if type == TagFlag and part isa IdentifierExpression and !part.isPrimitive
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
 
 			attrs.push(next = type.new(part,self))
 
-			if next isa TagAttr
-				@attrmap[String(next.name)] = next
+			if next isa TagAttr and next.name.isPrimitive
+				let name = String(next.name.toRaw)
+				@attrmap[name] = next
 
 		if next != curr
-			# if curr isa TagFlag and !curr.isStatic
-			# 	flag(F.TAG_HAS_DYNAMIC_FLAGS)
 			attrs.CURRENT = next
 		self
 
@@ -6635,7 +6692,10 @@ export class Tag < TagLike
 		else
 			if isSlot
 				# render the name of the slot 
-				let name = @attrmap:name ? @attrmap:name.value.toRaw : '__'
+				let name = @attrmap:name ? @attrmap:name.value : '__'
+				if name isa Str
+					# check if it is legal
+					name = name.raw
 				# add("{tvar}={fragment.root.tvar}.slot$('{name}')")
 				add("{vvar}={fragment.root.tvar}.__slots.{name}")
 				add("if({vvar})\{ {vvar}.insertInto$({fragment.tvar}) \}")
@@ -6729,15 +6789,9 @@ export class Tag < TagLike
 			else
 				let iref = "{cvar}.{item.oid}"
 
-				if item isa TagFlagExpr
-					let val = item.value
-					# item.value = LIT("{iref}={vvar}")
-					add "({vvar}={val.c(o)},{vvar}==={iref}||({dvar}|={F.DIFF_FLAGS},{iref}={vvar}))"
-					flagsToConcat.push("({iref}||'')")
-
-				elif item isa TagFlag
+				if item isa TagFlag
 					let cond = item.condition
-					let val = item.value
+					let val = item.name
 					let cref
 					let vref
 
@@ -6752,7 +6806,7 @@ export class Tag < TagLike
 					if cref and vref
 						flagsToConcat.push("({cref} ? ({vref}||'') : '')")
 					elif cref
-						flagsToConcat.push("({cref} ? '{val.c}' : '')")
+						flagsToConcat.push("({cref} ? {val.c(as:'string')} : '')")
 					elif vref
 						flagsToConcat.push("({vref}||'')")
 					else
@@ -6791,8 +6845,13 @@ export class Tag < TagLike
 				else
 					item.option(svg: true) if isSVG
 					let val = item.value
-					item.value = LIT("{iref}={vvar}")
-					add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{item.js(o)}))"
+					if item.valueIsStatic
+						add "{bvar} || ({ref}.{item.js(o)})"
+					elif val isa Func
+						add "({ref}.{item.js(o)})"
+					else
+						item.value = LIT("{iref}={vvar}")
+						add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{item.js(o)}))"
 
 		if flagsToConcat:length or (isSelf && @className)
 			flagsToConcat.unshift(@className) if @className

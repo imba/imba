@@ -1,45 +1,21 @@
 
-
-
-class PointDirective
-
-# imba.events.register 'point', PointDirective
-
 extend class Event
-	
-	def wait$mod handler, event, params, index
-		Promise.new do |resolve|
-			setTimeout(resolve,(params[0] isa Number ? params[0] : 1000))
 
-	def confirm$mod handler, event, params, index
+	def confirm$mod state, params
 		var res = window.confirm(params[0])
 		return res
 
-	def throttle$mod handler, event, params, index
-		return false if handler.throttled
-		handler.throttled = yes
-		let name = params[0]
-		unless name isa String
-			name = "in-{event.type or 'event'}"
-		let cl = event.currentTarget.classList
-		cl.add(name)
-		handler.once('idle') do
-			cl.remove(name)
-			handler.throttled = no
-		return true
+extend class Element
+	
+	def on$point
+		console.log 'on$handler'
+		# remove / clear some of the options from 
 
-	def debounce$mod handler, event, params, index
-		console.log 'debounce'
-		let state = handler.state ||= {}
-		if state.cooldown
-			return false
-		else
-			console.log('cooldown$modifier',handler,event,params)
-			state.cooldown = true
-			setTimeout(&,1000) do state.cooldown = false
-			return
-		self
+	def on$resize
+		console.log 'on$resize'
 
+	def toggleFlag name
+		@classList.toggle(name)
 
 tag app-root
 
@@ -49,22 +25,21 @@ tag app-root
 	def log ...params
 		console.log(...params)
 
-	def sleep time, param
-		Promise.new do |resolve,reject|
-			setTimeout(&,time) do
-				console.log "done in async method!"
-				resolve(param)
-
 	def cancelEventChain
 		return false
+
+	def multiply a,b
+		return a * b
+
+	def dragging ...params
+		console.log('dragging',...params)
 
 	def render
 		<self>
 			# <div :shortcut('cmd+a').prevent>
-			<div :point.prevent> "What happens when this resizes?"
-			<div :click.cooldown.log($type,'cooldown?')> "Click with throttle?"
+			<div :point.prevent @{test} .{test}> "What happens when this resizes?"
 			<div :click.throttle.log($type).wait(300)> "Click throotle sleep 300"
-			<div :click.sleep(300).log($type,'after await')> "Click with async method"
+			<div[test] :click.sleep(300).log($type,'after await')> "Click with async method"
 			<div :click.wait(300).log($type,'after await')> "wait 300"
 			<div :click.log($type).stop> "Click log stop"
 			<div :click.sleep(300,true).log($type,'after await')> "asyncMethod"
@@ -74,6 +49,8 @@ tag app-root
 			<div :click.confirm('Are you sure?').log('confirmed??')> "Click with confirmation"
 			<div :click.confirm('Are you sure?').log('confirmed??')> "Throttled"
 
+			<div :click.@multiply(2,2).@log($value)> "Passing value from previous call"
+
 			<form :submit.prevent.throttle.log('submitting form!').wait(500).@cancelEventChain>
 				<input type='text'>
 				<button type='submit'> 'Submit'
@@ -81,6 +58,19 @@ tag app-root
 			<div :reloading.throttle('busy').log('hello!').wait(2000)>
 				<h2> "Larger div here"
 				<button :click.trigger(:reloading)> 'Reload!'
+
+			# delegation
+			<div :click.sel('button.one').log('clicked button one')>
+				<h2> "Larger div here"
+				<button.one> 'One'
+				<button.two> 'Two'
+
+			<div.draggable :pointer.meta.capture.@dragging> "Drag with command!"
+
+			<div.resizable
+				:pointer.meta.capture.@dragging
+				:click.toggleFlag('expanded')
+			> "Can resize"
 
 
 imba.mount <app-root>
@@ -91,4 +81,14 @@ imba.mount <app-root>
 .busy {
 	color: red;
 	opacity: 0.5;
+}
+
+.resizable {
+	border: 1px solid blue;
+	padding: 10px;
+	width: 200px;
+	height: 100px;
+}
+.expanded {
+	width: 400px;
 }

@@ -16,7 +16,7 @@ tag app-original
 			if truthy
 				# <div> @hello
 				for item in todos
-					<div@{item.id}> <span> item.title
+					<div $key=item.id> <span> item.title
 			else
 				<div> "--"
 

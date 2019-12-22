@@ -17,7 +17,7 @@ tag app-root
 	def render
 		<self>
 			<ul> for item in todos
-				<li@{item.id}> <span> item.title
+				<li $key=item.id> <span> item.title
 
 imba.mount(<app-root>)
 

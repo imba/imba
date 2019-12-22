@@ -391,6 +391,7 @@ export class Lexer
 			i += pi
 			@loc = @locOffset + i
 
+
 		return
 
 	def basicContext
@@ -488,25 +489,23 @@ export class Lexer
 	def tagContextToken
 		let chr = @chunk[0]
 
-		let m = TAG_PART.exec(@chunk)
-		
-		if m
+		# let m = TAG_PART.exec(@chunk)
+		let m = /^([A-Za-z\_\-\$][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
+
+		if m # and false
 			let tok = m[1]
-			let typ = 'TAG_ATTR'
+			let typ = 'TAG_LITERAL'
 			let len = m[0]:length
 
-			if chr == ':'
-				typ = 'TAG_ON'
-			elif chr == '.'
-				typ = 'TAG_FLAG'
-			elif chr == '#'
-				typ = 'TAG_ID'
-			else
-				tok = m[0]
-				typ = tok == 'self' ? 'SELF' : 'TAG_ATTR'
-			
+			if tok == 'self' and @lastVal == '<'
+				typ = 'SELF'
+
 			token(typ,tok,len)
 			return len
+
+		elif chr == '%' or chr == ':' or chr == '.' or chr == '$' # and @chunk[1]
+			token("T{chr}",chr,1)
+			return 1
 
 		elif chr == ' ' or chr == '\n' or chr == '\t'
 			# add whitespace inside tag
@@ -780,7 +779,7 @@ export class Lexer
 
 		# console.log ctx1,ctx0
 	
-		if inTag && match = TAG_ATTR.exec(@chunk)
+		if inTag && false and match = TAG_ATTR.exec(@chunk)
 			# console.log 'TAG_ATTR IN tokid',match
 			# var prev = last @tokens
 			# if the prev is a terminator, we dont really need to care?
@@ -1011,7 +1010,6 @@ export class Lexer
 			return len
 
 		elif typ == 'EXPORT'
-			console.log 'typ is export'
 			pushEnd('EXPORT')
 			token(typ, id, idlen)
 			return len
@@ -1638,11 +1636,6 @@ export class Lexer
 
 		elif value == '*' and context == 'EXPORT'
 			tokid = "EXPORT_ALL"
-
-		elif value == '√'
-			tokid = 'SQRT'
-		elif value == 'ƒ'
-			tokid = 'DO'
 		elif value == '**'
 			tokid = 'EXP'
 		elif value in MATH

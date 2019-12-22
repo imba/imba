@@ -18,7 +18,7 @@ tag app-root
 		<self>
 			<div> '-'
 			for item in todos
-				<div@{item.id}> item.title
+				<div $key=item.id> item.title
 			<div> '-'
 
 let app = <app-root>

@@ -353,10 +353,17 @@ var grammar =
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
-		o 'TagOptions . IVAR' do A1.addPart(A3,AST.TagFlag)
-		o 'TagOptions . { Expression }' do A1.addPart(A4,AST.TagFlagExpr)
-		o 'TagOptions @ { Expression }' do A1.set(key: A4)
-		o 'TagOptions # { Expression }' do A1.set(id: A4) # need to add info about the tokens
+		# o 'TagOptions . IVAR' do A1.addPart(A3,AST.TagFlag)
+		
+		# o 'TagOptions @ { Expression }' do A1.set(key: A4)
+		# o 'TagOptions @ { Expression }' do A1.set(key: A4)
+		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
+		o 'TagOptions T. IVAR' do A1.addPart(A3,AST.TagFlag)
+		o 'TagOptions T. TagIdentifier' do A1.addPart(A3,AST.TagFlag)
+		o 'TagOptions # TagIdentifier' do A1.addPart(A3,AST.TagId)
+		o 'TagOptions T% TagIdentifier' do A1.addPart(A3,AST.TagFlag)
+		o 'TagOptions TAG_WS TagIdentifier' do A1.addPart(A2,AST.TagSep).addPart(A3,AST.TagAttr)
+
 		o 'TagOptions ( )' do A1.addPart(null,AST.TagArgList)
 		o 'TagOptions ( ArgList )' do A1.addPart(A3,AST.TagArgList)
 		o 'TagOptions CALL_START CALL_END' do A1.addPart(null,AST.TagArgList)
@@ -364,8 +371,21 @@ var grammar =
 		o 'TagOptions [ ArgList ]' do A1.addPart(A3,AST.TagData)
 		o 'TagOptions TAG_WS' do A1.addPart(A2,AST.TagSep)
 		o 'TagOptions Ivar' do A1.set(ivar: A2)
+		# o 'TagOptions TagFlag' do A1.addPart(A2)
 		o 'TagOptions = TagAttrValue' do A1.addPart(A3,AST.TagAttrValue)
-		
+	]
+
+	TagIdentifier: [
+		o 'TAG_LITERAL' do IdentifierExpression.new(A1)
+		o '{ Expression }' do IdentifierExpression.new(A2)
+		o 'TagIdentifier TAG_LITERAL' do A1.add(A2)
+		o 'TagIdentifier { Expression }' do A1.add(A3)
+		# o '{ Expression }' do TagIdentifier.new(A2)
+	]
+
+	TagFlag: [
+		o '%' do TagFlag.new()
+		o 'TagFlag TagPartIdentifier' do A1.add(A2)
 	]
 
 	TagAttrValue: [
