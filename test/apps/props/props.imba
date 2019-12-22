@@ -4,8 +4,9 @@ test 'data attributes' do
 
 test 'dynamic conditional class' do
 	let a = "tata"
-	let b = Math.random()
+	let b = 1 + Math.random()
 	let el = <div .test-{a}=b>
+	ok el.classList.contains('test-tata')
 
 test 'css variables' do
 	let a = "tata"

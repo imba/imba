@@ -646,10 +646,15 @@ var grammar =
 		o 'InlineVarKeyword VarAssignable' do VarReference.new(A2,A1)
 	]
 
+	# PrivateField: [
+	# 	o '# IDENTIFIER' do 
+	# ]
+
 	# Variables and properties that can be assigned to.
 	SimpleAssignable: [
 		o 'ENV_FLAG' do EnvFlag.new(A1)
 		o 'Const'
+		# o 'PrivateField'
 		o 'Ivar' do IvarAccess.new('.',null,A1)
 		o 'Gvar'
 		o 'Argvar'

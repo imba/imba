@@ -232,7 +232,7 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
-var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN']
+var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN']
 
 # optimize for FixedArray
 var INDEXABLE = [
@@ -434,7 +434,7 @@ export class Lexer
 		@context = @contexts[@contexts:length - 1]
 
 		refreshScope
-		self
+		return [popped,ctx]
 
 	def refreshScope
 		var ctx0 = @ends[@ends:length - 1]
@@ -1652,9 +1652,13 @@ export class Lexer
 			tokid = 'LOGIC' # or value is '?' and prev?:spaced 
 
 		elif prev and !prev:spaced
+			if value == '{' and pt == 'IDENTIFIER'
+				tokid = '{{'
+
 			if value is '(' and pt in CALLABLE
 				# not using this ???
 				# prev[0] = 'FUNC_EXIST' if prev[0] is '?'
+				# console.log 'call start!'
 				tokid = 'CALL_START'
 
 			elif value is '[' and pt in INDEXABLE
@@ -1663,8 +1667,15 @@ export class Lexer
 				# prev[0] = 'INDEX_SOAK' if prev[0] == '?'
 
 		switch value
-			when '(', '{', '[' then pushEnd(INVERSES[value])
-			when ')', '}', ']' then pair value
+			when '(', '{', '['
+				pushEnd(INVERSES[value],closeType: INVERSES[tokid])
+			when ')', '}', ']'
+				let paired = pair(value)
+				if paired and paired[1]:closeType
+					# console.log "specified close type! {paired[1]:closeType}"
+					tokid = paired[1]:closeType
+
+
 
 		# hacky rule to try to allow for tuple-assignments in blocks
 		# if value is ',' and prev[0] is 'IDENTIFIER' and @tokens[@tokens:length - 2][0] in ['TERMINATOR','INDENT']
