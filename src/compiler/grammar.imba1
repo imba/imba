@@ -140,19 +140,12 @@ var grammar =
 		o 'EXPORT { ImportSpecifierList }' do ExportNamedDeclaration.new(A1,[A3])
 		o 'EXPORT { ImportSpecifierList } FROM String' do
 			ExportNamedDeclaration.new(A1,[A3], A6)
-
 		o 'EXPORT EXPORT_ALL FROM String' do
 			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2)],A4)
 		o 'EXPORT EXPORT_ALL AS AnyIdentifier FROM String' do
 			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2,A4)],A6)
 		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A1) # A2.set(export: A1)
-		# o 'EXPORT Class' do Export.new(A2) A2.set(export: A1)
-		# o 'EXPORT Tag' do A2.set(export: A1)
 		o 'EXPORT_VAR VarBlock' do Export.new(A2).set(keyword: A1) # A2.set(export: A1)
-		# o 'EXPORT DEFAULT Expression' do Export.new(A3).set(default: A2, keyword: A1)
-		# o 'EXPORT Expression' do Export.new(A2).set(keyword: A1)
-		# o 'EXPORT EXPORT_ALL FROM String',                       -> new ExportAllDeclaration new Literal($2), $4
-		# o 'EXPORT { ExportSpecifierList OptComma } FROM String', -> new ExportNamedDeclaration new ExportSpecifierList($3), $7
 	]
 
 	Exportable: [
@@ -238,6 +231,11 @@ var grammar =
 		o 'Property'
 	]
 
+	Private: [
+		o '# IDENTIFIER' do Private.new(A2)
+		o 'Private {{ Expression }}' do A1.add(A3)
+	]
+
 	# A literal identifier, a variable name or property.
 	Identifier: [
 		o 'IDENTIFIER' do Identifier.new A1
@@ -254,12 +252,7 @@ var grammar =
 
 	# A literal identifier, a variable name or property.
 	Ivar: [
-		o 'IVAR' do Ivar.new A1
-		
-	]
-
-	Gvar: [
-		o 'GVAR' do Gvar.new A1
+		o '@ IDENTIFIER' do Ivar.new A2
 	]
 
 	Const: [
@@ -353,12 +346,9 @@ var grammar =
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
-		# o 'TagOptions . IVAR' do A1.addPart(A3,AST.TagFlag)
-		
-		# o 'TagOptions @ { Expression }' do A1.set(key: A4)
-		# o 'TagOptions @ { Expression }' do A1.set(key: A4)
+
 		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
-		o 'TagOptions T. IVAR' do A1.addPart(A3,AST.TagFlag)
+		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
 		o 'TagOptions T. TagIdentifier' do A1.addPart(A3,AST.TagFlag)
 		o 'TagOptions # TagIdentifier' do A1.addPart(A3,AST.TagId)
 		o 'TagOptions T% TagIdentifier' do A1.addPart(A3,AST.TagFlag)
@@ -459,16 +449,16 @@ var grammar =
 		o 'Const'
 		o 'Key'
 		o 'Ivar'
-		o 'Gvar'
+		o 'Private'
 	]
 
 	ObjAssignable: [
 		o 'SimpleObjAssignable'
 		# this is the interpolated string
+		o '[ Expression ]' do IdentifierExpression.new(A2)
 		o '( Expression )' do A2
 		o 'AlphaNumeric'
 	]
-
 	# wip
 	ObjRestValue: [
 		o '... SimpleObjAssignable' do Splat.new(A2).set(keyword: A1)
@@ -557,8 +547,7 @@ var grammar =
 	MethodScope: [
 		o 'MethodIdentifier'
 		o 'This'
-		o 'Self' # global?
-		o 'Gvar'
+		o 'Self'
 	]
 
 	# An optional, trailing comma.
@@ -656,17 +645,15 @@ var grammar =
 		o 'Const'
 		# o 'PrivateField'
 		o 'Ivar' do IvarAccess.new('.',null,A1)
-		o 'Gvar'
+		o 'Private' do Access.new('.',null,A1)
 		o 'Argvar'
 		o 'Self' # not sure if self should be assignable really
 		o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
+
 		o 'Value . NEW' do New.new(A1)
 		# o 'Value . Super' do SuperAccess.new('.',A1,A3)
+
 		o 'Value SoakableOp Identifier' do PropertyAccess.new(A2,A1,A3)
-		o 'Value ?: Identifier' do Access.new(A2,A1,A3)
-		o 'Value .: Identifier' do Access.new(A2,A1,A3)
-		o 'Value SoakableOp Ivar' do Access.new(A2,A1,A3)
-		o 'Value . Symbol' do Access.new('.',A1,Identifier.new(A3.value))
 		o 'Value SoakableOp Const' do Access.new(A2,A1,A3)
 		o 'Value INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
 	]
@@ -725,7 +712,6 @@ var grammar =
 		o 'AssignObj' do AssignList.new([A1])
 		o 'AssignList , AssignObj' do A1.add A3
 		o 'AssignList OptComma Terminator AssignObj' do A1.add(A3).add(A4) # A4.prebreak(A3)
-		# this is strange
 		o 'AssignList OptComma INDENT AssignList OptComma Outdent' do  A1.concat(A4.indented(A3,A6))
 	]
 

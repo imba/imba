@@ -36,6 +36,10 @@ export class Token
 	def c
 		"" + @value
 
+	def prepend str
+		@value = str + @value
+		return self
+
 	def toString
 		@value
 

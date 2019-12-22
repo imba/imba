@@ -449,9 +449,6 @@ def imba.createProxyProperty target
 		set: setter
 	}
 
-var isArray = do |val|
-	val and val:splice and val:sort
-
 var isGroup = do |obj|
 	return obj isa Array or (obj && obj.has isa Function)
 

@@ -145,7 +145,8 @@ export class EventHandler
 					args = [state,args]
 
 				# should default to first look at closure - no?
-				elif handler[0] == '@'
+				elif handler[0] == '_'
+
 					handler = handler.slice(1)
 					context = @closure
 				else

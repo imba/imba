@@ -73,7 +73,7 @@ var METHOD_IDENTIFIER = /// ^
 # added hyphens to identifiers now - to test
 var IDENTIFIER = /// ^
 	(
-		(\$|@@|@|\#)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* |
+		(\$|@@)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)*
 	)
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
@@ -204,10 +204,6 @@ var SHIFT   = ['<<', '>>', '>>>']
 
 # Comparison tokens.
 var COMPARE = ['===', '!==', '==', '!=', '<', '>', '<=', '>=','===','!==']
-
-# Overideable methods
-var OP_METHODS = ['<=>','<<','..']
-
 # Mathematical tokens.
 var MATH = ['*', '/', '%', '∪', '∩', '√']
 
@@ -232,12 +228,12 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
-var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN']
+var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END']
 
 # optimize for FixedArray
 var INDEXABLE = [
-	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'GVAR','SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN'
-	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID'
+	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN'
+	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID','INDEX_END'
 ]
 
 var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:','+','-','*']
@@ -395,7 +391,7 @@ export class Lexer
 		return
 
 	def basicContext
-		return selectorToken || symbolToken || methodNameToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || jsToken || literalToken || 0
+		return selectorToken || methodNameToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || jsToken || literalToken || 0
 
 	def moveCaret i
 		@loc += i
@@ -503,7 +499,7 @@ export class Lexer
 			token(typ,tok,len)
 			return len
 
-		elif chr == '%' or chr == ':' or chr == '.' or chr == '$' # and @chunk[1]
+		if chr == '%' or chr == ':' or chr == '.' # or chr == '$' # and @chunk[1]
 			token("T{chr}",chr,1)
 			return 1
 
@@ -705,17 +701,13 @@ export class Lexer
 			else
 				return 0
 
-		# whaat?
-		# console.log("method identifier",id)
 		if (['&','^','<<','<<<','>>'].indexOf(id) >= 0 or (id == '|' and context != '|'))
 			return 0
-
-		if OP_METHODS.indexOf(id) >= 0
-			space = yes
 
 		# not even anything we should use?!?
 		if pre == '@'
 			typ = 'IVAR'
+			id = id.slice(1)
 
 		elif pre == '$'
 			yes
@@ -724,12 +716,10 @@ export class Lexer
 			typ = 'IVAR'
 
 		elif CONST_IDENTIFIER.test(pre) or id == 'global' or id == 'exports'
-			# really? seems very strange
-			# console.log('global!!',typ,id)
 			typ = 'CONST_ID'
 		
 		# what is this really for?
-		if match[5] and ['IDENTIFIER','CONST_ID','GVAR','DECORATOR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING'].indexOf(ltyp) >= 0
+		if match[5] and ['IDENTIFIER','CONST_ID','DECORATOR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING'].indexOf(ltyp) >= 0
 			token('.','.',0)
 	
 		token(typ, id, length)
@@ -777,31 +767,11 @@ export class Lexer
 		var addLoc = false
 		var inTag = ctx0 == 'TAG_END' or (ctx1 == 'TAG_END' and ctx0 == 'OUTDENT')
 
-		# console.log ctx1,ctx0
-	
-		if inTag && false and match = TAG_ATTR.exec(@chunk)
-			# console.log 'TAG_ATTR IN tokid',match
-			# var prev = last @tokens
-			# if the prev is a terminator, we dont really need to care?
-			if @lastTyp != 'TAG_NAME'
-				if @lastTyp == 'TERMINATOR'
-					# console.log('prev was terminator -- drop it?')
-					true
-				else
-					token(",", ",")
-
-			var l = match[0]:length
-
-			token 'TAG_ATTR',match[1],l - 1  # add to loc?
-			@loc += l - 1
-			token '=','=',1
-			return l
-
 		# see if this is a plain object-key
 		# way too much logic going on here?
 		# the ast should normalize whether keys
 		# are accessable as keys or strings etc
-		if match = OBJECT_KEY.exec(@chunk)
+		if false and match = OBJECT_KEY.exec(@chunk)
 			var id = match[1]
 			var typ = 'KEY'
 
@@ -870,8 +840,7 @@ export class Lexer
 
 		elif typ == '@'
 			typ = 'IVAR'
-			if lastTyp in ['IDENTIFIER','IVAR','CONST_ID'] and !prev:spaced
-				token ".","."
+			id = id.slice(1)
 
 			# id:reserved = yes if colon
 		elif typ == '#'
@@ -882,7 +851,6 @@ export class Lexer
 
 		elif typ == '$' and !colon
 			typ = 'IDENTIFIER'
-			# typ = 'GVAR'
 
 		elif CONST_IDENTIFIER.test(id) or id == 'global' or id == 'exports'
 			# thous should really be handled by the ast instead
@@ -1038,8 +1006,8 @@ export class Lexer
 		
 		if colon
 			# console.log 'colon',colon,typ
-			if typ == 'IDENTIFIER' and NOT_KEY_AFTER.indexOf(@lastTyp) == -1
-				typ = 'KEY'
+			# if typ == 'IDENTIFIER' and NOT_KEY_AFTER.indexOf(@lastTyp) == -1
+			# 	typ = 'KEY'
 
 			token(typ, id, idlen)
 			var colonOffset = colon.indexOf(':')

@@ -19,27 +19,27 @@ tag app-root
 
 	def render
 		<self>
-			<div.a :click.ping(:a)>
-				<button.b :click.ping(:b)> "b"
-				<button.c :click.stop.ping(:c)> "c"
-				<button.d :click.self.stop.ping(:d) :click.ping(:de)>
+			<div.a :click.ping('a')>
+				<button.b :click.ping('b')> "b"
+				<button.c :click.stop.ping('c')> "c"
+				<button.d :click.self.stop.ping('d') :click.ping('de')>
 					"self"
 					<b> "-"
 
-				<button.e :click.stop.self.ping(:e)>
+				<button.e :click.stop.self.ping('e')>
 					"self"
 					<b> "inside"
 
-				<button.f :click.ping(:f1).ping(:f2)> "Multiple"
+				<button.f :click.ping('f1').ping('f2')> "Multiple"
 				<nested-item>
-					<button.g :click.ping(:g)> 'g'
+					<button.g :click.ping('g')> 'g'
 
-			<div.capturing :click.capture.ping(:captured)>
-				<button :click.ping(:button)> 'button'
+			<div.capturing :click.capture.ping('captured')>
+				<button :click.ping('button')> 'button'
 
-			<button.once :click.once.ping(:once)> 'once button'
+			<button.once :click.once.ping('once')> 'once button'
 
-			<button.h :click.ping(:h)>
+			<button.h :click.ping('h')>
 				"h"
 				<nested-item> "nested"
 

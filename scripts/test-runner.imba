@@ -69,18 +69,18 @@ def run item
 				e.file = item
 				tests.push(e)
 				if e.failed
-					print helpers.ansi.f(:redBright,"  ✘ {e.name}")
+					print helpers.ansi.f('redBright',"  ✘ {e.name}")
 				else
-					print helpers.ansi.f(:greenBright,"  ✔ {e.name}")
+					print helpers.ansi.f('greenBright',"  ✔ {e.name}")
 
 			'spec:warn': do |e|
-				print helpers.ansi.f(:yellowBright,"    - {e.message}")
+				print helpers.ansi.f('yellowBright',"    - {e.message}")
 
 			'spec:fail': do |e|
-				print helpers.ansi.f(:redBright,"    ✘ {e.message}")
+				print helpers.ansi.f('redBright',"    ✘ {e.message}")
 
 			'page:error': do |e|
-				print(helpers.ansi.f(:redBright,"error {e.message}"))
+				print(helpers.ansi.f('redBright',"error {e.message}"))
 				test.error = e
 				resolve(test)
 
@@ -162,10 +162,10 @@ def main
 	console.log("{tests.length} tests took {Date.now() - now}ms")
 
 	if passed.length
-		console.log helpers.ansi.f(:greenBright,"{passed.length} test{passed.length == 1 ? '' : 's'} passed")
+		console.log helpers.ansi.f('greenBright',"{passed.length} test{passed.length == 1 ? '' : 's'} passed")
 
 	if failed.length
-		console.log helpers.ansi.f(:redBright,"{failed.length} test{failed.length == 1 ? '' : 's'} failed")
+		console.log helpers.ansi.f('redBright',"{failed.length} test{failed.length == 1 ? '' : 's'} failed")
 		process.exit(1)
 	else
 		process.exit(0)

@@ -3403,20 +3403,39 @@ export class ObjAttr < Node
 		value.traverse if value
 		@defaults.traverse if @defaults
 
+		if key isa Ivar
+			if !value
+				key = Identifier.new(key.value)
+				value = OP('.',scope__.context,key)
+		elif key isa Private
+			if !value
+				value = OP('.',scope__.context,key)
+				key = Identifier.new(key.value)
+		self
+
 	def js o
 		let key = self.key
+		let kjs
 
-		if key isa Identifier and String(key.@value)[0] == '@'
-			key = Ivar.new(key)
+		# if key isa Identifier and String(key.@value)[0] == '@'
+		# 	key = Ivar.new(key)
 
-		var k = key.isReserved ? "'{key.c}'" : key.c
+		if key isa IdentifierExpression
+			# streamline this interface
+			kjs = key.asObjectKey
+		elif key.isReserved
+			kjs = "'{key.c}'"
+		else
+			kjs = key.c
+
+		# var k = key.isReserved ? "'{key.c}'" : key.c
 
 		if @defaults
-			"{k} = {@defaults.c}"
+			"{kjs} = {@defaults.c}"
 		elif value
-			"{k}: {value.c}"
+			"{kjs}: {value.c}"
 		else
-			"{k}"
+			"{kjs}"
 
 	def hasSideEffects
 		true
@@ -3727,17 +3746,11 @@ export class Access < Op
 		var pre = ""
 		var mark = ''
 
-
-
-		# if safechain
-		#	p "Access is safechained {rgt.c}"
-
 		if lft isa Super and STACK.method and STACK.method.option('inExtension')
 			return CALL(
 				OP('.',scope__.context,'super$'),
 				[rgt isa Identifier ? rgt.toStr : rgt]
 			).c()
-
 
 		if rgt isa Num
 			return ctx.c + "[" + rgt.c + "]"
@@ -3827,9 +3840,6 @@ export class GlobalVarAccess < ValueNode
 		value.c
 
 
-export class ObjectAccess < Access
-
-
 export class PropertyAccess < Access
 
 	def initialize o, l, r
@@ -3870,7 +3880,6 @@ export class PropertyAccess < Access
 		else
 			null
 
-
 export class IvarAccess < Access
 
 	def visit
@@ -3881,10 +3890,6 @@ export class IvarAccess < Access
 	def cache
 		# WARN hmm, this is not right... when accessing on another object it will need to be cached
 		return self
-
-
-export class ConstAccess < Access
-
 
 export class IndexAccess < Access
 
@@ -4298,11 +4303,15 @@ export class ConditionalAssign < Assign
 		var ls = l
 
 		if l isa Access
+
 			if l.left
 				l.left.cache
 			ls = l.clone(l.left,l.right) # this should still be cached?
-			l.cache if l isa PropertyAccess # correct now, to a certain degree
-			if l isa IndexAccess
+
+			if l isa PropertyAccess # correct now, to a certain degree
+				l.cache
+
+			if l isa IndexAccess or l.right isa IdentifierExpression
 				l.right.cache
 
 			# we should only cache the value itself if it is dynamic?
@@ -4369,9 +4378,7 @@ export class CompoundAssign < Assign
 		unless ln isa PropertyAccess
 			return self
 
-		if ln isa Access
-			# left might be zero?!?!
-			ln.left.cache if ln.left
+		ln.left.cache if ln.left
 		# TODO FIXME we want to cache the context of the assignment
 		var ast = OP('=',left,OP(op[0],left,right))
 		ast.toExpression if ast.isExpressable
@@ -4479,6 +4486,15 @@ export class Identifier < Node
 	def shouldParenthesizeInTernary
 		@parens or @cache
 
+
+export class Private < Identifier
+
+	def symbol
+		@symbol ||= AST.sym('__' + value)
+
+	def add part
+		IdentifierExpression.new(value).add(part).set(prefix: '__')
+
 export class TagIdRef < Identifier
 
 	def initialize v
@@ -4494,8 +4510,6 @@ export class TagIdRef < Identifier
 
 # FIXME Rename to IvarLiteral? or simply Literal with type Ivar
 export class Ivar < Identifier
-	
-	var prefix = '_' # '_'
 
 	def initialize v
 		@value = v isa Identifier ? v.value : v
@@ -4509,18 +4523,15 @@ export class Ivar < Identifier
 		(@private ? '__' : '') + helpers.dashToCamelCase(@value).replace(/^[@\#]/,'')
 		# value.c.camelCase.replace(/^@/,'')
 
-	def prefixed
-		name # (@private ? '__' : '') + name
-
 	def alias
-		prefixed
+		name
 
 	# the @ should possibly be gone from the start?
 	def js o
-		return prefixed
+		return name
 
 	def c
-		return prefixed
+		return name
 
 export class Decorator < ValueNode
 	
@@ -5782,6 +5793,8 @@ export class IdentifierExpression < Node
 	def asString
 		# what if a part is a string?	
 		let s = '`'
+		if option(:prefix)
+			s += option(:prefix)
 		for node in @nodes
 			if node isa Token
 				s += node.value
@@ -5798,7 +5811,7 @@ export class IdentifierExpression < Node
 	def toString
 		toRaw
 
-	def c o = {}
+	def js s, o = {}
 		if o:as == 'string'
 			return asString
 		elif o:as == 'key'
@@ -6037,7 +6050,6 @@ export class TagModifier < TagPart
 
 	def load value
 		if value isa IdentifierExpression
-			# console.log "not allowed!"
 			return value.@single
 		return value
 	

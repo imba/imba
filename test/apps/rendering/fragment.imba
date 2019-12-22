@@ -48,7 +48,9 @@ tag app-root
 			self.list(state.numbers)
 			self.list(state.names)
 
-imba.mount(<app-root>)
+var app = <app-root>
+app.render()
+imba.mount(app)
 
 test "add number" do
 	await spec.click('.add-number')
