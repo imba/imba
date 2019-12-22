@@ -5957,6 +5957,8 @@ export class TagAttr < TagPart
 			"setAttribute('{key}',{val})"
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}={val}"
+		elif key.indexOf('--') == 0
+			"style.setProperty('{key}',{val})"
 		else
 			"{helpers.dashToCamelCase(key)}={val}"
 		# elif dyn or true

@@ -7,6 +7,12 @@ test 'dynamic conditional class' do
 	let b = Math.random()
 	let el = <div .test-{a}=b>
 
+test 'css variables' do
+	let a = "tata"
+	let el = <div --depth=10>
+	eq el.style.getPropertyValue('--depth'), '10'
+
+
 test 'cacheable function' do
 	let a = "tata"
 	let b = Math.random()
@@ -16,4 +22,5 @@ test 'cacheable function' do
 			<div test=(|a,b| a + b)>
 			<div test=(|a,b| a + b + y)>
 			<div test.x(y)=(|a,b| a + b)>
+			<div data-value=Math.random()>
 	self
