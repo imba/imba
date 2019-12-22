@@ -67,5 +67,7 @@ test do
 			super.test
 			super.alias = 4
 			eq #alias, 4
+			self.alias = 5
+			eq #alias, 5
 
 	Cat.new.something()
