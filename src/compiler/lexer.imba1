@@ -391,7 +391,7 @@ export class Lexer
 		return
 
 	def basicContext
-		return selectorToken || methodNameToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || jsToken || literalToken || 0
+		return selectorToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || jsToken || literalToken || 0
 
 	def moveCaret i
 		@loc += i
@@ -734,8 +734,8 @@ export class Lexer
 	def isKeyword id
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set')
 			var scop = getScope
-			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'MODULE'
-			return true if incls
+			var incls = scop == 'CLASS' or scop == 'TAG'
+			return true if incls and @lastTyp != 'DEF'
 
 		if @lastTyp == 'ATTR' or @lastTyp == 'PROP'
 			return false
@@ -893,7 +893,7 @@ export class Lexer
 				self.pushEnd('TAG')
 			# FIXME @ends is not used the way it is supposed to..
 			# what we want is a context-stack
-			elif typ == 'DEF' or typ == 'GET' or typ == 'SET'
+			elif (typ == 'DEF' or typ == 'GET' or typ == 'SET')
 				typ = 'DEF'
 				openDef
 
@@ -986,11 +986,8 @@ export class Lexer
 		elif id == 'as' and (ctx0 == 'IMPORT' or @lastTyp == 'IDENTIFIER' or ctx0 == 'EXPORT')
 			typ = 'AS'
 
-		# will be much cleaner with the new handmade combined lexer+parser
-		# for now we need to do some testing
-		# elif id == 'as' and ctx0 == 'IMPORT'
-		# 	typ = 'AS'
-		# 	pair 'IMPORT'
+		if id == 'new'
+			typ = 'NEW'
 
 		if typ == 'IDENTIFIER'
 			# see if previous was catch -- belongs in rewriter?
@@ -998,10 +995,6 @@ export class Lexer
 				typ = 'CATCH_VAR'
 		
 		if colon
-			# console.log 'colon',colon,typ
-			# if typ == 'IDENTIFIER' and NOT_KEY_AFTER.indexOf(@lastTyp) == -1
-			# 	typ = 'KEY'
-
 			token(typ, id, idlen)
 			var colonOffset = colon.indexOf(':')
 
@@ -1542,6 +1535,28 @@ export class Lexer
 				prev.@len = @loc - prev.@loc + value:length
 				return value:length
 
+		if value == '|'
+			# hacky way to implement this
+			# with new lexer we'll use { ... } instead, and assume object-context,
+			# then go back and correct when we see the context is invalid
+			if pv == '('
+				token('DO', 'DO',0)
+				self.pushEnd('|')
+				token('BLOCK_PARAM_START', value,1)
+				return length
+
+			elif pt == 'DO'
+				self.pushEnd('|')
+				token('BLOCK_PARAM_START', value,1)
+				return length
+				
+			elif end1 == '|'
+				token('BLOCK_PARAM_END', value,1)
+				pair '|'
+				return length
+			else
+				return 0
+
 		if value is ';'             
 			@seenFor = no
 			tokid = 'TERMINATOR'
@@ -1571,9 +1586,6 @@ export class Lexer
 		elif value is '>' and context == 'DEF'
 			# console.log('picked up >!!')
 			tokid = 'DEF_FRAGMENT'
-	
-			# elif value is 'TERMINATOR' and end1 is '%' 
-			# 	closeSelector()
 
 		elif value is 'TERMINATOR' and end1 is 'DEF'
 			closeDef()
@@ -1589,14 +1601,12 @@ export class Lexer
 		elif value == '*' and @chunk.charAt(1).match(/[A-Za-z\_\@\[]/) and (prev:spaced or [',','(','[','{','|','\n','\t'].indexOf(pv) >= 0)
 			tokid = "SPLAT"
 
-		elif value == '*' and context == 'IMPORT'
-			tokid = "IMPORT_ALL"
+		elif value == '*' and (context == 'IMPORT' or context == 'EXPORT')
+			tokid = "{context}_ALL"
 
 		elif value == ',' and context == 'IMPORT'
 			tokid = "IMPORT_COMMA"
 
-		elif value == '*' and context == 'EXPORT'
-			tokid = "EXPORT_ALL"
 		elif value == '**'
 			tokid = 'EXP'
 		elif value in MATH
@@ -1617,15 +1627,11 @@ export class Lexer
 				tokid = '{{'
 
 			if value is '(' and pt in CALLABLE
-				# not using this ???
-				# prev[0] = 'FUNC_EXIST' if prev[0] is '?'
-				# console.log 'call start!'
 				tokid = 'CALL_START'
 
 			elif value is '[' and pt in INDEXABLE
 				tokid = 'INDEX_START'
 				tTs(prev,'INDEX_SOAK') if pt == '?'
-				# prev[0] = 'INDEX_SOAK' if prev[0] == '?'
 
 		switch value
 			when '(', '{', '['
@@ -1633,19 +1639,7 @@ export class Lexer
 			when ')', '}', ']'
 				let paired = pair(value)
 				if paired and paired[1]:closeType
-					# console.log "specified close type! {paired[1]:closeType}"
 					tokid = paired[1]:closeType
-
-
-
-		# hacky rule to try to allow for tuple-assignments in blocks
-		# if value is ',' and prev[0] is 'IDENTIFIER' and @tokens[@tokens:length - 2][0] in ['TERMINATOR','INDENT']
-		#   # token "TUPLE", "tuple" # should rather insert it somewhere else, no?
-		#   console.log("found comma")
-
-		# Breaking change that will make dot behave as in js
-		# if value == '.' and tokid == '.'
-		# 	tokid = '.:'
 
 		token(tokid, value, value:length)
 		return value:length
