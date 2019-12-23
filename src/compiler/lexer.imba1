@@ -369,7 +369,7 @@ export class Lexer
 
 		if !o:silent and @ends:length
 			console.log @ends
-			error "missing {@ends.pop}"
+			throw error("missing {@ends.pop}")
 
 		return @tokens
 
@@ -383,6 +383,7 @@ export class Lexer
 				if @context:pop.test(@chunk)
 					popEnd
 
+			# we should let the current context decide which methods to call
 			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || basicContext
 			i += pi
 			@loc = @locOffset + i
@@ -391,7 +392,7 @@ export class Lexer
 		return
 
 	def basicContext
-		return selectorToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || literalToken || 0
+		return selectorToken || symbolToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || literalToken || 0
 
 	def moveCaret i
 		@loc += i
@@ -1017,24 +1018,15 @@ export class Lexer
 	
 	def symbolToken
 		var match, symbol, prev
-
 		return 0 unless match = SYMBOL.exec(@chunk)
 		symbol = match[0]
 		prev = last(@tokens)
 
-		# is this a property-access?
-		# should invert this -- only allow when prev IS .. 
-		# : should be a token itself, with a specification of spacing (LR,R,L,NONE)
-		if prev and !prev:spaced and tT(prev) !in ['(','{','[','.','CALL_START','INDEX_START',',','=','INDENT','TERMINATOR','VALUE_START']
-			var access = symbol.split(':')[1] # really?
-			
-			token '.:',':', 1
-			
-			token 'IDENTIFIER', access, access:length, 1
-			return access:length + 1
-		else
-			token 'SYMBOL', symbol, match[0]:length
-			match[0]:length
+		if !prev or prev:spaced or @prevVal in ['(','[','=']
+			token 'STRING', '"' + symbol.slice(1) + '"', match[0]:length
+			warn error("Symbols are deprecated - use strings '{symbol.slice(1)}'")
+			return match[0]:length
+		return 0
 
 	def escapeStr str, heredoc, q
 		str = str.replace MULTILINER, (heredoc ? '\\n' : '')
@@ -1295,7 +1287,7 @@ export class Lexer
 					@loc += indent:length - whitespace:length
 					token('INDENT', whitespace,whitespace:length)
 					unless @opts:silent
-						return error("inconsistent {@indentStyle} indentation")
+						throw error("inconsistent {@indentStyle} indentation")
 
 			size = indentSize
 
@@ -1624,7 +1616,7 @@ export class Lexer
 
 		if herecomment
 			if HEREDOC_ILLEGAL.test(doc)
-				error "block comment cannot contain '*/' starting"
+				throw error("block comment cannot contain '*/' starting")
 			return doc if doc.indexOf('\n') <= 0
 		else
 			while match = HEREDOC_INDENT.exec(doc)
@@ -1712,7 +1704,7 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter
 
-		error "missing { stack.pop }, starting" unless @opts:silent
+		throw error("missing { stack.pop }, starting") unless @opts:silent
 
 	# Expand variables and expressions inside double-quoted strings using
 	# braces for substitution of arbitrary expressions.
@@ -1842,14 +1834,15 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter # what, why?
 
-		error "missing { stack.pop }, starting"
+		throw error "missing { stack.pop }, starting"
 
 	# Pairs up a closing token, ensuring that all listed pairs of tokens are
 	# correctly balanced throughout the course of the token stream.
 	def pair tok
 		var wanted = last(@ends)
 		unless tok == wanted
-			error "unmatched {tok}" unless 'OUTDENT' is wanted
+			unless 'OUTDENT' is wanted
+				throw error "unmatched {tok}"
 			var size = last(@indents)
 			@indent -= size
 			outdentToken(size, true, 0)
@@ -1908,7 +1901,7 @@ export class Lexer
 		# Does not work now
 		body = body.replace RegExp("{quote}","g"), '\\$&'
 		quote + escapeLines(body, heredoc) + quote
-		
+
 	# Throws a syntax error on the current `@line`.
 	def error message, len
 		message = "{message} on line {@line}" if @line isa Number
@@ -1918,14 +1911,19 @@ export class Lexer
 
 		var err = SyntaxError.new(message)
 		err:line = @line
-		# err:columnNumber
 		var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)
+		err.@code = @code
 		err:region = [@loc,@loc + (len or 0)]
-		throw err
+		return err
 
 	def warn message
 		var ary = @tokens:warnings ||= []
 		ary.push(message)
+
+		if !@opts:silent
+			if message isa ERR.ImbaParseError
+				message = message.excerpt(colors: 'yellow')
+		# add warnings to general compiler?
 		console.warn message
 		self
 

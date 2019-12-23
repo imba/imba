@@ -14,7 +14,9 @@ export class ImbaParseError < Error
 		this:message = e:message
 		this:filename = e:filename
 		this:line = e:line
+
 		@options = o or {}
+		this:severity = @options:severity or 'error'
 		self
 
 	def set opts
@@ -61,6 +63,12 @@ export class ImbaParseError < Error
 		var ln1 = Math.min(ln0 + 5,lines:length)
 		let lni = ln - ln0
 		var l = ln0
+		var colorize = do $1
+
+		if colors
+			let color = self:severity == 'warn' ? 'yellow' : 'red'
+			color = colors if colors isa String
+			colorize = do util:ansi[color](util:ansi.bold($1))
 
 		var out = while l < ln1
 			var line = lines[l++]
@@ -75,11 +83,10 @@ export class ImbaParseError < Error
 				else
 					"      {prefix} | {line}"
 
-		if colors
-			out[lni] = util:ansi.red(util:ansi.bold(out[lni]))
+		out[lni] = colorize(out[lni])
 
 		if details
-			out.unshift(self:message)
+			out.unshift(colorize(self:message))
 
 		return out.join('\n')
 
