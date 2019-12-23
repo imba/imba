@@ -945,6 +945,8 @@ export class ValueNode < Node
 	def region
 		[@value.@loc,@value.@loc + @value.@len]
 
+export class ExpressionNode < ValueNode
+
 export class AssertionNode < ValueNode
 	def js o
 		let op = @value
@@ -1604,7 +1606,6 @@ export class ExpressionBlock < ListNode
 	def addExpression expr
 		push(expr)
 		self
-
 
 
 # STATEMENTS
@@ -6600,6 +6601,9 @@ export class Tag < TagLike
 	def isNative
 		type isa TagTypeIdentifier and type.isSimpleNative
 
+	def isDynamicType
+		type isa ExpressionNode
+
 	def isSVG
 		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or @parent and @parent.isSVG)
 	
@@ -6633,7 +6637,7 @@ export class Tag < TagLike
 		var parent = self.parent
 		var fragment = self.fragment
 
-		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type.isClass ? type.name : "'" + type.@value + "'"))
+		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type:isClass and type.isClass ? type.name : "'" + type.@value + "'"))
 
 		var wasInline = o:inline
 		var isSVG = self.isSVG
@@ -6641,6 +6645,7 @@ export class Tag < TagLike
 
 		var canInline = no
 		var shouldEnd = hasFlag(F.TAG_CUSTOM)
+		var dynamicKey = null
 
 		# whether this tag should set a variable indicating
 		# whether this was built now or not
@@ -6649,6 +6654,15 @@ export class Tag < TagLike
 		# when it has any attributes? - but not text or
 
 		var inCondition = parent && parent.option(:condition)
+
+		if type isa ExpressionNode
+			add "{vvar}={type.c}"
+			add "{kvar}='{oid}_'+{vvar}"
+			typ = vvar
+			dynamicKey = kvar
+			flag(F.TAG_CUSTOM)
+			markWhenBuilt = yes
+			shouldEnd = yes
 
 		var params = [
 			typ,
@@ -6665,7 +6679,7 @@ export class Tag < TagLike
 			params[4] = nodes[0].c
 			nodes = []
 
-		if @dynamics:length == 0 and !hasDynamicFlags
+		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey
 			if nodes.every(|v| v isa Tag or v isa Str)
 				if !shouldEnd and !hasNonTagChildren and (parent isa Tag)
 					canInline = yes
@@ -6725,8 +6739,7 @@ export class Tag < TagLike
 					foot.push('}')
 				# should not render any attributes
 				@attributes = []
-				# add("{tvar}.insertInto$({fragment.tvar})")
-				# add("{fragment.tvar}.insert$({ref}={tvar},{@flags},{key}_))")
+
 			# this is a functional tag component
 			elif option(:args)
 				let key = "{cvar}.{oid}"
@@ -6764,14 +6777,21 @@ export class Tag < TagLike
 			elif canInline
 				add "{parent.bvar} || ({ctor})"
 			else
-				let ref = "{cvar}.{oid}"
+				let cref = "{cvar}.{oid}"
+				let ref = dynamicKey ? "{cvar}[{dynamicKey}]" : cref
 
 				if markWhenBuilt
 					@bvar = tagvar(:b)
 					add "{tvar} = ({bvar}={dvar}=1,{ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
 				else
 					add "{tvar} = {ref} || ({ref} = {ctor})"
+
 				@ref = tvar
+
+				if dynamicKey # and cache
+					@cvar = tagvar(:c)
+					add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
+					add "({tvar}=={cref}) || (!{cref} && ({cref}={tvar})) || {cref}.replaceWith$({cref}={tvar})"
 
 		if @slots
 			for own name, slot of @slots

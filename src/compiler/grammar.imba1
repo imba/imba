@@ -329,13 +329,13 @@ var grammar =
 	Tag: [
 		o 'TAG_START TagOptions TAG_END' do A2.set(open: A1, close: A3)
 		o 'TAG_START TagOptions TAG_END TagBody' do A2.set(body: A4, open: A1, close: A3)
-		o 'TAG_START { Expression } TAG_END' do TagWrapper.new A3, A1, A5
 	]
 
 	TagTypeName: [
 		o 'Self' do A1
 		o 'IDENTIFIER' do TagTypeIdentifier.new(A1)
 		o 'TAG_TYPE' do TagTypeIdentifier.new(A1)
+		o '{ Expression }' do ExpressionNode.new(A2)
 		o '' do null
 	]
 
@@ -351,7 +351,6 @@ var grammar =
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
 		o 'TagOptions T. TagIdentifier' do A1.addPart(A3,AST.TagFlag)
 		o 'TagOptions # TagIdentifier' do A1.addPart(A3,AST.TagId)
-		o 'TagOptions T% TagIdentifier' do A1.addPart(A3,AST.TagFlag)
 		o 'TagOptions TAG_WS TagIdentifier' do A1.addPart(A2,AST.TagSep).addPart(A3,AST.TagAttr)
 
 		o 'TagOptions ( )' do A1.addPart(null,AST.TagArgList)
@@ -389,7 +388,6 @@ var grammar =
 		o 'Tag' do ArgList.new([A1])
 	]
 	
-
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
 	TagDeclaration: [
