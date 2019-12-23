@@ -671,6 +671,10 @@ export class Node
 	def oid
 		@oid ||= STACK.generateId('')
 
+	# shorthand for the self context for a node
+	def slf
+		scope__.context
+
 	def p
 		# allow controlling this from CLI
 		if STACK.loglevel > 0
@@ -8569,11 +8573,11 @@ export class Super < Node
 			if m and m.isConstructor
 				op = LIT('super(...arguments)')
 			elif m and virtual
-				op = CALL(OP('.',scope__.context,'super$'),[m.name.toStr])
+				op = CALL(OP('.',slf,'super$'),[m.name.toStr])
 				if m.isSetter
-					op = OP('.',scope__.context,'super$set',[m.name.toStr,m.params.at(0)])
+					op = CALL(OP('.',slf,'super$set'),[m.name.toStr,m.params.at(0)])
 				elif !m.isGetter
-					op = CALL(OP('.',op,'apply'),[scope__.context,LIT('arguments')])
+					op = CALL(OP('.',op,'apply'),[slf,LIT('arguments')])
 			elif m
 				# op = virtual ? OP('.',sup,sup) : 
 				op = OP('.',sup,m.name)
@@ -8587,24 +8591,6 @@ export class Super < Node
 			return OP('.',sup,m.name).c
 
 		return "super"
-		# need to find the stuff here
-		# this is really not that good8
-		var m = STACK.method
-		var out = null
-		var up = STACK.current
-		var deep = up isa Access
-
-		# TODO optimization for later - problematic if there is a different reference in the end
-		if false && m && m.type == :constructor
-			out = "{m.target.c}.superclass"
-			out += ".apply({m.scope.context.c},arguments)" unless deep
-		else
-			out = "{m.target.c}.__super__"
-			unless up isa Access
-				out += ".{AST.c(m.supername)}"
-				unless up isa Call # autocall?
-					out += ".apply({m.scope.context.c},arguments)"
-		out
 
 # constants
 
