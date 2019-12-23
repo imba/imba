@@ -80,7 +80,7 @@ tag multi-input
 			<div.views> for item,i in values
 				<div.item .sel=(end > i >= start) .before=(start == end == i)> item
 
-			<input@input
+			@input = <input
 				type="text"
 				:beforeinput.@onbeforeinput
 				:selection.commit
