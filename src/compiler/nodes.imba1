@@ -6348,7 +6348,11 @@ class TagLike < Node
 		for item in @consumed when item isa TagLike
 			item.@parent = self
 			item.@level = (@level + 1)
+			item.visitAfterConsumed
 			item.consumeChildren
+		self
+
+	def visitAfterConsumed
 		self
 
 	def consume node
@@ -6436,7 +6440,7 @@ export class TagLoopFragment < TagLike
 		super
 
 		# determine if the order of elements will ever change inside loop
-		if @consumed.every(do $1 isa Tag and !$1.option(:key)) and !hasFlag(F.TAG_HAS_BRANCHES)
+		if @consumed.every(do $1 isa Tag and !$1.option(:key) and !$1.isDynamicType) and !hasFlag(F.TAG_HAS_BRANCHES)
 			flag(F.TAG_INDEXED)
 		else
 			flag(F.TAG_KEYED)
@@ -6530,6 +6534,12 @@ export class Tag < TagLike
 		return node
 
 	def visitAfterBody stack
+		self
+
+	def visitAfterConsumed
+		if @parent isa TagLoopFragment and isDynamicType
+			if option(:key)
+				set(key: OP('+',option(:key),OP('+',STR(' '),vvar)) )
 		self
 
 	def getSlot name
@@ -6657,7 +6667,9 @@ export class Tag < TagLike
 
 		if type isa ExpressionNode
 			add "{vvar}={type.c}"
-			add "{kvar}='{oid}_'+{vvar}"
+			unless (option(:key) or parent isa TagLoopFragment)
+				add "{kvar}='{oid}_'+{vvar}"
+
 			typ = vvar
 			dynamicKey = kvar
 			flag(F.TAG_CUSTOM)
@@ -6753,6 +6765,8 @@ export class Tag < TagLike
 				# what if we are not reactive at all?
 				if parent.isKeyed and !option(:key)
 					option(:key,OP('+',LIT("'{oid}$'"),parent.kvar))
+					if isDynamicType
+						set(key: OP('+',option(:key),vvar))
 					# @ref = "{parent.cvar}[{parent.kvar}]"
 
 				if option(:key)

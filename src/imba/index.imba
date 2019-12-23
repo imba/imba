@@ -206,6 +206,9 @@ class Scheduler
 
 imba.scheduler = Scheduler.new()
 imba.commit = do imba.scheduler.add('render')
+imba.tick = do
+	imba.commit()
+	return imba.scheduler.promise
 
 ###
 DOM
@@ -236,6 +239,10 @@ root.imbaElements = ImbaElementRegistry.new()
 import {EventHandler} from './events'
 
 extend class Node
+
+	def init$
+		self
+
 	# replace this with something else
 	def replaceWith$ other
 		@parentNode.replaceChild(other,this)
