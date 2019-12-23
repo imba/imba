@@ -89,7 +89,7 @@ var OBJECT_KEY = /// ^
 ///
 
 var TAG = /// ^
-	(\<|%)(?=[A-Za-z\#\.\{\@\>])
+	(\<)(?=[A-Za-z\#\.\{\@\>])
 ///
 
 var TAG_TYPE = /^(\w[\w\d]*:)?(\w[\w\d]*)(-[\w\d]+)*/
@@ -545,10 +545,11 @@ export class Lexer
 			pushEnd(INVERSES['TAG_START'])
 
 			if match = TAG_TYPE.exec(@chunk.substr(1,40))
-				# special case should probably be handled in AST
 				if match[0] != 'self'
 					token('TAG_TYPE',match[0],match[0]:length,1)
 					return input:length + match[0]:length
+			elif @chunk[1] == '>'
+				token('TAG_TYPE','fragment',0,0)
 
 			if identifier
 				if identifier.substr(0,1) == '{'

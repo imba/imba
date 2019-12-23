@@ -271,8 +271,6 @@ export class Rewriter
 		step("removeLeadingNewlines")
 		step("removeMidExpressionNewlines")
 		step("tagDefArguments")
-		step("closeOpenCalls")
-		step("closeOpenIndexes")
 		step("closeOpenTags")
 		step("addImplicitIndentation")
 		step("tagPostfixConditionals")
@@ -365,39 +363,6 @@ export class Rewriter
 
 	def tagDefArguments
 		yes
-
-	# The lexer has tagged the opening parenthesis of a method call. Match it with
-	# its paired close. We have the mis-nested outdent case included here for
-	# calls that close on the same line, just before their outdent.
-	def closeOpenCalls
-		var condition = do |token,i,tokens|
-			var t = token.@type
-			(t == ')' or t == 'CALL_END') || t == OUTDENT and this.tokenType(i - 1) == ')'
-
-		var action = do |token, i, tokens|
-			var t = token.@type
-			token = tokens[i - 1] if t === OUTDENT
-			# var tok = @tokens[t == OUTDENT ? i - 1 : i]
-			token.@type = 'CALL_END'
-			return
-			# T.setTyp(tok,'CALL_END')
-
-		scanTokens do |token,i,tokens|
-			this.detectEnd(i + 1, condition, action) if token.@type === 'CALL_START'
-			return 1
-
-		return
-
-	# The lexer has tagged the opening parenthesis of an indexing operation call.
-	# Match it with its paired close.
-	def closeOpenIndexes
-		# why differentiate between index and []
-		var condition = do |token, i| token.@type === ']' or token.@type === 'INDEX_END'
-		var action    = do |token, i| token.@type = 'INDEX_END'
-		
-		scanTokens do |token,i,tokens|
-			detectEnd(i + 1, condition, action) if token.@type === 'INDEX_START'
-			return 1
 
 	# The lexer has tagged the opening parenthesis of an indexing operation call.
 	# Match it with its paired close. Should be done in lexer directly
