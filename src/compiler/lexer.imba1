@@ -391,7 +391,7 @@ export class Lexer
 		return
 
 	def basicContext
-		return selectorToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || jsToken || literalToken || 0
+		return selectorToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || literalToken || 0
 
 	def moveCaret i
 		@loc += i
@@ -793,20 +793,7 @@ export class Lexer
 			token('IDENTIFIER', id, idlen)
 			return idlen
 
-		# should we force this to be an identifier even if it is a reserved word?
-		# this should only happen for when part of object etc
-		# will prev ever be @???
-		var forcedIdentifier
-
-		# again
-		forcedIdentifier = colon || lastTyp == '.' or lastTyp == '?.' # in ['.', '?.'
-
-
-		# temp hack! need to solve for other keywords etc as well
-		# problem appears with ternary conditions.
-
-		# well -- it should still be an indentifier if in object?
-		# forcedIdentifier = no if id in ['undefined','break']
+		var forcedIdentifier = colon || lastTyp == '.' || lastTyp == '?.'
 
 		forcedIdentifier = no if colon and lastTyp == '?' # for ternary
 
@@ -816,10 +803,8 @@ export class Lexer
 
 		var isKeyword = no
 
-		# console.log "match",match
-		# console.log "typ is {typ}"
 		# little reason to check for this right here? but I guess it is only a simple check
-		if typ == '$' and ARGVAR.test(id) # id.match(/^\$\d$/)
+		if typ == '$' and ARGVAR.test(id)
 			# console.log "TYP $"
 			if id == '$0'
 				typ = 'ARGUMENTS'
@@ -947,7 +932,7 @@ export class Lexer
 		var len = input:length
 
 		# should be strict about the order, check this manually instead
-		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == 'MODULE'
+		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG'
 			queueScope(typ)
 
 			var i = @tokens:length
@@ -999,8 +984,7 @@ export class Lexer
 			var colonOffset = colon.indexOf(':')
 
 			moveCaret(idlen + colonOffset)
-			# TODO Stop moving caret back and forth
-			# console.log idlen,colon,colonOffset
+
 			token(':', ':',1)
 			moveCaret(-(idlen + colonOffset))
 		else
@@ -1208,15 +1192,6 @@ export class Lexer
 
 		moveHead(comment)
 		return comment:length
-
-	# Matches JavaScript interpolated directly into the source via backticks.
-	def jsToken
-		var match, script
-		return 0
-
-		return 0 unless @chunk.charAt(0) is '`' and match = JSTOKEN.exec(@chunk)
-		token 'JS', (script = match[0]).slice 1, -1
-		script:length
 
 	# Matches regular expression literals. Lexing regular expressions is difficult
 	# to distinguish from division, so we borrow some basic heuristics from
