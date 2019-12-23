@@ -1,5 +1,6 @@
 # imba$inlineHelpers=1
 # imba$v2=0
+extern btoa, atob
 
 var path = require 'path'
 var util = require './helpers'
@@ -10,37 +11,39 @@ var VLQ_VALUE_MASK = VLQ_CONTINUATION_BIT - 1
 var BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 export class SourceMap
+	
+	prop result
 
 	def source
 		@source
 
 	def options
-		@source
+		@options
 
-	def initialize source
+	def initialize source, options
 		@source = source
+		@options = options
 		@maps = []
 		@map = ""
 		@js = ""
 
 	def filename
-		options:options:filename
+		options:filename
 
 	def sourceCode
-		options:options.@source
+		options.@source
 
 	def targetPath
-		options:options:targetPath
+		options:targetPath
 
 	def sourcePath
-		options:options:sourcePath
+		options:sourcePath
 
 	def sourceName
 		path.basename(sourcePath)
 
 	def targetName
 		path.basename(targetPath)
-		
 
 	def sourceFiles
 		[sourceName]
@@ -48,7 +51,7 @@ export class SourceMap
 	def parse
 		var matcher = /\%\$(\d*)\$\%/
 		var replacer = /^(.*?)\%\$(\d*)\$\%/
-		var lines = options:js.split(/\n/g) # what about js?
+		var lines = source:js.split(/\n/g) # what about js?
 		# return self
 		var locmap = util.locationToLineColMap(sourceCode)
 		@maps = []
@@ -123,7 +126,16 @@ export class SourceMap
 		# source:sourcemap = sourcemap
 		# var base64 = Buffer.new(JSON.stringify(map)).toString("base64")
 		# source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
-		return map
+		@result = map
+		return self
+
+	def inlined
+		var str = JSON.stringify(@result)
+		if typeof btoa == 'function'
+			str = btoa(str)
+		else
+			str = Buffer.new(str).toString("base64")
+		return "\n/*# sourceMappingURL=data:application/json;base64,{str}*/"
 
 	# borrowed from CoffeeScript
 	def encodeVlq value

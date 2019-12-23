@@ -2317,24 +2317,22 @@ export class Root < Code
 			sfcid: @scope.sfcid
 		}
 
-
-		
-
 		var stylebody = ""
 		for style in result:styles
 			if style:type == 'css'
-				# should just compile the styles directly?
 				let scoping = style:scoped ? result:sfcid : null
 				style:processed = csscompiler.compile(style:content,scope: scoping)
 				stylebody += style:processed + '\n'
 
-		# if stylebody and (o:inline-css or (!STACK.env('WEBPACK') && o:target == 'web'))
 		if stylebody
-			result:js = result:js.replace('{/*$sfc$*/}',JSON.stringify(result:sfc))
-			result:js = "imba.inlineStyles({JSON.stringify(stylebody)});\n{result:js}"
+			let css = {js: stylebody}
+			# let csso = Object.assign({},o,_source: stylebody)
+			# let sm = SourceMap.new(css,csso).generate.inlined
+			# css:js += sm
+			result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
 
 		if o:sourceMapInline or o:sourceMap
-			result:sourcemap = SourceMap.new(result).generate
+			result:sourcemap = SourceMap.new(result,o).generate.result
 
 		return result
 
