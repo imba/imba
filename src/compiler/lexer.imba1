@@ -732,13 +732,13 @@ export class Lexer
 		return false
 
 	def isKeyword id
+		if @lastTyp == 'ATTR' or @lastTyp == 'PROP' or @lastTyp == 'DEF'
+			return false
+
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set')
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG'
-			return true if incls and @lastTyp != 'DEF'
-
-		if @lastTyp == 'ATTR' or @lastTyp == 'PROP'
-			return false
+			return true if incls
 
 		ALL_KEYWORDS.indexOf(id) >= 0
 
