@@ -15,7 +15,7 @@ test 'css variables' do
 
 test 'attributes without value' do
 	let el = <button disabled>
-	eq el.getAttribute('disabled'), 'disabled'
+	ok el.hasAttribute('disabled')
 
 test 'cacheable function' do
 	let a = "tata"
