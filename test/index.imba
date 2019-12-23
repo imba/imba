@@ -12,10 +12,12 @@ for src in paths.keys()
 
 console.log "examples",examples
 
+var compiler = require('../src/compiler/compiler.imba1')
+
 require('../src/imba/index.imba')
 require('./spec.imba')
 
-var compiler = window.imbac
+
 
 var exposed = {}
 
@@ -25,25 +27,30 @@ window.onerror = do |e|
 window.onunhandledrejection = do |e|
 	console.log('page:error',{message: e.reason.message})
 
-var run = do |js|
-	# hack until we changed implicit self behaviour
-	# js = js.replace('self = {}','self = SELF')
-	# let script = document.createElement('script')
-	# script.innerHTML = js
-	# document.head.appendChild(script)
-	window.eval(js)
-
+var afterRun = do
 	if SPEC.blocks.length
 		exposed.test = SPEC.run.bind(SPEC)
 
 		for block in SPEC.blocks
-			# FIXME spec runner need to setup observer
 			exposed[block.name] = do block.run()
 
 	imba.commit()
 	console.log('example:loaded',10)
 
+var run = do |js|
+	# hack until we changed implicit self behaviour
+	# js = js.replace('self = {}','self = SELF')
+	let script = document.createElement('script')
+	script.innerHTML = js
+	# script.onload = afterRun
+	document.head.appendChild(script)
+	afterRun()
+	# window.eval(js)
+	# afterRun()
+	
+
 var compileAndRun = do |example|
+
 	var result = compiler.compile(example.body,{
 		sourcePath: example.path,
 		target: 'web'
@@ -52,7 +59,14 @@ var compileAndRun = do |example|
 	run(js)
 
 var load = do |src|
-	if examples[src]
+	if !location.origin.startsWith('file://')
+		# load as esm module
+		let script = document.createElement('script')
+		script.type = 'module'
+		script.src = './' + src.replace('.imba','.js')
+		script.onload = afterRun
+		document.head.appendChild(script)
+	elif examples[src]
 		compileAndRun(examples[src])
 
 tag test-runner
@@ -62,6 +76,7 @@ tag test-runner
 		document.location.reload()
 
 	def call e
+		console.log('calling',e)
 		exposed[e.target.value]()
 		self
 
