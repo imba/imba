@@ -13,6 +13,9 @@ test 'css variables' do
 	let el = <div --depth=10>
 	eq el.style.getPropertyValue('--depth'), '10'
 
+test 'attributes without value' do
+	let el = <button disabled>
+	eq el.getAttribute('disabled'), 'disabled'
 
 test 'cacheable function' do
 	let a = "tata"
