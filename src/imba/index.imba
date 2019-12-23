@@ -278,6 +278,9 @@ extend class Comment
 
 # what if this is in a webworker?
 extend class Element
+	
+	def slot$ name, ctx
+		return self
 
 	def on$ type, mods, scope
 
@@ -408,8 +411,6 @@ class ImbaElement < HTMLElement
 
 	# returns the named slot - for context
 	def slot$ name, ctx
-		# if the component has no render method
-		# we can simply pass through
 		if name == '__' and !self.render
 			return self
 

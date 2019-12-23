@@ -6492,7 +6492,7 @@ export class Tag < TagLike
 		@options:type && @options:type.traverse
 
 		# Need to potentially resolve tagname to variables first?
-		if isSelf or (tagName.indexOf('-') >= 0)
+		if isSelf or (tagName.indexOf('-') >= 0) or isDynamicType
 			flag(F.TAG_CUSTOM)
 
 		if attrs:length == 0 && !@options:type
@@ -6521,7 +6521,7 @@ export class Tag < TagLike
 
 	def register node
 		node = super(node)
-		# should go for any taglike!
+
 		if node isa TagLike and (isCustom and !isSelf)
 			let slotKey = node isa Tag ? node.@attrmap:slot : null
 			let name = '__'
@@ -6672,9 +6672,6 @@ export class Tag < TagLike
 
 			typ = vvar
 			dynamicKey = kvar
-			flag(F.TAG_CUSTOM)
-			markWhenBuilt = yes
-			shouldEnd = yes
 
 		var params = [
 			typ,
