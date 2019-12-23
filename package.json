@@ -42,7 +42,7 @@
     "bootstrap": "node scripts/bootstrap.js",
     "build-parser": "node scripts/generate-parser.js",
     "test": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba -c",
-    "clean": "find test/apps -name '*.js' -type f -delete",
+    "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "build": "node scripts/bootstrap.js && webpack --mode=none",
     "watch": "npm run build -- --watch"
   },
