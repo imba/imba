@@ -470,9 +470,7 @@ export class Lexer
 		if context == 'DEF'
 			var prev = last(@tokens)
 
-			if tT(prev) == 'DEF_FRAGMENT'
-				true
-			elif tT(prev) == 'TERMINATOR'
+			if tT(prev) == 'TERMINATOR'
 				let n = @tokens.pop
 				token('DEF_BODY', 'DEF_BODY',0)
 				@tokens.push(n)
@@ -1556,11 +1554,6 @@ export class Lexer
 		elif value is '>' and inTag
 			tokid = 'TAG_END'
 			pair 'TAG_END'
-
-		# this is a tokid-method
-		elif value is '>' and context == 'DEF'
-			# console.log('picked up >!!')
-			tokid = 'DEF_FRAGMENT'
 
 		elif value is 'TERMINATOR' and end1 is 'DEF'
 			closeDef()
