@@ -123,6 +123,8 @@ export class EventHandler
 			elif handler == 'once'
 				# clean up bound data as well
 				element.removeEventListener(event.type,self)
+			elif handler == 'options'
+				continue
 
 			elif keyCodes[handler]
 				unless keyCodes[handler].indexOf(event.keyCode) >= 0
@@ -146,7 +148,6 @@ export class EventHandler
 
 				# should default to first look at closure - no?
 				elif handler[0] == '_'
-
 					handler = handler.slice(1)
 					context = @closure
 				else
