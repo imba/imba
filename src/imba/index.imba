@@ -165,8 +165,7 @@ class Scheduler
 		@listeners[ns].add(item)
 
 	def unlisten ns, item
-		@listeners[ns] ||= Set.new()
-		@listeners[ns].remove(item)
+		@listeners[ns] && @listeners[ns].delete(item)
 
 	get promise
 		Promise.new do |resolve| @add(resolve)
@@ -229,12 +228,10 @@ class ImbaElementRegistry
 		root.customElements.get(name)
 
 	def define name, klass
-		# console.log "define element",name,klass
 		root.customElements.define(name,klass)
-		# klass.prototype.__sfc = options && options.id || null
 		return klass
 
-root.imbaElements = ImbaElementRegistry.new()
+imba.tags = root.imbaElements = ImbaElementRegistry.new()
 
 import {EventHandler} from './events'
 
@@ -677,3 +674,5 @@ def imba.createSVGElement name, bitflags, parent, flags, text, sfc
 	if parent and parent isa Node
 		el.insertInto$(parent)
 	return el
+
+import './intersect'
