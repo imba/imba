@@ -2539,9 +2539,6 @@ export class TagDeclaration < Code
 
 		@initor = MethodDeclaration.new([],[],Identifier.new('init$'),null,{})
 		@inits = @initor.body
-
-		
-
 		# replace with some advanced lookup?
 		scope.visit
 		body.add(@initor)
@@ -2557,10 +2554,15 @@ export class TagDeclaration < Code
 		scope.context.reference = name
 
 		# should probably also warn about stuff etc
-		let sup = CALL(LIT('imbaElements.get'),[superclass or LIT('')])
+		let sup = CALL(LIT('imba.tags.get'),[superclass or LIT('')])
 
 		if option(:extension)
-			return body.c
+			# TODO remove support - throw when trying to extend
+			@body.@delimiter = ','
+			@body.set(braces: yes)
+			let cls = CALL(LIT('imba.tags.get'),[name])
+			let tagname = TagTypeIdentifier.new(name)
+			return util.extend(cls,body).c
 
 		if @scope.root.styles:length > 0
 			@inits.add LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
@@ -2579,7 +2581,7 @@ export class TagDeclaration < Code
 		# jshead += " extends {sup.c}" if sup
 		# jshead = "export {jshead}" if option(:export)
 		let js = "{jshead} {jsbody}"
-		js += "; imbaElements.define({name.c},{clsvar.c})"
+		js += "; imba.tags.define({name.c},{clsvar.c})"
 
 
 		return js
@@ -2881,6 +2883,8 @@ export class PropertyDeclaration < Node
 	def visit
 		@options.traverse
 		scope__.entities.add(name,self)
+
+
 		self
 	
 	def toJSON
@@ -3318,6 +3322,9 @@ export class Obj < Literal
 		# 	v.traverse
 		self
 
+	def isPrimitive deep
+		!value.some(|v| !v.isPrimitive(yes) )
+
 	def js o
 		var dyn = value.filter(|v| v isa ObjAttr and (v.key isa Op or v.key isa InterpolatedString)  )
 
@@ -3446,6 +3453,8 @@ export class ObjAttr < Node
 	def hasSideEffects
 		true
 
+	def isPrimitive deep
+		!@value or @value.isPrimitive(deep)
 
 
 export class ArgsReference < Node
@@ -4625,6 +4634,11 @@ export class TagTypeIdentifier < Identifier
 
 	def toClassName
 		helpers.pascalCase(@str)
+
+	def toNativeClass
+		let name = @str
+		let prefix = (isSVG ? 'SVG' : 'HTML')
+		prefix + helpers.pascalCase(name+'-element')
 
 	def spawner
 		console.log "TagTypeIdentifier shuold never be used"
@@ -5833,12 +5847,14 @@ export class TagPart < Node
 
 	prop name
 	prop value
+	prop params
 	
 	def initialize value, owner
 		@name = load(value)
 		@tag = owner
 		@chain = []
 		@special = no
+		@params = null
 		self
 
 	def load value
@@ -5867,7 +5883,7 @@ export class TagPart < Node
 		
 	def add item, type
 		if type == TagArgList
-			@last.params = item or ListNode.new([])
+			(@last or self).params = item or ListNode.new([])
 		else
 			@chain.push(@last = TagModifier.new(item))
 		return self
@@ -6153,6 +6169,12 @@ export class TagDynamicArg < ValueNode
 		value.c
 
 export class TagHandler < TagPart
+	
+	prop params watch: yes
+
+	def paramsDidSet params
+		@chain.push(@last = TagModifier.new('options'))
+		@last.params = params
 
 	def isStatic
 		let valStatic = !value or value.isPrimitive or (value isa Func and !value.nonlocals)
@@ -7479,8 +7501,6 @@ export class Util.Extend < Util
 		function extend$(target,ext){
 			var descriptors = Object.getOwnPropertyDescriptors(ext);
 			Object.defineProperties(target.prototype,descriptors);
-			// var keys = Object.keys(descriptors);
-			// for(const key of keys){ let desc = descriptors[key]; }
 			return target;
 		};
 		'''
