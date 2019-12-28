@@ -488,9 +488,14 @@ var grammar =
 	]
 
 	Property: [
-		o 'PropType PropertyIdentifier Object' do PropertyDeclaration.new A2, A3, A1
-		o 'PropType PropertyIdentifier CALL_START Object CALL_END' do PropertyDeclaration.new A2, A4, A1
-		o 'PropType PropertyIdentifier' do PropertyDeclaration.new A2, null, A1
+		o 'STATIC PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A3, A4, A2).set(static: A1)
+		o 'PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A2, A3, A1)
+	]
+
+	PropertyOptions: [
+		o '' do null
+		o 'CALL_START Object CALL_END' do A2
+		o 'Object' do A1
 	]
 
 	PropType: [

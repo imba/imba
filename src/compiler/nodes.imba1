@@ -2977,6 +2977,9 @@ export class PropertyDeclaration < Node
 		# out = out.replace(/\n\s*$/,'')
 		out = out.replace(/^\s+|\s+$/g, '')
 
+		if option(:static)
+			out = out.replace(/^([\s\t]*)(get|set) /mg) do |m,pre,typ|
+				"{pre}static {typ} "
 		# if o.key(:v)
 		return out
 

@@ -932,7 +932,7 @@ export class Lexer
 		var len = input:length
 
 		# should be strict about the order, check this manually instead
-		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG'
+		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP"
 			queueScope(typ)
 
 			var i = @tokens:length
