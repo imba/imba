@@ -2437,6 +2437,7 @@ export class ClassDeclaration < Code
 		if @superclass and !option(:extension)
 			addMethod('super$',[LIT('k')],'super[k]')
 			addMethod('super$set',[LIT('k,v')],'super[k] = v')
+			addMethod('init$',[LIT('k')],'super.inherited instanceof Function && super.inherited(this)').set(static: yes)
 		self
 
 	def addMethod name, params, mbody, options
@@ -2488,7 +2489,10 @@ export class ClassDeclaration < Code
 		jshead = "export {jshead}" if option(:export)
 		let js = "{jshead} {jsbody}"
 		if option(:global)
-			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname};"
+			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
+
+		if superclass
+			js = "{js}; {cname}.init$();"
 		return js
 
 export class TagDeclaration < Code
