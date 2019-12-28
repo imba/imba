@@ -290,6 +290,9 @@ global class SpecAssert < SpecComponent
 		if a === b
 			return true
 		if a isa Array and b isa Array
+			return false if a.length != b.length
+			for item,i in a
+				return false unless self.compare(item,b[i])
 			return JSON.stringify(a) == JSON.stringify(b)
 		return false
 
