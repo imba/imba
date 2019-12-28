@@ -28,3 +28,8 @@ test 'cacheable function' do
 			<div test.x(y)=(|a,b| a + b)>
 			<div data-value=Math.random()>
 	self
+
+test 'dynamic tag name' do
+	let typ = 'todo'
+	let el = <{typ}-item title=typ> 
+	ok el.nodeName == 'TODO-ITEM'
