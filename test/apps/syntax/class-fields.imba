@@ -8,6 +8,8 @@ class Item
 	def constructor
 		@test = 10
 
+	get private
+		#private
 
 class Doc < Item
 	kind = 'document'
@@ -23,6 +25,8 @@ class Folder < Item
 		super # test
 		@name = 'stuff'
 
+	
+
 test 'static fields' do
 	ok Item.test == 1
 	ok Doc.test == 2
@@ -35,6 +39,10 @@ test 'instance fields' do
 
 	let folder = Folder.new
 	ok folder.kind == 'folder'
+
+test 'private instance fields' do
+	let folder = Folder.new
+	ok folder.private == 1
 
 test 'fields without value' do
 	let item = Folder.new
