@@ -7944,6 +7944,8 @@ export class RootScope < Scope
 
 		register 'global', self, type: 'global'
 		register 'module', self, type: 'global'
+		register 'browser', self, type: 'global'
+		register 'chrome', self, type: 'global'
 		register 'window', self, type: 'global'
 		register 'document', self, type: 'global'
 		register 'exports', self, type: 'global'
