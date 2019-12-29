@@ -584,11 +584,10 @@ export class Stack
 	def current
 		@nodes[@nodes:length - 1]
 
-	def closest test, i
+	def up test
 		test ||= do |v| !(v isa VarOrAccess)
 
-		if i == undefined
-			i = @nodes:length - 1
+		var i = @nodes:length - 2
 
 		if test:prototype isa Node
 			while i >= 0
@@ -601,9 +600,6 @@ export class Stack
 			return node if test(node)
 			i -= 1
 		return null
-
-	def up test
-		closest(test,@nodes:length - 2)
 
 	def relative node, offset = 0
 		var idx = @nodes.indexOf(node)
@@ -907,13 +903,12 @@ export class Node
 
 		var out = js(s,o)
 
+		var paren = shouldParenthesize
+
 		s.pop(self)
 
 		if out == undefined
 			return out
-
-		# really? why not call this somewhere else?
-		var paren = shouldParenthesize
 
 		if var indent = @indentation
 			out = indent.wrap(out,o)
