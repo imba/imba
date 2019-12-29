@@ -37,7 +37,7 @@ tag app-root
 	def render
 		<self>
 			# <div :shortcut('cmd+a').prevent>
-			<div :point.prevent @{test} .{test}> "What happens when this resizes?"
+			<div :point.prevent .{test}> "What happens when this resizes?"
 			<div :click.throttle.log($type).wait(300)> "Click throotle sleep 300"
 			<div[test] :click.sleep(300).log($type,'after await')> "Click with async method"
 			<div :click.wait(300).log($type,'after await')> "wait 300"
@@ -57,7 +57,7 @@ tag app-root
 
 			<div :reloading.throttle('busy').log('hello!').wait(2000)>
 				<h2> "Larger div here"
-				<button :click.trigger(:reloading)> 'Reload!'
+				<button :click.trigger('reloading')> 'Reload!'
 
 			# delegation
 			<div :click.sel('button.one').log('clicked button one')>
