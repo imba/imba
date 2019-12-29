@@ -232,7 +232,7 @@ var grammar =
 	]
 
 	Private: [
-		o '# IDENTIFIER' do Private.new(A2)
+		o '# IDENTIFIER' do Private.new(A2) # IdentifierExpression.new(A2).set(prefix: '__', private: yes)
 		o 'Private {{ Expression }}' do A1.add(A3)
 	]
 
@@ -488,7 +488,7 @@ var grammar =
 	]
 
 	Property: [
-		o 'STATIC PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A3, A4, A2).set(static: A1)
+		# o 'STATIC PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A3, A4, A2).set(static: A1)
 		o 'PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A2, A3, A1)
 	]
 
@@ -740,16 +740,44 @@ var grammar =
 
 	ClassStart: [
 		o 'CLASS SimpleAssignable' do ClassDeclaration.new(A2, null, []).set(keyword: A1)
-		o 'CLASS SimpleAssignable Block' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
-		o 'CLASS Block' do ClassDeclaration.new(null, null, A2).set(keyword: A1)
+		o 'CLASS SimpleAssignable ClassBody' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'CLASS ClassBody' do ClassDeclaration.new(null, null, A2).set(keyword: A1)
 		o 'CLASS SimpleAssignable COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
-		o 'CLASS SimpleAssignable COMPARE Expression Block' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
-		o 'CLASS COMPARE Expression Block' do ClassDeclaration.new(null, A3, A4).set(keyword: A1)
+		o 'CLASS SimpleAssignable COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
+		o 'CLASS COMPARE Expression ClassBody' do ClassDeclaration.new(null, A3, A4).set(keyword: A1)
 	]
 
 	ClassIdentifier: [
 		o '' do null
 		o 'SimpleAssignable'
+	]
+
+	ClassBody: [
+		o 'INDENT OUTDENT' do ClassBody.new([]).indented(A1,A2)
+		o 'INDENT ClassBodyBlock OUTDENT' do A2.indented(A1,A3)
+		o 'INDENT TERMINATOR ClassBodyBlock OUTDENT' do A3.prebreak(A2).indented(A1,A4)
+	]
+
+	ClassBodyBlock: [
+		o 'ClassBodyLine' do ClassBody.new([A1])
+		o 'ClassBodyBlock Terminator ClassBodyLine' do A1.break(A2).add(A3)
+		o 'ClassBodyBlock Terminator' do A1.break(A2)
+	]
+
+	ClassFieldIdentifier: [
+		o 'Private'
+		o 'IDENTIFIER' do IdentifierExpression.new(A1)
+		o 'CONST_ID' do IdentifierExpression.new(A1)
+		o '[ Expression ]' do IdentifierExpression.new(A2)
+	]
+
+	ClassBodyLine: [
+		o 'STATIC ClassBodyLine' do A2.set(static: A1)
+		o 'Property'
+		o 'MethodDeclaration'
+		o 'Comment'
+		o 'ClassFieldIdentifier = Expression' do ClassField.new(A1, A3)
+		o 'ClassFieldIdentifier' do ClassField.new(A1, null)
 	]
 
 	# Ordinary function invocation, or a chained series of calls.

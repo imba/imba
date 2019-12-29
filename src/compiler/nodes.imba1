@@ -584,10 +584,11 @@ export class Stack
 	def current
 		@nodes[@nodes:length - 1]
 
-	def up test
+	def closest test, i
 		test ||= do |v| !(v isa VarOrAccess)
 
-		var i = @nodes:length - 2 # key
+		if i == undefined
+			i = @nodes:length - 1
 
 		if test:prototype isa Node
 			while i >= 0
@@ -600,6 +601,9 @@ export class Stack
 			return node if test(node)
 			i -= 1
 		return null
+
+	def up test
+		closest(test,@nodes:length - 2)
 
 	def relative node, offset = 0
 		var idx = @nodes.indexOf(node)
@@ -630,7 +634,12 @@ export class Stack
 		up(Block)
 
 	def blockpart
-		up do |node| relative(node,-1) isa Block
+		let i = @nodes:length - 1
+		while i
+			if @nodes[i - 1] isa Block
+				return @nodes[i]
+			i--
+		return
 
 	def isExpression
 		var i = @nodes:length - 1
@@ -713,6 +722,9 @@ export class Node
 			return self
 
 		@options && @options[key]
+
+	def o
+		@options ||= {}
 
 	def keyword
 		option(:keyword)
@@ -895,6 +907,11 @@ export class Node
 
 		var out = js(s,o)
 
+		s.pop(self)
+
+		if out == undefined
+			return out
+
 		# really? why not call this somewhere else?
 		var paren = shouldParenthesize
 
@@ -908,8 +925,6 @@ export class Node
 				out = '{' + out + '}'
 			else
 				out = '{ ' + out + ' }'
-
-		s.pop(self)
 
 		if ch = @cache
 			out = "{ch:var.c} = {out}" unless ch:manual
@@ -1096,8 +1111,24 @@ export class ListNode < Node
 		var end = @nodes.pop
 		return end
 
-	def add item
-		@nodes.push(item)
+	def add item, o
+		let idx = null
+		if o and o:before
+			idx = @nodes.indexOf(o:before)
+			idx = null if idx == -1
+		elif o and o:after
+			idx = @nodes.indexOf(o:after) + 1
+			idx = null if idx == 0
+			if idx >= 1
+				while @nodes[idx] isa Meta
+					idx++
+		elif o isa Number
+			idx = o
+
+		if idx !== null
+			item isa Array ? @nodes.splice(idx,0,*item) : @nodes.splice(idx,0,item)
+		else
+			item isa Array ? @nodes.push(*item) : @nodes.push(item)
 		self
 
 	def unshift item, br
@@ -1192,6 +1223,9 @@ export class ListNode < Node
 			k++ if node and !(node isa Meta)
 		return k
 
+	def isEmpty
+		realCount == 0
+
 	def visit
 		for node in @nodes
 			node and node.traverse
@@ -1220,6 +1254,7 @@ export class ListNode < Node
 
 		for arg in nodes
 			var part = typeof arg == 'string' ? arg : (arg ? arg.c(expression: express) : '')
+
 			str += part
 			str += delim if part and (!express or arg != last) and !(arg isa Meta)
 
@@ -1321,17 +1356,6 @@ export class Block < ListNode
 			else
 				ary.push(node)
 		return ary
-
-	def push item
-		@nodes.push(item)
-		self
-
-	def add item
-		if item isa Array
-			@nodes.push(*item)
-		else
-			@nodes.push(item)
-		self
 
 	# This is just to work as an inplace replacement of nodes.coffee
 	# After things are working okay we'll do bigger refactorings
@@ -1442,6 +1466,35 @@ export class Block < ListNode
 			return first.shouldParenthesizeInTernary
 
 		yes
+
+export class ClassField < Node
+	
+	def initialize name, value
+		super
+		@name = name
+		@value = value
+
+	def js s
+		return if s.up isa ClassBody
+
+		util.setField(slf,@name,@value or LIT('void 0')).c
+
+export class ClassBody < Block
+
+	def setup
+		super
+		@fields = []
+		@staticFields = []
+
+	def visit stack
+		@scope.visit if @scope
+
+		if stack and stack.@tag
+			@tag = stack.@tag
+
+		for node,i in @nodes
+			node and node.traverse
+		self
 
 export class ExpressionList < Block
 
@@ -2426,18 +2479,53 @@ export class ClassDeclaration < Code
 		@entities = {} # items should register the entities as they come
 		self
 
+	def staticInit
+		@staticInit ||= addMethod('init$',[],@superclass ? 'super.inherited instanceof Function && super.inherited(this)' : 'this').set(static: yes)
+
 	def visit
 		# replace with some advanced lookup?
 		@body.@delimiter = ''
 		ROOT.entities.add(namepath,self)
 		scope.visit
 
-		body.traverse
-
 		if @superclass and !option(:extension)
 			addMethod('super$',[LIT('k')],'super[k]')
 			addMethod('super$set',[LIT('k,v')],'super[k] = v')
-			addMethod('init$',[LIT('k')],'super.inherited instanceof Function && super.inherited(this)').set(static: yes)
+			staticInit
+
+		body.traverse
+
+		var inits = Block.new()
+		var staticInits = Block.new()
+		var ctor = body.option(:ctor)
+
+		for node in body when node isa ClassField
+			if node.option(:static)
+				# ctor.inject(node,0)
+				staticInits.add([node,BR])
+
+			else
+				inits.add([node,BR])
+
+		if !inits.isEmpty
+			if ctor
+				let after = ctor.option(:injectInitAfter)
+				# inject before/after super or something
+				if after
+					console.log "inject after! {after.c}"
+				ctor.inject(inits,after ? {after: after} : 0)
+			else
+				ctor = addMethod('constructor',[LIT('...args')],'super(...args)')
+				# ctor.inject([BR,inits])
+				ctor.inject(BR)
+				ctor.inject(inits)
+
+		if !staticInits.isEmpty
+			staticInit.inject(staticInits,0)
+			# if o:staticInit
+			
+			# else
+			#	o:staticInit = addMethod('init$',[],'').set(static: yes)
 		self
 
 	def addMethod name, params, mbody, options
@@ -2458,6 +2546,7 @@ export class ClassDeclaration < Code
 
 		# should probably also warn about stuff etc
 		if option(:extension)
+			# fields are not allowed in class extensions?
 			@body.@delimiter = ','
 			@body.set(braces: yes)
 			return util.extend(name,body).c
@@ -2491,7 +2580,7 @@ export class ClassDeclaration < Code
 		if option(:global)
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
-		if superclass
+		if @staticInit
 			js = "{js}; {cname}.init$();"
 		return js
 
@@ -2613,6 +2702,9 @@ export class Func < Code
 		@type = :function
 		@variable = null
 		self
+
+	def inject line, o
+		@body.add([line,BR],o)
 
 	def nonlocals
 		@scope.@nonlocals
@@ -2742,10 +2834,11 @@ export class MethodDeclaration < Func
 				target = variable
 			# should be changed to VarOrAccess?!
 
-		if String(name) == 'initialize' and (closure isa ClassScope) and !(closure isa TagScope) # and not ModuleScope?
+		if String(name) == 'initialize' and (closure isa ClassScope) and !(closure isa TagScope)
 			self.type = :constructor
 
 		if String(name) == 'constructor' or isConstructor
+			up.set(ctor: self)
 			set(noreturn: yes)
 		
 		# instance-method / member
@@ -3655,6 +3748,8 @@ export class UnaryOp < Op
 		return self if op == '!'
 		var node = (left || right).node
 		# for property-accessors we need to rewrite the ast
+		return self
+
 		return self unless node isa PropertyAccess
 
 		# ask to cache the path
@@ -4482,7 +4577,7 @@ export class Identifier < Node
 		String(@value)
 
 	def toStr
-		return Str.new("'" + toString + "'")
+		return Str.new("'" + symbol + "'")
 
 	def toJSON
 		toString
@@ -4512,7 +4607,13 @@ export class Private < Identifier
 		@symbol ||= AST.sym('__' + value)
 
 	def add part
-		IdentifierExpression.new(value).add(part).set(prefix: '__')
+		IdentifierExpression.new(value).add(part).set(prefix: '__', private: yes)
+
+	def c
+		let up = STACK.current
+		return toStr.c if up isa Util
+		return '' + symbol
+			
 
 export class TagIdRef < Identifier
 
@@ -5787,6 +5888,12 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
 
 
 export class IdentifierExpression < Node
+
+	def self.wrap node
+		console.log 'wrap?'
+		return node
+		node isa self ? node : self.new(node)
+
 	def initialize value
 		super
 		@static = yes
@@ -5836,7 +5943,7 @@ export class IdentifierExpression < Node
 		toRaw
 
 	def js s, o = {}
-		if o:as == 'string'
+		if o:as == 'string' or s.parent isa Util
 			return asString
 		elif o:as == 'key'
 			return asObjectKey
@@ -7444,7 +7551,6 @@ export class Util < Node
 		return res
 
 
-
 	def self.keys obj
 		var l = Const.new("Object")
 		var r = Identifier.new("keys")
@@ -7499,6 +7605,26 @@ export class Util < Node
 		scope__.root.helper(self,helper)
 		"{name}({@args.map(|v| v.c).join(',')})"
 
+
+var HELPERS = {
+	setField: '''(target,key,value){
+		target[key] = value;
+	};'''
+}
+
+export class Util.Helper < Util
+	def name
+		option(:name)
+
+	def helper
+		option(:helper)
+
+for own k,v of HELPERS
+	Util[k] = do |*args|
+		let helper = 'function ' + k + '$' + v
+		Util.Helper.new(args).set(name: k + '$', helper: helper)
+
+
 export class Util.Extend < Util
 	def helper
 		'''
@@ -7506,6 +7632,22 @@ export class Util.Extend < Util
 			var descriptors = Object.getOwnPropertyDescriptors(ext);
 			Object.defineProperties(target.prototype,descriptors);
 			return target;
+		};
+		'''
+
+	def js o
+		# When this is triggered, we need to add it to the top of file?
+		scope__.root.helper(self,helper)
+		"extend$({AST.compact(AST.cary(args)).join(',')})"
+
+export class Util.SetField < Util
+	def name
+		'requireDefault$'
+
+	def helper
+		'''
+		function setField$(target,key,value){
+			target[key] = value;
 		};
 		'''
 
@@ -8612,6 +8754,7 @@ export class Super < Node
 		@up = STACK.parent
 		if var m = STACK.method
 			m.set(supr: {node: STACK.blockpart, block: STACK.block})
+			m.set(injectInitAfter: STACK.blockpart)
 		self
 
 

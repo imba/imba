@@ -33,10 +33,10 @@ var JS_KEYWORDS = [
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','const','self','await','import','require','module','export'
+	'when','def','tag','do','elif','begin','var','let','const','self','await','import','require','module','export','static'
 ]
 
-var IMBA_CONTEXTUAL_KEYWORDS = ['extend','static','local','global','prop']
+var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop']
 
 # FixedArray for performance
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
@@ -48,7 +48,7 @@ export var ALL_KEYWORDS = [
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','const','self','await','import',
-	'and','or','is','isnt','not','yes','no','isa','case','nil','require','module','export'
+	'and','or','is','isnt','not','yes','no','isa','case','nil','require','module','export','static'
 ]
 
 # The list of keywords that are reserved by JavaScript, but not used, or are
