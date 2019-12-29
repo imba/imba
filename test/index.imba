@@ -22,7 +22,7 @@ require('./spec.imba')
 var exposed = {}
 
 window.onerror = do |e|
-	console.log('page:error',{message: e.message})
+	console.log('page:error',{message: (e.message or e)})
 
 window.onunhandledrejection = do |e|
 	console.log('page:error',{message: e.reason.message})
