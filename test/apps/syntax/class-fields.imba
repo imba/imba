@@ -1,9 +1,11 @@
 class Item
 	name = 'hello'
-	other = 100
+	PascalCased = 1
 	#private = 1
-	static #private = 2
-	static test = 1
+
+	static PascalCased = 10
+	static #private = 10
+	static test = 10
 
 	def constructor
 		@test = 10
@@ -11,14 +13,17 @@ class Item
 	get private
 		#private
 
+	static get private
+		#private
+
 class Doc < Item
 	kind = 'document'
 	map = Map.new
-	static test = 2
+	static test = 20
 
 class Folder < Item
 	kind = 'folder'
-	static test = 3
+	static test = 30
 	items
 
 	def constructor
@@ -28,21 +33,23 @@ class Folder < Item
 	
 
 test 'static fields' do
-	ok Item.test == 1
-	ok Doc.test == 2
-	ok Folder.test == 3
+	ok Item.test == 10
+	ok Item.PascalCased == 10
+	ok Item.private == 10
+
+	ok Doc.test == 20
+	ok Folder.test == 30
+	
 
 test 'instance fields' do
 	let doc = Doc.new
 	ok doc.kind == 'document'
 	ok doc.name == 'hello'
+	ok doc.PascalCased == 1
+	ok doc.private == 1
 
 	let folder = Folder.new
 	ok folder.kind == 'folder'
-
-test 'private instance fields' do
-	let folder = Folder.new
-	ok folder.private == 1
 
 test 'fields without value' do
 	let item = Folder.new
