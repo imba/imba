@@ -1,11 +1,11 @@
 class Item
-	name = 'hello'
-	PascalCased = 1
+	@name = 'hello'
+	@PascalCased = 1
 	#private = 1
 
-	static PascalCased = 10
+	static @PascalCased = 10
 	static #private = 10
-	static test = 10
+	static @test = 10
 
 	def constructor
 		@test = 10
@@ -17,14 +17,15 @@ class Item
 		#private
 
 class Doc < Item
-	kind = 'document'
-	map = Map.new
+	@kind = 'document'
+	@map = Map.new
+
 	static test = 20
 
 class Folder < Item
-	kind = 'folder'
+	@kind = 'folder'
 	static test = 30
-	items
+	@items
 
 	def constructor
 		super # test

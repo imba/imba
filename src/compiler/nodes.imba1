@@ -2923,19 +2923,17 @@ export class PropertyDeclaration < Node
 	'''
 
 	prop name
-	prop options
+	prop schema
 
 	def initialize name, options, token
 		@token = token
 		@traversed = no
 		@name = name
-		@options = options || Obj.new(AssignList.new)
+		@schema = options || Obj.new(AssignList.new)
 
 	def visit
-		@options.traverse
+		@schema.traverse
 		scope__.entities.add(name,self)
-
-
 		self
 	
 	def toJSON
@@ -2952,7 +2950,7 @@ export class PropertyDeclaration < Node
 	# This will soon support bindings / listeners etc, much more
 	# advanced generated code based on options passed in.
 	def c
-		var o = options
+		var o = schema
 		var ast = ""
 		var key = name.js
 		var scope = STACK.scope

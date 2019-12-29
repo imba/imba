@@ -490,6 +490,7 @@ var grammar =
 	Property: [
 		# o 'STATIC PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A3, A4, A2).set(static: A1)
 		o 'PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A2, A3, A1)
+		o 'PropType PropertyIdentifier PropertyOptions = Expression' do PropertyDeclaration.new(A2, A3, A1).set(value: A5)
 	]
 
 	PropertyOptions: [
@@ -504,6 +505,7 @@ var grammar =
 	]
 
 	PropertyIdentifier: [
+		# also private
 		o 'Identifier'
 		o '{ Expression }' do A2
 	]
@@ -638,9 +640,6 @@ var grammar =
 		o 'InlineVarKeyword VarAssignable' do VarReference.new(A2,A1)
 	]
 
-	# PrivateField: [
-	# 	o '# IDENTIFIER' do 
-	# ]
 
 	# Variables and properties that can be assigned to.
 	SimpleAssignable: [
@@ -768,6 +767,8 @@ var grammar =
 		o 'Private'
 		o 'IDENTIFIER' do IdentifierExpression.new(A1)
 		o 'CONST_ID' do IdentifierExpression.new(A1)
+		o '@ IDENTIFIER' do IdentifierExpression.new(A2)
+		o '@ CONST_ID' do IdentifierExpression.new(A2)
 		o '[ Expression ]' do IdentifierExpression.new(A2)
 	]
 
