@@ -2505,11 +2505,15 @@ export class ClassDeclaration < Code
 
 		for node in body when node isa ClassField
 			if node.option(:static)
-				# ctor.inject(node,0)
 				staticInits.add([node,BR])
 
 			else
 				inits.add([node,BR])
+
+		for node,i in body
+			if node.@decorators
+				let op = util.decorate(STR('method'),LIT('this'),node.name,Arr.new(node.@decorators))
+				staticInits.add(op)
 
 		if !inits.isEmpty
 			if isTag
@@ -2714,6 +2718,7 @@ export class TagFragmentFunc < Func
 export class MethodDeclaration < Func
 
 	prop variable
+	prop decorators
 
 	def scopetype do MethodScope
 
@@ -2722,6 +2727,9 @@ export class MethodDeclaration < Func
 			option('return',yes)
 			return self
 		super
+
+	def identifier
+		@name
 
 	def metadata
 		{
@@ -2770,8 +2778,8 @@ export class MethodDeclaration < Func
 
 	def visit
 		@type = option(:type) or (option(:def)?.@value or 'def')
-
 		@decorators = up?.collectDecorators
+
 		var o = @options
 		scope.visit
 
@@ -2954,6 +2962,7 @@ export class PropertyDeclaration < Node
 		var ast = ""
 		var key = name.js
 		var scope = STACK.scope
+		var value = option(:value)
 
 		var addDesc = o.keys:length
 
@@ -4541,7 +4550,9 @@ export class Identifier < Node
 		symbol
 
 	def c
-		return '' + symbol # AST.mark(@value) +
+		let up = STACK.current
+		return toStr.c if up isa Util
+		return '' + symbol
 
 	def dump
 		{ loc: region }
@@ -4613,6 +4624,9 @@ export class Decorator < ValueNode
 		if let block = up
 			block.@decorators ||= []
 			block.@decorators.push(self)
+
+	def c
+		return
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
@@ -7560,6 +7574,9 @@ export class Util < Node
 
 var HELPERS = {
 	setField: '''(target,key,value){
+		target[key] = value;
+	};'''
+	decorate: '''(typ,decorators,value){
 		target[key] = value;
 	};'''
 }

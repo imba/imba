@@ -773,6 +773,7 @@ var grammar =
 	]
 
 	ClassBodyLine: [
+		o 'DECORATOR' do Decorator.new(A1)
 		o 'STATIC ClassBodyLine' do A2.set(static: A1)
 		o 'Property'
 		o 'MethodDeclaration'
