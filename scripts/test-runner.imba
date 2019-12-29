@@ -134,7 +134,7 @@ def main
 
 	var testFolder = path.resolve(__dirname,"..","test","apps")
 	var entries = getFiles(testFolder).filter do |item|
-		!options.main or item.indexOf(options.main) >= 0
+		options.main ? (item.indexOf(options.main) >= 0) : (item.indexOf('tmp/') == -1)
 
 	var files = entries.map(|v| v.replace(testFolder,"apps"))
 
