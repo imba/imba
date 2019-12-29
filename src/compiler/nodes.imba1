@@ -2353,10 +2353,10 @@ export class Root < Code
 
 	def compile o
 		STACK.reset # -- nested compilation does not work now
-		OPTS = STACK.@options = @options = o or {}
+		@scope.options = OPTS = STACK.@options = @options = o or {}
+		STACK.root = @scope
 		traverse
 		STACK.root = @scope
-		@scope.options = STACK.@options
 
 		var out = c
 		var result = {
@@ -2474,13 +2474,19 @@ export class ClassDeclaration < Code
 		@traversed = no
 		@name = name or LIT('')
 		@superclass = superclass
-		@scope = ClassScope.new(self)
-		@body = AST.blk(body)
+		@scope = isTag ? TagScope.new(self) : ClassScope.new(self)
+		@body = AST.blk(body) or ClassBody.new([])
 		@entities = {} # items should register the entities as they come
 		self
 
+	def isTag
+		no
+
 	def staticInit
 		@staticInit ||= addMethod('init$',[],@superclass ? 'super.inherited instanceof Function && super.inherited(this)' : 'this').set(static: yes)
+
+	def instanceInit
+		@instanceInit ||= addMethod('init$',[],isTag ? 'super.init$()' : '')
 
 	def visit
 		# replace with some advanced lookup?
@@ -2499,6 +2505,9 @@ export class ClassDeclaration < Code
 		var staticInits = Block.new()
 		var ctor = body.option(:ctor)
 
+		if isTag
+			ctor = instanceInit
+
 		for node in body when node isa ClassField
 			if node.option(:static)
 				# ctor.inject(node,0)
@@ -2508,24 +2517,20 @@ export class ClassDeclaration < Code
 				inits.add([node,BR])
 
 		if !inits.isEmpty
-			if ctor
+			if isTag
+				ctor.inject(inits)
+
+			elif ctor
 				let after = ctor.option(:injectInitAfter)
 				# inject before/after super or something
-				if after
-					console.log "inject after! {after.c}"
 				ctor.inject(inits,after ? {after: after} : 0)
 			else
 				ctor = addMethod('constructor',[LIT('...args')],'super(...args)')
-				# ctor.inject([BR,inits])
 				ctor.inject(BR)
 				ctor.inject(inits)
 
 		if !staticInits.isEmpty
 			staticInit.inject(staticInits,0)
-			# if o:staticInit
-			
-			# else
-			#	o:staticInit = addMethod('init$',[],'').set(static: yes)
 		self
 
 	def addMethod name, params, mbody, options
@@ -2582,69 +2587,33 @@ export class ClassDeclaration < Code
 
 		if @staticInit
 			js = "{js}; {cname}.init$();"
+
 		return js
 
-export class TagDeclaration < Code
+export class TagDeclaration < ClassDeclaration
 
-	prop name
-	prop superclass
-	prop initor
+	def isTag
+		yes
 
 	def namepath
 		"<{name}>"
 
-	def toJSON
-		{
+	def metadata
+		Object.assign(super,{
 			type: 'tag'
-			namepath: namepath
-			inherits: superclass ? "<{superclass.name}>" : null
-			symbols: @scope.entities
-			loc: loc
-			desc: @desc
-		}
-
-	def consume node
-		if node isa Return
-			option('return',yes)
-			return self
-		super
-		
-	def loc
-		if let d = option(:keyword)
-			[d.@loc,body.loc[1]]
-		else
-			super
-
-	def initialize name, superclass, body
-		@traversed = no
-		@name = name
-		@superclass = superclass
-		@scope = TagScope.new(self)
-		@body = AST.blk(body || [])
-		@body.@delimiter = ''
-
-	def visit
-		if String(name).match(/^[A-Z]/)
-			set(isClass: yes)
-
-		ROOT.entities.register(self) # what if this is not local?
-
-
-		@initor = MethodDeclaration.new([],[],Identifier.new('init$'),null,{})
-		@inits = @initor.body
-		# replace with some advanced lookup?
-		scope.visit
-		body.add(@initor)
-		body.traverse
-		@inits.add LIT("super.init$()") # if superclass
+		})
 
 	def id
 		name.id
 
-	def js o
+	def js s
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
+
+		if s.option(:hasScopedStyles)
+			# @scope.root.styles:length > 0
+			instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
 
 		# should probably also warn about stuff etc
 		let sup = CALL(LIT('imba.tags.get'),[superclass or LIT('')])
@@ -2657,26 +2626,16 @@ export class TagDeclaration < Code
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
 
-		if @scope.root.styles:length > 0
-			@inits.add LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
 
-		# var o = @options or {}
-		# var cname = name isa Access ? name.right : name
-		# var namespaced = name != cname
-		# var initor = null
-		# var sup = superclass
 		var mark = AST.mark(keyword)
+		let className = name.toClassName + 'Tag'
 		let closure = scope__.parent
-		let clsvar = closure.reusevar('class$')
 		let jsbody = '{' + body.c() + '}'
-		let jshead = "{clsvar.c} = {mark}class {name.toClassName} extends {sup.c}"
-		# jshead += " {@cname}" if @cname
-		# jshead += " extends {sup.c}" if sup
-		# jshead = "export {jshead}" if option(:export)
+		let jshead = "{mark}class {className} extends {sup.c}"
 		let js = "{jshead} {jsbody}"
-		js += "; imba.tags.define({name.c},{clsvar.c})"
-
-
+		if @staticInit
+			js += "; {className}.init$()"
+		js += "; imba.tags.define({name.c},{className})"
 		return js
 
 export class Func < Code

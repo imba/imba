@@ -400,9 +400,9 @@ var grammar =
 
 	TagDeclarationBlock: [
 		o 'TAG TagType' do TagDeclaration.new(A2).set(keyword: A1)
-		o 'TAG TagType Block' do TagDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'TAG TagType ClassBody' do TagDeclaration.new(A2, null, A3).set(keyword: A1)
 		o 'TAG TagType COMPARE TagType' do TagDeclaration.new(A2, A4).set(keyword: A1)
-		o 'TAG TagType COMPARE TagType Block' do TagDeclaration.new(A2, A4, A5).set(keyword: A1)
+		o 'TAG TagType COMPARE TagType ClassBody' do TagDeclaration.new(A2, A4, A5).set(keyword: A1)
 	]
 
 	TagDeclKeywords: [
