@@ -2512,7 +2512,9 @@ export class ClassDeclaration < Code
 
 		for node,i in body
 			if node.@decorators
-				let op = util.decorate(STR('method'),LIT('this'),node.name,Arr.new(node.@decorators))
+				let target = LIT('this.prototype')
+				let desc = LIT('null')
+				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
 				staticInits.add(op)
 
 		if !inits.isEmpty
@@ -4620,13 +4622,23 @@ export class Decorator < ValueNode
 	
 	def visit
 		@call.traverse if @call
+		if option(:params)
+			@params = option(:params)
+			@params.traverse
 
 		if let block = up
 			block.@decorators ||= []
 			block.@decorators.push(self)
 
-	def c
-		return
+	def c 
+		# should return other places as well...
+		return if STACK.current isa ClassBody
+		let out = @value.c.slice(2)
+		if @params
+			out += "({@params.c(expression: yes)})"
+		else
+			out += "()"
+		return out
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
@@ -7576,8 +7588,11 @@ var HELPERS = {
 	setField: '''(target,key,value){
 		target[key] = value;
 	};'''
-	decorate: '''(typ,decorators,value){
-		target[key] = value;
+	decorate: '''(decorators,target,key,desc){
+		var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+		if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+		else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+		return c > 3 && r && Object.defineProperty(target, key, r), r;
 	};'''
 }
 
