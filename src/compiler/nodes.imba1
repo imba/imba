@@ -1529,9 +1529,6 @@ export class ClassField < Node
 	def c
 		let up = STACK.current
 		let out
-
-		console.log "compile field {up}"
-
 		if up isa ClassBody
 			# return if isPlain
 			let prefix = isStatic ? 'static ' : ''
@@ -1559,14 +1556,14 @@ export class ClassField < Node
 			let op = CALL(GET(@storage,'get'),[THIS])
 			let getter = op
 			if value # and (!(value isa Str) and !(value isa Str) and !(value isa Bool) or @decorators)
-				# and !value.isPrimitive # only strings and numbers
-				# let setter = OP('=',getter,value)
-				# let setter = setterForValue(value)
-				let setter = CALL(GET(@storage,'set'),[THIS,value])
-				# op = IF(OP('==',getter,LIT('undefined')),setter)
-				let check = OP('!',CALL(GET(@storage,'has'),[THIS]))
-				op = IF(check,setter)
-				op = METH([],[op,BR,getter])
+				let inlined = (value isa Num) or (value isa Str) or (value isa Bool)
+				let has = CALL(GET(@storage,'has'),[THIS])
+				if inlined
+					op = METH([],[If.ternary(has,op,value)])
+				else
+					let setter = CALL(GET(@storage,'set'),[THIS,value])
+					op = IF(OP('!',has),setter)
+					op = METH([],[op,BR,getter])
 				op.traverse
 				return op
 			else
