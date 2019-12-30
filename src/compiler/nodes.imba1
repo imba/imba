@@ -219,6 +219,9 @@ var IF = do |cond,body,alt|
 var FN = do |pars,body|
 	Func.new(pars,body)
 
+var METH = do |pars,body|
+	ClosedFunc.new(pars,body)
+
 var CALL = do |callee,pars = []|
 	# possibly return instead(!)
 	Call.new(callee,pars)
@@ -1310,6 +1313,7 @@ export class Block < ListNode
 			@tag = stack.@tag
 
 		for node,i in @nodes
+			# allow replacing blocks?
 			node and node.traverse
 		
 		self
@@ -1462,12 +1466,23 @@ export class Block < ListNode
 
 		yes
 
+class ClassInitBlock < Block
+
+class InstanceInitBlock < Block
+
 export class ClassField < Node
-	
+	prop name
+	prop value
+
 	def initialize name, value
 		super
 		@name = name
 		@value = value
+
+	def visit
+		@decorators = up?.collectDecorators
+		@value.traverse if @value
+		self
 
 	def js s
 		return if s.up isa ClassBody
@@ -2490,32 +2505,38 @@ export class ClassDeclaration < Code
 		scope.visit
 
 		if @superclass and !option(:extension)
-			addMethod('super$',[LIT('k')],'super[k]')
-			addMethod('super$set',[LIT('k,v')],'super[k] = v')
+			# addMethod('super$',[LIT('k')],'super[k]')
+			# addMethod('super$set',[LIT('k,v')],'super[k] = v')
 			staticInit
 
 		body.traverse
 
-		var inits = Block.new()
-		var staticInits = Block.new()
+		var inits = InstanceInitBlock.new()
+		var staticInits = ClassInitBlock.new()
 		var ctor = body.option(:ctor)
 
 		if isTag
 			ctor = instanceInit
 
-		for node in body when node isa ClassField
-			if node.option(:static)
-				staticInits.add([node,BR])
-
-			else
-				inits.add([node,BR])
+		for node in body
+			if node isa ClassField
+				if node.option(:static)
+					staticInits.add([node,BR])
+				else
+					inits.add([node,BR])
+			elif node isa PropertyDeclaration
+				staticInits.add(node)
+				inits.add(node)
+				yes
+				# staticInits.add([node.getter,node.setter,BR])
+				# possibly with some options?
 
 		for node,i in body
 			if node.@decorators
 				let target = node.option(:static) ? LIT('this') : LIT('this.prototype')
 				let desc = LIT('null')
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
-				staticInits.add(op)
+				staticInits.add([op,BR])
 
 		if !inits.isEmpty
 			if isTag
@@ -2526,7 +2547,7 @@ export class ClassDeclaration < Code
 				# inject before/after super or something
 				ctor.inject(inits,after ? {after: after} : 0)
 			else
-				ctor = addMethod('constructor',[LIT('...args')],'super(...args)')
+				ctor = addMethod('constructor',[],superclass ? 'super(...arguments)' : 'this')
 				ctor.inject(BR)
 				ctor.inject(inits)
 
@@ -2680,7 +2701,7 @@ export class Func < Code
 		str = "async {str}" if option(:async)
 		return str
 
-	def js o
+	def js s,o
 		body.consume(ImplicitReturn.new) unless option(:noreturn)
 		var ind = body.@indentation
 		# var s = ind and ind.@open
@@ -2694,8 +2715,9 @@ export class Func < Code
 		# will need to wrap the value in a FunctionName which takes care of looking up scope
 		# and possibly dealing with it
 		var name = typeof @name == 'string' ? @name : @name.c
-		var name = name ? ' ' + name.replace(/\./g,'_') : ''
-		var out = "{funcKeyword}{name}({params.c}) " + code
+		name = name ? ' ' + name.replace(/\./g,'_') : ''
+		var keyword = o and o:keyword != undefined ? o:keyword : funcKeyword
+		var out = "{keyword}{name}({params.c}) " + code
 		# out = "async {out}" if option(:async)
 		out = "({out})()" if option(:eval)
 		return out
@@ -2710,6 +2732,9 @@ export class Lambda < Func
 		var k = option(:keyword)
 		(k and k.@value == 'ƒ') ? (MethodScope) : (LambdaScope)
 
+export class ClosedFunc < Func
+	def scopetype
+		MethodScope
 
 export class TagFragmentFunc < Func
 
@@ -2934,15 +2959,20 @@ export class PropertyDeclaration < Node
 
 	prop name
 	prop schema
+	prop value
 
-	def initialize name, options, token
+	def initialize name, schema, token
 		@token = token
 		@traversed = no
 		@name = name
-		@schema = options || Obj.new(AssignList.new)
+		@schema = schema || Obj.new(AssignList.new)
 
 	def visit
+		@decorators = up?.collectDecorators
 		@schema.traverse
+		@value = option(:value)
+		# if @value
+		# @value.traverse if @value
 		scope__.entities.add(name,self)
 		self
 	
@@ -2957,9 +2987,68 @@ export class PropertyDeclaration < Node
 	def loc
 		[@token.@loc,@name.region[1]]
 
+	def storageKey
+		@storageKey ||= STR(name.js + '$$')
+
+	def isPlain
+		!@decorators and (!@value or @value.isPrimitive)
+
+	def isStatic
+		option(:static)
+
+	def isLazy
+		option(:lazy)
+
+	def getter
+		@getter ||= if true
+			let op = OP('.',THIS,storageKey)
+			let getter = op
+			if value and (!(value isa Str) and !(value isa Str) and !(value isa Bool) or @decorators)
+				# and !value.isPrimitive # only strings and numbers
+				let setter = OP('=',getter,value)
+				# op = IF(OP('==',getter,LIT('undefined')),setter)
+				op = IF(CALL(LIT('!this.hasOwnProperty'),[storageKey]),setter)
+				op = METH([],[op,BR,getter])
+				op.traverse
+				return op
+			else
+				return FN([],[op])
+
+	def setter
+		@setter ||= if true
+			let op = OP('=',OP('.',THIS,storageKey),LIT('value'))
+			FN([LIT('value')],[op])
+
+	def decorater
+		@decorater ||= if true
+			# let target = option(:static) ? LIT('this') : LIT('this.prototype')
+			util.decorate(Arr.new(@decorators),target,name,LIT('null'))
+
+	def target
+		option(:static) ? LIT('this') : LIT('this.prototype')
+
 	# This will soon support bindings / listeners etc, much more
 	# advanced generated code based on options passed in.
 	def c
+		let up = STACK.current
+		let out
+
+		if up isa ClassBody
+			return if isPlain
+			let prefix = isStatic ? 'static ' : ''
+			out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
+
+		elif up isa ClassInitBlock
+			if !isLazy and isPlain and value
+				out = util.setField(target,name,@value).c + ';\n'
+
+		elif up isa InstanceInitBlock and !isStatic and !isLazy
+			if value
+				# out = util.setField(THIS,name,value).c + ';\n'
+				out = OP('.',THIS,name).c + ';\n'
+
+		return out
+
 		var o = schema
 		var ast = ""
 		var key = name.js
@@ -7586,8 +7675,10 @@ export class Util < Node
 
 var HELPERS = {
 	setField: '''(target,key,value){
-		target[key] = value;
+		// target[key] = value;
+		Object.defineProperty(target,key,{value:value});
 	};'''
+
 	decorate: '''(decorators,target,key,desc){
 		var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
 		if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -8780,6 +8871,7 @@ export class Super < Node
 export var BR = Newline.new('\n')
 export var BR2 = Newline.new('\n\n')
 export var SELF = Self.new
+export var THIS = LIT('this')
 # export var SUPER = Super.new
 
 export var TRUE = True.new('true')

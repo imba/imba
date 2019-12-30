@@ -1,6 +1,6 @@
 
 def log
-	return do |target,key,desc|
+	def decor target,key,desc
 		let prev = desc.value
 		desc.value = do
 			console.info "call {key}"
@@ -8,12 +8,12 @@ def log
 		return
 
 def readonly
-	return do |target,key,desc|
+	def decor target,key,desc
 		desc.writable = false
 		return desc
 
 def debounce wait = 100
-	def dec target,key,descriptor
+	def decor target,key,descriptor
 		const sym = Symbol('debounces')
 		const callback = descriptor.value
 
@@ -28,6 +28,34 @@ def debounce wait = 100
 				return callback.apply(this,args)
 
 		return descriptor
+
+def track
+	def decor target,key,desc
+		let getter = desc.get
+		let setter = desc.set
+		if getter isa Function
+			desc.get = do
+				console.info(`get {key}`)
+				getter.call(this)
+		if setter isa Function
+			desc.set = do |value|
+				console.info(`set {key}`)
+				setter.call(this,value)
+		# desc.writable = false
+		return desc
+
+def watch meth
+	def decor target,key,desc
+		let setter = desc.set
+		meth ||= key + 'DidSet'
+		if setter isa Function
+			desc.set = do |value|
+				let prev = this[key]
+				if value != prev
+					setter.call(this,value)
+					this[meth] and this[meth](value,prev,key)
+
+		return desc
 
 class Hello
 
@@ -51,6 +79,14 @@ class Hello
 	static def setup
 		true
 
+	@@track
+	prop number
+
+	@@watch
+	prop name = 'john'
+
+	def nameDidSet value,prev
+		console.info([prev,value])
 
 test do
 	let item = Hello.new
@@ -77,4 +113,17 @@ test do
 	eq $1.log,['debounced']
 
 
+test do
+	let item = Hello.new
+	item.number
+	item.number = 2
+	eq $1.log,['get number','set number']
+
+
+test do
+	let item = Hello.new
+	eq item.name, 'john'
+	item.name = 'john'
+	item.name = 'jane'
+	eq $1.log,[['john','jane']]
 

@@ -776,6 +776,7 @@ var grammar =
 	ClassBodyLine: [
 		o 'Decorator'
 		o 'STATIC ClassBodyLine' do A2.set(static: A1)
+		o 'LAZY ClassBodyLine' do A2.set(lazy: A1)
 		o 'Property'
 		o 'MethodDeclaration'
 		o 'Comment'

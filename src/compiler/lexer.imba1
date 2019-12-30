@@ -36,7 +36,7 @@ var IMBA_KEYWORDS = [
 	'when','def','tag','do','elif','begin','var','let','const','self','await','import','require','module','export','static'
 ]
 
-var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop']
+var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop','lazy']
 
 # FixedArray for performance
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
@@ -733,11 +733,15 @@ export class Lexer
 
 	def isKeyword id
 		if @lastTyp == 'ATTR' or @lastTyp == 'PROP' or @lastTyp == 'DEF'
-			return false
+			return false 
 
-		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set')
+		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy')
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG'
+
+			if id == 'lazy'
+				return incls and @lastTyp in ['INDENT','TERMINATOR','DECORATOR']
+
 			return true if incls
 
 		ALL_KEYWORDS.indexOf(id) >= 0
