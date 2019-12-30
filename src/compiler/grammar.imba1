@@ -782,7 +782,7 @@ var grammar =
 		o '@ IDENTIFIER' do IdentifierExpression.new(A2)
 		o '@ CONST_ID' do IdentifierExpression.new(A2)
 		o '@ { Expression }' do IdentifierExpression.new(A3)
-		o '[ Expression ]' do IdentifierExpression.new(A2)
+		# o '[ Expression ]' do IdentifierExpression.new(A2)
 	]
 
 
