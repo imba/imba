@@ -216,6 +216,20 @@ var IF = do |cond,body,alt|
 	node.addElse(alt) if alt
 	node
 
+var NODIFY = do |val|
+	if val == null
+		return Nil.new
+	elif val == false
+		return False.new
+	elif val == true
+		return True.new
+	elif val isa String
+		return STR(val)
+	elif val isa Number
+		return Num.new(val)
+	else
+		return val
+
 var FN = do |pars,body|
 	Func.new(pars,body)
 
@@ -225,6 +239,8 @@ var METH = do |pars,body|
 var CALL = do |callee,pars = []|
 	# possibly return instead(!)
 	Call.new(callee,pars)
+
+var GET = do |left,right| OP('.',left,right)
 
 var CALLSELF = do |name,pars = []|
 	var ref = Identifier.new(name)
@@ -1481,13 +1497,95 @@ export class ClassField < Node
 
 	def visit
 		@decorators = up?.collectDecorators
-		@value.traverse if @value
+		@name.traverse if @name and @name:traverse
+
+		# @value.traverse if @value # dont traverse yet
+		@storage = scope__.root.declare(null,LIT('new WeakMap()'))
 		self
 
-	def js s
-		return if s.up isa ClassBody
+	def target
+		option(:static) ? LIT('this') : LIT('this.prototype')
 
-		util.setField(slf,@name,@value or LIT('void 0')).c
+	def storageKey
+		@storageKey ||= STR(name.c + '$$')
+
+	def isPlain
+		!@decorators and (!@value or @value.isPrimitive)
+
+	def isLazy
+		yes
+
+	def isStatic
+		option(:static)
+
+	def loc
+		[@name.@loc,@name.region[1]]
+
+	# def js s
+	# 	return if s.up isa ClassBody
+	# 
+	# 	util.setField(slf,@name,@value or LIT('void 0')).c
+
+	def c
+		let up = STACK.current
+		let out
+
+		console.log "compile field {up}"
+
+		if up isa ClassBody
+			# return if isPlain
+			let prefix = isStatic ? 'static ' : ''
+			let name = name isa IdentifierExpression ? name.asObjectKey : name.c
+			out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
+
+		elif up isa ClassInitBlock
+			if !isLazy and isPlain and value
+				out = util.setField(target,name,@value).c + ';\n'
+			# else
+			# 	let obj = Obj.wrap(enumerable: false, writable: true, value: LIT('undefined'))
+			# 	out = util.initField(target,storageKey,obj).c + ';\n'
+
+		elif up isa InstanceInitBlock and !isStatic and !isLazy
+			if value
+				# out = util.setField(THIS,name,value).c + ';\n'
+				out = OP('.',THIS,name).c + ';\n'
+
+		return out
+
+
+	def getter
+		@getter ||= if true
+			# let op = OP('.',THIS,storageKey)
+			let op = CALL(GET(@storage,'get'),[THIS])
+			let getter = op
+			if value # and (!(value isa Str) and !(value isa Str) and !(value isa Bool) or @decorators)
+				# and !value.isPrimitive # only strings and numbers
+				# let setter = OP('=',getter,value)
+				# let setter = setterForValue(value)
+				let setter = CALL(GET(@storage,'set'),[THIS,value])
+				# op = IF(OP('==',getter,LIT('undefined')),setter)
+				let check = OP('!',CALL(GET(@storage,'has'),[THIS]))
+				op = IF(check,setter)
+				op = METH([],[op,BR,getter])
+				op.traverse
+				return op
+			else
+				return FN([],[op])
+
+	def setterForValue value
+		OP('=',OP('.',THIS,storageKey),value)
+
+	def setter
+		@setter ||= if true
+			let op = CALL(GET(@storage,'set'),[THIS,LIT('value')])
+			# OP('=',OP('.',THIS,storageKey),LIT('value'))
+			FN([LIT('value')],[op])
+
+	def decorater
+		@decorater ||= if true
+			# let target = option(:static) ? LIT('this') : LIT('this.prototype')
+			util.decorate(Arr.new(@decorators),target,name,LIT('null'))
+
 
 export class ClassBody < Block
 
@@ -2520,10 +2618,13 @@ export class ClassDeclaration < Code
 
 		for node in body
 			if node isa ClassField
-				if node.option(:static)
-					staticInits.add([node,BR])
-				else
-					inits.add([node,BR])
+				staticInits.add(node)
+				inits.add(node)
+
+				# if node.option(:static)
+				# 	staticInits.add([node,BR])
+				# else
+				# 	inits.add([node,BR])
 			elif node isa PropertyDeclaration
 				staticInits.add(node)
 				inits.add(node)
@@ -2969,6 +3070,7 @@ export class PropertyDeclaration < Node
 
 	def visit
 		@decorators = up?.collectDecorators
+		@name.traverse if @name and @name:traverse
 		@schema.traverse
 		@value = option(:value)
 		# if @value
@@ -2988,7 +3090,7 @@ export class PropertyDeclaration < Node
 		[@token.@loc,@name.region[1]]
 
 	def storageKey
-		@storageKey ||= STR(name.js + '$$')
+		@storageKey ||= STR(name.c + '$$')
 
 	def isPlain
 		!@decorators and (!@value or @value.isPrimitive)
@@ -3041,6 +3143,9 @@ export class PropertyDeclaration < Node
 		elif up isa ClassInitBlock
 			if !isLazy and isPlain and value
 				out = util.setField(target,name,@value).c + ';\n'
+			# else
+			# 	let obj = Obj.wrap(enumerable: false, writable: true, value: LIT('undefined'))
+			# 	out = util.initField(target,storageKey,obj).c + ';\n'
 
 		elif up isa InstanceInitBlock and !isStatic and !isLazy
 			if value
@@ -3539,6 +3644,11 @@ export class Obj < Literal
 				v = Obj.wrap(v)
 			# if k isa String
 			#	k = LIT(k)
+			v = NODIFY(v)
+
+			if k isa String
+				k = Identifier.new(k)
+
 			attrs.push(ObjAttr.new(k,v))
 		return Obj.new(attrs)
 
@@ -5957,7 +6067,6 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
 export class IdentifierExpression < Node
 
 	def self.wrap node
-		console.log 'wrap?'
 		return node
 		node isa self ? node : self.new(node)
 
@@ -5983,7 +6092,7 @@ export class IdentifierExpression < Node
 		self
 
 	def asObjectKey
-		@single ? "[{@single.c()}]" : "[{asString}]"
+		@single ? "{@single.c()}" : "[{asString}]"
 
 	def asIdentifier
 		@single ? "[{@single.c()}]" : "[{asString}]"
@@ -7674,9 +7783,16 @@ export class Util < Node
 
 
 var HELPERS = {
-	setField: '''(target,key,value){
-		// target[key] = value;
+	setField: '''(target,key,value,o){
 		Object.defineProperty(target,key,{value:value});
+	};'''
+
+	initField: '''(target,key,o){
+		Object.defineProperty(target,key,o);
+	};'''
+
+	initMap: '''(target){
+		Object.defineProperty(target,"$d$",{enumerable:false,value:new WeakMap()});
 	};'''
 
 	decorate: '''(decorators,target,key,desc){
@@ -7707,22 +7823,6 @@ export class Util.Extend < Util
 			var descriptors = Object.getOwnPropertyDescriptors(ext);
 			Object.defineProperties(target.prototype,descriptors);
 			return target;
-		};
-		'''
-
-	def js o
-		# When this is triggered, we need to add it to the top of file?
-		scope__.root.helper(self,helper)
-		"extend$({AST.compact(AST.cary(args)).join(',')})"
-
-export class Util.SetField < Util
-	def name
-		'requireDefault$'
-
-	def helper
-		'''
-		function setField$(target,key,value){
-			target[key] = value;
 		};
 		'''
 
@@ -8872,6 +8972,7 @@ export var BR = Newline.new('\n')
 export var BR2 = Newline.new('\n\n')
 export var SELF = Self.new
 export var THIS = LIT('this')
+export var PROTO = LIT('this.prototype')
 # export var SUPER = Super.new
 
 export var TRUE = True.new('true')

@@ -764,15 +764,6 @@ var grammar =
 		o 'ClassBodyBlock Terminator' do A1.break(A2)
 	]
 
-	ClassFieldIdentifier: [
-		o 'Private'
-		o 'IDENTIFIER' do IdentifierExpression.new(A1)
-		o 'CONST_ID' do IdentifierExpression.new(A1)
-		o '@ IDENTIFIER' do IdentifierExpression.new(A2)
-		o '@ CONST_ID' do IdentifierExpression.new(A2)
-		o '[ Expression ]' do IdentifierExpression.new(A2)
-	]
-
 	ClassBodyLine: [
 		o 'Decorator'
 		o 'STATIC ClassBodyLine' do A2.set(static: A1)
@@ -782,6 +773,16 @@ var grammar =
 		o 'Comment'
 		o 'ClassFieldIdentifier = Expression' do ClassField.new(A1, A3)
 		o 'ClassFieldIdentifier' do ClassField.new(A1, null)
+	]
+
+	ClassFieldIdentifier: [
+		o 'Private'
+		o 'IDENTIFIER' do IdentifierExpression.new(A1)
+		o 'CONST_ID' do IdentifierExpression.new(A1)
+		o '@ IDENTIFIER' do IdentifierExpression.new(A2)
+		o '@ CONST_ID' do IdentifierExpression.new(A2)
+		o '@ { Expression }' do IdentifierExpression.new(A3)
+		o '[ Expression ]' do IdentifierExpression.new(A2)
 	]
 
 
