@@ -12,6 +12,23 @@ def readonly
 		desc.writable = false
 		return desc
 
+def debounce wait = 100
+	def dec target,key,descriptor
+		const sym = Symbol('debounces')
+		const callback = descriptor.value
+
+		if typeof callback !== 'function'
+			throw SyntaxError.new('Only functions can be debounced')
+
+		descriptor.value = do
+			const args = arguments
+			clearTimeout(this[sym])
+			this[sym] = setTimeout(&,wait) do
+				delete this[sym]
+				return callback.apply(this,args)
+
+		return descriptor
+
 class Hello
 
 	@@log
@@ -25,6 +42,10 @@ class Hello
 
 	def disable
 		self
+
+	@@debounce(10)
+	def debounced
+		console.info 'debounced'
 
 	@@log
 	static def setup
@@ -46,5 +67,14 @@ test do
 	eq item.disable, 1
 	item.enable = 2
 	ok item.enable isa Function
+
+test do
+	let item = Hello.new
+	item.debounced()
+	item.debounced()
+	item.debounced()
+	await spec.wait(20)
+	eq $1.log,['debounced']
+
 
 

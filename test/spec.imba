@@ -79,6 +79,9 @@ global class Spec < SpecComponent
 		await imba.scheduler.promise
 		@observer.takeRecords()
 
+	def wait time = 100
+		Promise.new(do |resolve| setTimeout(resolve,time))
+
 	def constructor
 		super()
 		@console = console
