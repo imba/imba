@@ -26,10 +26,18 @@ class Hello
 	def disable
 		self
 
+	@@log
+	static def setup
+		true
+
 
 test do
 	let item = Hello.new
 	item.setup()
+	eq $1.log, ['call setup']
+
+test do
+	Hello.setup()
 	eq $1.log, ['call setup']
 
 test do

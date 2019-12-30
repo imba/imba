@@ -2512,7 +2512,7 @@ export class ClassDeclaration < Code
 
 		for node,i in body
 			if node.@decorators
-				let target = LIT('this.prototype')
+				let target = node.option(:static) ? LIT('this') : LIT('this.prototype')
 				let desc = LIT('null')
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
 				staticInits.add(op)
