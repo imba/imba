@@ -2616,25 +2616,13 @@ export class ClassDeclaration < Code
 		if isTag
 			ctor = instanceInit
 
-		for node in body
-			if node isa ClassField
-				staticInits.add(node)
-				inits.add(node)
-
-				# if node.option(:static)
-				# 	staticInits.add([node,BR])
-				# else
-				# 	inits.add([node,BR])
-			elif node isa PropertyDeclaration
-				staticInits.add(node)
-				inits.add(node)
-				yes
-				# staticInits.add([node.getter,node.setter,BR])
-				# possibly with some options?
+		for node in body when node isa ClassField
+			staticInits.add(node)
+			inits.add(node)
 
 		for node,i in body
 			if node.@decorators
-				let target = node.option(:static) ? LIT('this') : LIT('this.prototype')
+				let target = node.option(:static) ? THIS : PROTO
 				let desc = LIT('null')
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
 				staticInits.add([op,BR])

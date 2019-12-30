@@ -80,10 +80,10 @@ class Hello
 		true
 
 	@@track
-	prop number
+	@number
 
 	@@watch
-	prop name = 'john'
+	@name = 'john'
 
 	def nameDidSet value,prev
 		console.info([prev,value])
@@ -127,3 +127,18 @@ test do
 	item.name = 'jane'
 	eq $1.log,[['john','jane']]
 
+
+class CustomWatch
+	@@watch('updated')
+	@name = 'john'
+
+	def updated value,prev,key
+		console.info([prev,value,key])
+
+test do
+	let item = CustomWatch.new
+	eq item.name, 'john'
+	item.name = 'jane'
+	eq $1.log,[['john','jane','name']]
+
+console.log Object.keys(Hello.new)
