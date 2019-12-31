@@ -272,6 +272,11 @@ var grammar =
 		o 'DECORATOR ( )' do Decorator.new(A1)
 		o 'DECORATOR ( ArgList )' do Decorator.new(A1).set(params: A3)
 	]
+
+	Decorators: [
+		o 'Decorator' do [A1]
+		o 'Decorators Decorator' do A1.concat(A2)
+	]
 	
 
 	# Alphanumerics are separated from the other **Literal** matchers because
@@ -759,18 +764,23 @@ var grammar =
 	]
 
 	ClassBodyBlock: [
-		o 'ClassBodyLine' do ClassBody.new([A1])
+		o 'ClassBodyLine' do ClassBody.new([]).add(A1)
 		o 'ClassBodyBlock Terminator ClassBodyLine' do A1.break(A2).add(A3)
 		o 'ClassBodyBlock Terminator' do A1.break(A2)
 	]
 
 	ClassBodyLine: [
-		o 'Decorator'
-		o 'STATIC ClassBodyLine' do A2.set(static: A1)
-		o 'LAZY ClassBodyLine' do A2.set(lazy: A1)
-		o 'Property'
-		o 'MethodDeclaration'
+		o 'Decorators'
+		o 'ClassDeclLine'
+		o 'Decorators ClassDeclLine' do A1.concat([A2])
 		o 'Comment'
+		# o 'ClassFieldIdentifier = Expression' do ClassField.new(A1, A3)
+		# o 'ClassFieldIdentifier' do ClassField.new(A1, null)
+	]
+
+	ClassDeclLine: [
+		o 'STATIC ClassDeclLine' do A2.set(static: A1)
+		o 'MethodDeclaration'
 		o 'ClassFieldIdentifier = Expression' do ClassField.new(A1, A3)
 		o 'ClassFieldIdentifier' do ClassField.new(A1, null)
 	]

@@ -88,7 +88,6 @@ var IMPLICIT_FUNC_MAP =
 	'TAG_END': 1
 	'IVAR': 1
 	'CVAR': 1
-	'DECORATOR': 1
 	'CONST_ID': 1
 	'ARGVAR': 1
 	'NEW': 1
@@ -151,7 +150,7 @@ var IDENTIFIERS = ['IDENTIFIER', 'IVAR', 'DECORATOR', 'CONST_ID', 'ARGVAR']
 
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
 var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
-	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 'DECORATOR', 'CVAR',
+	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 'CVAR',
 	'CONST_ID', 'ARGVAR', 'NEW', 'BREAK', 'CONTINUE','RETURN'
 ]
 
