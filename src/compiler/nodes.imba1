@@ -2600,8 +2600,8 @@ export class ClassDeclaration < Code
 		scope.visit
 
 		if @superclass and !option(:extension)
-			# addMethod('super$',[LIT('k')],'super[k]')
-			# addMethod('super$set',[LIT('k,v')],'super[k] = v')
+			addMethod('super$',[LIT('k')],'super[k]')
+			addMethod('super$set',[LIT('k,v')],'super[k] = v')
 			staticInit
 
 		body.traverse
