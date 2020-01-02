@@ -47,7 +47,7 @@
     "watch": "npm run build -- --watch"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.11",
+  "version": "2.0.0-alpha.12",
   "licenses": [
     {
       "type": "MIT",
@@ -74,6 +74,7 @@
   "devDependencies": {
     "puppeteer": "^1.19.0",
     "raw-loader": "^3.1.0",
+    "rollup": "^1.27.11",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.9.0"
