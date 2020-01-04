@@ -212,7 +212,6 @@ imba.tick = do
 ###
 DOM
 ###
-		
 
 def imba.mount element, into
 	# automatic scheduling of element - even before
@@ -220,14 +219,29 @@ def imba.mount element, into
 	(into or document.body).appendChild(element)
 
 
+const CustomTagConstructors = {}
 
 class ImbaElementRegistry
 
+	def constructor
+		#types = {}
+
 	def get name
 		return ImbaElement unless name
-		root.customElements.get(name)
+		root.customElements.get(name) or ImbaElement
 
-	def define name, klass
+	def create name
+		if #types[name]
+			return #types[name].create$()
+		else
+			document.createElement(name)
+
+	def define name, klass, options
+		#types[name] = klass
+		if options and options.extends
+			CustomTagConstructors[name] = klass
+			console.log 'made to extend a native element'
+
 		root.customElements.define(name,klass)
 		return klass
 
@@ -646,6 +660,11 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 	var el = root.document.createElement(name)
 
 	if (bitflags & $TAG_CUSTOM$) or (bitflags === undefined and el.__f != undefined)
+		if CustomTagConstructors[name]
+			el = CustomTagConstructors[name].create$(el)
+			el.slot$ = ImbaElement.prototype.slot$
+			el.__slots = {}
+
 		el.__f = bitflags
 		el.init$()
 

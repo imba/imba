@@ -2711,8 +2711,20 @@ export class TagDeclaration < ClassDeclaration
 			type: 'tag'
 		})
 
-	def id
-		name.id
+	def visit
+		super
+
+		let sup = superclass
+
+		if sup and (sup.isNative or sup.isNativeSVG)
+			# console.log 'inheriting from native element'
+			let op = sup.nativeCreateNode
+			op = util.extendTag(op,THIS)
+			addMethod('create$',[],[op]).set(static: yes)
+			set(extends: Obj.wrap(extends: sup.name))
+
+		# if name.name.indexOf('-') == -1 or superclass and superclass.isNativeSVG
+		#	console.log("non-native tag?")
 
 	def js s
 		scope.virtualize # is this always needed?
@@ -2743,7 +2755,9 @@ export class TagDeclaration < ClassDeclaration
 		let js = "{jshead} {jsbody}"
 		if @staticInit
 			js += "; {className}.init$()"
-		js += "; imba.tags.define({name.c},{className})"
+
+		let ext = (option(:extends) or LIT('{}')).c
+		js += "; imba.tags.define({name.c},{className},{ext})"
 		return js
 
 export class Func < Code
@@ -4884,11 +4898,21 @@ export class TagTypeIdentifier < Identifier
 		name += "${@ns.toLowerCase}" if @ns
 		name
 
+	def nativeCreateNode
+		if isSVG
+			CALL(LIT('document.createElementNS'),[STR("http://www.w3.org/2000/svg"),STR(name)])
+		else
+			CALL(LIT('document.createElement'),[STR(name)])
+			# LIT('document.createElementNS("http://www.w3.org/2000/svg",name)'
+
 	def isClass
 		!!@str.match(/^[A-Z]/)
 		
 	def isNative
 		!@ns and TAG_TYPES.HTML.indexOf(@str) >= 0
+
+	def isNativeSVG
+		@ns == 'svg' and TAG_TYPES.SVG.indexOf(@str) >= 0
 
 	def isSVG
 		@ns == 'svg' or (!isNative and !@ns and TAG_TYPES.SVG.indexOf(@str) >= 0)
@@ -7775,6 +7799,11 @@ export class Util < Node
 var HELPERS = {
 	setField: '''(target,key,value,o){
 		Object.defineProperty(target,key,{value:value});
+	};'''
+
+	extendTag: '''(el,cls){
+		Object.defineProperties(el,Object.getOwnPropertyDescriptors(cls.prototype));
+		return el;
 	};'''
 
 	initField: '''(target,key,o){
