@@ -60,6 +60,11 @@ var HTML_PROPS =
 	fieldset: "disabled"
 	canvas: "width height"
 
+var CUSTOM_EVENTS = {
+	intersect: yes
+	selection: yes
+}
+
 export var AST = {}
 
 var TREE_TYPE =
@@ -2578,9 +2583,9 @@ export class Root < Code
 		if o:sourceMap # should handle sourcemap no matter what?
 			let map = SourceMap.new(result,o:sourceMap,o).generate
 			result:sourcemap = map.result
-		else
-			# remove sourcemap locations
-			result:js = result:js.replace(/\/\*\%(\d*)\$\*\//g,'')
+		# else
+		# remove sourcemap locations
+		result:js = result:js.replace(/\/\*\%(\w*)\$\*\//g,'')
 
 		return result
 
@@ -2803,6 +2808,8 @@ export class TagDeclaration < ClassDeclaration
 		})
 
 	def visit
+		scope__.imbaDependency('index')
+
 		super
 
 		let sup = superclass
@@ -6617,6 +6624,13 @@ export class TagHandler < TagPart
 		@chain.push(@last = TagModifier.new('options'))
 		@last.params = params
 
+	def visit
+		super
+
+		if @name and CUSTOM_EVENTS[String(@name)]
+			console.log "depending on selection event!!"
+			scope__.imbaDependency('events/' + String(@name))
+
 	def isStatic
 		let valStatic = !value or value.isPrimitive or (value isa Func and !value.nonlocals)
 		# check modifiers directly?
@@ -8025,28 +8039,6 @@ export class Util.Len < Util
 			"{scope__.imba.c}.len({args.map(|v| v.c ).join(',')})"
 
 
-export class Util.Subclass < Util
-
-	def helper
-		# should also check if it is a real promise
-		'''
-		// helper for subclassing
-		function subclass$(obj,sup) {
-			for (var k in sup) {
-				if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-			};
-			// obj.__super__ = sup;
-			obj.prototype = Object.create(sup.prototype);
-			obj.__super__ = obj.prototype.__super__ = sup.prototype;
-			obj.prototype.initialize = obj.prototype.constructor = obj;
-		};
-
-		'''
-
-	def js o
-		scope__.root.helper(self,helper)
-		"subclass$({args.map(|v| v.c).join(',')});\n"
-
 export class Util.Promisify < Util
 
 	def helper
@@ -8069,13 +8061,6 @@ export class Util.Promisify < Util
 			"promise$({args.map(|v| v.c).join(',')})"
 		else
 			"{scope__.imba.c}.await({args.map(|v| v.c).join(',')})"
-
-# TODO deprecated: can remove
-export class Util.Class < Util
-
-	def js o
-		# When this is triggered, we need to add it to the top of file?
-		"class$({args.map(|v| v.c).join(',')})"
 
 export class Util.Iterable < Util
 
@@ -8379,6 +8364,9 @@ export class Scope
 	def imbaRef name, shorthand = '_'
 		root.imbaRef(name,shorthand)
 
+	def imbaDependency *params
+		root.imbaDependency(*params)
+
 	def autodeclare variable
 		vars.push(variable) # only if it does not exist here!!!
 
@@ -8491,6 +8479,7 @@ export class RootScope < Scope
 		@entities = RootEntities.new(self)
 		@object = Obj.wrap({})
 		@head = [@vars]
+		@dependencies = {}
 		self
 
 	def sfcid
@@ -8579,6 +8568,13 @@ export class RootScope < Scope
 			@imbaTags = declare('_T',OP('.',imbaRef,'TAGS'))
 		else
 			@imbaTags = "{imbaRef.c}.TAGS"
+
+	def imbaDependency path
+		return if OPTS:imbaPath === null
+		@dependencies[path] ||= if true
+			let item = LIT("import '{OPTS:imbaPath or 'imba'}/src/imba/{path}'")
+			@head.push(item)
+			item
 			
 	def imbaRef name, shorthand = '_'
 		if name == 'tagscope'

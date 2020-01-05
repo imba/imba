@@ -45,8 +45,8 @@ export class SourceMap
 
 	def parse
 		# var matcher = /\/\*\%\$(\d*)\$\%/
-		var matcher = /\/\*\%(\d*)\$\*\//
-		var replacer = /^(.*?)\/\*\%(\d*)\$\*\//
+		var matcher = /\/\*\%(\w*)\$\*\//
+		var replacer = /^(.*?)\/\*\%(\w*)\$\*\//
 		var lines = @source:js.split(/\n/g) # what about js?
 		var verbose = @options:debug
 		# return self
@@ -62,7 +62,6 @@ export class SourceMap
 
 
 		for line,i in lines
-			# console.log "parse through",line
 			# could split on these?
 			var col = 0
 			var caret = -1
@@ -70,6 +69,7 @@ export class SourceMap
 			@maps[i] = []
 			while line.match(matcher)
 				line = line.replace(replacer) do |m,pre,loc|
+					return pre if loc == ''
 					var lc = locmap[parseInt(loc)]
 
 					# unless lc
@@ -80,7 +80,6 @@ export class SourceMap
 
 					if verbose
 						pre += "/*{srcline}:{srccol}*/"
-						self
 
 					if caret != pre:length
 						caret = pre:length

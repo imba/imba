@@ -14,7 +14,7 @@ console.log "examples",examples
 
 var compiler = require('../src/compiler/compiler.imba1')
 
-require('../src/imba/index.imba')
+require('../src/imba/module.imba')
 require('./spec.imba')
 
 
@@ -53,6 +53,7 @@ var compileAndRun = do |example|
 
 	var result = compiler.compile(example.body,{
 		sourcePath: example.path,
+		imbaPath: null,
 		target: 'web'
 	})
 	var js = result.js

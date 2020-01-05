@@ -30,23 +30,6 @@ imba.setInterval = do |fn,ms|
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
-def activateSelectionHandler
-	imba.document.addEventListener('selectionchange') do |e|
-		return if e.handled$
-		e.handled$ = yes
-		
-		let target = imba.document.activeElement
-		if target and target.matches('input,textarea')
-			let custom = CustomEvent.new('selection',{
-				detail: {
-					start: target.selectionStart
-					end: target.selectionEnd
-				}
-			})
-			target.dispatchEvent(custom)
-	activateSelectionHandler = do yes
-
-
 def imba.q$ query, ctx
 	(ctx isa Element ? ctx : document).querySelector(query)
 
@@ -70,17 +53,6 @@ def imba.toCamelCase str
 		str.replace(dashRegex) do |m| m.charAt(1).toUpperCase()
 	else
 		str
-
-def imba.createLiveFragment bitflags, options
-	var el = imba.document.createDocumentFragment()
-	el.setup$(bitflags, options)
-	return el
-
-var setterCache = {}
-
-# not to be used anymore?
-def imba.toSetter str
-	setterCache[str] ||= Imba.toCamelCase('set-' + str)
 
 # Basic events - move to separate file?
 var emit__ = do |event, args, node|
@@ -311,9 +283,6 @@ extend class Element
 		if passive
 			o = {passive: passive, capture: capture}
 
-		if type == 'selection'
-			activateSelectionHandler()
-
 		@addEventListener(type,handler,o)
 		return handler
 
@@ -512,8 +481,8 @@ extend class Element
 		if key == 'model'
 			unless #f & $TAG_BIND_MODEL$
 				#f |= $TAG_BIND_MODEL$
-				@on$('change',{_change$: true},this) if @change$
-				@on$('input',{capture: true,_input$: true},this) if @input$
+				this.on$('change',{_change$: true},this) if this.change$
+				this.on$('input',{capture: true,_input$: true},this) if this.input$
 
 		Object.defineProperty(self,key,o isa Array ? imba.createProxyProperty(o) : o)
 		return o
@@ -694,4 +663,4 @@ def imba.createSVGElement name, bitflags, parent, flags, text, sfc
 		el.insertInto$(parent)
 	return el
 
-import './intersect'
+# import './intersect'
