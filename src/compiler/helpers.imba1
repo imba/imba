@@ -165,6 +165,8 @@ export def locationToLineColMap code
 
 		loc++
 
+	map[loc] = [line,col]
+	map[loc + 1] = [line,col]
 	return map
 
 export def markLineColForTokens tokens, code
@@ -172,7 +174,7 @@ export def markLineColForTokens tokens, code
 
 export def parseArgs argv, o = {}
 	var aliases = o:alias ||= {}
-	var groups = o:groups ||= []
+	var groups = o:group ||= []
 	var schema = o:schema || {}
 
 	schema:main = {}
@@ -211,10 +213,6 @@ export def parseArgs argv, o = {}
 				key = key.substr(3)
 				val = false
 
-			for g in groups
-				if key.substr(0,g:length) == g
-					console.log 'should be part of group'
-
 			key = dashToCamelCase(key)
 
 			if m[2]
@@ -245,6 +243,17 @@ export def parseArgs argv, o = {}
 			
 			unless desc and desc:multi
 				curr = 'main'
+
+	for group in groups
+		let name = dashToCamelCase(group)
+		for own k,v of options
+			if k.indexOf(name) == 0
+				let key = k.substr(name:length).replace(/^\w/) do |m| m.toLowerCase()
+				if key
+					options[name] ||= {}
+					options[name][key] = v
+				else
+					options[name] ||= {}
 
 	if options:env isa String
 		options["ENV_{options:env}"] = yes

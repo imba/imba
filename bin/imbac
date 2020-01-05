@@ -28,12 +28,14 @@ var parseOpts = {
 		a: 'analyze',
 		t: 'tokenize',
 		v: 'version',
-		w: 'watch'
+		w: 'watch',
+		d: 'debug'
 	},
 	
 	schema: {
 		output: {type: 'string'},
-		target: {type: 'string'}
+		target: {type: 'string'},
+		format: {type: 'string'},
 	},
 	
 	group: ['source-map']
@@ -318,10 +320,15 @@ CLI.prototype.compileFile = function (src){
 	};
 	
 	out.compileTime = Date.now() - t;
-	
-	if (self.o().sourceMap && out.sourcemap) {
-		var base64 = new Buffer(JSON.stringify(out.sourcemap)).toString("base64");
+
+	let sourcemap = opts.sourceMap && out.sourcemap;
+
+	if (sourcemap && opts.sourceMap.inline) {
+		var base64 = new Buffer(JSON.stringify(sourcemap)).toString("base64");
 		out.js = out.js + "\n//# sourceMappingURL=data:application/json;base64," + base64;
+
+		// if(opts.sourceMap.debug)
+		// 	out.js = out.js + "\n/* " + JSON.stringify(sourcemap,null,2) + "\n */";
 	};
 	
 	src.output = out;
@@ -341,6 +348,10 @@ CLI.prototype.compileFile = function (src){
 		self.ensureDir(src.targetPath);
 		fs.writeFileSync(src.targetPath,out.js,'utf8');
 		if (!self.o().print) { self.log(status) };
+
+		if(sourcemap && !opts.print && !opts.sourceMap.inline) { // And webpack
+			fs.writeFileSync(src.targetPath + '.map',JSON.stringify(sourcemap),'utf8');
+		}
 		
 		// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
 	} else if (out.error) {
@@ -422,7 +433,7 @@ CLI.prototype.finish = function (){
 
 function main(){
 	var o = helpers.parseArgs(process.argv.slice(2),parseOpts);
-	
+
 	(o.colors == null) ? (o.colors = true) : o.colors;
 	
 	if (o.version) {

@@ -52,9 +52,20 @@ export class Token
 	def region
 		[@loc,@loc + (@len or @value:length)]
 
-	def sourceMapMarker
-		@loc == -1 ? ':' : "%${@loc}$%"
-		# @col == -1 ? '' : "%%{@line}${@col}%%"
+	def startLoc
+		@loc
+
+	def endLoc
+		@loc + (@len or @value:length)
+
+	def startLocMark
+		@loc == 0 or @loc > 0 ? "/*%{@loc}$*/" : ''
+
+	def endLocMark
+		@loc == 0 or @loc > 0 ? "/*%{endLoc}$*/" : ''
+
+	def m o
+		o === 1 ? endLocMark : startLocMark
 
 
 export def lex

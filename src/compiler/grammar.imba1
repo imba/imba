@@ -252,7 +252,7 @@ var grammar =
 
 	# A literal identifier, a variable name or property.
 	Ivar: [
-		o '@ IDENTIFIER' do Ivar.new A2
+		o '@ IDENTIFIER' do Ivar.new(A2).set(self: Self.new(A1))
 	]
 
 	Const: [
@@ -321,9 +321,9 @@ var grammar =
 
 	# A return statement from a function body.
 	Return: [
-		o 'RETURN Expression' do Return.new A2
-		o 'RETURN Arguments' do Return.new A2 # should probably force as array
-		o 'RETURN' do Return.new
+		o 'RETURN Expression' do Return.new(A2).set(keyword: A1)
+		o 'RETURN Arguments' do Return.new(A2).set(keyword: A1) # should probably force as array
+		o 'RETURN' do Return.new().set(keyword: A1)
 	]
 
 	Selector: [
@@ -368,7 +368,7 @@ var grammar =
 		o 'TagOptions TAG_WS' do A1.addPart(A2,AST.TagSep)
 		o 'TagOptions Ivar' do A1.set(ivar: A2)
 		# o 'TagOptions TagFlag' do A1.addPart(A2)
-		o 'TagOptions = TagAttrValue' do A1.addPart(A3,AST.TagAttrValue)
+		o 'TagOptions = TagAttrValue' do A1.addPart(A3,AST.TagAttrValue,A2)
 	]
 
 	TagIdentifier: [
@@ -527,10 +527,10 @@ var grammar =
 
 	MethodDeclaration: [
 		o 'DEF MethodScope MethodScopeType MethodIdentifier MethodParams MethodBody' do
-			MethodDeclaration.new(A5, A6, A4, A2, A3).set(def: A1)
+			MethodDeclaration.new(A5, A6, A4, A2, A3).set(def: A1,keyword: A1)
 
 		o 'DEF MethodIdentifier MethodParams MethodBody' do
-			MethodDeclaration.new(A3, A4, A2, null).set(def: A1)
+			MethodDeclaration.new(A3, A4, A2, null).set(def: A1, keyword: A1)
 	]
 
 	MethodParams: [
@@ -653,13 +653,13 @@ var grammar =
 		o 'ENV_FLAG' do EnvFlag.new(A1)
 		o 'Const'
 		# o 'PrivateField'
-		o 'Ivar' do IvarAccess.new('.',null,A1)
+		o 'Ivar' do IvarAccess.new('.',A1.option(:self),A1) # .setStartLoc(A1.startLoc)
 		o 'Private' do Access.new('.',null,A1)
 		o 'Argvar'
 		o 'Self' # not sure if self should be assignable really
 		o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
 
-		o 'Value . NEW' do New.new(A1)
+		o 'Value . NEW' do New.new(A1).set(keyword: A3)
 		# o 'Value . Super' do SuperAccess.new('.',A1,A3)
 
 		o 'Value SoakableOp Identifier' do PropertyAccess.new(A2,A1,A3)
@@ -799,7 +799,7 @@ var grammar =
 
 	# Ordinary function invocation, or a chained series of calls.
 	Invocation: [
-		o 'Value OptFuncExist Arguments' do Call.new A1, A3, A2
+		o 'Value OptFuncExist Arguments' do Call.new(A1, A3, A2)
 		o 'Value Do' do A1.addBlock(A2)
 	]
 
@@ -811,8 +811,8 @@ var grammar =
 
 	# The list of arguments to a function call.
 	Arguments: [
-		o 'CALL_START CALL_END' do ArgList.new([])
-		o 'CALL_START ArgList OptComma CALL_END' do A2
+		o 'CALL_START CALL_END' do ArgList.new([]).setEnds(A1,A2)
+		o 'CALL_START ArgList OptComma CALL_END' do A2.setEnds(A1,A4)
 	]
 
 	# A reference to the *this* current object.
@@ -1018,7 +1018,7 @@ var grammar =
 		o 'IfBlock ELIF Expression Block' do 
 			A1.addElse If.new(A3, A4, type: A2)
 
-		o 'IfBlock ELSE Block' do A1.addElse A3
+		o 'IfBlock ELSE Block' do A1.addElse(A3.set(keyword: A2))
 	]
 
 	# The full complement of *if* expressions, including postfix one-liner
@@ -1044,10 +1044,10 @@ var grammar =
 		o 'SQRT Expression' do AST.OP A1, A2
 		o('-     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # Op.new '-', A2
 		o('+     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # do Op.new '+', A2
-		o '-- SimpleAssignable' do UnaryOp.new '--', null, A2
-		o '++ SimpleAssignable' do UnaryOp.new '++', null, A2
-		o 'SimpleAssignable --' do UnaryOp.new '--', A1, null, true
-		o 'SimpleAssignable ++' do UnaryOp.new '++', A1, null, true
+		o '-- SimpleAssignable' do UnaryOp.new(A1, null, A2)
+		o '++ SimpleAssignable' do UnaryOp.new(A1, null, A2)
+		o 'SimpleAssignable --' do UnaryOp.new(A2, A1, null, true)
+		o 'SimpleAssignable ++' do UnaryOp.new(A2, A1, null, true)
 
 		o 'Expression +  Expression' do Op.new(A2,A1,A3)
 		o 'Expression -  Expression' do Op.new(A2,A1,A3)

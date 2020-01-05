@@ -20,38 +20,35 @@ export class SourceMap
 	def options
 		@options
 
-	def initialize source, options
+	def initialize source, options, file
 		@source = source
 		@options = options
+		@sourcePath = file:sourcePath
+		@sourceRoot = file:sourceRoot
+		@targetPath = file:targetPath
+
 		@maps = []
 		@map = ""
 		@js = ""
 
-	def filename
-		options:filename
-
 	def sourceCode
-		options.@source
-
-	def targetPath
-		options:targetPath
-
-	def sourcePath
-		options:sourcePath
+		@source:source
 
 	def sourceName
-		path.basename(sourcePath)
+		path.basename(@sourcePath)
 
 	def targetName
-		path.basename(targetPath)
+		path.basename(@targetPath)
 
 	def sourceFiles
 		[sourceName]
 
 	def parse
-		var matcher = /\%\$(\d*)\$\%/
-		var replacer = /^(.*?)\%\$(\d*)\$\%/
-		var lines = source:js.split(/\n/g) # what about js?
+		# var matcher = /\/\*\%\$(\d*)\$\%/
+		var matcher = /\/\*\%(\d*)\$\*\//
+		var replacer = /^(.*?)\/\*\%(\d*)\$\*\//
+		var lines = @source:js.split(/\n/g) # what about js?
+		var verbose = @options:debug
 		# return self
 		var locmap = util.locationToLineColMap(sourceCode)
 		@maps = []
@@ -62,19 +59,36 @@ export class SourceMap
 		# remove markers along the way and keep track of
 		# console.log source:js
 
+
+
 		for line,i in lines
+			# console.log "parse through",line
 			# could split on these?
 			var col = 0
-			var caret = 0
+			var caret = -1
 
 			@maps[i] = []
 			while line.match(matcher)
 				line = line.replace(replacer) do |m,pre,loc|
 					var lc = locmap[parseInt(loc)]
-					caret = pre:length
-					var mapping = [ [lc[0],lc[1]], [i,caret] ] # source and output
-					@maps[i].push(mapping)
+
+					# unless lc
+					# 	console.log "not found in locmap",loc,locmap:length
+
+					let srcline = lc[0] + 1
+					let srccol = lc[1] + 1
+
+					if verbose
+						pre += "/*{srcline}:{srccol}*/"
+						self
+
+					if caret != pre:length
+						caret = pre:length
+						var mapping = [ [srcline,srccol], [i + 1,caret + 1] ] # source and output
+						@maps[i].push(mapping)
+
 					return pre
+
 			lines[i] = line
 
 		
@@ -84,13 +98,13 @@ export class SourceMap
 	def generate
 		parse
 
-		var lastColumn        = 0
-		var lastSourceLine    = 0
-		var lastSourceColumn  = 0
+		var lastColumn        = 1
+		var lastSourceLine    = 1
+		var lastSourceColumn  = 1
 		var buffer            = ""
 
 		for line,lineNumber in @maps
-			lastColumn = 0
+			lastColumn = 1
 
 			for map,nr in line
 				buffer += ',' unless nr == 0
@@ -112,16 +126,17 @@ export class SourceMap
 			buffer += ";"
 
 
-		var rel = targetPath and path.relative(path.dirname(targetPath),sourcePath)
+		var rel = @targetPath and path.relative(path.dirname(@targetPath),@sourcePath)
 
 		var map =
 			version: 3
 			file: sourceName.replace(/\.imba/,'.js') or ''
-			sourceRoot: options:sourceRoot or ''
-			sources:    [rel or sourcePath]
+			sourceRoot: @sourceRoot or ''
+			sources:    [rel or @sourcePath]
 			sourcesContent: [sourceCode]
 			names:      []
 			mappings:   buffer
+			maps: @maps
 
 		# source:sourcemap = sourcemap
 		# var base64 = Buffer.new(JSON.stringify(map)).toString("base64")
@@ -155,6 +170,9 @@ export class SourceMap
 			answer += encodeBase64(nextChunk)
 
 		answer
+
+	def toJSON
+		@result
 
 	def encodeBase64 value
 		BASE64_CHARS[value] # or throw Error.new("Cannot Base64 encode value: {value}")

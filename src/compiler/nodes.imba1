@@ -252,6 +252,17 @@ var BLOCK = do
 var WHILE = do |test,code|
 	While.new(test).addBody(code)
 
+var C = do |node,opts|
+	typeof node == 'string' ? node : node.c(opts)
+
+var M = do |val,mark,o|
+	if mark == undefined
+		mark = val
+
+	if mark and mark:m
+		return mark.m(0) + C(val,o) + mark.m(1)
+	return C(val,o)
+
 export var SPLAT = do |value|
 	Splat.new(value)
 	# if value isa Assign
@@ -307,12 +318,6 @@ def AST.compileRaw item
 	else
 		o = JSON.stringify(item)
 	return o
-
-def AST.mark tok
-	if tok and (OPTS:sourceMapInline or OPTS:sourceMap) and tok:sourceMapMarker
-		tok.sourceMapMarker
-	else
-		''
 
 def AST.blk obj
 	obj isa Array ? Block.wrap(obj) : obj
@@ -426,6 +431,16 @@ export class Indentation
 	def bloc
 		@close and @close.@loc or 0
 
+	def startLoc
+		aloc
+
+	def endLoc
+		bloc
+
+	def m o
+		let l = o == 1 ? bloc : aloc
+		l > 0 ? "/*%{l}$*/" : ''
+
 	def wrap str
 		var om = @open and @open.@meta
 		var pre = om and om:pre or ''
@@ -440,6 +455,8 @@ export class Indentation
 		str = pre + '\n' + str
 		str += out.c if out isa Terminator
 		str = str + '\n' unless str[str:length - 1] == '\n'
+
+		# str = m(0) + str + m(1)
 		return str
 
 var INDENT = Indentation.new({},{})
@@ -723,6 +740,36 @@ export class Node
 		@value = null
 		self
 
+	def setStartLoc loc
+		@startLoc = loc
+		return self
+
+	def setEndLoc loc
+		@endLoc = loc
+		return self
+
+	def setRegion loc
+		if loc isa Node
+			loc = loc.region
+
+		if loc isa Array
+			@startLoc = loc[0]
+			@endLoc = loc[1]
+		return self
+
+	def setEnds start,end
+		if end and end:endLoc
+			@endLoc = end.endLoc
+		if start and start:startLoc
+			@startLoc = start.startLoc
+		self
+
+	def startLoc
+		@startLoc
+
+	def endLoc
+		@endLoc
+
 	def set obj
 		@options ||= {}
 		for own k,v of obj
@@ -742,7 +789,7 @@ export class Node
 		@options ||= {}
 
 	def keyword
-		option(:keyword)
+		@keyword or (@options and @options:keyword)
 
 	def configure obj
 		set(obj)
@@ -794,6 +841,14 @@ export class Node
 
 	def toString
 		"{self:constructor:name}"
+
+	def startLocMark
+		let l = startLoc
+		l == 0 or l > 0 ? "/*%{l}$*/" : ''
+
+	def endLocMark
+		let l = endLoc
+		l == 0 or l > 0 ? "/*%{l}$*/" : ''
 
 	# swallow might be better name
 	def consume node
@@ -909,6 +964,9 @@ export class Node
 		scope__.root.warn opts
 		self
 
+	def m o
+		o == 1 ? endLocMark : startLocMark
+
 	def c o
 		var s = STACK
 		var ch = @cache
@@ -945,6 +1003,17 @@ export class Node
 			var par = s.current
 			out = '(' + out + ')' if par isa Access || par isa Op # others? #
 			ch:cached = yes
+
+		if OPTS:sourceMap and (!o or o:mark !== false)
+			let m0 = m(0)
+			let m1 = m(1)
+			let ol = out:length
+			if m0 and out.indexOf(m0) != 0
+				out = m0 + out
+
+			if m1 and out.indexOf(m1,ol:length - m1:length) == -1
+				out = out + m1
+
 		return out
 
 	def c_cached cache
@@ -955,6 +1024,12 @@ export class Node
 export class ValueNode < Node
 
 	prop value
+
+	def startLoc
+		@value?.startLoc
+
+	def endLoc
+		@value?.endLoc
 
 	def initialize value
 		setup
@@ -1075,7 +1150,7 @@ export class Newline < Terminator
 		@value = v or '\n'
 
 	def c
-		AST.c(@value)
+		C(@value)
 
 
 # weird place?
@@ -1281,6 +1356,14 @@ export class ListNode < Node
 
 		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
 		self
+
+	def endLoc
+		if @endLoc
+			return @endLoc
+
+		var i = @nodes:length
+		let last = @nodes[i - 1]
+		last?.endLoc
 
 
 export class ArgList < ListNode
@@ -1780,15 +1863,20 @@ export class Return < Statement
 	def visit
 		@value.traverse if @value && @value:traverse
 
+	def startLoc
+		let l = (keyword or @value)
+		l ? l.startLoc : null
+
 	def js o
 		var v = @value
+		let k = M('return',keyword)
 
 		if v isa ArgList
-			return "return [{v.c(expression: yes)}]"
+			return "{k} [{v.c(expression: yes)}]"
 		elif v
-			return "return {v.c(expression: yes)}"
+			return "{k} {v.c(expression: yes)}"
 		else
-			"return"
+			k
 
 	def c
 		return super if !value or value.isExpressable
@@ -2484,13 +2572,15 @@ export class Root < Code
 
 		if stylebody
 			let css = {js: stylebody}
-			# let csso = Object.assign({},o,_source: stylebody)
-			# let sm = SourceMap.new(css,csso).generate.inlined
-			# css:js += sm
 			result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
 
-		if o:sourceMapInline or o:sourceMap
-			result:sourcemap = SourceMap.new(result,o).generate.result
+		# always create the sourcemap?
+		if o:sourceMap # should handle sourcemap no matter what?
+			let map = SourceMap.new(result,o:sourceMap,o).generate
+			result:sourcemap = map.result
+		else
+			# remove sourcemap locations
+			result:js = result:js.replace(/\/\*\%(\d*)\$\*\//g,'')
 
 		return result
 
@@ -2547,7 +2637,7 @@ export class ClassDeclaration < Code
 
 	def consume node
 		if node isa Return
-			option('return',yes)
+			option('return',node)
 			return self
 		super
 
@@ -2623,6 +2713,7 @@ export class ClassDeclaration < Code
 				let desc = LIT('null')
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
 				staticInits.add([op,BR])
+				# LIT(node.name.c)
 
 		if !inits.isEmpty
 			if isTag
@@ -2662,7 +2753,8 @@ export class ClassDeclaration < Code
 			# fields are not allowed in class extensions?
 			@body.@delimiter = ','
 			@body.set(braces: yes)
-			return util.extend(name,body).c
+			# TODO should rather declare a variable for the class name, and refer to that?
+			return util.extend(LIT(name.c),body).c
 			# return body.c
 
 		# if there are superclasses - add to the body
@@ -2674,10 +2766,9 @@ export class ClassDeclaration < Code
 		# var namespaced = name != cname
 		var initor = null
 		var sup = superclass
-		var mark = AST.mark(keyword)
 
 		unless typeof cname == 'string'
-			cname = cname.c
+			cname = cname.c(mark: yes)
 
 		var cpath = typeof name == 'string' ? name : name.c
 
@@ -2685,10 +2776,10 @@ export class ClassDeclaration < Code
 		@cpath = cpath
 
 		let jsbody = '{' + body.c() + '}'
-		let jshead = "{keyword}"
-		jshead += " {@cname}" if @cname
-		jshead += " extends {sup.c}" if sup
-		jshead = "export {jshead}" if option(:export)
+		let jshead = M(keyword,keyword) # "{C(keyword,mark: yes)}"
+		jshead += " {M cname, name}" if name
+		jshead += " extends {M(sup)}" if sup
+		jshead = "{M 'export',option(:export)} {jshead}" if option(:export)
 		let js = "{jshead} {jsbody}"
 		if option(:global)
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
@@ -2746,12 +2837,10 @@ export class TagDeclaration < ClassDeclaration
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
 
-
-		var mark = AST.mark(keyword)
 		let className = name.toClassName + 'Tag'
 		let closure = scope__.parent
 		let jsbody = '{' + body.c() + '}'
-		let jshead = "{mark}class {className} extends {sup.c}"
+		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 		let js = "{jshead} {jsbody}"
 		if @staticInit
 			js += "; {className}.init$()"
@@ -2817,7 +2906,7 @@ export class Func < Code
 		var name = typeof @name == 'string' ? @name : @name.c
 		name = name ? ' ' + name.replace(/\./g,'_') : ''
 		var keyword = o and o:keyword != undefined ? o:keyword : funcKeyword
-		var out = "{keyword}{name}({params.c}) " + code
+		var out = "{M(keyword,option(:def))}{name}({params.c}) " + code
 		# out = "async {out}" if option(:async)
 		out = "({out})()" if option(:eval)
 		return out
@@ -2991,10 +3080,9 @@ export class MethodDeclaration < Func
 				body.consume(ImplicitReturn.new)
 
 		var code = scope.c(indent: yes, braces: yes)
-		var name = typeof @name == 'string' ? @name : @name.c
+		var name = typeof @name == 'string' ? @name : @name.c()
 
 		var out = ""
-		var mark = AST.mark(option('def'))
 		var fname = AST.sym(self.name)
 
 		if option(:inClassBody) or option(:inObject)
@@ -3002,7 +3090,7 @@ export class MethodDeclaration < Func
 			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
 			prefix = "static {prefix}" if option(:static)
 			prefix = "async {prefix}" if option(:async)
-			out = "{prefix}{name}{mark}({params.c}){code}"
+			out = "{prefix}{M name, @name}({params.c}){code}"
 			return out
 
 		var func = "({params.c})" + code
@@ -3019,11 +3107,11 @@ export class MethodDeclaration < Func
 				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
 			else
 				let k = OP('.',target,@name)
-				out = "{mark}{k.c} = {funcKeyword} {func}"
+				out = "{k.c} = {funcKeyword} {func}"
 			if o:export
 				out = "exports.{o:default ? 'default' : fname} = {out}"
 		else
-			out = "{mark}{funcKeyword} {fname}{func}"
+			out = "{M funcKeyword, keyword} {M fname, @name}{func}"
 			if o:export
 				out = "export {o:default ? 'default ' : ''}{out}"
 
@@ -3268,7 +3356,16 @@ export class Literal < ValueNode
 	def shouldParenthesizeInTernary
 		no
 
+	def startLoc
+		@startLoc or (@value:startLoc && @value.startLoc)
+
+	def endLoc
+		@endLoc or (@value:endLoc && @value.endLoc)
+
 export class RawScript < Literal
+
+	def c
+		@value
 
 export class Bool < Literal
 
@@ -3311,7 +3408,7 @@ export class Undefined < Literal
 		no
 
 	def c
-		AST.mark(@value) + "undefined"
+		M("undefined",@value)
 
 export class Nil < Literal
 
@@ -3322,7 +3419,7 @@ export class Nil < Literal
 		no
 
 	def c
-		AST.mark(@value) + "null"
+		M("null",@value)
 
 export class True < Bool
 
@@ -3333,7 +3430,7 @@ export class True < Bool
 		yes
 
 	def c
-		AST.mark(@value) + "true"
+		M("true",@value)
 
 export class False < Bool
 
@@ -3344,7 +3441,7 @@ export class False < Bool
 		no
 
 	def c
-		AST.mark(@value) + "false"
+		M("false",@value)
 
 export class Num < Literal
 
@@ -3374,12 +3471,11 @@ export class Num < Literal
 
 	def c o
 		return super(o) if @cache
-		var js = String(@value)
+		var out = M(String(@value),@value)
 		var par = STACK.current
 		var paren = par isa Access and par.left == self
-		# only if this is the right part of teh acces
-		paren ? "({AST.mark(@value)}" + js + ")" : (AST.mark(@value) + js)
-		# @cache ? super(o) : String(@value)
+		# only if this is the right part of the access
+		paren ? "({out})" : out
 
 	def cache o
 		return self unless o and (o:cache or o:pool)
@@ -3426,7 +3522,7 @@ export class Str < Literal
 		String(@value)
 
 	def c o
-		@cache ? super(o) : String(@value)
+		@cache ? super(o) : (M js, @value)
 
 export class TemplateString < ListNode
 
@@ -3739,9 +3835,7 @@ export class Self < Literal
 
 	def c
 		var s = scope__
-		(s ? s.context.c : "this")
-
-export class ImplicitSelf < Self
+		M((s ? s.context.c : "this"),@value)
 
 export class This < Self
 
@@ -3755,10 +3849,7 @@ export class This < Self
 		self
 
 	def c
-		"this"
-
-
-
+		M("this",@value)
 
 # OPERATORS
 
@@ -3802,6 +3893,10 @@ export class Op < Node
 		# what if right is a string?!?
 		!right || right.isExpressable
 
+	def startLoc
+		let l = @left
+		l and l:startLoc ? l.startLoc : super
+
 	def js o
 		var out = null
 		var op = @op
@@ -3813,9 +3908,9 @@ export class Op < Node
 		r = r.c if r isa Node
 
 		if l && r
-			out = "{l} {AST.mark(@opToken)}{op} {r}"
+			out = "{l} {M op,@opToken} {r}"
 		elif l
-			out = "{AST.mark(@opToken)}{op}{l}"
+			out = "{M op,@opToken}{l}"
 		# out = out.parenthesize if up isa Op # really?
 		out
 		
@@ -3866,7 +3961,7 @@ export class ComparisonOp < Op
 
 		l = l.c if l isa Node
 		r = r.c if r isa Node
-		return "{l} {AST.mark(@opToken)}{op} {r}"
+		return "{l} {M op,@opToken} {r}"
 
 
 export class UnaryOp < Op
@@ -3880,6 +3975,10 @@ export class UnaryOp < Op
 	def isTruthy
 		var val = AST.truthy(left)
 		return val !== undefined ? (!val) : (undefined)
+
+	def startLoc
+		let l = (@left or @op)
+		l and l:startLoc ? l.startLoc : @startLoc
 
 	def js o
 		var l = @left
@@ -4005,6 +4104,12 @@ export class Access < Op
 		@right = r
 		return self
 
+	def startLoc
+		(@left or @right).startLoc
+
+	def endLoc
+		@right && @right.endLoc
+
 	def clone left, right
 		var ctor = self:constructor
 		ctor.new(op,left,right)
@@ -4020,6 +4125,9 @@ export class Access < Op
 		var ctx = (lft || scope__.context)
 		var pre = ""
 		var mark = ''
+
+		unless @startLoc
+			@startLoc = (lft or rgt).startLoc
 
 		if lft isa Super and STACK.method and STACK.method.option('inExtension')
 			return CALL(
@@ -4043,7 +4151,6 @@ export class Access < Op
 			raw = rgt.raw
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
-			mark = AST.mark(rgt.@value)
 			raw = rgt.c
 
 		if safechain and ctx
@@ -4055,7 +4162,7 @@ export class Access < Op
 		var out = if raw
 			# see if it needs quoting
 			# need to check to see if it is legal
-			ctx ? "{ctx.c}.{mark}{raw}" : raw
+			ctx ? "{ctx.c}.{raw}" : raw
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
 			"{ctx.c}[{r}]"
@@ -4063,7 +4170,12 @@ export class Access < Op
 		# if safechain and ctx
 		# 	out = "{ctx.c} && {out}"
 
-		return pre + out
+		# out = startLocMark + pre + out
+		out = pre + out
+		# out = pre + out
+		# out = startLocMark + out
+		# console.log "startloc??",startLocMark
+		return out
 
 	def visit
 		left.traverse if left
@@ -4166,6 +4278,8 @@ export class IvarAccess < Access
 		# WARN hmm, this is not right... when accessing on another object it will need to be cached
 		return self
 
+
+
 export class IndexAccess < Access
 
 	def cache o = {}
@@ -4231,7 +4345,7 @@ export class VarOrAccess < ValueNode
 			# @value.safechain = safechain
 
 		# TODO deprecate and remove
-		if value.symbol.indexOf('$') >= 0 or true
+		if true
 			# big hack - should disable
 			# major hack here, no?
 			# console.log "GlobalVarAccess"
@@ -4248,7 +4362,7 @@ export class VarOrAccess < ValueNode
 		self
 
 	def c
-		AST.mark(@token) + (@variable ? super() : value.c)
+		M((@variable ? super() : value.c), @token)
 
 	def js o
 
@@ -4353,7 +4467,7 @@ export class VarReference < ValueNode
 		if value isa Obj or value isa Arr
 			ref = value
 
-		var out = "{AST.mark(@value)}{ref.c}"
+		var out = "{ref.c}"
 		var keyword = o.es5 ? 'var' : (@type or 'var')
 
 		if ref && !ref.@declared # .option(:declared)
@@ -4504,7 +4618,7 @@ export class Assign < Op
 			l = ctx.reference
 
 		var lc = l.c
-		var out = "{lc} {AST.mark(@opToken)}{op} {right.c(expression: true)}"
+		var out = "{lc} {op} {right.c(expression: true)}"
 
 		if l isa Obj
 			out = "({out})"
@@ -4684,8 +4798,11 @@ export class Identifier < Node
 	prop value
 
 	def initialize value
+		if value isa Token
+			@startLoc = value.startLoc
 		@value = load(value)
 		@symbol = null
+
 
 		if ("" + value).indexOf("?") >= 0
 			@safechain = yes
@@ -4705,9 +4822,6 @@ export class Identifier < Node
 		@value.@variable = variable if @value
 		self
 
-	def sourceMapMarker
-		@value.sourceMapMarker
-
 	def load v
 		return (v isa Identifier ? v.value : v)
 
@@ -4724,6 +4838,12 @@ export class Identifier < Node
 
 	def region
 		[@value.@loc,@value.@loc + @value.@len]
+
+	def startLoc
+		@value and @value:startLoc ? @value.startLoc : null
+
+	def endLoc
+		@value and @value:endLoc ? @value.endLoc : null
 
 	def isValidIdentifier
 		yes
@@ -4749,10 +4869,14 @@ export class Identifier < Node
 	def js o
 		symbol
 
-	def c
+	def c o
 		let up = STACK.current
 		return toStr.c if up isa Util
-		return '' + symbol
+		let out = js
+		# if o and o:mark
+		# 	# console.log "mark identifier {out}"
+		# 	out = startLocMark + out + endLocMark
+		return out
 
 	def dump
 		{ loc: region }
@@ -4772,10 +4896,10 @@ export class Private < Identifier
 	def add part
 		IdentifierExpression.new(value).add(part).set(prefix: '__', private: yes)
 
-	def c
-		let up = STACK.current
-		return toStr.c if up isa Util
-		return '' + symbol
+	# def c
+	# 	let up = STACK.current
+	# 	return toStr.c if up isa Util
+	# 	return '' + symbol
 			
 
 export class TagIdRef < Identifier
@@ -4796,14 +4920,10 @@ export class Ivar < Identifier
 
 	def initialize v
 		@value = v isa Identifier ? v.value : v
-		@private = String(@value)[0] == '#'
 		self
 
-	def isPrivate
-		!!@private
-
 	def name
-		(@private ? '__' : '') + helpers.dashToCamelCase(@value).replace(/^[@\#]/,'')
+		helpers.dashToCamelCase(@value).replace(/^[@\#]/,'')
 		# value.c.camelCase.replace(/^@/,'')
 
 	def alias
@@ -4813,8 +4933,6 @@ export class Ivar < Identifier
 	def js o
 		return name
 
-	def c
-		return name
 
 export class Decorator < ValueNode
 	
@@ -4864,9 +4982,9 @@ export class Const < Identifier
 
 	def c
 		if option(:export)
-			"exports.{@value} = " + AST.mark(@value) + js
+			"exports.{@value} = " + js
 		else
-			AST.mark(@value) + js
+			super
 
 
 export class TagTypeIdentifier < Identifier
@@ -4878,6 +4996,13 @@ export class TagTypeIdentifier < Identifier
 		@token = value
 		@value = load(value)
 		self
+
+	def startLoc
+		@token?.startLoc
+
+	def endLoc
+		@token?.endLoc
+		
 
 	def load val
 		@str = ("" + val)
@@ -4982,6 +5107,10 @@ export class Call < Node
 	prop args
 	prop block
 
+	# def m
+	# 	console.log "called Call.m {@callee} ({startLoc} - {@callee.startLoc}) [{endLoc}]"
+	# 	super
+
 	def initialize callee, args, opexists
 		@traversed = no
 		@expression = no
@@ -5040,6 +5169,12 @@ export class Call < Node
 
 	def shouldParenthesizeInTernary
 		@parens or safechain or @cache
+
+	def startLoc
+		@startLoc or @callee and @callee:startLoc ? @callee.startLoc : 0
+
+	def endLoc
+		@endLoc or (@args and @args.endLoc) or @callee.endLoc
 
 	def js o
 		var opt = expression: yes
@@ -5107,27 +5242,15 @@ export class Call < Node
 			# callee should already be cached now -
 
 		# should just force expression from the start, no?
-		if splat and false
-			# important to wrap the single value in a value, to keep implicit call
-			# this is due to the way we check for an outer Call without checking if
-			# we are the receiver (in PropertyAccess). Should rather wrap in CallArguments
-			let rec = receiver
-			if receiver isa Super
-				rec = scope__.context
-			var ary = (args.count == 1 ? ValueNode.new(args.first.value) : Arr.new(args.list))
-
-			rec.cache # need to cache the context as it will be referenced in apply
-			out = "{callee.c(expression: yes)}.apply({rec.c},{ary.c(expression: yes)})"
-
-		elif @receiver
+		if @receiver
 			# quick workaround
 			@receiver.cache unless @receiver isa ScopeContext
 			args.unshift(receiver)
 			# should rather rewrite to a new call?
-			out = "{callee.c(expression: yes)}.call({args.c(expression: yes)})"
+			out = "{callee.c(expression: yes)}.call({args.c(expression: yes,mark: false)})"
 
 		else
-			out = "{callee.c(expression: yes)}({args.c(expression: yes)})"
+			out = "{callee.c(expression: yes)}({args.c(expression: yes,mark: false)})"
 
 		if wrap
 			# we set the cachevar inside
@@ -5149,6 +5272,12 @@ export class ImplicitCall < Call
 
 export class New < Call
 
+	# def startLoc
+	# 	keyword ? keyword.startLoc : super
+
+	def endLoc
+		keyword and keyword.endLoc or super
+
 	def js o
 		var target = callee
 
@@ -5161,6 +5290,7 @@ export class New < Call
 
 			target = left
 
+		# var out = "{M(keyword or 'new',keyword)} {callee.c}"
 		var out = "new {callee.c}"
 		out += '()' unless o.parent isa Call
 		out
@@ -5351,12 +5481,10 @@ export class If < ControlFlow
 			code = body ? body.c(braces: yes) : '{}' # (braces: yes)
 
 			# don't wrap if it is only a single expression?
-			var out = "{AST.mark(@type)}if ({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
+			var out = "{M 'if',@type} ({cond}) " + code # ' {' + code + '}' # '{' + code + '}'
 			out += " else {alt.c(alt isa If ? {} : brace)}" if alt
 			out
 
-	def sourceMapMarker
-		self
 
 	def shouldParenthesize
 		!!@parens
@@ -5724,7 +5852,7 @@ export class For < Loop
 		var after = ""
 
 		var code = body.c(braces: yes, indent: yes)
-		var head = "{AST.mark(options:keyword)}for ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
+		var head = "{M('for',keyword)} ({scope.vars.c}; {cond.c(expression: yes)}; {final.c(expression: yes)}) "
 		
 		return before + head + code + after
 
@@ -5792,7 +5920,7 @@ export class ForOf < For
 
 			body.unshift(OP('=',k,OP('.',vars:keys,i)))
 			code = body.c(indent: yes, braces: yes) # .wrap
-			var head = "{AST.mark(options:keyword)}for ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
+			var head = "{M('for',keyword)} ({scope.vars.c}; {OP('<',i,vars:len).c}; {OP('++',i).c})"
 			return head + code
 
 		else
@@ -5801,7 +5929,7 @@ export class ForOf < For
 			code = scope.c(braces: yes, indent: yes)
 			# let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
-			"{AST.mark(options:keyword)}for ({o.es5 ? 'var' : 'let'} {v.c} of {src.c(expression: yes)})" + code
+			"{M('for',keyword)} ({o.es5 ? 'var' : 'let'} {v.c} of {src.c(expression: yes)})" + code
 
 	def head
 		var v = options:vars
@@ -6108,6 +6236,14 @@ export class IdentifierExpression < Node
 		else
 			"[{asString}]"
 
+	def startLoc
+		let n = @nodes[0]
+		n?.startLoc
+
+	def endLoc
+		let n = @nodes[@nodes:length - 1]
+		n?.endLoc
+
 	def asIdentifier
 		@single ? "[{@single.c()}]" : "[{asString}]"
 
@@ -6228,6 +6364,9 @@ export class TagAttr < TagPart
 	def isSpecial
 		String(@name) == 'value'
 
+	def startLoc
+		@name?.startLoc
+
 	def isStatic
 		super and @chain.every(do |item|
 			let val = item isa Parens ? item.value : item
@@ -6274,6 +6413,7 @@ export class TagAttr < TagPart
 		# let mods = AST.compileRaw(@mods or null)
 		let val = value.c(o)
 		let bval = val
+		let op = M('=',option(:op))
 
 		if ns == 'css'
 			"css$('{key}',{val})"
@@ -6292,11 +6432,11 @@ export class TagAttr < TagPart
 			# how do we remove attribute then?
 			"setAttribute('{key}',{val})"
 		elif key.indexOf("data-") == 0
-			"dataset.{key.slice(5)}={val}"
+			"dataset.{key.slice(5)}{op}{val}"
 		elif key.indexOf('--') == 0
 			"style.setProperty('{key}',{val})"
 		else
-			"{helpers.dashToCamelCase(key)}={val}"
+			"{helpers.dashToCamelCase(key)}{op}{val}"
 		# elif dyn or true
 		# 	"set({quoted},{val}{add})"
 		# else
@@ -6870,7 +7010,7 @@ export class Tag < TagLike
 		@slots ||= {}
 		@slots[name] ||= TagSlotProxy.new(parent: self, name: name)
 
-	def addPart part, type
+	def addPart part, type, tok
 		let attrs = @attributes
 		let curr = attrs.CURRENT
 		let next = curr
@@ -6893,9 +7033,11 @@ export class Tag < TagLike
 			if curr isa TagFlag
 				curr.condition = part
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
+				curr.set(op: tok)
 
 			elif curr
 				curr.value = part
+				curr.set(op: tok)
 
 		elif curr isa TagHandler or curr isa TagAttr
 			curr.add(part,type)
@@ -7020,7 +7162,7 @@ export class Tag < TagLike
 		if isFragment
 			params = params.slice(1,3)
 
-		var ctor = "{tvar}={create_}({params.join(',')})"
+		var ctor = "{tvar}={M("{create_}({params.join(',')})",type)}"
 
 		if option(:assign)
 			# push it into ctor if it is not a variable assignment
@@ -7219,12 +7361,12 @@ export class Tag < TagLike
 					item.option(svg: true) if isSVG
 					let val = item.value
 					if item.valueIsStatic
-						add "{bvar} || ({ref}.{item.js(o)})"
+						add "{bvar} || ({ref}.{M(item.js(o),item)})"
 					elif val isa Func
 						add "({ref}.{item.js(o)})"
 					else
 						item.value = LIT("{iref}={vvar}")
-						add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{item.js(o)}))"
+						add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{M item.js(o),item}))"
 
 		if flagsToConcat:length or (isSelf && @className)
 			flagsToConcat.unshift(@className) if @className
@@ -7451,9 +7593,6 @@ export class ESMDeclaration < Statement
 
 	def isExport
 		String(keyword) == 'export'
-
-	def keyword
-		@keyword or option(:keyword)
 
 	def js
 		if @specifiers and @source
@@ -8942,6 +9081,9 @@ export class RootScopeContext < ScopeContext
 		# o and o:explicit ? super : ""
 
 export class Super < Node
+	def initialize keyword
+		@keyword = keyword
+		super
 
 	def visit
 		@method = STACK.method
@@ -8951,6 +9093,11 @@ export class Super < Node
 			m.set(injectInitAfter: STACK.blockpart)
 		self
 
+	def startLoc
+		@keyword and @keyword.startLoc
+
+	def endLoc
+		@keyword and @keyword.endLoc
 
 	def c
 		let m = @method
@@ -8959,7 +9106,6 @@ export class Super < Node
 		let op
 		let virtual = m and m.option('inExtension')
 		# need to know if our method is in the initial declaration
-
 
 		# when super is written all by itself - it means to do the default action
 		unless (up isa Access) or (up isa Call)
@@ -8972,13 +9118,13 @@ export class Super < Node
 				elif !m.isGetter
 					op = CALL(OP('.',op,'apply'),[slf,LIT('arguments')])
 			elif m
-				# op = virtual ? OP('.',sup,sup) : 
 				op = OP('.',sup,m.name)
 				if m.isSetter
 					op = OP('=',op,m.params.at(0))
 				elif !m.isGetter
 					op = CALL(op,[LIT('...arguments')])
-			return op ? op.c() : '/**/'
+
+			return op ? (M op.c(mark: false), self) : '/**/'
 
 		if up isa Call and m and !m.isConstructor
 			return OP('.',sup,m.name).c
