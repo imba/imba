@@ -364,7 +364,7 @@ Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
 
 # import './fragment'
-import {createLiveFragment,createFragment} from './fragment'
+import {createLiveFragment,createFragment} from './internal/fragment'
 
 imba.createLiveFragment = createLiveFragment
 imba.createFragment = createFragment
