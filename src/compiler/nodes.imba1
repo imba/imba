@@ -6399,6 +6399,9 @@ export class TagAttr < TagPart
 			@mods = {}
 			for m in @chain
 				@mods[m.name] = 1
+
+		if @ns == 'bind'
+			scope__.imbaDependency('internal/bind')
 		self
 
 	def ns
