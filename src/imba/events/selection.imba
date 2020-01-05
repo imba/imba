@@ -18,6 +18,5 @@ def activateSelectionHandler
 				target.dispatchEvent(custom)
 		imba.document.addEventListener('selectionchange',selHandler)
 
-extend class Element
-	def on$selection(mods, context)
-		activateSelectionHandler()
+Element.prototype.on$selection = do |mods, context|
+	activateSelectionHandler()

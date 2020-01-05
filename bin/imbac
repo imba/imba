@@ -323,9 +323,14 @@ CLI.prototype.compileFile = function (src){
 
 	let sourcemap = opts.sourceMap && out.sourcemap;
 
-	if (sourcemap && opts.sourceMap.inline) {
-		var base64 = new Buffer(JSON.stringify(sourcemap)).toString("base64");
-		out.js = out.js + "\n//# sourceMappingURL=data:application/json;base64," + base64;
+	if (sourcemap) {
+		if(opts.sourceMap.inline){
+			var base64 = new Buffer(JSON.stringify(sourcemap)).toString("base64");
+			out.js = out.js + "\n//# sourceMappingURL=data:application/json;base64," + base64;	
+		} else if (!opts.sourceMap.hidden){
+			out.js = out.js + "\n//# sourceMappingURL=" + path.basename(src.targetPath + '.map');
+		}
+		
 
 		if(opts.sourceMap.debug) {
 			let str = JSON.stringify(sourcemap,null,2);

@@ -27,15 +27,14 @@ def getIntersectionObserver
 		{threshold: [0,1]}
 	)
 
-extend class Element
-	def on$intersect(mods, context)
-		let obs
-		if mods.options
-			let opts = Object.assign({event: 'intersect'},mods.options[0])
-			if opts.root isa String
-				opts.root = document.querySelector(opts.root)
-			let ev = delete opts.event
-			obs = mods.options.obs = IntersectionObserver.new(callback(ev),opts)
-		else
-			obs = getIntersectionObserver(mods)
-		obs.observe(this)
+Element.prototype.on$intersect = do |mods,context|
+	let obs
+	if mods.options
+		let opts = Object.assign({event: 'intersect'},mods.options[0])
+		if opts.root isa String
+			opts.root = document.querySelector(opts.root)
+		let ev = delete opts.event
+		obs = mods.options.obs = IntersectionObserver.new(callback(ev),opts)
+	else
+		obs = getIntersectionObserver(mods)
+	obs.observe(this)
