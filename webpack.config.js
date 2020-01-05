@@ -11,7 +11,7 @@ var umd = {
 
 var modules = {
   rules: [
-    { test: /\.imba$/, use: './loader.js', exclude: /test\/\w+\// },
+    { test: /\.imba$/, use: {loader: './loader.js',options:{imbaPath: null}} , exclude: /test\/\w+\// },
     { test: /\.imba1$/, use: './scripts/bootstrap.loader.js' },
     { test: /\.html$/, use: 'raw-loader' }
   ]
