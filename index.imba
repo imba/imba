@@ -1,1 +1,1 @@
-module.exports = require("./src/imba/index.imba")
+require("./src/imba/index.imba")

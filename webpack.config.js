@@ -1,67 +1,48 @@
 var path = require('path');
-var webpack = require('webpack');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
-
 var package = require('./package.json');
-var loader = path.join(__dirname, "./loader");
+var loader = path.join(__dirname, "loader");
 
-var minify = new UglifyJsPlugin({
-	uglifyOptions: {
-		ecma: 6,
-		minimize: true,
-		compress: { warnings: false },
-		output: {
-			semicolons: false,
-			indent_level: 0
-		}
-	}
-	
-});
+var umd = {
+	filename: "./dist/[name].js",
+	libraryTarget: "umd",
+	globalObject: 'typeof self !== \'undefined\' ? self : this',
+	path: path.resolve(__dirname)
+};
 
-module.exports = [{
-	module: {
-		rules: [{test: /\.imba$/, loader: loader, options: {es5: true}}]
-	},
-	resolve: {extensions: ['*', '.imba', '.js']},
+var modules = {
+  rules: [
+    { test: /\.imba$/, use: {loader: './loader.js',options:{imbaPath: null}} , exclude: /test\/\w+\// },
+    { test: /\.imba1$/, use: './scripts/bootstrap.loader.js' },
+    { test: /\.html$/, use: 'raw-loader' }
+  ]
+}
+
+module.exports = (env, argv) =>[{
+	entry: "./src/compiler/compiler.imba1",
+	resolve: { extensions: [".imba1",".js",".json"] },
+	module: modules,
+	output: Object.assign({library: 'imbac'},umd,{filename: `./dist/compiler.js`}),
+	node: {fs: false, process: false, global: false},
+},{
 	entry: "./src/imba/index.imba",
+	resolve: { extensions: [".imba",".js"] },
+	module: modules,
+	// output: Object.assign({library: 'imba'},umd,{filename: `./dist/imba.js`}),
 	output: {
-		filename: "./imba.js",
-		library: {
-			root: "Imba",
-			amd: "imba",
-			commonjs: "imba"
-		},
+		filename: './dist/imba.js',
 		globalObject: 'typeof self !== \'undefined\' ? self : this',
-		path: path.resolve(__dirname),
-		libraryTarget: "umd"
+		path: __dirname
 	},
 	node: {fs: false, process: false, global: false},
-	plugins: [minify]
 },{
-	module: {
-		rules: [{test: /\.imba$/, loader: loader, options: {es5: true}}]
-	},
-	resolve: {extensions: ['*', '.imba', '.js']},
-	entry: "./src/compiler/compiler.imba",
-	output: {
-		filename: "./imbac.js",
-		library: "imbac",
-		libraryTarget: "umd",
-		globalObject: 'typeof self !== \'undefined\' ? self : this',
-		path: path.resolve(__dirname)
-	},
+	entry: "./src/compiler/grammar.imba1",
+	resolve: { extensions: [".imba1",".js"] },
+	module: modules,
+	output: Object.assign({library: 'grammar'},umd,{filename: `./build/grammar.js`}),
 	node: {fs: false, process: false, global: false},
-	plugins: [minify]
 },{
-	module: {
-		rules: [{test: /\.imba$/, loader: loader}]
-	},
-	resolve: {extensions: ['*', '.imba', '.js']},
 	entry: "./test/index.imba",
-	output: {
-		filename: "./test/client.js",
-		globalObject: 'typeof self !== \'undefined\' ? self : this',
-		path: path.resolve(__dirname)
-	},
-	node: {fs: false, process: false, global: false}
+	resolve: { extensions: [".imba",".imba1",".js",".json"] },
+	module: modules,
+	output: {filename: `./test/index.js`, path: __dirname}
 }]

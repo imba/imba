@@ -1,53 +1,98 @@
 
-# require imba ( ensure local version )
-require '../index'
-require './spec'
+var paths = require.context('raw-loader!./apps', true, /[\w\-\/]+\.imba$/)
+var examples = {}
 
-require './syntax/loop'
-require './syntax/class'
-require './syntax/super'
-require './syntax/operators'
-require './syntax/variables'
-require './syntax/arrays'
-require './syntax/catch'
-require './syntax/functions'
-require './syntax/return'
-require './syntax/statements'
-require './syntax/properties'
-require './syntax/literals'
-require './syntax/existense'
-require './syntax/scope'
-require './syntax/delete'
-require './syntax/blockparam'
-require './syntax/modules'
-require './syntax/switch'
-require './syntax/assignment'
-require './syntax/conditionals'
-require './syntax/await'
-require './syntax/tags'
-require './syntax/formatting'
-require './syntax/defs'
-require './syntax/issues'
-require './syntax/quirks'
+for src in paths.keys()
+	let path = "apps/" + src.slice(2)
+	var example = {
+		path: path
+		body: paths(src).default
+	}
+	examples[path] = example
 
-require './tags/define'
-require './tags/caching'
-require './tags/attributes'
-require './tags/svg'
+console.log "examples",examples
 
-if $web$
-	require './tags/virtual'
-	require './tags/html'
-	require './tags/templates'
-	require './tags/events'
+var compiler = require('../src/compiler/compiler.imba1')
+
+require('../src/imba/module.imba')
+require('./spec.imba')
+
+
+
+var exposed = {}
+
+window.onerror = do |e|
+	console.log('page:error',{message: (e.message or e)})
+
+window.onunhandledrejection = do |e|
+	console.log('page:error',{message: e.reason.message})
+
+var afterRun = do
+	if SPEC.blocks.length
+		exposed.test = SPEC.run.bind(SPEC)
+
+		for block in SPEC.blocks
+			exposed[block.name] = do block.run()
+
+	imba.commit()
+	console.log('example:loaded',10)
+
+var run = do |js|
+	# hack until we changed implicit self behaviour
+	# js = js.replace('self = {}','self = SELF')
+	let script = document.createElement('script')
+	script.innerHTML = js
+	# script.onload = afterRun
+	document.head.appendChild(script)
+	afterRun()
+	# window.eval(js)
+	# afterRun()
 	
-if $node$
-	require './tags/escaping'
 
-extern phantom
+var compileAndRun = do |example|
 
-SPEC.run do |exitCode|
-	if typeof phantom == 'object'
-		phantom.exit(exitCode)
-	elif typeof process == 'object' && process:exit
-		process.exit(exitCode)
+	var result = compiler.compile(example.body,{
+		sourcePath: example.path,
+		imbaPath: null,
+		target: 'web'
+	})
+	var js = result.js
+	run(js)
+
+var load = do |src|
+	if !location.origin.startsWith('file://')
+		# load as esm module
+		let script = document.createElement('script')
+		script.type = 'module'
+		script.src = './' + src.replace('.imba','.js')
+		script.onload = afterRun
+		document.head.appendChild(script)
+	elif examples[src]
+		compileAndRun(examples[src])
+
+tag test-runner
+
+	def go e
+		document.location.hash = "#{e.target.value}"
+		document.location.reload()
+
+	def call e
+		console.log('calling',e)
+		exposed[e.target.value]()
+		self
+
+	def render
+		<self>
+			<select :change.go>
+				<option disabled=yes value=""> "Jump to example"
+				for src in Object.keys(examples)
+					<option> src
+
+			for name in Object.keys(exposed)
+				<button value=name :click.call> name
+
+# imba.mount(<test-runner>)
+
+window.onload = do
+	var hash = (document.location.hash || '').slice(1)
+	load(hash) if hash

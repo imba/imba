@@ -1,0 +1,180 @@
+# imba$inlineHelpers=1
+# imba$v2=0
+extern btoa, atob
+
+var path = require 'path'
+var util = require './helpers'
+
+var VLQ_SHIFT = 5
+var VLQ_CONTINUATION_BIT = 1 << VLQ_SHIFT
+var VLQ_VALUE_MASK = VLQ_CONTINUATION_BIT - 1
+var BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+export class SourceMap
+	
+	prop result
+
+	def source
+		@source
+
+	def options
+		@options
+
+	def initialize source, options, file
+		@source = source
+		@options = options
+		@sourcePath = file:sourcePath
+		@sourceRoot = file:sourceRoot
+		@targetPath = file:targetPath
+
+		@maps = []
+		@map = ""
+		@js = ""
+
+	def sourceCode
+		@source:source
+
+	def sourceName
+		path.basename(@sourcePath)
+
+	def targetName
+		path.basename(@targetPath)
+
+	def sourceFiles
+		[sourceName]
+
+	def parse
+		# var matcher = /\/\*\%\$(\d*)\$\%/
+		var matcher = /\/\*\%(\w*)\$\*\//
+		var replacer = /^(.*?)\/\*\%(\w*)\$\*\//
+		var lines = @source:js.split(/\n/g) # what about js?
+		var verbose = @options:debug
+		# return self
+		var locmap = util.locationToLineColMap(sourceCode)
+		@maps = []
+		
+		var match
+		# split the code in lines. go through each line 
+		# go through the code looking for LOC markers
+		# remove markers along the way and keep track of
+		# console.log source:js
+
+
+
+		for line,i in lines
+			# could split on these?
+			var col = 0
+			var caret = -1
+
+			@maps[i] = []
+			while line.match(matcher)
+				line = line.replace(replacer) do |m,pre,loc|
+					return pre if loc == ''
+					var lc = locmap[parseInt(loc)]
+
+					# unless lc
+					# 	console.log "not found in locmap",loc,locmap:length
+
+					let srcline = lc[0] + 1
+					let srccol = lc[1] + 1
+
+					if verbose
+						pre += "/*{srcline}:{srccol}*/"
+
+					if caret != pre:length
+						caret = pre:length
+						var mapping = [ [srcline,srccol], [i + 1,caret + 1] ] # source and output
+						@maps[i].push(mapping)
+
+					return pre
+
+			lines[i] = line
+
+		
+		source:js = lines.join('\n')
+		self
+
+	def generate
+		parse
+
+		var lastColumn        = 1
+		var lastSourceLine    = 1
+		var lastSourceColumn  = 1
+		var buffer            = ""
+
+		for line,lineNumber in @maps
+			lastColumn = 1
+
+			for map,nr in line
+				buffer += ',' unless nr == 0
+				var src = map[0]
+				var dest = map[1]
+				
+				buffer += encodeVlq(dest[1] - lastColumn)
+				lastColumn = dest[1]
+				# add index
+				buffer += encodeVlq(0)
+
+				# The starting line in the original source, relative to the previous source line.
+				buffer += encodeVlq(src[0] - lastSourceLine)
+				lastSourceLine = src[0]
+				# The starting column in the original source, relative to the previous column.
+				buffer += encodeVlq(src[1] - lastSourceColumn)
+				lastSourceColumn = src[1]
+
+			buffer += ";"
+
+
+		var rel = @targetPath and path.relative(path.dirname(@targetPath),@sourcePath)
+
+		var map =
+			version: 3
+			file: sourceName.replace(/\.imba/,'.js') or ''
+			sourceRoot: @sourceRoot or ''
+			sources:    [rel or @sourcePath]
+			sourcesContent: [sourceCode]
+			names:      []
+			mappings:   buffer
+			maps: @maps
+
+		# source:sourcemap = sourcemap
+		# var base64 = Buffer.new(JSON.stringify(map)).toString("base64")
+		# source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
+		@result = map
+		return self
+
+	def inlined
+		var str = JSON.stringify(@result)
+		if typeof btoa == 'function'
+			str = btoa(str)
+		else
+			str = Buffer.new(str).toString("base64")
+		return "\n/*# sourceMappingURL=data:application/json;base64,{str}*/"
+
+	# borrowed from CoffeeScript
+	def encodeVlq value
+		var answer = ''
+		# Least significant bit represents the sign.
+		var signBit = value < 0 ? 1 : 0
+		var nextChunk
+		# The next bits are the actual value.
+		var valueToEncode = (Math.abs(value) << 1) + signBit
+		# Make sure we encode at least one character, even if valueToEncode is 0.
+		while valueToEncode or !answer
+			var nextChunk = valueToEncode & VLQ_VALUE_MASK
+			valueToEncode = valueToEncode >> VLQ_SHIFT
+			if valueToEncode
+				nextChunk |= VLQ_CONTINUATION_BIT
+
+			answer += encodeBase64(nextChunk)
+
+		answer
+
+	def toJSON
+		@result
+
+	def encodeBase64 value
+		BASE64_CHARS[value] # or throw Error.new("Cannot Base64 encode value: {value}")
+
+		
+		

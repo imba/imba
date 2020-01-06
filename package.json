@@ -39,16 +39,15 @@
     }
   ],
   "scripts": {
-    "build-parser": "bin/imba scripts/build-parser.imba",
-    "build": "webpack --progress --colors --display-modules --mode production",
-    "build-watch": "webpack --progress --colors --display-modules --watch",
-    "watch": "bin/imbac -w --es5 -o lib/ src/",
-    "test": "bin/imba test/index.imba",
-    "test-webpack": "bin/imba test/webpack/test.imba",
-    "test-chrome": "bin/imba test/run-chrome.imba"
+    "bootstrap": "node scripts/bootstrap.js",
+    "build-parser": "node scripts/generate-parser.js",
+    "test": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba -c",
+    "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
+    "build": "node scripts/bootstrap.js && webpack --mode=none",
+    "watch": "npm run build -- --watch"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "1.5.2",
+  "version": "2.0.0-alpha.13",
   "licenses": [
     {
       "type": "MIT",
@@ -59,8 +58,8 @@
     "node": ">=8.0.0"
   },
   "directories": {},
-  "main": "./index",
-  "browser": "./imba",
+  "main": "./index.js",
+  "browser": "./dist/imba.js",
   "bin": {
     "imba": "./bin/imba",
     "imbac": "./bin/imbac",
@@ -74,10 +73,11 @@
   },
   "devDependencies": {
     "puppeteer": "^1.19.0",
-    "uglifyjs-webpack-plugin": "^1.0.0-rc.0",
-    "underscore": "^1.8.3",
+    "raw-loader": "^3.1.0",
+    "rollup": "^1.27.11",
     "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.10"
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.9.0"
   },
   "dependencies": {}
 }

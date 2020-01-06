@@ -1,3 +1,22 @@
+var puppy = window.puppy
+
+var pup = do |ns,...params|
+	if puppy
+		await puppy(ns,params)
+
+class PupKeyboard
+	def type text, options = {}
+		await puppy('keyboard.type',[text,options])
+	def down text, options = {}
+		await puppy('keyboard.down',[text,options])
+	def up text, options = {}
+		await puppy('keyboard.up',[text,options])
+	def press text, options = {}
+		await puppy('keyboard.press',[text,options])
+
+class PupMouse
+	def type text, options
+		puppy('keyboard.type',[text,options])
 
 var TERMINAL_COLOR_CODES =
 	bold: 1
@@ -13,7 +32,7 @@ var TERMINAL_COLOR_CODES =
 	white: 37
 
 var fmt = do |code,string|
-	return string.toString if console:group
+	return string.toString() if console.group
 	code = TERMINAL_COLOR_CODES[code]
 	var resetStr = "\x1B[0m"
 	var resetRegex = /\x1B\[0m/g
@@ -24,345 +43,292 @@ var fmt = do |code,string|
 	str = "\x1B[{code}m{str}{resetStr}"
 	return str
 
-global class Spec
 
-	prop blocks
-	prop context
-	prop stack
-	prop assertions
+class SpecComponent
 
-	def initialize
+	def log ...params
+		@root.console.log(*params)
+
+	def emit ev, pars
+		imba.emit(self,ev,pars)
+
+	get root
+		@parent ? @parent.root : self
+
+
+global class Spec < SpecComponent
+	
+	get keyboard
+		#keyboard ||= PupKeyboard.new
+
+	get mouse
+		#mouse ||= PupMouse.new
+	
+	def click sel, trusted = yes
+		if puppy and trusted
+			# console.log "click with puppeteer!!",sel
+			await puppy('click',[sel])
+		else
+
+			let el = document.querySelector(sel)
+			el && el.click()
+		await @tick()
+
+	def tick commit = true
+		imba.commit() if commit
+		await imba.scheduler.promise
+		@observer.takeRecords()
+
+	def wait time = 100
+		Promise.new(do |resolve| setTimeout(resolve,time))
+
+	def constructor
+		super()
+		@console = console
 		@blocks = []
 		@assertions = []
 		@stack = [@context = self]
+		@tests = []
+		@warnings = []
+		@state = {info: [], mutations: [], log: []}
+
+		@observer = MutationObserver.new do |muts|
+			@context.state.mutations.push(*muts)
+
 		self
 
-	def fullName
+	get fullName
 		""
 
 	def eval block, ctx
 		@stack.push(@context = ctx)
-		var res = block()
+		var res = block(@context.state)
 		var after = do
-			@stack.pop
-			@context = @stack[@stack[:length] - 1]
+			@stack.pop()
+			@context = @stack[@stack.length - 1]
+			@observer.takeRecords()
 			self
 
-		if res and res:then
-			return res.then(after,after)
+		var err = do |e|
+			ctx.error = e
+			after()
+
+		if res and res.then
+			return res.then(after,err)
 		else
 			after()
 			return Promise.resolve(self)
 
 	def describe name, blk
-		if @context == self
-			@blocks.push SpecGroup.new(name, blk, self)
-		else
-			@context.describe(name,blk)
-		
-	def run i = 0, &blk
-		Imba.once(self,'done',blk) if blk
+		@blocks.push SpecGroup.new(name, blk, self)
+	
+	def test name, blk
+		if name isa Function
+			blk = name
+			name = @context.blocks.length + 1
+		@context.blocks.push SpecExample.new(name, blk, @context)
+
+	def eq actual, expected, options
+		SpecAssert.new(@context, actual,expected, options)
+	
+	def step i = 0, &blk
 		Spec.CURRENT = self
 		var block = @blocks[i]
+		return self.finish() unless block
+		imba.once(block,'done') do self.step(i+1)
+		block.run()
 
-		# we need the notifications
-		return finish unless block
-		Imba.once(block,'done') do run(i+1)
-		block.run
+	def run
+		Promise.new do |resolve,reject|
+			var prevInfo = console.info
+			@observer.observe(document.body,{
+				attributes: true,
+				childList: true,
+				characterData: true,
+				subtree: true
+			})
+			console.log 'running spec'
+			console.info = do |...params|
+				@context.state.info.push(params)
+				@context.state.log.push(params[0])
 
-	
+			imba.once(self,'done') do
+				@observer.disconnect()
+				console.info = prevInfo
+				resolve()
+			self.step(0)
+
 	def finish
-		console.log "\n"
-
 		var ok = []
 		var failed = []
 
-		for test in assertions
-			test.success ? ok.push(test) : failed.push(test)
+		for test in @tests
+			test.failed ? failed.push(test) : ok.push(test)
 		
 		var logs = [
-			fmt(:green,"{ok:length} OK")
-			fmt(:red,"{failed:length} FAILED")
-			"{assertions:length} TOTAL"
+			fmt('green',"{ok.length} OK")
+			fmt('red',"{failed.length} FAILED")
+			"{@tests.length} TOTAL"
 		]
 
 		console.log logs.join(" | ")
 
-		for item in failed
-			console.log item.fullName
-			console.log "    " + item.details
+		pup("spec:done",{
+			failed: failed.length,
+			passed: ok.length,
+			warnings: @warnings.length
+		})
+		var exitCode = (failed.length == 0 ? 0 : 1)
+		@emit('done', [exitCode])
 
-		var exitCode = (failed:length == 0 ? 0 : 1)
+global class SpecGroup < SpecComponent
 
-		Imba.emit(self, :done, [exitCode])
-
-	# def describe name, blk do SPEC.context.describe(name,blk)
-	def it name, blk do SPEC.context.it(name,blk)
-	def test name, blk do SPEC.context.it(name,blk)
-	def eq actual, expected, format do  SPEC.context.eq(actual, expected, format)
-	def match actual, expected, format do  SPEC.context.match(actual, expected, format)
-	def ok actual, msg do SPEC.context.assertion( SpecAssertTruthy.new(SPEC.context, actual, msg) )
-	def assert expression do SPEC.context.assert(expression)
-	def await do SPEC.context.await(*arguments)
-
-
-global class SpecCaller
-
-	def initialize scope, method, args
-		@scope = scope
-		@method = method
-		@args = args
-
-	def run
-		@value ?= @scope[@method](*@args)
-
-global class SpecGroup
-
-	def initialize name, blk, parent
+	def constructor name, blk, parent
+		super()
 		@parent = parent
 		@name = name
 		@blocks = []
 		SPEC.eval(blk,self) if blk
 		self
 
-	def fullName
+	get fullName
 		"{@parent.fullName}{@name} > "
-	
-	def blocks
-		@blocks
 
 	def describe name, blk
 		@blocks.push SpecGroup.new(name, blk, self)
 	
-	def it name, blk
+	def test name, blk
 		@blocks.push SpecExample.new(name, blk, self)
 
-	def emit ev, pars
-		Imba.emit(self,ev,pars)
-	
 	def run i = 0
-		start if i == 0
+		@start() if i == 0
 		var block = @blocks[i]
-		return finish unless block
-		Imba.once(block,'done') do run(i+1)
-		# block.once :done do run(i+1)
-		block.run
+		return @finish() unless block
+		imba.once(block,'done') do @run(i+1)
+		block.run() # this is where we wan to await?
 	
 	def start
-		emit(:start, [self])
+		@emit('start', [self])
 
-		if console:group
-			console.group @name
+		if console.group
+			console.group(@name)
 		else
 			console.log "\n-------- {@name} --------"
 		
-		
 	def finish
-		console.groupEnd if console:groupEnd
-		emit(:done, [self])
+		# console.groupEnd() if console.groupEnd
+		@emit('done', [self])
 
+global class SpecExample < SpecComponent
 
-global class SpecExample
-
-	def initialize name, block, parent
+	def constructor name, block, parent
+		super()
 		@parent = parent
 		@evaluated = no
 		@name = name
 		@block = block
 		@assertions = []
+		@root.tests.push(self)
+		@state = {info: [], mutations: [], log: []}
 		self
 
-	def fullName
+	get fullName
 		"{@parent.fullName}{@name}"
 
-	def emit ev, pars
-		Imba.emit(self,ev,pars)
-	
-	def await
-		assertion(SpecAwait.new(self, $0)).callback
-	
-	def eq actual, expected, format = null
-		assertion(SpecAssert.new(self, actual, expected, format))
-
-	def assert expression
-		assertion(SpecAssert.new(self, expression))
-
-	def assertion ass
-		@assertions.push ass
-		Imba.once(ass, :done) do
-			finish if @evaluated && @assertions.every(|a| a.done )
-		ass
-	
 	def run
+		@start()
+		# does a block really need to run here?
 		var promise = (@block ? SPEC.eval(@block, self) : Promise.resolve({}))
-		promise.then do
-			@evaluated = yes
-			finish if @assertions.every(|a| a.done)
+		try
+			var res = await promise
+		catch e
+			console.log "error from run!",e
+		@evaluated = yes
+		@finish()
+
+	def start
+		@emit('start')
+		console.group(@fullName)
 	
 	def finish
-		var details = []
-		var dots = @assertions.map do |v,i|
-			Spec.CURRENT.assertions.push(v)
-			if v.success
-				fmt(:green,"✔")
-			else
-				details.push(" - {v.details}")
-				fmt(:red,"✘")
-				
-		var str = "{@name} {dots.join(" ")}"
-		console.log(str)
-		console.log(details.join("\n")) if details:length > 0
-		emit(:done,[self])
+		@failed ? @fail() : @pass()
+		pup("spec:test", name: @fullName, failed: @failed)
+		for ass in @assertions
+			if ass.failed
+				if ass.options.warn
+					pup("spec:warn",message: ass.toString())
+				else
+					pup("spec:fail",message: ass.toString())
+		console.groupEnd(@fullName)
+		@emit('done',[self])
 
-global class SpecObject
+	def fail
+		console.log("%c✘ {@fullName}", "color:orangered",@state)
 
-	def ok actual, message
-		SPEC.ok(actual, message)
+	def pass
+		console.log("%c✔ {@fullName}", "color:forestgreen")
+		# @print("✔")
 
-global class SpecCondition
+	get failed
+		@error or @assertions.some do |ass| ass.critical
 
-	prop success
+	get passed
+		!@failed()
 
-	def initialize example
-		@example = example
-		self
+global class SpecAssert < SpecComponent
 
+	def constructor parent,actual,expected,options = {}
+		super()
 
-	def fullName
-		@example.fullName
-
-	def state
-		yes
-	
-	def failed
-		@done = yes
-		@success = no
-		emit :done, [no]
-		# process:stdout.write(fmt(:red,"✘"))
-		yes
-	
-	def passed
-		@done = yes
-		@success = yes
-		emit :done, [yes]
-		# process:stdout.write(fmt(:green,"✔"))
-		yes
-
-	def emit ev, pars
-		Imba.emit(self,ev,pars)
-	
-	def done
-		@done
-
-	def details
-		"error?"
-
-global class SpecAwait < SpecCondition
-
-	# #initialize
-	# 0. example <Object>
-	# 1. args <Function>
-	def initialize example, args
-		@example = example
-		@args = args
-
-		# TODO extract options
-		# TODO extract times the method should be called
-
-		@timeout = Imba.delay(100) do failed
-
-		@callback = do |*args|
-			Imba.clearTimeout(@timeout)
-			args.equals(@args[0]) ? passed : failed
-
-		self
-	
-	def callback
-		@callback
-
-global class SpecAssert < SpecCondition
-
-	def initialize example, actual, expected, format = null
-		@example = example
-		@actual = actual
+		@parent = parent
 		@expected = expected
-		@format = format
-		if expected isa Array
-			@format ||= String
-		run
+		@actual = actual
+		@options = options
+		@message = (options.message || options.warn) || "expected %2 - got %1"
+		parent.assertions.push(self)
+		self.compare(@expected,@actual) ? @pass() : @fail()
 		self
+
+	def compare a,b
+		if a === b
+			return true
+		if a isa Array and b isa Array
+			return false if a.length != b.length
+			for item,i in a
+				return false unless self.compare(item,b[i])
+			return JSON.stringify(a) == JSON.stringify(b)
+		return false
+
+	get critical
+		@failed && !@options.warn
 	
-	def run
-		var value = @actual isa SpecCaller ? @actual.run : @actual
-		test(@value = value)
+	def fail
+		@failed = yes
+		if @options.warn
+			@root.warnings.push(self)
 
-	def test value
-		if value && value[:equals]
-			value.equals(expected) ? passed : failed
-		elif @format
-			@left = @format(value)
-			@right = @format(@expected)
-			@left == @right ? passed : failed
+		# console.log("failed",self,@parent.state)	
+		self
+
+	def pass
+		@passed = yes
+		self
+
+	def toString
+		if @failed and @message isa String
+			let str = @message
+			str = str.replace('%1',@actual)
+			str = str.replace('%2',@expected)
+			return str
 		else
-			(value == @expected) ? passed : failed
-	
-	def failed
-		if console:group
-			console.error("expected",@expected,"got",@actual,self)
-		super.failed
+			"failed"
 
-	def details
-		unless @success
-			if @format
-				fmt(:red,"expected {@right} got {@left}")
-			else
-				fmt(:red,"expected {@expected} got {@value}")
-		else
-			"passed test"
-
-global class SpecAssertTruthy < SpecAssert
-
-	def initialize example, value, message
-		@example = example
-		@actual = value
-		@message = message
-		run
-
-	def test value
-		!!(value) ? passed : failed
-		
-	def failed
-		if console:group
-			console.error("failed",@message,self)
-		super.failed
-
-	def details
-		unless @success
-			fmt(:red,"assertion failed: {@message}")
-		else
-			"passed test"
-
-global class SpecAssertFalsy < SpecAssert
-
-	def initialize example, value
-		@example = example
-		@actual = value
-		run
-
-	def test value
-		!(value) ? passed : failed
-
-
-SPEC = Spec.new
+window.spec = SPEC = Spec.new
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
-global def it name, blk do SPEC.context.it(name,blk)
-global def test name, blk do SPEC.context.it(name,blk)
-global def eq actual, expected, format do  SPEC.context.eq(actual, expected, format)
-global def match actual, expected, format do  SPEC.context.match(actual, expected, format)
-global def ok actual, message do SPEC.context.assertion( SpecAssertTruthy.new(SPEC.context, actual, message) )
-global def assert expression do SPEC.context.assert(expression)
-global def await do SPEC.context.await(*arguments)
+global def test name, blk do SPEC.test(name,blk)
+global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
+global def ok actual, o do SPEC.eq(!!actual, true, o)
 
 

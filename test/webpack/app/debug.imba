@@ -1,1 +1,0 @@
-console.log 'debug is enabled'

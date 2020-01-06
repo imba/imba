@@ -1,1 +1,4 @@
-module.exports = exports = require("./lib/imba/index.js");
+// require imba ssr
+// require("./register.js");
+// require("./src/imba/ssr.imba");
+require("./src/imba/index.imba");
