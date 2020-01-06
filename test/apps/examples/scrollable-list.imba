@@ -78,7 +78,7 @@ tag todo-item
 
 tag app-root
 	def renderer todo, index
-		<todo-item[todo] .todo .done=todo.done :click.toggle($$model)>
+		<todo-item[todo] .todo .done=todo.done :click.toggle(todo)>
 
 	def toggle todo
 		console.log 'toggle this todo!',todo
