@@ -3078,7 +3078,7 @@ export class MethodDeclaration < Func
 	def js o
 		var o = @options
 		# FIXME Do this in the grammar - remnants of old implementation
-		unless type == :constructor or option(:noreturn)
+		unless type == :constructor or option(:noreturn) or isSetter()
 			if option(:chainable)
 				body.add(ImplicitReturn.new(scope.context))
 			elif option(:greedy)
