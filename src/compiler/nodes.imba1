@@ -60,6 +60,20 @@ var HTML_PROPS =
 	fieldset: "disabled"
 	canvas: "width height"
 
+var HTML_CONSTRUCTORS =
+	a: 'HTMLAnchorElement'
+	p: 'HTMLParagraphElement'
+	p: 'HTMLParagraphElement'
+	h1: 'HTMLParagraphElement'
+	h2: 'HTMLParagraphElement'
+	h3: 'HTMLHeadingElement'
+	h4: 'HTMLHeadingElement'
+	h5: 'HTMLHeadingElement'
+	h6: 'HTMLHeadingElement'
+	input: 'HTMLInputElement'
+	form: 'HTMLFormElement'
+	label: 'HTMLLabelElement'
+
 var CUSTOM_EVENTS = {
 	intersect: yes
 	selection: yes
@@ -556,6 +570,9 @@ export class Stack
 
 	def es5
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
+
+	def tsc
+		platform == 'tsc'
 
 	def autocall
 		!option(:explicitParens)
@@ -1587,7 +1604,6 @@ export class ClassField < Node
 	def visit
 		@decorators = up?.collectDecorators
 		@name.traverse if @name and @name:traverse
-
 		# @value.traverse if @value # dont traverse yet
 		@storage = scope__.root.declare(null,LIT('new WeakMap()'))
 		self
@@ -1619,19 +1635,26 @@ export class ClassField < Node
 		let up = STACK.current
 		let out
 		if up isa ClassBody
+			
 			# return if isPlain
-			let prefix = isStatic ? 'static ' : ''
+			let prefix = isStatic ? "{M('static',option(:static))} " : ''
 			let name = name isa IdentifierExpression ? name.asObjectKey : name.c
-			out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
 
-		elif up isa ClassInitBlock
+			if STACK.tsc
+
+				out = "{M(name,@name)}" # the value scope?
+				out += " = {@value.c}" if value
+			else
+				out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
+
+		elif up isa ClassInitBlock and !STACK.tsc
 			if !isLazy and isPlain and value
 				out = util.setField(target,name,@value).c + ';\n'
 			# else
 			# 	let obj = Obj.wrap(enumerable: false, writable: true, value: LIT('undefined'))
 			# 	out = util.initField(target,storageKey,obj).c + ';\n'
 
-		elif up isa InstanceInitBlock and !isStatic and !isLazy
+		elif up isa InstanceInitBlock and !isStatic and !isLazy and !STACK.tsc
 			if value
 				# out = util.setField(THIS,name,value).c + ';\n'
 				out = OP('.',THIS,name).c + ';\n'
@@ -2695,7 +2718,7 @@ export class ClassDeclaration < Code
 		ROOT.entities.add(namepath,self)
 		scope.visit
 
-		if @superclass and !option(:extension)
+		if @superclass and !option(:extension) and !STACK.tsc
 			addMethod('super$',[LIT('k')],'super[k]')
 			addMethod('super$set',[LIT('k,v')],'super[k] = v')
 			staticInit
@@ -2815,7 +2838,7 @@ export class TagDeclaration < ClassDeclaration
 
 		let sup = superclass
 
-		if sup and (sup.isNative or sup.isNativeSVG)
+		if sup and (sup.isNative or sup.isNativeSVG) and !STACK.tsc
 			# console.log 'inheriting from native element'
 			let op = sup.nativeCreateNode
 			op = util.extendTag(op,THIS)
@@ -2837,6 +2860,9 @@ export class TagDeclaration < ClassDeclaration
 		# should probably also warn about stuff etc
 		let sup = CALL(LIT('imba.tags.get'),[superclass or LIT('')])
 
+		if STACK.tsc
+			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
+
 		if option(:extension)
 			# TODO remove support - throw when trying to extend
 			@body.@delimiter = ','
@@ -2845,16 +2871,17 @@ export class TagDeclaration < ClassDeclaration
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
 
-		let className = name.toClassName + 'Tag'
+		let className = name.toClassName
 		let closure = scope__.parent
 		let jsbody = '{' + body.c() + '}'
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 		let js = "{jshead} {jsbody}"
-		if @staticInit
-			js += "; {className}.init$()"
 
-		let ext = (option(:extends) or LIT('{}')).c
-		js += "; imba.tags.define({name.c},{className},{ext})"
+		if !STACK.tsc
+			if @staticInit
+				js += "; {className}.init$()"
+			let ext = (option(:extends) or LIT('{}')).c
+			js += "; imba.tags.define({name.c},{className},{ext})"
 		return js
 
 export class Func < Code
@@ -3096,7 +3123,7 @@ export class MethodDeclaration < Func
 		if option(:inClassBody) or option(:inObject)
 			# what if this is async?
 			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
-			prefix = "static {prefix}" if option(:static)
+			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			prefix = "async {prefix}" if option(:async)
 			out = "{prefix}{M name, @name}({params.c}){code}"
 			return out
@@ -4159,7 +4186,7 @@ export class Access < Op
 			raw = rgt.raw
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
-			raw = rgt.c
+			raw = M(rgt.c,rgt)
 
 		if safechain and ctx
 			ctx.cache(force: yes)
@@ -5057,7 +5084,12 @@ export class TagTypeIdentifier < Identifier
 		LIT(@str)
 
 	def toClassName
-		helpers.pascalCase(@str)
+		if isNative
+			return HTML_CONSTRUCTORS[@str] or 'HTMLElement'
+		elif isNativeSVG
+			return 'SVG' + helpers.pascalCase(@str + '-element')
+		else
+			return helpers.pascalCase(@str + '-component')
 
 	def toNativeClass
 		let name = @str
@@ -8574,7 +8606,7 @@ export class RootScope < Scope
 			@imbaTags = "{imbaRef.c}.TAGS"
 
 	def imbaDependency path
-		return if OPTS:imbaPath === null
+		return if OPTS:imbaPath === null or OPTS:standalone or OPTS:target == 'tsc'
 		@dependencies[path] ||= if true
 			let item = LIT("import '{OPTS:imbaPath or 'imba'}/src/imba/{path}'")
 			@head.push(item)

@@ -353,6 +353,7 @@ export class Lexer
 		@code    = code
 		@opts    = o
 		@locOffset = o:loc or 0
+		@target = o:target
 		@indentStyle = o:indentation or null
 
 		# if the very first line is indented, take this as a gutter
@@ -1607,6 +1608,13 @@ export class Lexer
 					tokid = paired[1]:closeType
 
 		token(tokid, value, value:length)
+
+		if @target == 'tsc'
+			if value == '.' and (@chunk[1] == ' ' or @chunk[1] == '\n' or !@chunk[1])
+				token('IDENTIFIER','$CARET$',0,1)
+			if value == '@' and (!@chunk[1] or (/[^\w]/).test(@chunk[1]))
+				token('IDENTIFIER','$CARET$',0,1)
+
 		return value:length
 
 	# Token Manipulators

@@ -51,7 +51,10 @@ export class SourceMap
 		var verbose = @options:debug
 		# return self
 		var locmap = util.locationToLineColMap(sourceCode)
+		var append = ""
+		@locs = []
 		@maps = []
+
 		
 		var match
 		# split the code in lines. go through each line 
@@ -59,9 +62,10 @@ export class SourceMap
 		# remove markers along the way and keep track of
 		# console.log source:js
 
-
+		var jsloc = 0
 
 		for line,i in lines
+			# console.log 'parse line',line
 			# could split on these?
 			var col = 0
 			var caret = -1
@@ -72,26 +76,33 @@ export class SourceMap
 					return pre if loc == ''
 					var lc = locmap[parseInt(loc)]
 
-					# unless lc
-					# 	console.log "not found in locmap",loc,locmap:length
+					unless lc
+						# console.log "not found in locmap",loc,locmap:length
+						return pre
 
 					let srcline = lc[0] + 1
 					let srccol = lc[1] + 1
 
 					if verbose
 						pre += "/*{srcline}:{srccol}*/"
+						yes
 
 					if caret != pre:length
 						caret = pre:length
 						var mapping = [ [srcline,srccol], [i + 1,caret + 1] ] # source and output
 						@maps[i].push(mapping)
+						@locs.push([jsloc + caret,parseInt(loc)])
 
 					return pre
 
+			jsloc += line:length + 1
 			lines[i] = line
 
-		
 		source:js = lines.join('\n')
+		source:locs = {
+			map: locmap
+			generated: @locs
+		}
 		self
 
 	def generate
