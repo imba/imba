@@ -2621,7 +2621,7 @@ export class Root < Code
 			result:sourcemap = map.result
 		# else
 		# remove sourcemap locations
-		result:js = result:js.replace(/\/\*\%(\w*)\$\*\//g,'')
+		result:js = result:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
 
 		return result
 
