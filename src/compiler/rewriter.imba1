@@ -21,6 +21,7 @@ var OUTDENT = 'OUTDENT'
 var DEF_BODY = 'DEF_BODY'
 var THEN = 'THEN'
 var CATCH = 'CATCH'
+var EOF = {_type: 'EOF',_value: ''}
 
 var arrayToHash = do |ary|
 	var hash = {}
@@ -268,6 +269,9 @@ export class Rewriter
 	def all
 		step("ensureFirstLine")
 		step("removeLeadingNewlines")
+		if @options:target == 'tsc'
+			step("addPlaceholderIdentifiers")
+
 		step("removeMidExpressionNewlines")
 		step("tagDefArguments")
 		step("closeOpenTags")
@@ -327,6 +331,22 @@ export class Rewriter
 			@tokens.unshift(T.token('BODYSTART','BODYSTART'))
 			# @tokens = [T.token('BODYSTART','BODYSTART')].concat(@tokens)
 		return
+
+	def addPlaceholderIdentifiers
+		scanTokens do |token,i,tokens| # do |token,i,tokens|
+			var prev = tokens[i - 1] or EOF
+			var next = tokens[i + 1] or EOF
+			# var after = tokens[i + 2] or EOF
+			if prev.@type == '='
+				if (token.@type === TERMINATOR and next.@type != 'INDENT') or token.@type == ','
+					tokens.splice i, 0, Token.new('IDENTIFIER','$CARET$',token.@loc,0)
+					return 2
+			elif prev.@type == '.'
+				if (token.@type === TERMINATOR and next.@type != 'INDENT') or token.@type == ','
+					tokens.splice i, 0, Token.new('IDENTIFIER','$CARET$',token.@loc,0)
+					return 2
+
+			return 1
 
 	# Leading newlines would introduce an ambiguity in the grammar, so we
 	# dispatch them here.

@@ -45,17 +45,20 @@ export class SourceMap
 
 	def parse
 		# var matcher = /\/\*\%\$(\d*)\$\%/
-		var matcher = /\/\*\%(\w*)\$\*\//
-		var replacer = /^(.*?)\/\*\%(\w*)\$\*\//
+		var matcher = /\/\*\%([\w\|]*)?\$\*\//
+		var replacer = /^(.*?)\/\*\%([\w\|]*)\$\*\//
+		var prejs = @source:js
 		var lines = @source:js.split(/\n/g) # what about js?
 		var verbose = @options:debug
 		# return self
+		var sourceCode = self.sourceCode
 		var locmap = util.locationToLineColMap(sourceCode)
 		var append = ""
 		@locs = []
 		@maps = []
 
-		
+		var pairs = []
+		var groups = {}
 		var match
 		# split the code in lines. go through each line 
 		# go through the code looking for LOC markers
@@ -72,9 +75,13 @@ export class SourceMap
 
 			@maps[i] = []
 			while line.match(matcher)
-				line = line.replace(replacer) do |m,pre,loc|
-					return pre if loc == ''
-					var lc = locmap[parseInt(loc)]
+				line = line.replace(replacer) do |m,pre,meta|
+					return pre if meta == ''
+					let pars = meta.split('|')
+					let loc = parseInt(pars[0])
+					let gid = pars[1] and parseInt(pars[1])
+
+					var lc = locmap[loc]
 
 					unless lc
 						# console.log "not found in locmap",loc,locmap:length
@@ -83,16 +90,23 @@ export class SourceMap
 					let srcline = lc[0] + 1
 					let srccol = lc[1] + 1
 
-					if verbose
-						pre += "/*{srcline}:{srccol}*/"
-						yes
-
 					if caret != pre:length
 						caret = pre:length
 						var mapping = [ [srcline,srccol], [i + 1,caret + 1] ] # source and output
 						@maps[i].push(mapping)
-						@locs.push([jsloc + caret,parseInt(loc)])
 
+					let locpair = [jsloc + caret,loc]
+					@locs.push(locpair)
+
+					if gid
+						if let grp = groups[gid]
+							# groups[gid].push(locpair[0],locpair[1])
+							grp[1] = locpair[0]
+							grp[3] = locpair[1]
+							# grp[4] = locpair[1]
+						else
+							groups[gid] = [locpair[0],null,locpair[1],null]
+						# pairs.push([jsloc + caret,parseInt(pars[2]),loc,parseInt(pars[1]) - loc ])
 					return pre
 
 			jsloc += line:length + 1
@@ -102,7 +116,37 @@ export class SourceMap
 		source:locs = {
 			map: locmap
 			generated: @locs
+			spans: Object.values(groups)
 		}
+
+		if verbose
+			for pair in source:locs:spans
+				if pair[1] != null
+					pair.push(source:js.slice(pair[0],pair[1]))
+					pair.push(sourceCode.slice(pair[2],pair[3]))
+			console.log source:locs:spans
+			let superMap = {
+				0: '\u2080'
+				1: '\u2081'
+				2: '\u2082'
+				3: '\u2083'
+				4: '\u2084'
+				5: '\u2085'
+				6: '\u2086'
+				7: '\u2087'
+				8: '\u2088'
+				9: '\u2089'
+				'|': '\u208C'
+			}
+			let repSuper = do |m,str|
+				let o = ''
+				let l = str:length
+				let i = 0
+				while i < l
+					o += superMap[str[i++]]
+				return '\u208D' + o + '\u208E'
+
+			source:js = source:js + '\n/*\n' + prejs.replace(/\/\*\%([\w\|]*)?\$\*\//g,repSuper) + '\n*/'
 		self
 
 	def generate

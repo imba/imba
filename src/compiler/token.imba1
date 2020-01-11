@@ -16,7 +16,7 @@ export class Token
 		@type  = type
 		@value = value
 		@loc   = loc != null ? loc : -1
-		@len   = len or 0
+		@len   = len != null ? len : (@value:length) # or 0
 		@meta  = null
 		this:generated = no
 		this:newLine = no
@@ -50,23 +50,13 @@ export class Token
 		@value.slice(i)
 
 	def region
-		[@loc,@loc + (@len or @value:length)]
+		[@loc,@loc + @len] #  or @value:length)
 
 	def startLoc
 		@loc
 
 	def endLoc
-		@loc + (@len or @value:length)
-
-	def startLocMark
-		@loc == 0 or @loc > 0 ? "/*%{@loc}$*/" : ''
-
-	def endLocMark
-		@loc == 0 or @loc > 0 ? "/*%{endLoc}$*/" : ''
-
-	def m o
-		o === 1 ? endLocMark : startLocMark
-
+		@loc + @len # or @value:length)
 
 export def lex
 	var token = this:tokens[this:pos++]

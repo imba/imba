@@ -209,6 +209,43 @@ var ROOT = null
 
 export var NODES = []
 
+var C = do |node,opts|
+	typeof node == 'string' ? node : node.c(opts)
+
+var M = do |val,mark,o|
+	if mark == undefined
+		mark = val
+
+	if mark and mark:startLoc
+		val = C(val,o)
+		let ref = STACK.incr('sourcePair')
+		let start = mark.startLoc
+		let end = mark.endLoc
+		let m0 = ''
+		let m1 = ''
+		if start == 0 or start > 0
+			m0 = "/*%{start}|{ref}$*/"
+		if end == 0 or end > 0
+			m1 = "/*%{end}|{ref}$*/"
+		return m0 + val + m1
+	return C(val,o)
+
+var MSTART = do |*params|
+	for item in params
+		if item isa Number
+			return item
+		if item and item:startLoc isa Function
+			return item.startLoc
+	return null
+
+var MEND = do |*params|
+	for item in params
+		if item isa Number
+			return item
+		if item and item:endLoc isa Function
+			return item.endLoc
+	return null
+
 var LIT = do |val|
 	RawScript.new(val)
 
@@ -271,16 +308,7 @@ var BLOCK = do
 var WHILE = do |test,code|
 	While.new(test).addBody(code)
 
-var C = do |node,opts|
-	typeof node == 'string' ? node : node.c(opts)
 
-var M = do |val,mark,o|
-	if mark == undefined
-		mark = val
-
-	if mark and mark:m
-		return mark.m(0) + C(val,o) + mark.m(1)
-	return C(val,o)
 
 export var SPLAT = do |value|
 	Splat.new(value)
@@ -456,9 +484,6 @@ export class Indentation
 	def endLoc
 		bloc
 
-	def m o
-		let l = o == 1 ? bloc : aloc
-		l > 0 ? "/*%{l}$*/" : ''
 
 	def wrap str
 		var om = @open and @open.@meta
@@ -475,7 +500,6 @@ export class Indentation
 		str += out.c if out isa Terminator
 		str = str + '\n' unless str[str:length - 1] == '\n'
 
-		# str = m(0) + str + m(1)
 		return str
 
 var INDENT = Indentation.new({},{})
@@ -864,14 +888,6 @@ export class Node
 	def toString
 		"{self:constructor:name}"
 
-	def startLocMark
-		let l = startLoc
-		l == 0 or l > 0 ? "/*%{l}$*/" : ''
-
-	def endLocMark
-		let l = endLoc
-		l == 0 or l > 0 ? "/*%{l}$*/" : ''
-
 	# swallow might be better name
 	def consume node
 		if node isa TagLike
@@ -986,9 +1002,6 @@ export class Node
 		scope__.root.warn opts
 		self
 
-	def m o
-		o == 1 ? endLocMark : startLocMark
-
 	def c o
 		var s = STACK
 		var ch = @cache
@@ -1027,15 +1040,7 @@ export class Node
 			ch:cached = yes
 
 		if OPTS:sourceMap and (!o or o:mark !== false)
-			let m0 = m(0)
-			let m1 = m(1)
-			let ol = out:length
-			if m0 and out.indexOf(m0) != 0
-				out = m0 + out
-
-			if m1 and out.indexOf(m1,ol:length - m1:length) == -1
-				out = out + m1
-
+			out = M(out,self)
 		return out
 
 	def c_cached cache
@@ -1604,8 +1609,15 @@ export class ClassField < Node
 	def visit
 		@decorators = up?.collectDecorators
 		@name.traverse if @name and @name:traverse
-		# @value.traverse if @value # dont traverse yet
-		@storage = scope__.root.declare(null,LIT('new WeakMap()'))
+
+		if @value and STACK.tsc
+			@value.@scope = MethodScope.new(@value)
+			@value.traverse # if @value # dont traverse yet
+
+		if !STACK.tsc
+			@storage = scope__.root.declare(null,LIT('new WeakMap()'))
+
+		# traverse value with a different scope
 		self
 
 	def target
@@ -2690,6 +2702,12 @@ export class ClassDeclaration < Code
 		else
 			super
 
+	def startLoc
+		@startLoc ?= MSTART(option(:export),option(:keyword))
+
+	def endLoc
+		@endLoc ?= MEND(body)
+
 	def toJSON
 		metadata
 
@@ -2724,6 +2742,9 @@ export class ClassDeclaration < Code
 			staticInit
 
 		body.traverse
+
+		if STACK.tsc
+			return self
 
 		var inits = InstanceInitBlock.new()
 		var staticInits = ClassInitBlock.new()
@@ -2809,6 +2830,7 @@ export class ClassDeclaration < Code
 		jshead += " {M cname, name}" if name
 		jshead += " extends {M(sup)}" if sup
 		jshead = "{M 'export',option(:export)} {jshead}" if option(:export)
+
 		let js = "{jshead} {jsbody}"
 		if option(:global)
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
@@ -2844,7 +2866,6 @@ export class TagDeclaration < ClassDeclaration
 			op = util.extendTag(op,THIS)
 			addMethod('create$',[],[op]).set(static: yes)
 			set(extends: Obj.wrap(extends: sup.name))
-
 		# if name.name.indexOf('-') == -1 or superclass and superclass.isNativeSVG
 		#	console.log("non-native tag?")
 
@@ -2875,6 +2896,10 @@ export class TagDeclaration < ClassDeclaration
 		let closure = scope__.parent
 		let jsbody = '{' + body.c() + '}'
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
+
+		if STACK.tsc
+			jshead = "globalThis.{M(className,@name)} = {jshead}"
+
 		let js = "{jshead} {jsbody}"
 
 		if !STACK.tsc
@@ -4186,7 +4211,8 @@ export class Access < Op
 			raw = rgt.raw
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
-			raw = M(rgt.c,rgt)
+			# raw = M(rgt.c,rgt)
+			raw = rgt.c
 
 		if safechain and ctx
 			ctx.cache(force: yes)
@@ -4205,11 +4231,7 @@ export class Access < Op
 		# if safechain and ctx
 		# 	out = "{ctx.c} && {out}"
 
-		# out = startLocMark + pre + out
 		out = pre + out
-		# out = pre + out
-		# out = startLocMark + out
-		# console.log "startloc??",startLocMark
 		return out
 
 	def visit
@@ -4908,9 +4930,8 @@ export class Identifier < Node
 		let up = STACK.current
 		return toStr.c if up isa Util
 		let out = js
-		# if o and o:mark
-		# 	# console.log "mark identifier {out}"
-		# 	out = startLocMark + out + endLocMark
+		if OPTS:sourceMap and (!o or o:mark !== false)
+			out = M(out,@token or @value)
 		return out
 
 	def dump
@@ -5318,6 +5339,9 @@ export class New < Call
 	def endLoc
 		keyword and keyword.endLoc or super
 
+	def startLoc
+		null
+
 	def js o
 		var target = callee
 
@@ -5331,7 +5355,7 @@ export class New < Call
 			target = left
 
 		# var out = "{M(keyword or 'new',keyword)} {callee.c}"
-		var out = "new {callee.c}"
+		var out = "{M('new',keyword)} {M(callee.c,callee)}"
 		out += '()' unless o.parent isa Call
 		out
 
@@ -6479,7 +6503,7 @@ export class TagAttr < TagPart
 		elif key.indexOf('--') == 0
 			"style.setProperty('{key}',{val})"
 		else
-			"{helpers.dashToCamelCase(key)}{op}{val}"
+			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
 		# elif dyn or true
 		# 	"set({quoted},{val}{add})"
 		# else
@@ -7173,6 +7197,21 @@ export class Tag < TagLike
 		var shouldEnd = hasFlag(F.TAG_CUSTOM)
 		var dynamicKey = null
 
+		if STACK.tsc
+			# if tag is expression we want to suppress certain warnings
+			if type isa TagTypeIdentifier and !isSelf
+				add "{tvar} = new {M(type.toClassName,type)}"
+			else
+				add "{tvar} = {type.c}"
+			for item in @attributes
+				if item isa TagAttr
+					add "{tvar}.{item.c(o)}"
+				self
+			for item in body
+				add item.c
+
+			return out.join(";\n")
+
 		# whether this tag should set a variable indicating
 		# whether this was built now or not
 		# basically whether we need a reference at all?
@@ -7645,20 +7684,21 @@ export class ESMDeclaration < Statement
 		String(keyword) == 'export'
 
 	def js
+		let kw = M(keyword.c,keyword)
 		if @specifiers and @source
-			"{keyword.c} {AST.cary(@specifiers).join(',')} from {@source.c}"
+			"{kw} {AST.cary(@specifiers).join(',')} from {@source.c}"
 		elif @specifiers
-			"{keyword.c} {AST.cary(@specifiers).join(',')}"
+			"{kw} {AST.cary(@specifiers).join(',')}"
 		elif @source
-			"{keyword.c} {@source.c}"
+			"{kw} {@source.c}"
 
 export class ImportDeclaration < ESMDeclaration
 
 	def js
 		if @specifiers and @source
-			"{keyword.c} {AST.cary(@specifiers).join(',')} from {@source.c}"
+			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {@source.c}"
 		else
-			"{keyword.c} {@source.c}"
+			"{M(keyword.c,keyword)} {@source.c}"
 
 	def visit
 		return
@@ -7855,7 +7895,7 @@ export class Export < ValueNode
 		super
 		
 	def visit
-		value.set(export: self, return: option(:return), default: option(:default))
+		value.set(export: (option(:keyword) or self), return: option(:return), default: option(:default))
 		super
 
 	def js o
