@@ -2977,7 +2977,7 @@ export class Func < Code
 		var name = typeof @name == 'string' ? @name : @name.c
 		name = name ? ' ' + name.replace(/\./g,'_') : ''
 		var keyword = o and o:keyword != undefined ? o:keyword : funcKeyword
-		var out = "{M(keyword,option(:def))}{name}({params.c}) " + code
+		var out = "{M(keyword,option('def') or option('keyword'))}{name}({params.c}) " + code
 		# out = "async {out}" if option(:async)
 		out = "({out})()" if option(:eval)
 		return out
