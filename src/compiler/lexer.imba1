@@ -184,8 +184,6 @@ var LINE_CONTINUER  = /// ^ \s* (?: , | \??\.(?![.\d]) | :: ) ///
 
 var TRAILING_SPACES = /\s+$/
 
-var CONST_IDENTIFIER = /^[A-Z]/
-
 var ENV_FLAG = /^\$\w+\$/
 
 var ARGVAR = /^\$\d$/
@@ -228,11 +226,11 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
-var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END']
+var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END']
 
 # optimize for FixedArray
 var INDEXABLE = [
-	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','CONST_ID','NEW','ARGVAR','SYMBOL','RETURN'
+	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN'
 	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID','INDEX_END','CALL_END'
 ]
 
@@ -622,104 +620,6 @@ export class Lexer
 		else
 			return 0
 	
-	# is this really needed? Should be possible to
-	# parse the identifiers and = etc i jison?
-	# what is special about methodNameToken? really?
-	# this whole step should be removed - it's a huge mess
-	def methodNameToken
-		# we can optimize this by after a def simply
-		# fetching all the way after the def until a space or (
-		# and then add this to the def-token itself (as with fragment)
-		return 0 if @chunk[0] == ' '
-
-		var match
-
-		if @end == ')'
-			if @ends:length > 1
-				var outerctx = @ends[@ends:length - 2]
-				# selectors should be removed
-				if outerctx == '%' and match = TAG_ATTR.exec(@chunk)
-					token('TAG_ATTR_SET',match[1])
-					return match[0]:length
-
-		unless match = METHOD_IDENTIFIER.exec(@chunk)
-			return 0			
-		# var prev = last @tokens
-		var length = match[0]:length
-		
-		var id = match[0]
-		var ltyp = @lastTyp
-		var typ = 'IDENTIFIER'
-		var pre = id.charAt(0)
-		var space = no
-
-		var m4 = match[4] # might be out of bounds? should rather check charAt
-
-		# should this not quit here in practically all cases?
-		unless (ltyp == '.' or (ltyp == 'DEF' or ltyp == 'GET' or ltyp == 'SET') ) or (m4 == '!') or match[5]
-			return 0
-
-		# again, why?
-		if id == 'self' or id == 'this' or id == 'super' # in ['SELF','THIS']
-			return 0
-
-		if id == 'new'
-			# this is wrong -- in the case of <div value=Date.new>
-			# we are basically in a nested scope until the next space or >
-
-			typ = 'NEW' unless ltyp == '.' and inTag
-
-		if id == '...' and [',','(','CALL_START','BLOCK_PARAM_START','PARAM_START'].indexOf(ltyp) >= 0
-			return 0
-
-		if id == '|'
-			# hacky way to implement this
-			# with new lexer we'll use { ... } instead, and assume object-context,
-			# then go back and correct when we see the context is invalid
-
-			if ltyp == '(' or ltyp == 'CALL_START'
-				token('DO', 'DO',0)
-				self.pushEnd('|')
-				token('BLOCK_PARAM_START', id,1)
-				return length
-
-			elif ltyp == 'DO' or ltyp == '{'
-				self.pushEnd('|')
-				token('BLOCK_PARAM_START', id,1)
-				return length
-				
-			elif @ends[@ends:length - 1] == '|'
-				token('BLOCK_PARAM_END', '|',1)
-				pair '|'
-				return length
-			else
-				return 0
-
-		if (['&','^','<<','<<<','>>'].indexOf(id) >= 0 or (id == '|' and context != '|'))
-			return 0
-
-		# not even anything we should use?!?
-		if pre == '@'
-			typ = 'IVAR'
-			id = id.slice(1)
-
-		elif pre == '$'
-			yes
-
-		elif pre == '#'
-			typ = 'IVAR'
-
-		elif CONST_IDENTIFIER.test(pre) or id == 'global' or id == 'exports'
-			typ = 'CONST_ID'
-		
-		# what is this really for?
-		if match[5] and ['IDENTIFIER','CONST_ID','DECORATOR','CVAR','IVAR','SELF','THIS',']','}',')','NUMBER','STRING'].indexOf(ltyp) >= 0
-			token('.','.',0)
-	
-		token(typ, id, length)
-
-		if space
-			@last:spaced = yes
 
 		return length
 
@@ -834,10 +734,6 @@ export class Lexer
 
 		elif typ == '$' and !colon
 			typ = 'IDENTIFIER'
-
-		elif CONST_IDENTIFIER.test(id) or id == 'global' or id == 'exports'
-			# thous should really be handled by the ast instead
-			typ = 'CONST_ID'
 
 		elif id == 'elif'
 			token 'ELSE', 'elif', id:length

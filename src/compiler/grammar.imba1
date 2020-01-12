@@ -142,7 +142,7 @@ var grammar =
 			ExportNamedDeclaration.new(A1,[A3], A6)
 		o 'EXPORT EXPORT_ALL FROM String' do
 			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2)],A4)
-		o 'EXPORT EXPORT_ALL AS AnyIdentifier FROM String' do
+		o 'EXPORT EXPORT_ALL AS Identifier FROM String' do
 			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2,A4)],A6)
 		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A1) # A2.set(export: A1)
 		o 'EXPORT_VAR VarBlock' do Export.new(A2).set(keyword: A1) # A2.set(export: A1)
@@ -162,7 +162,7 @@ var grammar =
 	ImportDeclaration: [
 		o 'IMPORT String' do
 			ImportDeclaration.new(A1,null, A2)
-		o 'IMPORT AnyIdentifier FROM String' do
+		o 'IMPORT Identifier FROM String' do
 			ImportDeclaration.new(A1,[A2], A4)
 		o 'IMPORT ImportNamespaceSpecifier FROM String' do
 			ImportDeclaration.new(A1,[A2], A4)
@@ -170,9 +170,9 @@ var grammar =
 			ImportDeclaration.new(A1,null, A5)
 		o 'IMPORT { ImportSpecifierList } FROM String' do
 			ImportDeclaration.new(A1,[A3], A6)
-		o 'IMPORT AnyIdentifier IMPORT_COMMA ImportNamespaceSpecifier FROM String' do
+		o 'IMPORT Identifier IMPORT_COMMA ImportNamespaceSpecifier FROM String' do
 			ImportDeclaration.new(A1,[A2,A4], A6)
-		o 'IMPORT AnyIdentifier IMPORT_COMMA { ImportSpecifierList } FROM String' do
+		o 'IMPORT Identifier IMPORT_COMMA { ImportSpecifierList } FROM String' do
 			ImportDeclaration.new(A1,[A2,A5], A8)
 	]
 
@@ -181,7 +181,7 @@ var grammar =
 	]
 
 	ImportNamespaceSpecifier: [
-		o 'IMPORT_ALL AS AnyIdentifier' do ImportNamespaceSpecifier.new(Literal.new(A1),A3)
+		o 'IMPORT_ALL AS Identifier' do ImportNamespaceSpecifier.new(Literal.new(A1),A3)
 	]
 
 	ImportSpecifierList: [
@@ -193,10 +193,10 @@ var grammar =
 	]
 
 	ImportSpecifier: [
-		o 'AnyIdentifier' do ImportSpecifier.new(A1)
-		o 'AnyIdentifier AS AnyIdentifier' do ImportSpecifier.new(A1, A3)
+		o 'Identifier' do ImportSpecifier.new(A1)
+		o 'Identifier AS Identifier' do ImportSpecifier.new(A1, A3)
 		o 'DEFAULT' do ImportSpecifier.new(Literal.new(A1))
-		o 'DEFAULT AS AnyIdentifier' do ImportSpecifier.new(Literal.new(A1), A3)
+		o 'DEFAULT AS Identifier' do ImportSpecifier.new(Literal.new(A1), A3)
 	]
 
 	Require: [
@@ -241,11 +241,6 @@ var grammar =
 		o 'IDENTIFIER' do Identifier.new A1
 	]
 
-	AnyIdentifier: [
-		o 'CONST_ID' do Identifier.new(A1)
-		o 'IDENTIFIER' do Identifier.new(A1)
-	]
-
 	Key: [
 		o 'KEY' do Identifier.new A1
 	]
@@ -253,10 +248,6 @@ var grammar =
 	# A literal identifier, a variable name or property.
 	Ivar: [
 		o '@ IDENTIFIER' do Ivar.new(A2).set(self: Self.new(A1))
-	]
-
-	Const: [
-		o 'CONST_ID' do Const.new A1
 	]
 
 	Argvar: [
@@ -451,7 +442,6 @@ var grammar =
 
 	SimpleObjAssignable: [
 		o 'Identifier'
-		o 'Const'
 		o 'Key'
 		o 'Ivar'
 		o 'Private'
@@ -545,7 +535,6 @@ var grammar =
 
 	MethodIdentifier: [
 		o 'Identifier'
-		o 'Const'
 		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
 	]
 
@@ -626,7 +615,6 @@ var grammar =
 	]
 
 	VarAssignable: [
-		o 'Const'
 		o 'Identifier'
 		o 'Array' # all kinds?
 		o 'Object' # not supported anymore
@@ -651,7 +639,6 @@ var grammar =
 	# Variables and properties that can be assigned to.
 	SimpleAssignable: [
 		o 'ENV_FLAG' do EnvFlag.new(A1)
-		o 'Const'
 		# o 'PrivateField'
 		o 'Ivar' do IvarAccess.new('.',A1.option(:self),A1) # .setStartLoc(A1.startLoc)
 		o 'Private' do Access.new('.',null,A1)
@@ -662,8 +649,7 @@ var grammar =
 		o 'Value . NEW' do New.new(A1).set(keyword: A3)
 		# o 'Value . Super' do SuperAccess.new('.',A1,A3)
 
-		o 'Value SoakableOp Identifier' do PropertyAccess.new(A2,A1,A3)
-		o 'Value SoakableOp Const' do Access.new(A2,A1,A3)
+		o 'Value SoakableOp Identifier' do PropertyAccess.new(A2,A1,A3) # TODO change to regular access
 		o 'Value INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
 	]
 
@@ -788,11 +774,10 @@ var grammar =
 	ClassFieldIdentifier: [
 		o 'Private'
 		o 'IDENTIFIER' do IdentifierExpression.new(A1)
-		o 'CONST_ID' do IdentifierExpression.new(A1)
 		o '@ IDENTIFIER' do IdentifierExpression.new(A2)
-		o '@ CONST_ID' do IdentifierExpression.new(A2)
 		o '@ { Expression }' do IdentifierExpression.new(A3)
 		# o '[ Expression ]' do IdentifierExpression.new(A2)
+		o 'ClassFieldIdentifier TYPE IDENTIFIER' do A1.set(datatype: A3)
 	]
 
 

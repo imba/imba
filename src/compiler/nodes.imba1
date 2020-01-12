@@ -8007,13 +8007,6 @@ export class Util < Node
 		node.cache(force: yes, pool: 'list') if cache
 		return node
 
-	def self.defineTag type, ctor, supr
-		CALL(TAGDEF,[type,ctor,supr])
-
-
-	def self.defineClass name, supr, initor
-		CALL(CLASSDEF,[name or initor,sup])
-
 	def inlineHelpers
 		!!OPTS:inlineHelpers
 
@@ -9223,11 +9216,6 @@ export var NULL = 'null'
 
 export var RESERVED = ['default','native','enum','with']
 export var RESERVED_REGEX = /^(default|native|enum|with|new|char)$/
-
-export var UNION = Const.new('union$')
-export var INTERSECT = Const.new('intersect$')
-export var CLASSDEF = Const.new('imba$class')
-export var TAGDEF = Const.new('Imba.TAGS.define')
 
 
 
