@@ -246,6 +246,13 @@ var MEND = do |*params|
 			return item.endLoc
 	return null
 
+var TYP = do |item,format|
+	let typ = item.@options and item.@options:datatype
+	if typ
+		if format == 'jsdoc'
+			"/** @type \{{M(typ,typ)}\} */"
+		else
+			":{M(typ,typ)}"
 	else
 		""
 
