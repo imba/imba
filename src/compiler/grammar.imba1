@@ -696,7 +696,7 @@ var grammar =
 
 	# In Imba, an object literal is simply a list of assignments.
 	Object: [
-		o '{ AssignList OptComma }' do Obj.new A2, A1:generated
+		o '{ AssignList OptComma }' do Obj.new(A2, A1:generated).setEnds(A1,A4)
 	]
 
 	# Assignment of properties within an object literal can be separated by

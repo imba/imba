@@ -246,6 +246,9 @@ var MEND = do |*params|
 			return item.endLoc
 	return null
 
+	else
+		""
+
 var LIT = do |val|
 	RawScript.new(val)
 
@@ -493,7 +496,9 @@ export class Indentation
 		var out = @close
 
 		# the first newline should not be indented?
+
 		str = post.replace(/^\n/,'') + str
+
 		str = str.replace(/^/g,"\t").replace(/\n/g,"\n\t").replace(/\n\t$/g,"\n")
 
 		str = pre + '\n' + str
@@ -1146,10 +1151,13 @@ export class Comment < Meta
 
 	def c o
 		return "" if STACK.option(:comments) == false
+
 		var v = @value.@value
 		if o and o:expression or v.match(/\n/) or @value.type == 'HERECOMMENT' # multiline?
 			var out = v.replace(/\*\//g, '\\*\\/').replace(/\/\*/g, '\\/\\*')
 			"/*{out}*/"
+		elif v.indexOf('@type') >= 0
+			"/** {v} */"
 		else
 			"// {v}"
 
@@ -1653,9 +1661,10 @@ export class ClassField < Node
 			let name = name isa IdentifierExpression ? name.asObjectKey : name.c
 
 			if STACK.tsc
-
 				out = "{M(name,@name)}" # the value scope?
 				out += " = {@value.c}" if value
+				if let typ = TYP(@name,'jsdoc')
+					out = "{typ}\n{out}"
 			else
 				out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
 
@@ -2898,7 +2907,9 @@ export class TagDeclaration < ClassDeclaration
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
 		if STACK.tsc
-			jshead = "globalThis.{M(className,@name)} = {jshead}"
+			# jshead = "const {M(className,@name)} = globalThis.{M(className,@name)} = {jshead}"
+			yes
+
 
 		let js = "{jshead} {jsbody}"
 
@@ -4094,13 +4105,16 @@ export class InstanceOf < Op
 	def js o
 		# fix checks for String and Number
 
-		if right isa Const
+		if right isa Identifier # is this now a VarOrAccess?
 			# WARN otherwise - what do we do? does not work with dynamic
 			# classes etc? Should probably send to utility function isa$
 			var name = AST.c(right.value)
 			var obj = left.node
 			# TODO also check for primitive-constructor
 			if name in ['String','Number','Boolean']
+				if STACK.tsc
+					return "(typeof {obj.c}=='{name.toLowerCase}')"
+
 				unless obj isa LocalVarAccess
 					obj.cache
 				# need a double check for these (cache left) - possibly
@@ -4280,7 +4294,7 @@ export class LocalVarAccess < Access
 
 export class GlobalVarAccess < ValueNode
 
-	def js o
+	def c
 		value.c
 
 
@@ -4357,6 +4371,12 @@ export class VarOrAccess < ValueNode
 		@variable = null
 		self
 
+	def startLoc
+		@token.startLoc
+
+	def endLoc
+		@token.endLoc
+
 	# Shortcircuit traverse so that it is not added to the stack?!
 	def visit
 		# @identifier = value # this is not a real identifier?
@@ -4395,31 +4415,16 @@ export class VarOrAccess < ValueNode
 				
 				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
 				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
-
 				return self
 
 			# FIX
 			# @value.safechain = safechain
-
-		# TODO deprecate and remove
-		if true
-			# big hack - should disable
-			# major hack here, no?
-			# console.log "GlobalVarAccess"
-			@value = GlobalVarAccess.new(value)
-			return self
-
-		# really? what about just mimicking the two diffrent instead?
-		# Should we not return a call directly instead?
-		scope.root.@implicitAccessors.push(self)
-		@value = PropertyAccess.new(".",scope.context,value)
-		# mark the scope / context -- so we can show correct implicit
-		@token.@meta = {type: 'ACCESS'}
-		# @value.traverse # nah
-		self
+		@value = GlobalVarAccess.new(value)
+		return self
 
 	def c
-		M((@variable ? super() : value.c), @token)
+		@variable ? super() : value.c
+		# M((@variable ? super() : value.c), @token)
 
 	def js o
 
@@ -4524,7 +4529,7 @@ export class VarReference < ValueNode
 		if value isa Obj or value isa Arr
 			ref = value
 
-		var out = "{ref.c}"
+		var out = "{M(ref.c,@value)}"
 		var keyword = o.es5 ? 'var' : (@type or 'var')
 
 		if ref && !ref.@declared # .option(:declared)

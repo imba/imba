@@ -621,9 +621,6 @@ export class Lexer
 			return 0
 	
 
-		return length
-
-
 	def inTag
 		var len = @ends:length
 		if len > 0
@@ -1048,6 +1045,8 @@ export class Lexer
 				note = ' ' + note
 				# console.log "the previous node was SPACED"
 			# console.log "comment {note} - indent({indent}) - {length} {comment:length}"
+			if note.match(/^\/\/ \@type/)
+				note = '/**' + commentBody + '*/'
 
 			if (pt and pt != 'INDENT' and pt != 'TERMINATOR') or !pt
 				# console.log "skip comment"
@@ -1055,7 +1054,6 @@ export class Lexer
 				# console.log "adding as terminator"
 				token('TERMINATOR', note, length) # + '\n'
 			else
-				# console.log "add comment ({note})"
 				if pt == 'TERMINATOR'
 					tVs(prev,tV(prev) + note)
 					# prev[1] += note
@@ -1502,6 +1500,11 @@ export class Lexer
 				let paired = pair(value)
 				if paired and paired[1]:closeType
 					tokid = paired[1]:closeType
+
+
+		if value == '\\'
+			console.log 'backslash!!!'
+			tokid = 'TYPE'
 
 		token(tokid, value, value:length)
 

@@ -59,6 +59,7 @@ export class SourceMap
 
 		var pairs = []
 		var groups = {}
+		var uniqueGroups = {}
 		var match
 		# split the code in lines. go through each line 
 		# go through the code looking for LOC markers
@@ -103,6 +104,11 @@ export class SourceMap
 							# groups[gid].push(locpair[0],locpair[1])
 							grp[1] = locpair[0]
 							grp[3] = locpair[1]
+							let gstr = grp.join('|')
+							if uniqueGroups[gstr]
+								groups[gid] = []
+							else
+								uniqueGroups[gstr] = yes
 							# grp[4] = locpair[1]
 						else
 							groups[gid] = [locpair[0],null,locpair[1],null]
@@ -122,8 +128,11 @@ export class SourceMap
 		if verbose
 			for pair in source:locs:spans
 				if pair[1] != null
-					pair.push(source:js.slice(pair[0],pair[1]))
-					pair.push(sourceCode.slice(pair[2],pair[3]))
+					let jsstr = source:js.slice(pair[0],pair[1]).split("\n")
+					let imbastr = sourceCode.slice(pair[2],pair[3]).split("\n")
+					pair.push(jsstr[0])
+					pair.push(imbastr[0])
+
 			console.log source:locs:spans
 			let superMap = {
 				0: '\u2080'
@@ -139,6 +148,7 @@ export class SourceMap
 				'|': '\u208C'
 			}
 			let repSuper = do |m,str|
+				return "[{str}]"
 				let o = ''
 				let l = str:length
 				let i = 0
