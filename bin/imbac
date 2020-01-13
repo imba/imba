@@ -332,12 +332,11 @@ CLI.prototype.compileFile = function (src){
 		}
 		
 
-		if(opts.sourceMap.debug) {
-			let str = JSON.stringify(sourcemap,null,2);
-			
-			// str = str.replace('')
-			out.js = out.js + "\n/* " + str + "\n */";
-		}
+		// if(opts.sourceMap.debug) {
+		// 	let str = JSON.stringify(sourcemap,null,2);
+		// 	// str = str.replace('')
+		// 	out.js = out.js + "\n/* " + str + "\n */";
+		// }
 	};
 	
 	src.output = out;
