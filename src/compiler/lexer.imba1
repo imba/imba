@@ -1045,7 +1045,7 @@ export class Lexer
 				note = ' ' + note
 				# console.log "the previous node was SPACED"
 			# console.log "comment {note} - indent({indent}) - {length} {comment:length}"
-			if note.match(/^\/\/ \@type/)
+			if note.match(/^\/\/ \@(type|param)/)
 				note = '/**' + commentBody + '*/'
 
 			if (pt and pt != 'INDENT' and pt != 'TERMINATOR') or !pt

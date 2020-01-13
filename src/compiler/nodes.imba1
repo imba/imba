@@ -1163,7 +1163,7 @@ export class Comment < Meta
 		if o and o:expression or v.match(/\n/) or @value.type == 'HERECOMMENT' # multiline?
 			var out = v.replace(/\*\//g, '\\*\\/').replace(/\/\*/g, '\\/\\*')
 			"/*{out}*/"
-		elif v.indexOf('@type') >= 0
+		elif v.match(/\@(type|param)/)
 			"/** {v} */"
 		else
 			"// {v}"
