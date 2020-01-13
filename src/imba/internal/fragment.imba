@@ -4,8 +4,8 @@ extend class DocumentFragment
 	
 	# Called to make a documentFragment become a live fragment
 	def setup$ flags, options
-		#start = imba.document.createComment('start')
-		#end = imba.document.createComment('end')
+		#start = document.createComment('start')
+		#end = document.createComment('end')
 
 		#end.replaceWith$ = do |other|
 			this.parentNode.insertBefore(other,this)
@@ -63,11 +63,11 @@ class TagFragment
 		#parent = parent
 
 		if !(f & $TAG_FIRST_CHILD$) and self isa KeyedTagFragment
-			#start = imba.document.createComment('start')
+			#start = document.createComment('start')
 			#parent.appendChild(#start) if parent # not if inside tagbranch
 
 		unless f & $TAG_LAST_CHILD$
-			#end = imba.document.createComment('end')
+			#end = document.createComment('end')
 			parent.appendChild(#end) if parent
 
 		self.setup()
@@ -236,7 +236,7 @@ class IndexedTagFragment < TagFragment
 		return
 
 export def createLiveFragment bitflags, options
-	var el = imba.document.createDocumentFragment()
+	var el = document.createDocumentFragment()
 	el.setup$(bitflags, options)
 	return el
 

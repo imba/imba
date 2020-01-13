@@ -7010,7 +7010,7 @@ export class TagLoopFragment < TagLike
 		let iref = LIT('imba.createFragment')
 		# should know how many inner slots this fragment has?
 		let cache = parent.cvar
-		let parentRef = parent isa TagBranchFragment ? LIT('null') : parent.tvar
+		let parentRef = parent isa TagBranchFragment ? LIT('null') : fragment.tvar
 
 		let out = ""
 		out += "{tvar} = {cache}.{oid} || ({cache}.{oid} = {tvar} = {iref}({@flags},{parentRef}));\n"
