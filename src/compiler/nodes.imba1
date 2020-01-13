@@ -7442,12 +7442,20 @@ export class Tag < TagLike
 					add "{bvar} || {ref}.on$({item.quoted},{mods.c},{scope__.context.c})"
 
 				elif item isa TagAttr and item.ns == 'bind'
+					
 					let rawVal = item.value
 					let val = PATHIFY(rawVal)
+
 					shouldEnd = yes
 					if val isa Array
+						let target = val[0]
 						let key = val[1]
-						let bval = key isa Literal ? "[null,{key.c(o)}]" : "[]"
+						let bval = "[]"
+						if target isa Literal and key isa Literal
+							bval = "[{target.c(o)},{key.c(o)}]"
+						elif key isa Literal
+							bval = "[null,{key.c(o)}]"
+
 						add "{vvar}={iref} || ({iref}={ref}.bind$('{item.key}',{bval}))"
 						for part,i in val
 							unless part isa Literal
