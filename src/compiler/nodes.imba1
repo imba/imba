@@ -5121,6 +5121,8 @@ export class TagTypeIdentifier < Identifier
 			return HTML_CONSTRUCTORS[@str] or 'HTMLElement'
 		elif isNativeSVG
 			return 'SVG' + helpers.pascalCase(@str + '-element')
+		elif @str == 'fragment'
+			return 'DocumentFragment'
 		else
 			return helpers.pascalCase(@str + '-component')
 
@@ -6941,6 +6943,9 @@ export class TagContent < TagLike
 		let value = self.value
 		let parts = []
 		let isText = (value isa Str or value isa Num or value isa InterpolatedString)
+
+		if STACK.tsc
+			return value.c(o)
 
 		if isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
