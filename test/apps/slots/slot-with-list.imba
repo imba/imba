@@ -20,3 +20,15 @@ test do
 	ok $(header + div.item-1)
 	ok $(div.item-2)
 	ok $(div.item-3 + footer)
+
+test do
+	items.pop()
+	$(app-root).render()
+	ok $(div.item-2 + footer)
+
+test do
+	# return # not implemented yet
+	return #
+	items = []
+	$(app-root).render()
+	ok $(header + span.empty)

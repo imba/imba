@@ -360,6 +360,7 @@ extend class Element
 		@style[key] = value
 
 Element.prototype.appendChild$ = Element.prototype.appendChild
+Element.prototype.removeChild$ = Element.prototype.removeChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
 

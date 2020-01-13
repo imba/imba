@@ -204,10 +204,11 @@ class IndexedTagFragment < TagFragment
 		let from = @length
 		return if from == len or !#parent
 		let array = @$
+		let par = #parent
 
 		if from > len
 			while from > len
-				@removeChild(array[--from])
+				par.removeChild$(array[--from])
 		elif len > from
 			while len > from
 				@appendChild$(array[from++])
@@ -224,15 +225,7 @@ class IndexedTagFragment < TagFragment
 		let i = 0
 		while i < @length
 			let item = @$[i++]
-			#parent.removeChild(item)
-		return
-
-	def insertInto parent, slot
-		self
-
-	def removeChild item, index
-		# item need to be able to be added
-		#parent.removeChild(item)
+			#parent.removeChild$(item)
 		return
 
 export def createLiveFragment bitflags, options

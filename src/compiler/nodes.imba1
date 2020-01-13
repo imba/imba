@@ -6763,7 +6763,7 @@ class TagLike < Node
 			flag(F.TAG_HAS_LOOPS)
 			node = TagLoopFragment.new(body: node.body, value: node)
 
-		elif !(node isa Tag) and !(node isa Str)
+		elif !(node isa Tag) and (!(node isa Str) or self isa TagBranchFragment)
 			flag(F.TAG_HAS_DYNAMIC_CHILDREN)
 			node = TagContent.new(value: node)
 		elif node isa Tag
@@ -6947,10 +6947,13 @@ export class TagContent < TagLike
 		if STACK.tsc
 			return value.c(o)
 
-		if isOnlyChild and (value isa Str or value isa Num)
+		if parent isa TagBranchFragment
+			parts.push("{@tvar}={value.c(o)}")
+
+		elif isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
 
-		elif value isa InterpolatedString and isOnlyChild
+		elif value isa InterpolatedString and isOnlyChild and !(parent isa TagBranchFragment)
 			value = value.@nodes[0] if value.@nodes:length == 1
 			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$({key}={vvar}))"
 
@@ -6970,7 +6973,7 @@ export class TagFragment < TagLike
 export class TagBranchFragment < TagLike
 
 	def tvar
-		parent.tvar
+		fragment.tvar
 
 	def js o
 		let inserts = []
@@ -7256,7 +7259,7 @@ export class Tag < TagLike
 
 		var nodes = body ? body.values : []
 
-		if nodes:length == 1 and nodes[0] isa Str and !isSelf
+		if nodes:length == 1 and nodes[0] isa Str and !isSelf and !isSlot
 			params[4] = nodes[0].c
 			nodes = []
 
