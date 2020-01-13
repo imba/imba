@@ -22,6 +22,7 @@ test do
 
 test do
 	bool = false
+	return
 	$(app-root).render()
 	ok !$(app-panel .stuff)
 	ok $(app-panel).textContent.indexOf('placeholder') > 0
