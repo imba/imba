@@ -2,15 +2,8 @@ const CHR = "\u200b"
 # const CHR = "%"
 
 tag multi-input
-
-	prop values
-
-	# allow selecting multiple values
-	prop multiple default: yes
-
-	# only allow values from options
-	prop strict default: no
-	prop readonly default: no
+	@multiple = yes
+	@values = []
 
 	get prefixes
 		CHR.repeat(@values.length)
@@ -27,9 +20,6 @@ tag multi-input
 	get selEnd
 		@input ? @input.selectionEnd : 0
 
-	get values
-		#values or (#items ||= [])
-
 	def blur
 		@input.blur()
 		
@@ -40,9 +30,7 @@ tag multi-input
 		self
 
 	def submit
-		console.log 'submitting!'
 		self.addItem(@inputValue)
-		# self.trigger('change')
 		
 	def addItem value
 		@values.push(value or @inputValue)
