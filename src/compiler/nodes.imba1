@@ -2506,66 +2506,6 @@ export class VarName < ValueNode
 	def c
 		variable.c
 
-
-export class VarList < Node
-
-	prop type # let / var / const
-	prop left
-	prop right
-
-	# format :type, :left, :right
-
-	# should throw error if there are more values on right than left
-
-	def initialize t,l,r
-		@traversed = no
-		@type = type
-		@left = l
-		@right = r
-
-	def visit
-
-		# we need to carefully traverse children in the right order
-		# since we should be able to reference
-		for l,i in left
-			l.traverse # this should really be a var-declaration
-			r.traverse if var r = right[i]
-		self
-
-	def js o
-		# for the regular items
-		var pairs = []
-		var ll = left:length
-		var rl = right:length
-		var v = null
-
-		# splatting here we come
-		if ll > 1 && rl == 1
-			p "multiassign!"
-			var r = right[0]
-			r.cache
-			for l,i in left
-				if l.splat
-					throw "not supported?"
-					p "splat" # FIX reimplement slice?
-					if i == ll - 1
-						v = util.slice(r,i)
-						p "last"
-					else
-						v = util.slice(r,i,-(ll - i) + 1)
-				else
-					v = OP('.',r,Num.new(i))
-
-				pairs.push(OP('=',l,v))
-
-		else
-			for l,i in left
-				var r = right[i]
-				pairs.push(r ? OP('=',l.variable.accessor,r) : l)
-
-		return "var {pairs.c}"
-
-
 # CODE
 
 export class Code < Node
