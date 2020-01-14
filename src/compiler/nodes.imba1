@@ -5966,7 +5966,8 @@ export class ForOf < For
 		else
 			# we set the var -- why even declare it
 			# no need to declare -- it will declare itself in the loop - no?
-			source = vars:source = util.iterable(o:source)
+			source = vars:source = STACK.tsc ? o:source : util.iterable(o:source)
+
 			o:value = vars:value = o:name
 			# vars:source = o:source.@variable || scope.temporary(o:source, system: yes, pool: 'dict', type: 'let')
 			# vars:source
@@ -8073,6 +8074,7 @@ export class Util < Node
 		return CALL(OP('.',obj,slice),AST.compact([a,b]))
 
 	def self.iterable obj, cache
+		return obj if STACK.tsc
 		var node = Util.Iterable.new([obj])
 		node.cache(force: yes, pool: 'iter') if cache
 		return node
