@@ -7569,18 +7569,19 @@ export class Tag < TagLike
 
 		if o:inline
 			o:inline = wasInline
-			return '(' + out.join(',\n') + ')'
+			let js = '(' + out.join(',\n') + ')'
+			if isSlot and hasChildren
+				let key = "{cvar}.{oid}"
+				let post = "{tvar}==={key}__ || ({key}_ = {fragment.tvar}.insert$({key}__={tvar},{@flags},{key}_))"
+				js = "({tvar}={slotPath}),(!{tvar} || {tvar}.isEmpty$() && {js}),({post})"
+			return js
 		else
 			o:inline = wasInline
 			let js = out.join(";\n")
 			if isSlot and hasChildren
-				let pre = "{tvar}={fragment.root.tvar}.__slots.{option(:name)}"
-				let cond = "!{tvar} || {tvar}.isEmpty$()"
 				let key = "{cvar}.{oid}"
 				let post = "{tvar}==={key}__ || ({key}_ = {fragment.tvar}.insert$({key}__={tvar},{@flags},{key}_))"
-				# let post = "({key}_ = {fragment.tvar}.insert$({tvar},{@flags},{key}_))"
-				js = "{pre};\nif({cond})\{\n{js}\n\}\n{post}"
-				# js = js + 'slot?'
+				js = "{tvar}={slotPath};\nif(!{tvar} || {tvar}.isEmpty$())\{\n{js}\n\}\n{post}"
 			return js
 
 
