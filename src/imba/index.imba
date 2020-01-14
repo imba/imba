@@ -274,7 +274,13 @@ extend class Comment
 
 # what if this is in a webworker?
 extend class Element
-	
+
+	def emit name, detail, o = {bubbles: true}
+		o.detail = detail if detail != undefined
+		let event = CustomEvent.new(name, o)
+		let res = @dispatchEvent(event)
+		return event
+
 	def slot$ name, ctx
 		return self
 
