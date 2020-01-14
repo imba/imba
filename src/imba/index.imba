@@ -207,16 +207,34 @@ class ImbaElementRegistry
 		#types[name] = klass
 		if options and options.extends
 			CustomTagConstructors[name] = klass
-			console.log 'made to extend a native element'
+
+		let proto = klass.prototype
+		if proto.render && proto.end$ == Element.prototype.end$
+			proto.end$ = proto.render
 
 		root.customElements.define(name,klass)
 		return klass
 
 imba.tags = root.imbaElements = ImbaElementRegistry.new()
 
+var proxyHandler =
+	def get target, name
+		let ctx = target
+		let val = ctx[name]
+		while ctx and val == undefined
+			if ctx = ctx.parentContext
+				val = ctx[name]
+		return val
+
 import {EventHandler} from './events'
 
 extend class Node
+
+	get __context
+		this.context$ ||= Proxy.new(self,proxyHandler)
+
+	get parentContext
+		this.up$ or this.parentNode
 
 	def init$
 		self

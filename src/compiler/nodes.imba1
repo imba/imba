@@ -6967,7 +6967,7 @@ export class TagContent < TagLike
 			parts.push("{@tvar}={value.c(o)}")
 			if value isa Call
 				# mark parent to reset imba.ctx at the end
-				parts.unshift("imba.ctx=({key}$ || ({key}$=\{\}))")
+				parts.unshift("imba.ctx=({key}$ || ({key}$=\{_:{fragment.tvar}\}))")
 
 		elif isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
@@ -6981,7 +6981,7 @@ export class TagContent < TagLike
 
 			if value isa Call
 				# mark parent to reset imba.ctx at the end
-				parts.unshift("imba.ctx=({key}$ || ({key}$=\{\}))")
+				parts.unshift("imba.ctx=({key}$ || ({key}$=\{_:{fragment.tvar}\}))")
 
 			parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_))")
 
@@ -6999,6 +6999,7 @@ export class TagBranchFragment < TagLike
 
 		for item in @consumed when TagLike
 			# we need to get nested items as well?
+			item.set(detached: yes)
 			item.@tvar = tagvar(item.oid + '$')
 			inserts.push(item.@tvar)
 
@@ -7226,6 +7227,8 @@ export class Tag < TagLike
 	def isFragment
 		tagName == 'fragment'
 
+	def isDetached
+		option(:detached)
 
 	def js o
 		var isExpression = STACK.isExpression
@@ -7271,7 +7274,7 @@ export class Tag < TagLike
 		# whether this tag should set a variable indicating
 		# whether this was built now or not
 		# basically whether we need a reference at all?
-		var markWhenBuilt = shouldEnd or hasDynamicFlags or attrs:length or option(:markWhenBuilt)
+		var markWhenBuilt = shouldEnd or hasDynamicFlags or attrs:length or option(:markWhenBuilt) or isDetached
 		# when it has any attributes? - but not text or
 
 		var inCondition = parent && parent.option(:condition)
@@ -7333,6 +7336,7 @@ export class Tag < TagLike
 				let scop = scope__.closure
 				# add "{bvar}={dvar}=1"
 				add "{tvar}=({bvar}={dvar}=1,{scop.tagCache}.{oid}) || ({bvar}={dvar}=0,{scop.tagCache}.{oid}={ctor})"
+				add "{bvar}||({tvar}.up$={scop.tagCache}._)"
 				@ref = tvar
 				o:inline = yes if isExpression
 
@@ -7383,6 +7387,9 @@ export class Tag < TagLike
 				@bvar = tagvar(:b)
 				add "{tvar} = ({bvar}={dvar}=1,{ref}) || ({bvar}={dvar}=0,{ref} = {ctor})"
 				@ref = "{tvar}"
+
+				if isDetached or true
+					add "{bvar}||({tvar}.up$={fragment.tvar})"
 				# dont add cvar always!
 				if @dynamics:length or (@consumed:length and nodes:length)
 					# console.log "has dynamics? {@dynamics:length}",@consumed.map(|v| v:constructor:name)
@@ -7403,6 +7410,9 @@ export class Tag < TagLike
 					add "{tvar} = ({bvar}={dvar}=1,{ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
 				else
 					add "{tvar} = {ref} || ({ref} = {ctor})"
+
+				if isDetached
+					add "{bvar}||({tvar}.up$={fragment.tvar})"
 
 				@ref = tvar
 

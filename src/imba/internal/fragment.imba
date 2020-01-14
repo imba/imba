@@ -66,7 +66,6 @@ extend class DocumentFragment
 		return true
 
 class TagCollection
-
 	def constructor f, parent
 		#f = f
 		#parent = parent
@@ -80,6 +79,9 @@ class TagCollection
 			parent.appendChild$(#end) if parent
 
 		self.setup()
+
+	get parentContext
+		#parent
 
 	def appendChild$ item, index
 		# we know that these items are dom elements
