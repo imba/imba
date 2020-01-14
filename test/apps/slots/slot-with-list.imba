@@ -10,11 +10,12 @@ tag app-list
 tag app-root
 	def render
 		<self>
-			<div> "This is the app"
+			<div> "app"
 			<app-list> for item in items
 				<div .item-{item}> "{item}"
 
-imba.mount <app-root>
+let app = <app-root>
+imba.mount app
 
 test do
 	ok $(header + div.item-1)
@@ -27,8 +28,6 @@ test do
 	ok $(div.item-2 + footer)
 
 test do
-	# return # not implemented yet
-	return #
 	items = []
 	$(app-root).render()
 	ok $(header + span.empty)

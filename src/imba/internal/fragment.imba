@@ -37,7 +37,7 @@ extend class DocumentFragment
 			parent.appendChild$(this)
 		return this
 
-	def replaceWith$ other
+	def replaceWith$ other, parent
 		#start.insertBeforeBegin$(other)
 		var el = #start
 		while el
@@ -56,7 +56,16 @@ extend class DocumentFragment
 		child.parentNode && child.parentNode.removeChild(child)
 		self
 
-class TagFragment
+	def isEmpty$
+		let el = #start
+		let end = #end
+
+		while el = el.nextSibling
+			break if el == end
+			return false if el isa Element or el isa Text
+		return true
+
+class TagCollection
 
 	def constructor f, parent
 		#f = f
@@ -64,11 +73,11 @@ class TagFragment
 
 		if !(f & $TAG_FIRST_CHILD$) and self isa KeyedTagFragment
 			#start = document.createComment('start')
-			#parent.appendChild(#start) if parent # not if inside tagbranch
+			parent.appendChild$(#start) if parent # not if inside tagbranch
 
 		unless f & $TAG_LAST_CHILD$
 			#end = document.createComment('end')
-			parent.appendChild(#end) if parent
+			parent.appendChild$(#end) if parent
 
 		self.setup()
 
@@ -85,7 +94,6 @@ class TagFragment
 		#end.insertBeforeBegin$(other)
 		#parent.removeChild(#end)
 		#parent = null
-		console.log "replace TagFragment with other!",other,self
 		return
 
 	def joinBefore$ before
@@ -101,7 +109,7 @@ class TagFragment
 	def setup
 		self
 
-class KeyedTagFragment < TagFragment
+class KeyedTagFragment < TagCollection
 	def setup
 		@array = []
 		@changes = Map.new
@@ -194,7 +202,7 @@ class KeyedTagFragment < TagFragment
 			# @array.length = index
 		return
 
-class IndexedTagFragment < TagFragment
+class IndexedTagFragment < TagCollection
 
 	def setup
 		@$ = []

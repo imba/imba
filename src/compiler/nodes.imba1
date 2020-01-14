@@ -6762,12 +6762,12 @@ class TagLike < Node
 		elif node isa Loop
 			flag(F.TAG_HAS_LOOPS)
 			node = TagLoopFragment.new(body: node.body, value: node)
-
-		elif !(node isa Tag) and (!(node isa Str) or self isa TagBranchFragment)
-			flag(F.TAG_HAS_DYNAMIC_CHILDREN)
-			node = TagContent.new(value: node)
 		elif node isa Tag
-			self
+			flag(F.TAG_HAS_DYNAMIC_CHILDREN) if node.isSlot
+		else
+			flag(F.TAG_HAS_DYNAMIC_CHILDREN) unless node isa Str
+			node = TagContent.new(value: node)
+
 		@consumed.push(node) # why consume if node isa String?
 		node.@parent = self
 		return node
@@ -6783,6 +6783,9 @@ class TagLike < Node
 
 	def hasFlag key
 		@flags & key
+
+	def isAbstract
+		true
 
 	def isOnlyChild
 		isFirstChild && isLastChild
@@ -6813,6 +6816,9 @@ class TagLike < Node
 
 	def hasNonTagChildren
 		hasLoops or hasBranches or hasDynamicChildren
+
+	def hasChildren
+		@consumed:length > 0
 
 	def tagvar name
 		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{name}${tagvarprefix}")
@@ -6877,6 +6883,8 @@ class TagLike < Node
 		unless @parent
 			@level = 0
 			consumeChildren
+			visitAfterConsumed
+
 		self
 
 	def visitBeforeBody
@@ -6891,17 +6899,21 @@ class TagLike < Node
 		let first = @consumed[0]
 		let last = @consumed[@consumed:length - 1]
 
-		if first isa TagLike
-			first.flag(F.TAG_FIRST_CHILD)
-
-		if last isa TagLike
-			last.flag(F.TAG_LAST_CHILD)
-
+		# too many edgecases to really utilize this
+		if !isAbstract
+			first.flag(F.TAG_FIRST_CHILD) if first isa TagLike
+			last.flag(F.TAG_LAST_CHILD) if last isa TagLike
+				
 		for item in @consumed when item isa TagLike
 			item.@parent = self
 			item.@level = (@level + 1)
 			item.visitAfterConsumed
 			item.consumeChildren
+
+		visitAfterConsumedChildren
+		self
+
+	def visitAfterConsumedChildren
 		self
 
 	def visitAfterConsumed
@@ -6939,6 +6951,9 @@ export class TagContent < TagLike
 	def key
 		@key ||= "{parent.cvar}.{oid}"
 
+	def isStatic
+		value isa Str or value isa Num
+
 	def js
 		let value = self.value
 		let parts = []
@@ -6947,8 +6962,12 @@ export class TagContent < TagLike
 		if STACK.tsc
 			return value.c(o)
 
-		if parent isa TagBranchFragment
+		if parent isa TagBranchFragment or (@tvar and parent isa Tag and parent.isSlot)
+			# what if it is a call?
 			parts.push("{@tvar}={value.c(o)}")
+			if value isa Call
+				# mark parent to reset imba.ctx at the end
+				parts.unshift("imba.ctx=({key}$ || ({key}$=\{\}))")
 
 		elif isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
@@ -7043,6 +7062,9 @@ export class Tag < TagLike
 		@classNames = []
 		@className = null
 
+	def isAbstract
+		!isSlot and !isFragment
+
 	def attrs
 		@attributes
 
@@ -7075,6 +7097,13 @@ export class Tag < TagLike
 
 		if @classNames:length
 			@className = "'{@classNames.join(' ')}'"
+
+		if isSlot
+			# @tvar = tagvar('t'+oid)
+			let name = @attrmap:name ? @attrmap:name.value : '__'
+			name = name.raw if name isa Str
+			set(name: name)
+			@attributes = []
 		super
 
 	def register node
@@ -7095,10 +7124,16 @@ export class Tag < TagLike
 		self
 
 	def visitAfterConsumed
+
 		if @parent isa TagLoopFragment and isDynamicType
 			if option(:key)
 				set(key: OP('+',option(:key),OP('+',STR(' '),vvar)) )
 		self
+
+	def visitAfterConsumedChildren
+		if isSlot and @consumed:length > 1
+			set(markWhenBuilt: yes, reactive: yes)
+		return
 
 	def getSlot name
 		@slots ||= {}
@@ -7178,7 +7213,7 @@ export class Tag < TagLike
 		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or @parent and @parent.isSVG)
 	
 	def create_
-		if isFragment
+		if isFragment or isSlot
 			LIT('imba.createLiveFragment')
 		elif isSVG
 			LIT('imba.createSVGElement')
@@ -7186,7 +7221,7 @@ export class Tag < TagLike
 			LIT('imba.createElement')
 
 	def isReactive
-		@parent ? @parent.isReactive : !(scope__ isa RootScope)
+		option(:reactive) or (@parent ? @parent.isReactive : !(scope__ isa RootScope))
 
 	def isFragment
 		tagName == 'fragment'
@@ -7216,6 +7251,7 @@ export class Tag < TagLike
 		var canInline = no
 		var shouldEnd = hasFlag(F.TAG_CUSTOM)
 		var dynamicKey = null
+		var slotPath = isSlot ? "{fragment.root.tvar}.__slots.{option(:name)}" : ""
 
 		if STACK.tsc
 			# if tag is expression we want to suppress certain warnings
@@ -7235,7 +7271,7 @@ export class Tag < TagLike
 		# whether this tag should set a variable indicating
 		# whether this was built now or not
 		# basically whether we need a reference at all?
-		var markWhenBuilt = shouldEnd or hasDynamicFlags or attrs:length
+		var markWhenBuilt = shouldEnd or hasDynamicFlags or attrs:length or option(:markWhenBuilt)
 		# when it has any attributes? - but not text or
 
 		var inCondition = parent && parent.option(:condition)
@@ -7251,7 +7287,7 @@ export class Tag < TagLike
 		var params = [
 			typ,
 			@flags,
-			(fragment ? fragment.tvar : 'null'),
+			(fragment and !option(:detached) ? fragment.tvar : 'null'),
 			@className or 'null',
 			'null',
 			stack.option(:hasScopedStyles) ? STR(stack.sfcid) : LIT('null')
@@ -7259,17 +7295,21 @@ export class Tag < TagLike
 
 		var nodes = body ? body.values : []
 
-		if nodes:length == 1 and nodes[0] isa Str and !isSelf and !isSlot
-			params[4] = nodes[0].c
+		if nodes:length == 1 and nodes[0] isa TagContent and nodes[0].isStatic and !isSelf and !isSlot
+			params[4] = nodes[0].value.c
 			nodes = []
 
 		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey
 			if nodes.every(|v| v isa Tag or v isa Str)
-				if !shouldEnd and !hasNonTagChildren and (parent isa Tag)
+				if !shouldEnd and !hasNonTagChildren and (parent isa Tag) and !isSlot and !option(:dynamic)
 					canInline = yes
 
-		if isFragment
+		if isFragment or isSlot
 			params = params.slice(1,3)
+
+		if isSlot
+			# the slot is not supposed to be inserted immediately
+			params[1] = 'null'
 
 		var ctor = "{tvar}={M("{create_}({params.join(',')})",type)}"
 
@@ -7306,24 +7346,16 @@ export class Tag < TagLike
 				o:inline = yes
 
 		else
-			if isSlot
-				# render the name of the slot 
-				let name = @attrmap:name ? @attrmap:name.value : '__'
-				if name isa Str
-					# check if it is legal
-					name = name.raw
-				# add("{tvar}={fragment.root.tvar}.slot$('{name}')")
-				add("{vvar}={fragment.root.tvar}.__slots.{name}")
-				add("if({vvar})\{ {vvar}.insertInto$({fragment.tvar}) \}")
-
-				if @consumed:length > 0
-					# have children
-					@tvar = @parent.tvar
-					add("if(!{vvar})\{")
-					foot.push('}')
-				# should not render any attributes
-				@attributes = []
-
+			if isSlot and !hasChildren
+				let key = "{cvar}.{oid}"
+				add("{tvar}={slotPath}")
+				add("({key} = {fragment.tvar}.insert$({tvar},{@flags},{key}))")
+			elif isSlot and @consumed:length == 1
+				# single child can act as slot?
+				# if it is a string we dont really want to insert it at all
+				@consumed[0].set(dynamic: yes, detached: yes)
+				@consumed[0].@tvar = tvar
+				# add("{tvar}")
 			# this is a functional tag component
 			elif option(:args)
 				let key = "{cvar}.{oid}"
@@ -7500,7 +7532,7 @@ export class Tag < TagLike
 
 		for item in nodes
 			if item isa Str # static for sure
-				# should this not go into a TagLike?
+				# should this not go into a TagLike? Definitely
 				if isReactive
 					add "{bvar} || {tvar}.insert$({item.c(o)})"
 				else
@@ -7538,8 +7570,18 @@ export class Tag < TagLike
 		if o:inline
 			o:inline = wasInline
 			return '(' + out.join(',\n') + ')'
-		o:inline = wasInline
-		return out.join(";\n")
+		else
+			o:inline = wasInline
+			let js = out.join(";\n")
+			if isSlot and hasChildren
+				let pre = "{tvar}={fragment.root.tvar}.__slots.{option(:name)}"
+				let cond = "!{tvar} || {tvar}.isEmpty$()"
+				let key = "{cvar}.{oid}"
+				let post = "{tvar}==={key}__ || ({key}_ = {fragment.tvar}.insert$({key}__={tvar},{@flags},{key}_))"
+				# let post = "({key}_ = {fragment.tvar}.insert$({tvar},{@flags},{key}_))"
+				js = "{pre};\nif({cond})\{\n{js}\n\}\n{post}"
+				# js = js + 'slot?'
+			return js
 
 
 export class TagWrapper < ValueNode
