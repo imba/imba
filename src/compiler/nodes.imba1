@@ -4052,7 +4052,7 @@ export class InstanceOf < Op
 	def js o
 		# fix checks for String and Number
 
-		if right isa Identifier # is this now a VarOrAccess?
+		if right isa Identifier or right isa VarOrAccess
 			# WARN otherwise - what do we do? does not work with dynamic
 			# classes etc? Should probably send to utility function isa$
 			var name = AST.c(right.value)
