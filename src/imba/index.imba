@@ -220,7 +220,7 @@ imba.tags = root.imbaElements = ImbaElementRegistry.new()
 var proxyHandler =
 	def get target, name
 		let ctx = target
-		let val = ctx[name]
+		let val = undefined
 		while ctx and val == undefined
 			if ctx = ctx.parentContext
 				val = ctx[name]
