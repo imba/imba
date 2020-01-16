@@ -32,7 +32,7 @@ attention, you can ping during the meeting.
 ### Chat
 
 For questions and support please use our community chat on
-[gitter](https://gitter.im/somebee/imba).
+[gitter](https://gitter.im/somebee/imba) or our [discourse](https://users.imba.io/).
 
 ## License
 
