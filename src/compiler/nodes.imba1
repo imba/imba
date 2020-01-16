@@ -2785,7 +2785,11 @@ export class ClassDeclaration < Code
 		let jshead = M(keyword,keyword) # "{C(keyword,mark: yes)}"
 		jshead += " {M cname, name}" if name
 		jshead += " extends {M(sup)}" if sup
-		jshead = "{M 'export',option(:export)} {jshead}" if option(:export)
+		if option(:export) and option(:default)
+			jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
+		elif option(:export)
+			jshead = "{M 'export',option(:export)} {jshead}"
+			
 
 		let js = "{jshead} {jsbody}"
 		if option(:global)
@@ -7917,7 +7921,11 @@ export class Export < ValueNode
 		super
 		
 	def visit
-		value.set(export: (option(:keyword) or self), return: option(:return), default: option(:default))
+		value.set(
+			export: (option(:keyword) or self),
+			return: option(:return),
+			default: option(:default)
+		)
 		super
 
 	def js o

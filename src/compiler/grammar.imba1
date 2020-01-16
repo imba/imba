@@ -144,8 +144,9 @@ var grammar =
 			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2)],A4)
 		o 'EXPORT EXPORT_ALL AS Identifier FROM String' do
 			ExportAllDeclaration.new(A1,[ExportSpecifier.new(A2,A4)],A6)
-		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A1) # A2.set(export: A1)
-		o 'EXPORT_VAR VarBlock' do Export.new(A2).set(keyword: A1) # A2.set(export: A1)
+		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A1)
+		o 'EXPORT DEFAULT Exportable' do Export.new(A3).set(keyword: A1,default: A2)
+		o 'EXPORT_VAR VarBlock' do Export.new(A2).set(keyword: A1)
 	]
 
 	Exportable: [
