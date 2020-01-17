@@ -1,3 +1,4 @@
+import {SVGElement} from './dom'
 
 extend class SVGElement
 	

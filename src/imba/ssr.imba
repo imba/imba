@@ -54,10 +54,15 @@ var escapeTextContent = do |val, nodeName|
 	return str
 
 # could create a fake document 
-export class root.Document
+export class Document
 
-	def createElement type
-		return Element.new(type)
+	def createElement name
+		# look for custom elements now?
+		let typ = imba.tags.lookup(name)
+		let el = (typ or Element).new(name)
+		el.nodeName = name
+		return el
+
 
 	def createElementNS ns, type
 		return ns == 'svg' ? SVGElement.new(type) : HTMLElement.new(type)
@@ -73,7 +78,7 @@ export class root.Document
 # where we cache the indexes?
 export class DOMTokenList
 
-	def initialize dom, classes
+	def constructor dom, classes
 		this.classes = classes or []
 		this.dom = dom
 
@@ -106,7 +111,7 @@ export class DOMTokenList
 
 export class StyleDeclaration
 
-	def initialize dom
+	def constructor dom
 		self.dom = dom
 		self
 		
@@ -123,15 +128,31 @@ export class StyleDeclaration
 				items.push("{k}: {v}")
 		return items.join(';')
 
-export class root.Node
+export class Node
 
 	# appendChild
 	# removeChild etc
 
-export class root.Element < root.Node
+export class Comment < Node
+	
+	def constructor value
+		super
+		self.value = value
+		
+	get outerHTML
+		"<!-- {escapeTextContent(self.value)} -->"
+		
+	def toString
+		if self.tag and self.tag.toNodeString
+			return self.tag.toNodeString()
+		self.outerHTML
 
-	def initialize type
-		self.nodeName  = type
+export class Element < Node
+
+	def constructor name
+		super
+		self.nodeName  = name
+		self.childNodes = []
 		self.children = []
 		self
 
@@ -158,21 +179,12 @@ export class root.Element < root.Node
 
 	def appendChild child
 		# again, could be optimized much more
+		# console.log 'appendChild',child
 		if typeof child === 'string'
-			self.children.push(escapeTextContent(child,self.nodeName))
+			@childNodes.push(escapeTextContent(child,self.nodeName))
 		else
-			self.children.push(child)
-
+			@childNodes.push(child)
 		return child
-	
-	def appendNested child
-		if child isa Array
-			for member in child
-				self.appendNested(member)
-
-		elif child != null and child != undefined
-			self.appendChild(child.slot_ or child)
-		return
 
 	def insertBefore node, before
 		var idx = self.children.indexOf(before)
@@ -218,11 +230,6 @@ export class root.Element < root.Node
 		self
 		
 	def resolve
-		if self.tag and self.resolvedChildren != self.tag.__slots_
-			var content = self.tag.__slots_
-			self.resolvedChildren = content
-			self.children = []
-			self.appendNested(content)
 		self
 
 	set innerHTML value
@@ -230,7 +237,10 @@ export class root.Element < root.Node
 
 	get innerHTML
 		var o = ""
-		for item,i in self.tag.__slots_
+		if @textContent != undefined
+			return escapeTextContent(@textContent)
+
+		for item,i in @childNodes
 			if item isa String
 				o += escapeTextContent(item,self.nodeName)
 			elif item isa Number
@@ -294,21 +304,20 @@ export class root.Element < root.Node
 		self.classList.classes = (value or '').split(' ')
 		self.classList.toString()
 
-export class root.HTMLElement < root.Element
+export class DocumentFragment < Element
 
-export class root.SVGElement < root.Element
+export class HTMLElement < Element
 
-export class root.Text < root.Element
+export class SVGElement < Element
 
-export class root.Comment < root.Element
-	
-	def initialize value
-		self.value = value
-		
-	get outerHTML
-		"<!-- {escapeTextContent(self.value)} -->"
-		
-	def toString
-		if self.tag and self.tag.toNodeString
-			return self.tag.toNodeString()
-		self.outerHTML
+
+### Event ###
+export class Event
+
+export class MouseEvent < Event
+
+export class KeyboardEvent < Event
+
+export class CustomEvent < Event
+
+export var document = Document.new()

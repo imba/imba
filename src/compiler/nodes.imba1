@@ -5395,9 +5395,6 @@ export class If < ControlFlow
 		test.traverse if test
 		
 		@tag = stack.@tag
-		
-		if @tag
-			@tag.set(hasConditionals: yes)
 
 		# console.log "vars in if",Object.keys(@scope.varmap)
 		for own name, variable of @scope.varmap
@@ -5412,7 +5409,10 @@ export class If < ControlFlow
 			@pretest = AST.truthy(test)
 
 			if @pretest === true
+				# only collapse if condition includes compiletime flags?
 				alt = @alt = null
+				if test isa EnvFlag
+					@preunwrap = true
 
 			elif @pretest === false
 				loc # cache location before removing body
@@ -5437,7 +5437,7 @@ export class If < ControlFlow
 		# would possibly want to look up / out
 		var brace = braces: yes, indent: yes
 
-		if @pretest === true and false
+		if @pretest === true and @preunwrap
 			# what if it is inside expression?
 			let js = body ? body.c(braces: !!prevIf) : 'true'
 

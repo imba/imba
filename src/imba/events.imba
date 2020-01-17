@@ -8,28 +8,29 @@ const keyCodes = {
 	del: [8,46]
 }
 
-# only for web?
-extend class Event
-	
-	def wait$mod state, params
-		Promise.new do |resolve|
-			setTimeout(resolve,(params[0] isa Number ? params[0] : 1000))
+if $web$
+	# only for web?
+	extend class Event
+		
+		def wait$mod state, params
+			Promise.new do |resolve|
+				setTimeout(resolve,(params[0] isa Number ? params[0] : 1000))
 
-	def sel$mod state, params
-		return state.event.target.closest(params[0]) or false
+		def sel$mod state, params
+			return state.event.target.closest(params[0]) or false
 
-	def throttle$mod {handler,element,event}, params
-		return false if handler.throttled
-		handler.throttled = yes
-		let name = params[0]
-		unless name isa String
-			name = "in-{event.type or 'event'}"
-		let cl = element.classList
-		cl.add(name)
-		handler.once('idle') do
-			cl.remove(name)
-			handler.throttled = no
-		return true
+		def throttle$mod {handler,element,event}, params
+			return false if handler.throttled
+			handler.throttled = yes
+			let name = params[0]
+			unless name isa String
+				name = "in-{event.type or 'event'}"
+			let cl = element.classList
+			cl.add(name)
+			handler.once('idle') do
+				cl.remove(name)
+				handler.throttled = no
+			return true
 
 
 # could cache similar event handlers with the same parts
