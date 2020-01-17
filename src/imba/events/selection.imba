@@ -7,7 +7,7 @@ def activateSelectionHandler
 			return if e.handled$
 			e.handled$ = yes
 			
-			let target = imba.document.activeElement
+			let target = document.activeElement
 			if target and target.matches('input,textarea')
 				let custom = CustomEvent.new('selection',{
 					detail: {
@@ -16,7 +16,7 @@ def activateSelectionHandler
 					}
 				})
 				target.dispatchEvent(custom)
-		imba.document.addEventListener('selectionchange',selHandler)
+		document.addEventListener('selectionchange',selHandler)
 
 Element.prototype.on$selection = do |mods, context|
 	activateSelectionHandler()

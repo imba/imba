@@ -10,8 +10,6 @@ var imba = {
 
 root.imba = imba
 
-var raf = root.requestAnimationFrame || (do |blk| setTimeout(blk,1000 / 60))
-
 root.customElements ||= {
 	define: do console.log('no custom elements')
 	get: do console.log('no custom elements')
@@ -29,6 +27,9 @@ imba.setInterval = do |fn,ms|
 
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
+
+if $node$
+	import {Document,Node,Element,HTMLElement,Comment,DocumentFragment,document} from './ssr'
 
 def imba.q$ query, ctx
 	(ctx isa Element ? ctx : document).querySelector(query)
@@ -107,68 +108,7 @@ def imba.emit obj, event, params
 	return
 
 
-# Scheduler
-class Scheduler
-	def constructor
-		@queue = []
-		@stage = -1
-		@batch = 0
-		@scheduled = no
-		@listeners = {}
-
-		#ticker = do |e|
-			@scheduled = no
-			@tick(e)
-		self
-
-	def add item, force
-		if force or @queue.indexOf(item) == -1
-			@queue.push(item)
-
-		@schedule() unless @scheduled
-
-	def listen ns, item
-		@listeners[ns] ||= Set.new()
-		@listeners[ns].add(item)
-
-	def unlisten ns, item
-		@listeners[ns] && @listeners[ns].delete(item)
-
-	get promise
-		Promise.new do |resolve| @add(resolve)
-
-	def tick timestamp
-		var items = @queue
-		@ts = timestamp unless @ts
-		@dt = timestamp - @ts
-		@ts = timestamp
-		@queue = []
-		@stage = 1
-		@batch++
-
-		if items.length
-			for item,i in items
-				if typeof item === 'string' && @listeners[item]
-					@listeners[item].forEach do |item|
-						if item.tick isa Function
-							item.tick(self)
-						elif item isa Function
-							item(self)
-				elif item isa Function
-					item(@dt,self)
-				elif item.tick
-					item.tick(@dt,self)
-		@stage = 2
-		@stage = @scheduled ? 0 : -1
-		self
-
-	def schedule
-		if !@scheduled
-			@scheduled = yes
-			if @stage == -1
-				@stage = 0
-			raf(#ticker)
-		self
+import {Scheduler} from './internal/scheduler'
 
 imba.scheduler = Scheduler.new()
 imba.commit = do imba.scheduler.add('render')
@@ -193,12 +133,16 @@ class ImbaElementRegistry
 	def constructor
 		#types = {}
 
+	def lookup name
+		return #types[name]
+
 	def get name
 		return ImbaElement unless name
 		root.customElements.get(name) or ImbaElement
 
 	def create name
 		if #types[name]
+			# TODO refactor
 			return #types[name].create$()
 		else
 			document.createElement(name)
@@ -215,7 +159,7 @@ class ImbaElementRegistry
 		root.customElements.define(name,klass)
 		return klass
 
-imba.tags = root.imbaElements = ImbaElementRegistry.new()
+imba.tags = ImbaElementRegistry.new()
 
 var proxyHandler =
 	def get target, name
@@ -458,11 +402,8 @@ def imba.createProxyProperty target
 	}
 
 
-
-
-
 def imba.createElement name, bitflags, parent, flags, text, sfc
-	var el = root.document.createElement(name)
+	var el = document.createElement(name)
 
 	if (bitflags & $TAG_CUSTOM$) or (bitflags === undefined and el.__f != undefined)
 		if CustomTagConstructors[name]
@@ -493,7 +434,7 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 import './svg'
 
 def imba.createSVGElement name, bitflags, parent, flags, text, sfc
-	var el = root.document.createElementNS("http://www.w3.org/2000/svg",name)
+	var el = document.createElementNS("http://www.w3.org/2000/svg",name)
 	el.className.baseVal = flags if flags
 	if parent and parent isa Node
 		el.insertInto$(parent)

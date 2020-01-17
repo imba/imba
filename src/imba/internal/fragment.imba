@@ -1,4 +1,4 @@
-
+import {DocumentFragment} from '../dom'
 
 extend class DocumentFragment
 	
