@@ -133,6 +133,16 @@ export class Node
 	# appendChild
 	# removeChild etc
 
+export class Text < Node
+
+	def constructor str
+		super
+		@textContent = str or ''
+		self
+
+	get outerHTML
+		@textContent
+
 export class Comment < Node
 	
 	def constructor value
