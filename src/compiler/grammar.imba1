@@ -190,6 +190,7 @@ var grammar =
 		o 'ImportSpecifierList , ImportSpecifier' do A1.add(A3)
 		o 'ImportSpecifierList OptComma TERMINATOR ImportSpecifier' do A1.add A4
 		o 'INDENT ImportSpecifierList OptComma OUTDENT' do A2
+		o 'INDENT ImportSpecifierList OptComma TERMINATOR OUTDENT' do A2
 		o 'ImportSpecifierList OptComma INDENT ImportSpecifierList OptComma OUTDENT' do A1.concat A4
 	]
 
