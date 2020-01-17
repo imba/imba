@@ -29,7 +29,7 @@ imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
 if $node$
-	import {Document,Node,Element,HTMLElement,Comment,DocumentFragment,document} from './ssr'
+	import {Document,Node,Text,Comment,Element,HTMLElement,DocumentFragment,document} from './ssr'
 
 def imba.q$ query, ctx
 	(ctx isa Element ? ctx : document).querySelector(query)
