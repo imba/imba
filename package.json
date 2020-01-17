@@ -13,29 +13,29 @@
     {
       "name": "Sindre Aarsaether",
       "email": "sindre@identu.no",
-      "url": "http://github.com/somebee/"
+      "url": "https://github.com/somebee/"
     },
     {
       "name": "Magnus Holm",
       "email": "judofyr@gmail.com",
-      "url": "http://github.com/judofyr/"
+      "url": "https://github.com/judofyr/"
     },
     {
       "name": "Slee Woo",
-      "url": "http://github.com/sleewoo/"
+      "url": "https://github.com/sleewoo/"
     },
     {
       "name": "Luke Edwards",
       "email": "luke@lukeed.com",
-      "url": "http://github.com/lukeed/"
+      "url": "https://github.com/lukeed/"
     },
     {
       "name": "Gavin Ray",
-      "url": "http://github.com/GavinRay97/"
+      "url": "https://github.com/GavinRay97/"
     },
     {
       "name": "Alexander Alemayhu",
-      "url": "http://github.com/scanf/"
+      "url": "https://github.com/scanf/"
     }
   ],
   "scripts": {
@@ -51,7 +51,7 @@
   "licenses": [
     {
       "type": "MIT",
-      "url": "http://github.com/imba/imba/raw/master/LICENSE"
+      "url": "https://github.com/imba/imba/raw/master/LICENSE"
     }
   ],
   "engines": {
@@ -66,7 +66,7 @@
     "imbapack": "./bin/imbapack"
   },
   "preferGlobal": true,
-  "homepage": "http://imba.io",
+  "homepage": "https://imba.io",
   "repository": {
     "type": "git",
     "url": "git://github.com/imba/imba.git"
