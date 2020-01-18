@@ -29,7 +29,8 @@ imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
 if $node$
-	import {Document,Node,Text,Comment,Element,HTMLElement,DocumentFragment,document} from './ssr'
+	import {Document,Node,Text,Comment,Element,HTMLElement,DocumentFragment,document,getElementType} from './ssr'
+	imba.document = document
 
 def imba.q$ query, ctx
 	(ctx isa Element ? ctx : document).querySelector(query)
@@ -138,6 +139,8 @@ class ImbaElementRegistry
 
 	def get name
 		return ImbaElement unless name
+		return #types[name] if #types[name]
+		return getElementType(name) if $node$
 		root.customElements.get(name) or ImbaElement
 
 	def create name

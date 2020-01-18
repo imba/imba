@@ -5036,9 +5036,9 @@ export class TagTypeIdentifier < Identifier
 
 	def nativeCreateNode
 		if isSVG
-			CALL(LIT('document.createElementNS'),[STR("http://www.w3.org/2000/svg"),STR(name)])
+			CALL(LIT('imba.document.createElementNS'),[STR("http://www.w3.org/2000/svg"),STR(name)])
 		else
-			CALL(LIT('document.createElement'),[STR(name)])
+			CALL(LIT('imba.document.createElement'),[STR(name)])
 			# LIT('document.createElementNS("http://www.w3.org/2000/svg",name)'
 
 	def isClass
