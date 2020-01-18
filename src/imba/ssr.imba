@@ -37,7 +37,8 @@ export def getElementType typ
 	if typeof typ == 'string'
 		typ = TYPES[typ] or MAP[typ] or TYPES[typ + 'Element']
 
-	# console.log 'get element',String(typ)
+	if !typ
+		return getElementType('HTML')
 
 	if typ and !typ.klass
 		class element < getElementType(typ.up)
