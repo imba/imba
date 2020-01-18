@@ -63,9 +63,8 @@ var HTML_PROPS =
 var HTML_CONSTRUCTORS =
 	a: 'HTMLAnchorElement'
 	p: 'HTMLParagraphElement'
-	p: 'HTMLParagraphElement'
-	h1: 'HTMLParagraphElement'
-	h2: 'HTMLParagraphElement'
+	h1: 'HTMLHeadingElement'
+	h2: 'HTMLHeadingElement'
 	h3: 'HTMLHeadingElement'
 	h4: 'HTMLHeadingElement'
 	h5: 'HTMLHeadingElement'

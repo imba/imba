@@ -3,6 +3,8 @@
 
 var root = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
 
+import {TYPES,MAP} from './schema'
+
 var voidElements = {
 	area: yes
 	base: yes
@@ -21,7 +23,6 @@ var voidElements = {
 	wbr: yes
 }
 
-
 class CustomElementRegistry
 
 	def define
@@ -32,6 +33,31 @@ class CustomElementRegistry
 
 root.customElements ||= CustomElementRegistry.new()
 
+export def getElementType typ
+	if typeof typ == 'string'
+		typ = TYPES[typ] or MAP[typ] or TYPES[typ + 'Element']
+
+	# console.log 'get element',String(typ)
+
+	if typ and !typ.klass
+		class element < getElementType(typ.up)
+		typ.klass = element
+
+	if typ and !typ.idl
+		typ.idl = yes
+		let existing = Object.getOwnPropertyDescriptors(typ.klass.prototype)
+		for own key,alias of typ[1]
+			let name = alias == 1 ? key : alias
+			continue if existing[name]
+
+			Object.defineProperty(typ.klass.prototype,key,{
+				set: do |value|
+					this.setAttribute(name,value)
+					return
+				get: do this.getAttribute(name)
+			})
+
+	return typ.klass
 
 var escapeAttributeValue = do |val|
 	var str = typeof val == 'string' ? val : String(val)
@@ -53,16 +79,16 @@ var escapeTextContent = do |val, nodeName|
 		str = str.replace(/\>/g,"&gt;")
 	return str
 
+
 # could create a fake document 
 export class Document
 
 	def createElement name
 		# look for custom elements now?
 		let typ = imba.tags.lookup(name)
-		let el = (typ or Element).new(name)
+		let el = (typ or getElementType(name)).new(name)
 		el.nodeName = name
 		return el
-
 
 	def createElementNS ns, type
 		return ns == 'svg' ? SVGElement.new(type) : HTMLElement.new(type)
@@ -163,7 +189,7 @@ export class Element < Node
 		super
 		self.nodeName  = name
 		self.childNodes = []
-		self.children = []
+		self.attributes = {}
 		self
 
 	get classList
@@ -194,6 +220,7 @@ export class Element < Node
 			@childNodes.push(escapeTextContent(child,self.nodeName))
 		else
 			@childNodes.push(child)
+			child.parentNode = self
 		return child
 
 	def insertBefore node, before
@@ -202,18 +229,6 @@ export class Element < Node
 		self
 
 	def setAttribute key, value
-		self.attributes ||= []
-		self.attrmap ||= {}
-		
-		let idx = self.attrmap[key]
-		let str = "{key}=\"{escapeAttributeValue(value)}\""
-
-		if idx != null
-			self.attributes[idx] = str
-		else
-			self.attributes.push(str)
-			self.attrmap[key] = self.attributes.length - 1
-
 		self.attributes[key] = value
 		self
 
@@ -267,19 +282,9 @@ export class Element < Node
 		
 		sel += " id=\"{escapeAttributeValue(v)}\"" if var v = self.id
 		sel += " class=\"{escapeAttributeValue(v)}\"" if var v = self.classList.toString()
-		sel += " {self.attributes.join(" ")}" if var v = self.attributes
 
-		# temporary workaround for IDL attributes
-		# needs support for placeholder etc
-		sel += " placeholder=\"{escapeAttributeValue(v)}\"" if v = self.placeholder
-		sel += " value=\"{escapeAttributeValue(v)}\"" if v = self.value
-		sel += " checked" if  self.checked
-		sel += " disabled" if self.disabled
-		sel += " required" if self.required
-		sel += " readonly" if self.readOnly
-		sel += " autofocus" if self.autofocus
-		
-		# console.log("generating outer html",sel)
+		for own key,value of self.attributes
+			sel += " {key}=\"{escapeAttributeValue(value)}\""
 
 		if #style
 			sel += " style=\"{escapeAttributeValue(#style.toString())}\""
@@ -329,5 +334,13 @@ export class MouseEvent < Event
 export class KeyboardEvent < Event
 
 export class CustomEvent < Event
+
+TYPES[''].klass = Element
+TYPES['HTML'].klass = HTMLElement
+TYPES['SVG'].klass = SVGElement
+
+getElementType('')
+getElementType('HTML')
+getElementType('SVG')
 
 export var document = Document.new()
