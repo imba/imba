@@ -1047,6 +1047,8 @@ export class Lexer
 			# console.log "comment {note} - indent({indent}) - {length} {comment:length}"
 			if note.match(/^\/\/ \@(type|param)/)
 				note = '/**' + commentBody + '*/'
+			elif note.match(/^\/\/ \<(reference)/)
+				note = '///' + commentBody
 
 			if (pt and pt != 'INDENT' and pt != 'TERMINATOR') or !pt
 				# console.log "skip comment"

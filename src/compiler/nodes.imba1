@@ -2548,6 +2548,10 @@ export class Root < Code
 		STACK.root = @scope
 
 		var out = c
+
+		if STACK.tsc
+			out = "import 'imba/index';\n{out}"
+
 		var result = {
 			js: out,
 			ast: self,
@@ -2854,11 +2858,6 @@ export class TagDeclaration < ClassDeclaration
 		let jsbody = '{' + body.c() + '}'
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
-		if STACK.tsc
-			# jshead = "const {M(className,@name)} = globalThis.{M(className,@name)} = {jshead}"
-			yes
-
-
 		let js = "{jshead} {jsbody}"
 
 		if !STACK.tsc
@@ -2866,6 +2865,8 @@ export class TagDeclaration < ClassDeclaration
 				js += "; {className}.init$()"
 			let ext = (option(:extends) or LIT('{}')).c
 			js += "; imba.tags.define({name.c},{className},{ext})"
+		else
+			js += "; globalThis.{M className, name} = {className}"
 		return js
 
 export class Func < Code
