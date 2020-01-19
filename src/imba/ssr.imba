@@ -91,14 +91,22 @@ export class Document
 		el.nodeName = name
 		return el
 
-	def createElementNS ns, type
-		return ns == 'svg' ? SVGElement.new(type) : HTMLElement.new(type)
+	def createElementNS ns, name
+		if ns == "http://www.w3.org/2000/svg"
+			let typ = getElementType('svg_'+name)
+			let el = typ.new
+			el.nodeName = name
+			return el
+		return @createElement(name)
 
 	def createTextNode value
 		return Text.new(value)
 		
 	def createComment value
 		return Comment.new(value)
+
+	def createDocumentFragment
+		return DocumentFragment.new
 
 
 # could optimize by using a dictionary in addition to keys
@@ -215,18 +223,19 @@ export class Element < Node
 		self
 
 	def appendChild child
-		# again, could be optimized much more
-		# console.log 'appendChild',child
-		if typeof child === 'string'
-			@childNodes.push(escapeTextContent(child,self.nodeName))
-		else
-			@childNodes.push(child)
-			child.parentNode = self
+		self.childNodes.push(child)
+		child.parentNode = self
 		return child
 
+	def removeChild child
+		var idx = self.childNodes.indexOf(child)
+		if idx >= 0
+			self.childNodes.splice(idx, 1)
+		return self
+
 	def insertBefore node, before
-		var idx = self.children.indexOf(before)
-		self.children.splice(idx, 0, node)
+		var idx = self.childNodes.indexOf(before)
+		self.childNodes.splice(idx, 0, node)
 		self
 
 	def setAttribute key, value
@@ -295,23 +304,26 @@ export class Element < Node
 		else
 			return "<{sel}>{self.innerHTML}</{typ}>"
 
-	set children value
-		#children = value
-
-	get children
-		self.resolve()
-		return #children
-
 	get firstChild
-		self.children[0]
+		self.childNodes[0]
+
+	get lastChild
+		self.childNodes[self.childNodes.length - 1]
 
 	get firstElementChild
-		self.children[0]
+		let l = self.childNodes.length
+		let i = 0
+		while i < l
+			let el = self.childNodes[i++]
+			return el if el isa Element
+		return null
 
 	get lastElementChild
-		self.children[self.children.length - 1]
-	
-	
+		let i = self.childNodes.length
+		while i > 0
+			let el = self.childNodes[--i]
+			return el if el isa Element
+		return null
 
 	get className
 		self.classList.toString()
@@ -321,6 +333,9 @@ export class Element < Node
 		self.classList.toString()
 
 export class DocumentFragment < Element
+
+	get outerHTML
+		return self.innerHTML
 
 export class HTMLElement < Element
 

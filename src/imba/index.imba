@@ -334,6 +334,7 @@ Element.prototype.appendChild$ = Element.prototype.appendChild
 Element.prototype.removeChild$ = Element.prototype.removeChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
+Element.prototype.set$ = Element.prototype.setAttribute
 
 # import './fragment'
 import {createLiveFragment,createFragment} from './internal/fragment'
@@ -438,7 +439,11 @@ import './svg'
 
 def imba.createSVGElement name, bitflags, parent, flags, text, sfc
 	var el = document.createElementNS("http://www.w3.org/2000/svg",name)
-	el.className.baseVal = flags if flags
+	if flags
+		if $node$
+			el.className = flags
+		else
+			el.className.baseVal = flags
 	if parent and parent isa Node
 		el.insertInto$(parent)
 	return el

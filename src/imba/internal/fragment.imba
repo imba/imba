@@ -1,11 +1,11 @@
-import {DocumentFragment} from '../dom'
+import {DocumentFragment,Element,Text,document} from '../dom'
 
 extend class DocumentFragment
 	
 	# Called to make a documentFragment become a live fragment
 	def setup$ flags, options
-		#start = document.createComment('start')
-		#end = document.createComment('end')
+		#start = imba.document.createComment('start')
+		#end = imba.document.createComment('end')
 
 		#end.replaceWith$ = do |other|
 			this.parentNode.insertBefore(other,this)

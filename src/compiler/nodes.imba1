@@ -6455,7 +6455,7 @@ export class TagAttr < TagPart
 			"bind$('{key}',{modifiers.c},{bval})"
 		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
 			# how do we remove attribute then?
-			"setAttribute('{key}',{val})"
+			"set$('{key}',{val})"
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}{op}{val}"
 		elif key.indexOf('--') == 0
