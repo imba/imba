@@ -102,8 +102,8 @@ export var F =
 	TAG_HAS_DYNAMIC_CHILDREN: 2 ** 12
 	TAG_IN_BRANCH: 2 ** 13
 	TAG_BIND_MODEL: 2 ** 14
-	TAG_INDEXED: 2 ** 15
-	TAG_KEYED: 2 ** 16
+	TAG_INDEXED: 2 ** 15 # not used
+	TAG_KEYED: 2 ** 16 # not used
 
 	# render marks
 	DIFF_BUILT: 2 ** 0
@@ -6741,7 +6741,7 @@ class TagLike < Node
 		hasFlag(F.TAG_LAST_CHILD)
 
 	def isIndexed
-		hasFlag(F.TAG_INDEXED)
+		option(:indexed)
 
 	def isCustom
 		hasFlag(F.TAG_CUSTOM)
@@ -6956,16 +6956,18 @@ export class TagBranchFragment < TagLike
 export class TagLoopFragment < TagLike
 
 	def isKeyed
-		hasFlag(F.TAG_KEYED) or hasFlag(F.TAG_HAS_BRANCHES)
+		option(:keyed) or hasFlag(F.TAG_HAS_BRANCHES)
 
 	def consumeChildren
 		super
 
 		# determine if the order of elements will ever change inside loop
 		if @consumed.every(do $1 isa Tag and !$1.option(:key) and !$1.isDynamicType) and !hasFlag(F.TAG_HAS_BRANCHES)
-			flag(F.TAG_INDEXED)
+			set(indexed: yes)
+			# flag(F.TAG_INDEXED)
 		else
-			flag(F.TAG_KEYED)
+			set(keyed: yes)
+			# flag(F.TAG_KEYED)
 
 	def cvar
 		@cvar || tagvar('c')
@@ -6974,7 +6976,7 @@ export class TagLoopFragment < TagLike
 		if stack.isExpression
 			return CALL(FN([],[self]),[]).c
 		# if @tag and @childTags
-		let iref = LIT('imba.createFragment')
+		let iref = option(:indexed) ? LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
 		# should know how many inner slots this fragment has?
 		let cache = parent.cvar
 		let parentRef = parent isa TagBranchFragment ? LIT('null') : fragment.tvar

@@ -337,10 +337,11 @@ Element.prototype.replaceChild$ = Element.prototype.replaceChild
 Element.prototype.set$ = Element.prototype.setAttribute
 
 # import './fragment'
-import {createLiveFragment,createFragment} from './internal/fragment'
+import {createLiveFragment,createIndexedFragment,createKeyedFragment} from './internal/fragment'
 
 imba.createLiveFragment = createLiveFragment
-imba.createFragment = createFragment
+imba.createIndexedFragment = createIndexedFragment
+imba.createKeyedFragment = createKeyedFragment
 
 # Create custom tag with support for scheduling and unscheduling etc
 

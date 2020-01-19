@@ -243,10 +243,10 @@ export def createLiveFragment bitflags, options
 	el.setup$(bitflags, options)
 	return el
 
-export def createFragment bitflags, parent
-	if bitflags & $TAG_INDEXED$
-		return IndexedTagFragment.new(bitflags,parent)
-	else
-		return KeyedTagFragment.new(bitflags,parent)
+export def createIndexedFragment bitflags, parent
+	return IndexedTagFragment.new(bitflags,parent)
+
+export def createKeyedFragment bitflags, parent
+	return KeyedTagFragment.new(bitflags,parent)
 
 
