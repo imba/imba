@@ -2692,8 +2692,8 @@ export class ClassDeclaration < Code
 		scope.visit
 
 		if @superclass and !option(:extension) and !STACK.tsc
-			addMethod('super$',[LIT('k')],'super[k]')
-			addMethod('super$set',[LIT('k,v')],'super[k] = v')
+			# addMethod('super$',[LIT('k')],'super[k]')
+			# addMethod('super$set',[LIT('k,v')],'super[k] = v')
 			staticInit
 
 		body.traverse
@@ -2704,9 +2704,6 @@ export class ClassDeclaration < Code
 		var inits = InstanceInitBlock.new()
 		var staticInits = ClassInitBlock.new()
 		var ctor = body.option(:ctor)
-
-		if isTag
-			ctor = instanceInit
 
 		for node in body when node isa ClassField
 			staticInits.add(node)
@@ -2722,6 +2719,7 @@ export class ClassDeclaration < Code
 
 		if !inits.isEmpty
 			if isTag
+				ctor = instanceInit
 				ctor.inject(inits)
 
 			elif ctor

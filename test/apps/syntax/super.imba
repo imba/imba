@@ -54,8 +54,9 @@ test do
 test do
 	eq Dog.new(1,2,3).params, [1]
 
-# should still work when extending class
 test do
+	# removed this functionality
+	return
 	extend class Cat
 		set alias value
 			super
