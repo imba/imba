@@ -4212,11 +4212,6 @@ export class LocalVarAccess < Access
 		variable.@alias or super()
 
 
-export class GlobalVarAccess < ValueNode
-
-	def c
-		value.c
-
 
 export class PropertyAccess < Access
 
@@ -4339,11 +4334,10 @@ export class VarOrAccess < ValueNode
 
 			# FIX
 			# @value.safechain = safechain
-		@value = GlobalVarAccess.new(value)
 		return self
 
 	def c
-		@variable ? super() : value.c
+		@variable ? super() : M(@token.value,@token)
 		# M((@variable ? super() : value.c), @token)
 
 	def js o
@@ -6472,12 +6466,10 @@ export class TagModifier < TagPart
 		@params.traverse if @params
 		# TODO support evaluated paths?
 		for param in @params when param isa VarOrAccess
-			if param.value isa GlobalVarAccess
-				# what about nested path here?
-				let sym = param.value.c
-				if sym and sym[0] == '$'
-					let special = TagHandlerSpecialArg.new(sym.slice(1))
-					@params.swap(param,special)
+			let sym = param.@token.value
+			if sym and sym[0] == '$'
+				let special = TagHandlerSpecialArg.new(sym.slice(1))
+				@params.swap(param,special)
 		self
 		
 	def js
