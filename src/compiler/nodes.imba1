@@ -10,68 +10,39 @@ import ImbaParseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
-var HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ")
-var HTML_TAGS_UNSAFE = "article aside header section".split(" ")
+var TAG_NAMES = constants.TAG_NAMES
 
-# var SVG_TAGS = "svg g rect circle line polygon path".split(" ")
-var SVG_TAGS = " a animate animateMotion animateTransform circle clipPath color-profile defs desc discard ellipse feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feDropShadow feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feImage feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence filter foreignObject g hatch hatchpath image line linearGradient marker mask mesh meshgradient meshpatch meshrow metadata mpath path pattern polygon polyline radialGradient rect script set solidcolor stop style svg switch symbol text textPath title tspan unknown use view".split(" ")
+var TAG_TYPES = {}
+var TAG_ATTRS = {}
 
-var HTML_ATTRS =
-	a: "href target hreflang media download rel type ping referrerpolicy"
-	audio: "autoplay controls crossorigin loop muted preload src"
-	area: "alt coords download href hreflang ping referrerpolicy rel shape target"
-	base: "href target"
-	video: "autoplay buffered controls crossorigin height loop muted preload poster src width playsinline"
-	fieldset: "disabled form name"
-	form: "method action enctype autocomplete target"
-	button: "autofocus type form formaction formenctype formmethod formnovalidate formtarget value name"
-	embed: "height src type width"
-	input: "accept disabled form list max maxlength min minlength pattern required size step type"
-	label: "accesskey for form"
-	img: "alt src srcset crossorigin decoding height importance intrinsicsize ismap referrerpolicy sizes width usemap"
-	link: "rel type href media"
-	iframe: "allow allowfullscreen allowpaymentrequest height importance name referrerpolicy sandbox src srcdoc width frameborder align longdesc scrolling"
-	meta: "property content charset desc http-equiv color-scheme name scheme"
-	map: "name"
-	optgroup: "label"
-	option: "label"
-	output: "for form"
-	object: "type data width height"
-	param: "name type value valuetype"
-	progress: "max"
-	script: "src type async defer crossorigin integrity nonce language nomodule"
-	select: "size form multiple"
-	source: "sizes src srcset type media"
-	textarea: "rows cols minlength maxlength form wrap"
-	track: "default kind label src srclang"
-	td: "colspan rowspan headers"
-	th: "colspan rowspan"
+TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br
+ button canvas caption cite code col colgroup data datalist dd del details dfn
+ div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
+ head header hr html i iframe img input ins kbd keygen label legend li link
+ main map mark menu menuitem meta meter nav noscript object ol optgroup option
+ output p param pre progress q rp rt ruby s samp script section select small
+ source span strong style sub summary sup table tbody td textarea tfoot th
+ thead time title tr track u ul var video wbr".split(" ")
 
-var HTML_PROPS =
-	input: "autofocus autocomplete autocapitalize autocorrect value placeholder required disabled multiple checked readOnly spellcheck"
-	textarea: "autofocus autocomplete autocapitalize autocorrect value placeholder required disabled multiple checked readOnly spellcheck"
-	form: "novalidate"
-	fieldset: "disabled"
-	button: "disabled"
-	select: "autofocus disabled required readOnly multiple"
-	option: "disabled selected value"
-	optgroup: "disabled"
-	progress: "value"
-	fieldset: "disabled"
-	canvas: "width height"
+TAG_TYPES.SVG = "circle defs ellipse g line linearGradient mask path pattern polygon polyline
+radialGradient rect stop svg text tspan".split(" ")
 
-var HTML_CONSTRUCTORS =
-	a: 'HTMLAnchorElement'
-	p: 'HTMLParagraphElement'
-	h1: 'HTMLHeadingElement'
-	h2: 'HTMLHeadingElement'
-	h3: 'HTMLHeadingElement'
-	h4: 'HTMLHeadingElement'
-	h5: 'HTMLHeadingElement'
-	h6: 'HTMLHeadingElement'
-	input: 'HTMLInputElement'
-	form: 'HTMLFormElement'
-	label: 'HTMLLabelElement'
+TAG_ATTRS.HTML = "accept accessKey action allowFullScreen allowTransparency alt async
+ autoComplete autoFocus autoPlay cellPadding cellSpacing charSet checked
+ className cols colSpan content contentEditable contextMenu controls coords
+ crossOrigin data dateTime defer dir disabled download draggable encType form
+ formNoValidate frameBorder height hidden href hrefLang htmlFor httpEquiv icon
+ id label lang list loop max maxLength mediaGroup method min multiple muted
+ name noValidate pattern placeholder poster preload radioGroup readOnly rel
+ required role rows rowSpan sandbox scope scrollLeft scrolling scrollTop
+ seamless selected shape size span spellCheck src srcDoc srcSet start step
+ style tabIndex target title type useMap value width wmode"
+
+TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradientTransform
+ gradientUnits markerEnd markerMid markerStart offset opacity
+ patternContentUnits patternUnits points preserveAspectRatio r rx ry
+ spreadMethod stopColor stopOpacity stroke strokeDasharray strokeLinecap
+ strokeOpacity strokeWidth textAnchor transform version viewBox x1 x2 x y1 y2 y"
 
 var CUSTOM_EVENTS = {
 	intersect: yes
@@ -5059,19 +5030,14 @@ export class TagTypeIdentifier < Identifier
 		LIT(@str)
 
 	def toClassName
-		if isNative
-			return HTML_CONSTRUCTORS[@str] or 'HTMLElement'
-		elif isNativeSVG
-			return 'SVG' + helpers.pascalCase(@str + '-element')
-		elif @str == 'fragment'
+		let match = TAG_NAMES[isSVG ? "svg_{@name}" : @name]
+		return match:name if match
+			
+		if @str == 'fragment'
 			return 'DocumentFragment'
 		else
 			return helpers.pascalCase(@str + '-component')
 
-	def toNativeClass
-		let name = @str
-		let prefix = (isSVG ? 'SVG' : 'HTML')
-		prefix + helpers.pascalCase(name+'-element')
 
 	def spawner
 		console.log "TagTypeIdentifier shuold never be used"
@@ -6179,47 +6145,6 @@ export class Splat < ValueNode
 
 
 # TAGS
-
-var TAG_TYPES = {}
-var TAG_ATTRS = {}
-
-TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br
- button canvas caption cite code col colgroup data datalist dd del details dfn
- div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
- head header hr html i iframe img input ins kbd keygen label legend li link
- main map mark menu menuitem meta meter nav noscript object ol optgroup option
- output p param pre progress q rp rt ruby s samp script section select small
- source span strong style sub summary sup table tbody td textarea tfoot th
- thead time title tr track u ul var video wbr".split(" ")
- 
-TAG_TYPES.HTML_OPT = "abbr address area article aside audio b base bdi bdo big blockquote body br
- button canvas caption cite code col colgroup dd del details dfn
- div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
- head header hr html i img ins kbd keygen label legend li link
- main mark meta meter nav noscript object ol optgroup option
- output p param pre q rp rt ruby s samp script section small
- source span strong style sub summary sup table tbody td tfoot th
- thead time title tr track u ul wbr".split(" ")
-
-TAG_TYPES.SVG = "circle defs ellipse g line linearGradient mask path pattern polygon polyline
-radialGradient rect stop svg text tspan".split(" ")
-
-TAG_ATTRS.HTML = "accept accessKey action allowFullScreen allowTransparency alt async
- autoComplete autoFocus autoPlay cellPadding cellSpacing charSet checked
- className cols colSpan content contentEditable contextMenu controls coords
- crossOrigin data dateTime defer dir disabled download draggable encType form
- formNoValidate frameBorder height hidden href hrefLang htmlFor httpEquiv icon
- id label lang list loop max maxLength mediaGroup method min multiple muted
- name noValidate pattern placeholder poster preload radioGroup readOnly rel
- required role rows rowSpan sandbox scope scrollLeft scrolling scrollTop
- seamless selected shape size span spellCheck src srcDoc srcSet start step
- style tabIndex target title type useMap value width wmode"
-
-TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradientTransform
- gradientUnits markerEnd markerMid markerStart offset opacity
- patternContentUnits patternUnits points preserveAspectRatio r rx ry
- spreadMethod stopColor stopOpacity stroke strokeDasharray strokeLinecap
- strokeOpacity strokeWidth textAnchor transform version viewBox x1 x2 x y1 y2 y"
 
 
 export class IdentifierExpression < Node

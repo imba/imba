@@ -324,6 +324,7 @@ export const MAP = {
 var keys = Object.keys(TYPES)
 for typ,i in keys
 	let item = TYPES[typ]
+	item.name = typ + 'Element'
 	item.up = TYPES[keys[item[0]]]
 
 for own name,ref of MAP
