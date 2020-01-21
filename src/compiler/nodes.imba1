@@ -528,6 +528,7 @@ export class Stack
 		@es5 = null
 		@optlevel = null
 		@tag = null
+		@sfcid = null
 		self
 
 	def incr name
