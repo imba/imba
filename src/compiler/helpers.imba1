@@ -71,6 +71,8 @@ export def flatten arr
 	arr.forEach do |v| v isa Array ? out:push.apply(out,flatten(v)) : out.push(v)
 	return out
 
+export def clearLocationMarkers str
+	str.replace(/\/\*\%([\w\|]*)\$\*\//g,'')	
 
 export def pascalCase str
 	str.replace(/(^|[\-\_\s])(\w)/g) do |m,v,l| l.toUpperCase

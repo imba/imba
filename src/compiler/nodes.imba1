@@ -6466,11 +6466,17 @@ export class TagModifier < TagPart
 	def visit
 		@params.traverse if @params
 		# TODO support evaluated paths?
-		for param in @params when param isa VarOrAccess
-			let sym = param.@token.value
-			if sym and sym[0] == '$'
-				let special = TagHandlerSpecialArg.new(sym.slice(1))
-				@params.swap(param,special)
+		for param in @params
+			if param isa VarOrAccess
+				let sym = param.@token.value
+				if sym and sym[0] == '$'
+					let special = TagHandlerSpecialArg.new(sym.slice(1))
+					@params.swap(param,special)
+			elif param isa PropertyAccess
+				let out = helpers.clearLocationMarkers(param.js())
+				if out[0] == '$'
+					@params.swap(param,TagHandlerSpecialArg.new(out.slice(1)))
+
 		self
 		
 	def js
@@ -6563,7 +6569,6 @@ export class TagHandler < TagPart
 		super
 
 		if @name and CUSTOM_EVENTS[String(@name)]
-			console.log "depending on selection event!!"
 			scope__.imbaDependency('events/' + String(@name))
 
 	def isStatic

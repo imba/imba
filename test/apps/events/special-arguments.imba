@@ -2,23 +2,25 @@ var name = "John Doe"
 
 tag app-root
 
-	def ping e
-		console.info("{e.detail.start},{e.detail.start}")
-		# console.log "event",event
-
 	def log ...args
 		console.info(args)
 
 	def render
-		<self :hello.log($type,$detail)>
+		<self :hello.log($.type,$.detail)>
 			# $ refers to the event itself
 			
 			<div.a :click.log($)> 'A'
 
 			# $identifier refers to event[identifier]
-			<div.b :click.log($type)> 'Event type'
+			<div.b :click.log($.type)> 'Event type'
 
-			<div.c :click.trigger('hello','test')> 'Trigger custom'
+			<div.c :click.emit('hello','test')> 'Trigger custom'
+
+			<div.d :click.log('d',$)> 'D'
+
+			<div.d :click.log('d',$)> 'D'
+
+			<div.e reference=123 :click.log($element.reference)> 'E'
 
 imba.mount(<app-root>)
 
@@ -35,3 +37,9 @@ test "$type" do
 
 test "$detail" do
 	await click($1,'.c','hello,test')
+
+test do
+	await click($1,'.d','d,[object MouseEvent]')
+
+test do
+	await click($1,'.e','123')
