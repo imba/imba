@@ -52,6 +52,11 @@ def run item
 			test.log.push(params)
 			unless options.concurrent
 				console.log(*params)
+
+		var progress = do |out|
+			if options.concurrent
+				process.stdout.write(out or ".")
+				# console.log(*params)
 		# var src =  "http://localhost:1234/index.html#{item}"
 		var root = path.resolve(__dirname,"..","test")
 		var src =  "file://{root}/index.html#{item}"
@@ -68,10 +73,10 @@ def run item
 			'spec:test': do |e|
 				e.file = item
 				tests.push(e)
-				if e.failed
-					print helpers.ansi.f('redBright',"  ✘ {e.name}")
-				else
-					print helpers.ansi.f('greenBright',"  ✔ {e.name}")
+				let color = e.failed ? 'red' : 'green'
+				let prefix = e.failed ? '✘' : '✔'
+				print helpers.ansi.f("{color}Bright","  {prefix} {e.name}")
+				progress(helpers.ansi.f("{color}Bright",prefix))
 
 			'spec:warn': do |e|
 				print helpers.ansi.f('yellowBright',"    - {e.message}")
