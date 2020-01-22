@@ -39,5 +39,10 @@ test "scoped css" do
 	eq window.getComputedStyle(p2).fontSize, '8px'
 
 test "work with document.createElement" do
-	var el = imba.createElement('app-root')
+	var el = document.createElement('app-root')
+	document.body.appendChild(el)
+	eq JSON.stringify(el.dataset),JSON.stringify(p2.dataset)
+
+test "work with imba.createComponent" do
+	var el = imba.createComponent('app-root')
 	eq JSON.stringify(el.dataset),JSON.stringify(p2.dataset)
