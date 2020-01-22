@@ -2143,8 +2143,9 @@ export class Root < Code
 
 		traverse
 		STACK.@analyzing = false
-
-		return scope.dump
+		let out = scope.dump
+		out:tokens = o.@tokens
+		return out
 
 	def inspect
 		true
@@ -3948,6 +3949,11 @@ export class PropertyAccess < Access
 	def visit
 		@right.traverse if @right
 		@left.traverse if @left
+
+		unless up isa Call
+			console.log 'prop access call?!'
+			scope__.root.@implicitCalls.push(@right)
+
 		return self
 
 	# right in c we should possibly override
@@ -4094,6 +4100,7 @@ export class VarOrAccess < ValueNode
 		# really? what about just mimicking the two diffrent instead?
 		# Should we not return a call directly instead?
 		scope.root.@implicitAccessors.push(self)
+		scope.root.@implicitCalls.push(value)
 		@value = PropertyAccess.new(".",scope.context,value)
 		# mark the scope / context -- so we can show correct implicit
 		@token.@meta = {type: 'ACCESS'}
@@ -7971,6 +7978,7 @@ export class RootScope < Scope
 		@styles = []
 		@selfless = no
 		@implicitAccessors = []
+		@implicitCalls = []
 		@entities = RootEntities.new(self)
 		@object = Obj.wrap({})
 		@head = [@vars]
@@ -8008,6 +8016,7 @@ export class RootScope < Scope
 		var obj = {
 			warnings: AST.dump(@warnings)
 			autoself: @implicitAccessors.map(|s| s.dump)
+			autocall: @implicitCalls.map(|s| s.dump)
 		}
 
 		if OPTS:analysis:scopes

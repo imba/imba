@@ -46,6 +46,7 @@ Usage: imbac [options] path/to/script.imba
       --silent			 only print out errors (skip warnings)
   -w, --watch            recompile files on change
       --wrap             compile with top-level function wrapper
+      --migrate
 
 """
 
@@ -200,7 +201,54 @@ class CLI
 			o2:entities = yes
 			var out = compiler.analyze(src:sourceBody,o2)
 			src:analysis = out
+			delete out:tokens
 			present(JSON.stringify(out,null,2))
+
+	def migrate
+		traverse do |src|
+			var o2 = Object.create(o)
+			o2:filename = src:filename
+			o2:entities = yes
+			var out = compiler.analyze(src:sourceBody,o2)
+			src:analysis = out
+			var source = src:sourceBody
+			var result = ''
+
+			var edits = []
+
+			for token in out:tokens
+				if token.@type == '.:' && token.@loc
+					edits.push([token.@loc,'.',1])
+
+			for item in out:autoself
+				edits.push([item:loc[0],'self.',0])
+
+			for item in out:autocall
+				edits.push([item:loc[1],'()',0])
+
+			edits = edits.sort do |a,b|
+				let d = a[0] - b[0]
+				if d == 0
+					return a[2] - b[2]
+				else
+					return d
+
+			# console.log 'edits',edits
+
+			var edit = edits.shift()
+			var k = 0
+			while k < source:length
+				if edit && edit[0] == k
+					result += edit[1]
+					k += (edit[2] or 0)
+					edit = edits.shift()
+				else
+					result += source[k++]
+
+
+			present(source)
+			present(result)
+			# present(JSON.stringify(out,null,2))
 
 	def tokenize
 		# should prettyprint tokens
@@ -332,6 +380,9 @@ class CLI
 			elif o:tokenize
 				o:print = yes
 				tokenize(sources,o)
+			elif o:migrate
+				o:print = yes
+				migrate(sources,o)
 			else
 				compile(sources,o)
 		catch e
