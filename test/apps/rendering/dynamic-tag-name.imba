@@ -29,7 +29,7 @@ tag app-root
 				<{blk.type}-item.listed>
 					<div.inner> blk.name
 			if flip
-				<{blocks[0].type}-item.cond> <div.inner> blk.name
+				<{blocks[0].type}-item.cond> <div.inner> blocks[0].name
 
 var app = <app-root>
 imba.mount app
