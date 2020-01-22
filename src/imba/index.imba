@@ -418,7 +418,6 @@ class ImbaElement < HTMLElement
 		this.schedule() if #schedule
 
 		if this.mount isa Function
-			Promise.resolve(null).then
 			let res = this.mount()
 			if res && res.then isa Function
 				res.then(imba.commit)
