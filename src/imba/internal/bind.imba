@@ -26,6 +26,18 @@ var bindRemove = do |object,value|
 	elif object and object.delete isa Function
 		object.delete(value)
 
+def createProxyProperty target
+	def getter
+		target[0] ? target[0][target[1]] : undefined
+
+	def setter v
+		target[0] ? (target[0][target[1]] = v) : null
+
+	return {
+		get: getter
+		set: setter
+	}
+
 ###
 Data binding
 ###
@@ -45,7 +57,7 @@ extend class Element
 				this.on$('change',{_change$: true},this) if this.change$
 				this.on$('input',{capture: true,_input$: true},this) if this.input$
 
-		Object.defineProperty(self,key,o isa Array ? imba.createProxyProperty(o) : o)
+		Object.defineProperty(self,key,o isa Array ? createProxyProperty(o) : o)
 		return o
 
 Object.defineProperty(Element.prototype,'richValue',{

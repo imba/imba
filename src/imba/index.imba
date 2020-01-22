@@ -345,6 +345,16 @@ imba.createKeyedFragment = createKeyedFragment
 
 # Create custom tag with support for scheduling and unscheduling etc
 
+var mountedQueue
+var mountedFlush = do
+	let items = mountedQueue
+	mountedQueue = null
+	if items
+		for item in items
+			item.mounted$()
+	return
+
+
 class ImbaElement < HTMLElement
 	def constructor
 		super()
@@ -356,6 +366,7 @@ class ImbaElement < HTMLElement
 		#f = 0
 
 	def init$
+		#f |= $TAG_INITED$
 		self
 
 	# returns the named slot - for context
@@ -367,61 +378,73 @@ class ImbaElement < HTMLElement
 
 	def schedule
 		imba.scheduler.listen('render',self)
-		#scheduled = yes
-		@tick()
+		#f |= $TAG_SCHEDULED$
+		return self
 
 	def unschedule
 		imba.scheduler.unlisten('render',self)
-		#scheduled = no
+		#f &= ~$TAG_SCHEDULED$
+		return self
+
 
 	def connectedCallback
-		unless #f
-			#f = 8
-			this.awaken()
+		let flags = #f
+
+		if flags & $TAG_MOUNTED$
+			return
+
+		if this.mounted isa Function
+			unless mountedQueue
+				mountedQueue = []
+				Promise.resolve().then(mountedFlush)
+			mountedQueue.unshift(this)
+
+		unless flags & $TAG_INITED$
+			this.init$()
+
+		unless flags & $TAG_AWAKENED$
+			#f |= $TAG_AWAKENED$
+			this.awaken() if this.awaken
+
+		unless flags
+			this.render() if this.render
+
+		this.mount$()
+		return this
+
+	def mount$
+		#f |= $TAG_MOUNTED$
+
 		this.schedule() if #schedule
-		this.mount() if this.mount
+
+		if this.mount isa Function
+			Promise.resolve(null).then
+			let res = this.mount()
+			if res && res.then isa Function
+				res.then(imba.commit)
+		return this
+
+	def mounted$
+		this.mounted() if this.mounted isa Function
+		return this
 
 	def disconnectedCallback
-		this.unschedule() if #scheduled
-		this.unmount() if this.unmount
+		#f &= ~$TAG_MOUNTED$
+		this.unschedule() if #f & $TAG_SCHEDULED$
+		this.unmount() if this.unmount isa Function
 
 	def tick
 		this.render && this.render()
 
 	def awaken
 		#schedule = true
+		
 
 root.customElements.define('imba-element',ImbaElement)
 
 
-def imba.createProxyProperty target
-	def getter
-		target[0] ? target[0][target[1]] : undefined
-
-	def setter v
-		target[0] ? (target[0][target[1]] = v) : null
-
-	return {
-		get: getter
-		set: setter
-	}
-
-
 def imba.createElement name, bitflags, parent, flags, text, sfc
 	var el = document.createElement(name)
-
-	if (bitflags & $TAG_CUSTOM$) or (bitflags === undefined and el.__f != undefined)
-		if CustomTagConstructors[name]
-			el = CustomTagConstructors[name].create$(el)
-			el.slot$ = ImbaElement.prototype.slot$
-			el.__slots = {}
-
-		el.__f = bitflags
-		el.init$()
-
-		if text !== null
-			el.slot$('__').text$(text)
-			text = null
 
 	el.className = flags if flags
 
@@ -433,6 +456,29 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 
 	if parent and parent isa Node
 		el.insertInto$(parent)
+
+	return el
+
+def imba.createComponent name, bitflags, parent, flags, text, sfc
+	# the component could have a different web-components name?
+	var el = document.createElement(name)
+
+	if CustomTagConstructors[name]
+		el = CustomTagConstructors[name].create$(el)
+		el.slot$ = ImbaElement.prototype.slot$
+		el.__slots = {}
+
+	el.up$ = parent
+	el.__f = bitflags
+	el.init$()
+
+	if text !== null
+		el.slot$('__').text$(text)
+
+	el.className = flags if flags
+
+	if sfc
+		el.setAttribute('data-'+sfc,'')
 
 	return el
 

@@ -60,10 +60,11 @@ var TREE_TYPE =
 
 export var F = 
 	TAG_INITED: 2 ** 0 
-	TAG_CUSTOM: 2 ** 2
+	TAG_BUILT: 2 ** 1 # available
+	TAG_CUSTOM: 2 ** 2 # available
 	TAG_AWAKENED: 2 ** 3
 	TAG_MOUNTED: 2 ** 4
-	TAG_SCHEDULE: 2 ** 5
+	TAG_SCHEDULE: 2 ** 5 # available
 	TAG_SCHEDULED: 2 ** 6
 	TAG_FIRST_CHILD: 2 ** 7
 	TAG_LAST_CHILD: 2 ** 8
@@ -5017,6 +5018,9 @@ export class TagTypeIdentifier < Identifier
 
 	def isSVG
 		@ns == 'svg' or (!isNative and !@ns and TAG_TYPES.SVG.indexOf(@str) >= 0)
+
+	def isCustom
+		!isNative and !isNativeSVG
 	
 	def isSimpleNative
 		isNative and !(/input|textarea|select|form|iframe/).test(@str)
@@ -6665,8 +6669,8 @@ class TagLike < Node
 	def isIndexed
 		option(:indexed)
 
-	def isCustom
-		hasFlag(F.TAG_CUSTOM)
+	def isComponent
+		option(:custom)
 
 	def hasLoops
 		hasFlag(F.TAG_HAS_LOOPS)
@@ -6918,6 +6922,9 @@ export class TagKeyedFragment < TagLike
 
 export class TagSlotProxy < TagLike
 
+	def ref
+		tvar
+
 	def tagvarprefix
 		oid+'S'
 
@@ -6941,8 +6948,8 @@ export class Tag < TagLike
 		@options:type && @options:type.traverse
 
 		# Need to potentially resolve tagname to variables first?
-		if isSelf or (tagName.indexOf('-') >= 0) or isDynamicType
-			flag(F.TAG_CUSTOM)
+		if isSelf or (tagName.indexOf('-') >= 0) or isDynamicType or (@type?.isCustom)
+			@options:custom = yes
 
 		if attrs:length == 0 && !@options:type
 			@options:type = 'fragment'
@@ -6978,7 +6985,7 @@ export class Tag < TagLike
 	def register node
 		node = super(node)
 
-		if node isa TagLike and (isCustom and !isSelf)
+		if node isa TagLike and (isComponent and !isSelf)
 			let slotKey = node isa Tag ? node.@attrmap:slot : null
 			let name = '__'
 			if slotKey
@@ -7084,6 +7091,8 @@ export class Tag < TagLike
 	def create_
 		if isFragment or isSlot
 			LIT('imba.createLiveFragment')
+		elif isComponent
+			LIT('imba.createComponent')
 		elif isSVG
 			LIT('imba.createSVGElement')
 		else
@@ -7120,8 +7129,9 @@ export class Tag < TagLike
 		var isReactive = self.isReactive
 
 		var canInline = no
-		var shouldEnd = hasFlag(F.TAG_CUSTOM)
+		var shouldEnd = isComponent
 		var dynamicKey = null
+		var ownCache = no
 		var slotPath = isSlot ? "{fragment.root.tvar}.__slots.{option(:name)}" : ""
 
 		if STACK.tsc
@@ -7170,8 +7180,10 @@ export class Tag < TagLike
 			params[4] = nodes[0].value.c
 			nodes = []
 
+		# checking to see if a node is static enough to be inserted directly into the dom without
+		# any references.
 		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey
-			if nodes.every(|v| v isa Tag or v isa Str)
+			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType))
 				if !shouldEnd and !hasNonTagChildren and (parent isa Tag) and !isSlot and !option(:dynamic)
 					canInline = yes
 
@@ -7258,19 +7270,24 @@ export class Tag < TagLike
 
 				if isDetached or true
 					add "{bvar}||({tvar}.up$={fragment.tvar})"
+
 				# dont add cvar always!
+				# rule is just "do we need our own cache?"
 				if @dynamics:length or (@consumed:length and nodes:length)
+					ownCache = yes
 					# console.log "has dynamics? {@dynamics:length}",@consumed.map(|v| v:constructor:name)
-					@cvar = tagvar(:c)
-					add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
+					# @cvar = tagvar(:c)
+					# add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
 
 			elif !isReactive
 				add "({ctor})"
 
 			elif canInline
+				@ref = tvar
+				@bvar = parent.bvar
 				add "{parent.bvar} || ({ctor})"
 			else
-				let cref = "{cvar}.{oid}"
+				let cref = @cref = "{cvar}.{oid}"
 				let ref = dynamicKey ? "{cvar}[{dynamicKey}]" : cref
 
 				if markWhenBuilt
@@ -7285,9 +7302,14 @@ export class Tag < TagLike
 				@ref = tvar
 
 				if dynamicKey # and cache
-					@cvar = tagvar(:c)
-					add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
-					add "({tvar}=={cref}) || (!{cref} && ({cref}={tvar})) || {cref}.replaceWith$({cref}={tvar})"
+					ownCache = yes
+
+			if ownCache
+				@cvar = tagvar(:c)
+				add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
+
+
+					
 
 		if @slots
 			for own name, slot of @slots
@@ -7418,21 +7440,28 @@ export class Tag < TagLike
 			else
 				add item.c(o)
 
-		if parent isa TagLoopFragment
-			
-			if parent.isKeyed
-				add "{parent.ref}.push({tvar},{parent.kvar}++,{kvar})"
-			elif parent.isIndexed
-				add "{parent.kvar}++"
-
-		elif isFragment and parent and !(parent isa TagBranchFragment)
-			add "{fragment.ref}.insert$({tvar},{@flags})"
 
 		if shouldEnd
 			foot.push("{bvar} || !{tvar}.setup || {tvar}.setup({dvar})") unless isSelf
 			foot.push(isSelf ? "{tvar}.close$({dvar})" : "{tvar}.end$({dvar})")
 
+		if parent isa TagLoopFragment
+			
+			if parent.isKeyed
+				foot.push "{parent.ref}.push({tvar},{parent.kvar}++,{kvar})"
+			elif parent.isIndexed
+				foot.push "{parent.kvar}++"
 
+		elif isFragment and parent and !(parent isa TagBranchFragment)
+			foot.push "{fragment.ref}.insert$({tvar},{@flags})"
+
+		elif parent and isComponent and !(parent isa TagBranchFragment)
+			let pref = fragment.ref
+			let cref = @cref
+			if dynamicKey
+				foot.push "({tvar}=={cref}) || (!{cref} && ({cref}={tvar}).insertInto$({pref})) || {cref}.replaceWith$({cref}={tvar})"
+			else
+				foot.push "{bvar} || {tvar}.insertInto$({pref})"
 
 		if option(:fragmented)
 			add "imba.ctx=null"
