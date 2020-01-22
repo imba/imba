@@ -1421,8 +1421,6 @@ export class Lexer
 				token('BLOCK_PARAM_END', value,1)
 				pair '|'
 				return length
-			else
-				return 0
 
 		if value is ';'             
 			@seenFor = no
