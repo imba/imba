@@ -209,6 +209,7 @@ class CLI
 			var o2 = Object.create(o)
 			o2:filename = src:filename
 			o2:entities = yes
+			var targetPath = src:sourcePath.replace(/\.imba$/,'.imba2')
 			var out = compiler.analyze(src:sourceBody,o2)
 			src:analysis = out
 			var source = src:sourceBody
@@ -234,6 +235,7 @@ class CLI
 					return d
 
 			# console.log 'edits',edits
+			# TODO add symbol to string conversion
 
 			var edit = edits.shift()
 			var k = 0
@@ -247,7 +249,13 @@ class CLI
 
 
 			present(source)
+
+			result = result.replace(/def initialize/g,'def constructor')
+			result = result.replace(/def self\./g,'static def ')
+			result = result.replace(/\.len()/g,'.length')
+			result = result.replace(/\.@/g,'.')
 			present(result)
+			fs.writeFileSync(targetPath,result,'utf8')
 			# present(JSON.stringify(out,null,2))
 
 	def tokenize

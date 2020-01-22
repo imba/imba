@@ -4100,7 +4100,7 @@ export class VarOrAccess < ValueNode
 		# really? what about just mimicking the two diffrent instead?
 		# Should we not return a call directly instead?
 		scope.root.@implicitAccessors.push(self)
-		scope.root.@implicitCalls.push(value)
+		scope.root.@implicitCalls.push(value) unless up isa Call
 		@value = PropertyAccess.new(".",scope.context,value)
 		# mark the scope / context -- so we can show correct implicit
 		@token.@meta = {type: 'ACCESS'}
