@@ -6371,7 +6371,7 @@ export class TagAttr < TagPart
 			elif path isa Array
 				bval = "[{val[0].c(o)},{val[1].c(o)}]"
 
-			"bind$('{key}',{modifiers.c},{bval})"
+			"bind$('{key}',{bval})"
 		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
 			# how do we remove attribute then?
 			"set$('{key}',{val})"

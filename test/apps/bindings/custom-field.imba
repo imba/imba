@@ -6,4 +6,10 @@ tag custom-field
 			<input[@value]>
 			<p> "name is {@value}"
 
-imba.mount(<custom-field bind:value=name>)
+let app = <custom-field bind:value=name>
+imba.mount(app)
+
+test do
+	eq app.value, name
+	app.value = 'hi'
+	eq name, 'hi'
