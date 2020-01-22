@@ -120,7 +120,7 @@ class KeyedTagFragment < TagCollection
 
 	def push item, idx
 		# on first iteration we can merely run through
-		unless #f & $TAG_AWAKENED$
+		unless #f & $TAG_INITED$
 			@array.push(item)
 			self.appendChild$(item)
 			return
@@ -183,8 +183,8 @@ class KeyedTagFragment < TagCollection
 		return
 
 	def end$ index
-		unless #f & $TAG_AWAKENED$
-			#f |= $TAG_AWAKENED$
+		unless #f & $TAG_INITED$
+			#f |= $TAG_INITED$
 			return
 
 		if @dirty
