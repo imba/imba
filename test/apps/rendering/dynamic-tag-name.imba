@@ -1,6 +1,6 @@
 var blocks = [
-	{type: 'todo-item', name: 'Test this'}
-	{type: 'note-item', name: 'Explain this'}
+	{type: 'todo', name: 'Test this'}
+	{type: 'note', name: 'Explain this'}
 ]
 
 tag shared-item
@@ -8,6 +8,8 @@ tag shared-item
 tag todo-item < shared-item
 
 tag note-item < shared-item
+
+tag issue-item < shared-item
 
 tag app-root
 
@@ -17,20 +19,34 @@ tag app-root
 	def render
 		<self>
 			<section>
-				<{blocks[0].type}>
+				<{blocks[0].type}-item.static>
 					<div> "Type {blocks[0].type}"
 					<div> "Name {blocks[0].name}"
 			<button :click.step> "Next"
+			for blk in blocks
+				<{blk.type}-item.listed>
+					<div.inner> blk.name
 
 var app = <app-root>
 imba.mount app
 
 test do
-	ok $(todo-item)
+	ok $(todo-item.static)
+	ok $(note-item.static) == null
+	ok $(todo-item.listed + note-item.listed)
+
 	app.step()
 	app.render()
-	ok $(note-item)
-	ok $(todo-item) == null
+	ok $(note-item.static)
+	ok $(todo-item.static) == null
+	ok $(note-item.listed + todo-item.listed)
+
+	blocks[0].type = 'issue'
+	app.render()
+	ok $(note-item) == null
+	ok $(issue-item.static)
+	ok $(issue-item.listed + todo-item.listed)
+
 
 ### css
 
