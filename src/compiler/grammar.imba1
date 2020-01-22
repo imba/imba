@@ -835,6 +835,7 @@ var grammar =
 		o 'Arg' do ArgList.new([A1])
 		o 'ArgList , Arg' do A1.add A3
 		o 'ArgList OptComma Terminator Arg' do A1.add(A3).add(A4)
+		o 'ArgList OptComma TERMINATOR SEPARATOR Terminator Arg' do A1.add(A5).add(A6)
 		o 'INDENT ArgList OptComma Outdent' do A2.indented(A1,A4)
 		o 'ArgList OptComma INDENT ArgList OptComma Outdent' do A1.concat A4
 	]

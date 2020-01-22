@@ -122,6 +122,7 @@ var HEREDOC = /// ^ ("""|''') ([\s\S]*?) (?:\n[^\n\S]*)? \1 ///
 var OPERATOR = /// ^ (
 	?: [-=]=>             # function - what
 	 | ===
+	 | ---
 	 | ->
 	 | =>
 	 | !==
@@ -1456,6 +1457,11 @@ export class Lexer
 			# console.log("okay!")
 			tokid = 'BLOCK_ARG'
 			# change the next identifier instead?
+		elif value == '---'
+			tokid = 'SEPARATOR'
+		elif value == '-' and pt == 'TERMINATOR' and @chunk.match(/^\-\s*\n/)
+			tokid = 'SEPARATOR'
+
 
 		# elif value.match()
 		elif value == '*' and @chunk.charAt(1).match(/[A-Za-z\_\@\[]/) and (prev:spaced or [',','(','[','{','|','\n','\t'].indexOf(pv) >= 0)
