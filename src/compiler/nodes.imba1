@@ -2813,16 +2813,19 @@ export class TagDeclaration < ClassDeclaration
 			instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
 
 		# should probably also warn about stuff etc
-		let sup = CALL(LIT('imba.tags.get'),[superclass or LIT('')])
+		let sup = CALL(LIT('imba.tags.get'),[
+			superclass or STR('component'),
+			superclass ? STR(superclass.toClassName) : STR('ImbaElement')
+		])
 
 		if STACK.tsc
-			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
+			sup = superclass ? superclass.toClassName : LIT('ImbaElement')
 
 		if option(:extension)
 			# TODO remove support - throw when trying to extend
 			@body.@delimiter = ','
 			@body.set(braces: yes)
-			let cls = CALL(LIT('imba.tags.get'),[name])
+			let cls = CALL(LIT('imba.tags.get'),[name,STR(name.toClassName)])
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
 
@@ -5029,6 +5032,16 @@ export class TagTypeIdentifier < Identifier
 		LIT(@str)
 
 	def toClassName
+		let str = @str
+		if str == 'element'
+			return 'Element'
+		elif str == 'svg:element'
+			return 'SVGElement'
+		elif str == 'htmlelement'
+			return 'HTMLElement'
+		elif str == 'fragment'
+			return 'DocumentFragment'
+
 		let match = TAG_NAMES[isSVG ? "svg_{@name}" : @name]
 		return match:name if match
 			
@@ -5036,14 +5049,6 @@ export class TagTypeIdentifier < Identifier
 			return 'DocumentFragment'
 		else
 			return helpers.pascalCase(@str + '-component')
-
-
-	def spawner
-		console.log "TagTypeIdentifier shuold never be used"
-		if @ns
-			"_{@ns.toUpperCase}.{@name.replace(/-/g,'_').toUpperCase}"
-		else
-			"{@name.replace(/-/g,'_').toUpperCase}"
 
 	def id
 		var m = @str.match(/\#([\w\-\d\_]+)\b/)
@@ -7129,7 +7134,7 @@ export class Tag < TagLike
 		var isReactive = self.isReactive
 
 		var canInline = no
-		var shouldEnd = isComponent
+		var shouldEnd = isComponent or @attrmap:route or @attrmap:routeTo
 		var dynamicKey = null
 		var ownCache = no
 		var slotPath = isSlot ? "{fragment.root.tvar}.__slots.{option(:name)}" : ""

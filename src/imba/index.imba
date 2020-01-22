@@ -137,10 +137,11 @@ class ImbaElementRegistry
 	def lookup name
 		return #types[name]
 
-	def get name
-		return ImbaElement unless name
+	def get name, klass
+		return ImbaElement if !name or name == 'component'
 		return #types[name] if #types[name]
 		return getElementType(name) if $node$
+		return root[klass] if klass and root[klass]
 		root.customElements.get(name) or ImbaElement
 
 	def create name
