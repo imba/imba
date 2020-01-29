@@ -6845,6 +6845,7 @@ export class TagContent < TagLike
 		let value = self.value
 		let parts = []
 		let isText = (value isa Str or value isa Num or value isa InterpolatedString)
+		let isStatic = self.isStatic
 
 		if STACK.tsc
 			return value.c(o)
@@ -6858,7 +6859,8 @@ export class TagContent < TagLike
 
 		elif isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
-
+		elif isStatic
+			return "{bvar} || {ref}.insert$({value.c(o)})"
 		elif value isa InterpolatedString and isOnlyChild and !(parent isa TagBranchFragment)
 			value = value.@nodes[0] if value.@nodes:length == 1
 			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$({key}={vvar}))"
