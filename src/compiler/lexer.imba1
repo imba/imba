@@ -125,6 +125,7 @@ var OPERATOR = /// ^ (
 	 | ---
 	 | ->
 	 | =>
+	 | />
 	 | !==
 	 | \*\*=?            # exponentation
 	 | [-+*/%<>&|^!?=]=  # compound assign / compare
@@ -483,6 +484,7 @@ export class Lexer
 
 	def tagContextToken
 		let chr = @chunk[0]
+		let chr2 = @chunk[1]
 
 		# let m = TAG_PART.exec(@chunk)
 		let m = /^([A-Za-z\_\-\$][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
@@ -498,6 +500,11 @@ export class Lexer
 			token(typ,tok,len)
 			return len
 
+		if chr == '/' and chr2 == '>'
+			token("TAG_END",'/>',2)
+			pair 'TAG_END'
+			return 2
+
 		if chr == '%' or chr == ':' or chr == '.' # or chr == '$' # and @chunk[1]
 			token("T{chr}",chr,1)
 			return 1
@@ -510,7 +517,7 @@ export class Lexer
 			
 		elif chr == '=' and @chunk[1] != '>'
 			token '=','=',1
-			pushEnd('TAG_ATTR',id: 'VALUE', pop: /^[\s\n\>]/)
+			pushEnd('TAG_ATTR',id: 'VALUE', pop: /^([\s\n\>]|\/\>)/)
 			return 1
 		return 0
 
@@ -1093,6 +1100,7 @@ export class Lexer
 		var match, length, prev
 
 		return 0 if @chunk.charAt(0) != '/'
+
 		if match = HEREGEX.exec(@chunk)
 			length = heregexToken(match)
 			moveHead(match[0])

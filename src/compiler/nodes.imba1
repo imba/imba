@@ -1321,6 +1321,9 @@ export class ListNode < Node
 	def count
 		@nodes:length
 
+	def len
+		@nodes:length
+
 	def realCount
 		var k = 0
 		for node in @nodes
@@ -1331,8 +1334,17 @@ export class ListNode < Node
 		realCount == 0
 
 	def visit
-		for node in @nodes
-			node and node.traverse
+		let items = @nodes
+		let i = 0
+
+		while i < items:length
+			let item = items[i]
+			let res = item.traverse
+			if res != item
+				if res isa Array
+					items.splice(i,1,*res)
+					continue
+			i++
 		self
 
 	def isExpressable
@@ -4949,7 +4961,7 @@ export class Const < Identifier
 
 	def traverse
 		if @traversed
-			return
+			return self
 
 		@traversed = true
 		var curr = STACK.current
@@ -6948,6 +6960,21 @@ export class Tag < TagLike
 
 	def attrs
 		@attributes
+
+	def traverse
+		return self if @traversed
+
+		let close = @options:close
+		let body = @options:body or []
+		let returns = self
+
+		if close and close.@value == '/>' and body.len
+			returns = [self].concat(body.@nodes)
+			@options:body = ArgList.new([])
+
+		super
+
+		return returns
 
 	def visitBeforeBody stack
 		@options:type && @options:type.traverse
