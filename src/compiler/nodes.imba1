@@ -5036,6 +5036,9 @@ export class TagTypeIdentifier < Identifier
 
 	def isCustom
 		!isNative and !isNativeSVG
+
+	def isComponent
+		!isNative and !isNativeSVG
 	
 	def isSimpleNative
 		isNative and !(/input|textarea|select|form|iframe/).test(@str)
@@ -6687,7 +6690,16 @@ class TagLike < Node
 		option(:indexed)
 
 	def isComponent
-		option(:custom)
+		@kind == 'component'
+
+	def isSelf
+		type isa Self or type isa This
+
+	def isSlot
+		@kind == 'slot'
+
+	def isFragment
+		@kind == 'fragment'
 
 	def hasLoops
 		hasFlag(F.TAG_HAS_LOOPS)
@@ -6979,14 +6991,23 @@ export class Tag < TagLike
 		return returns
 
 	def visitBeforeBody stack
-		@options:type && @options:type.traverse
+		let type = @options:type
+		type && type.traverse
 
-		# Need to potentially resolve tagname to variables first?
-		if isSelf or (tagName.indexOf('-') >= 0) or isDynamicType or (@type?.isCustom)
+		if isSelf or (tagName.indexOf('-') >= 0) or isDynamicType or (type && type.isComponent)
 			@options:custom = yes
+			@kind = 'component'
+		else
+			@kind = 'element'
 
 		if attrs:length == 0 && !@options:type
 			@options:type = 'fragment'
+
+		if tagName == 'slot'
+			@kind = 'slot'
+
+		elif tagName == 'fragment'
+			@kind = 'fragment'
 
 		@dynamics = []
 
@@ -7106,15 +7127,6 @@ export class Tag < TagLike
 
 	def tagName
 		String(@options:type)
-		
-	def isSelf
-		type isa Self or type isa This
-
-	def isSlot
-		tagName == 'slot'
-		
-	def isNative
-		type isa TagTypeIdentifier and type.isSimpleNative
 
 	def isDynamicType
 		type isa ExpressionNode
@@ -7135,8 +7147,7 @@ export class Tag < TagLike
 	def isReactive
 		option(:reactive) or (@parent ? @parent.isReactive : !(scope__ isa RootScope))
 
-	def isFragment
-		tagName == 'fragment'
+	
 
 	def isDetached
 		option(:detached)
@@ -7163,10 +7174,12 @@ export class Tag < TagLike
 		var isReactive = self.isReactive
 
 		var canInline = no
-		var shouldEnd = isComponent or @attrmap:route or @attrmap:routeTo
+		var shouldEnd = isComponent or @attrmap:route or @attrmap:routeTo or @attrmap['route-to']
+
 		var dynamicKey = null
 		var ownCache = no
-		var slotPath = isSlot ? "{fragment.root.tvar}.__slots.{option(:name)}" : ""
+
+		var slotPath = isSlot ? OP('.',LIT("{fragment.root.tvar}.__slots"),STR(option(:name))).c : ""
 
 		if STACK.tsc
 			# if tag is expression we want to suppress certain warnings
