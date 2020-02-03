@@ -153,14 +153,16 @@ class ImbaElementRegistry
 
 	def define name, klass, options
 		#types[name] = klass
-		if options and options.extends
-			CustomTagConstructors[name] = klass
+		
 
 		let proto = klass.prototype
 		if proto.render && proto.end$ == Element.prototype.end$
 			proto.end$ = proto.render
 
-		root.customElements.define(name,klass)
+		if options and options.extends
+			CustomTagConstructors[name] = klass
+		else
+			root.customElements.define(name,klass)
 		return klass
 
 imba.tags = ImbaElementRegistry.new()
@@ -461,12 +463,14 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 
 def imba.createComponent name, bitflags, parent, flags, text, sfc
 	# the component could have a different web-components name?
-	var el = document.createElement(name)
+	var el
 
 	if CustomTagConstructors[name]
 		el = CustomTagConstructors[name].create$(el)
 		el.slot$ = ImbaElement.prototype.slot$
 		el.__slots = {}
+	else
+		el = document.createElement(name)
 
 	el.up$ = parent
 	el.__f = bitflags
