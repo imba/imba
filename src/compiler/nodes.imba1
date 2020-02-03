@@ -2831,7 +2831,7 @@ export class TagDeclaration < ClassDeclaration
 		])
 
 		if STACK.tsc
-			sup = superclass ? superclass.toClassName : LIT('ImbaElement')
+			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
 
 		if option(:extension)
 			# TODO remove support - throw when trying to extend
@@ -6160,9 +6160,6 @@ export class Splat < ValueNode
 		value
 
 
-
-
-
 # TAGS
 
 
@@ -6332,6 +6329,9 @@ export class TagAttr < TagPart
 	def startLoc
 		@name?.startLoc
 
+	def endLoc
+		@value?.endLoc
+
 	def isStatic
 		super and @chain.every(do |item|
 			let val = item isa Parens ? item.value : item
@@ -6351,6 +6351,7 @@ export class TagAttr < TagPart
 			@key = key.slice(i + 1)
 
 		unless @value
+			@autovalue = yes
 			@value = STR(key)
 
 		if @chain:length
@@ -6383,6 +6384,15 @@ export class TagAttr < TagPart
 		let bval = val
 		let op = M('=',option(:op))
 
+		if STACK.tsc
+			let isAttr = key.match(/^(aria-|data-)/)
+			if isAttr
+				return "{@tag.tvar}.setAttribute('{key}',{val})"
+			# how do we remove attribute then?
+			let access = "{@tag.tvar}.{M(key,@name)}"
+
+			return "{M(access,@name)}{op}{@autovalue ? M('true',@value) : val}"
+
 		if ns == 'css'
 			"css$('{key}',{val})"
 		elif ns == 'bind'
@@ -6405,6 +6415,7 @@ export class TagAttr < TagPart
 			"style.setProperty('{key}',{val})"
 		else
 			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
+
 		# elif dyn or true
 		# 	"set({quoted},{val}{add})"
 		# else
@@ -6930,8 +6941,13 @@ export class TagLoopFragment < TagLike
 		@cvar || tagvar('c')
 
 	def js o
+
 		if stack.isExpression
 			return CALL(FN([],[self]),[]).c
+
+		if STACK.tsc
+			return "{tvar} = new DocumentFragment;\n{value.c(o)}"
+
 		# if @tag and @childTags
 		let iref = option(:indexed) ? LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
 		# should know how many inner slots this fragment has?
@@ -7189,7 +7205,8 @@ export class Tag < TagLike
 				add "{tvar} = {type.c}"
 			for item in @attributes
 				if item isa TagAttr
-					add "{tvar}.{item.c(o)}"
+					add item.c(o) # M("{tvar}.{item.c(o)}",item)
+					# add M("{tvar}.{item.c(o)}",item)
 				self
 			for item in body
 				add item.c
@@ -7681,6 +7698,12 @@ export class ESMSpecifier < Node
 		@name = name
 		@alias = alias
 
+	def visit
+		let key = helpers.clearLocationMarkers((@alias || @name).c())
+		@variable = scope__.root.register(key, self, type: 'const')
+		self
+
+
 	def js
 		if @alias
 			"{@name.c()} as {@alias.c()}"
@@ -7689,6 +7712,7 @@ export class ESMSpecifier < Node
 
 
 export class ImportSpecifier < ESMSpecifier
+
 export class ExportSpecifier < ESMSpecifier
 
 export class ESMSpecifierList < ListNode
@@ -7726,6 +7750,8 @@ export class ImportDeclaration < ESMDeclaration
 			"{M(keyword.c,keyword)} {@source.c}"
 
 	def visit
+		for item in @specifiers
+			item?.traverse()
 		return
 
 		var dec = @declarations = VariableDeclaration.new([])
