@@ -375,7 +375,7 @@ class ImbaElement < HTMLElement
 		if name == '__' and !self.render
 			return self
 
-		#slots[name] ||= imba.createLiveFragment()
+		#slots[name] ||= imba.createLiveFragment(0,null,self)
 
 	def schedule
 		imba.scheduler.listen('render',self)

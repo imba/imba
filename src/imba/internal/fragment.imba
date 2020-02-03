@@ -1,7 +1,10 @@
 import {DocumentFragment,Element,Text,document} from '../dom'
 
 extend class DocumentFragment
-	
+
+	get parentContext
+		this.up$ or #parent
+
 	# Called to make a documentFragment become a live fragment
 	def setup$ flags, options
 		#start = imba.document.createComment('start')
@@ -238,9 +241,10 @@ class IndexedTagFragment < TagCollection
 			#parent.removeChild$(item)
 		return
 
-export def createLiveFragment bitflags, options
+export def createLiveFragment bitflags, options, par
 	var el = document.createDocumentFragment()
 	el.setup$(bitflags, options)
+	el.up$ = par if par
 	return el
 
 export def createIndexedFragment bitflags, parent

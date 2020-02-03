@@ -26,6 +26,13 @@ tag page-list
 			for item in #context.items
 				<page-item item=item>
 
+tag page-panel
+	def render
+		<self>
+			<header> "Header"
+			<section> <slot>
+			<footer> <slot name="footer">
+
 tag app-page
 	def hello
 
@@ -38,7 +45,7 @@ tag app-page
 			<page-list>
 			if bool
 				functional-tag(@page.items[0])
-
+			<page-panel> <page-item item=@page.items[0]>
 
 
 
@@ -52,6 +59,7 @@ tag app-root
 			<div> "app"
 			for page in pages
 				<app-page page=page>
+
 
 let app = <app-root>
 imba.mount app
