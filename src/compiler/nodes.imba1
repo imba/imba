@@ -4354,16 +4354,13 @@ export class VarOrAccess < ValueNode
 		return self
 
 	def c
-		@variable ? super() : M(@token.value,@token)
+		@variable ? super() : @identifier.c() # M(@token.value,@token)
 		# M((@variable ? super() : value.c), @token)
 
 	def js o
-
 		if var v = @variable
-			var out = v.c
-			out += "()" if v.@type == 'meth' and !(o.up isa Call)
-			return out
-		return "NONO"
+			return v.c()
+		throw 'not implemented'
 
 	def node
 		@variable ? self : value
@@ -6389,7 +6386,8 @@ export class TagAttr < TagPart
 			if isAttr
 				return "{@tag.tvar}.setAttribute('{key}',{val})"
 			# how do we remove attribute then?
-			let access = "{@tag.tvar}.{M(key,@name)}"
+			let path = self.nameIdentifier()
+			let access = "{@tag.tvar}.{M(path,@name)}"
 
 			return "{M(access,@name)}{op}{@autovalue ? M('true',@value) : val}"
 
