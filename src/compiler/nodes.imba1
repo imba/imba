@@ -1167,9 +1167,9 @@ export class Terminator < Meta
 			val = val.replace(/\/\/.*$/gm,'')
 
 		if STACK.tsc and val:length > 1
-			return M(val.replace(/^\t+/gm,''),self)
+			return M(val.replace(/^[\t ]+/gm,''),self)
 
-		return val.replace(/^\t+/gm,'')
+		return val.replace(/^[\t ]+/gm,'')
 
 export class Newline < Terminator
 

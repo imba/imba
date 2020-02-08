@@ -1254,7 +1254,7 @@ export class Lexer
 			let lvl = 0
 			while k > 0
 				let ln = lines[--k]
-				let lnlvl = useTabs ? ln:length : ln.replace(@indentRegex,'\t')
+				let lnlvl = useTabs ? ln:length : ln.replace(@indentRegex,'\t'):length
 				if lnlvl > lvl
 					lvl = lnlvl
 
