@@ -258,7 +258,7 @@ CLI.prototype.tokenize = function (){
 			var id = t._value;
 			var s;
 			if (typ == 'TERMINATOR') {
-				s = "[" + self.b(id.replace(/\n/g,"\\n")) + "]\n";
+				s = "[" + self.b(id.replace(/\n/g,"\\n").replace(/\t/g,"\\t")) + "]\n";
 			} else if (typ == 'IDENTIFIER') {
 				s = id;
 			} else if (typ == 'NUMBER') {

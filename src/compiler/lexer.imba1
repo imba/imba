@@ -1180,6 +1180,7 @@ export class Lexer
 
 			unless @indentStyle
 				@opts:indent = @indentStyle = whitespace
+				@indentRegex = RegExp.new(whitespace, 'g')
 
 			let indentSize = 0
 			let offset = 0
@@ -1240,19 +1241,23 @@ export class Lexer
 			pushEnd('OUTDENT')
 			@outdebt = @indebt = 0
 			addLinebreaks(brCount)
-		else
+		elif true
 			@indebt = 0
 
 			let moveOut = @indent - size
 			let currIndent = @indent
-			let lines = indent.split('\n')
+			let useTabs = @indentStyle == '\t'
+			let lines = indent.replace().split('\n')
 
 			let levels = []
 			let k = lines:length
 			let lvl = 0
 			while k > 0
 				let ln = lines[--k]
-				lvl = ln:length if ln:length > lvl
+				let lnlvl = useTabs ? ln:length : ln.replace(@indentRegex,'\t')
+				if lnlvl > lvl
+					lvl = lnlvl
+
 				levels[k] = lvl
 			
 			levels[0] = currIndent
@@ -1284,9 +1289,10 @@ export class Lexer
 			while moveOut > 0
 				outdentToken(1,yes)
 				moveOut--
-
-			# 	outdentToken(@indent - size, noNewlines, brCount)
-			# 	addLinebreaks(brCount - 1)
+		else
+			@indebt = 0
+			outdentToken(@indent - size, noNewlines, brCount)
+			addLinebreaks(brCount - 1)
 
 		@indent = size
 		return indent:length
