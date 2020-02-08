@@ -338,6 +338,7 @@ Element.prototype.removeChild$ = Element.prototype.removeChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
 Element.prototype.set$ = Element.prototype.setAttribute
+Element.prototype.setns$ = Element.prototype.setAttributeNS
 
 # import './fragment'
 import {createLiveFragment,createIndexedFragment,createKeyedFragment} from './internal/fragment'

@@ -7,4 +7,10 @@ tag app-root
 			<svg.pie viewBox="0 0 64 64" data-test=10>
 				<circle r="25%" cx="50%" cy="50%">
 
-imba.mount <app-root>
+let app = <app-root>
+imba.mount app
+
+test do
+	ok app.children[0] isa SVGSVGElement
+	ok app.children[0].children[0] isa SVGCircleElement
+	

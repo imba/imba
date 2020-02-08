@@ -6426,7 +6426,10 @@ export class TagAttr < TagPart
 			"bind$('{key}',{bval})"
 		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
 			# how do we remove attribute then?
-			"set$('{key}',{val})"
+			if ns
+				"setns$('{ns}','{key}',{val})"
+			else
+				"set$('{key}',{val})"
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}{op}{val}"
 		elif key.indexOf('--') == 0
@@ -7033,6 +7036,13 @@ export class Tag < TagLike
 			@kind = 'component'
 		else
 			@kind = 'element'
+		
+		# if @parent and !@parent:isSVG
+		#	console.log "parent without svg? {@parent}"
+
+		# console.log 
+		# 
+		# 
 
 		if attrs:length == 0 && !@options:type
 			@options:type = 'fragment'
@@ -7089,7 +7099,9 @@ export class Tag < TagLike
 		self
 
 	def visitAfterConsumed
-
+		if isSVG
+			@kind = 'svg'		
+		
 		if @parent isa TagLoopFragment and isDynamicType
 			if option(:key)
 				set(key: OP('+',option(:key),OP('+',STR(' '),vvar)) )
@@ -7166,15 +7178,15 @@ export class Tag < TagLike
 		type isa ExpressionNode
 
 	def isSVG
-		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or @parent and @parent.isSVG)
+		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or (@parent and @parent.isSVG))
 	
 	def create_
 		if isFragment or isSlot
 			LIT('imba.createLiveFragment')
-		elif isComponent
-			LIT('imba.createComponent')
 		elif isSVG
 			LIT('imba.createSVGElement')
+		elif isComponent
+			LIT('imba.createComponent')
 		else
 			LIT('imba.createElement')
 
