@@ -92,6 +92,12 @@ var grammar =
 	Terminator: [
 		o 'TERMINATOR' do Terminator.new(A1)
 	]
+	
+	TypeAnnotation: [
+		o 'TYPE IDENTIFIER' do TypeAnnotation.new([A2])
+		o 'TYPE IDENTIFIER INDEX_START INDEX_END' do TypeAnnotation.new([A2,A3,A4])
+		
+	]
 
 	# An indented block of expressions. Note that the [Rewriter](rewriter.html)
 	# will convert some postfix forms into blocks for us, by adjusting the
@@ -424,10 +430,10 @@ var grammar =
 
 	# Assignment of a variable, property, or index to a value.
 	Assign: [
-		# o 'SimpleAssignable , Assign' do A3
-		# o 'InlineVar = Expression' do Assign.new A2, A1, A3
 		o 'Assignable = Expression' do Assign.new A2, A1, A3
+		o 'Assignable TypeAnnotation = Expression' do Assign.new(A3, A1, A4).set(datatype: A2)
 		o 'Assignable = INDENT Expression Outdent' do Assign.new A2, A1, A4.indented(A3,A5)
+		o 'Assignable TypeAnnotation = INDENT Expression Outdent' do Assign.new(A3, A1, A5).indented(A4,A6).set(datatype: A2)
 	]
 
 	# Assignment when it happens within an object literal. The difference from
@@ -618,6 +624,13 @@ var grammar =
 
 	VarAssignable: [
 		o 'Identifier'
+		o 'Identifier TypeAnnotation' do A1.set(datatype: A2)
+		o 'Array' # all kinds?
+		o 'Object' # not supported anymore
+	]
+	
+	InlineVarAssignable: [
+		o 'Identifier'
 		o 'Array' # all kinds?
 		o 'Object' # not supported anymore
 	]
@@ -634,7 +647,7 @@ var grammar =
 	]
 
 	InlineVar: [
-		o 'InlineVarKeyword VarAssignable' do VarReference.new(A2,A1)
+		o 'InlineVarKeyword InlineVarAssignable' do VarReference.new(A2,A1)
 	]
 
 
@@ -647,7 +660,8 @@ var grammar =
 		o 'Argvar'
 		o 'Self' # not sure if self should be assignable really
 		o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
-
+			
+		# FIXME this isn really assignable?
 		o 'Value . NEW' do New.new(A1).set(keyword: A3)
 		# o 'Value . Super' do SuperAccess.new('.',A1,A3)
 
@@ -779,7 +793,7 @@ var grammar =
 		o '@ IDENTIFIER' do IdentifierExpression.new(A2)
 		o '@ { Expression }' do IdentifierExpression.new(A3)
 		# o '[ Expression ]' do IdentifierExpression.new(A2)
-		o 'ClassFieldIdentifier TYPE IDENTIFIER' do A1.set(datatype: A3)
+		o 'ClassFieldIdentifier TypeAnnotation' do A1.set(datatype: A2)
 	]
 
 

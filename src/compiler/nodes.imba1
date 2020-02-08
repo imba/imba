@@ -1763,7 +1763,7 @@ export class VarDeclList < Block
 
 	def add part
 		push(BR) if @nodes:length
-		let expr = VarReference.new(part[0],type).set(decl: self)
+		let expr = VarReference.new(part[0],type).set(decl: self, datatype: part[0].option(:datatype))
 		push(part[1] ? Assign.new('=',expr,part[1]) : expr)
 
 	def consume node
@@ -4509,7 +4509,10 @@ export class VarReference < ValueNode
 
 		# if @export
 		# 	out = "module.exports.{ref.c} = {ref.c}"
-
+		let typ = option(:datatype)
+		if STACK.tsc and typ
+			# look it up?
+			out = '/** @type {' + typ.c() + '} */\n' + out
 		return out
 
 	def declare
@@ -4574,7 +4577,7 @@ export class Assign < Op
 	def visit
 		var l = @left
 		var r = @right
-
+		
 		# WARNING - slightly undefined
 		# MARK THE STACK
 		l.traverse if l
@@ -4638,6 +4641,10 @@ export class Assign < Op
 
 		var lc = l.c
 		var out = "{lc} {op} {right.c(expression: true)}"
+		
+		if let typ = (option(:datatype) or l.option(:datatype))
+			if STACK.tsc and !(l isa VarReference)
+				out = '/** @type {' + typ.c() + '} */\n' + out
 
 		if l isa Obj
 			out = "({out})"
@@ -4807,6 +4814,25 @@ export class CompoundAssign < Assign
 		ast.c
 
 
+export class TypeAnnotation < Node
+	
+	def initialize value
+		@parts = value
+		# @parts.push(value) if value
+		self
+		
+	def add item
+		@parts.push(item)
+	
+	def startLoc
+		@parts[0].startLoc
+
+	def endLoc
+		@parts[@parts:length - 1].endLoc
+
+	def c
+		M(@parts.map(|item| item.@value).join(""),self)
+		
 # IDENTIFIERS
 
 # really need to clean this up
