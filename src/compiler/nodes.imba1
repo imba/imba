@@ -2040,6 +2040,14 @@ export class Param < Node
 
 	def varname
 		@variable ? @variable.c : name
+		
+	def jsdoc
+		let typ = option('datatype')
+		if typ && name
+			'@param {' + typ.c() + '} ' + name
+		else
+			''
+			
 
 	def js o
 		if @defaults
@@ -2213,6 +2221,14 @@ export class ParamList < ListNode
 
 	def toJSON
 		metadata
+		
+	def jsdoc
+		let out = []
+		for item in nodes when item isa Param
+			if item.option(:datatype)
+				out.push(item.jsdoc())
+		let doc = out.join('\n')
+		return (doc ? '/**\n' + doc + '\n*/\n' : '')
 
 	def visit
 		@splat = filter(|par| par isa SplatParam)[0]
@@ -3128,6 +3144,10 @@ export class MethodDeclaration < Func
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			prefix = "async {prefix}" if option(:async)
 			out = "{prefix}{M name, @name}({params.c}){code}"
+			
+			if STACK.tsc
+				out = @params.jsdoc() + out
+
 			return out
 
 		var func = "({params.c})" + code

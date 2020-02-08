@@ -593,7 +593,7 @@ var grammar =
 		# BlockParam.new A2, null, A1
 		o 'BLOCK_ARG ParamVar' do A2.set(blk: A1)
 		# BlockParam.new A2, null, A1
-		o 'ParamVar = ParamValue' do Param.new(A1.value,A3)
+		o 'ParamVar = ParamValue' do Param.new(A1.value,A3).set(datatype: A1.option(:datatype))
 		o 'Object = ParamValue' do Param.new(A1,A3)
 		o 'Array = ParamValue' do Param.new(A1,A3)
 		# OptionalParam.new A1, A3, A2
@@ -602,6 +602,7 @@ var grammar =
 	# Function Parameters
 	ParamVar: [
 		o 'Identifier' do Param.new(A1)
+		o 'Identifier TypeAnnotation' do Param.new(A1).set(datatype: A2)
 		# o 'SPLAT ParamVar' do Splat.new(A2).set(keyword: A1)
 	]
 
