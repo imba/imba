@@ -1039,7 +1039,7 @@ export class Lexer
 			length = match[0]:length
 			indent = match[1]
 			comment = match[2]
-			let commentBody = match[4]
+			let commentBody = (match[4] or '')
 			if comment[0] == '#'
 				commentBody = ' ' + commentBody
 
@@ -1207,7 +1207,7 @@ export class Lexer
 			if noNewlines
 				suppressNewlines()
 			else
-				newlineToken(brCount)
+				newlineToken(brCount,indent)
 			return indent:length
 
 		if size > @indent
@@ -1230,18 +1230,11 @@ export class Lexer
 				# should add terminator inside indent?
 				immediate.@meta ||= {pre: tV(immediate), post: ''}
 				immediate:scope = expectScope
-				# should rather add to meta somehow?!?
-				# tVs(immediate,tV(immediate) + '%|%') # crazy
 			else
 				# console.log "set indent {expectScope}"
 				token('INDENT', "" + diff,0)
 				@last:scope = expectScope
 
-			# console.log "indenting", prev, last(@tokens,1)
-			# if prev and prev[0] == 'TERMINATOR'
-			#   console.log "terminator before indent??"
-
-			# check for comments as well ?
 
 			@indents.push diff
 			pushEnd('OUTDENT')
@@ -1249,9 +1242,51 @@ export class Lexer
 			addLinebreaks(brCount)
 		else
 			@indebt = 0
-			outdentToken(@indent - size, noNewlines, brCount)
-			addLinebreaks(brCount - 1)
-			# console.log "outdent",noNewlines,tokid()
+
+			let moveOut = @indent - size
+			let currIndent = @indent
+			let lines = indent.split('\n')
+
+			let levels = []
+			let k = lines:length
+			let lvl = 0
+			while k > 0
+				let ln = lines[--k]
+				lvl = ln:length if ln:length > lvl
+				levels[k] = lvl
+			
+			levels[0] = currIndent
+			
+			# TODO track position as well
+	
+			let i = 0
+			let toks = []
+			let pre = ""
+			for ln,idx in lines
+				let lvl = levels[idx]
+				
+				while currIndent > lvl
+					if pre
+						terminatorToken(pre)
+						pre = ""
+					else
+						terminatorToken('')
+
+					moveOut--
+					outdentToken(1,yes)
+					currIndent--
+					
+				pre += '\n' + ln
+			
+			if pre
+				terminatorToken(pre)
+			
+			while moveOut > 0
+				outdentToken(1,yes)
+				moveOut--
+
+			# 	outdentToken(@indent - size, noNewlines, brCount)
+			# 	addLinebreaks(brCount - 1)
 
 		@indent = size
 		return indent:length
@@ -1264,9 +1299,9 @@ export class Lexer
 		var dent = 0
 		while moveOut > 0
 			var len = @indents:length - 1
-			if @indents[len] is undefined
+			if @indents[len] == undefined
 				moveOut = 0
-			elif @indents[len] is @outdebt
+			elif @indents[len] == @outdebt
 				moveOut -= @outdebt
 				@outdebt = 0
 			elif @indents[len] < @outdebt
@@ -1306,18 +1341,22 @@ export class Lexer
 			if match
 				prev:spaced = yes
 				# prev.@s = match[0]
+				# console.log 'whitespace',JSON.stringify(match[0]),prev
 				return match[0]:length
 			else
 				prev:newLine = yes
 				return 0
 
-	def addNewline
-		token 'TERMINATOR', '\n'
-
 	def moveHead str
 		var br = count(str,'\n')
 		return br
-		
+	
+	def terminatorToken content, loc
+		if @lastTyp == 'TERMINATOR'
+			@last.@value += content
+			# add location info as well?
+		else
+			token('TERMINATOR',content,loc)
 
 	def addLinebreaks count, raw
 		var br
@@ -1355,16 +1394,16 @@ export class Lexer
 				tVs(prev,v + (raw or br))
 				return this
 		
-		token('TERMINATOR', br, 0)
+		token('TERMINATOR', (raw or br), 0)
 		return
 
 	# Generate a newline token. Consecutive newlines get merged together.
-	def newlineToken lines
+	def newlineToken lines, raw
 		
 		# while lastTokenValue == ';'
 		#	@tokens.pop
 
-		addLinebreaks(lines)
+		addLinebreaks(lines,raw)
 		# WARN now import cannot go over multiple lines
 		closeDef()  # close def -- really?
 		var ctx = context

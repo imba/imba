@@ -194,10 +194,12 @@ var M = do |val,mark,o|
 		let end = mark.endLoc
 		let m0 = ''
 		let m1 = ''
+
 		if start == 0 or start > 0
-			m0 = "/*%{start}|{ref}$*/"
+			m0 = end >= start ? "/*%{start}|{ref}$*/" : "/*%{start}$*/"
+			
 		if end == 0 or end > 0
-			m1 = "/*%{end}|{ref}$*/"
+			m1 = start >= 0 ? "/*%{end}|{ref}$*/" : "/*%{end}$*/"
 		return m0 + val + m1
 	return C(val,o)
 
@@ -1008,6 +1010,7 @@ export class Node
 
 		if var indent = @indentation
 			out = indent.wrap(out,o)
+			self
 
 		# should move this somewhere else really
 		out = "({out})" if paren
@@ -1152,11 +1155,21 @@ export class Terminator < Meta
 	def loc
 		[@value.@loc,@value.@loc + @value.@value:length]
 
+	def startLoc
+		@value.startLoc
+
+	def endLoc
+		startLoc + @value.@value:length
+
 	def c
 		let val = @value.c
 		if STACK.option(:comments) == false
 			val = val.replace(/\/\/.*$/gm,'')
-		return val
+
+		if STACK.tsc and val:length > 1
+			return M(val.replace(/^\t+/gm,''),self)
+
+		return val.replace(/^\t+/gm,'')
 
 export class Newline < Terminator
 
@@ -1165,7 +1178,8 @@ export class Newline < Terminator
 		@value = v or '\n'
 
 	def c
-		C(@value)
+		@value
+		# M(@value,@value)
 
 
 # weird place?
@@ -1426,6 +1440,12 @@ export class Block < ListNode
 		@nodes = list or []
 		@head = null
 		@indentation = null
+		
+	def startLoc
+		@indentation ? @indentation.startLoc : super
+	
+	def endLoc
+		@indentation ? @indentation.endLoc : super
 
 	def self.wrap ary
 		unless ary isa Array
