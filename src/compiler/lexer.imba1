@@ -144,6 +144,7 @@ var OPERATOR = /// ^ (
 var WHITESPACE = /^[^\n\S]+/
 
 var COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|(?:###)?$)/
+var JS_COMMENT    = /^\/\*([\s\S]*?)\*\//
 # var INLINE_COMMENT = /^(\s*)((#[ \t\!]||\/\/)(.*)|#[ \t]?(?=\n|$))+/
 var INLINE_COMMENT = /^(\s*)((#[ \t\!]|\/\/)(.*)|#[ \t]?(?=\n|$))+/
 
@@ -1033,6 +1034,11 @@ export class Lexer
 		var match, length, comment, indent, prev
 
 		var typ = 'HERECOMMENT'
+		
+		if match = JS_COMMENT.exec(@chunk)
+			token 'HERECOMMENT', match[1], match[1]:length
+			token 'TERMINATOR', '\n'
+			return match[0]:length
 
 		if match = INLINE_COMMENT.exec(@chunk) # .match(INLINE_COMMENT)
 			# console.log "match inline comment"
@@ -1068,7 +1074,6 @@ export class Lexer
 					tVs(prev,tV(prev) + note)
 					# prev[1] += note
 				elif pt == 'INDENT'
-					# console.log "adding comment to INDENT: {note}" # why not add directly here?
 					addLinebreaks(1,note)
 				else
 					# console.log "comment here"
