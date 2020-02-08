@@ -1611,6 +1611,15 @@ export class Block < ListNode
 			return first.shouldParenthesizeInTernary
 
 		yes
+		
+	def indented a,b
+		super
+		if a isa Token and a.@type == 'INDENT'
+			if let post = (a.@meta and a.@meta:post)
+				let br = Token.new('TERMINATOR',post)
+				@nodes.unshift(Terminator.new(br))
+				a.@meta:post = ''
+		return self
 
 class ClassInitBlock < Block
 
