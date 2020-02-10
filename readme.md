@@ -4,7 +4,7 @@
 </p>
 
 [![install size](https://packagephobia.now.sh/badge?p=imba)](https://packagephobia.now.sh/result?p=imba)
-[![Build Status](https://travis-ci.org/imba/imba.svg?branch=master)](https://travis-ci.org/imba/imba) [![Downloads](https://img.shields.io/npm/dm/imba.svg)](https://npmcharts.com/compare/imba?minimal=true) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![License](https://img.shields.io/npm/l/imba.svg)](https://www.npmjs.com/package/imba) [![Knowledge Base & New Chat](https://img.shields.io/badge/knowledgebase_and_chat-spectrum-blueviolet.svg)](https://spectrum.chat/imba) [![Join the chat at https://gitter.im/somebee/imba](https://img.shields.io/badge/old_chat-gitter-fb0061.svg)](https://gitter.im/imba/Lobby)
+[![Build Status](https://travis-ci.org/imba/imba.svg?branch=master)](https://travis-ci.org/imba/imba) [![Downloads](https://img.shields.io/npm/dm/imba.svg)](https://npmcharts.com/compare/imba?minimal=true) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![License](https://img.shields.io/npm/l/imba.svg)](https://www.npmjs.com/package/imba)
 
 > if ruby and react had an indentation-based child, what would it look like?
 
@@ -17,6 +17,8 @@ subclassing, instantiating and rendering dom nodes.
 To get started with Imba, we recommend reading through the [official guide](http://imba.io/guides). If you just want to get going, clone [hello-world-imba](https://github.com/somebee/hello-world-imba) and follow the readme. Check out the [awesome-imba](https://github.com/koolamusic/awesome-imba) list for more resources.
 
 ## Community
+
+ [![Forum](https://img.shields.io/badge/discourse-forum-brightgreen.svg?style=flat-square)](https://users.imba.io) [![Join the chat at https://gitter.im/somebee/imba](https://img.shields.io/badge/chat-gitter-fb0061.svg)](https://gitter.im/somebee/imba)
 
 ### Bi-Weekly Imba Community Meeting
 
