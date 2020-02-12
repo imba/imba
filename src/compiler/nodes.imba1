@@ -6075,6 +6075,14 @@ export class Switch < ControlFlowStatement
 
 
 	def consume node
+		if node isa TagLike
+			if node.body == self
+				let branches = @cases.slice(0).concat([@fallback])
+				for block,i in branches when block
+					node.@branches.push([])
+					block.consume(node)
+				return self
+			return node.register(self)
 		# TODO work inside tags (like loops)
 		@cases = @cases.map(|item| item.consume(node))
 		@fallback = @fallback.consume(node) if @fallback
@@ -6755,7 +6763,7 @@ class TagLike < Node
 		@parent ? @parent.root : self
 
 	def register node
-		if node isa If
+		if node isa If or node isa Switch
 			flag(F.TAG_HAS_BRANCHES)
 			node = TagSwitchFragment.new(body: node)
 		elif node isa Loop
