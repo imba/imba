@@ -191,7 +191,10 @@ extend class Node
 
 	# replace this with something else
 	def replaceWith$ other
-		@parentNode.replaceChild(other,this)
+		if !(other isa Node) and other.replace$
+			other.replace$(this)
+		else
+			@parentNode.replaceChild(other,this)
 		return other
 
 	def insertInto$ parent
@@ -209,6 +212,12 @@ extend class Node
 			@nextSibling.insertBeforeBegin$(other)
 		else
 			@parentNode.appendChild(other)
+	
+	def insertAfterBegin$ other
+		if @childNodes[0]
+			@childNodes[0].insertBeforeBegin$(other)
+		else
+			@appendChild(other)
 
 extend class Comment
 	# replace this with something else

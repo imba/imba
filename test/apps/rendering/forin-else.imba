@@ -39,6 +39,8 @@ var titles = todos.map(|t| t.title).join("")
 
 test do
 	# await spec.tick()
+	eq app.textContent, titles
+	
 	app.flip()
 	app.render()
 	eq app.textContent, "--"

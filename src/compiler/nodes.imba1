@@ -5570,12 +5570,34 @@ export class If < ControlFlow
 		if node isa TagLike
 			# now we are reconsuming this
 			node.flag(F.TAG_HAS_BRANCHES)
-			if node.body == self or node isa TagLoopFragment
-				@body = @body.consume(node) if @body
-				@alt = @alt.consume(node) if @alt
+				
+			if node.body == self
+				let branches = [@body]
+				let alt = @alt
+				
+				while alt isa If
+					branches.push(alt.@body)
+					alt = alt.@alt
+				
+				if alt
+					branches.push(alt)
+				
+				for block,i in branches
+					node.@branches.push([])
+					block.consume(node)
+
+				return self
+				
+			if node isa TagLoopFragment
+				if @body
+					@body = @body.consume(node)
+
+				if @alt
+					@alt = @alt.consume(node)
 				return self
 			else
 				return node.register(self)
+
 			return self
 
 		if node isa TagPushAssign or node isa TagFragment
@@ -6735,7 +6757,7 @@ class TagLike < Node
 	def register node
 		if node isa If
 			flag(F.TAG_HAS_BRANCHES)
-			node = TagBranchFragment.new(body: node)
+			node = TagSwitchFragment.new(body: node)
 		elif node isa Loop
 			flag(F.TAG_HAS_LOOPS)
 			node = TagLoopFragment.new(body: node.body, value: node)
@@ -6949,7 +6971,7 @@ export class TagContent < TagLike
 		if STACK.tsc
 			return value.c(o)
 
-		if parent isa TagBranchFragment or (@tvar and parent isa Tag and parent.isSlot)
+		if parent isa TagSwitchFragment or (@tvar and parent isa Tag and parent.isSlot)
 			# what if it is a call?
 			parts.push("{@tvar}={value.c(o)}")
 			if value isa Call
@@ -6960,7 +6982,7 @@ export class TagContent < TagLike
 			return "{bvar} || {ref}.text$({value.c(o)})"
 		elif isStatic
 			return "{bvar} || {ref}.insert$({value.c(o)})"
-		elif value isa InterpolatedString and isOnlyChild and !(parent isa TagBranchFragment)
+		elif value isa InterpolatedString and isOnlyChild and !(parent isa TagSwitchFragment)
 			value = value.@nodes[0] if value.@nodes:length == 1
 			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$({key}={vvar}))"
 
@@ -6977,24 +6999,54 @@ export class TagContent < TagLike
 
 export class TagFragment < TagLike
 
-export class TagBranchFragment < TagLike
-
+export class TagSwitchFragment < TagLike
+	
+	def setup
+		super
+		@branches = []
+		@inserts = []
+		
+	def getInsertVar index
+		@inserts[index] ||= tagvar(self.oid + '$' + index)
+		
 	def tvar
 		fragment.tvar
+		
+	def register node
+		let res = super
+		if @branches
+			let curr = @branches[@branches:length - 1]
+			curr && curr.push(res)
+		return res
+		
+	def visitAfterConsumedChildren
+
+		unless @parent isa TagSwitchFragment
+			let max = self.assignChildIndices(0,self)
+		return self
+	
+	def assignChildIndices start,root
+		let nr = start
+		let max = start
+		for branch,i in @branches
+			nr = start
+			for item in branch
+				if item isa TagSwitchFragment
+					nr = item.assignChildIndices(nr,root)
+				else
+					item.@tvar = root.getInsertVar(nr)
+					item.set(detached: yes)
+					nr++
+
+			if nr > max
+				max = nr
+		return max
 
 	def js o
-		let inserts = []
-
-		for item in @consumed when TagLike
-			# we need to get nested items as well?
-			item.set(detached: yes)
-			item.@tvar = tagvar(item.oid + '$')
-			inserts.push(item.@tvar)
-
 		var out = body.c(o)
-		for item in inserts
+		for item in @inserts
 			let key = "{cvar}.{item}"
-			out += "\n({key}_ = {tvar}.insert$({item},{@flags},{key}_));"
+			out += "\n({key}_ = {tvar}.insert$({item},0,{key}_));"
 		return out
 
 export class TagLoopFragment < TagLike
@@ -7028,7 +7080,7 @@ export class TagLoopFragment < TagLike
 		let iref = option(:indexed) ? LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
 		# should know how many inner slots this fragment has?
 		let cache = parent.cvar
-		let parentRef = parent isa TagBranchFragment ? LIT('null') : fragment.tvar
+		let parentRef = parent isa TagSwitchFragment ? LIT('null') : fragment.tvar
 
 		let out = ""
 		out += "{tvar} = {cache}.{oid} || ({cache}.{oid} = {tvar} = {iref}({@flags},{parentRef}));\n"
@@ -7601,10 +7653,10 @@ export class Tag < TagLike
 			elif parent.isIndexed
 				foot.push "{parent.kvar}++"
 
-		elif isFragment and parent and !(parent isa TagBranchFragment)
+		elif isFragment and parent and !(parent isa TagSwitchFragment)
 			foot.push "{fragment.ref}.insert$({tvar},{@flags})"
 
-		elif parent and isComponent and !(parent isa TagBranchFragment)
+		elif parent and isComponent and !(parent isa TagSwitchFragment)
 			let pref = fragment.ref
 			let cref = @cref
 			if dynamicKey
@@ -8386,6 +8438,9 @@ export class Scope
 		if STACK.loglevel > 0
 			console.log(*arguments)
 		self
+	
+	def oid
+		@oid ||= STACK.generateId('')
 
 	def stack
 		STACK
