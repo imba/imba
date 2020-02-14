@@ -15,9 +15,10 @@ if (showHelp) {
 		node ./scripts/bootstrap.sh
 
 	ENVIRONMENT VARIABLES
+	By default they are not set so setting them to something is enough to turn them on.
 		- VERBOSE=false - make the script be more silent set.
     		- IGNORE_FS_ERRORS=false - don't show fs exceptions.
-    		- RESET=true - destroy the dist directory.
+    		- RESET=false - destroy the dist directory.
 `)
 	process.exit(0);
 }
@@ -42,7 +43,7 @@ function pack(opts){
 }
 
 const inform = (arguments) => {
-	if (process.env.VERBOSE == false) {
+	if (!process.env.VERBOSE) {
 		return;
 	}
 	console.log('INFO', arguments);
@@ -67,7 +68,7 @@ async function main(){
 	inform('checking for the dist path', dist);
 	if(fs.existsSync(dist)) { 
 		inform('dist directory already present');
-		if (process.env.RESET != true) {
+		if (!process.env.RESET) {
 			inform('aborting, to override run with environment RESET=true');
 			process.exit(0); 
 		} else {
