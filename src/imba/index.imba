@@ -29,7 +29,7 @@ imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
 if $node$
-	import {Document,Node,Text,Comment,Element,HTMLElement,DocumentFragment,document,getElementType} from './ssr'
+	import {Document,Node,Text,Comment,Element,HTMLElement,DocumentFragment,ShadowRoot,document,getElementType} from './ssr'
 	imba.document = document
 
 def imba.q$ query, ctx
@@ -348,6 +348,9 @@ Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
 Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
+
+ShadowRoot.prototype.insert$ = Element.prototype.insert$
+ShadowRoot.prototype.appendChild$ = Element.prototype.appendChild$
 
 # import './fragment'
 import {createLiveFragment,createIndexedFragment,createKeyedFragment} from './internal/fragment'

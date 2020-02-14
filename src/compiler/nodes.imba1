@@ -6811,7 +6811,10 @@ class TagLike < Node
 
 	def isSelf
 		type isa Self or type isa This
-
+	
+	def isShadowRoot
+		@tagName and @tagName == 'shadow-root'
+		
 	def isSlot
 		@kind == 'slot'
 
@@ -7111,6 +7114,7 @@ export class TagSlotProxy < TagLike
 	def tagvarprefix
 		oid+'S'
 
+
 export class Tag < TagLike
 	prop attrmap
 
@@ -7151,22 +7155,22 @@ export class Tag < TagLike
 			@kind = 'component'
 		else
 			@kind = 'element'
-		
-		# if @parent and !@parent:isSVG
-		#	console.log "parent without svg? {@parent}"
-
-		# console.log 
-		# 
-		# 
 
 		if attrs:length == 0 && !@options:type
 			@options:type = 'fragment'
+			
+		let tagName = self.tagName
 
 		if tagName == 'slot'
 			@kind = 'slot'
 
 		elif tagName == 'fragment'
 			@kind = 'fragment'
+			
+		if tagName == 'shadow-root'
+			@kind = 'shadow-root'
+			
+		@tagName = tagName
 
 		@dynamics = []
 
@@ -7287,7 +7291,7 @@ export class Tag < TagLike
 		@options:type || (@attributes:length == 0 ? :fragment : :div)
 
 	def tagName
-		String(@options:type)
+		@tagName || String(@options:type)
 
 	def isDynamicType
 		type isa ExpressionNode
@@ -7419,6 +7423,9 @@ export class Tag < TagLike
 			if isSelf
 				add "{tvar}=this"
 				add "{tvar}.open$()"
+				
+				#	add "{cvar} = ({bvar}={dvar}=1,{tvar}.$) || ({bvar}={dvar}=0,{tvar}.$=\{\},{tvar}S={tvar}.attachShadow(\{mode:'open'\}))"
+				# else
 				add "{cvar} = ({bvar}={dvar}=1,{tvar}.$) || ({bvar}={dvar}=0,{tvar}.$=\{\})"
 
 			elif isReactive
@@ -7439,7 +7446,11 @@ export class Tag < TagLike
 				o:inline = yes
 
 		else
-			if isSlot and !hasChildren
+			if isShadowRoot
+				let key = "{cvar}.{oid}"
+				add "{tvar}={key} || ({key}={fragment.tvar}.attachShadow(\{mode:'open'\}))"
+					
+			elif isSlot and !hasChildren
 				let key = "{cvar}.{oid}"
 				add("{tvar}={slotPath}")
 				add("({key} = {fragment.tvar}.insert$({tvar},{@flags},{key}))")
@@ -7662,6 +7673,7 @@ export class Tag < TagLike
 				foot.push "{parent.kvar}++"
 
 		elif isFragment and parent and !(parent isa TagSwitchFragment)
+			# not fragment.tvar?
 			foot.push "{fragment.ref}.insert$({tvar},{@flags})"
 
 		elif parent and isComponent and !(parent isa TagSwitchFragment)

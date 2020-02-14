@@ -53,7 +53,7 @@ extend class DocumentFragment
 		return other
 
 	def appendChild$ child
-		#end.insertBeforeBegin$(child)
+		#end ? #end.insertBeforeBegin$(child) : self.appendChild(child)
 		return child
 
 	def removeChild$ child
@@ -68,6 +68,11 @@ extend class DocumentFragment
 			break if el == end
 			return false if el isa Element or el isa Text
 		return true
+
+
+extend class ShadowRoot
+	get parentContext
+		@host
 
 class TagCollection
 	def constructor f, parent

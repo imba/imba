@@ -336,6 +336,12 @@ export class DocumentFragment < Element
 
 	get outerHTML
 		return self.innerHTML
+		
+export class ShadowRoot < DocumentFragment
+
+	get outerHTML
+		return self.innerHTML
+
 
 export class HTMLElement < Element
 
