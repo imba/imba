@@ -4936,7 +4936,7 @@ export class Identifier < Node
 
 	def c o
 		let up = STACK.current
-		return toStr.c if up isa Util
+		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
 		if OPTS:sourceMap and (!o or o:mark !== false)
 			out = M(out,@token or @value)
@@ -8231,10 +8231,6 @@ var HELPERS = {
 
 	initField: '''(target,key,o){
 		Object.defineProperty(target,key,o);
-	};'''
-
-	initMap: '''(target){
-		Object.defineProperty(target,"$d$",{enumerable:false,value:new WeakMap()});
 	};'''
 
 	decorate: '''(decorators,target,key,desc){
