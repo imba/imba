@@ -945,12 +945,6 @@ export class Node
 	def receiver
 		self
 
-	def addExpression expr
-		# might be better to nest this up after parsing is done?
-		var node = ExpressionBlock.new([self])
-		return node.addExpression(expr)
-
-
 	def indented a,b
 
 		if a isa Indentation
@@ -1803,29 +1797,6 @@ export class VarBlock < ListNode
 	def add expr
 		push(expr)
 
-	def addExpression expr
-
-		if expr isa Assign
-			# make sure the left-side is a var-reference
-			# this should be a different type of assign, no?
-			if expr.left isa VarOrAccess
-				expr.left = VarReference.new(expr.left.value,@type)
-
-			push(expr)
-
-		elif expr isa VarOrAccess
-			# this is really a VarReference
-			push(VarReference.new(expr.value,@type))
-
-		elif expr isa Splat && expr.node isa VarOrAccess
-			expr.value = VarReference.new(expr.node.value,@type)
-			push(expr)
-		else
-			p "VarBlock.addExpression {self} <- {expr}"
-			throw "VarBlock does not allow non-variable expressions"
-		self
-
-
 	def isExpressable
 		# we would need to force-drop the variables, makes little sense
 		# but, it could be, could just push the variables out?
@@ -1921,10 +1892,6 @@ export class ExpressionBlock < ListNode
 
 	def consume node
 		value.consume(node)
-
-	def addExpression expr
-		push(expr)
-		self
 
 
 # STATEMENTS
@@ -4578,10 +4545,6 @@ export class VarReference < ValueNode
 	def refnr
 		variable.references.indexOf(value)
 
-	# convert this into a list of references
-	def addExpression expr
-		VarBlock.new([self]).addExpression(expr)
-
 
 # ASSIGN
 
@@ -4629,6 +4592,7 @@ export class Assign < Op
 			ROOT.entities.add(l.namepath,{namepath: l.namepath, type: r.typeName, desc: @desc})
 
 		# this should probably be done in a different manner
+		# no longer needed for 
 		if lvar and lvar.declarator == l
 			lvar.@initialized = no
 			r.traverse if r
@@ -4709,16 +4673,6 @@ export class Assign < Op
 
 		var ast = right.consume(self)
 		return ast.consume(node)
-
-	# more workaround during transition away from a,b,c = 1,2,3 style assign
-	def addExpression expr
-		# p "addExpression {expr}"
-		var typ = ExpressionBlock
-		if @left and @left isa VarReference
-			typ = VarBlock
-		# might be better to nest this up after parsing is done?
-		var node = typ.new([self])
-		return node.addExpression(expr)
 
 
 export class PushAssign < Assign
@@ -8043,10 +7997,6 @@ export class ExportAllDeclaration < ExportDeclaration
 export class ExportNamedDeclaration < ExportDeclaration
 
 export class Export < ValueNode
-
-	def addExpression expr
-		value = value.addExpression(expr)
-		return self
 		
 	def loc
 		let kw = option(:keyword)

@@ -115,8 +115,6 @@ var grammar =
 		# o 'Splat'
 		o 'Expression'
 		# o 'HEADER' do Terminator.new(A1)
-		# o 'Line , Expression' do A1.addExpression(A3)
-		# o 'Line , Splat' do A1.addExpression(A3) # why is not splat an expression?
 		o 'Comment'
 		o 'Statement'
 		o 'ImportDeclaration'
