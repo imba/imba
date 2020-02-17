@@ -583,6 +583,15 @@ export class Stack
 
 	def tsc
 		platform == 'tsc'
+		
+	def format
+		@options:format or 'esm'
+		
+	def cjs
+		self.format() == 'cjs'
+	
+	def esm
+		self.format() == 'esm'
 
 	def autocall
 		!option(:explicitParens)
@@ -1764,6 +1773,7 @@ export class VarDeclList < Block
 	def add part
 		push(BR) if @nodes:length
 		let expr = VarReference.new(part[0],type).set(decl: self, datatype: part[0].option(:datatype))
+		# should we not have special VarAssign blocks?
 		push(part[1] ? Assign.new('=',expr,part[1]) : expr)
 
 	def consume node
@@ -1791,9 +1801,7 @@ export class VarBlock < ListNode
 	# beginning etc.
 
 	def add expr
-		# console.log "add item to varBlock!",expr
 		push(expr)
-		# addExpression(expr)
 
 	def addExpression expr
 
@@ -2047,7 +2055,6 @@ export class Param < Node
 			'@param {' + typ.c() + '} ' + name
 		else
 			''
-			
 
 	def js o
 		if @defaults
@@ -2816,11 +2823,16 @@ export class ClassDeclaration < Code
 		let jshead = M(keyword,keyword) # "{C(keyword,mark: yes)}"
 		jshead += " {M cname, name}" if name
 		jshead += " extends {M(sup)}" if sup
-		if option(:export) and option(:default)
+		
+		if option(:export) and STACK.cjs
+			let exportName = option(:default) ? 'default' : cname
+			jsbody = "{jsbody};\n{M('exports',o:export)}.{exportName} = {cname}"
+				
+		elif option(:export) and option(:default)
 			jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 		elif option(:export)
 			jshead = "{M 'export',option(:export)} {jshead}"
-			
+
 
 		let js = "{jshead} {jsbody}"
 		if option(:global)
@@ -3165,12 +3177,17 @@ export class MethodDeclaration < Func
 			else
 				let k = OP('.',target,@name)
 				out = "{k.c} = {funcKeyword} {func}"
+
 			if o:export
 				out = "exports.{o:default ? 'default' : fname} = {out}"
 		else
 			out = "{M funcKeyword, keyword} {M fname, @name}{func}"
 			if o:export
-				out = "export {o:default ? 'default ' : ''}{out}"
+				if STACK.cjs
+					let exportName = o:default ? 'default' : fname
+					out = "{out};\n{M('exports',o:export)}.{exportName} = {fname}"
+				else
+					out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
 
 		if o:global
 			out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
@@ -7856,8 +7873,23 @@ export class ESMSpecifier < Node
 		@alias = alias
 
 	def visit
-		let key = helpers.clearLocationMarkers((@alias || @name).c())
-		@variable = scope__.root.register(key, self, type: 'const')
+		@declaration = STACK.up(ESMDeclaration)
+		if @declaration isa ImportDeclaration
+			@importer = @declaration
+		else
+			@exporter = @declaration
+		@cname = helpers.clearLocationMarkers(@name.c())
+		@key = @alias ? helpers.clearLocationMarkers(@alias.c()) : @cname
+		
+		# only register variable for imports?
+		
+		if @exporter
+			# lookup variable
+			unless @exporter.source
+				console.log "looking up variable {@cname}"
+				@variable = scope__.root.lookup(@cname)
+		else
+			@variable = scope__.root.register(@key, self, type: 'const')
 		self
 
 
@@ -7870,21 +7902,47 @@ export class ESMSpecifier < Node
 
 export class ImportSpecifier < ESMSpecifier
 
+	def visit
+		super
+		if @importer
+			@variable.@c = OP('.',@importer.variable,@name).c
+
+export class ImportNamespaceSpecifier < ESMSpecifier
+
+	def visit
+		super
+		if @importer
+			@variable.@c = @importer.variable.c
+		
+		
 export class ExportSpecifier < ESMSpecifier
+
+export class ExportAllSpecifier < ESMSpecifier
+
+export class ImportDefaultSpecifier < ESMSpecifier
+
+	def visit
+		super
+		if STACK.cjs
+			if @importer
+				@variable.@c = "{@importer.variable.c}.default"
 
 export class ESMSpecifierList < ListNode
 	
 	def js
 		'{' + super + '}'
 
-export class ImportNamespaceSpecifier < ImportSpecifier
 
 export class ESMDeclaration < Statement
+	prop variable
+	prop source
+	
 	def initialize keyword, specifiers, source
 		setup
 		@keyword = keyword
 		@specifiers = specifiers
 		@source = source
+		@defaults = (specifiers and specifiers.find(do $1 isa ImportDefaultSpecifier))
 
 	def isExport
 		String(keyword) == 'export'
@@ -7901,190 +7959,88 @@ export class ESMDeclaration < Statement
 export class ImportDeclaration < ESMDeclaration
 
 	def js
+		if STACK.cjs
+			var src = @source.c
+			# we need to combine the requires
+			let reqjs = "require({src})"
+			unless @specifiers
+				return reqjs
+			
+			# let wildcards = 
+			if @defaults and @specifiers:length == 1
+				return "var {@variable.c} = {util.requireDefault(LIT(reqjs)).c}"
+			else
+				return "var {@variable.c} = {reqjs}"
+
 		if @specifiers and @source
 			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {@source.c}"
 		else
 			"{M(keyword.c,keyword)} {@source.c}"
 
 	def visit
+		if STACK.cjs and @specifiers
+			var src = @source.c
+			var m = helpers.clearLocationMarkers(src).match(/([\w\_\-]+)(\.js|imba)?[\"\']$/)
+			@alias = m ? '_$' + m[1].replace(/[\/\-]/g,'_') : 'mod$'
+			@variable = scope__.register(@alias,null,system: yes)
+		
 		for item in @specifiers
 			item?.traverse()
+			
 		return
-
-		var dec = @declarations = VariableDeclaration.new([])
-
-		var src = @source.c
-		var m = src.match(/([\w\_\-]+)(\.js|imba)?[\"\']$/)
-		@alias = m ? m[1].replace(/[\/\-]/g,'_') + '_$' : 'mod$'
-		@alias = @ns && @ns.alias || @alias
-
-		let req = Require.new(@source)
-		if @defaults
-			req = Util.RequireDefault.new([req])
-
-		@require = dec.add(@alias,req)
-		@require.traverse
-		# register the default variable
-		if @defaults
-			let op = OP('.',@require.variable,Identifier.new('default'))
-			dec.add(@defaults,op).type = 'import'
-
-		for specifier in @specifiers
-			if specifier isa ImportNamespaceSpecifier
-
-				yes
-			else
-				let name = specifier.alias or specifier.name
-				dec.add(name,OP('.',@require.variable,specifier.name)).type = 'import'
-
-		dec.traverse
-		self
-
-	def js2
-		return @declarations.c
-		return "/*imports*/"
-
 
 export class ExportDeclaration < ESMDeclaration
 
-# def js
-# 	if @source
-# 		"{keyword} {@specifiers.c} from {@source.c}"
+	def visit
+		if STACK.cjs
+			unless ROOT.@exportCJS
+				ROOT.@exportCJS = yes
+				ROOT.@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
+
+		for item in @specifiers
+			item?.traverse()
+		self
+		
+	def js
+		let kw = M(keyword.c,keyword)
+		let cjs = STACK.cjs
+		
+		if cjs
+			let out = []
+			
+			if @source
+				@variable ||= scope__.register(null,null,system: yes)
+				let decl = "var {@variable.c} = require({@source.c})"
+				out.push(decl)
+				
+				let tpl = '''
+				Object.defineProperty(exports, $name$, {
+					enumerable: true, get: function get() { return $path$; }
+				});
+				'''
+				
+				for item in @specifiers[0]
+					let js = tpl.replace('$name$',(item.alias or item.name).toStr().c())
+					js = js.replace('$path$',OP('.',@variable,item.name).c())
+					out.push(js)
+
+			else
+				for item in @specifiers[0]
+					let op = OP('=',OP('.',LIT('exports'),item.alias or item.name),item.@variable)
+					out.push(op.c)
+
+			return out.join(';\n')
+
+		if @specifiers and @source
+			"{kw} {AST.cary(@specifiers).join(',')} from {@source.c}"
+		elif @specifiers
+			"{kw} {AST.cary(@specifiers).join(',')}"
+		elif @source
+			"{kw} {@source.c}"
+		
 
 export class ExportAllDeclaration < ExportDeclaration
 export class ExportNamedDeclaration < ExportDeclaration
-
-
-export class ImportStatement < Statement
-	prop ns
-	prop imports
-	prop source
-	
-	def self.parse str, startPos = 0
-		var named = []
-		
-		let pos = startPos
-		if str[0] == '{'
-			pos += 1
-			str = str.slice(1,-1)
-
-		var parts = str.trim.split(",") # /\s*,\s*/
-
-		
-		
-		let id = do |name,loc = 0|
-			# slow
-			while name[0] == ' '
-				loc++
-				name = name.substr(1)
-			name = name.trim
-			Identifier.new(Token.new('IDENTIFIER',name,loc,name:length))
-		
-		for part in parts
-			let asIdx = part.indexOf(" as ")
-			if asIdx > 0
-				var [name,value] = part.split(" as ")
-				named.push([id(name,pos),id(value,pos + asIdx + 4)])
-			else
-				named.push([id(part,pos)])
-			pos += part:length + 1
-		return named
-		
-
-	def initialize imports, source, ns
-		@traversed = no
-		@imports = imports
-		@source = source
-		@ns = ns
-		
-		if imports and imports.@type == 'IMPORTS'
-			@imports = ImportStatement.parse(imports.@value,imports.@loc)
-			# console.log "parsed imports",imports.@value,imports.@loc
-		elif imports isa Array
-			@imports = imports.map(|item| [item])
-		self
-
-	def visit
-		if @ns
-			@nsvar ||= scope__.register(@ns,self)
-		else
-			var src = source.c
-			var m = src.match(/(\w+)(\.js|imba)?[\"\']$/)
-			@alias = m ? m[1] + '$' : 'mod$'
-
-		# should also register the imported items, no?
-		if @imports
-			var dec = @declarations = VariableDeclaration.new([])
-
-			if @imports:length == 1
-				let extName = @imports[0][0]
-				@alias = @imports[0][1] or extName
-				dec.add(@alias,OP('.',Require.new(source),extName)).type = 'import'
-				dec.traverse
-				return self
-
-			# @declarations = VariableDeclaration.new([])
-			@moduledecl = dec.add(@alias,Require.new(source))
-			@moduledecl.traverse
-
-
-			if @imports:length > 1
-				for imp in @imports
-					let name = imp[1] or imp[0]
-					dec.add(name,OP('.',@moduledecl.variable,imp[0])).type = 'import'
-			dec.traverse
-		self
-
-
-	def js o
-
-		if @declarations
-			return @declarations.c
-
-		var req = Require.new(source)
-
-		if @ns
-			# must register ns as a real variable
-			return "var {@nsvar.c} = {req.c}"
-
-		if @imports
-
-			var src = source.c
-			var alias = []
-			var vars = VarBlock.new([])
-
-			if var fname = src.match(/(\w+)(\.js|imba)?[\"\']$/)
-				alias.push(fname[1])
-
-			# var alias = src.match(/(\w+)(\.js|imba)?[\"\']$/)
-			# create a require for the source, with a temporary name?
-			var out = [req.cache(names: alias).c]
-
-			for imp in @imports
-				# we also need to register these imports as variables, no?
-				var o = OP('=',imp,OP('.',req,imp))
-				out.push("var {o.c}")
-
-			return out
-		else
-			return req.c
-
-	def consume node
-		return self
-
-
-# EXPORT
-
-export class ExportStatement < ValueNode
-
-	def js o
-		var nodes = @value.map do |arg| "module.exports.{arg.c} = {arg.c}"
-
-		if nodes:length > 1 and up isa Return
-			return '[' + nodes.join(',') + ']'
-
-		else
-			return nodes.join(';\n') + ';'
 
 export class Export < ValueNode
 
@@ -8250,6 +8206,10 @@ var HELPERS = {
 		if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
 		else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
 		return c > 3 && r && Object.defineProperty(target, key, r), r;
+	};'''
+	
+	requireDefault: '''(obj){
+		return obj && obj.__esModule ? obj : { default: obj };
 	};'''
 }
 
