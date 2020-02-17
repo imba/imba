@@ -831,6 +831,9 @@ export class Node
 
 	def keyword
 		@keyword or (@options and @options:keyword)
+		
+	def datatype
+		@options ? @options:datatype : null
 
 	def configure obj
 		set(obj)
@@ -1766,15 +1769,17 @@ export class VarDeclList < Block
 
 	def add part
 		push(BR) if @nodes:length
+		if true
+			let node = VarDeclaration.new(part[0],part[1],type).set(decl: self, datatype: part[0].option(:datatype))
+			push(node)
+			return self
+
 		let expr = VarReference.new(part[0],type).set(decl: self, datatype: part[0].option(:datatype))
 		# should we not have special VarAssign blocks?
 		push(part[1] ? Assign.new('=',expr,part[1]) : expr)
 
 	def consume node
 		return self
-
-	# def js
-	# 	let out = super
 
 
 # Could inherit from valueNode
@@ -2359,7 +2364,7 @@ export class ParamList < ListNode
 
 
 # Legacy. Should move away from this?
-export class VariableDeclaration < ListNode
+export class ScopeVariables < ListNode
 
 	# for later, moz-ast style
 	prop kind
@@ -2397,7 +2402,6 @@ export class VariableDeclaration < ListNode
 			groups[typ].push(item.@variable)
 
 		if groups['let'] and (groups['var'] or groups['const'])
-			# console.warn "VariableDeclaration with both var and let",nodes.map(|v| v.@variable and v.@variable.c )
 			groups['let'].forEach do |item| item.@virtual = yes
 		elif groups['let'] and !o.es5
 			keyword = 'let'
@@ -2439,6 +2443,52 @@ export class VariableDeclarator < Param
 	def accessor
 		self
 
+
+export class VarDeclaration < Node
+
+	prop kind
+	prop left
+	prop right
+	
+	def type
+		@kind
+
+	def initialize left, right, kind
+		@left = left
+		@right = right
+		@kind = kind
+		
+	def visit
+		@right.traverse if @right
+		@left.traverse if @left
+		
+		# replace directly 
+		if @left isa Identifier
+			@left.@variable = scope__.register(@left.symbol,self,type: type)
+		self
+		
+	def c o
+		if right and !right.isExpressable
+			console.log 'unexpressable assignment',String(kind)
+			if String(kind) == 'let' and false
+				console.log 'unexpressable let var assignment'
+				@tmpvar = scope__.temporary
+				let assign = OP('=',)
+				return Block.new([left,BR,right.consume(self)]).c(o)
+			return right.consume(self).c(o)
+		# testing this
+		return super(o)
+		
+	def js
+		let out = "{M(kind,kind)} {left.c()}"
+		if right
+			out += " = {right.c(expression: true)}"
+			
+		if let typ = datatype
+			if STACK.tsc # or just generally?
+				out = '/** @type {' + typ.c() + '} */\n' + out
+	
+		return out
 
 # TODO clean up and refactor all the different representations of vars
 # VarName, VarReference, LocalVarAccess?
@@ -4431,26 +4481,19 @@ export class VarReference < ValueNode
 	def loc
 		@value.region
 
-	# def set o
-	# 	# hack - workaround for hidden classes perf
-	# 	@export = yes if o:export
-	# 	return self
-
 	def js o
-		# experimental fix
-
 		# what about resolving?
 		var ref = @variable
 		if value isa Obj or value isa Arr
 			ref = value
 
 		var out = "{M(ref.c,@value)}"
-		var keyword = o.es5 ? 'var' : (@type or 'var')
+		var keyword = @type or 'var'
 
 		if ref && !ref.@declared # .option(:declared)
 			if o.isExpression or @export
-				# console.log "autodeclare {@value}"
-				ref.autodeclare
+				console.log "autodeclare {@value}"
+				ref.autodeclare if ref:autodeclare
 			else
 				out = "{keyword} {out}"
 				ref.@declared = yes
@@ -4478,8 +4521,6 @@ export class VarReference < ValueNode
 		self
 
 	def visit
-		# should be possible to have a VarReference without a name as well? for a system-variable
-		# name should not set this way.
 		var v = @variable ||= scope__.register(value.toString, self, type: @type)
 
 		# FIXME -- should not simply override the declarator here(!)
@@ -4528,6 +4569,17 @@ export class Assign < Op
 		var l = @left
 		var r = @right
 		
+		# these var assignments will only ever exist inside expressions etc
+		if l isa VarReference
+			if l.value isa Identifier
+				console.log 'assign with VarReference',l.type
+				# let variable = scope__.declare(l.value.symbol,null,type: l.type)
+				let variable = scope__.register(l.value.symbol,self,type: l.type)
+				# virtual should always happen?
+				variable.@virtual = yes
+				variable.autodeclare()
+				l = @left = variable
+
 		# WARNING - slightly undefined
 		# MARK THE STACK
 		l.traverse if l
@@ -4542,7 +4594,7 @@ export class Assign < Op
 			ROOT.entities.add(l.namepath,{namepath: l.namepath, type: r.typeName, desc: @desc})
 
 		# this should probably be done in a different manner
-		# no longer needed for 
+		# no longer needed for imba 2?
 		if lvar and lvar.declarator == l
 			lvar.@initialized = no
 			r.traverse if r
@@ -4559,6 +4611,7 @@ export class Assign < Op
 	def c o
 		unless right.isExpressable
 			if left isa VarReference and left.type == 'let'
+				console.log 'unexpressable let var assignment'
 				return Block.new([left,BR,right.consume(self)]).c(o)
 			return right.consume(self).c(o)
 		# testing this
@@ -5373,8 +5426,10 @@ export class If < ControlFlow
 		@tag = stack.@tag
 
 		# console.log "vars in if",Object.keys(@scope.varmap)
+		# TODO deal with variable scope
 		for own name, variable of @scope.varmap
 			if variable.type == 'let'
+				# console.log "variable virtualize"
 				variable.@virtual = yes
 
 		# the let-variables declared in if(*test*) should be
@@ -5803,18 +5858,35 @@ export class For < Loop
 		var reuseable = no # node isa Assign && node.left.node isa LocalVarAccess
 		var assignee = null
 		# might only work for locals?
-		if node isa Assign
-			if var receiver = node.left
-				if assignee = receiver.@variable
-					# we can only pull the var reference into the scope
-					# if we know that the variable is declared in this scope
-					reuseable = (receiver isa VarReference)
-
+		# if node isa Assign
+		# 	if var receiver = node.left
+		# 		if assignee = receiver.@variable
+		# 			# we can only pull the var reference into the scope
+		# 			# if we know that the variable is declared in this scope
+		# 			reuseable = (receiver isa VarReference)
+		
+		# elif node isa VarDeclaration
+		# 	if var receiver = node.left
+		# 		if assignee = receiver.@variable
+		# 			reuseable = (receiver isa Identifier)
+		# should type be let? And it should be added to th outer scope
 		resvar = @resvar ||= scope.register(:res,null,system: yes, type: 'var')
 
 		@catcher = PushAssign.new("push",resvar,null) # the value is not preset
 		let resval = Arr.new([])
 		body.consume(@catcher) # should still return the same body
+		
+		if node isa VarDeclaration
+			node.right = resvar.accessor
+			# let block = [self,BR,node]
+			return Block.new([
+				# how does assignment work here?
+				OP('=',VarReference.new(resvar,'let'),resval),
+				BR,
+				self,
+				BR,
+				node
+			])
 
 		if node
 			let block = [self,BR,resvar.accessor.consume(node)]
@@ -5859,6 +5931,7 @@ export class For < Loop
 				val.proxy(vars:source,idx)
 			elif val isa Obj or val isa Arr
 				# should run through an visit? VarReference.new(val,'let')
+				# TODO change this to a VarAssignment
 				body.unshift(OP('=', VarReference.new(val,'let'),OP('.',vars:source,idx)), BR)
 			else
 				body.unshift(OP('=',val,OP('.',vars:source,idx)), BR)
@@ -5931,7 +6004,7 @@ export class ForOf < For
 		var i = vars:index
 
 		var code
-
+		
 		if options:own
 			unless v
 				let ref = VarReference.new(options:value,'let')
@@ -5945,8 +6018,7 @@ export class ForOf < For
 			return head + code
 
 		else
-			# if v and v.refcount > 0
-			# 	body.unshift(OP('=',v,OP('.',src,k)))
+			# compile to a naive for of loop
 			code = scope.c(braces: yes, indent: yes)
 			# let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
@@ -8326,7 +8398,7 @@ export class Scope
 		@head = []
 		@node = node
 		@parent = parent
-		@vars = VariableDeclaration.new([])
+		@vars = ScopeVariables.new([])
 		@entities = Entities.new(self)
 		@meta = {}
 		@annotations = []
@@ -8844,6 +8916,8 @@ export class IfScope < FlowScope
 
 	def temporary refnode, o = {}, name = null
 		parent.temporary(refnode,o,name)
+		
+	
 
 export class BlockScope < FlowScope
 
@@ -8919,7 +8993,7 @@ export class Variable < Node
 		#
 		if @scope != closure and @type == 'let' and (es5 or @virtual) # or if it is a system-variable
 			item = closure.lookup(@name)
-
+			# console.log "resolving let {@name} {item.scope != scope}"
 			# we now need to ensure that this variable is unique inside
 			# the whole closure.
 			scope = closure
