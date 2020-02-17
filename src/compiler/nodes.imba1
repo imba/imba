@@ -1777,50 +1777,6 @@ export class VarDeclList < Block
 	# 	let out = super
 
 
-# this is almost like the old VarDeclarations but without the values
-export class VarBlock < ListNode
-
-	def load list
-		var first = list[0]
-
-		if first isa Assign
-			@type = first.left.@type
-		elif first isa VarReference
-			@type = first.@type
-		# @type = list[0] and list[0].type
-		list
-
-	# TODO All these inner items should rather be straight up literals
-	# or basic localvars - without any care whatsoever about adding var to the
-	# beginning etc.
-
-	def add expr
-		push(expr)
-
-	def isExpressable
-		# we would need to force-drop the variables, makes little sense
-		# but, it could be, could just push the variables out?
-		no
-
-	def js o
-		var code = AST.compact(AST.flatten(AST.cary(nodes)))
-		code = code.filter(|n| n != null && n != undefined && n != EMPTY)
-		var out = code.join(",")
-
-		# are we sure?
-		var keyword = o.es5 ? 'var' : (@type or 'var')
-		# we just need to trust that the variables have been autodeclared beforehand
-		# if we are inside an expression
-		out = "{keyword} " + out unless o.isExpression
-		return out
-
-
-	def consume node
-		# It doesnt make much sense for a VarBlock to consume anything
-		# it should probably return void for methods
-		return self
-
-
 # Could inherit from valueNode
 export class Parens < ValueNode
 
@@ -4453,8 +4409,6 @@ export class VarOrAccess < ValueNode
 
 export class VarReference < ValueNode
 
-	# TODO VarBlock should convert these to plain / dumb nodes
-
 	prop variable
 	prop declared
 	prop type
@@ -4494,11 +4448,7 @@ export class VarReference < ValueNode
 		var keyword = o.es5 ? 'var' : (@type or 'var')
 
 		if ref && !ref.@declared # .option(:declared)
-			if o.up(VarBlock) # or o.up(VarDeclList) # up varblock??
-				ref.@declared = yes
-
-				# ref.set(declared: yes)
-			elif o.isExpression or @export
+			if o.isExpression or @export
 				# console.log "autodeclare {@value}"
 				ref.autodeclare
 			else
