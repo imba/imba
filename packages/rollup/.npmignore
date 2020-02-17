@@ -1,0 +1,16 @@
+.DS_Store
+support
+examples
+plugins
+tmp
+.gitignore
+.github
+*.tgz
+*.log
+attic/*
+vendor/
+scripts/
+test/
+.cache
+.travis.yml
+.gitattributes

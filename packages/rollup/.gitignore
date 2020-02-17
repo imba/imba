@@ -1,0 +1,16 @@
+.DS_Store
+.cache
+/node_modules
+tmp
+*.tmp.js
+*.tgz
+dist/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
