@@ -1,0 +1,7 @@
+{
+  "packages": [
+    ".",
+    "imba-rollup"
+  ],
+  "version": "2.0.0-alpha.28"
+}
