@@ -514,6 +514,7 @@ export class Stack
 	prop nodes
 	prop scopes
 	prop root
+	prop state
 
 	def initialize
 		reset
@@ -527,6 +528,7 @@ export class Stack
 		@counter  = 0
 		@counters = {}
 		@options = {}
+		@state = {}
 		@es6 = null
 		@es5 = null
 		@optlevel = null
@@ -867,14 +869,20 @@ export class Node
 
 	# should rather do traversals
 	# o = {}, up, key, index
-	def traverse
+	def traverse o
 		if @traversed
 			return self
 		# NODES.push(self)
 		@traversed = yes
+		let prev
+		if o
+			prev = STACK.state
+			STACK.state = o
 		STACK.push self
-		visit(STACK)
+		visit(STACK,STACK.state)
 		STACK.pop self
+		if o
+			STACK.state = prev
 		return self
 
 	def inspect
@@ -1769,6 +1777,7 @@ export class VarDeclList < Block
 
 	def add part
 		push(BR) if @nodes:length
+
 		if true
 			let node = VarDeclaration.new(part[0],part[1],type).set(decl: self, datatype: part[0].option(:datatype))
 			push(node)
@@ -2460,11 +2469,15 @@ export class VarDeclaration < Node
 		
 	def visit
 		@right.traverse if @right
-		@left.traverse if @left
+		@left.traverse(declaring: type) if @left
 		
 		# replace directly 
 		if @left isa Identifier
 			@left.@variable = scope__.register(@left.symbol,self,type: type)
+		elif @left isa Obj
+			# need to traverse the object to register variables
+			# if it is a let we might also need to rename them though
+			
 		self
 		
 	def c o
@@ -3811,20 +3824,41 @@ export class ObjAttr < Node
 		@defaults = defaults
 		self
 
-	def visit
+	def visit stack, state
 		# should probably traverse key as well, unless it is a dead simple identifier
 		key.traverse
 		value.traverse if value
 		@defaults.traverse if @defaults
+		
+		let decl = state && state:declaring
 
 		if key isa Ivar
 			if !value
 				key = Identifier.new(key.value)
 				value = OP('.',scope__.context,key)
+				if @defaults
+					value = OP('=',value,@defaults)
+					@defaults = null
+
 		elif key isa Private
 			if !value
 				value = OP('.',scope__.context,key)
 				key = Identifier.new(key.value)
+
+		elif key isa Identifier
+			# if state && state:declaring
+			# 	key.variable = scope__.register(key.symbol,key)\
+			# isnt this rather going to
+			
+			if !value
+				if decl
+					value = scope__.register(key.symbol,key, type: decl)
+					if @defaults
+						value = OP('=',value,@defaults)
+						@defaults = null
+				else
+					value = scope__.lookup(key.symbol)
+					
 		self
 
 	def js o
@@ -4349,13 +4383,18 @@ export class VarOrAccess < ValueNode
 		@token.endLoc
 
 	# Shortcircuit traverse so that it is not added to the stack?!
-	def visit
+	def visit stack, state
 		# @identifier = value # this is not a real identifier?
-		# console.log "VarOrAccess {@identifier}"
-
+		var variable
 		var scope = scope__
+		
+		if state && state:declaring
+			console.log "VarOrAccess {@identifier}"
+			variable = scope.register(value,self,type: state:declaring)
 
-		var variable = scope.lookup(value)
+		
+
+		variable ||= scope.lookup(value)
 
 		# does not really need to have a declarator already? -- tricky
 		if variable && variable.declarator
@@ -4367,6 +4406,7 @@ export class VarOrAccess < ValueNode
 			# ie.  var x = x would resolve to var x = this.x() if x
 			# was not previously defined
 			if vscope == scope and !variable.@initialized
+				
 				# here we need to check if the variable exists outside
 				# if it does - we need to ensure that the inner variable does not collide
 				let outerVar = scope.parent.lookup(value)
@@ -4597,11 +4637,11 @@ export class Assign < Op
 		# no longer needed for imba 2?
 		if lvar and lvar.declarator == l
 			lvar.@initialized = no
-			r.traverse if r
+			r.traverse(assignment: yes) if r
 			lvar.@initialized = yes
 
 		else
-			r.traverse if r
+			r.traverse(assignment: yes) if r
 
 		if l isa VarReference or l.@variable
 			l.@variable.assigned(r,self)
@@ -4835,6 +4875,7 @@ export class Identifier < Node
 
 	prop safechain
 	prop value
+	prop variable
 
 	def initialize value
 		if value isa Token
@@ -4906,14 +4947,14 @@ export class Identifier < Node
 		AST.sym(@value)
 
 	def js o
-		symbol
+		@variable ? @variable.c() : symbol
 
 	def c o
 		let up = STACK.current
 		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
 		if OPTS:sourceMap and (!o or o:mark !== false)
-			out = M(out,@token or @value)
+			out = M(out, @token or @value)
 		return out
 
 	def dump
@@ -9070,6 +9111,7 @@ export class Variable < Node
 			# 	# should happen at earlier stage to
 			# 	# get around naming conventions
 			@c = "{c}$" if RESERVED_REGEX.test(@c) # @c.match(/^(default)$/)
+			@c = @c + '/*' + @ref + '*/'
 		return @c
 
 	def js

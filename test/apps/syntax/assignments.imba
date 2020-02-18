@@ -49,6 +49,26 @@ test do
 	eq a,1
 
 test do
+	let {a,b} = {a: 1,b: 1}
+	
+	if true
+		let a = 2
+		eq a, 2
+
+	eq a,1
+	
+test do
+	let {a,b} = {a: 1,b: 1}
+	
+	if let a = 2
+		let b = 2
+		eq a, 2
+		eq b, 2
+
+	eq a,1
+	eq b,1
+
+test do
 	let o = {a: 2}
 	let a = 1
 	if let {a} = o
@@ -57,3 +77,14 @@ test do
 	else
 		eq a, 1
 	eq a, 1
+
+test do
+	let a = 1
+	if let a = 2
+		let {name: a} = {name: 'a'}
+		let x = {@b,a}
+		[a=3] = [1,2,3]
+		eq a, 0
+	else
+		eq a, 1
+	eq a,1
