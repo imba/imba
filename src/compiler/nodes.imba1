@@ -1170,10 +1170,10 @@ export class Terminator < Meta
 		[@value.@loc,@value.@loc + @value.@value:length]
 
 	def startLoc
-		@value.startLoc
+		@value:startLoc ? @value.startLoc : -1
 
 	def endLoc
-		startLoc + @value.@value:length
+		@value.@value ? (startLoc + @value.@value:length) : -1
 
 	def c
 		let val = @value.c
@@ -2474,6 +2474,12 @@ export class VarDeclaration < Node
 			
 		self
 		
+	def consume node
+		if node isa TagLike
+			return self
+		
+		super(node)
+		
 	def c o
 		if right and !right.isExpressable
 			# console.log 'unexpressable assignment',String(kind)
@@ -2492,10 +2498,14 @@ export class VarDeclaration < Node
 		if right
 			out += " = {right.c(expression: true)}"
 			
+		if option(:export)
+			out = M('export',option(:export)) + " {out}"
+			# console.log 'export vardeclaration!!!'
+			
 		if let typ = datatype
 			if STACK.tsc # or just generally?
 				out = '/** @type {' + typ.c() + '} */\n' + out
-	
+
 		return out
 
 # TODO clean up and refactor all the different representations of vars
@@ -4384,7 +4394,7 @@ export class VarOrAccess < ValueNode
 		var scope = scope__
 		
 		if state && state:declaring
-			console.log "VarOrAccess {@identifier}"
+			# console.log "VarOrAccess {@identifier}"
 			variable = scope.register(value,self,type: state:declaring)
 
 		
@@ -4625,55 +4635,9 @@ export class Assign < Op
 		
 		if r
 			r.traverse(assignment: yes)
-		
-		# if l isa VarReference
-		# 	# should we deal with var reference directly?
-		# 	l.traverse()
+	
 		if l
 			l.traverse()
-		
-		# these var assignments will only ever exist inside expressions etc
-		if l isa VarReference and false
-			if l.value isa Identifier
-				console.log 'assign with VarReference',l.type
-				
-				# let variable = scope__.declare(l.value.symbol,null,type: l.type)
-				let variable = scope__.register(l.value.symbol,self,type: l.type)
-				# virtual should always happen?
-				variable.@virtual = yes
-				variable.autodeclare()
-				l = @left = variable
-		
-		
-
-		# var lvar = l isa VarReference and l.variable
-
-		# how does this work with constants that are really var references?
-		# should work when things are not described as well - but this is for testing
-		# but if it refers to something else
-		# if !lvar and @desc
-		# 	# entities should be able to extract the needed info instead
-		# 	ROOT.entities.add(l.namepath,{namepath: l.namepath, type: r.typeName, desc: @desc})
-
-		# this should probably be done in a different manner
-		# no longer needed for imba 2?
-		
-		# if we traverse the right side first - and it is a method -
-		# it will not be able to reference the variable defining the method itself.
-		# But this type of var assignment will only appear inside calls and conditions
-		# in which this shouldnt be allowed anyway.
-		
-		if false
-			if lvar and lvar.declarator == l
-				lvar.@initialized = no
-				r.traverse(assignment: yes) if r
-				lvar.@initialized = yes
-
-			else
-				r.traverse(assignment: yes) if r
-
-			if l isa VarReference or l.@variable
-				l.@variable.assigned(r,self)
 
 		return self
 
@@ -5835,13 +5799,16 @@ export class For < Loop
 
 		var parent = stack.@tag
 
-		options[:source].traverse # what about awakening the vars here?
-		declare
-
+		options:source.traverse # what about awakening the vars here?
+		
 		# add guard to body
 		if options:guard
 			var op = IF(options:guard.invert,Block.wrap([ContinueStatement.new("continue")]))
 			body.unshift(op,BR)
+
+		declare
+			
+		# here add the things to declare
 		
 		if parent
 			# TODO remove
@@ -5903,13 +5870,10 @@ export class For < Loop
 
 			vars:source = bare ? src : scope.declare('items',util.iterable(src),system: yes, type: 'let', pool: 'iter')
 			vars:len = scope.declare('len',util.len(vars:source),type: 'let', pool: 'len', system: yes)
-
-			if o:name isa Identifier # also Const etc?
-				vars:value = scope.declare(o:name,null,type: 'let')
-				vars:value.addReference(o:name) # adding reference!
-			elif o:name isa Obj or o:name isa Arr
-				vars:value = o:name
-
+			
+			if o:name
+				body.unshift(VarDeclaration.new(o:name,OP('.',vars:source,vars:index),'let'),BR)
+				
 			vars:index.addReference(oi) if oi
 
 		return self
@@ -5929,19 +5893,8 @@ export class For < Loop
 		var resvar = null
 		var reuseable = no # node isa Assign && node.left.node isa LocalVarAccess
 		var assignee = null
-		# might only work for locals?
-		# if node isa Assign
-		# 	if var receiver = node.left
-		# 		if assignee = receiver.@variable
-		# 			# we can only pull the var reference into the scope
-		# 			# if we know that the variable is declared in this scope
-		# 			reuseable = (receiver isa VarReference)
 		
-		# elif node isa VarDeclaration
-		# 	if var receiver = node.left
-		# 		if assignee = receiver.@variable
-		# 			reuseable = (receiver isa Identifier)
-		# should type be let? And it should be added to th outer scope
+		console.log "ForIn consume {node}"
 		
 		# this should be autodeclared no?
 		resvar = @resvar ||= scope.register(:res,null,system: yes, type: 'var')
@@ -5951,28 +5904,27 @@ export class For < Loop
 		body.consume(@catcher) # should still return the same body
 		resvar.autodeclare() # only if it is a system variable?
 		
-		if node isa VarDeclaration
+		if node isa VarDeclaration or node isa Assign
 			node.right = resvar.accessor
 			# let block = [self,BR,node]
 			return Block.new([
-				# how does assignment work here?
 				OP('=',resvar,resval)
-				# OP('=',VarReference.new(resvar,'let'),resval),
 				BR,
 				self,
 				BR,
 				node
 			])
 
-		if node
-			let block = [self,BR,resvar.accessor.consume(node)]
-
-			if @resvar
-				block.unshift(BR)
-				block.unshift(OP('=',VarReference.new(@resvar,'let'),resval))
-
-			var ast = Block.new(block)
-			return ast
+		elif node
+			# what if it is a PushVar?
+			# node.right = resvar.accessor
+			let block = [OP('=',resvar,resval),BR,self,BR,resvar.accessor.consume(node)]
+			# if @resvar
+			#	block.unshift(BR)
+			# block.unshift(OP('=',VarReference.new(@resvar,'let'),resval))
+			# var ast = Block.new(block)
+			return Block.new(block)
+			
 
 		return self
 
@@ -6002,15 +5954,6 @@ export class For < Loop
 			
 		else
 			cond = OP('<',idx,vars:len)
-			
-			if false and val.refcount < 3 and val.assignments:length == 0 and !val.@noproxy and false
-				val.proxy(vars:source,idx)
-			elif val isa Obj or val isa Arr
-				# should run through an visit? VarReference.new(val,'let')
-				# TODO change this to a VarAssignment
-				body.unshift(OP('=', VarReference.new(val,'let'),OP('.',vars:source,idx)), BR)
-			else
-				body.unshift(OP('=',val,OP('.',vars:source,idx)), BR)
 
 			if options:step
 				final = OP('=',idx,OP('+',idx,options:step))
@@ -6044,26 +5987,24 @@ export class ForOf < For
 			vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
 			o:value = o:index
 
-			if o:value isa Obj or o:value isa Arr
-				vars:value = null
-			else
-				v = vars:value = scope.declare(o:value,null,let: yes, type: 'let') if o:value
+			
 
 			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 			# systemvariable -- should not really be added to the map
 			var keys = vars:keys = scope.declare('keys',Util.keys(vars:source.accessor),system: yes, type: 'let') # the outer one should resolve first
 			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
 			k = vars:key = scope.declare(o:name,null,type: 'let') # scope.declare(o:name,null,system: yes)
+			
+			if o:value isa Obj or o:value isa Arr
+				body.unshift(VarDeclaration.new(o:value,OP('.',vars:source,k),'let'),BR)
+				vars:value = null
+			elif o:value
+				v = vars:value = scope.declare(o:value,null,let: yes, type: 'let')
+		
 		else
-			# we set the var -- why even declare it
-			# no need to declare -- it will declare itself in the loop - no?
 			source = vars:source = STACK.tsc ? o:source : util.iterable(o:source)
-
-			o:value = vars:value = o:name
-			# vars:source = o:source.@variable || scope.temporary(o:source, system: yes, pool: 'dict', type: 'let')
-			# vars:source
-			# v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
-			# k = vars:key = scope.register(o:name,o:name,type: 'let')
+			o:value = vars:value = o:name # need to visit these to declare them
+			o:name.traverse(declaring: 'let')
 
 		# TODO use util - why add references already? Ah -- this is for the highlighting
 		v.addReference(o:index) if v and o:index
@@ -6082,10 +6023,13 @@ export class ForOf < For
 		var code
 		
 		if options:own
-			unless v
-				let ref = VarReference.new(options:value,'let')
-				body.unshift(OP('=',ref,OP('.',src,k)))
-			elif v and v.refcount > 0
+			# unless v
+			# 	# need to visit this, no?
+			# 	# body.unshift(VarDeclaration.new(options:value,OP('.',src,k),'let'))
+			# 	# let ref = VarReference.new(options:value,'let')
+			# 	# body.unshift(OP('=',ref,OP('.',src,k)))
+			# el
+			if v and v.refcount > 0
 				body.unshift(OP('=',v,OP('.',src,k)))
 
 			body.unshift(OP('=',k,OP('.',vars:keys,i)))
@@ -6102,7 +6046,7 @@ export class ForOf < For
 
 	def head
 		var v = options:vars
-
+		# skipping head?
 		[
 			OP('=',v:key,OP('.',v:keys,v:index))
 			OP('=',v:value,OP('.',v:source,v:key)) if v:value
@@ -7956,7 +7900,7 @@ export class ImportSpecifier < ESMSpecifier
 
 	def visit
 		super
-		if @importer
+		if @importer and STACK.cjs
 			@variable.@c = OP('.',@importer.variable,@name).c
 
 export class ImportNamespaceSpecifier < ESMSpecifier
@@ -9147,7 +9091,7 @@ export class Variable < Node
 			# 	# should happen at earlier stage to
 			# 	# get around naming conventions
 			@c = "{c}$" if RESERVED_REGEX.test(@c) # @c.match(/^(default)$/)
-			@c = @c + '/*' + @ref + '*/'
+			# @c = @c + '/*' + @ref + '*/'
 		return @c
 
 	def js

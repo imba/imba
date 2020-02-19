@@ -1,4 +1,6 @@
 let ary = [1,2,3]
+let objary = [{a: 1},{a: 2},{a: 3}]
+
 let fn = do yes
 	
 test do
@@ -9,6 +11,40 @@ test do
 	
 	func(1,1)
 
+test do
+	let a = 0
+	if let a = 2
+		for {a},i in objary
+			eq a,i+1
+	eq a,0
+
+test do
+	let obj = {
+		a: {a: 1, key: 'a'}
+		b: {a: 1, key: 'b'}
+		c: {a: 1, key: 'c'}
+	}
+
+	let a = 0
+	let i = 0
+	if let a = 2
+		for own k,{a,key} of obj when a == 1
+			eq a,1
+			eq k,key
+			i++
+	eq a,0
+	eq i,3
+
+test do
+	let ary = [[{a:0}],[{a:1}],[{a:2}]]
+	let a = 0
+	if let a = 2
+		let k = 0
+		for [{a}] of ary
+			eq a,k++
+		eq k,3
+	eq a,0
+	
 test do
 	fn(let y = 1)
 
@@ -161,4 +197,15 @@ test do
 	{a,@b = 10} = {a: 1}
 	eq a,1
 	eq @b,10
+
+test do
+	class x
+		def constructor
+			#priv = for o in ary
+				o
+		get priv
+			#priv
+	
+	let v = x.new
+	eq v.priv,[1,2,3]
 	
