@@ -171,6 +171,7 @@ def main
 
 	if failed.length
 		console.log helpers.ansi.f('redBright',"{failed.length} test{failed.length == 1 ? '' : 's'} failed")
+		console.log "The following file(s) failed:\n", (failed.map do "x {$1.file}").join('\n')
 		process.exit(1)
 	else
 		process.exit(0)
