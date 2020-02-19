@@ -2482,13 +2482,7 @@ export class VarDeclaration < Node
 		
 	def c o
 		if right and !right.isExpressable
-			# console.log 'unexpressable assignment',String(kind)
-			if String(kind) == 'let' and false
-				console.log 'unexpressable let var assignment'
-				@tmpvar = scope__.temporary
-				let assign = OP('=',)
-				return Block.new([left,BR,right.consume(self)]).c(o)
-			
+			# TODO write failing tests and make them pass
 			return right.consume(self).c(o)
 		# testing this
 		return super(o)
@@ -2499,12 +2493,15 @@ export class VarDeclaration < Node
 			out += " = {right.c(expression: true)}"
 			
 		if option(:export)
-			out = M('export',option(:export)) + " {out}"
-			# console.log 'export vardeclaration!!!'
+			if STACK.cjs
+				out = "{out};\nexports.{left.c()} = {left.c()}"
+			else
+				out = M('export',option(:export)) + " {out}"
 			
 		if let typ = datatype
 			if STACK.tsc # or just generally?
 				out = '/** @type {' + typ.c() + '} */\n' + out
+
 
 		return out
 
