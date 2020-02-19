@@ -5894,8 +5894,6 @@ export class For < Loop
 		var reuseable = no # node isa Assign && node.left.node isa LocalVarAccess
 		var assignee = null
 		
-		console.log "ForIn consume {node}"
-		
 		# this should be autodeclared no?
 		resvar = @resvar ||= scope.register(:res,null,system: yes, type: 'var')
 
@@ -7882,7 +7880,6 @@ export class ESMSpecifier < Node
 		if @exporter
 			# lookup variable
 			unless @exporter.source
-				console.log "looking up variable {@cname}"
 				@variable = scope__.root.lookup(@cname)
 		else
 			@variable = scope__.root.register(@key, self, type: 'const')
@@ -7901,13 +7898,15 @@ export class ImportSpecifier < ESMSpecifier
 	def visit
 		super
 		if @importer and STACK.cjs
+			# FIXME will bug out if trying to set the variable
 			@variable.@c = OP('.',@importer.variable,@name).c
 
 export class ImportNamespaceSpecifier < ESMSpecifier
 
 	def visit
 		super
-		if @importer
+		if @importer and STACK.cjs
+			# FIXME will bug out if trying to set the variable
 			@variable.@c = @importer.variable.c
 		
 		
