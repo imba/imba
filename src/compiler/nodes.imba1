@@ -576,11 +576,13 @@ export class Stack
 
 	def sourcePath
 		@options:sourcePath
-
+	
+	
 	def es6
 		@es6 ?= !!(@options:es6 or @options:es2015 or env('IMBA_ES6'))
 
 	def es5
+		# TODO remove
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
 
 	def tsc
@@ -590,7 +592,7 @@ export class Stack
 		@options:format or 'esm'
 		
 	def cjs
-		self.format() == 'cjs'
+		self.format() == 'cjs' or (!@options:format and platform == 'node')
 	
 	def esm
 		self.format() == 'esm'
@@ -7984,10 +7986,7 @@ export class ImportDeclaration < ESMDeclaration
 export class ExportDeclaration < ESMDeclaration
 
 	def visit
-		if STACK.cjs
-			unless ROOT.@exportCJS
-				ROOT.@exportCJS = yes
-				ROOT.@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
+		scope__.root.activateExports()
 
 		for item in @specifiers
 			item?.traverse()
@@ -8047,6 +8046,8 @@ export class Export < ValueNode
 		super
 		
 	def visit
+		scope__.root.activateExports()
+
 		value.set(
 			export: (option(:keyword) or self),
 			return: option(:return),
@@ -8721,6 +8722,11 @@ export class RootScope < Scope
 	def globalRef
 		let js = "(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))"
 		@globalRef ||= declare('global$',LIT(js))
+		
+	def activateExports
+		if STACK.cjs and !@hasExports
+			@hasExports = yes
+			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
 
 	def lookup name
 		name = helpers.symbolize(name)
