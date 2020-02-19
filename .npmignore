@@ -19,3 +19,5 @@ src/compiler
 screenshot.png
 .gitattributes
 .editorconfig
+packages/
+lerna.json
