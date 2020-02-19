@@ -2035,13 +2035,6 @@ export class Param < Node
 			defaults: defaults
 		}
 
-export class SplatParam < Param
-
-	def loc
-		# hacky.. cannot know for sure that this is right?
-		var r = name.region
-		[r[0] - 1,r[1]]
-
 export class BlockParam < Param
 
 	def c
@@ -2175,7 +2168,6 @@ export class ParamList < ListNode
 		return (doc ? '/**\n' + doc + '\n*/\n' : '')
 
 	def visit
-		@splat = filter(|par| par isa SplatParam)[0]
 		var blk = filter(|par| par isa BlockParam)
 
 		if blk:length > 1
@@ -2236,10 +2228,10 @@ export class ParamList < ListNode
 			elif par isa BlockParam
 				signature.push('blk')
 				blk = par
-			elif par isa SplatParam
-				signature.push('splat')
-				splat = par
-				idx -= 1 # this should really be removed from the list, no?
+			# elif par isa SplatParam
+			# 	signature.push('splat')
+			# 	splat = par
+			# 	idx -= 1 # this should really be removed from the list, no?
 			elif par isa ArrayParams
 				arys.push(par)
 				signature.push('ary')
@@ -2471,23 +2463,26 @@ export class VarDeclaration < Node
 		@right.traverse if @right
 		@left.traverse(declaring: type) if @left
 		
-		# replace directly 
+		# replace directly
+		# should the left side be wrapped in a VarDeclLeft node?
 		if @left isa Identifier
-			@left.@variable = scope__.register(@left.symbol,self,type: type)
-		elif @left isa Obj
-			# need to traverse the object to register variables
-			# if it is a let we might also need to rename them though
+			@left.@variable ||= scope__.register(@left.symbol,self,type: type)
+
+		# elif @left isa Obj
+		# 	# need to traverse the object to register variables
+		# 	# if it is a let we might also need to rename them though
 			
 		self
 		
 	def c o
 		if right and !right.isExpressable
-			console.log 'unexpressable assignment',String(kind)
+			# console.log 'unexpressable assignment',String(kind)
 			if String(kind) == 'let' and false
 				console.log 'unexpressable let var assignment'
 				@tmpvar = scope__.temporary
 				let assign = OP('=',)
 				return Block.new([left,BR,right.consume(self)]).c(o)
+			
 			return right.consume(self).c(o)
 		# testing this
 		return super(o)
@@ -2933,7 +2928,7 @@ export class Func < Code
 	def visit
 		scope.visit
 		@context = scope.parent
-		@params.traverse
+		@params.traverse(declaring: 'arg')
 		@body.traverse # so soon?
 
 	def funcKeyword
@@ -4522,6 +4517,8 @@ export class VarReference < ValueNode
 		@value.region
 
 	def js o
+		return @value.c()
+
 		# what about resolving?
 		var ref = @variable
 		if value isa Obj or value isa Arr
@@ -4560,7 +4557,24 @@ export class VarReference < ValueNode
 		@variable && @variable.autodeclare
 		self
 
-	def visit
+	def visit stack, state
+		var vars = []
+	
+		@value.traverse(declaring: @type, variables: vars)
+
+		if @value isa Identifier
+			@value.@variable ||= scope__.register(@value.symbol,self,type: @type)
+			vars.push(@value.@variable)
+			
+		# console.log "visit VarReference!!! {@value} {@value:constructor:name}",vars:length
+
+		for variable in vars
+			# should always be autodeclared?
+			variable.@virtual = yes
+			variable.autodeclare()
+
+		return self
+		
 		var v = @variable ||= scope__.register(value.toString, self, type: @type)
 
 		# FIXME -- should not simply override the declarator here(!)
@@ -4609,48 +4623,64 @@ export class Assign < Op
 		var l = @left
 		var r = @right
 		
+		if r
+			r.traverse(assignment: yes)
+		
+		# if l isa VarReference
+		# 	# should we deal with var reference directly?
+		# 	l.traverse()
+		if l
+			l.traverse()
+		
 		# these var assignments will only ever exist inside expressions etc
-		if l isa VarReference
+		if l isa VarReference and false
 			if l.value isa Identifier
 				console.log 'assign with VarReference',l.type
+				
 				# let variable = scope__.declare(l.value.symbol,null,type: l.type)
 				let variable = scope__.register(l.value.symbol,self,type: l.type)
 				# virtual should always happen?
 				variable.@virtual = yes
 				variable.autodeclare()
 				l = @left = variable
+		
+		
 
-		# WARNING - slightly undefined
-		# MARK THE STACK
-		l.traverse if l
-
-		var lvar = l isa VarReference and l.variable
+		# var lvar = l isa VarReference and l.variable
 
 		# how does this work with constants that are really var references?
 		# should work when things are not described as well - but this is for testing
 		# but if it refers to something else
-		if !lvar and @desc
-			# entities should be able to extract the needed info instead
-			ROOT.entities.add(l.namepath,{namepath: l.namepath, type: r.typeName, desc: @desc})
+		# if !lvar and @desc
+		# 	# entities should be able to extract the needed info instead
+		# 	ROOT.entities.add(l.namepath,{namepath: l.namepath, type: r.typeName, desc: @desc})
 
 		# this should probably be done in a different manner
 		# no longer needed for imba 2?
-		if lvar and lvar.declarator == l
-			lvar.@initialized = no
-			r.traverse(assignment: yes) if r
-			lvar.@initialized = yes
+		
+		# if we traverse the right side first - and it is a method -
+		# it will not be able to reference the variable defining the method itself.
+		# But this type of var assignment will only appear inside calls and conditions
+		# in which this shouldnt be allowed anyway.
+		
+		if false
+			if lvar and lvar.declarator == l
+				lvar.@initialized = no
+				r.traverse(assignment: yes) if r
+				lvar.@initialized = yes
 
-		else
-			r.traverse(assignment: yes) if r
+			else
+				r.traverse(assignment: yes) if r
 
-		if l isa VarReference or l.@variable
-			l.@variable.assigned(r,self)
+			if l isa VarReference or l.@variable
+				l.@variable.assigned(r,self)
 
 		return self
 
 	def c o
 		unless right.isExpressable
 			if left isa VarReference and left.type == 'let'
+				# when does this occur?
 				console.log 'unexpressable let var assignment'
 				return Block.new([left,BR,right.consume(self)]).c(o)
 			return right.consume(self).c(o)
@@ -5472,6 +5502,7 @@ export class If < ControlFlow
 			if variable.type == 'let'
 				# console.log "variable virtualize"
 				variable.@virtual = yes
+				variable.autodeclare()
 
 		# the let-variables declared in if(*test*) should be
 		# local to the inner scope, but will technically be
@@ -5911,18 +5942,22 @@ export class For < Loop
 		# 		if assignee = receiver.@variable
 		# 			reuseable = (receiver isa Identifier)
 		# should type be let? And it should be added to th outer scope
+		
+		# this should be autodeclared no?
 		resvar = @resvar ||= scope.register(:res,null,system: yes, type: 'var')
 
 		@catcher = PushAssign.new("push",resvar,null) # the value is not preset
 		let resval = Arr.new([])
 		body.consume(@catcher) # should still return the same body
+		resvar.autodeclare() # only if it is a system variable?
 		
 		if node isa VarDeclaration
 			node.right = resvar.accessor
 			# let block = [self,BR,node]
 			return Block.new([
 				# how does assignment work here?
-				OP('=',VarReference.new(resvar,'let'),resval),
+				OP('=',resvar,resval)
+				# OP('=',VarReference.new(resvar,'let'),resval),
 				BR,
 				self,
 				BR,
@@ -8542,17 +8577,15 @@ export class Scope
 		var existing = @varmap.hasOwnProperty(name) && @varmap[name]
 		# FIXME check if existing is required to be unique as well?
 		return existing if existing and !o:unique
+
 		# var type = o:system ? SystemVariable : Variable
 		var item = Variable.new(self,name,decl,o)
 		
-		# register 
-		# if o:type == 'meth' and self isa RootScope
-		# 	console.log "add to object",name
-		# 	@object.add(name,item)
-		# var item = Variable.new(self,name,decl,o)
-		# need to check for duplicates, and handle this gracefully -
-		# going to refactor later
-		@varmap[name] = item if !o:system and !existing
+		if !o:system and !existing
+			@varmap[name] = item
+
+		if STACK.state and STACK.state:variables isa Array
+			STACK.state:variables.push(item)
 		return item
 
 	def annotate obj
@@ -9024,11 +9057,14 @@ export class Variable < Node
 
 	def resolve scope = scope, force = no
 		return self if @resolved and !force
+		
 
 		@resolved = yes
 		var es5 = STACK.es5
 		var closure = @scope.closure
 		var item = @shadowing or scope.lookup(@name)
+		
+		# console.log "resolving var {@name} {scope}",scope == @closure,@virtual
 
 		# if this is a let-definition inside a virtual scope we do need
 		#

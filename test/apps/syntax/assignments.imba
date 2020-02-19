@@ -1,4 +1,53 @@
 let ary = [1,2,3]
+let fn = do yes
+	
+test do
+	var func = do |{a,b}|
+		if let a = 2
+			eq a,2
+		eq a,b
+	
+	func(1,1)
+
+test do
+	fn(let y = 1)
+
+	if true
+		fn(let y = 2)
+		eq y, 2
+		
+	eq y, 1
+
+test do
+	let o = {a: 2}
+	let a = 1
+	if let {a} = o
+		eq a, 2
+	else
+		eq a, 1
+	eq a, 1
+
+test do
+	let a = 1
+	let s = 'a'
+	if let a = 2
+		eq a,2
+		let {name: s} = {name: 'b'}
+		eq s,'b'
+
+		let x = {@b,a,s}
+		eq x.a,2
+		eq x.s,'b'
+		
+		[a=3] = [1,2,3]
+		eq a, 1
+		[a=3] = []
+		eq a, 3
+	else
+		eq a, 1
+	eq a,1
+	eq s,'a'
+
 
 test do
 	let a = [1,2,3]
@@ -67,24 +116,49 @@ test do
 
 	eq a,1
 	eq b,1
-
+	
 test do
-	let o = {a: 2}
 	let a = 1
-	if let {a} = o
-		yes
+	let b = 1
+	let c = 1
+	let d = 1
+	let e = 1
+	let f = 1
+	let g = 1
+	
+	let at = 1
+
+	if 1
+		let a = 2
+		let b = {a}
+		let {c,name: {g}} = {c: 2,name: {g: 2}}
+		let [d,e,...rest] = [2,2,2,2]
+		let [x,y,z = at] = [2,2]
+	
 		eq a, 2
-	else
-		eq a, 1
+		eq b.a, 2
+		eq c, 2
+		eq e, 2
+		eq g, 2
+		eq x, 2
+		eq y, 2
+		eq z, 1
+		eq at, 1
+				
 	eq a, 1
 
 test do
-	let a = 1
-	if let a = 2
-		let {name: a} = {name: 'a'}
-		let x = {@b,a}
-		[a=3] = [1,2,3]
-		eq a, 0
-	else
-		eq a, 1
+	let [a,b,c] = [1,1,1]
+	
+	if true
+		let {a = 2, b = 2} = {a: 3}
+		eq a,3
+		eq b,2
+	eq a, 1
+
+test do
+	let a = 0
+	{a,@b = 10} = {a: 1}
 	eq a,1
+	eq @b,10
+	

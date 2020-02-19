@@ -588,7 +588,6 @@ var grammar =
 		o 'Object' do Param.new(A1)
 		o 'Array' do Param.new(A1)
 		o 'ParamVar' # do RequiredParam.new A1
-		# o 'SPLAT ParamVar' do SplatParam.new A2, null, A1
 		o '... ParamVar' do A2.set(splat: A1)
 		# BlockParam.new A2, null, A1
 		o 'BLOCK_ARG ParamVar' do A2.set(blk: A1)
