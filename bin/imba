@@ -43,7 +43,6 @@ function run(code,pars) {
 	if (path.extname(main.filename) != '.imba' || require.extensions) {
 		arguments[1].target || (arguments[1].target = 'node');
 		arguments[1].standalone || (arguments[1].standalone = true);
-		console.log('compile',filename);
 		var content = compiler.compile(code,arguments[1]);
 		return main._compile((content.js || content),main.filename);
 	} else {

@@ -4525,39 +4525,6 @@ export class VarReference < ValueNode
 	def loc
 		@value.region
 
-	def js o
-		return @value.c()
-
-		# what about resolving?
-		var ref = @variable
-		if value isa Obj or value isa Arr
-			ref = value
-
-		var out = "{M(ref.c,@value)}"
-		var keyword = @type or 'var'
-
-		if ref && !ref.@declared # .option(:declared)
-			if o.isExpression or @export
-				console.log "autodeclare {@value}"
-				ref.autodeclare if ref:autodeclare
-			else
-				out = "{keyword} {out}"
-				ref.@declared = yes
-				# ref.set(declared: yes)
-
-		# need to think the export through -- like registering somehow
-		# should register in scope - export on analysis++
-		if option(:decl) and option(:decl).option(:export)
-			out = "export {out}"
-
-		# if @export
-		# 	out = "module.exports.{ref.c} = {ref.c}"
-		let typ = option(:datatype)
-		if STACK.tsc and typ
-			# look it up?
-			out = '/** @type {' + typ.c() + '} */\n' + out
-		return out
-
 	def declare
 		self
 
@@ -4574,8 +4541,6 @@ export class VarReference < ValueNode
 		if @value isa Identifier
 			@value.@variable ||= scope__.register(@value.symbol,self,type: @type)
 			vars.push(@value.@variable)
-			
-		# console.log "visit VarReference!!! {@value} {@value:constructor:name}",vars:length
 
 		for variable in vars
 			# should always be autodeclared?
@@ -4583,21 +4548,9 @@ export class VarReference < ValueNode
 			variable.autodeclare()
 
 		return self
-		
-		var v = @variable ||= scope__.register(value.toString, self, type: @type)
-
-		# FIXME -- should not simply override the declarator here(!)
-		if !v.declarator
-			v.declarator = self
-
-		v.addReference(@value) if @value # is this the first reference?
-
-		# only needed when analyzing?
-		@value.@value.@variable = v
-		self
-
-	def refnr
-		variable.references.indexOf(value)
+	
+	def js o
+		return @value.c()
 
 
 # ASSIGN
@@ -4644,7 +4597,7 @@ export class Assign < Op
 		unless right.isExpressable
 			if left isa VarReference and left.type == 'let'
 				# when does this occur?
-				console.log 'unexpressable let var assignment'
+				# console.log 'unexpressable let var assignment'
 				return Block.new([left,BR,right.consume(self)]).c(o)
 			return right.consume(self).c(o)
 		# testing this
@@ -5913,15 +5866,8 @@ export class For < Loop
 			])
 
 		elif node
-			# what if it is a PushVar?
-			# node.right = resvar.accessor
 			let block = [OP('=',resvar,resval),BR,self,BR,resvar.accessor.consume(node)]
-			# if @resvar
-			#	block.unshift(BR)
-			# block.unshift(OP('=',VarReference.new(@resvar,'let'),resval))
-			# var ast = Block.new(block)
 			return Block.new(block)
-			
 
 		return self
 
@@ -6020,12 +5966,7 @@ export class ForOf < For
 		var code
 		
 		if options:own
-			# unless v
-			# 	# need to visit this, no?
-			# 	# body.unshift(VarDeclaration.new(options:value,OP('.',src,k),'let'))
-			# 	# let ref = VarReference.new(options:value,'let')
-			# 	# body.unshift(OP('=',ref,OP('.',src,k)))
-			# el
+			# FIXME are we sure about this?
 			if v and v.refcount > 0
 				body.unshift(OP('=',v,OP('.',src,k)))
 
