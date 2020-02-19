@@ -208,4 +208,16 @@ test do
 	
 	let v = x.new
 	eq v.priv,[1,2,3]
+
+test do
+	let i = 0
 	
+	# difficult to show the bug - but it is there
+	# will be apparent if we reenable implicit self
+	let fn = do |v|
+		i++
+		if v > 0
+			fn(v - 1)
+	fn(4)
+	eq i,5
+		
