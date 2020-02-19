@@ -60,6 +60,11 @@ if(require.extensions) {
 		return mod._compile(content,filename);
 	};
 	
+	require.extensions['.imba2'] = function (mod,filename){
+		var content = cacheFile(filename);
+		return mod._compile(content,filename);
+	};
+	
 	var findExtension = function (filename){
 		var curExtension,extensions;
 		extensions = path.basename(filename).split('.');
@@ -86,6 +91,10 @@ if(require.extensions) {
 
 } else if(require.registerExtension) {
 	require.registerExtension('.imba',function (content){
+		return compiler.compile(content, {target: 'node'}).js;
+	});
+	
+	require.registerExtension('.imba2',function (content){
 		return compiler.compile(content, {target: 'node'}).js;
 	});
 };

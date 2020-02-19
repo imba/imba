@@ -50,6 +50,8 @@ function run(code,pars) {
 	};
 };
 
+
+// TODO add support for imba run cache?
 if (require.extensions) {
 	require.extensions['.imba'] = function(mod,filename) {
 		var options = {filename: filename,target: 'node'};

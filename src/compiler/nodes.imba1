@@ -514,6 +514,7 @@ export class Stack
 	prop nodes
 	prop scopes
 	prop root
+	prop state
 
 	def initialize
 		reset
@@ -527,6 +528,7 @@ export class Stack
 		@counter  = 0
 		@counters = {}
 		@options = {}
+		@state = {}
 		@es6 = null
 		@es5 = null
 		@optlevel = null
@@ -574,15 +576,26 @@ export class Stack
 
 	def sourcePath
 		@options:sourcePath
-
+	
+	
 	def es6
 		@es6 ?= !!(@options:es6 or @options:es2015 or env('IMBA_ES6'))
 
 	def es5
+		# TODO remove
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
 
 	def tsc
 		platform == 'tsc'
+		
+	def format
+		@options:format or 'esm'
+		
+	def cjs
+		self.format() == 'cjs' or (!@options:format and platform == 'node')
+	
+	def esm
+		self.format() == 'esm'
 
 	def autocall
 		!option(:explicitParens)
@@ -822,6 +835,9 @@ export class Node
 
 	def keyword
 		@keyword or (@options and @options:keyword)
+		
+	def datatype
+		@options ? @options:datatype : null
 
 	def configure obj
 		set(obj)
@@ -855,14 +871,20 @@ export class Node
 
 	# should rather do traversals
 	# o = {}, up, key, index
-	def traverse
+	def traverse o
 		if @traversed
 			return self
 		# NODES.push(self)
 		@traversed = yes
+		let prev
+		if o
+			prev = STACK.state
+			STACK.state = o
 		STACK.push self
-		visit(STACK)
+		visit(STACK,STACK.state)
 		STACK.pop self
+		if o
+			STACK.state = prev
 		return self
 
 	def inspect
@@ -935,12 +957,6 @@ export class Node
 
 	def receiver
 		self
-
-	def addExpression expr
-		# might be better to nest this up after parsing is done?
-		var node = ExpressionBlock.new([self])
-		return node.addExpression(expr)
-
 
 	def indented a,b
 
@@ -1156,10 +1172,10 @@ export class Terminator < Meta
 		[@value.@loc,@value.@loc + @value.@value:length]
 
 	def startLoc
-		@value.startLoc
+		@value:startLoc ? @value.startLoc : -1
 
 	def endLoc
-		startLoc + @value.@value:length
+		@value.@value ? (startLoc + @value.@value:length) : -1
 
 	def c
 		let val = @value.c
@@ -1763,82 +1779,17 @@ export class VarDeclList < Block
 
 	def add part
 		push(BR) if @nodes:length
+
+		if true
+			let node = VarDeclaration.new(part[0],part[1],type).set(decl: self, datatype: part[0].option(:datatype))
+			push(node)
+			return self
+
 		let expr = VarReference.new(part[0],type).set(decl: self, datatype: part[0].option(:datatype))
+		# should we not have special VarAssign blocks?
 		push(part[1] ? Assign.new('=',expr,part[1]) : expr)
 
 	def consume node
-		return self
-
-	# def js
-	# 	let out = super
-
-
-# this is almost like the old VarDeclarations but without the values
-export class VarBlock < ListNode
-
-	def load list
-		var first = list[0]
-
-		if first isa Assign
-			@type = first.left.@type
-		elif first isa VarReference
-			@type = first.@type
-		# @type = list[0] and list[0].type
-		list
-
-	# TODO All these inner items should rather be straight up literals
-	# or basic localvars - without any care whatsoever about adding var to the
-	# beginning etc.
-
-	def add expr
-		# console.log "add item to varBlock!",expr
-		push(expr)
-		# addExpression(expr)
-
-	def addExpression expr
-
-		if expr isa Assign
-			# make sure the left-side is a var-reference
-			# this should be a different type of assign, no?
-			if expr.left isa VarOrAccess
-				expr.left = VarReference.new(expr.left.value,@type)
-
-			push(expr)
-
-		elif expr isa VarOrAccess
-			# this is really a VarReference
-			push(VarReference.new(expr.value,@type))
-
-		elif expr isa Splat && expr.node isa VarOrAccess
-			expr.value = VarReference.new(expr.node.value,@type)
-			push(expr)
-		else
-			p "VarBlock.addExpression {self} <- {expr}"
-			throw "VarBlock does not allow non-variable expressions"
-		self
-
-
-	def isExpressable
-		# we would need to force-drop the variables, makes little sense
-		# but, it could be, could just push the variables out?
-		no
-
-	def js o
-		var code = AST.compact(AST.flatten(AST.cary(nodes)))
-		code = code.filter(|n| n != null && n != undefined && n != EMPTY)
-		var out = code.join(",")
-
-		# are we sure?
-		var keyword = o.es5 ? 'var' : (@type or 'var')
-		# we just need to trust that the variables have been autodeclared beforehand
-		# if we are inside an expression
-		out = "{keyword} " + out unless o.isExpression
-		return out
-
-
-	def consume node
-		# It doesnt make much sense for a VarBlock to consume anything
-		# it should probably return void for methods
 		return self
 
 
@@ -1913,10 +1864,6 @@ export class ExpressionBlock < ListNode
 
 	def consume node
 		value.consume(node)
-
-	def addExpression expr
-		push(expr)
-		self
 
 
 # STATEMENTS
@@ -2047,7 +1994,6 @@ export class Param < Node
 			'@param {' + typ.c() + '} ' + name
 		else
 			''
-			
 
 	def js o
 		if @defaults
@@ -2090,13 +2036,6 @@ export class Param < Node
 			name: name
 			defaults: defaults
 		}
-
-export class SplatParam < Param
-
-	def loc
-		# hacky.. cannot know for sure that this is right?
-		var r = name.region
-		[r[0] - 1,r[1]]
 
 export class BlockParam < Param
 
@@ -2231,7 +2170,6 @@ export class ParamList < ListNode
 		return (doc ? '/**\n' + doc + '\n*/\n' : '')
 
 	def visit
-		@splat = filter(|par| par isa SplatParam)[0]
 		var blk = filter(|par| par isa BlockParam)
 
 		if blk:length > 1
@@ -2292,10 +2230,10 @@ export class ParamList < ListNode
 			elif par isa BlockParam
 				signature.push('blk')
 				blk = par
-			elif par isa SplatParam
-				signature.push('splat')
-				splat = par
-				idx -= 1 # this should really be removed from the list, no?
+			# elif par isa SplatParam
+			# 	signature.push('splat')
+			# 	splat = par
+			# 	idx -= 1 # this should really be removed from the list, no?
 			elif par isa ArrayParams
 				arys.push(par)
 				signature.push('ary')
@@ -2429,7 +2367,7 @@ export class ParamList < ListNode
 
 
 # Legacy. Should move away from this?
-export class VariableDeclaration < ListNode
+export class ScopeVariables < ListNode
 
 	# for later, moz-ast style
 	prop kind
@@ -2467,7 +2405,6 @@ export class VariableDeclaration < ListNode
 			groups[typ].push(item.@variable)
 
 		if groups['let'] and (groups['var'] or groups['const'])
-			# console.warn "VariableDeclaration with both var and let",nodes.map(|v| v.@variable and v.@variable.c )
 			groups['let'].forEach do |item| item.@virtual = yes
 		elif groups['let'] and !o.es5
 			keyword = 'let'
@@ -2509,6 +2446,66 @@ export class VariableDeclarator < Param
 	def accessor
 		self
 
+
+export class VarDeclaration < Node
+
+	prop kind
+	prop left
+	prop right
+	
+	def type
+		@kind
+
+	def initialize left, right, kind
+		@left = left
+		@right = right
+		@kind = kind
+		
+	def visit
+		@right.traverse if @right
+		@left.traverse(declaring: type) if @left
+		
+		# replace directly
+		# should the left side be wrapped in a VarDeclLeft node?
+		if @left isa Identifier
+			@left.@variable ||= scope__.register(@left.symbol,self,type: type)
+
+		# elif @left isa Obj
+		# 	# need to traverse the object to register variables
+		# 	# if it is a let we might also need to rename them though
+			
+		self
+		
+	def consume node
+		if node isa TagLike
+			return self
+		
+		super(node)
+		
+	def c o
+		if right and !right.isExpressable
+			# TODO write failing tests and make them pass
+			return right.consume(self).c(o)
+		# testing this
+		return super(o)
+		
+	def js
+		let out = "{M(kind,kind)} {left.c()}"
+		if right
+			out += " = {right.c(expression: true)}"
+			
+		if option(:export)
+			if STACK.cjs
+				out = "{out};\nexports.{left.c()} = {left.c()}"
+			else
+				out = M('export',option(:export)) + " {out}"
+			
+		if let typ = datatype
+			if STACK.tsc # or just generally?
+				out = '/** @type {' + typ.c() + '} */\n' + out
+
+
+		return out
 
 # TODO clean up and refactor all the different representations of vars
 # VarName, VarReference, LocalVarAccess?
@@ -2816,11 +2813,16 @@ export class ClassDeclaration < Code
 		let jshead = M(keyword,keyword) # "{C(keyword,mark: yes)}"
 		jshead += " {M cname, name}" if name
 		jshead += " extends {M(sup)}" if sup
-		if option(:export) and option(:default)
+		
+		if option(:export) and STACK.cjs
+			let exportName = option(:default) ? 'default' : cname
+			jsbody = "{jsbody};\n{M('exports',o:export)}.{exportName} = {cname}"
+				
+		elif option(:export) and option(:default)
 			jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 		elif option(:export)
 			jshead = "{M 'export',option(:export)} {jshead}"
-			
+
 
 		let js = "{jshead} {jsbody}"
 		if option(:global)
@@ -2935,7 +2937,7 @@ export class Func < Code
 	def visit
 		scope.visit
 		@context = scope.parent
-		@params.traverse
+		@params.traverse(declaring: 'arg')
 		@body.traverse # so soon?
 
 	def funcKeyword
@@ -3165,12 +3167,17 @@ export class MethodDeclaration < Func
 			else
 				let k = OP('.',target,@name)
 				out = "{k.c} = {funcKeyword} {func}"
+
 			if o:export
 				out = "exports.{o:default ? 'default' : fname} = {out}"
 		else
 			out = "{M funcKeyword, keyword} {M fname, @name}{func}"
 			if o:export
-				out = "export {o:default ? 'default ' : ''}{out}"
+				if STACK.cjs
+					let exportName = o:default ? 'default' : fname
+					out = "{out};\n{M('exports',o:export)}.{exportName} = {fname}"
+				else
+					out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
 
 		if o:global
 			out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
@@ -3821,20 +3828,41 @@ export class ObjAttr < Node
 		@defaults = defaults
 		self
 
-	def visit
+	def visit stack, state
 		# should probably traverse key as well, unless it is a dead simple identifier
 		key.traverse
 		value.traverse if value
 		@defaults.traverse if @defaults
+		
+		let decl = state && state:declaring
 
 		if key isa Ivar
 			if !value
 				key = Identifier.new(key.value)
 				value = OP('.',scope__.context,key)
+				if @defaults
+					value = OP('=',value,@defaults)
+					@defaults = null
+
 		elif key isa Private
 			if !value
 				value = OP('.',scope__.context,key)
 				key = Identifier.new(key.value)
+
+		elif key isa Identifier
+			# if state && state:declaring
+			# 	key.variable = scope__.register(key.symbol,key)\
+			# isnt this rather going to
+			
+			if !value
+				if decl
+					value = scope__.register(key.symbol,key, type: decl)
+					if @defaults
+						value = OP('=',value,@defaults)
+						@defaults = null
+				else
+					value = scope__.lookup(key.symbol)
+					
 		self
 
 	def js o
@@ -4359,13 +4387,18 @@ export class VarOrAccess < ValueNode
 		@token.endLoc
 
 	# Shortcircuit traverse so that it is not added to the stack?!
-	def visit
+	def visit stack, state
 		# @identifier = value # this is not a real identifier?
-		# console.log "VarOrAccess {@identifier}"
-
+		var variable
 		var scope = scope__
+		
+		if state && state:declaring
+			# console.log "VarOrAccess {@identifier}"
+			variable = scope.register(value,self,type: state:declaring)
 
-		var variable = scope.lookup(value)
+		
+
+		variable ||= scope.lookup(value)
 
 		# does not really need to have a declarator already? -- tricky
 		if variable && variable.declarator
@@ -4377,6 +4410,7 @@ export class VarOrAccess < ValueNode
 			# ie.  var x = x would resolve to var x = this.x() if x
 			# was not previously defined
 			if vscope == scope and !variable.@initialized
+				
 				# here we need to check if the variable exists outside
 				# if it does - we need to ensure that the inner variable does not collide
 				let outerVar = scope.parent.lookup(value)
@@ -4469,8 +4503,6 @@ export class VarOrAccess < ValueNode
 
 export class VarReference < ValueNode
 
-	# TODO VarBlock should convert these to plain / dumb nodes
-
 	prop variable
 	prop declared
 	prop type
@@ -4493,48 +4525,6 @@ export class VarReference < ValueNode
 	def loc
 		@value.region
 
-	# def set o
-	# 	# hack - workaround for hidden classes perf
-	# 	@export = yes if o:export
-	# 	return self
-
-	def js o
-		# experimental fix
-
-		# what about resolving?
-		var ref = @variable
-		if value isa Obj or value isa Arr
-			ref = value
-
-		var out = "{M(ref.c,@value)}"
-		var keyword = o.es5 ? 'var' : (@type or 'var')
-
-		if ref && !ref.@declared # .option(:declared)
-			if o.up(VarBlock) # or o.up(VarDeclList) # up varblock??
-				ref.@declared = yes
-
-				# ref.set(declared: yes)
-			elif o.isExpression or @export
-				# console.log "autodeclare {@value}"
-				ref.autodeclare
-			else
-				out = "{keyword} {out}"
-				ref.@declared = yes
-				# ref.set(declared: yes)
-
-		# need to think the export through -- like registering somehow
-		# should register in scope - export on analysis++
-		if option(:decl) and option(:decl).option(:export)
-			out = "export {out}"
-
-		# if @export
-		# 	out = "module.exports.{ref.c} = {ref.c}"
-		let typ = option(:datatype)
-		if STACK.tsc and typ
-			# look it up?
-			out = '/** @type {' + typ.c() + '} */\n' + out
-		return out
-
 	def declare
 		self
 
@@ -4543,27 +4533,24 @@ export class VarReference < ValueNode
 		@variable && @variable.autodeclare
 		self
 
-	def visit
-		# should be possible to have a VarReference without a name as well? for a system-variable
-		# name should not set this way.
-		var v = @variable ||= scope__.register(value.toString, self, type: @type)
+	def visit stack, state
+		var vars = []
+	
+		@value.traverse(declaring: @type, variables: vars)
 
-		# FIXME -- should not simply override the declarator here(!)
-		if !v.declarator
-			v.declarator = self
+		if @value isa Identifier
+			@value.@variable ||= scope__.register(@value.symbol,self,type: @type)
+			vars.push(@value.@variable)
 
-		v.addReference(@value) if @value # is this the first reference?
+		for variable in vars
+			# should always be autodeclared?
+			variable.@virtual = yes
+			variable.autodeclare()
 
-		# only needed when analyzing?
-		@value.@value.@variable = v
-		self
-
-	def refnr
-		variable.references.indexOf(value)
-
-	# convert this into a list of references
-	def addExpression expr
-		VarBlock.new([self]).addExpression(expr)
+		return self
+	
+	def js o
+		return @value.c()
 
 
 # ASSIGN
@@ -4598,36 +4585,19 @@ export class Assign < Op
 		var l = @left
 		var r = @right
 		
-		# WARNING - slightly undefined
-		# MARK THE STACK
-		l.traverse if l
-
-		var lvar = l isa VarReference and l.variable
-
-		# how does this work with constants that are really var references?
-		# should work when things are not described as well - but this is for testing
-		# but if it refers to something else
-		if !lvar and @desc
-			# entities should be able to extract the needed info instead
-			ROOT.entities.add(l.namepath,{namepath: l.namepath, type: r.typeName, desc: @desc})
-
-		# this should probably be done in a different manner
-		if lvar and lvar.declarator == l
-			lvar.@initialized = no
-			r.traverse if r
-			lvar.@initialized = yes
-
-		else
-			r.traverse if r
-
-		if l isa VarReference or l.@variable
-			l.@variable.assigned(r,self)
+		if r
+			r.traverse(assignment: yes)
+	
+		if l
+			l.traverse()
 
 		return self
 
 	def c o
 		unless right.isExpressable
 			if left isa VarReference and left.type == 'let'
+				# when does this occur?
+				# console.log 'unexpressable let var assignment'
 				return Block.new([left,BR,right.consume(self)]).c(o)
 			return right.consume(self).c(o)
 		# testing this
@@ -4692,16 +4662,6 @@ export class Assign < Op
 
 		var ast = right.consume(self)
 		return ast.consume(node)
-
-	# more workaround during transition away from a,b,c = 1,2,3 style assign
-	def addExpression expr
-		# p "addExpression {expr}"
-		var typ = ExpressionBlock
-		if @left and @left isa VarReference
-			typ = VarBlock
-		# might be better to nest this up after parsing is done?
-		var node = typ.new([self])
-		return node.addExpression(expr)
 
 
 export class PushAssign < Assign
@@ -4861,6 +4821,7 @@ export class Identifier < Node
 
 	prop safechain
 	prop value
+	prop variable
 
 	def initialize value
 		if value isa Token
@@ -4932,14 +4893,14 @@ export class Identifier < Node
 		AST.sym(@value)
 
 	def js o
-		symbol
+		@variable ? @variable.c() : symbol
 
 	def c o
 		let up = STACK.current
 		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
 		if OPTS:sourceMap and (!o or o:mark !== false)
-			out = M(out,@token or @value)
+			out = M(out, @token or @value)
 		return out
 
 	def dump
@@ -5452,9 +5413,12 @@ export class If < ControlFlow
 		@tag = stack.@tag
 
 		# console.log "vars in if",Object.keys(@scope.varmap)
+		# TODO deal with variable scope
 		for own name, variable of @scope.varmap
 			if variable.type == 'let'
+				# console.log "variable virtualize"
 				variable.@virtual = yes
+				variable.autodeclare()
 
 		# the let-variables declared in if(*test*) should be
 		# local to the inner scope, but will technically be
@@ -5787,13 +5751,16 @@ export class For < Loop
 
 		var parent = stack.@tag
 
-		options[:source].traverse # what about awakening the vars here?
-		declare
-
+		options:source.traverse # what about awakening the vars here?
+		
 		# add guard to body
 		if options:guard
 			var op = IF(options:guard.invert,Block.wrap([ContinueStatement.new("continue")]))
 			body.unshift(op,BR)
+
+		declare
+			
+		# here add the things to declare
 		
 		if parent
 			# TODO remove
@@ -5855,13 +5822,10 @@ export class For < Loop
 
 			vars:source = bare ? src : scope.declare('items',util.iterable(src),system: yes, type: 'let', pool: 'iter')
 			vars:len = scope.declare('len',util.len(vars:source),type: 'let', pool: 'len', system: yes)
-
-			if o:name isa Identifier # also Const etc?
-				vars:value = scope.declare(o:name,null,type: 'let')
-				vars:value.addReference(o:name) # adding reference!
-			elif o:name isa Obj or o:name isa Arr
-				vars:value = o:name
-
+			
+			if o:name
+				body.unshift(VarDeclaration.new(o:name,OP('.',vars:source,vars:index),'let'),BR)
+				
 			vars:index.addReference(oi) if oi
 
 		return self
@@ -5881,29 +5845,29 @@ export class For < Loop
 		var resvar = null
 		var reuseable = no # node isa Assign && node.left.node isa LocalVarAccess
 		var assignee = null
-		# might only work for locals?
-		if node isa Assign
-			if var receiver = node.left
-				if assignee = receiver.@variable
-					# we can only pull the var reference into the scope
-					# if we know that the variable is declared in this scope
-					reuseable = (receiver isa VarReference)
-
+		
+		# this should be autodeclared no?
 		resvar = @resvar ||= scope.register(:res,null,system: yes, type: 'var')
 
 		@catcher = PushAssign.new("push",resvar,null) # the value is not preset
 		let resval = Arr.new([])
 		body.consume(@catcher) # should still return the same body
+		resvar.autodeclare() # only if it is a system variable?
+		
+		if node isa VarDeclaration or node isa Assign
+			node.right = resvar.accessor
+			# let block = [self,BR,node]
+			return Block.new([
+				OP('=',resvar,resval)
+				BR,
+				self,
+				BR,
+				node
+			])
 
-		if node
-			let block = [self,BR,resvar.accessor.consume(node)]
-
-			if @resvar
-				block.unshift(BR)
-				block.unshift(OP('=',VarReference.new(@resvar,'let'),resval))
-
-			var ast = Block.new(block)
-			return ast
+		elif node
+			let block = [OP('=',resvar,resval),BR,self,BR,resvar.accessor.consume(node)]
+			return Block.new(block)
 
 		return self
 
@@ -5933,14 +5897,6 @@ export class For < Loop
 			
 		else
 			cond = OP('<',idx,vars:len)
-			
-			if false and val.refcount < 3 and val.assignments:length == 0 and !val.@noproxy and false
-				val.proxy(vars:source,idx)
-			elif val isa Obj or val isa Arr
-				# should run through an visit? VarReference.new(val,'let')
-				body.unshift(OP('=', VarReference.new(val,'let'),OP('.',vars:source,idx)), BR)
-			else
-				body.unshift(OP('=',val,OP('.',vars:source,idx)), BR)
 
 			if options:step
 				final = OP('=',idx,OP('+',idx,options:step))
@@ -5974,26 +5930,24 @@ export class ForOf < For
 			vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
 			o:value = o:index
 
-			if o:value isa Obj or o:value isa Arr
-				vars:value = null
-			else
-				v = vars:value = scope.declare(o:value,null,let: yes, type: 'let') if o:value
+			
 
 			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 			# systemvariable -- should not really be added to the map
 			var keys = vars:keys = scope.declare('keys',Util.keys(vars:source.accessor),system: yes, type: 'let') # the outer one should resolve first
 			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
 			k = vars:key = scope.declare(o:name,null,type: 'let') # scope.declare(o:name,null,system: yes)
+			
+			if o:value isa Obj or o:value isa Arr
+				body.unshift(VarDeclaration.new(o:value,OP('.',vars:source,k),'let'),BR)
+				vars:value = null
+			elif o:value
+				v = vars:value = scope.declare(o:value,null,let: yes, type: 'let')
+		
 		else
-			# we set the var -- why even declare it
-			# no need to declare -- it will declare itself in the loop - no?
 			source = vars:source = STACK.tsc ? o:source : util.iterable(o:source)
-
-			o:value = vars:value = o:name
-			# vars:source = o:source.@variable || scope.temporary(o:source, system: yes, pool: 'dict', type: 'let')
-			# vars:source
-			# v = vars:value = scope.declare(o:index,null,let: yes, type: 'let') if o:index
-			# k = vars:key = scope.register(o:name,o:name,type: 'let')
+			o:value = vars:value = o:name # need to visit these to declare them
+			o:name.traverse(declaring: 'let')
 
 		# TODO use util - why add references already? Ah -- this is for the highlighting
 		v.addReference(o:index) if v and o:index
@@ -6010,12 +5964,10 @@ export class ForOf < For
 		var i = vars:index
 
 		var code
-
+		
 		if options:own
-			unless v
-				let ref = VarReference.new(options:value,'let')
-				body.unshift(OP('=',ref,OP('.',src,k)))
-			elif v and v.refcount > 0
+			# FIXME are we sure about this?
+			if v and v.refcount > 0
 				body.unshift(OP('=',v,OP('.',src,k)))
 
 			body.unshift(OP('=',k,OP('.',vars:keys,i)))
@@ -6024,8 +5976,7 @@ export class ForOf < For
 			return head + code
 
 		else
-			# if v and v.refcount > 0
-			# 	body.unshift(OP('=',v,OP('.',src,k)))
+			# compile to a naive for of loop
 			code = scope.c(braces: yes, indent: yes)
 			# let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
@@ -6033,7 +5984,7 @@ export class ForOf < For
 
 	def head
 		var v = options:vars
-
+		# skipping head?
 		[
 			OP('=',v:key,OP('.',v:keys,v:index))
 			OP('=',v:value,OP('.',v:source,v:key)) if v:value
@@ -7856,8 +7807,22 @@ export class ESMSpecifier < Node
 		@alias = alias
 
 	def visit
-		let key = helpers.clearLocationMarkers((@alias || @name).c())
-		@variable = scope__.root.register(key, self, type: 'const')
+		@declaration = STACK.up(ESMDeclaration)
+		if @declaration isa ImportDeclaration
+			@importer = @declaration
+		else
+			@exporter = @declaration
+		@cname = helpers.clearLocationMarkers(@name.c())
+		@key = @alias ? helpers.clearLocationMarkers(@alias.c()) : @cname
+		
+		# only register variable for imports?
+		
+		if @exporter
+			# lookup variable
+			unless @exporter.source
+				@variable = scope__.root.lookup(@cname)
+		else
+			@variable = scope__.root.register(@key, self, type: 'const')
 		self
 
 
@@ -7870,21 +7835,49 @@ export class ESMSpecifier < Node
 
 export class ImportSpecifier < ESMSpecifier
 
+	def visit
+		super
+		if @importer and STACK.cjs
+			# FIXME will bug out if trying to set the variable
+			@variable.@c = OP('.',@importer.variable,@name).c
+
+export class ImportNamespaceSpecifier < ESMSpecifier
+
+	def visit
+		super
+		if @importer and STACK.cjs
+			# FIXME will bug out if trying to set the variable
+			@variable.@c = @importer.variable.c
+		
+		
 export class ExportSpecifier < ESMSpecifier
+
+export class ExportAllSpecifier < ESMSpecifier
+
+export class ImportDefaultSpecifier < ESMSpecifier
+
+	def visit
+		super
+		if STACK.cjs
+			if @importer
+				@variable.@c = "{@importer.variable.c}.default"
 
 export class ESMSpecifierList < ListNode
 	
 	def js
 		'{' + super + '}'
 
-export class ImportNamespaceSpecifier < ImportSpecifier
 
 export class ESMDeclaration < Statement
+	prop variable
+	prop source
+	
 	def initialize keyword, specifiers, source
 		setup
 		@keyword = keyword
 		@specifiers = specifiers
 		@source = source
+		@defaults = (specifiers and specifiers.find(do $1 isa ImportDefaultSpecifier))
 
 	def isExport
 		String(keyword) == 'export'
@@ -7901,196 +7894,87 @@ export class ESMDeclaration < Statement
 export class ImportDeclaration < ESMDeclaration
 
 	def js
+		if STACK.cjs
+			var src = @source.c
+			# we need to combine the requires
+			let reqjs = "require({src})"
+			unless @specifiers
+				return reqjs
+			
+			# let wildcards = 
+			if @defaults and @specifiers:length == 1
+				return "var {@variable.c} = {util.requireDefault(LIT(reqjs)).c}"
+			else
+				return "var {@variable.c} = {reqjs}"
+
 		if @specifiers and @source
 			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {@source.c}"
 		else
 			"{M(keyword.c,keyword)} {@source.c}"
 
 	def visit
+		if STACK.cjs and @specifiers
+			var src = @source.c
+			var m = helpers.clearLocationMarkers(src).match(/([\w\_\-]+)(\.js|imba)?[\"\']$/)
+			@alias = m ? '_$' + m[1].replace(/[\/\-]/g,'_') : 'mod$'
+			@variable = scope__.register(@alias,null,system: yes)
+		
 		for item in @specifiers
 			item?.traverse()
+			
 		return
-
-		var dec = @declarations = VariableDeclaration.new([])
-
-		var src = @source.c
-		var m = src.match(/([\w\_\-]+)(\.js|imba)?[\"\']$/)
-		@alias = m ? m[1].replace(/[\/\-]/g,'_') + '_$' : 'mod$'
-		@alias = @ns && @ns.alias || @alias
-
-		let req = Require.new(@source)
-		if @defaults
-			req = Util.RequireDefault.new([req])
-
-		@require = dec.add(@alias,req)
-		@require.traverse
-		# register the default variable
-		if @defaults
-			let op = OP('.',@require.variable,Identifier.new('default'))
-			dec.add(@defaults,op).type = 'import'
-
-		for specifier in @specifiers
-			if specifier isa ImportNamespaceSpecifier
-
-				yes
-			else
-				let name = specifier.alias or specifier.name
-				dec.add(name,OP('.',@require.variable,specifier.name)).type = 'import'
-
-		dec.traverse
-		self
-
-	def js2
-		return @declarations.c
-		return "/*imports*/"
-
 
 export class ExportDeclaration < ESMDeclaration
 
-# def js
-# 	if @source
-# 		"{keyword} {@specifiers.c} from {@source.c}"
+	def visit
+		scope__.root.activateExports()
+
+		for item in @specifiers
+			item?.traverse()
+		self
+		
+	def js
+		let kw = M(keyword.c,keyword)
+		let cjs = STACK.cjs
+		
+		if cjs
+			let out = []
+			
+			if @source
+				@variable ||= scope__.register(null,null,system: yes)
+				let decl = "var {@variable.c} = require({@source.c})"
+				out.push(decl)
+				
+				let tpl = '''
+				Object.defineProperty(exports, $name$, {
+					enumerable: true, get: function get() { return $path$; }
+				});
+				'''
+				
+				for item in @specifiers[0]
+					let js = tpl.replace('$name$',(item.alias or item.name).toStr().c())
+					js = js.replace('$path$',OP('.',@variable,item.name).c())
+					out.push(js)
+
+			else
+				for item in @specifiers[0]
+					let op = OP('=',OP('.',LIT('exports'),item.alias or item.name),item.@variable)
+					out.push(op.c)
+
+			return out.join(';\n')
+
+		if @specifiers and @source
+			"{kw} {AST.cary(@specifiers).join(',')} from {@source.c}"
+		elif @specifiers
+			"{kw} {AST.cary(@specifiers).join(',')}"
+		elif @source
+			"{kw} {@source.c}"
+		
 
 export class ExportAllDeclaration < ExportDeclaration
 export class ExportNamedDeclaration < ExportDeclaration
 
-
-export class ImportStatement < Statement
-	prop ns
-	prop imports
-	prop source
-	
-	def self.parse str, startPos = 0
-		var named = []
-		
-		let pos = startPos
-		if str[0] == '{'
-			pos += 1
-			str = str.slice(1,-1)
-
-		var parts = str.trim.split(",") # /\s*,\s*/
-
-		
-		
-		let id = do |name,loc = 0|
-			# slow
-			while name[0] == ' '
-				loc++
-				name = name.substr(1)
-			name = name.trim
-			Identifier.new(Token.new('IDENTIFIER',name,loc,name:length))
-		
-		for part in parts
-			let asIdx = part.indexOf(" as ")
-			if asIdx > 0
-				var [name,value] = part.split(" as ")
-				named.push([id(name,pos),id(value,pos + asIdx + 4)])
-			else
-				named.push([id(part,pos)])
-			pos += part:length + 1
-		return named
-		
-
-	def initialize imports, source, ns
-		@traversed = no
-		@imports = imports
-		@source = source
-		@ns = ns
-		
-		if imports and imports.@type == 'IMPORTS'
-			@imports = ImportStatement.parse(imports.@value,imports.@loc)
-			# console.log "parsed imports",imports.@value,imports.@loc
-		elif imports isa Array
-			@imports = imports.map(|item| [item])
-		self
-
-	def visit
-		if @ns
-			@nsvar ||= scope__.register(@ns,self)
-		else
-			var src = source.c
-			var m = src.match(/(\w+)(\.js|imba)?[\"\']$/)
-			@alias = m ? m[1] + '$' : 'mod$'
-
-		# should also register the imported items, no?
-		if @imports
-			var dec = @declarations = VariableDeclaration.new([])
-
-			if @imports:length == 1
-				let extName = @imports[0][0]
-				@alias = @imports[0][1] or extName
-				dec.add(@alias,OP('.',Require.new(source),extName)).type = 'import'
-				dec.traverse
-				return self
-
-			# @declarations = VariableDeclaration.new([])
-			@moduledecl = dec.add(@alias,Require.new(source))
-			@moduledecl.traverse
-
-
-			if @imports:length > 1
-				for imp in @imports
-					let name = imp[1] or imp[0]
-					dec.add(name,OP('.',@moduledecl.variable,imp[0])).type = 'import'
-			dec.traverse
-		self
-
-
-	def js o
-
-		if @declarations
-			return @declarations.c
-
-		var req = Require.new(source)
-
-		if @ns
-			# must register ns as a real variable
-			return "var {@nsvar.c} = {req.c}"
-
-		if @imports
-
-			var src = source.c
-			var alias = []
-			var vars = VarBlock.new([])
-
-			if var fname = src.match(/(\w+)(\.js|imba)?[\"\']$/)
-				alias.push(fname[1])
-
-			# var alias = src.match(/(\w+)(\.js|imba)?[\"\']$/)
-			# create a require for the source, with a temporary name?
-			var out = [req.cache(names: alias).c]
-
-			for imp in @imports
-				# we also need to register these imports as variables, no?
-				var o = OP('=',imp,OP('.',req,imp))
-				out.push("var {o.c}")
-
-			return out
-		else
-			return req.c
-
-	def consume node
-		return self
-
-
-# EXPORT
-
-export class ExportStatement < ValueNode
-
-	def js o
-		var nodes = @value.map do |arg| "module.exports.{arg.c} = {arg.c}"
-
-		if nodes:length > 1 and up isa Return
-			return '[' + nodes.join(',') + ']'
-
-		else
-			return nodes.join(';\n') + ';'
-
 export class Export < ValueNode
-
-	def addExpression expr
-		value = value.addExpression(expr)
-		return self
 		
 	def loc
 		let kw = option(:keyword)
@@ -8103,6 +7987,8 @@ export class Export < ValueNode
 		super
 		
 	def visit
+		scope__.root.activateExports()
+
 		value.set(
 			export: (option(:keyword) or self),
 			return: option(:return),
@@ -8250,6 +8136,10 @@ var HELPERS = {
 		if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
 		else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
 		return c > 3 && r && Object.defineProperty(target, key, r), r;
+	};'''
+	
+	requireDefault: '''(obj){
+		return obj && obj.__esModule ? obj : { default: obj };
 	};'''
 }
 
@@ -8466,7 +8356,7 @@ export class Scope
 		@head = []
 		@node = node
 		@parent = parent
-		@vars = VariableDeclaration.new([])
+		@vars = ScopeVariables.new([])
 		@entities = Entities.new(self)
 		@meta = {}
 		@annotations = []
@@ -8569,17 +8459,15 @@ export class Scope
 		var existing = @varmap.hasOwnProperty(name) && @varmap[name]
 		# FIXME check if existing is required to be unique as well?
 		return existing if existing and !o:unique
+
 		# var type = o:system ? SystemVariable : Variable
 		var item = Variable.new(self,name,decl,o)
 		
-		# register 
-		# if o:type == 'meth' and self isa RootScope
-		# 	console.log "add to object",name
-		# 	@object.add(name,item)
-		# var item = Variable.new(self,name,decl,o)
-		# need to check for duplicates, and handle this gracefully -
-		# going to refactor later
-		@varmap[name] = item if !o:system and !existing
+		if !o:system and !existing
+			@varmap[name] = item
+
+		if STACK.state and STACK.state:variables isa Array
+			STACK.state:variables.push(item)
 		return item
 
 	def annotate obj
@@ -8775,6 +8663,11 @@ export class RootScope < Scope
 	def globalRef
 		let js = "(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))"
 		@globalRef ||= declare('global$',LIT(js))
+		
+	def activateExports
+		if STACK.cjs and !@hasExports
+			@hasExports = yes
+			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
 
 	def lookup name
 		name = helpers.symbolize(name)
@@ -8984,6 +8877,8 @@ export class IfScope < FlowScope
 
 	def temporary refnode, o = {}, name = null
 		parent.temporary(refnode,o,name)
+		
+	
 
 export class BlockScope < FlowScope
 
@@ -9049,17 +8944,20 @@ export class Variable < Node
 
 	def resolve scope = scope, force = no
 		return self if @resolved and !force
+		
 
 		@resolved = yes
 		var es5 = STACK.es5
 		var closure = @scope.closure
 		var item = @shadowing or scope.lookup(@name)
+		
+		# console.log "resolving var {@name} {scope}",scope == @closure,@virtual
 
 		# if this is a let-definition inside a virtual scope we do need
 		#
 		if @scope != closure and @type == 'let' and (es5 or @virtual) # or if it is a system-variable
 			item = closure.lookup(@name)
-
+			# console.log "resolving let {@name} {item.scope != scope}"
 			# we now need to ensure that this variable is unique inside
 			# the whole closure.
 			scope = closure
@@ -9136,6 +9034,7 @@ export class Variable < Node
 			# 	# should happen at earlier stage to
 			# 	# get around naming conventions
 			@c = "{c}$" if RESERVED_REGEX.test(@c) # @c.match(/^(default)$/)
+			# @c = @c + '/*' + @ref + '*/'
 		return @c
 
 	def js
