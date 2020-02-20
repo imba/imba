@@ -2468,7 +2468,8 @@ export class VarDeclaration < Node
 		# replace directly
 		# should the left side be wrapped in a VarDeclLeft node?
 		if @left isa Identifier
-			@left.@variable ||= scope__.register(@left.symbol,self,type: type)
+			# TODO add an identifier.declare method for this
+			@left.@variable ||= scope__.register(@left.symbol,@left,type: type)
 
 		# elif @left isa Obj
 		# 	# need to traverse the object to register variables
@@ -2501,9 +2502,7 @@ export class VarDeclaration < Node
 				out = M('export',option(:export)) + " {out}"
 			
 		if let typ = datatype
-			if STACK.tsc # or just generally?
-				out = '/** @type {' + typ.c() + '} */\n' + out
-
+			out = '/** @type {' + typ.c() + '} */\n' + out
 
 		return out
 
@@ -3147,8 +3146,7 @@ export class MethodDeclaration < Func
 			prefix = "async {prefix}" if option(:async)
 			out = "{prefix}{M name, @name}({params.c}){code}"
 			
-			if STACK.tsc
-				out = @params.jsdoc() + out
+			out = @params.jsdoc() + out
 
 			return out
 
@@ -4870,6 +4868,9 @@ export class Identifier < Node
 
 	def endLoc
 		@value and @value:endLoc ? @value.endLoc : null
+		
+	def loc
+		[startLoc,endLoc]
 
 	def isValidIdentifier
 		yes
@@ -5929,8 +5930,6 @@ export class ForOf < For
 		if o:own
 			vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
 			o:value = o:index
-
-			
 
 			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 			# systemvariable -- should not really be added to the map
@@ -8466,8 +8465,15 @@ export class Scope
 
 		# also look at outer scopes if this is not closed?
 		var existing = @varmap.hasOwnProperty(name) && @varmap[name]
+		
+		if existing
+			if decl
+				decl.warn('Cannot redeclare variable')
+			console.log 'redeclaring variable',"{existing} {decl}"
+			
 		# FIXME check if existing is required to be unique as well?
-		return existing if existing and !o:unique
+		if existing and !o:unique
+			return existing
 
 		# var type = o:system ? SystemVariable : Variable
 		var item = Variable.new(self,name,decl,o)
