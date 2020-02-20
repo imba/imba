@@ -63,6 +63,11 @@ describe 'For ... of' do
 		let res = for value of iterable
 			value
 		eq res, [1,2,3]
+	
+	test 'iterating with index var' do
+		let res = for chr,index of 'abc'
+			chr + index
+		eq res, ['a0','b1','c2']
 	# test 'destructuring args' do
 	# 	let res = for own key, {id} of items
 	# 		id

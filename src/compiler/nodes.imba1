@@ -5948,6 +5948,12 @@ export class ForOf < For
 			source = vars:source = STACK.tsc ? o:source : util.iterable(o:source)
 			o:value = vars:value = o:name # need to visit these to declare them
 			o:name.traverse(declaring: 'let')
+			
+			# need to declare this variable outside the for of
+			if o:index
+				vars:counter = scope.parent.temporary(null,{},"{o:index}$")
+				body.unshift(VarDeclaration.new(o:index,OP('++',vars:counter),'let'),BR)
+				self
 
 		# TODO use util - why add references already? Ah -- this is for the highlighting
 		v.addReference(o:index) if v and o:index
@@ -5980,7 +5986,10 @@ export class ForOf < For
 			code = scope.c(braces: yes, indent: yes)
 			# let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
-			"{M('for',keyword)} ({o.es5 ? 'var' : 'let'} {v.c} of {src.c(expression: yes)})" + code
+			let js = "{M('for',keyword)} ({o.es5 ? 'var' : 'let'} {v.c} of {src.c(expression: yes)})" + code
+			if vars:counter
+				js = "{vars:counter} = 0; {js}"
+			return js
 
 	def head
 		var v = options:vars

@@ -6,6 +6,7 @@ exports.default = function imba(options) {
   options = Object.assign({
     sourceMap: {},
     bare: true,
+    format: 'esm',
     extensions: ['.imba', '.imba2'],
     ENV_ROLLUP: true
   }, options || {});
