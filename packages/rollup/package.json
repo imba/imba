@@ -1,7 +1,7 @@
 {
   "name": "imba-rollup",
   "description": "Build tools for imba 2",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "licenses": [
     {
       "type": "MIT",
@@ -20,7 +20,7 @@
     "watch": "rollup -c --watch"
   },
   "dependencies": {
-    "imba": "^2.0.0-alpha.22",
+    "imba": "^2.0.0-alpha.29",
     "resolve": "^1.15.0",
     "rollup": "^1.28.0",
     "rollup-plugin-commonjs": "^10.1.0",
