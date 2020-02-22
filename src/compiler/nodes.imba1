@@ -6,7 +6,7 @@ var helpers = require './helpers'
 var constants = require './constants'
 var csscompiler = require './css'
 
-import ImbaParseError from './errors'
+import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
@@ -739,6 +739,11 @@ export class Stack
 
 	def scoping
 		@nodes.filter(|n| n.@scope ).map(|n| n.@scope )
+		
+	def currentRegion
+		let l = @nodes:length
+		let node = @nodes[--l]
+		node and [node.startLoc,node.endLoc]
 
 # Lots of globals -- really need to deal with one stack per file / context
 export var STACK = Stack.new
@@ -2563,8 +2568,15 @@ export class Root < Code
 
 	def visit
 		ROOT = STACK.ROOT = @scope
-		scope.visit
-		body.traverse
+		try
+			scope.visit
+			body.traverse
+		catch e
+			let err = ImbaTraverseError.wrap(e)
+			err.@filename = OPTS:filename
+			err.@loc = STACK.currentRegion()
+			throw err
+			
 
 	def compile o
 		STACK.reset # -- nested compilation does not work now
@@ -3089,10 +3101,12 @@ export class MethodDeclaration < Func
 			set(static: yes)
 			
 		elif o:variable
+			
 			@variable = scope.parent.register(name, self, type: String(o:variable))
 			warn "{String(o:variable)} def cannot have a target" if target
 
 		elif !target
+			@variable = scope.parent.register(name,self,type: 'const')
 			yes
 		
 		if o:export and !(closure isa RootScope)
@@ -4244,6 +4258,8 @@ export class Access < Op
 		if safechain and ctx
 			ctx.cache(force: yes)
 			pre = ctx.c + " && "
+		
+		
 
 		# really?
 		# var ctx = (left || scope__.context)

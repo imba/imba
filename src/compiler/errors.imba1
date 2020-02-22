@@ -7,7 +7,7 @@ export class ImbaParseError < Error
 	
 	def self.wrap err
 		# what about the stacktrace?
-		ImbaParseError.new(err)
+		self.new(err)
 
 	def initialize e,o
 		this:error = e
@@ -41,7 +41,7 @@ export class ImbaParseError < Error
 			msg
 	
 	def loc
-		start?.region
+		@loc or start?.region
 
 	def toJSON
 		var o = @options
@@ -92,3 +92,12 @@ export class ImbaParseError < Error
 
 	def prettyMessage
 		var excerpt = self.excerpt
+
+export class ImbaTraverseError < ImbaParseError
+
+	def loc
+		@loc
+		
+	def excerpt
+		var excerpt = super
+		excerpt + '\n---\n' + this:error:stack
