@@ -2730,6 +2730,15 @@ export class ClassDeclaration < Code
 	def visit
 		# replace with some advanced lookup?
 		@body.@delimiter = ''
+		
+		STACK.pop(self)
+		
+		if @superclass
+			@superclass.traverse()
+			# also visit and possibly declare the class name?
+		
+		STACK.push(self)
+
 		ROOT.entities.add(namepath,self)
 		scope.visit
 
