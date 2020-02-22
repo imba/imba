@@ -4077,7 +4077,8 @@ export class UnaryOp < Op
 			var paren = l.shouldParenthesize(self)
 			# FIXME this is a very hacky workaround. Need to handle all this
 			# in the child instead, problems arise due to automatic caching
-			str = '(' + str + ')' unless str.match(/^\!?([\w\.]+)$/) or l isa Parens or paren or l isa Access or l isa Call
+			unless (str.match(/^\!?([\w\.]+)$/) or l isa Parens or paren or l isa Access or l isa Call) and !str.match(/[\s\&\|]/)
+				str = '(' + str + ')'
 			# l.set(parens: yes) # sure?
 			"{op}{str}"
 
@@ -4253,9 +4254,9 @@ export class Access < Op
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
 			"{ctx.c}[{r}]"
-
-		# if safechain and ctx
-		# 	out = "{ctx.c} && {out}"
+		
+		if rgt isa Identifier and (rgt.isPredicate or rgt.isDangerous)
+			out = "{out}()" unless up isa Call
 
 		out = pre + out
 		return out
@@ -4273,7 +4274,7 @@ export class Access < Op
 
 	def safechain
 		# right.safechain
-		String(@op) == '?.' or String(@op) == '?:'
+		String(@op) == '..' or String(@op) == '?.'
 
 	def cache o
 		(right isa Ivar && !left) ? self : super(o)
@@ -4877,6 +4878,12 @@ export class Identifier < Node
 
 	def isReserved
 		@value:reserved or RESERVED_TEST.test(String(@value))
+		
+	def isPredicate
+		(/\?$/).test(String(@value))
+	
+	def isDangerous
+		(/\!$/).test(String(@value))
 
 	def symbol
 		@symbol ||= AST.sym(value)
@@ -4949,7 +4956,7 @@ export class Ivar < Identifier
 		self
 
 	def name
-		helpers.dashToCamelCase(@value).replace(/^[@\#]/,'')
+		helpers.dashToCamelCase(@value).replace(/^[\#]/,'')
 		# value.c.camelCase.replace(/^@/,'')
 
 	def alias
@@ -4957,7 +4964,7 @@ export class Ivar < Identifier
 
 	# the @ should possibly be gone from the start?
 	def js o
-		return name
+		return symbol
 
 
 export class Decorator < ValueNode
