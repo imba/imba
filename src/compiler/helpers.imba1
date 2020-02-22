@@ -108,6 +108,12 @@ export def symbolize str
 
 	if end == '='
 		str = 'set' + str[0].toUpperCase + str.slice(1,-1)
+	
+	elif end == '?'
+		str = 'is' + str[0].toUpperCase + str.slice(1,-1)
+	
+	elif end == '!'
+		str = 'do' + str[0].toUpperCase + str.slice(1,-1)
 
 	if str.indexOf("-") >= 0
 		str = str.replace(/([\-\s])(\w)/g) do |m,v,l| l.toUpperCase
