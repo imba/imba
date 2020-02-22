@@ -4413,7 +4413,7 @@ export class VarOrAccess < ValueNode
 
 		
 
-		variable ||= scope.lookup(value)
+		variable ||= scope.lookup(value.symbol)
 
 		# does not really need to have a declarator already? -- tricky
 		if variable && variable.declarator
@@ -4499,22 +4499,6 @@ export class VarOrAccess < ValueNode
 	def toJSON
 		{type: typeName, value: @identifier.toString}
 
-#	def js
-#		if right isa Variable and right.type == 'meth'
-#			return "{right.c}()" unless up isa Call
-#
-#		right.c
-#
-#	def variable
-#		right
-#
-#	def cache o = {}
-#		super if o:force
-#		self
-#
-#	def alias
-#		variable.@alias or super # if resolved?
-#
 
 export class VarReference < ValueNode
 
@@ -4984,8 +4968,18 @@ export class Ivar < Identifier
 
 
 export class Decorator < ValueNode
+
+	def name
+		@name ||= @value.slice(2)
 	
 	def visit
+		
+		@variable = scope__.lookup(name)
+		# console.log 'visit decorator',name,!!@variable
+		
+		# if we dont have a variable and we are in a top level class
+		# add a warning?
+
 		@call.traverse if @call
 		if option(:params)
 			@params = option(:params)
@@ -4998,7 +4992,20 @@ export class Decorator < ValueNode
 	def c 
 		# should return other places as well...
 		return if STACK.current isa ClassBody
-		let out = @value.c.slice(2)
+		# name must be a 
+		let out
+		
+		
+		if @variable
+			out = @variable.c
+		else
+			let op = OP(
+				'||',
+				OP('.',THIS,'decorate$' + AST.sym(name)),
+				OP('.',LIT('imba'),'decorate$' + AST.sym(name))
+			)
+			out = '(' + op.c + ')'
+
 		if @params
 			out += "({@params.c(expression: yes)})"
 		else

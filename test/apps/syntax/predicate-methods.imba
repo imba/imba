@@ -18,7 +18,7 @@ class Group
 	def empty!
 		@data.items = []
 		return self
-
+		
 	def emptyOrArchived
 		@empty? or @archived?
 
