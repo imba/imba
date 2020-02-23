@@ -29,7 +29,8 @@ export class ImbaParseError < Error
 		var o = @options
 		var idx = o:pos - 1
 		var tok = o:tokens and o:tokens[idx]
-		tok = o:tokens[--idx] while tok and tok.@loc == -1
+		while tok and (tok.@loc == -1 or tok.@loc == 0)
+			tok = o:tokens[--idx] 
 		return tok
 
 	def desc
