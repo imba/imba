@@ -1772,6 +1772,12 @@ export class ClassBody < Block
 			@tag = stack.@tag
 
 		for node,i in @nodes
+			if node isa Tag
+				# add as render method
+				# console.log 'add as render method'
+				let meth = MethodDeclaration.new([],[node],Identifier.new('render'),null,{})
+				@nodes[i] = node = meth
+
 			node and node.traverse
 		self
 

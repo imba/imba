@@ -776,8 +776,7 @@ var grammar =
 		o 'ClassDeclLine'
 		o 'Decorators ClassDeclLine' do A1.concat([A2])
 		o 'Comment'
-		# o 'ClassFieldIdentifier = Expression' do ClassField.new(A1, A3)
-		# o 'ClassFieldIdentifier' do ClassField.new(A1, null)
+		o 'Tag'
 	]
 
 	ClassDeclLine: [
