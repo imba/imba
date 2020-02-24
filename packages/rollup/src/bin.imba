@@ -51,6 +51,8 @@ import resolve-plugin from 'rollup-plugin-node-resolve'
 import commonjs-plugin from 'rollup-plugin-commonjs'
 import serve-plugin from 'rollup-plugin-serve'
 import hmr-plugin from 'rollup-plugin-livereload'
+import alias-plugin from '@rollup/plugin-alias'
+import json-plugin from '@rollup/plugin-json'
 
 
 def resolveImba basedir
@@ -149,7 +151,14 @@ for entry in cfg.entries
 	let target = entry.target or 'web'
 	let plugins = (entry.plugins ||= [])
 	plugins.unshift(commonjs-plugin())
+	plugins.unshift(json-plugin())
 	plugins.unshift(resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json']))
+	
+	if entry.alias
+		let o = entry.alias isa Array ? {entries: entry.alias} : entry.alias
+		o.customResolver = resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json'])
+		plugins.unshift(alias-plugin(o))
+	
 	plugins.unshift(imba-plugin(target: target))
 
 	if options.serve and target == 'web'
