@@ -8512,9 +8512,9 @@ export class Scope
 		var existing = @varmap.hasOwnProperty(name) && @varmap[name]
 		
 		if existing
-			if decl
+			if decl and existing.type != 'global'
 				decl.warn('Cannot redeclare variable')
-			console.log 'redeclaring variable',"{existing} {decl}"
+			# console.log 'redeclaring variable',"{existing} {decl}",existing.type
 			
 		# FIXME check if existing is required to be unique as well?
 		if existing and !o:unique
