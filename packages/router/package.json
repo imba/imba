@@ -20,7 +20,7 @@
     "build": "echo skipped imbac -o lib src"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "0.4.0",
+  "version": "2.0.0-alpha.29",
   "licenses": [
     {
       "type": "MIT",
