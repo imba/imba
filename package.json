@@ -47,7 +47,7 @@
     "watch": "npm run build -- --watch"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.29",
+  "version": "2.0.0-alpha.30",
   "licenses": [
     {
       "type": "MIT",
@@ -80,6 +80,5 @@
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.9.0"
-  },
-  "dependencies": {}
+  }
 }
