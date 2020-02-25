@@ -21,6 +21,7 @@ jobs:
       run: |
         npm install -g lerna
         lerna exec npm install
+        npm run build
         lerna run build
         lerna run test
       env:
