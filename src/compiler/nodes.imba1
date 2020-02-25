@@ -515,6 +515,7 @@ export class Stack
 	prop scopes
 	prop root
 	prop state
+	prop semanticTokens
 
 	def initialize
 		reset
@@ -534,7 +535,18 @@ export class Stack
 		@optlevel = null
 		@tag = null
 		@sfcid = null
+		@semanticTokens = []
 		self
+	
+	def registerSemanticToken token, kind, modifiers
+		if token isa Node
+			token = token.@value
+		if kind isa Variable
+			token.@kind = kind.type
+		else
+			token.@kind = kind
+		@semanticTokens.push(token)
+		
 
 	def incr name
 		@counters[name] ||= 0
@@ -1664,6 +1676,7 @@ export class ClassField < Node
 
 		if @value and STACK.tsc
 			@value.@scope = MethodScope.new(@value)
+			@value.@scope.@parent = scope__
 			@value.traverse # if @value # dont traverse yet
 
 		if !STACK.tsc
@@ -1705,7 +1718,7 @@ export class ClassField < Node
 			let name = name isa IdentifierExpression ? name.asObjectKey : name.c
 
 			if STACK.tsc
-				out = "{M(name,@name)}" # the value scope?
+				out = "{prefix}{M(name,@name)}" # the value scope?
 				out += " = {@value.c}" if value
 				if let typ = TYP(@name,'jsdoc')
 					out = "{typ}\n{out}"
@@ -2593,7 +2606,15 @@ export class Root < Code
 		STACK.root = @scope
 		traverse
 		STACK.root = @scope
-
+		
+		if o:onTraversed isa Function
+			o:onTraversed(self,STACK)
+		
+		if OPTS:debug
+			# console.log "semantic tokens",STACK.semanticTokens
+			for tok in STACK.semanticTokens
+				console.log "semantic {tok.@value} - {tok.@kind}"
+		
 		var out = c
 
 		if STACK.tsc
@@ -4461,7 +4482,7 @@ export class VarOrAccess < ValueNode
 				variable.addReference(self)
 				@value = variable # variable.accessor(self)
 				@token.@variable = variable
-				
+				stack.registerSemanticToken(@token,variable)
 				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
 				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
 				return self
@@ -4471,6 +4492,7 @@ export class VarOrAccess < ValueNode
 			# console.log 'does implicit self exist?',stack.hasImplicitSelf,"{@value} - {@variable}"
 			if stack.hasImplicitSelf and !@identifier.isCapitalized
 				@value = Access.new(".",scope.context,@value)
+				stack.registerSemanticToken(@token,'accessor')
 			else
 				self
 		return self
@@ -7073,6 +7095,7 @@ export class TagSwitchFragment < TagLike
 
 	def js o
 		var out = body.c(o)
+		return out if STACK.tsc
 		for item in @inserts
 			let key = "{cvar}.{item}"
 			out += "\n({key}_ = {tvar}.insert$({item},0,{key}_));"
@@ -7368,8 +7391,12 @@ export class Tag < TagLike
 			# if tag is expression we want to suppress certain warnings
 			if type isa TagTypeIdentifier and !isSelf
 				add "{tvar} = new {M(type.toClassName,type)}"
-			else
+			elif isSelf
 				add "{tvar} = {type.c}"
+			else
+				add "{tvar} = new {M('HTMLElement',type)}"
+				add "{type.c}" # this is the string
+
 			for item in @attributes
 				if item isa TagAttr
 					add item.c(o) # M("{tvar}.{item.c(o)}",item)
@@ -7873,8 +7900,8 @@ export class ESMSpecifier < Node
 		@name = name
 		@alias = alias
 
-	def visit
-		@declaration = STACK.up(ESMDeclaration)
+	def visit stack
+		@declaration = stack.up(ESMDeclaration)
 		if @declaration isa ImportDeclaration
 			@importer = @declaration
 		else
@@ -7889,7 +7916,8 @@ export class ESMSpecifier < Node
 			unless @exporter.source
 				@variable = scope__.root.lookup(@cname)
 		else
-			@variable = scope__.root.register(@key, self, type: 'const')
+			@variable = scope__.root.register(@key, self, type: 'imported')
+			stack.registerSemanticToken (@alias or @name), @variable
 		self
 
 
@@ -8227,7 +8255,9 @@ export class Util.Extend < Util
 	def helper
 		'''
 		function extend$(target,ext){
+			// @ts-ignore
 			var descriptors = Object.getOwnPropertyDescriptors(ext);
+			// @ts-ignore
 			Object.defineProperties(target.prototype,descriptors);
 			return target;
 		};

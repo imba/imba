@@ -1580,7 +1580,7 @@ export class Lexer
 			let next = @chunk[1] or ''
 			if value == '.' and (next == ' ' or next == '\n' or !next)
 				token('IDENTIFIER','$CARET$',0,1)
-			elif value == '@' and (!next or (/[^\w]/).test(next))
+			elif value == '@' and (!next or (/[^\$\@\-\.\w]/).test(next))
 				token('IDENTIFIER','$CARET$',0,1)
 
 
