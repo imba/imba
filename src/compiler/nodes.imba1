@@ -584,6 +584,9 @@ export class Stack
 	def es5
 		# TODO remove
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
+		
+	def hasImplicitSelf
+		!!@options:selfless
 
 	def tsc
 		platform == 'tsc'
@@ -4429,8 +4432,6 @@ export class VarOrAccess < ValueNode
 			# console.log "VarOrAccess {@identifier}"
 			variable = scope.register(value,self,type: state:declaring)
 
-		
-
 		variable ||= scope.lookup(value.symbol)
 
 		# does not really need to have a declarator already? -- tricky
@@ -4464,16 +4465,23 @@ export class VarOrAccess < ValueNode
 				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
 				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
 				return self
-
 			# FIX
 			# @value.safechain = safechain
+		else
+			# console.log 'does implicit self exist?',stack.hasImplicitSelf,"{@value} - {@variable}"
+			if stack.hasImplicitSelf and !@identifier.isCapitalized
+				@value = Access.new(".",scope.context,@value)
+			else
+				self
 		return self
 
-	def c
-		@variable ? super() : @identifier.c() # M(@token.value,@token)
-		# M((@variable ? super() : value.c), @token)
+	# def c
+	# 	@variable ? super() : @value.c() # M(@token.value,@token)
+	# 	# M((@variable ? super() : value.c), @token)
 
 	def js o
+		return (@variable or @value).c()
+		
 		if var v = @variable
 			return v.c()
 		throw 'not implemented'
@@ -4902,6 +4910,9 @@ export class Identifier < Node
 	
 	def isDangerous
 		(/\!$/).test(String(@value))
+		
+	def isCapitalized
+		(/^[A-Z]/).test(String(@value))
 
 	def symbol
 		@symbol ||= AST.sym(value)
@@ -7276,7 +7287,7 @@ export class Tag < TagLike
 
 		elif type == TagData
 			let bind = String(self.type) in ['input','textarea','select','button','option']
-			curr = TagAttr.new(bind ? 'bind:model' : 'model')
+			curr = TagAttr.new(bind ? 'bind:model' : 'model',self)
 			curr.value = part.first
 			attrs.push(curr)
 			next = null

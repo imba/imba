@@ -31,7 +31,8 @@ export def run code, filename: null
 
 	if path.extname(main:filename) != '.imba' or require:extensions
 		arguments[1][:target] ||= 'node'
-		arguments[1][:standalone] ||= yes
+		arguments[1][:format] ||= 'cjs'
+		# arguments[1][:standalone] ||= yes
 		var content = compiler.compile(code, arguments[1])
 		main._compile (content:js or content), main:filename
 	else
