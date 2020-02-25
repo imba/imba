@@ -9,6 +9,11 @@ tag nested-element
 			<div.d1> "Div"
 			<slot>
 
+tag static-inside
+
+	def render
+		<self.inner>
+			"Static inside"
 
 tag custom-element
 	def render
@@ -20,6 +25,8 @@ tag custom-element
 				<span> 'child'
 			<div.one.two .{name} .{mult} .flipped=flip>
 			<nested-element.outer .outerflip=flip>
+			<nested-element.static-outer>
+			<static-inside.outer>
 
 let el = <custom-element>
 imba.mount(el)
@@ -37,9 +44,13 @@ test 'multiple dynamic' do
 	ok $(div.one:not(.m2))
 
 test 'combined outer and inner flags' do
-	ok $(.outer.inner)
+	ok $(nested-element.outer.inner)
+	ok $(static-inside.outer.inner)
 
 test 'combined outer and inner flags' do
 	flip = true
 	await spec.tick()
-	ok $(.outerflip.innerflip)
+	ok $(nested-element.outerflip.innerflip)
+
+test 'static outer and inner flags' do
+	ok $(nested-element.static-outer.inner)

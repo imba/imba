@@ -320,9 +320,10 @@ extend class Element
 	def flagSelf$ str
 		# if a tag receives flags from inside <self> we need to
 		# redefine the flag-methods to later use both
+		let existing = (#extflags ||= @className)
 		self.flag$ = do |str| self.flagSync$(#extflags = str)
 		self.flagSelf$ = do |str| self.flagSync$(#ownflags = str)
-		@className = (@className || '') + ' ' + (#ownflags = str)
+		@className = (existing ? existing + ' ' : '') + (#ownflags = str)
 		return
 
 	def flagSync$
