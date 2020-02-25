@@ -56,35 +56,44 @@ import json-plugin from '@rollup/plugin-json'
 
 
 def resolveImba basedir
-	let src = (resolve.sync('imba',{ basedir: basedir }) || '').replace('/index.js','')
-	if src
-		let pkg = require(src + '/package.json')
-		return {
-			path: src
-			version: pkg.version
-		}
+	try
+		let src = path.dirname(resolve.sync('imba',{ basedir: basedir }) || '')
+		if src
+			let pkg = require(path.resolve(src,'package.json'))
+
+			return {
+				path: src
+				version: pkg.version
+			}
+	catch e
+		
 
 var cwdlib = resolveImba(cwd)
 var pkglib = resolveImba(__dirname)
+# potentially look for global imba?
 
 var lib = cwdlib or pkglib
 
 if cwdlib && pkglib && cwdlib.version != pkglib.version
 	console.log 'conflicting versions of imba',cwdlib,pkglib
+	
+unless lib
+	console.log 'imba not found - install in project: npm install imba@pre'
+	process.exit(0)
 
 var bundles = []
 var watch = options.watch
 var serve = options.serve
 
-var imbac = require(lib.path + '/dist/compiler.js')
+var imbac = require(path.resolve(lib.path,'dist','compiler.js'))
 
 def imbaPlugin options
 	options = Object.assign({
 		sourceMap: {},
 		bare: true,
 		extensions: ['.imba', '.imba2'],
-		ENV_ROLLUP: true,
-		imbaPath: lib.path
+		ENV_ROLLUP: true
+		# ,imbaPath: lib.path
 	}, options || {})
 
 	var extensions = options.extensions
@@ -148,15 +157,26 @@ class Bundle
 
 for entry in cfg.entries
 	entry = resolvePaths(entry)
+	
+	let alias = Object.assign({
+		# imba: 
+	},cfg.alias or {},entry.alias or {})
+
 	let target = entry.target or 'web'
 	let plugins = (entry.plugins ||= [])
 	plugins.unshift(commonjs-plugin())
 	plugins.unshift(json-plugin())
 	plugins.unshift(resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json']))
 	
-	if entry.alias
-		let o = entry.alias isa Array ? {entries: entry.alias} : entry.alias
-		o.customResolver = resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json'])
+	if Object.keys(alias).length
+		let parts = for own k,v of alias
+			let replace = v.match(/^\.\.?\//) ? path.resolve(cwd, v) : v
+			{ "find": k, "replacement": replace }
+			
+		let o = {
+			entries: parts
+			customResolver: resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json'])
+		}
 		plugins.unshift(alias-plugin(o))
 	
 	plugins.unshift(imba-plugin(target: target))

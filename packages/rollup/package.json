@@ -22,7 +22,6 @@
   "dependencies": {
     "@rollup/plugin-alias": "^3.0.1",
     "@rollup/plugin-json": "^4.0.2",
-    "imba": "^2.0.0-alpha.30",
     "resolve": "^1.15.0",
     "rollup": "^1.28.0",
     "rollup-plugin-commonjs": "^10.1.0",
