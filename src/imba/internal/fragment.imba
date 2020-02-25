@@ -1,4 +1,4 @@
-import {DocumentFragment,Element,Text,document} from '../dom'
+import {DocumentFragment,Element,Text,ShadowRoot,document} from '../dom'
 
 extend class DocumentFragment
 

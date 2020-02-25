@@ -165,9 +165,6 @@ export class StyleDeclaration
 
 export class Node
 
-	# appendChild
-	# removeChild etc
-
 export class Text < Node
 
 	def constructor str
@@ -289,9 +286,10 @@ export class Element < Node
 	get outerHTML
 		var typ = self.nodeName
 		var sel = "{typ}"
+		var v
 		
-		sel += " id=\"{escapeAttributeValue(v)}\"" if var v = self.id
-		sel += " class=\"{escapeAttributeValue(v)}\"" if var v = self.classList.toString()
+		sel += " id=\"{escapeAttributeValue(v)}\"" if v = self.id
+		sel += " class=\"{escapeAttributeValue(v)}\"" if v = self.classList.toString()
 
 		for own key,value of self.attributes
 			sel += " {key}=\"{escapeAttributeValue(value)}\""

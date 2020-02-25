@@ -42,7 +42,7 @@ function run(code,pars) {
 	
 	if (path.extname(main.filename) != '.imba' || require.extensions) {
 		arguments[1].target || (arguments[1].target = 'node');
-		arguments[1].standalone || (arguments[1].standalone = true);
+		// arguments[1].standalone || (arguments[1].standalone = true);
 		var content = compiler.compile(code,arguments[1]);
 		return main._compile((content.js || content),main.filename);
 	} else {
@@ -54,7 +54,7 @@ function run(code,pars) {
 // TODO add support for imba run cache?
 if (require.extensions) {
 	require.extensions['.imba'] = function(mod,filename) {
-		var options = {filename: filename,target: 'node'};
+		var options = {filename: filename,target: 'node',format: 'cjs'};
 		
 		var body = fs.readFileSync(filename,'utf8');
 		var content = compiler.compile(body,options);

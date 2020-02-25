@@ -2742,6 +2742,9 @@ export class ClassDeclaration < Code
 		if @superclass
 			@superclass.traverse()
 			# also visit and possibly declare the class name?
+			
+		if option(:extension)
+			@name.traverse()
 		
 		STACK.push(self)
 
@@ -8806,7 +8809,8 @@ export class RootScope < Scope
 	def imbaDependency path
 		return if OPTS:imbaPath === null or OPTS:standalone or OPTS:target == 'tsc'
 		@dependencies[path] ||= if true
-			let item = LIT("import '{OPTS:imbaPath or 'imba'}/src/imba/{path}'")
+			let str = "'{OPTS:imbaPath or 'imba'}/src/imba/{path}'"
+			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
 			@head.push(item)
 			item
 			

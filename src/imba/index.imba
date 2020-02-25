@@ -1,4 +1,3 @@
-
 var root = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
 
 var imba = {
@@ -11,8 +10,8 @@ var imba = {
 root.imba = imba
 
 root.customElements ||= {
-	define: do console.log('no custom elements')
-	get: do console.log('no custom elements')
+	define: do yes # console.log('no custom elements')
+	get: do yes # console.log('no custom elements')
 }
 
 imba.setTimeout = do |fn,ms|
