@@ -6109,8 +6109,8 @@ export class Switch < ControlFlowStatement
 
 	def visit
 		c.traverse for c in cases
-		fallback.visit if fallback
-		source.visit if source
+		fallback.traverse if fallback
+		source.traverse if source
 		return
 
 
