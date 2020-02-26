@@ -76,9 +76,14 @@ export class EventHandler
 			let args = [event,self]
 			let res = undefined
 			let context = null
+			
+			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
+				handler = val[0]
+				args = [event,state].concat(val.slice(1))
+				context = element
 
 			# parse the arguments
-			if val isa Array
+			elif val isa Array
 				args = val.slice()
 
 				for par,i in args
@@ -113,7 +118,8 @@ export class EventHandler
 			elif handler == 'meta'
 				break unless event.metaKey
 			elif handler == 'self'
-				break unless target == element
+				break unless target == element	
+
 			elif handler == 'once'
 				# clean up bound data as well
 				element.removeEventListener(event.type,self)
@@ -147,12 +153,10 @@ export class EventHandler
 				else
 					context = @getHandlerForMethod(element,handler)
 
-
-			if context
+			if handler isa Function
+				res = handler.apply(context or element,args)
+			elif context
 				res = context[handler].apply(context,args)
-
-			elif handler isa Function
-				res = handler.apply(element,args)
 
 			if res and res.then isa Function
 				imba.commit() if commit

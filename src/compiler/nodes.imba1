@@ -2987,7 +2987,7 @@ export class Func < Code
 	def nonlocals
 		@scope.@nonlocals
 
-	def visit
+	def visit stack, o
 		scope.visit
 		@context = scope.parent
 		@params.traverse(declaring: 'arg')
@@ -3023,6 +3023,26 @@ export class Func < Code
 		par isa Call && par.callee == self
 		# if up as a call? Only if we are
 
+export class IsolatedFunc < Func
+	prop leaks
+
+	def scopetype do IsolatedFunctionScope
+	
+	def isStatic
+		yes
+		
+	def isPrimitive
+		yes
+
+	def visit
+		super
+
+		if let leaks = @scope.@leaks
+			@leaks = []
+			leaks.forEach do |shadow,source|
+				shadow.@proxy = @params.at(@params.count,yes)
+				@leaks.push(source)
+		self
 
 export class Lambda < Func
 	def scopetype
@@ -3916,6 +3936,7 @@ export class ObjAttr < Node
 						@defaults = null
 				else
 					value = scope__.lookup(key.symbol)
+		
 					
 		self
 
@@ -3931,6 +3952,8 @@ export class ObjAttr < Node
 			kjs = key.asObjectKey
 		elif key.isReserved
 			kjs = "'{key.c}'"
+		elif key isa Str and key.isValidIdentifier
+			kjs = key.raw
 		else
 			kjs = key.c
 
@@ -6306,7 +6329,8 @@ export class Splat < ValueNode
 
 
 export class IdentifierExpression < Node
-
+	prop single
+	
 	def self.wrap node
 		return node
 		node isa self ? node : self.new(node)
@@ -6600,9 +6624,10 @@ export class TagModifiers < ListNode
 		)
 
 	def visit
-		var keys = {}
+		var keys = {FUNC: 0}
 		for node,i in nodes
 			let key = String(node.name)
+			
 			if keys[key]
 				node.name = key + '~' + (keys[key]++)
 			else
@@ -6614,7 +6639,9 @@ export class TagModifiers < ListNode
 		@dynamics = []
 
 		for part,i in nodes when part isa TagModifier
+
 			for param,k in part.params
+				
 				if !param.isPrimitive
 					let ref = TagDynamicArg.new(param).set(
 						key: KEY(part.name),
@@ -6645,6 +6672,19 @@ export class TagModifier < TagPart
 		!params or params.every do |param| param.isPrimitive
 			
 	def visit
+		if @name isa IsolatedFunc
+			let evparam = @name.params.at(0,yes,'e')
+			let stateparam = @name.params.at(1,yes,'$')
+
+			@name.traverse
+			@value = @name
+			@name = STR('$_')
+			@params = ListNode.new([@value].concat(@value.leaks or []))
+
+		# @value.traverse if @value
+		# console.log "visit modifier {@name}"
+		
+
 		@params.traverse if @params
 		# TODO support evaluated paths?
 		for param in @params
@@ -6765,7 +6805,6 @@ export class TagHandler < TagPart
 		
 	def js o
 		return "on$({quoted},{modifiers.c},{scope__.context.c})"
-
 
 class TagLike < Node
 
@@ -7305,7 +7344,12 @@ export class Tag < TagLike
 				curr.value = part
 				curr.set(op: tok)
 
-		elif curr isa TagHandler or curr isa TagAttr
+		elif curr isa TagHandler
+			if part isa IdentifierExpression and part.single and !part.isPrimitive
+				console.log("add taghandler function {part.single}")
+				part = IsolatedFunc.new([],[part.single],null,{})
+			curr.add(part,type)
+		elif curr isa TagAttr
 			curr.add(part,type)
 
 		elif type == TagData
@@ -8915,6 +8959,30 @@ export class ClosureScope < Scope
 
 export class FunctionScope < Scope
 
+export class IsolatedFunctionScope < FunctionScope
+	
+	def lookup name
+		@lookups ||= {}
+		var ret = null
+		name = helpers.symbolize(name)
+		if @varmap.hasOwnProperty(name)
+			ret = @varmap[name]
+		else
+			ret = parent && parent.lookup(name)
+			
+			# only shadow variables inside the same closure?
+			if ret and ret.closure == parent.closure
+				@leaks ||= Map.new
+				@nonlocals ||= {}
+				@nonlocals[name] = ret
+				
+				let shadow = @leaks.get(ret)
+				unless shadow
+					@leaks.set(ret,shadow = ShadowedVariable.new(self,name,ret))
+				ret = shadow
+		ret
+
+
 export class MethodScope < Scope
 
 	def setup
@@ -9125,9 +9193,12 @@ export class Variable < Node
 		return @c if @c
 		# options - proxy??
 		if @proxy
-			@c = @proxy[0].c
-			if @proxy[1]
-				@c += '[' + @proxy[1].c + ']'
+			if @proxy isa Node
+				@c = @proxy.c
+			else
+				@c = @proxy[0].c
+				if @proxy[1]
+					@c += '[' + @proxy[1].c + ']'
 		else
 			resolve unless @resolved
 			var v = (alias or name)
@@ -9291,6 +9362,8 @@ export class SystemVariable < Variable
 	def name
 		resolve
 		@name
+
+export class ShadowedVariable < Variable
 
 
 export class ScopeContext < Node
