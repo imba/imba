@@ -51,7 +51,7 @@ extend class Element
 	def bind$ key, value
 		let o = value or []
 
-		if key == 'model'
+		if key == 'data'
 			unless #f & $TAG_BIND_MODEL$
 				#f |= $TAG_BIND_MODEL$
 				this.on$('change',{_change$: true},this) if this.change$
@@ -72,7 +72,7 @@ extend class HTMLSelectElement
 	def change$ e
 		return unless #f & $TAG_BIND_MODEL$
 
-		let model = @model
+		let model = @data
 		let prev = #richValue
 		#richValue = undefined
 		let values = self.getRichValue()
@@ -86,7 +86,7 @@ extend class HTMLSelectElement
 				if !prev or prev.indexOf(value) == -1
 					bindAdd(model,value)
 		else
-			@model = values[0]
+			@data = values[0]
 		self
 
 	def getRichValue
@@ -97,7 +97,7 @@ extend class HTMLSelectElement
 			o.richValue
 
 	def syncValue
-		let model = @model
+		let model = @data
 
 		if @multiple
 			let vals = []
@@ -140,10 +140,10 @@ extend class HTMLTextAreaElement
 		return self.value
 
 	def input$ e
-		@model = @value
+		@data = @value
 
 	def end$
-		@value = @model
+		@value = @data
 
 extend class HTMLInputElement
 	
@@ -155,12 +155,12 @@ extend class HTMLInputElement
 			return
 
 		#richValue = undefined
-		@model = @richValue
+		@data = @richValue
 
 	def change$ e
 		return unless #f & $TAG_BIND_MODEL$
 
-		let model = @model
+		let model = @data
 		let val = @richValue
 
 		if @type == 'checkbox' or @type == 'radio'
@@ -168,7 +168,7 @@ extend class HTMLInputElement
 			if isGroup(model)
 				checked ? bindAdd(model,val) : bindRemove(model,val)
 			else
-				@model = checked ? val : false
+				@data = checked ? val : false
 
 	def setRichValue value
 		#richValue = value
@@ -192,6 +192,10 @@ extend class HTMLInputElement
 	def end$
 		if #f & $TAG_BIND_MODEL$
 			if @type == 'checkbox' or @type == 'radio'
-				@checked = bindHas(@model,@richValue)
+				let val = @data
+				if val === true or val === false or val == null
+					@checked = !!val
+				else
+					@checked = bindHas(val,@richValue)
 			else
-				@richValue = @model
+				@richValue = @data

@@ -7354,7 +7354,7 @@ export class Tag < TagLike
 
 		elif type == TagData
 			let bind = String(self.type) in ['input','textarea','select','button','option']
-			curr = TagAttr.new(bind ? 'bind:model' : 'model',self)
+			curr = TagAttr.new(bind ? 'bind:data' : 'data',self)
 			curr.value = part.first
 			attrs.push(curr)
 			next = null
