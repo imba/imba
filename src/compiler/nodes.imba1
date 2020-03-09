@@ -540,7 +540,9 @@ export class Stack
 	
 	def registerSemanticToken token, kind, modifiers
 		if token isa Node
+			kind ||= token.@variable
 			token = token.@value
+			
 		if kind isa Variable
 			token.@kind = kind.type
 		else
@@ -1059,6 +1061,7 @@ export class Node
 		if ch = @cache
 			out = "{ch:var.c} = {out}" unless ch:manual
 			var par = s.current
+			par = par.node if par isa ValueNode
 			out = '(' + out + ')' if par isa Access || par isa Op # others? #
 			ch:cached = yes
 
@@ -2015,6 +2018,9 @@ export class Param < Node
 	def varname
 		@variable ? @variable.c : name
 		
+	def type
+		'param'
+		
 	def jsdoc
 		let typ = option('datatype')
 		if typ && name
@@ -2030,18 +2036,19 @@ export class Param < Node
 		else
 			return @value.c
 
-		return @variable.c if @variable
-
-	def visit
-		@value.traverse if @value
+	def visit stack
 		@defaults.traverse if @defaults
-		self.variable ||= scope__.register(name,self)
+		@value.traverse(declaring: 'param') if @value
 
-		if @name isa Identifier
+		# self.variable ||= scope__.register(name,self)
+
+		if @value isa Identifier
+			@value.@variable ||= scope__.register(@value.symbol,@value,type: type)
+			stack.registerSemanticToken(@value)
 			# change type here?
-			@name.@value.@type = "PARAMVAR" if @name.@value
-			@name.references(@variable)
-			@variable.addReference(@name)
+			# @name.@value.@type = "PARAMVAR" if @name.@value
+			# @name.references(@variable)
+			# @variable.addReference(@name)
 
 		self
 
@@ -2080,96 +2087,6 @@ export class OptionalParam < Param
 export class NamedParam < Param
 
 export class RequiredParam < Param
-
-export class NamedParams < ListNode
-
-	prop index
-	prop variable
-
-	def load list
-		var load = (|k| NamedParam.new(k.key,k.value) )
-		list isa Obj ? list.value.map(load) : list
-
-	def visit
-		var s = scope__
-		@variable ||= s.temporary(self, pool: 'keypars')
-		@variable.predeclared
-
-		# this is a listnode, which will automatically traverse
-		# and visit all children
-		super
-		# register the inner variables as well(!)
-		self
-
-
-	def varname
-		variable.c
-
-	def name
-		varname
-
-	def js o
-		"namedpar"
-
-	def toJSON
-		{
-			type: typeName
-			nodes: filter(|v| v isa NamedParam)
-		}
-
-
-export class IndexedParam < Param
-
-	prop parent
-	prop subindex
-
-	def visit
-		# BUG The defaults should probably be looked up like vars
-		self.variable ||= scope__.register(name,self)
-		self.variable.proxy(parent.variable,subindex)
-		self
-
-
-export class ArrayParams < ListNode
-
-	prop index
-	prop variable
-
-	def visit
-		var s = scope__
-		@variable ||= s.temporary(self, pool: 'keypars')
-		@variable.predeclared
-
-		# now when we loop through these inner params - we create the pars
-		# with the correct name, but bind them to the parent
-		super
-
-	def name
-		variable.c
-
-	def load list
-		return null unless list isa Arr
-		# try the basic first
-		unless list.splat
-			list.value.map do |v,i|
-				# must make sure the params are supported here
-				# should really not parse any array at all(!)
-				var name = v
-				if v isa VarOrAccess
-					# FIX?
-					name = v.value.value
-					# this is accepted
-				parse(name,v,i)
-
-	def parse name,child,i
-		var param = IndexedParam.new(name,null)
-
-		param.parent = self
-		param.subindex = i
-		param
-
-	def head ast
-		self
 
 export class ParamList < ListNode
 
@@ -2248,22 +2165,12 @@ export class ParamList < ListNode
 				return
 
 			par.index = idx
-			if par isa NamedParams
-				signature.push('named')
-				named = par
-			elif par isa OptionalParam
+			if par isa OptionalParam
 				signature.push('opt')
 				opt.push(par)
 			elif par isa BlockParam
 				signature.push('blk')
 				blk = par
-			# elif par isa SplatParam
-			# 	signature.push('splat')
-			# 	splat = par
-			# 	idx -= 1 # this should really be removed from the list, no?
-			elif par isa ArrayParams
-				arys.push(par)
-				signature.push('ary')
 			else
 				signature.push('reg')
 				reg.push(par)
@@ -2488,7 +2395,7 @@ export class VarDeclaration < Node
 		@right = right
 		@kind = kind
 		
-	def visit
+	def visit stack
 		@right.traverse if @right
 		@left.traverse(declaring: type) if @left
 		
@@ -2497,6 +2404,7 @@ export class VarDeclaration < Node
 		if @left isa Identifier
 			# TODO add an identifier.declare method for this
 			@left.@variable ||= scope__.register(@left.symbol,@left,type: type)
+			stack.registerSemanticToken(@left)
 
 		# elif @left isa Obj
 		# 	# need to traverse the object to register variables
@@ -2534,7 +2442,6 @@ export class VarDeclaration < Node
 		return out
 
 # TODO clean up and refactor all the different representations of vars
-# VarName, VarReference, LocalVarAccess?
 export class VarName < ValueNode
 
 	prop variable
@@ -2624,13 +2531,14 @@ export class Root < Code
 			js: out,
 			ast: self,
 			source: o.@source,
+			tokens: o.@tokens,
 			warnings: scope.warnings,
 			options: o,
 			toString: (do this:js)
 			styles: scope.styles,
 			sfcid: @scope.sfcid
 		}
-
+		
 		var stylebody = ""
 		for style in result:styles
 			if style:type == 'css'
@@ -2638,7 +2546,7 @@ export class Root < Code
 				style:processed = csscompiler.compile(style:content,scope: scoping)
 				stylebody += style:processed + '\n'
 
-		if stylebody
+		if stylebody and !STACK.tsc
 			let css = {js: stylebody}
 			result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
 
@@ -2861,8 +2769,16 @@ export class ClassDeclaration < Code
 
 		@cname = cname
 		@cpath = cpath
-
-		let jsbody = '{' + body.c() + '}'
+		
+		if STACK.tsc
+			# body.unshift()
+			let comment = "/*¡{cname}*/"
+			let add = helpers.clearLocationMarkers("{cname}.{comment}prototype.constructor;")
+			let fn = 'static meta$(){ ' + add + ' }\n'
+			body.unshift(LIT(fn))
+		
+		let jsbody = body.c()
+			
 		let jshead = M(keyword,keyword) # "{C(keyword,mark: yes)}"
 		jshead += " {M cname, name}" if name
 		jshead += " extends {M(sup)}" if sup
@@ -2877,12 +2793,17 @@ export class ClassDeclaration < Code
 			jshead = "{M 'export',option(:export)} {jshead}"
 
 
-		let js = "{jshead} {jsbody}"
+		let js = "{jshead} \{{jsbody}\}"
 		if option(:global)
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
 		if @staticInit
 			js = "{js}; {cname}.init$();"
+			
+		# if STACK.tsc
+		# 	let comment = "/*¡{cname}*/"
+		# 	let add = helpers.clearLocationMarkers("{cname}.{comment}prototype.constructor;")
+		# 	js = "{js}; {add}"
 
 		return js
 
@@ -2920,7 +2841,7 @@ export class TagDeclaration < ClassDeclaration
 		scope.context.value = name
 		scope.context.reference = name
 
-		if s.option(:hasScopedStyles)
+		if s.option(:hasScopedStyles) and !STACK.tsc
 			# @scope.root.styles:length > 0
 			instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
 
@@ -2932,6 +2853,10 @@ export class TagDeclaration < ClassDeclaration
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
+			let comment = "/*¡{name.c.slice(1,-1)}*/"
+			let add = helpers.clearLocationMarkers("this.{comment}prototype.constructor;")
+			let fn = 'static meta$(){ ' + add + ' }\n'
+			body.unshift(LIT(fn))
 
 		if option(:extension)
 			# TODO remove support - throw when trying to extend
@@ -2954,7 +2879,9 @@ export class TagDeclaration < ClassDeclaration
 			let ext = (option(:extends) or LIT('{}')).c
 			js += "; imba.tags.define({name.c},{className},{ext})"
 		else
-			js += "; globalThis.{M className, name} = {className}"
+			js += "; globalThis.{M className, name} = {className};"
+			# let comment = "/*¡{name.c.slice(1,-1)}*/"
+			# js +=  helpers.clearLocationMarkers("{className}.{comment}prototype.constructor")
 		return js
 
 export class Func < Code
@@ -3034,8 +2961,10 @@ export class IsolatedFunc < Func
 	def isPrimitive
 		yes
 
-	def visit
+	def visit stack
 		super
+		
+		return if stack.tsc
 
 		if let leaks = @scope.@leaks
 			@leaks = []
@@ -3931,11 +3860,14 @@ export class ObjAttr < Node
 			if !value
 				if decl
 					value = scope__.register(key.symbol,key, type: decl)
+					stack.registerSemanticToken(key,value)
+
 					if @defaults
 						value = OP('=',value,@defaults)
 						@defaults = null
 				else
 					value = scope__.lookup(key.symbol)
+					
 		
 					
 		self
@@ -4508,6 +4440,8 @@ export class VarOrAccess < ValueNode
 				stack.registerSemanticToken(@token,variable)
 				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
 				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
+				if variable and @identifier.isInternal
+					stack.registerSemanticToken(@token,@variable)
 				return self
 			# FIX
 			# @value.safechain = safechain
@@ -4516,6 +4450,8 @@ export class VarOrAccess < ValueNode
 			if stack.hasImplicitSelf and !@identifier.isCapitalized
 				@value = Access.new(".",scope.context,@value)
 				stack.registerSemanticToken(@token,'accessor')
+			elif @identifier.isInternal
+				@value = Access.new(".",scope.context,@value)
 			else
 				self
 		return self
@@ -4899,7 +4835,6 @@ export class Identifier < Node
 		@value = load(value)
 		@symbol = null
 
-
 		if ("" + value).indexOf("?") >= 0
 			@safechain = yes
 		# @safechain = ("" + value).indexOf("?") >= 0
@@ -4958,6 +4893,9 @@ export class Identifier < Node
 		
 	def isCapitalized
 		(/^[A-Z]/).test(String(@value))
+		
+	def isInternal
+		(/^\$/).test(String(@value))
 
 	def symbol
 		@symbol ||= AST.sym(value)
@@ -4993,7 +4931,17 @@ export class Identifier < Node
 
 	def shouldParenthesizeInTernary
 		@parens or @cache
-
+		
+	def registerVariable type, scope = scope__
+		@variable = scope.register(symbol,self,type: type)
+		stack.registerSemanticToken(@value,@variable)
+		return self
+	
+	def resolveVariable scope = scope__
+		let variable = scope__.lookup(symbol)
+		@variable = variable
+		stack.registerSemanticToken(@value,@variable)
+		return self
 
 export class Private < Identifier
 
@@ -5948,7 +5896,7 @@ export class For < Loop
 			return ast
 
 		var resvar = null
-		var reuseable = no # node isa Assign && node.left.node isa LocalVarAccess
+		var reuseable = no
 		var assignee = null
 		
 		# this should be autodeclared no?
@@ -6472,6 +6420,12 @@ export class TagFlag < TagPart
 
 	def value
 		@name
+		
+	def visit
+		@chain.map(|v| v.traverse )
+		# @value.traverse if @value
+		@condition.traverse if @condition
+		@name.traverse if @name:traverse
 
 	def isStatic
 		!isConditional and (@name isa Token or @name.isStatic)
@@ -6559,6 +6513,11 @@ export class TagAttr < TagPart
 			let access = "{@tag.tvar}.{M(path,@name)}"
 
 			return "{M(access,@name)}{op}{@autovalue ? M('true',@value) : val}"
+			
+		let key = self.key
+		
+		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button']
+			key = 'richValue'
 
 		if ns == 'css'
 			"css$('{key}',{val})"
@@ -6579,6 +6538,7 @@ export class TagAttr < TagPart
 				"setns$('{ns}','{key}',{val})"
 			else
 				"set$('{key}',{val})"
+			
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}{op}{val}"
 		elif key.indexOf('--') == 0
@@ -6652,6 +6612,9 @@ export class TagModifiers < ListNode
 		return @dynamics
 
 	def c
+		if STACK.tsc
+			return '[' + nodes.map(do $1.c()).join(',') + ']'
+			
 		let obj = Obj.new([])
 		for part in nodes
 			let val = part.params ? Arr.new(part.params) : LIT('true')
@@ -6672,11 +6635,12 @@ export class TagModifier < TagPart
 		!params or params.every do |param| param.isPrimitive
 			
 	def visit
-		if @name isa IsolatedFunc
+		if @name isa IsolatedFunc # not to be isolated for tsc
 			let evparam = @name.params.at(0,yes,'e')
 			let stateparam = @name.params.at(1,yes,'$')
-
 			@name.traverse
+			
+
 			@value = @name
 			@name = STR('$_')
 			@params = ListNode.new([@value].concat(@value.leaks or []))
@@ -6701,6 +6665,9 @@ export class TagModifier < TagPart
 		self
 		
 	def js
+		if STACK.tsc
+			return params ? params.c : quoted
+
 		if params and params.count > 0
 			"[{quoted},{params.c}]"
 		elif params
@@ -6804,6 +6771,8 @@ export class TagHandler < TagPart
 		null
 		
 	def js o
+		if STACK.tsc
+			return "[{quoted},{modifiers.c}]"
 		return "on$({quoted},{modifiers.c},{scope__.context.c})"
 
 class TagLike < Node
@@ -7346,8 +7315,9 @@ export class Tag < TagLike
 
 		elif curr isa TagHandler
 			if part isa IdentifierExpression and part.single and !part.isPrimitive
-				console.log("add taghandler function {part.single}")
-				part = IsolatedFunc.new([],[part.single],null,{})
+				# console.log 'is stack tsc?'
+				part = (STACK.tsc ? Func : IsolatedFunc).new([],[part.single],null,{})
+				
 			curr.add(part,type)
 		elif curr isa TagAttr
 			curr.add(part,type)
@@ -7442,7 +7412,7 @@ export class Tag < TagLike
 				add "{type.c}" # this is the string
 
 			for item in @attributes
-				if item isa TagAttr
+				if item isa TagAttr or item isa TagHandler
 					add item.c(o) # M("{tvar}.{item.c(o)}",item)
 					# add M("{tvar}.{item.c(o)}",item)
 				self
@@ -8763,7 +8733,8 @@ export class RootScope < Scope
 	def initialize
 		super
 
-		register 'global', self, type: 'global'
+		register('global', self, type: 'global').@c = 'globalThis'
+
 		register 'imba', self, type: 'global'
 		register 'module', self, type: 'global'
 		register 'window', self, type: 'global'
@@ -8779,6 +8750,7 @@ export class RootScope < Scope
 		register 'clearTimeout', self, type: 'global'
 		register 'clearInterval', self, type: 'global'
 		register 'clearImmediate', self, type: 'global'
+		register 'globalThis', self, type: 'global'
 		register 'isNaN', self, type: 'global'
 		register 'isFinite', self, type: 'global'
 		register '__dirname', self, type: 'global'
