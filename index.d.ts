@@ -5,6 +5,8 @@ interface Element {
     schedule(): this;
     unschedule(): this;
     model: any;
+    data: any;
+    $key: any;
 }
 
 interface ImbaElement implements Element {
@@ -21,6 +23,7 @@ interface Imba {
     clearInterval(handle?: number): void;
     clearTimeout(handle?: number): void;
     commit(): Promise<this>;
+    mount(element: Element): this;
 
     createIndexedFragment(...arguments: any[]): DocumentFragment;
     createKeyedFragment(...arguments: any[]): DocumentFragment;
