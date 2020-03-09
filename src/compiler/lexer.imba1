@@ -643,6 +643,11 @@ export class Lexer
 	def isKeyword id
 		if @lastTyp == 'ATTR' or @lastTyp == 'PROP' or @lastTyp == 'DEF'
 			return false 
+			
+		if (id == 'guard' or id == 'alter' or id == 'watch') and (getScope == 'PROP')
+			console.log 'got here!'
+			# only if we are on a newline? or something?
+			return true
 
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy')
 			var scop = getScope
