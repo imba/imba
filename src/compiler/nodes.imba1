@@ -545,6 +545,8 @@ export class Stack
 			
 		if kind isa Variable
 			token.@kind = kind.type
+			token.@level = kind.scope.level
+			token.@scope = kind.scope.kind
 		else
 			token.@kind = kind
 		@semanticTokens.push(token)
@@ -4267,7 +4269,7 @@ export class Access < Op
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
 			"{ctx.c}[{r}]"
-		
+			
 		if rgt isa Identifier and (rgt.isPredicate or rgt.isDangerous)
 			out = "{out}()" unless up isa Call
 
@@ -4547,6 +4549,7 @@ export class VarReference < ValueNode
 		if @value isa Identifier
 			@value.@variable ||= scope__.register(@value.symbol,self,type: @type)
 			vars.push(@value.@variable)
+			stack.registerSemanticToken(@value,@variable)
 
 		for variable in vars
 			# should always be autodeclared?
@@ -5225,7 +5228,6 @@ export class Call < Node
 				return TagWrapper.new(args and args:index ? args.index(0) : args[0])
 			if str == 'export'
 				return Export.new(args)
-
 
 		@callee = callee	
 		@args = args or ArgList.new([])
@@ -8468,6 +8470,9 @@ export class Scope
 
 	def stack
 		STACK
+		
+	def kind
+		@kind ||= self:constructor:name.replace('Scope','').toLowerCase()
 
 	def initialize node, parent
 		@nr = STACK.incr('scopes')
