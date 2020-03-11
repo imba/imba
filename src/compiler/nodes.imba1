@@ -9309,29 +9309,29 @@ export class SystemVariable < Variable
 			names.push(alias)
 
 		while !@name && alt = names.pop
-			let foundAlt = scope.lookup(alt)
+			let foundAlt = scope.lookup('$' + alt)
 			# check if higher level?
 			if !foundAlt # or (foundAlt.scope != scope and type == 'let' and !STACK.es5)
-				@name = alt # unless scope.lookup(alt)
+				@name = '$' + alt # unless scope.lookup(alt)
 
 		if !@name and @declarator
 			if node = declarator.node
 				if var nodealias = node.alias
-					names.push(nodealias + "_")
+					names.push(nodealias)
 
 		while !@name && alt = names.pop
-			@name = alt unless scope.lookup(alt)
+			@name = '$' + alt unless scope.lookup('$' + alt)
 
 		# go through alias proxies
 		if alias and !@name
 			var i = 0
-			@name = alias
+			@name = '$' + alias
 			# it is the closure that we should use
 			while scope.lookup(@name)
 				@name = "{alias}{i += 1}"
 
 		@name ||= "${scope.counter += 1}"
-		
+
 		scope.varmap[@name] = self
 
 		if type != 'let' or STACK.es5 or @virtual
