@@ -9,6 +9,7 @@ import INVERSES from './constants'
 var K = 0
 
 var ERR = require './errors'
+var helpers = require './helpers'
 
 # Constants
 # ---------
@@ -938,8 +939,9 @@ export class Lexer
 		prev = last(@tokens)
 
 		if !prev or prev:spaced or @prevVal in ['(','[','=']
-			token 'STRING', '"' + symbol.slice(1) + '"', match[0]:length
-			warn error("Symbols are deprecated - use strings '{symbol.slice(1)}'")
+			let sym = helpers.dashToCamelCase(symbol.slice(1))
+			token 'STRING', '"' + sym + '"', match[0]:length
+			# warn error("Symbols are deprecated - use strings '{symbol.slice(1)}'")
 			return match[0]:length
 		return 0
 
