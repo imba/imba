@@ -96,6 +96,7 @@ var IMPLICIT_FUNC_MAP =
 	'RETURN': 1
 	'INDEX_END': 1
 	']': 1
+	'BANG': 1
 
 var IMPLICIT_CALL_MAP =
 	'SELECTOR': 1
@@ -150,7 +151,7 @@ var IDENTIFIERS = ['IDENTIFIER', 'IVAR', 'DECORATOR', 'ARGVAR']
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
 var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 'CVAR',
-	'ARGVAR', 'NEW', 'BREAK', 'CONTINUE','RETURN'
+	'ARGVAR', 'NEW', 'BREAK', 'CONTINUE','RETURN','BANG'
 ]
 
 # If preceded by an `IMPLICIT_FUNC`, indicates a function invocation.

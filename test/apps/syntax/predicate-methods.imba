@@ -15,9 +15,13 @@ class Group
 	def empty?
 		@data.items.length == 0
 	
-	def empty!
+	def empty
 		@data.items = []
 		return self
+
+	# def empty!
+	# 	@data.items = []
+	# 	return self
 		
 	def emptyOrArchived
 		@empty? or @archived?

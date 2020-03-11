@@ -73,8 +73,8 @@ var METHOD_IDENTIFIER = /// ^
 # added hyphens to identifiers now - to test
 var IDENTIFIER = /// ^
 	(
-		(\$|@@)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?\!]? |
-		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?\!]?
+		(\$|@@)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
+		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]?
 	)
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
 ///
@@ -1537,6 +1537,9 @@ export class Lexer
 
 		elif value == ',' and context == 'IMPORT'
 			tokid = "IMPORT_COMMA"
+		
+		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or pt == 'IDENTIFIER')
+			tokid = 'BANG'
 
 		elif value == '**'
 			tokid = 'EXP'

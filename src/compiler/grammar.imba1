@@ -704,6 +704,7 @@ var grammar =
 		o 'Selector'
 		o 'Invocation'
 		o 'Require'
+		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
 	]
 
 	IndexValue: [

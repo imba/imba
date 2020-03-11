@@ -5188,6 +5188,11 @@ export class Argvar < ValueNode
 
 # CALL
 
+export class BangCall < ValueNode
+	
+	def c
+		"{@value.c}()"
+
 export class Call < Node
 
 	prop callee
@@ -5207,6 +5212,8 @@ export class Call < Node
 		@receiver = null
 		@opexists = opexists
 		# some axioms that share the same syntax as calls will be redirected from here
+		if callee isa BangCall
+			callee = callee.value
 
 		if callee isa VarOrAccess
 			var str = callee.value.symbol
