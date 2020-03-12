@@ -4854,6 +4854,7 @@ export class Identifier < Node
 
 	def references variable
 		@value.@variable = variable if @value
+		STACK.registerSemanticToken(@value,variable) if @value
 		self
 
 	def load v
