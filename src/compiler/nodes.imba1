@@ -6007,8 +6007,13 @@ export class ForOf < For
 		
 		else
 			source = vars:source = STACK.tsc ? o:source : util.iterable(o:source)
-			o:value = vars:value = o:name # need to visit these to declare them
-			o:name.traverse(declaring: 'let')
+			vars:value = o:value = o:name # need to visit these to declare them
+			o:value.traverse(declaring: 'let')
+			
+			if o:value isa Identifier
+				# v = vars:value = scope.declare(o:name,null,let: yes, type: 'let')
+				o:value.@variable ||= scope__.register(o:value.symbol,o:value,type: 'let')
+				STACK.registerSemanticToken(o:value)
 			
 			# need to declare this variable outside the for of
 			if o:index
