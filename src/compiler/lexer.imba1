@@ -753,7 +753,6 @@ export class Lexer
 			token 'ELSE', 'elif', id:length
 			token 'IF', 'if'
 			return id:length
-
 		else
 			typ = 'IDENTIFIER'
 
@@ -1469,6 +1468,10 @@ export class Lexer
 				tVs(prev,pv + '=') # need to change the length as well
 				prev.@len = @loc - prev.@loc + value:length
 				return value:length
+				
+		if value == 'ƒ'
+			tokid = 'DO'
+			
 
 		if value == '|'
 			# hacky way to implement this
@@ -1564,6 +1567,9 @@ export class Lexer
 
 			if value is '(' and pt in CALLABLE
 				tokid = 'CALL_START'
+
+			elif value is '(' and pt == 'DO'
+				tokid = 'BLOCK_PARAM_START'
 
 			elif value is '[' and pt in INDEXABLE
 				tokid = 'INDEX_START'
