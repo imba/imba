@@ -193,7 +193,7 @@ extend class Node
 		if !(other isa Node) and other.replace$
 			other.replace$(this)
 		else
-			@parentNode.replaceChild(other,this)
+			self.parentNode.replaceChild(other,this)
 		return other
 
 	def insertInto$ parent
@@ -204,19 +204,19 @@ extend class Node
 		this.insertBefore(el,prev)
 
 	def insertBeforeBegin$ other
-		@parentNode.insertBefore(other,this)
+		self.parentNode.insertBefore(other,this)
 
 	def insertAfterEnd$ other
-		if @nextSibling
-			@nextSibling.insertBeforeBegin$(other)
+		if self.nextSibling
+			self.nextSibling.insertBeforeBegin$(other)
 		else
-			@parentNode.appendChild(other)
+			self.parentNode.appendChild(other)
 	
 	def insertAfterBegin$ other
-		if @childNodes[0]
-			@childNodes[0].insertBeforeBegin$(other)
+		if self.childNodes[0]
+			self.childNodes[0].insertBeforeBegin$(other)
 		else
-			@appendChild(other)
+			self.appendChild(other)
 
 extend class Comment
 	# replace this with something else
@@ -224,10 +224,10 @@ extend class Comment
 		if other and other.joinBefore$
 			other.joinBefore$(this)
 		else
-			@parentNode.insertBefore$(other,this)
+			self.parentNode.insertBefore$(other,this)
 		# other.insertBeforeBegin$(this)
-		@parentNode.removeChild(this)
-		# @parentNode.replaceChild(other,this)
+		self.parentNode.removeChild(this)
+		# self.parentNode.replaceChild(other,this)
 		return other
 
 # what if this is in a webworker?
@@ -236,7 +236,7 @@ extend class Element
 	def emit name, detail, o = {bubbles: true}
 		o.detail = detail if detail != undefined
 		let event = CustomEvent.new(name, o)
-		let res = @dispatchEvent(event)
+		let res = self.dispatchEvent(event)
 		return event
 
 	def slot$ name, ctx
@@ -260,12 +260,12 @@ extend class Element
 		if passive
 			o = {passive: passive, capture: capture}
 
-		@addEventListener(type,handler,o)
+		self.addEventListener(type,handler,o)
 		return handler
 
 	# inline in files or remove all together?
 	def text$ item
-		@textContent = item
+		self.textContent = item
 		self
 
 	def insert$ item, f, prev
@@ -293,7 +293,7 @@ extend class Element
 				# FIXME what if the previous one was not text? Possibly dangerous
 				# when we set this on a fragment - it essentially replaces the whole
 				# fragment?
-				@textContent = txt
+				self.textContent = txt
 				return
 
 			if prev
@@ -305,7 +305,7 @@ extend class Element
 					prev.replaceWith$(res,self)
 					return res
 			else
-				@appendChild$(res = document.createTextNode(txt))
+				self.appendChild$(res = document.createTextNode(txt))
 				return res	
 
 		else
@@ -314,20 +314,20 @@ extend class Element
 		return
 
 	def flag$ str
-		@className = str
+		self.className = str
 		return
 
 	def flagSelf$ str
 		# if a tag receives flags from inside <self> we need to
 		# redefine the flag-methods to later use both
-		let existing = (#extflags ||= @className)
+		let existing = (#extflags ||= self.className)
 		self.flag$ = do |str| self.flagSync$(#extflags = str)
 		self.flagSelf$ = do |str| self.flagSync$(#ownflags = str)
-		@className = (existing ? existing + ' ' : '') + (#ownflags = str)
+		self.className = (existing ? existing + ' ' : '') + (#ownflags = str)
 		return
 
 	def flagSync$
-		@className = ((#extflags or '') + ' ' + (#ownflags || ''))
+		self.className = ((#extflags or '') + ' ' + (#ownflags || ''))
 
 	def open$
 		self
@@ -336,11 +336,11 @@ extend class Element
 		self
 
 	def end$
-		@render() if @render
+		self.render() if self.render
 		return
 
 	def css$ key, value, mods
-		@style[key] = value
+		self.style[key] = value
 
 Element.prototype.appendChild$ = Element.prototype.appendChild
 Element.prototype.removeChild$ = Element.prototype.removeChild

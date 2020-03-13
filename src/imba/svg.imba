@@ -4,7 +4,7 @@ if $web$
 	extend class SVGElement
 		
 		def flag$ str
-			@className.baseVal = str
+			self.className.baseVal = str
 			return
 
 		def flagSelf$ str
@@ -12,8 +12,8 @@ if $web$
 			# redefine the flag-methods to later use both
 			self.flag$ = do |str| self.flagSync$(#extflags = str)
 			self.flagSelf$ = do |str| self.flagSync$(#ownflags = str)
-			@className.baseVal = (@className.baseVal || '') + ' ' + (#ownflags = str)
+			self.className.baseVal = (self.className.baseVal || '') + ' ' + (#ownflags = str)
 			return
 
 		def flagSync$
-			@className.baseVal = ((#extflags or '') + ' ' + (#ownflags || ''))
+			self.className.baseVal = ((#extflags or '') + ' ' + (#ownflags || ''))

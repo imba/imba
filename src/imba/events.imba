@@ -36,12 +36,12 @@ if $web$
 # could cache similar event handlers with the same parts
 export class EventHandler
 	def constructor params,closure
-		@params = params
-		@closure = closure
+		self.params = params
+		self.closure = closure
 
 	def getHandlerForMethod el, name
 		return null unless el
-		el[name] ? el : @getHandlerForMethod(el.parentNode,name)
+		el[name] ? el : self.getHandlerForMethod(el.parentNode,name)
 
 	def emit name, ...params do imba.emit(self,name,params)
 	def on name, ...params do imba.listen(self,name,...params)
@@ -51,15 +51,15 @@ export class EventHandler
 	def handleEvent event
 		var target = event.target
 		var element = event.currentTarget
-		var mods = @params
+		var mods = self.params
 		var i = 0
-		let commit = yes # @params.length == 0
+		let commit = yes # self.params.length == 0
 		let awaited = no
 		let prevRes = undefined
 
-		# console.log 'handle event',event.type,@params
-		@currentEvents ||= Set.new
-		@currentEvents.add(event)
+		# console.log 'handle event',event.type,self.params
+		self.currentEvents ||= Set.new
+		self.currentEvents.add(event)
 
 		let state = {
 			element: element
@@ -149,9 +149,9 @@ export class EventHandler
 				# should default to first look at closure - no?
 				elif handler[0] == '_'
 					handler = handler.slice(1)
-					context = @closure
+					context = self.closure
 				else
-					context = @getHandlerForMethod(element,handler)
+					context = self.getHandlerForMethod(element,handler)
 
 			if handler isa Function
 				res = handler.apply(context or element,args)
@@ -170,8 +170,8 @@ export class EventHandler
 			state.value = res
 
 		imba.commit() if commit
-		@currentEvents.delete(event)
-		if @currentEvents.size == 0
-			@emit('idle')
+		self.currentEvents.delete(event)
+		if self.currentEvents.size == 0
+			self.emit('idle')
 		# what if the result is a promise
 		return

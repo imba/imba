@@ -97,7 +97,7 @@ export class Document
 			let el = typ.new
 			el.nodeName = name
 			return el
-		return @createElement(name)
+		return self.createElement(name)
 
 	def createTextNode value
 		return Text.new(value)
@@ -123,7 +123,7 @@ export class DOMTokenList
 
 	def remove flag
 		# TODO implement!
-		# @classes.push(flag) unless @classes.indexOf(flag) >= 0
+		# self.classes.push(flag) unless self.classes.indexOf(flag) >= 0
 		var idx = self.classes.indexOf(flag)
 		if idx >= 0
 			self.classes[idx] = ''
@@ -169,11 +169,11 @@ export class Text < Node
 
 	def constructor str
 		super
-		@textContent = str or ''
+		self.textContent = str or ''
 		self
 
 	get outerHTML
-		@textContent
+		self.textContent
 
 export class Comment < Node
 	
@@ -269,10 +269,10 @@ export class Element < Node
 
 	get innerHTML
 		var o = ""
-		if @textContent != undefined
-			return escapeTextContent(@textContent)
+		if self.textContent != undefined
+			return escapeTextContent(self.textContent)
 
-		for item,i in @childNodes
+		for item,i in self.childNodes
 			if item isa String
 				o += escapeTextContent(item,self.nodeName)
 			elif item isa Number

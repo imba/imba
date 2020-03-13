@@ -37,7 +37,7 @@ extend class DocumentFragment
 	def insertInto$ parent, before
 		unless #parent
 			#parent = parent
-			# console.log 'insertFrgment into',parent,Array.from(@childNodes)
+			# console.log 'insertFrgment into',parent,Array.from(self.childNodes)
 			parent.appendChild$(this)
 		return this
 
@@ -46,7 +46,7 @@ extend class DocumentFragment
 		var el = #start
 		while el
 			let next = el.nextSibling
-			@appendChild(el)
+			self.appendChild(el)
 			break if el == #end
 			el = next
 			
@@ -72,7 +72,7 @@ extend class DocumentFragment
 
 extend class ShadowRoot
 	get parentContext
-		@host
+		self.host
 
 class TagCollection
 	def constructor f, parent
@@ -101,27 +101,27 @@ class TagCollection
 		return
 
 	def replaceWith$ other
-		@detachNodes()
+		self.detachNodes()
 		#end.insertBeforeBegin$(other)
 		#parent.removeChild$(#end)
 		#parent = null
 		return
 
 	def joinBefore$ before
-		@insertInto$(before.parentNode,before)
+		self.insertInto$(before.parentNode,before)
 
 	def insertInto$ parent, before
 		unless #parent
 			#parent = parent
 			before ? before.insertBeforeBegin$(#end) : parent.appendChild$(#end)
-			@attachNodes()
+			self.attachNodes()
 		return this
 	
 	def replace$ other
 		unless #parent
 			#parent = other.parentNode
 		other.replaceWith$(#end)
-		@attachNodes()
+		self.attachNodes()
 		self
 		
 	def setup
@@ -129,50 +129,50 @@ class TagCollection
 
 class KeyedTagFragment < TagCollection
 	def setup
-		@array = []
-		@changes = Map.new
-		@dirty = no
-		@$ = {}
+		self.array = []
+		self.changes = Map.new
+		self.dirty = no
+		self.$ = {}
 
 	def push item, idx
 		# on first iteration we can merely run through
 		unless #f & $TAG_INITED$
-			@array.push(item)
+			self.array.push(item)
 			self.appendChild$(item)
 			return
 
-		let toReplace = @array[idx]
+		let toReplace = self.array[idx]
 
 		if toReplace === item
 			yes
 		else
-			@dirty = yes
+			self.dirty = yes
 			# if this is a new item
-			let prevIndex = @array.indexOf(item)
-			let changed = @changes.get(item)
+			let prevIndex = self.array.indexOf(item)
+			let changed = self.changes.get(item)
 
 			if prevIndex === -1
 				# should we mark the one currently in slot as removed?
-				@array.splice(idx,0,item)
+				self.array.splice(idx,0,item)
 				self.insertChild(item,idx)
 
 			elif prevIndex === idx + 1
 				if toReplace
-					@changes.set(toReplace,-1)
-				@array.splice(idx,1)
+					self.changes.set(toReplace,-1)
+				self.array.splice(idx,1)
 
 			else
-				@array.splice(prevIndex,1) if prevIndex >= 0
-				@array.splice(idx,0,item)
+				self.array.splice(prevIndex,1) if prevIndex >= 0
+				self.array.splice(idx,0,item)
 				self.insertChild(item,idx)
 
 			if changed == -1
-				@changes.delete(item)
+				self.changes.delete(item)
 		return
 
 	def insertChild item, index
 		if index > 0
-			let other = @array[index - 1]
+			let other = self.array[index - 1]
 			# will fail with text nodes
 			other.insertAfterEnd$(item)
 		elif #start
@@ -182,19 +182,19 @@ class KeyedTagFragment < TagCollection
 		return
 
 	def removeChild item, index
-		# @map.delete(item)
+		# self.map.delete(item)
 		# what if this is a fragment or virtual node?
 		if item.parentNode == #parent
 			#parent.removeChild(item)
 		return
 
 	def attachNodes
-		for item,i in @array
+		for item,i in self.array
 			#end.insertBeforeBegin$(item)
 		return
 
 	def detachNodes
-		for item in @array
+		for item in self.array
 			#parent.removeChild(item)
 		return
 
@@ -203,33 +203,33 @@ class KeyedTagFragment < TagCollection
 			#f |= $TAG_INITED$
 			return
 
-		if @dirty
-			@changes.forEach do |pos,item|
+		if self.dirty
+			self.changes.forEach do |pos,item|
 				if pos == -1
-					@removeChild(item)
-			@changes.clear()
-			@dirty = no
+					self.removeChild(item)
+			self.changes.clear()
+			self.dirty = no
 
 		# there are some items we should remove now
-		if @array.length > index
+		if self.array.length > index
 			
 			# remove the children below
-			while @array.length > index
-				let item = @array.pop()
-				@removeChild(item)
-			# @array.length = index
+			while self.array.length > index
+				let item = self.array.pop()
+				self.removeChild(item)
+			# self.array.length = index
 		return
 
 class IndexedTagFragment < TagCollection
 
 	def setup
-		@$ = []
-		@length = 0
+		self.$ = []
+		self.length = 0
 
 	def end$ len
-		let from = @length
+		let from = self.length
 		return if from == len or !#parent
-		let array = @$
+		let array = self.$
 		let par = #parent
 
 		if from > len
@@ -237,20 +237,20 @@ class IndexedTagFragment < TagCollection
 				par.removeChild$(array[--from])
 		elif len > from
 			while len > from
-				@appendChild$(array[from++])
-		@length = len
+				self.appendChild$(array[from++])
+		self.length = len
 		return
 
 	def attachNodes
-		for item,i in @$
-			break if i == @length
+		for item,i in self.$
+			break if i == self.length
 			#end.insertBeforeBegin$(item)
 		return
 
 	def detachNodes
 		let i = 0
-		while i < @length
-			let item = @$[i++]
+		while i < self.length
+			let item = self.$[i++]
 			#parent.removeChild$(item)
 		return
 
