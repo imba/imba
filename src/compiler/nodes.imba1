@@ -2398,7 +2398,9 @@ export class VarDeclaration < Node
 		@kind = kind
 		
 	def visit stack
-		@right.traverse if @right
+		unless @left isa Identifier and @right isa Func
+			@right.traverse if @right
+
 		@left.traverse(declaring: type) if @left
 		
 		# replace directly
@@ -2407,6 +2409,8 @@ export class VarDeclaration < Node
 			# TODO add an identifier.declare method for this
 			@left.@variable ||= scope__.register(@left.symbol,@left,type: type)
 			stack.registerSemanticToken(@left)
+			
+		@right.traverse if @right
 
 		# elif @left isa Obj
 		# 	# need to traverse the object to register variables
