@@ -308,7 +308,7 @@ export class Lexer
 		# should rather make it like a statemachine that moves from CLASS_DEF to CLASS_BODY etc
 		# Things should compile differently when you are in a CLASS_BODY than when in a DEF_BODY++
 
-		@indentStyle = null
+		@indentStyle = '\t'
 		@inTag = no
 
 		@tokens  = []             # Stream of parsed tokens in the form `['TYPE', value, line]`.
@@ -356,7 +356,7 @@ export class Lexer
 		@opts    = o
 		@locOffset = o:loc or 0
 		@target = o:target
-		@indentStyle = o:indentation or null
+		@indentStyle = '\t'
 
 		# if the very first line is indented, take this as a gutter
 		if let m = code.match(/^([\ \t]*)[^\n\s\t]/)
@@ -1212,7 +1212,7 @@ export class Lexer
 					@loc += indent:length - whitespace:length
 					token('INDENT', whitespace,whitespace:length)
 					unless @opts:silent
-						throw error("inconsistent {@indentStyle} indentation")
+						throw error("use tabs for indentation")
 
 			size = indentSize
 
