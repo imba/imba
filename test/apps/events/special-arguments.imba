@@ -6,7 +6,7 @@ tag app-root
 		console.info(args)
 
 	def render
-		<self :hello.log($.type,$.detail)>
+		<self :hello.{log(e.type,e.detail)}>
 			# $ refers to the event itself
 			
 			<div.a :click.log($)> 'A'

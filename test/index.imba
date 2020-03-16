@@ -60,8 +60,7 @@ var compileAndRun = do |example|
 	run(js)
 
 var load = do |src|
-	if !location.origin.startsWith('file://')
-		# load as esm module
+	if !global.location.origin.startsWith('file://')
 		let script = document.createElement('script')
 		script.type = 'module'
 		script.src = './' + src.replace('.imba','.js')

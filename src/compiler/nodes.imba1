@@ -4463,8 +4463,10 @@ export class VarOrAccess < ValueNode
 			# @value.safechain = safechain
 		elif stack.hasImplicitSelf and !@identifier.isCapitalized
 			let ctx = scope.context
-			unless ctx isa RootScopeContext
-				@value = Access.new(".",scope.context,@value)
+			if ctx isa RootScopeContext or ctx.isGlobalContext
+				yes
+			else
+				@value = Access.new(".",ctx,@value)
 				stack.registerSemanticToken(@token,'accessor')
 
 		elif @identifier.isInternal
@@ -9412,6 +9414,9 @@ export class ScopeContext < Node
 		
 	def proto
 		"{self.c}.prototype"
+		
+	def isGlobalContext
+		no
 
 export class IndirectScopeContext < ScopeContext
 	
@@ -9425,21 +9430,27 @@ export class IndirectScopeContext < ScopeContext
 
 	def c
 		reference.c
-
+		
+	def isGlobalContext
+		@parent.isGlobalContext
 
 export class RootScopeContext < ScopeContext
 
 	def reference
 		# should be a 
-		@reference ||= scope.declare("self",scope.object, type: 'global')
+		@reference ||= scope.lookup('global') # declare("self",scope.object, type: 'global')
 
 	def c o
 		# @reference ||= scope.declare("self",scope.object, type: 'global')
 		# return "" if o and o:explicit
+		return "globalThis"
 		var val = reference # @value || @reference
 		return (val and val != this) ? val.c : "this"
 		# should be the other way around, no?
 		# o and o:explicit ? super : ""
+	
+	def isGlobalContext
+		yes
 
 export class Super < Node
 	def initialize keyword

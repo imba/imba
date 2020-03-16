@@ -7,7 +7,7 @@ tag app-root
 
 	def render
 		<self>
-			<input[name] type='text' :selection.log($.detail.start,$.detail.end)>
+			<input[name] type='text' :selection.{log(e.detail.start,e.detail.end)}>
 			<p> name
 
 imba.mount(<app-root>)
