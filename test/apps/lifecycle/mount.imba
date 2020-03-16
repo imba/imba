@@ -29,8 +29,8 @@ tag app-item < app-component
 		console.log "item.mount"
 		console.log 'mount?',@ripple,@children[0],@parentNode
 		super
-		eq @ripple, true
-		ok @children[0] isa HTMLSpanElement
+		global.eq @ripple, true
+		global.ok @children[0] isa HTMLSpanElement
 
 		# the late item will be force included inside mounted now
 		# #mounted = yes

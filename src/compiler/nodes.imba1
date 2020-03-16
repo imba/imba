@@ -602,7 +602,8 @@ export class Stack
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
 		
 	def hasImplicitSelf
-		!!@options:selfless
+		yes
+		# !!@options:selfless
 
 	def tsc
 		platform == 'tsc'
@@ -3070,11 +3071,11 @@ export class MethodDeclaration < Func
 		var closure = @context = scope.parent.closure
 		
 		if closure isa RootScope and !target
-			scope.@selfless = yes
+			scope.@context = closure.context
 		
 		elif closure isa MethodScope and !target
-			scope:context = LambdaScope:prototype:context
-		
+			scope.@selfless = yes
+
 		@params.traverse
 			
 		if target isa Identifier
@@ -4460,15 +4461,17 @@ export class VarOrAccess < ValueNode
 				return self
 			# FIX
 			# @value.safechain = safechain
-		elif !scope.closure.selfless
-			# console.log 'does implicit self exist?',stack.hasImplicitSelf,"{@value} - {@variable}"
-			if stack.hasImplicitSelf and !@identifier.isCapitalized
-				@value = Access.new(".",scope.context,@value)
-				stack.registerSemanticToken(@token,'accessor')
-			elif @identifier.isInternal
-				@value = Access.new(".",scope.context,@value)
+		elif stack.hasImplicitSelf and !@identifier.isCapitalized
+			let ctx = scope.context
+			if ctx isa RootScopeContext or ctx.isGlobalContext
+				yes
 			else
-				self
+				@value = Access.new(".",ctx,@value)
+				stack.registerSemanticToken(@token,'accessor')
+
+		elif @identifier.isInternal
+			@value = Access.new(".",scope.context,@value)
+
 		return self
 
 	# def c
@@ -4606,6 +4609,9 @@ export class Assign < Op
 	def visit
 		var l = @left
 		var r = @right
+		
+		if l isa VarOrAccess and r isa VarOrAccess and l.@identifier.symbol == r.@identifier.symbol
+			@left = l = Access.new(".",scope__.context,l.@value)
 		
 		if r
 			r.traverse(assignment: yes)
@@ -9408,6 +9414,9 @@ export class ScopeContext < Node
 		
 	def proto
 		"{self.c}.prototype"
+		
+	def isGlobalContext
+		no
 
 export class IndirectScopeContext < ScopeContext
 	
@@ -9421,21 +9430,27 @@ export class IndirectScopeContext < ScopeContext
 
 	def c
 		reference.c
-
+		
+	def isGlobalContext
+		@parent.isGlobalContext
 
 export class RootScopeContext < ScopeContext
 
 	def reference
 		# should be a 
-		@reference ||= scope.declare("self",scope.object, type: 'global')
+		@reference ||= scope.lookup('global') # declare("self",scope.object, type: 'global')
 
 	def c o
 		# @reference ||= scope.declare("self",scope.object, type: 'global')
 		# return "" if o and o:explicit
+		return "globalThis"
 		var val = reference # @value || @reference
 		return (val and val != this) ? val.c : "this"
 		# should be the other way around, no?
 		# o and o:explicit ? super : ""
+	
+	def isGlobalContext
+		yes
 
 export class Super < Node
 	def initialize keyword
