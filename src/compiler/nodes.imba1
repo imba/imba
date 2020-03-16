@@ -3071,11 +3071,11 @@ export class MethodDeclaration < Func
 		var closure = @context = scope.parent.closure
 		
 		if closure isa RootScope and !target
-			scope.@selfless = yes
+			scope.@context = closure.context
 		
 		elif closure isa MethodScope and !target
-			scope:context = LambdaScope:prototype:context
-		
+			scope.@selfless = yes
+
 		@params.traverse
 			
 		if target isa Identifier
@@ -4461,15 +4461,15 @@ export class VarOrAccess < ValueNode
 				return self
 			# FIX
 			# @value.safechain = safechain
-		elif !scope.closure.selfless
-			# console.log 'does implicit self exist?',stack.hasImplicitSelf,"{@value} - {@variable}"
-			if stack.hasImplicitSelf and !@identifier.isCapitalized
+		elif stack.hasImplicitSelf and !@identifier.isCapitalized
+			let ctx = scope.context
+			unless ctx isa RootScopeContext
 				@value = Access.new(".",scope.context,@value)
 				stack.registerSemanticToken(@token,'accessor')
-			elif @identifier.isInternal
-				@value = Access.new(".",scope.context,@value)
-			else
-				self
+
+		elif @identifier.isInternal
+			@value = Access.new(".",scope.context,@value)
+
 		return self
 
 	# def c
