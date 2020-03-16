@@ -602,7 +602,8 @@ export class Stack
 		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
 		
 	def hasImplicitSelf
-		!!@options:selfless
+		yes
+		# !!@options:selfless
 
 	def tsc
 		platform == 'tsc'

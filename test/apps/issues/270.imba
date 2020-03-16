@@ -25,8 +25,8 @@ tag app-item < app-component
 		console.log "item.mount"
 		console.log 'mount?',@ripple,@children[0],@parentNode
 		super
-		eq @ripple, true
-		ok @children[0] isa HTMLSpanElement
+		global.eq @ripple, true
+		global.ok @children[0] isa HTMLSpanElement
 
 	def render
 		console.log "item.render"
@@ -49,7 +49,7 @@ tag app-root < app-component
 	def mount
 		@log 'mount'
 		console.log 'root mount',@children[0]
-		ok @children[0] isa HTMLDivElement
+		global.ok @children[0] isa HTMLDivElement
 
 	def render
 		console.log "root.render"
