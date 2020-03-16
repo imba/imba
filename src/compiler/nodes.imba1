@@ -3061,14 +3061,21 @@ export class MethodDeclaration < Func
 
 		var o = @options
 		scope.visit
-
-		var closure = @context = scope.parent.closure
-
-		@params.traverse
-		
+			
 		if option(:inObject)
+			@params.traverse
 			@body.traverse
 			return self
+		
+		var closure = @context = scope.parent.closure
+		
+		if closure isa RootScope and !target
+			scope.@selfless = yes
+		
+		elif closure isa MethodScope and !target
+			scope:context = LambdaScope:prototype:context
+		
+		@params.traverse
 			
 		if target isa Identifier
 			if let variable = scope.lookup(target.toString)
@@ -3103,6 +3110,7 @@ export class MethodDeclaration < Func
 			warn "{String(o:variable)} def cannot have a target" if target
 
 		elif !target
+			
 			@variable = scope.parent.register(name,self,type: 'const')
 			yes
 		
@@ -3110,6 +3118,7 @@ export class MethodDeclaration < Func
 			warn("cannot export non-root method", loc: o:export.loc)
 
 		ROOT.entities.add(namepath,self)
+		
 		@body.traverse
 
 		if isConstructor and option(:supr)
@@ -4451,7 +4460,7 @@ export class VarOrAccess < ValueNode
 				return self
 			# FIX
 			# @value.safechain = safechain
-		else
+		elif !scope.closure.selfless
 			# console.log 'does implicit self exist?',stack.hasImplicitSelf,"{@value} - {@variable}"
 			if stack.hasImplicitSelf and !@identifier.isCapitalized
 				@value = Access.new(".",scope.context,@value)
@@ -8785,7 +8794,7 @@ export class RootScope < Scope
 		@scopes   = []
 		@helpers  = []
 		@styles = []
-		@selfless = no
+		@selfless = yes
 		@implicitAccessors = []
 		@entities = RootEntities.new(self)
 		@object = Obj.wrap({})
