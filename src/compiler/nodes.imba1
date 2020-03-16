@@ -4608,6 +4608,9 @@ export class Assign < Op
 		var l = @left
 		var r = @right
 		
+		if l isa VarOrAccess and r isa VarOrAccess and l.@identifier.symbol == r.@identifier.symbol
+			@left = l = Access.new(".",scope__.context,l.@value)
+		
 		if r
 			r.traverse(assignment: yes)
 	
