@@ -15,7 +15,7 @@ To get started with Imba, we recommend reading through the [official guide](http
 
 ## Community
 
- [![Forum](https://img.shields.io/badge/discourse-forum-brightgreen.svg?style=flat-square)](https://users.imba.io) [![Join the chat at https://gitter.im/somebee/imba](https://img.shields.io/badge/chat-gitter-fb0061.svg)](https://gitter.im/somebee/imba)
+ [![Forum](https://img.shields.io/badge/discourse-forum-brightgreen.svg?style=flat-square)](https://users.imba.io) [![Join the chat at https://discord.gg/mkcbkRw](https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square)](https://discord.gg/mkcbkRw)
 
 ### Bi-Weekly Imba Community Meeting
 
@@ -31,7 +31,7 @@ attention, you can ping during the meeting.
 ### Chat
 
 For questions and support please use our community chat on
-[gitter](https://gitter.im/somebee/imba) or our [discourse](https://users.imba.io/).
+[Discord](https://discord.gg/mkcbkRw) or our [discourse](https://users.imba.io/).
 
 ## License
 
