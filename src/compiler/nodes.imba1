@@ -2790,17 +2790,18 @@ export class ClassDeclaration < Code
 		jshead += " {M cname, name}" if name
 		jshead += " extends {M(sup)}" if sup
 		
-		if option(:export) and STACK.cjs
-			let exportName = option(:default) ? 'default' : cname
-			jsbody = "{jsbody};\n{M('exports',o:export)}.{exportName} = {cname}"
-				
-		elif option(:export) and option(:default)
-			jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
-		elif option(:export)
-			jshead = "{M 'export',option(:export)} {jshead}"
-
+		if option(:export) and !STACK.cjs
+			if option(:default)
+				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
+			else
+				jshead = "{M 'export',option(:export)} {jshead}"
 
 		let js = "{jshead} \{{jsbody}\}"
+		
+		if option(:export) and STACK.cjs
+			let exportName = option(:default) ? 'default' : cname
+			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
+			
 		if option(:global)
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
