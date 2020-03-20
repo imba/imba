@@ -2439,7 +2439,6 @@ export class VarDeclaration < Node
 		return super(o)
 		
 	def js
-		let out = "{M(kind,kind)} {left.c()}"
 		let out = "{M(kind,keyword)} {left.c()}"
 		if right
 			out += " = {right.c(expression: true)}"
