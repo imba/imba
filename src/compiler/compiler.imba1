@@ -82,7 +82,7 @@ export def compile code, o = {}
 				console.log "   " + "in file {err:_filename}"
 				console.log err:stack if err:stack	
 			# console.log "error during compile",o:filename
-		else
+		elif !o:silent
 			console.log "error compiling {o:filename}"
 
 		throw err
