@@ -125,6 +125,9 @@ def imba.mount element, into
 	element.__schedule = yes
 	(into or document.body).appendChild(element)
 
+def imba.unmount element
+	const parent = element.parentElement
+	parent.removeChild(element)
 
 const CustomTagConstructors = {}
 
