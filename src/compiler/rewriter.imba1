@@ -337,7 +337,7 @@ export class Rewriter
 			var prev = tokens[i - 1] or EOF
 			var next = tokens[i + 1] or EOF
 			# var after = tokens[i + 2] or EOF
-			if prev.@type == '='
+			if prev.@type == '=' or prev.@type == ':'
 				if (token.@type === TERMINATOR and next.@type != 'INDENT') or token.@type == ',' or token.@type == 'DEF_BODY'
 					tokens.splice i, 0, Token.new('IDENTIFIER','$CARET$',token.@loc,0)
 					return 2
