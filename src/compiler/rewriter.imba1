@@ -824,12 +824,18 @@ export class Rewriter
 	def tagPostfixConditionals
 		var condition = do |token,i,tokens| token.@type === TERMINATOR or token.@type === INDENT
 		var action = do |token,i,tokens,s|
-			T.setTyp(s:original, 'POST_' + s:original.@type) if token.@type != INDENT
+			if token.@type != INDENT
+				if s:unfinished
+					tokens.splice i, 0, T.token('EMPTY_BLOCK', '')
+					# T.setTyp(s:original, 'POST_' + s:original.@type)
+				else
+					T.setTyp(s:original, 'POST_' + s:original.@type)
 
 		scanTokens do |token, i, tokens|
 			var typ = token.@type
 			return 1 unless typ == 'IF' or typ == 'FOR'
-			detectEnd(i + 1, condition,action,original: token)
+			let unfinished = tokens[i - 1] and condition(tokens[i - 1])
+			detectEnd(i + 1, condition,action,original: token,unfinished: unfinished)
 			1
 
 	# Look up a type by token index.

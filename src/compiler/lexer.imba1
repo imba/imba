@@ -184,7 +184,7 @@ var HEREDOC_INDENT  = /\n+([^\n\S]*)/g
 var HEREDOC_ILLEGAL = /\*\//
 
 # expensive?
-var LINE_CONTINUER  = /// ^ \s* (?: , | \??\.(?![.\d]) | :: ) ///
+var LINE_CONTINUER  = /// ^ \s* (?: , | \??\.(?![.\d])) ///
 
 var TRAILING_SPACES = /\s+$/
 
@@ -227,7 +227,7 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 # of a function invocation or indexing operation.
 # really?!
 
-var UNFINISHED = ['\\','.', '?.', '?:', 'UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'LOGIC', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
+var UNFINISHED = ['\\','.','UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
 var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END']
@@ -364,7 +364,7 @@ export class Lexer
 		
 		if o:gutter !== undefined
 			@state:gutter = o:gutter
-
+		
 		o.@tokens = @tokens 
 
 		parse(code)
@@ -1381,7 +1381,7 @@ export class Lexer
 		var br
 
 		return this if !raw and count == 0 # no terminators?
-
+		
 		var prev = @last
 
 		if !raw
@@ -1885,7 +1885,7 @@ export class Lexer
 	# Are we in the midst of an unfinished expression?
 	def unfinished
 		return true if LINE_CONTINUER.test(@chunk)	
-		return UNFINISHED.indexOf(@lastTyp) >= 0
+		return (UNFINISHED.indexOf(@lastTyp) >= 0 and @opts:target != 'tsc')
 	
 	# Converts newlines for string literals.
 	def escapeLines str, heredoc

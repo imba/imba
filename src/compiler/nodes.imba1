@@ -10,6 +10,8 @@ import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
+
+var TSC_CLASS_HEAD = 'static $static$(){this.prototype} $member$(){this.constructor} '
 var TAG_NAMES = constants.TAG_NAMES
 
 var TAG_TYPES = {}
@@ -1039,7 +1041,7 @@ export class Node
 
 		if o and o:indent
 			@indentation ||= INDENT
-
+		
 		var out = js(s,o)
 
 		var paren = shouldParenthesize
@@ -1208,7 +1210,7 @@ export class Terminator < Meta
 		if STACK.option(:comments) == false
 			val = val.replace(/\/\/.*$/gm,'')
 
-		if STACK.tsc and val:length > 1
+		if STACK.tsc and (val:length > 1 or @first)
 			return M(val.replace(/^[\t ]+/gm,''),self)
 
 		return val.replace(/^[\t ]+/gm,'')
@@ -1815,6 +1817,10 @@ export class VarDeclList < Block
 
 		if true
 			let node = VarDeclaration.new(part[0],part[1],type).set(decl: self, datatype: part[0].option(:datatype))
+			unless @firstDeclaration
+				@firstDeclaration = node
+				node.set(keyword: keyword)
+
 			push(node)
 			return self
 
@@ -2434,6 +2440,7 @@ export class VarDeclaration < Node
 		
 	def js
 		let out = "{M(kind,kind)} {left.c()}"
+		let out = "{M(kind,keyword)} {left.c()}"
 		if right
 			out += " = {right.c(expression: true)}"
 			
@@ -2507,6 +2514,8 @@ export class Root < Code
 		try
 			scope.visit
 			body.traverse
+			if body.first isa Terminator
+				body.first.@first = yes
 		catch e
 			let err = ImbaTraverseError.wrap(e)
 			err.@filename = OPTS:filename
@@ -2777,15 +2786,17 @@ export class ClassDeclaration < Code
 		@cname = cname
 		@cpath = cpath
 		
+		# if STACK.tsc
+		# 	# body.unshift()
+		# 	let comment = "/*¡{cname}*/"
+		# 	let add = helpers.clearLocationMarkers("{cname}.{comment}prototype.constructor;")
+		# 	let fn = 'static meta$(){ ' + add + ' }\n'
+		# 	body.unshift(LIT(fn))
+		
 		if STACK.tsc
-			# body.unshift()
-			let comment = "/*¡{cname}*/"
-			let add = helpers.clearLocationMarkers("{cname}.{comment}prototype.constructor;")
-			let fn = 'static meta$(){ ' + add + ' }\n'
-			body.unshift(LIT(fn))
+			body.unshift(LIT(TSC_CLASS_HEAD))
 		
 		let jsbody = body.c()
-			
 		let jshead = M(keyword,keyword) # "{C(keyword,mark: yes)}"
 		jshead += " {M cname, name}" if name
 		jshead += " extends {M(sup)}" if sup
@@ -2861,10 +2872,12 @@ export class TagDeclaration < ClassDeclaration
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
-			let comment = "/*¡{name.c.slice(1,-1)}*/"
-			let add = helpers.clearLocationMarkers("this.{comment}prototype.constructor;")
-			let fn = 'static meta$(){ ' + add + ' }\n'
-			body.unshift(LIT(fn))
+			body.unshift(LIT(TSC_CLASS_HEAD))
+			# if false
+			# let comment = "/*¡{name.c.slice(1,-1)}*/"
+			# let add = helpers.clearLocationMarkers("this.{comment}prototype.constructor;")
+			# let fn = 'static meta$(){ ' + add + ' }\n'
+			# body.unshift(LIT(fn))
 
 		if option(:extension)
 			# TODO remove support - throw when trying to extend
@@ -2876,10 +2889,10 @@ export class TagDeclaration < ClassDeclaration
 
 		let className = name.toClassName
 		let closure = scope__.parent
-		let jsbody = '{' + body.c() + '}'
+		let jsbody = body.c()
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
-		let js = "{jshead} {jsbody}"
+		let js = "{jshead} \{{jsbody}\}"
 
 		if !STACK.tsc
 			if @staticInit
@@ -5724,11 +5737,12 @@ export class Loop < Statement
 
 		var s = stack
 		var curr = s.current
-
+		
 		if stack.isExpression or isExpression
 			# what the inner one should not be an expression though?
 			# this will resut in an infinite loop, no?!?
 			scope.closeScope
+			
 			var ast = CALL(FN([],[self]),[])
 			return ast.c o
 
@@ -5737,6 +5751,7 @@ export class Loop < Statement
 		elif @tag
 			super.c 0
 		else
+			
 			scope.closeScope
 			var ast = CALL(FN([],[self]),[])
 			# scope.context.reference
@@ -5807,7 +5822,9 @@ export class While < Loop
 		var out = "while ({test.c(expression: yes)})" + body.c(braces: yes, indent: yes) # .wrap
 
 		if scope.vars.count > 0
-			return [scope.vars.c,out]
+			
+			out = scope.vars.c + ';' + out
+			# [scope.vars.c,out]
 		out
 
 
