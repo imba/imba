@@ -93,6 +93,9 @@ function main(){
 	src = lookup(src);
 	src = path.resolve(process.cwd(),src);
 	var body = fs.readFileSync(src,'utf8');
+	if (!body) {
+		return body;
+	}
 	o.target = 'node';
 	o.sourcePath = o.filename = src;
 	return run(body,o);
