@@ -33,6 +33,7 @@ interface Imba {
     listen(target: any, event:string, listener:any, path?: any): void;
     once(target: any, event:string, listener:any, path?: any): void;
     unlisten(target: any, event:string, listener:any, path?: any): void;
+    indexOf(target: any, source:any): boolean;
 }
 
 declare const imba: Imba
