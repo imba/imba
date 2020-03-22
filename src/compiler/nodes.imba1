@@ -5520,7 +5520,7 @@ export class If < ControlFlow
 		# local to the inner scope, but will technically be
 		# declared in the outer scope. Must get unique name
 
-		unless stack.isAnalyzing
+		if !stack.isAnalyzing and !stack.tsc
 			@pretest = AST.truthy(test)
 
 			if @pretest === true
