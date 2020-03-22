@@ -48,7 +48,7 @@
     "watch": "npm run build -- --watch"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.37",
+  "version": "2.0.0-alpha.38",
   "licenses": [
     {
       "type": "MIT",
