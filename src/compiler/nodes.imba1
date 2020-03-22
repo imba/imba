@@ -2323,7 +2323,7 @@ export class ScopeVariables < ListNode
 		vardec
 
 	def load list
-		# temporary solution!!!
+
 		list.map do |par| VariableDeclarator.new(par.name,par.defaults,par.splat)
 
 	def isExpressable
@@ -2554,16 +2554,17 @@ export class Root < Code
 			sfcid: @scope.sfcid
 		}
 		
-		var stylebody = ""
-		for style in result:styles
-			if style:type == 'css'
-				let scoping = style:scoped ? result:sfcid : null
-				style:processed = csscompiler.compile(style:content,scope: scoping)
-				stylebody += style:processed + '\n'
+		if !STACK.tsc
+			var stylebody = ""
+			for style in result:styles
+				if style:type == 'css'
+					let scoping = style:scoped ? result:sfcid : null
+					style:processed = csscompiler.compile(style:content,scope: scoping)
+					stylebody += style:processed + '\n'
 
-		if stylebody and !STACK.tsc
-			let css = {js: stylebody}
-			result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
+			if stylebody
+				let css = {js: stylebody}
+				result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
 
 		# always create the sourcemap?
 		if o:sourceMap # should handle sourcemap no matter what?
