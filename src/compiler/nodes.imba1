@@ -11,7 +11,7 @@ import Token from './token'
 import SourceMap from './sourcemap'
 
 
-var TSC_CLASS_HEAD = 'static $static$(){this.prototype} $member$(){this.constructor} '
+var TSC_CLASS_HEAD = 'static $static$(){ this.prototype } $member$(){ this.constructor } '
 var TAG_NAMES = constants.TAG_NAMES
 
 var TAG_TYPES = {}
