@@ -74,7 +74,7 @@ var METHOD_IDENTIFIER = /// ^
 # added hyphens to identifiers now - to test
 var IDENTIFIER = /// ^
 	(
-		(\$|@@)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
+		(\$|@)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]?
 	)
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
@@ -85,7 +85,7 @@ var IMPORTS = /// ^
 ///
 
 var OBJECT_KEY = /// ^
-	( (\$|@@|@|)[$A-Za-z_\x7f-\uffff\-][$\w\x7f-\uffff\-]*)
+	( (\$?)[$A-Za-z_\x7f-\uffff\-][$\w\x7f-\uffff\-]*)
 	( [^\n\S\s]* : (?![\*\=:$A-Za-z\_\x7f-\uffff]) )  # Is this a property name?
 ///
 
@@ -735,15 +735,14 @@ export class Lexer
 			typ = 'ENV_FLAG'
 			id = id.toUpperCase.slice(1, -1)
 
-		elif typ == '@'
-			typ = 'IVAR'
-			id = id.slice(1)
-
-			# id:reserved = yes if colon
+		# elif typ == '@'
+		# 	typ = 'IVAR'
+		# 	id = id.slice(1)
+		#	id:reserved = yes if colon
 		elif typ == '#'
 			typ = 'IVAR'
 
-		elif typ == '@@'
+		elif typ == '@'
 			typ = 'DECORATOR'
 
 		elif typ == '$' and !colon
