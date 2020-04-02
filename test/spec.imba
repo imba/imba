@@ -1,6 +1,6 @@
 var puppy = window.puppy
 
-var pup = do |ns,...params|
+var pup = do(ns,...params)
 	if puppy
 		await puppy(ns,params)
 
@@ -31,15 +31,15 @@ var TERMINAL_COLOR_CODES =
 	cyan: 36
 	white: 37
 
-var fmt = do |code,string|
-	return string.toString() if console.group
+var fmt = do(code,string)
+	return string.toString! if console.group
 	code = TERMINAL_COLOR_CODES[code]
 	var resetStr = "\x1B[0m"
 	var resetRegex = /\x1B\[0m/g
 	var codeRegex = /\x1B\[\d+m/g
 	var tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i
 	var numRegex = /\d+/
-	var str = ('' + string).replace resetRegex, "{resetStr}\x1B[{code}m" # allow nesting
+	var str = ('' + string).replace(resetRegex, "{resetStr}\x1B[{code}m") # allow nesting
 	str = "\x1B[{code}m{str}{resetStr}"
 	return str
 
@@ -47,22 +47,22 @@ var fmt = do |code,string|
 class SpecComponent
 
 	def log ...params
-		@root.console.log(*params)
+		root.console.log(*params)
 
 	def emit ev, pars
 		imba.emit(self,ev,pars)
 
 	get root
-		@parent ? @parent.root : self
+		parent ? parent.root : self
 
 
 global class Spec < SpecComponent
 	
 	get keyboard
-		#keyboard ||= PupKeyboard.new
+		_keyboard ||= PupKeyboard.new
 
 	get mouse
-		#mouse ||= PupMouse.new
+		_mouse ||= PupMouse.new
 	
 	def click sel, trusted = yes
 		if puppy and trusted
@@ -71,29 +71,29 @@ global class Spec < SpecComponent
 		else
 
 			let el = document.querySelector(sel)
-			el && el.click()
-		await @tick()
+			el && el.click!
+		await tick!
 
 	def tick commit = true
-		imba.commit() if commit
+		imba.commit! if commit
 		await imba.scheduler.promise
-		@observer.takeRecords()
+		observer.takeRecords!
 
 	def wait time = 100
-		Promise.new(do |resolve| setTimeout(resolve,time))
+		Promise.new(do(resolve) setTimeout(resolve,time))
 
 	def constructor
 		super()
-		@console = console
-		@blocks = []
-		@assertions = []
-		@stack = [@context = self]
-		@tests = []
-		@warnings = []
-		@state = {info: [], mutations: [], log: []}
+		console = console
+		blocks = []
+		assertions = []
+		stack = [context = self]
+		tests = []
+		warnings = []
+		state = {info: [], mutations: [], log: []}
 
-		@observer = MutationObserver.new do |muts|
-			@context.state.mutations.push(*muts)
+		observer = MutationObserver.new do(muts)
+			context.state.mutations.push(...muts)
 
 		self
 
@@ -101,74 +101,74 @@ global class Spec < SpecComponent
 		""
 
 	def eval block, ctx
-		@stack.push(@context = ctx)
-		var res = block(@context.state)
+		stack.push(context = ctx)
+		var res = block(context.state)
 		var after = do
-			@stack.pop()
-			@context = @stack[@stack.length - 1]
-			@observer.takeRecords()
+			stack.pop!
+			context = stack[stack.length - 1]
+			observer.takeRecords!
 			self
 
-		var err = do |e|
+		var err = do(e)
 			ctx.error = e
-			after()
+			after!
 
 		if res and res.then
 			return res.then(after,err)
 		else
-			after()
+			after!
 			return Promise.resolve(self)
 
 	def describe name, blk
-		@blocks.push SpecGroup.new(name, blk, self)
+		blocks.push SpecGroup.new(name, blk, self)
 	
 	def test name, blk
 		if name isa Function
 			blk = name
-			name = @context.blocks.length + 1
-		@context.blocks.push SpecExample.new(name, blk, @context)
+			name = context.blocks.length + 1
+		context.blocks.push SpecExample.new(name, blk, context)
 
 	def eq actual, expected, options
-		SpecAssert.new(@context, actual,expected, options)
+		SpecAssert.new(context, actual,expected, options)
 	
 	def step i = 0, &blk
 		Spec.CURRENT = self
-		var block = @blocks[i]
-		return self.finish() unless block
+		var block = blocks[i]
+		return self.finish! unless block
 		imba.once(block,'done') do self.step(i+1)
-		block.run()
+		block.run!
 
 	def run
-		Promise.new do |resolve,reject|
+		Promise.new do(resolve,reject)
 			var prevInfo = console.info
-			@observer.observe(document.body,{
+			observer.observe(document.body,{
 				attributes: true,
 				childList: true,
 				characterData: true,
 				subtree: true
 			})
 			console.log 'running spec'
-			console.info = do |...params|
-				@context.state.info.push(params)
-				@context.state.log.push(params[0])
+			console.info = do(...params)
+				context.state.info.push(params)
+				context.state.log.push(params[0])
 
 			imba.once(self,'done') do
-				@observer.disconnect()
+				observer.disconnect!
 				console.info = prevInfo
-				resolve()
+				resolve!
 			self.step(0)
 
 	def finish
 		var ok = []
 		var failed = []
 
-		for test in @tests
+		for test in tests
 			test.failed ? failed.push(test) : ok.push(test)
 		
 		var logs = [
 			fmt('green',"{ok.length} OK")
 			fmt('red',"{failed.length} FAILED")
-			"{@tests.length} TOTAL"
+			"{tests.length} TOTAL"
 		]
 
 		console.log logs.join(" | ")
@@ -176,117 +176,116 @@ global class Spec < SpecComponent
 		pup("spec:done",{
 			failed: failed.length,
 			passed: ok.length,
-			warnings: @warnings.length
+			warnings: warnings.length
 		})
 		var exitCode = (failed.length == 0 ? 0 : 1)
-		@emit('done', [exitCode])
+		emit('done', [exitCode])
 
 global class SpecGroup < SpecComponent
 
 	def constructor name, blk, parent
 		super()
-		@parent = parent
-		@name = name
-		@blocks = []
+		parent = parent
+		name = name
+		blocks = []
 		SPEC.eval(blk,self) if blk
 		self
 
 	get fullName
-		"{@parent.fullName}{@name} > "
+		"{parent.fullName}{name} > "
 
 	def describe name, blk
-		@blocks.push SpecGroup.new(name, blk, self)
+		blocks.push SpecGroup.new(name, blk, self)
 	
 	def test name, blk
-		@blocks.push SpecExample.new(name, blk, self)
+		blocks.push SpecExample.new(name, blk, self)
 
 	def run i = 0
-		@start() if i == 0
-		var block = @blocks[i]
-		return @finish() unless block
-		imba.once(block,'done') do @run(i+1)
-		block.run() # this is where we wan to await?
+		start! if i == 0
+		var block = blocks[i]
+		return finish! unless block
+		imba.once(block,'done') do run(i+1)
+		block.run! # this is where we wan to await?
 	
 	def start
-		@emit('start', [self])
+		emit('start', [self])
 
 		if console.group
-			console.group(@name)
+			console.group(name)
 		else
-			console.log "\n-------- {@name} --------"
+			console.log "\n-------- {name} --------"
 		
 	def finish
 		# console.groupEnd() if console.groupEnd
-		@emit('done', [self])
+		emit('done', [self])
 
 global class SpecExample < SpecComponent
 
 	def constructor name, block, parent
 		super()
-		@parent = parent
-		@evaluated = no
-		@name = name
-		@block = block
-		@assertions = []
-		@root.tests.push(self)
-		@state = {info: [], mutations: [], log: []}
+		parent = parent
+		evaluated = no
+		name = name
+		block = block
+		assertions = []
+		root.tests.push(self)
+		state = {info: [], mutations: [], log: []}
 		self
 
 	get fullName
-		"{@parent.fullName}{@name}"
+		"{parent.fullName}{name}"
 
 	def run
-		@start()
+		start!
 		# does a block really need to run here?
-		var promise = (@block ? SPEC.eval(@block, self) : Promise.resolve({}))
+		var promise = (block ? SPEC.eval(block, self) : Promise.resolve({}))
 		try
 			var res = await promise
 		catch e
 			console.log "error from run!",e
-		@evaluated = yes
-		@finish()
+		evaluated = yes
+		finish!
 
 	def start
-		@emit('start')
-		console.group(@fullName)
+		emit('start')
+		console.group(fullName)
 	
 	def finish
-		@failed ? @fail() : @pass()
-		pup("spec:test", name: @fullName, failed: @failed)
-		for ass in @assertions
+		failed ? fail! : pass!
+		pup("spec:test", name: fullName, failed: failed)
+		for ass in assertions
 			if ass.failed
 				if ass.options.warn
-					pup("spec:warn",message: ass.toString())
+					pup("spec:warn",message: ass.toString!)
 				else
-					pup("spec:fail",message: ass.toString())
-		console.groupEnd(@fullName)
-		@emit('done',[self])
+					pup("spec:fail",message: ass.toString!)
+		console.groupEnd(fullName)
+		emit('done',[self])
 
 	def fail
-		console.log("%c✘ {@fullName}", "color:orangered",@state)
+		console.log("%c✘ {fullName}", "color:orangered",state)
 
 	def pass
-		console.log("%c✔ {@fullName}", "color:forestgreen")
-		# @print("✔")
+		console.log("%c✔ {fullName}", "color:forestgreen")
 
 	get failed
-		@error or @assertions.some do |ass| ass.critical
+		error or assertions.some do(ass) ass.critical
 
 	get passed
-		!@failed()
+		!failed!
 
 global class SpecAssert < SpecComponent
 
 	def constructor parent,actual,expected,options = {}
 		super()
 
-		@parent = parent
-		@expected = expected
-		@actual = actual
-		@options = options
-		@message = (options.message || options.warn) || "expected %2 - got %1"
+		parent = parent
+		expected = expected
+		actual = actual
+		options = options
+		message = (options.message || options.warn) || "expected %2 - got %1"
 		parent.assertions.push(self)
-		self.compare(@expected,@actual) ? @pass() : @fail()
+		self.compare(expected,actual) ? pass! : fail!
 		self
 
 	def compare a,b
@@ -300,25 +299,23 @@ global class SpecAssert < SpecComponent
 		return false
 
 	get critical
-		@failed && !@options.warn
+		failed && !options.warn
 	
 	def fail
-		@failed = yes
-		if @options.warn
-			@root.warnings.push(self)
-
-		# console.log("failed",self,@parent.state)	
+		failed = yes
+		if options.warn
+			root.warnings.push(self)
 		self
 
 	def pass
-		@passed = yes
+		passed = yes
 		self
 
 	def toString
-		if @failed and @message isa String
-			let str = @message
-			str = str.replace('%1',@actual)
-			str = str.replace('%2',@expected)
+		if failed and message isa String
+			let str = message
+			str = str.replace('%1',actual)
+			str = str.replace('%2',expected)
 			return str
 		else
 			"failed"
