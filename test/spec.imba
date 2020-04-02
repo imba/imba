@@ -238,11 +238,12 @@ global class SpecExample < SpecComponent
 	def run
 		start!
 		# does a block really need to run here?
-		var promise = (block ? SPEC.eval(block, self) : Promise.resolve({}))
 		try
+			var promise = (block ? SPEC.eval(block, self) : Promise.resolve({}))
 			var res = await promise
 		catch e
 			console.log "error from run!",e
+			error = e
 		evaluated = yes
 		finish!
 

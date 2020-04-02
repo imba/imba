@@ -24,6 +24,8 @@ var consoleMapping = {
 }
 
 var tests = []
+var pages = []
+
 
 var parseRemoteObject = do |obj|
 	let result = obj.value or obj
@@ -39,8 +41,51 @@ var parseRemoteObject = do |obj|
 	elif obj.type == 'boolean'
 		result = obj.value == 'true'
 	return result
+	
+def releasePage page
+	pages.push(page)
+	
+def spawnPage
+	if pages[0]
+		return pages.shift!
 
-def run item
+	var page = await browser.newPage!
+	# let t = Date.now!
+	await page.exposeFunction('puppy') do |str,params|
+		# console.log 'exposed function',Date.now! - t
+		# console.log('puppy', str,params)
+		let rpc = page.HANDLERS
+		let receiver = page
+		let path = str.split('.')
+		let meth = path.pop()
+
+		if rpc[meth]
+			return rpc[meth].apply(self,params)
+
+		while path.length
+			receiver = receiver[path.shift()]
+		# console.log 'calling',meth,params
+		return receiver[meth].apply(receiver,params)
+	
+	# page.on 'load' do |msg|
+	# 	console.log 'page loaded'
+			
+	page.on 'console' do |msg|
+		# console.log("page on console",msg._type,msg)
+		var params = msg.args().filter(Boolean).map do |x|
+			parseRemoteObject(x._remoteObject)
+
+		let str = String(params[0]) # .replace(':','')
+		if page.HANDLERS and page.HANDLERS[str]
+			page.HANDLERS[str](*params.slice(1))
+
+		if options.console
+			var key = consoleMapping[msg.type()] or msg.type()
+			console[key].apply(console, params)
+
+	return page
+
+def run item, page
 	Promise.new do |resolve,reject|
 
 		var test = {
@@ -56,19 +101,13 @@ def run item
 		var progress = do |out|
 			if options.concurrent
 				process.stdout.write(out or ".")
-				# console.log(*params)
-		# var src =  "http://localhost:1234/index.html#{item}"
+
 		var root = path.resolve(__dirname,"..","test")
 		var src =  "file://{root}/index.html#{item}"
-		var page = await browser.newPage()
 
 		var handlers =
 			'example:loaded': do |e|
 				page.evaluate(do await SPEC.run())
-
-			'spec:done': do |e|
-				test.results = e
-				resolve(test) #  : reject(test)
 
 			'spec:test': do |e|
 				e.file = item
@@ -83,45 +122,26 @@ def run item
 
 			'spec:fail': do |e|
 				print helpers.ansi.f('redBright',"    ✘ {e.message}")
+			
+			'spec:done': do |e|
+				test.results = e
+				releasePage(page)
+				resolve(test) #  : reject(test)
 
 			'page:error': do |e|
 				print(helpers.ansi.f('redBright',"error {e.message}"))
 				test.error = e
+				releasePage(page)
 				resolve(test)
 
-		await page.exposeFunction('puppy') do |str,params|
-			# console.log('puppy', str,params)
-			let receiver = page
-			let path = str.split('.')
-			let meth = path.pop()
-
-			if handlers[meth]
-				return handlers[meth].apply(self,params)
-
-			while path.length
-				receiver = receiver[path.shift()]
-			# console.log 'calling',meth,params
-			return receiver[meth].apply(receiver,params)
-
+		let first = !page.HANDLERS
+		let errored = page.ERRORED
+		page.HANDLERS = handlers
 		print(helpers.ansi.bold(item) + ' ' + src)
-
-		page.on 'load' do |msg|
-			self
-
-		page.on 'console' do |msg|
-			# console.log("page on console",msg._type,msg)
-			var params = msg.args().filter(Boolean).map do |x|
-				parseRemoteObject(x._remoteObject)
-
-			let str = String(params[0]) # .replace(':','')
-			if handlers[str]
-				handlers[str](*params.slice(1))
-
-			if options.console
-				var key = consoleMapping[msg.type()] or msg.type()
-				console[key].apply(console, params)
-
-		page.goto(src)
+		await page.goto(src,errored ? { waitUntil: 'networkidle0' } : {})
+		if !first
+			await page.reload({waitUntil: 'domcontentloaded'})
+		await page.waitForNavigation
 
 
 def main
@@ -156,7 +176,8 @@ def main
 	else
 		for item in files
 			try
-				var res = await run(item)
+				let page = await spawnPage!
+				var res = await run(item,page)
 			catch e
 				self
 		console.log('')
