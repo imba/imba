@@ -5056,8 +5056,8 @@ export class Decorator < ValueNode
 		else
 			let op = OP(
 				'||',
-				OP('.',THIS,'decorate$' + AST.sym(name)),
-				OP('.',LIT('imba'),'decorate$' + AST.sym(name))
+				OP('.',THIS,'decorator$' + AST.sym(name)),
+				OP('.',LIT('imba'),'decorator$' + AST.sym(name))
 			)
 			out = '(' + op.c + ')'
 

@@ -33,11 +33,9 @@ tag app-root
 				# has an 'open' method, app-root.open will naturally be
 				# called 
 				<app-item> <div :click.open> 'open?'
-
-				# Including @ before the event handler specifies that it
-				# should explicitly call the method by that name on the
-				# lexical self
-				<app-item> <div.at-close :click.@close> 'close?'
+				
+				# Inlining
+				<app-item> <div.at-close :click.{close!}> 'close?'
 
 
 imba.mount <app-root>

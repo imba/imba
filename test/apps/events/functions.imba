@@ -3,29 +3,30 @@ let two = 1
 let values = [1,2,3,4]
 
 tag app-root
-	@counter = 0
-	@value = null
+	prop counter = 0
+	prop value = null
 
-	@model = {
-		update: do |val| @counter = val
+	prop model = {
+		update: do |val| counter = val
 	}
 	
 	def hello
-		@counter++
+		counter++
 
 	def render
 		let three = two
 
 		<self>
 			# <div :shortcut('cmd+a').prevent>
-			<div.value :click.{@value = [@counter,e.type,this == $.element]}> "Advanced"
-			<div.click-hello :click.{@hello()}> "Call hello"
-			<div.setter :click.{@counter=2}> "Set directly"
-			<div.incr :click.{@counter++}> "Incr"
-			<div.add :click.{@counter = one + three}> "Incr"
-			<div.model :click.{@model.update(10)}> "Model.update"
+			<div.value :click.{value = [counter,e.type,this == $.element]}> "Advanced"
+			<div.click-hello :click.{hello()}> "Call hello"
+			<div.setter :click.{counter=2}> "Set directly"
+			<div.incr :click.{counter++}> "Incr"
+			<div.add :click.{counter = one + three}> "Incr"
+			<div.model :click.{model.update(10)}> "Model.update"
 			for index in values
-				<div .index{index} :click.{@counter = index}> "Item {index}"
+				<div .index{index} :click.{counter = index}> "Item {index}"
+
 			
 let app = <app-root>
 imba.mount app

@@ -1,30 +1,26 @@
 class Group
 	
 	def constructor data
-		@data = data
+		data = data
 		
 	def add item
-		@data.items.push(item)
+		data.items.push(item)
 
 	def archived?
-		@data.archived != null
+		data.archived != null
 	
 	def active?
-		!@archived? && !@empty?
+		!archived? && !empty?
 		
 	def empty?
-		@data.items.length == 0
+		data.items.length == 0
 	
 	def empty
-		@data.items = []
+		data.items = []
 		return self
-
-	# def empty!
-	# 	@data.items = []
-	# 	return self
 		
 	def emptyOrArchived
-		@empty? or @archived?
+		empty? or archived?
 
 test do
 	let group = Group.new(items: [])

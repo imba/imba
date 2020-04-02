@@ -148,8 +148,8 @@ describe 'Object destructuring' do
 	test 'Destructuring into this' do
 		class Point
 			def constructor options
-				{@x,@y} = options
-				
+				{x,y} = options
+
 		let item = Point.new(x: 1,y: 2)
 		eq item.x,1
 		eq item.y,2

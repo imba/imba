@@ -7,27 +7,27 @@ var blocks = [
 tag shared-item
 	def render
 		<self>
-			<div> @model.name
+			<div> data.name
 			<span :click.convert> "Convert!"
 
 tag todo-item < shared-item
 	def convert
-		@model.type = 'note-item'
+		data.type = 'note-item'
 
 tag note-item < shared-item
 	def convert
-		@model.type = 'todo-item'
+		data.type = 'todo-item'
 
 tag app-root
 	def render
 		<self>
 			<section>
 				for item in blocks
-					<{item.type} model=item $key=item.id>
+					<{item.type} data=item $key=item.id>
 
 			<section>
 				for item in blocks
-					<{item.type} model=item>
+					<{item.type} data=item>
 
 imba.mount <app-root>
 

@@ -1,14 +1,14 @@
 let name = 'hello'
 
 tag app-root
-	@desc = 'none'
+	prop desc = 'none'
 	def render
 		<self>
 			<input[name].textfield>
 			<p> "name is {name}"
 
-			<input[@desc].descfield>
-			<p> "desc is {@desc}"
+			<input[desc].descfield>
+			<p> "desc is {desc}"
 
 let app = <app-root>
 imba.mount(app)

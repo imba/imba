@@ -1,8 +1,8 @@
 
 tag nested-item
 	def mount
-		console.info @staticprop
-		console.log "mounted nested-item",@staticprop,@dynamicprop
+		console.info staticprop
+		console.log "mounted nested-item",staticprop,dynamicprop
 
 tag app-root
 
@@ -13,7 +13,7 @@ tag app-root
 	def render
 		<self>
 			<div>
-				<nested-item staticprop=1 dynamicprop=Math.random()>
+				<nested-item staticprop=1 dynamicprop=Math.random!>
 					<p> 'Child'
 
 test "mount" do

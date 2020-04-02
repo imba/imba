@@ -11,7 +11,7 @@ def bench target,key,desc
 	return
 
 class Item
-	static def decorate$log target,key,desc
+	static def decorator$log target,key,desc
 		let prefix = this[0] or 'nopre'
 		let prev = desc.value
 		desc.value = do
