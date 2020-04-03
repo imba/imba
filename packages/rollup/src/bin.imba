@@ -124,23 +124,22 @@ def imbaPlugin options
 
 class Bundle
 	def constructor config
-		@config = config
-		@promise = Promise.new do |resolve,reject|
-			@resolver = resolve
-			@rejector = reject
+		self.config = config
+		self.promise = Promise.new do |resolve,reject|
+			self.resolver = resolve
+			self.rejector = reject
 		self
 
 	def start
-		@watcher = rollup.watch(@config)
-		@watcher.on('event') do |e| @onevent(e)
-		return @promise
+		self.watcher = rollup.watch(self.config)
+		self.watcher.on('event') do |e| self.onevent(e)
+		return self.promise
 
 	def onevent e
 		if e.code == 'BUNDLE_START'
 			console.log "bundles {relPath(e.input)} → {relPath(e.output[0])}"
 		elif e.code == 'BUNDLE_END'
 			console.log "created {relPath(e.input)} → {relPath(e.output[0])} in {e.duration}ms"
-			# @resolver(e)
 		elif e.code == 'ERROR'
 			let file = e.error && e.error.filename or e.error.id
 			console.log "errored {file ? relPath(file) : ''}"
@@ -149,10 +148,10 @@ class Bundle
 			else
 				console.log e.error.message
 
-			@rejector(e)
+			self.rejector(e)
 		elif e.code == 'END'
 			# console.log "created {relPath(e.input)} → {relPath(e.output[0])}"
-			@resolver(e)
+			self.resolver(e)
 
 
 for entry in cfg.entries
