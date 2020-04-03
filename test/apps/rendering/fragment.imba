@@ -59,4 +59,3 @@ test "add number" do
 test "add name" do
 	await spec.click('.add-name')
 	eq $1.mutations.length,1,"mutations error"
-

@@ -1,6 +1,11 @@
 var puppy = window.puppy
 
 var pup = do(ns,...params)
+	if ns.match(/^spec/) and puppy
+		puppy(ns,params)
+		return
+
+	# return
 	if puppy
 		await puppy(ns,params)
 
@@ -66,8 +71,11 @@ global class Spec < SpecComponent
 	
 	def click sel, trusted = yes
 		if puppy and trusted
-			# console.log "click with puppeteer!!",sel
-			await puppy('click',[sel])
+			console.log "click with puppeteer!!",sel
+			try
+				await puppy('click',[sel])
+			catch e
+				console.log 'error from pup click!'
 		else
 
 			let el = document.querySelector(sel)
@@ -156,6 +164,7 @@ global class Spec < SpecComponent
 				observer.disconnect!
 				console.info = prevInfo
 				resolve!
+			await tick!
 			self.step(0)
 
 	def finish
@@ -173,13 +182,13 @@ global class Spec < SpecComponent
 
 		console.log logs.join(" | ")
 
+		var exitCode = (failed.length == 0 ? 0 : 1)
+		emit('done', [exitCode])
 		pup("spec:done",{
 			failed: failed.length,
 			passed: ok.length,
 			warnings: warnings.length
 		})
-		var exitCode = (failed.length == 0 ? 0 : 1)
-		emit('done', [exitCode])
 
 global class SpecGroup < SpecComponent
 
@@ -216,7 +225,7 @@ global class SpecGroup < SpecComponent
 			console.log "\n-------- {name} --------"
 		
 	def finish
-		# console.groupEnd() if console.groupEnd
+		console.groupEnd(name) if console.groupEnd
 		emit('done', [self])
 
 global class SpecExample < SpecComponent
@@ -253,7 +262,9 @@ global class SpecExample < SpecComponent
 	
 	def finish
 		failed ? fail! : pass!
-		pup("spec:test", name: fullName, failed: failed)
+		let fails = assertions.filter do $1.critical
+		pup("spec:test", name: fullName, failed: failed, messages: fails.map(do $1.toString!), error: error && error.message )
+
 		for ass in assertions
 			if ass.failed
 				if ass.options.warn

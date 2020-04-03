@@ -9,10 +9,10 @@ tag app-bar
 			<h1> "BAR"
 
 tag app-root
-	@view = 'foo'
+	prop view = 'foo'
 
 	def change type
-		@view = type
+		view = type
 
 	def render
 		<self>
