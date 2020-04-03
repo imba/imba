@@ -1,6 +1,6 @@
 
 
-def bench target,key,desc
+def @bench target,key,desc
 	let prev = desc.value
 	desc.value = do
 		let t = Date.now!
@@ -10,16 +10,18 @@ def bench target,key,desc
 		return res
 	return
 
-class Item
-	def decorator$log target,key,desc
+def @log target,key,desc
 		let prefix = this[0] or 'nopre'
 		let prev = desc.value
 		desc.value = do
 			console.log "call {prefix} {key}"
 			return prev.apply(this,arguments)
 		return
+		
+class Item
 	
-	@log @log('hello') @bench
+	
+	@log('hello') @bench
 	def setup
 		let i = 0
 		let sum = 0

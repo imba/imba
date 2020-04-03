@@ -203,6 +203,7 @@ var grammar =
 
 	ImportSpecifier: [
 		o 'Identifier' do ImportSpecifier.new(A1)
+		o 'DecoratorIdentifier' do ImportSpecifier.new(A1)
 		o 'Identifier AS Identifier' do ImportSpecifier.new(A1, A3)
 		o 'DEFAULT' do ImportSpecifier.new(Literal.new(A1))
 		o 'DEFAULT AS Identifier' do ImportSpecifier.new(Literal.new(A1), A3)
@@ -249,6 +250,10 @@ var grammar =
 	Identifier: [
 		o 'IDENTIFIER' do Identifier.new A1
 	]
+	
+	DecoratorIdentifier: [
+		o 'DECORATOR' do DecoratorIdentifier.new A1
+	]
 
 	Key: [
 		o 'KEY' do Identifier.new A1
@@ -268,9 +273,9 @@ var grammar =
 	]
 	
 	Decorator: [
-		o 'DECORATOR' do Decorator.new A1 # kinda hacky, should be defined as something else
-		o 'DECORATOR ( )' do Decorator.new(A1)
-		o 'DECORATOR ( ArgList )' do Decorator.new(A1).set(params: A3)
+		o 'DecoratorIdentifier' do Decorator.new A1 # kinda hacky, should be defined as something else
+		o 'DecoratorIdentifier ( )' do Decorator.new(A1)
+		o 'DecoratorIdentifier ( ArgList )' do Decorator.new(A1).set(params: A3)
 	]
 
 	Decorators: [
@@ -544,6 +549,7 @@ var grammar =
 
 	MethodIdentifier: [
 		o 'Identifier'
+		o 'DecoratorIdentifier'
 		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
 	]
 
