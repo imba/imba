@@ -2859,6 +2859,8 @@ export class TagDeclaration < ClassDeclaration
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
+		
+		let className = name.toClassName
 
 		if s.option(:hasScopedStyles) and !STACK.tsc
 			# @scope.root.styles:length > 0
@@ -2873,21 +2875,23 @@ export class TagDeclaration < ClassDeclaration
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
 			body.unshift(LIT(TSC_CLASS_HEAD))
+			if option(:extension)
+				className = "Extended${className}"
+
 			# if false
 			# let comment = "/*¡{name.c.slice(1,-1)}*/"
 			# let add = helpers.clearLocationMarkers("this.{comment}prototype.constructor;")
 			# let fn = 'static meta$(){ ' + add + ' }\n'
 			# body.unshift(LIT(fn))
 
-		if option(:extension)
-			# TODO remove support - throw when trying to extend
+		elif option(:extension)
 			@body.@delimiter = ','
 			@body.set(braces: yes)
 			let cls = CALL(LIT('imba.tags.get'),[name,STR(name.toClassName)])
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
 
-		let className = name.toClassName
+		
 		let closure = scope__.parent
 		let jsbody = body.c()
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
@@ -2900,7 +2904,8 @@ export class TagDeclaration < ClassDeclaration
 			let ext = (option(:extends) or LIT('{}')).c
 			js += "; imba.tags.define({name.c},{className},{ext})"
 		else
-			js += "; globalThis.{M className, name} = {className};"
+			unless option(:extension)
+				js += "; globalThis.{M className, name} = {className};"
 			# let comment = "/*¡{name.c.slice(1,-1)}*/"
 			# js +=  helpers.clearLocationMarkers("{className}.{comment}prototype.constructor")
 		return js

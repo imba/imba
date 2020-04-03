@@ -47,13 +47,13 @@ def resolvePaths obj
 
 import resolve from 'resolve'
 import rollup from 'rollup'
-import resolve-plugin from 'rollup-plugin-node-resolve'
-import commonjs-plugin from 'rollup-plugin-commonjs'
-import serve-plugin from 'rollup-plugin-serve'
-import hmr-plugin from 'rollup-plugin-livereload'
+import resolve-plugin from '@rollup/plugin-node-resolve'
+import commonjs-plugin from '@rollup/plugin-commonjs'
 import alias-plugin from '@rollup/plugin-alias'
 import json-plugin from '@rollup/plugin-json'
-
+import replace-plugin from '@rollup/plugin-replace'
+import serve-plugin from 'rollup-plugin-serve'
+import hmr-plugin from 'rollup-plugin-livereload'
 
 def resolveImba basedir
 	try
@@ -164,9 +164,11 @@ for entry in cfg.entries
 
 	let target = entry.target or 'web'
 	let plugins = (entry.plugins ||= [])
+	let resolver = resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json'])
 	plugins.unshift(commonjs-plugin())
 	plugins.unshift(json-plugin())
-	plugins.unshift(resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json']))
+	plugins.unshift(resolver)
+	plugins.unshift(replace-plugin({'process.env.NODE_ENV': '"' + (process.env.NODE_ENV or 'production') + '"' }))
 	
 	if Object.keys(alias).length
 		let parts = for own k,v of alias
@@ -175,7 +177,7 @@ for entry in cfg.entries
 			
 		let o = {
 			entries: parts
-			customResolver: resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json'])
+			customResolver: resolver
 		}
 		plugins.unshift(alias-plugin(o))
 	
