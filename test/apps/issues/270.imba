@@ -1,32 +1,32 @@
 tag app-component
 
 	get name
-		@nodeName.toLowerCase().substr(4)
+		nodeName.toLowerCase().substr(4)
 
 	def log val
-		console.info "{@name}.{val}"
-		# console.log "{@name}.{val}"
+		console.info "{name}.{val}"
+		# console.log "{name}.{val}"
 
 	def mount
-		@log 'mount'
+		log 'mount'
 
 	def mounted
-		@log 'mounted'
+		log 'mounted'
 
 	def awaken
-		# @log 'awaken'
+		# log 'awaken'
 		super
 
 
 tag app-item < app-component
-	@ripple
+	prop ripple
 
 	def mount
 		console.log "item.mount"
-		console.log 'mount?',@ripple,@children[0],@parentNode
+		console.log 'mount?',ripple,children[0],parentNode
 		super
-		global.eq @ripple, true
-		global.ok @children[0] isa HTMLSpanElement
+		global.eq ripple, true
+		global.ok children[0] isa HTMLSpanElement
 
 	def render
 		console.log "item.render"
@@ -47,9 +47,9 @@ tag app-late < app-component
 
 tag app-root < app-component
 	def mount
-		@log 'mount'
-		console.log 'root mount',@children[0]
-		global.ok @children[0] isa HTMLDivElement
+		log 'mount'
+		console.log 'root mount',children[0]
+		global.ok children[0] isa HTMLDivElement
 
 	def render
 		console.log "root.render"

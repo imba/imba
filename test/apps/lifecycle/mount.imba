@@ -4,18 +4,18 @@ var unmounts = 0
 tag app-component
 
 	get name
-		@nodeName.toLowerCase().substr(4)
+		nodeName.toLowerCase().substr(4)
 
 	def log val
-		console.info "{@name}.{val}"
+		console.info "{name}.{val}"
 		# console.log "{@name}.{val}"
 
 	def mount
-		@log 'mount'
+		log 'mount'
 		mounts++
 
 	def mounted
-		@log 'mounted'
+		log 'mounted'
 
 	def awaken
 		# @log 'awaken'
@@ -23,14 +23,14 @@ tag app-component
 
 
 tag app-item < app-component
-	@ripple
+	prop ripple
 
 	def mount
 		console.log "item.mount"
-		console.log 'mount?',@ripple,@children[0],@parentNode
+		console.log 'mount?',ripple,children[0],parentNode
 		super
-		global.eq @ripple, true
-		global.ok @children[0] isa HTMLSpanElement
+		global.eq ripple, true
+		global.ok children[0] isa HTMLSpanElement
 
 		# the late item will be force included inside mounted now
 		# #mounted = yes
@@ -57,7 +57,7 @@ tag app-root < app-component
 
 	def mount
 		super
-		ok @children[0] isa HTMLDivElement
+		global.ok children[0] isa HTMLDivElement
 
 	def render
 		console.log "root.render"
@@ -66,11 +66,11 @@ tag app-root < app-component
 				<app-item ripple=true> <p> 'Child'
 
 tag app-root-if < app-component
-	@expand = no
+	prop expand = no
 	def render
 		<self>
 			<div>
-				if @expand
+				if expand
 					<app-item ripple=true> <p> 'Child'
 
 let expect = [

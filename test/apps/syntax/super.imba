@@ -1,7 +1,7 @@
 class Animal
 
 	def constructor ...params
-		@params = params
+		params = params
 
 	get name
 		'Animal'

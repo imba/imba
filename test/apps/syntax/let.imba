@@ -36,10 +36,4 @@ test do
 		eq a,3
 		eq b,2
 	eq a, 1
-
-test do
-	let a = 0
-	{a,@b = 10} = {a: 1}
-	eq a,1
-	eq @b,10
 	

@@ -4,8 +4,8 @@ describe 'Defining classes' do
 	test 'Class declarations' do
 		class Rectangle
 			def constructor height, width
-				@height = height
-				@width = width
+				self.height = height
+				self.width = width
 
 		ok Rectangle.new
 
@@ -13,16 +13,18 @@ describe 'Defining classes' do
 		# unnamed
 		var expr = class
 			def constructor height, width
-				@height = height
-				@width = width
+				self.height = height
+				self.width = width
+				
 		ok expr.new
 		ok expr.name == 'expr'
 
 		# named
 		var expr = class NamedClass
 			def constructor height, width
-				@height = height
-				@width = width
+				self.height = height
+				self.width = width
+
 		ok expr.new
 		ok expr.name == 'NamedClass'
 
@@ -33,24 +35,24 @@ describe 'Class body and method definitions' do
 		class Rectangle
 			# constructor
 			def constructor height, width
-				@height = height
-				@width = width
+				self.height = height
+				self.width = width
 
 			# Getter
 			get area
-				@calcArea()
+				calcArea!
 
 			# Method
 			def calcArea
-				return @height * @width
+				return height * width
 
 	test 'Static methods' do
 
 		class Point
 			# constructor
 			def constructor x, y
-				@x = x
-				@y = y
+				self.x = x
+				self.y = y
 
 
 			static def distance a,b
@@ -81,17 +83,17 @@ test 'Subclassing' do
 
 	class Animal
 		def constructor name
-			@name = name
+			self.name = name
 
 		def speak
-			"{@name} makes a noise"
+			"{name} makes a noise"
 
 	class Dog < Animal
 		def constructor name
 			super(name)
 
 		def speak
-			"{@name} barks."
+			"{name} barks."
 
 	let dog = Dog.new 'Mitzie'
 
@@ -101,13 +103,13 @@ test 'Super class calls with super' do
 
 	class Cat
 		def constructor name
-			@name = name
+			self.name = name
 
 		def speak
-			console.info "{@name} makes a noise."
+			console.info "{name} makes a noise."
 
 		get alias
-			@name
+			name
 
 	class Lion < Cat
 		get alias
@@ -115,7 +117,7 @@ test 'Super class calls with super' do
 
 		def speak
 			super.speak()
-			console.info "{@name} roars."
+			console.info "{name} roars."
 
 	let lion = Lion.new('Fuzzy')
 
@@ -126,7 +128,7 @@ test 'Super class calls with super' do
 test 'Reopen class' do
 	class Cat
 		def constructor name
-			@name = name
+			self.name = name
 
 		get age
 			10
@@ -140,7 +142,7 @@ test 'Reopen class' do
 			100
 
 		def speak
-			console.info "{@name} makes a noise."
+			console.info "{name} makes a noise."
 
 	let cat = Cat.new('Cosinus')
 	cat.speak()

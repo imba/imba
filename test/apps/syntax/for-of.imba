@@ -54,10 +54,10 @@ describe 'For ... of' do
 	test 'returning custom iterator' do
 		class Iterable
 			def constructor items
-				@items = items
+				items = items
 
 			def toIterable
-				@items
+				items
 
 		const iterable = Iterable.new([1,2,3])
 		let res = for value of iterable

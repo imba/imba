@@ -66,12 +66,15 @@ test do
 test do
 	let a = 1
 	let s = 'a'
+	this.b = 3
 	if let a = 2
 		eq a,2
 		let {name: s} = {name: 'b'}
 		eq s,'b'
 
-		let x = {@b,a,s}
+		let x = {b,a,s}
+		# bug
+		eq x.b,3
 		eq x.a,2
 		eq x.s,'b'
 		
@@ -194,17 +197,18 @@ test do
 
 test do
 	let a = 0
-	{a,@b = 10} = {a: 1}
+	{a,b = 10} = {a: 1}
 	eq a,1
-	eq @b,10
+	eq b,10
 
 test do
 	class x
 		def constructor
-			#priv = for o in ary
+			_priv = for o in ary
 				o
+
 		get priv
-			#priv
+			_priv
 	
 	let v = x.new
 	eq v.priv,[1,2,3]

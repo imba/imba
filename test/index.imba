@@ -18,7 +18,6 @@ require('../src/imba/module.imba')
 require('./spec.imba')
 
 
-
 var exposed = {}
 
 window.onerror = do |e|
@@ -35,7 +34,7 @@ var afterRun = do
 			exposed[block.name] = do block.run()
 
 	imba.commit()
-	console.log('example:loaded',10)
+	console.log('loaded?')
 
 var run = do |js|
 	# hack until we changed implicit self behaviour
@@ -50,14 +49,19 @@ var run = do |js|
 	
 
 var compileAndRun = do |example|
+	
+	try
+		var result = compiler.compile(example.body,{
+			sourcePath: example.path,
+			imbaPath: null,
+			target: 'web'
+		})
+		var js = result.js
+		run(js)
+	catch e
+		console.log('page:error',{message: e.message})
+		# console.log('compilation error')
 
-	var result = compiler.compile(example.body,{
-		sourcePath: example.path,
-		imbaPath: null,
-		target: 'web'
-	})
-	var js = result.js
-	run(js)
 
 var load = do |src|
 	if !global.location.origin.startsWith('file://')
@@ -76,7 +80,6 @@ tag test-runner
 		document.location.reload()
 
 	def call e
-		console.log('calling',e)
 		exposed[e.target.value]()
 		self
 
@@ -92,6 +95,11 @@ tag test-runner
 
 # imba.mount(<test-runner>)
 
-window.onload = do
-	var hash = (document.location.hash || '').slice(1)
-	load(hash) if hash
+var hash = (document.location.hash || '').slice(1)
+if hash
+	load(hash)
+
+# window.onload = do
+# 	console.log('example:loaded')
+# 	# var hash = (document.location.hash || '').slice(1)
+# 	# load(hash) if hash

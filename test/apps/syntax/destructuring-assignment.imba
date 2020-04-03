@@ -145,13 +145,13 @@ describe 'Object destructuring' do
 		# var results = for ({name: n, family: {father: f}} of people)
 		# 	console.log('Name: ' + n + ', Father: ' + f);
 
-	test 'Destructuring into this' do
-		class Point
-			def constructor options
-				{@x,@y} = options
-				
-		let item = Point.new(x: 1,y: 2)
-		eq item.x,1
-		eq item.y,2
+#	test 'Destructuring into this' do
+#		class Point
+#			def constructor options
+#				{x,y} = options
+#
+#		let item = Point.new(x: 1,y: 2)
+#		eq item.x,1
+#		eq item.y,2
 				
 				

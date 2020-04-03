@@ -15,7 +15,7 @@ extend class Element
 		console.log 'on$resize'
 
 	def toggleFlag name
-		@classList.toggle(name)
+		classList.toggle(name)
 
 tag app-root
 
@@ -49,9 +49,9 @@ tag app-root
 			<div :click.confirm('Are you sure?').log('confirmed??')> "Click with confirmation"
 			<div :click.confirm('Are you sure?').log('confirmed??')> "Throttled"
 
-			<div :click.@multiply(2,2).@log($value)> "Passing value from previous call"
+			<div :click.multiply(2,2).log($value)> "Passing value from previous call"
 
-			<form :submit.prevent.throttle.log('submitting form!').wait(500).@cancelEventChain>
+			<form :submit.prevent.throttle.log('submitting form!').wait(500).cancelEventChain>
 				<input type='text'>
 				<button type='submit'> 'Submit'
 
@@ -65,10 +65,10 @@ tag app-root
 				<button.one> 'One'
 				<button.two> 'Two'
 
-			<div.draggable :pointer.meta.capture.@dragging> "Drag with command!"
+			<div.draggable :pointer.meta.capture.dragging> "Drag with command!"
 
 			<div.resizable
-				:pointer.meta.capture.@dragging
+				:pointer.meta.capture.dragging
 				:click.toggleFlag('expanded')
 			> "Can resize"
 

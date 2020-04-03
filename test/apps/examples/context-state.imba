@@ -14,8 +14,8 @@ tag page-item
 		let list = #context.items
 
 		<self.block> <div>
-			<span> @item.title
-			<span> "item {list.indexOf(@item)+1} of {list.length} in page {#context.page.title}"
+			<span> item.title
+			<span> "item {list.indexOf(item)+1} of {list.length} in page {#context.page.title}"
 
 
 tag page-list
@@ -37,15 +37,15 @@ tag app-page
 	def hello
 
 	get pagetitle
-		@page.title
+		page.title
 
 	def render
-		<self.block items=@page.items>
-			<header> "page: {@page.title}"
+		<self.block items=page.items>
+			<header> "page: {page.title}"
 			<page-list>
 			if bool
-				functional-tag(@page.items[0])
-			<page-panel> <page-item item=@page.items[0]>
+				functional-tag(page.items[0])
+			<page-panel> <page-item item=page.items[0]>
 
 
 

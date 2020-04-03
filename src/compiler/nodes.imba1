@@ -5034,15 +5034,11 @@ export class Ivar < Identifier
 export class Decorator < ValueNode
 
 	def name
-		@name ||= @value.slice(2)
+		@name ||= @value.slice(1)
 	
 	def visit
 		
 		@variable = scope__.lookup(name)
-		# console.log 'visit decorator',name,!!@variable
-		
-		# if we dont have a variable and we are in a top level class
-		# add a warning?
 
 		@call.traverse if @call
 		if option(:params)
@@ -5065,15 +5061,15 @@ export class Decorator < ValueNode
 		else
 			let op = OP(
 				'||',
-				OP('.',THIS,'decorate$' + AST.sym(name)),
-				OP('.',LIT('imba'),'decorate$' + AST.sym(name))
+				OP('.',THIS,'decorator$' + AST.sym(name)),
+				OP('.',LIT('imba'),'decorator$' + AST.sym(name))
 			)
 			out = '(' + op.c + ')'
 
 		if @params
-			out += "({@params.c(expression: yes)})"
+			out += ".bind([{@params.c(expression: yes)}])"
 		else
-			out += "()"
+			out += ".bind([])"
 		return out
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess

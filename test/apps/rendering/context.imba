@@ -2,10 +2,10 @@
 tag app-item
 	# the default value of label will be inherited
 	# from the closest parent that has a label property
-	@label = #context.label
+	prop label = #context.label
 
 	def render
-		<self> <span> @label
+		<self> <span> label
 
 test do
 	var tree = <main label="inherited">

@@ -1,43 +1,34 @@
 class Item
-	@name = 'hello'
-	@PascalCased = 1
-	#priv = 1
+	prop name = 'hello'
+	prop PascalCased = 1
 
-	static @PascalCased = 10
-	static #priv = 10
-	static @test = 10
+	static prop PascalCased = 10
+	static prop priv = 10
+	static prop test = 10
 
 	def constructor
-		@test = 10
-
-	get private
-		#priv
-
-	static get private
-		#priv
+		test = 10
 
 class Doc < Item
-	@kind = 'document'
-	@map = Map.new
+	prop kind = 'document'
+	prop map = Map.new
 
-	static @test = 20
+	static prop test = 20
 
 class Folder < Item
-	@kind = 'folder'
-	@items
+	prop kind = 'folder'
+	prop items
 
-	static @test = 30
+	static prop test = 30
 
 	def constructor
 		super # test
-		@name = 'stuff'
+		name = 'stuff'
 
 
 test 'static fields' do
 	ok Item.test == 10
 	ok Item.PascalCased == 10
-	ok Item.private == 10
-
 	ok Doc.test == 20
 	ok Folder.test == 30
 	
@@ -47,7 +38,6 @@ test 'instance fields' do
 	ok doc.kind == 'document'
 	ok doc.name == 'hello'
 	ok doc.PascalCased == 1
-	ok doc.private == 1
 
 	let folder = Folder.new
 	ok folder.kind == 'folder'
@@ -61,23 +51,21 @@ test 'rich instance fields' do
 	let doc2 = Doc.new
 	ok doc1.map != doc2.map
 
-
-
 # dynamic default values
 class Dyn
 	def constructor ref = 0
-		console.info(@ref = ref)
+		console.info(self.ref = ref)
 
 class A
-	@number = 1
-	@value = Dyn.new('v1')
-	@options = Dyn.new('o1')
-	@desc = Dyn.new('d1')
-	@desc2 = Dyn.new(@desc.ref + '2')
+	prop number = 1
+	prop value = Dyn.new('v1')
+	prop options = Dyn.new('o1')
+	prop desc = Dyn.new('d1')
+	prop desc2 = Dyn.new(desc.ref + '2')
 
 class B < A
-	@number = 2
-	@options = Dyn.new('o2')
+	prop number = 2
+	prop options = Dyn.new('o2')
 	
 test do
 	let item = B.new
@@ -87,8 +75,8 @@ test do
 
 
 class C < A
-	@number
-	@value = 3
+	prop number
+	prop value = 3
 
 test do
 	let item = C.new
@@ -98,7 +86,7 @@ test do
 
 
 class D < A
-	@desc2 = Dyn.new('d4')
+	prop desc2 = Dyn.new('d4')
 
 test do
 	let item = D.new
@@ -107,7 +95,7 @@ test do
 
 
 class E < A
-	@desc3 = Dyn.new(@desc2.ref + '3')
+	prop desc3 = Dyn.new(desc2.ref + '3')
 
 test do
 	let item = E.new
