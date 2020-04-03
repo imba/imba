@@ -5059,10 +5059,11 @@ export class Decorator < ValueNode
 		if @variable
 			out = @variable.c
 		else
+			let name = 'decorator$' + AST.sym(name)
 			let op = OP(
 				'||',
-				OP('.',THIS,'decorator$' + AST.sym(name)),
-				OP('.',LIT('imba'),'decorator$' + AST.sym(name))
+				OP('.',OP('.',THIS,'prototype'),name),
+				OP('.',LIT('imba'),name)
 			)
 			out = '(' + op.c + ')'
 
