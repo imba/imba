@@ -238,7 +238,6 @@ var grammar =
 		o 'Class' # statement, no?
 		o 'TagDeclaration'
 		o 'Tag'
-		o 'Property'
 	]
 
 	Private: [
@@ -498,33 +497,9 @@ var grammar =
 		o 'DO BLOCK_PARAM_START ParamList BLOCK_PARAM_END Block' do Lambda.new A3, A5, null, null, {bound: true, keyword: A1}
 	]
 
-	Property: [
-		# o 'STATIC PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A3, A4, A2).set(static: A1)
-		o 'PropType PropertyIdentifier PropertyOptions' do PropertyDeclaration.new(A2, A3, A1)
-		o 'PropType PropertyIdentifier PropertyOptions = Expression' do PropertyDeclaration.new(A2, A3, A1).set(value: A5)
-	]
-
-	PropertyOptions: [
-		o '' do null
-		o 'CALL_START Object CALL_END' do A2
-		o 'Object' do A1
-	]
-
-	PropType: [
-		o 'PROP'
-		o 'ATTR'
-	]
-
-	PropertyIdentifier: [
-		# also private
-		o 'Identifier'
-		o '{ Expression }' do A2
-	]
-
 	# FIXME clean up method
 	Method: [
 		o 'MethodDeclaration' do A1
-		# o 'VarKeyword MethodDeclaration' do A2.set(variable: A1)
 		o 'GLOBAL MethodDeclaration' do A2.set(global: A1)
 		o 'STATIC MethodDeclaration' do A2.set(static: A1)
 	]
