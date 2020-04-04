@@ -4,9 +4,15 @@ interface Element {
      */
     schedule(): this;
     unschedule(): this;
-    model: any;
     data: any;
+    hotkey: any;
+    hotkey__: any;
+    route: any;
+    route__: any;
     $key: any;
+    emit(event:string, params?: any): Event;
+    focus(options?: any): void;
+    blur(): void;
 }
 
 interface ImbaElement implements Element {
@@ -23,7 +29,8 @@ interface Imba {
     clearInterval(handle?: number): void;
     clearTimeout(handle?: number): void;
     commit(): Promise<this>;
-    mount(element: Element): this;
+
+    mount<T>(element: T): T;
 
     createIndexedFragment(...arguments: any[]): DocumentFragment;
     createKeyedFragment(...arguments: any[]): DocumentFragment;
