@@ -1671,27 +1671,28 @@ class InstanceInitBlock < Block
 
 export class ClassField < Node
 	prop name
-	prop value
 
-	def initialize name, value
+	def initialize name
 		super
 		@name = name
-		@value = value
 
 	def visit
 		@decorators = up?.collectDecorators
 		@name.traverse if @name and @name:traverse
 
-		if @value and STACK.tsc
-			@value.@scope = MethodScope.new(@value)
-			@value.@scope.@parent = scope__
-			@value.traverse # if @value # dont traverse yet
+		if value and STACK.tsc
+			value.@scope = MethodScope.new(value)
+			value.@scope.@parent = scope__
+			value.traverse # if @value # dont traverse yet
 
 		if !STACK.tsc
 			@storage = scope__.root.declare(null,LIT('new WeakMap()'))
 
 		# traverse value with a different scope
 		self
+		
+	def value
+		option(:value)
 
 	def target
 		option(:static) ? LIT('this') : LIT('this.prototype')
@@ -1711,11 +1712,6 @@ export class ClassField < Node
 	def loc
 		[@name.@loc,@name.region[1]]
 
-	# def js s
-	# 	return if s.up isa ClassBody
-	# 
-	# 	util.setField(slf,@name,@value or LIT('void 0')).c
-
 	def c
 		let up = STACK.current
 		let out
@@ -1727,7 +1723,7 @@ export class ClassField < Node
 
 			if STACK.tsc
 				out = "{prefix}{M(name,@name)}" # the value scope?
-				out += " = {@value.c}" if value
+				out += " = {value.c}" if value
 				if let typ = TYP(@name,'jsdoc')
 					out = "{typ}\n{out}"
 			else
@@ -1735,7 +1731,7 @@ export class ClassField < Node
 
 		elif up isa ClassInitBlock and !STACK.tsc
 			if !isLazy and isPlain and value
-				out = util.setField(target,name,@value).c + ';\n'
+				out = util.setField(target,name,value).c + ';\n'
 			# else
 			# 	let obj = Obj.wrap(enumerable: false, writable: true, value: LIT('undefined'))
 			# 	out = util.initField(target,storageKey,obj).c + ';\n'
@@ -1774,13 +1770,25 @@ export class ClassField < Node
 		@setter ||= if true
 			let op = CALL(GET(@storage,'set'),[THIS,LIT('value')])
 			# OP('=',OP('.',THIS,storageKey),LIT('value'))
-			FN([LIT('value')],[op])
+			FN([LIT('value')],[op]).set(noreturn: true)
 
 	def decorater
 		@decorater ||= if true
 			# let target = option(:static) ? LIT('this') : LIT('this.prototype')
 			util.decorate(Arr.new(@decorators),target,name,LIT('null'))
 
+export class ClassAttribute < ClassField
+	def getter
+		@getter ||= if true
+			let op = CALL(GET(THIS,'getAttribute'),[name.toAttrString])
+			FN([],[op])
+	
+	def setter
+		@setter ||= if true
+			let op = CALL(GET(THIS,'setAttribute'),[name.toAttrString,LIT('value')])
+			FN([LIT('value')],[op]).set(noreturn: true)
+	
+	
 
 export class ClassBody < Block
 
@@ -4947,6 +4955,9 @@ export class Identifier < Node
 
 	def toStr
 		return Str.new("'" + symbol + "'")
+		
+	def toAttrString
+		return Str.new("'" + String(@value) + "'")
 
 	def toJSON
 		toString
