@@ -1,4 +1,14 @@
-## master
+
+## 2.0.0-alpha.40
+* Introduce decorators with `@decorator` syntax. See [#334](https://github.com/imba/imba/pull/334)
+* Allow declaring tag attributes. See [#335](https://github.com/imba/imba/pull/335)
+* Shorthand `!` for invoking parenless methods (`object.mymethod!`)
+* Implicit self is back (for good)
+
+## 2.0.0-alpha
+See [#263](https://github.com/imba/imba/issues/263) for an overview of changes
+
+## 1.5.2
 
 * Fixed #237 (CSS comments not working in SFC)
 * Fixed #240 (Build issues with font-properties in SFC)
