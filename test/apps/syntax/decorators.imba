@@ -1,16 +1,16 @@
 
-def log target,key,desc
+def @log target,key,desc
 	let prev = desc.value
 	desc.value = do
 		console.info "call {key}"
 		return prev.apply(this,arguments)
 	return
 
-def readonly target,key,desc
+def @readonly target,key,desc
 	desc.writable = false
 	return desc
 
-def debounce target,key,descriptor
+def @debounce target,key,descriptor
 	let wait = this[0] or 100
 	const sym = Symbol('debounces')
 	const callback = descriptor.value
@@ -27,7 +27,7 @@ def debounce target,key,descriptor
 
 	return descriptor
 
-def track target,key,desc
+def @track target,key,desc
 	let getter = desc.get
 	let setter = desc.set
 	if getter isa Function
@@ -41,7 +41,7 @@ def track target,key,desc
 	# desc.writable = false
 	return desc
 
-def watch target,key,desc
+def @watch target,key,desc
 
 	let meth = this[0] or (key + 'DidSet')
 	let setter = desc.set

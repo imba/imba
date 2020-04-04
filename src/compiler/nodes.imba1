@@ -4985,6 +4985,14 @@ export class Identifier < Node
 		stack.registerSemanticToken(@value,@variable)
 		return self
 
+export class DecoratorIdentifier < Identifier
+	
+	def symbol
+		"decorator${@value.slice(1)}"
+		
+	def toString
+		symbol
+
 export class Private < Identifier
 
 	def symbol
@@ -5034,11 +5042,11 @@ export class Ivar < Identifier
 export class Decorator < ValueNode
 
 	def name
-		@name ||= @value.slice(1)
+		@name ||= @value.js
 	
 	def visit
-		
 		@variable = scope__.lookup(name)
+		@value.@variable ||= @variable
 
 		@call.traverse if @call
 		if option(:params)
@@ -5052,21 +5060,9 @@ export class Decorator < ValueNode
 	def c 
 		# should return other places as well...
 		return if STACK.current isa ClassBody
-		# name must be a 
-		let out
-		
-		
-		if @variable
-			out = @variable.c
-		else
-			let name = 'decorator$' + AST.sym(name)
-			let op = OP(
-				'||',
-				OP('.',OP('.',THIS,'prototype'),name),
-				OP('.',LIT('imba'),name)
-			)
-			out = '(' + op.c + ')'
 
+		let out = @value.c
+		
 		if @params
 			out += ".bind([{@params.c(expression: yes)}])"
 		else

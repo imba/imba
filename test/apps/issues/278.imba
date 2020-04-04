@@ -20,9 +20,9 @@ tag app-root
 			# second click on 'FOO' renders app-foo and app-bar
 			<div :click.change('foo')> "FOO"
 			<div :click.change('bar')> "BAR"
-			if @view == 'foo'
+			if view == 'foo'
 				<app-foo>
-			elif @view == 'bar'
+			elif view == 'bar'
 				<app-bar>
 			else
 				<app-not-found>
