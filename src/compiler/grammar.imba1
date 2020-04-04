@@ -790,29 +790,21 @@ var grammar =
 	ClassDeclLine: [
 		o 'STATIC ClassDeclLine' do A2.set(static: A1)
 		o 'MethodDeclaration'
-		o 'ClassFieldIdentifier = Expression' do ClassField.new(A1, A3)
-		o 'ClassFieldIdentifier' do ClassField.new(A1, null)
-		o 'ClassFieldIdentifier ClassFieldBody' do ClassField.new(A1, null,A2)
-		o 'ClassFieldIdentifier INDENT ClassFieldBody OUTDENT' do ClassField.new(A1, null,A3)
+		o 'ClassField = Expression' do A1.set(value: A3) # ClassField.new(A1, A3)
+		o 'ClassField' do A1
+		# o 'ClassFieldIdentifier ClassFieldBody' do ClassField.new(A1, null,A2)
+		# o 'ClassFieldIdentifier INDENT ClassFieldBody OUTDENT' do ClassField.new(A1, null,A3)
+	]
+
+	ClassField: [
+		o 'PROP Identifier' do ClassField.new(A2).set(keyword: A1)
+		o 'ATTR Identifier' do ClassAttribute.new(A2).set(keyword: A1)
+		o 'ClassField TypeAnnotation' do A1.set(datatype: A2)
 	]
 	
 	ClassFieldBody: [
 		o 'WATCH Expression Terminator' do [A1,A2]
 	]
-
-	ClassFieldIdentifier: [
-		o 'Private'
-		o 'IDENTIFIER' do IdentifierExpression.new(A1)
-		o 'VAR IDENTIFIER' do IdentifierExpression.new(A2)
-		o 'PROP IDENTIFIER' do IdentifierExpression.new(A2)
-		o 'ATTR IDENTIFIER' do IdentifierExpression.new(A2)
-		o '@ IDENTIFIER' do IdentifierExpression.new(A2)
-		o '@ { Expression }' do IdentifierExpression.new(A3)
-		# o '[ Expression ]' do IdentifierExpression.new(A2)
-		o 'ClassFieldIdentifier TypeAnnotation' do A1.set(datatype: A2)
-	]
-
-
 
 	# Ordinary function invocation, or a chained series of calls.
 	Invocation: [
