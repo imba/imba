@@ -153,6 +153,17 @@ class Bundle
 			# console.log "created {relPath(e.input)} → {relPath(e.output[0])}"
 			self.resolver(e)
 
+unless cfg.entries isa Array
+	let entries = []
+	for own inpath,out of cfg.entries
+		if out isa Array
+			for part in out
+				entries.push({input: inpath, output: part})
+		else
+			entries.push({input: inpath, output: out})
+	
+	cfg.entries = entries
+
 
 for entry in cfg.entries
 	entry = resolvePaths(entry)
