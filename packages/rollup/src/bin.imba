@@ -84,6 +84,7 @@ unless lib
 var bundles = []
 var watch = options.watch
 var serve = options.serve
+var serving = no
 
 var imbac = require(path.resolve(lib.path,'dist','compiler.js'))
 
@@ -193,16 +194,23 @@ for entry in cfg.entries
 	
 	plugins.unshift(imba-plugin(target: target))
 
-	if options.serve and target == 'web'
+	if options.serve and target == 'web' and !serving
+		serving = true
 		let pubdir = path.dirname(entry.output.file)
 		let serve-config = Object.assign({
 			contentBase: pubdir,
 			historyApiFallback: true
 		},cfg.serve or {})
 		let base = serve-config.contentBase
+		let port = serve-config.port
 		plugins.push(serve-plugin(serve-config))
 		if options.hmr
-			plugins.push(hmr-plugin(base))
+			let hmr-config = {
+				watch: base
+				port: port ? (port + 1) : 35729
+			}
+			plugins.push(hmr-plugin(hmr-config))
+
 	bundles.push(Bundle.new(entry))
 
 def run
