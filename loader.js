@@ -62,7 +62,7 @@ module.exports = function(content,inMap) {
 		if(this.loaders.length == 1){
 			// There are no additional style loaders -- we will need to process it directly
 			let scope = resourceQuery.id ? '_' + resourceQuery.id : null;
-			var css = csscompiler.compile(body,{scope: scope});
+			var css = compiler.css.compile(body,{scope: scope});
 			let out = "var styles = document.createElement('style');"
 			out = out + "styles.textContent = " + JSON.stringify(css) + ";\n"
 			out = out + "document.head.appendChild(styles);"
