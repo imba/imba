@@ -49,6 +49,7 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
 var CUSTOM_EVENTS = {
 	intersect: yes
 	selection: yes
+	resize: yes
 }
 
 export var AST = {}
@@ -2569,8 +2570,10 @@ export class Root < Code
 					let scoping = style:scoped ? result:sfcid : null
 					style:processed = csscompiler.compile(style:content,scope: scoping)
 					stylebody += style:processed + '\n'
+					result:stylebody = stylebody
 
-			if stylebody
+			if stylebody and o:bundler != 'webpack'
+				
 				let css = {js: stylebody}
 				result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
 
@@ -5152,9 +5155,8 @@ export class Call < Node
 			callee = @callee = Access.new(callee.op,callee.left,callee.right)
 			# console.log "unwrapping the propertyAccess"
 
-		if rgt isa Identifier and rgt.value == 'assert' and !splat
+		if rgt isa Identifier and rgt.value == 'assert' and !splat and false
 			let arg = args.first
-			# if arg isa Op
 			arg.option(:assertion,yes)
 			args.@nodes[0] = AssertionNode.new(arg)
 			# console.log "Special assert call!! {arg.c}",arg isa Op
@@ -6358,11 +6360,15 @@ export class TagAttr < TagPart
 		let val = value.c(o)
 		let bval = val
 		let op = M('=',option(:op))
+		let isAttr = key.match(/^(aria-|data-)/)
+		
+		if isAttr 
+			if STACK.tsc
+				return "{@tag.tvar}.setAttribute('{key}',{val})"
+			if STACK.platform == 'node'
+				return "setAttribute('{key}',{val})"
 
 		if STACK.tsc
-			let isAttr = key.match(/^(aria-|data-)/)
-			if isAttr
-				return "{@tag.tvar}.setAttribute('{key}',{val})"
 			# how do we remove attribute then?
 			let path = self.nameIdentifier()
 			let access = "{@tag.tvar}.{M(path,@name)}"
@@ -7037,6 +7043,7 @@ export class Tag < TagLike
 
 	def traverse
 		return self if @traversed
+		scope__.imbaDependency('index')
 
 		let close = @options:close
 		let body = @options:body or []
