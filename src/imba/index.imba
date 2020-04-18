@@ -108,6 +108,7 @@ def imba.emit obj, event, params
 	return
 
 
+import {Flags} from './internal/flags'
 import {Scheduler} from './internal/scheduler'
 
 imba.scheduler = Scheduler.new()
@@ -312,6 +313,13 @@ extend class Element
 			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
 			return item
 		return
+		
+	get flags
+		unless $flags
+			$flags = Flags.new(self)
+			self.flag$ = do(str) self.flagSync$(#extflags = str)
+			self.flagSelf$ = do(str) self.flagSync$(#ownflags = str)
+		$flags
 
 	def flag$ str
 		self.className = str
@@ -321,13 +329,13 @@ extend class Element
 		# if a tag receives flags from inside <self> we need to
 		# redefine the flag-methods to later use both
 		let existing = (#extflags ||= self.className)
-		self.flag$ = do |str| self.flagSync$(#extflags = str)
-		self.flagSelf$ = do |str| self.flagSync$(#ownflags = str)
+		self.flag$ = do(str) self.flagSync$(#extflags = str)
+		self.flagSelf$ = do(str) self.flagSync$(#ownflags = str)
 		self.className = (existing ? existing + ' ' : '') + (#ownflags = str)
 		return
 
 	def flagSync$
-		self.className = ((#extflags or '') + ' ' + (#ownflags || ''))
+		self.className = ((#extflags or '') + ' ' + (#ownflags || '') + ' ' + ($flags or ''))
 
 	def open$
 		self
