@@ -46,34 +46,36 @@ module.exports = function(content,inMap) {
 		sourcePath: this.resourcePath,
 		target: this.target,
 		comments: false,
+		bundler: 'webpack',
 		ENV_DEBUG: this.debug,
-		ENV_WEBPACK: true
+		ENV_WEBPACK: true,
 	};
 
 	if(!opts.filename.match(/\.imba$/)){
 		return this.callback(null,content);
 	}
 
-	opts.id = shorthash(this.resourcePath);
+	opts.id = 'i' + shorthash(this.resourcePath);
 
+	const block = cachedStyleBodies.get(`${opts.id}-${options.index}`);
 
-	const body = cachedStyleBodies.get(`${opts.id}-${options.index}`);
-	if(options.type == 'style' && body){ 
+	if(options.type == 'style' && block){ 
+		let css = block.content;
 		if(this.loaders.length == 1){
 			// There are no additional style loaders -- we will need to process it directly
-			let scope = resourceQuery.id ? '_' + resourceQuery.id : null;
-			var css = compiler.css.compile(body,{scope: scope});
+			if(block.scoped) css = compiler.css.compile(block.content,{scope: block.id})
 			let out = "var styles = document.createElement('style');"
+			// css = css + '\n\/\/Hello there ' + [opts.id, options.index, options.id].join(' ');
 			out = out + "styles.textContent = " + JSON.stringify(css) + ";\n"
 			out = out + "document.head.appendChild(styles);"
 			return this.callback(null, out, inMap);
 		}
-		return this.callback(null,body);
+		return this.callback(null,css);
 	}
 
 	// style post-processor
 	if(resourceQuery && resourceQuery.type == 'style'){
-		let scope = resourceQuery.id ? '_' + resourceQuery.id : null;
+		let scope = resourceQuery.id ? resourceQuery.id : null;
 		var css = compiler.css.compile(content,{scope: scope})
 		return this.callback(null, css, inMap);
 	}
@@ -89,6 +91,7 @@ module.exports = function(content,inMap) {
 	}
 
 	try {
+		
 		var result = compiler.compile(content, opts);
 		var js = result.toString();
 		if(result.warnings && true){
@@ -101,14 +104,22 @@ module.exports = function(content,inMap) {
 
 		if(result.styles && result.styles.length && this.target == 'web' && this.rootContext) {
 			js = js.replace(/\/\*SCOPEID\*\//g,'"' + opts.id + '"');
-
+	
 			result.styles.forEach((style,i) => {
 				const ext = style.type || 'css';
 				const src = style.src || (self.resourcePath + '.' + i + '.' + ext);
 				const inheritQuery = self.resourceQuery.slice(1)
 				const remReq = getRemainingRequest(self);
-				cachedStyleBodies.set(`${opts.id}-${i}`, style.content);
-				const query = `${src}!=!imba/loader?type=style&index=${i}!${remReq}`
+				let key = `${opts.id}-${i}`;
+				let pars = '?type=style';
+				if(style.scoped){
+					pars = pars + "&id=" + opts.id;
+					style.id = result.sfcid;
+				}
+				cachedStyleBodies.set(key, style);
+
+				const query = `${src}!=!imba/loader?type=style&index=${i}!${remReq}${pars}`
+				// console.log('rewrite require',query);
 				js += "\nrequire('" + query + "');"
 			})
 		}
