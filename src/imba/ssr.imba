@@ -165,10 +165,16 @@ export class StyleDeclaration
 
 export class Node
 
+	def toString
+		this.outerHTML
+
+	get outerHTML
+		''
+
 export class Text < Node
 
 	def constructor str
-		super
+		super()
 		self.textContent = str or ''
 		self
 
@@ -178,7 +184,7 @@ export class Text < Node
 export class Comment < Node
 	
 	def constructor value
-		super
+		super()
 		self.value = value
 		
 	get outerHTML
@@ -192,7 +198,7 @@ export class Comment < Node
 export class Element < Node
 
 	def constructor name
-		super
+		super()
 		self.nodeName  = name
 		self.childNodes = []
 		self.attributes = {}
