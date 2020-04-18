@@ -18,5 +18,5 @@ def activateSelectionHandler
 				target.dispatchEvent(custom)
 		document.addEventListener('selectionchange',selHandler)
 
-Element.prototype.on$selection = do |mods, context|
+Element.prototype.on$selection = do(mods, context)
 	activateSelectionHandler()
