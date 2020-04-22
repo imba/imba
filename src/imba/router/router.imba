@@ -69,11 +69,11 @@ export class Router
 		let original = location
 		let loc = Location.parse(params.location or realpath,self)
 		let mode = params.mode
-		console.log 'refreshing router',params,loc,mode,original
+		# console.log 'refreshing router',params,loc,mode,original
 		# we need to compare with the previously stored location
 		# also see if state is different?
 		if !loc.equals(original)
-			console.log "actual url has changed!!",String(original),'to',String(loc)
+			# console.log "actual url has changed!!",String(original),'to',String(loc)
 			let req = Request.new(self,loc,original)
 			req.mode = mode
 			
@@ -129,7 +129,7 @@ export class Router
 
 	def setup
 		if isWeb
-			console.log 'setup on client'
+			# console.log 'setup on client'
 			# let url = self.url()
 			# if url and @redirects[url]
 			location = Location.parse(realpath,self)
