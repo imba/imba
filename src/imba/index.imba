@@ -121,10 +121,21 @@ imba.tick = do
 DOM
 ###
 
-def imba.mount element, into
-	# automatic scheduling of element - even before
-	element.__schedule = yes
-	(into or document.body).appendChild(element)
+def imba.mount mountable, into
+	let parent = into or document.body
+	let element = mountable
+	if mountable isa Function
+		let ctx = {_: parent}
+		let tick = do
+			imba.ctx = ctx
+			mountable(ctx)
+		element = tick()
+		imba.scheduler.listen('render',tick)
+	else
+		# automatic scheduling of element - even before
+		element.__schedule = yes
+
+	parent.appendChild(element)
 
 
 const CustomTagConstructors = {}
@@ -410,7 +421,6 @@ class ImbaElement < HTMLElement
 		#f &= ~$TAG_SCHEDULED$
 		return self
 
-
 	def connectedCallback
 		let flags = #f
 
@@ -427,8 +437,8 @@ class ImbaElement < HTMLElement
 			this.init$()
 
 		unless flags & $TAG_AWAKENED$
-			#f |= $TAG_AWAKENED$
 			this.awaken() if this.awaken
+			#f |= $TAG_AWAKENED$
 
 		unless flags
 			this.render() if this.render
@@ -437,14 +447,13 @@ class ImbaElement < HTMLElement
 		return this
 
 	def mount$
-		#f |= $TAG_MOUNTED$
-
 		this.schedule() if #schedule
 
 		if this.mount isa Function
 			let res = this.mount()
 			if res && res.then isa Function
 				res.then(imba.commit)
+		#f |= $TAG_MOUNTED$
 		return this
 
 	def mounted$
@@ -461,6 +470,15 @@ class ImbaElement < HTMLElement
 
 	def awaken
 		#schedule = true
+
+	get is-mounted
+		(#f & $TAG_MOUNTED$) != 0
+	
+	get is-awakened
+		(#f & $TAG_AWAKENED$) != 0
+	
+	get is-scheduled
+		(#f & $TAG_SCHEDULED$) != 0
 		
 
 root.customElements.define('imba-element',ImbaElement)
