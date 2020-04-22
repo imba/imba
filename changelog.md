@@ -1,4 +1,12 @@
 
+## 2.0.0-alpha.42
+* Fixed webpack imba/loader issues with scoped css
+* Add event wrapper for ResizeObserver
+* Add experimental router code
+* Add basic support for setting dom classes outside of templates
+* Allow calling imba.mount with a function
+
+
 ## 2.0.0-alpha.40
 * Introduce decorators with `@decorator` syntax. See [#334](https://github.com/imba/imba/pull/334)
 * Allow declaring tag attributes. See [#335](https://github.com/imba/imba/pull/335)
