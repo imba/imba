@@ -75,7 +75,7 @@ extend class Element
 
 		let par = value[0] != '/' ? parent-route : null
 		$route = ElementRoute.new(self,value,par,{node: self})
-		console.log 'setting route!',value,$route,par
+		# console.log 'setting route!',value,$route,par
 		self.end$ = self.end$routed
 		self.insertInto$ = do |parent|
 			parent.appendChild$($route.isActive() ? self : $route.placeholder)
@@ -83,7 +83,6 @@ extend class Element
 		# $route = value
 
 	set route-to value
-		console.log 'setting route to!'
 		if $route
 			if $route.raw != value
 				$route.path = value
@@ -95,7 +94,7 @@ extend class Element
 
 		self.onclick = do(e)
 			e.preventDefault()
-			console.log 'go to path!!',value
+			# console.log 'go to path!!',value
 			router.go($route.route.resolve!)
 		self
 
