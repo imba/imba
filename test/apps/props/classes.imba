@@ -2,6 +2,11 @@ let flip = false
 let name = null
 let mult = 'm1 m2'
 
+tag with-local-flags
+	def setup
+		flags.add('local')
+		
+
 tag nested-element
 
 	def render
@@ -27,6 +32,7 @@ tag custom-element
 			<nested-element.outer .outerflip=flip>
 			<nested-element.static-outer>
 			<static-inside.outer>
+			<with-local-flags.outer> "With local"
 
 let el = <custom-element>
 imba.mount(el)
@@ -54,3 +60,7 @@ test 'combined outer and inner flags' do
 
 test 'static outer and inner flags' do
 	ok $(nested-element.static-outer.inner)
+	
+
+test do
+	ok $(with-local-flags.outer.local)
