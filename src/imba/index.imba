@@ -183,7 +183,7 @@ var proxyHandler =
 		let ctx = target
 		let val = undefined
 		while ctx and val == undefined
-			if ctx = ctx.parentContext
+			if ctx = ctx.$parent
 				val = ctx[name]
 		return val
 
@@ -191,10 +191,10 @@ import {EventHandler} from './events'
 
 extend class Node
 
-	get __context
-		this.context$ ||= Proxy.new(self,proxyHandler)
+	get $context
+		$context_ ||= Proxy.new(self,proxyHandler)
 
-	get parentContext
+	get $parent
 		this.up$ or this.parentNode
 
 	def init$

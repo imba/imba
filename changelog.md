@@ -5,7 +5,8 @@
 * Add experimental router code
 * Add basic support for setting dom classes outside of templates
 * Allow calling imba.mount with a function
-
+* Rename #context api to $context
+* Rename parentContext to $parent
 
 ## 2.0.0-alpha.40
 * Introduce decorators with `@decorator` syntax. See [#334](https://github.com/imba/imba/pull/334)

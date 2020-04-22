@@ -2,7 +2,7 @@ import {DocumentFragment,Element,Text,ShadowRoot,document} from '../dom'
 
 extend class DocumentFragment
 
-	get parentContext
+	get $parent
 		this.up$ or #parent
 
 	# Called to make a documentFragment become a live fragment
@@ -71,7 +71,7 @@ extend class DocumentFragment
 
 
 extend class ShadowRoot
-	get parentContext
+	get $parent
 		self.host
 
 class TagCollection
@@ -89,7 +89,7 @@ class TagCollection
 
 		self.setup()
 
-	get parentContext
+	get $parent
 		#parent
 
 	def appendChild$ item, index

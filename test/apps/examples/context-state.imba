@@ -11,19 +11,19 @@ def functional-tag item
 
 tag page-item
 	def render
-		let list = #context.items
+		let list = $context.items
 
 		<self.block> <div>
 			<span> item.title
-			<span> "item {list.indexOf(item)+1} of {list.length} in page {#context.page.title}"
+			<span> "item {list.indexOf(item)+1} of {list.length} in page {$context.page.title}"
 
 
 tag page-list
 
 	def render
 		<self.block>
-			<div> "List inside {#context.page.title}"
-			for item in #context.items
+			<div> "List inside {$context.page.title}"
+			for item in $context.items
 				<page-item item=item>
 
 tag page-panel
