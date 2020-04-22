@@ -11,9 +11,11 @@ dist/imba.edge.*
 /determinator.json
 test/webpack/js/**/*.js
 test/attic
+test/tmp
 *.tmp.js
 *.tgz
 test/node_modules
+/node_modules
 !test/node_modules/imba
 !test/node_modules/imba2
 lib/
