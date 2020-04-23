@@ -2756,7 +2756,7 @@ export class ClassDeclaration < Code
 
 	def addMethod name, params, mbody, options
 		mbody = [LIT(mbody)] if mbody isa String
-		let func = MethodDeclaration.new(params,mbody or [],Identifier.new(name),null,{})
+		let func = MethodDeclaration.new(params,mbody or [],Identifier.new(name),null,options or {})
 		self.body.unshift(func,yes)
 		func.traverse
 		return func
@@ -2805,7 +2805,7 @@ export class ClassDeclaration < Code
 		# 	body.unshift(LIT(fn))
 		
 		if STACK.tsc
-			body.unshift(LIT(TSC_CLASS_HEAD))
+			body.unshift(LIT(TSC_CLASS_HEAD),yes)
 		
 		let jsbody = body.c()
 		let jshead = M(keyword,keyword) # "{C(keyword,mark: yes)}"
@@ -2863,8 +2863,27 @@ export class TagDeclaration < ClassDeclaration
 			op = util.extendTag(op,THIS)
 			addMethod('create$',[],[op]).set(static: yes)
 			set(extends: Obj.wrap(extends: sup.name))
+		
+		if @elementReferences
+			for own ref,child of @elementReferences
+				if STACK.tsc
+					let typ = child.type
+					let op = "{M(ref,child.option(:reference))}"
+					if typ and typ:toClassName
+						op += " = new {typ.toClassName}"
+					
+					self.body.unshift(LIT(op + ';'),yes)
+					# addMethod(ref,[],[],{type: 'get'})
+				# else
+				# 	addMethod(ref,[],[],{type: 'get'})
+
 		# if name.name.indexOf('-') == -1 or superclass and superclass.isNativeSVG
 		#	console.log("non-native tag?")
+		return
+		
+	def addElementReference name, child
+		let refs = @elementReferences ||= {}
+		refs[name] = child
 
 	def js s
 		scope.virtualize # is this always needed?
@@ -2885,7 +2904,7 @@ export class TagDeclaration < ClassDeclaration
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
-			body.unshift(LIT(TSC_CLASS_HEAD))
+			body.unshift(LIT(TSC_CLASS_HEAD),yes)
 			if option(:extension)
 				className = "Extended${className}"
 
@@ -7109,6 +7128,11 @@ export class Tag < TagLike
 			name = name.raw if name isa Str
 			set(name: name)
 			@attributes = []
+		
+		if @options:reference
+			let tagdef = stack.up(TagDeclaration)
+			if tagdef
+				tagdef.addElementReference(@options:reference,self)
 		super
 
 	def register node
@@ -7327,15 +7351,22 @@ export class Tag < TagLike
 		if isSlot
 			# the slot is not supposed to be inserted immediately
 			params[1] = 'null'
-
-		var ctor = "{tvar}={M("{create_}({params.join(',')})",type)}"
+		
+		var ctor = M("{create_}({params.join(',')})",type)
+		
+		if option(:reference)
+			# what if it is on root?
+			# should also check if there is already an element like this
+			ctor = OP('=',OP('.',scope__.context,option(:reference)),LIT(ctor)).c()
+			
+		ctor = "{tvar}={ctor}"
 
 		if option(:assign)
 			# push it into ctor if it is not a variable assignment
 			# otherwise we always want to assign it
 			ctor = OP('=',option(:assign),LIT(ctor)).c()
+			
 		if option(:ivar)
-
 			ctor = OP('=',OP('.',scope__.context,option(:ivar)),LIT(ctor)).c()
 
 		if !parent

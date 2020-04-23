@@ -1,4 +1,7 @@
 
+## 2.0.0-alpha.43
+* Add syntax for element references `<div$reference>`
+
 ## 2.0.0-alpha.42
 * Fixed webpack imba/loader issues with scoped css
 * Add event wrapper for ResizeObserver

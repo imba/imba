@@ -235,7 +235,7 @@ var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 
 # optimize for FixedArray
 var INDEXABLE = [
 	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN'
-	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAGID','INDEX_END','CALL_END'
+	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAG_REF','TAGID','INDEX_END','CALL_END'
 ]
 
 var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:','+','-','*']
@@ -490,7 +490,7 @@ export class Lexer
 
 		# let m = TAG_PART.exec(@chunk)
 		let m = /^([A-Za-z\_\-\$][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
-
+			
 		if m # and false
 			let tok = m[1]
 			let typ = 'TAG_LITERAL'
@@ -498,6 +498,9 @@ export class Lexer
 
 			if tok == 'self' and @lastVal == '<'
 				typ = 'SELF'
+				
+			if chr == '$' and @lastTyp == 'TAG_TYPE'
+				typ = 'TAG_REF'
 
 			token(typ,tok,len)
 			return len
