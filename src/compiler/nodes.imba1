@@ -2867,8 +2867,9 @@ export class TagDeclaration < ClassDeclaration
 		if @elementReferences
 			for own ref,child of @elementReferences
 				if STACK.tsc
+					let val = child.option(:reference)
 					let typ = child.type
-					let op = "{M(ref,child.option(:reference))}"
+					let op = "{M(AST.sym(val),val)}"
 					if typ and typ:toClassName
 						op += " = new {typ.toClassName}"
 					
