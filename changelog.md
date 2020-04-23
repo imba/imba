@@ -1,6 +1,7 @@
 
 ## 2.0.0-alpha.43
 * Add syntax for element references `<div$reference>`
+* Fix problem with missing ResizeObserver in safari
 
 ## 2.0.0-alpha.42
 * Fixed webpack imba/loader issues with scoped css

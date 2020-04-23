@@ -1,3 +1,4 @@
+import {CustomEvent,Element} from '../dom'
 
 var selHandler
 

@@ -1,3 +1,5 @@
+import {CustomEvent,Element} from '../dom'
+
 const observers = {}
 
 class IntersectEvent < CustomEvent
