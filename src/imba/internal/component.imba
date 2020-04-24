@@ -53,6 +53,10 @@ export class ImbaElement < HTMLElement
 	def tick
 		commit()
 
+	# called when component is (re-)rendered from its parent
+	def visit
+		commit()
+
 	# Wrapper for rendering. Default implementation
 	def commit
 		return self unless render?
@@ -61,9 +65,7 @@ export class ImbaElement < HTMLElement
 		rendered()
 		__F = (__F | $EL_RENDERED$) & ~$EL_RENDERING$
 
-	# called when component is (re-)rendered from its parent
-	def visited
-		commit()
+	
 
 	get autoschedule
 		(__F & $EL_SCHEDULE$) != 0
@@ -105,9 +107,8 @@ export class ImbaElement < HTMLElement
 		__F &= ~$EL_SCHEDULED$
 		return self
 
-
 	def end$
-		commit()
+		visit()
 
 	def connectedCallback
 		let flags = __F
