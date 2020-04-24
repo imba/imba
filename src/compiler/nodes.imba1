@@ -79,6 +79,18 @@ export var F =
 	TAG_BIND_MODEL: 2 ** 14
 	TAG_INDEXED: 2 ** 15 # not used
 	TAG_KEYED: 2 ** 16 # not used
+	
+	
+	EL_INITED: 2 ** 0
+	EL_HYDRATED: 2 ** 1
+	EL_DEHYDRATED: 2 ** 2
+	EL_AWAKENED: 2 ** 3
+	EL_MOUNTING: 2 ** 4
+	EL_MOUNTED: 2 ** 5
+	EL_SCHEDULE: 2 ** 6 # available
+	EL_SCHEDULED: 2 ** 7
+	EL_RENDERING: 2 ** 8
+	EL_RENDERED: 2 ** 9
 
 	# render marks
 	DIFF_BUILT: 2 ** 0
@@ -630,8 +642,9 @@ export class Stack
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
-
-		if F[key] != undefined
+		
+			
+		if F[key] !== undefined
 			return F[key]
 		
 		var lowercased = key.toLowerCase

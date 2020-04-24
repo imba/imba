@@ -76,12 +76,7 @@ tag app-root-if < app-component
 let expect = [
 	'root.mount',
 	'item.mount',
-	# 'late.mount',
-	'sub.mount',
-	'sub.mounted',
-	# 'late.mounted',
-	'item.mounted',
-	'root.mounted'
+	'sub.mount'
 ]
 
 test "mount" do

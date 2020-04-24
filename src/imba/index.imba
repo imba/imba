@@ -133,50 +133,10 @@ def imba.mount mountable, into
 		imba.scheduler.listen('render',tick)
 	else
 		# automatic scheduling of element - even before
-		element.__schedule = yes
+		# element.__schedule = yes
+		element.__F |= $EL_SCHEDULE$
 
 	parent.appendChild(element)
-
-
-const CustomTagConstructors = {}
-
-class ImbaElementRegistry
-
-	def constructor
-		#types = {}
-
-	def lookup name
-		return #types[name]
-
-	def get name, klass
-		return ImbaElement if !name or name == 'component'
-		return #types[name] if #types[name]
-		return getElementType(name) if $node$
-		return root[klass] if klass and root[klass]
-		root.customElements.get(name) or ImbaElement
-
-	def create name
-		if #types[name]
-			# TODO refactor
-			return #types[name].create$()
-		else
-			document.createElement(name)
-
-	def define name, klass, options
-		#types[name] = klass
-		
-
-		let proto = klass.prototype
-		if proto.render && proto.end$ == Element.prototype.end$
-			proto.end$ = proto.render
-
-		if options and options.extends
-			CustomTagConstructors[name] = klass
-		else
-			root.customElements.define(name,klass)
-		return klass
-
-imba.tags = ImbaElementRegistry.new()
 
 var proxyHandler =
 	def get target, name
@@ -380,109 +340,50 @@ imba.createKeyedFragment = createKeyedFragment
 
 # Create custom tag with support for scheduling and unscheduling etc
 
-var mountedQueue
-var mountedFlush = do
-	let items = mountedQueue
-	mountedQueue = null
-	if items
-		for item in items
-			item.mounted$()
-	return
+import {ImbaElement} from './internal/component'
 
+const CustomTagConstructors = {}
 
-class ImbaElement < HTMLElement
+class ImbaElementRegistry
+
 	def constructor
-		super()
-		this.setup$()
-		this.build() if this.build
+		types = {}
 
-	def setup$
-		#slots = {}
-		#f = 0
+	def lookup name
+		return types[name]
 
-	def init$
-		#f |= $TAG_INITED$
-		self
+	def get name, klass
+		return ImbaElement if !name or name == 'component'
+		return types[name] if types[name]
+		return getElementType(name) if $node$
+		return root[klass] if klass and root[klass]
+		root.customElements.get(name) or ImbaElement
 
-	# returns the named slot - for context
-	def slot$ name, ctx
-		if name == '__' and !self.render
-			return self
+	def create name
+		if types[name]
+			# TODO refactor
+			return types[name].create$()
+		else
+			document.createElement(name)
 
-		#slots[name] ||= imba.createLiveFragment(0,null,self)
+	def define name, klass, options
+		types[name] = klass
 
-	def schedule
-		imba.scheduler.listen('render',self)
-		#f |= $TAG_SCHEDULED$
-		return self
-
-	def unschedule
-		imba.scheduler.unlisten('render',self)
-		#f &= ~$TAG_SCHEDULED$
-		return self
-
-	def connectedCallback
-		let flags = #f
-
-		if flags & $TAG_MOUNTED$
-			return
-
-		if this.mounted isa Function
-			unless mountedQueue
-				mountedQueue = []
-				Promise.resolve().then(mountedFlush)
-			mountedQueue.unshift(this)
-
-		unless flags & $TAG_INITED$
-			this.init$()
-
-		unless flags & $TAG_AWAKENED$
-			this.awaken() if this.awaken
-			#f |= $TAG_AWAKENED$
-
-		unless flags
-			this.render() if this.render
-
-		this.mount$()
-		return this
-
-	def mount$
-		this.schedule() if #schedule
-
-		if this.mount isa Function
-			let res = this.mount()
-			if res && res.then isa Function
-				res.then(imba.commit)
-		#f |= $TAG_MOUNTED$
-		return this
-
-	def mounted$
-		this.mounted() if this.mounted isa Function
-		return this
-
-	def disconnectedCallback
-		#f &= ~$TAG_MOUNTED$
-		this.unschedule() if #f & $TAG_SCHEDULED$
-		this.unmount() if this.unmount isa Function
-
-	def tick
-		this.render && this.render()
-
-	def awaken
-		#schedule = true
-
-	get is-mounted
-		(#f & $TAG_MOUNTED$) != 0
-	
-	get is-awakened
-		(#f & $TAG_AWAKENED$) != 0
-	
-	get is-scheduled
-		(#f & $TAG_SCHEDULED$) != 0
+		let proto = klass.prototype
 		
+		# if proto.render && proto.end$ == Element.prototype.end$
+		#	proto.end$ = proto.render
 
-root.customElements.define('imba-element',ImbaElement)
+		if options and options.extends
+			CustomTagConstructors[name] = klass
+		else
+			root.customElements.define(name,klass)
+		return klass
 
+imba.tags = ImbaElementRegistry.new()
+
+
+# root.customElements.define('imba-element',ImbaElement)
 
 def imba.createElement name, bitflags, parent, flags, text, sfc
 	var el = document.createElement(name)
@@ -504,7 +405,7 @@ def imba.createComponent name, bitflags, parent, flags, text, sfc
 	# the component could have a different web-components name?
 	var el
 
-	if CustomTagConstructors[name]
+	if false and CustomTagConstructors[name]
 		el = CustomTagConstructors[name].create$(el)
 		el.slot$ = ImbaElement.prototype.slot$
 		el.__slots = {}
@@ -512,12 +413,12 @@ def imba.createComponent name, bitflags, parent, flags, text, sfc
 		el = document.createElement(name)
 
 	el.up$ = parent
-	el.__f = bitflags
 	el.init$()
 
 	if text !== null
 		el.slot$('__').text$(text)
 
+	# mark the classes as external static flags?
 	el.className = flags if flags
 
 	if sfc
