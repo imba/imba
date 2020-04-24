@@ -1,4 +1,8 @@
 
+## 2.0.0-alpha.44
+* Improved lifecycle methods for components
+* Fix sourcemapping for env-flags
+
 ## 2.0.0-alpha.43
 * Add syntax for element references `<div$reference>`
 * Fix problem with missing ResizeObserver in safari
