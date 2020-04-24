@@ -8031,9 +8031,13 @@ export class Require < ValueNode
 		out == 'require' ? 'require' : "require({out})"
 
 export class EnvFlag < ValueNode
+	
+	def initialize
+		super
+		@key = String(@value).slice(1,-1)		
 
 	def raw
-		@raw ?= STACK.env("" + @value)
+		@raw ?= STACK.env("" + @key)
 
 	def isTruthy
 		var val = raw
@@ -8045,17 +8049,20 @@ export class EnvFlag < ValueNode
 
 	def c
 		var val = raw
+		var out = val
 		if val !== undefined
 			if val isa String
 				if val.match(/^\d+(\.\d+)?$/)
-					parseFloat(val)
+					out = String(parseFloat(val))
 				else
-					"'{val}'"
+					out = "'{val}'"
 			else
-				"{val}"
+				out = "{val}"
 
 		else
-			"ENV_{@value}"
+			out = "ENV_{@key}"
+		
+		return M(out,@value)
 
 
 # UTILS

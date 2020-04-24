@@ -736,7 +736,7 @@ export class Lexer
 
 		elif typ == '$' and ENV_FLAG.test(id)
 			typ = 'ENV_FLAG'
-			id = id.toUpperCase.slice(1, -1)
+			id = id.toUpperCase # .slice(1, -1)
 
 		# elif typ == '@'
 		# 	typ = 'IVAR'
