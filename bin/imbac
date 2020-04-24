@@ -291,6 +291,9 @@ CLI.prototype.compileFile = function (src){
 	var opts = Object.create(self.o());
 	opts.filename = src.filename;
 	opts.sourcePath = src.sourcePath;
+	
+	if(opts.extlib) opts.imbaPath = null;
+	
 	var out = {};
 	var t = Date.now();
 	var at = new Date().toTimeString().substr(0,8);
