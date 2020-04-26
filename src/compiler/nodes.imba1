@@ -6996,8 +6996,12 @@ export class TagSwitchFragment < TagLike
 		return max
 
 	def js o
+		var top = @inserts.join(' = ') + ' = null;'
 		var out = body.c(o)
 		return out if STACK.tsc
+		
+		out = top + out
+
 		for item in @inserts
 			let key = "{cvar}.{item}"
 			out += "\n({key}_ = {tvar}.insert$({item},0,{key}_));"

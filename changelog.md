@@ -1,4 +1,7 @@
 
+## 2.0.0-alpha.45
+* Fix conditional rendering bug (#334)
+
 ## 2.0.0-alpha.44
 * Improved lifecycle methods for components
 * Fix sourcemapping for env-flags
