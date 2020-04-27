@@ -13,7 +13,6 @@ export class Location
 		self.parse(url)
 	
 	def parse url
-		console.log 'parsing',url
 		url = URL.new(url,router.origin) unless url isa URL
 		self.url = url
 		self
@@ -25,7 +24,6 @@ export class Location
 		str ? ('?' + str) : ''
 		
 	def update value
-		console.log 'updating location',value
 		if value isa Object
 			for own k,v of value
 				self.query(k,v)

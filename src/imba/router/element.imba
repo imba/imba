@@ -103,8 +103,8 @@ extend class Element
 		if $route
 			$route.resolve()
 			return unless $route.isActive()
-
-		self.render() if self.render
+		
+		visit() if visit
 
 	def end$routeTo
 		if $route
@@ -115,8 +115,8 @@ extend class Element
 			# console.log match,href
 			setAttribute('href',href)
 			flags.toggle('active',!!match)
-
-		self.render! if self.render
+			
+		visit() if visit
 
 	def routeDidEnter route
 		# console.log 'routeDidEnter'
