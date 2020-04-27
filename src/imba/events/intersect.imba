@@ -11,6 +11,9 @@ class IntersectEvent < CustomEvent
 	
 	get delta
 		detail.delta
+	
+	get entry
+		detail.entry
 		
 	def handle$mod state, args
 		let obs = state.event.detail.observer

@@ -2,7 +2,12 @@
 import {CustomEvent,Element} from '../dom'
 
 class ResizeEvent < CustomEvent
-
+	
+	get rect
+		detail.contentRect
+	
+	get entry
+		detail
 
 var resizeObserver = null
 
@@ -14,7 +19,7 @@ def getResizeObserver
 		
 	resizeObserver ||= ResizeObserver.new do |entries|
 		for entry in entries
-			let e = ResizeEvent.new('resize', bubbles: false, detail: entry.contentRect)
+			let e = ResizeEvent.new('resize', bubbles: false, detail: entry)
 			entry.target.dispatchEvent(e)
 		return
 
