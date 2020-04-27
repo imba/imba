@@ -59,19 +59,25 @@ export class EventHandler
 		let awaited = no
 		let prevRes = undefined
 
-		# console.log 'handle event',event.type,self.params
-		self.currentEvents ||= Set.new
-		self.currentEvents.add(event)
-
 		let state = {
 			element: element
 			event: event
 			modifiers: mods
 			handler: this
 		}
+			
+		if event.handle$mod
+			if event.handle$mod(state,mods.options) == false
+				return
+
+		self.currentEvents ||= Set.new
+		self.currentEvents.add(event)	
 
 		for own handler,val of mods
 			# let handler = part
+			if handler[0] == '_'
+				continue
+
 			if handler.indexOf('~') > 0
 				handler = handler.split('~')[0]
 
