@@ -1,3 +1,9 @@
+const toBind = {
+	INPUT: yes
+	SELECT: yes
+	TEXTAREA: yes
+}
+
 var isGroup = do |obj|
 	return obj isa Array or (obj && obj.has isa Function)
 
@@ -51,11 +57,14 @@ extend class Element
 	def bind$ key, value
 		let o = value or []
 
-		if key == 'data'
-			unless #f & $TAG_BIND_MODEL$
-				#f |= $TAG_BIND_MODEL$
-				this.on$('change',{_change$: true},this) if this.change$
-				this.on$('input',{capture: true,_input$: true},this) if this.input$
+		if key == 'data' and !$$bound and toBind[nodeName]
+			$$bound = yes
+			if change$
+				addEventListener('change',change$ = change$.bind(this))
+			if input$
+				addEventListener('input',input$ = input$.bind(this),capture: yes)
+			# this.on$('change',{_change$: true},this) if this.change$
+			# this.on$('input',{capture: true,_input$: true},this) if this.input$
 
 		Object.defineProperty(self,key,o isa Array ? createProxyProperty(o) : o)
 		return o
@@ -70,8 +79,6 @@ Object.defineProperty(Element.prototype,'richValue',{
 extend class HTMLSelectElement
 
 	def change$ e
-		return unless #f & $TAG_BIND_MODEL$
-
 		let model = self.data
 		let prev = #richValue
 		#richValue = undefined
@@ -87,6 +94,7 @@ extend class HTMLSelectElement
 					bindAdd(model,value)
 		else
 			self.data = values[0]
+		imba.commit!
 		self
 
 	def getRichValue
@@ -141,6 +149,7 @@ extend class HTMLTextAreaElement
 
 	def input$ e
 		self.data = self.value
+		imba.commit!
 
 	def end$
 		self.value = self.data
@@ -148,7 +157,6 @@ extend class HTMLTextAreaElement
 extend class HTMLInputElement
 	
 	def input$ e
-		return unless #f & $TAG_BIND_MODEL$
 		let typ = self.type
 
 		if typ == 'checkbox' or typ == 'radio'
@@ -156,10 +164,9 @@ extend class HTMLInputElement
 
 		#richValue = undefined
 		self.data = self.richValue
+		imba.commit!
 
 	def change$ e
-		return unless #f & $TAG_BIND_MODEL$
-
 		let model = self.data
 		let val = self.richValue
 
@@ -169,6 +176,7 @@ extend class HTMLInputElement
 				checked ? bindAdd(model,val) : bindRemove(model,val)
 			else
 				self.data = checked ? val : false
+		imba.commit!
 
 	def setRichValue value
 		#richValue = value
@@ -190,7 +198,7 @@ extend class HTMLInputElement
 		return value
 
 	def end$
-		if #f & $TAG_BIND_MODEL$
+		if $$bound
 			let typ = self.type
 			if typ == 'checkbox' or typ == 'radio'
 				let val = self.data
