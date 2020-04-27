@@ -5,6 +5,8 @@ const keyCodes = {
 	space: [32],
 	up: [38],
 	down: [40],
+	left: [37],
+	right: [39],
 	del: [8,46]
 }
 
@@ -105,12 +107,12 @@ export class EventHandler
 				event.stopImmediatePropagation()
 			elif handler == 'prevent'
 				event.preventDefault()
-			elif handler == 'ctrl'
-				break unless event.ctrlKey
 			elif handler == 'commit'
 				commit = yes
 			elif handler == 'silence'
 				commit = no
+			elif handler == 'ctrl'
+				break unless event.ctrlKey
 			elif handler == 'alt'
 				break unless event.altKey
 			elif handler == 'shift'

@@ -3,6 +3,7 @@
 * Fix conditional rendering bug (#334)
 * Changed event syntax from `<div :click.stop.{method()}>` to `<div @click.stop=method()>`
 * Allow comments inside multiline tags
+* Include left/right event key modifiers
 
 ## 2.0.0-alpha.44
 * Improved lifecycle methods for components
