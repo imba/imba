@@ -6529,11 +6529,14 @@ export class TagModifier < TagPart
 		!params or params.every do |param| param.isPrimitive
 			
 	def visit
+		if @name isa TagHandlerCallback
+			@name.traverse
+			@name = @name.value
+			
 		if @name isa IsolatedFunc # not to be isolated for tsc
 			let evparam = @name.params.at(0,yes,'e')
 			let stateparam = @name.params.at(1,yes,'$')
 			@name.traverse
-			
 
 			@value = @name
 			@name = STR('$_')
@@ -6668,6 +6671,37 @@ export class TagHandler < TagPart
 		if STACK.tsc
 			return "[{quoted},{modifiers.c}]"
 		return "on$({quoted},{modifiers.c},{scope__.context.c})"
+
+class TagHandlerCallback < ValueNode
+	
+	def visit
+		let val = value
+		
+		if val isa Parens
+			val = val.value
+			
+		if val isa Func
+			val = val.body
+			
+		# If the value is just a variable we can add it directly?
+		
+		if val isa Access or val isa VarOrAccess
+			# let e = Token.new('IDENTIFIER','e')
+			val = CALL(val,[LIT('e')])
+		# console.log 'is stack tsc?'
+		# TODO don't generate this until visiting the taghandler
+		
+		# if this is a plain access it should be enough to set a reference
+		# to the function once?
+			
+		value = (STACK.tsc ? Func : IsolatedFunc).new([],[val],null,{})
+		
+		if value isa IsolatedFunc
+			let evparam = value.params.at(0,yes,'e')
+			let stateparam = value.params.at(1,yes,'$')
+
+		value.traverse
+		return
 
 class TagLike < Node
 
@@ -7212,7 +7246,17 @@ export class Tag < TagLike
 				curr.condition = part
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
 				curr.set(op: tok)
-
+			elif curr isa TagHandler
+				
+				if part
+					
+					# if part isa Access or part isa VarOrAccess
+					#	# let e = Token.new('IDENTIFIER','e')
+					#	part = CALL(part,[LIT('e')])
+					# console.log 'is stack tsc?'
+					# TODO don't generate this until visiting the taghandler
+					# part = (STACK.tsc ? Func : IsolatedFunc).new([],[part],null,{})
+					curr.add(TagHandlerCallback.new(part),type)
 			elif curr
 				curr.value = part
 				curr.set(op: tok)

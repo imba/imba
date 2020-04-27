@@ -18,7 +18,7 @@ tag app-root
 
 		<self>
 			# <div :shortcut('cmd+a').prevent>
-			<div.value :click.{value = [counter,e.type,this == $.element]}> "Advanced"
+			<div.value :click=(value = [counter,e.type,this == $.element])> "Advanced"
 			<div.click-hello :click.{hello()}> "Call hello"
 			<div.setter :click.{counter=2}> "Set directly"
 			<div.incr :click.{counter++}> "Incr"

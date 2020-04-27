@@ -510,7 +510,7 @@ export class Lexer
 			pair 'TAG_END'
 			return 2
 
-		if chr == '%' or chr == ':' or chr == '.' # or chr == '$' # and @chunk[1]
+		if chr == '%' or chr == ':' or chr == '.' or chr == '@'
 			token("T{chr}",chr,1)
 			return 1
 
