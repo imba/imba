@@ -4,6 +4,8 @@
 * Changed event syntax from `<div :click.stop.{method()}>` to `<div @click.stop=method()>`
 * Allow comments inside multiline tags
 * Include left/right event key modifiers
+* Improve resize and intersect events
+* Always bind data when using `<tag[my-data]>` syntax
 
 ## 2.0.0-alpha.44
 * Improved lifecycle methods for components
