@@ -10,6 +10,8 @@ import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
+import StyleRule from './styler.imba'
+
 
 var TSC_CLASS_HEAD = 'static $static$(){ this.prototype } $member$(){ this.constructor } '
 var TAG_NAMES = constants.TAG_NAMES
@@ -6703,6 +6705,63 @@ class TagHandlerCallback < ValueNode
 		value.traverse
 		return
 
+
+export class TagStylePart < ValueNode
+
+	prop params
+	
+	def serialize
+		[value.toRaw,params ? params.map(do $1:raw ? $1.raw : $1.c) : []]
+
+export class TagStyleMixin < TagStylePart
+
+export class TagStyleScope < TagStylePart
+
+
+export class TagStyle < TagPart
+
+	def scopes
+		@chain.filter do $1 isa TagStyleScope
+			
+	def mixins
+		@chain.filter do $1 isa TagStyleMixin
+	
+	def add item, type
+		if type == TagArgList
+			(@last or self).params = item or ListNode.new([])
+		else
+			let node
+			
+			if type == TagFlag
+				node = TagStyleMixin.new(item)
+			elif type == TagStyle
+				node = TagStyleScope.new(item)
+			else
+				throw 'cannot add?'
+			
+			if node
+				@chain.push(@last = node)
+		return self
+		
+	def visit
+		# should build a full style based on this 
+		self
+		
+	def toStyle
+		let sel = ".fas42"
+		let scopes = self.scopes.map do $1.serialize
+		let mixins = self.mixins.map do $1.serialize
+		let rule = StyleRule.new(sel,scopes,mixins)
+		return rule.toString
+		
+	def c
+		let plain = []
+		for item in @chain
+			plain.push(item.serialize)
+		plain.push(toStyle)
+		
+		JSON.stringify(plain)
+
 class TagLike < Node
 
 	def initialize o = {}
@@ -7260,6 +7319,9 @@ export class Tag < TagLike
 			elif curr
 				curr.value = part
 				curr.set(op: tok)
+				
+		elif curr isa TagStyle
+			curr.add(part,type)
 
 		elif curr isa TagHandler
 			if part isa IdentifierExpression and part.single and !part.isPrimitive
@@ -7277,7 +7339,16 @@ export class Tag < TagLike
 			curr.value = part.first
 			attrs.push(curr)
 			next = null
+		
+		elif type == TagStyle
+			next = TagStyle.new("",self)
+			# console.log 'added tag style',part
+			next.add(part,TagStyle)
+			attrs.push(next)
 		else
+			if type == TagStyle
+				part = TagStyleScope.new(part)
+
 			if type == TagFlag and part isa IdentifierExpression and !part.isPrimitive
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
 
@@ -7554,7 +7625,7 @@ export class Tag < TagLike
 		let flagsToConcat = []
 
 		for item in @attributes
-			if item.@chain and item.@chain:length and !(item isa TagHandler)
+			if item.@chain and item.@chain:length and !(item isa TagHandler) and !(item isa TagStyle)
 				let mods = item.modifiers
 				let dyn = !mods.isStatic
 
@@ -7571,8 +7642,10 @@ export class Tag < TagLike
 					add "{bvar} || ({modpath}={vvar})"
 				else
 					add "{bvar} || ({modpath}={mods.c(o)})"
-
-			if !isReactive
+			
+			if item isa TagStyle
+				add "{bvar} // {item.c(o)}"
+			elif !isReactive
 				# buggy
 				add "{tvar}.{item.c(o)}"
 			elif item.isStatic

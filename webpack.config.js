@@ -19,7 +19,7 @@ var modules = {
 
 module.exports = (env, argv) =>[{
 	entry: "./src/compiler/compiler.imba1",
-	resolve: { extensions: [".imba1",".js",".json"] },
+	resolve: { extensions: [".imba1",".imba",".js",".json"] },
 	module: modules,
 	output: Object.assign({library: 'imbac'},umd,{filename: `./dist/compiler.js`}),
 	node: {fs: false, process: false, global: false},

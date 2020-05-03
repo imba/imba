@@ -359,7 +359,7 @@ var grammar =
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
 
-		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
+		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagStyle)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
 		o 'TagOptions T. TagIdentifier' do A1.addPart(A3,AST.TagFlag)

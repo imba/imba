@@ -1,0 +1,478 @@
+
+var conv = require('../../vendor/colors')
+import {fonts,colors} from './theme.imba'
+
+const extensions = {}
+
+var palette = {}
+for own name,variations of colors
+	let subcolors = palette[name] = {}
+	for own subname,hex of variations
+		let color = subcolors[subname] = {}
+		palette[name + '-' + subname] = color
+		let rgb = conv.hex.rgb(hex)
+		let [h,s,l] = conv.rgb.hsl(rgb)
+		color.hex = conv.hex.rgb(hex)
+		color.h = h
+		color.s = s
+		color.l = l
+		let path = name + '-' + subname
+		let hslstr = "{h.toFixed(2)},{s.toFixed(2)},{l.toFixed(2)}"
+		color.bg = "hsla({hslstr},var(--background-opacity,1))"
+		color.border = "hsla({hslstr},var(--border-opacity,1))"
+		color.text = "hsla({hslstr},var(--text-opacity,1))"
+		extensions['bg-' + path] = {'background-color': color.bg}
+		extensions['border-' + path] = {'border-color': color.border}
+		extensions['text-' + path] = {'color': color.text}
+
+
+class Selectors
+	static def parse context, states
+		let parser = self.new
+		parser.$parse(context,states)
+		
+	def $parse context, states
+		let rule = '&'
+		let breakpoints = breakpoints
+		let o = {context: context, media: []}
+		for [state,...params] in states
+			unless self[state]
+				if let media = breakpoints[state]
+					o.media.push(media)
+				continue
+				
+			let res = self[state](o,...params)
+			if typeof res == 'string'
+				rule = rule.replace('&',res)
+		let sel = rule.replace(/\&/g,context)
+		o.selectors = [sel]
+		if o.media.length
+			sel = '@media ' + o.media.join(' and ') + '{ ' + sel
+		return sel
+
+	def any
+		'&'
+
+	def hover
+		'&:hover'
+	
+	def focus
+		'&:focus'
+		
+	def active
+		'&:active'
+		
+	def visited
+		'&:visited'
+	
+	def disabled
+		'&:disabled'
+		
+	def focus-within
+		'&:focus-within'
+		
+	def odd
+		'&:nth-child(odd)'
+		
+	def even
+		'&:nth-child(even)'
+		
+	def empty
+		'&:empty'
+		
+	def hocus
+		'&:matches(:focus,:hover)'
+		
+	def first
+		'&:first-child'
+		
+	def last
+		'&:last-child'
+	
+	def up o, sel
+		sel.indexOf('&') >= 0 ? sel : "{sel} &"
+	
+	def sel o, sel
+		sel.indexOf('&') >= 0 ? sel : "& {sel}"
+	
+	# selector matching the custom component we are inside
+	def scope o, sel
+		sel.indexOf('&') >= 0 ? sel : "{sel} &"
+		
+	get breakpoints
+		{
+			sm: '(min-width: 640px)'
+			md: '(min-width: 768px)'
+			lg: '(min-width: 1024px)'
+			xl: '(min-width: 1280px)'
+		}
+		
+	# :light
+	# :dark
+	# :ios
+	# :android
+	# :mac
+	# :windows
+	# :linux
+	# :print
+		
+
+class Rules
+	
+	static def parse mods
+		let parser = self.new
+		parser.$parse(mods)
+		
+	def constructor
+		self
+	
+	def $merge object, result
+		if result isa Array
+			for item in result
+				$merge(object,item)
+		else
+			Object.assign(object,result)
+		return object
+				
+		
+	# pseudostates
+	def $parse mods
+		let values = {}
+		
+		for [mod,params] in mods
+			let res = null
+			let name = mod.replace(/\-/g,'_')
+			if self[name]
+				res = self[name](...params)
+			elif extensions[mod]
+				res = extensions[mod]
+			else
+				let [ns,name,variation] = mod.split('-')
+				# look for potential colors
+				if self[ns + '_COLOR']
+					if let color = $parse-color(mod)
+						res = self[ns + '_COLOR'](color)
+			if res
+				$merge(values,res)
+
+		return values
+	
+	def $parse-color str
+		let [ns,name,variation,add] = str.split('-')
+		
+		if let color = colors[name]
+			color = color[variation] or color
+			if color and color[ns]
+				return color[ns]
+		return null
+	
+	def bg_COLOR color
+		{'background-color': color}
+		
+	def text_COLOR color
+		{'color': color}
+		
+	def border_COLOR color
+		{'border-color': color}	
+		
+	def stroke_COLOR color
+		{'stroke': color}
+	
+	# converting argument to css values
+	def dim value, fallback, type
+		if value == undefined
+			return dim(fallback,null,type)
+		if typeof value == 'number'
+			return value * 0.25 + 'rem'
+		elif typeof value == 'string'
+			return value
+	
+	# margin
+	def mt(v0,v1) do {'margin-top':    dim(v0,v1)}
+	def ml(v0,v1) do {'margin-left':   dim(v0,v1)}
+	def mr(v0,v1) do {'margin-right':  dim(v0,v1)}
+	def mb(v0,v1) do {'margin-bottom': dim(v0,v1)} 
+	def mx(l,r=l) do {'margin-left': dim(l), 'margin-right': dim(r)}
+	def my(t,b=t) do {'margin-top': dim(t), 'margin-bottom': dim(b)}
+	def m(t,r,b,l) do [mt(t),mr(r,t),mb(b,t),ml(l,r == undefined ? t : r)]
+	
+	# padding
+	def pt(v0,v1) do {'padding-top':    dim(v0,v1)}
+	def pl(v0,v1) do {'padding-left':   dim(v0,v1)}
+	def pr(v0,v1) do {'padding-right':  dim(v0,v1)}
+	def pb(v0,v1) do {'padding-bottom': dim(v0,v1)}
+	def px(l,r=l) do {'padding-left': dim(l), 'padding-right': dim(r)}
+	def py(t,b=t) do {'padding-top': dim(t), 'padding-bottom': dim(b)}
+	def p(t,r=t,b=t,l=r)
+		{
+			'padding-top': dim(t),
+			'padding-right': dim(r),
+			'padding-bottom': dim(b),
+			'padding-left': dim(l)
+		}
+		# do [pt(t),pr(r,t),pb(b,t),pl(l,r == undefined ? t : r)]
+		
+	# positioning
+	def t(v0,v1) do {'top':    dim(v0,v1)}
+	def l(v0,v1) do {'left':   dim(v0,v1)}
+	def r(v0,v1) do {'right':  dim(v0,v1)}
+	def b(v0,v1) do {'bottom': dim(v0,v1)}
+	def tl(t,l) do  {'top': dim(t),'left': dim(l,t)}
+	def tr(t,r) do  {'top': dim(t),'right': dim(r,t)}
+	def bl(b,l) do  {'bottom': dim(b),'left': dim(l,t)}
+	def br(b,r) do  {'bottom': dim(b),'right': dim(b,r)}
+		
+	def w(w) do  {'width': dim(w)}
+	def h(w) do  {'heigth': dim(h)}
+	def wh(w,h=w) do {'width': dim(w), 'height': dim(h)}
+	
+	# display
+	
+	def display v
+		{display: v}
+		
+	def hidden do display('none')
+	def block do display('block')
+	def flow_root do display('flow-root')
+	def inline_block do display('inline-block')
+	def inline do display('inline')
+	def grid do display('grid')
+	def inline_grid do display('inline-grid')
+	def table do display('table')
+	def table_caption do display('table-caption')
+	def table_cell do display('table-cell')
+	def table_column do display('table-column')
+	def table_column_group do display('table-column-group')
+	def table_footer_group do display('table-footer-group')
+	def table_header_group do display('table-header-group')
+	def table_row_group do display('table-row-group')
+	def table_row do display('table-row')
+		
+		
+	def flex
+		display('flex')
+		
+	def inline_flex
+		display('inline-flex')
+
+	# position
+	def static do {position: 'static'}
+	def fixed do {position: 'fixed'}
+	def abs do {position: 'absolute'}
+	def rel do {position: 'relative'}
+	def sticky do {position: 'sticky'}
+		
+	# visibility
+	def visible do {visibility: 'visible'}
+	def invisible do {visibility: 'hidden'}
+	
+	# z index
+	def z(v) do {'z-index': v}
+
+
+	# TYPOGRAPHY
+	
+	# font-family
+	def font_sans
+		{'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'}
+	
+	def font_serif
+		{'font-family': 'Georgia, Cambria, "Times New Roman", Times, serif'}
+	
+	def font_mono
+		{'font-family': 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'}
+	
+	# font size
+	# could allow a manual font-size(v) in addition to these others?
+	# font sizes need to be predefined somewhere
+	
+
+	# font smoothing
+	
+	# font style
+	
+	# line height
+	def lh value
+		{'line-height': dim(value)}
+		
+	# list style type
+	
+	# text align
+	
+	# text color
+	
+	# text opacity
+	
+	# text decoration
+	def underline
+		{'text-decoration': 'underline'}
+	
+	def line_through
+		{'text-decoration': 'line-through'}
+		
+	def no_underline
+		{'text-decoration': 'none'}
+	
+	# text transform
+	def uppercase
+		{'text-transform': 'uppercase'}
+	
+	def lowercase
+		{'text-transform': 'lowercase'}
+		
+	def capitalize
+		{'text-transform': 'capitalize'}
+	
+	def normal_case
+		{'text-transform': 'normal-case'}
+		
+	
+	# vertical align
+	def align_baseline
+		{'vertical-align': 'baseline'}
+	
+	def align_top
+		{'vertical-align': 'top'}
+		
+	def align_middle
+		{'vertical-align': 'middle'}
+		
+	def align_bottom
+		{'vertical-align': 'bottom'}
+		
+	def align_text_top
+		{'vertical-align': 'text-top'}
+	
+	def align_text_bottom
+		{'vertical-align': 'text-bottom'}
+		
+	# whitespace
+	def whitespace_normal
+		{'white-space': 'whitespace-normal'}
+	
+	def whitespace_no_wrap
+		{'white-space': 'whitespace-no-wrap'}
+	
+	def whitespace_pre
+		{'white-space': 'whitespace-pre'}
+	
+	def whitespace_pre_line
+		{'white-space': 'whitespace-pre-line'}
+	
+	def whitespace_pre_wrap
+		{'white-space': 'whitespace-pre-wrap'}
+		
+	# word break
+	def break_normal
+		{'word-break': 'normal', 'overflow-wrap': 'normal'}
+	
+	def break_words
+		{'overflow-wrap': 'break-word'}
+	
+	def break_all
+		{'word-break': 'break-all'}
+		
+	def truncate
+		{'overflow': 'hidden','text-overflow':'ellipsis','white-space':'nowrap'}
+
+	# BACKGRONUDS
+	
+	def bg_opacity number
+		{'--background-opacity': number}
+	
+	# BORDERS
+	def border_opacity number
+		{'--border-opacity': number}
+	
+	# divide uses selector like spacing
+
+	
+	# Interactivity
+	
+	def select_none
+		{'user-select': 'none'}
+		
+	def select_text
+		{'user-select': 'text'}
+	
+	def select_all
+		{'user-select': 'all'}
+		
+	def select_auto
+		{'user-select': 'auto'}
+	
+	# space between .space-x-0 > * + *
+	# def space-x num
+
+export class StyleRule
+	
+	def constructor context,states,modifiers
+		context = context
+		selector = Selectors.parse(context,states)
+		rules = Rules.parse(modifiers)
+		
+	def toString
+		let sel = selector
+		let parts = []
+		for own key,value of rules
+			parts.push "{key}: {value};"
+		let out = sel + ' {\n' + parts.join('\n') + '\n}'
+		out += '}' if sel.indexOf('@media') >= 0
+		return out
+
+
+
+###
+
+:active
+:any-link
+:checked
+:blank
+:default
+:defined
+:dir()
+:disabled
+:empty
+:enabled
+:first
+:first-child
+:first-of-type
+:fullscreen
+:focus
+:focus-visible
+:focus-within
+:has()
+:host()
+:host-context()
+:hover
+:indeterminate
+:in-range
+:invalid
+:is() (:matches(), :any())
+:lang()
+:last-child
+:last-of-type
+:left
+:link
+:not()
+:nth-child()
+:nth-last-child()
+:nth-last-of-type()
+:nth-of-type()
+:only-child
+:only-of-type
+:optional
+:out-of-range
+:placeholder-shown
+:read-only
+:read-write
+:required
+:right
+:root
+:scope
+:target
+:valid
+:visited
+:where()
+
+###

@@ -85,13 +85,13 @@ tag test-runner
 
 	def render
 		<self>
-			<select :change.go>
+			<select @change.go>
 				<option disabled=yes value=""> "Jump to example"
 				for src in Object.keys(examples)
 					<option> src
 
 			for name in Object.keys(exposed)
-				<button value=name :click.call> name
+				<button value=name @click.call> name
 
 # imba.mount(<test-runner>)
 
