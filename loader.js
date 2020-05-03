@@ -1,7 +1,7 @@
 
 const qs = require('querystring');
 
-var compiler = require('./dist/compiler');
+var compiler = require('./dist/compiler.js');
 var helpers = compiler.helpers;
 
 var path = require('path');

@@ -17,13 +17,14 @@ for own name,variations of colors
 		color.s = s
 		color.l = l
 		let path = name + '-' + subname
-		let hslstr = "{h.toFixed(2)},{s.toFixed(2)},{l.toFixed(2)}"
+		let hslstr = "{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%"
 		color.bg = "hsla({hslstr},var(--background-opacity,1))"
 		color.border = "hsla({hslstr},var(--border-opacity,1))"
 		color.text = "hsla({hslstr},var(--text-opacity,1))"
 		extensions['bg-' + path] = {'background-color': color.bg}
 		extensions['border-' + path] = {'border-color': color.border}
 		extensions['text-' + path] = {'color': color.text}
+		extensions[path] = {'color': color.text}
 
 
 class Selectors
@@ -210,9 +211,10 @@ class Rules
 			'padding-bottom': dim(b),
 			'padding-left': dim(l)
 		}
-		# do [pt(t),pr(r,t),pb(b,t),pl(l,r == undefined ? t : r)]
+		# do [pt(t),pr(r,t),pb(b,t),pl(l,r == undefin ed ? t : r)]
 		
 	# positioning
+	# add longer aliases like left,right,bottom,top?
 	def t(v0,v1) do {'top':    dim(v0,v1)}
 	def l(v0,v1) do {'left':   dim(v0,v1)}
 	def r(v0,v1) do {'right':  dim(v0,v1)}
@@ -221,6 +223,14 @@ class Rules
 	def tr(t,r) do  {'top': dim(t),'right': dim(r,t)}
 	def bl(b,l) do  {'bottom': dim(b),'left': dim(l,t)}
 	def br(b,r) do  {'bottom': dim(b),'right': dim(b,r)}
+
+	def inset(t,r=t,b=t,l=r)
+		{
+			'top': dim(t),
+			'right': dim(r),
+			'bottom': dim(b),
+			'left': dim(l)
+		}
 		
 	def w(w) do  {'width': dim(w)}
 	def h(w) do  {'heigth': dim(h)}
@@ -380,9 +390,33 @@ class Rules
 	def bg_opacity number
 		{'--background-opacity': number}
 	
+	def bgo number
+		bg_opacity(number)
+	
 	# BORDERS
+	
+	# radius
+	
+	# width
+	
+	def border value = '1px'
+		{'border-width': value}
+	
+	# color
+	
+	# opacity
+	
 	def border_opacity number
 		{'--border-opacity': number}
+	
+	# style
+	def border_solid do	{'border-style': 'solid'}
+	def border_dashed do {'border-style': 'dashed'}
+	def border_dotted do {'border-style': 'dotted'}
+	def border_double do {'border-style': 'double'}
+	def border_none do {'border-style': 'none'}
+		
+	# should also support arbitrary border-(sides) methods
 	
 	# divide uses selector like spacing
 

@@ -12,7 +12,6 @@ import SourceMap from './sourcemap'
 
 import StyleRule from './styler.imba'
 
-
 var TSC_CLASS_HEAD = 'static $static$(){ this.prototype } $member$(){ this.constructor } '
 var TAG_NAMES = constants.TAG_NAMES
 
@@ -2583,7 +2582,7 @@ export class Root < Code
 			for style in result:styles
 				if style:type == 'css'
 					let scoping = style:scoped ? result:sfcid : null
-					style:processed = csscompiler.compile(style:content,scope: scoping)
+					style:processed ||= csscompiler.compile(style:content,scope: scoping)
 					stylebody += style:processed + '\n'
 					result:stylebody = stylebody
 
@@ -2907,10 +2906,18 @@ export class TagDeclaration < ClassDeclaration
 		scope.context.reference = name
 		
 		let className = name.toClassName
-
-		if s.option(:hasScopedStyles) and !STACK.tsc
-			# @scope.root.styles:length > 0
-			instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
+		
+		if !STACK.tsc
+			
+			if s.option(:hasScopedStyles)
+				# @scope.root.styles:length > 0
+				instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
+			console.log 'has option?',option(:sfcid)
+			if option(:sfcid)
+				# should add to static init instead? instanceInit should just have a list of classes.
+				instanceInit.inject LIT("this.setAttribute('data-{option(:sfcid)}','')")
+			# 	let ref = "{@scope.root.sfcid}-{s.option(:self).oid}"
+			# 	instanceInit.inject LIT("this.setAttribute('data-self','{ref}')")
 
 		# should probably also warn about stuff etc
 		let sup = CALL(LIT('imba.tags.get'),[
@@ -6717,7 +6724,6 @@ export class TagStyleMixin < TagStylePart
 
 export class TagStyleScope < TagStylePart
 
-
 export class TagStyle < TagPart
 
 	def scopes
@@ -6745,22 +6751,32 @@ export class TagStyle < TagPart
 		
 	def visit
 		# should build a full style based on this 
+		@tag.sfcid
+		@sel = @tag.uniqueSelector
+		
+		scope__.root.styles.push({
+			type: 'css'
+			processed: toStyle
+		})
 		self
 		
 	def toStyle
-		let sel = ".fas42"
+		let sel = "{@sel}"
 		let scopes = self.scopes.map do $1.serialize
 		let mixins = self.mixins.map do $1.serialize
 		let rule = StyleRule.new(sel,scopes,mixins)
 		return rule.toString
 		
 	def c
-		let plain = []
-		for item in @chain
-			plain.push(item.serialize)
-		plain.push(toStyle)
-		
-		JSON.stringify(plain)
+		# let plain = []
+		# for item in @chain
+		#	plain.push(item.serialize)
+		# plain.push(toStyle)
+		# scope__.root.styles.push({
+		# 	type: 'css'
+		# 	processed: toStyle
+		# })
+		"" # JSON.stringify(plain)
 
 class TagLike < Node
 
@@ -6770,6 +6786,12 @@ class TagLike < Node
 		@tagvars = {}
 		setup(o)
 		self
+		
+	def sfcid
+		@sfcid ||= STACK.sfcid + '-' + oid
+		
+	def uniqueSelector
+		@uniqueSelector ||= "[data-{sfcid}]"
 
 	def body
 		@body || @options:body
@@ -7170,11 +7192,18 @@ export class Tag < TagLike
 
 	def attrs
 		@attributes
+		
+	def uniqueSelector
+		@uniqueSelector ||= "[data-{sfcid}]"
+		
+	def tagDeclaration
+		stack.up(TagDeclaration)
 
 	def traverse
 		return self if @traversed
 		scope__.imbaDependency('index')
-
+		
+		
 		let close = @options:close
 		let body = @options:body or []
 		let returns = self
@@ -7210,6 +7239,10 @@ export class Tag < TagLike
 			
 		if tagName == 'shadow-root'
 			@kind = 'shadow-root'
+			
+		if isSelf
+			let decl = stack.up(TagDeclaration)
+			decl.set(self: self,sfcid: sfcid) if self
 			
 		@tagName = tagName
 
@@ -7456,6 +7489,8 @@ export class Tag < TagLike
 
 			typ = vvar
 			dynamicKey = kvar
+		
+		var addGlobalId = @sfcid or stack.option(:hasScopedStyles)
 
 		var params = [
 			typ,
@@ -7463,7 +7498,8 @@ export class Tag < TagLike
 			(fragment and !option(:detached) ? fragment.tvar : 'null'),
 			@className or 'null',
 			'null',
-			stack.option(:hasScopedStyles) ? STR(stack.sfcid) : LIT('null')
+			addGlobalId ? STR(sfcid) : LIT('null'),
+			addGlobalId ? STR(oid) : LIT('null')
 		]
 
 		var nodes = body ? body.values : []
@@ -7519,6 +7555,8 @@ export class Tag < TagLike
 				# add "{bvar}={dvar}=1"
 				add "{tvar}=({bvar}={dvar}=1,{scop.tagCache}.{oid}) || ({bvar}={dvar}=0,{scop.tagCache}.{oid}={ctor})"
 				add "{bvar}||({tvar}.up$={scop.tagCache}._)"
+				# if @sfcid
+				# 	add "{bvar}||({tvar}.setAttribute({STR(stack.sfcid)},{STR(oid)})"
 				@ref = tvar
 				o:inline = yes if isExpression
 
@@ -7540,6 +7578,7 @@ export class Tag < TagLike
 				let key = "{cvar}.{oid}"
 				add("{tvar}={slotPath}")
 				add("({key} = {fragment.tvar}.insert$({tvar},{@flags},{key}))")
+
 			elif isSlot and @consumed:length == 1
 				# single child can act as slot?
 				# if it is a string we dont really want to insert it at all
@@ -7644,7 +7683,8 @@ export class Tag < TagLike
 					add "{bvar} || ({modpath}={mods.c(o)})"
 			
 			if item isa TagStyle
-				add "{bvar} // {item.c(o)}"
+				# add "{bvar} // {item.c(o)}"
+				yes
 			elif !isReactive
 				# buggy
 				add "{tvar}.{item.c(o)}"
