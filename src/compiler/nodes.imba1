@@ -3436,6 +3436,18 @@ export class Num < Literal
 	def toJSON
 		{type: typeName, value: raw}
 
+export class NumWithUnit < Literal
+	def initialize v, unit
+		@traversed = no
+		@value = v
+		@unit = unit
+		
+		
+	
+	def c o
+		let raw = "{String(@value)}{String(@unit)}"
+		o:css ? raw : "'{raw}'"
+
 # should be quoted no?
 # what about strings in object-literals?
 # we want to be able to see if the values are allowed
@@ -6723,7 +6735,7 @@ export class TagStylePart < Node
 		# console.log 'tagstyle params',name,'pars?',params
 	
 	def serialize
-		[@name.c,params ? params.map(do $1:raw ? $1.raw : $1.c) : []]
+		[@name.c,params ? params.map(do $1:raw ? $1.raw : $1.c(css: yes)) : []]
 
 export class TagStyleMixin < TagStylePart
 

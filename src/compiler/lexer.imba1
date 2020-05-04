@@ -898,6 +898,9 @@ export class Lexer
 			# see if previous was catch -- belongs in rewriter?
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
+				
+		if lastTyp == 'NUMBER' and !prev:spaced and typ == 'IDENTIFIER'
+			typ = 'UNIT'
 		
 		if colon
 			token(typ, id, idlen)

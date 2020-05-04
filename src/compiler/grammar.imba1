@@ -286,6 +286,7 @@ var grammar =
 	# Alphanumerics are separated from the other **Literal** matchers because
 	# they can also serve as keys in object literals.
 	AlphaNumeric: [
+		o 'NUMBER UNIT' do NumWithUnit.new(A1,A2)
 		o 'NUMBER' do Num.new A1
 		o 'STRING' do Str.new A1
 		o 'Symbol'

@@ -15,10 +15,11 @@ tag x-app
 			<p :any.bg-red-200.bgo(0.5) :lg.bg-blue-400 :hover.bgo-100> "Decorators"
 
 			<ul> for item in items
-				<li :odd.purple-600 :even.underline> item
+				<li :odd.purple-600 :even.underline :lg:even.font-bold> item
+				
 			# <div.markdown innerHTML=generatedMarkdown>
 			# 	<css(h1) .mt(10px).text-bold.teal-800 :hover.underline>
-			<tyle(.red) .bg-red-300 :hover.bg-red-400>
+			# <tyle(.red) .bg-red-300 :hover.bg-red-400>
 				
 			<div> for label in labels
 				<div .{label.color}> label.title

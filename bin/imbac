@@ -261,7 +261,7 @@ CLI.prototype.tokenize = function (){
 				s = "[" + self.b(id.replace(/\n/g,"\\n").replace(/\t/g,"\\t")) + "]\n";
 			} else if (typ == 'IDENTIFIER') {
 				s = id;
-			} else if (typ == 'NUMBER') {
+			} else if (typ == 'NUMBER2') {
 				s = id;
 			} else if (id == typ) {
 				s = "[" + self.b(id) + "]";
