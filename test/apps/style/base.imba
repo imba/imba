@@ -19,6 +19,12 @@ tag x-app
 			<div :any.text-sm :up('x-app:hover').font-bold> "Bold when x-app is hovered"
 			
 			<input :any.ph-purple-600-a.pho(0.5) :focus.pho(1) type='text' placeholder='Placeholder value'>
+			
+			
+			<div :any.flex.space-x/2.space-y/3>
+				<button> "one"
+				<button> "two"
+				<button> "three"
 
 			<ul> for item in items
 				<li :odd.purple-600 :even.underline :lg:even.font-bold> item

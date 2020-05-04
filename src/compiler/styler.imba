@@ -144,7 +144,13 @@ class Rules
 			for item in result
 				$merge(object,item)
 		else
-			Object.assign(object,result)
+			for own k,v of result
+				if k.indexOf('&') >= 0
+					object[k] = Object.assign({},object[k] or {},v)
+				else
+					object[k] = v
+
+			# Object.assign(object,result)
 		return object
 				
 		
@@ -199,6 +205,11 @@ class Rules
 	# LAYOUT
 	
 	# Container
+	
+	def container
+		# tricky to implement 
+		null
+	
 	
 	# Box Sizing
 	
@@ -259,8 +270,36 @@ class Rules
 	def overflow_hidden do {overflow: 'hidden'}
 	
 	# Position
+	def static do {position: 'static'}
+	def fixed do {position: 'fixed'}
+	def abs do {position: 'absolute'}
+	def rel do {position: 'relative'}
+	def sticky do {position: 'sticky'}
+		
+	
+	# Top / Right / Bottom / Left
+	# add longer aliases like left,right,bottom,top?
+	def t(v0,v1) do {'top':    dim(v0,v1)}
+	def l(v0,v1) do {'left':   dim(v0,v1)}
+	def r(v0,v1) do {'right':  dim(v0,v1)}
+	def b(v0,v1) do {'bottom': dim(v0,v1)}
+	def tl(t,l) do  {'top': dim(t),'left': dim(l,t)}
+	def tr(t,r) do  {'top': dim(t),'right': dim(r,t)}
+	def bl(b,l) do  {'bottom': dim(b),'left': dim(l,t)}
+	def br(b,r) do  {'bottom': dim(b),'right': dim(b,r)}
+
+	def inset(t,r=t,b=t,l=r)
+		{
+			'top': dim(t),
+			'right': dim(r),
+			'bottom': dim(b),
+			'left': dim(l)
+		}
+	
 	
 	# Visibility
+	def visible do {visibility: 'visible'}
+	def invisible do {visibility: 'hidden'}
 	
 	# Z-index
 	def z(v) do {'z-index': v}
@@ -296,17 +335,66 @@ class Rules
 	# add aliases ltr, ttb, btt, rtl?
 	
 	# Flex Wrap
+	def flex_no_wrap do {'flex-wrap': 'no-wrap'}
+	def flex_wrap do {'flex-wrap': 'wrap'}
+	def flex_wrap_reverse do {'flex-wrap': 'wrap-reverse'}
+		
+	# Align Items
+	def items_stretch do {'align-items': 'stretch' }
+	def items_start do {'align-items': 'flex-start' }
+	def items_center do {'align-items': 'center' }
+	def items_end do {'align-items': 'flex-end' }
+	def items_baseline do {'align-items': 'baseline' }
+		
+	# Align Content
+	def content_start do {'align-content': 'flex-start' }
+	def content_center do {'align-content': 'center' }
+	def content_end do {'align-content': 'flex-end' }
+	def content_between do {'align-content': 'space-between' }
+	def content_around do {'align-content': 'space-around' }
 	
-	# margin
-	def mt(v0,v1) do {'margin-top':    dim(v0,v1)}
-	def ml(v0,v1) do {'margin-left':   dim(v0,v1)}
-	def mr(v0,v1) do {'margin-right':  dim(v0,v1)}
-	def mb(v0,v1) do {'margin-bottom': dim(v0,v1)} 
-	def mx(l,r=l) do {'margin-left': dim(l), 'margin-right': dim(r)}
-	def my(t,b=t) do {'margin-top': dim(t), 'margin-bottom': dim(b)}
-	def m(t,r,b,l) do [mt(t),mr(r,t),mb(b,t),ml(l,r == undefined ? t : r)]
+	# Align Self
+	def self_auto do {'align-self': 'auto' }
+	def self_start do {'align-self': 'flex-start' }
+	def self_center do {'align-self': 'center' }
+	def self_end do {'align-self': 'flex-end' }
+	def self_stretch do {'align-self': 'stretch' }
+		
+	# Justify Content
+	def justify_start do {'justify-content': 'flex-start' }
+	def justify_center do {'justify-content': 'center' }
+	def justify_end do {'justify-content': 'flex-end' }
+	def justify_between do {'justify-content': 'space-between' }
+	def justify_around do {'justify-content': 'space-around' }
+		
+	# Flex
+	def flex_initial do {flex: '0 1 auto' }
+	def flex_1 do {flex: '1 1 0%' }
+	def flex_auto do {flex: '1 1 auto' }
+	def flex_none do {flex: 'none' }
+		
+		
+	# Flex grow
+	def flex_grow(v = 1) do {'flex-grow': v }
+	# TODO alias as grow?
 	
-	# padding
+	# Flex Shrink
+	def flex_shrink(v = 1) do {'flex-shrink': v }
+	# TODO alias as shrink?
+	
+	
+	# Order
+	def order_first do {order: -9999}
+	def order_last do {order: 9999}
+	def order(v=0) do {order: v}
+	def order_NUM(v) do order(v) # fix this?
+
+
+	# add custom things here
+	
+	# SPACING
+	
+	# Padding
 	def pt(v0,v1) do {'padding-top':    dim(v0,v1)}
 	def pl(v0,v1) do {'padding-left':   dim(v0,v1)}
 	def pr(v0,v1) do {'padding-right':  dim(v0,v1)}
@@ -320,42 +408,40 @@ class Rules
 			'padding-bottom': dim(b),
 			'padding-left': dim(l)
 		}
-		# do [pt(t),pr(r,t),pb(b,t),pl(l,r == undefin ed ? t : r)]
-		
-	# positioning
-	# add longer aliases like left,right,bottom,top?
-	def t(v0,v1) do {'top':    dim(v0,v1)}
-	def l(v0,v1) do {'left':   dim(v0,v1)}
-	def r(v0,v1) do {'right':  dim(v0,v1)}
-	def b(v0,v1) do {'bottom': dim(v0,v1)}
-	def tl(t,l) do  {'top': dim(t),'left': dim(l,t)}
-	def tr(t,r) do  {'top': dim(t),'right': dim(r,t)}
-	def bl(b,l) do  {'bottom': dim(b),'left': dim(l,t)}
-	def br(b,r) do  {'bottom': dim(b),'right': dim(b,r)}
-
-	def inset(t,r=t,b=t,l=r)
+	
+	# Margin
+	def mt(v0,v1) do {'margin-top':    dim(v0,v1)}
+	def ml(v0,v1) do {'margin-left':   dim(v0,v1)}
+	def mr(v0,v1) do {'margin-right':  dim(v0,v1)}
+	def mb(v0,v1) do {'margin-bottom': dim(v0,v1)} 
+	def mx(l,r=l) do {'margin-left': dim(l), 'margin-right': dim(r)}
+	def my(t,b=t) do {'margin-top': dim(t), 'margin-bottom': dim(b)}
+	def m(t,r,b,l)
 		{
-			'top': dim(t),
-			'right': dim(r),
-			'bottom': dim(b),
-			'left': dim(l)
+			'margin-top': dim(t),
+			'margin-right': dim(r),
+			'margin-bottom': dim(b),
+			'margin-left': dim(l)
 		}
-		
+
+	# Space Between
+	def space_x length
+		{"& > * + *": {'margin-left': dim(length)}}
+	
+	def space_y length
+		{"& > * + *": {'margin-top': dim(length)}}
+	
+	
+	# SIZING
+	
 	def w(w) do  {'width': dim(w)}
 	def h(w) do  {'heigth': dim(h)}
 	def wh(w,h=w) do {'width': dim(w), 'height': dim(h)}
 
 
-	# position
-	def static do {position: 'static'}
-	def fixed do {position: 'fixed'}
-	def abs do {position: 'absolute'}
-	def rel do {position: 'relative'}
-	def sticky do {position: 'sticky'}
+	
 		
-	# visibility
-	def visible do {visibility: 'visible'}
-	def invisible do {visibility: 'hidden'}
+	
 	
 	
 
