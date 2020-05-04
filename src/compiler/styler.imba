@@ -1,6 +1,6 @@
 
 var conv = require('../../vendor/colors')
-import {fonts,colors,rounded} from './theme.imba'
+import {fonts,colors,variants} from './theme.imba'
 
 const extensions = {}
 
@@ -165,7 +165,6 @@ class Rules
 			let name = mod.replace(/\-/g,'_')
 			
 			if self[name]
-				params = [] unless params
 				res = self[name](...params)
 			
 			elif let colormatch = mod.match(colorRegex)
@@ -175,20 +174,25 @@ class Rules
 				if self[name]
 					params.unshift(color)
 					res = self[name](...params)
-
-			# check for colors 
-			elif extensions[mod]
-				res = extensions[mod]
-				
+			else
+				let parts = mod.split('-')
+				let dropped = []
+				while parts.length > 1
+					let drop = parts.pop!
+					let name = parts.join('_')
+					drop = parseFloat(drop) if drop.match(/^-?(\d+)$/)
+					params.unshift(drop)
+					if self[name]
+						res = self[name](...params)
 			if res
 				$merge(values,res)
 
 		return values
 		
 	# converting argument to css values
-	def dim value, fallback, type
+	def $length value, fallback, type
 		if value == undefined
-			return dim(fallback,null,type)
+			return $length(fallback,null,type)
 		if typeof value == 'number'
 			return value * 0.25 + 'rem'
 		elif typeof value == 'string'
@@ -201,8 +205,32 @@ class Rules
 				return "{value}%"
 		return value
 	
-	
+	def $value value, config
+		if value == undefined
+			value = config.default
+		
+		if config.hasOwnProperty(value)
+			value = config[value]
 			
+		if typeof value == 'number' and config.step
+			let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
+			return value * parseFloat(num) + unit
+
+		return value
+	
+	def $radius value
+		if value == undefined
+			value = variants.radius.default
+
+		if variants.radius.hasOwnProperty(value)
+			value = variants.radius[value]
+		
+		if typeof value == 'number'
+			let [step,num,unit] = (variants.radius.step or '0.125rem').match(/^(\-?[\d\.]+)(\w+)?$/)
+			return value * parseFloat(num) + unit
+			# return (value * 0.125) + 'rem'
+			
+		return value
 			
 	# LAYOUT
 	
@@ -281,21 +309,21 @@ class Rules
 	
 	# Top / Right / Bottom / Left
 	# add longer aliases like left,right,bottom,top?
-	def t(v0,v1) do {'top':    dim(v0,v1)}
-	def l(v0,v1) do {'left':   dim(v0,v1)}
-	def r(v0,v1) do {'right':  dim(v0,v1)}
-	def b(v0,v1) do {'bottom': dim(v0,v1)}
-	def tl(t,l) do  {'top': dim(t),'left': dim(l,t)}
-	def tr(t,r) do  {'top': dim(t),'right': dim(r,t)}
-	def bl(b,l) do  {'bottom': dim(b),'left': dim(l,t)}
-	def br(b,r) do  {'bottom': dim(b),'right': dim(b,r)}
+	def t(v0,v1) do {'top':    $length(v0,v1)}
+	def l(v0,v1) do {'left':   $length(v0,v1)}
+	def r(v0,v1) do {'right':  $length(v0,v1)}
+	def b(v0,v1) do {'bottom': $length(v0,v1)}
+	def tl(t,l=t) do  {'top': $length(t),'left': $length(l)}
+	def tr(t,r=t) do  {'top': $length(t),'right': $length(r)}
+	def bl(b,l=b) do  {'bottom': $length(b),'left': $length(l)}
+	def br(b,r=b) do  {'bottom': $length(b),'right': $length(r)}
 
 	def inset(t,r=t,b=t,l=r)
 		{
-			'top': dim(t),
-			'right': dim(r),
-			'bottom': dim(b),
-			'left': dim(l)
+			'top': $length(t),
+			'right': $length(r),
+			'bottom': $length(b),
+			'left': $length(l)
 		}
 	
 	
@@ -340,6 +368,13 @@ class Rules
 	def flex_no_wrap do {'flex-wrap': 'no-wrap'}
 	def flex_wrap do {'flex-wrap': 'wrap'}
 	def flex_wrap_reverse do {'flex-wrap': 'wrap-reverse'}
+	
+	def center do
+		{
+			'align-items': 'center',
+			'justify-content': 'center',
+			'text-align': 'center'
+		}
 		
 	# Align Items
 	def items_stretch do {'align-items': 'stretch' }
@@ -397,64 +432,74 @@ class Rules
 	# SPACING
 	
 	# Padding
-	def pt(v0,v1) do {'padding-top':    dim(v0,v1)}
-	def pl(v0,v1) do {'padding-left':   dim(v0,v1)}
-	def pr(v0,v1) do {'padding-right':  dim(v0,v1)}
-	def pb(v0,v1) do {'padding-bottom': dim(v0,v1)}
-	def px(l,r=l) do {'padding-left': dim(l), 'padding-right': dim(r)}
-	def py(t,b=t) do {'padding-top': dim(t), 'padding-bottom': dim(b)}
+	def pt(v0,v1) do {'padding-top':    $length(v0)}
+	def pl(v0,v1) do {'padding-left':   $length(v0)}
+	def pr(v0,v1) do {'padding-right':  $length(v0)}
+	def pb(v0,v1) do {'padding-bottom': $length(v0)}
+	def px(l,r=l) do {'padding-left': $length(l), 'padding-right': $length(r)}
+	def py(t,b=t) do {'padding-top': $length(t), 'padding-bottom': $length(b)}
 	def p(t,r=t,b=t,l=r)
 		{
-			'padding-top': dim(t),
-			'padding-right': dim(r),
-			'padding-bottom': dim(b),
-			'padding-left': dim(l)
+			'padding-top': $length(t),
+			'padding-right': $length(r),
+			'padding-bottom': $length(b),
+			'padding-left': $length(l)
 		}
 	
 	# Margin
-	def mt(v0,v1) do {'margin-top':    dim(v0,v1)}
-	def ml(v0,v1) do {'margin-left':   dim(v0,v1)}
-	def mr(v0,v1) do {'margin-right':  dim(v0,v1)}
-	def mb(v0,v1) do {'margin-bottom': dim(v0,v1)} 
-	def mx(l,r=l) do {'margin-left': dim(l), 'margin-right': dim(r)}
-	def my(t,b=t) do {'margin-top': dim(t), 'margin-bottom': dim(b)}
-	def m(t,r,b,l)
+	def mt(v0) do {'margin-top':    $length(v0)}
+	def ml(v0) do {'margin-left':   $length(v0)}
+	def mr(v0) do {'margin-right':  $length(v0)}
+	def mb(v0) do {'margin-bottom': $length(v0)} 
+	def mx(l,r=l) do {'margin-left': $length(l), 'margin-right': $length(r)}
+	def my(t,b=t) do {'margin-top': $length(t), 'margin-bottom': $length(b)}
+	def m(t,r=t,b=t,l=r)
 		{
-			'margin-top': dim(t),
-			'margin-right': dim(r),
-			'margin-bottom': dim(b),
-			'margin-left': dim(l)
+			'margin-top': $length(t),
+			'margin-right': $length(r),
+			'margin-bottom': $length(b),
+			'margin-left': $length(l)
 		}
 
 	# Space Between
 	def space_x length
-		{"& > * + *": {'margin-left': dim(length)}}
+		{"& > * + *": {'margin-left': $length(length)}}
 	
 	def space_y length
-		{"& > * + *": {'margin-top': dim(length)}}
+		{"& > * + *": {'margin-top': $length(length)}}
+		
+	def space length
+		{
+			"padding": $length(length / 2)
+			"& > *": {'margin': $length(length / 2) }
+		}
+		
 	
 	
 	# SIZING
 	
 	# Width
-	def w(length) do  {'width': dim(length)}
-	def wmin(length) do  {'min-width': dim(length)}
-	def wmax(length) do  {'max-width': dim(length)}
+	def w(length) do  {'width': $length(length)}
+	def width(length) do  {'width': $length(length)}
+	def wmin(length) do  {'min-width': $length(length)}
+	def wmax(length) do  {'max-width': $length(length)}
 		
 	# Min-Width
 	# Max-Width
 		
 	# Height
-	def h(length) do {'heigth': dim(length)}
-	def hmin(length) do {'min-heigth': dim(length)}
-	def hmax(length) do {'max-heigth': dim(length)}
+	def h(length) do {'heigth': $length(length)}
+	def height(length) do {'heigth': $length(length)}
+	def hmin(length) do {'min-heigth': $length(length)}
+	def hmax(length) do {'max-heigth': $length(length)}
 	# Add hclamp ? 
 
 	# Min-Height
 	# Max-Height
 	
 	# Both
-	def wh(w,h=w) do {'width': dim(w), 'height': dim(h)}
+	def wh(w,h=w) do {'width': $length(w), 'height': $length(h)}
+	def size(w,h=w) do {'width': $length(w), 'height': $length(h)}
 	
 
 
@@ -538,7 +583,7 @@ class Rules
 			
 	# should this use rems by default? How would you do
 	# plain numeric values?
-	def leading value do {'line-height': dim(value)}
+	def leading value do {'line-height': $length(value)}
 	def lh value do {'line-height': value}
 	
 	
@@ -717,7 +762,7 @@ class Rules
 		{'border-radius': '9999px'}
 		
 	def rounded num
-		{'border-radius': num}
+		{'border-radius': $radius(num)}
 	
 	# width
 	
@@ -748,7 +793,24 @@ class Rules
 	# should also support arbitrary border-(sides) methods
 	
 	# divide uses selector like spacing
-
+	
+	# Tables
+	
+	# Border Collapse
+	
+	# Table Layout
+	
+	
+	# EFFECTS
+	
+	# Box Shadow
+	def shadow value
+		{'box-shadow': $value(value,variants.shadow)}
+	
+	# Opacity
+	def opacity value
+		console.log 'called opacity',value,variants.opacity
+		{'opacity': $value(value,variants.opacity)}
 	
 	# Interactivity
 	
