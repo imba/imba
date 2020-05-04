@@ -357,7 +357,7 @@ var grammar =
 	]
 	
 	TagRuleScope: [
-		o 'T: IDENTIFIER' do TagStyleScope.new(A2)
+		o 'T: IDENTIFIER TagRuleArgs' do TagStyleScope.new(A2,A3)
 	]
 	
 	TagRuleMixins: [
@@ -368,7 +368,6 @@ var grammar =
 	TagRuleMixin: [
 		o '. IDENTIFIER TagRuleArgs' do TagStyleMixin.new(A2,A3)
 	]
-	
 	TagRuleArgs: [
 		o '' do []
 		o '( )' do []
@@ -387,8 +386,7 @@ var grammar =
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
 		
 		o 'TagOptions RULE_START TagRuleScopes TagRuleMixins RULE_END' do A1.addPart(TagStyle.new(A3,A4),AST.TagStyle)
-			
-		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagStyle)
+		# o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagStyle)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
 		o 'TagOptions T. TagIdentifier' do A1.addPart(A3,AST.TagFlag)

@@ -2912,7 +2912,7 @@ export class TagDeclaration < ClassDeclaration
 			if s.option(:hasScopedStyles)
 				# @scope.root.styles:length > 0
 				instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
-			console.log 'has option?',option(:sfcid)
+			# console.log 'has option?',option(:sfcid)
 			if option(:sfcid)
 				# should add to static init instead? instanceInit should just have a list of classes.
 				instanceInit.inject LIT("this.setAttribute('data-{option(:sfcid)}','')")

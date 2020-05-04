@@ -13,6 +13,8 @@ tag x-app
 		
 			<button :any.purple-400 :hover.blue-600> "Welcome"
 			<p :any.bg-red-200.bgo(0.5) :lg.bg-blue-400 :hover.bgo-100> "Decorators"
+			
+			<div :up('x-app:hover').font-bold> "Bold when x-app is hovered"
 
 			<ul> for item in items
 				<li :odd.purple-600 :even.underline :lg:even.font-bold> item
