@@ -509,6 +509,10 @@ export class Lexer
 			token("TAG_END",'/>',2)
 			pair 'TAG_END'
 			return 2
+			
+		if chr == ':'
+			pushEnd('TAG_RULE',id: 'RULE', pop: /^([\s\n\>]|\/\>)/)
+			return 0
 
 		if chr == '%' or chr == ':' or chr == '.' or chr == '@'
 			token("T{chr}",chr,1)
@@ -1591,6 +1595,9 @@ export class Lexer
 			
 		if value == '..' and !prev:spaced
 			tokid = '?.'
+			
+		if value == ':' and end1 == 'TAG_RULE'
+			tokid = 'T:'
 
 		token(tokid, value, value:length)
 

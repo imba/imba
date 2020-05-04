@@ -187,6 +187,108 @@ class Rules
 			return value * 0.25 + 'rem'
 		elif typeof value == 'string'
 			return value
+			
+			
+	# LAYOUT
+	
+	# Container
+	
+	# Box Sizing
+	
+	def box_border do {'box-sizing': 'border-box'}
+	def box_content do {'box-sizing': 'content-box'}
+	
+	# Display
+	
+	def display v
+		{display: v}
+		
+	def hidden do display('none')
+	def block do display('block')
+	def flow_root do display('flow-root')
+	def inline_block do display('inline-block')
+	def inline do display('inline')
+	def grid do display('grid')
+	def inline_grid do display('inline-grid')
+	def table do display('table')
+	def table_caption do display('table-caption')
+	def table_cell do display('table-cell')
+	def table_column do display('table-column')
+	def table_column_group do display('table-column-group')
+	def table_footer_group do display('table-footer-group')
+	def table_header_group do display('table-header-group')
+	def table_row_group do display('table-row-group')
+	def table_row do display('table-row')
+		
+	def flex
+		display('flex')
+		
+	def inline_flex
+		display('inline-flex')
+	
+	# Float
+	def float_right do {float: 'right'}
+	def float_left do {float: 'left'}
+	def float_none do {float: 'none'}
+	def clearfix do
+		{'&::after': {content: "", display: 'table', clear: 'both'}}
+	
+	# Clear
+	def clear_right do {clear: 'right'}
+	def clear_left do {clear: 'left'}
+	def clear_both do {clear: 'both'}
+	def clear_none do {clear: 'none'}
+	
+	# Object Fit
+	def object_contain do {'object-fit': 'contain'}
+	def object_cover do {'object-fit': 'cover'}
+	def object_fill do {'object-fit': 'fill'}
+	def object_none do {'object-fit': 'none'}
+	def object_scale_down do {'object-fit': 'scale-down'}
+	
+	# Object Position
+	
+	# Overflow
+	def overflow_hidden do {overflow: 'hidden'}
+	
+	# Position
+	
+	# Visibility
+	
+	# Z-index
+	def z(v) do {'z-index': v}
+		
+	# FLEXBOX
+	
+	# Flex Direction
+	
+	def flex_row
+		{'flex-direction': 'row'}
+	
+	def flex_row_reverse
+		{'flex-direction': 'row-reverse'}
+	
+	def flex_col
+		{'flex-direction': 'column'}
+	
+	def flex_col_reverse
+		{'flex-direction': 'column-reverse'}
+		
+	def ltr
+		{'flex-direction': 'row'}
+	
+	def rtl
+		{'flex-direction': 'row-reverse'}
+	
+	def ttb
+		{'flex-direction': 'column'}
+	
+	def btt
+		{'flex-direction': 'column-reverse'}
+
+	# add aliases ltr, ttb, btt, rtl?
+	
+	# Flex Wrap
 	
 	# margin
 	def mt(v0,v1) do {'margin-top':    dim(v0,v1)}
@@ -235,35 +337,7 @@ class Rules
 	def w(w) do  {'width': dim(w)}
 	def h(w) do  {'heigth': dim(h)}
 	def wh(w,h=w) do {'width': dim(w), 'height': dim(h)}
-	
-	# display
-	
-	def display v
-		{display: v}
-		
-	def hidden do display('none')
-	def block do display('block')
-	def flow_root do display('flow-root')
-	def inline_block do display('inline-block')
-	def inline do display('inline')
-	def grid do display('grid')
-	def inline_grid do display('inline-grid')
-	def table do display('table')
-	def table_caption do display('table-caption')
-	def table_cell do display('table-cell')
-	def table_column do display('table-column')
-	def table_column_group do display('table-column-group')
-	def table_footer_group do display('table-footer-group')
-	def table_header_group do display('table-header-group')
-	def table_row_group do display('table-row-group')
-	def table_row do display('table-row')
-		
-		
-	def flex
-		display('flex')
-		
-	def inline_flex
-		display('inline-flex')
+
 
 	# position
 	def static do {position: 'static'}
@@ -276,8 +350,7 @@ class Rules
 	def visible do {visibility: 'visible'}
 	def invisible do {visibility: 'hidden'}
 	
-	# z index
-	def z(v) do {'z-index': v}
+	
 
 
 	# TYPOGRAPHY

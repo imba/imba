@@ -6713,12 +6713,17 @@ class TagHandlerCallback < ValueNode
 		return
 
 
-export class TagStylePart < ValueNode
+export class TagStylePart < Node
 
 	prop params
 	
+	def initialize name, params
+		@name = name
+		@params = params or []
+		# console.log 'tagstyle params',name,'pars?',params
+	
 	def serialize
-		[value.toRaw,params ? params.map(do $1:raw ? $1.raw : $1.c) : []]
+		[@name.c,params ? params.map(do $1:raw ? $1.raw : $1.c) : []]
 
 export class TagStyleMixin < TagStylePart
 
@@ -6726,28 +6731,22 @@ export class TagStyleScope < TagStylePart
 
 export class TagStyle < TagPart
 
-	def scopes
-		@chain.filter do $1 isa TagStyleScope
-			
-	def mixins
-		@chain.filter do $1 isa TagStyleMixin
+	prop name
+	prop value
+	prop params
 	
-	def add item, type
-		if type == TagArgList
-			(@last or self).params = item or ListNode.new([])
-		else
-			let node
-			
-			if type == TagFlag
-				node = TagStyleMixin.new(item)
-			elif type == TagStyle
-				node = TagStyleScope.new(item)
-			else
-				throw 'cannot add?'
-			
-			if node
-				@chain.push(@last = node)
-		return self
+	prop scopes
+	prop mixins
+	
+	def initialize scopes, mixins
+		# @name = load(value)
+		# @tag = owner
+		@scopes = scopes
+		@mixins = mixins
+		@chain = []
+		@special = no
+		@params = []
+		self
 		
 	def visit
 		# should build a full style based on this 
@@ -6768,15 +6767,7 @@ export class TagStyle < TagPart
 		return rule.toString
 		
 	def c
-		# let plain = []
-		# for item in @chain
-		#	plain.push(item.serialize)
-		# plain.push(toStyle)
-		# scope__.root.styles.push({
-		# 	type: 'css'
-		# 	processed: toStyle
-		# })
-		"" # JSON.stringify(plain)
+		""
 
 class TagLike < Node
 
@@ -7374,18 +7365,24 @@ export class Tag < TagLike
 			next = null
 		
 		elif type == TagStyle
-			next = TagStyle.new("",self)
-			# console.log 'added tag style',part
-			next.add(part,TagStyle)
+			next = part # TagStyle.new("",self)
+			next.@tag = self
+			# next.add(part,TagStyle)
 			attrs.push(next)
+			
 		else
-			if type == TagStyle
+			if type == TagStyle and !(part isa TagStyle)
 				part = TagStyleScope.new(part)
 
 			if type == TagFlag and part isa IdentifierExpression and !part.isPrimitive
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
+				
+			if part isa type
+				part.@tag = self
+			else
+				part = type.new(part,self)
 
-			attrs.push(next = type.new(part,self))
+			attrs.push(next = part)
 
 			if next isa TagAttr and next.name.isPrimitive
 				let name = String(next.name.toRaw)

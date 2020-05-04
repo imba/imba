@@ -349,6 +349,32 @@ var grammar =
 		o 'TagIdentifier' do ExpressionNode.new(A1)
 		o '' do TagTypeIdentifier.new('div')
 	]
+	
+	TagRuleScopes: [
+		o 'TagRuleScope' do [A1]
+		o 'TagRuleScopes TagRuleScope' do A1.concat(A2)
+	]
+	
+	TagRuleScope: [
+		o 'T: IDENTIFIER' do TagStyleScope.new(A2)
+	]
+	
+	TagRuleMixins: [
+		o 'TagRuleMixin' do [A1]
+		o 'TagRuleMixins TagRuleMixin' do A1.concat(A2)
+	]
+	
+	TagRuleMixin: [
+		o '. IDENTIFIER TagRuleArgs' do TagStyleMixin.new(A2,A3)
+	]
+	
+	TagRuleArgs: [
+		o '' do []
+		o '( )' do []
+		o '( ArgList )' do A2
+		o 'CALL_START CALL_END' do []
+		o 'CALL_START ArgList CALL_END' do A2
+	]
 
 	TagOptions: [
 		o 'TagTypeName TAG_REF' do Tag.new(type: A1,reference: A2)
@@ -358,7 +384,9 @@ var grammar =
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
-
+		
+		o 'TagOptions RULE_START TagRuleScopes TagRuleMixins RULE_END' do A1.addPart(TagStyle.new(A3,A4),AST.TagStyle)
+			
 		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagStyle)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
