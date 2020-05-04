@@ -4,30 +4,40 @@ import {fonts,colors} from './theme.imba'
 
 const extensions = {}
 
-var palette = {}
+###
+bg: background
+ph: placeholder
+###
+
+# should not happen at root - but create a theme instance
+
+var palette = {
+	current: {string: "currentColor"}
+	black: {string: "hsla(0,0,0,var(--alpha,1))"}
+	white: {string: "hsla(0,100%,100%,var(--alpha,1))"}
+}
+
 for own name,variations of colors
-	let subcolors = palette[name] = {}
+	let subcolors = {}
+	
 	for own subname,hex of variations
+		let path = name + '-' + subname
 		let color = subcolors[subname] = {}
-		palette[name + '-' + subname] = color
+		palette[path] = color
+
 		let rgb = conv.hex.rgb(hex)
 		let [h,s,l] = conv.rgb.hsl(rgb)
 		color.hex = conv.hex.rgb(hex)
 		color.h = h
 		color.s = s
 		color.l = l
-		let path = name + '-' + subname
+		
 		let hslstr = "{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%"
-		color.bg = "hsla({hslstr},var(--background-opacity,1))"
-		color.border = "hsla({hslstr},var(--border-opacity,1))"
-		color.text = "hsla({hslstr},var(--text-opacity,1))"
-		color.ph = "hsla({hslstr},var(--placeholder-opacity,1))"
-		extensions['bg-' + path] = {'background-color': color.bg}
-		extensions['border-' + path] = {'border-color': color.border}
-		extensions['text-' + path] = {'color': color.text}
-		extensions['ph-' + path] = {'::placeholder color': color.ph}
-		extensions[path] = {'color': color.text}
+		color.string = "hsla({hslstr},var(--alpha,1))"
 
+
+# var colorRegex = RegExp.new('^(?:(\\w+)\-)?(' + Object.keys(palette).join('|') + ')\\b')
+var colorRegex = RegExp.new('\\b(' + Object.keys(palette).join('|') + ')\\b')
 
 class Selectors
 	static def parse context, states
@@ -142,45 +152,31 @@ class Rules
 	def $parse mods
 		let values = {}
 		
-		for [mod,params] in mods
+		for [mod,params = []] in mods
 			let res = null
 			let name = mod.replace(/\-/g,'_')
+			
 			if self[name]
+				params = [] unless params
 				res = self[name](...params)
+			
+			elif let colormatch = mod.match(colorRegex)
+				let color = palette[colormatch[1]]	
+				let name = mod.replace(colorRegex,'COLOR').replace(/\-/g,'_')
+			
+				if self[name]
+					params.unshift(color)
+					res = self[name](...params)
+
+			# check for colors 
 			elif extensions[mod]
 				res = extensions[mod]
-			else
-				let [ns,name,variation] = mod.split('-')
-				# look for potential colors
-				if self[ns + '_COLOR']
-					if let color = $parse-color(mod)
-						res = self[ns + '_COLOR'](color)
+				
 			if res
 				$merge(values,res)
 
 		return values
-	
-	def $parse-color str
-		let [ns,name,variation,add] = str.split('-')
 		
-		if let color = colors[name]
-			color = color[variation] or color
-			if color and color[ns]
-				return color[ns]
-		return null
-	
-	def bg_COLOR color
-		{'background-color': color}
-		
-	def text_COLOR color
-		{'color': color}
-		
-	def border_COLOR color
-		{'border-color': color}	
-		
-	def stroke_COLOR color
-		{'stroke': color}
-	
 	# converting argument to css values
 	def dim value, fallback, type
 		if value == undefined
@@ -189,6 +185,15 @@ class Rules
 			return value * 0.25 + 'rem'
 		elif typeof value == 'string'
 			return value
+			
+	def $alpha value
+		if typeof value == 'number'
+			# is already an integer
+			if Math.round(value) == value
+				return "{value}%"
+		return value
+	
+	
 			
 			
 	# LAYOUT
@@ -454,14 +459,40 @@ class Rules
 	
 	# Placeholder Opacity
 	
-	def placeholder_opacity number
-		{'--placeholder-opacity': number}
+	def placeholder_opacity alpha
+		{'--ph-alpha': $alpha(alpha)}
 	
-	# text align
+	def ph_COLOR color, alpha
+		{
+			'&::placeholder': {
+				color: color.string.replace('--alpha','--ph-alpha')
+			},
+			'--ph-alpha': $alpha(alpha)
+		}
+			
+	def pho alpha
+		{'--ph-alpha': $alpha(alpha)}
 	
-	# text color
+	# Text Align
+	def text_left do {'text-align': 'left' }
+	def text_center do {'text-align': 'center' }
+	def text_right do {'text-align': 'right' }
+	def text_justify do {'text-align': 'justify' }
+
+	
+	# Text Color
+	
+	def COLOR color, alpha
+		{
+			'color': color.string.replace('--alpha','--text-alpha'),
+			'--text-alpha': $alpha(alpha)
+		}
 	
 	# text opacity
+	def alpha alpha
+		{
+			'--text-alpha': $alpha(alpha)
+		}
 	
 	# text decoration
 	def underline
@@ -537,8 +568,20 @@ class Rules
 
 	# BACKGRONUDS
 	
-	def bg_opacity number
-		{'--background-opacity': number}
+	# Background Attachment
+	
+	# Background Color
+	
+	def bg_COLOR color, alpha
+		{
+			'background-color': color.string.replace('--alpha','--bg-alpha')
+			'--bg-alpha': $alpha(alpha)
+		}
+		
+	# Background Opacity
+	
+	def bg_opacity alpha
+		{'--bg-alpha': $alpha(alpha)}
 	
 	def bgo number
 		bg_opacity(number)
@@ -554,10 +597,17 @@ class Rules
 	
 	# color
 	
+	def border_COLOR color, alpha
+		{
+			'border-color': color.string.replace('--alpha','--border-alpha')
+			'--border-alpha': $alpha(alpha)
+		}
+		
+	
 	# opacity
 	
-	def border_opacity number
-		{'--border-opacity': number}
+	def border_opacity alpha
+		{'--border-alpha': $alpha(alpha)}
 	
 	# style
 	def border_solid do	{'border-style': 'solid'}
@@ -587,6 +637,20 @@ class Rules
 	
 	# space between .space-x-0 > * + *
 	# def space-x num
+	
+	# SVG
+	
+	# Fill
+	
+	# Stroke
+	
+	def stroke_COLOR color, alpha
+		{
+			'stroke': color.string.replace('--alpha','stroke-alpha')
+			'--stroke-alpha': $alpha(alpha)
+		}
+		
+	# Stroke Width
 
 export class StyleRule
 	
@@ -597,11 +661,30 @@ export class StyleRule
 		
 	def toString
 		let sel = selector
+		let selectors = [sel]
 		let parts = []
+		let subselectors = {}
+
 		for own key,value of rules
-			parts.push "{key}: {value};"
+			continue if value == undefined
+
+			if key.indexOf('&') >= 0
+				let subsel = key.replace('&',sel)
+				let sub = subselectors[subsel] ||= []
+				for own subkey,subvalue of value
+					unless subvalue == undefined
+						sub.push "{subkey}: {subvalue};"
+			else				
+				parts.push "{key}: {value};"
+
 		let out = sel + ' {\n' + parts.join('\n') + '\n}'
 		out += '}' if sel.indexOf('@media') >= 0
+		
+		for own subsel,contents of subselectors
+			let subout = subsel + ' {\n' + contents.join('\n') + '\n}'
+			subout += '}' if subsel.indexOf('@media') >= 0	
+			out += '\n' + subout
+
 		return out
 
 

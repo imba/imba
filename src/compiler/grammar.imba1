@@ -366,6 +366,7 @@ var grammar =
 	]
 	
 	TagRuleMixin: [
+		o '. IDENTIFIER MATH TagRuleInlineArg' do TagStyleMixin.new(A2,[A4],A3)
 		o '. IDENTIFIER TagRuleArgs' do TagStyleMixin.new(A2,A3)
 	]
 	TagRuleArgs: [
@@ -374,6 +375,12 @@ var grammar =
 		o '( ArgList )' do A2
 		o 'CALL_START CALL_END' do []
 		o 'CALL_START ArgList CALL_END' do A2
+	]
+	
+	TagRuleInlineArg: [
+		o 'NUMBER UNIT' do NumWithUnit.new(A1,A2)
+		o 'NUMBER' do Num.new A1
+		o 'IDENTIFIER' do A1
 	]
 
 	TagOptions: [

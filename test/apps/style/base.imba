@@ -12,11 +12,13 @@ tag x-app
 			# <css(.button) .bg-blue-300 :hover.bg-blue-400>
 		
 			<button :any.purple-400 :hover.blue-600> "Welcome"
-			<p :any.bg-red-200.bgo(0.5) :lg.bg-blue-400 :hover.bgo-100> "Decorators"
+			<p :any.bg-red-200> "Decorators"
+			<p :any.bg-red-200/10> "Decorators"
+			<p :any.bg-red-200/20.red-900> "Decorators"
 			
 			<div :any.text-sm :up('x-app:hover').font-bold> "Bold when x-app is hovered"
 			
-			<input :any.ph-purple-200 type='text' placeholder='Placeholder value'>
+			<input :any.ph-purple-600-a.pho(0.5) :focus.pho(1) type='text' placeholder='Placeholder value'>
 
 			<ul> for item in items
 				<li :odd.purple-600 :even.underline :lg:even.font-bold> item
