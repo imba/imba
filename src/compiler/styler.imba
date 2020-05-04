@@ -374,6 +374,17 @@ class Rules
 	
 	# font style
 	
+	# Font Weight
+	def font_hairline do {'font-weight': 100}
+	def font_thin do {'font-weight': 200}
+	def font_light do {'font-weight': 300}
+	def font_normal do {'font-weight': 400}
+	def font_medium do {'font-weight': 500}
+	def font_semibold do {'font-weight': 600}
+	def font_bold do {'font-weight': 700}
+	def font_extrabold do {'font-weight': 800}
+	def font_black do {'font-weight': 900}
+	
 	# line height
 	def lh value
 		{'line-height': dim(value)}
