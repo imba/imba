@@ -1,8 +1,10 @@
 
 var conv = require('../../vendor/colors')
-import {fonts,colors} from './theme.imba'
+import {fonts,colors,rounded} from './theme.imba'
 
 const extensions = {}
+
+# add some rounded size presents
 
 ###
 bg: background
@@ -710,6 +712,12 @@ class Rules
 	# BORDERS
 	
 	# radius
+	
+	def round
+		{'border-radius': '9999px'}
+		
+	def rounded num
+		{'border-radius': num}
 	
 	# width
 	
