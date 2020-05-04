@@ -21,9 +21,11 @@ for own name,variations of colors
 		color.bg = "hsla({hslstr},var(--background-opacity,1))"
 		color.border = "hsla({hslstr},var(--border-opacity,1))"
 		color.text = "hsla({hslstr},var(--text-opacity,1))"
+		color.ph = "hsla({hslstr},var(--placeholder-opacity,1))"
 		extensions['bg-' + path] = {'background-color': color.bg}
 		extensions['border-' + path] = {'border-color': color.border}
 		extensions['text-' + path] = {'color': color.text}
+		extensions['ph-' + path] = {'::placeholder color': color.ph}
 		extensions[path] = {'color': color.text}
 
 
@@ -355,7 +357,8 @@ class Rules
 
 	# TYPOGRAPHY
 	
-	# font-family
+	# Font Family
+	
 	def font_sans
 		{'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'}
 	
@@ -365,14 +368,39 @@ class Rules
 	def font_mono
 		{'font-family': 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'}
 	
-	# font size
-	# could allow a manual font-size(v) in addition to these others?
-	# font sizes need to be predefined somewhere
 	
-
-	# font smoothing
+	# Font Size
+	# font sizes need to be predefined somewhere outside of this - in theme?
+	def text_xs do {'font-size': '.75rem'}
+	def text_sm do {'font-size': '.875rem'}
+	def text_base do {'font-size': '1rem'}
+	def text_lg do {'font-size': '1.125rem'}
+	def text_xl do {'font-size': '1.25rem'}
+	def text_2xl do {'font-size': '1.5rem'}
+	def text_3xl do {'font-size': '1.875rem'}
+	def text_4xl do {'font-size': '2.25rem'}
+	def text_5xl do {'font-size': '3rem'}
+	def text_6xl do {'font-size': '4rem'}
+	def text_size v do {'font-size': v}
 	
-	# font style
+	# Font Smoothing
+	def antialiased
+		{
+			'-webkit-font-smoothing': 'antialiased'
+			'-moz-osx-font-smoothing': 'grayscale'
+		}
+	
+	def subpixel_antialiased
+		{
+			'-webkit-font-smoothing': 'auto'
+			'-moz-osx-font-smoothing': 'auto'
+		}
+	
+	
+	# Font Style
+	def italic do {'font-style': 'italic'}
+	def not_italic do {'font-style': 'normal'}
+	
 	
 	# Font Weight
 	def font_hairline do {'font-weight': 100}
@@ -385,11 +413,49 @@ class Rules
 	def font_extrabold do {'font-weight': 800}
 	def font_black do {'font-weight': 900}
 	
-	# line height
-	def lh value
-		{'line-height': dim(value)}
+	
+	# Letter Spacing
+	# Add 'ls' alias?
+	def tracking_tighter do {'letter-spacing': '-0.05em' }
+	def tracking_tight do {'letter-spacing': '-0.025em' }
+	def tracking_normal do {'letter-spacing': '0' }
+	def tracking_wide do {'letter-spacing': '0.025em' }
+	def tracking_wider do {'letter-spacing': '0.05em' }
+	def tracking_widest do {'letter-spacing': '0.1em' }
+	
+	
+	# Line Height
+	# Add 'lh' alias?
+	def leading_none do {'line-height': '1' }
+	def leading_tight do {'line-height': '1.25' }
+	def leading_snug do {'line-height': '1.375' }
+	def leading_normal do {'line-height': '1.5' }
+	def leading_relaxed do {'line-height': '1.625' }
+	def leading_loose do {'line-height': '2' }
+			
+	# should this use rems by default? How would you do
+	# plain numeric values?
+	def leading value do {'line-height': dim(value)}
+	def lh value do {'line-height': value}
+	
+	
+	# List Style Type
+	def list_none do {'list-style-type': 'none' }
+	def list_disc do {'list-style-type': 'disc' }
+	def list_decimal do {'list-style-type': 'decimal' }
 		
-	# list style type
+		
+	# List Style Position
+	def list_inside do {'list-style-position': 'inside' }
+	def list_outside do {'list-style-position': 'outside' }
+	
+	
+	# Placeholder Color
+	
+	# Placeholder Opacity
+	
+	def placeholder_opacity number
+		{'--placeholder-opacity': number}
 	
 	# text align
 	
