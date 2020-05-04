@@ -434,15 +434,25 @@ class Rules
 	
 	# SIZING
 	
-	def w(w) do  {'width': dim(w)}
-	def h(w) do  {'heigth': dim(h)}
-	def wh(w,h=w) do {'width': dim(w), 'height': dim(h)}
-
-
-	
+	# Width
+	def w(length) do  {'width': dim(length)}
+	def wmin(length) do  {'min-width': dim(length)}
+	def wmax(length) do  {'max-width': dim(length)}
 		
+	# Min-Width
+	# Max-Width
+		
+	# Height
+	def h(length) do {'heigth': dim(length)}
+	def hmin(length) do {'min-heigth': dim(length)}
+	def hmax(length) do {'max-heigth': dim(length)}
+	# Add hclamp ? 
+
+	# Min-Height
+	# Max-Height
 	
-	
+	# Both
+	def wh(w,h=w) do {'width': dim(w), 'height': dim(h)}
 	
 
 
@@ -545,7 +555,7 @@ class Rules
 	
 	# Placeholder Opacity
 	
-	def placeholder_opacity alpha
+	def ph_opacity alpha
 		{'--ph-alpha': $alpha(alpha)}
 	
 	def ph_COLOR color, alpha
@@ -555,9 +565,7 @@ class Rules
 			},
 			'--ph-alpha': $alpha(alpha)
 		}
-			
-	def pho alpha
-		{'--ph-alpha': $alpha(alpha)}
+
 	
 	# Text Align
 	def text_left do {'text-align': 'left' }
@@ -575,7 +583,8 @@ class Rules
 		}
 	
 	# text opacity
-	def alpha alpha
+	# TODO add shorthand?
+	def text_opacity alpha
 		{
 			'--text-alpha': $alpha(alpha)
 		}
@@ -656,6 +665,10 @@ class Rules
 	
 	# Background Attachment
 	
+	def bg_fixed do {'background-attachment': 'fixed' }
+	def bg_local do {'background-attachment': 'local' }
+	def bg_scroll do {'background-attachment': 'scroll' }
+	
 	# Background Color
 	
 	def bg_COLOR color, alpha
@@ -668,9 +681,31 @@ class Rules
 	
 	def bg_opacity alpha
 		{'--bg-alpha': $alpha(alpha)}
+		
+	# Background Position
 	
-	def bgo number
-		bg_opacity(number)
+	def bg_bottom do {'background-position': 'bottom' }
+	def bg_center do {'background-position': 'center' }
+	def bg_left do {'background-position': 'left' }
+	def bg_left_bottom do {'background-position': 'left bottom' }
+	def bg_left_top do {'background-position': 'left top' }
+	def bg_right do {'background-position': 'right' }
+	def bg_right_bottom do {'background-position': 'right bottom' }
+	def bg_right_top do {'background-position': 'right top' }
+	def bg_top do {'background-position': 'top' }
+	
+	# Background Repeat
+	def bg_repeat do {'background-repeat': 'repeat' }
+	def bg_no_repeat do {'background-repeat': 'no-repeat' }
+	def bg_repeat_x do {'background-repeat': 'repeat-x' }
+	def bg_repeat_y do {'background-repeat': 'repeat-y' }
+	def bg_repeat_round do {'background-repeat': 'round' }
+	def bg_repeat_space do {'background-repeat': 'space' }
+	
+	# Background Size
+	def bg_auto do {'background-size': 'auto' }
+	def bg_cover do {'background-size': 'cover' }
+	def bg_contain do {'background-size': 'contain' }
 	
 	# BORDERS
 	
