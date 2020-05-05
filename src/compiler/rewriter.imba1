@@ -61,6 +61,9 @@ var EXPRESSION_END =
 	'BLOCK_PARAM_END': 1,
 	'STRING_END': 1,
 	'TAG_END': 1
+	
+var NO_IMPLICIT_PARENS = ['STYLE_START']
+var NO_IMPLICIT_BRACES = ['STYLE_START']
 
 var SINGLE_LINERS =
 	ELSE: 1
@@ -451,11 +454,21 @@ export class Rewriter
 			return [a,b]
 			
 		var indents = []
+		var balancedStack = []
 
 		# method is called so many times
 		scanTokens do |token,i,tokens|
 			var type = token.@type
 			var v = token.@value
+			
+			if BALANCED_PAIRS[type]
+				balancedStack.unshift(type)
+			
+			elif INVERSES[type] and INVERSES[type] == balancedStack[0]
+				stack.unshift()
+
+			if NO_IMPLICIT_BRACES.indexOf(balancedStack[0]) >= 0
+				return 1
 
 			var ctx = stack:length ? stack[stack:length - 1] : baseCtx
 			var idx
@@ -695,10 +708,23 @@ export class Rewriter
 			return no
 
 		var i = 0
+		let stack = []
+		let currPair = null
 
 		while tokens:length > (i + 1)
 			var token = tokens[i]
 			var type = token.@type
+			
+			if BALANCED_PAIRS[type]
+				stack.push(currPair = type)
+			
+			elif INVERSES[type] and INVERSES[type] == currPair
+				stack.pop()
+				currPair = stack[stack:length - 1]
+
+			if NO_IMPLICIT_PARENS.indexOf(currPair) >= 0
+				i++
+				continue
 
 			var prev    = i > 0 ? tokens[i - 1] : null
 			var next    = tokens[i + 1]

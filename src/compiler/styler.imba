@@ -1,6 +1,6 @@
 
 var conv = require('../../vendor/colors')
-import {fonts,colors,variants} from './theme.imba'
+import {fonts,colors,variants,breakpoints} from './theme.imba'
 
 const extensions = {}
 
@@ -9,6 +9,64 @@ const extensions = {}
 ###
 bg: background
 ph: placeholder
+
+
+# special flow shorthands
+
+# horizontal align r/h/x
+
+[l]eft
+[c]enter
+[r]ight
+[s]stretch
+[b]baseline
+
+# vertical align c/v/y
+
+[t]op
+[m]iddle
+[b]ottom
+[s]tretch
+
+# justify content
+[s]tart
+[c]enter
+[e]nd
+[j]ustify - space-between
+[d]istribute - space-evenly
+[a]round - space-around
+
+
+
+# either
+[j]ustify - space-between
+[d]istribute - space-evenly
+[b]etween
+
+
+# shorthand follows format
+direction-xaxis-yaxis
+
+vtc (vertical top center)
+
+# Either follow format direction-x-y or direction-along-across
+# direction-along-across
+
+vss - vertical from start - stretching children
+vcc - vertical from center - centered children
+vsc - vertical from start - centered 
+vsl - vertical from start - children aligned to the left
+
+vst
+vcm
+hjc - horizontal justified 
+
+vmc - vertical middle ccenter
+vml - vertical middle left
+
+hcm - horizontal center middle
+hlm - horizontal left middle
+
 ###
 
 # should not happen at root - but create a theme instance
@@ -48,18 +106,27 @@ class Selectors
 		
 	def $parse context, states
 		let rule = '&'
-		let breakpoints = breakpoints
 		let o = {context: context, media: []}
 		for [state,...params] in states
+			let res
 			unless self[state]
 				if let media = breakpoints[state]
 					o.media.push(media)
-				continue
-				
-			let res = self[state](o,...params)
+					continue
+					
+				elif state.indexOf('&') >= 0
+					res = state	
+			else
+				res = self[state](o,...params)
+
 			if typeof res == 'string'
 				rule = rule.replace('&',res)
+
+
 		let sel = rule.replace(/\&/g,context)
+		
+		# possibly expand selectors?
+
 		o.selectors = [sel]
 		if o.media.length
 			sel = '@media ' + o.media.join(' and ') + '{ ' + sel
@@ -113,15 +180,7 @@ class Selectors
 	# selector matching the custom component we are inside
 	def scope o, sel
 		sel.indexOf('&') >= 0 ? sel : "{sel} &"
-		
-	get breakpoints
-		{
-			sm: '(min-width: 640px)'
-			md: '(min-width: 768px)'
-			lg: '(min-width: 1024px)'
-			xl: '(min-width: 1280px)'
-		}
-		
+
 	# :light
 	# :dark
 	# :ios
@@ -130,7 +189,6 @@ class Selectors
 	# :windows
 	# :linux
 	# :print
-		
 
 class Rules
 	
@@ -160,22 +218,25 @@ class Rules
 	def $parse mods
 		let values = {}
 		
-		for [mod,params = []] in mods
+		for [mod,...params] in mods
 			let res = null
-			let name = mod.replace(/\-/g,'_')
+			let scopes = mod.split(':')
+			let key = scopes.pop()
+			let name = key.replace(/\-/g,'_')
+			
 			
 			if self[name]
 				res = self[name](...params)
 			
-			elif let colormatch = mod.match(colorRegex)
+			elif let colormatch = key.match(colorRegex)
 				let color = palette[colormatch[1]]	
-				let name = mod.replace(colorRegex,'COLOR').replace(/\-/g,'_')
+				let name = key.replace(colorRegex,'COLOR').replace(/\-/g,'_')
 			
 				if self[name]
 					params.unshift(color)
 					res = self[name](...params)
 			else
-				let parts = mod.split('-')
+				let parts = key.split('-')
 				let dropped = []
 				while parts.length > 1
 					let drop = parts.pop!
@@ -185,6 +246,12 @@ class Rules
 					if self[name]
 						res = self[name](...params)
 			if res
+				if scopes.length
+					let obj = {}
+					let jsonkey = JSON.stringify(scopes.map(do [$1]))
+					obj[jsonkey] = res
+					res = obj
+
 				$merge(values,res)
 
 		return values
@@ -409,7 +476,7 @@ class Rules
 	def flex_1 do {flex: '1 1 0%' }
 	def flex_auto do {flex: '1 1 auto' }
 	def flex_none do {flex: 'none' }
-		
+	def flexible do {flex: '1 1 auto' }
 		
 	# Flex grow
 	def flex_grow(v = 1) do {'flex-grow': v }
@@ -418,6 +485,30 @@ class Rules
 	# Flex Shrink
 	def flex_shrink(v = 1) do {'flex-shrink': v }
 	# TODO alias as shrink?
+	
+	def hsc
+		{
+			'display': 'flex'
+			'flex-direction': 'row'
+			'justify-content': 'flex-start'
+			'align-items': 'center'
+		}
+	
+	def vsc
+		{
+			'display': 'flex'
+			'flex-direction': 'column'
+			'justify-content': 'flex-start'
+			'align-items': 'center'
+		}
+		
+	def vss
+		{
+			'display': 'flex'
+			'flex-direction': 'column'
+			'justify-content': 'flex-start'
+			'align-items': 'stretch'
+		}
 	
 	
 	# Order
@@ -847,20 +938,35 @@ export class StyleRule
 	
 	def constructor context,states,modifiers
 		context = context
+		states = states
 		selector = Selectors.parse(context,states)
-		rules = Rules.parse(modifiers)
+		rules = modifiers isa Array ? Rules.parse(modifiers) : modifiers
+		selectors = {}
 		
 	def toString
 		let sel = selector
-		let selectors = [sel]
 		let parts = []
 		let subselectors = {}
+		let subrules = []
 
 		for own key,value of rules
 			continue if value == undefined
+			
+			let subsel = null
+			
+			if key[0] == '['
+				let substates = states.concat(JSON.parse(key))
+				subrules.push StyleRule.new(context,substates,value)
+				continue
 
 			if key.indexOf('&') >= 0
-				let subsel = key.replace('&',sel)
+				console.log 'key',key
+				let substates = states.concat([[key]])
+				subrules.push StyleRule.new(context,substates,value)
+				continue
+
+				subsel = key.replace('&',sel)
+
 				let sub = subselectors[subsel] ||= []
 				for own subkey,subvalue of value
 					unless subvalue == undefined
@@ -875,6 +981,9 @@ export class StyleRule
 			let subout = subsel + ' {\n' + contents.join('\n') + '\n}'
 			subout += '}' if subsel.indexOf('@media') >= 0	
 			out += '\n' + subout
+		
+		for own subrule in subrules
+			out += '\n' + subrule.toString()
 
 		return out
 

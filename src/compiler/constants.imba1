@@ -10,6 +10,7 @@ export var BALANCED_PAIRS = [
 	['PARAM_START', 'PARAM_END']
 	['INDEX_START', 'INDEX_END']
 	['TAG_START','TAG_END']
+	['STYLE_START','STYLE_END']
 	['BLOCK_PARAM_START','BLOCK_PARAM_END']
 ]
 
@@ -26,6 +27,7 @@ for pair in BALANCED_PAIRS
 	var rite = pair[1]
 	INVERSES[rite] = left
 	INVERSES[left] = rite
+	BALANCED_PAIRS[left] = rite
 
 
 export var ALL_KEYWORDS = [

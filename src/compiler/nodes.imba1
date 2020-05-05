@@ -6730,12 +6730,13 @@ export class TagStylePart < Node
 	prop params
 	
 	def initialize name, params
-		@name = name
+		@key = name
 		@params = params or []
 		# console.log 'tagstyle params',name,'pars?',params
 	
 	def serialize
-		[@name.c,params ? params.map(do $1:raw ? $1.raw : $1.c(css: yes)) : []]
+		let key = @key.map(do $1.c).join(':')
+		[key].concat(params.map(do $1:raw ? $1.raw : $1.c(css: yes)))
 
 export class TagStyleMixin < TagStylePart
 
@@ -6775,6 +6776,7 @@ export class TagStyle < TagPart
 		let sel = "{@sel}"
 		let scopes = self.scopes.map do $1.serialize
 		let mixins = self.mixins.map do $1.serialize
+		# console.log 'toStyle',scopes,mixins
 		let rule = StyleRule.new(sel,scopes,mixins)
 		return rule.toString
 		

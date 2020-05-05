@@ -27,6 +27,12 @@ export const variants =
 		inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
 		outline: '0 0 0 3px rgba(66, 153, 225, 0.5)',
 		none: 'none'
+		
+export const breakpoints =
+	sm: '(min-width: 640px)'
+	md: '(min-width: 768px)'
+	lg: '(min-width: 1024px)'
+	xl: '(min-width: 1280px)'
 
 export const colors = 
 	red: {

@@ -382,6 +382,32 @@ var grammar =
 		o 'NUMBER' do Num.new A1
 		o 'IDENTIFIER' do A1
 	]
+	
+	StyleDefinition: [
+		o 'STYLE_START StyleProperties STYLE_END' do A2
+	
+	]
+	
+	StyleProperties: [
+		o 'StyleProperty' do [A1]	
+		o 'StyleProperties StyleProperty' do A1.concat(A2)
+	]
+	
+	StylePropertyScope: [
+		o ''
+		o 'IDENTIFIER :' do [A1]
+		o 'StylePropertyScope IDENTIFIER :' do A1.concat(A2)
+	]
+	
+	StylePropertyKey: [
+		o 'IDENTIFIER' do [A1]
+		o 'StylePropertyKey : IDENTIFIER' do A1.concat(A3)
+	]
+	
+	StyleProperty: [
+		o 'StylePropertyKey MATH TagRuleInlineArg' do TagStyleMixin.new(A1,[A3])
+		o 'StylePropertyKey TagRuleArgs' do TagStyleMixin.new(A1,A2)
+	]
 
 	TagOptions: [
 		o 'TagTypeName TAG_REF' do Tag.new(type: A1,reference: A2)
@@ -393,6 +419,7 @@ var grammar =
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
 		
 		o 'TagOptions RULE_START TagRuleScopes TagRuleMixins RULE_END' do A1.addPart(TagStyle.new(A3,A4),AST.TagStyle)
+		o 'TagOptions T. StyleDefinition' do A1.addPart(TagStyle.new([],A3),AST.TagStyle)
 		# o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagStyle)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
