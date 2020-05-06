@@ -465,7 +465,7 @@ export class Rewriter
 				balancedStack.unshift(type)
 			
 			elif INVERSES[type] and INVERSES[type] == balancedStack[0]
-				stack.unshift()
+				balancedStack.shift()
 
 			if NO_IMPLICIT_BRACES.indexOf(balancedStack[0]) >= 0
 				return 1

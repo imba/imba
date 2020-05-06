@@ -315,4 +315,5 @@ export def printWarning code, warn
 export def identifierForPath str
 	var hash = sha1.create()
 	hash.update(str)
-	return 'i' + hash.hex().slice(0, 8)
+	var id = hash.b32().replace(/^\d+/,'')
+	return id.slice(0, 6)

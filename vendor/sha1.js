@@ -340,6 +340,44 @@
       (h4 >> 24) & 0xFF, (h4 >> 16) & 0xFF, (h4 >> 8) & 0xFF, h4 & 0xFF
     ];
   };
+  
+  var alphabet = '0123456789abcdefghjkmnpqrtuvwxyz'
+  var alias = { o:0, i:1, l:1, s:5 }
+
+  Sha1.prototype.b32 = function () {
+    var bytes = this.digest();
+    
+    var skip = 0 // how many bits we will skip from the first byte
+    var bits = 0 // 5 high bits, carry from one byte to the next
+    var out = ''
+    
+    for (var i = 0; i < bytes.length; ) {
+        var byte = bytes[i];
+
+        if (skip < 0) { // we have a carry from the previous byte
+            bits |= (byte >> (-skip))
+        } else { // no carry
+            bits = (byte << skip) & 248
+        }
+
+        if (skip > 3) {
+            // not enough data to produce a character, get us another one
+            skip -= 8;
+            i += 1;
+            continue
+        }
+
+        if (skip < 4) {
+            // produce a character
+            out += alphabet[bits >> 3]
+            skip += 5
+        }
+    }
+    
+    out = out + (skip < 0 ? alphabet[bits >> 3] : '')
+      
+    return out;
+  };
 
   Sha1.prototype.array = Sha1.prototype.digest;
 

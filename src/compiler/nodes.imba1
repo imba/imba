@@ -6328,7 +6328,10 @@ export class TagId < TagPart
 
 export class TagFlag < TagPart
 	prop condition
-
+	
+	def rawClassName
+		name.toRaw
+		
 	def value
 		@name
 		
@@ -6345,6 +6348,7 @@ export class TagFlag < TagPart
 		!!condition
 
 	def js
+		# NOT used anymore
 		let val = value.c(as: 'string')
 		condition ? "flags.toggle({val},{condition.c})" : "classList.add({val})"
 	
@@ -6762,10 +6766,13 @@ export class TagStyle < TagPart
 		self
 		
 	def visit
-		# should build a full style based on this 
-		@tag.sfcid
-		@sel = @tag.uniqueSelector
+		@name = STACK.sfcid + oid
+		@sel = ".{@name}"
 		
+		# maybe reuse duplicated styles within a single file?
+		# should build a full style based on this 
+		# @tag.sfcid
+		# @sel = @tag.uniqueSelector
 		scope__.root.styles.push({
 			type: 'css'
 			processed: toStyle
@@ -6780,8 +6787,11 @@ export class TagStyle < TagPart
 		let rule = StyleRule.new(sel,scopes,mixins)
 		return rule.toString
 		
+	def toRaw
+		"{@name}"
+		
 	def c
-		""
+		"'{@name}'"
 
 class TagLike < Node
 
@@ -7256,7 +7266,7 @@ export class Tag < TagLike
 		@attributes = @attributes.filter do |item|
 
 			if item isa TagFlag and item.isStatic
-				@classNames.push(item.name.toRaw)
+				@classNames.push(item.rawClassName)
 				return false
 
 			if item == @attrmap:$key
@@ -7346,7 +7356,6 @@ export class Tag < TagLike
 			elif curr isa TagHandler
 				
 				if part
-					
 					# if part isa Access or part isa VarOrAccess
 					#	# let e = Token.new('IDENTIFIER','e')
 					#	part = CALL(part,[LIT('e')])
@@ -7354,6 +7363,7 @@ export class Tag < TagLike
 					# TODO don't generate this until visiting the taghandler
 					# part = (STACK.tsc ? Func : IsolatedFunc).new([],[part],null,{})
 					curr.add(TagHandlerCallback.new(part),type)
+				
 			elif curr
 				curr.value = part
 				curr.set(op: tok)
