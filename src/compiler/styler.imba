@@ -119,6 +119,8 @@ class Selectors
 					res = state
 				else
 					let [prefix,...flags] = state.split('-')
+					prefix = '_'+prefix if prefix == 'in' or prefix == 'is'
+
 					if self[prefix] and flags.length
 						params.unshift(".{flags.join('.')}")
 						state = prefix
@@ -126,6 +128,7 @@ class Selectors
 			
 			if self[state]
 				res = self[state](...params)
+			
 
 			if typeof res == 'string'
 				rule = rule.replace('&',res)
@@ -181,6 +184,12 @@ class Selectors
 		
 	def hocus
 		'&:matches(:focus,:hover)'
+		
+	def _in sel
+		sel.indexOf('&') >= 0 ? sel : "{sel} &"
+	
+	def _is sel
+		sel.indexOf('&') >= 0 ? sel : "&{sel}"
 	
 	def up sel
 		sel.indexOf('&') >= 0 ? sel : "{sel} &"

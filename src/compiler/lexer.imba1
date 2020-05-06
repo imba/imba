@@ -513,16 +513,6 @@ export class Lexer
 		if chr == ':'
 			pushEnd('TAG_RULE',id: 'RULE', pop: /^([\s\n\>]|\/\>)/)
 			return 0
-			
-		if chr == '.'
-			token("T{chr}",chr,1)
-			if chr2 == '(' and false
-				# pushEnd(chr2,id: 'RULE', pop: /^(\))/)
-				# return 2
-				token('STYLE_START',chr2,1)
-				pushEnd(INVERSES['STYLE_START'])
-				return 1
-			return 1
 
 		if chr == '%' or chr == ':' or chr == '.' or chr == '@'
 			token("T{chr}",chr,1)
@@ -1517,6 +1507,10 @@ export class Lexer
 			tokid = 'TERMINATOR'
 			
 		if value == '(' and pt == 'T.'
+			tokid = 'STYLE_START'
+		
+		elif value == '(' and pt == '.'
+			prev.@type = 'STYLE_DECL'
 			tokid = 'STYLE_START'
 
 		elif value is '(' and inTag and pt != '=' and prev:spaced # FIXed

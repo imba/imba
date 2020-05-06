@@ -384,9 +384,9 @@ var grammar =
 	]
 	
 	StyleDefinition: [
-		o 'STYLE_START StyleProperties STYLE_END' do A2
-	
+		o 'STYLE_DECL STYLE_START StyleProperties STYLE_END' do TagStyle.new([],A3)
 	]
+
 	
 	StyleProperties: [
 		o 'StyleProperty' do [A1]	
@@ -419,7 +419,7 @@ var grammar =
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
 		
 		o 'TagOptions RULE_START TagRuleScopes TagRuleMixins RULE_END' do A1.addPart(TagStyle.new(A3,A4),AST.TagStyle)
-		o 'TagOptions T. StyleDefinition' do A1.addPart(TagStyle.new([],A3),AST.TagFlag)
+		o 'TagOptions T. STYLE_START StyleProperties STYLE_END' do A1.addPart(TagStyle.new([],A4),AST.TagFlag)
 		# o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagStyle)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
@@ -750,6 +750,7 @@ var grammar =
 		o 'This'
 		o 'TagId'
 		o 'Selector'
+		o 'StyleDefinition'
 		o 'Invocation'
 		o 'Require'
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
