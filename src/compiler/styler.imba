@@ -106,18 +106,26 @@ class Selectors
 		
 	def $parse context, states
 		let rule = '&'
-		let o = {context: context, media: []}
+		o = {context: context, media: []}
 		for [state,...params] in states
 			let res
+
 			unless self[state]
 				if let media = breakpoints[state]
 					o.media.push(media)
 					continue
 					
 				elif state.indexOf('&') >= 0
-					res = state	
-			else
-				res = self[state](o,...params)
+					res = state
+				else
+					let [prefix,...flags] = state.split('-')
+					if self[prefix] and flags.length
+						params.unshift(".{flags.join('.')}")
+						state = prefix
+						console.log 'added params',params
+			
+			if self[state]
+				res = self[state](...params)
 
 			if typeof res == 'string'
 				rule = rule.replace('&',res)
@@ -134,33 +142,36 @@ class Selectors
 
 	def any
 		'&'
+		
+	def pseudo type,sel
+		sel ? "{sel}{type} &" : "&{type}"
 
-	def hover
-		'&:hover'
+	def hover sel
+		pseudo(':hover',sel)
 	
-	def focus
-		'&:focus'
+	def focus sel
+		pseudo(':focus',sel)
+
+	def active sel
+		pseudo(':active',sel)
 		
-	def active
-		'&:active'
-		
-	def visited
-		'&:visited'
+	def visited sel
+		pseudo(':visited',sel)
 	
-	def disabled
-		'&:disabled'
+	def disabled sel
+		pseudo(':disabled',sel)
 		
-	def focus-within
-		'&:focus-within'
+	def focus-within sel
+		pseudo(':focus-within',sel)
 		
-	def odd
-		'&:nth-child(odd)'
+	def odd sel
+		pseudo(':nth-child(odd)',sel)		
 		
-	def even
-		'&:nth-child(even)'
+	def even sel
+		pseudo(':nth-child(even)',sel)
 		
-	def empty
-		'&:empty'
+	def empty sel
+		pseudo(':empty',sel)
 		
 	def hocus
 		'&:matches(:focus,:hover)'
@@ -171,14 +182,14 @@ class Selectors
 	def last
 		'&:last-child'
 	
-	def up o, sel
+	def up sel
 		sel.indexOf('&') >= 0 ? sel : "{sel} &"
 	
-	def sel o, sel
+	def sel sel
 		sel.indexOf('&') >= 0 ? sel : "& {sel}"
 	
 	# selector matching the custom component we are inside
-	def scope o, sel
+	def scope sel
 		sel.indexOf('&') >= 0 ? sel : "{sel} &"
 
 	# :light
