@@ -170,17 +170,17 @@ class Selectors
 	def even sel
 		pseudo(':nth-child(even)',sel)
 		
+	def first sel
+		pseudo(':first-child',sel)
+		
+	def last sel
+		pseudo(':last-child',sel)
+		
 	def empty sel
 		pseudo(':empty',sel)
 		
 	def hocus
 		'&:matches(:focus,:hover)'
-		
-	def first
-		'&:first-child'
-		
-	def last
-		'&:last-child'
 	
 	def up sel
 		sel.indexOf('&') >= 0 ? sel : "{sel} &"
@@ -931,6 +931,18 @@ class Rules
 	# space between .space-x-0 > * + *
 	# def space-x num
 	
+	
+	# INTERACTIVITY
+
+	# Cursor	
+	def cursor_auto do {cursor: 'auto' }
+	def cursor_default do {cursor: 'default' }
+	def cursor_pointer do {cursor: 'pointer' }
+	def cursor_wait do {cursor: 'wait' }
+	def cursor_text do {cursor: 'text' }
+	def cursor_move do {cursor: 'move' }
+	def cursor_not_allowed do {cursor: 'not-allowed' }
+
 	# SVG
 	
 	# Fill
