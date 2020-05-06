@@ -12,10 +12,10 @@ const teal-box = .(bg-teal-600/25 teal-600 hover:bg-opacity/50)
 const list = .(vsc space(4) mx(-4) md:hsc)
 
 const colors =
-	blue: .(bg-blue-200 blue-800 hover:blue-900 hover:bg-blue-300)
-	red: .(bg-red-200 red-800 hover:red-900 hover:bg-red-300)
-	teal: .(bg-teal-200 teal-800 hover:teal-900 hover:bg-teal-300)
-	yellow: .(bg-yellow-200 yellow-800 hover:yellow-900 hover:bg-yellow-300)
+	blue: .(bg:blue-200 color:blue-800 hover{color:blue-900 bg:blue-300} hover:bg-blue-300)
+	teal: .(bg:teal-200 color:teal-800 hover:teal-900 hover:bg-teal-300)
+	red: .(bg:red-200 color:red-800 hover:red-900 hover:bg-red-300)
+	yellow: .(bg:yellow-200 color:yellow-800 hover:yellow-900 hover:bg-yellow-300)
 
 tag x-app
 	prop checked = false
