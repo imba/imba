@@ -430,19 +430,21 @@ var grammar =
 	]
 	
 	Style2Property: [
-		o 'IDENTIFIER' do StyleProperty.new(A1)
+		o 'IDENTIFIER' do StyleProperty.new([A1])
 		o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
 	]
 	
 	# the values
 	Style2Expression: [
-		o 'Style2Term' do StyleExpression.new(A1)
+		o 'Style2Term' do StyleExpression.new().add(A1)
+		o 'Style2Expression MATH' do A1.add(A2)
+		o 'Style2Expression Style2Term' do A1.add(A2)
 	]
 	
 	Style2Term: [
-		o 'NUMBER UNIT' do NumWithUnit.new(A1,A2)
-		o 'NUMBER' do Num.new A1
-		o 'IDENTIFIER' do A1
+		o 'NUMBER UNIT' do StyleNumber.new(A1,A2)
+		o 'NUMBER' do StyleNumber.new(A1)
+		o 'IDENTIFIER' do StyleIdentifier.new(A1)
 	]
 
 	TagOptions: [

@@ -8,8 +8,30 @@ export const aliases =
 	p: 'padding'
 	pl: 'padding-left'
 	pr: 'padding-right'
-	px: ['padding-left','padding-right']
-	py: ['padding-top','padding-bottom']
+	pt: 'padding-bottom'
+	pb: 'padding-bottom'
+	px: 'padding-x'
+	py: 'padding-y'
+	
+	m: 'margin'
+	ml: 'margin-left'
+	mr: 'margin-right'
+	mt: 'margin-bottom'
+	mb: 'margin-bottom'
+	mx: 'margin-x'
+	my: 'margin-y'
+	# px: ['padding-left','padding-right']
+	# py: ['padding-top','padding-bottom']
+	
+	ai: 'align-items'
+	ac: 'align-content'
+	jc: 'justify-content'
+	fw: 'flex-wrap'
+	
+	d: 'display'
+	
+	inset: ['top','right','bottom','left']
+	
 
 export const variants =
 	radius:

@@ -2,74 +2,10 @@
 var conv = require('../../vendor/colors')
 import {fonts,colors,variants,breakpoints} from './theme.imba'
 
+import * as theme from  './theme.imba'
+
 const extensions = {}
-
-# add some rounded size presents
-
-###
-bg: background
-ph: placeholder
-
-
-# special flow shorthands
-
-# horizontal align r/h/x
-
-[l]eft
-[c]enter
-[r]ight
-[s]stretch
-[b]baseline
-
-# vertical align c/v/y
-
-[t]op
-[m]iddle
-[b]ottom
-[s]tretch
-
-# justify content
-[s]tart
-[c]enter
-[e]nd
-[j]ustify - space-between
-[d]istribute - space-evenly
-[a]round - space-around
-
-
-
-# either
-[j]ustify - space-between
-[d]istribute - space-evenly
-[b]etween
-
-
-# shorthand follows format
-direction-xaxis-yaxis
-
-vtc (vertical top center)
-
-# Either follow format direction-x-y or direction-along-across
-# direction-along-across
-
-vss - vertical from start - stretching children
-vcc - vertical from center - centered children
-vsc - vertical from start - centered 
-vsl - vertical from start - children aligned to the left
-
-vst
-vcm
-hjc - horizontal justified 
-
-vmc - vertical middle ccenter
-vml - vertical middle left
-
-hcm - horizontal center middle
-hlm - horizontal left middle
-
-###
-
-# should not happen at root - but create a theme instance
+var ThemeInstance = null
 
 var palette = {
 	current: {string: "currentColor"}
@@ -98,6 +34,66 @@ for own name,variations of colors
 
 # var colorRegex = RegExp.new('^(?:(\\w+)\-)?(' + Object.keys(palette).join('|') + ')\\b')
 var colorRegex = RegExp.new('\\b(' + Object.keys(palette).join('|') + ')\\b')
+
+export class StyleTheme
+	
+	static def instance
+		ThemeInstance ||= self.new
+		
+	def constructor 
+		options = theme
+		
+	def parseColors
+		self
+		
+	get aliases
+		options.aliases or {}
+		
+	def expandProperty name
+		return aliases[name] or undefined
+		
+	def expandValue value, config
+
+		if value == undefined
+			value = config.default
+
+		if config.hasOwnProperty(value)
+			value = config[value]
+
+		if typeof value == 'number' and config.step
+			let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
+			return value * parseFloat(num) + unit
+
+		return value
+	
+	
+	def antialiazed value
+		# what if it is false?
+		if String(value) == 'subpixel'
+			{
+				'-webkit-font-smoothing':'auto'
+				'-moz-osx-font-smoothing': 'auto'
+			}
+		else
+			{
+				'-webkit-font-smoothing':'antialiased'
+				'-moz-osx-font-smoothing': 'grayscale'
+			}
+			
+	
+	def padding-x l,r=l
+		{'padding-left': l, 'padding-right': r}
+	
+	def padding-y t,b=t
+		{'padding-top': t, 'padding-bottom': b}
+		
+	def margin-x l,r=l
+		{'margin-left': l, 'margin-right': r}
+	
+	def margin-y t,b=t
+		{'margin-top': t, 'margin-bottom': b}
+		
+# should not happen at root - but create a theme instance
 
 class Selectors
 	static def parse context, states

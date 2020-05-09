@@ -10,7 +10,7 @@ import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
-import StyleRule from './styler.imba'
+import StyleRule,StyleTheme from './styler.imba'
 
 var TSC_CLASS_HEAD = 'static $static$(){ this.prototype } $member$(){ this.constructor } '
 var TAG_NAMES = constants.TAG_NAMES
@@ -532,6 +532,7 @@ export class Stack
 	prop root
 	prop state
 	prop semanticTokens
+	prop theme
 
 	def initialize
 		reset
@@ -552,6 +553,7 @@ export class Stack
 		@tag = null
 		@sfcid = null
 		@semanticTokens = []
+		@theme = StyleTheme.new
 		self
 	
 	def registerSemanticToken token, kind, modifiers
@@ -8260,39 +8262,102 @@ export class StyleRuleSet < StyleNode
 		@selectors = selectors
 		@body = body
 		
+	def visit
+		@selectors?.traverse
+		@body?.traverse
+		self		
+		
 	def c
-		"StyleRule"
-		JSON.stringify(@body)
+		JSON.stringify(@body,null,2)
 
 	# nodes # bunch of style properties and potentially nested rules
 	
 export class StyleBody < ListNode
+	
+	def visit
+		let items = @nodes
+		let i = 0
+
+		while i < items:length
+			let item = items[i]
+			let res = item.traverse
+
+			if res != item
+				if res isa Array
+					items.splice(i,1,*res)
+					continue
+			
+			# has changed?
+			if item == items[i]
+				i++
+		self
 
 	def toJSON
 		values
 
 export class StyleDeclaration < StyleNode
-	def initialize property, expression
+	def initialize property, expr
 		@property = property
-		@expression = expression
+		
+		unless expr isa StyleExpression
+			expr = StyleExpression.new(expr)
+
+		@expression = expr
+		
+	def visit stack
+		# see if property can be expanded
+		let theme = stack.theme
+		let list = stack.parent
+		let alias = theme.expandProperty(@property.name)
+		console.log 'visiting style declaration',alias
+		
+		if alias isa Array
+			let add = alias.map do |name,i|
+				StyleDeclaration.new(@property.clone(name),@expression)
+			list.replace(self,add)
+		elif alias
+			@property.@name = alias
+			
+		
+		let method = helpers.symbolize(@property.@name)
+		
+		if theme[method]
+			let res = theme[method].apply(theme,@expression.toArray)
+			let expanded = []
+			console.log 'theme has method',method,res
+			for own k,v of res
+				expanded.push StyleDeclaration.new(@property.clone(k),v)
+			list.replace(self,expanded)
+
+		self
 		
 	def toJSON
 		[@property,@expression]
 
 
 export class StyleProperty < StyleNode
+	
+	prop name
 	# modifiers
 	# values
-	def initialize name, modifiers
-		@name = name
-		@modifiers = modifiers or []
+	def initialize parts
+		@parts = parts
+		
+	def name
+		@name ||= String(@parts[0])
+		
+	def clone newname
+		StyleProperty.new([newname or @name].concat(modifiers))
 		
 	def addModifier modifier
-		@modifiers.push(modifier)
+		@parts.push(modifier)
 		self
 		
+	def modifiers
+		@parts.slice(1)
+		
 	def toJSON
-		[String(@name),@modifiers]
+		name + modifiers.join(".")
 	# lookup shorthand. If shorthand represents multiple
 	# props then we compile it to multiple props
 
@@ -8302,20 +8367,55 @@ export class StylePropertyModifier < StyleNode
 		
 	def toJSON
 		String(@name)
+		
+	def toString
+		String(@name)
 
 
 export class StyleExpression < StyleNode
-	def initialize value
-		@value = value
+	def initialize expr
+		@nodes = expr ? [].concat(expr) : []
+		
+	def add part
+		@nodes.push(part)
+		self
+	
+	def toString
+		@nodes.map(do $1.c).join(' ')
+		
+	def toArray
+		@nodes.slice(0)
 		
 	def toJSON
-		@value.c
+		toString
 
 	# parent is a style property
 	# type: number,number-with-unit,color etc
 	# expected type?
 	
 	# on visit we look up the theme to convert to the real type
+
+export class StyleTerm < ValueNode
+
+export class StyleIdentifier < StyleTerm
+
+export class StyleString < StyleTerm
+
+export class StyleNumber < StyleTerm
+	prop unit
+	
+	def initialize value,unit
+		super
+		@unit = unit
+		
+	def number
+		parseFloat(String(@value))
+	
+	def c
+		number
+		
+	def toJSON
+		number
 
 # UTILS
 

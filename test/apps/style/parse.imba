@@ -2,15 +2,19 @@
 const a = .{
 	color: red-500
 	display: block
+	pl: 1
 	py: 2
+	px: 1 0
 	shadow: inner
+	
+	margin-top: 2
 	display.md: inline
+	font: bold xl/2 sans
+	text: bold teal-200 xl/2
 }
 
-const c = .{ color: red-500, display: block }
-
 ###
-const style = $
+const style = $alias
 	color: red-500
 	display: block
 	&.blue
