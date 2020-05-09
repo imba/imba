@@ -32,7 +32,7 @@ var arrayToHash = do |ary|
 # var EXPRESSION_START = ['(','[','{','INDENT','CALL_START','PARAM_START','INDEX_START','BLOCK_PARAM_START','STRING_START','{{', 'TAG_START']
 # var EXPRESSION_END   = [')',']','}','OUTDENT','CALL_END','PARAM_END','INDEX_END','BLOCK_PARAM_END','STRING_END','}}', 'TAG_END']
 # Tokens that indicate the close of a clause of an expression.
-var EXPRESSION_CLOSE = [')',']','}','OUTDENT','CALL_END','PARAM_END','INDEX_END','BLOCK_PARAM_END','STRING_END','}}', 'TAG_END','CATCH', 'WHEN', 'ELSE', 'FINALLY']
+var EXPRESSION_CLOSE = [')',']','}','STYLE_END','OUTDENT','CALL_END','PARAM_END','INDEX_END','BLOCK_PARAM_END','STRING_END','}}', 'TAG_END','CATCH', 'WHEN', 'ELSE', 'FINALLY']
 
 var EXPRESSION_CLOSE_HASH = arrayToHash(EXPRESSION_CLOSE)
 
@@ -461,6 +461,9 @@ export class Rewriter
 			var type = token.@type
 			var v = token.@value
 			
+			if type == 'STYLE_START' and token.@closer
+				return tokens.indexOf(token.@closer) - i
+			
 			if BALANCED_PAIRS[type]
 				balancedStack.unshift(type)
 			
@@ -497,8 +500,10 @@ export class Rewriter
 			if EXPRESSION_START[type]
 				if type === INDENT and noBraceContext.indexOf(ctx[0]) >= 0
 					stack.pop
+				
+				let tt = tokenType(i - 1)
 
-				if type === INDENT and tokenType(i - 1) == '{'
+				if type === INDENT and (tt == '{' or tt == 'STYLE_START')
 					stack.push stackToken('{', i) # should not autogenerate another?
 				else
 					stack.push stackToken(type, i)
@@ -714,6 +719,10 @@ export class Rewriter
 		while tokens:length > (i + 1)
 			var token = tokens[i]
 			var type = token.@type
+			
+			if type == 'STYLE_START' and token.@closer
+				i = tokens.indexOf(token.@closer) + 1
+				continue
 			
 			if BALANCED_PAIRS[type]
 				stack.push(currPair = type)

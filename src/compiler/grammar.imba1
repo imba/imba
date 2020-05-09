@@ -383,7 +383,7 @@ var grammar =
 		o 'IDENTIFIER' do A1
 	]
 	
-	StyleDefinition: [
+	StyleDefinitionOld: [
 		o 'STYLE_DECL STYLE_START StyleProperties STYLE_END' do TagStyle.new([],A3)
 	]
 
@@ -407,6 +407,42 @@ var grammar =
 	StyleProperty: [
 		o 'StylePropertyKey MATH TagRuleInlineArg' do TagStyleMixin.new(A1,[A3])
 		o 'StylePropertyKey TagRuleArgs' do TagStyleMixin.new(A1,A2)
+	]
+	
+	Style2Definition: [
+		o 'STYLE_DECL STYLE_START Style2Body STYLE_END' do StyleRuleSet.new(null,A3)
+	]
+	
+	
+	Style2Body: [
+		o 'Style2Node' do StyleBody.new([A1])
+		o 'Style2Body , Style2Node' do A1.add A3
+		o 'Style2Body OptComma Terminator Style2Node' do A1.add(A3).add(A4)
+		o 'INDENT Style2Body OptComma Outdent' do A2.indented(A1,A4)
+	]
+	
+	Style2Node: [
+		o 'Style2Declaration'
+	]
+	
+	Style2Declaration: [
+		o 'Style2Property : Style2Expression' do StyleDeclaration.new(A1,A3)
+	]
+	
+	Style2Property: [
+		o 'IDENTIFIER' do StyleProperty.new(A1)
+		o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
+	]
+	
+	# the values
+	Style2Expression: [
+		o 'Style2Term' do StyleExpression.new(A1)
+	]
+	
+	Style2Term: [
+		o 'NUMBER UNIT' do NumWithUnit.new(A1,A2)
+		o 'NUMBER' do Num.new A1
+		o 'IDENTIFIER' do A1
 	]
 
 	TagOptions: [
@@ -750,7 +786,7 @@ var grammar =
 		o 'This'
 		o 'TagId'
 		o 'Selector'
-		o 'StyleDefinition'
+		o 'Style2Definition'
 		o 'Invocation'
 		o 'Require'
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)

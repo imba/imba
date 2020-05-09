@@ -1509,7 +1509,7 @@ export class Lexer
 		if value == '(' and pt == 'T.'
 			tokid = 'STYLE_START'
 		
-		elif value == '(' and pt == '.'
+		elif pt == '.' and (value == '(' or value == '{')
 			prev.@type = 'STYLE_DECL'
 			tokid = 'STYLE_START'
 
@@ -1590,14 +1590,18 @@ export class Lexer
 			elif value is '[' and pt in INDEXABLE
 				tokid = 'INDEX_START'
 				tTs(prev,'INDEX_SOAK') if pt == '?'
-
+		
+		let opener = null
+		
 		switch value
 			when '(', '{', '['
-				pushEnd(INVERSES[value],closeType: INVERSES[tokid])
+				pushEnd(INVERSES[value],closeType: INVERSES[tokid],i: @tokens:length)
 			when ')', '}', ']'
 				let paired = pair(value)
 				if paired and paired[1]:closeType
 					tokid = paired[1]:closeType
+					let other = @tokens[paired[1]:i]
+					opener = @tokens[paired[1]:i]
 
 
 		if value == '\\'
@@ -1610,6 +1614,9 @@ export class Lexer
 			tokid = 'T:'
 
 		token(tokid, value, value:length)
+		
+		if opener
+			opener.@closer = @last
 
 		if @target == 'tsc'
 			let next = @chunk[1] or ''

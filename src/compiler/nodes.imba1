@@ -8247,6 +8247,76 @@ export class EnvFlag < ValueNode
 		return M(out,@value)
 
 
+export class StyleNode < Node
+
+export class StyleSelector < StyleNode
+
+# all weird parts of a selector? Or do we just compile it?
+
+export class StyleRuleSet < StyleNode
+	
+	# selector
+	def initialize selectors, body
+		@selectors = selectors
+		@body = body
+		
+	def c
+		"StyleRule"
+		JSON.stringify(@body)
+
+	# nodes # bunch of style properties and potentially nested rules
+	
+export class StyleBody < ListNode
+
+	def toJSON
+		values
+
+export class StyleDeclaration < StyleNode
+	def initialize property, expression
+		@property = property
+		@expression = expression
+		
+	def toJSON
+		[@property,@expression]
+
+
+export class StyleProperty < StyleNode
+	# modifiers
+	# values
+	def initialize name, modifiers
+		@name = name
+		@modifiers = modifiers or []
+		
+	def addModifier modifier
+		@modifiers.push(modifier)
+		self
+		
+	def toJSON
+		[String(@name),@modifiers]
+	# lookup shorthand. If shorthand represents multiple
+	# props then we compile it to multiple props
+
+export class StylePropertyModifier < StyleNode
+	def initialize name
+		@name = name
+		
+	def toJSON
+		String(@name)
+
+
+export class StyleExpression < StyleNode
+	def initialize value
+		@value = value
+		
+	def toJSON
+		@value.c
+
+	# parent is a style property
+	# type: number,number-with-unit,color etc
+	# expected type?
+	
+	# on visit we look up the theme to convert to the real type
+
 # UTILS
 
 export class Util < Node
