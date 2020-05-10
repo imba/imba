@@ -436,9 +436,9 @@ var grammar =
 	
 	# the values
 	Style2Expression: [
-		o 'Style2Term' do StyleExpression.new().add(A1)
-		o 'Style2Expression MATH' do A1.add(A2)
-		o 'Style2Expression Style2Term' do A1.add(A2)
+		o 'Style2Term' do [A1] # StyleExpression.new().add(A1)
+		o 'Style2Expression MATH' do A1.concat(A2)
+		o 'Style2Expression Style2Term' do A1.concat(A2)
 	]
 	
 	Style2Term: [

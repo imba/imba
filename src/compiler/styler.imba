@@ -93,6 +93,28 @@ export class StyleTheme
 	def margin-y t,b=t
 		{'margin-top': t, 'margin-bottom': b}
 		
+	def $value value, index, config
+		if typeof config == 'string'
+			if config.match(/^(width|height|padding|margin|sizing|inset)/)
+				config = options.variants.sizing
+			else
+				config = options.variants[config] or {}
+		
+		if value == undefined
+			value = config.default
+		
+		if config.hasOwnProperty(String(value))
+			# should we convert it or rather just link it up?
+			value = config[value]
+			
+		if typeof value == 'number' and config.step
+			
+			let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
+			# should we not rather convert hte value
+			return value * parseFloat(num) + unit
+
+		return value
+		
 # should not happen at root - but create a theme instance
 
 class Selectors

@@ -45,6 +45,29 @@ export const variants =
 	
 	opacity:
 		step: '1%'
+	
+	sizing:
+		step: '0.125rem'
+		
+	font-size:
+		sm: ['14px','20px']
+		
+	text:
+		extrabold: {'font-weight': 800}
+		bold: {'font-weight': 700}
+		semibold: {'font-weight': 600}
+		medium: {'font-weight': 500}
+		normal: {'font-weight': 400}
+		light: {'font-weight': 300}
+		thin: {'font-weight': 200}
+		hairline: {'font-weight': 100}
+		
+		italic: {'font-style': 'italic'}
+		non-italic: {'font-style': 'normal'}
+		
+		sans: {'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'}
+		serif: {'font-family': 'Georgia, Cambria, "Times New Roman", Times, serif'}
+		mono: {'font-family': 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'}
 
 	shadow:
 		xs: '0 0 0 1px rgba(0, 0, 0, 0.05)',
