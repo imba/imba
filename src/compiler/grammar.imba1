@@ -434,16 +434,22 @@ var grammar =
 		o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
 	]
 	
+	Style2Expressions: [
+		o 'Style2Expression' do StyleExpressions.new([A1])
+		o 'Style2Expressions , Style2Expression' do A1.add(A3)
+	]
+	
 	# the values
 	Style2Expression: [
-		o 'Style2Term' do [A1] # StyleExpression.new().add(A1)
-		o 'Style2Expression MATH' do A1.concat(A2)
-		o 'Style2Expression Style2Term' do A1.concat(A2)
+		o 'Style2Term' do StyleExpression.new().add(A1)
+		o 'Style2Expression MATH' do A1.add(A2)
+		o 'Style2Expression Style2Term' do A1.add(A2)
 	]
 	
 	Style2Term: [
 		o 'NUMBER UNIT' do StyleNumber.new(A1,A2)
 		o 'NUMBER' do StyleNumber.new(A1)
+		o 'IDENTIFIER CALL_START Style2Expressions CALL_END' do StyleFunction.new(A1,A3)
 		o 'IDENTIFIER' do StyleIdentifier.new(A1)
 	]
 

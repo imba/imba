@@ -1414,11 +1414,12 @@ export class ListNode < Node
 
 		while i < items:length
 			let item = items[i]
-			let res = item.traverse
-			if res != item
-				if res isa Array
-					items.splice(i,1,*res)
-					continue
+			if item:traverse
+				let res = item.traverse
+				if res != item
+					if res isa Array
+						items.splice(i,1,*res)
+						continue
 			i++
 		self
 
@@ -8298,7 +8299,9 @@ export class StyleBody < ListNode
 export class StyleDeclaration < StyleNode
 	def initialize property, expr
 		@property = property
-		@expr = [].concat(expr)
+		@expr = expr isa StyleExpression ? expr : StyleExpression.new(expr)
+		self
+		
 		
 	def visit stack
 		# see if property can be expanded
@@ -8309,19 +8312,18 @@ export class StyleDeclaration < StyleNode
 		
 		if alias isa Array
 			let add = alias.map do |name,i|
-				StyleDeclaration.new(@property.clone(name),@expr)
+				StyleDeclaration.new(@property.clone(name),@expr.clone)
 			list.replace(self,add)
 			return
 
 		elif alias
 			@property.@name = alias
-			
 		
 		let name = String(@property.@name)
 		let method = helpers.symbolize(name)
 
 		if theme[method]
-			let res = theme[method].apply(theme,@expr)
+			let res = theme[method].apply(theme,@expr.toArray)
 			let expanded = []
 			# console.log 'theme has method',method,res
 			for own k,v of res
@@ -8329,19 +8331,22 @@ export class StyleDeclaration < StyleNode
 			list.replace(self,expanded)
 			return
 			
-		for item in @expr
-			item.traverse(property: name)
-		
-		let values = for value,i in @expr
-			theme.$value(value,i,name)
+		@expr.traverse(property: name) if @expr
 			
-		@values = values
+		# for item in @expr
+		#	if item:traverse
+		#		item.traverse(property: name)
+		
+		# let values = for value,i in @expr
+		# 	theme.$value(value,i,name)
+	
+		# @values = values
 		# @expr = values
 		# console.log 'values',@values
 		self
 		
 	def toCSS
-		"{@property.c}: {@expr.map(do $1.c).join(' ')}"
+		"{@property.c}: {AST.cary(@expr).join(' ')}"
 		
 	def toJSON
 		toCSS
@@ -8391,39 +8396,47 @@ export class StylePropertyModifier < StyleNode
 	def toString
 		String(@name)
 
+export class StyleExpressions < ListNode
 
-export class StyleExpression < StyleNode
-	def initialize expr
-		@nodes = expr ? [].concat(expr) : []
-		
-	def add part
-		@nodes.push(part)
-		self
-	
+	def c
+		AST.cary(@nodes).join(',')
+
+export class StyleExpression < ListNode
+
+	def load list
+		[].concat(list)
+
 	def toString
-		@nodes.map(do $1.c).join(' ')
+		AST.cary(@nodes).join(' ')
 		
 	def toArray
 		@nodes.slice(0)
+		
+	def clone
+		StyleExpression.new(@nodes.slice(0))
 		
 	def c
 		toString
 		
 	def toJSON
 		toString
-
-	# parent is a style property
-	# type: number,number-with-unit,color etc
-	# expected type?
-	
-	# on visit we look up the theme to convert to the real type
+		
+	def toArray
+		@nodes
+		
+	def toIterable
+		@nodes
 
 export class StyleTerm < ValueNode
 
 	def valueOf
 		String(@value)
+		
+	def toString
+		String(@value)
 
 	def visit stack, o
+		@token = @value
 		let resolved = stack.theme.$value(valueOf,0,o:property)
 		console.log 'resolved',String(resolved)
 		@resolvedValue = resolved
@@ -8433,9 +8446,23 @@ export class StyleTerm < ValueNode
 		!(@resolvedValue isa Node) ? @resolvedValue : valueOf
 		# number
 
+export class StyleFunction < Node
+	def initialize value, params
+		@name = value
+		@params = params
+	
+	def visit stack, o
+		@params.traverse if @params and @params:traverse
+		self
+		
+	def c
+		"{String(@name)}({@params.c})"
+
 export class StyleIdentifier < StyleTerm
 
 export class StyleString < StyleTerm
+
+export class StyleColor < StyleTerm
 
 export class StyleNumber < StyleTerm
 	prop unit
@@ -8444,23 +8471,17 @@ export class StyleNumber < StyleTerm
 		super
 		@unit = unit
 		
+	def unit
+		@unit ? String(@unit) : null
+		
 	def number
 		parseFloat(String(@value))
 		
 	def valueOf
-		@unit ? "{String(@value)}{String(@unit)}" : number
-		
-	# def visit stack, o
-	# 	let resolved = stack.theme.$value(valueOf,0,o:property)
-	# 	console.log 'resolved',String(resolved)
-	# 	@resolvedValue = resolved
-	# 	self
-	
-	# def c
-	# 	number
-		
-	# def toJSON
-	# 	number
+		if unit == 'u'
+			return number * 0.25 + 'rem'
+
+		unit ? "{String(@value)}{unit}" : number
 
 # UTILS
 

@@ -13,6 +13,17 @@ var palette = {
 	white: {string: "hsla(0,100%,100%,var(--alpha,1))"}
 }
 
+export class Color
+	
+	def constructor h,s,l,a = '100%'
+		h = h
+		s = s
+		l = l
+		a = a
+	
+	def toString
+		"{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
+
 for own name,variations of colors
 	let subcolors = {}
 	
@@ -30,6 +41,7 @@ for own name,variations of colors
 		
 		let hslstr = "{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%"
 		color.string = "hsla({hslstr},var(--alpha,1))"
+		color.rich = Color.new(h,s,l,'100%')
 
 
 # var colorRegex = RegExp.new('^(?:(\\w+)\-)?(' + Object.keys(palette).join('|') + ')\\b')
@@ -49,11 +61,14 @@ export class StyleTheme
 	get aliases
 		options.aliases or {}
 		
+	get colors
+		palette
+		
 	def expandProperty name
 		return aliases[name] or undefined
 		
 	def expandValue value, config
-
+	
 		if value == undefined
 			value = config.default
 
@@ -92,6 +107,39 @@ export class StyleTheme
 	
 	def margin-y t,b=t
 		{'margin-top': t, 'margin-bottom': b}
+
+	def tween ...params
+		let raw = params.join(' ')
+		let out = {}
+		let schema = options.variants.tween
+		# check if 
+		# split on each pair
+		
+		for param in params
+			let str = String(param)
+			console.log 'check tween',str
+			if let alias = schema[str]
+				console.log 'found tween alias',alias
+				Object.assign(out,alias)
+
+			elif options.variants.easings[str]
+				# FIXME or if it is a step etc?
+				Object.assign(out,{'transition-timing-function': options.variants.easings[str]})
+
+		return out
+	
+	def text ...params
+		let out = {}
+		# extract bold
+		return out
+		
+	# def shadow ...params
+	#	{}
+		
+	def $u number, part
+		let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
+		# should we not rather convert hte value
+		return value * parseFloat(num) + unit
 		
 	def $value value, index, config
 		if typeof config == 'string'
@@ -112,6 +160,10 @@ export class StyleTheme
 			let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
 			# should we not rather convert hte value
 			return value * parseFloat(num) + unit
+		
+		if palette[value]
+			console.log 'found color!!',palette[value]
+			return palette[value].string
 
 		return value
 		
