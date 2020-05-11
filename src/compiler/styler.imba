@@ -7,42 +7,38 @@ import * as theme from  './theme.imba'
 const extensions = {}
 var ThemeInstance = null
 
-var palette = {
-	current: {string: "currentColor"}
-	black: {string: "hsla(0,0,0,var(--alpha,1))"}
-	white: {string: "hsla(0,100%,100%,var(--alpha,1))"}
-}
+# {string: "hsla(0,0,0,var(--alpha,1))",h:0,s:0,l:0}
+# {string: "hsla(0,100%,100%,var(--alpha,1))",h:0,s:0,l:100}
 
 export class Color
 	
-	def constructor h,s,l,a = '100%'
+	def constructor name,h,s,l,a = '100%'
+		name = name
 		h = h
 		s = s
 		l = l
 		a = a
+		
+	def alpha v
+		Color.new(name,h,s,l,v)
 	
 	def toString
-		"{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
+		"hsla({h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
+
+var palette = {
+	current: {string: "currentColor"}
+	black: Color.new('black',0,0,0,'100%')
+	white: Color.new('white',0,0,100,'100%')
+}
 
 for own name,variations of colors
 	let subcolors = {}
 	
 	for own subname,hex of variations
 		let path = name + '-' + subname
-		let color = subcolors[subname] = {}
-		palette[path] = color
-
 		let rgb = conv.hex.rgb(hex)
 		let [h,s,l] = conv.rgb.hsl(rgb)
-		color.hex = conv.hex.rgb(hex)
-		color.h = h
-		color.s = s
-		color.l = l
-		
-		let hslstr = "{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%"
-		color.string = "hsla({hslstr},var(--alpha,1))"
-		color.rich = Color.new(h,s,l,'100%')
-
+		let color = subcolors[subname] = palette[path] = Color.new(path,h,s,l,'100%')
 
 # var colorRegex = RegExp.new('^(?:(\\w+)\-)?(' + Object.keys(palette).join('|') + ')\\b')
 var colorRegex = RegExp.new('\\b(' + Object.keys(palette).join('|') + ')\\b')
@@ -107,6 +103,15 @@ export class StyleTheme
 	
 	def margin-y t,b=t
 		{'margin-top': t, 'margin-bottom': b}
+		
+	def inset t,r=t,b=t,l=r
+		{top: t, right: r, bottom: b, left: l}
+		
+	def space length
+		{
+			"padding": length # $length(length / 2)
+			"& > *": {'margin': length } # $length(length / 2)
+		}
 
 	def tween ...params
 		let raw = params.join(' ')
@@ -141,12 +146,25 @@ export class StyleTheme
 		# should we not rather convert hte value
 		return value * parseFloat(num) + unit
 		
+	def $parseColor identifier
+		let key = String(identifier)
+		if let m = key.match(colorRegex)
+			let color = self.colors[m[1]]
+			let rest = key.replace(colorRegex,'')
+			if m = rest.match(/^\-(\d+)$/)
+				color = color.alpha(m[1] + '%')
+			# let name = key.replace(colorRegex,'COLOR').replace(/\-/g,'_')
+			return color
+		return
+		
 	def $value value, index, config
 		if typeof config == 'string'
-			if config.match(/^(width|height|padding|margin|sizing|inset)/)
-				config = options.variants.sizing
-			else
-				config = options.variants[config] or {}
+			if config.match(/^(width|height|top|left|bottom|right|padding|margin|sizing|inset)/)
+				config = 'sizing'
+			elif config.match(/^(border-radius)/)
+				config = 'radius'
+
+			config = options.variants[config] or {}
 		
 		if value == undefined
 			value = config.default
@@ -161,9 +179,11 @@ export class StyleTheme
 			# should we not rather convert hte value
 			return value * parseFloat(num) + unit
 		
-		if palette[value]
-			console.log 'found color!!',palette[value]
-			return palette[value].string
+		if typeof value == 'string'
+			if let color = $parseColor(value)
+				return color
+			# console.log 'found color!!',self.colors[value]
+			# return self.colors[value]
 
 		return value
 		
@@ -177,8 +197,13 @@ class Selectors
 	def $parse context, states
 		let rule = '&'
 		o = {context: context, media: []}
-		for [state,...params] in states
+		for state in states
 			let res
+			let params = []
+			
+			if state isa Array
+				params = state.slice(1)
+				state = state[0]
 
 			unless self[state]
 				if let media = breakpoints[state]
@@ -654,8 +679,6 @@ class Rules
 			"padding": $length(length / 2)
 			"& > *": {'margin': $length(length / 2) }
 		}
-		
-	
 	
 	# SIZING
 	
@@ -1056,14 +1079,10 @@ export class StyleRule
 			
 			let subsel = null
 			
-			if key[0] == '['
-				let substates = states.concat(JSON.parse(key))
-				subrules.push StyleRule.new(context,substates,value)
-				continue
-
 			if key.indexOf('&') >= 0
-				console.log 'key',key
-				let substates = states.concat([[key]])
+				console.log 'subquery',key,value
+				# let substates = states.concat([[key]])
+				let substates = ([[key]]).concat(states)
 				subrules.push StyleRule.new(context,substates,value)
 				continue
 
@@ -1073,6 +1092,27 @@ export class StyleRule
 				for own subkey,subvalue of value
 					unless subvalue == undefined
 						sub.push "{subkey}: {subvalue};"
+			
+			elif key.indexOf('.') >= 0
+				let keys = key.split('.')
+				
+				# let substates = states.concat(keys.slice(1))
+				let substates = keys.slice(1).concat(states)
+				console.log 'compile with substates',substates
+				# TODO use interpolated key?
+				let obj = {}
+				obj[keys[0]] = value				
+				subrules.push StyleRule.new(context,substates,obj)
+				continue
+			
+			elif key[0] == '['
+				# better to just check if key contains '.'
+				# this is only for a single property
+				let o = JSON.parse(key)
+				let substates = states.concat(o)
+				subrules.push StyleRule.new(context,substates,value)
+				continue
+
 			else				
 				parts.push "{key}: {value};"
 

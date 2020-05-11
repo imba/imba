@@ -413,6 +413,10 @@ var grammar =
 		o 'STYLE_DECL STYLE_START Style2Body STYLE_END' do StyleRuleSet.new(null,A3)
 	]
 	
+	NestedStyleRule: [
+		o 'Selector STYLE_START Style2Body STYLE_END' do StyleRuleSet.new(A1,A3)
+	]
+	
 	
 	Style2Body: [
 		o 'Style2Node' do StyleBody.new([A1])
@@ -423,14 +427,20 @@ var grammar =
 	
 	Style2Node: [
 		o 'Style2Declaration'
+		o 'NestedStyleRule'
 	]
 	
 	Style2Declaration: [
 		o 'Style2Property : Style2Expression' do StyleDeclaration.new(A1,A3)
 	]
 	
+	Style2Identifier: [
+		o '-- IDENTIFIER' do A2.prepend('--')
+		o 'IDENTIFIER' do A1
+	]
+	
 	Style2Property: [
-		o 'IDENTIFIER' do StyleProperty.new([A1])
+		o 'Style2Identifier' do StyleProperty.new([StylePropertyIdentifier.new(A1)])
 		o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
 	]
 	
@@ -450,7 +460,7 @@ var grammar =
 		o 'NUMBER UNIT' do StyleNumber.new(A1,A2)
 		o 'NUMBER' do StyleNumber.new(A1)
 		o 'IDENTIFIER CALL_START Style2Expressions CALL_END' do StyleFunction.new(A1,A3)
-		o 'IDENTIFIER' do StyleIdentifier.new(A1)
+		o 'Style2Identifier' do StyleIdentifier.new(A1)
 	]
 
 	TagOptions: [
@@ -462,8 +472,9 @@ var grammar =
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
 		
-		o 'TagOptions RULE_START TagRuleScopes TagRuleMixins RULE_END' do A1.addPart(TagStyle.new(A3,A4),AST.TagStyle)
-		o 'TagOptions T. STYLE_START StyleProperties STYLE_END' do A1.addPart(TagStyle.new([],A4),AST.TagFlag)
+		# o 'TagOptions RULE_START TagRuleScopes TagRuleMixins RULE_END' do A1.addPart(TagStyle.new(A3,A4),AST.TagStyle)
+		# o 'TagOptions T. STYLE_START StyleProperties STYLE_END' do A1.addPart(TagStyle.new([],A4),AST.TagFlag)
+		o 'TagOptions T. STYLE_START Style2Body STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
 		# o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagStyle)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)

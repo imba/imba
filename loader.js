@@ -60,10 +60,10 @@ module.exports = function(content,inMap) {
 	const block = cachedStyleBodies.get(`${opts.id}-${options.index}`);
 
 	if(options.type == 'style' && block){ 
-		let css = block.content;
+		let css = block.processed || block.content;
 		if(this.loaders.length == 1){
 			// There are no additional style loaders -- we will need to process it directly
-			if(block.scoped) css = compiler.css.compile(block.content,{scope: block.id})
+			if(block.scoped && !block.processed) css = compiler.css.compile(block.content,{scope: block.id})
 			let out = "var styles = document.createElement('style');"
 			// css = css + '\n\/\/Hello there ' + [opts.id, options.index, options.id].join(' ');
 			out = out + "styles.textContent = " + JSON.stringify(css) + ";\n"

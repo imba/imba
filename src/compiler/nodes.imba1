@@ -10,7 +10,7 @@ import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
-import StyleRule,StyleTheme from './styler.imba'
+import StyleRule,StyleTheme,Color from './styler.imba'
 
 var TSC_CLASS_HEAD = 'static $static$(){ this.prototype } $member$(){ this.constructor } '
 var TAG_NAMES = constants.TAG_NAMES
@@ -2587,7 +2587,8 @@ export class Root < Code
 					let scoping = style:scoped ? result:sfcid : null
 					style:processed ||= csscompiler.compile(style:content,scope: scoping)
 					stylebody += style:processed + '\n'
-					result:stylebody = stylebody
+			
+			result:stylebody = stylebody
 
 			if stylebody and o:bundler != 'webpack'
 				
@@ -7909,6 +7910,9 @@ export class Selector < ListNode
 				ary.push(val)
 
 		return ary.join(' + ')
+		
+	def toString
+		AST.cary(nodes).join('')
 
 
 	def js o
@@ -8263,13 +8267,48 @@ export class StyleRuleSet < StyleNode
 		@selectors = selectors
 		@body = body
 		
-	def visit
+	def isStatic
+		true
+		
+	def visit stack, o
+		if o:rule
+			@sel = @selectors?.toString
+			# should happen no matter what??
+			@sel = "& {@sel}" if @sel.indexOf('&') == -1
+			console.log 'nested rule!!',@sel
+			# @sel = "& {@sel}"
+		else
+			@name = STACK.sfcid + oid
+			@sel = ".{@name}"
+		
 		@selectors?.traverse
-		@body?.traverse
-		self		
+		
+		@styles = {}
+		@body?.traverse(rule: self, styles: @styles)
+		
+		if o:rule and o:styles
+			o:styles[@sel] = @styles
+
+		else
+			@css = StyleRule.new(@sel,[],@styles).toString
+			
+			scope__.root.styles.push({
+				type: 'css'
+				processed: @css
+			})
+			
+		self
+		
+	def toRaw
+		"{@name}"
 		
 	def c
-		JSON.stringify(@body,null,2)
+		# let json = JSON.stringify(@body,null,2)
+		# let css = StyleRule.new('aba',[],@styles)
+		# let out = json + '\n/*\n' + JSON.stringify(@styles,null,2) + '\n*/'
+		let out = "'{@name}'"
+		# out += '\n/*\n' + @css + '\n*/'
+		return out
 
 	# nodes # bunch of style properties and potentially nested rules
 	
@@ -8303,7 +8342,7 @@ export class StyleDeclaration < StyleNode
 		self
 		
 		
-	def visit stack
+	def visit stack, o
 		# see if property can be expanded
 		let theme = stack.theme
 		let list = stack.parent
@@ -8317,9 +8356,10 @@ export class StyleDeclaration < StyleNode
 			return
 
 		elif alias
-			@property.@name = alias
+			@property = @property.clone(alias)
+			# @property.@name = alias
 		
-		let name = String(@property.@name)
+		let name = String(@property.name)
 		let method = helpers.symbolize(name)
 
 		if theme[method]
@@ -8327,22 +8367,24 @@ export class StyleDeclaration < StyleNode
 			let expanded = []
 			# console.log 'theme has method',method,res
 			for own k,v of res
-				expanded.push StyleDeclaration.new(@property.clone(k),v)
+				if k.indexOf('&') >= 0
+					let body = StyleBody.new([])
+					let rule = StyleRuleSet.new(LIT(k),body)
+					expanded.push(rule)
+					for own k2,v2 of v
+						body.add(StyleDeclaration.new(@property.clone(k2),v2))
+				else	
+					expanded.push StyleDeclaration.new(@property.clone(k),v)
 			list.replace(self,expanded)
 			return
 			
 		@expr.traverse(property: name) if @expr
-			
-		# for item in @expr
-		#	if item:traverse
-		#		item.traverse(property: name)
 		
-		# let values = for value,i in @expr
-		# 	theme.$value(value,i,name)
-	
-		# @values = values
-		# @expr = values
-		# console.log 'values',@values
+		if o:styles
+			let key = @property.toKey
+			if o:selector
+				key = JSON.stringify([o:selector,key])
+			o:styles[key] = AST.cary(@expr).join(' ')
 		self
 		
 	def toCSS
@@ -8379,12 +8421,29 @@ export class StyleProperty < StyleNode
 
 	def toString
 		name + modifiers.join(".")
+		
+	def toKey
+		@parts.join('.')
+		# modifiers:length ? JSON.stringify(@parts) : name
 
 	def c
 		toString
 
 	# lookup shorthand. If shorthand represents multiple
 	# props then we compile it to multiple props
+
+export class StylePropertyIdentifier < StyleNode
+	def initialize name
+		@name = name
+		if String(name)[0] == '$'
+			@name = "--{String(name).slice(1)}"
+		# val[0] == '$' ? "var(--{val.slice(1)})" : val
+
+	def toJSON
+		String(@name)
+		
+	def toString
+		String(@name)
 
 export class StylePropertyModifier < StyleNode
 	def initialize name
@@ -8426,6 +8485,25 @@ export class StyleExpression < ListNode
 		
 	def toIterable
 		@nodes
+		
+	def visit2
+		let items = @nodes
+		let i = 0
+
+		while i < items:length
+			let item = items[i]
+			let next = items[i + 1] # no whitespace
+			let res = item.traverse
+			
+			if res != item
+				if res isa Array
+					items.splice(i,1,*res)
+					continue
+			
+			# has changed?
+			if item == items[i]
+				i++
+		self
 
 export class StyleTerm < ValueNode
 
@@ -8442,11 +8520,18 @@ export class StyleTerm < ValueNode
 		@resolvedValue = resolved
 		self
 		
+	def kind
+		@kind
+		
 	def c
 		!(@resolvedValue isa Node) ? @resolvedValue : valueOf
 		# number
 
 export class StyleFunction < Node
+
+	def kind
+		'function'
+
 	def initialize value, params
 		@name = value
 		@params = params
@@ -8459,6 +8544,17 @@ export class StyleFunction < Node
 		"{String(@name)}({@params.c})"
 
 export class StyleIdentifier < StyleTerm
+	
+	def c
+		let val = toString
+		val[0] == '$' ? "var(--{val.slice(1)})" : super
+
+	# def visit stack, o
+	# 	@token = @value
+	# 	let resolved = stack.theme.$value(valueOf,0,o:property)
+	# 	console.log 'resolved',String(resolved)
+	# 	@resolvedValue = resolved
+	# 	self
 
 export class StyleString < StyleTerm
 
@@ -8479,7 +8575,8 @@ export class StyleNumber < StyleTerm
 		
 	def valueOf
 		if unit == 'u'
-			return number * 0.25 + 'rem'
+			# return number * 0.25 + 'rem'
+			return number * 4 + 'px'
 
 		unit ? "{String(@value)}{unit}" : number
 

@@ -8,7 +8,7 @@ export const aliases =
 	p: 'padding'
 	pl: 'padding-left'
 	pr: 'padding-right'
-	pt: 'padding-bottom'
+	pt: 'padding-top'
 	pb: 'padding-bottom'
 	px: 'padding-x'
 	py: 'padding-y'
@@ -16,21 +16,36 @@ export const aliases =
 	m: 'margin'
 	ml: 'margin-left'
 	mr: 'margin-right'
-	mt: 'margin-bottom'
+	mt: 'margin-top'
 	mb: 'margin-bottom'
 	mx: 'margin-x'
 	my: 'margin-y'
-	# px: ['padding-left','padding-right']
-	# py: ['padding-top','padding-bottom']
 	
 	ai: 'align-items'
 	ac: 'align-content'
 	jc: 'justify-content'
 	fw: 'flex-wrap'
+	fd: 'flex-direction'
 	
 	d: 'display'
 	
-	inset: ['top','right','bottom','left']
+	bg: 'background'
+	bgp: 'background-position'
+	bgr: 'background-repeat'
+	bgi: 'background-image'
+	bga: 'background-attachment'
+	
+	ff: 'font-family'
+	fs: 'font-size'
+	fw: 'font-weight'
+	
+	round: 'border-radius'
+	radius: 'border-radius'
+	
+	rotate: '--rotate'
+	x: '--translate-x'
+	y: '--translate-y'
+	z: '--translate-z'
 	
 
 export const variants =
@@ -47,13 +62,16 @@ export const variants =
 		step: '1%'
 	
 	sizing:
-		step: '0.125rem'
+		step: '0.25rem'
 		
 	font-size:
 		sm: ['14px','20px']
 		
+	radius:
+		step: '0.125rem'
+		
 	units:
-		u: '0.125rem'
+		u: '4px' # '0.125rem'
 		
 	text:
 		extrabold: {'font-weight': 800}

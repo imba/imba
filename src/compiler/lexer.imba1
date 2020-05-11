@@ -899,7 +899,7 @@ export class Lexer
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
 				
-		if lastTyp == 'NUMBER' and !prev:spaced and typ == 'IDENTIFIER'
+		if lastTyp == 'NUMBER' and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
 			typ = 'UNIT'
 		
 		if colon
@@ -1512,6 +1512,9 @@ export class Lexer
 		elif pt == '.' and (value == '(' or value == '{')
 			prev.@type = 'STYLE_DECL'
 			tokid = 'STYLE_START'
+		
+		elif pt == 'SELECTOR_END' and value == '{'
+			tokid = 'STYLE_START'
 
 		elif value is '(' and inTag and pt != '=' and prev:spaced # FIXed
 			# console.log 'spaced before ( in tokid'
@@ -1564,6 +1567,8 @@ export class Lexer
 
 		elif value == '**'
 			tokid = 'EXP'
+		elif value == '%' and pt == 'NUMBER' and !prev:spaced
+			tokid = 'UNIT'
 		elif value in MATH
 			tokid = 'MATH'
 		elif value in COMPARE
