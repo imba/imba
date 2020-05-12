@@ -2586,14 +2586,17 @@ export class Root < Code
 				if style:type == 'css'
 					let scoping = style:scoped ? result:sfcid : null
 					style:processed ||= csscompiler.compile(style:content,scope: scoping)
-					stylebody += style:processed + '\n'
+					stylebody += style:processed + '\n\n'
 			
 			result:stylebody = stylebody
 
-			if stylebody and o:bundler != 'webpack'
-				
+			if stylebody
+				# and o:bundler != 'webpack'
 				let css = {js: stylebody}
+				# maybe do something different when server etc?
+				css:js = "/* styles from {o:sourcePath} */\n" + css:js
 				result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
+				result:styles:inlined = yes
 
 		# always create the sourcemap?
 		if o:sourceMap # should handle sourcemap no matter what?
@@ -8307,7 +8310,7 @@ export class StyleRuleSet < StyleNode
 		# let css = StyleRule.new('aba',[],@styles)
 		# let out = json + '\n/*\n' + JSON.stringify(@styles,null,2) + '\n*/'
 		let out = "'{@name}'"
-		# out += '\n/*\n' + @css + '\n*/'
+		out += '\n/*\n' + @css + '\n*/'
 		return out
 
 	# nodes # bunch of style properties and potentially nested rules
@@ -8516,7 +8519,7 @@ export class StyleTerm < ValueNode
 	def visit stack, o
 		@token = @value
 		let resolved = stack.theme.$value(valueOf,0,o:property)
-		console.log 'resolved',String(resolved)
+		# console.log 'resolved',String(resolved)
 		@resolvedValue = resolved
 		self
 		
@@ -8549,36 +8552,42 @@ export class StyleIdentifier < StyleTerm
 		let val = toString
 		val[0] == '$' ? "var(--{val.slice(1)})" : super
 
-	# def visit stack, o
-	# 	@token = @value
-	# 	let resolved = stack.theme.$value(valueOf,0,o:property)
-	# 	console.log 'resolved',String(resolved)
-	# 	@resolvedValue = resolved
-	# 	self
-
 export class StyleString < StyleTerm
 
 export class StyleColor < StyleTerm
 
-export class StyleNumber < StyleTerm
-	prop unit
+export class StyleVar < StyleTerm
+
+	def c
+		"var(--{toString})"
+
+export class StyleDimension < StyleTerm
 	
-	def initialize value,unit
-		super
-		@unit = unit
-		
-	def unit
-		@unit ? String(@unit) : null
-		
-	def number
-		parseFloat(String(@value))
+	prop unit
+	prop number
+
+	def initialize value
+		@value = value
+		let m = String(value).match(/^(.+)([a-zA-Z]+|%)$/)
+		@number = parseFloat(m[1])
+		@unit = m[2]
 		
 	def valueOf
 		if unit == 'u'
-			# return number * 0.25 + 'rem'
 			return number * 4 + 'px'
+		return String(@value)
 
-		unit ? "{String(@value)}{unit}" : number
+export class StyleNumber < StyleTerm
+	prop unit
+	prop number
+	
+	def initialize value,unit
+		super
+		@number = parseFloat(String(value))
+		@unit = null
+		
+	def valueOf
+		number
 
 # UTILS
 

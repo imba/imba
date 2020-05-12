@@ -107,6 +107,9 @@ export class StyleTheme
 	def inset t,r=t,b=t,l=r
 		{top: t, right: r, bottom: b, left: l}
 		
+	def size w,h=w
+		{width: w, height: h}
+		
 	def space length
 		{
 			"padding": length # $length(length / 2)
@@ -135,6 +138,18 @@ export class StyleTheme
 	
 	def text ...params
 		let out = {}
+		# extract bold
+		return out
+		
+	def layout ...params
+		let out = {}
+		let schema = options.variants.layout
+		for param,i in params
+			let str = String(param)
+			let val = schema[str]
+			if val
+				Object.assign(out,val)
+
 		# extract bold
 		return out
 		

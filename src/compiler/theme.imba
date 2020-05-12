@@ -24,10 +24,12 @@ export const aliases =
 	ai: 'align-items'
 	ac: 'align-content'
 	jc: 'justify-content'
-	fw: 'flex-wrap'
 	fd: 'flex-direction'
 	
+	
+	
 	d: 'display'
+	c: 'color'
 	
 	bg: 'background'
 	bgp: 'background-position'
@@ -47,7 +49,19 @@ export const aliases =
 	y: '--translate-y'
 	z: '--translate-z'
 	
+	grow: 'flex-grow'
+	shrink: 'flex-shrink'
+	shadow: 'box-shadow'
+	
+	h: 'height'
+	w: 'width'
+	
+	l: 'layout'
+	t: 'text'
+	td: 'text-decoration'
+	tt: 'text-transform'
 
+# some things should definitely move out of theme
 export const variants =
 	radius:
 		none: 0
@@ -64,8 +78,65 @@ export const variants =
 	sizing:
 		step: '0.25rem'
 		
-	font-size:
-		sm: ['14px','20px']
+	layout:
+		clip: {'overflow': 'hidden'}
+		noclip: {'overflow': 'visible'}
+		
+		'clip-x': {'overflow-x': 'hidden'}
+		'clip-y': {'overflow-y': 'hidden'}
+		
+		'scroll-x': {'overflow-x': 'auto'}
+		'scroll-y': {'overflow-y': 'auto'}
+		
+		'noclip-x': {'overflow-x': 'visible'}
+		'noclip-y': {'overflow-y': 'visible'}
+		
+		flex: {'display': 'flex'}
+		vflex: {'display': 'flex', 'flex-direction': 'column'}
+		hflex: {'display': 'flex', 'flex-direction': 'row'}
+		
+		# flex to top/bottom/left/right
+
+		
+		'inline-flex': {'display': 'inline-flex'}
+		'inline-vflex': {'display': 'inline-flex', 'flex-direction': 'column'}
+		'inline-hflex': {'display': 'inline-flex', 'flex-direction': 'row'}
+		
+		block: {'display': 'block'}
+		
+		'inline-block': {'display': 'inline-block'}
+		
+		'grid': {'display': 'grid'}
+		'inline-grid': {'display': 'inline-grid'}
+		
+		'contents': {'display': 'contents'}
+		
+		static: {position: 'static'}
+		relative: {position: 'relative'}
+		absolute: {position: 'absolute'}
+		rel: {position: 'relative'}
+		abs: {position: 'absolute'}
+		fixed: {position: 'fixed'}
+		sticky: {position: 'sticky'}
+
+		'border-box': {'box-sizing': 'border-box'}
+		'content-box': {'box-sizing': 'content-box'}
+		
+		'wrap': {'flex-wrap': 'wrap'}
+		'center': {'align-items': 'center','justify-content': 'center'}
+		
+	'font-size':
+		# sm: ['14px','20px']
+		'xs': '0.75rem'
+		'sm': '0.875rem'
+		'base': '1rem'
+		'lg': '1.125rem'
+		'xl': '1.25rem'
+		'2xl': '1.5rem'
+		'3xl': '1.875rem'
+		'4xl': '2.25rem'
+		'5xl': '3rem'
+		'6xl': '4rem'
 		
 	radius:
 		step: '0.125rem'
@@ -95,7 +166,7 @@ export const variants =
 		colors: {'transition-property': 'background-color, border-color, color, fill, stroke'}
 		opacity: {'transition-property': 'opacity'}
 
-	shadow:
+	'box-shadow':
 		xs: '0 0 0 1px rgba(0, 0, 0, 0.05)',
 		sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
 		default: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',

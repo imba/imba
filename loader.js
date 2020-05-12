@@ -102,7 +102,8 @@ module.exports = function(content,inMap) {
 			});
 		}
 
-		if(result.styles && result.styles.length && this.target == 'web' && this.rootContext) {
+		if(result.styles && result.styles.length && this.target == 'web' && this.rootContext && !result.styles.inlined) {
+			
 			js = js.replace(/\/\*SCOPEID\*\//g,'"' + opts.id + '"');
 	
 			result.styles.forEach((style,i) => {

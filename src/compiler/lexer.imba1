@@ -99,7 +99,7 @@ var TAG_PART = /^[\:\.\#]?([A-Za-z\_][\w\-]*)(\:[A-Za-z\_][\w\-]*)?/
 var TAG_ATTR = /^([\.\:]?[\w\_]+([\-\:\.][\w]+)*)(\s)*\=(?!\>)/
 
 
-var SELECTOR = /^([%\$]{1,2})([\(\w\#\.\[])/
+var SELECTOR = /^([%\$]{1,2})([\(])/
 var SELECTOR_PART = /^(\#|\.|:|::)?([\w]+(\-[\w]+)*)/
 var SELECTOR_COMBINATOR = /^ (\+|\>|\~)*\s*(?=[\w\.\#\:\{\*\[])/
 
@@ -111,6 +111,17 @@ var SYMBOL = ///^
 	\:((([\*\@$\w\x7f-\uffff]+)+([\-\\\:][\w\x7f-\uffff]+)*)|==|\<=\>)
 ///
 
+var STYLE_HEX = ///^
+	\#[0-9a-fA-F]{3,6}
+///
+
+var STYLE_NUMERIC = ///^
+	(\-?\d*\.?\d+) ([A-Za-z]+|\%)?(?![\d\w])
+///
+
+var STYLE_IDENTIFIER = ///^
+	[\w\-\$]*\w[\w\-\$]*
+///
 
 var NUMBER = ///
 	^ 0x[\da-f]+ |                              # hex
@@ -310,6 +321,7 @@ export class Lexer
 
 		@indentStyle = '\t'
 		@inTag = no
+		@inStyle = 0
 
 		@tokens  = []             # Stream of parsed tokens in the form `['TYPE', value, line]`.
 		@seenFor = no
@@ -366,7 +378,7 @@ export class Lexer
 			@state:gutter = o:gutter
 		
 		o.@tokens = @tokens 
-
+		
 		parse(code)
 		closeIndentation unless o:inline
 
@@ -387,7 +399,7 @@ export class Lexer
 					popEnd
 
 			# we should let the current context decide which methods to call
-			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || basicContext
+			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || (@inStyle and styleContextToken) || basicContext
 			i += pi
 			@loc = @locOffset + i
 
@@ -412,6 +424,9 @@ export class Lexer
 		@contexts.push(@context = (ctx or {}))
 		@end = val
 		refreshScope
+		
+		if ctx and ctx:closeType == 'STYLE_END'
+			@inStyle++
 
 		if ctx and ctx:id
 			ctx:start = Token.new(ctx:id + '_START',val, @last.region[1],0)
@@ -429,6 +444,9 @@ export class Lexer
 			ctx:end.@start = ctx:start
 			ctx:start.@end = ctx:end
 			@tokens.push(ctx:end)
+			
+		if ctx and ctx:closeType == 'STYLE_END'
+			@inStyle--
 
 		@contexts.pop
 		@context = @contexts[@contexts:length - 1]
@@ -545,6 +563,44 @@ export class Lexer
 			pair('TAG')
 
 		return 0
+		
+	def styleContextToken
+		return 0 if @end == '%'
+		# return 0
+		let chr = @chunk[0]
+		var m
+		# let chr2 = @chunk[1]
+		# not if we are inside
+		
+		if chr[0] == '#' and m = STYLE_HEX.exec(@chunk)
+			token 'COLOR', m[0], m[0]:length
+			return m[0]:length
+		
+		if m = STYLE_NUMERIC.exec(@chunk)
+			let len = m[0]:length
+			let typ = 'NUMBER'
+				
+			if m[2] == '%'
+				typ = 'PERCENTAGE'
+				# if @chunk[len]
+			elif m[2]
+				typ = 'DIMENSION'
+			# elif match[1].indexOf('.') == -1
+			# 	typ = 'INTEGER'
+			# console.log typ,match[0]
+			token typ, m[0], len
+			return len
+			
+		elif m = STYLE_IDENTIFIER.exec(@chunk)
+			if m[0].match(/^\-\-/)
+				token 'CSSVAR', m[0], m[0]:length	
+			else
+				token 'IDENTIFIER', m[0], m[0]:length
+
+			return m[0]:length
+
+		return 0
+		
 
 	def importsToken
 		if var match = IMPORTS.exec(@chunk)

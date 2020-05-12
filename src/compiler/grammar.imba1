@@ -432,10 +432,12 @@ var grammar =
 	
 	Style2Declaration: [
 		o 'Style2Property : Style2Expression' do StyleDeclaration.new(A1,A3)
+		# nested 
+		# o 'Style2Property CALL_START Style2Body CALL_END' do StyleDeclaration.new(A1,A3)
 	]
 	
 	Style2Identifier: [
-		o '-- IDENTIFIER' do A2.prepend('--')
+		o 'CSSVAR' do A1
 		o 'IDENTIFIER' do A1
 	]
 	
@@ -449,18 +451,28 @@ var grammar =
 		o 'Style2Expressions , Style2Expression' do A1.add(A3)
 	]
 	
+	StyleOperator: [
+		o 'MATH'
+		o '+'
+		o '-'
+	]
+	
 	# the values
 	Style2Expression: [
 		o 'Style2Term' do StyleExpression.new().add(A1)
-		o 'Style2Expression MATH' do A1.add(A2)
+		o 'Style2Expression StyleOperator' do A1.add(A2)
 		o 'Style2Expression Style2Term' do A1.add(A2)
 	]
 	
 	Style2Term: [
-		o 'NUMBER UNIT' do StyleNumber.new(A1,A2)
+		o 'CSSVAR' do StyleVar.new(A1)
+		o 'DIMENSION' do StyleDimension.new(A1)
+		o 'COLOR' do StyleColor.new(A1)
+		o 'PERCENTAGE' do StyleDimension.new(A1)
 		o 'NUMBER' do StyleNumber.new(A1)
+		o 'String' do A1
 		o 'IDENTIFIER CALL_START Style2Expressions CALL_END' do StyleFunction.new(A1,A3)
-		o 'Style2Identifier' do StyleIdentifier.new(A1)
+		o 'IDENTIFIER' do StyleIdentifier.new(A1)
 	]
 
 	TagOptions: [
