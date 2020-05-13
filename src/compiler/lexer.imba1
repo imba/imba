@@ -123,6 +123,12 @@ var STYLE_IDENTIFIER = ///^
 	[\w\-\$]*\w[\w\-\$]*
 ///
 
+var STYLE_PROPERTY = ///^
+	([\w\-\$]*\w[\w\-\$]*)
+	(\.[\w\-\$]*\w[\w\-\$]*)*
+	(?=\:)
+///
+
 var NUMBER = ///
 	^ 0x[\da-f]+ |                              # hex
 	^ 0b[01]+ |                              # binary
@@ -572,6 +578,13 @@ export class Lexer
 		# let chr2 = @chunk[1]
 		# not if we are inside
 		
+		# now - how do we find the selector-rules?
+		
+		if m = STYLE_PROPERTY.exec(@chunk)
+			# what is the last one?
+			token('CSSPROP', m[0], m[0]:length)
+			return m[0]:length
+		
 		if chr[0] == '#' and m = STYLE_HEX.exec(@chunk)
 			token 'COLOR', m[0], m[0]:length
 			return m[0]:length
@@ -593,7 +606,7 @@ export class Lexer
 			
 		elif m = STYLE_IDENTIFIER.exec(@chunk)
 			if m[0].match(/^\-\-/)
-				token 'CSSVAR', m[0], m[0]:length	
+				token 'CSSVAR', m[0], m[0]:length
 			else
 				token 'IDENTIFIER', m[0], m[0]:length
 
@@ -1563,6 +1576,9 @@ export class Lexer
 			tokid = 'TERMINATOR'
 			
 		if value == '(' and pt == 'T.'
+			tokid = 'STYLE_START'
+			
+		elif pt == 'TAG_WS' and (value == '{')
 			tokid = 'STYLE_START'
 		
 		elif pt == '.' and (value == '(' or value == '{')

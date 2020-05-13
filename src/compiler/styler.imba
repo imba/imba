@@ -92,31 +92,31 @@ export class StyleTheme
 			}
 			
 	
-	def padding-x l,r=l
+	def padding-x [l,r=l]
 		{'padding-left': l, 'padding-right': r}
 	
-	def padding-y t,b=t
+	def padding-y [t,b=t]
 		{'padding-top': t, 'padding-bottom': b}
 		
-	def margin-x l,r=l
+	def margin-x [l,r=l]
 		{'margin-left': l, 'margin-right': r}
 	
-	def margin-y t,b=t
+	def margin-y [t,b=t]
 		{'margin-top': t, 'margin-bottom': b}
 		
-	def inset t,r=t,b=t,l=r
+	def inset [t,r=t,b=t,l=r]
 		{top: t, right: r, bottom: b, left: l}
 		
-	def size w,h=w
+	def size [w,h=w]
 		{width: w, height: h}
 		
-	def space length
+	def space [length]
 		{
 			"padding": length # $length(length / 2)
 			"& > *": {'margin': length } # $length(length / 2)
 		}
 
-	def tween ...params
+	def tween [...params]
 		let raw = params.join(' ')
 		let out = {}
 		let schema = options.variants.tween
@@ -136,12 +136,12 @@ export class StyleTheme
 
 		return out
 	
-	def text ...params
+	def text [...params]
 		let out = {}
 		# extract bold
 		return out
 		
-	def layout ...params
+	def layout [...params]
 		let out = {}
 		let schema = options.variants.layout
 		for param,i in params

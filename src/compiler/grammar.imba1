@@ -420,9 +420,10 @@ var grammar =
 	
 	Style2Body: [
 		o 'Style2Node' do StyleBody.new([A1])
-		o 'Style2Body , Style2Node' do A1.add A3
-		o 'Style2Body OptComma Terminator Style2Node' do A1.add(A3).add(A4)
-		o 'INDENT Style2Body OptComma Outdent' do A2.indented(A1,A4)
+		o 'Style2Body OptSemicolon Style2Declaration' do A1.add A3
+		# o 'Style2Body , Style2Node' do A1.add A3
+		o 'Style2Body OptSemicolon Terminator Style2Node' do A1.add(A4)
+		o 'INDENT Style2Body OptSemicolon Outdent' do A2.indented(A1,A4)
 	]
 	
 	Style2Node: [
@@ -431,7 +432,7 @@ var grammar =
 	]
 	
 	Style2Declaration: [
-		o 'Style2Property : Style2Expression' do StyleDeclaration.new(A1,A3)
+		o 'Style2Property : Style2Expressions' do StyleDeclaration.new(A1,A3)
 		# nested 
 		# o 'Style2Property CALL_START Style2Body CALL_END' do StyleDeclaration.new(A1,A3)
 	]
@@ -442,8 +443,9 @@ var grammar =
 	]
 	
 	Style2Property: [
-		o 'Style2Identifier' do StyleProperty.new([StylePropertyIdentifier.new(A1)])
-		o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
+		o 'CSSPROP' do StyleProperty.new([A1])
+		# o 'Style2Identifier' do StyleProperty.new([StylePropertyIdentifier.new(A1)])
+		# o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
 	]
 	
 	Style2Expressions: [
@@ -678,6 +680,11 @@ var grammar =
 	OptComma: [
 		o ''
 		o ','
+	]
+	
+	OptSemicolon: [
+		o ''
+		o ';'
 	]
 
 	# The list of parameters that a function accepts can be of any length.

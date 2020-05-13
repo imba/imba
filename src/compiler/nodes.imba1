@@ -8341,26 +8341,20 @@ export class StyleBody < ListNode
 export class StyleDeclaration < StyleNode
 	def initialize property, expr
 		@property = property
-		@expr = expr isa StyleExpression ? expr : StyleExpression.new(expr)
+		@expr = expr isa StyleExpressions ? expr : StyleExpressions.new(expr)
 		self
 		
+	def clone name, params
+		self
 		
 	def visit stack, o
 		# see if property can be expanded
 		let theme = stack.theme
 		let list = stack.parent
 		let alias = theme.expandProperty(@property.name)
-		# console.log 'visiting style declaration',alias
-		
-		if alias isa Array
-			let add = alias.map do |name,i|
-				StyleDeclaration.new(@property.clone(name),@expr.clone)
-			list.replace(self,add)
-			return
 
-		elif alias
+		if alias
 			@property = @property.clone(alias)
-			# @property.@name = alias
 		
 		let name = String(@property.name)
 		let method = helpers.symbolize(name)
@@ -8403,14 +8397,15 @@ export class StyleProperty < StyleNode
 	prop name
 	# modifiers
 	# values
-	def initialize parts
-		@parts = parts
+	def initialize token
+		@token = token
+		@parts = String(@token).split('.')
 
 	def name
 		@name ||= String(@parts[0])
 
 	def clone newname
-		StyleProperty.new([newname or @name].concat(modifiers))
+		StyleProperty.new([newname or name].concat(modifiers).join("."))
 
 	def addModifier modifier
 		@parts.push(modifier)
@@ -8427,7 +8422,6 @@ export class StyleProperty < StyleNode
 		
 	def toKey
 		@parts.join('.')
-		# modifiers:length ? JSON.stringify(@parts) : name
 
 	def c
 		toString
@@ -8459,9 +8453,18 @@ export class StylePropertyModifier < StyleNode
 		String(@name)
 
 export class StyleExpressions < ListNode
+	
+	def load list
+		[].concat(list)
 
 	def c
-		AST.cary(@nodes).join(',')
+		AST.cary(@nodes).join(', ')
+		
+	def clone
+		StyleExpressions.new(@nodes.slice(0))
+	
+	def toArray
+		@nodes.filter(do $1 isa StyleExpression).map(do $1.toArray )
 
 export class StyleExpression < ListNode
 
