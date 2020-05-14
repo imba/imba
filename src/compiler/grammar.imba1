@@ -351,106 +351,46 @@ var grammar =
 		o '' do TagTypeIdentifier.new('div')
 	]
 	
-	TagRuleScopes: [
-		o 'TagRuleScope' do [A1]
-		o 'TagRuleScopes TagRuleScope' do A1.concat(A2)
+	StyleBlockDeclaration: [
+		o 'CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A2,A3)
 	]
 	
-	TagRuleScope: [
-		o 'T: IDENTIFIER TagRuleArgs' do TagStyleScope.new(A2,A3)
-	]
-	
-	TagRuleMixins: [
-		o 'TagRuleMixin' do [A1]
-		o 'TagRuleMixins TagRuleMixin' do A1.concat(A2)
-	]
-	
-	TagRuleMixin: [
-		o '. IDENTIFIER MATH TagRuleInlineArg' do TagStyleMixin.new(A2,[A4],A3)
-		o '. IDENTIFIER TagRuleArgs' do TagStyleMixin.new(A2,A3)
-	]
-	TagRuleArgs: [
-		o '' do []
-		o '( )' do []
-		o '( ArgList )' do A2
-		o 'CALL_START CALL_END' do []
-		o 'CALL_START ArgList CALL_END' do A2
-	]
-	
-	TagRuleInlineArg: [
-		o 'NUMBER UNIT' do NumWithUnit.new(A1,A2)
-		o 'NUMBER' do Num.new A1
-		o 'IDENTIFIER' do A1
-	]
-	
-	StyleDefinitionOld: [
-		o 'STYLE_DECL STYLE_START StyleProperties STYLE_END' do TagStyle.new([],A3)
-	]
-
-	
-	StyleProperties: [
-		o 'StyleProperty' do [A1]	
-		o 'StyleProperties StyleProperty' do A1.concat(A2)
-	]
-	
-	StylePropertyScope: [
-		o ''
-		o 'IDENTIFIER :' do [A1]
-		o 'StylePropertyScope IDENTIFIER :' do A1.concat(A2)
-	]
-	
-	StylePropertyKey: [
-		o 'IDENTIFIER' do [A1]
-		o 'StylePropertyKey : IDENTIFIER' do A1.concat(A3)
-	]
-	
-	StyleProperty: [
-		o 'StylePropertyKey MATH TagRuleInlineArg' do TagStyleMixin.new(A1,[A3])
-		o 'StylePropertyKey TagRuleArgs' do TagStyleMixin.new(A1,A2)
-	]
-	
-	Style2Definition: [
-		o 'STYLE_DECL STYLE_START Style2Body STYLE_END' do StyleRuleSet.new(null,A3)
+	StyleDefinition: [
+		o 'STYLE_DECL STYLE_START StyleBody STYLE_END' do StyleRuleSet.new(null,A3)
 	]
 	
 	NestedStyleRule: [
-		o 'Selector STYLE_START Style2Body STYLE_END' do StyleRuleSet.new(A1,A3)
+		o 'Selector STYLE_START StyleBody STYLE_END' do StyleRuleSet.new(A1,A3)
 	]
 	
+	StyleBlockBody: [
+		o 'INDENT StyleBody Outdent' do A2.indented(A1,A3)
+	]
 	
-	Style2Body: [
-		o 'Style2Node' do StyleBody.new([A1])
-		o 'Style2Body OptSemicolon Style2Declaration' do A1.add A3
+	StyleBody: [
+		o 'StyleNode' do StyleBody.new([A1])
+		o 'StyleBody StyleDeclaration' do A1.add A2
 		# o 'Style2Body , Style2Node' do A1.add A3
-		o 'Style2Body OptSemicolon Terminator Style2Node' do A1.add(A4)
-		o 'INDENT Style2Body OptSemicolon Outdent' do A2.indented(A1,A4)
+		o 'StyleBody Terminator StyleNode' do A1.add(A3)
+		o 'INDENT StyleBody Outdent' do A2.indented(A1,A3)
+		# o 'INDENT Style2Body OptSemicolon Outdent' do A2.indented(A1,A4)
 	]
 	
-	Style2Node: [
-		o 'Style2Declaration'
-		o 'NestedStyleRule'
+	StyleNode: [
+		o 'StyleDeclaration'
+		o 'CSS_SEL StyleBlockBody CSS_END' do StyleRuleSet.new(A1,A2)
+		# o 'NestedStyleRule'
 	]
 	
-	Style2Declaration: [
-		o 'Style2Property : Style2Expressions' do StyleDeclaration.new(A1,A3)
-		# nested 
+	StyleDeclaration: [
+		o 'StyleProperty : StyleExpressions' do StyleDeclaration.new(A1,A3)
 		# o 'Style2Property CALL_START Style2Body CALL_END' do StyleDeclaration.new(A1,A3)
 	]
 	
-	Style2Identifier: [
-		o 'CSSVAR' do A1
-		o 'IDENTIFIER' do A1
-	]
-	
-	Style2Property: [
+	StyleProperty: [
 		o 'CSSPROP' do StyleProperty.new([A1])
 		# o 'Style2Identifier' do StyleProperty.new([StylePropertyIdentifier.new(A1)])
 		# o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
-	]
-	
-	Style2Expressions: [
-		o 'Style2Expression' do StyleExpressions.new([A1])
-		o 'Style2Expressions , Style2Expression' do A1.add(A3)
 	]
 	
 	StyleOperator: [
@@ -459,21 +399,26 @@ var grammar =
 		o '-'
 	]
 	
-	# the values
-	Style2Expression: [
-		o 'Style2Term' do StyleExpression.new().add(A1)
-		o 'Style2Expression StyleOperator' do A1.add(A2)
-		o 'Style2Expression Style2Term' do A1.add(A2)
+	StyleExpressions: [
+		o 'StyleExpression' do StyleExpressions.new([A1])
+		o 'StyleExpressions , StyleExpression' do A1.add(A3)
 	]
 	
-	Style2Term: [
+	# the values
+	StyleExpression: [
+		o 'StyleTerm' do StyleExpression.new().add(A1)
+		o 'StyleExpression StyleOperator' do A1.add(A2)
+		o 'StyleExpression StyleTerm' do A1.add(A2)
+	]
+	
+	StyleTerm: [
 		o 'CSSVAR' do StyleVar.new(A1)
 		o 'DIMENSION' do StyleDimension.new(A1)
 		o 'COLOR' do StyleColor.new(A1)
 		o 'PERCENTAGE' do StyleDimension.new(A1)
 		o 'NUMBER' do StyleNumber.new(A1)
 		o 'String' do A1
-		o 'IDENTIFIER CALL_START Style2Expressions CALL_END' do StyleFunction.new(A1,A3)
+		o 'IDENTIFIER CALL_START StyleExpressions CALL_END' do StyleFunction.new(A1,A3)
 		o 'IDENTIFIER' do StyleIdentifier.new(A1)
 	]
 
@@ -486,9 +431,7 @@ var grammar =
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
 		
-		# o 'TagOptions RULE_START TagRuleScopes TagRuleMixins RULE_END' do A1.addPart(TagStyle.new(A3,A4),AST.TagStyle)
-		# o 'TagOptions T. STYLE_START StyleProperties STYLE_END' do A1.addPart(TagStyle.new([],A4),AST.TagFlag)
-		o 'TagOptions T. STYLE_START Style2Body STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
+		o 'TagOptions T. STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
 		# o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagStyle)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
@@ -824,7 +767,7 @@ var grammar =
 		o 'This'
 		o 'TagId'
 		o 'Selector'
-		o 'Style2Definition'
+		o 'StyleDefinition'
 		o 'Invocation'
 		o 'Require'
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
@@ -899,6 +842,7 @@ var grammar =
 		o 'Decorators'
 		o 'ClassDeclLine'
 		o 'Decorators ClassDeclLine' do A1.concat([A2])
+		o 'StyleBlockDeclaration'
 		o 'Comment'
 		o 'Tag'
 	]
@@ -906,6 +850,7 @@ var grammar =
 	ClassDeclLine: [
 		o 'STATIC ClassDeclLine' do A2.set(static: A1)
 		o 'MethodDeclaration'
+		
 		o 'ClassField = Expression' do A1.set(value: A3) # ClassField.new(A1, A3)
 		o 'ClassField' do A1
 		# o 'ClassFieldIdentifier ClassFieldBody' do ClassField.new(A1, null,A2)
@@ -1225,6 +1170,7 @@ var operators = [
 	['right', 'TAG_ATTR_SET']
 	['right', 'SPLAT']
 	['left', 'SELECTOR_START']
+	['left', 'CSS']
 ]
 
 # Wrapping Up

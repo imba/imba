@@ -706,6 +706,9 @@ export class Stack
 
 	def up test
 		test ||= do |v| !(v isa VarOrAccess)
+			
+		if typeof test == 'number'
+			return @nodes[@nodes:length - (1 + test)]
 
 		var i = @nodes:length - 2
 
@@ -2594,8 +2597,9 @@ export class Root < Code
 				# and o:bundler != 'webpack'
 				let css = {js: stylebody}
 				# maybe do something different when server etc?
-				css:js = "/* styles from {o:sourcePath} */\n" + css:js
-				result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
+				# css:js = "/* styles from {o:sourcePath} */\n" + css:js
+				result:js = "{result:js}\nimba.inlineStyles({JSON.stringify(css:js)});"
+				result:js += '\n/*\n' + css:js + '\n*/\n'
 				result:styles:inlined = yes
 
 		# always create the sourcemap?
@@ -2870,6 +2874,9 @@ export class TagDeclaration < ClassDeclaration
 		Object.assign(super,{
 			type: 'tag'
 		})
+		
+	def selectorpath
+		@selectorpath ||= String(name)
 
 	def visit
 		scope__.imbaDependency('index')
@@ -8274,11 +8281,24 @@ export class StyleRuleSet < StyleNode
 		true
 		
 	def visit stack, o
-		if o:rule
+		if stack.parent isa ClassBody
+			# console.log 'ruleset is inside of class!!'
+			let owner = stack.up(2)
+			if owner isa TagDeclaration
+				@sel = String(@selectors).trim
+				@sel = "& {@sel}" if @sel.indexOf('&') == -1
+				@sel = @sel.replace('&',owner.selectorpath)
+				# console.log "ruleset in class {owner}",@sel
+				set(inClassBody: yes)
+			else
+				yes # THROW here
+			# FIX the selector based on the tag
+
+		elif o:rule
 			@sel = @selectors?.toString
 			# should happen no matter what??
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
-			console.log 'nested rule!!',@sel
+			# console.log 'nested rule!!',@sel
 			# @sel = "& {@sel}"
 		else
 			@name = STACK.sfcid + oid
@@ -8306,6 +8326,7 @@ export class StyleRuleSet < StyleNode
 		"{@name}"
 		
 	def c
+		return '' if option(:inClassBody)
 		# let json = JSON.stringify(@body,null,2)
 		# let css = StyleRule.new('aba',[],@styles)
 		# let out = json + '\n/*\n' + JSON.stringify(@styles,null,2) + '\n*/'

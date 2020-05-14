@@ -25,6 +25,8 @@ export class Color
 	def toString
 		"hsla({h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
 
+
+# This has to move into StyleTheme class
 var palette = {
 	current: {string: "currentColor"}
 	black: Color.new('black',0,0,0,'100%')
@@ -32,13 +34,16 @@ var palette = {
 }
 
 for own name,variations of colors
-	let subcolors = {}
-	
-	for own subname,hex of variations
-		let path = name + '-' + subname
-		let rgb = conv.hex.rgb(hex)
-		let [h,s,l] = conv.rgb.hsl(rgb)
-		let color = subcolors[subname] = palette[path] = Color.new(path,h,s,l,'100%')
+	for own subname,raw of variations
+		let path = name + subname
+		
+		# are these just aliases?
+		if palette[raw]
+			palette[path] = palette[raw]
+		else
+			let rgb = conv.hex.rgb(raw)
+			let [h,s,l] = conv.rgb.hsl(rgb)
+			let color = palette[path] = Color.new(path,h,s,l,'100%')
 
 # var colorRegex = RegExp.new('^(?:(\\w+)\-)?(' + Object.keys(palette).join('|') + ')\\b')
 var colorRegex = RegExp.new('\\b(' + Object.keys(palette).join('|') + ')\\b')
@@ -1095,7 +1100,7 @@ export class StyleRule
 			let subsel = null
 			
 			if key.indexOf('&') >= 0
-				console.log 'subquery',key,value
+				# console.log 'subquery',key,value
 				# let substates = states.concat([[key]])
 				let substates = ([[key]]).concat(states)
 				subrules.push StyleRule.new(context,substates,value)
@@ -1113,7 +1118,7 @@ export class StyleRule
 				
 				# let substates = states.concat(keys.slice(1))
 				let substates = keys.slice(1).concat(states)
-				console.log 'compile with substates',substates
+				# console.log 'compile with substates',substates
 				# TODO use interpolated key?
 				let obj = {}
 				obj[keys[0]] = value				

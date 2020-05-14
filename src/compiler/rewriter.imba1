@@ -461,8 +461,14 @@ export class Rewriter
 			var type = token.@type
 			var v = token.@value
 			
+			if type == 'CSS_SEL' and token.@closer
+				let idx = tokens.indexOf(token.@closer)
+				# console.log 'CSS jump to',i,idx,idx - i,tokens[idx - i]
+				return idx - i + 1
+			
 			if type == 'STYLE_START' and token.@closer
 				return tokens.indexOf(token.@closer) - i
+				
 			
 			if BALANCED_PAIRS[type]
 				balancedStack.unshift(type)
@@ -720,7 +726,7 @@ export class Rewriter
 			var token = tokens[i]
 			var type = token.@type
 			
-			if type == 'STYLE_START' and token.@closer
+			if (type == 'STYLE_START' or type == 'CSS_SEL') and token.@closer
 				i = tokens.indexOf(token.@closer) + 1
 				continue
 			

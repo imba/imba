@@ -400,12 +400,13 @@ export class Lexer
 		@loc = @locOffset + i
 
 		while @chunk = code.slice(i)
-			if @context and @context:pop
-				if @context:pop.test(@chunk)
+			let ctx = @context
+			if ctx and ctx:pop
+				if ctx:pop.test(@chunk)
 					popEnd
 
 			# we should let the current context decide which methods to call
-			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || (@inStyle and styleContextToken) || basicContext
+			pi = (ctx and ctx:lexer and ctx:lexer.call(self)) || (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || (@inStyle and lexStyleBody) || basicContext
 			i += pi
 			@loc = @locOffset + i
 
@@ -446,7 +447,7 @@ export class Lexer
 		# automatically adding a closer if this is defined
 		var ctx = @context
 		if ctx and ctx:start
-			ctx:end = Token.new(ctx:id + '_END',popped,@last.region[1],0)
+			ctx:end = Token.new(ctx:closeType or ctx:id + '_END',popped,@last.region[1],0)
 			ctx:end.@start = ctx:start
 			ctx:start.@end = ctx:end
 			@tokens.push(ctx:end)
@@ -507,6 +508,8 @@ export class Lexer
 
 			pair('DEF')
 		return
+		
+		
 
 	def tagContextToken
 		let chr = @chunk[0]
@@ -570,7 +573,81 @@ export class Lexer
 
 		return 0
 		
-	def styleContextToken
+	def findBalancedSelector str
+		var stack = []
+		var i = 0
+		
+		# could it not happen here?
+		while i < (str:length - 1)
+			var letter = str.charAt(i)
+
+			let end = stack[0]
+			let instr = end == '"' or end == "'"
+			
+			if letter and letter == end
+				stack.shift
+			
+			elif !instr and (letter == ')' or letter == ']' or letter == '}')
+				console.log 'out of balance!!'
+				break
+				
+			elif letter == '(' and !instr
+				stack.unshift(')')
+			# elif letter == '{' and !instr
+			# 	stack.unshift('}')
+			elif letter == '[' and !instr
+				stack.unshift(']')
+			elif letter == '"'
+				stack.unshift('"')
+			elif letter == "'"
+				stack.unshift("'")
+			
+			if !end and (letter == '=' or letter == '\n' or letter == '{')
+				break
+			
+			i++
+				
+		return i ? str.slice(0,i) : null
+		
+		
+	def lexStyleRule
+		# when we meet = enter into style context?
+		
+		if let sel = findBalancedSelector(@chunk)
+			let len = sel:length
+			token('CSS_SEL',sel,len)
+			let seltoken = @last
+			let next = @chunk[len]
+			
+			if next == '='
+				len++
+				
+			@context:lexer = null
+			@indents.push 1
+			@outdebt = @indebt = 0
+			token('INDENT',"1",0,1)
+			pushEnd('OUTDENT',lexer: self:lexStyleBody,opener: seltoken)			
+			@indent++
+			return len
+		
+		
+		let chr = @chunk[0]
+		if chr == '='
+			# major hack
+			# now start the actual style rule
+			token('=','=',1)
+			@context:lexer = null
+			@indents.push 1
+			@outdebt = @indebt = 0
+			token('INDENT', "1",0,1)
+			pushEnd('OUTDENT',lexer: self:lexStyleBody,opener: @context:cssKeyword)
+			@context:cssKeyword = null
+			@indent++
+			return 1
+			
+		return 0
+		
+	def lexStyleBody
 		return 0 if @end == '%'
 		# return 0
 		let chr = @chunk[0]
@@ -579,6 +656,13 @@ export class Lexer
 		# not if we are inside
 		
 		# now - how do we find the selector-rules?
+		
+		# first check if there is a & in this new line
+		if m = (/^[^\n]*\&/).exec(@chunk)
+			let sel = findBalancedSelector(@chunk)
+			if sel and sel.indexOf('&') >= 0
+				# @context:lexer = self:lexStyleRule
+				return lexStyleRule
 		
 		if m = STYLE_PROPERTY.exec(@chunk)
 			# what is the last one?
@@ -726,7 +810,7 @@ export class Lexer
 			# only if we are on a newline? or something?
 			return true
 
-		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy')
+		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css')
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG'
 
@@ -919,6 +1003,8 @@ export class Lexer
 
 		# prev = last @tokens
 		var len = input:length
+		
+		# switch 
 
 		# should be strict about the order, check this manually instead
 		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP"
@@ -981,6 +1067,13 @@ export class Lexer
 			moveCaret(-(idlen + colonOffset))
 		else
 			token(typ, id, idlen)
+			
+			
+		if typ == 'CSS'
+			@context:lexer = self:lexStyleRule
+			@context:cssKeyword = @last
+			# pushEnd('CSS',lexer: self:cssLex, id: 'CSS')
+			# pushEnd('CSS_RULE',pop: /^(\n|\=)/)
 
 		return len
 
@@ -1410,9 +1503,17 @@ export class Lexer
 				@outdebt = 0
 
 				addLinebreaks(1) unless noNewlines
-
-				pair 'OUTDENT'
+				
+				let paired = pair('OUTDENT')
 				token('OUTDENT', "" + dent, 0)
+				if paired[1] and paired[1]:opener
+					let opener = paired[1]:opener
+					
+					@last.@opener = opener
+					opener.@closer = @last
+					if opener.@type == 'CSS_SEL'
+						token('CSS_END', "", 0)
+					# console.log 'paired now!!',opener,@tokens.indexOf(opener),@tokens:length - 1
 
 		@outdebt -= moveOut if dent
 
@@ -1423,7 +1524,7 @@ export class Lexer
 		@scopes:length = @indents:length
 		closeDef
 		var ctx = context
-		pair(ctx) if ctx == '%' or ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT' # really?
+		pair(ctx) if ctx == '%' or ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT' # or ctx == 'CSS' # really?
 		return this
 
 	# Matches and consumes non-meaningful whitespace. tokid the previous token
