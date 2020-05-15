@@ -536,10 +536,6 @@ export class Lexer
 			token("TAG_END",'/>',2)
 			pair 'TAG_END'
 			return 2
-			
-		if chr == ':'
-			pushEnd('TAG_RULE',id: 'RULE', pop: /^([\s\n\>]|\/\>)/)
-			return 0
 
 		if chr == '%' or chr == ':' or chr == '.' or chr == '@'
 			token("T{chr}",chr,1)
@@ -630,21 +626,6 @@ export class Lexer
 			@indent++
 			return len
 		
-		
-		let chr = @chunk[0]
-		if chr == '='
-			# major hack
-			# now start the actual style rule
-			token('=','=',1)
-			@context:lexer = null
-			@indents.push 1
-			@outdebt = @indebt = 0
-			token('INDENT', "1",0,1)
-			pushEnd('OUTDENT',lexer: self:lexStyleBody,opener: @context:cssKeyword)
-			@context:cssKeyword = null
-			@indent++
-			return 1
-			
 		return 0
 		
 	def lexStyleBody
@@ -661,7 +642,6 @@ export class Lexer
 		if m = (/^[^\n]*\&/).exec(@chunk)
 			let sel = findBalancedSelector(@chunk)
 			if sel and sel.indexOf('&') >= 0
-				# @context:lexer = self:lexStyleRule
 				return lexStyleRule
 		
 		if m = STYLE_PROPERTY.exec(@chunk)

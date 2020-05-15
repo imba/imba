@@ -7270,7 +7270,7 @@ export class Tag < TagLike
 			
 		if isSelf
 			let decl = stack.up(TagDeclaration)
-			decl.set(self: self,sfcid: sfcid) if self
+			decl.set(self: self,sfcid: sfcid) if decl
 			
 		@tagName = tagName
 
@@ -8420,7 +8420,7 @@ export class StyleProperty < StyleNode
 	# values
 	def initialize token
 		@token = token
-		@parts = String(@token).split('.')
+		@parts = String(@token).replace(/(^|\b)\$/g,'--').split('.')
 
 	def name
 		@name ||= String(@parts[0])

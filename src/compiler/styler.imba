@@ -239,7 +239,6 @@ class Selectors
 					if self[prefix] and flags.length
 						params.unshift(".{flags.join('.')}")
 						state = prefix
-						console.log 'added params',params
 			
 			if self[state]
 				res = self[state](...params)
