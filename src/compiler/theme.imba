@@ -26,8 +26,6 @@ export const aliases =
 	jc: 'justify-content'
 	fd: 'flex-direction'
 	
-	
-	
 	d: 'display'
 	c: 'color'
 	
@@ -71,9 +69,6 @@ export const variants =
 		lg: 4
 		full: '9999px'
 		step: '0.125rem'
-	
-	opacity:
-		step: '1%'
 	
 	sizing:
 		step: '0.25rem'
