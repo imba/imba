@@ -8402,7 +8402,7 @@ export class StyleDeclaration < StyleNode
 			let key = @property.toKey
 			if o:selector
 				key = JSON.stringify([o:selector,key])
-			o:styles[key] = AST.cary(@expr).join(' ')
+			o:styles[key] = @expr.c
 		self
 		
 	def toCSS
@@ -8410,7 +8410,6 @@ export class StyleDeclaration < StyleNode
 		
 	def toJSON
 		toCSS
-		# [@property,@expression]
 
 
 export class StyleProperty < StyleNode
