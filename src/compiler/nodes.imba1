@@ -8584,7 +8584,8 @@ export class StyleColor < StyleTerm
 export class StyleVar < StyleTerm
 
 	def c
-		"var(--{toString})"
+		toString
+		# "var(--{toString})"
 
 export class StyleDimension < StyleTerm
 	

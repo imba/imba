@@ -432,7 +432,7 @@ export class Lexer
 		@end = val
 		refreshScope
 		
-		if ctx and ctx:closeType == 'STYLE_END'
+		if ctx and (ctx:closeType == 'STYLE_END' or ctx:style)
 			@inStyle++
 
 		if ctx and ctx:id
@@ -452,7 +452,7 @@ export class Lexer
 			ctx:start.@end = ctx:end
 			@tokens.push(ctx:end)
 			
-		if ctx and ctx:closeType == 'STYLE_END'
+		if ctx and (ctx:closeType == 'STYLE_END' or ctx:style)
 			@inStyle--
 
 		@contexts.pop
@@ -625,7 +625,7 @@ export class Lexer
 			@indents.push 1
 			@outdebt = @indebt = 0
 			token('INDENT',"1",0,1)
-			pushEnd('OUTDENT',lexer: self:lexStyleBody,opener: seltoken)			
+			pushEnd('OUTDENT',lexer: self:lexStyleBody,opener: seltoken, style: yes)
 			@indent++
 			return len
 		
