@@ -112,12 +112,14 @@ var grammar =
 
 	# Block and statements, which make up a line in a body.
 	Line: [
+		o 'CSSDeclaration'
 		o 'VarBlock'
 		# o 'Splat'
 		o 'Expression'
 		# o 'HEADER' do Terminator.new(A1)
 		o 'Comment'
 		o 'Statement'
+		
 		o 'ImportDeclaration'
 		o 'ExportDeclaration'
 	]
@@ -353,6 +355,12 @@ var grammar =
 	
 	StyleBlockDeclaration: [
 		o 'CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A2,A3)
+	]
+	
+	CSSDeclaration: [
+		o 'GLOBAL CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A3,A4).set(global: A1)
+		# o 'StyleBlockDeclaration' do A1
+		# o 'GLOBAL StyleBlockDeclaration' do A2.set(global: A1)
 	]
 	
 	StyleDefinition: [

@@ -606,19 +606,22 @@ export class Lexer
 		return i ? str.slice(0,i) : null
 		
 		
-	def lexStyleRule
+	def lexStyleRule offset = 0
 		# when we meet = enter into style context?
+		let chunk = offset ? @chunk.slice(offset) : @chunk
 		
-		if let sel = findBalancedSelector(@chunk)
+		if let sel = findBalancedSelector(chunk)
 			let len = sel:length
-			token('CSS_SEL',sel,len)
+			token('CSS_SEL',sel,len,offset)
 			let seltoken = @last
-			let next = @chunk[len]
+			let next = chunk[len]
 			
 			if next == '='
 				len++
-				
-			@context:lexer = null
+			
+			if @context
+				@context:lexer = null
+
 			@indents.push 1
 			@outdebt = @indebt = 0
 			token('INDENT',"1",0,1)
@@ -793,6 +796,10 @@ export class Lexer
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css')
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG'
+			
+			if id == 'css' and @lastVal == 'global'
+				return true
+				
 
 			if id == 'lazy'
 				return incls and @lastTyp in ['INDENT','TERMINATOR','DECORATOR']
@@ -987,7 +994,7 @@ export class Lexer
 		# switch 
 
 		# should be strict about the order, check this manually instead
-		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP"
+		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS'
 			queueScope(typ)
 
 			var i = @tokens:length
@@ -1050,10 +1057,10 @@ export class Lexer
 			
 			
 		if typ == 'CSS'
-			@context:lexer = self:lexStyleRule
-			@context:cssKeyword = @last
-			# pushEnd('CSS',lexer: self:cssLex, id: 'CSS')
-			# pushEnd('CSS_RULE',pop: /^(\n|\=)/)
+			# if @context
+			#	@context:lexer = self:lexStyleRule
+			return len + lexStyleRule(len)
+			
 
 		return len
 
