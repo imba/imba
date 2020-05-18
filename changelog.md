@@ -1,4 +1,8 @@
 
+## 2.0.0-alpha.46
+* Added experimental syntax for css/styling. See [#334](https://github.com/imba/imba/pull/362)
+* Broke scoped css comment blocks until further notice
+
 ## 2.0.0-alpha.45
 * Fix conditional rendering bug (#334)
 * Changed event syntax from `<div :click.stop.{method()}>` to `<div @click.stop=method()>`
