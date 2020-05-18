@@ -74,51 +74,59 @@ export const variants =
 		step: '0.25rem'
 		
 	layout:
-		clip: {'overflow': 'hidden'}
-		noclip: {'overflow': 'visible'}
-		
-		'clip-x': {'overflow-x': 'hidden'}
-		'clip-y': {'overflow-y': 'hidden'}
-		
-		'scroll-x': {'overflow-x': 'auto'}
-		'scroll-y': {'overflow-y': 'auto'}
-		
-		'noclip-x': {'overflow-x': 'visible'}
-		'noclip-y': {'overflow-y': 'visible'}
-		
-		flex: {'display': 'flex'}
-		vflex: {'display': 'flex', 'flex-direction': 'column'}
-		hflex: {'display': 'flex', 'flex-direction': 'row'}
-		
-		# flex to top/bottom/left/right
-
-		
+		# display
+		'flex': {'display': 'flex'}
+		'vflex': {'display': 'flex', 'flex-direction': 'column'}
+		'hflex': {'display': 'flex', 'flex-direction': 'row'}
 		'inline-flex': {'display': 'inline-flex'}
 		'inline-vflex': {'display': 'inline-flex', 'flex-direction': 'column'}
 		'inline-hflex': {'display': 'inline-flex', 'flex-direction': 'row'}
-		
-		block: {'display': 'block'}
-		
+		'inline': {'display': 'inline'}
+		'block': {'display': 'block'}
 		'inline-block': {'display': 'inline-block'}
-		
 		'grid': {'display': 'grid'}
 		'inline-grid': {'display': 'inline-grid'}
-		
+		'table': {display: 'table' }
+		'table-caption': {display: 'table-caption' }
+		'table-cell': {display: 'table-cell' }
+		'table-column': {display: 'table-column' }
+		'table-column-group': {display: 'table-column-group' }
+		'table-footer-group': {display: 'table-footer-group' }
+		'table-header-group': {display: 'table-header-group' }
+		'table-row-group': {display: 'table-row-group' }
+		'table-row': {display: 'table-row' }
 		'contents': {'display': 'contents'}
+		'hidden': {'display': 'none'}
 		
-		static: {position: 'static'}
-		relative: {position: 'relative'}
-		absolute: {position: 'absolute'}
-		rel: {position: 'relative'}
-		abs: {position: 'absolute'}
-		fixed: {position: 'fixed'}
-		sticky: {position: 'sticky'}
-
+		# Position
+		'static': {position: 'static'}
+		'relative': {position: 'relative'}
+		'absolute': {position: 'absolute'}
+		'rel': {position: 'relative'}
+		'abs': {position: 'absolute'}
+		'fixed': {position: 'fixed'}
+		'sticky': {position: 'sticky'}
+		
+		# overflow
+		'clip': {'overflow': 'hidden'}
+		'noclip': {'overflow': 'visible'}
+		'clip-x': {'overflow-x': 'hidden'}
+		'clip-y': {'overflow-y': 'hidden'}
+		'scroll-x': {'overflow-x': 'auto'}
+		'scroll-y': {'overflow-y': 'auto'}
+		'noclip-x': {'overflow-x': 'visible'}
+		'noclip-y': {'overflow-y': 'visible'}
+		
+		# box-sizing
 		'border-box': {'box-sizing': 'border-box'}
 		'content-box': {'box-sizing': 'content-box'}
 		
 		'wrap': {'flex-wrap': 'wrap'}
 		'center': {'align-items': 'center','justify-content': 'center'}
+		
+		# visibility
+		'invisible': {visibility: 'hidden'}
+		'visible': {visibility: 'visible'}
 		
 	'font-size':
 		# sm: ['14px','20px']
@@ -200,6 +208,7 @@ export const variants =
 		"back": "cubic-bezier(0.68, -0.55, 0.265, 1.55)"
 		
 export const breakpoints =
+	xs: '(min-width: 480px)'
 	sm: '(min-width: 640px)'
 	md: '(min-width: 768px)'
 	lg: '(min-width: 1024px)'
