@@ -26,8 +26,12 @@ if (showHelp) {
 function pack(opts){
 	return new Promise(function(resolve,reject){
 		opts = Object.assign({
-			module: {rules: [{test: /\.imba1$/, use: __dirname + '/bootstrap.loader.js' }]},
-			resolve: {extensions: ['.imba1','.js','.json']},
+			module: {rules: [{
+				test: /\.imba1$/, use: __dirname + '/bootstrap.loader.js'
+			},{
+				test: /\.imba$/, use: {loader: __dirname + '/bootstrap.loader.js',options:{imbaPath: null}}
+			}]},
+			resolve: {extensions: ['.imba1','.imba','.js','.json']},
 			node: {fs: false, process: false, global: false}
 		},opts);
 

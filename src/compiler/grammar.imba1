@@ -112,12 +112,14 @@ var grammar =
 
 	# Block and statements, which make up a line in a body.
 	Line: [
+		o 'CSSDeclaration'
 		o 'VarBlock'
 		# o 'Splat'
 		o 'Expression'
 		# o 'HEADER' do Terminator.new(A1)
 		o 'Comment'
 		o 'Statement'
+		
 		o 'ImportDeclaration'
 		o 'ExportDeclaration'
 	]
@@ -286,6 +288,7 @@ var grammar =
 	# Alphanumerics are separated from the other **Literal** matchers because
 	# they can also serve as keys in object literals.
 	AlphaNumeric: [
+		o 'NUMBER UNIT' do NumWithUnit.new(A1,A2)
 		o 'NUMBER' do Num.new A1
 		o 'STRING' do Str.new A1
 		o 'Symbol'
@@ -349,6 +352,84 @@ var grammar =
 		o 'TagIdentifier' do ExpressionNode.new(A1)
 		o '' do TagTypeIdentifier.new('div')
 	]
+	
+	StyleBlockDeclaration: [
+		o 'CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A2,A3)
+	]
+	
+	CSSDeclaration: [
+		# o 'GLOBAL CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A3,A4).set(global: A1)
+		o 'StyleBlockDeclaration' do A1.set(toplevel: true)
+		o 'GLOBAL CSSDeclaration' do A2.set(global: A1)
+		o 'LOCAL CSSDeclaration' do A2.set(local: A1)
+	]
+	
+	StyleDefinition: [
+		o 'STYLE_DECL STYLE_START StyleBody STYLE_END' do StyleRuleSet.new(null,A3)
+	]
+	
+	NestedStyleRule: [
+		o 'Selector STYLE_START StyleBody STYLE_END' do StyleRuleSet.new(A1,A3)
+	]
+	
+	StyleBlockBody: [
+		o 'INDENT StyleBody Outdent' do A2.indented(A1,A3)
+	]
+	
+	StyleBody: [
+		o 'StyleNode' do StyleBody.new([A1])
+		o 'StyleBody StyleDeclaration' do A1.add A2
+		# o 'Style2Body , Style2Node' do A1.add A3
+		o 'StyleBody Terminator StyleNode' do A1.add(A3)
+		o 'INDENT StyleBody Outdent' do A2.indented(A1,A3)
+		# o 'INDENT Style2Body OptSemicolon Outdent' do A2.indented(A1,A4)
+	]
+	
+	StyleNode: [
+		o 'StyleDeclaration'
+		o 'CSS_SEL StyleBlockBody CSS_END' do StyleRuleSet.new(A1,A2)
+		# o 'NestedStyleRule'
+	]
+	
+	StyleDeclaration: [
+		o 'StyleProperty : StyleExpressions' do StyleDeclaration.new(A1,A3)
+		# o 'Style2Property CALL_START Style2Body CALL_END' do StyleDeclaration.new(A1,A3)
+	]
+	
+	StyleProperty: [
+		o 'CSSPROP' do StyleProperty.new([A1])
+		# o 'Style2Identifier' do StyleProperty.new([StylePropertyIdentifier.new(A1)])
+		# o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
+	]
+	
+	StyleOperator: [
+		o 'MATH'
+		o '+'
+		o '-'
+	]
+	
+	StyleExpressions: [
+		o 'StyleExpression' do StyleExpressions.new([A1])
+		o 'StyleExpressions , StyleExpression' do A1.add(A3)
+	]
+	
+	# the values
+	StyleExpression: [
+		o 'StyleTerm' do StyleExpression.new().add(A1)
+		o 'StyleExpression StyleOperator' do A1.add(A2)
+		o 'StyleExpression StyleTerm' do A1.add(A2)
+	]
+	
+	StyleTerm: [
+		o 'CSSVAR' do StyleVar.new(A1)
+		o 'DIMENSION' do StyleDimension.new(A1)
+		o 'COLOR' do StyleColor.new(A1)
+		o 'PERCENTAGE' do StyleDimension.new(A1)
+		o 'NUMBER' do StyleNumber.new(A1)
+		o 'String' do A1
+		o 'IDENTIFIER CALL_START StyleExpressions CALL_END' do StyleFunction.new(A1,A3)
+		o 'IDENTIFIER' do StyleIdentifier.new(A1)
+	]
 
 	TagOptions: [
 		o 'TagTypeName TAG_REF' do Tag.new(type: A1,reference: A2)
@@ -358,7 +439,8 @@ var grammar =
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
-
+		
+		o 'TagOptions T. STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
 		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
@@ -551,6 +633,11 @@ var grammar =
 		o ''
 		o ','
 	]
+	
+	OptSemicolon: [
+		o ''
+		o ';'
+	]
 
 	# The list of parameters that a function accepts can be of any length.
 	ParamList: [
@@ -689,6 +776,7 @@ var grammar =
 		o 'This'
 		o 'TagId'
 		o 'Selector'
+		o 'StyleDefinition'
 		o 'Invocation'
 		o 'Require'
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
@@ -763,6 +851,7 @@ var grammar =
 		o 'Decorators'
 		o 'ClassDeclLine'
 		o 'Decorators ClassDeclLine' do A1.concat([A2])
+		o 'StyleBlockDeclaration'
 		o 'Comment'
 		o 'Tag'
 	]
@@ -770,6 +859,7 @@ var grammar =
 	ClassDeclLine: [
 		o 'STATIC ClassDeclLine' do A2.set(static: A1)
 		o 'MethodDeclaration'
+		
 		o 'ClassField = Expression' do A1.set(value: A3) # ClassField.new(A1, A3)
 		o 'ClassField' do A1
 		# o 'ClassFieldIdentifier ClassFieldBody' do ClassField.new(A1, null,A2)
@@ -1089,6 +1179,7 @@ var operators = [
 	['right', 'TAG_ATTR_SET']
 	['right', 'SPLAT']
 	['left', 'SELECTOR_START']
+	['left', 'CSS']
 ]
 
 # Wrapping Up

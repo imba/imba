@@ -99,7 +99,7 @@ var TAG_PART = /^[\:\.\#]?([A-Za-z\_][\w\-]*)(\:[A-Za-z\_][\w\-]*)?/
 var TAG_ATTR = /^([\.\:]?[\w\_]+([\-\:\.][\w]+)*)(\s)*\=(?!\>)/
 
 
-var SELECTOR = /^([%\$]{1,2})([\(\w\#\.\[])/
+var SELECTOR = /^([%\$]{1,2})([\(])/
 var SELECTOR_PART = /^(\#|\.|:|::)?([\w]+(\-[\w]+)*)/
 var SELECTOR_COMBINATOR = /^ (\+|\>|\~)*\s*(?=[\w\.\#\:\{\*\[])/
 
@@ -111,6 +111,23 @@ var SYMBOL = ///^
 	\:((([\*\@$\w\x7f-\uffff]+)+([\-\\\:][\w\x7f-\uffff]+)*)|==|\<=\>)
 ///
 
+var STYLE_HEX = ///^
+	\#[0-9a-fA-F]{3,6}
+///
+
+var STYLE_NUMERIC = ///^
+	(\-?\d*\.?\d+) ([A-Za-z]+|\%)?(?![\d\w])
+///
+
+var STYLE_IDENTIFIER = ///^
+	[\w\-\$]*\w[\w\-\$]*
+///
+
+var STYLE_PROPERTY = ///^
+	([\w\-\$]*\w[\w\-\$]*)
+	(\.[\w\-\$]*\w[\w\-\$]*)*
+	(?=\:)
+///
 
 var NUMBER = ///
 	^ 0x[\da-f]+ |                              # hex
@@ -310,6 +327,7 @@ export class Lexer
 
 		@indentStyle = '\t'
 		@inTag = no
+		@inStyle = 0
 
 		@tokens  = []             # Stream of parsed tokens in the form `['TYPE', value, line]`.
 		@seenFor = no
@@ -366,7 +384,7 @@ export class Lexer
 			@state:gutter = o:gutter
 		
 		o.@tokens = @tokens 
-
+		
 		parse(code)
 		closeIndentation unless o:inline
 
@@ -382,12 +400,13 @@ export class Lexer
 		@loc = @locOffset + i
 
 		while @chunk = code.slice(i)
-			if @context and @context:pop
-				if @context:pop.test(@chunk)
+			let ctx = @context
+			if ctx and ctx:pop
+				if ctx:pop.test(@chunk)
 					popEnd
 
 			# we should let the current context decide which methods to call
-			pi = (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || basicContext
+			pi = (ctx and ctx:lexer and ctx:lexer.call(self)) || (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || (@inStyle and lexStyleBody) || basicContext
 			i += pi
 			@loc = @locOffset + i
 
@@ -412,6 +431,9 @@ export class Lexer
 		@contexts.push(@context = (ctx or {}))
 		@end = val
 		refreshScope
+		
+		if ctx and (ctx:closeType == 'STYLE_END' or ctx:style)
+			@inStyle++
 
 		if ctx and ctx:id
 			ctx:start = Token.new(ctx:id + '_START',val, @last.region[1],0)
@@ -425,10 +447,13 @@ export class Lexer
 		# automatically adding a closer if this is defined
 		var ctx = @context
 		if ctx and ctx:start
-			ctx:end = Token.new(ctx:id + '_END',popped,@last.region[1],0)
+			ctx:end = Token.new(ctx:closeType or ctx:id + '_END',popped,@last.region[1],0)
 			ctx:end.@start = ctx:start
 			ctx:start.@end = ctx:end
 			@tokens.push(ctx:end)
+			
+		if ctx and (ctx:closeType == 'STYLE_END' or ctx:style)
+			@inStyle--
 
 		@contexts.pop
 		@context = @contexts[@contexts:length - 1]
@@ -483,6 +508,8 @@ export class Lexer
 
 			pair('DEF')
 		return
+		
+		
 
 	def tagContextToken
 		let chr = @chunk[0]
@@ -541,6 +568,119 @@ export class Lexer
 			pair('TAG')
 
 		return 0
+		
+	def findBalancedSelector str
+		var stack = []
+		var i = 0
+		
+		# could it not happen here?
+		while i < (str:length - 1)
+			var letter = str.charAt(i)
+
+			let end = stack[0]
+			let instr = end == '"' or end == "'"
+			
+			if letter and letter == end
+				stack.shift
+			
+			elif !instr and (letter == ')' or letter == ']' or letter == '}')
+				console.log 'out of balance!!'
+				break
+				
+			elif letter == '(' and !instr
+				stack.unshift(')')
+			# elif letter == '{' and !instr
+			# 	stack.unshift('}')
+			elif letter == '[' and !instr
+				stack.unshift(']')
+			elif letter == '"'
+				stack.unshift('"')
+			elif letter == "'"
+				stack.unshift("'")
+			
+			if !end and (letter == '=' or letter == '\n' or letter == '{')
+				break
+			
+			i++
+				
+		return i ? str.slice(0,i) : null
+		
+		
+	def lexStyleRule offset = 0
+		# when we meet = enter into style context?
+		let chunk = offset ? @chunk.slice(offset) : @chunk
+		
+		if let sel = findBalancedSelector(chunk)
+			let len = sel:length
+			token('CSS_SEL',sel,len,offset)
+			let seltoken = @last
+			let next = chunk[len]
+			
+			if next == '='
+				len++
+			
+			if @context
+				@context:lexer = null
+
+			@indents.push 1
+			@outdebt = @indebt = 0
+			token('INDENT',"1",0,1)
+			pushEnd('OUTDENT',lexer: self:lexStyleBody,opener: seltoken, style: yes)
+			@indent++
+			return len
+		
+		return 0
+		
+	def lexStyleBody
+		return 0 if @end == '%'
+		# return 0
+		let chr = @chunk[0]
+		var m
+		# let chr2 = @chunk[1]
+		# not if we are inside
+		
+		# now - how do we find the selector-rules?
+		
+		# first check if there is a & in this new line
+		if m = (/^[^\n]*\&/).exec(@chunk)
+			let sel = findBalancedSelector(@chunk)
+			if sel and sel.indexOf('&') >= 0
+				return lexStyleRule
+		
+		if m = STYLE_PROPERTY.exec(@chunk)
+			# what is the last one?
+			token('CSSPROP', m[0], m[0]:length)
+			return m[0]:length
+		
+		if chr[0] == '#' and m = STYLE_HEX.exec(@chunk)
+			token 'COLOR', m[0], m[0]:length
+			return m[0]:length
+		
+		if m = STYLE_NUMERIC.exec(@chunk)
+			let len = m[0]:length
+			let typ = 'NUMBER'
+				
+			if m[2] == '%'
+				typ = 'PERCENTAGE'
+				# if @chunk[len]
+			elif m[2]
+				typ = 'DIMENSION'
+			# elif match[1].indexOf('.') == -1
+			# 	typ = 'INTEGER'
+			# console.log typ,match[0]
+			token typ, m[0], len
+			return len
+			
+		elif m = STYLE_IDENTIFIER.exec(@chunk)
+			if m[0].match(/^\-\-/)
+				token 'CSSVAR', m[0], m[0]:length
+			else
+				token 'IDENTIFIER', m[0], m[0]:length
+
+			return m[0]:length
+
+		return 0
+		
 
 	def importsToken
 		if var match = IMPORTS.exec(@chunk)
@@ -653,9 +793,15 @@ export class Lexer
 			# only if we are on a newline? or something?
 			return true
 
-		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy')
+		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css')
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG'
+
+			if id == 'css' and !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
+				return true
+
+			if id == 'css' and (@lastVal in ['global','local','export'])
+				return true
 
 			if id == 'lazy'
 				return incls and @lastTyp in ['INDENT','TERMINATOR','DECORATOR']
@@ -846,9 +992,11 @@ export class Lexer
 
 		# prev = last @tokens
 		var len = input:length
+		
+		# switch 
 
 		# should be strict about the order, check this manually instead
-		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP"
+		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS'
 			queueScope(typ)
 
 			var i = @tokens:length
@@ -894,6 +1042,9 @@ export class Lexer
 			# see if previous was catch -- belongs in rewriter?
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
+				
+		if lastTyp == 'NUMBER' and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
+			typ = 'UNIT'
 		
 		if colon
 			token(typ, id, idlen)
@@ -905,6 +1056,13 @@ export class Lexer
 			moveCaret(-(idlen + colonOffset))
 		else
 			token(typ, id, idlen)
+			
+			
+		if typ == 'CSS'
+			# if @context
+			#	@context:lexer = self:lexStyleRule
+			return len + lexStyleRule(len)
+			
 
 		return len
 
@@ -1334,9 +1492,17 @@ export class Lexer
 				@outdebt = 0
 
 				addLinebreaks(1) unless noNewlines
-
-				pair 'OUTDENT'
+				
+				let paired = pair('OUTDENT')
 				token('OUTDENT', "" + dent, 0)
+				if paired[1] and paired[1]:opener
+					let opener = paired[1]:opener
+					
+					@last.@opener = opener
+					opener.@closer = @last
+					if opener.@type == 'CSS_SEL'
+						token('CSS_END', "", 0)
+					# console.log 'paired now!!',opener,@tokens.indexOf(opener),@tokens:length - 1
 
 		@outdebt -= moveOut if dent
 
@@ -1347,7 +1513,7 @@ export class Lexer
 		@scopes:length = @indents:length
 		closeDef
 		var ctx = context
-		pair(ctx) if ctx == '%' or ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT' # really?
+		pair(ctx) if ctx == '%' or ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT' # or ctx == 'CSS' # really?
 		return this
 
 	# Matches and consumes non-meaningful whitespace. tokid the previous token
@@ -1498,6 +1664,19 @@ export class Lexer
 		if value is ';'             
 			@seenFor = no
 			tokid = 'TERMINATOR'
+			
+		if value == '(' and pt == 'T.'
+			tokid = 'STYLE_START'
+			
+		elif pt == 'TAG_WS' and (value == '{')
+			tokid = 'STYLE_START'
+		
+		elif pt == '.' and (value == '(' or value == '{')
+			prev.@type = 'STYLE_DECL'
+			tokid = 'STYLE_START'
+		
+		elif pt == 'SELECTOR_END' and value == '{'
+			tokid = 'STYLE_START'
 
 		elif value is '(' and inTag and pt != '=' and prev:spaced # FIXed
 			# console.log 'spaced before ( in tokid'
@@ -1550,6 +1729,8 @@ export class Lexer
 
 		elif value == '**'
 			tokid = 'EXP'
+		elif value == '%' and pt == 'NUMBER' and !prev:spaced
+			tokid = 'UNIT'
 		elif value in MATH
 			tokid = 'MATH'
 		elif value in COMPARE
@@ -1576,14 +1757,18 @@ export class Lexer
 			elif value is '[' and pt in INDEXABLE
 				tokid = 'INDEX_START'
 				tTs(prev,'INDEX_SOAK') if pt == '?'
-
+		
+		let opener = null
+		
 		switch value
 			when '(', '{', '['
-				pushEnd(INVERSES[value],closeType: INVERSES[tokid])
+				pushEnd(INVERSES[value],closeType: INVERSES[tokid],i: @tokens:length)
 			when ')', '}', ']'
 				let paired = pair(value)
 				if paired and paired[1]:closeType
 					tokid = paired[1]:closeType
+					let other = @tokens[paired[1]:i]
+					opener = @tokens[paired[1]:i]
 
 
 		if value == '\\'
@@ -1591,8 +1776,14 @@ export class Lexer
 			
 		if value == '..' and !prev:spaced
 			tokid = '?.'
+			
+		if value == ':' and end1 == 'TAG_RULE'
+			tokid = 'T:'
 
 		token(tokid, value, value:length)
+		
+		if opener
+			opener.@closer = @last
 
 		if @target == 'tsc'
 			let next = @chunk[1] or ''

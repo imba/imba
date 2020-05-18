@@ -248,7 +248,14 @@ CLI.prototype.tokenize = function (){
 		var o2 = Object.create(self.o());
 		o2.filename = src.filename;
 		o2.rewrite = self.o().rewrite;
-		var out = compiler.tokenize(src.sourceBody,o2);
+		var out
+		try {
+			out = compiler.tokenize(src.sourceBody,o2);	
+		} catch(e){
+			console.log('error in tokenizer:',e.message);
+			out = e._options.tokens;
+		}
+		
 		src.tokens = out;
 		
 		let res = [];

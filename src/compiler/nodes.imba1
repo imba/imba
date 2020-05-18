@@ -10,6 +10,7 @@ import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
+import StyleRule,StyleTheme,Color from './styler.imba'
 
 var TSC_CLASS_HEAD = 'static $static$(){ this.prototype } $member$(){ this.constructor } '
 var TAG_NAMES = constants.TAG_NAMES
@@ -531,6 +532,7 @@ export class Stack
 	prop root
 	prop state
 	prop semanticTokens
+	prop theme
 
 	def initialize
 		reset
@@ -551,6 +553,7 @@ export class Stack
 		@tag = null
 		@sfcid = null
 		@semanticTokens = []
+		@theme = StyleTheme.new
 		self
 	
 	def registerSemanticToken token, kind, modifiers
@@ -703,6 +706,9 @@ export class Stack
 
 	def up test
 		test ||= do |v| !(v isa VarOrAccess)
+			
+		if typeof test == 'number'
+			return @nodes[@nodes:length - (1 + test)]
 
 		var i = @nodes:length - 2
 
@@ -1411,11 +1417,12 @@ export class ListNode < Node
 
 		while i < items:length
 			let item = items[i]
-			let res = item.traverse
-			if res != item
-				if res isa Array
-					items.splice(i,1,*res)
-					continue
+			if item:traverse
+				let res = item.traverse
+				if res != item
+					if res isa Array
+						items.splice(i,1,*res)
+						continue
 			i++
 		self
 
@@ -2581,14 +2588,19 @@ export class Root < Code
 			for style in result:styles
 				if style:type == 'css'
 					let scoping = style:scoped ? result:sfcid : null
-					style:processed = csscompiler.compile(style:content,scope: scoping)
-					stylebody += style:processed + '\n'
-					result:stylebody = stylebody
+					style:processed ||= csscompiler.compile(style:content,scope: scoping)
+					stylebody += style:processed + '\n\n'
+			
+			result:stylebody = stylebody
 
-			if stylebody and o:bundler != 'webpack'
-				
+			if stylebody
+				# and o:bundler != 'webpack'
 				let css = {js: stylebody}
-				result:js = "imba.inlineStyles({JSON.stringify(css:js)});\n{result:js}"
+				# maybe do something different when server etc?
+				# css:js = "/* styles from {o:sourcePath} */\n" + css:js
+				result:js = "{result:js}\nimba.inlineStyles({JSON.stringify(css:js)});"
+				result:js += '\n/*\n' + css:js + '\n*/\n'
+				result:styles:inlined = yes
 
 		# always create the sourcemap?
 		if o:sourceMap # should handle sourcemap no matter what?
@@ -2862,6 +2874,9 @@ export class TagDeclaration < ClassDeclaration
 		Object.assign(super,{
 			type: 'tag'
 		})
+		
+	def selectorpath
+		@selectorpath ||= String(name)
 
 	def visit
 		scope__.imbaDependency('index')
@@ -2905,10 +2920,17 @@ export class TagDeclaration < ClassDeclaration
 		scope.context.reference = name
 		
 		let className = name.toClassName
-
-		if s.option(:hasScopedStyles) and !STACK.tsc
-			# @scope.root.styles:length > 0
-			instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
+		
+		if !STACK.tsc
+			
+			if s.option(:hasScopedStyles)
+				# @scope.root.styles:length > 0
+				instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
+			if option(:sfcid)
+				# should add to static init instead? instanceInit should just have a list of classes.
+				instanceInit.inject LIT("this.setAttribute('data-{option(:sfcid)}','')")
+			# 	let ref = "{@scope.root.sfcid}-{s.option(:self).oid}"
+			# 	instanceInit.inject LIT("this.setAttribute('data-self','{ref}')")
 
 		# should probably also warn about stuff etc
 		let sup = CALL(LIT('imba.tags.get'),[
@@ -3426,6 +3448,18 @@ export class Num < Literal
 
 	def toJSON
 		{type: typeName, value: raw}
+
+export class NumWithUnit < Literal
+	def initialize v, unit
+		@traversed = no
+		@value = v
+		@unit = unit
+		
+		
+	
+	def c o
+		let raw = "{String(@value)}{String(@unit)}"
+		o:css ? raw : "'{raw}'"
 
 # should be quoted no?
 # what about strings in object-literals?
@@ -6307,7 +6341,10 @@ export class TagId < TagPart
 
 export class TagFlag < TagPart
 	prop condition
-
+	
+	def rawClassName
+		name.toRaw
+		
 	def value
 		@name
 		
@@ -6324,6 +6361,7 @@ export class TagFlag < TagPart
 		!!condition
 
 	def js
+		# NOT used anymore
 		let val = value.c(as: 'string')
 		condition ? "flags.toggle({val},{condition.c})" : "classList.add({val})"
 	
@@ -6703,6 +6741,71 @@ class TagHandlerCallback < ValueNode
 		value.traverse
 		return
 
+
+export class TagStylePart < Node
+
+	prop params
+	
+	def initialize name, params
+		@key = name
+		@params = params or []
+		# console.log 'tagstyle params',name,'pars?',params
+	
+	def serialize
+		let key = @key.map(do $1.c).join(':')
+		[key].concat(params.map(do $1:raw ? $1.raw : $1.c(css: yes)))
+
+export class TagStyleMixin < TagStylePart
+
+export class TagStyleScope < TagStylePart
+
+export class TagStyle < TagPart
+
+	prop name
+	prop value
+	prop params
+	
+	prop scopes
+	prop mixins
+	
+	def initialize scopes, mixins
+		# @name = load(value)
+		# @tag = owner
+		@scopes = scopes
+		@mixins = mixins
+		@chain = []
+		@special = no
+		@params = []
+		self
+		
+	def visit
+		@name = STACK.sfcid + oid
+		@sel = ".{@name}"
+		
+		# maybe reuse duplicated styles within a single file?
+		# should build a full style based on this 
+		# @tag.sfcid
+		# @sel = @tag.uniqueSelector
+		scope__.root.styles.push({
+			type: 'css'
+			processed: toStyle
+		})
+		self
+		
+	def toStyle
+		let sel = "{@sel}"
+		let scopes = self.scopes.map do $1.serialize
+		let mixins = self.mixins.map do $1.serialize
+		# console.log 'toStyle',scopes,mixins
+		let rule = StyleRule.new(sel,scopes,mixins)
+		return rule.toString
+		
+	def toRaw
+		"{@name}"
+		
+	def c
+		"'{@name}'"
+
 class TagLike < Node
 
 	def initialize o = {}
@@ -6711,6 +6814,12 @@ class TagLike < Node
 		@tagvars = {}
 		setup(o)
 		self
+		
+	def sfcid
+		@sfcid ||= STACK.sfcid + '-' + oid
+		
+	def uniqueSelector
+		@uniqueSelector ||= "[data-{sfcid}]"
 
 	def body
 		@body || @options:body
@@ -7111,11 +7220,18 @@ export class Tag < TagLike
 
 	def attrs
 		@attributes
+		
+	def uniqueSelector
+		@uniqueSelector ||= "[data-{sfcid}]"
+		
+	def tagDeclaration
+		stack.up(TagDeclaration)
 
 	def traverse
 		return self if @traversed
 		scope__.imbaDependency('index')
-
+		
+		
 		let close = @options:close
 		let body = @options:body or []
 		let returns = self
@@ -7152,6 +7268,10 @@ export class Tag < TagLike
 		if tagName == 'shadow-root'
 			@kind = 'shadow-root'
 			
+		if isSelf
+			let decl = stack.up(TagDeclaration)
+			decl.set(self: self,sfcid: sfcid) if decl
+			
 		@tagName = tagName
 
 		@dynamics = []
@@ -7159,7 +7279,7 @@ export class Tag < TagLike
 		@attributes = @attributes.filter do |item|
 
 			if item isa TagFlag and item.isStatic
-				@classNames.push(item.name.toRaw)
+				@classNames.push(item.rawClassName)
 				return false
 
 			if item == @attrmap:$key
@@ -7249,7 +7369,6 @@ export class Tag < TagLike
 			elif curr isa TagHandler
 				
 				if part
-					
 					# if part isa Access or part isa VarOrAccess
 					#	# let e = Token.new('IDENTIFIER','e')
 					#	part = CALL(part,[LIT('e')])
@@ -7257,9 +7376,13 @@ export class Tag < TagLike
 					# TODO don't generate this until visiting the taghandler
 					# part = (STACK.tsc ? Func : IsolatedFunc).new([],[part],null,{})
 					curr.add(TagHandlerCallback.new(part),type)
+				
 			elif curr
 				curr.value = part
 				curr.set(op: tok)
+				
+		elif curr isa TagStyle
+			curr.add(part,type)
 
 		elif curr isa TagHandler
 			if part isa IdentifierExpression and part.single and !part.isPrimitive
@@ -7277,11 +7400,26 @@ export class Tag < TagLike
 			curr.value = part.first
 			attrs.push(curr)
 			next = null
+		
+		elif type == TagStyle
+			next = part # TagStyle.new("",self)
+			next.@tag = self
+			# next.add(part,TagStyle)
+			attrs.push(next)
+			
 		else
+			if type == TagStyle and !(part isa TagStyle)
+				part = TagStyleScope.new(part)
+
 			if type == TagFlag and part isa IdentifierExpression and !part.isPrimitive
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
+				
+			if part isa type
+				part.@tag = self
+			else
+				part = type.new(part,self)
 
-			attrs.push(next = type.new(part,self))
+			attrs.push(next = part)
 
 			if next isa TagAttr and next.name.isPrimitive
 				let name = String(next.name.toRaw)
@@ -7385,6 +7523,8 @@ export class Tag < TagLike
 
 			typ = vvar
 			dynamicKey = kvar
+		
+		var addGlobalId = @sfcid or stack.option(:hasScopedStyles)
 
 		var params = [
 			typ,
@@ -7392,7 +7532,8 @@ export class Tag < TagLike
 			(fragment and !option(:detached) ? fragment.tvar : 'null'),
 			@className or 'null',
 			'null',
-			stack.option(:hasScopedStyles) ? STR(stack.sfcid) : LIT('null')
+			addGlobalId ? STR(sfcid) : LIT('null'),
+			addGlobalId ? STR(oid) : LIT('null')
 		]
 
 		var nodes = body ? body.values : []
@@ -7448,6 +7589,8 @@ export class Tag < TagLike
 				# add "{bvar}={dvar}=1"
 				add "{tvar}=({bvar}={dvar}=1,{scop.tagCache}.{oid}) || ({bvar}={dvar}=0,{scop.tagCache}.{oid}={ctor})"
 				add "{bvar}||({tvar}.up$={scop.tagCache}._)"
+				# if @sfcid
+				# 	add "{bvar}||({tvar}.setAttribute({STR(stack.sfcid)},{STR(oid)})"
 				@ref = tvar
 				o:inline = yes if isExpression
 
@@ -7469,6 +7612,7 @@ export class Tag < TagLike
 				let key = "{cvar}.{oid}"
 				add("{tvar}={slotPath}")
 				add("({key} = {fragment.tvar}.insert$({tvar},{@flags},{key}))")
+
 			elif isSlot and @consumed:length == 1
 				# single child can act as slot?
 				# if it is a string we dont really want to insert it at all
@@ -7554,7 +7698,7 @@ export class Tag < TagLike
 		let flagsToConcat = []
 
 		for item in @attributes
-			if item.@chain and item.@chain:length and !(item isa TagHandler)
+			if item.@chain and item.@chain:length and !(item isa TagHandler) and !(item isa TagStyle)
 				let mods = item.modifiers
 				let dyn = !mods.isStatic
 
@@ -7571,8 +7715,11 @@ export class Tag < TagLike
 					add "{bvar} || ({modpath}={vvar})"
 				else
 					add "{bvar} || ({modpath}={mods.c(o)})"
-
-			if !isReactive
+			
+			if item isa TagStyle
+				# add "{bvar} // {item.c(o)}"
+				yes
+			elif !isReactive
 				# buggy
 				add "{tvar}.{item.c(o)}"
 			elif item.isStatic
@@ -7773,6 +7920,9 @@ export class Selector < ListNode
 				ary.push(val)
 
 		return ary.join(' + ')
+		
+	def toString
+		AST.cary(nodes).join('')
 
 
 	def js o
@@ -8113,6 +8263,357 @@ export class EnvFlag < ValueNode
 		
 		return M(out,@value)
 
+
+export class StyleNode < Node
+
+export class StyleSelector < StyleNode
+
+# all weird parts of a selector? Or do we just compile it?
+
+export class StyleRuleSet < StyleNode
+	
+	# selector
+	def initialize selectors, body
+		@selectors = selectors
+		@body = body
+		
+	def isStatic
+		true
+		
+	def visit stack, o
+		if stack.parent isa ClassBody
+			# console.log 'ruleset is inside of class!!'
+			let owner = stack.up(2)
+			if owner isa TagDeclaration
+				@sel = String(@selectors).trim
+				@sel = "& {@sel}" if @sel.indexOf('&') == -1
+				@sel = @sel.replace('&',owner.selectorpath)
+				# console.log "ruleset in class {owner}",@sel
+				set(inClassBody: yes)
+			else
+				yes # THROW here
+			# FIX the selector based on the tag
+		elif option(:toplevel)
+			@sel = String(@selectors).trim
+
+		elif o:rule
+			@sel = @selectors?.toString
+			# should happen no matter what??
+			@sel = "& {@sel}" if @sel.indexOf('&') == -1
+			# console.log 'nested rule!!',@sel
+			# @sel = "& {@sel}"
+		else
+			@name = STACK.sfcid + oid
+			@sel = ".{@name}"
+		
+		@selectors?.traverse
+		
+		@styles = {}
+		@body?.traverse(rule: self, styles: @styles)
+		
+		if o:rule and o:styles
+			o:styles[@sel] = @styles
+
+		else
+			@css = StyleRule.new(@sel,[],@styles).toString
+			
+			scope__.root.styles.push({
+				type: 'css'
+				processed: @css
+			})
+			
+		self
+		
+	def toRaw
+		"{@name}"
+		
+	def c
+		return '' if option(:inClassBody) or option(:toplevel)
+		# let json = JSON.stringify(@body,null,2)
+		# let css = StyleRule.new('aba',[],@styles)
+		# let out = json + '\n/*\n' + JSON.stringify(@styles,null,2) + '\n*/'
+		let out = "'{@name}'"
+		out += '\n/*\n' + @css + '\n*/'
+		return out
+
+	# nodes # bunch of style properties and potentially nested rules
+	
+export class StyleBody < ListNode
+	
+	def visit
+		let items = @nodes
+		let i = 0
+
+		while i < items:length
+			let item = items[i]
+			let res = item.traverse
+
+			if res != item
+				if res isa Array
+					items.splice(i,1,*res)
+					continue
+			
+			# has changed?
+			if item == items[i]
+				i++
+		self
+
+	def toJSON
+		values
+
+export class StyleDeclaration < StyleNode
+	def initialize property, expr
+		@property = property
+		@expr = expr isa StyleExpressions ? expr : StyleExpressions.new(expr)
+		self
+		
+	def clone name, params
+		self
+		
+	def visit stack, o
+		# see if property can be expanded
+		let theme = stack.theme
+		let list = stack.parent
+		let alias = theme.expandProperty(@property.name)
+
+		if alias
+			@property = @property.clone(alias)
+		
+		let name = String(@property.name)
+		let method = helpers.symbolize(name)
+
+		if theme[method]
+			let res = theme[method].apply(theme,@expr.toArray)
+			let expanded = []
+			# console.log 'theme has method',method,res
+			for own k,v of res
+				if k.indexOf('&') >= 0
+					let body = StyleBody.new([])
+					let rule = StyleRuleSet.new(LIT(k),body)
+					expanded.push(rule)
+					for own k2,v2 of v
+						body.add(StyleDeclaration.new(@property.clone(k2),v2))
+				else	
+					expanded.push StyleDeclaration.new(@property.clone(k),v)
+			list.replace(self,expanded)
+			return
+			
+		@expr.traverse(property: name) if @expr
+		
+		if o:styles
+			let key = @property.toKey
+			if o:selector
+				key = JSON.stringify([o:selector,key])
+			o:styles[key] = @expr.c
+		self
+		
+	def toCSS
+		"{@property.c}: {AST.cary(@expr).join(' ')}"
+		
+	def toJSON
+		toCSS
+
+
+export class StyleProperty < StyleNode
+
+	prop name
+	# modifiers
+	# values
+	def initialize token
+		@token = token
+		@parts = String(@token).replace(/(^|\b)\$/g,'--').split('.')
+
+	def name
+		@name ||= String(@parts[0])
+
+	def clone newname
+		StyleProperty.new([newname or name].concat(modifiers).join("."))
+
+	def addModifier modifier
+		@parts.push(modifier)
+		self
+
+	def modifiers
+		@parts.slice(1)
+
+	def toJSON
+		name + modifiers.join(".")
+
+	def toString
+		name + modifiers.join(".")
+		
+	def toKey
+		@parts.join('.')
+
+	def c
+		toString
+
+	# lookup shorthand. If shorthand represents multiple
+	# props then we compile it to multiple props
+
+export class StylePropertyIdentifier < StyleNode
+	def initialize name
+		@name = name
+		if String(name)[0] == '$'
+			@name = "--{String(name).slice(1)}"
+		# val[0] == '$' ? "var(--{val.slice(1)})" : val
+
+	def toJSON
+		String(@name)
+		
+	def toString
+		String(@name)
+
+export class StylePropertyModifier < StyleNode
+	def initialize name
+		@name = name
+		
+	def toJSON
+		String(@name)
+		
+	def toString
+		String(@name)
+
+export class StyleExpressions < ListNode
+	
+	def load list
+		[].concat(list)
+
+	def c
+		AST.cary(@nodes).join(', ')
+		
+	def clone
+		StyleExpressions.new(@nodes.slice(0))
+	
+	def toArray
+		@nodes.filter(do $1 isa StyleExpression).map(do $1.toArray )
+
+export class StyleExpression < ListNode
+
+	def load list
+		[].concat(list)
+
+	def toString
+		AST.cary(@nodes).join(' ')
+		
+	def toArray
+		@nodes.slice(0)
+		
+	def clone
+		StyleExpression.new(@nodes.slice(0))
+		
+	def c
+		toString
+		
+	def toJSON
+		toString
+		
+	def toArray
+		@nodes
+		
+	def toIterable
+		@nodes
+		
+	def visit2
+		let items = @nodes
+		let i = 0
+
+		while i < items:length
+			let item = items[i]
+			let next = items[i + 1] # no whitespace
+			let res = item.traverse
+			
+			if res != item
+				if res isa Array
+					items.splice(i,1,*res)
+					continue
+			
+			# has changed?
+			if item == items[i]
+				i++
+		self
+
+export class StyleTerm < ValueNode
+
+	def valueOf
+		String(@value)
+		
+	def toString
+		String(@value)
+
+	def visit stack, o
+		@token = @value
+		let resolved = stack.theme.$value(valueOf,0,o:property)
+		# console.log 'resolved',String(resolved)
+		@resolvedValue = resolved
+		self
+		
+	def kind
+		@kind
+		
+	def c
+		!(@resolvedValue isa Node) ? @resolvedValue : valueOf
+		# number
+
+export class StyleFunction < Node
+
+	def kind
+		'function'
+
+	def initialize value, params
+		@name = value
+		@params = params
+	
+	def visit stack, o
+		@params.traverse if @params and @params:traverse
+		self
+		
+	def c
+		"{String(@name)}({@params.c})"
+
+export class StyleIdentifier < StyleTerm
+	
+	def c
+		let val = toString
+		val[0] == '$' ? "var(--{val.slice(1)})" : super
+
+export class StyleString < StyleTerm
+
+export class StyleColor < StyleTerm
+
+export class StyleVar < StyleTerm
+
+	def c
+		toString
+		# "var(--{toString})"
+
+export class StyleDimension < StyleTerm
+	
+	prop unit
+	prop number
+
+	def initialize value
+		@value = value
+		let m = String(value).match(/^(.+)([a-zA-Z]+|%)$/)
+		@number = parseFloat(m[1])
+		@unit = m[2]
+		
+	def valueOf
+		if unit == 'u'
+			return number * 4 + 'px'
+		return String(@value)
+
+export class StyleNumber < StyleTerm
+	prop unit
+	prop number
+	
+	def initialize value,unit
+		super
+		@number = parseFloat(String(value))
+		@unit = null
+		
+	def valueOf
+		number
 
 # UTILS
 

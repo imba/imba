@@ -1,5 +1,6 @@
 
 var compiler = require('./bootstrap.compiler.js');
+var compiler2 = require('./bootstrap.compiler2.js');
 var path = require('path');
 var fs = require('fs');
 
@@ -20,7 +21,8 @@ module.exports = function(content,inMap) {
 	};
 
 	try {
-		var result = compiler.compile(content, opts);
+		var handler = opts.filename.indexOf('.imba1') >= 0 ? compiler : compiler2;
+		var result = handler.compile(content, opts);
 		var js = result.toString();
 		if(result.warnings && true){
 			result.warnings.forEach(function(warn){
