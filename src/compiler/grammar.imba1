@@ -358,9 +358,10 @@ var grammar =
 	]
 	
 	CSSDeclaration: [
-		o 'GLOBAL CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A3,A4).set(global: A1)
-		# o 'StyleBlockDeclaration' do A1
-		# o 'GLOBAL StyleBlockDeclaration' do A2.set(global: A1)
+		# o 'GLOBAL CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A3,A4).set(global: A1)
+		o 'StyleBlockDeclaration' do A1.set(toplevel: true)
+		o 'GLOBAL CSSDeclaration' do A2.set(global: A1)
+		o 'LOCAL CSSDeclaration' do A2.set(local: A1)
 	]
 	
 	StyleDefinition: [

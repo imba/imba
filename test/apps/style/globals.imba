@@ -1,7 +1,10 @@
 
-global css app-root
+css app-root
 	position: relative
 	display: block
+	
+css app-root
+	visibility: visible
 	
 tag app-root
 	def render

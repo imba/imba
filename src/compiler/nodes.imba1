@@ -8293,7 +8293,7 @@ export class StyleRuleSet < StyleNode
 			else
 				yes # THROW here
 			# FIX the selector based on the tag
-		elif option(:global)
+		elif option(:toplevel)
 			@sel = String(@selectors).trim
 
 		elif o:rule
@@ -8328,7 +8328,7 @@ export class StyleRuleSet < StyleNode
 		"{@name}"
 		
 	def c
-		return '' if option(:inClassBody) or option(:global)
+		return '' if option(:inClassBody) or option(:toplevel)
 		# let json = JSON.stringify(@body,null,2)
 		# let css = StyleRule.new('aba',[],@styles)
 		# let out = json + '\n/*\n' + JSON.stringify(@styles,null,2) + '\n*/'
