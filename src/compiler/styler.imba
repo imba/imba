@@ -120,20 +120,16 @@ export class StyleTheme
 			"& > *": {'margin': length } # $length(length / 2)
 		}
 
-	def tween ...parts
-		# let raw = params.join(' ')
+	def transition ...parts
 		let out = {}
 		let add = {}
-		let schema = options.variants.tween
-		# check if 
-		# split on each pair
+
 		let signatures = [
 			'name | duration'
 			'name | duration | delay'
 			'name | duration | ease'
 			'name | duration | ease | delay'
 		]
-		let easings = options.variants.easings
 		
 		let groups = {
 			styles: ['background-color','border-color','color','fill','stroke','opacity','box-shadow','transform']
@@ -141,38 +137,29 @@ export class StyleTheme
 			colors: ['background-color','border-color','color','fill','stroke']
 		}
 		
-		for part,i in parts
+		let i = 0
+		while i < parts.length
+			let part = parts[i]
 			let name = String(part[0])
+			if name.match(/^[\-\+]?\d?(\.?\d+)(s|ms)?$/)
+				part.unshift(name = 'styles')
+				
 			let ease = part[2]
-			# if name == 'colors'
 			let group = groups[name]
-			# console.log 'part',name
 			
 			if group and parts.length == 1
-				# keep as is --
 				part[0] = 'none'
 				Object.assign(add,{'transition-property': group.join(',')})
 			elif group and parts.length > 1
-				# now we need to expand the group
-				yes
+				# TODO we could do a more advanced version where we 
+				# create repeating transition-property and duration etc and seam
+				# the pairs together
+				let subparts = group.map do [$1].concat(part.slice(1))
+				parts.splice(i,1,...subparts)
+				continue
+			i++
 
-			# find the easing here
 		Object.assign(out,{'transition': parts},add)
-		return out
-				
-		let params = [...parts]
-		
-		for param in params
-			let str = String(param)
-			console.log 'check tween',str
-			if let alias = schema[str]
-				console.log 'found tween alias',alias
-				Object.assign(out,alias)
-
-			elif options.variants.easings[str]
-				# FIXME or if it is a step etc?
-				Object.assign(out,{'transition-timing-function': options.variants.easings[str]})
-
 		return out
 	
 	def text [...params]
