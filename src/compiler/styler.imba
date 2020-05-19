@@ -123,6 +123,7 @@ export class StyleTheme
 	def tween ...parts
 		# let raw = params.join(' ')
 		let out = {}
+		let add = {}
 		let schema = options.variants.tween
 		# check if 
 		# split on each pair
@@ -145,17 +146,18 @@ export class StyleTheme
 			let ease = part[2]
 			# if name == 'colors'
 			let group = groups[name]
-			console.log 'part',name
+			# console.log 'part',name
 			
-			if !group and parts.length == 1
+			if group and parts.length == 1
 				# keep as is --
+				part[0] = 'none'
+				Object.assign(add,{'transition-property': group.join(',')})
+			elif group and parts.length > 1
+				# now we need to expand the group
 				yes
-				
-			if ease and easings[String(ease)]
-				ease.resolvedValue = easings[String(ease)]
 
 			# find the easing here
-		Object.assign(out,{'transition': parts})
+		Object.assign(out,{'transition': parts},add)
 		return out
 				
 		let params = [...parts]
