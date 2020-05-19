@@ -22,6 +22,7 @@ export const aliases =
 	my: 'margin-y'
 	
 	ai: 'align-items'
+	as: 'align-self'
 	ac: 'align-content'
 	jc: 'justify-content'
 	fd: 'flex-direction'
@@ -41,11 +42,6 @@ export const aliases =
 	
 	round: 'border-radius'
 	radius: 'border-radius'
-	
-	rotate: '--rotate'
-	x: '--translate-x'
-	y: '--translate-y'
-	z: '--translate-z'
 	
 	grow: 'flex-grow'
 	shrink: 'flex-shrink'

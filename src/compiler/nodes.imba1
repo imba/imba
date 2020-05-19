@@ -2587,7 +2587,7 @@ export class Root < Code
 			var stylebody = ""
 			for style in result:styles
 				if style:type == 'css'
-					let scoping = style:scoped ? result:sfcid : null
+					let scoping = style:scoped ? result['sfcid'] : null
 					style:processed ||= csscompiler.compile(style:content,scope: scoping)
 					stylebody += style:processed + '\n\n'
 			

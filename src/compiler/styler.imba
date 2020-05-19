@@ -81,8 +81,7 @@ export class StyleTheme
 			return value * parseFloat(num) + unit
 
 		return value
-	
-	
+
 	def antialiazed value
 		# what if it is false?
 		if String(value) == 'subpixel'
@@ -1077,6 +1076,11 @@ class Rules
 		}
 		
 	# Stroke Width
+	
+export const TransformMixin = '''
+	--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;--t_scale:1;--t_scale-x:1;--t_scale-y:1;--t_skew-x:0;--t_skew-y:0;
+	transform: translate3d(var(--t_x),var(--t_y),var(--t_z)) rotate(var(--t_rotate)) skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
+'''
 
 export class StyleRule
 	
@@ -1086,6 +1090,7 @@ export class StyleRule
 		selector = Selectors.parse(context,states)
 		rules = modifiers isa Array ? Rules.parse(modifiers) : modifiers
 		selectors = {}
+		options = {}
 		
 	def toString
 		let sel = selector
@@ -1132,7 +1137,12 @@ export class StyleRule
 				subrules.push StyleRule.new(context,substates,value)
 				continue
 
-			else				
+			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
+				unless options.transform
+					options.transform = yes
+					parts.unshift(TransformMixin)
+				parts.push "--t_{key}: {value} !important;"
+			else
 				parts.push "{key}: {value};"
 
 		let out = sel + ' {\n' + parts.join('\n') + '\n}'
