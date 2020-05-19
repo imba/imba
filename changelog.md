@@ -1,3 +1,6 @@
+## 2.0.0-alpha.47
+* Added x, y, z, rotate, scale, scale-x, scale-y, skew-x, skew-y custom style properties
+* Extended transition property to accept colors, styles, sizes as properties and custom easings
 
 ## 2.0.0-alpha.46
 * Added experimental syntax for css/styling. See [#334](https://github.com/imba/imba/pull/362)
