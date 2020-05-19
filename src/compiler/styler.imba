@@ -120,12 +120,45 @@ export class StyleTheme
 			"& > *": {'margin': length } # $length(length / 2)
 		}
 
-	def tween [...params]
-		let raw = params.join(' ')
+	def tween ...parts
+		# let raw = params.join(' ')
 		let out = {}
 		let schema = options.variants.tween
 		# check if 
 		# split on each pair
+		let signatures = [
+			'name | duration'
+			'name | duration | delay'
+			'name | duration | ease'
+			'name | duration | ease | delay'
+		]
+		let easings = options.variants.easings
+		
+		let groups = {
+			styles: ['background-color','border-color','color','fill','stroke','opacity','box-shadow','transform']
+			sizes: ['width','height','left','top','right','bottom','margin','padding']
+			colors: ['background-color','border-color','color','fill','stroke']
+		}
+		
+		for part,i in parts
+			let name = String(part[0])
+			let ease = part[2]
+			# if name == 'colors'
+			let group = groups[name]
+			console.log 'part',name
+			
+			if !group and parts.length == 1
+				# keep as is --
+				yes
+				
+			if ease and easings[String(ease)]
+				ease.resolvedValue = easings[String(ease)]
+
+			# find the easing here
+		Object.assign(out,{'transition': parts})
+		return out
+				
+		let params = [...parts]
 		
 		for param in params
 			let str = String(param)
@@ -177,16 +210,20 @@ export class StyleTheme
 		return
 		
 	def $value value, index, config
+		let key = config
 		if typeof config == 'string'
 			if config.match(/^(width|height|top|left|bottom|right|padding|margin|sizing|inset)/)
 				config = 'sizing'
 			elif config.match(/^(border-radius)/)
 				config = 'radius'
+			elif config.match(/^tween|transition/) and options.variants.easings[String(value)]
+				return options.variants.easings[String(value)]
 
 			config = options.variants[config] or {}
 		
 		if value == undefined
 			value = config.default
+	
 		
 		if config.hasOwnProperty(String(value))
 			# should we convert it or rather just link it up?

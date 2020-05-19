@@ -8477,6 +8477,8 @@ export class StylePropertyModifier < StyleNode
 export class StyleExpressions < ListNode
 	
 	def load list
+		if list isa Array
+			list = list.map do $1 isa StyleExpression ? $1 : StyleExpression.new($1)
 		[].concat(list)
 
 	def c
