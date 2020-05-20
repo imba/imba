@@ -8574,6 +8574,9 @@ export class StyleFunction < Node
 		@params.traverse if @params and @params:traverse
 		self
 		
+	def toString
+		c
+		
 	def c
 		"{String(@name)}({@params.c})"
 

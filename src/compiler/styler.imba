@@ -344,6 +344,7 @@ export class StyleTheme
 	
 	def $parseColor identifier
 		let key = String(identifier)
+
 		if let m = key.match(colorRegex)
 			let color = self.colors[m[1]]
 			let rest = key.replace(colorRegex,'')
@@ -351,6 +352,15 @@ export class StyleTheme
 				color = color.alpha(m[1] + '%')
 			# let name = key.replace(colorRegex,'COLOR').replace(/\-/g,'_')
 			return color
+		elif key.match(/^#[a-fA-F0-9]{3,8}/)
+			return identifier
+			
+		elif key.match(/^(rgb|hsl)/)
+			return identifier
+		
+		elif key == 'currentColor'
+			return identifier
+
 		return null
 		
 	def $value value, index, config
