@@ -318,6 +318,22 @@ export class StyleTheme
 		# extract bold
 		return out
 		
+	def border [...params]
+		if params.length == 1 and $parseColor(params[0])
+			return [['1px','solid',params[0]]]
+		return
+
+	def border-left params
+		return border(params)
+		
+	def border-right params
+		return border(params)
+	
+	def border-top params
+		return border(params)
+		
+	def border-bottom params
+		return border(params)
 	# def shadow ...params
 	#	{}
 		

@@ -8385,18 +8385,22 @@ export class StyleDeclaration < StyleNode
 		if theme[method] and !option(:plain)
 			let res = theme[method].apply(theme,@expr.toArray)
 			let expanded = []
-			# console.log 'theme has method',method,res
-			for own k,v of res
-				if k.indexOf('&') >= 0
-					let body = StyleBody.new([])
-					let rule = StyleRuleSet.new(LIT(k),body)
-					expanded.push(rule)
-					for own k2,v2 of v
-						body.add(StyleDeclaration.new(@property.clone(k2),v2))
-				else
-					expanded.push StyleDeclaration.new(@property.clone(k),v).set(plain: k == method)
-			list.replace(self,expanded)
-			return
+			
+			if res isa Array
+				@expr = StyleExpressions.new(res)
+			elif res isa Object
+				# console.log 'theme has method',method,res
+				for own k,v of res
+					if k.indexOf('&') >= 0
+						let body = StyleBody.new([])
+						let rule = StyleRuleSet.new(LIT(k),body)
+						expanded.push(rule)
+						for own k2,v2 of v
+							body.add(StyleDeclaration.new(@property.clone(k2),v2))
+					else
+						expanded.push StyleDeclaration.new(@property.clone(k),v).set(plain: k == name)
+				list.replace(self,expanded)
+				return
 			
 		@expr.traverse(property: name) if @expr
 		
