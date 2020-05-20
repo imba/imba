@@ -119,6 +119,7 @@ export class Length
 # This has to move into StyleTheme class
 var palette = {
 	current: {string: "currentColor"}
+	transparent: Color.new('transparent',0,0,100,'0%')
 	black: Color.new('black',0,0,0,'100%')
 	white: Color.new('white',0,0,100,'100%')
 }
