@@ -7,7 +7,7 @@ tag app-root
 		<self>
 			<p$a.(font-weight: 600)> "1"
 			<p$b.(layout: block rel)> "2"
-			<input$input .(fw: 400 fw.focus: 600)>
+			<input$input .(font-weight:400 font-weight.focus: 600)>
 			<button$button>
 
 
