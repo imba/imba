@@ -1,3 +1,7 @@
+## 2.0.0-alpha.48
+* Added multi-purpose `text` style property for describing font-family, font-size, font-style, font-weight, text-decoration, text-transform, line-height, letter-spacing and color in a single property
+* Added shorthand style aliases for border-* and flex-*
+
 ## 2.0.0-alpha.47
 * Added x, y, z, rotate, scale, scale-x, scale-y, skew-x, skew-y custom style properties
 * Extended transition property to accept colors, styles, sizes as properties and custom easings
