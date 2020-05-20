@@ -1,5 +1,6 @@
-## 2.0.0-alpha.49 - unreleased
+## 2.0.0-alpha.49
 * Allow border and border-(top|right|bottom|left) to accept a single color value
+* Accept rgb/hsl/hex colors in text and border properties
 
 ## 2.0.0-alpha.48
 * Added multi-purpose `text` style property for describing font-family, font-size, font-style, font-weight, text-decoration, text-transform, line-height, letter-spacing and color in a single property
