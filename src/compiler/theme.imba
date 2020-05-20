@@ -2,58 +2,6 @@ export const fonts =
 	sans: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'
 	serif: 'Georgia, Cambria, "Times New Roman", Times, serif'
 	mono: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
-	
-	
-export const aliases =
-	p: 'padding'
-	pl: 'padding-left'
-	pr: 'padding-right'
-	pt: 'padding-top'
-	pb: 'padding-bottom'
-	px: 'padding-x'
-	py: 'padding-y'
-	
-	m: 'margin'
-	ml: 'margin-left'
-	mr: 'margin-right'
-	mt: 'margin-top'
-	mb: 'margin-bottom'
-	mx: 'margin-x'
-	my: 'margin-y'
-	
-	ai: 'align-items'
-	as: 'align-self'
-	ac: 'align-content'
-	jc: 'justify-content'
-	fd: 'flex-direction'
-	
-	d: 'display'
-	c: 'color'
-	
-	bg: 'background'
-	bgp: 'background-position'
-	bgr: 'background-repeat'
-	bgi: 'background-image'
-	bga: 'background-attachment'
-	
-	ff: 'font-family'
-	fs: 'font-size'
-	fw: 'font-weight'
-	
-	round: 'border-radius'
-	radius: 'border-radius'
-	
-	grow: 'flex-grow'
-	shrink: 'flex-shrink'
-	shadow: 'box-shadow'
-	
-	h: 'height'
-	w: 'width'
-	
-	l: 'layout'
-	t: 'text'
-	td: 'text-decoration'
-	tt: 'text-transform'
 
 # some things should definitely move out of theme
 export const variants =
@@ -125,10 +73,10 @@ export const variants =
 		'visible': {visibility: 'visible'}
 		
 	'font-size':
-		# sm: ['14px','20px']
 		'xs': '0.75rem'
 		'sm': '0.875rem'
 		'base': '1rem'
+		'md': '1rem'
 		'lg': '1.125rem'
 		'xl': '1.25rem'
 		'2xl': '1.5rem'
@@ -136,6 +84,19 @@ export const variants =
 		'4xl': '2.25rem'
 		'5xl': '3rem'
 		'6xl': '4rem'
+	
+	fontSize:
+		'xxs': ['10px',1.5]
+		'xs':  ['12px',1.5]
+		'sm':  ['14px',1.5]
+		'md':  ['16px',1.5]
+		'lg':  ['18px',1.5]
+		'xl':  ['20px',1.5]
+		'2xl': ['24px',1.5]
+		'3xl': ['30px',1.5]
+		'4xl': ['36px',1.5]
+		'5xl': ['48px',1.5]
+		'6xl': ['64px',1.5]
 		
 	radius:
 		step: '0.125rem'
@@ -144,22 +105,37 @@ export const variants =
 		u: '4px' # '0.125rem'
 		
 	text:
-		extrabold: {'font-weight': 800}
-		bold: {'font-weight': 700}
-		semibold: {'font-weight': 600}
-		medium: {'font-weight': 500}
-		normal: {'font-weight': 400}
-		light: {'font-weight': 300}
-		thin: {'font-weight': 200}
-		hairline: {'font-weight': 100}
-		
-		italic: {'font-style': 'italic'}
-		non-italic: {'font-style': 'normal'}
-		
-		sans: {'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'}
-		serif: {'font-family': 'Georgia, Cambria, "Times New Roman", Times, serif'}
-		mono: {'font-family': 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'}
+		'italic': {'font-style': 'italic'}
+		'non-italic': {'font-style': 'normal'}
 
+		'underline': {'text-decoration': 'underline'}
+		'overline': {'text-decoration': 'overline'}
+		'no-underline': {'text-decoration': 'none'}
+		'line-through': {'text-decoration': 'line-through'}
+		'undecorated': {'text-decoration': 'none'}
+		
+		'uppercase': {'text-transform': 'uppercase'}
+		'lowercase': {'text-transform': 'lowercase'}
+		'capitalize': {'text-transform': 'capitalize'}
+		'untransformed': {'text-transform': 'none'}
+		
+		'left': {'text-align': 'left'}
+		'center': {'text-align': 'center'}
+		'right': {'text-align': 'right'}
+		'justify': {'text-align': 'justify'}
+		
+		'tighter': {'letter-spacing': '-0.05em'}
+		'tight': {'letter-spacing': '-0.025em'}
+		'normal': {'letter-spacing': '0em'}
+		'wide': {'letter-spacing': '0.025em'}
+		'wider': {'letter-spacing': '0.05em'}
+		'widest': {'letter-spacing': '0.1em'}
+		
+		'antialiased': {'-webkit-font-smoothing': 'antialiased', '-moz-osx-font-smoothing': 'grayscale'}
+		'subpixel-antialiased': {'-webkit-font-smoothing': 'auto', '-moz-osx-font-smoothing': 'auto'}		
+		
+		'truncate': {'overflow': 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap'}
+		
 	'box-shadow':
 		xs: '0 0 0 1px rgba(0, 0, 0, 0.05)',
 		sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
