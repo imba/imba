@@ -8297,7 +8297,7 @@ export class StyleRuleSet < StyleNode
 			@sel = String(@selectors).trim
 
 		elif o:rule
-			@sel = @selectors?.toString
+			@sel = @selectors?.toString.trim
 			# should happen no matter what??
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
 			# console.log 'nested rule!!',@sel

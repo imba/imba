@@ -561,7 +561,6 @@ export class StyleRule
 				
 				# let substates = states.concat(keys.slice(1))
 				let substates = keys.slice(1).concat(states)
-				# console.log 'compile with substates',substates
 				# TODO use interpolated key?
 				let obj = {}
 				obj[keys[0]] = value				
