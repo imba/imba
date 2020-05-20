@@ -262,13 +262,14 @@ export class StyleTheme
 			let param = params[i++]
 
 			let value = String(param)
+			let length = /\d/.test(value) and Length.parse(value)
 
 			if options.fonts[value]
 				out['font-family'] = options.fonts[value]
 			elif value.match(/^(\d\d\d|bold|bolder|lighter|normal)$/)
 				out['font-weight'] = value
-			elif !size and sizes[value]
-				size = [].concat(sizes[value])
+			elif !size and (sizes[value] or (length and length.unit))
+				size = [].concat(sizes[value] or length)
 				if String(params[i]) == '/'
 					size[1] = params[i + 1]
 					i += 2
