@@ -415,8 +415,12 @@ class Selectors
 			if state isa Array
 				params = state.slice(1)
 				state = state[0]
+			
+			if !self[state] and self[state.replace(/\-/g,'_')]
+				state = state.replace(/\-/g,'_')
 
 			unless self[state]
+				
 				if let media = breakpoints[state]
 					o.media.push(media)
 					continue
@@ -469,7 +473,7 @@ class Selectors
 	def disabled sel
 		pseudo(':disabled',sel)
 		
-	def focus-within sel
+	def focus_within sel
 		pseudo(':focus-within',sel)
 		
 	def odd sel

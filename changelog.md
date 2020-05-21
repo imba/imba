@@ -1,5 +1,6 @@
 ## 2.0.0-alpha.50
 * Fix nested selector bug
+* Fix focus-within modifier
 
 ## 2.0.0-alpha.49
 * Allow border and border-(top|right|bottom|left) to accept a single color value
