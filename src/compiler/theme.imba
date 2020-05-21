@@ -41,6 +41,7 @@ export const variants =
 		'table-row': {display: 'table-row' }
 		'contents': {'display': 'contents'}
 		'hidden': {'display': 'none'}
+		'none': {'display': 'none'}
 		
 		# Position
 		'static': {position: 'static'}
