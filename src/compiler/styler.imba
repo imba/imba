@@ -45,8 +45,11 @@ export const aliases =
 	
 	# margins
 	d: 'display'
-	l: 'layout'
+	l: 'display'
+	layout: 'display'
 	t: 'text'
+	f: 'text'
+
 	
 	# borders
 	b: 'border'
@@ -135,8 +138,10 @@ for own name,variations of colors
 			let rgb = conv.hex.rgb(raw)
 			let [h,s,l] = conv.rgb.hsl(rgb)
 			let color = palette[path] = Color.new(path,h,s,l,'100%')
+			
+		if subname.match(/^\d00$/)
+			palette[name + subname[0]] = palette[path]
 
-# var colorRegex = RegExp.new('^(?:(\\w+)\-)?(' + Object.keys(palette).join('|') + ')\\b')
 var colorRegex = RegExp.new('\\b(' + Object.keys(palette).join('|') + ')\\b')
 
 export class StyleTheme
@@ -307,7 +312,7 @@ export class StyleTheme
 		# extract bold
 		return out
 		
-	def layout [...params]
+	def display [...params]
 		let out = {}
 		let schema = options.variants.layout
 		for param,i in params
@@ -315,7 +320,9 @@ export class StyleTheme
 			let val = schema[str]
 			if val
 				Object.assign(out,val)
-
+			else
+				# TODO check if it is a valid display value
+				out.display = str
 		# extract bold
 		return out
 		

@@ -3,6 +3,8 @@
 * Fix focus-within modifier
 * Add `:local` pseudo-class for only styling local children of component
 * Support `$reference` in selectors for targeting local referenced elements
+* Change `display` style property to accept multiple layout aliases
+* Add 1-digit color aliases (blue900 -> blue9 etc)
 
 ## 2.0.0-alpha.49
 * Allow border and border-(top|right|bottom|left) to accept a single color value
