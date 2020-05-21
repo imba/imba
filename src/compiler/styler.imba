@@ -401,11 +401,12 @@ export class StyleTheme
 # should not happen at root - but create a theme instance
 
 class Selectors
-	static def parse context, states
+	static def parse context, states, options
 		let parser = self.new
-		parser.$parse(context,states)
+		parser.$parse(context,states,options)
 		
-	def $parse context, states
+	def $parse context, states,options
+
 		let rule = '&'
 		o = {context: context, media: []}
 		for state in states
@@ -442,10 +443,15 @@ class Selectors
 			if typeof res == 'string'
 				rule = rule.replace('&',res)
 
+		# should reall parse the full selectors here
+		context = context.replace(/\$([\w\-]+)/g) do(m,ref)
+			".{options.localid}.{ref}"
+		
+		context = context.replace(/\:local/g) do(m)
+			options.hasLocalRules = yes
+			".{options.localid}"
 
 		let sel = rule.replace(/\&/g,context)
-		
-		# possibly expand selectors?
 
 		o.selectors = [sel]
 		if o.media.length
@@ -527,19 +533,26 @@ export const TransformMixin = '''
 
 export class StyleRule
 	
-	def constructor context,states,modifiers
+	def constructor parent,context,states,modifiers,options = {}
+		parent = parent
 		context = context
 		states = states
-		selector = Selectors.parse(context,states)
+		selector = Selectors.parse(context,states,options)
 		rules = modifiers
 		selectors = {}
-		options = {}
+		options = options
+		meta = {}
+		
+	def root
+		parent ? parent.root : self
 		
 	def toString
 		let sel = selector
 		let parts = []
-		let subselectors = {}
 		let subrules = []
+		
+		options.selectors ||= []
+		options.selectors.push(sel)
 
 		for own key,value of rules
 			continue if value == undefined
@@ -547,18 +560,10 @@ export class StyleRule
 			let subsel = null
 			
 			if key.indexOf('&') >= 0
-				# console.log 'subquery',key,value
 				# let substates = states.concat([[key]])
 				let substates = ([[key]]).concat(states)
-				subrules.push StyleRule.new(context,substates,value)
+				subrules.push StyleRule.new(self,context,substates,value,options)
 				continue
-
-				subsel = key.replace('&',sel)
-
-				let sub = subselectors[subsel] ||= []
-				for own subkey,subvalue of value
-					unless subvalue == undefined
-						sub.push "{subkey}: {subvalue};"
 			
 			elif key.indexOf('.') >= 0
 				let keys = key.split('.')
@@ -568,7 +573,7 @@ export class StyleRule
 				# TODO use interpolated key?
 				let obj = {}
 				obj[keys[0]] = value				
-				subrules.push StyleRule.new(context,substates,obj)
+				subrules.push StyleRule.new(self,context,substates,obj,options)
 				continue
 			
 			elif key[0] == '['
@@ -576,24 +581,19 @@ export class StyleRule
 				# this is only for a single property
 				let o = JSON.parse(key)
 				let substates = states.concat(o)
-				subrules.push StyleRule.new(context,substates,value)
+				subrules.push StyleRule.new(self,context,substates,value,options)
 				continue
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
-				unless options.transform
-					options.transform = yes
+				unless meta.transform
+					meta.transform = yes
 					parts.unshift(TransformMixin)
 				parts.push "--t_{key}: {value} !important;"
 			else
 				parts.push "{key}: {value};"
-
+				
 		let out = sel + ' {\n' + parts.join('\n') + '\n}'
 		out += '}' if sel.indexOf('@media') >= 0
-		
-		for own subsel,contents of subselectors
-			let subout = subsel + ' {\n' + contents.join('\n') + '\n}'
-			subout += '}' if subsel.indexOf('@media') >= 0	
-			out += '\n' + subout
 		
 		for own subrule in subrules
 			out += '\n' + subrule.toString()

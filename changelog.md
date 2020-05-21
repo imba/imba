@@ -1,6 +1,8 @@
 ## 2.0.0-alpha.50
 * Fix nested selector bug
 * Fix focus-within modifier
+* Add `:local` pseudo-class for only styling local children of component
+* Support `$reference` in selectors for targeting local referenced elements
 
 ## 2.0.0-alpha.49
 * Allow border and border-(top|right|bottom|left) to accept a single color value

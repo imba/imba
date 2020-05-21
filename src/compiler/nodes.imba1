@@ -583,6 +583,9 @@ export class Stack
 
 	def sfcid
 		@sfcid ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
+		
+	def fid
+		sfcid
 
 	def stash
 		@stash
@@ -803,6 +806,9 @@ export class Node
 
 	def oid
 		@oid ||= STACK.generateId('')
+		
+	def fid
+		STACK.fid
 
 	# shorthand for the self context for a node
 	def slf
@@ -2877,6 +2883,9 @@ export class TagDeclaration < ClassDeclaration
 		
 	def selectorpath
 		@selectorpath ||= String(name)
+		
+	def cssref
+		"_{STACK.fid}{oid}"
 
 	def visit
 		scope__.imbaDependency('index')
@@ -2920,17 +2929,6 @@ export class TagDeclaration < ClassDeclaration
 		scope.context.reference = name
 		
 		let className = name.toClassName
-		
-		if !STACK.tsc
-			
-			if s.option(:hasScopedStyles)
-				# @scope.root.styles:length > 0
-				instanceInit.inject LIT("this.setAttribute('data-{@scope.root.sfcid}','')")
-			if option(:sfcid)
-				# should add to static init instead? instanceInit should just have a list of classes.
-				instanceInit.inject LIT("this.setAttribute('data-{option(:sfcid)}','')")
-			# 	let ref = "{@scope.root.sfcid}-{s.option(:self).oid}"
-			# 	instanceInit.inject LIT("this.setAttribute('data-self','{ref}')")
 
 		# should probably also warn about stuff etc
 		let sup = CALL(LIT('imba.tags.get'),[
@@ -7223,15 +7221,11 @@ export class Tag < TagLike
 		
 	def uniqueSelector
 		@uniqueSelector ||= "[data-{sfcid}]"
-		
-	def tagDeclaration
-		stack.up(TagDeclaration)
 
-	def traverse
+	def traverse 
 		return self if @traversed
 		scope__.imbaDependency('index')
-		
-		
+		@tagDeclaration = STACK.up(TagDeclaration)
 		let close = @options:close
 		let body = @options:body or []
 		let returns = self
@@ -7291,8 +7285,8 @@ export class Tag < TagLike
 
 			return true
 
-		if @classNames:length
-			@className = "'{@classNames.join(' ')}'"
+		# if @classNames:length
+		#	@className = "'{@classNames.join(' ')}'"
 
 		if isSlot
 			# @tvar = tagvar('t'+oid)
@@ -7525,6 +7519,16 @@ export class Tag < TagLike
 			dynamicKey = kvar
 		
 		var addGlobalId = @sfcid or stack.option(:hasScopedStyles)
+		
+		if @tagDeclaration and (@tagDeclaration.option(:hasScopedStyles) or option(:reference))
+			@classNames.push(@tagDeclaration.cssref)
+		
+		if option(:reference)
+			let str = String(option(:reference)).slice(1)
+			@classNames.push(str)
+		
+		if @classNames:length
+			@className = "'{@classNames.join(' ')}'"
 
 		var params = [
 			typ,
@@ -7561,6 +7565,7 @@ export class Tag < TagLike
 		if option(:reference)
 			# what if it is on root?
 			# should also check if there is already an element like this
+			# ctor = CALL(OP('.',LIT(ctor),'ref$'),[STR(option(:reference))])
 			ctor = OP('=',OP('.',scope__.context,option(:reference)),LIT(ctor)).c()
 			
 		ctor = "{tvar}={ctor}"
@@ -8281,6 +8286,8 @@ export class StyleRuleSet < StyleNode
 		true
 		
 	def visit stack, o
+		@tagDeclaration = stack.up(TagDeclaration)
+		
 		if stack.parent isa ClassBody
 			# console.log 'ruleset is inside of class!!'
 			let owner = stack.up(2)
@@ -8290,8 +8297,10 @@ export class StyleRuleSet < StyleNode
 				@sel = @sel.replace('&',owner.selectorpath)
 				# console.log "ruleset in class {owner}",@sel
 				set(inClassBody: yes)
+				
 			else
 				yes # THROW here
+
 			# FIX the selector based on the tag
 		elif option(:toplevel)
 			@sel = String(@selectors).trim
@@ -8315,8 +8324,17 @@ export class StyleRuleSet < StyleNode
 			o:styles[@sel] = @styles
 
 		else
-			@css = StyleRule.new(@sel,[],@styles).toString
-			
+			# need to
+			let opts = {
+				selectors:[],
+				localid: @tagDeclaration && @tagDeclaration.cssref
+			}
+
+			@css = StyleRule.new(null,@sel,[],@styles,opts).toString
+
+			if opts:hasLocalRules and @tagDeclaration
+				@tagDeclaration.set(hasScopedStyles: yes)
+
 			scope__.root.styles.push({
 				type: 'css'
 				processed: @css
