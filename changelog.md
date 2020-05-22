@@ -1,3 +1,6 @@
+## 2.0.0-alpha.52
+* Fix issue with nested `$reference` selectors
+
 ## 2.0.0-alpha.51
 * No longer inheriting from CustomEvent as it is not supported in Safari
 * Fix input data binding issue

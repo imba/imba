@@ -49,6 +49,7 @@ export const aliases =
 	layout: 'display'
 	t: 'text'
 	f: 'text'
+	c: 'color'
 
 	
 	# borders
@@ -414,9 +415,8 @@ class Selectors
 	static def parse context, states, options
 		let parser = self.new
 		parser.$parse(context,states,options)
-		
+	
 	def $parse context, states,options
-
 		let rule = '&'
 		o = {context: context, media: []}
 		for state in states
@@ -454,14 +454,16 @@ class Selectors
 				rule = rule.replace('&',res)
 
 		# should reall parse the full selectors here
-		context = context.replace(/\$([\w\-]+)/g) do(m,ref)
-			".{options.localid}.{ref}"
 		
-		context = context.replace(/\:local/g) do(m)
-			options.hasLocalRules = yes
-			".{options.localid}"
 
 		let sel = rule.replace(/\&/g,context)
+		
+		sel = sel.replace(/\$([\w\-]+)/g) do(m,ref)
+			".{options.localid}.{ref}"
+		
+		sel = sel.replace(/\:local/g) do(m)
+			options.hasLocalRules = yes
+			".{options.localid}"
 
 		o.selectors = [sel]
 		if o.media.length
