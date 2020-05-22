@@ -80,8 +80,8 @@ extend class HTMLSelectElement
 
 	def change$ e
 		let model = self.data
-		let prev = #richValue
-		#richValue = undefined
+		let prev = $$value
+		$$value = undefined
 		let values = self.getRichValue()
 
 		if self.multiple
@@ -98,10 +98,10 @@ extend class HTMLSelectElement
 		self
 
 	def getRichValue
-		if #richValue
-			return #richValue
+		if $$value
+			return $$value
 
-		#richValue = for o in self.selectedOptions
+		$$value = for o in self.selectedOptions
 			o.richValue
 
 	def syncValue
@@ -114,13 +114,13 @@ extend class HTMLSelectElement
 				let sel = bindHas(model,val)
 				option.selected = sel
 				vals.push(val) if sel
-			#richValue = vals
+			$$value = vals
 
 		else
 			for option,i in self.options
 				let val = option.richValue
 				if val == model
-					#richValue = [val]
+					$$value = [val]
 					break self.selectedIndex = i
 		return
 
@@ -129,22 +129,22 @@ extend class HTMLSelectElement
 
 extend class HTMLOptionElement
 	def setRichValue value
-		#richValue = value
+		$$value = value
 		self.value = value
 
 	def getRichValue
-		if #richValue !== undefined
-			return #richValue
+		if $$value !== undefined
+			return $$value
 		return self.value
 
 extend class HTMLTextAreaElement
 	def setRichValue value
-		#richValue = value
+		$$value = value
 		self.value = value
 
 	def getRichValue
-		if #richValue !== undefined
-			return #richValue
+		if $$value !== undefined
+			return $$value
 		return self.value
 
 	def input$ e
@@ -152,7 +152,9 @@ extend class HTMLTextAreaElement
 		imba.commit!
 
 	def end$
-		self.value = self.data
+		if $$bound and self.value != self.data
+			self.value = self.data
+
 
 extend class HTMLInputElement
 	
@@ -162,7 +164,7 @@ extend class HTMLInputElement
 		if typ == 'checkbox' or typ == 'radio'
 			return
 
-		#richValue = undefined
+		$$value = undefined
 		self.data = self.richValue
 		imba.commit!
 
@@ -179,12 +181,16 @@ extend class HTMLInputElement
 		imba.commit!
 
 	def setRichValue value
-		#richValue = value
-		self.value = value
+		if $$value != value
+			$$value = value
+
+			if self.value != value
+				self.value = value
+		return
 
 	def getRichValue
-		if #richValue !== undefined
-			return #richValue
+		if $$value !== undefined
+			return $$value
 
 		let value = self.value
 		let typ = self.type
