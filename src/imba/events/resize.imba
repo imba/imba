@@ -1,14 +1,6 @@
 
 import {CustomEvent,Element} from '../dom'
 
-class ResizeEvent < CustomEvent
-	
-	get rect
-		detail.contentRect
-	
-	get entry
-		detail
-
 var resizeObserver = null
 
 def getResizeObserver
@@ -17,9 +9,10 @@ def getResizeObserver
 			console.warn(':resize not supported in this browser')
 			resizeObserver = {observe: do yes}
 		
-	resizeObserver ||= ResizeObserver.new do |entries|
+	resizeObserver ||= ResizeObserver.new do(entries)
 		for entry in entries
-			let e = ResizeEvent.new('resize', bubbles: false, detail: entry)
+			let e = CustomEvent.new('resize', bubbles: false, detail: entry)
+			e.rect = entry.contentRect
 			entry.target.dispatchEvent(e)
 		return
 

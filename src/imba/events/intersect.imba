@@ -1,29 +1,20 @@
-import {CustomEvent,Element} from '../dom'
+import {CustomEvent,Event,Element} from '../dom'
 
 const observers = global.WeakMap ? global.WeakMap.new : global.Map.new
 const defaults = {threshold: [0]}
 const rootTarget = {}
 
-class IntersectEvent < CustomEvent
-	
-	get ratio
-		detail.ratio
-	
-	get delta
-		detail.delta
-	
-	get entry
-		detail.entry
-		
-	def handle$mod state, args
+Event.intersect = {
+	handle: do(state,args)
 		let obs = state.event.detail.observer
 		return state.modifiers._observer == obs
-	
-	def in$mod state, args
-		return state.event.delta > 0
 
-	def out$mod state, args
-		return state.event.delta < 0
+	in: do(state,args)
+		return state.event.detail.delta > 0
+
+	out: do(state,args)
+		return state.event.detail.delta < 0
+}
 
 def callback name, key
 	return do |entries,observer|
@@ -33,7 +24,9 @@ def callback name, key
 			let prev = map.get(entry.target) or 0
 			let ratio = entry.intersectionRatio
 			let detail = {entry: entry, ratio: ratio, from: prev, delta: (ratio - prev), observer: observer }
-			let e = IntersectEvent.new(name, bubbles: false, detail: detail)
+			let e = CustomEvent.new(name, bubbles: false, detail: detail)
+			e.delta = detail.delta
+			e.ratio = detail.ratio
 			map.set(entry.target,ratio)
 			entry.target.dispatchEvent(e)
 		return
