@@ -479,6 +479,12 @@ class Selectors
 
 	def active sel
 		pseudo(':active',sel)
+	
+	def before sel
+		pseudo('::before',sel)
+
+	def after sel
+		pseudo('::after',sel)
 		
 	def visited sel
 		pseudo(':visited',sel)

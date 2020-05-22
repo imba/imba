@@ -1,5 +1,7 @@
 ## 2.0.0-alpha.51
 * No longer inheriting from CustomEvent as it is not supported in Safari
+* Fix input data binding issue
+* Added `before` and `after` style property modifiers
 
 ## 2.0.0-alpha.50
 * Fix nested selector bug
