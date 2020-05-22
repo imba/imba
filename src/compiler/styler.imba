@@ -80,6 +80,9 @@ export const aliases =
 
 	va: 'vertical-align'
 	ls: 'letter-spacing'
+	
+	prefix: 'content.before'
+	suffix: 'content.after'
 
 export class Color
 	

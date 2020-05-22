@@ -2,6 +2,8 @@
 * No longer inheriting from CustomEvent as it is not supported in Safari
 * Fix input data binding issue
 * Added `before` and `after` style property modifiers
+* Added `prefix` as alias for `before.content`
+* Added `suffix` as alias for `after.content`
 
 ## 2.0.0-alpha.50
 * Fix nested selector bug
