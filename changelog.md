@@ -1,3 +1,7 @@
+## 2.0.0-alpha.53
+* Allow media breakpoints in style selectors
+* Added max-width breakpoints
+
 ## 2.0.0-alpha.52
 * Fix issue with nested `$reference` selectors
 * Allow router to work for regular links

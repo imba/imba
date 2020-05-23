@@ -1,4 +1,9 @@
+
+
 tag app-root
+	
+	css @not-lg
+		l:vflex
 	
 	css $sidebar
 		background:red

@@ -8292,7 +8292,7 @@ export class StyleRuleSet < StyleNode
 			# console.log 'ruleset is inside of class!!'
 			let owner = stack.up(2)
 			if owner isa TagDeclaration
-				@sel = String(@selectors).trim
+				@sel = String(@selectors).trim or '&'
 				@sel = "& {@sel}" if @sel.indexOf('&') == -1
 				@sel = @sel.replace('&',owner.selectorpath)
 				# console.log "ruleset in class {owner}",@sel

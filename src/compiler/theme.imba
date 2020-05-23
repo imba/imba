@@ -194,6 +194,12 @@ export const breakpoints =
 	md: '(min-width: 768px)'
 	lg: '(min-width: 1024px)'
 	xl: '(min-width: 1280px)'
+	
+	'not-xs': '(max-width: 479px)'
+	'not-sm': '(max-width: 639px)'
+	'not-md': '(max-width: 767px)'
+	'not-lg': '(max-width: 1023px)'
+	'not-xl': '(max-width: 1279px)'
 
 export const material-colors = 
 	red: {

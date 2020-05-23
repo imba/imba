@@ -419,6 +419,9 @@ class Selectors
 	def $parse context, states,options
 		let rule = '&'
 		o = {context: context, media: []}
+		
+		
+		
 		for state in states
 			let res
 			let params = []
@@ -464,6 +467,12 @@ class Selectors
 		sel = sel.replace(/\:local/g) do(m)
 			options.hasLocalRules = yes
 			".{options.localid}"
+
+		sel = sel.replace(/@([\w\-]+)/g) do(m,breakpoint)
+			if let match = breakpoints[breakpoint]
+				o.media.push(match)
+				return ""
+			return m
 
 		o.selectors = [sel]
 		if o.media.length
