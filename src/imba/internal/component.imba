@@ -13,6 +13,10 @@ export class ImbaElement < HTMLElement
 	def init$
 		__F |= ($EL_INITED$ | $EL_HYDRATED$)
 		self
+		
+	def flag$ str
+		self.className = flags$ext = str
+		return
 
 	# returns the named slot - for context
 	def slot$ name, ctx
@@ -125,6 +129,7 @@ export class ImbaElement < HTMLElement
 			init$()
 
 		unless flags & $EL_HYDRATED$
+			flags$ext = className
 			hydrate()
 			__F |= $EL_HYDRATED$
 			commit()

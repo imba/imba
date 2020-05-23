@@ -287,26 +287,36 @@ extend class Element
 		
 	get flags
 		unless $flags
+			# unless deopted - we want to first cache the extflags
 			$flags = Flags.new(self)
-			self.flag$ = do(str) self.flagSync$(#extflags = str)
-			self.flagSelf$ = do(str) self.flagSync$(#ownflags = str)
-		$flags
+			if flag$ == Element.prototype.flag$
+				flags$ext = self.className
+			flagDeopt$()
+		return $flags
 
 	def flag$ str
 		self.className = str
+		return
+		
+	def flagDeopt$
+		self.flag$ = do(str) self.flagSync$(flags$ext = str)
+		self.flagSelf$ = do(str) self.flagSync$(flags$own = str)
 		return
 
 	def flagSelf$ str
 		# if a tag receives flags from inside <self> we need to
 		# redefine the flag-methods to later use both
-		let existing = (#extflags ||= self.className)
-		self.flag$ = do(str) self.flagSync$(#extflags = str)
-		self.flagSelf$ = do(str) self.flagSync$(#ownflags = str)
-		self.className = (existing ? existing + ' ' : '') + (#ownflags = str)
-		return
+		flagDeopt$()
+		return flagSelf$(str)
+		
+		# let existing = (flags$ext ||= self.className)
+		# self.flag$ = do(str) self.flagSync$(flags$ext = str)
+		# self.flagSelf$ = do(str) self.flagSync$(flags$own = str)
+		# self.className = (existing ? existing + ' ' : '') + (flags$own = str)
+		# return
 
 	def flagSync$
-		self.className = ((#extflags or '') + ' ' + (#ownflags || '') + ' ' + ($flags or ''))
+		self.className = ((flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
 
 	def open$
 		self
@@ -385,13 +395,10 @@ imba.tags = ImbaElementRegistry.new()
 
 # root.customElements.define('imba-element',ImbaElement)
 
-def imba.createElement name, bitflags, parent, flags, text, sfc
+def imba.createElement name, bitflags, parent, flags, text
 	var el = document.createElement(name)
 
 	el.className = flags if flags
-
-	if sfc
-		el.setAttribute('data-'+sfc,'')
 
 	if text !== null
 		el.text$(text)
@@ -401,7 +408,7 @@ def imba.createElement name, bitflags, parent, flags, text, sfc
 
 	return el
 
-def imba.createComponent name, bitflags, parent, flags, text, sfc
+def imba.createComponent name, bitflags, parent, flags, text
 	# the component could have a different web-components name?
 	var el
 
@@ -419,16 +426,13 @@ def imba.createComponent name, bitflags, parent, flags, text, sfc
 		el.slot$('__').text$(text)
 
 	# mark the classes as external static flags?
-	el.className = flags if flags
-
-	if sfc
-		el.setAttribute('data-'+sfc,'')
-
+	if flags
+		el.flag$(flags)
 	return el
 
 import './svg'
 
-def imba.createSVGElement name, bitflags, parent, flags, text, sfc
+def imba.createSVGElement name, bitflags, parent, flags, text
 	var el = document.createElementNS("http://www.w3.org/2000/svg",name)
 	if flags
 		if $node$
