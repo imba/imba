@@ -143,7 +143,7 @@ export class Route
 			node..commit()
 			# Imba.commit
 			if router.busy().length == 0
-				Imba.emit(router,'ready',[router])
+				imba.emit(router,'ready',[router])
 
 		node..setFlag('route-status',"status-{status}")
 	
@@ -168,30 +168,29 @@ export class Route
 		self
 		
 	def resolve url
+		return raw if raw[0] == '/'
+
 		url ||= router.url
-		if cache.resolveUrl == url
+	
+		if cache.resolveUrl == url and cache.resolved
 			return cache.resolved
-		
-		# let base = @router.root or ''
-		let base = ''
-		let raw = raw
-		cache.resolveUrl = url # base + url
+
+		cache.resolveUrl = url
 		
 		# if @query
 		# 	raw = raw.slice(0,raw.indexOf('?'))
 		# 	# add / remove params from url
 		
-		if parent and raw[0] != '/'
+		if parent
 			if let m = parent.test()
-				# what if 
 				if raw[0] == '?'
 					# possibly replace with & or even replace param?
-					cache.resolved = base + m.path + raw
+					cache.resolved = m.path + raw
 				else
-					cache.resolved = base + m.path + '/' + raw
+					cache.resolved = m.path + '/' + raw
 		else
 			# FIXME what if the url has some unknowns?
-			cache.resolved = base + raw # .replace(/[\@\$]/g,'')
+			cache.resolved = raw # .replace(/[\@\$]/g,'')
 
 		return cache.resolved
 		

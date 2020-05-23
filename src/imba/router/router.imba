@@ -149,10 +149,13 @@ export class Router
 		self
 		
 	def onclick e
-		
-		if let a = e.path.find(do $1.nodeName == 'A' )
+		return if e.metaKey or e.altKey
+		let a = e.path.find(do $1.nodeName == 'A')
+		let r = e.path.find(do $1.$routeTo)
+
+		if a and r != a and (!r or r.contains(a))
 			let href = a.getAttribute('href')
-			if href && !href.match(/\:\/\//) and !(e.metaKey and !e.altKey) and !a.getAttribute('target')
+			if href && !href.match(/\:\/\//) and !a.getAttribute('target') and !a.classList.contains('external')
 				a.addEventListener('click',onclicklink.bind(self),once: true)
 		yes
 		
@@ -250,4 +253,4 @@ export class Router
 if $web$
 	extend tag element
 		get router
-			MainInstance ||= Router.new()
+			Router.instance

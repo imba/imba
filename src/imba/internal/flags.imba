@@ -23,7 +23,7 @@ export class Flags
 		return self
 
 	def toggle ref, bool
-		bool = !contains(ref) if bool == undefined
+		bool = !contains(ref) if bool === undefined
 		bool ? add(ref) : remove(ref)
 
 	def valueOf

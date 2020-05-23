@@ -1,8 +1,9 @@
 class ElementRoute
-	def constructor node, path, parent
+	def constructor node, path, parent, options
 		node = node
 		route = node.router.routeFor(node,path,parent ? parent.route : null,{node: node})
 		match = null
+		options = options
 		placeholder = node.$placeholder or Comment.new("{path}")
 
 	get raw
@@ -13,6 +14,9 @@ class ElementRoute
 
 	get params
 		match
+		
+	get sticky
+		options and options.sticky
 
 	def isActive
 		match && match.active
@@ -20,35 +24,66 @@ class ElementRoute
 	def resolve
 		let prev = match
 		let prevUrl = prev and prev.url
-		let match = route.test()
+		let curr = route.test!
 
 		# console.log 'resolving route?',raw,match,prev
-		if match
-			let active = match.active # what if the previous was active?
-			match.active = true
+		if curr
+			let active = prev and prev.active # what if the previous was active?
+			curr.active = true
 
-			if match != prev
-				self.match = match
+			if curr != prev
+				self.match = curr
 
-			if match != prev or !active or (match.url != prevUrl)
-				node..routeDidResolve(match,prev,prevUrl)
+			if curr != prev or !active or (curr.url != prevUrl)
+				resolved(curr,prev,prevUrl)
 
 			if !active
 				enter()
+			
+			return curr
 
 		elif prev and prev.active
 			prev.active = false
 			leave()
 		elif !prev
-			match = {}
+			self.match = prev = {}
 			leave()
+			
+		return prev
 
 	def enter 
 		node..routeDidEnter(self)
+		
+	def resolved match,prev,prevUrl
+		node..routeDidResolve(match,prev,prevUrl)
 
 	def leave
 		node..routeDidLeave(self)
 
+class ElementRouteTo < ElementRoute
+	
+	def enter
+		self
+		
+	def resolve
+		url = route.resolve!
+		super
+		
+	def resolved
+		self
+		
+	def leave
+		self
+	
+	def go
+		let href = route.resolve!
+		if sticky and match
+			href = match.url or href
+		if options and options.replace
+			node.router.replace(href)
+		else
+			node.router.go(href)
+	
 
 extend class Element
 
@@ -73,7 +108,7 @@ extend class Element
 			return
 
 		let par = value[0] != '/' ? parent-route : null
-		$route = ElementRoute.new(self,value,par,{node: self})
+		$route = ElementRoute.new(self,value,par,route__)
 		# console.log 'setting route!',value,$route,par
 		self.end$ = self.end$routed
 		
@@ -81,7 +116,6 @@ extend class Element
 			# should base this on a modifier
 			parent.appendChild$($route.isActive() ? self : $route.placeholder)
 
-		# $route = value
 
 	set route-to value
 		if $route
@@ -90,14 +124,14 @@ extend class Element
 			return
 
 		let par = value[0] != '/' ? parent-route : null
-		$route = ElementRoute.new(self,value,par,{node: self})
+		$route = $routeTo = ElementRouteTo.new(self,value,par,routeTo__)
 		self.end$ = self.end$routeTo
 
 		self.onclick = do(e)
 			if !e.altKey and !e.metaKey
 				e.preventDefault()
-				router.go($route.route.resolve!)
-		self
+				$route.go!
+		
 
 	def end$routed
 		if $route
@@ -108,10 +142,16 @@ extend class Element
 
 	def end$routeTo
 		if $route
-			let match = $route.route.test()
-			let href = $route.route.resolve()
-			setAttribute('href',href)
-			flags.toggle('active',!!match)
+			
+			let match = $route.resolve!
+			let href = $route.url # $route.route.resolve()	
+			# let match = $route.route.test()
+			
+			if $route.sticky and match.url
+				href = match.url
+
+			setAttribute('href',href) if nodeName == 'A'
+			flags.toggle('active',match and match.active or false)
 			
 		visit() if visit
 

@@ -1,6 +1,8 @@
 ## 2.0.0-alpha.52
 * Fix issue with nested `$reference` selectors
-* Allow router to work for regular links as well
+* Allow router to work for regular links
+* Add route-to.replace modifier
+* Add route-to.sticky modifier
 
 ## 2.0.0-alpha.51
 * No longer inheriting from CustomEvent as it is not supported in Safari
