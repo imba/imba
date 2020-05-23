@@ -3,7 +3,7 @@ class ElementRoute
 		node = node
 		route = node.router.routeFor(node,path,parent ? parent.route : null,{node: node})
 		match = null
-		placeholder = Comment.new("{path}")
+		placeholder = node.$placeholder or Comment.new("{path}")
 
 	get raw
 		route.raw
@@ -28,11 +28,10 @@ class ElementRoute
 			match.active = true
 
 			if match != prev
-				match = match
+				self.match = match
 
 			if match != prev or !active or (match.url != prevUrl)
-				console.log 'routeDidResolve!',match,prev
-				node..routeDidResolve(match,prev)
+				node..routeDidResolve(match,prev,prevUrl)
 
 			if !active
 				enter()
@@ -77,7 +76,9 @@ extend class Element
 		$route = ElementRoute.new(self,value,par,{node: self})
 		# console.log 'setting route!',value,$route,par
 		self.end$ = self.end$routed
+		
 		self.insertInto$ = do |parent|
+			# should base this on a modifier
 			parent.appendChild$($route.isActive() ? self : $route.placeholder)
 
 		# $route = value
@@ -93,13 +94,12 @@ extend class Element
 		self.end$ = self.end$routeTo
 
 		self.onclick = do(e)
-			e.preventDefault()
-			# console.log 'go to path!!',value
-			router.go($route.route.resolve!)
+			if !e.altKey and !e.metaKey
+				e.preventDefault()
+				router.go($route.route.resolve!)
 		self
 
 	def end$routed
-		# console.log 'end routed!',self
 		if $route
 			$route.resolve()
 			return unless $route.isActive()
@@ -108,30 +108,29 @@ extend class Element
 
 	def end$routeTo
 		if $route
-			# console.log "ended with route to"
-			# only if some part of routing has changed
 			let match = $route.route.test()
 			let href = $route.route.resolve()
-			# console.log match,href
 			setAttribute('href',href)
 			flags.toggle('active',!!match)
 			
 		visit() if visit
 
 	def routeDidEnter route
-		# console.log 'routeDidEnter'
-		if route.placeholder.parentNode
-			route.placeholder.replaceWith$(self)
+		self.flags.add('routed')
+		let ph = route.placeholder
+		if ph.parentNode and ph != self
+			ph.replaceWith$(self)
 
 	def routeDidLeave route
-		# console.log 'routeDidLeave',parentNode,route.placeholder
-		if parentNode
-			self.replaceWith$(route.placeholder)
+		self.flags.remove('routed')
+		let ph = route.placeholder
+		if parentNode and ph != self
+			self.replaceWith$(ph)
 		self
 
 	def routeDidResolve params, prev
-		# console.log 'resolved?'
 		return
+
 		if !self.load or (params == prev and !self.reload)
 			self..routeDidMatch(params)
 			self..routeDidLoad(params,prev)

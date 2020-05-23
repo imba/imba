@@ -34,6 +34,7 @@ export class Router
 
 		if $web$
 			instance ||= self
+			
 		self
 
 	get origin
@@ -126,23 +127,44 @@ export class Router
 		self.emit('beforechange',req)
 		return true if req.aborted
 		return
+		
+	def onhashchange e
+		emit('hashchange',$hash = document.location.hash)
+		imba.commit()
 
 	def setup
 		if isWeb
-			# console.log 'setup on client'
-			# let url = self.url()
-			# if url and @redirects[url]
+			onclick = onclick.bind(self)
+			onhashchange = onhashchange.bind(self)
+			
+			$hash = document.location.hash
 			location = Location.parse(realpath,self)
 			history.replaceState(self.state,null,String(location))
 
 			window.onpopstate = self.onpopstate.bind(self) # do |e| onpopstate(e)
 			window.onbeforeunload = self.onbeforeunload.bind(self)
 
-			$hash = document.location.hash
-			window.addEventListener('hashchange') do |e|
-				self.emit('hashchange',$hash = document.location.hash)
-				imba.commit()
+			window.addEventListener('hashchange',onhashchange)
+			window.addEventListener('click',onclick,capture: yes)
 		self
+		
+	def onclick e
+		
+		if let a = e.path.find(do $1.nodeName == 'A' )
+			let href = a.getAttribute('href')
+			if href && !href.match(/\:\/\//) and !(e.metaKey and !e.altKey) and !a.getAttribute('target')
+				a.addEventListener('click',onclicklink.bind(self),once: true)
+		yes
+		
+	def onclicklink e
+		let a = e.path.find(do $1.nodeName == 'A' )
+		let href = a.getAttribute('href')
+		let url = URL.new(a.href)
+		let target = url.href.slice(url.origin.length)
+
+		self.go(target)
+		e.stopPropagation()
+		e.preventDefault()
 	
 	get path
 		return location.path
