@@ -27,6 +27,8 @@ imba.setInterval = do |fn,ms|
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
 
+Object.defineProperty(imba,'flags',get:(do imba.document.documentElement.classList))
+
 if $node$
 	import {Document,Node,Text,Comment,Element,HTMLElement,DocumentFragment,ShadowRoot,document,getElementType} from './ssr'
 	imba.document = document
