@@ -150,8 +150,18 @@ export class Router
 		
 	def onclick e
 		return if e.metaKey or e.altKey
-		let a = e.path.find(do $1.nodeName == 'A')
-		let r = e.path.find(do $1.$routeTo)
+
+		let a = null
+		let r = null
+		
+		let t = e.target
+		
+		while t
+			if t.nodeName == 'A'
+				a ||= t
+			if t.$routeTo
+				r ||= t
+			t = t.parentNode
 
 		if a and r != a and (!r or r.contains(a))
 			let href = a.getAttribute('href')
@@ -160,7 +170,7 @@ export class Router
 		yes
 		
 	def onclicklink e
-		let a = e.path.find(do $1.nodeName == 'A' )
+		let a = e.target
 		let href = a.getAttribute('href')
 		let url = URL.new(a.href)
 		let target = url.href.slice(url.origin.length)
