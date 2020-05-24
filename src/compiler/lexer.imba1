@@ -788,10 +788,20 @@ export class Lexer
 		if @lastTyp == 'ATTR' or @lastTyp == 'PROP' or @lastTyp == 'DEF'
 			return false 
 			
+		if id == 'get' or id == 'set'
+			if let m = @chunk.match(/^[gs]et ([\$\w\-]+)/) # ( (do)|\n(\t+))
+				let ctx = @contexts[@contexts:length - 1] or {}
+				let before = ctx:opener and @tokens[@tokens.indexOf(ctx:opener) - 1]
+
+				if @lastTyp in ['TERMINATOR','INDENT']
+					if before and (before.@type == '=' or before.@type == '{')
+						return true
+			
 		if (id == 'guard' or id == 'alter' or id == 'watch') and (getScope == 'PROP')
-			console.log 'got here!'
+			# console.log 'got here!'
 			# only if we are on a newline? or something?
 			return true
+			
 
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css')
 			var scop = getScope
@@ -1411,7 +1421,7 @@ export class Lexer
 
 
 			@indents.push diff
-			pushEnd('OUTDENT')
+			pushEnd('OUTDENT',opener: @last)
 			@outdebt = @indebt = 0
 			addLinebreaks(brCount)
 		elif true

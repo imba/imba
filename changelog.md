@@ -1,3 +1,6 @@
+## 2.0.0-alpha.54
+* Allow getters and setters in object literals
+
 ## 2.0.0-alpha.53
 * Allow media breakpoints in style selectors
 * Added max-width breakpoints
