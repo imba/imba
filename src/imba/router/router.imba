@@ -170,7 +170,7 @@ export class Router
 		yes
 		
 	def onclicklink e
-		let a = e.target
+		let a = e.currentTarget or e.target
 		let href = a.getAttribute('href')
 		let url = URL.new(a.href)
 		let target = url.href.slice(url.origin.length)

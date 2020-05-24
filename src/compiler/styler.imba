@@ -60,6 +60,7 @@ export const aliases =
 	bl: 'border-left'
 	bc: 'border-color'
 	bs: 'border-style'
+	bw: 'border-width'
 	
 	# background
 	bg: 'background'
@@ -378,7 +379,7 @@ export class StyleTheme
 	def $value value, index, config
 		let key = config
 		if typeof config == 'string'
-			if config.match(/^(width|height|top|left|bottom|right|padding|margin|sizing|inset)/)
+			if config.match(/^((min-|max-)?(width|height)|top|left|bottom|right|padding|margin|sizing|inset)/)
 				config = 'sizing'
 			elif config.match(/^(border-radius)/)
 				config = 'radius'

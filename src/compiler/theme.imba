@@ -67,7 +67,7 @@ export const variants =
 		'content-box': {'box-sizing': 'content-box'}
 		
 		'wrap': {'flex-wrap': 'wrap'}
-		'center': {'align-items': 'center','justify-content': 'center'}
+		'center': {'align-items': 'center','justify-content': 'center', 'align-content': 'center'}
 		
 		# visibility
 		'invisible': {visibility: 'hidden'}

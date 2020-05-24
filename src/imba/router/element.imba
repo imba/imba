@@ -51,13 +51,18 @@ class ElementRoute
 			
 		return prev
 
-	def enter 
+	def enter
+		node.flags.remove('not-routed')
+		node.flags.add('routed')
 		node..routeDidEnter(self)
 		
 	def resolved match,prev,prevUrl
 		node..routeDidResolve(match,prev,prevUrl)
 
 	def leave
+		# replace flag?
+		node.flags.add('not-routed')
+		node.flags.remove('routed')
 		node..routeDidLeave(self)
 
 class ElementRouteTo < ElementRoute
@@ -156,13 +161,11 @@ extend class Element
 		visit() if visit
 
 	def routeDidEnter route
-		self.flags.add('routed')
 		let ph = route.placeholder
 		if ph.parentNode and ph != self
 			ph.replaceWith$(self)
 
 	def routeDidLeave route
-		self.flags.remove('routed')
 		let ph = route.placeholder
 		if parentNode and ph != self
 			self.replaceWith$(ph)
