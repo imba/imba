@@ -38,7 +38,7 @@ export class Router
 		self
 
 	get origin
-		#origin ||= document.location.origin
+		$origin ||= document.location.origin
 		
 	def option key, value
 		if value == undefined

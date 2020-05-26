@@ -205,10 +205,10 @@ export class Element < Node
 		self
 
 	get classList
-		#classList ||= DOMTokenList.new(self)
+		$classList ||= DOMTokenList.new(self)
 
 	get style
-		#style ||= StyleDeclaration.new(this)
+		$style ||= StyleDeclaration.new(this)
 
 	def flag$
 		self
@@ -271,7 +271,7 @@ export class Element < Node
 		self
 
 	set innerHTML value
-		#innerHTML = value
+		$innerHTML = value
 
 	get innerHTML
 		var o = ""
@@ -286,8 +286,6 @@ export class Element < Node
 			elif item
 				o += item.outerHTML
 		return o
-		# self.resolve()
-		# return #innerHTML || (self.textContent and escapeTextContent(self.textContent,self.nodeName)) || (self.children and self.children.join("")) or ''
 	
 	get outerHTML
 		var typ = self.nodeName
@@ -300,8 +298,8 @@ export class Element < Node
 		for own key,value of self.attributes
 			sel += " {key}=\"{escapeAttributeValue(value)}\""
 
-		if #style
-			sel += " style=\"{escapeAttributeValue(#style.toString())}\""
+		if $style
+			sel += " style=\"{escapeAttributeValue($style.toString())}\""
 
 		if voidElements[typ]
 			return "<{sel}>"

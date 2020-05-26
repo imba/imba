@@ -9,7 +9,7 @@ export class Scheduler
 		self.scheduled = no
 		self.listeners = {}
 
-		#ticker = do |e|
+		$ticker = do |e|
 			self.scheduled = no
 			self.tick(e)
 		self
@@ -60,5 +60,5 @@ export class Scheduler
 			self.scheduled = yes
 			if self.stage == -1
 				self.stage = 0
-			raf(#ticker)
+			raf($ticker)
 		self

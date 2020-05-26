@@ -7,7 +7,7 @@ class Animal
 		'Animal'
 
 	set alias value
-		#alias = value
+		$alias = value
 
 	def skills
 		[1,2,3,4]
@@ -67,8 +67,8 @@ test do
 			eq super.test(1,2,3), [1,2,3]
 			super.test
 			super.alias = 4
-			eq #alias, 4
+			eq $alias, 4
 			self.alias = 5
-			eq #alias, 5
+			eq $alias, 5
 
 	Cat.new.something()

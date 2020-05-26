@@ -3,57 +3,57 @@ import {DocumentFragment,Element,Text,ShadowRoot,document} from '../dom'
 extend class DocumentFragment
 
 	get $parent
-		this.up$ or #parent
+		this.up$ or $$parent
 
 	# Called to make a documentFragment become a live fragment
 	def setup$ flags, options
-		#start = imba.document.createComment('start')
-		#end = imba.document.createComment('end')
+		$start = imba.document.createComment('start')
+		$end = imba.document.createComment('end')
 
-		#end.replaceWith$ = do |other|
+		$end.replaceWith$ = do |other|
 			this.parentNode.insertBefore(other,this)
 			return other
 
-		this.appendChild(#start)
-		this.appendChild(#end)
+		this.appendChild($start)
+		this.appendChild($end)
 	
 	# when we for sure know that the only content should be
 	# a single text node
 	def text$ item
-		unless #text
-			#text = this.insert$(item)
+		unless $text
+			$text = this.insert$(item)
 		else
-			#text.textContent = item
+			$text.textContent = item
 		return
 	
 	def insert$ item, options, toReplace
-		if #parent
+		if $$parent
 			# if the fragment is attached to a parent
 			# we can just proxy the call through
-			#parent.insert$(item,options,toReplace or #end)
+			$$parent.insert$(item,options,toReplace or $end)
 		else
-			Element.prototype.insert$.call(this,item,options,toReplace or #end)
+			Element.prototype.insert$.call(this,item,options,toReplace or $end)
 
 	def insertInto$ parent, before
-		unless #parent
-			#parent = parent
+		unless $$parent
+			$$parent = parent
 			# console.log 'insertFrgment into',parent,Array.from(self.childNodes)
 			parent.appendChild$(this)
 		return this
 
 	def replaceWith$ other, parent
-		#start.insertBeforeBegin$(other)
-		var el = #start
+		$start.insertBeforeBegin$(other)
+		var el = $start
 		while el
 			let next = el.nextSibling
 			self.appendChild(el)
-			break if el == #end
+			break if el == $end
 			el = next
 			
 		return other
 
 	def appendChild$ child
-		#end ? #end.insertBeforeBegin$(child) : self.appendChild(child)
+		$end ? $end.insertBeforeBegin$(child) : self.appendChild(child)
 		return child
 
 	def removeChild$ child
@@ -61,8 +61,8 @@ extend class DocumentFragment
 		self
 
 	def isEmpty$
-		let el = #start
-		let end = #end
+		let el = $start
+		let end = $end
 
 		while el = el.nextSibling
 			break if el == end
@@ -76,51 +76,48 @@ extend class ShadowRoot
 
 class TagCollection
 	def constructor f, parent
-		#f = f
-		#parent = parent
+		__F = f
+		$parent = parent
 
 		if !(f & $TAG_FIRST_CHILD$) and self isa KeyedTagFragment
-			#start = document.createComment('start')
-			parent.appendChild$(#start) if parent # not if inside tagbranch
+			$start = document.createComment('start')
+			parent.appendChild$($start) if parent # not if inside tagbranch
 
 		unless f & $TAG_LAST_CHILD$
-			#end = document.createComment('end')
-			parent.appendChild$(#end) if parent
+			$end = document.createComment('end')
+			parent.appendChild$($end) if parent
 
 		self.setup()
 
-	get $parent
-		#parent
-
 	def appendChild$ item, index
 		# we know that these items are dom elements
-		if #end and #parent
-			#end.insertBeforeBegin$(item)
-		elif #parent
-			#parent.appendChild$(item)
+		if $end and $parent
+			$end.insertBeforeBegin$(item)
+		elif $parent
+			$parent.appendChild$(item)
 		return
 
 	def replaceWith$ other
 		self.detachNodes()
-		#end.insertBeforeBegin$(other)
-		#parent.removeChild$(#end)
-		#parent = null
+		$end.insertBeforeBegin$(other)
+		$parent.removeChild$($end)
+		$parent = null
 		return
 
 	def joinBefore$ before
 		self.insertInto$(before.parentNode,before)
 
 	def insertInto$ parent, before
-		unless #parent
-			#parent = parent
-			before ? before.insertBeforeBegin$(#end) : parent.appendChild$(#end)
+		unless $parent
+			$parent = parent
+			before ? before.insertBeforeBegin$($end) : parent.appendChild$($end)
 			self.attachNodes()
 		return this
 	
 	def replace$ other
-		unless #parent
-			#parent = other.parentNode
-		other.replaceWith$(#end)
+		unless $parent
+			$parent = other.parentNode
+		other.replaceWith$($end)
 		self.attachNodes()
 		self
 		
@@ -136,7 +133,7 @@ class KeyedTagFragment < TagCollection
 
 	def push item, idx
 		# on first iteration we can merely run through
-		unless #f & $TAG_INITED$
+		unless __F & $TAG_INITED$
 			self.array.push(item)
 			self.appendChild$(item)
 			return
@@ -175,32 +172,32 @@ class KeyedTagFragment < TagCollection
 			let other = self.array[index - 1]
 			# will fail with text nodes
 			other.insertAfterEnd$(item)
-		elif #start
-			#start.insertAfterEnd$(item)
+		elif $start
+			$start.insertAfterEnd$(item)
 		else
-			#parent.insertAfterBegin$(item)
+			$parent.insertAfterBegin$(item)
 		return
 
 	def removeChild item, index
 		# self.map.delete(item)
 		# what if this is a fragment or virtual node?
-		if item.parentNode == #parent
-			#parent.removeChild(item)
+		if item.parentNode == $parent
+			$parent.removeChild(item)
 		return
 
 	def attachNodes
 		for item,i in self.array
-			#end.insertBeforeBegin$(item)
+			$end.insertBeforeBegin$(item)
 		return
 
 	def detachNodes
 		for item in self.array
-			#parent.removeChild(item)
+			$parent.removeChild(item)
 		return
 
 	def end$ index
-		unless #f & $TAG_INITED$
-			#f |= $TAG_INITED$
+		unless __F & $TAG_INITED$
+			__F |= $TAG_INITED$
 			return
 
 		if self.dirty
@@ -228,9 +225,9 @@ class IndexedTagFragment < TagCollection
 
 	def end$ len
 		let from = self.length
-		return if from == len or !#parent
+		return if from == len or !$parent
 		let array = self.$
-		let par = #parent
+		let par = $parent
 
 		if from > len
 			while from > len
@@ -244,14 +241,14 @@ class IndexedTagFragment < TagCollection
 	def attachNodes
 		for item,i in self.$
 			break if i == self.length
-			#end.insertBeforeBegin$(item)
+			$end.insertBeforeBegin$(item)
 		return
 
 	def detachNodes
 		let i = 0
 		while i < self.length
 			let item = self.$[i++]
-			#parent.removeChild$(item)
+			$parent.removeChild$(item)
 		return
 
 export def createLiveFragment bitflags, options, par
