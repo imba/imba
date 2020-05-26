@@ -6,13 +6,8 @@ export const fonts =
 # some things should definitely move out of theme
 export const variants =
 	radius:
-		none: 0
-		sm: 1
-		default: 2
-		md: 3
-		lg: 4
 		full: '9999px'
-		step: '0.125rem'
+		step: '2px'
 	
 	sizing:
 		step: '0.25rem'
@@ -72,19 +67,6 @@ export const variants =
 		# visibility
 		'invisible': {visibility: 'hidden'}
 		'visible': {visibility: 'visible'}
-		
-	'font-size':
-		'xs': '0.75rem'
-		'sm': '0.875rem'
-		'base': '1rem'
-		'md': '1rem'
-		'lg': '1.125rem'
-		'xl': '1.25rem'
-		'2xl': '1.5rem'
-		'3xl': '1.875rem'
-		'4xl': '2.25rem'
-		'5xl': '3rem'
-		'6xl': '4rem'
 	
 	fontSize:
 		'xxs': ['10px',1.5]
@@ -98,22 +80,23 @@ export const variants =
 		'4xl': ['36px',1.5]
 		'5xl': ['48px',1.5]
 		'6xl': ['64px',1.5]
-		
-		'1': ['8px',1.5]
-		'2': ['10px',1.5]
-		'3':  ['12px',1.5]
+
+		'1':  ['10px',1.5]
+		'2':  ['12px',1.5]
+		'3':  ['13px',1.5]
 		'4':  ['14px',1.5]
-		'5':  ['16px',1.5]
-		'6':  ['18px',1.5]
-		'7':  ['20px',1.5]
-		'8': ['24px',1.5]
-		'9': ['30px',1.5]
-		'10': ['36px',1.5]
-		'11': ['48px',1.5]
-		'12': ['64px',1.5]
-		
-	radius:
-		step: '0.125rem'
+		'5':  ['15px',1.5]
+		'6':  ['16px',1.5]
+		'7':  ['17px',1.5]
+		'8':  ['18px',1.5]
+		'9':  ['19px',1.5]
+		'10': ['20px',1.5]
+		'11': ['24px',1.4]
+		'12': ['30px',1.3]
+		'13': ['36px',1.3]
+		'14': ['48px',1.2]
+		'15': ['64px',1.2]
+		'16': ['96px',1.2]
 		
 	units:
 		u: '4px' # '0.125rem'
@@ -138,17 +121,35 @@ export const variants =
 		'right': {'text-align': 'right'}
 		'justify': {'text-align': 'justify'}
 		
+		'light': {'font-weight': '300'}
+		'medium': {'font-weight': '500'}
+		'semibold': {'font-weight': '600'}
+		
+		'normal': {'letter-spacing': '0em','font-weight':400,'font-style': 'normal'}
+		
+		'reset': {
+			'letter-spacing': '0em',
+			'font-weight': 400,
+			'text-transform':'none',
+			'text-decoration': 'none',
+			'font-style': 'normal'
+		}
+		
 		'tighter': {'letter-spacing': '-0.05em'}
 		'tight': {'letter-spacing': '-0.025em'}
-		'normal': {'letter-spacing': '0em'}
 		'wide': {'letter-spacing': '0.025em'}
 		'wider': {'letter-spacing': '0.05em'}
 		'widest': {'letter-spacing': '0.1em'}
 		
+		'nowrap': {'white-space': 'nowrap'}
+		'pre': {'white-space': 'pre'}
+		'pre-wrap': {'white-space': 'pre-wrap'}
+		'pre-line': {'white-space': 'pre-line'}
+		'break-spaces': {'white-space': 'break-spaces'}
+		'truncate': {'overflow': 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap'}
+		
 		'antialiased': {'-webkit-font-smoothing': 'antialiased', '-moz-osx-font-smoothing': 'grayscale'}
 		'subpixel-antialiased': {'-webkit-font-smoothing': 'auto', '-moz-osx-font-smoothing': 'auto'}		
-		
-		'truncate': {'overflow': 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap'}
 		
 	'box-shadow':
 		xs: '0 0 0 1px rgba(0, 0, 0, 0.05)',
@@ -161,7 +162,7 @@ export const variants =
 		inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
 		outline: '0 0 0 3px rgba(66, 153, 225, 0.5)',
 		none: 'none'
-	
+
 	easings:
 		"sine-in": "cubic-bezier(0.47, 0, 0.745, 0.715)",
 		"sine-out": "cubic-bezier(0.39, 0.575, 0.565, 1)",

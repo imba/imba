@@ -58,9 +58,33 @@ export const aliases =
 	br: 'border-right'
 	bb: 'border-bottom'
 	bl: 'border-left'
+	
+	bx: 'border-x'
+	by: 'border-y'
 	bc: 'border-color'
 	bs: 'border-style'
 	bw: 'border-width'
+	
+	btw: 'border-top-width'
+	brw: 'border-right-width'
+	bbw: 'border-bottom-width'
+	blw: 'border-left-width'
+	bxw: 'border-x-width'
+	byw: 'border-y-width'
+	
+	btc: 'border-top-color'
+	brc: 'border-right-color'
+	bbc: 'border-bottom-color'
+	blc: 'border-left-color'
+	bxc: 'border-x-color'
+	byc: 'border-y-color'
+	
+	bts: 'border-top-style'
+	brs: 'border-right-style'
+	bbs: 'border-bottom-style'
+	bls: 'border-left-style'
+	bxs: 'border-x-style'
+	bys: 'border-y-style'
 	
 	# background
 	bg: 'background'
@@ -279,15 +303,27 @@ export class StyleTheme
 				out['font-family'] = options.fonts[value]
 			elif value.match(/^(\d\d\d|bold|bolder|lighter|normal)$/)
 				out['font-weight'] = value
-			elif !size and (sizes[value] or (length and length.unit))
+			elif !size and (sizes[value] or (length))
+				if !sizes[value] and !length.unit
+					length.unit = 'px'
+
 				size = [].concat(sizes[value] or length)
 				if String(params[i]) == '/'
 					size[1] = params[i + 1]
 					i += 2
+
 			elif color = $parseColor(value)
 				out['color'] = String(color)
 			
 			elif let mixin = options.variants.text[value]
+				if typeof mixin == 'string'
+					mixin = mixin.replace(/\//g,' / ').split(/\s+/)
+
+				if mixin isa Array
+					let parts = self.text(mixin)
+					out = Object.assign(parts,out)
+					continue
+					
 				for own k,v of mixin
 					if out[k] and k == 'text-decoration' and v != 'undecorated'
 						out[k] = out[k] + " " + v
@@ -304,8 +340,8 @@ export class StyleTheme
 				let rounded = Math.round(fs.number * lh.number)
 				if rounded % 2 == 1
 					rounded++
-
-				out['line-height'] = String(fs.clone(rounded))
+				
+				out['line-height'] = lh.number == 0 ? 'inherit' : String(fs.clone(rounded))
 			elif lh
 				out['line-height'] = String(lh)
 			elif String(size[1]) == 'inherit'
@@ -330,7 +366,9 @@ export class StyleTheme
 				out.display = str
 		# extract bold
 		return out
-		
+	
+	# TODO allow setting border style and color w/o width?
+	# TODO allow size hidden etc?
 	def border [...params]
 		if params.length == 1 and $parseColor(params[0])
 			return [['1px','solid',params[0]]]
@@ -347,6 +385,25 @@ export class StyleTheme
 		
 	def border-bottom params
 		return border(params)
+		
+	def border-x params
+		{'border-left': border(params) or params, 'border-right': border(params) or params}
+		
+	def border-y params
+		{'border-top': border(params) or params, 'border-bottom': border(params) or params}
+		
+	def border-x-width [l,r=l]
+		{'border-left-width': l, 'border-right-width': r}
+		
+	def border-y-width [t,b=t]
+		{'border-top-width': t, 'border-bottom-width': b}
+		
+	def border-x-style [l,r=l]
+		{'border-left-style': l, 'border-right-style': r}
+		
+	def border-y-style [t,b=t]
+		{'border-top-style': t, 'border-bottom-style': b}
+
 	# def shadow ...params
 	#	{}
 		

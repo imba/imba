@@ -8386,7 +8386,8 @@ export class StyleDeclaration < StyleNode
 		self
 		
 	def clone name, params
-		self
+		params = @expr.clone unless params
+		StyleDeclaration.new(@property.clone(name),params)
 		
 	def visit stack, o
 		# see if property can be expanded
@@ -8394,7 +8395,10 @@ export class StyleDeclaration < StyleNode
 		let list = stack.parent
 		let alias = theme.expandProperty(@property.name)
 
-		if alias
+		if alias isa Array
+			list.replace(self,alias.map do clone($1))
+			return
+		elif alias
 			@property = @property.clone(alias)
 		
 		let name = String(@property.name)
