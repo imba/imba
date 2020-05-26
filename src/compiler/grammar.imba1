@@ -480,10 +480,28 @@ var grammar =
 	]
 
 	TagBody: [
-		o 'INDENT OUTDENT' do ArgList.new([]).indented(A1,A2)
-		o 'INDENT ArgList OUTDENT' do A2.indented(A1,A3)
-		o 'CALL_START ArgList CALL_END' do A2
-		o 'Tag' do ArgList.new([A1])
+		o 'INDENT OUTDENT' do TagBody.new([]).indented(A1,A2)
+		o 'INDENT TagBodyList OUTDENT' do A2.indented(A1,A3)
+		o 'CALL_START TagBodyList CALL_END' do A2
+		o 'Tag' do TagBody.new([A1])
+	]
+	
+	TagBodyList: [
+		o 'TagBodyItem' do TagBody.new([]).add(A1)
+		o 'TagBodyList , TagBodyItem' do A1.add A3
+		o 'TagBodyList OptComma Terminator TagBodyItem' do A1.add(A3).add(A4)
+		o 'TagBodyList OptComma TERMINATOR SEPARATOR Terminator TagBodyItem' do A1.add(A5).add(A6)
+		o 'INDENT TagBodyList OptComma Outdent' do A2.indented(A1,A4)
+		o 'TagBodyList OptComma INDENT TagBodyList OptComma Outdent' do A1.concat A4
+	]
+
+	# Valid arguments are Blocks or Splats.
+	TagBodyItem: [
+		o 'Expression'
+		o '... Expression' do Splat.new(A2).set(keyword: A1)
+		o 'Splat'
+		o 'LOGIC'
+		o 'Comment'
 	]
 	
 	# Class definitions have optional bodies of prototype property assignments,

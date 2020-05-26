@@ -3541,6 +3541,15 @@ export class InterpolatedString < Node
 
 	def escapeString str
 		str = str.replace(/\n/g, '\\\n')
+		
+	def toArray
+		let items = @nodes.map do |part,i|
+			if part isa Token and part.@type == 'NEOSTRING'
+				Str.new('"' + part.@value + '"')
+			else
+				part
+				
+		return items
 
 	def js o
 		var kind = String(option("open") or '"')
@@ -6826,6 +6835,26 @@ export class TagStyle < TagPart
 	def c
 		"'{@name}'"
 
+export class TagBody < ListNode
+	
+	def add item, o
+		if item isa InterpolatedString
+			item = item.toArray
+			if item:length == 1
+				item = TagTextContent.new(item[0])
+				
+		super(item,o)
+		
+	def consume node
+		if node isa TagLike
+			@nodes = @nodes.map do |child|
+				if !(child isa Meta) # and !(child isa Assign)
+					child.consume(node)
+				else
+					child
+			return self
+		super
+
 class TagLike < Node
 
 	def initialize o = {}
@@ -7061,13 +7090,15 @@ class TagLike < Node
 			return self
 		return self
 
+export class TagTextContent < ValueNode
+
 export class TagContent < TagLike
 	
 	def vvar
 		parent.vvar
 
 	def bvar
-		fragment.bvar
+		parent.bvar # is this not the parent bvar?
 
 	def ref
 		fragment.tvar
@@ -7081,7 +7112,7 @@ export class TagContent < TagLike
 	def js
 		let value = self.value
 		let parts = []
-		let isText = (value isa Str or value isa Num or value isa InterpolatedString)
+		let isText = (value isa Str or value isa Num or value isa TagTextContent)
 		let isStatic = self.isStatic
 
 		if STACK.tsc
@@ -7098,7 +7129,7 @@ export class TagContent < TagLike
 			return "{bvar} || {ref}.text$({value.c(o)})"
 		elif isStatic
 			return "{bvar} || {ref}.insert$({value.c(o)})"
-		elif value isa InterpolatedString and isOnlyChild and !(parent isa TagSwitchFragment)
+		elif value isa TagTextContent and isOnlyChild and !(parent isa TagSwitchFragment)
 			value = value.@nodes[0] if value.@nodes:length == 1
 			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$({key}={vvar}))"
 
@@ -7108,8 +7139,10 @@ export class TagContent < TagLike
 			if value isa Call
 				# mark parent to reset imba.ctx at the end
 				parts.unshift("imba.ctx=({key}$ || ({key}$=\{_:{fragment.tvar}\}))")
-
-			parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_))")
+			if value isa TagTextContent
+				parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$(String({key}={vvar}),{@flags},{key}_))")
+			else
+				parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_))")
 
 		return "(" + parts.join(',') + ')'
 
@@ -7554,18 +7587,15 @@ export class Tag < TagLike
 
 		var params = [
 			typ,
-			@flags,
 			(fragment and !option(:detached) ? fragment.tvar : 'null'),
 			@className or 'null',
-			'null',
-			addGlobalId ? STR(sfcid) : LIT('null'),
-			addGlobalId ? STR(oid) : LIT('null')
+			'null'
 		]
 
 		var nodes = body ? body.values : []
 
 		if nodes:length == 1 and nodes[0] isa TagContent and nodes[0].isStatic and !isSelf and !isSlot
-			params[4] = nodes[0].value.c
+			params[3] = nodes[0].value.c
 			nodes = []
 
 		# checking to see if a node is static enough to be inserted directly into the dom without
@@ -7576,7 +7606,7 @@ export class Tag < TagLike
 					canInline = yes
 
 		if isFragment or isSlot
-			params = params.slice(1,3)
+			params = [@flags].concat(params.slice(1,2)) # .slice(1,3)
 
 		if isSlot
 			# the slot is not supposed to be inserted immediately

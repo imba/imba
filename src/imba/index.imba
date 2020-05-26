@@ -398,7 +398,7 @@ imba.tags = ImbaElementRegistry.new()
 
 # root.customElements.define('imba-element',ImbaElement)
 
-def imba.createElement name, bitflags, parent, flags, text
+def imba.createElement name, parent, flags, text
 	var el = document.createElement(name)
 
 	el.className = flags if flags
@@ -411,7 +411,7 @@ def imba.createElement name, bitflags, parent, flags, text
 
 	return el
 
-def imba.createComponent name, bitflags, parent, flags, text
+def imba.createComponent name, parent, flags, text
 	# the component could have a different web-components name?
 	var el
 	
@@ -439,7 +439,7 @@ def imba.createComponent name, bitflags, parent, flags, text
 
 import './svg'
 
-def imba.createSVGElement name, bitflags, parent, flags, text
+def imba.createSVGElement name, parent, flags, text
 	var el = document.createElementNS("http://www.w3.org/2000/svg",name)
 	if flags
 		if $node$
