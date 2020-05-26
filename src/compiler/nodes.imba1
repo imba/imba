@@ -7130,8 +7130,7 @@ export class TagContent < TagLike
 		elif isStatic
 			return "{bvar} || {ref}.insert$({value.c(o)})"
 		elif value isa TagTextContent and isOnlyChild and !(parent isa TagSwitchFragment)
-			value = value.@nodes[0] if value.@nodes:length == 1
-			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$({key}={vvar}))"
+			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$(String({key}={vvar})))"
 
 		else
 			parts.push("{vvar}={value.c(o)}")
@@ -7269,7 +7268,7 @@ export class Tag < TagLike
 		@className = null
 
 	def isAbstract
-		!isSlot and !isFragment
+		isSlot or isFragment
 
 	def attrs
 		@attributes
