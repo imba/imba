@@ -380,6 +380,7 @@ class ImbaElementRegistry
 
 	def define name, klass, options
 		types[name] = klass
+		klass.nodeName = name
 
 		let proto = klass.prototype
 		
@@ -413,8 +414,12 @@ def imba.createElement name, bitflags, parent, flags, text
 def imba.createComponent name, bitflags, parent, flags, text
 	# the component could have a different web-components name?
 	var el
+	
+	if typeof name != 'string'
+		if name and name.nodeName
+			name = name.nodeName
 
-	if false and CustomTagConstructors[name]
+	if CustomTagConstructors[name]
 		el = CustomTagConstructors[name].create$(el)
 		el.slot$ = ImbaElement.prototype.slot$
 		el.__slots = {}

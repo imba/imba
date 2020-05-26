@@ -157,7 +157,7 @@ var grammar =
 	Exportable: [
 		o 'MethodDeclaration'
 		o 'Class'
-		o 'Tag'
+		o 'TagDeclaration'
 	]
 
 	ImportOrExport: [

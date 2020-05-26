@@ -1,3 +1,6 @@
+## 2.0.0-alpha.55
+* Allow local/exportable tags (uppercased tag declarations)
+
 ## 2.0.0-alpha.54
 * Allow getters and setters in object literals
 

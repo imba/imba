@@ -2882,7 +2882,8 @@ export class TagDeclaration < ClassDeclaration
 		})
 		
 	def selectorpath
-		@selectorpath ||= String(name)
+		@selectorpath ||= name.toSelector
+		# @selectorpath ||= String(name)
 		
 	def cssref
 		"_{STACK.fid}{oid}"
@@ -2895,7 +2896,6 @@ export class TagDeclaration < ClassDeclaration
 		let sup = superclass
 
 		if sup and (sup.isNative or sup.isNativeSVG) and !STACK.tsc
-			# console.log 'inheriting from native element'
 			let op = sup.nativeCreateNode
 			op = util.extendTag(op,THIS)
 			addMethod('create$',[],[op]).set(static: yes)
@@ -2959,8 +2959,19 @@ export class TagDeclaration < ClassDeclaration
 		let closure = scope__.parent
 		let jsbody = body.c()
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
+		
+		if option(:export) and !STACK.cjs
+			if option(:default)
+				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
+			else
+				jshead = "{M 'export',option(:export)} {jshead}"
 
 		let js = "{jshead} \{{jsbody}\}"
+		
+		if option(:export) and STACK.cjs
+			let exportName = option(:default) ? 'default' : cname
+			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
+
 
 		if !STACK.tsc
 			if @staticInit
@@ -4999,7 +5010,7 @@ export class TagTypeIdentifier < Identifier
 		return @str
 
 	def js o
-		return "'" + @str + "'"
+		return "'" + toNodeName + "'"
 
 	def c
 		js
@@ -5039,6 +5050,9 @@ export class TagTypeIdentifier < Identifier
 
 	def toFunctionalType
 		LIT(@str)
+		
+	def toSelector
+		toNodeName
 
 	def toClassName
 		let str = @str
@@ -5056,8 +5070,16 @@ export class TagTypeIdentifier < Identifier
 			
 		if @str == 'fragment'
 			return 'DocumentFragment'
+		elif isClass
+			return @str
 		else
 			return helpers.pascalCase(@str + '-component')
+			
+	def toNodeName
+		if isClass
+			@nodeName ||= helpers.dasherize(@str + '-' + fid)
+		else
+			@str
 
 	def id
 		var m = @str.match(/\#([\w\-\d\_]+)\b/)

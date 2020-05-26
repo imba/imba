@@ -92,6 +92,9 @@ export def dashToCamelCase str
 export def snakeCase str
 	var str = str.replace(/([\-\s])(\w)/g,'_')
 	str.replace(/()([A-Z])/g,"_$1") do |m,v,l| l.toUpperCase
+		
+export def dasherize str
+	str.replace(/([a-z\d])([A-Z])/g,"$1-$2").toLowerCase
 
 export def setterSym sym
 	dashToCamelCase("set-{sym}")
