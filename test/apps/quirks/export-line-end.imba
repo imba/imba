@@ -6,6 +6,6 @@ export def createLiveFragment bitflags, options
 
 export def createFragment bitflags, parent
 	if bitflags & $TAG_INDEXED$
-		return IndexedTagFragment.new(bitflags,parent)
+		return new IndexedTagFragment(bitflags,parent)
 	else
-		return KeyedTagFragment.new(bitflags,parent)
+		return new KeyedTagFragment(bitflags,parent)

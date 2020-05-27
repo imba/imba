@@ -1,3 +1,6 @@
+## 2.0.0-alpha.57
+* Update instantiation syntax in tests++
+
 ## 2.0.0-alpha.56
 * Add `new Foo` instantiation syntax
 * Deprecate `Foo.new` instantiation syntax

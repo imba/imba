@@ -18,7 +18,7 @@ var MainInstance
 
 export class Router
 	static get instance
-		MainInstance ||= self.new
+		MainInstance ||= new self
 
 	# support redirects
 	def constructor o = {}
@@ -26,8 +26,8 @@ export class Router
 		options = o
 		busy = []
 		root = o.root or ''
-		history = $web$ ? window.history : History.new(self)
-		location = Location.new(o.url or ($web$ ? document.location.href : '/'),self)
+		history = $web$ ? window.history : (new History(self))
+		location = new Location(o.url or ($web$ ? document.location.href : '/'),self)
 		mode = o.mode or 'history'
 
 		self.setup!
@@ -75,7 +75,7 @@ export class Router
 		# also see if state is different?
 		if !loc.equals(original)
 			# console.log "actual url has changed!!",String(original),'to',String(loc)
-			let req = Request.new(self,loc,original)
+			let req = Rnew equest(self,loc,original)
 			req.mode = mode
 			
 			self.emit('beforechange',req)
@@ -123,7 +123,7 @@ export class Router
 		self
 
 	def onbeforeunload e
-		let req = Request.new(self,null,location)
+		let req = new Request(self,null,location)
 		self.emit('beforechange',req)
 		return true if req.aborted
 		return
@@ -172,7 +172,7 @@ export class Router
 	def onclicklink e
 		let a = e.currentTarget or e.target
 		let href = a.getAttribute('href')
-		let url = URL.new(a.href)
+		let url = new URL(a.href)
 		let target = url.href.slice(url.origin.length)
 
 		self.go(target)
@@ -209,14 +209,14 @@ export class Router
 			# location:hash = serializeParams(value)
 		
 	def match pattern
-		var route = routes[pattern] ||= Route.new(self,pattern)
+		var route = routes[pattern] ||= new Route(self,pattern)
 		route.test()
 		
 	def route pattern
-		routes[pattern] ||= Route.new(self,pattern)
+		routes[pattern] ||= new Route(self,pattern)
 
 	def routeFor node, path, par, opts
-		Route.new(self,path,par,opts)
+		new Route(self,path,par,opts)
 		
 	def go url, state = {}
 		let loc = location.clone().update(url,state)

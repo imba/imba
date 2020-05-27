@@ -23,7 +23,7 @@ class Group
 		empty? or archived?
 
 test do
-	let group = Group.new(items: [])
+	let group = new Group(items: [])
 	eq group.empty?,true
 	
 	group.add(1)

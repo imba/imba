@@ -6,14 +6,14 @@ export class Location
 	static def parse url, router
 		if url isa Location
 			return url
-		return self.new(url,router)
+		return new Location(url,router)
 
 	def constructor url, router
 		router = router
 		self.parse(url)
 	
 	def parse url
-		url = URL.new(url,router.origin) unless url isa URL
+		url = new URL(url,router.origin) unless url isa URL
 		self.url = url
 		self
 		
@@ -38,7 +38,7 @@ export class Location
 		(value == null or value == '') ? q.delete(name) : q.set(name,value)
 	
 	def clone
-		Location.new(url.href,router)
+		new Location(url.href,router)
 		
 	def equals other
 		self.toString() == String(other)
@@ -56,5 +56,5 @@ export class Location
 		href
 		
 	def match str
-		let route = ROUTES[str] ||= Route.new(null,str)
+		let route = ROUTES[str] ||= new Route(null,str)
 		route.test(self)

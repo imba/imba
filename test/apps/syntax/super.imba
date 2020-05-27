@@ -43,16 +43,16 @@ class Dog < Animal
 		super(a)
 
 test do
-	eq Cat.new(1,2,3).params, [1,2,3]
+	eq new Cat(1,2,3).params, [1,2,3]
 
 test do
-	eq Cat.new.name, "Cat Animal Animal"
+	eq new Cat.name, "Cat Animal Animal"
 
 test do
-	eq Cat.new.test(10,20), [ [10,20],[1],[2,3] ]
+	eq new Cat.test(10,20), [ [10,20],[1],[2,3] ]
 
 test do
-	eq Dog.new(1,2,3).params, [1]
+	eq new Dog(1,2,3).params, [1]
 
 test do
 	# removed this functionality
@@ -71,4 +71,4 @@ test do
 			self.alias = 5
 			eq $alias, 5
 
-	Cat.new.something()
+	(new Cat).something()

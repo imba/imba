@@ -126,7 +126,7 @@ def imbaPlugin options
 class Bundle
 	def constructor config
 		self.config = config
-		self.promise = Promise.new do |resolve,reject|
+		self.promise = new Promise do |resolve,reject|
 			self.resolver = resolve
 			self.rejector = reject
 		self
@@ -211,7 +211,7 @@ for entry in cfg.entries
 			}
 			plugins.push(hmr-plugin(hmr-config))
 
-	bundles.push(Bundle.new(entry))
+	bundles.push(new Bundle(entry))
 
 def run
 	var bundlers = await Promise.all(bundles.map(do $1.start() ))

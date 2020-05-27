@@ -11,13 +11,13 @@ describe 'For ... of' do
 		eq res, ['a','b','c']
 
 	test 'iterating over a TypedArray' do
-		const iterable = Uint8Array.new([0x00, 0xff])
+		const iterable = new Uint8Array([0x00, 0xff])
 		let res = for value of iterable
 			value
 		eq res, [0,255]
 	
 	test 'iterating over a Map' do
-		const iterable = Map.new([['a', 1], ['b', 2], ['c', 3]])
+		const iterable = new Map([['a', 1], ['b', 2], ['c', 3]])
 
 		let res = for value of iterable
 			value
@@ -25,7 +25,7 @@ describe 'For ... of' do
 		eq res, [['a',1],['b',2],['c',3]]
 
 	test 'iterating over a Set' do
-		const iterable = Set.new([1, 1, 2, 2, 3, 3])
+		const iterable = new Set([1, 1, 2, 2, 3, 3])
 
 		let res = for value of iterable
 			value
@@ -46,7 +46,7 @@ describe 'For ... of' do
 							return {value: undefined, done: true}
 				}
 
-		const iterable = Iterable.new
+		const iterable = new Iterable
 		let res = for value of iterable
 			value
 		eq res, [0,1,2]
@@ -59,7 +59,7 @@ describe 'For ... of' do
 			def toIterable
 				items
 
-		const iterable = Iterable.new([1,2,3])
+		const iterable = new Iterable([1,2,3])
 		let res = for value of iterable
 			value
 		eq res, [1,2,3]

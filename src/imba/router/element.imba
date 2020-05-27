@@ -4,7 +4,7 @@ class ElementRoute
 		route = node.router.routeFor(node,path,parent ? parent.route : null,{node: node})
 		match = null
 		options = options
-		placeholder = node.$placeholder or Comment.new("{path}")
+		placeholder = node.$placeholder or new Comment("{path}")
 
 	get raw
 		route.raw
@@ -113,7 +113,7 @@ extend class Element
 			return
 
 		let par = value[0] != '/' ? parent-route : null
-		$route = ElementRoute.new(self,value,par,route__)
+		$route = new ElementRoute(self,value,par,route__)
 		# console.log 'setting route!',value,$route,par
 		self.end$ = self.end$routed
 		
@@ -129,7 +129,7 @@ extend class Element
 			return
 
 		let par = value[0] != '/' ? parent-route : null
-		$route = $routeTo = ElementRouteTo.new(self,value,par,routeTo__)
+		$route = $routeTo = new ElementRouteTo(self,value,par,routeTo__)
 		self.end$ = self.end$routeTo
 
 		self.onclick = do(e)

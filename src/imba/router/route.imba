@@ -57,7 +57,7 @@ export class Route
 			# we only want to match end OR /
 			# if path[path:length - 1]
 			path = path + '(?=[\/\#\?]|$)'
-		regex = RegExp.new(path)
+		regex = new RegExp(path)
 		self
 
 	def test loc, path

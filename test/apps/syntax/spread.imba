@@ -14,6 +14,6 @@ class Lion < Cat
 		# super[name](...parans)
 
 
-let lion = Lion.new
+let lion = new Lion
 let pars = [1,2,3]
 lion.log('hello',...pars)

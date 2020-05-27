@@ -58,7 +58,7 @@ var pages = []
 var counter = 0 
 
 var doneResolve
-var donePromise = Promise.new do(resolve,reject)
+var donePromise = new Promise do(resolve,reject)
 	doneResolve = resolve
 
 
@@ -144,7 +144,7 @@ def spawnRunner
 
 def run page
 	
-	Promise.new do(resolve,reject)
+	new Promise do(resolve,reject)
 
 		var test = page.result = {
 			path: page.path

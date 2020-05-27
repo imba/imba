@@ -40,4 +40,4 @@ export class Request
 		self
 
 	def match str
-		location ? Route.new(self,str).test() : null
+		location ? (new Route(self,str)).test() : null

@@ -210,7 +210,7 @@ test do
 		get priv
 			_priv
 	
-	let v = x.new
+	let v = new x
 	eq v.priv,[1,2,3]
 
 test do

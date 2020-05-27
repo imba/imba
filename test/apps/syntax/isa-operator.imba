@@ -9,7 +9,7 @@ test do
 	ok num isa Number
 
 test do
-	var a = One.new
+	var a = new One
 	ok a isa One
 
 test do

@@ -11,7 +11,7 @@ class Item
 
 class Doc < Item
 	prop kind = 'document'
-	prop map = Map.new
+	prop map = new Map
 
 	static prop test = 20
 
@@ -34,21 +34,21 @@ test 'static fields' do
 	
 
 test 'instance fields' do
-	let doc = Doc.new
+	let doc = new Doc
 	ok doc.kind == 'document'
 	ok doc.name == 'hello'
 	ok doc.PascalCased == 1
 
-	let folder = Folder.new
+	let folder = new Folder
 	ok folder.kind == 'folder'
 
 # test 'fields without value' do
-#	let item = Folder.new
+#	let item = new Folder
 #	ok item.hasOwnProperty('items') # should we really?
 
 test 'rich instance fields' do
-	let doc1 = Doc.new
-	let doc2 = Doc.new
+	let doc1 = new Doc
+	let doc2 = new Doc
 	ok doc1.map != doc2.map
 
 # dynamic default values
@@ -58,17 +58,17 @@ class Dyn
 
 class A
 	prop number = 1
-	prop value = Dyn.new('v1')
-	prop options = Dyn.new('o1')
-	prop desc = Dyn.new('d1')
-	prop desc2 = Dyn.new(desc.ref + '2')
+	prop value = new Dyn('v1')
+	prop options = new Dyn('o1')
+	prop desc = new Dyn('d1')
+	prop desc2 = new Dyn(desc.ref + '2')
 
 class B < A
 	prop number = 2
-	prop options = Dyn.new('o2')
+	prop options = new Dyn('o2')
 	
 test do
-	let item = B.new
+	let item = new B
 	item.options
 	eq $1.log, ['o2']
 	eq item.number, 2
@@ -79,25 +79,25 @@ class C < A
 	prop value = 3
 
 test do
-	let item = C.new
+	let item = new C
 	item.options
 	eq $1.log, ['o1']
 	eq item.value, 3
 
 
 class D < A
-	prop desc2 = Dyn.new('d4')
+	prop desc2 = new Dyn('d4')
 
 test do
-	let item = D.new
+	let item = new D
 	item.desc2
 	eq $1.log, ['d4']
 
 
 class E < A
-	prop desc3 = Dyn.new(desc2.ref + '3')
+	prop desc3 = new Dyn(desc2.ref + '3')
 
 test do
-	let item = E.new
+	let item = new E
 	item.desc3
 	eq $1.log, ['d1','d12','d123']

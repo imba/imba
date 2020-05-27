@@ -31,7 +31,7 @@ class CustomElementRegistry
 	def get
 		self
 
-root.customElements ||= CustomElementRegistry.new()
+root.customElements ||= new CustomElementRegistry
 
 export def getElementType typ
 	if typeof typ == 'string'
@@ -94,19 +94,19 @@ export class Document
 	def createElementNS ns, name
 		if ns == "http://www.w3.org/2000/svg"
 			let typ = getElementType('svg_'+name)
-			let el = typ.new
+			let el = new typ
 			el.nodeName = name
 			return el
 		return self.createElement(name)
 
 	def createTextNode value
-		return Text.new(value)
+		return new Text(value)
 		
 	def createComment value
-		return Comment.new(value)
+		return new Comment(value)
 
 	def createDocumentFragment
-		return DocumentFragment.new
+		return new DocumentFragment
 
 
 # could optimize by using a dictionary in addition to keys
@@ -137,8 +137,7 @@ export class DOMTokenList
 		self.classes.indexOf(flag) >= 0
 
 	def clone dom
-		var clone = DOMTokenList.new(dom,self.classes.slice(0))
-		return clone
+		new DOMTokenList(dom,self.classes.slice(0))
 		
 	def toString
 		# beware of perf
@@ -205,10 +204,10 @@ export class Element < Node
 		self
 
 	get classList
-		$classList ||= DOMTokenList.new(self)
+		$classList ||= new DOMTokenList(self)
 
 	get style
-		$style ||= StyleDeclaration.new(this)
+		$style ||= new StyleDeclaration(this)
 
 	def flag$
 		self
@@ -367,4 +366,4 @@ getElementType('')
 getElementType('HTML')
 getElementType('SVG')
 
-export var document = Document.new()
+export var document = new Document

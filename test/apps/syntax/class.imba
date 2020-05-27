@@ -7,7 +7,7 @@ describe 'Defining classes' do
 				self.height = height
 				self.width = width
 
-		ok Rectangle.new
+		ok new Rectangle
 
 	test 'Class expressions' do
 		# unnamed
@@ -16,7 +16,7 @@ describe 'Defining classes' do
 				self.height = height
 				self.width = width
 				
-		ok expr.new
+		ok new expr
 		ok expr.name == 'expr'
 
 		# named
@@ -25,7 +25,7 @@ describe 'Defining classes' do
 				self.height = height
 				self.width = width
 
-		ok expr.new
+		ok new expr
 		ok expr.name == 'NamedClass'
 
 describe 'Class body and method definitions' do
@@ -60,8 +60,8 @@ describe 'Class body and method definitions' do
 				const dy = a.y - b.y
 				Math.hypot(dx, dy)
 
-		const p1 = Point.new(5, 5)
-		const p2 = Point.new(10, 10)
+		const p1 = new Point(5, 5)
+		const p2 = new Point(10, 10)
 
 		eq Point.distance(p2,p1), Math.hypot(5,5)
 
@@ -76,7 +76,7 @@ describe 'Class body and method definitions' do
 			def [method]
 				return 'member'
 
-		ok Example.new.hello() == 'member'
+		ok (new Example).hello() == 'member'
 		ok Example.hello() == 'static'
 
 test 'Subclassing' do
@@ -95,7 +95,7 @@ test 'Subclassing' do
 		def speak
 			"{name} barks."
 
-	let dog = Dog.new 'Mitzie'
+	let dog = new Dog 'Mitzie'
 
 	eq dog.speak(), 'Mitzie barks.'
 
@@ -119,7 +119,7 @@ test 'Super class calls with super' do
 			super.speak()
 			console.info "{name} roars."
 
-	let lion = Lion.new('Fuzzy')
+	let lion = new Lion('Fuzzy')
 
 	lion.speak()
 	eq $1.log, ['Fuzzy makes a noise.','Fuzzy roars.']
@@ -144,7 +144,7 @@ test 'Reopen class' do
 		def speak
 			console.info "{name} makes a noise."
 
-	let cat = Cat.new('Cosinus')
+	let cat = new Cat('Cosinus')
 	cat.speak()
 	eq $1.log, ['Cosinus makes a noise.']
 

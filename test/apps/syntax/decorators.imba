@@ -16,7 +16,7 @@ def @debounce target,key,descriptor
 	const callback = descriptor.value
 
 	if typeof callback !== 'function'
-		throw SyntaxError.new('Only functions can be debounced')
+		throw new SyntaxError('Only functions can be debounced')
 
 	descriptor.value = do
 		const args = arguments
@@ -87,7 +87,7 @@ class Hello
 		console.info([prev,value])
 
 test do
-	let item = Hello.new
+	let item = new Hello
 	item.setup!
 	eq $1.log, ['call setup']
 
@@ -96,14 +96,14 @@ test do
 	eq $1.log, ['call setup']
 
 test do
-	let item = Hello.new
+	let item = new Hello
 	item.disable = 1
 	eq item.disable, 1
 	item.enable = 2
 	ok item.enable isa Function
 
 test do
-	let item = Hello.new
+	let item = new Hello
 	item.debounced!
 	item.debounced!
 	item.debounced!
@@ -112,14 +112,14 @@ test do
 
 
 test do
-	let item = Hello.new
+	let item = new Hello
 	item.number
 	item.number = 2
 	eq $1.log,['get number','set number']
 
 
 test do
-	let item = Hello.new
+	let item = new Hello
 	eq item.name, 'john'
 	item.name = 'john'
 	item.name = 'jane'
@@ -134,9 +134,9 @@ class CustomWatch
 		console.info([prev,value,key])
 
 test do
-	let item = CustomWatch.new
+	let item = new CustomWatch
 	eq item.name, 'john'
 	item.name = 'jane'
 	eq $1.log,[['john','jane','name']]
 
-console.log Object.keys(Hello.new)
+console.log Object.keys(new Hello)
