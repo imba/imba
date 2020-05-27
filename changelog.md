@@ -1,3 +1,7 @@
+## 2.0.0-alpha.56
+* Add `new Foo` instantiation syntax
+* Deprecate `Foo.new` instantiation syntax
+
 ## 2.0.0-alpha.55
 * Allow local/exportable tags (uppercased tag declarations)
 * Allow interpolated tags inside strings in tag trees
