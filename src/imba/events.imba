@@ -16,7 +16,7 @@ const keyCodes = {
 extend class Event
 	
 	def wait$mod state, params
-		Promise.new do |resolve|
+		new Promise do |resolve|
 			setTimeout(resolve,(params[0] isa Number ? params[0] : 1000))
 
 	def sel$mod state, params
@@ -77,7 +77,7 @@ export class EventHandler
 			if schema.handle(state,mods.options) == false
 				return
 
-		self.currentEvents ||= Set.new
+		self.currentEvents ||= new Set
 		self.currentEvents.add(event)	
 
 		for own handler,val of mods
@@ -148,7 +148,7 @@ export class EventHandler
 			elif handler == 'trigger' or handler == 'emit'
 				let name = args[0]
 				let detail = args[1] # is custom event if not?
-				let e = CustomEvent.new(name, bubbles: true, detail: detail) # : Event.new(name)
+				let e = new CustomEvent(name, bubbles: true, detail: detail) # : new Event(name)
 				e.originalEvent = event
 				let customRes = element.dispatchEvent(e)
 

@@ -24,7 +24,7 @@ module.exports = function(content,inMap) {
 		var handler = opts.filename.indexOf('.imba1') >= 0 ? compiler : compiler2;
 		var result = handler.compile(content, opts);
 		var js = result.toString();
-		if(result.warnings && true){
+		if(result.warnings){
 			result.warnings.forEach(function(warn){
 				var msg = helpers.printWarning(result.source,warn);
 				var err = new Error(msg);

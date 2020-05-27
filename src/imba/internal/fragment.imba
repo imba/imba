@@ -127,7 +127,7 @@ class TagCollection
 class KeyedTagFragment < TagCollection
 	def setup
 		self.array = []
-		self.changes = Map.new
+		self.changes = new Map
 		self.dirty = no
 		self.$ = {}
 
@@ -258,9 +258,9 @@ export def createLiveFragment bitflags, options, par
 	return el
 
 export def createIndexedFragment bitflags, parent
-	return IndexedTagFragment.new(bitflags,parent)
+	return new IndexedTagFragment(bitflags,parent)
 
 export def createKeyedFragment bitflags, parent
-	return KeyedTagFragment.new(bitflags,parent)
+	return new KeyedTagFragment(bitflags,parent)
 
 

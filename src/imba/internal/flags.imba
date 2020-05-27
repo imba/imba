@@ -16,7 +16,7 @@ export class Flags
 
 	def remove ref
 		return self unless contains(ref)
-		var regex = RegExp.new('(^|\\s)*' + ref + '(\\s|$)*', 'g')
+		var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*', 'g')
 		string = string.replace(regex, '')
 		dom.classList.remove(ref)
 		# sync!

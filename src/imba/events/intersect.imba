@@ -1,6 +1,6 @@
 import {CustomEvent,Event,Element} from '../dom'
 
-const observers = global.WeakMap ? global.WeakMap.new : global.Map.new
+const observers = new (global.WeakMap || Map)
 const defaults = {threshold: [0]}
 const rootTarget = {}
 
@@ -18,13 +18,13 @@ Event.intersect = {
 
 def callback name, key
 	return do |entries,observer|
-		let map = observer.prevRatios ||= WeakMap.new
+		let map = observer.prevRatios ||= new WeakMap
 		
 		for entry in entries
 			let prev = map.get(entry.target) or 0
 			let ratio = entry.intersectionRatio
 			let detail = {entry: entry, ratio: ratio, from: prev, delta: (ratio - prev), observer: observer }
-			let e = CustomEvent.new(name, bubbles: false, detail: detail)
+			let e = new CustomEvent(name, bubbles: false, detail: detail)
 			e.delta = detail.delta
 			e.ratio = detail.ratio
 			map.set(entry.target,ratio)
@@ -36,7 +36,7 @@ def getIntersectionObserver opts = defaults
 	let target = opts.root or rootTarget
 	let map = observers.get(target)
 	map || observers.set(target,map = {})
-	map[key] ||= IntersectionObserver.new(callback('intersect',key),opts)
+	map[key] ||= new IntersectionObserver(callback('intersect',key),opts)
 
 Element.prototype.on$intersect = do(mods,context)
 	let obs

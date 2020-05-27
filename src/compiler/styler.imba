@@ -120,7 +120,7 @@ export class Color
 		a = a
 		
 	def alpha v
-		Color.new(name,h,s,l,v)
+		new Color(name,h,s,l,v)
 	
 	def toString
 		"hsla({h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
@@ -130,7 +130,7 @@ export class Length
 	static def parse value
 		let m = String(value).match(/^(\-?[\d\.]+)(\w+|%)?$/)
 		return null unless m
-		return self.new(parseFloat(m[1]),m[2])
+		return new self(parseFloat(m[1]),m[2])
 	
 	def constructor number, unit
 		number = number
@@ -143,7 +143,7 @@ export class Length
 		number + (unit or '')
 		
 	def clone num = number, u = unit
-		Length.new(num,u)
+		new Length(num,u)
 		
 	def rounded
 		clone(Math.round(number))
@@ -151,9 +151,9 @@ export class Length
 # This has to move into StyleTheme class
 var palette = {
 	current: {string: "currentColor"}
-	transparent: Color.new('transparent',0,0,100,'0%')
-	black: Color.new('black',0,0,0,'100%')
-	white: Color.new('white',0,0,100,'100%')
+	transparent: new Color('transparent',0,0,100,'0%')
+	black: new Color('black',0,0,0,'100%')
+	white: new Color('white',0,0,100,'100%')
 }
 
 for own name,variations of colors
@@ -166,17 +166,17 @@ for own name,variations of colors
 		else
 			let rgb = conv.hex.rgb(raw)
 			let [h,s,l] = conv.rgb.hsl(rgb)
-			let color = palette[path] = Color.new(path,h,s,l,'100%')
+			let color = palette[path] = new Color(path,h,s,l,'100%')
 			
 		if subname.match(/^\d00$/)
 			palette[name + subname[0]] = palette[path]
 
-var colorRegex = RegExp.new('\\b(' + Object.keys(palette).join('|') + ')\\b')
+var colorRegex = new RegExp('\\b(' + Object.keys(palette).join('|') + ')\\b')
 
 export class StyleTheme
 	
 	static def instance
-		ThemeInstance ||= self.new
+		ThemeInstance ||= new self
 		
 	def constructor 
 		options = theme
@@ -471,7 +471,7 @@ export class StyleTheme
 
 class Selectors
 	static def parse context, states, options
-		let parser = self.new
+		let parser = new self
 		parser.$parse(context,states,options)
 	
 	def $parse context, states,options
@@ -647,7 +647,7 @@ export class StyleRule
 			if key.indexOf('&') >= 0
 				# let substates = states.concat([[key]])
 				let substates = ([[key]]).concat(states)
-				subrules.push StyleRule.new(self,context,substates,value,options)
+				subrules.push new StyleRule(self,context,substates,value,options)
 				continue
 			
 			elif key.indexOf('.') >= 0
@@ -658,7 +658,7 @@ export class StyleRule
 				# TODO use interpolated key?
 				let obj = {}
 				obj[keys[0]] = value				
-				subrules.push StyleRule.new(self,context,substates,obj,options)
+				subrules.push new StyleRule(self,context,substates,obj,options)
 				continue
 			
 			elif key[0] == '['
@@ -666,7 +666,7 @@ export class StyleRule
 				# this is only for a single property
 				let o = JSON.parse(key)
 				let substates = states.concat(o)
-				subrules.push StyleRule.new(self,context,substates,value,options)
+				subrules.push new StyleRule(self,context,substates,value,options)
 				continue
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)

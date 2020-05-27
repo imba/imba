@@ -10,7 +10,7 @@ def activateSelectionHandler
 			
 			let target = document.activeElement
 			if target and target.matches('input,textarea')
-				let custom = CustomEvent.new('selection',{
+				let custom = new CustomEvent('selection',{
 					detail: {
 						start: target.selectionStart
 						end: target.selectionEnd

@@ -21,14 +21,14 @@ export class Scheduler
 		self.schedule() unless self.scheduled
 
 	def listen ns, item
-		self.listeners[ns] ||= Set.new()
+		self.listeners[ns] ||= new Set()
 		self.listeners[ns].add(item)
 
 	def unlisten ns, item
 		self.listeners[ns] && self.listeners[ns].delete(item)
 
 	get promise
-		Promise.new do |resolve| self.add(resolve)
+		new Promise do |resolve| self.add(resolve)
 
 	def tick timestamp
 		var items = self.queue

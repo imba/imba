@@ -113,7 +113,7 @@ def imba.emit obj, event, params
 import {Flags} from './internal/flags'
 import {Scheduler} from './internal/scheduler'
 
-imba.scheduler = Scheduler.new()
+imba.scheduler = new Scheduler()
 imba.commit = do imba.scheduler.add('render')
 imba.tick = do
 	imba.commit()
@@ -154,7 +154,7 @@ import {EventHandler} from './events'
 extend class Node
 
 	get $context
-		$context_ ||= Proxy.new(self,proxyHandler)
+		$context_ ||= new Proxy(self,proxyHandler)
 
 	get $parent
 		this.up$ or this.parentNode
@@ -209,7 +209,7 @@ extend class Element
 
 	def emit name, detail, o = {bubbles: true}
 		o.detail = detail if detail != undefined
-		let event = CustomEvent.new(name, o)
+		let event = new CustomEvent(name, o)
 		let res = self.dispatchEvent(event)
 		return event
 
@@ -225,7 +225,7 @@ extend class Element
 		if self[check] isa Function
 			handler = self[check](mods,scope)
 
-		handler = EventHandler.new(mods,scope)
+		handler = new EventHandler(mods,scope)
 		var capture = mods.capture
 		var passive = mods.passive
 
@@ -290,7 +290,7 @@ extend class Element
 	get flags
 		unless $flags
 			# unless deopted - we want to first cache the extflags
-			$flags = Flags.new(self)
+			$flags = new Flags(self)
 			if flag$ == Element.prototype.flag$
 				flags$ext = self.className
 			flagDeopt$()
@@ -393,7 +393,7 @@ class ImbaElementRegistry
 			root.customElements.define(name,klass)
 		return klass
 
-imba.tags = ImbaElementRegistry.new()
+imba.tags = new ImbaElementRegistry()
 
 
 # root.customElements.define('imba-element',ImbaElement)

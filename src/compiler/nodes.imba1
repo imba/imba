@@ -573,7 +573,7 @@ export class Stack
 			token.@kind = kind
 		@semanticTokens.push(token)
 		
-
+		
 	def incr name
 		@counters[name] ||= 0
 		@counters[name] += 1
@@ -5384,7 +5384,7 @@ export class New < Call
 	# 	keyword ? keyword.startLoc : super
 	
 	def visit
-		warn 'Value.new is deprecated - use new Value'
+		keyword.warn 'Value.new is deprecated - use new Value'
 		super
 
 	def endLoc

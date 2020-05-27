@@ -9,9 +9,9 @@ def getResizeObserver
 			console.warn(':resize not supported in this browser')
 			resizeObserver = {observe: do yes}
 		
-	resizeObserver ||= ResizeObserver.new do(entries)
+	resizeObserver ||= new ResizeObserver do(entries)
 		for entry in entries
-			let e = CustomEvent.new('resize', bubbles: false, detail: entry)
+			let e = new CustomEvent('resize', bubbles: false, detail: entry)
 			e.rect = entry.contentRect
 			entry.target.dispatchEvent(e)
 		return

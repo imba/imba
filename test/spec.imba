@@ -64,10 +64,10 @@ class SpecComponent
 global class Spec < SpecComponent
 	
 	get keyboard
-		_keyboard ||= PupKeyboard.new
+		_keyboard ||= new PupKeyboard
 
 	get mouse
-		_mouse ||= PupMouse.new
+		_mouse ||= new PupMouse
 	
 	def click sel, trusted = yes
 		if puppy and trusted
@@ -88,7 +88,7 @@ global class Spec < SpecComponent
 		observer.takeRecords!
 
 	def wait time = 100
-		Promise.new(do(resolve) setTimeout(resolve,time))
+		new Promise(do(resolve) setTimeout(resolve,time))
 
 	def constructor
 		super()
@@ -100,7 +100,7 @@ global class Spec < SpecComponent
 		warnings = []
 		state = {info: [], mutations: [], log: []}
 
-		observer = MutationObserver.new do(muts)
+		observer = new MutationObserver do(muts)
 			context.state.mutations.push(...muts)
 
 		self
@@ -128,16 +128,16 @@ global class Spec < SpecComponent
 			return Promise.resolve(self)
 
 	def describe name, blk
-		blocks.push SpecGroup.new(name, blk, self)
+		blocks.push new SpecGroup(name, blk, self)
 	
 	def test name, blk
 		if name isa Function
 			blk = name
 			name = context.blocks.length + 1
-		context.blocks.push SpecExample.new(name, blk, context)
+		context.blocks.push new SpecExample(name, blk, context)
 
 	def eq actual, expected, options
-		SpecAssert.new(context, actual,expected, options)
+		new SpecAssert(context, actual,expected, options)
 	
 	def step i = 0, &blk
 		Spec.CURRENT = self
@@ -147,7 +147,7 @@ global class Spec < SpecComponent
 		block.run!
 
 	def run
-		Promise.new do(resolve,reject)
+		new Promise do(resolve,reject)
 			var prevInfo = console.info
 			observer.observe(document.body,{
 				attributes: true,
@@ -204,10 +204,10 @@ global class SpecGroup < SpecComponent
 		"{parent.fullName}{name} > "
 
 	def describe name, blk
-		blocks.push SpecGroup.new(name, blk, self)
+		blocks.push new SpecGroup(name, blk, self)
 	
 	def test name, blk
-		blocks.push SpecExample.new(name, blk, self)
+		blocks.push new SpecExample(name, blk, self)
 
 	def run i = 0
 		start! if i == 0
@@ -332,7 +332,7 @@ global class SpecAssert < SpecComponent
 		else
 			"failed"
 
-window.spec = SPEC = Spec.new
+window.spec = SPEC = new Spec
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
