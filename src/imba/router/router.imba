@@ -75,7 +75,7 @@ export class Router
 		# also see if state is different?
 		if !loc.equals(original)
 			# console.log "actual url has changed!!",String(original),'to',String(loc)
-			let req = Rnew equest(self,loc,original)
+			let req = new Request(self,loc,original)
 			req.mode = mode
 			
 			self.emit('beforechange',req)
