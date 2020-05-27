@@ -1589,6 +1589,7 @@ export class Block < ListNode
 		self
 
 	def cpart node
+		return "" if node === BR0
 		var out = typeof node == 'string' ? node : (node ? node.c : "")
 		return "" if out == null or out == undefined or out == ""
 
@@ -2836,13 +2837,6 @@ export class ClassDeclaration < Code
 		@cname = cname
 		@cpath = cpath
 		
-		# if STACK.tsc
-		# 	# body.unshift()
-		# 	let comment = "/*¡{cname}*/"
-		# 	let add = helpers.clearLocationMarkers("{cname}.{comment}prototype.constructor;")
-		# 	let fn = 'static meta$(){ ' + add + ' }\n'
-		# 	body.unshift(LIT(fn))
-		
 		if STACK.tsc
 			body.unshift(LIT(TSC_CLASS_HEAD),yes)
 		
@@ -2894,25 +2888,35 @@ export class StructDeclaration < ClassDeclaration
 			for param in option(:params).reverse
 				let name = String(param.name)
 				
-				let field = fields[name] = ClassField.new(param.name).set(
+				let field = ClassField.new(param.name).set(
 					datatype: param.option(:datatype)
 					value: param.defaults
 				)
 				field.set(param: param)
 
 				body.unshift(field)
-				params.push(param)
+				params.unshift(param)
 				
 		params.push(LIT('$$={}'))
-				
+		
+		let prevSignificant
 		for node,i in body
+			if node isa Terminator
+				body.replace(node,BR0) if prevSignificant isa ClassField 
+			else
+				prevSignificant = node
+				
 			if node isa ClassField
 				let name = String(node.name)
+				let field = node
 				if fields[name]
-					console.log 'already defined field!',name
+					unless fields[name].datatype
+						fields[name].set(datatype: node.datatype)
+				else
+					node.set(struct: self, raw: yes)
+					fields.push(fields[name] = node)
 
-				node.set(struct: self, raw: yes)
-				fields.push(node)
+				body.replace(node,BR0)
 
 		body.traverse
 
@@ -2923,7 +2927,6 @@ export class StructDeclaration < ClassDeclaration
 	
 		var inits = StructInitBody.new([])
 		var setters = []
-		
 
 		for field in fields
 			# check if null?
@@ -2944,8 +2947,8 @@ export class StructDeclaration < ClassDeclaration
 			# ctorBody.push(OP('=',THIS,name).c + ';\n')
 		
 		# replace the whole body
-		@body = ClassBody.new([])
-		@body.@delimiter = ''
+		# @body = ClassBody.new([])
+		# @body.@delimiter = ''
 		ctor = addMethod('constructor',params,inits)
 		# add existing methods for cloning etc
 		return self
@@ -10099,6 +10102,7 @@ export class Super < Node
 
 # constants
 
+export var BR0 = Newline.new('\n')
 export var BR = Newline.new('\n')
 export var BR2 = Newline.new('\n\n')
 export var SELF = Self.new
