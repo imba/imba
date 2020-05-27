@@ -11,12 +11,20 @@ export class ImbaParseError < Error
 
 	def initialize e,o
 		this:error = e
-		this:message = e:message
-		this:filename = e:filename
-		this:line = e:line
 
 		@options = o or {}
 		this:severity = @options:severity or 'error'
+		
+		let msg = e:message
+		
+		if let m = msg.match(/Unexpected '([\w\-]+)'/)
+			if m[1] == 'TERMINATOR'
+				msg = 'Unexpected newline'
+			
+			
+		this:message = msg
+		this:filename = e:filename
+		this:line = e:line
 		self
 
 	def set opts
@@ -29,9 +37,18 @@ export class ImbaParseError < Error
 		var o = @options
 		var idx = o:pos - 1
 		var tok = o:tokens and o:tokens[idx]
-		while tok and (tok.@loc == -1 or tok.@loc == 0)
-			tok = o:tokens[--idx] 
+		while tok and (tok.@loc == -1 or tok.@loc == 0 or tok.@len == 0)
+			tok = o:tokens[--idx]
 		return tok
+		
+	get token
+		return @token if @token
+		var o = @options
+		var idx = o:pos - 1
+		var tok = o:tokens and o:tokens[idx]
+		while tok and (tok.@loc == -1 or tok.@loc == 0 or tok.@len == 0)
+			tok = o:tokens[--idx]
+		return @token = tok
 
 	def desc
 		var o = @options
