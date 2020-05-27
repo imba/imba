@@ -139,6 +139,8 @@ var grammar =
 		o 'CONTINUE CALL_START Expression CALL_END' do ContinueStatement.new A1,A3
 
 		o 'DEBUGGER' do DebuggerStatement.new A1
+			
+		o 'StructDeclaration'
 	]
 
 	ExportDeclaration: [
@@ -157,6 +159,7 @@ var grammar =
 	Exportable: [
 		o 'MethodDeclaration'
 		o 'Class'
+		o 'StructDeclaration'
 		o 'TagDeclaration'
 	]
 
@@ -260,10 +263,6 @@ var grammar =
 		o 'KEY' do Identifier.new A1
 	]
 
-	# A literal identifier, a variable name or property.
-	Ivar: [
-		o '@ IDENTIFIER' do Ivar.new(A2).set(self: Self.new(A1))
-	]
 
 	Argvar: [
 		o 'ARGVAR' do Argvar.new A1
@@ -457,7 +456,6 @@ var grammar =
 		o 'TagOptions TAG_WS' do A1.addPart(A2,AST.TagSep)
 		o 'TagOptions Comment' do A1
 		o 'TagOptions TERMINATOR' do A1
-		o 'TagOptions Ivar' do A1.set(ivar: A2)
 		# o 'TagOptions TagFlag' do A1.addPart(A2)
 		o 'TagOptions = TagAttrValue' do A1.addPart(A3,AST.TagAttrValue,A2)
 	]
@@ -561,7 +559,6 @@ var grammar =
 	SimpleObjAssignable: [
 		o 'Identifier'
 		o 'Key'
-		o 'Ivar'
 		o 'Private'
 	]
 
@@ -663,6 +660,15 @@ var grammar =
 		o 'Param' do [A1]
 		o 'ParamList , Param' do A1.concat A3
 	]
+	
+	ParamExpression: [
+		o 'Value'
+		o 'Code'
+		o 'Operation'
+		o 'Assign'
+		o 'Ternary'
+		o 'Tag'
+	]
 
 	ParamValue: [
 		o 'Expression'
@@ -746,18 +752,15 @@ var grammar =
 	# Variables and properties that can be assigned to.
 	SimpleAssignable: [
 		o 'ENV_FLAG' do EnvFlag.new(A1)
-		# o 'PrivateField'
-		o 'Ivar' do IvarAccess.new('.',A1.option(:self),A1) # .setStartLoc(A1.startLoc)
 		o 'Private' do Access.new('.',null,A1)
 		o 'Argvar'
 		o 'Self' # not sure if self should be assignable really
 		o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
 			
 		# FIXME this isn really assignable?
-		o 'Value . NEW' do New.new(A1).set(keyword: A3)
+		# o 'Value . NEW' do LegacyNew.new(A1).set(keyword: A3)
 		# o 'Value . Super' do SuperAccess.new('.',A1,A3)
-
-		o 'Value SoakableOp Identifier' do PropertyAccess.new(A2,A1,A3) # TODO change to regular access
+		o 'Value SoakableOp Identifier' do AST.OP(A2,A1,A3) # PropertyAccess.new(A2,A1,A3) # TODO change to regular access
 		o 'Value INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
 	]
 
@@ -830,7 +833,12 @@ var grammar =
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
 
-
+	StructDeclaration: [
+		# o 'STRUCT SimpleAssignable' do StructDeclaration.new(A2, null, []).set(keyword: A1)
+		o 'STRUCT Identifier CALL_START ParamList CALL_END' do StructDeclaration.new(A2, null, []).set(params: A4, keyword: A1)
+		o 'STRUCT Identifier CALL_START ParamList CALL_END ClassBody' do StructDeclaration.new(A2, null, A6).set(params: A4, keyword: A1)
+		o 'STRUCT Identifier ClassBody' do StructDeclaration.new(A2, null, A3).set(keyword: A1)
+	]
 	# might as well handle this in the lexer instead
 	Class: [
 		o 'ClassStart' do A1
@@ -885,6 +893,7 @@ var grammar =
 	]
 
 	ClassField: [
+		o 'Identifier' do ClassField.new(A1)
 		o 'PROP Identifier' do ClassField.new(A2).set(keyword: A1)
 		o 'ATTR Identifier' do ClassAttribute.new(A2).set(keyword: A1)
 		o 'ClassField TypeAnnotation' do A1.set(datatype: A2)
@@ -1137,6 +1146,7 @@ var grammar =
 	# -type rule, but in order to make the precedence binding possible, separate
 	# rules are necessary.
 	Operation: [
+		o 'NEW Expression' do Instantiation.new(A2).set(keyword: A1)
 		o 'UNARY Expression' do AST.OP A1, A2
 		o 'SQRT Expression' do AST.OP A1, A2
 		o('-     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # Op.new '-', A2
@@ -1176,7 +1186,7 @@ var operators = [
 	# ['left',      '{{', '}}']
 	# ['left', 'STRING_START','STRING_END']
 	['nonassoc',  '++', '--']
-	['right',     'UNARY','THROW','SQRT','NOT']
+	['right',     'UNARY','NEW','THROW','SQRT','NOT']
 	['right','AWAIT']
 	['right',     'EXP']
 	['left',      'MATH']
@@ -1191,7 +1201,7 @@ var operators = [
 	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN', 'THROW', 'EXTENDS']
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']
 	['right',     'TAG_END']
-	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER', 'CLASS', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END', 'IMPORT', 'EXPORT']
+	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER','STRUCT','CLASS', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END', 'IMPORT', 'EXPORT']
 	['right',     'POST_IF','POST_FOR']
 	['right', 'NEW_TAG']
 	['right', 'TAG_ATTR_SET']

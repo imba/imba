@@ -93,7 +93,6 @@ var IMPLICIT_FUNC_MAP =
 	'IVAR': 1
 	'CVAR': 1
 	'ARGVAR': 1
-	'NEW': 1
 	'BREAK': 1
 	'CONTINUE': 1
 	'RETURN': 1
@@ -154,7 +153,7 @@ var IDENTIFIERS = ['IDENTIFIER', 'IVAR', 'DECORATOR', 'ARGVAR']
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
 var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 'CVAR',
-	'ARGVAR', 'NEW', 'BREAK', 'CONTINUE','RETURN','BANG'
+	'ARGVAR', 'BREAK', 'CONTINUE','RETURN','BANG'
 ]
 
 # If preceded by an `IMPLICIT_FUNC`, indicates a function invocation.
@@ -188,7 +187,7 @@ var NO_IMPLICIT_BLOCK_CALL = [
 	'-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=', '>>=', '>>>=', '&=', '^=', '|=', '**='
 ] # .concat(COMPOUND_ASSIGN)
 
-var NO_CALL_TAG = ['CLASS', 'IF','UNLESS','TAG','WHILE','FOR','UNTIL','CATCH','FINALLY','MODULE','LEADING_WHEN']
+var NO_CALL_TAG = ['CLASS', 'IF','UNLESS','TAG','WHILE','FOR','UNTIL','CATCH','FINALLY','MODULE','LEADING_WHEN','STRUCT']
 
 var NO_CALL_TAG_MAP = arrayToHash(NO_CALL_TAG)
 
@@ -550,7 +549,7 @@ export class Rewriter
 			
 
 			# found a type
-			let isDefInObject = (type == defType) and indents[0] not in ['CLASS','DEF','MODULE','TAG']
+			let isDefInObject = (type == defType) and indents[0] not in ['CLASS','DEF','MODULE','TAG','STRUCT']
 			# isDefInObject = isDefInObject and 
 			if (type == ':' or isDefInObject) and ctx[0] != '{' and ctx[0] != 'TERNARY' and (noBraceContext.indexOf(ctx[0]) == -1 or ctx[0] == defType)
 				# could just check if the end was right before this?
@@ -580,7 +579,7 @@ export class Rewriter
 				if !tprev or (tprev.@type not in ['INDENT','TERMINATOR'])
 					autoClose = yes
 					
-				if indents[0] and indents[0] in ['CLASS','DEF','MODULE','TAG']
+				if indents[0] and indents[0] in ['CLASS','DEF','MODULE','TAG','STRUCT']
 					autoClose = yes
 
 				if t0 and T.typ(t0) == '}' and t0:generated and ((t1.@type == ',' and !t1:generated) or !(t0:scope and t0:scope:autoClose)) #  and !autoClose

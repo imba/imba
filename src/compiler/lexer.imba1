@@ -802,10 +802,12 @@ export class Lexer
 			# only if we are on a newline? or something?
 			return true
 			
+		if id == 'struct' and @indents == 0
+			return true # 'CLASS'
 
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css')
 			var scop = getScope
-			var incls = scop == 'CLASS' or scop == 'TAG'
+			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'STRUCT'
 
 			if id == 'css' and !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
 				return true
@@ -917,8 +919,12 @@ export class Lexer
 		# this catches all 
 		if !forcedIdentifier and isKeyword = self.isKeyword(id)
 			# (id in JS_KEYWORDS or id in IMBA_KEYWORDS)
+			
+			if typeof isKeyword == 'string'
+				typ = isKeyword
+			else
+				typ = id.toUpperCase
 
-			typ = id.toUpperCase
 			addLoc = true
 			
 			if typ == 'MODULE'
@@ -1006,7 +1012,7 @@ export class Lexer
 		# switch 
 
 		# should be strict about the order, check this manually instead
-		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS'
+		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS' or typ == 'STRUCT'
 			queueScope(typ)
 
 			var i = @tokens:length
@@ -1045,7 +1051,11 @@ export class Lexer
 		elif id == 'as' and (ctx0 == 'IMPORT' or @lastTyp == 'IDENTIFIER' or ctx0 == 'EXPORT')
 			typ = 'AS'
 
-		if id == 'new'
+		# if id == 'new'
+		#	console.log 'new keyword', @chunk.slice(0,5),@chunk.match(/^new\s+[\w\$\(]/)
+
+		if id == 'new' and (@lastTyp != '.' and @chunk.match(/^new\s+[\w\$\(]/))
+			# console.log 'is new keyword!!'
 			typ = 'NEW'
 
 		if typ == 'IDENTIFIER'
@@ -1786,6 +1796,7 @@ export class Lexer
 			
 		if value == '..' and !prev:spaced
 			tokid = '?.'
+			value = '?.'
 			
 		if value == ':' and end1 == 'TAG_RULE'
 			tokid = 'T:'

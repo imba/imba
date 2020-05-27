@@ -111,8 +111,13 @@ export var OP = do |op, l, r|
 
 	switch o
 		when '.'
+			
 			r = Identifier.new(r) if r isa String
 			# r = r.value if r isa VarOrAccess
+			
+			if r.@value and r.@value.@value == 'new'
+				return New.new(l).set(keyword: r)
+				
 			Access.new(op,l,r)
 		when '='
 			Assign.new(op,l,r)
@@ -125,7 +130,6 @@ export var OP = do |op, l, r|
 		when '?.'
 			if r isa VarOrAccess
 				r = r.value
-
 			# depends on the right side - this is wrong
 			PropertyAccess.new(op,l,r)
 
@@ -1712,11 +1716,12 @@ export class ClassField < Node
 			value.@scope.@parent = scope__
 			value.traverse # if @value # dont traverse yet
 
-		if !STACK.tsc
+		if !STACK.tsc and !option(:raw)
 			@storage = scope__.root.declare(null,LIT('new WeakMap()'))
 
 		# traverse value with a different scope
 		self
+		
 		
 	def value
 		option(:value)
@@ -1740,6 +1745,8 @@ export class ClassField < Node
 		[@name.@loc,@name.region[1]]
 
 	def c
+		return if option(:struct)
+
 		let up = STACK.current
 		let out
 		if up isa ClassBody
@@ -2704,6 +2711,9 @@ export class ClassDeclaration < Code
 	def toJSON
 		metadata
 
+	def isStruct
+		keyword and String(keyword) == 'struct'
+
 	def initialize name, superclass, body
 		# what about the namespace?
 		@traversed = no
@@ -2742,8 +2752,6 @@ export class ClassDeclaration < Code
 		scope.visit
 
 		if @superclass and !option(:extension) and !STACK.tsc
-			# addMethod('super$',[LIT('k')],'super[k]')
-			# addMethod('super$set',[LIT('k,v')],'super[k] = v')
 			staticInit
 
 		body.traverse
@@ -2839,7 +2847,7 @@ export class ClassDeclaration < Code
 			body.unshift(LIT(TSC_CLASS_HEAD),yes)
 		
 		let jsbody = body.c()
-		let jshead = M(keyword,keyword) # "{C(keyword,mark: yes)}"
+		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
 		jshead += " {M cname, name}" if name
 		jshead += " extends {M(sup)}" if sup
 		
@@ -2867,6 +2875,80 @@ export class ClassDeclaration < Code
 		# 	js = "{js}; {add}"
 
 		return js
+		
+export class StructInitBody < Block
+
+export class StructDeclaration < ClassDeclaration
+
+	def visit
+		# replace with some advanced lookup?
+		@body.@delimiter = ''
+		ROOT.entities.add(namepath,self)
+		scope.visit
+		
+		var fields = []
+		var signature = []
+		var params = []
+		
+		if option(:params)
+			for param in option(:params).reverse
+				let name = String(param.name)
+				
+				let field = fields[name] = ClassField.new(param.name).set(
+					datatype: param.option(:datatype)
+					value: param.defaults
+				)
+				field.set(param: param)
+
+				body.unshift(field)
+				params.push(param)
+				
+		params.push(LIT('$$={}'))
+				
+		for node,i in body
+			if node isa ClassField
+				let name = String(node.name)
+				if fields[name]
+					console.log 'already defined field!',name
+
+				node.set(struct: self, raw: yes)
+				fields.push(node)
+
+		body.traverse
+
+		if STACK.tsc
+			return self
+
+		var ctor = body.option(:ctor)
+	
+		var inits = StructInitBody.new([])
+		var setters = []
+		
+
+		for field in fields
+			# check if null?
+			# let param = LIT('$$')
+			let access = OP('.',THIS,field.name)
+			let setter = OP('.',LIT('$$'),field.name)
+			
+			if field.option(:param)
+				setter = field.option(:param).name
+			
+			if field.value
+				setter = OP('||',setter,field.value)
+				# let op = OP('=',access,setter)
+			
+			let assign = OP('=',access,setter).set(datatype: field.datatype)
+			# setters.push(OP('=',access,setter))
+			inits.add([assign,BR])
+			# ctorBody.push(OP('=',THIS,name).c + ';\n')
+		
+		# replace the whole body
+		@body = ClassBody.new([])
+		@body.@delimiter = ''
+		ctor = addMethod('constructor',params,inits)
+		# add existing methods for cloning etc
+		return self
 
 export class TagDeclaration < ClassDeclaration
 
@@ -4029,17 +4111,6 @@ export class UnaryOp < Op
 		# for property-accessors we need to rewrite the ast
 		return self
 
-		return self unless node isa PropertyAccess
-
-		# ask to cache the path
-		node.left.cache if node isa Access && node.left
-
-		var num = Num.new(1)
-		var ast = OP('=',node,OP(op[0],node,num))
-		ast = OP(op[0] == '-' ? '+' : '-',ast,num) if left
-
-		return ast
-
 	def consume node
 		var norm = normalize
 		norm == self ? super : norm.consume(node)
@@ -4182,6 +4253,8 @@ export class Access < Op
 			pre = ctx.c + " && "
 		
 		
+		
+		
 
 		# really?
 		# var ctx = (left || scope__.context)
@@ -4202,6 +4275,10 @@ export class Access < Op
 	def visit
 		left.traverse if left
 		right.traverse if right
+		
+		if right isa Identifier and right.toRaw == 'new'
+			console.log 'NEW access!!!'
+			
 		return
 
 	def isExpressable
@@ -4570,8 +4647,9 @@ export class Assign < Op
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
 		if let typ = (option(:datatype) or l.option(:datatype))
-			if STACK.tsc and !(l isa VarReference)
+			if !(l isa VarReference)
 				out = '/** @type {' + typ.c() + '} */\n' + out
+			
 
 		if l isa Obj
 			out = "({out})"
@@ -5156,6 +5234,8 @@ export class Call < Node
 
 		if callee isa VarOrAccess
 			var str = callee.value.symbol
+			if str == 'new'
+				console.log 'calling'
 			if str == 'extern'
 				callee.value.value.@type = 'EXTERN'
 				return ExternDeclaration.new(args)
@@ -5249,7 +5329,6 @@ export class Call < Node
 		if callee isa PropertyAccess # && rec = callee.receiver
 			@receiver = callee.receiver
 			callee = @callee = Access.new(callee.op,callee.left,callee.right)
-			# console.log "unwrapping the propertyAccess"
 
 		if rgt isa Identifier and rgt.value == 'assert' and !splat and false
 			let arg = args.first
@@ -5260,14 +5339,6 @@ export class Call < Node
 			# rewrite a.len(..) to len$(a)
 
 		if callee.safechain
-			# Does this affect shouldParenthesizeInTernary?
-			# if lft isa Call
-			# if lft isa Call # could be a property access as well - it is the same?
-			# if it is a local var access we simply check if it is a function, then call
-			# but it should be safechained outside as well?
-			# lft.cache if lft
-			# the outer safechain should not cache the whole call - only ask to cache
-			# the result? -- chain onto
 			var isfn = Util.IsFunction.new([callee])
 			wrap = ["{isfn.c}  &&  ",""]
 			callee = OP('.',callee.left,callee.right)
@@ -5302,10 +5373,19 @@ export class ImplicitCall < Call
 	def js o
 		"{callee.c}()"
 
+export class Instantiation < ValueNode
+
+	def js o
+		"{M('new',keyword)} {value.c}"
+
 export class New < Call
 
 	# def startLoc
 	# 	keyword ? keyword.startLoc : super
+	
+	def visit
+		warn 'Value.new is deprecated - use new Value'
+		super
 
 	def endLoc
 		keyword and keyword.endLoc or super
@@ -7625,9 +7705,6 @@ export class Tag < TagLike
 			# push it into ctor if it is not a variable assignment
 			# otherwise we always want to assign it
 			ctor = OP('=',option(:assign),LIT(ctor)).c()
-			
-		if option(:ivar)
-			ctor = OP('=',OP('.',scope__.context,option(:ivar)),LIT(ctor)).c()
 
 		if !parent
 			@ref = "{tvar}"
