@@ -46,10 +46,10 @@ test do
 	eq new Cat(1,2,3).params, [1,2,3]
 
 test do
-	eq new Cat.name, "Cat Animal Animal"
+	eq (new Cat).name, "Cat Animal Animal"
 
 test do
-	eq new Cat.test(10,20), [ [10,20],[1],[2,3] ]
+	eq (new Cat).test(10,20), [ [10,20],[1],[2,3] ]
 
 test do
 	eq new Dog(1,2,3).params, [1]
