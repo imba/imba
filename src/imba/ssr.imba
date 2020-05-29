@@ -274,6 +274,9 @@ export class Element < Node
 
 	get innerHTML
 		var o = ""
+		if $innerHTML
+			return $innerHTML
+
 		if self.textContent != undefined
 			return escapeTextContent(self.textContent)
 
