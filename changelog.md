@@ -1,3 +1,6 @@
+## 2.0.0-alpha.58
+* Allow setting innerHTML in SSR
+
 ## 2.0.0-alpha.57
 * Update instantiation syntax in tests++
 
