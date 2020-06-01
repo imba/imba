@@ -1,5 +1,6 @@
 ## 2.0.0-alpha.59
 * Add support for numeric separator `100_000`
+* Fix multiline regex parsing issues
 
 ## 2.0.0-alpha.58
 * Allow setting innerHTML in SSR

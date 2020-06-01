@@ -167,7 +167,7 @@ var WHITESPACE = /^[^\n\S]+/
 var COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|(?:###)?$)/
 var JS_COMMENT    = /^\/\*([\s\S]*?)\*\//
 # var INLINE_COMMENT = /^(\s*)((#[ \t\!]||\/\/)(.*)|#[ \t]?(?=\n|$))+/
-var INLINE_COMMENT = /^(\s*)((#[ \t\!]|\/\/)(.*)|#[ \t]?(?=\n|$))+/
+var INLINE_COMMENT = /^(\s*)((#[ \t\!]|\/\/(?!\/))(.*)|#[ \t]?(?=\n|$))+/
 
 var CODE       = /^[-=]=>/
 
