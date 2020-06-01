@@ -130,9 +130,12 @@ var STYLE_PROPERTY = ///^
 ///
 
 var NUMBER = ///
-	^ 0x[\da-f]+ |                              # hex
-	^ 0b[01]+ |                              # binary
-	^ \d*\.?\d+ (?:e[+-]?\d+)?  # decimal
+	^ 0x[\da-f_]+ |                              # hex
+	^ 0b[01_]+ |                              # binary
+	^ 0o[\d_]+ |                              # binary
+	^ (?:\d[_\d]*)\.?\d[_\d]* (?:e[+-]?\d+)? | # decimal2
+	^ \d*\.?\d+ (?:e[+-]?\d+)? # decimal
+	
 ///i
 
 var HEREDOC = /// ^ ("""|''') ([\s\S]*?) (?:\n[^\n\S]*)? \1 ///
@@ -1096,9 +1099,9 @@ export class Lexer
 		number = match[0]
 		lexedLength = number:length
 
-		if var binaryLiteral = /0b([01]+)/.exec(number)
+		if var binaryLiteral = /0b([01_]+)/.exec(number)
 			
-			number = "" + parseInt(binaryLiteral[1], 2)
+			number = "" + parseInt(binaryLiteral[1].replace(/_/g,''), 2)
 
 		var prev = last(@tokens)
 

@@ -3506,27 +3506,26 @@ export class Num < Literal
 		@value = v
 
 	def toString
-		String(@value)
+		String(@value).replace(/\_/g,'')
 
 	def toNumber
-		parseFloat(String(@value))
+		@number ?= parseFloat(toString)
 
 	def isPrimitive deep
 		yes
 
 	def isTruthy
-		String(@value) != "0"
+		toNumber != 0
 
 	def shouldParenthesize par = up
 		par isa Access and par.left == self
 
 	def js o
-		var num = String(@value)
-		return num
+		return toString
 
 	def c o
 		return super(o) if @cache
-		var out = M(String(@value),@value)
+		var out = M(toString,@value)
 		var par = STACK.current
 		var paren = par isa Access and par.left == self
 		# only if this is the right part of the access
@@ -3538,7 +3537,7 @@ export class Num < Literal
 
 	def raw
 		# really?
-		JSON.parse(String(value))
+		JSON.parse(toString)
 
 	def toJSON
 		{type: typeName, value: raw}
