@@ -33,6 +33,16 @@ export const aliases =
 	w: 'width'
 	h: 'height'
 	
+	# offsets / positions
+	ot: 'top'
+	ob: 'bottom'
+	ol: 'left'
+	or: 'right'
+	otl: ['top','left']
+	otr: ['top','right']
+	obr: ['bottom','right']
+	obl: ['bottom','left']
+	
 	# flex
 	ai: 'align-items'
 	as: 'align-self'
@@ -92,6 +102,7 @@ export const aliases =
 	bgr: 'background-repeat'
 	bgi: 'background-image'
 	bga: 'background-attachment'
+	bgs: 'background-size'
 	
 	# TODO decide on one of these
 	round: 'border-radius'
@@ -106,6 +117,8 @@ export const aliases =
 
 	va: 'vertical-align'
 	ls: 'letter-spacing'
+	
+	
 	
 	prefix: 'content.before'
 	suffix: 'content.after'

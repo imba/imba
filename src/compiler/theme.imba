@@ -56,6 +56,7 @@ export const variants =
 		'scroll-y': {'overflow-y': 'auto'}
 		'noclip-x': {'overflow-x': 'visible'}
 		'noclip-y': {'overflow-y': 'visible'}
+		'truncate': {'overflow': 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap'}
 		
 		# box-sizing
 		'border-box': {'box-sizing': 'border-box'}
