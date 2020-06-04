@@ -46,6 +46,7 @@ export const variants =
 		'abs': {position: 'absolute'}
 		'fixed': {position: 'fixed'}
 		'sticky': {position: 'sticky'}
+		'inset': {position: 'absolute',top:'0',bottom:'0',left:'0',right:'0'}
 		
 		# overflow
 		'clip': {'overflow': 'hidden'}

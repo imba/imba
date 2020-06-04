@@ -96,6 +96,7 @@ export const aliases =
 	# TODO decide on one of these
 	round: 'border-radius'
 	radius: 'border-radius'
+	r: 'border-radius'
 
 	shadow: 'box-shadow'
 	
