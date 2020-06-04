@@ -17,12 +17,12 @@ root.customElements ||= {
 imba.setTimeout = do |fn,ms|
 	setTimeout(&,ms) do
 		fn()
-		imba.commit()
+		imba.$commit()
 
 imba.setInterval = do |fn,ms|
 	setInterval(&,ms) do
 		fn()
-		imba.commit()
+		imba.$commit()
 
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
@@ -114,7 +114,12 @@ import {Flags} from './internal/flags'
 import {Scheduler} from './internal/scheduler'
 
 imba.scheduler = new Scheduler()
-imba.commit = do imba.scheduler.add('render')
+imba.$commit = do imba.scheduler.add('render')
+
+imba.commit = do
+	imba.scheduler.add('render')
+	return imba.scheduler.promise
+
 imba.tick = do
 	imba.commit()
 	return imba.scheduler.promise
