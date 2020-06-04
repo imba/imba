@@ -1,7 +1,7 @@
 class ElementRoute
-	def constructor node, path, parent, options
+	def constructor node, path, parent, options = {}
 		node = node
-		route = node.router.routeFor(node,path,parent ? parent.route : null,{node: node})
+		route = node.router.routeFor(node,path,parent ? parent.route : null,options)
 		match = null
 		options = options
 		placeholder = node.$placeholder or new Comment("{path}")
@@ -17,6 +17,9 @@ class ElementRoute
 		
 	get sticky
 		options and options.sticky
+		
+	get exact
+		options and options.exact
 
 	def isActive
 		match && match.active
@@ -82,8 +85,9 @@ class ElementRouteTo < ElementRoute
 	
 	def go
 		let href = route.resolve!
-		if sticky and match
+		if sticky and match and !match.active
 			href = match.url or href
+
 		if options and options.replace
 			node.router.replace(href)
 		else
@@ -153,6 +157,7 @@ extend class Element
 			# let match = $route.route.test()
 			
 			if $route.sticky and match.url
+				
 				href = match.url
 
 			setAttribute('href',href) if nodeName == 'A'

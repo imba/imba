@@ -1,3 +1,6 @@
+## 2.0.0-alpha.60
+* Add `route-to.exact` modifier to router
+
 ## 2.0.0-alpha.59
 * Add support for numeric separator `100_000`
 * Fix multiline regex parsing issues

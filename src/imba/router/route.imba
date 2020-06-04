@@ -9,7 +9,6 @@ export class Route
 		parent = parent
 		router = router
 		options = options
-		node = options.node
 		status = 200
 		path = str
 		
@@ -126,47 +125,7 @@ export class Route
 			return cache.match = params
 
 		return cache.match = null
-	
-	# should split up the Route types
-	def statusDidSet status, prev
-		let idx = router.busy().indexOf(self)
-		clearTimeout(statusTimeout)
 
-		if status < 200
-			router.busy().push(self) if idx == -1
-			statusTimeout = setTimeout(&,25000) do status = 408
-		elif idx >= 0 and status >= 200
-			router.busy().splice(idx,1)
-			
-			# immediately to be able to kick of nested routes
-			# is not commit more natural?
-			node..commit()
-			# Imba.commit
-			if router.busy().length == 0
-				imba.emit(router,'ready',[router])
-
-		node..setFlag('route-status',"status-{status}")
-	
-	def load cb
-		status = 102
-
-		var _handler = handler = do |res|
-			if _handler != handler
-				# console.log "another load has started after this"
-				return
-
-			handler = null
-			status = typeof res == 'number' ? res : 200
-
-		if cb isa Function
-			cb = cb(handler)
-			
-		if cb and cb.then
-			cb.then(handler,handler)
-		else
-			handler(cb)
-		self
-		
 	def resolve url
 		return raw if raw[0] == '/'
 
