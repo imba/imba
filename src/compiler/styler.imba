@@ -30,6 +30,10 @@ export const aliases =
 	mx: 'margin-x'
 	my: 'margin-y'
 	
+	s: 'spacing'
+	sx: 'spacing-x'
+	sy: 'spacing-y'
+	
 	w: 'width'
 	h: 'height'
 	
@@ -48,17 +52,21 @@ export const aliases =
 	as: 'align-self'
 	ac: 'align-content'
 	jc: 'justify-content'
+	ff: 'flex-flow' # support up/down/left/right aliases
+	f: 'flex'
 	fd: 'flex-direction'
-	fg: 'flex-grow'
-	fs: 'flex-shrink'
-	fb: 'flex-basis'
+	# fd: 'flex-direction'
+	# fg: 'flex-grow'
+	# fs: 'flex-shrink'
+	# fb: 'flex-basis'
 	
 	# margins
+	is: 'composition'
+	layout:'display'
 	d: 'display'
-	l: 'display'
-	layout: 'display'
+	a: 'align'
+	l: 'layout'
 	t: 'text'
-	f: 'text'
 	c: 'color'
 
 	
@@ -108,6 +116,26 @@ export const aliases =
 	round: 'border-radius'
 	radius: 'border-radius'
 	r: 'border-radius'
+	
+	
+	# grid
+	gtr: 'grid-template-rows'
+	gtc: 'grid-template-columns'
+	gta: 'grid-template-areas'
+	gar: 'grid-auto-rows'
+	gac: 'grid-auto-columns'
+	gaf: 'grid-auto-flow'
+	gcg: 'grid-column-gap'
+	grg: 'grid-row-gap'
+	cg: 'column-gap'
+	rg: 'row-gap'
+	ga: 'grid-area'
+	gr: 'grid-row'
+	gc: 'grid-column'
+	grs: 'grid-row-start'
+	gcs: 'grid-column-start'
+	gre: 'grid-row-end'
+	gce: 'grid-column-end'
 
 	shadow: 'box-shadow'
 	
@@ -118,8 +146,7 @@ export const aliases =
 
 	va: 'vertical-align'
 	ls: 'letter-spacing'
-	
-	
+	ws: 'white-space'
 	
 	prefix: 'content.before'
 	suffix: 'content.after'
@@ -255,6 +282,97 @@ export class StyleTheme
 			"padding": length # $length(length / 2)
 			"& > *": {'margin': length } # $length(length / 2)
 		}
+		
+	def spacing [y,x=y]
+		return {'spacing-x': x,'spacing-y': y}
+		{
+			"padding": length # $length(length / 2)
+			"& > *": {'margin': length } # $length(length / 2)
+		}
+	
+	def spacing-x [v]
+		spacing-axis('x',v)
+		
+	def spacing-y [v]
+		spacing-axis('y',v)
+		
+	def spacing-axis axis, v
+		let iv = "--s{axis}"
+		let ov = "--ps{axis}"
+		
+		let out = {
+			[iv]: v
+			"& > *": {
+				[ov]: [v]
+				["m{axis}"]: [v]	
+			}
+		}
+		return out
+		
+	def any-layout o
+		# should not set anything if spacing is set either before or after
+		o["& > *"] = {
+			mx: 'var(--sx,0)'
+			my: 'var(--sy,0)'
+		}
+		
+	def hflow-layout o
+		any-layout(o)
+		o.display = 'flex'
+		o.ff = 'row wrap'
+		o.jc = 'var(--hflow-jc,inherit)'
+		o.ai = 'center'
+		yes
+	
+	def vflow-layout o
+		any-layout(o)
+		o.display = 'flex'
+		o.ff = 'row wrap'
+		o.jc = 'var(--hflow-jc,inherit)' # nah
+		o.ai = 'var(--vflow-ai,inherit)'
+		
+		
+	def flow-layout o
+		any-layout(o)
+		o.display = 'flex'
+		# o.fd = 'var(--flow-fd,row)'
+		o.ai = 'var(--flow-ai,center)'
+		o.ff = 'var(--flow-fd,row) wrap'
+		o.jc = 'var(--hflow-jc,inherit)'
+		
+	def align [v]
+		let str = String(v)
+		let o = {'--align': str}
+		if str == 'left'
+			o.ta = 'left'
+			o['--hflow-jc'] = 'flex-start'
+			o['--flow-fd'] = 'row'
+			o['--flow-ai'] = 'flex-start'
+			o['--vflow-ai'] = 'flex-start'
+
+		elif str == 'right'
+			o.ta = 'right'
+			o['--hflow-jc'] = 'flex-end'
+			o['--flow-fd'] = 'row-reverse'
+			o['--flow-ai'] = 'flex-start'
+			o['--vflow-ai'] = 'flex-end'
+			
+		elif str == 'center'
+			o.ta = 'center'
+			o['--hflow-jc'] = 'center'
+			o['--flow-fd'] = 'column'
+			o['--flow-ai'] = 'center'
+			o['--vflow-ai'] = 'center'
+			
+		elif str == 'justify'
+			o.ta = 'left'
+			o['--hflow-jc'] = 'flex-start'
+			o['--flow-fd'] = 'row'
+			o['--flow-ai'] = 'stretch'
+			
+		return o
+
+			
 
 	def transition ...parts
 		let out = {}
@@ -367,7 +485,7 @@ export class StyleTheme
 		# extract bold
 		return out
 		
-	def display [...params]
+	def layout [...params]
 		let out = {}
 		let schema = options.variants.layout
 		for param,i in params
@@ -378,6 +496,43 @@ export class StyleTheme
 			else
 				# TODO check if it is a valid display value
 				out.display = str
+		# extract bold
+		return out
+		
+	def display [...params]
+		let out = {}
+		let schema = options.variants.layout
+		for param,i in params
+			# console.log 'display param',param
+			let str = String(param)
+			let val = schema[str]
+			
+			if val
+				Object.assign(out,val)
+			elif self[str+'Layout']
+				console.log 'found layout!!',str
+				self[str+'Layout'](out)
+			else
+				# TODO check if it is a valid display value
+				out.display = str
+		# extract bold
+		return out
+		
+	def composition [...params]
+		let out = {}
+		let fonts = options.fonts
+		let schema = options.variants.helpers
+
+		for param,i in params
+			# find fonts and all that?
+			let str = String(param)
+			let val = schema[str]
+			if val
+				Object.assign(out,val)
+			else
+				self
+				# TODO check if it is a valid display value
+				# out.display = str
 		# extract bold
 		return out
 	

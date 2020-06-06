@@ -8451,7 +8451,10 @@ export class StyleRuleSet < StyleNode
 		@body?.traverse(rule: self, styles: @styles)
 		
 		if o:rule and o:styles
-			o:styles[@sel] = @styles
+			if o:styles[@sel]
+				Object.assign(o:styles[@sel],@styles)
+			else
+				o:styles[@sel] = @styles
 
 		else
 			# need to
@@ -8517,6 +8520,11 @@ export class StyleDeclaration < StyleNode
 		
 	def clone name, params
 		params = @expr.clone unless params
+		if typeof params == 'string' or typeof params == 'number'
+			params = [params]
+		if !(params isa Array) and !(params isa ListNode)
+			params = [params]
+
 		StyleDeclaration.new(@property.clone(name),params)
 		
 	def visit stack, o
@@ -8548,9 +8556,10 @@ export class StyleDeclaration < StyleNode
 						let rule = StyleRuleSet.new(LIT(k),body)
 						expanded.push(rule)
 						for own k2,v2 of v
-							body.add(StyleDeclaration.new(@property.clone(k2),v2))
+							# need recursive thing here
+							body.add(clone(k2,v2))
 					else
-						expanded.push StyleDeclaration.new(@property.clone(k),v).set(plain: k == name)
+						expanded.push clone(k,v).set(plain: k == name)
 				list.replace(self,expanded)
 				return
 			
@@ -8560,6 +8569,7 @@ export class StyleDeclaration < StyleNode
 			let key = @property.toKey
 			if o:selector
 				key = JSON.stringify([o:selector,key])
+				
 			o:styles[key] = @expr.c
 		self
 		

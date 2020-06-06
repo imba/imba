@@ -69,6 +69,12 @@ export const variants =
 		# visibility
 		'invisible': {visibility: 'hidden'}
 		'visible': {visibility: 'visible'}
+		'unselectable': {'user-select': 'none'}
+		'selectable': {'user-select': 'auto'}
+		'unclickable': {'pointer-events': 'none'}
+		'clickable': {'pointer-events': 'auto'}
+		
+		# text related
 	
 	fontSize:
 		'xxs': ['10px',1.5]
@@ -103,6 +109,139 @@ export const variants =
 	units:
 		u: '4px' # '0.125rem'
 		
+	helpers:
+		# positioning
+		'static': {position: 'static'}
+		'relative': {position: 'relative'}
+		'absolute': {position: 'absolute'}
+		'rel': {position: 'relative'}
+		'abs': {position: 'absolute'}
+		'fixed': {position: 'fixed'}
+		'sticky': {position: 'sticky'}
+		'inset': {position: 'absolute',top:'0',bottom:'0',left:'0',right:'0'}
+		
+		# display
+		'hidden': {'display': 'none'}
+		'fragment': {'display': 'contents'}
+		'inline': {'display': 'inline'}
+		'block': {'display': 'block'}
+		'flex': {'display': 'flex'}
+		'hflex': {'display': 'flex','flex-direction':'row'}
+		'vflex': {'display': 'flex','flex-direction':'column'}
+
+		'cluster': {
+			'display': 'flex',
+			'flex-direction':'row',
+			'justify-content': 'var(--flow-align,center)'
+			'align-items': 'center'
+			'align-content': 'center'
+			'flex-wrap': 'wrap'
+		}
+		
+		'flow': {
+			'display': 'flex',
+			'flex-direction':'column',
+			'justify-content': 'center'
+			'align-items': 'var(--flow-align,center)'
+			'align-content': 'var(--flow-align,center)'
+			'flex-wrap': 'no-wrap'
+		}
+		
+		'bar': {
+			'display': 'flex',
+			'flex-direction':'row',
+			'justify-content': 'var(--flow-align,center)'
+			'align-items': 'center'
+			'align-content': 'center'
+			'align-self': 'stretch'
+			'flex-wrap': 'no-wrap'
+		}
+		
+		'left': {
+			'text-align':'left'
+			'--flow-align':'flex-start'
+		}
+		
+		'right': {
+			'text-align':'right'
+			'--flow-align':'flex-end'
+		}
+		
+		'center': {
+			'text-align':'center'
+			'--flow-align':'center'
+		}
+		
+		'stack': {
+			'display': 'flex',
+			'flex-direction':'column',
+			'justify-content': 'flex-start'
+			'align-items': 'stretch'
+		}
+		
+		# visibility
+		'invisible': {visibility: 'hidden'}
+		'visible': {visibility: 'visible'}
+		
+		# user-select
+		'unselectable': {'user-select': 'none'}
+		'selectable': {'user-select': 'auto'}
+		
+		# pointer-events
+		'unclickable': {'pointer-events': 'none'}
+		'clickable': {'pointer-events': 'auto'}
+		
+		# border-radius
+		'round': {'border-radius': 'full'}
+		'rounded': {'border-radius': '3px'}
+		'rounded': {'border-radius': '3px'}
+		
+		# box-sizing
+		'border-box': {'box-sizing': 'border-box'}
+		'content-box': {'box-sizing': 'content-box'}
+		
+		# text-decoration
+		'underlined': {'text-decoration': 'underline'}
+		
+		# text-transform
+		'uppercase': {'text-transform': 'uppercase'}
+		'lowercase': {'text-transform': 'lowercase'}
+		'capitalize': {'text-transform': 'capitalize'}
+		'normalcase': {'text-transform': 'none'}
+		
+		# font-style
+		'italic': {'font-style': 'italic'}
+		'non-italic': {'font-style': 'normal'}
+		
+		# font weight
+		'medium': {'font-weight': '500'}
+		'semibold': {'font-weight': '600'}
+		'bold': {'font-weight': 'bold'}
+		
+		# font sizes
+		# fs1, fs2, fs3, fs4 etc...
+		
+		# color
+		# blue1, blue2 etc
+		
+		# background-color
+		# bg-blue1 bg-blue2 etc
+		
+		# font smoothing
+		'antialiased': {'-webkit-font-smoothing': 'antialiased', '-moz-osx-font-smoothing': 'grayscale'}
+		'subpixel-antialiased': {'-webkit-font-smoothing': 'auto', '-moz-osx-font-smoothing': 'auto'}		
+		
+		# overflow
+		'clip': {'overflow': 'hidden'}
+		'noclip': {'overflow': 'visible'}
+		'clip-x': {'overflow-x': 'hidden'}
+		'clip-y': {'overflow-y': 'hidden'}
+		'scroll-x': {'overflow-x': 'auto'}
+		'scroll-y': {'overflow-y': 'auto'}
+		'noclip-x': {'overflow-x': 'visible'}
+		'noclip-y': {'overflow-y': 'visible'}
+		'truncated': {'overflow': 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap'}
+
 	text:
 		'italic': {'font-style': 'italic'}
 		'non-italic': {'font-style': 'normal'}
