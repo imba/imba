@@ -302,6 +302,7 @@ export class StyleTheme
 		
 		let out = {
 			[iv]: v
+			["p{axis}"]: "var({iv})"
 			"& > *": {
 				[ov]: [v]
 				["m{axis}"]: [v]	
@@ -311,6 +312,9 @@ export class StyleTheme
 		
 	def any-layout o
 		# should not set anything if spacing is set either before or after
+		o.px = 'var(--sx,0)'
+		o.py = 'var(--sy,0)'
+
 		o["& > *"] = {
 			mx: 'var(--sx,0)'
 			my: 'var(--sy,0)'
@@ -605,7 +609,7 @@ export class StyleTheme
 	def $value value, index, config
 		let key = config
 		if typeof config == 'string'
-			if config.match(/^((min-|max-)?(width|height)|top|left|bottom|right|padding|margin|sizing|inset)/)
+			if config.match(/^((min-|max-)?(width|height)|top|left|bottom|right|padding|margin|sizing|inset|spacing|sx$|sy$|s$)/)
 				config = 'sizing'
 			elif config.match(/^(border-radius)/)
 				config = 'radius'
