@@ -8682,6 +8682,10 @@ export class StyleExpression < ListNode
 	def toIterable
 		@nodes
 		
+	def addParam param
+		last.addParam(param)
+		return self
+		
 	def visit2
 		let items = @nodes
 		let i = 0
@@ -8715,12 +8719,20 @@ export class StyleTerm < ValueNode
 		# console.log 'resolved',String(resolved)
 		@resolvedValue = resolved
 		self
+	
+	get param
+		@params and @params[0]
 		
 	def kind
 		@kind
+	
+	def addParam param
+		@params ||= []
+		@params.push(param)
+		return self
 		
 	def c
-		!(@resolvedValue isa Node) ? @resolvedValue : valueOf
+		(@resolvedValue and !(@resolvedValue isa Node)) ? @resolvedValue : valueOf
 		# number
 
 export class StyleFunction < Node
@@ -8765,26 +8777,33 @@ export class StyleDimension < StyleTerm
 
 	def initialize value
 		@value = value
-		let m = String(value).match(/^(.+)([a-zA-Z]+|%)$/)
+		let m = String(value).match(/^([\-\+]?[\d\.]*)([a-zA-Z]+|%)?$/)
 		@number = parseFloat(m[1])
-		@unit = m[2]
+		@unit = m[2] or null
 		
 	def valueOf
 		if unit == 'u'
 			return number * 4 + 'px'
-		return String(@value)
+		elif unit == null
+			return number
+		else
+			return String(@value)
 
-export class StyleNumber < StyleTerm
-	prop unit
-	prop number
-	
-	def initialize value,unit
-		super
-		@number = parseFloat(String(value))
-		@unit = null
+export class StyleNumber < StyleDimension
+	# prop unit
+	# prop number
+	# def initialize value,unit
+	# 	super
+	# 	@number = parseFloat(String(value))
+	# 	@unit = null
 		
-	def valueOf
-		number
+	# def valueOf
+	# 	if unit == 'u'
+	# 		return number * 4 + 'px'
+	# 	return String(@value)
+		
+	# def valueOf
+	# 	number
 
 # UTILS
 

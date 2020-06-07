@@ -658,6 +658,11 @@ export class Lexer
 		if chr[0] == '#' and m = STYLE_HEX.exec(@chunk)
 			token 'COLOR', m[0], m[0]:length
 			return m[0]:length
+			
+		if chr == '/' and !@last:spaced
+			# console.log '!!!'
+			token '/', chr, 1
+			return 1
 		
 		if m = STYLE_NUMERIC.exec(@chunk)
 			let len = m[0]:length
@@ -668,9 +673,11 @@ export class Lexer
 				# if @chunk[len]
 			elif m[2]
 				typ = 'DIMENSION'
-			# elif match[1].indexOf('.') == -1
-			# 	typ = 'INTEGER'
-			# console.log typ,match[0]
+
+			if @lastTyp == 'COMPARE' and !@last:spaced
+				yes
+				# @last.@type = 'MOD'
+
 			token typ, m[0], len
 			return len
 			

@@ -417,6 +417,11 @@ var grammar =
 		o 'StyleTerm' do StyleExpression.new().add(A1)
 		o 'StyleExpression StyleOperator' do A1.add(A2)
 		o 'StyleExpression StyleTerm' do A1.add(A2)
+		o 'StyleExpression / StyleTerm' do A1.addParam(A3)
+	]
+	
+	StyleOperation: [
+		o 'StyleTerm / StyleTerm' do A1.addParam(A3)
 	]
 	
 	StyleTerm: [
@@ -428,6 +433,9 @@ var grammar =
 		o 'String' do A1
 		o 'IDENTIFIER CALL_START StyleExpressions CALL_END' do StyleFunction.new(A1,A3)
 		o 'IDENTIFIER' do StyleIdentifier.new(A1)
+		o 'COMPARE StyleTerm' do A2.set(op: A1)
+		# o '> StyleTerm' do A2.set(op:A1)
+		
 	]
 
 	TagOptions: [

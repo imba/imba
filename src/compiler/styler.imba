@@ -47,24 +47,23 @@ export const aliases =
 	obr: ['bottom','right']
 	obl: ['bottom','left']
 	
-	# flex
+	# alignment
+	a: 'align'
 	ai: 'align-items'
 	as: 'align-self'
 	ac: 'align-content'
 	jc: 'justify-content'
-	ff: 'flex-flow' # support up/down/left/right aliases
-	f: 'flex'
-	fd: 'flex-direction'
-	# fd: 'flex-direction'
-	# fg: 'flex-grow'
-	# fs: 'flex-shrink'
-	# fb: 'flex-basis'
+	ji: 'justify-items'
 	
+	# flex
+	f: 'flex'
+	ff: 'flex-flow' # support up/down/left/right aliases
+
 	# margins
 	is: 'composition'
 	layout:'display'
 	d: 'display'
-	a: 'align'
+	
 	l: 'layout'
 	t: 'text'
 	c: 'color'
@@ -277,6 +276,36 @@ export class StyleTheme
 	def size [w,h=w]
 		{width: w, height: h}
 		
+	def width [...params]
+		let o = {}
+		for param in params
+			let opts = param._options or {}
+			let u = param._unit
+			if u == 'c' or u == 'col' or u == 'cols'
+				o['grid-column-end'] = "span {param._number}"
+			elif opts.op and String(opts.op) == '>'
+				o['min-width'] = param
+			elif opts.op and String(opts.op) == '<'
+				o['max-width'] = param
+			else
+				o.width = param
+		return o
+		
+	def height [...params]
+		let o = {}
+		for param in params
+			let opts = param._options or {}
+			let u = param._unit
+			if u == 'r' or u == 'row' or u == 'rows'
+				o['grid-row-end'] = "span {param._number}"
+			elif opts.op and String(opts.op) == '>'
+				o['min-height'] = param
+			elif opts.op and String(opts.op) == '<'
+				o['max-height'] = param
+			else
+				o.height = param
+		return o
+		
 	def space [length]
 		{
 			"padding": length # $length(length / 2)
@@ -291,89 +320,99 @@ export class StyleTheme
 		}
 	
 	def spacing-x [v]
-		spacing-axis('x',v)
+		v._unit ||= 'u'
+		{$sx_c:v, $sx_s:v, px:"calc(var(--sx_s) / 2)", "& > *": {$sx_:v, mx:'calc(var(--sx_) / 2)'}}
 		
 	def spacing-y [v]
-		spacing-axis('y',v)
+		v._unit ||= 'u'
+		{$sy_s:v, py:"calc(var(--sy_s) / 2)", "& > *": {$sy_:v, my:'calc(var(--sy_) / 2)'}}
+	
+	def g [y,x=y]
+		return {gx: x,gy: y}
 		
-	def spacing-axis axis, v
-		let iv = "--s{axis}"
-		let ov = "--ps{axis}"
+	def gx [v]
+		v.unit ||= 'u'
+		{$sx_s:v, mx:'calc((var(--sx_,0px) - var(--sx_s)) / 2)', "& > *": {$sx_:v, mx:'calc(var(--sx_) / 2)'}}
 		
-		let out = {
-			[iv]: v
-			["p{axis}"]: "var({iv})"
-			"& > *": {
-				[ov]: [v]
-				["m{axis}"]: [v]	
-			}
-		}
-		return out
+	def gy [v]
+		v.unit ||= 'u'
+		{$sy_s:v, my:'calc((var(--sy_,0px) - var(--sy_s)) / 2)', "& > *": {$sy_:v, my:'calc(var(--sy_) / 2)'}}
 		
 	def any-layout o
-		# should not set anything if spacing is set either before or after
-		o.px = 'var(--sx,0)'
-		o.py = 'var(--sy,0)'
-
-		o["& > *"] = {
-			mx: 'var(--sx,0)'
-			my: 'var(--sy,0)'
-		}
-		
-	def hflow-layout o
+		o["& > *"] = {position: 'relative'}
+		return
+	
+	def row-layout o
 		any-layout(o)
 		o.display = 'flex'
 		o.ff = 'row wrap'
-		o.jc = 'var(--hflow-jc,inherit)'
+		o.jc = 'var(--row-jc,inherit)'
 		o.ai = 'center'
 		yes
-	
-	def vflow-layout o
+		
+	def col-layout o
 		any-layout(o)
 		o.display = 'flex'
-		o.ff = 'row wrap'
-		o.jc = 'var(--hflow-jc,inherit)' # nah
-		o.ai = 'var(--vflow-ai,inherit)'
+		o.ff = 'column nowrap'
+		o.ai = 'var(--row-jc,stretch)'
+		o.jc = 'var(--col-jc,inherit)'
 		
-		
-	def flow-layout o
+	def auto-layout o
 		any-layout(o)
 		o.display = 'flex'
-		# o.fd = 'var(--flow-fd,row)'
 		o.ai = 'var(--flow-ai,center)'
 		o.ff = 'var(--flow-fd,row) wrap'
-		o.jc = 'var(--hflow-jc,inherit)'
+		o.jc = 'var(--auto-ai,inherit)'
 		
-	def align [v]
-		let str = String(v)
-		let o = {'--align': str}
-		if str == 'left'
-			o.ta = 'left'
-			o['--hflow-jc'] = 'flex-start'
-			o['--flow-fd'] = 'row'
-			o['--flow-ai'] = 'flex-start'
-			o['--vflow-ai'] = 'flex-start'
+	def stack-layout o
+		any-layout(o)
+		o.display = 'flex'
+		o.ff = 'column nowrap'
+		o.ai = 'var(--stack-ai,stretch)'
+		o.jc = 'var(--row-jc,inherit)'
+	
+		
+	def align [...params]
+		
+		let o = {}
+		
+		for par in params
+			let str = String(par)
+			o['--align'] = str
+			if str == 'left'
+				o.ta = 'left'
+				o['--row-jc'] = 'flex-start'
+				o['--flow-fd'] = 'row'
+				o['--flow-ai'] = 'flex-start'
+				o['--auto-ai'] = 'flex-start'
 
-		elif str == 'right'
-			o.ta = 'right'
-			o['--hflow-jc'] = 'flex-end'
-			o['--flow-fd'] = 'row-reverse'
-			o['--flow-ai'] = 'flex-start'
-			o['--vflow-ai'] = 'flex-end'
+			elif str == 'right'
+				o.ta = 'right'
+				o['--row-jc'] = 'flex-end'
+				o['--flow-fd'] = 'row-reverse'
+				o['--flow-ai'] = 'flex-start'
+				o['--auto-ai'] = 'flex-end'
+				
+			elif str == 'center'
+				o.ta = 'center'
+				o['--row-jc'] = 'center'
+				o['--flow-fd'] = 'column'
+				o['--flow-ai'] = 'center'
+				o['--auto-ai'] = 'center'
 			
-		elif str == 'center'
-			o.ta = 'center'
-			o['--hflow-jc'] = 'center'
-			o['--flow-fd'] = 'column'
-			o['--flow-ai'] = 'center'
-			o['--vflow-ai'] = 'center'
+			elif str == 'justify'
+				o.ta = 'left'
+				o['--row-jc'] = 'flex-start'
+				o['--flow-fd'] = 'row'
+				o['--flow-ai'] = 'stretch'
 			
-		elif str == 'justify'
-			o.ta = 'left'
-			o['--hflow-jc'] = 'flex-start'
-			o['--flow-fd'] = 'row'
-			o['--flow-ai'] = 'stretch'
-			
+			elif str == 'top'
+				o['--col-jc'] = 'flex-start'
+			elif str == 'bottom'
+				o['--col-jc'] = 'flex-end'
+			elif str == 'middle'
+				o['--col-jc'] = 'center'
+				
 		return o
 
 			
@@ -508,14 +547,29 @@ export class StyleTheme
 		let schema = options.variants.layout
 		for param,i in params
 			# console.log 'display param',param
+			let next = params[i + 1]
 			let str = String(param)
 			let val = schema[str]
+			let u = param._unit
 			
 			if val
 				Object.assign(out,val)
 			elif self[str+'Layout']
-				console.log 'found layout!!',str
 				self[str+'Layout'](out)
+			elif u == 'col' or u == 'cols' or u == 'c'
+				out.display = 'grid'
+				out.jc = 'var(--row-jc,center)'
+				let w = '1fr'
+				if param.param
+					param.param._unit ||= 'u'
+					w = param.param.c!
+				out['grid-template-columns'] = "repeat({param._number}, {w})"
+
+				# out['grid-template-columns'] = "repeat({param._number}, 1fr)"
+				# elif param._unit == 'c'
+				# 	out['grid-template-columns'] = "repeat({param._number}, 1fr)"
+				# elif param._unit == 'r'
+				# 	out['grid-template-rows'] = "repeat({param._number}, 1fr)"
 			else
 				# TODO check if it is a valid display value
 				out.display = str
@@ -608,8 +662,13 @@ export class StyleTheme
 		
 	def $value value, index, config
 		let key = config
+		let orig = value
+		let result = null
+		# console.log 'resolve value',String(config),value
 		if typeof config == 'string'
-			if config.match(/^((min-|max-)?(width|height)|top|left|bottom|right|padding|margin|sizing|inset|spacing|sx$|sy$|s$)/)
+			if config.match(/^((min-|max-)?(width|height)|top|left|bottom|right|padding|margin|sizing|inset|spacing|sy$|s$|\-\-s[xy])/)
+				config = 'sizing'
+			elif config.match(/^\-\-s[xy]_/)
 				config = 'sizing'
 			elif config.match(/^(border-radius)/)
 				config = 'radius'
@@ -627,16 +686,18 @@ export class StyleTheme
 			value = config[value]
 			
 		if typeof value == 'number' and config.step
-			
+			console.log 'was number??'
 			let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
-			# should we not rather convert hte value
 			return value * parseFloat(num) + unit
 		
-		if typeof value == 'string'
+		elif typeof value == 'string'
 			if let color = $parseColor(value)
 				return color
 			# console.log 'found color!!',self.colors[value]
 			# return self.colors[value]
+			
+		# if value and value._resolvedValue
+		#	return value._resolvedValue
 
 		return value
 		
