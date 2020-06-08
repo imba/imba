@@ -159,7 +159,7 @@ export class Color
 		l = l
 		a = a
 		
-	def alpha v
+	def alpha v = '100%'
 		new Color(name,h,s,l,v)
 	
 	def toString
@@ -364,13 +364,25 @@ export class StyleTheme
 		o.ff = 'var(--flow-fd,row) wrap'
 		o.jc = 'var(--auto-ai,inherit)'
 		
-	def stack-layout o
+	def box-layout o
 		any-layout(o)
 		o.display = 'flex'
 		o.ff = 'column nowrap'
-		o.ai = 'var(--stack-ai,stretch)'
-		o.jc = 'var(--row-jc,inherit)'
-	
+		o.ai = 'var(--box-ai,center)'
+		o.jc = 'var(--box-jc,center)'
+		
+	def stack-layout o, key
+		any-layout(o)
+		
+		o.display = 'grid'
+		if key.param
+			o.gtc = "minmax(auto,{key.param.c!})"
+		else
+			o.gtc = "1fr"
+		o.jc = 'center'
+		# o.ff = 'column nowrap'
+		# o.ai = 'var(--stack-ai,stretch)'
+		# o.jc = 'var(--row-jc,inherit)'
 		
 	def align [...params]
 		
@@ -405,13 +417,17 @@ export class StyleTheme
 				o['--row-jc'] = 'flex-start'
 				o['--flow-fd'] = 'row'
 				o['--flow-ai'] = 'stretch'
+				o['--box-jc'] = 'space-around'
 			
 			elif str == 'top'
 				o['--col-jc'] = 'flex-start'
+				o['--box-jc'] = 'flex-start'
 			elif str == 'bottom'
 				o['--col-jc'] = 'flex-end'
+				o['--box-jc'] = 'flex-end'
 			elif str == 'middle'
 				o['--col-jc'] = 'center'
+				o['--box-jc'] = 'center'
 				
 		return o
 
@@ -555,7 +571,7 @@ export class StyleTheme
 			if val
 				Object.assign(out,val)
 			elif self[str+'Layout']
-				self[str+'Layout'](out)
+				self[str+'Layout'](out,param)
 			elif u == 'col' or u == 'cols' or u == 'c'
 				out.display = 'grid'
 				out.jc = 'var(--row-jc,center)'
@@ -564,7 +580,6 @@ export class StyleTheme
 					param.param._unit ||= 'u'
 					w = param.param.c!
 				out['grid-template-columns'] = "repeat({param._number}, {w})"
-
 				# out['grid-template-columns'] = "repeat({param._number}, 1fr)"
 				# elif param._unit == 'c'
 				# 	out['grid-template-columns'] = "repeat({param._number}, 1fr)"
@@ -645,6 +660,8 @@ export class StyleTheme
 		if let m = key.match(colorRegex)
 			let color = self.colors[m[1]]
 			let rest = key.replace(colorRegex,'')
+			# console.log 'found color!!'
+			# identifier.color = color
 			if m = rest.match(/^\-(\d+)$/)
 				color = color.alpha(m[1] + '%')
 			# let name = key.replace(colorRegex,'COLOR').replace(/\-/g,'_')
@@ -686,7 +703,6 @@ export class StyleTheme
 			value = config[value]
 			
 		if typeof value == 'number' and config.step
-			console.log 'was number??'
 			let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
 			return value * parseFloat(num) + unit
 		

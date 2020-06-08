@@ -8567,10 +8567,15 @@ export class StyleDeclaration < StyleNode
 		
 		if o:styles
 			let key = @property.toKey
+			let val = @expr
 			if o:selector
 				key = JSON.stringify([o:selector,key])
 				
-			o:styles[key] = @expr.c
+			if @property.isUnit
+				if @property.number != 1
+					val = LIT("calc({val.c} / {@property.number})")
+
+			o:styles[key] = val.c(property: @property)
 		self
 		
 	def toCSS
@@ -8583,11 +8588,18 @@ export class StyleDeclaration < StyleNode
 export class StyleProperty < StyleNode
 
 	prop name
+	prop number
+	prop unit
 	# modifiers
 	# values
 	def initialize token
 		@token = token
-		@parts = String(@token).replace(/(^|\b)\$/g,'--').split('.')
+		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
+		@name = String(@parts[0])
+		
+		if let m = @name.match(/^(\d+)([a-zA-Z]+)$/)
+			@number = parseInt(m[1])
+			@unit = m[2]
 
 	def name
 		@name ||= String(@parts[0])
@@ -8598,6 +8610,9 @@ export class StyleProperty < StyleNode
 	def addModifier modifier
 		@parts.push(modifier)
 		self
+		
+	def isUnit
+		@unit
 
 	def modifiers
 		@parts.slice(1)
@@ -8609,7 +8624,9 @@ export class StyleProperty < StyleNode
 		name + modifiers.join(".")
 		
 	def toKey
-		@parts.join('.')
+		let name = isUnit ? "--u_{@unit}" : self.name
+		[name].concat(modifiers).join('.')
+		# @parts.join('.')
 
 	def c
 		toString
@@ -8712,6 +8729,9 @@ export class StyleTerm < ValueNode
 		
 	def toString
 		String(@value)
+		
+	def toAlpha
+		toString
 
 	def visit stack, o
 		@token = @value
@@ -8733,7 +8753,6 @@ export class StyleTerm < ValueNode
 		
 	def c
 		(@resolvedValue and !(@resolvedValue isa Node)) ? @resolvedValue : valueOf
-		# number
 
 export class StyleFunction < Node
 
@@ -8755,8 +8774,17 @@ export class StyleFunction < Node
 		"{String(@name)}({@params.c})"
 
 export class StyleIdentifier < StyleTerm
+	prop color
+
+	def visit stack
+		if let c = stack.theme:colors[toString]
+			color = c.alpha(self:param ? self:param.toAlpha : '100%')
+		
+		super
+		
 	
 	def c
+		return color.toString if color
 		let val = toString
 		val[0] == '$' ? "var(--{val.slice(1)})" : super
 
@@ -8769,6 +8797,8 @@ export class StyleVar < StyleTerm
 	def c
 		toString
 		# "var(--{toString})"
+
+var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax %'.split(' ')
 
 export class StyleDimension < StyleTerm
 	
@@ -8786,8 +8816,17 @@ export class StyleDimension < StyleTerm
 			return number * 4 + 'px'
 		elif unit == null
 			return number
-		else
+		elif unit in VALID_CSS_UNITS
 			return String(@value)
+		else
+			return "calc(var(--u_{unit},{String(@value)}) * {@number})"
+			# return String(@value)
+			
+	def toAlpha
+		unless unit
+			return number + '%'
+		else
+			return valueOf
 
 export class StyleNumber < StyleDimension
 	# prop unit
