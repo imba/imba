@@ -8811,6 +8811,12 @@ export class StyleDimension < StyleTerm
 		@number = parseFloat(m[1])
 		@unit = m[2] or null
 		
+	def clone num = @number, unit = @unit
+		let cloned = StyleDimension.new(value)
+		cloned.@unit =  unit
+		cloned.@number = num
+		return cloned
+		
 	def valueOf
 		if unit == 'u'
 			return number * 4 + 'px'

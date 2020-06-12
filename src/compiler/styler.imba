@@ -33,9 +33,16 @@ export const aliases =
 	s: 'spacing'
 	sx: 'spacing-x'
 	sy: 'spacing-y'
+	st: 'spacing-top'
+	sr: 'spacing-right'
+	sb: 'spacing-bottom'
+	sl: 'spacing-left'
 	
 	w: 'width'
 	h: 'height'
+	wh: ['width','height']
+	
+	# child width and child height
 	
 	# offsets / positions
 	ot: 'top'
@@ -46,6 +53,10 @@ export const aliases =
 	otr: ['top','right']
 	obr: ['bottom','right']
 	obl: ['bottom','left']
+	obx: ['bottom','left','right']
+	otx: ['top','left','right']
+	oly: ['left','top','bottom']
+	ory: ['right','top','bottom']
 	
 	# alignment
 	a: 'align'
@@ -53,22 +64,30 @@ export const aliases =
 	as: 'align-self'
 	ac: 'align-content'
 	jc: 'justify-content'
+	js: 'justify-self'
 	ji: 'justify-items'
+	pc: 'place-content'
+	ps: 'place-self'
+	pi: 'place-items'
 	
 	# flex
-	f: 'flex'
-	ff: 'flex-flow' # support up/down/left/right aliases
-
-	# margins
-	is: 'composition'
-	layout:'display'
-	d: 'display'
 	
-	l: 'layout'
+	ff: 'flex-flow' # support up/down/left/right aliases
+	fb: 'flex-basis'
+	
+	# fonts
+	fs: 'font-size'
+	fw: 'font-weight'
+	# fs: 'font-style'
+	
+	# margins
+	# l: 'layout'
+	is: 'layout'
+	d: 'display'
+	f: 'font' # shorthand?
 	t: 'text'
 	c: 'color'
 
-	
 	# borders
 	b: 'border'
 	bt: 'border-top'
@@ -112,11 +131,14 @@ export const aliases =
 	bgs: 'background-size'
 	
 	# TODO decide on one of these
-	round: 'border-radius'
+	# round: 'border-radius'
 	radius: 'border-radius'
-	r: 'border-radius'
-	
-	
+	brr: ['border-top-right-radius','border-bottom-right-radius']
+	bbr: ['border-bottom-left-radius','border-bottom-right-radius']
+	btr: ['border-top-left-radius','border-top-right-radius']
+	blr: ['border-top-left-radius','border-bottom-left-radius']
+	# r: 'border-radius'
+
 	# grid
 	gtr: 'grid-template-rows'
 	gtc: 'grid-template-columns'
@@ -145,6 +167,7 @@ export const aliases =
 
 	va: 'vertical-align'
 	ls: 'letter-spacing'
+	lh: 'line-height'
 	ws: 'white-space'
 	
 	prefix: 'content.before'
@@ -164,6 +187,9 @@ export class Color
 	
 	def toString
 		"hsla({h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
+		
+	def c
+		toString!
 
 export class Length
 	
@@ -187,6 +213,15 @@ export class Length
 		
 	def rounded
 		clone(Math.round(number))
+		
+	def c
+		toString!
+	
+	get _unit
+		unit
+	
+	get _number
+		number
 
 # This has to move into StyleTheme class
 var palette = {
@@ -332,11 +367,19 @@ export class StyleTheme
 		
 	def gx [v]
 		v.unit ||= 'u'
-		{$sx_s:v, mx:'calc((var(--sx_,0px) - var(--sx_s)) / 2)', "& > *": {$sx_:v, mx:'calc(var(--sx_) / 2)'}}
+		{
+			'column-gap': v
+			'--gx': v
+			# $sx_s:v, mx:'calc((var(--sx_,0px) - var(--sx_s)) / 2)', "& > *": {$sx_:v, mx:'calc(var(--sx_) / 2)'}
+		}
 		
 	def gy [v]
 		v.unit ||= 'u'
-		{$sy_s:v, my:'calc((var(--sy_,0px) - var(--sy_s)) / 2)', "& > *": {$sy_:v, my:'calc(var(--sy_) / 2)'}}
+		{
+			'row-gap': v
+			'--gy': v
+			# $sy_s:v, my:'calc((var(--sy_,0px) - var(--sy_s)) / 2)', "& > *": {$sy_:v, my:'calc(var(--sy_) / 2)'}
+		}
 		
 	def any-layout o
 		o["& > *"] = {position: 'relative'}
@@ -357,12 +400,20 @@ export class StyleTheme
 		o.ai = 'var(--row-jc,stretch)'
 		o.jc = 'var(--col-jc,inherit)'
 		
+	def cluster-layout o
+		o.display = 'flex'
+		o.ff = 'row wrap'
+		o.jc = 'var(--row-jc,inherit)'
+		o.ai = 'center'
+		o.margin = 'calc(var(--gy) * -0.5) calc(var(--gx) * -0.5)' # weak padding
+		o["& > *"] = {margin:'calc(var(--gy) / 2) calc(var(--gx) / 2)'}
+		
 	def auto-layout o
 		any-layout(o)
 		o.display = 'flex'
 		o.ai = 'var(--flow-ai,center)'
-		o.ff = 'var(--flow-fd,row) wrap'
-		o.jc = 'var(--auto-ai,inherit)'
+		o.ff = 'var(--flow-fd,row) nowrap'
+		o.jc = 'var(--flow-ai,inherit)'
 		
 	def box-layout o
 		any-layout(o)
@@ -370,6 +421,25 @@ export class StyleTheme
 		o.ff = 'column nowrap'
 		o.ai = 'var(--box-ai,center)'
 		o.jc = 'var(--box-jc,center)'
+		
+	def cols-layout o, key
+		o.display = 'grid'
+		o['row-gap'] = 'var(--gy,inherit)'
+		o['column-gap'] = 'var(--gx,inherit)'
+		o.gaf = 'column'
+		o.gac = 'minmax(0,100%)'
+		
+	def rows-layout o, key
+		o.display = 'grid'
+		o['row-gap'] = 'var(--gy,inherit)'
+		o['column-gap'] = 'var(--gx,inherit)'
+		o.gaf = 'row'
+		o.gar = 'auto'
+		if key.param
+			o.gtc = "minmax(auto,{key.param.c!})"
+		else
+			o.gtc = "1fr"
+		
 		
 	def stack-layout o, key
 		any-layout(o)
@@ -384,6 +454,13 @@ export class StyleTheme
 		# o.ai = 'var(--stack-ai,stretch)'
 		# o.jc = 'var(--row-jc,inherit)'
 		
+	def cluster2-layout o
+		any-layout(o)
+		o.display = 'flex'
+		o.ff = 'row wrap'
+		o.jc = 'var(--row-jc,inherit)'
+		o.ai = 'center'
+		
 	def align [...params]
 		
 		let o = {}
@@ -396,21 +473,18 @@ export class StyleTheme
 				o['--row-jc'] = 'flex-start'
 				o['--flow-fd'] = 'row'
 				o['--flow-ai'] = 'flex-start'
-				o['--auto-ai'] = 'flex-start'
 
 			elif str == 'right'
 				o.ta = 'right'
 				o['--row-jc'] = 'flex-end'
 				o['--flow-fd'] = 'row-reverse'
 				o['--flow-ai'] = 'flex-start'
-				o['--auto-ai'] = 'flex-end'
 				
 			elif str == 'center'
 				o.ta = 'center'
 				o['--row-jc'] = 'center'
 				o['--flow-fd'] = 'column'
 				o['--flow-ai'] = 'center'
-				o['--auto-ai'] = 'center'
 			
 			elif str == 'justify'
 				o.ta = 'left'
@@ -474,6 +548,53 @@ export class StyleTheme
 
 		Object.assign(out,{'transition': parts},add)
 		return out
+		
+	def font-size [v]
+		
+		let sizes = options.variants.fontSize
+		let raw = String(v)
+		let size = v
+		let lh
+		let out = {}
+		
+		if sizes[raw]
+			[size,lh] = sizes[raw]
+			size = Length.parse(size)
+			lh = Length.parse(lh or '')
+		
+		if v.param and v.param
+			lh = v.param
+			
+		out['font-size'] = size
+		
+		if lh
+			let lhu = lh._unit
+			let lhn = lh._number
+			out.lh = lh
+			if lhu == 'fs'
+				out.lh = new Length(lhn)
+			elif lhu
+				out.lh = lh
+			elif lhn == 0
+				out.lh = 'inherit'
+			elif lhn and size._unit == 'px'
+				let rounded = Math.round(size._number * lhn)
+				if rounded % 2 == 1
+					rounded++
+				out.lh = new Length(rounded,'px')
+		
+		return out
+		
+	def line-height [v]
+		let uvar = v
+		if v._number and !v._unit
+			uvar = v.clone(v._number,'em')
+			
+		return {
+			'line-height': v
+			'--u_lh': uvar
+		}
+		
 	
 	def text [...params]
 		let out = {}
@@ -544,7 +665,7 @@ export class StyleTheme
 		# extract bold
 		return out
 		
-	def layout [...params]
+	def layout_old [...params]
 		let out = {}
 		let schema = options.variants.layout
 		for param,i in params
@@ -558,7 +679,7 @@ export class StyleTheme
 		# extract bold
 		return out
 		
-	def display [...params]
+	def layout [...params]
 		let out = {}
 		let schema = options.variants.layout
 		for param,i in params
@@ -574,7 +695,8 @@ export class StyleTheme
 				self[str+'Layout'](out,param)
 			elif u == 'col' or u == 'cols' or u == 'c'
 				out.display = 'grid'
-				out.jc = 'var(--row-jc,center)'
+				out.jc = 'var(--cols-jc,center)'
+				
 				let w = '1fr'
 				if param.param
 					param.param._unit ||= 'u'
@@ -685,9 +807,11 @@ export class StyleTheme
 		if typeof config == 'string'
 			if config.match(/^((min-|max-)?(width|height)|top|left|bottom|right|padding|margin|sizing|inset|spacing|sy$|s$|\-\-s[xy])/)
 				config = 'sizing'
-			elif config.match(/^\-\-s[xy]_/)
+			elif config.match(/^\-\-[gs][xy]_/)
 				config = 'sizing'
-			elif config.match(/^(border-radius)/)
+			elif config.match(/^(row-|column-)?gap/)
+				config = 'sizing'
+			elif config.match(/^border-.*radius/)
 				config = 'radius'
 			elif config.match(/^tween|transition/) and options.variants.easings[String(value)]
 				return options.variants.easings[String(value)]
