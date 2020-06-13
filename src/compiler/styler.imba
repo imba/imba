@@ -858,11 +858,24 @@ class Selectors
 	def $parse context, states,options
 		let rule = '&'
 		o = {context: context, media: [], it:[], up:[]}
-		
+
+		let i = 0
+		while i < states.length
+			let item = states[i]
+			let pars = null
+			if item isa Array
+				pars = item.slice(1)
+				item = item[0]
+			
+			# could be a rather long selector?
+			
+			i++
 	
 		for state in states
 			let res
 			let params = []
+			
+			if state 
 			
 			if state isa Array
 				params = state.slice(1)
@@ -942,6 +955,12 @@ class Selectors
 	
 	def focus sel
 		pseudo(':focus',sel)
+	
+	def focin sel
+		pseudo(':focus-within',sel)
+	
+	def focus_within sel
+		pseudo(':focus-within',sel)
 
 	def active sel
 		pseudo(':active',sel)
@@ -957,10 +976,7 @@ class Selectors
 	
 	def disabled sel
 		pseudo(':disabled',sel)
-		
-	def focus_within sel
-		pseudo(':focus-within',sel)
-		
+
 	def odd sel
 		pseudo(':nth-child(odd)',sel)		
 		
@@ -977,7 +993,7 @@ class Selectors
 		pseudo(':empty',sel)
 		
 	def hocus
-		'&:matches(:focus,:hover)'
+		'&:matches(:focus,:hover,:focus-within)'
 		
 	def _in sel
 		sel.indexOf('&') >= 0 ? sel : "{sel} &"
@@ -1010,15 +1026,19 @@ export const TransformMixin = '''
 	transform: translate3d(var(--t_x),var(--t_y),var(--t_z)) rotate(var(--t_rotate)) skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 '''
 
+import * as selparser from './selparse'
+
+export class StyleSheet
+
 export class StyleRule
 	
 	def constructor parent,context,states,modifiers,options = {}
 		parent = parent
 		context = context
 		states = states
-		selector = Selectors.parse(context,states,options)
+		rawSelector = context
+		selector = states ? Selectors.parse(context,states,options) : context
 		rules = modifiers
-		selectors = {}
 		options = options
 		meta = {}
 		
@@ -1026,12 +1046,8 @@ export class StyleRule
 		parent ? parent.root : self
 		
 	def toString
-		let sel = selector
 		let parts = []
 		let subrules = []
-		
-		options.selectors ||= []
-		options.selectors.push(sel)
 
 		for own key,value of rules
 			continue if value == undefined
@@ -1039,20 +1055,28 @@ export class StyleRule
 			let subsel = null
 			
 			if key.indexOf('&') >= 0
+				
 				# let substates = states.concat([[key]])
 				# parse through the media queries etc?
 				let substates = ([[key]]).concat(states)
-				subrules.push new StyleRule(self,context,substates,value,options)
+				# what if it has no & ? -- and what if is the child of multiple?
+				# let subsel = key.replace(/\&/g,selector)
+				
+				let subsel = selparser.unwrap(selector,key)
+				console.log 'key selector',key,subsel
+				subrules.push new StyleRule(self,subsel,null,value,options)
 				continue
 			
 			elif key.indexOf('~') >= 0
 				let keys = key.split('~')
 				# let substates = states.concat(keys.slice(1))
 				let substates = keys.slice(1).concat(states)
+				let subsel = selector + ' ' + keys.slice(1).join(' ')
 				# TODO use interpolated key?
+				console.log 'subsel',subsel
 				let obj = {}
-				obj[keys[0]] = value				
-				subrules.push new StyleRule(self,context,substates,obj,options)
+				obj[keys[0]] = value
+				subrules.push new StyleRule(self,subsel,null,obj,options)
 				continue
 			
 			elif key[0] == '['
@@ -1060,7 +1084,7 @@ export class StyleRule
 				# this is only for a single property
 				let o = JSON.parse(key)
 				let substates = states.concat(o)
-				subrules.push new StyleRule(self,context,substates,value,options)
+				subrules.push new StyleRule(self,selector,substates,value,options)
 				continue
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
@@ -1070,9 +1094,13 @@ export class StyleRule
 				parts.push "--t_{key}: {value} !important;"
 			else
 				parts.push "{key}: {value};"
-				
-		let out = sel + ' {\n' + parts.join('\n') + '\n}'
-		out += '}' if sel.indexOf('@media') >= 0
+		
+		let content = parts.join('\n')
+		let sel = selparser.parse(selector,options)
+		let out = selparser.render(sel,content)
+
+		# let out = sel + ' {\n' + parts.join('\n') + '\n}'
+		# out += '}' if sel.indexOf('@media') >= 0
 		
 		for own subrule in subrules
 			out += '\n' + subrule.toString()

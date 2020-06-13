@@ -355,6 +355,9 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         (rule = rule || {}).tagName = '*';
       } else if (isIdentStart(chr) || chr === '\\') {
         (rule = rule || {}).tagName = getIdent();
+      } else if (chr === '$') {
+        pos++;
+        (rule = rule || {}).tagName = '$' + getIdent();
       } else if (chr === '.') {
         pos++;
         rule = rule || {};
@@ -420,10 +423,13 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         }
         rule = rule || {};
         (rule.attrs = rule.attrs || []).push(attr);
-      } else if (chr === ':') {
+      } else if (chr === ':' || chr === '@') {
+        let special = chr === '@';
+        
         pos++;
         var pseudoName = getIdent();
         var pseudo = {
+          special: special,
           name: pseudoName
         };
         if (chr === '(') {

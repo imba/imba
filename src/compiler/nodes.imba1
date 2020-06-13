@@ -8451,7 +8451,7 @@ export class StyleRuleSet < StyleNode
 		@body?.traverse(rule: self, styles: @styles)
 		
 		if o:rule and o:styles
-			if o:styles[@sel]
+			if o:styles[@sel] # '§ '+
 				Object.assign(o:styles[@sel],@styles)
 			else
 				o:styles[@sel] = @styles
@@ -8463,7 +8463,8 @@ export class StyleRuleSet < StyleNode
 				localid: @tagDeclaration && @tagDeclaration.cssref
 			}
 
-			@css = StyleRule.new(null,@sel,[],@styles,opts).toString
+			@css = StyleRule.new(null,@sel,null,@styles,opts).toString
+			console.log 'compile style',@sel
 
 			if opts:hasLocalRules and @tagDeclaration
 				@tagDeclaration.set(hasScopedStyles: yes)
