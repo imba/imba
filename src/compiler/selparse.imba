@@ -12,7 +12,8 @@ const PSEUDO_ALIASES = {
 
 def addClass rule, name
 	rule.classNames ||= []
-	rule.classNames.push(name)
+	if rule.classNames.indexOf(name) == -1
+		rule.classNames.push(name)
 	return rule
 
 def addPseudo rule, pseudo
@@ -77,8 +78,14 @@ export def rewrite rule,ctx,scope = {}
 			
 			if name and name[0] == '$'
 				part.tagName = null
-				flags.unshift(name.slice(1))
-				flags.unshift(scope.localid)
+				addClass(part,name.slice(1))
+				addClass(part,scope.localid)
+				# flags.unshift(name.slice(1))
+				# flags.unshift(scope.localid)
+				
+			if scope.forceLocal
+				addClass(part,scope.localid)
+				# flags.unshift(scope.localid)
 			
 			for mod in mods when mod.special
 				
@@ -90,7 +97,7 @@ export def rewrite rule,ctx,scope = {}
 				elif mod.name == 'local'
 					mod.remove = yes
 					scope.hasLocalRules = yes
-					flags.push(scope.localid)
+					flags.push(scope.localid) if scope.localid
 				
 				elif PSEUDO_ALIASES[mod.name]
 					Object.assign(mod,PSEUDO_ALIASES[mod.name])

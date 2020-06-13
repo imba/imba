@@ -8462,6 +8462,7 @@ export class StyleRuleSet < StyleNode
 				selectors:[],
 				localid: @tagDeclaration && @tagDeclaration.cssref
 				base: @basesel
+				forceLocal: option(:local)
 			}
 
 			@css = StyleRule.new(null,@sel,@styles,opts).toString

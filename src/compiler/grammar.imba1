@@ -886,7 +886,7 @@ var grammar =
 		o 'Decorators'
 		o 'ClassDeclLine'
 		o 'Decorators ClassDeclLine' do A1.concat([A2])
-		o 'StyleBlockDeclaration'
+		o 'CSSDeclaration'
 		o 'Comment'
 		o 'Tag'
 	]
