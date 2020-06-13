@@ -8494,6 +8494,13 @@ export class StyleBody < ListNode
 	def visit
 		let items = @nodes
 		let i = 0
+			
+		let prevname
+		for item in items when item isa StyleDeclaration
+			if !item.@property.@name
+				item.@property.name = prevname
+
+			prevname = item.@property.@name
 
 		while i < items:length
 			let item = items[i]
@@ -8594,18 +8601,32 @@ export class StyleProperty < StyleNode
 	# values
 	def initialize token
 		@token = token
-		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
-		@name = String(@parts[0])
+		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=\.|\@)/g) # .split(/[\.\@]/g)
+		# @parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
+		@name  = String(@parts[0])
 		
 		if let m = @name.match(/^(\d+)([a-zA-Z]+)$/)
 			@number = parseInt(m[1])
 			@unit = m[2]
+			
+		if @name.match(/^[\@\.]/)
+			@parts.unshift(@name = null)
+
+		self
+	
+	def name= value
+		if let m = value.match(/^(\d+)([a-zA-Z]+)$/)
+			@number = parseInt(m[1])
+			@unit = m[2]
+		else
+			@number = @unit = null
+		@name = value
 
 	def name
 		@name ||= String(@parts[0])
 
 	def clone newname
-		StyleProperty.new([newname or name].concat(modifiers).join("."))
+		StyleProperty.new([newname or name].concat(modifiers).join(""))
 
 	def addModifier modifier
 		@parts.push(modifier)
@@ -8618,14 +8639,14 @@ export class StyleProperty < StyleNode
 		@parts.slice(1)
 
 	def toJSON
-		name + modifiers.join(".")
+		name + modifiers.join("~")
 
 	def toString
-		name + modifiers.join(".")
+		name + modifiers.join("~")
 		
 	def toKey
 		let name = isUnit ? "--u_{@unit}" : self.name
-		[name].concat(modifiers).join('.')
+		[name].concat(modifiers).join('~')
 		# @parts.join('.')
 
 	def c
@@ -8798,7 +8819,7 @@ export class StyleVar < StyleTerm
 		toString
 		# "var(--{toString})"
 
-var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax %'.split(' ')
+var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms'.split(' ')
 
 export class StyleDimension < StyleTerm
 	

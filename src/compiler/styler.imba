@@ -153,6 +153,7 @@ export const aliases =
 	ga: 'grid-area'
 	gr: 'grid-row'
 	gc: 'grid-column'
+	gt: 'grid-template'
 	grs: 'grid-row-start'
 	gcs: 'grid-column-start'
 	gre: 'grid-row-end'
@@ -169,6 +170,9 @@ export const aliases =
 	ls: 'letter-spacing'
 	lh: 'line-height'
 	ws: 'white-space'
+	zi: 'z-index'
+	o: 'opacity'
+	tween: 'transition'
 	
 	prefix: 'content.before'
 	suffix: 'content.after'
@@ -227,6 +231,7 @@ export class Length
 var palette = {
 	current: {string: "currentColor"}
 	transparent: new Color('transparent',0,0,100,'0%')
+	clear: new Color('transparent',100,100,100,'0%')
 	black: new Color('black',0,0,0,'100%')
 	white: new Color('white',0,0,100,'100%')
 }
@@ -571,6 +576,7 @@ export class StyleTheme
 			let lhu = lh._unit
 			let lhn = lh._number
 			out.lh = lh
+			# supprt base unit as well?
 			if lhu == 'fs'
 				out.lh = new Length(lhn)
 			elif lhu
@@ -587,6 +593,7 @@ export class StyleTheme
 		
 	def line-height [v]
 		let uvar = v
+		# TODO what if it has u unit?
 		if v._number and !v._unit
 			uvar = v.clone(v._number,'em')
 			
@@ -850,10 +857,9 @@ class Selectors
 	
 	def $parse context, states,options
 		let rule = '&'
-		o = {context: context, media: []}
+		o = {context: context, media: [], it:[], up:[]}
 		
-		
-		
+	
 		for state in states
 			let res
 			let params = []
@@ -861,8 +867,17 @@ class Selectors
 			if state isa Array
 				params = state.slice(1)
 				state = state[0]
+				
+			if state[0] == '@'
+				state = state.slice(1)
 			
-			if !self[state] and self[state.replace(/\-/g,'_')]
+			if state[0] == '.'
+				if state[1] == '.'
+					o.up.push(state.slice(1))
+				else
+					o.it.push(state)
+
+			elif !self[state] and self[state.replace(/\-/g,'_')]
 				state = state.replace(/\-/g,'_')
 
 			unless self[state]
@@ -890,6 +905,11 @@ class Selectors
 
 		# should reall parse the full selectors here
 		
+		rule = rule.replace(/&/g,'&'+o.it.join(''))
+		
+		# how to merge in up-selectors?
+		if o.up.length
+			rule = rule.replace(/&/g,o.up.join('') + ' &')
 
 		let sel = rule.replace(/\&/g,context)
 		
@@ -1020,13 +1040,13 @@ export class StyleRule
 			
 			if key.indexOf('&') >= 0
 				# let substates = states.concat([[key]])
+				# parse through the media queries etc?
 				let substates = ([[key]]).concat(states)
 				subrules.push new StyleRule(self,context,substates,value,options)
 				continue
 			
-			elif key.indexOf('.') >= 0
-				let keys = key.split('.')
-				
+			elif key.indexOf('~') >= 0
+				let keys = key.split('~')
 				# let substates = states.concat(keys.slice(1))
 				let substates = keys.slice(1).concat(states)
 				# TODO use interpolated key?

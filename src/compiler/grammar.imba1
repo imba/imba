@@ -744,6 +744,7 @@ var grammar =
 	VarBlockAssign: [
 		o 'VarAssignable' do [A1]
 		o 'VarAssignable = Expression' do [A1,A3]
+		o 'VarAssignable = StyleBlockDeclaration' do [A1,A3]
 		o 'VarAssignable = INDENT Expression Outdent' do [A1,A4.indented(A3,A5)]
 	]
 
