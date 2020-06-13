@@ -8464,7 +8464,7 @@ export class StyleRuleSet < StyleNode
 				base: @basesel
 			}
 
-			@css = StyleRule.new(null,@sel,null,@styles,opts).toString
+			@css = StyleRule.new(null,@sel,@styles,opts).toString
 
 			if opts:hasLocalRules and @tagDeclaration
 				@tagDeclaration.set(hasScopedStyles: yes)

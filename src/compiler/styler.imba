@@ -849,177 +849,6 @@ export class StyleTheme
 		return value
 		
 # should not happen at root - but create a theme instance
-
-class Selectors
-	static def parse context, states, options
-		let parser = new self
-		parser.$parse(context,states,options)
-	
-	def $parse context, states,options
-		let rule = '&'
-		o = {context: context, media: [], it:[], up:[]}
-
-		let i = 0
-		while i < states.length
-			let item = states[i]
-			let pars = null
-			if item isa Array
-				pars = item.slice(1)
-				item = item[0]
-			
-			# could be a rather long selector?
-			
-			i++
-	
-		for state in states
-			let res
-			let params = []
-			
-			if state 
-			
-			if state isa Array
-				params = state.slice(1)
-				state = state[0]
-				
-			if state[0] == '@'
-				state = state.slice(1)
-			
-			if state[0] == '.'
-				if state[1] == '.'
-					o.up.push(state.slice(1))
-				else
-					o.it.push(state)
-
-			elif !self[state] and self[state.replace(/\-/g,'_')]
-				state = state.replace(/\-/g,'_')
-
-			unless self[state]
-				
-				if let media = breakpoints[state]
-					o.media.push(media)
-					continue
-					
-				elif state.indexOf('&') >= 0
-					res = state
-				else
-					let [prefix,...flags] = state.split('-')
-					prefix = '_'+prefix if prefix == 'in' or prefix == 'is'
-
-					if self[prefix] and flags.length
-						params.unshift(".{flags.join('.')}")
-						state = prefix
-			
-			if self[state]
-				res = self[state](...params)
-			
-
-			if typeof res == 'string'
-				rule = rule.replace('&',res)
-
-		# should reall parse the full selectors here
-		
-		rule = rule.replace(/&/g,'&'+o.it.join(''))
-		
-		# how to merge in up-selectors?
-		if o.up.length
-			rule = rule.replace(/&/g,o.up.join('') + ' &')
-
-		let sel = rule.replace(/\&/g,context)
-		
-		sel = sel.replace(/\$([\w\-]+)/g) do(m,ref)
-			".{options.localid}.{ref}"
-		
-		sel = sel.replace(/\:local/g) do(m)
-			options.hasLocalRules = yes
-			".{options.localid}"
-
-		sel = sel.replace(/@([\w\-]+)/g) do(m,breakpoint)
-			if let match = breakpoints[breakpoint]
-				o.media.push(match)
-				return ""
-			return m
-
-		o.selectors = [sel]
-		if o.media.length
-			sel = '@media ' + o.media.join(' and ') + '{ ' + sel
-		return sel
-
-	def any
-		'&'
-		
-	def pseudo type,sel
-		sel ? "{sel}{type} &" : "&{type}"
-
-	def hover sel
-		pseudo(':hover',sel)
-	
-	def focus sel
-		pseudo(':focus',sel)
-	
-	def focin sel
-		pseudo(':focus-within',sel)
-	
-	def focus_within sel
-		pseudo(':focus-within',sel)
-
-	def active sel
-		pseudo(':active',sel)
-	
-	def before sel
-		pseudo('::before',sel)
-
-	def after sel
-		pseudo('::after',sel)
-		
-	def visited sel
-		pseudo(':visited',sel)
-	
-	def disabled sel
-		pseudo(':disabled',sel)
-
-	def odd sel
-		pseudo(':nth-child(odd)',sel)		
-		
-	def even sel
-		pseudo(':nth-child(even)',sel)
-		
-	def first sel
-		pseudo(':first-child',sel)
-		
-	def last sel
-		pseudo(':last-child',sel)
-		
-	def empty sel
-		pseudo(':empty',sel)
-		
-	def hocus
-		'&:matches(:focus,:hover,:focus-within)'
-		
-	def _in sel
-		sel.indexOf('&') >= 0 ? sel : "{sel} &"
-	
-	def _is sel
-		sel.indexOf('&') >= 0 ? sel : "&{sel}"
-	
-	def up sel
-		sel.indexOf('&') >= 0 ? sel : "{sel} &"
-	
-	def sel sel
-		sel.indexOf('&') >= 0 ? sel : "& {sel}"
-	
-	# selector matching the custom component we are inside
-	def scope sel
-		sel.indexOf('&') >= 0 ? sel : "{sel} &"
-
-	# :light
-	# :dark
-	# :ios
-	# :android
-	# :mac
-	# :windows
-	# :linux
-	# :print
-
 	
 export const TransformMixin = '''
 	--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;--t_scale:1;--t_scale-x:1;--t_scale-y:1;--t_skew-x:0;--t_skew-y:0;
@@ -1028,17 +857,12 @@ export const TransformMixin = '''
 
 import * as selparser from './selparse'
 
-export class StyleSheet
-
 export class StyleRule
 	
-	def constructor parent,context,states,modifiers,options = {}
+	def constructor parent,selector,content,options = {}
 		parent = parent
-		context = context
-		states = states
-		rawSelector = context
-		selector = states ? Selectors.parse(context,states,options) : context
-		rules = modifiers
+		selector = selector
+		content = content
 		options = options
 		meta = {}
 		
@@ -1049,40 +873,30 @@ export class StyleRule
 		let parts = []
 		let subrules = []
 
-		for own key,value of rules
+		for own key,value of self.content
 			continue if value == undefined
 			
 			let subsel = null
 			
 			if key.indexOf('&') >= 0
-				# let substates = states.concat([[key]])
-				# parse through the media queries etc?
-				# let substates = ([[key]]).concat(states)
-				# what if it has no & ? -- and what if is the child of multiple?
-				# let subsel = key.replace(/\&/g,selector)
 				let subsel = selparser.unwrap(selector,key)
-				# console.log 'key selector',key,subsel
-				subrules.push new StyleRule(self,subsel,null,value,options)
+				subrules.push new StyleRule(self,subsel,value,options)
 				continue
 			
 			elif key.indexOf('~') >= 0
 				let keys = key.split('~')
-				# let substates = states.concat(keys.slice(1))
-				# let substates = keys.slice(1).concat(states)
 				let subsel = selparser.unwrap(selector,keys.slice(1).join(' '))
-				# TODO use interpolated key?
-				# console.log 'subsel',subsel
 				let obj = {}
 				obj[keys[0]] = value
-				subrules.push new StyleRule(self,subsel,null,obj,options)
+				subrules.push new StyleRule(self,subsel,obj,options)
 				continue
 			
 			elif key[0] == '['
 				# better to just check if key contains '.'
 				# this is only for a single property
+				console.warn "DEPRECATED",key,self
 				let o = JSON.parse(key)
-				let substates = states.concat(o)
-				subrules.push new StyleRule(self,selector,substates,value,options)
+				subrules.push new StyleRule(self,selector,value,options)
 				continue
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
@@ -1097,9 +911,6 @@ export class StyleRule
 		let sel = selparser.parse(selector,options)
 		let out = selparser.render(sel,content)
 
-		# let out = sel + ' {\n' + parts.join('\n') + '\n}'
-		# out += '}' if sel.indexOf('@media') >= 0
-		
 		for own subrule in subrules
 			out += '\n' + subrule.toString()
 
