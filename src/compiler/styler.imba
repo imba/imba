@@ -909,7 +909,7 @@ export class StyleRule
 		
 		let content = parts.join('\n')
 		let sel = selparser.parse(selector,options)
-		let out = selparser.render(sel,content)
+		let out = content.match(/[^\n\s]/) ? selparser.render(sel,content) : ""
 
 		for own subrule in subrules
 			out += '\n' + subrule.toString()
