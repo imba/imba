@@ -1055,25 +1055,23 @@ export class StyleRule
 			let subsel = null
 			
 			if key.indexOf('&') >= 0
-				
 				# let substates = states.concat([[key]])
 				# parse through the media queries etc?
-				let substates = ([[key]]).concat(states)
+				# let substates = ([[key]]).concat(states)
 				# what if it has no & ? -- and what if is the child of multiple?
 				# let subsel = key.replace(/\&/g,selector)
-				
 				let subsel = selparser.unwrap(selector,key)
-				console.log 'key selector',key,subsel
+				# console.log 'key selector',key,subsel
 				subrules.push new StyleRule(self,subsel,null,value,options)
 				continue
 			
 			elif key.indexOf('~') >= 0
 				let keys = key.split('~')
 				# let substates = states.concat(keys.slice(1))
-				let substates = keys.slice(1).concat(states)
-				let subsel = selector + ' ' + keys.slice(1).join(' ')
+				# let substates = keys.slice(1).concat(states)
+				let subsel = selparser.unwrap(selector,keys.slice(1).join(' '))
 				# TODO use interpolated key?
-				console.log 'subsel',subsel
+				# console.log 'subsel',subsel
 				let obj = {}
 				obj[keys[0]] = value
 				subrules.push new StyleRule(self,subsel,null,obj,options)

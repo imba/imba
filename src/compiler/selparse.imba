@@ -83,7 +83,7 @@ export def rewrite rule,ctx,scope = {}
 			for mod in mods when mod.special
 				
 				if breakpoints[mod.name]
-					console.log 'found breakpoint!!!',breakpoints[mod.name]
+					# console.log 'found breakpoint!!!',breakpoints[mod.name]
 					rule.media.push(breakpoints[mod.name])
 					mod.remove = yes
 					
@@ -125,7 +125,7 @@ export def render root, content
 		
 	let out = []
 	
-	for group in groups
+	for group in groups when group[1]
 		let sel = group.slice(1).join(',') + ' {$CONTENT$}'
 		if group[0]
 			sel = group[0] + '{\n' + sel + '\n}'
@@ -140,10 +140,7 @@ export def unwrap parent, subsel
 	let subs = subsel.split(',')
 	
 	let sels = []
-	
-	if pars.length > 1 or subs.length > 1
-		console.log 'need to unwrap!!!'
-		
+
 	for sub in subs
 		for par in pars
 			let sel = sub

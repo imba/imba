@@ -8425,7 +8425,7 @@ export class StyleRuleSet < StyleNode
 				@sel = String(@selectors).trim or '&'
 				@sel = "& {@sel}" if @sel.indexOf('&') == -1
 				@sel = @sel.replace('&',owner.selectorpath)
-				# console.log "ruleset in class {owner}",@sel
+				@basesel = owner.selectorpath
 				set(inClassBody: yes)
 				
 			else
@@ -8461,10 +8461,10 @@ export class StyleRuleSet < StyleNode
 			let opts = {
 				selectors:[],
 				localid: @tagDeclaration && @tagDeclaration.cssref
+				base: @basesel
 			}
 
 			@css = StyleRule.new(null,@sel,null,@styles,opts).toString
-			console.log 'compile style',@sel
 
 			if opts:hasLocalRules and @tagDeclaration
 				@tagDeclaration.set(hasScopedStyles: yes)
