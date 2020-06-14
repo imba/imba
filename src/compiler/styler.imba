@@ -38,6 +38,8 @@ export const aliases =
 	sb: 'spacing-bottom'
 	sl: 'spacing-left'
 	
+	# add scroll snap shorthands?
+	
 	w: 'width'
 	h: 'height'
 	wh: ['width','height']
@@ -58,6 +60,8 @@ export const aliases =
 	oly: ['left','top','bottom']
 	ory: ['right','top','bottom']
 	
+	pos: 'position'	
+	
 	# alignment
 	a: 'align'
 	ai: 'align-items'
@@ -74,18 +78,32 @@ export const aliases =
 	
 	ff: 'flex-flow' # support up/down/left/right aliases
 	fb: 'flex-basis'
+	fl: 'flex'
+	flf: 'flex-flow'
+	fld: 'flex-direction'
+	flb: 'flex-basis'
+	flg: 'flex-grow'
+	fls: 'flex-shrink'
+	flw: 'flex-wrap'
 	
 	# fonts
+	f: 'font' # shorthand?
+	t: 'text'
 	fs: 'font-size'
 	fw: 'font-weight'
-	# fs: 'font-style'
+	td: 'text-decoration'
+	tt: 'text-transform'
+	ta: 'text-align'
+	va: 'vertical-align'
+	ls: 'letter-spacing'
+	lh: 'line-height'
 	
 	# margins
 	# l: 'layout'
 	is: 'layout'
+	l: 'layout'
 	d: 'display'
-	f: 'font' # shorthand?
-	t: 'text'
+	
 	c: 'color'
 
 	# borders
@@ -161,21 +179,14 @@ export const aliases =
 
 	shadow: 'box-shadow'
 	
-	# should rather use the multi-purpose [t]ext property
-	td: 'text-decoration'
-	tt: 'text-transform'
-	ta: 'text-align'
 
-	va: 'vertical-align'
-	ls: 'letter-spacing'
-	lh: 'line-height'
 	ws: 'white-space'
 	zi: 'z-index'
 	o: 'opacity'
 	tween: 'transition'
 	
-	prefix: 'content.before'
-	suffix: 'content.after'
+	prefix: 'content@before'
+	suffix: 'content@after'
 
 export class Color
 	
@@ -689,15 +700,24 @@ export class StyleTheme
 	def layout [...params]
 		let out = {}
 		let schema = options.variants.layout
+		# real positions ought to be set as important
+		out.position = 'relative'
+
 		for param,i in params
 			# console.log 'display param',param
 			let next = params[i + 1]
 			let str = String(param)
 			let val = schema[str]
 			let u = param._unit
-			
+
 			if val
 				Object.assign(out,val)
+			
+			elif param._color
+				
+				out.color = param
+			elif options.fonts[str]
+				out['font-family'] = options.fonts[str]
 			elif self[str+'Layout']
 				self[str+'Layout'](out,param)
 			elif u == 'col' or u == 'cols' or u == 'c'
@@ -709,11 +729,6 @@ export class StyleTheme
 					param.param._unit ||= 'u'
 					w = param.param.c!
 				out['grid-template-columns'] = "repeat({param._number}, {w})"
-				# out['grid-template-columns'] = "repeat({param._number}, 1fr)"
-				# elif param._unit == 'c'
-				# 	out['grid-template-columns'] = "repeat({param._number}, 1fr)"
-				# elif param._unit == 'r'
-				# 	out['grid-template-rows'] = "repeat({param._number}, 1fr)"
 			else
 				# TODO check if it is a valid display value
 				out.display = str
@@ -840,11 +855,6 @@ export class StyleTheme
 		elif typeof value == 'string'
 			if let color = $parseColor(value)
 				return color
-			# console.log 'found color!!',self.colors[value]
-			# return self.colors[value]
-			
-		# if value and value._resolvedValue
-		#	return value._resolvedValue
 
 		return value
 		

@@ -3,6 +3,48 @@ export const fonts =
 	serif: 'Georgia, Cambria, "Times New Roman", Times, serif'
 	mono: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
 
+export const modifiers =
+	odd: {name: 'nth-child', valueType: 'string',value: 'odd'}
+	even: {name: 'nth-child', valueType: 'string',value: 'even'}
+	first: {name: 'first-child'}
+	last: {name: 'last-child'}
+	focin: {name: 'focus-within'}
+	
+	print: {media: 'print'}
+	screen: {media: 'screen'}
+	
+	xs: {media: '(min-width: 480px)' }
+	sm: {media: '(min-width: 640px)' }
+	md: {media: '(min-width: 768px)' }
+	lg: {media: '(min-width: 1024px)' }
+	xl: {media: '(min-width: 1280px)' }
+	'not-xs': {media: '(max-width: 479px)' }
+	'not-sm': {media: '(max-width: 639px)' }
+	'not-md': {media: '(max-width: 767px)' }
+	'not-lg': {media: '(max-width: 1023px)' }
+	'not-xl': {media: '(max-width: 1279px)' }
+
+	landscape: {media: '(orientation: landscape)'}
+	portrait: {media: '(orientation: portrait)'}
+	
+	dark: {media: '(prefers-color-scheme: dark)'}
+	light: {media: '(prefers-color-scheme: light)'}
+	
+	mac: {ua: 'mac'}
+	ios: {ua: 'ios'}
+	win: {ua: 'win'}
+	android: {ua: 'android'}
+	linux: {ua: 'linux'}
+	
+	ie: {ua: 'ie'}
+	chrome: {ua: 'chrome'}
+	safari: {ua: 'safari'}
+	firefox: {ua: 'firefox'}
+	opera: {ua: 'opera'}
+	blink: {ua: 'blink'}
+	webkit: {ua: 'webkit'}
+
+
 # some things should definitely move out of theme
 export const variants =
 	radius:
@@ -38,6 +80,8 @@ export const variants =
 		'hidden': {'display': 'none'}
 		'none': {'display': 'none'}
 		
+		'control': {display: 'flex', fld: 'row', pc:'center',pi:'center'}
+		
 		# Position
 		'static': {position: 'static !important'}
 		'relative': {position: 'relative !important'}
@@ -46,7 +90,7 @@ export const variants =
 		'abs': {position: 'absolute !important'}
 		'fixed': {position: 'fixed !important'}
 		'sticky': {position: 'sticky !important'}
-		'inset': {position: 'absolute',top:'0',bottom:'0',left:'0',right:'0'}
+		'inset': {top:'0',bottom:'0',left:'0',right:'0'}
 		
 		# overflow
 		'clip': {'overflow': 'hidden'}
@@ -74,7 +118,24 @@ export const variants =
 		'unclickable': {'pointer-events': 'none'}
 		'clickable': {'pointer-events': 'auto'}
 		
-		# text related
+		# text-transform
+		'uppercase': {'text-transform': 'uppercase'}
+		'lowercase': {'text-transform': 'lowercase'}
+		'capitalize': {'text-transform': 'capitalize'}
+		'normalcase': {'text-transform': 'none'}
+		
+		# font-style
+		'italic': {'font-style': 'italic'}
+		'non-italic': {'font-style': 'normal'}
+		
+		# font weight
+		'medium': {'font-weight': '500'}
+		'semibold': {'font-weight': '600'}
+		'bold': {'font-weight': 'bold'}
+		
+		# general helpers
+		'faa': {'-webkit-font-smoothing': 'antialiased', '-moz-osx-font-smoothing': 'grayscale'}
+		'fsaa': {'-webkit-font-smoothing': 'auto', '-moz-osx-font-smoothing': 'auto'}
 	
 	fontSize:
 		'xxs': ['10px',1.5]
@@ -265,6 +326,7 @@ export const variants =
 		'light': {'font-weight': '300'}
 		'medium': {'font-weight': '500'}
 		'semibold': {'font-weight': '600'}
+		'bold': {'font-weight': '700'}
 		
 		'normal': {'letter-spacing': '0em','font-weight':400,'font-style': 'normal'}
 		

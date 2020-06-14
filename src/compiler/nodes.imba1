@@ -8550,6 +8550,8 @@ export class StyleDeclaration < StyleNode
 		
 		let name = String(@property.name)
 		let method = helpers.symbolize(name)
+		
+		@expr.traverse(property: name) if @expr
 
 		if theme[method] and !option(:plain)
 			let res = theme[method].apply(theme,@expr.toArray)
@@ -8604,6 +8606,10 @@ export class StyleProperty < StyleNode
 	def initialize token
 		@token = token
 		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=\.|\@)/g) # .split(/[\.\@]/g)
+		
+		for part,i in @parts
+			@parts[i] = part.replace(/^\.\./,'@up-').replace(/^\./,'@is-')
+			
 		# @parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
 		@name  = String(@parts[0])
 		
@@ -8801,7 +8807,7 @@ export class StyleIdentifier < StyleTerm
 
 	def visit stack
 		if let c = stack.theme:colors[toString]
-			color = c.alpha(self:param ? self:param.toAlpha : '100%')
+			color = self:param ? c.alpha(self:param.toAlpha) : c
 		
 		super
 		

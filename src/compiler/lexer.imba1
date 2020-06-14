@@ -664,19 +664,14 @@ export class Lexer
 		# return 0
 		let chr = @chunk[0]
 		var m
-		# let chr2 = @chunk[1]
-		# not if we are inside
-		
-		# now - how do we find the selector-rules?
-		# if m = (/^([^\n]*\&|[^\n]*\t*[\@\.\>])/).exec(@chunk)
-		# 	console.log 'waht is last typ?',@chunk.slice(0,10),@lastTyp
+
 		let styleprop = STYLE_PROPERTY.exec(@chunk)
+		let ltyp = @lastTyp
 			
-		if !styleprop and chr.match(/[\*\w\&\$\>\/\.\#\[\@\!]/)
-			# console.log 'selector?',JSON.stringify(chr),@chunk.slice(0,10),@lastTyp
-			if (@lastTyp == 'TERMINATOR' or @lastTyp == 'INDENT')
-				let sel = findBalancedSelector(@chunk)
-				return lexStyleRule(0) if sel
+		if !styleprop and @chunk.match(/^([\*\w\&\$\>\/\.\[\@\!]|\#[\w\-])/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')
+			# console.log 'selector?',JSON.stringify(chr),@chunk.slice(0,10),ltyp
+			let sel = findBalancedSelector(@chunk)
+			return lexStyleRule(0) if sel
 				
 			# let sel = findBalancedSelector(@chunk)
 			# return lexStyleRule(0) if sel
@@ -1758,6 +1753,9 @@ export class Lexer
 			tokid = 'STYLE_START'
 		
 		elif pt == 'SELECTOR_END' and value == '{'
+			tokid = 'STYLE_START'
+		
+		elif value == '[' and inTag
 			tokid = 'STYLE_START'
 
 		elif value is '(' and inTag and pt != '=' and prev:spaced # FIXed

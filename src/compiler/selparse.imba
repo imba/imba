@@ -1,14 +1,5 @@
 var selparser = require('../../vendor/css-selector-parser')
-import {fonts,colors,variants,breakpoints} from './theme.imba'
-
-
-const PSEUDO_ALIASES = {
-	odd: {name: 'nth-child', valueType: 'string',value: 'odd'}
-	even: {name: 'nth-child', valueType: 'string',value: 'even'}
-	first: {name: 'first-child'}
-	last: {name: 'last-child'}
-	focin: {name: 'focus-within'}
-}
+import {fonts,colors,variants,breakpoints,modifiers} from './theme.imba'
 
 def addClass rule, name
 	rule.classNames ||= []
@@ -23,6 +14,20 @@ def addPseudo rule, pseudo
 
 	rule.pseudos.push(pseudo)
 	return rule
+
+def getRootRule ruleset
+	let rule = ruleset.rule
+	if rule.tagName != 'html'
+		rule = ruleset.rule = {type: 'rule',tagName:'html',classNames:[],rule: rule}
+	return rule
+	
+def addRootClass ruleset, name
+	let rule = ruleset.rule
+	if rule.tagName != 'html'
+		rule = ruleset.rule = {type: 'rule',tagName:'html',classNames:[],rule: rule}
+	addClass(rule,name)
+	return ruleset
+	
 	
 def wrapRule rule, wrapper
 	yes
@@ -89,25 +94,28 @@ export def rewrite rule,ctx,scope = {}
 			
 			for mod in mods when mod.special
 				
-				if breakpoints[mod.name]
-					# console.log 'found breakpoint!!!',breakpoints[mod.name]
-					rule.media.push(breakpoints[mod.name])
-					mod.remove = yes
+				if let alias = modifiers[mod.name]
+					if alias.media
+						rule.media.push(alias.media)
+						mod.remove = yes
+					if alias.ua
+						# get or force-create html element
+						addClass(getRootRule(rule),"ua-{alias.ua}")
+						mod.remove = yes
 					
+					unless mod.remove
+						Object.assign(mod,alias)
+
 				elif mod.name == 'local'
 					mod.remove = yes
 					scope.hasLocalRules = yes
 					flags.push(scope.localid) if scope.localid
-				
-				elif PSEUDO_ALIASES[mod.name]
-					Object.assign(mod,PSEUDO_ALIASES[mod.name])
 
-				# find breakpoints
-				if let m = mod.name.match(/^(in|is)-(.+)$/)
+				if let m = mod.name.match(/^(in|is|up)-(.+)$/)
 					mod.remove = yes
 					if m[1] == 'is'
 						addClass(part,m[2])
-					elif m[1] == 'in'
+					elif m[1] == 'in' or m[1] == 'up'
 						unless prev
 							root.rule = {type: 'rule',classNames:[m[2]],rule:root.rule}
 						else
