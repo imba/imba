@@ -91,7 +91,21 @@ export const aliases =
 	t: 'text'
 	fs: 'font-size'
 	fw: 'font-weight'
+	ts: 'text-shadow'
 	td: 'text-decoration'
+	tdl: 'text-decoration-line'
+	tdc: 'text-decoration-color'
+	tds: 'text-decoration-style'
+	tdt: 'text-decoration-thickness'
+	tdsi: 'text-decoration-skip-ink'
+	
+	te: 'text-emphasis'
+	tec: 'text-emphasis-color'
+	tes: 'text-emphasis-style'
+	tep: 'text-emphasis-position'
+	tet: 'text-emphasis-thickness'
+	tesi: 'text-decoration-skip-ink'
+	
 	tt: 'text-transform'
 	ta: 'text-align'
 	va: 'vertical-align'
@@ -612,6 +626,18 @@ export class StyleTheme
 			'line-height': v
 			'--u_lh': uvar
 		}
+		
+	def text-decoration params
+		for param,i in params
+			let str = String(param)
+			if str == 'u'
+				param._resolvedValue = 'underline'
+			elif str == 's'
+				param._resolvedValue = 'line-through'
+			
+		return [params]
+			
+			
 		
 	
 	def text [...params]

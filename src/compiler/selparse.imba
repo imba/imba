@@ -92,8 +92,24 @@ export def rewrite rule,ctx,scope = {}
 				addClass(part,scope.localid)
 				# flags.unshift(scope.localid)
 			
+			# console.log 'special mods',part,mods
+			
+			let modTarget = part
+			
 			for mod in mods when mod.special
 				
+				let [m,pre,name] = (mod.name.match(/^(\$|\.+|is|up)\-?(.*)$/) or [])
+				
+				if pre == '.' or pre == 'is'
+					console.log 'class mod!!',mod
+					addClass(modTarget,name)
+					mod.remove = yes
+				
+				elif pre == '..' or pre == 'up'
+					prev ||= root.rule = {type: 'rule',classNames:[],rule:root.rule}
+					addClass(modTarget = prev,name)
+					mod.remove = yes
+
 				if let alias = modifiers[mod.name]
 					if alias.media
 						rule.media.push(alias.media)
@@ -110,16 +126,20 @@ export def rewrite rule,ctx,scope = {}
 					mod.remove = yes
 					scope.hasLocalRules = yes
 					flags.push(scope.localid) if scope.localid
-
-				if let m = mod.name.match(/^(in|is|up)-(.+)$/)
+				
+				if modTarget != part and !mod.remove
+					addPseudo(modTarget,mod)
 					mod.remove = yes
-					if m[1] == 'is'
-						addClass(part,m[2])
-					elif m[1] == 'in' or m[1] == 'up'
-						unless prev
-							root.rule = {type: 'rule',classNames:[m[2]],rule:root.rule}
-						else
-							addClass(prev,m[2])
+
+				# if let m = mod.name.match(/^(in|is|up)-(.+)$/)
+				# 	mod.remove = yes
+				# 	if m[1] == 'is'
+				# 		addClass(part,m[2])
+				# 	elif m[1] == 'in' or m[1] == 'up'
+				# 		unless prev
+				# 			root.rule = {type: 'rule',classNames:[m[2]],rule:root.rule}
+				# 		else
+				# 			addClass(prev,m[2])
 
 			part.pseudos = mods.filter do !$1.remove
 
