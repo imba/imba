@@ -332,8 +332,13 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         }
         skipWhitespace();
         rule = this.parseRule();
+
         if (!rule) {
-          throw Error('Rule expected after "' + op + '".');
+          if(op == '>'){
+            rule = {tagName: '*'}
+          } else {
+            throw Error('Rule expected after "' + op + '".');  
+          }
         }
         rule.nestingOperator = op;
       } else {
