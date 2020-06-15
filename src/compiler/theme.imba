@@ -8,6 +8,7 @@ export const modifiers =
 	even: {name: 'nth-child', valueType: 'string',value: 'even'}
 	first: {name: 'first-child'}
 	last: {name: 'last-child'}
+	lone: {name: 'only-child'}
 	focin: {name: 'focus-within'}
 	
 	print: {media: 'print'}
@@ -18,6 +19,11 @@ export const modifiers =
 	md: {media: '(min-width: 768px)' }
 	lg: {media: '(min-width: 1024px)' }
 	xl: {media: '(min-width: 1280px)' }
+	'lt-xs': {media: '(max-width: 479px)' }
+	'lt-sm': {media: '(max-width: 639px)' }
+	'lt-md': {media: '(max-width: 767px)' }
+	'lt-lg': {media: '(max-width: 1023px)' }
+	'lt-xl': {media: '(max-width: 1279px)' }
 	'not-xs': {media: '(max-width: 479px)' }
 	'not-sm': {media: '(max-width: 639px)' }
 	'not-md': {media: '(max-width: 767px)' }
