@@ -8737,7 +8737,7 @@ export class StyleProperty < StyleNode
 			@number = parseInt(m[1])
 			@unit = m[2]
 			
-		if !@name.match(/^\w/)
+		if !@name.match(/^[\w\-]/)
 			@parts.unshift(@name = null)
 
 		self
