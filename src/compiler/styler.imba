@@ -1,6 +1,6 @@
 
 var conv = require('../../vendor/colors')
-import {fonts,colors,variants,breakpoints} from './theme.imba'
+import {fonts,colors,variants} from './theme.imba'
 
 import * as theme from  './theme.imba'
 
@@ -9,6 +9,9 @@ var ThemeInstance = null
 
 # {string: "hsla(0,0,0,var(--alpha,1))",h:0,s:0,l:0}
 # {string: "hsla(0,100%,100%,var(--alpha,1))",h:0,s:0,l:100}
+
+# export const properties =
+	
 
 export const aliases =
 	
@@ -34,13 +37,9 @@ export const aliases =
 	mx: 'margin-x'
 	my: 'margin-y'
 	
-	s: 'spacing'
-	sx: 'spacing-x'
-	sy: 'spacing-y'
-	st: 'spacing-top'
-	sr: 'spacing-right'
-	sb: 'spacing-bottom'
-	sl: 'spacing-left'
+	g: 'gap'
+	rg: 'row-gap'
+	cg: 'column-gap'
 	
 	# add scroll snap shorthands?
 	
@@ -50,11 +49,8 @@ export const aliases =
 	b: 'bottom'
 	l: 'left'
 	r: 'right'
-	i: 'inset'
 	size: ['width','height']
 	
-	# alignment
-	a: 'align'
 	pi: 'place-items'
 	pc: 'place-content'
 	ps: 'place-self'	
@@ -314,25 +310,11 @@ export class StyleTheme
 		if config.hasOwnProperty(value)
 			value = config[value]
 
-		if typeof value == 'number' and config.step
-			let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
+		if typeof value == 'number' and config.NUMBER
+			let [step,num,unit] = config.NUMBER.match(/^(\-?[\d\.]+)(\w+|%)?$/)
 			return value * parseFloat(num) + unit
 
 		return value
-
-	def antialiazed value
-		# what if it is false?
-		if String(value) == 'subpixel'
-			{
-				'-webkit-font-smoothing':'auto'
-				'-moz-osx-font-smoothing': 'auto'
-			}
-		else
-			{
-				'-webkit-font-smoothing':'antialiased'
-				'-moz-osx-font-smoothing': 'grayscale'
-			}
-			
 	
 	def padding-x [l,r=l]
 		{'padding-left': l, 'padding-right': r}
@@ -397,172 +379,6 @@ export class StyleTheme
 			else
 				o.height = param
 		return o
-		
-	def space [length]
-		{
-			"padding": length # $length(length / 2)
-			"& > *": {'margin': length } # $length(length / 2)
-		}
-		
-	def spacing [y,x=y]
-		return {'spacing-x': x,'spacing-y': y}
-		{
-			"padding": length # $length(length / 2)
-			"& > *": {'margin': length } # $length(length / 2)
-		}
-	
-	def spacing-x [v]
-		v._unit ||= 'u'
-		{$sx_c:v, $sx_s:v, px:"calc(var(--sx_s) / 2)", "& > *": {$sx_:v, mx:'calc(var(--sx_) / 2)'}}
-		
-	def spacing-y [v]
-		v._unit ||= 'u'
-		{$sy_s:v, py:"calc(var(--sy_s) / 2)", "& > *": {$sy_:v, my:'calc(var(--sy_) / 2)'}}
-	
-	def g [y,x=y]
-		return {gx: x,gy: y}
-		
-	def gx [v]
-		v.unit ||= 'u'
-		{
-			'column-gap': v
-			'--gx': v
-			# $sx_s:v, mx:'calc((var(--sx_,0px) - var(--sx_s)) / 2)', "& > *": {$sx_:v, mx:'calc(var(--sx_) / 2)'}
-		}
-		
-	def gy [v]
-		v.unit ||= 'u'
-		{
-			'row-gap': v
-			'--gy': v
-			# $sy_s:v, my:'calc((var(--sy_,0px) - var(--sy_s)) / 2)', "& > *": {$sy_:v, my:'calc(var(--sy_) / 2)'}
-		}
-		
-	def any-layout o
-		o["& > *"] = {position: 'relative'}
-		return
-	
-	def row-layout o
-		any-layout(o)
-		o.display = 'flex'
-		o.ff = 'row wrap'
-		o.jc = 'var(--row-jc,inherit)'
-		o.ai = 'center'
-		yes
-		
-	def col-layout o
-		any-layout(o)
-		o.display = 'flex'
-		o.ff = 'column nowrap'
-		o.ai = 'var(--row-jc,stretch)'
-		o.jc = 'var(--col-jc,inherit)'
-		
-	def cluster-layout o
-		o.display = 'flex'
-		o.ff = 'row wrap'
-		o.jc = 'var(--row-jc,inherit)'
-		o.ai = 'center'
-		o.margin = 'calc(var(--gy) * -0.5) calc(var(--gx) * -0.5)' # weak padding
-		o["& > *"] = {margin:'calc(var(--gy) / 2) calc(var(--gx) / 2)'}
-		
-	def auto-layout o
-		any-layout(o)
-		o.display = 'flex'
-		o.ai = 'var(--flow-ai,center)'
-		o.ff = 'var(--flow-fd,row) nowrap'
-		o.jc = 'var(--flow-ai,inherit)'
-		
-	def box-layout o
-		any-layout(o)
-		o.display = 'flex'
-		o.ff = 'column nowrap'
-		o.ai = 'var(--box-ai,center)'
-		o.jc = 'var(--box-jc,center)'
-		
-	def cols-layout o, key
-		o.display = 'grid'
-		o['row-gap'] = 'var(--gy,inherit)'
-		o['column-gap'] = 'var(--gx,inherit)'
-		o.gaf = 'column'
-		o.gac = 'minmax(0,100%)'
-		
-	def rows-layout o, key
-		o.display = 'grid'
-		o['row-gap'] = 'var(--gy,inherit)'
-		o['column-gap'] = 'var(--gx,inherit)'
-		o.gaf = 'row'
-		o.gar = 'auto'
-		if key.param
-			o.gtc = "minmax(auto,{key.param.c!})"
-		else
-			o.gtc = "1fr"
-		
-		
-	def stack-layout o, key
-		any-layout(o)
-		
-		o.display = 'grid'
-		if key.param
-			o.gtc = "minmax(auto,{key.param.c!})"
-		else
-			o.gtc = "1fr"
-		o.jc = 'center'
-		# o.ff = 'column nowrap'
-		# o.ai = 'var(--stack-ai,stretch)'
-		# o.jc = 'var(--row-jc,inherit)'
-		
-	def cluster2-layout o
-		any-layout(o)
-		o.display = 'flex'
-		o.ff = 'row wrap'
-		o.jc = 'var(--row-jc,inherit)'
-		o.ai = 'center'
-		
-	def align [...params]
-		
-		let o = {}
-		
-		for par in params
-			let str = String(par)
-			o['--align'] = str
-			if str == 'left'
-				o.ta = 'left'
-				o['--row-jc'] = 'flex-start'
-				o['--flow-fd'] = 'row'
-				o['--flow-ai'] = 'flex-start'
-
-			elif str == 'right'
-				o.ta = 'right'
-				o['--row-jc'] = 'flex-end'
-				o['--flow-fd'] = 'row-reverse'
-				o['--flow-ai'] = 'flex-start'
-				
-			elif str == 'center'
-				o.ta = 'center'
-				o['--row-jc'] = 'center'
-				o['--flow-fd'] = 'column'
-				o['--flow-ai'] = 'center'
-			
-			elif str == 'justify'
-				o.ta = 'left'
-				o['--row-jc'] = 'flex-start'
-				o['--flow-fd'] = 'row'
-				o['--flow-ai'] = 'stretch'
-				o['--box-jc'] = 'space-around'
-			
-			elif str == 'top'
-				o['--col-jc'] = 'flex-start'
-				o['--box-jc'] = 'flex-start'
-			elif str == 'bottom'
-				o['--col-jc'] = 'flex-end'
-				o['--box-jc'] = 'flex-end'
-			elif str == 'middle'
-				o['--col-jc'] = 'center'
-				o['--box-jc'] = 'center'
-				
-		return o
-
-			
 
 	def transition ...parts
 		let out = {}
@@ -622,7 +438,6 @@ export class StyleTheme
 		return
 		
 	def font-size [v]
-		
 		let sizes = options.variants.fontSize
 		let raw = String(v)
 		let size = v
@@ -678,149 +493,7 @@ export class StyleTheme
 				param._resolvedValue = 'line-through'
 			
 		return [params]
-			
-			
-		
-	
-	def text [...params]
-		let out = {}
-		let fonts = options.fonts
-		let sizes = options.variants.fontSize
-		let size = null
-		let color = null
-		
-		let i = 0
-		
-		while i < params.length
-			let param = params[i++]
 
-			let value = String(param)
-			let length = /\d/.test(value) and Length.parse(value)
-
-			if options.fonts[value]
-				out['font-family'] = options.fonts[value]
-			elif value.match(/^(\d\d\d|bold|bolder|lighter|normal)$/)
-				out['font-weight'] = value
-			elif !size and (sizes[value] or (length))
-				if !sizes[value] and !length.unit
-					length.unit = 'px'
-
-				size = [].concat(sizes[value] or length)
-				if String(params[i]) == '/'
-					size[1] = params[i + 1]
-					i += 2
-
-			elif color = $parseColor(value)
-				out['color'] = String(color)
-			
-			elif let mixin = options.variants.text[value]
-				if typeof mixin == 'string'
-					mixin = mixin.replace(/\//g,' / ').split(/\s+/)
-
-				if mixin isa Array
-					let parts = self.text(mixin)
-					out = Object.assign(parts,out)
-					continue
-					
-				for own k,v of mixin
-					if out[k] and k == 'text-decoration' and v != 'undecorated'
-						out[k] = out[k] + " " + v
-					else
-						out[k] = v
-				# Object.apply(out,options.variants.text[value])
-
-		if size
-			let fs = Length.parse(size[0])
-			let lh = Length.parse(size[1] or '')
-			out['font-size'] = String(fs)
-
-			if lh and !lh.unit
-				let rounded = Math.round(fs.number * lh.number)
-				if rounded % 2 == 1
-					rounded++
-				
-				out['line-height'] = lh.number == 0 ? 'inherit' : String(fs.clone(rounded))
-			elif lh
-				out['line-height'] = String(lh)
-			elif String(size[1]) == 'inherit'
-				out['line-height'] = 'inherit'
-			
-			if out['line-height'] and out['line-height'] != 'inherit'
-				out['--lh'] = out['line-height']
-
-		# extract bold
-		return out
-		
-	def layout_old [...params]
-		let out = {}
-		let schema = options.variants.layout
-		for param,i in params
-			let str = String(param)
-			let val = schema[str]
-			if val
-				Object.assign(out,val)
-			else
-				# TODO check if it is a valid display value
-				out.display = str
-		# extract bold
-		return out
-		
-	def layout [...params]
-		let out = {}
-		let schema = options.variants.layout
-		# real positions ought to be set as important
-		out.position = 'relative'
-
-		for param,i in params
-			# console.log 'display param',param
-			let next = params[i + 1]
-			let str = String(param)
-			let val = schema[str]
-			let u = param._unit
-
-			if val
-				Object.assign(out,val)
-			
-			elif param._color
-				
-				out.color = param
-			elif options.fonts[str]
-				out['font-family'] = options.fonts[str]
-			elif self[str+'Layout']
-				self[str+'Layout'](out,param)
-			elif u == 'col' or u == 'cols' or u == 'c'
-				out.display = 'grid'
-				out.jc = 'var(--cols-jc,center)'
-				
-				let w = '1fr'
-				if param.param
-					param.param._unit ||= 'u'
-					w = param.param.c!
-				out['grid-template-columns'] = "repeat({param._number}, {w})"
-			else
-				# TODO check if it is a valid display value
-				out.display = str
-		# extract bold
-		return out
-		
-	def composition [...params]
-		let out = {}
-		let fonts = options.fonts
-		let schema = options.variants.helpers
-
-		for param,i in params
-			# find fonts and all that?
-			let str = String(param)
-			let val = schema[str]
-			if val
-				Object.assign(out,val)
-			else
-				self
-				# TODO check if it is a valid display value
-				# out.display = str
-		# extract bold
-		return out
-	
 	# TODO allow setting border style and color w/o width?
 	# TODO allow size hidden etc?
 	def border [...params]
@@ -847,22 +520,28 @@ export class StyleTheme
 		{'border-top': border(params) or params, 'border-bottom': border(params) or params}
 		
 	def border-x-width [l,r=l]
-		{'border-left-width': l, 'border-right-width': r}
+		{blw: l, brw: r}
 		
 	def border-y-width [t,b=t]
-		{'border-top-width': t, 'border-bottom-width': b}
+		{btw: t, bbw: b}
 		
 	def border-x-style [l,r=l]
-		{'border-left-style': l, 'border-right-style': r}
+		{bls: l, brs: r}
 		
 	def border-y-style [t,b=t]
-		{'border-top-style': t, 'border-bottom-style': b}
+		{bts: t, bbs: b}
+	
+	def border-x-color [l,r=l]
+		{blc: l, brc: r}
+		
+	def border-y-color [t,b=t]
+		{btc: t, bbc: b}
 
 	# def shadow ...params
 	#	{}
 		
 	def $u number, part
-		let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
+		let [step,num,unit] = config.NUMBER.match(/^(\-?[\d\.]+)(\w+|%)?$/)
 		# should we not rather convert hte value
 		return value * parseFloat(num) + unit
 	
@@ -927,8 +606,8 @@ export class StyleTheme
 			# should we convert it or rather just link it up?
 			value = config[value]
 			
-		if typeof value == 'number' and config.step
-			let [step,num,unit] = config.step.match(/^(\-?[\d\.]+)(\w+|%)?$/)
+		if typeof value == 'number' and config.NUMBER
+			let [step,num,unit] = config.NUMBER.match(/^(\-?[\d\.]+)(\w+|%)?$/)
 			return value * parseFloat(num) + unit
 		
 		elif typeof value == 'string'
@@ -1005,60 +684,3 @@ export class StyleRule
 			out += '\n' + subrule.toString()
 
 		return out
-
-
-
-###
-
-:active
-:any-link
-:checked
-:blank
-:default
-:defined
-:dir()
-:disabled
-:empty
-:enabled
-:first
-:first-child
-:first-of-type
-:fullscreen
-:focus
-:focus-visible
-:focus-within
-:has()
-:host()
-:host-context()
-:hover
-:indeterminate
-:in-range
-:invalid
-:is() (:matches(), :any())
-:lang()
-:last-child
-:last-of-type
-:left
-:link
-:not()
-:nth-child()
-:nth-last-child()
-:nth-last-of-type()
-:nth-of-type()
-:only-child
-:only-of-type
-:optional
-:out-of-range
-:placeholder-shown
-:read-only
-:read-write
-:required
-:right
-:root
-:scope
-:target
-:valid
-:visited
-:where()
-
-###
