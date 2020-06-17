@@ -4,19 +4,78 @@ export const fonts =
 	mono: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
 
 export const modifiers =
+	
 	odd: {name: 'nth-child', valueType: 'string',value: 'odd'}
 	even: {name: 'nth-child', valueType: 'string',value: 'even'}
 	first: {name: 'first-child'}
 	last: {name: 'last-child'}
+	only: {name: 'only-child'}
 	'not-first': {name: 'not', valueType: 'raw',value: ':first-child'}
 	'not-last': {name: 'not', valueType: 'raw',value: ':last-child'}
-	lone: {name: 'only-child'}
-	focin: {name: 'focus-within'}
 	
-	f: {name: 'focus'}
-	h: {name: 'hover'}
-	fi: {name: 'focus-within'}
-	hf: {name: ['hover','focus']}
+	active: {}
+	checked: {}
+	default: {}
+	defined: {}
+	disabled: {}
+	empty: {}
+	enabled: {}
+	'first-of-type': {}
+	'first-page': {name: 'first'}
+	fullscreen: {}
+	focus: {}
+	focin: {name: 'focus-within'}
+	'focus-within': {}
+	hover: {}
+	indeterminate: {}
+	'in-range': {}
+	invalid: {}
+	is: {type: 'selector'}
+	lang: {}
+	'last-of-type': {}
+	left: {}
+	link: {}
+	not: {type: 'selector'}
+	'nth-child': {}
+	'nth-last-child': {}
+	'nth-last-of-type': {}
+	'nth-of-type': {}
+	'only-child': {}
+	'only-of-type': {}
+	optional: {}
+	'out-of-range': {}
+	'placeholder-shown': {}
+	'read-only': {}
+	'read-write': {}
+	required: {}
+	right: {}
+	scope: {}
+	# state: {}
+	target: {}
+	'target-within': {}
+	valid: {}
+	visited: {}
+	where: {}
+	
+	after: {type:'el', name: ''}
+	backdrop: {type:'el'}
+	before: {type:'el'}
+	cue: {type:'el'}
+	'cue-region': {type:'el'}
+	'first-letter': {type:'el'}
+	'first-line': {type:'el'}
+	marker: {type:'el'}
+	placeholder: {type:'el'}
+	selection: {type:'el'}
+	
+	
+	
+	# all the native pseudo classes
+
+	# f: {name: 'focus'}
+	# h: {name: 'hover'}
+	# fi: {name: 'focus-within'}
+	# hf: {name: ['hover','focus']}
 	
 	print: {media: 'print'}
 	screen: {media: 'screen'}
@@ -31,11 +90,11 @@ export const modifiers =
 	'lt-md': {media: '(max-width: 767px)' }
 	'lt-lg': {media: '(max-width: 1023px)' }
 	'lt-xl': {media: '(max-width: 1279px)' }
-	'not-xs': {media: '(max-width: 479px)' }
-	'not-sm': {media: '(max-width: 639px)' }
-	'not-md': {media: '(max-width: 767px)' }
-	'not-lg': {media: '(max-width: 1023px)' }
-	'not-xl': {media: '(max-width: 1279px)' }
+	# 'not-xs': {media: '(max-width: 479px)' }
+	# 'not-sm': {media: '(max-width: 639px)' }
+	# 'not-md': {media: '(max-width: 767px)' }
+	# 'not-lg': {media: '(max-width: 1023px)' }
+	# 'not-xl': {media: '(max-width: 1279px)' }
 
 	landscape: {media: '(orientation: landscape)'}
 	portrait: {media: '(orientation: portrait)'}

@@ -608,20 +608,23 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
       }
       if (entity.pseudos) {
         res += entity.pseudos.map(function(pseudo) {
+          let pre = ":" + this.escapeIdentifier(pseudo.name);
           if (pseudo.valueType) {
             if (pseudo.valueType === 'selector') {
-              return ":" + this.escapeIdentifier(pseudo.name) + "(" + this._renderEntity(pseudo.value) + ")";
+              return pre + "(" + this._renderEntity(pseudo.value) + ")";
             } else if (pseudo.valueType === 'substitute') {
-              return ":" + this.escapeIdentifier(pseudo.name) + "($" + pseudo.value + ")";
+              return pre + "($" + pseudo.value + ")";
             } else if (pseudo.valueType === 'numeric') {
-              return ":" + this.escapeIdentifier(pseudo.name) + "(" + pseudo.value + ")";
+              return pre + "(" + pseudo.value + ")";
             } else if (pseudo.valueType === 'raw') {
-              return ":" + this.escapeIdentifier(pseudo.name) + "(" + pseudo.value + ")";
+              return pre + "(" + pseudo.value + ")";
             } else {
-              return ":" + this.escapeIdentifier(pseudo.name) + "(" + this.escapeIdentifier(pseudo.value) + ")";
+              return pre + "(" + this.escapeIdentifier(pseudo.value) + ")";
             }
+          } else if(pseudo.type == 'el') {
+            return ':' + pre;
           } else {
-            return ":" + this.escapeIdentifier(pseudo.name);
+            return pre;
           }
         }, this).join('');
       }

@@ -98,14 +98,14 @@ export def rewrite rule,ctx,scope = {}
 			
 			for mod in mods when mod.special
 				
-				let [m,pre,name] = (mod.name.match(/^(\$|\.+|is|up)\-?(.*)$/) or [])
+				let [m,pre,name] = (mod.name.match(/^(\$|\.+|is-|up-)(.*)$/) or [])
 				
-				if pre == '.' or pre == 'is'
+				if pre == '.' or pre == 'is-'
 					# console.log 'class mod!!',mod
 					addClass(modTarget,name)
 					mod.remove = yes
 				
-				elif pre == '..' or pre == 'up'
+				elif pre == '..' or pre == 'up-'
 					prev ||= root.rule = {type: 'rule',classNames:[],rule:root.rule}
 					addClass(modTarget = prev,name)
 					mod.remove = yes
