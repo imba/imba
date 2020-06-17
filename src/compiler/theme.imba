@@ -8,8 +8,15 @@ export const modifiers =
 	even: {name: 'nth-child', valueType: 'string',value: 'even'}
 	first: {name: 'first-child'}
 	last: {name: 'last-child'}
+	'not-first': {name: 'not', valueType: 'raw',value: ':first-child'}
+	'not-last': {name: 'not', valueType: 'raw',value: ':last-child'}
 	lone: {name: 'only-child'}
 	focin: {name: 'focus-within'}
+	
+	f: {name: 'focus'}
+	h: {name: 'hover'}
+	fi: {name: 'focus-within'}
+	hf: {name: ['hover','focus']}
 	
 	print: {media: 'print'}
 	screen: {media: 'screen'}
@@ -60,6 +67,9 @@ export const variants =
 	sizing:
 		step: '0.25rem'
 		
+	letter-spacing:
+		NUMBER: '0.05em'
+		
 	layout:
 		# display
 		'flex': {'display': 'flex'}
@@ -84,19 +94,19 @@ export const variants =
 		'table-row': {display: 'table-row' }
 		'contents': {'display': 'contents'}
 		'hidden': {'display': 'none'}
-		'none': {'display': 'none'}
+		# 'none': {'display': 'none'}
 		
 		'control': {display: 'flex', fld: 'row', pc:'center',pi:'center'}
 		
 		# Position
 		'static': {position: 'static !important'}
-		'relative': {position: 'relative !important'}
-		'absolute': {position: 'absolute !important'}
+		# 'relative': {position: 'relative !important'}
+		# 'absolute': {position: 'absolute !important'}
 		'rel': {position: 'relative !important'}
 		'abs': {position: 'absolute !important'}
 		'fixed': {position: 'fixed !important'}
 		'sticky': {position: 'sticky !important'}
-		'inset': {top:'0',bottom:'0',left:'0',right:'0'}
+		# 'inset': {top:'0',bottom:'0',left:'0',right:'0'}
 		
 		# overflow
 		'clip': {'overflow': 'hidden'}
@@ -139,7 +149,7 @@ export const variants =
 		'semibold': {'font-weight': '600'}
 		'bold': {'font-weight': 'bold'}
 		
-		# general helpers
+		# general helpers - could just add as classes?
 		'faa': {'-webkit-font-smoothing': 'antialiased', '-moz-osx-font-smoothing': 'grayscale'}
 		'fsaa': {'-webkit-font-smoothing': 'auto', '-moz-osx-font-smoothing': 'auto'}
 	

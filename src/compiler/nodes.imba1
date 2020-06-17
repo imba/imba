@@ -8752,6 +8752,7 @@ export class StyleExpression < ListNode
 		self
 
 export class StyleTerm < ValueNode
+	
 
 	def valueOf
 		String(@value)
@@ -8781,7 +8782,9 @@ export class StyleTerm < ValueNode
 		return self
 		
 	def c
-		(@resolvedValue and !(@resolvedValue isa Node)) ? @resolvedValue : valueOf
+		let out = (@resolvedValue and !(@resolvedValue isa Node)) ? @resolvedValue : valueOf
+		out
+		
 
 export class StyleFunction < Node
 
@@ -8827,7 +8830,7 @@ export class StyleVar < StyleTerm
 		toString
 		# "var(--{toString})"
 
-var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms'.split(' ')
+var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr'.split(' ')
 
 export class StyleDimension < StyleTerm
 	

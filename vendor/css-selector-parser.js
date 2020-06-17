@@ -615,6 +615,8 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
               return ":" + this.escapeIdentifier(pseudo.name) + "($" + pseudo.value + ")";
             } else if (pseudo.valueType === 'numeric') {
               return ":" + this.escapeIdentifier(pseudo.name) + "(" + pseudo.value + ")";
+            } else if (pseudo.valueType === 'raw') {
+              return ":" + this.escapeIdentifier(pseudo.name) + "(" + pseudo.value + ")";
             } else {
               return ":" + this.escapeIdentifier(pseudo.name) + "(" + this.escapeIdentifier(pseudo.value) + ")";
             }
@@ -632,8 +634,9 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
 
 var parser = new CssSelectorParser();
 parser.registerSelectorPseudos('has','not','is','matches','any')
+parser.registerNumericPseudos('nth-child')
 parser.registerNestingOperators('>>>','>', '+', '~')
 parser.registerAttrEqualityMods('^', '$', '*', '~')
-parser.enableSubstitutes()
+// parser.enableSubstitutes()
 
 module.exports = parser;

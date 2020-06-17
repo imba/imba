@@ -68,8 +68,8 @@ export def rewrite rule,ctx,scope = {}
 					up.pseudos = (up.pseudos or []).concat(mods)
 					up.rule = part.rule
 					parts.splice(parts.indexOf(part),1)
-				else
-					console.log 'cannot send further up!!!'
+				# else
+				# 	console.log 'cannot send further up!!!'
 		
 		let container = parts[0]
 
@@ -101,7 +101,7 @@ export def rewrite rule,ctx,scope = {}
 				let [m,pre,name] = (mod.name.match(/^(\$|\.+|is|up)\-?(.*)$/) or [])
 				
 				if pre == '.' or pre == 'is'
-					console.log 'class mod!!',mod
+					# console.log 'class mod!!',mod
 					addClass(modTarget,name)
 					mod.remove = yes
 				

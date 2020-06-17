@@ -11,6 +11,10 @@ var ThemeInstance = null
 # {string: "hsla(0,100%,100%,var(--alpha,1))",h:0,s:0,l:100}
 
 export const aliases =
+	
+	c: 'color'
+	d: 'display'
+	pos: 'position'
 
 	# padding
 	p: 'padding'
@@ -42,42 +46,30 @@ export const aliases =
 	
 	w: 'width'
 	h: 'height'
-	wh: ['width','height']
-	
-	# child width and child height
-	
-	# offsets / positions
-	ot: 'top'
-	ob: 'bottom'
-	ol: 'left'
-	or: 'right'
-	otl: ['top','left']
-	otr: ['top','right']
-	obr: ['bottom','right']
-	obl: ['bottom','left']
-	obx: ['bottom','left','right']
-	otx: ['top','left','right']
-	oly: ['left','top','bottom']
-	ory: ['right','top','bottom']
-	
-	pos: 'position'	
+	t: 'top'
+	b: 'bottom'
+	l: 'left'
+	r: 'right'
+	i: 'inset'
+	size: ['width','height']
 	
 	# alignment
 	a: 'align'
+	pi: 'place-items'
+	pc: 'place-content'
+	ps: 'place-self'	
 	ai: 'align-items'
-	as: 'align-self'
 	ac: 'align-content'
+	as: 'align-self'
+	ji: 'justify-items'
 	jc: 'justify-content'
 	js: 'justify-self'
-	ji: 'justify-items'
-	pc: 'place-content'
-	ps: 'place-self'
-	pi: 'place-items'
+	
 	
 	# flex
 	
-	ff: 'flex-flow' # support up/down/left/right aliases
-	fb: 'flex-basis'
+	# ff: 'flex-flow' # support up/down/left/right aliases
+	# fb: 'flex-basis'
 	fl: 'flex'
 	flf: 'flex-flow'
 	fld: 'flex-direction'
@@ -87,8 +79,8 @@ export const aliases =
 	flw: 'flex-wrap'
 	
 	# fonts
-	f: 'font' # shorthand?
-	t: 'text'
+	# f: 'font' # shorthand?
+	ff: 'font-family'
 	fs: 'font-size'
 	fw: 'font-weight'
 	ts: 'text-shadow'
@@ -114,62 +106,64 @@ export const aliases =
 	
 	# margins
 	# l: 'layout'
+	# l: 'layout'
 	is: 'layout'
-	l: 'layout'
 	d: 'display'
 	
-	c: 'color'
 
 	# borders
-	b: 'border'
-	bt: 'border-top'
-	br: 'border-right'
-	bb: 'border-bottom'
-	bl: 'border-left'
-	
-	bx: 'border-x'
-	by: 'border-y'
+	# b: 'border'
 	bc: 'border-color'
 	bs: 'border-style'
 	bw: 'border-width'
-	
-	btw: 'border-top-width'
-	brw: 'border-right-width'
-	bbw: 'border-bottom-width'
-	blw: 'border-left-width'
-	bxw: 'border-x-width'
-	byw: 'border-y-width'
-	
+	# br: 'border-radius'
+
+	# bb: 'border-bottom'
 	btc: 'border-top-color'
-	brc: 'border-right-color'
-	bbc: 'border-bottom-color'
-	blc: 'border-left-color'
-	bxc: 'border-x-color'
-	byc: 'border-y-color'
-	
 	bts: 'border-top-style'
+	btw: 'border-top-width'
+	# btr: ['border-top-left-radius','border-top-right-radius']
+	# btrr: 'border-top-right-radius'
+	# btlr: 'border-top-left-radius'
+	
+	brc: 'border-right-color'
 	brs: 'border-right-style'
+	brw: 'border-right-width'
+	# brr: ['border-top-right-radius','border-bottom-right-radius']
+
+	bbc: 'border-bottom-color'
 	bbs: 'border-bottom-style'
+	bbw: 'border-bottom-width'
+	# bbr: ['border-bottom-left-radius','border-bottom-right-radius']
+	# bbrr: 'border-bottom-right-radius'
+	# bblr: 'border-bottom-left-radius'
+	
+	blc: 'border-left-color'
 	bls: 'border-left-style'
+	blw: 'border-left-width'
+	# blr: ['border-top-left-radius','border-bottom-left-radius']
+	
+	# br: 'border-right'
+	bxc: 'border-x-color'
 	bxs: 'border-x-style'
+	bxw: 'border-x-width'
+	
+	# by: 'border-y'
+	byc: 'border-y-color'
 	bys: 'border-y-style'
+	byw: 'border-y-width'
 	
 	# background
 	bg: 'background'
 	bgp: 'background-position'
+	bgc: 'background-color'
 	bgr: 'background-repeat'
 	bgi: 'background-image'
 	bga: 'background-attachment'
 	bgs: 'background-size'
+	bgo: 'background-origin'
+	bgclip: 'background-clip'
 	
-	# TODO decide on one of these
-	# round: 'border-radius'
-	radius: 'border-radius'
-	brr: ['border-top-right-radius','border-bottom-right-radius']
-	bbr: ['border-bottom-left-radius','border-bottom-right-radius']
-	btr: ['border-top-left-radius','border-top-right-radius']
-	blr: ['border-top-left-radius','border-bottom-left-radius']
-	# r: 'border-radius'
 
 	# grid
 	gtr: 'grid-template-rows'
@@ -198,6 +192,14 @@ export const aliases =
 	zi: 'z-index'
 	o: 'opacity'
 	tween: 'transition'
+	pe: 'pointer-events'
+	us: 'user-select'
+	
+	'of':'overflow'
+	'ofx':'overflow-x'
+	'ofy':'overflow-y'
+	'ofa':'overflow-anchor'
+	# 'ofa':'overflow-anchor'
 	
 	prefix: 'content@before'
 	suffix: 'content@after'
@@ -251,6 +253,15 @@ export class Length
 	
 	get _number
 		number
+
+export class Var
+	
+	def constructor name, fallback
+		name = name
+		fallback = fallback
+		
+	def c
+		fallback ? "var(--{name},{fallback.c ? fallback.c! : String(fallback)})" : "var(--{name})"
 
 # This has to move into StyleTheme class
 var palette = {
@@ -340,6 +351,22 @@ export class StyleTheme
 		
 	def size [w,h=w]
 		{width: w, height: h}
+		
+	def grid params
+		if let m = $varFallback('grid',params)
+			return m
+		return
+		
+	def radius [tl,tr=tl,br=tl,bl=tr]
+		if tl == tr == br == bl
+			return {'border-radius': tl}
+		else
+			return {
+				'border-top-left-radius': tl
+				'border-top-right-radius': tr
+				'border-bottom-right-radius': br
+				'border-bottom-left-radius': bl
+			}
 		
 	def width [...params]
 		let o = {}
@@ -578,6 +605,21 @@ export class StyleTheme
 
 		Object.assign(out,{'transition': parts},add)
 		return out
+		
+	def font params,...rest
+		for param,i in params
+			yes
+		return
+		
+	def font-family params
+		if let m = $varFallback('font',params)
+			return m
+		return
+	
+	def box-shadow params
+		if let m = $varFallback('box-shadow',params)
+			return m
+		return
 		
 	def font-size [v]
 		
@@ -846,6 +888,17 @@ export class StyleTheme
 			return identifier
 
 		return null
+		
+	def $varFallback name, params, exclude = []
+		if params.length == 1
+			let str = String(params[0])
+			let fallback = params[0]
+			exclude.push('none','initial','unset','inherit')
+			if !exclude.indexOf(str) >= 0
+				if name == 'font' and fonts[str]
+					fallback = fonts[str]
+				return [new Var("{name}-{str}",fallback)]
+		return
 		
 	def $value value, index, config
 		let key = config
