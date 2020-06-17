@@ -87,6 +87,10 @@ export def rewrite rule,ctx,scope = {}
 				addClass(part,scope.localid)
 				# flags.unshift(name.slice(1))
 				# flags.unshift(scope.localid)
+			elif name and name[0] == '%'
+				
+				part.tagName = null
+				addClass(part,'mixin___'+name.slice(1))
 				
 			if scope.forceLocal
 				addClass(part,scope.localid)
@@ -144,7 +148,8 @@ export def rewrite rule,ctx,scope = {}
 				# 			addClass(prev,m[2])
 
 			part.pseudos = mods.filter do !$1.remove
-
+		
+		# console.log 'parts afte rewrite',parts
 	return rule
 
 export def render root, content

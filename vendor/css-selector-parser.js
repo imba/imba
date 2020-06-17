@@ -360,9 +360,9 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         (rule = rule || {}).tagName = '*';
       } else if (isIdentStart(chr) || chr === '\\') {
         (rule = rule || {}).tagName = getIdent();
-      } else if (chr === '$') {
+      } else if (chr === '$' || chr === '%') {
         pos++;
-        (rule = rule || {}).tagName = '$' + getIdent();
+        (rule = rule || {}).tagName = chr + getIdent();
       } else if (chr === '.') {
         pos++;
         rule = rule || {};

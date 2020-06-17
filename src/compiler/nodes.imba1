@@ -4965,6 +4965,51 @@ export class DecoratorIdentifier < Identifier
 		
 	def toString
 		symbol
+		
+export class MixinIdentifier < Identifier
+	
+	def symbol
+		"mixin${@value.slice(1)}"
+		
+	def traverse o
+		if @traversed
+			return self
+		unless @variable
+			resolveVariable
+		@traversed = yes
+
+		
+	def toString
+		symbol
+		
+	def toFlagName
+		# look for variable etc
+		symbol
+		
+	def toFlags
+		return @parts if @parts
+		traverse
+		let v = @variable
+		let parts = []
+		let part = v
+		
+		while part
+			if part.@declarator isa StyleRuleSet
+				parts.push(STR(part.@declarator.@name))
+			else
+				parts.push(part)
+
+			part = part.@parent
+		
+		# for part in vars
+		# 	if part.@declarator isa StyleRuleSet
+		# 		parts.push(STR(v.@declarator.@name))
+		# console.log 'resolvedFlagName',parts
+		return @parts = parts
+		
+		if v and v.@declarator isa StyleRuleSet
+			return v.@declarator.@name
+		return null
 
 export class Private < Identifier
 
@@ -6466,7 +6511,7 @@ export class TagFlag < TagPart
 		@name.traverse if @name:traverse
 
 	def isStatic
-		!isConditional and (@name isa Token or @name.isStatic)
+		!isConditional and (@name isa Token or @name.isStatic or @name isa MixinIdentifier)
 
 	def isConditional
 		!!condition
@@ -7409,7 +7454,7 @@ export class Tag < TagLike
 		@attributes = @attributes.filter do |item|
 
 			if item isa TagFlag and item.isStatic
-				@classNames.push(item.rawClassName)
+				@classNames.push(item)
 				return false
 
 			if item == @attrmap:$key
@@ -7666,8 +7711,35 @@ export class Tag < TagLike
 			let str = String(option(:reference)).slice(1)
 			@classNames.push(str)
 		
+		
+		
 		if @classNames:length
-			@className = "'{@classNames.join(' ')}'"
+			let names = []
+			let dynamic = no
+			for cls,i in @classNames
+				if cls isa TagFlag
+					if cls.name isa MixinIdentifier
+						# let add = cls.name.toFlags
+						for cpart in cls.name.toFlags
+							if cpart isa Str
+								names.push(cpart.raw)
+								# cls += cpart.raw + ' '
+							elif cpart isa Variable
+								names.push('${' + cpart.c + '}')
+								dynamic = yes
+								# cls = "'+{cls.name.symbol}+'"
+						# if cls.name.resolvedFlagName
+						# 	cls = cls.name.resolvedFlagName
+						# else
+						# 	cls = "'+{cls.name.symbol}+'"
+					else
+						# cls = cls.rawClassName
+						names.push(cls.rawClassName)
+				else
+					names.push(cls)
+
+			let q = dynamic ? '`' : "'"
+			@className = q + names.join(' ') + q
 
 		var params = [
 			typ,
@@ -7870,6 +7942,9 @@ export class Tag < TagLike
 					let val = item.name
 					let cref
 					let vref
+					
+					if val isa MixinIdentifier
+						console.log 'flag is mixin identifier!!'
 
 					if cond and !cond.isPrimitive
 						cref = "{cvar}.{cond.oid}"
@@ -8420,15 +8495,27 @@ export class StyleRuleSet < StyleNode
 		
 	def visit stack, o
 		@tagDeclaration = stack.up(TagDeclaration)
+		let sel = String(@selectors).trim
+		
+		console.log 'selector',sel
+		
+		if sel.match(/^\%[\w\-]+$/)
+			set(mixin: sel.slice(1))
+			@identifier = MixinIdentifier.new(sel)
+			@name = sel.slice(1) + '-' + STACK.sfcid + oid
+			@sel = ".{@name}"
+			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
+			# @variable.@resolvedValue = @sel
 		
 		if stack.parent isa ClassBody
 			# console.log 'ruleset is inside of class!!'
 			let owner = stack.up(2)
 			if owner isa TagDeclaration
-				@sel = String(@selectors).trim or '&'
-				@sel = "& {@sel}" if @sel.indexOf('&') == -1
-				@sel = @sel.replace('&',owner.selectorpath)
-				@basesel = owner.selectorpath
+				if !@variable
+					@sel = String(@selectors).trim or '&'
+					@sel = "& {@sel}" if @sel.indexOf('&') == -1
+					@sel = @sel.replace('&',owner.selectorpath)
+					@basesel = owner.selectorpath
 				set(inClassBody: yes)
 				
 			else
@@ -8436,15 +8523,15 @@ export class StyleRuleSet < StyleNode
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
-			@sel = String(@selectors).trim
+			@sel ||= String(@selectors).trim
 
 		elif o:rule
-			@sel = @selectors?.toString.trim
+			@sel ||= @selectors?.toString.trim
 			# should happen no matter what??
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
 			# console.log 'nested rule!!',@sel
 			# @sel = "& {@sel}"
-		else
+		elif !@name
 			@name = STACK.sfcid + oid
 			@sel = ".{@name}"
 		
@@ -8466,12 +8553,36 @@ export class StyleRuleSet < StyleNode
 				localid: @tagDeclaration && @tagDeclaration.cssref
 				base: @basesel
 				forceLocal: option(:local)
+				mixins: {}
 			}
+			
+			opts:resolver = do |name|
+				let varname = 'mixin$' + name
+				if let resolved = scope__.lookup('mixin$' + name)
+					if resolved.@declarator isa StyleRuleSet
+						return resolved.@declarator.@sel
+					else
+						return resolved
+				return null
 
 			@css = StyleRule.new(null,@sel,@styles,opts).toString
 
 			if opts:hasLocalRules and @tagDeclaration
 				@tagDeclaration.set(hasScopedStyles: yes)
+			
+			console.log 'out',@css
+
+			@css = @css.replace(/\.mixin___([\w\-]+)/g) do |m,name|
+				console.log 'replace mixin',m
+				let varname = 'mixin$' + name
+				if let resolved = scope__.lookup(varname)
+					if resolved.@declarator isa StyleRuleSet
+						return '.'+resolved.@declarator.@name
+					else
+						return m
+				# console.log 'found mixin?',resolved
+				
+			# console.log 'result!!',@css
 
 			scope__.root.styles.push({
 				type: 'css'
@@ -8484,6 +8595,12 @@ export class StyleRuleSet < StyleNode
 		"{@name}"
 		
 	def c
+		if option(:toplevel) and option(:export)
+			if STACK.cjs
+				return "exports.{@identifier.c} = '{@name}'"
+			else
+				return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
+		
 		return '' if option(:inClassBody) or option(:toplevel)
 		# let json = JSON.stringify(@body,null,2)
 		# let css = StyleRule.new('aba',[],@styles)
@@ -9321,9 +9438,16 @@ export class Scope
 		# FIXME check if existing is required to be unique as well?
 		if existing and !o:unique
 			return existing
+		
+		let par = o:lookup && parent && parent.lookup(name)
+		
+			
 
 		# var type = o:system ? SystemVariable : Variable
 		var item = Variable.new(self,name,decl,o)
+		
+		if par
+			item.@parent = par
 		
 		if !o:system and !existing
 			@varmap[name] = item
@@ -9830,6 +9954,20 @@ export class Variable < Node
 			@isArray = no
 		self
 	
+	def parents
+		let parents = []
+		let scope = closure.parent
+		let res = self
+		while scope and res and parents:length < 5
+			console.log 'get parents!!!'
+			if res = scope.lookup(@name)
+				parents.unshift(res)
+				let newscope = res.scope.parent
+				if scope == newscope
+					break
+				scope = newscope
+
+		return parents
 
 	def resolve scope = scope, force = no
 		return self if @resolved and !force

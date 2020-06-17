@@ -74,7 +74,7 @@ var METHOD_IDENTIFIER = /// ^
 # added hyphens to identifiers now - to test
 var IDENTIFIER = /// ^
 	(
-		(\$|@)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
+		(\$|@|\%)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]?
 	)
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
@@ -527,7 +527,7 @@ export class Lexer
 		let chr2 = @chunk[1]
 
 		# let m = TAG_PART.exec(@chunk)
-		let m = /^([A-Za-z\_\-\$][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
+		let m = /^([A-Za-z\_\-\$\%][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
 			
 		if m # and false
 			let tok = m[1]
@@ -539,6 +539,9 @@ export class Lexer
 				
 			if chr == '$' and @lastTyp == 'TAG_TYPE'
 				typ = 'TAG_REF'
+			
+			if chr == '%'
+				typ = 'MIXIN'
 
 			token(typ,tok,len)
 			return len
@@ -669,7 +672,7 @@ export class Lexer
 		let styleprop = STYLE_PROPERTY.exec(@chunk)
 		let ltyp = @lastTyp
 			
-		if !styleprop and @chunk.match(/^([\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')
+		if !styleprop and @chunk.match(/^([\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')
 			# console.log 'selector?',JSON.stringify(chr),@chunk.slice(0,10),ltyp
 			let sel = findBalancedSelector(@chunk)
 			return lexStyleRule(0) if sel
@@ -963,6 +966,9 @@ export class Lexer
 
 		elif typ == '@'
 			typ = 'DECORATOR'
+		
+		elif typ == '%'
+			typ = 'MIXIN'
 
 		elif typ == '$' and !colon
 			typ = 'IDENTIFIER'
