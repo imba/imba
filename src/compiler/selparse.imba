@@ -92,14 +92,12 @@ export def rewrite rule,ctx,scope = {}
 				addClass(part,scope.localid)
 				# flags.unshift(scope.localid)
 			
-			# console.log 'special mods',part,mods
-			
 			let modTarget = part
 			
 			for mod in mods when mod.special
 				
-				let [m,pre,name] = (mod.name.match(/^(\$|\.+|is-|up-)(.*)$/) or [])
-				
+				let [m,pre,name,post] = (mod.name.match(/^(\$|\.+|is-|up-)?([^\~\+]*)([\~\+]*)$/) or [])
+
 				if pre == '.' or pre == 'is-'
 					# console.log 'class mod!!',mod
 					addClass(modTarget,name)
@@ -109,6 +107,10 @@ export def rewrite rule,ctx,scope = {}
 					prev ||= root.rule = {type: 'rule',classNames:[],rule:root.rule}
 					addClass(modTarget = prev,name)
 					mod.remove = yes
+					
+				if post == '~'
+					# console.log 'after selector!!',mod,part
+					modTarget
 
 				if let alias = modifiers[mod.name]
 					if alias.media

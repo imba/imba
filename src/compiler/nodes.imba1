@@ -8608,10 +8608,12 @@ export class StyleProperty < StyleNode
 	# values
 	def initialize token
 		@token = token
-		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=\.|\@)/g) # .split(/[\.\@]/g)
+		# also split 
+		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=[\.\@])/g) # .split(/[\.\@]/g)
 		
 		for part,i in @parts
-			@parts[i] = part.replace(/^\.\./,'@up-').replace(/^\./,'@is-')
+			# @parts[i] = part.replace(/^\.\./,'@up-').replace(/^\./,'@is-')
+			@parts[i] = part.replace(/^\./,'@.') # .replace(/^\./,'@is-')
 			
 		# @parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
 		@name  = String(@parts[0])
@@ -8620,7 +8622,7 @@ export class StyleProperty < StyleNode
 			@number = parseInt(m[1])
 			@unit = m[2]
 			
-		if @name.match(/^[\@\.]/)
+		if !@name.match(/^\w/)
 			@parts.unshift(@name = null)
 
 		self
@@ -8650,14 +8652,14 @@ export class StyleProperty < StyleNode
 		@parts.slice(1)
 
 	def toJSON
-		name + modifiers.join("~")
+		name + modifiers.join("§")
 
 	def toString
-		name + modifiers.join("~")
+		name + modifiers.join("§")
 		
 	def toKey
 		let name = isUnit ? "--u_{@unit}" : self.name
-		[name].concat(modifiers).join('~')
+		[name].concat(modifiers).join('§')
 		# @parts.join('.')
 
 	def c

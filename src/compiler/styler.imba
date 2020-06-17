@@ -972,8 +972,9 @@ export class StyleRule
 				subrules.push new StyleRule(self,subsel,value,options)
 				continue
 			
-			elif key.indexOf('~') >= 0
-				let keys = key.split('~')
+			elif key.indexOf('§') >= 0
+				# let keys = key.replace(/[\.\~\@\+]/g,'\\$&').split('§')
+				let keys = key.split('§')
 				let subsel = selparser.unwrap(selector,keys.slice(1).join(' '))
 				let obj = {}
 				obj[keys[0]] = value

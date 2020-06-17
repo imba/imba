@@ -224,11 +224,11 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
     }
     return result;
   };
-  getIdent = function() {
+  getIdent = function(specials) {
     var result = '';
     chr = str.charAt(pos);
     while (pos < l) {
-      if (isIdent(chr)) {
+      if (isIdent(chr) || (specials && specials[chr])) {
         result += chr;
       } else if (chr === '\\') {
         pos++;
@@ -432,7 +432,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         let special = chr === '@';
         
         pos++;
-        var pseudoName = getIdent();
+        var pseudoName = getIdent({'~':true,'+':true,'.':true});
         var pseudo = {
           special: special,
           name: pseudoName
