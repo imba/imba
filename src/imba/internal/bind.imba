@@ -2,6 +2,7 @@ const toBind = {
 	INPUT: yes
 	SELECT: yes
 	TEXTAREA: yes
+	BUTTON: yes
 }
 
 var isGroup = do |obj|
@@ -63,6 +64,8 @@ extend class Element
 				addEventListener('change',change$ = change$.bind(this))
 			if input$
 				addEventListener('input',input$ = input$.bind(this),capture: yes)
+			if click$
+				addEventListener('click',click$ = click$.bind(this),capture: yes)
 			# this.on$('change',{_change$: true},this) if this.change$
 			# this.on$('input',{capture: true,_input$: true},this) if this.input$
 
@@ -214,4 +217,44 @@ extend class HTMLInputElement
 					self.checked = bindHas(val,self.richValue)
 			else
 				self.richValue = self.data
+		return
+		
+extend class HTMLButtonElement
+
+	get checked
+		$checked
+		
+	set checked val
+		if val != $checked
+			$checked = val
+			flags.toggle('checked',!!val)
+	
+	def setRichValue value
+		$$value = value
+		self.value = value
+
+	def getRichValue
+		if $$value !== undefined
+			return $$value
+		return self.value
+		
+	def click$ e
+		let data = self.data
+		let toggled = self.checked
+		let val = self.richValue
+		# if self.type == 'checkbox' or self.type == 'radio'
+		if isGroup(data)
+			toggled ? bindRemove(data,val) : bindAdd(data,val)
+		else
+			self.data = toggled ? null : val
+		
+		imba.commit!
+
+	def end$
+		if $$bound
+			let val = self.data
+			if val === true or val === false or val == null
+				self.checked = !!val
+			else
+				self.checked = bindHas(val,self.richValue)
 		return

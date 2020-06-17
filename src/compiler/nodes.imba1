@@ -7543,7 +7543,7 @@ export class Tag < TagLike
 
 			if type == TagFlag and part isa IdentifierExpression and !part.isPrimitive
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
-				
+
 			if part isa type
 				part.@tag = self
 			else
@@ -7553,6 +7553,9 @@ export class Tag < TagLike
 
 			if next isa TagAttr and next.name.isPrimitive
 				let name = String(next.name.toRaw)
+				if name == 'bind'
+					(next.@name.@single or next.@name).@value = 'bind:data'
+					name = 'bind:data'
 				@attrmap[name] = next
 
 		if next != curr
