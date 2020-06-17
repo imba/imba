@@ -4977,6 +4977,19 @@ export class MixinIdentifier < Identifier
 		unless @variable
 			resolveVariable
 		@traversed = yes
+	
+	def c o
+		if o and (o:as == 'string' or o:as == 'substr')
+			let flags = toFlags.map do |f| f isa Variable ? "$\{{f.c}\}" : f.raw
+			let out = flags.join(' ')
+			return o:as == 'string' ? "`{out}`" : out
+			
+		let up = STACK.current
+		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
+		let out = js
+		if OPTS:sourceMap and (!o or o:mark !== false)
+			out = M(out, @token or @value)
+		return out
 
 		
 	def toString
@@ -7719,21 +7732,9 @@ export class Tag < TagLike
 			for cls,i in @classNames
 				if cls isa TagFlag
 					if cls.name isa MixinIdentifier
-						# let add = cls.name.toFlags
-						for cpart in cls.name.toFlags
-							if cpart isa Str
-								names.push(cpart.raw)
-								# cls += cpart.raw + ' '
-							elif cpart isa Variable
-								names.push('${' + cpart.c + '}')
-								dynamic = yes
-								# cls = "'+{cls.name.symbol}+'"
-						# if cls.name.resolvedFlagName
-						# 	cls = cls.name.resolvedFlagName
-						# else
-						# 	cls = "'+{cls.name.symbol}+'"
+						names.push(cls.name.c(as:'substr'))
+						dynamic = yes
 					else
-						# cls = cls.rawClassName
 						names.push(cls.rawClassName)
 				else
 					names.push(cls)
@@ -7942,15 +7943,12 @@ export class Tag < TagLike
 					let val = item.name
 					let cref
 					let vref
-					
-					if val isa MixinIdentifier
-						console.log 'flag is mixin identifier!!'
-
+			
 					if cond and !cond.isPrimitive
 						cref = "{cvar}.{cond.oid}"
 						add "({vvar}=({cond.c(o)}||undefined),{vvar}==={cref}||({dvar}|={F.DIFF_FLAGS},{cref}={vvar}))"
 
-					if val and !(val isa Token) and !val.isPrimitive
+					if val and !(val isa Token) and !val.isPrimitive and !(val isa MixinIdentifier)
 						vref = "{cvar}.{val.oid}"
 						add "({vvar}={val.c(o)},{vvar}==={vref}||({dvar}|={F.DIFF_FLAGS},{vref}={vvar}))"
 
@@ -7960,8 +7958,10 @@ export class Tag < TagLike
 						flagsToConcat.push("({cref} ? {val.c(as:'string')} : '')")
 					elif vref
 						flagsToConcat.push("({vref}||'')")
+					elif val isa MixinIdentifier
+						flagsToConcat.push(val.c(as:'string'))
 					else
-						flagsToConcat.push("'{val.c}'")
+						flagsToConcat.push("'{val.c(as:'substring')}'")
 
 				elif item isa TagHandler
 					let mods = item.modifiers
@@ -8497,8 +8497,6 @@ export class StyleRuleSet < StyleNode
 		@tagDeclaration = stack.up(TagDeclaration)
 		let sel = String(@selectors).trim
 		
-		console.log 'selector',sel
-		
 		if sel.match(/^\%[\w\-]+$/)
 			set(mixin: sel.slice(1))
 			@identifier = MixinIdentifier.new(sel)
@@ -8570,10 +8568,10 @@ export class StyleRuleSet < StyleNode
 			if opts:hasLocalRules and @tagDeclaration
 				@tagDeclaration.set(hasScopedStyles: yes)
 			
-			console.log 'out',@css
+			# console.log 'out',@css
 
 			@css = @css.replace(/\.mixin___([\w\-]+)/g) do |m,name|
-				console.log 'replace mixin',m
+				# console.log 'replace mixin',m
 				let varname = 'mixin$' + name
 				if let resolved = scope__.lookup(varname)
 					if resolved.@declarator isa StyleRuleSet

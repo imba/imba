@@ -339,5 +339,21 @@ global def describe name, blk do SPEC.context.describe(name,blk)
 global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
+	
+global def eqcss el, match
+	if typeof el == 'string'
+		el = document.querySelector(el)
+	elif el isa Element and !el.parentNode
+		document.body.appendChild(el)
+	let style = window.getComputedStyle(el)
+	for own k,expected of match
+		let real = style[k]
+		if expected isa RegExp
+			global.ok real.match(expected)
+			unless real.match(expected)
+				console.log real,'did no match',expected
+		else
+			global.eq(real,expected)
+	return
 
 

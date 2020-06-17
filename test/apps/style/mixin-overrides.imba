@@ -15,24 +15,8 @@ tag app-root
 		<app-item>
 
 
-def check el, match
-	if typeof el == 'string'
-		el = document.querySelector(el)
-	elif el isa Element and !el.parentNode
-		document.body.appendChild(el)
-	let style = window.getComputedStyle(el)
-	for own k,expected of match
-		let real = style[k]
-		if expected isa RegExp
-			global.ok real.match(expected)
-			unless real.match(expected)
-				console.log real,'did no match',expected
-		else
-			global.eq(real,expected)
-	return
-
 imba.mount(<app-root>)
 
 test do
-	check('app-root b', marginLeft: '1px', marginRight: '2px')
-	check('app-item i', marginLeft: '2px', marginRight: '1px')
+	eqcss('app-root b', marginLeft: '1px', marginRight: '2px')
+	eqcss('app-item i', marginLeft: '2px', marginRight: '1px')
