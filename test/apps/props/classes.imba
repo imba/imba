@@ -23,9 +23,9 @@ tag static-inside
 tag custom-element
 	def render
 		<self.custom-class>
-			<input[flip] type='checkbox'>
-			<input[name] type='checkbox' value='hello'>
-			<input[name]>
+			<input bind=flip type='checkbox'>
+			<input bind=name type='checkbox' value='hello'>
+			<input bind=name>
 			<div.child-class>
 				<span> 'child'
 			<div.one.two .{name} .{mult} .flipped=flip>

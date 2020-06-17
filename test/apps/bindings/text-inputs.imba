@@ -4,10 +4,10 @@ tag app-root
 	prop desc = 'none'
 	def render
 		<self>
-			<input[name].textfield>
+			<input.textfield bind=name>
 			<p> "name is {name}"
 
-			<input[desc].descfield>
+			<input.descfield bind=desc>
 			<p> "desc is {desc}"
 
 let app = <app-root>

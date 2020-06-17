@@ -3,7 +3,7 @@ let name = 'hello'
 tag custom-field
 	def render
 		<self>
-			<input[value]>
+			<input bind=value>
 			<p> "name is {value}"
 
 let app = <custom-field bind:value=name>

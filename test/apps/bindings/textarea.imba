@@ -3,7 +3,7 @@ let value = 'hello'
 tag textarea-app
 	def render
 		<self>
-			<textarea[value]>
+			<textarea bind=value>
 			<p> "text is {value}"
 
 imba.mount(<textarea-app>)

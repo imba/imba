@@ -15,7 +15,7 @@ tag app-panel
 tag app-root
 	def render
 		<self>
-			<input[bool] type='checkbox'>
+			<input bind=bool type='checkbox'>
 			<div> "app"
 			<app-panel>
 				if bool
