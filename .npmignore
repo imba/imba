@@ -13,7 +13,6 @@ build/
 vendor/
 scripts/
 test/
-src/compiler
 .cache
 .travis.yml
 screenshot.png
