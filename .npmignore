@@ -10,7 +10,6 @@ webpack.config.js
 *.log
 attic/*
 build/
-vendor/
 scripts/
 test/
 .cache
