@@ -7463,6 +7463,20 @@ export class Tag < TagLike
 		@tagName = tagName
 
 		@dynamics = []
+		
+		let i = 0
+		while i < @attributes:length
+			let item = @attributes[i++]
+			if item isa TagFlag and item.name isa StyleRuleSet				
+				if item.name.placeholders:length
+					for ph in item.name.placeholders
+						let setter = TagAttr.new(ph.name)
+						setter.@tag = self
+						setter.value = ph.value
+						@attributes.splice(i++,0,setter)
+						setter.traverse
+						
+
 
 		@attributes = @attributes.filter do |item|
 
@@ -8487,11 +8501,19 @@ export class StyleRuleSet < StyleNode
 	
 	# selector
 	def initialize selectors, body
+		@placeholders = []
 		@selectors = selectors
 		@body = body
 		
 	def isStatic
 		true
+	
+	def addPlaceholder item
+		@placeholders.push(item)
+		return self
+		
+	def placeholders
+		@placeholders
 		
 	def visit stack, o
 		@tagDeclaration = stack.up(TagDeclaration)
@@ -8536,7 +8558,7 @@ export class StyleRuleSet < StyleNode
 		@selectors?.traverse
 		
 		@styles = {}
-		@body?.traverse(rule: self, styles: @styles)
+		@body?.traverse(rule: self, styles: @styles, rootRule: (o:rule or self))
 		
 		if o:rule and o:styles
 			if o:styles[@sel] # '§ '+
@@ -8658,7 +8680,16 @@ export class StyleDeclaration < StyleNode
 		# see if property can be expanded
 		let theme = stack.theme
 		let list = stack.parent
+		let name = @property.name
 		let alias = theme.expandProperty(@property.name)
+		
+		if @expr
+			@expr.traverse(
+				rule: o:rule
+				rootRule: o:rootRule,
+				decl: self,
+				property: @property
+			)
 
 		if alias isa Array
 			list.replace(self,alias.map do clone($1))
@@ -8669,7 +8700,7 @@ export class StyleDeclaration < StyleNode
 		let name = String(@property.name)
 		let method = helpers.symbolize(name)
 		
-		@expr.traverse(property: name) if @expr
+		@expr.traverse(decl: self, property: @property) if @expr
 
 		if theme[method] and !option(:plain)
 			let res = theme[method].apply(theme,@expr.toArray)
@@ -8692,7 +8723,7 @@ export class StyleDeclaration < StyleNode
 				list.replace(self,expanded)
 				return
 			
-		@expr.traverse(property: name) if @expr
+		@expr.traverse(decl: self, property: @property) if @expr
 		
 		if o:styles
 			let key = @property.toKey
@@ -8885,8 +8916,8 @@ export class StyleTerm < ValueNode
 
 	def visit stack, o
 		@token = @value
-		let resolved = stack.theme.$value(valueOf,0,o:property)
-		# console.log 'resolved',String(resolved)
+		@property = o:property
+		let resolved = stack.theme.$value(valueOf,0,o:property and o:property.@name)
 		@resolvedValue = resolved
 		self
 	
@@ -8904,7 +8935,21 @@ export class StyleTerm < ValueNode
 	def c
 		let out = (@resolvedValue and !(@resolvedValue isa Node)) ? @resolvedValue : valueOf
 		out
-		
+	
+export class StyleInterpolationExpression < StyleTerm
+	
+	prop name
+	
+	def visit stack,o
+		super
+		if o:rootRule
+			o:rootRule.addPlaceholder(self)
+		@id = "{fid}{oid}"
+		@name = "--{@id}"
+		# get default value based on property name / type?
+
+	def c
+		"var(--{@id})"
 
 export class StyleFunction < Node
 

@@ -387,24 +387,19 @@ var grammar =
 		# o 'Style2Body , Style2Node' do A1.add A3
 		o 'StyleBody Terminator StyleNode' do A1.add(A3)
 		o 'INDENT StyleBody Outdent' do A2.indented(A1,A3)
-		# o 'INDENT Style2Body OptSemicolon Outdent' do A2.indented(A1,A4)
 	]
 	
 	StyleNode: [
 		o 'StyleDeclaration'
 		o 'CSS_SEL StyleBlockBody CSS_END' do StyleRuleSet.new(A1,A2)
-		# o 'NestedStyleRule'
 	]
 	
 	StyleDeclaration: [
 		o 'StyleProperty : StyleExpressions' do StyleDeclaration.new(A1,A3)
-		# o 'Style2Property CALL_START Style2Body CALL_END' do StyleDeclaration.new(A1,A3)
 	]
 	
 	StyleProperty: [
 		o 'CSSPROP' do StyleProperty.new([A1])
-		# o 'Style2Identifier' do StyleProperty.new([StylePropertyIdentifier.new(A1)])
-		# o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
 	]
 	
 	StyleOperator: [
@@ -437,6 +432,7 @@ var grammar =
 		o 'PERCENTAGE' do StyleDimension.new(A1)
 		o 'NUMBER' do StyleNumber.new(A1)
 		o 'String' do A1
+		o '{ Expression }' do StyleInterpolationExpression.new(A2)
 		o 'IDENTIFIER CALL_START StyleExpressions CALL_END' do StyleFunction.new(A1,A3)
 		o 'IDENTIFIER' do StyleIdentifier.new(A1)
 		o 'COMPARE StyleTerm' do A2.set(op: A1)
