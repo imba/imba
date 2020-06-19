@@ -438,6 +438,7 @@ export class Lexer
 		return o and o[key]
 
 	def pushEnd val, ctx
+		let prev = @context
 		@ends.push(val)
 		@contexts.push(@context = (ctx or {}))
 		@end = val
@@ -445,7 +446,12 @@ export class Lexer
 		
 		if ctx and (ctx:closeType == 'STYLE_END' or ctx:style)
 			ctx:lexer = self:lexStyleBody
+			ctx:style = yes
 			@inStyle++
+		
+		if prev and prev:style and val != '}'
+			ctx:lexer = self:lexStyleBody
+			ctx:style = yes
 
 		if ctx and ctx:id
 			ctx:start = Token.new(ctx:id + '_START',val, @last.region[1],0)
@@ -652,8 +658,8 @@ export class Lexer
 			if next == '='
 				len++
 			
-			if @context
-				@context:lexer = null
+			# if @context
+			#	@context:lexer = null
 
 			@indents.push 1
 			@outdebt = @indebt = 0
@@ -678,20 +684,6 @@ export class Lexer
 			let sel = findBalancedSelector(@chunk)
 			return lexStyleRule(0) if sel
 				
-			# let sel = findBalancedSelector(@chunk)
-			# return lexStyleRule(0) if sel
-		
-		# first check if there is a & in this new line
-		# if m = (/^([^\n]*\&|\t*[\@\.\>\#])/).exec(@chunk) and @lastTyp == 'TERMINATOR'
-		# 	console.log 'addeds selector from this',@chunk.slice(0,10)
-		# 	let sel = findBalancedSelector(@chunk)
-		# 	if sel # and sel.indexOf('&') >= 0
-		# 		return lexStyleRule(0)
-		# elif @lastTyp == 'TERMINATOR' and !styleprop
-		# 	let sel = findBalancedSelector(@chunk)
-		# 	if sel # and sel.indexOf('&') >= 0
-		# 		return lexStyleRule(0)
-		
 		if styleprop
 			# what is the last one?
 			token('CSSPROP', styleprop[0], styleprop[0]:length)
@@ -718,8 +710,6 @@ export class Lexer
 
 			if @lastTyp == 'COMPARE' and !@last:spaced
 				yes
-				# @last.@type = 'MOD'
-
 			token typ, m[0], len
 			return len
 			
@@ -1151,8 +1141,6 @@ export class Lexer
 			
 			
 		if typ == 'CSS'
-			# if @context
-			#	@context:lexer = self:lexStyleRule
 			return len + lexStyleRule(len,true)
 			
 
