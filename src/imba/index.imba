@@ -111,15 +111,15 @@ def imba.toStyleValue value, unit, key
 		else
 			yes	
 		
-		elif typ == 'string' and key
-			if CSS_STR_PROPS[key] and value[0] != '"' and value[0] != "'"
-			if value.indexOf('"') >= 0
-				if value.indexOf("'") >= 0
-					yes
-				else
-					value = "'" + value + "'"
+	elif typ == 'string' and key
+		if CSS_STR_PROPS[key] and value[0] != '"' and value[0] != "'"
+		if value.indexOf('"') >= 0
+			if value.indexOf("'") >= 0
+				yes
 			else
-				value = '"' + value + '"'
+				value = "'" + value + "'"
+		else
+			value = '"' + value + '"'
 
 	return value
 
