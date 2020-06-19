@@ -417,7 +417,7 @@ export class Lexer
 					popEnd
 
 			# we should let the current context decide which methods to call
-			pi = (ctx and ctx:lexer and ctx:lexer.call(self)) || (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || (@inStyle and lexStyleBody) || basicContext
+			pi = (ctx and ctx:lexer and ctx:lexer.call(self)) || (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || (@inStyle2 and lexStyleBody) || basicContext
 			i += pi
 			@loc = @locOffset + i
 
@@ -444,6 +444,7 @@ export class Lexer
 		refreshScope
 		
 		if ctx and (ctx:closeType == 'STYLE_END' or ctx:style)
+			ctx:lexer = self:lexStyleBody
 			@inStyle++
 
 		if ctx and ctx:id
@@ -723,12 +724,19 @@ export class Lexer
 			return len
 			
 		elif m = STYLE_IDENTIFIER.exec(@chunk)
+			let id = 'CSSIDENTIFIER'
+			let val = m[0]
+			let len = val:length
 			if m[0].match(/^\-\-/)
-				token 'CSSVAR', m[0], m[0]:length
-			else
-				token 'IDENTIFIER', m[0], m[0]:length
-
-			return m[0]:length
+				id = 'CSSVAR'
+			elif @last and !@last:spaced and ltyp == '}'
+				id = 'CSSUNIT'
+			token id, val, len
+			return len
+		
+		elif @last and !@last:spaced and ltyp == '}' and chr == '%'
+			token 'CSSUNIT', chr, 1
+			return 1
 
 		return 0
 		
@@ -1127,7 +1135,7 @@ export class Lexer
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
 				
-		if lastTyp == 'NUMBER' and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
+		if (lastTyp == 'NUMBER' or lastTyp == '}') and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
 			typ = 'UNIT'
 		
 		if colon

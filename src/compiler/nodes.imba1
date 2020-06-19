@@ -6642,8 +6642,16 @@ export class TagAttr < TagPart
 			
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}{op}{val}"
+			
 		elif key.indexOf('--') == 0
-			"style.setProperty('{key}',{val})"
+			let pars = ["'{key}'",val]
+			let u = option(:unit)
+			let k = StyleTheme.propAbbr(option(:propname))
+			if u or k
+				pars.push(u ? STR(u) : NULL)
+				pars.push(STR(k)) if k
+
+			"css$var({AST.cary(pars).join(',')})"
 		else
 			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
 
@@ -7473,10 +7481,13 @@ export class Tag < TagLike
 						let setter = TagAttr.new(ph.name)
 						setter.@tag = self
 						setter.value = ph.value
+						setter.set(
+							propname: ph.@propname
+							unit: ph.option('unit')
+						)
 						@attributes.splice(i++,0,setter)
 						setter.traverse
 						
-
 
 		@attributes = @attributes.filter do |item|
 
@@ -8917,7 +8928,8 @@ export class StyleTerm < ValueNode
 	def visit stack, o
 		@token = @value
 		@property = o:property
-		let resolved = stack.theme.$value(valueOf,0,o:property and o:property.@name)
+		@propname = o:property and o:property.@name
+		let resolved = stack.theme.$value(valueOf,0,@propname)
 		@resolvedValue = resolved
 		self
 	
@@ -8946,7 +8958,8 @@ export class StyleInterpolationExpression < StyleTerm
 			o:rootRule.addPlaceholder(self)
 		@id = "{fid}{oid}"
 		@name = "--{@id}"
-		# get default value based on property name / type?
+		
+		# @propname = stack.theme.expandProperty
 
 	def c
 		"var(--{@id})"
@@ -8995,7 +9008,7 @@ export class StyleVar < StyleTerm
 		toString
 		# "var(--{toString})"
 
-var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr'.split(' ')
+var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
 
 export class StyleDimension < StyleTerm
 	
@@ -9125,6 +9138,13 @@ export class Util < Node
 var HELPERS = {
 	setField: '''(target,key,value,o){
 		Object.defineProperty(target,key,{value:value});
+	};'''
+	
+	cssConv: '''(value,unit,key){
+		let t = typeof value;
+		// Support custom units
+		return value;
+		// Object.defineProperty(target,key,{value:value});
 	};'''
 
 	extendTag: '''(el,cls){

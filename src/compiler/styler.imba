@@ -199,6 +199,11 @@ export const aliases =
 	
 	prefix: 'content@before'
 	suffix: 'content@after'
+	
+export const abbreviations = {}
+for own k,v of aliases
+	if typeof v == 'string'
+		abbreviations[v] = k
 
 export class Color
 	
@@ -289,6 +294,9 @@ export class StyleTheme
 	
 	static def instance
 		ThemeInstance ||= new self
+		
+	static def propAbbr name
+		abbreviations[name] or name
 		
 	def constructor 
 		options = theme
@@ -578,13 +586,19 @@ export class StyleTheme
 					fallback = fonts[str]
 				return [new Var("{name}-{str}",fallback)]
 		return
-		
+
 	def $value value, index, config
 		let key = config
 		let orig = value
 		let result = null
 		# console.log 'resolve value',String(config),value
 		if typeof config == 'string'
+			if aliases[config]
+				config = aliases[config]
+				
+				if config isa Array
+					config = config[0]
+			
 			if config.match(/^((min-|max-)?(width|height)|top|left|bottom|right|padding|margin|sizing|inset|spacing|sy$|s$|\-\-s[xy])/)
 				config = 'sizing'
 			elif config.match(/^\-\-[gs][xy]_/)

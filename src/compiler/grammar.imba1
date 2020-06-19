@@ -425,6 +425,11 @@ var grammar =
 		o 'StyleTerm / StyleTerm' do A1.addParam(A3)
 	]
 	
+	StyleTermPlaceholder: [
+		o '{ Expression }' do StyleInterpolationExpression.new(A2)
+		o 'StyleTermPlaceholder CSSUNIT' do A1.set(unit: A2)
+	]
+	
 	StyleTerm: [
 		o 'CSSVAR' do StyleVar.new(A1)
 		o 'DIMENSION' do StyleDimension.new(A1)
@@ -432,9 +437,10 @@ var grammar =
 		o 'PERCENTAGE' do StyleDimension.new(A1)
 		o 'NUMBER' do StyleNumber.new(A1)
 		o 'String' do A1
-		o '{ Expression }' do StyleInterpolationExpression.new(A2)
-		o 'IDENTIFIER CALL_START StyleExpressions CALL_END' do StyleFunction.new(A1,A3)
-		o 'IDENTIFIER' do StyleIdentifier.new(A1)
+		o 'StyleTermPlaceholder' do A1
+		# o '{ Expression }' do StyleInterpolationExpression.new(A2)
+		o 'CSSIDENTIFIER CALL_START StyleExpressions CALL_END' do StyleFunction.new(A1,A3)
+		o 'CSSIDENTIFIER' do StyleIdentifier.new(A1)
 		o 'COMPARE StyleTerm' do A2.set(op: A1)
 		# o '> StyleTerm' do A2.set(op:A1)
 		
