@@ -7,25 +7,25 @@ var frameworks = []
 tag example-app
 	def render
 		<self>
-			<input[state.bool].bool type='checkbox'>
+			<input.bool bind=state.bool type='checkbox'>
 			<p> "Boolean is {state.bool}"
 
 			# 
-			<input[state.status].value value='something' type='checkbox'>
+			<input.value bind=state.status value='something' type='checkbox'>
 			<p> "Status is {state.status}"
 
 			# Multiple checkboxes, bound to the same Array
 			<label>
-				<input[frameworks] type='checkbox' value='react'>
+				<input bind=frameworks type='checkbox' value='react'>
 				<span> "React"
 			<label>
-				<input[frameworks] type='checkbox' value='imba'>
+				<input bind=frameworks type='checkbox' value='imba'>
 				<span> "Imba"
 			<label>
-				<input[frameworks] type='checkbox' value='vue'>
+				<input bind=frameworks type='checkbox' value='vue'>
 				<span> "Vue"
 			<label>
-				<input[frameworks] type='checkbox' value='svelte'>
+				<input bind=frameworks type='checkbox' value='svelte'>
 				<span> "Svelte"
 
 			<p> "Selected frameworks: {frameworks.join(',')}"

@@ -29,6 +29,7 @@ interface Imba {
     clearInterval(handle?: number): void;
     clearTimeout(handle?: number): void;
     commit(): Promise<this>;
+    render(): Promise<this>;
 
     mount<T>(element: T): T;
 

@@ -1,5 +1,6 @@
 var raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (do |blk| setTimeout(blk,1000 / 60))
 
+
 # Scheduler
 export class Scheduler
 	def constructor
@@ -8,7 +9,8 @@ export class Scheduler
 		self.batch = 0
 		self.scheduled = no
 		self.listeners = {}
-
+		$promise = null
+		$resolve = null
 		$ticker = do |e|
 			self.scheduled = no
 			self.tick(e)
@@ -21,14 +23,15 @@ export class Scheduler
 		self.schedule() unless self.scheduled
 
 	def listen ns, item
-		self.listeners[ns] ||= new Set()
+		self.listeners[ns] ||= new Set
 		self.listeners[ns].add(item)
 
 	def unlisten ns, item
 		self.listeners[ns] && self.listeners[ns].delete(item)
 
 	get promise
-		new Promise do |resolve| self.add(resolve)
+		$promise ||= new Promise do(resolve)
+			$resolve = resolve
 
 	def tick timestamp
 		var items = self.queue
@@ -53,6 +56,9 @@ export class Scheduler
 					item.tick(self.dt,self)
 		self.stage = 2
 		self.stage = self.scheduled ? 0 : -1
+		if $promise
+			$resolve(self)
+			$promise = $resolve = null
 		self
 
 	def schedule

@@ -1,13 +1,13 @@
 tag app-root
 	
-	css button = layout: abs
-		&:focus = layout: rel
+	css button pos:absolute
+		&:focus pos:relative
 
 	def render
 		<self>
-			<p$a.(font-weight: 600)> "1"
-			<p$b.(layout: block rel)> "2"
-			<input$input .(font-weight:400 font-weight.focus: 600)>
+			<p$a[fw:600]> "1"
+			<p$b[d:block pos:relative]> "2"
+			<input$input .(fw:400 fw@focus:600)>
 			<button$button>
 
 

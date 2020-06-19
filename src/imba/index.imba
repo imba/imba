@@ -17,12 +17,12 @@ root.customElements ||= {
 imba.setTimeout = do |fn,ms|
 	setTimeout(&,ms) do
 		fn()
-		imba.commit()
+		imba.$commit()
 
 imba.setInterval = do |fn,ms|
 	setInterval(&,ms) do
 		fn()
-		imba.commit()
+		imba.$commit()
 
 imba.clearInterval = root.clearInterval
 imba.clearTimeout = root.clearTimeout
@@ -45,6 +45,84 @@ def imba.inlineStyles styles
 	document.head.appendChild(el)
 	return
 
+const VALID_CSS_UNITS = {
+	cm:1
+	mm:1
+	Q:1
+	pc:1
+	pt:1
+	px:1
+	em:1
+	ex:1
+	ch:1
+	rem:1
+	vw:1
+	vh:1
+	vmin:1
+	vmax:1
+	s:1
+	ms:1
+	fr:1
+	'%':1
+	'in':1
+	turn:1
+	grad:1
+	rad:1
+	deg:1
+	Hz:1
+	kHz:1
+}
+
+const CSS_DEFAULT_UNITS = {
+	x:'px'
+	y:'px'
+	z:'px'
+	rotate:'turn'
+}
+
+const CSS_STR_PROPS = {
+	prefix:1
+	suffix:1
+	content:1
+}
+
+const CSS_PX_PROPS = /^([xyz])$/
+const CSS_DIM_PROPS = /^([tlbr]|size|[whtlbr]|[mp][tlbrxy]?|[rcxy]?g)$/
+
+def imba.toStyleValue value, unit, key
+	let typ = typeof value
+	if typ == 'number'
+		if !unit
+			if CSS_PX_PROPS.test(key)
+				unit = 'px'
+			elif CSS_DIM_PROPS.test(key)
+				unit = 'u'
+			elif key == 'rotate'
+				unit = 'turn'
+
+		if unit
+			if VALID_CSS_UNITS[unit]
+				# what if the unit is already set?
+				return value + unit
+			elif unit == 'u'
+				return value * 4 + 'px'
+			else
+				return "calc(var(--u_{unit},1px) * {value})"
+		else
+			yes	
+		
+	elif typ == 'string' and key
+		if CSS_STR_PROPS[key] and value[0] != '"' and value[0] != "'"
+			if value.indexOf('"') >= 0
+				if value.indexOf("'") == -1
+					value = "'" + value + "'"
+				else
+					no # do something here
+			else
+				value = '"' + value + '"'
+
+	return value
+
 var dashRegex = /-./g
 
 def imba.toCamelCase str
@@ -52,10 +130,12 @@ def imba.toCamelCase str
 		str.replace(dashRegex) do |m| m.charAt(1).toUpperCase()
 	else
 		str
+		
+
 
 # Basic events - move to separate file?
 var emit__ = do |event, args, node|
-	var prev, cb, ret
+	let prev, cb, ret
 
 	while (prev = node) and (node = node.next)
 		if cb = node.listener
@@ -72,7 +152,7 @@ var emit__ = do |event, args, node|
 
 # method for registering a listener on object
 def imba.listen obj, event, listener, path
-	var cbs, list, tail
+	let cbs, list, tail
 	cbs = obj.__listeners__ ||= {}
 	list = cbs[event] ||= {}
 	tail = list.tail || (list.tail = (list.next = {}))
@@ -83,14 +163,14 @@ def imba.listen obj, event, listener, path
 
 # register a listener once
 def imba.once obj, event, listener
-	var tail = imba.listen(obj,event,listener)
+	let tail = imba.listen(obj,event,listener)
 	tail.times = 1
 	return tail
 
 # remove a listener
 def imba.unlisten obj, event, cb, meth
-	var node, prev
-	var meta = obj.__listeners__
+	let node, prev
+	let meta = obj.__listeners__
 	return unless meta
 
 	if node = meta[event]
@@ -104,7 +184,7 @@ def imba.unlisten obj, event, cb, meth
 
 # emit event
 def imba.emit obj, event, params
-	if var cb = obj.__listeners__
+	if let cb = obj.__listeners__
 		emit__(event,params,cb[event]) if cb[event]
 		emit__(event,[event,params],cb.all) if cb.all
 	return
@@ -114,7 +194,12 @@ import {Flags} from './internal/flags'
 import {Scheduler} from './internal/scheduler'
 
 imba.scheduler = new Scheduler()
-imba.commit = do imba.scheduler.add('render')
+imba.$commit = do imba.scheduler.add('render')
+
+imba.commit = do
+	imba.scheduler.add('render')
+	return imba.scheduler.promise
+
 imba.tick = do
 	imba.commit()
 	return imba.scheduler.promise
@@ -150,6 +235,7 @@ var proxyHandler =
 		return val
 
 import {EventHandler} from './events'
+import './events/pointer'
 
 extend class Node
 
@@ -218,21 +304,24 @@ extend class Element
 
 	def on$ type, mods, scope
 
-		var check = 'on$' + type
-		var handler
+		let check = 'on$' + type
+		let handler
 
 		# check if a custom handler exists for this type?
 		if self[check] isa Function
 			handler = self[check](mods,scope)
 
 		handler = new EventHandler(mods,scope)
-		var capture = mods.capture
-		var passive = mods.passive
+		let capture = mods.capture
+		let passive = mods.passive
 
-		var o = capture
+		let o = capture
 
 		if passive
 			o = {passive: passive, capture: capture}
+		
+		if type == 'touch'
+			type = 'pointerdown'
 
 		self.addEventListener(type,handler,o)
 		return handler
@@ -332,6 +421,11 @@ extend class Element
 
 	def css$ key, value, mods
 		self.style[key] = value
+		
+	def css$var name, value, unit, key
+		let cssval = imba.toStyleValue(value,unit,key)
+		self.style.setProperty(name,cssval)
+		return
 
 Element.prototype.appendChild$ = Element.prototype.appendChild
 Element.prototype.removeChild$ = Element.prototype.removeChild

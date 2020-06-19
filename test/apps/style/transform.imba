@@ -1,11 +1,11 @@
 
 tag app-root
 	def render
-		<self.(l:flex)>
-			<button$btn1.(m:3 scale:1.25 scale.hover: 1.5)> "Scale always"
-			<button$btn2.(m:3 scale.hover:1.3 transition:250ms back-out)> "Scale on hover"
+		<self[d:flex]>
+			<button$btn1[m:3 scale:1.25 @hover: 1.5]> "Scale always"
+			<button$btn2[m:3 scale@hover:1.3 transition:250ms back-out]> "Scale on hover"
 		
-imba.mount(var app = <app-root>)
+imba.mount(<app-root>)
 
 # test do
 # 	eq window.getComputedStyle(app).position, 'relative'
