@@ -235,6 +235,7 @@ var proxyHandler =
 		return val
 
 import {EventHandler} from './events'
+import './events/pointer'
 
 extend class Node
 
@@ -318,6 +319,9 @@ extend class Element
 
 		if passive
 			o = {passive: passive, capture: capture}
+		
+		if type == 'touch'
+			type = 'pointerdown'
 
 		self.addEventListener(type,handler,o)
 		return handler

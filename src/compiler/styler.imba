@@ -581,9 +581,10 @@ export class StyleTheme
 			let str = String(params[0])
 			let fallback = params[0]
 			exclude.push('none','initial','unset','inherit')
-			if !exclude.indexOf(str) >= 0
+			if !exclude.indexOf(str) >= 0 and str.match(/^[\w\-]+$/)
 				if name == 'font' and fonts[str]
 					fallback = fonts[str]
+				# elif name == 'box-shadow' and 
 				return [new Var("{name}-{str}",fallback)]
 		return
 

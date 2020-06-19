@@ -1,5 +1,5 @@
 test-runner {
-	position: sticky;
+	position: fixed;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -7,6 +7,7 @@ test-runner {
 	top: 0px;
 	padding: 8px;
 	background: whitesmoke;
+	width:100%;
 }
 html,body {
 	padding: 0px;
@@ -15,4 +16,5 @@ html,body {
 
 body {
 	background: whitesmoke;
+	padding-top:30px;
 }

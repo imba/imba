@@ -152,7 +152,7 @@ export const variants =
 		'15': ['64px',1.2]
 		'16': ['96px',1.2]
 
-	box-shadow:
+	'box-shadow':
 		xs: '0 0 0 1px rgba(0, 0, 0, 0.05)',
 		sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
 		default: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
