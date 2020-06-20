@@ -8,7 +8,7 @@ tag app-root
 		<self> <shadow-root>
 			<style> 'span {color: red;}'
 			<span> "Hello there"
-			<input[bool] type='checkbox'>
+			<input bind=bool type='checkbox'>
 			if bool
 				<span> "Is checked!"
 			<p> "Paragraph here"

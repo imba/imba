@@ -39,7 +39,7 @@ tag app-root
 			# <div :shortcut('cmd+a').prevent>
 			<div :point.prevent .{test}> "What happens when this resizes?"
 			<div :click.throttle.log($type).wait(300)> "Click throotle sleep 300"
-			<div[test] :click.sleep(300).log($type,'after await')> "Click with async method"
+			<div data=test :click.sleep(300).log($type,'after await')> "Click with async method"
 			<div :click.wait(300).log($type,'after await')> "wait 300"
 			<div :click.log($type).stop> "Click log stop"
 			<div :click.sleep(300,true).log($type,'after await')> "asyncMethod"

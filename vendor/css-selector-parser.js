@@ -224,11 +224,11 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
     }
     return result;
   };
-  getIdent = function() {
+  getIdent = function(specials) {
     var result = '';
     chr = str.charAt(pos);
     while (pos < l) {
-      if (isIdent(chr)) {
+      if (isIdent(chr) || (specials && specials[chr])) {
         result += chr;
       } else if (chr === '\\') {
         pos++;
@@ -332,8 +332,13 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         }
         skipWhitespace();
         rule = this.parseRule();
+
         if (!rule) {
-          throw Error('Rule expected after "' + op + '".');
+          if(op == '>'){
+            rule = {tagName: '*'}
+          } else {
+            throw Error('Rule expected after "' + op + '".');  
+          }
         }
         rule.nestingOperator = op;
       } else {
@@ -355,6 +360,9 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         (rule = rule || {}).tagName = '*';
       } else if (isIdentStart(chr) || chr === '\\') {
         (rule = rule || {}).tagName = getIdent();
+      } else if (chr === '$' || chr === '%') {
+        pos++;
+        (rule = rule || {}).tagName = chr + getIdent();
       } else if (chr === '.') {
         pos++;
         rule = rule || {};
@@ -420,10 +428,13 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         }
         rule = rule || {};
         (rule.attrs = rule.attrs || []).push(attr);
-      } else if (chr === ':') {
+      } else if (chr === ':' || chr === '@') {
+        let special = chr === '@';
+        
         pos++;
-        var pseudoName = getIdent();
+        var pseudoName = getIdent({'~':true,'+':true,'.':true});
         var pseudo = {
+          special: special,
           name: pseudoName
         };
         if (chr === '(') {
@@ -597,18 +608,23 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
       }
       if (entity.pseudos) {
         res += entity.pseudos.map(function(pseudo) {
+          let pre = ":" + this.escapeIdentifier(pseudo.name);
           if (pseudo.valueType) {
             if (pseudo.valueType === 'selector') {
-              return ":" + this.escapeIdentifier(pseudo.name) + "(" + this._renderEntity(pseudo.value) + ")";
+              return pre + "(" + this._renderEntity(pseudo.value) + ")";
             } else if (pseudo.valueType === 'substitute') {
-              return ":" + this.escapeIdentifier(pseudo.name) + "($" + pseudo.value + ")";
+              return pre + "($" + pseudo.value + ")";
             } else if (pseudo.valueType === 'numeric') {
-              return ":" + this.escapeIdentifier(pseudo.name) + "(" + pseudo.value + ")";
+              return pre + "(" + pseudo.value + ")";
+            } else if (pseudo.valueType === 'raw') {
+              return pre + "(" + pseudo.value + ")";
             } else {
-              return ":" + this.escapeIdentifier(pseudo.name) + "(" + this.escapeIdentifier(pseudo.value) + ")";
+              return pre + "(" + this.escapeIdentifier(pseudo.value) + ")";
             }
+          } else if(pseudo.type == 'el') {
+            return ':' + pre;
           } else {
-            return ":" + this.escapeIdentifier(pseudo.name);
+            return pre;
           }
         }, this).join('');
       }
@@ -621,8 +637,9 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
 
 var parser = new CssSelectorParser();
 parser.registerSelectorPseudos('has','not','is','matches','any')
+parser.registerNumericPseudos('nth-child')
 parser.registerNestingOperators('>>>','>', '+', '~')
 parser.registerAttrEqualityMods('^', '$', '*', '~')
-parser.enableSubstitutes()
+// parser.enableSubstitutes()
 
 module.exports = parser;

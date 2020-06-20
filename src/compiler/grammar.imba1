@@ -160,6 +160,7 @@ var grammar =
 		o 'MethodDeclaration'
 		o 'Class'
 		o 'StructDeclaration'
+		o 'CSSDeclaration'
 		o 'TagDeclaration'
 	]
 
@@ -209,6 +210,7 @@ var grammar =
 	ImportSpecifier: [
 		o 'Identifier' do ImportSpecifier.new(A1)
 		o 'DecoratorIdentifier' do ImportSpecifier.new(A1)
+		o 'MixinIdentifier' do ImportSpecifier.new(A1)
 		o 'Identifier AS Identifier' do ImportSpecifier.new(A1, A3)
 		o 'DEFAULT' do ImportSpecifier.new(Literal.new(A1))
 		o 'DEFAULT AS Identifier' do ImportSpecifier.new(Literal.new(A1), A3)
@@ -257,6 +259,10 @@ var grammar =
 	
 	DecoratorIdentifier: [
 		o 'DECORATOR' do DecoratorIdentifier.new A1
+	]
+	
+	MixinIdentifier: [
+		o 'MIXIN' do MixinIdentifier.new A1
 	]
 
 	Key: [
@@ -381,24 +387,19 @@ var grammar =
 		# o 'Style2Body , Style2Node' do A1.add A3
 		o 'StyleBody Terminator StyleNode' do A1.add(A3)
 		o 'INDENT StyleBody Outdent' do A2.indented(A1,A3)
-		# o 'INDENT Style2Body OptSemicolon Outdent' do A2.indented(A1,A4)
 	]
 	
 	StyleNode: [
 		o 'StyleDeclaration'
 		o 'CSS_SEL StyleBlockBody CSS_END' do StyleRuleSet.new(A1,A2)
-		# o 'NestedStyleRule'
 	]
 	
 	StyleDeclaration: [
 		o 'StyleProperty : StyleExpressions' do StyleDeclaration.new(A1,A3)
-		# o 'Style2Property CALL_START Style2Body CALL_END' do StyleDeclaration.new(A1,A3)
 	]
 	
 	StyleProperty: [
 		o 'CSSPROP' do StyleProperty.new([A1])
-		# o 'Style2Identifier' do StyleProperty.new([StylePropertyIdentifier.new(A1)])
-		# o 'Style2Property . IDENTIFIER' do A1.addModifier(StylePropertyModifier.new(A3))
 	]
 	
 	StyleOperator: [
@@ -417,6 +418,16 @@ var grammar =
 		o 'StyleTerm' do StyleExpression.new().add(A1)
 		o 'StyleExpression StyleOperator' do A1.add(A2)
 		o 'StyleExpression StyleTerm' do A1.add(A2)
+		o 'StyleExpression / StyleTerm' do A1.addParam(A3)
+	]
+	
+	StyleOperation: [
+		o 'StyleTerm / StyleTerm' do A1.addParam(A3)
+	]
+	
+	StyleTermPlaceholder: [
+		o '{ Expression }' do StyleInterpolationExpression.new(A2)
+		o 'StyleTermPlaceholder CSSUNIT' do A1.set(unit: A2)
 	]
 	
 	StyleTerm: [
@@ -426,8 +437,13 @@ var grammar =
 		o 'PERCENTAGE' do StyleDimension.new(A1)
 		o 'NUMBER' do StyleNumber.new(A1)
 		o 'String' do A1
-		o 'IDENTIFIER CALL_START StyleExpressions CALL_END' do StyleFunction.new(A1,A3)
-		o 'IDENTIFIER' do StyleIdentifier.new(A1)
+		o 'StyleTermPlaceholder' do A1
+		# o '{ Expression }' do StyleInterpolationExpression.new(A2)
+		o 'CSSIDENTIFIER ( StyleExpressions )' do StyleFunction.new(A1,A3)
+		o 'CSSIDENTIFIER' do StyleIdentifier.new(A1)
+		o 'COMPARE StyleTerm' do A2.set(op: A1)
+		# o '> StyleTerm' do A2.set(op:A1)
+		
 	]
 
 	TagOptions: [
@@ -438,8 +454,9 @@ var grammar =
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
-		
+		o 'TagOptions STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A3),AST.TagFlag)
 		o 'TagOptions T. STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
+		o 'TagOptions MIXIN' do A1.addPart(MixinIdentifier.new(A2),AST.TagFlag)
 		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
@@ -736,6 +753,7 @@ var grammar =
 	VarBlockAssign: [
 		o 'VarAssignable' do [A1]
 		o 'VarAssignable = Expression' do [A1,A3]
+		o 'VarAssignable = StyleBlockDeclaration' do [A1,A3]
 		o 'VarAssignable = INDENT Expression Outdent' do [A1,A4.indented(A3,A5)]
 	]
 
@@ -877,7 +895,7 @@ var grammar =
 		o 'Decorators'
 		o 'ClassDeclLine'
 		o 'Decorators ClassDeclLine' do A1.concat([A2])
-		o 'StyleBlockDeclaration'
+		o 'CSSDeclaration'
 		o 'Comment'
 		o 'Tag'
 	]

@@ -74,7 +74,7 @@ var METHOD_IDENTIFIER = /// ^
 # added hyphens to identifiers now - to test
 var IDENTIFIER = /// ^
 	(
-		(\$|@)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
+		(\$|@|\%)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]?
 	)
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
@@ -90,7 +90,7 @@ var OBJECT_KEY = /// ^
 ///
 
 var TAG = /// ^
-	(\<)(?=[A-Za-z\#\.\{\@\>])
+	(\<)(?=[A-Za-z\#\.\%\[\{\@\>])
 ///
 
 var TAG_TYPE = /^(\w[\w\d]*:)?(\w[\w\d]*)(-[\w\d]+)*/
@@ -124,8 +124,16 @@ var STYLE_IDENTIFIER = ///^
 ///
 
 var STYLE_PROPERTY = ///^
-	([\w\-\$]*\w[\w\-\$]*)
-	(\.[\w\-\$]*\w[\w\-\$]*)*
+	([\.\@]*[\w\-\$]*\w[\w\-\$]*[\~\+]?)
+	([\.\@]+[\w\-\$]*\w[\w\-\$]*[\~\+]?)*(\&([\.\@]*[\w\-\$]*\w[\w\-\$]*[\~\+]?)
+	([\.\@]+[\w\-\$]*\w[\w\-\$]*[\~\+]?)*)*
+	(?=\:([^\:]|$))
+///
+
+var STYLE_MODIFIERS = ///^
+	(\@?[\w\-\$]*\w[\w\-\$]*)
+	([\.\@][\w\-\$]*\w[\w\-\$]*)*
+	(\@[\w\-\$]*\w[\w\-\$]*)*
 	(?=\:)
 ///
 
@@ -409,7 +417,7 @@ export class Lexer
 					popEnd
 
 			# we should let the current context decide which methods to call
-			pi = (ctx and ctx:lexer and ctx:lexer.call(self)) || (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || (@inStyle and lexStyleBody) || basicContext
+			pi = (ctx and ctx:lexer and ctx:lexer.call(self)) || (@end == 'TAG' and tagDefContextToken) || (@inTag and tagContextToken) || (@inStyle2 and lexStyleBody) || basicContext
 			i += pi
 			@loc = @locOffset + i
 
@@ -430,13 +438,20 @@ export class Lexer
 		return o and o[key]
 
 	def pushEnd val, ctx
+		let prev = @context
 		@ends.push(val)
 		@contexts.push(@context = (ctx or {}))
 		@end = val
 		refreshScope
 		
 		if ctx and (ctx:closeType == 'STYLE_END' or ctx:style)
+			ctx:lexer = self:lexStyleBody
+			ctx:style = yes
 			@inStyle++
+		
+		if prev and prev:style and val != '}'
+			ctx:lexer = self:lexStyleBody
+			ctx:style = yes
 
 		if ctx and ctx:id
 			ctx:start = Token.new(ctx:id + '_START',val, @last.region[1],0)
@@ -519,7 +534,7 @@ export class Lexer
 		let chr2 = @chunk[1]
 
 		# let m = TAG_PART.exec(@chunk)
-		let m = /^([A-Za-z\_\-\$][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
+		let m = /^([A-Za-z\_\-\$\%][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
 			
 		if m # and false
 			let tok = m[1]
@@ -531,6 +546,9 @@ export class Lexer
 				
 			if chr == '$' and @lastTyp == 'TAG_TYPE'
 				typ = 'TAG_REF'
+			
+			if chr == '%'
+				typ = 'MIXIN'
 
 			token(typ,tok,len)
 			return len
@@ -575,7 +593,7 @@ export class Lexer
 	def findBalancedSelector str
 		var stack = []
 		var i = 0
-		
+		var replaces = []
 		# could it not happen here?
 		while i < (str:length - 1)
 			var letter = str.charAt(i)
@@ -589,6 +607,9 @@ export class Lexer
 			elif !instr and (letter == ')' or letter == ']' or letter == '}')
 				console.log 'out of balance!!'
 				break
+				
+			elif letter == '/'
+				replaces.unshift([i,1,':'])
 				
 			elif letter == '(' and !instr
 				stack.unshift(')')
@@ -604,26 +625,41 @@ export class Lexer
 			if !end and (letter == '=' or letter == '\n' or letter == '{')
 				break
 			
+			if !end and letter == ' ' and STYLE_PROPERTY.exec(str.slice(i + 1))
+				# console.log 'found end!',str.slice(0,i)
+				break
+
+			# console.log 'try',letter,i,end,str.substr(i,5)
 			i++
-				
-		return i ? str.slice(0,i) : null
+		
+		return null if i == 0
+		
+		let sel = str.slice(0,i)
+		if replaces:length
+			sel = sel.split('')
+			for repl in replaces
+				sel.splice(*repl)
+			sel = sel.join('')
+
+		return sel
 		
 		
-	def lexStyleRule offset = 0
+	def lexStyleRule offset = 0, force = no
 		# when we meet = enter into style context?
 		let chunk = offset ? @chunk.slice(offset) : @chunk
+		let sel = findBalancedSelector(chunk)
 		
-		if let sel = findBalancedSelector(chunk)
-			let len = sel:length
-			token('CSS_SEL',sel,len,offset)
+		if sel or force
+			let len = sel ? sel:length : 0
+			token('CSS_SEL',sel or '',len,offset)
 			let seltoken = @last
 			let next = chunk[len]
 			
 			if next == '='
 				len++
 			
-			if @context
-				@context:lexer = null
+			# if @context
+			#	@context:lexer = null
 
 			@indents.push 1
 			@outdebt = @indebt = 0
@@ -639,25 +675,28 @@ export class Lexer
 		# return 0
 		let chr = @chunk[0]
 		var m
-		# let chr2 = @chunk[1]
-		# not if we are inside
-		
-		# now - how do we find the selector-rules?
-		
-		# first check if there is a & in this new line
-		if m = (/^[^\n]*\&/).exec(@chunk)
+
+		let styleprop = STYLE_PROPERTY.exec(@chunk)
+		let ltyp = @lastTyp
+			
+		if !styleprop and @chunk.match(/^([\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')
+			# console.log 'selector?',JSON.stringify(chr),@chunk.slice(0,10),ltyp
 			let sel = findBalancedSelector(@chunk)
-			if sel and sel.indexOf('&') >= 0
-				return lexStyleRule
-		
-		if m = STYLE_PROPERTY.exec(@chunk)
+			return lexStyleRule(0) if sel
+				
+		if styleprop
 			# what is the last one?
-			token('CSSPROP', m[0], m[0]:length)
-			return m[0]:length
+			token('CSSPROP', styleprop[0], styleprop[0]:length)
+			return styleprop[0]:length
 		
 		if chr[0] == '#' and m = STYLE_HEX.exec(@chunk)
 			token 'COLOR', m[0], m[0]:length
 			return m[0]:length
+			
+		if chr == '/' and !@last:spaced
+			# console.log '!!!'
+			token '/', chr, 1
+			return 1
 		
 		if m = STYLE_NUMERIC.exec(@chunk)
 			let len = m[0]:length
@@ -668,19 +707,26 @@ export class Lexer
 				# if @chunk[len]
 			elif m[2]
 				typ = 'DIMENSION'
-			# elif match[1].indexOf('.') == -1
-			# 	typ = 'INTEGER'
-			# console.log typ,match[0]
+
+			if @lastTyp == 'COMPARE' and !@last:spaced
+				yes
 			token typ, m[0], len
 			return len
 			
 		elif m = STYLE_IDENTIFIER.exec(@chunk)
+			let id = 'CSSIDENTIFIER'
+			let val = m[0]
+			let len = val:length
 			if m[0].match(/^\-\-/)
-				token 'CSSVAR', m[0], m[0]:length
-			else
-				token 'IDENTIFIER', m[0], m[0]:length
-
-			return m[0]:length
+				id = 'CSSVAR'
+			elif @last and !@last:spaced and ltyp == '}'
+				id = 'CSSUNIT'
+			token id, val, len
+			return len
+		
+		elif @last and !@last:spaced and ltyp == '}' and chr == '%'
+			token 'CSSUNIT', chr, 1
+			return 1
 
 		return 0
 		
@@ -807,16 +853,26 @@ export class Lexer
 			
 		if id == 'struct' and @indents == 0
 			return true # 'CLASS'
+			
+		if id == 'css'
+			if !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
+				return true
+				
+			if (@lastVal in ['global','local','export','default'])
+				return true
+				
+			if (@lastTyp in ['='])
+				return true
 
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css')
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'STRUCT'
 
-			if id == 'css' and !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
-				return true
+			# if id == 'css' and !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
+			# 	return true
 
-			if id == 'css' and (@lastVal in ['global','local','export'])
-				return true
+			# if id == 'css' and (@lastVal in ['global','local','export'])
+			# 	return true
 
 			if id == 'lazy'
 				return incls and @lastTyp in ['INDENT','TERMINATOR','DECORATOR']
@@ -908,6 +964,9 @@ export class Lexer
 
 		elif typ == '@'
 			typ = 'DECORATOR'
+		
+		elif typ == '%'
+			typ = 'MIXIN'
 
 		elif typ == '$' and !colon
 			typ = 'IDENTIFIER'
@@ -1066,7 +1125,7 @@ export class Lexer
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
 				
-		if lastTyp == 'NUMBER' and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
+		if (lastTyp == 'NUMBER' or lastTyp == '}') and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
 			typ = 'UNIT'
 		
 		if colon
@@ -1082,9 +1141,7 @@ export class Lexer
 			
 			
 		if typ == 'CSS'
-			# if @context
-			#	@context:lexer = self:lexStyleRule
-			return len + lexStyleRule(len)
+			return len + lexStyleRule(len,true)
 			
 
 		return len
@@ -1700,6 +1757,9 @@ export class Lexer
 		
 		elif pt == 'SELECTOR_END' and value == '{'
 			tokid = 'STYLE_START'
+		
+		elif value == '[' and inTag
+			tokid = 'STYLE_START'
 
 		elif value is '(' and inTag and pt != '=' and prev:spaced # FIXed
 			# console.log 'spaced before ( in tokid'
@@ -2101,7 +2161,7 @@ export class Lexer
 
 	# Are we in the midst of an unfinished expression?
 	def unfinished
-		return true if LINE_CONTINUER.test(@chunk)	
+		return true if LINE_CONTINUER.test(@chunk) and (!@context or !@context:style)
 		return (UNFINISHED.indexOf(@lastTyp) >= 0 and @opts:target != 'tsc')
 	
 	# Converts newlines for string literals.

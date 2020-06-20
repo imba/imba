@@ -4965,6 +4965,64 @@ export class DecoratorIdentifier < Identifier
 		
 	def toString
 		symbol
+		
+export class MixinIdentifier < Identifier
+	
+	def symbol
+		"mixin${@value.slice(1)}"
+		
+	def traverse o
+		if @traversed
+			return self
+		unless @variable
+			resolveVariable
+		@traversed = yes
+	
+	def c o
+		if o and (o:as == 'string' or o:as == 'substr')
+			let flags = toFlags.map do |f| f isa Variable ? "$\{{f.c}\}" : f.raw
+			let out = flags.join(' ')
+			return o:as == 'string' ? "`{out}`" : out
+			
+		let up = STACK.current
+		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
+		let out = js
+		if OPTS:sourceMap and (!o or o:mark !== false)
+			out = M(out, @token or @value)
+		return out
+
+		
+	def toString
+		symbol
+		
+	def toFlagName
+		# look for variable etc
+		symbol
+		
+	def toFlags
+		return @parts if @parts
+		traverse
+		let v = @variable
+		let parts = []
+		let part = v
+		
+		while part
+			if part.@declarator isa StyleRuleSet
+				parts.push(STR(part.@declarator.@name))
+			else
+				parts.push(part)
+
+			part = part.@parent
+		
+		# for part in vars
+		# 	if part.@declarator isa StyleRuleSet
+		# 		parts.push(STR(v.@declarator.@name))
+		# console.log 'resolvedFlagName',parts
+		return @parts = parts
+		
+		if v and v.@declarator isa StyleRuleSet
+			return v.@declarator.@name
+		return null
 
 export class Private < Identifier
 
@@ -6466,7 +6524,7 @@ export class TagFlag < TagPart
 		@name.traverse if @name:traverse
 
 	def isStatic
-		!isConditional and (@name isa Token or @name.isStatic)
+		!isConditional and (@name isa Token or @name.isStatic or @name isa MixinIdentifier)
 
 	def isConditional
 		!!condition
@@ -6584,8 +6642,16 @@ export class TagAttr < TagPart
 			
 		elif key.indexOf("data-") == 0
 			"dataset.{key.slice(5)}{op}{val}"
+			
 		elif key.indexOf('--') == 0
-			"style.setProperty('{key}',{val})"
+			let pars = ["'{key}'",val]
+			let u = option(:unit)
+			let k = StyleTheme.propAbbr(option(:propname))
+			if u or k
+				pars.push(u ? STR(u) : NULL)
+				pars.push(STR(k)) if k
+
+			"css$var({AST.cary(pars).join(',')})"
 		else
 			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
 
@@ -7405,11 +7471,28 @@ export class Tag < TagLike
 		@tagName = tagName
 
 		@dynamics = []
+		
+		let i = 0
+		while i < @attributes:length
+			let item = @attributes[i++]
+			if item isa TagFlag and item.name isa StyleRuleSet				
+				if item.name.placeholders:length
+					for ph in item.name.placeholders
+						let setter = TagAttr.new(ph.name)
+						setter.@tag = self
+						setter.value = ph.value
+						setter.set(
+							propname: ph.@propname
+							unit: ph.option('unit')
+						)
+						@attributes.splice(i++,0,setter)
+						setter.traverse
+						
 
 		@attributes = @attributes.filter do |item|
 
 			if item isa TagFlag and item.isStatic
-				@classNames.push(item.rawClassName)
+				@classNames.push(item)
 				return false
 
 			if item == @attrmap:$key
@@ -7543,7 +7626,7 @@ export class Tag < TagLike
 
 			if type == TagFlag and part isa IdentifierExpression and !part.isPrimitive
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
-				
+
 			if part isa type
 				part.@tag = self
 			else
@@ -7553,6 +7636,9 @@ export class Tag < TagLike
 
 			if next isa TagAttr and next.name.isPrimitive
 				let name = String(next.name.toRaw)
+				if name == 'bind'
+					(next.@name.@single or next.@name).@value = 'bind:data'
+					name = 'bind:data'
 				@attrmap[name] = next
 
 		if next != curr
@@ -7663,8 +7749,23 @@ export class Tag < TagLike
 			let str = String(option(:reference)).slice(1)
 			@classNames.push(str)
 		
+		
+		
 		if @classNames:length
-			@className = "'{@classNames.join(' ')}'"
+			let names = []
+			let dynamic = no
+			for cls,i in @classNames
+				if cls isa TagFlag
+					if cls.name isa MixinIdentifier
+						names.push(cls.name.c(as:'substr'))
+						dynamic = yes
+					else
+						names.push(cls.rawClassName)
+				else
+					names.push(cls)
+
+			let q = dynamic ? '`' : "'"
+			@className = q + names.join(' ') + q
 
 		var params = [
 			typ,
@@ -7867,12 +7968,12 @@ export class Tag < TagLike
 					let val = item.name
 					let cref
 					let vref
-
+			
 					if cond and !cond.isPrimitive
 						cref = "{cvar}.{cond.oid}"
 						add "({vvar}=({cond.c(o)}||undefined),{vvar}==={cref}||({dvar}|={F.DIFF_FLAGS},{cref}={vvar}))"
 
-					if val and !(val isa Token) and !val.isPrimitive
+					if val and !(val isa Token) and !val.isPrimitive and !(val isa MixinIdentifier) and !(val isa StyleRuleSet)
 						vref = "{cvar}.{val.oid}"
 						add "({vvar}={val.c(o)},{vvar}==={vref}||({dvar}|={F.DIFF_FLAGS},{vref}={vvar}))"
 
@@ -7882,8 +7983,10 @@ export class Tag < TagLike
 						flagsToConcat.push("({cref} ? {val.c(as:'string')} : '')")
 					elif vref
 						flagsToConcat.push("({vref}||'')")
+					elif val isa MixinIdentifier
+						flagsToConcat.push(val.c(as:'string'))
 					else
-						flagsToConcat.push("'{val.c}'")
+						flagsToConcat.push("'{val.c(as:'substring')}'")
 
 				elif item isa TagHandler
 					let mods = item.modifiers
@@ -8409,23 +8512,41 @@ export class StyleRuleSet < StyleNode
 	
 	# selector
 	def initialize selectors, body
+		@placeholders = []
 		@selectors = selectors
 		@body = body
 		
 	def isStatic
 		true
+	
+	def addPlaceholder item
+		@placeholders.push(item)
+		return self
+		
+	def placeholders
+		@placeholders
 		
 	def visit stack, o
 		@tagDeclaration = stack.up(TagDeclaration)
+		let sel = String(@selectors).trim
+		
+		if sel.match(/^\%[\w\-]+$/)
+			set(mixin: sel.slice(1))
+			@identifier = MixinIdentifier.new(sel)
+			@name = sel.slice(1) + '-' + STACK.sfcid + oid
+			@sel = ".{@name}"
+			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
+			# @variable.@resolvedValue = @sel
 		
 		if stack.parent isa ClassBody
 			# console.log 'ruleset is inside of class!!'
 			let owner = stack.up(2)
 			if owner isa TagDeclaration
-				@sel = String(@selectors).trim or '&'
-				@sel = "& {@sel}" if @sel.indexOf('&') == -1
-				@sel = @sel.replace('&',owner.selectorpath)
-				# console.log "ruleset in class {owner}",@sel
+				if !@variable
+					@sel = String(@selectors).trim or '&'
+					@sel = "& {@sel}" if @sel.indexOf('&') == -1
+					@sel = @sel.replace('&',owner.selectorpath)
+					@basesel = owner.selectorpath
 				set(inClassBody: yes)
 				
 			else
@@ -8433,37 +8554,66 @@ export class StyleRuleSet < StyleNode
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
-			@sel = String(@selectors).trim
+			@sel ||= String(@selectors).trim
 
 		elif o:rule
-			@sel = @selectors?.toString.trim
+			@sel ||= @selectors?.toString.trim
 			# should happen no matter what??
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
 			# console.log 'nested rule!!',@sel
 			# @sel = "& {@sel}"
-		else
+		elif !@name
 			@name = STACK.sfcid + oid
 			@sel = ".{@name}"
 		
 		@selectors?.traverse
 		
 		@styles = {}
-		@body?.traverse(rule: self, styles: @styles)
+		@body?.traverse(rule: self, styles: @styles, rootRule: (o:rule or self))
 		
 		if o:rule and o:styles
-			o:styles[@sel] = @styles
+			if o:styles[@sel] # '§ '+
+				Object.assign(o:styles[@sel],@styles)
+			else
+				o:styles[@sel] = @styles
 
 		else
 			# need to
 			let opts = {
 				selectors:[],
 				localid: @tagDeclaration && @tagDeclaration.cssref
+				base: @basesel
+				forceLocal: option(:local)
+				mixins: {}
 			}
+			
+			opts:resolver = do |name|
+				let varname = 'mixin$' + name
+				if let resolved = scope__.lookup('mixin$' + name)
+					if resolved.@declarator isa StyleRuleSet
+						return resolved.@declarator.@sel
+					else
+						return resolved
+				return null
 
-			@css = StyleRule.new(null,@sel,[],@styles,opts).toString
+			@css = StyleRule.new(null,@sel,@styles,opts).toString
 
 			if opts:hasLocalRules and @tagDeclaration
 				@tagDeclaration.set(hasScopedStyles: yes)
+			
+			# console.log 'out',@css
+
+			@css = @css.replace(/\.mixin___([\w\-]+)/g) do |m,name|
+				# console.log 'replace mixin',m
+				let varname = 'mixin$' + name
+				if let resolved = scope__.lookup(varname)
+					if resolved.@declarator isa StyleRuleSet
+						return '.'+resolved.@declarator.@name
+					else
+						return m
+				# console.log 'found mixin?',resolved
+				
+			# console.log 'result!!',@css
 
 			scope__.root.styles.push({
 				type: 'css'
@@ -8476,12 +8626,18 @@ export class StyleRuleSet < StyleNode
 		"{@name}"
 		
 	def c
+		if option(:toplevel) and option(:export)
+			if STACK.cjs
+				return "exports.{@identifier.c} = '{@name}'"
+			else
+				return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
+		
 		return '' if option(:inClassBody) or option(:toplevel)
 		# let json = JSON.stringify(@body,null,2)
 		# let css = StyleRule.new('aba',[],@styles)
 		# let out = json + '\n/*\n' + JSON.stringify(@styles,null,2) + '\n*/'
 		let out = "'{@name}'"
-		out += '\n/*\n' + @css + '\n*/'
+		# out += '\n/*\n' + @css + '\n*/'
 		return out
 
 	# nodes # bunch of style properties and potentially nested rules
@@ -8491,6 +8647,13 @@ export class StyleBody < ListNode
 	def visit
 		let items = @nodes
 		let i = 0
+			
+		let prevname
+		for item in items when item isa StyleDeclaration
+			if !item.@property.@name
+				item.@property.name = prevname
+
+			prevname = item.@property.@name
 
 		while i < items:length
 			let item = items[i]
@@ -8517,13 +8680,27 @@ export class StyleDeclaration < StyleNode
 		
 	def clone name, params
 		params = @expr.clone unless params
+		if typeof params == 'string' or typeof params == 'number'
+			params = [params]
+		if !(params isa Array) and !(params isa ListNode)
+			params = [params]
+
 		StyleDeclaration.new(@property.clone(name),params)
 		
 	def visit stack, o
 		# see if property can be expanded
 		let theme = stack.theme
 		let list = stack.parent
+		let name = @property.name
 		let alias = theme.expandProperty(@property.name)
+		
+		if @expr
+			@expr.traverse(
+				rule: o:rule
+				rootRule: o:rootRule,
+				decl: self,
+				property: @property
+			)
 
 		if alias isa Array
 			list.replace(self,alias.map do clone($1))
@@ -8533,6 +8710,8 @@ export class StyleDeclaration < StyleNode
 		
 		let name = String(@property.name)
 		let method = helpers.symbolize(name)
+		
+		@expr.traverse(decl: self, property: @property) if @expr
 
 		if theme[method] and !option(:plain)
 			let res = theme[method].apply(theme,@expr.toArray)
@@ -8548,19 +8727,26 @@ export class StyleDeclaration < StyleNode
 						let rule = StyleRuleSet.new(LIT(k),body)
 						expanded.push(rule)
 						for own k2,v2 of v
-							body.add(StyleDeclaration.new(@property.clone(k2),v2))
+							# need recursive thing here
+							body.add(clone(k2,v2))
 					else
-						expanded.push StyleDeclaration.new(@property.clone(k),v).set(plain: k == name)
+						expanded.push clone(k,v).set(plain: k == name)
 				list.replace(self,expanded)
 				return
 			
-		@expr.traverse(property: name) if @expr
+		@expr.traverse(decl: self, property: @property) if @expr
 		
 		if o:styles
 			let key = @property.toKey
+			let val = @expr
 			if o:selector
 				key = JSON.stringify([o:selector,key])
-			o:styles[key] = @expr.c
+				
+			if @property.isUnit
+				if @property.number != 1
+					val = LIT("calc({val.c} / {@property.number})")
+
+			o:styles[key] = val.c(property: @property)
 		self
 		
 	def toCSS
@@ -8573,33 +8759,65 @@ export class StyleDeclaration < StyleNode
 export class StyleProperty < StyleNode
 
 	prop name
+	prop number
+	prop unit
 	# modifiers
 	# values
 	def initialize token
 		@token = token
-		@parts = String(@token).replace(/(^|\b)\$/g,'--').split('.')
+		# also split 
+		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=[\.\@])/g) # .split(/[\.\@]/g)
+		
+		for part,i in @parts
+			# @parts[i] = part.replace(/^\.\./,'@up-').replace(/^\./,'@is-')
+			@parts[i] = part.replace(/^\./,'@.') # .replace(/^\./,'@is-')
+			
+		# @parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
+		@name  = String(@parts[0])
+		
+		if let m = @name.match(/^(\d+)([a-zA-Z]+)$/)
+			@number = parseInt(m[1])
+			@unit = m[2]
+			
+		if !@name.match(/^[\w\-]/)
+			@parts.unshift(@name = null)
+
+		self
+	
+	def name= value
+		if let m = value.match(/^(\d+)([a-zA-Z]+)$/)
+			@number = parseInt(m[1])
+			@unit = m[2]
+		else
+			@number = @unit = null
+		@name = value
 
 	def name
 		@name ||= String(@parts[0])
 
 	def clone newname
-		StyleProperty.new([newname or name].concat(modifiers).join("."))
+		StyleProperty.new([newname or name].concat(modifiers).join(""))
 
 	def addModifier modifier
 		@parts.push(modifier)
 		self
+		
+	def isUnit
+		@unit
 
 	def modifiers
 		@parts.slice(1)
 
 	def toJSON
-		name + modifiers.join(".")
+		name + modifiers.join("§")
 
 	def toString
-		name + modifiers.join(".")
+		name + modifiers.join("§")
 		
 	def toKey
-		@parts.join('.')
+		let name = isUnit ? "--u_{@unit}" : self.name
+		[name].concat(modifiers).join('§')
+		# @parts.join('.')
 
 	def c
 		toString
@@ -8672,6 +8890,10 @@ export class StyleExpression < ListNode
 	def toIterable
 		@nodes
 		
+	def addParam param
+		last.addParam(param)
+		return self
+		
 	def visit2
 		let items = @nodes
 		let i = 0
@@ -8692,26 +8914,55 @@ export class StyleExpression < ListNode
 		self
 
 export class StyleTerm < ValueNode
+	
 
 	def valueOf
 		String(@value)
 		
 	def toString
 		String(@value)
+		
+	def toAlpha
+		toString
 
 	def visit stack, o
 		@token = @value
-		let resolved = stack.theme.$value(valueOf,0,o:property)
-		# console.log 'resolved',String(resolved)
+		@property = o:property
+		@propname = o:property and o:property.@name
+		let resolved = stack.theme.$value(valueOf,0,@propname)
 		@resolvedValue = resolved
 		self
+	
+	get param
+		@params and @params[0]
 		
 	def kind
 		@kind
+	
+	def addParam param
+		@params ||= []
+		@params.push(param)
+		return self
 		
 	def c
-		!(@resolvedValue isa Node) ? @resolvedValue : valueOf
-		# number
+		let out = (@resolvedValue and !(@resolvedValue isa Node)) ? @resolvedValue : valueOf
+		out
+	
+export class StyleInterpolationExpression < StyleTerm
+	
+	prop name
+	
+	def visit stack,o
+		super
+		if o:rootRule
+			o:rootRule.addPlaceholder(self)
+		@id = "{fid}{oid}"
+		@name = "--{@id}"
+		
+		# @propname = stack.theme.expandProperty
+
+	def c
+		"var(--{@id})"
 
 export class StyleFunction < Node
 
@@ -8733,8 +8984,17 @@ export class StyleFunction < Node
 		"{String(@name)}({@params.c})"
 
 export class StyleIdentifier < StyleTerm
+	prop color
+
+	def visit stack
+		if let c = stack.theme:colors[toString]
+			color = self:param ? c.alpha(self:param.toAlpha) : c
+		
+		super
+		
 	
 	def c
+		return color.toString if color
 		let val = toString
 		val[0] == '$' ? "var(--{val.slice(1)})" : super
 
@@ -8748,6 +9008,8 @@ export class StyleVar < StyleTerm
 		toString
 		# "var(--{toString})"
 
+var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
+
 export class StyleDimension < StyleTerm
 	
 	prop unit
@@ -8755,26 +9017,48 @@ export class StyleDimension < StyleTerm
 
 	def initialize value
 		@value = value
-		let m = String(value).match(/^(.+)([a-zA-Z]+|%)$/)
+		let m = String(value).match(/^([\-\+]?[\d\.]*)([a-zA-Z]+|%)?$/)
 		@number = parseFloat(m[1])
-		@unit = m[2]
+		@unit = m[2] or null
+		
+	def clone num = @number, unit = @unit
+		let cloned = StyleDimension.new(value)
+		cloned.@unit =  unit
+		cloned.@number = num
+		return cloned
 		
 	def valueOf
 		if unit == 'u'
 			return number * 4 + 'px'
-		return String(@value)
+		elif unit == null
+			return number
+		elif unit in VALID_CSS_UNITS
+			return String(@value)
+		else
+			return "calc(var(--u_{unit},{String(@value)}) * {@number})"
+			# return String(@value)
+			
+	def toAlpha
+		unless unit
+			return number + '%'
+		else
+			return valueOf
 
-export class StyleNumber < StyleTerm
-	prop unit
-	prop number
-	
-	def initialize value,unit
-		super
-		@number = parseFloat(String(value))
-		@unit = null
+export class StyleNumber < StyleDimension
+	# prop unit
+	# prop number
+	# def initialize value,unit
+	# 	super
+	# 	@number = parseFloat(String(value))
+	# 	@unit = null
 		
-	def valueOf
-		number
+	# def valueOf
+	# 	if unit == 'u'
+	# 		return number * 4 + 'px'
+	# 	return String(@value)
+		
+	# def valueOf
+	# 	number
 
 # UTILS
 
@@ -8854,6 +9138,13 @@ export class Util < Node
 var HELPERS = {
 	setField: '''(target,key,value,o){
 		Object.defineProperty(target,key,{value:value});
+	};'''
+	
+	cssConv: '''(value,unit,key){
+		let t = typeof value;
+		// Support custom units
+		return value;
+		// Object.defineProperty(target,key,{value:value});
 	};'''
 
 	extendTag: '''(el,cls){
@@ -9210,9 +9501,16 @@ export class Scope
 		# FIXME check if existing is required to be unique as well?
 		if existing and !o:unique
 			return existing
+		
+		let par = o:lookup && parent && parent.lookup(name)
+		
+			
 
 		# var type = o:system ? SystemVariable : Variable
 		var item = Variable.new(self,name,decl,o)
+		
+		if par
+			item.@parent = par
 		
 		if !o:system and !existing
 			@varmap[name] = item
@@ -9719,6 +10017,20 @@ export class Variable < Node
 			@isArray = no
 		self
 	
+	def parents
+		let parents = []
+		let scope = closure.parent
+		let res = self
+		while scope and res and parents:length < 5
+			console.log 'get parents!!!'
+			if res = scope.lookup(@name)
+				parents.unshift(res)
+				let newscope = res.scope.parent
+				if scope == newscope
+					break
+				scope = newscope
+
+		return parents
 
 	def resolve scope = scope, force = no
 		return self if @resolved and !force
