@@ -1,7 +1,8 @@
 
-var conv = require('../../vendor/colors')
+# var conv = require('../../vendor/colors')
+import * as selparser from './selparse'
+import {conv} from '../../vendor/colors'
 import {fonts,colors,variants} from './theme.imba'
-
 import * as theme from  './theme.imba'
 
 const extensions = {}
@@ -637,8 +638,6 @@ export const TransformMixin = '''
 	--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;--t_scale:1;--t_scale-x:1;--t_scale-y:1;--t_skew-x:0;--t_skew-y:0;
 	transform: translate3d(var(--t_x),var(--t_y),var(--t_z)) rotate(var(--t_rotate)) skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 '''
-
-import * as selparser from './selparse'
 
 export class StyleRule
 	

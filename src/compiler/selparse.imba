@@ -1,5 +1,6 @@
-var selparser = require('../../vendor/css-selector-parser')
-import {fonts,colors,variants,breakpoints,modifiers} from './theme.imba'
+# var selparser = require('../../vendor/css-selector-parser')
+import * as selparser from '../../vendor/css-selector-parser'
+import {modifiers} from './theme.imba'
 
 def addClass rule, name
 	rule.classNames ||= []
@@ -35,8 +36,6 @@ def cloneRule rule
 
 export def calcSpecificity rule
 	let number = 0
-
-export def add
 	
 export def rewrite rule,ctx,o = {}
 	

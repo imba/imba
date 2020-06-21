@@ -647,4 +647,6 @@ parser.registerNestingOperators('>>>','>', '+', '~')
 parser.registerAttrEqualityMods('^', '$', '*', '~')
 // parser.enableSubstitutes()
 
-module.exports = parser;
+export const parse = function(v){ return parser.parse(v) }
+export const render = function(v){ return parser.render(v) }
+// exports.default = parser;
