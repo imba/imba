@@ -39,11 +39,7 @@ def imba.q$ query, ctx
 def imba.q$$ query, ctx
 	(ctx isa Element ? ctx : document).querySelectorAll(query)
 
-def imba.inlineStyles styles
-	var el = document.createElement('style')
-	el.textContent = styles
-	document.head.appendChild(el)
-	return
+import * as styles from './css'
 
 const VALID_CSS_UNITS = {
 	cm:1
@@ -122,6 +118,13 @@ def imba.toStyleValue value, unit, key
 				value = '"' + value + '"'
 
 	return value
+
+def imba.inlineStyles content, id
+	styles.register(content,id)
+	# var el = document.createElement('style')
+	# el.textContent = styles
+	# document.head.appendChild(el)
+	return
 
 var dashRegex = /-./g
 

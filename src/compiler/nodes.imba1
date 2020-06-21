@@ -7689,6 +7689,7 @@ export class Tag < TagLike
 
 		var parent = self.parent
 		var fragment = self.fragment
+		let oscope = @tagDeclaration ? @tagDeclaration.scope : null
 
 		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type:isClass and type.isClass ? type.name : "'" + type.@value + "'"))
 
@@ -7742,14 +7743,13 @@ export class Tag < TagLike
 		
 		var addGlobalId = @sfcid or stack.option(:hasScopedStyles)
 		
-		if @tagDeclaration and (@tagDeclaration.option(:hasScopedStyles) or option(:reference))
+		if @tagDeclaration and @tagDeclaration.option(:hasScopedStyles)
 			@classNames.push(@tagDeclaration.cssref)
 		
 		if option(:reference)
-			let str = String(option(:reference)).slice(1)
-			@classNames.push(str)
-		
-		
+			if oscope
+				let name = String(option(:reference)).slice(1)
+				@classNames.push(oscope.cssReferenceFlag(name))
 		
 		if @classNames:length
 			let names = []
@@ -8528,13 +8528,15 @@ export class StyleRuleSet < StyleNode
 		
 	def visit stack, o
 		@tagDeclaration = stack.up(TagDeclaration)
+		@flag = stack.up(TagFlag)
+		@tag = @flag and @flag.@tag
 		let sel = String(@selectors).trim
 		
 		if sel.match(/^\%[\w\-]+$/)
 			set(mixin: sel.slice(1))
 			@identifier = MixinIdentifier.new(sel)
 			@name = sel.slice(1) + '-' + STACK.sfcid + oid
-			@sel = ".{@name}"
+			@sel = sel # "%{@name}"
 			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
 			# @variable.@resolvedValue = @sel
 		
@@ -8548,6 +8550,7 @@ export class StyleRuleSet < StyleNode
 					@sel = @sel.replace('&',owner.selectorpath)
 					@basesel = owner.selectorpath
 				set(inClassBody: yes)
+				@rulescope = owner.scope__
 				
 			else
 				yes # THROW here
@@ -8578,12 +8581,15 @@ export class StyleRuleSet < StyleNode
 				o:styles[@sel] = @styles
 
 		else
-			# need to
+			let pri = !!@flag ? (@tag and @tag.isSelf ? 2 : 2) : 0
+			# might want to send in the rule itself instead?
 			let opts = {
 				selectors:[],
 				localid: @tagDeclaration && @tagDeclaration.cssref
-				base: @basesel
+				base: @basesel,
+				priority: pri
 				forceLocal: option(:local)
+				scope: @tagDeclaration ? @tagDeclaration.scope : stack.scope
 				mixins: {}
 			}
 			
@@ -8595,6 +8601,8 @@ export class StyleRuleSet < StyleNode
 					else
 						return resolved
 				return null
+				
+			
 
 			@css = StyleRule.new(null,@sel,@styles,opts).toString
 
@@ -9415,6 +9423,12 @@ export class Scope
 
 	def nextShortRef
 		AST.counterToShortRef(@refcounter++)
+		
+	def cssReferenceFlag refname
+		refname + '_' + STACK.fid + @nr
+	
+	# def cssMixinFlag name
+		
 
 	def meta key, value
 		if value != undefined

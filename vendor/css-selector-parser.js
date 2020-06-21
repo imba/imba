@@ -362,7 +362,8 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         (rule = rule || {}).tagName = getIdent();
       } else if (chr === '$' || chr === '%') {
         pos++;
-        (rule = rule || {}).tagName = chr + getIdent();
+        rule = rule || {};
+        (rule.classNames = rule.classNames || []).push(chr + getIdent());
       } else if (chr === '.') {
         pos++;
         rule = rule || {};
@@ -592,6 +593,10 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
         res += entity.classNames.map(function(cn) {
           return "." + (this.escapeIdentifier(cn));
         }, this).join('');
+      }
+      if(entity.pri > 0){
+        let i = entity.pri;
+        while(--i >= 0) res += ':not(#_)';
       }
       if (entity.attrs) {
         res += entity.attrs.map(function(attr) {

@@ -15,144 +15,159 @@ def addPseudo rule, pseudo
 	rule.pseudos.push(pseudo)
 	return rule
 
-def getRootRule ruleset
+def getRootRule ruleset, force
 	let rule = ruleset.rule
-	if rule.tagName != 'html'
-		rule = ruleset.rule = {type: 'rule',tagName:'html',classNames:[],rule: rule}
+	let root
+
+	if !rule.isRoot
+		rule = ruleset.rule = {type: 'rule',rule: rule,isRoot:yes}
 	return rule
-	
+
 def addRootClass ruleset, name
-	let rule = ruleset.rule
-	if rule.tagName != 'html'
-		rule = ruleset.rule = {type: 'rule',tagName:'html',classNames:[],rule: rule}
-	addClass(rule,name)
+	addClass(getRootRule(ruleset),name)
 	return ruleset
-	
 	
 def wrapRule rule, wrapper
 	yes
 	
 def cloneRule rule
 	JSON.parse(JSON.stringify(rule))
+
+export def calcSpecificity rule
+	let number = 0
+
+export def add
 	
-export def rewrite rule,ctx,scope = {}
+export def rewrite rule,ctx,o = {}
 	
 	if rule.type == 'selectors'
 		for sel in rule.selectors
-			rewrite(sel,rule,scope)
+			rewrite(sel,rule,o)
 			
-	if rule.type == 'ruleSet'
-		let root = rule
-		rule.meta = {}
-		rule.media = []
-
-		let parts = []
-		let curr = rule.rule
-		while curr
-			parts.push(curr)
-			curr = curr.rule
+	unless rule.type == 'ruleSet'
+		return rule
 		
-		let rev = parts.slice(0).reverse!
+	
+	let root = rule
+	let pri = 0
+	let specificity = 0
+	let scope = o.scope
+	rule.meta = {}
+	rule.media = []
+
+	let parts = []
+	let curr = rule.rule
+	while curr
+		parts.push(curr)
+		curr = curr.rule
+	
+	let rev = parts.slice(0).reverse!
+	
+	# hack
+	for part,i in rev
+		let up = rev[i + 1]
+		let flags = part.classNames
+		let mods = part.pseudos
+		let name = part.tagName
+		let op = part.nestingOperator
 		
-		# hack
-		for part,i in rev
-			let up = rev[i + 1]
-			let flags = part.classNames
-			let mods = part.pseudos
-			let name = part.tagName
-			let op = part.nestingOperator
-			
-			if !flags and !name and !op and (mods and mods.every(do $1.special))
-				# console.log 'send up to the parent',part,up,part == up
-				if up
-					up.pseudos = (up.pseudos or []).concat(mods)
-					up.rule = part.rule
-					parts.splice(parts.indexOf(part),1)
-				# else
-				# 	console.log 'cannot send further up!!!'
+		if !flags and !name and !op and (mods and mods.every(do $1.special))
+			# console.log 'send up to the parent',part,up,part == up
+			if up
+				up.pseudos = (up.pseudos or []).concat(mods)
+				up.rule = part.rule
+				parts.splice(parts.indexOf(part),1)
+			# else
+			# 	console.log 'cannot send further up!!!'
+	
+	let container = parts[0]
+
+	for part,i in parts
+		let prev = parts[i - 1]
+		let next = parts[i + 1]
+		let flags = part.classNames ||= []
+		let mods = part.pseudos or []
+		let name = part.tagName
+		let op = part.nestingOperator
 		
-		let container = parts[0]
-
-		for part,i in parts
-			let prev = parts[i - 1]
-			let next = parts[i + 1]
-			let flags = part.classNames ||= []
-			let mods = part.pseudos or []
-			let name = part.tagName
-			let op = part.nestingOperator
-			
-			if name and name[0] == '$'
-				part.tagName = null
-				addClass(part,name.slice(1))
-				addClass(part,scope.localid)
-				# flags.unshift(name.slice(1))
-				# flags.unshift(scope.localid)
-			elif name and name[0] == '%'
-				
-				part.tagName = null
-				addClass(part,'mixin___'+name.slice(1))
-				
-			if scope.forceLocal
-				addClass(part,scope.localid)
-				# flags.unshift(scope.localid)
-			
-			let modTarget = part
-			
-			for mod in mods when mod.special
-				
-				let [m,pre,name,post] = (mod.name.match(/^(\$|\.+|is-|up-)?([^\~\+]*)([\~\+]*)$/) or [])
-
-				if pre == '.' or pre == 'is-'
-					# console.log 'class mod!!',mod
-					addClass(modTarget,name)
-					mod.remove = yes
-				
-				elif pre == '..' or pre == 'up-'
-					prev ||= root.rule = {type: 'rule',classNames:[],rule:root.rule}
-					addClass(modTarget = prev,name)
-					mod.remove = yes
-					
-				if post == '~'
-					# console.log 'after selector!!',mod,part
-					modTarget
-
-				if let alias = modifiers[mod.name]
-					if alias.media
-						rule.media.push(alias.media)
-						mod.remove = yes
-					if alias.ua
-						# get or force-create html element
-						addClass(getRootRule(rule),"ua-{alias.ua}")
-						mod.remove = yes
-					
-					unless mod.remove
-						Object.assign(mod,alias)
-
-				elif mod.name == 'local'
-					mod.remove = yes
-					scope.hasLocalRules = yes
-					flags.push(scope.localid) if scope.localid
-				
-				if modTarget != part and !mod.remove
-					addPseudo(modTarget,mod)
-					mod.remove = yes
-
-				# if let m = mod.name.match(/^(in|is|up)-(.+)$/)
-				# 	mod.remove = yes
-				# 	if m[1] == 'is'
-				# 		addClass(part,m[2])
-				# 	elif m[1] == 'in' or m[1] == 'up'
-				# 		unless prev
-				# 			root.rule = {type: 'rule',classNames:[m[2]],rule:root.rule}
-				# 		else
-				# 			addClass(prev,m[2])
-
-			part.pseudos = mods.filter do !$1.remove
+		if name == 'html'
+			part.isRoot = yes
 		
-		# console.log 'parts afte rewrite',parts
+		if mods.some(do $1.name == 'root')
+			part.isRoot = yes
+			
+		for flag,i in flags
+
+			if flag[0] == '%'
+				flags[i] = 'mixin___'+flag.slice(1)
+				pri = 1 if pri < 1
+			elif flag[0] == '$'
+				flags[i] = scope.cssReferenceFlag(flag.slice(1))
+				pri = 1 if pri < 1
+		
+		if part.tagName
+			specificity++
+			
+		specificity += part.classNames.length
+		
+		let modTarget = part
+		
+		for mod in mods when mod.special
+			
+			let [m,pre,name,post] = (mod.name.match(/^(\$|\.+|is-|up-)?([^\~\+]*)([\~\+]*)$/) or [])
+
+			if pre == '.' or pre == 'is-'
+				# console.log 'class mod!!',mod
+				addClass(modTarget,name)
+				mod.remove = yes
+				specificity++
+			
+			elif pre == '..' or pre == 'up-'
+				prev ||= root.rule = {type: 'rule',classNames:[],rule:root.rule}
+				addClass(modTarget = prev,name)
+				mod.remove = yes
+				specificity++
+				
+			if post == '~'
+				modTarget
+
+			if let alias = modifiers[mod.name]
+				if alias.media
+					rule.media.push(alias.media)
+					mod.remove = yes
+				if alias.ua
+					# get or force-create html element
+					addClass(getRootRule(rule),"ua-{alias.ua}")
+					mod.remove = yes
+					# possibly two levels?
+					specificity++
+				
+				unless mod.remove
+					Object.assign(mod,alias)
+
+			elif mod.name == 'local'
+				mod.remove = yes
+				o.hasLocalRules = yes
+				addClass(rule,o.localid) if o.localid
+				specificity++
+			
+			if modTarget != part and !mod.remove
+				addPseudo(modTarget,mod)
+				mod.remove = yes
+				specificity++
+			elif !mod.remove
+				specificity++
+
+		part.pseudos = mods.filter do !$1.remove
+	
+	rule.specificity = specificity
+
+	if pri = Math.max(o.priority or 0,pri)
+		# let last = parts[parts.length - 1]
+		parts[parts.length - 1].pri = pri
 	return rule
 
-export def render root, content
+export def render root, content, options = {}
 	let group = ['']
 	let groups = [group]
 	let rules = root.selectors or [root]

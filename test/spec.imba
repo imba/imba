@@ -346,6 +346,9 @@ global def eqcss el, match
 	elif el isa Element and !el.parentNode
 		document.body.appendChild(el)
 	let style = window.getComputedStyle(el)
+	if typeof match == 'number'
+		match = {fontWeight: String(match)}
+
 	for own k,expected of match
 		let real = style[k]
 		if expected isa RegExp
