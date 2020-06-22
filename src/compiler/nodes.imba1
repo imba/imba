@@ -7304,9 +7304,9 @@ export class TagContent < TagLike
 				# mark parent to reset imba.ctx at the end
 				parts.unshift("imba.ctx=({key}$ || ({key}$=\{_:{fragment.tvar}\}))")
 			if value isa TagTextContent
-				parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$(String({key}={vvar}),{@flags},{key}_))")
+				parts.push("({vvar}==={key}&&{bvar}) || ({key}_ = {ref}.insert$(String({key}={vvar}),{@flags},{key}_))")
 			else
-				parts.push("{vvar}==={key} || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_))")
+				parts.push("({vvar}==={key}&&{bvar}) || ({key}_ = {ref}.insert$({key}={vvar},{@flags},{key}_))")
 
 		return "(" + parts.join(',') + ')'
 
