@@ -103,15 +103,14 @@ export var F =
 # Helpers for operators
 export var OP = do |op, l, r|
 	var o = String(op)
-	if o == '-' and !r and l isa Num
-		l.@value = -l.toNumber
+	if o == '-' and !r and (l isa Num or l isa NumWithUnit)
+		l.negate
 		return l
-	elif o == '+' and !r and l isa Num
+	elif o == '+' and !r and (l isa Num or l isa NumWithUnit)
 		return l
 
 	switch o
 		when '.'
-			
 			r = Identifier.new(r) if r isa String
 			# r = r.value if r isa VarOrAccess
 			
@@ -141,7 +140,7 @@ export var OP = do |op, l, r|
 			TypeOf.new(op,l,r)
 		when 'delete'
 			Delete.new(op,l,r)
-		when '--','++','!','√','not' # alias
+		when '--','++','!','√','not'
 			UnaryOp.new(op,l,r)
 		when '>','<','>=','<=','==','===','!=','!=='
 			ComparisonOp.new(op,l,r)
@@ -3516,6 +3515,10 @@ export class Num < Literal
 
 	def isTruthy
 		toNumber != 0
+		
+	def negate
+		@value = -toNumber
+		self
 
 	def shouldParenthesize par = up
 		par isa Access and par.left == self
@@ -3547,13 +3550,27 @@ export class NumWithUnit < Literal
 		@traversed = no
 		@value = v
 		@unit = unit
-		
-		
+	
+	def negate
+		set(negate: yes)
+		return self
 	
 	def c o
 		let raw = "{String(@value)}{String(@unit)}"
-		o:css ? raw : "'{raw}'"
-
+		raw = "-{raw}" if option(:negate)
+		o and o:css ? raw : "'{raw}'"
+	
+export class ExpressionWithUnit < ValueNode
+	
+	def initialize value, unit
+		@value = value
+		@unit = unit
+	
+	def js o
+		# util.unit(@value,STR(@unit)).c
+		# let out = typeof @value == 'string' ? @value : @value.c
+		"({value.c}+{STR(@unit).c})"
+	
 # should be quoted no?
 # what about strings in object-literals?
 # we want to be able to see if the values are allowed
@@ -9146,6 +9163,10 @@ export class Util < Node
 var HELPERS = {
 	setField: '''(target,key,value,o){
 		Object.defineProperty(target,key,{value:value});
+	};'''
+	
+	unit: '''(value,unit){
+		return value + unit;
 	};'''
 	
 	cssConv: '''(value,unit,key){

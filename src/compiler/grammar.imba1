@@ -1028,6 +1028,7 @@ var grammar =
 	# the trick.
 	Parenthetical: [
 		o '( ExpressionList )' do Parens.new(A2,A1,A3)
+		o '( ExpressionList ) UNIT' do ExpressionWithUnit.new(Parens.new(A2,A1,A3),A4)
 		# o '( INDENT ExpressionList OUTDENT )' do Parens.new(A3,A1,A5)
 	]
 
@@ -1167,6 +1168,8 @@ var grammar =
 		o 'NEW Expression' do Instantiation.new(A2).set(keyword: A1)
 		o 'UNARY Expression' do AST.OP A1, A2
 		o 'SQRT Expression' do AST.OP A1, A2
+		o '--- Expression' do AST.OP A1, A2
+		o '+++ Expression' do AST.OP A1, A2
 		o('-     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # Op.new '-', A2
 		o('+     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # do Op.new '+', A2
 		o '-- SimpleAssignable' do UnaryOp.new(A1, null, A2)
@@ -1183,6 +1186,8 @@ var grammar =
 		o 'Expression COMPARE  Expression' do AST.OP A2, A1, A3
 		o 'Expression LOGIC    Expression' do AST.OP A2, A1, A3
 		# o 'Expression ?.    Expression' do AST.OP A2, A1, A3
+		
+		# o 'Expression UNIT' do AST.OP A2, A1
 
 		o 'Expression NOT RELATION Expression' do
 			AST.OP(A3, A1, A4).invert(A2)
@@ -1208,7 +1213,7 @@ var operators = [
 	['right','AWAIT']
 	['right',     'EXP']
 	['left',      'MATH']
-	['left',      '+', '-']
+	['left',      '+', '-','+++','---']
 	['left',      'SHIFT']
 	['left',      'RELATION']
 	['left',      'COMPARE']

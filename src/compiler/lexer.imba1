@@ -899,21 +899,6 @@ export class Lexer
 		var addLoc = false
 		var inTag = ctx0 == 'TAG_END' or (ctx1 == 'TAG_END' and ctx0 == 'OUTDENT')
 
-		# see if this is a plain object-key
-		# way too much logic going on here?
-		# the ast should normalize whether keys
-		# are accessable as keys or strings etc
-		if false and match = OBJECT_KEY.exec(@chunk)
-			var id = match[1]
-			var typ = 'KEY'
-
-			token(typ, id, id:length)
-			moveCaret(id:length)
-			# console.log "MATCH",match
-			token ':', ':', match[3]:length
-			moveCaret(-id:length)
-			return match[0]:length
-
 		unless match = IDENTIFIER.exec(@chunk)
 			return 0
 
@@ -955,10 +940,6 @@ export class Lexer
 			typ = 'ENV_FLAG'
 			id = id.toUpperCase # .slice(1, -1)
 
-		# elif typ == '@'
-		# 	typ = 'IVAR'
-		# 	id = id.slice(1)
-		#	id:reserved = yes if colon
 		elif typ == '#'
 			typ = 'IVAR'
 
@@ -1124,8 +1105,8 @@ export class Lexer
 			# see if previous was catch -- belongs in rewriter?
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
-				
-		if (lastTyp == 'NUMBER' or lastTyp == '}') and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
+
+		if (lastTyp == 'NUMBER' or lastTyp == ')') and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
 			typ = 'UNIT'
 		
 		if colon
@@ -1812,7 +1793,7 @@ export class Lexer
 
 		elif value == '**'
 			tokid = 'EXP'
-		elif value == '%' and pt == 'NUMBER' and !prev:spaced
+		elif value == '%' and (pt == 'NUMBER' or pt == ')') and !prev:spaced
 			tokid = 'UNIT'
 		elif value in MATH
 			tokid = 'MATH'
@@ -1863,6 +1844,10 @@ export class Lexer
 			
 		if value == ':' and end1 == 'TAG_RULE'
 			tokid = 'T:'
+			
+		if (tokid == '-' or tokid == '+')
+			if /\w|\(|\$/.test(@chunk[1]) and (!prev or prev:spaced)
+				tokid = tokid + tokid + tokid
 
 		token(tokid, value, value:length)
 		
@@ -1875,7 +1860,6 @@ export class Lexer
 				token('IDENTIFIER','$CARET$',0,1)
 			elif value == '@' and (!next or (/[^\$\@\-\.\w]/).test(next))
 				token('IDENTIFIER','$CARET$',0,1)
-
 
 		return value:length
 
