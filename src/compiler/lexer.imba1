@@ -1728,16 +1728,6 @@ export class Lexer
 			
 		if value == '(' and pt == 'T.'
 			tokid = 'STYLE_START'
-			
-		elif pt == 'TAG_WS' and (value == '{')
-			tokid = 'STYLE_START'
-		
-		elif pt == '.' and (value == '(' or value == '{')
-			prev.@type = 'STYLE_DECL'
-			tokid = 'STYLE_START'
-		
-		elif pt == 'SELECTOR_END' and value == '{'
-			tokid = 'STYLE_START'
 		
 		elif value == '[' and inTag
 			tokid = 'STYLE_START'

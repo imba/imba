@@ -369,16 +369,14 @@ var grammar =
 		o 'LOCAL CSSDeclaration' do A2.set(local: A1)
 	]
 	
-	StyleDefinition: [
-		o 'STYLE_DECL STYLE_START StyleBody STYLE_END' do StyleRuleSet.new(null,A3)
-	]
-	
-	NestedStyleRule: [
-		o 'Selector STYLE_START StyleBody STYLE_END' do StyleRuleSet.new(A1,A3)
-	]
 	
 	StyleBlockBody: [
 		o 'INDENT StyleBody Outdent' do A2.indented(A1,A3)
+	]
+	
+	OptStyleBody: [
+		o '' do StyleBody.new([])
+		o 'StyleBody'
 	]
 	
 	StyleBody: [
@@ -454,6 +452,7 @@ var grammar =
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
+		o 'TagOptions STYLE_START STYLE_END' do A1 
 		o 'TagOptions STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A3),AST.TagFlag)
 		o 'TagOptions T. STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
 		o 'TagOptions MIXIN' do A1.addPart(MixinIdentifier.new(A2),AST.TagFlag)
@@ -815,7 +814,6 @@ var grammar =
 		o 'This'
 		o 'TagId'
 		o 'Selector'
-		o 'StyleDefinition'
 		o 'Invocation'
 		o 'Require'
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
