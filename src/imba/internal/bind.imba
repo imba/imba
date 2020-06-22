@@ -184,10 +184,10 @@ extend class HTMLInputElement
 		imba.commit!
 
 	def setRichValue value
-		if $$value != value
+		if $$value !== value
 			$$value = value
 
-			if self.value != value
+			if self.value !== value
 				self.value = value
 		return
 
