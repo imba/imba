@@ -146,7 +146,9 @@ var IMPLICIT_CALL_MAP =
 	'FOR': 1
 	'CONTINUE': 1
 	'BREAK': 1
-
+	'INLINE_LET': 1
+	'INLINE_VAR': 1
+	'INLINE_CONST': 1
 
 var IDENTIFIERS = ['IDENTIFIER', 'IVAR', 'DECORATOR', 'ARGVAR']
 
@@ -157,14 +159,6 @@ var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', # ')', 'INDEX_END', #  'CALL_END'
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 'CVAR',
 	'ARGVAR', 'BREAK', 'CONTINUE','RETURN','BANG'
 ]
-
-# If preceded by an `IMPLICIT_FUNC`, indicates a function invocation.
-var IMPLICIT_CALL    = [
-	'SELECTOR','IDENTIFIER', 'NUMBER', 'STRING', 'SYMBOL', 'JS', 'REGEX', 'NEW', 'PARAM_START', 'CLASS',
-	'IF', 'UNLESS', 'TRY', 'SWITCH', 'THIS', 'BOOL', 'TRUE','FALSE', 'NULL', 'UNDEFINED', 'UNARY', 'SUPER', 'IVAR', 'ARGVAR','SELF', 
-	'@', '[', '(', '{', '--', '++','SELECTOR', 'TAG_START', 'TAGID', '#', 'SELECTOR_START', 'IDREF', 'SPLAT', 'DO', 'BLOCK_ARG',
-	'FOR', 'STRING_START','CONTINUE','BREAK'
-] # '->', '=>', why does it not work with symbol?
 
 var IMPLICIT_INDENT_CALL = [
 	'FOR'
