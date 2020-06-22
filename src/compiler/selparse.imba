@@ -138,9 +138,12 @@ export def rewrite rule,ctx,o = {}
 					# get or force-create html element
 					addClass(getRootRule(rule),"ua-{alias.ua}")
 					mod.remove = yes
-					# possibly two levels?
 					specificity++
-				
+				if alias.flag
+					addClass(modTarget,alias.flag)
+					mod.remove = yes
+					specificity++
+
 				unless mod.remove
 					Object.assign(mod,alias)
 

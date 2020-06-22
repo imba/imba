@@ -1,36 +1,40 @@
 import {Event,Element} from '../dom'
 
 Event.pointerdown = {
-	handle: do(s,args)
-		let ev = s.event
-		s.handler.x0 = ev.x
-		s.handler.y0 = ev.y
-
-	lock: do(state,args)
-		let ev = state.event
+	handle: do(state,options)
+		# only if touch
+		let e = state.event
 		let el = state.element
 		let handler = state.handler
+		return true if handler.type != 'touch'
+		
+		e.dx = e.dy = 0
+		handler.x0 = e.x
+		handler.y0 = e.y
+		handler.pointerId = e.pointerId
+
 		let canceller = do return false
 		let selstart = document.onselectstart
-		el.setPointerCapture(ev.pointerId)
-		handler.pointerId = ev.pointerId
-		handler.x0 = ev.x
-		handler.y0 = ev.y
-		ev.dx = ev.dy = 0
+		el.setPointerCapture(e.pointerId)
 
 		el.addEventListener('pointermove',handler)
 		el.addEventListener('pointerup',handler)
 		document.onselectstart = canceller
+
+		el.flags.add('_touch_')
+
 		el.addEventListener('pointerup',&,once: true) do(e)
 			el.releasePointerCapture(e.pointerId)
 			el.removeEventListener('pointermove',handler)
 			el.removeEventListener('pointerup',handler)
 			handler.pointerId = null
+			if handler.pointerFlag
+				el.flags.remove(handler.pointerFlag)
+			el.flags.remove('_touch_')
 			document.onselectstart = selstart
-		yes
-			
-			
+		yes			
 }
+
 Event.pointermove = {
 	handle: do(s,args)
 		let h = s.handler

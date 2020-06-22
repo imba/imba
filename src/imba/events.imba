@@ -87,7 +87,8 @@ export class EventHandler
 
 			if handler.indexOf('~') > 0
 				handler = handler.split('~')[0]
-
+			
+			let modargs = []
 			let args = [event,self]
 			let res = undefined
 			let context = null
@@ -100,6 +101,7 @@ export class EventHandler
 			# parse the arguments
 			elif val isa Array
 				args = val.slice()
+				modargs = args
 
 				for par,i in args
 					# what about fully nested arrays and objects?
@@ -159,11 +161,11 @@ export class EventHandler
 					# console.log "found modifier!",mod
 					handler = mod
 					context = event
-					args = [state,args]
+					args = [state,modargs]
 				
 				elif schema and schema[handler] isa Function
 					context = schema
-					args = [state,args]
+					args = [state,modargs]
 
 				# should default to first look at closure - no?
 				elif handler[0] == '_'

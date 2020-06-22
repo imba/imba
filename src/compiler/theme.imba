@@ -105,6 +105,8 @@ export const modifiers =
 	opera: {ua: 'opera'}
 	blink: {ua: 'blink'}
 	webkit: {ua: 'webkit'}
+	
+	touch: {flag: '_touch_'}
 
 
 # some things should definitely move out of theme

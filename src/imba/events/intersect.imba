@@ -41,15 +41,23 @@ def getIntersectionObserver opts = defaults
 Element.prototype.on$intersect = do(mods,context)
 	let obs
 	if mods.options
-		let opts = {threshold: []}
+		let th = [] 
+		let opts = {threshold:th}
 
 		for arg in mods.options
 			if arg isa Element
 				opts.root = arg
 			elif typeof arg == 'number'
-				opts.threshold.push(arg)
+				th.push(arg)
+				
+		if th.length == 1
+			let num = th[0]
+			if num > 1
+				th[0] = 0
+				while th.length < num
+					th.push(th.length / (num - 1))
 
-		opts.threshold.push(0) if opts.threshold.length == 0
+		th.push(0) if th.length == 0
 		obs = getIntersectionObserver(opts)
 	else
 		obs = getIntersectionObserver()

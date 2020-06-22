@@ -325,6 +325,7 @@ extend class Element
 		
 		if type == 'touch'
 			type = 'pointerdown'
+			handler.type = 'touch'
 
 		self.addEventListener(type,handler,o)
 		return handler
@@ -354,7 +355,7 @@ extend class Element
 		elif type !== 'object'
 			let res
 			let txt = item
-
+			
 			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$)
 				# FIXME what if the previous one was not text? Possibly dangerous
 				# when we set this on a fragment - it essentially replaces the whole
