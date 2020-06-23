@@ -1,5 +1,30 @@
 import {Event,Element} from '../dom'
 
+class Touch
+	def constructor e
+		id = e.pointerId
+		t0 = Date.now!
+		x0 = x = e.x
+		y0 = y = e.y
+		mx = my = 0
+		e.touch = self
+	
+	def update e
+		mx = e.x - x
+		my = e.y - x
+		x = e.x
+		y = e.y
+		e.touch = self
+	
+	get dx
+		x - x0
+	
+	get dy
+		y - y0
+		
+	get dt
+		Date.now! - t0
+
 Event.pointerdown = {
 	handle: do(state,options)
 		# only if touch
@@ -12,6 +37,8 @@ Event.pointerdown = {
 		handler.x0 = e.x
 		handler.y0 = e.y
 		handler.pointerId = e.pointerId
+		
+		handler.touch = new Touch(e)
 
 		let canceller = do return false
 		let selstart = document.onselectstart
@@ -41,6 +68,7 @@ Event.pointermove = {
 		let e = s.event
 		let id = h.pointerId
 		return false if id and e.pointerId != id
+		h.touch.update(e) if h.touch
 		if typeof h.x0 == 'number'
 			e.dx = e.x - h.x0
 			e.dy = e.y - h.y0
@@ -52,6 +80,8 @@ Event.pointerup = {
 		let e = s.event
 		let id = h.pointerId
 		return false if id and e.pointerId != id
+		h.touch.update(e) if h.touch
+			
 		if typeof h.x0 == 'number'
 			e.dx = e.x - h.x0
 			e.dy = e.y - h.y0
