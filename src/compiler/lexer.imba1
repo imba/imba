@@ -90,7 +90,7 @@ var OBJECT_KEY = /// ^
 ///
 
 var TAG = /// ^
-	(\<)(?=[A-Za-z\#\.\%\[\{\@\>])
+	(\<)(?=[A-Za-z\#\.\%\$\[\{\@\>])
 ///
 
 var TAG_TYPE = /^(\w[\w\d]*:)?(\w[\w\d]*)(-[\w\d]+)*/
@@ -544,7 +544,7 @@ export class Lexer
 			if tok == 'self' and @lastVal == '<'
 				typ = 'SELF'
 				
-			if chr == '$' and @lastTyp == 'TAG_TYPE'
+			if chr == '$' and (@lastTyp == 'TAG_TYPE' or @lastTyp == 'TAG_START')
 				typ = 'TAG_REF'
 			
 			if chr == '%'
