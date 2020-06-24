@@ -1,5 +1,5 @@
 
-import {CustomEvent,Element} from '../dom'
+import {CustomEvent,Element,Event} from '../dom'
 
 var resizeObserver = null
 
@@ -12,7 +12,10 @@ def getResizeObserver
 	resizeObserver ||= new ResizeObserver do(entries)
 		for entry in entries
 			let e = new CustomEvent('resize', bubbles: false, detail: entry)
+			e.entry = entry
 			e.rect = entry.contentRect
+			e.width = entry.target.offsetWidth
+			e.height = entry.target.offsetHeight
 			entry.target.dispatchEvent(e)
 		return
 
