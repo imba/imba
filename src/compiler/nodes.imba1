@@ -7289,6 +7289,7 @@ export class TagContent < TagLike
 			if value isa Call
 				# mark parent to reset imba.ctx at the end
 				parts.unshift("imba.ctx=({key}$ || ({key}$=\{_:{fragment.tvar}\}))")
+				parts.push("imba.ctx=null")
 
 		elif isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
@@ -7303,6 +7304,8 @@ export class TagContent < TagLike
 			if value isa Call
 				# mark parent to reset imba.ctx at the end
 				parts.unshift("imba.ctx=({key}$ || ({key}$=\{_:{fragment.tvar}\}))")
+				parts.push("imba.ctx=null")
+
 			if value isa TagTextContent
 				parts.push("({vvar}==={key}&&{bvar}) || ({key}_ = {ref}.insert$(String({key}={vvar}),{@flags},{key}_))")
 			else
@@ -7878,6 +7881,7 @@ export class Tag < TagLike
 				add("imba.ctx=({key}$c || ({key}$c=\{\}))")
 				let call = CALL(option(:type).toFunctionalType,option(:args))
 				add("{tvar}={call.c(o)}")
+				add("imba.ctx=null")
 				add("{tvar}==={ref} || ({key}_ = {fragment.tvar}.insert$({ref}={tvar},{@flags},{key}_))")
 				# call the tag - type?
 

@@ -2,25 +2,25 @@ var name = "John Doe"
 
 tag app-root
 
-	def log ...args
+	def logs ...args
 		console.info(args)
 
 	def render
-		<self :hello.{log(e.type,e.detail)}>
+		<self @hello.{logs(e.type,e.detail)}>
 			# $ refers to the event itself
 			
-			<div.a :click.log($)> 'A'
+			<div.a @click.logs($)> 'A'
 
 			# $identifier refers to event[identifier]
-			<div.b :click.{log(e.type)}> 'Event type'
+			<div.b @click.{logs(e.type)}> 'Event type'
 
-			<div.c :click.emit('hello','test')> 'Trigger custom'
+			<div.c @click.emit('hello','test')> 'Trigger custom'
 
-			<div.d :click.log('d',$)> 'D'
+			<div.d @click.logs('d',$)> 'D'
 
-			<div.d :click.log('d',$)> 'D'
+			<div.d @click.logs('d',$)> 'D'
 
-			<div.e reference=123 :click.{log($.element.reference)}> 'E'
+			<div.e reference=123 @click.{logs($.element.reference)}> 'E'
 
 imba.mount(<app-root>)
 
