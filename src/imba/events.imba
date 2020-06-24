@@ -12,29 +12,52 @@ const keyCodes = {
 	del: [8,46]
 }
 
-# only for web?
-extend class Event
+def Event.log$mod ...params
+	console.log(...params)
+	return true
+
+# Skip unless matching selector
+def Event.sel$mod expr
+	return !!event.target.matches(String(expr))
 	
-	def wait$mod state, params
-		new Promise do |resolve|
-			setTimeout(resolve,(params[0] isa Number ? params[0] : 1000))
+def Event.if$mod expr
+	return !!expr
+	
+def Event.wait$mod num
+	new Promise(do setTimeout($1,(typeof num == 'number' ? num : 1000)))
+	
+def Event.throttle$mod ms = 250
+	return false if handler.throttled
+	handler.throttled = yes
 
-	def sel$mod state, params
-		return state.event.target.closest(params[0]) or false
+	let cl = element.flags.add('_cooldown_')
 
-	def throttle$mod {handler,element,event}, params
-		return false if handler.throttled
-		handler.throttled = yes
-		let name = params[0]
-		unless name isa String
-			name = "in-{event.type or 'event'}"
-		let cl = element.classList
-		cl.add(name)
-		handler.once('idle') do
-			cl.remove(name)
+	handler.once('idle') do
+		setTimeout(&,ms) do
+			element.flags.remove('_cooldown_')
 			handler.throttled = no
-		return true
+	return true
+	
+def Event.flag$mod name,sel
+	# console.warn 'event flag',self,arguments,id,step
+	let el = sel isa global.Element ? sel : (sel ? element.closest(sel) : element)
+	return true unless el
+	let step = step
+	handler[step] = id
 
+	el.flags.add(name)
+	let ts = Date.now!
+	handler.once('idle') do
+		let elapsed = Date.now! - ts
+		let delay = Math.max(250 - elapsed,0)
+		setTimeout(&,delay) do
+			# console.warn 'event flag after',self,handler[step],id,step
+			el.flags.remove(name) if handler[step] == id
+
+	return true
+	
+def Event.busy$mod sel
+	return Event.flag$mod.call(this,'busy',250,sel)
 
 # could cache similar event handlers with the same parts
 export class EventHandler
@@ -59,39 +82,45 @@ export class EventHandler
 		let commit = yes # self.params.length == 0
 		let awaited = no
 		let prevRes = undefined
+		
+		self.count ||= 0
 
 		let state = {
 			element: element
 			event: event
 			modifiers: mods
 			handler: this
+			id: ++self.count
+			step: -1
 		}
-			
+
 		if event.handle$mod
-			if event.handle$mod(state,mods.options) == false
+			if event.handle$mod.call(state,mods.options) == false
 				return
 
-		let schema = Event[event.type]
+		let guard = Event[event.type + '$handle']
 			
-		if schema and schema.handle
-			if schema.handle(state,mods.options) == false
-				return
-
+		if guard and guard.call(state,mods.options) == false
+			return
+		
 		self.currentEvents ||= new Set
 		self.currentEvents.add(event)	
 
 		for own handler,val of mods
-			# let handler = part
+			state.step++
+
 			if handler[0] == '_'
 				continue
 
 			if handler.indexOf('~') > 0
 				handler = handler.split('~')[0]
 			
-			let modargs = []
+			let modargs = null
 			let args = [event,self]
 			let res = undefined
 			let context = null
+			let m
+			let isstring = typeof handler == 'string'
 			
 			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
 				handler = val[0]
@@ -116,6 +145,11 @@ export class EventHandler
 
 						args[i] = value
 
+			if typeof handler == 'string' and m = handler.match(/^(emit|flag)-(.+)$/)
+				modargs = args = [] unless modargs
+				args.unshift(m[2])
+				handler = m[1]
+			
 			# console.log "handle part",i,handler,event.currentTarget
 			# check if it is an array?
 			if handler == 'stop'
@@ -124,7 +158,7 @@ export class EventHandler
 				event.preventDefault()
 			elif handler == 'commit'
 				commit = yes
-			elif handler == 'silence'
+			elif handler == 'silence' or handler == 'silent'
 				commit = no
 			elif handler == 'ctrl'
 				break unless event.ctrlKey
@@ -135,7 +169,7 @@ export class EventHandler
 			elif handler == 'meta'
 				break unless event.metaKey
 			elif handler == 'self'
-				break unless target == element	
+				break unless target == element
 
 			elif handler == 'once'
 				# clean up bound data as well
@@ -147,7 +181,7 @@ export class EventHandler
 				unless keyCodes[handler].indexOf(event.keyCode) >= 0
 					break
 
-			elif handler == 'trigger' or handler == 'emit'
+			elif handler == 'emit'
 				let name = args[0]
 				let detail = args[1] # is custom event if not?
 				let e = new CustomEvent(name, bubbles: true, detail: detail) # : new Event(name)
@@ -155,17 +189,12 @@ export class EventHandler
 				let customRes = element.dispatchEvent(e)
 
 			elif typeof handler == 'string'
-				let mod = handler + '$mod'
-
-				if event[mod] isa Function
-					# console.log "found modifier!",mod
-					handler = mod
-					context = event
-					args = [state,modargs]
+				let fn = Event[handler + '$mod'] or Event[event.type + '$' + handler]
 				
-				elif schema and schema[handler] isa Function
-					context = schema
-					args = [state,modargs]
+				if fn isa Function
+					handler = fn
+					context = state
+					args = modargs or []
 
 				# should default to first look at closure - no?
 				elif handler[0] == '_'

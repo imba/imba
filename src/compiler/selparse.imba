@@ -143,6 +143,9 @@ export def rewrite rule,ctx,o = {}
 					addClass(modTarget,alias.flag)
 					mod.remove = yes
 					specificity++
+				if alias.pri
+					pri = alias.pri
+					mod.remove = yes
 
 				unless mod.remove
 					Object.assign(mod,alias)

@@ -4,17 +4,15 @@ const observers = new (global.WeakMap || Map)
 const defaults = {threshold: [0]}
 const rootTarget = {}
 
-Event.intersect = {
-	handle: do(state,args)
-		let obs = state.event.detail.observer
-		return state.modifiers._observer == obs
+def Event.intersect$handle
+	let obs = event.detail.observer
+	return modifiers._observer == obs
 
-	in: do(state,args)
-		return state.event.detail.delta > 0
+def Event.intersect$in
+	return event.detail.delta > 0
 
-	out: do(state,args)
-		return state.event.detail.delta < 0
-}
+def Event.intersect$out
+	return event.detail.delta < 0
 
 def callback name, key
 	return do |entries,observer|

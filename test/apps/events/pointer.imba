@@ -1,14 +1,5 @@
 tag app-item
-	css p:2 bg:teal2 pos:relative
-	
-	def resize e
-		console.log 'hello!!',e.type
-
-	def render
-		<self @pointerdown.lock=resize> "Item"
-		
-tag app-touched
-	css p:2 pos:absolute bg:teal2 @touch:teal3
+	css p:2 pos:relative bg:teal2 @touch:teal3
 	
 	prop x = 0
 	prop y = 0
@@ -20,7 +11,7 @@ tag app-touched
 		render!
 
 	def render
-		<self[x:{x} y:{y}] @touch=touch> "Item"
+		<self[x:{x} y:{y}] @touch.log('hello',1,2)=touch> "Item"
 
 # Play around
 tag app-example
@@ -31,6 +22,6 @@ tag app-example
 		<self>
 			<app-item>
 			<app-item>
-			<app-touched> 
+			<app-item> 
 
 imba.mount do <app-example[d:block pt:8]>

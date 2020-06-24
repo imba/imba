@@ -8599,6 +8599,7 @@ export class StyleRuleSet < StyleNode
 
 		else
 			let pri = !!@flag ? (@tag and @tag.isSelf ? 2 : 2) : 0
+			pri = 1 if pri < 1 and option(:inClassBody)
 			# might want to send in the rule itself instead?
 			let opts = {
 				selectors:[],

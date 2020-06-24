@@ -70,7 +70,7 @@ export const modifiers =
 	
 	
 	# all the native pseudo classes
-
+	force: {pri: 3}
 	
 	print: {media: 'print'}
 	screen: {media: 'screen'}
