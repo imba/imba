@@ -23,6 +23,7 @@ def callback name, key
 			let ratio = entry.intersectionRatio
 			let detail = {entry: entry, ratio: ratio, from: prev, delta: (ratio - prev), observer: observer }
 			let e = new CustomEvent(name, bubbles: false, detail: detail)
+			e.entry = detail.entry
 			e.delta = detail.delta
 			e.ratio = detail.ratio
 			map.set(entry.target,ratio)
