@@ -8717,8 +8717,8 @@ export class StyleDeclaration < StyleNode
 		# see if property can be expanded
 		let theme = stack.theme
 		let list = stack.parent
-		let name = @property.name
-		let alias = theme.expandProperty(@property.name)
+		let name = String(@property.name)
+		let alias = theme.expandProperty(name)
 		
 		if @expr
 			@expr.traverse(
@@ -8731,11 +8731,10 @@ export class StyleDeclaration < StyleNode
 		if alias isa Array
 			list.replace(self,alias.map do clone($1))
 			return
-		elif alias
+		elif alias and alias != name
 			@property = @property.clone(alias)
-		
-		let name = String(@property.name)
-		let method = helpers.symbolize(name)
+
+		let method = helpers.symbolize(alias or name)
 		
 		@expr.traverse(decl: self, property: @property) if @expr
 

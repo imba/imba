@@ -203,8 +203,16 @@ export const aliases =
 	suffix: 'content@after'
 	
 	# transforms
-	
-	
+	x: 'x'
+	y: 'y'
+	z: 'z'
+	rotate: 'rotate'
+	scale: 'scale'
+	'scale-x': 'scale-x'
+	'scale-y': 'scale-y'
+	'skew-x': 'skew-x'
+	'skew-y': 'skew-y'
+
 export const abbreviations = {}
 for own k,v of aliases
 	if typeof v == 'string'
