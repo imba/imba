@@ -113,32 +113,33 @@ export const aliases =
 	bc: 'border-color'
 	bs: 'border-style'
 	bw: 'border-width'
+	br: 'border-radius'
 	# br: 'border-radius'
 
 	# bb: 'border-bottom'
 	btc: 'border-top-color'
 	bts: 'border-top-style'
 	btw: 'border-top-width'
-	# btr: ['border-top-left-radius','border-top-right-radius']
-	# btrr: 'border-top-right-radius'
-	# btlr: 'border-top-left-radius'
+	btr: ['border-top-left-radius','border-top-right-radius']
+	btrr: 'border-top-right-radius'
+	btlr: 'border-top-left-radius'
 	
 	brc: 'border-right-color'
 	brs: 'border-right-style'
 	brw: 'border-right-width'
-	# brr: ['border-top-right-radius','border-bottom-right-radius']
+	brr: ['border-top-right-radius','border-bottom-right-radius']
 
 	bbc: 'border-bottom-color'
 	bbs: 'border-bottom-style'
 	bbw: 'border-bottom-width'
-	# bbr: ['border-bottom-left-radius','border-bottom-right-radius']
-	# bbrr: 'border-bottom-right-radius'
-	# bblr: 'border-bottom-left-radius'
+	bbr: ['border-bottom-left-radius','border-bottom-right-radius']
+	bbrr: 'border-bottom-right-radius'
+	bblr: 'border-bottom-left-radius'
 	
 	blc: 'border-left-color'
 	bls: 'border-left-style'
 	blw: 'border-left-width'
-	# blr: ['border-top-left-radius','border-bottom-left-radius']
+	blr: ['border-top-left-radius','border-bottom-left-radius']
 	
 	# br: 'border-right'
 	bxc: 'border-x-color'
@@ -197,7 +198,7 @@ export const aliases =
 	'ofy':'overflow-y'
 	'ofa':'overflow-anchor'
 	# 'ofa':'overflow-anchor'
-	
+	origin: 'transform-origin'
 	prefix: 'content@before'
 	suffix: 'content@after'
 	
