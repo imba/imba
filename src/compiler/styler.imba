@@ -706,7 +706,7 @@ export class StyleTheme
 		
 		if fallback
 			let okstr = str.match(/^[a-zA-Z\-][\w\-]*$/) and !str.match(/^(none|inherit|unset|initial)$/)
-			let oknum = unit and VALID_VAR_UNITS.indexOf(unit) == -1
+			let oknum = unit and VALID_CSS_UNITS.indexOf(unit) == -1
 			if (okstr or oknum) and value.alone
 				return new Var("{fallback}-{str}",orig != value ? value : raw)
 			
