@@ -23,8 +23,8 @@ def Event.sel$mod expr
 def Event.if$mod expr
 	return !!expr
 	
-def Event.wait$mod num
-	new Promise(do setTimeout($1,(typeof num == 'number' ? num : 1000)))
+def Event.wait$mod num = 250
+	new Promise(do setTimeout($1,num))
 	
 def Event.throttle$mod ms = 250
 	return false if handler.throttled
