@@ -12,7 +12,18 @@ var ThemeInstance = null
 # {string: "hsla(0,100%,100%,var(--alpha,1))",h:0,s:0,l:100}
 
 # export const properties =
-	
+
+export const layouts =
+	group: do(o)
+		o.display = 'flex'
+		o.jc = 'flex-start'
+		o.flw = 'wrap'
+		# unique variable for this?
+		o['--u_sx'] = "calc(var(--u_cg,0) * 0.5)"
+		o['--u_sy'] = "calc(var(--u_rg,0) * 0.5)"
+		# this should be added as ultra low specificity
+		o.margin = "calc(var(--u_sy) * -1) calc(var(--u_sx) * -1)"
+		o["&>*"] = {margin: "var(--u_sy) var(--u_sx)"}
 
 export const aliases =
 	
@@ -26,8 +37,8 @@ export const aliases =
 	pr: 'padding-right'
 	pt: 'padding-top'
 	pb: 'padding-bottom'
-	px: 'padding-x'
-	py: 'padding-y'
+	px: ['pl','pr']
+	py: ['pt','pb']
 	
 	# margins
 	m: 'margin'
@@ -35,8 +46,8 @@ export const aliases =
 	mr: 'margin-right'
 	mt: 'margin-top'
 	mb: 'margin-bottom'
-	mx: 'margin-x'
-	my: 'margin-y'
+	mx: ['ml','mr']
+	my: ['mt','mb']
 	
 	g: 'gap'
 	rg: 'row-gap'
@@ -54,13 +65,21 @@ export const aliases =
 	
 	pi: 'place-items'
 	pc: 'place-content'
-	ps: 'place-self'	
+	ps: 'place-self'
+	pa: ['pi','pc','ps']
+	# a: ['ai','ac']
 	ai: 'align-items'
 	ac: 'align-content'
 	as: 'align-self'
+	a: ['ac','ai']
+	# j: ['jc','ji']
 	ji: 'justify-items'
 	jc: 'justify-content'
 	js: 'justify-self'
+	j: ['jc','ji']
+	
+	
+	
 	
 	
 	# flex
@@ -201,6 +220,7 @@ export const aliases =
 	origin: 'transform-origin'
 	prefix: 'content@before'
 	suffix: 'content@after'
+	radius: 'border-radius'
 	
 	# transforms
 	x: 'x'
@@ -277,6 +297,30 @@ export class Var
 	def c
 		fallback ? "var(--{name},{fallback.c ? fallback.c! : String(fallback)})" : "var(--{name})"
 
+export class Calc
+	
+	def constructor expr
+		expr = expr
+		
+	def cpart parts
+		let out = '('
+		for part in parts
+			if typeof part == 'string'
+				out += ' ' + part + ' '
+			elif typeof part == 'number'
+				out += part
+			elif part.c isa Function
+				out += part.c!
+			elif part isa Array
+				out += cpart(part)
+			
+		out += ')'
+		return out
+	
+	def c
+		'calc' + cpart(expr)
+		
+
 # This has to move into StyleTheme class
 var palette = {
 	current: {string: "currentColor"}
@@ -302,6 +346,7 @@ for own name,variations of colors
 			palette[name + subname[0]] = palette[path]
 
 var colorRegex = new RegExp('\\b(' + Object.keys(palette).join('|') + ')\\b')
+var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
 
 export class StyleTheme
 	
@@ -348,6 +393,7 @@ export class StyleTheme
 	
 	def margin-y [t,b=t]
 		{'margin-top': t, 'margin-bottom': b}
+
 		
 	def inset [t,r=t,b=t,l=r]
 		{top: t, right: r, bottom: b, left: l}
@@ -360,16 +406,13 @@ export class StyleTheme
 			return m
 		return
 		
-	def radius [tl,tr=tl,br=tl,bl=tr]
-		if tl == tr == br == bl
-			return {'border-radius': tl}
-		else
-			return {
-				'border-top-left-radius': tl
-				'border-top-right-radius': tr
-				'border-bottom-right-radius': br
-				'border-bottom-left-radius': bl
-			}
+	def display params
+		let out = {display: params}
+		for par in params
+			if let layout = layouts[String(par)]
+				layout.call(this,out,par,params)
+		return out
+		
 		
 	def width [...params]
 		let o = {}
@@ -452,12 +495,12 @@ export class StyleTheme
 		if let m = $varFallback('font',params)
 			return m
 		return
-	
-	def box-shadow params
-		if let m = $varFallback('box-shadow',params)
+		
+	def text-shadow params
+		if let m = $varFallback('text-shadow',params)
 			return m
 		return
-		
+
 	def font-size [v]
 		let sizes = options.variants.fontSize
 		let raw = String(v)
@@ -557,6 +600,15 @@ export class StyleTheme
 		
 	def border-y-color [t,b=t]
 		{btc: t, bbc: b}
+	
+	def gap [v]
+		{'gap': v, '--u_rg': v,'--u_cg': v}
+			
+	def row-gap [v]
+		{'row-gap': v, '--u_rg': v}
+
+	def column-gap [v]
+		{'column-gap': v, '--u_cg': v}
 
 	# def shadow ...params
 	#	{}
@@ -604,44 +656,57 @@ export class StyleTheme
 	def $value value, index, config
 		let key = config
 		let orig = value
+		let raw = value && value.toRaw ? value.toRaw! : String(value)
+		let str = String(value)
+		let fallback = no
 		let result = null
-		# console.log 'resolve value',String(config),value
+		let unit = orig._unit
+		# console.log 'resolve value',raw
 		if typeof config == 'string'
 			if aliases[config]
 				config = aliases[config]
 				
 				if config isa Array
 					config = config[0]
-			
+
 			if config.match(/^((min-|max-)?(width|height)|top|left|bottom|right|padding|margin|sizing|inset|spacing|sy$|s$|\-\-s[xy])/)
 				config = 'sizing'
 			elif config.match(/^\-\-[gs][xy]_/)
 				config = 'sizing'
 			elif config.match(/^(row-|column-)?gap/)
 				config = 'sizing'
+			elif config.match(/^[mps][trblxy]?$/)
+				config = 'sizing'
+			elif config.match(/^[trblwh]$/)
+				config = 'sizing'
 			elif config.match(/^border-.*radius/)
 				config = 'radius'
-			elif config.match(/^tween|transition/) and options.variants.easings[String(value)]
-				return options.variants.easings[String(value)]
+				fallback = 'border-radius'
+			elif config.match(/^box-shadow/)
+				fallback = config = 'box-shadow'
+			elif config.match(/^tween|transition/) and options.variants.easings[raw]
+				return options.variants.easings[raw]
 
 			config = options.variants[config] or {}
 		
 		if value == undefined
 			value = config.default
-	
 		
-		if config.hasOwnProperty(String(value))
+		if config.hasOwnProperty(raw)
 			# should we convert it or rather just link it up?
 			value = config[value]
 			
-		if typeof value == 'number' and config.NUMBER
+		if typeof raw == 'number' and config.NUMBER
 			let [step,num,unit] = config.NUMBER.match(/^(\-?[\d\.]+)(\w+|%)?$/)
 			return value * parseFloat(num) + unit
 		
-		elif typeof value == 'string'
-			if let color = $parseColor(value)
+		elif typeof raw == 'string'
+			if let color = $parseColor(raw)
 				return color
-
+		
+		if fallback and (str.match(/^[\w\-]+$/) or unit and VALID_VAR_UNITS.indexOf(unit) == -1)
+			return new Var("{fallback}-{str}",orig != value ? value : raw)
+			
 		return value
 		
 # should not happen at root - but create a theme instance

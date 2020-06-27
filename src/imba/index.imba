@@ -83,7 +83,7 @@ const CSS_STR_PROPS = {
 }
 
 const CSS_PX_PROPS = /^([xyz])$/
-const CSS_DIM_PROPS = /^([tlbr]|size|[whtlbr]|[mp][tlbrxy]?|[rcxy]?g)$/
+const CSS_DIM_PROPS = /^([tlbr]|size|[whtlbr]|[mps][tlbrxy]?|[rcxy]?[gs])$/
 
 def imba.toStyleValue value, unit, key
 	let typ = typeof value

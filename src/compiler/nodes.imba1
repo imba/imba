@@ -200,7 +200,7 @@ var ROOT = null
 export var NODES = []
 
 var C = do |node,opts|
-	typeof node == 'string' ? node : node.c(opts)
+	(typeof node == 'string' or typeof node == 'number') ? node : node.c(opts)
 
 var M = do |val,mark,o|
 	if mark == undefined
@@ -8951,6 +8951,9 @@ export class StyleTerm < ValueNode
 	def toString
 		String(@value)
 		
+	def toRaw
+		valueOf
+		
 	def toAlpha
 		toString
 
@@ -8958,7 +8961,7 @@ export class StyleTerm < ValueNode
 		@token = @value
 		@property = o:property
 		@propname = o:property and o:property.@name
-		let resolved = stack.theme.$value(valueOf,0,@propname)
+		let resolved = stack.theme.$value(self,0,@propname)
 		@resolvedValue = resolved
 		self
 	
@@ -8974,7 +8977,7 @@ export class StyleTerm < ValueNode
 		return self
 		
 	def c
-		let out = (@resolvedValue and !(@resolvedValue isa Node)) ? @resolvedValue : valueOf
+		let out = (@resolvedValue and !(@resolvedValue isa Node)) ? C(@resolvedValue) : valueOf
 		out
 	
 export class StyleInterpolationExpression < StyleTerm
@@ -9055,6 +9058,12 @@ export class StyleDimension < StyleTerm
 		cloned.@unit =  unit
 		cloned.@number = num
 		return cloned
+		
+	def toString
+		"{@number}{@unit or ''}"
+	
+	def toRaw
+		@unit ? toString : @number
 		
 	def valueOf
 		if unit == 'u'

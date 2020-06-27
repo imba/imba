@@ -113,6 +113,12 @@ export const modifiers =
 export const variants =
 	radius:
 		full: '9999px'
+		xxs: '1px',
+		xs: '2px',
+		sm: '3px',
+		md: '4px',
+		lg: '6px',
+		xl: '8px',
 		NUMBER: '2px'
 	
 	sizing:
@@ -124,11 +130,11 @@ export const variants =
 	font-size:
 		'xxs': ['10px',1.5]
 		'xs':  ['12px',1.5]
-		's-':  ['13px',1.5]
+		# 'sm-':  ['13px',1.5]
 		'sm':  ['14px',1.5]
-		'm-':  ['15px',1.5]
+		# 'md-':  ['15px',1.5]
 		'md':  ['16px',1.5]
-		'l-':  ['17px',1.5]
+		# 'lg-':  ['17px',1.5]
 		'lg':  ['18px',1.5]
 		'xl':  ['20px',1.5]
 		'2xl': ['24px',1.5]
@@ -155,13 +161,13 @@ export const variants =
 		'16': ['96px',1.2]
 
 	'box-shadow':
-		xs: '0 0 0 1px rgba(0, 0, 0, 0.05)',
-		sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-		default: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+		xxs: '0 0 0 1px rgba(0, 0, 0, 0.05)',
+		xs: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+		sm: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
 		md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
 		lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
 		xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-		'2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+		'2xl': '0 25px 50px -6px rgba(0, 0, 0, 0.25)',
 		inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
 		outline: '0 0 0 3px rgba(66, 153, 225, 0.5)',
 		none: 'none'
