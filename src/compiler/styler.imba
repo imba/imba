@@ -704,8 +704,11 @@ export class StyleTheme
 			if let color = $parseColor(raw)
 				return color
 		
-		if fallback and (str.match(/^[\w\-]+$/) or unit and VALID_VAR_UNITS.indexOf(unit) == -1)
-			return new Var("{fallback}-{str}",orig != value ? value : raw)
+		if fallback
+			let okstr = str.match(/^[a-zA-Z\-][\w\-]*$/) and !str.match(/^(none|inherit|unset|initial)$/)
+			let oknum = unit and VALID_VAR_UNITS.indexOf(unit) == -1
+			if (okstr or oknum) and value.alone
+				return new Var("{fallback}-{str}",orig != value ? value : raw)
 			
 		return value
 		

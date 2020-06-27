@@ -8961,6 +8961,7 @@ export class StyleTerm < ValueNode
 		@token = @value
 		@property = o:property
 		@propname = o:property and o:property.@name
+		self:alone = stack.up.values:length == 1
 		let resolved = stack.theme.$value(self,0,@propname)
 		@resolvedValue = resolved
 		self
