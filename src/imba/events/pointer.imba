@@ -1,21 +1,25 @@
-import {Event,PointerEvent,Element} from '../dom'
 
+import {Event,PointerEvent,Element} from '../dom'
+import {parseDimension} from '../css'
+	
 class Pointer
 	def constructor e, state
 		state = state
-		start = e
+		start = event = e
 		id = e.pointerId
 		t0 = Date.now!
 		cx0 = cx = e.x
 		cy0 = cy = e.y
 		tx0 = ty0 = ax = ay = mx = my = ox = oy = 0
+		raw = {x0: e.x, y0: e.y}
 		e.touch = self
 	
 	def update e
 		mx = e.x - x
 		my = e.y - y
-		cx = e.x
-		cy = e.y
+		cx = raw.x = e.x
+		cy = raw.y = e.y
+		event = e
 		e.touch = self
 		
 	def round
@@ -27,6 +31,13 @@ class Pointer
 		self
 		
 	def frame frame,ax = 0,ay = ax
+		if typeof frame == 'string'
+			let sel = frame
+			console.warn 'find frame?',sel,state
+			if let el = state.element
+				frame = el.closest(sel) or el.querySelector(sel)
+				console.warn 'found frame?',frame
+
 		if frame isa Element
 			frame = frame.getBoundingClientRect!
 
@@ -37,29 +48,105 @@ class Pointer
 		oy = frame.top + frame.height * ay
 		self
 		
-	get x
-		cx - ox
+	def transform rect,min,max,step
+		let count = arguments.length
 		
-	get y
-		cy - oy
+		if typeof rect == 'string'
+			let sel = rect
+			console.warn 'find rect?',sel,state
+			if let el = state.element
+				rect = el.closest(sel) or el.querySelector(sel)
+				console.warn 'found frame?',rect
+		elif typeof rect == 'number'
+			step = max
+			max = min
+			min = rect
+			rect = state.element
+			count++
+				
+		console.warn 'transform!!',arguments
+
+		if rect isa Element
+			rect = rect.getBoundingClientRect!
+		
+		console.warn 'transform',rect,min,max,step,count
+
+		if count == 2
+			step = min
+			count--
+
+		xaxis = [rect.left,rect.width,min,max,step]
+		yaxis = [rect.top,rect.height,min,max,step]
+		
+		if count == 1
+			xaxis[2] = yaxis[2] = 0
+			xaxis[3] = xaxis[1]
+			yaxis[3] = yaxis[1]
+		
+		if min isa Array
+			xaxis = xaxis.slice(0,2).concat(min)
+
+		if max isa Array
+			yaxis = yaxis.slice(0,2).concat(max)
+			
+		if typeof xaxis[4] == 'string'
+			xaxis.splice(4,1,...parseDimension(xaxis[4]))
+
+		if typeof yaxis[4] == 'string'
+			yaxis.splice(4,1,...parseDimension(yaxis[4]))
+
+			
+
+	def $round val,step = 1
+		let inv = 1.0 / step
+		Math.round(val * inv) / inv
+		
+	def $conv value,trx,clamp
+		return value unless trx
+		let offset = trx[0]
+		let size = trx[1]
+		let out = value - offset
+		let min = trx[2]
+		let max = trx[3]
+		let len = max - min
+		let step = trx[4] or 0.1
+		let stepunit = trx[5]
+
+		if max != undefined
+			out = min + len * (out / size)
+		if clamp
+			if min > max
+				out = Math.max(max,Math.min(min,out))
+			else
+				out = Math.min(max,Math.max(min,out))
+
+		if stepunit == '%'
+			step = len * (step / 100)
+
+		return $round(out,step)
+		
+	def $x value
+		$conv(value,xaxis,clamped)
+	
+	def $y value
+		$conv(value,yaxis,clamped)
+		
+	get x do $x(raw.x)
+	get y do $y(raw.y)
+	get x0 do $x(raw.x0)
+	get y0 do $y(raw.y0)
 	
 	get dx
-		cx - cx0
+		x - x0
 	
 	get dy
-		cy - cy0
+		y - y0
 		
-	get tx # target x
+	get tx
 		tx0 + dx
 	
 	get ty
 		ty0 + dy
-		
-	get xa
-		frame ? (x / frame.width) : 0
-	
-	get ya
-		frame ? (y / frame.height) : 0
 		
 	get dt
 		Date.now! - t0
@@ -91,20 +178,44 @@ def Event.touch$threshold$mod dr
 	return !!state[step]
 
 def Event.touch$sync$mod item
-	item.x = state.ox + state.touch.dx
-	item.y = state.oy + state.touch.dy
+	# how does clamping come into the picture?
+	unless state.offset
+		state.offset = {
+			x: item.x
+			y: item.y
+		}
+	console.log 'sync touch',state.touch.x,state.offset.x
+	item.x = state.offset.x + state.touch.dx
+	item.y = state.offset.y + state.touch.dy
 	return yes
-	
+
 def Event.touch$round$mod item
 	state.touch.round!
 	return yes
 	
-def Event.touch$anchor$mod ...params
-	unless state.frame
-		state.frame = yes
-		console.warn 'reframe',state
-		state.touch.frame(...params)
+def Event.touch$transform$mod ...params
+	unless state.transformed
+		state.transformed = yes
+		state.touch.transform(...params)
 	return yes
+
+def Event.touch$reframe$mod ...params
+	unless state.transformed
+		state.transformed = yes
+		state.touch.transform(...params)
+		# state.touch.clamped = yes
+	return yes
+	
+def Event.touch$clamp$mod ...params
+	unless state.transformed
+		state.transformed = yes
+		state.touch.transform(...params)
+		state.touch.clamped = yes
+	return yes
+	
+	# state.touch.clamped = expr == undefined ? yes : (!!expr)
+	# return yes
+		
 		
 def Event.touch$handle o = {}
 	let e = event
@@ -135,9 +246,11 @@ def Event.touch$handle o = {}
 
 	if modifiers.sync
 		let origin = modifiers.sync[0]
-		state.ox = origin and origin.x or 0
-		state.oy = origin and origin.y or 0
-		console.warn 'found sync modifier!!',origin
+		state.offset = {
+			x: origin and origin.x or 0
+			y: origin and origin.y or 0
+		}
+		console.warn 'found sync modifier!!',state.offset
 
 	let canceller = do return false
 	let selstart = document.onselectstart

@@ -19,3 +19,10 @@ export def register styles, id
 	el.textContent = styles
 	document.head.appendChild(el)
 	return
+	
+export def parseDimension val
+	if typeof val == 'string'
+		let [m,num,unit] = val.match(/^([-+]?[\d\.]+)(%|\w+)$/)
+		return [parseFloat(num),unit]
+	elif typeof val == 'number'
+		return [val]

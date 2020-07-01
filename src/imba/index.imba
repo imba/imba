@@ -86,7 +86,11 @@ const CSS_PX_PROPS = /^([xyz])$/
 const CSS_DIM_PROPS = /^([tlbr]|size|[whtlbr]|[mps][tlbrxy]?|[rcxy]?[gs])$/
 
 def imba.toStyleValue value, unit, key
-	let typ = typeof value
+	if CSS_STR_PROPS[key]
+		value = String(value)
+
+	let typ = typeof value	
+		
 	if typ == 'number'
 		if !unit
 			if CSS_PX_PROPS.test(key)

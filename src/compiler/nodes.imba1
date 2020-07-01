@@ -6779,6 +6779,8 @@ export class TagModifier < TagPart
 		
 
 		@params.traverse if @params
+		
+		return self
 		# TODO support evaluated paths?
 		for param in @params
 			if param isa VarOrAccess
