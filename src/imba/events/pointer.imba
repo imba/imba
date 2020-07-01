@@ -68,6 +68,7 @@ class Pointer
 
 		if rect isa Element
 			rect = rect.getBoundingClientRect!
+
 		
 		console.warn 'transform',rect,min,max,step,count
 
@@ -204,6 +205,14 @@ def Event.touch$reframe$mod ...params
 		state.transformed = yes
 		state.touch.transform(...params)
 		# state.touch.clamped = yes
+	return yes
+	
+	
+def Event.touch$fit$mod ...params
+	unless state.transformed
+		state.transformed = yes
+		state.touch.transform(...params)
+		state.touch.clamped = yes
 	return yes
 	
 def Event.touch$clamp$mod ...params
