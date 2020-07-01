@@ -355,11 +355,16 @@ export class SVGElement < Element
 ### Event ###
 export class Event
 
-export class MouseEvent < Event
+export class UIEvent < Event
 
-export class KeyboardEvent < Event
+export class MouseEvent < UIEvent
+
+export class PointerEvent < MouseEvent
+
+export class KeyboardEvent < UIEvent
 
 export class CustomEvent < Event
+
 
 TYPES[''].klass = Element
 TYPES['HTML'].klass = HTMLElement

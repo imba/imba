@@ -25,6 +25,9 @@ def Event.if$mod expr
 	
 def Event.wait$mod num = 250
 	new Promise(do setTimeout($1,num))
+
+def Event.self$mod
+	return event.target == element
 	
 def Event.throttle$mod ms = 250
 	return false if handler.throttled
@@ -84,6 +87,7 @@ export class EventHandler
 		let prevRes = undefined
 		
 		self.count ||= 0
+		self.state ||= {}
 
 		let state = {
 			element: element
@@ -92,15 +96,16 @@ export class EventHandler
 			handler: this
 			id: ++self.count
 			step: -1
+			state: self.state
 		}
 
 		if event.handle$mod
-			if event.handle$mod.call(state,mods.options) == false
+			if event.handle$mod.apply(state,mods.options or []) == false
 				return
 
-		let guard = Event[event.type + '$handle']
+		let guard = Event[self.type + '$handle'] or Event[event.type + '$handle'] or event.handle$mod
 			
-		if guard and guard.call(state,mods.options) == false
+		if guard and guard.apply(state,mods.options or []) == false
 			return
 		
 		self.currentEvents ||= new Set
@@ -168,9 +173,6 @@ export class EventHandler
 				break unless event.shiftKey
 			elif handler == 'meta'
 				break unless event.metaKey
-			elif handler == 'self'
-				break unless target == element
-
 			elif handler == 'once'
 				# clean up bound data as well
 				element.removeEventListener(event.type,self)
@@ -189,7 +191,8 @@ export class EventHandler
 				let customRes = element.dispatchEvent(e)
 
 			elif typeof handler == 'string'
-				let fn = Event[handler + '$mod'] or Event[event.type + '$' + handler]
+				let fn = (self.type and Event[self.type + '$' + handler + '$mod'])
+				fn ||= event[handler + '$mod'] or Event[event.type + '$' + handler] or Event[handler + '$mod']
 				
 				if fn isa Function
 					handler = fn
@@ -216,9 +219,13 @@ export class EventHandler
 
 			if res === false
 				break
+				
 
 			state.value = res
-
+		
+		if state.cleanup isa Function
+			state.cleanup()
+		
 		imba.$commit! if commit
 		self.currentEvents.delete(event)
 		if self.currentEvents.size == 0

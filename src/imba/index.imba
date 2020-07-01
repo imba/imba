@@ -327,9 +327,10 @@ extend class Element
 		if passive
 			o = {passive: passive, capture: capture}
 		
-		if type == 'touch'
+		if (/^(pointerdrag|touch)$/).test(type)
+			handler.type = type
 			type = 'pointerdown'
-			handler.type = 'touch'
+			
 
 		self.addEventListener(type,handler,o)
 		return handler
