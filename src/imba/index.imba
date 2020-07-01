@@ -295,7 +295,11 @@ extend class Comment
 
 # what if this is in a webworker?
 extend class Element
-
+	
+	def log ...params
+		console.log(...params)
+		self
+	
 	def emit name, detail, o = {bubbles: true}
 		o.detail = detail if detail != undefined
 		let event = new CustomEvent(name, o)
