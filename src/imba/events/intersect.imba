@@ -9,10 +9,10 @@ def Event.intersect$handle
 	return modifiers._observer == obs
 
 def Event.intersect$in
-	return event.detail.delta > 0
+	return event.delta >= 0 and event.entry.isIntersecting
 
 def Event.intersect$out
-	return event.detail.delta < 0
+	return event.delta < 0
 
 def callback name, key
 	return do |entries,observer|
@@ -23,7 +23,8 @@ def callback name, key
 			let ratio = entry.intersectionRatio
 			let detail = {entry: entry, ratio: ratio, from: prev, delta: (ratio - prev), observer: observer }
 			let e = new CustomEvent(name, bubbles: false, detail: detail)
-			e.entry = detail.entry
+			e.entry = entry
+			e.isIntersecting = entry.isIntersecting
 			e.delta = detail.delta
 			e.ratio = detail.ratio
 			map.set(entry.target,ratio)
