@@ -1,156 +1,6 @@
 
 import {Event,PointerEvent,Element} from '../dom'
-import {parseDimension} from '../css'
-	
-class Pointer
-	def constructor e, state
-		state = state
-		start = event = e
-		id = e.pointerId
-		t0 = Date.now!
-		cx0 = cx = e.x
-		cy0 = cy = e.y
-		tx0 = ty0 = ax = ay = mx = my = ox = oy = 0
-		raw = {x0: e.x, y0: e.y}
-		e.touch = self
-	
-	def update e
-		mx = e.x - x
-		my = e.y - y
-		cx = raw.x = e.x
-		cy = raw.y = e.y
-		event = e
-		e.touch = self
-		
-	def round
-		$round = yes
-		cx0 = Math.round(cx0)
-		cy0 = Math.round(cy0)
-		cx = Math.round(cx)
-		cy = Math.round(cy)
-		self
-		
-	def frame frame,ax = 0,ay = ax
-		if typeof frame == 'string'
-			let sel = frame
-			console.warn 'find frame?',sel,state
-			if let el = state.element
-				frame = el.closest(sel) or el.querySelector(sel)
-				console.warn 'found frame?',frame
-
-		if frame isa Element
-			frame = frame.getBoundingClientRect!
-
-		frame = frame
-		ax = ax
-		ay = ay
-		ox = frame.left + frame.width * ax
-		oy = frame.top + frame.height * ay
-		self
-		
-	def transform rect,min,max,step
-		let count = arguments.length
-		
-		if typeof rect == 'string'
-			let sel = rect
-			console.warn 'find rect?',sel,state
-			if let el = state.element
-				rect = el.closest(sel) or el.querySelector(sel)
-				console.warn 'found frame?',rect
-		elif typeof rect == 'number'
-			step = max
-			max = min
-			min = rect
-			rect = state.element
-			count++
-				
-		console.warn 'transform!!',arguments
-
-		if rect isa Element
-			rect = rect.getBoundingClientRect!
-
-		
-		console.warn 'transform',rect,min,max,step,count
-
-		if count == 2
-			step = min
-			count--
-
-		xaxis = [rect.left,rect.width,min,max,step]
-		yaxis = [rect.top,rect.height,min,max,step]
-		
-		if count == 1
-			xaxis[2] = yaxis[2] = 0
-			xaxis[3] = xaxis[1]
-			yaxis[3] = yaxis[1]
-		
-		if min isa Array
-			xaxis = xaxis.slice(0,2).concat(min)
-
-		if max isa Array
-			yaxis = yaxis.slice(0,2).concat(max)
-			
-		if typeof xaxis[4] == 'string'
-			xaxis.splice(4,1,...parseDimension(xaxis[4]))
-
-		if typeof yaxis[4] == 'string'
-			yaxis.splice(4,1,...parseDimension(yaxis[4]))
-
-			
-
-	def $round val,step = 1
-		let inv = 1.0 / step
-		Math.round(val * inv) / inv
-		
-	def $conv value,trx,clamp
-		return value unless trx
-		let offset = trx[0]
-		let size = trx[1]
-		let out = value - offset
-		let min = trx[2]
-		let max = trx[3]
-		let len = max - min
-		let step = trx[4] or 0.1
-		let stepunit = trx[5]
-
-		if max != undefined
-			out = min + len * (out / size)
-		if clamp
-			if min > max
-				out = Math.max(max,Math.min(min,out))
-			else
-				out = Math.min(max,Math.max(min,out))
-
-		if stepunit == '%'
-			step = len * (step / 100)
-
-		return $round(out,step)
-		
-	def $x value
-		$conv(value,xaxis,clamped)
-	
-	def $y value
-		$conv(value,yaxis,clamped)
-		
-	get x do $x(raw.x)
-	get y do $y(raw.y)
-	get x0 do $x(raw.x0)
-	get y0 do $y(raw.y0)
-	
-	get dx
-		x - x0
-	
-	get dy
-		y - y0
-		
-	get tx
-		tx0 + dx
-	
-	get ty
-		ty0 + dy
-		
-	get dt
-		Date.now! - t0
+import {round,clamp,scale,parseDimension} from '../math'
 
 extend class PointerEvent
 	
@@ -171,159 +21,253 @@ extend class PointerEvent
 
 	def lock$mod dr
 		return yes
+
+class Touch
+	def constructor e,handler,el
+		phase = 'init'
+		events = []
+		event = e
+		handler = handler
+		target = currentTarget = el
+	
+	set event value
+		x = value.clientX
+		y = value.clientY
+		events.push(value)
+	
+	get start
+		events[0]
 		
-def Event.touch$threshold$mod dr
-	if !state[step] and event.dr > dr
-		console.warn 'moved past threshold!'
-		state[step] = yes
-	return !!state[step]
+	get event
+		events[events.length - 1]
+	
+	get elapsed
+		event.timeStamp - events[0].timeStamp
+	
+	get pointerId do event.pointerId
+	get clientX do event.clientX
+	get clientY do event.clientY
+	get offsetX do event.offsetX
+	get offsetY do event.offsetY
+	get type do event.type
+		
+	def emit name, ...params do imba.emit(self,name,params)
+	def on name, ...params do imba.listen(self,name,...params)
+	def once name, ...params do imba.once(self,name,...params)
+	def un name, ...params do imba.unlisten(self,name,...params)
 
-def Event.touch$sync$mod item
-	# how does clamping come into the picture?
-	unless state.offset
-		state.offset = {
-			x: item.x
-			y: item.y
-		}
-	console.log 'sync touch',state.touch.x,state.offset.x
-	item.x = state.offset.x + state.touch.dx
-	item.y = state.offset.y + state.touch.dy
-	return yes
+def Event.touch$in$mod
+	return Event.touch$reframe$mod.apply(this,arguments)
+	
+def Event.touch$fit$mod
+	let o = (state[step] ||= {clamp:yes})
+	return Event.touch$reframe$mod.apply(this,arguments)
 
-def Event.touch$round$mod item
-	state.touch.round!
+def Event.touch$snap$mod sx=1,sy=sx
+	event.x = round(event.x,sx)
+	event.y = round(event.y,sy)
 	return yes
 	
-def Event.touch$transform$mod ...params
-	unless state.transformed
-		state.transformed = yes
-		state.touch.transform(...params)
-	return yes
+def Event.touch$moved$mod a,b
+	let o = state[step] ||= {}
+	unless o.setup
+		let th = a or 4
+		if typeof a == 'string' and a.match(/^(up|down|left|right|x|y)$/)
+			o.dir = a
+			th = b or 4
 
+		o.setup = yes
+		let [tv,tu] = parseDimension(th)
+		o.threshold = tv
+		o.sy = tv
+		o.x0 = event.x
+		o.y0 = event.y
+		if (tu and tu != 'px')
+			console.warn 'only px threshold allowed in @touch.moved'
+
+	if o.active
+		return yes
+	
+	let th = o.threshold
+	let dx = event.x - o.x0
+	let dy = event.y - o.y0
+	let hit = no
+	
+	if dx > th and (o.dir == 'right' or o.dir == 'x')
+		hit = yes
+		
+	if !hit and dx < -th and (o.dir == 'left' or o.dir == 'x')
+		hit = yes
+		
+	if !hit and dy > th and (o.dir == 'down' or o.dir == 'y')
+		hit = yes
+	
+	if !hit and dy < -th and (o.dir == 'up' or o.dir == 'y')
+		hit = yes
+		
+	if !hit
+		let dr = Math.sqrt(dx*dx + dy*dy)
+		if dr > th and !o.dir
+			hit = yes
+	
+	if hit
+		o.active = yes
+		let pinned = state.pinTarget
+		element.flags.incr('_move_')
+		pinned.flags.incr('_move_') if pinned
+		imba.once(current,'end') do
+			pinned.flags.decr('_move_') if pinned
+			element.flags.decr('_move_')
+
+	return !!o.active
+	
 def Event.touch$reframe$mod ...params
-	unless state.transformed
-		state.transformed = yes
-		state.touch.transform(...params)
-		# state.touch.clamped = yes
-	return yes
-	
-	
-def Event.touch$fit$mod ...params
-	unless state.transformed
-		state.transformed = yes
-		state.touch.transform(...params)
-		state.touch.clamped = yes
-	return yes
-	
-def Event.touch$clamp$mod ...params
-	unless state.transformed
-		state.transformed = yes
-		state.touch.transform(...params)
-		state.touch.clamped = yes
-	return yes
-	
-	# state.touch.clamped = expr == undefined ? yes : (!!expr)
-	# return yes
+	let o = (state[step] ||= {})
 		
+	unless o.rect
+		let el = element
+		let len = params.length
+		let box = params[0]
+		let min = 0
+		let max = 100%
+		let snap = 1
+		let typ = typeof box
 		
-def Event.touch$handle o = {}
+		if typ == 'number' or (typ == 'string' and (/^([-+]?\d[\d\.]*)(%|\w+)$/).test(box)) or box isa Array
+			box = null
+
+		elif typ == 'string'
+			if box == 'this' or box == ''
+				box = element
+			elif box == 'up'
+				box = element.parentNode
+			elif box == 'op'
+				box = element.offsetParent
+			else
+				box = el.closest(box) or el.querySelector(box)
+
+		if box == null
+			len++
+			params.unshift(box = el)
+		
+		if len == 2
+			snap = params[1]
+		elif len > 2
+			[min,max,snap=1] = params.slice(1)
+
+		let rect = box.getBoundingClientRect!
+		min = [min,min] unless min isa Array
+		max = [max,max] unless max isa Array
+		snap = [snap,snap] unless snap isa Array
+
+		o.rect = rect
+		o.x = scale(rect.left,rect.right,min[0],max[0],snap[0])
+		o.y = scale(rect.top,rect.bottom,min[1],max[1],snap[1])
+
+		state.scaleX = o.x
+		state.scaleY = o.y
+		event.x0 = event.x = o.x(event.x,o.clamp)
+		event.y0 = event.y = o.y(event.y,o.clamp)
+	else
+		let x = event.x = o.x(event.x,o.clamp)
+		let y = event.y = o.y(event.y,o.clamp)
+		event.dx = x - event.x0
+		event.dy = y - event.y0
+
+	return yes
+	
+def Event.touch$pin$mod ...params
+	let o = state[step] 
+		
+	unless o
+		let box = params[0]
+		if typeof box == 'string'
+			box = element.closest(box) or element.querySelector(box)
+		unless box isa Element
+			params.unshift(box = state.target)
+		
+		let ax = params[1] or 0
+		let ay = params[2] ?= ax
+		let rect = box.getBoundingClientRect!
+		
+		o = state[step] = {
+			x: state.clientX - (rect.left + rect.width * ax)
+			y: state.clientY - (rect.top + rect.height * ay)
+		}
+		
+		if box
+			state.pinTarget = box
+			box.flags.incr('_touch_')
+			state.once('end') do box.flags.decr('_touch_')
+
+	event.x -= o.x
+	event.y -= o.y
+	return yes
+
+def Event.touch$lock$mod ...params
+	let o = state[step]
+	
+	unless o
+		o = state[step] = state.target.style
+		let prev = o.touchAction
+		o.touchAction = 'none'
+		state.once('end') do o.removeProperty('touch-action')
+	return yes
+	
+def Event.touch$sync$mod item,xalias='x',yalias='y'
+	let o = state[step]
+	# how does clamping come into the picture?
+	unless o
+		o = state[step] = {
+			x: item[xalias] or 0
+			y: item[yalias] or 0
+			tx: state.x
+			ty: state.y
+		}
+
+	item[xalias] = o.x + (state.x - o.tx) if xalias
+	item[yalias] = o.y + (state.y - o.ty) if yalias
+	return yes
+		
+def Event.touch$handle
 	let e = event
 	let el = element
-	if state.id
-		return state.id == e.pointerId
-		
-	if modifiers.self and element != event.target
+	let id = state.pointerId
+	current = state
+	return id == e.pointerId if id
+
+	let t = state = handler.state = current = new Touch(e,handler,el)
+
+	let canceller = do(e)
+		e.preventDefault!
 		return false
-	
-	# console.warn self
-
-	let t  = e.touch = new Pointer(e,self)
-	let x0 = e.x
-	let y0 = e.y
-
-	if o isa Element
-		t.originRect = o.getBoundingClientRect!
-		console.warn 'adding origin rect',t.originRect
-		
-	if typeof o.x == 'number'
-		t.tx0 = o.x
-	
-	if typeof o.y == 'number'
-		t.ty0 = o.y
-
-	handler.state = state = {id: e.pointerId, touch: t}
-
-	if modifiers.sync
-		let origin = modifiers.sync[0]
-		state.offset = {
-			x: origin and origin.x or 0
-			y: origin and origin.y or 0
-		}
-		console.warn 'found sync modifier!!',state.offset
-
-	let canceller = do return false
-	let selstart = document.onselectstart
 		
 	let listener = do(e)
 		let typ = e.type
-		let dx = e.dx = e.x - x0
-		let dy = e.dy = e.y - y0
-		let dr = e.dr = Math.sqrt(dx*dx + dy*dy)
 		let ph = t.phase
-
-		t.update(e)
-		e.tx = t.tx
-		e.ty = t.ty
-		handler.handleEvent(e)
+		t.event = e
+		try handler.handleEvent(t)
 
 		if typ == 'pointerup' or typ == 'pointercancel'
 			el.releasePointerCapture(e.pointerId)
-			el.flags.remove('_touch_')
-			document.onselectstart = selstart
 
-			
 	let teardown = do(e)
-		console.warn 'teardown pointer'
+		el.flags.decr('_touch_')
+		t.emit('end')
 		handler.state = {}
 		el.removeEventListener('pointermove',listener)
 		el.removeEventListener('pointerup',listener)
 		el.removeEventListener('pointercancel',listener)
-		if document.onselectstart == canceller
-			document.onselectstart = selstart
-		# el.removeEventListener('pointercancel',listener)
-	
+		document.removeEventListener('selectstart',canceller)
+
+	el.flags.incr('_touch_')
 	el.setPointerCapture(e.pointerId)
 	el.addEventListener('pointermove',listener)
 	el.addEventListener('pointerup',listener)
 	el.addEventListener('pointercancel',listener)
 	el.addEventListener('lostpointercapture',teardown,once:true)
-	document.onselectstart = canceller
+	document.addEventListener('selectstart',canceller,capture:true)
 
 	listener(e)
-
+	# handler.once('idle') do console.warn 'is idle!'
 	return false
-
-	yes			
-
-def Event.pointermove$handle
-	let h = handler
-	let e = event
-	let id = h.pointerId
-	return false if id and e.pointerId != id
-	h.touch.update(e) if h.touch
-	if typeof h.x0 == 'number'
-		e.dx = e.x - h.x0
-		e.dy = e.y - h.y0
-	return true
-
-
-def Event.pointerup$handle
-	let h = handler
-	let e = event
-	let id = h.pointerId
-	return false if id and e.pointerId != id
-	h.touch.update(e) if h.touch
-	if typeof h.x0 == 'number'
-		e.dx = e.x - h.x0
-		e.dy = e.y - h.y0
-	return true

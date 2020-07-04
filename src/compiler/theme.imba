@@ -107,7 +107,8 @@ export const modifiers =
 	webkit: {ua: 'webkit'}
 	
 	touch: {flag: '_touch_'}
-
+	move: {flag: '_move_'}
+	hold: {flag: '_hold_'}
 
 # some things should definitely move out of theme
 export const variants =

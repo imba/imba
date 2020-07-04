@@ -25,6 +25,20 @@ export class Flags
 	def toggle ref, bool
 		bool = !contains(ref) if bool === undefined
 		bool ? add(ref) : remove(ref)
+		
+	def incr ref
+		let m = stacks ||= {}
+		let c = m[ref] or 0
+		add(ref) if c < 1
+		m[ref] = Math.max(c,0) + 1
+		return self
+	
+	def decr ref
+		let m = stacks ||= {}
+		let c = m[ref] or 0
+		remove(ref) if c == 1
+		m[ref] = Math.max(c,1) - 1
+		return self
 
 	def valueOf
 		string

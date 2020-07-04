@@ -33,11 +33,11 @@ def Event.throttle$mod ms = 250
 	return false if handler.throttled
 	handler.throttled = yes
 
-	let cl = element.flags.add('_cooldown_')
+	element.flags.incr('throttled')
 
-	handler.once('idle') do
+	imba.once(current,'end') do
 		setTimeout(&,ms) do
-			element.flags.remove('_cooldown_')
+			element.flags.decr('throttled')
 			handler.throttled = no
 	return true
 	
@@ -46,16 +46,16 @@ def Event.flag$mod name,sel
 	let el = sel isa global.Element ? sel : (sel ? element.closest(sel) : element)
 	return true unless el
 	let step = step
-	handler[step] = id
+	state[step] = id
 
-	el.flags.add(name)
+	el.flags.incr(name)
+
 	let ts = Date.now!
-	handler.once('idle') do
+	
+	imba.once(current,'end') do
 		let elapsed = Date.now! - ts
 		let delay = Math.max(250 - elapsed,0)
-		setTimeout(&,delay) do
-			# console.warn 'event flag after',self,handler[step],id,step
-			el.flags.remove(name) if handler[step] == id
+		setTimeout(&,delay) do el.flags.decr(name)
 
 	return true
 	
@@ -97,7 +97,10 @@ export class EventHandler
 			id: ++self.count
 			step: -1
 			state: self.state
+			current: null
 		}
+		
+		state.current = state
 
 		if event.handle$mod
 			if event.handle$mod.apply(state,mods.options or []) == false
@@ -107,6 +110,8 @@ export class EventHandler
 			
 		if guard and guard.apply(state,mods.options or []) == false
 			return
+		
+		# let object = state.proxy or event 
 		
 		self.currentEvents ||= new Set
 		self.currentEvents.add(event)	
@@ -121,7 +126,7 @@ export class EventHandler
 				handler = handler.split('~')[0]
 			
 			let modargs = null
-			let args = [event,self]
+			let args = [event,state]
 			let res = undefined
 			let context = null
 			let m
@@ -150,7 +155,7 @@ export class EventHandler
 
 						args[i] = value
 
-			if typeof handler == 'string' and m = handler.match(/^(emit|flag)-(.+)$/)
+			if typeof handler == 'string' and m = handler.match(/^(emit|flag|moved|pin|fit|refit|map|remap)-(.+)$/)
 				modargs = args = [] unless modargs
 				args.unshift(m[2])
 				handler = m[1]
@@ -223,8 +228,7 @@ export class EventHandler
 
 			state.value = res
 		
-		if state.cleanup isa Function
-			state.cleanup()
+		imba.emit(state,'end',state)
 		
 		imba.$commit! if commit
 		self.currentEvents.delete(event)
