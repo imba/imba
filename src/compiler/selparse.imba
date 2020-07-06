@@ -80,6 +80,7 @@ export def rewrite rule,ctx,o = {}
 	
 	let container = parts[0]
 	let localpart = null
+	let deeppart = null
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -88,6 +89,13 @@ export def rewrite rule,ctx,o = {}
 		let mods = part.pseudos or []
 		let name = part.tagName
 		let op = part.nestingOperator
+		
+		if op == '>>'
+			localpart = prev
+			part.nestingOperator = '>'
+		elif op == '>>>'
+			localpart = prev
+			part.nestingOperator = null
 		
 		if name == 'html'
 			part.isRoot = yes
@@ -110,7 +118,7 @@ export def rewrite rule,ctx,o = {}
 			specificity++
 		
 		# or non-local?
-		if o.component and (!next or next.nestingOperator == '>>>') and !localpart
+		if o.component and (!next or next.nestingOperator == '>>>') and !localpart and !deeppart
 			localpart = part
 			
 		specificity += part.classNames.length
@@ -161,6 +169,18 @@ export def rewrite rule,ctx,o = {}
 				o.hasScopedStyles = yes
 				addClass(rule,o.ns) if o.ns
 				specificity++
+				
+			elif mod.name == 'deep'
+				mod.remove = yes
+				deeppart = part
+				
+				if prev
+					if !prev.isRoot
+						localpart = prev
+					else
+						localpart = prev.rule = {type: 'rule',rule: prev.rule}
+				else
+					localpart = rule.rule = {type: 'rule',rule: rule.rule}
 			
 			if modTarget != part and !mod.remove
 				addPseudo(modTarget,mod)

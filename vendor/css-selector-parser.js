@@ -324,9 +324,12 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
       }
       if (ruleNestingOperators[chr]) {
         var op = chr;
-        if(op == '>' && str.charAt(pos) == '>' && str.charAt(pos + 1) == '>'){
+        if(op == '>' && str.charAt(pos + 1) == '>' && str.charAt(pos + 2) == '>'){
           op = '>>>';
           pos = pos + 3;
+        } else if(op == '>' && str.charAt(pos + 1) == '>'){
+          op = '>>';
+          pos = pos + 2;
         } else {
           pos++;
         }
@@ -643,7 +646,7 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
 var parser = new CssSelectorParser();
 parser.registerSelectorPseudos('has','not','is','matches','any')
 parser.registerNumericPseudos('nth-child')
-parser.registerNestingOperators('>>>','>', '+', '~')
+parser.registerNestingOperators('>>>','>>','>', '+', '~')
 parser.registerAttrEqualityMods('^', '$', '*', '~')
 // parser.enableSubstitutes()
 

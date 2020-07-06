@@ -2743,8 +2743,10 @@ export class ClassDeclaration < Code
 			@superclass.traverse()
 			# also visit and possibly declare the class name?
 			
-		if option(:extension)
+		if option(:extension) and @name
 			@name.traverse()
+		elif @name
+			@name.traverse(declaring: self)
 		
 		STACK.push(self)
 
@@ -2983,14 +2985,20 @@ export class TagDeclaration < ClassDeclaration
 		let sup = superclass
 	
 		@config = {}
+		
+		# if name and name.isClass
+		#	name.declareVariable(scope__.parent)
 
-		if sup and (sup.isNative or sup.isNativeSVG) and !STACK.tsc
-			let op = sup.nativeCreateNode
-			op = util.extendTag(op,THIS)
-			addMethod('create$',[],[op]).set(static: yes)
-			set(extends: Obj.wrap(extends: sup.name))
-			@config:extends = sup.name
-			# set(extends: Obj.wrap(extends: sup.name))
+
+		if sup and !STACK.tsc
+			if (sup.isNative or sup.isNativeSVG)
+				let op = sup.nativeCreateNode
+				op = util.extendTag(op,THIS)
+				addMethod('create$',[],[op]).set(static: yes)
+				set(extends: Obj.wrap(extends: sup.name))
+				@config:extends = sup.name
+			elif sup.isClass
+				sup.resolveVariable(scope__.parent)
 		
 		if @elementReferences
 			for own ref,child of @elementReferences
@@ -3013,15 +3021,17 @@ export class TagDeclaration < ClassDeclaration
 		scope.context.value = name
 		scope.context.reference = name
 		
-		@config:ns = cssns if option(:hasScopedStyles)
+		
 		
 		let className = name.toClassName
-
-		# should probably also warn about stuff etc
-		let sup = CALL(LIT('imba.tags.get'),[
-			superclass or STR('component'),
-			superclass ? STR(superclass.toClassName) : STR('ImbaElement')
-		])
+		let sup = superclass
+		
+		if sup and sup.@variable
+			sup = sup.@variable
+		elif sup
+			sup = CALL(LIT('imba.tags.get'),[sup,STR(sup.toClassName)])
+		else
+			sup = CALL(LIT('imba.tags.get'),[STR('component'),STR('ImbaElement')])
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
@@ -3059,6 +3069,7 @@ export class TagDeclaration < ClassDeclaration
 			let exportName = option(:default) ? 'default' : cname
 			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
 
+		@config:ns = cssns if option(:hasScopedStyles)
 
 		if !STACK.tsc
 			if @staticInit
@@ -4974,7 +4985,7 @@ export class Identifier < Node
 		return self
 	
 	def resolveVariable scope = scope__
-		let variable = scope__.lookup(symbol)
+		let variable = scope.lookup(symbol)
 		@variable = variable
 		stack.registerSemanticToken(@value,@variable)
 		return self
@@ -5176,6 +5187,15 @@ export class TagTypeIdentifier < Identifier
 		@name = parts.pop
 		@ns = parts.shift # if any?
 		return @str
+		
+	def traverse o
+		if @traversed
+			return self
+		# NODES.push(self)
+		@traversed = yes
+		if o and o:declaring and isClass
+			registerVariable('const',o:declscope or STACK.scope)
+		self
 
 	def js o
 		return "'" + toNodeName + "'"
@@ -5193,7 +5213,6 @@ export class TagTypeIdentifier < Identifier
 			CALL(LIT('imba.document.createElementNS'),[STR("http://www.w3.org/2000/svg"),STR(name)])
 		else
 			CALL(LIT('imba.document.createElement'),[STR(name)])
-			# LIT('document.createElementNS("http://www.w3.org/2000/svg",name)'
 
 	def isClass
 		!!@str.match(/^[A-Z]/)
@@ -5206,6 +5225,9 @@ export class TagTypeIdentifier < Identifier
 
 	def isSVG
 		@ns == 'svg' or (!isNative and !@ns and TAG_TYPES.SVG.indexOf(@str) >= 0)
+		
+	def symbol
+		@str
 
 	def isCustom
 		!isNative and !isNativeSVG
@@ -5221,6 +5243,12 @@ export class TagTypeIdentifier < Identifier
 		
 	def toSelector
 		toNodeName
+		
+	def resolveVariable scope = scope__
+		let variable = scope__.lookup(@str)
+		if @variable = variable
+			stack.registerSemanticToken(@value,@variable)
+		return self
 
 	def toClassName
 		let str = @str
@@ -8589,6 +8617,10 @@ export class StyleRuleSet < StyleNode
 			if owner isa TagDeclaration
 				if !@variable
 					@sel = String(@selectors).trim or '&'
+					if @sel.match(/^\>{1,3}/)
+						@sel = "& {@sel}"
+
+					# @sel = @sel.replace('&',".{cmp.cssns}_")
 					# @sel = "& {@sel}" if @sel.indexOf('&') == -1
 					@sel = @sel.replace('&',".{cmp.cssns}_")
 				set(inClassBody: yes)

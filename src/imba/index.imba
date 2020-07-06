@@ -399,7 +399,9 @@ extend class Element
 		return $flags
 
 	def flag$ str
-		self.className = str
+		# Potentially slow
+		let ns = flags$ns
+		self.className = ns ? (ns + (flags$ext = str)) : (flags$ext = str)
 		return
 		
 	def flagDeopt$
@@ -520,8 +522,12 @@ imba.tags = new ImbaElementRegistry()
 def imba.createElement name, parent, flags, text, ctx
 	var el = document.createElement(name)
 	
-	if ctx
-		flags = ctx._ns_ + ' ' + flags
+	let f = ctx and ctx._ns_
+	
+	if f
+		# what about when these flags are later updated?
+		flags = flags ? (f + ' ' + flags) : f
+		el.flags$ns = f + ' '
 		
 	el.className = flags if flags
 
