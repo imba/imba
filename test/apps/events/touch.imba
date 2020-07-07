@@ -1,164 +1,136 @@
 
-css .section d:block pos:relative border:1px solid red
-	top:10vh left:10vw w:80vw h:80vh
-css .item d:block pos:relative w:30px h:30px bg:teal3 m:1
+css .section d:block bg:white pos:relative border:1px solid red
+	top:2vh left:2vw w:96vw h:86vh
+	
+css .item d:block pos:relative w:50px h:50px bg:teal3 m:1 radius:sm
 
 css .square d:block bg:white pos:relative size:200px
-css .box pos:absolute inset:25px bg:white shadow:inset 0 0 0 1px gray4/50
+# css .box pos:absolute inset:25px bg:white shadow:inset 0 0 0 1px gray4/50
 css .thumb pos:absolute l:-2 t:-2 d:block size:4 bg:blue7 radius:sm
-	
-tag Something
-	
-	def render
-		<self>
-			<div @touch.hold(100)>
+
+css .box t:0 l:0 d:block pos:absolute fs:15px w:2em h:2em radius:sm
+	bg:teal4/60 @touch:teal4/70 @move:green4/80
+
+css .handle d:block pos:absolute w:10px h:10px l:10px t:10px bg:blue6 radius:sm
+css .area d:flex pos:relative m:4 size:140px shadow:inset 0 0 0 1px gray6/50 jc:center ai:center
 
 tag Draggable
-	prop step = 1
-	def move e
-		top = e.touch.y
-		left = e.touch.x
-	
-	def render
-		<self[t:{top}% l:{left}%].item @touch.transform(parentNode,0,100,step)=move> "I"
-		
-tag DraggableSync
-	prop step = 1
-	prop pos = { x:10, y:10 }
-
-	def render
-		<self[t:{pos.y}% l:{pos.x}%].item
-			@touch.transform(parentNode,0,100,step).sync(pos)> "S"
-
-tag Slider
-	prop min = 0
-	prop max = 100
-	prop step = 1
-	prop value = 0
-	
-	css .track h:2 w:100% bg:blue3 pos:relative radius:sm
-	css .thumb h:4 w:2 bg:blue7 d:block pos:absolute x:-50% t:50% y:-50% radius:sm
-	
-	def update e
-		value = Math.min(max,Math.max(e.touch.x,min))
-
-	def render
-		<self @touch.transform(self,min,max,step)=update>
-			<$track.track> <.thumb[l:{100 * (value - min) / (max - min)}%]>
-			<span.value> value
-
-tag MultiSlide
-	prop min = 0
-	prop max = 100
-	prop step = 1
-	prop value = [0,0]
-	
-	css d:block bg:white pos:relative size:10rem
-
-	css $box
-		pos:absolute inset:6 bg:white shadow:inset 0 0 0 1px gray4/50
-	
-	css $area
-		pos:absolute border:1px dashed gray4 b:0 l:0 bg:gray4/20
-		$thumb pos:absolute r:-2 t:-2 d:block size:4 bg:blue7 radius:sm
-	
-	def update e do value = [e.touch.x,e.touch.y]
-	get l do 100 * (value[0] - min) / (max - min)
-	get b do 100 * (value[1] - min) / (max - min)
-
-	def render
-		<self @touch.reframe($box,[min,max,step],[max,min,step]).clamp=update>
-			<$box> <$area[h:{b}% w:{l}%]> <$thumb>
-			<span.value> value.join(',')
-
-
-tag DragTest
-	prop clamp = yes
-	prop step = 1
 	prop x = 0
 	prop y = 0
-
-	def update e
-		x = e.touch.x
-		y = e.touch.y
-
+	
 	def render
-		<self.square @touch.reframe($box,step).clamp(clamp)=update>
-			<$box.box> <$thumb.thumb[x:{x} y:{y}]>
-			<span.value> [title,x,y].join(',')
-			
-tag CenterDragTest
-	prop clamp = yes
-	prop step = 1
-	prop x = 0
-	prop y = 0
+		<self[x:{x} y:{y}].item> "drag me"
 
-	def update e
-		x = e.touch.x
-		y = e.touch.y
-
-	def render
-		<self.square @touch.reframe($box,step).clamp(clamp)=update>
-			<$box.box> <$thumb.thumb[x:{x} y:{y}]>
-			<span.value> [title,x,y].join(',')
-
+const config = {
+	container: '.area'
+	frame: ''
+	scale: [0,100]
+}
 
 const dpr = window.devicePixelRatio
 
 tag Paint
-	prop size = 300
-
+	prop size = 148
+	
 	def draw e
-		let path = e.touch.path ||= new Path2D
-		# $path = new Path2D if e.type == 'pointerdown'
+		let path = e.path ||= new Path2D
 		path.lineTo(e.offsetX * dpr,e.offsetY * dpr)
 		$canvas.getContext('2d').stroke(path)
 
 	def render
-		<self[d:block overflow:hidden bg:white]>
-			<canvas$canvas[size:{size}px]
-				width=size*dpr
-				height=size*dpr
-				@touch.rel()=draw
+		<self[d:block overflow:hidden bg:blue2 pos:absolute inset:1px]>
+			<canvas$canvas[size:{size}px] width=size*dpr height=size*dpr
+				@touch=draw
 			>
 
-tag Options
+tag Area
 	prop p1 = { x:10, y:10 }
 	prop p2 = { x:10, y:20 }
+	prop sized = {w: 100}
+	prop r = {t:0,r:0,b:0,l:0}
 	
-	def dragging e
-		let t = e.touch
-		# e.x,e.y,
-		console.log t.x,t.y,e.target
+	prop tpc = 0
+	prop lpx = 0
+	
+	
+	# css &>* d:block pos:absolute w:50px h:50px bg:teal3 m:1 radius:sm
+	
+	def dragging e,el=e.target
+		el.style.transform = "translate({e.x}px,{e.y}px)"
+		
+	def upd e,obj
+		console.log 'upd',e.x,e.y,e.elapsed
+		sized.w = Math.abs(e.x)
+		
+	def brpos e
+		console.log 'brpos',e,e.x,e.y
+		r.r=e.x
+		r.b=e.y
+	
+	def track e
+		console.log 'touch',e.phase,e.x,e.y
 	
 	def render
-		<self>
-			<div.item @touch.transform(self,0,1,0.1)=dragging> "%"
-			<div.item @pointerdrag.rect(self).x(0,100,1)=dragging> "I"
+		<self[d:flex flw:wrap jc:center ac:center]>
+			# <div @touch=dragging(e)>
+			<.area> <.box @touch.reframe('.area')=dragging(e)>
+			<.area> <.box @touch.lock.pin.reframe('.area')=dragging(e)>
+			<.area> <.box @touch.pin.reframe('.area').moved(10)=dragging(e)>
+			<.area> <.box[ml:-1em mt:-1em] @touch.pin(0.5).reframe('.area')=dragging(e)>
 			
-			<Draggable.item>
-			<Draggable.item step=10>
-			<DraggableSync[pos:absolute].item>
-			<DraggableSync[pos:absolute].item step=10>
-			<div[x:{p1.x}px y:{p1.y}px].item @touch.reframe(self).sync(p1)> "H"
-			<div[x:{p2.x}px y:{p2.y}px].item @touch.reframe(self).sync(p2)> "%"
+			<.area> <.box[ml:-1em mt:-1em] @touch.pin(0.5).fit('.area',10)=dragging(e)> 'S10'
+			<.area> <.box[ml:-1em mt:-1em] @touch.pin(0.5).moved(10).fit('.area')=dragging(e)> 'D'
+			
+			<.area> <.box[ml:-1em mt:-1em] @touch.pin(0.5).moved(4).fit('.area',10)=dragging(e)>
+			<.area> <.box[ml:-1em mt:-1em] @touch.pin(0.5).fit('.area',0,100%,10%)=dragging(e)>
+			<.area> <.box[ml:-1em mt:-1em] @touch.pin(0.5).fit('.area',0,100%,10%)=dragging(e)>
+			<.area> <.box[ml:-1em mt:-1em] @touch.pin(0.5).moved(4).fit('.area',10)=dragging(e)>
+			
+			<.area> <.box[ml:-1em mt:-1em] @touch.pin(0.5).fit('.area')=dragging(e)>
+			
+			<.area>
+				<.box[bg.throttled:red3 bg.blue:blue3] @click.flag-blue> "B"
 
-			<Slider step=10>
-			<Slider min=-20 max=20 step=2>
-				
-			<div[d:grid pa:center gtc:max-content max-content gap:4]>
-				<MultiSlide step=10>
-				<MultiSlide>
-				<DragTest title='clamp'>
-				<DragTest clamp=no step=4 title='unclamped'>
-				<DragTest[w:300px] step=10% title='step 10%'>
+			<.area>
+				"multiple scales"
+				<.box[ml:-1em mt:-1em t:{tpc}% l:{lpx}px]
+					@touch.pin(0.5).fit('.area',0,[100%,100],1)=(tpc=e.y,lpx=e.x,console.log(e))
+				>
+			<.area @touch.pin(0.5).moved(4).fit('.area',10)=dragging(e)> <.box[l:-1em t:-1em]>
+			
+			<.area> <.box[l:-1em t:-1em]
+				@touch.pin(0.5).moved(4).fit('.area',10)=dragging(e)
+			>
+			# <.area> <.box[l:-1em t:-1em] @touch(anchor:0.5,threshold:4,fit:'.area',snap:10)=dragging(e)>
+			# <.area> <.box[l:-1em t:-1em] @touch(
+			# 	anchor:0.5
+			# 	threshold:4
+			# 	fit:'.area'
+			# 	snap:10
+			# )=dragging(e)>
+			
+			<$earea.area> <$ebox.box>
+				<.handle @touch.pin($ebox).moved.reframe($earea)=dragging(e,$ebox)>
+						
+			<.area>
+				"fit-op"
+				<.box[l:-1em t:-2em] @touch.pin(0.5,1).fit('op')=dragging(e)>
 
-			<Paint[border:gray4]>
+			<.area> <.box[t:50% l:50% bg:orange3] @touch.frame(self)=dragging(e)>
 			
-			# transpose
-			# <div @drag.transform(rect,x0,x1,y0,y1)>
-			<div @touch.transform(rect,x0,x1,y0,y1)>
-			# transform values to 0 - 1 based on 
-			# <div @pointerdrag(target,container).hold(100)>
+			<.area>
+				<$bs.box[pos:relative w:{sized.w}px] @touch.fit($bs,-100%,100%,2)=upd(e)>
+		
 			
-imba.mount do <Options.section>
+			<.area>
+				<$bs2.box[pos:relative w:{sized.w}px]>
+					<.handle[l:100% ml:2] @touch.anchor($bs2,1,0.5).reframe($bs2,-100%,100%,2)=upd(e)>
+			<$xa.area>
+				<$bs3.box[w:auto h:auto t:{r.t}px r:{r.r}px b:{r.b}px l:{r.l}px]>
+					<.handle[l:100% t:100%] @touch.anchor($bs3,1,1).reframe($xa,100%,0,1)=brpos(e)>
+			
+			<.area> <Paint>
+			
+imba.mount do <Area.section>
+	
+console.log 'here'
