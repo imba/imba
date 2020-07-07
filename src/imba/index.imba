@@ -399,13 +399,18 @@ extend class Element
 		return $flags
 
 	def flag$ str
-		self.className = str
+		# Potentially slow
+		let ns = flags$ns
+		self.className = ns ? (ns + (flags$ext = str)) : (flags$ext = str)
 		return
 		
 	def flagDeopt$
-		self.flag$ = do(str) self.flagSync$(flags$ext = str)
+		self.flag$ = self.flagExt$ # do(str) self.flagSync$(flags$ext = str)
 		self.flagSelf$ = do(str) self.flagSync$(flags$own = str)
 		return
+		
+	def flagExt$ str
+		self.flagSync$(flags$ext = str)
 
 	def flagSelf$ str
 		# if a tag receives flags from inside <self> we need to
@@ -420,7 +425,7 @@ extend class Element
 		# return
 
 	def flagSync$
-		self.className = ((flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
+		self.className = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
 
 	def open$
 		self
@@ -485,7 +490,7 @@ class ImbaElementRegistry
 		else
 			document.createElement(name)
 
-	def define name, klass, options
+	def define name, klass, options = {}
 		types[name] = klass
 		klass.nodeName = name
 
@@ -493,8 +498,17 @@ class ImbaElementRegistry
 		
 		# if proto.render && proto.end$ == Element.prototype.end$
 		#	proto.end$ = proto.render
+		let basens = proto._ns_
+		if options.ns
+			let ns = options.ns
+			let flags = ns + ' ' + ns + '_ '
+			if basens
+				flags += proto.flags$ns 
+				ns += ' ' + basens
+			proto._ns_ = ns
+			proto.flags$ns = flags
 
-		if options and options.extends
+		if options.extends
 			CustomTagConstructors[name] = klass
 		else
 			root.customElements.define(name,klass)
@@ -505,9 +519,16 @@ imba.tags = new ImbaElementRegistry()
 
 # root.customElements.define('imba-element',ImbaElement)
 
-def imba.createElement name, parent, flags, text
+def imba.createElement name, parent, flags, text, ctx
 	var el = document.createElement(name)
-
+	
+	let f = ctx and ctx._ns_
+	
+	if f
+		# what about when these flags are later updated?
+		flags = flags ? (f + ' ' + flags) : f
+		el.flags$ns = f + ' '
+		
 	el.className = flags if flags
 
 	if text !== null
@@ -518,7 +539,7 @@ def imba.createElement name, parent, flags, text
 
 	return el
 
-def imba.createComponent name, parent, flags, text
+def imba.createComponent name, parent, flags, text, ctx
 	# the component could have a different web-components name?
 	var el
 	
@@ -538,10 +559,15 @@ def imba.createComponent name, parent, flags, text
 
 	if text !== null
 		el.slot$('__').text$(text)
-
+	
+	let nsflag = (ctx and ctx._ns_)
 	# mark the classes as external static flags?
-	if flags
-		el.flag$(flags)
+	if nsflag
+		el.flags$ns += nsflag + ' '
+		el.flag$ = el.flagExt$
+		
+	if flags or nsflag or el.flags$ns
+		el.flag$(flags or '')
 	return el
 
 import './svg'

@@ -3,6 +3,9 @@ import {HTMLElement} from '../dom'
 export class ImbaElement < HTMLElement
 	def constructor
 		super()
+		if flags$ns
+			flag$ = flagExt$
+
 		setup$()
 		build()
 

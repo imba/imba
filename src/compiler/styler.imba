@@ -24,6 +24,14 @@ export const layouts =
 		# this should be added as ultra low specificity
 		o.margin = "calc(var(--u_sy) * -1) calc(var(--u_sx) * -1)"
 		o["&>*"] = {margin: "var(--u_sy) var(--u_sx)"}
+	
+	vflex: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+	
+	hflex: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
 
 export const aliases =
 	
@@ -130,35 +138,62 @@ export const aliases =
 	# borders
 	# b: 'border'
 	bc: 'border-color'
-	bs: 'border-style'
+	# bs: 'border-style'
 	bw: 'border-width'
-	br: 'border-radius'
 	# br: 'border-radius'
-
+	# br: 'border-radius'
+	
+	bd: 'border'
+	bdc: 'border-color'
+	bds: 'border-style'
+	bdw: 'border-width'
+	bdr: 'border-right'
+	bdl: 'border-left'
+	bdt: 'border-top'
+	bdb: 'border-bottom'
+	bdx: ['bdl','bdr']
+	bdy: ['bdt','bdb']
+	
+	bdr: 'border-right'
+	bdl: 'border-left'
+	bdb: 'border-bottom'
+	
+	# radius
+	radius: 'border-radius'
+	br: 'border-radius'
+	btlr: 'border-top-left-radius'
+	btrr: 'border-top-right-radius'
+	bblr: 'border-bottom-left-radius'
+	bbrr: 'border-bottom-right-radius'
+	btr: ['btlr','btrr']
+	bbr: ['bblr','bbrr']
+	blr: ['btlr','bblr']
+	brr: ['btrr','bbrr']
+	
 	# bb: 'border-bottom'
 	btc: 'border-top-color'
 	bts: 'border-top-style'
 	btw: 'border-top-width'
-	btr: ['border-top-left-radius','border-top-right-radius']
-	btrr: 'border-top-right-radius'
-	btlr: 'border-top-left-radius'
+	# btr: ['border-top-left-radius','border-top-right-radius']
+	# btrr: 'border-top-right-radius'
+	# btlr: 'border-top-left-radius'
 	
 	brc: 'border-right-color'
 	brs: 'border-right-style'
 	brw: 'border-right-width'
-	brr: ['border-top-right-radius','border-bottom-right-radius']
+	# brr: ['border-top-right-radius','border-bottom-right-radius']
 
 	bbc: 'border-bottom-color'
 	bbs: 'border-bottom-style'
 	bbw: 'border-bottom-width'
-	bbr: ['border-bottom-left-radius','border-bottom-right-radius']
-	bbrr: 'border-bottom-right-radius'
-	bblr: 'border-bottom-left-radius'
+	# bbr: ['border-bottom-left-radius','border-bottom-right-radius']
+	# bbrr: 'border-bottom-right-radius'
+	# bblr: 'border-bottom-left-radius'
 	
 	blc: 'border-left-color'
 	bls: 'border-left-style'
 	blw: 'border-left-width'
-	blr: ['border-top-left-radius','border-bottom-left-radius']
+	# blr: ['border-top-left-radius','border-bottom-left-radius']
 	
 	# br: 'border-right'
 	bxc: 'border-x-color'
@@ -201,9 +236,9 @@ export const aliases =
 	gcs: 'grid-column-start'
 	gre: 'grid-row-end'
 	gce: 'grid-column-end'
-
-	shadow: 'box-shadow'
 	
+	bs: 'box-shadow'
+	shadow: 'box-shadow'
 
 	ws: 'white-space'
 	zi: 'z-index'
@@ -220,7 +255,7 @@ export const aliases =
 	origin: 'transform-origin'
 	prefix: 'content@before'
 	suffix: 'content@after'
-	radius: 'border-radius'
+	
 	
 	# transforms
 	x: 'x'

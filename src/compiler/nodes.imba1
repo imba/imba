@@ -582,7 +582,7 @@ export class Stack
 		@counters[name] -= 1
 
 	def generateId ns = 'oid'
-		AST.counterToShortRef(STACK.incr('oid'))
+		AST.counterToShortRef(STACK.incr(ns))
 
 	def sfcid
 		@sfcid ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
@@ -2743,8 +2743,10 @@ export class ClassDeclaration < Code
 			@superclass.traverse()
 			# also visit and possibly declare the class name?
 			
-		if option(:extension)
+		if option(:extension) and @name
 			@name.traverse()
+		elif @name
+			@name.traverse(declaring: self)
 		
 		STACK.push(self)
 
@@ -2968,9 +2970,12 @@ export class TagDeclaration < ClassDeclaration
 	def selectorpath
 		@selectorpath ||= name.toSelector
 		# @selectorpath ||= String(name)
+	
+	def cssns
+		"{fid}{oid}"
 		
 	def cssref
-		"_{STACK.fid}{oid}"
+		"{cssns}"
 
 	def visit
 		scope__.imbaDependency('index')
@@ -2978,12 +2983,22 @@ export class TagDeclaration < ClassDeclaration
 		super
 
 		let sup = superclass
+	
+		@config = {}
+		
+		# if name and name.isClass
+		#	name.declareVariable(scope__.parent)
 
-		if sup and (sup.isNative or sup.isNativeSVG) and !STACK.tsc
-			let op = sup.nativeCreateNode
-			op = util.extendTag(op,THIS)
-			addMethod('create$',[],[op]).set(static: yes)
-			set(extends: Obj.wrap(extends: sup.name))
+
+		if sup and !STACK.tsc
+			if (sup.isNative or sup.isNativeSVG)
+				let op = sup.nativeCreateNode
+				op = util.extendTag(op,THIS)
+				addMethod('create$',[],[op]).set(static: yes)
+				set(extends: Obj.wrap(extends: sup.name))
+				@config:extends = sup.name
+			elif sup.isClass
+				sup.resolveVariable(scope__.parent)
 		
 		if @elementReferences
 			for own ref,child of @elementReferences
@@ -2995,12 +3010,6 @@ export class TagDeclaration < ClassDeclaration
 						op += " = new {typ.toClassName}"
 					
 					self.body.unshift(LIT(op + ';'),yes)
-					# addMethod(ref,[],[],{type: 'get'})
-				# else
-				# 	addMethod(ref,[],[],{type: 'get'})
-
-		# if name.name.indexOf('-') == -1 or superclass and superclass.isNativeSVG
-		#	console.log("non-native tag?")
 		return
 		
 	def addElementReference name, child
@@ -3012,13 +3021,17 @@ export class TagDeclaration < ClassDeclaration
 		scope.context.value = name
 		scope.context.reference = name
 		
+		
+		
 		let className = name.toClassName
-
-		# should probably also warn about stuff etc
-		let sup = CALL(LIT('imba.tags.get'),[
-			superclass or STR('component'),
-			superclass ? STR(superclass.toClassName) : STR('ImbaElement')
-		])
+		let sup = superclass
+		
+		if sup and sup.@variable
+			sup = sup.@variable
+		elif sup
+			sup = CALL(LIT('imba.tags.get'),[sup,STR(sup.toClassName)])
+		else
+			sup = CALL(LIT('imba.tags.get'),[STR('component'),STR('ImbaElement')])
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
@@ -3056,11 +3069,13 @@ export class TagDeclaration < ClassDeclaration
 			let exportName = option(:default) ? 'default' : cname
 			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
 
+		@config:ns = cssns if option(:hasScopedStyles)
 
 		if !STACK.tsc
 			if @staticInit
 				js += "; {className}.init$()"
-			let ext = (option(:extends) or LIT('{}')).c
+			# let ext = (option(:extends) or LIT('{}')).c
+			let ext = Obj.wrap(@config).c
 			js += "; imba.tags.define({name.c},{className},{ext})"
 		else
 			unless option(:extension)
@@ -4970,7 +4985,7 @@ export class Identifier < Node
 		return self
 	
 	def resolveVariable scope = scope__
-		let variable = scope__.lookup(symbol)
+		let variable = scope.lookup(symbol)
 		@variable = variable
 		stack.registerSemanticToken(@value,@variable)
 		return self
@@ -5172,6 +5187,15 @@ export class TagTypeIdentifier < Identifier
 		@name = parts.pop
 		@ns = parts.shift # if any?
 		return @str
+		
+	def traverse o
+		if @traversed
+			return self
+		# NODES.push(self)
+		@traversed = yes
+		if o and o:declaring and isClass
+			registerVariable('const',o:declscope or STACK.scope)
+		self
 
 	def js o
 		return "'" + toNodeName + "'"
@@ -5189,7 +5213,6 @@ export class TagTypeIdentifier < Identifier
 			CALL(LIT('imba.document.createElementNS'),[STR("http://www.w3.org/2000/svg"),STR(name)])
 		else
 			CALL(LIT('imba.document.createElement'),[STR(name)])
-			# LIT('document.createElementNS("http://www.w3.org/2000/svg",name)'
 
 	def isClass
 		!!@str.match(/^[A-Z]/)
@@ -5202,6 +5225,9 @@ export class TagTypeIdentifier < Identifier
 
 	def isSVG
 		@ns == 'svg' or (!isNative and !@ns and TAG_TYPES.SVG.indexOf(@str) >= 0)
+		
+	def symbol
+		@str
 
 	def isCustom
 		!isNative and !isNativeSVG
@@ -5217,6 +5243,12 @@ export class TagTypeIdentifier < Identifier
 		
 	def toSelector
 		toNodeName
+		
+	def resolveVariable scope = scope__
+		let variable = scope__.lookup(@str)
+		if @variable = variable
+			stack.registerSemanticToken(@value,@variable)
+		return self
 
 	def toClassName
 		let str = @str
@@ -7448,6 +7480,8 @@ export class Tag < TagLike
 
 	def traverse 
 		return self if @traversed
+		@tid = STACK.generateId('tag')
+		# console.log 'tag id',@tid,fid
 		scope__.imbaDependency('index')
 		@tagDeclaration = STACK.up(TagDeclaration)
 		let close = @options:close
@@ -7711,6 +7745,7 @@ export class Tag < TagLike
 
 		var parent = self.parent
 		var fragment = self.fragment
+		var component = @tagDeclaration
 		let oscope = @tagDeclaration ? @tagDeclaration.scope : null
 
 		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type:isClass and type.isClass ? type.name : "'" + type.@value + "'"))
@@ -7764,14 +7799,22 @@ export class Tag < TagLike
 			dynamicKey = kvar
 		
 		var addGlobalId = @sfcid or stack.option(:hasScopedStyles)
-		
-		if @tagDeclaration and @tagDeclaration.option(:hasScopedStyles)
-			@classNames.push(@tagDeclaration.cssref)
+
+		# if component # and @tagDeclaration.option(:hasScopedStyles)
+		# 	# let op = OP('.',scope__.context,STR('_ns_'))
+		# 	# @classNames.push(component.cssref)
+		# 	# @classNames.push(op)
+		# 	if isSelf
+		# 		@classNames.push(component.cssns + '_')
 		
 		if option(:reference)
 			if oscope
 				let name = String(option(:reference)).slice(1)
-				@classNames.push(oscope.cssReferenceFlag(name))
+				# oscope.cssReferenceFlag(name)
+				@classNames.push(name)
+				if component
+					@classNames.push("ref--{name}")
+				# @classNames.push(oscope.cssReferenceFlag(name))
 		
 		if @classNames:length
 			let names = []
@@ -7783,6 +7826,9 @@ export class Tag < TagLike
 						dynamic = yes
 					else
 						names.push(cls.rawClassName)
+				elif cls isa Node
+					dynamic = yes
+					names.push('${' + cls.c + '}')
 				else
 					names.push(cls)
 
@@ -7793,7 +7839,8 @@ export class Tag < TagLike
 			typ,
 			(fragment and !option(:detached) ? fragment.tvar : 'null'),
 			@className or 'null',
-			'null'
+			'null',
+			oscope ? scope__.context.c : 'null' # or rather the imba context?
 		]
 
 		var nodes = body ? body.values : []
@@ -8550,9 +8597,10 @@ export class StyleRuleSet < StyleNode
 		@placeholders
 		
 	def visit stack, o
-		@tagDeclaration = stack.up(TagDeclaration)
+		let cmp = @tagDeclaration = stack.up(TagDeclaration)
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
+		
 		let sel = String(@selectors).trim
 		
 		if sel.match(/^\%[\w\-]+$/)
@@ -8569,11 +8617,17 @@ export class StyleRuleSet < StyleNode
 			if owner isa TagDeclaration
 				if !@variable
 					@sel = String(@selectors).trim or '&'
-					@sel = "& {@sel}" if @sel.indexOf('&') == -1
-					@sel = @sel.replace('&',owner.selectorpath)
-					@basesel = owner.selectorpath
+					if @sel.match(/^\>{1,3}/)
+						@sel = "& {@sel}"
+
+					# @sel = @sel.replace('&',".{cmp.cssns}_")
+					# @sel = "& {@sel}" if @sel.indexOf('&') == -1
+					@sel = @sel.replace('&',".{cmp.cssns}_")
 				set(inClassBody: yes)
 				@rulescope = owner.scope__
+				
+				if cmp
+					cmp.set(hasScopedStyles: yes)
 				
 			else
 				yes # THROW here
@@ -8589,7 +8643,9 @@ export class StyleRuleSet < StyleNode
 			# console.log 'nested rule!!',@sel
 			# @sel = "& {@sel}"
 		elif !@name
-			@name = STACK.sfcid + oid
+			# if this is unconditional - we should only need to use the unique
+			# class name of the element
+			@name = (cmp ? cmp.cssns : fid) + oid
 			@sel = ".{@name}"
 		
 		@selectors?.traverse
@@ -8607,13 +8663,13 @@ export class StyleRuleSet < StyleNode
 			let pri = !!@flag ? (@tag and @tag.isSelf ? 2 : 2) : 0
 			pri = 1 if pri < 1 and option(:inClassBody)
 			# might want to send in the rule itself instead?
+			let component = @tagDeclaration
 			let opts = {
-				selectors:[],
-				localid: @tagDeclaration && @tagDeclaration.cssref
-				base: @basesel,
+				selectors:[]
+				component: cmp
+				ns: cmp && cmp.cssns
 				priority: pri
-				forceLocal: option(:local)
-				scope: @tagDeclaration ? @tagDeclaration.scope : stack.scope
+				forceLocal: cmp && !@flag
 				mixins: {}
 			}
 			
@@ -8630,8 +8686,8 @@ export class StyleRuleSet < StyleNode
 
 			@css = StyleRule.new(null,@sel,@styles,opts).toString
 
-			if opts:hasLocalRules and @tagDeclaration
-				@tagDeclaration.set(hasScopedStyles: yes)
+			if opts:hasScopedStyles and cmp
+				cmp.set(hasScopedStyles: yes)
 			
 			# console.log 'out',@css
 
@@ -8643,9 +8699,6 @@ export class StyleRuleSet < StyleNode
 						return '.'+resolved.@declarator.@name
 					else
 						return m
-				# console.log 'found mixin?',resolved
-				
-			# console.log 'result!!',@css
 
 			scope__.root.styles.push({
 				type: 'css'

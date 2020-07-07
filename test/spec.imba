@@ -345,11 +345,12 @@ global def eqcss el, match,sel
 		el = document.querySelector(el)
 	elif el isa Element and !el.parentNode
 		document.body.appendChild(el)
-	if sel
+	if typeof sel == 'string'
 		el = el.querySelector(sel)	
+	elif typeof sel == 'number'
+		el = el.children[sel]
+
 	let style = window.getComputedStyle(el)
-	
-	
 
 	if typeof match == 'number'
 		match = {fontWeight: String(match)}

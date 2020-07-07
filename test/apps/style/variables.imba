@@ -12,3 +12,7 @@ tag A2
 	css fw:$num
 
 test do eqcss <A2>, 500
+
+imba.mount <div>
+	<A1>
+	<A2>

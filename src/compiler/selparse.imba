@@ -50,7 +50,6 @@ export def rewrite rule,ctx,o = {}
 	let root = rule
 	let pri = 0
 	let specificity = 0
-	let scope = o.scope
 	rule.meta = {}
 	rule.media = []
 
@@ -80,6 +79,8 @@ export def rewrite rule,ctx,o = {}
 			# 	console.log 'cannot send further up!!!'
 	
 	let container = parts[0]
+	let localpart = null
+	let deeppart = null
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -88,6 +89,13 @@ export def rewrite rule,ctx,o = {}
 		let mods = part.pseudos or []
 		let name = part.tagName
 		let op = part.nestingOperator
+		
+		if op == '>>'
+			localpart = prev
+			part.nestingOperator = '>'
+		elif op == '>>>'
+			localpart = prev
+			part.nestingOperator = null
 		
 		if name == 'html'
 			part.isRoot = yes
@@ -101,11 +109,17 @@ export def rewrite rule,ctx,o = {}
 				flags[i] = 'mixin___'+flag.slice(1)
 				pri = 1 if pri < 1
 			elif flag[0] == '$'
-				flags[i] = scope.cssReferenceFlag(flag.slice(1))
+				# flags[i] = flag.slice(1) + '-' + o.ns
+				flags[i] = 'ref--' + flag.slice(1)
+				localpart = part
 				pri = 1 if pri < 1
 		
 		if part.tagName
 			specificity++
+		
+		# or non-local?
+		if o.component and (!next or next.nestingOperator == '>>>') and !localpart and !deeppart
+			localpart = part
 			
 		specificity += part.classNames.length
 		
@@ -152,9 +166,21 @@ export def rewrite rule,ctx,o = {}
 
 			elif mod.name == 'local'
 				mod.remove = yes
-				o.hasLocalRules = yes
-				addClass(rule,o.localid) if o.localid
+				o.hasScopedStyles = yes
+				addClass(rule,o.ns) if o.ns
 				specificity++
+				
+			elif mod.name == 'deep'
+				mod.remove = yes
+				deeppart = part
+				
+				if prev
+					if !prev.isRoot
+						localpart = prev
+					else
+						localpart = prev.rule = {type: 'rule',rule: prev.rule}
+				else
+					localpart = rule.rule = {type: 'rule',rule: rule.rule}
 			
 			if modTarget != part and !mod.remove
 				addPseudo(modTarget,mod)
@@ -166,6 +192,11 @@ export def rewrite rule,ctx,o = {}
 		part.pseudos = mods.filter do !$1.remove
 	
 	rule.specificity = specificity
+	
+	if localpart and o.ns and o.forceLocal
+		o.hasScopedStyles = true
+		addClass(localpart,o.ns)
+
 
 	if pri = Math.max(o.priority or 0,pri)
 		# let last = parts[parts.length - 1]
@@ -222,7 +253,7 @@ export def parse str, options
 export def test str, log = no
 	var sel = selparser.parse(str)
 	console.log 'parsed',str,sel
-	var options = {localid: 'dvs342'}
+	var options = {ns: 'dvs342'}
 	var out = rewrite(sel,null,options)
 	let css = render(out)
 	console.log css
