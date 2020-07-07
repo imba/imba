@@ -57,10 +57,6 @@ export const aliases =
 	mx: ['ml','mr']
 	my: ['mt','mb']
 	
-	g: 'gap'
-	rg: 'row-gap'
-	cg: 'column-gap'
-	
 	# add scroll snap shorthands?
 	
 	w: 'width'
@@ -71,29 +67,25 @@ export const aliases =
 	r: 'right'
 	size: ['width','height']
 	
-	pi: 'place-items'
-	pc: 'place-content'
-	ps: 'place-self'
-	pa: ['pi','pc','ps']
-	# a: ['ai','ac']
-	ai: 'align-items'
-	ac: 'align-content'
-	as: 'align-self'
-	a: ['ac','ai']
-	# j: ['jc','ji']
+	# justify
 	ji: 'justify-items'
 	jc: 'justify-content'
 	js: 'justify-self'
 	j: ['jc','ji']
 	
+	# align
+	ai: 'align-items'
+	ac: 'align-content'
+	as: 'align-self'
+	a: ['ac','ai']
 	
+	# place
+	pi: 'place-items'
+	pc: 'place-content'
+	ps: 'place-self'
 	
-	
-	
+
 	# flex
-	
-	# ff: 'flex-flow' # support up/down/left/right aliases
-	# fb: 'flex-basis'
 	fl: 'flex'
 	flf: 'flex-flow'
 	fld: 'flex-direction'
@@ -103,11 +95,12 @@ export const aliases =
 	flw: 'flex-wrap'
 	
 	# fonts
-	# f: 'font' # shorthand?
 	ff: 'font-family'
 	fs: 'font-size'
 	fw: 'font-weight'
 	ts: 'text-shadow'
+	
+	# text-decoration
 	td: 'text-decoration'
 	tdl: 'text-decoration-line'
 	tdc: 'text-decoration-color'
@@ -115,33 +108,24 @@ export const aliases =
 	tdt: 'text-decoration-thickness'
 	tdsi: 'text-decoration-skip-ink'
 	
+	# text-emphasis
 	te: 'text-emphasis'
 	tec: 'text-emphasis-color'
 	tes: 'text-emphasis-style'
 	tep: 'text-emphasis-position'
 	tet: 'text-emphasis-thickness'
 	tesi: 'text-decoration-skip-ink'
-	
+		
+	# text
 	tt: 'text-transform'
 	ta: 'text-align'
 	va: 'vertical-align'
 	ls: 'letter-spacing'
 	lh: 'line-height'
-	
-	# margins
-	# l: 'layout'
-	# l: 'layout'
-	is: 'layout'
-	d: 'display'
-	
 
 	# borders
-	# b: 'border'
-	bc: 'border-color'
-	# bs: 'border-style'
-	bw: 'border-width'
-	# br: 'border-radius'
-	# br: 'border-radius'
+	bc: 'border-color' # DEPRECATED
+	bw: 'border-width' # DEPRECATED
 	
 	bd: 'border'
 	bdc: 'border-color'
@@ -158,8 +142,28 @@ export const aliases =
 	bdl: 'border-left'
 	bdb: 'border-bottom'
 	
+	bdtc: 'border-top-color'
+	bdts: 'border-top-style'
+	bdtw: 'border-top-width'
+	
+	bdtc: 'border-top-color'
+	bdts: 'border-top-style'
+	bdtw: 'border-top-width'
+	
+	bdrc: 'border-right-color'
+	bdrs: 'border-right-style'
+	bdrw: 'border-right-width'
+	
+	bdbc: 'border-bottom-color'
+	bdbs: 'border-bottom-style'
+	bdbw: 'border-bottom-width'
+	
+	bdlc: 'border-left-color'
+	bdls: 'border-left-style'
+	bdlw: 'border-left-width'
+
 	# radius
-	radius: 'border-radius'
+	radius: 'border-radius' # DEPRECATED
 	br: 'border-radius'
 	btlr: 'border-top-left-radius'
 	btrr: 'border-top-right-radius'
@@ -169,41 +173,6 @@ export const aliases =
 	bbr: ['bblr','bbrr']
 	blr: ['btlr','bblr']
 	brr: ['btrr','bbrr']
-	
-	# bb: 'border-bottom'
-	btc: 'border-top-color'
-	bts: 'border-top-style'
-	btw: 'border-top-width'
-	# btr: ['border-top-left-radius','border-top-right-radius']
-	# btrr: 'border-top-right-radius'
-	# btlr: 'border-top-left-radius'
-	
-	brc: 'border-right-color'
-	brs: 'border-right-style'
-	brw: 'border-right-width'
-	# brr: ['border-top-right-radius','border-bottom-right-radius']
-
-	bbc: 'border-bottom-color'
-	bbs: 'border-bottom-style'
-	bbw: 'border-bottom-width'
-	# bbr: ['border-bottom-left-radius','border-bottom-right-radius']
-	# bbrr: 'border-bottom-right-radius'
-	# bblr: 'border-bottom-left-radius'
-	
-	blc: 'border-left-color'
-	bls: 'border-left-style'
-	blw: 'border-left-width'
-	# blr: ['border-top-left-radius','border-bottom-left-radius']
-	
-	# br: 'border-right'
-	bxc: 'border-x-color'
-	bxs: 'border-x-style'
-	bxw: 'border-x-width'
-	
-	# by: 'border-y'
-	byc: 'border-y-color'
-	bys: 'border-y-style'
-	byw: 'border-y-width'
 	
 	# background
 	bg: 'background'
@@ -216,8 +185,10 @@ export const aliases =
 	bgo: 'background-origin'
 	bgclip: 'background-clip'
 	
-
 	# grid
+	g: 'gap'
+	rg: 'row-gap'
+	cg: 'column-gap'
 	gtr: 'grid-template-rows'
 	gtc: 'grid-template-columns'
 	gta: 'grid-template-areas'
@@ -226,8 +197,6 @@ export const aliases =
 	gaf: 'grid-auto-flow'
 	gcg: 'grid-column-gap'
 	grg: 'grid-row-gap'
-	cg: 'column-gap'
-	rg: 'row-gap'
 	ga: 'grid-area'
 	gr: 'grid-row'
 	gc: 'grid-column'
@@ -237,25 +206,19 @@ export const aliases =
 	gre: 'grid-row-end'
 	gce: 'grid-column-end'
 	
+	# shadow
 	bs: 'box-shadow'
-	shadow: 'box-shadow'
-
-	ws: 'white-space'
-	zi: 'z-index'
-	o: 'opacity'
-	tween: 'transition'
-	pe: 'pointer-events'
-	us: 'user-select'
+	shadow: 'box-shadow' # DEPRECATED
 	
+	# overflow
 	'of':'overflow'
 	'ofx':'overflow-x'
 	'ofy':'overflow-y'
 	'ofa':'overflow-anchor'
-	# 'ofa':'overflow-anchor'
-	origin: 'transform-origin'
+	
+	# content
 	prefix: 'content@before'
 	suffix: 'content@after'
-	
 	
 	# transforms
 	x: 'x'
@@ -267,6 +230,15 @@ export const aliases =
 	'scale-y': 'scale-y'
 	'skew-x': 'skew-x'
 	'skew-y': 'skew-y'
+	origin: 'transform-origin'
+	
+	# others
+	ws: 'white-space'
+	zi: 'z-index'
+	pe: 'pointer-events'
+	us: 'user-select'
+	o: 'opacity'
+	tween: 'transition'
 
 export const abbreviations = {}
 for own k,v of aliases
