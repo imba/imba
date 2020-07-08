@@ -227,7 +227,7 @@ var COMPOUND_ASSIGN = [ '-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=',
 var UNARY = ['!', '~', 'NEW', 'TYPEOF', 'DELETE']
 
 # Logical tokens.
-var LOGIC   = ['&&', '||', '&', '|', '^','and','or']
+var LOGIC   = ['&&', '||', '?:', '&', '|', '^','and','or']
 
 # Bit-shifting tokens.
 var SHIFT   = ['<<', '>>', '>>>']

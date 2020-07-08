@@ -146,6 +146,8 @@ export var OP = do |op, l, r|
 			ComparisonOp.new(op,l,r)
 		when '..','...'
 			Range.new(op,l,r)
+		when '?:'
+			ExistentialOp.new(op,l,r)
 		else
 			Op.new(op,l,r)
 
@@ -269,8 +271,8 @@ var STR = do |val|
 	return val if val isa Str
 	return Str.new(helpers.singlequote(String(val)))
 
-var IF = do |cond,body,alt|
-	var node = If.new(cond,body)
+var IF = do |cond,body,alt,o={}|
+	var node = If.new(cond,body,o)
 	node.addElse(alt) if alt
 	node
 
@@ -3475,6 +3477,9 @@ export class Undefined < Literal
 
 	def isTruthy
 		no
+		
+	def cache
+		self
 
 	def c
 		M("undefined",@value)
@@ -3486,6 +3491,9 @@ export class Nil < Literal
 
 	def isTruthy
 		no
+		
+	def cache
+		self
 
 	def c
 		M("null",@value)
@@ -4067,6 +4075,24 @@ export class Op < Node
 		var ast = right.consume(clone)
 		ast.consume(node) if node
 		return ast
+		
+export class ExistentialOp < Op
+	
+	def js o
+		var out = null
+		var op = @op
+
+		var l = @left
+		var r = @right
+		
+		l.cache
+		# let cond = OP('!=',l,NULL)
+		let ast = IF(OP('!=',l,NULL), l, r, type: '?')
+		# l = l.c if l isa Node
+		# r = r.c if r isa Node
+		return ast.c(expression: yes)
+		# out = "{l} {M '||',@opToken} {r}"
+		
 
 export class ComparisonOp < Op
 
