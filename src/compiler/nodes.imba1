@@ -4299,9 +4299,7 @@ export class Access < Op
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
 			"{ctx.c}[{r}]"
-			
-		if rgt isa Identifier and (rgt.isPredicate or rgt.isDangerous)
-			out = "{out}()" unless up isa Call
+
 
 		out = pre + out
 		return out

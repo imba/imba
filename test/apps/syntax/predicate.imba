@@ -6,13 +6,13 @@ class Group
 	def add item
 		data.items.push(item)
 
-	def archived?
+	get archived?
 		data.archived != null
 	
-	def active?
+	get active?
 		!archived? && !empty?
 		
-	def empty?
+	get empty?
 		data.items.length == 0
 	
 	def empty
