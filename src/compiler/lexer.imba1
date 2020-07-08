@@ -150,6 +150,9 @@ var HEREDOC = /// ^ ("""|''') ([\s\S]*?) (?:\n[^\n\S]*)? \1 ///
 
 var OPERATOR = /// ^ (
 	?: [-=]=>             # function - what
+	 | !&
+	 | [&|~^]?=\? # reassign
+	 | [&|~^]= # bit assign
 	 | ===
 	 | ---
 	 | ->
@@ -221,19 +224,24 @@ var ENV_FLAG = /^\$\w+\$/
 var ARGVAR = /^\$\d$/
 
 # Compound assignment tokens.
-var COMPOUND_ASSIGN = [ '-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=', '>>=', '>>>=', '&=', '^=', '|=', '=<', '**=']
+var COMPOUND_ASSIGN = [
+	'-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=',
+	'<<=', '>>=', '>>>=', '&=', '^=', '|=', '~=', '=<', '**=',
+	'=?','~=?','|=?','&=?','^=?'
+]
 
 # Unary tokens.
 var UNARY = ['!', '~', 'NEW', 'TYPEOF', 'DELETE']
 
 # Logical tokens.
-var LOGIC   = ['&&', '||', '?:', '&', '|', '^','and','or']
+var LOGIC   = ['&&', '||', '?:', '&', '|', '^','and','or','!&']
 
 # Bit-shifting tokens.
 var SHIFT   = ['<<', '>>', '>>>']
 
 # Comparison tokens.
 var COMPARE = ['===', '!==', '==', '!=', '<', '>', '<=', '>=','===','!==']
+
 # Mathematical tokens.
 var MATH = ['*', '/', '%', '∪', '∩', '√']
 

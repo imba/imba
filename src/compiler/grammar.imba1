@@ -1193,8 +1193,8 @@ var grammar =
 		o 'Expression RELATION Expression' do
 			AST.OP A2, A1, A3
 
-		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do AST.OP_COMPOUND(A2.@value,A2,A1,A3)
-		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do AST.OP_COMPOUND(A2.@value, A1, A4.indented(A3,A5))
+		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do AST.OP(A2,A1,A3)
+		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do AST.OP(A2,A1,A4.indented(A3,A5))
 	]
 
 

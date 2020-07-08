@@ -120,6 +120,9 @@ export var OP = do |op, l, r|
 			Access.new(op,l,r)
 		when '='
 			Assign.new(op,l,r)
+		
+		when '~='
+			return OP('&=',l,OP('~',r))
 
 		when '?=','||=','&&='
 			ConditionalAssign.new(op,l,r)
@@ -140,26 +143,14 @@ export var OP = do |op, l, r|
 			TypeOf.new(op,l,r)
 		when 'delete'
 			Delete.new(op,l,r)
-		when '--','++','!','√','not'
+		when '--','++','!','√','not','!!'
 			UnaryOp.new(op,l,r)
 		when '>','<','>=','<=','==','===','!=','!=='
 			ComparisonOp.new(op,l,r)
 		when '..','...'
 			Range.new(op,l,r)
-		when '?:'
-			ExistentialOp.new(op,l,r)
 		else
 			Op.new(op,l,r)
-
-export var OP_COMPOUND = do |sym,op,l,r|
-	# console.log "?. soak operator",sym
-	if sym == '?.'
-		console.log "?. soak operator"
-		return null
-	if sym == '?=' or sym == '||=' or sym == '&&='
-		return ConditionalAssign.new(op,l,r)
-	else
-		return CompoundAssign.new(op,l,r)
 
 var PATHIFY = do |val|
 	if val isa TagAttrValue
@@ -4021,7 +4012,7 @@ export class Op < Node
 			@op = '!=='
 		elif @op == 'not'
 			@op = '!'
-			
+
 		@left = l
 		@right = r
 		return self
@@ -4042,18 +4033,49 @@ export class Op < Node
 	def js o
 		var out = null
 		var op = @op
+		let opv = op
 
 		var l = @left
 		var r = @right
+		
+		if op == '!&'
+			return "({C l} {M '&',@opToken} {C r})==0"
+			
+		elif op == '?:'
+			let ast = IF(OP('!=',l.cache,NULL), l, r, type: '?')
+			return ast.c(expression: yes)
+			
+		elif op == '|=?'
+			return If.ternary(OP('!&',l,r.cache),
+				Parens.new([OP('|=',l,r),TRUE]),
+				FALSE
+			).c
+		
+		elif op == '~=?'
+			return If.ternary(OP('&',l,r.cache),
+				Parens.new([OP('~=',l,r),TRUE]),
+				FALSE
+			).c
+		
+		elif op == '^=?'
+			return OP('!!',OP('&',OP('^=',l,r.cache),r)).c
+			
+		elif op == '=?'
+			r.cache
+			return If.ternary(OP('!=',l,r),
+				Parens.new([OP('=',l,r),TRUE]),
+				FALSE
+			).c
 
 		l = l.c if l isa Node
 		r = r.c if r isa Node
+		
 
 		if l && r
-			out = "{l} {M op,@opToken} {r}"
+			out ||= "{l} {M op,@opToken} {r}"
 		elif l
-			out = "{M op,@opToken}{l}"
-		# out = out.parenthesize if up isa Op # really?
+			out ||= "{M op,@opToken}{l}"
+
 		out
 		
 	def isString
@@ -4075,7 +4097,8 @@ export class Op < Node
 		var ast = right.consume(clone)
 		ast.consume(node) if node
 		return ast
-		
+
+
 export class ExistentialOp < Op
 	
 	def js o
@@ -4086,10 +4109,7 @@ export class ExistentialOp < Op
 		var r = @right
 		
 		l.cache
-		# let cond = OP('!=',l,NULL)
 		let ast = IF(OP('!=',l,NULL), l, r, type: '?')
-		# l = l.c if l isa Node
-		# r = r.c if r isa Node
 		return ast.c(expression: yes)
 		# out = "{l} {M '||',@opToken} {r}"
 		
@@ -4148,7 +4168,7 @@ export class UnaryOp < Op
 		if op == 'not'
 			op = '!'
 
-		if op == '!'
+		if op == '!' or op == '!!'
 			# l.@parens = yes
 			var str = l.c
 			var paren = l.shouldParenthesize(self)
@@ -4537,7 +4557,7 @@ export class VarOrAccess < ValueNode
 		# value and value.symbol
 
 	def cache o = {}
-		@variable ? (o:force and super(o)) : value.cache(o)
+		@variable ? (o:force ? super(o) : self) : value.cache(o)
 
 	def decache
 		@variable ? super() : value.decache
@@ -4759,7 +4779,6 @@ export class TagPushAssign < PushAssign
 
 	def consume node
 		return self
-
 
 export class ConditionalAssign < Assign
 
