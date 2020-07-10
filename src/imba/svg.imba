@@ -4,7 +4,8 @@ if $web$
 	extend class SVGElement
 		
 		def flag$ str
-			self.className.baseVal = flags$ext = str
+			let ns = flags$ns
+			self.className.baseVal = ns ? (ns + (flags$ext = str)) : (flags$ext = str)
 			return
 
 		def flagSelf$ str
@@ -15,4 +16,4 @@ if $web$
 			return flagSelf$(str)
 
 		def flagSync$
-			self.className.baseVal = ((flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
+			self.className.baseVal = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))

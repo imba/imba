@@ -46,5 +46,18 @@ test do
 	eqcss app.$box4.children[0], 300
 	eqcss app.$box6.children[0], 300
 	eqcss app.$box6.children[1], 300
-	
 	eqcss app.$box5.children[0], 500
+
+
+# svg
+tag A
+	css circle stroke-width:2px
+	
+	<self>
+		<div> "svg"
+		<svg> <circle>
+
+imba.mount(let a = <A>)
+
+test do
+	eqcss <A>, {strokeWidth: 2px}, 'circle'

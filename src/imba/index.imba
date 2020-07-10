@@ -572,13 +572,21 @@ def imba.createComponent name, parent, flags, text, ctx
 
 import './svg'
 
-def imba.createSVGElement name, parent, flags, text
+def imba.createSVGElement name, parent, flags, text, ctx
 	var el = document.createElementNS("http://www.w3.org/2000/svg",name)
+	
+	let f = ctx and ctx._ns_
+	
+	if f
+		flags = flags ? (f + ' ' + flags) : f
+		el.flags$ns = f + ' '
+
 	if flags
 		if $node$
 			el.className = flags
 		else
 			el.className.baseVal = flags
+
 	if parent and parent isa Node
 		el.insertInto$(parent)
 	return el
