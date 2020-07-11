@@ -39,6 +39,7 @@ export def calcSpecificity rule
 	
 export def rewrite rule,ctx,o = {}
 	
+	
 	if rule.type == 'selectors'
 		for sel in rule.selectors
 			rewrite(sel,rule,o)
@@ -81,6 +82,7 @@ export def rewrite rule,ctx,o = {}
 	let container = parts[0]
 	let localpart = null
 	let deeppart = null
+	let forceLocal = o.forceLocal
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -103,6 +105,11 @@ export def rewrite rule,ctx,o = {}
 		if mods.some(do $1.name == 'root')
 			part.isRoot = yes
 			
+		if name == 'self'
+			if o.ns
+				addClass(part,o.ns + '_')
+				part.tagName = null
+			
 		for flag,i in flags
 
 			if flag[0] == '%'
@@ -118,9 +125,9 @@ export def rewrite rule,ctx,o = {}
 			specificity++
 		
 		# or non-local?
-		if o.component and (!next or next.nestingOperator == '>>>') and !localpart and !deeppart
+		if o.ns and (!next or next.nestingOperator == '>>>') and !localpart and !deeppart
 			localpart = part
-			
+
 		specificity += part.classNames.length
 		
 		let modTarget = part
@@ -167,8 +174,9 @@ export def rewrite rule,ctx,o = {}
 			elif mod.name == 'local'
 				mod.remove = yes
 				o.hasScopedStyles = yes
-				addClass(rule,o.ns) if o.ns
+				addClass(part,o.ns) if o.ns
 				specificity++
+				forceLocal = no
 				
 			elif mod.name == 'deep'
 				mod.remove = yes
@@ -193,7 +201,7 @@ export def rewrite rule,ctx,o = {}
 	
 	rule.specificity = specificity
 	
-	if localpart and o.ns and o.forceLocal
+	if forceLocal and localpart and o.ns
 		o.hasScopedStyles = true
 		addClass(localpart,o.ns)
 
@@ -247,7 +255,7 @@ export def unwrap parent, subsel
 	
 export def parse str, options
 	let sel = selparser.parse(str)
-	let out = rewrite(sel,null,options)
+	let out = sel and rewrite(sel,null,options)
 	return out
 
 export def test str, log = no

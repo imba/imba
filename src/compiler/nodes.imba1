@@ -7775,6 +7775,7 @@ export class Tag < TagLike
 		option(:detached)
 
 	def js o
+		var stack = STACK
 		var isExpression = STACK.isExpression
 
 		var head = []
@@ -7785,7 +7786,8 @@ export class Tag < TagLike
 			if val isa Variable
 				val = val.toString
 			out.push(val)
-
+		
+		
 		var parent = self.parent
 		var fragment = self.fragment
 		var component = @tagDeclaration
@@ -7805,7 +7807,7 @@ export class Tag < TagLike
 
 		var slotPath = isSlot ? OP('.',LIT("{fragment.root.tvar}.__slots"),STR(option(:name))).c : ""
 
-		if STACK.tsc
+		if stack.tsc
 			# if tag is expression we want to suppress certain warnings
 			if type isa TagTypeIdentifier and !isSelf
 				add "{tvar} = new {M(type.toClassName,type)}"
@@ -7849,6 +7851,15 @@ export class Tag < TagLike
 		# 	# @classNames.push(op)
 		# 	if isSelf
 		# 		@classNames.push(component.cssns + '_')
+		
+		if stack.option(:hasScopedStyles)
+			@classNames.unshift(stack.fid)
+
+		if component and !isSelf
+			# cache this as a variable
+			let op = OP('.',scope__.context,'_ns_')
+			op = scope__.closure.memovar('_ns_',OP('||',op,STR('')))
+			@classNames.push op
 		
 		if option(:reference)
 			if oscope
@@ -8632,6 +8643,9 @@ export class StyleRuleSet < StyleNode
 	def isStatic
 		true
 	
+	def isGlobal
+		!!option(:global)
+	
 	def addPlaceholder item
 		@placeholders.push(item)
 		return self
@@ -8710,12 +8724,14 @@ export class StyleRuleSet < StyleNode
 			let opts = {
 				selectors:[]
 				component: cmp
-				ns: cmp && cmp.cssns
+				ns: cmp ? cmp.cssns : fid
 				priority: pri
-				forceLocal: cmp && !@flag
+				forceLocal: !@flag && (cmp or !isGlobal)
+				inline: !!@flag
+				global: !!isGlobal
 				mixins: {}
 			}
-			
+
 			opts:resolver = do |name|
 				let varname = 'mixin$' + name
 				if let resolved = scope__.lookup('mixin$' + name)
@@ -8724,14 +8740,12 @@ export class StyleRuleSet < StyleNode
 					else
 						return resolved
 				return null
-				
-			
 
 			@css = StyleRule.new(null,@sel,@styles,opts).toString
 
-			if opts:hasScopedStyles and cmp
-				cmp.set(hasScopedStyles: yes)
-			
+			if opts:hasScopedStyles
+				(cmp or stack).set(hasScopedStyles: yes)
+
 			# console.log 'out',@css
 
 			@css = @css.replace(/\.mixin___([\w\-]+)/g) do |m,name|
@@ -9559,6 +9573,15 @@ export class Scope
 		
 	def cssReferenceFlag refname
 		refname + '_' + STACK.fid + @nr
+		
+	def memovar name, init
+		@memovars ||= {}
+		let item = @memovars[name]
+		unless item
+			item = @memovars[name] = declare(item,init)
+			# temporary(null,{reuse: yes},"{name}")
+			
+		return item
 	
 	# def cssMixinFlag name
 		

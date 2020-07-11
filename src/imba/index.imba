@@ -521,13 +521,6 @@ imba.tags = new ImbaElementRegistry()
 
 def imba.createElement name, parent, flags, text, ctx
 	var el = document.createElement(name)
-	
-	let f = ctx and ctx._ns_
-	
-	if f
-		# what about when these flags are later updated?
-		flags = flags ? (f + ' ' + flags) : f
-		el.flags$ns = f + ' '
 		
 	el.className = flags if flags
 
@@ -559,14 +552,8 @@ def imba.createComponent name, parent, flags, text, ctx
 
 	if text !== null
 		el.slot$('__').text$(text)
-	
-	let nsflag = (ctx and ctx._ns_)
-	# mark the classes as external static flags?
-	if nsflag
-		el.flags$ns += nsflag + ' '
-		el.flag$ = el.flagExt$
 		
-	if flags or nsflag or el.flags$ns
+	if flags or el.flags$ns # or nsflag
 		el.flag$(flags or '')
 	return el
 
@@ -574,12 +561,6 @@ import './svg'
 
 def imba.createSVGElement name, parent, flags, text, ctx
 	var el = document.createElementNS("http://www.w3.org/2000/svg",name)
-	
-	let f = ctx and ctx._ns_
-	
-	if f
-		flags = flags ? (f + ' ' + flags) : f
-		el.flags$ns = f + ' '
 
 	if flags
 		if $node$
