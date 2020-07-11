@@ -2959,16 +2959,22 @@ export class TagDeclaration < ClassDeclaration
 		Object.assign(super,{
 			type: 'tag'
 		})
-		
-	def selectorpath
-		@selectorpath ||= name.toSelector
-		# @selectorpath ||= String(name)
 	
 	def cssns
 		"{fid}{oid}"
 		
-	def cssref
-		"{cssns}"
+	def cssref scope
+		if isNeverExtended and !superclass
+			return option(:hasScopedStyles) ? cssns : null
+
+		let s = scope.closure
+		return s.memovar('_ns_',OP('||',OP('.',s.context,'_ns_'),STR('')))
+		
+	def isNeverExtended
+		if name and name.isClass
+			return !option(:export) and !option(:extended)
+		else
+			no
 
 	def visit
 		scope__.imbaDependency('index')
@@ -2978,10 +2984,6 @@ export class TagDeclaration < ClassDeclaration
 		let sup = superclass
 	
 		@config = {}
-		
-		# if name and name.isClass
-		#	name.declareVariable(scope__.parent)
-
 
 		if sup and !STACK.tsc
 			if (sup.isNative or sup.isNativeSVG)
@@ -2992,6 +2994,8 @@ export class TagDeclaration < ClassDeclaration
 				@config:extends = sup.name
 			elif sup.isClass
 				sup.resolveVariable(scope__.parent)
+				let up = sup.@variable && sup.@variable.value
+				up.set(extended: self) if up
 		
 		if @elementReferences
 			for own ref,child of @elementReferences
@@ -5238,6 +5242,9 @@ export class TagTypeIdentifier < Identifier
 		@traversed = yes
 		if o and o:declaring and isClass
 			registerVariable('const',o:declscope or STACK.scope)
+			if @variable
+				@variable.value = o:declaring
+				
 		self
 
 	def js o
@@ -7769,8 +7776,6 @@ export class Tag < TagLike
 	def isReactive
 		option(:reactive) or (@parent ? @parent.isReactive : !(scope__ isa RootScope))
 
-	
-
 	def isDetached
 		option(:detached)
 
@@ -7842,24 +7847,15 @@ export class Tag < TagLike
 
 			typ = vvar
 			dynamicKey = kvar
-		
-		var addGlobalId = @sfcid or stack.option(:hasScopedStyles)
 
-		# if component # and @tagDeclaration.option(:hasScopedStyles)
-		# 	# let op = OP('.',scope__.context,STR('_ns_'))
-		# 	# @classNames.push(component.cssref)
-		# 	# @classNames.push(op)
-		# 	if isSelf
-		# 		@classNames.push(component.cssns + '_')
-		
 		if stack.option(:hasScopedStyles)
 			@classNames.unshift(stack.fid)
 
 		if component and !isSelf
 			# cache this as a variable
-			let op = OP('.',scope__.context,'_ns_')
-			op = scope__.closure.memovar('_ns_',OP('||',op,STR('')))
-			@classNames.push op
+			# let op = OP('.',scope__.context,'_ns_')
+			# op = scope__.closure.memovar('_ns_',OP('||',op,STR('')))
+			@classNames.push component.cssref(scope__)
 		
 		if option(:reference)
 			if oscope
@@ -8695,10 +8691,8 @@ export class StyleRuleSet < StyleNode
 
 		elif o:rule
 			@sel ||= @selectors?.toString.trim
-			# should happen no matter what??
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
-			# console.log 'nested rule!!',@sel
-			# @sel = "& {@sel}"
+
 		elif !@name
 			# if this is unconditional - we should only need to use the unique
 			# class name of the element
@@ -8709,7 +8703,7 @@ export class StyleRuleSet < StyleNode
 		
 		@styles = {}
 		@body?.traverse(rule: self, styles: @styles, rootRule: (o:rule or self))
-		
+
 		if o:rule and o:styles
 			if o:styles[@sel] # '§ '+
 				Object.assign(o:styles[@sel],@styles)
@@ -8746,10 +8740,7 @@ export class StyleRuleSet < StyleNode
 			if opts:hasScopedStyles
 				(cmp or stack).set(hasScopedStyles: yes)
 
-			# console.log 'out',@css
-
 			@css = @css.replace(/\.mixin___([\w\-]+)/g) do |m,name|
-				# console.log 'replace mixin',m
 				let varname = 'mixin$' + name
 				if let resolved = scope__.lookup(varname)
 					if resolved.@declarator isa StyleRuleSet
@@ -8775,9 +8766,6 @@ export class StyleRuleSet < StyleNode
 				return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
 		
 		return '' if option(:inClassBody) or option(:toplevel)
-		# let json = JSON.stringify(@body,null,2)
-		# let css = StyleRule.new('aba',[],@styles)
-		# let out = json + '\n/*\n' + JSON.stringify(@styles,null,2) + '\n*/'
 		let out = "'{@name}'"
 		# out += '\n/*\n' + @css + '\n*/'
 		return out
@@ -10148,6 +10136,7 @@ export class Variable < Node
 	prop autodeclare
 	prop references
 	prop export
+	prop value
 
 	def pool
 		null
