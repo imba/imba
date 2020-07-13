@@ -7451,7 +7451,7 @@ export class TagSwitchFragment < TagLike
 
 		for item in @inserts
 			let key = "{cvar}.{item}"
-			out += "\n({key}_ = {tvar}.insert$({item},0,{key}_));"
+			out += ";\n({key}_ = {tvar}.insert$({item},0,{key}_));"
 		return out
 
 export class TagLoopFragment < TagLike
