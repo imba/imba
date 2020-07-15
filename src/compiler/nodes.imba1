@@ -7875,6 +7875,9 @@ export class Tag < TagLike
 					@classNames.push("ref--{name}")
 				# @classNames.push(oscope.cssReferenceFlag(name))
 		
+		if option(:key)
+			set(detached: yes)
+		
 		if @classNames:length
 			let names = []
 			let dynamic = no
@@ -7898,8 +7901,7 @@ export class Tag < TagLike
 			typ,
 			(fragment and !option(:detached) ? fragment.tvar : 'null'),
 			@className or 'null',
-			'null',
-			oscope ? scope__.context.c : 'null' # or rather the imba context?
+			'null'
 		]
 
 		var nodes = body ? body.values : []
@@ -8033,6 +8035,12 @@ export class Tag < TagLike
 			else
 				let cref = @cref = "{cvar}.{oid}"
 				let ref = dynamicKey ? "{cvar}[{dynamicKey}]" : cref
+				
+				if option(:key)
+					let dref = @dref = "{cvar}.${oid}"
+					add "{dref} || ({dref}=\{\})"
+					dynamicKey = option(:key).c
+					ref = "{dref}[{dynamicKey}]"
 
 				if markWhenBuilt
 					@bvar = tagvar(:b)
@@ -8045,7 +8053,7 @@ export class Tag < TagLike
 
 				@ref = tvar
 
-				if dynamicKey # and cache
+				if dynamicKey
 					ownCache = yes
 
 			if ownCache
@@ -8205,7 +8213,7 @@ export class Tag < TagLike
 			# not fragment.tvar?
 			foot.push "{fragment.ref}.insert$({tvar},{@flags})"
 
-		elif parent and isComponent and !(parent isa TagSwitchFragment)
+		elif parent and !(parent isa TagSwitchFragment) and (isComponent or dynamicKey)
 			let pref = fragment.ref
 			let cref = @cref
 			if dynamicKey
