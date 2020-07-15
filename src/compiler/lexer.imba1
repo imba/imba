@@ -166,7 +166,7 @@ var OPERATOR = /// ^ (
 	 | ([-+:])\1         # doubles
 	 | ([&|<>])\2=?      # logic / shift
 	 | \?\.              # soak access
-	 | \?\:              # soak symbol
+	 | \?\?              # soak symbol
 	 | \.{2,3}           # range or splat
 	 | \*(?=[a-zA-Z\_])   # splat -- 
 ) ///
@@ -234,7 +234,7 @@ var COMPOUND_ASSIGN = [
 var UNARY = ['!', '~', 'NEW', 'TYPEOF', 'DELETE']
 
 # Logical tokens.
-var LOGIC   = ['&&', '||', '?:', '&', '|', '^','and','or','!&']
+var LOGIC   = ['&&', '||', '??', '&', '|', '^','and','or','!&']
 
 # Bit-shifting tokens.
 var SHIFT   = ['<<', '>>', '>>>']
@@ -274,7 +274,7 @@ var INDEXABLE = [
 	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAG_REF','TAGID','INDEX_END','CALL_END'
 ]
 
-var NOT_KEY_AFTER = ['.','?','?.','UNARY','?:','+','-','*']
+var NOT_KEY_AFTER = ['.','?','?.','UNARY','??','+','-','*']
 
 var GLOBAL_IDENTIFIERS = ['global','exports']
 

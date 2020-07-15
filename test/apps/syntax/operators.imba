@@ -30,12 +30,12 @@ test '?=' do
 	eq b,1
 
 
-test '?:' do
-	eq (zero ?: 1),0
-	eq (nill ?: 1),1
-	eq (udef ?: 1),1
-	eq (undefined ?: null ?: 2),2
-	eq (undefined ?: 1 ?: 2),1
+test '??' do
+	eq (zero ?? 1),0
+	eq (nill ?? 1),1
+	eq (udef ?? 1),1
+	eq (undefined ?? null ?? 2),2
+	eq (undefined ?? 1 ?? 2),1
 
 # Reassignment
 

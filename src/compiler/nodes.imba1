@@ -4045,7 +4045,7 @@ export class Op < Node
 		if op == '!&'
 			return "({C l} {M '&',@opToken} {C r})==0"
 			
-		elif op == '?:'
+		elif op == '??'
 			let ast = IF(OP('!=',l.cache,NULL), l, r, type: '?')
 			return ast.c(expression: yes)
 			
