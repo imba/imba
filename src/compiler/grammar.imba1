@@ -565,6 +565,7 @@ var grammar =
 	AssignObj: [
 		o 'MethodDeclaration' do A1.set(inObject: yes)
 		o 'ObjAssignable' do ObjAttr.new(A1)
+		o '...' do ObjRestAttr.new(A1)
 		o 'ObjAssignable : Expression' do ObjAttr.new(A1, A3)
 		o 'ObjAssignable : INDENT Expression Outdent' do ObjAttr.new(A1, A4.indented(A3,A5))
 		o 'SimpleObjAssignable = Expression' do ObjAttr.new(A1, null, A3)
@@ -709,6 +710,7 @@ var grammar =
 		o 'ParamVar = ParamValue' do Param.new(A1.value,A3).set(datatype: A1.option(:datatype))
 		o 'Object = ParamValue' do Param.new(A1,A3)
 		o 'Array = ParamValue' do Param.new(A1,A3)
+		o '...' do RestParam.new(A1)
 		# OptionalParam.new A1, A3, A2
 	]
 
@@ -864,17 +866,26 @@ var grammar =
 	]
 
 	ClassStart: [
-		o 'CLASS SimpleAssignable' do ClassDeclaration.new(A2, null, []).set(keyword: A1)
-		o 'CLASS SimpleAssignable ClassBody' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'CLASS Identifier ClassConstructorParams ClassBody' do ClassDeclaration.new(A2, null, A4).set(keyword: A1,params: A3)
+		o 'CLASS Identifier ClassConstructorParams' do ClassDeclaration.new(A2, null, []).set(keyword: A1,params: A3)
+		o 'CLASS Identifier ClassBody' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'CLASS Identifier' do ClassDeclaration.new(A2, null, []).set(keyword: A1)
+		
 		o 'CLASS ClassBody' do ClassDeclaration.new(null, null, A2).set(keyword: A1)
-		o 'CLASS SimpleAssignable COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
-		o 'CLASS SimpleAssignable COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
+		o 'CLASS Identifier ClassConstructorParams COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A5, A6).set(keyword: A1, params: A3)
+		o 'CLASS Identifier ClassConstructorParams COMPARE Expression' do ClassDeclaration.new(A2, A6, []).set(keyword: A1, params: A3)
+		o 'CLASS Identifier COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
+		o 'CLASS Identifier COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
 		o 'CLASS COMPARE Expression ClassBody' do ClassDeclaration.new(null, A3, A4).set(keyword: A1)
+	]
+	
+	ClassConstructorParams: [
+		o 'CALL_START ParamList CALL_END' do A2
 	]
 
 	ClassIdentifier: [
-		o '' do null
-		o 'SimpleAssignable'
+		# o '' do null
+		o 'IDENTIFIER' do Identifier.new(A1)
 	]
 
 	ClassBody: [

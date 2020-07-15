@@ -63,16 +63,19 @@ class A
 	prop desc = new Dyn('d1')
 	prop desc2 = new Dyn(desc.ref + '2')
 
+test do
+	let item = new A
+	eq $1.log, ['v1','o1','d1','d12']
+	
 class B < A
 	prop number = 2
 	prop options = new Dyn('o2')
 	
 test do
 	let item = new B
-	item.options
-	eq $1.log, ['o2']
+	eq $1.log, ['v1','o1','d1','d12','o2']
 	eq item.number, 2
-
+###
 
 class C < A
 	prop number
@@ -101,3 +104,4 @@ test do
 	let item = new E
 	item.desc3
 	eq $1.log, ['d1','d12','d123']
+###

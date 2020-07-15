@@ -1611,9 +1611,17 @@ export class Block < ListNode
 			return super(o,nodes: ast)
 
 		var str = ""
-
+		let empty = no
 		for v in ast
-			str += cpart(v)
+			let vs = cpart(v)
+			# FIXME windows?
+			if vs[0] == '\n' and (/^\n+$/).test(vs)
+				continue if empty
+				empty = yes
+			elif vs
+				empty = no
+			# console.log 'add item?',JSON.stringify(vs)
+			str += vs
 
 		# now add the head items as well
 		if @head and @head:length > 0
@@ -1704,12 +1712,12 @@ export class ClassField < Node
 		@decorators = up?.collectDecorators
 		@name.traverse if @name and @name:traverse
 
-		if value and STACK.tsc
+		if value and (STACK.tsc or true)
 			value.@scope = MethodScope.new(value)
 			value.@scope.@parent = scope__
 			value.traverse # if @value # dont traverse yet
 
-		if !STACK.tsc and !option(:raw)
+		if !STACK.tsc and !option(:raw) and @decorators
 			@storage = scope__.root.declare(null,LIT('new WeakMap()'))
 
 		# traverse value with a different scope
@@ -1729,7 +1737,13 @@ export class ClassField < Node
 		!@decorators and (!@value or @value.isPrimitive)
 
 	def isLazy
-		yes
+		no
+		
+	def hasStaticInits
+		isStatic or @decorators
+		
+	def hasConstructorInits
+		!isStatic
 
 	def isStatic
 		option(:static)
@@ -1753,20 +1767,42 @@ export class ClassField < Node
 				out += " = {value.c}" if value
 				if let typ = TYP(@name,'jsdoc')
 					out = "{typ}\n{out}"
-			else
+			elif false
 				out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
 
 		elif up isa ClassInitBlock and !STACK.tsc
-			if !isLazy and isPlain and value
-				out = util.setField(target,name,value).c + ';\n'
-			# else
-			# 	let obj = Obj.wrap(enumerable: false, writable: true, value: LIT('undefined'))
-			# 	out = util.initField(target,storageKey,obj).c + ';\n'
+			if !isLazy and isStatic # and isPlain 
+				# out = util.setField(target,name,value).c + ';\n'
+				out = OP('=',OP('.',THIS,name),value or UNDEFINED).c + ';\n'
 
 		elif up isa InstanceInitBlock and !isStatic and !isLazy and !STACK.tsc
-			if value
-				# out = util.setField(THIS,name,value).c + ';\n'
-				out = OP('.',THIS,name).c + ';\n'
+			let ctor = up.option(:ctor)
+			let opts = up.option(:opts)
+			let val = value or UNDEFINED
+			
+			let paramIndex = option(:paramIndex)
+			let restIndex = option(:restIndex)
+			let access
+			
+			if paramIndex != undefined
+				let name = option(:paramName)
+				access = ctor.@params.at(paramIndex,yes,name)
+				if value
+					val = If.ternary(OP('!==',access,UNDEFINED),access,val)
+				else
+					val = access
+
+			elif restIndex != undefined
+				let rest = ctor.@params.at(restIndex,yes,'_fields')
+				access = OP('.',rest,name)
+
+				if value
+					access.cache(reuse: yes, name: 'v')
+					val = If.ternary(OP('&&',rest,OP('!==',access,UNDEFINED)),access,val)
+				else
+					val = If.ternary(rest,access,UNDEFINED)
+				
+			out = OP('=',OP('.',THIS,name),val).c + ';\n'
 
 		return out
 
@@ -2114,6 +2150,8 @@ export class Param < Node
 			name: name
 			defaults: defaults
 		}
+		
+export class RestParam < Param
 
 export class BlockParam < Param
 
@@ -2721,7 +2759,8 @@ export class ClassDeclaration < Code
 		no
 
 	def staticInit
-		@staticInit ||= addMethod('init$',[],@superclass ? 'super.inherited instanceof Function && super.inherited(this)' : 'this').set(static: yes)
+		# @superclass ? 'super.inherited instanceof Function && super.inherited(this)' : 'this'
+		@staticInit ||= addMethod('init$',[],'this').set(static: yes)
 
 	def instanceInit
 		@instanceInit ||= addMethod('init$',[],isTag ? 'super.init$()' : '')
@@ -2746,8 +2785,53 @@ export class ClassDeclaration < Code
 		ROOT.entities.add(namepath,self)
 		scope.visit
 
-		if @superclass and !option(:extension) and !STACK.tsc
-			staticInit
+		# if @superclass and !option(:extension) and !STACK.tsc
+		#	staticInit
+		
+		var fields = []
+		var signature = []
+		var params = []
+		var declaredFields = {}
+		var restIndex = undefined
+		
+		
+		for node in body when node isa ClassField
+			if !node.isStatic
+				let name = String(node.name)
+				declaredFields[name] = node
+		
+		if option(:params)
+			# find the rest param
+			let add = []
+			for param,index in option(:params) # .reverse
+				
+				if param isa RestParam
+					restIndex = index
+					continue
+					
+				let name = String(param.name)
+				let field = declaredFields[name]
+				let dtyp = param.option(:datatype)
+
+				if !field
+					field = fields[name] = ClassField.new(param.name).set(
+						datatype: dtyp
+						value: param.defaults
+					)
+					# field.set(param: param)
+					add.push(field)
+					params.push(param)
+				else
+					if dtyp and !field.datatype
+						field.set(datatype: dtyp)
+					if param.defaults and !field.value
+						field.set(value: param.defaults)
+				
+				if field
+					field.set(paramIndex: index, paramName: name)
+
+			for item in add.reverse
+				body.unshift(item)
 
 		body.traverse
 
@@ -2759,8 +2843,13 @@ export class ClassDeclaration < Code
 		var ctor = body.option(:ctor)
 
 		for node in body when node isa ClassField
-			staticInits.add(node)
-			inits.add(node)
+			if node.hasStaticInits
+				staticInits.add(node)
+			if node.hasConstructorInits
+				inits.add(node)
+				
+			if !node.isStatic and restIndex != null
+				node.set(restIndex: restIndex)
 
 		for node,i in body
 			if node.@decorators
@@ -2778,9 +2867,12 @@ export class ClassDeclaration < Code
 			elif ctor
 				let after = ctor.option(:injectInitAfter)
 				# inject before/after super or something
+				inits.set(ctor: ctor)
 				ctor.inject(inits,after ? {after: after} : 0)
 			else
-				ctor = addMethod('constructor',[],superclass ? 'super(...arguments)' : 'this')
+				ctor = addMethod('constructor',[],superclass ? 'super(...arguments)' : '')
+				# inits.set(opts: ctor.@params.at(0,yes))
+				inits.set(ctor: ctor)
 				ctor.inject(BR)
 				ctor.inject(inits)
 
@@ -3947,6 +4039,8 @@ export class ObjAttr < Node
 	def isPrimitive deep
 		!@value or @value.isPrimitive(deep)
 
+
+export class ObjRestAttr < ObjAttr
 
 export class ArgsReference < Node
 
@@ -9715,6 +9809,7 @@ export class Scope
 	# we only need a temporary thing with defaults -- that is all
 	# change these values, no?
 	def temporary decl, o = {}, name = null
+		name ||= o:name
 		if name and o:reuse and @vars["_temp_{name}"]
 			return @vars["_temp_{name}"]
 
