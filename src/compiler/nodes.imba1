@@ -7223,7 +7223,7 @@ class TagLike < Node
 		@consumed:length > 0
 
 	def tagvar name
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{name}${tagvarprefix}")
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{tagvarprefix}{name}")
 
 	def tagvarprefix
 		"{level}"
