@@ -82,9 +82,14 @@ test do
 	let e = new E
 	eq e.mult, 4
 
-class F
-	key = 'f'
-	
-class G < F
-	val = 100
 
+class F
+	a = 2
+	b = 2
+	util = {
+		mult: do a * b
+	}
+
+test do
+	let f = new F
+	eq f.util.mult!, 4

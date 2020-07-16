@@ -18,8 +18,10 @@ def @log target,key,desc
 			return prev.apply(this,arguments)
 		return
 		
+
+
+		
 class Item
-	
 	
 	@log('hello') @bench
 	def setup

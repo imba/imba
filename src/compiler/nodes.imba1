@@ -1712,18 +1712,14 @@ export class ClassField < Node
 		@decorators = up?.collectDecorators
 		@name.traverse if @name and @name:traverse
 
-		if value and (STACK.tsc or true)
-			value.@scope = MethodScope.new(value)
+		if value
+			value.@scope = @vscope = FieldScope.new(value)
 			value.@scope.@parent = scope__
-			value.traverse # if @value # dont traverse yet
+			value.traverse
 
-		if !STACK.tsc and !option(:raw) and @decorators
-			@storage = scope__.root.declare(null,LIT('new WeakMap()'))
-
-		# traverse value with a different scope
 		self
-		
-		
+	
+
 	def value
 		option(:value)
 
@@ -1753,11 +1749,10 @@ export class ClassField < Node
 
 	def c
 		return if option(:struct)
-
+		
 		let up = STACK.current
 		let out
 		if up isa ClassBody
-			
 			# return if isPlain
 			let prefix = isStatic ? "{M('static',option(:static))} " : ''
 			let name = name isa IdentifierExpression ? name.asObjectKey : name.c
@@ -1767,42 +1762,51 @@ export class ClassField < Node
 				out += " = {value.c}" if value
 				if let typ = TYP(@name,'jsdoc')
 					out = "{typ}\n{out}"
-			elif false
+			elif self isa ClassAttribute
 				out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
-
-		elif up isa ClassInitBlock and !STACK.tsc
-			if !isLazy and isStatic # and isPlain 
-				# out = util.setField(target,name,value).c + ';\n'
+			
+		elif !STACK.tsc
+			if isStatic and up isa ClassInitBlock
+				if @vscope
+					if let fn = STACK.up(Func)
+						@vscope.mergeScopeInto(fn.@scope)
 				out = OP('=',OP('.',THIS,name),value or UNDEFINED).c + ';\n'
 
-		elif up isa InstanceInitBlock and !isStatic and !isLazy and !STACK.tsc
-			let ctor = up.option(:ctor)
-			let opts = up.option(:opts)
-			let val = value or UNDEFINED
-			
-			let paramIndex = option(:paramIndex)
-			let restIndex = option(:restIndex)
-			let access
-			
-			if paramIndex != undefined
-				let name = option(:paramName)
-				access = ctor.@params.at(paramIndex,yes,name)
-				if value
-					val = If.ternary(OP('!==',access,UNDEFINED),access,val)
-				else
-					val = access
+			elif !isStatic and up isa InstanceInitBlock
+				if @vscope
+					if let fn = STACK.up(Func)
+						@vscope.mergeScopeInto(fn.@scope)
 
-			elif restIndex != undefined
-				let rest = ctor.@params.at(restIndex,yes,'_fields')
-				access = OP('.',rest,name)
-
-				if value
-					access.cache(reuse: yes, name: 'v')
-					val = If.ternary(OP('&&',rest,OP('!==',access,UNDEFINED)),access,val)
-				else
-					val = If.ternary(rest,access,UNDEFINED)
+				let ctor = up.option(:ctor)
+				let opts = up.option(:opts)
+				let val = value or UNDEFINED
 				
-			out = OP('=',OP('.',THIS,name),val).c + ';\n'
+				let paramIndex = option(:paramIndex)
+				let restIndex = option(:restIndex)
+				let access
+				
+				if paramIndex != undefined
+					let name = option(:paramName)
+					access = ctor.@params.at(paramIndex,yes,name)
+					if value
+						val = If.ternary(OP('!==',access,UNDEFINED),access,val)
+					else
+						val = access
+
+				elif restIndex != undefined
+					let rest = ctor.@params.at(restIndex,yes,'_fields')
+					access = OP('.',rest,name)
+
+					if value
+						access.cache(reuse: yes, name: 'v')
+						val = If.ternary(OP('&&',rest,OP('!==',access,UNDEFINED)),access,val)
+					else
+						val = If.ternary(rest,access,UNDEFINED)
+				
+				if self isa ClassAttribute and !value
+					return
+
+				out = OP('=',OP('.',THIS,name),val).c + ';\n'
 
 		return out
 
@@ -2763,7 +2767,7 @@ export class ClassDeclaration < Code
 		@staticInit ||= addMethod('init$',[],'this').set(static: yes)
 
 	def instanceInit
-		@instanceInit ||= addMethod('init$',[],isTag ? 'super.init$()' : '')
+		@instanceInit ||= addMethod('init$',[],isTag ? 'super.init$()' : '').set(noreturn: yes)
 
 	def visit
 		# replace with some advanced lookup?
@@ -2803,7 +2807,7 @@ export class ClassDeclaration < Code
 		if option(:params)
 			# find the rest param
 			let add = []
-			for param,index in option(:params) # .reverse
+			for param,index in option(:params)
 				
 				if param isa RestParam
 					restIndex = index
@@ -2862,6 +2866,7 @@ export class ClassDeclaration < Code
 		if !inits.isEmpty
 			if isTag
 				ctor = instanceInit
+				inits.set(ctor: ctor)
 				ctor.inject(inits)
 
 			elif ctor
@@ -2871,7 +2876,6 @@ export class ClassDeclaration < Code
 				ctor.inject(inits,after ? {after: after} : 0)
 			else
 				ctor = addMethod('constructor',[],superclass ? 'super(...arguments)' : '')
-				# inits.set(opts: ctor.@params.at(0,yes))
 				inits.set(ctor: ctor)
 				ctor.inject(BR)
 				ctor.inject(inits)
@@ -10160,6 +10164,22 @@ export class MethodScope < Scope
 
 	def setup
 		@selfless = no
+
+export class FieldScope < Scope
+	
+	def setup
+		@selfless = no
+		
+	def mergeScopeInto other
+		for own k,v of @varmap
+			continue if k == 'self'
+			v.resolve(other,yes)
+			other.declare(v)
+		
+		if @context and @context.@reference
+			@context.@reference = other.context.reference
+		yes
+
 
 export class LambdaScope < Scope
 
