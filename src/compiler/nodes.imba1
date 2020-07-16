@@ -281,8 +281,11 @@ var NODIFY = do |val|
 	else
 		return val
 
-var FN = do |pars,body|
-	Func.new(pars,body)
+var FN = do |pars,body,scope|
+	let fn = Func.new(pars,body)
+	if scope
+		fn.@scope.@systemscope = scope
+	return fn
 
 var METH = do |pars,body|
 	ClosedFunc.new(pars,body)
@@ -4120,8 +4123,8 @@ export class Op < Node
 		return self
 
 	def visit
-		@right.traverse if @right
-		@left.traverse if @left
+		@right.traverse if @right and @right:traverse
+		@left.traverse if @left and @left:traverse
 		return self
 
 	def isExpressable
@@ -4145,6 +4148,8 @@ export class Op < Node
 			
 		elif op == '??'
 			let ast = IF(OP('!=',l.cache,NULL), l, r, type: '?')
+			ast.@scope.@systemscope = stack.scope
+			# ast.traverse
 			return ast.c(expression: yes)
 			
 		elif op == '|=?'
@@ -4201,20 +4206,6 @@ export class Op < Node
 		return ast
 
 
-export class ExistentialOp < Op
-	
-	def js o
-		var out = null
-		var op = @op
-
-		var l = @left
-		var r = @right
-		
-		l.cache
-		let ast = IF(OP('!=',l,NULL), l, r, type: '?')
-		return ast.c(expression: yes)
-		# out = "{l} {M '||',@opToken} {r}"
-		
 
 export class ComparisonOp < Op
 
@@ -7321,10 +7312,10 @@ class TagLike < Node
 		@consumed:length > 0
 
 	def tagvar name
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes},"{tagvarprefix}{name}")
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes,alias:"{tagvarprefix}{name}"},"{tagvarprefix}{name}")
 
 	def tagvarprefix
-		"{level}"
+		"{level + 1}"
 
 	def level
 		@level
@@ -7583,7 +7574,10 @@ export class TagLoopFragment < TagLike
 	def js o
 
 		if stack.isExpression
-			return CALL(FN([],[self]),[]).c
+			let fn = CALL(FN([],[self],stack.scope),[])
+			# the inner tag loop has to get the opdated scope as well
+			# fn.traverse
+			return fn.c
 
 		if STACK.tsc
 			return "{tvar} = new DocumentFragment;\n{value.c(o)}"
@@ -9704,6 +9698,7 @@ export class Scope
 			# LIT('(Imba.$c ? (Imba.$c[Imba.$k] || (Imba.$c[Imba.$k] = {})) : {})'),
 			LIT('(imba.ctx||{})'),
 			system: yes
+			temporary: yes
 		)
 	# def context
 	# 	@context ||= ScopeContext.new(self)
@@ -9813,7 +9808,11 @@ export class Scope
 	# we only need a temporary thing with defaults -- that is all
 	# change these values, no?
 	def temporary decl, o = {}, name = null
+		if @systemscope and @systemscope != self
+			return @systemscope.temporary(decl,o,name)
+
 		name ||= o:name
+		o:temporary = yes
 		if name and o:reuse and @vars["_temp_{name}"]
 			return @vars["_temp_{name}"]
 
@@ -10223,6 +10222,9 @@ export class FlowScope < Scope
 		# FIXME
 		@context.reference if @context
 		self
+		
+	def temporary refnode, o = {}, name = null
+		(@systemscope or parent).temporary(refnode,o,name)
 
 export class CatchScope < FlowScope
 
@@ -10236,20 +10238,9 @@ export class ForScope < FlowScope
 	def autodeclare variable
 		vars.push(variable)
 
-	def temporary refnode, o = {}, name = null
-		parent.temporary(refnode,o,name)
-
 export class IfScope < FlowScope
 
-	def temporary refnode, o = {}, name = null
-		parent.temporary(refnode,o,name)
-		
-	
-
 export class BlockScope < FlowScope
-
-	def temporary refnode, o = {}, name = null
-		parent.temporary(refnode,o,name)
 
 	def region
 		node.region
@@ -10493,18 +10484,25 @@ export class SystemVariable < Variable
 		# adds a very random initial name
 		# the auto-magical goes last, or at least, possibly reuse other names
 		# "${Math.floor(Math.random * 1000)}"
-		var alias = @name
-		var typ = @options:pool
-		var names = [].concat(@options:names)
+		let o = @options
+		var alias = o:alias or @name
+		var typ = o:pool
+		var names = [].concat(o:names)
 		var alt = null
 		var node = null
 
 		@name = null
 
 		var scope = self.scope
+		
+		if o:temporary and !o:alias
+			let i = 0
+			@name = '$' + i
+			while scope.lookup(@name)
+				@name = "${i += 1}"
 
 		if typ == 'tag'
-			var i = 0
+			let i = 0
 			while !@name
 				var alt = "t{i++}"
 				@name = alt unless scope.lookup(alt)
@@ -10552,14 +10550,13 @@ export class SystemVariable < Variable
 			@name = '$' + alt unless scope.lookup('$' + alt)
 
 		# go through alias proxies
-		if alias and !@name
-			var i = 0
-			@name = '$' + alias
+		if !@name
+			let i = 0
+			@name = '$' + (alias or '') + i
 			# it is the closure that we should use
+			# 
 			while scope.lookup(@name)
-				@name = "{alias}{i += 1}"
-
-		@name ||= "${scope.counter += 1}"
+				@name = "${alias or ''}{i += 1}"
 
 		scope.varmap[@name] = self
 

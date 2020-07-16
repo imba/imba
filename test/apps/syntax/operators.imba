@@ -36,6 +36,9 @@ test '??' do
 	eq (udef ?? 1),1
 	eq (undefined ?? null ?? 2),2
 	eq (undefined ?? 1 ?? 2),1
+	
+	let obj = {nill: null, val: undefined}
+	eq (obj.nill ?? obj.val ?? 10), 10
 
 # Reassignment
 
