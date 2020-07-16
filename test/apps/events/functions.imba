@@ -7,7 +7,7 @@ tag app-root
 	prop value = null
 
 	prop model = {
-		update: do |val| counter = val
+		update: do(val) counter = val
 	}
 	
 	def hello

@@ -843,7 +843,7 @@ export class Lexer
 
 	def isKeyword id
 		if @lastTyp == 'ATTR' or @lastTyp == 'PROP' or @lastTyp == 'DEF'
-			return false 
+			return false
 			
 		if id == 'get' or id == 'set'
 			if let m = @chunk.match(/^[gs]et ([\$\w\-]+)/) # ( (do)|\n(\t+))
@@ -872,7 +872,7 @@ export class Lexer
 			if (@lastTyp in ['='])
 				return true
 
-		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css')
+		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css' or id == 'constructor')
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'STRUCT'
 
@@ -883,6 +883,9 @@ export class Lexer
 			# 	return true
 
 			if id == 'lazy'
+				return incls and @lastTyp in ['INDENT','TERMINATOR','DECORATOR']
+				
+			if id == 'constructor'
 				return incls and @lastTyp in ['INDENT','TERMINATOR','DECORATOR']
 
 			return true if incls
@@ -1009,6 +1012,11 @@ export class Lexer
 			# what we want is a context-stack
 			elif (typ == 'DEF' or typ == 'GET' or typ == 'SET')
 				typ = 'DEF'
+				openDef
+				
+			elif (typ == 'CONSTRUCTOR')
+				token('DEF','',0)
+				typ = 'IDENTIFIER'
 				openDef
 
 			elif typ == 'DO'
