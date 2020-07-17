@@ -7116,71 +7116,6 @@ class TagHandlerCallback < ValueNode
 		value.traverse
 		return
 
-
-export class TagStylePart < Node
-
-	prop params
-	
-	def initialize name, params
-		@key = name
-		@params = params or []
-		# console.log 'tagstyle params',name,'pars?',params
-	
-	def serialize
-		let key = @key.map(do $1.c).join(':')
-		[key].concat(params.map(do $1:raw ? $1.raw : $1.c(css: yes)))
-
-export class TagStyleMixin < TagStylePart
-
-export class TagStyleScope < TagStylePart
-
-export class TagStyle < TagPart
-
-	prop name
-	prop value
-	prop params
-	
-	prop scopes
-	prop mixins
-	
-	def initialize scopes, mixins
-		# @name = load(value)
-		# @tag = owner
-		@scopes = scopes
-		@mixins = mixins
-		@chain = []
-		@special = no
-		@params = []
-		self
-		
-	def visit
-		@name = STACK.sfcid + oid
-		@sel = ".{@name}"
-		
-		# maybe reuse duplicated styles within a single file?
-		# should build a full style based on this 
-		# @tag.sfcid
-		# @sel = @tag.uniqueSelector
-		scope__.root.styles.push({
-			type: 'css'
-			processed: toStyle
-		})
-		self
-		
-	def toStyle
-		let sel = "{@sel}"
-		let scopes = self.scopes.map do $1.serialize
-		let mixins = self.mixins.map do $1.serialize
-		# console.log 'toStyle',scopes,mixins
-		let rule = StyleRule.new(sel,scopes,mixins)
-		return rule.toString
-		
-	def toRaw
-		"{@name}"
-		
-	def c
-		"'{@name}'"
-
 export class TagBody < ListNode
 	
 	def add item, o
@@ -7212,9 +7147,6 @@ class TagLike < Node
 
 	def sfcid
 		@sfcid ||= STACK.sfcid + '-' + oid
-		
-	def uniqueSelector
-		@uniqueSelector ||= "[data-{sfcid}]"
 
 	def body
 		@body || @options:body
@@ -7580,10 +7512,8 @@ export class TagLoopFragment < TagLike
 		# determine if the order of elements will ever change inside loop
 		if @consumed.every(do $1 isa Tag and !$1.option(:key) and !$1.isDynamicType) and !hasFlag(F.TAG_HAS_BRANCHES)
 			set(indexed: yes)
-			# flag(F.TAG_INDEXED)
 		else
 			set(keyed: yes)
-			# flag(F.TAG_KEYED)
 
 	def cvar
 		@cvar || tagvar('c')
@@ -7642,9 +7572,6 @@ export class Tag < TagLike
 
 	def attrs
 		@attributes
-		
-	def uniqueSelector
-		@uniqueSelector ||= "[data-{sfcid}]"
 
 	def traverse 
 		return self if @traversed
@@ -7818,9 +7745,6 @@ export class Tag < TagLike
 				curr.value = part
 				curr.set(op: tok)
 				
-		elif curr isa TagStyle
-			curr.add(part,type)
-
 		elif curr isa TagHandler
 			if part isa IdentifierExpression and part.single and !part.isPrimitive
 				# console.log 'is stack tsc?'
@@ -7837,16 +7761,8 @@ export class Tag < TagLike
 			curr.value = part.first
 			attrs.push(curr)
 			next = null
-		
-		elif type == TagStyle
-			next = part # TagStyle.new("",self)
-			next.@tag = self
-			# next.add(part,TagStyle)
-			attrs.push(next)
 			
 		else
-			if type == TagStyle and !(part isa TagStyle)
-				part = TagStyleScope.new(part)
 
 			if type == TagFlag and part isa IdentifierExpression and !part.isPrimitive
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
@@ -8182,7 +8098,7 @@ export class Tag < TagLike
 		let flagsToConcat = []
 
 		for item in @attributes
-			if item.@chain and item.@chain:length and !(item isa TagHandler) and !(item isa TagStyle)
+			if item.@chain and item.@chain:length and !(item isa TagHandler)
 				let mods = item.modifiers
 				let dyn = !mods.isStatic
 
@@ -8200,10 +8116,7 @@ export class Tag < TagLike
 				else
 					add "{bvar} || ({modpath}={mods.c(o)})"
 			
-			if item isa TagStyle
-				# add "{bvar} // {item.c(o)}"
-				yes
-			elif !isReactive
+			if !isReactive
 				# buggy
 				add "{tvar}.{item.c(o)}"
 			elif item.isStatic
@@ -8796,7 +8709,7 @@ export class StyleRuleSet < StyleNode
 		if sel.match(/^\%[\w\-]+$/)
 			set(mixin: sel.slice(1))
 			@identifier = MixinIdentifier.new(sel)
-			@name = sel.slice(1) + '-' + STACK.sfcid + oid
+			@name = sel.slice(1) + '-' + STACK.fid + oid
 			@sel = sel # "%{@name}"
 			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
 			# @variable.@resolvedValue = @sel
