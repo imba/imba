@@ -1,20 +1,3 @@
-### css
-box-element {
-	border: 1px solid black;
-	padding: 10px;
-	margin: 10px;
-	display: block;
-}
-header {
-	color: green;
-}
-
-footer {
-	color: red;
-}
-###
-
-
 tag box-element
 	def render
 		<self>
