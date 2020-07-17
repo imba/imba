@@ -7953,10 +7953,8 @@ export class Tag < TagLike
 			@classNames.unshift(stack.fid)
 
 		if component and !isSelf
-			# cache this as a variable
-			# let op = OP('.',scope__.context,'_ns_')
-			# op = scope__.closure.memovar('_ns_',OP('||',op,STR('')))
-			@classNames.push component.cssref(scope__)
+			if let cname = component.cssref(scope__)
+				@classNames.push cname
 		
 		if option(:reference)
 			if oscope
