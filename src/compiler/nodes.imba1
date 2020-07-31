@@ -26,8 +26,7 @@ TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blo
  source span strong style sub summary sup table tbody td textarea tfoot th
  thead time title tr track u ul var video wbr".split(" ")
 
-TAG_TYPES.SVG = "circle defs ellipse g line linearGradient mask path pattern polygon polyline
-radialGradient rect stop svg text tspan".split(" ")
+TAG_TYPES.SVG = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ")
 
 TAG_ATTRS.HTML = "accept accessKey action allowFullScreen allowTransparency alt async
  autoComplete autoFocus autoPlay cellPadding cellSpacing charSet checked
@@ -5366,7 +5365,7 @@ export class TagTypeIdentifier < Identifier
 		@ns == 'svg' and TAG_TYPES.SVG.indexOf(@str) >= 0
 
 	def isSVG
-		@ns == 'svg' or (!isNative and !@ns and TAG_TYPES.SVG.indexOf(@str) >= 0)
+		@ns == 'svg' or (!isNative and !@ns and TAG_NAMES["svg_{@str}"]) # TAG_TYPES.SVG.indexOf(@str) >= 0 
 		
 	def symbol
 		@str
