@@ -2792,7 +2792,10 @@ export class ClassDeclaration < Code
 			
 		if option(:extension) and @name
 			@name.traverse()
+			if @name isa Identifier
+				@name.resolveVariable()
 		elif @name
+			# TODO should actually declare in outer scope
 			@name.traverse(declaring: self)
 		
 		STACK.push(self)
