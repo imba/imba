@@ -1,0 +1,150 @@
+export def matchToken token, match
+	let typ = token.type
+	if match isa RegExp
+		return typ.match(match)
+	elif typeof match == 'string'
+		return typ.indexOf(match) == 0 and (!typ[match.length] or typ[match.length] == '.')
+
+export def prevToken start, match, max = 100000
+	let tok = start
+	while tok and max > 0
+		return tok if matchToken(tok,match)
+		max--
+		tok = tok.prev
+	return null
+
+export def pascalCase str
+	str.replace(/(^|[\-\_\s])(\w)/g) do $3.toUpperCase!
+
+export def computeLineOffsets text, isAtLineStart, textOffset
+	if textOffset === undefined
+		textOffset = 0
+
+	var result = isAtLineStart ? [textOffset] : []
+	var i = 0
+	while i < text.length
+		var ch = text.charCodeAt(i)
+		if ch === 13 || ch === 10
+			if ch === 13 && (i + 1 < text.length) && text.charCodeAt(i + 1) === 10
+				i++
+			result.push(textOffset + i + 1)
+		i++
+	return result
+
+export def getWellformedRange range
+	var start = range.start
+	var end = range.end
+	if start.line > end.line || start.line === end.line && start.character > end.character
+		return { start: end, end: start }
+	return range
+
+export def getWellformedEdit textEdit
+	var range = getWellformedRange(textEdit.range)
+	if range !== textEdit.range
+		return { newText: textEdit.newText, range: range }
+	return textEdit
+
+export def mergeSort data, compare
+	if data.length <= 1
+		return data
+	var p = (data.length / 2) | 0
+	var left = data.slice(0, p)
+	var right = data.slice(p)
+	mergeSort(left, compare)
+	mergeSort(right, compare)
+	var leftIdx = 0
+	var rightIdx = 0
+	var i = 0
+	while leftIdx < left.length && rightIdx < right.length
+		var ret = compare(left[leftIdx], right[rightIdx])
+		if ret <= 0
+			// smaller_equal -> take left to preserve order
+			data[i++] = left[leftIdx++]
+		else
+			// greater -> take right
+			data[i++] = right[rightIdx++]
+
+	while (leftIdx < left.length)
+		data[i++] = left[leftIdx++]
+
+	while (rightIdx < right.length)
+		data[i++] = right[rightIdx++]
+
+	return data
+
+export def editIsFull e
+		return e !== undefined && e !== null && typeof e.text === 'string' && e.range === undefined
+
+export def editIsIncremental e
+	return !editIsFull(e) && (e.rangeLength === undefined or typeof e.rangeLength === 'number')
+
+
+export def fastExtractSymbols text
+	let lines = text.split(/\n/)
+	let symbols = []
+	let scope = {indent: -1,children: []}
+	let root = scope
+	# symbols.root = scope
+	let m
+	let t0 = Date.now!
+
+	for line,i in lines
+		if line.match(/^\s*$/)
+			continue
+
+		let indent = line.match(/^\t*/)[0].length
+
+		while scope.indent >= indent
+			scope = scope.parent or root 
+
+		m = line.match(/^(\t*((?:export )?(?:static )?(?:extend )?)(class|tag|def|get|set|prop|attr) )(\@?[\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
+		# m ||= line.match(/^(.*(def|get|set|prop|attr) )([\w\-\$]+)/)
+
+		if m
+			let kind = m[3]
+			let name = m[4]
+			let ns = scope.name ? scope.name + '.' : ''
+			let mods = m[2].trim().split(/\s+/)
+			let md = ''
+
+			let span = {
+				start: {line: i, character: m[1].length}
+				end: {line: i, character: m[0].length}
+			}
+
+			let symbol = {
+				kind: kind
+				ownName: name
+				name: ns + name
+				span: span
+				indent: indent
+				modifiers: mods
+				children: []
+				parent: scope == root ? null : scope
+				type: kind
+				data: {}
+				static: mods.indexOf('static') >= 0
+				extends: mods.indexOf('extend') >= 0
+			}
+
+			if symbol.static
+				symbol.containerName = 'static'
+			
+			symbol.containerName = m[2] + m[3]
+				
+			
+			if kind == 'tag' and m = line.match(/\<\s+([\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
+				symbol.superclass = m[1]
+
+			if scope.type == 'tag'
+				md = "```html\n<{scope.name} {name}>\n```\n"
+				symbol.description = {kind: 'markdown',value: md}
+
+			scope.children.push(symbol)
+			scope = symbol
+
+			symbols.push(symbol)
+	
+	root.all = symbols
+	console.log 'fast outline',text.length,Date.now! - t0
+	return root
