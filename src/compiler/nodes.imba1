@@ -12,7 +12,6 @@ import SourceMap from './sourcemap'
 
 import StyleRule,StyleTheme,Color from './styler.imba'
 
-var TSC_CLASS_HEAD = 'static $static$(){ this.prototype } $member$(){ this.constructor } '
 var TAG_NAMES = constants.TAG_NAMES
 
 var TAG_TYPES = {}
@@ -2620,11 +2619,6 @@ export class Root < Code
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)
 		
-		if OPTS:debug
-			# console.log "semantic tokens",STACK.semanticTokens
-			for tok in STACK.semanticTokens
-				console.log "semantic {tok.@value} - {tok.@kind}"
-		
 		var out = c
 
 		if STACK.tsc
@@ -2941,8 +2935,6 @@ export class ClassDeclaration < Code
 		@cname = cname
 		@cpath = cpath
 		
-		if STACK.tsc
-			body.unshift(LIT(TSC_CLASS_HEAD),yes)
 		
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
@@ -3142,7 +3134,7 @@ export class TagDeclaration < ClassDeclaration
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
-			body.unshift(LIT(TSC_CLASS_HEAD),yes)
+
 			if option(:extension)
 				className = "Extended${className}"
 
