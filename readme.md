@@ -19,14 +19,13 @@ To get started with Imba, we recommend reading through the [official guide](http
 
 ### Bi-Weekly Imba Community Meeting
 
-Everyone is welcome! The developer meetings are usually on Monday's every 2
-weeks. This is a great place to report your issues, hangout and talk about your
-project using Imba. If you have an open pull request which has not seen
-attention, you can ping during the meeting.
+Everyone is welcome! The developer meetings are usually on Monday's every 2 weeks. This is a great place to report your issues, hangout and talk about your project using Imba. If you have an open pull request which has not seen attention, you can ping during the meeting.
 
-- Attend physically at the Scrimba [office](https://www.meetup.com/Imba-Oslo-Meetup/events/chnlhryzmbdb/).
-- Join remotely via [Zoom](https://us04web.zoom.us/j/230170873)
-- Catch up via the [Meeting notes](https://docs.google.com/document/d/1ABGjOJut9eXrajYjdN4G4-UGGU4gvKznLk5CAaXYjso/edit?usp=sharing)
+For the exact meeting times please use the Meetup group [Imba Oslo Meetup](https://www.meetup.com/Imba-Oslo-Meetup), this is where you can see the timezone, cancellations, etc.
+
+You can join us remotely via [Zoom](https://us04web.zoom.us/j/230170873).
+
+Did you miss a meeting? No worries, catch up via the [meeting notes](https://docs.google.com/document/d/1ABGjOJut9eXrajYjdN4G4-UGGU4gvKznLk5CAaXYjso/edit?usp=sharing) or [video recordings](https://www.youtube.com/playlist?list=PLf1a9PYKGPdl3OMBHV72Oz23eFy9q51jJ).
 
 ### Chat
 
