@@ -1796,7 +1796,7 @@ export class Lexer
 		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or pt == 'IDENTIFIER')
 			tokid = 'BANG'
 			
-		elif value == '&' and @chunk.match(/\&\s*[,\)\}\]]/)
+		elif value == '&' and @chunk.match(/^\&\s*[,\)\}\]]/)
 			tokid = 'DO_PLACEHOLDER'
 		elif value == '**'
 			tokid = 'EXP'
