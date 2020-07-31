@@ -5468,6 +5468,8 @@ export class BangCall < ValueNode
 	
 	def c
 		"{@value.c}()"
+		
+export class DoPlaceholder < Node
 
 export class Call < Node
 
@@ -5527,7 +5529,7 @@ export class Call < Node
 		@block && @block.traverse
 
 	def addBlock block
-		var pos = @args.filter(|n,i| n == '&')[0] # WOULD BE TOKEN - CAREFUL
+		var pos = @args.filter(|n,i| n isa DoPlaceholder )[0]
 		pos ? args.replace(pos,block) : args.push(block)
 		self
 

@@ -996,7 +996,7 @@ var grammar =
 		o 'Expression'
 		o '... Expression' do Splat.new(A2).set(keyword: A1)
 		o 'Splat'
-		o 'LOGIC'
+		o 'DO_PLACEHOLDER' do DoPlaceholder.new(A1)
 		o 'Comment'
 	]
 

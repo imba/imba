@@ -234,13 +234,13 @@ var COMPOUND_ASSIGN = [
 var UNARY = ['!', '~', 'NEW', 'TYPEOF', 'DELETE']
 
 # Logical tokens.
-var LOGIC   = ['&&', '||', '??', '&', '|', '^','and','or','!&']
+var LOGIC   = ['&&', '||', '??', 'and','or']
 
 # Bit-shifting tokens.
 var SHIFT   = ['<<', '>>', '>>>']
 
 # Comparison tokens.
-var COMPARE = ['===', '!==', '==', '!=', '<', '>', '<=', '>=','===','!==']
+var COMPARE = ['===', '!==', '==', '!=', '<', '>', '<=', '>=','===','!==','&', '|', '^','!&']
 
 # Mathematical tokens.
 var MATH = ['*', '/', '%', '∪', '∩', '√']
@@ -1059,7 +1059,7 @@ export class Lexer
 			switch id
 				when '!','not'                            then typ = 'UNARY'
 				when '==', '!=', '===', '!==','is','isnt' then typ = 'COMPARE'
-				when '&&', '||','and','or'                then typ = 'LOGIC'
+				when '&&', '||','and','or','??'           then typ = 'LOGIC'
 				when 'super','break', 'continue', 'debugger','arguments' then typ = id.toUpperCase
 				# when 'true', 'false', 'null', 'undefined' then typ = 'BOOL'
 				# really?
@@ -1795,7 +1795,9 @@ export class Lexer
 		
 		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or pt == 'IDENTIFIER')
 			tokid = 'BANG'
-
+			
+		elif value == '&' and @chunk.match(/\&\s*[,\)\}\]]/)
+			tokid = 'DO_PLACEHOLDER'
 		elif value == '**'
 			tokid = 'EXP'
 		elif value == '%' and (pt == 'NUMBER' or pt == ')') and !prev:spaced
