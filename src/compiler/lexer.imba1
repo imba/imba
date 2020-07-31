@@ -963,7 +963,7 @@ export class Lexer
 		elif typ == '$' and !colon
 			typ = 'IDENTIFIER'
 
-		elif id == 'elif'
+		elif id == 'elif' and !forcedIdentifier
 			token 'ELSE', 'elif', id:length
 			token 'IF', 'if'
 			return id:length
@@ -1044,8 +1044,7 @@ export class Lexer
 					if prev.@type == 'UNARY'
 						prev.@type = 'NOT'
 
-		if id == 'super'
-			typ = 'SUPER'
+		
 
 		# do we really want to check this here
 		if !forcedIdentifier
@@ -1061,7 +1060,7 @@ export class Lexer
 				when '!','not'                            then typ = 'UNARY'
 				when '==', '!=', '===', '!==','is','isnt' then typ = 'COMPARE'
 				when '&&', '||','and','or'                then typ = 'LOGIC'
-				when 'break', 'continue', 'debugger','arguments' then typ = id.toUpperCase
+				when 'super','break', 'continue', 'debugger','arguments' then typ = id.toUpperCase
 				# when 'true', 'false', 'null', 'undefined' then typ = 'BOOL'
 				# really?
 
