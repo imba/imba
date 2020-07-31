@@ -60,14 +60,14 @@ export def getElementType typ
 
 	return typ.klass
 
-var escapeAttributeValue = do |val|
-	var str = typeof val == 'string' ? val : String(val)
+const escapeAttributeValue = do |val|
+	let str = typeof val == 'string' ? val : String(val)
 	if str.indexOf('"') >= 0
 		str = str.replace(/\"/g,"&quot;")
 	return str
 	
-var escapeTextContent = do |val, nodeName|
-	var str = typeof val == 'string' ? val : String(val)
+const escapeTextContent = do |val, nodeName|
+	let str = typeof val == 'string' ? val : String(val)
 	
 	if nodeName == 'script'
 		return str
@@ -87,7 +87,8 @@ export class Document
 	def createElement name
 		# look for custom elements now?
 		let typ = imba.tags.lookup(name)
-		let el = (typ or getElementType(name)).new(name)
+		let ctor = typ or getElementType(name)
+		let el = new ctor(name)
 		el.nodeName = name
 		return el
 
@@ -374,4 +375,4 @@ getElementType('')
 getElementType('HTML')
 getElementType('SVG')
 
-export var document = new Document
+export const document = new Document
