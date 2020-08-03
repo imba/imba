@@ -42,9 +42,14 @@ def denter indent,outdent,stay,o = {}
 
 	let cases = {
 		'$1==$S2\t': indent
-		'$1==$S2': stay
+		'$1==$S2': {
+			cases: {'$1==$S6': stay,'@default': {token: '@rematch',switchTo: '@*$1'}}
+		}
 		'@default': outdent
 	}
+	for k,v of ['next','switchTo']
+		if indent[k] and indent[k].indexOf('*') == -1
+			indent[k] += '*$1'
 
 	# for own k,v of cases
 	let rule = [/^(\t*)(?=[^\t\n])/,{cases: cases}]
@@ -65,7 +70,7 @@ export const states = {
 	root: [
 		[/^@comment/,'comment','@>_comment'] # want to push this state _ before the token
 		[/^(\t+)(?=[^\t\n])/,{cases: {
-			'$1==$S2\t': {token: 'white.indent',next: '@>_indent'}
+			'$1==$S2\t': {token: 'white.indent',next: '@>_indent*$1'}
 			'@default': 'white.indent'
 		}}]
 		'block_'
@@ -509,17 +514,17 @@ export const states = {
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\,\s*)/,'separator']
-		[/\s(in|of)@B/,'keyword',switchTo: '@for_source=']
+		[/\s(in|of)@B/,'keyword',switchTo: '@>for_source=']
 		[/[ \t]+/, 'white']
 	]
 	for_source: [
-		denter({switchTo: '@>for_body'},-1,-1)
+		denter({switchTo: '@>for_body'},-1,{switchTo: '@for_body'})
 		'expr_'
 		[/[ \t]+/, 'white']
 	]
 
 	for_body: [
-		denter(null,-1,0)
+		denter(2,-1,0)
 		'block_'
 	]
 
@@ -966,7 +971,7 @@ export const states = {
 # 5 = the monarch substate -- for identifiers++
 def rewrite-state raw
 	
-	let state = ['$S1','$S2','$S3','$S4','$S5']
+	let state = ['$S1','$S2','$S3','$S4','$S5','$S6']
 
 	if raw.match(/\@(pop|push|popall)/)
 		return raw
@@ -974,7 +979,6 @@ def rewrite-state raw
 	raw = raw.slice(1) if raw[0] == '@'
 
 	if raw.indexOf('.') >= 0
-		console.log 'return raw state',raw
 		return raw
 
 	raw = rewrite-token(raw)
@@ -982,10 +986,10 @@ def rewrite-state raw
 	#	return raw
 
 	if raw[0] == '>'
-		state[1] = '$S2\t'
+		state[1] = '$S6\t'
 		raw = raw.slice(1)
 
-	for part in raw.split(/(?=[\/\&\=])/)
+	for part in raw.split(/(?=[\/\&\=\*])/)
 		if part[0] == '&'
 			if part[1] == '-' or part[1] == '_'
 				state[2] = '$S3' + part.slice(1)
@@ -998,6 +1002,8 @@ def rewrite-state raw
 			state[3] = part.slice(1)
 		elif part[0] == '/'
 			state[4] = part.slice(1)
+		elif part[0] == '*'
+			state[5] = part.slice(1)
 		else
 			state[0] = part
 	return state.join('.')
@@ -1008,6 +1014,7 @@ def rewrite-token raw
 	raw = raw.replace('$F','$S4')
 	raw = raw.replace('$&','$S3')
 	raw = raw.replace('$I','$S2')
+	raw = raw.replace('$T','$S2')
 	
 	# if orig != raw
 	#	console.log 'rewriting token',orig,raw
