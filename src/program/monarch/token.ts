@@ -15,11 +15,19 @@ export class Token {
 	public scope: any;
 	public stack: any;
 	public mods: number;
+	public kind: number;
+
+	public symbol?: any;
+	public next?: Token;
+	public context?: any;
+	public prev?: Token;
+	public op?: string;
 
 	constructor(offset: number, type: string, language: string) {
 		this.offset = offset | 0;// @perf
 		this.type = type;
 		this.language = language;
+		this.kind = 0;
 		this.mods = 0;
 		this.value = null;
 		this.stack = null;

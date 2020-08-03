@@ -2,6 +2,8 @@ const eolpop = [/^/, token: '@rematch', next: '@pop']
 const repop = { token: '@rematch', next: '@pop'}
 const toodeep = {token: 'white.indent',next: '@>illegal_indent'}
 
+export const EOF = '§EOF§'
+
 def regexify array, pattern = '#'
 	if typeof array == 'string'
 		array = array.split(' ')
@@ -91,6 +93,7 @@ export const states = {
 			'this': 'this'
 			'self': 'self'
 			'@keywords': 'keyword.$#'
+			'$0~[A-Z].*': 'identifier.uppercase.$F'
 			'@default': 'identifier.$F'
 		}]
 	]
@@ -149,6 +152,9 @@ export const states = {
 
 	keyword_: [
 		[/new@B/,'keyword.new']
+		[/isa@B/,'keyword.isa']
+		[/(switch|when|throw|continue|break|then|await)@B/,'keyword.$1']
+		[/delete@B/,'keyword.delete']
 		[/and@B|or@B/, 'operator.flow']
 	]
 
@@ -198,9 +204,9 @@ export const states = {
 	]
 
 	access_: [
-		[/(\.\.?)(@id)/,cases: {
-			'$2~[A-Z].*': ['operator.access','access.uppercase']
-			'@default': ['operator.access','access']
+		[/(\.\.?)(@id\!?)/,cases: {
+			'$2~[A-Z].*': ['operator.access','accessor.uppercase']
+			'@default': ['operator.access','accessor']
 		}]
 	]
 
@@ -216,8 +222,8 @@ export const states = {
 
 	implicit_call_: [
 		[/(\.\.?)(@id)@implicitCall/,cases: {
-			'$2~[A-Z].*': ['operator.access','access.uppercase','@implicit_call_body']
-			'@default': ['operator.access','access','@implicit_call_body']
+			'$2~[A-Z].*': ['operator.access','accessor.uppercase','@implicit_call_body']
+			'@default': ['operator.access','accessor','@implicit_call_body']
 		}]
 		[/(@id)@implicitCall/,cases: {
 			'$2~[A-Z].*': ['identifier.uppercase','@implicit_call_body']
@@ -458,6 +464,7 @@ export const states = {
 
 	member_: [
 		# [/static(?=\s+(get|set|def) )/,'keyword.static'] # only in class and tagclass?
+		[/(constructor)@B/, 'entity.name.constructor','@>def_params&$1/$1']
 		[/(def|get|set)(\s)(@id)/, ['keyword.$1','white.entity','entity.name.$1','@>def_params&$1/$1']]
 		[/(def|get|set)(\s)(\[)/, ['keyword.$1','white.entity','$$','@>def_dynamic_name/$1']]
 	]
@@ -503,10 +510,12 @@ export const states = {
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\,\s*)/,'separator']
 		[/\s(in|of)@B/,'keyword',switchTo: '@for_source=']
+		[/[ \t]+/, 'white']
 	]
 	for_source: [
 		denter({switchTo: '@>for_body'},-1,-1)
 		'expr_'
+		[/[ \t]+/, 'white']
 	]
 
 	for_body: [
@@ -591,10 +600,8 @@ export const states = {
 	]
 
 	interpolation_body: [
-		[/\}/, { cases: {
-			'@default': {token: 'string.bracket.close', next: '@pop'}
-		}}]
-		'value_'
+		[/\}/,'string.bracket.close','@pop']
+		'expr_'
 	]
 
 	_class: [
@@ -611,7 +618,7 @@ export const states = {
 
 	_tagclass: [
 		'_class'
-		[/(?=\<self)/,'entity.name.def.render','@>_def&def',]
+		[/(?=\<self)/,'entity.name.def.render','@_render&def',]
 		# self def
 	]
 
@@ -632,6 +639,11 @@ export const states = {
 	def_dynamic_name: [
 		[']',token: 'square.close',switchTo: '@def_params&$/']
 		'expr_'
+	]
+
+	_render: [
+		denter(2,-1,-1)
+		'block_'
 	]
 
 	_def: [
@@ -867,7 +879,7 @@ export const states = {
 
 		[/\{/,'tag.$/.braces.open', '@_tag_interpolation']
 		[/\[/,'style.open', '@css_inline']
-		[/(\s*\=\s*)/,'tag.operator.equals', '@_tag_value&-value']
+		[/(\s*\=\s*)/,'operator.equals.tag-$/', '@_tag_value&-value']
 		[/\:/,token: 'tag.event.start', switchTo: '@/event']
 		'tag_event_'
 		# [/\@/,token: 'tag.event.start', switchTo: '@/event']
@@ -888,7 +900,7 @@ export const states = {
 		'_tag_part'
 		[/\.(@optid)/,'tag.event.modifier']
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
-		[/(\s*\=\s*)/,'tag.operator.equals', '@_tag_value&handler']
+		[/(\s*\=\s*)/,'operator.equals.tag-$/', '@_tag_value&handler']
 		[/\s+/,'@rematch','@pop']
 	]
 	

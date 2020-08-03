@@ -141,8 +141,7 @@ export class Scope < Node
 		if self isa Root
 			for own key,val of Globals
 				let tok = {value: key, offset: -1, mods: 0}
-				let typ = SymbolFlags.ConstVariable | SymbolFlags.IsGlobal
-				varmap[key] = new Sym(typ,key,tok)
+				varmap[key] = new Sym(SymbolFlags.GlobalVar,key,tok)
 
 		indent = parts[3] ? parts[3].length : 0
 		setup!
@@ -163,7 +162,7 @@ export class Scope < Node
 
 	def setup
 		if handler?
-			varmap.e = new Var({value: 'e', offset: 0})
+			varmap.e = new Sym(SymbolFlags.SpecialVar,'e')
 			# self.declare()
 			# add virtual vars
 

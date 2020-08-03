@@ -3,7 +3,6 @@ import { lexer, Token } from './lexer'
 import * as util from './utils'
 import { Root, Scope, Group, ScopeTypeMap } from './scope'
 import { Sym, SymbolFlags } from './symbol'
-const newline = String.fromCharCode(172)
 
 import {SemanticTokenTypes,SemanticTokenModifiers,M,CompletionTypes,Keywords,SymbolKind} from './types'
 
@@ -20,7 +19,7 @@ export class ImbaDocument
 		connection = null
 		lineTokens = []
 		head = seed = new Token(0,'eol','imba')
-		seed.state = lexer.getInitialState!
+		seed.stack = lexer.getInitialState!
 		history = []
 		tokens = []
 		versionToHistoryMap = {}
@@ -409,31 +408,6 @@ export class ImbaDocument
 			scope = scope.parent
 		return vars
 
-	def getNavigationTree walker
-		let outline = {
-			children: []
-		}
-		let options = {
-			entities: []
-		}
-		let all = []
-		options.visit = do(item)
-			if item.span
-				item.span.start = positionAt(item.span.offset)
-				item.span.end = positionAt(item.span.offset + item.span.length)
-
-			all.push(item)
-
-			if walker isa Function
-				walker(item)
-			
-		ensureParsed!
-		if seed.scope
-			let res = seed.scope.outline(outline,options)
-			return res
-
-		return outline
-
 	def getOutline walker
 		ensureParsed!
 		let t = Date.now!
@@ -533,7 +507,7 @@ export class ImbaDocument
 				let entityFlags = 0
 				let next = lines[i+1]
 				let str = raw.slice(line,next or raw.length)
-				let lexed = lexer.tokenize(str,head.state,line)
+				let lexed = lexer.tokenize(str,head.stack,line)
 
 				for tok,ti in lexed.tokens
 					let types = tok.type.split('.')
@@ -614,8 +588,10 @@ export class ImbaDocument
 									sym.dereference(lft)
 
 					prev = tok
-
-				head = {state: lexed.endState, offset: (next or content.length)}
+				# head should
+				head = new Token((next or content.length),'eol','imba')
+				head.stack = lexed.endState
+				# head = {state: lexed.endState, offset: (next or content.length)}
 		catch e
 			console.log 'parser crashed',e
 			# console.log tokens

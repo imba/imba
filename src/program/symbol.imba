@@ -28,15 +28,14 @@ export const SymbolFlags = {
 	Prototype:               1 << 22,  # Prototype property (no source representation)
 	ExportStar:              1 << 23,  # Export * declaration
 	Optional:                1 << 24,  # Optional property
-	Transient:               1 << 25,  # Transient symbol (created during type check)
-	Assignment:              1 << 26,  # Assignment treated as declaration (eg `this.prop = 1`)
-	ModuleExports:           1 << 27,  # Symbol for CommonJS `module` of `module.exports`
-
+	
 	# Modifiers
+	IsSpecial:        1 << 27
 	IsImport:           1 << 28
 	IsStatic:           1 << 29
 	IsGlobal:           1 << 30
 	IsRoot:           1 << 31
+	
 }
 
 SymbolFlags.Component = SymbolFlags.LocalComponent | SymbolFlags.GlobalComponent
@@ -45,6 +44,9 @@ SymbolFlags.Accessor = SymbolFlags.GetAccessor | SymbolFlags.SetAccessor
 SymbolFlags.ClassMember = SymbolFlags.Method | SymbolFlags.Accessor | SymbolFlags.Property
 SymbolFlags.Scoped = SymbolFlags.Function | SymbolFlags.Variable | SymbolFlags.Class | SymbolFlags.Enum | SymbolFlags.LocalComponent
 SymbolFlags.Type = SymbolFlags.Component | SymbolFlags.Class
+
+SymbolFlags.GlobalVar = SymbolFlags.ConstVariable | SymbolFlags.IsGlobal
+SymbolFlags.SpecialVar = SymbolFlags.ConstVariable | SymbolFlags.IsSpecial
 
 const Conversions = [
 	['entity.name.function',0,SymbolFlags.Function]
@@ -73,6 +75,7 @@ export class Sym
 		return 0
 
 	prop value
+	prop body = null
 
 	def constructor flags, name, node
 		flags = flags
@@ -160,6 +163,10 @@ export class Sym
 
 		if flags & SymbolFlags.IsRoot
 			mods |= M.Root
+		
+		if flags & SymbolFlags.IsSpecial
+			mods |= M.Special
+
 		return mods
 
 
