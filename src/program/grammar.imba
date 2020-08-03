@@ -657,7 +657,7 @@ export const states = {
 	]
 
 	_flow: [
-		denter(null,-1,0)
+		denter(2,-1,0)
 		'block_'
 	]
 
@@ -704,7 +704,7 @@ export const states = {
 	]
 
 	_type: [
-		denter(null,-1,-1)
+		denter(-1,-1,-1)
 		[/\\/,'type.delim']
 		[/\[/,'type','@/]']
 		[/\(/,'type','@/)']
