@@ -13,9 +13,12 @@ interface Element {
     emit(event:string, params?: any): Event;
     focus(options?: any): void;
     blur(): void;
+    
+    [key: string]: any;
 }
 
 interface ImbaElement implements Element {
+    [key: string]: any;
 }
 
 interface ImbaAnyElement implements ImbaElement {
