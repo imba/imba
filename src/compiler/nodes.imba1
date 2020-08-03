@@ -231,6 +231,8 @@ var MEND = do |*params|
 
 var TYP = do |item,format|
 	let typ = item.@options and item.@options:datatype
+	typ ||= item:datatype isa Function and item.datatype
+
 	if typ
 		if format == 'jsdoc'
 			"/** @type \{{M(typ,typ)}\} */"
@@ -1752,6 +1754,9 @@ export class ClassField < Node
 
 	def isStatic
 		option(:static)
+		
+	def datatype
+		option(:datatype)
 
 	def loc
 		[@name.@loc,@name.region[1]]
@@ -1769,8 +1774,10 @@ export class ClassField < Node
 			if STACK.tsc
 				out = "{prefix}{M(name,@name)}" # the value scope?
 				out += " = {value.c}" if value
-				if let typ = TYP(@name,'jsdoc')
-					out = "{typ}\n{out}"
+				if datatype
+					if let typ = TYP(self,'jsdoc')
+						out = "{typ}\n{out}"
+
 			elif self isa ClassAttribute
 				out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
 			
