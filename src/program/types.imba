@@ -29,7 +29,7 @@ export const M = {
 	Import: 1 << 1
 	Export: 1 << 2
 	Global: 1 << 3
-	Local:  1 << 4
+	ReadOnly:  1 << 4
 	Static: 1 << 5
 	Modification: 1 << 6
 	Deprecated: 1 << 7
@@ -39,8 +39,13 @@ export const M = {
 	Class: 1 << 11
 	Member: 1 << 12
 	Function: 1 << 13
+	Def: 1 << 14
+	Var: 1 << 15
+	Let: 1 << 16
+	Const: 1 << 17
+	Get: 1 << 18
+	Set: 1 << 19
 }
-
 
 export const SemanticTokenModifiers = Object.keys(M).map(do $1.toLowerCase! )
 
@@ -130,4 +135,33 @@ export const Keywords = {
 	when: KeywordTypes.Block
 	while: KeywordTypes.Block
 	yes: KeywordTypes.Block
+}
+
+export const SymbolKind = {
+	File: 1
+	Module: 2
+	Namespace: 3
+	Package: 4
+	Class: 5
+	Method: 6
+	Property: 7
+	Field: 8
+	Constructor: 9
+	Enum: 10
+	Interface: 11
+	Function: 12
+	Variable: 13
+	Constant: 14
+	String: 15
+	Number: 16
+	Boolean: 17
+	Array: 18
+	Object: 19
+	Key: 20
+	Null: 21
+	EnumMember: 22
+	Struct: 23
+	Event: 24
+	Operator: 25
+	TypeParameter: 26
 }

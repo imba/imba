@@ -87,11 +87,10 @@ export const states = {
 		[/\$\w+\$/, 'identifier.env']
 		[/\$\d+/, 'identifier.special']
 		# [/(@constant)/, 'identifier.constant.$S4']
-		[/@anyIdentifier([\?\!]?)/,cases: {
+		[/@id\!?/,cases: {
 			'this': 'this'
 			'self': 'self'
 			'@keywords': 'keyword.$#'
-			'$0~[A-Z].*': 'identifier.uppercase.$F'
 			'@default': 'identifier.$F'
 		}]
 	]
@@ -104,6 +103,7 @@ export const states = {
 		'var_'
 		'func_'
 		'import_'
+		'export_'
 		'flow_'
 		'for_'
 		'try_'
@@ -198,7 +198,7 @@ export const states = {
 	]
 
 	access_: [
-		[/(\.\.?)(@anyIdentifier\??)/,cases: {
+		[/(\.\.?)(@id)/,cases: {
 			'$2~[A-Z].*': ['operator.access','access.uppercase']
 			'@default': ['operator.access','access']
 		}]
@@ -209,17 +209,17 @@ export const states = {
 	]
 
 	key_: [
-		[/(@anyIdentifier\??)(\:\s*)/,cases: {
+		[/(@id)(\:\s*)/,cases: {
 			'@default': ['key','operator.assign.key-value']
 		}]
 	]
 
 	implicit_call_: [
-		[/(\.\.?)(@anyIdentifier\??)@implicitCall/,cases: {
+		[/(\.\.?)(@id)@implicitCall/,cases: {
 			'$2~[A-Z].*': ['operator.access','access.uppercase','@implicit_call_body']
 			'@default': ['operator.access','access','@implicit_call_body']
 		}]
-		[/(@anyIdentifier\??)@implicitCall/,cases: {
+		[/(@id)@implicitCall/,cases: {
 			'$2~[A-Z].*': ['identifier.uppercase','@implicit_call_body']
 			'@default': ['identifier','@implicit_call_body']
 		}]
@@ -238,9 +238,9 @@ export const states = {
 	]
 
 	params_: [
-		[/\[/, '[', '@array_body=param']
-		[/\{/, '{', '@object_body=param']
-		[/(@variable)/,'identifier.param']
+		[/\[/, '[', '@array_body=decl-param']
+		[/\{/, '{', '@object_body=decl-param']
+		[/(@variable)/,'identifier.decl-param']
 		# [/(\s*\=\s*)(?=(for|while|until|if|unless)\s)/,'operator','@pop']
 		'spread_'
 		'type_'
@@ -275,9 +275,8 @@ export const states = {
 
 	object_body: [
 		[/\}/, '}', '@pop']
-		# [/(@anyIdentifier)(\s*:\s*)(@anyIdentifier)/, ['key','operator.assign.key-value','identifier.$F']]
-		[/(@anyIdentifier)(\s*:\s*)/, ['key','operator.assign.key-value','@object_value']]
-		[/(@anyIdentifier)/, 'identifier.$F']
+		[/(@id)(\s*:\s*)/, ['key','operator.assign.key-value','@object_value']]
+		[/(@id)/, 'identifier.$F']
 		[/\[/, '[', '@object_dynamic_key=']
 		[/\s*=\s*/,'operator.assign','@object_value=']
 		[/:/,'operator.assign.key-value','@object_value=']
@@ -317,7 +316,7 @@ export const states = {
 	]
 
 	catch_: [
-		[/(catch)(\s+)(@anyIdentifier)/, ['keyword.$1','white','identifier.const','@>_catch']]
+		[/(catch)(\s+)(@id)/, ['keyword.$1','white','identifier.const','@>_catch']]
 		[/catch@B/,'keyword.catch','@>_catch']
 	]
 
@@ -357,11 +356,11 @@ export const states = {
 
 	class_: [
 		[/(export|extend)(?=\s+class )/,'keyword.$1']
-		[/(class)(\s)(@anyIdentifier)/, ['keyword.$1','white.$1name','entity.$1','@class_start=']]
+		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
 	]
 
 	class_start: [
-		[/(\s+\<\s+)(@anyIdentifier)/,['keyword.extends','identifier.superclass']]
+		[/(\s+\<\s+)(@id)/,['keyword.extends','identifier.superclass']]
 		[/@comment/,'comment']
 		[/^/,'@rematch',switchTo: '@>_class&class=']
 	]
@@ -369,36 +368,80 @@ export const states = {
 	tagclass_: [
 		[/(export|extend)(?=\s+tag )/,'keyword.$#']
 		[/(tag)(\s)(@constant)/, ['keyword.tag','white.tagname','entity.$1.local','@tagclass_start=']] # only when uppercase
-		[/(tag)(\s)(@anyIdentifier)/, ['keyword.tag','white.tagname','entity.tag','@tagclass_start=']] # only when uppercase
+		[/(tag)(\s)(@id)/, ['keyword.tag','white.tagname','entity.tag','@tagclass_start=']] # only when uppercase
 	]
 
 	tagclass_start: [
-		[/(\s+\<\s+)(@anyIdentifier)/,['keyword.extends','identifier.superclass']]
+		[/(\s+\<\s+)(@id)/,['keyword.extends','identifier.superclass']]
 		[/@comment/, 'comment']
 		[/^/,'@rematch',switchTo: '@>_tagclass&tag=']
 	]
 
 	import_: [
 		[/(import)(?=\s+['"])/,'keyword.import','@>import_source']
-		[/(import|export)@B/,'keyword.import','@>import_body']
+		[/(import)@B/,'keyword.import','@>import_body=decl-import/part']
 	]
 
-	import_body: [
+	export_: [
+		[/(export)( +)(default)@B/,['keyword.export','white','keyword.default']] # ,'@>import_body'
+		[/(export)(?= +(let|const|var|class|tag)@B)/,'keyword.export'] # ,'@>import_body'
+		[/(export)(\s+\*\s+)(from)@B/,['keyword.export','operator.star','keyword.from','@>import_source']]
+		[/(export)@B/,'keyword.export','@>export_body']
+	]
+
+	export_body: [
 		denter(null,-1,0)
-		[/(\*)(\s+as\s+)(@esmIdentifier)/, ['keyword.star','keyword.as','identifier.const.import']]
-		[/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.const.import']]
+		[/(\*)(\s+as\s+)(@esmIdentifier)/, ['keyword.star','keyword.as','identifier.const.export']]
+		[/(@esmIdentifier)(\s+as\s+)(default)/, ['alias','keyword.as','alias.default']]
+		[/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.const.export']]
 		[/from/, 'keyword.from',switchTo: '@import_source']
-		[/\{/,'{','@esm_specifiers/import']
-		[/(@esmIdentifier)/,'identifier.const.import']
+		[/\{/,'{','@esm_specifiers=export/part']
+		[/(@esmIdentifier)/,'identifier.const.export']
+		[/\*/,'operator.star']
 		'comma_'
 		'common_'		
 	]
 
+	import_body: [
+		denter(null,-1,0)
+		[/(@esmIdentifier)( +from)/,['identifier.$F','keyword.from',switchTo: '@import_source']]
+		[/(\*)(\s+as\s+)(@esmIdentifier)(\s+from)/,['keyword.star','keyword.as','identifier.$F','keyword.from',switchTo: '@import_source']]
+		[/(@esmIdentifier)(\s*,\s*)(\*)(\s+as\s+)(@esmIdentifier)(from)/,
+			['identifier.const.import','delimiter','keyword.star','keyword.as','identifier.$F','keyword.from',switchTo: '@import_source']]
+		# [/(\*)(\s+as\s+)(@esmIdentifier)/, ['keyword.star','keyword.as','identifier.const.import',switchTo: '@/delim']]
+		# [/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.const.import']]
+		[/from/, 'keyword.from',switchTo: '@import_source']
+		[/\{/,'{','@esm_specifiers/part']
+		[/(@esmIdentifier)/,'identifier.$F',switchTo: '@/delim']
+		[/\s*\,\s*/,'delimiter.comma',switchTo: '@/part']
+		'comma_'
+		'common_'
+	]
+	import_part: [
+		[/\{/,'{','@esm_specifiers/part']
+		[/(\*)(\s+as\s+)(@esmIdentifier)/, ['keyword.star','keyword.as','identifier.$F',switchTo: '@import_delim']]
+		[/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.$F',switchTo: '@import_delim']]
+		[/(@esmIdentifier)/,'identifier.$F',switchTo: '@import_delim']
+		
+	]
+
+	import_delim: [
+		[/\}/, '}', '@pop']
+		[/\s*\,\s*/,'delimiter.comma',switchTo: '@import_part']
+		'common_'
+		[/from/, 'keyword.from',switchTo: '@import_source']
+	]
+
+
 	esm_specifiers: [
 		[/\}/, '}', '@pop']
-		[/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.const.$/']]
-		[/(@esmIdentifier)/, 'identifier.const.$/']
-		[/\s*\,\s*/,'delimiter.comma']
+		[/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.const.$F',switchTo: '@/delim']]
+		[/@esmIdentifier/,cases: {
+			'$/==part': {token: 'identifier.const.$S4', switchTo: '@/delim'}
+			'@default': {token: 'invalid'}
+		}]
+		[/\s*\,\s*/,'delimiter.comma',switchTo: '@/part']
+		'whitespace'
 	]
 
 	import_source: [
@@ -412,16 +455,20 @@ export const states = {
 		[/\{/, 'invalid']
 		[/["'`]/, cases: { '$#==$F': { token: 'path.close', next: '@pop' }, '@default': 'path' }]
 	]
-	
-	def_: [
+
+	member_: [
 		# [/static(?=\s+(get|set|def) )/,'keyword.static'] # only in class and tagclass?
-		[/(def|get|set)(\s)(@anyIdentifier)/, ['keyword.$1','white.entity','entity.$1.$3','@>def_params&$1/$1']]
+		[/(def|get|set)(\s)(@id)/, ['keyword.$1','white.entity','entity.name.$1','@>def_params&$1/$1']]
 		[/(def|get|set)(\s)(\[)/, ['keyword.$1','white.entity','$$','@>def_dynamic_name/$1']]
 	]
 
 	func_: [
 		[/export(?=\s+(get|set|def) )/,'keyword.export'] # only in class and tagclass?
-		[/(def)(\s)(@anyIdentifier)/, ['keyword.$1','white.entity','entity.$1.$3','@>def_params&$1/$1']]
+		[/(def)(\s)(@id)(\.)(@id)/,[
+			'keyword.$1','white.entity','identifier.target','operator','entity.name.member', '@>def_params&$1/$1'
+		]]
+
+		[/(def)(\s)(@id)/, ['keyword.$1','white.entity','entity.name.function.decl-const-func','@>def_params&$1/$1']]
 	]
 	
 	flow_: [
@@ -437,7 +484,7 @@ export const states = {
 	]
 
 	for_: [
-		[/for(?: own)?@B/,'keyword.$#','@for_start&flow=let']
+		[/for(?: own)?@B/,'keyword.$#','@for_start&flow=decl-let']
 		# [/for@B/,'keyword.$#','@for_start&flow=let']
 	]
 
@@ -468,8 +515,8 @@ export const states = {
 	]
 
 	decorator_: [
-		[/(\@@anyIdentifier)(\()/,['decorator','$2','@_decorator_params']]
-		[/(\@@anyIdentifier)/,'decorator']
+		[/(\@@id)(\()/,['decorator','$2','@_decorator_params']]
+		[/(\@@id)/,'decorator']
 	]
 
 	_decorator_params: [
@@ -478,9 +525,9 @@ export const states = {
 	]
 
 	field_: [
-		[/static(?=\s+@anyIdentifier)/,'keyword.static']
-		[/(@anyIdentifier\??)(?=$)/,'field']
-		[/(@anyIdentifier\??)/,['field','@_field_1']]
+		[/static(?=\s+@id)/,'keyword.static']
+		[/(@id)(?=$)/,'field']
+		[/(@id)/,['field','@_field_1']]
 	]
 
 	_field_1: [
@@ -495,11 +542,11 @@ export const states = {
 	]
 
 	var_: [
-		[/((?:export )?)(const|let|var)(?=\s|$)/, ['keyword.export','keyword.$1','@_varblock=$2']] # $2_body.$S2.$2.$S4
+		[/((?:export )?)(const|let|var)(?=\s|$)/, ['keyword.export','keyword.$1','@_varblock=decl-$2']] # $2_body.$S2.$2.$S4
 	]
 
 	inline_var_: [
-		[/(const|let|var)(?=\s|$)/, ['keyword.$1','@inline_var_body=$1']]
+		[/(const|let|var)(?=\s|$)/, ['keyword.$1','@inline_var_body=decl-$1']]
 	]
 
 	string_: [
@@ -553,7 +600,7 @@ export const states = {
 	_class: [
 		denter(toodeep,-1,0)
 		'css_'
-		'def_'
+		'member_'
 		'comment_'
 		'decorator_'
 		[/(get|set|def|static|prop|attr)@B/,'keyword.$0.invalid']
@@ -564,7 +611,7 @@ export const states = {
 
 	_tagclass: [
 		'_class'
-		[/(?=\<self)/,'entity.def.render','@>_def&def',]
+		[/(?=\<self)/,'entity.name.def.render','@>_def&def',]
 		# self def
 	]
 
@@ -612,7 +659,7 @@ export const states = {
 		[/\[/, '[', '@array_body']
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
-		[/(\s*\=\s*)/,'operator',switchTo: '@var_value=ident']
+		[/(\s*\=\s*)/,'operator',switchTo: '@var_value=']
 	]
 
 	var_value: [
@@ -620,6 +667,7 @@ export const states = {
 		denter({switchTo: '@>block'},-1,-1)
 		'do_'
 		'expr_'
+		'common_'
 	]
 
 	common_: [
@@ -666,14 +714,14 @@ export const states = {
 	]
 
 	sel_: [
-		[/(\%)((?:@anyIdentifier)?)/,['style.selector.mixin.prefix','style.selector.mixin']]
+		[/(\%)((?:@id)?)/,['style.selector.mixin.prefix','style.selector.mixin']]
 		[/(\@)(\.{0,2}[\w\-]*)/,['style.selector.modifier.prefix','style.selector.modifier']]
 		[/\.([\w\-]+)/,'style.selector.class-name']
 		[/\#([\w\-]+)/,'style.selector.id']
 		[/([\w\-]+)/,'style.selector.element']
 		[/(>+|~|\+)/,'style.selector.operator']
 		[/(\*+)/,'style.selector.element.any']
-		[/(\$)((?:@anyIdentifier)?)/,['style.selector.reference.prefix','style.selector.reference']]
+		[/(\$)((?:@id)?)/,['style.selector.reference.prefix','style.selector.reference']]
 		[/\&/,'style.selector.context']
 		[/\(/,'delimiter.selector.parens.open','@css_selector_parens']
 		[/\[/,'delimiter.selector.attr.open','@css_selector_attr']
@@ -717,11 +765,11 @@ export const states = {
 	css_property: [
 		denter(null,-1,-1)
 		[/\]/,'@rematch','@pop']
-		[/(\d+)(@anyIdentifier)/, ['style.property.unit.number','style.property.unit.name']]
-		[/((--|\$)@anyIdentifier)/, 'style.property.var']
-		[/(-*@anyIdentifier)/, 'style.property.name']
-		[/(\@+|\.+)(@anyIdentifier\-?)/, ['style.property.modifier.start','style.property.modifier']]
-		[/\+(@anyIdentifier)/, 'style.property.scope']
+		[/(\d+)(@id)/, ['style.property.unit.number','style.property.unit.name']]
+		[/((--|\$)@id)/, 'style.property.var']
+		[/(-*@id)/, 'style.property.name']
+		[/(\@+|\.+)(@id\-?)/, ['style.property.modifier.start','style.property.modifier']]
+		[/\+(@id)/, 'style.property.scope']
 		[/\s*([\:]\s*)(?=@br|$)/, 'style.property.operator',switchTo: '@>css_multiline_value&_stylevalue']
 		[/\s*([\:]\s*)/, 'style.property.operator',switchTo: '@>css_value&_stylevalue']
 	]
@@ -729,8 +777,8 @@ export const states = {
 	css_value_: [
 		[/(x?xs|sm\-?|md\-?|lg|xl|\dxl)\b/, 'style.value.size'],
 		[/\#[0-9a-fA-F]+/, 'style.value.color.hex'],
-		[/((--|\$)@anyIdentifier)/, 'style.value.var']
-		[/(@anyIdentifierOpt)(\@+|\.+)(@anyIdentifierOpt)/,['style.property.name','style.property.modifier.prefix','style.property.modifier']]
+		[/((--|\$)@id)/, 'style.value.var']
+		[/(@optid)(\@+|\.+)(@optid)/,['style.property.name','style.property.modifier.prefix','style.property.modifier']]
 		'op_'
 		'string_'
 		'number_'
@@ -738,7 +786,7 @@ export const states = {
 		[/\s+/,'style.value.white']
 		[/\(/, 'delimiter.style.parens.open', '@css_expressions']
 		[/\{/, 'delimiter.style.curly.open', '@css_interpolation']
-		[/(@anyIdentifier)/, 'style.value']
+		[/(@id)/, 'style.value']
 	]
 
 	css_value: [
@@ -798,10 +846,10 @@ export const states = {
 		[/\/>/,'tag.close','@pop']
 		# [/>/,'tag.close',switchTo: '@tag_content=']
 		[/>/,'tag.close','@pop']
-		[/(\-?@tagIdentifier)(\:@anyIdentifier)?/,'tag.$/']
+		[/(\-?@tagIdentifier)(\:@id)?/,'tag.$/']
 		[/(\-?\d+)/,'tag.$S3']
-		[/(\%)(@anyIdentifier)/,['tag.mixin.prefix','tag.mixin']]
-		[/(\#)(@anyIdentifier)/,['tag.id.prefix','tag.id']]
+		[/(\%)(@id)/,['tag.mixin.prefix','tag.mixin']]
+		[/(\#)(@id)/,['tag.id.prefix','tag.id']]
 
 		[/\./,{ cases: {
 			'$/==event': {token: 'tag.event-modifier.start', switchTo: '@/event-modifier'}
@@ -812,7 +860,7 @@ export const states = {
 			'@default': {token: 'tag.flag.start', switchTo: '@/flag'}
 		}}]
 
-		[/(\$?@anyIdentifier)/,{ cases: {
+		[/(\$?@id)/,{ cases: {
 			'$S3==name': 'tag.reference'
 			'@default': 'tag.$/'
 		}}]
@@ -830,7 +878,7 @@ export const states = {
 	]
 	tag_event_: [
 		# add an additional slot for name etc?
-		[/(\@)(@anyIdentifierOpt)/,['tag.event.start','tag.event.name','@_tag_event/$2']]
+		[/(\@)(@optid)/,['tag.event.start','tag.event.name','@_tag_event/$2']]
 	]
 	
 	_tag_part: [
@@ -838,7 +886,7 @@ export const states = {
 	]
 	_tag_event: [
 		'_tag_part'
-		[/\.(@anyIdentifierOpt)/,'tag.event.modifier']
+		[/\.(@optid)/,'tag.event.modifier']
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
 		[/(\s*\=\s*)/,'tag.operator.equals', '@_tag_value&handler']
 		[/\s+/,'@rematch','@pop']
@@ -944,23 +992,26 @@ def rewrite-state raw
 
 def rewrite-token raw
 	let orig = raw
+	raw = raw.replace('$/','$S5')
 	raw = raw.replace('$F','$S4')
 	raw = raw.replace('$&','$S3')
 	raw = raw.replace('$I','$S2')
-	raw = raw.replace('$/','$S5')
+	
 	# if orig != raw
 	#	console.log 'rewriting token',orig,raw
 	return raw
 
 def rewrite-actions actions,add
 	if typeof actions == 'string' # and parts.indexOf('$') >= 0
-		actions = {token: rewrite-token(actions)}
+		actions = {token: actions}
 
 	if actions and actions.token != undefined
+		actions.token = rewrite-token(actions.token)
+
 		if typeof add == 'string'
 			actions.next = add
 		elif add
-			Object.assign(actions,add)
+			Object.assign(actions,add)		
 
 		if actions.next
 			actions.next = rewrite-state(actions.next)
@@ -1070,13 +1121,12 @@ export const grammar = {
 	className: /[A-Z][A-Za-z\d\-\_]*|[A-Za-z\d\-\_]+/
 	methodName: /[A-Za-z\_][A-Za-z\d\-\_]*\=?/
 	subIdentifer: /(?:\-*[\w\$]+)*/
-	# id: /@anyIdentifierPre([\?\!]?)/
 	identifier: /[a-z_]@subIdentifer/
 	mixinIdentifier: /\%[a-z_]@subIdentifer/
-	# anyIdentifier: /[A-Za-z_\$][\w\$]*@subIdentifer/
-	anyIdentifier: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*/
-	anyIdentifierOpt: /(?:@anyIdentifier)?/
-	# anyIdentifierPre: /([A-Za-z_\$])[\w\$]*(?:\-+[\w\$]+)*/
+	# anyIdentifier: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*/
+	# anyIdentifierOpt: /(?:@anyIdentifier)?/
+	id: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
+	optid: /(?:@id)?/
 	esmIdentifier: /[\@\%]?[A-Za-z_\$]@subIdentifer/
 	propertyPath: /(?:[A-Za-z_\$][A-Za-z\d\-\_\$]*\.)?(?:[A-Za-z_\$][A-Za-z\d\-\_\$]*)/
 	tagNameIdentifier: /(?:[\w\-]+\:)?\w+(?:\-\w+)*/

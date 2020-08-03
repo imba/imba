@@ -1,5 +1,6 @@
 import * as util from './utils'
-import {M,KeywordTypes} from './types'
+import {M,KeywordTypes,SemanticTokenTypes,SemanticTokenModifiers} from './types'
+import {Sym,SymbolFlags} from './symbol'
 
 export const Globals = {
 	'global': 1
@@ -25,69 +26,7 @@ export const Globals = {
 	'__filename': 1
 }
 
-export class Var
-	def constructor token,typ,value = null, scope = null
-		type = typ
-		mods = 0
-		token = token
-		name = token.value
-		value = value
-		refs = []
-		token.mods |= M.Declaration
-
-		if scope and scope isa Root
-			mods |= M.Root
-		else
-			mods |= M.Local
-
-	get offset
-		token.offset
-
-	get loc
-		[token.offset,token.value.length]
-
-	def dereference tok
-		let idx = refs.indexOf(tok)
-		if idx >= 0
-			tok.var = null
-			refs.splice(idx,1)
-		return self
-
-	def reference tok
-		refs.push(tok)
-		tok.var = self
-		return self
-	
-	def inspect
-		if value
-			value.inspect!
-		else
-			console.log "{type} {name}"
-
-	def toJSON
-		{
-			kind: type
-			name: name
-			span: token.span
-		}
-
-	def toOutline
-		{
-			kind: type
-			name: name
-			span: token.span
-		}
-
-	def outline ctx, o = {}
-		if value
-			return value.outline(ctx,o)
-		else
-			let obj = toJSON!
-			o.visit(obj,self) if o.visit
-			ctx.children.push(obj) if ctx.children
-			return obj
-
-export class Context
+export class Node
 	type = ''
 	start
 	end
@@ -98,6 +37,8 @@ export class Context
 		end = null
 		type = type
 		parent = parent
+		$name = null
+
 		token.scope = self
 
 	def pop end
@@ -163,7 +104,7 @@ export class Context
 			return query(self)
 		return yes
 
-export class Group < Context
+export class Group < Node
 	def constructor token, parent, type, parts = []
 		super(token,parent,type)
 
@@ -172,9 +113,6 @@ export class Group < Context
 
 	get varmap
 		parent.varmap
-
-	def declare ...params
-		return parent.declare(...params)
 
 	def lookup ...params
 		return parent.lookup(...params)
@@ -191,7 +129,7 @@ export class StyleNode < Group
 
 export class StyleRuleNode < Group
 
-export class Scope < Context
+export class Scope < Node
 
 	def constructor token, parent, type, parts = []
 		super(token,parent,type)
@@ -203,8 +141,8 @@ export class Scope < Context
 		if self isa Root
 			for own key,val of Globals
 				let tok = {value: key, offset: -1, mods: 0}
-				varmap[key] = new Var(tok,'global',null,self)
-				varmap[key].mods |= M.Global
+				let typ = SymbolFlags.ConstVariable | SymbolFlags.IsGlobal
+				varmap[key] = new Sym(typ,key,tok)
 
 		indent = parts[3] ? parts[3].length : 0
 		setup!
@@ -230,22 +168,13 @@ export class Scope < Context
 			# add virtual vars
 
 		if class? or property?
-			ident = token = util.prevToken(start,"entity.{type}")
-			keyword = util.prevToken(start,"keyword.{type}")
+			ident = token = util.prevToken(start,"entity.")
 
 			if ident
 				ident.body = self
 
 			if ident && ident.type == 'entity.def.render'
 				$name = 'render'
-			if parent.class?
-				ident.mods |= M.Member
-				parent.entities.push(self)
-			elif ident
-				if tag? and !ident.type.match(/\.local$/)
-					parent.entities.push(self)
-				else
-					parent.declare(ident,'const',self)
 	
 	get path
 		let par = parent ? parent.path : ''
@@ -309,34 +238,24 @@ export class Scope < Context
 	get name
 		$name or (ident ? ident.value : '')
 
-	get variables
-		entities.filter do $1 isa Var
-
 	def visit
 		self
 
-	def declare token, typ, value
-		token.var = new Var(token,typ,value,self)
-		entities.push(token.var)
-		varmap[token.var.name] = token.var
-		return token.var
-
-	def lookup token
-		if let variable = varmap[token.value]
-			variable.reference(token)
+	def register symbol
+		if symbol.scoped?
+			varmap[symbol.name] = symbol
+			if self.root?
+				symbol.flags |= SymbolFlags.IsRoot
+		return symbol
+		
+	def lookup token, kind = SymbolFlags.Scoped
+		let name = token.value
+		if name[name.length - 1] == '!'
+			name = name.slice(0,-1)
+		if let variable = varmap[name]
+			# variable.reference(token)
 			return variable # token.var
 		return null
-
-	def register token
-		entities.push(token)
-
-	def inspect
-		# console.log "{ind}{type} {name}"
-		let grp = "{type} {name}"
-		console.group(grp)
-		for entity in entities
-			entity.inspect!
-		console.groupEnd!
 
 	def toOutline
 		{
@@ -345,24 +264,6 @@ export class Scope < Context
 			children: []
 			span: ident ? ident.span : start.span
 		}
-
-	def outline ctx, o = {}
-		let item = {
-			kind: type
-			name: name
-			children: []
-			span: ident ? ident.span : start.span
-		}
-
-		ctx.children.push(item) if ctx
-		
-		if o.visit
-			o.visit(item,self)
-
-		for entity in entities
-			entity.outline(item,o)
-
-		return item
 
 export class Root < Scope
 

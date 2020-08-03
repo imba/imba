@@ -2,33 +2,10 @@ import {computeLineOffsets,getWellformedRange,getWellformedEdit,mergeSort,editIs
 import { lexer, Token } from './lexer'
 import * as util from './utils'
 import { Root, Scope, Group, ScopeTypeMap } from './scope'
+import { Sym, SymbolFlags } from './symbol'
 const newline = String.fromCharCode(172)
 
-import {SemanticTokenTypes,SemanticTokenModifiers,M,CompletionTypes,Keywords} from './types'
-
-const GlobalVars = {
-	'global': 1
-	'imba': 1
-	'module': 1
-	'window': 1
-	'document': 1
-	'exports': 1
-	'console': 1
-	'process': 1
-	'parseInt': 1
-	'parseFloat': 1
-	'setTimeout': 1
-	'setInterval': 1
-	'setImmediate': 1
-	'clearTimeout': 1
-	'clearInterval': 1
-	'clearImmediate': 1
-	'globalThis': 1
-	'isNaN': 1
-	'isFinite': 1
-	'__dirname': 1
-	'__filename': 1
-}
+import {SemanticTokenTypes,SemanticTokenModifiers,M,CompletionTypes,Keywords,SymbolKind} from './types'
 
 export class ImbaDocument
 
@@ -42,8 +19,13 @@ export class ImbaDocument
 		content = content
 		connection = null
 		lineTokens = []
-		head = seed = {type: 'eol', offset:0, state: lexer.getInitialState!}
+		head = seed = new Token(0,'eol','imba')
+		seed.state = lexer.getInitialState!
+		history = []
 		tokens = []
+		versionToHistoryMap = {}
+		versionToHistoryMap[version] = -1
+		
 
 	def log ...params
 		console.log(...params)
@@ -110,14 +92,20 @@ export class ImbaDocument
 		# what if it is a full updaate
 		# handle specific smaller changes in an optimized fashion
 		# many changes will be a single character etc
+		let edits = []
+		
 		for change,i in changes
 			if editIsFull(change)
 				overwrite(change.text,version)
+				edits.push([0,content.length,change.text])
 				continue
 
 			var range = getWellformedRange(change.range)
 			var startOffset = offsetAt(range.start)
 			var endOffset = offsetAt(range.end)
+
+			# console.log 'update with changes',change.text,startOffset,endOffset
+
 			change.range = range
 			change.offset = startOffset
 			change.length = endOffset - startOffset
@@ -127,12 +115,13 @@ export class ImbaDocument
 			# content = content.substring(0, startOffset) + change.text + content.substring(endOffset, content.length)
 			applyEdit(change,version,changes)
 
+			edits.push([startOffset,endOffset - startOffset,change.text or ''])
+
 			var startLine = Math.max(range.start.line, 0)
 			var endLine = Math.max(range.end.line, 0)
 			var lineOffsets = self.lineOffsets
 			# some bug with these line offsets here
 			# many items has no line offset changes at all?
-
 			var addedLineOffsets = computeLineOffsets(change.text, false, startOffset)
 
 			if (endLine - startLine) === addedLineOffsets.length
@@ -151,7 +140,28 @@ export class ImbaDocument
 					lineOffsets[k] = lineOffsets[k] + diff
 					k++
 		
+		history.push(edits)
+		console.log 'updated',edits,history.length - 1,version # startOffset,endOffset,change.text,JSON.stringify(content)
+		versionToHistoryMap[version] = history.length - 1
 		updated(changes,version)
+
+	def offsetAtVersion fromOffset, fromVersion, toVersion = version
+		let from = versionToHistoryMap[fromVersion]
+		let to = versionToHistoryMap[toVersion]
+		let offset = fromOffset
+		let modified = no
+		
+		if from < to
+			console.log 'convert offset to future version'
+			while from < to
+				let edits = history[++from]
+				for [start,len,text] in edits
+					continue if start > offset
+					if offset > start and offset > (start + len)
+						offset += (text.length - len)
+						console.log 'add to offset',(text.length - len)
+		
+		return offset
 
 	def applyEdit change,version,changes
 		# apply textual changes
@@ -243,31 +253,33 @@ export class ImbaDocument
 			prev = token
 		return prev or token
 
-	def getSemanticTokens
-		parse!
-		tokens.filter do !!$1.var
+	def getSemanticTokens filter = SymbolFlags.Scoped
+		let tokens = parse!
+		let items = []
+
+		for tok,i in tokens
+			let sym = tok.symbol
+			continue unless sym and (!filter or sym.flags & filter)
+			let typ = SemanticTokenTypes[sym.semanticKind]
+			let mods = tok.mods | sym.semanticFlags
+
+			items.push([tok.offset,tok.value.length,typ,mods])
+
+		return items
+
 
 	def getEncodedSemanticTokens
 		let tokens = getSemanticTokens!
 		let out = []
 		let l = 0
-		let o = 0
-		for tok,i in tokens
-			let pos = positionAt(tok.offset)
-			let typ = SemanticTokenTypes.indexOf('variable')
-
-			let mods = tok.mods
-			let line = pos.line
-
-			if tok.var
-				mods |= tok.var.mods
-
+		let c = 0
+		for item in tokens
+			let pos = positionAt(item[0])
 			let dl = pos.line - l
-			let chr = dl ? pos.character : (pos.character - o)
-			out.push(dl,chr,tok.value.length,typ,mods)
+			let chr = dl ? pos.character : (pos.character - c)
+			out.push(dl,chr,item[1],item[2],item[3])
 			l = pos.line
-			o = pos.character
-
+			c = pos.character
 		return out
 
 	def tokenAtOffset offset
@@ -326,7 +338,7 @@ export class ImbaDocument
 		if tok.match('identifier tag.operator.equals br white')
 			flags |= CompletionTypes.Value
 
-		if tok.match('tag.name')
+		if tok.match('tag.name tag.open')
 			flags |= CompletionTypes.TagName
 		elif tok.match('tag.attr tag.white')
 			flags |= CompletionTypes.TagProp
@@ -387,10 +399,10 @@ export class ImbaDocument
 
 		while scope
 			for item in Object.values(scope.varmap)
-				continue if item.type == 'global' and !globals?
+				continue if item.global? and !globals?
 				continue if names[item.name]
 
-				if item.offset < offset
+				if item.node.offset < offset
 					vars.push(item)
 					names[item.name] = item
 
@@ -430,10 +442,19 @@ export class ImbaDocument
 		let curr = root
 		let scop = null
 		let last\any = {}
+		let symbols = new Set
+		let awaitScope = null
 
 		def add item,tok
+			if item isa Sym
+				symbols.add(item)
+				item = {
+					name: item.name
+					kind: item.kind
+				}
 			last = item
 			item.token = tok
+			item.children ||= []
 			item.span ||= tok.span
 			item.name ||= tok.value
 			all.push(item)
@@ -449,17 +470,17 @@ export class ImbaDocument
 			curr = curr.parent
 
 		for token,i in tokens
+			let sym = token.symbol
 			if token.type == 'key'
-				add({kind:'key'},token)
-
-			elif token.body
-				if !last or last.token != token
-					add(token.body.toOutline!,token)
-				push(token.body.end)
-
-			elif token.var and token.mods & M.Declaration and token.var.mods !& M.Import
-				console.log 'adding another var',token.var.toJSON!,token,token.var.mods
-				add(token.var.toJSON!,token)
+				add({kind:SymbolKind.Key},token)
+			elif sym
+				if !symbols.has(sym)
+					add(sym,token)
+				if sym.body
+					awaitScope = sym.body.start
+			
+			if token == awaitScope
+				push(token.end)
 			
 			if token == curr.end
 				pop!
@@ -503,6 +524,7 @@ export class ImbaDocument
 		let entity = null
 		let scope\any = new Root(seed,null,'root')
 		let log = console.log.bind(console)
+		let lastDecl = null
 
 		log = do yes
 
@@ -518,6 +540,7 @@ export class ImbaDocument
 					let value = tok.value
 					let nextToken = lexed.tokens[ti + 1]
 					let [typ,subtyp,sub2] = types
+					let decl = 0
 
 					tokens.push(tok)
 					
@@ -548,6 +571,10 @@ export class ImbaDocument
 							ctor = ScopeTypeMap[scopetype] || Group
 
 						scope = tok.scope = new ctor(tok,scope,scopetype,types)
+						if lastDecl
+							lastDecl.body = scope
+							scope.symbol = lastDecl
+
 						ctor
 					elif typ == 'pop'
 						# log " ".repeat(sub2) + tok.type
@@ -559,22 +586,32 @@ export class ImbaDocument
 					elif subtyp == 'close' and ScopeTypeMap[typ]
 						scope = scope.pop(tok)
 
-					if typ == 'identifier'
-						if subtyp == 'const' or subtyp == 'let' or subtyp == 'param' or subtyp == 'var'
-							let tvar = scope.declare(tok,subtyp)
-							tvar.mods |= M.Import if sub2 == 'import'
-						elif subtyp == 'key' and sub2 == 'param'
-							scope.declare(tok,sub2)
-						else
-							scope.lookup(tok)
-							# hardcoded fallback handling
-							if prev && prev.op == '=' and tok.var
-								let lft = prev.prev
-								if lft && lft.var == tok.var
-									if lft.mods & M.Declaration
-										tok.var.dereference(tok)
-									elif !nextToken or nextToken.match('br')
-										lft.var.dereference(lft)
+
+					if tok.match(/entity\.name|decl-|field/)
+						# let tvar = scope.declare(tok,subtyp)
+						# create a symbol
+						# console.log 'declare',tok.type,Symbol.idToFlags(tok.type,tok.mods)
+						let symFlags = Sym.idToFlags(tok.type,tok.mods)
+
+						if symFlags
+							lastDecl = tok.symbol = new Sym(symFlags,tok.value,tok)
+							scope.register(tok.symbol)
+
+						tok.mods |= M.Declaration
+
+					if tok.match('identifier') && !tok.symbol
+						let sym = scope.lookup(tok)
+						if sym && sym.scoped?
+							sym.addReference(tok)
+
+						# hardcoded fallback handling
+						if prev && prev.op == '=' and sym
+							let lft = prev.prev
+							if lft && lft.symbol == sym
+								if lft.mods & M.Declaration
+									sym.dereference(tok)
+								elif !nextToken or nextToken.match('br')
+									sym.dereference(lft)
 
 					prev = tok
 

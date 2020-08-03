@@ -138,14 +138,6 @@ export const aliases =
 	bdx: ['bdl','bdr']
 	bdy: ['bdt','bdb']
 	
-	bdr: 'border-right'
-	bdl: 'border-left'
-	bdb: 'border-bottom'
-	
-	bdtc: 'border-top-color'
-	bdts: 'border-top-style'
-	bdtw: 'border-top-width'
-	
 	bdtc: 'border-top-color'
 	bdts: 'border-top-style'
 	bdtw: 'border-top-width'

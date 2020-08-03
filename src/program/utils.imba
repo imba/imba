@@ -1,3 +1,19 @@
+export class Converter
+	def constructor rules, matcher
+		self.cache = {}
+		self.rules = rules
+		self.matcher = matcher
+
+	def convert value
+		for rule in rules
+			if matcher
+				if matcher(rule[0],value)
+					return value[1]
+			# if type.indexOf(strtest) >= 0 and (modtest == 0 or mods & modtest)
+			#	console.log 'found?',strtest
+			#	return flags
+		return 0
+
 export def matchToken token, match
 	let typ = token.type
 	if match isa RegExp
@@ -5,10 +21,10 @@ export def matchToken token, match
 	elif typeof match == 'string'
 		return typ.indexOf(match) == 0 and (!typ[match.length] or typ[match.length] == '.')
 
-export def prevToken start, match, max = 100000
+export def prevToken start, pattern, max = 100000
 	let tok = start
 	while tok and max > 0
-		return tok if matchToken(tok,match)
+		return tok if tok.match(pattern)
 		max--
 		tok = tok.prev
 	return null
