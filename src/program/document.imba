@@ -140,7 +140,7 @@ export class ImbaDocument
 					k++
 		
 		history.push(edits)
-		console.log 'updated',edits,history.length - 1,version # startOffset,endOffset,change.text,JSON.stringify(content)
+		# console.log 'updated',edits,history.length - 1,version # startOffset,endOffset,change.text,JSON.stringify(content)
 		versionToHistoryMap[version] = history.length - 1
 		updated(changes,version)
 
@@ -151,14 +151,12 @@ export class ImbaDocument
 		let modified = no
 		
 		if from < to
-			console.log 'convert offset to future version'
 			while from < to
 				let edits = history[++from]
 				for [start,len,text] in edits
 					continue if start > offset
 					if offset > start and offset > (start + len)
 						offset += (text.length - len)
-						console.log 'add to offset',(text.length - len)
 		
 		return offset
 
@@ -312,6 +310,17 @@ export class ImbaDocument
 		let group = ctx
 		let scope = ctx.scope
 		let meta = {}
+
+		const before = {
+			line: content.slice(linePos,offset)
+			token: tok.value.slice(0,tokPos)
+		}
+
+		const after = {
+			token: tok.value.slice(tokPos)
+			line: content.slice(offset,lineOffsets[pos.line + 1]).replace(/[\r\n]+/,'')
+		}
+
 		let suggest = {
 			keywords: []
 		}
@@ -359,6 +368,9 @@ export class ImbaDocument
 		if tok.match('style.value.white') or (tok.prev and tok.prev.match('style.value.white'))
 			flags |= CompletionTypes.StyleProp
 
+		if tok.match('style.selector.element') and after.line.match(/^\s*$/)
+			flags |= CompletionTypes.StyleProp
+
 		let kfilter = scope.allowedKeywordTypes
 		suggest.keywords = for own key,v of Keywords when v & kfilter
 			key
@@ -376,16 +388,8 @@ export class ImbaDocument
 			mode: ''
 			path: scope.path
 			suggest: suggest
-			textBefore: content.slice(linePos,offset)
-			textAfter: content.slice(offset,lineOffsets[pos.line + 1])
-			before: {
-				line: content.slice(linePos,offset)
-				token: tok.value.slice(0,tokPos)
-			}
-			after: {
-				token: tok.value.slice(tokPos)
-				line: content.slice(offset,lineOffsets[pos.line + 1])
-			}
+			before: before
+			after: after
 		}
 
 		return out
