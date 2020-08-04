@@ -28,6 +28,8 @@ export class ImbaDocument
 		tokens = []
 		versionToHistoryMap = {}
 		versionToHistoryMap[version] = -1
+		if content and content.match(/^\#[^\n]+imba1/m)
+			isLegacy = yes
 		
 
 	def log ...params
