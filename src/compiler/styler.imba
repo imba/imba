@@ -817,10 +817,13 @@ export class StyleRule
 			if options.global and !context
 				meta.uniqueName = meta.name
 
+			let subprops = {}
+			subprops["--animation-{name}"] = "{meta.uniqueName}"
+
 			if context
-				let subprops = {}
-				subprops["--animation-{name}"] = "{meta.uniqueName}"
 				subrules.push new StyleRule(null,context,subprops,options)
+			elif options.ns and !options.global
+				subrules.push new StyleRule(null,".{options.ns}",subprops,{})
 
 		for own key,value of self.content
 			continue if value == undefined

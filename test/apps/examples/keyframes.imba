@@ -2,6 +2,10 @@ global css @keyframes blink
 	100% o:0
 	0% o:1
 
+css @keyframes blink
+	100% o:0
+	0% o:1
+
 global css .test
 	@keyframes blink
 		from o:0
