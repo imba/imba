@@ -372,7 +372,14 @@ def AST.sym obj
 	helpers.symbolize(String(obj))
 
 def AST.cary ary
-	ary.map(|v| typeof v == 'string' ? v : v.c )
+	ary.map do |v|
+		if typeof v == 'string'
+			return v
+		elif v && v:c
+			return v.c
+		else
+			console.warn 'could not compile',v
+			return String(v)
 
 def AST.dump obj, key
 	if obj isa Array
@@ -8708,7 +8715,7 @@ export class StyleRuleSet < StyleNode
 		@tag = @flag and @flag.@tag
 		
 		let sel = String(@selectors).trim
-		
+
 		if sel.match(/^\%[\w\-]+$/)
 			set(mixin: sel.slice(1))
 			@identifier = MixinIdentifier.new(sel)

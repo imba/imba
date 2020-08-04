@@ -33,6 +33,16 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'row'
 
+export const validTypes = {
+	ease: 'linear|ease|ease-in|ease-out|ease-in-out|step-start|step-end|stepsƒ|cubic-bezierƒ'
+}
+
+for own k,v of validTypes
+	let o = {}
+	for item in v.split('|')
+		o[item] = 1
+	validTypes[k] = o
+
 export const aliases =
 	
 	c: 'color'
@@ -404,6 +414,60 @@ export class StyleTheme
 		if let m = $varFallback('grid',params)
 			return m
 		return
+
+	def animation ...params
+		
+		let valids = {
+			normal:1,reverse:1,alternate:1,'alternate-reverse':1
+			infinite:2
+			none:3,forwards:3,backwards:3,both:3
+			running:4,paused:4
+		}
+		let used = {}
+		for anim,k in params
+			let name = null
+			let ease = null
+			for part,i in anim
+				let str = String(part)
+				let typ = valids[str]
+
+				if validTypes.ease[str] and !ease
+					ease = yes
+				elif typ
+					if used[typ]
+						name = [i,str]
+					used[typ] = yes
+				elif str.match(/^[^\d\.]/) and str.indexOf('(') == -1
+					if name
+						ease = [i,str]
+					else
+						name = [i,str]
+			if name
+				anim[name[0]] = new Var("animation-{name[1]}",name[1])
+			if ease isa Array
+				let fallback = options.variants.easings[ease[1]]
+				anim[ease[0]] = new Var("ease-{ease[1]}",fallback)
+
+		return {animation: params}
+
+	def animation-timing-function ...params
+		for param,i in params
+			let fb = $varFallback('ease',param)
+			params[i] = fb if fb
+		return params
+
+	def animation-name ...params
+		for param,i in params
+			let fb = $varFallback('animation',param)
+			if fb
+				# param[0] = fb[0]
+				params[i] = fb
+			# params[i] = $varFallback('animation',param)
+		return params
+
+		if let m = $varFallback('animation',params)
+			return m
+		return
 		
 	def display params
 		let out = {display: params}
@@ -648,9 +712,12 @@ export class StyleTheme
 			if !exclude.indexOf(str) >= 0 and str.match(/^[\w\-]+$/)
 				if name == 'font' and fonts[str]
 					fallback = fonts[str]
+				if name == 'ease' and options.variants.easings[str]
+					fallback = options.variants.easings[str]
 				# elif name == 'box-shadow' and 
 				return [new Var("{name}-{str}",fallback)]
 		return
+	
 
 	def $value value, index, config
 		let key = config
@@ -725,14 +792,35 @@ export class StyleRule
 		selector = selector
 		content = content
 		options = options
+		isKeyFrames = selector.indexOf('@keyframes ') >= 0
+		isKeyFrame = parent and parent.isKeyFrames
 		meta = {}
 		
 	def root
 		parent ? parent.root : self
 		
-	def toString
+	def toString o = {}
 		let parts = []
 		let subrules = []
+
+		if isKeyFrames
+			let [context,name] = selector.split(/\s*\@keyframes\s*/)
+
+			context = context.trim!
+			name = name.trim!
+
+			let path = [name,context,options.ns].filter(do $1).join('-')
+			# what if it is global?
+			meta.name = name
+			meta.uniqueName = path.replace(/[\s\.\,]+/g,'').replace(/[^\w\-]/g,'_')
+
+			if options.global and !context
+				meta.uniqueName = meta.name
+
+			if context
+				let subprops = {}
+				subprops["--animation-{name}"] = "{meta.uniqueName}"
+				subrules.push new StyleRule(null,context,subprops,options)
 
 		for own key,value of self.content
 			continue if value == undefined
@@ -740,6 +828,12 @@ export class StyleRule
 			let subsel = null
 			
 			if key.indexOf('&') >= 0
+				if isKeyFrames
+					let keyframe = key.replace(/&/g,'')
+					let rule = new StyleRule(self,keyframe,value,options)
+					parts.push(rule.toString(indent: yes))
+					continue
+
 				let subsel = selparser.unwrap(selector,key)
 				subrules.push new StyleRule(self,subsel,value,options)
 				continue
@@ -770,8 +864,18 @@ export class StyleRule
 				parts.push "{key}: {value};"
 		
 		let content = parts.join('\n')
-		let sel = selparser.parse(selector,options)
-		let out = content.match(/[^\n\s]/) ? selparser.render(sel,content,options) : ""
+		let out = ""
+		if o.indent or isKeyFrames
+			content = '\n' + content + '\n'
+
+		if isKeyFrame
+			out = "{selector} \{{content}\}"
+
+		elif isKeyFrames
+			out = "@keyframes {meta.uniqueName} \{{content}\}"
+		else
+			let sel = isKeyFrame ? selector : selparser.parse(selector,options)
+			out = content.match(/[^\n\s]/) ? selparser.render(sel,content,options) : ""
 
 		for own subrule in subrules
 			out += '\n' + subrule.toString()
