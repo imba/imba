@@ -93,6 +93,7 @@ export const states = {
 	identifier_: [
 		[/\$\w+\$/, 'identifier.env']
 		[/\$\d+/, 'identifier.special']
+		[/\¶@id/, 'ivar'] # imba1
 		# [/(@constant)/, 'identifier.constant.$S4']
 		[/@id\!?/,cases: {
 			'this': 'this'

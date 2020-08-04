@@ -10,6 +10,9 @@ export class ImbaDocument
 
 	static def tmp content
 		new self('file://temporary.imba','imba',0,content)
+	
+	static def from uri, languageId, version, content
+		new self(uri,languageId,version,content)
 
 	def constructor uri, languageId, version, content
 		uri = uri
@@ -18,6 +21,7 @@ export class ImbaDocument
 		content = content
 		connection = null
 		lineTokens = []
+		isLegacy = languageId == 'imba1' or (uri && uri.match(/\.imba1$/))
 		head = seed = new Token(0,'eol','imba')
 		seed.stack = lexer.getInitialState!
 		history = []
@@ -412,7 +416,17 @@ export class ImbaDocument
 			scope = scope.parent
 		return vars
 
-	def getOutline walker
+	def getOutline walker = null
+
+		if isLegacy
+			let symbols = util.fastExtractSymbols(content)
+			for item in symbols.all
+				delete item.parent
+				item.path = item.name
+				item.name = item.ownName
+				walker(item,symbols.all) if walker
+			return symbols
+
 		ensureParsed!
 		let t = Date.now!
 		let all = []
@@ -503,6 +517,13 @@ export class ImbaDocument
 		let scope\any = new Root(seed,null,'root')
 		let log = console.log.bind(console)
 		let lastDecl = null
+		let legacy = isLegacy
+
+		if isLegacy
+			raw = raw.replace(/\@\w/g) do(m) '¶' + m.slice(1)
+			raw = raw.replace(/\w\:(?=\w)/g) do(m) m[0] + '.'
+			raw = raw.replace(/(do)(\s?)\|([^\|]*)\|/g) do(m,a,space,b)
+				a + '(' + (space or '') + b + ')'
 
 		log = do yes
 
@@ -521,6 +542,9 @@ export class ImbaDocument
 					let decl = 0
 
 					tokens.push(tok)
+
+					if typ == 'ivar'
+						value = tok.value = '@' + value.slice(1)
 					
 					if prev
 						prev.next = tok
@@ -683,4 +707,3 @@ export class ImbaDocument
 			token.value = value
 
 		return tokens.map(do $1.value).join('')
-	
