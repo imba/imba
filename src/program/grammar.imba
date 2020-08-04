@@ -324,12 +324,17 @@ export const states = {
 
 	# add try_start that accepts catch on the same line?
 	try_: [
-		[/try@B/,'keyword.try','@>_try']
+		[/try@B/,'keyword.try','@>_try&try']
 	]
 
 	catch_: [
-		[/(catch)(\s+)(@id)/, ['keyword.$1','white','identifier.const','@>_catch']]
-		[/catch@B/,'keyword.catch','@>_catch']
+		[/(catch\s+)(?=@id(\s|$))/, 'keyword.catch','@catch_start&catch']
+		[/catch@B/,'keyword.catch','@catch_start&catch']
+	]
+
+	catch_start: [
+		[/@id/,'identifier.decl-const','@>_catch']
+		[/.?/,'@rematch',switchTo:'@>_catch']
 	]
 
 	_catch: [
