@@ -122,7 +122,7 @@ export var OP = do |op, l, r|
 		when '~='
 			return OP('&=',l,OP('~',r))
 
-		when '?=','||=','&&='
+		when '?=','||=','&&=','??='
 			ConditionalAssign.new(op,l,r)
 		when '+=','-=','*=','/=','^=','%=','**='
 			CompoundAssign.new(op,l,r)
@@ -4939,7 +4939,7 @@ export class ConditionalAssign < Assign
 	def condition
 
 		# use switch instead to cache op access
-		if op == '?='
+		if op == '?=' or op == '??='
 			OP('==',left,NULL)
 		elif op == '||='
 			OP('!',left)

@@ -19,12 +19,12 @@ test '||=' do
 	d ||= 1
 	eq d, 1
 
-test '?=' do
+test '??=' do
 	let a = 0
 	let b = null
 
-	a ?= 1
-	b ?= 1
+	a ??= 1
+	b ??= 1
 	
 	eq a,0
 	eq b,1
