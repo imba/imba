@@ -1,6 +1,6 @@
 <p align="center">
 <a href="http://imba.io" target="_blank">
-<img width="300" src="https://raw.githubusercontent.com/imba/brand/master/images/logo/png/logo-black.png"></a>
+<img width="300" src="https://github.com/imba/brand/blob/master/imba-web-logo.png"></a>
 </p>
 
 [![install size](https://packagephobia.now.sh/badge?p=imba)](https://packagephobia.now.sh/result?p=imba)
