@@ -601,12 +601,12 @@ export const states = {
 	]
 
 	_herestring: [
-		[/("""|''')/, { cases: { '$1==$S2': { token: 'string', next: '@pop' }, '@default': 'string' } }],
+		[/("""|''')/, { cases: { '$1==$F': { token: 'string', next: '@pop' }, '@default': 'string' } }],
 		[/[^#\\'"\{]+/, 'string'],
 		[/['"]+/, 'string'],
 		[/@escapes/, 'string.escape'],
 		[/\./, 'string.escape.invalid'],
-		[/\{/, { cases: { '$S2=="""': { token: 'string', next: '@interpolation_body' }, '@default': 'string' } }],
+		[/\{/, { cases: { '$F=="""': { token: 'string', next: '@interpolation_body' }, '@default': 'string' } }],
 		[/#/, 'string']
 	]
 
