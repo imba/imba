@@ -6839,16 +6839,6 @@ export class TagAttr < TagPart
 				bval = "[{val[0].c(o)},{val[1].c(o)}]"
 
 			"bind$('{key}',{bval})"
-		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
-			# how do we remove attribute then?
-			if ns
-				"setns$('{ns}','{key}',{val})"
-			else
-				"set$('{key}',{val})"
-			
-		elif key.indexOf("data-") == 0
-			"dataset.{key.slice(5)}{op}{val}"
-			
 		elif key.indexOf('--') == 0
 			let pars = ["'{key}'",val]
 			let u = option(:unit)
@@ -6858,13 +6848,16 @@ export class TagAttr < TagPart
 				pars.push(STR(k)) if k
 
 			"css$var({AST.cary(pars).join(',')})"
+		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
+			if ns
+				"setns$('{ns}','{key}',{val})"
+			else
+				"set$('{key}',{val})"
+			
+		elif key.indexOf("data-") == 0
+			"dataset.{key.slice(5)}{op}{val}"
 		else
 			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
-
-		# elif dyn or true
-		# 	"set({quoted},{val}{add})"
-		# else
-		# 	"{helpers.setterSym(name)}({val}{add})"
 	
 export class TagAttrValue < TagPart
 	
