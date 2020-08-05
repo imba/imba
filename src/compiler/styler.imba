@@ -792,7 +792,7 @@ export class StyleRule
 		selector = selector
 		content = content
 		options = options
-		isKeyFrames = selector.indexOf('@keyframes ') >= 0
+		isKeyFrames = !!selector.match(/\@keyframes \w/)
 		isKeyFrame = parent and parent.isKeyFrames
 		meta = {}
 		
