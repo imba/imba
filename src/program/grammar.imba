@@ -365,7 +365,7 @@ export const states = {
 	]
 
 	_do: [
-		denter(null,-1,0)
+		denter(2,-1,0)
 		# block in general, no?
 		[/(\}|\)|\])/,'@rematch', '@pop']
 		'block_'
@@ -510,7 +510,7 @@ export const states = {
 		[/(while|until)@B/,'keyword.$#','@>while_body']
 	]
 	while_body: [
-		denter(null,-1,0)
+		denter(2,-1,0)
 		'block_'
 	]
 
@@ -557,7 +557,7 @@ export const states = {
 	]
 
 	_field_value: [
-		denter(null,-1,0)
+		denter(2,-1,0)
 		'block_' # sure?
 	]
 
@@ -851,7 +851,7 @@ export const states = {
 		[/(\s*)(<)(?=\w|\{|\[|\%|\#|>)/,['white','tag.open','@_tag/name']]
 	]
 	tag_content: [
-		denter(null,-1,0)
+		denter(2,-1,0)
 		[/\)|\}\]/,'@rematch', '@pop']
 		'common_'
 		'flow_'
