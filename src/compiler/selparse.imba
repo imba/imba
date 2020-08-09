@@ -83,6 +83,7 @@ export def rewrite rule,ctx,o = {}
 	let localpart = null
 	let deeppart = null
 	let forceLocal = o.forceLocal
+	let escaped = no
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -94,9 +95,11 @@ export def rewrite rule,ctx,o = {}
 		
 		if op == '>>'
 			localpart = prev
+			escaped = part
 			part.nestingOperator = '>'
 		elif op == '>>>'
 			localpart = prev
+			escaped = part
 			part.nestingOperator = null
 		
 		if name == 'html'
@@ -118,7 +121,7 @@ export def rewrite rule,ctx,o = {}
 			elif flag[0] == '$'
 				# flags[i] = flag.slice(1) + '-' + o.ns
 				flags[i] = 'ref--' + flag.slice(1)
-				localpart = part
+				localpart = part unless escaped
 				pri = 1 if pri < 1
 		
 		if part.tagName
