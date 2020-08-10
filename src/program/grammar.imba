@@ -250,7 +250,7 @@ export const states = {
 	]
 
 	params_: [
-		[/\[/, '[', '@array_body=decl-param']
+		[/\[/, '[', '@array_var_body=decl-param']
 		[/\{/, '{', '@object_body=decl-param']
 		[/(@variable)/,'identifier.decl-param']
 		# [/(\s*\=\s*)(?=(for|while|until|if|unless)\s)/,'operator','@pop']
@@ -516,11 +516,11 @@ export const states = {
 
 	for_start: [
 		denter({switchTo: '@>for_body'},-1,-1)
-		[/\[/, '[', '@array_body']
+		[/\[/, '[', '@array_var_body']
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\,\s*)/,'separator']
-		[/\s(in|of)@B/,'keyword',switchTo: '@>for_source=']
+		[/\s(in|of)@B/,'keyword.$1',switchTo: '@>for_source=']
 		[/[ \t]+/, 'white']
 	]
 	for_source: [
@@ -669,7 +669,7 @@ export const states = {
 
 	_varblock: [
 		denter(1,-1,-1)
-		[/\[/, '[', '@array_body']
+		[/\[/, '[', '@array_var_body']
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/\s*\,\s*/,'separator']
@@ -678,8 +678,15 @@ export const states = {
 		'type_'
 	]
 
+	array_var_body: [
+		[/\]/, ']', '@pop']
+		'expr_'
+		[',','delimiter']
+	]
+
+
 	inline_var_body: [
-		[/\[/, '[', '@array_body']
+		[/\[/, '[', '@array_var_body']
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator',switchTo: '@var_value=']
