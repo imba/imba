@@ -3951,9 +3951,7 @@ export class PropertyAccess < Access
 		@left.traverse if @left
 
 		unless up isa Call
-			console.log 'prop access call?!'
 			scope__.root.@implicitCalls.push(@right)
-
 		return self
 
 	# right in c we should possibly override
@@ -7863,7 +7861,7 @@ export class Scope
 		root.requires(path,name)
 
 	def imba
-		root.requires('imba', 'Imba')
+		root.requires('imba1', 'Imba')
 
 	def imbaTags
 		root.imbaTags

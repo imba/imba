@@ -48,7 +48,7 @@ module.exports = function(content,inMap) {
 		ENV_WEBPACK: true
 	};
 
-	if(!opts.filename.match(/\.imba$/)){
+	if(!opts.filename.match(/\.imba1?$/)){
 		return this.callback(null,content);
 	}
 

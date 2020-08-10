@@ -27,8 +27,9 @@ export def run code, filename: null
 
 	var Module = require('module').Module
 	main:paths = Module._nodeModulePaths(path.dirname(filename))
+	var ext = path.extname(main:filename)
 
-	if path.extname(main:filename) != '.imba' or require:extensions
+	if (ext != '.imba' and ext != '.imba1') or require:extensions
 		arguments[1][:target] ||= 'node'
 		arguments[1][:standalone] ||= yes
 		var content = compiler.compile(code, arguments[1])
@@ -37,7 +38,7 @@ export def run code, filename: null
 		main._compile code, main:filename
 
 if require:extensions
-	require:extensions['.imba'] = do |mod, filename|
+	require:extensions['.imba1'] = do |mod, filename|
 		var options = {filename: filename, target: 'node'}
 		
 		var body = fs.readFileSync(filename, 'utf8')

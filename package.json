@@ -1,5 +1,5 @@
 {
-  "name": "imba",
+  "name": "imba1",
   "description": "Intuitive and powerful language for building webapps that fly",
   "keywords": [
     "javascript",
@@ -39,16 +39,16 @@
     }
   ],
   "scripts": {
-    "build-parser": "bin/imba scripts/build-parser.imba",
+    "build-parser": "bin/imba scripts/build-parser.imba1",
     "build": "webpack --progress --colors --display-modules --mode production",
     "build-watch": "webpack --progress --colors --display-modules --watch",
     "watch": "bin/imbac -w --es5 -o lib/ src/",
-    "test": "bin/imba test/index.imba",
-    "test-webpack": "bin/imba test/webpack/test.imba",
-    "test-chrome": "bin/imba test/run-chrome.imba"
+    "test": "bin/imba test/index.imba1",
+    "test-webpack": "bin/imba test/webpack/test.imba1",
+    "test-chrome": "bin/imba test/run-chrome.imba1"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "licenses": [
     {
       "type": "MIT",
@@ -62,9 +62,9 @@
   "main": "./index",
   "browser": "./imba",
   "bin": {
-    "imba": "./bin/imba",
-    "imbac": "./bin/imbac",
-    "imbapack": "./bin/imbapack"
+    "imba1": "./bin/imba",
+    "imbac1": "./bin/imbac",
+    "imbapack1": "./bin/imbapack"
   },
   "preferGlobal": true,
   "homepage": "http://imba.io",
@@ -79,5 +79,7 @@
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
   },
-  "dependencies": {}
+  "dependencies": {
+    "loader-utils": "^2.0.0"
+  }
 }

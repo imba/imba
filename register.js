@@ -55,7 +55,7 @@ function cacheFile(filename) {
 if(require.extensions) {
 	var Module = require('module');
 	
-	require.extensions['.imba'] = function (mod,filename){
+	require.extensions['.imba1'] = function (mod,filename){
 		var content = cacheFile(filename);
 		return mod._compile(content,filename);
 	};
@@ -85,7 +85,7 @@ if(require.extensions) {
 	};
 
 } else if(require.registerExtension) {
-	require.registerExtension('.imba',function (content){
+	require.registerExtension('.imba1',function (content){
 		return imba.compile(content, {target: 'node'}).js;
 	});
 };
@@ -103,8 +103,8 @@ if(cp) {
 		// to be able to fork without specifying extension
 		// not sure how else to solve this - but it is relatively important
 		// when you want to be able to run the same codebase directly or compiled
-		if(ext != '.js' && ext != '.imba' && fs.existsSync(filepath + '.imba')) {
-			filepath = filepath + '.imba';
+		if(ext != '.js' && ext != '.imba1' && fs.existsSync(filepath + '.imba1')) {
+			filepath = filepath + '.imba1';
 		};
 		
 		if(filepath.match(/\.(imba)$/)) {

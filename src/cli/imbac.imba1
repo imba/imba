@@ -72,14 +72,14 @@ class CLI
 
 			if fs.existsSync(dir)
 				var stat = fs.statSync(dir)
-			elif part.match(/\.(imba|js)$/)
+			elif part.match(/\.(imba1?|js)$/)
 				yes
 			else
 				fs.mkdirSync(dir)
 				console.log ansi.green("+ mkdir {dir}")
 		return
 
-	def findRecursive root, pattern = /\.imba$/
+	def findRecursive root, pattern = /\.imba1?$/
 		var results = []
 		root = path.relative(process.cwd,root)
 		root = path.normalize(root)
@@ -95,7 +95,7 @@ class CLI
 			elif src.match(pattern)
 				results.push(src)
 
-		if root.match(/\/\*\.imba$/)
+		if root.match(/\/\*\.imba1?$/)
 			root = root.slice(0,-7)
 			read(root,1)
 		else
@@ -127,7 +127,7 @@ class CLI
 			file:targetPath = file:sourcePath
 
 		if file:targetPath
-			file:targetPath = file:targetPath.replace(/\.imba$/,'.js')
+			file:targetPath = file:targetPath.replace(/\.imba1?$/,'.js')
 
 		coll.push(file)
 
