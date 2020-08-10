@@ -1,26 +1,11 @@
-
-const qs = require('querystring');
-
 var compiler = require('./dist/compiler.js');
 var helpers = compiler.helpers;
 
 var path = require('path');
 var fs = require('fs');
-var loaderPath = fs.realpathSync(__filename); // path.join(path.dirname(fs.realpathSync(__filename)), '..',path.sep);
+var loaderPath = fs.realpathSync(__filename);
 
 const crypto = require('crypto');
-const utils = require('loader-utils');
-const stringifyRequest = utils.stringifyRequest;
-const getRemainingRequest = utils.getRemainingRequest;
-
-const isESLintLoader = l => /(\/|\\|@)eslint-loader/.test(l.path)
-const isNullLoader = l => /(\/|\\|@)null-loader/.test(l.path)
-const isCSSLoader = l => /(\/|\\|@)css-loader/.test(l.path)
-const isImbaLoader = l => /(\/|\\|@)imba\/loader/.test(l.path)
-const isCacheLoader = l => /(\/|\\|@)cache-loader/.test(l.path)
-
-const isPreLoader = l => !l.pitchExecuted
-const isPostLoader = l => l.pitchExecuted
 
 function shorthash(str){
 	var shasum = crypto.createHash('sha1');
@@ -33,12 +18,8 @@ var cachedStyleBodies = new Map();
 module.exports = function(content,inMap) {
 	this.cacheable();
 
-	const options = utils.getOptions(this) || {};
-
 	var self = this;
 	var query = this.query;
-
-	const resourceQuery = qs.parse(this.resourceQuery.slice(1));
 
 	var opts = {
 		filename: path.basename(this.resourcePath),
@@ -53,31 +34,6 @@ module.exports = function(content,inMap) {
 
 	if(!opts.filename.match(/\.imba$/)){
 		return this.callback(null,content);
-	}
-
-	opts.id = 'i' + shorthash(this.resourcePath);
-
-	const block = cachedStyleBodies.get(`${opts.id}-${options.index}`);
-
-	if(options.type == 'style' && block){ 
-		let css = block.processed || block.content;
-		if(this.loaders.length == 1){
-			// There are no additional style loaders -- we will need to process it directly
-			if(block.scoped && !block.processed) css = compiler.css.compile(block.content,{scope: block.id})
-			let out = "var styles = document.createElement('style');"
-			// css = css + '\n\/\/Hello there ' + [opts.id, options.index, options.id].join(' ');
-			out = out + "styles.textContent = " + JSON.stringify(css) + ";\n"
-			out = out + "document.head.appendChild(styles);"
-			return this.callback(null, out, inMap);
-		}
-		return this.callback(null,css);
-	}
-
-	// style post-processor
-	if(resourceQuery && resourceQuery.type == 'style'){
-		let scope = resourceQuery.id ? resourceQuery.id : null;
-		var css = compiler.css.compile(content,{scope: scope})
-		return this.callback(null, css, inMap);
 	}
 
 	if(this.env){
@@ -100,29 +56,6 @@ module.exports = function(content,inMap) {
 				var err = new Error(msg);
 				self.emitWarning(err);
 			});
-		}
-
-		if(result.styles && result.styles.length && this.target == 'web' && this.rootContext && !result.styles.inlined) {
-			
-			js = js.replace(/\/\*SCOPEID\*\//g,'"' + opts.id + '"');
-	
-			result.styles.forEach((style,i) => {
-				const ext = style.type || 'css';
-				const src = style.src || (self.resourcePath + '.' + i + '.' + ext);
-				const inheritQuery = self.resourceQuery.slice(1)
-				const remReq = getRemainingRequest(self);
-				let key = `${opts.id}-${i}`;
-				let pars = '?type=style';
-				if(style.scoped){
-					pars = pars + "&id=" + opts.id;
-					style.id = result.sfcid;
-				}
-				cachedStyleBodies.set(key, style);
-
-				const query = `${src}!=!imba/loader?type=style&index=${i}!${remReq}${pars}`
-				// console.log('rewrite require',query);
-				js += "\nrequire('" + query + "');"
-			})
 		}
 
 		this.callback(null, js, result.sourcemap);
