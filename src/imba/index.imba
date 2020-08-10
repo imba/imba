@@ -125,10 +125,10 @@ def imba.toStyleValue value, unit, key
 
 def imba.inlineStyles content, id
 	styles.register(content,id)
-	# var el = document.createElement('style')
-	# el.textContent = styles
-	# document.head.appendChild(el)
 	return
+
+def imba.getAllStyles
+	return styles.toStyleSheet!
 
 var dashRegex = /-./g
 

@@ -1,11 +1,13 @@
 
 let root
-let resets = '*,::before,::after {
+let resets = '''*,::before,::after {
 	box-sizing: border-box;
 	border-width: 0;
 	border-style: solid;
 	border-color: currentColor;
-}'
+}'''
+
+const map = {}
 
 export def setup
 	unless root
@@ -14,11 +16,18 @@ export def setup
 	
 
 export def register styles, id
-	setup!
-	var el = document.createElement('style')
-	el.textContent = styles
-	document.head.appendChild(el)
+	setup! if $web$
+	if id and !map[id]
+		let entry = map[id] = {raw: styles}
+		if $web$
+			entry.node = document.createElement('style')
+			entry.node.textContent = entry.raw
+			document.head.appendChild(entry.node)
+
 	return
+
+export def toStyleSheet
+	Object.values(map).map(do $1.raw).join('\n\n')
 	
 export def parseDimension val
 	if typeof val == 'string'

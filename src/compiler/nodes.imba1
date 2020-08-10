@@ -2640,6 +2640,7 @@ export class Root < Code
 		var result = {
 			js: out,
 			ast: self,
+			fid: STACK.fid,
 			source: o.@source,
 			tokens: o.@tokens,
 			warnings: scope.warnings,
@@ -2653,19 +2654,18 @@ export class Root < Code
 			var stylebody = ""
 			for style in result:styles
 				if style:type == 'css'
-					let scoping = style:scoped ? result['sfcid'] : null
-					style:processed ||= csscompiler.compile(style:content,scope: scoping)
 					stylebody += style:processed + '\n\n'
-			
-			result:stylebody = stylebody
+
+			result:css = stylebody
 
 			if stylebody
 				# and o:bundler != 'webpack'
 				let css = {js: stylebody}
 				# maybe do something different when server etc?
 				# css:js = "/* styles from {o:sourcePath} */\n" + css:js
-				result:js = "{result:js}\nimba.inlineStyles({JSON.stringify(css:js)});"
-				result:js += '\n/*\n' + css:js + '\n*/\n'
+				
+				result:js = "{result:js}\nimba.inlineStyles({JSON.stringify(result:css)},'{result:fid}');"
+				result:js += '\n/*\n' + result:css + '\n*/\n'
 				result:styles:inlined = yes
 
 		# always create the sourcemap?
