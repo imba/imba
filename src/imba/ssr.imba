@@ -31,6 +31,12 @@ class CustomElementRegistry
 	def get
 		self
 
+	def upgrade
+		return
+
+	def whenDefined
+		return
+
 root.customElements ||= new CustomElementRegistry
 
 export def getElementType typ
@@ -338,6 +344,8 @@ export class Element < Node
 		self.classList.toString()
 
 export class DocumentFragment < Element
+	def constructor
+		super(null)
 
 	get outerHTML
 		return self.innerHTML
