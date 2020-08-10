@@ -133,48 +133,44 @@ export const aliases =
 	ls: 'letter-spacing'
 	lh: 'line-height'
 
-	# borders
-	bc: 'border-color' # DEPRECATED
-	bw: 'border-width' # DEPRECATED
-	
+	# border
 	bd: 'border'
-	bdc: 'border-color'
-	bds: 'border-style'
-	bdw: 'border-width'
 	bdr: 'border-right'
 	bdl: 'border-left'
 	bdt: 'border-top'
 	bdb: 'border-bottom'
-	bdx: ['bdl','bdr']
-	bdy: ['bdt','bdb']
-	
-	bdtc: 'border-top-color'
-	bdts: 'border-top-style'
-	bdtw: 'border-top-width'
-	
-	bdrc: 'border-right-color'
-	bdrs: 'border-right-style'
-	bdrw: 'border-right-width'
-	
-	bdbc: 'border-bottom-color'
-	bdbs: 'border-bottom-style'
-	bdbw: 'border-bottom-width'
-	
-	bdlc: 'border-left-color'
-	bdls: 'border-left-style'
-	bdlw: 'border-left-width'
 
-	# radius
-	radius: 'border-radius' # DEPRECATED
-	br: 'border-radius'
-	btlr: 'border-top-left-radius'
-	btrr: 'border-top-right-radius'
-	bblr: 'border-bottom-left-radius'
-	bbrr: 'border-bottom-right-radius'
-	btr: ['btlr','btrr']
-	bbr: ['bblr','bbrr']
-	blr: ['btlr','bblr']
-	brr: ['btrr','bbrr']
+	# border-style
+	bs: 'border-style'
+	bsr: 'border-right-style'
+	bsl: 'border-left-style'
+	bst: 'border-top-style'
+	bsb: 'border-bottom-style'
+
+	# border-width
+	bw: 'border-width'
+	bwr: 'border-right-width'
+	bwl: 'border-left-width'
+	bwt: 'border-top-width'
+	bwb: 'border-bottom-width'
+
+	# border-color
+	bc: 'border-color'
+	bcr: 'border-right-color'
+	bcl: 'border-left-color'
+	bct: 'border-top-color'
+	bcb: 'border-bottom-color'
+
+	# border-radius
+	rd: 'border-radius'
+	rdtl: 'border-top-left-radius'
+	rdtr: 'border-top-right-radius'
+	rdbl: 'border-bottom-left-radius'
+	rdbr: 'border-bottom-right-radius'
+	rdt: ['rdtl','rdtr']
+	rdb: ['rdbl','rdbr']
+	rdl: ['rdtl','rdbl']
+	rdr: ['rdtr','rdbr']
 	
 	# background
 	bg: 'background'
@@ -209,7 +205,7 @@ export const aliases =
 	gce: 'grid-column-end'
 	
 	# shadow
-	bs: 'box-shadow'
+	bxs: 'box-shadow'
 	shadow: 'box-shadow' # DEPRECATED
 	
 	# overflow
