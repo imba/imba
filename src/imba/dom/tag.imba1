@@ -1,5 +1,8 @@
 var Imba = require("../imba")
 
+extern globalThis
+
+
 Imba.CSSKeyMap = {}
 
 Imba.TAG_BUILT = 1
@@ -46,6 +49,56 @@ def Imba.createTextNode node
 	if node and node:nodeType == 3
 		return node
 	return Imba.document.createTextNode(node)
+
+
+class Imba2TagProxy
+	def self.build node
+		Proxy.new(node,self.new(node))
+
+	def initialize node
+		@target = node
+		@cache = {}
+		return self
+	
+	def setter key,receiver
+		return do |value,mods|
+			# console.log 'setting!!',key,value,@target
+			@target[key] = value
+			return receiver
+
+	def get target, key, receiver
+		let cache = (target:V1CACHE ||= {})
+
+		if cache[key]
+			return cache[key]
+
+		if key == 'dom'
+			return cache[key] = do return target
+		if key == 'tag'
+			return cache[key] = do return target
+		
+		if key == '_tag' or key == '_dom' or key == '_slot_'
+			return target
+		
+		if key == 'end'
+			# console.log target
+			return cache[key] = do
+				target.end$
+				return receiver
+
+		if key.match(/^set[A-Z]/)
+			let name = key[3].toLowerCase + key.slice(4)
+			return cache[key] = setter(name,receiver)
+
+		else
+			if target[key] isa Function
+				return target[key]
+			else
+				return cache[key] = do
+					return target[key]
+
+		return null
+
 
 
 
@@ -988,6 +1041,7 @@ class Imba.Tags
 def Imba.createElement name, ctx, ref, pref
 	var type = name
 	var parent
+	var node
 	if name isa Function
 		type = name
 	else
@@ -1002,7 +1056,12 @@ def Imba.createElement name, ctx, ref, pref
 	else
 		parent = ctx and pref != undefined ? ctx[pref] : (ctx and ctx.@tag or ctx)
 
-	var node = type.build(parent)
+	if type == null and globalThis and globalThis:imba
+		node = globalThis:imba:document.createElement(name)
+		node = Imba2TagProxy.build(node)
+		# node['init$']() if node['init$']
+	else
+		node = type.build(parent)
 	
 	if ctx isa TagMap
 		ctx:i$++
