@@ -55,7 +55,7 @@ export def getElementType typ
 		let existing = Object.getOwnPropertyDescriptors(typ.klass.prototype)
 		for own key,alias of typ[1]
 			let name = alias == 1 ? key : alias
-			continue if existing[name]
+			continue if existing[name] or name == 'style'
 
 			Object.defineProperty(typ.klass.prototype,key,{
 				set: do |value|
@@ -152,8 +152,7 @@ export class DOMTokenList
 
 export class StyleDeclaration
 
-	def constructor dom
-		self.dom = dom
+	def constructor
 		self
 		
 	def removeProperty key
@@ -165,7 +164,7 @@ export class StyleDeclaration
 	def toString
 		var items = []
 		for own k,v of self
-			unless k[0] == '_'
+			unless v isa Function
 				items.push("{k}: {v}")
 		return items.join(';')
 
@@ -214,7 +213,7 @@ export class Element < Node
 		$classList ||= new DOMTokenList(self)
 
 	get style
-		$style ||= new StyleDeclaration(this)
+		$style ||= new StyleDeclaration
 
 	def flag$
 		self

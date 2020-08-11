@@ -29,9 +29,9 @@ imba.clearTimeout = root.clearTimeout
 
 Object.defineProperty(imba,'flags',get:(do imba.document.documentElement.classList))
 
-if $node$
-	import {Document,Node,Text,Comment,Element,HTMLElement,DocumentFragment,ShadowRoot,document,getElementType} from './ssr'
-	imba.document = document
+# if $node$
+import {Document,Node,Text,Comment,Element,HTMLElement,DocumentFragment,ShadowRoot,document,getElementType} from './dom'
+imba.document = document
 
 def imba.q$ query, ctx
 	(ctx isa Element ? ctx : document).querySelector(query)
