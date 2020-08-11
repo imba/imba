@@ -745,7 +745,8 @@ export const states = {
 
 	sel_: [
 		[/(\%)((?:@id)?)/,['style.selector.mixin.prefix','style.selector.mixin']]
-		[/(\@)(\.{0,2}[\w\-]*)/,['style.selector.modifier.prefix','style.selector.modifier']]
+		[/(\@)(\.{0,2}[\w\-\<\>\!]*\+?)/,['style.selector.modifier.prefix','style.selector.modifier']]
+		[/(\@)(\.{0,2}[\w\-\<\>\!]*)/,['style.selector.modifier.prefix','style.selector.modifier']]
 		[/\.([\w\-]+)/,'style.selector.class-name']
 		[/\#([\w\-]+)/,'style.selector.id']
 		[/([\w\-]+)/,'style.selector.element']
@@ -762,7 +763,7 @@ export const states = {
 
 	css_props: [
 		denter(null,-1,0)
-		[/(?=@cssPropertyKey)/,'','@css_property&-_styleprop-_stylepropkey']
+		[/(?=@cssPropertyKey2)/,'','@css_property&-_styleprop-_stylepropkey']
 		[/#(\s.+)?\n?$/, 'comment']
 		[/(?=[\%\*\w\&\$\>\.\[\@\!]|\#[\w\-])/,'','@>css_selector&rule-_sel']
 		[/\s+/, 'white']
@@ -771,14 +772,14 @@ export const states = {
 	css_selector: [
 		denter({switchTo: '@css_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
 		[/(\}|\)|\])/,'@rematch', '@pop']
-		[/(?=\s*@cssPropertyKey)/,'',switchTo:'@css_props&_props']
+		[/(?=\s*@cssPropertyKey2)/,'',switchTo:'@css_props&_props']
 		[/\s*#\s/,'@rematch',switchTo:'@css_props&_props']
 		'sel_'
 	]
 
 	css_inline: [
 		[/\]/,'style.close','@pop']
-		[/(?=@cssPropertyKey)/,'','@css_property&-_styleprop-_stylepropkey']
+		[/(?=@cssPropertyKey2)/,'','@css_property&-_styleprop-_stylepropkey']
 		[/(?=@cssPropertyPath\])/,'','@css_property&-_styleprop-_stylepropkey']
 	]
 
@@ -798,6 +799,8 @@ export const states = {
 		[/(\d+)(@id)/, ['style.property.unit.number','style.property.unit.name']]
 		[/((--|\$)@id)/, 'style.property.var']
 		[/(-*@id)/, 'style.property.name']
+		# [/(\@+)([\>\<\!]?[\w\-]+)/, ['style.property.modifier.start','style.property.modifier']]
+		[/@cssModifier/,'style.property.modifier']
 		[/(\@+|\.+)(@id\-?)/, ['style.property.modifier.start','style.property.modifier']]
 		[/\+(@id)/, 'style.property.scope']
 		[/\s*([\:]\s*)(?=@br|$)/, 'style.property.operator',switchTo: '@>css_multiline_value&_stylevalue']
@@ -821,7 +824,8 @@ export const states = {
 
 	css_value: [
 		denter({switchTo: '@>css_multiline_value'},-1,-1)
-		[/@cssPropertyKey/, '@rematch', '@pop']
+		# [/@cssModifier/, '@rematch', '@pop']
+		[/@cssPropertyKey2/, '@rematch', '@pop']
 		[/;/, 'style.delimiter', '@pop']
 		[/(\}|\)|\])/, '@rematch', '@pop']
 		'css_value_'
@@ -829,7 +833,7 @@ export const states = {
 
 	css_multiline_value: [
 		denter(null,-1,0)
-		[/@cssPropertyKey/, 'invalid']
+		[/@cssPropertyKey2/, 'invalid']
 		'css_value_'
 	]
 
@@ -1166,11 +1170,14 @@ export const grammar = {
 	varKeyword: /var|let|const/
 	tagIdentifier: /-*[a-zA-Z][\w\-]*/
 	implicitCall: /(?!\s(?:and|or)\s)(?=\s[\w\'\"\/\[\{])/ # not true for or etc
+	cssModifier: /(?:\@+[\<\>\!]?[\w\-]+\+?|\.+@id\-?)/
 	cssPropertyPath: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*/
 	cssPropertyKey: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*(?:\s*\:)/
+	
 	cssVariable: /(?:--|\$)[\w\-\$]+/
 	cssPropertyName: /[\w\-\$]+/
-	cssModifier: /\@[\w\-\$]+/
+	# cssModifier: /\@[\w\-\$]+/
+	cssPropertyKey2: /(?:@cssPropertyName(?:@cssModifier)*|@cssModifier+)(?:\s*\:)/
 	cssUpModifier: /\.\.[\w\-\$]+/
 	cssIsModifier: /\.[\w\-\$]+/
 	

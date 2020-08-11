@@ -130,6 +130,10 @@ var STYLE_PROPERTY = ///^
 	(?=\:([^\:]|$))
 ///
 
+var STYLE_PROPERTY2 = ///^
+	([^\s]+)(?=\:([^\:]|$))
+///
+
 var STYLE_MODIFIERS = ///^
 	(\@?[\w\-\$]*\w[\w\-\$]*)
 	([\.\@][\w\-\$]*\w[\w\-\$]*)*
@@ -634,7 +638,7 @@ export class Lexer
 			if !end and (letter == '=' or letter == '\n' or letter == '{')
 				break
 			
-			if !end and letter == ' ' and STYLE_PROPERTY.exec(str.slice(i + 1))
+			if !end and letter == ' ' and STYLE_PROPERTY2.exec(str.slice(i + 1))
 				# console.log 'found end!',str.slice(0,i)
 				break
 
@@ -685,7 +689,7 @@ export class Lexer
 		let chr = @chunk[0]
 		var m
 
-		let styleprop = STYLE_PROPERTY.exec(@chunk)
+		let styleprop = STYLE_PROPERTY2.exec(@chunk)
 		let ltyp = @lastTyp
 			
 		if !styleprop and @chunk.match(/^([\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')

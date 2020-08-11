@@ -138,7 +138,9 @@ export def rewrite rule,ctx,o = {}
 		for mod in mods when mod.special
 			
 			let [m,pre,name,post] = (mod.name.match(/^(\$|\.+|is-|up-)?([^\~\+]*)([\~\+]*)$/) or [])
-
+			# console.log 'special',mod.name
+			let hit
+			let media
 			if pre == '.' or pre == 'is-'
 				# console.log 'class mod!!',mod
 				addClass(modTarget,name)
@@ -150,6 +152,32 @@ export def rewrite rule,ctx,o = {}
 				addClass(modTarget = prev,name)
 				mod.remove = yes
 				specificity++
+
+			elif hit = mod.name.match(/^([a-z]*)(\d+)(\+|\-)?$/)
+				# console.log 'hit!!!',hit
+				unless hit[1]
+					if hit[3] == '-'
+						media = "(max-width: {hit[2]}px)"
+					else
+						media = "(min-width: {hit[2]}px)"
+
+			elif hit = (mod.name.match(/^([a-z\-]*)([\>\<\!])(\d+)$/) or mod.name.match(/^(\.)?(gte|lte)\-(\d+)$/))
+				let [all,key,op,val] = hit
+				let num = parseInt(val)
+				if op == '>' or op == 'gte'
+					if key == 'vh'
+						media = "(min-height: {val}px)"
+					else
+						media = "(min-width: {val}px)"
+				elif op == '<' or op == 'lte' or op == '!'
+					if key == 'vh'
+						media = "(max-height: {num - 1}px)"
+					else
+						media = "(max-width: {num - 1}px)"
+
+			if media
+				rule.media.push(media)
+				mod.remove = yes
 				
 			if post == '~'
 				modTarget

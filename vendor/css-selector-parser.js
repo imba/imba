@@ -436,7 +436,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         let special = chr === '@';
         
         pos++;
-        var pseudoName = getIdent({'~':true,'+':true,'.':true});
+        var pseudoName = getIdent({'~':true,'+':true,'.':true,'>':true,'<':true,'!':true});
         var pseudo = {
           special: special,
           name: pseudoName
