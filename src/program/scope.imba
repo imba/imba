@@ -175,8 +175,10 @@ export class Scope < Node
 			if ident
 				ident.body = self
 
-			if ident && ident.type == 'entity.def.render'
+			if ident && ident.type == 'entity.name.def.render'
 				$name = 'render'
+				if ident.symbol
+					ident.symbol.name = 'render'
 	
 	get path
 		let par = parent ? parent.path : ''
