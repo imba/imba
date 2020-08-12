@@ -357,6 +357,9 @@ export class ShadowRoot < DocumentFragment
 
 export class HTMLElement < Element
 
+	get outerHTML
+		return "<!DOCTYPE html>" + super.outerHTML
+
 export class SVGElement < Element
 
 
