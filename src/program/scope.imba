@@ -122,6 +122,9 @@ export class TagNode < Group
 	get name
 		findChildren('tag.name').join('')
 
+	get outline
+		findChildren(/tag\.(reference|name|id|white|flag|event(?!\-))/).join('')
+
 export class StyleNode < Group
 
 	get properties

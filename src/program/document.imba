@@ -489,7 +489,7 @@ export class ImbaDocument
 				awaitScope = token
 			
 			elif scope and scope.type == 'tag'
-				add({kind:SymbolKind.Field,name:scope.name},token)
+				add({kind:SymbolKind.Field,name:scope.outline},token)
 
 			if token == awaitScope
 				push(token.end)

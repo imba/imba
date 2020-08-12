@@ -883,7 +883,7 @@ export const states = {
 		[/(\-?@tagIdentifier)(\:@id)?/,'tag.$/']
 		[/(\-?\d+)/,'tag.$S3']
 		[/(\%)(@id)/,['tag.mixin.prefix','tag.mixin']]
-		[/(\#)(@id)/,['tag.id.prefix','tag.id']]
+		[/\#@id/,'tag.id']
 
 		[/\./,{ cases: {
 			'$/==event': {token: 'tag.event-modifier.start', switchTo: '@/event-modifier'}
@@ -895,7 +895,7 @@ export const states = {
 		}}]
 
 		[/(\$?@id)/,{ cases: {
-			'$S3==name': 'tag.reference'
+			'$/==name': 'tag.reference'
 			'@default': 'tag.$/'
 		}}]
 
@@ -920,7 +920,7 @@ export const states = {
 	]
 	_tag_event: [
 		'_tag_part'
-		[/\.(@optid)/,'tag.event.modifier']
+		[/\.(@optid)/,'tag.event-modifier']
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
 		[/(\s*\=\s*)/,'operator.equals.tag-$/', '@_tag_value&handler']
 		[/\s+/,'@rematch','@pop']
