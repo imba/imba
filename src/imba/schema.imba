@@ -48,7 +48,7 @@ export const TYPES = {
 	HTMLPicture: [1,{}]
 	HTMLPre: [1,{width: 1}]
 	HTMLProgress: [1,{value: 1,max: 1}]
-	HTMLScript: [1,{src: 1,type: 1,charset: 1,crossOrigin: 'crossorigin',referrerPolicy: 'referrerpolicy',event: 1,htmlFor: 'for',integrity: 1}]
+	HTMLScript: [1,{src: 1,type: 1,charset: 1,crossOrigin: 'crossorigin',referrerPolicy: 'referrerpolicy',event: 1,htmlFor: 'for',integrity: 1,defer: 1, async: 1}]
 	HTMLSelect: [1,{autocomplete: 1,name: 1,size: 1}]
 	HTMLSlot: [1,{name: 1}]
 	HTMLSource: [1,{src: 1,type: 1,srcset: 1,sizes: 1,media: 1}]
