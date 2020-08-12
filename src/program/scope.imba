@@ -182,7 +182,7 @@ export class Scope < Node
 			let sep = static? ? '.' : '#'
 			return parent ? "{parent.path}{sep}{name}" : name
 		
-		if tag?
+		if component?
 			return util.pascalCase(name + 'Component')
 
 		if class?
@@ -198,8 +198,8 @@ export class Scope < Node
 		else
 			KeywordTypes.Block
 
-	get tag?
-		!!type.match(/^tag/)
+	get component?
+		!!type.match(/^component/)
 
 	get root?
 		self isa Root
@@ -208,7 +208,7 @@ export class Scope < Node
 		self isa Root
 		
 	get class?
-		!!type.match(/^class/) or tag?
+		!!type.match(/^class/) or component?
 
 	get def?
 		!!type.match(/def|get|set/)
@@ -229,7 +229,7 @@ export class Scope < Node
 		!!type.match(/if|else|elif|unless|for|while|until/)
 	
 	get closure?
-		!!type.match(/class|tag|def|get|set|do/)
+		!!type.match(/class|component|def|get|set|do/)
 
 	get scope
 		self

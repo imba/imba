@@ -49,6 +49,8 @@ SymbolFlags.GlobalVar = SymbolFlags.ConstVariable | SymbolFlags.IsGlobal
 SymbolFlags.SpecialVar = SymbolFlags.ConstVariable | SymbolFlags.IsSpecial
 
 const Conversions = [
+	['entity.name.component.local',0,SymbolFlags.LocalComponent]
+	['entity.name.component.global',0,SymbolFlags.GlobalComponent]
 	['entity.name.function',0,SymbolFlags.Function]
 	['entity.name.class',0,SymbolFlags.Class]
 	['entity.name.def',0,SymbolFlags.Method]
@@ -103,6 +105,9 @@ export class Sym
 	get global?
 		flags & SymbolFlags.IsGlobal
 
+	get component?
+		flags & SymbolFlags.Component
+
 	get escapedName
 		name
 	
@@ -123,6 +128,8 @@ export class Sym
 		if self.variable?
 			SymbolKind.Variable
 		elif flags & SymbolFlags.Class
+			SymbolKind.Class
+		elif flags & SymbolFlags.Component
 			SymbolKind.Class
 		elif flags & SymbolFlags.Property
 			SymbolKind.Field
@@ -147,6 +154,8 @@ export class Sym
 			'function'
 		elif member?
 			'member'
+		elif component?
+			'component'
 		else
 			'variable'
 

@@ -165,3 +165,6 @@ export const SymbolKind = {
 	Operator: 25
 	TypeParameter: 26
 }
+
+for own k,v of SymbolKind
+	SymbolKind[v] = k

@@ -481,11 +481,15 @@ export class ImbaDocument
 					add(sym,token)
 				if sym.body
 					awaitScope = sym.body.start
+
 			elif scope and scope.type == 'do'
 				let pre = textBefore(token.offset - 3).replace(/^\s*(return\s*)?/,'')
 				pre += " callback"
 				add({kind:SymbolKind.Function,name:pre},token.prev)
 				awaitScope = token
+			
+			elif scope and scope.type == 'tag'
+				add({kind:SymbolKind.Field,name:scope.name},token)
 
 			if token == awaitScope
 				push(token.end)
@@ -592,6 +596,7 @@ export class ImbaDocument
 						if lastDecl
 							lastDecl.body = scope
 							scope.symbol = lastDecl
+							lastDecl = null
 
 						ctor
 					elif typ == 'pop'

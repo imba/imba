@@ -384,14 +384,14 @@ export const states = {
 
 	tagclass_: [
 		[/(export|extend)(?=\s+tag )/,'keyword.$#']
-		[/(tag)(\s)(@constant)/, ['keyword.tag','white.tagname','entity.$1.local','@tagclass_start=']] # only when uppercase
-		[/(tag)(\s)(@id)/, ['keyword.tag','white.tagname','entity.tag','@tagclass_start=']] # only when uppercase
+		[/(tag)(\s)(@constant)/, ['keyword.tag','white.tagname','entity.name.component.local','@tagclass_start=']] # only when uppercase
+		[/(tag)(\s)(@id)/, ['keyword.tag','white.tagname','entity.name.component.global','@tagclass_start=']] # only when uppercase
 	]
 
 	tagclass_start: [
 		[/(\s+\<\s+)(@id)/,['keyword.extends','identifier.superclass']]
 		[/@comment/, 'comment']
-		[/^/,'@rematch',switchTo: '@>_tagclass&tag=']
+		[/^/,'@rematch',switchTo: '@>_tagclass&component=']
 	]
 
 	import_: [
