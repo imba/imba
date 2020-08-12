@@ -9072,9 +9072,28 @@ export class StyleExpression < ListNode
 	def toIterable
 		@nodes
 		
-	def addParam param
+	def addParam param,op
+		param.@op = op
 		last.addParam(param)
 		return self
+
+	def reclaimParams
+		let items = filter do $1:param
+		for item in items
+			let param = item:param
+			let op = param.@op
+			add([op,param],after: item)
+			item.@params = []
+
+		return
+
+	def visit stack, o
+		if o and o:property
+			let name = o:property.@name
+
+			if name == 'gt' or name == 'grid-template'
+				reclaimParams
+		super
 		
 	def visit2
 		let items = @nodes

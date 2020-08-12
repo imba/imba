@@ -252,6 +252,11 @@ for own k,v of aliases
 	if typeof v == 'string'
 		abbreviations[v] = k
 
+def isNumber val
+	if val._value and val._value._type == "NUMBER" and !val._unit
+		return true
+	return false
+
 export class Color
 	
 	def constructor name,h,s,l,a = '100%'
@@ -568,6 +573,18 @@ export class StyleTheme
 		if let m = $varFallback('text-shadow',params)
 			return m
 		return
+
+	def grid-template params
+		for param,i in params
+			if isNumber(param)
+				param._resolvedValue = "repeat({param._value},1fr)"
+		return
+
+	def grid-template-columns params
+		grid-template(params)
+
+	def grid-template-rows params
+		grid-template(params)
 
 	def font-size [v]
 		let sizes = options.variants.fontSize
