@@ -152,7 +152,7 @@ var grammar =
 		o 'EXPORT EXPORT_ALL AS Identifier FROM String' do
 			ExportAllDeclaration.new(A1,[ExportAllSpecifier.new(A2,A4)],A6)
 		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A1)
-		o 'EXPORT DEFAULT Exportable' do Export.new(A3).set(keyword: A1,default: A2)
+		o 'EXPORT DEFAULT DefaultExportable' do Export.new(A3).set(keyword: A1,default: A2)
 		o 'EXPORT_VAR VarBlock' do Export.new(A2).set(keyword: A1)
 	]
 
@@ -162,6 +162,10 @@ var grammar =
 		o 'StructDeclaration'
 		o 'CSSDeclaration'
 		o 'TagDeclaration'
+	]
+
+	DefaultExportable: [
+		o 'Expression'
 	]
 
 	ImportOrExport: [

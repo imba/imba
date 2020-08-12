@@ -8628,9 +8628,19 @@ export class Export < ValueNode
 
 		# if value isa VarOrAccess
 		# 	return "exports.{value.c} = {value.c};"
+		let isDefault = option(:default)
 
 		if value isa ListNode
 			value.map do |item| item.set export: self
+
+		if value isa MethodDeclaration or value isa ClassDeclaration
+			return value.c
+
+		if isDefault
+			if !STACK.cjs
+				return "export default {value.c}"
+			else
+				return "exports.default = {value.c}"
 
 		return value.c
 
