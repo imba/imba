@@ -1,17 +1,17 @@
 tag app-root
 	
 	css button pos:absolute
-		&:focus pos:relative
+		@focus pos:relative
 
 	def render
 		<self>
 			<p$a[fw:600]> "1"
 			<p$b[d:block pos:relative]> "2"
-			<input$input .(fw:400 fw@focus:600)>
+			<input$input[fw:400 fw@focus:600]>
 			<button$button>
 
 
-imba.mount(var app = <app-root>)
+imba.mount(let app = <app-root>)
 
 def style el
 	if typeof el == 'string'
