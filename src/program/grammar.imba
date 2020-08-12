@@ -483,7 +483,7 @@ export const states = {
 	func_: [
 		[/export(?=\s+(get|set|def) )/,'keyword.export'] # only in class and tagclass?
 		[/(def)(\s)(@id)(\.)(@id)/,[
-			'keyword.$1','white.entity','identifier.target','operator','entity.name.member', '@>def_params&$1/$1'
+			'keyword.$1','white.entity','identifier.target','operator','entity.name.def', '@>def_params&$1/$1'
 		]]
 
 		[/(def)(\s)(@id)/, ['keyword.$1','white.entity','entity.name.function.decl-const-func','@>def_params&$1/$1']]

@@ -399,6 +399,11 @@ export class ImbaDocument
 		}
 
 		return out
+	
+	def textBefore offset
+		let before = content.slice(0,offset)
+		let ln = before.lastIndexOf('\n')
+		return before.slice(ln + 1)
 
 	def varsAtOffset offset, globals? = no
 		let tok = tokenAtOffset(offset)
@@ -465,14 +470,23 @@ export class ImbaDocument
 
 		for token,i in tokens
 			let sym = token.symbol
+			let scope = token.scope
+
 			if token.type == 'key'
 				add({kind:SymbolKind.Key},token)
 			elif sym
+				continue if sym.parameter?
+
 				if !symbols.has(sym)
 					add(sym,token)
 				if sym.body
 					awaitScope = sym.body.start
-			
+			elif scope and scope.type == 'do'
+				let pre = textBefore(token.offset - 3).replace(/^\s*(return\s*)?/,'')
+				pre += " callback"
+				add({kind:SymbolKind.Function,name:pre},token.prev)
+				awaitScope = token
+
 			if token == awaitScope
 				push(token.end)
 			

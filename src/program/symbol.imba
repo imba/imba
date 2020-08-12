@@ -88,6 +88,9 @@ export class Sym
 	get variable?
 		flags & SymbolFlags.Variable
 	
+	get parameter?
+		flags & SymbolFlags.Parameter
+	
 	get member?
 		flags & SymbolFlags.ClassMember
 
