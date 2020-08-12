@@ -33,6 +33,15 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'row'
 
+	hgrid: do(o)
+		o.display = 'grid'
+		o.gaf = 'column'
+		o.gac = '1fr'
+	
+	vgrid: do(o)
+		o.display = 'grid'
+		o.gaf = 'row'
+
 export const validTypes = {
 	ease: 'linear|ease|ease-in|ease-out|ease-in-out|step-start|step-end|stepsƒ|cubic-bezierƒ'
 }
