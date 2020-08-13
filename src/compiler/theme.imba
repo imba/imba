@@ -50,6 +50,7 @@ export const modifiers =
 	required: {}
 	right: {}
 	scope: {}
+	root: {}
 	# state: {}
 	target: {}
 	'target-within': {}

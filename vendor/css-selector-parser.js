@@ -594,7 +594,11 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
       }
       if (entity.classNames) {
         res += entity.classNames.map(function(cn) {
-          return "." + (this.escapeIdentifier(cn));
+          if(cn[0] == '!') {
+            return ":not(." + this.escapeIdentifier(cn.slice(1)) + ")";
+          } else {
+            return "." + (this.escapeIdentifier(cn));
+          }
         }, this).join('');
       }
       if(entity.pri > 0){

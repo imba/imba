@@ -4,6 +4,7 @@ import {modifiers} from './theme.imba'
 
 def addClass rule, name
 	rule.classNames ||= []
+
 	if rule.classNames.indexOf(name) == -1
 		rule.classNames.push(name)
 	return rule
@@ -134,13 +135,14 @@ export def rewrite rule,ctx,o = {}
 		specificity += part.classNames.length
 		
 		let modTarget = part
-		
+
 		for mod in mods when mod.special
 			
 			let [m,pre,name,post] = (mod.name.match(/^(\$|\.+|is-|up-)?([^\~\+]*)([\~\+]*)$/) or [])
-			# console.log 'special',mod.name
 			let hit
 			let media
+			let neg = mod.name[0] == '!'
+
 			if pre == '.' or pre == 'is-'
 				# console.log 'class mod!!',mod
 				addClass(modTarget,name)
@@ -154,7 +156,6 @@ export def rewrite rule,ctx,o = {}
 				specificity++
 
 			elif hit = mod.name.match(/^([a-z]*)(\d+)(\+|\-)?$/)
-				# console.log 'hit!!!',hit
 				unless hit[1]
 					if hit[3] == '-'
 						media = "(max-width: {hit[2]}px)"
@@ -162,6 +163,7 @@ export def rewrite rule,ctx,o = {}
 						media = "(min-width: {hit[2]}px)"
 
 			elif hit = (mod.name.match(/^([a-z\-]*)([\>\<\!])(\d+)$/) or mod.name.match(/^(\.)?(gte|lte)\-(\d+)$/))
+				# TODO simplify to just @number for gte and @!number for lt
 				let [all,key,op,val] = hit
 				let num = parseInt(val)
 				if op == '>' or op == 'gte'
@@ -175,14 +177,17 @@ export def rewrite rule,ctx,o = {}
 					else
 						media = "(max-width: {num - 1}px)"
 
+			
+				
+			if post == '~'
+				# NOT IMPLEMENTED sibling selector modifier
+				modTarget
+
 			if media
 				rule.media.push(media)
 				mod.remove = yes
-				
-			if post == '~'
-				modTarget
 
-			if let alias = modifiers[mod.name]
+			elif let alias = modifiers[mod.name]
 				if alias.media
 					rule.media.push(alias.media)
 					mod.remove = yes
@@ -210,6 +215,7 @@ export def rewrite rule,ctx,o = {}
 				forceLocal = no
 				
 			elif mod.name == 'deep'
+				# TODO remove this -- supported with deep nesting operators
 				mod.remove = yes
 				deeppart = part
 				
@@ -220,6 +226,13 @@ export def rewrite rule,ctx,o = {}
 						localpart = prev.rule = {type: 'rule',rule: prev.rule}
 				else
 					localpart = rule.rule = {type: 'rule',rule: rule.rule}
+			elif !mod.remove
+				# TODO negative class modifiers like this don't work well now
+				let cls = neg ? "!mod-{mod.name.slice(1)}" : "mod-{mod.name}"
+				addClass(getRootRule(rule),cls)
+				mod.remove = yes
+				specificity++
+			
 			
 			if modTarget != part and !mod.remove
 				addPseudo(modTarget,mod)
