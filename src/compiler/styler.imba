@@ -90,19 +90,24 @@ export const aliases =
 	ji: 'justify-items'
 	jc: 'justify-content'
 	js: 'justify-self'
-	j: ['jc','ji']
+	j: ['justify-content','justify-items']
 	
 	# align
 	ai: 'align-items'
 	ac: 'align-content'
 	as: 'align-self'
-	a: ['ac','ai']
+	a: ['align-content','align-items']
+
+	# justify & align
+	jai: ['justify-items','align-items']
+	jac: ['justify-content','align-content']
+	jas: ['justify-self','align-self']
+	ja: ['justify-content','align-content','justify-items','align-items']
 	
 	# place
-	pi: 'place-items'
-	pc: 'place-content'
-	ps: 'place-self'
-	
+	# pi: 'place-items'
+	# pc: 'place-content'
+	# ps: 'place-self'
 
 	# flex
 	fl: 'flex'
