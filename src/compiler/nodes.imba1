@@ -2658,7 +2658,7 @@ export class Root < Code
 
 			result:css = stylebody
 
-			if stylebody
+			if stylebody and o:css != 'separate'
 				# and o:bundler != 'webpack'
 				let css = {js: stylebody}
 				# maybe do something different when server etc?
