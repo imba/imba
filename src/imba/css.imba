@@ -16,7 +16,9 @@ export def setup
 	
 
 export def register styles, id
-	setup! if $web$
+	if !map.root and id != 'root'
+		register(resets,'root')
+
 	if id and !map[id]
 		let entry = map[id] = {raw: styles}
 		if $web$
