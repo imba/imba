@@ -1,3 +1,5 @@
+import {Element,HTMLInputElement,HTMLSelectElement,HTMLButtonElement,HTMLOptionElement,HTMLTextAreaElement} from '../dom'
+
 const toBind = {
 	INPUT: yes
 	SELECT: yes
@@ -73,10 +75,8 @@ extend class Element
 		return o
 
 Object.defineProperty(Element.prototype,'richValue',{
-	def get
-		self.getRichValue()
-	def set v
-		self.setRichValue(v)
+	get: do this.getRichValue()
+	set: do(v) this.setRichValue(v)
 })
 
 extend class HTMLSelectElement

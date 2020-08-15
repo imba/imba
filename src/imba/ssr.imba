@@ -215,6 +215,12 @@ export class Element < Node
 	get style
 		$style ||= new StyleDeclaration
 
+	get richValue
+		value
+
+	set richValue value
+		self.value = value
+
 	def flag$
 		self
 
@@ -359,6 +365,16 @@ export class HTMLElement < Element
 
 	get outerHTML
 		return "<!DOCTYPE html>" + super.outerHTML
+
+export class HTMLSelectElement < Element
+
+export class HTMLInputElement < Element
+
+export class HTMLTextAreaElement < Element
+
+export class HTMLButtonElement < Element
+
+export class HTMLOptionElement < Element
 
 export class SVGElement < Element
 

@@ -6823,7 +6823,7 @@ export class TagAttr < TagPart
 			
 		let key = self.key
 		
-		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button']
+		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button'] and STACK.platform != 'node'
 			key = 'richValue'
 
 		if ns == 'css'
