@@ -572,4 +572,7 @@ def imba.createSVGElement name, parent, flags, text, ctx
 		el.insertInto$(parent)
 	return el
 
+# currently needed for richValue override
+import './internal/bind'
+
 # import './intersect'
