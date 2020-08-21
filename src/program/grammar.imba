@@ -372,7 +372,8 @@ export const states = {
 	]
 
 	class_: [
-		[/(export|extend)(?=\s+class )/,'keyword.$1']
+		[/(extend)(?=\s+class )/,'keyword.$1']
+		[/(global)(?=\s+class )/,'keyword.$1']
 		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
 	]
 
@@ -383,7 +384,8 @@ export const states = {
 	]
 
 	tagclass_: [
-		[/(export|extend)(?=\s+tag )/,'keyword.$#']
+		[/(extend)(?=\s+tag )/,'keyword.$1']
+		[/(global)(?=\s+tag )/,'keyword.$1']
 		[/(tag)(\s)(@constant)/, ['keyword.tag','white.tagname','entity.name.component.local','@tagclass_start=']] # only when uppercase
 		[/(tag)(\s)(@id)/, ['keyword.tag','white.tagname','entity.name.component.global','@tagclass_start=']] # only when uppercase
 	]
@@ -402,6 +404,8 @@ export const states = {
 	export_: [
 		[/(export)( +)(default)@B/,['keyword.export','white','keyword.default']] # ,'@>import_body'
 		[/(export)(?= +(let|const|var|class|tag)@B)/,'keyword.export'] # ,'@>import_body'
+		[/(export)( +)(global)@B/,['keyword.export','white','keyword.global']] # ,'@>import_body'
+
 		[/(export)(\s+\*\s+)(from)@B/,['keyword.export','operator.star','keyword.from','@>import_source']]
 		[/(export)@B/,'keyword.export','@>export_body']
 	]
@@ -481,7 +485,8 @@ export const states = {
 	]
 
 	func_: [
-		[/export(?=\s+(get|set|def) )/,'keyword.export'] # only in class and tagclass?
+		[/export(?=\s+(get|set|def|global) )/,'keyword.export'] # only in class and tagclass?
+		[/global(?=\s+(get|set|def) )/,'keyword.global'] # only in class and tagclass?
 		[/(def)(\s)(@id)(\.)(@id)/,[
 			'keyword.$1','white.entity','identifier.target','operator','entity.name.def', '@>def_params&$1/$1'
 		]]
