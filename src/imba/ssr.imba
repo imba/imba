@@ -360,21 +360,22 @@ export class ShadowRoot < DocumentFragment
 	get outerHTML
 		return self.innerHTML
 
-
 export class HTMLElement < Element
+
+export class HTMLHtmlElement < HTMLElement
 
 	get outerHTML
 		return "<!DOCTYPE html>" + super.outerHTML
 
-export class HTMLSelectElement < Element
+export class HTMLSelectElement < HTMLElement
 
-export class HTMLInputElement < Element
+export class HTMLInputElement < HTMLElement
 
-export class HTMLTextAreaElement < Element
+export class HTMLTextAreaElement < HTMLElement
 
-export class HTMLButtonElement < Element
+export class HTMLButtonElement < HTMLElement
 
-export class HTMLOptionElement < Element
+export class HTMLOptionElement < HTMLElement
 
 export class SVGElement < Element
 
@@ -396,6 +397,12 @@ export class CustomEvent < Event
 TYPES[''].klass = Element
 TYPES['HTML'].klass = HTMLElement
 TYPES['SVG'].klass = SVGElement
+MAP['html'].klass = HTMLHtmlElement
+MAP['select'].klass = HTMLSelectElement
+MAP['input'].klass = HTMLInputElement
+MAP['textarea'].klass = HTMLTextAreaElement
+MAP['button'].klass = HTMLButtonElement
+MAP['option'].klass = HTMLOptionElement
 
 getElementType('')
 getElementType('HTML')
