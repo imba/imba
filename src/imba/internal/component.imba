@@ -80,28 +80,28 @@ export class ImbaElement < HTMLElement
 	set autoschedule value
 		value ? (__F |= $EL_SCHEDULE$) : (__F &= ~$EL_SCHEDULE$)
 
-	def render?
+	get render?
 		return true
 
-	def mounting?
+	get mounting?
 		return (__F & $EL_MOUNTING$) != 0
 
-	def mounted?
+	get mounted?
 		return (__F & $EL_MOUNTED$) != 0
 	
-	def awakened?
+	get awakened?
 		return (__F & $EL_AWAKENED$) != 0
 	
-	def rendered?
+	get rendered?
 		return (__F & $EL_RENDERED$) != 0
 
-	def rendering?
+	get rendering?
 		return (__F & $EL_RENDERING$) != 0
 	
-	def scheduled?
+	get scheduled?
 		return (__F & $EL_SCHEDULED$) != 0
 
-	def hydrated?
+	get hydrated?
 		return (__F & $EL_HYDRATED$) != 0
 
 	def schedule
