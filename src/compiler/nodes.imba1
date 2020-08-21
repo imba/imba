@@ -9959,7 +9959,8 @@ export class RootScope < Scope
 
 	def globalRef
 		let js = "(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))"
-		@globalRef ||= declare('global$',LIT(js))
+		# @globalRef ||= declare('global$',LIT(js))
+		@globalRef ||= LIT('globalThis')
 		
 	def activateExports
 		if STACK.cjs and !@hasExports
