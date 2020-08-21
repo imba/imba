@@ -40,8 +40,9 @@ class CustomElementRegistry
 root.customElements ||= new CustomElementRegistry
 
 export def getElementType typ
+	let name = typ
 	if typeof typ == 'string'
-		typ = TYPES[typ] or MAP[typ] or TYPES[typ + 'Element']
+		typ = TYPES[typ] or MAP[typ] or TYPES[typ + 'Element'] or MAP['svg_' + typ]
 
 	if !typ
 		return getElementType('HTML')
@@ -58,7 +59,7 @@ export def getElementType typ
 			continue if existing[name] or name == 'style'
 
 			Object.defineProperty(typ.klass.prototype,key,{
-				set: do |value|
+				set: do(value)
 					this.setAttribute(name,value)
 					return
 				get: do this.getAttribute(name)
