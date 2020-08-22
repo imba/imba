@@ -192,7 +192,8 @@ for entry in cfg.entries
 		}
 		plugins.unshift(alias-plugin(o))
 	
-	plugins.unshift(imba-plugin(target: target))
+	let iopts = Object.assign({target: target},entry.options or {})
+	plugins.unshift(imba-plugin(iopts))
 
 	if options.serve and target == 'web' and !serving
 		serving = true
