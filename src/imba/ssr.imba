@@ -169,6 +169,18 @@ export class StyleDeclaration
 				items.push("{k}: {v}")
 		return items.join(';')
 
+class DataSet
+	static def wrap node
+		new Proxy(node.attributes,new DataSet)
+	
+	def set target, key, value
+		target["data-" + key] = value
+		return true
+
+	def get target, key
+		target["data-" + key]
+
+
 export class Node
 
 	def toString
@@ -215,6 +227,9 @@ export class Element < Node
 
 	get style
 		$style ||= new StyleDeclaration
+
+	get dataset
+		$dataset ||= DataSet.wrap(self)
 
 	get richValue
 		value
