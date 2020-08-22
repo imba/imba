@@ -7486,7 +7486,10 @@ export class TagSwitchFragment < TagLike
 	def js o
 		var parts = []
 
-		var top = @inserts.join(' = ') + ' = null'
+		var top = ''
+		if @inserts.len
+			top = @inserts.join(' = ') + ' = null'
+
 		var out = body.c(o)
 		
 		return out if STACK.tsc
