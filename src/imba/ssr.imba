@@ -268,7 +268,7 @@ export class Element < Node
 		self.getAttribute(ns + ':' + key)
 
 	def removeAttribute key
-		console.log "removeAttribute not implemented on server"
+		delete self.attributes[key]
 		true
 	
 	# noop
