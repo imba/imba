@@ -593,8 +593,15 @@ export class Stack
 		@symbols[ref] ||= @root.declare(ref,LIT('Symbol()'),system: yes).resolve.c
 
 	def sfcid
-		@sfcid ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
-		
+		return @sfcid if @sfcid
+		let src = sourcePath
+		let cwd = self.cwd
+		# relativize the cwd thing
+		if @options:path and cwd
+			src = @options:path.relative(cwd,src)
+		@sfcid = helpers.identifierForPath(src)
+		return @sfcid
+	
 	def fid
 		sfcid
 
@@ -623,9 +630,15 @@ export class Stack
 		@options:filename
 
 	def sourcePath
-		@options:sourcePath
+		# TODO should merge sourcePath and filename
+		@options:sourcePath or filename
+
+	def config
+		@options:config or {}
 	
-	
+	def cwd
+		config && config:cwd
+
 	def es6
 		@es6 ?= !!(@options:es6 or @options:es2015 or env('IMBA_ES6'))
 

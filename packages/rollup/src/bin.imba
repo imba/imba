@@ -88,23 +88,26 @@ var serving = no
 
 var imbac = require(path.resolve(lib.path,'dist','compiler.js'))
 
-def imbaPlugin options
-	options = Object.assign({
+def imbaPlugin o
+	o = Object.assign({
 		sourceMap: {},
 		bare: true,
 		extensions: ['.imba', '.imba2'],
 		ENV_ROLLUP: true
-		# ,imbaPath: lib.path
-	}, options || {})
+	}, o || {})
 
-	var extensions = options.extensions
-	delete options.extensions
-	delete options.include
-	delete options.exclude
+	var extensions = o.extensions
+	delete o.extensions
+	delete o.include
+	delete o.exclude
 
 	return {
-		transform: do |code, id|
-			var opts = Object.assign({},options,{sourcePath: id, filename: id})
+		transform: do(code, id)
+			var opts = Object.assign({},o,{sourcePath: id, filename: id})
+
+			opts.fs || Object.defineProperty(opts,'fs',{value: fs, enumerable:false})
+			opts.path || Object.defineProperty(opts,'path',{value: path, enumerable:false})
+
 			var output
 			return null if extensions.indexOf(path.extname(id)) === -1
 

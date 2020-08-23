@@ -9,6 +9,7 @@ var rewriter = require './rewriter'
 export var parser = require('../../build/parser')['parser']
 var ast = require './nodes'
 
+import resolveConfigFile from './imbaconfig'
 import ImbaParseError from './errors'
 
 # Instantiate a Lexer for our use here.
@@ -21,6 +22,11 @@ var rewriter = Rewriter.new
 parser:lexer = lex.jisonBridge
 parser:yy = ast # everything is exported right here now
 
+# normalize compiler options, resolve imbaconfig.json++
+export def resolveConfig o = {}
+	let path = o:sourcePath or o:filename
+	o:config ||= resolveConfigFile(path,o) or {}
+	return o
 
 export def tokenize code, o = {}
 	try
@@ -49,6 +55,7 @@ export def rewrite tokens, o = {}
 
 
 export def parse code, o = {}
+	o = resolveConfig(o)
 	var tokens = code isa Array ? code : tokenize(code,o)
 	try
 		o.@source ||= code if tokens != code

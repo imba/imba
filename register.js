@@ -14,6 +14,18 @@ if(cacheDir){
 function cacheFile(filename) {	
 	var content;
 
+	const options = {
+		filename: filename,
+		sourcePath: filename,
+		target: 'node',
+		evaling: true
+	}
+
+	Object.defineProperties(options,{
+		fs: {value: fs, enumerable:false},
+		path: {value: path, enumerable:false}
+	})
+
 	if(cacheDir) {
 		var cacheName = cachePrefix + '-' + filename.replace(/\//g,'__') + '.js';
 		var cachePath = path.join(cacheDir,cacheName);
@@ -30,12 +42,7 @@ function cacheFile(filename) {
 	}
 
 	if (!content) {
-		var compiled = compiler.compile(fs.readFileSync(filename,'utf8'),{
-			filename: filename,
-			sourcePath: filename,
-			target: 'node',
-			evaling: true
-		});
+		var compiled = compiler.compile(fs.readFileSync(filename,'utf8'),options);
 
 		content = compiled.js;
 

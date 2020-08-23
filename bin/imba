@@ -39,11 +39,14 @@ function run(code,pars) {
 	
 	var Module = require('module').Module;
 	main.paths = Module._nodeModulePaths(path.dirname(filename));
-	
+
+	if(!pars.fs) Object.defineProperty(pars,'fs',{value: fs, enumerable:false});
+	if(!pars.path) Object.defineProperty(pars,'path',{value: path, enumerable:false});
+
 	if (path.extname(main.filename) != '.imba' || require.extensions) {
-		arguments[1].target || (arguments[1].target = 'node');
+		pars.target || (pars.target = 'node');
 		// arguments[1].standalone || (arguments[1].standalone = true);
-		var content = compiler.compile(code,arguments[1]);
+		var content = compiler.compile(code,pars);
 		return main._compile((content.js || content),main.filename);
 	} else {
 		return main._compile(code,main.filename);
@@ -56,6 +59,9 @@ if (require.extensions) {
 	require.extensions['.imba'] = function(mod,filename) {
 		var options = {filename: filename,target: 'node',format: 'cjs'};
 		
+		Object.defineProperty(options,'fs',{value: fs, enumerable:false});
+		Object.defineProperty(options,'path',{value: path, enumerable:false});
+
 		var body = fs.readFileSync(filename,'utf8');
 		var content = compiler.compile(body,options);
 		return mod._compile((content.js),filename);
@@ -76,6 +82,9 @@ function main(){
 	} else if ((!o.main && !o.eval) || o.help) {
 		return console.log(help);
 	};
+
+	Object.defineProperty(o,'fs',{value: fs, enumerable:false});
+	Object.defineProperty(o,'path',{value: path, enumerable:false});
 	
 	if (o.es6) {
 		process.env.IMBA_ES6 = true;

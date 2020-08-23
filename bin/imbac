@@ -50,6 +50,9 @@ function CLI(options){
 	this._options = options;
 	this._sources = [];
 	this._current = null;
+	if(!options.fs) Object.defineProperty(options,'fs',{value: fs, enumerable:false});
+	if(!options.path) Object.defineProperty(options,'path',{value: path, enumerable:false});
+	
 	this;
 };
 
@@ -314,6 +317,8 @@ CLI.prototype.compileFile = function (src){
 		srcp = srcpAbs;
 		dstp = dstpAbs;
 	};
+
+	opts.filename = srcpAbs;
 	
 	try {
 		if (src.filename.match(/\.imba1$/)) {
