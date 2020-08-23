@@ -53,6 +53,7 @@ import alias-plugin from '@rollup/plugin-alias'
 import json-plugin from '@rollup/plugin-json'
 import replace-plugin from '@rollup/plugin-replace'
 import serve-plugin from 'rollup-plugin-serve'
+import {terser} from 'rollup-plugin-terser'
 import hmr-plugin from 'rollup-plugin-livereload'
 
 def resolveImba basedir
@@ -179,10 +180,15 @@ for entry in cfg.entries
 	let target = entry.target or 'web'
 	let plugins = (entry.plugins ||= [])
 	let resolver = resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json'])
+
+	if entry.output && entry.output.compact
+		plugins.unshift(terser())
+
 	plugins.unshift(commonjs-plugin())
 	plugins.unshift(json-plugin())
 	plugins.unshift(resolver)
 	plugins.unshift(replace-plugin({'process.env.NODE_ENV': '"' + (process.env.NODE_ENV or 'production') + '"' }))
+	
 	
 	if Object.keys(alias).length
 		let parts = for own k,v of alias

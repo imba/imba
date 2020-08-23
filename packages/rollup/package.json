@@ -9,7 +9,7 @@
     }
   ],
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=14.0.0"
   },
   "directories": {},
   "bin": {
@@ -30,6 +30,7 @@
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-livereload": "^1.0.4",
     "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-serve": "^1.0.1"
+    "rollup-plugin-serve": "^1.0.1",
+    "rollup-plugin-terser": "^7.0.0"
   }
 }
