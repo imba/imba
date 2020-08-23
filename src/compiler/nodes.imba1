@@ -560,7 +560,7 @@ export class Stack
 		@sfcid = null
 		@semanticTokens = []
 		@symbols = {}
-		@theme = StyleTheme.new
+		@theme = null
 		self
 	
 	def registerSemanticToken token, kind, modifiers
@@ -604,6 +604,9 @@ export class Stack
 	
 	def fid
 		sfcid
+
+	def theme
+		@theme = config:theme or StyleTheme.new(config:styles)
 
 	def stash
 		@stash
@@ -9218,7 +9221,7 @@ export class StyleIdentifier < StyleTerm
 	prop color
 
 	def visit stack
-		if let c = stack.theme:colors[toString]
+		if let c = stack.theme.$color(toString)
 			color = self:param ? c.alpha(self:param.toAlpha) : c
 		
 		super

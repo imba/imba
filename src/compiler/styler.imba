@@ -271,8 +271,17 @@ export class Color
 		l = l
 		a = a
 		
-	def alpha v = '100%'
-		new Color(name,h,s,l,v)
+	def alpha a = '100%'
+		new Color(name,h,s,l,a)
+
+	def clone
+		new Color(name,h,s,l,a)
+
+	def mix other, hw = 0.5, sw = 0.5, lw = 0.5
+		let	h1 = h + (other.h - h) * hw
+		let	s1 = s + (other.s - s) * sw
+		let	l1 = l + (other.l - l) * lw
+		return new Color(name + other.name,h1,s1,l1)
 	
 	def toString
 		"hsla({h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
@@ -346,7 +355,7 @@ export class Calc
 		
 
 # This has to move into StyleTheme class
-var palette = {
+var defaultPalette = {
 	current: {string: "currentColor"}
 	transparent: new Color('transparent',0,0,100,'0%')
 	clear: new Color('transparent',100,100,100,'0%')
@@ -354,22 +363,30 @@ var palette = {
 	white: new Color('white',0,0,100,'100%')
 }
 
-for own name,variations of colors
-	for own subname,raw of variations
-		let path = name + subname
-		
-		# are these just aliases?
-		if palette[raw]
-			palette[path] = palette[raw]
-		else
-			let rgb = conv.hex.rgb(raw)
-			let [h,s,l] = conv.rgb.hsl(rgb)
-			let color = palette[path] = new Color(path,h,s,l,'100%')
-			
-		if subname.match(/^\d00$/)
-			palette[name + subname[0]] = palette[path]
+def parseColorString str
+	if let m = str.match(/hsl\((\d+), *(\d+\%), *(\d+\%?)/)
+		let h = parseInt(m[1])
+		let s = parseInt(m[2])
+		let l = parseInt(m[3])
+		return [h,s,l]
+	elif str[0] == '#'
+		return conv.rgb.hsl(conv.hex.rgb(str))
 
-var colorRegex = new RegExp('\\b(' + Object.keys(palette).join('|') + ')\\b')
+
+def parseColors palette, colors
+	for own name,variations of colors
+		for own subname,raw of variations
+			let path = name + subname
+
+			if palette[raw]
+				palette[path] = palette[raw]
+			else
+				let [h,s,l] = parseColorString(raw)
+				let color = palette[path] = new Color(path,h,s,l,'100%')
+	return palette
+
+parseColors(defaultPalette,colors)
+
 var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
 
 export class StyleTheme
@@ -380,15 +397,13 @@ export class StyleTheme
 	static def propAbbr name
 		abbreviations[name] or name
 		
-	def constructor 
+	def constructor ext = {}
 		options = theme
-		
-	def parseColors
-		self
-		
-	get colors
-		palette
-		
+		palette = Object.assign({},defaultPalette)
+
+		if ext.colors
+			parseColors(palette,ext.colors)
+
 	def expandProperty name
 		return aliases[name] or undefined
 		
@@ -702,6 +717,41 @@ export class StyleTheme
 
 	# def shadow ...params
 	#	{}
+
+	def $color name
+
+		if palette[name]
+			return palette[name]
+
+		if let m = name.match(/^(\w+)(\d)(?:\-(\d+))?$/)			
+			let ns = m[1]
+			let nr = parseInt(m[2])
+			let fraction = parseInt(m[3]) or 0
+			let from = null
+			let to = null
+			let n0 = nr + 1
+			let n1 = nr
+
+			while n0 > 1 and !from
+				from = palette[ns + (--n0)]
+
+			while n1 < 9 and !to
+				to = palette[ns + (++n1)]
+
+			let weight = ((nr - n0) + (fraction / 10)) / (n1 - n0)
+			let hw = weight, sw = weight, lw = weight
+
+			if !to
+				to = palette.blue9
+				hw = 0
+			
+			if !from
+				from = palette.blue1
+				hw = 1
+
+			if from and to
+				return palette[name] = from.mix(to,hw,sw,lw)
+		null
 		
 	def $u number, part
 		let [step,num,unit] = config.NUMBER.match(/^(\-?[\d\.]+)(\w+|%)?$/)
@@ -710,17 +760,10 @@ export class StyleTheme
 	
 	def $parseColor identifier
 		let key = String(identifier)
-
-		if let m = key.match(colorRegex)
-			let color = self.colors[m[1]]
-			let rest = key.replace(colorRegex,'')
-			# console.log 'found color!!'
-			# identifier.color = color
-			if m = rest.match(/^\-(\d+)$/)
-				color = color.alpha(m[1] + '%')
-			# let name = key.replace(colorRegex,'COLOR').replace(/\-/g,'_')
+		if let color = $color(key)
 			return color
-		elif key.match(/^#[a-fA-F0-9]{3,8}/)
+
+		if key.match(/^#[a-fA-F0-9]{3,8}/)
 			return identifier
 			
 		elif key.match(/^(rgb|hsl)/)
