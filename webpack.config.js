@@ -29,7 +29,7 @@ module.exports = (env, argv) =>[{
 	module: modules,
 	// output: Object.assign({library: 'imba'},umd,{filename: `./dist/imba.js`}),
 	output: {
-		filename: './dist/imba.js',
+		filename: './dist/imba.webpack.js',
 		globalObject: 'typeof self !== \'undefined\' ? self : this',
 		path: __dirname
 	},

@@ -2,7 +2,7 @@
 var imbac = require('./dist/compiler.js');
 var extname = require('path').extname;
 
-exports.default = function imba(options) {
+exports.default = function(options) {
   options = Object.assign({
     sourceMap: {},
     bare: true,

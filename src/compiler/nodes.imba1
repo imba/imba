@@ -10062,6 +10062,7 @@ export class RootScope < Scope
 
 	def imbaDependency path
 		return if OPTS:imbaPath === null or OPTS:standalone or OPTS:target == 'tsc'
+		return if OPTS:imbaFormat == 'script'
 		@dependencies[path] ||= if true
 			let str = "'{OPTS:imbaPath or 'imba'}/src/imba/{path}'"
 			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
