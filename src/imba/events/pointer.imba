@@ -234,7 +234,7 @@ def Event.touch$handle
 	let el = element
 	let id = state.pointerId
 	current = state
-	return id == e.pointerId if id
+	return id == e.pointerId if id != undefined
 
 	let t = state = handler.state = current = new Touch(e,handler,el)
 
@@ -246,6 +246,7 @@ def Event.touch$handle
 		let typ = e.type
 		let ph = t.phase
 		t.event = e
+		
 		try handler.handleEvent(t)
 
 		if typ == 'pointerup' or typ == 'pointercancel'
