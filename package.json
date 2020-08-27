@@ -44,9 +44,9 @@
     "test": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba",
     "test-fast": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba -c",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
-    "build": "node scripts/bootstrap.js && webpack --mode=none",
+    "build": "node scripts/bootstrap.js && webpack --mode=none && rollup -c rollup.config.js",
     "prerelease": "lerna publish --dist-tag pre",
-    "watch": "npm run build -- --watch"
+    "watch": "npm run build -- --watch && rollup --watch -c rollup.config.js"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.89",
