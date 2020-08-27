@@ -131,7 +131,7 @@ var STYLE_PROPERTY = ///^
 ///
 
 var STYLE_PROPERTY2 = ///^
-	([^\s]+)(?=\:([^\:]|$))
+	([\w\-\$\@\.\!]+)(?=\:([^\:]|$))
 ///
 
 var STYLE_MODIFIERS = ///^
