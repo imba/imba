@@ -333,7 +333,7 @@ export const states = {
 	]
 
 	catch_start: [
-		[/@id/,'identifier.decl-const','@>_catch']
+		[/@id/,'identifier.decl-const',switchTo:'@>_catch']
 		[/.?/,'@rematch',switchTo:'@>_catch']
 	]
 
