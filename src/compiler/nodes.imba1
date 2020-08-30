@@ -3803,6 +3803,8 @@ export class InterpolatedString < Node
 
 	def js o
 		var kind = String(option("open") or '"')
+		if kind:length == 3
+			kind = kind[0]
 		# creating the string
 		var parts = []
 		var str = @noparen ? '' : '('
