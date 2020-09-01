@@ -138,7 +138,6 @@ export const aliases =
 	tes: 'text-emphasis-style'
 	tep: 'text-emphasis-position'
 	tet: 'text-emphasis-thickness'
-	tesi: 'text-decoration-skip-ink'
 		
 	# text
 	tt: 'text-transform'
