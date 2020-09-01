@@ -327,6 +327,12 @@ export class ImbaDocument
 			line: content.slice(offset,lineOffsets[pos.line + 1]).replace(/[\r\n]+/,'')
 		}
 
+		if group
+			if group.start
+				before.group = content.slice(group.start.offset,offset)
+			if group.end
+				after.group = content.slice(offset,group.end.offset)
+
 		let suggest = {
 			keywords: []
 		}
