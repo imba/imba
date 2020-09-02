@@ -318,11 +318,13 @@ export class ImbaDocument
 		let meta = {}
 
 		const before = {
+			character: content[offset - 1]
 			line: content.slice(linePos,offset)
 			token: tok.value.slice(0,tokPos)
 		}
 
 		const after = {
+			character: content[offset]
 			token: tok.value.slice(tokPos)
 			line: content.slice(offset,lineOffsets[pos.line + 1]).replace(/[\r\n]+/,'')
 		}
@@ -540,7 +542,7 @@ export class ImbaDocument
 		let tokens = []
 		let prev = head
 		let entity = null
-		let scope\any = new Root(seed,null,'root')
+		let scope\any = new Root(self,seed,null,'root')
 		let log = console.log.bind(console)
 		let lastDecl = null
 		let legacy = isLegacy
@@ -598,7 +600,7 @@ export class ImbaDocument
 							scopetype = scopetype.slice(idx + 1)
 							ctor = ScopeTypeMap[scopetype] || Group
 
-						scope = tok.scope = new ctor(tok,scope,scopetype,types)
+						scope = tok.scope = new ctor(self,tok,scope,scopetype,types)
 						if lastDecl
 							lastDecl.body = scope
 							scope.symbol = lastDecl
@@ -610,7 +612,7 @@ export class ImbaDocument
 						scope = scope.pop(tok)
 					
 					elif subtyp == 'open' and ScopeTypeMap[typ]
-						scope = tok.scope = new (ScopeTypeMap[typ])(tok,scope,typ,types)
+						scope = tok.scope = new (ScopeTypeMap[typ])(self,tok,scope,typ,types)
 
 					elif subtyp == 'close' and ScopeTypeMap[typ]
 						scope = scope.pop(tok)

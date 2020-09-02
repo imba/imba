@@ -32,7 +32,8 @@ export class Node
 	end
 	parent
 
-	def constructor token, parent, type
+	def constructor doc, token, parent, type
+		doc = doc
 		start = token
 		end = null
 		type = type
@@ -89,8 +90,7 @@ export class Node
 		$name or ''
 	
 	get value
-		# all the way from start to end
-		''
+		doc.content.slice(start.offset,end ? end.offset : -1)
 
 	get next
 		end ? end.next : null
@@ -105,8 +105,8 @@ export class Node
 		return yes
 
 export class Group < Node
-	def constructor token, parent, type, parts = []
-		super(token,parent,type)
+	def constructor doc, token, parent, type, parts = []
+		super(doc, token,parent,type)
 
 	get scope
 		parent.scope
@@ -134,8 +134,8 @@ export class StyleRuleNode < Group
 
 export class Scope < Node
 
-	def constructor token, parent, type, parts = []
-		super(token,parent,type)
+	def constructor doc, token, parent, type, parts = []
+		super(doc, token,parent,type)
 		children = []
 		entities = []
 		refs = []
