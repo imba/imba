@@ -49,7 +49,7 @@
     "watch": "npm run build -- --watch && rollup --watch -c rollup.config.js"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.91",
+  "version": "2.0.0-alpha.92",
   "licenses": [
     {
       "type": "MIT",
