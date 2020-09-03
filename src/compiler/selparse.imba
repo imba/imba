@@ -138,18 +138,18 @@ export def rewrite rule,ctx,o = {}
 
 		for mod in mods when mod.special
 			
-			let [m,pre,name,post] = (mod.name.match(/^(\$|\.+|is-|up-)?([^\~\+]*)([\~\+]*)$/) or [])
+			let [m,pre,name,post] = (mod.name.match(/^(\$|\.+)?([^\~\+]*)([\~\+]*)$/) or [])
 			let hit
 			let media
 			let neg = mod.name[0] == '!'
 
-			if pre == '.' or pre == 'is-'
+			if pre == '.'
 				# console.log 'class mod!!',mod
 				addClass(modTarget,name)
 				mod.remove = yes
 				specificity++
 			
-			elif pre == '..' or pre == 'up-'
+			elif pre == '..'
 				prev ||= root.rule = {type: 'rule',classNames:[],rule:root.rule}
 				addClass(modTarget = prev,name)
 				mod.remove = yes

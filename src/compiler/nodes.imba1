@@ -9010,8 +9010,7 @@ export class StyleProperty < StyleNode
 		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=[\.\@])/g) # .split(/[\.\@]/g)
 		
 		for part,i in @parts
-			# @parts[i] = part.replace(/^\.\./,'@up-').replace(/^\./,'@is-')
-			@parts[i] = part.replace(/^\./,'@.') # .replace(/^\./,'@is-')
+			@parts[i] = part.replace(/^\./,'@.')
 			
 		# @parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
 		@name  = String(@parts[0])
