@@ -44,9 +44,12 @@
     "test": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba",
     "test-fast": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba -c",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
-    "build": "node scripts/bootstrap.js && webpack --mode=none && rollup -c rollup.config.js",
-    "prerelease": "lerna publish --dist-tag pre",
-    "watch": "npm run build -- --watch && rollup --watch -c rollup.config.js"
+    "build": "npm run bootstrap && rollup -c rollup.config.js",
+    "watch": "npm run bootstrap && rollup --watch -c rollup.config.js",
+    "build-compiler": "npm run bootstrap && webpack --mode=none",
+    "watch-compiler": "npm run bootstrap && webpack --mode=none --watch",
+    "prerelease": "lerna publish --dist-tag pre"
+    
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.92",
@@ -75,6 +78,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^9.0.0",
+    "chokidar": "^3.4.2",
     "puppeteer": "^2.1.1",
     "raw-loader": "^3.1.0",
     "rollup": "^1.32.1",
