@@ -437,6 +437,11 @@ class ImbaElementRegistry
 
 imba.tags = new ImbaElementRegistry()
 
+# asset handling
+import * as assets from './assets'
+
+imba.registerAsset = assets.register
+imba.createAssetElement = assets.create
 
 # root.customElements.define('imba-element',ImbaElement)
 

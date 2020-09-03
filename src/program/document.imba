@@ -302,6 +302,29 @@ export class ImbaDocument
 				return tok
 		return tok
 
+	def patternAtOffset offset, matcher = /[\w\-\.\%]/
+		let from = offset
+		let to = offset
+		let str = content
+
+		while from > 0 and matcher.test(content[from - 1])
+			from--
+
+		while matcher.test(content[to + 1] or '')
+			to++
+
+		let value = str.slice(from,to + 1)
+		return [value,from,to]
+
+	def adjustmentAtOffset offset,amount = 1
+		let [word,start,end] = patternAtOffset(offset)
+		let [pre,post] = word.split(/[\d\.]+/)
+		let num = parseFloat(word.slice(pre.length).slice(0,post.length ? -post.length : 1000))
+		if !Number.isNaN(num)
+			num += amount
+			return [start + pre.length,word.length - pre.length - post.length,String(num)]
+		return null
+
 	def contextAtOffset offset
 		ensureParsed!
 

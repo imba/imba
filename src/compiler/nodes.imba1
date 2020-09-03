@@ -11,6 +11,7 @@ import Token from './token'
 import SourceMap from './sourcemap'
 
 import StyleRule,StyleTheme,Color from './styler.imba'
+import parseAsset from './assets.imba'
 
 var TAG_NAMES = constants.TAG_NAMES
 
@@ -591,6 +592,10 @@ export class Stack
 	def getSymbol ref
 		ref ||= incr('symbols')
 		@symbols[ref] ||= @root.declare(ref,LIT('Symbol()'),system: yes).resolve.c
+
+	def getAsset name
+		let assets = config:assets 
+		assets ? assets[name] : null
 
 	def sfcid
 		return @sfcid if @sfcid
@@ -1639,7 +1644,7 @@ export class Block < ListNode
 		var l = ast:length
 		# really?
 		var express = isExpression or o.isExpression or (option(:express) and isExpressable)
-		return '' if ast:length == 0
+		return '' if ast:length == 0 and (!@head or @head:length == 0)
 
 		if express
 			return super(o,nodes: ast)
@@ -2648,7 +2653,7 @@ export class Root < Code
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)
 		
-		var out = c
+		var out = c(o)
 
 		if STACK.tsc
 			out = "import 'imba/index';\n{out}"
@@ -2663,6 +2668,7 @@ export class Root < Code
 			options: o,
 			toString: (do this:js)
 			styles: scope.styles,
+			assets: scope.assets,
 			sfcid: @scope.sfcid
 		}
 		
@@ -5397,7 +5403,13 @@ export class TagTypeIdentifier < Identifier
 		@ns == 'svg' and TAG_TYPES.SVG.indexOf(@str) >= 0
 
 	def isSVG
-		@ns == 'svg' or (!isNative and !@ns and TAG_NAMES["svg_{@str}"]) # TAG_TYPES.SVG.indexOf(@str) >= 0 
+		@ns == 'svg' or (!isNative and !@ns and TAG_NAMES["svg_{@str}"]) or isAsset # TAG_TYPES.SVG.indexOf(@str) >= 0
+
+	def isAsset
+		!!@str.match(/^svg\-/)
+
+	def toAssetName
+		isAsset ? @str.slice(4) : null
 		
 	def symbol
 		@str
@@ -7625,6 +7637,13 @@ export class Tag < TagLike
 		else
 			@kind = 'element'
 
+		if type isa TagTypeIdentifier
+			if type.isAsset
+				@assetName = type.toAssetName
+				@asset = scope__.root.lookupAsset(@assetName)
+				@isAsset = yes
+				@isSVG = yes
+
 		if attrs:length == 0 && !@options:type
 			@options:type = 'fragment'
 			
@@ -7821,9 +7840,15 @@ export class Tag < TagLike
 	def isSVG
 		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or (@parent and @parent.isSVG))
 	
+	def isAsset
+		@isAsset or no
+		# type isa TagTypeIdentifier and type.isAsset
+	
 	def create_
 		if isFragment or isSlot
 			LIT('imba.createLiveFragment')
+		elif isAsset
+			LIT('imba.createAssetElement')
 		elif isSVG
 			LIT('imba.createSVGElement')
 		elif isComponent
@@ -7867,6 +7892,9 @@ export class Tag < TagLike
 
 		var dynamicKey = null
 		var ownCache = no
+
+		if @asset
+			typ = "'{@assetName}'"
 
 		var slotPath = isSlot ? OP('.',LIT("{fragment.root.tvar}.__slots"),STR(option(:name))).c : ""
 
@@ -9927,6 +9955,7 @@ export class RootScope < Scope
 	prop object
 	prop styles
 	prop options
+	prop assets
 
 	def initialize
 		super
@@ -9961,6 +9990,7 @@ export class RootScope < Scope
 		@scopes   = []
 		@helpers  = []
 		@styles = []
+		@assets = {}
 		@selfless = yes
 		@implicitAccessors = []
 		@entities = RootEntities.new(self)
@@ -9979,14 +10009,21 @@ export class RootScope < Scope
 		@context ||= RootScopeContext.new(self)
 
 	def globalRef
-		let js = "(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))"
-		# @globalRef ||= declare('global$',LIT(js))
 		@globalRef ||= LIT('globalThis')
 		
 	def activateExports
 		if STACK.cjs and !@hasExports
 			@hasExports = yes
 			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
+	
+	def lookupAsset name
+		unless @assets[name]
+			let asset = STACK.getAsset(name)
+			registerAsset(name,asset)
+		return @assets[name]
+
+	def registerAsset name, asset
+		@assets[name] = asset
 
 	def lookup name
 		name = helpers.symbolize(name)
@@ -10090,11 +10127,27 @@ export class RootScope < Scope
 
 	def c o = {}
 		o:expression = no
-		# need to fix this
-		node.body.head = head
-		var body = node.body.c(o)
 
-		return body
+		let body = node.body.c(o)
+		let assetCount = Object.keys(assets):length
+
+		if assetCount
+			head.push LIT('// ASSETS-START')
+
+		for own name, asset of assets
+			try
+				let parsed = parseAsset(asset,name)
+				let body = JSON.stringify(parsed)
+				let out = "imba.registerAsset('{name}',{body})"
+				head.push LIT(out)
+
+		if assetCount
+			head.push LIT('// ASSETS-END')
+
+		let pre = Block.new([])
+		pre.head = head
+				
+		return pre.c(o) + '\n' + body
 
 export class ModuleScope < Scope
 

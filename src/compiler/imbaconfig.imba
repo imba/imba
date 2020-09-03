@@ -16,8 +16,17 @@ export def resolveConfigFile dir,{path,fs}
 		config.cwd ||= dir
 		if config.styles
 			config.theme ||= new StyleTheme(config.styles)
-
-		# console.log 'resolved config',config
+		
+		let assetsDir = path.resolve(dir,'assets')
+		let assets = config.assets ||= {}
+		# look for assets directory
+		if fs.existsSync(assetsDir)
+			const entries = fs.readdirSync(assetsDir)
+			for entry in entries when entry.match(/\.svg/)
+				let src = path.resolve(assetsDir,entry)
+				let name = path.basename(src,'.svg')
+				let body = fs.readFileSync(src,'utf8')
+				assets[name] = {body: body}
 		return cached[src] = config
 	else
 		cached[src] = null
