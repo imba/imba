@@ -13,7 +13,8 @@ export def create name, parent, flags
 		for own k,v of asset.attributes
 			el.setAttribute(k,v)
 		
-		el.flags$ns = el.className = asset.flags.join(' ')
+		el.flags$ns = asset.flags.join(' ')
+		el.className = (el.flags$ns + ' ' + flags).trim!
 		el.innerHTML = asset.content
 		if parent and parent isa Node
 			el.insertInto$(parent)
@@ -26,12 +27,10 @@ export def create name, parent, flags
 				el.setAttribute(k,v)
 			el.innerHTML = asset.content
 			el.className.baseVal = asset.flags.join(' ')
-			# el.flags$ns = 
 			asset.node = el
 		
 		let el = asset.node.cloneNode(yes)
-		el.flags$ns = el.className.baseVal
-		let cls = el.className.baseVal
+		let cls = el.flags$ns = el.className.baseVal
 		el.className.baseVal = cls + ' ' + flags
 		if parent and parent isa Node
 			el.insertInto$(parent)
