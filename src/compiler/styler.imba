@@ -180,10 +180,10 @@ export const aliases =
 	rdtr: 'border-top-right-radius'
 	rdbl: 'border-bottom-left-radius'
 	rdbr: 'border-bottom-right-radius'
-	rdt: ['rdtl','rdtr']
-	rdb: ['rdbl','rdbr']
-	rdl: ['rdtl','rdbl']
-	rdr: ['rdtr','rdbr']
+	rdt: ['border-top-left-radius','border-top-right-radius']
+	rdb: ['border-bottom-left-radius','border-bottom-right-radius']
+	rdl: ['border-top-left-radius','border-bottom-left-radius']
+	rdr: ['border-top-right-radius','border-bottom-right-radius']
 	
 	# background
 	bg: 'background'
@@ -814,7 +814,7 @@ export class StyleTheme
 				config = 'sizing'
 			elif config.match(/^[trblwh]$/)
 				config = 'sizing'
-			elif config.match(/^border-.*radius/)
+			elif config.match(/^border-.*radius/) or config.match(/^rd[tlbr]{0,2}$/)
 				config = 'radius'
 				fallback = 'border-radius'
 			elif config.match(/^box-shadow/)
