@@ -5710,7 +5710,7 @@ export class New < Call
 
 		# var out = "{M(keyword or 'new',keyword)} {callee.c}"
 		var out = "{M('new',keyword)} {M(callee.c,callee)}"
-		out += '()' unless o.parent isa Call
+		out += '()' unless (o.parent isa Call or o.parent isa BangCall)
 		out
 
 
@@ -7443,7 +7443,8 @@ export class TagContent < TagLike
 		if parent isa TagSwitchFragment or (@tvar and parent isa Tag and (parent.isSlot or isDetached))
 			# what if it is a call?
 			parts.push("{@tvar}={value.c(o)}")
-			if value isa Call
+
+			if value isa Call or value isa BangCall
 				# mark parent to reset imba.ctx at the end
 				let k = "{parent.cvar}[{osym('$')}]"
 				parts.unshift("imba.ctx=({k} || ({k}=\{_:{fragment.tvar}\}))")
@@ -7458,10 +7459,10 @@ export class TagContent < TagLike
 
 		else
 			parts.push("{vvar}={value.c(o)}")
-			
+
 			let inskey = "{parent.cvar}[{osym(:i)}]"
 
-			if value isa Call
+			if value isa Call or value isa BangCall
 				# let k = "{parent.cvar}[{osym.c}]"
 				let k = "{parent.cvar}[{osym('$')}]"
 				# mark parent to reset imba.ctx at the end
