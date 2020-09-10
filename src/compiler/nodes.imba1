@@ -1749,6 +1749,7 @@ export class ClassField < Node
 
 	def visit
 		@decorators = up?.collectDecorators
+		@classdecl = STACK.up(ClassDeclaration)
 		@name.traverse if @name and @name:traverse
 
 		if value
@@ -1807,7 +1808,10 @@ export class ClassField < Node
 						out = "{typ}\n{out}"
 
 			elif self isa ClassAttribute
-				out = "{prefix}set {name}{setter.c(keyword: '')}\n{prefix}get {name}{getter.c(keyword: '')}"
+				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
+				let getter = "{prefix}get {name}{self.getter.c(keyword: '')}"
+				let delim = (@classdecl && @classdecl.isExtension ? ',\n' : '\n')
+				out = "{setter}{delim}{getter}"
 			
 		elif !STACK.tsc
 			if isStatic and up isa ClassInitBlock
@@ -2788,6 +2792,9 @@ export class ClassDeclaration < Code
 
 	def isStruct
 		keyword and String(keyword) == 'struct'
+	
+	def isExtension
+		option(:extension)
 
 	def initialize name, superclass, body
 		# what about the namespace?
