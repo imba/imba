@@ -5502,10 +5502,7 @@ export class Argvar < ValueNode
 
 # CALL
 
-export class BangCall < ValueNode
-	
-	def c
-		"{@value.c}()"
+
 		
 export class DoPlaceholder < Node
 
@@ -5529,7 +5526,7 @@ export class Call < Node
 		@opexists = opexists
 		# some axioms that share the same syntax as calls will be redirected from here
 		if callee isa BangCall
-			callee = callee.value
+			callee = callee.@callee
 
 		if callee isa VarOrAccess
 			var str = callee.value.symbol
@@ -5664,13 +5661,7 @@ export class Call < Node
 
 		return out
 
-
-
-
-export class ImplicitCall < Call
-
-	def js o
-		"{callee.c}()"
+export class BangCall < Call
 
 export class Instantiation < ValueNode
 
