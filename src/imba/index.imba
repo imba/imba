@@ -445,6 +445,9 @@ imba.createAssetElement = assets.create
 
 # root.customElements.define('imba-element',ImbaElement)
 
+def imba.getElementById id
+	document.getElementById(id)
+
 def imba.createElement name, parent, flags, text, ctx
 	var el = document.createElement(name)
 		

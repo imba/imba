@@ -276,7 +276,7 @@ var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 
 # optimize for FixedArray
 var INDEXABLE = [
 	'IDENTIFIER', 'STRING', 'REGEX', ')', ']', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN'
-	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAG_REF','TAGID','INDEX_END','CALL_END'
+	'NUMBER', 'BOOL', 'TAG_SELECTOR', 'ARGUMENTS','}','TAG_TYPE','TAG_REF','INDEX_END','CALL_END'
 ]
 
 var NOT_KEY_AFTER = ['.','?','?.','UNARY','??','+','-','*']

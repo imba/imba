@@ -116,6 +116,8 @@ export class Document
 	def createDocumentFragment
 		return new DocumentFragment
 
+	def getElementById id
+		return null
 
 # could optimize by using a dictionary in addition to keys
 # where we cache the indexes?

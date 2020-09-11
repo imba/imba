@@ -133,7 +133,6 @@ var IMPLICIT_CALL_MAP =
 	'++': 1
 	'---': 1
 	'+++': 1
-	'TAGID': 1
 	'#': 1
 	'TAG_START': 1
 	'PARAM_START': 1

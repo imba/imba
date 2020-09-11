@@ -4472,9 +4472,6 @@ export class Access < Op
 			ctx.cache(force: yes)
 			pre = ctx.c + " && "
 		
-		
-		
-		
 
 		# really?
 		# var ctx = (left || scope__.context)
@@ -4488,15 +4485,14 @@ export class Access < Op
 
 
 		out = pre + out
+
+		if pre
+			out = "({out})"
 		return out
 
 	def visit
 		left.traverse if left
 		right.traverse if right
-		
-		if right isa Identifier and right.toRaw == 'new'
-			console.log 'NEW access!!!'
-			
 		return
 
 	def isExpressable
@@ -5253,14 +5249,14 @@ export class Private < Identifier
 	# 	return '' + symbol
 			
 
-export class TagIdRef < Identifier
+export class TagIdRef < ValueNode
 
 	def initialize v
 		@value = v isa Identifier ? v.value : v
 		self
 
-	def c
-		"{scope__.imba.c}.getTagSingleton('{value.c.substr(1)}')"
+	def js
+		"{scope__.imba.c}.getElementById('{value.c}')"
 
 
 # This is not an identifier - it is really a string
