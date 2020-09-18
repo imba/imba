@@ -247,7 +247,7 @@ extend class HTMLButtonElement
 			toggled ? bindRemove(data,val) : bindAdd(data,val)
 		else
 			self.data = toggled ? null : val
-		
+		end$!
 		imba.commit!
 
 	def end$

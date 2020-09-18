@@ -229,6 +229,7 @@ export const MAP = {
 	small:1
 	source:52
 	span:53
+	strike:1
 	strong:1
 	style:54
 	sub:1
