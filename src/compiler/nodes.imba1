@@ -5925,11 +5925,11 @@ export class If < ControlFlow
 			node.flag(F.TAG_HAS_BRANCHES)
 				
 			if node.body == self
-				let branches = [@body]
+				let branches = @body ? [@body] : []
 				let alt = @alt
 				
 				while alt isa If
-					branches.push(alt.@body)
+					branches.push(alt.@body) if alt.@body
 					alt = alt.@alt
 				
 				if alt
