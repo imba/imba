@@ -1018,6 +1018,7 @@ var grammar =
 	# A catch clause names its error and runs a block of code.
 	Catch: [
 		o 'CATCH CATCH_VAR Block' do Catch.new(A3,A2)
+		o 'CATCH Block' do Catch.new(A2,null)
 		# o 'CATCH CATCH_VAR Expression' do Catch.new(A3,A2)
 	]
 
