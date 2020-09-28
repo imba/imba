@@ -29,3 +29,32 @@ def main
 test do
 	eq main!,[200,100]
 
+def lettry
+	let x = try
+		"hello"
+
+test do
+	eq lettry!,"hello"
+
+def constif bool
+	const x = if bool
+		for b in [1,2,3]
+			b * 20
+		1
+	else
+		0
+
+test do
+	eq constif(false),0
+	eq constif(true),1
+
+def consttry bool
+	const x = try
+		bool && Math.methodNotFound!
+		1
+	catch e
+		2
+
+test do
+	eq consttry(false),1
+	eq consttry(true),2

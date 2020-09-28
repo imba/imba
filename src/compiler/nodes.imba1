@@ -996,6 +996,8 @@ export class Node
 		if node isa Assign
 			# node.right = self
 			return OP(node.op,node.left,self)
+		elif node isa VarDeclaration
+			return OP('=',node.left,self)
 		elif node isa Op
 			return OP(node.op,node.left,self)
 		elif node isa Return
@@ -1951,7 +1953,6 @@ export class VarDeclList < Block
 	def consume node
 		if @nodes:length == 1
 			return @nodes[0].consume(node)
-
 		return self
 
 
@@ -2520,6 +2521,9 @@ export class VarDeclaration < Node
 	prop kind
 	prop left
 	prop right
+
+	def op
+		'='
 	
 	def type
 		@kind
@@ -2552,13 +2556,20 @@ export class VarDeclaration < Node
 
 	def isExpressable
 		no
-		
+
 	def consume node
 		if node isa TagLike
 			return self
-		
+
 		if node isa PushAssign or node isa Return
-			return Block.new([self,BR,@left.consume(node)])
+			let ast = self
+			if right and !right.isExpressable
+				let temp = scope__.temporary(self)
+				let ast = right.consume(OP('=',temp,NULL))
+				right = temp
+				return Block.new([ast,BR,self.consume(node)])
+
+			return Block.new([ast,BR,@left.consume(node)])
 
 		if node isa Return
 			return Block.new([self,BR,@left.consume(node)])
@@ -2567,8 +2578,10 @@ export class VarDeclaration < Node
 		
 	def c o
 		if right and !right.isExpressable
-			# TODO write failing tests and make them pass
-			return right.consume(self).c(o)
+			let temp = scope__.temporary(self)
+			let ast = right.consume(OP('=',temp,NULL))
+			right = temp
+			return Block.new([ast,BR,self]).c(o)
 		# testing this
 		return super(o)
 		
@@ -7399,6 +7412,8 @@ class TagLike < Node
 
 		if node isa Assign
 			return OP(node.op,node.left,self)
+		elif node isa VarDeclaration
+			return OP('=',node.left,self)
 		elif node isa Op
 			return OP(node.op,node.left,self)
 		elif node isa Return
