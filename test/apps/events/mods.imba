@@ -23,3 +23,18 @@ tag D
 		<div @click.flag-busy>
 		
 imba.mount <C>
+
+
+# custom emit
+tag E
+	def longHandler
+		await new Promise do setTimeout($1,1000)
+
+	<self @click.mod-clicking=longHandler>
+		<div>
+
+test do
+	let el = <E>
+	imba.mount el
+	el.click!
+	ok document.documentElement.classList.contains("mod-clicking")

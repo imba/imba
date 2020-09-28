@@ -56,11 +56,14 @@ def Event.flag$mod name,sel
 		let elapsed = Date.now! - ts
 		let delay = Math.max(250 - elapsed,0)
 		setTimeout(&,delay) do el.flags.decr(name)
-
 	return true
 	
 def Event.busy$mod sel
 	return Event.flag$mod.call(this,'busy',250,sel)
+
+def Event.mod$mod name
+	return Event.flag$mod.call(this,"mod-{name}",document.documentElement)
+
 
 # could cache similar event handlers with the same parts
 export class EventHandler
@@ -155,7 +158,7 @@ export class EventHandler
 
 						args[i] = value
 
-			if typeof handler == 'string' and m = handler.match(/^(emit|flag|moved|pin|fit|refit|map|remap)-(.+)$/)
+			if typeof handler == 'string' and m = handler.match(/^(emit|flag|mod|moved|pin|fit|refit|map|remap)-(.+)$/)
 				modargs = args = [] unless modargs
 				args.unshift(m[2])
 				handler = m[1]
