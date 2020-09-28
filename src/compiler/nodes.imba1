@@ -8803,6 +8803,8 @@ export class StyleRuleSet < StyleNode
 					@sel = String(@selectors).trim or '&'
 					if @sel.match(/^\>{1,3}/)
 						@sel = "& {@sel}"
+					elif @sel.match(/^\@/) and !@sel.match(/&/)
+						@sel = "&{@sel}"
 
 					# @sel = @sel.replace('&',".{cmp.cssns}_")
 					# @sel = "& {@sel}" if @sel.indexOf('&') == -1

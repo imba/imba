@@ -78,3 +78,15 @@ test 'inline precedence' do
 	eqcss app.$p2, 700
 
 # test media query precedence
+
+tag A
+	css $button fw:500
+
+	<self>
+		<button$button[fw:600]> "600"
+
+tag B < A
+	css $button fw:700
+
+test '$sel == inline' do	
+	eqcss <B>,700,0
