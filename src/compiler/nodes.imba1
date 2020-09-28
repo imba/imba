@@ -1769,6 +1769,9 @@ export class ClassField < Node
 	def storageKey
 		@storageKey ||= STR(name.c + '$$')
 
+	def storageMap
+		@storageMap ||= scope__.root.declare(null,LIT('new WeakMap()'))
+
 	def isPlain
 		!@decorators and (!@value or @value.isPrimitive)
 
@@ -1807,7 +1810,7 @@ export class ClassField < Node
 					if let typ = TYP(self,'jsdoc')
 						out = "{typ}\n{out}"
 
-			elif self isa ClassAttribute
+			elif self isa ClassAttribute or (@decorators && @decorators:length > 0)
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
 				let getter = "{prefix}get {name}{self.getter.c(keyword: '')}"
 				let delim = (@classdecl && @classdecl.isExtension ? ',\n' : '\n')
@@ -1862,15 +1865,15 @@ export class ClassField < Node
 	def getter
 		@getter ||= if true
 			# let op = OP('.',THIS,storageKey)
-			let op = CALL(GET(@storage,'get'),[THIS])
+			let op = CALL(GET(storageMap,'get'),[THIS])
 			let getter = op
-			if value # and (!(value isa Str) and !(value isa Str) and !(value isa Bool) or @decorators)
+			if value and false # and (!(value isa Str) and !(value isa Str) and !(value isa Bool) or @decorators)
 				let inlined = (value isa Num) or (value isa Str) or (value isa Bool)
-				let has = CALL(GET(@storage,'has'),[THIS])
+				let has = CALL(GET(storageMap,'has'),[THIS])
 				if inlined
 					op = METH([],[If.ternary(has,op,value)])
 				else
-					let setter = CALL(GET(@storage,'set'),[THIS,value])
+					let setter = CALL(GET(storageMap,'set'),[THIS,value])
 					op = IF(OP('!',has),setter)
 					op = METH([],[op,BR,getter])
 				op.traverse
@@ -1883,7 +1886,7 @@ export class ClassField < Node
 
 	def setter
 		@setter ||= if true
-			let op = CALL(GET(@storage,'set'),[THIS,LIT('value')])
+			let op = CALL(GET(storageMap,'set'),[THIS,LIT('value')])
 			# OP('=',OP('.',THIS,storageKey),LIT('value'))
 			FN([LIT('value')],[op]).set(noreturn: true)
 
