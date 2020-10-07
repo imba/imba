@@ -6,4 +6,5 @@ export def extendTag$ el,cls
 	return el
 
 export def iter$ obj
-	return obj ? (obj.toIterable ? obj.toIterable() : obj) : []
+	let iter 
+	return obj ? ((iter = obj.toIterable) ? iter.call(obj) : obj) : []
