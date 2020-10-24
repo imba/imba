@@ -480,18 +480,18 @@ export const states = {
 	member_: [
 		# [/static(?=\s+(get|set|def) )/,'keyword.static'] # only in class and tagclass?
 		[/(constructor)@B/, 'entity.name.constructor','@>def_params&$1/$1']
-		[/(def|get|set)(\s)(@id)/, ['keyword.$1','white.entity','entity.name.$1','@>def_params&$1/$1']]
+		[/(def|get|set)(\s)(@defid)/, ['keyword.$1','white.entity','entity.name.$1','@>def_params&$1/$1']]
 		[/(def|get|set)(\s)(\[)/, ['keyword.$1','white.entity','$$','@>def_dynamic_name/$1']]
 	]
 
 	func_: [
 		[/export(?=\s+(get|set|def|global) )/,'keyword.export'] # only in class and tagclass?
 		[/global(?=\s+(get|set|def) )/,'keyword.global'] # only in class and tagclass?
-		[/(def)(\s)(@id)(\.)(@id)/,[
+		[/(def)(\s)(@id)(\.)(@defid)/,[
 			'keyword.$1','white.entity','identifier.target','operator','entity.name.def', '@>def_params&$1/$1'
 		]]
 
-		[/(def)(\s)(@id)/, ['keyword.$1','white.entity','entity.name.function.decl-const-func','@>def_params&$1/$1']]
+		[/(def)(\s)(@defid)/, ['keyword.$1','white.entity','entity.name.function.decl-const-func','@>def_params&$1/$1']]
 	]
 	
 	flow_: [
@@ -540,8 +540,8 @@ export const states = {
 	]
 
 	decorator_: [
-		[/(\@@id)(\()/,['decorator','$2','@_decorator_params']]
-		[/(\@@id)/,'decorator']
+		[/(@decid)(\()/,['decorator','$2','@_decorator_params']]
+		[/(@decid)/,'decorator']
 	]
 
 	_decorator_params: [
@@ -1167,6 +1167,11 @@ export const grammar = {
 	# anyIdentifier: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*/
 	# anyIdentifierOpt: /(?:@anyIdentifier)?/
 	id: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
+	plainid: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
+	defid: /[\@\#]*@plainid/
+	decid: /\@@plainid/
+	symid: /\#@plainid/
+	symref: /\#\#@plainid/
 	optid: /(?:@id)?/
 	esmIdentifier: /[\@\%]?[A-Za-z_\$]@subIdentifer/
 	propertyPath: /(?:[A-Za-z_\$][A-Za-z\d\-\_\$]*\.)?(?:[A-Za-z_\$][A-Za-z\d\-\_\$]*)/
