@@ -85,6 +85,7 @@ var SINGLE_CLOSERS_MAP =
 
 var IMPLICIT_FUNC_MAP =
 	'IDENTIFIER': 1
+	'SYMBOLID': 1
 	'SUPER': 1
 	'@': 1
 	'THIS': 1
@@ -103,6 +104,7 @@ var IMPLICIT_FUNC_MAP =
 var IMPLICIT_CALL_MAP =
 	'SELECTOR': 1
 	'IDENTIFIER': 1
+	'SYMBOLID': 1
 	'NUMBER': 1
 	'STRING': 1
 	'SYMBOL': 1
@@ -154,7 +156,7 @@ var IDENTIFIERS = ['IDENTIFIER', 'IVAR', 'DECORATOR', 'ARGVAR']
 
 
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
-var IMPLICIT_FUNC    = ['IDENTIFIER', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
+var IMPLICIT_FUNC    = ['IDENTIFIER', 'SYMBOLID', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 'CVAR',
 	'ARGVAR', 'BREAK', 'CONTINUE','RETURN','BANG'
 ]

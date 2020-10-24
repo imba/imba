@@ -2440,6 +2440,7 @@ export class ScopeVariables < ListNode
 
 	# for later, moz-ast style
 	prop kind
+	prop split
 
 	# we want to register these variables in
 	def add name, init, pos = -1
@@ -2469,16 +2470,32 @@ export class ScopeVariables < ListNode
 		var groups = {}
 
 		nodes.forEach do |item|
-			let typ = item.@variable and item.@variable.type
-			groups[typ] ||= []
-			groups[typ].push(item.@variable)
+			let variable = item.@variable or item
+
+			let typ = variable isa Variable and variable.type
+			if typ
+				groups[typ] ||= []
+				groups[typ].push(item)
+			# elif item.@variable
+			#	console.log 'variable without type'
+			# else
+			#	console.log "no variable type?? {item:constructor} {item.type}"
 
 		if groups['let'] and (groups['var'] or groups['const'])
-			groups['let'].forEach do |item| item.@virtual = yes
+			groups['let'].forEach do |item|
+				(item.@variable or item).@virtual = yes
+
 		elif groups['let'] and !o.es5
 			keyword = 'let'
 
 		# FIX PERFORMANCE
+		# This is used in let scope as well - inflexible
+		if split and true
+			let out2 = []
+			for own k,v of groups
+				out2.push "{k} {AST.cary(v).join(', ')};"
+			return out2.join("\n")
+
 		var out = AST.compact(AST.cary(nodes)).join(", ")
 		out ? "{keyword} {out}" : ""
 
@@ -4090,7 +4107,7 @@ export class ObjAttr < Node
 		# if key isa Identifier and String(key.@value)[0] == '@'
 		# 	key = Ivar.new(key)
 
-		if key isa IdentifierExpression
+		if key isa IdentifierExpression or key isa SymbolIdentifier
 			# streamline this interface
 			kjs = key.asObjectKey
 		elif key.isReserved
@@ -4440,6 +4457,7 @@ export class Access < Op
 		@right = r
 		return self
 
+	
 	def startLoc
 		(@left or @right).startLoc
 
@@ -4471,7 +4489,7 @@ export class Access < Op
 				[rgt isa Identifier ? rgt.toStr : rgt]
 			).c()
 
-		if rgt isa Num
+		if rgt isa Num or rgt isa SymbolIdentifier
 			return ctx.c + "[" + rgt.c + "]"
 
 		# is this right? Should not the index compile the brackets
@@ -4515,6 +4533,7 @@ export class Access < Op
 	def visit
 		left.traverse if left
 		right.traverse if right
+		@left ||= scope__.context
 		return
 
 	def isExpressable
@@ -5198,6 +5217,21 @@ export class DecoratorIdentifier < Identifier
 		
 	def toString
 		symbol
+
+export class SymbolIdentifier < Identifier
+	
+	def c
+		variable.c
+		# "Symbol.for('imba.{@value.slice(2)}')"
+
+	def variable
+		@variable ||= scope__.root.symbolRef(@value.slice(0).replace(/^[\@\#]+/,''))
+
+	def asObjectKey
+		"[{c}]"
+
+	def toString
+		c
 		
 export class MixinIdentifier < Identifier
 	
@@ -10017,6 +10051,8 @@ export class RootScope < Scope
 		@object = Obj.wrap({})
 		@head = [@vars]
 		@dependencies = {}
+		@symbolRefs = {}
+		@vars.split = yes
 		self
 
 	def sfcid
@@ -10143,6 +10179,10 @@ export class RootScope < Scope
 			map[name] = declare(shorthand,OP('.',imba,name), system: yes)
 		else
 			map[name] = "{imbaRef.c}.{name}"
+
+	def symbolRef name
+		let map = @symbolRefs
+		map[name] ||= declare("{name}$",LIT("Symbol.for('\#{name}')"), type: 'const', system: yes)
 		
 
 	def c o = {}

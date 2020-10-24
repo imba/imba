@@ -255,6 +255,11 @@ var grammar =
 	Identifier: [
 		o 'IDENTIFIER' do Identifier.new A1
 	]
+
+	SymbolIdentifier: [
+		o 'SYMBOLID' do SymbolIdentifier.new A1
+	]
+	
 	
 	DecoratorIdentifier: [
 		o 'DECORATOR' do DecoratorIdentifier.new A1
@@ -320,6 +325,7 @@ var grammar =
 	# through and printed to JavaScript.
 	Literal: [
 		o 'AlphaNumeric'
+		o 'SYMBOLREF' do SymbolIdentifier.new(A1)
 		o 'JS' do Literal.new A1
 		o 'REGEX' do RegExp.new A1
 		o 'BOOL' do Bool.new A1
@@ -448,6 +454,7 @@ var grammar =
 		o 'TagTypeName' do Tag.new(type: A1)
 		o 'TagOptions INDEX_START ArgList INDEX_END' do A1.addPart(A3,AST.TagData)
 		o 'TagOptions TAG_ID' do A1.addPart(A2,AST.TagId)
+		o 'TagOptions SYMBOLID' do A1.addPart(IdentifierExpression.new(A2.cloneSlice(1)),AST.TagId)
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
 		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
@@ -572,6 +579,7 @@ var grammar =
 
 	SimpleObjAssignable: [
 		o 'Identifier'
+		o 'SymbolIdentifier'
 		o 'Key'
 	]
 
@@ -640,6 +648,7 @@ var grammar =
 	MethodIdentifier: [
 		o 'Identifier'
 		o 'DecoratorIdentifier'
+		o 'SymbolIdentifier' do InterpolatedIdentifier.new(A1)
 		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
 	]
 
@@ -770,11 +779,13 @@ var grammar =
 		o 'Argvar'
 		o 'Self' # not sure if self should be assignable really
 		o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
+		o 'SymbolIdentifier' do Access.new('.',null,A1) # LocalIdentifier.new(A1)
 
 		# FIXME this isn really assignable?
 		# o 'Value . NEW' do LegacyNew.new(A1).set(keyword: A3)
 		# o 'Value . Super' do SuperAccess.new('.',A1,A3)
 		o 'Value SoakableOp Identifier' do AST.OP(A2,A1,A3) # PropertyAccess.new(A2,A1,A3) # TODO change to regular access
+		o 'Value SoakableOp SymbolIdentifier' do IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3) # PropertyAccess.new(A2,A1,A3) # TODO change to regular access
 		o 'Value INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
 	]
 
@@ -916,6 +927,7 @@ var grammar =
 
 	ClassField: [
 		o 'Identifier' do ClassField.new(A1)
+		o 'SymbolIdentifier' do ClassField.new(A1)
 		o 'PROP Identifier' do ClassField.new(A2).set(keyword: A1)
 		o 'ATTR Identifier' do ClassAttribute.new(A2).set(keyword: A1)
 		o 'ClassField TypeAnnotation' do A1.set(datatype: A2)

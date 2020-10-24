@@ -49,6 +49,9 @@ export class Token
 	def slice i
 		@value.slice(i)
 
+	def cloneSlice i
+		Token.new(@type,slice(i),@loc,@len)
+
 	def region
 		[@loc,@loc + @len] #  or @value:length)
 

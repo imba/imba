@@ -74,7 +74,7 @@ var METHOD_IDENTIFIER = /// ^
 # added hyphens to identifiers now - to test
 var IDENTIFIER = /// ^
 	(
-		(\$|@|\%)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
+		(\$|##|#|@|\%)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]?
 	)
 	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
@@ -271,7 +271,7 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 var UNFINISHED = ['\\','.','UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'COMPOUND_ASSIGN', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
-var CALLABLE  = ['IDENTIFIER', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END']
+var CALLABLE  = ['IDENTIFIER','SYMBOLID', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END']
 
 # optimize for FixedArray
 var INDEXABLE = [
@@ -956,13 +956,19 @@ export class Lexer
 			typ = 'ENV_FLAG'
 			id = id.toUpperCase # .slice(1, -1)
 
-		elif typ == '#'
-			typ = 'IVAR'
+		# elif typ == '#'
+		#	typ = 'IVAR'
 
 		elif typ == '@'
 			typ = 'DECORATOR'
 		
+		elif typ == '#'
+			typ = 'SYMBOLID'
+		elif typ == '##'
+			typ = 'SYMBOLREF'
+		
 		elif typ == '%'
+			# use for something else
 			typ = 'MIXIN'
 
 		elif typ == '$' and !colon
