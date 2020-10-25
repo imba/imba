@@ -872,16 +872,16 @@ var grammar =
 	]
 
 	ClassStart: [
-		o 'CLASS Identifier ClassConstructorParams ClassBody' do ClassDeclaration.new(A2, null, A4).set(keyword: A1,params: A3)
-		o 'CLASS Identifier ClassConstructorParams' do ClassDeclaration.new(A2, null, []).set(keyword: A1,params: A3)
-		o 'CLASS Identifier ClassBody' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
-		o 'CLASS Identifier' do ClassDeclaration.new(A2, null, []).set(keyword: A1)
+		o 'CLASS ClassName ClassConstructorParams ClassBody' do ClassDeclaration.new(A2, null, A4).set(keyword: A1,params: A3)
+		o 'CLASS ClassName ClassConstructorParams' do ClassDeclaration.new(A2, null, []).set(keyword: A1,params: A3)
+		o 'CLASS ClassName ClassBody' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'CLASS ClassName' do ClassDeclaration.new(A2, null, []).set(keyword: A1)
 		
 		o 'CLASS ClassBody' do ClassDeclaration.new(null, null, A2).set(keyword: A1)
-		o 'CLASS Identifier ClassConstructorParams COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A5, A6).set(keyword: A1, params: A3)
-		o 'CLASS Identifier ClassConstructorParams COMPARE Expression' do ClassDeclaration.new(A2, A6, []).set(keyword: A1, params: A3)
-		o 'CLASS Identifier COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
-		o 'CLASS Identifier COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
+		o 'CLASS ClassName ClassConstructorParams COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A5, A6).set(keyword: A1, params: A3)
+		o 'CLASS ClassName ClassConstructorParams COMPARE Expression' do ClassDeclaration.new(A2, A6, []).set(keyword: A1, params: A3)
+		o 'CLASS ClassName COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
+		o 'CLASS ClassName COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
 		o 'CLASS COMPARE Expression ClassBody' do ClassDeclaration.new(null, A3, A4).set(keyword: A1)
 	]
 	
@@ -889,9 +889,18 @@ var grammar =
 		o 'CALL_START ParamList CALL_END' do A2
 	]
 
-	ClassIdentifier: [
+
+
+	ClassName: [
 		# o '' do null
-		o 'IDENTIFIER' do Identifier.new(A1)
+		# o 'SYMBOLID'
+		# o 'Identifier' # do ClassIdentifier.new(A1)
+		o 'Identifier' # do ClassName.new(A1)
+		o 'SymbolIdentifier' do Access.new('.',null,A1) # IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3)
+		o 'ClassName . Identifier' do AST.OP(A2,A1,A3)
+		o 'ClassName . SymbolIdentifier' do IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3)
+		# ClassName.new(A3,A1) # AST.OP(A2,A1,A3)
+		# o 'Value . SymbolIdentifier' do IndexAccess.new(A2,A1,A3)
 	]
 
 	ClassBody: [
