@@ -1,4 +1,4 @@
-import {Event} from './dom'
+const {Event,Element} = imba.dom
 
 const keyCodes = {
 	esc: [27],
@@ -43,7 +43,7 @@ def Event.throttle$mod ms = 250
 	
 def Event.flag$mod name,sel
 	# console.warn 'event flag',self,arguments,id,step
-	let el = sel isa global.Element ? sel : (sel ? element.closest(sel) : element)
+	let el = sel isa imba.dom.Element ? sel : (sel ? element.closest(sel) : element)
 	return true unless el
 	let step = step
 	state[step] = id
@@ -62,7 +62,7 @@ def Event.busy$mod sel
 	return Event.flag$mod.call(this,'busy',250,sel)
 
 def Event.mod$mod name
-	return Event.flag$mod.call(this,"mod-{name}",document.documentElement)
+	return Event.flag$mod.call(this,"mod-{name}",imba.document.documentElement)
 
 
 # could cache similar event handlers with the same parts
@@ -220,7 +220,7 @@ export class EventHandler
 				res = context[handler].apply(context,args)
 
 			if res and res.then isa Function and res != imba.scheduler.$promise
-				imba.$commit! if commit
+				imba.#commit! if commit
 				awaited = yes
 				# TODO what if await fails?
 				res = await res
@@ -232,10 +232,44 @@ export class EventHandler
 			state.value = res
 		
 		imba.emit(state,'end',state)
-		
-		imba.$commit! if commit
+		imba.#commit! if commit
+
 		self.currentEvents.delete(event)
 		if self.currentEvents.size == 0
 			self.emit('idle')
 		# what if the result is a promise
 		return
+
+
+# Extend element with the needed methods
+extend class Element
+
+	def emit name, detail, o = {bubbles: true}
+		o.detail = detail if detail != undefined
+		let event = new CustomEvent(name, o)
+		let res = self.dispatchEvent(event)
+		return event
+
+	def on$ type, mods, scope
+		let check = 'on$' + type
+		let handler
+
+		# check if a custom handler exists for this type?
+		if self[check] isa Function
+			handler = self[check](mods,scope)
+
+		handler = new EventHandler(mods,scope)
+		let capture = mods.capture
+		let passive = mods.passive
+
+		let o = capture
+
+		if passive
+			o = {passive: passive, capture: capture}
+		
+		if (/^(pointerdrag|touch)$/).test(type)
+			handler.type = type
+			type = 'pointerdown'
+			
+		self.addEventListener(type,handler,o)
+		return handler

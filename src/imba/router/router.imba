@@ -159,7 +159,7 @@ export class Router
 		while t
 			if t.nodeName == 'A'
 				a ||= t
-			if t.$routeTo
+			if t.#routeTo
 				r ||= t
 			t = t.parentNode
 

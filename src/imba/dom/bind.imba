@@ -1,4 +1,4 @@
-import {Element,HTMLInputElement,HTMLSelectElement,HTMLButtonElement,HTMLOptionElement,HTMLTextAreaElement} from '../dom'
+# import {Element,HTMLInputElement,HTMLSelectElement,HTMLButtonElement,HTMLOptionElement,HTMLTextAreaElement} from '../dom'
 
 const toBind = {
 	INPUT: yes
@@ -50,7 +50,7 @@ def createProxyProperty target
 ###
 Data binding
 ###
-extend class Element
+extend class imba.dom.Element
 	def getRichValue
 		self.value
 
@@ -74,12 +74,12 @@ extend class Element
 		Object.defineProperty(self,key,o isa Array ? createProxyProperty(o) : o)
 		return o
 
-Object.defineProperty(Element.prototype,'richValue',{
+Object.defineProperty(imba.dom.Element.prototype,'richValue',{
 	get: do this.getRichValue()
 	set: do(v) this.setRichValue(v)
 })
 
-extend class HTMLSelectElement
+extend class imba.dom.HTMLSelectElement
 
 	def change$ e
 		let model = self.data
@@ -130,7 +130,7 @@ extend class HTMLSelectElement
 	def end$
 		self.syncValue()
 
-extend class HTMLOptionElement
+extend class imba.dom.HTMLOptionElement
 	def setRichValue value
 		$$value = value
 		self.value = value
@@ -140,7 +140,7 @@ extend class HTMLOptionElement
 			return $$value
 		return self.value
 
-extend class HTMLTextAreaElement
+extend class imba.dom.HTMLTextAreaElement
 	def setRichValue value
 		$$value = value
 		self.value = value
@@ -159,7 +159,7 @@ extend class HTMLTextAreaElement
 			self.value = self.data
 
 
-extend class HTMLInputElement
+extend class imba.dom.HTMLInputElement
 	
 	def input$ e
 		let typ = self.type
@@ -219,7 +219,7 @@ extend class HTMLInputElement
 				self.richValue = self.data
 		return
 		
-extend class HTMLButtonElement
+extend class imba.dom.HTMLButtonElement
 
 	get checked
 		$checked

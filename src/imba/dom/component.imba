@@ -1,6 +1,8 @@
-import {HTMLElement} from '../dom'
+# import {HTMLElement} from '../dom'
 
-export class ImbaElement < HTMLElement
+const DOM = imba.dom
+
+class imba.dom.ImbaElement < imba.dom.HTMLElement
 	def constructor
 		super()
 		if flags$ns
@@ -158,3 +160,85 @@ export class ImbaElement < HTMLElement
 		__F = __F & (~$EL_MOUNTED$ & ~$EL_MOUNTING$)
 		unschedule() if __F & $EL_SCHEDULED$
 		unmount()
+
+
+# Stuff for element registry
+
+const CustomTagConstructors = {}
+
+class ImbaElementRegistry
+
+	def constructor
+		types = {}
+
+	def lookup name
+		return types[name]
+
+	def get name, klass
+		return DOM.ImbaElement if !name or name == 'component'
+		return types[name] if types[name]
+		return DOM.getElementType(name) if $node$
+		return DOM[klass] if klass and DOM[klass]
+		DOM.customElements.get(name) or DOM.ImbaElement
+
+	def create name
+		if types[name]
+			# TODO refactor
+			return types[name].create$()
+		else
+			imba.document.createElement(name)
+
+	def define name, klass, options = {}
+		types[name] = klass
+		klass.nodeName = name
+
+		let proto = klass.prototype
+		
+		# if proto.render && proto.end$ == Element.prototype.end$
+		#	proto.end$ = proto.render
+		let basens = proto._ns_
+		if options.ns
+			let ns = options.ns
+			let flags = ns + ' ' + ns + '_ '
+			if basens
+				flags += proto.flags$ns 
+				ns += ' ' + basens
+			proto._ns_ = ns
+			proto.flags$ns = flags
+
+		if options.extends
+			CustomTagConstructors[name] = klass
+		else
+			DOM.customElements.define(name,klass)
+		return klass
+
+imba.tags = new ImbaElementRegistry
+
+const proto = imba.dom.ImbaElement.prototype
+
+def imba.createComponent name, parent, flags, text, ctx
+	# the component could have a different web-components name?
+	var el
+	
+	if typeof name != 'string'
+		if name and name.nodeName
+			name = name.nodeName
+
+	if CustomTagConstructors[name]
+		el = CustomTagConstructors[name].create$(el)
+		# extend with mroe stuff
+		
+		el.slot$ = proto.slot$
+		el.__slots = {}
+	else
+		el = imba.document.createElement(name)
+
+	el.##parent = parent
+	el.init$()
+
+	if text !== null
+		el.slot$('__').text$(text)
+		
+	if flags or el.flags$ns # or nsflag
+		el.flag$(flags or '')
+	return el

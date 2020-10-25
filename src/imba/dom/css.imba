@@ -43,6 +43,8 @@ const CSS_STR_PROPS = {
 const CSS_PX_PROPS = /^([xyz])$/
 const CSS_DIM_PROPS = /^([tlbr]|size|[whtlbr]|[mps][tlbrxy]?|[rcxy]?[gs])$/
 
+const ext = imba.css ||= {}
+
 let root
 let resets = '''*,::before,::after {
 	box-sizing: border-box;
@@ -53,26 +55,26 @@ let resets = '''*,::before,::after {
 
 const map = {}
 
-export def setup
+def ext.setup
 	unless root
-		if root = document.documentElement
+		if root = imba.document.documentElement
 			register(resets,'root')
 	
 
-export def register styles, id
+def ext.register styles, id
 	if !map.root and id != 'root'
-		register(resets,'root')
+		ext.register(resets,'root')
 
 	if id and !map[id]
 		let entry = map[id] = {raw: styles}
 		if $web$
-			entry.node = document.createElement('style')
+			entry.node = imba.document.createElement('style')
 			entry.node.textContent = entry.raw
-			document.head.appendChild(entry.node)
+			imba.document.head.appendChild(entry.node)
 
 	return
 
-export def toValue value, unit, key
+def ext.toValue value, unit, key
 	if CSS_STR_PROPS[key]
 		value = String(value)
 
@@ -110,12 +112,25 @@ export def toValue value, unit, key
 
 	return value
 
-export def toStyleSheet
+def ext.toStyleSheet
 	Object.values(map).map(do $1.raw).join('\n\n')
 	
-export def parseDimension val
+def ext.parseDimension val
 	if typeof val == 'string'
 		let [m,num,unit] = val.match(/^([-+]?[\d\.]+)(%|\w+)$/)
 		return [parseFloat(num),unit]
 	elif typeof val == 'number'
 		return [val]
+
+imba.inlineStyles = ext.register
+imba.toStyleValue = ext.toValue
+imba.getAllStyles = ext.toStyleSheet
+
+extend class imba.dom.Element
+	def css$ key, value, mods
+		self.style[key] = value
+		
+	def css$var name, value, unit, key
+		let cssval = ext.toValue(value,unit,key)
+		self.style.setProperty(name,cssval)
+		return

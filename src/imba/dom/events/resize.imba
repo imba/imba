@@ -1,5 +1,5 @@
 
-import {CustomEvent,Element,Event} from '../dom'
+const {Event,CustomEvent,Element} = imba.dom
 
 var resizeObserver = null
 
@@ -7,7 +7,7 @@ def getResizeObserver
 	unless global.ResizeObserver
 		unless resizeObserver
 			console.warn(':resize not supported in this browser')
-			resizeObserver = {observe: do yes}
+			resizeObserver = {observe: (do yes)}
 		
 	resizeObserver ||= new ResizeObserver do(entries)
 		for entry in entries

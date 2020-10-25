@@ -1,4 +1,5 @@
-import {SVGElement} from './dom'
+
+const {Node,SVGElement} = imba.dom
 
 const descriptorCache = {}
 def getDescriptor item,key,cache
@@ -43,3 +44,19 @@ if $web$
 
 		def flagSync$
 			self.className.baseVal = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
+
+
+def imba.createSVGElement name, parent, flags, text, ctx
+	var el = imba.document.createElementNS("http://www.w3.org/2000/svg",name)
+
+	if flags
+		if $node$
+			el.className = flags
+		else
+			el.className.baseVal = flags
+
+	if parent and parent isa Node
+		el.insertInto$(parent)
+	return el
+
+# currently needed for richValue override

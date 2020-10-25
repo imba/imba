@@ -34,10 +34,10 @@ imba.mount <app-root>
 test do
 	ok $(app-root footer)
 	blocks[2].type = 'header'
-	await imba.tick()
+	await imba.commit!
 	ok $(app-root header)
 	$(app-root todo-item span).click()
-	await imba.tick()
+	await imba.commit!
 	# all todos should have been converted
 	ok $(app-root todo-item) == null
 

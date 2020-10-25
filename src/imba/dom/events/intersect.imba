@@ -1,8 +1,14 @@
-import {CustomEvent,Event,Element} from '../dom'
+# import {CustomEvent,Event,Element} from '../dom'
 
 const observers = new (global.WeakMap || Map)
 const defaults = {threshold: [0]}
 const rootTarget = {}
+
+const {Event,CustomEvent,Element} = imba.dom
+
+# const CustomEvent = imba.dom.CustomEvent
+# const Element = imba.dom.Element
+
 
 def Event.intersect$handle
 	let obs = event.detail.observer

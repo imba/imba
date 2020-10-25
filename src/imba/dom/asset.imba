@@ -1,28 +1,27 @@
-import {document,Node} from './dom'
-
 const assets = {}
+const ext = imba.assets ||= {}
 
-export def register name, asset
+def ext.register name, asset
 	assets[name] = asset
 	self
 
-export def create name, parent, flags
+def ext.create name, parent, flags
 	let asset = assets[name]
 	if $node$ # !asset.node
-		let el = document.createElementNS("http://www.w3.org/2000/svg",'svg')
+		let el = imba.document.createElementNS("http://www.w3.org/2000/svg",'svg')
 		for own k,v of asset.attributes
 			el.setAttribute(k,v)
 		
 		el.flags$ns = asset.flags.join(' ') + ' '
 		el.className = (el.flags$ns + flags).trim!
 		el.innerHTML = asset.content
-		if parent and parent isa Node
+		if parent and parent isa imba.dom.Node
 			el.insertInto$(parent)
 		return el
 	
 	if $web$
 		if !asset.node
-			let el = document.createElementNS("http://www.w3.org/2000/svg",'svg')
+			let el = imba.document.createElementNS("http://www.w3.org/2000/svg",'svg')
 			for own k,v of asset.attributes
 				el.setAttribute(k,v)
 			el.innerHTML = asset.content
@@ -32,8 +31,11 @@ export def create name, parent, flags
 		let el = asset.node.cloneNode(yes)
 		let cls = el.flags$ns = el.className.baseVal + ' '
 		el.className.baseVal = cls + flags
-		if parent and parent isa Node
+		if parent and parent isa imba.dom.Node
 			el.insertInto$(parent)
 		return el
 	# if node -- do tiny parsing
 	return null
+
+imba.registerAsset = ext.register
+imba.createAssetElement = ext.create

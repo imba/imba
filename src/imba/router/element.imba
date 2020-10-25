@@ -92,9 +92,8 @@ class ElementRouteTo < ElementRoute
 			node.router.replace(href)
 		else
 			node.router.go(href)
-	
 
-extend class Element
+extend class imba.dom.Element
 
 	#	set router value
 	#		$router = value
@@ -105,58 +104,59 @@ extend class Element
 	#			yes
 	#		$router ||= $context.router
 
-	get route
-		$route
+	
 
 	get parent-route
-		$context.route
+		#context.route
 
 	set route value
-		if $route and $route.raw != value
-			$route.path = value
+		if #route and #route.raw != value
+			#route.path = value
 			return
 
 		let par = value[0] != '/' ? parent-route : null
-		$route = new ElementRoute(self,value,par,route__)
-		# console.log 'setting route!',value,$route,par
+		#route = new ElementRoute(self,value,par,route__)
+
 		self.end$ = self.end$routed
 		
 		self.insertInto$ = do |parent|
 			# should base this on a modifier
-			parent.appendChild$($route.isActive() ? self : $route.placeholder)
+			parent.appendChild$(#route.isActive() ? self : #route.placeholder)
 
+	get route
+		##route
 
 	set route-to value
-		if $route
-			if $route.raw != value
-				$route.path = value
+		if #route
+			if #route.raw != value
+				#route.path = value
 			return
 
 		let par = value[0] != '/' ? parent-route : null
-		$route = $routeTo = new ElementRouteTo(self,value,par,routeTo__)
+		#route = #routeTo = new ElementRouteTo(self,value,par,routeTo__)
 		self.end$ = self.end$routeTo
 
 		self.onclick = do(e)
 			if !e.altKey and !e.metaKey
 				e.preventDefault()
-				$route.go!
+				#route.go!
 		
 
 	def end$routed
-		if $route
-			$route.resolve()
-			return unless $route.isActive()
+		if #route
+			#route.resolve()
+			return unless #route.isActive()
 		
 		visit() if visit
 
 	def end$routeTo
-		if $route
+		if #route
 			
-			let match = $route.resolve!
-			let href = $route.url # $route.route.resolve()	
+			let match = #route.resolve!
+			let href = #route.url
 			# let match = $route.route.test()
 			
-			if $route.sticky and match.url
+			if #route.sticky and match.url
 				
 				href = match.url
 
@@ -184,7 +184,7 @@ extend class Element
 			self..routeDidLoad(params,prev)
 			return self
 
-		$route.load do
+		#route.load do
 			self.routeDidMatch(params)
 			let val
 			try

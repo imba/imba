@@ -841,6 +841,10 @@ export class Node
 		
 	def osym ns = ''
 		STACK.getSymbol(oid + ns)
+
+	# get global symbol with name
+	def gsym name
+		scope__.root.symbolRef(name)
 		
 	def fid
 		STACK.fid
@@ -2729,7 +2733,7 @@ export class Root < Code
 				# maybe do something different when server etc?
 				# css:js = "/* styles from {o:sourcePath} */\n" + css:js
 				
-				result:js = "{result:js}\nimba.inlineStyles({JSON.stringify(result:css)},'{result:fid}');"
+				result:js = "{result:js}\nimba.css.register({JSON.stringify(result:css)},'{result:fid}');"
 				result:js += '\n/*\n' + result:css + '\n*/\n'
 				result:styles:inlined = yes
 
@@ -3039,6 +3043,7 @@ export class ClassDeclaration < Code
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
 		if @staticInit
+			# this means we need to cache it 
 			js = "{js}; {cname}.init$();"
 			
 		# if STACK.tsc
@@ -6868,8 +6873,8 @@ export class TagAttr < TagPart
 			for m in @chain
 				@mods[m.name] = 1
 
-		if @ns == 'bind'
-			scope__.imbaDependency('internal/bind')
+		# if @ns == 'bind'
+		#	scope__.imbaDependency('internal/bind')
 		self
 
 	def ns
@@ -7154,9 +7159,9 @@ export class TagHandler < TagPart
 
 	def visit
 		super
-
-		if @name and CUSTOM_EVENTS[String(@name)]
-			scope__.imbaDependency('events/' + String(@name))
+		# Replace with something better for debugging
+		# if @name and CUSTOM_EVENTS[String(@name)]
+		#	scope__.imbaDependency('events/' + String(@name))
 
 	def isStatic
 		let valStatic = !value or value.isPrimitive or (value isa Func and !value.nonlocals)
@@ -8087,7 +8092,7 @@ export class Tag < TagLike
 				# add "{bvar}={dvar}=1"
 				let k = "{scop.tagCache}[{osym}]"
 				add "({bvar}={dvar}=1,{tvar}={k}) || ({bvar}={dvar}=0,{k}={ctor})"
-				add "{bvar} || ({tvar}.up$={scop.tagCache}._)" # really?
+				add "{bvar} || ({tvar}[{gsym('##up')}]={scop.tagCache}._)" # really? 
 				@ref = tvar
 				o:inline = yes if isExpression
 				# if @consumed:length or @dynamics:length
@@ -8149,7 +8154,7 @@ export class Tag < TagLike
 				@ref = "{tvar}"
 
 				if isDetached or true
-					add "{bvar}||({tvar}.up$={fragment.tvar})"
+					add "{bvar}||({tvar}[{gsym('##up')}]={fragment.tvar})"
 
 				# dont add cvar always!
 				# rule is just "do we need our own cache?"
@@ -8183,7 +8188,7 @@ export class Tag < TagLike
 					add "({tvar} = {ref}) || ({ref}={ctor})"
 
 				if isDetached
-					add "{bvar}||({tvar}.up$={fragment.tvar})"
+					add "{bvar}||({tvar}[{gsym('##up')}]={fragment.tvar})"
 
 				@ref = tvar
 

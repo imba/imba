@@ -1,4 +1,4 @@
-import {CustomEvent,Element} from '../dom'
+const {Event,CustomEvent,Element} = imba.dom
 
 var selHandler
 

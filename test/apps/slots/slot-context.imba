@@ -11,5 +11,5 @@ tag C
 test do
 	imba.mount let app = <B>
 	ok app.children[0].matches('.a')
-	eq app.children[0].$parent,app
+	eq app.children[0].#parent,app
 	

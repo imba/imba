@@ -1,6 +1,5 @@
 var raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (do |blk| setTimeout(blk,1000 / 60))
 
-
 # Scheduler
 export class Scheduler
 	def constructor
@@ -68,3 +67,24 @@ export class Scheduler
 				self.stage = 0
 			raf($ticker)
 		self
+
+# what if we just want to deal with this?
+imba.scheduler = new Scheduler()
+
+imba.#commit = do imba.scheduler.add('render')
+
+imba.commit = do
+	imba.scheduler.add('render')
+	return imba.scheduler.promise
+
+imba.setTimeout = do(fn,ms)
+	setTimeout(&,ms) do
+		fn!
+		imba.#commit!
+		return
+
+imba.setInterval = do(fn,ms)
+	setInterval(&,ms) do
+		fn!
+		imba.#commit!
+		return

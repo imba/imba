@@ -961,7 +961,6 @@ export class Lexer
 
 		elif typ == '@'
 			typ = 'DECORATOR'
-		
 		elif typ == '#'
 			typ = 'SYMBOLID'
 		elif typ == '##'

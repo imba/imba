@@ -1,9 +1,11 @@
-import {DocumentFragment,Element,Text,ShadowRoot,document} from '../dom'
+# import {DocumentFragment,Element,Text,ShadowRoot,document} from '../dom'
 
-extend class DocumentFragment
+const {Element,Text,document} = imba.dom
 
-	get $parent
-		this.up$ or $$parent
+extend class imba.dom.DocumentFragment
+
+	get #parent
+		##up or ##parent
 
 	# Called to make a documentFragment become a live fragment
 	def setup$ flags, options
@@ -27,16 +29,16 @@ extend class DocumentFragment
 		return
 	
 	def insert$ item, options, toReplace
-		if $$parent
+		if ##parent
 			# if the fragment is attached to a parent
 			# we can just proxy the call through
-			$$parent.insert$(item,options,toReplace or $end)
+			##parent.insert$(item,options,toReplace or $end)
 		else
 			Element.prototype.insert$.call(this,item,options,toReplace or $end)
 
 	def insertInto$ parent, before
-		unless $$parent
-			$$parent = parent
+		unless ##parent
+			##parent = parent
 			# console.log 'insertFrgment into',parent,Array.from(self.childNodes)
 			parent.appendChild$(this)
 		return this
@@ -69,54 +71,49 @@ extend class DocumentFragment
 			return false if el isa Element or el isa Text
 		return true
 
-
-extend class ShadowRoot
-	get $parent
-		self.host
-
-class TagCollection
+class VirtualFragment
 	def constructor f, parent
 		__F = f
-		$parent = parent
+		#parent = parent
 
 		if !(f & $TAG_FIRST_CHILD$) and self isa KeyedTagFragment
-			$start = document.createComment('start')
+			$start = imba.document.createComment('start')
 			parent.appendChild$($start) if parent # not if inside tagbranch
 
 		unless f & $TAG_LAST_CHILD$
-			$end = document.createComment('end')
+			$end = imba.document.createComment('end')
 			parent.appendChild$($end) if parent
 
 		self.setup()
 
 	def appendChild$ item, index
 		# we know that these items are dom elements
-		if $end and $parent
+		if $end and #parent
 			$end.insertBeforeBegin$(item)
-		elif $parent
-			$parent.appendChild$(item)
+		elif #parent
+			#parent.appendChild$(item)
 		return
 
 	def replaceWith$ other
 		self.detachNodes()
 		$end.insertBeforeBegin$(other)
-		$parent.removeChild$($end)
-		$parent = null
+		#parent.removeChild$($end)
+		#parent = null
 		return
 
 	def joinBefore$ before
 		self.insertInto$(before.parentNode,before)
 
 	def insertInto$ parent, before
-		unless $parent
-			$parent = parent
+		unless #parent
+			#parent = parent
 			before ? before.insertBeforeBegin$($end) : parent.appendChild$($end)
 			self.attachNodes()
 		return this
 	
 	def replace$ other
-		unless $parent
-			$parent = other.parentNode
+		unless #parent
+			#parent = other.parentNode
 		other.replaceWith$($end)
 		self.attachNodes()
 		self
@@ -124,7 +121,7 @@ class TagCollection
 	def setup
 		self
 
-class KeyedTagFragment < TagCollection
+class KeyedTagFragment < VirtualFragment
 	def setup
 		self.array = []
 		self.changes = new Map
@@ -175,14 +172,14 @@ class KeyedTagFragment < TagCollection
 		elif $start
 			$start.insertAfterEnd$(item)
 		else
-			$parent.insertAfterBegin$(item)
+			#parent.insertAfterBegin$(item)
 		return
 
 	def removeChild item, index
 		# self.map.delete(item)
 		# what if this is a fragment or virtual node?
-		if item.parentNode == $parent
-			$parent.removeChild(item)
+		if item.parentNode == #parent
+			#parent.removeChild(item)
 		return
 
 	def attachNodes
@@ -192,7 +189,7 @@ class KeyedTagFragment < TagCollection
 
 	def detachNodes
 		for item in self.array
-			$parent.removeChild(item)
+			#parent.removeChild(item)
 		return
 
 	def end$ index
@@ -217,7 +214,7 @@ class KeyedTagFragment < TagCollection
 			# self.array.length = index
 		return
 
-class IndexedTagFragment < TagCollection
+class IndexedTagFragment < VirtualFragment
 
 	def setup
 		self.$ = []
@@ -225,9 +222,9 @@ class IndexedTagFragment < TagCollection
 
 	def end$ len
 		let from = self.length
-		return if from == len or !$parent
+		return if from == len or !#parent
 		let array = self.$
-		let par = $parent
+		let par = #parent
 
 		if from > len
 			while from > len
@@ -248,19 +245,19 @@ class IndexedTagFragment < TagCollection
 		let i = 0
 		while i < self.length
 			let item = self.$[i++]
-			$parent.removeChild$(item)
+			#parent.removeChild$(item)
 		return
 
-export def createLiveFragment bitflags, options, par
-	var el = document.createDocumentFragment()
+def imba.createLiveFragment bitflags, options, par
+	var el = imba.document.createDocumentFragment()
 	el.setup$(bitflags, options)
-	el.up$ = par if par
+	el.##up = par if par
 	return el
 
-export def createIndexedFragment bitflags, parent
+def imba.createIndexedFragment bitflags, parent
 	return new IndexedTagFragment(bitflags,parent)
 
-export def createKeyedFragment bitflags, parent
+def imba.createKeyedFragment bitflags, parent
 	return new KeyedTagFragment(bitflags,parent)
 
 

@@ -1,9 +1,10 @@
 # TODO classes should not be global,
 # rather imported where they are needed
 
-var root = (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : null))
-
 import {TYPES,MAP} from './schema'
+
+var imba = global.imba ||= {}
+var DOM = imba.dom ||= {}
 
 var voidElements = {
 	area: yes
@@ -37,7 +38,7 @@ class CustomElementRegistry
 	def whenDefined
 		return
 
-root.customElements ||= new CustomElementRegistry
+DOM.customElements ||= new CustomElementRegistry
 
 export def getElementType typ
 	let name = typ
@@ -67,6 +68,8 @@ export def getElementType typ
 
 	return typ.klass
 
+DOM.getElementType = getElementType
+
 const escapeAttributeValue = do |val|
 	let str = typeof val == 'string' ? val : String(val)
 	if str.indexOf('"') >= 0
@@ -89,7 +92,7 @@ const escapeTextContent = do |val, nodeName|
 
 
 # could create a fake document 
-export class Document
+export class DOM.Document
 
 	def createElement name
 		# look for custom elements now?
@@ -108,13 +111,13 @@ export class Document
 		return self.createElement(name)
 
 	def createTextNode value
-		return new Text(value)
+		return new DOM.Text(value)
 		
 	def createComment value
-		return new Comment(value)
+		return new DOM.Comment(value)
 
 	def createDocumentFragment
-		return new DocumentFragment
+		return new DOM.DocumentFragment
 
 	def getElementById id
 		return null
@@ -183,7 +186,7 @@ class DataSet
 		target["data-" + key]
 
 
-export class Node
+export class DOM.Node
 
 	def toString
 		this.outerHTML
@@ -191,7 +194,7 @@ export class Node
 	get outerHTML
 		''
 
-export class Text < Node
+class DOM.Text < DOM.Node
 
 	def constructor str
 		super()
@@ -201,7 +204,7 @@ export class Text < Node
 	get outerHTML
 		self.textContent
 
-export class Comment < Node
+class DOM.Comment < DOM.Node
 	
 	def constructor value
 		super()
@@ -215,7 +218,7 @@ export class Comment < Node
 			return self.tag.toNodeString()
 		self.outerHTML
 
-export class Element < Node
+class DOM.Element < DOM.Node
 
 	def constructor name
 		super()
@@ -366,64 +369,53 @@ export class Element < Node
 		self.classList.classes = (value or '').split(' ')
 		self.classList.toString()
 
-export class DocumentFragment < Element
+class DOM.DocumentFragment < DOM.Element
 	def constructor
 		super(null)
 
 	get outerHTML
 		return self.innerHTML
 		
-export class ShadowRoot < DocumentFragment
+class DOM.ShadowRoot < DOM.DocumentFragment
 
 	get outerHTML
 		return self.innerHTML
 
-export class HTMLElement < Element
+class DOM.HTMLElement < DOM.Element
 
-export class HTMLHtmlElement < HTMLElement
+class DOM.HTMLHtmlElement < DOM.HTMLElement
 
 	get outerHTML
 		return "<!DOCTYPE html>" + super.outerHTML
 
-export class HTMLSelectElement < HTMLElement
-
-export class HTMLInputElement < HTMLElement
-
-export class HTMLTextAreaElement < HTMLElement
-
-export class HTMLButtonElement < HTMLElement
-
-export class HTMLOptionElement < HTMLElement
-
-export class SVGElement < Element
+class DOM.HTMLSelectElement < DOM.HTMLElement
+class DOM.HTMLInputElement < DOM.HTMLElement
+class DOM.HTMLTextAreaElement < DOM.HTMLElement
+class DOM.HTMLButtonElement < DOM.HTMLElement
+class DOM.HTMLOptionElement < DOM.HTMLElement
+class DOM.SVGElement < DOM.Element
 
 
 ### Event ###
-export class Event
+class DOM.Event
+class DOM.UIEvent < DOM.Event
+class DOM.MouseEvent < DOM.UIEvent
+class DOM.PointerEvent < DOM.MouseEvent
+class DOM.KeyboardEvent < DOM.UIEvent
+class DOM.CustomEvent < DOM.Event
 
-export class UIEvent < Event
-
-export class MouseEvent < UIEvent
-
-export class PointerEvent < MouseEvent
-
-export class KeyboardEvent < UIEvent
-
-export class CustomEvent < Event
-
-
-TYPES[''].klass = Element
-TYPES['HTML'].klass = HTMLElement
-TYPES['SVG'].klass = SVGElement
-MAP['html'].klass = HTMLHtmlElement
-MAP['select'].klass = HTMLSelectElement
-MAP['input'].klass = HTMLInputElement
-MAP['textarea'].klass = HTMLTextAreaElement
-MAP['button'].klass = HTMLButtonElement
-MAP['option'].klass = HTMLOptionElement
+TYPES[''].klass = DOM.Element
+TYPES['HTML'].klass = DOM.HTMLElement
+TYPES['SVG'].klass = DOM.SVGElement
+MAP['html'].klass = DOM.HTMLHtmlElement
+MAP['select'].klass = DOM.HTMLSelectElement
+MAP['input'].klass = DOM.HTMLInputElement
+MAP['textarea'].klass = DOM.HTMLTextAreaElement
+MAP['button'].klass = DOM.HTMLButtonElement
+MAP['option'].klass = DOM.HTMLOptionElement
 
 getElementType('')
 getElementType('HTML')
 getElementType('SVG')
 
-export const document = new Document
+export const document = new DOM.Document
