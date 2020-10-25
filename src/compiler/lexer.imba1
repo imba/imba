@@ -1804,7 +1804,7 @@ export class Lexer
 		elif value == ',' and context == 'IMPORT'
 			tokid = "IMPORT_COMMA"
 		
-		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or pt == 'IDENTIFIER')
+		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or (pt == 'IDENTIFIER' or pt == 'SYMBOLID'))
 			tokid = 'BANG'
 			
 		elif value == '&' and @chunk.match(/^\&\s*[,\)\}\]]/)
