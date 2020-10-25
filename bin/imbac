@@ -35,6 +35,7 @@ var parseOpts = {
 	schema: {
 		output: {type: 'string'},
 		target: {type: 'string'},
+		runtime: {type: 'string'}, // global | inline | import
 		format: {type: 'string'},
 	},
 	
