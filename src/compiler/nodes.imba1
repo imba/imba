@@ -5222,10 +5222,9 @@ export class SymbolIdentifier < Identifier
 	
 	def c
 		variable.c
-		# "Symbol.for('imba.{@value.slice(2)}')"
 
 	def variable
-		@variable ||= scope__.root.symbolRef(@value.slice(0).replace(/^[\@\#]+/,''))
+		@variable ||= scope__.root.symbolRef(@value.slice(0))
 
 	def asObjectKey
 		"[{c}]"
@@ -10182,7 +10181,7 @@ export class RootScope < Scope
 
 	def symbolRef name
 		let map = @symbolRefs
-		map[name] ||= declare("{name}$",LIT("Symbol.for('\#{name}')"), type: 'const', system: yes)
+		map[name] ||= declare("{String(name).replace(/[\@\#]/g,'_')}$",LIT("Symbol.for('{name}')"), type: 'const', system: yes)
 		
 
 	def c o = {}

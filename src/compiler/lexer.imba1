@@ -965,7 +965,7 @@ export class Lexer
 		elif typ == '#'
 			typ = 'SYMBOLID'
 		elif typ == '##'
-			typ = 'SYMBOLREF'
+			typ = 'SYMBOLID'
 		
 		elif typ == '%'
 			# use for something else
