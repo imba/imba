@@ -93,8 +93,16 @@ export const states = {
 	identifier_: [
 		[/\$\w+\$/, 'identifier.env']
 		[/\$\d+/, 'identifier.special']
+		[/\#+@id/, 'identifier.symbol']
 		[/\¶@id/, 'ivar'] # imba1
 		# [/(@constant)/, 'identifier.constant.$S4']
+		[/@id\!?/,cases: {
+			'this': 'this'
+			'self': 'self'
+			'@keywords': 'keyword.$#'
+			'$0~[A-Z].*': 'identifier.uppercase.$F'
+			'@default': 'identifier.$F'
+		}]
 		[/@id\!?/,cases: {
 			'this': 'this'
 			'self': 'self'
@@ -210,8 +218,9 @@ export const states = {
 	]
 
 	access_: [
-		[/(\.\.?)(@id\!?)/,cases: {
+		[/(\.\.?)(@propid\!?)/,cases: {
 			'$2~[A-Z].*': ['operator.access','accessor.uppercase']
+			'$2~#.*': ['operator.access','accessor.symbol']
 			'@default': ['operator.access','accessor']
 		}]
 	]
@@ -221,7 +230,7 @@ export const states = {
 	]
 
 	key_: [
-		[/(@id)(\:\s*)/,cases: {
+		[/(@propid)(\:\s*)/,cases: {
 			'@default': ['key','operator.assign.key-value']
 		}]
 	]
@@ -1168,6 +1177,7 @@ export const grammar = {
 	# anyIdentifierOpt: /(?:@anyIdentifier)?/
 	id: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	plainid: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
+	propid: /[\@\#]*@plainid/
 	defid: /[\@\#]*@plainid/
 	decid: /\@@plainid/
 	symid: /\#@plainid/
