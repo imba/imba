@@ -318,7 +318,7 @@ export const states = {
 	]
 
 	comment_: [
-		[/#(\s.+)?(\n|$)/, 'comment']
+		[/#(\s.*)?(\n|$)/, 'comment']
 	]
 
 	block_comment_: [
@@ -690,7 +690,7 @@ export const states = {
 		[/(\s*\=\s*)(?=(for|while|until|if|unless)\s)/,'operator','@pop']
 		[/(\s*\=\s*)/,'operator','@var_value=']
 		'type_'
-		[/#(\s.+)?\n?$/, 'comment']
+		[/#(\s.*)?\n?$/, 'comment']
 	]
 
 	array_var_body: [
@@ -773,13 +773,13 @@ export const states = {
 		[/\[/,'delimiter.selector.attr.open','@css_selector_attr']
 		[/\s+/,'white']
 		[/,/,'style.selector.delimiter']
-		[/#(\s.+)?\n?$/, 'comment']
+		[/#(\s.*)?\n?$/, 'comment']
 	]
 
 	css_props: [
 		denter(null,-1,0)
 		[/(?=@cssPropertyKey2)/,'','@css_property&-_styleprop-_stylepropkey']
-		[/#(\s.+)?\n?$/, 'comment']
+		[/#(\s.*)?\n?$/, 'comment']
 		[/(?=[\%\*\w\&\$\>\.\[\@\!]|\#[\w\-])/,'','@>css_selector&rule-_sel']
 		[/\s+/, 'white']
 	]
