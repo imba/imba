@@ -8,7 +8,7 @@ def ext.register name, asset
 def ext.create name, parent, flags
 	let asset = assets[name]
 	if $node$ # !asset.node
-		let el = imba.document.createElementNS("http://www.w3.org/2000/svg",'svg')
+		let el = document.createElementNS("http://www.w3.org/2000/svg",'svg')
 		for own k,v of asset.attributes
 			el.setAttribute(k,v)
 		
@@ -21,7 +21,7 @@ def ext.create name, parent, flags
 	
 	if $web$
 		if !asset.node
-			let el = imba.document.createElementNS("http://www.w3.org/2000/svg",'svg')
+			let el = document.createElementNS("http://www.w3.org/2000/svg",'svg')
 			for own k,v of asset.attributes
 				el.setAttribute(k,v)
 			el.innerHTML = asset.content

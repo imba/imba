@@ -23,7 +23,7 @@ extend class Element
 			if prev and prev isa Comment # check perf
 				return prev
 
-			let el = imba.document.createComment('')
+			let el = document.createComment('')
 			prev ? prev.replaceWith$(el) : el.insertInto$(this)
 			return el
 
@@ -48,11 +48,11 @@ extend class Element
 					prev.textContent = txt
 					return prev
 				else
-					res = imba.document.createTextNode(txt)
+					res = document.createTextNode(txt)
 					prev.replaceWith$(res,self)
 					return res
 			else
-				self.appendChild$(res = imba.document.createTextNode(txt))
+				self.appendChild$(res = document.createTextNode(txt))
 				return res	
 
 		else
@@ -79,7 +79,7 @@ Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
 def imba.createElement name, parent, flags, text
-	var el = imba.document.createElement(name)
+	var el = document.createElement(name)
 		
 	el.className = flags if flags
 

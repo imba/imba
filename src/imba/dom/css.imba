@@ -57,9 +57,8 @@ const map = {}
 
 def ext.setup
 	unless root
-		if root = imba.document.documentElement
+		if root = document.documentElement
 			register(resets,'root')
-	
 
 def ext.register styles, id
 	if !map.root and id != 'root'
@@ -68,9 +67,9 @@ def ext.register styles, id
 	if id and !map[id]
 		let entry = map[id] = {raw: styles}
 		if $web$
-			entry.node = imba.document.createElement('style')
+			entry.node = document.createElement('style')
 			entry.node.textContent = entry.raw
-			imba.document.head.appendChild(entry.node)
+			document.head.appendChild(entry.node)
 
 	return
 

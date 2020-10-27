@@ -1,6 +1,6 @@
 
 export def createLiveFragment bitflags, options
-	var el = imba.document.createDocumentFragment()
+	var el = document.createDocumentFragment()
 	el.setup$(bitflags, options)
 	return el
 

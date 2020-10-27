@@ -1,5 +1,5 @@
 def imba.mount mountable, into
-	let parent = into or imba.document.body
+	let parent = into or document.body
 	let element = mountable
 	if mountable isa Function
 		let ctx = {_: parent}
@@ -21,10 +21,10 @@ def imba.unmount node
 	yes
 	
 def imba.getElementById id
-	imba.document.getElementById(id)
+	document.getElementById(id)
 
 def imba.q$ query, ctx
-	(ctx isa imba.dom.Element ? ctx : imba.document).querySelector(query)
+	(ctx isa imba.dom.Element ? ctx : document).querySelector(query)
 
 def imba.q$$ query, ctx
-	(ctx isa imba.dom.Element ? ctx : imba.document).querySelectorAll(query)
+	(ctx isa imba.dom.Element ? ctx : document).querySelectorAll(query)

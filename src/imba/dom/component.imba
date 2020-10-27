@@ -186,7 +186,7 @@ class ImbaElementRegistry
 			# TODO refactor
 			return types[name].create$()
 		else
-			imba.document.createElement(name)
+			document.createElement(name)
 
 	def define name, klass, options = {}
 		types[name] = klass
@@ -231,7 +231,7 @@ def imba.createComponent name, parent, flags, text, ctx
 		el.slot$ = proto.slot$
 		el.__slots = {}
 	else
-		el = imba.document.createElement(name)
+		el = document.createElement(name)
 
 	el.##parent = parent
 	el.init$()

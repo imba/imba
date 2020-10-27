@@ -5458,10 +5458,11 @@ export class TagTypeIdentifier < Identifier
 		name
 
 	def nativeCreateNode
+		let doc = scope__.root.document.c
 		if isSVG
-			CALL(LIT('imba.document.createElementNS'),[STR("http://www.w3.org/2000/svg"),STR(name)])
+			CALL(LIT("{doc}.createElementNS"),[STR("http://www.w3.org/2000/svg"),STR(name)])
 		else
-			CALL(LIT('imba.document.createElement'),[STR(name)])
+			CALL(LIT("{doc}.createElement"),[STR(name)])
 
 	def isClass
 		!!@str.match(/^[A-Z]/)
@@ -9841,7 +9842,7 @@ export class Scope
 			o:system = yes
 
 		if o:system
-			return SystemVariable.new(self,name,decl,o)
+			return (o:varclass or SystemVariable).new(self,name,decl,o)
 
 		name = helpers.symbolize(name)
 
@@ -9862,7 +9863,7 @@ export class Scope
 			
 
 		# var type = o:system ? SystemVariable : Variable
-		var item = Variable.new(self,name,decl,o)
+		var item = (o:varclass or Variable).new(self,name,decl,o)
 		
 		if par
 			item.@parent = par
@@ -10021,6 +10022,7 @@ export class RootScope < Scope
 	prop styles
 	prop options
 	prop assets
+	prop document
 
 	def initialize
 		super
@@ -10030,7 +10032,7 @@ export class RootScope < Scope
 		register 'imba', self, type: 'global'
 		register 'module', self, type: 'global'
 		register 'window', self, type: 'global'
-		register 'document', self, type: 'global'
+		self.document = register 'document', self, type: 'global', varclass: GlobalDocumentReference
 		register 'exports', self, type: 'global'
 		register 'console', self, type: 'global'
 		register 'process', self, type: 'global'
@@ -10690,6 +10692,13 @@ export class SystemVariable < Variable
 
 export class ShadowedVariable < Variable
 
+export class GlobalDocumentReference < Variable
+	def c
+		if STACK.platform == 'node' and !@c
+			@scope.@head.push("const $imbadoc$ = (imba.document || (imba.document = new imba.dom.Document))")
+			@c = '$imbadoc$'
+
+		super
 
 export class ScopeContext < Node
 
