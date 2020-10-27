@@ -88,5 +88,5 @@ tag A
 tag B < A
 	css $button fw:700
 
-test '$sel == inline' do	
-	eqcss <B>,700,0
+# test '$sel == inline' do	
+#	eqcss <B>,700,0
