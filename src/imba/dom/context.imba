@@ -9,5 +9,8 @@ const handler =
 
 extend class imba.dom.Node
 
+	get $context
+		console.warn "$context is deprecated - use #context instead"
+
 	get #context
 		##context ||= new Proxy(self,handler)
