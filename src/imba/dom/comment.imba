@@ -5,7 +5,5 @@ extend class imba.dom.Comment
 			other.joinBefore$(this)
 		else
 			self.parentNode.insertBefore$(other,this)
-		# other.insertBeforeBegin$(this)
 		self.parentNode.removeChild(this)
-		# self.parentNode.replaceChild(other,this)
 		return other

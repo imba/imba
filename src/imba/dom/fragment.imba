@@ -12,7 +12,7 @@ extend class imba.dom.DocumentFragment
 		$start = imba.document.createComment('start')
 		$end = imba.document.createComment('end')
 
-		$end.replaceWith$ = do |other|
+		$end.replaceWith$ = do(other)
 			this.parentNode.insertBefore(other,this)
 			return other
 

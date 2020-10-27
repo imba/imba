@@ -1,4 +1,15 @@
-# convenience methods added to the very core of the imba library to make certain things slightly easier
+###
+Collection of convenience methods.
+###
+
+const dashRegex = /-./g
+
+def imba.toCamelCase str
+	if str.indexOf('-') >= 0
+		str.replace(dashRegex) do $1.charAt(1).toUpperCase!
+	else
+		str
+
 
 # Basic events - move to separate file?
 const emit__ = do(event, args, node)
@@ -16,14 +27,6 @@ const emit__ = do(event, args, node)
 			prev.next = node.next
 			node.listener = null
 	return
-
-const dashRegex = /-./g
-
-def imba.toCamelCase str
-	if str.indexOf('-') >= 0
-		str.replace(dashRegex) do $1.charAt(1).toUpperCase!
-	else
-		str
 
 # method for registering a listener on object
 def imba.listen obj, event, listener, path

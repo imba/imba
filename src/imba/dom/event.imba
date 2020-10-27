@@ -241,7 +241,7 @@ export class EventHandler
 		return
 
 
-# Extend element with the needed methods
+# Add methods to Element
 extend class Element
 
 	def emit name, detail, o = {bubbles: true}

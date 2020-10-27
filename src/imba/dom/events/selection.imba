@@ -1,12 +1,13 @@
 const {Event,CustomEvent,Element} = imba.dom
 
 var selHandler
+var handledSym = Symbol!
 
 def activateSelectionHandler
 	unless selHandler
 		selHandler = do |e|
-			return if e.handled$
-			e.handled$ = yes
+			return if e[handledSym]
+			e[handledSym] = yes
 			
 			let target = document.activeElement
 			if target and target.matches('input,textarea')

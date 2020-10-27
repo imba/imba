@@ -17,6 +17,7 @@ def imba.mount mountable, into
 
 # TBD
 def imba.unmount node
+	throw "Not implemented"
 	yes
 	
 def imba.getElementById id

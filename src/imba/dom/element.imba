@@ -6,12 +6,6 @@ extend class Element
 	def log ...params
 		console.log(...params)
 		self
-	
-	def emit name, detail, o = {bubbles: true}
-		o.detail = detail if detail != undefined
-		let event = new CustomEvent(name, o)
-		let res = self.dispatchEvent(event)
-		return event
 
 	def slot$ name, ctx
 		return self
@@ -80,10 +74,11 @@ Element.prototype.appendChild$  = Element.prototype.appendChild
 Element.prototype.removeChild$  = Element.prototype.removeChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
+
 Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
-def imba.createElement name, parent, flags, text, ctx
+def imba.createElement name, parent, flags, text
 	var el = imba.document.createElement(name)
 		
 	el.className = flags if flags

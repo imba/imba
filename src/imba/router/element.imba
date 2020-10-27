@@ -124,7 +124,7 @@ extend class imba.dom.Element
 			parent.appendChild$(#route.isActive() ? self : #route.placeholder)
 
 	get route
-		##route
+		#route
 
 	set route-to value
 		if #route
