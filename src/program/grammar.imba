@@ -690,6 +690,7 @@ export const states = {
 		[/(\s*\=\s*)(?=(for|while|until|if|unless)\s)/,'operator','@pop']
 		[/(\s*\=\s*)/,'operator','@var_value=']
 		'type_'
+		[/#(\s.+)?\n?$/, 'comment']
 	]
 
 	array_var_body: [
