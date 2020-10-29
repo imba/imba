@@ -1,4 +1,6 @@
-extend class imba.dom.Node
+const Node = window.Node
+
+extend class Node
 	get #parent
 		##parent or this.parentNode
 

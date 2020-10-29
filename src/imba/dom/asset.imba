@@ -15,7 +15,7 @@ def ext.create name, parent, flags
 		el.flags$ns = asset.flags.join(' ') + ' '
 		el.className = (el.flags$ns + flags).trim!
 		el.innerHTML = asset.content
-		if parent and parent isa imba.dom.Node
+		if parent and parent isa imba.Node
 			el.insertInto$(parent)
 		return el
 	
@@ -31,7 +31,7 @@ def ext.create name, parent, flags
 		let el = asset.node.cloneNode(yes)
 		let cls = el.flags$ns = el.className.baseVal + ' '
 		el.className.baseVal = cls + flags
-		if parent and parent isa imba.dom.Node
+		if parent and parent isa Node
 			el.insertInto$(parent)
 		return el
 	# if node -- do tiny parsing

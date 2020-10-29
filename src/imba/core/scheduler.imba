@@ -1,13 +1,17 @@
 var raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (do |blk| setTimeout(blk,1000 / 60))
 
 # Scheduler
-export class Scheduler
+class Imba.Scheduler
 	def constructor
 		self.queue = []
 		self.stage = -1
 		self.batch = 0
 		self.scheduled = no
 		self.listeners = {}
+		self.commit = do
+			add('render')
+			return self
+
 		$promise = null
 		$resolve = null
 		$ticker = do |e|
@@ -20,6 +24,7 @@ export class Scheduler
 			self.queue.push(item)
 
 		self.schedule() unless self.scheduled
+		return self
 
 	def listen ns, item
 		self.listeners[ns] ||= new Set
@@ -68,23 +73,9 @@ export class Scheduler
 			raf($ticker)
 		self
 
-# what if we just want to deal with this?
-imba.scheduler = new Scheduler()
+extend class Imba
+	get scheduler
+		#scheduler ||= new Imba.Scheduler
 
-imba.#commit = do imba.scheduler.add('render')
-
-imba.commit = do
-	imba.scheduler.add('render')
-	return imba.scheduler.promise
-
-imba.setTimeout = do(fn,ms)
-	setTimeout(&,ms) do
-		fn!
-		imba.#commit!
-		return
-
-imba.setInterval = do(fn,ms)
-	setInterval(&,ms) do
-		fn!
-		imba.#commit!
-		return
+	def commit
+		scheduler.add('render').promise

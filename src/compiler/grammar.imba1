@@ -895,7 +895,10 @@ var grammar =
 		# o '' do null
 		# o 'SYMBOLID'
 		# o 'Identifier' # do ClassIdentifier.new(A1)
-		o 'Identifier' # do ClassName.new(A1)
+		# o 'Self' # not sure if self should be assignable really
+		# o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
+		# o 'SymbolIdentifier' do Access.new('.',null,A1) # LocalIdentifier.new(A1)
+		o 'Identifier' do VarOrAccess.new(A1) # do ClassName.new(A1)
 		o 'SymbolIdentifier' do Access.new('.',null,A1) # IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3)
 		o 'ClassName . Identifier' do AST.OP(A2,A1,A3)
 		o 'ClassName . SymbolIdentifier' do IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3)

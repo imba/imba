@@ -220,7 +220,8 @@ export class EventHandler
 				res = context[handler].apply(context,args)
 
 			if res and res.then isa Function and res != imba.scheduler.$promise
-				imba.#commit! if commit
+				imba.scheduler.commit! if commit
+
 				awaited = yes
 				# TODO what if await fails?
 				res = await res
@@ -232,7 +233,7 @@ export class EventHandler
 			state.value = res
 		
 		imba.emit(state,'end',state)
-		imba.#commit! if commit
+		imba.scheduler.commit! if commit
 
 		self.currentEvents.delete(event)
 		if self.currentEvents.size == 0

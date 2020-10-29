@@ -591,6 +591,7 @@ export class Stack
 		
 	def getSymbol ref
 		ref ||= incr('symbols')
+		# Belongs in root
 		@symbols[ref] ||= @root.declare(ref,LIT('Symbol()'),system: yes).resolve.c
 
 	def getAsset name
@@ -841,6 +842,9 @@ export class Node
 		
 	def osym ns = ''
 		STACK.getSymbol(oid + ns)
+
+	def symbolRef name
+		STACK.root.symbolRef(name)
 
 	# get global symbol with name
 	def gsym name
@@ -2842,6 +2846,9 @@ export class ClassDeclaration < Code
 	def initialize name, superclass, body
 		# what about the namespace?
 		@traversed = no
+		if name isa VarOrAccess
+			name = name.@value
+
 		@name = name # or LIT('')
 		@superclass = superclass
 		@scope = isTag ? TagScope.new(self) : ClassScope.new(self)
@@ -3252,8 +3259,8 @@ export class TagDeclaration < ClassDeclaration
 		let js = "{jshead} \{{jsbody}\}"
 		
 		if option(:export) and STACK.cjs
-			let exportName = option(:default) ? 'default' : cname
-			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
+			let exportName = option(:default) ? 'default' : className
+			js = "{js};\n{M('exports',o:export)}.{exportName} = {className}"
 
 		@config:ns = cssns if option(:hasScopedStyles)
 
@@ -4673,8 +4680,16 @@ export class VarOrAccess < ValueNode
 
 		variable ||= scope.lookup(value.symbol)
 
+		if variable and variable isa GlobalReference
+			let name = variable.name
+			@value = LIT(scope.imba.c)
+			if name != 'imba'
+				@value = LIT("{scope.imba.c}.{name}")
+			# "{root.symbolRef('#imba').c}"
+			# console.log 'variable is global reference',variable.name,@value.c
+
 		# does not really need to have a declarator already? -- tricky
-		if variable && variable.declarator
+		elif variable && variable.declarator
 			# var decl = variable.declarator
 			let vscope = variable.scope
 
@@ -5439,11 +5454,13 @@ export class TagTypeIdentifier < Identifier
 			return self
 		# NODES.push(self)
 		@traversed = yes
-		if o and o:declaring and isClass
-			registerVariable('const',o:declscope or STACK.scope)
-			if @variable
-				@variable.value = o:declaring
-				
+		if isClass
+			if o and o:declaring
+				registerVariable('const',o:declscope or STACK.scope)
+				if @variable
+					@variable.value = o:declaring
+			else
+				resolveVariable
 		self
 
 	def js o
@@ -5506,6 +5523,8 @@ export class TagTypeIdentifier < Identifier
 			stack.registerSemanticToken(@value,@variable)
 		return self
 
+	
+
 	def toClassName
 		let str = @str
 		if str == 'element'
@@ -5532,6 +5551,12 @@ export class TagTypeIdentifier < Identifier
 			@nodeName ||= helpers.dasherize(@str + '-' + fid)
 		else
 			@str
+
+	def toTypeArgument
+		if @variable
+			@variable.c
+		else
+			name
 
 	def id
 		var m = @str.match(/\#([\w\-\d\_]+)\b/)
@@ -7946,7 +7971,7 @@ export class Tag < TagLike
 		var component = @tagDeclaration
 		let oscope = @tagDeclaration ? @tagDeclaration.scope : null
 
-		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type:isClass and type.isClass ? type.name : "'" + type.@value + "'"))
+		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type:isClass and type.isClass ? type.toTypeArgument : "'" + type.@value + "'"))
 
 		var wasInline = o:inline
 		var isSVG = self.isSVG
@@ -9758,7 +9783,7 @@ export class Scope
 		
 	def cssReferenceFlag refname
 		refname + '_' + STACK.fid + @nr
-		
+
 	def memovar name, init
 		@memovars ||= {}
 		let item = @memovars[name]
@@ -9935,7 +9960,8 @@ export class Scope
 		root.requires(path,name)
 
 	def imba
-		root.imba # requires('imba2', 'Imba')
+		@imba ||= LIT("(this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])")
+		# root.imba # requires('imba2', 'Imba')
 
 	def imbaTags
 		root.imbaTags
@@ -10024,15 +10050,17 @@ export class RootScope < Scope
 	prop assets
 	prop document
 
+	
+
 	def initialize
 		super
 
 		register('global', self, type: 'global').@c = 'globalThis'
 
-		register 'imba', self, type: 'global'
 		register 'module', self, type: 'global'
-		register 'window', self, type: 'global'
-		self.document = register 'document', self, type: 'global', varclass: GlobalDocumentReference
+		register 'imba', self, type: 'global', varclass: GlobalReference
+		register 'window', self, type: 'global', varclass: GlobalReference
+		self.document = register 'document', self, type: 'global', varclass: GlobalReference
 		register 'exports', self, type: 'global'
 		register 'console', self, type: 'global'
 		register 'process', self, type: 'global'
@@ -10691,6 +10719,22 @@ export class SystemVariable < Variable
 		@name
 
 export class ShadowedVariable < Variable
+
+
+export class GlobalReference < Variable
+	def c o
+		if STACK.platform == 'node' and !@c
+			if @name == 'window' or @name == 'document'
+				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba).{@name}"
+			# if @name == 'document'
+			#	@scope.@head.push("const $imbadoc$ = (imba.document || (imba.document = new imba.dom.Document))")
+			#	@c = '$imbadoc$'
+			if @name == 'imba'
+				# if accessed directly it should just reference global.imba for speed?
+				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba)"
+			elif @name == 'window' or @name == 'document'
+				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba).{@name}"
+		super
 
 export class GlobalDocumentReference < Variable
 	def c

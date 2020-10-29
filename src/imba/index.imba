@@ -1,4 +1,11 @@
 import './core/imba'
+if $node$
+	import './core/server'
+	yes
+
+if $web$
+	import './core/browser'
+	yes
 import './core/dom'
 import './core/utils'
 import './core/scheduler'
