@@ -20,6 +20,5 @@ export class History
 		pos -= 1
 		return stack.pop!
 
-		
 	def currentState
 		stack[pos]

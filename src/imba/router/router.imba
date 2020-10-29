@@ -255,5 +255,5 @@ extend class ImbaContext
 		#router ||= new Router(window,document)
 
 extend class window.Node
-	get #router
+	get router
 		imba.router

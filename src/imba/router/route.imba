@@ -1,5 +1,3 @@
-var isWeb = typeof window !== 'undefined'
-
 export class Route
 	# prop raw
 	# prop params

@@ -98,9 +98,6 @@ extend class window.Element
 	get parent-route
 		#context.route
 
-	get router
-		imba.router
-
 	set route value
 		if #route and #route.raw != value
 			#route.path = value
