@@ -4688,9 +4688,13 @@ export class VarOrAccess < ValueNode
 
 		if variable and variable isa GlobalReference
 			let name = variable.name
-			@value = LIT(scope.imba.c)
-			if name != 'imba'
-				@value = LIT("{scope.imba.c}.{name}")
+
+			if stack.tsc
+				@value = LIT(name)
+			else
+				@value = LIT(scope.imba.c)
+				if name != 'imba'
+					@value = LIT("{scope.imba.c}.{name}")
 			# "{root.symbolRef('#imba').c}"
 			# console.log 'variable is global reference',variable.name,@value.c
 
