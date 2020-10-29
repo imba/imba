@@ -59,7 +59,7 @@
     }
   ],
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=13.10.0"
   },
   "directories": {},
   "main": "./index.js",
