@@ -308,6 +308,15 @@ class DOM.Element < DOM.Node
 			self.childNodes.splice(idx, 1)
 		return self
 
+	def replaceChild newChild, oldChild
+		let idx = childNodes.indexOf(oldChild)
+		if idx >= 0
+			childNodes.splice(idx,1,newChild)
+			newChild.parentNode = self
+		# self.childNodes.push(child)
+		# child.parentNode = self
+		return oldChild
+
 	def insertBefore node, before
 		var idx = self.childNodes.indexOf(before)
 		self.childNodes.splice(idx, 0, node)
