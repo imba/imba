@@ -35,8 +35,9 @@ function pack(input,outname,out = {},opts = {}){
         input: input,
         output: Object.assign({
             file: './dist/' + outname +  '.js',
-            format: 'esm',
-            name: 'bundle'
+            format: 'iife',
+            name: 'bundle',
+            runtime: 'global'
         },out),
         external: function(id){
             return id[0] != '.' && id.indexOf('imba') != 0;
@@ -57,7 +58,7 @@ function pack(input,outname,out = {},opts = {}){
 }
 
 export default [
-    pack('./src/imba/module','imba'),
-    pack('./src/imba/module','imba.min', {compact: true}),
-    pack('./src/imba/router/router','imba-router',{},{standalone: true, imbaFormat:'script'}),
+    pack('./src/imba/index','imba'),
+    pack('./src/imba/index','imba.min', {compact: true}),
+    pack('./src/imba/router/router','imba.router',{},{runtime: 'global'}),
 ]
