@@ -661,6 +661,12 @@ export class Stack
 
 	def tsc
 		platform == 'tsc'
+
+	def isWeb
+		platform == 'web'
+	
+	def isNode
+		platform == 'node'
 		
 	def format
 		@options:format or 'esm'
@@ -9960,7 +9966,7 @@ export class Scope
 		root.requires(path,name)
 
 	def imba
-		@imba ||= LIT("(this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])")
+		@imba ||= (STACK.isNode ? LIT("(this && this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])") : LIT('imba'))
 		# root.imba # requires('imba2', 'Imba')
 
 	def imbaTags
@@ -10185,7 +10191,6 @@ export class RootScope < Scope
 
 	def imba
 		LIT('imba')
-		# root.requires('imba2', 'Imba')
 
 	def imbaTags
 		return @imbaTags if @imbaTags
@@ -10722,7 +10727,7 @@ export class ShadowedVariable < Variable
 
 
 export class GlobalReference < Variable
-	def c o
+	def c2 o
 		if STACK.platform == 'node' and !@c
 			if @name == 'window' or @name == 'document'
 				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba).{@name}"

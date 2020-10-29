@@ -232,8 +232,6 @@ class DOM.Node
 	get #imba
 		##imba ?= asl.getStore!
 
-console.log DOM.Node
-
 class DOM.Text < DOM.Node
 
 	def constructor str
