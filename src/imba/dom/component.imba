@@ -1,8 +1,9 @@
 # import {HTMLElement} from '../dom'
 
 const DOM = imba.dom
+const doc = imba.document # global.#document or global.document
 
-class imba.dom.ImbaElement < imba.dom.HTMLElement
+class window.ImbaElement < window.HTMLElement
 	def constructor
 		super()
 		if flags$ns
@@ -145,7 +146,8 @@ class imba.dom.ImbaElement < imba.dom.HTMLElement
 
 		let res = mount()
 		if res && res.then isa Function
-			res.then(imba.commit)
+			res.then(imba.scheduler.commit)
+
 		# else
 		#	if this.render and $EL_RENDERED$
 		#		this.render()
@@ -186,7 +188,7 @@ class ImbaElementRegistry
 			# TODO refactor
 			return types[name].create$()
 		else
-			document.createElement(name)
+			doc.createElement(name)
 
 	def define name, klass, options = {}
 		types[name] = klass
@@ -214,7 +216,7 @@ class ImbaElementRegistry
 
 imba.tags = new ImbaElementRegistry
 
-const proto = imba.dom.ImbaElement.prototype
+const proto = window.ImbaElement.prototype
 
 def imba.createComponent name, parent, flags, text, ctx
 	# the component could have a different web-components name?
@@ -231,7 +233,7 @@ def imba.createComponent name, parent, flags, text, ctx
 		el.slot$ = proto.slot$
 		el.__slots = {}
 	else
-		el = document.createElement(name)
+		el = doc.createElement(name)
 
 	el.##parent = parent
 	el.init$()

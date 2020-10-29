@@ -260,7 +260,23 @@ export class Router
 			(e.meta() or e.alt()) ? window.open(href,'_blank') : self.router.go(href,{})
 		return
 
+extend class Imba
+	get router
+		#router ||= new Router(window,document)
+
+extend class window.Element
+	get #router
+		imba.router
+
 if $web$
 	extend tag element
 		get router
+			imba.router
+
+			Router.instance
+
+if $node$
+	extend tag element
+		get router
+			document
 			Router.instance

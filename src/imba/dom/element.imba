@@ -1,5 +1,5 @@
-const {Node,Element,Comment,Text} = imba.dom
-
+const {Node,Element,Comment,Text} = window
+const doc = document # global.#document or global.document
 # what if this is in a webworker?
 extend class Element
 	
@@ -23,7 +23,7 @@ extend class Element
 			if prev and prev isa Comment # check perf
 				return prev
 
-			let el = document.createComment('')
+			let el = doc.createComment('')
 			prev ? prev.replaceWith$(el) : el.insertInto$(this)
 			return el
 
@@ -48,11 +48,11 @@ extend class Element
 					prev.textContent = txt
 					return prev
 				else
-					res = document.createTextNode(txt)
+					res = doc.createTextNode(txt)
 					prev.replaceWith$(res,self)
 					return res
 			else
-				self.appendChild$(res = document.createTextNode(txt))
+				self.appendChild$(res = doc.createTextNode(txt))
 				return res	
 
 		else
@@ -79,7 +79,7 @@ Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
 def imba.createElement name, parent, flags, text
-	var el = document.createElement(name)
+	var el = doc.createElement(name)
 		
 	el.className = flags if flags
 
