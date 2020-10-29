@@ -3555,8 +3555,8 @@ export class MethodDeclaration < Func
 		if option(:inClassBody) or option(:inObject)
 			# what if this is async?
 			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
-			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			prefix = "async {prefix}" if option(:async)
+			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			out = "{prefix}{M name, @name}({params.c}){code}"
 			
 			out = @params.jsdoc() + out
