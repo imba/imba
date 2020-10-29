@@ -98,6 +98,9 @@ extend class window.Element
 	get parent-route
 		#context.route
 
+	get router
+		imba.router
+
 	set route value
 		if #route and #route.raw != value
 			#route.path = value
@@ -129,7 +132,6 @@ extend class window.Element
 			if !e.altKey and !e.metaKey
 				e.preventDefault()
 				#route.go!
-		
 
 	def end$routed
 		if #route

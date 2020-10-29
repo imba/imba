@@ -26,8 +26,6 @@ global class Imba
 	get clearTimeout
 		global.clearTimeout
 
-	
-
 	def setTimeout fn,ms
 		setTimeout(&,ms) do
 			fn!
@@ -48,22 +46,3 @@ global class Imba
 		self
 
 global.imba = global.#imba = new Imba
-
-# global.imba = global.##imba = new Proxy(global,new Imba)
-# global.imba.version = '2.0.0-alpha.97'
-
-# if $node$
-# 	import './server'
-# 	yes
-# 	# global.imba.dom = global.imba
-
-# if $web$
-# 	global.imba.dom = global
-# 	# global.imba.window = global
-# 	# global.imba.document = global
-# 	# global.imba.document = global
-# 	# global.#document = global.document
-
-# global.imba.clearInterval = global.clearInterval
-# global.imba.clearTimeout = global.clearTimeout
-
