@@ -1,7 +1,7 @@
 var raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (do |blk| setTimeout(blk,1000 / 60))
 
 # Scheduler
-class Imba.Scheduler
+global class ImbaScheduler
 	def constructor
 		self.queue = []
 		self.stage = -1
@@ -73,9 +73,9 @@ class Imba.Scheduler
 			raf($ticker)
 		self
 
-extend class Imba
+extend class ImbaContext
 	get scheduler
-		#scheduler ||= new Imba.Scheduler
+		#scheduler ||= new ImbaScheduler
 
 	def commit
 		scheduler.add('render').promise
