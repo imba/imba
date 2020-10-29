@@ -1,4 +1,4 @@
-global class Imba
+global class ImbaContext
 
 	def constructor parent,state = {}
 		#parent = parent
@@ -41,8 +41,5 @@ global class Imba
 	def run cb
 		cb()
 
-	def fork cb
-		cb() if cb
-		self
 
-global.imba = global.#imba = new Imba
+global.imba = global.#imba = new ImbaContext

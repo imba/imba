@@ -250,7 +250,7 @@ export class Router
 			(e.meta() or e.alt()) ? window.open(href,'_blank') : self.router.go(href,{})
 		return
 
-extend class Imba
+extend class ImbaContext
 	get router
 		#router ||= new Router(window,document)
 

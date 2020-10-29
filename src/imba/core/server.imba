@@ -3,10 +3,9 @@ Very basic shim for the DOM to support rendering on the server
 ###
 
 import {TYPES,MAP} from './schemas'
-
 import {AsyncLocalStorage} from 'async_hooks'
-export const asl = new AsyncLocalStorage
 
+var asl = null
 
 class Location < URL
 
@@ -17,19 +16,21 @@ class Window
 	get location
 		self.document.location
 
-extend class Imba
+extend class ImbaContext
 	get #window
 		##window ||= new Window(self)
 
 	get #document
 		##document or self.window.document
 
-	def fork cb
-		let runtime = new Imba(self,Object.create(state))
+	def run cb
+		let runtime = new ImbaContext(self,Object.create(state))
+		runtime
+		asl ||= new AsyncLocalStorage
 		asl.run(runtime,cb)
 
 Object.defineProperties(global,{
-	#imba: {get: (do asl.getStore! or global.imba)}
+	#imba: {get: (do asl..getStore! or global.imba)}
 })
 
 const DOM = global.imba.##window = Window.prototype
@@ -126,8 +127,7 @@ class DOM.Document
 		#location = new Location(value)
 
 	get location
-		#location # = new Location(value)
-	
+		#location ||= new Location('http://localhost/')
 
 	def createElement name
 		# look for custom elements now?
@@ -230,7 +230,7 @@ class DOM.Node
 		''
 
 	get #imba
-		##imba ?= asl.getStore!
+		##imba ?= global.#imba
 
 class DOM.Text < DOM.Node
 

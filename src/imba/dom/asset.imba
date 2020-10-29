@@ -1,5 +1,6 @@
 const assets = {}
 const ext = imba.assets ||= {}
+const Node = window.Node
 
 def ext.register name, asset
 	assets[name] = asset
@@ -15,7 +16,7 @@ def ext.create name, parent, flags
 		el.flags$ns = asset.flags.join(' ') + ' '
 		el.className = (el.flags$ns + flags).trim!
 		el.innerHTML = asset.content
-		if parent and parent isa imba.Node
+		if parent and parent isa Node
 			el.insertInto$(parent)
 		return el
 	
@@ -37,5 +38,5 @@ def ext.create name, parent, flags
 	# if node -- do tiny parsing
 	return null
 
-imba.registerAsset = ext.register
-imba.createAssetElement = ext.create
+ImbaContext.prototype.registerAsset = ext.register
+ImbaContext.prototype.createAssetElement = ext.create
