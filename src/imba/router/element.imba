@@ -1,10 +1,10 @@
 class ElementRoute
 	def constructor node, path, parent, options = {}
 		node = node
-		route = node.router.routeFor(node,path,parent ? parent.route : null,options)
+		route = imba.router.routeFor(node,path,parent ? parent.route : null,options)
 		match = null
 		options = options
-		placeholder = node.$placeholder or new Comment("{path}")
+		placeholder = node.$placeholder or new window.Comment("{path}")
 
 	get raw
 		route.raw
@@ -89,22 +89,11 @@ class ElementRouteTo < ElementRoute
 			href = match.url or href
 
 		if options and options.replace
-			node.router.replace(href)
+			imba.router.replace(href)
 		else
-			node.router.go(href)
+			imba.router.go(href)
 
-extend class imba.dom.Element
-
-	#	set router value
-	#		$router = value
-	#
-	#	get router
-	#		if $web$
-	#			# router instance
-	#			yes
-	#		$router ||= $context.router
-
-	
+extend class window.Element
 
 	get parent-route
 		#context.route

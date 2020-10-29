@@ -1,9 +1,5 @@
-# import {Route} from './Route'
-# import {URLSearchParams} from '../lib/util'
-# check if is web
-var isWeb = typeof window !== 'undefined'
+# imba$runtime=global
 
-var ROUTES = {}
 # proxy for hash
 class Hash
 	
@@ -14,27 +10,21 @@ import {Route} from './route'
 
 import './element'
 
-var MainInstance
-
 export class Router
-	static get instance
-		MainInstance ||= new self
-
 	# support redirects
 	def constructor o = {}
 		routes = {}
 		options = o
 		busy = []
+		#doc = document
+		#win = window
+		web? = window == global
 		root = o.root or ''
+
 		history = $web$ ? window.history : (new History(self))
-		location = new Location(o.url or ($web$ ? document.location.href : '/'),self)
+		location = new Location(o.url or document.location.href,self)
 		mode = o.mode or 'history'
-
 		self.setup!
-
-		if $web$
-			instance ||= self
-			
 		self
 
 	get origin
@@ -103,7 +93,7 @@ export class Router
 				elif mode == 'replace' # params:replace
 					self.replaceState(params.state or self.state,null,String(location))
 					
-				if isWeb
+				if web?
 					location.state = window.history.state
 					
 				self.emit('change',req)
@@ -133,7 +123,7 @@ export class Router
 		imba.commit()
 
 	def setup
-		if isWeb
+		if web?
 			onclick = onclick.bind(self)
 			onhashchange = onhashchange.bind(self)
 			
@@ -202,7 +192,7 @@ export class Router
 		return params or ''
 
 	set hash value
-		if isWeb
+		if web?
 			# console.log "set hash",serializeParams(value)
 			# will set without jumping
 			history.replaceState({},null,'#' + self.serializeParams(value)) # last state?
@@ -264,19 +254,6 @@ extend class Imba
 	get router
 		#router ||= new Router(window,document)
 
-extend class window.Element
+extend class window.Node
 	get #router
 		imba.router
-
-if $web$
-	extend tag element
-		get router
-			imba.router
-
-			Router.instance
-
-if $node$
-	extend tag element
-		get router
-			document
-			Router.instance
