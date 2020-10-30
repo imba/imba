@@ -13,14 +13,14 @@ var isGroup = do(obj)
 	return obj isa Array or (obj && obj.has isa Function)
 
 var bindHas = do(object,value)
-	if object isa Array
+	if object == value
+		return true
+	elif object isa Array
 		object.indexOf(value) >= 0
 	elif object and object.has isa Function
 		object.has(value)
 	elif object and object.contains isa Function
 		object.contains(value)
-	elif object == value
-		return true
 	else
 		return false
 

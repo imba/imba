@@ -230,17 +230,18 @@ export const states = {
 	]
 
 	key_: [
+		[/(\#+@id)(\:\s*)/,['key.symbol','operator.assign.key-value']]
 		[/(@propid)(\:\s*)/,cases: {
 			'@default': ['key','operator.assign.key-value']
 		}]
 	]
 
 	implicit_call_: [
-		[/(\.\.?)(@id)@implicitCall/,cases: {
+		[/(\.\.?)(@propid)@implicitCall/,cases: {
 			'$2~[A-Z].*': ['operator.access','accessor.uppercase','@implicit_call_body']
 			'@default': ['operator.access','accessor','@implicit_call_body']
 		}]
-		[/(@id)@implicitCall/,cases: {
+		[/(@propid)@implicitCall/,cases: {
 			'$2~[A-Z].*': ['identifier.uppercase','@implicit_call_body']
 			'@default': ['identifier','@implicit_call_body']
 		}]
@@ -1181,7 +1182,7 @@ export const grammar = {
 	propid: /[\@\#]*@plainid/
 	defid: /[\@\#]*@plainid/
 	decid: /\@@plainid/
-	symid: /\#@plainid/
+	symid: /\#+@plainid/
 	symref: /\#\#@plainid/
 	optid: /(?:@id)?/
 	esmIdentifier: /[\@\%]?[A-Za-z_\$]@subIdentifer/
