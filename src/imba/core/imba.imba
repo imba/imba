@@ -9,7 +9,7 @@ global class ImbaContext
 		#state
 
 	get version
-		'2.0.0-alpha.97'
+		'2.0.0-alpha.99'
 
 	get window
 		#window or global.window
