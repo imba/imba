@@ -167,7 +167,8 @@ export const states = {
 	keyword_: [
 		[/new@B/,'keyword.new']
 		[/isa@B/,'keyword.isa']
-		[/(switch|when|throw|continue|break|then|await)@B/,'keyword.$1']
+		[/is@B/,'keyword.is']
+		[/(switch|when|throw|continue|break|then|await|typeof|by)@B/,'keyword.$1']
 		[/delete@B/,'keyword.delete']
 		[/and@B|or@B/, 'operator.flow']
 	]
@@ -688,7 +689,7 @@ export const states = {
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/\s*\,\s*/,'separator']
-		[/(\s*\=\s*)(?=(for|while|until|if|unless)\s)/,'operator','@pop']
+		[/(\s*\=\s*)(?=(for|while|until|if|unless|try)\s)/,'operator','@pop']
 		[/(\s*\=\s*)/,'operator','@var_value=']
 		'type_'
 		[/#(\s.*)?\n?$/, 'comment']
@@ -824,7 +825,7 @@ export const states = {
 	]
 
 	css_value_: [
-		[/(x?xs|sm\-?|md\-?|lg|xl|\dxl)\b/, 'style.value.size'],
+		[/(x?xs|sm\-?|md\-?|lg\-?|xx*l|\dxl|hg|x+h)\b/, 'style.value.size'],
 		[/\#[0-9a-fA-F]+/, 'style.value.color.hex'],
 		[/((--|\$)@id)/, 'style.value.var']
 		[/(@optid)(\@+|\.+)(@optid)/,['style.property.name','style.property.modifier.prefix','style.property.modifier']]
@@ -980,19 +981,20 @@ export const states = {
 	]
 
 	_regexrange: [
-		[/-/,     'regexp.escape.control'],
-		[/\^/,    'regexp.invalid'],
-		[/@regexpesc/, 'regexp.escape'],
-		[/[^\]]/, 'regexp'],
-		[/\]/,    'regexp.escape.control', '@pop'],
+		[/-/,     'regexp.escape.control']
+		[/\^/,    'regexp.invalid']
+		[/@regexpesc/, 'regexp.escape']
+		[/[^\]]/, 'regexp']
+		[/\]/,    'regexp.escape.control', '@pop']
 	]
 
 	_hereregexp: [
-		[/[^\\\/#]/, 'regexp'],
-		[/\\./, 'regexp'],
-		[/#.*$/, 'comment'],
-		['///[igm]*','regexp', '@pop' ],
-		[/\//, 'regexp'],
+		[/[^\\\/#]/, 'regexp']
+		[/\\./, 'regexp']
+		[/#.*$/, 'comment']
+		['///[igm]*','regexp', '@pop' ]
+		[/\//, 'regexp']
+		'comment_'
 	]
 }
 
@@ -1148,7 +1150,7 @@ export const grammar = {
 	operators: [
 		'=', '!', '~', '?', ':','!!','??',
 		'&', '|', '^', '%', '<<','!&',
-		'>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=', '?=',
+		'>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=', '?=', '??=',
 		'^=', '%=', '~=', '<<=', '>>=', '>>>=','..','...','||=',`&&=`,'**=','**',
 		'|=?','~=?','^=?','=?','and','or'
 	],
@@ -1191,7 +1193,7 @@ export const grammar = {
 	variable: /[\w\$]+(?:-[\w\$]*)*\??/
 	varKeyword: /var|let|const/
 	tagIdentifier: /-*[a-zA-Z][\w\-]*/
-	implicitCall: /(?!\s(?:and|or)\s)(?=\s[\w\'\"\/\[\{])/ # not true for or etc
+	implicitCall: /(?!\s(?:and|or|is|isa)\s)(?=\s[\w\'\"\/\[\{])/ # not true for or etc
 	cssModifier: /(?:\@+[\<\>\!]?[\w\-]+\+?|\.+@id\-?)/
 	cssPropertyPath: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*/
 	cssPropertyKey: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*(?:\s*\:)/
