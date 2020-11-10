@@ -18,7 +18,7 @@ var schema = {
 	schema: {
 		config: {type: 'string'},
 		output: {type: 'string'},
-		target: {type: 'string'},
+		platform: {type: 'string'},
 		format: {type: 'string'},
 	},
 	group: ['source-map']
@@ -115,7 +115,7 @@ def imbaPlugin o
 			try
 				output = imbac.compile(code, opts)
 			catch e
-				if options.target == 'web' and serve
+				if options.platform == 'browser' and serve
 					let msg = e.excerpt(colors: no)
 					let fn = printErrorInDocument.toString()
 					fn = fn.replace("ERROR_FILE",id)
@@ -177,7 +177,7 @@ for entry in cfg.entries
 		# imba: 
 	},cfg.alias or {},entry.alias or {})
 
-	let target = entry.target or 'web'
+	let platform = entry.platform or 'browser'
 	let plugins = (entry.plugins ||= [])
 	let resolver = resolve-plugin(extensions: ['.imba', '.mjs','.js','.cjs','.json'])
 
@@ -201,10 +201,10 @@ for entry in cfg.entries
 		}
 		plugins.unshift(alias-plugin(o))
 	
-	let iopts = Object.assign({target: target},entry.options or {})
+	let iopts = Object.assign({platform: platform},entry.options or {})
 	plugins.unshift(imba-plugin(iopts))
 
-	if options.serve and target == 'web' and !serving
+	if options.serve and platform == 'browser' and !serving
 		serving = true
 		let pubdir = path.dirname(entry.output.file)
 		let serve-config = Object.assign({

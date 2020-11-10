@@ -628,7 +628,7 @@ export class Stack
 		@options && @options[key]
 
 	def platform
-		@options:target
+		@options:platform
 
 	def sourcePath
 		@options:sourcePath
@@ -644,10 +644,13 @@ export class Stack
 		# !!@options:selfless
 
 	def tsc
-		platform == 'tsc'
+		platform == 'tsc' or @options:tsc
 
 	def isWeb
-		platform == 'web'
+		platform == 'browser' or platform == 'web'
+	
+	def isWorker
+		platform == 'worker'
 	
 	def isNode
 		platform == 'node'
@@ -656,7 +659,7 @@ export class Stack
 		@options:format or 'esm'
 		
 	def cjs
-		self.format() == 'cjs' or (!@options:format and platform == 'node')
+		self.format() == 'cjs' or (!@options:format and isNode)
 	
 	def esm
 		self.format() == 'esm'
@@ -673,12 +676,13 @@ export class Stack
 		
 		if @options[lowercased] != undefined
 			return @options[lowercased]
-
-
-		if platform and key in ['WEB','NODE','WEBWORKER']
-			return platform.toUpperCase == key
-
-		# console.log 'lookup env var',key,@options:env
+			
+		if key == 'WEB' or key == 'BROWSER'
+			return isWeb
+		elif key == 'NODE'
+			return isNode
+		elif key == 'WORKER' or key == 'WEBWORKER'
+			return isWorker
 
 		if var e = @options:env
 			if e.hasOwnProperty(key)
@@ -1879,7 +1883,6 @@ export class ClassField < Node
 
 	def decorater
 		@decorater ||= if true
-			# let target = option(:static) ? LIT('this') : LIT('this.prototype')
 			util.decorate(Arr.new(@decorators),target,name,LIT('null'))
 
 export class ClassAttribute < ClassField
@@ -2756,7 +2759,7 @@ export class Root < Code
 		STACK.@analyzing = true
 		ROOT = STACK.ROOT = @scope
 		OPTS = STACK.@options = {
-			target: o:target
+			platform: o:platform
 			loglevel: o:loglevel or 0
 			analysis: {
 				entities: (o:entities or no),
@@ -9568,25 +9571,6 @@ export class Util.IndexOf < Util
 		else
 			"{scope__.imba.c}.indexOf({args.map(|v| v.c ).join(',')})"
 
-export class Util.Len < Util
-
-	def helper
-		'''
-		function len$(a){
-			return a && (a.len instanceof Function ? a.len() : a.length) || 0;
-		};
-		'''
-
-	def js o
-		# 
-		if true # isStandalone
-			scope__.root.helper(self,helper)
-			# When this is triggered, we need to add it to the top of file?
-			"len$({args.map(|v| v.c ).join(',')})"
-		else
-			"{scope__.imba.c}.len({args.map(|v| v.c ).join(',')})"
-
-
 export class Util.Promisify < Util
 
 	def helper
@@ -9619,20 +9603,8 @@ export class Util.Iterable < Util
 
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
-
 		scope__.root.helper(self,helper)
 		return "iter$({args[0].c})"
-
-export class Util.RequireDefault < Util
-	
-	def helper
-		# now we want to allow null values as well - just return as empty collection
-		# should be the same for for own of I guess
-		'''function requireDefault$(obj){
-			return obj && obj.__esModule ? obj : { default: obj };
-		};'''
-
-	# function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 export class Util.IsFunction < Util
 
@@ -9644,9 +9616,6 @@ export class Util.Array < Util
 	def js o
 		# When this is triggered, we need to add it to the top of file?
 		"new Array({args.map(|v| v.c)})"
-
-
-
 
 class Entities
 
@@ -10176,7 +10145,7 @@ export class RootScope < Scope
 			@imbaTags = "{imbaRef.c}.TAGS"
 
 	def imbaDependency path
-		return if OPTS:imbaPath === null or OPTS:standalone or OPTS:target == 'tsc'
+		return if OPTS:imbaPath === null or OPTS:standalone or (OPTS:target == 'tsc' or OPTS:tsc)
 		return if OPTS:imbaFormat == 'script' or OPTS:runtime == 'global'
 		@dependencies[path] ||= if true
 			let str = "'{OPTS:imbaPath or 'imba'}/src/imba/{path}'"

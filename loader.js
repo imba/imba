@@ -25,6 +25,7 @@ module.exports = function(content,inMap) {
 		sourceMap: this.sourceMap,
 		sourcePath: this.resourcePath,
 		target: this.target,
+		platform: this.target,
 		comments: false,
 		bundler: 'webpack',
 		ENV_DEBUG: this.debug,

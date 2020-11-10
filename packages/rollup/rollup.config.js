@@ -43,7 +43,7 @@ export default {
         return id[0] != '.' && (id.indexOf('imba') != 0 || id.indexOf('imba/rollup') == 0)
     },
     plugins: [
-        imba({target: 'node', format: 'esm'}),
+        imba({platform: 'node', format: 'esm'}),
         resolve({extensions: ['.imba', '.mjs','.js','.json'],preferBuiltins: true}),
         commonjs()
     ]

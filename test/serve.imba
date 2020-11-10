@@ -17,7 +17,7 @@ def requestHandler request, res
 		let source = fs.readFileSync(imbasrc,'utf8')
 		let result = compiler.compile(source,{
 			sourcePath: imbasrc,
-			target: 'web'
+			platform: 'browser'
 		})
 
 		res.setHeader("Content-Type", 'application/javascript')

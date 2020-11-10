@@ -30,7 +30,7 @@ export def run code, filename: null
 	main:paths = Module._nodeModulePaths(path.dirname(filename))
 
 	if path.extname(main:filename) != '.imba' or require:extensions
-		arguments[1][:target] ||= 'node'
+		arguments[1][:platform] ||= 'node'
 		arguments[1][:format] ||= 'cjs'
 
 		var content = compiler.compile(code, arguments[1])
@@ -40,7 +40,7 @@ export def run code, filename: null
 
 if require:extensions
 	require:extensions['.imba'] = do |mod, sourcePath|
-		var options = {sourcePath: sourcePath, target: 'node'}
+		var options = {sourcePath: sourcePath, platform: 'node'}
 		
 		var body = fs.readFileSync(sourcePath, 'utf8')
 		var content = compile(body, options)

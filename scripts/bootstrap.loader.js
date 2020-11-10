@@ -15,6 +15,7 @@ module.exports = function(content,inMap) {
 		sourceMap: this.sourceMap,
 		sourcePath: this.resourcePath,
 		target: this.target,
+		platform: this.platform,
 		comments: false,
 		ENV_DEBUG: this.debug,
 		ENV_WEBPACK: true

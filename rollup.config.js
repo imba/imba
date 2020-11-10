@@ -43,7 +43,7 @@ function pack(input,outname,out = {},opts = {}){
             return id[0] != '.' && id.indexOf('imba') != 0;
         },
         plugins: [
-            compile(Object.assign({target: 'web'},opts)),
+            compile(Object.assign({target: 'web',platform: 'browser'},opts)),
             nodeResolve({
                 extensions: ['.imba','.js','.json'],
                 preferBuiltins: true
