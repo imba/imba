@@ -8860,7 +8860,7 @@ export class StyleRuleSet < StyleNode
 		if sel.match(/^\%[\w\-]+$/)
 			set(mixin: sel.slice(1))
 			@identifier = MixinIdentifier.new(sel)
-			@name = sel.slice(1) + '-' + STACK.sourceId + oid
+			@name = sel.slice(1) + '-' + sourceId + oid
 			@sel = sel # "%{@name}"
 			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
 			# @variable.@resolvedValue = @sel
