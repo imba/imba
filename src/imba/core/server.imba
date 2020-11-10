@@ -25,7 +25,6 @@ extend class ImbaContext
 
 	def run cb
 		let runtime = new ImbaContext(self,Object.create(state))
-		runtime
 		asl ||= new AsyncLocalStorage
 		asl.run(runtime,cb)
 
