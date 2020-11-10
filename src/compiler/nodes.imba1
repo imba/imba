@@ -557,7 +557,7 @@ export class Stack
 		@es6 = null
 		@es5 = null
 		@tag = null
-		@sfcid = null
+		@sourceId = null
 		@semanticTokens = []
 		@symbols = {}
 		@theme = null
@@ -597,18 +597,16 @@ export class Stack
 		let assets = config:assets 
 		assets ? assets[name] : null
 
-	def sfcid
-		return @sfcid if @sfcid
+	def sourceId
+		return @sourceId if @sourceId
 		let src = sourcePath
 		let cwd = self.cwd
 		# relativize the cwd thing
+		# TODO rename+document this option. sourceBase or sourceRoot?
 		if @options:path and cwd
 			src = @options:path.relative(cwd,src)
-		@sfcid = helpers.identifierForPath(src)
-		return @sfcid
-	
-	def fid
-		sfcid
+		@sourceId = helpers.identifierForPath(src)
+		return @sourceId
 
 	def theme
 		@theme = config:theme or StyleTheme.new(config:styles)
@@ -848,8 +846,8 @@ export class Node
 	def gsym name
 		scope__.root.symbolRef(name)
 		
-	def fid
-		STACK.fid
+	def sourceId
+		STACK.sourceId
 
 	# shorthand for the self context for a node
 	def slf
@@ -2710,15 +2708,14 @@ export class Root < Code
 		var result = {
 			js: out,
 			ast: self,
-			fid: STACK.fid,
+			sourceId: sourceId,
 			source: o.@source,
 			tokens: o.@tokens,
 			warnings: scope.warnings,
 			options: o,
 			toString: (do this:js)
 			styles: scope.styles,
-			assets: scope.assets,
-			sfcid: @scope.sfcid
+			assets: scope.assets
 		}
 		
 		if !STACK.tsc
@@ -2735,7 +2732,7 @@ export class Root < Code
 				# maybe do something different when server etc?
 				# css:js = "/* styles from {o:sourcePath} */\n" + css:js
 				
-				result:js = "{result:js}\nimba.css.register({JSON.stringify(result:css)},'{result:fid}');"
+				result:js = "{result:js}\nimba.css.register({JSON.stringify(result:css)},'{result:sourceId}');"
 				result:js += '\n/*\n' + result:css + '\n*/\n'
 				result:styles:inlined = yes
 
@@ -3155,7 +3152,7 @@ export class TagDeclaration < ClassDeclaration
 		})
 	
 	def cssns
-		"{fid}{oid}"
+		"{sourceId}{oid}"
 		
 	def cssref scope
 		if isNeverExtended and !superclass
@@ -5553,7 +5550,7 @@ export class TagTypeIdentifier < Identifier
 			
 	def toNodeName
 		if isClass
-			@nodeName ||= helpers.dasherize(@str + '-' + fid)
+			@nodeName ||= helpers.dasherize(@str + '-' + sourceId)
 		else
 			@str
 
@@ -7270,8 +7267,8 @@ class TagLike < Node
 		setup(o)
 		self
 
-	def sfcid
-		@sfcid ||= STACK.sfcid + '-' + oid
+	def sourceId
+		@sourceId ||= STACK.sourceId + '-' + oid
 
 	def body
 		@body || @options:body
@@ -7707,7 +7704,6 @@ export class Tag < TagLike
 	def traverse 
 		return self if @traversed
 		@tid = STACK.generateId('tag')
-		# console.log 'tag id',@tid,fid
 		scope__.imbaDependency('index')
 		@tagDeclaration = STACK.up(TagDeclaration)
 		let close = @options:close
@@ -7755,7 +7751,7 @@ export class Tag < TagLike
 			
 		if isSelf
 			let decl = stack.up(TagDeclaration)
-			decl.set(self: self,sfcid: sfcid) if decl
+			decl.set(self: self,sourceId: sourceId) if decl
 			
 		@tagName = tagName
 
@@ -8030,7 +8026,7 @@ export class Tag < TagLike
 			dynamicKey = kvar
 
 		if stack.option(:hasScopedStyles)
-			@classNames.unshift(stack.fid)
+			@classNames.unshift(stack.sourceId)
 
 		if component and !isSelf
 			if let cname = component.cssref(scope__)
@@ -8039,11 +8035,9 @@ export class Tag < TagLike
 		if option(:reference)
 			if oscope
 				let name = String(option(:reference)).slice(1)
-				# oscope.cssReferenceFlag(name)
 				@classNames.push(name)
 				if component
 					@classNames.push("ref--{name}")
-				# @classNames.push(oscope.cssReferenceFlag(name))
 		
 		if option(:key)
 			set(detached: yes)
@@ -8866,7 +8860,7 @@ export class StyleRuleSet < StyleNode
 		if sel.match(/^\%[\w\-]+$/)
 			set(mixin: sel.slice(1))
 			@identifier = MixinIdentifier.new(sel)
-			@name = sel.slice(1) + '-' + STACK.fid + oid
+			@name = sel.slice(1) + '-' + STACK.sourceId + oid
 			@sel = sel # "%{@name}"
 			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
 			# @variable.@resolvedValue = @sel
@@ -8905,7 +8899,7 @@ export class StyleRuleSet < StyleNode
 		elif !@name
 			# if this is unconditional - we should only need to use the unique
 			# class name of the element
-			@name = (cmp ? cmp.cssns : fid) + oid
+			@name = (cmp ? cmp.cssns : sourceId) + oid
 			@sel = ".{@name}"
 		
 		@selectors?.traverse
@@ -8927,7 +8921,7 @@ export class StyleRuleSet < StyleNode
 			let opts = {
 				selectors:[]
 				component: cmp
-				ns: cmp ? cmp.cssns : fid
+				ns: cmp ? cmp.cssns : sourceId
 				priority: pri
 				forceLocal: !@flag && (cmp or !isGlobal)
 				inline: !!@flag
@@ -9316,7 +9310,7 @@ export class StyleInterpolationExpression < StyleTerm
 		super
 		if o:rootRule
 			o:rootRule.addPlaceholder(self)
-		@id = "{fid}{oid}"
+		@id = "{sourceId}{oid}"
 		@name = "--{@id}"
 		
 		# @propname = stack.theme.expandProperty
@@ -9785,9 +9779,6 @@ export class Scope
 
 	def nextShortRef
 		AST.counterToShortRef(@refcounter++)
-		
-	def cssReferenceFlag refname
-		refname + '_' + STACK.fid + @nr
 
 	def memovar name, init
 		@memovars ||= {}
@@ -10101,8 +10092,8 @@ export class RootScope < Scope
 		@vars.split = yes
 		self
 
-	def sfcid
-		@sfcid ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
+	def sourceId
+		@sourceId ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
 	# single-file-component options
 	def sfco
 		@sfco ||= declare('sfc$',LIT('{/*$sfc$*/}'))
