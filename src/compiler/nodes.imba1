@@ -554,8 +554,6 @@ export class Stack
 		@counters = {}
 		@options = {}
 		@state = {}
-		@es6 = null
-		@es5 = null
 		@tag = null
 		@sourceId = null
 		@semanticTokens = []
@@ -644,13 +642,6 @@ export class Stack
 	
 	def cwd
 		config && config:cwd
-
-	def es6
-		@es6 ?= !!(@options:es6 or @options:es2015 or env('IMBA_ES6'))
-
-	def es5
-		# TODO remove
-		@es5 ?= !!(@options:es5 or env('IMBA_ES5'))
 		
 	def hasImplicitSelf
 		yes
@@ -687,12 +678,6 @@ export class Stack
 		if @options[lowercased] != undefined
 			return @options[lowercased]
 
-		# temporary shorthand
-		if lowercased == 'es6'
-			return self.es6
-
-		if lowercased == 'es5'
-			return self.es5
 
 		if platform and key in ['WEB','NODE','WEBWORKER']
 			return platform.toUpperCase == key
@@ -2489,7 +2474,7 @@ export class ScopeVariables < ListNode
 			groups['let'].forEach do |item|
 				(item.@variable or item).@virtual = yes
 
-		elif groups['let'] and !o.es5
+		elif groups['let']
 			keyword = 'let'
 
 		# FIX PERFORMANCE
@@ -6455,7 +6440,7 @@ export class ForOf < For
 			code = scope.c(braces: yes, indent: yes)
 			# let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
-			let js = "{M('for',keyword)} ({o.es5 ? 'var' : 'let'} {v.c} of {src.c(expression: yes)})" + code
+			let js = "{M('for',keyword)} (let {v.c} of {src.c(expression: yes)})" + code
 			if vars:counter
 				js = "{vars:counter} = 0; {js}"
 			return js
@@ -8506,15 +8491,18 @@ export class Await < ValueNode
 
 		var fnscope = o.up(Func) # do |item| item isa MethodDeclaration or item isa Fun
 
-		if !o.es5
-			if fnscope
-				set(native: yes)
-				fnscope.set(async: yes)
-				return self
-			else
-				# add warning
-				# should add as diagnostics - no?
-				warn "toplevel await not allowed"
+		if fnscope
+			set(native: yes)
+			fnscope.set(async: yes)
+			return self
+
+		###
+		Top-level await is supported from node 14.8.0 but only when
+		using loading script as es module, which breaks require etc.
+		Right now we use our old async func transformations for top-level awaits
+		but that feels hacky.
+		###
+		warn "toplevel await not allowed"
 
 		var block = o.up(Block) # or up to the closest FUNCTION?
 		var outer = o.relative(block,1)
@@ -10464,7 +10452,6 @@ export class Variable < Node
 		
 
 		@resolved = yes
-		var es5 = STACK.es5
 		var closure = @scope.closure
 		var item = @shadowing or scope.lookup(@name)
 		
@@ -10472,7 +10459,7 @@ export class Variable < Node
 
 		# if this is a let-definition inside a virtual scope we do need
 		#
-		if @scope != closure and @type == 'let' and (es5 or @virtual) # or if it is a system-variable
+		if @scope != closure and @type == 'let' and @virtual # or if it is a system-variable
 			item = closure.lookup(@name)
 			# console.log "resolving let {@name} {item.scope != scope}"
 			# we now need to ensure that this variable is unique inside
@@ -10489,7 +10476,7 @@ export class Variable < Node
 			if item.scope != scope && (options:let or @type == 'let')
 				scope.varmap[@name] = self
 				# if we allow native let we dont need to rewrite scope?
-				return self if (!es5 and !@virtual and !@shadowing)
+				return self if (!@virtual and !@shadowing)
 					
 
 			# different rules for different variables?
@@ -10683,7 +10670,7 @@ export class SystemVariable < Variable
 		while !@name && alt = names.pop
 			let foundAlt = scope.lookup('$' + alt)
 			# check if higher level?
-			if !foundAlt # or (foundAlt.scope != scope and type == 'let' and !STACK.es5)
+			if !foundAlt # or (foundAlt.scope != scope and type == 'let')
 				@name = '$' + alt # unless scope.lookup(alt)
 
 		if !@name and @declarator
@@ -10705,7 +10692,7 @@ export class SystemVariable < Variable
 
 		scope.varmap[@name] = self
 
-		if type != 'let' or STACK.es5 or @virtual
+		if type != 'let' or @virtual
 			closure.varmap[@name] = self
 		self
 
