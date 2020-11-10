@@ -556,7 +556,6 @@ export class Stack
 		@state = {}
 		@es6 = null
 		@es5 = null
-		@optlevel = null
 		@tag = null
 		@sfcid = null
 		@semanticTokens = []
@@ -676,13 +675,6 @@ export class Stack
 	
 	def esm
 		self.format() == 'esm'
-
-	def autocall
-		!option(:explicitParens)
-		# !@options:explicitParens
-		
-	def optlevel
-		@optlevel ?= (@options:conservative or env('IMBA_CONSERVATIVE') ? 0 : (@options:optlevel or 9)) # stack.option(:conservative)
 
 	def env key
 		var val = @options["ENV_{key}"]
