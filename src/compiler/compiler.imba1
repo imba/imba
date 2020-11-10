@@ -14,7 +14,6 @@ import ImbaParseError from './errors'
 
 # Instantiate a Lexer for our use here.
 export var lex = lexer.Lexer.new
-export var css = require './css'
 export var Rewriter = rewriter.Rewriter
 export var helpers = util
 var rewriter = Rewriter.new

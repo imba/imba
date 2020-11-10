@@ -4,7 +4,6 @@
 
 var helpers = require './helpers'
 var constants = require './constants'
-var csscompiler = require './css'
 
 import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
