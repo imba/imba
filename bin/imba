@@ -57,7 +57,7 @@ function run(code,pars) {
 // TODO add support for imba run cache?
 if (require.extensions) {
 	require.extensions['.imba'] = function(mod,filename) {
-		var options = {filename: filename,target: 'node',format: 'cjs'};
+		var options = {filename: filename,target: 'node'};
 		
 		Object.defineProperty(options,'fs',{value: fs, enumerable:false});
 		Object.defineProperty(options,'path',{value: path, enumerable:false});

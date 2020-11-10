@@ -16,7 +16,7 @@ function cacheFile(sourcePath) {
 
 	const options = {
 		sourcePath: sourcePath,
-		target: 'node',
+		platform: 'node',
 		evaling: true
 	}
 
@@ -97,11 +97,11 @@ if(require.extensions) {
 
 } else if(require.registerExtension) {
 	require.registerExtension('.imba',function (content){
-		return compiler.compile(content, {target: 'node'}).js;
+		return compiler.compile(content, {platform: 'node'}).js;
 	});
 	
 	require.registerExtension('.imba2',function (content){
-		return compiler.compile(content, {target: 'node'}).js;
+		return compiler.compile(content, {platform: 'node'}).js;
 	});
 };
 

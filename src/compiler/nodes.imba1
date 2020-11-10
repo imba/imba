@@ -630,6 +630,9 @@ export class Stack
 	def platform
 		@options:platform
 
+	def format
+		@options:format
+
 	def sourcePath
 		@options:sourcePath
 
@@ -638,11 +641,7 @@ export class Stack
 	
 	def cwd
 		config && config:cwd
-		
-	def hasImplicitSelf
-		yes
-		# !!@options:selfless
-
+	
 	def tsc
 		platform == 'tsc' or @options:tsc
 
@@ -654,15 +653,13 @@ export class Stack
 	
 	def isNode
 		platform == 'node'
-		
-	def format
-		@options:format or 'esm'
-		
+
 	def cjs
-		self.format() == 'cjs' or (!@options:format and isNode)
+		format == 'cjs' or (!format and isNode)
 	
+	# The format defaults to esm
 	def esm
-		self.format() == 'esm'
+		!cjs
 
 	def env key
 		var val = @options["ENV_{key}"]
@@ -4709,7 +4706,7 @@ export class VarOrAccess < ValueNode
 				return self
 			# FIX
 			# @value.safechain = safechain
-		elif stack.hasImplicitSelf and !@identifier.isCapitalized
+		elif !@identifier.isCapitalized
 			let ctx = scope.context
 			if ctx isa RootScopeContext or ctx.isGlobalContext
 				yes

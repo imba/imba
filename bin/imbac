@@ -35,7 +35,7 @@ var parseOpts = {
 		output: {type: 'string'},
 		platform: {type: 'string'}, // node | browser | worker
 		runtime: {type: 'string'}, // global | inline | import
-		format: {type: 'string'},
+		format: {type: 'string'}, // cjs | esm
 	},
 	
 	group: ['source-map']
@@ -49,17 +49,18 @@ Usage: imbac [options] path/to/script.imba
 
   -h, --help             display this help message
   -v, --version          display the version number
+  -w, --watch            recompile files on change
   -m, --source-map       generate source map and add inline to .js files
-  --inline-helpers       inline helpers to not depend on imba.js
-  --inline-css           inline css declared in sfc css blocks
   -o, --output [dir]     set the output directory for compiled JavaScript
   -p, --print            print out the compiled JavaScript
   -s, --stdio            listen for and compile scripts over stdio
   -t, --tokenize         print out the tokens that the lexer/rewriter produce
   --platform [type]      Specify platform: 'node', 'browser', 'worker'
+  --format [type]        Specify format: 'esm' (default), 'cjs'
   
+  --inline-helpers       inline helpers to not depend on imba.js
+  --inline-css           inline css declared in sfc css blocks
   --silent               only print out errors (skip warnings)
-  -w, --watch            recompile files on change
 
   --analyze          print out the scopes and variables of your script
 `;
