@@ -103,13 +103,6 @@ export const states = {
 			'$0~[A-Z].*': 'identifier.uppercase.$F'
 			'@default': 'identifier.$F'
 		}]
-		[/@id\!?/,cases: {
-			'this': 'this'
-			'self': 'self'
-			'@keywords': 'keyword.$#'
-			'$0~[A-Z].*': 'identifier.uppercase.$F'
-			'@default': 'identifier.$F'
-		}]
 	]
 
 	block_: [
@@ -561,6 +554,7 @@ export const states = {
 	]
 
 	field_: [
+		[/((?:lazy )?)((?:static )?)(const|let)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_varblock=field-$2']] # $2_body.$S2.$2.$S4
 		[/static(?=\s+@id)/,'keyword.static']
 		[/(@id)(?=$)/,'field']
 		[/(@id)/,['field','@_field_1']]
@@ -633,6 +627,7 @@ export const states = {
 
 	_class: [
 		denter(toodeep,-1,0)
+		# 'var_'
 		'css_'
 		'member_'
 		'comment_'
@@ -918,7 +913,7 @@ export const states = {
 
 		[/\{/,'tag.$/.braces.open', '@_tag_interpolation']
 		[/\[/,'style.open', '@css_inline']
-		[/(\s*\=\s*)/,'operator.equals.tag-$/', '@_tag_value&-value']
+		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&-value']
 		[/\:/,token: 'tag.event.start', switchTo: '@/event']
 		'tag_event_'
 		# [/\@/,token: 'tag.event.start', switchTo: '@/event']
@@ -939,7 +934,7 @@ export const states = {
 		'_tag_part'
 		[/\.(@optid)/,'tag.event-modifier']
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
-		[/(\s*\=\s*)/,'operator.equals.tag-$/', '@_tag_value&handler']
+		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&handler']
 		[/\s+/,'@rematch','@pop']
 	]
 	
