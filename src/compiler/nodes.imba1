@@ -9460,13 +9460,6 @@ var HELPERS = {
 	unit: '''(value,unit){
 		return value + unit;
 	};'''
-	
-	cssConv: '''(value,unit,key){
-		let t = typeof value;
-		// Support custom units
-		return value;
-		// Object.defineProperty(target,key,{value:value});
-	};'''
 
 	extendTag: '''(el,cls){
 		Object.defineProperties(el,Object.getOwnPropertyDescriptors(cls.prototype));
