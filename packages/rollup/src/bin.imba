@@ -104,7 +104,7 @@ def imbaPlugin o
 
 	return {
 		transform: do(code, id)
-			var opts = Object.assign({},o,{sourcePath: id, filename: id})
+			var opts = Object.assign({},o,{sourcePath: id})
 
 			opts.fs || Object.defineProperty(opts,'fs',{value: fs, enumerable:false})
 			opts.path || Object.defineProperty(opts,'path',{value: path, enumerable:false})
@@ -146,7 +146,7 @@ class Bundle
 		elif e.code == 'BUNDLE_END'
 			console.log "created {relPath(e.input)} → {relPath(e.output[0])} in {e.duration}ms"
 		elif e.code == 'ERROR'
-			let file = e.error && e.error.filename or e.error.id
+			let file = e.error && e.error.sourcePath or e.error.id
 			console.log "errored {file ? relPath(file) : ''}"
 			if e.error.excerpt
 				console.log e.error.excerpt(colors: yes)

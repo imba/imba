@@ -11,12 +11,11 @@ if(cacheDir){
 	cachePrefix = require('./package.json').version
 }
 
-function cacheFile(filename) {	
+function cacheFile(sourcePath) {	
 	var content;
 
 	const options = {
-		filename: filename,
-		sourcePath: filename,
+		sourcePath: sourcePath,
 		target: 'node',
 		evaling: true
 	}
@@ -27,12 +26,12 @@ function cacheFile(filename) {
 	})
 
 	if(cacheDir) {
-		var cacheName = cachePrefix + '-' + filename.replace(/\//g,'__') + '.js';
+		var cacheName = cachePrefix + '-' + sourcePath.replace(/\//g,'__') + '.js';
 		var cachePath = path.join(cacheDir,cacheName);
 
 		try {
 			var cacheTime = fs.statSync(cachePath).mtime;
-			var sourceTime = fs.statSync(filename).mtime;
+			var sourceTime = fs.statSync(sourcePath).mtime;
 			if (cacheTime > sourceTime) {
 				content = fs.readFileSync(cachePath, 'utf8');
 			}
@@ -42,7 +41,7 @@ function cacheFile(filename) {
 	}
 
 	if (!content) {
-		var compiled = compiler.compile(fs.readFileSync(filename,'utf8'),options);
+		var compiled = compiler.compile(fs.readFileSync(sourcePath,'utf8'),options);
 
 		content = compiled.js;
 

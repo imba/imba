@@ -23,7 +23,7 @@ export class ImbaParseError < Error
 			
 			
 		this:message = msg
-		this:filename = e:filename
+		this:sourcePath = e:sourcePath
 		this:line = e:line
 		self
 

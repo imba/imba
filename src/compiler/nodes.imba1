@@ -630,12 +630,8 @@ export class Stack
 	def platform
 		@options:target
 
-	def filename
-		@options:filename
-
 	def sourcePath
-		# TODO should merge sourcePath and filename
-		@options:sourcePath or filename
+		@options:sourcePath
 
 	def config
 		@options:config or {}
@@ -2670,7 +2666,7 @@ export class Root < Code
 				body.first.@first = yes
 		catch e
 			let err = ImbaTraverseError.wrap(e)
-			err.@filename = OPTS:filename
+			err.@sourcePath = OPTS:sourcePath
 			err.@loc = STACK.currentRegion()
 			throw err
 			

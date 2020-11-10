@@ -32,16 +32,16 @@ export def run code, filename: null
 	if path.extname(main:filename) != '.imba' or require:extensions
 		arguments[1][:target] ||= 'node'
 		arguments[1][:format] ||= 'cjs'
-		# arguments[1][:standalone] ||= yes
+
 		var content = compiler.compile(code, arguments[1])
 		main._compile (content:js or content), main:filename
 	else
 		main._compile code, main:filename
 
 if require:extensions
-	require:extensions['.imba'] = do |mod, filename|
-		var options = {filename: filename, target: 'node'}
+	require:extensions['.imba'] = do |mod, sourcePath|
+		var options = {sourcePath: sourcePath, target: 'node'}
 		
-		var body = fs.readFileSync(filename, 'utf8')
+		var body = fs.readFileSync(sourcePath, 'utf8')
 		var content = compile(body, options)
-		return mod._compile (content:js), filename
+		return mod._compile (content:js), sourcePath

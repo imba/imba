@@ -24,7 +24,7 @@ parser:yy = ast # everything is exported right here now
 
 # normalize compiler options, resolve imbaconfig.json++
 export def resolveConfig o = {}
-	let path = o:sourcePath or o:filename
+	let path = o:sourcePath
 	o:config ||= resolveConfigFile(path,o) or {}
 	return o
 
@@ -63,7 +63,7 @@ export def parse code, o = {}
 		return parser.parse tokens
 	catch err
 		err:_code = code
-		err:_filename = o:filename if o:filename
+		err:_sourcePath = o:sourcePath if o:sourcePath
 		throw err
 
 export def compile code, o = {}
@@ -79,18 +79,18 @@ export def compile code, o = {}
 		return ast.compile(o)
 	catch err
 		err:_code = code
-		err:_filename = o:filename if o:filename
+		err:_sourcePath = o:sourcePath if o:sourcePath
 		if o:evaling
-			console.log "error compiling {o:filename}"
+			console.log "error compiling {o:sourcePath}"
 			if err:excerpt
 				console.log "   " + err.excerpt(colors: true)
 			else
 				console.log "   " + err:message
-				console.log "   " + "in file {err:_filename}"
+				console.log "   " + "in file {err:_sourcePath}"
 				console.log err:stack if err:stack	
-			# console.log "error during compile",o:filename
+
 		elif !o:silent
-			console.log "error compiling {o:filename}"
+			console.log "error compiling {o:sourcePath}"
 
 		throw err
 

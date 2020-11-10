@@ -22,7 +22,6 @@ module.exports = function(content,inMap) {
 	var query = this.query;
 
 	var opts = {
-		filename: path.basename(this.resourcePath),
 		sourceMap: this.sourceMap,
 		sourcePath: this.resourcePath,
 		target: this.target,
@@ -32,7 +31,7 @@ module.exports = function(content,inMap) {
 		ENV_WEBPACK: true,
 	};
 
-	if(!opts.filename.match(/\.imba$/)){
+	if(!opts.sourcePath.match(/\.imba$/)){
 		return this.callback(null,content);
 	}
 
