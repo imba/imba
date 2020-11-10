@@ -540,6 +540,7 @@ export class Stack
 	prop state
 	prop semanticTokens
 	prop theme
+	prop css
 
 	def initialize
 		reset
@@ -559,6 +560,8 @@ export class Stack
 		@semanticTokens = []
 		@symbols = {}
 		@theme = null
+
+		@css = ''
 		self
 	
 	def registerSemanticToken token, kind, modifiers
@@ -573,7 +576,7 @@ export class Stack
 		else
 			token.@kind = kind
 		@semanticTokens.push(token)
-		
+	
 		
 	def incr name
 		@counters[name] ||= 0
@@ -632,6 +635,7 @@ export class Stack
 
 	def format
 		@options:format
+		
 
 	def sourcePath
 		@options:sourcePath
@@ -1195,21 +1199,6 @@ export class Meta < ValueNode
 export class Comment < Meta
 
 	def visit
-		if @value.type == 'HERECOMMENT'
-			let raw = @value.@value
-			let line = raw.slice(0,raw.indexOf('\n')).trim
-
-			if let m = line.match(/^(css|less|stylus|sass|scss)( scoped)?/)
-				var style = {
-					content: raw.slice(raw.indexOf('\n'))
-					scoped: !!m[2]
-					type: m[1]
-					attrs: {}
-				}
-				# compile style directly here?
-				scope__.root.styles.push(style)
-				stack.set(hasScopedStyles: yes) if m[2]
-
 		if var block = up
 			var idx = block.indexOf(self) + 1
 			idx += 1 if block.index(idx) isa Terminator
@@ -2694,28 +2683,16 @@ export class Root < Code
 			tokens: o.@tokens,
 			warnings: scope.warnings,
 			options: o,
-			toString: (do this:js)
-			styles: scope.styles,
+			toString: (do this:js),
+			css: STACK.css,
 			assets: scope.assets
 		}
 		
 		if !STACK.tsc
-			var stylebody = ""
-			for style in result:styles
-				if style:type == 'css'
-					stylebody += style:processed + '\n\n'
-
-			result:css = stylebody
-
-			if stylebody and o:css != 'separate'
-				# and o:bundler != 'webpack'
-				let css = {js: stylebody}
-				# maybe do something different when server etc?
-				# css:js = "/* styles from {o:sourcePath} */\n" + css:js
-				
+			if result:css and (!o:styles or o:styles == 'inline')
 				result:js = "{result:js}\nimba.css.register({JSON.stringify(result:css)},'{result:sourceId}');"
-				result:js += '\n/*\n' + result:css + '\n*/\n'
-				result:styles:inlined = yes
+				if o:debug
+					result:js += '\n/*\n' + result:css + '\n*/\n' # this we should only include when debugging
 
 		# always create the sourcemap?
 		if o:sourceMap # should handle sourcemap no matter what?
@@ -8935,11 +8912,7 @@ export class StyleRuleSet < StyleNode
 					else
 						return m
 
-			scope__.root.styles.push({
-				type: 'css'
-				processed: @css
-			})
-			
+			STACK.css += @css + '\n\n'
 		self
 		
 	def toRaw
@@ -9991,7 +9964,6 @@ export class RootScope < Scope
 	prop scopes
 	prop entities
 	prop object
-	prop styles
 	prop options
 	prop assets
 	prop document
@@ -10030,7 +10002,7 @@ export class RootScope < Scope
 		@warnings = []
 		@scopes   = []
 		@helpers  = []
-		@styles = []
+
 		@assets = {}
 		@selfless = yes
 		@implicitAccessors = []
