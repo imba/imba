@@ -14,9 +14,10 @@ console.log "examples",examples
 
 var compiler = require('../src/compiler/compiler.imba1')
 
-require('../src/imba/module.imba')
+require('../src/imba/index.imba')
 require('./spec.imba')
 
+global.imba.compiler = compiler
 
 var exposed = {}
 
