@@ -3004,11 +3004,6 @@ export class ClassDeclaration < Code
 		if @staticInit
 			# this means we need to cache it 
 			js = "{js}; {cname}.init$();"
-			
-		# if STACK.tsc
-		# 	let comment = "/*¡{cname}*/"
-		# 	let add = helpers.clearLocationMarkers("{cname}.{comment}prototype.constructor;")
-		# 	js = "{js}; {add}"
 
 		return js
 		
@@ -3184,12 +3179,6 @@ export class TagDeclaration < ClassDeclaration
 			if option(:extension)
 				className = "Extended${className}"
 
-			# if false
-			# let comment = "/*¡{name.c.slice(1,-1)}*/"
-			# let add = helpers.clearLocationMarkers("this.{comment}prototype.constructor;")
-			# let fn = 'static meta$(){ ' + add + ' }\n'
-			# body.unshift(LIT(fn))
-
 		elif option(:extension)
 			@body.@delimiter = ','
 			@body.set(braces: yes)
@@ -3225,8 +3214,6 @@ export class TagDeclaration < ClassDeclaration
 		else
 			unless option(:extension)
 				js += "; globalThis.{M className, name} = {className};"
-			# let comment = "/*¡{name.c.slice(1,-1)}*/"
-			# js +=  helpers.clearLocationMarkers("{className}.{comment}prototype.constructor")
 		return js
 
 export class Func < Code
