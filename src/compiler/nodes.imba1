@@ -631,7 +631,7 @@ export class Stack
 		@options && @options[key]
 
 	def platform
-		@options:platform
+		@options:platform or 'browser'
 
 	def format
 		@options:format
