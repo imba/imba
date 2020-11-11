@@ -2704,15 +2704,7 @@ export class Root < Code
 		return result
 
 	def js o
-		var out
-		unless @options:wrap
-			out = scope.c
-		else
-			body.consume(ImplicitReturn.new)
-			out = scope.c(indent: yes)
-			out = out.replace(/^\n?/,'\n')
-			out = out.replace(/\n?$/,'\n\n')
-			out = '(function(){' + out + '})();'
+		var out = scope.c
 
 		# find and replace shebangs
 		var shebangs = []
