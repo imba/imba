@@ -2689,7 +2689,7 @@ export class Root < Code
 		
 		if !STACK.tsc
 			if result:css and (!o:styles or o:styles == 'inline')
-				result:js = "{result:js}\nimba.css.register({JSON.stringify(result:css)},'{result:sourceId}');"
+				result:js = "{result:js}\nimba.styles.register('{result:sourceId}',{JSON.stringify(result:css)});"
 				if o:debug
 					result:js += '\n/*\n' + result:css + '\n*/\n' # this we should only include when debugging
 
