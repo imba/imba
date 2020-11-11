@@ -56,8 +56,6 @@ Usage: imbac [options] path/to/script.imba
   --platform [type]      Specify platform: 'node', 'browser', 'worker'
   --format [type]        Specify format: 'esm' (default), 'cjs'
   --styles [format]      Specify how styles should be added: 'extern', 'inline'
-  
-  --inline-helpers       inline helpers to not depend on imba.js
   --silent               only print out errors (skip warnings)
   --analyze          print out the scopes and variables of your script
 `;

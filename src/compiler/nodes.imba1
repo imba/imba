@@ -9419,9 +9419,6 @@ export class Util < Node
 		node.cache(force: yes, pool: 'list') if cache
 		return node
 
-	def inlineHelpers
-		!!OPTS:inlineHelpers
-
 	def name
 		'requireDefault$'
 
@@ -9505,12 +9502,9 @@ export class Util.IndexOf < Util
 		'''
 
 	def js o
-		if inlineHelpers
-			scope__.root.helper(self,helper)
-			# When this is triggered, we need to add it to the top of file?
-			"idx$({args.map(|v| v.c ).join(',')})"
-		else
-			"{scope__.imba.c}.indexOf({args.map(|v| v.c ).join(',')})"
+		scope__.root.helper(self,helper)
+		# When this is triggered, we need to add it to the top of file?
+		"idx$({args.map(|v| v.c ).join(',')})"
 
 export class Util.Promisify < Util
 
@@ -9528,12 +9522,8 @@ export class Util.Promisify < Util
 		'''
 
 	def js o
-		if inlineHelpers
-			# When this is triggered, we need to add it to the top of file?
-			scope__.root.helper(self,helper)
-			"promise$({args.map(|v| v.c).join(',')})"
-		else
-			"{scope__.imba.c}.await({args.map(|v| v.c).join(',')})"
+		scope__.root.helper(self,helper)
+		"promise$({args.map(|v| v.c).join(',')})"
 
 export class Util.Iterable < Util
 
