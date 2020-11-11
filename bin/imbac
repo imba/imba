@@ -172,7 +172,7 @@ CLI.prototype.cwd = function (){
 
 CLI.prototype.run = function (){
 	var self = this, o_, main_;
-	(o_ = self.o()).target || (o_.target = 'node');
+	(o_ = self.o()).platform || (o_.platform = 'node');
 	
 	if (self.o().output) {
 		self.o().output = path.normalize(path.resolve(self.cwd(),self.o().output));
@@ -190,7 +190,7 @@ CLI.prototype.run = function (){
 		stdin.setEncoding('utf8');
 		stdin.on('data',function(chunk) { return chunks.push(chunk); });
 		stdin.on('end',function() {
-			self.sources().push({filename: 'stdin',sourceBody: chunks.join()});
+			self.sources().push({sourcePath: 'stdin',sourceBody: chunks.join()});
 			return self.finish();
 		});
 	} else {
