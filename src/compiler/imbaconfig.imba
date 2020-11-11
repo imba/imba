@@ -1,4 +1,3 @@
-import {StyleTheme} from './styler'
 const cached = {}
 
 export def resolveConfigFile dir,{path,fs}
@@ -14,8 +13,8 @@ export def resolveConfigFile dir,{path,fs}
 			return value
 		let config = JSON.parse(fs.readFileSync(src,'utf8'),resolver)
 		config.cwd ||= dir
-		if config.styles
-			config.theme ||= new StyleTheme(config.styles)
+		# if config.styles
+		#	config.theme ||= new StyleTheme(config.styles)
 		
 		let assetsDir = path.resolve(dir,'assets')
 		let assets = config.assets ||= {}

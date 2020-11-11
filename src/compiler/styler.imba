@@ -7,6 +7,7 @@ import * as theme from  './theme.imba'
 
 const extensions = {}
 var ThemeInstance = null
+const ThemeCache = new WeakMap
 
 # {string: "hsla(0,0,0,var(--alpha,1))",h:0,s:0,l:0}
 # {string: "hsla(0,100%,100%,var(--alpha,1))",h:0,s:0,l:100}
@@ -395,13 +396,20 @@ export class StyleTheme
 		
 	static def propAbbr name
 		abbreviations[name] or name
+
+	static def wrap config
+		return self.instance() unless config
+
+		let theme = ThemeCache.get(config)
+		ThemeCache.set(config,theme = new self(config)) unless theme
+		return theme
 		
 	def constructor ext = {}
 		options = theme
 		palette = Object.assign({},defaultPalette)
 
-		if ext.colors
-			parseColors(palette,ext.colors)
+		if ext.theme and ext.theme.colors
+			parseColors(palette,ext.theme.colors)
 
 	def expandProperty name
 		return aliases[name] or undefined

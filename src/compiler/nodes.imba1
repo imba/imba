@@ -609,7 +609,8 @@ export class Stack
 		return @sourceId
 
 	def theme
-		@theme = config:theme or StyleTheme.new(config:styles)
+		@theme ||= StyleTheme.wrap(@options:config)
+		# config:theme or StyleTheme.wrap(config:styles)
 
 	def stash
 		@stash
