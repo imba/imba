@@ -4773,7 +4773,7 @@ export class VarReference < ValueNode
 		unless @expression == true
 			@expression = true
 			for variable in @variables
-				variable.@type = 'var'
+				variable.@type = 'let'
 				variable.@virtual = yes
 				variable.autodeclare()
 		return self
@@ -4788,14 +4788,12 @@ export class VarReference < ValueNode
 
 		# should happen automatically when traversing no?
 		if @value isa Identifier
-			console.log "register {@value.symbol} in {scope}"
 			@value.@variable ||= scope__.register(@value.symbol,self,type: @type)
 			vars.push(@value.@variable)
 			stack.registerSemanticToken(@value,@variable)
 		
 		@variables = vars
-		forceExpression if option('virtualize')
-	
+		# forceExpression if option('virtualize')
 		return self
 	
 	def js stack,params
@@ -4844,15 +4842,11 @@ export class Assign < Op
 		if r
 			r.traverse(assignment: yes)
 
-		if l isa VarReference and !(STACK.up isa Block) and !(STACK.up isa Export)
-			console.log 'var reference in block!!'
-			# l.forceExpression
-			l.option('virtualize',yes)
-
 		if l
 			l.traverse()
-		
-		
+
+		if l isa VarReference and !(STACK.up isa Block) and !(STACK.up isa Export)
+			l.forceExpression
 
 		return self
 
@@ -8749,9 +8743,7 @@ export class Export < ValueNode
 			return: option(:return),
 			default: option(:default)
 		)
-		
-		if value isa Assign
-			console.log "export assign {value.@expression}"
+
 		super
 
 	def js o
@@ -8764,28 +8756,26 @@ export class Export < ValueNode
 
 		if value isa ListNode
 			value.map do |item| item.set export: self
-		else
-			value.set export: self
+		# else
+		#	value.set export: self
 
 		if value isa MethodDeclaration or value isa ClassDeclaration
 			return value.c
 
+		
+
 		if value isa Assign and value.left isa VarReference
+		
 			if !STACK.cjs
-				console.log "Export assign {value.@expression}"
-				return "export {value.c}"
+				return isDefault ? "export default {value.c}" : "export {value.c}"
 			else
-				# value.left.forceExpression
-				# poorly supported
-				value.right = OP('=',LIT("exports.{value.left.value.c}"),value.right)
+				let sym = isDefault ? "default" : value.left.value.symbol
+				value.right = OP('=',LIT("exports.{sym}"),value.right)
 				return value.c
-				# return "exports.default = {value.c}"
 
 		if isDefault
-			if !STACK.cjs
-				return "export default {value.c}"
-			else
-				return "exports.default = {value.c}"
+			let out = value.c
+			STACK.cjs ? "exports.default = {out}" : "export default {out}"
 
 		return value.c
 
@@ -10298,6 +10288,7 @@ export class FlowScope < Scope
 					# p "{name} already exists as a block-variable {decl}"
 					# TODO should throw error instead
 					decl.warn "Variable already exists in block" if decl
+					console.log "ALREADY EXISTS?"
 					# root.warn message: "Holy shit"
 			closure.register(name,decl,o)
 		else
