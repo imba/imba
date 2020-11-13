@@ -8762,8 +8762,6 @@ export class Export < ValueNode
 		if value isa MethodDeclaration or value isa ClassDeclaration
 			return value.c
 
-		
-
 		if value isa Assign and value.left isa VarReference
 		
 			if !STACK.cjs
@@ -8775,6 +8773,7 @@ export class Export < ValueNode
 
 		if isDefault
 			let out = value.c
+			
 			STACK.cjs ? "exports.default = {out}" : "export default {out}"
 
 		return value.c
@@ -10529,7 +10528,6 @@ export class Variable < Node
 	def autodeclare
 		return self if @declared
 		@autodeclare = yes
-		console.log "autodeclaring variable {self}"
 		scope.autodeclare(self)
 		@declared = yes
 		self
