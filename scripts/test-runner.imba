@@ -26,16 +26,16 @@ def getFiles(dir, o = [])
 			getFiles(fullpath,o)
 	return o
 	
-var options = helpers.parseArgs(process.argv.slice(2),{
+let options = helpers.parseArgs(process.argv.slice(2),{
 	alias: {g: 'grep',c: 'concurrent'}
 })
 
-var consoleMapping = {
+let consoleMapping = {
 	startGroup: 'group'
 	endGroup: 'groupEnd'
 }
 
-var parseRemoteObject = do |obj|
+let parseRemoteObject = do |obj|
 	let result = obj.value or obj
 	if obj.type == 'object'
 		# console.log("object",obj,obj.preview)
@@ -51,14 +51,14 @@ var parseRemoteObject = do |obj|
 	return result
 
 
-var tests = []
-var runners = []
-var queued = []
-var pages = []
-var counter = 0 
+let tests = []
+let runners = []
+let queued = []
+let pages = []
+let counter = 0 
 
-var doneResolve
-var donePromise = new Promise do(resolve,reject)
+let doneResolve
+let donePromise = new Promise do(resolve,reject)
 	doneResolve = resolve
 
 
@@ -95,8 +95,8 @@ def spawnRunner
 		return runners.shift!
 	
 	# console.log 'spawning runner'
-	var browser = await puppeteer.launch(args: args, headless: true)
-	var runner = await browser.newPage!
+	let browser = await puppeteer.launch(args: args, headless: true)
+	let runner = await browser.newPage!
 	runner.setViewport({width: 300, height: 300})
 	runner.nr = counter++
 	runner.meta = []
@@ -128,7 +128,7 @@ def spawnRunner
 			
 	runner.on 'console' do(msg)
 		# console.log("page on console",msg._type,msg)
-		var params = msg.args().filter(Boolean).map do |x|
+		let params = msg.args().filter(Boolean).map do |x|
 			parseRemoteObject(x._remoteObject)
 
 		let str = String(params[0]) # .replace(':','')
@@ -137,7 +137,7 @@ def spawnRunner
 			runner.HANDLERS[str](*params.slice(1))
 
 		if options.console
-			var key = consoleMapping[msg.type()] or msg.type()
+			let key = consoleMapping[msg.type()] or msg.type()
 			console[key].apply(console, params)
 
 	return runner
@@ -146,32 +146,32 @@ def run page
 	
 	new Promise do(resolve,reject)
 
-		var test = page.result = {
+		let test = page.result = {
 			path: page.path
 			log: []
 			tests: []
 			failed: []
 		}
 		
-		var runner = await spawnRunner!
+		let runner = await spawnRunner!
 		runner.page = page
 		page.runner = runner
 
-		var print = do(...params)
+		let print = do(...params)
 			test.log.push(params)
 			unless options.concurrent
 				console.log(*params)
 
-		var progress = do(out)
+		let progress = do(out)
 			if options.concurrent
 				process.stdout.write(out or ".")
 
-		var root = path.resolve(__dirname,"..","test")
-		var src =  "file://{root}/index.html?{page.nr}#{page.path}"
-		var state = 'setup'
-		var currTest
+		let root = path.resolve(__dirname,"..","test")
+		let src =  "file://{root}/index.html?{page.nr}#{page.path}"
+		let state = 'setup'
+		let currTest
 
-		var handlers =
+		let handlers =
 			'spec:test': do(e)
 				e.file = page.path
 				tests.push(e)
@@ -221,12 +221,12 @@ def run page
 
 
 def main
-	var now = Date.now()
-	var testFolder = path.resolve(__dirname,"..","test","apps")
-	var entries = getFiles(testFolder).filter do |item|
+	let now = Date.now()
+	let testFolder = path.resolve(__dirname,"..","test","apps")
+	let entries = getFiles(testFolder).filter do |item|
 		options.main ? (item.indexOf(options.main) >= 0) : !item.match(/(examples|tmp)\//)
 
-	var files = entries.map(|v| v.replace(testFolder,"apps"))
+	let files = entries.map(|v| v.replace(testFolder,"apps"))
 	
 	pages = files.map do(src,i)
 		{
@@ -254,9 +254,9 @@ def main
 				console.log(*row)
 			console.log('')
 
-	var passed = tests.filter do !$1.failed
-	var failed = tests.filter do $1.failed
-	var crashed = pages.filter do $1.error
+	let passed = tests.filter do !$1.failed
+	let failed = tests.filter do $1.failed
+	let crashed = pages.filter do $1.error
 	console.log('')
 	console.log("{tests.length} tests took {Date.now() - now}ms")
 

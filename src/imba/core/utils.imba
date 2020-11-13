@@ -13,7 +13,9 @@ def imba.toCamelCase str
 
 # Basic events - move to separate file?
 const emit__ = do(event, args, node)
-	let prev, cb, ret
+	let prev
+	let cb
+	let ret
 
 	while (prev = node) and (node = node.next)
 		if cb = node.listener
@@ -30,7 +32,9 @@ const emit__ = do(event, args, node)
 
 # method for registering a listener on object
 def imba.listen obj, event, listener, path
-	let cbs, list, tail
+	let cbs
+	let list
+	let tail
 	cbs = obj.#__listeners__ ||= {}
 	list = cbs[event] ||= {}
 	tail = list.tail || (list.tail = (list.next = {}))
@@ -47,7 +51,8 @@ def imba.once obj, event, listener
 
 # remove a listener
 def imba.unlisten obj, event, cb, meth
-	let node, prev
+	let node
+	let prev
 	let meta = obj.#__listeners__
 	return unless meta
 

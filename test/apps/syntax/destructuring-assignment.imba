@@ -11,13 +11,15 @@ describe 'Array destructuring' do
 		ok green == 'three'
 
 	test 'Assignment separate from declaration' do
-		let a, b
+		let a
+		let b
 		[a, b] = [1, 2]
 		ok a == 1
 		ok b == 2
 
 	test 'Default values' do
-		let a, b
+		let a
+		let b
 		[a=5, b=7] = [1]
 		ok a == 1
 		ok b == 7
@@ -47,7 +49,8 @@ describe 'Object destructuring' do
 		ok p == 42 and q == true
 
 	test 'Assignment without declaration' do
-		let a,b
+		let a
+		let b
 		{a,b} = {a: 1, b: 2}
 		ok a == 1 and b == 2
 

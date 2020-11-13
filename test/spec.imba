@@ -23,7 +23,7 @@ class PupMouse
 	def type text, options
 		puppy('keyboard.type',[text,options])
 
-var TERMINAL_COLOR_CODES =
+const TERMINAL_COLOR_CODES =
 	bold: 1
 	underline: 4
 	reverse: 7
@@ -36,15 +36,15 @@ var TERMINAL_COLOR_CODES =
 	cyan: 36
 	white: 37
 
-var fmt = do(code,string)
+const fmt = do(code,string)
 	return string.toString! if console.group
 	code = TERMINAL_COLOR_CODES[code]
-	var resetStr = "\x1B[0m"
-	var resetRegex = /\x1B\[0m/g
-	var codeRegex = /\x1B\[\d+m/g
-	var tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i
-	var numRegex = /\d+/
-	var str = ('' + string).replace(resetRegex, "{resetStr}\x1B[{code}m") # allow nesting
+	let resetStr = "\x1B[0m"
+	let resetRegex = /\x1B\[0m/g
+	let codeRegex = /\x1B\[\d+m/g
+	let tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i
+	let numRegex = /\d+/
+	let str = ('' + string).replace(resetRegex, "{resetStr}\x1B[{code}m") # allow nesting
 	str = "\x1B[{code}m{str}{resetStr}"
 	return str
 
@@ -110,14 +110,14 @@ global class Spec < SpecComponent
 
 	def eval block, ctx
 		stack.push(context = ctx)
-		var res = block(context.state)
-		var after = do
+		let res = block(context.state)
+		let after = do
 			stack.pop!
 			context = stack[stack.length - 1]
 			observer.takeRecords!
 			self
 
-		var err = do(e)
+		let err = do(e)
 			ctx.error = e
 			after!
 
@@ -141,14 +141,14 @@ global class Spec < SpecComponent
 	
 	def step i = 0, &blk
 		Spec.CURRENT = self
-		var block = blocks[i]
+		let block = blocks[i]
 		return self.finish! unless block
 		imba.once(block,'done') do self.step(i+1)
 		block.run!
 
 	def run
 		new Promise do(resolve,reject)
-			var prevInfo = console.info
+			let prevInfo = console.info
 			observer.observe(document.body,{
 				attributes: true,
 				childList: true,
@@ -168,13 +168,13 @@ global class Spec < SpecComponent
 			self.step(0)
 
 	def finish
-		var ok = []
-		var failed = []
+		let ok = []
+		let failed = []
 
 		for test in tests
 			test.failed ? failed.push(test) : ok.push(test)
 		
-		var logs = [
+		let logs = [
 			fmt('green',"{ok.length} OK")
 			fmt('red',"{failed.length} FAILED")
 			"{tests.length} TOTAL"
@@ -182,7 +182,7 @@ global class Spec < SpecComponent
 
 		console.log logs.join(" | ")
 
-		var exitCode = (failed.length == 0 ? 0 : 1)
+		let exitCode = (failed.length == 0 ? 0 : 1)
 		emit('done', [exitCode])
 		pup("spec:done",{
 			failed: failed.length,
@@ -211,7 +211,7 @@ global class SpecGroup < SpecComponent
 
 	def run i = 0
 		start! if i == 0
-		var block = blocks[i]
+		let block = blocks[i]
 		return finish! unless block
 		imba.once(block,'done') do run(i+1)
 		block.run! # this is where we wan to await?
@@ -248,8 +248,8 @@ global class SpecExample < SpecComponent
 		start!
 		# does a block really need to run here?
 		try
-			var promise = (block ? SPEC.eval(block, self) : Promise.resolve({}))
-			var res = await promise
+			let promise = (block ? SPEC.eval(block, self) : Promise.resolve({}))
+			let res = await promise
 		catch e
 			console.log "error from run!",e
 			error = e

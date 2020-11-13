@@ -110,12 +110,15 @@ var grammar =
 		o 'INDENT TERMINATOR Body OUTDENT' do A3.prebreak(A2).indented(A1,A4)
 	]
 
+	
+
 	# Block and statements, which make up a line in a body.
 	Line: [
 		o 'CSSDeclaration'
-		o 'VarBlock'
+		# o 'VarBlock'
 		# o 'Splat'
 		o 'Expression'
+		o 'VarDecl' do A1.option('block',yes) # VarDeclaration.new(A2,null,A1)
 		# o 'HEADER' do Terminator.new(A1)
 		o 'Comment'
 		o 'Statement'
@@ -153,7 +156,7 @@ var grammar =
 			ExportAllDeclaration.new(A1,[ExportAllSpecifier.new(A2,A4)],A6)
 		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A1)
 		o 'EXPORT DEFAULT DefaultExportable' do Export.new(A3).set(keyword: A1,default: A2)
-		o 'EXPORT_VAR VarBlock' do Export.new(A2).set(keyword: A1)
+		# o 'EXPORT_VAR VarBlock' do Export.new(A2).set(keyword: A1)
 	]
 
 	Exportable: [
@@ -162,6 +165,7 @@ var grammar =
 		o 'StructDeclaration'
 		o 'CSSDeclaration'
 		o 'TagDeclaration'
+		o 'VarAssign'
 	]
 
 	DefaultExportable: [
@@ -249,6 +253,11 @@ var grammar =
 		o 'Class' # statement, no?
 		o 'TagDeclaration'
 		o 'Tag'
+	]
+
+	ExpressionBlock: [
+		o 'Expression'
+		o 'INDENT ExpressionBlock Outdent' do A2.indented(A1,A3)
 	]
 
 	# A literal identifier, a variable name or property.
@@ -558,6 +567,7 @@ var grammar =
 
 	# Assignment of a variable, property, or index to a value.
 	Assign: [
+		o 'VarAssign'
 		o 'Assignable = Expression' do Assign.new A2, A1, A3
 		o 'Assignable TypeAnnotation = Expression' do Assign.new(A3, A1, A4).set(datatype: A2)
 		o 'Assignable = INDENT Expression Outdent' do Assign.new A2, A1, A4.indented(A3,A5)
@@ -732,15 +742,15 @@ var grammar =
 	]
 	
 	VarKeyword: [
-		o 'VAR'
-		o 'LET'
-		o 'CONST'
+		o 'BLOCK_VAR'
+		o 'BLOCK_LET'
+		o 'BLOCK_CONST'
 	]
 
 	InlineVarKeyword: [
-		o 'INLINE_VAR'
-		o 'INLINE_LET'
-		o 'INLINE_CONST'
+		o 'VAR'
+		o 'LET'
+		o 'CONST'
 	]
 
 	VarAssignable: [
@@ -752,6 +762,7 @@ var grammar =
 	
 	InlineVarAssignable: [
 		o 'Identifier'
+		o 'Identifier TypeAnnotation' do A1.set(datatype: A2)
 		o 'Array' # all kinds?
 		o 'Object' # not supported anymore
 	]
@@ -768,8 +779,13 @@ var grammar =
 		o 'VarBlock , VarBlockAssign' do A1.add(A3)
 	]
 
-	InlineVar: [
+	VarDecl: [
 		o 'InlineVarKeyword InlineVarAssignable' do VarReference.new(A2,A1)
+	]
+
+	VarAssign: [
+		o 'VarDecl = Expression' do Assign.new A2, A1, A3
+		o 'VarDecl = INDENT Expression Outdent' do Assign.new A2, A1, A4.indented(A3,A5)
 	]
 
 
@@ -801,7 +817,6 @@ var grammar =
 	# Everything that can be assigned to.
 	Assignable: [
 		o 'SimpleAssignable'
-		o 'InlineVar'
 		o 'Array' #  do A1
 		o 'Object' # not supported anymore
 	]

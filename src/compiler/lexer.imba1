@@ -1005,12 +1005,14 @@ export class Lexer
 
 			elif typ == 'VAR' or typ == 'CONST' or typ == 'LET'
 				let ltyp = @lastTyp
-				# console.log "last val before var,const,let {@lastTyp}"
-				if ltyp != 'TERMINATOR' and ltyp != 'INDENT' and ltyp != 'EXPORT' and ltyp
-					typ = "INLINE_{typ}"
 
-				if @lastVal == 'export'
-					tTs(prev,'EXPORT_VAR')
+				# extremely flakey - comma separated declaration blocks are inherently
+				# ambiguous in the current syntax
+				# if ltyp != 'TERMINATOR' and ltyp != 'INDENT' and ltyp != 'EXPORT' and ltyp
+				#	typ = "INLINE_{typ}"
+
+				# if @lastVal == 'export'
+				#	tTs(prev,'EXPORT_VAR')
 
 			# skipping 
 			elif typ == 'IF' or typ == 'ELSE' or typ == 'TRUE' or typ == 'FALSE' or typ == 'NULL'

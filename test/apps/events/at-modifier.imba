@@ -40,7 +40,7 @@ tag app-root
 
 imba.mount <app-root>
 
-var click = do |state,sel,expect|
+const click = do(state,sel,expect)
 	state.log = []
 	await spec.click(sel,no)
 	eq(state.log.join(','),expect)
