@@ -251,7 +251,7 @@ CLI.prototype.analyze = function (){
 	var self = this;
 	return self.traverse(function(src) {
 		var o2 = Object.create(self.o());
-		o2.filename = src.filename;
+		o2.sourcePath = src.sourcePath;
 		o2.entities = true;
 		var out = compiler.analyze(src.sourceBody,o2);
 		src.analysis = out;
@@ -264,7 +264,7 @@ CLI.prototype.tokenize = function (){
 	var self = this;
 	return self.traverse(function(src) {
 		var o2 = Object.create(self.o());
-		o2.filename = src.filename;
+		o2.sourcePath = src.sourcePath;
 		o2.rewrite = self.o().rewrite;
 		var out
 		try {
@@ -314,7 +314,7 @@ CLI.prototype.compile = function (){
 CLI.prototype.compileFile = function (src){
 	var self = this;
 	var opts = Object.create(self.o());
-	opts.filename = src.filename;
+	// opts.filename = src.filename;
 	opts.sourcePath = src.sourcePath;
 	
 	if(opts.extlib) opts.imbaPath = null;
@@ -322,7 +322,7 @@ CLI.prototype.compileFile = function (src){
 	var out = {};
 	var t = Date.now();
 	var at = new Date().toTimeString().substr(0,8);
-	var srcp = self.o().stdio ? src.filename : path.relative(process.cwd(),src.sourcePath);
+	var srcp = self.o().stdio ? src.sourcePath : path.relative(process.cwd(),src.sourcePath);
 	var dstp = src.targetPath && path.relative(process.cwd(),src.targetPath);
 	
 	var srcpAbs = path.resolve(srcp);
@@ -333,15 +333,16 @@ CLI.prototype.compileFile = function (src){
 		dstp = dstpAbs;
 	};
 
-	opts.filename = srcpAbs;
+	opts.sourcePath = srcpAbs;
 	
 	try {
-		if (src.filename.match(/\.imba1$/)) {
+		if (src.sourcePath.match(/\.imba1$/)) {
 			imbac1 || (imbac1 = require("../script/bootstrap.compiler.js"));
+			opts.filename = opts.sourcePath;
 			out = imbac1.compile(src.sourceBody,opts);
 		} else {
 			out = compiler.compile(src.sourceBody,opts);
-			if(opts.standalone){
+			if(opts.runtime == 'inline'){
 				out.js = fs.readFileSync(path.resolve(__dirname,'..','dist','imba.js'),'utf8') + '\n' + out.js;
 			}
 		};
