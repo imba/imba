@@ -696,13 +696,23 @@ export const states = {
 		[/\{/, '{', '@object_body']
 		[/(@variable)(?=\n|,|$)/,'identifier.$F','@pop']
 		[/(@variable)/,'identifier.$F']
-		[/(\s*\=\s*)/,'operator',switchTo: '@var_value&value='] # ,switchTo: '@var_value='
+		[/(\s*\=\s*)/,'operator.declval',switchTo: '@var_value&value='] # ,switchTo: '@var_value='
 	]
 
 	array_var_body: [
 		[/\]/, ']', '@pop']
-		'expr_'
+		[/\{/, '{', '@object_body']
+		[/\[/, '[', '@array_var_body']
+		'spread_'
+		[/(@variable)/,'identifier.$F']
+		[/(\s*\=\s*)/,'operator.assign','@array_var_body_value=']
+		# 'expr_'
 		[',','delimiter']
+	]
+
+	array_var_body_value: [
+		[/(?=,|\)|]|})/, 'delimiter', '@pop']
+		'expr_'
 	]
 
 

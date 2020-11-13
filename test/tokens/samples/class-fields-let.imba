@@ -6,7 +6,10 @@ class Hello
 	const other = 100
 	static let aye = 40
 
-	def render
+	def render param
+		param = param
+		let data = data
+		let [x1,x2,x3 = x2,...test] = [x2,x3,x4]
 		let hello = 10
 		1
 		hello
@@ -26,8 +29,8 @@ class Hello
 		aye
 		let y = 10
 
-		let aba = do(a,b,y)
-			y + a + one
+		let aba = do(a,b,y,hh)
+			y + a + one + hh
 		let x = if true
 			let y = 100
 			let b = 2
@@ -37,6 +40,16 @@ class Hello
 			100
 			y
 		
+		let x = try
+			Math.rendom!
+		catch
+			10
+			x
+
+		try
+			let h = 200
+		
+		h
 		x
 	
 		2

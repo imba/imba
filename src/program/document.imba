@@ -568,6 +568,8 @@ export class ImbaDocument
 		let scope\any = new Root(self,seed,null,'root')
 		let log = console.log.bind(console)
 		let lastDecl = null
+		let lastVarKeyword = null
+		let lastVarAssign = null
 		let legacy = isLegacy
 
 		if isLegacy
@@ -608,6 +610,10 @@ export class ImbaDocument
 					if typ == 'keyword'
 						if M[subtyp]
 							entityFlags |= M[subtyp]
+						if value == 'let' or value == 'const'
+							lastVarKeyword = tok
+							lastVarAssign = null
+
 					
 					if typ == 'entity'
 						tok.mods |= entityFlags
@@ -622,16 +628,25 @@ export class ImbaDocument
 						if idx >= 0
 							scopetype = scopetype.slice(idx + 1)
 							ctor = ScopeTypeMap[scopetype] || Group
+						elif ScopeTypeMap[scopetype]
+							ctor = ScopeTypeMap[scopetype]
 
 						scope = tok.scope = new ctor(self,tok,scope,scopetype,types)
 						if lastDecl
 							lastDecl.body = scope
 							scope.symbol = lastDecl
 							lastDecl = null
-
+						if scope == scope.scope
+							lastVarKeyword = null
+							lastVarAssign = null
 						ctor
+
 					elif typ == 'pop'
-						# log " ".repeat(sub2) + tok.type
+						# console.log 'popping the value!',subtyp
+						# log " ".repeat(sub2) + tok.type\
+						if subtyp == 'value'
+							lastVarAssign = null
+						
 						scope = scope.pop(tok)
 					
 					elif subtyp == 'open' and ScopeTypeMap[typ]
@@ -649,14 +664,22 @@ export class ImbaDocument
 
 						if symFlags
 							lastDecl = tok.symbol = new Sym(symFlags,tok.value,tok)
+							tok.symbol.keyword = lastVarKeyword
 							scope.register(tok.symbol)
 
 						tok.mods |= M.Declaration
 
+					if subtyp == 'declval'
+						# console.log "found declval"
+						lastVarAssign = tok
+
 					if tok.match('identifier') && !tok.symbol
-						let sym = scope.lookup(tok)
+						let sym = scope.lookup(tok,lastVarKeyword)
 						if sym && sym.scoped?
-							sym.addReference(tok)
+							if lastVarAssign and sym.keyword == lastVarKeyword
+								yes # should not resolve
+							else
+								sym.addReference(tok)
 
 						# hardcoded fallback handling
 						if prev && prev.op == '=' and sym
