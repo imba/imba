@@ -639,6 +639,9 @@ export class Stack
 	def sourcePath
 		@options:sourcePath
 
+	def imbaPath
+		@options:imbaPath
+
 	def config
 		@options:config or {}
 	
@@ -2697,6 +2700,7 @@ export class Root < Code
 			toString: (do this:js),
 			css: STACK.css,
 			assets: scope.assets
+			dependencies: Object.keys(scope.@dependencies)
 		}
 		
 		if !STACK.tsc
@@ -3124,7 +3128,7 @@ export class TagDeclaration < ClassDeclaration
 			no
 
 	def visit
-		scope__.imbaDependency('index')
+		scope__.imbaDependency('core')
 
 		super
 
@@ -7686,7 +7690,7 @@ export class Tag < TagLike
 	def traverse 
 		return self if @traversed
 		@tid = STACK.generateId('tag')
-		scope__.imbaDependency('index')
+		scope__.imbaDependency('core')
 		@tagDeclaration = STACK.up(TagDeclaration)
 		let close = @options:close
 		let body = @options:body or []
@@ -10130,12 +10134,13 @@ export class RootScope < Scope
 			@imbaTags = "{imbaRef.c}.TAGS"
 
 	def imbaDependency path
-		return if OPTS:imbaPath === null or OPTS:standalone or (OPTS:target == 'tsc' or OPTS:tsc)
-		return if OPTS:imbaFormat == 'script' or OPTS:runtime == 'global'
+		let imbaPath = STACK.imbaPath
 		@dependencies[path] ||= if true
-			let str = "'{OPTS:imbaPath or 'imba'}/src/imba/{path}'"
+			# TODO should point directly to imba and let the package.json map correctly
+			let str = "'{imbaPath or 'imba'}/{path}'"
+			# TODO create actual Import nodes instead of literals here
 			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
-			@head.push(item)
+			@head.push(item) if imbaPath !== null and !STACK.tsc
 			item
 			
 	def imbaRef name, shorthand = '_'

@@ -54,7 +54,7 @@ var compileAndRun = do |example|
 	try
 		var result = compiler.compile(example.body,{
 			sourcePath: example.path,
-			runtime: 'global',
+			imbaPath: null,
 			platform: 'browser'
 		})
 		var js = result.js
