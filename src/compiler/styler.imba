@@ -746,7 +746,9 @@ export class StyleTheme
 				to = palette[ns + (++n1)]
 
 			let weight = ((nr - n0) + (fraction / 10)) / (n1 - n0)
-			let hw = weight, sw = weight, lw = weight
+			let hw = weight
+			let sw = weight
+			let lw = weight
 
 			if !to
 				to = palette.blue9
