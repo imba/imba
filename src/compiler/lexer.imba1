@@ -397,7 +397,7 @@ export class Lexer
 		@code    = code
 		@opts    = o
 		@locOffset = o:loc or 0
-		@target = o:target
+		@platform = o:platform or o:target
 		@indentStyle = '\t'
 
 		# if the very first line is indented, take this as a gutter
@@ -1873,7 +1873,7 @@ export class Lexer
 		if opener
 			opener.@closer = @last
 
-		if @target == 'tsc'
+		if @platform == 'tsc'
 			let next = @chunk[1] or ''
 			if value == '.' and (next == ' ' or next == '\n' or !next)
 				token('IDENTIFIER','$CARET$',0,1)
@@ -2165,7 +2165,7 @@ export class Lexer
 	# Are we in the midst of an unfinished expression?
 	def unfinished
 		return true if LINE_CONTINUER.test(@chunk) and (!@context or !@context:style)
-		return (UNFINISHED.indexOf(@lastTyp) >= 0 and @opts:target != 'tsc')
+		return (UNFINISHED.indexOf(@lastTyp) >= 0 and @platform != 'tsc')
 	
 	# Converts newlines for string literals.
 	def escapeLines str, heredoc

@@ -247,6 +247,7 @@ export class Rewriter
 
 		@tokens  = tokens
 		@options = opts
+		@platform = opts:platform or opts:target
 
 		var i = 0
 		var k = tokens:length
@@ -267,7 +268,7 @@ export class Rewriter
 	def all
 		step("ensureFirstLine")
 		step("removeLeadingNewlines")
-		if @options:target == 'tsc'
+		if @platform == 'tsc'
 			step("addPlaceholderIdentifiers")
 
 		step("removeMidExpressionNewlines")
