@@ -28,30 +28,16 @@ export def resolveConfig o = {}
 	return o
 
 export def tokenize code, o = {}
-	try
-		# console.log('tokenize') if o:profile
-		console.time('tokenize') if o:profile
-		o.@source = code
-		lex.reset
-		var tokens = lex.tokenize code, o
-		console.timeEnd('tokenize') if o:profile
+	o.@source = code
+	lex.reset
+	var tokens = lex.tokenize code, o
 
-		unless o:rewrite === no
-			tokens = rewriter.rewrite(tokens,o)
-		return tokens
-
-	catch err
-		throw err
-
-export def rewrite tokens, o = {}
-	try
-		console.time('rewrite') if o:profile
-		tokens = rewriter.rewrite tokens, o
-		console.timeEnd('rewrite') if o:profile
-	catch err
-		throw err
+	unless o:rewrite === no
+		tokens = rewriter.rewrite(tokens,o)
 	return tokens
 
+export def rewrite tokens, o = {}
+	rewriter.rewrite tokens, o
 
 export def parse code, o = {}
 	o = resolveConfig(o)
@@ -66,6 +52,7 @@ export def parse code, o = {}
 		throw err
 
 export def compile code, o = {}
+
 	try
 		# check if code is completely blank
 		unless /\S/.test(code)
@@ -79,17 +66,9 @@ export def compile code, o = {}
 	catch err
 		err:_code = code
 		err:_sourcePath = o:sourcePath if o:sourcePath
-		if o:evaling
-			console.log "error compiling {o:sourcePath}"
-			if err:excerpt
-				console.log "   " + err.excerpt(colors: true)
-			else
-				console.log "   " + err:message
-				console.log "   " + "in file {err:_sourcePath}"
-				console.log err:stack if err:stack	
 
-		elif !o:silent
-			console.log "error compiling {o:sourcePath}"
+		if err:toNativeError
+			throw err.toNativeError
 
 		throw err
 

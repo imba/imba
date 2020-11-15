@@ -2,6 +2,7 @@
 # create separate error-types with all the logic
 
 var util = require './helpers'
+const meta = WeakMap.new
 
 export class ImbaParseError < Error
 	
@@ -13,6 +14,7 @@ export class ImbaParseError < Error
 		this:error = e
 
 		@options = o or {}
+		
 		this:severity = @options:severity or 'error'
 		
 		let msg = e:message
@@ -20,12 +22,17 @@ export class ImbaParseError < Error
 		if let m = msg.match(/Unexpected '([\w\-]+)'/)
 			if m[1] == 'TERMINATOR'
 				msg = 'Unexpected newline'
-			
-			
+
 		this:message = msg
 		this:sourcePath = e:sourcePath
 		this:line = e:line
 		self
+
+	get _options
+		meta.get(self)
+
+	set _options value
+		meta.set(self,value)
 
 	def set opts
 		@options ||= {}
@@ -66,6 +73,15 @@ export class ImbaParseError < Error
 		var tok = start
 		return {warn: yes, message: desc, loc: loc}
 
+	def toNativeError
+		let err = SyntaxError.new("hello")
+		err:fileName = @sourcePath
+		err:message = self:message
+		err:stack = excerpt(colors: no, details: yes)
+		err:lineNumber = self:lineNumber
+		err:columnNumber = self:columnNumber
+		return err
+
 	def excerpt gutter: yes, colors: no, details: yes
 
 		var code = @code
@@ -76,6 +92,9 @@ export class ImbaParseError < Error
 		var ln = lc[0]
 		var col = lc[1]
 		var line = lines[ln]
+
+		self:lineNumber = ln + 1
+		self:columnNumber = col
 
 		var ln0 = Math.max(0,ln - 2)
 		var ln1 = Math.min(ln0 + 5,lines:length)
@@ -106,7 +125,7 @@ export class ImbaParseError < Error
 		if details
 			out.unshift(colorize(self:message))
 
-		return out.join('\n')
+		return out.join('\n') + '\n'
 
 	def prettyMessage
 		var excerpt = self.excerpt
