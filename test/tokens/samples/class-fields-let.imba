@@ -6,10 +6,11 @@ class Hello
 	const other = 100
 	static let aye = 40
 
-	def render param
+	def render param, other = 10, ...ary
 		param = param
 		let data = data
 		let [x1,x2,x3 = x2,...test] = [x2,x3,x4]
+		let {z1,z2,z3: z4} = object
 		let hello = 10
 		1
 		hello
@@ -30,7 +31,7 @@ class Hello
 		let y = 10
 
 		let aba = do(a,b,y,hh)
-			y + a + one + hh
+			y + a + one + hh + ary + z1 + z3 + z4
 		let x = if true
 			let y = 100
 			let b = 2

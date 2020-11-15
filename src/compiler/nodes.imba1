@@ -8773,9 +8773,7 @@ export class Export < ValueNode
 
 		if isDefault
 			let out = value.c
-			
-			STACK.cjs ? "exports.default = {out}" : "export default {out}"
-
+			return STACK.cjs ? "exports.default = {out}" : "export default {out}"
 		return value.c
 
 export class Require < ValueNode
