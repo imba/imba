@@ -132,4 +132,4 @@ extend class imba.dom.Element
 		self.style.setProperty(name,cssval)
 		return
 
-imba.styles = new Styles
+ImbaContext.prototype.styles = new Styles

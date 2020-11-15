@@ -125,6 +125,8 @@ export class TagNode < Group
 	get outline
 		findChildren(/tag\.(reference|name|id|white|flag|event(?!\-))/).join('')
 
+export class ValueNode < Group
+
 export class StyleNode < Group
 
 	get properties
@@ -313,6 +315,7 @@ export const ScopeTypeMap = {
 	stylerule: StyleRuleNode
 	sel: SelectorNode
 	path: PathNode
+	value: ValueNode
 	styleprop: StylePropNode
 	stylepropkey: StylePropKey
 	stylevalue: StylePropValue

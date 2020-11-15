@@ -500,11 +500,11 @@ export const states = {
 	
 	flow_: [
 		# [/(else)(?=\s|$)/, ['keyword.$1','@flow_start.$S2.flow.$S4']]
-		[/(if|else|elif|unless)(?=\s|$)/, ['keyword.$1','@flow_start&$1']]
+		[/(if|else|elif|unless)(?=\s|$)/, ['keyword.$1','@flow_start=$1']]
 	]
 
 	flow_start: [
-		denter({switchTo: '@>_flow'},-1,-1)
+		denter({switchTo: '@>_flow&$F'},-1,-1)
 		# denter({switchTo: '@>_flow&-body'},-1,-1)
 		# denter('@>_flow&block',-1,-1)
 		'expr_'
@@ -554,7 +554,7 @@ export const states = {
 	]
 
 	field_: [
-		[/((?:lazy )?)((?:static )?)(const|let)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_varblock=field-$2']] # $2_body.$S2.$2.$S4
+		[/((?:lazy )?)((?:static )?)(const|let)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$2']] # $2_body.$S2.$2.$S4
 		[/static(?=\s+@id)/,'keyword.static']
 		[/(@id)(?=$)/,'field']
 		[/(@id)/,['field','@_field_1']]
@@ -572,11 +572,12 @@ export const states = {
 	]
 
 	var_: [
-		[/((?:export )?)(const|let|var)(?=\s|$)/, ['keyword.export','keyword.$1','@_varblock=decl-$2']] # $2_body.$S2.$2.$S4
+		[/((?:export )?)(const|let)(?=\s[\[\{\$a-zA-Z]|$)/, ['keyword.export','keyword.$1','@_vardecl=decl-$2']] # $2_body.$S2.$2.$S4
+		[/((?:export )?)(const|let)(?=\s|$)/, ['keyword.export','keyword.$1']]
 	]
 
 	inline_var_: [
-		[/(const|let|var)(?=\s|$)/, ['keyword.$1','@inline_var_body=decl-$1']]
+		[/(const|let)(?=\s[\[\{\$a-zA-Z]|$)/, ['keyword.$1','@inline_var_body=decl-$1']]
 	]
 
 	string_: [
@@ -690,10 +691,28 @@ export const states = {
 		[/#(\s.*)?\n?$/, 'comment']
 	]
 
+	_vardecl: [
+		[/\[/, '[', '@array_var_body']
+		[/\{/, '{', '@object_body']
+		[/(@variable)(?=\n|,|$)/,'identifier.$F','@pop']
+		[/(@variable)/,'identifier.$F']
+		[/(\s*\=\s*)/,'operator.declval',switchTo: '@var_value&value='] # ,switchTo: '@var_value='
+	]
+
 	array_var_body: [
 		[/\]/, ']', '@pop']
-		'expr_'
+		[/\{/, '{', '@object_body']
+		[/\[/, '[', '@array_var_body']
+		'spread_'
+		[/(@variable)/,'identifier.$F']
+		[/(\s*\=\s*)/,'operator.assign','@array_var_body_value=']
+		# 'expr_'
 		[',','delimiter']
+	]
+
+	array_var_body_value: [
+		[/(?=,|\)|]|})/, 'delimiter', '@pop']
+		'expr_'
 	]
 
 
@@ -701,15 +720,16 @@ export const states = {
 		[/\[/, '[', '@array_var_body']
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
-		[/(\s*\=\s*)/,'operator',switchTo: '@var_value=']
+		[/(\s*\=\s*)/,'operator','@pop'] # ,switchTo: '@var_value='
 	]
 
 	var_value: [
-		[/(?=,|\))/, 'delimiter', '@pop']
+		[/(?=,|\)|]|})/, 'delimiter', '@pop']
 		denter({switchTo: '@>block'},-1,-1)
-		'do_'
-		'expr_'
-		'common_'
+		'block_'
+		# 'do_'
+		# 'expr_'
+		# 'common_'
 	]
 
 	common_: [

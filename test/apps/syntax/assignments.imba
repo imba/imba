@@ -2,21 +2,29 @@ let ary = [1,2,3]
 let objary = [{a: 1},{a: 2},{a: 3}]
 
 let fn = do yes
-	
-test do
-	var func = do |{a,b}|
-		if let a = 2
-			eq a,2
-		eq a,b
-	
-	func(1,1)
+
+test 'implicit return' do
+	let x = 1
+	let impl = do x = 10
+	eq impl!, 10
+
+test 'return let' do
+	let impl = do
+		# declarations return implicitly like assignments
+		let x = 10
+	eq impl!, 10
+
+	let expl = do
+		# gramatically valid
+		return let x = 10
+	eq expl!, 10
 
 test do
-	let a = 0
 	if let a = 2
 		for {a},i in objary
 			eq a,i+1
-	eq a,0
+	eq a,2
+
 
 test do
 	let obj = {
@@ -25,48 +33,46 @@ test do
 		c: {a: 1, key: 'c'}
 	}
 
-	let a = 0
+	# let a = 0
 	let i = 0
 	if let a = 2
 		for own k,{a,key} of obj when a == 1
 			eq a,1
 			eq k,key
 			i++
-	eq a,0
+		eq a,2
+	eq a,2
 	eq i,3
 
 test do
 	let ary = [[{a:0}],[{a:1}],[{a:2}]]
-	let a = 0
 	if let a = 2
 		let k = 0
 		for [{a}] of ary
 			eq a,k++
 		eq k,3
-	eq a,0
+	eq a,2
 	
 test do
+	# variable declarations are expressable like assignments
 	fn(let y = 1)
 
 	if true
 		fn(let y = 2)
 		eq y, 2
-		
+
 	eq y, 1
 
 test do
 	let o = {a: 2}
-	let a = 1
 	if let {a} = o
 		eq a, 2
-	else
-		eq a, 1
-	eq a, 1
+	eq a, 2
 
 test do
-	let a = 1
 	let s = 'a'
 	this.b = 3
+
 	if let a = 2
 		eq a,2
 		let {name: s} = {name: 'b'}
@@ -83,19 +89,18 @@ test do
 		[a=3] = []
 		eq a, 3
 	else
-		eq a, 1
-	eq a,1
+		eq a, undefined
 	eq s,'a'
 
 
 test do
 	let a = [1,2,3]
-	var b = for item in a
+	let b = for item in a
 		item * 2
 	eq b, [2,4,6]
 	
 	
-	var [e,f,g] = for item in a
+	let [e,f,g] = for item in a
 		item * 2
 	eq e,2
 	eq f,4
@@ -111,7 +116,9 @@ test do
 	
 
 test do
-	let a = 1, b = 2, c = 3
+	let a = 1
+	let b = 2
+	let c = 3
 	let x = do yes
 	x(let y = 1)
 	
@@ -119,22 +126,8 @@ test do
 		x(let z = 2)
 		x(let y = 2)
 		eq y, 2
-		
+
 	eq y, 1
-
-test do
-	let a = 1
-	if let a = 2
-		eq a, 2
-	eq a, 1
-
-test do
-	let a = 1
-	if let a = 0
-		eq a, 0
-	else
-		eq a, 1
-	eq a,1
 
 test do
 	let {a,b} = {a: 1,b: 1}
@@ -148,7 +141,8 @@ test do
 test do
 	let {a,b} = {a: 1,b: 1}
 	
-	if let a = 2
+	if true
+		let a = 2
 		let b = 2
 		eq a, 2
 		eq b, 2
@@ -218,7 +212,7 @@ test do
 	
 	# difficult to show the bug - but it is there
 	# will be apparent if we reenable implicit self
-	let fn = do |v|
+	let fn = do(v)
 		i++
 		if v > 0
 			fn(v - 1)

@@ -25,6 +25,10 @@ interface ImbaAnyElement implements ImbaElement {
     [key: string]: any;
 }
 
+interface ImbaStyles {
+    [key: string]: any;
+}
+
 
 interface Imba {
     setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
@@ -35,6 +39,8 @@ interface Imba {
     render(): Promise<this>;
 
     mount<T>(element: T): T;
+
+    styles: ImbaStyles;
 
     createIndexedFragment(...arguments: any[]): DocumentFragment;
     createKeyedFragment(...arguments: any[]): DocumentFragment;

@@ -1,4 +1,4 @@
-var data =
+let data =
 	user:
 		name: 'hello'
 		login: do 200

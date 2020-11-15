@@ -635,7 +635,6 @@ export class Stack
 
 	def format
 		@options:format
-		
 
 	def sourcePath
 		@options:sourcePath
@@ -747,12 +746,20 @@ export class Stack
 		idx >= 0 ? @nodes[idx + offset] : null
 
 	def scope lvl = 0
+		return @withScope if @withScope
 		var i = @nodes:length - 1 - lvl
 		while i >= 0
 			var node = @nodes[i]
 			return node.@scope if node.@scope
 			i -= 1
 		return null
+
+	def withScope scop, cb
+		let prev = @withScope
+		@withScope = scop
+		cb()
+		@withScope = prev
+		return
 
 	def scopes
 		# include deeper scopes as well?
@@ -2015,6 +2022,8 @@ export class Return < Statement
 		return self
 
 	def visit
+		if @value isa VarReference
+			@value.option('virtualize',yes)
 		@value.traverse if @value && @value:traverse
 
 	def startLoc
@@ -2514,17 +2523,19 @@ export class VarDeclaration < Node
 	prop right
 
 	def op
-		'='
+		@op
 	
 	def type
 		@kind
 
-	def initialize left, right, kind
+	def initialize left, right, kind, op = '='
+		@op = op
 		@left = left
 		@right = right
 		@kind = kind
 		
 	def visit stack
+		# WARN not always correct
 		unless @left isa Identifier and @right isa Func
 			@right.traverse if @right
 
@@ -4755,28 +4766,42 @@ export class VarReference < ValueNode
 
 	def consume node
 		# really? the consumed node dissappear?
-		@variable && @variable.autodeclare
+		forceExpression
 		self
+
+	def forceExpression
+		unless @expression == true
+			@expression = true
+			for variable in @variables
+				variable.@type = 'let'
+				variable.@virtual = yes
+				variable.autodeclare()
+		return self
 
 	def visit stack, state
 		var vars = []
-	
+
+		var virtualize = stack
+		let scope = scope__
+		# @scope = scope__
 		@value.traverse(declaring: @type, variables: vars)
 
+		# should happen automatically when traversing no?
 		if @value isa Identifier
 			@value.@variable ||= scope__.register(@value.symbol,self,type: @type)
 			vars.push(@value.@variable)
 			stack.registerSemanticToken(@value,@variable)
-
-		for variable in vars
-			# should always be autodeclared?
-			variable.@virtual = yes
-			variable.autodeclare()
-
+		
+		@variables = vars
+		# forceExpression if option('virtualize')
 		return self
 	
-	def js o
-		return @value.c()
+	def js stack,params
+		let out = @value.c()
+		# console.log "is expression?? {@expression} {params:expression}"
+		unless @expression
+			out = "{@type} {out}"
+		return out
 
 
 # ASSIGN
@@ -4816,18 +4841,24 @@ export class Assign < Op
 		
 		if r
 			r.traverse(assignment: yes)
-	
+
 		if l
 			l.traverse()
+
+		if l isa VarReference and !(STACK.up isa Block) and !(STACK.up isa Export)
+			l.forceExpression
 
 		return self
 
 	def c o
 		unless right.isExpressable
-			if left isa VarReference and left.type == 'let'
-				# when does this occur?
-				# console.log 'unexpressable let var assignment'
-				return Block.new([left,BR,right.consume(self)]).c(o)
+			# if left isa VarReference and !(right isa Loop) and false
+			#	let ref = left
+			#	@left = left.@value
+			#	return Block.new([ref,BR,right.consume(self)]).c(o)
+			if left isa VarReference and (!(right isa Loop) or @expression)
+				left.forceExpression
+
 			return right.consume(self).c(o)
 		# testing this
 		return super(o)
@@ -4837,7 +4868,12 @@ export class Assign < Op
 			p "Assign#js right is not expressable "
 			# here this should be go out of the stack(!)
 			# it should already be consumed?
+			left.forceExpression if left isa VarReference
 			return right.consume(self).c
+
+		if @expression
+			left.forceExpression
+
 		var l = left.node
 		var r = right
 
@@ -4885,6 +4921,10 @@ export class Assign < Op
 				return right.consume(node)
 			else
 				return self
+
+		if node isa Return and left isa VarReference
+			# console.log 'possible consume??'
+			left.forceExpression
 
 		if isExpressable
 			forceExpression
@@ -5805,9 +5845,14 @@ export class If < ControlFlow
 
 	def visit stack
 		var alt = alt
+		var scop = @scope
+		scop.visit if scop
 
-		@scope.visit if @scope
-		test.traverse if test
+		if test
+			# make sure variables are registered in outer scope
+			@scope = null
+			test.traverse
+			@scope = scop
 		
 		@tag = stack.@tag
 
@@ -8698,6 +8743,7 @@ export class Export < ValueNode
 			return: option(:return),
 			default: option(:default)
 		)
+
 		super
 
 	def js o
@@ -8710,16 +8756,24 @@ export class Export < ValueNode
 
 		if value isa ListNode
 			value.map do |item| item.set export: self
+		# else
+		#	value.set export: self
 
 		if value isa MethodDeclaration or value isa ClassDeclaration
 			return value.c
 
-		if isDefault
+		if value isa Assign and value.left isa VarReference
+		
 			if !STACK.cjs
-				return "export default {value.c}"
+				return isDefault ? "export default {value.c}" : "export {value.c}"
 			else
-				return "exports.default = {value.c}"
+				let sym = isDefault ? "default" : value.left.value.symbol
+				value.right = OP('=',LIT("exports.{sym}"),value.right)
+				return value.c
 
+		if isDefault
+			let out = value.c
+			return STACK.cjs ? "exports.default = {out}" : "export default {out}"
 		return value.c
 
 export class Require < ValueNode
@@ -10231,6 +10285,7 @@ export class FlowScope < Scope
 					# p "{name} already exists as a block-variable {decl}"
 					# TODO should throw error instead
 					decl.warn "Variable already exists in block" if decl
+					console.log "ALREADY EXISTS?"
 					# root.warn message: "Holy shit"
 			closure.register(name,decl,o)
 		else
@@ -10239,6 +10294,7 @@ export class FlowScope < Scope
 	# FIXME should override temporary as well
 
 	def autodeclare variable
+		# need to be unique for this 
 		parent.autodeclare(variable)
 
 	def closure
@@ -10354,12 +10410,8 @@ export class Variable < Node
 		# console.log "resolving var {@name} {scope}",scope == @closure,@virtual
 
 		# if this is a let-definition inside a virtual scope we do need
-		#
 		if @scope != closure and @type == 'let' and @virtual # or if it is a system-variable
 			item = closure.lookup(@name)
-			# console.log "resolving let {@name} {item.scope != scope}"
-			# we now need to ensure that this variable is unique inside
-			# the whole closure.
 			scope = closure
 
 		if item == self

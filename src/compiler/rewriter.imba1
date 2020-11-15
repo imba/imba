@@ -147,9 +147,9 @@ var IMPLICIT_CALL_MAP =
 	'FOR': 1
 	'CONTINUE': 1
 	'BREAK': 1
-	'INLINE_LET': 1
-	'INLINE_VAR': 1
-	'INLINE_CONST': 1
+	'LET': 1
+	'VAR': 1
+	'CONST': 1
 
 var IDENTIFIERS = ['IDENTIFIER', 'IVAR', 'DECORATOR', 'ARGVAR']
 
@@ -247,6 +247,7 @@ export class Rewriter
 
 		@tokens  = tokens
 		@options = opts
+		@platform = opts:platform or opts:target
 
 		var i = 0
 		var k = tokens:length
@@ -267,7 +268,7 @@ export class Rewriter
 	def all
 		step("ensureFirstLine")
 		step("removeLeadingNewlines")
-		if @options:target == 'tsc'
+		if @platform == 'tsc'
 			step("addPlaceholderIdentifiers")
 
 		step("removeMidExpressionNewlines")
