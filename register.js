@@ -17,7 +17,8 @@ function cacheFile(sourcePath) {
 	const options = {
 		sourcePath: sourcePath,
 		platform: 'node',
-		evaling: true
+		evaling: true,
+		raiseErrors: true
 	}
 
 	Object.defineProperties(options,{
