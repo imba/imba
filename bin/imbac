@@ -35,7 +35,7 @@ var parseOpts = {
 		output: {type: 'string'},
 		platform: {type: 'string'}, // node | browser | worker
 		styles: {type: 'string'}, // extern | inline
-		runtime: {type: 'string'}, // global | inline | import
+		impba: {type: 'string'}, // global | inline | import
 		format: {type: 'string'}, // cjs | esm
 	},
 	

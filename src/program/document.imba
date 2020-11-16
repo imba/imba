@@ -6,6 +6,10 @@ import { Sym, SymbolFlags } from './symbol'
 
 import {SemanticTokenTypes,SemanticTokenModifiers,M,CompletionTypes,Keywords,SymbolKind} from './types'
 
+###
+line and character are both zero based
+###
+
 export class ImbaDocument
 
 	static def tmp content
@@ -51,15 +55,18 @@ export class ImbaDocument
 	def getLineText line
 		let start = lineOffsets[line]
 		let end = lineOffsets[line + 1]
-		return content.substring(start, end)
+		return content.substring(start, end).replace(/[\r\n]/g,'')
 	
 	def positionAt offset
+		if typeof offset == 'object'
+			offset = offset.offset
+
 		offset = Math.max(Math.min(offset, content.length), 0)
 		var lineOffsets = lineOffsets
 		var low = 0
 		var high = lineOffsets.length
 		if high === 0
-			return { line: 0, character: offset }
+			return { line: 0, character: offset, offset: offset }
 		while low < high
 			var mid = Math.floor((low + high) / 2)
 			if lineOffsets[mid] > offset
@@ -69,7 +76,7 @@ export class ImbaDocument
 		// low is the least x for which the line offset is larger than the current offset
 		// or array.length if no line offset is larger than the current offset
 		var line = low - 1
-		return { line: line, character: (offset - lineOffsets[line]) }
+		return { line: line, character: (offset - lineOffsets[line]), offset: offset }
 
 	def offsetAt position
 		if position.offset

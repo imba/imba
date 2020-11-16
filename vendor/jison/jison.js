@@ -1307,22 +1307,29 @@ parser.parse = function parse (input) {
             var tsym = lexer.yytext;
             var tok = self.terminals_[symbol] || symbol;
             var tloc = tsym ? tsym._loc : -1;
+            var tend = tloc > -1 ? (tloc + tsym._len) : -1;
             var tpos = tloc != -1 ? "[" + tsym._loc + ":" + tsym._len + "]" : '[0:0]';
 
             if (lexer.showPosition) {
-                errStr = 'Parse error at '+(tpos)+":\n"+lexer.showPosition()+"\nExpecting "+expected.join(', ') + ", got '" + (self.terminals_[symbol] || symbol)+ "'";
+                errStr = 'Parse error at '+(tpos)+":\n"+lexer.showPosition()+"\nExpecting "+expected.join(', ') + ", got '" + (tok)+ "'";
             } else {
-                errStr = 'Parse error at '+(tpos)+": Unexpected " + (symbol == EOF ? "end of input" : ("'"+(tok)+"'"));
+                // errStr = 'Parse error at '+(tpos)+": Unexpected " + (symbol == EOF ? "end of input" : ("'"+(tok)+"'"));
+                errStr = "Unexpected " + (symbol == EOF ? "end of input" : ("'"+(tok)+"'"));
             }
 
             self.parseError(errStr, {
                 lexer: lexer,
                 text: lexer.match,
                 token: tok,
+                offset: tloc,
+                length: (tend - tloc),
+                start: {offset: tloc},
+                end: {offset: tend},
                 line: lexer.yylineno,
                 expected: expected,
                 recoverable: (error_rule_depth !== false)
             });
+
         } else if (preErrorSymbol !== EOF) {
             error_rule_depth = locateNearestErrorRecoveryRule(state);
         }
