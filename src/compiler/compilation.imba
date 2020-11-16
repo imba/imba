@@ -38,7 +38,6 @@ export class Diagnostic
 	def toError
 		let msg = "{source.sourcePath}:{start.line + 1}:{start.character + 1}: {message}"
 		let err = new SyntaxError(msg)
-		err.fileName = source.sourcePath
 		let line = source.doc.getLineText(start.line)
 		let stack = [msg,line]
 		stack.push line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(length)
@@ -108,6 +107,8 @@ export class Compilation
 		parse!
 		if flags |=? STEPS.COMPILE
 			result = ast.compile(options,self)
+			raiseErrors! if options.raiseErrors
+
 		return self
 
 	def addDiagnostic severity, params
@@ -130,3 +131,8 @@ export class Compilation
 
 	def toString
 		self.js
+
+	def raiseErrors
+		if errors.length
+			throw errors[0].toError!
+		return self		

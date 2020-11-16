@@ -49,8 +49,12 @@ function run(code,options) {
 
 	if (path.extname(main.filename) != '.imba' || require.extensions) {
 		options.platform || (options.platform = 'node');
+		options.raiseErrors = true;
+
 		// arguments[1].standalone || (arguments[1].standalone = true);
 		var content = compiler.compile(code,options);
+		if(content.raiseErrors) content.raiseErrors();
+
 		return main._compile((content.js || content),main.filename);
 	} else {
 		return main._compile(code,main.filename);
@@ -61,7 +65,7 @@ function run(code,options) {
 // TODO add support for imba run cache?
 if (require.extensions) {
 	require.extensions['.imba'] = function(mod,filename) {
-		var options = {sourcePath: filename,platform: 'node'};
+		var options = {sourcePath: filename,platform: 'node', raiseErrors: true};
 		
 		Object.defineProperty(options,'fs',{value: fs, enumerable:false});
 		Object.defineProperty(options,'path',{value: path, enumerable:false});
