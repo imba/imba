@@ -1077,11 +1077,18 @@ export class Node
 	def alias
 		null
 
-	def warn text, opts = {}
-		opts:message = text
-		opts:loc ||= loc
-		scope__.root.warn opts
-		self
+	def warn message, opts = {}
+		let loc = opts:loc or self.loc
+		Compilation.warn(
+			severity: opts:severity or 'warning'
+			message: message
+			offset: (loc ? loc[0] : 0)
+			length: (loc ? (loc[1] - loc[0]) : 0)
+		)
+
+	def error message, opts = {}
+		opts:severity = 'error'
+		warn(message,opts)
 
 	def c o
 		var s = STACK
@@ -2663,7 +2670,7 @@ export class Root < Code
 			throw err
 			
 
-	def compile o
+	def compile o, script = {}
 		STACK.reset # -- nested compilation does not work now
 		@scope.options = OPTS = STACK.@options = @options = o or {}
 		STACK.root = @scope
@@ -2701,10 +2708,16 @@ export class Root < Code
 		# always create the sourcemap?
 		if o:sourceMap # should handle sourcemap no matter what?
 			let map = SourceMap.new(result,o:sourceMap,o).generate
-			result:sourcemap = map.result
+			script:sourcemap = result:sourcemap = map.result
+			# map.result
 		# else
 		# remove sourcemap locations
 		result:js = result:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+
+		script:js = result:js
+		script:css = result:css
+		script:sourceId = sourceId
+		script:dependencies = result:dependencies
 
 		return result
 
@@ -9804,9 +9817,9 @@ export class Scope
 		
 		if existing
 			if decl and existing.type != 'global'
-				decl.warn('Cannot redeclare variable')
+				decl.error('Cannot redeclare variable')
 			# console.log 'redeclaring variable',"{existing} {decl}",existing.type
-			
+
 		# FIXME check if existing is required to be unique as well?
 		if existing and !o:unique
 			return existing
@@ -10267,7 +10280,6 @@ export class FlowScope < Scope
 					# p "{name} already exists as a block-variable {decl}"
 					# TODO should throw error instead
 					decl.warn "Variable already exists in block" if decl
-					console.log "ALREADY EXISTS?"
 					# root.warn message: "Holy shit"
 			closure.register(name,decl,o)
 		else
