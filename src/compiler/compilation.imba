@@ -93,6 +93,7 @@ export class Compilation
 	def tokenize
 		if flags |=? STEPS.TOKENIZE
 			Compilation.current = self
+			lexer.reset!
 			tokens = lexer.tokenize(sourceCode,options,self)
 			tokens = rewriter.rewrite(tokens,options,self)
 		yes

@@ -2691,7 +2691,6 @@ export class Root < Code
 			sourceId: sourceId,
 			source: o.@source,
 			tokens: o.@tokens,
-			warnings: scope.warnings,
 			options: o,
 			toString: (do this:js),
 			css: STACK.css,
@@ -10078,15 +10077,8 @@ export class RootScope < Scope
 	def head
 		@head
 
-	def warn data
-		# hacky
-		data:node = null
-		@warnings.push(data)
-		self
-
 	def dump
 		var obj = {
-			warnings: AST.dump(@warnings)
 			autoself: @implicitAccessors.map(|s| s.dump)
 		}
 
