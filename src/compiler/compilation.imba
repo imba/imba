@@ -42,7 +42,7 @@ export class Diagnostic
 		let line = source.doc.getLineText(start.line)
 		let stack = [msg,line]
 		stack.push line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(length)
-		err.stack = "\n" + stack.join('\n') + "\n"
+		err.stack = "\n" + stack.join('\n').replace(/\t/g,'    ') + "\n"
 		return err
 
 	def raise
@@ -70,9 +70,9 @@ export class Compilation
 
 	static prop current
 
-	static def error opts do current..addDiagnostic(opts)
-	static def warn opts do current..addDiagnostic(opts)
-	static def info opts do current..addDiagnostic(opts)
+	static def error opts do current..addDiagnostic('error',opts)
+	static def warn opts do current..addDiagnostic('warning',opts)
+	static def info opts do current..addDiagnostic('info',opts)
 
 	def constructor code, options
 		self.code = code
@@ -104,7 +104,8 @@ export class Compilation
 			result = ast.compile(options,self)
 		return result
 
-	def addDiagnostic params
+	def addDiagnostic severity, params
+		params.severity ||= severity
 		let item = new Diagnostic(self,params)
 		diagnostics.push item
 		return item

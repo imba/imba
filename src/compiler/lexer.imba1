@@ -5,6 +5,7 @@ var T = require './token'
 var Token = T.Token
 
 import INVERSES from './constants'
+import Compilation from './compilation'
 
 var K = 0
 
@@ -413,7 +414,6 @@ export class Lexer
 		closeIndentation unless o:inline
 
 		if !o:silent and @ends:length
-			console.log @ends
 			throw error("missing {@ends.pop}")
 
 		return @tokens
@@ -1445,6 +1445,7 @@ export class Lexer
 
 			let indentSize = 0
 			let offset = 0
+			let offsetLoc = @loc
 
 			while true
 				let idx = whitespace.indexOf(@indentStyle,offset)
@@ -1458,9 +1459,14 @@ export class Lexer
 				else
 					# workaround to report correct location
 					@loc += indent:length - whitespace:length
+					let start = @loc
 					token('INDENT', whitespace,whitespace:length)
-					unless @opts:silent
-						throw error("use tabs for indentation")
+
+					Compilation.error(
+						message: "Use tabs for indentation"
+						offset: start + offset # offsetLoc + offset + (indent:length - whitespace:length)
+						length: whitespace:length - offset
+					).raise()
 
 			size = indentSize
 
@@ -1895,6 +1901,7 @@ export class Lexer
 		if herecomment
 			if HEREDOC_ILLEGAL.test(doc)
 				throw error("block comment cannot contain '*/' starting")
+
 			return doc if doc.indexOf('\n') <= 0
 		else
 			while match = HEREDOC_INDENT.exec(doc)
@@ -1982,7 +1989,8 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter
 
-		throw error("missing { stack.pop }, starting") unless @opts:silent
+		unless @opts:silent
+			throw error("missing { stack.pop }, starting")
 
 	# Expand variables and expressions inside double-quoted strings using
 	# braces for substitution of arbitrary expressions.
@@ -2120,7 +2128,7 @@ export class Lexer
 		var wanted = last(@ends)
 		unless tok == wanted
 			unless 'OUTDENT' is wanted
-				throw error "unmatched {tok}"
+				throw error "unmatched {tok}",tok:length
 			var size = last(@indents)
 			@indent -= size
 			outdentToken(size, true, 0)
@@ -2182,17 +2190,24 @@ export class Lexer
 
 	# Throws a syntax error on the current `@line`.
 	def error message, len
-		message = "{message} on line {@line}" if @line isa Number
+		# message = "{message} on line {@line}" if @line isa Number
+		return Compilation.error(
+			message: message
+			line: @line
+			offset: @loc
+			length: len or 0
+		).toError
 
-		if len
-			message += " [{@loc}:{@loc + len}]"
 
-		var err = SyntaxError.new(message)
-		err:line = @line
-		var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)
-		err.@code = @code
-		err:region = [@loc,@loc + (len or 0)]
-		return err
+		#	if len
+		#		message += " [{@loc}:{@loc + len}]"
+		#
+		#	var err = SyntaxError.new(message)
+		#	err:line = @line
+		#	var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)
+		#	err.@code = @code
+		#	err:region = [@loc,@loc + (len or 0)]
+		#	return err
 
 	def warn message
 		var ary = @tokens:warnings ||= []
