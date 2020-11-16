@@ -11,6 +11,7 @@ import SourceMap from './sourcemap'
 
 import StyleRule,StyleTheme,Color from './styler.imba'
 import parseAsset from './assets.imba'
+import Compilation from './compilation'
 
 var TAG_NAMES = constants.TAG_NAMES
 
@@ -322,7 +323,18 @@ var RESERVED_TEST = /^(default|char|for)$/
 # captures error from parser
 export def parseError str, o
 	# find nearest token
-	var err
+	# if Compilation:current
+	# 	# let tok = o:lexer:tokens[o:lexer:pos]
+	# 	# console.log 'found current compilation',o:lexer:pos,tok,o:start,o:end
+	var err = Compilation.error({
+		category: 'parser'
+		severity: 'error'
+		offset: o:offset
+		length: o:length
+		message: str
+	})
+
+	return err.raise()
 
 	if o:lexer
 		var token = o:lexer:yytext
@@ -10140,7 +10152,7 @@ export class RootScope < Scope
 			let str = "'{imbaPath or 'imba'}/{path}'"
 			# TODO create actual Import nodes instead of literals here
 			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
-			@head.push(item) if imbaPath !== null and !STACK.tsc
+			@head.push(item) if imbaPath !== null and !STACK.tsc and imbaPath != 'global'
 			item
 			
 	def imbaRef name, shorthand = '_'

@@ -12,6 +12,8 @@ var ast = require './nodes'
 import resolveConfigFile from './imbaconfig'
 import ImbaParseError from './errors'
 
+import {Diagnostic,Compilation} from './compilation'
+
 # Instantiate a Lexer for our use here.
 export var lex = lexer.Lexer.new
 export var Rewriter = rewriter.Rewriter
@@ -21,19 +23,23 @@ var rewriter = Rewriter.new
 parser:lexer = lex.jisonBridge
 parser:yy = ast # everything is exported right here now
 
+Compilation:prototype:lexer = lex
+Compilation:prototype:rewriter = rewriter
+Compilation:prototype:parser = parser
+
 # normalize compiler options, resolve imbaconfig.json++
 export def resolveConfig o = {}
 	let path = o:sourcePath
 	o:config ||= resolveConfigFile(path,o) or {}
 	return o
 
-export def tokenize code, o = {}
+export def tokenize code, options = {}
 	o.@source = code
 	lex.reset
-	var tokens = lex.tokenize code, o
+	var tokens = lex.tokenize(code, options)
 
 	unless o:rewrite === no
-		tokens = rewriter.rewrite(tokens,o)
+		tokens = rewriter.rewrite(tokens,options)
 	return tokens
 
 export def rewrite tokens, o = {}
@@ -52,6 +58,8 @@ export def parse code, o = {}
 		throw err
 
 export def compile code, o = {}
+	let compilation = Compilation.new(code,o)
+	return compilation.compile()
 
 	try
 		# check if code is completely blank
