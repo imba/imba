@@ -20,8 +20,8 @@ export class SourceMap
 	def options
 		@options
 
-	def initialize source, options, file
-		@source = source
+	def initialize script, options, file
+		@script = script
 		@options = options
 		@sourcePath = file:sourcePath
 		@sourceRoot = file:sourceRoot
@@ -32,7 +32,7 @@ export class SourceMap
 		@js = ""
 
 	def sourceCode
-		@source:source
+		@script:sourceCode
 
 	def sourceName
 		path.basename(@sourcePath)
@@ -47,8 +47,8 @@ export class SourceMap
 		# var matcher = /\/\*\%\$(\d*)\$\%/
 		var matcher = /\/\*\%([\w\|]*)?\$\*\//
 		var replacer = /^(.*?)\/\*\%([\w\|]*)\$\*\//
-		var prejs = @source:js
-		var lines = @source:js.split(/\n/g) # what about js?
+		var prejs = @script:js
+		var lines = @script:js.split(/\n/g) # what about js?
 		var verbose = @options:debug
 		# return self
 		var sourceCode = self.sourceCode
@@ -118,22 +118,21 @@ export class SourceMap
 			jsloc += line:length + 1
 			lines[i] = line
 
-		source:js = lines.join('\n')
-		source:locs = {
+		@script:js = lines.join('\n')
+		@script:locs = {
 			map: locmap
 			generated: @locs
 			spans: Object.values(groups)
 		}
 
 		if verbose
-			for pair in source:locs:spans
+			for pair in @script:locs:spans
 				if pair[1] != null
-					let jsstr = source:js.slice(pair[0],pair[1]).split("\n")
+					let jsstr = @script:js.slice(pair[0],pair[1]).split("\n")
 					let imbastr = sourceCode.slice(pair[2],pair[3]).split("\n")
 					pair.push(jsstr[0])
 					pair.push(imbastr[0])
 
-			console.log source:locs:spans
 			let superMap = {
 				0: '\u2080'
 				1: '\u2081'
@@ -156,7 +155,7 @@ export class SourceMap
 					o += superMap[str[i++]]
 				return '\u208D' + o + '\u208E'
 
-			source:js = source:js + '\n/*\n' + prejs.replace(/\/\*\%([\w\|]*)?\$\*\//g,repSuper) + '\n*/'
+			@script:js = @script:js + '\n/*\n' + prejs.replace(/\/\*\%([\w\|]*)?\$\*\//g,repSuper) + '\n*/'
 		self
 
 	def generate
