@@ -63,6 +63,9 @@ export class Diagnostics < Array
 	get info
 		filter do $1.severity == 'info'
 
+###
+Should eventually take over for the Stack / options mess in nodes.imba1
+###
 export class Compilation
 
 	# lexer, rewriter and parser are
@@ -75,20 +78,23 @@ export class Compilation
 	static def info opts do current..addDiagnostic('info',opts)
 
 	def constructor code, options
-		self.code = code
+		self.sourceCode = code
+		self.sourcePath = options.sourcePath
+
 		self.options = options
 		self.flags = 0
 		self.js = ""
 		self.css = ""
+		self.result = {}
 		self.diagnostics = [] #  new Diagnostics
 		self.tokens = null
 		self.ast = null
-		self.sourcePath = options.sourcePath
+		
 
 	def tokenize
 		if flags |=? STEPS.TOKENIZE
 			Compilation.current = self
-			tokens = lexer.tokenize(code,options,self)
+			tokens = lexer.tokenize(sourceCode,options,self)
 			tokens = rewriter.rewrite(tokens,options,self)
 		yes
 
@@ -102,7 +108,7 @@ export class Compilation
 		parse!
 		if flags |=? STEPS.COMPILE
 			result = ast.compile(options,self)
-		return result
+		return self
 
 	def addDiagnostic severity, params
 		params.severity ||= severity
@@ -120,4 +126,7 @@ export class Compilation
 		diagnostics.filter do $1.severity == 'info'
 	
 	get doc
-		#doc ||= new ImbaDocument(null,'imba',0,code)
+		#doc ||= new ImbaDocument(null,'imba',0,sourceCode)
+
+	def toString
+		self.js

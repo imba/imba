@@ -347,9 +347,13 @@ CLI.prototype.compileFile = function (src){
 			}
 		};
 	} catch (e) {
-		out = {error: e};
+		out = {errors: [e]};
 	};
-	
+
+	if(out.errors && out.errors.length){
+		// out = { error: out.errors[0].toError() }
+	}
+
 	out.compileTime = Date.now() - t;
 
 	let sourcemap = opts.sourceMap && out.sourcemap;
@@ -361,13 +365,6 @@ CLI.prototype.compileFile = function (src){
 		} else if (!opts.sourceMap.hidden){
 			out.js = out.js + "\n//# sourceMappingURL=" + path.basename(src.targetPath + '.map');
 		}
-		
-
-		// if(opts.sourceMap.debug) {
-		// 	let str = JSON.stringify(sourcemap,null,2);
-		// 	// str = str.replace('')
-		// 	out.js = out.js + "\n/* " + str + "\n */";
-		// }
 	};
 	
 	src.output = out;
@@ -375,6 +372,7 @@ CLI.prototype.compileFile = function (src){
 	let status = ("" + self.gray(("" + at + " compile")) + " " + srcp + " " + self.gray("to") + " " + dstp + " " + self.green(out.compileTime + "ms"));
 	
 	if (out.error) {
+
 		status += self.red(" [1 error]");
 	};
 	
@@ -382,29 +380,37 @@ CLI.prototype.compileFile = function (src){
 		let count = out.warnings.length;
 		status += self.yellow((" [" + count + " warning" + ((count > 1) ? 's' : '') + "]"));
 	};
-	
-	if (src.targetPath && out.js !== undefined && !self.o().print) {
+
+	if (out.errors && out.errors.length) {
+		let count = out.errors.length;
+		status += self.red((" [" + count + " error" + ((count > 1) ? 's' : '') + "]"));
+		if (!self.o().print) {
+			self.log(status);
+			
+			out.errors.forEach(function(err,i){
+				if(err.toError instanceof Function){
+					err = err.toError();
+				}
+				// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
+				if (err.excerpt) {
+					self.log("   " + err.excerpt({colors: self.o().colors}));
+				} else {
+					self.log("   " + err.message);
+					self.log("   " + ("in file " + srcp));
+					if (err.stack) { self.log(err.stack) };
+				};
+			})
+		};
+	}
+	else if (src.targetPath && out.js !== undefined && !self.o().print) {
 		self.ensureDir(src.targetPath);
 		fs.writeFileSync(src.targetPath,out.js,'utf8');
 		if (!self.o().print) { self.log(status) };
 
 		if(sourcemap && !opts.print && !opts.sourceMap.inline) { // And webpack
 			fs.writeFileSync(src.targetPath + '.map',JSON.stringify(sourcemap),'utf8');
-		}
-		
+		}	
 		// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
-	} else if (out.error) {
-		if (!self.o().print) {
-			self.log(status);
-			// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
-			if (out.error.excerpt) {
-				self.log("   " + out.error.excerpt({colors: self.o().colors}));
-			} else {
-				self.log("   " + out.error.message);
-				self.log("   " + ("in file " + srcp));
-				if (out.error.stack) { self.log(out.error.stack) };
-			};
-		};
 	};
 	
 	if (out.warnings && !self.o().silent && !self.o().print) {
