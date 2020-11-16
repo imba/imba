@@ -2704,21 +2704,20 @@ export class Root < Code
 				if o:debug
 					result:js += '\n/*\n' + result:css + '\n*/\n' # this we should only include when debugging
 
-		# always create the sourcemap?
-		if o:sourceMap # should handle sourcemap no matter what?
-			let map = SourceMap.new(result,o:sourceMap,o).generate
-			script:sourcemap = result:sourcemap = map.result
-			# map.result
-		# else
-		# remove sourcemap locations
-		result:js = result:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
-
 		script:js = result:js
 		script:css = result:css
 		script:sourceId = sourceId
 		script:dependencies = result:dependencies
 
-		return result
+		# always create the sourcemap?
+		if o:sourceMap # should handle sourcemap no matter what?
+			let map = SourceMap.new(script,o:sourceMap,o).generate
+			script:sourcemap = result:sourcemap = map.result
+			# map.result
+
+		# remove sourcemap locations
+		script:js = script:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+		return script
 
 	def js o
 		var out = scope.c
