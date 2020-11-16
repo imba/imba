@@ -326,7 +326,7 @@ export class Rewriter
 	def ensureFirstLine
 		var token = @tokens[0]
 
-		if token.@type === TERMINATOR
+		if !token or token.@type === TERMINATOR
 			@tokens.unshift(T.token('BODYSTART','BODYSTART'))
 			# @tokens = [T.token('BODYSTART','BODYSTART')].concat(@tokens)
 		return
