@@ -322,10 +322,6 @@ var RESERVED_TEST = /^(default|char|for)$/
 
 # captures error from parser
 export def parseError str, o
-	# find nearest token
-	# if Compilation:current
-	# 	# let tok = o:lexer:tokens[o:lexer:pos]
-	# 	# console.log 'found current compilation',o:lexer:pos,tok,o:start,o:end
 	var err = Compilation.error({
 		category: 'parser'
 		severity: 'error'
@@ -335,25 +331,6 @@ export def parseError str, o
 	})
 
 	return err.raise()
-
-	if o:lexer
-		var token = o:lexer:yytext
-		# console.log o:lexer:pos,token.@loc
-		err = ImbaParseError.new({message: str},{
-			pos: o:lexer:pos
-			tokens: o:lexer:tokens
-			token: o:lexer:yytext
-			meta: o
-		})
-
-		throw err
-
-		# should find the closest token with actual position
-		# str = "[{token.@loc}:{token.@len || String(token):length}] {str}"
-	var e = Error.new(str)
-	e:lexer = o:lexer
-	e:options = o
-	throw e
 
 def AST.c obj
 	typeof obj == 'string' ? obj : obj.c
@@ -9914,9 +9891,6 @@ export class Scope
 		@imba ||= (STACK.isNode ? LIT("(this && this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])") : LIT('imba'))
 		# root.imba # requires('imba2', 'Imba')
 
-	def imbaTags
-		root.imbaTags
-		
 	def imbaRef name, shorthand = '_'
 		root.imbaRef(name,shorthand)
 
@@ -10135,15 +10109,6 @@ export class RootScope < Scope
 
 	def imba
 		LIT('imba')
-
-	def imbaTags
-		return @imbaTags if @imbaTags
-		var imbaRef = self.imba
-		# don't add if we cannot be certain that imba is required on top
-		if @requires.Imba
-			@imbaTags = declare('_T',OP('.',imbaRef,'TAGS'))
-		else
-			@imbaTags = "{imbaRef.c}.TAGS"
 
 	def imbaDependency path
 		let imbaPath = STACK.imbaPath
