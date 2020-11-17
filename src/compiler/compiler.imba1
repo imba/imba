@@ -34,13 +34,8 @@ export def resolveConfig o = {}
 	return o
 
 export def tokenize code, options = {}
-	o.@source = code
-	lex.reset
-	var tokens = lex.tokenize(code, options)
-
-	unless o:rewrite === no
-		tokens = rewriter.rewrite(tokens,options)
-	return tokens
+	let script = Compilation.new(code,options)
+	return script.tokenize()
 
 export def rewrite tokens, o = {}
 	rewriter.rewrite tokens, o
@@ -49,8 +44,6 @@ export def parse code, o = {}
 	o = resolveConfig(o)
 	var tokens = code isa Array ? code : tokenize(code,o)
 	try
-		o.@source ||= code if tokens != code
-		o.@tokens = tokens
 		return parser.parse(tokens)
 	catch err
 		err:_code = code
@@ -60,25 +53,6 @@ export def parse code, o = {}
 export def compile code, o = {}
 	let compilation = Compilation.new(code,o)
 	return compilation.compile()
-
-	try
-		# check if code is completely blank
-		unless /\S/.test(code)
-			return {
-				js: "",
-				toString: do this:js
-			}
-		var tokens = tokenize(code, o)
-		var ast = parse(tokens, o)
-		return ast.compile(o)
-	catch err
-		err:_code = code
-		err:_sourcePath = o:sourcePath if o:sourcePath
-
-		if err:toNativeError
-			throw err.toNativeError
-
-		throw err
 
 export def analyze code, o = {}
 	var meta

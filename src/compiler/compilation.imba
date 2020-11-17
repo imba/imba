@@ -1,9 +1,5 @@
-# warning
-# error
-# info
-
 import { ImbaDocument } from '../program/document'
-import { Position, Range, Diagnostic } from '../program/structures'
+import { Position, Range, Diagnostic,DiagnosticSeverity } from '../program/structures'
 
 const STEPS =
 	TOKENIZE: 1
@@ -15,6 +11,7 @@ const STEPS =
 ###
 Should eventually take over for the Stack / options mess in nodes.imba1
 ###
+
 export class Compilation
 
 	# lexer, rewriter and parser are
@@ -38,7 +35,6 @@ export class Compilation
 		self.diagnostics = []
 		self.tokens = null
 		self.ast = null
-		
 
 	def tokenize
 		if flags |=? STEPS.TOKENIZE
@@ -49,7 +45,7 @@ export class Compilation
 				tokens = rewriter.rewrite(tokens,options,self)
 			catch e
 				yes
-		self
+		return tokens
 
 	def parse
 		tokenize!
@@ -77,13 +73,13 @@ export class Compilation
 		errors.length > 0
 	
 	get errors
-		diagnostics.filter do $1.severity == 'error'
+		diagnostics.filter do $1.severity == DiagnosticSeverity.Error
 	
 	get warnings
-		diagnostics.filter do $1.severity == 'warning'
+		diagnostics.filter do $1.severity == DiagnosticSeverity.Warning
 
 	get info
-		diagnostics.filter do $1.severity == 'info'
+		diagnostics.filter do $1.severity == DiagnosticSeverity.Information
 	
 	get doc
 		#doc ||= new ImbaDocument(null,'imba',0,sourceCode)

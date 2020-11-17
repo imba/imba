@@ -271,6 +271,7 @@ CLI.prototype.tokenize = function (){
 			out = compiler.tokenize(src.sourceBody,o2);	
 		} catch(e){
 			console.log('error in tokenizer:',e.message);
+			throw e;
 			out = e._options.tokens;
 		}
 		
