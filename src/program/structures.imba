@@ -26,6 +26,12 @@ export class Range
 		self.start = start
 		self.end = end
 
+	get offset
+		start.offset
+
+	get length
+		end.offset - start.offset
+
 export const DiagnosticSeverity = {
 	Error: 1
 	Warning: 2

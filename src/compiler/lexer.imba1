@@ -380,7 +380,7 @@ export class Lexer
 		}
 
 
-	def tokenize code, o = {}, script = null
+	def tokenize code, o, script = null
 
 		if code:length == 0
 			return []
@@ -410,7 +410,8 @@ export class Lexer
 		if o:gutter !== undefined
 			@state:gutter = o:gutter
 		
-		o.@tokens = @tokens 
+		if @script and !o:inline
+			@script:tokens = @tokens
 		
 		parse(code)
 		closeIndentation unless o:inline

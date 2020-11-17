@@ -1232,7 +1232,7 @@ function parseError (str, hash) {
 
 parser.parseError = lrGeneratorMixin.parseError = parseError;
 
-parser.parse = function parse (input) {
+parser.parse = function parse (input, script = null) {
 
     // For Imba we are going to drop most of the features that are not used
     // Locations are provided by the tokens from the lexer directly - so drop yylloc
@@ -1315,6 +1315,16 @@ parser.parse = function parse (input) {
             } else {
                 // errStr = 'Parse error at '+(tpos)+": Unexpected " + (symbol == EOF ? "end of input" : ("'"+(tok)+"'"));
                 errStr = "Unexpected " + (symbol == EOF ? "end of input" : ("'"+(tok)+"'"));
+            }
+
+            if(script){
+                let err = script.addDiagnostic('error',{
+                    message: errStr,
+                    source: 'imba-parser',
+                    range: script.rangeAt(tloc,tend)
+                })
+
+                err.raise();
             }
 
             self.parseError(errStr, {
