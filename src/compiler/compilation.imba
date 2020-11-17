@@ -3,6 +3,7 @@
 # info
 
 import { ImbaDocument } from '../program/document'
+import { Position, Range, Diagnostic } from '../program/structures'
 
 const STEPS =
 	TOKENIZE: 1
@@ -10,57 +11,6 @@ const STEPS =
 	PARSE: 4
 	TRAVERSE: 8
 	COMPILE: 16
-
-const META = new WeakMap
-
-export class Diagnostic
-
-	def constructor source, {category, severity, message, offset, length}
-		self.category = category
-		self.severity = severity
-		self.message = message
-		self.offset = offset
-		self.length = length
-		META.set(self,source)
-
-	get start
-		#start ??= source.doc.positionAt(offset)
-	
-	get end
-		#end ??= source.doc.positionAt(offset + length)
-
-	get source
-		META.get(self)
-
-	get snippet
-		""
-
-	def toError
-		let msg = "{source.sourcePath}:{start.line + 1}:{start.character + 1}: {message}"
-		let err = new SyntaxError(msg)
-		let line = source.doc.getLineText(start.line)
-		let stack = [msg,line]
-		stack.push line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(length)
-		err.stack = "\n" + stack.join('\n').replace(/\t/g,'    ') + "\n"
-		return err
-
-	def raise
-		throw toError!
-
-export class Diagnostics < Array
-
-	def add raw
-		push let item = new Diagnostic(raw)
-		return item
-
-	get errors
-		filter do $1.severity == 'error'
-	
-	get warnings
-		filter do $1.severity == 'warning'
-
-	get info
-		filter do $1.severity == 'info'
 
 ###
 Should eventually take over for the Stack / options mess in nodes.imba1
@@ -85,7 +35,7 @@ export class Compilation
 		self.js = ""
 		self.css = ""
 		self.result = {}
-		self.diagnostics = [] #  new Diagnostics
+		self.diagnostics = []
 		self.tokens = null
 		self.ast = null
 		
@@ -93,30 +43,38 @@ export class Compilation
 	def tokenize
 		if flags |=? STEPS.TOKENIZE
 			Compilation.current = self
-			lexer.reset!
-			tokens = lexer.tokenize(sourceCode,options,self)
-			tokens = rewriter.rewrite(tokens,options,self)
-		yes
+			try
+				lexer.reset!
+				tokens = lexer.tokenize(sourceCode,options,self)
+				tokens = rewriter.rewrite(tokens,options,self)
+			catch e
+				yes
+		self
 
 	def parse
 		tokenize!
 		if flags |=? STEPS.PARSE
-			ast = parser.parse(tokens,options,self)
+			if !errored?
+				ast = parser.parse(tokens,self)
+		self
 
 	def compile
 		Compilation.current = self
 		parse!
 		if flags |=? STEPS.COMPILE
-			result = ast.compile(options,self)
+			if !errored?
+				result = ast.compile(options,self)
 			raiseErrors! if options.raiseErrors
-
-		return self
+		self
 
 	def addDiagnostic severity, params
 		params.severity ||= severity
-		let item = new Diagnostic(self,params)
+		let item = new Diagnostic(params,self)
 		diagnostics.push item
 		return item
+	
+	get errored?
+		errors.length > 0
 	
 	get errors
 		diagnostics.filter do $1.severity == 'error'
@@ -129,6 +87,15 @@ export class Compilation
 	
 	get doc
 		#doc ||= new ImbaDocument(null,'imba',0,sourceCode)
+
+	def positionAt offset
+		doc.positionAt(offset)
+	
+	def offsetAt position
+		doc.offsetAt(position)
+	
+	def rangeAt a,b
+		doc.rangeAt(a,b)
 
 	def toString
 		self.js

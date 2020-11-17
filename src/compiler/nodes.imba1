@@ -815,6 +815,12 @@ export class Node
 	prop options
 	prop traversed
 
+	# reference to the script object this node
+	# is part of
+	def script
+		# TODO don't use global state for this
+		Compilation:current
+
 	def safechain
 		no
 
@@ -1078,13 +1084,18 @@ export class Node
 		null
 
 	def warn message, opts = {}
-		let loc = opts:loc or self.loc
-		Compilation.warn(
-			severity: opts:severity or 'warning'
+		let loc = opts:loc or self.loc or [0,0]
+		script.addDiagnostic(opts:severity or 'warning',{
 			message: message
-			offset: (loc ? loc[0] : 0)
-			length: (loc ? (loc[1] - loc[0]) : 0)
-		)
+			range: script.rangeAt(loc[0],loc[1])
+		})
+
+		# Compilation.warn(
+		#	severity: opts:severity or 'warning'
+		#	message: message
+		#	offset: (loc ? loc[0] : 0)
+		#	length: (loc ? (loc[1] - loc[0]) : 0)
+		# )
 
 	def error message, opts = {}
 		opts:severity = 'error'
@@ -2685,35 +2696,22 @@ export class Root < Code
 		if STACK.tsc
 			out = "import 'imba/index';\n{out}"
 
-		var result = {
-			js: out,
-			ast: self,
-			sourceId: sourceId,
-			source: o.@source,
-			tokens: o.@tokens,
-			options: o,
-			toString: (do this:js),
-			css: STACK.css,
-			assets: scope.assets
-			dependencies: Object.keys(scope.@dependencies)
-		}
+		script:js = out
+		script:css = STACK.css
+		script:sourceId = sourceId
+		script:assts = scope.assets
+		script:dependencies = Object.keys(scope.@dependencies)
 		
 		if !STACK.tsc
-			if result:css and (!o:styles or o:styles == 'inline')
-				result:js = "{result:js}\nimba.styles.register('{result:sourceId}',{JSON.stringify(result:css)});"
+			if script:css and (!o:styles or o:styles == 'inline')
+				script:js = "{script:js}\nimba.styles.register('{script:sourceId}',{JSON.stringify(script:css)});"
 				if o:debug
-					result:js += '\n/*\n' + result:css + '\n*/\n' # this we should only include when debugging
-
-		script:js = result:js
-		script:css = result:css
-		script:sourceId = sourceId
-		script:dependencies = result:dependencies
+					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
 		# always create the sourcemap?
 		if o:sourceMap # should handle sourcemap no matter what?
 			let map = SourceMap.new(script,o:sourceMap,o).generate
-			script:sourcemap = result:sourcemap = map.result
-			# map.result
+			script:sourcemap = map.result
 
 		# remove sourcemap locations
 		script:js = script:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')

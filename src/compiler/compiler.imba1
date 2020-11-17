@@ -51,7 +51,7 @@ export def parse code, o = {}
 	try
 		o.@source ||= code if tokens != code
 		o.@tokens = tokens
-		return parser.parse tokens
+		return parser.parse(tokens)
 	catch err
 		err:_code = code
 		err:_sourcePath = o:sourcePath if o:sourcePath

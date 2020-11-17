@@ -394,6 +394,8 @@ CLI.prototype.compileFile = function (src){
 				// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
 				if (err.excerpt) {
 					self.log("   " + err.excerpt({colors: self.o().colors}));
+				} else if(err instanceof SyntaxError && err.stack){
+					self.log(err.stack);
 				} else {
 					self.log("   " + err.message);
 					self.log("   " + ("in file " + srcp));
