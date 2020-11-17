@@ -38,8 +38,8 @@ export class Compilation
 
 	def tokenize
 		if flags |=? STEPS.TOKENIZE
-			Compilation.current = self
 			try
+				Compilation.current = self
 				lexer.reset!
 				tokens = lexer.tokenize(sourceCode,options,self)
 				tokens = rewriter.rewrite(tokens,options,self)
@@ -51,14 +51,16 @@ export class Compilation
 		tokenize!
 		if flags |=? STEPS.PARSE
 			if !errored?
-				ast = parser.parse(tokens,self)
+				Compilation.current = self
+				try
+					ast = parser.parse(tokens,self)
 		self
 
 	def compile
-		Compilation.current = self
 		parse!
 		if flags |=? STEPS.COMPILE
 			if !errored?
+				Compilation.current = self
 				result = ast.compile(options,self)
 			raiseErrors! if options.raiseErrors
 		self

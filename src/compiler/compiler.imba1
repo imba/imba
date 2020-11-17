@@ -51,7 +51,7 @@ export def parse code, o = {}
 		throw err
 
 export def compile code, o = {}
-	let compilation = Compilation.new(code,o)
+	let compilation = Compilation.new(code,resolveConfig(o))
 	return compilation.compile()
 
 export def analyze code, o = {}
