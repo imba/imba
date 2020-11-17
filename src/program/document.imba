@@ -6,6 +6,8 @@ import { Sym, SymbolFlags } from './symbol'
 
 import {SemanticTokenTypes,SemanticTokenModifiers,M,CompletionTypes,Keywords,SymbolKind} from './types'
 
+import {Range, Position} from './structures'
+
 ###
 line and character are both zero based
 ###
@@ -58,6 +60,9 @@ export class ImbaDocument
 		return content.substring(start, end).replace(/[\r\n]/g,'')
 	
 	def positionAt offset
+		if offset isa Position
+			return offset
+
 		if typeof offset == 'object'
 			offset = offset.offset
 
@@ -66,7 +71,8 @@ export class ImbaDocument
 		var low = 0
 		var high = lineOffsets.length
 		if high === 0
-			return { line: 0, character: offset, offset: offset }
+			return new Position(0,offset,offset)
+			# return { line: 0, character: offset, offset: offset }
 		while low < high
 			var mid = Math.floor((low + high) / 2)
 			if lineOffsets[mid] > offset
@@ -76,7 +82,8 @@ export class ImbaDocument
 		// low is the least x for which the line offset is larger than the current offset
 		// or array.length if no line offset is larger than the current offset
 		var line = low - 1
-		return { line: line, character: (offset - lineOffsets[line]), offset: offset }
+		return new Position(line,offset - lineOffsets[line],offset)
+		# return { line: line, character: (offset - lineOffsets[line]), offset: offset }
 
 	def offsetAt position
 		if position.offset
@@ -90,7 +97,10 @@ export class ImbaDocument
 
 		var lineOffset = lineOffsets[position.line]
 		var nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : content.length
-		return Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset)
+		return position.offset = Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset)
+
+	def rangeAt start, end
+		new Range(positionAt(start),positionAt(end))
 
 	def overwrite body,newVersion
 		version = newVersion or (version + 1)

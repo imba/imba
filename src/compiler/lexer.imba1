@@ -366,6 +366,7 @@ export class Lexer
 		@last    = null
 		@lastTyp = ''
 		@lastVal = null
+		@script  = null
 		self
 
 	def jisonBridge jison
@@ -379,7 +380,7 @@ export class Lexer
 		}
 
 
-	def tokenize code, o = {}
+	def tokenize code, o = {}, script = null
 
 		if code:length == 0
 			return []
@@ -395,6 +396,7 @@ export class Lexer
 		@lastTyp = null
 		@lastVal = null
 
+		@script  = script
 		@code    = code
 		@opts    = o
 		@locOffset = o:loc or 0
@@ -413,8 +415,8 @@ export class Lexer
 		parse(code)
 		closeIndentation unless o:inline
 
-		if !o:silent and @ends:length
-			throw error("missing {@ends.pop}")
+		if @ends:length
+			error("missing {@ends.pop}")
 
 		return @tokens
 
@@ -1188,7 +1190,6 @@ export class Lexer
 		if !prev or prev:spaced or @prevVal in ['(','[','=']
 			let sym = helpers.dashToCamelCase(symbol.slice(1))
 			token 'STRING', '"' + sym + '"', match[0]:length
-			# warn error("Symbols are deprecated - use strings '{symbol.slice(1)}'")
 			return match[0]:length
 		return 0
 
@@ -1423,11 +1424,9 @@ export class Lexer
 				whitespace = whitespace.slice(gutter:length)
 
 			elif @chunk[indent:length] === undefined
-				# if this is the end of code we're okay
 				yes
 			else
-				warn('incorrect indentation')
-				# console.log "GUTTER IS INCORRECT!!",JSON.stringify(indent),JSON.stringify(@chunk[indent:length]),@last # @chunk[indent:length - 1]
+				error('incorrect indentation')
 
 			# should throw error otherwise?
 
@@ -1454,19 +1453,16 @@ export class Lexer
 					offset += @indentStyle['length']
 				elif offset == whitespace:length
 					break
-				elif @opts:silent
-					break
 				else
 					# workaround to report correct location
 					@loc += indent:length - whitespace:length
 					let start = @loc
 					token('INDENT', whitespace,whitespace:length)
 
-					Compilation.error(
-						message: "Use tabs for indentation"
-						offset: start + offset # offsetLoc + offset + (indent:length - whitespace:length)
+					error("Use tabs for indentation",{
+						offset: start + offset
 						length: whitespace:length - offset
-					).raise()
+					})
 
 			size = indentSize
 
@@ -1900,7 +1896,7 @@ export class Lexer
 
 		if herecomment
 			if HEREDOC_ILLEGAL.test(doc)
-				throw error("block comment cannot contain '*/' starting")
+				error("block comment cannot contain '*/' starting")
 
 			return doc if doc.indexOf('\n') <= 0
 		else
@@ -1989,8 +1985,7 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter
 
-		unless @opts:silent
-			throw error("missing { stack.pop }, starting")
+		error("missing { stack.pop }, starting")
 
 	# Expand variables and expressions inside double-quoted strings using
 	# braces for substitution of arbitrary expressions.
@@ -2061,7 +2056,7 @@ export class Lexer
 				# why create a whole new lexer? Should rather reuse one
 				# much better to simply move into interpolation mode where
 				# we continue parsing until we meet unpaired }
-				var nested = Lexer.new.tokenize inner, inline: yes, rewrite: no, loc: offset + locOffset
+				var nested = Lexer.new.tokenize(inner, {inline: yes, rewrite: no, loc: offset + locOffset}, @script)
 				# console.log nested.pop
 
 				if nested[0] and tT(nested[0]) == 'TERMINATOR'
@@ -2120,7 +2115,7 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter # what, why?
 
-		throw error "missing { stack.pop }, starting"
+		error("missing { stack.pop }, starting")
 
 	# Pairs up a closing token, ensuring that all listed pairs of tokens are
 	# correctly balanced throughout the course of the token stream.
@@ -2128,7 +2123,7 @@ export class Lexer
 		var wanted = last(@ends)
 		unless tok == wanted
 			unless 'OUTDENT' is wanted
-				throw error "unmatched {tok}",tok:length
+				error("unmatched {tok}", length: tok:length)
 			var size = last(@indents)
 			@indent -= size
 			outdentToken(size, true, 0)
@@ -2189,34 +2184,11 @@ export class Lexer
 		quote + escapeLines(body, heredoc) + quote
 
 	# Throws a syntax error on the current `@line`.
-	def error message, len
-		# message = "{message} on line {@line}" if @line isa Number
-		return Compilation.error(
+	def error message, params = {} # len = 0
+		let loc = params:offset or @loc
+		let err = @script.addDiagnostic('error',{
 			message: message
-			line: @line
-			offset: @loc
-			length: len or 0
-		).toError
-
-
-		#	if len
-		#		message += " [{@loc}:{@loc + len}]"
-		#
-		#	var err = SyntaxError.new(message)
-		#	err:line = @line
-		#	var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)
-		#	err.@code = @code
-		#	err:region = [@loc,@loc + (len or 0)]
-		#	return err
-
-	def warn message
-		var ary = @tokens:warnings ||= []
-		ary.push(message)
-
-		if !@opts:silent
-			if message isa ERR.ImbaParseError
-				message = message.excerpt(colors: 'yellow')
-		# add warnings to general compiler?
-		console.warn message
-		self
-
+			source: params:source or 'imba-lexer'
+			range: params:range or @script.rangeAt(loc,loc + (params:length or len))
+		})
+		throw err.toError
