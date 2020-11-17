@@ -2839,12 +2839,13 @@ export class ClassDeclaration < Code
 			if @name isa Identifier
 				@name.resolveVariable()
 
-		elif @name
+		elif @name and !(@name isa Access)
 			# TODO should actually declare in outer scope
 			@name.traverse(declaring: self)
+		elif @name
+			@name.traverse()
 		
 		STACK.push(self)
-
 		ROOT.entities.add(namepath,self)
 		scope.visit
 
@@ -6615,7 +6616,7 @@ export class Catch < ControlFlowStatement
 
 	def visit
 		@scope.visit
-		@variable = @scope.register(@varname,self,pool: 'catchvar')
+		@variable = @scope.register(@varname,self,type: 'let', pool: 'catchvar')
 		@body.traverse
 
 
@@ -10263,13 +10264,12 @@ export class FlowScope < Scope
 		@parent.params if @parent
 
 	def register name, decl = null, o = {}
-		if o:type != 'let' and (closure != self)
+		if o:type != 'let' and o:type != 'const' and (closure != self)
 			if var found = lookup(name)
 				if found.type == 'let'
-					# p "{name} already exists as a block-variable {decl}"
-					# TODO should throw error instead
+					# console.log "{name} already exists as a block-variable {decl}"
 					decl.warn "Variable already exists in block" if decl
-					# root.warn message: "Holy shit"
+
 			closure.register(name,decl,o)
 		else
 			super(name,decl,o)
