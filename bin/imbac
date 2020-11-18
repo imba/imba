@@ -35,7 +35,7 @@ var parseOpts = {
 		output: {type: 'string'},
 		platform: {type: 'string'}, // node | browser | worker
 		styles: {type: 'string'}, // extern | inline
-		impba: {type: 'string'}, // global | inline | import
+		imbaPath: {type: 'string'}, // global | inline | import
 		format: {type: 'string'}, // cjs | esm
 	},
 	
@@ -51,6 +51,7 @@ Usage: imbac [options] path/to/script.imba
   -m, --source-map       generate source map and add inline to .js files
   -o, --output [dir]     set the output directory for compiled JavaScript
   -p, --print            print out the compiled JavaScript
+  -d, --debug            Enable compiler debugging
   -s, --stdio            listen for and compile scripts over stdio
   -t, --tokenize         print out the tokens that the lexer/rewriter produce
   --platform [type]      Specify platform: 'node', 'browser', 'worker'
@@ -360,6 +361,7 @@ CLI.prototype.compileFile = function (src){
 	let sourcemap = opts.sourceMap && out.sourcemap;
 
 	if (sourcemap) {
+		// TODO this should clearly happen inside the compiler??
 		if(opts.sourceMap.inline){
 			var base64 = new Buffer(JSON.stringify(sourcemap)).toString("base64");
 			out.js = out.js + "\n//# sourceMappingURL=data:application/json;base64," + base64;	
@@ -410,9 +412,9 @@ CLI.prototype.compileFile = function (src){
 		fs.writeFileSync(src.targetPath,out.js,'utf8');
 		if (!self.o().print) { self.log(status) };
 
-		if(sourcemap && !opts.print && !opts.sourceMap.inline) { // And webpack
+		if(sourcemap && !opts.print && !opts.sourceMap.inline && !opts.sourceMap.hidden) { // And webpack
 			fs.writeFileSync(src.targetPath + '.map',JSON.stringify(sourcemap),'utf8');
-		}	
+		}
 		// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
 	};
 	

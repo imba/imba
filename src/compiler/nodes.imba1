@@ -2709,7 +2709,7 @@ export class Root < Code
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
 		# always create the sourcemap?
-		if o:sourceMap # should handle sourcemap no matter what?
+		if o:sourceMap or STACK.tsc # should handle sourcemap no matter what?
 			let map = SourceMap.new(script,o:sourceMap,o).generate
 			script:sourcemap = map.result
 
@@ -4464,14 +4464,12 @@ export class Access < Op
 			raw = rgt.raw
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
-			# raw = M(rgt.c,rgt)
 			raw = rgt.c
 
 		if safechain and ctx
 			ctx.cache(force: yes)
 			pre = ctx.c + " && "
 		
-
 		# really?
 		# var ctx = (left || scope__.context)
 		var out = if raw
@@ -4482,6 +4480,8 @@ export class Access < Op
 			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
 			"{ctx.c}[{r}]"
 
+		if self isa ImplicitAccess
+			out = M(out,rgt.@token or rgt.@value)
 
 		out = pre + out
 
@@ -4510,6 +4510,8 @@ export class Access < Op
 
 	def shouldParenthesizeInTernary
 		@parens or @cache
+
+export class ImplicitAccess < Access
 
 
 # Should change this to just refer directly to the variable? Or VarReference
@@ -4671,8 +4673,6 @@ export class VarOrAccess < ValueNode
 				stack.registerSemanticToken(@token,variable)
 				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
 				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
-				if variable and @identifier.isInternal
-					stack.registerSemanticToken(@token,@variable)
 				return self
 			# FIX
 			# @value.safechain = safechain
@@ -4681,11 +4681,8 @@ export class VarOrAccess < ValueNode
 			if ctx isa RootScopeContext or ctx.isGlobalContext
 				yes
 			else
-				@value = Access.new(".",ctx,@value)
+				@value = ImplicitAccess.new(".",ctx,@value)
 				stack.registerSemanticToken(@token,'accessor')
-
-		elif @identifier.isInternal
-			@value = Access.new(".",scope.context,@value)
 
 		return self
 
@@ -4760,6 +4757,8 @@ export class VarReference < ValueNode
 		@type = type and String(type)
 		@declared = yes # just testing now
 
+	def datatype
+		super or (@value:datatype ? @value.datatype : null)
 
 	def loc
 		@value.region
@@ -4900,10 +4899,10 @@ export class Assign < Op
 		var lc = l.c
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
-		if let typ = (option(:datatype) or l.option(:datatype))
-			if !(l isa VarReference)
-				out = '/** @type {' + typ.c() + '} */\n' + out
-			
+		if let typ = (datatype or l.datatype)
+			# if !(l isa VarReference)
+			console.log "found type!!"
+			out = '/** @type {' + typ.c() + '} */ ' + out
 
 		if l isa Obj
 			out = "({out})"
@@ -5189,6 +5188,7 @@ export class Identifier < Node
 		let up = STACK.current
 		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
+		# FIXME should it not always enable?
 		if OPTS:sourceMap and (!o or o:mark !== false)
 			out = M(out, @token or @value)
 		return out
@@ -6910,11 +6910,11 @@ export class TagAttr < TagPart
 		let val = value.c(o)
 		let bval = val
 		let op = M('=',option(:op))
-		let isAttr = key.match(/^(aria-|data-)/)
+		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG)
 		
 		if isAttr 
 			if STACK.tsc
-				return "{@tag.tvar}.setAttribute('{key}',{val})"
+				return "{@tag.tvar}.setAttribute('{key}',String({val}))"
 			if STACK.platform == 'node'
 				return "setAttribute('{key}',{val})"
 
@@ -7940,7 +7940,7 @@ export class Tag < TagLike
 
 	def js o
 		var stack = STACK
-		var isExpression = STACK.isExpression
+		var isExpression = stack.isExpression
 
 		var head = []
 		var out = []

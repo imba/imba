@@ -53,4 +53,9 @@ interface Imba {
     indexOf(target: any, source:any): boolean;
 }
 
+interface Event {
+    detail: any;
+    originalEvent: Event | null;
+}
+
 declare const imba: Imba
