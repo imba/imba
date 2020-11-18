@@ -165,8 +165,6 @@ describe 'Object destructuring' do
 			def constructor options
 				{x,y} = options
 
-		let item = Point.new(x: 1,y: 2)
+		let item = new Point(x: 1,y: 2)
 		eq item.x,1
 		eq item.y,2
-				
-				
