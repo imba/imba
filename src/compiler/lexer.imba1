@@ -634,7 +634,7 @@ export class Lexer
 				stack.unshift('"')
 			elif chr == "'"
 				stack.unshift("'")
-			elif !end and (chr == '=' or chr == '\n' or chr == '{' or chr == ' ')
+			elif !end and (chr == '=' or chr == '\n' or chr == '{' or chr == ' ' or chr == '.')
 				break
 			i++
 		

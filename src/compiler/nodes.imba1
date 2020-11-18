@@ -360,12 +360,12 @@ def AST.sym obj
 	# console.log "sym {obj}"
 	helpers.symbolize(String(obj))
 
-def AST.cary ary
+def AST.cary ary,params = null
 	ary.map do |v|
 		if typeof v == 'string'
 			return v
 		elif v && v:c
-			return v.c
+			return params ? v.c(params) : v.c
 		else
 			console.warn 'could not compile',v
 			return String(v)
@@ -2143,18 +2143,23 @@ export class Param < Node
 
 	def varname
 		@variable ? @variable.c : name
+
+	def datatype
+		super or @value.datatype
 		
 	def type
 		'param'
 		
 	def jsdoc
-		let typ = option('datatype')
+		let typ = datatype
 		if typ && name
-			'@param {' + typ.c() + '} ' + name
+			typ.asParam(name)
+			# '@param {' + typ.c() + '} ' + name
 		else
 			''
 
 	def js o
+		# include type??
 		if @defaults
 			return "{@value.c} = {@defaults.c}"
 		elif option(:splat)
@@ -2236,7 +2241,7 @@ export class ParamList < ListNode
 	def jsdoc
 		let out = []
 		for item in nodes when item isa Param
-			if item.option(:datatype)
+			if item.datatype # option(:datatype)
 				out.push(item.jsdoc())
 		let doc = out.join('\n')
 		return (doc ? '/**\n' + doc + '\n*/\n' : '')
@@ -2455,10 +2460,8 @@ export class ScopeVariables < ListNode
 		# When is this needed?
 		if count == 1 && !isExpressable
 			first.variable.autodeclare
-			var node = first.assignment
-			return node.c
+			return first.assignment.c
 
-		
 		var keyword = 'var'
 		var groups = {}
 
@@ -2476,6 +2479,7 @@ export class ScopeVariables < ListNode
 
 		if groups['let'] and (groups['var'] or groups['const'])
 			groups['let'].forEach do |item|
+
 				(item.@variable or item).@virtual = yes
 
 		elif groups['let']
@@ -2483,13 +2487,14 @@ export class ScopeVariables < ListNode
 
 		# FIX PERFORMANCE
 		# This is used in let scope as well - inflexible
+		# Is this used by 
 		if split and true
 			let out2 = []
 			for own k,v of groups
-				out2.push "{k} {AST.cary(v).join(', ')};"
+				out2.push "{k} {AST.cary(v,as: 'declaration').join(', ')};"
 			return out2.join("\n")
 
-		var out = AST.compact(AST.cary(nodes)).join(", ")
+		var out = AST.compact(AST.cary(nodes,as: 'declaration')).join(", ")
 		out ? "{keyword} {out}" : ""
 
 export class VariableDeclarator < Param
@@ -2512,13 +2517,16 @@ export class VariableDeclarator < Param
 		return null if variable.@proxy
 
 		var defs = defaults
+		let typ = variable.datatype
 		# FIXME need to deal with var-defines within other statements etc
 		# FIXME need better syntax for this
 		if defs != null && defs != undefined
 			# console.log "defaults is {defaults}"
 			defs = defs.c(expression: yes) if defs isa Node
-
+			defs = "{typ.c}({defs})" if typ
 			"{variable.c} = {defs}"
+		elif typ
+			"{variable.c} = {typ.c}(undefined)"
 		else
 			"{variable.c}"
 
@@ -2609,7 +2617,7 @@ export class VarDeclaration < Node
 				out = M('export',option(:export)) + " {out}"
 			
 		if let typ = datatype
-			out = '/** @type {' + typ.c() + '} */\n' + out
+			out = typ.c() + '\n' + out
 
 		return out
 
@@ -4427,7 +4435,10 @@ export class Access < Op
 		var ctor = self:constructor
 		ctor.new(op,left,right)
 
-	def js o
+	def datatype
+		right:datatype ? right.datatype : null
+
+	def js stack
 		var raw = null
 		var lft = left
 		var rgt = right
@@ -4442,7 +4453,7 @@ export class Access < Op
 		unless @startLoc
 			@startLoc = (lft or rgt).startLoc
 
-		if lft isa Super and STACK.method and STACK.method.option('inExtension')
+		if lft isa Super and stack.method and stack.method.option('inExtension')
 			return CALL(
 				OP('.',scope__.context,'super$'),
 				[rgt isa Identifier ? rgt.toStr : rgt]
@@ -4480,8 +4491,19 @@ export class Access < Op
 			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
 			"{ctx.c}[{r}]"
 
+		# console.log "access up {stack.up}"
+
+		let typ = datatype
+		let up = stack.up
+
 		if self isa ImplicitAccess
 			out = M(out,rgt.@token or rgt.@value)
+
+		if typ and (!(up isa Assign) or up.right.node == self)
+			if up isa Block and (self isa ImplicitAccess or lft isa Self)
+				out = typ.c + ' ' + out
+			else
+				out = typ.c + '(' + out + ')'
 
 		out = pre + out
 
@@ -4512,6 +4534,9 @@ export class Access < Op
 		@parens or @cache
 
 export class ImplicitAccess < Access
+
+	def datatype
+		super or @right.datatype
 
 
 # Should change this to just refer directly to the variable? Or VarReference
@@ -4691,6 +4716,11 @@ export class VarOrAccess < ValueNode
 	# 	# M((@variable ? super() : value.c), @token)
 
 	def js o
+		if @variable
+			let typ = datatype
+			if typ
+				return typ.c() + '(' + @variable.c() + ')'
+
 		return (@variable or @value).c()
 		
 		if var v = @variable
@@ -4699,6 +4729,9 @@ export class VarOrAccess < ValueNode
 
 	def node
 		@variable ? self : value
+
+	def datatype
+		super or @identifier.datatype
 
 	def symbol
 		@identifier.symbol
@@ -4785,12 +4818,11 @@ export class VarReference < ValueNode
 
 		var virtualize = stack
 		let scope = scope__
-		# @scope = scope__
 		@value.traverse(declaring: @type, variables: vars)
 
 		# should happen automatically when traversing no?
 		if @value isa Identifier
-			@value.@variable ||= scope__.register(@value.symbol,self,type: @type)
+			@value.@variable ||= scope.register(@value.symbol,self,type: @type, datatype: datatype)
 			vars.push(@value.@variable)
 			stack.registerSemanticToken(@value,@variable)
 		
@@ -4892,6 +4924,7 @@ export class Assign < Op
 					return op.c(expression: true)
 		# We are setting self(!)
 		# TODO document functionality
+
 		if l isa Self
 			var ctx = scope__.context
 			l = ctx.reference
@@ -4900,7 +4933,8 @@ export class Assign < Op
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
 		if let typ = (datatype or l.datatype)
-			out = '/** @type {' + typ.c() + '} */ ' + out
+			out = typ.c() + ' ' + out
+			# out = '/** @type {' + typ.c() + '} */ ' + out
 
 		if l isa Obj
 			out = "({out})"
@@ -5078,8 +5112,12 @@ export class TypeAnnotation < Node
 	def endLoc
 		@value.endLoc
 
+	def asParam name
+		"@param \{{M(String(@value).slice(1),self)}\} {name}"
+
 	def c
-		M(String(@value).slice(1),self)
+		return '/**@type {' + M(String(@value).slice(1),self) + '}*/'
+		# M(String(@value).slice(1),self)
 		
 # IDENTIFIERS
 
@@ -9905,7 +9943,7 @@ export class Scope
 		root.imbaDependency(*params)
 
 	def autodeclare variable
-		vars.push(variable) # only if it does not exist here!!!
+		vars.add(variable) # only if it does not exist here!!!
 
 	def free variable
 		variable.free # :owner = null
@@ -10296,12 +10334,12 @@ export class CatchScope < FlowScope
 export class WhileScope < FlowScope
 
 	def autodeclare variable
-		vars.push(variable)
+		vars.add(variable)
 
 export class ForScope < FlowScope
 
 	def autodeclare variable
-		vars.push(variable)
+		vars.add(variable)
 
 export class IfScope < FlowScope
 
@@ -10325,6 +10363,7 @@ export class Variable < Node
 	prop references
 	prop export
 	prop value
+	prop datatype
 
 	def pool
 		null
@@ -10339,6 +10378,7 @@ export class Variable < Node
 		@declarator  	= decl
 		@autodeclare 	= no
 		@declared		= o and o:declared || no
+		@datatype 		= o and o:datatype
 		@resolved		= no
 		@options 		= o || {}
 		@type			= o and o:type || 'var' # what about let here=
@@ -10448,7 +10488,7 @@ export class Variable < Node
 	def refcount
 		@references:length
 
-	def c
+	def c params
 		return @c if @c
 		# options - proxy??
 		if @proxy
