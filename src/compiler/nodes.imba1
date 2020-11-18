@@ -1782,7 +1782,7 @@ export class ClassField < Node
 		option(:static)
 		
 	def datatype
-		option(:datatype)
+		@name and @name.datatype
 
 	def loc
 		[@name.@loc,@name.region[1]]
@@ -1800,9 +1800,11 @@ export class ClassField < Node
 			if STACK.tsc
 				out = "{prefix}{M(name,@name)}" # the value scope?
 				out += " = {value.c}" if value
-				if datatype
-					if let typ = TYP(self,'jsdoc')
-						out = "{typ}\n{out}"
+				let typ = datatype
+				if typ
+					out = "{typ.c} {out}"
+					# if let typ = TYP(self,'jsdoc')
+					#	out = "{typ}\n{out}"
 
 			elif self isa ClassAttribute or (@decorators && @decorators:length > 0)
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
