@@ -11,6 +11,7 @@ import SourceMap from './sourcemap'
 
 import StyleRule,StyleTheme,Color from './styler.imba'
 import parseAsset from './assets.imba'
+import Compilation from './compilation'
 
 var TAG_NAMES = constants.TAG_NAMES
 
@@ -321,27 +322,15 @@ var RESERVED_TEST = /^(default|char|for)$/
 
 # captures error from parser
 export def parseError str, o
-	# find nearest token
-	var err
+	var err = Compilation.error({
+		category: 'parser'
+		severity: 'error'
+		offset: o:offset
+		length: o:length
+		message: str
+	})
 
-	if o:lexer
-		var token = o:lexer:yytext
-		# console.log o:lexer:pos,token.@loc
-		err = ImbaParseError.new({message: str},{
-			pos: o:lexer:pos
-			tokens: o:lexer:tokens
-			token: o:lexer:yytext
-			meta: o
-		})
-
-		throw err
-
-		# should find the closest token with actual position
-		# str = "[{token.@loc}:{token.@len || String(token):length}] {str}"
-	var e = Error.new(str)
-	e:lexer = o:lexer
-	e:options = o
-	throw e
+	return err.raise()
 
 def AST.c obj
 	typeof obj == 'string' ? obj : obj.c
@@ -371,12 +360,12 @@ def AST.sym obj
 	# console.log "sym {obj}"
 	helpers.symbolize(String(obj))
 
-def AST.cary ary
+def AST.cary ary,params = null
 	ary.map do |v|
 		if typeof v == 'string'
 			return v
 		elif v && v:c
-			return v.c
+			return params ? v.c(params) : v.c
 		else
 			console.warn 'could not compile',v
 			return String(v)
@@ -826,6 +815,12 @@ export class Node
 	prop options
 	prop traversed
 
+	# reference to the script object this node
+	# is part of
+	def script
+		# TODO don't use global state for this
+		Compilation:current
+
 	def safechain
 		no
 
@@ -1088,11 +1083,23 @@ export class Node
 	def alias
 		null
 
-	def warn text, opts = {}
-		opts:message = text
-		opts:loc ||= loc
-		scope__.root.warn opts
-		self
+	def warn message, opts = {}
+		let loc = opts:loc or self.loc or [0,0]
+		script.addDiagnostic(opts:severity or 'warning',{
+			message: message
+			range: script.rangeAt(loc[0],loc[1])
+		})
+
+		# Compilation.warn(
+		#	severity: opts:severity or 'warning'
+		#	message: message
+		#	offset: (loc ? loc[0] : 0)
+		#	length: (loc ? (loc[1] - loc[0]) : 0)
+		# )
+
+	def error message, opts = {}
+		opts:severity = 'error'
+		warn(message,opts)
 
 	def c o
 		var s = STACK
@@ -1775,7 +1782,7 @@ export class ClassField < Node
 		option(:static)
 		
 	def datatype
-		option(:datatype)
+		@name and @name.datatype
 
 	def loc
 		[@name.@loc,@name.region[1]]
@@ -1793,9 +1800,11 @@ export class ClassField < Node
 			if STACK.tsc
 				out = "{prefix}{M(name,@name)}" # the value scope?
 				out += " = {value.c}" if value
-				if datatype
-					if let typ = TYP(self,'jsdoc')
-						out = "{typ}\n{out}"
+				let typ = datatype
+				if typ
+					out = "{typ.c} {out}"
+					# if let typ = TYP(self,'jsdoc')
+					#	out = "{typ}\n{out}"
 
 			elif self isa ClassAttribute or (@decorators && @decorators:length > 0)
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
@@ -2136,18 +2145,23 @@ export class Param < Node
 
 	def varname
 		@variable ? @variable.c : name
+
+	def datatype
+		super or @value.datatype
 		
 	def type
 		'param'
 		
 	def jsdoc
-		let typ = option('datatype')
+		let typ = datatype
 		if typ && name
-			'@param {' + typ.c() + '} ' + name
+			typ.asParam(name)
+			# '@param {' + typ.c() + '} ' + name
 		else
 			''
 
 	def js o
+		# include type??
 		if @defaults
 			return "{@value.c} = {@defaults.c}"
 		elif option(:splat)
@@ -2229,7 +2243,7 @@ export class ParamList < ListNode
 	def jsdoc
 		let out = []
 		for item in nodes when item isa Param
-			if item.option(:datatype)
+			if item.datatype # option(:datatype)
 				out.push(item.jsdoc())
 		let doc = out.join('\n')
 		return (doc ? '/**\n' + doc + '\n*/\n' : '')
@@ -2448,10 +2462,8 @@ export class ScopeVariables < ListNode
 		# When is this needed?
 		if count == 1 && !isExpressable
 			first.variable.autodeclare
-			var node = first.assignment
-			return node.c
+			return first.assignment.c
 
-		
 		var keyword = 'var'
 		var groups = {}
 
@@ -2469,6 +2481,7 @@ export class ScopeVariables < ListNode
 
 		if groups['let'] and (groups['var'] or groups['const'])
 			groups['let'].forEach do |item|
+
 				(item.@variable or item).@virtual = yes
 
 		elif groups['let']
@@ -2476,13 +2489,14 @@ export class ScopeVariables < ListNode
 
 		# FIX PERFORMANCE
 		# This is used in let scope as well - inflexible
+		# Is this used by 
 		if split and true
 			let out2 = []
 			for own k,v of groups
-				out2.push "{k} {AST.cary(v).join(', ')};"
+				out2.push "{k} {AST.cary(v,as: 'declaration').join(', ')};"
 			return out2.join("\n")
 
-		var out = AST.compact(AST.cary(nodes)).join(", ")
+		var out = AST.compact(AST.cary(nodes,as: 'declaration')).join(", ")
 		out ? "{keyword} {out}" : ""
 
 export class VariableDeclarator < Param
@@ -2505,13 +2519,16 @@ export class VariableDeclarator < Param
 		return null if variable.@proxy
 
 		var defs = defaults
+		let typ = variable.datatype
 		# FIXME need to deal with var-defines within other statements etc
 		# FIXME need better syntax for this
 		if defs != null && defs != undefined
 			# console.log "defaults is {defaults}"
 			defs = defs.c(expression: yes) if defs isa Node
-
+			defs = "{typ.c}({defs})" if typ
 			"{variable.c} = {defs}"
+		elif typ
+			"{variable.c} = {typ.c}(undefined)"
 		else
 			"{variable.c}"
 
@@ -2602,7 +2619,7 @@ export class VarDeclaration < Node
 				out = M('export',option(:export)) + " {out}"
 			
 		if let typ = datatype
-			out = '/** @type {' + typ.c() + '} */\n' + out
+			out = typ.c() + '\n' + out
 
 		return out
 
@@ -2674,7 +2691,7 @@ export class Root < Code
 			throw err
 			
 
-	def compile o
+	def compile o, script = {}
 		STACK.reset # -- nested compilation does not work now
 		@scope.options = OPTS = STACK.@options = @options = o or {}
 		STACK.root = @scope
@@ -2689,35 +2706,26 @@ export class Root < Code
 		if STACK.tsc
 			out = "import 'imba/index';\n{out}"
 
-		var result = {
-			js: out,
-			ast: self,
-			sourceId: sourceId,
-			source: o.@source,
-			tokens: o.@tokens,
-			warnings: scope.warnings,
-			options: o,
-			toString: (do this:js),
-			css: STACK.css,
-			assets: scope.assets
-			dependencies: Object.keys(scope.@dependencies)
-		}
+		script:js = out
+		script:css = STACK.css
+		script:sourceId = sourceId
+		script:assts = scope.assets
+		script:dependencies = Object.keys(scope.@dependencies)
 		
 		if !STACK.tsc
-			if result:css and (!o:styles or o:styles == 'inline')
-				result:js = "{result:js}\nimba.styles.register('{result:sourceId}',{JSON.stringify(result:css)});"
+			if script:css and (!o:styles or o:styles == 'inline')
+				script:js = "{script:js}\nimba.styles.register('{script:sourceId}',{JSON.stringify(script:css)});"
 				if o:debug
-					result:js += '\n/*\n' + result:css + '\n*/\n' # this we should only include when debugging
+					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
 		# always create the sourcemap?
-		if o:sourceMap # should handle sourcemap no matter what?
-			let map = SourceMap.new(result,o:sourceMap,o).generate
-			result:sourcemap = map.result
-		# else
-		# remove sourcemap locations
-		result:js = result:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+		if o:sourceMap or STACK.tsc # should handle sourcemap no matter what?
+			let map = SourceMap.new(script,o:sourceMap,o).generate
+			script:sourcemap = map.result
 
-		return result
+		# remove sourcemap locations
+		script:js = script:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+		return script
 
 	def js o
 		var out = scope.c
@@ -2841,12 +2849,13 @@ export class ClassDeclaration < Code
 			if @name isa Identifier
 				@name.resolveVariable()
 
-		elif @name
+		elif @name and !(@name isa Access)
 			# TODO should actually declare in outer scope
 			@name.traverse(declaring: self)
+		elif @name
+			@name.traverse()
 		
 		STACK.push(self)
-
 		ROOT.entities.add(namepath,self)
 		scope.visit
 
@@ -3932,6 +3941,7 @@ export class Obj < Literal
 	def js o
 		var dyn = value.filter(|v| v isa ObjAttr and (v.key isa Op or v.key isa InterpolatedString)  )
 
+		# TODO should remove as it is no longer needed
 		if dyn:length > 0
 			var idx = value.indexOf(dyn[0])
 			# create a temp variable
@@ -4055,6 +4065,8 @@ export class ObjAttr < Node
 						@defaults = null
 				else
 					value = scope__.lookup(key.symbol)
+					unless value
+						value = OP('.',scope__.context,key)
 					
 		
 					
@@ -4428,7 +4440,10 @@ export class Access < Op
 		var ctor = self:constructor
 		ctor.new(op,left,right)
 
-	def js o
+	def datatype
+		right:datatype ? right.datatype : null
+
+	def js stack
 		var raw = null
 		var lft = left
 		var rgt = right
@@ -4443,7 +4458,7 @@ export class Access < Op
 		unless @startLoc
 			@startLoc = (lft or rgt).startLoc
 
-		if lft isa Super and STACK.method and STACK.method.option('inExtension')
+		if lft isa Super and stack.method and stack.method.option('inExtension')
 			return CALL(
 				OP('.',scope__.context,'super$'),
 				[rgt isa Identifier ? rgt.toStr : rgt]
@@ -4465,14 +4480,12 @@ export class Access < Op
 			raw = rgt.raw
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
-			# raw = M(rgt.c,rgt)
 			raw = rgt.c
 
 		if safechain and ctx
 			ctx.cache(force: yes)
 			pre = ctx.c + " && "
 		
-
 		# really?
 		# var ctx = (left || scope__.context)
 		var out = if raw
@@ -4483,6 +4496,19 @@ export class Access < Op
 			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
 			"{ctx.c}[{r}]"
 
+		# console.log "access up {stack.up}"
+
+		let typ = datatype
+		let up = stack.up
+
+		if self isa ImplicitAccess
+			out = M(out,rgt.@token or rgt.@value)
+
+		if typ and (!(up isa Assign) or up.right.node == self)
+			if up isa Block and (self isa ImplicitAccess or lft isa Self)
+				out = typ.c + ' ' + out
+			else
+				out = typ.c + '(' + out + ')'
 
 		out = pre + out
 
@@ -4511,6 +4537,11 @@ export class Access < Op
 
 	def shouldParenthesizeInTernary
 		@parens or @cache
+
+export class ImplicitAccess < Access
+
+	def datatype
+		super or @right.datatype
 
 
 # Should change this to just refer directly to the variable? Or VarReference
@@ -4672,8 +4703,6 @@ export class VarOrAccess < ValueNode
 				stack.registerSemanticToken(@token,variable)
 				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
 				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
-				if variable and @identifier.isInternal
-					stack.registerSemanticToken(@token,@variable)
 				return self
 			# FIX
 			# @value.safechain = safechain
@@ -4682,11 +4711,8 @@ export class VarOrAccess < ValueNode
 			if ctx isa RootScopeContext or ctx.isGlobalContext
 				yes
 			else
-				@value = Access.new(".",ctx,@value)
+				@value = ImplicitAccess.new(".",ctx,@value)
 				stack.registerSemanticToken(@token,'accessor')
-
-		elif @identifier.isInternal
-			@value = Access.new(".",scope.context,@value)
 
 		return self
 
@@ -4695,6 +4721,11 @@ export class VarOrAccess < ValueNode
 	# 	# M((@variable ? super() : value.c), @token)
 
 	def js o
+		if @variable
+			let typ = datatype
+			if typ
+				return typ.c() + '(' + @variable.c() + ')'
+
 		return (@variable or @value).c()
 		
 		if var v = @variable
@@ -4703,6 +4734,9 @@ export class VarOrAccess < ValueNode
 
 	def node
 		@variable ? self : value
+
+	def datatype
+		super or @identifier.datatype
 
 	def symbol
 		@identifier.symbol
@@ -4761,6 +4795,8 @@ export class VarReference < ValueNode
 		@type = type and String(type)
 		@declared = yes # just testing now
 
+	def datatype
+		super or (@value:datatype ? @value.datatype : null)
 
 	def loc
 		@value.region
@@ -4787,12 +4823,11 @@ export class VarReference < ValueNode
 
 		var virtualize = stack
 		let scope = scope__
-		# @scope = scope__
 		@value.traverse(declaring: @type, variables: vars)
 
 		# should happen automatically when traversing no?
 		if @value isa Identifier
-			@value.@variable ||= scope__.register(@value.symbol,self,type: @type)
+			@value.@variable ||= scope.register(@value.symbol,self,type: @type, datatype: datatype)
 			vars.push(@value.@variable)
 			stack.registerSemanticToken(@value,@variable)
 		
@@ -4894,6 +4929,7 @@ export class Assign < Op
 					return op.c(expression: true)
 		# We are setting self(!)
 		# TODO document functionality
+
 		if l isa Self
 			var ctx = scope__.context
 			l = ctx.reference
@@ -4901,10 +4937,9 @@ export class Assign < Op
 		var lc = l.c
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
-		if let typ = (option(:datatype) or l.option(:datatype))
-			if !(l isa VarReference)
-				out = '/** @type {' + typ.c() + '} */\n' + out
-			
+		if let typ = (datatype or l.datatype)
+			out = typ.c() + ' ' + out
+			# out = '/** @type {' + typ.c() + '} */ ' + out
 
 		if l isa Obj
 			out = "({out})"
@@ -5070,21 +5105,24 @@ export class CompoundAssign < Assign
 export class TypeAnnotation < Node
 	
 	def initialize value
-		@parts = value
-		# @parts.push(value) if value
+		@value = value
 		self
 		
 	def add item
 		@parts.push(item)
 	
 	def startLoc
-		@parts[0].startLoc
+		@value.startLoc + 1
 
 	def endLoc
-		@parts[@parts:length - 1].endLoc
+		@value.endLoc
+
+	def asParam name
+		"@param \{{M(String(@value).slice(1),self)}\} {name}"
 
 	def c
-		M(@parts.map(|item| item.@value).join(""),self)
+		return '/**@type {' + M(String(@value).slice(1),self) + '}*/'
+		# M(String(@value).slice(1),self)
 		
 # IDENTIFIERS
 
@@ -5190,6 +5228,7 @@ export class Identifier < Node
 		let up = STACK.current
 		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
+		# FIXME should it not always enable?
 		if OPTS:sourceMap and (!o or o:mark !== false)
 			out = M(out, @token or @value)
 		return out
@@ -6617,7 +6656,7 @@ export class Catch < ControlFlowStatement
 
 	def visit
 		@scope.visit
-		@variable = @scope.register(@varname,self,pool: 'catchvar')
+		@variable = @scope.register(@varname,self,type: 'let', pool: 'catchvar')
 		@body.traverse
 
 
@@ -6911,11 +6950,11 @@ export class TagAttr < TagPart
 		let val = value.c(o)
 		let bval = val
 		let op = M('=',option(:op))
-		let isAttr = key.match(/^(aria-|data-)/)
+		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG)
 		
 		if isAttr 
 			if STACK.tsc
-				return "{@tag.tvar}.setAttribute('{key}',{val})"
+				return "{@tag.tvar}.setAttribute('{key}',String({val}))"
 			if STACK.platform == 'node'
 				return "setAttribute('{key}',{val})"
 
@@ -7941,7 +7980,7 @@ export class Tag < TagLike
 
 	def js o
 		var stack = STACK
-		var isExpression = STACK.isExpression
+		var isExpression = stack.isExpression
 
 		var head = []
 		var out = []
@@ -9815,9 +9854,9 @@ export class Scope
 		
 		if existing
 			if decl and existing.type != 'global'
-				decl.warn('Cannot redeclare variable')
+				decl.error('Cannot redeclare variable')
 			# console.log 'redeclaring variable',"{existing} {decl}",existing.type
-			
+
 		# FIXME check if existing is required to be unique as well?
 		if existing and !o:unique
 			return existing
@@ -9902,9 +9941,6 @@ export class Scope
 		@imba ||= (STACK.isNode ? LIT("(this && this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])") : LIT('imba'))
 		# root.imba # requires('imba2', 'Imba')
 
-	def imbaTags
-		root.imbaTags
-		
 	def imbaRef name, shorthand = '_'
 		root.imbaRef(name,shorthand)
 
@@ -9912,7 +9948,7 @@ export class Scope
 		root.imbaDependency(*params)
 
 	def autodeclare variable
-		vars.push(variable) # only if it does not exist here!!!
+		vars.add(variable) # only if it does not exist here!!!
 
 	def free variable
 		variable.free # :owner = null
@@ -10079,15 +10115,8 @@ export class RootScope < Scope
 	def head
 		@head
 
-	def warn data
-		# hacky
-		data:node = null
-		@warnings.push(data)
-		self
-
 	def dump
 		var obj = {
-			warnings: AST.dump(@warnings)
 			autoself: @implicitAccessors.map(|s| s.dump)
 		}
 
@@ -10124,15 +10153,6 @@ export class RootScope < Scope
 	def imba
 		LIT('imba')
 
-	def imbaTags
-		return @imbaTags if @imbaTags
-		var imbaRef = self.imba
-		# don't add if we cannot be certain that imba is required on top
-		if @requires.Imba
-			@imbaTags = declare('_T',OP('.',imbaRef,'TAGS'))
-		else
-			@imbaTags = "{imbaRef.c}.TAGS"
-
 	def imbaDependency path
 		let imbaPath = STACK.imbaPath
 		@dependencies[path] ||= if true
@@ -10140,7 +10160,7 @@ export class RootScope < Scope
 			let str = "'{imbaPath or 'imba'}/{path}'"
 			# TODO create actual Import nodes instead of literals here
 			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
-			@head.push(item) if imbaPath !== null and !STACK.tsc
+			@head.push(item) if imbaPath !== null and !STACK.tsc and imbaPath != 'global'
 			item
 			
 	def imbaRef name, shorthand = '_'
@@ -10284,14 +10304,12 @@ export class FlowScope < Scope
 		@parent.params if @parent
 
 	def register name, decl = null, o = {}
-		if o:type != 'let' and (closure != self)
+		if o:type != 'let' and o:type != 'const' and (closure != self)
 			if var found = lookup(name)
 				if found.type == 'let'
-					# p "{name} already exists as a block-variable {decl}"
-					# TODO should throw error instead
+					# console.log "{name} already exists as a block-variable {decl}"
 					decl.warn "Variable already exists in block" if decl
-					console.log "ALREADY EXISTS?"
-					# root.warn message: "Holy shit"
+
 			closure.register(name,decl,o)
 		else
 			super(name,decl,o)
@@ -10321,12 +10339,12 @@ export class CatchScope < FlowScope
 export class WhileScope < FlowScope
 
 	def autodeclare variable
-		vars.push(variable)
+		vars.add(variable)
 
 export class ForScope < FlowScope
 
 	def autodeclare variable
-		vars.push(variable)
+		vars.add(variable)
 
 export class IfScope < FlowScope
 
@@ -10350,6 +10368,7 @@ export class Variable < Node
 	prop references
 	prop export
 	prop value
+	prop datatype
 
 	def pool
 		null
@@ -10364,6 +10383,7 @@ export class Variable < Node
 		@declarator  	= decl
 		@autodeclare 	= no
 		@declared		= o and o:declared || no
+		@datatype 		= o and o:datatype
 		@resolved		= no
 		@options 		= o || {}
 		@type			= o and o:type || 'var' # what about let here=
@@ -10473,7 +10493,7 @@ export class Variable < Node
 	def refcount
 		@references:length
 
-	def c
+	def c params
 		return @c if @c
 		# options - proxy??
 		if @proxy

@@ -92,11 +92,9 @@ var grammar =
 	Terminator: [
 		o 'TERMINATOR' do Terminator.new(A1)
 	]
-	
-	TypeAnnotation: [
-		o 'TYPE IDENTIFIER' do TypeAnnotation.new([A2])
-		o 'TYPE IDENTIFIER INDEX_START INDEX_END' do TypeAnnotation.new([A2,A3,A4])
-		
+
+	Type: [
+		o 'TYPE' do TypeAnnotation.new(A1)
 	]
 
 	# An indented block of expressions. Note that the [Rewriter](rewriter.html)
@@ -262,7 +260,8 @@ var grammar =
 
 	# A literal identifier, a variable name or property.
 	Identifier: [
-		o 'IDENTIFIER' do Identifier.new A1
+		o 'IDENTIFIER Type' do Identifier.new(A1).set(datatype: A2)
+		o 'IDENTIFIER' do Identifier.new(A1)
 	]
 
 	SymbolIdentifier: [
@@ -569,9 +568,7 @@ var grammar =
 	Assign: [
 		o 'VarAssign'
 		o 'Assignable = Expression' do Assign.new A2, A1, A3
-		o 'Assignable TypeAnnotation = Expression' do Assign.new(A3, A1, A4).set(datatype: A2)
 		o 'Assignable = INDENT Expression Outdent' do Assign.new A2, A1, A4.indented(A3,A5)
-		o 'Assignable TypeAnnotation = INDENT Expression Outdent' do Assign.new(A3, A1, A5).indented(A4,A6).set(datatype: A2)
 	]
 
 	# Assignment when it happens within an object literal. The difference from
@@ -732,7 +729,7 @@ var grammar =
 	# Function Parameters
 	ParamVar: [
 		o 'Identifier' do Param.new(A1)
-		o 'Identifier TypeAnnotation' do Param.new(A1).set(datatype: A2)
+		# o 'Identifier TypeAnnotation' do Param.new(A1).set(datatype: A2)
 		# o 'SPLAT ParamVar' do Splat.new(A2).set(keyword: A1)
 	]
 
@@ -755,14 +752,12 @@ var grammar =
 
 	VarAssignable: [
 		o 'Identifier'
-		o 'Identifier TypeAnnotation' do A1.set(datatype: A2)
 		o 'Array' # all kinds?
 		o 'Object' # not supported anymore
 	]
 	
 	InlineVarAssignable: [
 		o 'Identifier'
-		o 'Identifier TypeAnnotation' do A1.set(datatype: A2)
 		o 'Array' # all kinds?
 		o 'Object' # not supported anymore
 	]
@@ -957,7 +952,6 @@ var grammar =
 		o 'SymbolIdentifier' do ClassField.new(A1)
 		o 'PROP Identifier' do ClassField.new(A2).set(keyword: A1)
 		o 'ATTR Identifier' do ClassAttribute.new(A2).set(keyword: A1)
-		o 'ClassField TypeAnnotation' do A1.set(datatype: A2)
 	]
 	
 	ClassFieldBody: [
@@ -1142,6 +1136,7 @@ var grammar =
 	ForVariables: [
 		o 'ForValue' do [A1]
 		o 'ForValue , ForValue' do [A1, A3]
+		o 'ForValue , ForValue , ForValue' do [A1, A3, A5]
 	]
 
 	# The source of a comprehension is an array or object with an optional guard

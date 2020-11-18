@@ -9,7 +9,7 @@ def ext.register name, asset
 def ext.create name, parent, flags
 	let asset = assets[name]
 	if $node$ # !asset.node
-		let el = document.createElementNS("http://www.w3.org/2000/svg",'svg')
+		let el = global.imba.document.createElementNS("http://www.w3.org/2000/svg",'svg')
 		for own k,v of asset.attributes
 			el.setAttribute(k,v)
 		

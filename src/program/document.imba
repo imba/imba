@@ -6,6 +6,12 @@ import { Sym, SymbolFlags } from './symbol'
 
 import {SemanticTokenTypes,SemanticTokenModifiers,M,CompletionTypes,Keywords,SymbolKind} from './types'
 
+import {Range, Position} from './structures'
+
+###
+line and character are both zero based
+###
+
 export class ImbaDocument
 
 	static def tmp content
@@ -51,15 +57,22 @@ export class ImbaDocument
 	def getLineText line
 		let start = lineOffsets[line]
 		let end = lineOffsets[line + 1]
-		return content.substring(start, end)
+		return content.substring(start, end).replace(/[\r\n]/g,'')
 	
 	def positionAt offset
+		if offset isa Position
+			return offset
+
+		if typeof offset == 'object'
+			offset = offset.offset
+
 		offset = Math.max(Math.min(offset, content.length), 0)
-		var lineOffsets = lineOffsets
-		var low = 0
-		var high = lineOffsets.length
+		let lineOffsets = lineOffsets
+		let low = 0
+		let high = lineOffsets.length
 		if high === 0
-			return { line: 0, character: offset }
+			return new Position(0,offset,offset)
+			# return { line: 0, character: offset, offset: offset }
 		while low < high
 			var mid = Math.floor((low + high) / 2)
 			if lineOffsets[mid] > offset
@@ -69,7 +82,8 @@ export class ImbaDocument
 		// low is the least x for which the line offset is larger than the current offset
 		// or array.length if no line offset is larger than the current offset
 		var line = low - 1
-		return { line: line, character: (offset - lineOffsets[line]) }
+		return new Position(line,offset - lineOffsets[line],offset)
+		# return { line: line, character: (offset - lineOffsets[line]), offset: offset }
 
 	def offsetAt position
 		if position.offset
@@ -83,7 +97,10 @@ export class ImbaDocument
 
 		var lineOffset = lineOffsets[position.line]
 		var nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : content.length
-		return Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset)
+		return position.offset = Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset)
+
+	def rangeAt start, end
+		new Range(positionAt(start),positionAt(end))
 
 	def overwrite body,newVersion
 		version = newVersion or (version + 1)
@@ -706,7 +723,7 @@ export class ImbaDocument
 
 
 	# This is essentially the tokenizer
-	def getTokens range
+	def getTokens range = null
 		parse!
 		return tokens
 

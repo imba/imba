@@ -157,6 +157,7 @@ export def unionOfLocations *locs
 
 
 export def locationToLineColMap code
+	# TODO support windows
 	var lines = code.split(/\n/g)
 	var map = []
 

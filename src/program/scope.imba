@@ -114,6 +114,9 @@ export class Group < Node
 	get varmap
 		parent.varmap
 
+	def register symbol
+		return parent.register(symbol)
+
 	def lookup ...params
 		return parent.lookup(...params)
 

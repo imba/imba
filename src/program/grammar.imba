@@ -526,11 +526,12 @@ export const states = {
 	for_start: [
 		denter({switchTo: '@>for_body'},-1,-1)
 		[/\[/, '[', '@array_var_body']
-		[/\{/, '{', '@object_body']
+		[/\{/, '{', '@object_body'] # object_var_body?
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\,\s*)/,'separator']
 		[/\s(in|of)@B/,'keyword.$1',switchTo: '@>for_source=']
 		[/[ \t]+/, 'white']
+		'type_'
 	]
 	for_source: [
 		denter({switchTo: '@>for_body'},-1,{switchTo: '@for_body'})
@@ -697,6 +698,7 @@ export const states = {
 		[/(@variable)(?=\n|,|$)/,'identifier.$F','@pop']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator.declval',switchTo: '@var_value&value='] # ,switchTo: '@var_value='
+		'type_'
 	]
 
 	array_var_body: [
@@ -721,6 +723,7 @@ export const states = {
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator','@pop'] # ,switchTo: '@var_value='
+		'type_'
 	]
 
 	var_value: [
@@ -750,12 +753,13 @@ export const states = {
 
 	_type: [
 		denter(-1,-1,-1)
-		[/\\/,'type.delim']
-		[/\[/,'type','@/]']
-		[/\(/,'type','@/)']
-		[/\{/,'type','@/}']
-		[/\</,'type','@/>']
-		[/\,|\s/,{
+		[/\\/,'delimiter.type.prefix']
+		[/\[/,'delimiter.type','@/]']
+		[/\(/,'delimiter.type','@/)']
+		[/\{/,'delimiter.type','@/}']
+		[/\</,'delimiter.type','@/>']
+		[/\|/,'delimiter.type.union']
+		[/\,|\s|\=|\./,{
 			cases: {
 				'$/==0': { token: '@rematch', next: '@pop' }
 				'@default': 'type'
@@ -763,7 +767,7 @@ export const states = {
 		}]
 		[/[\]\}\)\>]/,{
 			cases: {
-				'$#==$/': { token: 'type', next: '@pop' }
+				'$#==$/': { token: 'delimiter.type', next: '@pop' }
 				'@default': { token: '@rematch', next: '@pop' }
 			}
 		}]
