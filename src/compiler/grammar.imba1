@@ -94,9 +94,8 @@ var grammar =
 	]
 	
 	TypeAnnotation: [
-		o 'TYPE IDENTIFIER' do TypeAnnotation.new([A2])
-		o 'TYPE IDENTIFIER INDEX_START INDEX_END' do TypeAnnotation.new([A2,A3,A4])
-		
+		o 'TYPE' do TypeAnnotation.new(A1)
+		# o 'TYPE IDENTIFIER INDEX_START INDEX_END' do TypeAnnotation.new([A2,A3,A4])
 	]
 
 	# An indented block of expressions. Note that the [Rewriter](rewriter.html)
