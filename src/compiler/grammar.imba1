@@ -94,6 +94,11 @@ var grammar =
 	]
 	
 	TypeAnnotation: [
+		o 'TYPE2' do TypeAnnotation.new(A1)
+		# o 'TYPE IDENTIFIER INDEX_START INDEX_END' do TypeAnnotation.new([A2,A3,A4])
+	]
+
+	Type: [
 		o 'TYPE' do TypeAnnotation.new(A1)
 		# o 'TYPE IDENTIFIER INDEX_START INDEX_END' do TypeAnnotation.new([A2,A3,A4])
 	]
@@ -261,7 +266,8 @@ var grammar =
 
 	# A literal identifier, a variable name or property.
 	Identifier: [
-		o 'IDENTIFIER' do Identifier.new A1
+		o 'IDENTIFIER Type' do Identifier.new(A1).set(datatype: A2)
+		o 'IDENTIFIER' do Identifier.new(A1)
 	]
 
 	SymbolIdentifier: [
