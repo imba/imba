@@ -67,9 +67,9 @@ export class ImbaDocument
 			offset = offset.offset
 
 		offset = Math.max(Math.min(offset, content.length), 0)
-		var lineOffsets = lineOffsets
-		var low = 0
-		var high = lineOffsets.length
+		let lineOffsets = lineOffsets
+		let low = 0
+		let high = lineOffsets.length
 		if high === 0
 			return new Position(0,offset,offset)
 			# return { line: 0, character: offset, offset: offset }
@@ -723,7 +723,7 @@ export class ImbaDocument
 
 
 	# This is essentially the tokenizer
-	def getTokens range
+	def getTokens range = null
 		parse!
 		return tokens
 
