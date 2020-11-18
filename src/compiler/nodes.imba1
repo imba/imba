@@ -3941,6 +3941,7 @@ export class Obj < Literal
 	def js o
 		var dyn = value.filter(|v| v isa ObjAttr and (v.key isa Op or v.key isa InterpolatedString)  )
 
+		# TODO should remove as it is no longer needed
 		if dyn:length > 0
 			var idx = value.indexOf(dyn[0])
 			# create a temp variable
@@ -4064,6 +4065,8 @@ export class ObjAttr < Node
 						@defaults = null
 				else
 					value = scope__.lookup(key.symbol)
+					unless value
+						value = OP('.',scope__.context,key)
 					
 		
 					

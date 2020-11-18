@@ -41,6 +41,7 @@ describe 'Array destructuring' do
 		eq a, 1
 		eq b, [2,3]
 
+
 describe 'Object destructuring' do
 	test 'Basic assignment' do
 		let o = {p: 42, q: true}
@@ -148,13 +149,24 @@ describe 'Object destructuring' do
 		# var results = for ({name: n, family: {father: f}} of people)
 		# 	console.log('Name: ' + n + ', Father: ' + f);
 
-#	test 'Destructuring into this' do
-#		class Point
-#			def constructor options
-#				{x,y} = options
-#
-#		let item = Point.new(x: 1,y: 2)
-#		eq item.x,1
-#		eq item.y,2
+	test 'Destructuring into self' do
+		new class
+			def constructor
+				{one:one,two:two} = {one: 1, two: 2}
+				global.eq self.one, 1
+				global.eq self.two, 2
+
+				let three = 0
+				{three,four} = {three: 3, four: 4}
+				global.eq three, 3
+				global.eq self.four, 4
+
+		class Point
+			def constructor options
+				{x,y} = options
+
+		let item = Point.new(x: 1,y: 2)
+		eq item.x,1
+		eq item.y,2
 				
 				
