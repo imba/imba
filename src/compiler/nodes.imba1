@@ -4900,8 +4900,6 @@ export class Assign < Op
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
 		if let typ = (datatype or l.datatype)
-			# if !(l isa VarReference)
-			console.log "found type!!"
 			out = '/** @type {' + typ.c() + '} */ ' + out
 
 		if l isa Obj
@@ -5068,21 +5066,20 @@ export class CompoundAssign < Assign
 export class TypeAnnotation < Node
 	
 	def initialize value
-		@parts = value
-		# @parts.push(value) if value
+		@value = value
 		self
 		
 	def add item
 		@parts.push(item)
 	
 	def startLoc
-		@parts[0].startLoc
+		@value.startLoc + 1
 
 	def endLoc
-		@parts[@parts:length - 1].endLoc
+		@value.endLoc
 
 	def c
-		M(@parts.map(|item| item.@value).join(""),self)
+		M(String(@value).slice(1),self)
 		
 # IDENTIFIERS
 

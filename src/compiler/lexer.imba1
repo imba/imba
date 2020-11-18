@@ -605,6 +605,41 @@ export class Lexer
 			pair('TAG')
 
 		return 0
+
+	def findTypeAnnotation str
+		var stack = []
+		var i = 0
+		var replaces = []
+		# could it not happen here?
+		while i < (str:length - 1)
+			var chr = str.charAt(i)
+			let end = stack[0]
+			let instr = end == '"' or end == "'"
+
+			if chr and chr == end
+				stack.shift
+			
+			elif !end and (chr == ')' or chr == ']' or chr == '}' or chr == '>')
+				break
+				
+			elif chr == '('
+				stack.unshift(')')
+			elif chr == '['
+				stack.unshift(']')
+			elif chr == '{'
+				stack.unshift('}')
+			elif chr == '<'
+				stack.unshift('>')
+			elif chr == '"'
+				stack.unshift('"')
+			elif chr == "'"
+				stack.unshift("'")
+			elif !end and (chr == '=' or chr == '\n' or chr == '{' or chr == ' ')
+				break
+			i++
+		
+		return null if i == 0
+		return str.slice(0,i)
 		
 	def findBalancedSelector str
 		var stack = []
@@ -1859,6 +1894,9 @@ export class Lexer
 
 		if value == '\\'
 			tokid = 'TYPE'
+			let annotation = findTypeAnnotation(@chunk.slice(1))
+			if annotation
+				value = value + annotation
 			
 		if value == '..' and !prev:spaced
 			tokid = '?.'
