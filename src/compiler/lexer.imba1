@@ -78,7 +78,7 @@ var IDENTIFIER = /// ^
 		(\$|##|#|@|\%)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]?
 	)
-	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
+	( [^\n\S]* : )?  # Is this a property name?
 ///
 
 var IMPORTS = /// ^
@@ -610,6 +610,7 @@ export class Lexer
 		var stack = []
 		var i = 0
 		var replaces = []
+		var ending = /[\=\n\{\ \t\.\,\:\+]/
 		# could it not happen here?
 		while i < (str:length - 1)
 			var chr = str.charAt(i)
@@ -634,7 +635,8 @@ export class Lexer
 				stack.unshift('"')
 			elif chr == "'"
 				stack.unshift("'")
-			elif !end and (chr == '=' or chr == '\n' or chr == '{' or chr == ' ' or chr == '.')
+			elif !end and ending.test(chr)
+				#  (chr == '=' or chr == '\n' or chr == '{' or chr == ' ' or chr == '.' or chr == ',' or chr == ':' or chr == '+')
 				break
 			i++
 		
