@@ -2848,6 +2848,9 @@ export class ClassDeclaration < Code
 	
 	def initKey
 		@initKey ||= SymbolIdentifier.new('#init')
+	
+	def initPath
+		@initPath ||= OP('.',LIT('super'),initKey)
 
 	def instanceInit
 		# 'super.init$()'
@@ -2855,10 +2858,13 @@ export class ClassDeclaration < Code
 		let call = Super.callOp(initKey)
 		if @superclass
 			call = OP('&&',OP('.',LIT('super'),initKey),call)
-		let fn = addMethod(initKey,[],(isTag or @superclass) ? [call] : '',{}) do |fun|
+		let fn = addMethod(initKey,[],(isTag or @superclass) ? [call,BR] : '',{}) do |fun|
 			yes
 		fn.set(noreturn: yes)
 		@instanceInit = fn
+
+	def isInitingFields
+		@inits or (@supernode and @supernode:isInitingFields and @supernode.isInitingFields)
 
 	def visit
 		# replace with some advanced lookup?
@@ -2866,18 +2872,32 @@ export class ClassDeclaration < Code
 
 		
 		STACK.pop(self)
+		let sup = @superclass
 		
-		if @superclass
-			@superclass.traverse()
+		if sup
+			sup.traverse()
 			# also visit and possibly declare the class name?
+			if sup isa VarOrAccess and sup.@variable
+				@supernode = sup.@variable.value
+				# console.log "Found superclass variable {sup} {@supernode}"
+				# lookup to see if we have info about the superclass
+				# sup.resolveVariable(scope__.parent)
+				# let up = sup.@variable && sup.@variable.value
+				# up.set(extended: self) if up
 			
 		if option(:extension) and @name
 			@name.traverse()
 			if @name isa Identifier
 				@name.resolveVariable()
+		
+		elif @name isa Identifier
+			console.log 'registering variable for class'
+			@name.registerVariable('const')
+			@name.@variable.value = self
 
 		elif @name and !(@name isa Access)
 			# TODO should actually declare in outer scope
+			console.log 'declare the class name as a variable!'
 			@name.traverse(declaring: self)
 		elif @name
 			@name.traverse()
@@ -2966,24 +2986,19 @@ export class ClassDeclaration < Code
 			if !@superclass
 				let initop = OP('.',THIS,initKey)
 				if !ctor
-					ctor = addMethod('constructor',[],[],{}) do |fun|
-						yes
+					ctor = addMethod('constructor',[],[],{})
 					let param = ctor.params.at(0,yes,'$$',LIT('null'))
 					let callop = CALL(initop,[param])
 					ctor.body.add([callop,BR],0)
 				else
-					# let param = ctor.params.at(0,yes)
-					# let callop = CALL(OP('.',THIS,initKey),[param])
-					# let supcall = ctor.option(:injectInitAfter)
 					let sup = ctor.option(:supr)
 					if sup
-						console.log "supcall!!! {sup:node}"
 						sup:real.set(target: initop,args: [])
 					else
-						let op = CALL(initop,[])
-						ctor.body.add([op,BR],0)
+						ctor.body.add([CALL(initop,[]),BR],0)
 
 			if !@superclass or !inits.isEmpty
+				@inits = inits
 				instanceInit
 				inits.set(ctor: instanceInit)
 				instanceInit.inject(inits)
@@ -2991,7 +3006,14 @@ export class ClassDeclaration < Code
 				# we don't have an explicit constructor
 				# if we cannot know on compiletime that the superclass
 				# has an initor - we do need to call it here
-				if @superclass and !ctor
+				if @superclass
+					let op = OP('||',initPath,CALL(OP('.',THIS,initKey),[]))
+					unless @supernode and @supernode.isInitingFields
+						if !ctor
+							ctor = addMethod('constructor',[],[Super.new(),BR,op],{})
+						else
+							let after = ctor.option(:injectInitAfter)
+							ctor.inject(op,after ? {after: after} : 0)
 					yes
 
 		elif !inits.isEmpty
@@ -3052,6 +3074,7 @@ export class ClassDeclaration < Code
 		# var namespaced = name != cname
 		var initor = null
 		var sup = superclass
+
 
 		if typeof cname != 'string' and cname
 			cname = cname.c(mark: yes)

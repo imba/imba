@@ -172,21 +172,55 @@ describe "Class Fields" do
 	# native inheritance
 	describe "native inheritance" do
 		# adding fields when inheriting from native classes also works
-		class MyArray < Array
+		class BaseArray < Array
+			name = 'Array'
+			id\number
 
-		class List < MyArray
+			def constructor id, ...rest
+				super(...rest)
+				self.id = id
+				yes
+			
+			set name value
+				#counter = (#counter or 0) + 1
+				#name = value
+
+			get name
+				#name
+
+		class AppArray < BaseArray
+
+		class List < AppArray
 			name = 'List'
 			order = 'ascending'
 
-			# def constructor
-			#	super
-			#	#init!
-		
 		class TodoList < List
 			name = 'Todos'
+		
+		test 'BaseArray' do
+			let arr = new BaseArray(1000,1,2,3,4)
+			eq arr.length, 4
+			eq arr.id, 1000
+			eq arr.#counter, 1
+			eq arr.name, 'Array'
 
-		test do
-			let list = new TodoList(1,2,3,4)
-			eq list.length, 4
-			eq list.order, 'ascending'
-			eq list.name, 'Todos'
+		test 'AppArray' do
+			let arr = new AppArray(1001,1,2,3,4)
+			eq arr.length, 4
+			eq arr.id, 1001
+			eq arr.#counter, 1
+			eq arr.name, 'Array'
+
+		test 'List' do
+			let arr = new List(1002,1,2,3,4)
+			eq arr.length, 4
+			eq arr.id, 1002
+			eq arr.#counter, 2
+			eq arr.name, 'List'
+
+		test 'TodoList' do
+			let arr = new TodoList(1003,1,2,3,4)
+			eq arr.length, 4
+			eq arr.id, 1003
+			eq arr.#counter, 3
+			eq arr.name, 'Todos'
