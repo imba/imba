@@ -926,10 +926,15 @@ var grammar =
 		o 'STATIC ClassDeclLine' do A2.set(static: A1)
 		o 'MethodDeclaration'
 		
-		o 'ClassField = Expression' do A1.set(value: A3) # ClassField.new(A1, A3)
+		o 'ClassField ClassFieldOp Expression' do A1.set(value: A3,op: A2) # ClassField.new(A1, A3)
 		o 'ClassField' do A1
 		# o 'ClassFieldIdentifier ClassFieldBody' do ClassField.new(A1, null,A2)
 		# o 'ClassFieldIdentifier INDENT ClassFieldBody OUTDENT' do ClassField.new(A1, null,A3)
+	]
+
+	ClassFieldOp: [
+		'='
+		'COMPOUND_ASSIGN'
 	]
 
 	ClassField: [
