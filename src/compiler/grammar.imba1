@@ -655,7 +655,7 @@ var grammar =
 	MethodIdentifier: [
 		o 'Identifier'
 		o 'DecoratorIdentifier'
-		o 'SymbolIdentifier' do InterpolatedIdentifier.new(A1)
+		o 'SymbolIdentifier' do A1 # InterpolatedIdentifier.new(A1)
 		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
 	]
 
