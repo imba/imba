@@ -4,7 +4,7 @@ extend class Node
 	get #parent
 		##parent or this.parentNode
 
-	def init$
+	def #init
 		self
 
 	# replace this with something else

@@ -2844,7 +2844,7 @@ export class ClassDeclaration < Code
 
 	def staticInit
 		# @superclass ? 'super.inherited instanceof Function && super.inherited(this)' : 'this'
-		@staticInit ||= addMethod('init$',[],'this').set(static: yes)
+		@staticInit ||= addMethod(initKey,[],'this').set(static: yes)
 	
 	def initKey
 		@initKey ||= SymbolIdentifier.new('#init')
@@ -2853,7 +2853,6 @@ export class ClassDeclaration < Code
 		@initPath ||= OP('.',LIT('super'),initKey)
 
 	def instanceInit
-		# 'super.init$()'
 		return @instanceInit if @instanceInit
 		let call = Super.callOp(initKey)
 		if @superclass
@@ -2878,7 +2877,9 @@ export class ClassDeclaration < Code
 			sup.traverse()
 			# also visit and possibly declare the class name?
 			if sup isa VarOrAccess and sup.@variable
-				@supernode = sup.@variable.value
+				let val = sup.@variable.value
+				if val isa ClassDeclaration
+					@supernode = val
 				# console.log "Found superclass variable {sup} {@supernode}"
 				# lookup to see if we have info about the superclass
 				# sup.resolveVariable(scope__.parent)
@@ -2906,9 +2907,6 @@ export class ClassDeclaration < Code
 		ROOT.entities.add(namepath,self)
 		scope.visit
 
-		# if @superclass and !option(:extension) and !STACK.tsc
-		#	staticInit
-		
 		var separateInitChain = true
 		var fields = []
 		var signature = []
@@ -2980,10 +2978,18 @@ export class ClassDeclaration < Code
 				let desc = LIT('null')
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
 				staticInits.add([op,BR])
-				# LIT(node.name.c)
 
-		if separateInitChain
-			if !@superclass
+		if !inits.isEmpty
+			@inits = inits
+			instanceInit
+			inits.set(ctor: instanceInit)
+			instanceInit.inject(inits)
+			if isTag
+				# tags always call init from outside the actual construction
+				yes
+
+			elif !@superclass
+				@inits = inits
 				let initop = OP('.',THIS,initKey)
 				if !ctor
 					ctor = addMethod('constructor',[],[],{})
@@ -2997,41 +3003,17 @@ export class ClassDeclaration < Code
 					else
 						ctor.body.add([CALL(initop,[]),BR],0)
 
-			if !@superclass or !inits.isEmpty
-				@inits = inits
-				instanceInit
-				inits.set(ctor: instanceInit)
-				instanceInit.inject(inits)
-
+			elif !@supernode or !@supernode.isInitingFields
 				# we don't have an explicit constructor
 				# if we cannot know on compiletime that the superclass
 				# has an initor - we do need to call it here
-				if @superclass
-					let op = OP('||',initPath,CALL(OP('.',THIS,initKey),[]))
-					unless @supernode and @supernode.isInitingFields
-						if !ctor
-							ctor = addMethod('constructor',[],[Super.new(),BR,op],{})
-						else
-							let after = ctor.option(:injectInitAfter)
-							ctor.inject(op,after ? {after: after} : 0)
-					yes
-
-		elif !inits.isEmpty
-			if isTag
-				ctor = instanceInit
-				inits.set(ctor: ctor)
-				ctor.inject(inits)
-
-			elif ctor
-				let after = ctor.option(:injectInitAfter)
-				# inject before/after super or something
-				inits.set(ctor: ctor)
-				ctor.inject(inits,after ? {after: after} : 0)
-			else
-				ctor = addMethod('constructor',[],superclass ? 'super(...arguments)' : '')
-				inits.set(ctor: ctor)
-				ctor.inject(BR)
-				ctor.inject(inits)
+				let op = OP('||',initPath,CALL(OP('.',THIS,initKey),[]))
+				if !ctor
+					ctor = addMethod('constructor',[],[Super.new(),BR,op],{})
+				else
+					let after = ctor.option(:injectInitAfter)
+					ctor.inject(op,after ? {after: after} : 0)
+				yes
 
 		if !staticInits.isEmpty
 			staticInit.inject(staticInits,0)
@@ -3107,7 +3089,7 @@ export class ClassDeclaration < Code
 
 		if @staticInit
 			# this means we need to cache it 
-			js = "{js}; {cname}.init$();"
+			js = "{js}; {cname}[{initKey.c}]();"
 
 		return js
 		
@@ -3197,6 +3179,9 @@ export class StructDeclaration < ClassDeclaration
 export class TagDeclaration < ClassDeclaration
 
 	def isTag
+		yes
+
+	def isInitingFields
 		yes
 
 	def namepath
@@ -3311,7 +3296,7 @@ export class TagDeclaration < ClassDeclaration
 
 		if !STACK.tsc
 			if @staticInit
-				js += "; {className}.init$()"
+				js += "; {className}[{initKey.c}]()"
 			# let ext = (option(:extends) or LIT('{}')).c
 			let ext = Obj.wrap(@config).c
 			js += "; imba.tags.define({name.c},{className},{ext})"
