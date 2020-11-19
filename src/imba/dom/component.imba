@@ -16,7 +16,7 @@ class window.ImbaElement < window.HTMLElement
 		__slots = {}
 		__F = 0
 
-	def init$
+	def #init
 		__F |= ($EL_INITED$ | $EL_HYDRATED$)
 		self
 		
@@ -132,7 +132,7 @@ class window.ImbaElement < window.HTMLElement
 		__F |= $EL_MOUNTING$
 
 		unless inited
-			init$()
+			#init!
 
 		unless flags & $EL_HYDRATED$
 			flags$ext = className
@@ -236,7 +236,7 @@ def imba.createComponent name, parent, flags, text, ctx
 		el = doc.createElement(name)
 
 	el.##parent = parent
-	el.init$()
+	el.#init!
 
 	if text !== null
 		el.slot$('__').text$(text)

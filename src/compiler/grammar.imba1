@@ -140,8 +140,6 @@ var grammar =
 		o 'CONTINUE CALL_START Expression CALL_END' do ContinueStatement.new A1,A3
 
 		o 'DEBUGGER' do DebuggerStatement.new A1
-			
-		o 'StructDeclaration'
 	]
 
 	ExportDeclaration: [
@@ -160,7 +158,6 @@ var grammar =
 	Exportable: [
 		o 'MethodDeclaration'
 		o 'Class'
-		o 'StructDeclaration'
 		o 'CSSDeclaration'
 		o 'TagDeclaration'
 		o 'VarAssign'
@@ -655,7 +652,7 @@ var grammar =
 	MethodIdentifier: [
 		o 'Identifier'
 		o 'DecoratorIdentifier'
-		o 'SymbolIdentifier' do InterpolatedIdentifier.new(A1)
+		o 'SymbolIdentifier' do A1 # InterpolatedIdentifier.new(A1)
 		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
 	]
 
@@ -866,13 +863,6 @@ var grammar =
 
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
-
-	StructDeclaration: [
-		# o 'STRUCT SimpleAssignable' do StructDeclaration.new(A2, null, []).set(keyword: A1)
-		o 'STRUCT Identifier CALL_START ParamList CALL_END' do StructDeclaration.new(A2, null, []).set(params: A4, keyword: A1)
-		o 'STRUCT Identifier CALL_START ParamList CALL_END ClassBody' do StructDeclaration.new(A2, null, A6).set(params: A4, keyword: A1)
-		o 'STRUCT Identifier ClassBody' do StructDeclaration.new(A2, null, A3).set(keyword: A1)
-	]
 	# might as well handle this in the lexer instead
 	Class: [
 		o 'ClassStart' do A1
@@ -882,21 +872,16 @@ var grammar =
 	]
 
 	ClassStart: [
-		o 'CLASS ClassName ClassConstructorParams ClassBody' do ClassDeclaration.new(A2, null, A4).set(keyword: A1,params: A3)
-		o 'CLASS ClassName ClassConstructorParams' do ClassDeclaration.new(A2, null, []).set(keyword: A1,params: A3)
+		# o 'CLASS ClassName ClassConstructorParams ClassBody' do ClassDeclaration.new(A2, null, A4).set(keyword: A1,params: A3)
+		# o 'CLASS ClassName ClassConstructorParams' do ClassDeclaration.new(A2, null, []).set(keyword: A1,params: A3)
 		o 'CLASS ClassName ClassBody' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
 		o 'CLASS ClassName' do ClassDeclaration.new(A2, null, []).set(keyword: A1)
-		
 		o 'CLASS ClassBody' do ClassDeclaration.new(null, null, A2).set(keyword: A1)
-		o 'CLASS ClassName ClassConstructorParams COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A5, A6).set(keyword: A1, params: A3)
-		o 'CLASS ClassName ClassConstructorParams COMPARE Expression' do ClassDeclaration.new(A2, A6, []).set(keyword: A1, params: A3)
+		# o 'CLASS ClassName ClassConstructorParams COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A5, A6).set(keyword: A1, params: A3)
+		# o 'CLASS ClassName ClassConstructorParams COMPARE Expression' do ClassDeclaration.new(A2, A6, []).set(keyword: A1, params: A3)
 		o 'CLASS ClassName COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
 		o 'CLASS ClassName COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
 		o 'CLASS COMPARE Expression ClassBody' do ClassDeclaration.new(null, A3, A4).set(keyword: A1)
-	]
-	
-	ClassConstructorParams: [
-		o 'CALL_START ParamList CALL_END' do A2
 	]
 
 
@@ -1263,7 +1248,7 @@ var operators = [
 	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN', 'THROW', 'EXTENDS']
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']
 	['right',     'TAG_END']
-	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER','STRUCT','CLASS', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END', 'IMPORT', 'EXPORT']
+	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER','CLASS', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END', 'IMPORT', 'EXPORT']
 	['right',     'POST_IF','POST_FOR']
 	['right', 'NEW_TAG']
 	['right', 'TAG_ATTR_SET']

@@ -110,10 +110,15 @@ export var OP = do |op, l, r|
 
 	switch o
 		when '.'
+			if l isa Super
+				l.member = r
+				return l
+
 			r = Identifier.new(r) if r isa String
 			# r = r.value if r isa VarOrAccess
 			
 			if r.@value and r.@value.@value == 'new'
+				# TODO remove support for this
 				return New.new(l).set(keyword: r)
 				
 			Access.new(op,l,r)
@@ -247,6 +252,8 @@ var LIT = do |val|
 
 var SYM = do |val|
 	Symbol.new(val)
+
+	
 
 var KEY = do |val|
 	val = val.value if val isa Token
@@ -1841,7 +1848,7 @@ export class ClassField < Node
 						val = access
 
 				elif restIndex != undefined
-					let rest = ctor.@params.at(restIndex,yes,'_fields')
+					let rest = ctor.@params.at(restIndex,yes,'$$',LIT('null'))
 					access = OP('.',rest,name)
 
 					if value
@@ -2160,7 +2167,9 @@ export class Param < Node
 		else
 			''
 
-	def js o
+	def js stack, params
+		if !params or params:as != 'declaration'
+			return "{@value.c}"
 		# include type??
 		if @defaults
 			return "{@value.c} = {@defaults.c}"
@@ -2228,9 +2237,14 @@ export class ParamList < ListNode
 	prop splat
 	prop block
 
-	def at index, force = no, name = null
+	def at index, force = no, name = null, value = null
 		if force
-			add(Param.new(count == index && name || "_{count}")) until count > index
+			while index >= count
+				let curr = count == index
+				let val = curr ? value : null
+				add(Param.new(curr && name || "_{count}",val))
+				# is this ever traversed?
+
 			# need to visit at the same time, no?
 		list[index]
 
@@ -2267,6 +2281,7 @@ export class ParamList < ListNode
 	def js o
 		return EMPTY if count == 0
 
+		# FIXME This can be removed for v2?
 		if o.parent isa Block
 			return head(o)
 
@@ -2280,7 +2295,7 @@ export class ParamList < ListNode
 			var pars = nodes
 			# pars = filter(|arg| arg != @splat && !(arg isa BlockParam)) if @splat
 			# pars = filter(|arg| arg isa RequiredParam or arg isa OptionalParam) if @splat
-			AST.compact(nodes.map(|param| param.c() )).join(",")
+			AST.compact(nodes.map(|param| param.c(as: 'declaration') )).join(",")
 		else
 			throw "not implemented paramlist js"
 			"ta" + AST.compact(map(|arg| arg.c )).join(",")
@@ -2829,28 +2844,53 @@ export class ClassDeclaration < Code
 
 	def staticInit
 		# @superclass ? 'super.inherited instanceof Function && super.inherited(this)' : 'this'
-		@staticInit ||= addMethod('init$',[],'this').set(static: yes)
+		@staticInit ||= addMethod(initKey,[],'this').set(static: yes)
+	
+	def initKey
+		@initKey ||= SymbolIdentifier.new('#init')
+	
+	def initPath
+		@initPath ||= OP('.',LIT('super'),initKey)
 
 	def instanceInit
-		@instanceInit ||= addMethod('init$',[],isTag ? 'super.init$()' : '').set(noreturn: yes)
+		return @instanceInit if @instanceInit
+		let call = Super.callOp(initKey)
+		if @superclass
+			call = OP('&&',OP('.',LIT('super'),initKey),call)
+		let fn = addMethod(initKey,[],(isTag or @superclass) ? [call,BR] : '',{}) do |fun|
+			yes
+		fn.set(noreturn: yes)
+		@instanceInit = fn
+
+	def isInitingFields
+		@inits or (@supernode and @supernode:isInitingFields and @supernode.isInitingFields)
 
 	def visit
 		# replace with some advanced lookup?
 		@body.@delimiter = ''
+
 		
 		STACK.pop(self)
+		let sup = @superclass
 		
-		if @superclass
-			@superclass.traverse()
+		if sup
+			sup.traverse()
 			# also visit and possibly declare the class name?
+			if sup isa VarOrAccess and sup.@variable
+				let val = sup.@variable.value
+				if val isa ClassDeclaration
+					@supernode = val
 			
 		if option(:extension) and @name
 			@name.traverse()
 			if @name isa Identifier
 				@name.resolveVariable()
+		
+		elif @name isa Identifier
+			@name.registerVariable('const')
+			@name.@variable.value = self
 
 		elif @name and !(@name isa Access)
-			# TODO should actually declare in outer scope
 			@name.traverse(declaring: self)
 		elif @name
 			@name.traverse()
@@ -2859,20 +2899,19 @@ export class ClassDeclaration < Code
 		ROOT.entities.add(namepath,self)
 		scope.visit
 
-		# if @superclass and !option(:extension) and !STACK.tsc
-		#	staticInit
-		
+		var separateInitChain = true
 		var fields = []
 		var signature = []
 		var params = []
 		var declaredFields = {}
 		var restIndex = undefined
-		
-		
+
 		for node in body when node isa ClassField
 			if !node.isStatic
 				let name = String(node.name)
 				declaredFields[name] = node
+				if separateInitChain
+					node.set(restIndex: 0)
 		
 		if option(:params)
 			# find the rest param
@@ -2931,33 +2970,54 @@ export class ClassDeclaration < Code
 				let desc = LIT('null')
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
 				staticInits.add([op,BR])
-				# LIT(node.name.c)
 
 		if !inits.isEmpty
+			@inits = inits
+			instanceInit
+			inits.set(ctor: instanceInit)
+			instanceInit.inject(inits)
 			if isTag
-				ctor = instanceInit
-				inits.set(ctor: ctor)
-				ctor.inject(inits)
+				# tags always call init from outside the actual construction
+				yes
 
-			elif ctor
-				let after = ctor.option(:injectInitAfter)
-				# inject before/after super or something
-				inits.set(ctor: ctor)
-				ctor.inject(inits,after ? {after: after} : 0)
-			else
-				ctor = addMethod('constructor',[],superclass ? 'super(...arguments)' : '')
-				inits.set(ctor: ctor)
-				ctor.inject(BR)
-				ctor.inject(inits)
+			elif !@superclass
+				@inits = inits
+				let initop = OP('.',THIS,initKey)
+				if !ctor
+					ctor = addMethod('constructor',[],[],{})
+					let param = ctor.params.at(0,yes,'$$',LIT('null'))
+					let callop = CALL(initop,[param])
+					ctor.body.add([callop,BR],0)
+				else
+					let sup = ctor.option(:supr)
+					if sup
+						sup:real.set(target: initop,args: [])
+					else
+						ctor.body.add([CALL(initop,[]),BR],0)
+
+			elif !@supernode or !@supernode.isInitingFields
+				# we don't have an explicit constructor
+				# if we cannot know on compiletime that the superclass
+				# has an initor - we do need to call it here
+				let op = OP('||',initPath,CALL(OP('.',THIS,initKey),[]))
+				if !ctor
+					ctor = addMethod('constructor',[],[Super.new(),BR,op],{})
+				else
+					let after = ctor.option(:injectInitAfter)
+					ctor.inject(op,after ? {after: after} : 0)
+				yes
 
 		if !staticInits.isEmpty
 			staticInit.inject(staticInits,0)
 		self
 
-	def addMethod name, params, mbody, options
+	def addMethod name, params, mbody, options, cb
 		mbody = [LIT(mbody)] if mbody isa String
-		let func = MethodDeclaration.new(params,mbody or [],Identifier.new(name),null,options or {})
+		name = Identifier.new(name) if name isa String
+		let func = MethodDeclaration.new(params,mbody or [],name,null,options or {})
 		self.body.unshift(func,yes)
+		if cb isa Function
+			cb(func)
 		func.traverse
 		return func
 
@@ -2988,6 +3048,7 @@ export class ClassDeclaration < Code
 		# var namespaced = name != cname
 		var initor = null
 		var sup = superclass
+
 
 		if typeof cname != 'string' and cname
 			cname = cname.c(mark: yes)
@@ -3020,96 +3081,16 @@ export class ClassDeclaration < Code
 
 		if @staticInit
 			# this means we need to cache it 
-			js = "{js}; {cname}.init$();"
+			js = "{js}; {cname}[{initKey.c}]();"
 
 		return js
-		
-export class StructInitBody < Block
-
-export class StructDeclaration < ClassDeclaration
-
-	def visit
-		# replace with some advanced lookup?
-		@body.@delimiter = ''
-		ROOT.entities.add(namepath,self)
-		scope.visit
-		
-		var fields = []
-		var signature = []
-		var params = []
-		
-		if option(:params)
-			for param in option(:params).reverse
-				let name = String(param.name)
-				
-				let field = ClassField.new(param.name).set(
-					datatype: param.option(:datatype)
-					value: param.defaults
-				)
-				field.set(param: param)
-
-				body.unshift(field)
-				params.unshift(param)
-				
-		params.push(LIT('$$={}'))
-		
-		let prevSignificant
-		for node,i in body
-			if node isa Terminator
-				body.replace(node,BR0) if prevSignificant isa ClassField 
-			else
-				prevSignificant = node
-				
-			if node isa ClassField
-				let name = String(node.name)
-				let field = node
-				if fields[name]
-					unless fields[name].datatype
-						fields[name].set(datatype: node.datatype)
-				else
-					node.set(struct: self, raw: yes)
-					fields.push(fields[name] = node)
-
-				body.replace(node,BR0)
-
-		body.traverse
-
-		if STACK.tsc
-			return self
-
-		var ctor = body.option(:ctor)
-	
-		var inits = StructInitBody.new([])
-		var setters = []
-
-		for field in fields
-			# check if null?
-			# let param = LIT('$$')
-			let access = OP('.',THIS,field.name)
-			let setter = OP('.',LIT('$$'),field.name)
-			
-			if field.option(:param)
-				setter = field.option(:param).name
-			
-			if field.value
-				setter = OP('||',setter,field.value)
-				# let op = OP('=',access,setter)
-			
-			let assign = OP('=',access,setter).set(datatype: field.datatype)
-			# setters.push(OP('=',access,setter))
-			inits.add([assign,BR])
-			# ctorBody.push(OP('=',THIS,name).c + ';\n')
-		
-		# replace the whole body
-		# @body = ClassBody.new([])
-		# @body.@delimiter = ''
-		ctor = addMethod('constructor',params,inits)
-		# add existing methods for cloning etc
-		return self
 
 export class TagDeclaration < ClassDeclaration
 
 	def isTag
+		yes
+
+	def isInitingFields
 		yes
 
 	def namepath
@@ -3224,7 +3205,7 @@ export class TagDeclaration < ClassDeclaration
 
 		if !STACK.tsc
 			if @staticInit
-				js += "; {className}.init$()"
+				js += "; {className}[{initKey.c}]()"
 			# let ext = (option(:extends) or LIT('{}')).c
 			let ext = Obj.wrap(@config).c
 			js += "; imba.tags.define({name.c},{className},{ext})"
@@ -3497,7 +3478,7 @@ export class MethodDeclaration < Func
 				body.consume(ImplicitReturn.new)
 
 		var code = scope.c(indent: yes, braces: yes)
-		var name = typeof @name == 'string' ? @name : @name.c()
+		var name = typeof @name == 'string' ? @name : @name.c(as: 'field')
 
 		var out = ""
 		var fname = AST.sym(self.name)
@@ -3507,7 +3488,7 @@ export class MethodDeclaration < Func
 			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
 			prefix = "async {prefix}" if option(:async)
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
-			out = "{prefix}{M name, @name}({params.c}){code}"
+			out = "{prefix}{M name, @name, as: 'field'}({params.c}){code}"
 			
 			out = @params.jsdoc() + out
 
@@ -3517,6 +3498,7 @@ export class MethodDeclaration < Func
 		var ctx = context
 
 		if target
+			# TODO make this work with SymbolIdentifier
 			if fname[0] == '['
 				fname = fname.slice(1,-1)
 			else
@@ -4447,6 +4429,7 @@ export class Access < Op
 		var raw = null
 		var lft = left
 		var rgt = right
+		var rgtexpr = null
 
 		if rgt isa Token
 			rgt = Identifier.new(rgt)
@@ -4464,9 +4447,10 @@ export class Access < Op
 				[rgt isa Identifier ? rgt.toStr : rgt]
 			).c()
 
-		if rgt isa Num or rgt isa SymbolIdentifier
+		if rgt isa Num
+			# FIXME not adding type info
 			return ctx.c + "[" + rgt.c + "]"
-
+		
 		# is this right? Should not the index compile the brackets
 		# or value is a symbol -- should be the same, no?
 		if rgt isa Index and (rgt.value isa Str or rgt.value isa Symbol)
@@ -4478,6 +4462,12 @@ export class Access < Op
 
 		elif rgt isa Symbol and rgt.isValidIdentifier
 			raw = rgt.raw
+
+		elif rgt isa InterpolatedIdentifier
+			rgt = rgt.value
+		
+		elif rgt isa SymbolIdentifier
+			yes
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
 			raw = rgt.c
@@ -4493,7 +4483,7 @@ export class Access < Op
 			# need to check to see if it is legal
 			ctx ? "{ctx.c}.{raw}" : raw
 		else
-			var r = rgt isa Node ? rgt.c(expression: yes) : rgt
+			var r = rgt isa Node ? rgt.c(expression: yes, as: 'value') : rgt
 			"{ctx.c}[{r}]"
 
 		# console.log "access up {stack.up}"
@@ -5263,8 +5253,12 @@ export class DecoratorIdentifier < Identifier
 
 export class SymbolIdentifier < Identifier
 	
-	def c
-		variable.c
+	def c o = {}
+		let out = variable.c
+		if o:as == 'field'
+			"[{out}]"
+		else
+			out
 
 	def variable
 		@variable ||= scope__.root.symbolRef(@value.slice(0))
@@ -5642,6 +5636,10 @@ export class Call < Node
 		# some axioms that share the same syntax as calls will be redirected from here
 		if callee isa BangCall
 			callee = callee.@callee
+
+		if callee isa Super
+			callee.args = self isa BangCall ? [] : args
+			return callee
 
 		if callee isa VarOrAccess
 			var str = callee.value.symbol
@@ -10777,17 +10775,27 @@ export class RootScopeContext < ScopeContext
 		yes
 
 export class Super < Node
-	def initialize keyword
+
+	prop member
+	prop args
+
+	def initialize keyword, member
 		@keyword = keyword
+		@member = member
 		super
 
 	def visit
 		@method = STACK.method
 		@up = STACK.parent
 		if var m = STACK.method
-			m.set(supr: {node: STACK.blockpart, block: STACK.block})
+			m.set(supr: {node: STACK.blockpart, block: STACK.block, real: self})
 			m.set(injectInitAfter: STACK.blockpart)
 		self
+
+	def replaceWithInitor
+		if up isa Call
+			yes
+
 
 	def startLoc
 		@keyword and @keyword.startLoc
@@ -10795,30 +10803,48 @@ export class Super < Node
 	def endLoc
 		@keyword and @keyword.endLoc
 
+	def self.callOp name
+		let op = OP('.',LIT('super'),name)
+		CALL(op,[LIT('arguments[0]')])
+
 	def c
 		let m = @method
 		let up = @up
 		let sup = LIT('super')
 		let op
+		let top = option(:top)
 		let virtual = m and m.option('inExtension')
+		let args = self.args
+		
 		# need to know if our method is in the initial declaration
 
 		# when super is written all by itself - it means to do the default action
 		unless (up isa Access) or (up isa Call)
-			if m and m.isConstructor
+			if m and m.isConstructor and !member
+				let target = option(:target) or LIT('super')
+				let fallbackArgs = option(:args) or [LIT('...arguments')]
+				return CALL(target,args or fallbackArgs).c
 				op = LIT('super(...arguments)')
 			elif m and virtual
+				# FIXME - we no longer support super in class extensions
 				op = CALL(OP('.',slf,'super$'),[m.name.toStr])
 				if m.isSetter
 					op = CALL(OP('.',slf,'super$set'),[m.name.toStr,m.params.at(0)])
 				elif !m.isGetter
 					op = CALL(OP('.',op,'apply'),[slf,LIT('arguments')])
+			elif member
+				op = OP('.',sup,member)
 			elif m
+				# console.log "type of super? {m.name}"
 				op = OP('.',sup,m.name)
 				if m.isSetter
 					op = OP('=',op,m.params.at(0))
 				elif !m.isGetter
-					op = CALL(op,[LIT('...arguments')])
+					args ||= [LIT('...arguments')]
+					# op = CALL(op,[LIT('...arguments')])
+
+			if args
+				op = CALL(op,args)
 
 			return op ? (M op.c(mark: false), self) : '/**/'
 

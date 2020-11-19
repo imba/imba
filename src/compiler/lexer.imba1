@@ -904,9 +904,6 @@ export class Lexer
 			# only if we are on a newline? or something?
 			return true
 			
-		if id == 'struct' and @indents == 0
-			return true # 'CLASS'
-			
 		if id == 'css'
 			if !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
 				return true
@@ -919,7 +916,7 @@ export class Lexer
 
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css' or id == 'constructor')
 			var scop = getScope
-			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'STRUCT'
+			var incls = scop == 'CLASS' or scop == 'TAG'
 
 			# if id == 'css' and !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
 			# 	return true
@@ -1122,7 +1119,7 @@ export class Lexer
 		# switch 
 
 		# should be strict about the order, check this manually instead
-		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS' or typ == 'STRUCT'
+		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS'
 			queueScope(typ)
 
 			var i = @tokens:length
@@ -1845,7 +1842,7 @@ export class Lexer
 		elif value == ',' and context == 'IMPORT'
 			tokid = "IMPORT_COMMA"
 		
-		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or (pt == 'IDENTIFIER' or pt == 'SYMBOLID'))
+		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or (pt == 'IDENTIFIER' or pt == 'SYMBOLID' or pt == 'SUPER'))
 			tokid = 'BANG'
 			
 		elif value == '&' and @chunk.match(/^\&\s*[,\)\}\]]/)
