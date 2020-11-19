@@ -2892,13 +2892,10 @@ export class ClassDeclaration < Code
 				@name.resolveVariable()
 		
 		elif @name isa Identifier
-			console.log 'registering variable for class'
 			@name.registerVariable('const')
 			@name.@variable.value = self
 
 		elif @name and !(@name isa Access)
-			# TODO should actually declare in outer scope
-			console.log 'declare the class name as a variable!'
 			@name.traverse(declaring: self)
 		elif @name
 			@name.traverse()
@@ -5729,7 +5726,6 @@ export class Call < Node
 			callee = callee.@callee
 
 		if callee isa Super
-			console.log 'super calling',self isa BangCall
 			callee.args = self isa BangCall ? [] : args
 			return callee
 
