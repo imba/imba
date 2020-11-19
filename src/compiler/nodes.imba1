@@ -2880,11 +2880,6 @@ export class ClassDeclaration < Code
 				let val = sup.@variable.value
 				if val isa ClassDeclaration
 					@supernode = val
-				# console.log "Found superclass variable {sup} {@supernode}"
-				# lookup to see if we have info about the superclass
-				# sup.resolveVariable(scope__.parent)
-				# let up = sup.@variable && sup.@variable.value
-				# up.set(extended: self) if up
 			
 		if option(:extension) and @name
 			@name.traverse()
@@ -3089,89 +3084,6 @@ export class ClassDeclaration < Code
 			js = "{js}; {cname}[{initKey.c}]();"
 
 		return js
-		
-export class StructInitBody < Block
-
-export class StructDeclaration < ClassDeclaration
-
-	def visit
-		# replace with some advanced lookup?
-		@body.@delimiter = ''
-		ROOT.entities.add(namepath,self)
-		scope.visit
-		
-		var fields = []
-		var signature = []
-		var params = []
-		
-		if option(:params)
-			for param in option(:params).reverse
-				let name = String(param.name)
-				
-				let field = ClassField.new(param.name).set(
-					datatype: param.option(:datatype)
-					value: param.defaults
-				)
-				field.set(param: param)
-
-				body.unshift(field)
-				params.unshift(param)
-				
-		params.push(LIT('$$={}'))
-		
-		let prevSignificant
-		for node,i in body
-			if node isa Terminator
-				body.replace(node,BR0) if prevSignificant isa ClassField 
-			else
-				prevSignificant = node
-				
-			if node isa ClassField
-				let name = String(node.name)
-				let field = node
-				if fields[name]
-					unless fields[name].datatype
-						fields[name].set(datatype: node.datatype)
-				else
-					node.set(struct: self, raw: yes)
-					fields.push(fields[name] = node)
-
-				body.replace(node,BR0)
-
-		body.traverse
-
-		if STACK.tsc
-			return self
-
-		var ctor = body.option(:ctor)
-	
-		var inits = StructInitBody.new([])
-		var setters = []
-
-		for field in fields
-			# check if null?
-			# let param = LIT('$$')
-			let access = OP('.',THIS,field.name)
-			let setter = OP('.',LIT('$$'),field.name)
-			
-			if field.option(:param)
-				setter = field.option(:param).name
-			
-			if field.value
-				setter = OP('||',setter,field.value)
-				# let op = OP('=',access,setter)
-			
-			let assign = OP('=',access,setter).set(datatype: field.datatype)
-			# setters.push(OP('=',access,setter))
-			inits.add([assign,BR])
-			# ctorBody.push(OP('=',THIS,name).c + ';\n')
-		
-		# replace the whole body
-		# @body = ClassBody.new([])
-		# @body.@delimiter = ''
-		ctor = addMethod('constructor',params,inits)
-		# add existing methods for cloning etc
-		return self
 
 export class TagDeclaration < ClassDeclaration
 
