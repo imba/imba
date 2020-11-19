@@ -612,13 +612,13 @@ export class Lexer
 		var replaces = []
 		var ending = /[\=\n\{\ \t\.\,\:\+]/
 		# could it not happen here?
-		while i < (str:length - 1)
+		while i < str:length
 			var chr = str.charAt(i)
 			let end = stack[0]
 			let instr = end == '"' or end == "'"
 
 			if chr and chr == end
-				stack.shift
+				stack.shift()
 			
 			elif !end and (chr == ')' or chr == ']' or chr == '}' or chr == '>')
 				break
