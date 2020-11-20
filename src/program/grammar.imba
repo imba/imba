@@ -635,7 +635,7 @@ export const states = {
 		'member_'
 		'comment_'
 		'decorator_'
-		[/(get|set|def|static|prop|attr)@B/,'keyword.$0.invalid']
+		[/(get|set|def|static|prop|attr)@B/,'keyword.$0']
 		'field_'
 		'common_'
 		
@@ -694,6 +694,7 @@ export const states = {
 	]
 
 	_vardecl: [
+		denter(null,-1,-1)
 		[/\[/, '[', '@array_var_body']
 		[/\{/, '{', '@object_body']
 		[/(@variable)(?=\n|,|$)/,'identifier.$F','@pop']
