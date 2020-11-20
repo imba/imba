@@ -113,8 +113,6 @@ var grammar =
 	# Block and statements, which make up a line in a body.
 	Line: [
 		o 'CSSDeclaration'
-		# o 'VarBlock'
-		# o 'Splat'
 		o 'Expression'
 		o 'VarDecl' do A1.option('block',yes) # VarDeclaration.new(A2,null,A1)
 		# o 'HEADER' do Terminator.new(A1)
@@ -152,7 +150,6 @@ var grammar =
 			ExportAllDeclaration.new(A1,[ExportAllSpecifier.new(A2,A4)],A6)
 		o 'EXPORT Exportable' do Export.new(A2).set(keyword: A1)
 		o 'EXPORT DEFAULT DefaultExportable' do Export.new(A3).set(keyword: A1,default: A2)
-		# o 'EXPORT_VAR VarBlock' do Export.new(A2).set(keyword: A1)
 	]
 
 	Exportable: [
@@ -257,7 +254,7 @@ var grammar =
 
 	# A literal identifier, a variable name or property.
 	Identifier: [
-		o 'IDENTIFIER Type' do Identifier.new(A1).set(datatype: A2)
+		# o 'IDENTIFIER Type' do Identifier.new(A1).set(datatype: A2)
 		o 'IDENTIFIER' do Identifier.new(A1)
 	]
 
@@ -330,7 +327,6 @@ var grammar =
 	# through and printed to JavaScript.
 	Literal: [
 		o 'AlphaNumeric'
-		o 'SYMBOLREF' do SymbolIdentifier.new(A1)
 		o 'JS' do Literal.new A1
 		o 'REGEX' do RegExp.new A1
 		o 'BOOL' do Bool.new A1
@@ -720,12 +716,12 @@ var grammar =
 		o 'Object = ParamValue' do Param.new(A1,A3)
 		o 'Array = ParamValue' do Param.new(A1,A3)
 		o '...' do RestParam.new(A1)
-		# OptionalParam.new A1, A3, A2
 	]
 
 	# Function Parameters
 	ParamVar: [
 		o 'Identifier' do Param.new(A1)
+		o 'Identifier Type' do Param.new(A1).set(datatype: A2)
 		# o 'Identifier TypeAnnotation' do Param.new(A1).set(datatype: A2)
 		# o 'SPLAT ParamVar' do Splat.new(A2).set(keyword: A1)
 	]
@@ -734,14 +730,8 @@ var grammar =
 	Splat: [
 		o 'SPLAT Expression' do AST.SPLAT(A2)
 	]
-	
-	VarKeyword: [
-		o 'BLOCK_VAR'
-		o 'BLOCK_LET'
-		o 'BLOCK_CONST'
-	]
 
-	InlineVarKeyword: [
+	VarKeyword: [
 		o 'VAR'
 		o 'LET'
 		o 'CONST'
@@ -751,28 +741,11 @@ var grammar =
 		o 'Identifier'
 		o 'Array' # all kinds?
 		o 'Object' # not supported anymore
-	]
-	
-	InlineVarAssignable: [
-		o 'Identifier'
-		o 'Array' # all kinds?
-		o 'Object' # not supported anymore
-	]
-
-	VarBlockAssign: [
-		o 'VarAssignable' do [A1]
-		o 'VarAssignable = Expression' do [A1,A3]
-		o 'VarAssignable = StyleBlockDeclaration' do [A1,A3]
-		o 'VarAssignable = INDENT Expression Outdent' do [A1,A4.indented(A3,A5)]
-	]
-
-	VarBlock: [
-		o 'VarKeyword VarBlockAssign' do VarDeclList.new([]).set(keyword: A1,type: A1.value).add(A2)
-		o 'VarBlock , VarBlockAssign' do A1.add(A3)
+		o 'VarAssignable Type' do A1.set(datatype: A2)
 	]
 
 	VarDecl: [
-		o 'InlineVarKeyword InlineVarAssignable' do VarReference.new(A2,A1)
+		o 'VarKeyword VarAssignable' do VarReference.new(A2,A1)
 	]
 
 	VarAssign: [
@@ -788,10 +761,14 @@ var grammar =
 		o 'Self' # not sure if self should be assignable really
 		o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
 		o 'SymbolIdentifier' do Access.new('.',null,A1) # LocalIdentifier.new(A1)
-
+		o 'Access'
 		# FIXME this isn really assignable?
 		# o 'Value . NEW' do LegacyNew.new(A1).set(keyword: A3)
 		# o 'Value . Super' do SuperAccess.new('.',A1,A3)
+		o 'SimpleAssignable Type' do A1.set(datatype: A2)
+	]
+
+	Access: [
 		o 'Value SoakableOp Identifier' do AST.OP(A2,A1,A3) # PropertyAccess.new(A2,A1,A3) # TODO change to regular access
 		o 'Value SoakableOp SymbolIdentifier' do IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3) # PropertyAccess.new(A2,A1,A3) # TODO change to regular access
 		o 'Value INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
@@ -832,7 +809,13 @@ var grammar =
 		o 'Invocation'
 		o 'Require'
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
+		# o 'Value Type' do A1.set(datatype: A2)
 	]
+
+	# TypedValue: [
+	#	o 'Value'
+	#	o 'Value Type' do A1.set(datatype: A2)
+	# ]
 
 	IndexValue: [
 		o 'Expression' do Index.new A1
@@ -942,6 +925,7 @@ var grammar =
 		o 'SymbolIdentifier' do ClassField.new(A1)
 		o 'PROP Identifier' do ClassField.new(A2).set(keyword: A1)
 		o 'ATTR Identifier' do ClassAttribute.new(A2).set(keyword: A1)
+		o 'ClassField Type' do A1.set(datatype: A2)
 	]
 	
 	ClassFieldBody: [
@@ -1057,6 +1041,7 @@ var grammar =
 	Parenthetical: [
 		o '( ExpressionList )' do Parens.new(A2,A1,A3)
 		o '( ExpressionList ) UNIT' do ExpressionWithUnit.new(Parens.new(A2,A1,A3),A4)
+		o 'Parenthetical Type' do A1.set(datatype: A2)
 		# o '( INDENT ExpressionList OUTDENT )' do Parens.new(A3,A1,A5)
 	]
 

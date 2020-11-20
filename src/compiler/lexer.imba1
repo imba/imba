@@ -610,7 +610,7 @@ export class Lexer
 		var stack = []
 		var i = 0
 		var replaces = []
-		var ending = /[\=\n\{\ \t\.\,\:\+]/
+		var ending = /[\=\n\ \t\.\,\:\+]/
 		# could it not happen here?
 		while i < str:length
 			var chr = str.charAt(i)

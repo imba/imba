@@ -1788,8 +1788,8 @@ export class ClassField < Node
 	def isStatic
 		option(:static)
 		
-	def datatype
-		@name and @name.datatype
+	# def datatype
+	#	@name and @name.datatype
 
 	def loc
 		[@name.@loc,@name.region[1]]
@@ -1989,6 +1989,8 @@ export class Parens < ValueNode
 			str = v isa Array ? AST.cary(v) : v.c(expression: yes)
 
 		# check if we really need parens here?
+		if datatype and STACK.tsc
+			str = datatype.c + '(' + str + ')'
 		return str
 
 	def set obj
@@ -2170,6 +2172,7 @@ export class Param < Node
 	def js stack, params
 		if !params or params:as != 'declaration'
 			return "{@value.c}"
+
 		# include type??
 		if @defaults
 			return "{@value.c} = {@defaults.c}"
@@ -2278,24 +2281,32 @@ export class ParamList < ListNode
 		# need to register the required-pars as variables
 		super
 
-	def js o
+	def js stack
 		return EMPTY if count == 0
 
 		# FIXME This can be removed for v2?
-		if o.parent isa Block
-			return head(o)
+		if stack.parent isa Block
+			return head(stack)
 
 		# items = map(|arg| arg.name.c ).compact
 		# return null unless items[0]
 
-		if o.parent isa Code
+		if stack.parent isa Code
 			# return "params_here"
 			# remove the splat, for sure.. need to handle the other items as well
 			# this is messy with references to argvars etc etc. Fix
+			let inline = !(stack.parent isa MethodDeclaration)
 			var pars = nodes
+			var opts = {as: 'declaration', typed: inline}
 			# pars = filter(|arg| arg != @splat && !(arg isa BlockParam)) if @splat
 			# pars = filter(|arg| arg isa RequiredParam or arg isa OptionalParam) if @splat
-			AST.compact(nodes.map(|param| param.c(as: 'declaration') )).join(",")
+			AST.compact(nodes.map(|param|
+				let part = param.c(opts)
+				let typ = inline and param.datatype
+				if typ
+					part = typ.c + part
+				return part
+			)).join(",")
 		else
 			throw "not implemented paramlist js"
 			"ta" + AST.compact(map(|arg| arg.c )).join(",")
@@ -4120,10 +4131,17 @@ export class Self < Literal
 	def visit
 		scope__.context
 		self
+	
+	def js
+		var s = scope__
+		s ? s.context.c : "this"
 
 	def c
-		var s = scope__
-		M((s ? s.context.c : "this"),@value)
+		let out = M(js,@value)
+		let typ = STACK.tsc and option(:datatype)
+		if typ
+			out = "{typ.c}({out})"
+		return out
 
 export class This < Self
 
@@ -4136,8 +4154,8 @@ export class This < Self
 	def visit
 		self
 
-	def c
-		M("this",@value)
+	def js
+		"this"
 
 # OPERATORS
 
@@ -4432,8 +4450,8 @@ export class Access < Op
 		var ctor = self:constructor
 		ctor.new(op,left,right)
 
-	def datatype
-		right:datatype ? right.datatype : null
+	# def datatype
+	#	right:datatype ? right.datatype : null
 
 	def js stack
 		var raw = null
@@ -4498,11 +4516,12 @@ export class Access < Op
 
 		# console.log "access up {stack.up}"
 
-		let typ = datatype
+		# let typ = datatype
 		let up = stack.up
+		let typ = option(:datatype)
 
 		if ctx
-			if self isa ImplicitAccess and typ and stack.tsc
+			if self isa ImplicitAccess and typ and stack.tsc and !(up isa Block) and false
 				out = '/**@type{any}*/('+ctx.c+')' + out
 			else
 				out = ctx.c + out
@@ -4716,27 +4735,22 @@ export class VarOrAccess < ValueNode
 			let ctx = scope.context
 			if ctx isa RootScopeContext or ctx.isGlobalContext
 				yes
+				@includeType = yes
+				# global access
 			else
-				@value = ImplicitAccess.new(".",ctx,@value)
+				@value = ImplicitAccess.new(".",ctx,@value).set(datatype: datatype)
 				stack.registerSemanticToken(@token,'accessor')
 
 		return self
 
-	# def c
-	# 	@variable ? super() : @value.c() # M(@token.value,@token)
-	# 	# M((@variable ? super() : value.c), @token)
-
 	def js o
+		let val = @variable or @value
 		if @variable
 			let typ = datatype
 			if typ
 				return typ.c() + '(' + @variable.c() + ')'
 
 		return (@variable or @value).c()
-		
-		if var v = @variable
-			return v.c()
-		throw 'not implemented'
 
 	def node
 		@variable ? self : value
@@ -4746,7 +4760,6 @@ export class VarOrAccess < ValueNode
 
 	def symbol
 		@identifier.symbol
-		# value and value.symbol
 
 	def cache o = {}
 		@variable ? (o:force ? super(o) : self) : value.cache(o)
@@ -4889,6 +4902,8 @@ export class Assign < Op
 
 		if l
 			l.traverse()
+
+		# if l isa VarOrAccess
 
 		if l isa VarReference and !(STACK.up isa Block) and !(STACK.up isa Export)
 			l.forceExpression
