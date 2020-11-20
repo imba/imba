@@ -30,7 +30,7 @@ interface ImbaStyles {
 }
 
 
-interface Imba {
+interface ImbaContext {
     setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
     setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
     clearInterval(handle?: number): void;
@@ -58,4 +58,12 @@ interface Event {
     originalEvent: Event | null;
 }
 
-declare const imba: Imba
+interface Object {
+    [key: string]: any;
+}
+
+declare const imba: ImbaContext
+
+declare global {
+    imba: ImbaContext;
+}

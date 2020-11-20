@@ -2876,10 +2876,16 @@ export class ClassDeclaration < Code
 		if sup
 			sup.traverse()
 			# also visit and possibly declare the class name?
-			if sup isa VarOrAccess and sup.@variable
-				let val = sup.@variable.value
-				if val isa ClassDeclaration
-					@supernode = val
+			if sup isa VarOrAccess
+				if sup.@variable
+					let val = sup.@variable.value
+					if val isa ClassDeclaration
+						@supernode = val
+				elif sup.symbol == 'Object'
+					if !STACK.tsc
+						sup = @superclass = null
+					else
+						@autosuper = yes
 			
 		if option(:extension) and @name
 			@name.traverse()
@@ -2948,7 +2954,11 @@ export class ClassDeclaration < Code
 
 		body.traverse
 
+		var ctor = body.option(:ctor)
+
 		if STACK.tsc
+			if ctor and @autosuper
+				ctor.body.add([LIT("super()"),BR],0)
 			return self
 
 		var inits = InstanceInitBlock.new()
@@ -3557,10 +3567,10 @@ export class Literal < ValueNode
 		no
 
 	def startLoc
-		@startLoc or (@value:startLoc && @value.startLoc)
+		@startLoc or (@value and @value:startLoc && @value.startLoc)
 
 	def endLoc
-		@endLoc or (@value:endLoc && @value.endLoc)
+		@endLoc or (@value and @value:endLoc && @value.endLoc)
 
 export class RawScript < Literal
 
@@ -4481,15 +4491,21 @@ export class Access < Op
 		var out = if raw
 			# see if it needs quoting
 			# need to check to see if it is legal
-			ctx ? "{ctx.c}.{raw}" : raw
+			ctx ? ".{raw}" : raw
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes, as: 'value') : rgt
-			"{ctx.c}[{r}]"
+			"[{r}]"
 
 		# console.log "access up {stack.up}"
 
 		let typ = datatype
 		let up = stack.up
+
+		if ctx
+			if self isa ImplicitAccess and typ and stack.tsc
+				out = '/**@type{any}*/('+ctx.c+')' + out
+			else
+				out = ctx.c + out
 
 		if self isa ImplicitAccess
 			out = M(out,rgt.@token or rgt.@value)
@@ -8015,9 +8031,12 @@ export class Tag < TagLike
 		if stack.tsc
 			# if tag is expression we want to suppress certain warnings
 			if type isa TagTypeIdentifier and !isSelf
-				add "{tvar} = new {M(type.toClassName,type)}"
+				if type.isAsset
+					add "{tvar} = new {M("SVGSVGElement",type)}"
+				else
+					add "{tvar} = new {M(type.toClassName,type)}"
 			elif isSelf
-				add "{tvar} = {type.c}"
+				add "{tvar} = {type.c}" 
 			else
 				add "{tvar} = new {M('HTMLElement',type)}"
 				add "{type.c}" # this is the string
@@ -8027,10 +8046,18 @@ export class Tag < TagLike
 					add item.c(o) # M("{tvar}.{item.c(o)}",item)
 					# add M("{tvar}.{item.c(o)}",item)
 				self
-			for item in body
+			let nodes = body ? body.values : []
+			for item in nodes
 				add item.c
 
-			return out.join(";\n")
+			if o:inline or isExpression
+				# o:inline = wasInline
+				let js = '(' + out.join(',\n') + ')'
+				return js
+			else
+				# o:inline = wasInline
+				let js = out.join(";\n")
+				return js
 
 		# whether this tag should set a variable indicating
 		# whether this was built now or not
