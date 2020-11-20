@@ -1142,6 +1142,11 @@ export class Lexer
 			# return importsToken or len
 			return len
 
+		elif id == 'type' and lastTyp == 'IMPORT'
+			token('TYPEIMPORT', id, idlen)
+			# return importsToken or len
+			return len
+
 		elif typ == 'EXPORT'
 			pushEnd('EXPORT')
 			token(typ, id, idlen)

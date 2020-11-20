@@ -4858,7 +4858,10 @@ export class VarReference < ValueNode
 		let out = @value.c()
 		# console.log "is expression?? {@expression} {params:expression}"
 		unless @expression
+
 			out = "{@type} {out}"
+			if let typ = (STACK.tsc and datatype)
+				out = typ.c + ' ' + out
 		return out
 
 
@@ -4958,7 +4961,7 @@ export class Assign < Op
 		var lc = l.c
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
-		if let typ = (datatype or l.datatype)
+		if let typ = (datatype or (l and !(l isa VarReference) and l.datatype))
 			out = typ.c() + ' ' + out
 			# out = '/** @type {' + typ.c() + '} */ ' + out
 
@@ -8724,7 +8727,6 @@ export class ESMDeclaration < Statement
 			"{kw} {@source.c}"
 
 export class ImportDeclaration < ESMDeclaration
-
 	def js
 		if STACK.cjs
 			var src = @source.c
@@ -8755,6 +8757,29 @@ export class ImportDeclaration < ESMDeclaration
 			item?.traverse()
 			
 		return
+
+export class ImportTypeDeclaration < ESMDeclaration
+
+	def js
+		return "" unless STACK.tsc
+
+		let src = @source.c
+
+		if @defaults
+			let tpl = '/** @typedef \{import(SOURCE)\} NAME */true'
+			tpl = tpl.replace('SOURCE',src).replace('NAME',@defaults.c)
+			return tpl # '/** @typedef \{import("PATH")\} NAME */'
+		else
+			let parts = []
+
+			for item in @specifiers[0].nodes
+				let name = item.@name.c
+				let alias = item.@alias ? item.@alias.c : name
+				let part = "/** @typedef \{import({src}).{name}\} {alias} */true"
+				parts.push(part)
+				# let part = tpl.replace('SOURCE',src).replace('PATH',name).replace('PATH',name)
+			return parts.join(';\n')
+
 
 export class ExportDeclaration < ESMDeclaration
 

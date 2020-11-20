@@ -178,12 +178,16 @@ var grammar =
 			ImportDeclaration.new(A1,null, A2)
 		o 'IMPORT ImportDefaultSpecifier FROM String' do
 			ImportDeclaration.new(A1,[A2], A4)
+		o 'IMPORT TYPEIMPORT ImportDefaultSpecifier FROM String' do
+			ImportTypeDeclaration.new(A1,[A3], A5)
 		o 'IMPORT ImportNamespaceSpecifier FROM String' do
 			ImportDeclaration.new(A1,[A2], A4)
 		o 'IMPORT { } FROM String' do
 			ImportDeclaration.new(A1,null, A5)
 		o 'IMPORT { ImportSpecifierList } FROM String' do
 			ImportDeclaration.new(A1,[A3], A6)
+		o 'IMPORT TYPEIMPORT { ImportSpecifierList } FROM String' do
+			ImportTypeDeclaration.new(A1,[A4], A7)
 		o 'IMPORT ImportDefaultSpecifier IMPORT_COMMA ImportNamespaceSpecifier FROM String' do
 			ImportDeclaration.new(A1,[A2,A4], A6)
 		o 'IMPORT ImportDefaultSpecifier IMPORT_COMMA { ImportSpecifierList } FROM String' do
@@ -739,9 +743,10 @@ var grammar =
 
 	VarAssignable: [
 		o 'Identifier'
+		o 'Identifier Type' do A1.set(datatype: A2)
 		o 'Array' # all kinds?
 		o 'Object' # not supported anymore
-		o 'VarAssignable Type' do A1.set(datatype: A2)
+		# o 'VarAssignable Type' do A1.set(datatype: A2)
 	]
 
 	VarDecl: [
