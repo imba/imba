@@ -913,11 +913,25 @@ var grammar =
 	ClassDeclLine: [
 		o 'STATIC ClassDeclLine' do A2.set(static: A1)
 		o 'MethodDeclaration'
-		
-		o 'ClassField ClassFieldOp Expression' do A1.set(value: A3,op: A2) # ClassField.new(A1, A3)
-		o 'ClassField' do A1
+		o 'ClassFieldDeclaration'
 		# o 'ClassFieldIdentifier ClassFieldBody' do ClassField.new(A1, null,A2)
 		# o 'ClassFieldIdentifier INDENT ClassFieldBody OUTDENT' do ClassField.new(A1, null,A3)
+	]
+
+	ClassFieldDeclaration: [
+		o 'ClassField ClassFieldOp Expression' do A1.set(value: A3,op: A2) # ClassField.new(A1, A3)
+		o 'ClassField' do A1
+		o 'ClassFieldDeclaration @ WatchBody' do A1.set(watch: A3)
+		o 'ClassFieldDeclaration DECORATOR WatchBody' do A1.set(watch: A3)
+	]
+
+	ClassFieldDecoration: [
+		o 'ClassFieldDeclaration @ WatchBody' do A1.set(watch: A3)
+	]
+
+	WatchBody: [
+		o 'Block'
+		o 'Expression'
 	]
 
 	ClassFieldOp: [

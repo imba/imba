@@ -87,7 +87,6 @@ var IMPLICIT_FUNC_MAP =
 	'IDENTIFIER': 1
 	'SYMBOLID': 1
 	'SUPER': 1
-	'@': 1
 	'THIS': 1
 	'SELF': 1
 	'TAG_END': 1
@@ -127,7 +126,6 @@ var IMPLICIT_CALL_MAP =
 	'IVAR': 1
 	'ARGVAR': 1
 	'SELF': 1
-	'@': 1
 	'[': 1
 	'(': 1
 	'{': 1

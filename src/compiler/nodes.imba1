@@ -117,9 +117,9 @@ export var OP = do |op, l, r|
 			r = Identifier.new(r) if r isa String
 			# r = r.value if r isa VarOrAccess
 			
-			if r.@value and r.@value.@value == 'new'
-				# TODO remove support for this
-				return New.new(l).set(keyword: r)
+			# if r.@value and r.@value.@value == 'new'
+			#	# TODO remove support for this
+			#	return New.new(l).set(keyword: r)
 				
 			Access.new(op,l,r)
 		when '='
@@ -1757,7 +1757,6 @@ export class ClassField < Node
 			value.@scope = @vscope = FieldScope.new(value)
 			value.@scope.@parent = scope__
 			value.traverse
-
 		self
 	
 
@@ -1766,6 +1765,12 @@ export class ClassField < Node
 
 	def target
 		option(:static) ? LIT('this') : LIT('this.prototype')
+
+	def storageSymbol
+		symbolRef("#{name.c(as:'symbolpart')}")
+
+	def watcherSymbol
+		symbolRef("#{name.c(as:'symbolpart')}DidSet")
 
 	def storageKey
 		@storageKey ||= STR(name.c + '$$')
@@ -1780,16 +1785,16 @@ export class ClassField < Node
 		no
 		
 	def hasStaticInits
-		isStatic or @decorators
+		isStatic or @decorators or watchBody
 		
 	def hasConstructorInits
 		!isStatic
 
 	def isStatic
 		option(:static)
-		
-	# def datatype
-	#	@name and @name.datatype
+
+	def watchBody
+		option(:watch)
 
 	def loc
 		[@name.@loc,@name.region[1]]
@@ -1810,63 +1815,102 @@ export class ClassField < Node
 				let typ = datatype
 				if typ
 					out = "{typ.c} {out}"
-					# if let typ = TYP(self,'jsdoc')
-					#	out = "{typ}\n{out}"
 
 			elif self isa ClassAttribute or (@decorators && @decorators:length > 0)
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
 				let getter = "{prefix}get {name}{self.getter.c(keyword: '')}"
 				let delim = (@classdecl && @classdecl.isExtension ? ',\n' : '\n')
 				out = "{setter}{delim}{getter}"
+
+			return out
+		
+		return if STACK.tsc
+
+		if isStatic and up isa ClassInitBlock
+			if @vscope
+				if let fn = STACK.up(Func)
+					@vscope.mergeScopeInto(fn.@scope)
+			out = OP('=',OP('.',THIS,name),value or UNDEFINED).c + ';\n'
+
+		elif !isStatic and up isa ClassInitBlock
+			return ""
+			# let watcher = watchBody
+			# Fix indent??
+			let key = name
+			if name isa Identifier
+				key = name.toStr
+
+			let tpl = """
+			Object.defineProperty(this.prototype,{key.c},\{
+				enumerable: true,
+				set{self.setter.c(keyword: '')},
+				get{self.getter.c(keyword: '')}
+			\})
+			"""
 			
-		elif !STACK.tsc
-			if isStatic and up isa ClassInitBlock
-				if @vscope
-					if let fn = STACK.up(Func)
-						@vscope.mergeScopeInto(fn.@scope)
-				out = OP('=',OP('.',THIS,name),value or UNDEFINED).c + ';\n'
+			return tpl
 
-			elif !isStatic and up isa InstanceInitBlock
-				if @vscope
-					if let fn = STACK.up(Func)
-						@vscope.mergeScopeInto(fn.@scope)
+		elif !isStatic and up isa InstanceInitBlock
+			if @vscope
+				if let fn = STACK.up(Func)
+					@vscope.mergeScopeInto(fn.@scope)
 
-				let ctor = up.option(:ctor)
-				let opts = up.option(:opts)
-				let val = value or UNDEFINED
-				
-				let paramIndex = option(:paramIndex)
-				let restIndex = option(:restIndex)
-				let access
-				
-				if paramIndex != undefined
-					let name = option(:paramName)
-					access = ctor.@params.at(paramIndex,yes,name)
-					if value
-						val = If.ternary(OP('!==',access,UNDEFINED),access,val)
-					else
-						val = access
+			let key = name
+			if name isa Identifier
+				key = name.toStr
 
-				elif restIndex != undefined
-					let rest = ctor.@params.at(restIndex,yes,'$$',LIT('null'))
-					access = OP('.',rest,name)
+			let ctor = up.option(:ctor)
+			let opts = up.option(:opts)
+			let val = value or UNDEFINED
+			
+			let paramIndex = option(:paramIndex)
+			let restIndex = option(:restIndex)
+			let access
+			
+			if paramIndex != undefined
+				let name = option(:paramName)
+				access = ctor.@params.at(paramIndex,yes,name)
+				if value
+					val = If.ternary(OP('!==',access,UNDEFINED),access,val)
+				else
+					val = access
 
-					if value
-						access.cache(reuse: yes, name: 'v')
-						val = If.ternary(OP('&&',rest,OP('!==',access,UNDEFINED)),access,val)
-					else
-						val = If.ternary(rest,access,UNDEFINED)
-				
-				if self isa ClassAttribute and !value
-					return
+			elif restIndex != undefined
+				let rest = ctor.@params.at(restIndex,yes,'$$',LIT('null'))
+				access = OP('.',rest,name)
 
-				out = OP('=',OP('.',THIS,name),val).c + ';\n'
+				if value
+					access.cache(reuse: yes, name: 'v')
+					val = If.ternary(OP('&&',rest,OP('!==',access,UNDEFINED)),access,val)
+				else
+					val = If.ternary(rest,access,UNDEFINED)
+			
+			if self isa ClassAttribute and !value
+				return
+
+			out = OP('=',OP('.',THIS,name),val).c + ';\n'
+
+			
+			if watchBody
+				out = """
+				Object.defineProperty(this,{key.c},\{
+					enumerable: true,
+					set{self.setter.c(keyword: '')},
+					get{self.getter.c(keyword: '')}
+				\});
+				{out}
+				"""
+				# if the default is undefined, we dont really want this?
 
 		return out
 
 
 	def getter
 		@getter ||= if true
+			return parseTemplate('(){ return $get$; }')
+			let op = GET(THIS,storageSymbol)
+			return FN([],[op])
+
 			# let op = OP('.',THIS,storageKey)
 			let op = CALL(GET(storageMap,'get'),[THIS])
 			let getter = op
@@ -1887,11 +1931,39 @@ export class ClassField < Node
 	def setterForValue value
 		OP('=',OP('.',THIS,storageKey),value)
 
+	def parseTemplate tpl
+		tpl = tpl.replace(/\$(\w+)\$/g) do |m,key|
+			if key == 'get'
+				GET(THIS,storageSymbol).c
+			elif key == 'set'
+				OP('=',GET(THIS,storageSymbol),LIT('value')).c
+			elif key == 'watcher'
+				GET(THIS,watcherSymbol).c
+			else
+				''
+		LIT(tpl)
+
 	def setter
 		@setter ||= if true
-			let op = CALL(GET(storageMap,'set'),[THIS,LIT('value')])
+			let watch = watchBody
+			# is it better to use a template?
+			let tpl = '''
+				(value){
+						let old = $get$;
+						if(value !== old){
+							$set$;
+							$watcher$({new:value,old:old});
+						}
+					}
+			'''
+			parseTemplate(tpl)
+
+			# if watch
+			# 	body.unshift OP('=',LIT('let old'),op)
+			# 	body.unshift LIT('let same = old == value')
+			# let op = CALL(GET(storageMap,'set'),[THIS,LIT('value')])
 			# OP('=',OP('.',THIS,storageKey),LIT('value'))
-			FN([LIT('value')],[op]).set(noreturn: true)
+			# FN([LIT('value')],[setop]).set(noreturn: true)
 
 	def decorater
 		@decorater ||= if true
@@ -2929,6 +3001,9 @@ export class ClassDeclaration < Code
 				declaredFields[name] = node
 				if separateInitChain
 					node.set(restIndex: 0)
+				# if node.watchBody
+				#	console.log 'has watcher??'
+
 		
 		if option(:params)
 			# find the rest param
@@ -2967,16 +3042,23 @@ export class ClassDeclaration < Code
 
 		var ctor = body.option(:ctor)
 
-		if STACK.tsc
-			if ctor and @autosuper
-				ctor.body.add([LIT("super()"),BR],0)
-			return self
-
+		# if STACK.tsc
+		#	if ctor and @autosuper
+		#		ctor.body.add([LIT("super()"),BR],0)
+		#	# return self
+		let tsc = STACK.tsc
 		var inits = InstanceInitBlock.new()
 		var staticInits = ClassInitBlock.new()
 		var ctor = body.option(:ctor)
 
-		for node in body when node isa ClassField
+		let fieldNodes = body.filter do |node| node isa ClassField
+
+		for node in fieldNodes
+			if node.watchBody
+				addMethod(node.watcherSymbol,[],[node.watchBody],{}) do |fn|
+					node.@watchMethod = fn
+					node.@watchParam = fn.params.at(0,yes,'e')
+
 			if node.hasStaticInits
 				staticInits.add(node)
 			if node.hasConstructorInits
@@ -2996,19 +3078,21 @@ export class ClassDeclaration < Code
 			@inits = inits
 			instanceInit
 			inits.set(ctor: instanceInit)
-			instanceInit.inject(inits)
+
+			unless tsc
+				instanceInit.inject(inits)
+
 			if isTag
 				# tags always call init from outside the actual construction
 				yes
 
 			elif !@superclass
-				@inits = inits
 				let initop = OP('.',THIS,initKey)
 				if !ctor
 					ctor = addMethod('constructor',[],[],{})
 					let param = ctor.params.at(0,yes,'$$',LIT('null'))
 					let callop = CALL(initop,[param])
-					ctor.body.add([callop,BR],0)
+					ctor.body.add([callop,BR],0) unless tsc
 				else
 					let sup = ctor.option(:supr)
 					if sup
@@ -3027,6 +3111,9 @@ export class ClassDeclaration < Code
 					let after = ctor.option(:injectInitAfter)
 					ctor.inject(op,after ? {after: after} : 0)
 				yes
+
+		if tsc and ctor and @autosuper
+			ctor.body.add([LIT("super()"),BR],0)
 
 		if !staticInits.isEmpty
 			staticInit.inject(staticInits,0)
@@ -9608,6 +9695,13 @@ var HELPERS = {
 		Object.defineProperty(target,key,o);
 	};'''
 
+	watcher: '''(k,w){
+		return { enumerable:true,
+			set(v){var o=this[k]; (v===o)||(this[k]=v,this[w]({new:v,old:o}));}
+			get(){ return this[k] }
+		};
+	};'''
+
 	decorate: '''(decorators,target,key,desc){
 		var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
 		if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10559,6 +10653,9 @@ export class Variable < Node
 		@references:length
 
 	def c params
+		if params and params:as == 'field'
+			return "[" + c({}) + "]"
+
 		return @c if @c
 		# options - proxy??
 		if @proxy
