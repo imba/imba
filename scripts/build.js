@@ -17,6 +17,10 @@ function plugin(build){
 	let watcher = this.watcher;
 	let fs = require('fs');
 
+	build.onResolve({filter: /^compiler$/}, (args) => {
+		return {path: "./compiler.cjs", external: true}
+	});
+
 	build.onLoad({ filter: /\.imba1/ }, async (args) => {
 		// console.log('loading imba',args);
 		if(watcher) watcher.add(args.path);
@@ -87,8 +91,8 @@ async function bundle(options){
 	let watcher = entry.watcher = argv.watch && chokidar.watch([]);
 
 	options.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
-	options.resolveExtensions = ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json','.tests'];
-	options.target = options.target || ['es2019']; // ['chrome58', 'firefox57', 'safari11', 'edge16'];
+	options.resolveExtensions = ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'];
+	options.target = options.target || ['es2019'];
 	options.bundle = true;
 	options.incremental = !!watcher;
 	options.logLevel = 'info';
@@ -158,4 +162,12 @@ bundle([{
 	sourcemap: false,
 	format: 'iife',
 	platform: 'browser'
+},{
+	entryPoints: ['src/compiler/bundler.imba'],
+	outfile: 'dist/bundler.js',
+	minify: false,
+	sourcemap: false,
+	format: 'cjs',
+	external: ['chokidar','esbuild'],
+	platform: 'node'
 }])

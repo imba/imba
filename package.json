@@ -63,7 +63,8 @@
   "type": "commonjs",
   "browser": {
     "imba": "./dist/imba.js",
-    "path": "./vendor/path.js"
+    "path": "./vendor/path.js",
+    "compilah": "./dist/compiler.js"
   },
   "exports": {
     "./core": "./core.imba",
