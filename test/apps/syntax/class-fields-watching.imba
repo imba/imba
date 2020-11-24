@@ -75,6 +75,7 @@ describe "Class Field watching" do
 		item.parent = root
 		eq item.parent, root
 		ok root.children.has(item)
+		eq Object.keys(item), ['name','children','actualParent']
 
 	test "using watcher" do
 		###
@@ -86,8 +87,8 @@ describe "Class Field watching" do
 			prop name = "Entry"
 			prop children = new Set
 			prop parent @set
-				e..value.children.add(self)
-				e..oldValue.children.delete(self)
+				e.value..children..add(self)
+				e.oldValue..children..delete(self)
 
 		# we can again use the property like any other,
 		# with default constructor and all that.

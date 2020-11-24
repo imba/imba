@@ -109,7 +109,7 @@ export var OP = do |op, l, r|
 		return l
 
 	switch o
-		when '.'
+		when '.','?.'
 			if l isa Super
 				l.member = r
 				return l
@@ -133,11 +133,11 @@ export var OP = do |op, l, r|
 		when '+=','-=','*=','/=','^=','%=','**='
 			CompoundAssign.new(op,l,r)
 
-		when '?.'
-			if r isa VarOrAccess
-				r = r.value
-			# depends on the right side - this is wrong
-			PropertyAccess.new(op,l,r)
+		# when '?.'
+		# 	if r isa VarOrAccess
+		# 		r = r.value
+		# 	# depends on the right side - this is wrong
+		# 	PropertyAccess.new(op,l,r)
 
 		when 'instanceof','isa'
 			InstanceOf.new(op,l,r)
@@ -1757,6 +1757,9 @@ export class ClassField < Node
 			value.@scope = @vscope = FieldScope.new(value)
 			value.@scope.@parent = scope__
 			value.traverse
+
+		if watchBody
+			@descriptor = STACK.root.declare("{oid}$Prop",util.watcher(storageSymbol,watcherSymbol), type: 'const', system: yes)
 		self
 	
 
@@ -1785,7 +1788,7 @@ export class ClassField < Node
 		no
 		
 	def hasStaticInits
-		isStatic or @decorators or watchBody
+		isStatic or @decorators # or watchBody
 		
 	def hasConstructorInits
 		!isStatic
@@ -1892,15 +1895,8 @@ export class ClassField < Node
 
 			
 			if watchBody
-				out = """
-				Object.defineProperty(this,{key.c},\{
-					enumerable: true,
-					set{self.setter.c(keyword: '')},
-					get{self.getter.c(keyword: '')}
-				\});
-				{out}
-				"""
-				# if the default is undefined, we dont really want this?
+				@descriptor ||= STACK.root.declare("{oid}$Prop",util.watcher(storageSymbol,watcherSymbol), type: 'const', system: yes)
+				out = "Object.defineProperty(this,{key.c},{@descriptor.c});\n{out}"
 
 		return out
 
@@ -4553,6 +4549,8 @@ export class Access < Op
 		var pre = ""
 		var mark = ''
 
+		let safeop = safechain ? '?' : ''
+
 		unless @startLoc
 			@startLoc = (lft or rgt).startLoc
 
@@ -4564,7 +4562,7 @@ export class Access < Op
 
 		if rgt isa Num
 			# FIXME not adding type info
-			return ctx.c + "[" + rgt.c + "]"
+			return ctx.c + "{safeop}[" + rgt.c + "]"
 		
 		# is this right? Should not the index compile the brackets
 		# or value is a symbol -- should be the same, no?
@@ -4586,20 +4584,16 @@ export class Access < Op
 
 		elif rgt isa Identifier and rgt.isValidIdentifier
 			raw = rgt.c
-
-		if safechain and ctx
-			ctx.cache(force: yes)
-			pre = ctx.c + " && "
 		
 		# really?
 		# var ctx = (left || scope__.context)
 		var out = if raw
 			# see if it needs quoting
 			# need to check to see if it is legal
-			ctx ? ".{raw}" : raw
+			ctx ? "{safeop}.{raw}" : raw
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes, as: 'value') : rgt
-			"[{r}]"
+			"{safeop}[{r}]"
 
 		# console.log "access up {stack.up}"
 
@@ -4641,8 +4635,7 @@ export class Access < Op
 		right isa Identifier ? right.alias : super()
 
 	def safechain
-		# right.safechain
-		String(@op) == '..' or String(@op) == '?.'
+		String(@op) == '?.'
 
 	def cache o
 		(right isa Ivar && !left) ? self : super(o)
@@ -5867,12 +5860,16 @@ export class Call < Node
 			# console.log "Special assert call!! {arg.c}",arg isa Op
 
 			# rewrite a.len(..) to len$(a)
-
-		if callee.safechain
-			var isfn = Util.IsFunction.new([callee])
-			wrap = ["{isfn.c}  &&  ",""]
-			callee = OP('.',callee.left,callee.right)
-			# callee should already be cached now -
+		
+		let safeop = ''
+		if callee isa Access and callee.op == '?.'
+			safeop = '?.'
+		# if callee.safechain
+		#	console.log 'function safechain!!'
+		#	var isfn = Util.IsFunction.new([callee])
+		#	wrap = ["{isfn.c}  &&  ",""]
+		#	callee = OP('.',callee.left,callee.right)
+		#	# callee should already be cached now -
 
 		# should just force expression from the start, no?
 		if @receiver
@@ -5883,7 +5880,7 @@ export class Call < Node
 			out = "{callee.c(expression: yes)}.call({args.c(expression: yes,mark: false)})"
 
 		else
-			out = "{callee.c(expression: yes)}({args.c(expression: yes,mark: false)})"
+			out = "{callee.c(expression: yes)}{safeop}({args.c(expression: yes,mark: false)})"
 
 		if wrap
 			# we set the cachevar inside
@@ -9697,7 +9694,7 @@ var HELPERS = {
 
 	watcher: '''(k,w){
 		return { enumerable:true,
-			set(v){var o=this[k]; (v===o)||(this[k]=v,this[w]({new:v,old:o}));}
+			set(v){var o=this[k]; (v===o)||(this[k]=v,this[w]({value:v,oldValue:o}));},
 			get(){ return this[k] }
 		};
 	};'''
@@ -10267,7 +10264,8 @@ export class RootScope < Scope
 		# log "add helper",typ,value
 		if @helpers.indexOf(value) == -1
 			@helpers.push(value)
-			@head.unshift(value)
+			# console.log 'adding helper',value
+			# @head.unshift(value)
 
 		return self
 
@@ -10365,7 +10363,11 @@ export class RootScope < Scope
 		let pre = Block.new([])
 		pre.head = head
 				
-		return pre.c(o) + '\n' + body
+		let out = pre.c(o) + '\n' + body
+
+		if @helpers.len
+			out = AST.cary(@helpers).join(';\n') + '\n' + out
+		return out
 
 export class ModuleScope < Scope
 
