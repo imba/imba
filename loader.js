@@ -1,4 +1,4 @@
-var compiler = require('./dist/compiler.js');
+var compiler = require('./dist/compiler.cjs');
 var helpers = compiler.helpers;
 
 var path = require('path');
