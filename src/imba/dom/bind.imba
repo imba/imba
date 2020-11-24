@@ -9,10 +9,10 @@ const toBind = {
 	BUTTON: yes
 }
 
-var isGroup = do(obj)
+let isGroup = do(obj)
 	return obj isa Array or (obj && obj.has isa Function)
 
-var bindHas = do(object,value)
+let bindHas = do(object,value)
 	if object == value
 		return true
 	elif object isa Array
@@ -24,13 +24,13 @@ var bindHas = do(object,value)
 	else
 		return false
 
-var bindAdd = do(object,value)
+let bindAdd = do(object,value)
 	if object isa Array
 		object.push(value)
 	elif object and object.add isa Function
 		object.add(value)
 
-var bindRemove = do(object,value)
+let bindRemove = do(object,value)
 	if object isa Array
 		let idx = object.indexOf(value)
 		object.splice(idx,1) if idx >= 0

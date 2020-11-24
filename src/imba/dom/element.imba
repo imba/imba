@@ -79,7 +79,7 @@ Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
 def imba.createElement name, parent, flags, text
-	var el = doc.createElement(name)
+	let el = doc.createElement(name)
 		
 	el.className = flags if flags
 

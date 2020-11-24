@@ -1940,26 +1940,7 @@ export class ClassField < Node
 		LIT(tpl)
 
 	def setter
-		@setter ||= if true
-			let watch = watchBody
-			# is it better to use a template?
-			let tpl = '''
-				(value){
-						let old = $get$;
-						if(value !== old){
-							$set$;
-							$watcher$({new:value,old:old});
-						}
-					}
-			'''
-			parseTemplate(tpl)
-
-			# if watch
-			# 	body.unshift OP('=',LIT('let old'),op)
-			# 	body.unshift LIT('let same = old == value')
-			# let op = CALL(GET(storageMap,'set'),[THIS,LIT('value')])
-			# OP('=',OP('.',THIS,storageKey),LIT('value'))
-			# FN([LIT('value')],[setop]).set(noreturn: true)
+		@setter ||= ""
 
 	def decorater
 		@decorater ||= if true
