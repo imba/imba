@@ -379,8 +379,8 @@ def main
 		console.log "The following file(s) crashed:"
 		console.log (crashed.map do " - {$1.path}").join('\n')
 
-	await new Promise do(resolve) setTimeout(resolve,100000)
-	server.close do
-		process.exit(failed.length ? 1 : 0)
+	# await new Promise do(resolve) setTimeout(resolve,100000)
+	# server.close do
+	process.exit(failed.length ? 1 : 0)
 
 main()
