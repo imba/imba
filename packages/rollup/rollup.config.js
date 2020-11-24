@@ -1,7 +1,7 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 
-var imbac = require('../../dist/compiler.js');
+var imbac = require('../../dist/compiler.cjs');
 var extname = require('path').extname;
 
 function imba(options) {
