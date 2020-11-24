@@ -2,7 +2,7 @@
 
 var path = require('path')
 var fs = require('fs');
-var compiler = require("../dist/compiler");
+var compiler = require("../dist/compiler.cjs");
 
 var helpers = compiler.helpers;
 var package = require('../package.json');

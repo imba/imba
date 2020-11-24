@@ -366,4 +366,8 @@ global def eqcss el, match,sel
 			global.eq(real,expected)
 	return
 
+window.onerror = do(e)
+	console.log('page:error',{message: (e.message or e)})
 
+window.onunhandledrejection = do(e)
+	console.log('page:error',{message: e.reason.message})

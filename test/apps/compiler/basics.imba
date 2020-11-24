@@ -17,7 +17,7 @@ if true
 
 def compile name, o = {}
 	o.sourcePath ||= "{name}.imba"
-	global.imba.compiler.compile(fs[name],o)
+	global.imbac.compile(fs[name],o)
 
 test 'platform: node' do
 	let res = String compile('code1', platform: 'node')

@@ -71,7 +71,7 @@
   "exports": {
     "./core": "./core.imba",
     "./compiler": {
-      "require": "./dist/compiler.js",
+      "require": "./dist/compiler.cjs",
       "default": "./dist/compiler.mjs"
     }
   },

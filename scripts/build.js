@@ -62,7 +62,7 @@ async function bundle(options){
 
 bundle([{
 	entryPoints: ['src/compiler/compiler.imba1'],
-	outfile: 'dist/compiler.js',
+	outfile: 'dist/compiler.cjs',
 	sourcemap: false,
 	format: 'cjs',
 	platform: 'browser'
@@ -71,6 +71,13 @@ bundle([{
 	outfile: 'dist/compiler.mjs',
 	sourcemap: false,
 	format: 'esm',
+	platform: 'browser',
+},{
+	entryPoints: ['src/compiler/compiler.imba1'],
+	outfile: 'dist/compiler.js',
+	sourcemap: false,
+	format: 'iife',
+	globalName: 'imbac',
 	platform: 'browser',
 },{
 	entryPoints: ['src/imba/index.imba'],
@@ -101,6 +108,13 @@ bundle([{
 },{
 	entryPoints: ['test/index.imba'],
 	outfile: 'test/index.js',
+	minify: false,
+	sourcemap: false,
+	format: 'iife',
+	platform: 'browser'
+},{
+	entryPoints: ['test/spec.imba'],
+	outfile: 'dist/imba.spec.js',
 	minify: false,
 	sourcemap: false,
 	format: 'iife',

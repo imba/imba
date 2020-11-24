@@ -1,7 +1,7 @@
 var puppeteer = require "puppeteer"
 var path = require "path"
 var fs = require "fs"
-var compiler = require "../dist/compiler"
+var compiler = require "../dist/compiler.cjs"
 var helpers = compiler.helpers
 var http = require('http')
 var browser
@@ -128,7 +128,7 @@ def spawnRunner
 		if runner.page
 			runner.meta.push('pup')
 
-		await runner.waitForSelector('test-runner')
+		# await runner.waitForSelector('test-runner')
 		return receiver[meth].apply(receiver,params)
 
 			
@@ -173,7 +173,8 @@ def run page
 				process.stdout.write(out or ".")
 
 		let root = path.resolve(__dirname,"..","test")
-		let src =  "file://{root}/index.html?{page.nr}#{page.path}"
+		let src = "http://localhost:{PORT}/{page.path}.html"
+		# let src = "file://{root}/index.html?{page.nr}#{page.path}"
 		let state = 'setup'
 		let currTest
 
@@ -202,6 +203,7 @@ def run page
 				# console.log "starting tests!"
 			
 			'spec:done': do(e)
+				# console.log 'spec done'
 				test.results = e
 				setTimeout(&,0) do releaseRunner(runner,page)
 				resolve(test)
@@ -221,6 +223,7 @@ def run page
 		runner.meta.push(page.path)
 		try
 			await runner.goto(src, waitUntil: 'domcontentloaded', timeout: 5000)
+			# console.log 'went to!'
 			# await runner.waitFor(0)
 		catch e
 			console.log 'timed out for',page.path,e
@@ -230,15 +233,47 @@ def run page
 			console.log "evaluate the loading now!"
 
 def serve
+	let statics = {}
+	for item in ['imba.js','imba.spec.js','compiler.js']
+		let body = fs.readFileSync(path.join(__dirname,'..','dist',item),'utf8')
+		statics["/{item}"] = body
+
 	server = http.createServer do(req,res)
-		
+		if let file = statics[req.url]
+			res.write(file)
+			return res.end!
+
 		# let url = new URL(req.url)
 		let src = path.join(__dirname,"..","test",req.url)
-		# console.log "requested {req.url} {src}"
+		let name = path.basename(src)
+		let ext = src.split('.').pop!
+		let barename = name.replace(/(\.(js|html|imba))+$/,'')
+		let entry = pages[src.replace(/(\.(js|html|imba))+$/,'.imba')]
+		# console.log "requested {req.url} {src}",entry
+		# let plain = src.replace(/\.(js|html|)/)
 
-		let page = pages[src]
-		if page
-			let body = page.body
+
+		if ext == 'html'
+			let html = """
+				<html><head>
+				<meta charset='UTF-8'>
+				<script src='/imba.js' type='text/javascript'></script>
+				<script src='/imba.spec.js' type='text/javascript'></script>
+				</head><body>
+				<script src='./{barename}.imba' type='text/javascript'></script>
+				<script>SPEC.run();</script>
+				</body></html>
+			"""
+
+			if entry and entry.body.indexOf('global.imbac') >= 0
+				html = html.replace('</head>',"<script src='/compiler.js' type='text/javascript'></script></head>")
+			# console.log 'returning',html
+			res.write(html)
+			return res.end!
+
+		if entry
+			let body = entry.body
+			# console.log 'found page'
 			
 			let opts = {
 				platform: 'browser'
@@ -251,12 +286,16 @@ def serve
 				# possibly use esbuild if there are exports etc
 				let output = compiler.compile(body,opts)
 				res.writeHead(200, { 'Content-Type': 'application/javascript' })
-				res.write(output.js)
+				let js = output.js
+				# js = '(function(){' + js + '})();SPEC.run()'
+				# console.log 'write html',output.js
+				res.write(js)
 			catch e
 				# res.write 'console.log("page:error",{message: "error compiling"})'
 				res.write 'console.log("hello")'
 		else
 			console.warn "NOT HANDLING REQUEST {src}"
+			res.write('')
 		res.end!
 
 	new Promise do(resolve)
@@ -275,6 +314,7 @@ def main
 	pages = entries.map do(src,i)
 		{
 			path: src.replace(testFolder,"apps"),
+
 			sourcePath: src,
 			state: null,
 			log: []
@@ -339,7 +379,7 @@ def main
 		console.log "The following file(s) crashed:"
 		console.log (crashed.map do " - {$1.path}").join('\n')
 
-	# await new Promise do(resolve) setTimeout(resolve,100000)
+	await new Promise do(resolve) setTimeout(resolve,100000)
 	server.close do
 		process.exit(failed.length ? 1 : 0)
 
