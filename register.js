@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var cp = require('child_process');
-var compiler = require('./dist/compiler');
+var compiler = require('./dist/compiler.cjs');
 
 var cacheDir = process.env.IMBA_CACHE_DIR;
 var cachePrefix

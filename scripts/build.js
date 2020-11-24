@@ -1,15 +1,25 @@
 const imba1 = require('./bootstrap.compiler.js');
 const imba2 = require('./bootstrap.compiler2.js');
+const chokidar = require('chokidar');
+
+let helpers = imba2.helpers;
 let time = 0;
+let argv = helpers.parseArgs(process.argv.slice(2),{
+	alias: {w: 'watch'}
+})
+console.log('args',argv,process.argv,argv.watch);
+let meta = Symbol();
+
 
 function plugin(build){
 	// console.log('setting up plugin',build,this);
-	let options = this;
-
+	let options = this.options;
+	let watcher = this.watcher;
 	let fs = require('fs');
 
 	build.onLoad({ filter: /\.imba1/ }, async (args) => {
 		// console.log('loading imba',args);
+		if(watcher) watcher.add(args.path);
 		let raw = await fs.promises.readFile(args.path, 'utf8');
 		let target = {
 			browser: 'web',
@@ -28,6 +38,7 @@ function plugin(build){
 
 	build.onLoad({ filter: /\.imba/ }, async (args) => {
 		// console.log('loading imba',args);
+		if(watcher) watcher.add(args.path);
 		let raw = await fs.promises.readFile(args.path, 'utf8');
 		let t0 = Date.now();
 		let body = imba2.compile(raw,{
@@ -50,14 +61,28 @@ async function bundle(options){
 		}
 		return;
 	}
-	options.plugins = [{name: 'imba', setup: plugin.bind(options)}];
+	let input = options.entryPoints[0];
+	let entry = {options: options}
+	let watcher = entry.watcher = argv.watch && chokidar.watch([]);
+
+	options.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
 	options.resolveExtensions = ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json','.tests'];
 	options.target = options.target || ['es2019']; // ['chrome58', 'firefox57', 'safari11', 'edge16'];
 	options.bundle = true;
-	let input = options.entryPoints[0];
-	let res = await require('esbuild').build(options);
+	options.incremental = !!watcher;
+	
+	let result = await require('esbuild').build(options);
+	if(watcher){
+		watcher.on('change',async ()=>{
+			console.log('rebuilding',input);
+			let rebuilt = await result.rebuild();
+			console.log('rebuilt',input);
+		})
+	}
 	console.log(`built ${input} in ${time}ms`);
 }
+
+// 
 
 bundle([{
 	entryPoints: ['src/compiler/compiler.imba1'],
@@ -66,7 +91,19 @@ bundle([{
 	format: 'cjs',
 	platform: 'browser'
 },{
-
+	entryPoints: ['src/compiler/compiler.imba1'],
+	outfile: 'dist/compiler.mjs',
+	sourcemap: false,
+	format: 'esm',
+	platform: 'browser',
+},{
+	entryPoints: ['src/compiler/compiler.imba1'],
+	outfile: 'dist/compiler.js',
+	sourcemap: false,
+	format: 'iife',
+	globalName: 'imbac',
+	platform: 'browser',
+},{
 	entryPoints: ['src/imba/index.imba'],
 	outfile: 'dist/imba.js',
 	sourcemap: false,

@@ -44,7 +44,7 @@
     "bootstrap": "node scripts/build-parser.js && node scripts/build.js",
     "build": "node scripts/build.js",
     "build-parser": "node scripts/build-parser.js",
-    "watch": "npm run bootstrap && rollup --watch -c rollup.config.js",
+    "watch": "node scripts/build.js -w",
     "prerelease": "lerna publish --dist-tag pre"
   },
   "bugs": "https://github.com/imba/imba/issues",
