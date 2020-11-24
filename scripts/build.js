@@ -106,13 +106,6 @@ bundle([{
 	format: 'iife',
 	platform: 'browser'
 },{
-	entryPoints: ['test/index.imba'],
-	outfile: 'test/index.js',
-	minify: false,
-	sourcemap: false,
-	format: 'iife',
-	platform: 'browser'
-},{
 	entryPoints: ['test/spec.imba'],
 	outfile: 'dist/imba.spec.js',
 	minify: false,

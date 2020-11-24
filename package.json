@@ -39,15 +39,12 @@
     }
   ],
   "scripts": {
-    "bootstrap": "node scripts/bootstrap.js",
-    "build-parser": "node scripts/generate-parser.js",
-    "test": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba",
-    "test-fast": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba -c",
+    "test": "bin/imba scripts/test-runner.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
-    "build": "npm run bootstrap && rollup -c rollup.config.js",
+    "bootstrap": "node scripts/build-parser.js && node scripts/build.js",
+    "build": "node scripts/build.js",
+    "build-parser": "node scripts/build-parser.js",
     "watch": "npm run bootstrap && rollup --watch -c rollup.config.js",
-    "build-compiler": "npm run bootstrap && webpack --mode=none",
-    "watch-compiler": "npm run bootstrap && webpack --mode=none --watch",
     "prerelease": "lerna publish --dist-tag pre"
   },
   "bugs": "https://github.com/imba/imba/issues",

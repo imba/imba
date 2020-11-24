@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x, 12.x]
+        node-version: [14.x]
 
     steps:
     - uses: actions/checkout@v1
@@ -17,13 +17,11 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: npm install, build-compiler, build and test
+    - name: npm install, bootstrap, build and test
       run: |
         npm install -g lerna
         lerna exec npm install
-        npm run build-compiler
-        npm run build
-        lerna run build
-        lerna run test
+        npm run bootstrap
+        npm run test
       env:
         CI: true
