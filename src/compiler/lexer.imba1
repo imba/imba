@@ -2150,7 +2150,7 @@ export class Lexer
 
 					end = stack[stack:length - 1]
 					continue
-			if end is '}' and letter is [')']
+			if end is '}' and letter is ')'
 				stack.push end = letter
 			elif end is '}' and letter is '{'
 				stack.push end = '}'

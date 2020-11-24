@@ -2062,7 +2062,7 @@ export class Parens < ValueNode
 		return str
 
 	def set obj
-		console.log "Parens set {JSON.stringify(obj)}"
+		# console.log "Parens set {JSON.stringify(obj)}"
 		super(obj)
 
 

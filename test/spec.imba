@@ -148,6 +148,7 @@ global class Spec < SpecComponent
 
 	def run
 		new Promise do(resolve,reject)
+			pup("spec:start",{})
 			let prevInfo = console.info
 			observer.observe(document.body,{
 				attributes: true,

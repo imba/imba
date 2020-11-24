@@ -3,7 +3,11 @@ var path = require "path"
 var fs = require "fs"
 var compiler = require "../dist/compiler"
 var helpers = compiler.helpers
+var http = require('http')
 var browser
+var esbuild = require 'esbuild'
+const PORT = 8089
+
 
 var args = [
 	'--disable-web-security',
@@ -16,6 +20,8 @@ var args = [
 	'--disable-dev-shm-usage',
 	'--single-process'
 ]
+
+let server = null
 
 def getFiles(dir, o = [])
 	fs.readdirSync(dir, withFileTypes: true).filter do |src|
@@ -63,13 +69,13 @@ let donePromise = new Promise do(resolve,reject)
 
 
 def startNextTest
-	let next = pages.find(do !$1.state)
+	let next = pages.find(do !$1.state && !$1.skip)
 
 	if next
 		next.state = 'running'
 		setTimeout(&,0) do run(next)
 
-	elif pages.every(do $1.state == 'done')
+	elif pages.every(do $1.state == 'done' or $1.skip )
 		doneResolve(pages) if doneResolve
 		doneResolve = null
 	
@@ -190,6 +196,10 @@ def run page
 
 			'spec:fail': do(e)
 				print helpers.ansi.f('redBright',"    ✘ {e.message}")
+
+			'spec:start': do(e)
+				yes
+				# console.log "starting tests!"
 			
 			'spec:done': do(e)
 				test.results = e
@@ -216,32 +226,81 @@ def run page
 			console.log 'timed out for',page.path,e
 			page.error ||= e
 
-		unless page.error
-			runner.evaluate(do SPEC && SPEC.run!)
+		if page.error
+			console.log "evaluate the loading now!"
 
+def serve
+	server = http.createServer do(req,res)
+		
+		# let url = new URL(req.url)
+		let src = path.join(__dirname,"..","test",req.url)
+		# console.log "requested {req.url} {src}"
+
+		let page = pages[src]
+		if page
+			let body = page.body
+			
+			let opts = {
+				platform: 'browser'
+				sourcePath: src
+				imbaPath: null
+				raiseErrors: true
+			}
+
+			try
+				# possibly use esbuild if there are exports etc
+				let output = compiler.compile(body,opts)
+				res.writeHead(200, { 'Content-Type': 'application/javascript' })
+				res.write(output.js)
+			catch e
+				# res.write 'console.log("page:error",{message: "error compiling"})'
+				res.write 'console.log("hello")'
+		else
+			console.warn "NOT HANDLING REQUEST {src}"
+		res.end!
+
+	new Promise do(resolve)
+		server.listen(PORT) do resolve(server)
 
 def main
+
 	let now = Date.now()
+	let server = await serve!
 	let testFolder = path.resolve(__dirname,"..","test","apps")
 	let entries = getFiles(testFolder).filter do |item|
 		options.main ? (item.indexOf(options.main) >= 0) : !item.match(/(examples|tmp)\//)
 
-	let files = entries.map(|v| v.replace(testFolder,"apps"))
+	# let files = entries.map(|v| )
 	
-	pages = files.map do(src,i)
+	pages = entries.map do(src,i)
 		{
-			path: src,
+			path: src.replace(testFolder,"apps"),
+			sourcePath: src,
 			state: null,
 			log: []
 			tests: []
 			failed: []
 			nr: i
+			body: fs.readFileSync(src,'utf8')
 		}
-	
-	options.verbose = true if pages.length < 3
 
-	let concurrency = Math.min(options.concurrent ? 3 : 1,pages.length)
 	
+	for page in pages
+		pages[page.sourcePath] = page
+		let bundle = page.body.match(/^(import|export) /gm)
+		page.skip = yes if bundle
+		page.skip = yes if page.body.match(/# SKIP/)
+
+	let entrypoints = pages.filter do !$1.skip
+
+
+	console.log "starting tests?",entrypoints.length
+	
+		
+	# fetch the actual items to compile first
+	options.verbose = true if entrypoints.length < 3
+
+	let concurrency = Math.min(options.concurrent ? 3 : 1,entrypoints.length)
 	while --concurrency >= 0
 		startNextTest!
 	
@@ -249,14 +308,14 @@ def main
 	
 	if options.concurrent and options.verbose
 		console.log('')
-		for page in pages
+		for page in entrypoints
 			for row in page.result.log
 				console.log(*row)
 			console.log('')
 
 	let passed = tests.filter do !$1.failed
 	let failed = tests.filter do $1.failed
-	let crashed = pages.filter do $1.error
+	let crashed = entrypoints.filter do $1.error
 	console.log('')
 	console.log("{tests.length} tests took {Date.now() - now}ms")
 
@@ -266,7 +325,7 @@ def main
 	if failed.length
 		console.log helpers.ansi.f('redBright',"{failed.length} test{failed.length == 1 ? '' : 's'} failed")
 		console.log "The following file(s) failed:"
-		for page in pages when page.failed.length
+		for page in entrypoints when page.failed.length
 			console.log "  {page.path}"
 			for test in page.failed
 				console.log "  " + test.detail
@@ -279,8 +338,9 @@ def main
 	if crashed.length
 		console.log "The following file(s) crashed:"
 		console.log (crashed.map do " - {$1.path}").join('\n')
-	
-	
-	process.exit(failed.length ? 1 : 0)
+
+	# await new Promise do(resolve) setTimeout(resolve,100000)
+	server.close do
+		process.exit(failed.length ? 1 : 0)
 
 main()

@@ -1,14 +1,16 @@
 
-var paths = require.context('raw-loader!./apps', true, /[\w\-\/]+\.imba$/)
+# var samples = require './apps.tests'
+# var paths = require.context('raw-loader!./apps', true, /[\w\-\/]+\.imba$/)
 var examples = {}
 
-for src in paths.keys()
-	let path = "apps/" + src.slice(2)
-	var example = {
-		path: path
-		body: paths(src).default
-	}
-	examples[path] = example
+# for src in paths.keys()
+# 	let path = "apps/" + src.slice(2)
+# 	var example = {
+# 		path: path
+# 		body: paths(src).default
+# 	}
+# 	examples[path] = example
+
 
 console.log "examples",examples
 
@@ -50,7 +52,7 @@ var run = do |js|
 	
 
 var compileAndRun = do |example|
-	
+
 	try
 		var result = compiler.compile(example.body,{
 			sourcePath: example.path,
@@ -64,8 +66,18 @@ var compileAndRun = do |example|
 		# console.log('compilation error')
 
 
-var load = do |src|
-	if !global.location.origin.startsWith('file://')
+var load = do(src)
+	if true
+		let script = document.createElement('script')
+		script.src = 'http://localhost:8089/' + src # .replace('.imba','.js')
+		script.onload = do
+			console.log 'loaded script',src
+			SPEC.run!
+		script.type = "application/javascript"
+		document.head.appendChild(script)
+		
+
+	elif !global.location.origin.startsWith('file://')
 		let script = document.createElement('script')
 		script.type = 'module'
 		script.src = './' + src.replace('.imba','.js')

@@ -1,3 +1,4 @@
+# SKIP
 
 def @log target,key,desc
 	let prev = desc.value
