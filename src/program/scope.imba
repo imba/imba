@@ -227,7 +227,7 @@ export class Scope < Node
 		ident && ident.mods & M.Static
 	
 	get handler?
-		!!type.match(/handler/)
+		!!type.match(/handler|spy/)
 
 	get member?
 		!!type.match(/def|get|set/)

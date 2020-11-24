@@ -110,7 +110,6 @@ describe "Class Field watching" do
 		eq called, 1
 		eq item.names,["A","B"]
 			
-
 	###
 	Imba allows you to include a method body after your
 	property declaration which will 
