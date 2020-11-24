@@ -7,9 +7,9 @@ let time = 0;
 let argv = helpers.parseArgs(process.argv.slice(2),{
 	alias: {w: 'watch'}
 })
-console.log('args',argv,process.argv,argv.watch);
-let meta = Symbol();
 
+let meta = Symbol();
+let compileCache = {};
 
 function plugin(build){
 	// console.log('setting up plugin',build,this);
@@ -20,7 +20,16 @@ function plugin(build){
 	build.onLoad({ filter: /\.imba1/ }, async (args) => {
 		// console.log('loading imba',args);
 		if(watcher) watcher.add(args.path);
+
+		let key = `${args.path}:${options.platform}`
 		let raw = await fs.promises.readFile(args.path, 'utf8');
+		let cached = compileCache[key];
+
+		if(cached && cached.input == raw){
+			// console.log('found cached version',key);
+			return {contents: cached.output};
+		}
+		
 		let target = {
 			browser: 'web',
 			worker: 'webworker'
@@ -33,6 +42,7 @@ function plugin(build){
 			sourcePath: args.path
 		});
 		time += (Date.now() - t0);
+		compileCache[key] = {input: raw, output: body.js};
 		return {contents: body.js}
 	})
 
@@ -40,14 +50,25 @@ function plugin(build){
 		// console.log('loading imba',args);
 		if(watcher) watcher.add(args.path);
 		let raw = await fs.promises.readFile(args.path, 'utf8');
+		let key = `${args.path}:${options.platform}`
+		let cached = compileCache[key];
+
+		if(cached && cached.input == raw){
+			// console.log('found cached version',key);
+			return {contents: cached.output};
+		}
+
 		let t0 = Date.now();
 		let body = imba2.compile(raw,{
 			platform: options.platform || 'browser',
+			format: 'esm',
 			sourcePath: args.path,
 			imbaPath: null
 		});
 
 		time += (Date.now() - t0);
+		compileCache[key] = {input: raw, output: body.js};
+
 		return {
 			contents: body.js
 		}
@@ -70,6 +91,7 @@ async function bundle(options){
 	options.target = options.target || ['es2019']; // ['chrome58', 'firefox57', 'safari11', 'edge16'];
 	options.bundle = true;
 	options.incremental = !!watcher;
+	options.logLevel = 'info';
 	
 	let result = await require('esbuild').build(options);
 	if(watcher){
@@ -79,7 +101,7 @@ async function bundle(options){
 			console.log('rebuilt',input);
 		})
 	}
-	console.log(`built ${input} in ${time}ms`);
+	console.log(`built ${input}`);
 }
 
 // 
