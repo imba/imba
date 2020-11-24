@@ -33,7 +33,7 @@
   var createMethod = function () {
     var method = createOutputMethod('hex');
     if (NODE_JS) {
-      method = nodeWrap(method);
+      // method = nodeWrap(method);
     }
     method.create = function () {
       return new Sha1();

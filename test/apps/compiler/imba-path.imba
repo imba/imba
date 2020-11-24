@@ -12,7 +12,7 @@ tag App
 
 def compile name, o = {}
 	o.sourcePath ||= "{name}.imba"
-	global.imba.compiler.compile(fs[name],o)
+	global.imbac.compile(fs[name],o)
 
 test 'auto' do
 	let res = String compile('plain', platform: 'browser')

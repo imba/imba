@@ -556,7 +556,7 @@ export const states = {
 	]
 
 	field_: [
-		[/((?:lazy )?)((?:static )?)(const|let)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$2']] # $2_body.$S2.$2.$S4
+		[/((?:lazy )?)((?:static )?)(const|let|attr)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$3']] # $2_body.$S2.$2.$S4
 		[/static(?=\s+@id)/,'keyword.static']
 		[/(@id)(?=$)/,'field']
 		[/(@id)/,['field','@_field_1']]
@@ -566,11 +566,13 @@ export const states = {
 		denter(null,-1,-1)
 		'type_'
 		[/(\s*=\s*)/,['operator','@>_field_value']]
+		[/(\s*(?:\@)set\s*)/,['keyword.spy','@>_def&spy']]
 	]
 
 	_field_value: [
 		denter(2,-1,0)
 		'block_' # sure?
+		[/(\s*(?:\@)set\s*)/,['@rematch','@pop']]
 	]
 
 	var_: [

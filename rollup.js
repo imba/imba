@@ -1,5 +1,5 @@
   
-var imbac = require('./dist/compiler.js');
+var imbac = require('./dist/compiler.cjs');
 var extname = require('path').extname;
 
 exports.default = function(options) {

@@ -148,6 +148,7 @@ global class Spec < SpecComponent
 
 	def run
 		new Promise do(resolve,reject)
+			pup("spec:start",{})
 			let prevInfo = console.info
 			observer.observe(document.body,{
 				attributes: true,
@@ -365,4 +366,8 @@ global def eqcss el, match,sel
 			global.eq(real,expected)
 	return
 
+window.onerror = do(e)
+	console.log('page:error',{message: (e.message or e)})
 
+window.onunhandledrejection = do(e)
+	console.log('page:error',{message: e.reason.message})

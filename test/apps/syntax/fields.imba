@@ -12,15 +12,8 @@ class A2
 test do
 	let item = new A2
 	eq item.name, 'hello'
-	
-class A3(name)
-	name = 'hello'
-	
-test do
-	let item = new A3('john')
-	eq item.name, 'john'
 
-class A4(...)
+class A4
 	name = 'hello'
 	
 test do
