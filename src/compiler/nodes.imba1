@@ -594,7 +594,7 @@ export class Stack
 		assets ? assets[name] : null
 
 	def sourceId
-		return @sourceId if @sourceId
+		return @sourceId if (@sourceId ||= @options:sourceId)
 		let src = sourcePath
 		let cwd = self.cwd
 		# relativize the cwd thing
@@ -9067,7 +9067,7 @@ export class StyleRuleSet < StyleNode
 		elif !@name
 			# if this is unconditional - we should only need to use the unique
 			# class name of the element
-			@name = (cmp ? cmp.cssns : sourceId) + oid
+			@name = (cmp ? (cmp.cssns + oid) : (sourceId + oid))
 			@sel = ".{@name}"
 		
 		@selectors?.traverse
@@ -9474,7 +9474,7 @@ export class StyleInterpolationExpression < StyleTerm
 		super
 		if o:rootRule
 			o:rootRule.addPlaceholder(self)
-		@id = "{sourceId}{oid}"
+		@id = "{sourceId}_{oid}"
 		@name = "--{@id}"
 		
 		# @propname = stack.theme.expandProperty
@@ -10209,7 +10209,7 @@ export class RootScope < Scope
 		self
 
 	def sourceId
-		@sourceId ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
+		@sourceId ||= STACK.sourceId # @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
 	# single-file-component options
 	def sfco
 		@sfco ||= declare('sfc$',LIT('{/*$sfc$*/}'))
