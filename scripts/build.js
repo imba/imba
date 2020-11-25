@@ -17,8 +17,9 @@ function plugin(build){
 	let watcher = this.watcher;
 	let fs = require('fs');
 
-	build.onResolve({filter: /^compiler$/}, (args) => {
-		return {path: "./compiler.cjs", external: true}
+	build.onResolve({filter: /^compiler1?$/}, ({path}) => {
+		let src = path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./compiler.cjs";
+		return {path: src, external: true}
 	});
 
 	build.onLoad({ filter: /\.imba1/ }, async (args) => {
@@ -168,6 +169,6 @@ bundle([{
 	minify: false,
 	sourcemap: false,
 	format: 'cjs',
-	external: ['chokidar','esbuild'],
+	external: ['chokidar','esbuild','readdirp'],
 	platform: 'node'
 }])
