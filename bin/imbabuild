@@ -5,4 +5,4 @@ var fs = require('fs');
 var package = require('../package.json');
 var bundler = require('../dist/bundler.js');
 
-bundler.run({cwd: process.cwd()});
+bundler.run({cwd: process.cwd(), argv: process.argv.slice(2)});
