@@ -1940,7 +1940,7 @@ export class ClassField < Node
 		LIT(tpl)
 
 	def setter
-		@setter ||= ""
+		@setter ||= parseTemplate('(value){ $set$; }')
 
 	def decorater
 		@decorater ||= if true

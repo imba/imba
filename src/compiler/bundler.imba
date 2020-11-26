@@ -86,6 +86,28 @@ def idGenerator alphabet = 'abcdefghijklmnopqrstuvwxyz'
 
 const numToId = idGenerator!
 const sourceIdMappings = []
+
+const esbuildPlatformDefaults = {
+	browser: {platform: 'browser'}
+	web: {platform: 'browser'}
+	node: {platform: 'node'}
+	worker: {platform: 'browser'} # ?
+}
+
+def ensureDir src
+	let stack = []
+	let dirname = src
+
+	while true
+		dirname = path.dirname(dirname)
+		break if fs.existsSync(dirname)
+		stack.push(dirname)
+
+	while stack.length
+		fs.mkdirSync(stack.pop!)
+
+	return
+
 def resolveSourceId src
 	let map = sourceIdMappings
 	let id = map[src]
@@ -114,23 +136,32 @@ class Bundle
 		cwd = options.cwd
 		cachePrefix = "{o.platform}"
 		entryPoints = o.entryPoints or [o.infile]
-		esoptions = {
+
+		let defaults = esbuildPlatformDefaults[o.platform or 'browser'] or {}
+		esoptions = Object.assign(defaults,{
 			entryPoints: entryPoints
 			target: o.target or ['es2019']
 			bundle: true
 			format: o.format or 'iife'
 			outfile: o.outfile
 			outdir: o.outdir
-			minifyIdentifiers: !!o.minify
+			outbase: o.outbase
+			globalName: o.globalName
+			banner: o.banner
+			footer: o.footer
+			minify: !!o.minify
 			incremental: o.watch
-			platform: o.platform
 			write: false
 			metafile: 'meta.json'
 			external: o.external or undefined
 			plugins: [{name: 'imba', setup: setup.bind(self)}]
 			// outExtension: { '.js': '.imba' }
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
-		}
+		})
+
+		if o.outname
+			esoptions.sourcefile = o.outname
+
 		console.log 'esoptions',esoptions
 
 	def setup build
@@ -195,7 +226,10 @@ class Bundle
 				let result = compiler.compile(raw,iopts)
 				let id = result.sourceId
 				body = result.js
-				styles[id] = "._css_{id}\{--ref:'{id}'\}\n" + result.css
+				styles[id] = {
+					loader: 'css'
+					contents: "._css_{id}\{--ref:'{id}'\}\n" + result.css
+				}
 				if result.css
 					body += "\nimport './{name}.{id}.imba.css';\n"
 			
@@ -206,10 +240,7 @@ class Bundle
 
 		build.onLoad({ filter: /\.imba\.css$/, namespace: 'styles' }) do(args)
 			let id = args.path.match(/(\w+)\.imba\.css/)[1]
-			return {
-				loader: 'css'
-				contents: styles[id] or "/* blank */"
-			}
+			return styles[id]
 
 
 	def build
@@ -276,7 +307,7 @@ class Bundle
 
 					parts = parts.sort do(a,b) a.order - b.order
 					# console.log("orders",parts.map(do [$1.path,$1.order]))
-					fs.writeFileSync(file.path,parts.map(do $1.text).join('\n'))
+					writeFile(file.path,parts.map(do $1.text).join('\n'))
 					continue
 				catch e
 					yes
@@ -284,9 +315,13 @@ class Bundle
 					# console.log 'errored with style',e,file.text.slice(0,100)
 
 			if file != meta
-				fs.writeFileSync(file.path,file.text)
+				writeFile(file.path,file.text)
 
 		return
+
+	def writeFile outpath, content
+		ensureDir(outpath)
+		fs.writeFileSync(outpath,content)
 
 
 export def run options = {}

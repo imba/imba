@@ -77,8 +77,16 @@ if (require.extensions) {
 };
 
 function main(){
-	var args = process.argv;
-	var o = helpers.parseArgs(args.slice(2),parseOpts);
+	var args = process.argv.slice(2);
+
+	if(args[0] && args[0].match(/^(build|watch|serve)$/) ){
+		let bundlerArgs = args.slice(1).concat("--" + args[0])
+		var bundler = require('../dist/bundler.js');
+		return bundler.run({cwd: process.cwd(), argv: bundlerArgs});
+	}
+	
+
+	var o = helpers.parseArgs(args,parseOpts);
 	var src = o.main;
 	if (src instanceof Array) { src = src[0] };
 	

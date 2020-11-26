@@ -64,10 +64,11 @@
   "browser": {
     "imba": "./dist/imba.js",
     "path": "./vendor/path.js",
-    "compilah": "./dist/compiler.js"
+    "compiler": "./dist/compiler.js"
   },
   "exports": {
     "./core": "./core.imba",
+    "./loader": "./loader.js",
     "./compiler": {
       "require": "./dist/compiler.cjs",
       "default": "./dist/compiler.mjs"
