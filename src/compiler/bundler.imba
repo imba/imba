@@ -91,19 +91,34 @@ const esbuildPlatformDefaults = {
 	worker: {platform: 'browser'} # ?
 }
 
+const defaultLoaders = {
+	".png": "file",
+	".svg": "file",
+	".woff2": "file",
+	".woff": "file",
+	".ttf": "file",
+	".otf": "file"
+}
+
+
+const dirExistsCache = {}
+
 def ensureDir src
 	let stack = []
 	let dirname = src
+	
+	new Promise do(resolve)
 
-	while true
-		dirname = path.dirname(dirname)
-		break if fs.existsSync(dirname)
-		stack.push(dirname)
+		while dirname = path.dirname(dirname)
+			if dirExistsCache[dirname] or fs.existsSync(dirname)
+				break
+			stack.push(dirname)
 
-	while stack.length
-		fs.mkdirSync(stack.pop!)
+		while stack.length
+			let dir = stack.pop!
+			fs.mkdirSync(dirExistsCache[dirname] = dir)
 
-	return
+		resolve(src)
 
 
 def resolveSourceId src
@@ -117,14 +132,9 @@ def resolveSourceId src
 	
 	return id
 
-class Project
-	def constructor config
-		config = config
-		bundles = []
-
 class Bundle
 	def constructor o, config
-		styles = {} # <sourceId,body> map
+		styles = {}
 		config = config
 		options = o
 		watcher = o.watch ? chokidar.watch([]) : null
@@ -136,6 +146,7 @@ class Bundle
 		entryPoints = o.entryPoints or [o.infile]
 
 		let defaults = esbuildPlatformDefaults[o.platform or 'browser'] or {}
+
 		esoptions = Object.assign(defaults,{
 			entryPoints: entryPoints
 			target: o.target or ['es2019']
@@ -152,12 +163,11 @@ class Bundle
 			minifyIdentifiers: !!o.minify
 			minifySyntax: !!o.minify
 			incremental: o.watch
-			loader: o.loader
+			loader: Object.assign({},defaultLoaders,o.loader or {})
 			write: false
 			metafile: 'meta.json'
 			external: o.external or undefined
-			plugins: [{name: 'imba', setup: setup.bind(self)}]
-			// outExtension: { '.js': '.imba' }
+			plugins: (o.plugins or []).concat({name: 'imba', setup: setup.bind(self)})
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
 		})
 		
@@ -170,63 +180,26 @@ class Bundle
 		if o.outname
 			esoptions.sourcefile = o.outname
 
-		console.log 'esoptions',esoptions
-
-	def resolve
 
 	def setup build
 		let externs = options.external or []
+		let expkg = externs.indexOf("packages") >= 0
 
-		build.onResolve({ filter: /(\w+)\.css$/ }) do(args)
-			let id = args.path.match(/(\w+)\.css$/)[1]
-			if id and styles[id]
-				let abs = path.resolve(args.resolveDir,args.path)
-				let rel = path.relative(cwd,abs)
-				# console.log 'resolving css',args,abs,rel
-				return {path: rel, namespace: 'styles'}
-			return
+		build.onResolve(filter: /\.imbacss$/) do(args)
+			let id = args.path.match(/(\w+)\.imbacss$/)[1]
+			return {path: id, namespace: 'styles'}
 
-		build.onResolve({ filter: /.*/ }) do(args)
-
+		expkg && build.onResolve(filter: /.*/, namespace: 'file') do(args)
 			let id = args.path
 			let ns = args.namespace
-			let ext  = path.extname(id)
-			let rel? = id[0] == '.'
 
-			if ext == '.svg' and ns == 'styles' and false
-				# here we can actually resolve the file on disk
-				# and inspect the sizes etc to decide whether to inline
-				# or reference. Could also decide based on certain options
-				# console.log "svg asset in styles here??",args,ext
-
-				if rel?
-					let abs = path.resolve(args.resolveDir,id)
-					let resolved = path.relative(options.outdir,abs)
-					console.log 'svg resolves to?',resolved
-					# if it is not possible to resolve we need to inline it or link it some other way
-					return {path: abs}
-
+			if (/[\w\@]/).test(id[0]) and externs.indexOf("!{id}") == -1
+				console.log 'mark as external',args
 				return {external: true}
-
-			if ns == 'styles'
-				return
-
-			if (/^imba(\/|$)/).test(id) and externs.indexOf(id) == -1
-				return
-
-			if (/[\w\@]/).test(id[0]) and externs.indexOf("packages") >= 0 and externs.indexOf("!{id}") == -1
-				return {external: true}
-
-			if id.match(/\.json/) and externs.indexOf(".json") >= 0
-				let abs = path.resolve(args.resolveDir,id)
-				let resolved = path.relative(options.outdir,abs)
-				console.log "should rewrite path",options.outdir,args,resolved,abs
-				return {external: true, path: resolved}
-			console.log 'resolving',args.path		
 			return
 
 
-		build.onLoad({ filter: /\.imba1?$/ }) do(args)
+		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
 			watcher.add(args.path) if watcher
 			let raw = await fs.promises.readFile(args.path, 'utf8')
 			let key = "{cachePrefix}:{args.path}" # possibly more
@@ -261,24 +234,15 @@ class Bundle
 				}
 				if result.css
 					let name = path.basename(args.path,'.imba')
-					body += "\nimport './{name}.{id}.css';\n"
+					body += "\nimport './{id}.imbacss';\n"
 			
 			let out = {contents: body}
 			cache[key] = {input: raw, result: out}
 
 			return out
 
-		build.onLoad({ filter: /.*/, namespace: 'assets' }) do(args)
-			console.log 'load asset',args
-			let contents = await fs.promises.readFile(args.path, 'utf8')
-			return {
-				contents: contents
-				loader: 'dataurl'
-			}
-
-		build.onLoad({ filter: /(\w+)\.css$/, namespace: 'styles' }) do(args)
-			let id = args.path.match(/(\w+)\.css$/)[1]
-			return styles[id]
+		build.onLoad({ filter: /\.*/, namespace: 'styles'}) do(args)
+			styles[args.path]
 
 
 	def build
@@ -304,7 +268,6 @@ class Bundle
 		write(result.outputFiles)
 	
 	def findStyleDependencies entry,entries,styles,checked = {}
-		
 		if typeof entry == 'string'
 			if checked[entry]
 				return
@@ -313,12 +276,15 @@ class Bundle
 
 		for item in entry.imports
 			# FIXME not working with external stylesheets now
-			if item.path.match(/styles\:/)
-				let id = item.path.match(/(\w+)\.css/)[1]
-				styles.push(id) unless styles.indexOf(id) >= 0
-				styles[id] = item.path
-			else
+			let styleid = (item.path.match(/styles\:(\w+)/) or [])[1]
+			if styleid
+				styles.push(styleid) unless styles.indexOf(styleid) >= 0
+				styles[styleid] = item.path
+			else				
 				findStyleDependencies(item.path,entries,styles,checked)
+				if item.path.match(/\.css$/)
+					# push some styles here?
+					yes
 		return styles
 
 	def write files
@@ -354,7 +320,7 @@ class Bundle
 
 	def writeFile outpath, content
 		console.log 'write',outpath
-		ensureDir(outpath)
+		await ensureDir(outpath)
 		fs.promises.writeFile(outpath,content)
 		# fs.writeFileSync(outpath,content)
 
