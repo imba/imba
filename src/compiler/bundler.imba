@@ -167,8 +167,13 @@ class Bundle
 	def setup build
 		let ext = options.external or []
 
-		build.onResolve({ filter: /\.imba\.css$/ }) do(args)
-			{path: path.resolve(args.resolveDir,args.path), namespace: 'styles'}
+		build.onResolve({ filter: /(\w+)\.css$/ }) do(args)
+			let id = args.path.match(/(\w+)\.css$/)[1]
+			if id and styles[id]
+				let abs = path.resolve(args.resolveDir,args.path)
+				let rel = path.relative(cwd,abs)
+				return {path: rel, namespace: 'styles'}
+			return
 
 		build.onResolve({ filter: /.*/ }) do(args)
 
@@ -199,7 +204,6 @@ class Bundle
 
 		build.onLoad({ filter: /\.imba1?$/ }) do(args)
 			watcher.add(args.path) if watcher
-			let name = path.basename(args.path)
 			let raw = await fs.promises.readFile(args.path, 'utf8')
 			let key = "{cachePrefix}:{args.path}" # possibly more
 
@@ -231,15 +235,16 @@ class Bundle
 					contents: "._css_{id}\{--ref:'{id}'\}\n" + result.css
 				}
 				if result.css
-					body += "\nimport './{name}.{id}.imba.css';\n"
+					let name = path.basename(args.path,'.imba')
+					body += "\nimport './{name}.{id}.css';\n"
 			
 			let out = {contents: body}
 			cache[key] = {input: raw, result: out}
 
 			return out
 
-		build.onLoad({ filter: /\.imba\.css$/, namespace: 'styles' }) do(args)
-			let id = args.path.match(/(\w+)\.imba\.css/)[1]
+		build.onLoad({ filter: /(\w+)\.css$/, namespace: 'styles' }) do(args)
+			let id = args.path.match(/(\w+)\.css$/)[1]
 			return styles[id]
 
 
@@ -270,8 +275,8 @@ class Bundle
 			entry = entries[entry]
 
 		for item in entry.imports
-			if item.path.match(/\.css/)
-				let id = item.path.match(/(\w+)\.imba\.css/)[1]
+			if item.path.match(/styles\:/)
+				let id = item.path.match(/(\w+)\.css/)[1]
 				styles.push(id) unless styles.indexOf(id) >= 0
 				styles[id] = item.path
 			else
