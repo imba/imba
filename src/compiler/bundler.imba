@@ -81,9 +81,6 @@ def idGenerator alphabet = 'abcdefghijklmnopqrstuvwxyz'
 	return do(num)
 		num.toString(alphabet.length).split("").map(do remap[$1]).join("")
 
-const numToId = idGenerator!
-const sourceIdMappings = []
-
 const esbuildPlatformDefaults = {
 	browser: {platform: 'browser'}
 	web: {platform: 'browser'}
@@ -99,7 +96,6 @@ const defaultLoaders = {
 	".ttf": "file",
 	".otf": "file"
 }
-
 
 const dirExistsCache = {}
 
@@ -120,32 +116,70 @@ def ensureDir src
 
 		resolve(src)
 
-
-def resolveSourceId src
-	let map = sourceIdMappings
-	let id = map[src]
-	
-	unless id
-		let nr = map.length
-		map.push(src)
-		id = map[src] = numToId(nr) + "_"
-	
-	return id
-
-class Bundle
-	def constructor o, config
-		styles = {}
+class Bundler
+	def constructor config, options
 		config = config
+		options = options
+		cwd = options.cwd
+		bundles = []
+		sourceIdMap = []
+		#cache = {}
+		return self
+
+	def sourceIdForPath src
+		let map = sourceIdMap
+
+		unless map[src]
+			let gen = #sourceIdGenerator ||= idGenerator!			
+			map[src] = gen(map.push(src)) + "_"
+
+		return map[src]
+
+	def setup
+		for own key,value of config.entries
+			continue if value.skip
+			let paths = await expandPath(key)
+			let entry = Object.assign({},options,{entryPoints: paths},value)
+			let bundle = new Bundle(self,entry)
+			bundles.push(bundle)
+
+	def run
+		let builds = for bundle in bundles
+			bundle.build!
+		await Promise.all(builds)
+		console.log 'built all entries'
+
+class Entry
+	def constructor bundle, options
+		bundle = bundle
+		options = options
+	
+class Bundle
+	get config
+		bundler.config
+
+	def constructor bundler,o
+		bundler = bundler
+		styles = {}
 		options = o
 		watcher = o.watch ? chokidar.watch([]) : null
 		result = null
 		built = no
-		cache = o.#cache or {}
+		cache = bundler.#cache or {}
+		manifest = {}
+
 		cwd = options.cwd
 		cachePrefix = "{o.platform}"
 		entryPoints = o.entryPoints or [o.infile]
 
 		let defaults = esbuildPlatformDefaults[o.platform or 'browser'] or {}
+
+		# create entrypoint abstraction
+		for item in entryPoints
+			let src = path.relative(cwd,item)
+			{
+				path: path.relative(cwd,item)
+			}
 
 		esoptions = Object.assign(defaults,{
 			entryPoints: entryPoints
@@ -160,12 +194,12 @@ class Bundle
 			publicPath: o.publicPath
 			banner: o.banner
 			footer: o.footer
-			minifyIdentifiers: !!o.minify
-			minifySyntax: !!o.minify
+			// minifyIdentifiers: !!o.minify
+			minify: !!o.minify
 			incremental: o.watch
 			loader: Object.assign({},defaultLoaders,o.loader or {})
 			write: false
-			metafile: 'meta.json'
+			metafile: "{o.name or 'bundle'}.meta.json"
 			external: o.external or undefined
 			plugins: (o.plugins or []).concat({name: 'imba', setup: setup.bind(self)})
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
@@ -185,9 +219,8 @@ class Bundle
 		let externs = options.external or []
 		let expkg = externs.indexOf("packages") >= 0
 
-		build.onResolve(filter: /\.imbacss$/) do(args)
-			let id = args.path.match(/(\w+)\.imbacss$/)[1]
-			return {path: id, namespace: 'styles'}
+		build.onResolve(filter: /\.imba\.css$/) do(args)
+			return {path: args.path, namespace: 'styles'}
 
 		expkg && build.onResolve(filter: /.*/, namespace: 'file') do(args)
 			let id = args.path
@@ -210,7 +243,7 @@ class Bundle
 				format: 'esm',
 				sourcePath: args.path,
 				imbaPath: options.imbaPath or 'imba'
-				sourceId: resolveSourceId(args.path)
+				sourceId: bundler.sourceIdForPath(args.path)
 				config: config
 				styles: 'extern'
 			}
@@ -227,14 +260,17 @@ class Bundle
 				let result = compiler.compile(raw,iopts)
 				let id = result.sourceId
 				body = result.js
-				styles[id] = {
-					loader: 'css'
-					contents: "._css_{id}\{--ref:'{id}'\}\n" + result.css
-					resolveDir: path.dirname(args.path)
-				}
+				
 				if result.css
 					let name = path.basename(args.path,'.imba')
-					body += "\nimport './{id}.imbacss';\n"
+					let cssname = "{name}-{id}.imba.css"
+					styles[cssname] = {
+						loader: 'css'
+						contents: result.css
+						resolveDir: path.dirname(args.path)
+					}
+					
+					body += "\nimport '{cssname}';\n"
 			
 			let out = {contents: body}
 			cache[key] = {input: raw, result: out}
@@ -254,10 +290,9 @@ class Bundle
 			write(result.outputFiles)
 			if watcher
 				watcher.on('change') do rebuild!
-					
 
 		console.log 'did build!'
-		return self
+		return self 
 
 	def rebuild
 		let t = Date.now!
@@ -266,56 +301,94 @@ class Bundle
 		console.log('rebuilt',options.infile,Date.now! - t)
 		result = rebuilt
 		write(result.outputFiles)
-	
-	def findStyleDependencies entry,entries,styles,checked = {}
-		if typeof entry == 'string'
-			if checked[entry]
-				return
-			checked[entry] = entry
-			entry = entries[entry]
+
+	def traverseInput entry, inputs, root = entry
+		inputs.#nr ||= 1
+		return if entry.nr
+		entry.nr = (inputs.#nr += 1)
 
 		for item in entry.imports
-			# FIXME not working with external stylesheets now
-			let styleid = (item.path.match(/styles\:(\w+)/) or [])[1]
-			if styleid
-				styles.push(styleid) unless styles.indexOf(styleid) >= 0
-				styles[styleid] = item.path
-			else				
-				findStyleDependencies(item.path,entries,styles,checked)
-				if item.path.match(/\.css$/)
-					# push some styles here?
-					yes
-		return styles
+			traverseInput(inputs[item.path],inputs,root)
+
+		return
+	
+	def traverseInput entry, inputs, root = entry
+		inputs.#nr ||= 1
+		return if entry.nr
+		entry.nr = (inputs.#nr += 1)
+		entry.css = []
+
+		for item in entry.imports
+			let dep = inputs[item.path]
+			traverseInput(dep,inputs,root)
+			if item.path.match(/\.css$/)
+				entry.css.push(item.path)
+			else
+				entry.css.push(...dep.css)
+
+		entry.css = entry.css.filter do(item,i) entry.css.indexOf(item) == i
+		return
 
 	def write files
-		# console.log "order",orderedStyleSheets,firstResolve,process.cwd!,entry
 		let meta = JSON.parse(files.find(do $1.path.match(/meta\.json$/)).text)
 
+		let o = options
 		let styles = []
 
-		for entry in entryPoints
-			let rel = path.relative(cwd,entry)
-			findStyleDependencies(rel,meta.inputs,styles)
-			# console.log 'handling entry point',rel
+		for src in entryPoints
+			let entry = meta.inputs[path.relative(cwd,src)]
+			traverseInput(entry,meta.inputs,entry)
+			styles.push(...entry.css)
+
+		meta.css = styles.filter do(item,i) styles.indexOf(item) == i
+
+		# go through to extract the actual css chunks from output files
+		# that is - before the correct ordering
+		for own key,value of meta.outputs
+			let file = files.find do path.relative(cwd,$1.path) == key
+			continue unless file and key.match(/\.css$/)
+
+			let offset = 0
+			let body = file.text
+			let parts = []
+
+			for own src,details of value.inputs
+				let entry = meta.inputs[src]
+				let bytes = details.bytesInOutput
+				let header = "/* {src} */\n"
+
+				if !o.minify
+					offset += header.length
+
+				let chunk = body.substr(offset,bytes)
+				offset += bytes
+				offset += 1 if !o.minify
+				entry.output ||= chunk
+				parts[entry.nr] = chunk
+		
+			file.contents = parts.filter(do $1).join('\n')
+
+		manifest = meta
+		# now all css inputs that are used should have an output property with
+		# the final processed body of that input.
+
+		# if we want a shared css file for all entries now it should be enough to just traverse the entrypoints and collect any css we come across
+
+		# generate shared stylesheet
+		# remove duplicates of all the included style chunks
+		files.push {
+			path: path.resolve(options.outdir,"shared-styles.css")
+			contents: meta.css.map(do meta.inputs[$1].output).join('\n')
+		}
+		
 
 		for file in files
-			if file.path.match(/\.css$/)
-				try
-					let splitter = (/(?=\/\* styles\:)/g)
-					let parts = []
-					file.text.split(splitter).map do(str)
-						try
-							let ref = str.match(/\._css_([\w_\-]+)/)[1]
-							parts.push {id: ref, text: str, order: styles.indexOf(ref)}
-
-					parts = parts.sort do(a,b) a.order - b.order
-					# console.log("orders",parts.map(do [$1.path,$1.order]))
-					writeFile(file.path,parts.map(do $1.text).join('\n'))
-					continue
-
 			if !file.path.match(/meta\.json$/)
-				writeFile(file.path,file.text)
+				writeFile(file.path,file.contents or file.text)
 
+		let metadest = path.resolve(options.outdir,esoptions.metafile)
+		writeFile(metadest,JSON.stringify(meta,null,2))
+		# generate a shared stylesheet
 		return
 
 	def writeFile outpath, content
@@ -332,20 +405,9 @@ export def run options = {}
 		Object.assign(options,compiler.helpers.parseArgs(options.argv,schema))
 	
 	let config = options.config or resolveConfigFile(cwd,path: path, fs: fs)
-
-	options.#cache = {}
-
-	for own key,value of config.entries
-		continue if value.skip
-		let paths = await expandPath(key)
-		let entry = Object.assign({},options,value)
-		# possibly to multiple entry points there?
-		entry.entryPoints = paths
-
-		let bundle = new Bundle(entry,config)
-		bundles.push(bundle)
-		bundle.build!
-	yes
+	let bundler = new Bundler(config,options)
+	await bundler.setup!
+	bundler.run!
 
 export def build options
 	if options isa Array
@@ -353,4 +415,3 @@ export def build options
 	console.log 'build with config',options
 	let bundle = new Bundle(options)
 	bundle.build!
-	# options.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
