@@ -4,6 +4,7 @@
 
 var helpers = require './helpers'
 var constants = require './constants'
+var fspath = require 'path'
 
 import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
@@ -2772,6 +2773,10 @@ export class Root < Code
 		STACK.root = @scope
 		traverse
 		STACK.root = @scope
+
+		if o:bundle
+			@scope.lookup('__filename').@c = STR(o:sourcePath).c
+			@scope.lookup('__dirname').@c = STR(fspath.dirname(o:sourcePath)).c
 		
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)

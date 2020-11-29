@@ -267,11 +267,13 @@ class Bundler
 		return self
 
 	def run
+		time 'build'
 		let builds = for bundle in bundles
 			bundle.build!
 		await Promise.all(builds)
 		console.log 'built all entries'
 		write!
+		timed 'build'
 
 	def rebuilt bundle
 		self
@@ -318,6 +320,7 @@ class Bundler
 		let manifest = {
 			files: {}
 			urls: {}
+			assets: {}
 			idmap: sourceIdMap
 		}
 
@@ -327,8 +330,10 @@ class Bundler
 		# go through output files to actually 
 		for bundle in bundles
 			for file in bundle.files
+				file.writePath = dev? ? file.path : file.hashedPath
 				let pub = path.relative(pubdir,file.path)
 				let hashpub = path.relative(pubdir,file.hashedPath)
+				
 				let src = relp(file.path)
 				let url = puburl + '/' + pub
 				let redir = url
@@ -342,6 +347,12 @@ class Bundler
 				if !pub.match(/^\.\.?\//)
 					manifest.urls[url] = redir # hashed url
 
+					manifest.assets[pub] = {
+						url: redir
+						path: file.writePath
+						hash: file.hash
+					}
+
 				file.pubpath = path.relative(bundle.outdir,file.path)
 				manifest.files[src] = {
 					hash: file.hash
@@ -351,12 +362,8 @@ class Bundler
 				}
 			
 				if file.dirty
-					file.writePath = dev? ? file.path : file.hashedPath
 					file.dirty = no
-
 					write.add(file)
-				
-				# files.push(file)
 
 		console.log 'manifest',manifest
 		time 'writeFiles'
@@ -366,7 +373,7 @@ class Bundler
 		for file of write
 			let dest = file.writePath
 			let link = dest != file.path and file.path
-
+			file.dirty = no
 			await ensureDir(dest)
 			console.log 'write',dest
 			let promise = fsp.writeFile(dest,file.contents or file.text)
@@ -388,7 +395,7 @@ class Bundler
 
 	def writeManifest manifest
 		let dest = manifestpath
-		let json = JSON.stringify(manifest)
+		let json = JSON.stringify(manifest,null,2)
 		self.manifest = manifest
 		console.log 'write manifest',dest
 		fs.promises.writeFile(dest,json)
@@ -452,7 +459,7 @@ class Bundle
 			target: o.target or ['es2019']
 			bundle: true
 			define: o.define
-			format: o.format or 'esm'
+			format: o.format or 'iife'
 			outfile: o.outfile
 			outdir: o.outdir
 			outbase: o.outbase
@@ -471,7 +478,7 @@ class Bundle
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
 		})
 
-		console.log esoptions
+		# console.log esoptions
 		
 		# add default defines
 		unless node?
@@ -491,18 +498,28 @@ class Bundle
 	def plugin build
 		let externs = options.external or []
 		let expkg = externs.indexOf("packages") >= 0
+		let exjson = externs.indexOf(".json") >= 0
 
 		build.onResolve(filter: /\.imba\.css$/) do(args)
 			return {path: args.path, namespace: 'styles'}
 
-		expkg && build.onResolve(filter: /.*/, namespace: 'file') do(args)
+		(expkg or exjson) and build.onResolve(filter: /.*/, namespace: 'file') do(args)
 			let id = args.path
 			let ns = args.namespace
 
-			if (/[\w\@]/).test(id[0]) and externs.indexOf("!{id}") == -1
-				console.log 'mark as external',args
-				return {external: true}
+			if exjson and id.match(/\.json$/)
+				let abspath = path.resolve(args.resolveDir,id)
+				let outpath = path.relative(outdir,args.resolveDir)
+				console.log 'externalize',args,outpath
+				return {external: true, path: abspath}
+
+			if expkg
+				if (/[\w\@]/).test(id[0]) and externs.indexOf("!{id}") == -1
+					console.log 'mark as external',args
+					return {external: true}
 			return
+
+		
 
 		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
 			watcher.add(args.path) if watcher
@@ -518,20 +535,44 @@ class Bundle
 				sourceId: bundler.sourceIdForPath(args.path)
 				config: config
 				styles: 'extern'
+				bundle: yes
 			}
 			let body = null
 
 			if cache[key] and cache[key].input == raw
 				return cache[key].result
 
+			let out = {
+				errors: []
+				warnings: []
+			}
+
 			# legacy handling
 			if args.path.match(/\.imba1$/)
 				iopts.target = iopts.sourcePath
-				body = String(imba1.compile(raw,iopts))
+				out.contents = String(imba1.compile(raw,iopts))
 			else
 				let result = compiler.compile(raw,iopts)
 				let id = result.sourceId
 				body = result.js
+
+				if result.warnings
+					console.warn "WARNINGS",args.path
+				
+				if result.errors..length
+					console.warn "ERRORS!!!",args.path
+					let arr = out.errors
+					for err in result.errors
+						let loc = err.range.start
+						out.errors.push(
+							text: err.message
+							location: {
+								file: args.path
+								line: loc.line + 1
+								column: loc.character
+							}
+						)
+
 				
 				if result.css
 					let name = path.basename(args.path,'.imba')
@@ -543,8 +584,10 @@ class Bundle
 					}
 					
 					body += "\nimport '{cssname}';\n"
-			
-			let out = {contents: body}
+
+				out.contents = body
+
+
 			cache[key] = {input: raw, result: out}
 
 			return out
