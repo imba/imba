@@ -161,7 +161,7 @@ class Bundler
 		env = 'development' if env == 'dev' or options.dev
 		env = 'production' if env == 'prod' or options.prod
 
-		manifestpath = absp(config.manifest..path or './dist/manifest')
+		manifestpath = absp(config.manifest..path or './dist/manifest.json')
 		console.log manifestpath
 		try
 			manifest = JSON.parse(fs.readFileSync(manifestpath,'utf-8'))
@@ -182,12 +182,9 @@ class Bundler
 		path.relative(cwd,src)
 
 	get publicPath
-		config.assets..publicPath
+		config.publicPath
 	
 	get publicDir
-		config.client..outdir
-	
-	get clientDir
 		config.client..outdir
 
 	get dev?
@@ -252,6 +249,7 @@ class Bundler
 				continue if value.skip
 				let paths = await expandPath(key)
 				entries.push Object.assign({},options,{entryPoints: paths},value)
+				console.log 'added entry',entries[entries.length - 1]
 
 		
 		bundles = entries.map do new Bundle(self,$1)
@@ -262,7 +260,8 @@ class Bundler
 			watcher.on('change') do(src,stats)
 				#dirtyInputs.add(relp(src))
 				clearTimeout(#rebuildTimeout)
-				#rebuildTimeout = setTimeout(&,200) do rebuild!
+				# only rebuild if a rebuild is not already ongoing?
+				#rebuildTimeout = setTimeout(&,50) do rebuild!
 
 		return self
 
@@ -357,25 +356,22 @@ class Bundler
 				manifest.files[src] = {
 					hash: file.hash
 					path: file.path
-					pub: pub
-					hashpub: hashpub
 				}
 			
 				if file.dirty
 					file.dirty = no
 					write.add(file)
 
-		console.log 'manifest',manifest
 		time 'writeFiles'
-		console.log 'writing files',write.size
+
 		let fsp = fs.promises
 		let writes = []
 		for file of write
 			let dest = file.writePath
 			let link = dest != file.path and file.path
 			file.dirty = no
+			console.log 'writing files',dest,file.hash
 			await ensureDir(dest)
-			console.log 'write',dest
 			let promise = fsp.writeFile(dest,file.contents or file.text)
 			
 			if link
@@ -389,15 +385,15 @@ class Bundler
 		await Promise.all(writes)
 		timed 'writeFiles'
 		
-		# write the manifest
-		await writeManifest(manifest)
+		if writes.length
+			# write the manifest
+			await writeManifest(manifest)
 		yes
 
 	def writeManifest manifest
 		let dest = manifestpath
 		let json = JSON.stringify(manifest,null,2)
 		self.manifest = manifest
-		console.log 'write manifest',dest
 		fs.promises.writeFile(dest,json)
 
 class Entry
@@ -419,7 +415,7 @@ class Bundle
 		!node?
 
 	get publicPath
-		options.publicPath or config.assets..publicPath
+		options.publicPath or bundler.publicPath
 
 	def time name = 'default'
 		let now = Date.now!
@@ -442,7 +438,6 @@ class Bundle
 		built = no
 		cache = bundler.#cache or {}
 		meta = {}
-		
 
 		name = options.name
 		cwd = options.cwd
@@ -454,7 +449,7 @@ class Bundle
 
 		let defaults = esbuildPlatformDefaults[o.platform or 'browser'] or {}
 
-		esoptions = Object.assign(defaults,{
+		esoptions = Object.assign({},defaults,{
 			entryPoints: entryPoints
 			target: o.target or ['es2019']
 			bundle: true
@@ -486,9 +481,9 @@ class Bundle
 			let env = o.env or process.env.NODE_ENV or 'production'
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
 
-		if o.outname
-			esoptions.sourcefile = o.outname
-		
+		# if o.outname
+		#	esoptions.sourcefile = o.outname
+
 		if o.splitting and esoptions.format != 'esm'
 			esoptions.splitting = false
 
@@ -497,26 +492,31 @@ class Bundle
 
 	def plugin build
 		let externs = options.external or []
-		let expkg = externs.indexOf("packages") >= 0
-		let exjson = externs.indexOf(".json") >= 0
+		let extdeps = externs.indexOf("dependencies") >= 0
+		let extjson = externs.indexOf(".json") >= 0
+		let extmap = {}
+		if extdeps
+			try
+				for value in Object.keys(config.package.dependencies)
+					extmap[value] = yes
+
+		for key in externs when key[0] == '!'
+			delete extmap[key.slice(1)]
 
 		build.onResolve(filter: /\.imba\.css$/) do(args)
 			return {path: args.path, namespace: 'styles'}
 
-		(expkg or exjson) and build.onResolve(filter: /.*/, namespace: 'file') do(args)
+		(extdeps or extjson) and build.onResolve(filter: /.*/, namespace: 'file') do(args)
 			let id = args.path
 			let ns = args.namespace
 
-			if exjson and id.match(/\.json$/)
+			if extjson and id.match(/\.json$/)
 				let abspath = path.resolve(args.resolveDir,id)
 				let outpath = path.relative(outdir,args.resolveDir)
-				console.log 'externalize',args,outpath
 				return {external: true, path: abspath}
 
-			if expkg
-				if (/[\w\@]/).test(id[0]) and externs.indexOf("!{id}") == -1
-					console.log 'mark as external',args
-					return {external: true}
+			if extmap[id]
+				return {external: true}
 			return
 
 		
@@ -556,8 +556,8 @@ class Bundle
 				let id = result.sourceId
 				body = result.js
 
-				if result.warnings
-					console.warn "WARNINGS",args.path
+				# if result.warnings
+				#	console.warn "WARNINGS",args.path
 				
 				if result.errors..length
 					console.warn "ERRORS!!!",args.path
@@ -602,8 +602,8 @@ class Bundle
 			result = await esbuild.build(esoptions)
 			console.log 'built',Date.now! - t
 			write(result.outputFiles)
-			if watcher
-				watcher.on('change') do rebuild!
+			# if watcher
+			#	watcher.on('change') do rebuild!
 
 		console.log 'did build!'
 		return self 
@@ -636,7 +636,7 @@ class Bundle
 
 	def write files
 		let pubdir = bundler.client..outdir
-		let metafile = pluck(files) do $1.path.match(/metafile\.json$/)
+		let metafile = pluck(files) do $1.path.indexOf(esoptions.metafile) >= 0 # match(/metafile\.json$/)
 		let meta = JSON.parse(metafile.text)
 
 		# see if we have already built things before and nothing has changed?
@@ -644,13 +644,16 @@ class Bundle
 		for file in files
 			# find the related entrypoint for this file
 			# finding the related previously compiled file if rebuilding
+			if pubdir and node? and !file.path.match(/\.[cm]?js(\.map)?$/)
+				file.path = path.resolve(pubdir,path.basename(file.path))
+				# calculate the public path?
+
 			let prev = self.files and self.files.find do $1.path == file.path
 
 			let hash = file.hash = (file.path.match(/\.([A-Z\d]{8})\.\w+$/) or [])[1]
 			let name = path.basename(file.path)
 
 			if hash
-				console.log 'found hash??',hash
 				file.hashedName = name
 			else
 				hash = file.hash = createHash(file.contents)
@@ -660,10 +663,6 @@ class Bundle
 			file.dirty = !prev or prev.hash != hash
 
 			# asset files should always be redirected to pubdir instead
-			if pubdir and node? and !file.path.match(/\.[cm]?js(\.map)?$/)
-				file.path = path.resolve(pubdir,path.basename(file.path))
-				# calculate the public path?
-			
 			file.hashedPath = path.resolve(path.dirname(file.path),file.hashedName)
 
 		timed 'hashing'
@@ -674,11 +673,14 @@ class Bundle
 		
 		let o = options
 		let styles = []
-		
-
 
 		for src in entryPoints
 			let entry = meta.inputs[path.relative(cwd,src)]
+			unless entry
+				# console.log 'cannot find input entry??',src,cwd,meta,esoptions,options,entryPoints,metafile.path
+				for bundle in bundler.bundles
+					console.log "bundle config",bundle.entryPoints,bundle == self,bundle.esoptions,bundle.esoptions == esoptions
+
 			traverseInput(entry,meta.inputs,entry)
 			styles.push(...entry.css)
 
@@ -713,27 +715,7 @@ class Bundle
 		outputs = meta.outputs
 		self.meta = meta
 		self.files = files
-
-		# now all css inputs that are used should have an output property with
-		# the final processed body of that input.
-		# if we want a shared css file for all entries now it should be enough to just traverse the entrypoints and collect any css we come across
-		# generate shared stylesheet
-		# remove duplicates of all the included style chunks
-		# files.push {
-		# 	path: path.resolve(options.outdir,"shared-styles.css")
-		# 	contents: meta.css.map(do meta.inputs[$1].output).join('\n')
-		# }
-
-		# for file in files
-		#	writeFile(file.path,file.contents or file.text)
-
-		# let metadest = path.resolve(options.outdir,esoptions.metafile)
-		# writeFile(metadest,JSON.stringify(meta,null,2))
 		return
-
-	def writeFile outpath, content
-		await ensureDir(outpath)
-		fs.promises.writeFile(outpath,content)
 
 export def run options = {}
 	let bundles = []

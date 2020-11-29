@@ -16,7 +16,7 @@ def resolvePaths obj,cwd
 
 export def resolveConfigFile dir,{path,fs}
 	return null if !path or !fs or !dir or (dir == path.dirname(dir))
-	let src = path.resolve(dir,'imbaconfig.json')
+	let src = path.resolve(dir,'package.json')
 	if cached[src]
 		return cached[src]
 
@@ -26,19 +26,14 @@ export def resolveConfigFile dir,{path,fs}
 			if typeof value == 'string' and value.match(/^\.\//)
 				return path.resolve(dir,value)
 			return value
-		let config = JSON.parse(fs.readFileSync(src,'utf8'),resolver)
+
+		let package = JSON.parse(fs.readFileSync(src,'utf8'))
+		let config = package.imba ||= {}
 		resolvePaths(config,dir)
+		config.package = package
 		config.cwd ||= dir
 
-		config.#resolve = do(value)
-			if value.match(/^\.\//)
-				return path.resolve(this.cwd,value)
-			else
-				value
-
-		# if config.styles
-		#	config.theme ||= new StyleTheme(config.styles)
-		
+		# DEPRECATED – to be removed
 		let assetsDir = path.resolve(dir,'assets')
 		let assets = config.assets ||= {}
 		# look for assets directory
