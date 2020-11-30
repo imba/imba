@@ -8,6 +8,7 @@ const path = require 'path'
 const readdirp = require 'readdirp'
 const crypto = require 'crypto'
 import {resolveConfigFile} from './imbaconfig'
+import {Server} from '../bundler/server'
 
 def pluck array, cb
 	for item,i in array
@@ -173,6 +174,7 @@ class Bundler
 		#dirtyInputs = new Set
 		#watchedFiles = {}
 		#timestamps = {}
+
 		return self
 
 	def absp ...src
@@ -231,9 +233,6 @@ class Bundler
 
 	get client
 		bundles.find do $1.name == 'client'
-
-	get server
-		bundles.find do $1.name == 'server'
 		
 	def setup
 		let entries = []
@@ -262,7 +261,10 @@ class Bundler
 				clearTimeout(#rebuildTimeout)
 				# only rebuild if a rebuild is not already ongoing?
 				#rebuildTimeout = setTimeout(&,50) do rebuild!
-
+		
+		if options.serve
+			server = new Server(self)
+			server.start!
 		return self
 
 	def run
@@ -330,10 +332,16 @@ class Bundler
 		for bundle in bundles
 			for file in bundle.files
 				file.writePath = dev? ? file.path : file.hashedPath
+				let src = relp(file.path)
 				let pub = path.relative(pubdir,file.path)
 				let hashpub = path.relative(pubdir,file.hashedPath)
+
+				let entry = manifest.files[src] = {
+					hash: file.hash
+					path: file.writePath
+					#file: file
+				}
 				
-				let src = relp(file.path)
 				let url = puburl + '/' + pub
 				let redir = url
 
@@ -344,7 +352,8 @@ class Bundler
 
 				# better way to check whether file is in public path?
 				if !pub.match(/^\.\.?\//)
-					manifest.urls[url] = redir # hashed url
+					entry.url = redir
+					manifest.urls[url] = src # hashed url
 
 					manifest.assets[pub] = {
 						url: redir
@@ -353,14 +362,14 @@ class Bundler
 					}
 
 				file.pubpath = path.relative(bundle.outdir,file.path)
-				manifest.files[src] = {
-					hash: file.hash
-					path: file.path
-				}
 			
 				if file.dirty
 					file.dirty = no
 					write.add(file)
+
+			if options.verbose
+				manifest.bundles ||= []
+				manifest.bundles.push(bundle.meta)
 
 		time 'writeFiles'
 
@@ -382,6 +391,7 @@ class Bundler
 					fsp.symlink(dest,link)
 			writes.push promise
 
+		# could write to a virtual dir as well?
 		await Promise.all(writes)
 		timed 'writeFiles'
 		
@@ -394,7 +404,12 @@ class Bundler
 		let dest = manifestpath
 		let json = JSON.stringify(manifest,null,2)
 		self.manifest = manifest
+		console.log 'writing manifest'
 		fs.promises.writeFile(dest,json)
+
+	def serve
+		let port = config.serve.port
+		console.log "start serving!!!",config.serve.port
 
 class Entry
 	def constructor bundle, options
@@ -676,11 +691,6 @@ class Bundle
 
 		for src in entryPoints
 			let entry = meta.inputs[path.relative(cwd,src)]
-			unless entry
-				# console.log 'cannot find input entry??',src,cwd,meta,esoptions,options,entryPoints,metafile.path
-				for bundle in bundler.bundles
-					console.log "bundle config",bundle.entryPoints,bundle == self,bundle.esoptions,bundle.esoptions == esoptions
-
 			traverseInput(entry,meta.inputs,entry)
 			styles.push(...entry.css)
 
@@ -710,6 +720,8 @@ class Bundle
 				offset += 1 if !o.minify
 				entry.output ||= chunk
 				parts[entry.nr] = chunk
+				
+			file.contents = parts.filter(do $1).join('\n')
 
 		inputs = meta.inputs
 		outputs = meta.outputs

@@ -6299,7 +6299,7 @@ export class While < Loop
 		# else
 		# declare the variable we will use to soak up results
 		# TODO Use a special vartype for this?
-		var resvar = scope.declare(:res,Arr.new([]),system: yes)
+		var resvar = scope.declare('res',Arr.new([]),system: yes)
 		# WHAT -- fix this --
 		@catcher = PushAssign.new("push",resvar,null) # the value is not preset # what
 		body.consume(@catcher) # should still return the same body
@@ -7505,7 +7505,7 @@ class TagLike < Node
 		@consumed:length > 0
 
 	def tagvar name
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes,alias:"{tagvarprefix}{name}"},"{tagvarprefix}{name}")
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: no,alias:"{tagvarprefix}{name}"},"{tagvarprefix}{name}")
 
 	def tagvarprefix
 		"{level + 1}"
@@ -10005,8 +10005,6 @@ export class Scope
 			return existing
 		
 		let par = o:lookup && parent && parent.lookup(name)
-		
-			
 
 		# var type = o:system ? SystemVariable : Variable
 		var item = (o:varclass or Variable).new(self,name,decl,o)
@@ -10741,11 +10739,14 @@ export class SystemVariable < Variable
 		# the auto-magical goes last, or at least, possibly reuse other names
 		# "${Math.floor(Math.random * 1000)}"
 		let o = @options
+
 		var alias = o:alias or @name
 		var typ = o:pool
 		var names = [].concat(o:names)
 		var alt = null
 		var node = null
+
+
 
 		@name = null
 
@@ -10754,8 +10755,17 @@ export class SystemVariable < Variable
 		if o:temporary and !o:alias
 			let i = 0
 			@name = '$' + i
+			# should also lookup other v
 			while scope.lookup(@name)
 				@name = "${i += 1}"
+		
+		# unless pool
+		if !o:alias or true
+			let name = @name or 'sys'
+			let nr = STACK.incr(@name or 'sysvar')
+			@name = "{name}${nr}"
+			return self
+
 
 		if typ == 'tag'
 			let i = 0
@@ -10766,17 +10776,11 @@ export class SystemVariable < Variable
 		elif typ == 'iter'
 			names = ['ary__','ary_','coll','array','items','ary']
 
-		elif typ == 'dict'
-			names = ['dict']
-
 		elif typ == 'val'
 			names = ['v_']
 
 		elif typ == 'arguments'
 			names = ['$_','$0']
-
-		elif typ == 'keypars'
-			names = ['opts','options','pars']
 
 		elif typ == 'counter'
 			names = ['i__','i_','k','j','i']
@@ -10786,7 +10790,6 @@ export class SystemVariable < Variable
 
 		elif typ == 'list'
 			names = ['tmplist_','tmplist','tmp']
-		# or if type placeholder / cacher (add 0)
 
 		if alias
 			names.push(alias)

@@ -1,6 +1,8 @@
 const imba1 = require('./bootstrap.compiler.js');
 const imba2 = require('./bootstrap.compiler2.js');
 const chokidar = require('chokidar');
+const fs = require('fs');
+const path = require('path');
 
 let helpers = imba2.helpers;
 let time = 0;
@@ -21,6 +23,8 @@ function plugin(build){
 		let src = path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./compiler.cjs";
 		return {path: src, external: true}
 	});
+
+
 
 	build.onLoad({ filter: /\.imba1/ }, async (args) => {
 		// console.log('loading imba',args);
@@ -68,7 +72,7 @@ function plugin(build){
 			platform: options.platform || 'browser',
 			format: 'esm',
 			sourcePath: args.path,
-			imbaPath: null
+			imbaPath: options.imbaPath || null
 		});
 
 		time += (Date.now() - t0);
@@ -167,6 +171,7 @@ bundle([{
 	entryPoints: ['src/compiler/bundler.imba'],
 	outfile: 'dist/bundler.js',
 	minify: false,
+	imbaPath: path.resolve(__dirname,'..'),
 	sourcemap: false,
 	format: 'cjs',
 	external: ['chokidar','esbuild','readdirp'],
