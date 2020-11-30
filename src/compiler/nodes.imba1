@@ -683,6 +683,8 @@ export class Stack
 			return isNode
 		elif key == 'WORKER' or key == 'WEBWORKER'
 			return isWorker
+		elif key == 'HMR'
+			return !!@options:hmr
 
 		if var e = @options:env
 			if e.hasOwnProperty(key)

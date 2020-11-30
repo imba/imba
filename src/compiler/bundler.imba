@@ -317,7 +317,7 @@ class Bundler
 				watcher..add(file)
 		timed 'watch'
 		
-		let write = new Set
+		let filesToWrite = []
 		let manifest = {
 			files: {}
 			urls: {}
@@ -335,6 +335,7 @@ class Bundler
 				let src = relp(file.path)
 				let pub = path.relative(pubdir,file.path)
 				let hashpub = path.relative(pubdir,file.hashedPath)
+				# let id = sourceIdForPath(src) # for the outputs, not the inputs??
 
 				let entry = manifest.files[src] = {
 					hash: file.hash
@@ -353,6 +354,7 @@ class Bundler
 				# better way to check whether file is in public path?
 				if !pub.match(/^\.\.?\//)
 					entry.url = redir
+					file.url = redir
 					manifest.urls[url] = src # hashed url
 
 					manifest.assets[pub] = {
@@ -365,7 +367,7 @@ class Bundler
 			
 				if file.dirty
 					file.dirty = no
-					write.add(file)
+					filesToWrite.push(file)
 
 			if options.verbose
 				manifest.bundles ||= []
@@ -375,7 +377,7 @@ class Bundler
 
 		let fsp = fs.promises
 		let writes = []
-		for file of write
+		for file in filesToWrite
 			let dest = file.writePath
 			let link = dest != file.path and file.path
 			file.dirty = no
@@ -398,6 +400,9 @@ class Bundler
 		if writes.length
 			# write the manifest
 			await writeManifest(manifest)
+
+		if server
+			server.updated(filesToWrite)
 		yes
 
 	def writeManifest manifest
@@ -550,6 +555,7 @@ class Bundle
 				sourceId: bundler.sourceIdForPath(args.path)
 				config: config
 				styles: 'extern'
+				hmr: options.serve and !node?
 				bundle: yes
 			}
 			let body = null

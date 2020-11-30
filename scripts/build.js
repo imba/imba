@@ -16,6 +16,7 @@ let compileCache = {};
 function plugin(build){
 	// console.log('setting up plugin',build,this);
 	let options = this.options;
+	let self = this;
 	let watcher = this.watcher;
 	let fs = require('fs');
 
@@ -72,7 +73,7 @@ function plugin(build){
 			platform: options.platform || 'browser',
 			format: 'esm',
 			sourcePath: args.path,
-			imbaPath: options.imbaPath || null
+			imbaPath: self.imbaPath || null
 		});
 
 		time += (Date.now() - t0);
@@ -95,12 +96,16 @@ async function bundle(options){
 	let entry = {options: options}
 	let watcher = entry.watcher = argv.watch && chokidar.watch([]);
 
+	entry.imbaPath = options.imbaPath;
 	options.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
 	options.resolveExtensions = ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'];
 	options.target = options.target || ['es2019'];
 	options.bundle = true;
+	options.loader = {'.txt':'text'}
 	options.incremental = !!watcher;
 	options.logLevel = 'info';
+
+	delete options.imbaPath;
 	
 	let result = await require('esbuild').build(options);
 	if(watcher){
@@ -171,7 +176,7 @@ bundle([{
 	entryPoints: ['src/compiler/bundler.imba'],
 	outfile: 'dist/bundler.js',
 	minify: false,
-	imbaPath: path.resolve(__dirname,'..'),
+	imbaPath: '../imba', // path.resolve(__dirname,'..','src','imba'),
 	sourcemap: false,
 	format: 'cjs',
 	external: ['chokidar','esbuild','readdirp'],
