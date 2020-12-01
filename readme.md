@@ -25,7 +25,7 @@ For the exact meeting times please use the Meetup group [Imba Oslo Meetup](https
 
 You can join us remotely via [Zoom](https://us04web.zoom.us/j/230170873).
 
-Did you miss a meeting? No worries, catch up via the [meeting notes](https://docs.google.com/document/d/1ABGjOJut9eXrajYjdN4G4-UGGU4gvKznLk5CAaXYjso/edit?usp=sharing) or [video recordings](https://www.youtube.com/playlist?list=PLf1a9PYKGPdl3OMBHV72Oz23eFy9q51jJ).
+Did you miss a meeting? No worries, catch up via the [meeting notes](https://bit.ly/2JyjGM1) or [video recordings](https://www.youtube.com/playlist?list=PLf1a9PYKGPdl3OMBHV72Oz23eFy9q51jJ).
 
 ### Chat
 
