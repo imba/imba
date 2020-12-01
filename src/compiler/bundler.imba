@@ -207,6 +207,8 @@ class Bundler
 				fmt 'dim', (part / 1000).toFixed(1) + 'kb'
 			elif f == 'path'
 				fmt('bold',part)
+			elif f == 'ms'
+				fmt('yellow',Math.round(part) + 'ms')
 			else
 				part
 
@@ -337,14 +339,16 @@ class Bundler
 				if bundle.inputs[input]
 					dirtyBundles.add(bundle)
 
-		console.log 'rebuild now!',changes,Array.from(dirtyBundles).length
+		log('info','rebuilding')
+		# console.log 'rebuild now!',changes,Array.from(dirtyBundles).length
 
 		# await Promise.all Array.from(dirtyBundles).map do $1.rebuild!
 		let awaits = for item of dirtyBundles
 			item.rebuild!
 
 		await Promise.all(awaits) 
-		console.log 'was rebuilt',time('rebuild')
+		log('info','finished rebuilding in %ms',time('rebuild'))
+		# console.log 'was rebuilt',time('rebuild')
 		write!
 		self
 
@@ -615,7 +619,8 @@ class Bundle
 
 			# legacy handling
 			if args.path.match(/\.imba1$/)
-				iopts.target = iopts.sourcePath
+				iopts.filename = iopts.sourcePath
+				iopts.inlineHelpers = 1
 				out.contents = String(imba1.compile(raw,iopts))
 			else
 				let result = compiler.compile(raw,iopts)
@@ -672,9 +677,9 @@ class Bundle
 
 	def rebuild
 		let t = Date.now!
-		console.log('rebuilding',options.infile)
+		# console.log('rebuilding',options.infile)
 		let rebuilt = await result.rebuild!
-		console.log('rebuilt',options.infile,Date.now! - t)
+		# console.log('rebuilt',options.infile,Date.now! - t)
 		result = rebuilt
 		write(result.outputFiles)
 		bundler.rebuilt(self)
@@ -706,6 +711,12 @@ class Bundle
 		for file in files
 			# find the related entrypoint for this file
 			# finding the related previously compiled file if rebuilding
+			let output = meta.outputs[bundler.relp(file.path)]
+
+			if output
+				file.#output = output
+				output.#file = file
+
 			if pubdir and node? and !file.path.match(/\.[cm]?js(\.map)?$/)
 				file.path = path.resolve(pubdir,path.basename(file.path))
 				# calculate the public path?
@@ -730,7 +741,6 @@ class Bundle
 		timed 'hashing'
 
 		unless files.some(do $1.dirty)
-			console.log 'nothing has changed!!!'
 			return yes
 		
 		let o = options
@@ -746,9 +756,11 @@ class Bundle
 		# go through to extract the actual css chunks from output files
 		# that is - before the correct ordering
 		for own key,value of meta.outputs
-			let file = files.find do path.relative(cwd,$1.path) == key
-			value.#file = file
+			# let file = files.find do path.relative(cwd,$1.path) == key
+			let file = value.#file
+			# value.#file = file
 			continue unless file and key.match(/\.css$/)
+
 
 			let offset = 0
 			let body = file.text
@@ -762,12 +774,12 @@ class Bundle
 				if !o.minify
 					offset += header.length
 
-				let chunk = body.substr(offset,bytes)
+				let chunk = header + body.substr(offset,bytes)
 				offset += bytes
 				offset += 1 if !o.minify
 				entry.output ||= chunk
 				parts[entry.nr] = chunk
-				
+
 			file.contents = parts.filter(do $1).join('\n')
 
 		inputs = meta.inputs
