@@ -182,8 +182,7 @@ class Bundler
 		env = 'development' if env == 'dev' or options.dev
 		env = 'production' if env == 'prod' or options.prod
 
-		manifestpath = absp(config.output..manifest or config.outdir or './dist')
-		manifestpath = path.resolve(manifestpath,'manifest.json') unless path.extname(manifestpath) == '.json'
+		manifestpath = path.resolve(outdir,'manifest.json')
 
 		try
 			manifest = JSON.parse(fs.readFileSync(manifestpath,'utf-8'))
@@ -220,14 +219,12 @@ class Bundler
 	def relp src
 		path.relative(cwd,src)
 
-	get publicPath
-		config.publicPath or config.output..url or ''
 	
-	get browserDir
-		config.output..browser or config.output
-
-	get publicDir
-		browserDir
+	get puburl do config.puburl or '/assets/'
+	get srcdir do config.srcdir or './src'
+	get outdir do config.outdir or './build'
+	get pubdir do config.pubdir or outdir + '/public'  # './build/public'
+	get libdir do config.libdir or outdir + '/server'  # './build/server'
 
 	get dev?
 		env == 'development'
@@ -253,7 +250,6 @@ class Bundler
 			let files = []
 			for entry,i in item
 				if entry.indexOf('*') >= 0
-					# need to start watching paths here?
 					let paths = await expandPath(entry)
 					files.push(...paths)
 				else
@@ -295,8 +291,10 @@ class Bundler
 		if config.entries
 			for own key,value of config.entries
 				continue if value.skip
+				
 				let paths = await parseEntryPoints(value.entryPoints or key)
 				let cfg = Object.assign({},config,options,{entryPoints: paths},value)
+				cfg.platform ||= 'browser'
 				entries.push cfg
 
 		bundles = entries.map do new Bundle(self,$1)
@@ -375,49 +373,17 @@ class Bundler
 			idmap: sourceIdMap
 		}
 
-		let pubdir = publicDir
-		let puburl = publicPath
+		let prevFiles = self.files or []
+
 		let files = []
+		let sheets = []
 		# go through output files to actually 
 		for bundle in bundles
 			for file in bundle.files
-				file.writePath = dev? ? file.path : file.hashedPath
-				let src = relp(file.path)
-				let pub = path.relative(pubdir,file.path)
-				let hashpub = path.relative(pubdir,file.hashedPath)
-				# let id = sourceIdForPath(src) # for the outputs, not the inputs??
-
-				let entry = manifest.files[src] = {
-					hash: file.hash
-					path: file.writePath
-					#file: file
-				}
 				
-				let url = puburl + '/' + pub
-				let redir = url
-
-				if dev?
-					redir += "?v={file.hash}"
-				else
-					redir = puburl + '/' + hashpub
-
-				# better way to check whether file is in public path?
-				if !pub.match(/^\.\.?\//)
-					entry.url = redir
-					file.url = redir
-					manifest.urls[url] = src # hashed url
-
-					manifest.assets[pub] = {
-						url: redir
-						path: file.writePath
-						hash: file.hash
-					}
-
-				file.pubpath = path.relative(bundle.outdir,file.path)
-			
-				if file.dirty
-					file.dirty = no
-					filesToWrite.push(file)
+				files.push(file)
+				if file.path.match(/\.css$/)
+					sheets.push(file)
 
 			if options.verbose
 				manifest.bundles ||= []
@@ -425,14 +391,58 @@ class Bundler
 
 		time 'writeFiles'
 
+		let sharedcss = []
+
+		for sheet in sheets
+			sharedcss.push(...sheet.contents.split("/* chunk:end */"))
+		
+		let sheetbody = sharedcss.filter(do(v,i) sharedcss.indexOf(v) == i).join('\n')
+		let sheethash = createHash(sheetbody)
+
+		files.push {
+			contents: sheetbody
+			hash: sheethash
+			path: path.resolve(pubdir,"all.css")
+			hashedPath: path.resolve(pubdir,"all.{sheethash}.css")
+		}
+
+		for file in files
+			file.writePath = dev? ? file.path : file.hashedPath
+			let prev = prevFiles.find do $1.path == file.path
+			let src = relp(file.path)
+			let pub = path.relative(pubdir,file.path)
+			let hashpub = path.relative(pubdir,file.hashedPath)
+
+			let entry = manifest.files[src] = {
+				hash: file.hash
+				path: file.writePath
+				#file: file
+			}
+			
+			let url = puburl + pub
+			let redir = dev? ? "{url}?v={file.hash}" : puburl + hashpub
+
+			# better way to check whether file is in public path?
+			if !pub.match(/^\.\.?\//)
+				entry.url = redir
+				file.url = redir
+				manifest.urls[url] = src
+
+				manifest.assets[pub] = {
+					url: redir
+					path: file.writePath
+					hash: file.hash
+				}
+
+			if !prev or prev.hash != file.hash
+				filesToWrite.push(file)
+
 		let fsp = fs.promises
 		let writes = []
 		for file in filesToWrite
 			let dest = file.writePath
 			let link = dest != file.path and file.path
 			let size = (file.contents or file.text).length
-			file.dirty = no
-
 			log('success','write %path %kb',relp(dest),size)
 
 			# console.log 'writing files',dest,file.hash
@@ -450,30 +460,25 @@ class Bundler
 		# could write to a virtual dir as well?
 		await Promise.all(writes)
 		timed 'writeFiles'
+
+		self.files = files
 		
 		if writes.length
 			# write the manifest
 			await writeManifest(manifest)
+			server.updated(filesToWrite) if server
 
-		if server
-			server.updated(filesToWrite)
 		yes
 
 	def writeManifest manifest
 		let dest = manifestpath
 		let json = JSON.stringify(manifest,null,2)
 		self.manifest = manifest
-		# console.log 'writing manifest'
 		await ensureDir(dest)
 		fs.promises.writeFile(dest,json)
 		log('success','write %path %kb',relp(dest),json.length)
 
 
-class Entry
-	def constructor bundle, options
-		bundle = bundle
-		options = options
-	
 class Bundle
 	get config
 		bundler.config
@@ -483,9 +488,6 @@ class Bundle
 
 	get web?
 		!node?
-
-	get publicPath
-		options.publicPath or bundler.publicPath
 
 	def time name = 'default'
 		let now = Date.now!
@@ -503,7 +505,6 @@ class Bundle
 		styles = {}
 		manifest = {}
 		options = o
-		# watcher = o.watch ? chokidar.watch([]) : null
 		result = null
 		built = no
 		cache = bundler.#cache or {}
@@ -512,33 +513,36 @@ class Bundle
 		name = options.name
 		cwd = options.cwd
 		
-		platform = o.platform
+		platform = o.platform or 'browser'
 		cachePrefix = "{o.platform}"
 		entryPoints = o.entryPoints
+
 		let defaults = esbuildPlatformDefaults[o.platform or 'browser'] or {}
-		outdir = o.outdir or config.output[platform] or defaults.outdir
+		# outdir = o.outdir or config.output[platform] or defaults.outdir
 
 		esoptions = Object.assign({},defaults,{
 			entryPoints: entryPoints
 			target: o.target or ['es2019']
 			bundle: true
 			define: o.define
+			platform: o.platform == 'node' ? 'node' : 'browser'
 			format: o.format or 'iife'
 			outfile: o.outfile
-			outdir: outdir
-			outbase: o.outbase
-			globalName: o.globalName # weird, no?
-			publicPath: publicPath
+			outdir: o.outfile ? '' : (node? ? bundler.libdir : bundler.pubdir)
+			outbase: o.outbase or bundler.srcdir
+			globalName: o.globalName
+			publicPath: o.publicPath or bundler.puburl
 			banner: o.banner
 			footer: o.footer
 			splitting: o.splitting
 			minify: !!o.minify
 			incremental: o.watch
-			loader: o.loader or {} # Object.assign({},defaultLoaders,o.loader or {})
+			loader: o.loader or {}
 			write: false
 			metafile: "metafile.json"
 			external: o.external or undefined
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
+			outExtension: o.outExtension
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
 		})
 
@@ -549,9 +553,6 @@ class Bundle
 			let defines = esoptions.define ||= {}
 			let env = o.env or process.env.NODE_ENV or 'production'
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
-
-		# if o.outname
-		#	esoptions.sourcefile = o.outname
 
 		if o.splitting and esoptions.format != 'esm'
 			esoptions.splitting = false
@@ -581,30 +582,27 @@ class Bundle
 
 			if extjson and id.match(/\.json$/)
 				let abspath = path.resolve(args.resolveDir,id)
-				let outpath = path.relative(outdir,args.resolveDir)
+				let outpath = path.relative(esoptions.outdir,args.resolveDir)
 				return {external: true, path: abspath}
 
 			if extmap[id]
 				return {external: true}
 			return
 
-		
-
 		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
-			watcher.add(args.path) if watcher
 			let raw = await fs.promises.readFile(args.path, 'utf8')
 			let key = "{cachePrefix}:{args.path}" # possibly more
 
 			let t0 = Date.now()
 			let iopts = {
-				platform: options.platform || 'browser',
+				platform: platform || 'browser',
 				format: 'esm',
 				sourcePath: args.path,
 				imbaPath: options.imbaPath or 'imba'
 				sourceId: bundler.sourceIdForPath(args.path)
 				config: config
 				styles: 'extern'
-				hmr: options.hmr # and !node?
+				hmr: options.hmr
 				bundle: yes
 			}
 			let body = null
@@ -702,7 +700,6 @@ class Bundle
 		return
 
 	def write files
-		let pubdir = bundler.browserDir
 		let metafile = pluck(files) do $1.path.indexOf(esoptions.metafile) >= 0 # match(/metafile\.json$/)
 		let meta = JSON.parse(metafile.text)
 
@@ -711,18 +708,23 @@ class Bundle
 		for file in files
 			# find the related entrypoint for this file
 			# finding the related previously compiled file if rebuilding
-			let output = meta.outputs[bundler.relp(file.path)]
+			let outfile = bundler.relp(file.path)
+			let output = meta.outputs[outfile]
 
 			if output
 				file.#output = output
 				output.#file = file
 
-			if pubdir and node? and !file.path.match(/\.[cm]?js(\.map)?$/)
-				file.path = path.resolve(pubdir,path.basename(file.path))
-				# calculate the public path?
+			# assets should always go in the public folder? Maybe not json and text etc
+			# need to figure out how to deal with that
+			if node? and !file.path.match(/\.([cm]?js|css)(\.map)?$/)
+				let rel = path.resolve(bundler.pubdir,path.relative(esoptions.outdir,file.path))
+				file.path = rel
+				if output
+					delete meta.outputs[outfile]
+					meta.outputs[outfile = bundler.relp(file.path)] = output
 
 			let prev = self.files and self.files.find do $1.path == file.path
-
 			let hash = file.hash = (file.path.match(/\.([A-Z\d]{8})\.\w+$/) or [])[1]
 			let name = path.basename(file.path)
 
@@ -732,10 +734,7 @@ class Bundle
 				hash = file.hash = createHash(file.contents)
 				file.hashedName = name.replace(/(?=\.\w+$)/,".{hash}")
 
-			# console.log "will write",file.path,file.hash,prev and prev.hash == hash
 			file.dirty = !prev or prev.hash != hash
-
-			# asset files should always be redirected to pubdir instead
 			file.hashedPath = path.resolve(path.dirname(file.path),file.hashedName)
 
 		timed 'hashing'
@@ -747,7 +746,7 @@ class Bundle
 		let styles = []
 
 		for src in entryPoints
-			let entry = meta.inputs[path.relative(cwd,src)]
+			let entry = meta.inputs[bundler.relp(src)]
 			traverseInput(entry,meta.inputs,entry)
 			styles.push(...entry.css)
 
@@ -761,7 +760,6 @@ class Bundle
 			# value.#file = file
 			continue unless file and key.match(/\.css$/)
 
-
 			let offset = 0
 			let body = file.text
 			let parts = []
@@ -774,7 +772,7 @@ class Bundle
 				if !o.minify
 					offset += header.length
 
-				let chunk = header + body.substr(offset,bytes)
+				let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
 				offset += bytes
 				offset += 1 if !o.minify
 				entry.output ||= chunk
