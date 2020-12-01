@@ -740,6 +740,9 @@ export def run options = {}
 	let cwd = (options.cwd ||= process.cwd!)
 	if options.argv
 		Object.assign(options,compiler.helpers.parseArgs(options.argv,schema))
+
+	if options.serve
+		options.watch = yes # ?
 	
 	let config = options.config or resolveConfigFile(cwd,path: path, fs: fs)
 	let bundler = new Bundler(config,options)

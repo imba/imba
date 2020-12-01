@@ -647,6 +647,9 @@ export class Stack
 	
 	def tsc
 		platform == 'tsc' or @options:tsc
+	
+	def hmr
+		!!@options:hmr
 
 	def isWeb
 		platform == 'browser' or platform == 'web'
@@ -5642,7 +5645,9 @@ export class TagTypeIdentifier < Identifier
 			stack.registerSemanticToken(@value,@variable)
 		return self
 
-	
+	def toVarPrefix
+		let str = @str
+		str.replace(/[\:\-]/g,'')
 
 	def toClassName
 		let str = @str
@@ -7522,22 +7527,22 @@ class TagLike < Node
 		@fragment || parent
 
 	def tvar
-		@tvar or tagvar('t')
+		@tvar or tagvar('T')
 
 	# built variable
 	def bvar
-		@bvar or (@parent ? @parent.bvar : tagvar('b'))
+		@bvar or (@parent ? @parent.bvar : tagvar('B'))
 
 	# cache variable
 	def cvar
-		@cvar or (@parent ? @parent.cvar :  tagvar('c'))
+		@cvar or (@parent ? @parent.cvar :  tagvar('C'))
 
-	def vvar do tagvar('v') # value variable
-	def kvar do tagvar('k') # key variable
+	def vvar do tagvar('V') # value variable
+	def kvar do tagvar('K') # key variable
 
 	# for tracking specific changes -- included in end
 	# shuold maybe link it with built
-	def dvar do tagvar('d') # value variable
+	def dvar do tagvar('D') # value variable
 
 	def ref
 		@ref || (@cachedRef = "{parent ? parent.cvar : ''}[{osym}]")
@@ -7774,7 +7779,7 @@ export class TagLoopFragment < TagLike
 			set(keyed: yes)
 
 	def cvar
-		@cvar || tagvar('c')
+		@cvar || tagvar('C')
 
 	def js o
 
@@ -7831,6 +7836,12 @@ export class Tag < TagLike
 	def attrs
 		@attributes
 
+	def cssflag
+		@cssflag ||= "{sourceId}"
+
+	def tagvarprefix
+		@tagvarprefix ||= (type and type:toVarPrefix ? type.toVarPrefix : (isSelf ? 'cmp' : 'tag'))
+
 	def traverse 
 		return self if @traversed
 		@tid = STACK.generateId('tag')
@@ -7849,6 +7860,7 @@ export class Tag < TagLike
 		return returns
 
 	def visitBeforeBody stack
+		oid
 		let type = @options:type
 		type && type.traverse
 
@@ -8166,6 +8178,12 @@ export class Tag < TagLike
 			typ = vvar
 			dynamicKey = kvar
 
+		# add unique flag to this element if it has inline styles or
+		# we're compiling for hmr.
+		if @cssflag or STACK.hmr
+			@classNames.unshift(cssflag)
+
+		# if we have file-scoped styles - add flag to all tags in page
 		if stack.option(:hasScopedStyles)
 			@classNames.unshift(stack.sourceId)
 
@@ -8199,6 +8217,7 @@ export class Tag < TagLike
 				else
 					names.push(cls)
 
+			names = names.filter do |item,i| names.indexOf(item) == i
 			let q = dynamic ? '`' : "'"
 			@className = q + names.join(' ') + q
 
@@ -8315,7 +8334,7 @@ export class Tag < TagLike
 					@ref = "{parent.cvar}[{parent.kvar}]"
 
 				# if we add our own bvar?
-				@bvar = tagvar(:b)
+				@bvar = tagvar('B')
 				add "({bvar}={dvar}=1,{tvar}={ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
 				@ref = "{tvar}"
 
@@ -8348,7 +8367,7 @@ export class Tag < TagLike
 					ref = "{dref}[{dynamicKey}]"
 
 				if markWhenBuilt
-					@bvar = tagvar(:b)
+					@bvar = tagvar('B')
 					add "({bvar}={dvar}=1,{tvar}={ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
 				else
 					add "({tvar} = {ref}) || ({ref}={ctor})"
@@ -9032,6 +9051,7 @@ export class StyleRuleSet < StyleNode
 		
 		let sel = String(@selectors).trim
 
+		# TODO remove mixins
 		if sel.match(/^\%[\w\-]+$/)
 			set(mixin: sel.slice(1))
 			@identifier = MixinIdentifier.new(sel)
@@ -9039,6 +9059,7 @@ export class StyleRuleSet < StyleNode
 			@sel = sel # "%{@name}"
 			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
 			# @variable.@resolvedValue = @sel
+
 		
 		if stack.parent isa ClassBody
 			# console.log 'ruleset is inside of class!!'
@@ -9071,11 +9092,15 @@ export class StyleRuleSet < StyleNode
 			@sel ||= @selectors?.toString.trim
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
 
+		elif !@name and @tag and @flag and !@flag.@condition
+			@name = @tag.cssflag
+			@sel = ".{@name}"
+
 		elif !@name
-			# if this is unconditional - we should only need to use the unique
-			# class name of the element
 			@name = (cmp ? (cmp.cssns + oid) : (sourceId + oid))
 			@sel = ".{@name}"
+
+		# if @tag and flag is not conditional -- use the flag id of the tag itself
 		
 		@selectors?.traverse
 		
@@ -10763,8 +10788,9 @@ export class SystemVariable < Variable
 		
 		# unless pool
 		if !o:alias or true
-			let name = @name or 'sys'
-			let nr = STACK.incr(@name or 'sysvar')
+			let name = @name or o:alias or 'sys'
+			name = "_{name}" if (/\d/).test(name[0])
+			let nr = STACK.incr(name)
 			@name = "{name}${nr}"
 			return self
 
