@@ -35,6 +35,7 @@ export var ansi =
 	red: do |text| '\u001b[31m' + text + '\u001b[39m'
 	green: do |text| '\u001b[32m' + text + '\u001b[39m'
 	yellow: do |text| '\u001b[33m' + text + '\u001b[39m'
+	blue: do |text| '\u001b[94m' + text + '\u001b[39m'
 	gray: do |text| '\u001b[90m' + text + '\u001b[39m'
 	white: do |text| '\u001b[37m' + text + '\u001b[39m'
 	f: do |name,text|

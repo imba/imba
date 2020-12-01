@@ -45,7 +45,8 @@ export class Server
 	def start
 		#server = http.createServer(handle.bind(self))
 		#server.listen(port) do
-			log "server started on {origin}"
+			bundler.log 'info',"server started on {origin}"
+			# log "server started on {origin}"
 		self
 
 	def broadcast event, msg

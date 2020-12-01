@@ -7,8 +7,20 @@ const fs = require 'fs'
 const path = require 'path'
 const readdirp = require 'readdirp'
 const crypto = require 'crypto'
+const helpers = require './helpers'
+
 import {resolveConfigFile} from './imbaconfig'
 import {Server} from '../bundler/server'
+
+const ansi = helpers.ansi
+const notWin = process.platform !== 'win32' || process.env.CI || process.env.TERM === 'xterm-256color'
+
+const logSymbols = {
+	info: ansi.blue(notWin ? 'ℹ' : 'i')
+	success: ansi.green(notWin ? '✔' : '√')
+	warning: ansi.yellow(notWin ? '⚠' : '!!')
+	error: ansi.red(notWin ? '×' : '✖')
+}
 
 def pluck array, cb
 	for item,i in array
@@ -90,6 +102,8 @@ const esbuildPlatformDefaults = {
 	worker: {platform: 'browser'}
 }
 
+
+
 const defaultLoaders = {
 	".png": "file",
 	".svg": "file",
@@ -155,6 +169,8 @@ def ensureDir src
 def createHash body
 	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8)
 
+
+
 class Bundler
 	def constructor config, options
 		cwd = options.cwd
@@ -171,7 +187,6 @@ class Bundler
 		manifestpath = absp(config.output..manifest or config.outdir or './dist')
 		manifestpath = path.resolve(manifestpath,'manifest.json') unless path.extname(manifestpath) == '.json'
 
-		console.log manifestpath
 		try
 			manifest = JSON.parse(fs.readFileSync(manifestpath,'utf-8'))
 			sourceIdMap = manifest.idmap or {}
@@ -185,6 +200,10 @@ class Bundler
 
 		return self
 
+	def log kind,...msg
+		let sym = logSymbols[kind] or kind
+		console.log(sym,...msg)
+
 	def absp ...src
 		path.resolve(cwd,...src)
 
@@ -192,7 +211,7 @@ class Bundler
 		path.relative(cwd,src)
 
 	get publicPath
-		config.publicPath or config.output..url
+		config.publicPath or config.output..url or ''
 	
 	get browserDir
 		config.output..browser or config.output
@@ -217,21 +236,6 @@ class Bundler
 
 		return map[src]
 
-	def #parseBundle item, defaults = [{}]
-		let files = []
-		for entry,i in item.entries
-			if entry.indexOf('*') >= 0
-				# need to start watching paths here?
-				let paths = await expandPath(entry)
-				files.push(...paths)
-			else
-				files.push(entry)
-
-		item.entryPoints = files
-		let out = Object.assign({},...defaults,item)
-		console.log 'parsed bundle',out
-		return out
-
 	def parseEntryPoints item
 		if typeof item == 'string'
 			return parseEntryPoints([item])
@@ -244,7 +248,7 @@ class Bundler
 					files.push(...paths)
 				else
 					files.push(entry)
-			console.log 'returned files',files
+
 			return files
 		elif item and item.entryPoints
 			parseEntryPoints(item.entryPoints)
@@ -257,7 +261,8 @@ class Bundler
 		return diff
 	
 	def timed name = 'default'
-		console.log "time {name}: {time(name)}"
+		let str = "time {name}: {time(name)}"
+		# console.log str
 
 	get client
 		bundles.find do $1.name == 'client'
@@ -271,7 +276,6 @@ class Bundler
 				# first merge in defaults?
 				if typeof cfg == 'string' or cfg isa Array
 					cfg = {entryPoints: cfg}
-				console.log 'going to add default',cfg
 
 				cfg.entryPoints = await parseEntryPoints(cfg.entryPoints || defaults.entryPoints)
 				cfg = Object.assign({},config,defaults,options,cfg)
@@ -281,12 +285,10 @@ class Bundler
 		if config.entries
 			for own key,value of config.entries
 				continue if value.skip
-				let paths = await expandPath(key)
+				let paths = await parseEntryPoints(value.entryPoints or key)
 				let cfg = Object.assign({},config,options,{entryPoints: paths},value)
 				entries.push cfg
-				console.log 'added entry',entries[entries.length - 1]
-		
-		console.log 'entry options',entries
+
 		bundles = entries.map do new Bundle(self,$1)
 		for bundle in bundles
 			await bundle.setup!
@@ -308,7 +310,6 @@ class Bundler
 		let builds = for bundle in bundles
 			bundle.build!
 		await Promise.all(builds)
-		console.log 'built all entries'
 		write!
 		timed 'build'
 
@@ -345,9 +346,10 @@ class Bundler
 		time 'watch'
 		for bundle in bundles
 			for own src,value of bundle.inputs
-				if !src.match(/^[\w\-]+\:/) and src.match(/\.imba/)
+				# TODO start watching essentially all files instead?
+				if !src.match(/^[\w\-]+\:/) and src.match(/\.(imba|css|svg)/)
 					watch.add( absp(src) )
-		console.log 'filesToWatch',Array.from(watch).length
+		# console.log 'filesToWatch',Array.from(watch).length
 		for file in Array.from(watch)
 			if #watchedFiles[file] =? yes
 				watcher..add(file)
@@ -417,7 +419,8 @@ class Bundler
 			let dest = file.writePath
 			let link = dest != file.path and file.path
 			file.dirty = no
-			console.log 'writing files',dest,file.hash
+			log('success','write',relp(dest))
+			# console.log 'writing files',dest,file.hash
 			await ensureDir(dest)
 			let promise = fsp.writeFile(dest,file.contents or file.text)
 			
@@ -448,6 +451,7 @@ class Bundler
 		# console.log 'writing manifest'
 		await ensureDir(dest)
 		fs.promises.writeFile(dest,json)
+		log('success','write',relp(dest))
 
 
 class Entry
@@ -476,7 +480,7 @@ class Bundle
 		return diff
 	
 	def timed name = 'default'
-		console.log "time {name}: {time(name)}"
+		let str = "time {name}: {time(name)}"
 
 	def constructor bundler,o
 		#timestamps = {}
@@ -648,15 +652,11 @@ class Bundle
 
 	def build
 		if built =? true
-			console.log 'starting to build'
+			# console.log 'starting to build'
 			let t = Date.now!
 			result = await esbuild.build(esoptions)
-			console.log 'built',Date.now! - t
+			# console.log 'built',Date.now! - t
 			write(result.outputFiles)
-			# if watcher
-			#	watcher.on('change') do rebuild!
-
-		console.log 'did build!'
 		return self 
 
 	def rebuild
