@@ -110,13 +110,12 @@ const defaultOptions = {
 	node:
 		platform: 'node'
 		format: 'cjs'
-		outdir: './lib'
 		loader: defaultLoaders
 		name: 'node'
+		entryPoints: ['./src/server.imba']
 
 	browser:
 		platform: 'browser'
-		outdir: './dist/browser'
 		loader: defaultLoaders
 		name: 'browser'
 		entryPoints: ['./src/index.imba']
