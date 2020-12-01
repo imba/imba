@@ -100,6 +100,13 @@ const defaultLoaders = {
 }
 
 const defaultOptions = {
+	base:
+		outdir:
+			manifest: "./dist"
+			browser: "./dist/browser"
+			node: "./dist/node"
+			url: "/bundle"
+
 	node:
 		platform: 'node'
 		format: 'cjs'
@@ -109,9 +116,10 @@ const defaultOptions = {
 
 	browser:
 		platform: 'browser'
-		outdir: './lib'
+		outdir: './dist/browser'
 		loader: defaultLoaders
 		name: 'browser'
+		entryPoints: ['./src/index.imba']
 
 	server:
 		platform: 'node'
@@ -122,7 +130,6 @@ const defaultOptions = {
 
 	client:
 		platform: 'browser'
-		outdir: './dist/client'
 		loader: defaultLoaders
 		name: 'client'
 }
@@ -162,7 +169,9 @@ class Bundler
 		env = 'development' if env == 'dev' or options.dev
 		env = 'production' if env == 'prod' or options.prod
 
-		manifestpath = absp(config.manifest..path or './dist/manifest.json')
+		manifestpath = absp(config.output..manifest or config.outdir or './dist')
+		manifestpath = path.resolve(manifestpath,'manifest.json') unless path.extname(manifestpath) == '.json'
+
 		console.log manifestpath
 		try
 			manifest = JSON.parse(fs.readFileSync(manifestpath,'utf-8'))
@@ -184,10 +193,13 @@ class Bundler
 		path.relative(cwd,src)
 
 	get publicPath
-		config.publicPath
+		config.publicPath or config.output..url
 	
+	get browserDir
+		config.output..browser or config.output
+
 	get publicDir
-		config.client..outdir
+		browserDir
 
 	get dev?
 		env == 'development'
@@ -221,6 +233,23 @@ class Bundler
 		console.log 'parsed bundle',out
 		return out
 
+	def parseEntryPoints item
+		if typeof item == 'string'
+			return parseEntryPoints([item])
+		if item isa Array
+			let files = []
+			for entry,i in item
+				if entry.indexOf('*') >= 0
+					# need to start watching paths here?
+					let paths = await expandPath(entry)
+					files.push(...paths)
+				else
+					files.push(entry)
+			console.log 'returned files',files
+			return files
+		elif item and item.entryPoints
+			parseEntryPoints(item.entryPoints)
+
 	def time name = 'default'
 		let now = Date.now!
 		let prev = #timestamps[name] or now
@@ -236,21 +265,29 @@ class Bundler
 		
 	def setup
 		let entries = []
+		let shared = {}
 
 		for own name,defaults of defaultOptions
-			if config[name]
-				let entry = await #parseBundle(config[name],[options,defaults])
-				config[name] = entries[name] = entry
-				entries.push(entry)
+			if let cfg = config[name]
+				# first merge in defaults?
+				if typeof cfg == 'string' or cfg isa Array
+					cfg = {entryPoints: cfg}
+				console.log 'going to add default',cfg
+
+				cfg.entryPoints = await parseEntryPoints(cfg.entryPoints || defaults.entryPoints)
+				cfg = Object.assign({},config,defaults,options,cfg)
+				config[name] = cfg
+				entries.push(cfg)
 
 		if config.entries
 			for own key,value of config.entries
 				continue if value.skip
 				let paths = await expandPath(key)
-				entries.push Object.assign({},options,{entryPoints: paths},value)
+				let cfg = Object.assign({},config,options,{entryPoints: paths},value)
+				entries.push cfg
 				console.log 'added entry',entries[entries.length - 1]
-
 		
+		console.log 'entry options',entries
 		bundles = entries.map do new Bundle(self,$1)
 		for bundle in bundles
 			await bundle.setup!
@@ -409,12 +446,10 @@ class Bundler
 		let dest = manifestpath
 		let json = JSON.stringify(manifest,null,2)
 		self.manifest = manifest
-		console.log 'writing manifest'
+		# console.log 'writing manifest'
+		await ensureDir(dest)
 		fs.promises.writeFile(dest,json)
 
-	def serve
-		let port = config.serve.port
-		console.log "start serving!!!",config.serve.port
 
 class Entry
 	def constructor bundle, options
@@ -424,9 +459,6 @@ class Entry
 class Bundle
 	get config
 		bundler.config
-
-	get outdir
-		options.outdir
 
 	get node?
 		platform == 'node'
@@ -461,13 +493,12 @@ class Bundle
 
 		name = options.name
 		cwd = options.cwd
+		
 		platform = o.platform
 		cachePrefix = "{o.platform}"
 		entryPoints = o.entryPoints
-
-		console.log "construct with options",o
-
 		let defaults = esbuildPlatformDefaults[o.platform or 'browser'] or {}
+		outdir = o.outdir or config.output[platform] or defaults.outdir
 
 		esoptions = Object.assign({},defaults,{
 			entryPoints: entryPoints
@@ -476,7 +507,7 @@ class Bundle
 			define: o.define
 			format: o.format or 'iife'
 			outfile: o.outfile
-			outdir: o.outdir
+			outdir: outdir
 			outbase: o.outbase
 			globalName: o.globalName # weird, no?
 			publicPath: publicPath
@@ -555,7 +586,7 @@ class Bundle
 				sourceId: bundler.sourceIdForPath(args.path)
 				config: config
 				styles: 'extern'
-				hmr: options.serve and !node?
+				hmr: options.hmr # and !node?
 				bundle: yes
 			}
 			let body = null
@@ -656,7 +687,7 @@ class Bundle
 		return
 
 	def write files
-		let pubdir = bundler.client..outdir
+		let pubdir = bundler.browserDir
 		let metafile = pluck(files) do $1.path.indexOf(esoptions.metafile) >= 0 # match(/metafile\.json$/)
 		let meta = JSON.parse(metafile.text)
 

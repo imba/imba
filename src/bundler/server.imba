@@ -36,9 +36,16 @@ export class Server
 	get manifest
 		bundler.manifest
 
+	get origin
+		"http://localhost:{port}"
+
+	def log ...message
+		console.log(...message)
+
 	def start
 		#server = http.createServer(handle.bind(self))
-		#server.listen(port)
+		#server.listen(port) do
+			log "server started on {origin}"
 		self
 
 	def broadcast event, msg
