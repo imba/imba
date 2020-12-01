@@ -169,8 +169,6 @@ def ensureDir src
 def createHash body
 	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8)
 
-
-
 class Bundler
 	def constructor config, options
 		cwd = options.cwd
@@ -200,9 +198,19 @@ class Bundler
 
 		return self
 
-	def log kind,...msg
+	def log kind,str,...rest
 		let sym = logSymbols[kind] or kind
-		console.log(sym,...msg)
+		let fmt = helpers.ansi.f
+		str = str.replace(/\%([\w\.]+)/g) do(m,f)
+			let part = rest.shift!
+			if f == 'kb'
+				fmt 'dim', (part / 1000).toFixed(1) + 'kb'
+			elif f == 'path'
+				fmt('bold',part)
+			else
+				part
+
+		console.log(sym + ' ' + str,...rest)
 
 	def absp ...src
 		path.resolve(cwd,...src)
@@ -418,8 +426,11 @@ class Bundler
 		for file in filesToWrite
 			let dest = file.writePath
 			let link = dest != file.path and file.path
+			let size = (file.contents or file.text).length
 			file.dirty = no
-			log('success','write',relp(dest))
+
+			log('success','write %path %kb',relp(dest),size)
+
 			# console.log 'writing files',dest,file.hash
 			await ensureDir(dest)
 			let promise = fsp.writeFile(dest,file.contents or file.text)
@@ -451,7 +462,7 @@ class Bundler
 		# console.log 'writing manifest'
 		await ensureDir(dest)
 		fs.promises.writeFile(dest,json)
-		log('success','write',relp(dest))
+		log('success','write %path %kb',relp(dest),json.length)
 
 
 class Entry
