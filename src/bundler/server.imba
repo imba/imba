@@ -18,8 +18,6 @@ const mimes = {
 	css: 'text/css'
 }
 
-export class Response
-
 export class Server
 
 	def constructor bundler
@@ -37,16 +35,15 @@ export class Server
 		bundler.manifest
 
 	get origin
-		"http://localhost:{port}"
+		options.origin or "http{options.https ? 's' : ''}://{options.host or 'localhost'}:{port}"
 
-	def log ...message
-		console.log(...message)
+	get log
+		bundler.log
 
 	def start
 		#server = http.createServer(handle.bind(self))
 		#server.listen(port) do
-			bundler.log 'info',"server started on {origin}"
-			# log "server started on {origin}"
+			log.success "server started on {origin}"
 		self
 
 	def broadcast event, msg
@@ -72,9 +69,6 @@ export class Server
 			body: null
 			type: ext or 'html'
 		}
-
-		# console.log 'handle this!!!!',url,abs
-		# wait for bundler if it has unfinished business
 
 		if let src = (manifest.urls[req.url] or manifest.urls[url.pathname])
 			let asset = manifest.files[src]

@@ -173,7 +173,7 @@ bundle([{
 	format: 'iife',
 	platform: 'browser'
 },{
-	entryPoints: ['src/compiler/bundler.imba'],
+	entryPoints: ['src/bundler/index.imba'],
 	outfile: 'dist/bundler.js',
 	minify: false,
 	imbaPath: '../imba', // path.resolve(__dirname,'..','src','imba'),
