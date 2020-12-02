@@ -1,16 +1,16 @@
-import './core/imba'
+import './common/imba'
 if $node$
-	import './core/server'
+	import './common/server'
 	yes
 
 if $web$
-	import './core/browser'
+	import './common/browser'
 	yes
 
-import './core/dom'
-import './core/utils'
-import './core/scheduler'
-import './core/styles'
+import './common/dom'
+import './common/utils'
+import './common/scheduler'
+import './common/styles'
 
 import './dom/node'
 import './dom/comment'
@@ -30,3 +30,7 @@ import './dom/events/pointer'
 import './dom/events/intersect'
 import './dom/events/resize'
 import './dom/events/selection'
+
+if $hmr$
+	import './hmr'
+	yes

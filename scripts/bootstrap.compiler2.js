@@ -7218,6 +7218,8 @@ Stack.prototype.env = function (key){
 		return this.isNode();
 	} else if (key == 'WORKER' || key == 'WEBWORKER') {
 		return this.isWorker();
+	} else if (key == 'HMR') {
+		return !!this._options.hmr;
 	};
 	
 	if (e = this._options.env) {

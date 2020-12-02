@@ -1,6 +1,8 @@
 const imba1 = require('./bootstrap.compiler.js');
 const imba2 = require('./bootstrap.compiler2.js');
 const chokidar = require('chokidar');
+const fs = require('fs');
+const path = require('path');
 
 let helpers = imba2.helpers;
 let time = 0;
@@ -14,8 +16,16 @@ let compileCache = {};
 function plugin(build){
 	// console.log('setting up plugin',build,this);
 	let options = this.options;
+	let self = this;
 	let watcher = this.watcher;
 	let fs = require('fs');
+
+	build.onResolve({filter: /^compiler1?$/}, ({path}) => {
+		let src = path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./compiler.cjs";
+		return {path: src, external: true}
+	});
+
+
 
 	build.onLoad({ filter: /\.imba1/ }, async (args) => {
 		// console.log('loading imba',args);
@@ -63,7 +73,7 @@ function plugin(build){
 			platform: options.platform || 'browser',
 			format: 'esm',
 			sourcePath: args.path,
-			imbaPath: null
+			imbaPath: self.imbaPath || null
 		});
 
 		time += (Date.now() - t0);
@@ -86,12 +96,16 @@ async function bundle(options){
 	let entry = {options: options}
 	let watcher = entry.watcher = argv.watch && chokidar.watch([]);
 
+	entry.imbaPath = options.imbaPath;
 	options.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
-	options.resolveExtensions = ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json','.tests'];
-	options.target = options.target || ['es2019']; // ['chrome58', 'firefox57', 'safari11', 'edge16'];
+	options.resolveExtensions = ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'];
+	options.target = options.target || ['es2019'];
 	options.bundle = true;
+	options.loader = {'.txt':'text'}
 	options.incremental = !!watcher;
 	options.logLevel = 'info';
+
+	delete options.imbaPath;
 	
 	let result = await require('esbuild').build(options);
 	if(watcher){
@@ -158,4 +172,13 @@ bundle([{
 	sourcemap: false,
 	format: 'iife',
 	platform: 'browser'
+},{
+	entryPoints: ['src/bundler/index.imba'],
+	outfile: 'dist/bundler.js',
+	minify: false,
+	imbaPath: '../imba', // path.resolve(__dirname,'..','src','imba'),
+	sourcemap: false,
+	format: 'cjs',
+	external: ['chokidar','esbuild','readdirp'],
+	platform: 'node'
 }])

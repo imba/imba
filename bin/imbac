@@ -37,6 +37,7 @@ var parseOpts = {
 		styles: {type: 'string'}, // extern | inline
 		imbaPath: {type: 'string'}, // global | inline | import
 		format: {type: 'string'}, // cjs | esm
+		hmr: null
 	},
 	
 	group: ['source-map']
@@ -58,6 +59,7 @@ Usage: imbac [options] path/to/script.imba
   --format [type]        Specify format: 'esm' (default), 'cjs'
   --styles [format]      Specify how styles should be added: 'extern', 'inline'
   --silent               only print out errors (skip warnings)
+  --hmr                  compile for hot-module-reloading
   --analyze          print out the scopes and variables of your script
 `;
 

@@ -4,6 +4,7 @@
 
 var helpers = require './helpers'
 var constants = require './constants'
+var fspath = require 'path'
 
 import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
@@ -594,7 +595,7 @@ export class Stack
 		assets ? assets[name] : null
 
 	def sourceId
-		return @sourceId if @sourceId
+		return @sourceId if (@sourceId ||= @options:sourceId)
 		let src = sourcePath
 		let cwd = self.cwd
 		# relativize the cwd thing
@@ -646,6 +647,9 @@ export class Stack
 	
 	def tsc
 		platform == 'tsc' or @options:tsc
+	
+	def hmr
+		!!@options:hmr
 
 	def isWeb
 		platform == 'browser' or platform == 'web'
@@ -682,6 +686,8 @@ export class Stack
 			return isNode
 		elif key == 'WORKER' or key == 'WEBWORKER'
 			return isWorker
+		elif key == 'HMR'
+			return !!@options:hmr
 
 		if var e = @options:env
 			if e.hasOwnProperty(key)
@@ -1940,7 +1946,7 @@ export class ClassField < Node
 		LIT(tpl)
 
 	def setter
-		@setter ||= ""
+		@setter ||= parseTemplate('(value){ $set$; }')
 
 	def decorater
 		@decorater ||= if true
@@ -2772,6 +2778,10 @@ export class Root < Code
 		STACK.root = @scope
 		traverse
 		STACK.root = @scope
+
+		if o:bundle
+			@scope.lookup('__filename').@c = STR(o:sourcePath).c
+			@scope.lookup('__dirname').@c = STR(fspath.dirname(o:sourcePath)).c
 		
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)
@@ -2792,13 +2802,14 @@ export class Root < Code
 				script:js = "{script:js}\nimba.styles.register('{script:sourceId}',{JSON.stringify(script:css)});"
 				if o:debug
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
-
+			
 		# always create the sourcemap?
 		if o:sourceMap or STACK.tsc # should handle sourcemap no matter what?
 			let map = SourceMap.new(script,o:sourceMap,o).generate
 			script:sourcemap = map.result
 
-		# remove sourcemap locations
+		# remove sourcemap markers from js and css
+		script:css &&= script:css.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
 		script:js = script:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
 		return script
 
@@ -5634,7 +5645,9 @@ export class TagTypeIdentifier < Identifier
 			stack.registerSemanticToken(@value,@variable)
 		return self
 
-	
+	def toVarPrefix
+		let str = @str
+		str.replace(/[\:\-]/g,'')
 
 	def toClassName
 		let str = @str
@@ -6293,7 +6306,7 @@ export class While < Loop
 		# else
 		# declare the variable we will use to soak up results
 		# TODO Use a special vartype for this?
-		var resvar = scope.declare(:res,Arr.new([]),system: yes)
+		var resvar = scope.declare('res',Arr.new([]),system: yes)
 		# WHAT -- fix this --
 		@catcher = PushAssign.new("push",resvar,null) # the value is not preset # what
 		body.consume(@catcher) # should still return the same body
@@ -7499,7 +7512,7 @@ class TagLike < Node
 		@consumed:length > 0
 
 	def tagvar name
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: yes,alias:"{tagvarprefix}{name}"},"{tagvarprefix}{name}")
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: no,alias:"{tagvarprefix}{name}"},"{tagvarprefix}{name}")
 
 	def tagvarprefix
 		"{level + 1}"
@@ -7514,22 +7527,22 @@ class TagLike < Node
 		@fragment || parent
 
 	def tvar
-		@tvar or tagvar('t')
+		@tvar or tagvar('T')
 
 	# built variable
 	def bvar
-		@bvar or (@parent ? @parent.bvar : tagvar('b'))
+		@bvar or (@parent ? @parent.bvar : tagvar('B'))
 
 	# cache variable
 	def cvar
-		@cvar or (@parent ? @parent.cvar :  tagvar('c'))
+		@cvar or (@parent ? @parent.cvar :  tagvar('C'))
 
-	def vvar do tagvar('v') # value variable
-	def kvar do tagvar('k') # key variable
+	def vvar do tagvar('V') # value variable
+	def kvar do tagvar('K') # key variable
 
 	# for tracking specific changes -- included in end
 	# shuold maybe link it with built
-	def dvar do tagvar('d') # value variable
+	def dvar do tagvar('D') # value variable
 
 	def ref
 		@ref || (@cachedRef = "{parent ? parent.cvar : ''}[{osym}]")
@@ -7766,7 +7779,7 @@ export class TagLoopFragment < TagLike
 			set(keyed: yes)
 
 	def cvar
-		@cvar || tagvar('c')
+		@cvar || tagvar('C')
 
 	def js o
 
@@ -7823,6 +7836,12 @@ export class Tag < TagLike
 	def attrs
 		@attributes
 
+	def cssflag
+		@cssflag ||= "{sourceId}"
+
+	def tagvarprefix
+		@tagvarprefix ||= (type and type:toVarPrefix ? type.toVarPrefix : (isSelf ? 'cmp' : 'tag'))
+
 	def traverse 
 		return self if @traversed
 		@tid = STACK.generateId('tag')
@@ -7841,6 +7860,7 @@ export class Tag < TagLike
 		return returns
 
 	def visitBeforeBody stack
+		oid
 		let type = @options:type
 		type && type.traverse
 
@@ -8158,6 +8178,12 @@ export class Tag < TagLike
 			typ = vvar
 			dynamicKey = kvar
 
+		# add unique flag to this element if it has inline styles or
+		# we're compiling for hmr.
+		if @cssflag or STACK.hmr
+			@classNames.unshift(cssflag)
+
+		# if we have file-scoped styles - add flag to all tags in page
 		if stack.option(:hasScopedStyles)
 			@classNames.unshift(stack.sourceId)
 
@@ -8191,6 +8217,7 @@ export class Tag < TagLike
 				else
 					names.push(cls)
 
+			names = names.filter do |item,i| names.indexOf(item) == i
 			let q = dynamic ? '`' : "'"
 			@className = q + names.join(' ') + q
 
@@ -8307,7 +8334,7 @@ export class Tag < TagLike
 					@ref = "{parent.cvar}[{parent.kvar}]"
 
 				# if we add our own bvar?
-				@bvar = tagvar(:b)
+				@bvar = tagvar('B')
 				add "({bvar}={dvar}=1,{tvar}={ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
 				@ref = "{tvar}"
 
@@ -8340,7 +8367,7 @@ export class Tag < TagLike
 					ref = "{dref}[{dynamicKey}]"
 
 				if markWhenBuilt
-					@bvar = tagvar(:b)
+					@bvar = tagvar('B')
 					add "({bvar}={dvar}=1,{tvar}={ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
 				else
 					add "({tvar} = {ref}) || ({ref}={ctor})"
@@ -9024,6 +9051,7 @@ export class StyleRuleSet < StyleNode
 		
 		let sel = String(@selectors).trim
 
+		# TODO remove mixins
 		if sel.match(/^\%[\w\-]+$/)
 			set(mixin: sel.slice(1))
 			@identifier = MixinIdentifier.new(sel)
@@ -9031,6 +9059,7 @@ export class StyleRuleSet < StyleNode
 			@sel = sel # "%{@name}"
 			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
 			# @variable.@resolvedValue = @sel
+
 		
 		if stack.parent isa ClassBody
 			# console.log 'ruleset is inside of class!!'
@@ -9063,11 +9092,15 @@ export class StyleRuleSet < StyleNode
 			@sel ||= @selectors?.toString.trim
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
 
-		elif !@name
-			# if this is unconditional - we should only need to use the unique
-			# class name of the element
-			@name = (cmp ? cmp.cssns : sourceId) + oid
+		elif !@name and @tag and @flag and !@flag.@condition
+			@name = @tag.cssflag
 			@sel = ".{@name}"
+
+		elif !@name
+			@name = (cmp ? (cmp.cssns + oid) : (sourceId + oid))
+			@sel = ".{@name}"
+
+		# if @tag and flag is not conditional -- use the flag id of the tag itself
 		
 		@selectors?.traverse
 		
@@ -9473,7 +9506,7 @@ export class StyleInterpolationExpression < StyleTerm
 		super
 		if o:rootRule
 			o:rootRule.addPlaceholder(self)
-		@id = "{sourceId}{oid}"
+		@id = "{sourceId}_{oid}"
 		@name = "--{@id}"
 		
 		# @propname = stack.theme.expandProperty
@@ -9999,8 +10032,6 @@ export class Scope
 			return existing
 		
 		let par = o:lookup && parent && parent.lookup(name)
-		
-			
 
 		# var type = o:system ? SystemVariable : Variable
 		var item = (o:varclass or Variable).new(self,name,decl,o)
@@ -10208,7 +10239,7 @@ export class RootScope < Scope
 		self
 
 	def sourceId
-		@sourceId ||= @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
+		@sourceId ||= STACK.sourceId # @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
 	# single-file-component options
 	def sfco
 		@sfco ||= declare('sfc$',LIT('{/*$sfc$*/}'))
@@ -10735,11 +10766,14 @@ export class SystemVariable < Variable
 		# the auto-magical goes last, or at least, possibly reuse other names
 		# "${Math.floor(Math.random * 1000)}"
 		let o = @options
+
 		var alias = o:alias or @name
 		var typ = o:pool
 		var names = [].concat(o:names)
 		var alt = null
 		var node = null
+
+
 
 		@name = null
 
@@ -10748,8 +10782,18 @@ export class SystemVariable < Variable
 		if o:temporary and !o:alias
 			let i = 0
 			@name = '$' + i
+			# should also lookup other v
 			while scope.lookup(@name)
 				@name = "${i += 1}"
+		
+		# unless pool
+		if !o:alias or true
+			let name = @name or o:alias or 'sys'
+			name = "_{name}" if (/\d/).test(name[0])
+			let nr = STACK.incr(name)
+			@name = "{name}${nr}"
+			return self
+
 
 		if typ == 'tag'
 			let i = 0
@@ -10760,17 +10804,11 @@ export class SystemVariable < Variable
 		elif typ == 'iter'
 			names = ['ary__','ary_','coll','array','items','ary']
 
-		elif typ == 'dict'
-			names = ['dict']
-
 		elif typ == 'val'
 			names = ['v_']
 
 		elif typ == 'arguments'
 			names = ['$_','$0']
-
-		elif typ == 'keypars'
-			names = ['opts','options','pars']
 
 		elif typ == 'counter'
 			names = ['i__','i_','k','j','i']
@@ -10780,7 +10818,6 @@ export class SystemVariable < Variable
 
 		elif typ == 'list'
 			names = ['tmplist_','tmplist','tmp']
-		# or if type placeholder / cacher (add 0)
 
 		if alias
 			names.push(alias)

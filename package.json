@@ -63,10 +63,12 @@
   "type": "commonjs",
   "browser": {
     "imba": "./dist/imba.js",
-    "path": "./vendor/path.js"
+    "path": "./vendor/path.js",
+    "compiler": "./dist/compiler.js"
   },
   "exports": {
     "./core": "./core.imba",
+    "./loader": "./loader.js",
     "./compiler": {
       "require": "./dist/compiler.cjs",
       "default": "./dist/compiler.mjs"
@@ -74,7 +76,8 @@
   },
   "bin": {
     "imba": "./bin/imba",
-    "imbac": "./bin/imbac"
+    "imbac": "./bin/imbac",
+    "imbabuild": "./bin/imbabuild"
   },
   "preferGlobal": true,
   "homepage": "https://imba.io",
@@ -84,7 +87,10 @@
   },
   "devDependencies": {
     "chokidar": "^3.4.3",
-    "esbuild": "^0.8.14",
     "puppeteer": "^2.1.1"
+  },
+  "dependencies": {
+    "readdirp": "^3.5.0",
+    "esbuild": "^0.8.15"
   }
 }

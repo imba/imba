@@ -77,8 +77,22 @@ if (require.extensions) {
 };
 
 function main(){
-	var args = process.argv;
-	var o = helpers.parseArgs(args.slice(2),parseOpts);
+	var args = process.argv.slice(2);
+
+	if(args[0] && args[0].match(/^(build|watch|serve|dev)$/) ){
+		let bundlerArgs = args.slice(1).concat("--" + args[0]);
+		let options = {cwd: process.cwd(), argv: bundlerArgs};
+		var bundler = require('../dist/bundler.js');
+		if(args[0] == 'dev'){
+			options.serve = true;
+			options.hmr = true;
+			options.watch = true;
+		}
+		return bundler.run(options);
+	}
+	
+
+	var o = helpers.parseArgs(args,parseOpts);
 	var src = o.main;
 	if (src instanceof Array) { src = src[0] };
 	
