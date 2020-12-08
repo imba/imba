@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 const Node = window.Node
 
 extend class Node

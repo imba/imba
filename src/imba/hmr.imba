@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 def connect
 	imba.sse = new EventSource("/__hmr__")
 	imba.sse.onmessage = do(e)

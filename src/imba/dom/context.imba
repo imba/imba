@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 const handler =
 	def get target, name
 		let ctx = target

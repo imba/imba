@@ -1,11 +1,13 @@
+# imba$imbaPath=global
+const imba = global.imba
 const {Event,CustomEvent,Element} = imba.dom
 
-var selHandler
-var handledSym = Symbol!
+let selHandler
+let handledSym = Symbol!
 
 def activateSelectionHandler
 	unless selHandler
-		selHandler = do |e|
+		selHandler = do(e)
 			return if e[handledSym]
 			e[handledSym] = yes
 			

@@ -1,4 +1,5 @@
-
+# imba$imbaPath=global
+const imba = global.imba
 const {Event,CustomEvent,Element} = imba.dom
 
 var resizeObserver = null

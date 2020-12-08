@@ -1,4 +1,4 @@
-
+# imba$imbaPath=global
 def imba.mount mountable, into
 	let parent = into or document.body
 	let element = mountable

@@ -1,4 +1,5 @@
-var raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (do |blk| setTimeout(blk,1000 / 60))
+# imba$imbaPath=global
+let raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (do |blk| setTimeout(blk,1000 / 60))
 
 # Scheduler
 global class ImbaScheduler

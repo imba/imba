@@ -91,6 +91,7 @@
   "dependencies": {
     "chokidar": "^3.4.3",
     "esbuild": "^0.8.17",
+    "micromatch": "^4.0.2",
     "readdirp": "^3.5.0"
   }
 }

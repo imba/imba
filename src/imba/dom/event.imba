@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 const {Event,Element} = imba.dom
 
 const keyCodes = {

@@ -1,4 +1,4 @@
-
+# imba$imbaPath=global
 const {Node,SVGElement} = imba.dom
 
 const descriptorCache = {}

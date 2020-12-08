@@ -5619,7 +5619,7 @@ export class TagTypeIdentifier < Identifier
 		!!@str.match(/^svg\-/)
 
 	def toAssetName
-		isAsset ? @str.slice(4) : null
+		isAsset ? @str : null # .slice(4)
 		
 	def symbol
 		@str
@@ -7873,7 +7873,7 @@ export class Tag < TagLike
 		if type isa TagTypeIdentifier
 			if type.isAsset
 				@assetName = type.toAssetName
-				@asset = scope__.root.lookupAsset(@assetName)
+				@asset = scope__.root.lookupAsset(@assetName,'svg')
 				@isAsset = yes
 				@isSVG = yes
 
@@ -10106,6 +10106,7 @@ export class Scope
 		root.requires(path,name)
 
 	def imba
+		imbaDependency('core') unless @imba
 		@imba ||= (STACK.isNode ? LIT("(this && this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])") : LIT('imba'))
 		# root.imba # requires('imba2', 'Imba')
 
@@ -10255,14 +10256,20 @@ export class RootScope < Scope
 			@hasExports = yes
 			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
 	
-	def lookupAsset name
+	def lookupAsset name, kind
 		unless @assets[name]
 			let asset = STACK.getAsset(name)
-			registerAsset(name,asset)
+			registerAsset(name,kind,asset)
+
 		return @assets[name]
 
-	def registerAsset name, asset
-		@assets[name] = asset
+	def registerAsset name, kind, asset
+		@assets[name] = asset or {
+			name: name,
+			kind: kind,
+			external: yes,
+			ref: register('asset',null,system: yes)
+		}
 
 	def lookup name
 		name = helpers.symbolize(name)
@@ -10320,7 +10327,8 @@ export class RootScope < Scope
 		return variable
 
 	def imba
-		LIT('imba')
+		imbaDependency('core') unless @imba
+		@imba ||= LIT('imba')
 
 	def imbaDependency path
 		let imbaPath = STACK.imbaPath
@@ -10364,10 +10372,29 @@ export class RootScope < Scope
 
 		for own name, asset of assets
 			try
-				let parsed = parseAsset(asset,name)
-				let body = JSON.stringify(parsed)
-				let out = "imba.registerAsset('{name}',{body})"
-				head.push LIT(out)
+				if asset:external
+					# could we always run through node here?
+					# extremely experimental
+					let id = "asset${name}"
+					let ref = asset:ref.c
+					let src = "{asset:kind or 'assets'}/{name}.svg"
+					let out = "import {id} from '{src}'"
+					
+					# head.push LIT(out)
+					if STACK.@options:bundle
+						# head.push(LIT "import 'asset--svg-{name}.imba'")
+						head.push(LIT "import {asset:ref.c} from '@{asset:kind}/{name}'")
+						head.push LIT("imba.registerAsset('{name}',{ref})")
+						# head.push LIT("imba.registerAsset('{name}',{id})")
+					else
+						head.push LIT("const {ref} = imba.asset;")
+						# head.push LIT("constimba.registerAsset('{name}',{asset:ref.c})")
+						# head.push LIT("imba.registerAsset('{name}',{id})")
+				else	
+					let parsed = parseAsset(asset,name)
+					let body = JSON.stringify(parsed)
+					let out = "imba.registerAsset('{name}',{body})"
+					head.push LIT(out)
 
 		if assetCount
 			head.push LIT('// ASSETS-END')

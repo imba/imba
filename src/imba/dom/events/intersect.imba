@@ -1,5 +1,5 @@
-# import {CustomEvent,Event,Element} from '../dom'
-
+# imba$imbaPath=global
+const imba = global.imba
 const observers = new (global.WeakMap || Map)
 const defaults = {threshold: [0]}
 const rootTarget = {}

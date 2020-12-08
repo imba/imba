@@ -1,5 +1,7 @@
+# imba$imbaPath=global
 import './common/imba'
 if $node$
+	import './common/ssr'
 	import './common/server'
 	yes
 
@@ -7,7 +9,7 @@ if $web$
 	import './common/browser'
 	yes
 
-import './common/dom'
+
 import './common/utils'
 import './common/scheduler'
 import './common/styles'
@@ -34,3 +36,5 @@ import './dom/events/selection'
 if $hmr$
 	import './hmr'
 	yes
+
+export default "tester"

@@ -1,4 +1,4 @@
-# import {HTMLElement} from '../dom'
+# imba$imbaPath=global
 
 const DOM = imba.dom
 const doc = imba.document # global.#document or global.document

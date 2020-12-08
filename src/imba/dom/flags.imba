@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 const {Element} = imba.dom
 
 export class Flags

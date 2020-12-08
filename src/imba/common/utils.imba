@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 ###
 Collection of convenience methods.
 ###

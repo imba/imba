@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 extend class imba.dom.Comment
 	# replace this with something else
 	def replaceWith$ other

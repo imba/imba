@@ -1,3 +1,6 @@
+# imba$imbaPath=global
+# import {HTMLElement} from '../dom'
+const imba = global.imba
 const {Event,PointerEvent,Element} = imba.dom
 
 def round val,step = 1

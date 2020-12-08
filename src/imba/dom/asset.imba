@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 const assets = {}
 const ext = imba.assets ||= {}
 const Node = window.Node

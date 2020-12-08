@@ -1,6 +1,4 @@
-###
-
-###
+# imba$imbaPath=global
 
 const toBind = {
 	INPUT: yes

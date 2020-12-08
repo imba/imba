@@ -1,5 +1,4 @@
-# import {DocumentFragment,Element,Text,ShadowRoot,document} from '../dom'
-
+# imba$imbaPath=global
 const {Element,Text} = imba.dom
 
 extend class imba.dom.DocumentFragment

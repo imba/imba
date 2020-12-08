@@ -11,6 +11,8 @@ const logSymbols = {
 }
 
 export class Logger
+	def constructor owner = null
+		#ctime = Date.now!
 
 	def write kind,str,...rest
 		let sym = logSymbols[kind] or kind
@@ -23,6 +25,10 @@ export class Logger
 				fmt('bold',part)
 			elif f == 'ms'
 				fmt('yellow',Math.round(part) + 'ms')
+			elif f == 'elapsed'
+				rest.unshift(part)
+				let elapsed = Date.now! - #ctime
+				fmt('yellow',Math.round(elapsed) + 'ms')
 			else
 				part
 

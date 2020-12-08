@@ -1,21 +1,27 @@
 import chokidar from 'chokidar'
-
+# import esbuild from 'esbuild'
 const esbuild = require 'esbuild'
-const fs = require 'fs'
+const nodefs = require 'fs'
 const path = require 'path'
 const utils = require './utils'
+import mountfs from './fs'
 
 import {Server} from './server'
 import {Logger} from './logger'
 import {Bundle} from './bundle'
 
 export class Bundler
-	def constructor config, options
+
+
+	def constructor config, options, program
+		#key = Symbol!
 		cwd = options.cwd
 		config = config
 		options = options
 		bundles = []
 		sourceIdMap = {}
+		program = program
+
 		watcher = options.watch ? chokidar.watch([]) : null
 		log = new Logger
 		
@@ -26,7 +32,7 @@ export class Bundler
 		manifestpath = path.resolve(outdir,'manifest.json')
 
 		try
-			manifest = JSON.parse(fs.readFileSync(manifestpath,'utf-8'))
+			manifest = JSON.parse(nodefs.readFileSync(manifestpath,'utf-8'))
 			sourceIdMap = manifest.idmap or {}
 		catch
 			manifest = {}
@@ -44,11 +50,20 @@ export class Bundler
 	def relp src
 		path.relative(cwd,src)
 
+	get package
+		options.package or {}		
+
+	get fs
+		program.fs
+
 	get puburl do config.puburl or '/assets/'
-	get srcdir do config.srcdir or './src'
+	get basedir do config.basedir or './'
 	get outdir do config.outdir or './build'
 	get pubdir do config.pubdir or outdir + '/public'  # './build/public'
-	get libdir do config.libdir or outdir + '/server'  # './build/server'
+	get libdir do config.libdir or outdir # + '/server'  # './build/server'
+
+	get incremental?
+		options.watch
 
 	get dev?
 		env == 'development'
@@ -97,55 +112,67 @@ export class Bundler
 		bundles.find do $1.name == 'client'
 		
 	def setup
-		let entries = []
-		let shared = {}
-		for key in ['node','browser']
-			if let cfg = config[key]
-				# first merge in defaults?
-				if typeof cfg == 'string' or cfg isa Array
-					cfg = {entryPoints: cfg}
+		#setup ||= new Promise do(resolve)
+			esb = await (program ? program.esb! : esbuild.startService!)
+			let entries = []
+			let shared = {}
+			# what if we dont even have a config here?
+			for key in ['node','server','browser','client']			
+				if let cfg = config[key]
+					# first merge in defaults?
+					if typeof cfg == 'string' or cfg isa Array
+						cfg = {entryPoints: cfg}
+						if key == 'node' or key == 'server'
+							cfg.platform = 'node'
+							cfg.external = ['dependencies','.json']
+						else
+							cfg.platform = 'browser'
 
-				cfg.platform = key
-				cfg.entryPoints = await parseEntryPoints(cfg.entryPoints)
-				cfg = Object.assign({},config,options,cfg)
-				config[key] = cfg
-				entries.push(cfg)
+					continue unless cfg.entryPoints
 
-		if config.entries
-			for own key,value of config.entries
-				continue if value.skip
-				let paths = await parseEntryPoints(value.entryPoints or key)
-				let cfg = Object.assign({},config,options,{entryPoints: paths},value)
-				cfg.platform ||= 'browser'
-				entries.push cfg
+					cfg.entryPoints = await parseEntryPoints(cfg.entryPoints)
+					# cfg = Object.assign({},config,options,cfg)
+					entries.push(cfg)
 
-		for cfg in entries
-			# use default loaders by default
-			cfg.loader = Object.assign({},utils.defaultLoaders,cfg.loader or {})
-			cfg.format = 'cjs' if cfg.platform == 'node' and !cfg.format
+			if config.entries
+				for own key,value of config.entries
+					continue if value.skip
+					let paths = await parseEntryPoints(value.entryPoints or key)
+					let cfg = Object.assign({},config,options,{entryPoints: paths},value)
+					cfg.platform ||= 'browser'
+					entries.push cfg
 
-		bundles = entries.map do new Bundle(self,$1)
-		for bundle in bundles
-			await bundle.setup!
+			for cfg in entries
+				# use default loaders by default
+				cfg.loader = Object.assign({},utils.defaultLoaders,cfg.loader or {})
+				cfg.format = 'cjs' if cfg.platform == 'node' and !cfg.format
 
-		if watcher
-			watcher.on('change') do(src,stats)
-				#dirtyInputs.add(relp(src))
-				clearTimeout(#rebuildTimeout)
-				# only rebuild if a rebuild is not already ongoing?
-				#rebuildTimeout = setTimeout(&,50) do rebuild!
-		
-		if options.serve
-			server = new Server(self)
-			server.start!
-		return self
+			bundles = entries.map do new Bundle(self,$1)
+			for bundle in bundles
+				await bundle.setup!
+			
+			console.log('bundle configs',entries)
+			if watcher and false
+				watcher.on('change') do(src,stats)
+					#dirtyInputs.add(relp(src))
+					clearTimeout(#rebuildTimeout)
+					# only rebuild if a rebuild is not already ongoing?
+					#rebuildTimeout = setTimeout(&,50) do rebuild!
+			resolve(self)
 
 	def run
+		await setup!
 		time 'build'
+		let t = Date.now!
+		# emit events to server
+		# server.start!
 		let builds = for bundle in bundles
 			bundle.build!
 		await Promise.all(builds)
+		console.log 'did run',Date.now! - t
 		write!
+		if options.watch
+			program.watcher.on('change') do rebuild!
 		timed 'build'
 
 	def rebuilt bundle
@@ -154,29 +181,27 @@ export class Bundler
 	def rebuild
 		time 'rebuild'
 		clearTimeout(#rebuildTimeout)
-		let changes = Array.from(#dirtyInputs)
-		#dirtyInputs.clear!
+		# let changes = Array.from(#dirtyInputs)
+		# #dirtyInputs.clear!
 
-		let dirtyBundles = new Set
+		let dirtyBundles = bundles # new Set
 
-		for bundle in bundles
-			for input in changes
-				if bundle.inputs[input]
-					dirtyBundles.add(bundle)
-
+		# for bundle in bundles
+		# 	for input in changes
+		# 		if bundle.inputs[input]
+		# 			dirtyBundles.add(bundle)
 		log.info 'rebuilding'
-
 		# await Promise.all Array.from(dirtyBundles).map do $1.rebuild!
 		let awaits = for item of dirtyBundles
 			item.rebuild!
 
 		await Promise.all(awaits) 
 		log.info 'finished rebuilding in %ms',time('rebuild')
-
 		write!
 		self
 
 	def write bundles = self.bundles
+		let t = Date.now!
 		let watch = new Set
 		# watch / unwatch
 		time 'watch'
@@ -184,11 +209,12 @@ export class Bundler
 			for own src,value of bundle.inputs
 				# TODO start watching essentially all files instead?
 				if !src.match(/^[\w\-]+\:/) and src.match(/\.(imba|css|svg)/)
-					watch.add( absp(src) )
+					# watch.add( absp(src) )
+					fs.lookup(src).watch(bundle)
 
-		for file in Array.from(watch)
-			if #watchedFiles[file] =? yes
-				watcher..add(file)
+		# for file in Array.from(watch)
+		#	if #watchedFiles[file] =? yes
+		#		watcher..add(file)
 		timed 'watch'
 		
 		let filesToWrite = []
@@ -199,6 +225,7 @@ export class Bundler
 			idmap: sourceIdMap
 		}
 
+		let firstWrite = !self.files
 		let prevFiles = self.files or []
 
 		let files = []
@@ -228,8 +255,8 @@ export class Bundler
 		files.push {
 			contents: sheetbody
 			hash: sheethash
-			path: path.resolve(pubdir,"all.css")
-			hashedPath: path.resolve(pubdir,"all.{sheethash}.css")
+			path: path.resolve(pubdir,"bundle.css")
+			hashedPath: path.resolve(pubdir,"bundle.{sheethash}.css")
 		}
 
 		for file in files
@@ -263,21 +290,23 @@ export class Bundler
 			if !prev or prev.hash != file.hash
 				filesToWrite.push(file)
 
-		let fsp = fs.promises
+		let fsp = nodefs.promises
 		let writes = []
 		for file in filesToWrite
 			let dest = file.writePath
 			let link = dest != file.path and file.path
-			let size = (file.contents or file.text).length
+			let body = file.contents or file.text
+			let size = (body or "").length
 			log.success 'write %path %kb',relp(dest),size
+			continue if body == undefined
 
 			await utils.ensureDir(dest)
-			let promise = fsp.writeFile(dest,file.contents or file.text)
+			let promise = fsp.writeFile(dest,body)
 			
 			if link
 				promise = promise.then do
 					try
-						await fsp.access(link,fs.constants.R_OK)
+						await fsp.access(link,nodefs.constants.R_OK)
 						await fsp.unlink(link)
 					fsp.symlink(dest,link)
 			writes.push promise
@@ -289,10 +318,20 @@ export class Bundler
 		self.files = files
 		
 		if writes.length
-			# write the manifest
+			manifest.changes = filesToWrite.map do relp($1.path)
 			await writeManifest(manifest)
-			server.updated(filesToWrite) if server
 
+			if options.serve and !server
+				server = new Server(self,options.serve)
+				server.start!
+
+			server.updated(filesToWrite,manifest,firstWrite) if server
+
+		if config.buildfile
+			let json = JSON.stringify(bundles.map(do $1.meta),null,2)
+			await nodefs.promises.writeFile(absp(config.buildfile),json)
+		
+		console.log 'did write',Date.now! - t
 		yes
 
 	def writeManifest manifest
@@ -300,5 +339,5 @@ export class Bundler
 		let json = JSON.stringify(manifest,null,2)
 		self.manifest = manifest
 		await utils.ensureDir(dest)
-		fs.promises.writeFile(dest,json)
+		await nodefs.promises.writeFile(dest,json)
 		log.success 'write %path %kb',relp(dest),json.length

@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 const {Element,ShadowRoot} = imba.dom
 
 ShadowRoot.prototype.insert$ = Element.prototype.insert$

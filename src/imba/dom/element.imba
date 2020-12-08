@@ -1,3 +1,4 @@
+# imba$imbaPath=global
 const {Node,Element,Comment,Text} = window
 const doc = document # global.#document or global.document
 # what if this is in a webworker?

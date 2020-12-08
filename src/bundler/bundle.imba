@@ -1,8 +1,10 @@
 import compiler from 'compiler'
 import imba1 from 'compiler1'
 
+import {parseAsset} from '../compiler/assets'
+
 const esbuild = require 'esbuild'
-const fs = require 'fs'
+const nodefs = require 'fs'
 const path = require 'path'
 const utils = require './utils'
 
@@ -16,6 +18,18 @@ export class Bundle
 	get web?
 		!node?
 
+	get puburl
+		options.puburl or bundler.puburl or ''
+
+	get esb
+		bundler.esb
+
+	get fs
+		bundler.fs
+	
+	get program
+		bundler.program
+
 	def time name = 'default'
 		let now = Date.now!
 		let prev = #timestamps[name] or now
@@ -27,14 +41,15 @@ export class Bundle
 		let str = "time {name}: {time(name)}"
 
 	def constructor bundler,o
+		#key = Symbol!
 		#timestamps = {}
+
 		bundler = bundler
 		styles = {}
-		manifest = {}
 		options = o
 		result = null
 		built = no
-		cache = bundler.#cache or {}
+		#cache = bundler.#cache or {}
 		meta = {}
 
 		name = options.name
@@ -47,30 +62,30 @@ export class Bundle
 		esoptions = {
 			entryPoints: entryPoints
 			target: o.target or ['es2019']
-			bundle: true
+			bundle: o.bundle === false ? false : true
 			define: o.define
 			platform: o.platform == 'node' ? 'node' : 'browser'
 			format: o.format or 'iife'
 			outfile: o.outfile
-			outdir: o.outfile ? '' : (node? ? bundler.libdir : bundler.pubdir)
-			outbase: o.outbase or bundler.srcdir
+			outdir: o.outfile ? '' : (o.outdir ? o.outdir : (node? ? bundler.libdir : bundler.pubdir))
+			outbase: o.outbase or bundler.basedir
 			globalName: o.globalName
 			publicPath: o.publicPath or bundler.puburl
 			banner: o.banner
 			footer: o.footer
 			splitting: o.splitting
 			minify: !!o.minify
-			incremental: o.watch
+			incremental: bundler.incremental?
 			loader: o.loader or {}
 			write: false
 			metafile: "metafile.json"
 			external: o.external or undefined
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			outExtension: o.outExtension
-			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
+			resolveExtensions: ['.imba.mjs','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
 		}
 
-		# console.log esoptions
+		console.log esoptions
 		
 		# add default defines
 		unless node?
@@ -78,11 +93,18 @@ export class Bundle
 			let env = o.env or process.env.NODE_ENV or 'production'
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
 
+		if o.bundle == false
+			esoptions.bundle = false
+			delete esoptions.external
+
 		if o.splitting and esoptions.format != 'esm'
 			esoptions.splitting = false
 
 	def setup
 		self
+
+	def resolveAsset name
+		try config.#assets[name]
 
 	def plugin build
 		let externs = options.external or []
@@ -91,14 +113,19 @@ export class Bundle
 		let extmap = {}
 		if extdeps
 			try
-				for value in Object.keys(config.package.dependencies)
+				for value in Object.keys(bundler.package..dependencies or [])
 					extmap[value] = yes
+					
 
 		for key in externs when key[0] == '!'
 			delete extmap[key.slice(1)]
 
-		build.onResolve(filter: /\.imba\.css$/) do(args)
+		build.onResolve(filter: /\.imba\.(css)$/) do(args)
 			return {path: args.path, namespace: 'styles'}
+
+		build.onResolve(filter: /^@svg\//) do(args)
+			console.log 'resolving asset',args.path
+			return {path: args.path, namespace: 'asset'}
 
 		(extdeps or extjson) and build.onResolve(filter: /.*/, namespace: 'file') do(args)
 			let id = args.path
@@ -114,7 +141,15 @@ export class Bundle
 			return
 
 		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
-			let raw = await fs.promises.readFile(args.path, 'utf8')
+			let srcfile = fs.lookup(args.path)
+			# console.log 'onload imba file',args.path,!!srcfile.#imba
+
+			if srcfile.imba
+				let pre = await srcfile.imba.precompile!
+				return {contents: pre}
+
+
+			let raw = await nodefs.promises.readFile(args.path, 'utf8')
 			let key = "{cachePrefix}:{args.path}" # possibly more
 
 			let t0 = Date.now()
@@ -127,20 +162,34 @@ export class Bundle
 				config: config
 				styles: 'extern'
 				hmr: options.hmr
-				bundle: yes
+				bundle: options.bundle === false ? false : yes
+				assets: config.#assets
 			}
+
 			let body = null
 
-			if cache[key] and cache[key].input == raw
-				return cache[key].result
+			if #cache[key] and #cache[key].input == raw
+				
+				return #cache[key].result
 
 			let out = {
 				errors: []
 				warnings: []
 			}
 
+			if false
+				let jspath = iopts.sourcePath + '.mjs'
+				let cached = await utils.exists(jspath)
+				
+				if cached and true
+					let body = await utils.readFile(jspath)
+					console.log 'return cached version'
+					return {contents: body}
+				console.log 'will compile imba',iopts.sourcePath,cached
+
 			# legacy handling
 			if args.path.match(/\.imba1$/)
+
 				iopts.filename = iopts.sourcePath
 				iopts.inlineHelpers = 1
 				out.contents = String(imba1.compile(raw,iopts))
@@ -163,32 +212,67 @@ export class Bundle
 							}
 						)
 
-				
 				if result.css
 					let name = path.basename(args.path,'.imba')
 					let cssname = "{name}-{id}.imba.css"
-					styles[cssname] = {
+					#cache[cssname] = {
 						loader: 'css'
 						contents: result.css
 						resolveDir: path.dirname(args.path)
 					}
-					
+
 					body += "\nimport '{cssname}';\n"
 
 				out.contents = body
 
 
-			cache[key] = {input: raw, result: out}
+			#cache[key] = {
+				input: raw,
+				result: out
+			}
 
 			return out
 
-		build.onLoad({ filter: /\.*/, namespace: 'styles'}) do(args)
-			styles[args.path]
+		build.onLoad({ filter: /.*/, namespace: 'styles'}) do(args)
+			#cache[args.path]
+
+		build.onLoad({ filter: /@(assets|svg)\/.*/}) do(args)
+			let id = args.path
+			if #cache[id]
+				return #cache[id]
+
+			# , namespace: 'asset'
+			let name = id.replace('@svg/','')
+			if let asset = resolveAsset(name)
+				# if we're on node - just load the file?
+				let body = await nodefs.promises.readFile(bundler.absp(asset.path),'utf8')
+				let parsed = parseAsset({body: body},name)
+				# console.log 'parsed asset',parsed
+
+				let js = "
+					export default {JSON.stringify(parsed)};
+				"
+
+				return #cache[id] = {contents: js,loader:'js'}
+
+		build.onLoad({ filter: /\.svg$/, namespace: 'file'}) do(args)
+			console.log 'onload svg',args
+
+			let content = await nodefs.promises.readFile(args.path,'utf8')
+			return
+			return {
+				contents: content
+				loader: 'text'
+			}
+			return
+			# cache[args.path]
+		
+		
 
 	def build
 		if built =? true
 			let t = Date.now!
-			result = await esbuild.build(esoptions)
+			result = await esb.build(esoptions)
 			write(result.outputFiles)
 		return self 
 
@@ -271,31 +355,70 @@ export class Bundle
 
 		# go through to extract the actual css chunks from output files
 		# that is - before the correct ordering
+		let svgs = Object.keys(meta.outputs).filter do $1.match(/\.svg$/)
+
+		console.log 'svgs',svgs
+
 		for own key,value of meta.outputs
 			# let file = files.find do path.relative(cwd,$1.path) == key
 			let file = value.#file
-			# value.#file = file
-			continue unless file and key.match(/\.css$/)
 
-			let offset = 0
-			let body = file.text
-			let parts = []
+			if file and key.match(/\.css$/)
+				let offset = 0
+				let body = file.text
+				let parts = []
 
-			for own src,details of value.inputs
-				let entry = meta.inputs[src]
-				let bytes = details.bytesInOutput
-				let header = "/* {src} */\n"
+				for own src,details of value.inputs
+					let entry = meta.inputs[src]
+					let bytes = details.bytesInOutput
+					let header = "/* {src} */\n"
 
-				if !o.minify
-					offset += header.length
+					if !o.minify
+						offset += header.length
 
-				let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
-				offset += bytes
-				offset += 1 if !o.minify
-				entry.output ||= chunk
-				parts[entry.nr] = chunk
+					let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
+					offset += bytes
+					offset += 1 if !o.minify
+					entry.output ||= chunk
+					parts[entry.nr] = chunk
 
-			file.contents = parts.filter(do $1).join('\n')
+				file.contents = parts.filter(do $1).join('\n')
+
+			elif file and key.match(/\.js$/)
+				# if not dirty - dont change?
+				# if this 
+				# inline assets referenced from code?
+				# let append = "var $assets$ = globalThis[S]"
+				continue
+				
+				if svgs.length
+					let names = svgs.map do path.basename($1)
+					let urls = names.map do (puburl or '') + $1
+
+					let append = ["globalThis[Symbol.for('#assets')] = globalThis[Symbol.for('#assets')] || \{\}"]
+					let regex = new RegExp("({puburl or ''})(" + names.join("|") + ')(?=[\'"])','g')
+					let js = file.text
+					# just look through 
+					file.contents = file.text.replace(regex) do(m,pre,name,qoute)
+						let dest = svgs.find(do $1.indexOf(name) >= 0)
+						let svg = meta.outputs[dest]
+						let url = pre + name
+						console.log 'found asset',m,name,svg,url
+						if svg and svg.#file
+							let raw = svg.#file.text
+							# console.log raw
+							append.push "globalThis[{url},{JSON.stringify(raw)})"
+							return m
+						return m
+					
+					file.contents = file.text + '\n' + append.join(';\n')
+					console.log "find svg?",svgs,regex,append
+					
+
+
+				# file.contents =
+				yes
+
 
 		inputs = meta.inputs
 		outputs = meta.outputs
