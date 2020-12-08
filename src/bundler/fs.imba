@@ -48,6 +48,9 @@ export class FileNode
 	get name
 		path.basename(rel)
 
+	get scanned?
+		self.fs.scanned.indexOf(rel) >= 0
+
 	def invalidate
 		cache = {}
 		#imba..invalidate!
@@ -58,12 +61,24 @@ export class FileNode
 		if #body =? body
 			await utils.ensureDir(abs)
 			fs.promises.writeFile(abs,body)
+
+	def writeSync body
+		if #body =? body
+			# await utils.ensureDir(abs)
+			fs.writeFileSync(abs,body)
+
 	
 	def read enc = 'utf8'
 		#body or fs.promises.readFile(abs,enc)
 	
+	def readSync enc = 'utf8'
+		#body ||= fs.readFileSync(abs,enc)
+	
 	def stat
 		fs.promises.stat(abs).then(do $1).catch(do blankStat)
+
+	get mtimesync
+		#mtime ||= fs.statSync(abs).mtimeMs
 
 	def mtime
 		unless #mtime
@@ -115,6 +130,9 @@ export class FileSystem
 
 	def toString do cwd
 	def valueOf do cwd
+
+	def existsSync src
+		scanned.indexOf(relative(src)) >= 0
 	
 	def lookup src
 		src = relative(src)

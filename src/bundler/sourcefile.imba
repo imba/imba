@@ -2,6 +2,27 @@ import compiler from 'compiler'
 import imba1 from 'compiler1'
 import {SourceMapper} from '../compiler/sourcemapper'
 
+
+const defaultConfig = {
+	platform: 'node',
+	format: 'esm',
+	raw: true
+	imbaPath: 'imba'
+	styles: 'extern'
+	hmr: true
+	bundle: false
+}
+
+const defaults = {
+	node: {
+		ext: '.mjs'
+	}
+
+	browser: {
+		ext: '.js'
+	}
+}
+
 export default class SourceFile
 	def constructor src
 		#cache = {}
@@ -39,9 +60,66 @@ export default class SourceFile
 		setTimeout(&,20) do precompile!
 		self
 
-	def prebuild
-		let dest = fs.lookup(src.rel + '.mjs')
-		build(dest,platform: 'node')
+	def prebuild o = {}
+		let jsfile = mirrorFile('.mjs')
+		let cssfile = null 
+		let srctime = src.mtimesync
+		let outtime = jsfile.scanned? ? jsfile.mtimesync : 0
+		
+		# the previous one was built earlier
+		if outtime > srctime and outtime > program.mtime
+			return true
+
+		
+		try
+			let sourceBody = await src.read!
+
+			for platform in ['node','browser']
+				console.log "start compile! {src.rel}",platform,srctime,outtime
+				let cfg = defaults[platform]
+				let outfile = mirrorFile(cfg.ext)
+
+				# should not always compile both
+
+				let opts = Object.assign({
+					platform: platform,
+					format: 'esm',
+					raw: true
+					sourcePath: src.rel,
+					sourceId: src.id,
+					cwd: cwd,
+					imbaPath: 'imba'
+					styles: 'extern'
+					hmr: true # hmm
+					bundle: false,
+				},o)
+
+				let legacy = (/\.imba1$/).test(src.rel)
+				let lib = legacy ? imba1 : compiler
+
+				if legacy
+					opts.filename = opts.sourcePath
+					opts.target = platform == 'node' ? opts.platform : 'web'
+					opts.inlineHelpers = 1
+
+				let res = lib.compile(sourceBody,opts)
+
+				if legacy
+					await outfile.write(res.js)
+				else
+					let js = res.js
+					if res.css.length
+						if platform == 'node'
+							cssfile = mirrorFile('.css')
+							await cssfile.write(SourceMapper.strip(res.css))
+
+					if cssfile
+						js += "\nimport './{cssfile.name}'"
+				
+					await outfile.write(SourceMapper.strip(js))
+		catch e
+			yes
+
 
 	def build dest, o = {}
 		#cache[dest] ||= new Promise do(resolve,reject)
@@ -59,7 +137,7 @@ export default class SourceFile
 			},o)
 
 			let t = Date.now!
-			
+
 			mtsrc ||= await src.mtime!
 			let mtdest = await dest.mtime!
 
@@ -160,7 +238,7 @@ export default class SourceFile
 
 	def compile o = {}
 		# for now we expect
-		console.log 'compiling!'
+		console.log 'compiling!',src.abs
 		let code = await precompile(o)
 		if o.styles == 'import' and code.indexOf('HAS_CSS_STYLES') >= 0
 			code += "\nimport '{src.abs}.css'"

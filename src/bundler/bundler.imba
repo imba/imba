@@ -158,7 +158,7 @@ export class Bundler
 		let builds = for bundle in bundles
 			bundle.build!
 		await Promise.all(builds)
-		log.info 'built bundles in %ms',time('build')
+		log.info 'bundled in %elapsed' # ,time('build')
 		write!
 
 		if options.watch

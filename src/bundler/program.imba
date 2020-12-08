@@ -79,12 +79,13 @@ export default class Program
 
 	def transpile
 		# await prepare!
-		let sources = fs.nodes fs.glob(config.include,config.exclude,'imba')
+		let sources = fs.nodes fs.glob(config.include,config.exclude,'imba,imba1')
+		log.info 'found %d sources to compile in %elapsed',sources.length # ,sources.map do $1.rel
 		# get the stats for them as well
 		# we do need the id mappings?
 
 		let promises = for source in sources
-			source.imba.prebuild!
+			source.imba.prebuild(config: config)
 
 		await Promise.all(promises)
 
@@ -100,7 +101,7 @@ export default class Program
 		await build!
 
 	def clean
-		let sources = fs.nodes fs.glob(['**/*.imba.mjs','**/*.imba.css'],null,'mjs,js,css,meta')
+		let sources = fs.nodes fs.glob(['**/*.imba.mjs','**/*.imba.js','**/*.imba.css'],null,'mjs,js,css,meta')
 
 		for file in sources
 			await file.unlink!

@@ -83,10 +83,32 @@ export class Bundle
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			outExtension: o.outExtension
 			# resolveExtensions: ['.imba.mjs','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
-			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.json']
+			resolveExtensions: [
+				'.imba.mjs','.imba',
+				'.imba1.mjs','.imba1',
+				'.ts','.mjs','.cjs','.js'
+			]
 		}
 
-		console.log esoptions
+		if esoptions.platform == 'browser'
+			esoptions.resolveExtensions.unshift('.imba.js','.imba1.js')
+
+
+		if true
+			
+			for ep,i in entryPoints
+				let node = fs.lookup(ep).rel
+				
+				if web? and fs.existsSync(node + '.js')
+					entryPoints[i] = ep + '.js'
+				elif fs.existsSync(node + '.mjs')
+					entryPoints[i] = ep + '.mjs'
+		
+
+			# if existsSync()
+		# console.log 'entrypoints',entryPoints
+
+		# console.log esoptions
 		
 		# add default defines
 		unless node?
@@ -127,7 +149,7 @@ export class Bundle
 			build.onLoad(filter: /.*/, namespace: 'ext') do(args)
 				return {contents: ''}
 
-		build.onResolve(filter: /\.imba\.(css)$/) do(args)
+		false && build.onResolve(filter: /\.imba\.(css)$/) do(args)
 			let id = args.path
 			# let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
 			return {path: args.path, namespace: 'styles'}

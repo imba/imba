@@ -86,12 +86,14 @@
     "url": "git://github.com/imba/imba.git"
   },
   "devDependencies": {
+    "fdir": "^4.1.0",
+    "micromatch": "^4.0.2",
+    "picomatch": "^2.2.2",
     "puppeteer": "^2.1.1"
   },
   "dependencies": {
     "chokidar": "^3.4.3",
     "esbuild": "^0.8.17",
-    "micromatch": "^4.0.2",
     "readdirp": "^3.5.0"
   }
 }

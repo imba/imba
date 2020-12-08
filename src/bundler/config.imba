@@ -13,7 +13,7 @@ export const defaultConfig = {
 	node: {
 		platform: 'node'
 		format: 'cjs'
-		external: ['dependencies','.json']
+		external: ['dependencies','.json','imba']
 		outExtensionz: {
 			'.js': '.node.js'
 			'.css': '.node.css'
