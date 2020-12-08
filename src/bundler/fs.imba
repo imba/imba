@@ -43,14 +43,16 @@ export class FileNode
 	def invalidate
 		cache = {}
 		#imba..invalidate!
+		#body = null
 		self
 	
 	def write body
-		await utils.ensureDir(abs)
-		fs.promises.writeFile(abs,body)
+		if #body =? body
+			await utils.ensureDir(abs)
+			fs.promises.writeFile(abs,body)
 	
 	def read enc = 'utf8'
-		fs.promises.readFile(abs,enc)
+		#body or fs.promises.readFile(abs,enc)
 	
 	def stat
 		fs.promises.stat(abs).then(do $1).catch(do blankStat)

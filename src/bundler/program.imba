@@ -26,8 +26,11 @@ export default class Program
 	def constructor config, options
 		config = config
 		options = options
+
+		mtime = options.force ? Date.now! : 0
 		fs = new FileSystem(options.cwd,'.',self)
 		log = new Logger(self)
+		
 		idFaucet = utils.idGenerator!
 		idmap = {}
 		sources = {}
@@ -58,7 +61,12 @@ export default class Program
 
 	def setup
 		#setup ||= new Promise do(resolve)
-			esb! # start setting up the service
+			esb!
+			return resolve(self)
+			
+			await esb!
+			# esb! # start setting up the service
+			# resolve(self)
 
 			filters = {
 				depth: 5
@@ -88,7 +96,6 @@ export default class Program
 	def prepare
 		await setup!
 		let promises = for own src,file of sources when file.imba
-			# console.log 'handle file',file
 			file.imba..prepare!
 		await Promise.all(promises)
 
@@ -98,7 +105,6 @@ export default class Program
 
 	def build
 		await setup!
-		# await prepare!
 		await bundler.run!
 
 	def watch

@@ -2797,25 +2797,33 @@ export class Root < Code
 		}
 
 		script:js = out
-		script:css = STACK.css
+		script:css = STACK.css or ""
 		script:sourceId = sourceId
 		script:assets = scope.assets
 		script:dependencies = Object.keys(scope.@dependencies)
+
+		
 		
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
 				script:js = "{script:js}\nimba.styles.register('{script:sourceId}',{JSON.stringify(script:css)});"
 				if o:debug
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
-			
+		
+		if script:css
+			script:js += '\n//HAS_CSS_STYLES'
+
 		# always create the sourcemap?
 		if o:sourceMap or STACK.tsc # should handle sourcemap no matter what?
 			let map = SourceMap.new(script,o:sourceMap,o).generate
 			script:sourcemap = map.result
 
 		# remove sourcemap markers from js and css
-		script:css &&= script:css.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
-		script:js = script:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+		# start with other markers as well
+		unless o:raw
+			script:css &&= script:css.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+			script:js = script:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+
 		return script
 
 	def js o

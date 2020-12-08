@@ -76,7 +76,7 @@ export class Bundler
 		src = relp(src)
 
 		unless map[src]
-			let gen = #sourceIdGenerator ||= utils.idGenerator!	
+			let gen = #sourceIdGenerator ||= utils.idGenerator!
 			let nr = Object.keys(map).length
 			map[src] = gen(nr) + "0"
 
@@ -119,7 +119,6 @@ export class Bundler
 			# what if we dont even have a config here?
 			for key in ['node','server','browser','client']			
 				if let cfg = config[key]
-					# first merge in defaults?
 					if typeof cfg == 'string' or cfg isa Array
 						cfg = {entryPoints: cfg}
 						if key == 'node' or key == 'server'
@@ -131,7 +130,6 @@ export class Bundler
 					continue unless cfg.entryPoints
 
 					cfg.entryPoints = await parseEntryPoints(cfg.entryPoints)
-					# cfg = Object.assign({},config,options,cfg)
 					entries.push(cfg)
 
 			if config.entries
@@ -143,37 +141,26 @@ export class Bundler
 					entries.push cfg
 
 			for cfg in entries
-				# use default loaders by default
 				cfg.loader = Object.assign({},utils.defaultLoaders,cfg.loader or {})
 				cfg.format = 'cjs' if cfg.platform == 'node' and !cfg.format
 
 			bundles = entries.map do new Bundle(self,$1)
 			for bundle in bundles
 				await bundle.setup!
-			
-			console.log('bundle configs',entries)
-			if watcher and false
-				watcher.on('change') do(src,stats)
-					#dirtyInputs.add(relp(src))
-					clearTimeout(#rebuildTimeout)
-					# only rebuild if a rebuild is not already ongoing?
-					#rebuildTimeout = setTimeout(&,50) do rebuild!
+
 			resolve(self)
 
 	def run
 		await setup!
 		time 'build'
-		let t = Date.now!
-		# emit events to server
-		# server.start!
 		let builds = for bundle in bundles
 			bundle.build!
 		await Promise.all(builds)
-		console.log 'did run',Date.now! - t
+		log.info 'built bundles in %ms',time('build')
 		write!
+
 		if options.watch
 			program.watcher.on('change') do rebuild!
-		timed 'build'
 
 	def rebuilt bundle
 		self
@@ -185,7 +172,6 @@ export class Bundler
 		# #dirtyInputs.clear!
 
 		let dirtyBundles = bundles # new Set
-
 		# for bundle in bundles
 		# 	for input in changes
 		# 		if bundle.inputs[input]

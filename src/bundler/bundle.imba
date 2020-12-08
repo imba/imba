@@ -129,8 +129,8 @@ export class Bundle
 
 		build.onResolve(filter: /\.imba\.(css)$/) do(args)
 			let id = args.path
-			let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
-			return {path: resolved, namespace: 'styles'}
+			# let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
+			return {path: args.path, namespace: 'styles'}
 
 		build.onResolve(filter: /^@svg\//) do(args)
 			console.log 'resolving asset',args.path
@@ -165,15 +165,15 @@ export class Bundle
 					styles: 'import' # always?
 				}
 
-				let pre = await srcfile.imba.compile(opts)
-				console.log 'recompiled',srcfile.rel
+				let code = await srcfile.imba.compile(opts)
+				# console.log 'recompiled',srcfile.rel
 				cached = srcfile.cache[#key] = {
-					js: {contents: String(pre.js)}
-					css: {
-						loader: 'css'
-						resolveDir: path.dirname(args.path)
-						contents: String(pre.css)
-					}
+					js: {contents: String(code)}
+					# css: {
+					# 	loader: 'css'
+					# 	resolveDir: path.dirname(args.path)
+					# 	contents: String(pre.css)
+					# }
 				}
 				return cached.js
 
@@ -263,7 +263,16 @@ export class Bundle
 			return out
 
 		build.onLoad({ filter: /.*/, namespace: 'styles'}) do(args)
-			let entry = fs.lookup(args.path).cache[#key]
+			let id = args.path.replace(/\.css$/,'')
+			let entry = fs.lookup(id).imba
+			let body = await entry.getStyles!
+
+			return {
+				loader: 'css'
+				contents: body
+				resolveDir: path.dirname(id)
+			}
+
 			unless entry
 				console.log 'could not find styles!!',args.path
 			return entry.css
@@ -389,8 +398,6 @@ export class Bundle
 		# that is - before the correct ordering
 		let svgs = Object.keys(meta.outputs).filter do $1.match(/\.svg$/)
 
-		console.log 'svgs',svgs
-
 		for own key,value of meta.outputs
 			# let file = files.find do path.relative(cwd,$1.path) == key
 			let file = value.#file
@@ -417,10 +424,6 @@ export class Bundle
 				file.contents = parts.filter(do $1).join('\n')
 
 			elif file and key.match(/\.js$/)
-				# if not dirty - dont change?
-				# if this 
-				# inline assets referenced from code?
-				# let append = "var $assets$ = globalThis[S]"
 				continue
 				
 				if svgs.length
