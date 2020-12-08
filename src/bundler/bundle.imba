@@ -82,7 +82,8 @@ export class Bundle
 			external: o.external or undefined
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			outExtension: o.outExtension
-			resolveExtensions: ['.imba.mjs','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
+			# resolveExtensions: ['.imba.mjs','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
+			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.json']
 		}
 
 		console.log esoptions
@@ -115,7 +116,6 @@ export class Bundle
 			try
 				for value in Object.keys(bundler.package..dependencies or [])
 					extmap[value] = yes
-					
 
 		for key in externs when key[0] == '!'
 			delete extmap[key.slice(1)]
@@ -133,7 +133,6 @@ export class Bundle
 			return {path: args.path, namespace: 'styles'}
 
 		build.onResolve(filter: /^@svg\//) do(args)
-			console.log 'resolving asset',args.path
 			return {path: args.path, namespace: 'asset'}
 
 		(extdeps or extjson) and build.onResolve(filter: /.*/, namespace: 'file') do(args)
@@ -177,7 +176,6 @@ export class Bundle
 				}
 				return cached.js
 
-
 			let raw = await nodefs.promises.readFile(args.path, 'utf8')
 			let key = "{cachePrefix}:{args.path}" # possibly more
 
@@ -205,16 +203,6 @@ export class Bundle
 				errors: []
 				warnings: []
 			}
-
-			if false
-				let jspath = iopts.sourcePath + '.mjs'
-				let cached = await utils.exists(jspath)
-				
-				if cached and true
-					let body = await utils.readFile(jspath)
-					console.log 'return cached version'
-					return {contents: body}
-				console.log 'will compile imba',iopts.sourcePath,cached
 
 			# legacy handling
 			if args.path.match(/\.imba1$/)
@@ -282,10 +270,8 @@ export class Bundle
 			if #cache[id]
 				return #cache[id]
 
-			# , namespace: 'asset'
 			let name = id.replace('@svg/','')
 			if let asset = resolveAsset(name)
-				# if we're on node - just load the file?
 				let body = await nodefs.promises.readFile(bundler.absp(asset.path),'utf8')
 				let parsed = parseAsset({body: body},name)
 				# console.log 'parsed asset',parsed
@@ -448,10 +434,6 @@ export class Bundle
 					
 					file.contents = file.text + '\n' + append.join(';\n')
 					console.log "find svg?",svgs,regex,append
-					
-
-
-				# file.contents =
 				yes
 
 

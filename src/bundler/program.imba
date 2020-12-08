@@ -57,36 +57,14 @@ export default class Program
 		sources[fs.relative(src)] ||= fs.lookup(src)
 
 	def esb
+		#hasesb = yes
 		#esb ||= await esbuild.startService({})
 
 	def setup
 		#setup ||= new Promise do(resolve)
 			esb!
 			return resolve(self)
-			
-			await esb!
-			# esb! # start setting up the service
-			# resolve(self)
 
-			filters = {
-				depth: 5
-				fileFilter: '*.imba'
-				directoryFilter: ['!.git', '!*modules','!tmp','!.imba']
-			}
-
-			let t = Date.now!
-			# Should rather just run through the directories recursively
-			# without fancy filtering etc
-
-			let files = await readdirp.promise(cwd,filters)
-			let paths = files.map(do $1.path)
-
-			let matches = match(paths)
-			console.log 'found files',filters,matches
-			
-			for src in matches
-				add(src)
-			resolve(self)
 
 	def match files
 		let matchers = []
@@ -100,20 +78,57 @@ export default class Program
 		await Promise.all(promises)
 
 	def transpile
-		await prepare!
-		log.info 'transpiled in %elapsed'
+		# await prepare!
+		let sources = fs.nodes fs.glob(config.include,config.exclude,'imba')
+		# get the stats for them as well
+		# we do need the id mappings?
+
+		let promises = for source in sources
+			source.imba.prebuild!
+
+		await Promise.all(promises)
+
+		log.info 'transpiled %d files in %elapsed',promises.length
+
 
 	def build
 		await setup!
+		await transpile!
 		await bundler.run!
 
 	def watch
 		await build!
 
+	def clean
+		let sources = fs.nodes fs.glob(['**/*.imba.mjs','**/*.imba.css'],null,'mjs,js,css,meta')
+
+		for file in sources
+			await file.unlink!
+
+		log.info 'cleaned %d files in %elapsed',sources.length
+		return
+
+		let remove = fs.scan(/\.imba\.(css|mjs|js|tjs)$/)
+		# console.log 'found files',Object.keys(fs.nodes).length,remove
+
+		let files = await log.time 'crawl' do
+			fs.crawl!
+
+		# console.log 'files',files
+		
+		let files2 = await log.time 'crawl2' do
+			fs.crawl(rootDirs: {src: 1, scripts: 1})
+		# console.log files2
+
+		for item in remove
+			await item.unlink!
+		self
+
 	def run
 		if self[options.command] isa Function
 			let out = await self[options.command]()
-			#esb.stop! if #esb and !options.watch
+			if #hasesb and !options.watch
+				(await esb!).stop!
 			return out
 
 	get bundler

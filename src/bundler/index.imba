@@ -51,33 +51,36 @@ def stall
 export def run options = {}
 	unless cluster.isMaster
 		return new StallerWorker(options)
-
+	let t = Date.now!
 	let bundles = []
 	let cwd = (options.cwd ||= process.cwd!)
 	if options.argv
 		Object.assign(options,helpers.parseArgs(options.argv,schema))
 	
+
 	# if options.config 
 	options.config = utils.resolveConfig(options.config or 'imbaconfig.json',cwd)
 	options.package = utils.resolveFile(options.package or 'package.json',cwd) do JSON.parse($1.body)
 
 	options.config = await conf.resolve(options.config,cwd)
 
-	console.log 'found config?',options.config,options
+	# console.log 'found config?',options.config,options
 
 	if options.serve
 		options.watch = yes
 
+	console.log 'starting',Date.now! - t
 	let program = new Program(options.config,options)
 	program.setup!
 	return program.run!
 
-	if options.command == 'transpile'	
-		return program.run!
+	# if options.command == 'transpile'	
+	#	return program.run!
 	
-	elif options.command == 'build'
-		return program.run!
+	# elif options.command == 'build'
+	# 	return program.run!
 
 	let bundler = new Bundler(options.config,options)
 	await bundler.setup!
 	bundler.run!
+	

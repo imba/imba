@@ -38,7 +38,7 @@ def clone object
 export def merge config, defaults
 	for own key,value of defaults
 		let typ = schema[key]
-		console.log 'merge',key,config
+
 		if config.hasOwnProperty(key)
 			if typ == 'merge'
 				config[key] = merge(config[key],value)
@@ -69,7 +69,7 @@ export def resolve config, cwd
 					asset.path = path.relative(cwd,item)
 		
 		config.#assets = assets
-		console.log 'assets',assets
+		# console.log 'assets',assets
 		# for part in config.assets
 		# 	let items = resolvePaths()
 		# for entry in entries when entry.match(/\.svg/)

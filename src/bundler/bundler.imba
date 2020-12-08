@@ -114,6 +114,8 @@ export class Bundler
 	def setup
 		#setup ||= new Promise do(resolve)
 			esb = await (program ? program.esb! : esbuild.startService!)
+
+			time('setup')
 			let entries = []
 			let shared = {}
 			# what if we dont even have a config here?
@@ -147,7 +149,7 @@ export class Bundler
 			bundles = entries.map do new Bundle(self,$1)
 			for bundle in bundles
 				await bundle.setup!
-
+			log.info 'setup %ms',time('setup')
 			resolve(self)
 
 	def run

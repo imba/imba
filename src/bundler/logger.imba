@@ -25,8 +25,10 @@ export class Logger
 				fmt('bold',part)
 			elif f == 'ms'
 				fmt('yellow',Math.round(part) + 'ms')
+			elif f == 'd'
+				fmt('blueBright',part)
 			elif f == 'elapsed'
-				rest.unshift(part)
+				rest.unshift(part) if part != undefined
 				let elapsed = Date.now! - #ctime
 				fmt('yellow',Math.round(elapsed) + 'ms')
 			else
@@ -39,3 +41,12 @@ export class Logger
 	def warn ...pars do write('warn',...pars)
 	def error ...pars do write('error',...pars)
 	def success ...pars do write('success',...pars)
+
+
+	def time label, cb
+		let t = Date.now!
+		if cb
+			let res = await cb()
+			info "{label} %ms",Date.now! - t
+			return res
+		

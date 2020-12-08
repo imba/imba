@@ -2,8 +2,11 @@ const fs = require 'fs'
 const path = require 'path'
 const readdirp = require 'readdirp'
 const utils = require './utils'
+const micromatch = require 'micromatch'
 
+import {fdir} from '../../vendor/fdir/index.js'
 import SourceFile from './sourcefile'
+
 
 const readdirpOptions = {
 	depth: 5
@@ -25,7 +28,6 @@ const blankStat = {
 }
 
 const roots = {}
-const nodes = {}
 
 export class FileNode
 
@@ -37,8 +39,14 @@ export class FileNode
 		#watchers = new Set
 		#watched = no
 
+	def [Symbol.toPrimitive] hint
+		abs
+
 	get program
 		self.fs.program
+
+	get name
+		path.basename(rel)
 
 	def invalidate
 		cache = {}
@@ -57,6 +65,12 @@ export class FileNode
 	def stat
 		fs.promises.stat(abs).then(do $1).catch(do blankStat)
 
+	def mtime
+		unless #mtime
+			let s = await stat!
+			#mtime = s.mtimeMs
+		return #mtime
+
 	get imba
 		return null unless (/\.imba1?$/).test(rel)
 		#imba ||= new SourceFile(self)
@@ -69,6 +83,9 @@ export class FileNode
 
 	get imba?
 		(/\.imba1?$/).test(rel)
+	
+	def unlink
+		fs.promises.unlink(abs)
 
 	def watch observer
 		#watchers.add(observer)
@@ -93,14 +110,18 @@ export class FileSystem
 	def constructor dir, base, program
 		cwd = path.resolve(base,dir)
 		program = program
-		#cache = {}
+		nodemap = {}
+		scanned = null
 
 	def toString do cwd
 	def valueOf do cwd
 	
 	def lookup src
 		src = relative(src)
-		#cache[src] ||= new FileNode(self,src,resolve(src))
+		nodemap[src] ||= new FileNode(self,src,resolve(src))
+
+	def nodes arr
+		arr.map do lookup($1)
 
 	def resolve src
 		path.resolve(cwd,src)
@@ -127,3 +148,66 @@ export class FileSystem
 
 	def stat src
 		fs.promises.stat(resolve(src)).then(do $1).catch(do blankStat)
+
+	def prescan
+		return if scanned
+		scanned = crawl!
+		for item in scanned
+			let li = item.lastIndexOf('.')
+			let ext = item.slice(li + 1) or '*'
+			let map = scanned[ext] ||= []
+			map.push(item)
+		return scanned
+		
+
+	def glob match = [], ignore = null, ext = null
+		prescan!
+		let sources = scanned
+		if ext
+			sources = []
+			if typeof ext == 'string'
+				ext = ext.split(',')
+			for item in ext
+				sources = sources.concat(scanned[item] or [])
+
+		let res = micromatch(sources,match,ignore: ignore)
+		return res
+
+	# scanning through the files that are already loaded into the filesystem
+	def scan match
+		prescan!
+		let matched = []
+		for src in scanned
+			let m = no
+			if match isa RegExp
+				m = match.test(src)
+				matched.push(lookup(src)) if m
+		return matched
+
+	def crawl o = {}
+		# let sep = path.sep
+		let slice = cwd.length + 1
+		let api = (new fdir).crawlWithOptions(cwd,{
+			includeBasePath: true
+			# includeDirs: true
+			group: false
+			includeDirs: false
+			maxDepth: 8
+			filters: [do $1[0] != '.']
+			exclude: do
+				if $3 == 7 and o.rootDirs and !o.rootDirs[$1]
+					return yes
+				return (/^(\.|node_modules)/).test($1)
+		})
+
+		return api.sync!.map do $1.slice(slice)
+
+		let results = api.sync!
+		return results
+		let entries = []
+		for dir in results
+			for file in dir.files
+				let full = dir.dir + sep + file
+				entries[full] = yes
+
+		return entries
