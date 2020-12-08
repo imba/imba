@@ -28,6 +28,8 @@ export default class Program
 		options = options
 		fs = new FileSystem(options.cwd,'.',self)
 		log = new Logger(self)
+		idFaucet = utils.idGenerator!
+		idmap = {}
 		sources = {}
 
 		watcher = options.watch ? chokidar.watch([]) : new VirtualWatcher
@@ -40,6 +42,13 @@ export default class Program
 
 	get cwd
 		fs.cwd
+
+	def sourceIdForPath src
+		unless idmap[src]
+			let nr = Object.keys(idmap).length
+			idmap[src] = idFaucet(nr) + "0"
+		return idmap[src]
+
 
 	def add src
 		sources[fs.relative(src)] ||= fs.lookup(src)
@@ -58,10 +67,8 @@ export default class Program
 			}
 
 			let t = Date.now!
-
 			# Should rather just run through the directories recursively
 			# without fancy filtering etc
-
 
 			let files = await readdirp.promise(cwd,filters)
 			let paths = files.map(do $1.path)
@@ -91,7 +98,7 @@ export default class Program
 
 	def build
 		await setup!
-		await prepare!
+		# await prepare!
 		await bundler.run!
 
 	def watch

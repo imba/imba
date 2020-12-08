@@ -2791,10 +2791,15 @@ export class Root < Code
 		if STACK.tsc
 			out = "import 'imba/index';\n{out}"
 
+		script:rawResult = {
+			js: out
+			css: STACK.css
+		}
+
 		script:js = out
 		script:css = STACK.css
 		script:sourceId = sourceId
-		script:assts = scope.assets
+		script:assets = scope.assets
 		script:dependencies = Object.keys(scope.@dependencies)
 		
 		if !STACK.tsc

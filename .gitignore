@@ -21,6 +21,7 @@ node_modules
 lib/
 build/
 dist/
+dist2/
 .imba
 *.imba.mjs
 test/index.js

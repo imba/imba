@@ -14,7 +14,7 @@ export const defaultConfig = {
 		platform: 'node'
 		format: 'cjs'
 		external: ['dependencies','.json']
-		outExtension: {
+		outExtensionz: {
 			'.js': '.node.js'
 			'.css': '.node.css'
 		}
@@ -23,7 +23,7 @@ export const defaultConfig = {
 	browser: {
 		platform: 'browser'
 		format: 'cjs'
-		outExtension: {
+		outExtensionz: {
 			'.js': '.bundle.js'
 			'.css': '.bundle.css'
 		}

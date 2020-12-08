@@ -5,7 +5,7 @@ export default class SourceFile
 	def constructor src
 		#cache = {}
 		src = src
-		out = src.tmp!
+		out = src.tmp('.meta')
 
 	get config do project.config
 	
@@ -14,10 +14,6 @@ export default class SourceFile
 
 	# making sure that the actual body is there
 	def prepare
-		# srcstat = await src.stat!
-		# outstat = await out.stat!
-		# console.log 'preparing?',src.rel,out.rel,srcstat,outstat
-		# console.log srcstat,outstat
 		await precompile!
 
 	def readSource
@@ -31,29 +27,33 @@ export default class SourceFile
 		self
 
 	def precompile o = {}
-		#cache.result ||= new Promise do(resolve,reject)
-			# console.log 'compiling!'
-			# check the timings
+		# let key -- get a key based on the options
+		o.platform ||= 'browser'
+		let key = o.platform
+		#cache[key] ||= new Promise do(resolve,reject)
 			let opts = Object.assign({
-				platform: 'browser',
+				platform: platform,
 				format: 'esm',
 				sourcePath: src.rel,
+				sourceId: src.id,
 				cwd: cwd,
 				imbaPath: 'imba'
-				# config: config
 				styles: 'extern'
 				hmr: true
 				bundle: false
-				# assets: config.#assets
 			},o)
 
 			# slow?
+			let tmpfile = src.tmp(".{key}")	
+			let t = Date.now!
 			srcstat ||= await src.stat!
-			outstat ||= await out.stat!
+			let outstat = await tmpfile.stat!
+			
 
 			if outstat.mtimeMs > srcstat.mtimeMs
-				let body = await out.read!
-				return resolve(body)
+				let body = await tmpfile.read!
+				let result = compiler.deserialize(body,{sourcePath: src.rel})
+				return resolve(result)
 
 			try
 				let legacy = (/\.imba1$/).test(src.rel)
@@ -63,16 +63,34 @@ export default class SourceFile
 
 				if legacy
 					opts.filename = opts.sourcePath
+					opts.target = opts.platform
 					opts.inlineHelpers = 1
 
-
 				let res = lib.compile(sourceCode,opts)
-				console.log 'write to',out.rel,res.js.length,sourceCode.length
-				await out.write(res.js) # outfs.writePath(outfile,res.js)
+				let serialized = null
+
+				if legacy
+					# imba1 file must be handled differently
+					serialized = JSON.stringify({js: String(res.js), css: ""})
+					res = compiler.deserialize(serialized,{sourcePath: src.rel})
+				else
+					serialized = res.serialize!
+
+				console.log 't',Date.now! - t,src.rel,src.id
+				# dont write this always?
+				await tmpfile.write(serialized)
 				# we want to save the raw js without parsing or removing sourcemap markers
 				# so that we can modify the file etc before rerunning with sourcemap
-				resolve(res.js)
-				# let out = utils.rename(src,'*.imba.mjs')
+				# memory hungry now?
+				console.log 'write to',tmpfile.rel,res.js.length,sourceCode.length,Date.now! - t
+				resolve(res)
 			catch e
 				resolve(errors: [])
 
+	def compile o = {}
+		# for now we expect
+		let input = await precompile(o)
+		unless input.recompile isa Function
+			console.log 'recompile not function',o,src.rel,input.recompile
+
+		return input.recompile(o)

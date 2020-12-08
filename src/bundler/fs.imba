@@ -59,8 +59,11 @@ export class FileNode
 		return null unless (/\.imba1?$/).test(rel)
 		#imba ||= new SourceFile(self)
 
+	get id
+		#id ||= program.sourceIdForPath(rel)
+
 	def tmp ns = ''
-		self.fs.lookup('.imba/' + rel + ns)
+		self.fs.lookup('.imba/_' + (rel + ns).replace(/\//g,'_$$_'))
 
 	get imba?
 		(/\.imba1?$/).test(rel)
@@ -69,7 +72,7 @@ export class FileNode
 		#watchers.add(observer)
 		if #watched =? yes
 			program.watcher.add(abs)
-			console.log 'now watching file!',rel,abs
+			# console.log 'now watching file!',rel,abs
 
 	def unwatch observer
 		#watchers.delete(observer)

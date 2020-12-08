@@ -120,8 +120,17 @@ export class Bundle
 		for key in externs when key[0] == '!'
 			delete extmap[key.slice(1)]
 
+		if options.imbaPath == 'global'
+			build.onResolve(filter: /^imba\//) do(args)
+				return {path: 'blank', namespace: 'ext'}
+
+			build.onLoad(filter: /.*/, namespace: 'ext') do(args)
+				return {contents: ''}
+
 		build.onResolve(filter: /\.imba\.(css)$/) do(args)
-			return {path: args.path, namespace: 'styles'}
+			let id = args.path
+			let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
+			return {path: resolved, namespace: 'styles'}
 
 		build.onResolve(filter: /^@svg\//) do(args)
 			console.log 'resolving asset',args.path
@@ -145,8 +154,28 @@ export class Bundle
 			# console.log 'onload imba file',args.path,!!srcfile.#imba
 
 			if srcfile.imba
-				let pre = await srcfile.imba.precompile!
-				return {contents: pre}
+				if let cached = srcfile.cache[#key]
+					return cached.js
+
+				let opts = {
+					platform: platform || 'browser',
+					format: 'esm',
+					sourcePath: args.path,
+					imbaPath: options.imbaPath or 'imba'
+					styles: 'import' # always?
+				}
+
+				let pre = await srcfile.imba.compile(opts)
+				console.log 'recompiled',srcfile.rel
+				cached = srcfile.cache[#key] = {
+					js: {contents: String(pre.js)}
+					css: {
+						loader: 'css'
+						resolveDir: path.dirname(args.path)
+						contents: String(pre.css)
+					}
+				}
+				return cached.js
 
 
 			let raw = await nodefs.promises.readFile(args.path, 'utf8')
@@ -234,7 +263,10 @@ export class Bundle
 			return out
 
 		build.onLoad({ filter: /.*/, namespace: 'styles'}) do(args)
-			#cache[args.path]
+			let entry = fs.lookup(args.path).cache[#key]
+			unless entry
+				console.log 'could not find styles!!',args.path
+			return entry.css
 
 		build.onLoad({ filter: /@(assets|svg)\/.*/}) do(args)
 			let id = args.path
@@ -255,7 +287,7 @@ export class Bundle
 
 				return #cache[id] = {contents: js,loader:'js'}
 
-		build.onLoad({ filter: /\.svg$/, namespace: 'file'}) do(args)
+		false && build.onLoad({ filter: /\.svg$/, namespace: 'file'}) do(args)
 			console.log 'onload svg',args
 
 			let content = await nodefs.promises.readFile(args.path,'utf8')

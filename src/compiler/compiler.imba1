@@ -33,6 +33,9 @@ export def resolveConfig o = {}
 	o:config ||= resolveConfigFile(path,o) or {}
 	return o
 
+export def deserialize data, options = {}
+	Compilation.deserialize(data,options)
+
 export def tokenize code, options = {}
 	let script = Compilation.new(code,options)
 	return script.tokenize()
