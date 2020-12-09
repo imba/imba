@@ -135,7 +135,7 @@ export class FileSystem
 	def valueOf do cwd
 
 	def existsSync src
-		scanned.indexOf(relative(src)) >= 0
+		scannedFile(relative(src)) or fs.existsSync(resolve(src))
 	
 	def lookup src
 		src = relative(src)
