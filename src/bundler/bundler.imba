@@ -5,15 +5,14 @@ const nodefs = require 'fs'
 const path = require 'path'
 const utils = require './utils'
 import mountfs from './fs'
-
+import Component from './component'
 import {Server} from './server'
 import {Logger} from './logger'
 import {Bundle} from './bundle'
 
-export class Bundler
-
-
+export class Bundler < Component
 	def constructor config, options, program
+		super()
 		#key = Symbol!
 		cwd = options.cwd
 		config = config

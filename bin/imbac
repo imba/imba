@@ -37,7 +37,8 @@ var parseOpts = {
 		styles: {type: 'string'}, // extern | inline
 		imbaPath: {type: 'string'}, // global | inline | import
 		format: {type: 'string'}, // cjs | esm
-		hmr: null
+		hmr: null,
+		raw: null
 	},
 	
 	group: ['source-map']

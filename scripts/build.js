@@ -25,8 +25,6 @@ function plugin(build){
 		return {path: src, external: true}
 	});
 
-
-
 	build.onLoad({ filter: /\.imba1/ }, async (args) => {
 		// console.log('loading imba',args);
 		if(watcher) watcher.add(args.path);

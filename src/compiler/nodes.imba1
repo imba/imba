@@ -5,6 +5,7 @@
 var helpers = require './helpers'
 var constants = require './constants'
 var fspath = require 'path'
+var transformers = require './transformers'
 
 import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
@@ -13,6 +14,8 @@ import SourceMap from './sourcemap'
 import StyleRule,StyleTheme,Color from './styler.imba'
 import parseAsset from './assets.imba'
 import Compilation from './compilation'
+
+import SourceMapper from './sourcemapper'
 
 var TAG_NAMES = constants.TAG_NAMES
 
@@ -200,6 +203,10 @@ export var NODES = []
 var C = do |node,opts|
 	(typeof node == 'string' or typeof node == 'number') ? node : node.c(opts)
 
+# wrap output in path markers
+var MP = do |val,typ|
+	return "/*${typ}$*/{val}/*$*/"
+
 var M = do |val,mark,o|
 	if mark == undefined
 		mark = val
@@ -212,11 +219,16 @@ var M = do |val,mark,o|
 		let m0 = ''
 		let m1 = ''
 
+		# if o and o:locRef 
+		#	ref += '|' + o:locRef
+
 		if start == 0 or start > 0
 			m0 = end >= start ? "/*%{start}|{ref}$*/" : "/*%{start}$*/"
 			
 		if end == 0 or end > 0
 			m1 = start >= 0 ? "/*%{end}|{ref}$*/" : "/*%{end}$*/"
+		if o and o:locRef
+			val = MP(val,o:locRef)
 		return m0 + val + m1
 	return C(val,o)
 
@@ -535,6 +547,7 @@ export class Stack
 	prop root
 	prop state
 	prop semanticTokens
+	prop meta
 	prop theme
 	prop css
 
@@ -556,7 +569,7 @@ export class Stack
 		@semanticTokens = []
 		@symbols = {}
 		@theme = null
-
+		@meta = {}
 		@css = ''
 		self
 	
@@ -573,6 +586,7 @@ export class Stack
 			token.@kind = kind
 		@semanticTokens.push(token)
 	
+
 		
 	def incr name
 		@counters[name] ||= 0
@@ -681,11 +695,15 @@ export class Stack
 			return @options[lowercased]
 			
 		if key == 'WEB' or key == 'BROWSER'
+			@meta:universal = no
 			return isWeb
 		elif key == 'NODE'
+			@meta:universal = no
 			return isNode
 		elif key == 'WORKER' or key == 'WEBWORKER'
+			@meta:universal = no
 			return isWorker
+
 		elif key == 'HMR'
 			return !!@options:hmr
 
@@ -2801,17 +2819,24 @@ export class Root < Code
 		script:sourceId = sourceId
 		script:assets = scope.assets
 		script:dependencies = Object.keys(scope.@dependencies)
+		script:universal = STACK.meta:universal !== no
+		script:imports = transformers.extractDependencies(script:js)
 
-		
+		if o:onResolve
+			script:js = transformers.resolveDependencies(o:sourcePath,script:js,o:onResolve)
+
+		if false
+			console.log 'deps',script:imports
+			let resolver = do |path,ctx|
+				return "something else"
+			console.log transformers.resolveDependencies(script:js,resolver)
+
 		
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
 				script:js = "{script:js}\nimba.styles.register('{script:sourceId}',{JSON.stringify(script:css)});"
 				if o:debug
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
-		
-		if script:css
-			script:js += '\n//HAS_CSS_STYLES'
 
 		# always create the sourcemap?
 		if o:sourceMap or STACK.tsc # should handle sourcemap no matter what?
@@ -2821,8 +2846,8 @@ export class Root < Code
 		# remove sourcemap markers from js and css
 		# start with other markers as well
 		unless o:raw
-			script:css &&= script:css.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
-			script:js = script:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+			script:css &&= SourceMapper.strip(script:css) # .replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+			script:js = SourceMapper.strip(script:js) # .replace(/\/\*\%([\w\|]*)\$\*\//g,'')
 
 		return script
 
@@ -3866,7 +3891,7 @@ export class Str < Literal
 		String(@value)
 
 	def c o
-		@cache ? super(o) : (M js, @value)
+		@cache ? super(o) : (M js, @value, o)
 
 export class TemplateString < ListNode
 
@@ -5769,6 +5794,9 @@ export class Call < Node
 			if str == 'extern'
 				callee.value.value.@type = 'EXTERN'
 				return ExternDeclaration.new(args)
+			if str == 'require'
+				console.log 'calling require'
+
 			if str == 'tag'
 				# console.log "ERROR - access args by some method"
 				return TagWrapper.new(args and args:index ? args.index(0) : args[0])
@@ -7078,7 +7106,9 @@ export class TagAttr < TagPart
 		if isAttr 
 			if STACK.tsc
 				return "{@tag.tvar}.setAttribute('{key}',String({val}))"
-			if STACK.platform == 'node'
+			if STACK.isNode
+				# mark compilation as being only for node?
+				STACK.meta:universal = no
 				return "setAttribute('{key}',{val})"
 
 		if STACK.tsc
@@ -7090,7 +7120,8 @@ export class TagAttr < TagPart
 			
 		let key = self.key
 		
-		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button'] and STACK.platform != 'node'
+		# why delegate differently on node and web?
+		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button'] and !STACK.isNode
 			key = 'richValue'
 
 		if ns == 'css'
@@ -8833,8 +8864,13 @@ export class ESMDeclaration < Statement
 
 export class ImportDeclaration < ESMDeclaration
 	def js
+		
+		var src = @source and @source.c(locRef: 'path')
+		# console.log("importing {@source:constructor} {src}")
+
+		# FIXME can move away from cjs - letting esbuild transform if needed.
 		if STACK.cjs
-			var src = @source.c
+			# var src = @source.c(locRef: 'path')
 			# we need to combine the requires
 			let reqjs = "require({src})"
 			unless @specifiers
@@ -8847,9 +8883,9 @@ export class ImportDeclaration < ESMDeclaration
 				return "var {@variable.c} = {reqjs}"
 
 		if @specifiers and @source
-			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {@source.c}"
+			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {src}"
 		else
-			"{M(keyword.c,keyword)} {@source.c}"
+			"{M(keyword.c,keyword)} {src}"
 
 	def visit
 		if STACK.cjs and @specifiers
@@ -8992,7 +9028,8 @@ export class Export < ValueNode
 export class Require < ValueNode
 
 	def js o
-		var out = value isa Parens ? value.value.c : value.c
+		var val = value isa Parens ? value.value : value
+		var out = val.c(locRef: 'path')
 		out == 'require' ? 'require' : "require({out})"
 
 export class EnvFlag < ValueNode
@@ -10120,6 +10157,8 @@ export class Scope
 
 	def imba
 		imbaDependency('core') unless @imba
+		# should be the same for node and js
+		STACK.meta:universal = no
 		@imba ||= (STACK.isNode ? LIT("(this && this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])") : LIT('imba'))
 		# root.imba # requires('imba2', 'Imba')
 
@@ -10212,7 +10251,7 @@ export class RootScope < Scope
 		super
 
 		register('global', self, type: 'global').@c = 'globalThis'
-
+		register('require', self, type: 'global') # .@c = 'globalThis'
 		register 'module', self, type: 'global'
 		register 'imba', self, type: 'global', varclass: GlobalReference
 		register 'window', self, type: 'global', varclass: GlobalReference
@@ -10347,7 +10386,7 @@ export class RootScope < Scope
 		let imbaPath = STACK.imbaPath
 		@dependencies[path] ||= if true
 			# TODO should point directly to imba and let the package.json map correctly
-			let str = "'{imbaPath or 'imba'}/{path}'"
+			let str = MP("'{imbaPath or 'imba'}/{path}'",'path')
 			# TODO create actual Import nodes instead of literals here
 			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
 			@head.push(item) if imbaPath !== null and !STACK.tsc and imbaPath != 'global'
@@ -10896,30 +10935,7 @@ export class SystemVariable < Variable
 		@name
 
 export class ShadowedVariable < Variable
-
-
 export class GlobalReference < Variable
-	def c2 o
-		if STACK.platform == 'node' and !@c
-			if @name == 'window' or @name == 'document'
-				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba).{@name}"
-			# if @name == 'document'
-			#	@scope.@head.push("const $imbadoc$ = (imba.document || (imba.document = new imba.dom.Document))")
-			#	@c = '$imbadoc$'
-			if @name == 'imba'
-				# if accessed directly it should just reference global.imba for speed?
-				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba)"
-			elif @name == 'window' or @name == 'document'
-				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba).{@name}"
-		super
-
-export class GlobalDocumentReference < Variable
-	def c
-		if STACK.platform == 'node' and !@c
-			@scope.@head.push("const $imbadoc$ = (imba.document || (imba.document = new imba.dom.Document))")
-			@c = '$imbadoc$'
-
-		super
 
 export class ScopeContext < Node
 

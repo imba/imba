@@ -6,7 +6,7 @@ const micromatch = require 'micromatch'
 
 import {fdir} from '../../vendor/fdir/index.js'
 import SourceFile from './sourcefile'
-
+import {Resolver} from './resolver'
 
 const readdirpOptions = {
 	depth: 5
@@ -49,7 +49,10 @@ export class FileNode
 		path.basename(rel)
 
 	get scanned?
-		self.fs.scanned.indexOf(rel) >= 0
+		self.fs.scannedFile(rel)
+
+	get reldir
+		rel.slice(0,rel.lastIndexOf('/') + 1)
 
 	def invalidate
 		cache = {}
@@ -87,7 +90,7 @@ export class FileNode
 		return #mtime
 
 	get imba
-		return null unless (/\.imba1?$/).test(rel)
+		return null unless #imba or imba?
 		#imba ||= new SourceFile(self)
 
 	get id
@@ -126,7 +129,7 @@ export class FileSystem
 		cwd = path.resolve(base,dir)
 		program = program
 		nodemap = {}
-		scanned = null
+		#files = null
 
 	def toString do cwd
 	def valueOf do cwd
@@ -141,6 +144,13 @@ export class FileSystem
 	def nodes arr
 		arr.map do lookup($1)
 
+	get outdir
+		program.outdir
+
+	get files
+		prescan! unless #files
+		return #files
+
 	def resolve src
 		path.resolve(cwd,src)
 
@@ -153,6 +163,9 @@ export class FileSystem
 
 	def writeFile src,body
 		fs.promises.writeFile(resolve(src),body)
+
+	def scannedFile src
+		#files and #files.indexOf(src) >= 0
 
 	def unlink src,body
 		fs.promises.unlink(resolve(src))
@@ -167,35 +180,55 @@ export class FileSystem
 	def stat src
 		fs.promises.stat(resolve(src)).then(do $1).catch(do blankStat)
 
-	def prescan
-		return if scanned
-		scanned = crawl!
-		for item in scanned
+	def prescan items = null
+		return #files if #files
+		#files = items or crawl!
+		for item in #files
 			let li = item.lastIndexOf('.')
 			let ext = item.slice(li + 1) or '*'
-			let map = scanned[ext] ||= []
+			let map = #files[ext] ||= []
 			map.push(item)
-		return scanned
-		
+		# should we drop the abspart here?
+		return #files
+	
+	def reset
+		#files = null
+		self
 
 	def glob match = [], ignore = null, ext = null
 		prescan!
-		let sources = scanned
+		let sources = #files
 		if ext
 			sources = []
 			if typeof ext == 'string'
 				ext = ext.split(',')
 			for item in ext
-				sources = sources.concat(scanned[item] or [])
+				sources = sources.concat(#files[item] or [])
+
+		if match isa RegExp and !ignore
+			return sources.filter do match.test($1)
 
 		let res = micromatch(sources,match,ignore: ignore)
 		return res
+
+	def find regex, ext = null
+		prescan!
+		let sources = ext ? [] : #files
+
+		if typeof ext == 'string'
+			ext = ext.split(',')
+
+		if ext isa Array
+			for item in ext
+				sources = sources.concat(#files[item] or [])
+		
+		return sources.filter do regex.test($1)
 
 	# scanning through the files that are already loaded into the filesystem
 	def scan match
 		prescan!
 		let matched = []
-		for src in scanned
+		for src in #files
 			let m = no
 			if match isa RegExp
 				m = match.test(src)
@@ -213,19 +246,13 @@ export class FileSystem
 			maxDepth: 8
 			filters: [do $1[0] != '.']
 			exclude: do
-				if $3 == 7 and o.rootDirs and !o.rootDirs[$1]
-					return yes
+				if $3 == 7 
+					if o.includeRoots and !o.includeRoots[$1]
+						return yes
+					if o.excludeRoots and o.excludeRoots[$1]
+						return yes
+
 				return (/^(\.|node_modules)/).test($1)
 		})
 
 		return api.sync!.map do $1.slice(slice)
-
-		let results = api.sync!
-		return results
-		let entries = []
-		for dir in results
-			for file in dir.files
-				let full = dir.dir + sep + file
-				entries[full] = yes
-
-		return entries

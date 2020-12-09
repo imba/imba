@@ -17,6 +17,7 @@ def resolvePaths obj,cwd
 export def resolveConfigFile dir,{path,fs}
 	return null if !path or !fs or !dir or (dir == path.dirname(dir))
 	let src = path.resolve(dir,'package.json')
+
 	if cached[src]
 		return cached[src]
 
@@ -28,7 +29,9 @@ export def resolveConfigFile dir,{path,fs}
 			return value
 
 		let package = JSON.parse(fs.readFileSync(src,'utf8'))
+
 		let config = package.imba ||= {}
+
 		resolvePaths(config,dir)
 		config.package = package
 		config.cwd ||= dir

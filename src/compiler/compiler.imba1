@@ -8,6 +8,7 @@ var lexer = require './lexer'
 var rewriter = require './rewriter'
 export var parser = require('../../build/parser')['parser']
 var ast = require './nodes'
+var transformers = require './transformers'
 
 import resolveConfigFile from './imbaconfig'
 import ImbaParseError from './errors'
@@ -54,6 +55,11 @@ export def parse code, o = {}
 		throw err
 
 export def compile code, o = {}
+	let compilation = Compilation.new(code,resolveConfig(o))
+	return compilation.compile()
+
+
+export def resolve code, o = {}
 	let compilation = Compilation.new(code,resolveConfig(o))
 	return compilation.compile()
 

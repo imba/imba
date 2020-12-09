@@ -7,6 +7,8 @@ import {FileSystem} from './fs'
 import chokidar from 'chokidar'
 import {Logger} from './logger'
 import {Bundler} from './bundler'
+import {Resolver} from './resolver'
+import Component from './component'
 const esbuild = require 'esbuild'
 
 class VirtualWatcher
@@ -20,13 +22,13 @@ class VirtualWatcher
 	def stop
 		yes
 
-
-export default class Program
+export default class Program < Component
 
 	def constructor config, options
+		super()
 		config = config
 		options = options
-
+		outdir = config.outdir or 'build'
 		mtime = options.force ? Date.now! : 0
 		fs = new FileSystem(options.cwd,'.',self)
 		log = new Logger(self)
@@ -45,6 +47,9 @@ export default class Program
 
 	get cwd
 		fs.cwd
+
+	get resolver
+		#resolver ||= new Resolver(config: config, files: fs.files, program: self)
 
 	def sourceIdForPath src
 		unless idmap[src]
@@ -78,19 +83,25 @@ export default class Program
 		await Promise.all(promises)
 
 	def transpile
-		# await prepare!
+		await clean! if options.clean
 		let sources = fs.nodes fs.glob(config.include,config.exclude,'imba,imba1')
 		log.info 'found %d sources to compile in %elapsed',sources.length # ,sources.map do $1.rel
 		# get the stats for them as well
 		# we do need the id mappings?
-
+		# console.log fs.files.imba
+		let stack = {
+			promises: []
+			promise: do this.promises.push($1)
+			resolver: resolver
+		}
+		
 		let promises = for source in sources
-			source.imba.prebuild(config: config)
+			source.imba.prebuild(stack,config: config)
 
 		await Promise.all(promises)
+		await Promise.all(stack.promises)
 
-		log.info 'transpiled %d files in %elapsed',promises.length
-
+		log.info 'transpiled %d files in %elapsed',sources.length
 
 	def build
 		await setup!
@@ -101,12 +112,14 @@ export default class Program
 		await build!
 
 	def clean
-		let sources = fs.nodes fs.glob(['**/*.imba.mjs','**/*.imba.js','**/*.imba.css'],null,'mjs,js,css,meta')
+		# let sources = fs.nodes fs.glob(['**/*.imba.mjs','**/*.imba.js','**/*.imba.css'],null,'mjs,js,css,meta')
+		let sources = fs.nodes fs.find(/\.imba1?\.\w+$/,'mjs,js,cjs,css,meta')
 
 		for file in sources
 			await file.unlink!
 
 		log.info 'cleaned %d files in %elapsed',sources.length
+		fs.reset!
 		return
 
 		let remove = fs.scan(/\.imba\.(css|mjs|js|tjs)$/)

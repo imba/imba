@@ -1,6 +1,7 @@
 import compiler from 'compiler'
 import imba1 from 'compiler1'
 import {SourceMapper} from '../compiler/sourcemapper'
+import {resolveDependencies} from '../compiler/transformers'
 
 
 const defaultConfig = {
@@ -18,7 +19,7 @@ const defaults = {
 		ext: '.mjs'
 	}
 
-	browser: {
+	web: {
 		ext: '.js'
 	}
 }
@@ -27,24 +28,21 @@ export default class SourceFile
 	def constructor src
 		#cache = {}
 		src = src
-		out = src.tmp('.meta')
-		cssfile = src.tmp('.css')
-		nodefile = src.tmp('.mjs')
-		webfile = src.tmp('.js')
-
-	get config do project.config
-
-	get program
-		src.program
+		out = {
+			meta: mirrorFile('.meta')
+			css: mirrorFile('.css')
+			node: mirrorFile('.mjs')
+			web: mirrorFile('.js')
+		}
 	
-	get fs
-		src.fs
-
-	get cwd
-		src.fs.cwd
+	get fs do src.fs
+	get cwd do fs.cwd
+	get program do fs.program
+	get config do program.config
 
 	def mirrorFile ext
-		fs.lookup(src.rel + ext)
+		let fs = fs
+		fs.lookup((fs.outdir or '.') + '/' + src.rel + ext)
 
 	# making sure that the actual body is there
 	def prepare
@@ -60,65 +58,94 @@ export default class SourceFile
 		setTimeout(&,20) do precompile!
 		self
 
-	def prebuild o = {}
-		let jsfile = mirrorFile('.mjs')
-		let cssfile = null 
+	def prebuild {promise,resolver}, o = {}
+		let jsfile = out.node
 		let srctime = src.mtimesync
 		let outtime = jsfile.scanned? ? jsfile.mtimesync : 0
+		let manifest = {node: {}, web: {}}
+		let fs = fs
 		
 		# the previous one was built earlier
 		if outtime > srctime and outtime > program.mtime
 			return true
 
-		
 		try
+			# this makes the promises not work?
 			let sourceBody = await src.read!
+			let rawResults 
 
-			for platform in ['node','browser']
-				console.log "start compile! {src.rel}",platform,srctime,outtime
+			for platform in ['node','web']
+				# console.log "start compile! {src.rel}",platform,srctime,outtime
+				let web = platform == 'web'
 				let cfg = defaults[platform]
-				let outfile = mirrorFile(cfg.ext)
-
+				let outfile = out[platform] # web ? webfile : jsfile # mirrorFile(cfg.ext)
+				let meta = manifest[platform] 
+				let imports = meta.imports ||= {}
 				# should not always compile both
 
 				let opts = Object.assign({
-					platform: platform,
-					format: 'esm',
+					platform: platform
+					format: 'esm'
 					raw: true
-					sourcePath: src.rel,
-					sourceId: src.id,
-					cwd: cwd,
+					sourcePath: src.rel
+					sourceId: src.id
+					cwd: cwd
 					imbaPath: 'imba'
 					styles: 'extern'
-					hmr: true # hmm
-					bundle: false,
+					hmr: true
+					bundle: false
 				},o)
 
 				let legacy = (/\.imba1$/).test(src.rel)
-				let lib = legacy ? imba1 : compiler
 
 				if legacy
 					opts.filename = opts.sourcePath
-					opts.target = platform == 'node' ? opts.platform : 'web'
+					opts.target = platform #  == 'node' ? opts.platform : 'web'
 					opts.inlineHelpers = 1
 
-				let res = lib.compile(sourceBody,opts)
-
 				if legacy
+					let res = imba1.compile(sourceBody,opts)
 					await outfile.write(res.js)
 				else
+					let res = rawResults or compiler.compile(sourceBody,opts)
 					let js = res.js
+
+					js = resolveDependencies(src.rel,js) do(args)
+						# console.log 'args',src.rel,args
+						let res = imports[args.path] = resolver.resolve(args)
+						let path = res.path
+						
+						if res.namespace
+							let file = fs.lookup(path)
+
+							if file.imba
+								path = res.remapped = file.imba.out[platform].rel
+
+							let rel = resolver.relative(outfile.reldir,path)
+							return rel
+						
+						return path or null
+
 					if res.css.length
 						if platform == 'node'
-							cssfile = mirrorFile('.css')
-							await cssfile.write(SourceMapper.strip(res.css))
+							await out.css.write(SourceMapper.strip(res.css))
 
-					if cssfile
-						js += "\nimport './{cssfile.name}'"
-				
+						# need to resolve mappings?
+						js += "\nimport './{out.css.name}'"
 					await outfile.write(SourceMapper.strip(js))
+
+					if res.universal
+						rawResults = res
+						# console.log 'no need to build for web as well!!'
+						# break
+
+			# console.log 'write manifest'
+			await out.meta.write(JSON.stringify(manifest,null,2))
+			# console.log 'imports',imports
 		catch e
+			console.log 'error',e
 			yes
+		return self
 
 
 	def build dest, o = {}

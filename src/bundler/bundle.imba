@@ -7,8 +7,9 @@ const esbuild = require 'esbuild'
 const nodefs = require 'fs'
 const path = require 'path'
 const utils = require './utils'
+import Component from './component'
 
-export class Bundle
+export class Bundle < Component
 	get config
 		bundler.config
 
@@ -41,6 +42,7 @@ export class Bundle
 		let str = "time {name}: {time(name)}"
 
 	def constructor bundler,o
+		super()
 		#key = Symbol!
 		#timestamps = {}
 
@@ -93,9 +95,7 @@ export class Bundle
 		if esoptions.platform == 'browser'
 			esoptions.resolveExtensions.unshift('.imba.js','.imba1.js')
 
-
 		if true
-			
 			for ep,i in entryPoints
 				let node = fs.lookup(ep).rel
 				
@@ -103,14 +103,11 @@ export class Bundle
 					entryPoints[i] = ep + '.js'
 				elif fs.existsSync(node + '.mjs')
 					entryPoints[i] = ep + '.mjs'
-		
-
-			# if existsSync()
+	
 		# console.log 'entrypoints',entryPoints
-
 		# console.log esoptions
-		
 		# add default defines
+
 		unless node?
 			let defines = esoptions.define ||= {}
 			let env = o.env or process.env.NODE_ENV or 'production'
@@ -288,6 +285,7 @@ export class Bundle
 			return entry.css
 
 		build.onLoad({ filter: /@(assets|svg)\/.*/}) do(args)
+			console.log 'onload asset'
 			let id = args.path
 			if #cache[id]
 				return #cache[id]
