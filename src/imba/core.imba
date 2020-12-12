@@ -36,5 +36,3 @@ import './dom/events/selection'
 if $hmr$
 	import './hmr'
 	yes
-
-export default "tester"

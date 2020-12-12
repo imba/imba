@@ -26,6 +26,7 @@ export default class Program < Component
 
 	def constructor config, options
 		super()
+		key = Symbol!
 		config = config
 		options = options
 		outdir = config.outdir or 'build'
@@ -36,6 +37,9 @@ export default class Program < Component
 		idFaucet = utils.idGenerator!
 		idmap = {}
 		sources = {}
+		jobs = []
+		included = new Set
+		compiled = new Set
 
 		watcher = options.watch ? chokidar.watch([]) : new VirtualWatcher
 
@@ -61,6 +65,30 @@ export default class Program < Component
 	def add src
 		sources[fs.relative(src)] ||= fs.lookup(src)
 
+	def include file
+		unless included.has(file)
+			console.log 'including file!',file
+			included.add(file)
+		self
+
+	def queue promise
+		# console.log 'queue promise',!!promise
+		if promise[key]
+			console.log 'promise has already been queued'
+		else
+			promise[key] = 1
+			jobs.push(promise)
+		return promise
+	
+	def flush
+		# copy all current promises
+		let promises = jobs.slice(0)
+		jobs = []
+		await Promise.all(promises)
+		if jobs.length
+			await flush!
+		return true
+
 	def esb
 		#hasesb = yes
 		#esb ||= await esbuild.startService({})
@@ -69,18 +97,6 @@ export default class Program < Component
 		#setup ||= new Promise do(resolve)
 			esb!
 			return resolve(self)
-
-
-	def match files
-		let matchers = []
-		return files unless config.include or config.exclude
-		return micromatch(files,config.include or [],ignore: config.exclude)
-
-	def prepare
-		await setup!
-		let promises = for own src,file of sources when file.imba
-			file.imba..prepare!
-		await Promise.all(promises)
 
 	def transpile
 		await clean! if options.clean
@@ -94,12 +110,20 @@ export default class Program < Component
 			promise: do this.promises.push($1)
 			resolver: resolver
 		}
-		
-		let promises = for source in sources
-			source.imba.prebuild(stack,config: config)
 
-		await Promise.all(promises)
-		await Promise.all(stack.promises)
+		# run through an include all he sources
+
+		# then start building
+
+		
+		for source in sources
+			source.imba.load!
+
+		await flush!
+		# await Promise.all(promises)
+		# await Promise.all(stack.promises)
+
+		# now write as well?
 
 		log.info 'transpiled %d files in %elapsed',sources.length
 

@@ -22,7 +22,7 @@ export const defaultConfig = {
 
 	browser: {
 		platform: 'browser'
-		format: 'cjs'
+		format: 'esm'
 		outExtensionz: {
 			'.js': '.bundle.js'
 			'.css': '.bundle.css'

@@ -58,8 +58,8 @@ export class Bundler < Component
 	get puburl do config.puburl or '/assets/'
 	get basedir do config.basedir or './'
 	get outdir do config.outdir or './build'
-	get pubdir do config.pubdir or outdir + '/public'  # './build/public'
-	get libdir do config.libdir or outdir # + '/server'  # './build/server'
+	get pubdir do config.pubdir or 'dist/web'  # './build/public'
+	get libdir do config.libdir or 'dist' # + '/server'  # './build/server'
 
 	get incremental?
 		options.watch
@@ -88,6 +88,9 @@ export class Bundler < Component
 			let files = []
 			for entry,i in item
 				if entry.indexOf('*') >= 0
+					let paths1 = fs.glob([entry])
+					# console.log 'expand entries',entry,paths1
+					
 					let paths = await utils.expandPath(entry)
 					files.push(...paths)
 				else
@@ -117,37 +120,37 @@ export class Bundler < Component
 			time('setup')
 			let entries = []
 			let shared = {}
-			# what if we dont even have a config here?
-			for key in ['node','server','browser','client']			
-				if let cfg = config[key]
-					if typeof cfg == 'string' or cfg isa Array
-						cfg = {entryPoints: cfg}
-						if key == 'node' or key == 'server'
-							cfg.platform = 'node'
-							cfg.external = ['dependencies','.json']
-						else
-							cfg.platform = 'browser'
 
-					continue unless cfg.entryPoints
+			if config.node
+				entries.push(config.node)
 
-					cfg.entryPoints = await parseEntryPoints(cfg.entryPoints)
-					entries.push(cfg)
+			if config.browser
+				entries.push(config.browser)
 
 			if config.entries
 				for own key,value of config.entries
 					continue if value.skip
-					let paths = await parseEntryPoints(value.entryPoints or key)
-					let cfg = Object.assign({},config,options,{entryPoints: paths},value)
-					cfg.platform ||= 'browser'
+					# value.entryPoints ||= [key]
 					entries.push cfg
+					# let paths = await parseEntryPoints(value.entryPoints or [key])
+					# let cfg = Object.assign({},config,options,{entryPoints: paths},value)
+					# cfg.platform ||= 'browser'
+			
+			console.log entries,config
 
-			for cfg in entries
+			bundles = for cfg in entries
+				continue unless cfg.entryPoints or cfg.exports
 				cfg.loader = Object.assign({},utils.defaultLoaders,cfg.loader or {})
 				cfg.format = 'cjs' if cfg.platform == 'node' and !cfg.format
+				# cfg.entryPoints = fs.glob(cfg.entryPoints or [],null,'imba')
+				
+				new Bundle(self,cfg)
 
-			bundles = entries.map do new Bundle(self,$1)
+			# bundles = entries.map do new Bundle(self,$1)
+
 			for bundle in bundles
 				await bundle.setup!
+
 			log.info 'setup %ms',time('setup')
 			resolve(self)
 
@@ -160,7 +163,9 @@ export class Bundler < Component
 		log.info 'bundled in %elapsed' # ,time('build')
 		write!
 
+
 		if options.watch
+			setInterval(&,1000) do rebuild!
 			program.watcher.on('change') do rebuild!
 
 	def rebuilt bundle

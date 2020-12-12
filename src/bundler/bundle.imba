@@ -19,8 +19,17 @@ export class Bundle < Component
 	get web?
 		!node?
 
+	get minify?
+		!!bundler.options.minify
+
 	get puburl
 		options.puburl or bundler.puburl or ''
+
+	get pubdir
+		options.pubdir or bundler.pubdir or 'public'
+	
+	get libdir
+		options.libdir or bundler.libdir or 'dist'
 
 	get esb
 		bundler.esb
@@ -55,15 +64,59 @@ export class Bundle < Component
 		meta = {}
 
 		name = options.name
-		cwd = options.cwd
+		cwd = fs.cwd
 		
 		platform = o.platform or 'browser'
 		cachePrefix = "{o.platform}"
 		entryPoints = o.entryPoints
+		outfileMap = {}
+
+		let externals = []
+		let package = bundler.package or {}
+		for ext in o.external
+			if ext == "dependencies"
+				let deps = Object.keys(package.dependencies or {})
+				externals.push(...deps)
+			if ext == ".json"
+				externals.push("*.json")
+			externals.push(ext)
+		
+		let esentries = []
+		for src,i in entryPoints
+			let file = fs.lookup(src)
+			if file and file.imba
+				let real = file.imba.out[platform]
+				entryPoints[i] = real.rel
+		
+		console.log 'real entries',esentries
+
+		if options.exports
+			let raw = options.exports
+			entryPoints = entries = []
+			if typeof raw == 'string'
+				raw = {main: raw}
+
+			console.log 'exports!!',raw
+
+			for own key, value of raw
+				let paths = fs.nodes fs.glob(value)
+				console.log 'found values',key,value
+				for res in paths
+					let slots = res.extractStarPattern(value)
+					let name = key.replace(/\*/g) do(m) slots.shift!
+					console.log res.rel,value,slots,name
+					let esentry = res.imba ? res.imba.out[platform].rel : res.rel
+					entries.push(esentry)
+					# entries[esentry] = name
+					let out = esentry.replace(/\.(imba|[mc]?js)$/,'')
+					outfileMap[out + '.bundle.js'] = name + '.js'   # out + '.bundle.js'
+					outfileMap[out + '.bundle.css'] = name + '.css'
+					# outfileMap[esentry.replace(/\.(imba|[mc]?js)$/,'.bundle.css')] = name + '.css'
+			
+			console.log 'entries',entries,outfileMap,cwd
 
 		esoptions = {
 			entryPoints: entryPoints
-			target: o.target or ['es2019']
 			bundle: o.bundle === false ? false : true
 			define: o.define
 			platform: o.platform == 'node' ? 'node' : 'browser'
@@ -71,19 +124,25 @@ export class Bundle < Component
 			outfile: o.outfile
 			outdir: o.outfile ? '' : (o.outdir ? o.outdir : (node? ? bundler.libdir : bundler.pubdir))
 			outbase: o.outbase or bundler.basedir
+			outbase: fs.cwd
+			outdir: fs.cwd
+			outExtension: {
+				".js": ".bundle.js"
+				".css": ".bundle.css"
+			}
 			globalName: o.globalName
 			publicPath: o.publicPath or bundler.puburl
 			banner: o.banner
 			footer: o.footer
 			splitting: o.splitting
-			minify: !!o.minify
+			minify: !!minify?
 			incremental: bundler.incremental?
 			loader: o.loader or {}
 			write: false
 			metafile: "metafile.json"
-			external: o.external or undefined
+			external: externals
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
-			outExtension: o.outExtension
+			# outExtension: o.outExtension
 			# resolveExtensions: ['.imba.mjs','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
 			resolveExtensions: [
 				'.imba.mjs','.imba',
@@ -94,19 +153,6 @@ export class Bundle < Component
 
 		if esoptions.platform == 'browser'
 			esoptions.resolveExtensions.unshift('.imba.js','.imba1.js')
-
-		if true
-			for ep,i in entryPoints
-				let node = fs.lookup(ep).rel
-				
-				if web? and fs.existsSync(node + '.js')
-					entryPoints[i] = ep + '.js'
-				elif fs.existsSync(node + '.mjs')
-					entryPoints[i] = ep + '.mjs'
-	
-		# console.log 'entrypoints',entryPoints
-		# console.log esoptions
-		# add default defines
 
 		unless node?
 			let defines = esoptions.define ||= {}
@@ -140,7 +186,8 @@ export class Bundle < Component
 			delete extmap[key.slice(1)]
 
 		if options.imbaPath == 'global'
-			build.onResolve(filter: /^imba\//) do(args)
+			build.onResolve(filter: /^imba(\/|$)/) do(args)
+				# console.log 'onresolve imba'
 				return {path: 'blank', namespace: 'ext'}
 
 			build.onLoad(filter: /.*/, namespace: 'ext') do(args)
@@ -152,9 +199,12 @@ export class Bundle < Component
 			return {path: args.path, namespace: 'styles'}
 
 		build.onResolve(filter: /^@svg\//) do(args)
+			# console.log 'onresolve svg'
 			return {path: args.path, namespace: 'asset'}
 
-		(extdeps or extjson) and build.onResolve(filter: /.*/, namespace: 'file') do(args)
+		# (extdeps or extjson)
+		false and build.onResolve(filter: /.*/, namespace: 'file') do(args)
+			# console.log 'onresolve all?'
 			let id = args.path
 			let ns = args.namespace
 
@@ -168,10 +218,35 @@ export class Bundle < Component
 			return
 
 		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
+			# console.log 'onload imba',args
 			let srcfile = fs.lookup(args.path)
+			let outfile = srcfile.imba.out[platform]
+			if outfile
+				return outfile[#key] if outfile[#key] 
+
+				let out = outfile[#key] = {
+					loader: 'js'
+					contents: await outfile.read!
+					resolveDir: outfile.absdir
+				}
+				# console.log 'returning out',out
+				return outfile[#key]
+
+				# just write the content here
+				outfile
+				return {
+					loader: 'css'
+					contents: body
+					resolveDir: path.dirname(id)
+				}
+
+
 			# console.log 'onload imba file',args.path,!!srcfile.#imba
 
-			if srcfile.imba
+			if srcfile.imba and srcfile.imba.out
+				process.exit(0)
+				throw 1
+
 				if let cached = srcfile.cache[#key]
 					return cached.js
 
@@ -331,6 +406,7 @@ export class Bundle < Component
 		bundler.rebuilt(self)
 
 	def traverseInput entry, inputs, root = entry
+		# console.log 'traverse',entry # ,inputs
 		inputs.#nr ||= 1
 		return if entry.nr
 		entry.nr = (inputs.#nr += 1)
@@ -351,29 +427,28 @@ export class Bundle < Component
 		let metafile = utils.pluck(files) do $1.path.indexOf(esoptions.metafile) >= 0 # match(/metafile\.json$/)
 		let meta = JSON.parse(metafile.text)
 
-		# see if we have already built things before and nothing has changed?
+		# when compiling for node we need to make sure that assets and stylesheets
+		# are saved in public folders alongside all the browser files.
+
 		time 'hashing'
 		for file in files
-			# find the related entrypoint for this file
-			# finding the related previously compiled file if rebuilding
-			let outfile = bundler.relp(file.path)
-			let output = meta.outputs[outfile]
-
+			let id = fs.relative(file.path).replace(/^__dist__\//,'')
+			let output = meta.outputs[id]
+			let outfile = outfileMap[id] or id
+			
 			if output
 				file.#output = output
 				output.#file = file
 
-			# assets should always go in the public folder? Maybe not json and text etc
-			# need to figure out how to deal with that
-			if node? and !file.path.match(/\.([cm]?js|css)(\.map)?$/)
-				let rel = path.resolve(bundler.pubdir,path.relative(esoptions.outdir,file.path))
-				file.path = rel
-				if output
-					delete meta.outputs[outfile]
-					meta.outputs[outfile = bundler.relp(file.path)] = output
+			let public? = web? or !id.match(/\.([cm]?js|json)(\.map)?$/)
+			let outdir = public? ? pubdir : libdir # webdir?
+			file.path = fs.resolve(outdir,outfile)
 
 			let prev = self.files and self.files.find do $1.path == file.path
 			let hash = file.hash = (file.path.match(/\.([A-Z\d]{8})\.\w+$/) or [])[1]
+
+			# get the actual file for this instead?
+
 			let name = path.basename(file.path)
 
 			if hash
@@ -384,6 +459,9 @@ export class Bundle < Component
 
 			file.dirty = !prev or prev.hash != hash
 			file.hashedPath = path.resolve(path.dirname(file.path),file.hashedName)
+			# console.log 'outfile',!!output,[id,outfile,fs.relative(file.path),file.hashedPath] # file.path
+
+		# console.log outfileMap
 
 		timed 'hashing'
 
@@ -394,67 +472,53 @@ export class Bundle < Component
 		let styles = []
 
 		for src in entryPoints
+			# console.log 'entrypoint',src
 			let entry = meta.inputs[bundler.relp(src)]
 			traverseInput(entry,meta.inputs,entry)
 			styles.push(...entry.css)
 
-		meta.css = styles.filter do(item,i) styles.indexOf(item) == i
+		# meta.css = styles.filter do(item,i) styles.indexOf(item) == i
 
 		# go through to extract the actual css chunks from output files
 		# that is - before the correct ordering
+
+		# 
 		let svgs = Object.keys(meta.outputs).filter do $1.match(/\.svg$/)
 
 		for own key,value of meta.outputs
 			# let file = files.find do path.relative(cwd,$1.path) == key
 			let file = value.#file
 
+
 			if file and key.match(/\.css$/)
 				let offset = 0
 				let body = file.text
 				let parts = []
+				let debug = false # !!key.match(/server/)
 
 				for own src,details of value.inputs
 					let entry = meta.inputs[src]
 					let bytes = details.bytesInOutput
 					let header = "/* {src} */\n"
 
-					if !o.minify
+					if !minify?
 						offset += header.length
 
+					# details.start = body.substr(offset,30)
 					let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
 					offset += bytes
-					offset += 1 if !o.minify
+					offset += 1 if !minify?
 					entry.output ||= chunk
+					
 					parts[entry.nr] = chunk
 
+				if debug
+					console.log 'reworked css stuff',value.inputs
+					# ,parts.filter(do $1)
+
+				# value.newoutput = parts.filter(do $1).join('\n')
+				# file.contents = body
 				file.contents = parts.filter(do $1).join('\n')
-
-			elif file and key.match(/\.js$/)
-				continue
-				
-				if svgs.length
-					let names = svgs.map do path.basename($1)
-					let urls = names.map do (puburl or '') + $1
-
-					let append = ["globalThis[Symbol.for('#assets')] = globalThis[Symbol.for('#assets')] || \{\}"]
-					let regex = new RegExp("({puburl or ''})(" + names.join("|") + ')(?=[\'"])','g')
-					let js = file.text
-					# just look through 
-					file.contents = file.text.replace(regex) do(m,pre,name,qoute)
-						let dest = svgs.find(do $1.indexOf(name) >= 0)
-						let svg = meta.outputs[dest]
-						let url = pre + name
-						console.log 'found asset',m,name,svg,url
-						if svg and svg.#file
-							let raw = svg.#file.text
-							# console.log raw
-							append.push "globalThis[{url},{JSON.stringify(raw)})"
-							return m
-						return m
-					
-					file.contents = file.text + '\n' + append.join(';\n')
-					console.log "find svg?",svgs,regex,append
-				yes
 
 
 		inputs = meta.inputs

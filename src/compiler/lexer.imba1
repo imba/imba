@@ -124,6 +124,10 @@ var STYLE_IDENTIFIER = ///^
 	[\w\-\$]*\w[\w\-\$]*
 ///
 
+var STYLE_URL = ///^
+	url\(([^\)]*)\)
+///
+
 var STYLE_PROPERTY = ///^
 	([\.\@]*[\w\-\$]*\w[\w\-\$]*[\~\+]?)
 	([\.\@]+[\w\-\$]*\w[\w\-\$]*[\~\+]?)*(\&([\.\@]*[\w\-\$]*\w[\w\-\$]*[\~\+]?)
@@ -765,7 +769,13 @@ export class Lexer
 				yes
 			token typ, m[0], len
 			return len
-			
+
+		elif m = STYLE_URL.exec(@chunk)
+			# console.log 'matching style url',m
+			let len = m[0]:length
+			token 'CSSURL', m[0], len
+			return m[0]:length
+
 		elif m = STYLE_IDENTIFIER.exec(@chunk)
 			let id = 'CSSIDENTIFIER'
 			let val = m[0]
@@ -775,6 +785,7 @@ export class Lexer
 			elif @last and !@last:spaced and ltyp == '}'
 				id = 'CSSUNIT'
 			token id, val, len
+
 			return len
 		
 		elif @last and !@last:spaced and ltyp == '}' and chr == '%'

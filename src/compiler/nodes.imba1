@@ -204,7 +204,7 @@ var C = do |node,opts|
 	(typeof node == 'string' or typeof node == 'number') ? node : node.c(opts)
 
 # wrap output in path markers
-var MP = do |val,typ|
+var MP = do |val,typ = 'path'|
 	return "/*${typ}$*/{val}/*$*/"
 
 var M = do |val,mark,o|
@@ -5654,7 +5654,8 @@ export class TagTypeIdentifier < Identifier
 		@ns == 'svg' or (!isNative and !@ns and TAG_NAMES["svg_{@str}"]) or isAsset # TAG_TYPES.SVG.indexOf(@str) >= 0
 
 	def isAsset
-		!!@str.match(/^svg\-/)
+		@ns == 'assets'
+		# !!@str.match(/^svg\-/)
 
 	def toAssetName
 		isAsset ? @str : null # .slice(4)
@@ -9581,7 +9582,26 @@ export class StyleFunction < Node
 		c
 		
 	def c
-		"{String(@name)}({@params.c})"
+		# console.log "style function {@name}"
+		let name = String(@name)
+		let pars = @params.c
+
+		# if name == 'svg'
+		#	name = 'url'
+		#	pars = "'{name}/{pars}'"
+
+		if name == 'url'
+			return MP("{name}({SourceMapper.strip(pars)})",'path')
+
+
+		"{name}({pars})"
+
+export class StyleURL < ValueNode
+
+	def c
+		let out = String(@value)
+		return MP(SourceMapper.strip(out),'path')
+		# "{name}({pars})"
 
 export class StyleIdentifier < StyleTerm
 	prop color
@@ -10432,16 +10452,21 @@ export class RootScope < Scope
 					let src = "{asset:kind or 'assets'}/{name}.svg"
 					let out = "import {id} from '{src}'"
 					
-					# head.push LIT(out)
-					if STACK.@options:bundle
-						# head.push(LIT "import 'asset--svg-{name}.imba'")
-						head.push(LIT "import {asset:ref.c} from '@{asset:kind}/{name}'")
-						head.push LIT("imba.registerAsset('{name}',{ref})")
-						# head.push LIT("imba.registerAsset('{name}',{id})")
-					else
-						head.push LIT("const {ref} = imba.asset;")
-						# head.push LIT("constimba.registerAsset('{name}',{asset:ref.c})")
-						# head.push LIT("imba.registerAsset('{name}',{id})")
+					# head.push(LIT "import {asset:ref.c} from {MP "'asset:{asset:kind}/{name}'"}")
+					head.push(LIT "import {asset:ref.c} from {MP "'{name}'"}")
+
+					if false
+						# head.push LIT(out)
+						if STACK.@options:bundle
+							# head.push(LIT "import 'asset--svg-{name}.imba'")
+							head.push(LIT "import {asset:ref.c} from '@{asset:kind}/{name}'")
+							# head.push LIT("imba.registerAsset('{name}',{ref})")
+							# head.push LIT("imba.registerAsset('{name}',{id})")
+						else
+							head.push(LIT "import {asset:ref.c} from {MP "'asset:{asset:kind}/{name}'"}")
+							# head.push LIT("const {ref} = imba.asset;")
+							# head.push LIT("constimba.registerAsset('{name}',{asset:ref.c})")
+							# head.push LIT("imba.registerAsset('{name}',{id})")
 				else	
 					let parsed = parseAsset(asset,name)
 					let body = JSON.stringify(parsed)

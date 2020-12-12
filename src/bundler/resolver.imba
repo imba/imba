@@ -6,7 +6,7 @@ const p = require 'path'
 const testconfig = {
 	paths: {
 		"app/*": ["app/*"]
-		"svg/*": ["assets/*","assets/feather/*"]
+		"svg/*": ["app/assets/*","assets/feather/*"]
 		"env": ["app/env.imba"]
 		"views/*": ["app/*","app/views/*"]
 	}
@@ -19,8 +19,8 @@ const testfiles = [
 	'app/html.imba'
 	'app/views/menu.imba'
 	'app/views/cards/item.imba'
-	'assets/logo.svg'
-	'assets/check.svg'
+	'app/assets/logo.svg'
+	'app/assets/check.svg'
 	'assets/feather/check.svg'
 ]
 
@@ -32,9 +32,10 @@ const tests = {
 		'./store': 'app/store.imba'
 		'views/html': 'app/html.imba'
 		'app/store': 'app/store.imba'
-		'svg/logo': 'assets/logo.svg'
+		'svg/logo': 'app/assets/logo.svg'
+		'svg/logo.svg': 'app/assets/logo.svg'
 		'views/cards/item': 'app/views/cards/item.imba'
-		'../assets/logo': 'assets/logo.svg'
+		'./assets/logo': 'app/assets/logo.svg'
 }
 
 export class Resolver
@@ -60,7 +61,7 @@ export class Resolver
 
 		dirs = {}
 		aliases = {}
-		extensions = config.extensions or ['.imba','.ts','.js','.css','.svg','.json']
+		extensions = config.extensions or ['.imba','.imba1','.ts','.js','.css','.svg','.json']
 		resolve = resolve.bind(self)
 		self
 
@@ -74,18 +75,27 @@ export class Resolver
 		for own dir, rules of paths
 			let rels = dirs[dir] = []
 			let prefix = dir.replace('/*','/')
+			dirs[prefix.replace(/\/\*?$/)] = rels
 
 			for rule in rules
 				let replacer = rule.replace('/*','/')
 				let matches = micromatch(files,[rule])
 				for match in matches
 					let alias = match.replace(replacer,prefix)
+					let stripped = match.replace(replacer,'')
+
 					let ext = alias.slice(alias.lastIndexOf('.'))
-					let unprefixed = alias.replace(/\.\w+$/,'')
 					aliases[alias] = [match]
+
+					let unprefixed = alias.replace(/\.\w+$/,'')
 					let wildcard = aliases[unprefixed] ||= []
 					wildcard.push(match)
-		# console.log aliases
+
+
+
+
+					
+		console.log aliases
 		# console.log 'resolver setup',Date.now! - t,aliases
 		return
 
@@ -114,21 +124,30 @@ export class Resolver
 		setup!
 		let inpath = o.path
 		let found
+		let namespace = 'file'
+		let colonIndex = inpath.indexOf(':')
+
+		if colonIndex >= 0
+			namespace = inpath.substr(0,colonIndex)
+			inpath = inpath.replace(':','/')
+			# [namespace,inpath] = inpath.split(':')
+
+		# if 
 
 		if found = aliases[inpath]
-			return {path: aliases[inpath][0], namespace: 'file'}
+			return {path: aliases[inpath][0], namespace: namespace}
 
 		let rel? = inpath.match(/^\.+\//)
 
 		# check if relative
 		# let indir = importer.slice(0,importer.lastIndexOf('/') + 1) #  p.dirname(importer)
-		
+
 		if rel?
 			let m = 0
 			let norm = p.normalize(o.resolveDir + inpath)
 			let found = aliases[norm]
 			m = testWithExtensions(norm) or (aliases[norm] or [norm])[0]
-			return {path: m, namespace: 'file'}
+			return {path: m, namespace: namespace}
 
 		return {path: inpath}
 

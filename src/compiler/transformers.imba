@@ -9,12 +9,24 @@ export def extractDependencies code, replacer = null
 	let locs = deps.#locations = []
 
 	while true
+		# what if this is for css
 		let index = code.indexOf(pre,offset)
 		break if index == -1
 		offset = index + pre.length
+
+		let url = code.substr(offset,4) == 'url('
 		let end = code.indexOf(post,offset)
-		let part = code.slice(offset,end).slice(1,-1)
-		locs.push([offset + 1,end - 1,part])
+		let [loff,roff] = url ? [4,1] : [1,1]
+
+		if url
+			let q = code[offset + loff]
+			if q == '"' or q == "'" and q == code[end - roff]
+				loff += 1
+				roff += 1
+
+		let part = code.slice(offset,end)
+		part = part.slice(loff,-roff)
+		locs.push([offset + loff,end - roff,part])
 		deps[part] = part
 	return deps
 

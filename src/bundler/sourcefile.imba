@@ -3,7 +3,6 @@ import imba1 from 'compiler1'
 import {SourceMapper} from '../compiler/sourcemapper'
 import {resolveDependencies} from '../compiler/transformers'
 
-
 const defaultConfig = {
 	platform: 'node',
 	format: 'esm',
@@ -33,11 +32,12 @@ export default class SourceFile
 			css: mirrorFile('.css')
 			node: mirrorFile('.mjs')
 			web: mirrorFile('.js')
+			browser: mirrorFile('.js')
 		}
 	
 	get fs do src.fs
 	get cwd do fs.cwd
-	get program do fs.program
+	get program do #program ||= fs.program
 	get config do program.config
 
 	def mirrorFile ext
@@ -58,16 +58,25 @@ export default class SourceFile
 		setTimeout(&,20) do precompile!
 		self
 
-	def prebuild {promise,resolver}, o = {}
+	def load
+		# program should be implied, no?
+		# run as a full-blown promise?
+		#cache.load ||= program.queue(#load!)
+
+	def #load
+		# console.log "loading {src.rel}"
+		# run as a full-blown promise?
+		# program.queue #cache.build ||= new Promise do(resolve,reject)
 		let jsfile = out.node
 		let srctime = src.mtimesync
 		let outtime = jsfile.scanned? ? jsfile.mtimesync : 0
 		let manifest = {node: {}, web: {}}
+		let resolver = program.resolver
 		let fs = fs
 		
 		# the previous one was built earlier
 		if outtime > srctime and outtime > program.mtime
-			return true
+			return Promise.resolve(yes)
 
 		try
 			# this makes the promises not work?
@@ -94,7 +103,7 @@ export default class SourceFile
 					styles: 'extern'
 					hmr: true
 					bundle: false
-				},o)
+				},program.config)
 
 				let legacy = (/\.imba1$/).test(src.rel)
 
@@ -110,24 +119,39 @@ export default class SourceFile
 					let res = rawResults or compiler.compile(sourceBody,opts)
 					let js = res.js
 
-					js = resolveDependencies(src.rel,js) do(args)
-						# console.log 'args',src.rel,args
+					let onResolve = do(args)
 						let res = imports[args.path] = resolver.resolve(args)
+
 						let path = res.path
-						
+						if res.path.indexOf('logo') >= 0 and false
+							
+							console.log 'args',src.rel,args,res # ,fs.files,resolver.paths,resolver.aliases
+							# console.log 'onresolve',args.path,res
+
 						if res.namespace
 							let file = fs.lookup(path)
 
+							if res.namespace != 'file'
+								yes # console.log 'resolve asset?!?',res,path,file.asset
+								# if file.asset
+								if file.asset
+									file.asset.load!
+
 							if file.imba
 								path = res.remapped = file.imba.out[platform].rel
+								file.imba.load!
 
 							let rel = resolver.relative(outfile.reldir,path)
 							return rel
 						
 						return path or null
 
+					js = resolveDependencies(src.rel,js,onResolve)
+
 					if res.css.length
 						if platform == 'node'
+							# resolve paths in css as well
+							res.css = resolveDependencies(src.rel,res.css,onResolve)
 							await out.css.write(SourceMapper.strip(res.css))
 
 						# need to resolve mappings?

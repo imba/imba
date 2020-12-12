@@ -6,6 +6,7 @@ const micromatch = require 'micromatch'
 
 import {fdir} from '../../vendor/fdir/index.js'
 import SourceFile from './sourcefile'
+import AssetFile from './assetfile'
 import {Resolver} from './resolver'
 
 const readdirpOptions = {
@@ -53,6 +54,9 @@ export class FileNode
 
 	get reldir
 		rel.slice(0,rel.lastIndexOf('/') + 1)
+	
+	get absdir
+		abs.slice(0,abs.lastIndexOf('/') + 1)
 
 	def invalidate
 		cache = {}
@@ -93,6 +97,14 @@ export class FileNode
 		return null unless #imba or imba?
 		#imba ||= new SourceFile(self)
 
+	get asset
+		return null unless #asset or (/\.svg$/).test(rel)
+		#asset ||= new AssetFile(self)
+
+	def load
+		let rich = (self.imba or self.asset)
+		rich ? rich.load(program) : {}
+
 	get id
 		#id ||= program.sourceIdForPath(rel)
 
@@ -117,6 +129,18 @@ export class FileNode
 			#watched = no
 			program.watcher.add(abs)
 			console.log 'unwatch file!'
+
+	def extractStarPattern pat
+		# let patparts = pat.split('/')
+		# let relparts = rel.split('/')
+		
+		# for part,i in patparts when part == '*'
+		#	relparts[i]
+
+		let regex = new RegExp(pat.replace(/\*/g,'([^\/]+)'))
+		# console.log 'regex',regex
+		return (rel.match(regex) or []).slice(1)
+		
 
 # Need to allow proxies to filenodes per project
 
@@ -151,8 +175,8 @@ export class FileSystem
 		prescan! unless #files
 		return #files
 
-	def resolve src
-		path.resolve(cwd,src)
+	def resolve ...src
+		path.resolve(cwd,...src)
 
 	def relative src
 		path.relative(cwd,resolve(src))
@@ -185,8 +209,11 @@ export class FileSystem
 		#files = items or crawl!
 		for item in #files
 			let li = item.lastIndexOf('.')
-			let ext = item.slice(li + 1) or '*'
+			let ext = item.slice(li) or '.*'
+			
 			let map = #files[ext] ||= []
+			unless map.push
+				console.log 'ext?!',ext,item
 			map.push(item)
 		# should we drop the abspart here?
 		return #files
@@ -203,10 +230,20 @@ export class FileSystem
 			if typeof ext == 'string'
 				ext = ext.split(',')
 			for item in ext
-				sources = sources.concat(#files[item] or [])
+				sources = sources.concat(#files['.' + item] or [])
 
 		if match isa RegExp and !ignore
 			return sources.filter do match.test($1)
+		
+		elif typeof match == 'string'
+			if match.indexOf('*') >= 0
+				match = [match]
+			else
+				return scannedFile(relative(match)) ? [match] : []
+
+		if !match or match.length == 0
+			return sources.slice(0) if !ignore
+			match = ['*']
 
 		let res = micromatch(sources,match,ignore: ignore)
 		return res
@@ -220,7 +257,7 @@ export class FileSystem
 
 		if ext isa Array
 			for item in ext
-				sources = sources.concat(#files[item] or [])
+				sources = sources.concat(#files['.' + item] or [])
 		
 		return sources.filter do regex.test($1)
 

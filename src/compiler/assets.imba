@@ -34,8 +34,8 @@ export def parseAsset raw,name
 		desc.flags = attrs.class.split(/\s+/g)
 		delete attrs.class
 	
-	desc.flags.push("asset-{name.toLowerCase!}")
+	if name
+		desc.flags.push("asset-{name.toLowerCase!}")
 
 	delete attrs.xmlns
-	# console.log 'returned',desc
 	return desc
