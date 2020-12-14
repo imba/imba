@@ -9,7 +9,6 @@ const {Event,CustomEvent,Element} = imba.dom
 # const CustomEvent = imba.dom.CustomEvent
 # const Element = imba.dom.Element
 
-
 def Event.intersect$handle
 	let obs = event.detail.observer
 	return modifiers._observer == obs
@@ -21,7 +20,7 @@ def Event.intersect$out
 	return event.delta < 0
 
 def callback name, key
-	return do |entries,observer|
+	return do(entries,observer)
 		let map = observer.prevRatios ||= new WeakMap
 		
 		for entry in entries

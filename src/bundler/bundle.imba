@@ -69,6 +69,8 @@ export class Bundle < Component
 		platform = o.platform or 'browser'
 		cachePrefix = "{o.platform}"
 		entryPoints = o.entryPoints
+		entryNodes = []
+		resolvedEntryMap = {}
 		outfileMap = {}
 
 		let externals = []
@@ -106,14 +108,16 @@ export class Bundle < Component
 					let name = key.replace(/\*/g) do(m) slots.shift!
 					console.log res.rel,value,slots,name
 					let esentry = res.imba ? res.imba.out[platform].rel : res.rel
+					entryNodes.push(res)
 					entries.push(esentry)
-					# entries[esentry] = name
+					# we really need to ensure that this is being built, no?
 					let out = esentry.replace(/\.(imba|[mc]?js)$/,'')
 					outfileMap[out + '.bundle.js'] = name + '.js'   # out + '.bundle.js'
 					outfileMap[out + '.bundle.css'] = name + '.css'
 					# outfileMap[esentry.replace(/\.(imba|[mc]?js)$/,'.bundle.css')] = name + '.css'
 			
 			console.log 'entries',entries,outfileMap,cwd
+			# entries.push("client2.imba")
 
 		esoptions = {
 			entryPoints: entryPoints
@@ -122,7 +126,7 @@ export class Bundle < Component
 			platform: o.platform == 'node' ? 'node' : 'browser'
 			format: o.format or 'iife'
 			outfile: o.outfile
-			outdir: o.outfile ? '' : (o.outdir ? o.outdir : (node? ? bundler.libdir : bundler.pubdir))
+			# outdir: o.outfile ? '' : (o.outdir ? o.outdir : (node? ? bundler.libdir : bundler.pubdir))
 			outbase: o.outbase or bundler.basedir
 			outbase: fs.cwd
 			outdir: fs.cwd
@@ -167,6 +171,10 @@ export class Bundle < Component
 			esoptions.splitting = false
 
 	def setup
+		let promises = for entry in entryNodes
+			entry.load!
+		
+		await Promise.all(promises)
 		self
 
 	def resolveAsset name
@@ -198,11 +206,6 @@ export class Bundle < Component
 			# let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
 			return {path: args.path, namespace: 'styles'}
 
-		build.onResolve(filter: /^@svg\//) do(args)
-			# console.log 'onresolve svg'
-			return {path: args.path, namespace: 'asset'}
-
-		# (extdeps or extjson)
 		false and build.onResolve(filter: /.*/, namespace: 'file') do(args)
 			# console.log 'onresolve all?'
 			let id = args.path
@@ -217,132 +220,29 @@ export class Bundle < Component
 				return {external: true}
 			return
 
+		build.onResolve(filter: /\.imba1?$/) do(args)
+			console.log 'onresolve imba',args # what if this is in a nested project?
+			let src = fs.lookup(args.path)
+			await src.imba.load!
+			# the related assets also need to be loaded, no?
+			let out = src.imba.out[platform]
+			console.log 'resolved to',out.abs
+			resolvedEntryMap[src.rel] = out.rel
+			return {path: out.abs}
+		
+			# return {path: args.path, namespace: 'asset'}
+
 		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
-			# console.log 'onload imba',args
+			console.log 'onload imba',args
 			let srcfile = fs.lookup(args.path)
+			# let outfile = srcfile.imba.out[platform]
+			await srcfile.imba.load!
 			let outfile = srcfile.imba.out[platform]
-			if outfile
-				return outfile[#key] if outfile[#key] 
-
-				let out = outfile[#key] = {
-					loader: 'js'
-					contents: await outfile.read!
-					resolveDir: outfile.absdir
-				}
-				# console.log 'returning out',out
-				return outfile[#key]
-
-				# just write the content here
-				outfile
-				return {
-					loader: 'css'
-					contents: body
-					resolveDir: path.dirname(id)
-				}
-
-
-			# console.log 'onload imba file',args.path,!!srcfile.#imba
-
-			if srcfile.imba and srcfile.imba.out
-				process.exit(0)
-				throw 1
-
-				if let cached = srcfile.cache[#key]
-					return cached.js
-
-				let opts = {
-					platform: platform || 'browser',
-					format: 'esm',
-					sourcePath: args.path,
-					imbaPath: options.imbaPath or 'imba'
-					styles: 'import' # always?
-				}
-
-				let code = await srcfile.imba.compile(opts)
-				# console.log 'recompiled',srcfile.rel
-				cached = srcfile.cache[#key] = {
-					js: {contents: String(code)}
-					# css: {
-					# 	loader: 'css'
-					# 	resolveDir: path.dirname(args.path)
-					# 	contents: String(pre.css)
-					# }
-				}
-				return cached.js
-
-			let raw = await nodefs.promises.readFile(args.path, 'utf8')
-			let key = "{cachePrefix}:{args.path}" # possibly more
-
-			let t0 = Date.now()
-			let iopts = {
-				platform: platform || 'browser',
-				format: 'esm',
-				sourcePath: args.path,
-				imbaPath: options.imbaPath or 'imba'
-				sourceId: bundler.sourceIdForPath(args.path)
-				config: config
-				styles: 'extern'
-				hmr: options.hmr
-				bundle: options.bundle === false ? false : yes
-				assets: config.#assets
+			return {
+				loader: 'js'
+				contents: await outfile.read!
+				resolveDir: outfile.absdir
 			}
-
-			let body = null
-
-			if #cache[key] and #cache[key].input == raw
-				
-				return #cache[key].result
-
-			let out = {
-				errors: []
-				warnings: []
-			}
-
-			# legacy handling
-			if args.path.match(/\.imba1$/)
-
-				iopts.filename = iopts.sourcePath
-				iopts.inlineHelpers = 1
-				out.contents = String(imba1.compile(raw,iopts))
-			else
-				let result = compiler.compile(raw,iopts)
-				let id = result.sourceId
-				body = result.js
-				
-				if result.errors..length
-					console.warn "ERRORS!!!",args.path
-					let arr = out.errors
-					for err in result.errors
-						let loc = err.range.start
-						out.errors.push(
-							text: err.message
-							location: {
-								file: args.path
-								line: loc.line + 1
-								column: loc.character
-							}
-						)
-
-				if result.css
-					let name = path.basename(args.path,'.imba')
-					let cssname = "{name}-{id}.imba.css"
-					#cache[cssname] = {
-						loader: 'css'
-						contents: result.css
-						resolveDir: path.dirname(args.path)
-					}
-
-					body += "\nimport '{cssname}';\n"
-
-				out.contents = body
-
-
-			#cache[key] = {
-				input: raw,
-				result: out
-			}
-
-			return out
 
 		build.onLoad({ filter: /.*/, namespace: 'styles'}) do(args)
 			let id = args.path.replace(/\.css$/,'')
@@ -376,19 +276,6 @@ export class Bundle < Component
 				"
 
 				return #cache[id] = {contents: js,loader:'js'}
-
-		false && build.onLoad({ filter: /\.svg$/, namespace: 'file'}) do(args)
-			console.log 'onload svg',args
-
-			let content = await nodefs.promises.readFile(args.path,'utf8')
-			return
-			return {
-				contents: content
-				loader: 'text'
-			}
-			return
-			# cache[args.path]
-		
 		
 
 	def build
@@ -429,6 +316,8 @@ export class Bundle < Component
 
 		# when compiling for node we need to make sure that assets and stylesheets
 		# are saved in public folders alongside all the browser files.
+
+		console.log meta
 
 		time 'hashing'
 		for file in files
@@ -472,7 +361,7 @@ export class Bundle < Component
 		let styles = []
 
 		for src in entryPoints
-			# console.log 'entrypoint',src
+			
 			let entry = meta.inputs[bundler.relp(src)]
 			traverseInput(entry,meta.inputs,entry)
 			styles.push(...entry.css)

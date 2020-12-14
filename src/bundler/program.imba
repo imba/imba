@@ -30,7 +30,8 @@ export default class Program < Component
 		config = config
 		options = options
 		outdir = config.outdir or 'build'
-		mtime = options.force ? Date.now! : 0
+		mtime = options.force ? Date.now! : (options.mtime or 0)
+		console.log 'program mtime',mtime
 		fs = new FileSystem(options.cwd,'.',self)
 		log = new Logger(self)
 		

@@ -33,6 +33,7 @@ export default class SourceFile
 			node: mirrorFile('.mjs')
 			web: mirrorFile('.js')
 			browser: mirrorFile('.js')
+			transformed: mirrorFile('.trs.js')
 		}
 	
 	get fs do src.fs
@@ -99,11 +100,14 @@ export default class SourceFile
 					sourcePath: src.rel
 					sourceId: src.id
 					cwd: cwd
-					imbaPath: 'imba'
+					imbaPath: 'imba' # need to be able to change this?
 					styles: 'extern'
 					hmr: true
 					bundle: false
-				},program.config)
+					config: program.config
+				})
+
+				# ,program.config
 
 				let legacy = (/\.imba1$/).test(src.rel)
 
@@ -121,28 +125,20 @@ export default class SourceFile
 
 					let onResolve = do(args)
 						let res = imports[args.path] = resolver.resolve(args)
-
 						let path = res.path
-						if res.path.indexOf('logo') >= 0 and false
-							
-							console.log 'args',src.rel,args,res # ,fs.files,resolver.paths,resolver.aliases
-							# console.log 'onresolve',args.path,res
 
 						if res.namespace
 							let file = fs.lookup(path)
 
-							if res.namespace != 'file'
-								yes # console.log 'resolve asset?!?',res,path,file.asset
-								# if file.asset
-								if file.asset
-									file.asset.load!
+							if res.namespace != 'file' and file.asset
+								file.asset.load!
+								path = res.remapped = file.asset.out.js.rel
 
 							if file.imba
 								path = res.remapped = file.imba.out[platform].rel
 								file.imba.load!
 
-							let rel = resolver.relative(outfile.reldir,path)
-							return rel
+							return resolver.relative(outfile.reldir,path)
 						
 						return path or null
 
@@ -150,16 +146,37 @@ export default class SourceFile
 
 					if res.css.length
 						if platform == 'node'
-							# resolve paths in css as well
 							res.css = resolveDependencies(src.rel,res.css,onResolve)
 							await out.css.write(SourceMapper.strip(res.css))
 
 						# need to resolve mappings?
 						js += "\nimport './{out.css.name}'"
+
 					await outfile.write(SourceMapper.strip(js))
 
+					let esb = await program.esb!
+					let stripped = SourceMapper.strip(js)
+					console.log 'will transform',src.rel
+					let ojs = await esb.transform(stripped,{
+						sourcefile: src.rel
+						format: 'esm'
+						minifySyntax: false
+						minifyIdentifiers: false
+					})
+
+					if ojs.errors..length
+						console.log 'errors in transform',src.rel,ojs.errors
+
+					# console.log 'transformed',ojs.code
+					# await out.transformed.write(SourceMapper.strip(ojs.code))
+
 					if res.universal
+						# console.log "universal {src.rel}"
 						rawResults = res
+					else
+						yes
+						# if src.rel.indexOf('/core') >= 0
+						#	console.log "not universal {src.rel}",opts
 						# console.log 'no need to build for web as well!!'
 						# break
 

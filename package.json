@@ -64,10 +64,15 @@
   "browser": {
     "imba": "./dist/imba.js",
     "path": "./vendor/path.js",
-    "compiler": "./dist/compiler.js"
+    "compiler": "./dist/compiler.js",
+    "./core.imba": "./build/src/imba/core.imba.js"
   },
   "exports": {
-    "./core": "./build/src/imba/core.imba.mjs",
+    "./core": {
+      "require": "./dist/imba.node.cjs",
+      "default": "./build/src/imba/core.imba.mjs",
+      "browser": "./vendor/colors.js"
+    },
     "./loader": "./loader.js",
     "./compiler": {
       "require": "./dist/compiler.cjs",

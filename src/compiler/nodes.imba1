@@ -699,6 +699,7 @@ export class Stack
 			return isWeb
 		elif key == 'NODE'
 			@meta:universal = no
+			console.log 'is node?!'
 			return isNode
 		elif key == 'WORKER' or key == 'WEBWORKER'
 			@meta:universal = no
@@ -5659,6 +5660,11 @@ export class TagTypeIdentifier < Identifier
 
 	def toAssetName
 		isAsset ? @str : null # .slice(4)
+
+	def toAssetReference
+		let asset = STACK.root.lookupAsset(toAssetName,'svg')
+		return asset:ref
+		return OP('.',asset:ref,STR(@name))
 		
 	def symbol
 		@str
@@ -7919,6 +7925,7 @@ export class Tag < TagLike
 			if type.isAsset
 				@assetName = type.toAssetName
 				@asset = scope__.root.lookupAsset(@assetName,'svg')
+				@assetRef = type.toAssetReference
 				@isAsset = yes
 				@isSVG = yes
 
@@ -8172,7 +8179,8 @@ export class Tag < TagLike
 		var ownCache = no
 
 		if @asset
-			typ = "'{@assetName}'"
+			typ = @assetRef.c
+			# typ = "'{@assetName}'"
 
 		var slotPath = isSlot ? OP('.',LIT("{fragment.root.tvar}.__slots"),STR(option(:name))).c : ""
 
@@ -8272,6 +8280,10 @@ export class Tag < TagLike
 			@className or 'null',
 			'null'
 		]
+
+		# if @asset
+		#	params[0] = OP('.',@asset:ref,typ).c
+		#	# Arr.new([typ,@asset:ref]).c
 
 		var nodes = body ? body.values : []
 
@@ -10329,10 +10341,9 @@ export class RootScope < Scope
 			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
 	
 	def lookupAsset name, kind
-		unless @assets[name]
-			let asset = STACK.getAsset(name)
-			registerAsset(name,kind,asset)
-
+		@assets[name] ||= registerAsset(name,kind)
+		#	let asset = STACK.getAsset(name)
+		#	registerAsset(name,kind)
 		return @assets[name]
 
 	def registerAsset name, kind, asset

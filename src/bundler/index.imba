@@ -57,8 +57,12 @@ export def run options = {}
 	if options.argv
 		Object.assign(options,helpers.parseArgs(options.argv,schema))
 	
+	let mtime = fs.statSync(__filename).mtimeMs
+	# console.log stat,__filename
+	# return
 
-	# if options.config 
+	# if options.config
+	options.mtime = mtime
 	options.config = utils.resolveConfig(options.config or 'imbaconfig.json',cwd)
 	options.package = utils.resolveFile(options.package or 'package.json',cwd) do JSON.parse($1.body)
 

@@ -136,7 +136,7 @@ export class Bundler < Component
 					# let cfg = Object.assign({},config,options,{entryPoints: paths},value)
 					# cfg.platform ||= 'browser'
 			
-			console.log entries,config
+			# console.log entries,config
 
 			bundles = for cfg in entries
 				continue unless cfg.entryPoints or cfg.exports

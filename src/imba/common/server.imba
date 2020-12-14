@@ -1,10 +1,10 @@
 # imba$imbaPath=global
-const cluster = require('cluster')
-const net = require('net')
-const http = require('http')
-const https = require('https')
-const fs = require('fs')
-const path = require('path')
+import cluster from 'cluster'
+import net from 'net'
+import http from 'http'
+import https from 'https'
+import fs from 'fs'
+import path from 'path'
 
 const mimes = {
 	svg: 'image/svg+xml'

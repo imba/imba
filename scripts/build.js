@@ -151,6 +151,12 @@ bundle([{
 	platform: 'browser'
 },{
 	entryPoints: ['src/imba/index.imba'],
+	outfile: 'dist/imba.node.cjs',
+	sourcemap: false,
+	format: 'cjs',
+	platform: 'node'
+},{
+	entryPoints: ['src/imba/index.imba'],
 	outfile: 'dist/imba.min.js',
 	minify: true,
 	sourcemap: false,
