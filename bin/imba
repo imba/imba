@@ -79,7 +79,7 @@ if (require.extensions) {
 function main(){
 	var args = process.argv.slice(2);
 
-	if(args[0] && args[0].match(/^(build|watch|serve|dev|transpile|clean)$/) ){
+	if(args[0] && args[0].match(/^(build|watch|serve|dev|transpile|clean|start)$/) ){
 		let bundlerArgs = args.slice(1).concat("--" + args[0]);
 		let options = {cwd: process.cwd(), argv: bundlerArgs,command: args[0]};
 		var bundler = require('../dist/bundler.js');

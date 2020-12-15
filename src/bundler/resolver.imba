@@ -165,4 +165,4 @@ def run
 			# console.log 'testing',importer,raw,expected,res
 			unless expected == res
 				console.warn "ERROR",expected,res
-# run!
+run!

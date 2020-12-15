@@ -82,6 +82,7 @@ export def resolveConfig name, cwd = '.'
 	try
 		let src = path.resolve(cwd,name)
 		let config = JSON.parse(fs.readFileSync(src,'utf8'))
+		config.#mtime = fs.statSync(src).mtimeMs or 0
 		config.#path = src
 		return config
 	catch e

@@ -1,5 +1,5 @@
 const fs = require 'fs'
-const path = require 'path'
+const fsp = require 'path'
 const readdirp = require 'readdirp'
 const utils = require './utils'
 const micromatch = require 'micromatch'
@@ -30,24 +30,55 @@ const blankStat = {
 
 const roots = {}
 
-export class FileNode
+export class FSNodeList < Array
+	
+export class FSNode
+
+	static def create program, src, abs
+		let ext = src.slice(src.lastIndexOf('.'))
+		let types = {
+			'.json': JsonFileNode
+		}
+		let cls = types[ext] or self
+		new cls(program,src,abs)
 
 	def constructor root, rel, abs
 		self.fs = root
 		rel = rel
 		abs = abs
-		cache = {}
 		#watchers = new Set
 		#watched = no
-
-	def [Symbol.toPrimitive] hint
-		abs
-
+	
 	get program
 		self.fs.program
 
 	get name
-		path.basename(rel)
+		fsp.basename(rel)
+
+	def watch observer
+		#watchers.add(observer)
+		if #watched =? yes
+			program.watcher.add(abs)
+			# console.log 'watch',abs
+
+	def unwatch observer
+		#watchers.delete(observer)
+		if #watched and #watchers.size == 0
+			#watched = no
+			program.watcher.unwatch(abs)
+			# console.log 'unwatch',abs
+
+
+export class DirNode < FSNode
+
+export class FileNode < FSNode
+
+	def constructor root, rel, abs
+		super
+		cache = {}
+
+	def [Symbol.toPrimitive] hint
+		abs
 
 	get scanned?
 		self.fs.scannedFile(rel)
@@ -57,6 +88,9 @@ export class FileNode
 	
 	get absdir
 		abs.slice(0,abs.lastIndexOf('/') + 1)
+
+	get dir
+		self.fs.lookup(absdir,DirNode)
 
 	def invalidate
 		cache = {}
@@ -117,19 +151,6 @@ export class FileNode
 	def unlink
 		fs.promises.unlink(abs)
 
-	def watch observer
-		#watchers.add(observer)
-		if #watched =? yes
-			program.watcher.add(abs)
-			# console.log 'now watching file!',rel,abs
-
-	def unwatch observer
-		#watchers.delete(observer)
-		if #watched and #watchers.size == 0
-			#watched = no
-			program.watcher.add(abs)
-			console.log 'unwatch file!'
-
 	def extractStarPattern pat
 		# let patparts = pat.split('/')
 		# let relparts = rel.split('/')
@@ -141,16 +162,38 @@ export class FileNode
 		# console.log 'regex',regex
 		return (rel.match(regex) or []).slice(1)
 		
-
+export class TmpFileNode < FileNode
 # Need to allow proxies to filenodes per project
 
+export class JsonFileNode < FileNode
+
+	def constructor
+		super
+		console.log 'added json file node!!!',rel
+
+	def load
+		try 
+			raw = readSync!
+			data = JSON.parse(raw)
+			console.log 'loaded json file node'
+		catch
+			data = {}
+		return self
+		
+	def save
+		let out = JSON.stringify(data,null,2)
+		if out != raw
+			raw = out
+			writeSync(out)
+		self
+
 export default def mount dir, base = '.'
-	let cwd = path.resolve(base,dir)
+	let cwd = fsp.resolve(base,dir)
 	roots[cwd] ||= new FileSystem(dir,base)
 
 export class FileSystem
 	def constructor dir, base, program
-		cwd = path.resolve(base,dir)
+		cwd = fsp.resolve(base,dir)
 		program = program
 		nodemap = {}
 		#files = null
@@ -161,9 +204,9 @@ export class FileSystem
 	def existsSync src
 		scannedFile(relative(src)) or fs.existsSync(resolve(src))
 	
-	def lookup src
+	def lookup src, typ = FileNode
 		src = relative(src)
-		nodemap[src] ||= new FileNode(self,src,resolve(src))
+		nodemap[src] ||= typ.create(self,src,resolve(src))
 
 	def nodes arr
 		arr.map do lookup($1)
@@ -176,10 +219,10 @@ export class FileSystem
 		return #files
 
 	def resolve ...src
-		path.resolve(cwd,...src)
+		fsp.resolve(cwd,...src)
 
 	def relative src
-		path.relative(cwd,resolve(src))
+		fsp.relative(cwd,resolve(src))
 
 	def writePath src,body
 		await utils.ensureDir(resolve(src))

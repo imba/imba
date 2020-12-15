@@ -98,8 +98,7 @@ export class Bundle < Component
 			if typeof raw == 'string'
 				raw = {main: raw}
 
-			console.log 'exports!!',raw
-
+			# console.log 'exports!!',raw
 			for own key, value of raw
 				let paths = fs.nodes fs.glob(value)
 				console.log 'found values',key,value
@@ -107,7 +106,7 @@ export class Bundle < Component
 					let slots = res.extractStarPattern(value)
 					let name = key.replace(/\*/g) do(m) slots.shift!
 					console.log res.rel,value,slots,name
-					let esentry = res.imba ? res.imba.out[platform].rel : res.rel
+					let esentry = res.rel # res.imba ? res.imba.out[platform].rel : res.rel
 					entryNodes.push(res)
 					entries.push(esentry)
 					# we really need to ensure that this is being built, no?
@@ -156,7 +155,7 @@ export class Bundle < Component
 		}
 
 		if esoptions.platform == 'browser'
-			esoptions.resolveExtensions.unshift('.imba.js','.imba1.js')
+			esoptions.resolveExtensions.unshift('.web.js')
 
 		unless node?
 			let defines = esoptions.define ||= {}
@@ -168,7 +167,8 @@ export class Bundle < Component
 			delete esoptions.external
 
 		if o.splitting and esoptions.format != 'esm'
-			esoptions.splitting = false
+			# esoptions.splitting = false
+			esoptions.format = 'esm'
 
 	def setup
 		let promises = for entry in entryNodes
@@ -220,27 +220,46 @@ export class Bundle < Component
 				return {external: true}
 			return
 
-		build.onResolve(filter: /\.imba1?$/) do(args)
+		build.onResolve(filter: /\.imba-css$/) do(args)
+			console.log 'onresolve css',args # what if this is in a nested project?
+			let id = args.path
+			# let key = args.path.replace(//)
+			# let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
+			return {path: args.path.replace(/-css$/,''), namespace: 'styles'}
+
+		build.onResolve(filter: /\.zimba1?$/) do(args)
 			console.log 'onresolve imba',args # what if this is in a nested project?
 			let src = fs.lookup(args.path)
 			await src.imba.load!
-			# the related assets also need to be loaded, no?
 			let out = src.imba.out[platform]
 			console.log 'resolved to',out.abs
 			resolvedEntryMap[src.rel] = out.rel
 			return {path: out.abs}
-		
 			# return {path: args.path, namespace: 'asset'}
 
 		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
-			console.log 'onload imba',args
-			let srcfile = fs.lookup(args.path)
-			# let outfile = srcfile.imba.out[platform]
-			await srcfile.imba.load!
-			let outfile = srcfile.imba.out[platform]
+			
+			let src = fs.lookup(args.path)
+			await src.imba.load!
+			let outfile = src.imba.out[platform]
+			console.log 'onload imba',args.path # ,!!outfile.#body
+
 			return {
 				loader: 'js'
 				contents: await outfile.read!
+				# resolveDir: outfile.absdir
+			}
+
+		# nono?
+		build.onLoad({ filter: /\.imba-css$/, namespace: 'file' }) do(args)
+			console.log 'onload css',args
+			let src = fs.lookup(args.path.replace(/\.css$/,''))
+			await src.imba.load!
+			# let outfile = src.imba.out[platform]
+
+			return {
+				loader: 'css'
+				contents: await src.imba.out.css.read!
 				resolveDir: outfile.absdir
 			}
 
@@ -316,8 +335,7 @@ export class Bundle < Component
 
 		# when compiling for node we need to make sure that assets and stylesheets
 		# are saved in public folders alongside all the browser files.
-
-		console.log meta
+		# console.log meta
 
 		time 'hashing'
 		for file in files

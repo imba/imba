@@ -28,7 +28,7 @@ export class Bundler < Component
 		env = 'development' if env == 'dev' or options.dev
 		env = 'production' if env == 'prod' or options.prod
 
-		manifestpath = path.resolve(outdir,'manifest.json')
+		manifestpath = path.resolve(cwd,'manifest.json')
 
 		try
 			manifest = JSON.parse(nodefs.readFileSync(manifestpath,'utf-8'))
@@ -130,13 +130,7 @@ export class Bundler < Component
 			if config.entries
 				for own key,value of config.entries
 					continue if value.skip
-					# value.entryPoints ||= [key]
 					entries.push cfg
-					# let paths = await parseEntryPoints(value.entryPoints or [key])
-					# let cfg = Object.assign({},config,options,{entryPoints: paths},value)
-					# cfg.platform ||= 'browser'
-			
-			# console.log entries,config
 
 			bundles = for cfg in entries
 				continue unless cfg.entryPoints or cfg.exports
@@ -165,8 +159,13 @@ export class Bundler < Component
 
 
 		if options.watch
-			setInterval(&,1000) do rebuild!
-			program.watcher.on('change') do rebuild!
+			# setInterval(&,1000) do rebuild!
+			program.watcher.on('change') do
+				clearTimeout(#rebuildTimeout)
+				#rebuildTimeout = setTimeout(&,20) do
+					# don't queue yet if we are already rebuilding
+					rebuild!
+
 
 	def rebuilt bundle
 		self
@@ -176,7 +175,6 @@ export class Bundler < Component
 		clearTimeout(#rebuildTimeout)
 		# let changes = Array.from(#dirtyInputs)
 		# #dirtyInputs.clear!
-
 		let dirtyBundles = bundles # new Set
 		# for bundle in bundles
 		# 	for input in changes
@@ -197,11 +195,13 @@ export class Bundler < Component
 		let watch = new Set
 		# watch / unwatch
 		time 'watch'
+
 		for bundle in bundles
 			for own src,value of bundle.inputs
 				# TODO start watching essentially all files instead?
 				if !src.match(/^[\w\-]+\:/) and src.match(/\.(imba|css|svg)/)
 					# watch.add( absp(src) )
+					# console.log 'start watching!',src
 					fs.lookup(src).watch(bundle)
 
 		# for file in Array.from(watch)
@@ -310,8 +310,15 @@ export class Bundler < Component
 		self.files = files
 		
 		if writes.length
+			
 			manifest.changes = filesToWrite.map do relp($1.path)
+			let buildinfo = program.manifest
+			for own k,v of manifest
+				buildinfo.data[k] = v
+
 			await writeManifest(manifest)
+
+			buildinfo.save!
 
 			if options.serve and !server
 				server = new Server(self,options.serve)
@@ -319,11 +326,12 @@ export class Bundler < Component
 
 			server.updated(filesToWrite,manifest,firstWrite) if server
 
-		if config.buildfile
-			let json = JSON.stringify(bundles.map(do $1.meta),null,2)
-			await nodefs.promises.writeFile(absp(config.buildfile),json)
+		# if config.buildfile
+		#	let json = JSON.stringify(bundles.map(do $1.meta),null,2)
+		#	await nodefs.promises.writeFile(absp(config.buildfile),json)
 		
-		console.log 'did write',Date.now! - t
+		# log.success ''
+		# console.log 'did write',Date.now! - t
 		yes
 
 	def writeManifest manifest

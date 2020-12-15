@@ -19,6 +19,9 @@ class VirtualWatcher
 	def add watched
 		yes
 
+	def path
+		self
+
 	def stop
 		yes
 
@@ -34,6 +37,8 @@ export default class Program < Component
 		console.log 'program mtime',mtime
 		fs = new FileSystem(options.cwd,'.',self)
 		log = new Logger(self)
+
+		manifest = fs.lookup('imbabuild.json').load!
 		
 		idFaucet = utils.idGenerator!
 		idmap = {}
@@ -41,13 +46,16 @@ export default class Program < Component
 		jobs = []
 		included = new Set
 		compiled = new Set
-
-		watcher = options.watch ? chokidar.watch([]) : new VirtualWatcher
+		
+		watcher = options.watch ? chokidar.watch([],ignoreInitial: true, depth: 1, cwd: cwd) : new VirtualWatcher
 
 		watcher.on('change') do(src,stats)
 			let file = fs.lookup(src)
 			console.log 'watcher changed?!',src,stats
 			file.invalidate!
+
+		watcher.on('raw') do(event,src,details)
+			yes
 		self
 
 	get cwd
@@ -103,42 +111,37 @@ export default class Program < Component
 		await clean! if options.clean
 		let sources = fs.nodes fs.glob(config.include,config.exclude,'imba,imba1')
 		log.info 'found %d sources to compile in %elapsed',sources.length # ,sources.map do $1.rel
-		# get the stats for them as well
-		# we do need the id mappings?
-		# console.log fs.files.imba
-		let stack = {
-			promises: []
-			promise: do this.promises.push($1)
-			resolver: resolver
-		}
 
-		# run through an include all he sources
+		console.log sources.map do $1.rel
 
-		# then start building
-
-		
 		for source in sources
 			source.imba.load!
 
 		await flush!
-		# await Promise.all(promises)
-		# await Promise.all(stack.promises)
-
-		# now write as well?
-
 		log.info 'transpiled %d files in %elapsed',sources.length
+
+		if options.watch
+			log.info 'start watching?'
+			# for source in sources
+			#	source.dir.watch!
+			yes
 
 	def build
 		await setup!
 		await transpile!
 		await bundler.run!
+		# watcher.on('change') do(src,stats)
+		# 	clearTimeout(#rebuild)
+		# 	#rebuild = setTimeout(&,10) do bundler.rebuild!
+		# if options.watch
+		#	setInterval(&,15000) do bundler.rebuild!`
 
 	def watch
 		await build!
 
 	def clean
 		# let sources = fs.nodes fs.glob(['**/*.imba.mjs','**/*.imba.js','**/*.imba.css'],null,'mjs,js,css,meta')
-		let sources = fs.nodes fs.find(/\.imba1?\.\w+$/,'mjs,js,cjs,css,meta')
+		let sources = fs.nodes fs.find(/\.imba1?(\.web)?\.\w+$/,'mjs,js,cjs,css,meta')
 
 		for file in sources
 			await file.unlink!
@@ -162,6 +165,11 @@ export default class Program < Component
 		for item in remove
 			await item.unlink!
 		self
+
+	def start
+		console.log 'starting!!'
+		options.serve = yes
+		await build!
 
 	def run
 		if self[options.command] isa Function

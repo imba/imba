@@ -4,7 +4,7 @@ import net from 'net'
 import http from 'http'
 import https from 'https'
 import fs from 'fs'
-import path from 'path'
+import fsp from 'path'
 
 const mimes = {
 	svg: 'image/svg+xml'
@@ -22,29 +22,66 @@ const mimes = {
 	css: 'text/css'
 }
 
+class Manifest
+	def constructor cwd = process.cwd!
+		cwd = cwd
+		path = fsp.resolve(cwd,'imbabuild.json')
+		data = load! or {}
+
+	def load
+		try JSON.parse(fs.readFileSync(path,'utf-8'))
+
+	def watch
+		self
+
+	def urlForAsset name
+		return unless data.assets
+
+		if let asset = data.assets[name]
+			console.log 'found asset'
+			return asset.url
+		return null
+
+	def assetForUrl url
+		return unless data.urls
+		let pathname = url.split('?')[0]
+		if let file = data.files[data.urls[pathname]]
+			let ext = fsp.extname(file.path).substr(1)
+
+			let out = {
+				path: file.path
+				url: file.url
+				headers: {
+					'Content-Type': mimes[ext] or 'text/plain'
+				}
+			}
+
+			if ext == 'js'
+				out.headers['Service-Worker-Allowed'] = '/'
+			return out
+
+		return null
+
+	def watch
+		if #watch =? yes
+			console.log 'watching manifest!',path
+			fs.watch(path) do(curr,prev)
+				let updated = load!
+				console.log updated,'manifest changed'
+				data = updated
 
 class Server
 	def constructor
 		clients = new Set
 		servers = new Set
 		cwd = process.cwd!
-		unless manifest = loadBuildManifest([path.resolve(cwd,'build'),cwd])
-			console.log "imba.server could not find manifest.json in {process.cwd!}"
+		# unless manifest = loadBuildManifest([fsp.resolve(cwd,'build'),cwd])
+		#	console.log "imba.server could not find manifest.json in {process.cwd!}"
 		# if process.env.IMBA_MANIFEST
 		#	try manifest = JSON.parse(fs.readFileSync(process.env.IMBA_MANIFEST,'utf-8'))
 
-	def loadBuildManifest dirs
-		# should just be included in the build directly? But not when it is not built
-		let search = []
-		for dir in dirs
-			search.push path.resolve(dir,'manifest.json')
-		try 
-			for src in search
-				if fs.existsSync(src)
-					return JSON.parse(fs.readFileSync(src,'utf-8'))
-		return null
-				
-
+	get manifest
+		global.imba.manifest
 
 	def send ...params
 		# console.log 'sending to imba process!'
@@ -55,7 +92,7 @@ class Server
 		let pathname = url.split('?')[0]
 		if let file = manifest.files[manifest.urls[pathname]]
 			# console.log 'found file?',file
-			let ext = path.extname(file.path).substr(1)
+			let ext = fsp.extname(file.path).substr(1)
 
 			let out = {
 				path: file.path
@@ -72,6 +109,13 @@ class Server
 
 		return null
 
+	def urlForAsset name
+		console.log 'get url for asset',name,manifest
+		if let asset = manifest.assets[name]
+			console.log 'found asset'
+			return asset.url
+		return null
+
 	def middleware req, res, next
 		# console.log 'middleware for express?!?',req.url,this
 		if req.url == '/__hmr__' # method == 'HMR'
@@ -82,14 +126,11 @@ class Server
 	def intercept req, res, next
 		console.log 'get request',req.url,req.baseUrl,!!manifest
 
-		# should only intercept if wanted
-		if let asset = assetForUrl(req.url)
-
+		if let asset = global.imba.assetForUrl(req.url)
 			res.writeHead(200, asset.headers)
 			let reader = fs.createReadStream(asset.path)
 			return reader.pipe(res)
 
-		# req.headers.accept
 		if req.url == '/__hmr__'
 			res.writeHead(200, {
 				'Content-Type': 'text/event-stream'
@@ -108,10 +149,10 @@ class Server
 
 	def serve app
 		console.log('started serving',process.env.IMBA_MANIFEST)
+		return
 
-		if !manifest and process.env.IMBA_MANIFEST
-			try manifest = JSON.parse(fs.readFileSync(process.env.IMBA_MANIFEST,'utf-8'))
-
+		# if !manifest and process.env.IMBA_MANIFEST
+		#	try manifest = JSON.parse(fs.readFileSync(process.env.IMBA_MANIFEST,'utf-8'))
 		# identify if this is an express server
 		servers.add(app)
 
@@ -179,9 +220,20 @@ class Server
 			manifest = rest[0]
 		self
 
+
+
 extend class ImbaContext
 	get server
-		#server ||= new Server
+		global.#imbaServer ||= new Server
+
+	get manifest
+		global.#imbaManifest ||= new Manifest
+
+	def urlForAsset name
+		manifest.urlForAsset(name)
+
+	def assetForUrl url
+		manifest.assetForUrl(url)
 
 	def serve app, ...rest
 		# console.log app
@@ -208,7 +260,6 @@ extend class ImbaContext
 
 if cluster.isWorker and process.env.IMBA_SERVE
 	process.on('message') do(msg)
-
 		if msg isa Array
 			global.imba.server.on(...msg)
 		else

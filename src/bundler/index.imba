@@ -58,8 +58,6 @@ export def run options = {}
 		Object.assign(options,helpers.parseArgs(options.argv,schema))
 	
 	let mtime = fs.statSync(__filename).mtimeMs
-	# console.log stat,__filename
-	# return
 
 	# if options.config
 	options.mtime = mtime
@@ -67,13 +65,12 @@ export def run options = {}
 	options.package = utils.resolveFile(options.package or 'package.json',cwd) do JSON.parse($1.body)
 
 	options.config = await conf.resolve(options.config,cwd)
-
+	options.mtime = Math.max(mtime,options.config.#mtime or 0)
 	# console.log 'found config?',options.config,options
 
-	if options.serve
-		options.watch = yes
-
-	console.log 'starting',Date.now! - t
+	# if options.serve
+	#	options.watch = yes
+	console.log 'starting',Date.now! - t,options.mtime,options.config.#mtime
 	let program = new Program(options.config,options)
 	program.setup!
 	return program.run!

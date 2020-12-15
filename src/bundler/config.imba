@@ -53,6 +53,7 @@ export def resolve config, cwd
 	# may need to rerun when assets change?
 	if config.assets and !config.#assets
 		let assets = {}
+		console.log 'resolving assets?!'
 
 		for own key,value of config.assets
 			let paths = []

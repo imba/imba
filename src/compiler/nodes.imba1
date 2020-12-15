@@ -699,7 +699,6 @@ export class Stack
 			return isWeb
 		elif key == 'NODE'
 			@meta:universal = no
-			console.log 'is node?!'
 			return isNode
 		elif key == 'WORKER' or key == 'WEBWORKER'
 			@meta:universal = no

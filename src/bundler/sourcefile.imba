@@ -31,8 +31,8 @@ export default class SourceFile
 			meta: mirrorFile('.meta')
 			css: mirrorFile('.css')
 			node: mirrorFile('.mjs')
-			web: mirrorFile('.js')
-			browser: mirrorFile('.js')
+			web: mirrorFile('.web.js')
+			browser: mirrorFile('.web.js')
 			transformed: mirrorFile('.trs.js')
 		}
 	
@@ -53,10 +53,10 @@ export default class SourceFile
 		#cache.source ||= src.read!
 
 	def invalidate
+		# possibly try to recompile -- see if anything has changed for real and all that
 		let prevBody = #cache.source
 		#cache = {}
-		srcstat = outstat = null
-		setTimeout(&,20) do precompile!
+		# setTimeout(&,20) do precompile!
 		self
 
 	def load
@@ -74,13 +74,18 @@ export default class SourceFile
 		let manifest = {node: {}, web: {}}
 		let resolver = program.resolver
 		let fs = fs
+
+		# register to watch file
+		src.watch(self)
 		
 		# the previous one was built earlier
 		if outtime > srctime and outtime > program.mtime
+			console.log 'cached imba',src.rel,outtime - srctime
 			return Promise.resolve(yes)
 
 		try
 			# this makes the promises not work?
+			console.log 'need to compile',src.rel
 			let sourceBody = await src.read!
 			let rawResults 
 
@@ -129,14 +134,25 @@ export default class SourceFile
 
 						if res.namespace
 							let file = fs.lookup(path)
+							let resolvedFile = file
 
-							if res.namespace != 'file' and file.asset
+							if args.css
+								console.log 'resolving with css',args,res
+
+							if res.namespace != 'file' and file.asset and !args.css
 								file.asset.load!
-								path = res.remapped = file.asset.out.js.rel
+								# TODO need to ensure that this path exists before doing more?
+								file = file.asset.out.js
+								console.log 'onresolve',args
 
 							if file.imba
-								path = res.remapped = file.imba.out[platform].rel
+								# resolvedFile = res.remapped = file.imba.out[platform].rel
 								file.imba.load!
+								return resolver.relative(src.reldir,file.rel)
+								# path = file.rel
+							return file.abs
+
+							return resolver.relative(src.reldir,path)
 
 							return resolver.relative(outfile.reldir,path)
 						
@@ -146,26 +162,27 @@ export default class SourceFile
 
 					if res.css.length
 						if platform == 'node'
-							res.css = resolveDependencies(src.rel,res.css,onResolve)
+							res.css = resolveDependencies(src.rel,res.css,onResolve, css: true)
 							await out.css.write(SourceMapper.strip(res.css))
 
 						# need to resolve mappings?
-						js += "\nimport './{out.css.name}'"
+						js += "\nimport '{out.css.abs}'"
 
 					await outfile.write(SourceMapper.strip(js))
 
-					let esb = await program.esb!
-					let stripped = SourceMapper.strip(js)
-					console.log 'will transform',src.rel
-					let ojs = await esb.transform(stripped,{
-						sourcefile: src.rel
-						format: 'esm'
-						minifySyntax: false
-						minifyIdentifiers: false
-					})
+					if false
+						let esb = await program.esb!
+						let stripped = SourceMapper.strip(js)
+						console.log 'will transform',src.rel
+						let ojs = await esb.transform(stripped,{
+							sourcefile: src.rel
+							format: 'esm'
+							minifySyntax: false
+							minifyIdentifiers: false
+						})
 
-					if ojs.errors..length
-						console.log 'errors in transform',src.rel,ojs.errors
+						if ojs.errors..length
+							console.log 'errors in transform',src.rel,ojs.errors
 
 					# console.log 'transformed',ojs.code
 					# await out.transformed.write(SourceMapper.strip(ojs.code))
@@ -173,6 +190,9 @@ export default class SourceFile
 					if res.universal
 						# console.log "universal {src.rel}"
 						rawResults = res
+						# no need to even save the web file(!)
+						# but we need to check if it exists?!
+						# break
 					else
 						yes
 						# if src.rel.indexOf('/core') >= 0
@@ -187,6 +207,11 @@ export default class SourceFile
 			console.log 'error',e
 			yes
 		return self
+
+	
+	def #compile opts
+		# check for cached version of this
+		self
 
 
 	def build dest, o = {}
@@ -314,6 +339,9 @@ export default class SourceFile
 		return out.code
 
 	def getStyles o = {}
+		await load!
+		return out.css.read!
+
 		let code = await cssfile.read!
 		let out = SourceMapper.run(code,o)
 		return out.code
