@@ -81,11 +81,13 @@ export const modifiers =
 	md: {media: '(min-width: 768px)' }
 	lg: {media: '(min-width: 1024px)' }
 	xl: {media: '(min-width: 1280px)' }
+	'2xl': {media: '(min-width: 1536px)' }
 	'lt-xs': {media: '(max-width: 479px)' }
 	'lt-sm': {media: '(max-width: 639px)' }
 	'lt-md': {media: '(max-width: 767px)' }
 	'lt-lg': {media: '(max-width: 1023px)' }
 	'lt-xl': {media: '(max-width: 1279px)' }
+	'lt-2xl': {media: '(max-width: 1535px)' }
 
 	landscape: {media: '(orientation: landscape)'}
 	portrait: {media: '(orientation: portrait)'}
