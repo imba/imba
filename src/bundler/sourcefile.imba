@@ -1,9 +1,4 @@
-import compiler from 'compiler'
-import imba1 from 'compiler1'
 import np from 'path'
-import {SourceMapper} from '../compiler/sourcemapper'
-import {resolveDependencies} from '../compiler/transformers'
-import {StaticPool} from 'node-worker-threads-pool'
 
 const defaultConfig = {
 	platform: 'node',
@@ -15,62 +10,22 @@ const defaultConfig = {
 	bundle: false
 }
 
-const defaults = {
-	node: {
-		ext: '.mjs'
-	}
-
-	web: {
-		ext: '.js'
-	}
-}
-
-const pool = new StaticPool({
-	size: 3,
-	task: np.resolve(__dirname,'compiler-worker.js'),
-	workerData: ""
-})
-
 export default class SourceFile
 	def constructor src
-		#cache = {}
 		src = src
-		out = {
-			meta: mirrorFile('.meta')
-			css: mirrorFile('.css')
-			node: mirrorFile('.mjs')
-			web: mirrorFile('.web.js')
-			browser: mirrorFile('.web.js')
-			transformed: mirrorFile('.trs.js')
-		}
-	
+
 	get fs do src.fs
 	get cwd do fs.cwd
 	get program do #program ||= fs.program
 	get config do program.config
-
-	def mirrorFile ext
-		let fs = fs
-		fs.lookup((fs.outdir or '.') + '/' + src.rel + ext)
+	get log do program.log
 
 	# making sure that the actual body is there
 	def prepare
 		yes
-
-	def readSource
-		#cache.source ||= src.read!
-
-	def invalidate
-		#cache = {}
-		self
-
-	def load
-		true
 	
-	def #compile o
-		# check for cached version of this
+	def compile o
 		program.cache.load("{src.rel}:{o.platform}",src.mtimesync) do
-
 			o = Object.assign({},defaultConfig,{
 				sourcePath: src.rel,
 				sourceId: src.id,
@@ -89,26 +44,7 @@ export default class SourceFile
 				o.target = o.platform #  == 'node' ? opts.platform : 'web'
 				o.inlineHelpers = 1
 				params.type = 'imba1'
-
-			let out = await pool.exec(params)
+			let t = Date.now!
+			let out = await program.workers.exec('compile', [params])
+			log.success 'compile %path in %ms',src.rel,Date.now! - t
 			return out
-			
-			console.log 'returned from pool',out2
-			if true
-
-				let res = imba1.compile(code,o)
-				return {id: src.id, js: res.js}
-
-			else
-
-				let out2 = await pool.exec(params)
-				console.log 'returned from pool',out2
-
-				let res = compiler.compile(code,o)
-				let js = res.js
-				let styles = res.css
-
-				if styles
-					js += "\nimport 'styles:{src.rel}'"
-
-				return {id: src.id, js: js, css: styles}

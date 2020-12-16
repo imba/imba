@@ -1,6 +1,5 @@
 const utils = require './utils'
-const path = require 'path'
-const readdirp = require 'readdirp'
+const np = require 'path'
 const micromatch = require 'micromatch'
 
 import {FileSystem} from './fs'
@@ -11,6 +10,9 @@ import {Resolver} from './resolver'
 import Component from './component'
 import Cache from './cache'
 const esbuild = require 'esbuild'
+
+const workerPool = require('workerpool')
+const workerScript = np.resolve(__dirname,'compiler-worker.js')
 
 class VirtualWatcher
 
@@ -28,6 +30,9 @@ class VirtualWatcher
 
 export default class Program < Component
 
+	get workers
+		#workers ||= workerPool.pool(workerScript, maxWorkers:2)
+
 	def constructor config, options
 		super()
 		key = Symbol!
@@ -35,7 +40,7 @@ export default class Program < Component
 		options = options
 		outdir = config.outdir or 'build'
 		mtime = options.force ? Date.now! : (options.mtime or 0)
-		console.log 'program mtime',mtime
+		# console.log 'program mtime',mtime
 		fs = new FileSystem(options.cwd,'.',self)
 		log = new Logger(self)
 		cache = new Cache(self,fs.lookup('.imba/stuff.json'))
@@ -59,11 +64,9 @@ export default class Program < Component
 
 		watcher.on('change') do(src,stats)
 			let file = fs.lookup(src)
-			# console.log 'watcher changed?!',src,stats
 			file.invalidate!
 			fs.touchFile(src)
 			#bundler..scheduleRebuild!
-			# if src.match(/\.(imba|svg)$/)
 
 		watcher.on('unlink') do(src,stats)
 			console.log "watcher unlink {src}"
@@ -144,30 +147,15 @@ export default class Program < Component
 		# log.info 'transpiled %d files in %elapsed',sources.length
 
 		if options.watch
-			# log.info 'start watching?'
-			# hmm - we want to watch all directories mentioned in paths etc
-
 			for source in sources
 				source.dir.watch!
 			yes
 
-		# console.log Object.keys(fs.#map)
-		# console.log fs.#tree
-		# console.log fs.#tree.match('.(imba|js)$').paths
-		# console.log fs.#tree.withExtension('css').paths
-
-
 	def build
 		await setup!
 		bundler
-		# await transpile!
 		await bundler.run!
 		await cache.save!
-		# watcher.on('change') do(src,stats)
-		# 	clearTimeout(#rebuild)
-		# 	#rebuild = setTimeout(&,10) do bundler.rebuild!
-		# if options.watch
-		#	setInterval(&,15000) do bundler.rebuild!`
 
 	def watch
 		await build!
@@ -208,8 +196,11 @@ export default class Program < Component
 	def run
 		if self[options.command] isa Function
 			let out = await self[options.command]()
-			if #hasesb and !options.watch
-				(await esb!).stop!
+			if !options.watch
+				if #hasesb
+					(await esb!).stop!
+				if #workers
+					#workers.terminate!
 			return out
 
 	get bundler

@@ -49,34 +49,4 @@ export def merge config, defaults
 
 export def resolve config, cwd
 	config = merge(config,defaultConfig)
-	
-	# may need to rerun when assets change?
-	if config.assets and !config.#assets
-		let assets = {}
-		console.log 'resolving assets?!'
-
-		for own key,value of config.assets
-			let paths = []
-			for dir in value
-				let expanded = await utils.expandPath(path.resolve(cwd,dir),fileFilter: '*.svg', cwd: cwd)
-				
-				paths.push(...expanded)
-			
-			for item in paths
-				let name = path.basename(item,'.svg').toLowerCase!.replace(/_|\s+/g,'-')
-				let asset = assets["{key}-{name}"] ||= {}
-
-				unless asset.path
-					asset.path = path.relative(cwd,item)
-		
-		config.#assets = assets
-		# console.log 'assets',assets
-		# for part in config.assets
-		# 	let items = resolvePaths()
-		# for entry in entries when entry.match(/\.svg/)
-		# 		let src = path.resolve(assetsDir,entry)
-		# 		let name = path.basename(src,'.svg')
-		# 		let body = fs.readFileSync(src,'utf8')
-		# 		assets[name] = {body: body}
-
 	return config

@@ -1,6 +1,5 @@
 const nodefs = require 'fs'
-const fsp = require 'path'
-const readdirp = require 'readdirp'
+const np = require 'path'
 const utils = require './utils'
 const micromatch = require 'micromatch'
 
@@ -10,12 +9,6 @@ import AssetFile from './assetfile'
 import {Resolver} from './resolver'
 
 import ChangeLog from './changes'
-
-const readdirpOptions = {
-	depth: 5
-	fileFilter: ['*.imba','*.imba.mjs']
-	directoryFilter: ['!.git', '!*modules','!tmp']
-}
 
 const blankStat = {
 	size: 0,
@@ -113,7 +106,7 @@ export class FSNode
 		self.fs.program
 
 	get name
-		fsp.basename(rel)
+		np.basename(rel)
 
 	def watch observer
 		#watchers.add(observer)
@@ -280,13 +273,9 @@ export class JsonFileNode < FileNode
 			writeSync(out)
 		self
 
-export default def mount dir, base = '.'
-	let cwd = fsp.resolve(base,dir)
-	roots[cwd] ||= new FileSystem(dir,base)
-
 export class FileSystem
 	def constructor dir, base, program
-		cwd = fsp.resolve(base,dir)
+		cwd = np.resolve(base,dir)
 		program = program
 		nodemap = {}
 		existsCache = {}
@@ -325,10 +314,10 @@ export class FileSystem
 		return #files
 
 	def resolve ...src
-		fsp.resolve(cwd,...src)
+		np.resolve(cwd,...src)
 
 	def relative src
-		fsp.relative(cwd,resolve(src))
+		np.relative(cwd,resolve(src))
 
 	def writePath src,body
 		await utils.ensureDir(resolve(src))

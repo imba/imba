@@ -93,13 +93,12 @@
   "devDependencies": {
     "fdir": "^4.1.0",
     "micromatch": "^4.0.2",
-    "node-worker-threads-pool": "^1.4.3",
     "picomatch": "^2.2.2",
-    "puppeteer": "^2.1.1"
+    "puppeteer": "^2.1.1",
+    "workerpool": "^6.0.3"
   },
   "dependencies": {
     "chokidar": "^3.4.3",
-    "esbuild": "^0.8.21",
-    "readdirp": "^3.5.0"
+    "esbuild": "^0.8.21"
   }
 }

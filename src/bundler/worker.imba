@@ -1,14 +1,12 @@
 import compiler from 'compiler'
 import imba1 from 'compiler1'
 
-import {parentPort, workerData} from 'worker_threads'
+const workerpool = require('workerpool')
 
 const id = Math.random!
 
-parentPort.on 'message' do({code,type,options})
+def compile {code,type,options}
 	let response = {id: options.sourceId}
-
-	console.log 'compiler worker!!!',options.sourcePath,id
 
 	if type == 'imba1'
 		let res = imba1.compile(code,options)
@@ -22,5 +20,6 @@ parentPort.on 'message' do({code,type,options})
 
 		response.js = js
 		response.css = res.css
-		
-	parentPort.postMessage(response)
+	return response
+
+workerpool.worker(compile: compile)

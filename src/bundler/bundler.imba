@@ -1,10 +1,8 @@
-import chokidar from 'chokidar'
-# import esbuild from 'esbuild'
 const esbuild = require 'esbuild'
 const nodefs = require 'fs'
-const path = require 'path'
+const np = require 'path'
 const utils = require './utils'
-import mountfs from './fs'
+
 import Component from './component'
 import {Server} from './server'
 import {Logger} from './logger'
@@ -21,33 +19,18 @@ export class Bundler < Component
 		sourceIdMap = {}
 		program = program
 		pathLookups = {}
-		# watcher = options.watch ? chokidar.watch([]) : null
 		log = new Logger
 		
 		env = options.env or process.env.NODE_ENV or 'development'
 		env = 'development' if env == 'dev' or options.dev
 		env = 'production' if env == 'prod' or options.prod
-
-		manifestpath = path.resolve(cwd,'manifest.json')
-
-		try
-			manifest = JSON.parse(nodefs.readFileSync(manifestpath,'utf-8'))
-			sourceIdMap = manifest.idmap or {}
-		catch
-			manifest = {}
-
-		#cache = {}
-		#dirtyInputs = new Set
-		#watchedFiles = {}
-		#timestamps = {}
-
 		return self
 
 	def absp ...src
-		path.resolve(cwd,...src)
+		np.resolve(cwd,...src)
 
 	def relp src
-		path.relative(cwd,src)
+		np.relative(cwd,src)
 
 	get package
 		options.package or {}		
@@ -81,38 +64,6 @@ export class Bundler < Component
 
 		return map[src]
 
-	def parseEntryPoints item
-		if typeof item == 'string'
-			return parseEntryPoints([item])
-		if item isa Array
-			let files = []
-			for entry,i in item
-				if entry.indexOf('*') >= 0
-					let paths1 = fs.glob([entry])
-					# console.log 'expand entries',entry,paths1
-					
-					let paths = await utils.expandPath(entry)
-					files.push(...paths)
-				else
-					files.push(entry)
-
-			return files
-		elif item and item.entryPoints
-			parseEntryPoints(item.entryPoints)
-
-	def time name = 'default'
-		let now = Date.now!
-		let prev = #timestamps[name] or now
-		let diff = now - prev
-		#timestamps[name] = now		
-		return diff
-	
-	def timed name = 'default'
-		let str = "time {name}: {time(name)}"
-
-	get client
-		bundles.find do $1.name == 'client'
-		
 	def setup
 		#setup ||= new Promise do(resolve)
 			esb = await (program ? program.esb! : esbuild.startService!)
@@ -136,11 +87,7 @@ export class Bundler < Component
 				continue unless cfg.entryPoints or cfg.exports
 				cfg.loader = Object.assign({},utils.defaultLoaders,cfg.loader or {})
 				cfg.format = 'cjs' if cfg.platform == 'node' and !cfg.format
-				# cfg.entryPoints = fs.glob(cfg.entryPoints or [],null,'imba')
-				
 				new Bundle(self,cfg)
-
-			# bundles = entries.map do new Bundle(self,$1)
 
 			for bundle in bundles
 				await bundle.setup!
@@ -154,17 +101,8 @@ export class Bundler < Component
 		let builds = for bundle in bundles
 			bundle.build!
 		await Promise.all(builds)
-		log.info 'bundled in %elapsed' # ,time('build')
+		log.info 'bundled in %elapsed'
 		write!
-
-
-		if options.watch
-			setInterval(&,5000) do rebuild(yes)
-		# 	program.watcher.on('change') do
-		# 		clearTimeout(#rebuildTimeout)
-		# 		#rebuildTimeout = setTimeout(&,20) do
-		# 			# don't queue yet if we are already rebuilding
-		# 			rebuild!
 
 	def scheduleRebuild
 		clearTimeout(#rebuildTimeout)
@@ -175,7 +113,6 @@ export class Bundler < Component
 		self
 
 	def rebuild force? = no
-		let t = Date.now!
 		time 'rebuild'
 		clearTimeout(#rebuildTimeout)
 		let changes = fs.changelog.pull(self)
@@ -185,16 +122,7 @@ export class Bundler < Component
 			if force? or changes.find(do bundle.pathLookups[$1])
 				dirty.push(bundle)
 
-		# let changes = Array.from(#dirtyInputs)
-		# #dirtyInputs.clear!
-		# let dirtyBundles = bundles # new Set
-		# for bundle in bundles
-		# 	for input in changes
-		# 		if bundle.inputs[input]
-		# 			dirtyBundles.add(bundle)
-
-		console.log 'rebuild based on changes in files?',changes,dirty.length
-
+		# console.log 'rebuild based on changes in files?',changes,dirty.length
 		return self unless dirty.length
 
 		log.info 'rebuilding'
@@ -205,23 +133,10 @@ export class Bundler < Component
 		await Promise.all(awaits) 
 		log.info 'finished rebuilding in %ms',time('rebuild')
 		write!
-		log.info 'finished rebuilding in %ms',Date.now! - t
 		self
 
 	def write bundles = self.bundles
 		let t = Date.now!
-		# watch / unwatch
-		# for bundle in bundles
-		# 	for own src,value of bundle.inputs
-		# 		# TODO start watching essentially all files instead?
-		# 		if !src.match(/^[\w\-]+\:/) and src.match(/\.(imba|css|svg)$/)
-		# 			# watch.add( absp(src) )
-		# 			# console.log 'start watching!',src
-		# 			fs.lookup(src).watch(bundle)
-
-		# for file in Array.from(watch)
-		#	if #watchedFiles[file] =? yes
-		#		watcher..add(file)
 		
 		let filesToWrite = []
 		let manifest = {
@@ -261,16 +176,16 @@ export class Bundler < Component
 		files.push {
 			contents: sheetbody
 			hash: sheethash
-			path: path.resolve(pubdir,"bundle.css")
-			hashedPath: path.resolve(pubdir,"bundle.{sheethash}.css")
+			path: np.resolve(pubdir,"bundle.css")
+			hashedPath: np.resolve(pubdir,"bundle.{sheethash}.css")
 		}
 
 		for file in files
 			file.writePath = dev? ? file.path : file.hashedPath
 			let prev = prevFiles.find do $1.path == file.path
 			let src = relp(file.path)
-			let pub = path.relative(pubdir,file.path)
-			let hashpub = path.relative(pubdir,file.hashedPath)
+			let pub = np.relative(pubdir,file.path)
+			let hashpub = np.relative(pubdir,file.hashedPath)
 
 			let entry = manifest.files[src] = {
 				hash: file.hash
@@ -330,9 +245,8 @@ export class Bundler < Component
 			for own k,v of manifest
 				buildinfo.data[k] = v
 
-			await writeManifest(manifest)
-
-			buildinfo.save!
+			# await writeManifest(manifest)
+			await buildinfo.save!
 
 			if options.serve and !server
 				server = new Server(self,options.serve)
@@ -340,18 +254,7 @@ export class Bundler < Component
 
 			server.updated(filesToWrite,manifest,firstWrite) if server
 
-		if true
+		if false # drop this?
 			let json = JSON.stringify(bundles.map(do $1.meta),null,2)
 			await nodefs.promises.writeFile(fs.resolve('buildinfo.json'),json)
-		
-		# log.success ''
-		# console.log 'did write',Date.now! - t
 		yes
-
-	def writeManifest manifest
-		let dest = manifestpath
-		let json = JSON.stringify(manifest,null,2)
-		self.manifest = manifest
-		await utils.ensureDir(dest)
-		await nodefs.promises.writeFile(dest,json)
-		log.success 'write %path %kb',relp(dest),json.length
