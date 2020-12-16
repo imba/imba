@@ -21,7 +21,7 @@ export const defaultConfig = {
 			'edge16',
 			'node12.19.0',
 		]
-		external: ['dependencies','.json','imba']
+		external: ['dependencies','!imba']
 	}
 
 	browser: {
@@ -32,8 +32,7 @@ export const defaultConfig = {
 			'chrome58',
 			'firefox57',
 			'safari11',
-			'edge16',
-			'node12.19.0',
+			'edge16'
 		]
 	}
 

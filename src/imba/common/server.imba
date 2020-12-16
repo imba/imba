@@ -22,6 +22,17 @@ const mimes = {
 	css: 'text/css'
 }
 
+
+class Asset
+	def constructor desc
+		desc = desc
+
+	get url do desc.url
+	get path do desc.path
+	get hash do desc.hash
+	get ext do #ext ||= fsp.extname(desc.path).substr(1)
+	get body do #body ||= fs.readFileSync(desc.path,'utf8')
+
 class Manifest
 	def constructor cwd = process.cwd!
 		cwd = cwd
@@ -34,11 +45,13 @@ class Manifest
 	def watch
 		self
 
-	def urlForAsset name
+	def assetByName name
 		return unless data.assets
-
 		if let asset = data.assets[name]
-			console.log 'found asset'
+			return asset.#rich ||= new Asset(asset)
+
+	def urlForAsset name
+		if let asset = assetByName(name)
 			return asset.url
 		return null
 
@@ -240,6 +253,9 @@ extend class ImbaContext
 
 	def urlForAsset name
 		manifest.urlForAsset(name)
+
+	def asset name
+		manifest.assetByName(name)
 
 	def assetForUrl url
 		manifest.assetForUrl(url)

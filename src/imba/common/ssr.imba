@@ -445,6 +445,18 @@ class DOM.HTMLButtonElement < DOM.HTMLElement
 class DOM.HTMLOptionElement < DOM.HTMLElement
 class DOM.SVGElement < DOM.Element
 
+class DOM.HTMLScriptElement < DOM.HTMLElement
+
+	set asset name
+		let asset = imba.asset(name) or imba.asset(name + ".js")
+		console.log 'did set asset',asset..url
+		if asset
+			setAttribute('src',asset.url)
+			setAttribute('type','module')
+
+	get asset
+		#asset
+
 ### Event ###
 class DOM.Event
 class DOM.UIEvent < DOM.Event
@@ -462,6 +474,7 @@ MAP['input'].klass = DOM.HTMLInputElement
 MAP['textarea'].klass = DOM.HTMLTextAreaElement
 MAP['button'].klass = DOM.HTMLButtonElement
 MAP['option'].klass = DOM.HTMLOptionElement
+MAP['script'].klass = DOM.HTMLScriptElement
 
 getElementType('')
 getElementType('HTML')
