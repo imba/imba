@@ -1,16 +1,3 @@
-export const CHANGES =
-	CREATED: 1
-	UPDATED: 2
-	DELETED: 4
-	TOUCHED: 8
-	RELATED: 16
-	CHILDREN: 32
-	DESCENDANTS: 64
-	ATTACHED: 128
-	DETACHED: 256
-	REFERENCED: 512
-	DEREFERENCED: 1024
-
 export default class ChangeLog
 	def constructor
 		log = []
@@ -19,7 +6,6 @@ export default class ChangeLog
 		depth = 0
 		offset = 0
 		pulled = 0
-		stash = null # new Set
 		batch = null
 	
 	def flush
@@ -40,7 +26,6 @@ export default class ChangeLog
 		else
 			batch = new Map
 			batch.set(item,flag)
-		
 
 	def trim
 		offset += log.length

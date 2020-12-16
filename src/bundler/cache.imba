@@ -25,7 +25,7 @@ export default class Cache
 		file.data = all
 		await file.save!
 
-	def load key, time, cb
+	def memo key, time, cb
 		let cached = map[key]
 		time = mintime if mintime > time
 		if cached and cached.time >= time

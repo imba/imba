@@ -13,20 +13,28 @@ export const defaultConfig = {
 	node: {
 		platform: 'node'
 		format: 'cjs'
+		target: [
+			'es2020',
+			'chrome58',
+			'firefox57',
+			'safari11',
+			'edge16',
+			'node12.19.0',
+		]
 		external: ['dependencies','.json','imba']
-		outExtensionz: {
-			'.js': '.node.js'
-			'.css': '.node.css'
-		}
 	}
 
 	browser: {
 		platform: 'browser'
 		format: 'esm'
-		outExtensionz: {
-			'.js': '.bundle.js'
-			'.css': '.bundle.css'
-		}
+		target: [
+			'es2020',
+			'chrome58',
+			'firefox57',
+			'safari11',
+			'edge16',
+			'node12.19.0',
+		]
 	}
 
 	bundles: []

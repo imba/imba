@@ -174,7 +174,7 @@ export class Bundle < Component
 	
 		build.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
 			let src = fs.lookup(path)
-			let res = await src.imba.compile(imbaoptions)
+			let res = await src.compile(imbaoptions)
 			let cached = res[#key]
 			unless cached
 				cached = res[#key] ||= {
@@ -185,7 +185,7 @@ export class Bundle < Component
 
 		build.onLoad(filter: /.*/, namespace: 'asset') do({path})
 			let file = fs.lookup(path)
-			let out = await file.asset.compile(format: 'esm')
+			let out = await file.compile(format: 'esm')
 			return {loader: 'js', contents: out.js}
 
 	def build

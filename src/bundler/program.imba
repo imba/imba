@@ -30,9 +30,6 @@ class VirtualWatcher
 
 export default class Program < Component
 
-	get workers
-		#workers ||= workerPool.pool(workerScript, maxWorkers:2)
-
 	def constructor config, options
 		super()
 		key = Symbol!
@@ -90,6 +87,12 @@ export default class Program < Component
 	get resolver
 		#resolver ||= new Resolver(config: config, files: fs.files, program: self, fs: fs)
 
+	get bundler
+		#bundler ||= new Bundler(config,options,self)
+
+	get workers
+		#workers ||= workerPool.pool(workerScript, maxWorkers:2)
+
 	def sourceIdForPath src
 		unless idmap[src]
 			let nr = Object.keys(idmap).length
@@ -107,7 +110,6 @@ export default class Program < Component
 		self
 
 	def queue promise
-		# console.log 'queue promise',!!promise
 		if promise[key]
 			console.log 'promise has already been queued'
 		else
@@ -131,7 +133,6 @@ export default class Program < Component
 	def setup
 		#setup ||= new Promise do(resolve)
 			esb!
-			# look for the cache-file
 			await cache.setup!
 			return resolve(self)
 
@@ -139,21 +140,11 @@ export default class Program < Component
 		await clean! if options.clean
 		let sources = fs.glob(config.include,config.exclude,'imba,imba1')
 		log.info 'found %d sources to compile in %elapsed',sources.length # ,sources.map do $1.rel
-
-		for source in sources
-			source.imba.load!
-
 		await flush!
-		# log.info 'transpiled %d files in %elapsed',sources.length
-
-		if options.watch
-			for source in sources
-				source.dir.watch!
-			yes
+		self
 
 	def build
 		await setup!
-		bundler
 		await bundler.run!
 		await cache.save!
 
@@ -161,7 +152,6 @@ export default class Program < Component
 		await build!
 
 	def clean
-		# let sources = fs.nodes fs.glob(['**/*.imba.mjs','**/*.imba.js','**/*.imba.css'],null,'mjs,js,css,meta')
 		let sources = fs.nodes fs.find(/\.imba1?(\.web)?\.\w+$/,'mjs,js,cjs,css,meta')
 
 		for file in sources
@@ -171,25 +161,8 @@ export default class Program < Component
 		fs.reset!
 		return
 
-		let remove = fs.scan(/\.imba\.(css|mjs|js|tjs)$/)
-		# console.log 'found files',Object.keys(fs.nodes).length,remove
-
-		let files = await log.time 'crawl' do
-			fs.crawl!
-
-		# console.log 'files',files
-		
-		let files2 = await log.time 'crawl2' do
-			fs.crawl(rootDirs: {src: 1, scripts: 1})
-		# console.log files2
-
-		for item in remove
-			await item.unlink!
-		self
-
 	def start
 		return
-		console.log 'starting!!'
 		options.serve = yes
 		await build!
 
@@ -203,5 +176,4 @@ export default class Program < Component
 					#workers.terminate!
 			return out
 
-	get bundler
-		#bundler ||= new Bundler(config,options,self)
+	

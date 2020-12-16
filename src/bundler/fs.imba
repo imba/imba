@@ -4,10 +4,8 @@ const utils = require './utils'
 const micromatch = require 'micromatch'
 
 import {fdir} from '../../vendor/fdir/index.js'
-import SourceFile from './sourcefile'
-import AssetFile from './assetfile'
 import {Resolver} from './resolver'
-
+import {parseAsset} from '../compiler/assets'
 import ChangeLog from './changes'
 
 const blankStat = {
@@ -89,8 +87,12 @@ export class FSNode
 	static def create program, src, abs
 		let ext = src.slice(src.lastIndexOf('.'))
 		let types = {
-			'.json': JsonFileNode
+			'.json': JSONFile
+			'.imba': ImbaFile
+			'.imba1': Imba1File
+			'.svg': SVGFile
 		}
+
 		let cls = types[ext] or FileNode
 		new cls(program,src,abs)
 
@@ -107,6 +109,9 @@ export class FSNode
 
 	get name
 		np.basename(rel)
+
+	def memo key, cb
+		program.cache.memo("{rel}:{key}",mtimesync,cb)
 
 	def watch observer
 		#watchers.add(observer)
@@ -194,7 +199,6 @@ export class FileNode < FSNode
 
 	def writeSync body
 		if #body =? body
-			# await utils.ensureDir(abs)
 			nodefs.writeFileSync(abs,body)
 
 	def read enc = 'utf8'
@@ -240,20 +244,78 @@ export class FileNode < FSNode
 		nodefs.promises.unlink(abs)
 
 	def extractStarPattern pat
-		# let patparts = pat.split('/')
-		# let relparts = rel.split('/')
-		
-		# for part,i in patparts when part == '*'
-		#	relparts[i]
-
 		let regex = new RegExp(pat.replace(/\*/g,'([^\/]+)'))
-		# console.log 'regex',regex
 		return (rel.match(regex) or []).slice(1)
-		
-export class TmpFileNode < FileNode
-# Need to allow proxies to filenodes per project
 
-export class JsonFileNode < FileNode
+
+export class ImbaFile < FileNode
+
+	def compile o
+		memo(o.platform) do
+			o = Object.assign({
+				platform: 'node',
+				format: 'esm',
+				raw: true
+				imbaPath: 'imba'
+				styles: 'extern'
+				hmr: true
+				bundle: false
+				sourcePath: rel,
+				sourceId: id,
+				cwd: fs.cwd
+			},o)
+
+			let code = await read!
+
+			let params = {
+				code: code
+				options: o
+				type: 'imba'
+			}
+
+			let t = Date.now!
+			let out = await program.workers.exec('compile', [params])
+			program.log.success 'compile %path in %ms',rel,Date.now! - t
+			return out
+
+export class Imba1File < FileNode
+
+	def compile o
+		memo(o.platform) do
+			o = Object.assign({
+				platform: 'node',
+				format: 'esm',
+				sourcePath: rel,
+				filename: rel,
+				inlineHelpers: 1,
+				cwd: fs.cwd
+			},o)
+
+			o.target = o.platform
+
+			let code = await read!
+
+			let params = {
+				code: code
+				options: o
+				type: 'imba1'
+			}
+
+			let t = Date.now!
+			let out = await program.workers.exec('compile', [params])
+			program.log.success 'compile %path in %ms',rel,Date.now! - t
+			return out
+
+
+export class SVGFile < FileNode
+
+	def compile o
+		memo(o.format) do
+			let svgbody = await read!
+			let parsed = parseAsset({body: svgbody})
+			return {js: "export default {JSON.stringify(parsed)};"}
+
+export class JSONFile < FileNode
 
 	def constructor
 		super
@@ -295,8 +357,8 @@ export class FileSystem
 			# return false
 			# if the filesystem is live
 			# console.log 'checking node',src
-			# if existsCache[src] != undefined
-			#	return existsCache[src]
+			if existsCache[src] != undefined
+				return existsCache[src]
 			return existsCache[src] = nodefs.existsSync(resolve(src))
 	
 	def lookup src, typ = FileNode

@@ -1,6 +1,5 @@
 const fs = require 'fs'
 const path = require 'path'
-const readdirp = require 'readdirp'
 const crypto = require 'crypto'
 
 export const defaultLoaders = {
@@ -10,12 +9,6 @@ export const defaultLoaders = {
 	".woff": "file",
 	".ttf": "file",
 	".otf": "file"
-}
-
-const readdirpOptions = {
-	depth: 5
-	fileFilter: ['*.imba','*.imba.mjs']
-	directoryFilter: ['!.git', '!*modules','!tmp']
 }
 
 export def writePath src, body
@@ -87,40 +80,6 @@ export def resolveFile name,cwd,handler
 		}
 		return handler(file)
 	return null
-
-export def resolvePaths obj,cwd
-	if obj isa Array
-		for item,i in obj
-			obj[i] = resolvePaths(item,cwd)
-	elif typeof obj == 'string'
-		return obj.replace(/^\.\//,cwd + '/')
-	elif typeof obj == 'object'
-		for own k,v of obj
-			let alt = k.replace(/^\.\//,cwd + '/')
-			obj[alt] = resolvePaths(v,cwd)
-			if alt != k
-				delete obj[k]
-	return obj
-
-export def expandPath src, o = {}
-	unless src.indexOf("*") >= 0
-		return Promise.resolve([src])
-
-	let options = Object.assign({
-		depth: 1
-		fileFilter: '*.imba',
-	},o)
-
-	src = src.replace(/(\/\*\*)?(\/\*(\.\w+)?)?$/) do(m,deep,last,ext)
-		if ext
-			options.fileFilter = '*' + ext
-		if deep
-			options.depth = 5
-		return ""
-	# console.log "readdirp",src,options
-	let files = await readdirp.promise(src,options)
-	# console.log 'files from promise',files
-	return files.map do $1.fullPath
 
 # generates a function that converts integers to a short
 # alphanumeric string utilizing the supplied alphabet
