@@ -21,9 +21,12 @@ export default class AssetFile
 		let fs = fs
 		# outdir is not shared for the whole fs?
 		fs.lookup((fs.outdir or '.') + '/' + src.rel + ext)
-	
-	
-		
+
+	def #compile o = {}
+		program.cache.load("{src.rel}:{o.format}",src.mtimesync) do
+			let svgbody = await src.read!
+			let parsed = parseAsset({body: svgbody})
+			return {js: "export default {JSON.stringify(parsed)};"}
 
 	def load
 		# program should be implied, no?

@@ -20,7 +20,7 @@ export class Bundler < Component
 		bundles = []
 		sourceIdMap = {}
 		program = program
-
+		pathLookups = {}
 		# watcher = options.watch ? chokidar.watch([]) : null
 		log = new Logger
 		
@@ -159,55 +159,69 @@ export class Bundler < Component
 
 
 		if options.watch
-			# setInterval(&,1000) do rebuild!
-			program.watcher.on('change') do
-				clearTimeout(#rebuildTimeout)
-				#rebuildTimeout = setTimeout(&,20) do
-					# don't queue yet if we are already rebuilding
-					rebuild!
+			setInterval(&,5000) do rebuild(yes)
+		# 	program.watcher.on('change') do
+		# 		clearTimeout(#rebuildTimeout)
+		# 		#rebuildTimeout = setTimeout(&,20) do
+		# 			# don't queue yet if we are already rebuilding
+		# 			rebuild!
 
+	def scheduleRebuild
+		clearTimeout(#rebuildTimeout)
+		#rebuildTimeout = setTimeout(&,20) do rebuild!
+		self
 
 	def rebuilt bundle
 		self
 
-	def rebuild
+	def rebuild force? = no
+		let t = Date.now!
 		time 'rebuild'
 		clearTimeout(#rebuildTimeout)
+		let changes = fs.changelog.pull(self)
+		
+		let dirty = []
+		for bundle in bundles
+			if force? or changes.find(do bundle.pathLookups[$1])
+				dirty.push(bundle)
+
 		# let changes = Array.from(#dirtyInputs)
 		# #dirtyInputs.clear!
-		let dirtyBundles = bundles # new Set
+		# let dirtyBundles = bundles # new Set
 		# for bundle in bundles
 		# 	for input in changes
 		# 		if bundle.inputs[input]
 		# 			dirtyBundles.add(bundle)
+
+		console.log 'rebuild based on changes in files?',changes,dirty.length
+
+		return self unless dirty.length
+
 		log.info 'rebuilding'
 		# await Promise.all Array.from(dirtyBundles).map do $1.rebuild!
-		let awaits = for item of dirtyBundles
+		let awaits = for item of dirty
 			item.rebuild!
 
 		await Promise.all(awaits) 
 		log.info 'finished rebuilding in %ms',time('rebuild')
 		write!
+		log.info 'finished rebuilding in %ms',Date.now! - t
 		self
 
 	def write bundles = self.bundles
 		let t = Date.now!
-		let watch = new Set
 		# watch / unwatch
-		time 'watch'
-
-		for bundle in bundles
-			for own src,value of bundle.inputs
-				# TODO start watching essentially all files instead?
-				if !src.match(/^[\w\-]+\:/) and src.match(/\.(imba|css|svg)/)
-					# watch.add( absp(src) )
-					# console.log 'start watching!',src
-					fs.lookup(src).watch(bundle)
+		# for bundle in bundles
+		# 	for own src,value of bundle.inputs
+		# 		# TODO start watching essentially all files instead?
+		# 		if !src.match(/^[\w\-]+\:/) and src.match(/\.(imba|css|svg)$/)
+		# 			# watch.add( absp(src) )
+		# 			# console.log 'start watching!',src
+		# 			fs.lookup(src).watch(bundle)
 
 		# for file in Array.from(watch)
 		#	if #watchedFiles[file] =? yes
 		#		watcher..add(file)
-		timed 'watch'
 		
 		let filesToWrite = []
 		let manifest = {
@@ -326,9 +340,9 @@ export class Bundler < Component
 
 			server.updated(filesToWrite,manifest,firstWrite) if server
 
-		# if config.buildfile
-		#	let json = JSON.stringify(bundles.map(do $1.meta),null,2)
-		#	await nodefs.promises.writeFile(absp(config.buildfile),json)
+		if true
+			let json = JSON.stringify(bundles.map(do $1.meta),null,2)
+			await nodefs.promises.writeFile(fs.resolve('buildinfo.json'),json)
 		
 		# log.success ''
 		# console.log 'did write',Date.now! - t

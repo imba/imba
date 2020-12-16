@@ -9,6 +9,7 @@ import {Logger} from './logger'
 import {Bundler} from './bundler'
 import {Resolver} from './resolver'
 import Component from './component'
+import Cache from './cache'
 const esbuild = require 'esbuild'
 
 class VirtualWatcher
@@ -37,8 +38,10 @@ export default class Program < Component
 		console.log 'program mtime',mtime
 		fs = new FileSystem(options.cwd,'.',self)
 		log = new Logger(self)
-
+		cache = new Cache(self,fs.lookup('.imba/stuff.json'))
+		cache.mintime = mtime
 		manifest = fs.lookup('imbabuild.json').load!
+		buildinfo = fs.lookup('.imba/cache.json').load!		
 		
 		idFaucet = utils.idGenerator!
 		idmap = {}
@@ -56,20 +59,25 @@ export default class Program < Component
 
 		watcher.on('change') do(src,stats)
 			let file = fs.lookup(src)
-			console.log 'watcher changed?!',src,stats
+			# console.log 'watcher changed?!',src,stats
 			file.invalidate!
+			fs.touchFile(src)
+			#bundler..scheduleRebuild!
+			# if src.match(/\.(imba|svg)$/)
 
 		watcher.on('unlink') do(src,stats)
 			console.log "watcher unlink {src}"
 			fs.removeFile(src)
+			#bundler..scheduleRebuild!
 
 		watcher.on('add') do(src,stats)
 			console.log "watcher add {src}"
 			fs.addFile(src)
-			console.log fs.#tree.withExtension('svg').paths
+			#bundler..scheduleRebuild!
+
 
 		watcher.on('raw') do(event,src,details)
-			console.log "watch {event}",src
+			# console.log "watch {event}",src
 			yes
 		self
 
@@ -120,13 +128,14 @@ export default class Program < Component
 	def setup
 		#setup ||= new Promise do(resolve)
 			esb!
+			# look for the cache-file
+			await cache.setup!
 			return resolve(self)
 
 	def transpile
 		await clean! if options.clean
 		let sources = fs.glob(config.include,config.exclude,'imba,imba1')
 		log.info 'found %d sources to compile in %elapsed',sources.length # ,sources.map do $1.rel
-		console.log 'found sources',sources.paths
 
 		for source in sources
 			source.imba.load!
@@ -135,8 +144,9 @@ export default class Program < Component
 		# log.info 'transpiled %d files in %elapsed',sources.length
 
 		if options.watch
-			log.info 'start watching?'
+			# log.info 'start watching?'
 			# hmm - we want to watch all directories mentioned in paths etc
+
 			for source in sources
 				source.dir.watch!
 			yes
@@ -150,8 +160,9 @@ export default class Program < Component
 	def build
 		await setup!
 		bundler
-		await transpile!
+		# await transpile!
 		await bundler.run!
+		await cache.save!
 		# watcher.on('change') do(src,stats)
 		# 	clearTimeout(#rebuild)
 		# 	#rebuild = setTimeout(&,10) do bundler.rebuild!

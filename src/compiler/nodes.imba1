@@ -10464,7 +10464,7 @@ export class RootScope < Scope
 					let out = "import {id} from '{src}'"
 					
 					# head.push(LIT "import {asset:ref.c} from {MP "'asset:{asset:kind}/{name}'"}")
-					head.push(LIT "import {asset:ref.c} from {MP "'{name}?asset'"}")
+					head.push(LIT "import {asset:ref.c} from {MP "'{name.replace(/\:/g,'/')}?asset'"}")
 
 					if false
 						# head.push LIT(out)

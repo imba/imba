@@ -9,6 +9,8 @@ import SourceFile from './sourcefile'
 import AssetFile from './assetfile'
 import {Resolver} from './resolver'
 
+import ChangeLog from './changes'
+
 const readdirpOptions = {
 	depth: 5
 	fileFilter: ['*.imba','*.imba.mjs']
@@ -134,6 +136,11 @@ export class FSNode
 			console.log 'now deregistering node',rel
 			self.fs.#tree.remove(self)
 
+	def touch
+		#mtime = Date.now!
+		#body = undefined
+		self
+
 	def changed
 		self
 
@@ -183,6 +190,7 @@ export class FileNode < FSNode
 	def invalidate
 		cache = {}
 		#imba..invalidate!
+		#mtime = Date.now!
 		#body = null
 		self
 	
@@ -261,7 +269,6 @@ export class JsonFileNode < FileNode
 		try 
 			raw = readSync!
 			data = JSON.parse(raw)
-			console.log 'loaded json file node'
 		catch
 			data = {}
 		return self
@@ -282,6 +289,8 @@ export class FileSystem
 		cwd = fsp.resolve(base,dir)
 		program = program
 		nodemap = {}
+		existsCache = {}
+		changelog = new ChangeLog
 		#files = null
 		#tree = new FSTree
 		#map = {}
@@ -294,11 +303,12 @@ export class FileSystem
 		if entry
 			return entry.existsSync!
 		else
-			return false
+			# return false
 			# if the filesystem is live
 			# console.log 'checking node',src
-			return nodefs.existsSync(resolve(src))
-
+			# if existsCache[src] != undefined
+			#	return existsCache[src]
+			return existsCache[src] = nodefs.existsSync(resolve(src))
 	
 	def lookup src, typ = FileNode
 		src = relative(src)
@@ -336,16 +346,16 @@ export class FileSystem
 	def stat src
 		nodefs.promises.stat(resolve(src)).then(do $1).catch(do blankStat)
 
-	def unlinked src
-		self
-
-	def added src
-		self
-
+	def touchFile src
+		changelog.mark(src)
+		lookup(src).touch!
+		
 	def addFile src
+		changelog.mark(src)
 		lookup(src).register!
-
+		
 	def removeFile src
+		changelog.mark(src)
 		lookup(src).deregister!
 		
 	def prescan items = null

@@ -93,6 +93,7 @@
   "devDependencies": {
     "fdir": "^4.1.0",
     "micromatch": "^4.0.2",
+    "node-worker-threads-pool": "^1.4.3",
     "picomatch": "^2.2.2",
     "puppeteer": "^2.1.1"
   },

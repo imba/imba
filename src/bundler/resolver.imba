@@ -91,9 +91,10 @@ export class Resolver
 		entries = []
 		let t = Date.now!
 
+		
 		# this will take time to match
 		for own dir, rules of paths
-			entries.push( new PathEntry(dir,rules))
+			entries.push( new PathEntry(dir,rules) )
 			let rels = dirs[dir] = []
 			let prefix = dir.replace('/*','/')
 			dirs[prefix.replace(/\/\*?$/)] = rels
@@ -112,7 +113,8 @@ export class Resolver
 					let wildcard = aliases[unprefixed] ||= []
 					wildcard.push(match)
 
-
+		pathsMatcher = new RegExp("^({entries.map(do $1.pre).join('|')})")
+		# console.log pathsMatcher
 		# console.log aliases
 		# console.log 'resolver setup',Date.now! - t,aliases
 
@@ -153,17 +155,20 @@ export class Resolver
 				# test.push(...m)
 		return cache[path] = test
 	
-	def resolve o
+	def resolve o, lookupMap
 		setup!
 		let path = o.path
 		let found
 		let namespace = 'file'
 		let colonIndex = path.indexOf(':')
+		let qIndex = path.indexOf('?')
 
 		if colonIndex >= 0
 			namespace = path.substr(0,colonIndex)
 			path = path.replace(':','/')
 
+		if qIndex > 0
+			[path,namespace] = path.split('?')
 		# if found = aliases[path]
 		#	return {path: aliases[path][0], namespace: namespace}
 
@@ -175,15 +180,21 @@ export class Resolver
 			let norm = p.normalize(o.resolveDir + path)
 			let found = aliases[norm]
 			m = testWithExtensions(norm) or (aliases[norm] or [norm])[0]
-			return {path: m, namespace: namespace}
-		elif fs
-			for m in expand(path)
-				# should this be synchronous?
-				if fs.existsSync(m)
-					# console.log 'resolved path!!',m,path
-					return {path: m}
+			return {path: fs.relative(m), namespace: namespace}
 
-		return {path: path}
+		elif !pathsMatcher.test(path)
+			return null
+
+		elif fs
+			for m in expand(path,namespace)
+				# should this be synchronous?
+				if lookupMap
+					lookupMap[m] = yes
+
+				if fs.existsSync(m)
+					return {path: fs.resolve(m), namespace: namespace}
+
+		return {path: path, namespace: namespace}
 
 def run
 	let resolver = new Resolver(config: testconfig, files: testfiles)

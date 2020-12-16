@@ -185,4 +185,13 @@ bundle([{
 	format: 'cjs',
 	external: ['chokidar','esbuild','readdirp'],
 	platform: 'node'
+},{
+	entryPoints: ['src/bundler/worker.imba'],
+	outfile: 'dist/compiler-worker.js',
+	minify: false,
+	imbaPath: '../imba',
+	sourcemap: false,
+	format: 'cjs',
+	external: ['chokidar','esbuild','readdirp'],
+	platform: 'node'
 }])

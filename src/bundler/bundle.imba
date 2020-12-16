@@ -9,6 +9,8 @@ const np = require 'path'
 const utils = require './utils'
 import Component from './component'
 
+import {SourceMapper} from '../compiler/sourcemapper'
+
 export class Bundle < Component
 	get config
 		bundler.config
@@ -72,6 +74,7 @@ export class Bundle < Component
 		entryNodes = []
 		resolvedEntryMap = {}
 		outfileMap = {}
+		pathLookups = {}
 
 		let externals = []
 		let package = bundler.package or {}
@@ -82,15 +85,6 @@ export class Bundle < Component
 			if ext == ".json"
 				externals.push("*.json")
 			externals.push(ext)
-		
-		let esentries = []
-		for src,i in entryPoints
-			let file = fs.lookup(src)
-			if file and file.imba
-				let real = file.imba.out[platform]
-				entryPoints[i] = real.rel
-		
-		console.log 'real entries',esentries
 
 		if options.exports
 			let raw = options.exports
@@ -101,23 +95,20 @@ export class Bundle < Component
 			# console.log 'exports!!',raw
 			for own key, value of raw
 				let paths = value.indexOf('*') >= 0 ? fs.glob(value) : [fs.lookup(value)]
-				console.log 'checking exports',key,value
+				# console.log 'checking exports',key,value
 				
 				for res in paths
 					let slots = res.extractStarPattern(value)
 					let name = key.replace(/\*/g) do(m) slots.shift!
-					console.log res.rel,value,slots,name
+					# console.log res.rel,value,slots,name
 					let esentry = res.rel # res.imba ? res.imba.out[platform].rel : res.rel
 					entryNodes.push(res)
 					entries.push(esentry)
-					# we really need to ensure that this is being built, no?
+
 					let out = esentry.replace(/\.(imba|[mc]?js)$/,'')
 					outfileMap[out + '.bundle.js'] = name + '.js'   # out + '.bundle.js'
 					outfileMap[out + '.bundle.css'] = name + '.css'
 					# outfileMap[esentry.replace(/\.(imba|[mc]?js)$/,'.bundle.css')] = name + '.css'
-			
-			console.log 'entries',entries,outfileMap,cwd
-			# entries.push("client2.imba")
 
 		esoptions = {
 			entryPoints: entryPoints
@@ -156,6 +147,11 @@ export class Bundle < Component
 			]
 		}
 
+		imbaoptions = {
+			platform: o.platform
+			css: 'external'
+		}
+
 		if esoptions.platform == 'browser'
 			esoptions.resolveExtensions.unshift('.web.js')
 
@@ -173,10 +169,10 @@ export class Bundle < Component
 			esoptions.format = 'esm'
 
 	def setup
-		let promises = for entry in entryNodes
-			entry.load!
-		
-		await Promise.all(promises)
+		# let promises = for entry in entryNodes
+		#	entry.load!
+		#
+		# await Promise.all(promises)
 		self
 
 	def resolveAsset name
@@ -184,19 +180,6 @@ export class Bundle < Component
 
 	def plugin build
 		let externs = options.external or []
-		let extdeps = externs.indexOf("dependencies") >= 0
-		let extjson = externs.indexOf(".json") >= 0
-		let extmap = {}
-
-		self.esbuilder = build
-
-		if extdeps
-			try
-				for value in Object.keys(bundler.package..dependencies or [])
-					extmap[value] = yes
-
-		for key in externs when key[0] == '!'
-			delete extmap[key.slice(1)]
 
 		if options.imbaPath == 'global'
 			build.onResolve(filter: /^imba(\/|$)/) do(args)
@@ -205,81 +188,34 @@ export class Bundle < Component
 
 			build.onLoad(filter: /.*/, namespace: 'ext') do(args)
 				return {contents: ''}
-		
+
 		build.onResolve(filter: /\?asset$/) do(args)
-			console.log 'onresolve',args
-			let [path,type] = args.path.split('?')
-			let resolved = program.resolver.resolve(path: path)
-			console.log 'resolved',resolved
-			if resolved
-				return {
-					path: resolved.path
-					namespace: type
-				}
+			let resolved = program.resolver.resolve(args,pathLookups)
+			return resolved
 
-		# build.onResolve(filter: /^x\//) do(args)
-		#	console.log 'onresolve',args
+		build.onResolve(filter: /^styles:/) do({path})
+			return {path: path.slice(7), namespace: 'styles'}
+
+		build.onResolve(filter: /^[\w\@]/) do(args)
+			# maybe use the paths interface here instead?
+			if args.importer.indexOf('.imba') > 0
+				return program.resolver.resolve(args,pathLookups)
 	
-		false && build.onResolve(filter: /\.imba\.(css)$/) do(args)
-			let id = args.path
-			# let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
-			return {path: args.path, namespace: 'styles'}
-
-		false and build.onResolve(filter: /.*/, namespace: 'file') do(args)
-			# console.log 'onresolve all?'
-			let id = args.path
-			let ns = args.namespace
-
-			if extjson and id.match(/\.json$/)
-				let abspath = np.resolve(args.resolveDir,id)
-				let outpath = np.relative(esoptions.outdir,args.resolveDir)
-				return {external: true, path: abspath}
-
-			if extmap[id]
-				return {external: true}
-			return
-
-		build.onResolve(filter: /\.imba-css$/) do(args)
-			console.log 'onresolve css',args # what if this is in a nested project?
-			let id = args.path
-			# let key = args.path.replace(//)
-			# let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
-			return {path: args.path.replace(/-css$/,''), namespace: 'styles'}
-
-		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
-			let src = fs.lookup(args.path)
-			await src.imba.load!
-			let outfile = src.imba.out[platform]
-			# console.log 'onload imba',args.path
-			return {
-				loader: 'js'
-				contents: await outfile.read!
-				# resolveDir: outfile.absdir
-			}
-
-		# nono?
-		build.onLoad({ filter: /\.imba-css$/, namespace: 'file' }) do(args)
-			console.log 'onload css',args
-			let src = fs.lookup(args.path.replace(/\.css$/,''))
-			await src.imba.load!
-			# let outfile = src.imba.out[platform]
-
-			return {
-				loader: 'css'
-				contents: await src.imba.out.css.read!
-				resolveDir: outfile.absdir
-			}
+		build.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
+			let src = fs.lookup(path)
+			let res = await src.imba.#compile(imbaoptions)
+			let cached = res[#key]
+			unless cached
+				cached = res[#key] ||= {
+					file: {loader: 'js', contents: SourceMapper.strip(res.js or "")}
+					styles: {loader: 'css', contents: SourceMapper.strip(res.css or "")}
+				}
+			return cached[namespace]
 
 		build.onLoad(filter: /.*/, namespace: 'asset') do({path})
-			# console.log 'onload asset',path
 			let file = fs.lookup(path)
-			await file.asset.load!
-			return {
-				loader: 'js'
-				contents: await file.asset.out.js.read!
-			}
-
-
+			let out = await file.asset.#compile(format: 'esm')
+			return {loader: 'js', contents: out.js}
 
 		build.onLoad({ filter: /.*/, namespace: 'styles'}) do(args)
 			let id = args.path.replace(/\.css$/,'')
@@ -296,37 +232,19 @@ export class Bundle < Component
 				console.log 'could not find styles!!',args.path
 			return entry.css
 
-
-		build.onLoad({ filter: /@(assets|svg)\/.*/}) do(args)
-			console.log 'onload asset'
-			let id = args.path
-			if #cache[id]
-				return #cache[id]
-
-			let name = id.replace('@svg/','')
-			if let asset = resolveAsset(name)
-				let body = await nodefs.promises.readFile(bundler.absp(asset.path),'utf8')
-				let parsed = parseAsset({body: body},name)
-				# console.log 'parsed asset',parsed
-
-				let js = "
-					export default {JSON.stringify(parsed)};
-				"
-
-				return #cache[id] = {contents: js,loader:'js'}
-		
-
 	def build
 		if built =? true
 			let t = Date.now!
 			result = await esb.build(esoptions)
 			write(result.outputFiles)
+
 		return self 
 
 	def rebuild
 		let t = Date.now!
 		let rebuilt = await result.rebuild!
 		result = rebuilt
+		# console.log 'rebuilt (before write)',Date.now! - t
 		write(result.outputFiles)
 		bundler.rebuilt(self)
 
@@ -340,7 +258,7 @@ export class Bundle < Component
 		for item in entry.imports
 			let dep = inputs[item.path]
 			traverseInput(dep,inputs,root)
-			if item.path.match(/\.css$/)
+			if item.path.match(/\.css$/) or item.path.match(/^styles:/)
 				entry.css.push(item.path)
 			else
 				entry.css.push(...dep.css)
@@ -355,6 +273,15 @@ export class Bundle < Component
 		# when compiling for node we need to make sure that assets and stylesheets
 		# are saved in public folders alongside all the browser files.
 		# console.log meta
+
+		for own src,value of meta.inputs
+
+			# TODO start watching essentially all files instead?
+			if !src.match(/^[\w\-]+\:/) and src.match(/\.(imba|css|svg)$/)
+				pathLookups[src] = yes 
+				# watch.add( absp(src) )
+				# console.log 'start watching!',src
+				fs.lookup(src).watch(bundle)
 
 		time 'hashing'
 		for file in files
