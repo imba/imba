@@ -125,13 +125,11 @@ export class FSNode
 	def register
 		if flags |=? FLAGS.REGISTERED
 			self.fs.#tree.add(self)
-			yes
-			# console.log 'now registering node',rel
 		self
 	
 	def deregister
 		if flags ~=? FLAGS.REGISTERED
-			console.log 'now deregistering node',rel
+			# console.log 'now deregistering node',rel
 			self.fs.#tree.remove(self)
 
 	def touch
@@ -139,19 +137,15 @@ export class FSNode
 		#body = undefined
 		self
 
-	def changed
-		self
-
 	def existsSync
 		return true if registered?
 		# return false if deregistered I presume
-		console.log 'check nodefs.existsSync',abs
+		# console.log 'check nodefs.existsSync',abs
 		let real = nodefs.existsSync(abs)
 		if real
 			register!
 			return yes
 		else
-			# mark as checked?
 			return no
 
 	def unwatch observer
@@ -173,9 +167,6 @@ export class FileNode < FSNode
 	def [Symbol.toPrimitive] hint
 		abs
 
-	get scanned?
-		self.fs.scannedFile(rel)
-
 	get reldir
 		rel.slice(0,rel.lastIndexOf('/') + 1)
 	
@@ -184,13 +175,6 @@ export class FileNode < FSNode
 
 	get dir
 		self.fs.lookup(absdir,DirNode)
-
-	def invalidate
-		cache = {}
-		#imba..invalidate!
-		#mtime = Date.now!
-		#body = null
-		self
 	
 	def write body
 		if #body =? body
@@ -219,27 +203,9 @@ export class FileNode < FSNode
 			#mtime = s.mtimeMs
 		return #mtime
 
-	get imba
-		return null unless #imba or imba?
-		#imba ||= new SourceFile(self)
-
-	get asset
-		return null unless #asset or (/\.svg$/).test(rel)
-		#asset ||= new AssetFile(self)
-
-	def load
-		let rich = (self.imba or self.asset)
-		rich ? rich.load(program) : {}
-
 	get id
 		#id ||= program.sourceIdForPath(rel)
 
-	def tmp ns = ''
-		self.fs.lookup('.imba/_' + (rel + ns).replace(/\//g,'_$$_'))
-
-	get imba?
-		(/\.imba1?$/).test(rel)
-	
 	def unlink
 		nodefs.promises.unlink(abs)
 

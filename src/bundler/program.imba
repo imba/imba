@@ -52,7 +52,7 @@ export default class Program < Component
 		included = new Set
 		compiled = new Set
 		
-		watcher = options.watch ? chokidar.watch([],{
+		watcher = options.watch ? chokidar.watch([cwd],{
 			ignoreInitial: true,
 			depth: 5,
 			ignored: '.*',
@@ -60,18 +60,17 @@ export default class Program < Component
 		}) : new VirtualWatcher
 
 		watcher.on('change') do(src,stats)
-			let file = fs.lookup(src)
-			file.invalidate!
+			# console.log "watcher change {src}"
 			fs.touchFile(src)
 			#bundler..scheduleRebuild!
 
 		watcher.on('unlink') do(src,stats)
-			console.log "watcher unlink {src}"
+			# console.log "watcher unlink {src}"
 			fs.removeFile(src)
 			#bundler..scheduleRebuild!
 
 		watcher.on('add') do(src,stats)
-			console.log "watcher add {src}"
+			# console.log "watcher add {src}"
 			fs.addFile(src)
 			#bundler..scheduleRebuild!
 
@@ -79,10 +78,15 @@ export default class Program < Component
 		watcher.on('raw') do(event,src,details)
 			# console.log "watch {event}",src
 			yes
+
+		watcher.add(np.resolve(imbaPath,'src'))
 		self
 
 	get cwd
 		fs.cwd
+
+	get imbaPath
+		options.imbaPath
 
 	get resolver
 		#resolver ||= new Resolver(config: config, files: fs.files, program: self, fs: fs)
@@ -91,7 +95,7 @@ export default class Program < Component
 		#bundler ||= new Bundler(config,options,self)
 
 	get workers
-		#workers ||= workerPool.pool(workerScript, maxWorkers:2)
+		#workers ||= workerPool.pool(workerScript, maxWorkers:4)
 
 	def sourceIdForPath src
 		unless idmap[src]
@@ -99,15 +103,8 @@ export default class Program < Component
 			idmap[src] = idFaucet(nr) + "0"
 		return idmap[src]
 
-
 	def add src
 		sources[fs.relative(src)] ||= fs.lookup(src)
-
-	def include file
-		unless included.has(file)
-			console.log 'including file!',file
-			included.add(file)
-		self
 
 	def queue promise
 		if promise[key]

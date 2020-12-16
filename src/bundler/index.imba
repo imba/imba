@@ -2,6 +2,7 @@ const esbuild = require 'esbuild'
 const cluster = require 'cluster'
 
 const fs = require 'fs'
+const np = require 'path'
 const utils = require './utils'
 const conf = require './config'
 const helpers = require '../compiler/helpers'
@@ -50,6 +51,8 @@ export def run options = {}
 		Object.assign(options,helpers.parseArgs(options.argv,schema))
 	
 	let mtime = fs.statSync(__filename).mtimeMs
+
+	options.imbaPath ||= np.resolve(__dirname,'..')
 
 	options.mtime = mtime
 	options.config = utils.resolveConfig(options.config or 'imbaconfig.json',cwd)

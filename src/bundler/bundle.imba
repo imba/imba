@@ -129,6 +129,7 @@ export class Bundle < Component
 
 		imbaoptions = {
 			platform: o.platform
+			imbaPath: o.imbaPath
 			css: 'external'
 		}
 
@@ -154,12 +155,22 @@ export class Bundle < Component
 	def plugin build
 		let externs = options.external or []
 
-		if options.imbaPath == 'global'
-			build.onResolve(filter: /^imba(\/|$)/) do(args)
-				return {path: 'blank', namespace: 'ext'}
+		# if options.imbaPath == 'global'
+		# 	build.onResolve(filter: /^imba(\/|$)/) do(args)
+		# 		return {path: 'blank', namespace: 'ext'}
+		# 
+		# 	build.onLoad(filter: /.*/, namespace: 'ext') do(args)
+		# 		return {contents: ''}
 
-			build.onLoad(filter: /.*/, namespace: 'ext') do(args)
-				return {contents: ''}
+		let imbaDir = program.imbaPath
+
+		build.onResolve(filter: /^imba(\/|$)/) do(args)
+			if args.path == 'imba'
+				args.path = 'imba/core'
+
+			let real = "{imbaDir}/src/{args.path}.imba"
+			# console.log 'real imba path',real,args.path
+			return {path: real}
 
 		build.onResolve(filter: /\?asset$/) do(args)
 			let resolved = program.resolver.resolve(args,pathLookups)
@@ -193,7 +204,7 @@ export class Bundle < Component
 			let t = Date.now!
 			result = await esb.build(esoptions)
 			write(result.outputFiles)
-
+			# console.log 'pathLookups', pathLookups
 		return self 
 
 	def rebuild
