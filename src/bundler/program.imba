@@ -47,14 +47,29 @@ export default class Program < Component
 		included = new Set
 		compiled = new Set
 		
-		watcher = options.watch ? chokidar.watch([],ignoreInitial: true, depth: 1, cwd: cwd) : new VirtualWatcher
+		watcher = options.watch ? chokidar.watch([],{
+			ignoreInitial: true,
+			depth: 5,
+			ignored: '.*',
+			cwd: cwd
+		}) : new VirtualWatcher
 
 		watcher.on('change') do(src,stats)
 			let file = fs.lookup(src)
 			console.log 'watcher changed?!',src,stats
 			file.invalidate!
 
+		watcher.on('unlink') do(src,stats)
+			console.log "watcher unlink {src}"
+			fs.removeFile(src)
+
+		watcher.on('add') do(src,stats)
+			console.log "watcher add {src}"
+			fs.addFile(src)
+			console.log fs.#tree.withExtension('svg').paths
+
 		watcher.on('raw') do(event,src,details)
+			console.log "watch {event}",src
 			yes
 		self
 
@@ -62,7 +77,7 @@ export default class Program < Component
 		fs.cwd
 
 	get resolver
-		#resolver ||= new Resolver(config: config, files: fs.files, program: self)
+		#resolver ||= new Resolver(config: config, files: fs.files, program: self, fs: fs)
 
 	def sourceIdForPath src
 		unless idmap[src]
@@ -109,25 +124,32 @@ export default class Program < Component
 
 	def transpile
 		await clean! if options.clean
-		let sources = fs.nodes fs.glob(config.include,config.exclude,'imba,imba1')
+		let sources = fs.glob(config.include,config.exclude,'imba,imba1')
 		log.info 'found %d sources to compile in %elapsed',sources.length # ,sources.map do $1.rel
-
-		console.log sources.map do $1.rel
+		console.log 'found sources',sources.paths
 
 		for source in sources
 			source.imba.load!
 
 		await flush!
-		log.info 'transpiled %d files in %elapsed',sources.length
+		# log.info 'transpiled %d files in %elapsed',sources.length
 
 		if options.watch
 			log.info 'start watching?'
-			# for source in sources
-			#	source.dir.watch!
+			# hmm - we want to watch all directories mentioned in paths etc
+			for source in sources
+				source.dir.watch!
 			yes
+
+		# console.log Object.keys(fs.#map)
+		# console.log fs.#tree
+		# console.log fs.#tree.match('.(imba|js)$').paths
+		# console.log fs.#tree.withExtension('css').paths
+
 
 	def build
 		await setup!
+		bundler
 		await transpile!
 		await bundler.run!
 		# watcher.on('change') do(src,stats)
@@ -167,6 +189,7 @@ export default class Program < Component
 		self
 
 	def start
+		return
 		console.log 'starting!!'
 		options.serve = yes
 		await build!

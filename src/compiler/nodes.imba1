@@ -10283,6 +10283,7 @@ export class RootScope < Scope
 
 		register('global', self, type: 'global').@c = 'globalThis'
 		register('require', self, type: 'global') # .@c = 'globalThis'
+		register('import', self, type: 'global')
 		register 'module', self, type: 'global'
 		register 'imba', self, type: 'global', varclass: GlobalReference
 		register 'window', self, type: 'global', varclass: GlobalReference
@@ -10463,7 +10464,7 @@ export class RootScope < Scope
 					let out = "import {id} from '{src}'"
 					
 					# head.push(LIT "import {asset:ref.c} from {MP "'asset:{asset:kind}/{name}'"}")
-					head.push(LIT "import {asset:ref.c} from {MP "'{name}'"}")
+					head.push(LIT "import {asset:ref.c} from {MP "'{name}?asset'"}")
 
 					if false
 						# head.push LIT(out)

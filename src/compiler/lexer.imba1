@@ -1147,11 +1147,14 @@ export class Lexer
 			queueScope(typ)
 
 		elif typ == 'IMPORT'
-			# could manually parse the whole ting here?
-			pushEnd('IMPORT')
-			token(typ, id, idlen)
-			# return importsToken or len
-			return len
+			# console.log 'import last type',lastTyp,@chunk[idlen]
+			if lastTyp == 'AWAIT' or @chunk[idlen] == '('
+				typ = 'IDENTIFIER'
+			else
+				pushEnd('IMPORT')
+				token(typ, id, idlen)
+				# return importsToken or len
+				return len
 
 		elif id == 'type' and lastTyp == 'IMPORT'
 			token('TYPEIMPORT', id, idlen)

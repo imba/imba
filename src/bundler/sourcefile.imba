@@ -70,7 +70,7 @@ export default class SourceFile
 		# program.queue #cache.build ||= new Promise do(resolve,reject)
 		let jsfile = out.node
 		let srctime = src.mtimesync
-		let outtime = jsfile.scanned? ? jsfile.mtimesync : 0
+		let outtime = jsfile.mtimesync # : 0
 		let manifest = {node: {}, web: {}}
 		let resolver = program.resolver
 		let fs = fs
@@ -80,7 +80,7 @@ export default class SourceFile
 		
 		# the previous one was built earlier
 		if outtime > srctime and outtime > program.mtime
-			console.log 'cached imba',src.rel,outtime - srctime
+			# console.log 'cached imba',src.rel,outtime - srctime
 			return Promise.resolve(yes)
 
 		try
@@ -158,11 +158,11 @@ export default class SourceFile
 						
 						return path or null
 
-					js = resolveDependencies(src.rel,js,onResolve)
+					# js = resolveDependencies(src.rel,js,onResolve)
 
 					if res.css.length
 						if platform == 'node'
-							res.css = resolveDependencies(src.rel,res.css,onResolve, css: true)
+							# res.css = resolveDependencies(src.rel,res.css,onResolve, css: true)
 							await out.css.write(SourceMapper.strip(res.css))
 
 						# need to resolve mappings?

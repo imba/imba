@@ -70,6 +70,15 @@ class Manifest
 				console.log updated,'manifest changed'
 				data = updated
 
+				let changed = for item in data.changes
+					let entry = data.files[item]
+					continue unless entry.url
+					entry.url
+				console.log 'changes',changed
+
+				if global.#imbaServer and changed.length
+					global.#imbaServer.broadcast('invalidate',changed)
+
 class Server
 	def constructor
 		clients = new Set

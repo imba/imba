@@ -7,6 +7,7 @@ const testconfig = {
 	paths: {
 		"app/*": ["app/*"]
 		"svg/*": ["app/assets/*","assets/feather/*"]
+		"svg/icons/*": ["assets/feather/*"]
 		"env": ["app/env.imba"]
 		"views/*": ["app/*","app/views/*"]
 	}
@@ -38,6 +39,22 @@ const tests = {
 		'./assets/logo': 'app/assets/logo.svg'
 }
 
+class PathEntry
+
+	def constructor key, mappings
+		key = key
+		pre = key.replace(/\*$/,'')
+		mappings = mappings
+		cache = {}
+	
+	def match path	
+		if path.indexOf(pre) == 0
+			let sub = path.slice(pre.length)
+			mappings.map do $1.replace('*',sub)
+		else
+			null
+	
+
 export class Resolver
 	prop config
 	prop files
@@ -56,11 +73,13 @@ export class Resolver
 		config = o.config
 		files = o.files
 		program = o.program
+		fs = o.fs
 		paths = config.paths or {}
 		# {config,files,program} = o
 
 		dirs = {}
 		aliases = {}
+		cache = {}
 		extensions = config.extensions or ['.imba','.imba1','.ts','.js','.css','.svg','.json']
 		resolve = resolve.bind(self)
 		self
@@ -69,10 +88,12 @@ export class Resolver
 		return unless #ready =? 1
 		dirs = {}
 		aliases = {}
+		entries = []
 		let t = Date.now!
 
 		# this will take time to match
 		for own dir, rules of paths
+			entries.push( new PathEntry(dir,rules))
 			let rels = dirs[dir] = []
 			let prefix = dir.replace('/*','/')
 			dirs[prefix.replace(/\/\*?$/)] = rels
@@ -92,11 +113,9 @@ export class Resolver
 					wildcard.push(match)
 
 
-
-
-					
-		console.log aliases
+		# console.log aliases
 		# console.log 'resolver setup',Date.now! - t,aliases
+
 		return
 
 	
@@ -119,40 +138,58 @@ export class Resolver
 		unless res[0] == '.'
 			res = './' + res
 		return res
+
+	def expand path
+		if cache[path]
+			return cache[path]
+		setup!
+		let test = []
+		for entry in entries
+			if let m = entry.match(path)
+				for item in m
+					test.push(item)
+					for ext in extensions
+						test.push(item + ext)
+				# test.push(...m)
+		return cache[path] = test
 	
 	def resolve o
 		setup!
-		let inpath = o.path
+		let path = o.path
 		let found
 		let namespace = 'file'
-		let colonIndex = inpath.indexOf(':')
+		let colonIndex = path.indexOf(':')
 
 		if colonIndex >= 0
-			namespace = inpath.substr(0,colonIndex)
-			inpath = inpath.replace(':','/')
-			# [namespace,inpath] = inpath.split(':')
+			namespace = path.substr(0,colonIndex)
+			path = path.replace(':','/')
 
-		# if 
+		# if found = aliases[path]
+		#	return {path: aliases[path][0], namespace: namespace}
 
-		if found = aliases[inpath]
-			return {path: aliases[inpath][0], namespace: namespace}
-
-		let rel? = inpath.match(/^\.+\//)
-
-		# check if relative
-		# let indir = importer.slice(0,importer.lastIndexOf('/') + 1) #  p.dirname(importer)
+		let rel? = path.match(/^\.+\//)
 
 		if rel?
+			# return {path: inpath}
 			let m = 0
-			let norm = p.normalize(o.resolveDir + inpath)
+			let norm = p.normalize(o.resolveDir + path)
 			let found = aliases[norm]
 			m = testWithExtensions(norm) or (aliases[norm] or [norm])[0]
 			return {path: m, namespace: namespace}
+		elif fs
+			for m in expand(path)
+				# should this be synchronous?
+				if fs.existsSync(m)
+					# console.log 'resolved path!!',m,path
+					return {path: m}
 
-		return {path: inpath}
+		return {path: path}
 
 def run
 	let resolver = new Resolver(config: testconfig, files: testfiles)
+
+	console.log resolver.expand("svg/icons/test")
+
 	for own importer, paths of tests
 		for own raw, expected of paths
 			
@@ -165,4 +202,4 @@ def run
 			# console.log 'testing',importer,raw,expected,res
 			unless expected == res
 				console.warn "ERROR",expected,res
-run!
+# run!

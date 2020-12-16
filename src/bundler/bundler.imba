@@ -21,7 +21,7 @@ export class Bundler < Component
 		sourceIdMap = {}
 		program = program
 
-		watcher = options.watch ? chokidar.watch([]) : null
+		# watcher = options.watch ? chokidar.watch([]) : null
 		log = new Logger
 		
 		env = options.env or process.env.NODE_ENV or 'development'

@@ -18,23 +18,6 @@ const readdirpOptions = {
 	directoryFilter: ['!.git', '!*modules','!tmp']
 }
 
-export def mount dir,cwd = '.'
-	
-	{
-		cwd: path.resolve(cwd,dir)
-		toString: do this.cwd
-		valueOf: do this.cwd
-		resolve: do(src) path.resolve(this.cwd,src)
-		relative: do(src) path.relative(this.cwd,src)
-		writePath: do(src,body) writePath(this.resolve(src),body)
-		writeFile: do(src,body) fs.promises.writeFile(this.resolve(src),body)
-		unlink: do(src,body) fs.promises.unlink(this.resolve(src))
-		readFile: do(src,enc='utf8') fs.promises.readFile(this.resolve(src),enc)
-		findFiles: do(options = {})
-			let res = await readdirp.promise(this.cwd,Object.assign({},readdirpOptions,options))
-			res.map do $1.path
-	}
-	
 export def writePath src, body
 	await ensureDir(src)
 	fs.promises.writeFile(src,body)

@@ -1,4 +1,4 @@
-const fs = require 'fs'
+const nodefs = require 'fs'
 const fsp = require 'path'
 const readdirp = require 'readdirp'
 const utils = require './utils'
@@ -30,7 +30,64 @@ const blankStat = {
 
 const roots = {}
 
-export class FSNodeList < Array
+const FLAGS = {
+	CHECKED: 1
+	EXISTS: 2
+	REGISTERED: 4
+	WATCHED: 8
+	RESOLVED: 16
+	REMOVED: 32
+	ADDED: 64
+}
+
+const matchToRegexCache = {}
+
+def matchToRegex str 
+	matchToRegexCache[str] ||= if true
+		str = str.replace(/(\*\*|\*|\.)/g) do(m,t)
+			if t == '**'
+				"(.*)"
+			elif t == '*'
+				"([^\/]+)"
+			elif t == '.'
+				"\\."
+		new RegExp(str)
+		
+# console.log matchToRegex("*.imba$")
+# console.log matchToRegex("*.(imba|js|cjs)$")
+
+# special list with optimizations for filtering etc
+export class FSTree < Array
+
+	def constructor ...items
+		super(...items)
+		#cache = {}
+
+	def withExtension ext
+		match(".({ext.replace(/,/g,'|')})$")
+
+	def match match
+		if typeof match == 'string'
+			let regex = matchToRegex(match)
+			#cache[match] ||= filter(do regex.test($1.rel))
+
+	def add node
+		let idx = indexOf(node)
+		if idx == -1
+			push(node)
+			#cache = {}
+		self
+
+	get paths
+		map do $1.rel
+
+	def remove node
+		let idx = indexOf(node)
+		if idx >= 0
+			splice(idx,1)
+			for own key, res of #cache
+				res.remove(node)
+		return self
 	
 export class FSNode
 
@@ -39,13 +96,14 @@ export class FSNode
 		let types = {
 			'.json': JsonFileNode
 		}
-		let cls = types[ext] or self
+		let cls = types[ext] or FileNode
 		new cls(program,src,abs)
 
 	def constructor root, rel, abs
 		self.fs = root
 		rel = rel
 		abs = abs
+		flags = 0
 		#watchers = new Set
 		#watched = no
 	
@@ -60,6 +118,36 @@ export class FSNode
 		if #watched =? yes
 			program.watcher.add(abs)
 			# console.log 'watch',abs
+
+	get registered?
+		flags & FLAGS.REGISTERED
+
+	def register
+		if flags |=? FLAGS.REGISTERED
+			self.fs.#tree.add(self)
+			yes
+			# console.log 'now registering node',rel
+		self
+	
+	def deregister
+		if flags ~=? FLAGS.REGISTERED
+			console.log 'now deregistering node',rel
+			self.fs.#tree.remove(self)
+
+	def changed
+		self
+
+	def existsSync
+		return true if registered?
+		# return false if deregistered I presume
+		console.log 'check nodefs.existsSync',abs
+		let real = nodefs.existsSync(abs)
+		if real
+			register!
+			return yes
+		else
+			# mark as checked?
+			return no
 
 	def unwatch observer
 		#watchers.delete(observer)
@@ -101,25 +189,24 @@ export class FileNode < FSNode
 	def write body
 		if #body =? body
 			await utils.ensureDir(abs)
-			fs.promises.writeFile(abs,body)
+			nodefs.promises.writeFile(abs,body)
 
 	def writeSync body
 		if #body =? body
 			# await utils.ensureDir(abs)
-			fs.writeFileSync(abs,body)
+			nodefs.writeFileSync(abs,body)
 
-	
 	def read enc = 'utf8'
-		#body or fs.promises.readFile(abs,enc)
+		#body or nodefs.promises.readFile(abs,enc)
 	
 	def readSync enc = 'utf8'
-		#body ||= fs.readFileSync(abs,enc)
+		#body ||= nodefs.readFileSync(abs,enc)
 	
 	def stat
-		fs.promises.stat(abs).then(do $1).catch(do blankStat)
+		nodefs.promises.stat(abs).then(do $1).catch(do blankStat)
 
 	get mtimesync
-		#mtime ||= fs.statSync(abs).mtimeMs
+		#mtime ||= (existsSync! ? nodefs.statSync(abs).mtimeMs : 1)
 
 	def mtime
 		unless #mtime
@@ -149,7 +236,7 @@ export class FileNode < FSNode
 		(/\.imba1?$/).test(rel)
 	
 	def unlink
-		fs.promises.unlink(abs)
+		nodefs.promises.unlink(abs)
 
 	def extractStarPattern pat
 		# let patparts = pat.split('/')
@@ -169,7 +256,6 @@ export class JsonFileNode < FileNode
 
 	def constructor
 		super
-		console.log 'added json file node!!!',rel
 
 	def load
 		try 
@@ -197,12 +283,22 @@ export class FileSystem
 		program = program
 		nodemap = {}
 		#files = null
+		#tree = new FSTree
+		#map = {}
 
 	def toString do cwd
 	def valueOf do cwd
 
 	def existsSync src
-		scannedFile(relative(src)) or fs.existsSync(resolve(src))
+		let entry = nodemap[src]
+		if entry
+			return entry.existsSync!
+		else
+			return false
+			# if the filesystem is live
+			# console.log 'checking node',src
+			return nodefs.existsSync(resolve(src))
+
 	
 	def lookup src, typ = FileNode
 		src = relative(src)
@@ -229,31 +325,35 @@ export class FileSystem
 		writeFile(resolve(src),body)
 
 	def writeFile src,body
-		fs.promises.writeFile(resolve(src),body)
-
-	def scannedFile src
-		#files and #files.indexOf(src) >= 0
+		nodefs.promises.writeFile(resolve(src),body)
 
 	def unlink src,body
-		fs.promises.unlink(resolve(src))
+		nodefs.promises.unlink(resolve(src))
 
 	def readFile src,enc='utf8'
-		fs.promises.readFile(resolve(src),enc)
-
-	def findFiles options = {}
-		let res = await readdirp.promise(cwd,Object.assign({},readdirpOptions,options))
-		res.map do $1.path
+		nodefs.promises.readFile(resolve(src),enc)
 
 	def stat src
-		fs.promises.stat(resolve(src)).then(do $1).catch(do blankStat)
+		nodefs.promises.stat(resolve(src)).then(do $1).catch(do blankStat)
 
+	def unlinked src
+		self
+
+	def added src
+		self
+
+	def addFile src
+		lookup(src).register!
+
+	def removeFile src
+		lookup(src).deregister!
+		
 	def prescan items = null
 		return #files if #files
 		#files = items or crawl!
 		for item in #files
 			let li = item.lastIndexOf('.')
 			let ext = item.slice(li) or '.*'
-			
 			let map = #files[ext] ||= []
 			unless map.push
 				console.log 'ext?!',ext,item
@@ -267,29 +367,28 @@ export class FileSystem
 
 	def glob match = [], ignore = null, ext = null
 		prescan!
-		let sources = #files
+
+		let sources = #tree
 		if ext
-			sources = []
-			if typeof ext == 'string'
-				ext = ext.split(',')
-			for item in ext
-				sources = sources.concat(#files['.' + item] or [])
+			sources = #tree.withExtension(ext)
 
 		if match isa RegExp and !ignore
-			return sources.filter do match.test($1)
+			return sources.filter do match.test($1.rel)
 		
 		elif typeof match == 'string'
 			if match.indexOf('*') >= 0
 				match = [match]
 			else
-				return scannedFile(relative(match)) ? [match] : []
+				# not working
+				return new FSTree(existsSync(match) ? lookup(match) : null)
 
 		if !match or match.length == 0
 			return sources.slice(0) if !ignore
 			match = ['*']
 
-		let res = micromatch(sources,match,ignore: ignore)
-		return res
+		let res = micromatch(sources.paths,match,ignore: ignore)
+		
+		return new FSTree(...res.map(do nodemap[$1]))
 
 	def find regex, ext = null
 		prescan!
@@ -318,13 +417,15 @@ export class FileSystem
 	def crawl o = {}
 		# let sep = path.sep
 		let slice = cwd.length + 1
+		let filter = do(a) a[0] != '.'
+		let grouped = yes
 		let api = (new fdir).crawlWithOptions(cwd,{
-			includeBasePath: true
+			includeBasePath: !grouped
 			# includeDirs: true
-			group: false
+			group: grouped
 			includeDirs: false
 			maxDepth: 8
-			filters: [do $1[0] != '.']
+			filters: [filter]
 			exclude: do
 				if $3 == 7 
 					if o.includeRoots and !o.includeRoots[$1]
@@ -335,4 +436,23 @@ export class FileSystem
 				return (/^(\.|node_modules)/).test($1)
 		})
 
-		return api.sync!.map do $1.slice(slice)
+		let res = api.sync!
+
+		unless grouped
+			return res.map do $1.slice(slice)
+
+		let paths = []
+		for entry in res
+			let absdir = entry.dir
+			let reldir = absdir.slice(slice)
+			let dir = nodemap[reldir] ||= new DirNode(self,reldir,absdir)
+			# dir.register!
+
+			for f in entry.files
+				let rel = reldir + '/' + f
+				let abs = absdir + '/' + f
+				let file = nodemap[rel] ||= FSNode.create(self,rel,abs)
+				file.register!
+				paths.push(rel)
+		# console.log 'paths',paths
+		return paths

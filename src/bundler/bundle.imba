@@ -5,7 +5,7 @@ import {parseAsset} from '../compiler/assets'
 
 const esbuild = require 'esbuild'
 const nodefs = require 'fs'
-const path = require 'path'
+const np = require 'path'
 const utils = require './utils'
 import Component from './component'
 
@@ -100,8 +100,9 @@ export class Bundle < Component
 
 			# console.log 'exports!!',raw
 			for own key, value of raw
-				let paths = fs.nodes fs.glob(value)
-				console.log 'found values',key,value
+				let paths = value.indexOf('*') >= 0 ? fs.glob(value) : [fs.lookup(value)]
+				console.log 'checking exports',key,value
+				
 				for res in paths
 					let slots = res.extractStarPattern(value)
 					let name = key.replace(/\*/g) do(m) slots.shift!
@@ -144,6 +145,7 @@ export class Bundle < Component
 			write: false
 			metafile: "metafile.json"
 			external: externals
+			tsconfig: o.tsconfig
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			# outExtension: o.outExtension
 			# resolveExtensions: ['.imba.mjs','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json']
@@ -185,6 +187,9 @@ export class Bundle < Component
 		let extdeps = externs.indexOf("dependencies") >= 0
 		let extjson = externs.indexOf(".json") >= 0
 		let extmap = {}
+
+		self.esbuilder = build
+
 		if extdeps
 			try
 				for value in Object.keys(bundler.package..dependencies or [])
@@ -200,7 +205,21 @@ export class Bundle < Component
 
 			build.onLoad(filter: /.*/, namespace: 'ext') do(args)
 				return {contents: ''}
+		
+		build.onResolve(filter: /\?asset$/) do(args)
+			console.log 'onresolve',args
+			let [path,type] = args.path.split('?')
+			let resolved = program.resolver.resolve(path: path)
+			console.log 'resolved',resolved
+			if resolved
+				return {
+					path: resolved.path
+					namespace: type
+				}
 
+		# build.onResolve(filter: /^x\//) do(args)
+		#	console.log 'onresolve',args
+	
 		false && build.onResolve(filter: /\.imba\.(css)$/) do(args)
 			let id = args.path
 			# let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
@@ -212,8 +231,8 @@ export class Bundle < Component
 			let ns = args.namespace
 
 			if extjson and id.match(/\.json$/)
-				let abspath = path.resolve(args.resolveDir,id)
-				let outpath = path.relative(esoptions.outdir,args.resolveDir)
+				let abspath = np.resolve(args.resolveDir,id)
+				let outpath = np.relative(esoptions.outdir,args.resolveDir)
 				return {external: true, path: abspath}
 
 			if extmap[id]
@@ -227,23 +246,11 @@ export class Bundle < Component
 			# let resolved = path.resolve(args.resolveDir,id.replace(/\.css$/,''))
 			return {path: args.path.replace(/-css$/,''), namespace: 'styles'}
 
-		build.onResolve(filter: /\.zimba1?$/) do(args)
-			console.log 'onresolve imba',args # what if this is in a nested project?
-			let src = fs.lookup(args.path)
-			await src.imba.load!
-			let out = src.imba.out[platform]
-			console.log 'resolved to',out.abs
-			resolvedEntryMap[src.rel] = out.rel
-			return {path: out.abs}
-			# return {path: args.path, namespace: 'asset'}
-
 		build.onLoad({ filter: /\.imba1?$/, namespace: 'file' }) do(args)
-			
 			let src = fs.lookup(args.path)
 			await src.imba.load!
 			let outfile = src.imba.out[platform]
-			console.log 'onload imba',args.path # ,!!outfile.#body
-
+			# console.log 'onload imba',args.path
 			return {
 				loader: 'js'
 				contents: await outfile.read!
@@ -263,6 +270,17 @@ export class Bundle < Component
 				resolveDir: outfile.absdir
 			}
 
+		build.onLoad(filter: /.*/, namespace: 'asset') do({path})
+			# console.log 'onload asset',path
+			let file = fs.lookup(path)
+			await file.asset.load!
+			return {
+				loader: 'js'
+				contents: await file.asset.out.js.read!
+			}
+
+
+
 		build.onLoad({ filter: /.*/, namespace: 'styles'}) do(args)
 			let id = args.path.replace(/\.css$/,'')
 			let entry = fs.lookup(id).imba
@@ -271,12 +289,13 @@ export class Bundle < Component
 			return {
 				loader: 'css'
 				contents: body
-				resolveDir: path.dirname(id)
+				resolveDir: np.dirname(id)
 			}
 
 			unless entry
 				console.log 'could not find styles!!',args.path
 			return entry.css
+
 
 		build.onLoad({ filter: /@(assets|svg)\/.*/}) do(args)
 			console.log 'onload asset'
@@ -356,7 +375,7 @@ export class Bundle < Component
 
 			# get the actual file for this instead?
 
-			let name = path.basename(file.path)
+			let name = np.basename(file.path)
 
 			if hash
 				file.hashedName = name
@@ -365,7 +384,7 @@ export class Bundle < Component
 				file.hashedName = name.replace(/(?=\.\w+$)/,".{hash}")
 
 			file.dirty = !prev or prev.hash != hash
-			file.hashedPath = path.resolve(path.dirname(file.path),file.hashedName)
+			file.hashedPath = np.resolve(np.dirname(file.path),file.hashedName)
 			# console.log 'outfile',!!output,[id,outfile,fs.relative(file.path),file.hashedPath] # file.path
 
 		# console.log outfileMap

@@ -32,9 +32,9 @@ export default class AssetFile
 
 	def #load
 		let srctime = src.mtimesync
-		let outtime = out.js.scanned? ? out.js.mtimesync : 0
+		let outtime = out.js.mtimesync
 		let fs = fs
-		
+
 		console.log 'asset loaded!!',src.rel,out.js.rel
 
 		# the previous one was built earlier
