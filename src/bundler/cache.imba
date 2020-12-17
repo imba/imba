@@ -1,10 +1,16 @@
+const utils = require './utils'
+
 export default class Cache
 
 	def constructor path, file
 		path = path
 		file = file
-		map = {}
+		data = {
+			aliases: {}
+			cache: {}
+		}
 		mintime = 0
+		idFaucet = utils.idGenerator!
 
 	def setup
 		await deserialize!
@@ -14,30 +20,43 @@ export default class Cache
 
 	def deserialize
 		await file.load!
-		map = file.data
+		data = file.data
 		self
 
 	def serialize
-		let all = {}
-		for own key,val of map
+		let all = {
+			aliases: aliases
+			cache: {}
+		}
+		for own key,val of cache
 			let value = await val.promise
-			all[key] = {time: val.time, promise: value}
+			all.cache[key] = {time: val.time, promise: value}
 		file.data = all
 		await file.save!
 
+	get cache
+		data.cache ||= {}
+
+	get aliases
+		data.aliases ||= {}
+
+	def alias src
+		unless aliases[src]
+			let nr = Object.keys(aliases).length
+			aliases[src] = idFaucet(nr) + "0"
+
+		return aliases[src]
+
 	def memo key, time, cb
-		let cached = map[key]
+		let cached = cache[key]
 		time = mintime if mintime > time
 		if cached and cached.time >= time
-			# console.log 'return cache for',key
 			return cached.promise
 
-		cached = map[key] = {
+		cached = cache[key] = {
 			time: Date.now!
 			promise: cb!
 		}
-
-		# console.log 'caching',key
 
 		return cached.promise
 

@@ -268,7 +268,7 @@ export class Imba1File < FileNode
 			}
 
 			let t = Date.now!
-			let out = await program.workers.exec('compile', [params])
+			let out = await program.workers.exec('compile_imba1', [code,o])
 			program.log.success 'compile %path in %ms',rel,Date.now! - t
 			return out
 

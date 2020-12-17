@@ -1,5 +1,4 @@
 const esbuild = require 'esbuild'
-const cluster = require 'cluster'
 
 const fs = require 'fs'
 const np = require 'path'
@@ -8,7 +7,6 @@ const conf = require './config'
 const helpers = require '../compiler/helpers'
 
 import Program from './program'
-import {StallerWorker} from './staller'
 
 const schema = {
 	alias: {
@@ -38,12 +36,7 @@ const schema = {
 	group: ['source-map']
 }
 
-def stall
-	let port = process.env.PORT
-
 export def run options = {}
-	unless cluster.isMaster
-		return new StallerWorker(options)
 	let t = Date.now!
 	let bundles = []
 	let cwd = (options.cwd ||= process.cwd!)

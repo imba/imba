@@ -1,6 +1,9 @@
 const utils = require './utils'
 const np = require 'path'
 const micromatch = require 'micromatch'
+const esbuild = require 'esbuild'
+const workerPool = require 'workerpool'
+const workerScript = np.resolve(__dirname,'compiler-worker.js')
 
 import {FileSystem} from './fs'
 import chokidar from 'chokidar'
@@ -9,10 +12,9 @@ import {Bundler} from './bundler'
 import {Resolver} from './resolver'
 import Component from './component'
 import Cache from './cache'
-const esbuild = require 'esbuild'
+import Serve from './serve'
 
-const workerPool = require('workerpool')
-const workerScript = np.resolve(__dirname,'compiler-worker.js')
+
 
 class VirtualWatcher
 
@@ -55,12 +57,12 @@ export default class Program < Component
 		watcher = options.watch ? chokidar.watch([cwd],{
 			ignoreInitial: true,
 			depth: 5,
-			ignored: '.*',
+			ignored: ['.*','.git/**'],
 			cwd: cwd
 		}) : new VirtualWatcher
 
 		watcher.on('change') do(src,stats)
-			# console.log "watcher change {src}"
+			console.log "watcher change {src}"
 			fs.touchFile(src)
 			#bundler..scheduleRebuild!
 
@@ -94,14 +96,18 @@ export default class Program < Component
 	get bundler
 		#bundler ||= new Bundler(config,options,self)
 
+	get server
+		#server ||= new Serve(self,options)
+
 	get workers
 		#workers ||= workerPool.pool(workerScript, maxWorkers:4)
 
 	def sourceIdForPath src
-		unless idmap[src]
-			let nr = Object.keys(idmap).length
-			idmap[src] = idFaucet(nr) + "0"
-		return idmap[src]
+		cache.alias(src)
+		# unless idmap[src]
+		#	let nr = Object.keys(idmap).length
+		#	idmap[src] = idFaucet(nr) + "0"
+		# return idmap[src]
 
 	def add src
 		sources[fs.relative(src)] ||= fs.lookup(src)
@@ -159,9 +165,11 @@ export default class Program < Component
 		return
 
 	def start
-		return
 		options.serve = yes
-		await build!
+		if options.build
+			await build!
+
+		server.start!
 
 	def run
 		if self[options.command] isa Function

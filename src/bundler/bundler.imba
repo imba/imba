@@ -4,7 +4,6 @@ const np = require 'path'
 const utils = require './utils'
 
 import Component from './component'
-import {Server} from './server'
 import {Logger} from './logger'
 import {Bundle} from './bundle'
 
@@ -20,7 +19,6 @@ export class Bundler < Component
 		program = program
 		pathLookups = {}
 		log = new Logger
-		
 		env = options.env or process.env.NODE_ENV or 'development'
 		env = 'development' if env == 'dev' or options.dev
 		env = 'production' if env == 'prod' or options.prod
@@ -81,6 +79,11 @@ export class Bundler < Component
 			if config.entries
 				for own key,value of config.entries
 					continue if value.skip
+					value.entryPoints ||= [key]
+					entries.push value
+
+			if config.bundles
+				for cfg in config.bundles
 					entries.push cfg
 
 			bundles = for cfg in entries
@@ -200,7 +203,7 @@ export class Bundler < Component
 			if !pub.match(/^\.\.?\//)
 				entry.url = redir
 				file.url = redir
-				manifest.urls[url] = src
+				manifest.urls[url] = pub
 
 				manifest.assets[pub] = {
 					url: redir
@@ -238,21 +241,12 @@ export class Bundler < Component
 
 		self.files = files
 		
-		if writes.length
-			
+		if writes.length			
 			manifest.changes = filesToWrite.map do relp($1.path)
 			let buildinfo = program.manifest
 			for own k,v of manifest
 				buildinfo.data[k] = v
-
-			# await writeManifest(manifest)
 			await buildinfo.save!
-
-			if options.serve and !server
-				server = new Server(self,options.serve)
-				server.start!
-
-			server.updated(filesToWrite,manifest,firstWrite) if server
 
 		if false # drop this?
 			let json = JSON.stringify(bundles.map(do $1.meta),null,2)

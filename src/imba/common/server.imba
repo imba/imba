@@ -1,10 +1,8 @@
 # imba$imbaPath=global
 import cluster from 'cluster'
-import net from 'net'
-import http from 'http'
-import https from 'https'
 import fs from 'fs'
 import fsp from 'path'
+import {EventEmitter} from 'events'
 
 const mimes = {
 	svg: 'image/svg+xml'
@@ -22,6 +20,67 @@ const mimes = {
 	css: 'text/css'
 }
 
+class Servers < Set
+
+	def call name,...params
+		for server of self
+			server[name](...params)
+
+	def close o = {}	
+		for server of self
+			server.close(o)
+
+	def reload o = {}	
+		for server of self
+			server.reload(o)
+	
+	def broadcast msg, ...rest
+		for server of self
+			server.broadcast(msg,...rest)
+
+	def emit event, data
+		for server of self
+			server.emit(event,data)
+
+const servers = new Servers
+
+ImbaContext.prototype.process = new class Process < EventEmitter
+
+	def constructor
+		super
+
+		if cluster.isWorker
+			process.on('message') do(msg)
+				emit('message',msg)
+				emit(...msg.slice(1)) if msg[0] == 'emit'
+		self
+
+	def send msg
+		if process.send isa Function
+			process.send(msg)
+
+	def reload
+		# only allow reloading once
+		return self unless isReloading =? yes
+
+		unless process.env.IMBA_SERVE
+			console.warn "not possible to gracefully reload servers not started via imba start"
+			return
+
+		# stall all current servers
+		for server of servers
+			server.pause!
+	
+		on('reloaded') do(e)
+			console.log 'closing servers'
+			let promises = for server of servers
+				server.close!
+			await Promise.all(promises)
+			console.log 'actually closed!!'
+			process.exit(0)
+
+		send('reload')
+
 
 class Asset
 	def constructor desc
@@ -33,20 +92,26 @@ class Asset
 	get ext do #ext ||= fsp.extname(desc.path).substr(1)
 	get body do #body ||= fs.readFileSync(desc.path,'utf8')
 
-class Manifest
+	get headers
+		{
+			'Content-Type': mimes[ext] or 'text/plain'
+		}
+
+class Manifest < EventEmitter
 	def constructor cwd = process.cwd!
+		super()
 		cwd = cwd
 		path = fsp.resolve(cwd,'imbabuild.json')
 		data = load! or {}
 
+	get changes
+		data.changes or []
+
 	def load
 		try JSON.parse(fs.readFileSync(path,'utf-8'))
 
-	def watch
-		self
-
 	def assetByName name
-		return unless data.assets
+		return unless data.assets and name
 		if let asset = data.assets[name]
 			return asset.#rich ||= new Asset(asset)
 
@@ -56,200 +121,128 @@ class Manifest
 		return null
 
 	def assetForUrl url
-		return unless data.urls
 		let pathname = url.split('?')[0]
-		if let file = data.files[data.urls[pathname]]
-			let ext = fsp.extname(file.path).substr(1)
-
-			let out = {
-				path: file.path
-				url: file.url
-				headers: {
-					'Content-Type': mimes[ext] or 'text/plain'
-				}
-			}
-
-			if ext == 'js'
-				out.headers['Service-Worker-Allowed'] = '/'
-			return out
-
-		return null
+		return assetByName(data and data.urls and data.urls[pathname])
 
 	def watch
 		if #watch =? yes
-			console.log 'watching manifest!',path
 			fs.watch(path) do(curr,prev)
 				let updated = load!
-				console.log updated,'manifest changed'
 				data = updated
 
-				let changed = for item in data.changes
+				emit('update',data.changes,self)
+
+				let changedAssets = for item in data.changes
 					let entry = data.files[item]
 					continue unless entry.url
 					entry.url
-				console.log 'changes',changed
 
-				if global.#imbaServer and changed.length
-					global.#imbaServer.broadcast('invalidate',changed)
+				if changedAssets.length
+					emit('invalidate',changedAssets)
+
+	# listen to updates etc
+	def on event, cb
+		watch!
+		super
 
 class Server
-	def constructor
+
+	static def wrap server
+		new self(server)
+
+	def constructor srv
+		servers.add(self)
+		id = Math.random!
+		closed = no
+		paused = no
+		server = srv
 		clients = new Set
-		servers = new Set
-		cwd = process.cwd!
-		# unless manifest = loadBuildManifest([fsp.resolve(cwd,'build'),cwd])
-		#	console.log "imba.server could not find manifest.json in {process.cwd!}"
-		# if process.env.IMBA_MANIFEST
-		#	try manifest = JSON.parse(fs.readFileSync(process.env.IMBA_MANIFEST,'utf-8'))
+		manifest = global.imba.manifest
+		stalledResponses = []
 
-	get manifest
-		global.imba.manifest
+		# fetch and remove the original request listener
+		let originalHandler = server._events.request
+		srv.off('request',originalHandler)
 
-	def send ...params
-		# console.log 'sending to imba process!'
-		process.send(...params)
+		# check if this is an express app?
+		originalHandler.#server = self
 
-	def assetForUrl url, body? = no
-		return unless manifest..urls
-		let pathname = url.split('?')[0]
-		if let file = manifest.files[manifest.urls[pathname]]
-			# console.log 'found file?',file
-			let ext = fsp.extname(file.path).substr(1)
+		manifest.on('invalidate') do(params)
+			# console.log 'manifest.on invalidate from server',params
+			broadcast('invalidate',params)
+		
+		handler = do(req,res)
+			if paused or closed
+				res.statusCode=302
+				res.setHeader('Connection','close')
+				res.setHeader('Location',req.url)
 
-			let out = {
-				path: file.path
-				url: file.url
-				headers: {
-					'Content-Type': mimes[ext] or 'text/plain'
-				}
-			}
-
-			if ext == 'js'
-				out.headers['Service-Worker-Allowed'] = '/'
-
-			return out
-
-		return null
-
-	def urlForAsset name
-		console.log 'get url for asset',name,manifest
-		if let asset = manifest.assets[name]
-			console.log 'found asset'
-			return asset.url
-		return null
-
-	def middleware req, res, next
-		# console.log 'middleware for express?!?',req.url,this
-		if req.url == '/__hmr__' # method == 'HMR'
-			console.log 'blocking middleware'
-			return
-		next()
-
-	def intercept req, res, next
-		console.log 'get request',req.url,req.baseUrl,!!manifest
-
-		if let asset = global.imba.assetForUrl(req.url)
-			res.writeHead(200, asset.headers)
-			let reader = fs.createReadStream(asset.path)
-			return reader.pipe(res)
-
-		if req.url == '/__hmr__'
-			res.writeHead(200, {
-				'Content-Type': 'text/event-stream'
-				'Connection': 'keep-alive'
-				'Cache-Control': 'no-cache'
-			})
-
-			clients.add(res)
-			req.method = 'HMR'
-			req.on('close') do clients.delete(res)
-			return true
-
-		next(req,res)
-
-
-
-	def serve app
-		console.log('started serving',process.env.IMBA_MANIFEST)
-		return
-
-		# if !manifest and process.env.IMBA_MANIFEST
-		#	try manifest = JSON.parse(fs.readFileSync(process.env.IMBA_MANIFEST,'utf-8'))
-		# identify if this is an express server
-		servers.add(app)
-
-		app.on 'request' do(req,res)
-			console.log 'get request',req.url,req.baseUrl
-			# may need to parse raw headers here rawHeaders
-			let headers = req.headers or {}
-			let mode = headers['sec-fetch-mode']
-			let dest = headers['sec-fetch-dest']
-			let accept = (headers['accept'] or '').split(',')[0]
-
-			let {end,writeHead,write} = res
-
-			# should only intercept if wanted
-			if let asset = assetForUrl(req.url)
-				# console.log 'found asset!',req.url
-				req.url = null
-				res.writeHead(200, asset.headers)
-				let reader = fs.createReadStream(asset.path)
-				return reader.pipe(res)
-
-			# req.headers.accept
+				if closed
+					return res.end!
+				else
+					return stalledResponses.push(res)
+			
 			if req.url == '/__hmr__'
-				console.log 'handling hmr'
-
 				res.writeHead(200, {
 					'Content-Type': 'text/event-stream'
 					'Connection': 'keep-alive'
 					'Cache-Control': 'no-cache'
 				})
-
 				clients.add(res)
-				req.method = 'HMR'
 				req.on('close') do clients.delete(res)
 				return true
 
-			if false
-				res.writeHead = do(code,extras)
-					console.log 'writehead',code,extras
-					writeHead.apply(res,arguments)
+			if let asset = manifest.assetForUrl(req.url)
+				res.writeHead(200, asset.headers)
+				let reader = fs.createReadStream(asset.path)
+				return reader.pipe(res)
 
-				# only works for express, no?
-				res.end = do(data)
-					console.log "end request?!?!",data,res.statusCode,res
-					end.apply(res,arguments)
-		
-		return app
+			return originalHandler(req,res)
 
-	def broadcast event, msg
+		srv.on('request',handler)
+
+	def broadcast event, data = {}
+		let msg = "data: {JSON.stringify(data)}\n\n\n"
 		for client of clients
 			client.write("event: {event}\n")
 			client.write("id: imba\n")
-			client.write("data: {JSON.stringify(msg)}\n\n\n")
+			client.write(msg)
+		return self
+
+	def pause
+		if paused =? yes
+			broadcast('paused')
+			console.log 'paused server'
 		self
 
-	def on msg, ...rest
-		console.log 'process.on',msg,rest.length
-		if msg == 'close'
-			for server of servers
-				console.log 'closing server',server
-				server.close!
-		elif msg == 'broadcast'
-			broadcast(...rest)
-		elif msg == 'manifest'
-			manifest = rest[0]
-		self
+	def resume
+		if paused =? no
+			console.log 'resumed server'
+			broadcast('resumed')
+			flushStalledResponses!
 
+	def flushStalledResponses
+		for res in stalledResponses
+			res.end!
+		stalledResponses = []
+	
+	def close
+		pause!
 
+		new Promise do(resolve)
+			closed = yes
+			server.close(resolve)
+			flushStalledResponses!
 
 extend class ImbaContext
-	get server
-		global.#imbaServer ||= new Server
+	get servers
+		servers
 
 	get manifest
 		global.#imbaManifest ||= new Manifest
+
+	def serve srv,...params
+		return Server.wrap(srv,...params)
 
 	def urlForAsset name
 		manifest.urlForAsset(name)
@@ -259,36 +252,3 @@ extend class ImbaContext
 
 	def assetForUrl url
 		manifest.assetForUrl(url)
-
-	def serve app, ...rest
-		# console.log app
-		# console.log app.stack
-		console.log 'listen to app',app.handle
-		let res
-
-		let express? = app._router
-
-		if express?
-			let handle = app.handle
-			app.handle = do(req,res,callback)
-				server.intercept(req,res) do handle.call(app,req,res,callback)
-
-		# if it is a regular http / https server? How can we then inject ourselves before 
-
-		if app.listen isa Function				
-			res = app.listen(...rest)
-			server.servers.add(res)
-		return res
-
-# ImbaContext.prototype.server = server
-# ImbaContext.prototype.middleware = handler.middleware.bind(handler)
-
-if cluster.isWorker and process.env.IMBA_SERVE
-	process.on('message') do(msg)
-		if msg isa Array
-			global.imba.server.on(...msg)
-		else
-			global.imba.server.on(msg)
-		
-		
-

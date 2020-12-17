@@ -140,6 +140,7 @@ export class Bundle < Component
 			let defines = esoptions.define ||= {}
 			let env = o.env or process.env.NODE_ENV or 'production'
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
+			defines["ENV_DEBUG"] ||= "false"
 
 		if o.bundle == false
 			esoptions.bundle = false
@@ -163,11 +164,17 @@ export class Bundle < Component
 		# 		return {contents: ''}
 
 		let imbaDir = program.imbaPath
+		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
 
 		build.onResolve(filter: /^imba(\/|$)/) do(args)
+			
+			if args.path.match(/^imba\/(program|compiler|dist|src\/)/)
+				return null
+			
 			if args.path == 'imba'
 				args.path = 'imba/core'
 
+			# find this imbaDir relative to resolveDir?
 			let real = "{imbaDir}/src/{args.path}.imba"
 			# console.log 'real imba path',real,args.path
 			return {path: real}
@@ -178,6 +185,10 @@ export class Bundle < Component
 
 		build.onResolve(filter: /^styles:/) do({path})
 			return {path: path.slice(7), namespace: 'styles'}
+
+		build.onResolve(filter: /^\//) do(args)
+			if isCSS(args.importer)
+				return {path: args.path, external: yes}
 
 		build.onResolve(filter: /^[\w\@]/) do(args)
 			if args.importer.indexOf('.imba') > 0
