@@ -1,5 +1,7 @@
 # imba$imbaPath=global
-import './common/imba'
+import main from './common/imba'
+export default main
+
 if $node$
 	import './common/ssr'
 	import './common/server'

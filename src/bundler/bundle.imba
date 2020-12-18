@@ -70,7 +70,14 @@ export class Bundle < Component
 				externals.push("*.json")
 			externals.push(ext)
 
-		if options.exports
+		console.log 'create bundle',o
+		
+		if options.include
+			# let paths = value.indexOf('*') >= 0 ? fs.glob(value) : [fs.lookup(value)]
+			entryPoints = options.include.slice(0)
+			self
+
+		elif options.exports
 			let raw = options.exports
 			entryPoints = []
 			if typeof raw == 'string'
@@ -91,18 +98,18 @@ export class Bundle < Component
 					let out = esentry.replace(/\.(imba|[mc]?js)$/,'')
 					outfileMap[out + '.bundle.js'] = name + '.js'   # out + '.bundle.js'
 					outfileMap[out + '.bundle.css'] = name + '.css'
-					# outfileMap[esentry.replace(/\.(imba|[mc]?js)$/,'.bundle.css')] = name + '.css'
+
+		console.log 'entrypoints',entryPoints
 
 		esoptions = {
 			entryPoints: entryPoints
 			bundle: o.bundle === false ? false : true
 			define: o.define
 			platform: o.platform == 'node' ? 'node' : 'browser'
-			format: o.format or 'iife'
+			format: o.format or 'esm'
 			outfile: o.outfile
-			outbase: o.outbase or bundler.basedir
-			outbase: fs.cwd
-			outdir: fs.cwd
+			outbase: o.outbase or fs.cwd
+			outdir: o.outdir or fs.cwd
 			outExtension: {
 				".js": ".bundle.js"
 				".css": ".bundle.css"

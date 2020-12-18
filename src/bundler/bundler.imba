@@ -87,7 +87,7 @@ export class Bundler < Component
 					entries.push cfg
 
 			bundles = for cfg in entries
-				continue unless cfg.entryPoints or cfg.exports
+				continue unless cfg.entryPoints or cfg.exports or cfg.include
 				cfg.loader = Object.assign({},utils.defaultLoaders,cfg.loader or {})
 				cfg.format = 'cjs' if cfg.platform == 'node' and !cfg.format
 				new Bundle(self,cfg)

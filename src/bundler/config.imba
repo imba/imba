@@ -10,17 +10,12 @@ const schema = {
 export const defaultConfig = {
 	buildfile: 'imbabuild.json'
 
+	outdir: 'dist'
+
 	node: {
 		platform: 'node'
 		format: 'cjs'
-		target: [
-			'es2020',
-			'chrome58',
-			'firefox57',
-			'safari11',
-			'edge16',
-			'node12.19.0',
-		]
+		target: ['node12.19.0']
 		external: ['dependencies','!imba']
 	}
 

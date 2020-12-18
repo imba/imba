@@ -75,4 +75,6 @@ global class ImbaContext
 		(ctx isa window.Element ? ctx : document).querySelectorAll(query)
 
 
-global.imba = global.#imba = new ImbaContext
+const ctx = new ImbaContext
+global.imba = global.#imba = ctx
+export default ctx	

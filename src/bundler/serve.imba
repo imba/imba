@@ -19,8 +19,7 @@ export default class Serve < Component
 		listening = no
 
 	def start
-		spawn!
-		spawn!
+		# TODO allow specifying number of instances
 		spawn!
 
 	def spawn replace = null
