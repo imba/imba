@@ -571,7 +571,11 @@ export class Stack
 		@theme = null
 		@meta = {}
 		@css = ''
+		@runtime
 		self
+
+	def runtime
+		@root.runtime
 	
 	def registerSemanticToken token, kind, modifiers
 		if token isa Node
@@ -880,6 +884,9 @@ export class Node
 		if STACK.loglevel > 0
 			console.log(*arguments)
 		self
+
+	def runtime
+		STACK.runtime
 
 	def typeName
 		self:constructor:name
@@ -2089,6 +2096,9 @@ export class Parens < ValueNode
 
 	def consume node
 		@value.consume(node)
+
+
+export class PureExpression < Parens
 
 
 # Could inherit from valueNode
@@ -4572,6 +4582,10 @@ export class Access < Op
 		var rgt = right
 		var rgtexpr = null
 
+		if lft isa VarOrAccess and lft.@variable isa ImportProxy
+			console.log 'is import proxy!!!'
+			return lft.@variable.access(rgt).c
+
 		if rgt isa Token
 			rgt = Identifier.new(rgt)
 
@@ -4864,6 +4878,8 @@ export class VarOrAccess < ValueNode
 
 	def node
 		@variable ? self : value
+
+	
 
 	def datatype
 		super or @identifier.datatype
@@ -5797,6 +5813,8 @@ export class Call < Node
 			var str = callee.value.symbol
 			if str == 'new'
 				console.log 'calling'
+			# if str == '__pure__'
+			#	console.log 'PUREPRERE'
 			if str == 'extern'
 				callee.value.value.@type = 'EXTERN'
 				return ExternDeclaration.new(args)
@@ -8134,7 +8152,8 @@ export class Tag < TagLike
 		elif isAsset
 			LIT('imba.createAssetElement')
 		elif isSVG
-			LIT('imba.createSVGElement')
+			runtime:createSVGElement
+			# LIT('imba.createSVGElement')
 		elif isComponent
 			LIT('imba.createComponent')
 		else
@@ -10304,6 +10323,9 @@ export class RootScope < Scope
 		register 'isFinite', self, type: 'global'
 		register '__dirname', self, type: 'global'
 		register '__filename', self, type: 'global'
+		register('__pure__', self, type: 'global', varclass: PureReference).@c = "/* @__PURE__ */"
+		
+
 		register '_', self, type: 'global'
 
 		# preregister global special variables here
@@ -10321,7 +10343,12 @@ export class RootScope < Scope
 		@dependencies = {}
 		@symbolRefs = {}
 		@vars.split = yes
+
+		@runtime = register('__imba__', self, type: 'global', varclass: ImportProxy, path: 'imba/runtime').proxy
 		self
+	
+	def runtime
+		@runtime
 
 	def sourceId
 		@sourceId ||= STACK.sourceId # @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
@@ -10404,7 +10431,7 @@ export class RootScope < Scope
 		var req = Require.new(Str.new("'" + path + "'"))
 		var variable = Variable.new(self,name,null,system: yes)
 		var dec = @vars.add(variable, req)
-		variable.declarator ||= dec
+		variable.declarator ||= dec 
 		variable.@requirePath = path
 		@requires[name] = variable
 		return variable
@@ -10417,10 +10444,15 @@ export class RootScope < Scope
 		let imbaPath = STACK.imbaPath
 		@dependencies[path] ||= if true
 			# TODO should point directly to imba and let the package.json map correctly
+
 			let str = MP("'{imbaPath or 'imba'}/{path}'",'path')
 			# TODO create actual Import nodes instead of literals here
+			let key = path.replace(/[\/\.]/g,'_')
+			# let ref = register("imba_{key}",null,system: yes)
+			# let item = STACK.cjs ? LIT("const {ref.c} = require({str})") : LIT("import {ref.c} from {str}")
 			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
-			@head.push(item) if imbaPath !== null and !STACK.tsc and imbaPath != 'global'
+			if imbaPath !== null and !STACK.tsc and imbaPath != 'global'
+				@head.push(item)
 			item
 			
 	def imbaRef name, shorthand = '_'
@@ -10972,6 +11004,34 @@ export class SystemVariable < Variable
 
 export class ShadowedVariable < Variable
 export class GlobalReference < Variable
+export class PureReference < Variable
+
+export class ImportProxy < Variable
+	prop proxy
+
+	def initialize
+		super
+		@exports = {}
+		@head = LIT("import ")
+		@head:c = self:head.bind(self)
+		scope.@head.push(@head)
+		var getter = do |t,p,r| self.access(p)
+		@proxy = Proxy.new(self,{get: getter })
+
+	def head
+		# for own key,value
+		let keys = Object.keys(@exports)
+
+		if keys:length == 0
+			return ""
+
+		let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
+		"import \{{out}\} from '{@options:path}'"
+
+	def access key
+		let raw = C(key,mark: false)
+		console.log 'access!',raw
+		@exports[raw] ||= LIT("{@name}_{raw}")
 
 export class ScopeContext < Node
 

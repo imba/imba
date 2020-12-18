@@ -71,7 +71,7 @@ export class Bundle < Component
 			externals.push(ext)
 
 		console.log 'create bundle',o
-		
+
 		if options.include
 			# let paths = value.indexOf('*') >= 0 ? fs.glob(value) : [fs.lookup(value)]
 			entryPoints = options.include.slice(0)
@@ -127,6 +127,7 @@ export class Bundle < Component
 			external: externals
 			tsconfig: o.tsconfig
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
+			pure: o.pure
 			resolveExtensions: [
 				'.imba.mjs','.imba',
 				'.imba1.mjs','.imba1',
@@ -141,7 +142,7 @@ export class Bundle < Component
 		}
 
 		if esoptions.platform == 'browser'
-			esoptions.resolveExtensions.unshift('.web.js')
+			esoptions.resolveExtensions.unshift('.web.imba','.web.js')
 
 		unless node?
 			let defines = esoptions.define ||= {}
@@ -175,7 +176,7 @@ export class Bundle < Component
 
 		build.onResolve(filter: /^imba(\/|$)/) do(args)
 			
-			if args.path.match(/^imba\/(program|compiler|dist|src\/)/)
+			if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
 				return null
 			
 			if args.path == 'imba'

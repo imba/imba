@@ -221,7 +221,7 @@ export class ImbaFile < FileNode
 			o = Object.assign({
 				platform: 'node',
 				format: 'esm',
-				raw: true
+				# raw: true
 				imbaPath: 'imba'
 				styles: 'extern'
 				hmr: true

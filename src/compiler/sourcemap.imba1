@@ -22,7 +22,7 @@ export class SourceMap
 
 	def initialize script, options, file
 		@script = script
-		@options = options
+		@options = options or {}
 		@sourcePath = file:sourcePath
 		@sourceRoot = file:sourceRoot
 		@targetPath = file:targetPath

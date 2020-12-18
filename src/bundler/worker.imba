@@ -13,6 +13,7 @@ def compile_imba code, options
 	if res.css
 		js += "\nimport 'styles:{options.sourcePath}'"
 
+	# clean up the trims now
 	out.js = js
 	out.css = res.css
 	return out
