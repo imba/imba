@@ -5,23 +5,17 @@ const workerpool = require('workerpool')
 
 const id = Math.random!
 
-def compile {code,type,options}
-	let response = {id: options.sourceId}
+def compile_imba code, options
+	let out = {id: options.sourceId}
+	let res = compiler.compile(code,options)
+	let js = res.js
 
-	if type == 'imba1'
-		let res = imba1.compile(code,options)
-		response.js = res.js
+	if res.css
+		js += "\nimport 'styles:{options.sourcePath}'"
 
-	elif type == 'imba'
-		let res = compiler.compile(code,options)
-		let js = res.js
-
-		if res.css
-			js += "\nimport 'styles:{options.sourcePath}'"
-
-		response.js = js
-		response.css = res.css
-	return response
+	out.js = js
+	out.css = res.css
+	return out
 
 
 def compile_imba1 code,options
@@ -36,6 +30,6 @@ def compile_imba1 code,options
 	return {id: options.sourceId, js: js}
 
 workerpool.worker(
-	compile: compile
+	compile_imba: compile_imba
 	compile_imba1: compile_imba1
 )

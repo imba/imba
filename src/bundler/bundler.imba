@@ -143,10 +143,13 @@ export class Bundler < Component
 		
 		let filesToWrite = []
 		let manifest = {
+			cwd: fs.cwd
 			files: {}
 			urls: {}
 			assets: {}
 			idmap: sourceIdMap
+			inputs: {}
+			outputs: {}
 		}
 
 		let firstWrite = !self.files
@@ -154,8 +157,36 @@ export class Bundler < Component
 
 		let files = []
 		let sheets = []
+
+		let outputs = manifest.outputs
+		let inputs = manifest.inputs
 		# go through output files to actually 
 		for bundle in bundles
+			let ns = bundle.platform
+			for own path,output of bundle.outputs
+				let entry = outputs[path] ||= {}
+
+				entry[ns] = {
+					imports: output.imports
+					exports: output.exports
+				}
+
+			for own path,input of bundle.inputs
+				let entry = inputs[path] ||= {}
+				# TODO need to calculate the outname based on outbase etc
+				let outname = path.replace(/\.(imba|[cm]?jsx?|tsx?)$/,'.bundle')
+				if outputs[outname+'.js']
+					entry[ns] = outname+'.js'
+					# throw error if this is already touched by another bundle?
+				
+				if outputs[outname+'.css']
+					entry.css = outname+'.css'
+				# look for the outputs
+			
+			# delete input entries without any outputs
+			# for own k,v of inputs
+			#	delete inputs[k] unless Object.keys(v).length
+
 			for file in bundle.files
 				
 				files.push(file)
@@ -248,7 +279,7 @@ export class Bundler < Component
 				buildinfo.data[k] = v
 			await buildinfo.save!
 
-		if false # drop this?
+		if true # drop this?
 			let json = JSON.stringify(bundles.map(do $1.meta),null,2)
 			await nodefs.promises.writeFile(fs.resolve('buildinfo.json'),json)
 		yes

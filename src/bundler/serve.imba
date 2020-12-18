@@ -5,39 +5,6 @@ const cluster = require 'cluster'
 
 import Component from './component'
 
-export class Staller
-
-	def constructor server
-		server = server
-		log = server.log
-		active = yes
-		listening = no
-		spawn!	
-
-	def spawn
-		cluster.setupMaster({exec: process.argv[1]})
-		worker = cluster.fork(PORT: server.port)
-		worker.on 'listening' do(address)
-			console.log 'staller is listening',address
-			listening = yes
-			unless active
-				yes
-	
-	def send ...args
-		worker.send(...args)
-
-	def resume
-		unless active
-			active = yes
-			send('start')
-
-	def pause
-		if active
-			send('stop')
-			active = no
-			spawn!
-
-
 export default class Serve < Component
 	def constructor program, params
 		super()
@@ -50,20 +17,10 @@ export default class Serve < Component
 		workers = []
 		active = yes
 		listening = no
-	
-	def pause
-		self
-		# staller.resume!
-	
-	def resume
-		self
-		# staller.pause!
 
 	def start
 		spawn!
-
-	def restart
-		main.send('close') if main
+		spawn!
 		spawn!
 
 	def spawn replace = null

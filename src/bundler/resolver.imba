@@ -192,7 +192,8 @@ export class Resolver
 					lookupMap[m] = yes
 
 				if fs.existsSync(m)
-					return {path: fs.resolve(m), namespace: namespace}
+					path = namespace == 'file' ? fs.resolve(m) : m
+					return {path: path, namespace: namespace}
 
 		return {path: path, namespace: namespace}
 

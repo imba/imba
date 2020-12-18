@@ -95,6 +95,8 @@ class Asset
 	get headers
 		{
 			'Content-Type': mimes[ext] or 'text/plain'
+			'Access-Control-Allow-Origin': '*'
+			'cache-control': 'public'
 		}
 
 class Manifest < EventEmitter

@@ -228,19 +228,17 @@ export class ImbaFile < FileNode
 				bundle: false
 				sourcePath: rel,
 				sourceId: id,
-				cwd: fs.cwd
+				cwd: fs.cwd,
+				config: program.config
 			},o)
+
+			# console.log "compile with options",o,program.config.theme
+			# throw "non"
 
 			let code = await read!
 
-			let params = {
-				code: code
-				options: o
-				type: 'imba'
-			}
-
 			let t = Date.now!
-			let out = await program.workers.exec('compile', [params])
+			let out = await program.workers.exec('compile_imba', [code,o])
 			program.log.success 'compile %path in %ms',rel,Date.now! - t
 			return out
 
