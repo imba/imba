@@ -3311,9 +3311,9 @@ export class TagDeclaration < ClassDeclaration
 		if sup and sup.@variable
 			sup = sup.@variable
 		elif sup
-			sup = CALL(LIT('imba.tags.get'),[sup,STR(sup.toClassName)])
+			sup = CALL(runtime:getTagType,[sup,STR(sup.toClassName)])
 		else
-			sup = CALL(LIT('imba.tags.get'),[STR('component'),STR('ImbaElement')])
+			sup = CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
@@ -3324,7 +3324,7 @@ export class TagDeclaration < ClassDeclaration
 		elif option(:extension)
 			@body.@delimiter = ','
 			@body.set(braces: yes)
-			let cls = CALL(LIT('imba.tags.get'),[name,STR(name.toClassName)])
+			let cls = CALL(runtime:getTagType,[name,STR(name.toClassName)])
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
 
@@ -3352,7 +3352,7 @@ export class TagDeclaration < ClassDeclaration
 				js += "; {className}[{initKey.c}]()"
 			# let ext = (option(:extends) or LIT('{}')).c
 			let ext = Obj.wrap(@config).c
-			js += "; imba.tags.define({name.c},{className},{ext})"
+			js += "; {runtime:defineTag}({name.c},{className},{ext})"
 		else
 			unless option(:extension)
 				js += "; globalThis.{M className, name} = {className};"
@@ -7734,8 +7734,8 @@ export class TagContent < TagLike
 			if value isa Call or value isa BangCall
 				# mark parent to reset imba.ctx at the end
 				let k = "{parent.cvar}[{osym('$')}]"
-				parts.unshift("imba.ctx=({k} || ({k}=\{_:{fragment.tvar}\}))")
-				parts.push("imba.ctx=null")
+				parts.unshift("{runtime:renderContext}.context=({k} || ({k}=\{_:{fragment.tvar}\}))")
+				parts.push("{runtime:renderContext}.context=null")
 
 		elif isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
@@ -7753,8 +7753,8 @@ export class TagContent < TagLike
 				# let k = "{parent.cvar}[{osym.c}]"
 				let k = "{parent.cvar}[{osym('$')}]"
 				# mark parent to reset imba.ctx at the end
-				parts.unshift("imba.ctx=({k} || ({k}=\{_:{fragment.tvar}\}))")
-				parts.push("imba.ctx=null")
+				parts.unshift("{runtime:renderContext}.context=({k} || ({k}=\{_:{fragment.tvar}\}))")
+				parts.push("{runtime:renderContext}.context=null")
 
 			if value isa TagTextContent
 				parts.push("({vvar}==={key}&&{bvar}) || ({inskey} = {ref}.insert$(String({key}={vvar}),{@flags},{inskey}))")
@@ -8148,16 +8148,18 @@ export class Tag < TagLike
 	
 	def create_
 		if isFragment or isSlot
-			LIT('imba.createLiveFragment')
+			runtime:createLiveFragment
+			# LIT('imba.createLiveFragment')
 		elif isAsset
-			LIT('imba.createAssetElement')
+			runtime:createAssetElement
+			# LIT('imba.createAssetElement')
 		elif isSVG
 			runtime:createSVGElement
 			# LIT('imba.createSVGElement')
 		elif isComponent
-			LIT('imba.createComponent')
+			runtime:createComponent
 		else
-			LIT('imba.createElement')
+			runtime:createElement
 
 	def isReactive
 		option(:reactive) or (@parent ? @parent.isReactive : !(scope__ isa RootScope))
@@ -8385,11 +8387,11 @@ export class Tag < TagLike
 				let key = "{cvar}[{osym}]"
 				let ckey = "{cvar}[{osym('$')}]"
 				let inskey = "{cvar}[{osym('ins')}]"
-				add("imba.ctx=({ckey} || ({ckey}=\{\}))")
+				add("{runtime:renderContext}.context=({ckey} || ({ckey}=\{\}))")
 				
 				let call = CALL(option(:type).toFunctionalType,option(:args))
 				add("{tvar}={call.c(o)}")
-				add("imba.ctx=null")
+				add("{runtime:renderContext}.context=null")
 				add("{tvar}==={ref} || ({inskey} = {fragment.tvar}.insert$({ref}={tvar},{@flags},{inskey}))")
 				# call the tag - type?
 
@@ -8626,7 +8628,7 @@ export class Tag < TagLike
 				foot.push "{bvar} || {tvar}.insertInto$({pref})"
 
 		if option(:fragmented)
-			add "imba.ctx=null"
+			add "{runtime:renderContext}.context=null"
 
 		if !parent
 			if option(:return)
@@ -10020,6 +10022,9 @@ export class Scope
 		@refcounter = 0
 		@level = (parent ? parent.@level : -1) + 1
 		setup
+
+	def runtime
+		root.runtime
 		
 	def setup
 		@selfless = yes
@@ -10057,7 +10062,7 @@ export class Scope
 		# deal with root instead?
 		@tagCache ||= declare('c$$',
 			# LIT('(Imba.$c ? (Imba.$c[Imba.$k] || (Imba.$c[Imba.$k] = {})) : {})'),
-			LIT('(imba.ctx||{})'),
+			LIT("({runtime:renderContext}.context||\{\})"),
 			system: yes
 			temporary: yes
 		)
@@ -10211,9 +10216,6 @@ export class Scope
 		STACK.meta:universal = no
 		@imba ||= (STACK.isNode ? LIT("(this && this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])") : LIT('imba'))
 		# root.imba # requires('imba2', 'Imba')
-
-	def imbaRef name, shorthand = '_'
-		root.imbaRef(name,shorthand)
 
 	def imbaDependency *params
 		root.imbaDependency(*params)
@@ -10441,6 +10443,7 @@ export class RootScope < Scope
 		@imba ||= LIT('imba')
 
 	def imbaDependency path
+		return
 		let imbaPath = STACK.imbaPath
 		@dependencies[path] ||= if true
 			# TODO should point directly to imba and let the package.json map correctly
@@ -10454,22 +10457,6 @@ export class RootScope < Scope
 			if imbaPath !== null and !STACK.tsc and imbaPath != 'global'
 				@head.push(item)
 			item
-			
-	def imbaRef name, shorthand = '_'
-		if name == 'tagscope'
-			name = 'createTagScope(/*SCOPEID*/)'
-		elif name == 'tagfactory'
-			name = 'createElementFactory(/*SCOPEID*/)'
-
-		var map = @imbaRefs ||= {}
-		return map[name] if map[name]
-
-		var imbaRef = self.imba
-		
-		if @requires.Imba
-			map[name] = declare(shorthand,OP('.',imba,name), system: yes)
-		else
-			map[name] = "{imbaRef.c}.{name}"
 
 	def symbolRef name
 		let map = @symbolRefs
@@ -11008,9 +10995,11 @@ export class PureReference < Variable
 
 export class ImportProxy < Variable
 	prop proxy
+	prop path
 
 	def initialize
 		super
+		@path = @options:path
 		@exports = {}
 		@head = LIT("import ")
 		@head:c = self:head.bind(self)
@@ -11026,7 +11015,13 @@ export class ImportProxy < Variable
 			return ""
 
 		let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
-		"import \{{out}\} from '{@options:path}'"
+
+		let path = self.path
+
+		if path == 'imba/runtime'
+			path = STACK.imbaPath or 'imba/runtime'
+
+		"import \{{out}\} from '{path or ""}'"
 
 	def access key
 		let raw = C(key,mark: false)

@@ -1,7 +1,6 @@
 # imba$imbaPath=global
 let raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (do |blk| setTimeout(blk,1000 / 60))
 
-
 # Scheduler
 export class Scheduler
 	def constructor
@@ -75,4 +74,22 @@ export class Scheduler
 			raf($ticker)
 		self
 
-export const scheduler = __pure__ new Scheduler 
+export const scheduler = new Scheduler 
+
+export def commit
+	scheduler.add('render').promise
+
+export def setTimeout fn,ms
+	global.setTimeout(&,ms) do
+		fn!
+		commit!
+		return
+
+export def setInterval fn,ms
+	global.setInterval(&,ms) do
+		fn!
+		commit!
+		return
+
+export const clearInterval = global.clearInterval
+export const clearTimeout = global.clearTimeout
