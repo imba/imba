@@ -590,7 +590,8 @@ export class Stack
 			token.@kind = kind
 		@semanticTokens.push(token)
 	
-
+	def use item
+		@root.use(item)
 		
 	def incr name
 		@counters[name] ||= 0
@@ -3313,7 +3314,8 @@ export class TagDeclaration < ClassDeclaration
 		elif sup
 			sup = CALL(runtime:getTagType,[sup,STR(sup.toClassName)])
 		else
-			sup = CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
+			sup = runtime:ImbaElement # CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
+			# sup = CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
@@ -7389,7 +7391,9 @@ export class TagHandler < TagPart
 
 	def visit
 		super
+		STACK.use('events')
 		# Replace with something better for debugging
+
 		# if @name and CUSTOM_EVENTS[String(@name)]
 		#	scope__.imbaDependency('events/' + String(@name))
 
@@ -10345,11 +10349,15 @@ export class RootScope < Scope
 		@symbolRefs = {}
 		@vars.split = yes
 
-		@runtime = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba').proxy
+		@imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
+		@runtime = @imba.proxy
 		self
 	
 	def runtime
 		@runtime
+
+	def use item
+		@imba.touch(item)
 
 	def sourceId
 		@sourceId ||= STACK.sourceId # @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
@@ -10438,30 +10446,15 @@ export class RootScope < Scope
 		return variable
 
 	def imba
-		imbaDependency('core') unless @imba
-		@imba ||= LIT('imba')
+		@imba
 
 	def imbaDependency path
 		return
-		let imbaPath = STACK.imbaPath
-		@dependencies[path] ||= if true
-			# TODO should point directly to imba and let the package.json map correctly
-
-			let str = MP("'{imbaPath or 'imba'}/{path}'",'path')
-			# TODO create actual Import nodes instead of literals here
-			let key = path.replace(/[\/\.]/g,'_')
-			# let ref = register("imba_{key}",null,system: yes)
-			# let item = STACK.cjs ? LIT("const {ref.c} = require({str})") : LIT("import {ref.c} from {str}")
-			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
-			if imbaPath !== null and !STACK.tsc and imbaPath != 'global'
-				@head.push(item)
-			item
 
 	def symbolRef name
 		let map = @symbolRefs
 		map[name] ||= declare("{String(name).replace(/[\@\#]/g,'_')}$",LIT("Symbol.for('{name}')"), type: 'const', system: yes)
 		
-
 	def c o = {}
 		o:expression = no
 
@@ -11000,15 +10993,22 @@ export class ImportProxy < Variable
 		super
 		@path = @options:path
 		@exports = {}
+		@touched = {}
 		@head = LIT("import ")
 		@head:c = self:head.bind(self)
 		scope.@head.push(@head)
 		var getter = do |t,p,r| self.access(p)
 		@proxy = Proxy.new(self,{get: getter })
 
+	def touch key
+		unless @touched[key]
+			@touched[key] = access(key)
+		self
+
 	def head
 		# for own key,value
 		let keys = Object.keys(@exports)
+		let touches = Object.values(@touched)
 
 		if keys:length == 0
 			return ""
@@ -11020,7 +11020,10 @@ export class ImportProxy < Variable
 		if path == 'imba'
 			path = STACK.imbaPath or 'imba'
 
-		"import \{{out}\} from '{path or ""}'"
+		let js = "import \{{out}\} from '{path or ""}'"
+		if touches:length
+			js += ";\n({touches.map(do $1.c).join(",")});"
+		return js
 
 	def access key
 		let raw = C(key,mark: false)

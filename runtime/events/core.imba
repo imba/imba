@@ -15,6 +15,8 @@ const keyCodes = {
 	del: [8,46]
 }
 
+export const events = {}
+
 def Event.log$mod ...params
 	console.log(...params)
 	return true
