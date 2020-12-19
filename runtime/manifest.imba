@@ -2,6 +2,22 @@ import {EventEmitter} from 'events'
 import fs from 'fs'
 import fsp from 'path'
 
+const mimes = {
+	svg: 'image/svg+xml'
+	html: 'text/html'
+	jpg: 'image/jpeg'
+	jpeg: 'image/jpeg'
+	js: 'text/javascript'
+	mjs: 'text/javascript'
+	json: 'application/json'
+	otf: 'font/otf'
+	ttf: 'font/ttf'
+	woff: 'font/woff'
+	woff2: 'font/woff2'
+	png: 'image/png'
+	css: 'text/css'
+}
+
 class Asset
 	def constructor desc
 		desc = desc

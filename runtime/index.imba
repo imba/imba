@@ -10,6 +10,7 @@ export * from './dom/fragment'
 export * from './dom/component'
 export * from './dom/styles'
 export * from './dom/context'
+export * from './dom/assets'
 export * from './dom/mount'
 
 # Exporting events

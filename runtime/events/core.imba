@@ -38,7 +38,7 @@ def Event.throttle$mod ms = 250
 
 	element.flags.incr('throttled')
 
-	imba.once(current,'end') do
+	once(current,'end') do
 		setTimeout(&,ms) do
 			element.flags.decr('throttled')
 			handler.throttled = no

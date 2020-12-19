@@ -156,7 +156,7 @@ def Event.touch$moved$mod a,b
 		let pinned = state.pinTarget
 		element.flags.incr('_move_')
 		pinned.flags.incr('_move_') if pinned
-		imba.once(current,'end') do
+		once(current,'end') do
 			pinned.flags.decr('_move_') if pinned
 			element.flags.decr('_move_')
 

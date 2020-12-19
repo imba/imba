@@ -32,7 +32,7 @@ export const {
 const CustomTagConstructors = {}
 const TYPES = {}
 
-export getTagType name
+export def getTagType name
 	if window[name]
 		return window[name]
 
@@ -149,7 +149,6 @@ Element.prototype.appendChild$  = Element.prototype.appendChild
 Element.prototype.removeChild$  = Element.prototype.removeChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
-
 Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
@@ -212,8 +211,6 @@ extend class SVGElement
 
 # Registry
 
-const CustomTagConstructors = {}
-
 class ImbaElementRegistry
 
 	def constructor
@@ -262,6 +259,31 @@ class ImbaElementRegistry
 
 export const tags = new ImbaElementRegistry
 
+export def createComponent name, parent, flags, text, ctx
+	# the component could have a different web-components name?
+	let el
+	
+	if typeof name != 'string'
+		if name and name.nodeName
+			name = name.nodeName
+
+	if CustomTagConstructors[name]
+		el = CustomTagConstructors[name].create$(el)
+		console.warn "slot not implemented"
+		# el.slot$ = proto.slot$
+		el.__slots = {}
+	else
+		el = global.document.createElement(name)
+
+	el.##parent = parent
+	el.#init!
+
+	if text !== null
+		el.slot$('__').text$(text)
+		
+	if flags or el.flags$ns # or nsflag
+		el.flag$(flags or '')
+	return el
 
 export def defineTag name, klass, options = {}
 	TYPES[name] = klass
