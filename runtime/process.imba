@@ -3,6 +3,9 @@ import cluster from 'cluster'
 import fs from 'fs'
 import fsp from 'path'
 import {EventEmitter} from 'events'
+import {manifest} from './manifest'
+
+const proc = global.process
 
 const mimes = {
 	svg: 'image/svg+xml'
@@ -51,20 +54,20 @@ export const process = new class Process < EventEmitter
 		super
 
 		if cluster.isWorker
-			process.on('message') do(msg)
+			proc.on('message') do(msg)
 				emit('message',msg)
 				emit(...msg.slice(1)) if msg[0] == 'emit'
 		self
 
 	def send msg
-		if process.send isa Function
-			process.send(msg)
+		if proc.send isa Function
+			proc.send(msg)
 
 	def reload
 		# only allow reloading once
 		return self unless isReloading =? yes
 
-		unless process.env.IMBA_SERVE
+		unless proc.env.IMBA_SERVE
 			console.warn "not possible to gracefully reload servers not started via imba start"
 			return
 
@@ -78,75 +81,10 @@ export const process = new class Process < EventEmitter
 				server.close!
 			await Promise.all(promises)
 			console.log 'actually closed!!'
-			process.exit(0)
+			proc.exit(0)
 
 		send('reload')
 
-
-class Asset
-	def constructor desc
-		desc = desc
-
-	get url do desc.url
-	get path do desc.path
-	get hash do desc.hash
-	get ext do #ext ||= fsp.extname(desc.path).substr(1)
-	get body do #body ||= fs.readFileSync(desc.path,'utf8')
-
-	get headers
-		{
-			'Content-Type': mimes[ext] or 'text/plain'
-			'Access-Control-Allow-Origin': '*'
-			'cache-control': 'public'
-		}
-
-class Manifest < EventEmitter
-	def constructor cwd = process.cwd!
-		super()
-		cwd = cwd
-		path = fsp.resolve(cwd,'imbabuild.json')
-		data = load! or {}
-
-	get changes
-		data.changes or []
-
-	def load
-		try JSON.parse(fs.readFileSync(path,'utf-8'))
-
-	def assetByName name
-		return unless data.assets and name
-		if let asset = data.assets[name]
-			return asset.#rich ||= new Asset(asset)
-
-	def urlForAsset name
-		if let asset = assetByName(name)
-			return asset.url
-		return null
-
-	def assetForUrl url
-		let pathname = url.split('?')[0]
-		return assetByName(data and data.urls and data.urls[pathname])
-
-	def watch
-		if #watch =? yes
-			fs.watch(path) do(curr,prev)
-				let updated = load!
-				data = updated
-
-				emit('update',data.changes,self)
-
-				let changedAssets = for item in data.changes
-					let entry = data.files[item]
-					continue unless entry.url
-					entry.url
-
-				if changedAssets.length
-					emit('invalidate',changedAssets)
-
-	# listen to updates etc
-	def on event, cb
-		watch!
-		super
 
 class Server
 
@@ -160,7 +98,6 @@ class Server
 		paused = no
 		server = srv
 		clients = new Set
-		manifest = global.imba.manifest
 		stalledResponses = []
 
 		# fetch and remove the original request listener
@@ -237,9 +174,9 @@ class Server
 			server.close(resolve)
 			flushStalledResponses!
 
-
 export def asset name
 	manifest.assetByName(name)
 
 export def serve srv,...params
+	console.log 'serving!'
 	return Server.wrap(srv,...params)

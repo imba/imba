@@ -1,13 +1,17 @@
+import {renderContext} from './context'
+import {scheduler} from '../scheduler'
+
 export def mount mountable, into
 	let parent = into or document.body
 	let element = mountable
 	if mountable isa Function
 		let ctx = {_: parent}
 		let tick = do
-			imba.ctx = ctx
+			renderContext.context = ctx
 			mountable(ctx)
+			# now remove the context?
 		element = tick()
-		imba.scheduler.listen('render',tick)
+		scheduler.listen('render',tick)
 	else
 		# automatic scheduling of element - even before
 		# element.__schedule = yes

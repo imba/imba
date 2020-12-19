@@ -2,14 +2,15 @@
 
 export * from './utils'
 export * from './scheduler'
+export * from './manifest'
 export * from './process'
 
 export * from './dom/core'
-export * from './dom/mount'
 export * from './dom/fragment'
 export * from './dom/component'
 export * from './dom/styles'
 export * from './dom/context'
+export * from './dom/mount'
 
 # Exporting events
 export * from './events/core'

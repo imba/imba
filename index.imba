@@ -1,2 +1,2 @@
 # require("./src/imba/index.imba")
-export { default } from './src/imba/core'
+export * from './runtime/index.imba'

@@ -10,8 +10,6 @@ import {AsyncLocalStorage} from 'async_hooks'
 
 let asl = null
 
-
-
 class Location < URL
 
 export class Window
@@ -634,7 +632,11 @@ export def createComponent name, parent, flags, text, ctx
 	return el
 
 export def defineTag name, klass, options = {}
-	TYPES[name] = klass
+	TYPES[name] = {
+		idl: yes
+		name: name
+		klass: klass
+	}
 	klass.nodeName = name
 
 	let proto = klass.prototype

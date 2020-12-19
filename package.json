@@ -59,15 +59,21 @@
     "node": ">=13.10.0"
   },
   "directories": {},
-  "main": "./index.js",
+  "main": "./index",
   "type": "commonjs",
   "browser": {
-    "imba": "./dist/imba.js",
+    "imba": "./dist/runtime.web.mjs",
     "path": "./vendor/path.js",
     "compiler": "./dist/compiler.js",
+    ".": "./dist/runtime.web.mjs",
     "./core.imba": "./build/src/imba/core.imba.web.js"
   },
   "exports": {
+    ".": {
+      "require": "./dist/runtime.node.cjs",
+      "default": "./dist/runtime.node.mjs",
+      "browser": "./dist/runtime.web.mjs"
+    },
     "./core": {
       "require": "./dist/imba.node.cjs",
       "default": "./build/src/imba/core.imba.mjs",

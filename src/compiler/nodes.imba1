@@ -4583,7 +4583,6 @@ export class Access < Op
 		var rgtexpr = null
 
 		if lft isa VarOrAccess and lft.@variable isa ImportProxy
-			console.log 'is import proxy!!!'
 			return lft.@variable.access(rgt).c
 
 		if rgt isa Token
@@ -10306,7 +10305,7 @@ export class RootScope < Scope
 		register('require', self, type: 'global') # .@c = 'globalThis'
 		register('import', self, type: 'global')
 		register 'module', self, type: 'global'
-		register 'imba', self, type: 'global', varclass: GlobalReference
+		# register 'imba', self, type: 'global', varclass: GlobalReference
 		register 'window', self, type: 'global', varclass: GlobalReference
 		self.document = register 'document', self, type: 'global', varclass: GlobalReference
 		register 'exports', self, type: 'global'
@@ -10346,7 +10345,7 @@ export class RootScope < Scope
 		@symbolRefs = {}
 		@vars.split = yes
 
-		@runtime = register('__imba__', self, type: 'global', varclass: ImportProxy, path: 'imba/runtime').proxy
+		@runtime = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba').proxy
 		self
 	
 	def runtime
@@ -11018,15 +11017,16 @@ export class ImportProxy < Variable
 
 		let path = self.path
 
-		if path == 'imba/runtime'
-			path = STACK.imbaPath or 'imba/runtime'
+		if path == 'imba'
+			path = STACK.imbaPath or 'imba'
 
 		"import \{{out}\} from '{path or ""}'"
 
 	def access key
 		let raw = C(key,mark: false)
-		console.log 'access!',raw
 		@exports[raw] ||= LIT("{@name}_{raw}")
+
+export class ImbaRuntime < ImportProxy
 
 export class ScopeContext < Node
 

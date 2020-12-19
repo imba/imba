@@ -175,12 +175,12 @@ export class Bundle < Component
 		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
 
 		build.onResolve(filter: /^imba(\/|$)/) do(args)
+			if args.path == 'imba'
+				return {path: real}
 			
+			console.log "IMBA RESOLVE",args.path,args.importer
 			if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
 				return null
-			
-			if args.path == 'imba'
-				args.path = 'imba/core'
 
 			# find this imbaDir relative to resolveDir?
 			let real = "{imbaDir}/src/{args.path}.imba"

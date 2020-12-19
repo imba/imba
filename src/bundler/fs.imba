@@ -240,6 +240,7 @@ export class ImbaFile < FileNode
 			let t = Date.now!
 			let out = await program.workers.exec('compile_imba', [code,o])
 			program.log.success 'compile %path in %ms',rel,Date.now! - t
+			# console.log 'compiled',out.js
 			return out
 
 export class Imba1File < FileNode
