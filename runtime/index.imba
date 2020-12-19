@@ -4,6 +4,7 @@ export * from './utils'
 export * from './scheduler'
 export * from './manifest'
 export * from './process'
+export * from './hmr'
 
 export * from './dom/core'
 export * from './dom/fragment'
@@ -19,11 +20,3 @@ export * from './events/intersect'
 export * from './events/pointer'
 export * from './events/resize'
 export * from './events/selection'
-
-###
-
-export pure const item = hello
-
-export const item = pure
-	...
-###
