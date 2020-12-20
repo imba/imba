@@ -2,7 +2,7 @@ const imba1 = require('./bootstrap.compiler.js');
 const imba2 = require('./bootstrap.compiler2.js');
 const chokidar = require('chokidar');
 const fs = require('fs');
-const path = require('path');
+const np = require('path');
 
 let helpers = imba2.helpers;
 let time = 0;
@@ -13,15 +13,41 @@ let argv = helpers.parseArgs(process.argv.slice(2),{
 let meta = Symbol();
 let compileCache = {};
 
+let defaults = {
+	paths: {
+
+	}
+}
+
 function plugin(build){
 	// console.log('setting up plugin',build,this);
 	let options = this.options;
 	let self = this;
 	let watcher = this.watcher;
 	let fs = require('fs');
+	let basedir = np.resolve(__dirname,'..');
+	let outdir = options.outdir || np.dirname(options.outfile);
+	let distdir = np.resolve(__dirname,'..','dist')
+	let distrel = './' + np.relative(distdir,outdir);
+	let absoutdir = np.resolve(__dirname,'..',outdir);
 
-	build.onResolve({filter: /^compiler1?$/}, ({path}) => {
-		let src = path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./compiler.cjs";
+	function relative(path){
+		let res = np.relative(absoutdir,np.resolve(basedir,path));
+		if(res[0] != '.') res = './' + res;
+		return res;
+	}
+	
+	console.log(absoutdir,distdir,distrel);
+	console.log(absoutdir,'relative!',relative('dist/compiler'));
+
+	build.onResolve({filter: /^dist\//}, (p) => {
+		return {path: relative(p.path), external: true}
+	});
+
+	build.onResolve({filter: /^compiler1?$/}, (p) => {
+		// find the output dir
+		console.log('resolve compiler?',p,options);
+		let src = p.path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./compiler.cjs";
 		return {path: src, external: true}
 	});
 
@@ -180,10 +206,10 @@ bundle([{
 	entryPoints: ['src/bundler/index.imba'],
 	outfile: 'dist/bundler.js',
 	minify: false,
-	imbaPath: '../imba', // path.resolve(__dirname,'..','src','imba'),
+	imbaPath: '../imba',
 	sourcemap: false,
 	format: 'cjs',
-	external: ['chokidar','esbuild','readdirp'],
+	external: ['chokidar','esbuild'],
 	platform: 'node'
 },{
 	entryPoints: ['src/bundler/worker.imba'],
@@ -192,6 +218,17 @@ bundle([{
 	imbaPath: '../imba',
 	sourcemap: false,
 	format: 'cjs',
-	external: ['chokidar','esbuild','readdirp'],
+	external: ['chokidar','esbuild'],
+	platform: 'node'
+},{
+	entryPoints: ['src/bin/imba.imba'],
+	outbase: 'src/bin',
+	outdir: 'dist/bin',
+	minify: false,
+	imbaPath: '../imba',
+	// banner: '#!/usr/bin/env node',
+	sourcemap: false,
+	format: 'cjs',
+	external: ['chokidar','esbuild'],
 	platform: 'node'
 }])

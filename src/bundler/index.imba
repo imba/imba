@@ -10,7 +10,6 @@ import {program} from 'commander'
 
 import Program from './program'
 
-
 let prog = program.version('0.0.1')
 
 prog.help!
@@ -55,8 +54,6 @@ export def run options = {}
 	let mtime = fs.statSync(__filename).mtimeMs
 
 	options.imbaPath ||= np.resolve(__dirname,'..')
-	
-
 	options.mtime = mtime
 	options.config = utils.resolveConfig(options.config or 'imbaconfig.json',cwd)
 	options.package = utils.resolveFile(options.package or 'package.json',cwd) do JSON.parse($1.body)

@@ -2,6 +2,8 @@ const fs = require 'fs'
 const path = require 'path'
 const crypto = require 'crypto'
 
+import {resolve as parseConfig} from './config'
+
 export const defaultLoaders = {
 	".png": "file",
 	".svg": "file",
@@ -54,13 +56,13 @@ export def pluck array, cb
 			return item
 	return null
 
-export def resolveConfig name, cwd = '.'
+export def resolveConfig cwd, name
 	try
-		let src = path.resolve(cwd,name)
+		let src = path.resolve(cwd or '.',name or 'imbaconfig.json')
 		let config = JSON.parse(fs.readFileSync(src,'utf8'))
 		config.#mtime = fs.statSync(src).mtimeMs or 0
 		config.#path = src
-		return config
+		return parseConfig(config)
 	catch e
 		return {}
 	
@@ -80,6 +82,9 @@ export def resolveFile name,cwd,handler
 		}
 		return handler(file)
 	return null
+
+export def resolvePackage cwd
+	resolveFile('package.json',cwd) do JSON.parse($1.body)
 
 # generates a function that converts integers to a short
 # alphanumeric string utilizing the supplied alphabet

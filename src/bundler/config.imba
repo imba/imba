@@ -1,6 +1,3 @@
-const utils = require './utils'
-const path = require 'path'
-
 const schema = {
 	loader: 'merge'
 	node: 'merge'

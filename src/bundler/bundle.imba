@@ -1,6 +1,3 @@
-import compiler from 'compiler'
-import imba1 from 'compiler1'
-
 import {parseAsset} from '../compiler/assets'
 
 const esbuild = require 'esbuild'
