@@ -70,8 +70,6 @@ export class Bundle < Component
 				externals.push("*.json")
 			externals.push(ext)
 
-		console.log 'create bundle',o,externals,o.external
-
 		if options.include
 			# let paths = value.indexOf('*') >= 0 ? fs.glob(value) : [fs.lookup(value)]
 			entryPoints = options.include.slice(0)
@@ -99,8 +97,6 @@ export class Bundle < Component
 					outfileMap[out + '.bundle.js'] = name + '.js'   # out + '.bundle.js'
 					outfileMap[out + '.bundle.css'] = name + '.css'
 
-		console.log 'entrypoints',entryPoints
-
 		esoptions = {
 			entryPoints: entryPoints
 			bundle: o.bundle === false ? false : true
@@ -119,8 +115,8 @@ export class Bundle < Component
 			banner: o.banner
 			footer: o.footer
 			splitting: o.splitting
-			minify: !!minify?
-			incremental: bundler.incremental?
+			minify: program.options.minify
+			incremental: program.options.watch
 			loader: o.loader or {}
 			write: false
 			metafile: "metafile.json"
@@ -144,6 +140,8 @@ export class Bundle < Component
 
 		if esoptions.platform == 'browser'
 			esoptions.resolveExtensions.unshift('.web.imba','.web.js')
+		else
+			esoptions.resolveExtensions.unshift('.node.imba','.node.js')
 
 		unless node?
 			let defines = esoptions.define ||= {}
@@ -156,7 +154,6 @@ export class Bundle < Component
 			delete esoptions.external
 
 		if o.splitting and esoptions.format != 'esm'
-			# esoptions.splitting = false
 			esoptions.format = 'esm'
 
 	def setup
@@ -165,20 +162,12 @@ export class Bundle < Component
 	def plugin build
 		let externs = options.external or []
 
-		# if options.imbaPath == 'global'
-		# 	build.onResolve(filter: /^imba(\/|$)/) do(args)
-		# 		return {path: 'blank', namespace: 'ext'}
-		# 
-		# 	build.onLoad(filter: /.*/, namespace: 'ext') do(args)
-		# 		return {contents: ''}
-
 		let imbaDir = program.imbaPath
 		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
 
 		build.onResolve(filter: /^imba(\/|$)/) do(args)
 			if args.path == 'imba'
-				console.log 'resolving imba!',args,imbaDir
-				# not if we want to keep this external for sure
+				# console.log 'resolve imba',imbaDir
 				return {path: np.resolve(imbaDir,'index.imba') }
 			
 			console.log "IMBA RESOLVE",args.path,args.importer
@@ -226,7 +215,6 @@ export class Bundle < Component
 			let t = Date.now!
 			result = await esb.build(esoptions)
 			write(result.outputFiles)
-			# console.log 'pathLookups', pathLookups
 		return self 
 
 	def rebuild

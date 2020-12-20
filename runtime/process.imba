@@ -7,8 +7,6 @@ import {manifest} from './manifest'
 
 const proc = global.process
 
-
-
 class Servers < Set
 
 	def call name,...params
@@ -61,11 +59,11 @@ export const process = new class Process < EventEmitter
 			server.pause!
 	
 		on('reloaded') do(e)
-			console.log 'closing servers'
+			# console.log 'closing servers'
 			let promises = for server of servers
 				server.close!
 			await Promise.all(promises)
-			console.log 'actually closed!!'
+			# console.log 'actually closed!!'
 			proc.exit(0)
 
 		send('reload')
@@ -95,6 +93,8 @@ class Server
 		manifest.on('invalidate') do(params)
 			# console.log 'manifest.on invalidate from server',params
 			broadcast('invalidate',params)
+
+		# use different handler if we are on http2?
 		
 		handler = do(req,res)
 			if paused or closed

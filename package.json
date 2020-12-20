@@ -98,6 +98,7 @@
   },
   "devDependencies": {
     "commander": "^6.2.1",
+    "eventemitter3": "^4.0.7",
     "fdir": "^4.1.0",
     "micromatch": "^4.0.2",
     "picomatch": "^2.2.2",
@@ -106,6 +107,6 @@
   },
   "dependencies": {
     "chokidar": "^3.4.3",
-    "esbuild": "^0.8.21"
+    "esbuild": "^0.8.25"
   }
 }

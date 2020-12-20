@@ -6,7 +6,9 @@ const micromatch = require 'micromatch'
 import {fdir} from '../../vendor/fdir/index.js'
 import {Resolver} from './resolver'
 import {parseAsset} from '../compiler/assets'
+import Component from './component'
 import ChangeLog from './changes'
+
 
 const blankStat = {
 	size: 0,
@@ -300,8 +302,9 @@ export class JSONFile < FileNode
 			writeSync(out)
 		self
 
-export class FileSystem
+export class FileSystem < Component
 	def constructor dir, base, program
+		super()
 		cwd = np.resolve(base,dir)
 		program = program
 		nodemap = {}
@@ -365,14 +368,17 @@ export class FileSystem
 	def touchFile src
 		changelog.mark(src)
 		lookup(src).touch!
+		emit('change')
 		
 	def addFile src
 		changelog.mark(src)
 		lookup(src).register!
+		emit('change')
 		
 	def removeFile src
 		changelog.mark(src)
 		lookup(src).deregister!
+		emit('change')
 		
 	def prescan items = null
 		return #files if #files
@@ -472,7 +478,6 @@ export class FileSystem
 			let absdir = entry.dir
 			let reldir = absdir.slice(slice)
 			let dir = nodemap[reldir] ||= new DirNode(self,reldir,absdir)
-			# dir.register!
 
 			for f in entry.files
 				let rel = reldir + '/' + f
@@ -480,5 +485,5 @@ export class FileSystem
 				let file = nodemap[rel] ||= FSNode.create(self,rel,abs)
 				file.register!
 				paths.push(rel)
-		# console.log 'paths',paths
+
 		return paths

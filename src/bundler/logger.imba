@@ -27,6 +27,8 @@ export class Logger
 				fmt('yellow',Math.round(part) + 'ms')
 			elif f == 'd'
 				fmt('blueBright',part)
+			elif f == 'ref'
+				fmt('yellowBright','#' + (part.id or part))
 			elif f == 'elapsed'
 				rest.unshift(part) if part != undefined
 				let elapsed = Date.now! - #ctime

@@ -1,8 +1,8 @@
-const esbuild = require 'esbuild'
 const nodefs = require 'fs'
 const np = require 'path'
 const utils = require './utils'
 
+import {startService} from 'esbuild'
 import Component from './component'
 import {Logger} from './logger'
 import {Bundle} from './bundle'
@@ -39,8 +39,8 @@ export class Bundler < Component
 	get puburl do config.puburl or '/assets/'
 	get basedir do config.basedir or './'
 	get outdir do config.outdir or './build'
-	get pubdir do config.pubdir or 'dist/web'  # './build/public'
-	get libdir do config.libdir or 'dist' # + '/server'  # './build/server'
+	get pubdir do config.pubdir or 'dist/web'
+	get libdir do config.libdir or 'dist'
 
 	get incremental?
 		options.watch
@@ -64,7 +64,7 @@ export class Bundler < Component
 
 	def setup
 		#setup ||= new Promise do(resolve)
-			esb = await (program ? program.esb! : esbuild.startService!)
+			esb = await startService!
 
 			time('setup')
 			let entries = []
@@ -105,7 +105,10 @@ export class Bundler < Component
 			bundle.build!
 		await Promise.all(builds)
 		log.info 'bundled in %elapsed'
-		write!
+		await write!
+		console.log 'did write!!'
+		unless options.watch
+			esb.stop!
 
 	def scheduleRebuild
 		clearTimeout(#rebuildTimeout)

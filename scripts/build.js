@@ -37,9 +37,6 @@ function plugin(build){
 		return res;
 	}
 	
-	console.log(absoutdir,distdir,distrel);
-	console.log(absoutdir,'relative!',relative('dist/compiler'));
-
 	build.onResolve({filter: /^dist\//}, (p) => {
 		return {path: relative(p.path), external: true}
 	});

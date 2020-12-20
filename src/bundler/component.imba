@@ -1,4 +1,6 @@
-export default class Component
+import {EventEmitter} from 'events'
+
+export default class Component < EventEmitter
 
 	def time name = 'default'
 		let now = Date.now!
@@ -9,4 +11,4 @@ export default class Component
 		return diff
 	
 	def timed name = 'default'
-		let str = "time {name}: {time(name)}"		
+		let str = "time {name}: {time(name)}"
