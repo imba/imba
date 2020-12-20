@@ -41,7 +41,6 @@ class Manifest < EventEmitter
 		cwd = cwd
 		path = fsp.resolve(cwd,'imbabuild.json')
 		data = load! or {}
-		console.log 'loaded manifest',data
 
 	get changes
 		data.changes or []

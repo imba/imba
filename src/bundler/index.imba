@@ -1,12 +1,19 @@
-const esbuild = require 'esbuild'
 
+const esbuild = require 'esbuild'
 const fs = require 'fs'
 const np = require 'path'
 const utils = require './utils'
 const conf = require './config'
 const helpers = require '../compiler/helpers'
 
+import {program} from 'commander'
+
 import Program from './program'
+
+
+let prog = program.version('0.0.1')
+
+prog.help!
 
 const schema = {
 	alias: {
@@ -43,9 +50,12 @@ export def run options = {}
 	if options.argv
 		Object.assign(options,helpers.parseArgs(options.argv,schema))
 	
+	console.log "options after parsing args",options
+
 	let mtime = fs.statSync(__filename).mtimeMs
 
 	options.imbaPath ||= np.resolve(__dirname,'..')
+	
 
 	options.mtime = mtime
 	options.config = utils.resolveConfig(options.config or 'imbaconfig.json',cwd)

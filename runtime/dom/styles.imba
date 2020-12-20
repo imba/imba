@@ -125,13 +125,15 @@ class Styles
 		elif typeof val == 'number'
 			return [val]
 
+export const styles = new Styles
+
+
 extend class Element
 	def css$ key, value, mods
 		self.style[key] = value
 		
 	def css$var name, value, unit, key
-		let cssval = global.imba.styles.toValue(value,unit,key)
+		let cssval = styles.toValue(value,unit,key)
 		self.style.setProperty(name,cssval)
 		return
 
-export const styles = new Styles

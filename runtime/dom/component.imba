@@ -1,5 +1,3 @@
-# imba$imbaPath=global
-
 import {HTMLElement} from './core'
 import {createLiveFragment} from './fragment'
 import {scheduler} from '../scheduler'

@@ -65,12 +65,15 @@ export class Bundle < Component
 		for ext in o.external
 			if ext == "dependencies"
 				let deps = Object.keys(package.dependencies or {})
-				externals.push(...deps)
+				for dep in deps
+					unless o.external.indexOf("!{dep}") >= 0
+						externals.push(dep)
+
 			if ext == ".json"
 				externals.push("*.json")
 			externals.push(ext)
 
-		console.log 'create bundle',o
+		console.log 'create bundle',o,externals,o.external
 
 		if options.include
 			# let paths = value.indexOf('*') >= 0 ? fs.glob(value) : [fs.lookup(value)]
@@ -128,6 +131,7 @@ export class Bundle < Component
 			tsconfig: o.tsconfig
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: o.pure
+			treeShaking: o.treeShaking
 			resolveExtensions: [
 				'.imba.mjs','.imba',
 				'.imba1.mjs','.imba1',
@@ -176,7 +180,9 @@ export class Bundle < Component
 
 		build.onResolve(filter: /^imba(\/|$)/) do(args)
 			if args.path == 'imba'
-				return {path: real}
+				console.log 'resolving imba!',args,imbaDir
+				# not if we want to keep this external for sure
+				return {path: np.resolve(imbaDir,'index.imba') }
 			
 			console.log "IMBA RESOLVE",args.path,args.importer
 			if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)

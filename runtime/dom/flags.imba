@@ -1,4 +1,3 @@
-# imba$imbaPath=global
 export class Flags
 
 	def constructor dom

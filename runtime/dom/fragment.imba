@@ -1,5 +1,4 @@
-# imba$imbaPath=global
-import {Element,Text,DocumentFragment} from './core'
+import {Element,Text,DocumentFragment,document,createComment} from './core'
 
 extend class DocumentFragment
 
@@ -8,8 +7,8 @@ extend class DocumentFragment
 
 	# Called to make a documentFragment become a live fragment
 	def setup$ flags, options
-		$start = document.createComment('start')
-		$end = document.createComment('end')
+		$start = createComment('start')
+		$end = createComment('end')
 
 		$end.replaceWith$ = do(other)
 			this.parentNode.insertBefore(other,this)
@@ -75,16 +74,6 @@ class VirtualFragment
 		__F = f
 		#parent = parent
 
-		if !(f & $TAG_FIRST_CHILD$) and self isa KeyedTagFragment
-			$start = document.createComment('start')
-			parent.appendChild$($start) if parent # not if inside tagbranch
-
-		unless f & $TAG_LAST_CHILD$
-			$end = document.createComment('end')
-			parent.appendChild$($end) if parent
-
-		self.setup()
-
 	def appendChild$ item, index
 		# we know that these items are dom elements
 		if $end and #parent
@@ -122,6 +111,19 @@ class VirtualFragment
 
 class KeyedTagFragment < VirtualFragment
 	
+	def constructor f, parent
+		super
+
+		if !(f & $TAG_FIRST_CHILD$)
+			$start = createComment('start')
+			parent.appendChild$($start) if parent
+
+		unless f & $TAG_LAST_CHILD$
+			$end = createComment('end')
+			parent.appendChild$($end) if parent
+
+		self.setup()
+
 	def setup
 		self.array = []
 		self.changes = new Map
@@ -215,6 +217,15 @@ class KeyedTagFragment < VirtualFragment
 		return
 
 class IndexedTagFragment < VirtualFragment
+
+	def constructor f, parent
+		super
+
+		unless f & $TAG_LAST_CHILD$
+			$end = createComment('end')
+			parent.appendChild$($end) if parent
+
+		self.setup()
 
 	def setup
 		self.$ = []

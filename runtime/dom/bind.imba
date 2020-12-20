@@ -1,13 +1,15 @@
-# imba$imbaPath=global
 import {
 	Element,
 	HTMLSelectElement,
 	HTMLInputElement,
 	HTMLButtonElement,
 	HTMLTextAreaElement,
-	HTMLOptionElement,
-	HTMLButtonElement
+	HTMLOptionElement
 } from './core'
+
+import {commit} from '../scheduler'
+
+# TODO use meta properties for $$value, $$bound etc
 
 export def use_dom_bind
 	yes
@@ -86,7 +88,8 @@ extend class Element
 		Object.defineProperty(self,key,o isa Array ? createProxyProperty(o) : o)
 		return o
 
-Object.defineProperty(imba.dom.Element.prototype,'richValue',{
+console.log "defining richValue for Element"
+Object.defineProperty(Element.prototype,'richValue',{
 	get: do this.getRichValue()
 	set: do(v) this.setRichValue(v)
 })
@@ -109,7 +112,7 @@ extend class HTMLSelectElement
 					bindAdd(model,value)
 		else
 			self.data = values[0]
-		imba.commit!
+		commit!
 		self
 
 	def getRichValue
@@ -164,7 +167,7 @@ extend class HTMLTextAreaElement
 
 	def input$ e
 		self.data = self.value
-		imba.commit!
+		commit!
 
 	def end$
 		if $$bound and self.value != self.data
@@ -181,7 +184,7 @@ extend class HTMLInputElement
 
 		$$value = undefined
 		self.data = self.richValue
-		imba.commit!
+		commit!
 
 	def change$ e
 		let model = self.data
@@ -193,7 +196,7 @@ extend class HTMLInputElement
 				checked ? bindAdd(model,val) : bindRemove(model,val)
 			else
 				self.data = checked ? val : false
-		imba.commit!
+		commit!
 
 	def setRichValue value
 		if $$value !== value
@@ -260,7 +263,7 @@ extend class HTMLButtonElement
 		else
 			self.data = toggled ? null : val
 		end$!
-		imba.commit!
+		commit!
 
 	def end$
 		if $$bound

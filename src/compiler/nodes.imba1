@@ -51,9 +51,18 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
  strokeOpacity strokeWidth textAnchor transform version viewBox x1 x2 x y1 y2 y"
 
 var CUSTOM_EVENTS = {
-	intersect: yes
-	selection: yes
-	resize: yes
+	intersect: 'events_intersect'
+	selection: 'events_selection'
+	resize: 'events_resize'
+	touch: 'events_pointer'
+	pointer: 'events_pointer'
+	pointerdown: 'events_pointer'
+	pointermove: 'events_pointer'
+	pointerover: 'events_pointer'
+	pointerout: 'events_pointer'
+	pointerup: 'events_pointer'
+	pointercancel: 'events_pointer'
+	lostpointercapture: 'events_pointer'
 }
 
 export var AST = {}
@@ -3319,14 +3328,17 @@ export class TagDeclaration < ClassDeclaration
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
-
 			if option(:extension)
 				className = "Extended${className}"
 
 		elif option(:extension)
 			@body.@delimiter = ','
 			@body.set(braces: yes)
+			
+			
 			let cls = CALL(runtime:getTagType,[name,STR(name.toClassName)])
+			if className == 'ImbaElement'
+				cls = runtime:ImbaElement
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
 
@@ -5714,6 +5726,8 @@ export class TagTypeIdentifier < Identifier
 		let str = @str
 		if str == 'element'
 			return 'Element'
+		elif str == 'component'
+			return 'ImbaElement'
 		elif str == 'svg:element'
 			return 'SVGElement'
 		elif str == 'htmlelement'
@@ -7102,8 +7116,11 @@ export class TagAttr < TagPart
 			for m in @chain
 				@mods[m.name] = 1
 
-		# if @ns == 'bind'
+		if @ns == 'bind'
+			STACK.use('use_dom_bind')
 		#	scope__.imbaDependency('internal/bind')
+
+
 		self
 
 	def ns
@@ -7154,6 +7171,7 @@ export class TagAttr < TagPart
 		elif ns == 'bind'
 			let path = PATHIFY(value)
 
+
 			if path isa Variable
 				let getter = "function()\{ return {val} \}"
 				let setter = "function(v$)\{ {val} = v$ \}"
@@ -7170,6 +7188,7 @@ export class TagAttr < TagPart
 				pars.push(u ? STR(u) : NULL)
 				pars.push(STR(k)) if k
 
+			STACK.use('styles')
 			"css$var({AST.cary(pars).join(',')})"
 		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
 			if ns
@@ -7393,8 +7412,8 @@ export class TagHandler < TagPart
 		super
 		STACK.use('events')
 		# Replace with something better for debugging
-
-		# if @name and CUSTOM_EVENTS[String(@name)]
+		if @name and CUSTOM_EVENTS[String(@name)]
+			STACK.use(CUSTOM_EVENTS[String(@name)])
 		#	scope__.imbaDependency('events/' + String(@name))
 
 	def isStatic
@@ -7864,7 +7883,8 @@ export class TagLoopFragment < TagLike
 			return "{tvar} = new DocumentFragment;\n{value.c(o)}"
 
 		# if @tag and @childTags
-		let iref = option(:indexed) ? LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
+		let iref = option(:indexed) ? (runtime:createIndexedFragment) : (runtime:createKeyedFragment)
+		# LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
 		# should know how many inner slots this fragment has?
 		let cache = parent.cvar
 		let parentRef = parent isa TagSwitchFragment ? LIT('null') : fragment.tvar

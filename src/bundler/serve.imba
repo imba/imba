@@ -17,17 +17,20 @@ export default class Serve < Component
 		workers = []
 		active = yes
 		listening = no
+		jobs = {}
+	
 
-	def start
+	def start scripts
 		# TODO allow specifying number of instances
-		spawn!
+		for script in scripts
+			spawn(script)
 
-	def spawn replace = null
-		cluster.setupMaster({exec: options.script})
-		log.info 'starting server',options.port
+	def spawn o, replace = null
+		cluster.setupMaster({exec: o.exec})
+		log.info 'starting',o
 		let restarts = replace ? (replace.#restarts + 1) : 0
 		let worker = cluster.fork(
-			PORT: options.port
+			PORT: o.port or process.env.PORT
 			IMBA_RESTARTS: restarts
 			IMBA_SERVE: true
 		)
@@ -53,7 +56,7 @@ export default class Serve < Component
 			if message == 'reload'
 				worker.#reloading = yes
 				worker.send(['emit','reloading'])
-				spawn(worker)
+				spawn(o,worker)
 				
 			# if message == 'restart' and worker == main
 			#	restart!

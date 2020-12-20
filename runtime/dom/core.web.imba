@@ -34,7 +34,14 @@ export const {
 const CustomTagConstructors = {}
 const TYPES = {}
 
-export def getTagType name
+export def getTagType name, klass
+	# TODO follow same structure as ssr TYPES
+	if TYPES[name]
+		return TYPES[name]
+
+	if window[klass]
+		return window[klass]
+
 	if window[name]
 		return window[name]
 
@@ -125,11 +132,11 @@ extend class Element
 					prev.textContent = txt
 					return prev
 				else
-					res = doc.createTextNode(txt)
+					res = document.createTextNode(txt)
 					prev.replaceWith$(res,self)
 					return res
 			else
-				self.appendChild$(res = doc.createTextNode(txt))
+				self.appendChild$(res = document.createTextNode(txt))
 				return res	
 
 		else
@@ -243,57 +250,41 @@ extend class SVGElement
 	def flagSync$
 		self.className.baseVal = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
 
+export def createSVGElement name, parent, flags, text, ctx
+	let el = document.createElementNS("http://www.w3.org/2000/svg",name)
+
+	if flags
+		el.className.baseVal = flags
+
+	if parent and parent isa Node
+		el.insertInto$(parent)
+	return el
+
+
+export def createAssetElement asset, parent, flags
+	unless asset
+		console.warn "asset {name} not included in bundle"
+		return null
+		
+	if !asset.#node
+		let el = document.createElementNS("http://www.w3.org/2000/svg",'svg')
+		for own k,v of asset.attributes
+			el.setAttribute(k,v)
+		el.innerHTML = asset.content
+		el.className.baseVal = asset.flags.join(' ')
+		asset.#node = el
+	
+	let el = asset.#node.cloneNode(yes)
+	let cls = el.flags$ns = el.className.baseVal + ' '
+	el.className.baseVal = cls + flags
+	if parent and parent isa Node
+		el.insertInto$(parent)
+	return el
+
+export def createComment text
+	document.createComment(text)
 
 # Registry
-
-class ImbaElementRegistry
-
-	def constructor
-		types = {}
-
-	def lookup name
-		return types[name]
-
-	def get name, klass
-		return ImbaElement if !name or name == 'component'
-		return types[name] if types[name]
-		return DOM.getElementType(name) if $node$
-		return DOM[klass] if klass and DOM[klass]
-		DOM.customElements.get(name) or DOM.ImbaElement
-
-	def create name
-		if types[name]
-			# TODO refactor
-			return types[name].create$()
-		else
-			doc.createElement(name)
-
-	def define name, klass, options = {}
-		types[name] = klass
-		klass.nodeName = name
-
-		let proto = klass.prototype
-		
-		# if proto.render && proto.end$ == Element.prototype.end$
-		#	proto.end$ = proto.render
-		let basens = proto._ns_
-		if options.ns
-			let ns = options.ns
-			let flags = ns + ' ' + ns + '_ '
-			if basens
-				flags += proto.flags$ns 
-				ns += ' ' + basens
-			proto._ns_ = ns
-			proto.flags$ns = flags
-
-		if options.extends
-			CustomTagConstructors[name] = klass
-		else
-			DOM.customElements.define(name,klass)
-		return klass
-
-export const tags = new ImbaElementRegistry
-
 export def createComponent name, parent, flags, text, ctx
 	# the component could have a different web-components name?
 	let el
@@ -308,7 +299,7 @@ export def createComponent name, parent, flags, text, ctx
 		# el.slot$ = proto.slot$
 		el.__slots = {}
 	else
-		el = global.document.createElement(name)
+		el = document.createElement(name)
 
 	el.##parent = parent
 	el.#init!
@@ -322,6 +313,8 @@ export def createComponent name, parent, flags, text, ctx
 
 export def defineTag name, klass, options = {}
 	TYPES[name] = klass
+	console.log 'defineTag',name
+
 	klass.nodeName = name
 
 	let proto = klass.prototype
@@ -342,3 +335,4 @@ export def defineTag name, klass, options = {}
 		window.customElements.define(name,klass)
 
 	return klass
+

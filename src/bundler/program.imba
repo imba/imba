@@ -166,10 +166,21 @@ export default class Program < Component
 
 	def start
 		options.serve = yes
+
 		if options.build
 			await build!
 
-		server.start!
+		if options.main
+			console.log 'check if main exists?',options.main
+
+		# find the scripts to start
+		let scripts = []
+
+		if options.main
+			scripts.push({exec: options.main})
+		elif config.serve
+			scripts.push(config.serve)
+		server.start(scripts)
 
 	def run
 		if self[options.command] isa Function

@@ -1,4 +1,3 @@
-# imba$imbaPath=global
 ###
 Very basic shim for the DOM to support rendering on the server
 We want to support this in webworkers as well, so the asynclocalstorage
@@ -8,6 +7,7 @@ should move elsewhere
 import {TYPES,MAP} from './schema'
 import {AsyncLocalStorage} from 'async_hooks'
 import {Flags} from './flags'
+import {manifest} from '../manifest'
 
 let asl = null
 
@@ -74,7 +74,8 @@ class CustomElementRegistry
 
 export const customElements = new CustomElementRegistry
 
-export def getTagType typ
+export def getTagType typ, klass
+
 	let name = typ
 	if typeof typ == 'string'
 		typ = TYPES[typ] or MAP[typ] or TYPES[typ + 'Element'] or MAP['svg_' + typ]
@@ -240,9 +241,6 @@ export class Node
 	def text$ item
 		self.textContent = item
 		self
-
-	get #imba
-		##imba ?= global.#imba
 
 	get #parent
 		##parent or this.parentNode
@@ -590,7 +588,7 @@ export class SVGElement < Element
 export class HTMLScriptElement < HTMLElement
 
 	set asset name
-		let asset = imba.asset(name) or imba.asset(name + ".js")
+		let asset = manifest.assetByName(name) or manifest.assetByName(name + ".js")
 		console.log 'did set asset',asset..url
 		if asset
 			setAttribute('src',asset.url)
@@ -635,6 +633,39 @@ export def createElement name, parent, flags, text
 		el.insertInto$(parent)
 
 	return el
+
+export def createSVGElement name, parent, flags, text, ctx
+	let el = doc.createElementNS("http://www.w3.org/2000/svg",name)
+
+	if flags
+		el.className = flags
+
+	if parent and parent isa Node
+		el.insertInto$(parent)
+	return el
+
+
+export def createAssetElement asset, parent, flags
+	unless asset
+		console.warn "asset {name} not included in bundle"
+		return null
+
+	# TODO import document somehow?
+	let el = doc.createElementNS("http://www.w3.org/2000/svg",'svg')
+
+	if asset
+		for own k,v of asset.attributes
+			el.setAttribute(k,v)
+		
+		el.flags$ns = asset.flags.join(' ') + ' '
+		el.className = (el.flags$ns + flags).trim!
+		el.innerHTML = asset.content
+	if parent and parent isa Node
+		el.insertInto$(parent)
+	return el
+
+export def createComment text
+	doc.createComment(text)
 
 export def createComponent name, parent, flags, text, ctx
 	# the component could have a different web-components name?

@@ -97,6 +97,7 @@
     "url": "git://github.com/imba/imba.git"
   },
   "devDependencies": {
+    "commander": "^6.2.1",
     "fdir": "^4.1.0",
     "micromatch": "^4.0.2",
     "picomatch": "^2.2.2",
