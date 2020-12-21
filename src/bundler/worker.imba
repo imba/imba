@@ -12,7 +12,14 @@ const id = Math.random!
 
 def compile_imba code, options
 	let out = {id: options.sourceId}
-	let res = compiler.compile(code,options)
+	let res = null
+	
+	try
+		res = compiler.compile(code,options)
+	catch e
+		console.log "ERROR COMPILING IMBA",e,options.sourcePath
+		res = {}
+
 	let js = res.js
 
 	if res.css

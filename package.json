@@ -64,6 +64,7 @@
   "browser": {
     "imba": "./dist/runtime.web.mjs",
     "path": "./vendor/path.js",
+    "events": "./vendor/events.js",
     "compiler": "./dist/compiler.js",
     ".": "./dist/runtime.web.mjs",
     "./core.imba": "./build/src/imba/core.imba.web.js"

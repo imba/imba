@@ -186,7 +186,7 @@ let bundles = [{
 	format: 'esm',
 	globalName: 'imba',
 	platform: 'browser',
-	minify: true
+	minify: false
 },{
 	entryPoints: ['src/compiler/compiler.imba1'],
 	outfile: 'dist/browser/compiler.js',

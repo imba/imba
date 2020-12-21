@@ -18,3 +18,6 @@ export * from './events/intersect'
 export * from './events/pointer'
 export * from './events/resize'
 export * from './events/selection'
+
+# Router
+export * from './router'

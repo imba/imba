@@ -11067,6 +11067,9 @@ export class ImbaRuntime < ImportProxy
 			self.path = options:runtime
 		self
 
+	def c
+		@c = "IMBA"
+
 	# def access key
 	# 	# if @globalName
 	# 	let raw = C(key,mark: false)
