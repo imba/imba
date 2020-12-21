@@ -1,4 +1,18 @@
-# imba$imbaPath=global
+import {
+	Element,
+	HTMLSelectElement,
+	HTMLInputElement,
+	HTMLButtonElement,
+	HTMLTextAreaElement,
+	HTMLOptionElement
+} from './core'
+
+import {commit} from '../scheduler'
+
+# TODO use meta properties for $$value, $$bound etc
+
+export def use_dom_bind
+	yes
 
 const toBind = {
 	INPUT: yes
@@ -50,7 +64,7 @@ def createProxyProperty target
 ###
 Data binding
 ###
-extend class imba.dom.Element
+extend class Element
 	def getRichValue
 		self.value
 
@@ -74,12 +88,13 @@ extend class imba.dom.Element
 		Object.defineProperty(self,key,o isa Array ? createProxyProperty(o) : o)
 		return o
 
-Object.defineProperty(imba.dom.Element.prototype,'richValue',{
+console.log "defining richValue for Element"
+Object.defineProperty(Element.prototype,'richValue',{
 	get: do this.getRichValue()
 	set: do(v) this.setRichValue(v)
 })
 
-extend class imba.dom.HTMLSelectElement
+extend class HTMLSelectElement
 
 	def change$ e
 		let model = self.data
@@ -97,7 +112,7 @@ extend class imba.dom.HTMLSelectElement
 					bindAdd(model,value)
 		else
 			self.data = values[0]
-		imba.commit!
+		commit!
 		self
 
 	def getRichValue
@@ -130,7 +145,7 @@ extend class imba.dom.HTMLSelectElement
 	def end$
 		self.syncValue()
 
-extend class imba.dom.HTMLOptionElement
+extend class HTMLOptionElement
 	def setRichValue value
 		$$value = value
 		self.value = value
@@ -140,7 +155,7 @@ extend class imba.dom.HTMLOptionElement
 			return $$value
 		return self.value
 
-extend class imba.dom.HTMLTextAreaElement
+extend class HTMLTextAreaElement
 	def setRichValue value
 		$$value = value
 		self.value = value
@@ -152,14 +167,14 @@ extend class imba.dom.HTMLTextAreaElement
 
 	def input$ e
 		self.data = self.value
-		imba.commit!
+		commit!
 
 	def end$
 		if $$bound and self.value != self.data
 			self.value = self.data
 
 
-extend class imba.dom.HTMLInputElement
+extend class HTMLInputElement
 	
 	def input$ e
 		let typ = self.type
@@ -169,7 +184,7 @@ extend class imba.dom.HTMLInputElement
 
 		$$value = undefined
 		self.data = self.richValue
-		imba.commit!
+		commit!
 
 	def change$ e
 		let model = self.data
@@ -181,7 +196,7 @@ extend class imba.dom.HTMLInputElement
 				checked ? bindAdd(model,val) : bindRemove(model,val)
 			else
 				self.data = checked ? val : false
-		imba.commit!
+		commit!
 
 	def setRichValue value
 		if $$value !== value
@@ -219,7 +234,7 @@ extend class imba.dom.HTMLInputElement
 				self.richValue = self.data
 		return
 		
-extend class imba.dom.HTMLButtonElement
+extend class HTMLButtonElement
 
 	get checked
 		$checked
@@ -248,7 +263,7 @@ extend class imba.dom.HTMLButtonElement
 		else
 			self.data = toggled ? null : val
 		end$!
-		imba.commit!
+		commit!
 
 	def end$
 		if $$bound

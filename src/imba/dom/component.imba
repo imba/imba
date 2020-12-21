@@ -1,9 +1,8 @@
-# imba$imbaPath=global
+import {HTMLElement} from './core'
+import {createLiveFragment} from './fragment'
+import {scheduler} from '../scheduler'
 
-const DOM = imba.dom
-const doc = imba.document # global.#document or global.document
-
-class window.ImbaElement < window.HTMLElement
+export class ImbaElement < HTMLElement
 	def constructor
 		super()
 		if flags$ns
@@ -29,7 +28,7 @@ class window.ImbaElement < window.HTMLElement
 		if name == '__' and !render
 			return self
 
-		__slots[name] ||= imba.createLiveFragment(0,null,self)
+		__slots[name] ||= createLiveFragment(0,null,self)
 
 	# called immediately after construction 
 	def build
@@ -108,12 +107,12 @@ class window.ImbaElement < window.HTMLElement
 		return (__F & $EL_HYDRATED$) != 0
 
 	def schedule
-		imba.scheduler.listen('render',self)
+		scheduler.listen('render',self)
 		__F |= $EL_SCHEDULED$
 		return self
 
 	def unschedule
-		imba.scheduler.unlisten('render',self)
+		scheduler.unlisten('render',self)
 		__F &= ~$EL_SCHEDULED$
 		return self
 
@@ -146,7 +145,7 @@ class window.ImbaElement < window.HTMLElement
 
 		let res = mount()
 		if res && res.then isa Function
-			res.then(imba.scheduler.commit)
+			res.then(scheduler.commit)
 
 		# else
 		#	if this.render and $EL_RENDERED$
@@ -162,85 +161,3 @@ class window.ImbaElement < window.HTMLElement
 		__F = __F & (~$EL_MOUNTED$ & ~$EL_MOUNTING$)
 		unschedule() if __F & $EL_SCHEDULED$
 		unmount()
-
-
-# Stuff for element registry
-
-const CustomTagConstructors = {}
-
-class ImbaElementRegistry
-
-	def constructor
-		types = {}
-
-	def lookup name
-		return types[name]
-
-	def get name, klass
-		return DOM.ImbaElement if !name or name == 'component'
-		return types[name] if types[name]
-		return DOM.getElementType(name) if $node$
-		return DOM[klass] if klass and DOM[klass]
-		DOM.customElements.get(name) or DOM.ImbaElement
-
-	def create name
-		if types[name]
-			# TODO refactor
-			return types[name].create$()
-		else
-			doc.createElement(name)
-
-	def define name, klass, options = {}
-		types[name] = klass
-		klass.nodeName = name
-
-		let proto = klass.prototype
-		
-		# if proto.render && proto.end$ == Element.prototype.end$
-		#	proto.end$ = proto.render
-		let basens = proto._ns_
-		if options.ns
-			let ns = options.ns
-			let flags = ns + ' ' + ns + '_ '
-			if basens
-				flags += proto.flags$ns 
-				ns += ' ' + basens
-			proto._ns_ = ns
-			proto.flags$ns = flags
-
-		if options.extends
-			CustomTagConstructors[name] = klass
-		else
-			DOM.customElements.define(name,klass)
-		return klass
-
-imba.tags = new ImbaElementRegistry
-
-const proto = window.ImbaElement.prototype
-
-def imba.createComponent name, parent, flags, text, ctx
-	# the component could have a different web-components name?
-	var el
-	
-	if typeof name != 'string'
-		if name and name.nodeName
-			name = name.nodeName
-
-	if CustomTagConstructors[name]
-		el = CustomTagConstructors[name].create$(el)
-		# extend with mroe stuff
-		
-		el.slot$ = proto.slot$
-		el.__slots = {}
-	else
-		el = doc.createElement(name)
-
-	el.##parent = parent
-	el.#init!
-
-	if text !== null
-		el.slot$('__').text$(text)
-		
-	if flags or el.flags$ns # or nsflag
-		el.flag$(flags or '')
-	return el

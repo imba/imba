@@ -36,7 +36,7 @@ function plugin(build){
 		if(res[0] != '.') res = './' + res;
 		return res;
 	}
-	
+
 	build.onResolve({filter: /^dist\//}, (p) => {
 		return {path: relative(p.path), external: true}
 	});
@@ -106,29 +106,35 @@ function plugin(build){
 	})
 }
 
-async function bundle(options){
-	if(options instanceof Array){
-		for(let config of options){
+async function bundle(o){
+	if(o instanceof Array){
+		for(let config of o){
 			bundle(config);
 		}
 		return;
 	}
-	let input = options.entryPoints[0];
-	let entry = {options: options}
+	let input = o.entryPoints[0];
+	let entry = {options: o}
 	let watcher = entry.watcher = argv.watch && chokidar.watch([]);
 
-	entry.imbaPath = options.imbaPath;
-	options.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
-	options.resolveExtensions = ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'];
-	options.target = options.target || ['es2019'];
-	options.bundle = true;
-	options.loader = {'.txt':'text'}
-	options.incremental = !!watcher;
-	options.logLevel = 'info';
+	entry.imbaPath = o.imbaPath;
+	o.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
 
-	delete options.imbaPath;
+	if(o.platform == 'node'){
+		o.resolveExtensions = ['.node.imba','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'];
+	} else {
+		o.resolveExtensions = ['.web.imba','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'];
+	}
 	
-	let result = await require('esbuild').build(options);
+	o.target = o.target || ['es2019'];
+	o.bundle = true;
+	o.loader = {'.txt':'text'}
+	o.incremental = !!watcher;
+	o.logLevel = 'info';
+
+	delete o.imbaPath;
+	
+	let result = await require('esbuild').build(o);
 	if(watcher){
 		watcher.on('change',async ()=>{
 			console.log('rebuilding',input);
@@ -144,76 +150,36 @@ async function bundle(options){
 bundle([{
 	entryPoints: ['src/compiler/compiler.imba1'],
 	outfile: 'dist/compiler.cjs',
-	sourcemap: false,
 	format: 'cjs',
 	platform: 'browser'
 },{
 	entryPoints: ['src/compiler/compiler.imba1'],
 	outfile: 'dist/compiler.mjs',
-	sourcemap: false,
 	format: 'esm',
 	platform: 'browser',
 },{
 	entryPoints: ['src/compiler/compiler.imba1'],
 	outfile: 'dist/compiler.js',
-	sourcemap: false,
 	format: 'iife',
 	globalName: 'imbac',
 	platform: 'browser',
 },{
 	entryPoints: ['src/imba/index.imba'],
 	outfile: 'dist/imba.js',
-	sourcemap: false,
 	format: 'iife',
-	platform: 'browser'
-},{
-	entryPoints: ['src/imba/index.imba'],
-	outfile: 'dist/imba.mjs',
-	sourcemap: false,
-	format: 'esm',
-	platform: 'browser'
-},{
-	entryPoints: ['src/imba/index.imba'],
-	outfile: 'dist/imba.node.cjs',
-	sourcemap: false,
-	format: 'cjs',
-	platform: 'node'
-},{
-	entryPoints: ['src/imba/index.imba'],
-	outfile: 'dist/imba.min.js',
-	minify: true,
-	sourcemap: false,
-	format: 'iife',
-	platform: 'browser'
-},{
-	entryPoints: ['src/imba/router/router.imba'],
-	outfile: 'dist/imba.router.js',
-	minify: true,
-	sourcemap: false,
-	format: 'iife',
+	globalName: 'imba',
 	platform: 'browser'
 },{
 	entryPoints: ['test/spec.imba'],
 	outfile: 'dist/imba.spec.js',
 	minify: false,
-	sourcemap: false,
 	format: 'iife',
 	platform: 'browser'
-},{
-	entryPoints: ['src/bundler/index.imba'],
-	outfile: 'dist/bundler.js',
-	minify: false,
-	imbaPath: '../imba',
-	sourcemap: false,
-	format: 'cjs',
-	external: ['chokidar','esbuild'],
-	platform: 'node'
 },{
 	entryPoints: ['src/bundler/worker.imba'],
 	outfile: 'dist/compiler-worker.js',
 	minify: false,
 	imbaPath: '../imba',
-	sourcemap: false,
 	format: 'cjs',
 	external: ['chokidar','esbuild'],
 	platform: 'node'
@@ -223,7 +189,6 @@ bundle([{
 	outdir: 'dist/bin',
 	minify: false,
 	imbaPath: '../imba',
-	// banner: '#!/usr/bin/env node',
 	sourcemap: false,
 	format: 'cjs',
 	external: ['chokidar','esbuild'],

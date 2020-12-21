@@ -1,15 +1,14 @@
-# imba$imbaPath=global
-const {Element,Text} = imba.dom
+import {Element,Text,DocumentFragment,document,createComment} from './core'
 
-extend class imba.dom.DocumentFragment
+extend class DocumentFragment
 
 	get #parent
 		##up or ##parent
 
 	# Called to make a documentFragment become a live fragment
 	def setup$ flags, options
-		$start = document.createComment('start')
-		$end = document.createComment('end')
+		$start = createComment('start')
+		$end = createComment('end')
 
 		$end.replaceWith$ = do(other)
 			this.parentNode.insertBefore(other,this)
@@ -75,16 +74,6 @@ class VirtualFragment
 		__F = f
 		#parent = parent
 
-		if !(f & $TAG_FIRST_CHILD$) and self isa KeyedTagFragment
-			$start = document.createComment('start')
-			parent.appendChild$($start) if parent # not if inside tagbranch
-
-		unless f & $TAG_LAST_CHILD$
-			$end = document.createComment('end')
-			parent.appendChild$($end) if parent
-
-		self.setup()
-
 	def appendChild$ item, index
 		# we know that these items are dom elements
 		if $end and #parent
@@ -121,6 +110,20 @@ class VirtualFragment
 		self
 
 class KeyedTagFragment < VirtualFragment
+	
+	def constructor f, parent
+		super
+
+		if !(f & $TAG_FIRST_CHILD$)
+			$start = createComment('start')
+			parent.appendChild$($start) if parent
+
+		unless f & $TAG_LAST_CHILD$
+			$end = createComment('end')
+			parent.appendChild$($end) if parent
+
+		self.setup()
+
 	def setup
 		self.array = []
 		self.changes = new Map
@@ -215,6 +218,15 @@ class KeyedTagFragment < VirtualFragment
 
 class IndexedTagFragment < VirtualFragment
 
+	def constructor f, parent
+		super
+
+		unless f & $TAG_LAST_CHILD$
+			$end = createComment('end')
+			parent.appendChild$($end) if parent
+
+		self.setup()
+
 	def setup
 		self.$ = []
 		self.length = 0
@@ -247,16 +259,16 @@ class IndexedTagFragment < VirtualFragment
 			#parent.removeChild$(item)
 		return
 
-def imba.createLiveFragment bitflags, options, par
-	var el = document.createDocumentFragment()
+export def createLiveFragment bitflags, options, par
+	const el = document.createDocumentFragment!
 	el.setup$(bitflags, options)
 	el.##up = par if par
 	return el
 
-def imba.createIndexedFragment bitflags, parent
+export def createIndexedFragment bitflags, parent
 	return new IndexedTagFragment(bitflags,parent)
 
-def imba.createKeyedFragment bitflags, parent
+export def createKeyedFragment bitflags, parent
 	return new KeyedTagFragment(bitflags,parent)
 
 
