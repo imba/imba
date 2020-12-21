@@ -1,10 +1,10 @@
-var pool = [
+const pool = [
 	{id: 7, title: "Seven"}
 	{id: 8, title: "Eight"}
 	{id: 9, title: "Nine"}
 ]
 
-var todos = [
+const todos = [
 	{id: 1, title: "One"}
 	{id: 2, title: "Two"}
 	{id: 3, title: "Three"}
@@ -21,12 +21,12 @@ tag app-root
 
 imba.mount(<app-root>)
 
-var ordered = do
+const ordered = do
 	var titles = todos.map(|t| t.title).join("")
 	var actual = document.querySelector('ul').textContent
 	eq actual, titles, message: "expected order to be %2 - was %1"
 
-var mutated = do |state,count|
+const mutated = do(state,count)
 	eq state.mutations.length, count, warn: "expected %2 mutations - got %1"
 
 test "remove from end" do
