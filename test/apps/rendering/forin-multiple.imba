@@ -1,6 +1,6 @@
-var pool = []
+const pool = []
 
-var items = [
+const items = [
 	{id: 1, title: "One"}
 	{id: 2, title: "Two"}
 	{id: 3, title: "Three"}
@@ -9,7 +9,7 @@ var items = [
 	{id: 6, title: "Six"}
 ]
 
-var numbers = [1,2,3]
+const numbers = [1,2,3]
 
 tag app-root
 	def render
@@ -21,12 +21,12 @@ tag app-root
 
 imba.mount(<app-root>)
 
-var ordered = do
-	var titles = items.map(|t| t.title).join("-")
-	var actual = $(.items).textContent
+const ordered = do
+	let titles = items.map(do $1.title).join("-")
+	let actual = document.querySelector('.items').textContent
 	eq actual, titles
 
-var mutated = do |state,count|
+const mutated = do(state,count)
 	eq state.mutations.length, count, warn: "expected %2 mutations - got %1"
 
 test "remove from end" do

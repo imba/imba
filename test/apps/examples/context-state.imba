@@ -6,14 +6,15 @@ let pages = [
 let bool = true
 
 def functional-tag item
+	# console.log 'called functional tag',item,imba.renderContext.context
 	<div> <page-item item=item>
 
 
 tag page-item
 	def render
 		let list = #context.items
-
 		<self.block> <div>
+			<span> "Item"
 			<span> item.title
 			<span> "item {list.indexOf(item)+1} of {list.length} in page {#context.page.title}"
 
@@ -34,8 +35,6 @@ tag page-panel
 			<footer> <slot name="footer">
 
 tag app-page
-	def hello
-
 	get pagetitle
 		page.title
 
@@ -65,16 +64,5 @@ let app = <app-root>
 imba.mount app
 
 test do
-	app.render()
+	app.render!
 	ok true
-
-### css
-
-.block {
-	display: block;
-	padding: 10px;
-	margin: 10px;
-	border: 1px solid black;
-}
-
-###

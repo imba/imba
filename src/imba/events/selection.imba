@@ -1,4 +1,3 @@
-# imba$imbaPath=global
 import {Event,CustomEvent,Element} from '../dom/core'
 
 export def events_selection

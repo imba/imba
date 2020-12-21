@@ -29,17 +29,17 @@ tag app-root
 imba.mount <app-root>
 
 test 'static text' do
-	ok $(.static-text).textContent == '^Labeled'
+	ok document.querySelector('.static-text').textContent == '^Labeled'
 
 test 'dynamic text' do
-	ok $(.dynamic-text).textContent == '^Labeled Hello'
+	ok document.querySelector('.dynamic-text').textContent == '^Labeled Hello'
 
 test 'dynamic' do
-	ok $(.dynamic).textContent == '^Hello'
+	ok document.querySelector('.dynamic').textContent == '^Hello'
 
 test 'shallow dynamic' do
-	ok $(.shallow-dynamic).textContent == 'Hello'
-	ok $(.shallow-dynamic).firstChild isa Text
+	ok document.querySelector('.shallow-dynamic').textContent == 'Hello'
+	ok document.querySelector('.shallow-dynamic').firstChild isa Text
 
 test 'multi dynamic' do
-	ok $(.multi-dynamic).textContent == '^HelloYesHello'
+	ok document.querySelector('.multi-dynamic').textContent == '^HelloYesHello'

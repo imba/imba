@@ -35,34 +35,21 @@ var app = <app-root>
 imba.mount app
 
 test do
-	ok $(todo-item.static)
-	ok $(note-item.static) == null
-	ok $(todo-item.listed + note-item.listed)
-	ok $(todo-item.cond .inner)
+	ok document.querySelector('todo-item.static')
+	ok document.querySelector('note-item.static') == null
+	ok document.querySelector('todo-item.listed + note-item.listed')
+	ok document.querySelector('todo-item.cond .inner')
 
 	app.step()
 	app.render()
-	ok $(note-item.static)
-	ok $(todo-item.static) == null
-	ok $(note-item.listed + todo-item.listed)
-	ok $(note-item.cond .inner)
+	ok document.querySelector('note-item.static')
+	ok document.querySelector('todo-item.static') == null
+	ok document.querySelector('note-item.listed + todo-item.listed')
+	ok document.querySelector('note-item.cond .inner')
 
 	blocks[0].type = 'issue'
 	app.render()
-	ok $(note-item) == null
-	ok $(issue-item.static)
-	ok $(issue-item.listed + todo-item.listed)
-	ok $(issue-item.cond .inner)
-
-
-### css
-
-todo-item {
-	color: blue;
-}
-
-note-item {
-	color: red;
-}
-
-###
+	ok document.querySelector('note-item') == null
+	ok document.querySelector('issue-item.static')
+	ok document.querySelector('issue-item.listed + todo-item.listed')
+	ok document.querySelector('issue-item.cond .inner')

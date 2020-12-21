@@ -230,6 +230,15 @@ class DataSet
 		target["data-" + key]
 
 
+const contextHandler =
+	def get target, name
+		let ctx = target
+		let val = undefined
+		while ctx and val == undefined
+			if ctx = ctx.#parent
+				val = ctx[name]
+		return val
+
 export class Node
 
 	def toString
@@ -243,7 +252,10 @@ export class Node
 		self
 
 	get #parent
-		##parent or this.parentNode
+		##parent or this.parentNode or ##up
+
+	get #context
+		##context ||= new Proxy(self,contextHandler)
 
 	def #init
 		self

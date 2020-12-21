@@ -1,21 +1,21 @@
-var string = "one"
+let string = "one"
 
-var nested = do
+let nested = do
 	<div> string
 
-var fragment = do
+let fragment = do
 	<footer>
 		<p> string
-		nested()
+		nested!
 
 tag app-root
 	def render
 		<self>
 			<div> "Count is there"
-			fragment()
+			fragment!
 
-var app = <app-root>
-imba.mount(app)
+
+imba.mount(let app = <app-root>)
 
 test "check" do
 	let p = app.querySelector('p')
@@ -24,5 +24,5 @@ test "check" do
 	await spec.tick()
 	eq p.textContent, "two"
 	string = "three"
-	let frag = fragment()
+	let frag = fragment!
 	eq p.textContent, "two"

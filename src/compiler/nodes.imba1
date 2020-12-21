@@ -590,13 +590,15 @@ export class Stack
 		if token isa Node
 			kind ||= token.@variable
 			token = token.@value
-			
-		if kind isa Variable
-			token.@kind = kind.type
-			token.@level = kind.scope.level
-			token.@scope = kind.scope.kind
-		else
-			token.@kind = kind
+
+		unless typeof token == 'string'
+			if kind isa Variable
+				token.@kind = kind.type
+				token.@level = kind.scope.level
+				token.@scope = kind.scope.kind
+			else
+				token.@kind = kind
+
 		@semanticTokens.push(token)
 	
 	def use item
@@ -2814,6 +2816,7 @@ export class Root < Code
 		STACK.reset # -- nested compilation does not work now
 		@scope.options = OPTS = STACK.@options = @options = o or {}
 		STACK.root = @scope
+		@scope.@imba.configure(o)
 		traverse
 		STACK.root = @scope
 
@@ -2823,6 +2826,9 @@ export class Root < Code
 		
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)
+
+		if STACK.css and (!o:styles or o:styles == 'inline')
+			runtime:styles
 		
 		var out = c(o)
 
@@ -2842,8 +2848,8 @@ export class Root < Code
 		script:universal = STACK.meta:universal !== no
 		script:imports = transformers.extractDependencies(script:js)
 
-		if o:onResolve
-			script:js = transformers.resolveDependencies(o:sourcePath,script:js,o:onResolve)
+		if o:resolve
+			script:js = transformers.resolveDependencies(o:sourcePath,script:js,o:resolve)
 
 		if false
 			console.log 'deps',script:imports
@@ -2854,7 +2860,7 @@ export class Root < Code
 		
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
-				script:js = "{script:js}\nimba.styles.register('{script:sourceId}',{JSON.stringify(script:css)});"
+				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{JSON.stringify(script:css)});"
 				if o:debug
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
@@ -11047,9 +11053,24 @@ export class ImportProxy < Variable
 
 	def access key
 		let raw = C(key,mark: false)
+		if @globalName
+			return LIT("{@globalName}.{raw}")
+
 		@exports[raw] ||= LIT("{@name}_{raw}")
 
 export class ImbaRuntime < ImportProxy
+
+	def configure options
+		if options:runtime == 'global'
+			@globalName = 'imba'
+		elif options:runtime
+			self.path = options:runtime
+		self
+
+	# def access key
+	# 	# if @globalName
+	# 	let raw = C(key,mark: false)
+	# 	@exports[raw] ||= LIT("{@name}_{raw}")
 
 export class ScopeContext < Node
 

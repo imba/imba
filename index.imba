@@ -1,1 +1,1 @@
-export * from './src/imba/index.imba'
+export * from './src/imba/imba.imba'

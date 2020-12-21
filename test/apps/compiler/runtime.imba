@@ -1,3 +1,5 @@
+import imbac from 'imba/compiler'
+
 let fs = {}
 
 fs.plain = """
@@ -8,11 +10,12 @@ fs.tags = """
 tag App
 	<self>
 
+imba.mount(<App>)
 """
 
 def compile name, o = {}
 	o.sourcePath ||= "{name}.imba"
-	global.imbac.compile(fs[name],o)
+	imbac.compile(fs[name],o)
 
 test 'auto' do
 	let res = String compile('plain', platform: 'browser')
@@ -20,11 +23,10 @@ test 'auto' do
 
 test 'tags' do
 	let res = String compile('tags', platform: 'browser')
-	ok res.indexOf('import') >= 0
+	ok res.indexOf('imba.mount') == -1
+	# eq res,'test'
 
-	res = String compile('tags', platform: 'browser', imbaPath: '/here')
-	ok res.indexOf('/here/core') >= 0
 
-test 'result.dependencies' do
-	let res = compile('tags', platform: 'browser')
-	eq res.dependencies, ['core']
+test 'tags2' do
+	let res = String compile('tags', platform: 'browser', runtime: 'global')
+	ok res.indexOf('imba.mount') >= 0

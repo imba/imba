@@ -127,7 +127,6 @@ class Styles
 
 export const styles = new Styles
 
-
 extend class Element
 	def css$ key, value, mods
 		self.style[key] = value

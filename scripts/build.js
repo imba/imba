@@ -90,12 +90,11 @@ function plugin(build){
 		}
 
 		let t0 = Date.now();
-		let body = imba2.compile(raw,{
+		let body = imba2.compile(raw,Object.assign({
 			platform: options.platform || 'browser',
 			format: 'esm',
 			sourcePath: args.path,
-			imbaPath: self.imbaPath || null
-		});
+		},self.imbaOptions));
 
 		time += (Date.now() - t0);
 		compileCache[key] = {input: raw, output: body.js};
@@ -116,8 +115,16 @@ async function bundle(o){
 	let input = o.entryPoints[0];
 	let entry = {options: o}
 	let watcher = entry.watcher = argv.watch && chokidar.watch([]);
+	let name = np.basename(input).replace(/\.imba1?$/,'');
 
-	entry.imbaPath = o.imbaPath;
+	if(name == 'index'){
+		name = np.basename(np.dirname(input));
+	}
+
+	console.log("NAME IS",name);
+
+	entry.imbaOptions = o.options || {};
+
 	o.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
 
 	if(o.platform == 'node'){
@@ -125,14 +132,19 @@ async function bundle(o){
 	} else {
 		o.resolveExtensions = ['.web.imba','.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'];
 	}
+
+	if(!o.outdir && !o.outfile){
+		o.outdir = `dist/${o.platform}`;
+	}
 	
+
 	o.target = o.target || ['es2019'];
-	o.bundle = true;
+	if(o.bundle == undefined) o.bundle = true;
 	o.loader = {'.txt':'text'}
 	o.incremental = !!watcher;
 	o.logLevel = 'info';
 
-	delete o.imbaPath;
+	delete o.options;
 	
 	let result = await require('esbuild').build(o);
 	if(watcher){
@@ -142,12 +154,11 @@ async function bundle(o){
 			console.log('rebuilt',input);
 		})
 	}
-	console.log(`built ${input}`);
+	console.log(`built ${input} to ${o.outfile}`);
 }
 
 // 
-
-bundle([{
+let bundles = [{
 	entryPoints: ['src/compiler/compiler.imba1'],
 	outfile: 'dist/compiler.cjs',
 	format: 'cjs',
@@ -164,22 +175,36 @@ bundle([{
 	globalName: 'imbac',
 	platform: 'browser',
 },{
-	entryPoints: ['src/imba/index.imba'],
-	outfile: 'dist/imba.js',
+	entryPoints: ['src/imba/imba.imba'],
+	outfile: 'dist/browser/imba.iife.js',
 	format: 'iife',
 	globalName: 'imba',
 	platform: 'browser'
 },{
+	entryPoints: ['src/imba/imba.imba'],
+	outfile: 'dist/browser/imba.js',
+	format: 'esm',
+	globalName: 'imba',
+	platform: 'browser',
+	minify: true
+},{
+	entryPoints: ['src/compiler/compiler.imba1'],
+	outfile: 'dist/browser/compiler.js',
+	format: 'esm',
+	platform: 'browser'
+},{
 	entryPoints: ['test/spec.imba'],
-	outfile: 'dist/imba.spec.js',
+	outfile: 'dist/browser/spec.js',
 	minify: false,
-	format: 'iife',
+	format: 'esm',
+	bundle: false,
+	options: {runtime: './imba.js'},
 	platform: 'browser'
 },{
 	entryPoints: ['src/bundler/worker.imba'],
 	outfile: 'dist/compiler-worker.js',
 	minify: false,
-	imbaPath: '../imba',
+
 	format: 'cjs',
 	external: ['chokidar','esbuild'],
 	platform: 'node'
@@ -188,9 +213,11 @@ bundle([{
 	outbase: 'src/bin',
 	outdir: 'dist/bin',
 	minify: false,
-	imbaPath: '../imba',
 	sourcemap: false,
 	format: 'cjs',
 	external: ['chokidar','esbuild'],
 	platform: 'node'
-}])
+}];
+
+
+bundle(bundles)

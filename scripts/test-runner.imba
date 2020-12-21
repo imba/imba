@@ -1,15 +1,15 @@
-var puppeteer = require "puppeteer"
-var path = require "path"
-var fs = require "fs"
-var compiler = require "../dist/compiler.cjs"
-var helpers = compiler.helpers
-var http = require('http')
-var browser
-var esbuild = require 'esbuild'
+const puppeteer = require "puppeteer"
+const path = require "path"
+const fs = require "fs"
+const compiler = require "../dist/compiler.cjs"
+const helpers = compiler.helpers
+const http = require('http')
+
+const esbuild = require 'esbuild'
 const PORT = 8089
 
 
-var args = [
+const args = [
 	'--disable-web-security',
 	'--allow-file-access-from-file',
 	'--no-sandbox',
@@ -21,6 +21,7 @@ var args = [
 	'--single-process'
 ]
 
+let browser = null
 let server = null
 
 def getFiles(dir, o = [])
@@ -33,7 +34,7 @@ def getFiles(dir, o = [])
 	return o
 	
 let options = helpers.parseArgs(process.argv.slice(2),{
-	alias: {g: 'grep',c: 'concurrent'}
+	alias: {g: 'grep',c: 'concurrent',d: 'debug'}
 })
 
 let consoleMapping = {
@@ -41,7 +42,7 @@ let consoleMapping = {
 	endGroup: 'groupEnd'
 }
 
-let parseRemoteObject = do |obj|
+let parseRemoteObject = do(obj)
 	let result = obj.value or obj
 	if obj.type == 'object'
 		# console.log("object",obj,obj.preview)
@@ -234,12 +235,14 @@ def run page
 
 def serve
 	let statics = {}
-	for item in ['imba.js','imba.spec.js','compiler.js']
-		let body = fs.readFileSync(path.join(__dirname,'..','dist',item),'utf8')
+	for item in ['imba.js','spec.js','compiler.js']
+		let body = fs.readFileSync(path.join(__dirname,'..','dist','browser',item),'utf8')
 		statics["/{item}"] = body
 
 	server = http.createServer do(req,res)
+		# console.log 'serving?!?',req.url
 		if let file = statics[req.url]
+			res.setHeader("Content-Type", "application/javascript")
 			res.write(file)
 			return res.end!
 
@@ -257,15 +260,16 @@ def serve
 			let html = """
 				<html><head>
 				<meta charset='UTF-8'>
-				<script src='/imba.js' type='text/javascript'></script>
-				<script src='/imba.spec.js' type='text/javascript'></script>
+				<script src='/imba.js' type='module'></script>
+				<script src='/spec.js' type='module'></script>
 				</head><body>
-				<script src='./{barename}.imba' type='text/javascript'></script>
-				<script>SPEC.run();</script>
+				<script src='./{barename}.imba' type='module'></script>
+				<script type='module'>SPEC.run();</script>
 				</body></html>
 			"""
 
 			if entry and entry.body.indexOf('global.imbac') >= 0
+				console.log 'need to import the compiler?'
 				html = html.replace('</head>',"<script src='/compiler.js' type='text/javascript'></script></head>")
 			# console.log 'returning',html
 			res.write(html)
@@ -278,8 +282,13 @@ def serve
 			let opts = {
 				platform: 'browser'
 				sourcePath: src
-				imbaPath: null
+				runtime: '/imba.js'
 				raiseErrors: true
+				resolve: {
+					'imba': '/imba.js',
+					'imba/compiler': '/compiler.js',
+					'imba/spec': '/compiler.js'
+				}
 			}
 
 			try
@@ -287,6 +296,7 @@ def serve
 				let output = compiler.compile(body,opts)
 				res.writeHead(200, { 'Content-Type': 'application/javascript' })
 				let js = output.js
+				# console.log 'js here',js
 				# js = '(function(){' + js + '})();SPEC.run()'
 				# console.log 'write html',output.js
 				res.write(js)
@@ -328,7 +338,6 @@ def main
 	for page in pages
 		pages[page.sourcePath] = page
 		let bundle = page.body.match(/^(import|export) /gm)
-		page.skip = yes if bundle
 		page.skip = yes if page.body.match(/# SKIP/)
 
 	let entrypoints = pages.filter do !$1.skip
@@ -381,6 +390,8 @@ def main
 
 	# await new Promise do(resolve) setTimeout(resolve,100000)
 	# server.close do
-	process.exit(failed.length ? 1 : 0)
+	
+	unless options.debug
+		process.exit(failed.length ? 1 : 0)
 
 main()

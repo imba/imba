@@ -30,12 +30,12 @@ tag app-root
 let app = <app-root>
 imba.mount(app)
 test do
-	ok $(app-root div + app-foo)
+	ok document.querySelector('app-root div + app-foo')
 	app.view = 'bar'
 	app.render()
-	ok $(app-root div + app-bar)
+	ok document.querySelector('app-root div + app-bar')
 	app.view = 'foo'
 	app.render()
-	ok $(app-root div + app-foo)
-	ok $(app-bar) == null
+	ok document.querySelector('app-root div + app-foo')
+	ok document.querySelector('app-bar') == null
 	

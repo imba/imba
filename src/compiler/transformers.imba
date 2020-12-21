@@ -41,10 +41,14 @@ export def resolveDependencies importer, code, resolver, context = {}
 	let deps = extractDependencies(code)
 	let locs = deps.#locations.slice(0).reverse!
 	let resolved = Object.assign({},deps)
-	if resolver isa Function
-		for own key,dep of deps
-			let res = resolver(Object.assign({path: key},context))
-			resolved[key] = res if res != null
+	
+	for own key,dep of deps
+		let res = null
+		if resolver isa Function
+			res = resolver(Object.assign({path: key},context))
+		elif resolver[key]
+			res = resolver[key]
+		resolved[key] = res if res != null
 
 	for [start,end,part] in locs
 		let replacement = resolved[part]

@@ -47,9 +47,21 @@ export def getTagType name, klass
 
 # Basic node extensions
 
+const contextHandler =
+	def get target, name
+		let ctx = target
+		let val = undefined
+		while ctx and val == undefined
+			if ctx = ctx.#parent
+				val = ctx[name]
+		return val
+
 extend class Node
 	get #parent
-		##parent or this.parentNode
+		##parent or this.parentNode or ##up # FIX
+
+	get #context
+		##context ||= new Proxy(self,contextHandler)
 
 	def #init
 		self
@@ -335,4 +347,3 @@ export def defineTag name, klass, options = {}
 		window.customElements.define(name,klass)
 
 	return klass
-
