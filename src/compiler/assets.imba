@@ -23,7 +23,7 @@ export def parseAsset raw,name
 			if len > 2 and val[0] == val[len - 1] and (val[0] == '"' or val[0] == "'")
 				val = val.slice(1,-1)
 			attrs[currAttr.value] = val
-		# console.log tok.type,tok.value
+
 		if tok.type == 'delimiter.xml' and val == '>'
 			contentStart = tok.offset + 1
 			break

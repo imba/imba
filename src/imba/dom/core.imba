@@ -38,6 +38,10 @@ export class Window
 
 # const DOM = global.imba.##window = Window.prototype
 
+export def use_window
+	yes
+
+
 const voidElements = {
 	area: yes
 	base: yes
@@ -678,6 +682,9 @@ export def createAssetElement asset, parent, flags
 
 export def createComment text
 	doc.createComment(text)
+
+export def createFragment
+	doc.createDocumentFragment
 
 export def createComponent name, parent, flags, text, ctx
 	# the component could have a different web-components name?

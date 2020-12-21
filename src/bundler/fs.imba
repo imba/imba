@@ -223,7 +223,6 @@ export class ImbaFile < FileNode
 			o = Object.assign({
 				platform: 'node',
 				format: 'esm',
-				# raw: true
 				imbaPath: 'imba'
 				styles: 'extern'
 				hmr: true
@@ -234,6 +233,8 @@ export class ImbaFile < FileNode
 				config: program.config
 			},o)
 
+			o.format = 'esm' # always esm here?
+
 			# console.log "compile with options",o,program.config.theme
 			# throw "non"
 
@@ -241,7 +242,7 @@ export class ImbaFile < FileNode
 
 			let t = Date.now!
 			let out = await program.workers.exec('compile_imba', [code,o])
-			program.log.success 'compile %path in %ms',rel,Date.now! - t
+			program.log.success 'compile %path %path in %ms',rel,o.platform,Date.now! - t
 			# console.log 'compiled',out.js
 			return out
 

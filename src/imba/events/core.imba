@@ -67,7 +67,8 @@ def Event.busy$mod sel
 	return Event.flag$mod.call(this,'busy',250,sel)
 
 def Event.mod$mod name
-	return Event.flag$mod.call(this,"mod-{name}",document.documentElement)
+	# FIXME
+	return Event.flag$mod.call(this,"mod-{name}",global.document.documentElement)
 
 # could cache similar event handlers with the same parts
 export class EventHandler

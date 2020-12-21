@@ -4829,7 +4829,9 @@ export class VarOrAccess < ValueNode
 		if variable and variable isa GlobalReference
 			let name = variable.name
 
-			if stack.tsc
+			if variable isa ZonedVariable
+				@value = variable.forScope(scope)
+			elif stack.tsc
 				@value = LIT(name)
 			elif stack.isNode
 				@value = LIT(scope.imba.c)
@@ -4837,9 +4839,7 @@ export class VarOrAccess < ValueNode
 					@value = LIT("{scope.imba.c}.{name}")
 			else
 				@value = LIT(name)
-
-			# "{root.symbolRef('#imba').c}"
-			# console.log 'variable is global reference',variable.name,@value.c
+		
 
 		# does not really need to have a declarator already? -- tricky
 		elif variable && variable.declarator
@@ -8222,7 +8222,11 @@ export class Tag < TagLike
 		var isReactive = self.isReactive
 
 		var canInline = no
-		var shouldEnd = isComponent or @attrmap:route or @attrmap:routeTo or @attrmap['route-to']
+		var useRoutes = @attrmap:route or @attrmap:routeTo or @attrmap['route-to']
+		var shouldEnd = isComponent or useRoutes
+
+		if useRoutes
+			stack.use('router')
 
 		var dynamicKey = null
 		var ownCache = no
@@ -9078,6 +9082,9 @@ export class Export < ValueNode
 			if !STACK.cjs
 				return isDefault ? "export default {value.c}" : "export {value.c}"
 			else
+				let val = value.left.value
+				console.log "export is a var reference?! {value.left} {val}"
+
 				let sym = isDefault ? "default" : value.left.value.symbol
 				value.right = OP('=',LIT("exports.{sym}"),value.right)
 				return value.c
@@ -10336,8 +10343,8 @@ export class RootScope < Scope
 		register('import', self, type: 'global')
 		register 'module', self, type: 'global'
 		# register 'imba', self, type: 'global', varclass: GlobalReference
-		register 'window', self, type: 'global', varclass: GlobalReference
-		self.document = register 'document', self, type: 'global', varclass: GlobalReference
+		register 'window', self, type: 'global', varclass: ZonedVariable
+		self.document = register 'document', self, type: 'global', varclass: ZonedVariable
 		register 'exports', self, type: 'global'
 		register 'console', self, type: 'global'
 		register 'process', self, type: 'global'
@@ -11010,6 +11017,28 @@ export class SystemVariable < Variable
 export class ShadowedVariable < Variable
 export class GlobalReference < Variable
 export class PureReference < Variable
+
+export class ZonedVariable < GlobalReference
+	def forScope scope
+		ZonedVariableAccess.new(self,scope)
+
+	def c
+		"{@name}"
+
+export class ZonedVariableAccess < Node
+
+	def initialize variable, scope
+		@variable = variable
+		@scope = scope
+	
+	def c
+		let name = @variable.@name
+		if STACK.isNode
+			STACK.use("use_{name}")
+			"{runtime:zone}.get('{name}',{@scope.context.c})"
+		else
+			# what if it is redefined somewhere?
+			"{name}"
 
 export class ImportProxy < Variable
 	prop proxy

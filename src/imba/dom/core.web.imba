@@ -7,7 +7,6 @@ export const {
 	PointerEvent,
 	KeyboardEvent,
 	CustomEvent,
-
 	Node,
 	Comment,
 	Text,
@@ -20,19 +19,22 @@ export const {
 	HTMLButtonElement,
 	HTMLOptionElement,
 	HTMLScriptElement,
-
 	SVGElement,
-	
 	DocumentFragment,
 	ShadowRoot,
 	Document,
 	Window,
-	customElements,
-	document
-} = window
+	customElements
+} = global.window
+
+# export const document = global.window.document
 
 const CustomTagConstructors = {}
 const TYPES = {}
+
+export def use_window
+	yes
+
 
 export def getTagType name, klass
 	# TODO follow same structure as ssr TYPES
@@ -295,6 +297,9 @@ export def createAssetElement asset, parent, flags
 
 export def createComment text
 	document.createComment(text)
+
+export def createFragment
+	document.createDocumentFragment!
 
 # Registry
 export def createComponent name, parent, flags, text, ctx

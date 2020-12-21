@@ -1,4 +1,4 @@
-import {Element,Text,DocumentFragment,document,createComment} from './core'
+import {Element,Text,DocumentFragment,createFragment,createComment} from './core'
 
 extend class DocumentFragment
 
@@ -260,7 +260,7 @@ class IndexedTagFragment < VirtualFragment
 		return
 
 export def createLiveFragment bitflags, options, par
-	const el = document.createDocumentFragment!
+	const el = createFragment!
 	el.setup$(bitflags, options)
 	el.##up = par if par
 	return el

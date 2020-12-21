@@ -1,3 +1,4 @@
+# imba$runtimez=local
 # proxy for hash
 class Hash
 
@@ -5,7 +6,7 @@ let routerInstance = null
 
 import {EventEmitter} from 'events'
 
-import {Node} from './dom/core'
+import {Node,Element} from './dom/core'
 import {Location} from './router/location'
 import {History} from './router/history'
 import {Request} from './router/request'
@@ -16,6 +17,9 @@ import {commit,scheduler} from './scheduler'
 
 export def getRouter
 	routerInstance ||= new Router(window,document)
+
+export const router = {}
+
 
 export class Router < EventEmitter
 
@@ -343,7 +347,7 @@ export class ElementRouteTo < ElementRoute
 		else
 			router.go(href)
 
-extend class window.Node
+extend class Node
 	get router
 		getRouter!
 

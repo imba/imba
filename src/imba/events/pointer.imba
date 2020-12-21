@@ -300,7 +300,7 @@ def Event.touch$handle
 		el.removeEventListener('pointermove',listener)
 		el.removeEventListener('pointerup',listener)
 		el.removeEventListener('pointercancel',listener)
-		document.removeEventListener('selectstart',canceller)
+		global.document.removeEventListener('selectstart',canceller)
 
 	el.flags.incr('_touch_')
 	el.setPointerCapture(e.pointerId)
@@ -308,7 +308,7 @@ def Event.touch$handle
 	el.addEventListener('pointerup',listener)
 	el.addEventListener('pointercancel',listener)
 	el.addEventListener('lostpointercapture',teardown,once:true)
-	document.addEventListener('selectstart',canceller,capture:true)
+	global.document.addEventListener('selectstart',canceller,capture:true)
 
 	listener(e)
 	# handler.once('idle') do console.warn 'is idle!'
