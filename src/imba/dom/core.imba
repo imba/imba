@@ -11,7 +11,7 @@ import {manifest} from '../manifest'
 
 let asl = null
 
-class Location < URL
+export class Location < URL
 
 export class Window
 	get document
@@ -20,27 +20,8 @@ export class Window
 	get location
 		self.document.location
 
-# extend class ImbaContext
-# 	get #window
-# 		##window ||= new Window(self)
-# 
-# 	get #document
-# 		##document or self.window.document
-# 
-# 	def run cb
-# 		let runtime = new ImbaContext(self,Object.create(state))
-# 		asl ||= new AsyncLocalStorage
-# 		asl.run(runtime,cb)
-
-# Object.defineProperties(global,{
-# 	#imba: {get: (do asl..getStore! or global.imba)}
-# })
-
-# const DOM = global.imba.##window = Window.prototype
-
 export def use_window
 	yes
-
 
 const voidElements = {
 	area: yes
@@ -134,8 +115,18 @@ const escapeTextContent = do(val, nodeName)
 # could create a fake document 
 export class Document
 
+	static def create ctx, cb
+		let doc = new Document
+		doc.#context = ctx
+		doc.location = ctx.location
+		asl ||= new AsyncLocalStorage
+		asl.run(doc,cb)
+		return doc
+
 	set location value
-		#location = new Location(value)
+		if typeof value == 'string'
+			value = new Location(value)
+		#location = value
 
 	get location
 		#location ||= new Location('http://localhost/')
@@ -169,6 +160,10 @@ export class Document
 
 const doc = new Document
 export const document = doc
+
+export def get_document
+	asl && asl..getStore! or doc
+
 # could optimize by using a dictionary in addition to keys
 # where we cache the indexes?
 # export these as well?
@@ -254,6 +249,9 @@ export class Node
 	def text$ item
 		self.textContent = item
 		self
+
+	get ownerDocument
+		##document ||= get_document!
 
 	get #parent
 		##parent or this.parentNode or ##up
@@ -605,7 +603,6 @@ export class HTMLScriptElement < HTMLElement
 
 	set asset name
 		let asset = manifest.assetByName(name) or manifest.assetByName(name + ".js")
-		console.log 'did set asset',asset..url
 		if asset
 			setAttribute('src',asset.url)
 			setAttribute('type','module')

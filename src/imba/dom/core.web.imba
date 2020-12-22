@@ -28,9 +28,11 @@ export const {
 } = global.window
 
 # export const document = global.window.document
-
 const CustomTagConstructors = {}
 const TYPES = {}
+
+export def get_document
+	global.document
 
 export def use_window
 	yes

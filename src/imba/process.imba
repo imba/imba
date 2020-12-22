@@ -4,6 +4,12 @@ import fs from 'fs'
 import fsp from 'path'
 import {EventEmitter} from 'events'
 import {manifest} from './manifest'
+import {Document,Location} from './dom/core'
+
+# import from http2 etc?
+import http from 'http'
+import https from 'https'
+import {Http2ServerRequest} from 'http2'
 
 const proc = global.process
 
@@ -95,8 +101,12 @@ class Server
 			broadcast('invalidate',params)
 
 		# use different handler if we are on http2?
+
+
 		
 		handler = do(req,res)
+			let ishttp2 = req isa Http2ServerRequest
+
 			if paused or closed
 				res.statusCode=302
 				res.setHeader('Connection','close')
@@ -122,7 +132,18 @@ class Server
 				let reader = fs.createReadStream(asset.path)
 				return reader.pipe(res)
 
-			return originalHandler(req,res)
+			# create full url
+			let headers = req.headers
+			let base = if ishttp2
+				headers[':scheme'] + '://' + headers[':authority']
+			else
+				headers.host
+			
+			let url = new Location(req.url,base)
+
+			console.log 'request headers',url
+			Document.create(location: url) do
+				return originalHandler(req,res)
 
 		srv.on('request',handler)
 
@@ -163,5 +184,11 @@ export def asset name
 	manifest.assetByName(name)
 
 export def serve srv,...params
-	console.log 'serving!'
+	if srv isa http.Server
+		console.log 'http server!!'
+	elif srv isa https.Server
+		console.log 'https server!!'
+	else
+		console.log 'unknown server'
+
 	return Server.wrap(srv,...params)

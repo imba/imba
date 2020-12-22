@@ -1,12 +1,9 @@
 # imba$runtimez=local
-# proxy for hash
-class Hash
 
 let routerInstance = null
 
 import {EventEmitter} from 'events'
-
-import {Node,Element} from './dom/core'
+import {Node,Element,Document,createComment} from './dom/core'
 import {Location} from './router/location'
 import {History} from './router/history'
 import {Request} from './router/request'
@@ -14,34 +11,34 @@ import {Route} from './router/route'
 import {commit,scheduler} from './scheduler'
 
 # import './router/element'
+extend class Document
+	get router
+		#router ||= new Router(self)
 
-export def getRouter
-	routerInstance ||= new Router(window,document)
-
-export const router = {}
-
+export def use_router
+	yes
+	# routerInstance ||= new Router(window,document)
 
 export class Router < EventEmitter
 
 	# support redirects
-	def constructor o = {}
+	def constructor doc, o = {}
 		super()
 		routes = {}
 		options = o
 		busy = []
-		#doc = document
-		#win = window
-		web? = window == global
+		#doc = doc
+		web? = !!doc.defaultView
 		root = o.root or ''
-
-		history = $web$ ? window.history : (new History(self))
-		location = new Location(o.url or document.location.href,self)
+		history = $web$ ? global.window.history : (new History(self))
+		location = new Location(o.url or doc.location.href,self)
 		mode = o.mode or 'history'
 		self.setup!
+		console.log 'created router!!'
 		self
 
 	get origin
-		$origin ||= document.location.origin
+		#origin ||= #doc.location.origin
 		
 	def option key, value
 		if value == undefined
@@ -52,7 +49,7 @@ export class Router < EventEmitter
 		
 	get realpath
 		if $web$
-			let loc = document.location
+			let loc = #doc.location
 			return loc.href.slice(loc.origin.length)
 		return location.path
 
@@ -86,7 +83,7 @@ export class Router < EventEmitter
 			if req.aborted
 				# console.log "request was aborted",params
 				# what about silent abort?
-				var res = !req.forceAbort && window.confirm("Are you sure you want to leave? You might have unsaved changes")
+				var res = !req.forceAbort && global.window.confirm("Are you sure you want to leave? You might have unsaved changes")
 
 				if res
 					req.aborted = no
@@ -106,17 +103,16 @@ export class Router < EventEmitter
 				elif mode == 'replace' # params:replace
 					self.replaceState(params.state or self.state,null,String(location))
 					
-				if web?
-					location.state = window.history.state
+				if $web$
+					location.state = global.window.history.state
 					
 				self.emit('change',req)
 				commit!
 		
 		$web$ and self.onReady do
-			# deprecate
-			let hash = document.location.hash
-			if hash != $hash
-				self.emit('hashchange',$hash = hash)
+			let hash = #doc.location.hash
+			if hash != #hash
+				self.emit('hashchange',#hash = hash)
 
 		refreshing = no
 		self
@@ -132,15 +128,15 @@ export class Router < EventEmitter
 		return
 		
 	def onhashchange e
-		emit('hashchange',$hash = document.location.hash)
+		emit('hashchange',#hash = #doc.location.hash)
 		commit!
 
 	def setup
-		if web?
+		if $web$
 			onclick = onclick.bind(self)
 			onhashchange = onhashchange.bind(self)
 			
-			$hash = document.location.hash
+			#hash = #doc.location.hash
 			location = Location.parse(realpath,self)
 			history.replaceState(self.state,null,String(location))
 
@@ -195,7 +191,7 @@ export class Router < EventEmitter
 			return location.query(par,val)
 		
 	get hash
-		$hash
+		#hash
 
 	def serializeParams params
 		if params isa Object
@@ -205,14 +201,12 @@ export class Router < EventEmitter
 		return params or ''
 
 	set hash value
-		if web?
-			# console.log "set hash",serializeParams(value)
-			# will set without jumping
+		if $web$
 			history.replaceState({},null,'#' + self.serializeParams(value)) # last state?
 			# location:hash = serializeParams(value)
 		
 	def match pattern
-		var route = routes[pattern] ||= new Route(self,pattern)
+		let route = routes[pattern] ||= new Route(self,pattern)
 		route.test()
 		
 	def route pattern
@@ -242,20 +236,19 @@ export class Router < EventEmitter
 	def onReady cb
 		scheduler.add do
 			busy.length == 0 ? cb(self) : once('ready',cb)
-			
-	# def emit name, ...params do imba.emit(self,name,params)
-	# def on name, ...params do imba.listen(self,name,...params)
-	# def once name, ...params do imba.once(self,name,...params)
-	# def un name, ...params do imba.unlisten(self,name,...params)
+		
+# def emit name, ...params do imba.emit(self,name,params)
+# def on name, ...params do imba.listen(self,name,...params)
+# def once name, ...params do imba.once(self,name,...params)
+# def un name, ...params do imba.unlisten(self,name,...params)
 
 export class ElementRoute
 	def constructor node, path, parent, options = {}
 		node = node
-
 		route = router.routeFor(node,path,parent ? parent.route : null,options)
 		match = null
 		options = options
-		placeholder = node.$placeholder or new window.Comment("{path}")
+		placeholder = node.$placeholder or createComment("{path}")
 
 	get raw
 		route.raw
@@ -267,7 +260,7 @@ export class ElementRoute
 		match
 
 	get router
-		getRouter!
+		node.ownerDocument.router
 		
 	get sticky
 		options and options.sticky
@@ -349,7 +342,7 @@ export class ElementRouteTo < ElementRoute
 
 extend class Node
 	get router
-		getRouter!
+		ownerDocument.router
 
 extend class Element
 

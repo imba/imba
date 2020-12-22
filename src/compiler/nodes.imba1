@@ -4988,19 +4988,19 @@ export class VarReference < ValueNode
 		var virtualize = stack
 		let scope = scope__
 		@value.traverse(declaring: @type, variables: vars)
-
-		# should happen automatically when traversing no?
+		# console.log("has variable? {@value.@variable}")
+		# should happen automatically when traversing via traverse(declaring:...)
 		if @value isa Identifier
 			@value.@variable ||= scope.register(@value.symbol,self,type: @type, datatype: datatype)
 			vars.push(@value.@variable)
 			stack.registerSemanticToken(@value,@variable)
 		
 		@variables = vars
-		# forceExpression if option('virtualize')
 		return self
 	
 	def js stack,params
 		let out = @value.c()
+		# console.log "result of varreference {out}"
 		# console.log "is expression?? {@expression} {params:expression}"
 		unless @expression
 
@@ -8226,7 +8226,7 @@ export class Tag < TagLike
 		var shouldEnd = isComponent or useRoutes
 
 		if useRoutes
-			stack.use('router')
+			stack.use('use_router')
 
 		var dynamicKey = null
 		var ownCache = no
@@ -10169,7 +10169,7 @@ export class Scope
 			# console.log 'redeclaring variable',"{existing} {decl}",existing.type
 
 		# FIXME check if existing is required to be unique as well?
-		if existing and !o:unique
+		if existing and !o:unique and existing.type != 'global'
 			return existing
 		
 		let par = o:lookup && parent && parent.lookup(name)
@@ -10180,7 +10180,7 @@ export class Scope
 		if par
 			item.@parent = par
 		
-		if !o:system and !existing
+		if !o:system and (!existing or existing.type == 'global')
 			@varmap[name] = item
 
 		if STACK.state and STACK.state:variables isa Array
@@ -10343,8 +10343,8 @@ export class RootScope < Scope
 		register('import', self, type: 'global')
 		register 'module', self, type: 'global'
 		# register 'imba', self, type: 'global', varclass: GlobalReference
-		register 'window', self, type: 'global', varclass: ZonedVariable
-		self.document = register 'document', self, type: 'global', varclass: ZonedVariable
+		register 'window', self, type: 'global', varclass: WindowReference
+		self.document = register 'document', self, type: 'global', varclass: DocumentReference
 		register 'exports', self, type: 'global'
 		register 'console', self, type: 'global'
 		register 'process', self, type: 'global'
@@ -11024,6 +11024,24 @@ export class ZonedVariable < GlobalReference
 
 	def c
 		"{@name}"
+
+export class DocumentReference < ZonedVariable
+	def forScope scope
+		self
+
+	def c
+		if STACK.isNode
+			"{runtime:get_document}()"
+		else
+			"globalThis.document"
+
+export class WindowReference < GlobalReference
+	def c
+		if STACK.isNode
+			"{runtime:get_window}()"
+		else
+			"window"
+
 
 export class ZonedVariableAccess < Node
 
