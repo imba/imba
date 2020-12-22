@@ -17,7 +17,6 @@ extend class Document
 
 export def use_router
 	yes
-	# routerInstance ||= new Router(window,document)
 
 export class Router < EventEmitter
 
@@ -34,7 +33,6 @@ export class Router < EventEmitter
 		location = new Location(o.url or doc.location.href,self)
 		mode = o.mode or 'history'
 		self.setup!
-		console.log 'created router!!'
 		self
 
 	get origin

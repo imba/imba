@@ -1,8 +1,4 @@
-const http = require 'http'
-const fs = require 'fs'
-const path = require 'path'
 const cluster = require 'cluster'
-
 import Component from './component'
 
 export default class Serve < Component
@@ -46,24 +42,18 @@ export default class Serve < Component
 		workers.push(worker)
 
 		worker.on 'listening' do(address)
-			# this could happen multiple times in a single cluster?
+			# this could happen multiple times in a single worker?
+			# should rather listen for imba.serve commands?
 			log.info "%ref listening on %d",o.number,address.port
 			if replace
 				replace.send(['emit','reloaded'])
-			# staller.pause!
-			# now start cleaning up old versions?
 
 		worker.on 'exit' do
 			log.info "%ref exited",o.number
 
 		worker.on 'message' do(message, handle)
-			# console.log 'message from worker',message
-
 			if message == 'reload'
 				log.info "%ref start reloading",o.number
 				worker.#reloading = yes
 				worker.send(['emit','reloading'])
 				spawn(o,worker)
-				
-			# if message == 'restart' and worker == main
-			#	restart!

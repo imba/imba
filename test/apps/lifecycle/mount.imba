@@ -81,7 +81,7 @@ let expect = [
 
 test "mount" do
 	imba.mount(<app-root>)
-	await imba
+	await imba.commit!
 	# console.log $1.log.slice(0),expect
 	eq $1.log, expect
 

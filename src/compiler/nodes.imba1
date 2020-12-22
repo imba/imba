@@ -4898,8 +4898,6 @@ export class VarOrAccess < ValueNode
 	def node
 		@variable ? self : value
 
-	
-
 	def datatype
 		super or @identifier.datatype
 
@@ -11082,21 +11080,25 @@ export class ImportProxy < Variable
 		# for own key,value
 		let keys = Object.keys(@exports)
 		let touches = Object.values(@touched)
-
-		if keys:length == 0
-			return ""
-
-		let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
+		let js = []
 
 		let path = self.path
 
 		if path == 'imba'
 			path = STACK.imbaPath or 'imba'
 
-		let js = "import \{{out}\} from '{path or ""}'"
+		if @importAll
+			js.push("import * as {@name} from '{path}';")
+
+		if keys:length > 0
+			let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
+			js.push "import \{{out}\} from '{path or ""}';"
+
 		if touches:length
-			js += ";\n({touches.map(do $1.c).join(",")});"
-		return js
+			js.push "({touches.map(do $1.c).join(",")});"
+
+		return js:length ? js.join('\n') : ''
+
 
 	def access key
 		let raw = C(key,mark: false)
@@ -11115,7 +11117,11 @@ export class ImbaRuntime < ImportProxy
 		self
 
 	def c
-		@c = "IMBA"
+		if !@importAll
+			@importAll = yes
+			# console.log "import all",STACK.current
+			STACK.current.warn("Referencing imba directly disables efficient tree-shaking")
+		@c = "imba"
 
 	# def access key
 	# 	# if @globalName

@@ -109,10 +109,14 @@ class Server
 
 			if paused or closed
 				res.statusCode=302
-				res.setHeader('Connection','close')
 				res.setHeader('Location',req.url)
 
+				unless ishttp2
+					res.setHeader('Connection','close')
+
 				if closed
+					if ishttp2
+						req.stream.session.close!
 					return res.end!
 				else
 					return stalledResponses.push(res)
@@ -141,7 +145,6 @@ class Server
 			
 			let url = new Location(req.url,base)
 
-			console.log 'request headers',url
 			Document.create(location: url) do
 				return originalHandler(req,res)
 

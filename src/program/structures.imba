@@ -57,8 +57,14 @@ export class Diagnostic
 	get #source
 		DOCMAP.get(self)
 
-	get snippet
-		""
+	def toSnippet
+		let start = range.start
+		let end = range.end
+		let msg = "{#source.sourcePath}:{start.line + 1}:{start.character + 1}: {message}"
+		let line = #source.doc.getLineText(start.line)
+		let stack = [msg,line]
+		stack.push line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(end.character - start.character)
+		return stack.join('\n').replace(/\t/g,'    ') + "\n"
 
 	def toError
 		let start = range.start
