@@ -5,7 +5,6 @@ class Connection
 		self
 
 	def start
-		console.log 'starting this!!!'
 		return if socket
 
 		socket = new EventSource("/__hmr__")

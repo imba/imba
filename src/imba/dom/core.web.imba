@@ -332,7 +332,6 @@ export def createComponent name, parent, flags, text, ctx
 
 export def defineTag name, klass, options = {}
 	TYPES[name] = klass
-	console.log 'defineTag',name
 
 	klass.nodeName = name
 
