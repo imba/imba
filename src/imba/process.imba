@@ -1,7 +1,7 @@
 # imba$imbaPath=global
 import cluster from 'cluster'
-import fs from 'fs'
-import fsp from 'path'
+import nfs from 'fs'
+import np from 'path'
 import {EventEmitter} from 'events'
 import {manifest} from './manifest'
 import {Document,Location} from './dom/core'
@@ -10,6 +10,40 @@ import {Document,Location} from './dom/core'
 import http from 'http'
 import https from 'https'
 import {Http2ServerRequest} from 'http2'
+
+const mimes = {
+	svg: 'image/svg+xml'
+	html: 'text/html'
+	jpg: 'image/jpeg'
+	jpeg: 'image/jpeg'
+	js: 'text/javascript'
+	mjs: 'text/javascript'
+	json: 'application/json'
+	otf: 'font/otf'
+	ttf: 'font/ttf'
+	woff: 'font/woff'
+	woff2: 'font/woff2'
+	png: 'image/png'
+	css: 'text/css'
+	avif: 'image/avif'
+}
+
+const defaultHeaders = {
+	svg: {'Content-Type': 'image/svg+xml'}
+	html: {'Content-Type': 'text/html'}
+	jpg: {'Content-Type': 'image/jpeg'}
+	jpeg: {'Content-Type': 'image/jpeg'}
+	js: {'Content-Type': 'text/javascript'}
+	mjs: {'Content-Type': 'text/javascript'}
+	json: {'Content-Type': 'application/json'}
+	otf: {'Content-Type': 'font/otf'}
+	ttf: {'Content-Type': 'font/ttf'}
+	woff: {'Content-Type': 'font/woff'}
+	woff2: {'Content-Type': 'font/woff2'}
+	png: {'Content-Type': 'image/png'}
+	css: {'Content-Type': 'text/css'}
+	avif: {'Content-Type': 'image/avif'}
+}
 
 const proc = global.process
 
@@ -75,6 +109,24 @@ export const process = new class Process < EventEmitter
 		send('reload')
 
 
+class AssetResponder
+	def constructor url, params = {}
+		url = url
+		path = np.resolve(manifest.assetsDir,url.slice(manifest.assetsUrl.length + 1))
+		ext = np.extname(url)
+		mimeType = mimes[ext.slice(1)] or 'text/plain'
+		headers = {
+			'Access-Control-Allow-Origin': '*'
+			'cache-control': 'public'
+		}
+		Object.assign(headers,defaultHeaders[ext.slice(1)] or {})
+
+	def createReadStream
+		nfs.createReadStream(path)
+
+	def pipe response
+		createReadStream!.pipe(response)
+
 class Server
 
 	static def wrap server
@@ -88,6 +140,7 @@ class Server
 		server = srv
 		clients = new Set
 		stalledResponses = []
+		assetResponders = {}
 
 		# fetch and remove the original request listener
 		let originalHandler = server._events.request
@@ -101,11 +154,11 @@ class Server
 			broadcast('invalidate',params)
 
 		# use different handler if we are on http2?
-
-
 		
 		handler = do(req,res)
 			let ishttp2 = req isa Http2ServerRequest
+			let url = req.url
+			let assetPrefix = '/__assets__/'
 
 			if paused or closed
 				res.statusCode=302
@@ -121,7 +174,7 @@ class Server
 				else
 					return stalledResponses.push(res)
 			
-			if req.url == '/__hmr__'
+			if url == '/__hmr__'
 				res.writeHead(200, {
 					'Content-Type': 'text/event-stream'
 					'Connection': 'keep-alive'
@@ -131,21 +184,32 @@ class Server
 				req.on('close') do clients.delete(res)
 				return true
 
+			if url.indexOf(assetPrefix) == 0
+				let responder = assetResponders[url] ||= new AssetResponder(url,self)
+				console.log 'return asset with headers?',responder.path
+				res.writeHead(200, responder.headers)
+				return responder.pipe(res)
+
 			if let asset = manifest.assetForUrl(req.url)
 				res.writeHead(200, asset.headers)
-				let reader = fs.createReadStream(asset.path)
+				let reader = nfs.createReadStream(asset.path)
 				return reader.pipe(res)
 
 			# create full url
 			let headers = req.headers
-			let base = if ishttp2
-				headers[':scheme'] + '://' + headers[':authority']
+			let base
+			if ishttp2
+				base = headers[':scheme'] + '://' + headers[':authority']
 			else
-				headers.host
-			
-			let url = new Location(req.url,base)
+				let scheme = req.connection.encrypted ? 'https' : 'http'
+				base = scheme + '://' + headers.host
 
-			Document.create(location: url) do
+			# console.log "get headers",base,req.url,headers,req.protocol
+			
+			let loc = new Location(req.url,base)
+
+			# create a context - not a document?
+			Document.create(location: loc) do
 				return originalHandler(req,res)
 
 		srv.on('request',handler)
@@ -187,11 +251,11 @@ export def asset name
 	manifest.assetByName(name)
 
 export def serve srv,...params
-	if srv isa http.Server
-		console.log 'http server!!'
-	elif srv isa https.Server
-		console.log 'https server!!'
-	else
-		console.log 'unknown server'
+	# if srv isa http.Server
+	# 	console.log 'http server!!'
+	# elif srv isa https.Server
+	# 	console.log 'https server!!'
+	# else
+	# 	console.log 'unknown server'
 
 	return Server.wrap(srv,...params)

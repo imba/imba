@@ -1,7 +1,7 @@
 const puppeteer = require "puppeteer"
 const path = require "path"
 const fs = require "fs"
-const compiler = require "../dist/compiler.cjs"
+const compiler = require "../dist/node/compiler.js"
 const helpers = compiler.helpers
 const http = require('http')
 

@@ -12,6 +12,7 @@ export const defaultConfig = {
 	node: {
 		platform: 'node'
 		format: 'cjs'
+		outdir: 'dist'
 		target: ['node12.19.0']
 		external: ['dependencies','!imba']
 	}
@@ -19,6 +20,9 @@ export const defaultConfig = {
 	browser: {
 		platform: 'browser'
 		format: 'esm'
+		outdir: 'dist'
+		splitting: true
+
 		target: [
 			'es2020',
 			'chrome58',

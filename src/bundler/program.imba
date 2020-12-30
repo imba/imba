@@ -5,6 +5,7 @@ const esbuild = require 'esbuild'
 const workerPool = require 'workerpool'
 const workerScript = np.resolve(__dirname,'..','compiler-worker.js')
 
+import {startWorkers} from './pooler'
 import {FileSystem} from './fs'
 import chokidar from 'chokidar'
 import {Logger} from './logger'
@@ -37,21 +38,23 @@ export default class Program < Component
 		options = options
 		outdir = config.outdir or 'build'
 		mtime = options.force ? Date.now! : (options.mtime or 0)
+		package = options.package
+
 		fs = new FileSystem(options.cwd,'.',self)
 		log = new Logger(self)
-		cache = new Cache(self,fs.lookup('.imba/stuff.json'))
-		cache.mintime = mtime
+		cache = new Cache(self)
+
 		manifest = fs.lookup('imbabuild.json').load!
-		buildinfo = fs.lookup('.imba/cache.json').load!		
-		
+
 		watcher = options.watch ? chokidar.watch([cwd],{
 			ignoreInitial: true,
-			depth: 5,
-			ignored: ['.*','.git/**'],
+			depth: 0,
+			ignored: ['.*','.git/**','.cache'],
 			cwd: cwd
 		}) : new VirtualWatcher
 
 		watcher.on('change') do(src,stats)
+			console.log 'watcher on change',src
 			fs.touchFile(src)
 			#bundler..scheduleRebuild!
 
@@ -75,6 +78,9 @@ export default class Program < Component
 	get imbaPath
 		options.imbaPath
 
+	get program
+		self
+
 	get resolver
 		#resolver ||= new Resolver(config: config, files: fs.files, program: self, fs: fs)
 
@@ -86,13 +92,11 @@ export default class Program < Component
 
 	get workers
 		# TODO add reference counting and start/stop to allow correctly terminating etc
-		#workers ||= workerPool.pool(workerScript, maxWorkers:4)
-
-	def sourceIdForPath src
-		cache.alias(src)
+		#workers ||= startWorkers! # workerPool.pool(workerScript, maxWorkers:2)
 
 	def esb
 		#hasesb = yes
+		console.log 'called program esb'
 		#esb ||= await esbuild.startService({})
 
 	def setup

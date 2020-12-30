@@ -17,3 +17,11 @@ test 'attr default' do
 test 'attr default override' do
 	let el = <A preattr='world'>
 	eq el.getAttribute('preattr'), 'world'
+
+test 'dataset' do
+	let el = <div data-one='a'>
+	eq el.dataset.one, 'a'
+
+test 'dataset 2' do
+	let el = <div data-one-more='a'>
+	eq el.dataset.oneMore, 'a'

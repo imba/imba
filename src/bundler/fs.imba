@@ -192,6 +192,9 @@ export class FileNode < FSNode
 	
 	def readSync enc = 'utf8'
 		#body ||= nodefs.readFileSync(abs,enc)
+
+	def jsonReadSync
+		#json ||= JSON.parse(readSync!)
 	
 	def stat
 		nodefs.promises.stat(abs).then(do $1).catch(do blankStat)
@@ -205,9 +208,6 @@ export class FileNode < FSNode
 			#mtime = s.mtimeMs
 		return #mtime
 
-	get id
-		#id ||= program.sourceIdForPath(rel)
-
 	def unlink
 		nodefs.promises.unlink(abs)
 
@@ -218,7 +218,7 @@ export class FileNode < FSNode
 
 export class ImbaFile < FileNode
 
-	def compile o
+	def compile o,context = program
 		memo(o.platform) do
 			o = Object.assign({
 				platform: 'node',
@@ -228,7 +228,7 @@ export class ImbaFile < FileNode
 				hmr: true
 				bundle: false
 				sourcePath: rel,
-				sourceId: id,
+				sourceId: program.cache.getPathAlias(rel),
 				cwd: fs.cwd,
 				config: program.config
 			},o)
@@ -241,14 +241,14 @@ export class ImbaFile < FileNode
 			let code = await read!
 
 			let t = Date.now!
-			let out = await program.workers.exec('compile_imba', [code,o])
-			program.log.success 'compile %path %path in %ms',rel,o.platform,Date.now! - t
+			let out = await context.workers.exec('compile_imba', [code,o])
+			program.log.success 'compile %path %path in %ms',rel,o.platform,Date.now! - t,o.sourceId
 			# console.log 'compiled',out.js
 			return out
 
 export class Imba1File < FileNode
 
-	def compile o
+	def compile o,context = program
 		memo(o.platform) do
 			o = Object.assign({
 				platform: 'node',
@@ -270,7 +270,7 @@ export class Imba1File < FileNode
 			}
 
 			let t = Date.now!
-			let out = await program.workers.exec('compile_imba1', [code,o])
+			let out = await context.workers.exec('compile_imba1', [code,o])
 			program.log.success 'compile %path in %ms',rel,Date.now! - t
 			return out
 
@@ -353,6 +353,9 @@ export class FileSystem < Component
 	def writePath src,body
 		await utils.ensureDir(resolve(src))
 		writeFile(resolve(src),body)
+
+	def ensureDir src
+		await utils.ensureDir(resolve(src))
 
 	def writeFile src,body
 		nodefs.promises.writeFile(resolve(src),body)

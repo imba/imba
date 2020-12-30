@@ -50,7 +50,6 @@ function run(code,options) {
 	if (path.extname(main.filename) != '.imba' || require.extensions) {
 		options.platform || (options.platform = 'node');
 		options.raiseErrors = true;
-
 		// arguments[1].standalone || (arguments[1].standalone = true);
 		var content = compiler.compile(code,options);
 		if(content.raiseErrors) content.raiseErrors();
@@ -66,9 +65,10 @@ function run(code,options) {
 if (require.extensions) {
 	require.extensions['.imba'] = function(mod,filename) {
 		var options = {sourcePath: filename,platform: 'node', raiseErrors: true};
-		
 		Object.defineProperty(options,'fs',{value: fs, enumerable:false});
 		Object.defineProperty(options,'path',{value: path, enumerable:false});
+
+		// What type of format etc do we use?
 
 		var body = fs.readFileSync(filename,'utf8');
 		var content = compiler.compile(body,options);

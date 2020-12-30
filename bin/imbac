@@ -3,7 +3,7 @@
 var path = require('path');
 var fs = require('fs');
 var package = require('../package.json');
-var compiler = require("../dist/compiler.cjs");
+var compiler = require("../dist/node/compiler.js");
 var helpers = compiler.helpers;
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };

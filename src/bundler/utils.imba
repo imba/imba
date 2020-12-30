@@ -2,6 +2,7 @@ const fs = require 'fs'
 const path = require 'path'
 const crypto = require 'crypto'
 
+import * as flatted from 'flatted'
 import {resolve as parseConfig} from './config'
 
 export const defaultLoaders = {
@@ -96,7 +97,14 @@ export def idGenerator alphabet = 'abcdefghijklmnopqrstuvwxyz'
 		num.toString(alphabet.length).split("").map(do remap[$1]).join("")
 
 export def createHash body
-	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8)
+	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8).toUpperCase!
+
+export def serializeData data
+	flatted.stringify(data)
+
+export def deserializeData data
+	flatted.parse(data)
+	
 
 const dirExistsCache = {}
 

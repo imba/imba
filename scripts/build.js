@@ -157,24 +157,50 @@ async function bundle(o){
 	console.log(`built ${input} to ${o.outfile}`);
 }
 
-// 
+let universal = function(entrypoint,name){
+	let versions = [];
+
+	let add = function(o){
+		let ext = o.format == 'esm' ? 'mjs' : 'js';
+
+		versions.push({
+			entryPoints: [entrypoint],
+			outfile: `dist/${o.platform}/${name}.${ext}`,
+			format: o.format,
+			platform: o.platform
+		})
+	}
+	
+	add({platform: 'node', format: 'esm'});
+	add({platform: 'node', format: 'cjs'});
+	add({platform: 'browser', format: 'esm'});
+	add({platform: 'browser', format: 'cjs'});
+	
+	return versions;
+}
+
 let bundles = [{
-	entryPoints: ['src/compiler/compiler.imba1'],
-	outfile: 'dist/compiler.cjs',
-	format: 'cjs',
-	platform: 'browser'
-},{
-	entryPoints: ['src/compiler/compiler.imba1'],
-	outfile: 'dist/compiler.mjs',
-	format: 'esm',
-	platform: 'browser',
-},{
-	entryPoints: ['src/compiler/compiler.imba1'],
-	outfile: 'dist/compiler.js',
-	format: 'iife',
-	globalName: 'imbac',
-	platform: 'browser',
-},{
+// 	entryPoints: ['src/compiler/compiler.imba1'],
+// 	outfile: 'dist/compiler.cjs',
+// 	format: 'cjs',
+// 	platform: 'browser'
+// },{
+// 	entryPoints: ['src/compiler/compiler.imba1'],
+// 	outfile: 'dist/compiler.mjs',
+// 	format: 'esm',
+// 	platform: 'browser',
+// },{
+// 	entryPoints: ['src/compiler/compiler.imba1'],
+// 	outfile: 'dist/compiler.js',
+// 	format: 'iife',
+// 	globalName: 'imbac',
+// 	platform: 'browser',
+// },{
+// 	entryPoints: ['src/compiler/compiler.imba1'],
+// 	outfile: 'dist/browser/compiler.js',
+// 	format: 'esm',
+// 	platform: 'browser'
+// },{
 	entryPoints: ['src/imba/imba.imba'],
 	outfile: 'dist/browser/imba.iife.js',
 	format: 'iife',
@@ -188,11 +214,13 @@ let bundles = [{
 	platform: 'browser',
 	minify: false
 },{
-	entryPoints: ['src/compiler/compiler.imba1'],
-	outfile: 'dist/browser/compiler.js',
-	format: 'esm',
-	platform: 'browser'
+	entryPoints: ['src/imba/imba.imba'],
+	outfile: 'dist/node/imba.js',
+	format: 'cjs',
+	platform: 'node',
+	minify: false
 },{
+
 	entryPoints: ['test/spec.imba'],
 	outfile: 'dist/browser/spec.js',
 	minify: false,
@@ -218,6 +246,12 @@ let bundles = [{
 	external: ['chokidar','esbuild'],
 	platform: 'node'
 }];
+
+console.log( universal('src/program/index.imba','program') );
+
+bundles.push(...universal('src/program/index.imba','program'));
+
+bundles.push(...universal('src/compiler/compiler.imba1','compiler'));
 
 
 bundle(bundles)

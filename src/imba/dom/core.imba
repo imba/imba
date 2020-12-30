@@ -180,7 +180,7 @@ class DOMTokenList
 	def remove flag
 		# TODO implement!
 		# self.classes.push(flag) unless self.classes.indexOf(flag) >= 0
-		var idx = self.classes.indexOf(flag)
+		let idx = self.classes.indexOf(flag)
 		if idx >= 0
 			self.classes[idx] = ''
 		self
@@ -211,7 +211,7 @@ export class StyleDeclaration
 		self[name] = value
 		
 	def toString
-		var items = []
+		let items = []
 		for own k,v of self
 			unless v isa Function
 				items.push("{k}: {v}")
@@ -326,19 +326,25 @@ export class Element < Node
 		self
 
 	get classList
-		$classList ||= new DOMTokenList(self)
+		##classList ||= new DOMTokenList(self)
 
 	get style
-		$style ||= new StyleDeclaration
+		##style ||= new StyleDeclaration
 
 	get dataset
-		$dataset ||= DataSet.wrap(self)
+		##dataset ||= DataSet.wrap(self)
 
 	get richValue
 		value
 
 	set richValue value
 		self.value = value
+
+	set asset asset
+		#asset = asset
+	
+	get asset
+		#asset
 
 	def flag$
 		self
@@ -352,7 +358,7 @@ export class Element < Node
 		return child
 
 	def removeChild child
-		var idx = self.childNodes.indexOf(child)
+		let idx = self.childNodes.indexOf(child)
 		if idx >= 0
 			self.childNodes.splice(idx, 1)
 		return self
@@ -367,7 +373,7 @@ export class Element < Node
 		return oldChild
 
 	def insertBefore node, before
-		var idx = self.childNodes.indexOf(before)
+		let idx = self.childNodes.indexOf(before)
 		self.childNodes.splice(idx, 0, node)
 		self
 
@@ -401,12 +407,12 @@ export class Element < Node
 		self
 
 	set innerHTML value
-		$innerHTML = value
+		#innerHTML = value
 
 	get innerHTML
-		var o = ""
-		if $innerHTML
-			return $innerHTML
+		let o = ""
+		if #innerHTML
+			return #innerHTML
 
 		if self.textContent != undefined
 			return escapeTextContent(self.textContent)
@@ -421,9 +427,9 @@ export class Element < Node
 		return o
 	
 	get outerHTML
-		var typ = self.nodeName
-		var sel = "{typ}"
-		var v
+		let typ = self.nodeName
+		let sel = "{typ}"
+		let v
 		
 		sel += " id=\"{escapeAttributeValue(v)}\"" if v = self.id
 		sel += " class=\"{escapeAttributeValue(v)}\"" if v = self.classList.toString()
@@ -431,8 +437,8 @@ export class Element < Node
 		for own key,value of self.attributes
 			sel += " {key}=\"{escapeAttributeValue(value)}\""
 
-		if $style
-			sel += " style=\"{escapeAttributeValue($style.toString())}\""
+		if ##style
+			sel += " style=\"{escapeAttributeValue(##style.toString())}\""
 
 		if voidElements[typ]
 			return "<{sel}>"
@@ -597,18 +603,35 @@ export class HTMLInputElement < HTMLElement
 export class HTMLTextAreaElement < HTMLElement
 export class HTMLButtonElement < HTMLElement
 export class HTMLOptionElement < HTMLElement
-export class SVGElement < Element
 
 export class HTMLScriptElement < HTMLElement
 
-	set asset name
-		let asset = manifest.assetByName(name) or manifest.assetByName(name + ".js")
-		if asset
-			setAttribute('src',asset.url)
-			setAttribute('type','module')
+	get outerHTML
+		if #asset
+			if #asset.js
+				# add nomodule version as well?
+				setAttribute('src',#asset.js)
+				setAttribute('type','module')
+			else
+				console.warn "could not find browser entrypoint for {#asset.path}"
+			
+		super
 
-	get asset
-		#asset
+export class HTMLLinkElement < HTMLElement
+
+	get outerHTML
+		if #asset
+			let rel = getAttribute('rel')
+			let href
+			if rel == 'stylesheet'
+				unless href = #asset.css
+					console.warn "could not find stylesheet for {#asset.path}"
+			
+			if href
+				setAttribute('href',href)
+			# include preloads here?
+			# add asset / script id?
+		super
 
 ### Event ###
 export class Event
@@ -617,6 +640,43 @@ export class MouseEvent < UIEvent
 export class PointerEvent < MouseEvent
 export class KeyboardEvent < UIEvent
 export class CustomEvent < Event
+
+
+const descriptorCache = {}
+def getDescriptor item,key,cache
+	if !item
+		return cache[key] = null
+
+	if cache[key] !== undefined
+		return cache[key]
+	
+	let desc = Object.getOwnPropertyDescriptor(item,key)
+
+	if desc !== undefined or item == SVGElement
+		return cache[key] = desc or null
+
+	getDescriptor(Reflect.getPrototypeOf(item),key,cache)
+
+export class SVGElement < Element
+
+	def set$ key,value
+		let cache = descriptorCache[nodeName] ||= {}
+		let desc = getDescriptor(this,key,cache)
+
+		if !desc or !desc.set
+			setAttribute(key,value)
+		else
+			self[key] = value
+		return
+
+export class SVGSVGElement < SVGElement
+
+	set asset value
+		if #asset =? value
+			for own k,v of value.attributes
+				setAttribute(k,v)
+			innerHTML = value.content
+		return
 
 TYPES[''].klass = Element
 TYPES['HTML'].klass = HTMLElement
@@ -629,6 +689,9 @@ MAP['textarea'].klass = HTMLTextAreaElement
 MAP['button'].klass = HTMLButtonElement
 MAP['option'].klass = HTMLOptionElement
 MAP['script'].klass = HTMLScriptElement
+MAP['link'].klass = HTMLLinkElement
+
+MAP['svg_svg'].klass = SVGSVGElement
 
 getTagType('')
 getTagType('HTML')

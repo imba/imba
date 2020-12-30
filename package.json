@@ -65,25 +65,26 @@
     "imba": "./dist/runtime.web.mjs",
     "path": "./vendor/path.js",
     "events": "./vendor/events.js",
-    "compiler": "./dist/compiler.js",
-    ".": "./dist/runtime.web.mjs",
-    "./core.imba": "./build/src/imba/core.imba.web.js"
+    "compiler": "./dist/browser/compiler.js",
+    "./program": "./dist/browser/program.mjs",
+    ".": "./dist/browser/imba.js"
   },
   "exports": {
     ".": {
-      "require": "./dist/runtime.node.cjs",
-      "default": "./dist/runtime.node.mjs",
-      "browser": "./dist/runtime.web.mjs"
+      "require": "./dist/node/imba.js",
+      "default": "./dist/node/imba.mjs",
+      "browser": "./dist/browser/imba.js"
     },
-    "./core": {
-      "require": "./dist/imba.node.cjs",
-      "default": "./build/src/imba/core.imba.mjs",
-      "browser": "./build/src/imba/core.imba.web.js"
+    "./program": {
+      "require": "./dist/node/program.js",
+      "default": "./dist/node/program.mjs",
+      "browser": "./dist/browser/program.mjs"
     },
     "./loader": "./loader.js",
     "./compiler": {
       "require": "./dist/compiler.cjs",
-      "default": "./dist/compiler.mjs"
+      "default": "./dist/compiler.mjs",
+      "browser": "./dist/browser/compiler.js"
     }
   },
   "bin": {
@@ -101,6 +102,7 @@
     "commander": "^6.2.1",
     "eventemitter3": "^4.0.7",
     "fdir": "^4.1.0",
+    "flatted": "^3.1.0",
     "micromatch": "^4.0.2",
     "picomatch": "^2.2.2",
     "puppeteer": "^2.1.1",

@@ -1135,6 +1135,7 @@ export class Node
 
 	def warn message, opts = {}
 		let loc = opts:loc or self.loc or [0,0]
+		console.log 'loc warn',loc,script.rangeAt(loc[0],loc[1])
 		script.addDiagnostic(opts:severity or 'warning',{
 			message: message
 			range: script.rangeAt(loc[0],loc[1])
@@ -2849,6 +2850,7 @@ export class Root < Code
 		script:imports = transformers.extractDependencies(script:js)
 
 		if o:resolve
+			# console.log 'resolving dependencies',script:imports,script:js
 			script:js = transformers.resolveDependencies(o:sourcePath,script:js,o:resolve)
 
 		if false
@@ -7148,11 +7150,21 @@ export class TagAttr < TagPart
 		let bval = val
 		let op = M('=',option(:op))
 		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG)
+
+		if key == 'asset'
+			# console.log "IS ASSET REFERENCE!",@tag.@tagName,value isa Str
+			if value isa Str
+				@asset = STACK.root.registerAsset(value.raw,@tag.@tagName or 'asset')
+				val = CALL(runtime:assetReference,[@asset:ref]).c
+				# MP(val,"path.asset.{@tag.@tagName}")
+			else
+				val = MP(val,"path.asset.{@tag.@tagName}")
 		
 		if isAttr 
 			if STACK.tsc
 				return "{@tag.tvar}.setAttribute('{key}',String({val}))"
-			if STACK.isNode
+			if STACK.isNode and !@asset
+				# TODO don't compile to setAttribute directly for node
 				# mark compilation as being only for node?
 				STACK.meta:universal = no
 				return "setAttribute('{key}',{val})"
@@ -7165,8 +7177,9 @@ export class TagAttr < TagPart
 			return "{M(access,@name)}{op}{@autovalue ? M('true',@value) : val}"
 			
 		let key = self.key
-		
+
 		# why delegate differently on node and web?
+		# should rather always delegate value to '#value'?
 		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button'] and !STACK.isNode
 			key = 'richValue'
 
@@ -7201,7 +7214,9 @@ export class TagAttr < TagPart
 				"set$('{key}',{val})"
 			
 		elif key.indexOf("data-") == 0
-			"dataset.{key.slice(5)}{op}{val}"
+			# "set('{key}',{val})"
+			"setAttribute('{key}',{val})"
+			# "dataset.{key.slice(5)}{op}{val}"
 		else
 			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
 	
@@ -9081,7 +9096,7 @@ export class Export < ValueNode
 				return isDefault ? "export default {value.c}" : "export {value.c}"
 			else
 				let val = value.left.value
-				console.log "export is a var reference?! {value.left} {val}"
+				# console.log "export is a var reference?! {value.left} {val}"
 
 				let sym = isDefault ? "default" : value.left.value.symbol
 				value.right = OP('=',LIT("exports.{sym}"),value.right)
@@ -10407,15 +10422,19 @@ export class RootScope < Scope
 			@hasExports = yes
 			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
 	
-	def lookupAsset name, kind
-		@assets[name] ||= registerAsset(name,kind)
+	def lookupAsset name, kind = 'asset'
+		registerAsset(name,kind)
 		#	let asset = STACK.getAsset(name)
 		#	registerAsset(name,kind)
-		return @assets[name]
+		# return @assets[name]
 
-	def registerAsset name, kind, asset
-		@assets[name] = asset or {
-			name: name,
+	def registerAsset path, kind, asset
+		let key = path + kind
+		if @assets[key]
+			return @assets[key]
+
+		@assets[key] = asset or {
+			path: path,
 			kind: kind,
 			external: yes,
 			ref: register('asset',null,system: yes)
@@ -10496,30 +10515,12 @@ export class RootScope < Scope
 			head.push LIT('// ASSETS-START')
 
 		for own name, asset of assets
+			# assets should have their own node that compiles instead? Like ImportProxy
 			try
 				if asset:external
-					# could we always run through node here?
-					# extremely experimental
-					let id = "asset${name}"
 					let ref = asset:ref.c
-					let src = "{asset:kind or 'assets'}/{name}.svg"
-					let out = "import {id} from '{src}'"
-					
-					# head.push(LIT "import {asset:ref.c} from {MP "'asset:{asset:kind}/{name}'"}")
-					head.push(LIT "import {asset:ref.c} from {MP "'{name.replace(/\:/g,'/')}?asset'"}")
-
-					if false
-						# head.push LIT(out)
-						if STACK.@options:bundle
-							# head.push(LIT "import 'asset--svg-{name}.imba'")
-							head.push(LIT "import {asset:ref.c} from '@{asset:kind}/{name}'")
-							# head.push LIT("imba.registerAsset('{name}',{ref})")
-							# head.push LIT("imba.registerAsset('{name}',{id})")
-						else
-							head.push(LIT "import {asset:ref.c} from {MP "'asset:{asset:kind}/{name}'"}")
-							# head.push LIT("const {ref} = imba.asset;")
-							# head.push LIT("constimba.registerAsset('{name}',{asset:ref.c})")
-							# head.push LIT("imba.registerAsset('{name}',{id})")
+					let path = asset:path
+					head.push(LIT "import {ref} from {MP "'{path}?{asset:kind or 'asset'}'"}")
 				else	
 					let parsed = parseAsset(asset,name)
 					let body = JSON.stringify(parsed)
@@ -11081,18 +11082,28 @@ export class ImportProxy < Variable
 		let keys = Object.keys(@exports)
 		let touches = Object.values(@touched)
 		let js = []
-
+		let cjs = STACK.cjs
 		let path = self.path
 
 		if path == 'imba'
 			path = STACK.imbaPath or 'imba'
 
+		let pathjs = MP "'{path}'"
+
 		if @importAll
-			js.push("import * as {@name} from '{path}';")
+			if cjs
+				js.push("const {@name} = require({pathjs});")
+			else
+				js.push("import * as {@name} from {pathjs};")
+
 
 		if keys:length > 0
-			let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
-			js.push "import \{{out}\} from '{path or ""}';"
+			if cjs
+				let out = keys.map(do |a| "{a}: {@exports[a]}").join(", ")
+				js.push "const \{{out}\} = require({pathjs});"
+			else
+				let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
+				js.push "import \{{out}\} from {pathjs};"
 
 		if touches:length
 			js.push "({touches.map(do $1.c).join(",")});"

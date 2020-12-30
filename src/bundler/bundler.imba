@@ -38,7 +38,7 @@ export class Bundler < Component
 
 	get puburl do config.puburl or '/assets/'
 	get basedir do config.basedir or './'
-	get outdir do config.outdir or './build'
+	get outdir do config.outdir or './dist'
 	get pubdir do config.pubdir or 'dist/web'
 	get libdir do config.libdir or 'dist'
 
@@ -50,17 +50,6 @@ export class Bundler < Component
 
 	get prod?
 		env == 'production'
-
-	def sourceIdForPath src
-		let map = sourceIdMap
-		src = relp(src)
-
-		unless map[src]
-			let gen = #sourceIdGenerator ||= utils.idGenerator!
-			let nr = Object.keys(map).length
-			map[src] = gen(nr) + "0"
-
-		return map[src]
 
 	def setup
 		#setup ||= new Promise do(resolve)
@@ -87,7 +76,7 @@ export class Bundler < Component
 					entries.push cfg
 
 			bundles = for cfg in entries
-				continue unless cfg.entryPoints or cfg.exports or cfg.include
+				continue unless cfg.entryPoints or cfg.exports or cfg.include or cfg.entries
 				cfg.loader = Object.assign({},utils.defaultLoaders,cfg.loader or {})
 				cfg.format = 'cjs' if cfg.platform == 'node' and !cfg.format
 				new Bundle(self,cfg)
@@ -187,8 +176,8 @@ export class Bundler < Component
 				# look for the outputs
 			
 			# delete input entries without any outputs
-			# for own k,v of inputs
-			#	delete inputs[k] unless Object.keys(v).length
+			for own k,v of inputs
+				delete inputs[k] unless Object.keys(v).length
 
 			for file in bundle.files
 				

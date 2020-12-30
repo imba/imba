@@ -88,7 +88,6 @@ extend class Element
 		Object.defineProperty(self,key,o isa Array ? createProxyProperty(o) : o)
 		return o
 
-console.log "defining richValue for Element"
 Object.defineProperty(Element.prototype,'richValue',{
 	get: do this.getRichValue()
 	set: do(v) this.setRichValue(v)

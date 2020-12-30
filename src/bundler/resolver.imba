@@ -1,6 +1,6 @@
 # const tscpaths = require "tsconfig-paths"
 const micromatch = require 'micromatch'
-const p = require 'path'
+const np = require 'path'
 
 
 const testconfig = {
@@ -80,7 +80,7 @@ export class Resolver
 		dirs = {}
 		aliases = {}
 		cache = {}
-		extensions = config.extensions or ['.imba','.imba1','.ts','.js','.css','.svg','.json']
+		extensions = config.extensions or ['','.imba','.imba1','.ts','.js','.css','.svg','.json']
 		resolve = resolve.bind(self)
 		self
 
@@ -136,7 +136,7 @@ export class Resolver
 
 	def relative dir, path
 		# console.log 'relative!!!',dir,path
-		let res = p.relative(dir,path)
+		let res = np.relative(dir,path)
 		unless res[0] == '.'
 			res = './' + res
 		return res
@@ -177,9 +177,18 @@ export class Resolver
 		if rel?
 			# return {path: inpath}
 			let m = 0
-			let norm = p.normalize(o.resolveDir + path)
-			let found = aliases[norm]
-			m = testWithExtensions(norm) or (aliases[norm] or [norm])[0]
+			let norm = np.resolve(o.resolveDir,path) # abs
+			# let found = aliases[norm]
+			# m = testWithExtensions(norm) or (aliases[norm] or [norm])[0]
+			# console.log 'resolve?!',norm,o.resolveDir,path
+
+			for ext in extensions
+				let m = norm + ext
+				if fs.existsSync(m)
+					# console.log 'resolved with ext!',fs.relative(test)
+					path = namespace == 'file' ? m : fs.relative(m)
+					return {path: path, namespace: namespace}
+
 			return {path: fs.relative(m), namespace: namespace}
 
 		elif !pathsMatcher.test(path)
@@ -194,6 +203,7 @@ export class Resolver
 				if fs.existsSync(m)
 					path = namespace == 'file' ? fs.resolve(m) : m
 					return {path: path, namespace: namespace}
+			return null
 
 		return {path: path, namespace: namespace}
 

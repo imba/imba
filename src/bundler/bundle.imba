@@ -56,6 +56,7 @@ export class Bundle < Component
 		entryNodes = []
 		outfileMap = {}
 		pathLookups = {}
+		ns = o.ns or o.platform == 'node' ? 'node' : 'browser'
 
 		let externals = []
 		let package = bundler.package or {}
@@ -71,8 +72,12 @@ export class Bundle < Component
 			externals.push(ext)
 
 		if options.include
-			# let paths = value.indexOf('*') >= 0 ? fs.glob(value) : [fs.lookup(value)]
 			entryPoints = options.include.slice(0)
+			self
+
+		elif options.entries
+			entryPoints = options.entries.slice(0)
+			console.log 'got entries!',entryPoints
 			self
 
 		elif options.exports
@@ -86,6 +91,7 @@ export class Bundle < Component
 				let paths = value.indexOf('*') >= 0 ? fs.glob(value) : [fs.lookup(value)]
 				
 				for res in paths
+					# glob paths should not be resolved in constructor but rather in a dynamic index
 					let slots = res.extractStarPattern(value)
 					let name = key.replace(/\*/g) do(m) slots.shift!
 
@@ -105,13 +111,13 @@ export class Bundle < Component
 			format: o.format or 'esm'
 			outfile: o.outfile
 			outbase: o.outbase or fs.cwd
-			outdir: o.outdir or fs.cwd
+			outdir: o.outfile ? undefined : (o.outdir or fs.cwd)
 			outExtension: {
-				".js": ".bundle.js"
-				".css": ".bundle.css"
+				".js": ".{ns}.js"
+				".css": ".{ns}.css"
 			}
 			globalName: o.globalName
-			publicPath: o.publicPath or bundler.puburl
+			publicPath: o.publicPath or '__assets__'
 			banner: o.banner
 			footer: o.footer
 			splitting: o.splitting
@@ -156,6 +162,8 @@ export class Bundle < Component
 		if o.splitting and esoptions.format != 'esm'
 			esoptions.format = 'esm'
 
+		# console.log 'start with optons',esoptions
+
 	def setup
 		self
 
@@ -166,10 +174,13 @@ export class Bundle < Component
 		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
 
 		build.onResolve(filter: /^imba(\/|$)/) do(args)
+
 			if args.path == 'imba'
 				# console.log 'resolve imba',imbaDir
 				return {path: np.resolve(imbaDir,'index.imba') }
 			
+			# if we're compiling for node we should resolve using the
+			# package json paths?
 			console.log "IMBA RESOLVE",args.path,args.importer
 			if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
 				return null
@@ -192,6 +203,7 @@ export class Bundle < Component
 
 		build.onResolve(filter: /^[\w\@]/) do(args)
 			if args.importer.indexOf('.imba') > 0
+				# console.log 'resolve',args
 				return program.resolver.resolve(args,pathLookups)
 	
 		build.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
@@ -262,8 +274,9 @@ export class Bundle < Component
 				output.#file = file
 
 			let public? = web? or !id.match(/\.([cm]?js|json)(\.map)?$/)
-			let outdir = public? ? pubdir : libdir # webdir?
-			file.path = fs.resolve(outdir,outfile)
+
+			# let outdir = public? ? pubdir : libdir # webdir?
+			# file.path = fs.resolve(outdir,outfile)
 
 			let prev = self.files and self.files.find do $1.path == file.path
 			let hash = file.hash = (file.path.match(/\.([A-Z\d]{8})\.\w+$/) or [])[1]

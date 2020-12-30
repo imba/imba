@@ -1,6 +1,6 @@
 import {EventEmitter} from 'events'
 import fs from 'fs'
-import fsp from 'path'
+import np from 'path'
 
 const mimes = {
 	svg: 'image/svg+xml'
@@ -18,6 +18,22 @@ const mimes = {
 	css: 'text/css'
 }
 
+# 
+class AssetReference
+	def constructor manifest, path
+		manifest = manifest
+		path = path
+	
+	get data
+		try manifest.data.assets[path]
+
+	get js
+		data..js
+
+	get css
+		data..css	
+
+
 class Asset
 	def constructor desc
 		desc = desc
@@ -25,7 +41,7 @@ class Asset
 	get url do desc.url
 	get path do desc.path
 	get hash do desc.hash
-	get ext do #ext ||= fsp.extname(desc.path).substr(1)
+	get ext do #ext ||= np.extname(desc.path).substr(1)
 	get body do #body ||= fs.readFileSync(desc.path,'utf8')
 
 	get headers
@@ -39,14 +55,40 @@ class Manifest < EventEmitter
 	def constructor cwd = process.cwd!
 		super()
 		cwd = cwd
-		path = fsp.resolve(cwd,'imbabuild.json')
+		path = global.IMBA_MANIFEST_PATH or np.resolve(cwd,'imbabuild.json')
+		
 		data = load! or {}
+		refs = {}
+		console.log 'manifest loaded!',data
+
+	def assetReference path,...rest
+		if typeof path != 'string'
+			return path
+
+		refs[path] ||= new AssetReference(self,path)
+
+	get assetsDir
+		data.assetsDir
+
+	get assetsUrl
+		data.assetsUrl
 
 	get changes
 		data.changes or []
 
+	def asset src
+		if data.assets and data.assets[src]
+			console.log 'returning asset!!',data.assets[src]
+			return data.assets[src]
+
 	def load
-		try JSON.parse(fs.readFileSync(path,'utf-8'))
+		let raw = fs.readFileSync(path,'utf-8')
+		try
+			JSON.parse(raw)
+		catch e
+			console.log "json loading error",e
+			console.log raw
+
 
 	def assetByName name
 		return unless data.assets and name
@@ -60,6 +102,7 @@ class Manifest < EventEmitter
 
 	def assetForUrl url
 		let pathname = url.split('?')[0]
+
 		return assetByName(data and data.urls and data.urls[pathname])
 
 	def watch
@@ -84,3 +127,7 @@ class Manifest < EventEmitter
 		super
 
 export const manifest = new Manifest
+global.#manifest = manifest
+
+export def assetReference path,...wildcards
+	manifest.assetReference(path,...wildcards)
