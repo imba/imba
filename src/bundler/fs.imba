@@ -178,13 +178,15 @@ export class FileNode < FSNode
 	get dir
 		self.fs.lookup(absdir,DirNode)
 	
-	def write body
-		if #body =? body
+	def write body, hash
+		if !hash or (#hash =? hash)
 			await utils.ensureDir(abs)
+			fs.log.success 'write %path %kb',rel,body.length
 			nodefs.promises.writeFile(abs,body)
 
-	def writeSync body
-		if #body =? body
+	def writeSync body, hash
+		if !hash or (#hash =? hash)
+			fs.log.success 'write %path %kb',rel,body.length
 			nodefs.writeFileSync(abs,body)
 
 	def read enc = 'utf8'
@@ -193,14 +195,13 @@ export class FileNode < FSNode
 	def readSync enc = 'utf8'
 		#body ||= nodefs.readFileSync(abs,enc)
 
-	def jsonReadSync
-		#json ||= JSON.parse(readSync!)
-	
 	def stat
 		nodefs.promises.stat(abs).then(do $1).catch(do blankStat)
 
 	get mtimesync
-		#mtime ||= (existsSync! ? nodefs.statSync(abs).mtimeMs : 1)
+		# only cache if we have a fully watched fs
+		# return #mtime ||= (existsSync! ? nodefs.statSync(abs).mtimeMs : 1)
+		(existsSync! ? nodefs.statSync(abs).mtimeMs : 1)
 
 	def mtime
 		unless #mtime
@@ -234,9 +235,6 @@ export class ImbaFile < FileNode
 			},o)
 
 			o.format = 'esm' # always esm here?
-
-			# console.log "compile with options",o,program.config.theme
-			# throw "non"
 
 			let code = await read!
 

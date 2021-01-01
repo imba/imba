@@ -270,9 +270,7 @@ extend class SVGElement
 extend class SVGSVGElement
 
 	set asset value
-		
 		if #asset =? value
-			console.log 'svg set asset',value
 			for own k,v of value.attributes
 				setAttribute(k,v)
 			innerHTML = value.content

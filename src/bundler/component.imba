@@ -1,6 +1,10 @@
 import {EventEmitter} from 'events'
+import {Logger} from './logger'
 
 export default class Component < EventEmitter
+
+	get log
+		#logger ||= new Logger
 
 	def time name = 'default'
 		let now = Date.now!

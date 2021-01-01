@@ -1,17 +1,21 @@
 export default class ChangeLog
-	def constructor
+	def constructor o = {}
 		log = []
 		maps = new WeakMap
-		cursors = null # new WeakMap
+		cursors = o.ignoreInitial ? null : new WeakMap # new WeakMap
 		depth = 0
 		offset = 0
 		pulled = 0
+		options = o
 		batch = null
 	
 	def flush
 		if batch
-			for [item,marks] of batch
-				log.push(item)
+			if options.withFlags
+				log.push(...Array.from(batch))
+			else
+				for [item,marks] of batch
+					log.push(item)
 			batch = null
 		return self
 

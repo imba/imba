@@ -610,7 +610,7 @@ export class HTMLScriptElement < HTMLElement
 		if #asset
 			if #asset.js
 				# add nomodule version as well?
-				setAttribute('src',#asset.js)
+				setAttribute('src',#asset.js.url)
 				setAttribute('type','module')
 			else
 				console.warn "could not find browser entrypoint for {#asset.path}"
@@ -624,13 +624,11 @@ export class HTMLLinkElement < HTMLElement
 			let rel = getAttribute('rel')
 			let href
 			if rel == 'stylesheet'
-				unless href = #asset.css
+				unless href = #asset.css.url
 					console.warn "could not find stylesheet for {#asset.path}"
 			
 			if href
 				setAttribute('href',href)
-			# include preloads here?
-			# add asset / script id?
 		super
 
 ### Event ###

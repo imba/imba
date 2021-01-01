@@ -1,132 +1,91 @@
 import {EventEmitter} from 'events'
-import fs from 'fs'
+import nfs from 'fs'
 import np from 'path'
+import {deserializeData,patchManifest,serializeData} from './utils'
 
-const mimes = {
-	svg: 'image/svg+xml'
-	html: 'text/html'
-	jpg: 'image/jpeg'
-	jpeg: 'image/jpeg'
-	js: 'text/javascript'
-	mjs: 'text/javascript'
-	json: 'application/json'
-	otf: 'font/otf'
-	ttf: 'font/ttf'
-	woff: 'font/woff'
-	woff2: 'font/woff2'
-	png: 'image/png'
-	css: 'text/css'
-}
-
-# 
-class AssetReference
+class Asset
 	def constructor manifest, path
 		manifest = manifest
 		path = path
-	
-	get data
-		try manifest.data.assets[path]
+
+	get web
+		try manifest.inputs.web[path]
 
 	get js
-		data..js
+		web..js
 
 	get css
-		data..css	
+		web..css
 
-
-class Asset
-	def constructor desc
-		desc = desc
-
-	get url do desc.url
-	get path do desc.path
-	get hash do desc.hash
-	get ext do #ext ||= np.extname(desc.path).substr(1)
-	get body do #body ||= fs.readFileSync(desc.path,'utf8')
-
-	get headers
-		{
-			'Content-Type': mimes[ext] or 'text/plain'
-			'Access-Control-Allow-Origin': '*'
-			'cache-control': 'public'
-		}
-
-class Manifest < EventEmitter
-	def constructor cwd = process.cwd!
+export class Manifest < EventEmitter
+	def constructor options = {}
 		super()
-		cwd = cwd
-		path = global.IMBA_MANIFEST_PATH or np.resolve(cwd,'imbabuild.json')
-		
-		data = load! or {}
+		options = options
+		path = options.path
 		refs = {}
-		console.log 'manifest loaded!',data
+		init(options.data)
 
 	def assetReference path,...rest
-		if typeof path != 'string'
-			return path
+		return path if typeof path != 'string'
+		refs[path] ||= new Asset(self,path)
 
-		refs[path] ||= new AssetReference(self,path)
+	get assetsDir do data.assetsDir
+	get assetsUrl do data.assetsUrl
+	get changes do data.changes or {}
+	get inputs do data.inputs
+	get urls do data.urls
+	get main do data.main
 
-	get assetsDir
-		data.assetsDir
+	def loadFromFile path
+		nfs.readFileSync(path,'utf-8')
 
-	get assetsUrl
-		data.assetsUrl
+	def init data = null
+		if data or path
+			update(data)
+		self
 
-	get changes
-		data.changes or []
+	def update raw 
+		if raw == null
+			if path
+				raw = loadFromFile(path)
+			else
+				console.warn "cannot update manifest without path"
 
-	def asset src
-		if data.assets and data.assets[src]
-			console.log 'returning asset!!',data.assets[src]
-			return data.assets[src]
+		if typeof raw == 'string'
+			let str = raw
+			raw = deserializeData(raw)
+			raw.#raw = str
 
-	def load
-		let raw = fs.readFileSync(path,'utf-8')
-		try
-			JSON.parse(raw)
-		catch e
-			console.log "json loading error",e
-			console.log raw
+		data = patchManifest(data or {},raw)
+		
+		if data.changes.all.length
+			emit('change',diff,self)
+		if data.changes.main
+			emit('change:main',data.main,self)
+		return data.changes
 
+	def serializeForBrowser
+		return data.#raw
 
-	def assetByName name
-		return unless data.assets and name
-		if let asset = data.assets[name]
-			return asset.#rich ||= new Asset(asset)
-
-	def urlForAsset name
-		if let asset = assetByName(name)
-			return asset.url
-		return null
-
-	def assetForUrl url
-		let pathname = url.split('?')[0]
-
-		return assetByName(data and data.urls and data.urls[pathname])
+	def #refresh data
+		yes
 
 	def watch
 		if #watch =? yes
-			fs.watch(path) do(curr,prev)
-				let updated = load!
-				data = updated
-
-				emit('update',data.changes,self)
-
-				let changedAssets = for item in data.changes
-					let entry = data.files[item]
-					continue unless entry.url
-					entry.url
-
-				if changedAssets.length
-					emit('invalidate',changedAssets)
+			path and nfs.watch(path) do(ev,name)
+				console.log 'watch manifest!',ev,path
+				let exists = nfs.existsSync(path)
+				let stat = exists and nfs.statSync(path)
+				update! if exists
+				return
 
 	# listen to updates etc
 	def on event, cb
 		watch!
 		super
 
-export const manifest = new Manifest
+const defaultPath = global.IMBA_MANIFEST_PATH or (global.IMBA_ENTRYPOINT ? global.IMBA_ENTRYPOINT + '.manifest' : null)
+export const manifest = new Manifest(path: defaultPath)
 global.#manifest = manifest
 
 export def assetReference path,...wildcards

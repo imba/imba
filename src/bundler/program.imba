@@ -41,7 +41,6 @@ export default class Program < Component
 		package = options.package
 
 		fs = new FileSystem(options.cwd,'.',self)
-		log = new Logger(self)
 		cache = new Cache(self)
 
 		manifest = fs.lookup('imbabuild.json').load!

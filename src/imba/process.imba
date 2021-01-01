@@ -71,24 +71,46 @@ class Servers < Set
 
 export const servers = new Servers
 
+
+
 export const process = new class Process < EventEmitter
 
 	def constructor
 		super
+		autoreload = no
+		state = {} # proxy for listening?
+
 
 		if cluster.isWorker
+			console.log 'created for worker!!!'
+			# does this make us unable to automatically stop a process?
 			proc.on('message') do(msg)
 				emit('message',msg)
 				emit(...msg.slice(1)) if msg[0] == 'emit'
+				reload! if msg == 'reload'
 		self
+
+	def #live
+		yes
 
 	def send msg
 		if proc.send isa Function
 			proc.send(msg)
 
+	def on name, cb
+		watch! if name == 'change'
+		super
+
+	def watch
+		if #watch =? yes
+			manifest.on('change:main') do
+				emit('change',manifest)
+
 	def reload
 		# only allow reloading once
 		return self unless isReloading =? yes
+
+		state.reloading = yes
 
 		unless proc.env.IMBA_SERVE
 			console.warn "not possible to gracefully reload servers not started via imba start"
@@ -120,6 +142,14 @@ class AssetResponder
 			'cache-control': 'public'
 		}
 		Object.assign(headers,defaultHeaders[ext.slice(1)] or {})
+
+	def respond req, res
+		let asset = manifest.urls[url]
+		let headers = headers
+		let path = asset ? np.resolve(proc.cwd!,asset.path) : self.path
+		let stream = nfs.createReadStream(path)
+		res.writeHead(200, headers)
+		return stream.pipe(res)
 
 	def createReadStream
 		nfs.createReadStream(path)
@@ -154,6 +184,11 @@ class Server
 			broadcast('invalidate',params)
 
 		# use different handler if we are on http2?
+
+		# if we are in dev-mode, broadcast updated manifest to the clients
+		manifest.on('change') do(changes,m)
+			console.log 'manifest changed'
+			broadcast('manifest',m.data.#raw)
 		
 		handler = do(req,res)
 			let ishttp2 = req isa Http2ServerRequest
@@ -181,19 +216,15 @@ class Server
 					'Cache-Control': 'no-cache'
 				})
 				clients.add(res)
+				# send initial manifest to hmr connection
+				broadcast('init',manifest.serializeForBrowser!,[res])
 				req.on('close') do clients.delete(res)
 				return true
 
 			if url.indexOf(assetPrefix) == 0
+				let asset = manifest.urls[url]
 				let responder = assetResponders[url] ||= new AssetResponder(url,self)
-				console.log 'return asset with headers?',responder.path
-				res.writeHead(200, responder.headers)
-				return responder.pipe(res)
-
-			if let asset = manifest.assetForUrl(req.url)
-				res.writeHead(200, asset.headers)
-				let reader = nfs.createReadStream(asset.path)
-				return reader.pipe(res)
+				return responder.respond(req,res)
 
 			# create full url
 			let headers = req.headers
@@ -214,8 +245,13 @@ class Server
 
 		srv.on('request',handler)
 
-	def broadcast event, data = {}
-		let msg = "data: {JSON.stringify(data)}\n\n\n"
+		if cluster.isWorker
+			process.#live!
+			process.send('serve')
+
+	def broadcast event, data = {}, clients = clients
+		data = JSON.stringify(data)
+		let msg = "data: {data}\n\n\n"
 		for client of clients
 			client.write("event: {event}\n")
 			client.write("id: imba\n")
@@ -246,9 +282,6 @@ class Server
 			closed = yes
 			server.close(resolve)
 			flushStalledResponses!
-
-export def asset name
-	manifest.assetByName(name)
 
 export def serve srv,...params
 	# if srv isa http.Server

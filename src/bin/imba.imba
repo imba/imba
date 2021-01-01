@@ -1,6 +1,7 @@
 import {program as cli} from 'commander'
 import Program from '../bundler/program'
 import Server from '../bundler/serve'
+import Runner from '../bundler/runner'
 import Bundler from '../bundler/bundle2'
 import np from 'path'
 import nfs from 'fs'
@@ -75,60 +76,36 @@ def run entry, o
 		minify: o.minify
 		platform: 'node'
 		outdir: 'dist/node'
-		outbase: o.cwd
 		sourcemap: true
 		watch: o.watch
+		contenthash: false
+		isMain: yes
 	})
 
 	# add some environment stuff etc
-	# maybe include the current commit or something?
+	# maybe include the current commit or something? That could make sense
 	let hash = prog.cache.normalizeKey("{o.minify}-{o.sourcemap}").slice(0,4)
 	let id = params.id = prog.cache.getPathAlias(entry) + "1{hash}"
-	console.log "id for entry",id
+	# params.outdir = "dist/{id}"
+	params.id = id
+	params.outbase = prog.cwd
 
 	let bundle = new Bundler(prog,params)
 
 	let out = await bundle.build!
-
-	return
-
-	# Error.prepareStackTrace = do(e)
-	#	console.log "PREPARE STACK TRACE!"
-	# console.log 'result from bundle build',out.outputFiles
 	
-	for entry in out.outputFiles
-		# console.log entry.text
-		let file = prog.fs.lookup(entry.path)
-		await file.write(entry.contents)
-		# nfs.writeFileSync(entry.path,entry.contents,'utf8')
-	let first = out.outputFiles.find do $1.path.match(/\.js$/)
+	if let exec = out..manifest..main
+		let path = np.resolve(prog.cwd,exec.path)
 
-	let main = require.main
-	# main.moduleCache && (main.moduleCache = {})
-	let body = first.text
-
-	# console.log 'find sourcemap?',Module._cache,main
-	# return
-	if true
-		Module._load(first.path, main, true)
-		return
-
-
-	if false
-		main.filename = process.argv[1] = file.abs # first.path # (filename ? nfs.realpathSync(filename) : '.')
-		main.paths = Module._nodeModulePaths(file.absdir)
-	else
-		main.id = first.path
-		main.filename = process.argv[1] = first.path # first.path # (filename ? nfs.realpathSync(filename) : '.')
-		main.path = np.dirname(main.filename)
-		main.paths = Module._nodeModulePaths(main.path)
-		main.loaded = false
-		main.children = []
-		Module._load(main.id, main, true)
-
-	# console.log "going to run!",first.text.length,reqmain.filename
-	console.log 'ready in',Date.now! - t,body.length
-	main._compile(body,np.basename(main.filename))
+		if o.watch
+			let runner = new Runner(path,o)
+			runner.start!
+			bundle.manifest.on('change:main') do
+				# console.log 'manifest change for runner?!?'
+				runner.reload!
+		else
+			Module._load(path, require.main, true)
+	return
 
 let binary = cli.version('2.0.0').name('imba')
 
@@ -137,6 +114,8 @@ cli.command('run <script>', { isDefault: true })
 	.option("-b, --build", "")
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
+	.option("-d, --dev", "Minify generated files")
+	.option("-i, --instances <count>", "Number of instances to start",fmt.i,1)
 	.action(run)
 
 cli.command('serve [script]')

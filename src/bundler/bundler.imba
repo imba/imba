@@ -18,7 +18,6 @@ export class Bundler < Component
 		sourceIdMap = {}
 		program = program
 		pathLookups = {}
-		log = new Logger
 		env = options.env or process.env.NODE_ENV or 'development'
 		env = 'development' if env == 'dev' or options.dev
 		env = 'production' if env == 'prod' or options.prod

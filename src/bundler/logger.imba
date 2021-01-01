@@ -27,6 +27,10 @@ export class Logger
 				fmt('yellow',Math.round(part) + 'ms')
 			elif f == 'd'
 				fmt('blueBright',part)
+			elif f == 'red'
+				fmt('redBright',part)
+			elif f == 'yellow'
+				fmt('yellowBright',part)
 			elif f == 'ref'
 				fmt('yellowBright','#' + (part.id or part))
 			elif f == 'elapsed'
@@ -38,6 +42,7 @@ export class Logger
 
 		console.log(sym + ' ' + str,...rest)
 	
+	def debug ...pars do write('info',...pars)
 	def log ...pars do write('info',...pars)
 	def info ...pars do write('info',...pars)
 	def warn ...pars do write('warn',...pars)

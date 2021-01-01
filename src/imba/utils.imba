@@ -1,5 +1,91 @@
 const dashRegex = /-./g
 
+export def serializeData data
+	let sym = Symbol!
+	let refs = {}
+	let nr = 0
+	let replacer = do(key,value)
+		if value and value.#type
+			let ref = value[sym] ||= "$${nr++}$$"
+			refs[ref] = value
+			return key == ref ? value : ref
+		value
+
+	let json = JSON.stringify(data,replacer,2)
+	json = JSON.stringify(Object.assign({"$$": refs},JSON.parse(json)),replacer,2)
+	return json
+
+export def deserializeData data
+	let objects = {}
+	let reg = /\$\$\d+\$\$/
+	let reviver = do(key,value)
+		if typeof value == 'string'
+			if value[0] == '$' and reg.test(value)
+				return objects[value] ||= {}
+		return value
+
+	let parsed = JSON.parse(data,reviver)
+	if parsed.$$
+		for own k,v of parsed.$$
+			if let obj = objects[k]
+				Object.assign(obj,v)
+		delete parsed.$$
+	return parsed
+
+export def patchManifest prev, curr
+	let origs = {}
+	let diff = {
+		added: []
+		changed: []
+		removed: []
+		all: []
+		urls: {}
+	}
+
+	if prev.assets
+		for item in prev.assets
+			let ref = item.originalPath or item.path
+			origs[ref] = item
+			if item.url
+				# add old urls to the new manifest
+				curr.urls[item.url] ||= item
+	
+	for item in (curr.assets or [])
+		let ref = item.originalPath or item.path
+		let orig = origs[ref]
+
+		if item.url and prev.urls
+			prev.urls[item.url] = item
+
+		if orig
+			if orig.hash != item.hash
+				orig.invalidated = Date.now!
+				orig.replacedBy = item
+				item.replaces = orig
+				diff.changed.push(item)
+				diff.all.push(item)
+
+			if orig == prev.main
+				diff.main = item
+
+			delete origs[ref]
+		else
+			diff.added.push(item)
+			diff.all.push(item)
+
+	# these are the items that are no longer referencd
+	for own path,item of origs
+		item.removed = Date.now!
+		diff.all.push(item)
+
+	for item in diff.all
+		let typ = diff[item.type] ||= []
+		typ.push(item)
+
+	diff.removed = Object.values(origs)
+	curr.changes = diff
+	return curr
+
 export def toCamelCase str
 	if str.indexOf('-') >= 0
 		str.replace(dashRegex) do $1.charAt(1).toUpperCase!
