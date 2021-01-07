@@ -88,8 +88,8 @@
     }
   },
   "bin": {
+    "imba-node": "./bin/imba-node",
     "imba": "./bin/imba",
-    "imba2": "./bin/imba2",
     "imbac": "./bin/imbac"
   },
   "preferGlobal": true,

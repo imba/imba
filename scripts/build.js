@@ -121,8 +121,6 @@ async function bundle(o){
 		name = np.basename(np.dirname(input));
 	}
 
-	console.log("NAME IS",name);
-
 	entry.imbaOptions = o.options || {};
 
 	o.plugins = [{name: 'imba', setup: plugin.bind(entry)}];
@@ -246,17 +244,13 @@ let bundles = [{
 	external: ['chokidar','esbuild'],
 	platform: 'node'
 },{
-	entryPoints: ['src/bin/vm.imba'],
-	outbase: 'src/bin',
-	outdir: 'dist/bin',
-	minify: false,
+	entryPoints: ['register.imba'],
+	outdir: '.',
 	sourcemap: false,
 	format: 'cjs',
 	external: ['imba'],
 	platform: 'node'
 }];
-
-console.log( universal('src/program/index.imba','program') );
 
 bundles.push(...universal('src/program/index.imba','program'));
 

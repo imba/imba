@@ -1,5 +1,6 @@
 const cluster = require 'cluster'
 import np from 'path'
+import cp from 'child_process'
 import Component from './component'
 import {Logger} from './logger'
 
@@ -27,7 +28,7 @@ class Instance
 		runner = runner
 		atime = Date.now!
 		state = 'closed'
-		log = new Logger(prefix: ["%bold%dim",name,": "], loglevel: 'info')
+		log = new Logger(prefix: ["%bold%dim",name,": "])
 		current = null
 		restarts = 0
 
@@ -35,18 +36,39 @@ class Instance
 
 	def start
 		return if current and current.#next
-		let exec = args.exec = manifest.main.path  and "/Users/sindre/repos/imba/dist/bin/vm.js"
+		
+		# let exec = args.exec = manifest.main.source.path # path and loader
+		let o = runner.o
+		let loader = o.imbaPath ? np.resolve(o.imbaPath,"register.js") : "imba/register.js"
+		let path = manifest.main.source.path
 
-		log.info "starting"
-		cluster.setupMaster(args)
+		let args = {
+			windowsHide: yes
+			args: o.extras
+			exec: path
+			execArgv: [
+				o.inspect and '--inspect',
+				o.sourcemap and '--enable-source-maps'
+				'-r',loader
+			].filter do $1
+		}
 
-		let worker = cluster.fork(
+		let env = {
 			IMBA_RESTARTS: restarts
 			IMBA_SERVE: true
 			IMBA_MANIFEST_PATH: manifest.path
-			IMBA_PATH: runner.options.imbaPath
-			IMBA_ENTRYPOINT: manifest.main.path
-		)
+			IMBA_PATH: o.imbaPath
+		}
+
+		log.info "starting"
+
+		if o.execMode == 'fork'
+			args.env = Object.assign({},process.env,env)
+			return cp.fork(np.resolve(path),args.args,args)
+
+		cluster.setupMaster(args)
+
+		let worker = cluster.fork(env)
 
 		worker.nr = restarts++
 		let prev = worker.#prev = current
@@ -88,24 +110,27 @@ class Instance
 export default class Runner < Component
 	def constructor manifest, options
 		super()
+		o = options
 		manifest = manifest
-		options = options
 		workers = new Set
 
 	def start
-		let max = options.instances or 1
+		let max = o.instances or 1
 		let nr = 1
 		let args = {
 			windowsHide: yes
-			execArgv: ['--enable-source-maps','--inspect']
+			args: o.extras
+			execArgv: [
+				o.inspect and '--inspect',
+				o.sourcemap and '--enable-source-maps'
+			].filter do $1
 		}
 
-		let name = options.name or np.basename(manifest.main.source.path)
+		let name = o.name or np.basename(manifest.main.source.path)
 
 		while nr <= max
 			let opts = {
 				number: nr,
-				args: args,
 				name: max > 1 ? "{name} {nr}/{max}" : name
 			}
 			workers.add new Instance(self,opts)

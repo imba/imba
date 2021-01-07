@@ -20,12 +20,12 @@ export class SourceMap
 	def options
 		@options
 
-	def initialize script, options, file
+	def initialize script, options
 		@script = script
 		@options = options or {}
-		@sourcePath = file:sourcePath
-		@sourceRoot = file:sourceRoot
-		@targetPath = file:targetPath
+		@sourcePath = @options:sourcePath
+		@sourceRoot = @options:sourceRoot
+		@targetPath = @options:targetPath
 
 		@maps = []
 		@map = ""
@@ -201,6 +201,12 @@ export class SourceMap
 			mappings:   buffer
 			maps: @maps
 
+		if @options:sourcemap == 'inline'
+			# console.log 'inline sourcemap!'
+			map:file = sourceName
+			map:sources = [sourceName]
+
+		# console.log "creating sourcemap",map:file,map:sources,map:sourceRoot
 		# source:sourcemap = sourcemap
 		# var base64 = Buffer.new(JSON.stringify(map)).toString("base64")
 		# source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
@@ -208,12 +214,13 @@ export class SourceMap
 		return self
 
 	def inlined
+		# maybe drop the sourcesContent
 		var str = JSON.stringify(@result)
 		if typeof btoa == 'function'
 			str = btoa(str)
 		else
-			str = Buffer.new(str).toString("base64")
-		return "\n/*# sourceMappingURL=data:application/json;base64,{str}*/"
+			str = Buffer.from(str,'utf-8').toString("base64")
+		return "\n//# sourceMappingURL=data:application/json;base64,{str}"
 
 	# borrowed from CoffeeScript
 	def encodeVlq value

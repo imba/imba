@@ -230,9 +230,10 @@ export class ImbaFile < FileNode
 				styles: 'extern'
 				hmr: true
 				bundle: true
-				sourcePath: rel,
-				sourceId: program.cache.getPathAlias(rel),
-				cwd: fs.cwd,
+				sourcePath: rel
+				sourceId: program.cache.getPathAlias(rel)
+				cwd: fs.cwd
+				sourcemap: 'inline'
 				config: program.config
 			},{})
 

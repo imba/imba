@@ -1,14 +1,14 @@
+import np from 'path'
+import nfs from 'fs'
+
 import {program as cli, InvalidOptionArgumentError,CommanderError} from 'commander'
 
 import Program from '../bundler/program'
 import Runner from '../bundler/runner'
-import Bundler from '../bundler/bundle2'
-import np from 'path'
-import nfs from 'fs'
+import Bundler from '../bundler/bundle'
+
 import {resolveConfig,resolvePackage} from '../bundler/utils'
 import tmp from 'tmp'
-
-import { findSourceMap, SourceMap, Module } from 'module'
 
 const t0 = Date.now!
 
@@ -40,11 +40,11 @@ const schema = {
 	}
 }
 
-def parseOptions options
+def parseOptions options, extras = []
 	options = options.opts! if options.opts isa Function
 	let cwd = options.cwd ||= process.cwd!
 	options.imbaPath ||= np.resolve(__dirname,'..','..')
-
+	options.extras = extras
 	let statFiles = [
 		__filename
 		np.resolve(__dirname,'..','compiler-worker.js')
@@ -89,8 +89,8 @@ def build entry, o
 	let out = await bundle.build!
 	console.log 'done building!!'
 
-def run entry, o
-	o = parseOptions(o)
+def run entry, o, extras
+	o = parseOptions(o,extras)
 	let t = Date.now!
 
 	let prog = new Program(o.config,o)
@@ -104,75 +104,43 @@ def run entry, o
 		platform: 'node'
 		watch: o.watch
 		outdir: o.outdir
+		outbase: prog.cwd
 		sourcemap: 'inline'
 		contenthash: false
 		isMain: yes
 	})
+
 	tmp.setGracefulCleanup!
 
-	let hash = prog.cache.normalizeKey("{o.minify}-{o.sourcemap}")
-	let id = params.id = (prog.cache.getPathAlias(entry) + "1{hash}").slice(0,8)
+	# let hash = prog.cache.normalizeKey("{o.minify}-{o.sourcemap}")
+	# let id = params.id = (prog.cache.getPathAlias(entry) + "1{hash}").slice(0,8)
 
 	unless params.outdir
 		let tmpdir = tmp.dirSync(unsafeCleanup: yes)
-		params.tmpdir = tmpdir.name
-		params.outdir = tmpdir.name
+		params.outdir = params.tmpdir = tmpdir.name
 
 	params.outbase = prog.cwd
 
 	let bundle = new Bundler(prog,params)
 	let out = await bundle.build!
 	
+	# unless errors
+
+	# should we really need this here?
 	if let exec = out..manifest..main
-		let path = np.resolve(prog.cwd,exec.path)
+
+		if !o.watch and o.instances == 1
+			o.execMode = 'fork'
+		o.name ||= entry
+
+		let runner = new Runner(bundle.manifest,o)
+
+		runner.start!
 
 		if o.watch
-			o.name ||= entry
-			let runner = new Runner(bundle.manifest,o)
-			runner.start!
 			bundle.manifest.on('change:main') do
 				console.log 'manifest change:main!!'
 				runner.reload!
-		else
-			let _resolveFilename = Module._resolveFilename
-
-			# copy existing module extensions
-			# this should move into the manifest / runner
-			# how will it work with js files as well? We need to consider this
-			Module._extensions['.imba'] = do(mod,filename)
-				# console.log 'loading imbajs file!!',filename,path
-				let rel = np.relative(prog.cwd,filename)
-				if let src = bundle.manifest.inputs.node[rel]
-					# console.log "found input!!!!",src.js, bundle.manifest.resolve(src.js)
-					let rawpath = bundle.manifest.resolve(src.js)
-					let raw = nfs.readFileSync(rawpath,'utf-8')
-					return mod._compile(raw,filename)
-				
-				# fallback to other imba extension
-				console.log 'cannot compile imba file!!!',mod,filename
-				# let raw = nfs.readFileSync(path,'utf-8')
-				# mod._compile(raw,filename)
-
-			Module._extensions['.imbajs'] = do(mod,filename)
-				let raw = nfs.readFileSync(path,'utf-8')
-				mod._compile(raw,filename)
-				# let raw = exex
-				# mod._compile()
-
-			Module._resolveFilename = do(name,from)
-				if name == 'imba'
-					let src = np.resolve(o.imbaPath,'dist','node','imba.js')
-					return src
-				console.log 'resolve filename',name,from and from.path
-				let res =  _resolveFilename.apply(Module,arguments)
-				return res
-
-			if params.tmpdir or true
-				# console.log 'path to manifest',bundle.manifest.path
-				# require(file.abs)
-				Module._load(file.abs, require.main, true)
-			else
-				Module._load(path, require.main, true)
 	return
 
 let binary = cli.storeOptionsAsProperties(false).version('2.0.0').name('imba')
@@ -180,14 +148,13 @@ let binary = cli.storeOptionsAsProperties(false).version('2.0.0').name('imba')
 def increase-verbosity dummy, prev
 	prev + 1
 
-cli.command('run <script>', { isDefault: true })
+cli.command('exec <script>', { isDefault: true })
 	.description('Run stuff')
 	.option("-b, --build", "")
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
 	.option("-d, --dev", "Minify generated files")
 	.option("-i, --instances <count>", "Number of instances to start",fmt.i,1)
-	.option("-c, --clean", "Disregard previosly cached compilations")
 	.option("-v, --verbose", "verbosity (repeat to increase)",increase-verbosity,0)
 	.option("--name [name]", "Give name to process")
 	.option("--outdir <value>", "")
@@ -196,6 +163,7 @@ cli.command('run <script>', { isDefault: true })
 	.option("--inspect", "Debug stuff")
 	.option("--no-sourcemap", "Omit sourcemaps")
 	.option("--no-contenthash", "Disable hashing")
+	.option("--clean", "Disregard previosly cached compilations")
 	.action(run)
 
 cli.command('serve [script]')
@@ -205,7 +173,7 @@ cli.command('serve [script]')
 	.option("-b, --build", "")
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
-	.option("-c, --clean", "Remove previously generated files")
+	.option("--clean", "Remove previously generated files")
 	.option("-f, --force", "Disregard previosly cached compilations")
 	.option("-i, --instances <count>", "Number of instances to start",fmt.i,1)
 	.action(run)

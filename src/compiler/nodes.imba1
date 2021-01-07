@@ -2878,9 +2878,15 @@ export class Root < Code
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
 		# always create the sourcemap?
-		if o:sourceMap or STACK.tsc # should handle sourcemap no matter what?
-			let map = SourceMap.new(script,o:sourceMap,o).generate
+		if o:sourcemap or STACK.tsc # should handle sourcemap no matter what?
+			let map = SourceMap.new(script,o).generate
 			script:sourcemap = map.result
+
+			if o:sourcemap == 'inline'
+				script:js += map.inlined
+
+		# if o:sourcemap == 'inline'
+		#	let map = script:sourcemap ||= SourceMap.new(script,o:sourceMap,o).generate
 
 		# remove sourcemap markers from js and css
 		# start with other markers as well
@@ -5409,7 +5415,7 @@ export class Identifier < Node
 		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
 		# FIXME should it not always enable?
-		if OPTS:sourceMap and (!o or o:mark !== false)
+		if OPTS:sourcemap and (!o or o:mark !== false)
 			out = M(out, @token or @value)
 		return out
 

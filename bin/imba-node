@@ -1,0 +1,119 @@
+#!/usr/bin/env node
+
+var path = require('path')
+var fs = require('fs');
+var compiler = require("../dist/compiler.cjs");
+
+var helpers = compiler.helpers;
+var package = require('../package.json');
+
+var parseOpts = {
+	alias: {h: 'help',v: 'version',e: 'eval'},
+	schema: {eval: {type: 'string'}}
+};
+
+var help = `\n
+Usage: imba [options] path/to/script.imba [arguments]
+
+  -h, --help             display this help message
+  -v, --version          display the version number
+`;
+
+function lookup(src){
+	src = path.resolve(process.cwd(),src);
+	
+	if (fs.statSync(src).isDirectory()) {
+		var f = path.join(src,'index.imba');
+		if (fs.existsSync(f)) {
+			src = f;
+		} else {
+			return;
+		};
+	};
+	
+	return src;
+};
+
+function run(code,options) {
+	if(!options||options.constructor !== Object) options = {};
+	var filename = options.sourcePath !== undefined ? options.sourcePath : null;
+	var main = require.main;
+	main.filename = process.argv[1] = (filename ? fs.realpathSync(filename) : '.');
+	main.moduleCache && (main.moduleCache = {});
+	
+	var Module = require('module').Module;
+	main.paths = Module._nodeModulePaths(path.dirname(filename));
+
+	if(!options.fs) Object.defineProperty(options,'fs',{value: fs, enumerable:false});
+	if(!options.path) Object.defineProperty(options,'path',{value: path, enumerable:false});
+
+	if (path.extname(main.filename) != '.imba' || require.extensions) {
+		options.platform || (options.platform = 'node');
+		options.raiseErrors = true;
+		// arguments[1].standalone || (arguments[1].standalone = true);
+		var content = compiler.compile(code,options);
+		if(content.raiseErrors) content.raiseErrors();
+
+		return main._compile((content.js || content),main.filename);
+	} else {
+		return main._compile(code,main.filename);
+	};
+};
+
+
+// TODO add support for imba run cache?
+if (require.extensions) {
+	require.extensions['.imba'] = function(mod,filename) {
+		var options = {sourcePath: filename,platform: 'node', raiseErrors: true};
+		Object.defineProperty(options,'fs',{value: fs, enumerable:false});
+		Object.defineProperty(options,'path',{value: path, enumerable:false});
+
+		// What type of format etc do we use?
+
+		var body = fs.readFileSync(filename,'utf8');
+		var content = compiler.compile(body,options);
+		return mod._compile((content.js),filename);
+	};
+};
+
+function main(){
+	var args = process.argv.slice(2);
+
+	if(args[0] && args[0].match(/^(build|watch|serve|dev|transpile|clean|start)$/) ){
+		let bundlerArgs = args.slice(1).concat("--" + args[0]);
+		let options = {cwd: process.cwd(), argv: bundlerArgs,command: args[0]};
+		var bundler = require('../dist/bundler.js');
+		if(args[0] == 'dev'){
+			options.serve = true;
+			options.hmr = true;
+			options.watch = true;
+		}
+		return bundler.run(options);
+	}
+	
+
+	var o = helpers.parseArgs(args,parseOpts);
+	var src = o.main;
+	if (src instanceof Array) { src = src[0] };
+	
+	process.argv.shift();
+	process.argv[0] = 'imba';
+	
+	if (o.version) {
+		return console.log(package.version);
+	} else if ((!o.main && !o.eval) || o.help) {
+		return console.log(help);
+	};
+
+	Object.defineProperty(o,'fs',{value: fs, enumerable:false});
+	Object.defineProperty(o,'path',{value: path, enumerable:false});
+
+	src = lookup(src);
+	src = path.resolve(process.cwd(),src);
+	var body = fs.readFileSync(src,'utf8');
+	o.platform = 'node';
+	o.sourcePath = src;
+	return run(body,o);
+};
+
+main();
