@@ -245,6 +245,15 @@ let bundles = [{
 	format: 'cjs',
 	external: ['chokidar','esbuild'],
 	platform: 'node'
+},{
+	entryPoints: ['src/bin/vm.imba'],
+	outbase: 'src/bin',
+	outdir: 'dist/bin',
+	minify: false,
+	sourcemap: false,
+	format: 'cjs',
+	external: ['imba'],
+	platform: 'node'
 }];
 
 console.log( universal('src/program/index.imba','program') );

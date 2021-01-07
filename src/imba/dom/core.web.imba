@@ -29,8 +29,8 @@ export const {
 
 # export const document = global.window.document
 const CustomTagConstructors = {}
-const TYPES = {}
-
+export const TYPES = {}
+export const CUSTOM_TYPES = {}
 export def get_document
 	global.document
 
@@ -341,7 +341,7 @@ export def createComponent name, parent, flags, text, ctx
 	return el
 
 export def defineTag name, klass, options = {}
-	TYPES[name] = klass
+	TYPES[name] = CUSTOM_TYPES[name] = klass
 
 	klass.nodeName = name
 

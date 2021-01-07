@@ -15,6 +15,7 @@ export default class Watcher < Component
 		fs = fs
 		history = new ChangeLog withFlags: yes
 		events = []
+		map = {}
 
 	get instance
 		return #watcher if #watcher
@@ -51,8 +52,14 @@ export default class Watcher < Component
 
 	def add ...paths
 		# console.log 'watch add!!',paths
+		for path in paths
+			map[path] = yes
+
 		instance.add(...paths)
 		self
+
+	def has path
+		!!map[path]
 
 	def sync target
 		history.pull(target)

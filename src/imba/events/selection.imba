@@ -12,7 +12,7 @@ def activateSelectionHandler
 			return if e[handledSym]
 			e[handledSym] = yes
 			
-			let target = document.activeElement
+			let target = global.document.activeElement
 			if target and target.matches('input,textarea')
 				let custom = new CustomEvent('selection',{
 					detail: {
@@ -21,7 +21,7 @@ def activateSelectionHandler
 					}
 				})
 				target.dispatchEvent(custom)
-		document.addEventListener('selectionchange',selHandler)
+		global.document.addEventListener('selectionchange',selHandler)
 
 extend class Element
 	def on$selection mods, context

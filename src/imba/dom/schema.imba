@@ -1,6 +1,7 @@
 # imba$imbaPath=global
+# className: 'class',
 export const TYPES = {
-	"": [-1,{id: 1,className: 'class',slot: 1,part: 1,elementTiming: 'elementtiming'}]
+	"": [-1,{id: 1,slot: 1,part: 1,elementTiming: 'elementtiming'}]
 	HTML: [-1,{title: 1,lang: 1,translate: 1,dir: 1,accessKey: 'accesskey',draggable: 1,spellcheck: 1,autocapitalize: 1,inputMode: 'inputmode',style: 1,tabIndex: 'tabindex',enterKeyHint: 'enterkeyhint'}]
 	HTMLAnchor: [1,{target: 1,download: 1,ping: 1,rel: 1,relList: 'rel',hreflang: 1,type: 1,referrerPolicy: 'referrerpolicy',coords: 1,charset: 1,name: 1,rev: 1,shape: 1,href: 1}]
 	HTMLArea: [1,{alt: 1,coords: 1,download: 1,shape: 1,target: 1,ping: 1,rel: 1,relList: 'rel',referrerPolicy: 'referrerpolicy',href: 1}]

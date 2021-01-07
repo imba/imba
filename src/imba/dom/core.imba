@@ -59,6 +59,8 @@ class CustomElementRegistry
 
 export const customElements = new CustomElementRegistry
 
+export const CUSTOM_TYPES = {}
+
 export def getTagType typ, klass
 
 	let name = typ
@@ -430,9 +432,13 @@ export class Element < Node
 		let typ = self.nodeName
 		let sel = "{typ}"
 		let v
+		let cls = self.classList.toString!
+
+		if self.dehydrate
+			cls = (cls ? ('_ssr_ ' + cls) : '_ssr_')
 		
 		sel += " id=\"{escapeAttributeValue(v)}\"" if v = self.id
-		sel += " class=\"{escapeAttributeValue(v)}\"" if v = self.classList.toString()
+		sel += " class=\"{escapeAttributeValue(cls)}\"" if cls
 
 		for own key,value of self.attributes
 			sel += " {key}=\"{escapeAttributeValue(value)}\""
@@ -773,7 +779,7 @@ export def createComponent name, parent, flags, text, ctx
 	return el
 
 export def defineTag name, klass, options = {}
-	TYPES[name] = {
+	TYPES[name] = CUSTOM_TYPES[name] = {
 		idl: yes
 		name: name
 		klass: klass

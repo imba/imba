@@ -1333,427 +1333,6 @@ var require_constants = __commonJS((exports2) => {
   }
 });
 
-// vendor/path.js
-var require_path = __commonJS((exports2, module2) => {
-  "use strict";
-  function assertPath(path) {
-    if (typeof path !== "string") {
-      throw new TypeError("Path must be a string. Received " + JSON.stringify(path));
-    }
-  }
-  function normalizeStringPosix(path, allowAboveRoot) {
-    var res = "";
-    var lastSegmentLength = 0;
-    var lastSlash = -1;
-    var dots = 0;
-    var code;
-    for (var i = 0; i <= path.length; ++i) {
-      if (i < path.length)
-        code = path.charCodeAt(i);
-      else if (code === 47)
-        break;
-      else
-        code = 47;
-      if (code === 47) {
-        if (lastSlash === i - 1 || dots === 1) {
-        } else if (lastSlash !== i - 1 && dots === 2) {
-          if (res.length < 2 || lastSegmentLength !== 2 || res.charCodeAt(res.length - 1) !== 46 || res.charCodeAt(res.length - 2) !== 46) {
-            if (res.length > 2) {
-              var lastSlashIndex = res.lastIndexOf("/");
-              if (lastSlashIndex !== res.length - 1) {
-                if (lastSlashIndex === -1) {
-                  res = "";
-                  lastSegmentLength = 0;
-                } else {
-                  res = res.slice(0, lastSlashIndex);
-                  lastSegmentLength = res.length - 1 - res.lastIndexOf("/");
-                }
-                lastSlash = i;
-                dots = 0;
-                continue;
-              }
-            } else if (res.length === 2 || res.length === 1) {
-              res = "";
-              lastSegmentLength = 0;
-              lastSlash = i;
-              dots = 0;
-              continue;
-            }
-          }
-          if (allowAboveRoot) {
-            if (res.length > 0)
-              res += "/..";
-            else
-              res = "..";
-            lastSegmentLength = 2;
-          }
-        } else {
-          if (res.length > 0)
-            res += "/" + path.slice(lastSlash + 1, i);
-          else
-            res = path.slice(lastSlash + 1, i);
-          lastSegmentLength = i - lastSlash - 1;
-        }
-        lastSlash = i;
-        dots = 0;
-      } else if (code === 46 && dots !== -1) {
-        ++dots;
-      } else {
-        dots = -1;
-      }
-    }
-    return res;
-  }
-  function _format(sep, pathObject) {
-    var dir = pathObject.dir || pathObject.root;
-    var base = pathObject.base || (pathObject.name || "") + (pathObject.ext || "");
-    if (!dir) {
-      return base;
-    }
-    if (dir === pathObject.root) {
-      return dir + base;
-    }
-    return dir + sep + base;
-  }
-  var posix = {
-    resolve: function resolve() {
-      var resolvedPath = "";
-      var resolvedAbsolute = false;
-      var cwd;
-      for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-        var path;
-        if (i >= 0)
-          path = arguments[i];
-        else {
-          if (cwd === void 0)
-            cwd = process.cwd();
-          path = cwd;
-        }
-        assertPath(path);
-        if (path.length === 0) {
-          continue;
-        }
-        resolvedPath = path + "/" + resolvedPath;
-        resolvedAbsolute = path.charCodeAt(0) === 47;
-      }
-      resolvedPath = normalizeStringPosix(resolvedPath, !resolvedAbsolute);
-      if (resolvedAbsolute) {
-        if (resolvedPath.length > 0)
-          return "/" + resolvedPath;
-        else
-          return "/";
-      } else if (resolvedPath.length > 0) {
-        return resolvedPath;
-      } else {
-        return ".";
-      }
-    },
-    normalize: function normalize(path) {
-      assertPath(path);
-      if (path.length === 0)
-        return ".";
-      var isAbsolute = path.charCodeAt(0) === 47;
-      var trailingSeparator = path.charCodeAt(path.length - 1) === 47;
-      path = normalizeStringPosix(path, !isAbsolute);
-      if (path.length === 0 && !isAbsolute)
-        path = ".";
-      if (path.length > 0 && trailingSeparator)
-        path += "/";
-      if (isAbsolute)
-        return "/" + path;
-      return path;
-    },
-    isAbsolute: function isAbsolute(path) {
-      assertPath(path);
-      return path.length > 0 && path.charCodeAt(0) === 47;
-    },
-    join: function join() {
-      if (arguments.length === 0)
-        return ".";
-      var joined;
-      for (var i = 0; i < arguments.length; ++i) {
-        var arg = arguments[i];
-        assertPath(arg);
-        if (arg.length > 0) {
-          if (joined === void 0)
-            joined = arg;
-          else
-            joined += "/" + arg;
-        }
-      }
-      if (joined === void 0)
-        return ".";
-      return posix.normalize(joined);
-    },
-    relative: function relative(from, to) {
-      assertPath(from);
-      assertPath(to);
-      if (from === to)
-        return "";
-      from = posix.resolve(from);
-      to = posix.resolve(to);
-      if (from === to)
-        return "";
-      var fromStart = 1;
-      for (; fromStart < from.length; ++fromStart) {
-        if (from.charCodeAt(fromStart) !== 47)
-          break;
-      }
-      var fromEnd = from.length;
-      var fromLen = fromEnd - fromStart;
-      var toStart = 1;
-      for (; toStart < to.length; ++toStart) {
-        if (to.charCodeAt(toStart) !== 47)
-          break;
-      }
-      var toEnd = to.length;
-      var toLen = toEnd - toStart;
-      var length = fromLen < toLen ? fromLen : toLen;
-      var lastCommonSep = -1;
-      var i = 0;
-      for (; i <= length; ++i) {
-        if (i === length) {
-          if (toLen > length) {
-            if (to.charCodeAt(toStart + i) === 47) {
-              return to.slice(toStart + i + 1);
-            } else if (i === 0) {
-              return to.slice(toStart + i);
-            }
-          } else if (fromLen > length) {
-            if (from.charCodeAt(fromStart + i) === 47) {
-              lastCommonSep = i;
-            } else if (i === 0) {
-              lastCommonSep = 0;
-            }
-          }
-          break;
-        }
-        var fromCode = from.charCodeAt(fromStart + i);
-        var toCode = to.charCodeAt(toStart + i);
-        if (fromCode !== toCode)
-          break;
-        else if (fromCode === 47)
-          lastCommonSep = i;
-      }
-      var out = "";
-      for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
-        if (i === fromEnd || from.charCodeAt(i) === 47) {
-          if (out.length === 0)
-            out += "..";
-          else
-            out += "/..";
-        }
-      }
-      if (out.length > 0)
-        return out + to.slice(toStart + lastCommonSep);
-      else {
-        toStart += lastCommonSep;
-        if (to.charCodeAt(toStart) === 47)
-          ++toStart;
-        return to.slice(toStart);
-      }
-    },
-    _makeLong: function _makeLong(path) {
-      return path;
-    },
-    dirname: function dirname(path) {
-      assertPath(path);
-      if (path.length === 0)
-        return ".";
-      var code = path.charCodeAt(0);
-      var hasRoot = code === 47;
-      var end = -1;
-      var matchedSlash = true;
-      for (var i = path.length - 1; i >= 1; --i) {
-        code = path.charCodeAt(i);
-        if (code === 47) {
-          if (!matchedSlash) {
-            end = i;
-            break;
-          }
-        } else {
-          matchedSlash = false;
-        }
-      }
-      if (end === -1)
-        return hasRoot ? "/" : ".";
-      if (hasRoot && end === 1)
-        return "//";
-      return path.slice(0, end);
-    },
-    basename: function basename(path, ext) {
-      if (ext !== void 0 && typeof ext !== "string")
-        throw new TypeError('"ext" argument must be a string');
-      assertPath(path);
-      var start = 0;
-      var end = -1;
-      var matchedSlash = true;
-      var i;
-      if (ext !== void 0 && ext.length > 0 && ext.length <= path.length) {
-        if (ext.length === path.length && ext === path)
-          return "";
-        var extIdx = ext.length - 1;
-        var firstNonSlashEnd = -1;
-        for (i = path.length - 1; i >= 0; --i) {
-          var code = path.charCodeAt(i);
-          if (code === 47) {
-            if (!matchedSlash) {
-              start = i + 1;
-              break;
-            }
-          } else {
-            if (firstNonSlashEnd === -1) {
-              matchedSlash = false;
-              firstNonSlashEnd = i + 1;
-            }
-            if (extIdx >= 0) {
-              if (code === ext.charCodeAt(extIdx)) {
-                if (--extIdx === -1) {
-                  end = i;
-                }
-              } else {
-                extIdx = -1;
-                end = firstNonSlashEnd;
-              }
-            }
-          }
-        }
-        if (start === end)
-          end = firstNonSlashEnd;
-        else if (end === -1)
-          end = path.length;
-        return path.slice(start, end);
-      } else {
-        for (i = path.length - 1; i >= 0; --i) {
-          if (path.charCodeAt(i) === 47) {
-            if (!matchedSlash) {
-              start = i + 1;
-              break;
-            }
-          } else if (end === -1) {
-            matchedSlash = false;
-            end = i + 1;
-          }
-        }
-        if (end === -1)
-          return "";
-        return path.slice(start, end);
-      }
-    },
-    extname: function extname(path) {
-      assertPath(path);
-      var startDot = -1;
-      var startPart = 0;
-      var end = -1;
-      var matchedSlash = true;
-      var preDotState = 0;
-      for (var i = path.length - 1; i >= 0; --i) {
-        var code = path.charCodeAt(i);
-        if (code === 47) {
-          if (!matchedSlash) {
-            startPart = i + 1;
-            break;
-          }
-          continue;
-        }
-        if (end === -1) {
-          matchedSlash = false;
-          end = i + 1;
-        }
-        if (code === 46) {
-          if (startDot === -1)
-            startDot = i;
-          else if (preDotState !== 1)
-            preDotState = 1;
-        } else if (startDot !== -1) {
-          preDotState = -1;
-        }
-      }
-      if (startDot === -1 || end === -1 || preDotState === 0 || preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
-        return "";
-      }
-      return path.slice(startDot, end);
-    },
-    format: function format(pathObject) {
-      if (pathObject === null || typeof pathObject !== "object") {
-        throw new TypeError('The "pathObject" argument must be of type Object. Received type ' + typeof pathObject);
-      }
-      return _format("/", pathObject);
-    },
-    parse: function parse3(path) {
-      assertPath(path);
-      var ret = {root: "", dir: "", base: "", ext: "", name: ""};
-      if (path.length === 0)
-        return ret;
-      var code = path.charCodeAt(0);
-      var isAbsolute = code === 47;
-      var start;
-      if (isAbsolute) {
-        ret.root = "/";
-        start = 1;
-      } else {
-        start = 0;
-      }
-      var startDot = -1;
-      var startPart = 0;
-      var end = -1;
-      var matchedSlash = true;
-      var i = path.length - 1;
-      var preDotState = 0;
-      for (; i >= start; --i) {
-        code = path.charCodeAt(i);
-        if (code === 47) {
-          if (!matchedSlash) {
-            startPart = i + 1;
-            break;
-          }
-          continue;
-        }
-        if (end === -1) {
-          matchedSlash = false;
-          end = i + 1;
-        }
-        if (code === 46) {
-          if (startDot === -1)
-            startDot = i;
-          else if (preDotState !== 1)
-            preDotState = 1;
-        } else if (startDot !== -1) {
-          preDotState = -1;
-        }
-      }
-      if (startDot === -1 || end === -1 || preDotState === 0 || preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
-        if (end !== -1) {
-          if (startPart === 0 && isAbsolute)
-            ret.base = ret.name = path.slice(1, end);
-          else
-            ret.base = ret.name = path.slice(startPart, end);
-        }
-      } else {
-        if (startPart === 0 && isAbsolute) {
-          ret.name = path.slice(1, startDot);
-          ret.base = path.slice(1, end);
-        } else {
-          ret.name = path.slice(startPart, startDot);
-          ret.base = path.slice(startPart, end);
-        }
-        ret.ext = path.slice(startDot, end);
-      }
-      if (startPart > 0)
-        ret.dir = path.slice(0, startPart - 1);
-      else if (isAbsolute)
-        ret.dir = "/";
-      return ret;
-    },
-    sep: "/",
-    delimiter: ":",
-    win32: null,
-    posix: null
-  };
-  posix.posix = posix;
-  module2.exports = posix;
-});
-
 // src/compiler/sourcemapper.imba
 var require_sourcemapper = __commonJS((exports2) => {
   __export(exports2, {
@@ -1782,9 +1361,10 @@ var require_compilation = __commonJS((exports2) => {
     Compilation: () => Compilation2,
     CompilationResult: () => CompilationResult
   });
-  var path2 = __toModule(require_path());
+  var path2 = __toModule(require("path"));
   var sourcemapper = __toModule(require_sourcemapper());
-  var $_doc$ = Symbol.for("#doc");
+  var sys$14 = Symbol.for("#init");
+  var sys$22 = Symbol.for("#doc");
   var STEPS = {
     TOKENIZE: 1,
     REWRITE: 2,
@@ -1796,21 +1376,21 @@ var require_compilation = __commonJS((exports2) => {
   var CompilationResult = class {
   };
   var Compilation2 = class {
-    static init$() {
+    static [sys$14]() {
       this.current = void 0;
       return this;
     }
     static error(opts) {
-      var $0;
-      return ($0 = this.current) && $0.addDiagnostic && $0.addDiagnostic("error", opts);
+      var _a, _b;
+      return (_b = (_a = this.current) == null ? void 0 : _a.addDiagnostic) == null ? void 0 : _b.call(_a, "error", opts);
     }
     static warn(opts) {
-      var $0;
-      return ($0 = this.current) && $0.addDiagnostic && $0.addDiagnostic("warning", opts);
+      var _a, _b;
+      return (_b = (_a = this.current) == null ? void 0 : _a.addDiagnostic) == null ? void 0 : _b.call(_a, "warning", opts);
     }
     static info(opts) {
-      var $0;
-      return ($0 = this.current) && $0.addDiagnostic && $0.addDiagnostic("info", opts);
+      var _a, _b;
+      return (_b = (_a = this.current) == null ? void 0 : _a.addDiagnostic) == null ? void 0 : _b.call(_a, "info", opts);
     }
     static deserialize(data, o = {}) {
       let item = new Compilation2("", o);
@@ -1848,8 +1428,8 @@ var require_compilation = __commonJS((exports2) => {
       ;
     }
     tokenize() {
-      var $0;
-      if ((this.flags & ($0 = STEPS.TOKENIZE)) == 0 ? (this.flags |= $0, true) : false) {
+      var $0$1;
+      if ((this.flags & ($0$1 = STEPS.TOKENIZE)) == 0 ? (this.flags |= $0$1, true) : false) {
         try {
           Compilation2.current = this;
           this.lexer.reset();
@@ -1864,9 +1444,9 @@ var require_compilation = __commonJS((exports2) => {
       return this.tokens;
     }
     parse() {
-      var $0;
+      var $0$2;
       this.tokenize();
-      if ((this.flags & ($0 = STEPS.PARSE)) == 0 ? (this.flags |= $0, true) : false) {
+      if ((this.flags & ($0$2 = STEPS.PARSE)) == 0 ? (this.flags |= $0$2, true) : false) {
         if (!this.isErrored) {
           Compilation2.current = this;
           try {
@@ -1881,9 +1461,9 @@ var require_compilation = __commonJS((exports2) => {
       return this;
     }
     compile() {
-      var $0;
+      var $0$3;
       this.parse();
-      if ((this.flags & ($0 = STEPS.COMPILE)) == 0 ? (this.flags |= $0, true) : false) {
+      if ((this.flags & ($0$3 = STEPS.COMPILE)) == 0 ? (this.flags |= $0$3, true) : false) {
         if (!this.isErrored) {
           Compilation2.current = this;
           this.result = this.ast.compile(this.options, this);
@@ -1937,7 +1517,7 @@ var require_compilation = __commonJS((exports2) => {
       });
     }
     get doc() {
-      return this[$_doc$] || (this[$_doc$] = new ImbaDocument(null, "imba", 0, this.sourceCode));
+      return this[sys$22] || (this[sys$22] = new ImbaDocument(null, "imba", 0, this.sourceCode));
     }
     positionAt(offset) {
       return this.doc.positionAt(offset);
@@ -1959,7 +1539,7 @@ var require_compilation = __commonJS((exports2) => {
       return this;
     }
   };
-  Compilation2.init$();
+  Compilation2[sys$14]();
 });
 
 // src/compiler/errors.imba1
@@ -6414,18 +5994,18 @@ var require_transformers = __commonJS((exports2) => {
     extractDependencies: () => extractDependencies,
     resolveDependencies: () => resolveDependencies
   });
-  var path = __toModule(require_path());
+  var path = __toModule(require("path"));
   function iter$7(a) {
     let v;
     return a ? (v = a.toIterable) ? v.call(a) : a : [];
   }
-  var $_locations$ = Symbol.for("#locations");
+  var sys$14 = Symbol.for("#locations");
   function extractDependencies(code, replacer = null) {
     let deps = {};
     let offset = 0;
     let pre = "/*$path$*/";
     let post = "/*$*/";
-    let locs = deps[$_locations$] = [];
+    let locs = deps[sys$14] = [];
     while (true) {
       let index = code.indexOf(pre, offset);
       if (index == -1) {
@@ -6458,23 +6038,26 @@ var require_transformers = __commonJS((exports2) => {
     context.resolveDir || (context.resolveDir = imp.slice(0, imp.lastIndexOf("/") + 1));
     let outcode = code;
     let deps = extractDependencies(code);
-    let locs = deps[$_locations$].slice(0).reverse();
+    let locs = deps[sys$14].slice(0).reverse();
     let resolved = Object.assign({}, deps);
-    if (resolver instanceof Function) {
-      for (let $i = 0, $keys = Object.keys(deps), $l = $keys.length, key, dep; $i < $l; $i++) {
-        key = $keys[$i];
-        dep = deps[key];
-        let res = resolver(Object.assign({path: key}, context));
-        if (res != null) {
-          resolved[key] = res;
-        }
-        ;
+    for (let sys$22 = 0, sys$32 = Object.keys(deps), sys$4 = sys$32.length, key, dep; sys$22 < sys$4; sys$22++) {
+      key = sys$32[sys$22];
+      dep = deps[key];
+      let res = null;
+      if (resolver instanceof Function) {
+        res = resolver(Object.assign({path: key}, context));
+      } else if (resolver[key]) {
+        res = resolver[key];
+      }
+      ;
+      if (res != null) {
+        resolved[key] = res;
       }
       ;
     }
     ;
-    for (let $i = 0, $items = iter$7(locs), $len = $items.length; $i < $len; $i++) {
-      let [start, end, part] = $items[$i];
+    for (let sys$5 = 0, sys$6 = iter$7(locs), sys$7 = sys$6.length; sys$5 < sys$7; sys$5++) {
+      let [start, end, part] = sys$6[sys$5];
       let replacement = resolved[part];
       outcode = outcode.slice(0, start) + replacement + outcode.slice(end);
     }
@@ -6488,7 +6071,7 @@ var require_sourcemap = __commonJS((exports2) => {
   function iter$7(a) {
     return a ? a.toArray ? a.toArray() : a : [];
   }
-  var path = require_path();
+  var path = require("path");
   var util4 = require_helpers();
   var VLQ_SHIFT = 5;
   var VLQ_CONTINUATION_BIT = 1 << VLQ_SHIFT;
@@ -7423,12 +7006,12 @@ var require_styler = __commonJS((exports2) => {
   var validTypes = {
     ease: "linear|ease|ease-in|ease-out|ease-in-out|step-start|step-end|steps\u0192|cubic-bezier\u0192"
   };
-  for (let $i = 0, $keys = Object.keys(validTypes), $l = $keys.length, k, v; $i < $l; $i++) {
-    k = $keys[$i];
+  for (let sys$14 = 0, sys$22 = Object.keys(validTypes), sys$6 = sys$22.length, k, v; sys$14 < sys$6; sys$14++) {
+    k = sys$22[sys$14];
     v = validTypes[k];
     let o = {};
-    for (let $j = 0, $items = iter$7(v.split("|")), $len = $items.length; $j < $len; $j++) {
-      let item = $items[$j];
+    for (let sys$32 = 0, sys$4 = iter$7(v.split("|")), sys$5 = sys$4.length; sys$32 < sys$5; sys$32++) {
+      let item = sys$4[sys$32];
       o[item] = 1;
     }
     ;
@@ -7581,8 +7164,8 @@ var require_styler = __commonJS((exports2) => {
     tween: "transition"
   };
   var abbreviations = {};
-  for (let $i = 0, $keys = Object.keys(aliases), $l = $keys.length, k, v; $i < $l; $i++) {
-    k = $keys[$i];
+  for (let sys$7 = 0, sys$8 = Object.keys(aliases), sys$9 = sys$8.length, k, v; sys$7 < sys$9; sys$7++) {
+    k = sys$8[sys$7];
     v = aliases[k];
     if (typeof v == "string") {
       abbreviations[v] = k;
@@ -7673,8 +7256,8 @@ var require_styler = __commonJS((exports2) => {
     }
     cpart(parts) {
       let out = "(";
-      for (let $i = 0, $items = iter$7(parts), $len = $items.length; $i < $len; $i++) {
-        let part = $items[$i];
+      for (let sys$10 = 0, sys$11 = iter$7(parts), sys$122 = sys$11.length; sys$10 < sys$122; sys$10++) {
+        let part = sys$11[sys$10];
         if (typeof part == "string") {
           out += " " + part + " ";
         } else if (typeof part == "number") {
@@ -7714,11 +7297,11 @@ var require_styler = __commonJS((exports2) => {
     ;
   }
   function parseColors(palette, colors3) {
-    for (let $i = 0, $keys = Object.keys(colors3), $l = $keys.length, name, variations; $i < $l; $i++) {
-      name = $keys[$i];
+    for (let sys$132 = 0, sys$14 = Object.keys(colors3), sys$18 = sys$14.length, name, variations; sys$132 < sys$18; sys$132++) {
+      name = sys$14[sys$132];
       variations = colors3[name];
-      for (let $j = 0, $keys0 = Object.keys(variations), $l2 = $keys0.length, subname, raw; $j < $l2; $j++) {
-        subname = $keys0[$j];
+      for (let sys$15 = 0, sys$16 = Object.keys(variations), sys$17 = sys$16.length, subname, raw; sys$15 < sys$17; sys$15++) {
+        subname = sys$16[sys$15];
         raw = variations[subname];
         let path = name + subname;
         if (palette[raw]) {
@@ -7823,12 +7406,12 @@ var require_styler = __commonJS((exports2) => {
         paused: 4
       };
       let used = {};
-      for (let k = 0, $items = iter$7(params), $len = $items.length; k < $len; k++) {
-        let anim = $items[k];
+      for (let k = 0, sys$19 = iter$7(params), sys$22 = sys$19.length; k < sys$22; k++) {
+        let anim = sys$19[k];
         let name = null;
         let ease = null;
-        for (let i = 0, $ary = iter$7(anim), $len2 = $ary.length; i < $len2; i++) {
-          let part = $ary[i];
+        for (let i = 0, sys$20 = iter$7(anim), sys$21 = sys$20.length; i < sys$21; i++) {
+          let part = sys$20[i];
           let str = String(part);
           let typ = valids[str];
           if (validTypes.ease[str] && !ease) {
@@ -7864,8 +7447,8 @@ var require_styler = __commonJS((exports2) => {
       return {animation: params};
     }
     animationTimingFunction(...params) {
-      for (let i = 0, $items = iter$7(params), $len = $items.length; i < $len; i++) {
-        let param = $items[i];
+      for (let i = 0, sys$23 = iter$7(params), sys$24 = sys$23.length; i < sys$24; i++) {
+        let param = sys$23[i];
         let fb = this.$varFallback("ease", param);
         if (fb) {
           params[i] = fb;
@@ -7877,8 +7460,8 @@ var require_styler = __commonJS((exports2) => {
     }
     animationName(...params) {
       let m;
-      for (let i = 0, $items = iter$7(params), $len = $items.length; i < $len; i++) {
-        let param = $items[i];
+      for (let i = 0, sys$25 = iter$7(params), sys$26 = sys$25.length; i < sys$26; i++) {
+        let param = sys$25[i];
         let fb = this.$varFallback("animation", param);
         if (fb) {
           params[i] = fb;
@@ -7895,8 +7478,8 @@ var require_styler = __commonJS((exports2) => {
     }
     display(params) {
       let out = {display: params};
-      for (let $i = 0, $items = iter$7(params), $len = $items.length, layout; $i < $len; $i++) {
-        let par = $items[$i];
+      for (let sys$27 = 0, sys$28 = iter$7(params), sys$29 = sys$28.length, layout; sys$27 < sys$29; sys$27++) {
+        let par = sys$28[sys$27];
         if (layout = layouts[String(par)]) {
           layout.call(this, out, par, params);
         }
@@ -7907,8 +7490,8 @@ var require_styler = __commonJS((exports2) => {
     }
     width([...params]) {
       let o = {};
-      for (let $i = 0, $items = iter$7(params), $len = $items.length; $i < $len; $i++) {
-        let param = $items[$i];
+      for (let sys$30 = 0, sys$31 = iter$7(params), sys$32 = sys$31.length; sys$30 < sys$32; sys$30++) {
+        let param = sys$31[sys$30];
         let opts = param._options || {};
         let u = param._unit;
         if (u == "c" || u == "col" || u == "cols") {
@@ -7927,8 +7510,8 @@ var require_styler = __commonJS((exports2) => {
     }
     height([...params]) {
       let o = {};
-      for (let $i = 0, $items = iter$7(params), $len = $items.length; $i < $len; $i++) {
-        let param = $items[$i];
+      for (let sys$33 = 0, sys$34 = iter$7(params), sys$35 = sys$34.length; sys$33 < sys$35; sys$33++) {
+        let param = sys$34[sys$33];
         let opts = param._options || {};
         let u = param._unit;
         if (u == "r" || u == "row" || u == "rows") {
@@ -7987,8 +7570,8 @@ var require_styler = __commonJS((exports2) => {
       return out;
     }
     font(params, ...rest) {
-      for (let i = 0, $items = iter$7(params), $len = $items.length; i < $len; i++) {
-        let param = $items[i];
+      for (let i = 0, sys$36 = iter$7(params), sys$37 = sys$36.length; i < sys$37; i++) {
+        let param = sys$36[i];
         true;
       }
       ;
@@ -8011,8 +7594,8 @@ var require_styler = __commonJS((exports2) => {
       return;
     }
     gridTemplate(params) {
-      for (let i = 0, $items = iter$7(params), $len = $items.length; i < $len; i++) {
-        let param = $items[i];
+      for (let i = 0, sys$38 = iter$7(params), sys$39 = sys$38.length; i < sys$39; i++) {
+        let param = sys$38[i];
         if (isNumber(param)) {
           param._resolvedValue = "repeat(" + param._value + ",1fr)";
         }
@@ -8079,8 +7662,8 @@ var require_styler = __commonJS((exports2) => {
       };
     }
     textDecoration(params) {
-      for (let i = 0, $items = iter$7(params), $len = $items.length; i < $len; i++) {
-        let param = $items[i];
+      for (let i = 0, sys$40 = iter$7(params), sys$41 = sys$40.length; i < sys$41; i++) {
+        let param = sys$40[i];
         let str = String(param);
         if (str == "u") {
           param._resolvedValue = "underline";
@@ -8340,9 +7923,9 @@ var require_styler = __commonJS((exports2) => {
         ;
       }
       ;
-      for (let $o = this.content, $i = 0, $keys = Object.keys($o), $l = $keys.length, key, value; $i < $l; $i++) {
-        key = $keys[$i];
-        value = $o[key];
+      for (let sys$44 = this.content, sys$42 = 0, sys$43 = Object.keys(sys$44), sys$45 = sys$43.length, key, value; sys$42 < sys$45; sys$42++) {
+        key = sys$43[sys$42];
+        value = sys$44[key];
         if (value == void 0) {
           continue;
         }
@@ -8399,8 +7982,8 @@ var require_styler = __commonJS((exports2) => {
         out = content.match(/[^\n\s]/) ? render2(sel, content, this.options) : "";
       }
       ;
-      for (let $i = 0, $items = iter$7(subrules), $len = $items.length; $i < $len; $i++) {
-        let subrule = $items[$i];
+      for (let sys$46 = 0, sys$47 = iter$7(subrules), sys$48 = sys$47.length; sys$46 < sys$48; sys$46++) {
+        let subrule = sys$47[sys$46];
         out += "\n" + subrule.toString();
       }
       ;
@@ -8419,7 +8002,7 @@ var require_assets = __commonJS((exports2) => {
     return a ? (v = a.toIterable) ? v.call(a) : a : [];
   }
   function parseAsset(raw, name) {
-    var $0, $1;
+    var $0$1, $0$2;
     let text = raw.body;
     let xml2 = Monarch.getTokenizer("xml");
     let state = xml2.getInitialState();
@@ -8428,8 +8011,8 @@ var require_assets = __commonJS((exports2) => {
     let desc = {attributes: attrs, flags: []};
     let currAttr;
     let contentStart = 0;
-    for (let $i = 0, $items = iter$7(out.tokens), $len = $items.length; $i < $len; $i++) {
-      let tok = $items[$i];
+    for (let sys$14 = 0, sys$22 = iter$7(out.tokens), sys$32 = sys$22.length; sys$14 < sys$32; sys$14++) {
+      let tok = sys$22[sys$14];
       let val = tok.value;
       if (tok.type == "attribute.name.xml") {
         currAttr = tok;
@@ -8455,14 +8038,14 @@ var require_assets = __commonJS((exports2) => {
     desc.content = text.slice(contentStart).replace("</svg>", "");
     if (attrs.class) {
       desc.flags = attrs.class.split(/\s+/g);
-      $0 = attrs.class, delete attrs.class, $0;
+      $0$1 = attrs.class, delete attrs.class, $0$1;
     }
     ;
     if (name) {
       desc.flags.push("asset-" + name.toLowerCase());
     }
     ;
-    $1 = attrs.xmlns, delete attrs.xmlns, $1;
+    $0$2 = attrs.xmlns, delete attrs.xmlns, $0$2;
     return desc;
   }
 });
@@ -8491,7 +8074,7 @@ var require_nodes = __commonJS((exports2) => {
   var self2 = {};
   var helpers2 = require_helpers();
   var constants = require_constants();
-  var fspath = require_path();
+  var fspath = require("path");
   var transformers2 = require_transformers();
   var errors$ = require_errors();
   var ImbaParseError2 = errors$.ImbaParseError;
@@ -8547,7 +8130,7 @@ var require_nodes = __commonJS((exports2) => {
     TAG_KEYED: 2 ** 16,
     EL_INITED: 2 ** 0,
     EL_HYDRATED: 2 ** 1,
-    EL_DEHYDRATED: 2 ** 2,
+    EL_HYDRATING: 2 ** 2,
     EL_AWAKENED: 2 ** 3,
     EL_MOUNTING: 2 ** 4,
     EL_MOUNTED: 2 ** 5,
@@ -8555,6 +8138,7 @@ var require_nodes = __commonJS((exports2) => {
     EL_SCHEDULED: 2 ** 7,
     EL_RENDERING: 2 ** 8,
     EL_RENDERED: 2 ** 9,
+    EL_SSR: 2 ** 10,
     DIFF_BUILT: 2 ** 0,
     DIFF_FLAGS: 2 ** 1,
     DIFF_ATTRS: 2 ** 2,
@@ -9194,12 +8778,15 @@ var require_nodes = __commonJS((exports2) => {
       token3 = token3._value;
     }
     ;
-    if (kind instanceof Variable) {
-      token3._kind = kind.type();
-      token3._level = kind.scope().level();
-      token3._scope = kind.scope().kind();
-    } else {
-      token3._kind = kind;
+    if (typeof token3 != "string") {
+      if (kind instanceof Variable) {
+        token3._kind = kind.type();
+        token3._level = kind.scope().level();
+        token3._scope = kind.scope().kind();
+      } else {
+        token3._kind = kind;
+      }
+      ;
     }
     ;
     return this._semanticTokens.push(token3);
@@ -9344,7 +8931,7 @@ var require_nodes = __commonJS((exports2) => {
       ;
     }
     ;
-    if (false) {
+    if (typeof process != "undefined" && process.env) {
       val = process.env[key.toUpperCase()];
       if (val != void 0) {
         return val;
@@ -9823,6 +9410,7 @@ var require_nodes = __commonJS((exports2) => {
     if (opts === void 0)
       opts = {};
     let loc = opts.loc || this.loc() || [0, 0];
+    console.log("loc warn", loc, this.script().rangeAt(loc[0], loc[1]));
     return this.script().addDiagnostic(opts.severity || "warning", {
       message,
       range: this.script().rangeAt(loc[0], loc[1])
@@ -11974,12 +11562,29 @@ var require_nodes = __commonJS((exports2) => {
     this.traverse();
     STACK.setRoot(this._scope);
     if (o.bundle) {
-      this._scope.lookup("__filename")._c = STR(o.sourcePath).c();
-      this._scope.lookup("__dirname")._c = STR(fspath.dirname(o.sourcePath)).c();
+      if (o.cwd && STACK.isNode()) {
+        let abs = fspath.resolve(o.cwd, o.sourcePath);
+        let rel = fspath.relative(o.cwd, abs);
+        let np = this._scope.importProxy("path").proxy();
+        this._scope.lookup("__filename").c = function() {
+          return LIT("" + np.resolve + "(" + STR(rel).c() + ")").c();
+        };
+        this._scope.lookup("__dirname").c = function() {
+          return LIT("" + np.dirname + "(" + np.resolve + "(" + STR(rel).c() + "))").c();
+        };
+      } else {
+        this._scope.lookup("__filename")._c = STR(o.sourcePath).c();
+        this._scope.lookup("__dirname")._c = STR(fspath.dirname(o.sourcePath)).c();
+      }
+      ;
     }
     ;
     if (o.onTraversed instanceof Function) {
       o.onTraversed(this, STACK);
+    }
+    ;
+    if (STACK.css() && (!o.styles || o.styles == "inline")) {
+      this.runtime().styles;
     }
     ;
     var out = this.c(o);
@@ -11998,8 +11603,8 @@ var require_nodes = __commonJS((exports2) => {
     script.dependencies = Object.keys(this.scope()._dependencies);
     script.universal = STACK.meta().universal !== false;
     script.imports = transformers2.extractDependencies(script.js);
-    if (o.onResolve) {
-      script.js = transformers2.resolveDependencies(o.sourcePath, script.js, o.onResolve);
+    if (o.resolve) {
+      script.js = transformers2.resolveDependencies(o.sourcePath, script.js, o.resolve);
     }
     ;
     if (false) {
@@ -12007,7 +11612,7 @@ var require_nodes = __commonJS((exports2) => {
     ;
     if (!STACK.tsc()) {
       if (script.css && (!o.styles || o.styles == "inline")) {
-        script.js = "" + script.js + "\nimba.styles.register('" + script.sourceId + "'," + JSON.stringify(script.css) + ");";
+        script.js = "" + script.js + "\n" + this.runtime().styles + ".register('" + script.sourceId + "'," + JSON.stringify(script.css) + ");";
         if (o.debug) {
           script.js += "\n/*\n" + script.css + "\n*/\n";
         }
@@ -14287,7 +13892,9 @@ var require_nodes = __commonJS((exports2) => {
     variable || (variable = scope2.lookup(this.value().symbol()));
     if (variable && variable instanceof GlobalReference) {
       let name = variable.name();
-      if (stack.tsc()) {
+      if (variable instanceof ZonedVariable) {
+        this._value = variable.forScope(scope2);
+      } else if (stack.tsc()) {
         this._value = LIT(name);
       } else if (stack.isNode()) {
         this._value = LIT(scope2.imba().c());
@@ -16965,12 +16572,22 @@ var require_nodes = __commonJS((exports2) => {
     let bval = val;
     let op = M2("=", this.option("op"));
     let isAttr = this.key().match(/^(aria-|data-)/) || this._tag && this._tag.isSVG();
+    if (this.key() == "asset") {
+      if (this.value() instanceof Str) {
+        this._asset = STACK.root().registerAsset(this.value().raw(), this._tag._tagName || "asset");
+        val = CALL(this.runtime().assetReference, [this._asset.ref]).c();
+      } else {
+        val = MP(val, "path.asset." + this._tag._tagName);
+      }
+      ;
+    }
+    ;
     if (isAttr) {
       if (STACK.tsc()) {
         return "" + this._tag.tvar() + ".setAttribute('" + this.key() + "',String(" + val + "))";
       }
       ;
-      if (STACK.isNode()) {
+      if (STACK.isNode() && !this._asset) {
         STACK.meta().universal = false;
         return "setAttribute('" + this.key() + "'," + val + ")";
       }
@@ -17023,7 +16640,7 @@ var require_nodes = __commonJS((exports2) => {
       }
       ;
     } else if (key.indexOf("data-") == 0) {
-      return "dataset." + key.slice(5) + op + val;
+      return "setAttribute('" + key + "'," + val + ")";
     } else {
       return "" + M2(helpers2.dashToCamelCase(key), this._name) + op + val;
     }
@@ -18229,7 +17846,12 @@ var require_nodes = __commonJS((exports2) => {
     var isSVG = this.isSVG();
     var isReactive = this.isReactive();
     var canInline = false;
-    var shouldEnd = this.isComponent() || this._attrmap.route || this._attrmap.routeTo || this._attrmap["route-to"];
+    var useRoutes = this._attrmap.route || this._attrmap.routeTo || this._attrmap["route-to"];
+    var shouldEnd = this.isComponent() || useRoutes;
+    if (useRoutes) {
+      stack.use("use_router");
+    }
+    ;
     var dynamicKey = null;
     var ownCache = false;
     if (this._asset) {
@@ -19199,6 +18821,7 @@ var require_nodes = __commonJS((exports2) => {
       if (!STACK.cjs()) {
         return isDefault ? "export default " + self3.value().c() : "export " + self3.value().c();
       } else {
+        let val = self3.value().left().value();
         let sym = isDefault ? "default" : self3.value().left().value().symbol();
         self3.value().setRight(OP("=", LIT("exports." + sym), self3.value().right()));
         return self3.value().c();
@@ -20478,7 +20101,7 @@ var require_nodes = __commonJS((exports2) => {
       ;
     }
     ;
-    if (existing && !o.unique) {
+    if (existing && !o.unique && existing.type() != "global") {
       return existing;
     }
     ;
@@ -20488,7 +20111,7 @@ var require_nodes = __commonJS((exports2) => {
       item._parent = par;
     }
     ;
-    if (!o.system && !existing) {
+    if (!o.system && (!existing || existing.type() == "global")) {
       this._varmap[name] = item;
     }
     ;
@@ -20664,8 +20287,8 @@ var require_nodes = __commonJS((exports2) => {
     this.register("require", this, {type: "global"});
     this.register("import", this, {type: "global"});
     this.register("module", this, {type: "global"});
-    this.register("window", this, {type: "global", varclass: GlobalReference});
-    this.setDocument(this.register("document", this, {type: "global", varclass: GlobalReference}));
+    this.register("window", this, {type: "global", varclass: WindowReference});
+    this.setDocument(this.register("document", this, {type: "global", varclass: DocumentReference}));
     this.register("exports", this, {type: "global"});
     this.register("console", this, {type: "global"});
     this.register("process", this, {type: "global"});
@@ -20696,6 +20319,7 @@ var require_nodes = __commonJS((exports2) => {
     this._head = [this._vars];
     this._dependencies = {};
     this._symbolRefs = {};
+    this._importProxies = {};
     this._vars.setSplit(true);
     this._imba = this.register("imba", this, {type: "global", varclass: ImbaRuntime, path: "imba"});
     this._runtime = this._imba.proxy();
@@ -20752,6 +20376,9 @@ var require_nodes = __commonJS((exports2) => {
     this._document = v;
     return this;
   };
+  RootScope.prototype.importProxy = function(name, path) {
+    return this._importProxies[name] || (this._importProxies[name] = this.register("$" + name + "$", this, {type: "global", varclass: ImportProxy, path: path || name}));
+  };
   RootScope.prototype.runtime = function() {
     return this._runtime;
   };
@@ -20778,12 +20405,18 @@ var require_nodes = __commonJS((exports2) => {
     ;
   };
   RootScope.prototype.lookupAsset = function(name, kind) {
-    this._assets[name] || (this._assets[name] = this.registerAsset(name, kind));
-    return this._assets[name];
+    if (kind === void 0)
+      kind = "asset";
+    return this.registerAsset(name, kind);
   };
-  RootScope.prototype.registerAsset = function(name, kind, asset) {
-    return this._assets[name] = asset || {
-      name,
+  RootScope.prototype.registerAsset = function(path, kind, asset) {
+    let key = path + kind;
+    if (this._assets[key]) {
+      return this._assets[key];
+    }
+    ;
+    return this._assets[key] = asset || {
+      path,
       kind,
       external: true,
       ref: this.register("asset", null, {system: true})
@@ -20877,14 +20510,9 @@ var require_nodes = __commonJS((exports2) => {
       asset = o1[name];
       try {
         if (asset.external) {
-          let id = "asset$" + name;
           let ref = asset.ref.c();
-          let src = "" + (asset.kind || "assets") + "/" + name + ".svg";
-          let out2 = "import " + id + " from '" + src + "'";
-          this.head().push(LIT("import " + asset.ref.c() + " from " + MP("'" + name.replace(/\:/g, "/") + "?asset'")));
-          if (false) {
-          }
-          ;
+          let path = asset.path;
+          this.head().push(LIT("import " + ref + " from " + MP("'" + path + "?" + (asset.kind || "asset") + "'")));
         } else {
           let parsed = parseAsset(asset, name);
           let body2 = JSON.stringify(parsed);
@@ -21575,6 +21203,62 @@ var require_nodes = __commonJS((exports2) => {
   }
   subclass$(PureReference, Variable);
   exports2.PureReference = PureReference;
+  function ZonedVariable() {
+    return GlobalReference.apply(this, arguments);
+  }
+  subclass$(ZonedVariable, GlobalReference);
+  exports2.ZonedVariable = ZonedVariable;
+  ZonedVariable.prototype.forScope = function(scope2) {
+    return new ZonedVariableAccess(this, scope2);
+  };
+  ZonedVariable.prototype.c = function() {
+    return "" + this._name;
+  };
+  function DocumentReference() {
+    return ZonedVariable.apply(this, arguments);
+  }
+  subclass$(DocumentReference, ZonedVariable);
+  exports2.DocumentReference = DocumentReference;
+  DocumentReference.prototype.forScope = function(scope2) {
+    return this;
+  };
+  DocumentReference.prototype.c = function() {
+    if (STACK.isNode()) {
+      return "" + this.runtime().get_document + "()";
+    } else {
+      return "globalThis.document";
+    }
+    ;
+  };
+  function WindowReference() {
+    return GlobalReference.apply(this, arguments);
+  }
+  subclass$(WindowReference, GlobalReference);
+  exports2.WindowReference = WindowReference;
+  WindowReference.prototype.c = function() {
+    if (STACK.isNode()) {
+      return "" + this.runtime().get_window + "()";
+    } else {
+      return "window";
+    }
+    ;
+  };
+  function ZonedVariableAccess(variable, scope2) {
+    this._variable = variable;
+    this._scope = scope2;
+  }
+  subclass$(ZonedVariableAccess, Node2);
+  exports2.ZonedVariableAccess = ZonedVariableAccess;
+  ZonedVariableAccess.prototype.c = function() {
+    let name = this._variable._name;
+    if (STACK.isNode()) {
+      STACK.use("use_" + name);
+      return "" + this.runtime().zone + ".get('" + name + "'," + this._scope.context().c() + ")";
+    } else {
+      return "" + name;
+    }
+    ;
+  };
   function ImportProxy() {
     var self3 = this;
     ImportProxy.prototype.__super__.constructor.apply(self3, arguments);
@@ -21616,26 +21300,45 @@ var require_nodes = __commonJS((exports2) => {
     var self3 = this;
     let keys = Object.keys(self3._exports);
     let touches = Object.values(self3._touched);
-    if (keys.length == 0) {
-      return "";
-    }
-    ;
-    let out = keys.map(function(a) {
-      return "" + a + " as " + self3._exports[a];
-    }).join(", ");
+    let js = [];
+    let cjs = STACK.cjs();
     let path = self3.path();
     if (path == "imba") {
       path = STACK.imbaPath() || "imba";
     }
     ;
-    let js = "import {" + out + "} from '" + (path || "") + "'";
-    if (touches.length) {
-      js += ";\n(" + touches.map(function(_0) {
-        return _0.c();
-      }).join(",") + ");";
+    let pathjs = MP("'" + path + "'");
+    if (self3._importAll) {
+      if (cjs) {
+        js.push("const " + self3._name + " = require(" + pathjs + ");");
+      } else {
+        js.push("import * as " + self3._name + " from " + pathjs + ";");
+      }
+      ;
     }
     ;
-    return js;
+    if (keys.length > 0) {
+      if (cjs) {
+        let out = keys.map(function(a) {
+          return "" + a + ": " + self3._exports[a];
+        }).join(", ");
+        js.push("const {" + out + "} = require(" + pathjs + ");");
+      } else {
+        let out = keys.map(function(a) {
+          return "" + a + " as " + self3._exports[a];
+        }).join(", ");
+        js.push("import {" + out + "} from " + pathjs + ";");
+      }
+      ;
+    }
+    ;
+    if (touches.length) {
+      js.push("(" + touches.map(function(_0) {
+        return _0.c();
+      }).join(",") + ");");
+    }
+    ;
+    return js.length ? js.join("\n") : "";
   };
   ImportProxy.prototype.access = function(key) {
     let raw = C(key, {mark: false});
@@ -21658,6 +21361,14 @@ var require_nodes = __commonJS((exports2) => {
     }
     ;
     return this;
+  };
+  ImbaRuntime.prototype.c = function() {
+    if (!this._importAll) {
+      this._importAll = true;
+      STACK.current().warn("Referencing imba directly disables efficient tree-shaking");
+    }
+    ;
+    return this._c = "imba";
   };
   function ScopeContext(scope2, value) {
     this._scope = scope2;
@@ -21865,23 +21576,23 @@ var require_imbaconfig = __commonJS((exports2) => {
   }
   var cached = {};
   function resolvePaths(obj, cwd) {
-    var $0;
+    var $0$1;
     if (obj instanceof Array) {
-      for (let i = 0, $items = iter$7(obj), $len = $items.length; i < $len; i++) {
-        let item = $items[i];
+      for (let i = 0, sys$14 = iter$7(obj), sys$22 = sys$14.length; i < sys$22; i++) {
+        let item = sys$14[i];
         obj[i] = resolvePaths(item, cwd);
       }
       ;
     } else if (typeof obj == "string") {
       return obj.replace(/^\.\//, cwd + "/");
     } else if (typeof obj == "object") {
-      for (let $i = 0, $keys = Object.keys(obj), $l = $keys.length, k, v; $i < $l; $i++) {
-        k = $keys[$i];
+      for (let sys$32 = 0, sys$4 = Object.keys(obj), sys$5 = sys$4.length, k, v; sys$32 < sys$5; sys$32++) {
+        k = sys$4[sys$32];
         v = obj[k];
         let alt = k.replace(/^\.\//, cwd + "/");
         obj[alt] = resolvePaths(v, cwd);
         if (alt != k) {
-          $0 = obj[k], delete obj[k], $0;
+          $0$1 = obj[k], delete obj[k], $0$1;
         }
         ;
       }
@@ -21917,8 +21628,8 @@ var require_imbaconfig = __commonJS((exports2) => {
       let assets = config.assets || (config.assets = {});
       if (fs.existsSync(assetsDir)) {
         const entries = fs.readdirSync(assetsDir);
-        for (let $i = 0, $items = iter$7(entries), $len = $items.length; $i < $len; $i++) {
-          let entry = $items[$i];
+        for (let sys$6 = 0, sys$7 = iter$7(entries), sys$8 = sys$7.length; sys$6 < sys$8; sys$6++) {
+          let entry = sys$7[sys$6];
           if (!entry.match(/\.svg/)) {
             continue;
           }
@@ -21946,22 +21657,30 @@ var T = require_token();
 var util3 = require_helpers();
 
 // src/program/structures.imba
-var $_source$ = Symbol.for("#source");
+var sys$1 = Symbol.for("#init");
+var sys$2 = Symbol.for("#source");
+var sys$3 = Symbol.for("#lineText");
 var DOCMAP = new WeakMap();
 var Position = class {
+  [sys$1]($$ = null) {
+    this.line = $$ ? $$.line : void 0;
+    this.character = $$ ? $$.character : void 0;
+    this.offset = $$ ? $$.offset : void 0;
+  }
   constructor(l, c, o) {
-    this.line = void 0;
-    this.character = void 0;
-    this.offset = void 0;
+    this[sys$1]();
     this.line = l;
     this.character = c;
     this.offset = o;
   }
 };
 var Range = class {
+  [sys$1]($$ = null) {
+    this.start = $$ ? $$.start : void 0;
+    this.end = $$ ? $$.end : void 0;
+  }
   constructor(start, end) {
-    this.start = void 0;
-    this.end = void 0;
+    this[sys$1]();
     this.start = start;
     this.end = end;
   }
@@ -21992,18 +21711,27 @@ var Diagnostic = class {
     this.message = data.message;
     DOCMAP.set(this, doc);
   }
-  get [$_source$]() {
+  get [sys$2]() {
     return DOCMAP.get(this);
   }
-  get snippet() {
-    return "";
+  get [sys$3]() {
+    return this[sys$2].doc.getLineText(this.range.start.line);
+  }
+  toSnippet() {
+    let start = this.range.start;
+    let end = this.range.end;
+    let msg = "" + this[sys$2].sourcePath + ":" + (start.line + 1) + ":" + (start.character + 1) + ": " + this.message;
+    let line = this[sys$2].doc.getLineText(start.line);
+    let stack = [msg, line];
+    stack.push(line.replace(/[^\t]/g, " ").slice(0, start.character) + "^".repeat(end.character - start.character));
+    return stack.join("\n").replace(/\t/g, "    ") + "\n";
   }
   toError() {
     let start = this.range.start;
     let end = this.range.end;
-    let msg = "" + this[$_source$].sourcePath + ":" + (start.line + 1) + ":" + (start.character + 1) + ": " + this.message;
+    let msg = "" + this[sys$2].sourcePath + ":" + (start.line + 1) + ":" + (start.character + 1) + ": " + this.message;
     let err = new SyntaxError(msg);
-    let line = this[$_source$].doc.getLineText(start.line);
+    let line = this[sys$2].doc.getLineText(start.line);
     let stack = [msg, line];
     stack.push(line.replace(/[^\t]/g, " ").slice(0, start.character) + "^".repeat(end.character - start.character));
     err.stack = "\n" + stack.join("\n").replace(/\t/g, "    ") + "\n";
@@ -22078,8 +21806,8 @@ function fastExtractSymbols(text) {
   let root = scope2;
   let m;
   let t0 = Date.now();
-  for (let i = 0, $items = iter$(lines), $len = $items.length; i < $len; i++) {
-    let line = $items[i];
+  for (let i = 0, sys$4 = iter$(lines), sys$5 = sys$4.length; i < sys$5; i++) {
+    let line = sys$4[i];
     if (line.match(/^\s*$/)) {
       continue;
     }
@@ -22163,7 +21891,7 @@ function regexify(array, pattern = "#") {
   return new RegExp("(?:" + items.join("|") + ")");
 }
 function denter(indent, outdent, stay, o = {}) {
-  var $0;
+  var $0$1;
   if (indent == null) {
     indent = toodeep;
   } else if (indent == 1) {
@@ -22195,9 +21923,9 @@ function denter(indent, outdent, stay, o = {}) {
     },
     "@default": outdent
   };
-  $0 = 0;
+  $0$1 = 0;
   for (let k of ["next", "switchTo"]) {
-    let v = $0++;
+    let v = $0$1++;
     if (indent[k] && indent[k].indexOf("*") == -1) {
       indent[k] += "*$1";
     }
@@ -22207,8 +21935,8 @@ function denter(indent, outdent, stay, o = {}) {
   let rule = [/^(\t*)(?=[^\t\n])/, {cases}];
   if (o.comment) {
     let clones = {};
-    for (let $i = 0, $keys = Object.keys(cases), $l = $keys.length, k, v; $i < $l; $i++) {
-      k = $keys[$i];
+    for (let sys$14 = 0, sys$22 = Object.keys(cases), sys$32 = sys$22.length, k, v; sys$14 < sys$32; sys$14++) {
+      k = sys$22[sys$14];
       v = cases[k];
       let clone = Object.assign({}, v);
       if (!clone.next && !clone.switchTo) {
@@ -23046,8 +22774,8 @@ function rewriteState(raw) {
     raw = raw.slice(1);
   }
   ;
-  for (let $i = 0, $items = iter$2(raw.split(/(?=[\/\&\=\*])/)), $len = $items.length; $i < $len; $i++) {
-    let part = $items[$i];
+  for (let sys$4 = 0, sys$5 = iter$2(raw.split(/(?=[\/\&\=\*])/)), sys$6 = sys$5.length; sys$4 < sys$6; sys$4++) {
+    let part = sys$5[sys$4];
     if (part[0] == "&") {
       if (part[1] == "-" || part[1] == "_") {
         state[2] = "$S3" + part.slice(1);
@@ -23103,9 +22831,9 @@ function rewriteActions(actions, add) {
     ;
   } else if (actions && actions.cases) {
     let cases = {};
-    for (let $o = actions.cases, $i = 0, $keys = Object.keys($o), $l = $keys.length, k, v; $i < $l; $i++) {
-      k = $keys[$i];
-      v = $o[k];
+    for (let sys$9 = actions.cases, sys$7 = 0, sys$8 = Object.keys(sys$9), sys$10 = sys$8.length, k, v; sys$7 < sys$10; sys$7++) {
+      k = sys$8[sys$7];
+      v = sys$9[k];
       let newkey = rewriteToken(k);
       cases[newkey] = rewriteActions(v);
     }
@@ -23114,8 +22842,8 @@ function rewriteActions(actions, add) {
   } else if (actions instanceof Array) {
     let result = [];
     let curr = null;
-    for (let i = 0, $items = iter$2(actions), $len = $items.length; i < $len; i++) {
-      let action = $items[i];
+    for (let i = 0, sys$11 = iter$2(actions), sys$122 = sys$11.length; i < sys$122; i++) {
+      let action = sys$11[i];
       if (action[0] == "@" && i == actions.length - 1 && curr) {
         action = {next: action};
       }
@@ -23137,8 +22865,8 @@ function rewriteActions(actions, add) {
   }
   ;
   if (actions instanceof Array) {
-    for (let i = 0, $items = iter$2(actions), $len = $items.length; i < $len; i++) {
-      let action = $items[i];
+    for (let i = 0, sys$132 = iter$2(actions), sys$14 = sys$132.length; i < sys$14; i++) {
+      let action = sys$132[i];
       if (action.token && action.token.indexOf("$$") >= 0) {
         action.token = action.token.replace("$$", "$" + (i + 1));
       }
@@ -23157,8 +22885,8 @@ function rewriteActions(actions, add) {
   ;
   return actions;
 }
-for (let $i = 0, $keys = Object.keys(states), $l = $keys.length, key, rules; $i < $l; $i++) {
-  key = $keys[$i];
+for (let sys$15 = 0, sys$16 = Object.keys(states), sys$17 = sys$16.length, key, rules; sys$15 < sys$17; sys$15++) {
+  key = sys$16[sys$15];
   rules = states[key];
   let i = 0;
   while (i < rules.length) {
@@ -24474,8 +24202,8 @@ var SemanticTokenTypes = [
   "property",
   "label"
 ];
-for (let index = 0, $items = iter$3(SemanticTokenTypes), $len = $items.length; index < $len; index++) {
-  let key = $items[index];
+for (let index = 0, sys$14 = iter$3(SemanticTokenTypes), sys$22 = sys$14.length; index < sys$22; index++) {
+  let key = sys$14[index];
   SemanticTokenTypes[key] = index;
 }
 var M = {
@@ -24503,8 +24231,8 @@ var M = {
 var SemanticTokenModifiers = Object.keys(M).map(function(_0) {
   return _0.toLowerCase();
 });
-for (let $i = 0, $items = iter$3(Object.keys(M)), $len = $items.length; $i < $len; $i++) {
-  let k = $items[$i];
+for (let sys$32 = 0, sys$4 = iter$3(Object.keys(M)), sys$5 = sys$4.length; sys$32 < sys$5; sys$32++) {
+  let k = sys$4[sys$32];
   M[k.toLowerCase()] = M[k];
 }
 var CompletionTypes = {
@@ -24617,8 +24345,8 @@ var SymbolKind = {
   Operator: 25,
   TypeParameter: 26
 };
-for (let $i = 0, $keys = Object.keys(SymbolKind), $l = $keys.length, k, v; $i < $l; $i++) {
-  k = $keys[$i];
+for (let sys$6 = 0, sys$7 = Object.keys(SymbolKind), sys$8 = sys$7.length, k, v; sys$6 < sys$8; sys$6++) {
+  k = sys$7[sys$6];
   v = SymbolKind[k];
   SymbolKind[v] = k;
 }
@@ -24628,6 +24356,7 @@ function iter$4(a) {
   let v;
   return a ? (v = a.toIterable) ? v.call(a) : a : [];
 }
+var sys$12 = Symbol.for("#init");
 var SymbolFlags = {
   None: 0,
   ConstVariable: 1 << 0,
@@ -24686,13 +24415,18 @@ var Conversions = [
 ];
 var ConversionCache = {};
 var Sym = class {
+  [sys$12]($$ = null) {
+    var $0$1;
+    this.value = $$ ? $$.value : void 0;
+    this.body = $$ && ($0$1 = $$.body) !== void 0 ? $0$1 : null;
+  }
   static idToFlags(type, mods = 0) {
     if (ConversionCache[type] != void 0) {
       return ConversionCache[type];
     }
     ;
-    for (let $i = 0, $items = iter$4(Conversions), $len = $items.length; $i < $len; $i++) {
-      let [strtest, modtest, flags] = $items[$i];
+    for (let sys$22 = 0, sys$32 = iter$4(Conversions), sys$4 = sys$32.length; sys$22 < sys$4; sys$22++) {
+      let [strtest, modtest, flags] = sys$32[sys$22];
       if (type.indexOf(strtest) >= 0) {
         return ConversionCache[type] = flags;
       }
@@ -24702,8 +24436,7 @@ var Sym = class {
     return 0;
   }
   constructor(flags, name, node) {
-    this.value = void 0;
-    this.body = null;
+    this[sys$12]();
     this.flags = flags;
     this.name = name;
     this.node = node;
@@ -24822,6 +24555,7 @@ var Sym = class {
 };
 
 // src/program/scope.imba
+var sys$13 = Symbol.for("#init");
 var Globals = {
   global: 1,
   imba: 1,
@@ -24846,11 +24580,15 @@ var Globals = {
   __filename: 1
 };
 var Node = class {
+  [sys$13]($$ = null) {
+    var $0$1;
+    this.type = $$ && ($0$1 = $$.type) !== void 0 ? $0$1 : "";
+    this.start = $$ ? $$.start : void 0;
+    this.end = $$ ? $$.end : void 0;
+    this.parent = $$ ? $$.parent : void 0;
+  }
   constructor(doc, token3, parent, type) {
-    this.type = "";
-    this.start = void 0;
-    this.end = void 0;
-    this.parent = void 0;
+    this[sys$13]();
     this.doc = doc;
     this.start = token3;
     this.end = null;
@@ -24978,8 +24716,8 @@ var Scope = class extends Node {
     this.refs = [];
     this.varmap = Object.create(parent ? parent.varmap : {});
     if (this instanceof Root) {
-      for (let $i = 0, $keys = Object.keys(Globals), $l = $keys.length, key, val; $i < $l; $i++) {
-        key = $keys[$i];
+      for (let sys$22 = 0, sys$32 = Object.keys(Globals), sys$4 = sys$32.length, key, val; sys$22 < sys$4; sys$22++) {
+        key = sys$32[sys$22];
         val = Globals[key];
         let tok = {value: key, offset: -1, mods: 0};
         this.varmap[key] = new Sym(SymbolFlags.GlobalVar, key, tok);
@@ -25139,11 +24877,11 @@ var SelectorNode = class extends Group {
 };
 var StylePropKey = class extends Group {
   get propertyName() {
-    var $0;
+    var _a;
     if (this.start.next.match("style.property.name")) {
       return this.start.next.value;
     } else {
-      return ($0 = this.parent.prevProperty) && $0.propertyName;
+      return (_a = this.parent.prevProperty) == null ? void 0 : _a.propertyName;
     }
     ;
   }
@@ -25292,8 +25030,8 @@ var ImbaDocument = class {
   }
   update(changes, version) {
     let edits = [];
-    for (let i = 0, $items = iter$5(changes), $len = $items.length; i < $len; i++) {
-      let change = $items[i];
+    for (let i = 0, sys$14 = iter$5(changes), sys$4 = sys$14.length; i < sys$4; i++) {
+      let change = sys$14[i];
       if (editIsFull(change)) {
         this.overwrite(change.text, version);
         edits.push([0, this.content.length, change.text]);
@@ -25315,8 +25053,8 @@ var ImbaDocument = class {
       var lineOffsets = this.lineOffsets;
       var addedLineOffsets = computeLineOffsets(change.text, false, startOffset);
       if (endLine - startLine === addedLineOffsets.length) {
-        for (let k = 0, $ary = iter$5(addedLineOffsets), $len2 = $ary.length; k < $len2; k++) {
-          let added = $ary[k];
+        for (let k = 0, sys$22 = iter$5(addedLineOffsets), sys$32 = sys$22.length; k < sys$32; k++) {
+          let added = sys$22[k];
           lineOffsets[k + startLine + 1] = addedLineOffsets[i];
         }
         ;
@@ -25353,8 +25091,8 @@ var ImbaDocument = class {
     if (from < to) {
       while (from < to) {
         let edits = this.history[++from];
-        for (let $i = 0, $items = iter$5(edits), $len = $items.length; $i < $len; $i++) {
-          let [start, len, text] = $items[$i];
+        for (let sys$5 = 0, sys$6 = iter$5(edits), sys$7 = sys$6.length; sys$5 < sys$7; sys$5++) {
+          let [start, len, text] = sys$6[sys$5];
           if (start > offset) {
             continue;
           }
@@ -25486,8 +25224,8 @@ var ImbaDocument = class {
   getSemanticTokens(filter = SymbolFlags.Scoped) {
     let tokens = this.parse();
     let items = [];
-    for (let i = 0, $items = iter$5(tokens), $len = $items.length; i < $len; i++) {
-      let tok = $items[i];
+    for (let i = 0, sys$8 = iter$5(tokens), sys$9 = sys$8.length; i < sys$9; i++) {
+      let tok = sys$8[i];
       let sym = tok.symbol;
       if (!(sym && (!filter || sym.flags & filter))) {
         continue;
@@ -25505,8 +25243,8 @@ var ImbaDocument = class {
     let out = [];
     let l = 0;
     let c = 0;
-    for (let $i = 0, $items = iter$5(tokens), $len = $items.length; $i < $len; $i++) {
-      let item = $items[$i];
+    for (let sys$10 = 0, sys$11 = iter$5(tokens), sys$122 = sys$11.length; sys$10 < sys$122; sys$10++) {
+      let item = sys$11[sys$10];
       let pos = this.positionAt(item[0]);
       let dl = pos.line - l;
       let chr = dl ? pos.character : pos.character - c;
@@ -25564,7 +25302,7 @@ var ImbaDocument = class {
     return null;
   }
   contextAtOffset(offset) {
-    var $res;
+    var sys$132;
     this.ensureParsed();
     let pos = this.positionAt(offset);
     let tok = this.tokenAtOffset(offset);
@@ -25659,18 +25397,18 @@ var ImbaDocument = class {
     }
     ;
     let kfilter = scope2.allowedKeywordTypes;
-    $res = [];
-    for (let $i = 0, $keys = Object.keys(Keywords), $l = $keys.length, key, v; $i < $l; $i++) {
-      key = $keys[$i];
+    sys$132 = [];
+    for (let sys$14 = 0, sys$15 = Object.keys(Keywords), sys$16 = sys$15.length, key, v; sys$14 < sys$16; sys$14++) {
+      key = sys$15[sys$14];
       v = Keywords[key];
       if (!(v & kfilter)) {
         continue;
       }
       ;
-      $res.push(key);
+      sys$132.push(key);
     }
     ;
-    suggest.keywords = $res;
+    suggest.keywords = sys$132;
     suggest.flags = flags;
     let out = {
       token: tok,
@@ -25699,8 +25437,8 @@ var ImbaDocument = class {
     let scope2 = tok.context.scope;
     let names = {};
     while (scope2) {
-      for (let $i = 0, $items = iter$5(Object.values(scope2.varmap)), $len = $items.length; $i < $len; $i++) {
-        let item = $items[$i];
+      for (let sys$17 = 0, sys$18 = iter$5(Object.values(scope2.varmap)), sys$19 = sys$18.length; sys$17 < sys$19; sys$17++) {
+        let item = sys$18[sys$17];
         if (item.isGlobal && !isGlobals) {
           continue;
         }
@@ -25722,12 +25460,12 @@ var ImbaDocument = class {
     return vars;
   }
   getOutline(walker = null) {
-    var $0, $1, $2, $3;
+    var $0$1, $0$2, $0$3, $0$4;
     if (this.isLegacy) {
       let symbols2 = fastExtractSymbols(this.content);
-      for (let $i = 0, $items = iter$5(symbols2.all), $len = $items.length; $i < $len; $i++) {
-        let item = $items[$i];
-        $0 = item.parent, delete item.parent, $0;
+      for (let sys$20 = 0, sys$21 = iter$5(symbols2.all), sys$22 = sys$21.length; sys$20 < sys$22; sys$20++) {
+        let item = sys$21[sys$20];
+        $0$1 = item.parent, delete item.parent, $0$1;
         item.path = item.name;
         item.name = item.ownName;
         if (walker) {
@@ -25777,8 +25515,8 @@ var ImbaDocument = class {
       return curr = curr.parent;
     }
     ;
-    for (let i = 0, $items = iter$5(this.tokens), $len = $items.length; i < $len; i++) {
-      let token3 = $items[i];
+    for (let i = 0, sys$23 = iter$5(this.tokens), sys$24 = sys$23.length; i < sys$24; i++) {
+      let token3 = sys$23[i];
       let sym = token3.symbol;
       let scope2 = token3.scope;
       if (token3.type == "key") {
@@ -25815,8 +25553,8 @@ var ImbaDocument = class {
       ;
     }
     ;
-    for (let $i = 0, $items = iter$5(all), $len = $items.length; $i < $len; $i++) {
-      let item = $items[$i];
+    for (let sys$25 = 0, sys$26 = iter$5(all), sys$27 = sys$26.length; sys$25 < sys$27; sys$25++) {
+      let item = sys$26[sys$25];
       if (item.span) {
         let len = item.span.length;
         item.span.start = this.positionAt(item.span.offset);
@@ -25827,9 +25565,9 @@ var ImbaDocument = class {
         walker(item, all);
       }
       ;
-      $1 = item.parent, delete item.parent, $1;
-      $2 = item.end, delete item.end, $2;
-      $3 = item.token, delete item.token, $3;
+      $0$2 = item.parent, delete item.parent, $0$2;
+      $0$3 = item.end, delete item.end, $0$3;
+      $0$4 = item.token, delete item.token, $0$4;
     }
     ;
     return root;
@@ -25882,14 +25620,14 @@ var ImbaDocument = class {
       return true;
     };
     try {
-      for (let i = 0, $items = iter$5(lines), $len = $items.length; i < $len; i++) {
-        let line = $items[i];
+      for (let i = 0, sys$28 = iter$5(lines), sys$31 = sys$28.length; i < sys$31; i++) {
+        let line = sys$28[i];
         let entityFlags = 0;
         let next = lines[i + 1];
         let str = raw.slice(line, next || raw.length);
         let lexed = lexer2.tokenize(str, head.stack, line);
-        for (let ti = 0, $ary = iter$5(lexed.tokens), $len2 = $ary.length; ti < $len2; ti++) {
-          let tok = $ary[ti];
+        for (let ti = 0, sys$29 = iter$5(lexed.tokens), sys$30 = sys$29.length; ti < sys$30; ti++) {
+          let tok = sys$29[ti];
           let types4 = tok.type.split(".");
           let value = tok.value;
           let nextToken = lexed.tokens[ti + 1];
@@ -26031,7 +25769,7 @@ var ImbaDocument = class {
     source = source.replace(/def ([\w\-]+)\=/g, "set $1");
     source = source.replace(/do\s?\|([^\|]+)\|/g, "do($1)");
     source = source.replace(/(prop) ([\w\-]+) (.+)$/gm, function(m, typ, name, rest) {
-      var $0, $1;
+      var $0$5, $0$6;
       let opts = {};
       rest.split(/,\s*/).map(function(_0) {
         return _0.split(/\:\s*/);
@@ -26045,10 +25783,10 @@ var ImbaDocument = class {
         out = "@watch " + out;
       }
       ;
-      $0 = opts.watch, delete opts.watch, $0;
+      $0$5 = opts.watch, delete opts.watch, $0$5;
       if (opts.default) {
         out = "" + out + " = " + opts.default;
-        $1 = opts.default, delete opts.default, $1;
+        $0$6 = opts.default, delete opts.default, $0$6;
       }
       ;
       if (Object.keys(opts).length) {
@@ -26060,8 +25798,8 @@ var ImbaDocument = class {
     let doc = ImbaDocument.tmp(source);
     let tokens = doc.getTokens();
     let ivarPrefix = "";
-    for (let i = 0, $items = iter$5(tokens), $len = $items.length; i < $len; i++) {
-      let token3 = $items[i];
+    for (let i = 0, sys$32 = iter$5(tokens), sys$33 = sys$32.length; i < sys$33; i++) {
+      let token3 = sys$32[i];
       let next = tokens[i + 1];
       let {value, type, offset} = token3;
       let end = offset + value.length;
@@ -26825,7 +26563,8 @@ var modifiers = {
   webkit: {ua: "webkit"},
   touch: {flag: "_touch_"},
   move: {flag: "_move_"},
-  hold: {flag: "_hold_"}
+  hold: {flag: "_hold_"},
+  ssr: {flag: "_ssr_"}
 };
 var variants = {
   radius: {
@@ -27071,8 +26810,8 @@ function getRootRule(ruleset, force) {
 }
 function rewrite(rule, ctx, o = {}) {
   if (rule.type == "selectors") {
-    for (let $i = 0, $items = iter$6(rule.selectors), $len = $items.length; $i < $len; $i++) {
-      let sel = $items[$i];
+    for (let sys$14 = 0, sys$22 = iter$6(rule.selectors), sys$32 = sys$22.length; sys$14 < sys$32; sys$14++) {
+      let sel = sys$22[sys$14];
       rewrite(sel, rule, o);
     }
     ;
@@ -27095,8 +26834,8 @@ function rewrite(rule, ctx, o = {}) {
   }
   ;
   let rev = parts.slice(0).reverse();
-  for (let i = 0, $items = iter$6(rev), $len = $items.length; i < $len; i++) {
-    let part = $items[i];
+  for (let i = 0, sys$4 = iter$6(rev), sys$5 = sys$4.length; i < sys$5; i++) {
+    let part = sys$4[i];
     let up = rev[i + 1];
     let flags = part.classNames;
     let mods = part.pseudos;
@@ -27120,8 +26859,8 @@ function rewrite(rule, ctx, o = {}) {
   let deeppart = null;
   let forceLocal = o.forceLocal;
   let escaped = false;
-  for (let i = 0, $items = iter$6(parts), $len = $items.length; i < $len; i++) {
-    let part = $items[i];
+  for (let i = 0, sys$6 = iter$6(parts), sys$122 = sys$6.length; i < sys$122; i++) {
+    let part = sys$6[i];
     let prev = parts[i - 1];
     let next = parts[i + 1];
     let flags = part.classNames || (part.classNames = []);
@@ -27156,8 +26895,8 @@ function rewrite(rule, ctx, o = {}) {
       ;
     }
     ;
-    for (let i2 = 0, $ary = iter$6(flags), $len2 = $ary.length; i2 < $len2; i2++) {
-      let flag = $ary[i2];
+    for (let i2 = 0, sys$7 = iter$6(flags), sys$8 = sys$7.length; i2 < sys$8; i2++) {
+      let flag = sys$7[i2];
       if (flag[0] == "%") {
         flags[i2] = "mixin___" + flag.slice(1);
         if (pri < 1) {
@@ -27188,8 +26927,8 @@ function rewrite(rule, ctx, o = {}) {
     ;
     specificity += part.classNames.length;
     let modTarget = part;
-    for (let $i = 0, $ary = iter$6(mods), $len2 = $ary.length, alias; $i < $len2; $i++) {
-      let mod = $ary[$i];
+    for (let sys$9 = 0, sys$10 = iter$6(mods), sys$11 = sys$10.length, alias; sys$9 < sys$11; sys$9++) {
+      let mod = sys$10[sys$9];
       if (!mod.special) {
         continue;
       }
@@ -27333,8 +27072,8 @@ function render2(root, content, options = {}) {
   let group = [""];
   let groups = [group];
   let rules = root.selectors || [root];
-  for (let $i = 0, $items = iter$6(rules), $len = $items.length; $i < $len; $i++) {
-    let rule = $items[$i];
+  for (let sys$132 = 0, sys$14 = iter$6(rules), sys$15 = sys$14.length; sys$132 < sys$15; sys$132++) {
+    let rule = sys$14[sys$132];
     let sel = render(rule);
     let media = rule.media.length ? "@media " + rule.media.join(" and ") : "";
     if (media != group[0]) {
@@ -27345,8 +27084,8 @@ function render2(root, content, options = {}) {
   }
   ;
   let out = [];
-  for (let $i = 0, $items = iter$6(groups), $len = $items.length; $i < $len; $i++) {
-    let group2 = $items[$i];
+  for (let sys$16 = 0, sys$17 = iter$6(groups), sys$18 = sys$17.length; sys$16 < sys$18; sys$16++) {
+    let group2 = sys$17[sys$16];
     if (!group2[1]) {
       continue;
     }
@@ -27365,10 +27104,10 @@ function unwrap(parent, subsel) {
   let pars = parent.split(",");
   let subs = subsel.split(",");
   let sels = [];
-  for (let $i = 0, $items = iter$6(subs), $len = $items.length; $i < $len; $i++) {
-    let sub = $items[$i];
-    for (let $j = 0, $ary = iter$6(pars), $len2 = $ary.length; $j < $len2; $j++) {
-      let par = $ary[$j];
+  for (let sys$19 = 0, sys$20 = iter$6(subs), sys$24 = sys$20.length; sys$19 < sys$24; sys$19++) {
+    let sub = sys$20[sys$19];
+    for (let sys$21 = 0, sys$22 = iter$6(pars), sys$23 = sys$22.length; sys$21 < sys$23; sys$21++) {
+      let par = sys$22[sys$21];
       let sel = sub;
       if (sel.indexOf("&") >= 0) {
         sel = sel.replace("&", par);

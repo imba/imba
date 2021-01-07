@@ -71,26 +71,40 @@ class Servers < Set
 
 export const servers = new Servers
 
-
-
 export const process = new class Process < EventEmitter
 
 	def constructor
 		super
 		autoreload = no
 		state = {} # proxy for listening?
-
-
+		# process is 
 		if cluster.isWorker
-			console.log 'created for worker!!!'
+			# console.log 'created for worker!!!'
 			# does this make us unable to automatically stop a process?
 			proc.on('message') do(msg)
 				emit('message',msg)
 				emit(...msg.slice(1)) if msg[0] == 'emit'
-				reload! if msg == 'reload'
+				# reload! if msg == 'reload'
 		self
 
-	def #live
+	def #setup
+		return unless #setup? =? yes
+
+		on('reloading') do(e)
+			console.log 'is reloading - from outside'
+			state.reloading = yes
+			for server of servers
+				server.pause!
+
+		on('reloaded') do(e)
+			state.reloaded = yes
+			console.log 'is reloaded - from outside'
+
+			let promises = for server of servers
+				server.close!
+			await Promise.all(promises)
+			# console.log 'actually closed!!'
+			proc.exit(0)
 		yes
 
 	def send msg
@@ -109,12 +123,14 @@ export const process = new class Process < EventEmitter
 	def reload
 		# only allow reloading once
 		return self unless isReloading =? yes
-
 		state.reloading = yes
 
 		unless proc.env.IMBA_SERVE
 			console.warn "not possible to gracefully reload servers not started via imba start"
 			return
+
+		send('reload')
+		return
 
 		# stall all current servers
 		for server of servers
@@ -134,11 +150,12 @@ export const process = new class Process < EventEmitter
 class AssetResponder
 	def constructor url, params = {}
 		url = url
-		path = np.resolve(manifest.assetsDir,url.slice(manifest.assetsUrl.length + 1))
+		# path = np.resolve(manifest.assetsDir,url.slice(manifest.assetsUrl.length + 1))
 		ext = np.extname(url)
 		mimeType = mimes[ext.slice(1)] or 'text/plain'
 		headers = {
 			'Access-Control-Allow-Origin': '*'
+			'Service-Worker-Allowed': '/'
 			'cache-control': 'public'
 		}
 		Object.assign(headers,defaultHeaders[ext.slice(1)] or {})
@@ -146,7 +163,8 @@ class AssetResponder
 	def respond req, res
 		let asset = manifest.urls[url]
 		let headers = headers
-		let path = asset ? np.resolve(proc.cwd!,asset.path) : self.path
+		let path = asset ? manifest.resolve(asset) : self.path
+		#  np.resolve(proc.cwd!,asset.path)
 		let stream = nfs.createReadStream(path)
 		res.writeHead(200, headers)
 		return stream.pipe(res)
@@ -200,6 +218,7 @@ class Server
 				res.setHeader('Location',req.url)
 
 				unless ishttp2
+					console.log 'set header connection'
 					res.setHeader('Connection','close')
 
 				if closed
@@ -210,13 +229,15 @@ class Server
 					return stalledResponses.push(res)
 			
 			if url == '/__hmr__'
-				res.writeHead(200, {
+				let headers = {
 					'Content-Type': 'text/event-stream'
-					'Connection': 'keep-alive'
 					'Cache-Control': 'no-cache'
-				})
+				}
+				unless ishttp2
+					headers['Connection'] = 'keep-alive'
+
+				res.writeHead(200,headers)
 				clients.add(res)
-				# send initial manifest to hmr connection
 				broadcast('init',manifest.serializeForBrowser!,[res])
 				req.on('close') do clients.delete(res)
 				return true
@@ -245,8 +266,11 @@ class Server
 
 		srv.on('request',handler)
 
+		srv.on('close') do
+			console.log "server is closing!!!"
+
 		if cluster.isWorker
-			process.#live!
+			process.#setup!
 			process.send('serve')
 
 	def broadcast event, data = {}, clients = clients
@@ -292,3 +316,9 @@ export def serve srv,...params
 	# 	console.log 'unknown server'
 
 	return Server.wrap(srv,...params)
+
+export def _filename_ path
+	np.resolve(proc.cwd!,path)
+
+export def _dirname_ path
+	np.dirname(_filename_(path))

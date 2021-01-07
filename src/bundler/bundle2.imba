@@ -3,14 +3,13 @@ import {parseAsset} from '../compiler/assets'
 import {startService} from 'esbuild'
 import {startWorkers} from './pooler'
 import {inspect} from 'util'
-import {pluck,createHash} from './utils'
+import {pluck,createHash,diagnosticToESB} from './utils'
 
 import {serializeData,deserializeData} from '../imba/utils'
 import {Manifest} from '../imba/manifest'
 
-const esbuild = require 'esbuild'
-const nodefs = require 'fs'
-const np = require 'path'
+import os from 'os'
+import np from 'path'
 
 # const utils = require './utils'
 import Component from './component'
@@ -18,6 +17,7 @@ import {SourceMapper} from '../compiler/sourcemapper'
 
 import Watcher from './watcher'
 
+const ASSETS_URL = '/__assets__/'
 
 export default class Bundle < Component
 	get config
@@ -28,12 +28,6 @@ export default class Bundle < Component
 
 	get web?
 		!node?
-
-	get minify?
-		!!bundler.options.minify
-
-	get watch?
-		program.options.watch or options.watch
 
 	get main?
 		options.isMain
@@ -52,12 +46,16 @@ export default class Bundle < Component
 
 	get fs
 		program.fs
+
+	get o
+		options
 	
 	get program
 		bundler.program
 
 	def constructor bundler,o
 		super()
+		#id = Math.random!
 		#key = Symbol!
 		#bundles = {}
 		#watchedPaths = {}
@@ -71,19 +69,19 @@ export default class Bundle < Component
 		meta = {}
 		name = options.name
 		cwd = fs.cwd
-
+		parent = o.parent
 		platform = o.platform or 'browser'
-		cachePrefix = "{o.platform}"
 		entryPoints = o.entryPoints
 		
 		entryNodes = []
 		outfileMap = {}
 		pathLookups = {}
 		children = new Set
+		presult = {}
 		ns = o.id or o.ns or (o.platform == 'node' ? 'node' : 'browser')
 
-		if o.watch
-			watcher = new Watcher(fs)
+		if o.watch or o.watcher
+			watcher = o.watcher or new Watcher(fs)
 
 		let externals = []
 		let package = bundler.package or {}
@@ -106,19 +104,19 @@ export default class Bundle < Component
 			format: o.format or 'esm'
 			outfile: o.outfile
 			outbase: o.outbase
-			outdir: o.outfile ? undefined : (o.outdir or fs.cwd)
+			outdir: o.outfile ? undefined : fs.cwd # (o.outdir or fs.cwd)
 			outExtension: {
 				".js": ".__dist__.js"
 				".css": ".__dist__.css"
 			}
 			globalName: o.globalName
-			publicPath: o.publicPath or '/__assets__'
+			publicPath: o.publicPath or ASSETS_URL
 			banner: o.banner or "//BANNER"
 			footer: o.footer
 			splitting: o.splitting
 			sourcemap: o.sourcemap
-			minify: program.options.minify
-			incremental: watch?
+			minify: o.minify
+			incremental: o.watch
 			loader: o.loader or {
 				".png": "file",
 				".svg": "file",
@@ -166,17 +164,26 @@ export default class Bundle < Component
 			esoptions.format = 'esm'
 
 		if main?
-			esoptions
-			# manifest = fs.lookup("{o.outdir}/.manifest")
-			# decide the output name aleady?
-			# esoptions.banner = "globalThis.IMBA_MANIFEST_PATH='{manifest.abs}';"
-			# esoptions.banner = "globalThis.IMBA_MANIFEST_PATH=__filename + '.manifest';"
-			# include a path here as well!
-			# log.info 'create manifset!!'
-			manifest = new Manifest(data: {})
-			esoptions.banner = "globalThis.IMBA_ENTRYPOINT=__filename;"
+			# not if main entrypoint is web?
+			manifest = new Manifest(data: {}, path: np.resolve(o.outdir,'.imbabuild') )
+			esoptions.banner = node? ? "globalThis.IMBA_ENTRYPOINT=__filename;" : "//BANNER"
+			
+			if node?
+				esoptions.banner = "globalThis.IMBA_MANIFEST_PATH = '{manifest.path}';"
+			spinner = log.spinner!
+		
+		log.debug "esbuild",esoptions
 
 	def setup
+		self
+
+	def watchPath path
+		# watch the directory
+		if !parent and watcher and !#watchedPaths[path] and path.indexOf(':') == -1
+			watcher.add path.slice(0,path.lastIndexOf('/'))
+
+		#watchedPaths[path] = 1
+		parent.watchPath(path) if parent
 		self
 
 	def plugin build
@@ -192,14 +199,25 @@ export default class Bundle < Component
 			style: 'web'
 		}
 
+		let toLoadResult = do(object,compilation)
+			if compilation.errors
+				console.log 'converting errors'
+				
+
 		build.onResolve(filter: /^imba(\/|$)/) do(args)
 			if args.path == 'imba'
-				# console.log 'resolve imba',imbaDir
-				return {path: np.resolve(imbaDir,'index.imba') }
+				log.debug 'resolve imba',imbaDir,args.importer
+				let sub = 'index.imba'
+				if node?
+					sub = 'dist/node/imba.js'
+					return {path: 'imba', external: yes}
+					return {path: np.resolve(imbaDir,sub), external: yes}
+
+				return {path: np.resolve(imbaDir,sub) }
 			
 			# if we're compiling for node we should resolve using the
 			# package json paths?
-			console.log "IMBA RESOLVE",args.path,args.importer
+			log.debug "IMBA RESOLVE",args.path,args.importer
 			if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
 				return null
 
@@ -210,8 +228,7 @@ export default class Bundle < Component
 
 		build.onResolve(filter: /\?(\w+)$/) do(args)
 			let res = program.resolver.resolve(args,pathLookups)
-			# console.log 'resolving?!',args.path,res
-			res.namespace = namespaceMap[res.namespace] or res.namespace
+			let ns = res.namespace = namespaceMap[res.namespace] or res.namespace
 			return res
 
 		build.onResolve(filter: /^styles:/) do({path})
@@ -223,26 +240,7 @@ export default class Bundle < Component
 
 		build.onResolve(filter: /^[\w\@]/) do(args)
 			if args.importer.indexOf('.imba') > 0
-				# console.log 'resolve',args
 				return program.resolver.resolve(args,pathLookups)
-	
-		build.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
-			let src = fs.lookup(path)
-			let res = await src.compile(imbaoptions,self)
-			let cached = res[#key]
-			unless cached
-				cached = res[#key] ||= {
-					file: {
-						loader: 'js',
-						contents: SourceMapper.strip(res.js or "")
-						}
-					styles: {
-						loader: 'css'
-						contents: SourceMapper.strip(res.css or "")
-						resolveDir: src.absdir
-					}
-				}
-			return cached[namespace]
 
 		build.onLoad(filter: /.*/, namespace: 'asset') do({path})
 			let file = fs.lookup(path)
@@ -256,70 +254,239 @@ export default class Bundle < Component
 			let body = 'export default "$"'.replace('$',args.path)
 			return {loader: 'js', contents: body}
 
+		build.onLoad(filter: /.*/, namespace: 'worker') do(args)
+			let src = "worker:{args.path}"
+			log.debug "onLoad worker",args.path,src
+
+			let opts = {
+				platform: 'worker'
+				splitting: no
+				format: 'esm'
+				entryPoints: [args.path]
+				publicPath: ASSETS_URL
+				outdir: options.outdir
+				outbase: fs.cwd
+				watcher: watcher
+				parent: self
+			}
+
+			let bundler = #bundles[src] ||= new Bundle(program,opts)
+			let bundle = await bundler.rebuild!
+			presult[src] = bundle.meta
+			
+			let input = bundle.meta.inputs[args.path]
+			# if input
+			#	console.log 'returned from the worker bundle',bundle,input.js.url
+			return {loader: 'text', contents: input.js.url}
+	
+		build.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
+			let src = fs.lookup(path)
+			# console.log 'compiling',path
+			let res = await src.compile(imbaoptions,self)
+
+
+			let cached = res[#key] ||= {
+				file: {
+					loader: 'js',
+					contents: SourceMapper.strip(res.js or "")
+					errors: res.errors.map do diagnosticToESB($1,file: src.abs, namespace: namespace)
+					warnings: res.warnings.map do diagnosticToESB($1,file: src.abs, namespace: namespace)
+				}
+				styles: {
+					loader: 'css'
+					contents: SourceMapper.strip(res.css or "")
+					resolveDir: src.absdir
+				}
+			}
+			return cached[namespace]
+
 	def build force = no
-		
-		if (built =? true)
+		if (built =? true) or force
 			esb = await startService!
 			workers = await startWorkers!
 			let t = Date.now!
-			result = await esb.build(esoptions)
+			try
+				presult = {#prev: presult}
+				result = await esb.build(esoptions)
+			catch e
+				# console.log "ERRORED WHEN BUILDING!!",e.errors
+				result = e
+
 			await transform(result)
-			unless watch?
+
+			if main?
+				await write(result)
+
+			unless o.watch
 				esb.stop!
 				esb = null
 				workers.stop!
 				workers = null
-			if watcher and main?
+
+			# only add this once
+			if watcher and main? and (#watching =? true)
 				watcher.on('touch') do
-					# console.log "watcher touch",$1
+					console.log "watcher touch",$1,#watchedPaths,#id
 					clearTimeout(#rebuildTimeout)
-					#rebuildTimeout = setTimeout(&,50) do
-						# what if we are currently building?
+					#rebuildTimeout = setTimeout(&,100) do
 						clearTimeout(#rebuildTimeout)
 						rebuild(watcher: watcher)
+
 		return result
 
-	def rebuild {force = no, watcher = null} = {}
-		return build! unless built and esb
+	def rebuild {force = no} = {}
+		return build(yes) unless built and esb and result and result.rebuild isa Function
 
 		# console.log 'start rebuild',force
 		# let changes = fs.changelog.pull(self)
 		# for the main one we need to look at all potential inputs
-		if watcher
+		if watcher and !force
 			let changes = watcher.sync(self)
 			let dirty = no
-			# console.log 'changes since last build',changes,Object.keys(result.meta.inputs)
-			let inputs = result.meta.inputs
 			for [path,flags] in changes
-				if #watchedPaths[path] or inputs[path]
+				if #watchedPaths[path] or flags != 1
 					dirty = yes
-					# console.log "there is an input!!"
-				elif flags != 1
-					dirty = yes
-					# console.log "file added or removed",path
 			
+			console.log 'watching - rebuild?',dirty
 			unless dirty
 				return result
 
 		let t = Date.now!
-		let rebuilt = await result.rebuild!
-		result = rebuilt
-		await transform(result)
+		let prev = result
+
+		try
+			presult = {#prev: presult}
+			let rebuilt = await result.rebuild!
+			result = rebuilt
+		catch e
+			result = e
+		
+		await transform(result,prev)
+		
 		if main?
-			log.info 'finished rebuilding in %ms',Date.now! - t
+			await write(result,prev)
+			if result.errors
+				log.error 'failed rebuilding in %ms',Date.now! - t
+			else
+				log.info 'finished rebuilding in %ms',Date.now! - t
 		return result
 
-	def write
-		self
+	def write result
+		let meta = result.meta
+		let ins = meta.inputs
+		let outs = meta.outputs
+		let urls = meta.urls
+
+		if meta.errors
+			# emit errors - should be linked to the inputs from previous working manifest?
+			return
+
+		let manifest = result.manifest = {
+			assetsUrl: ASSETS_URL
+			path: self.manifest.path
+			inputs: {
+				node: ins
+				web: {}
+				worker: {}
+			}
+			outputs: outs
+			urls: urls
+		}
+
+		let main = manifest.main = ins[entryPoints[0]].js
+
+		manifest.outdir = (o.tmpdir or o.outdir)
+
+		# if o.tmpdir
+		# 	manifest.path = np.resolve(o.tmpdir,".manifest")
+		# elif main
+		# 	manifest.path = "{main.path}.manifest"
+
+		let writeFiles = {}
+		let webEntries = []
+
+		for own path,input of ins
+			if path.indexOf('web:') == 0
+				webEntries.push(path.slice(4))
+		
+		if webEntries.length
+			# let outdir = np.resolve(fs.cwd,'dist','web')
+			let opts = {
+				platform: 'browser'
+				splitting: yes
+				entryPoints: webEntries # should rather have a single entry?
+				publicPath: manifest.assetsUrl # '/__assets__'
+				outdir: o.outdir
+				outbase: fs.cwd
+				watcher: watcher
+				minify: o.minify
+				parent: self
+			}
+
+			let bundler = #bundles.web ||= new Bundle(program,opts)
+			let bundle = await bundler.rebuild(watcher: watcher)
+
+			manifest.inputs.web = bundle.meta.inputs
+
+			for own k,v of bundle.meta.outputs
+				outs[k] = v
+				urls[v.url] = v if v.url
+
+		# continue walking through to look for 
+
+		manifest.assets = Object.values(manifest.outputs)
+
+		# a sorted list of all the output hashes is a fast way to
+		# see if anything in the bundle has changed or not
+		manifest.hash = createHash(Object.values(outs).map(do $1.hash or $1.path).sort!.join('-'))
+
+		if #hash =? manifest.hash
+			let json = serializeData(manifest)
+			# console.log 'ready to write',manifest.assets.map do $1.path
+			for asset in manifest.assets
+				# if it has a url - set different path?
+				let path = np.resolve(o.outdir,asset.path)
+				# console.log 'will write',path
+				let file = fs.lookup(path)
+				await file.write(asset.#contents,asset.hash)
+
+			# how can we see if manifest has changed at all? We really only want to write this when we have changes.
+			if manifest.path
+				# let src = np.resolve(o.outdir,'.imbabuild') # manifest.path
+				let mfile = fs.lookup(manifest.path)
+				await mfile.writeSync json, manifest.hash
+
+			self.manifest.update(json)
+
+		try log.debug main.path,main.hash
+		return result
 
 	###
 	Go through the generated files - create hashes for the file-contents and rewrite
 	the paths and references for the bundle - ready to write to the file system.
-	###
-	def transform result
-		# console.log 'transforming',result
 
-		let files = result.outputFiles
+	Normalize the files and 
+	###
+	def transform result, prev
+		# console.log 'transforming',result
+		let t = Date.now!
+		if result isa Error
+			console.log 'result is error!!'
+			for err in result.errors
+				watchPath(err.location.file)
+
+			result.rebuild = prev and prev.rebuild.bind(prev)
+			result.meta = {
+				inputs: {}
+				outputs: {}
+				urls: {}
+				errors: result.errors
+				warnings: result.warnings
+			}
+
+			return result
+
+		let files = result.outputFiles or []
 		let metafile = pluck(files) do $1.path.indexOf(esoptions.metafile) >= 0
 		let meta = JSON.parse(metafile.text)
 
@@ -351,29 +518,51 @@ export default class Bundle < Component
 			map: ".__dist__.js.map"
 		}
 
-		for own path,input of ins			
+		for own path,input of ins
 			input.#type = input._ = 'input'
 			input.path = path
 			input.imports = input.imports.map do ins[$1.path]
-			
+			watchPath(path)
 			# what about sourcemaps?
 			let outname = path.replace(/\.(imba|[cm]?jsx?|tsx?)$/,"")
 
 			for own key,ext of tests
-				let name = reloutdir + '/' + outname + ext
+
+				let name = outname + ext
+				name = "{reloutdir}/{name}" if reloutdir
+
 				if outs[name]
 					input[key] = outs[name]
 					outs[name].source = input
 
 		let urlOutputMap = {}
 		let walker = {}
+
+
+		walker.collectCSSInputs = do(input, matched = [], visited = [])
+			if visited.indexOf(input) >= 0
+				return matched
+
+			visited.push(input)
+
+			if input.path.match(/(^styles:)|(\.css$)/)  # or input.path.match(/^styles:/)
+				matched.push(input)
+				
+			for item in input.imports
+				walker.collectCSSInputs(item,matched,visited)
+
+			return matched
 		
 		for own path,output of outs
-
 			output.#type = output._ = 'output'
 			output.path = path
 			output.type = (np.extname(path) or '').slice(1)
-			output.url = path.replace(reloutdir,esoptions.publicPath)
+			# output.url = path.replace(reloutdir,esoptions.publicPath)
+			# output.url = np.resolve() path.replace(reloutdir,esoptions.publicPath)
+
+			if web? or output.type == 'css'
+				output.path = "public/__assets__/{path}"
+				output.url = "/__assets__/{path}"
 
 			let inputs = []
 			for own src,m of output.inputs
@@ -381,9 +570,48 @@ export default class Bundle < Component
 			
 			output.inputs = inputs
 
+			if output.type == 'css'
+				let origPaths = inputs.map(do $1[0].path )
+				let corrPaths = []
+
+				if output.source
+					walker.collectCSSInputs(output.source,corrPaths)
+
+				# console.log "correct css files",corrPaths.map do $1.path
+				# due to bugs in esbuild we need to reorder the css chunks according to inputs?
+				let offset = 0
+				let body = output.#file.text
+				let chunks = []
+
+				for [input,bytes] in inputs
+					let header = "/* {input.path} */\n"
+
+					# check if the order is correct first?
+					
+					if !o.minify
+						offset += header.length
+					
+					let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
+					let index = corrPaths.indexOf(input)
+
+					offset += bytes
+					offset += 1 if !o.minify
+
+					# chunks[index] = chunk
+					chunks[index] = chunk
+					# chunks.push(chunk)
+					# console.log 'got chunk',chunk
+				
+				let text = chunks.filter(do $1).join('\n')
+				# console.log 'new text',text.length,body.length
+				output.#contents = text
+
+
 			if output.imports
 				output.imports = output.imports.map do
 					let chunk = $1.path.indexOf("/chunk.")
+					if chunk >= 0
+						console.log "importing chunk!!!",$1
 					$1.path = reloutdir + $1.path.slice(chunk) if chunk >= 0
 					outs[$1.path]
 
@@ -392,7 +620,8 @@ export default class Bundle < Component
 			elif m = path.match(/chunk\.([A-Z\d]{8})\.\w+\.(js|css)$/)
 				output.hash = m[1]
 
-			urlOutputMap[output.url] = output
+			if output.url
+				urlOutputMap[output.url] = output
 
 		###
 		Should probably use the original uint8 array rather than the text
@@ -423,6 +652,7 @@ export default class Bundle < Component
 				if asset
 					await walker.resolveAsset(asset)
 					if asset.url != path
+						# need to pad the length of the import to fix relative asset urls
 						body = body.slice(0,start) + asset.url + body.slice(end)
 						# console.log 'resolved found asset',asset.path,asset.hash
 			return body
@@ -437,106 +667,31 @@ export default class Bundle < Component
 				asset.#contents = await walker.replacePaths(asset.#text,asset)
 
 			asset.hash = createHash(asset.#contents)
-
-			unless main?
-				asset.url = asset.url.replace('.__dist__.',".{asset.hash}.")
+			if true
+				let sub = o.contenthash !== false ? ".{asset.hash}." : "."
 				asset.originalPath = asset.path
-				asset.path = asset.path.replace('.__dist__.',".{asset.hash}.")
-			
+				if asset.url
+					asset.url = asset.url.replace('.__dist__.',sub)
+				asset.path = asset.path.replace('.__dist__.',sub)
 			return asset
+
 
 		let newouts = {}
 
 		for own path,output of outs
 			await walker.resolveAsset(output)
 
-			unless node?
+			if !node? and output.url
 				urls[output.url] = output
 
 			newouts[output.path] = output
 
-		# console.log 'resolved files',Object.values(outs).map(do $1.path)
+		for own path,input of ins
+			if presult[path]
+				log.debug "Add presult outputs {path}" # ,presult[path]
+				Object.assign(newouts,presult[path].outputs)
 
 		# now update the paths in output
 		outs = meta.outputs = newouts
-
-		return result unless main?
-
-		let manifest = result.manifest = {
-			# path: mfile.abs
-			assetsDir: np.resolve(fs.cwd,'dist','web')
-			assetsUrl: '/__assets__'
-			inputs: {
-				node: ins
-				web: {}
-				worker: {}
-			}
-			outputs: outs
-			urls: urls
-		}
-
-		let main = manifest.main = ins[entryPoints[0]].js
-
-		let writeFiles = {}
-		let webEntries = []
-
-		for own path,input of ins
-			if path.indexOf('web:') == 0
-				webEntries.push(path.slice(4))
-		
-		if webEntries
-			# let outdir = np.resolve(fs.cwd,'dist','web')
-			let opts = {
-				platform: 'browser'
-				ns: id or 'browser'
-				splitting: yes
-				entryPoints: webEntries # should rather have a single entry?
-				publicPath: manifest.assetsUrl # '/__assets__'
-				outdir: manifest.assetsDir
-				outbase: fs.cwd
-			}
-
-			let bundler = #bundles.web ||= new Bundle(program,opts)
-			let bundle = await bundler.rebuild(watcher: watcher)
-
-			manifest.inputs.web = bundle.meta.inputs
-
-			for own k,v of bundle.meta.outputs
-				outs[k] = v
-				urls[v.url] = v if v.url
-
-		manifest.assets = Object.values(manifest.outputs)
-
-		let watchDirs = new Set
-
-		let watchPaths = #watchedPaths ||= {}
-		for own k,v of manifest.inputs
-			for path in Object.keys(v)
-				watchPaths[path] = 1
-				unless path.indexOf(':') >= 0
-					let pre = path.slice(0,path.lastIndexOf('/'))
-					watchDirs.add(pre)
-
-		if watcher
-			watcher.add(...Array.from(watchDirs))
-		# a sorted list of all the output hashes is a fast way to
-		# see if anything in the bundle has changed or not
-		manifest.hash = createHash(Object.values(outs).map(do $1.hash or $1.path).sort!.join('-'))
-
-		# console.log 'watchDirs',Array.from(watchDirs)
-
-		if #hash =? manifest.hash
-			let json = serializeData(manifest)
-			let manifestPath = main ? (main.path + '.manifest') : null
-			let mfile = fs.lookup(manifestPath)
-
-			for asset in manifest.assets
-				let file = fs.lookup(asset.path)
-				await file.write(asset.#contents,asset.hash)
-
-			# how can we see if manifest has changed at all? We really only want to write this when we have changes.
-			await mfile.writeSync json, manifest.hash
-			self.manifest.update(json)
-
-		# try log.info main.path,main.hash
+		log.debug "transformed",Date.now! - t
 		return result

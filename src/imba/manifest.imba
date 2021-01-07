@@ -22,6 +22,7 @@ export class Manifest < EventEmitter
 		super()
 		options = options
 		path = options.path
+		dir = path and np.dirname(path)
 		refs = {}
 		init(options.data)
 
@@ -35,6 +36,15 @@ export class Manifest < EventEmitter
 	get inputs do data.inputs
 	get urls do data.urls
 	get main do data.main
+	get cwd do process.cwd!
+	
+	def resolve path
+		if path._ == 'input'
+			return np.resolve(cwd,path.path)
+		elif path._ == 'output'
+			return np.resolve(dir,path.path)
+		else
+			return np.resolve(cwd,path.path or path)
 
 	def loadFromFile path
 		nfs.readFileSync(path,'utf-8')

@@ -65,8 +65,8 @@ export def patchManifest prev, curr
 				diff.changed.push(item)
 				diff.all.push(item)
 
-			if orig == prev.main
-				diff.main = item
+				if orig == prev.main
+					diff.main = item
 
 			delete origs[ref]
 		else

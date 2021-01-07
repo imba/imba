@@ -96,7 +96,7 @@ export var F =
 	
 	EL_INITED: 2 ** 0
 	EL_HYDRATED: 2 ** 1
-	EL_DEHYDRATED: 2 ** 2
+	EL_HYDRATING: 2 ** 2
 	EL_AWAKENED: 2 ** 3
 	EL_MOUNTING: 2 ** 4
 	EL_MOUNTED: 2 ** 5
@@ -104,6 +104,7 @@ export var F =
 	EL_SCHEDULED: 2 ** 7
 	EL_RENDERING: 2 ** 8
 	EL_RENDERED: 2 ** 9
+	EL_SSR: 2 ** 10
 
 	# render marks
 	DIFF_BUILT: 2 ** 0
@@ -2822,8 +2823,18 @@ export class Root < Code
 		STACK.root = @scope
 
 		if o:bundle
-			@scope.lookup('__filename').@c = STR(o:sourcePath).c
-			@scope.lookup('__dirname').@c = STR(fspath.dirname(o:sourcePath)).c
+			if o:cwd and STACK.isNode
+				let abs = fspath.resolve(o:cwd,o:sourcePath)
+				let rel = fspath.relative(o:cwd,abs)
+				let np = @scope.importProxy('path').proxy
+
+				@scope.lookup('__filename'):c = do LIT("{np:resolve}({STR(rel).c})").c
+				@scope.lookup('__dirname'):c = do LIT("{np:dirname}({np:resolve}({STR(rel).c}))").c
+				# @scope.lookup('__filename'):c = do LIT("{runtime:_filename_}({STR(rel).c})").c
+				# @scope.lookup('__dirname'):c = do LIT("{runtime:_dirname_}({STR(rel).c})").c
+			else
+				@scope.lookup('__filename').@c = STR(o:sourcePath).c
+				@scope.lookup('__dirname').@c = STR(fspath.dirname(o:sourcePath)).c
 		
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)
@@ -10393,11 +10404,16 @@ export class RootScope < Scope
 		@head = [@vars]
 		@dependencies = {}
 		@symbolRefs = {}
+		@importProxies = {}
 		@vars.split = yes
 
 		@imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
+		# @imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
 		@runtime = @imba.proxy
 		self
+
+	def importProxy name, path
+		@importProxies[name] ||= register("${name}$", self, type: 'global', varclass: ImportProxy, path: path or name)
 	
 	def runtime
 		@runtime

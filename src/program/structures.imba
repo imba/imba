@@ -57,6 +57,9 @@ export class Diagnostic
 	get #source
 		DOCMAP.get(self)
 
+	get #lineText
+		#source.doc.getLineText(range.start.line)
+
 	def toSnippet
 		let start = range.start
 		let end = range.end

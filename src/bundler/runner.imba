@@ -1,5 +1,7 @@
 const cluster = require 'cluster'
+import np from 'path'
 import Component from './component'
+import {Logger} from './logger'
 
 const FLAGS = {
 
@@ -9,82 +11,112 @@ const FLAGS = {
 	ERRORED: 8
 }
 
+class Instance
+	runner = null
+	args = {}
+	mode = 'cluster'
+	name = 'worker'
+	restarts = 0
+
+	get manifest
+		runner.manifest
+
+	def constructor runner, options
+		super(options)
+		options = options
+		runner = runner
+		atime = Date.now!
+		state = 'closed'
+		log = new Logger(prefix: ["%bold%dim",name,": "], loglevel: 'info')
+		current = null
+		restarts = 0
+
+		# setInterval(&,2000) do reload!
+
+	def start
+		return if current and current.#next
+		let exec = args.exec = manifest.main.path  and "/Users/sindre/repos/imba/dist/bin/vm.js"
+
+		log.info "starting"
+		cluster.setupMaster(args)
+
+		let worker = cluster.fork(
+			IMBA_RESTARTS: restarts
+			IMBA_SERVE: true
+			IMBA_MANIFEST_PATH: manifest.path
+			IMBA_PATH: runner.options.imbaPath
+			IMBA_ENTRYPOINT: manifest.main.path
+		)
+
+		worker.nr = restarts++
+		let prev = worker.#prev = current
+
+		if prev
+			log.info "reloading"
+			prev.#next = worker
+
+		worker.on 'exit' do(code, signal)
+			if signal
+				log.info "killed by signal: %d",signal
+			elif code != 0
+				log.error "exited with error code: %red",code
+			elif !worker.#next
+				log.info "exited"
+		
+		worker.on 'listening' do(address)
+			log.success "listening on %address",address
+			prev..send(['emit','reloaded'])
+			# now we can kill the reloaded process?
+
+		worker.on 'error' do
+			log.info "%red","errorerd"
+
+		# worker.on 'online' do log.info "%green","online"
+
+		worker.on 'message' do(message, handle)
+			if message == 'reload'
+				console.log "RELOAD MESSAGE"
+				reload!
+
+		current = worker
+
+	def reload
+		start!
+		self
+
+
 export default class Runner < Component
-	def constructor exec, options
+	def constructor manifest, options
 		super()
-		exec = exec
+		manifest = manifest
 		options = options
 		workers = new Set
 
 	def start
 		let max = options.instances or 1
 		let nr = 1
+		let args = {
+			windowsHide: yes
+			execArgv: ['--enable-source-maps','--inspect']
+		}
+
+		let name = options.name or np.basename(manifest.main.source.path)
+
 		while nr <= max
-			let opts = {number: nr, max: max}
-			spawn(opts)
+			let opts = {
+				number: nr,
+				args: args,
+				name: max > 1 ? "{name} {nr}/{max}" : name
+			}
+			workers.add new Instance(self,opts)
 			nr++
+
+		for worker of workers
+			worker.start!
+
 		return self
 
 	def reload
-		console.log 'runner restart?!?'
 		for worker of workers
-			worker.send('reload')
+			worker.reload!
 		self
-
-	def spawn o, replace = null
-		cluster.setupMaster({
-			exec: exec
-			windowsHide: yes
-			execArgv: ['--enable-source-maps']
-		})
-
-		unless replace
-			log.info "spawn %path instance %ref",exec,o.number
-
-		let restarts = replace ? (replace.#restarts + 1) : 0
-		let worker = cluster.fork(
-			PORT: o.port or process.env.PORT
-			IMBA_RESTARTS: restarts
-			IMBA_SERVE: true
-		)
-		worker.#restarts = restarts
-		worker.#state = 'loading'
-		worker.#listening = []
-
-		worker.reload = do
-			log.info "%ref start reloading",o.number
-			worker.#reloading = yes
-			worker.#state = 'reloading'
-			worker.send(['emit','reloading'])
-			spawn(o,worker)
-
-		workers.add(worker)
-
-		worker.on 'listening' do(address)
-			# this could happen multiple times in a single worker?
-			# should rather listen for imba.serve commands?
-			worker.#listening.push(address)
-			log.info "%ref listening on %d",o.number,address.port
-			if replace
-				replace.send(['emit','reloaded'])
-
-		worker.on 'error' do
-			log.info "%ref errorerd",o.number
-			# workers.delete(worker)
-
-		worker.on 'exit' do(code, signal)
-			if signal
-				log.info "%ref was killed by signal: %d",o.number,signal
-			elif code != 0
-				log.error "%ref exited with error code: %red",o.number,code
-			else
-				log.info "%ref exited",o.number
-
-			workers.delete(worker)
-
-		worker.on 'message' do(message, handle)
-			if message == 'serve'
-				log.info '%ref started serving',o.number
-
-			if message == 'reload'
-				worker.reload!

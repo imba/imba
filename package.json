@@ -104,8 +104,10 @@
     "fdir": "^4.1.0",
     "flatted": "^3.1.0",
     "micromatch": "^4.0.2",
+    "ora": "^5.2.0",
     "picomatch": "^2.2.2",
     "puppeteer": "^2.1.1",
+    "tmp": "^0.2.1",
     "workerpool": "^6.0.3"
   },
   "dependencies": {

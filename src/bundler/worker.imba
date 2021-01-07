@@ -20,6 +20,15 @@ def compile_imba code, options
 		console.log "ERROR COMPILING IMBA",e,options.sourcePath
 		res = {}
 
+	for item in res.diagnostics
+		item.lineText = item.#lineText
+
+	if res.warnings
+		out.warnings = res.warnings
+
+	if res.errors
+		out.errors = res.errors
+
 	let js = res.js
 
 	if res.css
@@ -32,15 +41,17 @@ def compile_imba code, options
 
 
 def compile_imba1 code,options
-	let response = {id: options.sourceId}
 	options.target = 'web' if options.target == 'browser'
+	let out = {id: options.sourceId, warnings: [], errors: []}
 	let res = imba1.compile(code,options)
 	let js = res.js
 
 	if js.indexOf('$_ =') > 0
 		js = "var $_;\n{js}"
+	
+	out.js = js
 
-	return {id: options.sourceId, js: js}
+	return out
 
 workerpool.worker(
 	compile_imba: compile_imba

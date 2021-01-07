@@ -1,6 +1,97 @@
-import {HTMLElement} from './core'
+import {Node,HTMLElement,CUSTOM_TYPES} from './core'
 import {createLiveFragment} from './fragment'
 import {scheduler} from '../scheduler'
+
+const hydrator = new class
+	items = []
+	current = null
+	lastQueued = null
+	tests = 0
+
+	def flush
+		let item = null
+
+		if false
+			console.log 'flush hydrate',items,tests
+			for item,i in items
+				let next = items[i + 1]
+				if next
+					unless next.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_PRECEDING
+						console.log "WRONG ORDER!!!",item,next,next.compareDocumentPosition(item)
+
+		while item = items.shift!
+			continue if !item.parentNode or item.hydrated?
+			# Mark as inited to stop connectedCallback from early exit
+			let prev = current
+			current = item
+			item.__F |= $EL_INITED$ | $EL_SSR$
+			item.connectedCallback!
+			current = prev
+		return
+
+	def queue item
+		# let len = items.push(item)
+		let len = items.length
+		let idx = 0
+		let prev = lastQueued
+		lastQueued = item
+
+		let BEFORE = Node.DOCUMENT_POSITION_PRECEDING
+		let AFTER = Node.DOCUMENT_POSITION_FOLLOWING
+
+		if len
+			let prevIndex = items.indexOf(prev)
+			let index = prevIndex
+
+			let compare = do(a,b)
+				tests++
+				a.compareDocumentPosition(b)
+
+			if prevIndex == -1 or prev.nodeName != item.nodeName
+				index = prevIndex = 0
+
+			let curr = items[index]
+
+			while curr and compare(curr,item) & AFTER
+				curr = items[++index]
+
+			if index != prevIndex
+				curr ? items.splice(index,0,item) : items.push(item)
+			else
+				while curr and compare(curr,item) & BEFORE
+					curr = items[--index]
+				if index != prevIndex
+					curr ? items.splice(index + 1,0,item) : items.unshift(item)
+		else
+			items.push(item)
+			global.queueMicrotask(flush.bind(self)) if !current
+
+		return
+
+	def run item
+		return if active
+		# look for parents that are still hydrated
+		# only the ssr elements that are not yet awakened
+		active = yes
+		# let all = global.document.getElementsByClassName('__ssr')
+		let all = global.document.querySelectorAll('.__ssr')
+		console.log 'running hydrator',item,all.length,Array.from(all)
+
+		for item in all
+			item.#count ||= 1
+			item.#count++
+			let name = item.nodeName
+			let typ = map[name] ||= global.window.customElements.get(name.toLowerCase!) or HTMLElement
+			console.log 'item type',name,typ,!!CUSTOM_TYPES[name.toLowerCase!]
+			# console.log 'hydrate??',item.constructor
+			continue if !item.connectedCallback or !item.parentNode or item.hydrated?
+			console.log 'hydrate',item # !!item.parentNode,item,item.connectedCallback
+			# item.connectedCallback!
+
+		active = no
+
+export def hydrate
+	hydrator.flush!
 
 export class ImbaElement < HTMLElement
 	def constructor
@@ -20,6 +111,7 @@ export class ImbaElement < HTMLElement
 		self
 		
 	def flag$ str
+
 		self.className = flags$ext = str
 		return
 
@@ -74,8 +166,6 @@ export class ImbaElement < HTMLElement
 		rendered()
 		__F = (__F | $EL_RENDERED$) & ~$EL_RENDERING$
 
-	
-
 	get autoschedule
 		(__F & $EL_SCHEDULE$) != 0
 	
@@ -106,6 +196,9 @@ export class ImbaElement < HTMLElement
 	get hydrated?
 		return (__F & $EL_HYDRATED$) != 0
 
+	get ssr?
+		return (__F & $EL_SSR$) != 0
+
 	def schedule
 		scheduler.listen('render',self)
 		__F |= $EL_SCHEDULED$
@@ -119,10 +212,24 @@ export class ImbaElement < HTMLElement
 	def end$
 		visit()
 
+	def open$
+		if __F & $EL_SSR$
+			__F = __F & ~$EL_SSR$
+			# remove flag
+			classList.remove('_ssr_')
+			if flags$ext and flags$ext.indexOf('_ssr_') == 0
+				flags$ext = flags$ext.slice(5)
+			innerHTML = ''
+		self
+
 	def connectedCallback
 		let flags = __F
 		let inited = flags & $EL_INITED$
 		let awakened = flags & $EL_AWAKENED$
+
+		if !inited
+			hydrator.queue(self)
+			return
 
 		# return if we are already in the process of mounting - or have mounted
 		if flags & ($EL_MOUNTING$ | $EL_MOUNTED$)
@@ -134,9 +241,10 @@ export class ImbaElement < HTMLElement
 			#init!
 
 		unless flags & $EL_HYDRATED$
+			# clearly seems wrong?
 			flags$ext = className
-			hydrate()
 			__F |= $EL_HYDRATED$
+			self.hydrate()
 			commit()
 
 		unless awakened

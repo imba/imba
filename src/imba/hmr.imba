@@ -2,10 +2,11 @@ import {deserializeData} from './utils'
 import {manifest} from './manifest'
 
 # Improve this
+let doc =  global.document
 
 class Connection
 	def constructor
-		if $web$ and global.document.documentElement..getAttribute('data-hmr')
+		if $web$ and doc.documentElement..getAttribute('data-hmr')
 			start!
 		self
 
@@ -15,21 +16,21 @@ class Connection
 			js: []
 		}
 
-		for sheet of document.styleSheets
+		for sheet of doc.styleSheets
 			let url = sheet.ownerNode.getAttribute('href')
 			console.log 'look for sheet',url,manifest.urls
 			if let asset = manifest.urls[url]
 				if asset.replacedBy
 					sheet.ownerNode.href = asset.replacedBy.url
 
-		for el of document.querySelectorAll('script[src]')
+		for el of doc.querySelectorAll('script[src]')
 			if let asset = manifest.urls[el.getAttribute('src')]
 				if asset.replacedBy
 					dirty.js.push(asset)
 
 		if dirty.js.length
 			console.log "js changed - reload?",dirty.js
-			document.location.reload!
+			doc.location.reload!
 		self
 
 	def start
@@ -63,12 +64,12 @@ class Connection
 			console.log "Changes for manifest",changes
 			refresh changes
 
-
+		# REMOVE?
 		socket.addEventListener("invalidate") do(e)	
-			let origin = window.location.origin
+			let origin = global.window.location.origin
 			let data = JSON.parse(e.data).map do new URL($1,origin)
 			let dirty = {css: [], js: []}
-			for sheet of document.styleSheets
+			for sheet of doc.styleSheets
 				let url = new URL(sheet.href,origin)
 				let match = data.find do $1.pathname == url.pathname
 				if match
@@ -77,7 +78,7 @@ class Connection
 					dirty.css.push([sheet,match])
 			
 			# check scripts
-			for item of document.getElementsByTagName('script')
+			for item of doc.getElementsByTagName('script')
 				continue unless item.src
 				let url = new URL(item.src,origin)
 				let match = data.find do $1.pathname == url.pathname
@@ -86,12 +87,12 @@ class Connection
 
 			if dirty.js.length
 				console.log "js changed - reload?",dirty.js
-				document.location.reload!
+				doc.location.reload!
 			return
 
 		socket.addEventListener("reload") do(e)	
 			console.log 'asked to reload by server'
-			document.location.reload!
+			doc.location.reload!
 		
 		socket.onerror = do(e)
 			console.log 'hmr disconnected',e

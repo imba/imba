@@ -181,12 +181,14 @@ export class FileNode < FSNode
 	def write body, hash
 		if !hash or (#hash =? hash)
 			await utils.ensureDir(abs)
-			fs.log.success 'write %path %kb',rel,body.length
+			if rel.indexOf('../') != 0 or true
+				fs.log.success 'write %path %kb',rel,body.length
 			nodefs.promises.writeFile(abs,body)
 
 	def writeSync body, hash
 		if !hash or (#hash =? hash)
-			fs.log.success 'write %path %kb',rel,body.length
+			if rel.indexOf('../') != 0 or true
+				fs.log.success 'write %path %kb',rel,body.length
 			nodefs.writeFileSync(abs,body)
 
 	def read enc = 'utf8'
@@ -222,17 +224,17 @@ export class ImbaFile < FileNode
 	def compile o,context = program
 		memo(o.platform) do
 			o = Object.assign({
-				platform: 'node',
+				platform: o.platform,
 				format: 'esm',
 				imbaPath: 'imba'
 				styles: 'extern'
 				hmr: true
-				bundle: false
+				bundle: true
 				sourcePath: rel,
 				sourceId: program.cache.getPathAlias(rel),
 				cwd: fs.cwd,
 				config: program.config
-			},o)
+			},{})
 
 			o.format = 'esm' # always esm here?
 
@@ -241,7 +243,6 @@ export class ImbaFile < FileNode
 			let t = Date.now!
 			let out = await context.workers.exec('compile_imba', [code,o])
 			program.log.success 'compile %path %path in %ms',rel,o.platform,Date.now! - t,o.sourceId
-			# console.log 'compiled',out.js
 			return out
 
 export class Imba1File < FileNode

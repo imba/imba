@@ -14,6 +14,18 @@ export const defaultLoaders = {
 	".otf": "file"
 }
 
+export def diagnosticToESB item, add = {}
+	# {"id":"bs","warnings":[],"errors":[{"range":{"start":{"line":3,"character":9,"offset":41},"end":{"line":3,"character":9,"offset":41}},"severity":1,"source":"imba-parser","message":"Unexpected 'TERMINATOR'"}],"js":"","css":""}
+	{
+		text: item.message
+		location: Object.assign({
+			line: item.range.start.line + 1
+			column: item.range.start.character
+			length: item.range.end.offset - item.range.start.offset
+			lineText: item.lineText
+		},add)
+	}
+
 export def writePath src, body
 	await ensureDir(src)
 	fs.promises.writeFile(src,body)

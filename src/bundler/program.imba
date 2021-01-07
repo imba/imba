@@ -45,7 +45,7 @@ export default class Program < Component
 
 		manifest = fs.lookup('imbabuild.json').load!
 
-		watcher = options.watch ? chokidar.watch([cwd],{
+		watcher = options.watch2 ? chokidar.watch([cwd],{
 			ignoreInitial: true,
 			depth: 0,
 			ignored: ['.*','.git/**','.cache'],
