@@ -135,7 +135,6 @@ export default class Bundle < Component
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: o.pure
 			treeShaking: o.treeShaking
-			keepNames: true
 			resolveExtensions: [
 				'.imba.mjs','.imba',
 				'.imba1.mjs','.imba1',
@@ -180,12 +179,12 @@ export default class Bundle < Component
 		self
 
 	def watchPath path
-		# watch the directory
-		if !parent and watcher and !#watchedPaths[path] and path.indexOf(':') == -1
-			watcher.add path.slice(0,path.lastIndexOf('/'))
-
-		#watchedPaths[path] = 1
-		parent.watchPath(path) if parent
+		unless #watchedPaths[path]
+			#watchedPaths[path] = 1
+			if parent
+				parent.watchPath(path)
+			elif watcher and path.indexOf(':') == -1
+				watcher.add path.slice(0,path.lastIndexOf('/'))
 		self
 
 	def plugin build
@@ -289,6 +288,7 @@ export default class Bundle < Component
 				outdir: options.outdir
 				outbase: fs.cwd
 				watcher: watcher
+				minify: o.minify
 				parent: self
 			}
 
@@ -377,6 +377,7 @@ export default class Bundle < Component
 
 			# only add this once
 			if watcher and main? and (#watching =? true)
+				watcher.start!
 				watcher.on('touch') do
 					# console.log "watcher touch",$1,#watchedPaths,#id
 					clearTimeout(#rebuildTimeout)
@@ -578,7 +579,7 @@ export default class Bundle < Component
 			input.imports = input.imports.map do ins[$1.path]
 			watchPath(path)
 			# what about sourcemaps?
-			let outname = path.replace(/\.(imba|[cm]?jsx?|tsx?)$/,"")
+			let outname = path.replace(/\.(imba1?|[cm]?jsx?|tsx?)$/,"")
 			let jsout 
 			for own key,ext of tests
 

@@ -45,6 +45,9 @@ export class Manifest < EventEmitter
 			return np.resolve(dir,path.path)
 		else
 			return np.resolve(cwd,path.path or path)
+	
+	def read path
+		nfs.readFileSync(resolve(path),'utf-8')
 
 	def loadFromFile path
 		nfs.readFileSync(path,'utf-8')
@@ -63,7 +66,7 @@ export class Manifest < EventEmitter
 
 		if typeof raw == 'string'
 			let str = raw
-			raw = deserializeData(raw)
+			raw = deserializeData(raw) # pass in the objects we want to wrap them with?
 			raw.#raw = str
 
 		data = patchManifest(data or {},raw)

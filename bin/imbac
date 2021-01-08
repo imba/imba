@@ -24,7 +24,7 @@ var parseOpts = {
 		h: 'help',
 		s: 'stdio',
 		p: 'print',
-		m: 'sourceMap',
+		m: 'sourcemap',
 		t: 'tokenize',
 		v: 'version',
 		w: 'watch',
@@ -33,6 +33,7 @@ var parseOpts = {
 	
 	schema: {
 		output: {type: 'string'},
+		sourcemap: {type: 'string'}, // inline | extern
 		platform: {type: 'string'}, // node | browser | worker
 		styles: {type: 'string'}, // extern | inline
 		imbaPath: {type: 'string'}, // global | inline | import
@@ -41,7 +42,7 @@ var parseOpts = {
 		raw: null
 	},
 	
-	group: ['source-map']
+	groupz: ['sourcemap']
 };
 
 var help = `\n
@@ -50,7 +51,7 @@ Usage: imbac [options] path/to/script.imba
   -h, --help             display this help message
   -v, --version          display the version number
   -w, --watch            recompile files on change
-  -m, --source-map       generate source map and add inline to .js files
+  -m, --sourcemap       generate source map and add inline to .js files
   -o, --output [dir]     set the output directory for compiled JavaScript
   -p, --print            print out the compiled JavaScript
   -d, --debug            Enable compiler debugging
@@ -299,7 +300,7 @@ CLI.prototype.tokenize = function (){
 				s = self.b(("[" + typ + " " + id + "]"));
 			};
 			
-			if (t._loc != -1 && self.o().sourceMap) {
+			if (t._loc != -1 && self.o().sourcemap) {
 				s = ("(" + (t._loc) + ":" + (t._len) + ")") + s; // chalk.bold(s)
 			};
 			
@@ -362,14 +363,14 @@ CLI.prototype.compileFile = function (src){
 
 	out.compileTime = Date.now() - t;
 
-	let sourcemap = opts.sourceMap && out.sourcemap;
+	let sourcemap = opts.sourcemap && out.sourcemap;
 
 	if (sourcemap) {
 		// TODO this should clearly happen inside the compiler??
-		if(opts.sourceMap.inline){
-			var base64 = new Buffer(JSON.stringify(sourcemap)).toString("base64");
-			out.js = out.js + "\n//# sourceMappingURL=data:application/json;base64," + base64;	
-		} else if (!opts.sourceMap.hidden){
+		if(opts.sourcemap == 'inline'){
+			// var base64 = new Buffer(JSON.stringify(sourcemap)).toString("base64");
+			// out.js = out.js + "\n//# sourceMappingURL=data:application/json;base64," + base64;	
+		} else if (opts.sourcemap && opts.sourcemap != 'external'){
 			out.js = out.js + "\n//# sourceMappingURL=" + path.basename(src.targetPath + '.map');
 		}
 	};
@@ -416,8 +417,8 @@ CLI.prototype.compileFile = function (src){
 		fs.writeFileSync(src.targetPath,out.js,'utf8');
 		if (!self.o().print) { self.log(status) };
 
-		if(sourcemap && !opts.print && !opts.sourceMap.inline && !opts.sourceMap.hidden) { // And webpack
-			fs.writeFileSync(src.targetPath + '.map',JSON.stringify(sourcemap),'utf8');
+		if(sourcemap && !opts.print && opts.sourcemap != 'inline') { // And webpack
+			fs.writeFileSync(src.targetPath + '.map',JSON.stringify(sourcemap,null,2),'utf8');
 		}
 		// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
 	};

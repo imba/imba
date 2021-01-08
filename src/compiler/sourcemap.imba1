@@ -56,6 +56,7 @@ export class SourceMap
 		var append = ""
 		@locs = []
 		@maps = []
+		@names = []
 
 		var pairs = []
 		var groups = {}
@@ -85,7 +86,6 @@ export class SourceMap
 					var lc = locmap[loc]
 
 					unless lc
-						# console.log "not found in locmap",loc,locmap:length
 						return pre
 
 					let srcline = lc[0] + 1
@@ -97,6 +97,7 @@ export class SourceMap
 						@maps[i].push(mapping)
 
 					let locpair = [jsloc + caret,loc]
+
 					@locs.push(locpair)
 
 					if gid
@@ -104,11 +105,17 @@ export class SourceMap
 							# groups[gid].push(locpair[0],locpair[1])
 							grp[1] = locpair[0]
 							grp[3] = locpair[1]
+							# grp.START = locpair
 							let gstr = grp.join('|')
 							if uniqueGroups[gstr]
 								groups[gid] = []
 							else
 								uniqueGroups[gstr] = yes
+								let name = sourceCode.slice(grp[2],grp[3])
+								if grp.START
+									grp.START[2] = name
+									unless @names.indexOf(name) >= 0
+										@names.push(name)
 							# grp[4] = locpair[1]
 						else
 							groups[gid] = [locpair[0],null,locpair[1],null]
@@ -199,7 +206,7 @@ export class SourceMap
 			sourcesContent: [sourceCode]
 			names:      []
 			mappings:   buffer
-			maps: @maps
+			# maps: @maps
 
 		if @options:sourcemap == 'inline'
 			# console.log 'inline sourcemap!'

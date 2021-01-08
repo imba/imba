@@ -16,31 +16,29 @@ export default class Watcher < Component
 		history = new ChangeLog withFlags: yes
 		events = []
 		map = {}
+		map[fs.cwd] = 1
 
 	get instance
 		return #watcher if #watcher
-		#watcher = Chokidar.watch([fs.cwd],{
+
+		let initial = Object.keys(map)
+
+		#watcher = Chokidar.watch(initial,{
 			ignoreInitial: true,
-			depth: 5,
-			ignored: ['.*','.git/**','.cache/**',fs.resolve('dist')],
+			depth: 1,
+			ignored: isIgnored.bind(self) # ['.*','.git/**','.cache/**',fs.resolve('dist')],
 			cwd: fs.cwd
 		}) 
 
 		#watcher.on('change') do(src,stats)
-			# console.log 'watcher on change',src
 			history.mark(src,FLAGS.CHANGE) # with change / remove flags
 			emit('change',src)
 			emit('touch',src)
-			# fs.touchFile(src)
-			# #bundler..scheduleRebuild!
 
 		#watcher.on('unlink') do(src,stats)
 			history.mark(src,FLAGS.UNLINK)
 			emit('unlink',src)
 			emit('touch',src)
-			yes
-			# fs.removeFile(src)
-			# #bundler..scheduleRebuild!
 
 		#watcher.on('add') do(src,stats)
 			console.log 'add',src
@@ -49,13 +47,21 @@ export default class Watcher < Component
 			emit('touch',src)
 
 		return #watcher
+	
+	def isIgnored path
+		return true if path.match(/(\/\.(git|cache)\/|\.DS_Store)/)
+		# console.log 'is ignored?',path
+		return false
 
 	def add ...paths
-		# console.log 'watch add!!',paths
+		let uniq = []
 		for path in paths
-			map[path] = yes
+			unless map[path]
+				map[path] = yes
+				uniq.push(path)
 
-		instance.add(...paths)
+		if #watcher and uniq.length
+			#watcher.add(...uniq)
 		self
 
 	def has path
@@ -63,4 +69,10 @@ export default class Watcher < Component
 
 	def sync target
 		history.pull(target)
+
+	def start
+		instance
+		return self
+
+
 
