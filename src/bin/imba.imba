@@ -92,6 +92,7 @@ def build entry, o
 def run entry, o, extras
 	o = parseOptions(o,extras)
 	let t = Date.now!
+	console.log 'run with options',o
 
 	let prog = new Program(o.config,o)
 	let file = prog.fs.lookup(entry)
@@ -154,7 +155,7 @@ cli.command('exec <script>', { isDefault: true })
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
 	.option("-d, --dev", "Minify generated files")
-	.option("-i, --instances <count>", "Number of instances to start",fmt.i,1)
+	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.option("-v, --verbose", "verbosity (repeat to increase)",increase-verbosity,0)
 	.option("--name [name]", "Give name to process")
 	.option("--outdir <value>", "")
@@ -164,18 +165,6 @@ cli.command('exec <script>', { isDefault: true })
 	.option("--no-sourcemap", "Omit sourcemaps")
 	.option("--no-contenthash", "Disable hashing")
 	.option("--clean", "Disregard previosly cached compilations")
-	.action(run)
-
-cli.command('serve [script]')
-	.description('clone a repository into a newly created directory',{
-		script: "something here"
-	})
-	.option("-b, --build", "")
-	.option("-w, --watch", "Continously build and watch project while running")
-	.option("-m, --minify", "Minify generated files")
-	.option("--clean", "Remove previously generated files")
-	.option("-f, --force", "Disregard previosly cached compilations")
-	.option("-i, --instances <count>", "Number of instances to start",fmt.i,1)
 	.action(run)
 
 cli.command('build [script]')
