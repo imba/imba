@@ -88,6 +88,10 @@ export default class Bundle < Component
 		for ext in o.external
 			if ext == "dependencies"
 				let deps = Object.keys(package.dependencies or {})
+
+				if o.execOnly
+					deps.push( ...Object.keys(package.devDependencies or {}) )
+
 				for dep in deps
 					unless o.external.indexOf("!{dep}") >= 0
 						externals.push(dep)

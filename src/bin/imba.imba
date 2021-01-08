@@ -92,7 +92,6 @@ def build entry, o
 def run entry, o, extras
 	o = parseOptions(o,extras)
 	let t = Date.now!
-	console.log 'run with options',o
 
 	let prog = new Program(o.config,o)
 	let file = prog.fs.lookup(entry)
@@ -108,6 +107,7 @@ def run entry, o, extras
 		outbase: prog.cwd
 		sourcemap: 'inline'
 		contenthash: false
+		execOnly: yes
 		isMain: yes
 	})
 
@@ -152,15 +152,15 @@ def increase-verbosity dummy, prev
 cli.command('exec <script>', { isDefault: true })
 	.description('Run stuff')
 	.option("-b, --build", "")
+	.option("-d, --dev", "Enable development mode")
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
-	.option("-d, --dev", "Minify generated files")
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.option("-v, --verbose", "verbosity (repeat to increase)",increase-verbosity,0)
 	.option("--name [name]", "Give name to process")
 	.option("--outdir <value>", "")
 	.option("--loglevel [value]", "Set loglevel info|warning|error|debug|silent")
-	.option("--sourcemap <value>", "", "info")
+	.option("--sourcemap <value>", "", "inline")
 	.option("--inspect", "Debug stuff")
 	.option("--no-sourcemap", "Omit sourcemaps")
 	.option("--no-contenthash", "Disable hashing")

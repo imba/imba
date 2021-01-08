@@ -1,5 +1,5 @@
-var mounts = 0
-var unmounts = 0
+let mounts = 0
+let unmounts = 0
 
 tag app-component
 
@@ -88,11 +88,13 @@ test "mount" do
 	# await spec.tick()
 	# console.log $1.log.slice(0),expect
 
-test "manual" do |state|
+test "manual" do(state)
 	mounts = 0
 	let el = document.createElement('app-root')
-	# el.render()
 	document.body.appendChild(el)
+	await Promise.resolve(yes)
+	# to make sure elements are mounted in correct order
+	# we do not guarantee that the mount is synchronous
 	eq mounts, 3
 	# await null
 	# console.log $1.log.slice(0),expect
