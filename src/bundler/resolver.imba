@@ -165,7 +165,8 @@ export class Resolver
 
 		if colonIndex >= 0
 			namespace = path.substr(0,colonIndex)
-			path = path.replace(':','/')
+			# path = path.replace(':','/')
+			path = path.slice(colonIndex + 1)
 
 		if qIndex > 0
 			[path,namespace] = path.split('?')

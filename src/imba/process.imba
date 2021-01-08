@@ -165,6 +165,11 @@ class AssetResponder
 		let headers = headers
 		let path = asset ? manifest.resolve(asset) : self.path
 		#  np.resolve(proc.cwd!,asset.path)
+		unless path
+			console.log 'found no path for',asset,url
+			res.writeHead(404, {})
+			return res.end!
+		
 		let stream = nfs.createReadStream(path)
 		res.writeHead(200, headers)
 		return stream.pipe(res)
@@ -218,7 +223,6 @@ class Server
 				res.setHeader('Location',req.url)
 
 				unless ishttp2
-					console.log 'set header connection'
 					res.setHeader('Connection','close')
 
 				if closed
@@ -285,12 +289,12 @@ class Server
 	def pause
 		if paused =? yes
 			broadcast('paused')
-			console.log 'paused server'
+			# console.log 'paused server'
 		self
 
 	def resume
 		if paused =? no
-			console.log 'resumed server'
+			# console.log 'resumed server'
 			broadcast('resumed')
 			flushStalledResponses!
 

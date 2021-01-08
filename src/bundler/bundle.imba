@@ -11,7 +11,6 @@ import {Manifest} from '../imba/manifest'
 import os from 'os'
 import np from 'path'
 
-# const utils = require './utils'
 import Component from './component'
 import {SourceMapper} from '../compiler/sourcemapper'
 
@@ -20,9 +19,6 @@ import Watcher from './watcher'
 const ASSETS_URL = '/__assets__/'
 
 export default class Bundle < Component
-	get config
-		bundler.config
-
 	get node?
 		platform == 'node'
 
@@ -49,6 +45,9 @@ export default class Bundle < Component
 
 	get o
 		options
+
+	get config
+		o.config or parent.config
 	
 	get program
 		bundler.program
@@ -120,7 +119,7 @@ export default class Bundle < Component
 			splitting: o.splitting
 			sourcemap: o.sourcemap
 			minify: o.minify
-			incremental: o.watch
+			incremental: !!watcher
 			loader: o.loader or {
 				".png": "file",
 				".svg": "file",
@@ -136,6 +135,7 @@ export default class Bundle < Component
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: o.pure
 			treeShaking: o.treeShaking
+			keepNames: true
 			resolveExtensions: [
 				'.imba.mjs','.imba',
 				'.imba1.mjs','.imba1',
@@ -154,7 +154,7 @@ export default class Bundle < Component
 		else
 			esoptions.resolveExtensions.unshift('.node.imba','.node.js')
 
-		unless node?
+		if !node? and false
 			let defines = esoptions.define ||= {}
 			let env = o.env or process.env.NODE_ENV or 'production'
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
@@ -170,8 +170,6 @@ export default class Bundle < Component
 		if main?
 			# not if main entrypoint is web?
 			manifest = new Manifest(data: {}, path: np.resolve(o.outdir,'.imbabuild') )
-			esoptions.banner = node? ? "globalThis.IMBA_ENTRYPOINT=__filename;" : "//BANNER"
-			
 			if node?
 				esoptions.banner = "globalThis.IMBA_MANIFEST_PATH = '{manifest.path}';"
 			spinner = log.spinner!
@@ -191,7 +189,7 @@ export default class Bundle < Component
 		self
 
 	def plugin build
-		let externs = options.external or []
+		let externs = esoptions.external or []
 
 		let imbaDir = program.imbaPath
 		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
@@ -206,11 +204,16 @@ export default class Bundle < Component
 		let toLoadResult = do(object,compilation)
 			if compilation.errors
 				console.log 'converting errors'
-				
+
+		build.onResolve(filter: /^\//) do(args)
+			console.log 'abs resolving absolute path',args,{path: args.path, external: yes}
+			return {path: args.path, external: yes}
+
+			if isCSS(args.importer)
+				return {path: args.path, external: yes}
 
 		build.onResolve(filter: /^imba(\/|$)/) do(args)
 			if args.path == 'imba'
-				log.debug 'resolve imba',imbaDir,args.importer
 				let sub = 'index.imba'
 				if node?
 					sub = 'dist/node/imba.js'
@@ -232,18 +235,33 @@ export default class Bundle < Component
 
 		build.onResolve(filter: /\?(\w+)$/) do(args)
 			let res = program.resolver.resolve(args,pathLookups)
+			# console.log 'resolve with namespace?',args.path,res
 			let ns = res.namespace = namespaceMap[res.namespace] or res.namespace
+
+			if ns == 'serviceworker'
+				res.namespace = 'entry'
+				res.path = "{ns}:{res.path}"
+
+			return res
+
+		build.onResolve(filter: /^(serviceworker|worker)\:/) do(args)
+			let res = program.resolver.resolve(args,pathLookups)
+			# let ns = res.namespace = namespaceMap[res.namespace] or res.namespace
+			res.path = "{res.namespace}:{res.path}"
+			res.namespace = 'entry'
 			return res
 
 		build.onResolve(filter: /^styles:/) do({path})
 			return {path: path.slice(7), namespace: 'styles'}
 
-		build.onResolve(filter: /^\//) do(args)
-			if isCSS(args.importer)
-				return {path: args.path, external: yes}
-
 		build.onResolve(filter: /^[\w\@]/) do(args)
+			# return if args.path.indexOf('imba') == 0'
+
+			if externs.indexOf(args.path) >= 0
+				return {external: true}
+
 			if args.importer.indexOf('.imba') > 0
+				# console.log 'resolving through imba',args.path,externs
 				return program.resolver.resolve(args,pathLookups)
 
 		build.onLoad(filter: /.*/, namespace: 'asset') do({path})
@@ -279,13 +297,43 @@ export default class Bundle < Component
 			presult[src] = bundle.meta
 			
 			let input = bundle.meta.inputs[args.path]
-			# if input
-			#	console.log 'returned from the worker bundle',bundle,input.js.url
+			return {loader: 'text', contents: input.js.url}
+		
+		build.onLoad(filter: /^(serviceworker)\:.*/, namespace: 'entry') do(args)
+			let parts = args.path.split(':')
+			let path = parts.pop!
+			let type = parts.shift!
+
+			# let src = args.path
+			# let path = src.slice(src.indexOf(':') + 1)
+			# "serviceworker:{args.path}"
+			# console.log "onLoad entry",src,path,config.defaults
+
+			let opts = {
+				entryPoints: [path]
+				publicPath: ASSETS_URL
+				outdir: options.outdir
+				outbase: fs.cwd
+				watcher: watcher
+				sourcemap: o.sourcemap and yes	
+				parent: self
+			}
+
+			if config.defaults[type]
+				opts = Object.assign({},config.defaults[type],opts)
+
+			let bundler = #bundles[args.path] ||= new Bundle(program,opts)
+			let bundle = await bundler.rebuild!
+
+			presult["entry:{args.path}"] = bundle.meta
+			
+			let input = bundle.meta.inputs[path]
 			return {loader: 'text', contents: input.js.url}
 	
 		build.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
 			let src = fs.lookup(path)
 			# console.log 'compiling',path
+			# css items should not wait for this - we can clearly cache them directly here?
 			let res = await src.compile(imbaoptions,self)
 
 
@@ -330,7 +378,7 @@ export default class Bundle < Component
 			# only add this once
 			if watcher and main? and (#watching =? true)
 				watcher.on('touch') do
-					console.log "watcher touch",$1,#watchedPaths,#id
+					# console.log "watcher touch",$1,#watchedPaths,#id
 					clearTimeout(#rebuildTimeout)
 					#rebuildTimeout = setTimeout(&,100) do
 						clearTimeout(#rebuildTimeout)
@@ -415,6 +463,7 @@ export default class Bundle < Component
 		
 		if webEntries.length
 			# let outdir = np.resolve(fs.cwd,'dist','web')
+			# should rather inherit from the 
 			let opts = {
 				platform: 'browser'
 				splitting: yes
@@ -424,7 +473,7 @@ export default class Bundle < Component
 				outbase: fs.cwd
 				watcher: watcher
 				minify: o.minify
-				sourcemap: 'inline' # this 
+				sourcemap: o.sourcemap and yes
 				parent: self
 			}
 
@@ -476,7 +525,7 @@ export default class Bundle < Component
 		# console.log 'transforming',result
 		let t = Date.now!
 		if result isa Error
-			console.log 'result is error!!'
+			console.log 'result is error!!',result
 			for err in result.errors
 				watchPath(err.location.file)
 
@@ -518,8 +567,8 @@ export default class Bundle < Component
 				console.log 'could not map the file to anything!!',file.path,path,reloutdir
 
 		let tests = {
-			css: ".__dist__.css"
 			js: ".__dist__.js"
+			css: ".__dist__.css"
 			map: ".__dist__.js.map"
 		}
 
@@ -530,7 +579,7 @@ export default class Bundle < Component
 			watchPath(path)
 			# what about sourcemaps?
 			let outname = path.replace(/\.(imba|[cm]?jsx?|tsx?)$/,"")
-
+			let jsout 
 			for own key,ext of tests
 
 				let name = outname + ext
@@ -539,6 +588,10 @@ export default class Bundle < Component
 				if outs[name]
 					input[key] = outs[name]
 					outs[name].source = input
+					if key == 'js'
+						jsout = outs[name]
+					elif jsout
+						jsout[key] = outs[name]
 
 		let urlOutputMap = {}
 		let walker = {}
@@ -575,7 +628,7 @@ export default class Bundle < Component
 			
 			output.inputs = inputs
 
-			if output.type == 'css'
+			if output.type == 'css' and !output.#ordered
 				let origPaths = inputs.map(do $1[0].path )
 				let corrPaths = []
 
@@ -609,6 +662,7 @@ export default class Bundle < Component
 				
 				let text = chunks.filter(do $1).join('\n')
 				# console.log 'new text',text.length,body.length
+				output.#ordered = yes
 				output.#contents = text
 
 
@@ -620,7 +674,7 @@ export default class Bundle < Component
 
 			if let m = path.match(/\.([A-Z\d]{8})\.\w+$/)
 				output.hash = m[1]
-			elif m = path.match(/chunk\.([A-Z\d]{8})\.\w+\.(js|css)$/)
+			elif m = path.match(/chunk\.([A-Z\d]{8})\.\w+\.(js|css)(\.map)?$/)
 				output.hash = m[1]
 
 			if output.url
@@ -669,13 +723,28 @@ export default class Bundle < Component
 				asset.#text = asset.#file.text
 				asset.#contents = await walker.replacePaths(asset.#text,asset)
 
-			asset.hash = createHash(asset.#contents)
+			if asset.type == 'map'
+				let js = asset.source.js
+				if js
+					await walker.resolveAsset(js)
+					asset.hash = js.hash
+
+			asset.hash ||= createHash(asset.#contents)
+
 			if true
-				let sub = o.contenthash !== false ? ".{asset.hash}." : "."
+				# allow a fully custom pattern instead?
+				let sub = o.hashing !== false ? ".{asset.hash}." : "."
 				asset.originalPath = asset.path
 				if asset.url
 					asset.url = asset.url.replace('.__dist__.',sub)
+
 				asset.path = asset.path.replace('.__dist__.',sub)
+				# now replace link to sourcemap as well
+				if asset.type == 'js' and asset.map
+					let orig = np.basename(asset.originalPath) + '.map'
+					let replaced = np.basename(asset.path) + '.map'
+					# console.log 'update url to the replaced map'
+					asset.#contents = asset.#contents.replace(orig,replaced)
 			return asset
 
 

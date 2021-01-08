@@ -24,7 +24,7 @@ const hydrator = new class
 			# Mark as inited to stop connectedCallback from early exit
 			let prev = current
 			current = item
-			item.__F |= $EL_INITED$ | $EL_SSR$
+			item.__F |= $EL_SSR$
 			item.connectedCallback!
 			current = prev
 		return
@@ -227,7 +227,7 @@ export class ImbaElement < HTMLElement
 		let inited = flags & $EL_INITED$
 		let awakened = flags & $EL_AWAKENED$
 
-		if !inited
+		if !inited and !(flags & $EL_SSR$)
 			hydrator.queue(self)
 			return
 

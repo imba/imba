@@ -105,10 +105,12 @@ def run entry, o, extras
 		watch: o.watch
 		outdir: o.outdir
 		outbase: prog.cwd
-		sourcemap: 'inline'
-		contenthash: false
+		sourcemap: yes
+		hashing: false
 		execOnly: yes
 		isMain: yes
+		config: o.config
+		imbaPath: o.imbaPath
 	})
 
 	tmp.setGracefulCleanup!
@@ -163,7 +165,7 @@ cli.command('exec <script>', { isDefault: true })
 	.option("--sourcemap <value>", "", "inline")
 	.option("--inspect", "Debug stuff")
 	.option("--no-sourcemap", "Omit sourcemaps")
-	.option("--no-contenthash", "Disable hashing")
+	.option("--no-hashing", "Disable hashing")
 	.option("--clean", "Disregard previosly cached compilations")
 	.action(run)
 
@@ -177,7 +179,7 @@ cli.command('build [script]')
 	.option("--platform <platform>", "Disregard previosly cached compilations","browser")
 	.option("--outdir <value>", "")
 	.option("--pubdir <value>", "Directory for public items - default to")
-	.option("--no-contenthash", "Disable hashing")
+	.option("--no-hashing", "Disable hashing")
 	.action(build)
 
 binary.parse(process.argv)

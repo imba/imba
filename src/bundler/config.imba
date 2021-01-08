@@ -2,6 +2,7 @@ const schema = {
 	loader: 'merge'
 	node: 'merge'
 	browser: 'merge'
+	defaults: 'merge'
 }
 
 export const defaultConfig = {
@@ -34,6 +35,15 @@ export const defaultConfig = {
 	}
 
 	bundles: []
+
+	defaults: {
+		serviceworker: {
+			splitting: false
+			hashing: false
+			format: 'iife'
+			platform: 'worker'
+		}
+	}
 }
 
 def clone object
