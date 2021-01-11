@@ -720,11 +720,12 @@ export class SVGElement < Element
 
 export class SVGSVGElement < SVGElement
 
-	set asset value
-		if #asset =? value
-			for own k,v of value.attributes
-				setAttribute(k,v)
-			innerHTML = value.content
+	set src value
+		if #src =? value
+			if value..content
+				for own k,v of value.attributes
+					setAttribute(k,v)
+				innerHTML = value.content
 		return
 
 TYPES[''].klass = Element

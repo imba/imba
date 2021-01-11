@@ -34,7 +34,8 @@ export def format str,...rest
 		elif f == 'address'
 			let typ = addressTypeName[part.addressType]
 			if part.port
-				fmt('blueBright',[part.address or "0.0.0.0",part.port].join(':'))
+				# what about the protocol?
+				fmt('blueBright',[part.address or "http://127.0.0.1",part.port].join(':'))
 			else
 				fmt('blueBright',typ)
 		elif f == 'ms'
@@ -59,12 +60,17 @@ export def format str,...rest
 	return [str,...rest]
 
 let Spinner = null
+let Instance = null
 
 export class Logger
+
+	static get main
+		Instance ||= new self
+
 	def constructor {prefix = null,loglevel} = {}
 		#ctime = Date.now!
 		self.prefix = prefix ? format(...prefix)[0] : ''
-		self.loglevel = loglevel or global.#IMBA_OPTIONS.loglevel or 'warning'
+		self.loglevel = loglevel or (global.#IMBA_OPTIONS and global.#IMBA_OPTIONS.loglevel) or 'warning'
 
 	def write kind,...parts
 		if logLevels.indexOf(kind) < logLevels.indexOf(self.loglevel)

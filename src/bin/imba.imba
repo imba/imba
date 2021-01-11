@@ -122,9 +122,11 @@ def run entry, o, extras
 		imbaPath: o.imbaPath
 	})
 
+	o.port ||= await getport(port: getport.makeRange(3000, 3100))
+	
 	if o.autoserve
 		delete params.entryPoints
-		o.port ||= await getport(port: getport.makeRange(3000, 3100))
+		
 		params.stdin = {
 			contents: SERVE_TEMPLATE.replace('CLIENT_ENTRY','./' + file.name),
 			resolveDir: file.absdir

@@ -25,8 +25,31 @@ class AssetProxy
 
 		asset[key]
 
+class SVGAsset
+	prop url
+	prop meta
+
+	def adoptNode node
+		if meta..content
+			for own k,v of meta.attributes
+				node.setAttribute(k,v)
+			node.innerHTML = meta.content
+		self
+	
+	def toString
+		url
+	
+	def toStyleString
+		"url({url})"
+
 
 export def asset data
+	if data.#asset
+		return data.#asset
+
+	if data.type == 'svg'
+		return data.#asset ||= new SVGAsset(data)
+	
 	if data.input
 		return data.#asset ||= AssetProxy.wrap(data)
 	

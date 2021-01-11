@@ -5,6 +5,7 @@ import np from 'path'
 import {EventEmitter} from 'events'
 import {manifest} from './manifest'
 import {Document,Location} from './dom/core'
+import {Logger,format} from '../bundler/logger'
 
 # import from http2 etc?
 import http from 'http'
@@ -197,12 +198,27 @@ class Server
 		if proc.env.IMBA_PATH
 			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'devtools.js')
 
+		scheme = srv isa http.Server ? 'http' : 'https'
+
 		# fetch and remove the original request listener
 		let originalHandler = server._events.request
 		srv.off('request',originalHandler)
 
 		# check if this is an express app?
 		originalHandler.#server = self
+
+		srv.on('listening') do
+			# if not silent?
+			let adr = server.address!
+			let host = adr.address
+			if host == '::' or host == '0.0.0.0'
+				host = 'localhost'
+
+			let url = "{scheme}://{host}:{adr.port}/"
+			# console.log 'got here?!?'
+			Logger.main.warn 'listening on %bold',url
+
+		# setTimeout(&,100) do console.log 'imba.serve!',server.address!
 
 		manifest.on('invalidate') do(params)
 			# console.log 'manifest.on invalidate from server',params

@@ -18195,7 +18195,7 @@ function format(str, ...rest) {
     } else if (f == "address") {
       let typ = addressTypeName[part.addressType];
       if (part.port) {
-        return fmt2("blueBright", [part.address || "0.0.0.0", part.port].join(":"));
+        return fmt2("blueBright", [part.address || "http://127.0.0.1", part.port].join(":"));
       } else {
         return fmt2("blueBright", typ);
       }
@@ -18227,11 +18227,15 @@ function format(str, ...rest) {
   return [str, ...rest];
 }
 var Spinner = null;
+var Instance = null;
 var Logger = class {
+  static get main() {
+    return Instance || (Instance = new this());
+  }
   constructor({prefix = null, loglevel} = {}) {
     this[sys$22] = Date.now();
     this.prefix = prefix ? format(...prefix)[0] : "";
-    this.loglevel = loglevel || globalThis[sys$3].loglevel || "warning";
+    this.loglevel = loglevel || globalThis[sys$3] && globalThis[sys$3].loglevel || "warning";
   }
   write(kind, ...parts) {
     if (logLevels.indexOf(kind) < logLevels.indexOf(this.loglevel)) {
@@ -18794,7 +18798,8 @@ var SVGFile = class extends FileNode {
     return this.memo(o.format, async function() {
       let svgbody = await self2.read();
       let parsed = parseAsset({body: svgbody});
-      return {js: "export default " + JSON.stringify(parsed) + ";"};
+      let js = "import {asset} from 'imba';\nimport url from './" + self2.name + "';\nexport default asset({\n	url: url,\n	type: 'svg',\n	meta: " + JSON.stringify(parsed) + ",\n	toString: function(){ return this.url;}\n})";
+      return {js};
     });
   }
 };
@@ -18803,7 +18808,7 @@ var ImageFile = class extends FileNode {
     var self2 = this;
     return this.memo(o.format, async function() {
       let size = await Promise.resolve(image_size.default(self2.abs));
-      let js = "import {asset} from 'imba';\nimport url from './" + self2.name + "';\nexport default asset({\n	url: url,\n	width: " + (size.width || 0) + ",\n	height: " + (size.height || 0) + ",\n	toString: function(){ return this.url;}\n})";
+      let js = "import {asset} from 'imba';\nimport url from './" + self2.name + "';\nexport default asset({\n	url: url,\n	type: 'image',\n	width: " + (size.width || 0) + ",\n	height: " + (size.height || 0) + ",\n	toString: function(){ return this.url;}\n})";
       return {js};
     });
   }
@@ -19382,7 +19387,7 @@ var sys$18 = Symbol.for("#init");
 var sys$25 = Symbol.for("#next");
 var sys$33 = Symbol.for("#prev");
 var cluster = require("cluster");
-var Instance = class {
+var Instance2 = class {
   [sys$18]($$ = null) {
     var $0$1;
     this.runner = $$ && ($0$1 = $$.runner) !== void 0 ? $0$1 : null;
@@ -19434,12 +19439,12 @@ var Instance = class {
       IMBA_HMR: o.hmr ? true : void 0,
       PORT: process.env.PORT || o.port
     };
-    this.log.info("starting");
     if (o.execMode == "fork") {
       args.env = Object.assign({}, process.env, env);
       return child_process.default.fork(path2.default.resolve(path6), args.args, args);
     }
     ;
+    this.log.info("starting");
     cluster.setupMaster(args);
     let worker2 = cluster.fork(env);
     worker2.nr = this.restarts++;
@@ -19507,7 +19512,7 @@ var Runner = class extends component_default {
         number: nr,
         name: max > 1 ? "" + name + " " + nr + "/" + max : name
       };
-      this.workers.add(new Instance(this, opts));
+      this.workers.add(new Instance2(this, opts));
       nr++;
     }
     ;
@@ -19662,18 +19667,22 @@ var fs3 = __toModule(require("fs"));
 var path3 = __toModule(require("path"));
 var sys$110 = Symbol.for("#refresh");
 var sys$26 = Symbol.for("#manifest");
-var sys$34 = Symbol.for("#abspath");
+var sys$34 = Symbol.for("#absPath");
 var sys$42 = Symbol.for("#raw");
 var sys$52 = Symbol.for("#watch");
 var Asset = class {
   constructor(manifest3) {
     this[sys$26] = manifest3;
   }
-  get abspath() {
+  get absPath() {
     return this[sys$34] || (this[sys$34] = this[sys$26].resolve(this));
   }
   readSync() {
-    return fs3.default.readFileSync(this.abspath, "utf-8");
+    return fs3.default.readFileSync(this.absPath, "utf-8");
+  }
+  pipe(res) {
+    let stream = fs3.default.createReadStream(this.absPath);
+    return stream.pipe(res);
   }
   toString() {
     return this.url;
@@ -19774,7 +19783,6 @@ var Manifest = class extends events2.EventEmitter {
     var self2 = this;
     if (this[sys$52] != true ? (this[sys$52] = true, true) : false) {
       return this.path && fs3.default.watch(this.path, function(ev, name) {
-        console.log("watch manifest!", ev, self2.path);
         let exists = fs3.default.existsSync(self2.path);
         let stat = exists && fs3.default.statSync(self2.path);
         if (exists) {
@@ -19869,7 +19877,7 @@ var Watcher = class extends component_default {
     return this[sys$111];
   }
   isIgnored(path6) {
-    if (path6.match(/(\/\.(git|cache)\/|\.DS_Store)/)) {
+    if (path6.match(/(\/\.(git|imba-cache|cache)\/|\.DS_Store)/)) {
       return true;
     }
     ;
@@ -20953,9 +20961,9 @@ async function run(entry, o, extras) {
     config: o.config,
     imbaPath: o.imbaPath
   });
+  o.port || (o.port = await get_port.default({port: get_port.default.makeRange(3e3, 3100)}));
   if (o.autoserve) {
     $0$1 = params.entryPoints, delete params.entryPoints, $0$1;
-    o.port || (o.port = await get_port.default({port: get_port.default.makeRange(3e3, 3100)}));
     params.stdin = {
       contents: serve_http_default.replace("CLIENT_ENTRY", "./" + file.name),
       resolveDir: file.absdir,

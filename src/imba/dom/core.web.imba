@@ -269,13 +269,17 @@ extend class SVGElement
 
 extend class SVGSVGElement
 
-	set asset value
-		if #asset =? value
-			console.log 'svg set asset',value
-			for own k,v of value.attributes
-				setAttribute(k,v)
-			innerHTML = value.content
+	set src value
+		if #src =? value
+			if value..adoptNode
+				value.adoptNode(self)
+			elif value..content
+				for own k,v of value.attributes
+					setAttribute(k,v)
+				innerHTML = value.content
 		return
+
+		
 
 export def createSVGElement name, parent, flags, text, ctx
 	let el = document.createElementNS("http://www.w3.org/2000/svg",name)

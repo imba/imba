@@ -285,7 +285,19 @@ export class SVGFile < FileNode
 		memo(o.format) do
 			let svgbody = await read!
 			let parsed = parseAsset({body: svgbody})
-			return {js: "export default {JSON.stringify(parsed)};"}
+			# special serializer
+			let js = """
+			import \{asset\} from 'imba';
+			import url from './{name}';
+			export default asset(\{
+				url: url,
+				type: 'svg',
+				meta: {JSON.stringify(parsed)},
+				toString: function()\{ return this.url;\}
+			\})
+			"""
+			#  "export default {JSON.stringify(parsed)};"
+			return {js: js}
 
 export class ImageFile < FileNode
 
@@ -299,6 +311,7 @@ export class ImageFile < FileNode
 			import url from './{name}';
 			export default asset(\{
 				url: url,
+				type: 'image',
 				width: {size.width or 0},
 				height: {size.height or 0},
 				toString: function()\{ return this.url;\}

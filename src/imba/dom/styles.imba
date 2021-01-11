@@ -84,7 +84,7 @@ class Styles
 		if CSS_STR_PROPS[key]
 			value = String(value)
 
-		let typ = typeof value	
+		let typ = typeof value
 			
 		if typ == 'number'
 			if !unit
@@ -116,6 +116,8 @@ class Styles
 				else
 					value = '"' + value + '"'
 
+		elif value and value.toStyleString isa Function
+			return value.toStyleString!
 		return value
 		
 	def parseDimension val

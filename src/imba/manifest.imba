@@ -7,11 +7,15 @@ class Asset
 	def constructor manifest
 		#manifest = manifest
 
-	get abspath
-		#abspath ||= #manifest.resolve(self)
+	get absPath
+		#absPath ||= #manifest.resolve(self)
 
 	def readSync
-		nfs.readFileSync(abspath,'utf-8')
+		nfs.readFileSync(absPath,'utf-8')
+
+	def pipe res
+		let stream = nfs.createReadStream(absPath)
+		return stream.pipe(res)
 
 	def toString
 		url
@@ -82,7 +86,6 @@ export class Manifest < EventEmitter
 	def watch
 		if #watch =? yes
 			path and nfs.watch(path) do(ev,name)
-				console.log 'watch manifest!',ev,path
 				let exists = nfs.existsSync(path)
 				let stat = exists and nfs.statSync(path)
 				update! if exists

@@ -49,8 +49,7 @@ export default class Watcher < Component
 		return #watcher
 	
 	def isIgnored path
-		return true if path.match(/(\/\.(git|cache)\/|\.DS_Store)/)
-		# console.log 'is ignored?',path
+		return true if path.match(/(\/\.(git|imba-cache|cache)\/|\.DS_Store)/)
 		return false
 
 	def add ...paths

@@ -62,11 +62,11 @@ class Instance
 			PORT: process.env.PORT or o.port
 		}
 
-		log.info "starting"
-
 		if o.execMode == 'fork'
 			args.env = Object.assign({},process.env,env)
 			return cp.fork(np.resolve(path),args.args,args)
+
+		log.info "starting"
 
 		cluster.setupMaster(args)
 
