@@ -4731,9 +4731,6 @@ export class Access < Op
 		let lft = left
 		left.traverse if left
 
-		if lft isa VarOrAccess and lft.isGlobal('import')
-			console.log 'accessing import!!!'
-
 		right.traverse if right
 		@left ||= scope__.context
 		return
