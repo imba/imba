@@ -1,6 +1,6 @@
-var puppy = window.puppy
+const puppy = window.puppy
 
-var pup = do(ns,...params)
+const pup = do(ns,...params)
 	if ns.match(/^spec/) and puppy
 		puppy(ns,params)
 		return
@@ -333,7 +333,7 @@ global class SpecAssert < SpecComponent
 		else
 			"failed"
 
-window.spec = SPEC = new Spec
+window.spec = global.SPEC = new Spec
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)

@@ -1,5 +1,7 @@
 let fs = {}
 
+import imbac from 'imba/compiler'
+
 fs.code1 = """
 if $node$
 	'Node'
@@ -17,7 +19,7 @@ if true
 
 def compile name, o = {}
 	o.sourcePath ||= "{name}.imba"
-	global.imbac.compile(fs[name],o)
+	imbac.compile(fs[name],o)
 
 test 'platform: node' do
 	let res = String compile('code1', platform: 'node')

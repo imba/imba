@@ -1,3 +1,5 @@
+import imbac from 'imba/compiler'
+
 let fs = {}
 
 fs.code1 = """
@@ -6,7 +8,7 @@ global css div color:mint1 stroke:mint2 bgc:mint3
 
 def compile name, o = {}
 	o.sourcePath ||= "{name}.imba"
-	global.imbac.compile(fs[name],o)
+	imbac.compile(fs[name],o)
 
 test 'custom color' do
 	let res = compile('code1', config: {theme: {

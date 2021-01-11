@@ -8,11 +8,11 @@ tag app-item
 		<self> <span> label
 
 test do
-	var tree = <main label="inherited">
+	let tree = <main label="inherited">
 		<div>
 			<app-item>
 	eq tree.textContent, "inherited"
 
 test do
-	var tree = <div> <app-item label="direct">
+	let tree = <div> <app-item label="direct">
 	eq tree.textContent, "direct"

@@ -1,9 +1,99 @@
-# import {HTMLElement} from '../dom'
+import {Node,HTMLElement,CUSTOM_TYPES} from './core'
+import {createLiveFragment} from './fragment'
+import {scheduler} from '../scheduler'
 
-const DOM = imba.dom
-const doc = imba.document # global.#document or global.document
+const hydrator = new class
+	items = []
+	current = null
+	lastQueued = null
+	tests = 0
 
-class window.ImbaElement < window.HTMLElement
+	def flush
+		let item = null
+
+		if false
+			console.log 'flush hydrate',items,tests
+			for item,i in items
+				let next = items[i + 1]
+				if next
+					unless next.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_PRECEDING
+						console.log "WRONG ORDER!!!",item,next,next.compareDocumentPosition(item)
+
+		while item = items.shift!
+			continue if !item.parentNode or item.hydrated?
+			# Mark as inited to stop connectedCallback from early exit
+			let prev = current
+			current = item
+			item.__F |= $EL_SSR$
+			item.connectedCallback!
+			current = prev
+		return
+
+	def queue item
+		# let len = items.push(item)
+		let len = items.length
+		let idx = 0
+		let prev = lastQueued
+		lastQueued = item
+
+		let BEFORE = Node.DOCUMENT_POSITION_PRECEDING
+		let AFTER = Node.DOCUMENT_POSITION_FOLLOWING
+
+		if len
+			let prevIndex = items.indexOf(prev)
+			let index = prevIndex
+
+			let compare = do(a,b)
+				tests++
+				a.compareDocumentPosition(b)
+
+			if prevIndex == -1 or prev.nodeName != item.nodeName
+				index = prevIndex = 0
+
+			let curr = items[index]
+
+			while curr and compare(curr,item) & AFTER
+				curr = items[++index]
+
+			if index != prevIndex
+				curr ? items.splice(index,0,item) : items.push(item)
+			else
+				while curr and compare(curr,item) & BEFORE
+					curr = items[--index]
+				if index != prevIndex
+					curr ? items.splice(index + 1,0,item) : items.unshift(item)
+		else
+			items.push(item)
+			global.queueMicrotask(flush.bind(self)) if !current
+
+		return
+
+	def run item
+		return if active
+		# look for parents that are still hydrated
+		# only the ssr elements that are not yet awakened
+		active = yes
+		# let all = global.document.getElementsByClassName('__ssr')
+		let all = global.document.querySelectorAll('.__ssr')
+		console.log 'running hydrator',item,all.length,Array.from(all)
+
+		for item in all
+			item.#count ||= 1
+			item.#count++
+			let name = item.nodeName
+			let typ = map[name] ||= global.window.customElements.get(name.toLowerCase!) or HTMLElement
+			console.log 'item type',name,typ,!!CUSTOM_TYPES[name.toLowerCase!]
+			# console.log 'hydrate??',item.constructor
+			continue if !item.connectedCallback or !item.parentNode or item.hydrated?
+			console.log 'hydrate',item # !!item.parentNode,item,item.connectedCallback
+			# item.connectedCallback!
+
+		active = no
+
+export def hydrate
+	hydrator.flush!
+
+export class ImbaElement < HTMLElement
 	def constructor
 		super()
 		if flags$ns
@@ -21,6 +111,7 @@ class window.ImbaElement < window.HTMLElement
 		self
 		
 	def flag$ str
+
 		self.className = flags$ext = str
 		return
 
@@ -29,7 +120,7 @@ class window.ImbaElement < window.HTMLElement
 		if name == '__' and !render
 			return self
 
-		__slots[name] ||= imba.createLiveFragment(0,null,self)
+		__slots[name] ||= createLiveFragment(0,null,self)
 
 	# called immediately after construction 
 	def build
@@ -75,8 +166,6 @@ class window.ImbaElement < window.HTMLElement
 		rendered()
 		__F = (__F | $EL_RENDERED$) & ~$EL_RENDERING$
 
-	
-
 	get autoschedule
 		(__F & $EL_SCHEDULE$) != 0
 	
@@ -107,23 +196,40 @@ class window.ImbaElement < window.HTMLElement
 	get hydrated?
 		return (__F & $EL_HYDRATED$) != 0
 
+	get ssr?
+		return (__F & $EL_SSR$) != 0
+
 	def schedule
-		imba.scheduler.listen('render',self)
+		scheduler.listen('render',self)
 		__F |= $EL_SCHEDULED$
 		return self
 
 	def unschedule
-		imba.scheduler.unlisten('render',self)
+		scheduler.unlisten('render',self)
 		__F &= ~$EL_SCHEDULED$
 		return self
 
 	def end$
 		visit()
 
+	def open$
+		if __F & $EL_SSR$
+			__F = __F & ~$EL_SSR$
+			# remove flag
+			classList.remove('_ssr_')
+			if flags$ext and flags$ext.indexOf('_ssr_') == 0
+				flags$ext = flags$ext.slice(5)
+			innerHTML = ''
+		self
+
 	def connectedCallback
 		let flags = __F
 		let inited = flags & $EL_INITED$
 		let awakened = flags & $EL_AWAKENED$
+
+		if !inited and !(flags & $EL_SSR$)
+			hydrator.queue(self)
+			return
 
 		# return if we are already in the process of mounting - or have mounted
 		if flags & ($EL_MOUNTING$ | $EL_MOUNTED$)
@@ -135,9 +241,10 @@ class window.ImbaElement < window.HTMLElement
 			#init!
 
 		unless flags & $EL_HYDRATED$
+			# clearly seems wrong?
 			flags$ext = className
-			hydrate()
 			__F |= $EL_HYDRATED$
+			self.hydrate()
 			commit()
 
 		unless awakened
@@ -146,7 +253,7 @@ class window.ImbaElement < window.HTMLElement
 
 		let res = mount()
 		if res && res.then isa Function
-			res.then(imba.scheduler.commit)
+			res.then(scheduler.commit)
 
 		# else
 		#	if this.render and $EL_RENDERED$
@@ -162,85 +269,3 @@ class window.ImbaElement < window.HTMLElement
 		__F = __F & (~$EL_MOUNTED$ & ~$EL_MOUNTING$)
 		unschedule() if __F & $EL_SCHEDULED$
 		unmount()
-
-
-# Stuff for element registry
-
-const CustomTagConstructors = {}
-
-class ImbaElementRegistry
-
-	def constructor
-		types = {}
-
-	def lookup name
-		return types[name]
-
-	def get name, klass
-		return DOM.ImbaElement if !name or name == 'component'
-		return types[name] if types[name]
-		return DOM.getElementType(name) if $node$
-		return DOM[klass] if klass and DOM[klass]
-		DOM.customElements.get(name) or DOM.ImbaElement
-
-	def create name
-		if types[name]
-			# TODO refactor
-			return types[name].create$()
-		else
-			doc.createElement(name)
-
-	def define name, klass, options = {}
-		types[name] = klass
-		klass.nodeName = name
-
-		let proto = klass.prototype
-		
-		# if proto.render && proto.end$ == Element.prototype.end$
-		#	proto.end$ = proto.render
-		let basens = proto._ns_
-		if options.ns
-			let ns = options.ns
-			let flags = ns + ' ' + ns + '_ '
-			if basens
-				flags += proto.flags$ns 
-				ns += ' ' + basens
-			proto._ns_ = ns
-			proto.flags$ns = flags
-
-		if options.extends
-			CustomTagConstructors[name] = klass
-		else
-			DOM.customElements.define(name,klass)
-		return klass
-
-imba.tags = new ImbaElementRegistry
-
-const proto = window.ImbaElement.prototype
-
-def imba.createComponent name, parent, flags, text, ctx
-	# the component could have a different web-components name?
-	var el
-	
-	if typeof name != 'string'
-		if name and name.nodeName
-			name = name.nodeName
-
-	if CustomTagConstructors[name]
-		el = CustomTagConstructors[name].create$(el)
-		# extend with mroe stuff
-		
-		el.slot$ = proto.slot$
-		el.__slots = {}
-	else
-		el = doc.createElement(name)
-
-	el.##parent = parent
-	el.#init!
-
-	if text !== null
-		el.slot$('__').text$(text)
-		
-	if flags or el.flags$ns # or nsflag
-		el.flag$(flags or '')
-	return el

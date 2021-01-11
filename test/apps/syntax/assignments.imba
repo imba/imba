@@ -71,7 +71,7 @@ test do
 
 test do
 	let s = 'a'
-	this.b = 3
+	global.b = 3
 
 	if let a = 2
 		eq a,2

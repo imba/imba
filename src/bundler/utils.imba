@@ -1,7 +1,10 @@
-const fs = require 'fs'
-const path = require 'path'
-const readdirp = require 'readdirp'
-const crypto = require 'crypto'
+import nfs from 'fs'
+import np from 'path'
+import crypto from 'crypto'
+import os from 'os'
+
+import * as flatted from 'flatted'
+import {resolve as parseConfig} from './config'
 
 export const defaultLoaders = {
 	".png": "file",
@@ -12,6 +15,61 @@ export const defaultLoaders = {
 	".otf": "file"
 }
 
+export def getCacheDir options
+	# or just the directory of this binary?
+	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'..','.imba-cache')  # np.resolve(os.homedir!,'.imba')
+	unless nfs.existsSync(dir)
+		console.log 'cache dir does not exist - create',dir
+		nfs.mkdirSync(dir)
+	return dir
+
+export def diagnosticToESB item, add = {}
+	# {"id":"bs","warnings":[],"errors":[{"range":{"start":{"line":3,"character":9,"offset":41},"end":{"line":3,"character":9,"offset":41}},"severity":1,"source":"imba-parser","message":"Unexpected 'TERMINATOR'"}],"js":"","css":""}
+	{
+		text: item.message
+		location: Object.assign({
+			line: item.range.start.line + 1
+			column: item.range.start.character
+			length: item.range.end.offset - item.range.start.offset
+			lineText: item.lineText
+		},add)
+	}
+
+export def writePath src, body
+	await ensureDir(src)
+	nfs.promises.writeFile(src,body)
+
+export def writeFile src, body
+	nfs.promises.writeFile(src,body)
+
+export def readFile src, encoding = 'utf8'
+	nfs.promises.readFile(src, encoding)
+
+export def exists src
+	let p = nfs.promises.access(src, nfs.constants.F_OK)
+	p.then(do yes).catch(do no)
+
+export def rename src, pattern
+	let dir = np.dirname(src)
+	let ext = np.extname(src)
+	let name = np.basename(src,ext)
+	return np.join(dir,pattern.replace('*',name))
+
+
+	let parsed = np.parse(src)
+	if typeof pattern == 'string'
+		if pattern[0] == '.'
+			return np.join(dir,name + pattern)
+			parsed.ext = pattern
+		elif pattern.indexOf('')
+			parsed.name = pattern
+	else
+		Object.assign(parsed,pattern)
+	console.log 'rename',parsed
+	return np.format(parsed)
+	# let basedir = path.dirname(src)
+	# let ext = path.exxtname
+
 # find, remove and return item from array
 export def pluck array, cb
 	for item,i in array
@@ -20,39 +78,37 @@ export def pluck array, cb
 			return item
 	return null
 
-export def resolvePaths obj,cwd
-	if obj isa Array
-		for item,i in obj
-			obj[i] = resolvePaths(item,cwd)
-	elif typeof obj == 'string'
-		return obj.replace(/^\.\//,cwd + '/')
-	elif typeof obj == 'object'
-		for own k,v of obj
-			let alt = k.replace(/^\.\//,cwd + '/')
-			obj[alt] = resolvePaths(v,cwd)
-			if alt != k
-				delete obj[k]
-	return obj
+export def resolveConfig cwd, name
+	try
+		let src = np.resolve(cwd or '.',name or 'imbaconfig.json')
+		let config = JSON.parse(nfs.readFileSync(src,'utf8'))
+		config.#mtime = nfs.statSync(src).mtimeMs or 0
+		config.#path = src
+		return parseConfig(config)
+	catch e
+		return parseConfig({})
+	
+export def resolvePath name, cwd = '.', cb = null
+	# console.log 'resolve path',name,cwd
+	let src = np.resolve(cwd,name)
+	let dir = np.dirname(src)
+	if nfs.existsSync(src)
+		return src
+	let up = np.dirname(dir)
+	# console.log 'reresolve',up,dir
+	up != dir ? resolvePath(name,up) : null
 
-export def expandPath src
-	unless src.indexOf("*") >= 0
-		return Promise.resolve([src])
+export def resolveFile name,cwd,handler
+	if let src = resolvePath(name,cwd)
+		let file = {
+			path: src
+			body: nfs.readFileSync(src,'utf-8')
+		}
+		return handler(file)
+	return null
 
-	let options = {
-		depth: 1
-		fileFilter: '*.imba',
-	}
-
-	src = src.replace(/(\/\*\*)?(\/\*\.(\w+))?$/) do(m,deep,last,ext)
-		if last
-			options.fileFilter = last.slice(1)
-		if deep
-			options.depth = 5
-		return ""
-	# console.log "readdirp",src,options
-	let files = await readdirp.promise(src,options)
-	# console.log 'files from promise',files
-	return files.map do $1.fullPath
+export def resolvePackage cwd
+	resolveFile('package.json',cwd) do JSON.parse($1.body)
 
 # generates a function that converts integers to a short
 # alphanumeric string utilizing the supplied alphabet
@@ -64,7 +120,14 @@ export def idGenerator alphabet = 'abcdefghijklmnopqrstuvwxyz'
 		num.toString(alphabet.length).split("").map(do remap[$1]).join("")
 
 export def createHash body
-	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8)
+	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8).toUpperCase!
+
+export def serializeData data
+	flatted.stringify(data)
+
+export def deserializeData data
+	flatted.parse(data)
+	
 
 const dirExistsCache = {}
 
@@ -74,13 +137,13 @@ export def ensureDir src
 	
 	new Promise do(resolve)
 
-		while dirname = path.dirname(dirname)
-			if dirExistsCache[dirname] or fs.existsSync(dirname)
+		while dirname = np.dirname(dirname)
+			if dirExistsCache[dirname] or nfs.existsSync(dirname)
 				break
 			stack.push(dirname)
 
 		while stack.length
 			let dir = stack.pop!
-			fs.mkdirSync(dirExistsCache[dirname] = dir)
+			nfs.mkdirSync(dirExistsCache[dirname] = dir)
 
 		resolve(src)

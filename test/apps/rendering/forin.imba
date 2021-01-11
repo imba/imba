@@ -1,6 +1,6 @@
-var pool = []
+const pool = []
 
-var items = [
+const items = [
 	{id: 1, title: "One"}
 	{id: 2, title: "Two"}
 	{id: 3, title: "Three"}
@@ -9,7 +9,7 @@ var items = [
 	{id: 6, title: "Six"}
 ]
 
-var numbers = [1,2,3]
+const numbers = [1,2,3]
 
 tag app-root
 	def render
@@ -41,7 +41,7 @@ test "reorder item" do
 	eq $1.mutations.length,items.length
 
 describe "with siblings" do
-	let div = $(.with-siblings)
+	let div = document.querySelector('.with-siblings')
 	test "advanced" do
 		eq div.innerText, 'a123b'
 		numbers.push(4)

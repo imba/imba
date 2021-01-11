@@ -1,4 +1,4 @@
-var blocks = [
+const blocks = [
 	{type: 'todo-item', name: 'I am a todo item', id: 1}
 	{type: 'note-item', name: 'I am a note item', id: 2}
 	{type: 'footer', name: 'I am a footer', id: 3}
@@ -32,29 +32,11 @@ tag app-root
 imba.mount <app-root>
 
 test do
-	ok $(app-root footer)
+	ok document.querySelector('app-root footer')
 	blocks[2].type = 'header'
 	await imba.commit!
-	ok $(app-root header)
-	$(app-root todo-item span).click()
+	ok document.querySelector('app-root header')
+	document.querySelector('app-root todo-item span').click()
 	await imba.commit!
 	# all todos should have been converted
-	ok $(app-root todo-item) == null
-
-
-### css
-
-todo-item {
-	color: blue;
-}
-
-note-item {
-	color: red;
-}
-
-footer {
-	min-height: 20px;
-	background: purple;
-}
-
-###
+	ok document.querySelector('app-root todo-item') == null

@@ -5,6 +5,7 @@
 var helpers = require './helpers'
 var constants = require './constants'
 var fspath = require 'path'
+var transformers = require './transformers'
 
 import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
@@ -14,10 +15,23 @@ import StyleRule,StyleTheme,Color from './styler.imba'
 import parseAsset from './assets.imba'
 import Compilation from './compilation'
 
+import SourceMapper from './sourcemapper'
+
 var TAG_NAMES = constants.TAG_NAMES
 
 var TAG_TYPES = {}
 var TAG_ATTRS = {}
+
+var EXT_LOADER_MAP = {
+	svg: 'image'
+	png: 'image'
+	apng: 'image'
+	jpg: 'image'
+	jpeg: 'image'
+	gif: 'image'
+	tiff: 'image'
+	bmp: 'image'
+}
 
 TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br
  button canvas caption cite code col colgroup data datalist dd del details dfn
@@ -48,9 +62,18 @@ TAG_ATTRS.SVG = "cx cy d dx dy fill fillOpacity fontFamily fontSize fx fy gradie
  strokeOpacity strokeWidth textAnchor transform version viewBox x1 x2 x y1 y2 y"
 
 var CUSTOM_EVENTS = {
-	intersect: yes
-	selection: yes
-	resize: yes
+	intersect: 'events_intersect'
+	selection: 'events_selection'
+	resize: 'events_resize'
+	touch: 'events_pointer'
+	pointer: 'events_pointer'
+	pointerdown: 'events_pointer'
+	pointermove: 'events_pointer'
+	pointerover: 'events_pointer'
+	pointerout: 'events_pointer'
+	pointerup: 'events_pointer'
+	pointercancel: 'events_pointer'
+	lostpointercapture: 'events_pointer'
 }
 
 export var AST = {}
@@ -84,7 +107,7 @@ export var F =
 	
 	EL_INITED: 2 ** 0
 	EL_HYDRATED: 2 ** 1
-	EL_DEHYDRATED: 2 ** 2
+	EL_HYDRATING: 2 ** 2
 	EL_AWAKENED: 2 ** 3
 	EL_MOUNTING: 2 ** 4
 	EL_MOUNTED: 2 ** 5
@@ -92,6 +115,7 @@ export var F =
 	EL_SCHEDULED: 2 ** 7
 	EL_RENDERING: 2 ** 8
 	EL_RENDERED: 2 ** 9
+	EL_SSR: 2 ** 10
 
 	# render marks
 	DIFF_BUILT: 2 ** 0
@@ -200,6 +224,10 @@ export var NODES = []
 var C = do |node,opts|
 	(typeof node == 'string' or typeof node == 'number') ? node : node.c(opts)
 
+# wrap output in path markers
+var MP = do |val,typ = 'path'|
+	return "/*${typ}$*/{val}/*$*/"
+
 var M = do |val,mark,o|
 	if mark == undefined
 		mark = val
@@ -212,11 +240,16 @@ var M = do |val,mark,o|
 		let m0 = ''
 		let m1 = ''
 
+		# if o and o:locRef 
+		#	ref += '|' + o:locRef
+
 		if start == 0 or start > 0
 			m0 = end >= start ? "/*%{start}|{ref}$*/" : "/*%{start}$*/"
 			
 		if end == 0 or end > 0
 			m1 = start >= 0 ? "/*%{end}|{ref}$*/" : "/*%{end}$*/"
+		if o and o:locRef
+			val = MP(val,o:locRef)
 		return m0 + val + m1
 	return C(val,o)
 
@@ -535,6 +568,7 @@ export class Stack
 	prop root
 	prop state
 	prop semanticTokens
+	prop meta
 	prop theme
 	prop css
 
@@ -556,23 +590,31 @@ export class Stack
 		@semanticTokens = []
 		@symbols = {}
 		@theme = null
-
+		@meta = {}
 		@css = ''
+		@runtime
 		self
+
+	def runtime
+		@root.runtime
 	
 	def registerSemanticToken token, kind, modifiers
 		if token isa Node
 			kind ||= token.@variable
 			token = token.@value
-			
-		if kind isa Variable
-			token.@kind = kind.type
-			token.@level = kind.scope.level
-			token.@scope = kind.scope.kind
-		else
-			token.@kind = kind
+
+		unless typeof token == 'string'
+			if kind isa Variable
+				token.@kind = kind.type
+				token.@level = kind.scope.level
+				token.@scope = kind.scope.kind
+			else
+				token.@kind = kind
+
 		@semanticTokens.push(token)
 	
+	def use item
+		@root.use(item)
 		
 	def incr name
 		@counters[name] ||= 0
@@ -681,11 +723,15 @@ export class Stack
 			return @options[lowercased]
 			
 		if key == 'WEB' or key == 'BROWSER'
+			@meta:universal = no
 			return isWeb
 		elif key == 'NODE'
+			@meta:universal = no
 			return isNode
 		elif key == 'WORKER' or key == 'WEBWORKER'
+			@meta:universal = no
 			return isWorker
+
 		elif key == 'HMR'
 			return !!@options:hmr
 
@@ -863,6 +909,9 @@ export class Node
 			console.log(*arguments)
 		self
 
+	def runtime
+		STACK.runtime
+
 	def typeName
 		self:constructor:name
 
@@ -965,6 +1014,9 @@ export class Node
 	def isReserved
 		no
 
+	def isGlobal name
+		no
+
 	# should rather do traversals
 	# o = {}, up, key, index
 	def traverse o
@@ -1025,6 +1077,9 @@ export class Node
 
 	def isExpression
 		@expression || false
+
+	def isRuntimeReference
+		no
 
 	def hasSideEffects
 		true
@@ -1098,6 +1153,7 @@ export class Node
 
 	def warn message, opts = {}
 		let loc = opts:loc or self.loc or [0,0]
+		console.log 'loc warn',loc,script.rangeAt(loc[0],loc[1])
 		script.addDiagnostic(opts:severity or 'warning',{
 			message: message
 			range: script.rangeAt(loc[0],loc[1])
@@ -2073,6 +2129,9 @@ export class Parens < ValueNode
 		@value.consume(node)
 
 
+export class PureExpression < Parens
+
+
 # Could inherit from valueNode
 # an explicit expression-block (with parens) is somewhat different
 # can be used to return after an expression
@@ -2776,41 +2835,82 @@ export class Root < Code
 		STACK.reset # -- nested compilation does not work now
 		@scope.options = OPTS = STACK.@options = @options = o or {}
 		STACK.root = @scope
+		@scope.@imba.configure(o)
 		traverse
 		STACK.root = @scope
 
 		if o:bundle
-			@scope.lookup('__filename').@c = STR(o:sourcePath).c
-			@scope.lookup('__dirname').@c = STR(fspath.dirname(o:sourcePath)).c
+			if o:cwd and STACK.isNode
+				let abs = fspath.resolve(o:cwd,o:sourcePath)
+				let rel = fspath.relative(o:cwd,abs)
+				let np = @scope.importProxy('path').proxy
+
+				@scope.lookup('__filename'):c = do LIT("{np:resolve}({STR(rel).c})").c
+				@scope.lookup('__dirname'):c = do LIT("{np:dirname}({np:resolve}({STR(rel).c}))").c
+				# @scope.lookup('__filename'):c = do LIT("{runtime:_filename_}({STR(rel).c})").c
+				# @scope.lookup('__dirname'):c = do LIT("{runtime:_dirname_}({STR(rel).c})").c
+			else
+				@scope.lookup('__filename').@c = STR(o:sourcePath).c
+				@scope.lookup('__dirname').@c = STR(fspath.dirname(o:sourcePath)).c
 		
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)
+
+		if STACK.css and (!o:styles or o:styles == 'inline')
+			runtime:styles
 		
 		var out = c(o)
 
 		if STACK.tsc
 			out = "import 'imba/index';\n{out}"
 
+		script:rawResult = {
+			js: out
+			css: STACK.css
+		}
+
 		script:js = out
-		script:css = STACK.css
+		script:css = STACK.css or ""
 		script:sourceId = sourceId
-		script:assts = scope.assets
+		script:assets = scope.assets
 		script:dependencies = Object.keys(scope.@dependencies)
+		script:universal = STACK.meta:universal !== no
+		script:imports = transformers.extractDependencies(script:js)
+
+		if o:resolve
+			# console.log 'resolving dependencies',script:imports,script:js
+			script:js = transformers.resolveDependencies(o:sourcePath,script:js,o:resolve)
+
+		if false
+			console.log 'deps',script:imports
+			let resolver = do |path,ctx|
+				return "something else"
+			console.log transformers.resolveDependencies(script:js,resolver)
+
 		
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
-				script:js = "{script:js}\nimba.styles.register('{script:sourceId}',{JSON.stringify(script:css)});"
+				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{JSON.stringify(script:css)});"
 				if o:debug
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
-			
+
 		# always create the sourcemap?
-		if o:sourceMap or STACK.tsc # should handle sourcemap no matter what?
-			let map = SourceMap.new(script,o:sourceMap,o).generate
+		if o:sourcemap or STACK.tsc # should handle sourcemap no matter what?
+			let map = SourceMap.new(script,o).generate
 			script:sourcemap = map.result
 
+			if o:sourcemap == 'inline'
+				script:js += map.inlined
+
+		# if o:sourcemap == 'inline'
+		#	let map = script:sourcemap ||= SourceMap.new(script,o:sourceMap,o).generate
+
 		# remove sourcemap markers from js and css
-		script:css &&= script:css.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
-		script:js = script:js.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+		# start with other markers as well
+		unless o:raw
+			script:css &&= SourceMapper.strip(script:css) # .replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+			script:js = SourceMapper.strip(script:js) # .replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+
 		return script
 
 	def js o
@@ -3263,20 +3363,24 @@ export class TagDeclaration < ClassDeclaration
 		if sup and sup.@variable
 			sup = sup.@variable
 		elif sup
-			sup = CALL(LIT('imba.tags.get'),[sup,STR(sup.toClassName)])
+			sup = CALL(runtime:getTagType,[sup,STR(sup.toClassName)])
 		else
-			sup = CALL(LIT('imba.tags.get'),[STR('component'),STR('ImbaElement')])
+			sup = runtime:ImbaElement # CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
+			# sup = CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
 
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
-
 			if option(:extension)
 				className = "Extended${className}"
 
 		elif option(:extension)
 			@body.@delimiter = ','
 			@body.set(braces: yes)
-			let cls = CALL(LIT('imba.tags.get'),[name,STR(name.toClassName)])
+			
+			
+			let cls = CALL(runtime:getTagType,[name,STR(name.toClassName)])
+			if className == 'ImbaElement'
+				cls = runtime:ImbaElement
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
 
@@ -3304,7 +3408,7 @@ export class TagDeclaration < ClassDeclaration
 				js += "; {className}[{initKey.c}]()"
 			# let ext = (option(:extends) or LIT('{}')).c
 			let ext = Obj.wrap(@config).c
-			js += "; imba.tags.define({name.c},{className},{ext})"
+			js += "; {runtime:defineTag}({name.c},{className},{ext})"
 		else
 			unless option(:extension)
 				js += "; globalThis.{M className, name} = {className};"
@@ -3853,7 +3957,7 @@ export class Str < Literal
 		String(@value)
 
 	def c o
-		@cache ? super(o) : (M js, @value)
+		@cache ? super(o) : (M js, @value, o)
 
 export class TemplateString < ListNode
 
@@ -4525,6 +4629,12 @@ export class Access < Op
 		var ctor = self:constructor
 		ctor.new(op,left,right)
 
+	def isRuntimeReference
+		if left isa VarOrAccess and left.@variable isa ImbaRuntime
+			if right isa Identifier
+				return right.toString
+			return yes
+		return no	
 	# def datatype
 	#	right:datatype ? right.datatype : null
 
@@ -4533,6 +4643,9 @@ export class Access < Op
 		var lft = left
 		var rgt = right
 		var rgtexpr = null
+
+		if lft isa VarOrAccess and lft.@variable isa ImportProxy
+			return lft.@variable.access(rgt).c
 
 		if rgt isa Token
 			rgt = Identifier.new(rgt)
@@ -4615,7 +4728,9 @@ export class Access < Op
 		return out
 
 	def visit
+		let lft = left
 		left.traverse if left
+
 		right.traverse if right
 		@left ||= scope__.context
 		return
@@ -4737,6 +4852,9 @@ export class VarOrAccess < ValueNode
 		@variable = null
 		self
 
+	def isGlobal name
+		@variable and @variable.isGlobal(name)
+
 	def startLoc
 		@token.startLoc
 
@@ -4758,7 +4876,9 @@ export class VarOrAccess < ValueNode
 		if variable and variable isa GlobalReference
 			let name = variable.name
 
-			if stack.tsc
+			if variable isa ZonedVariable
+				@value = variable.forScope(scope)
+			elif stack.tsc
 				@value = LIT(name)
 			elif stack.isNode
 				@value = LIT(scope.imba.c)
@@ -4766,9 +4886,7 @@ export class VarOrAccess < ValueNode
 					@value = LIT("{scope.imba.c}.{name}")
 			else
 				@value = LIT(name)
-
-			# "{root.symbolRef('#imba').c}"
-			# console.log 'variable is global reference',variable.name,@value.c
+		
 
 		# does not really need to have a declarator already? -- tricky
 		elif variable && variable.declarator
@@ -4915,19 +5033,19 @@ export class VarReference < ValueNode
 		var virtualize = stack
 		let scope = scope__
 		@value.traverse(declaring: @type, variables: vars)
-
-		# should happen automatically when traversing no?
+		# console.log("has variable? {@value.@variable}")
+		# should happen automatically when traversing via traverse(declaring:...)
 		if @value isa Identifier
 			@value.@variable ||= scope.register(@value.symbol,self,type: @type, datatype: datatype)
 			vars.push(@value.@variable)
 			stack.registerSemanticToken(@value,@variable)
 		
 		@variables = vars
-		# forceExpression if option('virtualize')
 		return self
 	
 	def js stack,params
 		let out = @value.c()
+		# console.log "result of varreference {out}"
 		# console.log "is expression?? {@expression} {params:expression}"
 		unless @expression
 
@@ -5325,7 +5443,7 @@ export class Identifier < Node
 		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
 		# FIXME should it not always enable?
-		if OPTS:sourceMap and (!o or o:mark !== false)
+		if OPTS:sourcemap and (!o or o:mark !== false)
 			out = M(out, @token or @value)
 		return out
 
@@ -5616,10 +5734,16 @@ export class TagTypeIdentifier < Identifier
 		@ns == 'svg' or (!isNative and !@ns and TAG_NAMES["svg_{@str}"]) or isAsset # TAG_TYPES.SVG.indexOf(@str) >= 0
 
 	def isAsset
-		!!@str.match(/^svg\-/)
+		@ns == 'assets'
+		# !!@str.match(/^svg\-/)
 
 	def toAssetName
-		isAsset ? @str.slice(4) : null
+		isAsset ? @str : null # .slice(4)
+
+	def toAssetReference
+		let asset = STACK.root.lookupAsset(toAssetName,'svg')
+		return asset:ref
+		return OP('.',asset:ref,STR(@name))
 		
 	def symbol
 		@str
@@ -5653,6 +5777,8 @@ export class TagTypeIdentifier < Identifier
 		let str = @str
 		if str == 'element'
 			return 'Element'
+		elif str == 'component'
+			return 'ImbaElement'
 		elif str == 'svg:element'
 			return 'SVGElement'
 		elif str == 'htmlelement'
@@ -5753,9 +5879,14 @@ export class Call < Node
 			var str = callee.value.symbol
 			if str == 'new'
 				console.log 'calling'
+			# if str == '__pure__'
+			#	console.log 'PUREPRERE'
 			if str == 'extern'
 				callee.value.value.@type = 'EXTERN'
 				return ExternDeclaration.new(args)
+			if str == 'require'
+				console.log 'calling require'
+
 			if str == 'tag'
 				# console.log "ERROR - access args by some method"
 				return TagWrapper.new(args and args:index ? args.index(0) : args[0])
@@ -5782,6 +5913,40 @@ export class Call < Node
 		callee.traverse
 		# if the callee is a PropertyAccess - better to immediately change it
 
+		let runref = callee.isRuntimeReference
+
+		if callee isa Access and callee.left.isGlobal('import')
+			let arg = args.first
+			let kind = callee.right.toString
+
+			callee = runtime:asset
+
+			if arg isa Str
+				let asset = STACK.root.registerAsset(arg.raw,"asset-{kind}")
+				args.replace(arg,asset:ref)
+
+		elif callee.isGlobal('import')
+			
+			# TODO support interpolated strings that can be globbed
+			let arg = args.first
+			let path = arg isa Str and arg.raw
+			# console.log 'calling the global import!!',path
+			if path
+				let ext = path.split('.').pop()
+				if EXT_LOADER_MAP[ext]
+					@asset = STACK.root.registerAsset(path)
+					args.replace(arg,@asset:ref)
+					callee = runtime:asset
+
+		if runref == 'asset'
+			
+			let arg = args.first
+
+			if arg isa Str
+				let asset = STACK.root.registerAsset(arg.raw,'asset')
+				args.replace(arg,asset:ref)
+			# console.log 'visit Call asset',runref
+
 		@block && @block.traverse
 
 	def addBlock block
@@ -5807,6 +5972,9 @@ export class Call < Node
 		@endLoc or (@args and @args.endLoc) or @callee.endLoc
 
 	def js o
+		if @asset
+			return @asset:ref.c
+
 		var opt = expression: yes
 		var rec = null
 		# var args = AST.compact(args) # really?
@@ -7036,8 +7204,11 @@ export class TagAttr < TagPart
 			for m in @chain
 				@mods[m.name] = 1
 
-		# if @ns == 'bind'
+		if @ns == 'bind'
+			STACK.use('use_dom_bind')
 		#	scope__.imbaDependency('internal/bind')
+
+
 		self
 
 	def ns
@@ -7061,11 +7232,34 @@ export class TagAttr < TagPart
 		let bval = val
 		let op = M('=',option(:op))
 		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG)
+		let tagName = @tag and @tag.@tagName
+
+		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'img' or tagName == 'script' or tagName == 'svg'))
+
+		if isAsset
+			let kind = 'asset'
+			if tagName == 'img' or tagName == 'svg'
+				kind = 'asset-img'
+			elif tagName == 'script'
+				kind = 'asset-web'
+
+			let path = value isa Str and value.raw
+			if path and !path.match(/^(\/|https?\:\/\/)/)
+				@asset = STACK.root.registerAsset(path,kind)
+				val = @asset:ref.c
+			else
+				val = MP(val,"path.{kind}")
+
+		# if key == 'src' and @tag.@tagName == 'img' and value isa Str
+		#	console.log "IMG ASSET"
 		
 		if isAttr 
 			if STACK.tsc
 				return "{@tag.tvar}.setAttribute('{key}',String({val}))"
-			if STACK.platform == 'node'
+			if STACK.isNode and !@asset
+				# TODO don't compile to setAttribute directly for node
+				# mark compilation as being only for node?
+				STACK.meta:universal = no
 				return "setAttribute('{key}',{val})"
 
 		if STACK.tsc
@@ -7076,14 +7270,17 @@ export class TagAttr < TagPart
 			return "{M(access,@name)}{op}{@autovalue ? M('true',@value) : val}"
 			
 		let key = self.key
-		
-		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button'] and STACK.platform != 'node'
+
+		# why delegate differently on node and web?
+		# should rather always delegate value to '#value'?
+		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button'] and !STACK.isNode
 			key = 'richValue'
 
 		if ns == 'css'
 			"css$('{key}',{val})"
 		elif ns == 'bind'
 			let path = PATHIFY(value)
+
 
 			if path isa Variable
 				let getter = "function()\{ return {val} \}"
@@ -7101,6 +7298,7 @@ export class TagAttr < TagPart
 				pars.push(u ? STR(u) : NULL)
 				pars.push(STR(k)) if k
 
+			STACK.use('styles')
 			"css$var({AST.cary(pars).join(',')})"
 		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
 			if ns
@@ -7109,7 +7307,9 @@ export class TagAttr < TagPart
 				"set$('{key}',{val})"
 			
 		elif key.indexOf("data-") == 0
-			"dataset.{key.slice(5)}{op}{val}"
+			# "set('{key}',{val})"
+			"setAttribute('{key}',{val})"
+			# "dataset.{key.slice(5)}{op}{val}"
 		else
 			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
 	
@@ -7322,8 +7522,10 @@ export class TagHandler < TagPart
 
 	def visit
 		super
+		STACK.use('events')
 		# Replace with something better for debugging
-		# if @name and CUSTOM_EVENTS[String(@name)]
+		if @name and CUSTOM_EVENTS[String(@name)]
+			STACK.use(CUSTOM_EVENTS[String(@name)])
 		#	scope__.imbaDependency('events/' + String(@name))
 
 	def isStatic
@@ -7666,8 +7868,8 @@ export class TagContent < TagLike
 			if value isa Call or value isa BangCall
 				# mark parent to reset imba.ctx at the end
 				let k = "{parent.cvar}[{osym('$')}]"
-				parts.unshift("imba.ctx=({k} || ({k}=\{_:{fragment.tvar}\}))")
-				parts.push("imba.ctx=null")
+				parts.unshift("{runtime:renderContext}.context=({k} || ({k}=\{_:{fragment.tvar}\}))")
+				parts.push("{runtime:renderContext}.context=null")
 
 		elif isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
@@ -7685,8 +7887,8 @@ export class TagContent < TagLike
 				# let k = "{parent.cvar}[{osym.c}]"
 				let k = "{parent.cvar}[{osym('$')}]"
 				# mark parent to reset imba.ctx at the end
-				parts.unshift("imba.ctx=({k} || ({k}=\{_:{fragment.tvar}\}))")
-				parts.push("imba.ctx=null")
+				parts.unshift("{runtime:renderContext}.context=({k} || ({k}=\{_:{fragment.tvar}\}))")
+				parts.push("{runtime:renderContext}.context=null")
 
 			if value isa TagTextContent
 				parts.push("({vvar}==={key}&&{bvar}) || ({inskey} = {ref}.insert$(String({key}={vvar}),{@flags},{inskey}))")
@@ -7793,7 +7995,8 @@ export class TagLoopFragment < TagLike
 			return "{tvar} = new DocumentFragment;\n{value.c(o)}"
 
 		# if @tag and @childTags
-		let iref = option(:indexed) ? LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
+		let iref = option(:indexed) ? (runtime:createIndexedFragment) : (runtime:createKeyedFragment)
+		# LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
 		# should know how many inner slots this fragment has?
 		let cache = parent.cvar
 		let parentRef = parent isa TagSwitchFragment ? LIT('null') : fragment.tvar
@@ -7873,7 +8076,8 @@ export class Tag < TagLike
 		if type isa TagTypeIdentifier
 			if type.isAsset
 				@assetName = type.toAssetName
-				@asset = scope__.root.lookupAsset(@assetName)
+				@asset = scope__.root.lookupAsset(@assetName,'svg')
+				@assetRef = type.toAssetReference
 				@isAsset = yes
 				@isSVG = yes
 
@@ -8079,15 +8283,18 @@ export class Tag < TagLike
 	
 	def create_
 		if isFragment or isSlot
-			LIT('imba.createLiveFragment')
+			runtime:createLiveFragment
+			# LIT('imba.createLiveFragment')
 		elif isAsset
-			LIT('imba.createAssetElement')
+			runtime:createAssetElement
+			# LIT('imba.createAssetElement')
 		elif isSVG
-			LIT('imba.createSVGElement')
+			runtime:createSVGElement
+			# LIT('imba.createSVGElement')
 		elif isComponent
-			LIT('imba.createComponent')
+			runtime:createComponent
 		else
-			LIT('imba.createElement')
+			runtime:createElement
 
 	def isReactive
 		option(:reactive) or (@parent ? @parent.isReactive : !(scope__ isa RootScope))
@@ -8121,13 +8328,18 @@ export class Tag < TagLike
 		var isReactive = self.isReactive
 
 		var canInline = no
-		var shouldEnd = isComponent or @attrmap:route or @attrmap:routeTo or @attrmap['route-to']
+		var useRoutes = @attrmap:route or @attrmap:routeTo or @attrmap['route-to']
+		var shouldEnd = isComponent or useRoutes
+
+		if useRoutes
+			stack.use('use_router')
 
 		var dynamicKey = null
 		var ownCache = no
 
 		if @asset
-			typ = "'{@assetName}'"
+			typ = @assetRef.c
+			# typ = "'{@assetName}'"
 
 		var slotPath = isSlot ? OP('.',LIT("{fragment.root.tvar}.__slots"),STR(option(:name))).c : ""
 
@@ -8228,6 +8440,10 @@ export class Tag < TagLike
 			'null'
 		]
 
+		# if @asset
+		#	params[0] = OP('.',@asset:ref,typ).c
+		#	# Arr.new([typ,@asset:ref]).c
+
 		var nodes = body ? body.values : []
 
 		if nodes:length == 1 and nodes[0] isa TagContent and nodes[0].isStatic and !isSelf and !isSlot
@@ -8310,11 +8526,11 @@ export class Tag < TagLike
 				let key = "{cvar}[{osym}]"
 				let ckey = "{cvar}[{osym('$')}]"
 				let inskey = "{cvar}[{osym('ins')}]"
-				add("imba.ctx=({ckey} || ({ckey}=\{\}))")
+				add("{runtime:renderContext}.context=({ckey} || ({ckey}=\{\}))")
 				
 				let call = CALL(option(:type).toFunctionalType,option(:args))
 				add("{tvar}={call.c(o)}")
-				add("imba.ctx=null")
+				add("{runtime:renderContext}.context=null")
 				add("{tvar}==={ref} || ({inskey} = {fragment.tvar}.insert$({ref}={tvar},{@flags},{inskey}))")
 				# call the tag - type?
 
@@ -8551,7 +8767,7 @@ export class Tag < TagLike
 				foot.push "{bvar} || {tvar}.insertInto$({pref})"
 
 		if option(:fragmented)
-			add "imba.ctx=null"
+			add "{runtime:renderContext}.context=null"
 
 		if !parent
 			if option(:return)
@@ -8820,8 +9036,13 @@ export class ESMDeclaration < Statement
 
 export class ImportDeclaration < ESMDeclaration
 	def js
+		
+		var src = @source and @source.c(locRef: 'path')
+		# console.log("importing {@source:constructor} {src}")
+
+		# FIXME can move away from cjs - letting esbuild transform if needed.
 		if STACK.cjs
-			var src = @source.c
+			# var src = @source.c(locRef: 'path')
 			# we need to combine the requires
 			let reqjs = "require({src})"
 			unless @specifiers
@@ -8834,9 +9055,9 @@ export class ImportDeclaration < ESMDeclaration
 				return "var {@variable.c} = {reqjs}"
 
 		if @specifiers and @source
-			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {@source.c}"
+			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {src}"
 		else
-			"{M(keyword.c,keyword)} {@source.c}"
+			"{M(keyword.c,keyword)} {src}"
 
 	def visit
 		if STACK.cjs and @specifiers
@@ -8967,6 +9188,9 @@ export class Export < ValueNode
 			if !STACK.cjs
 				return isDefault ? "export default {value.c}" : "export {value.c}"
 			else
+				let val = value.left.value
+				# console.log "export is a var reference?! {value.left} {val}"
+
 				let sym = isDefault ? "default" : value.left.value.symbol
 				value.right = OP('=',LIT("exports.{sym}"),value.right)
 				return value.c
@@ -8979,7 +9203,8 @@ export class Export < ValueNode
 export class Require < ValueNode
 
 	def js o
-		var out = value isa Parens ? value.value.c : value.c
+		var val = value isa Parens ? value.value : value
+		var out = val.c(locRef: 'path')
 		out == 'require' ? 'require' : "require({out})"
 
 export class EnvFlag < ValueNode
@@ -9531,7 +9756,26 @@ export class StyleFunction < Node
 		c
 		
 	def c
-		"{String(@name)}({@params.c})"
+		# console.log "style function {@name}"
+		let name = String(@name)
+		let pars = @params.c
+
+		# if name == 'svg'
+		#	name = 'url'
+		#	pars = "'{name}/{pars}'"
+
+		if name == 'url'
+			return MP("{name}({SourceMapper.strip(pars)})",'path')
+
+
+		"{name}({pars})"
+
+export class StyleURL < ValueNode
+
+	def c
+		let out = String(@value)
+		return MP(SourceMapper.strip(out),'path')
+		# "{name}({pars})"
 
 export class StyleIdentifier < StyleTerm
 	prop color
@@ -9920,6 +10164,9 @@ export class Scope
 		@refcounter = 0
 		@level = (parent ? parent.@level : -1) + 1
 		setup
+
+	def runtime
+		root.runtime
 		
 	def setup
 		@selfless = yes
@@ -9957,7 +10204,7 @@ export class Scope
 		# deal with root instead?
 		@tagCache ||= declare('c$$',
 			# LIT('(Imba.$c ? (Imba.$c[Imba.$k] || (Imba.$c[Imba.$k] = {})) : {})'),
-			LIT('(imba.ctx||{})'),
+			LIT("({runtime:renderContext}.context||\{\})"),
 			system: yes
 			temporary: yes
 		)
@@ -10028,7 +10275,7 @@ export class Scope
 			# console.log 'redeclaring variable',"{existing} {decl}",existing.type
 
 		# FIXME check if existing is required to be unique as well?
-		if existing and !o:unique
+		if existing and !o:unique and existing.type != 'global'
 			return existing
 		
 		let par = o:lookup && parent && parent.lookup(name)
@@ -10039,7 +10286,7 @@ export class Scope
 		if par
 			item.@parent = par
 		
-		if !o:system and !existing
+		if !o:system and (!existing or existing.type == 'global')
 			@varmap[name] = item
 
 		if STACK.state and STACK.state:variables isa Array
@@ -10106,11 +10353,11 @@ export class Scope
 		root.requires(path,name)
 
 	def imba
+		imbaDependency('core') unless @imba
+		# should be the same for node and js
+		STACK.meta:universal = no
 		@imba ||= (STACK.isNode ? LIT("(this && this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])") : LIT('imba'))
 		# root.imba # requires('imba2', 'Imba')
-
-	def imbaRef name, shorthand = '_'
-		root.imbaRef(name,shorthand)
 
 	def imbaDependency *params
 		root.imbaDependency(*params)
@@ -10198,11 +10445,12 @@ export class RootScope < Scope
 		super
 
 		register('global', self, type: 'global').@c = 'globalThis'
-
+		register('require', self, type: 'global') # .@c = 'globalThis'
+		self.IMPORT = register('import', self, type: 'global')
 		register 'module', self, type: 'global'
-		register 'imba', self, type: 'global', varclass: GlobalReference
-		register 'window', self, type: 'global', varclass: GlobalReference
-		self.document = register 'document', self, type: 'global', varclass: GlobalReference
+		# register 'imba', self, type: 'global', varclass: GlobalReference
+		register 'window', self, type: 'global', varclass: WindowReference
+		self.document = register 'document', self, type: 'global', varclass: DocumentReference
 		register 'exports', self, type: 'global'
 		register 'console', self, type: 'global'
 		register 'process', self, type: 'global'
@@ -10219,6 +10467,9 @@ export class RootScope < Scope
 		register 'isFinite', self, type: 'global'
 		register '__dirname', self, type: 'global'
 		register '__filename', self, type: 'global'
+		register('__pure__', self, type: 'global', varclass: PureReference).@c = "/* @__PURE__ */"
+		
+
 		register '_', self, type: 'global'
 
 		# preregister global special variables here
@@ -10235,8 +10486,22 @@ export class RootScope < Scope
 		@head = [@vars]
 		@dependencies = {}
 		@symbolRefs = {}
+		@importProxies = {}
 		@vars.split = yes
+
+		@imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
+		# @imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
+		@runtime = @imba.proxy
 		self
+
+	def importProxy name, path
+		@importProxies[name] ||= register("${name}$", self, type: 'global', varclass: ImportProxy, path: path or name)
+	
+	def runtime
+		@runtime
+
+	def use item
+		@imba.touch(item)
 
 	def sourceId
 		@sourceId ||= STACK.sourceId # @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
@@ -10255,14 +10520,23 @@ export class RootScope < Scope
 			@hasExports = yes
 			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
 	
-	def lookupAsset name
-		unless @assets[name]
-			let asset = STACK.getAsset(name)
-			registerAsset(name,asset)
-		return @assets[name]
+	def lookupAsset name, kind = 'asset'
+		registerAsset(name,kind)
+		#	let asset = STACK.getAsset(name)
+		#	registerAsset(name,kind)
+		# return @assets[name]
 
-	def registerAsset name, asset
-		@assets[name] = asset
+	def registerAsset path, kind, asset
+		let key = path + kind
+		if @assets[key]
+			return @assets[key]
+
+		@assets[key] = asset or {
+			path: path,
+			kind: kind,
+			external: yes,
+			ref: register('asset',null,system: yes)
+		}
 
 	def lookup name
 		name = helpers.symbolize(name)
@@ -10314,45 +10588,21 @@ export class RootScope < Scope
 		var req = Require.new(Str.new("'" + path + "'"))
 		var variable = Variable.new(self,name,null,system: yes)
 		var dec = @vars.add(variable, req)
-		variable.declarator ||= dec
+		variable.declarator ||= dec 
 		variable.@requirePath = path
 		@requires[name] = variable
 		return variable
 
 	def imba
-		LIT('imba')
+		@imba
 
 	def imbaDependency path
-		let imbaPath = STACK.imbaPath
-		@dependencies[path] ||= if true
-			# TODO should point directly to imba and let the package.json map correctly
-			let str = "'{imbaPath or 'imba'}/{path}'"
-			# TODO create actual Import nodes instead of literals here
-			let item = STACK.cjs ? LIT("require({str})") : LIT("import {str}")
-			@head.push(item) if imbaPath !== null and !STACK.tsc and imbaPath != 'global'
-			item
-			
-	def imbaRef name, shorthand = '_'
-		if name == 'tagscope'
-			name = 'createTagScope(/*SCOPEID*/)'
-		elif name == 'tagfactory'
-			name = 'createElementFactory(/*SCOPEID*/)'
-
-		var map = @imbaRefs ||= {}
-		return map[name] if map[name]
-
-		var imbaRef = self.imba
-		
-		if @requires.Imba
-			map[name] = declare(shorthand,OP('.',imba,name), system: yes)
-		else
-			map[name] = "{imbaRef.c}.{name}"
+		return
 
 	def symbolRef name
 		let map = @symbolRefs
 		map[name] ||= declare("{String(name).replace(/[\@\#]/g,'_')}$",LIT("Symbol.for('{name}')"), type: 'const', system: yes)
 		
-
 	def c o = {}
 		o:expression = no
 
@@ -10363,11 +10613,19 @@ export class RootScope < Scope
 			head.push LIT('// ASSETS-START')
 
 		for own name, asset of assets
+			# assets should have their own node that compiles instead? Like ImportProxy
 			try
-				let parsed = parseAsset(asset,name)
-				let body = JSON.stringify(parsed)
-				let out = "imba.registerAsset('{name}',{body})"
-				head.push LIT(out)
+				if asset:external
+					let ref = asset:ref.c
+					let path = asset:path
+					if asset:kind
+						path += "?{asset:kind}"
+					head.push(LIT "import {ref} from {MP "'{path}'"}")
+				else	
+					let parsed = parseAsset(asset,name)
+					let body = JSON.stringify(parsed)
+					let out = "imba.registerAsset('{name}',{body})"
+					head.push LIT(out)
 
 		if assetCount
 			head.push LIT('// ASSETS-END')
@@ -10564,6 +10822,9 @@ export class Variable < Node
 		@references 	= [] # only needed when profiling
 		@assignments 	= []
 		self
+	
+	def isGlobal name
+		@type == 'global' and (!name or @name == name)
 
 	def closure
 		@scope.closure
@@ -10856,30 +11117,130 @@ export class SystemVariable < Variable
 		@name
 
 export class ShadowedVariable < Variable
-
-
 export class GlobalReference < Variable
-	def c2 o
-		if STACK.platform == 'node' and !@c
-			if @name == 'window' or @name == 'document'
-				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba).{@name}"
-			# if @name == 'document'
-			#	@scope.@head.push("const $imbadoc$ = (imba.document || (imba.document = new imba.dom.Document))")
-			#	@c = '$imbadoc$'
-			if @name == 'imba'
-				# if accessed directly it should just reference global.imba for speed?
-				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba)"
-			elif @name == 'window' or @name == 'document'
-				@c = "(this[{symbolRef('#imba').c}] || globalThis.imba).{@name}"
-		super
+export class PureReference < Variable
 
-export class GlobalDocumentReference < Variable
+export class ZonedVariable < GlobalReference
+	def forScope scope
+		ZonedVariableAccess.new(self,scope)
+
 	def c
-		if STACK.platform == 'node' and !@c
-			@scope.@head.push("const $imbadoc$ = (imba.document || (imba.document = new imba.dom.Document))")
-			@c = '$imbadoc$'
+		"{@name}"
 
+export class DocumentReference < ZonedVariable
+	def forScope scope
+		self
+
+	def c
+		if STACK.isNode
+			"{runtime:get_document}()"
+		else
+			"globalThis.document"
+
+export class WindowReference < GlobalReference
+	def c
+		if STACK.isNode
+			"{runtime:get_window}()"
+		else
+			"window"
+
+
+export class ZonedVariableAccess < Node
+
+	def initialize variable, scope
+		@variable = variable
+		@scope = scope
+	
+	def c
+		let name = @variable.@name
+		if STACK.isNode
+			STACK.use("use_{name}")
+			"{runtime:zone}.get('{name}',{@scope.context.c})"
+		else
+			# what if it is redefined somewhere?
+			"{name}"
+
+export class ImportProxy < Variable
+	prop proxy
+	prop path
+
+	def initialize
 		super
+		@path = @options:path
+		@exports = {}
+		@touched = {}
+		@head = LIT("import ")
+		@head:c = self:head.bind(self)
+		scope.@head.push(@head)
+		var getter = do |t,p,r| self.access(p)
+		@proxy = Proxy.new(self,{get: getter })
+
+	def touch key
+		unless @touched[key]
+			@touched[key] = access(key)
+		self
+
+	def head
+		# for own key,value
+		let keys = Object.keys(@exports)
+		let touches = Object.values(@touched)
+		let js = []
+		let cjs = STACK.cjs
+		let path = self.path
+
+		if path == 'imba'
+			path = STACK.imbaPath or 'imba'
+
+		let pathjs = MP "'{path}'"
+
+		if @importAll
+			if cjs
+				js.push("const {@name} = require({pathjs});")
+			else
+				js.push("import * as {@name} from {pathjs};")
+
+
+		if keys:length > 0
+			if cjs
+				let out = keys.map(do |a| "{a}: {@exports[a]}").join(", ")
+				js.push "const \{{out}\} = require({pathjs});"
+			else
+				let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
+				js.push "import \{{out}\} from {pathjs};"
+
+		if touches:length
+			js.push "({touches.map(do $1.c).join(",")});"
+
+		return js:length ? js.join('\n') : ''
+
+
+	def access key
+		let raw = C(key,mark: false)
+		if @globalName
+			return LIT("{@globalName}.{raw}")
+
+		@exports[raw] ||= LIT("{@name}_{raw}")
+
+export class ImbaRuntime < ImportProxy
+
+	def configure options
+		if options:runtime == 'global'
+			@globalName = 'imba'
+		elif options:runtime
+			self.path = options:runtime
+		self
+
+	def c
+		if !@importAll
+			@importAll = yes
+			# console.log "import all",STACK.current
+			STACK.current.warn("Referencing imba directly disables efficient tree-shaking")
+		@c = "imba"
+
+	# def access key
+	# 	# if @globalName
+	# 	let raw = C(key,mark: false)
+	# 	@exports[raw] ||= LIT("{@name}_{raw}")
 
 export class ScopeContext < Node
 

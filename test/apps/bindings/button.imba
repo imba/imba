@@ -1,9 +1,9 @@
-var state =
+const state =
 	bool: false
 	status: null
 	labels: []
 
-var frameworks = []
+const frameworks = []
 
 css button color:blue
 css button.checked color:red
@@ -21,6 +21,7 @@ tag example-app
 			<button.b5 bind=state.labels value='three'> 'three'
 			<button.b4 bind=state.labels value='two'> 'two'
 			<p> "Labels {state.labels.join(',')}"
+
 imba.mount(<example-app>)
 
 test 'bool' do

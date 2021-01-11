@@ -59,25 +59,38 @@
     "node": ">=13.10.0"
   },
   "directories": {},
-  "main": "./index.js",
+  "main": "./index",
   "type": "commonjs",
   "browser": {
-    "imba": "./dist/imba.js",
+    "imba": "./dist/browser/imba.js",
     "path": "./vendor/path.js",
-    "compiler": "./dist/compiler.js"
+    "events": "./vendor/events.js",
+    "compiler": "./dist/browser/compiler.js",
+    "./program": "./dist/browser/program.mjs",
+    ".": "./dist/browser/imba.js"
   },
   "exports": {
-    "./core": "./core.imba",
+    ".": {
+      "require": "./dist/node/imba.js",
+      "default": "./dist/node/imba.mjs",
+      "browser": "./dist/browser/imba.js"
+    },
+    "./program": {
+      "require": "./dist/node/program.js",
+      "default": "./dist/node/program.mjs",
+      "browser": "./dist/browser/program.mjs"
+    },
     "./loader": "./loader.js",
     "./compiler": {
       "require": "./dist/compiler.cjs",
-      "default": "./dist/compiler.mjs"
+      "default": "./dist/compiler.mjs",
+      "browser": "./dist/browser/compiler.js"
     }
   },
   "bin": {
+    "imba-node": "./bin/imba-node",
     "imba": "./bin/imba",
-    "imbac": "./bin/imbac",
-    "imbabuild": "./bin/imbabuild"
+    "imbac": "./bin/imbac"
   },
   "preferGlobal": true,
   "homepage": "https://imba.io",
@@ -86,11 +99,21 @@
     "url": "git://github.com/imba/imba.git"
   },
   "devDependencies": {
-    "puppeteer": "^2.1.1"
+    "commander": "^6.2.1",
+    "eventemitter3": "^4.0.7",
+    "fdir": "^4.1.0",
+    "flatted": "^3.1.0",
+    "get-port": "^5.1.1",
+    "image-size": "^0.9.3",
+    "micromatch": "^4.0.2",
+    "ora": "^5.2.0",
+    "picomatch": "^2.2.2",
+    "puppeteer": "^2.1.1",
+    "tmp": "^0.2.1",
+    "workerpool": "^6.0.3"
   },
   "dependencies": {
     "chokidar": "^3.4.3",
-    "esbuild": "^0.8.17",
-    "readdirp": "^3.5.0"
+    "esbuild": "^0.8.25"
   }
 }
