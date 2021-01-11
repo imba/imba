@@ -291,27 +291,6 @@ export def createSVGElement name, parent, flags, text, ctx
 		el.insertInto$(parent)
 	return el
 
-
-export def createAssetElement asset, parent, flags
-	unless asset
-		console.warn "asset {name} not included in bundle"
-		return null
-		
-	if !asset.#node
-		let el = document.createElementNS("http://www.w3.org/2000/svg",'svg')
-		for own k,v of asset.attributes
-			el.setAttribute(k,v)
-		el.innerHTML = asset.content
-		el.className.baseVal = asset.flags.join(' ')
-		asset.#node = el
-	
-	let el = asset.#node.cloneNode(yes)
-	let cls = el.flags$ns = el.className.baseVal + ' '
-	el.className.baseVal = cls + flags
-	if parent and parent isa Node
-		el.insertInto$(parent)
-	return el
-
 export def createComment text
 	document.createComment(text)
 

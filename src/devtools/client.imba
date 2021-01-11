@@ -1,16 +1,36 @@
-import {deserializeData} from '../imba/utils'
-import {manifest} from '../imba/manifest'
-
+# import {deserializeData} from '../imba/utils'
+# import {manifest} from '../imba/manifest'
 # Improve this
 let doc =  global.document
+
+import {deserializeData,patchManifest} from '../imba/utils'
+
+class Manifest
+	def constructor
+		data = {}
+
+	get assetsDir do data.assetsDir
+	get assetsUrl do data.assetsUrl
+	get changes do data.changes or {}
+	get inputs do data.inputs
+	get urls do data.urls
+	get main do data.main
+
+	def init raw
+		update(raw)
+	
+	def update raw
+		if typeof raw == 'string'
+			raw = deserializeData(raw)
+
+		data = patchManifest(data,raw)
+		return data.changes
 
 class DevTools
 	def constructor
 		start!
+		manifest = new Manifest({})
 		self
-
-	get manifest
-		manifest
 
 	def refresh changes
 		let dirty = {

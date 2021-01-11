@@ -21,8 +21,8 @@ function deserializeData(data, reviver = null) {
   };
   let parsed = JSON.parse(data, parser);
   if (parsed.$$) {
-    for (let sys$4 = parsed.$$, sys$22 = 0, sys$3 = Object.keys(sys$4), sys$5 = sys$3.length, k, v, obj; sys$22 < sys$5; sys$22++) {
-      k = sys$3[sys$22];
+    for (let sys$4 = parsed.$$, sys$2 = 0, sys$3 = Object.keys(sys$4), sys$5 = sys$3.length, k, v, obj; sys$2 < sys$5; sys$2++) {
+      k = sys$3[sys$2];
       v = sys$4[k];
       if (obj = objects[k]) {
         Object.assign(obj, v);
@@ -87,8 +87,8 @@ function patchManifest(prev, curr) {
     ;
   }
   ;
-  for (let sys$122 = 0, sys$13 = Object.keys(origs), sys$14 = sys$13.length, path, item; sys$122 < sys$14; sys$122++) {
-    path = sys$13[sys$122];
+  for (let sys$12 = 0, sys$13 = Object.keys(origs), sys$14 = sys$13.length, path, item; sys$12 < sys$14; sys$12++) {
+    path = sys$13[sys$12];
     item = origs[path];
     item.removed = Date.now();
     diff.all.push(item);
@@ -105,18 +105,15 @@ function patchManifest(prev, curr) {
   return curr;
 }
 
-// src/imba/manifest.web.imba
-var sys$12 = Symbol.for("#data");
-var sys$2 = Symbol.for("#manifest");
+// src/devtools/client.imba
+function iter$2(a) {
+  let v;
+  return a ? (v = a.toIterable) ? v.call(a) : a : [];
+}
+var doc = globalThis.document;
 var Manifest = class {
   constructor() {
-    this.refs = {};
-  }
-  get data() {
-    return this[sys$12] || (this[sys$12] = deserializeData(globalThis.IMBA_MANIFEST || "{}"));
-  }
-  set data(value) {
-    this[sys$12] = value;
+    this.data = {};
   }
   get assetsDir() {
     return this.data.assetsDir;
@@ -148,22 +145,11 @@ var Manifest = class {
     return this.data.changes;
   }
 };
-var manifest = new Manifest();
-globalThis[sys$2] = manifest;
-
-// src/devtools/client.imba
-function iter$2(a) {
-  let v;
-  return a ? (v = a.toIterable) ? v.call(a) : a : [];
-}
-var doc = globalThis.document;
 var DevTools = class {
   constructor() {
     this.start();
+    this.manifest = new Manifest({});
     this;
-  }
-  get manifest() {
-    return manifest;
   }
   refresh(changes) {
     let dirty = {
@@ -173,7 +159,7 @@ var DevTools = class {
     for (let sheet of iter$2(doc.styleSheets)) {
       let asset;
       let url = sheet.ownerNode.getAttribute("href");
-      if (asset = manifest.urls[url]) {
+      if (asset = this.manifest.urls[url]) {
         if (asset.replacedBy) {
           sheet.ownerNode.href = asset.replacedBy.url;
         }
@@ -184,7 +170,7 @@ var DevTools = class {
     ;
     for (let el of iter$2(doc.querySelectorAll("script[src]"))) {
       let asset1;
-      if (asset1 = manifest.urls[el.getAttribute("src")]) {
+      if (asset1 = this.manifest.urls[el.getAttribute("src")]) {
         if (asset1.replacedBy) {
           dirty.js.push(asset1);
         }
@@ -219,11 +205,11 @@ var DevTools = class {
     });
     this.socket.addEventListener("init", function(e) {
       let json = JSON.parse(e.data);
-      return manifest.init(json);
+      return self.manifest.init(json);
     });
     this.socket.addEventListener("manifest", function(e) {
       let json = JSON.parse(e.data);
-      let changes = manifest.update(json);
+      let changes = self.manifest.update(json);
       console.log("Changes for manifest", changes);
       return self.refresh(changes);
     });

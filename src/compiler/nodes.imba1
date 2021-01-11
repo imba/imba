@@ -5734,8 +5734,7 @@ export class TagTypeIdentifier < Identifier
 		@ns == 'svg' or (!isNative and !@ns and TAG_NAMES["svg_{@str}"]) or isAsset # TAG_TYPES.SVG.indexOf(@str) >= 0
 
 	def isAsset
-		@ns == 'assets'
-		# !!@str.match(/^svg\-/)
+		false
 
 	def toAssetName
 		isAsset ? @str : null # .slice(4)

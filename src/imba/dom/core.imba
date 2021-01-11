@@ -770,26 +770,6 @@ export def createSVGElement name, parent, flags, text, ctx
 		el.insertInto$(parent)
 	return el
 
-
-export def createAssetElement asset, parent, flags
-	unless asset
-		console.warn "asset {name} not included in bundle"
-		return null
-
-	# TODO import document somehow?
-	let el = doc.createElementNS("http://www.w3.org/2000/svg",'svg')
-
-	if asset
-		for own k,v of asset.attributes
-			el.setAttribute(k,v)
-		
-		el.flags$ns = asset.flags.join(' ') + ' '
-		el.className = (el.flags$ns + flags).trim!
-		el.innerHTML = asset.content
-	if parent and parent isa Node
-		el.insertInto$(parent)
-	return el
-
 export def createComment text
 	doc.createComment(text)
 
