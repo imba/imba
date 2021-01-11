@@ -1,6 +1,7 @@
-const fs = require 'fs'
-const path = require 'path'
-const crypto = require 'crypto'
+import nfs from 'fs'
+import np from 'path'
+import crypto from 'crypto'
+import os from 'os'
 
 import * as flatted from 'flatted'
 import {resolve as parseConfig} from './config'
@@ -13,6 +14,15 @@ export const defaultLoaders = {
 	".ttf": "file",
 	".otf": "file"
 }
+
+export def getCacheDir options
+	# or just the directory of this binary?
+	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'..','.imba-cache')  # np.resolve(os.homedir!,'.imba')
+	console.log 'cache dir here',dir,__filename
+	unless nfs.existsSync(dir)
+		console.log 'cache dir does not exist - create'
+		nfs.mkdirSync(dir)
+	return dir
 
 export def diagnosticToESB item, add = {}
 	# {"id":"bs","warnings":[],"errors":[{"range":{"start":{"line":3,"character":9,"offset":41},"end":{"line":3,"character":9,"offset":41}},"severity":1,"source":"imba-parser","message":"Unexpected 'TERMINATOR'"}],"js":"","css":""}
@@ -28,36 +38,36 @@ export def diagnosticToESB item, add = {}
 
 export def writePath src, body
 	await ensureDir(src)
-	fs.promises.writeFile(src,body)
+	nfs.promises.writeFile(src,body)
 
 export def writeFile src, body
-	fs.promises.writeFile(src,body)
+	nfs.promises.writeFile(src,body)
 
 export def readFile src, encoding = 'utf8'
-	fs.promises.readFile(src, encoding)
+	nfs.promises.readFile(src, encoding)
 
 export def exists src
-	let p = fs.promises.access(src, fs.constants.F_OK)
+	let p = nfs.promises.access(src, nfs.constants.F_OK)
 	p.then(do yes).catch(do no)
 
 export def rename src, pattern
-	let dir = path.dirname(src)
-	let ext = path.extname(src)
-	let name = path.basename(src,ext)
-	return path.join(dir,pattern.replace('*',name))
+	let dir = np.dirname(src)
+	let ext = np.extname(src)
+	let name = np.basename(src,ext)
+	return np.join(dir,pattern.replace('*',name))
 
 
-	let parsed = path.parse(src)
+	let parsed = np.parse(src)
 	if typeof pattern == 'string'
 		if pattern[0] == '.'
-			return path.join(dir,name + pattern)
+			return np.join(dir,name + pattern)
 			parsed.ext = pattern
 		elif pattern.indexOf('')
 			parsed.name = pattern
 	else
 		Object.assign(parsed,pattern)
 	console.log 'rename',parsed
-	return path.format(parsed)
+	return np.format(parsed)
 	# let basedir = path.dirname(src)
 	# let ext = path.exxtname
 
@@ -71,27 +81,29 @@ export def pluck array, cb
 
 export def resolveConfig cwd, name
 	try
-		let src = path.resolve(cwd or '.',name or 'imbaconfig.json')
-		let config = JSON.parse(fs.readFileSync(src,'utf8'))
-		config.#mtime = fs.statSync(src).mtimeMs or 0
+		let src = np.resolve(cwd or '.',name or 'imbaconfig.json')
+		let config = JSON.parse(nfs.readFileSync(src,'utf8'))
+		config.#mtime = nfs.statSync(src).mtimeMs or 0
 		config.#path = src
 		return parseConfig(config)
 	catch e
-		return {}
+		return parseConfig({})
 	
 export def resolvePath name, cwd = '.', cb = null
-	let src = path.resolve(cwd,name)
-	let dir = path.dirname(src)
-	if fs.existsSync(src)
+	# console.log 'resolve path',name,cwd
+	let src = np.resolve(cwd,name)
+	let dir = np.dirname(src)
+	if nfs.existsSync(src)
 		return src
-	let up = path.dirname(dir)
-	up != dir ? resolvePath(name,dir) : null
+	let up = np.dirname(dir)
+	# console.log 'reresolve',up,dir
+	up != dir ? resolvePath(name,up) : null
 
 export def resolveFile name,cwd,handler
 	if let src = resolvePath(name,cwd)
 		let file = {
 			path: src
-			body: fs.readFileSync(src,'utf-8')
+			body: nfs.readFileSync(src,'utf-8')
 		}
 		return handler(file)
 	return null
@@ -126,13 +138,13 @@ export def ensureDir src
 	
 	new Promise do(resolve)
 
-		while dirname = path.dirname(dirname)
-			if dirExistsCache[dirname] or fs.existsSync(dirname)
+		while dirname = np.dirname(dirname)
+			if dirExistsCache[dirname] or nfs.existsSync(dirname)
 				break
 			stack.push(dirname)
 
 		while stack.length
 			let dir = stack.pop!
-			fs.mkdirSync(dirExistsCache[dirname] = dir)
+			nfs.mkdirSync(dirExistsCache[dirname] = dir)
 
 		resolve(src)

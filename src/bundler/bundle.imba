@@ -19,6 +19,7 @@ import Watcher from './watcher'
 const ASSETS_URL = '/__assets__/'
 
 export default class Bundle < Component
+
 	get node?
 		platform == 'node'
 
@@ -27,15 +28,6 @@ export default class Bundle < Component
 
 	get main?
 		options.isMain
-
-	get puburl
-		options.puburl or bundler.puburl or ''
-
-	get pubdir
-		options.pubdir or bundler.pubdir or 'public'
-	
-	get libdir
-		options.libdir or bundler.libdir or 'dist'
 
 	get outdir
 		options.outdir or fs.cwd
@@ -54,7 +46,6 @@ export default class Bundle < Component
 
 	def constructor bundler,o
 		super()
-		#id = Math.random!
 		#key = Symbol!
 		#bundles = {}
 		#watchedPaths = {}
@@ -71,16 +62,15 @@ export default class Bundle < Component
 		parent = o.parent
 		platform = o.platform or 'browser'
 		entryPoints = o.entryPoints
-		
-		entryNodes = []
-		outfileMap = {}
 		pathLookups = {}
 		children = new Set
 		presult = {}
-		ns = o.id or o.ns or (o.platform == 'node' ? 'node' : 'browser')
+
+		if parent
+			watcher = parent.watcher
 
 		if o.watch or o.watcher
-			watcher = o.watcher or new Watcher(fs)
+			watcher ||= o.watcher or new Watcher(fs)
 
 		let externals = []
 		let package = bundler.package or {}
@@ -106,7 +96,7 @@ export default class Bundle < Component
 			platform: o.platform == 'node' ? 'node' : 'browser'
 			format: o.format or 'esm'
 			outfile: o.outfile
-			outbase: o.outbase
+			outbase: o.outbase or fs.cwd
 			outdir: o.outfile ? undefined : fs.cwd # (o.outdir or fs.cwd)
 			outExtension: {
 				".js": ".__dist__.js"
@@ -173,7 +163,8 @@ export default class Bundle < Component
 				esoptions.banner = "globalThis.IMBA_MANIFEST_PATH = '{manifest.path}';"
 			spinner = log.spinner!
 		
-		log.debug "esbuild",esoptions
+		# console.log "esbuild",esoptions
+		
 
 	def setup
 		self
@@ -232,10 +223,11 @@ export default class Bundle < Component
 			# console.log 'real imba path',real,args.path
 			return {path: real}
 
-		build.onResolve(filter: /\?(\w+)$/) do(args)
+		build.onResolve(filter: /\?([\w\-]+)$/) do(args)
 			let res = program.resolver.resolve(args,pathLookups)
-			# console.log 'resolve with namespace?',args.path,res
 			let ns = res.namespace = namespaceMap[res.namespace] or res.namespace
+
+			console.log 'onResolve asset',res
 
 			if ns == 'serviceworker'
 				res.namespace = 'entry'
@@ -263,6 +255,54 @@ export default class Bundle < Component
 				# console.log 'resolving through imba',args.path,externs
 				return program.resolver.resolve(args,pathLookups)
 
+
+		build.onLoad(filter: /.*/, namespace: 'asset-svg') do({path})
+			let file = fs.lookup(path)
+			let out = await file.compile({format: 'esm'},self)
+			return {loader: 'js', contents: out.js}
+		
+		build.onLoad(filter: /.*/, namespace: 'asset-web') do({path,namespace})
+			# console.log "onLoad asset:web",path,namespace
+			# how would this be compiled when already in web?
+			let body = 'export default {input:"asset-web:$"}'.replace('$',path)
+			return {loader: 'js', contents: body}
+	
+		build.onLoad(filter: /.*/, namespace: 'asset-worker') do(args)
+			let id = "asset-worker:{args.path}"
+
+			let opts = {
+				platform: 'worker'
+				format: 'esm'
+				entryPoints: [args.path]
+				outdir: o.outdir
+				minify: o.minify
+				parent: self
+			}
+
+			if config.defaults.worker
+				opts = Object.assign({},config.defaults.worker,opts)
+
+			# should be cached at the top-level bundle, and all builds
+			# during a single full build should resolve to the same build
+
+			let bundler = #bundles[id] ||= new Bundle(program,opts)
+			let bundle = await bundler.rebuild!
+			presult[id] = bundle.meta
+
+			let input = bundle.meta.inputs[args.path]
+
+			# not for web?
+			let data = {
+				input: id
+			}
+
+			if web?
+				data.url = input.js.url
+				data.hash = input.js.hash
+
+			let body = 'export default ' + JSON.stringify(data) # .replace('$',id)
+			return {loader: 'js', contents: body}
+
 		build.onLoad(filter: /.*/, namespace: 'asset') do({path})
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
@@ -284,10 +324,7 @@ export default class Bundle < Component
 				splitting: no
 				format: 'esm'
 				entryPoints: [args.path]
-				publicPath: ASSETS_URL
 				outdir: options.outdir
-				outbase: fs.cwd
-				watcher: watcher
 				minify: o.minify
 				parent: self
 			}
@@ -304,17 +341,9 @@ export default class Bundle < Component
 			let path = parts.pop!
 			let type = parts.shift!
 
-			# let src = args.path
-			# let path = src.slice(src.indexOf(':') + 1)
-			# "serviceworker:{args.path}"
-			# console.log "onLoad entry",src,path,config.defaults
-
 			let opts = {
 				entryPoints: [path]
-				publicPath: ASSETS_URL
 				outdir: options.outdir
-				outbase: fs.cwd
-				watcher: watcher
 				sourcemap: o.sourcemap and yes	
 				parent: self
 			}
@@ -461,27 +490,30 @@ export default class Bundle < Component
 		for own path,input of ins
 			if path.indexOf('web:') == 0
 				webEntries.push(path.slice(4))
+			elif path.indexOf('asset-web:') == 0
+				webEntries.push(path.slice(10))
+				webEntries[path.slice(10)] = input
 		
 		if webEntries.length
-			# let outdir = np.resolve(fs.cwd,'dist','web')
-			# should rather inherit from the 
 			let opts = {
 				platform: 'browser'
 				splitting: yes
-				entryPoints: webEntries # should rather have a single entry?
-				publicPath: manifest.assetsUrl # '/__assets__'
+				entryPoints: webEntries
 				outdir: o.outdir
-				outbase: fs.cwd
-				watcher: watcher
 				minify: o.minify
 				sourcemap: o.sourcemap and yes
 				parent: self
 			}
 
 			let bundler = #bundles.web ||= new Bundle(program,opts)
-			let bundle = await bundler.rebuild(watcher: watcher)
+			let bundle = await bundler.rebuild!
 
 			manifest.inputs.web = bundle.meta.inputs
+
+			for own k,v of bundle.meta.inputs
+				if webEntries[k]
+					# console.log 'found asset input for this?'
+					webEntries[k].asset = v.js
 
 			for own k,v of bundle.meta.outputs
 				outs[k] = v
@@ -510,10 +542,12 @@ export default class Bundle < Component
 				# let src = np.resolve(o.outdir,'.imbabuild') # manifest.path
 				let mfile = fs.lookup(manifest.path)
 				await mfile.writeSync json, manifest.hash
+				# console.log 'manifest',json
 
 			self.manifest.update(json)
 
 		try log.debug main.path,main.hash
+		
 		return result
 
 	###
@@ -587,6 +621,7 @@ export default class Bundle < Component
 				name = "{reloutdir}/{name}" if reloutdir
 
 				if outs[name]
+					# Hook into parent inputs here?
 					input[key] = outs[name]
 					outs[name].source = input
 					if key == 'js'
@@ -616,8 +651,6 @@ export default class Bundle < Component
 			output.#type = output._ = 'output'
 			output.path = path
 			output.type = (np.extname(path) or '').slice(1)
-			# output.url = path.replace(reloutdir,esoptions.publicPath)
-			# output.url = np.resolve() path.replace(reloutdir,esoptions.publicPath)
 
 			if web? or output.type == 'css'
 				output.path = "public/__assets__/{path}"
@@ -759,9 +792,18 @@ export default class Bundle < Component
 
 			newouts[output.path] = output
 
+		console.log Object.keys(presult)
+
 		for own path,input of ins
 			if presult[path]
 				log.debug "Add presult outputs {path}" # ,presult[path]
+
+				let real = path.slice(path.indexOf(':') + 1)
+				let asset = presult[path].inputs[real]
+				if asset and asset.js
+					# console.log "FOUND ASSET!",real
+					input.asset = asset.js
+
 				Object.assign(newouts,presult[path].outputs)
 
 		# now update the paths in output

@@ -1,6 +1,7 @@
 const np = require 'path'
 const workerPool = require 'workerpool'
-const workerScript = np.resolve(__dirname,'..','compiler-worker.js')
+# temporary hack - we know that we compile to bin/
+const workerScript = np.resolve(__dirname,'..','dist','compiler-worker.js')
 
 # #workers ||= workerPool.pool(workerScript, maxWorkers:2)
 

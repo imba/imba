@@ -28,21 +28,21 @@ var module2 = __toModule(require("module"));
 // src/imba/utils.imba
 var sys$1 = Symbol.for("#type");
 var sys$18 = Symbol.for("#__listeners__");
-function deserializeData(data) {
+function deserializeData(data, reviver = null) {
   var $0$1;
   let objects = {};
   let reg = /\$\$\d+\$\$/;
-  let reviver = function(key, value) {
+  let parser = function(key, value) {
     if (typeof value == "string") {
       if (value[0] == "$" && reg.test(value)) {
-        return objects[value] || (objects[value] = {});
+        return objects[value] || (objects[value] = reviver ? reviver(value) : {});
       }
       ;
     }
     ;
     return value;
   };
-  let parsed = JSON.parse(data, reviver);
+  let parsed = JSON.parse(data, parser);
   if (parsed.$$) {
     for (let sys$4 = parsed.$$, sys$2 = 0, sys$3 = Object.keys(sys$4), sys$5 = sys$3.length, k, v, obj; sys$2 < sys$5; sys$2++) {
       k = sys$3[sys$2];
@@ -95,3 +95,4 @@ module2.Module._resolveFilename = function(name, from) {
   let res = _resolveFilename.apply(module2.Module, arguments);
   return res;
 };
+console.log("loading register", process.env.IMBA_MANIFEST_PATH);

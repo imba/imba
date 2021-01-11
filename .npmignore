@@ -5,6 +5,7 @@ plugins
 tmp
 .gitignore
 .github
+.imba-cache
 webpack.config.js
 *.tgz
 *.log

@@ -41,6 +41,8 @@ const voidElements = {
 	wbr: yes
 }
 
+let HtmlContext = null
+
 const CustomTagConstructors = {}
 
 class CustomElementRegistry
@@ -124,6 +126,12 @@ export class Document
 		asl ||= new AsyncLocalStorage
 		asl.run(doc,cb)
 		return doc
+
+	def constructor
+		self
+
+	get scripts
+		#scripts ||= []
 
 	set location value
 		if typeof value == 'string'
@@ -601,8 +609,39 @@ export class HTMLElement < Element
 
 export class HTMLHtmlElement < HTMLElement
 
+	get scripts
+		#scripts ||= []
+
 	get outerHTML
-		return "<!DOCTYPE html>" + super.outerHTML
+		# watch for assets that are collected etc
+		console.log "compiling outerhtml!"
+		let prev = HtmlContext
+		HtmlContext = self
+		let html = super.outerHTML
+		console.log 'has scripts',self.scripts.length
+		# automatically include stylesheets?
+		# add data-hmr yes or inject hmr script if hmr?
+		let sheets = new Set
+		let jsassets = []
+		let inject = []
+
+		for script in self.scripts
+			let src = script.src
+			let asset = manifest.urls[src]
+			console.log 'script source',src,String(src),!!asset,asset..path
+			if asset and asset.css
+				sheets.add(asset.css)
+			# add preloads?
+		
+		for sheet of sheets
+			inject.push("<link rel='stylesheet' href='{sheet.url}'>")
+		# now go through the stylesheets?
+		HtmlContext = prev
+		
+		if inject.length
+			let pos = html.indexOf('</head>')
+			html = html.slice(0,pos) + '\n' + inject.join('\n') + '\n' + html.slice(pos)
+		return "<!DOCTYPE html>" + html
 
 export class HTMLSelectElement < HTMLElement
 export class HTMLInputElement < HTMLElement
@@ -613,6 +652,9 @@ export class HTMLOptionElement < HTMLElement
 export class HTMLScriptElement < HTMLElement
 
 	get outerHTML
+		if HtmlContext
+			(HtmlContext.scripts||=[]).push(self)
+
 		if #asset
 			if #asset.js
 				# add nomodule version as well?

@@ -1,6 +1,8 @@
 const utils = require './utils'
 import np from 'path'
 import nfs from 'fs'
+import os from 'os'
+
 import crypto from 'crypto'
 
 const hashedKeyCache = {
@@ -12,11 +14,11 @@ const keyPathCache  = {
 }
 
 export default class Cache
-
-	def constructor program
+	def constructor options
 		#key = Symbol!
-		program = program
-		dir = np.resolve(program.cwd,'.cache') # file.absdir # np.dirname()
+		o = options
+		console.log 'cache dir?',o.cachedir
+		dir = o.cachedir # or np.resolve(program.cwd,'.cache') # file.absdir # np.dirname()
 		aliaspath = np.resolve(dir,'.imba-aliases')
 		aliasmap = ""
 		aliascache = {}
@@ -26,7 +28,7 @@ export default class Cache
 			cache: {}
 		}
 
-		mintime = program.mtime or 0
+		mintime = o.mtime or 0
 		idFaucet = utils.idGenerator!
 		preload!
 

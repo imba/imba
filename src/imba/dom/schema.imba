@@ -38,7 +38,7 @@ export const TYPES = {
 	HTMLLink: [1,{href: 1,crossOrigin: 'crossorigin',rel: 1,relList: 'rel',media: 1,hreflang: 1,type: 1,as: 1,referrerPolicy: 'referrerpolicy',sizes: 1,imageSrcset: 'imagesrcset',imageSizes: 'imagesizes',charset: 1,rev: 1,target: 1,integrity: 1}]
 	HTMLMap: [1,{name: 1}]
 	HTMLMenu: [1,{}]
-	HTMLMeta: [1,{name: 1,httpEquiv: 'http-equiv',content: 1,scheme: 1,property:1}]
+	HTMLMeta: [1,{name: 1,httpEquiv: 'http-equiv',content: 1,scheme: 1,property:1, charset:1}]
 	HTMLMeter: [1,{value: 1,min: 1,max: 1,low: 1,high: 1,optimum: 1}]
 	HTMLObject: [1,{data: 1,type: 1,name: 1,useMap: 'usemap',width: 1,height: 1,align: 1,archive: 1,code: 1,hspace: 1,standby: 1,vspace: 1,codeBase: 'codebase',codeType: 'codetype',border: 1}]
 	HTMLOList: [1,{start: 1,type: 1}]

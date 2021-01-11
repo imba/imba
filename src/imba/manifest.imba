@@ -4,6 +4,20 @@ import np from 'path'
 import {deserializeData,patchManifest,serializeData} from './utils'
 
 class Asset
+	def constructor manifest
+		#manifest = manifest
+
+	get abspath
+		#abspath ||= #manifest.resolve(self)
+
+	def readSync
+		nfs.readFileSync(abspath,'utf-8')
+
+	def toString
+		console.log 'asset toString',url
+		url
+
+class AssetReference
 	def constructor manifest, path
 		manifest = manifest
 		path = path
@@ -24,17 +38,18 @@ export class Manifest < EventEmitter
 		path = options.path
 		dir = path and np.dirname(path)
 		refs = {}
+		reviver = do(key) new Asset(self)
 		init(options.data)
 
 	def assetReference path,...rest
 		return path if typeof path != 'string'
-		refs[path] ||= new Asset(self,path)
+		refs[path] ||= new AssetReference(self,path)
 
 	get assetsDir do data.assetsDir
 	get assetsUrl do data.assetsUrl
 	get changes do data.changes or {}
 	get inputs do data.inputs
-	get urls do data.urls
+	get urls do data.urls or {}
 	get main do data.main
 	get cwd do process.cwd!
 	
@@ -66,7 +81,7 @@ export class Manifest < EventEmitter
 
 		if typeof raw == 'string'
 			let str = raw
-			raw = deserializeData(raw) # pass in the objects we want to wrap them with?
+			raw = deserializeData(raw,reviver) # pass in the objects we want to wrap them with?
 			raw.#raw = str
 
 		data = patchManifest(data or {},raw)

@@ -7,7 +7,7 @@ import Program from '../bundler/program'
 import Runner from '../bundler/runner'
 import Bundler from '../bundler/bundle'
 
-import {resolveConfig,resolvePackage} from '../bundler/utils'
+import {resolveConfig,resolvePackage,getCacheDir} from '../bundler/utils'
 import tmp from 'tmp'
 
 const t0 = Date.now!
@@ -43,12 +43,13 @@ const schema = {
 def parseOptions options, extras = []
 	options = options.opts! if options.opts isa Function
 	let cwd = options.cwd ||= process.cwd!
-	options.imbaPath ||= np.resolve(__dirname,'..','..')
+	options.imbaPath ||= np.resolve(__dirname,'..')
+
 	options.extras = extras
 	let statFiles = [
 		__filename
-		np.resolve(__dirname,'..','compiler-worker.js')
-		np.resolve(__dirname,'..','node','compiler.js')
+		np.resolve(__dirname,'..','dist','compiler-worker.js')
+		np.resolve(__dirname,'..','dist','node','compiler.js')
 	]
 	options.mtime = Math.max(...statFiles.map(do nfs.statSync($1).mtimeMs))
 	# TODO also check mtime of the compiler
@@ -70,7 +71,9 @@ def parseOptions options, extras = []
 
 	options.loglevel ||= 'warning'
 
+	options.cachedir = getCacheDir(options)
 	global.#IMBA_OPTIONS = options
+	# console.log 'options',options
 	return options
 
 def build entry, o
@@ -118,6 +121,8 @@ def run entry, o, extras
 	# let hash = prog.cache.normalizeKey("{o.minify}-{o.sourcemap}")
 	# let id = params.id = (prog.cache.getPathAlias(entry) + "1{hash}").slice(0,8)
 
+	# console.log 'run?!',params,o.config.node
+
 	unless params.outdir
 		let tmpdir = tmp.dirSync(unsafeCleanup: yes)
 		params.outdir = params.tmpdir = tmpdir.name
@@ -137,7 +142,8 @@ def run entry, o, extras
 		o.name ||= entry
 
 		let runner = new Runner(bundle.manifest,o)
-
+		# console.log 'ready to run',bundle.manifest.main
+		
 		runner.start!
 
 		if o.watch

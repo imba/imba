@@ -37,6 +37,22 @@ export const defaultConfig = {
 	bundles: []
 
 	defaults: {
+		web: {
+			target: [
+				'es2020',
+				'chrome58',
+				'firefox57',
+				'safari11',
+				'edge16'
+			]
+		} 
+
+		worker: {
+			splitting: false
+			hashing: true
+			format: 'iife'
+			platform: 'worker'
+		}
 		serviceworker: {
 			splitting: false
 			hashing: false

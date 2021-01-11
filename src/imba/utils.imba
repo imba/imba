@@ -15,16 +15,16 @@ export def serializeData data
 	json = JSON.stringify(Object.assign({"$$": refs},JSON.parse(json)),replacer,2)
 	return json
 
-export def deserializeData data
+export def deserializeData data, reviver = null
 	let objects = {}
 	let reg = /\$\$\d+\$\$/
-	let reviver = do(key,value)
+	let parser = do(key,value)
 		if typeof value == 'string'
 			if value[0] == '$' and reg.test(value)
-				return objects[value] ||= {}
+				return objects[value] ||= reviver ? reviver(value) : {}
 		return value
 
-	let parsed = JSON.parse(data,reviver)
+	let parsed = JSON.parse(data,parser)
 	if parsed.$$
 		for own k,v of parsed.$$
 			if let obj = objects[k]

@@ -1148,7 +1148,8 @@ export class Lexer
 
 		elif typ == 'IMPORT'
 			# console.log 'import last type',lastTyp,@chunk[idlen]
-			if lastTyp == 'AWAIT' or @chunk[idlen] == '('
+			let next = @chunk[idlen]
+			if lastTyp == 'AWAIT' or next == '(' or next == '.'
 				typ = 'IDENTIFIER'
 			else
 				pushEnd('IMPORT')

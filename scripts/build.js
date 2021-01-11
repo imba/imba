@@ -237,7 +237,7 @@ let bundles = [{
 },{
 	entryPoints: ['src/bin/imba.imba'],
 	outbase: 'src/bin',
-	outdir: 'dist/bin',
+	outdir: 'bin',
 	minify: false,
 	sourcemap: false,
 	format: 'cjs',

@@ -38,7 +38,7 @@ export default class Program < Component
 		mtime = options.force ? Date.now! : (options.mtime or 0)
 		package = options.package
 		fs = new FileSystem(options.cwd,'.',self)
-		cache = new Cache(self)
+		cache = new Cache(options)
 
 		manifest = fs.lookup('imbabuild.json').load!
 

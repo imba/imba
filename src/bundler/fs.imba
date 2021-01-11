@@ -113,13 +113,12 @@ export class FSNode
 		np.basename(rel)
 
 	def memo key, cb
-		program.cache.memo("{rel}:{key}",mtimesync,cb)
+		program.cache.memo("{abs}:{key}",mtimesync,cb)
 
 	def watch observer
 		#watchers.add(observer)
 		if #watched =? yes
 			program.watcher.add(abs)
-			# console.log 'watch',abs
 
 	get registered?
 		flags & FLAGS.REGISTERED
@@ -231,7 +230,7 @@ export class ImbaFile < FileNode
 				hmr: true
 				bundle: true
 				sourcePath: rel
-				sourceId: program.cache.getPathAlias(rel)
+				sourceId: program.cache.getPathAlias(abs)
 				cwd: fs.cwd
 				sourcemap: 'inline'
 				config: program.config

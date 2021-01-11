@@ -39,6 +39,7 @@ class Instance
 		
 		# let exec = args.exec = manifest.main.source.path # path and loader
 		let o = runner.o
+		console.log "imbapath",o.imbaPath
 		let loader = o.imbaPath ? np.resolve(o.imbaPath,"register.js") : "imba/register.js"
 		let path = manifest.main.source.path
 

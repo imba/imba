@@ -1003,6 +1003,9 @@ export class Node
 	def isReserved
 		no
 
+	def isGlobal name
+		no
+
 	# should rather do traversals
 	# o = {}, up, key, index
 	def traverse o
@@ -1063,6 +1066,9 @@ export class Node
 
 	def isExpression
 		@expression || false
+
+	def isRuntimeReference
+		no
 
 	def hasSideEffects
 		true
@@ -4612,6 +4618,12 @@ export class Access < Op
 		var ctor = self:constructor
 		ctor.new(op,left,right)
 
+	def isRuntimeReference
+		if left isa VarOrAccess and left.@variable isa ImbaRuntime
+			if right isa Identifier
+				return right.toString
+			return yes
+		return no
 	# def datatype
 	#	right:datatype ? right.datatype : null
 
@@ -4620,6 +4632,9 @@ export class Access < Op
 		var lft = left
 		var rgt = right
 		var rgtexpr = null
+
+		if lft isa VarOrAccess and lft.isGlobal('import')
+			console.log 'accessing import!!!'
 
 		if lft isa VarOrAccess and lft.@variable isa ImportProxy
 			return lft.@variable.access(rgt).c
@@ -4705,7 +4720,12 @@ export class Access < Op
 		return out
 
 	def visit
+		let lft = left
 		left.traverse if left
+
+		if lft isa VarOrAccess and lft.isGlobal('import')
+			console.log 'accessing import!!!'
+
 		right.traverse if right
 		@left ||= scope__.context
 		return
@@ -4826,6 +4846,9 @@ export class VarOrAccess < ValueNode
 		@token 		= value.@value
 		@variable = null
 		self
+
+	def isGlobal name
+		@variable and @variable.isGlobal(name)
 
 	def startLoc
 		@token.startLoc
@@ -5884,6 +5907,28 @@ export class Call < Node
 		args.traverse
 		callee.traverse
 		# if the callee is a PropertyAccess - better to immediately change it
+
+		let runref = callee.isRuntimeReference
+
+		if callee isa Access and callee.left.isGlobal('import')
+			let arg = args.first
+			let kind = callee.right.toString
+
+			callee = runtime:asset
+
+			if arg isa Str
+				let asset = STACK.root.registerAsset(arg.raw,"asset-{kind}")
+				args.replace(arg,asset:ref)
+			
+
+		if runref == 'asset'
+			
+			let arg = args.first
+
+			if arg isa Str
+				let asset = STACK.root.registerAsset(arg.raw,'asset')
+				args.replace(arg,asset:ref)
+			# console.log 'visit Call asset',runref
 
 		@block && @block.traverse
 
@@ -7167,15 +7212,25 @@ export class TagAttr < TagPart
 		let bval = val
 		let op = M('=',option(:op))
 		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG)
+		let tagName = @tag and @tag.@tagName
 
-		if key == 'asset'
+		let isAsset = key == 'asset' or (key == 'src' and tagName == 'img' and value isa Str)
+
+		if isAsset
 			# console.log "IS ASSET REFERENCE!",@tag.@tagName,value isa Str
 			if value isa Str
-				@asset = STACK.root.registerAsset(value.raw,@tag.@tagName or 'asset')
-				val = CALL(runtime:assetReference,[@asset:ref]).c
+				let kind = 'asset'
+				if tagName == 'img'
+					kind = ''
+
+				@asset = STACK.root.registerAsset(value.raw,kind)
+				val = @asset:ref.c
 				# MP(val,"path.asset.{@tag.@tagName}")
 			else
-				val = MP(val,"path.asset.{@tag.@tagName}")
+				val = MP(val,"path.asset.{tagName}")
+
+		# if key == 'src' and @tag.@tagName == 'img' and value isa Str
+		#	console.log "IMG ASSET"
 		
 		if isAttr 
 			if STACK.tsc
@@ -10370,7 +10425,7 @@ export class RootScope < Scope
 
 		register('global', self, type: 'global').@c = 'globalThis'
 		register('require', self, type: 'global') # .@c = 'globalThis'
-		register('import', self, type: 'global')
+		self.IMPORT = register('import', self, type: 'global')
 		register 'module', self, type: 'global'
 		# register 'imba', self, type: 'global', varclass: GlobalReference
 		register 'window', self, type: 'global', varclass: WindowReference
@@ -10542,7 +10597,9 @@ export class RootScope < Scope
 				if asset:external
 					let ref = asset:ref.c
 					let path = asset:path
-					head.push(LIT "import {ref} from {MP "'{path}?{asset:kind or 'asset'}'"}")
+					if asset:kind
+						path += "?{asset:kind}"
+					head.push(LIT "import {ref} from {MP "'{path}'"}")
 				else	
 					let parsed = parseAsset(asset,name)
 					let body = JSON.stringify(parsed)
@@ -10744,6 +10801,9 @@ export class Variable < Node
 		@references 	= [] # only needed when profiling
 		@assignments 	= []
 		self
+	
+	def isGlobal name
+		@type == 'global' and (!name or @name == name)
 
 	def closure
 		@scope.closure
