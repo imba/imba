@@ -17,7 +17,6 @@ export default class Cache
 	def constructor options
 		#key = Symbol!
 		o = options
-		console.log 'cache dir?',o.cachedir
 		dir = o.cachedir # or np.resolve(program.cwd,'.cache') # file.absdir # np.dirname()
 		aliaspath = np.resolve(dir,'.imba-aliases')
 		aliasmap = ""

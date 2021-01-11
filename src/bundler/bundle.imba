@@ -11,10 +11,13 @@ import {Manifest} from '../imba/manifest'
 import os from 'os'
 import np from 'path'
 
+import {FileSystem} from './fs'
 import Component from './component'
 import {SourceMapper} from '../compiler/sourcemapper'
 
 import Watcher from './watcher'
+
+import SERVE_TEMPLATE from './templates/serve-http.txt'
 
 const ASSETS_URL = '/__assets__/'
 
@@ -108,6 +111,7 @@ export default class Bundle < Component
 			footer: o.footer
 			splitting: o.splitting
 			sourcemap: o.sourcemap
+			stdin: o.stdin
 			minify: o.minify
 			incremental: !!watcher
 			loader: o.loader or {
@@ -183,6 +187,7 @@ export default class Bundle < Component
 
 		let imbaDir = program.imbaPath
 		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
+		let isImba = do(f) (/\.imba$/).test(f) and f.indexOf('styles:') != 0 # (/^styles:/).test(f) or 
 
 		const namespaceMap = {
 			svg: 'asset'
@@ -223,11 +228,20 @@ export default class Bundle < Component
 			# console.log 'real imba path',real,args.path
 			return {path: real}
 
+		build.onResolve(filter: /\.(svg|png|jpe?g|gif|tiff|webp)$/) do(args)
+			# only catch these when imported from an imba file?
+			return unless isImba(args.importer) and args.namespace == 'file'
+			let ext = np.extname(args.path).slice(1)
+			let res = program.resolver.resolve(args,pathLookups)
+			res.namespace = 'asset-img'
+			return res
+
 		build.onResolve(filter: /\?([\w\-]+)$/) do(args)
+			# TODO demand ?asset- prefix
 			let res = program.resolver.resolve(args,pathLookups)
 			let ns = res.namespace = namespaceMap[res.namespace] or res.namespace
 
-			console.log 'onResolve asset',res
+			# console.log 'onResolve asset2',args,res
 
 			if ns == 'serviceworker'
 				res.namespace = 'entry'
@@ -237,7 +251,6 @@ export default class Bundle < Component
 
 		build.onResolve(filter: /^(serviceworker|worker)\:/) do(args)
 			let res = program.resolver.resolve(args,pathLookups)
-			# let ns = res.namespace = namespaceMap[res.namespace] or res.namespace
 			res.path = "{res.namespace}:{res.path}"
 			res.namespace = 'entry'
 			return res
@@ -255,18 +268,23 @@ export default class Bundle < Component
 				# console.log 'resolving through imba',args.path,externs
 				return program.resolver.resolve(args,pathLookups)
 
-
 		build.onLoad(filter: /.*/, namespace: 'asset-svg') do({path})
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js}
+
+		build.onLoad(filter: /.*/, namespace: 'asset-img') do({path})
+			let file = fs.lookup(path)
+			let out = await file.compile({format: 'esm'},self)
+			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 		
 		build.onLoad(filter: /.*/, namespace: 'asset-web') do({path,namespace})
-			# console.log "onLoad asset:web",path,namespace
-			# how would this be compiled when already in web?
-			let body = 'export default {input:"asset-web:$"}'.replace('$',path)
-			return {loader: 'js', contents: body}
-	
+			let js = """
+			import \{asset\} from 'imba';
+			export default asset(\{input: 'asset-web:{path}'\})
+			"""
+			return {loader: 'js', contents: js}
+
 		build.onLoad(filter: /.*/, namespace: 'asset-worker') do(args)
 			let id = "asset-worker:{args.path}"
 
@@ -309,6 +327,7 @@ export default class Bundle < Component
 			return {loader: 'js', contents: out.js}
 
 		build.onLoad(filter: /.*/, namespace: 'script') do(args)
+			throw "namespace script not supported"
 			return {loader: 'text', contents: args.path}
 
 		build.onLoad(filter: /.*/, namespace: 'web') do(args)
@@ -361,10 +380,8 @@ export default class Bundle < Component
 	
 		build.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
 			let src = fs.lookup(path)
-			# console.log 'compiling',path
-			# css items should not wait for this - we can clearly cache them directly here?
+	
 			let res = await src.compile(imbaoptions,self)
-
 
 			let cached = res[#key] ||= {
 				file: {
@@ -372,6 +389,7 @@ export default class Bundle < Component
 					contents: SourceMapper.strip(res.js or "")
 					errors: res.errors.map do diagnosticToESB($1,file: src.abs, namespace: namespace)
 					warnings: res.warnings.map do diagnosticToESB($1,file: src.abs, namespace: namespace)
+					resolveDir: src.absdir
 				}
 				styles: {
 					loader: 'css'
@@ -428,8 +446,7 @@ export default class Bundle < Component
 			for [path,flags] in changes
 				if #watchedPaths[path] or flags != 1
 					dirty = yes
-			
-			console.log 'watching - rebuild?',dirty
+
 			unless dirty
 				return result
 
@@ -475,7 +492,7 @@ export default class Bundle < Component
 			urls: urls
 		}
 
-		let main = manifest.main = ins[entryPoints[0]].js
+		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]].js
 
 		manifest.outdir = (o.tmpdir or o.outdir)
 
@@ -527,22 +544,22 @@ export default class Bundle < Component
 		# see if anything in the bundle has changed or not
 		manifest.hash = createHash(Object.values(outs).map(do $1.hash or $1.path).sort!.join('-'))
 
+		#outfs ||= new FileSystem(o.outdir,'.',program)
+
 		if #hash =? manifest.hash
 			let json = serializeData(manifest)
+			log.info "building in %path",o.outdir
+			
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in manifest.assets
-				# if it has a url - set different path?
-				let path = np.resolve(o.outdir,asset.path)
-				# console.log 'will write',path
-				let file = fs.lookup(path)
+				let file = #outfs.lookup(asset.path)
 				await file.write(asset.#contents,asset.hash)
 
 			# how can we see if manifest has changed at all? We really only want to write this when we have changes.
 			if manifest.path
 				# let src = np.resolve(o.outdir,'.imbabuild') # manifest.path
-				let mfile = fs.lookup(manifest.path)
+				let mfile = #outfs.lookup('.imbabuild')
 				await mfile.writeSync json, manifest.hash
-				# console.log 'manifest',json
 
 			self.manifest.update(json)
 
@@ -758,7 +775,8 @@ export default class Bundle < Component
 				asset.#contents = await walker.replacePaths(asset.#text,asset)
 
 			if asset.type == 'map'
-				let js = asset.source.js
+				# console.log 'found map?!',asset,!!asset.source
+				let js = asset.source..js
 				if js
 					await walker.resolveAsset(js)
 					asset.hash = js.hash
@@ -791,8 +809,6 @@ export default class Bundle < Component
 				urls[output.url] = output
 
 			newouts[output.path] = output
-
-		console.log Object.keys(presult)
 
 		for own path,input of ins
 			if presult[path]

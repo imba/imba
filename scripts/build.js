@@ -250,6 +250,13 @@ let bundles = [{
 	format: 'cjs',
 	external: ['imba'],
 	platform: 'node'
+},{
+	entryPoints: ['devtools.imba'],
+	outdir: '.',
+	sourcemap: false,
+	format: 'cjs',
+	external: [],
+	platform: 'browser'
 }];
 
 bundles.push(...universal('src/program/index.imba','program'));

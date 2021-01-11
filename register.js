@@ -95,4 +95,3 @@ module2.Module._resolveFilename = function(name, from) {
   let res = _resolveFilename.apply(module2.Module, arguments);
   return res;
 };
-console.log("loading register", process.env.IMBA_MANIFEST_PATH);

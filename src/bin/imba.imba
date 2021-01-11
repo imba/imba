@@ -9,6 +9,9 @@ import Bundler from '../bundler/bundle'
 
 import {resolveConfig,resolvePackage,getCacheDir} from '../bundler/utils'
 import tmp from 'tmp'
+import getport from 'get-port'
+
+import SERVE_TEMPLATE from '../bundler/templates/serve-http.txt'
 
 const t0 = Date.now!
 
@@ -41,6 +44,9 @@ const schema = {
 }
 
 def parseOptions options, extras = []
+	if options.#parsed
+		return options
+
 	options = options.opts! if options.opts isa Function
 	let cwd = options.cwd ||= process.cwd!
 	options.imbaPath ||= np.resolve(__dirname,'..')
@@ -65,6 +71,7 @@ def parseOptions options, extras = []
 
 	if options.watch or options.dev
 		options.loglevel ||= 'info'
+		options.hmr = yes
 
 	if options.clean
 		options.mtime = Date.now!
@@ -73,12 +80,12 @@ def parseOptions options, extras = []
 
 	options.cachedir = getCacheDir(options)
 	global.#IMBA_OPTIONS = options
-	# console.log 'options',options
+	options.#parsed = yes
 	return options
 
 def build entry, o
 	o = parseOptions(o)
-	console.log 'build with entry?',entry,o
+	# console.log 'build with entry?',entry,o
 	let prog = new Program(o.config,o)
 	# await prog.build!
 	let params = Object.assign({},o.config.node,o,{
@@ -90,7 +97,6 @@ def build entry, o
 	# params.outbase = prog.cwd
 	let bundle = new Bundler(prog,params)
 	let out = await bundle.build!
-	console.log 'done building!!'
 
 def run entry, o, extras
 	o = parseOptions(o,extras)
@@ -116,12 +122,17 @@ def run entry, o, extras
 		imbaPath: o.imbaPath
 	})
 
+	if o.autoserve
+		delete params.entryPoints
+		o.port ||= await getport(port: getport.makeRange(3000, 3100))
+		params.stdin = {
+			contents: SERVE_TEMPLATE.replace('CLIENT_ENTRY','./' + file.name),
+			resolveDir: file.absdir
+			sourcefile: file.rel
+			loader: 'js'
+		}
+
 	tmp.setGracefulCleanup!
-
-	# let hash = prog.cache.normalizeKey("{o.minify}-{o.sourcemap}")
-	# let id = params.id = (prog.cache.getPathAlias(entry) + "1{hash}").slice(0,8)
-
-	# console.log 'run?!',params,o.config.node
 
 	unless params.outdir
 		let tmpdir = tmp.dirSync(unsafeCleanup: yes)
@@ -131,8 +142,6 @@ def run entry, o, extras
 
 	let bundle = new Bundler(prog,params)
 	let out = await bundle.build!
-	
-	# unless errors
 
 	# should we really need this here?
 	if let exec = out..manifest..main
@@ -148,9 +157,15 @@ def run entry, o, extras
 
 		if o.watch
 			bundle.manifest.on('change:main') do
-				console.log 'manifest change:main!!'
 				runner.reload!
 	return
+
+def serve entry, o, extras
+	o = o.opts!
+	o.watch = yes
+	o.autoserve = yes
+	o = parseOptions(o,extras)
+	run(entry,o,extras)
 
 let binary = cli.storeOptionsAsProperties(false).version('2.0.0').name('imba')
 
@@ -187,5 +202,23 @@ cli.command('build [script]')
 	.option("--pubdir <value>", "Directory for public items - default to")
 	.option("--no-hashing", "Disable hashing")
 	.action(build)
+
+cli.command('serve <script>')
+	.description('Run stuff')
+	.option("-b, --build", "")
+	.option("-d, --dev", "Enable development mode")
+	.option("-w, --watch", "Continously build and watch project while running")
+	.option("-m, --minify", "Minify generated files")
+	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
+	.option("-v, --verbose", "verbosity (repeat to increase)",increase-verbosity,0)
+	.option("--name [name]", "Give name to process")
+	.option("--outdir <value>", "")
+	.option("--loglevel [value]", "Set loglevel info|warning|error|debug|silent")
+	.option("--sourcemap <value>", "", "inline")
+	.option("--inspect", "Debug stuff")
+	.option("--no-sourcemap", "Omit sourcemaps")
+	.option("--no-hashing", "Disable hashing")
+	.option("--clean", "Disregard previosly cached compilations")
+	.action(serve)
 
 binary.parse(process.argv)

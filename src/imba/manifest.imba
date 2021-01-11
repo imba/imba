@@ -14,22 +14,7 @@ class Asset
 		nfs.readFileSync(abspath,'utf-8')
 
 	def toString
-		console.log 'asset toString',url
 		url
-
-class AssetReference
-	def constructor manifest, path
-		manifest = manifest
-		path = path
-
-	get web
-		try manifest.inputs.web[path]
-
-	get js
-		web..js
-
-	get css
-		web..css
 
 export class Manifest < EventEmitter
 	def constructor options = {}
@@ -40,10 +25,6 @@ export class Manifest < EventEmitter
 		refs = {}
 		reviver = do(key) new Asset(self)
 		init(options.data)
-
-	def assetReference path,...rest
-		return path if typeof path != 'string'
-		refs[path] ||= new AssetReference(self,path)
 
 	get assetsDir do data.assetsDir
 	get assetsUrl do data.assetsUrl
@@ -115,6 +96,3 @@ export class Manifest < EventEmitter
 const defaultPath = global.IMBA_MANIFEST_PATH or (global.IMBA_ENTRYPOINT ? global.IMBA_ENTRYPOINT + '.manifest' : null)
 export const manifest = new Manifest(path: defaultPath)
 global.#manifest = manifest
-
-export def assetReference path,...wildcards
-	manifest.assetReference(path,...wildcards)

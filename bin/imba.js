@@ -37,7 +37,7 @@ var require_commander = __commonJS((exports2, module2) => {
   var EventEmitter3 = require("events").EventEmitter;
   var spawn = require("child_process").spawn;
   var path6 = require("path");
-  var fs5 = require("fs");
+  var fs6 = require("fs");
   var Option = class {
     constructor(flags, description) {
       this.flags = flags;
@@ -443,7 +443,7 @@ Read more on https://git.io/JJc0W`);
       }
       let baseDir;
       try {
-        const resolvedLink = fs5.realpathSync(scriptPath);
+        const resolvedLink = fs6.realpathSync(scriptPath);
         baseDir = path6.dirname(resolvedLink);
       } catch (e) {
         baseDir = ".";
@@ -453,11 +453,11 @@ Read more on https://git.io/JJc0W`);
         bin = subcommand._executableFile;
       }
       const localBin = path6.join(baseDir, bin);
-      if (fs5.existsSync(localBin)) {
+      if (fs6.existsSync(localBin)) {
         bin = localBin;
       } else {
         sourceExt.forEach((ext) => {
-          if (fs5.existsSync(`${localBin}${ext}`)) {
+          if (fs6.existsSync(`${localBin}${ext}`)) {
             bin = `${localBin}${ext}`;
           }
         });
@@ -12314,6 +12314,1128 @@ var require_helpers = __commonJS((exports2) => {
   };
 });
 
+// node_modules/queue/index.js
+var require_queue = __commonJS((exports2, module2) => {
+  var inherits = require_inherits();
+  var EventEmitter3 = require("events").EventEmitter;
+  module2.exports = Queue;
+  module2.exports.default = Queue;
+  function Queue(options) {
+    if (!(this instanceof Queue)) {
+      return new Queue(options);
+    }
+    EventEmitter3.call(this);
+    options = options || {};
+    this.concurrency = options.concurrency || Infinity;
+    this.timeout = options.timeout || 0;
+    this.autostart = options.autostart || false;
+    this.results = options.results || null;
+    this.pending = 0;
+    this.session = 0;
+    this.running = false;
+    this.jobs = [];
+    this.timers = {};
+  }
+  inherits(Queue, EventEmitter3);
+  var arrayMethods = [
+    "pop",
+    "shift",
+    "indexOf",
+    "lastIndexOf"
+  ];
+  arrayMethods.forEach(function(method) {
+    Queue.prototype[method] = function() {
+      return Array.prototype[method].apply(this.jobs, arguments);
+    };
+  });
+  Queue.prototype.slice = function(begin, end) {
+    this.jobs = this.jobs.slice(begin, end);
+    return this;
+  };
+  Queue.prototype.reverse = function() {
+    this.jobs.reverse();
+    return this;
+  };
+  var arrayAddMethods = [
+    "push",
+    "unshift",
+    "splice"
+  ];
+  arrayAddMethods.forEach(function(method) {
+    Queue.prototype[method] = function() {
+      var methodResult = Array.prototype[method].apply(this.jobs, arguments);
+      if (this.autostart) {
+        this.start();
+      }
+      return methodResult;
+    };
+  });
+  Object.defineProperty(Queue.prototype, "length", {
+    get: function() {
+      return this.pending + this.jobs.length;
+    }
+  });
+  Queue.prototype.start = function(cb) {
+    if (cb) {
+      callOnErrorOrEnd.call(this, cb);
+    }
+    this.running = true;
+    if (this.pending >= this.concurrency) {
+      return;
+    }
+    if (this.jobs.length === 0) {
+      if (this.pending === 0) {
+        done.call(this);
+      }
+      return;
+    }
+    var self2 = this;
+    var job = this.jobs.shift();
+    var once = true;
+    var session = this.session;
+    var timeoutId = null;
+    var didTimeout = false;
+    var resultIndex = null;
+    var timeout = job.timeout || this.timeout;
+    function next(err, result) {
+      if (once && self2.session === session) {
+        once = false;
+        self2.pending--;
+        if (timeoutId !== null) {
+          delete self2.timers[timeoutId];
+          clearTimeout(timeoutId);
+        }
+        if (err) {
+          self2.emit("error", err, job);
+        } else if (didTimeout === false) {
+          if (resultIndex !== null) {
+            self2.results[resultIndex] = Array.prototype.slice.call(arguments, 1);
+          }
+          self2.emit("success", result, job);
+        }
+        if (self2.session === session) {
+          if (self2.pending === 0 && self2.jobs.length === 0) {
+            done.call(self2);
+          } else if (self2.running) {
+            self2.start();
+          }
+        }
+      }
+    }
+    if (timeout) {
+      timeoutId = setTimeout(function() {
+        didTimeout = true;
+        if (self2.listeners("timeout").length > 0) {
+          self2.emit("timeout", next, job);
+        } else {
+          next();
+        }
+      }, timeout);
+      this.timers[timeoutId] = timeoutId;
+    }
+    if (this.results) {
+      resultIndex = this.results.length;
+      this.results[resultIndex] = null;
+    }
+    this.pending++;
+    self2.emit("start", job);
+    var promise = job(next);
+    if (promise && promise.then && typeof promise.then === "function") {
+      promise.then(function(result) {
+        return next(null, result);
+      }).catch(function(err) {
+        return next(err || true);
+      });
+    }
+    if (this.running && this.jobs.length > 0) {
+      this.start();
+    }
+  };
+  Queue.prototype.stop = function() {
+    this.running = false;
+  };
+  Queue.prototype.end = function(err) {
+    clearTimers.call(this);
+    this.jobs.length = 0;
+    this.pending = 0;
+    done.call(this, err);
+  };
+  function clearTimers() {
+    for (var key in this.timers) {
+      var timeoutId = this.timers[key];
+      delete this.timers[key];
+      clearTimeout(timeoutId);
+    }
+  }
+  function callOnErrorOrEnd(cb) {
+    var self2 = this;
+    this.on("error", onerror);
+    this.on("end", onend);
+    function onerror(err) {
+      self2.end(err);
+    }
+    function onend(err) {
+      self2.removeListener("error", onerror);
+      self2.removeListener("end", onend);
+      cb(err, this.results);
+    }
+  }
+  function done(err) {
+    this.session++;
+    this.running = false;
+    this.emit("end", err);
+  }
+});
+
+// node_modules/image-size/dist/types/bmp.js
+var require_bmp = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.BMP = void 0;
+  exports2.BMP = {
+    validate(buffer) {
+      return buffer.toString("ascii", 0, 2) === "BM";
+    },
+    calculate(buffer) {
+      return {
+        height: Math.abs(buffer.readInt32LE(22)),
+        width: buffer.readUInt32LE(18)
+      };
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/ico.js
+var require_ico = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.ICO = void 0;
+  var TYPE_ICON = 1;
+  var SIZE_HEADER = 2 + 2 + 2;
+  var SIZE_IMAGE_ENTRY = 1 + 1 + 1 + 1 + 2 + 2 + 4 + 4;
+  function getSizeFromOffset(buffer, offset) {
+    const value = buffer.readUInt8(offset);
+    return value === 0 ? 256 : value;
+  }
+  function getImageSize(buffer, imageIndex) {
+    const offset = SIZE_HEADER + imageIndex * SIZE_IMAGE_ENTRY;
+    return {
+      height: getSizeFromOffset(buffer, offset + 1),
+      width: getSizeFromOffset(buffer, offset)
+    };
+  }
+  exports2.ICO = {
+    validate(buffer) {
+      if (buffer.readUInt16LE(0) !== 0) {
+        return false;
+      }
+      return buffer.readUInt16LE(2) === TYPE_ICON;
+    },
+    calculate(buffer) {
+      const nbImages = buffer.readUInt16LE(4);
+      const imageSize = getImageSize(buffer, 0);
+      if (nbImages === 1) {
+        return imageSize;
+      }
+      const imgs = [imageSize];
+      for (let imageIndex = 1; imageIndex < nbImages; imageIndex += 1) {
+        imgs.push(getImageSize(buffer, imageIndex));
+      }
+      const result = {
+        height: imageSize.height,
+        images: imgs,
+        width: imageSize.width
+      };
+      return result;
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/cur.js
+var require_cur = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.CUR = void 0;
+  var ico_1 = require_ico();
+  var TYPE_CURSOR = 2;
+  exports2.CUR = {
+    validate(buffer) {
+      if (buffer.readUInt16LE(0) !== 0) {
+        return false;
+      }
+      return buffer.readUInt16LE(2) === TYPE_CURSOR;
+    },
+    calculate(buffer) {
+      return ico_1.ICO.calculate(buffer);
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/dds.js
+var require_dds = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.DDS = void 0;
+  exports2.DDS = {
+    validate(buffer) {
+      return buffer.readUInt32LE(0) === 542327876;
+    },
+    calculate(buffer) {
+      return {
+        height: buffer.readUInt32LE(12),
+        width: buffer.readUInt32LE(16)
+      };
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/gif.js
+var require_gif = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.GIF = void 0;
+  var gifRegexp = /^GIF8[79]a/;
+  exports2.GIF = {
+    validate(buffer) {
+      const signature = buffer.toString("ascii", 0, 6);
+      return gifRegexp.test(signature);
+    },
+    calculate(buffer) {
+      return {
+        height: buffer.readUInt16LE(8),
+        width: buffer.readUInt16LE(6)
+      };
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/icns.js
+var require_icns = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.ICNS = void 0;
+  var SIZE_HEADER = 4 + 4;
+  var FILE_LENGTH_OFFSET = 4;
+  var ENTRY_LENGTH_OFFSET = 4;
+  var ICON_TYPE_SIZE = {
+    ICON: 32,
+    "ICN#": 32,
+    "icm#": 16,
+    icm4: 16,
+    icm8: 16,
+    "ics#": 16,
+    ics4: 16,
+    ics8: 16,
+    is32: 16,
+    s8mk: 16,
+    icp4: 16,
+    icl4: 32,
+    icl8: 32,
+    il32: 32,
+    l8mk: 32,
+    icp5: 32,
+    ic11: 32,
+    ich4: 48,
+    ich8: 48,
+    ih32: 48,
+    h8mk: 48,
+    icp6: 64,
+    ic12: 32,
+    it32: 128,
+    t8mk: 128,
+    ic07: 128,
+    ic08: 256,
+    ic13: 256,
+    ic09: 512,
+    ic14: 512,
+    ic10: 1024
+  };
+  function readImageHeader(buffer, imageOffset) {
+    const imageLengthOffset = imageOffset + ENTRY_LENGTH_OFFSET;
+    return [
+      buffer.toString("ascii", imageOffset, imageLengthOffset),
+      buffer.readUInt32BE(imageLengthOffset)
+    ];
+  }
+  function getImageSize(type) {
+    const size = ICON_TYPE_SIZE[type];
+    return {width: size, height: size, type};
+  }
+  exports2.ICNS = {
+    validate(buffer) {
+      return buffer.toString("ascii", 0, 4) === "icns";
+    },
+    calculate(buffer) {
+      const bufferLength = buffer.length;
+      const fileLength = buffer.readUInt32BE(FILE_LENGTH_OFFSET);
+      let imageOffset = SIZE_HEADER;
+      let imageHeader = readImageHeader(buffer, imageOffset);
+      let imageSize = getImageSize(imageHeader[0]);
+      imageOffset += imageHeader[1];
+      if (imageOffset === fileLength) {
+        return imageSize;
+      }
+      const result = {
+        height: imageSize.height,
+        images: [imageSize],
+        width: imageSize.width
+      };
+      while (imageOffset < fileLength && imageOffset < bufferLength) {
+        imageHeader = readImageHeader(buffer, imageOffset);
+        imageSize = getImageSize(imageHeader[0]);
+        imageOffset += imageHeader[1];
+        result.images.push(imageSize);
+      }
+      return result;
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/j2c.js
+var require_j2c = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.J2C = void 0;
+  exports2.J2C = {
+    validate(buffer) {
+      return buffer.toString("hex", 0, 4) === "ff4fff51";
+    },
+    calculate(buffer) {
+      return {
+        height: buffer.readUInt32BE(12),
+        width: buffer.readUInt32BE(8)
+      };
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/jp2.js
+var require_jp2 = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.JP2 = void 0;
+  var BoxTypes = {
+    ftyp: "66747970",
+    ihdr: "69686472",
+    jp2h: "6a703268",
+    jp__: "6a502020",
+    rreq: "72726571",
+    xml_: "786d6c20"
+  };
+  var calculateRREQLength = (box) => {
+    const unit = box.readUInt8(0);
+    let offset = 1 + 2 * unit;
+    const numStdFlags = box.readUInt16BE(offset);
+    const flagsLength = numStdFlags * (2 + unit);
+    offset = offset + 2 + flagsLength;
+    const numVendorFeatures = box.readUInt16BE(offset);
+    const featuresLength = numVendorFeatures * (16 + unit);
+    return offset + 2 + featuresLength;
+  };
+  var parseIHDR = (box) => {
+    return {
+      height: box.readUInt32BE(4),
+      width: box.readUInt32BE(8)
+    };
+  };
+  exports2.JP2 = {
+    validate(buffer) {
+      const signature = buffer.toString("hex", 4, 8);
+      const signatureLength = buffer.readUInt32BE(0);
+      if (signature !== BoxTypes.jp__ || signatureLength < 1) {
+        return false;
+      }
+      const ftypeBoxStart = signatureLength + 4;
+      const ftypBoxLength = buffer.readUInt32BE(signatureLength);
+      const ftypBox = buffer.slice(ftypeBoxStart, ftypeBoxStart + ftypBoxLength);
+      return ftypBox.toString("hex", 0, 4) === BoxTypes.ftyp;
+    },
+    calculate(buffer) {
+      const signatureLength = buffer.readUInt32BE(0);
+      const ftypBoxLength = buffer.readUInt16BE(signatureLength + 2);
+      let offset = signatureLength + 4 + ftypBoxLength;
+      const nextBoxType = buffer.toString("hex", offset, offset + 4);
+      switch (nextBoxType) {
+        case BoxTypes.rreq:
+          const MAGIC = 4;
+          offset = offset + 4 + MAGIC + calculateRREQLength(buffer.slice(offset + 4));
+          return parseIHDR(buffer.slice(offset + 8, offset + 24));
+        case BoxTypes.jp2h:
+          return parseIHDR(buffer.slice(offset + 8, offset + 24));
+        default:
+          throw new TypeError("Unsupported header found: " + buffer.toString("ascii", offset, offset + 4));
+      }
+    }
+  };
+});
+
+// node_modules/image-size/dist/readUInt.js
+var require_readUInt = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.readUInt = void 0;
+  function readUInt(buffer, bits, offset, isBigEndian) {
+    offset = offset || 0;
+    const endian = isBigEndian ? "BE" : "LE";
+    const methodName = "readUInt" + bits + endian;
+    return buffer[methodName].call(buffer, offset);
+  }
+  exports2.readUInt = readUInt;
+});
+
+// node_modules/image-size/dist/types/jpg.js
+var require_jpg = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.JPG = void 0;
+  var readUInt_1 = require_readUInt();
+  var EXIF_MARKER = "45786966";
+  var APP1_DATA_SIZE_BYTES = 2;
+  var EXIF_HEADER_BYTES = 6;
+  var TIFF_BYTE_ALIGN_BYTES = 2;
+  var BIG_ENDIAN_BYTE_ALIGN = "4d4d";
+  var LITTLE_ENDIAN_BYTE_ALIGN = "4949";
+  var IDF_ENTRY_BYTES = 12;
+  var NUM_DIRECTORY_ENTRIES_BYTES = 2;
+  function isEXIF(buffer) {
+    return buffer.toString("hex", 2, 6) === EXIF_MARKER;
+  }
+  function extractSize(buffer, index) {
+    return {
+      height: buffer.readUInt16BE(index),
+      width: buffer.readUInt16BE(index + 2)
+    };
+  }
+  function extractOrientation(exifBlock, isBigEndian) {
+    const idfOffset = 8;
+    const offset = EXIF_HEADER_BYTES + idfOffset;
+    const idfDirectoryEntries = readUInt_1.readUInt(exifBlock, 16, offset, isBigEndian);
+    for (let directoryEntryNumber = 0; directoryEntryNumber < idfDirectoryEntries; directoryEntryNumber++) {
+      const start = offset + NUM_DIRECTORY_ENTRIES_BYTES + directoryEntryNumber * IDF_ENTRY_BYTES;
+      const end = start + IDF_ENTRY_BYTES;
+      if (start > exifBlock.length) {
+        return;
+      }
+      const block = exifBlock.slice(start, end);
+      const tagNumber = readUInt_1.readUInt(block, 16, 0, isBigEndian);
+      if (tagNumber === 274) {
+        const dataFormat = readUInt_1.readUInt(block, 16, 2, isBigEndian);
+        if (dataFormat !== 3) {
+          return;
+        }
+        const numberOfComponents = readUInt_1.readUInt(block, 32, 4, isBigEndian);
+        if (numberOfComponents !== 1) {
+          return;
+        }
+        return readUInt_1.readUInt(block, 16, 8, isBigEndian);
+      }
+    }
+  }
+  function validateExifBlock(buffer, index) {
+    const exifBlock = buffer.slice(APP1_DATA_SIZE_BYTES, index);
+    const byteAlign = exifBlock.toString("hex", EXIF_HEADER_BYTES, EXIF_HEADER_BYTES + TIFF_BYTE_ALIGN_BYTES);
+    const isBigEndian = byteAlign === BIG_ENDIAN_BYTE_ALIGN;
+    const isLittleEndian = byteAlign === LITTLE_ENDIAN_BYTE_ALIGN;
+    if (isBigEndian || isLittleEndian) {
+      return extractOrientation(exifBlock, isBigEndian);
+    }
+  }
+  function validateBuffer(buffer, index) {
+    if (index > buffer.length) {
+      throw new TypeError("Corrupt JPG, exceeded buffer limits");
+    }
+    if (buffer[index] !== 255) {
+      throw new TypeError("Invalid JPG, marker table corrupted");
+    }
+  }
+  exports2.JPG = {
+    validate(buffer) {
+      const SOIMarker = buffer.toString("hex", 0, 2);
+      return SOIMarker === "ffd8";
+    },
+    calculate(buffer) {
+      buffer = buffer.slice(4);
+      let orientation;
+      let next;
+      while (buffer.length) {
+        const i = buffer.readUInt16BE(0);
+        if (isEXIF(buffer)) {
+          orientation = validateExifBlock(buffer, i);
+        }
+        validateBuffer(buffer, i);
+        next = buffer[i + 1];
+        if (next === 192 || next === 193 || next === 194) {
+          const size = extractSize(buffer, i + 5);
+          if (!orientation) {
+            return size;
+          }
+          return {
+            height: size.height,
+            orientation,
+            width: size.width
+          };
+        }
+        buffer = buffer.slice(i + 2);
+      }
+      throw new TypeError("Invalid JPG, no size found");
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/ktx.js
+var require_ktx = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.KTX = void 0;
+  var SIGNATURE = "KTX 11";
+  exports2.KTX = {
+    validate(buffer) {
+      return SIGNATURE === buffer.toString("ascii", 1, 7);
+    },
+    calculate(buffer) {
+      return {
+        height: buffer.readUInt32LE(40),
+        width: buffer.readUInt32LE(36)
+      };
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/png.js
+var require_png = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.PNG = void 0;
+  var pngSignature = "PNG\r\n\n";
+  var pngImageHeaderChunkName = "IHDR";
+  var pngFriedChunkName = "CgBI";
+  exports2.PNG = {
+    validate(buffer) {
+      if (pngSignature === buffer.toString("ascii", 1, 8)) {
+        let chunkName = buffer.toString("ascii", 12, 16);
+        if (chunkName === pngFriedChunkName) {
+          chunkName = buffer.toString("ascii", 28, 32);
+        }
+        if (chunkName !== pngImageHeaderChunkName) {
+          throw new TypeError("Invalid PNG");
+        }
+        return true;
+      }
+      return false;
+    },
+    calculate(buffer) {
+      if (buffer.toString("ascii", 12, 16) === pngFriedChunkName) {
+        return {
+          height: buffer.readUInt32BE(36),
+          width: buffer.readUInt32BE(32)
+        };
+      }
+      return {
+        height: buffer.readUInt32BE(20),
+        width: buffer.readUInt32BE(16)
+      };
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/pnm.js
+var require_pnm = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.PNM = void 0;
+  var PNMTypes = {
+    P1: "pbm/ascii",
+    P2: "pgm/ascii",
+    P3: "ppm/ascii",
+    P4: "pbm",
+    P5: "pgm",
+    P6: "ppm",
+    P7: "pam",
+    PF: "pfm"
+  };
+  var Signatures = Object.keys(PNMTypes);
+  var handlers = {
+    default: (lines) => {
+      let dimensions = [];
+      while (lines.length > 0) {
+        const line = lines.shift();
+        if (line[0] === "#") {
+          continue;
+        }
+        dimensions = line.split(" ");
+        break;
+      }
+      if (dimensions.length === 2) {
+        return {
+          height: parseInt(dimensions[1], 10),
+          width: parseInt(dimensions[0], 10)
+        };
+      } else {
+        throw new TypeError("Invalid PNM");
+      }
+    },
+    pam: (lines) => {
+      const size = {};
+      while (lines.length > 0) {
+        const line = lines.shift();
+        if (line.length > 16 || line.charCodeAt(0) > 128) {
+          continue;
+        }
+        const [key, value] = line.split(" ");
+        if (key && value) {
+          size[key.toLowerCase()] = parseInt(value, 10);
+        }
+        if (size.height && size.width) {
+          break;
+        }
+      }
+      if (size.height && size.width) {
+        return {
+          height: size.height,
+          width: size.width
+        };
+      } else {
+        throw new TypeError("Invalid PAM");
+      }
+    }
+  };
+  exports2.PNM = {
+    validate(buffer) {
+      const signature = buffer.toString("ascii", 0, 2);
+      return Signatures.includes(signature);
+    },
+    calculate(buffer) {
+      const signature = buffer.toString("ascii", 0, 2);
+      const type = PNMTypes[signature];
+      const lines = buffer.toString("ascii", 3).split(/[\r\n]+/);
+      const handler = handlers[type] || handlers.default;
+      return handler(lines);
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/psd.js
+var require_psd = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.PSD = void 0;
+  exports2.PSD = {
+    validate(buffer) {
+      return buffer.toString("ascii", 0, 4) === "8BPS";
+    },
+    calculate(buffer) {
+      return {
+        height: buffer.readUInt32BE(14),
+        width: buffer.readUInt32BE(18)
+      };
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/svg.js
+var require_svg = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.SVG = void 0;
+  var svgReg = /<svg\s([^>"']|"[^"]*"|'[^']*')*>/;
+  var extractorRegExps = {
+    height: /\sheight=(['"])([^%]+?)\1/,
+    root: svgReg,
+    viewbox: /\sviewBox=(['"])(.+?)\1/,
+    width: /\swidth=(['"])([^%]+?)\1/
+  };
+  var INCH_CM = 2.54;
+  var units = {
+    cm: 96 / INCH_CM,
+    em: 16,
+    ex: 8,
+    m: 96 / INCH_CM * 100,
+    mm: 96 / INCH_CM / 10,
+    pc: 96 / 72 / 12,
+    pt: 96 / 72
+  };
+  function parseLength(len) {
+    const m = /([0-9.]+)([a-z]*)/.exec(len);
+    if (!m) {
+      return void 0;
+    }
+    return Math.round(parseFloat(m[1]) * (units[m[2]] || 1));
+  }
+  function parseViewbox(viewbox) {
+    const bounds = viewbox.split(" ");
+    return {
+      height: parseLength(bounds[3]),
+      width: parseLength(bounds[2])
+    };
+  }
+  function parseAttributes(root) {
+    const width = root.match(extractorRegExps.width);
+    const height = root.match(extractorRegExps.height);
+    const viewbox = root.match(extractorRegExps.viewbox);
+    return {
+      height: height && parseLength(height[2]),
+      viewbox: viewbox && parseViewbox(viewbox[2]),
+      width: width && parseLength(width[2])
+    };
+  }
+  function calculateByDimensions(attrs) {
+    return {
+      height: attrs.height,
+      width: attrs.width
+    };
+  }
+  function calculateByViewbox(attrs, viewbox) {
+    const ratio = viewbox.width / viewbox.height;
+    if (attrs.width) {
+      return {
+        height: Math.floor(attrs.width / ratio),
+        width: attrs.width
+      };
+    }
+    if (attrs.height) {
+      return {
+        height: attrs.height,
+        width: Math.floor(attrs.height * ratio)
+      };
+    }
+    return {
+      height: viewbox.height,
+      width: viewbox.width
+    };
+  }
+  exports2.SVG = {
+    validate(buffer) {
+      const str = String(buffer);
+      return svgReg.test(str);
+    },
+    calculate(buffer) {
+      const root = buffer.toString("utf8").match(extractorRegExps.root);
+      if (root) {
+        const attrs = parseAttributes(root[0]);
+        if (attrs.width && attrs.height) {
+          return calculateByDimensions(attrs);
+        }
+        if (attrs.viewbox) {
+          return calculateByViewbox(attrs, attrs.viewbox);
+        }
+      }
+      throw new TypeError("Invalid SVG");
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/tiff.js
+var require_tiff = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.TIFF = void 0;
+  var fs6 = require("fs");
+  var readUInt_1 = require_readUInt();
+  function readIFD(buffer, filepath, isBigEndian) {
+    const ifdOffset = readUInt_1.readUInt(buffer, 32, 4, isBigEndian);
+    let bufferSize = 1024;
+    const fileSize = fs6.statSync(filepath).size;
+    if (ifdOffset + bufferSize > fileSize) {
+      bufferSize = fileSize - ifdOffset - 10;
+    }
+    const endBuffer = Buffer.alloc(bufferSize);
+    const descriptor = fs6.openSync(filepath, "r");
+    fs6.readSync(descriptor, endBuffer, 0, bufferSize, ifdOffset);
+    fs6.closeSync(descriptor);
+    return endBuffer.slice(2);
+  }
+  function readValue(buffer, isBigEndian) {
+    const low = readUInt_1.readUInt(buffer, 16, 8, isBigEndian);
+    const high = readUInt_1.readUInt(buffer, 16, 10, isBigEndian);
+    return (high << 16) + low;
+  }
+  function nextTag(buffer) {
+    if (buffer.length > 24) {
+      return buffer.slice(12);
+    }
+  }
+  function extractTags(buffer, isBigEndian) {
+    const tags = {};
+    let temp = buffer;
+    while (temp && temp.length) {
+      const code = readUInt_1.readUInt(temp, 16, 0, isBigEndian);
+      const type = readUInt_1.readUInt(temp, 16, 2, isBigEndian);
+      const length = readUInt_1.readUInt(temp, 32, 4, isBigEndian);
+      if (code === 0) {
+        break;
+      } else {
+        if (length === 1 && (type === 3 || type === 4)) {
+          tags[code] = readValue(temp, isBigEndian);
+        }
+        temp = nextTag(temp);
+      }
+    }
+    return tags;
+  }
+  function determineEndianness(buffer) {
+    const signature = buffer.toString("ascii", 0, 2);
+    if (signature === "II") {
+      return "LE";
+    } else if (signature === "MM") {
+      return "BE";
+    }
+  }
+  var signatures = [
+    "49492a00",
+    "4d4d002a"
+  ];
+  exports2.TIFF = {
+    validate(buffer) {
+      return signatures.includes(buffer.toString("hex", 0, 4));
+    },
+    calculate(buffer, filepath) {
+      if (!filepath) {
+        throw new TypeError("Tiff doesn't support buffer");
+      }
+      const isBigEndian = determineEndianness(buffer) === "BE";
+      const ifdBuffer = readIFD(buffer, filepath, isBigEndian);
+      const tags = extractTags(ifdBuffer, isBigEndian);
+      const width = tags[256];
+      const height = tags[257];
+      if (!width || !height) {
+        throw new TypeError("Invalid Tiff. Missing tags");
+      }
+      return {height, width};
+    }
+  };
+});
+
+// node_modules/image-size/dist/types/webp.js
+var require_webp = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.WEBP = void 0;
+  function calculateExtended(buffer) {
+    return {
+      height: 1 + buffer.readUIntLE(7, 3),
+      width: 1 + buffer.readUIntLE(4, 3)
+    };
+  }
+  function calculateLossless(buffer) {
+    return {
+      height: 1 + ((buffer[4] & 15) << 10 | buffer[3] << 2 | (buffer[2] & 192) >> 6),
+      width: 1 + ((buffer[2] & 63) << 8 | buffer[1])
+    };
+  }
+  function calculateLossy(buffer) {
+    return {
+      height: buffer.readInt16LE(8) & 16383,
+      width: buffer.readInt16LE(6) & 16383
+    };
+  }
+  exports2.WEBP = {
+    validate(buffer) {
+      const riffHeader = buffer.toString("ascii", 0, 4) === "RIFF";
+      const webpHeader = buffer.toString("ascii", 8, 12) === "WEBP";
+      const vp8Header = buffer.toString("ascii", 12, 15) === "VP8";
+      return riffHeader && webpHeader && vp8Header;
+    },
+    calculate(buffer) {
+      const chunkHeader = buffer.toString("ascii", 12, 16);
+      buffer = buffer.slice(20, 30);
+      if (chunkHeader === "VP8X") {
+        const extendedHeader = buffer[0];
+        const validStart = (extendedHeader & 192) === 0;
+        const validEnd = (extendedHeader & 1) === 0;
+        if (validStart && validEnd) {
+          return calculateExtended(buffer);
+        } else {
+          throw new TypeError("Invalid WebP");
+        }
+      }
+      if (chunkHeader === "VP8 " && buffer[0] !== 47) {
+        return calculateLossy(buffer);
+      }
+      const signature = buffer.toString("hex", 3, 6);
+      if (chunkHeader === "VP8L" && signature !== "9d012a") {
+        return calculateLossless(buffer);
+      }
+      throw new TypeError("Invalid WebP");
+    }
+  };
+});
+
+// node_modules/image-size/dist/types.js
+var require_types = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.typeHandlers = void 0;
+  var bmp_1 = require_bmp();
+  var cur_1 = require_cur();
+  var dds_1 = require_dds();
+  var gif_1 = require_gif();
+  var icns_1 = require_icns();
+  var ico_1 = require_ico();
+  var j2c_1 = require_j2c();
+  var jp2_1 = require_jp2();
+  var jpg_1 = require_jpg();
+  var ktx_1 = require_ktx();
+  var png_1 = require_png();
+  var pnm_1 = require_pnm();
+  var psd_1 = require_psd();
+  var svg_1 = require_svg();
+  var tiff_1 = require_tiff();
+  var webp_1 = require_webp();
+  exports2.typeHandlers = {
+    bmp: bmp_1.BMP,
+    cur: cur_1.CUR,
+    dds: dds_1.DDS,
+    gif: gif_1.GIF,
+    icns: icns_1.ICNS,
+    ico: ico_1.ICO,
+    j2c: j2c_1.J2C,
+    jp2: jp2_1.JP2,
+    jpg: jpg_1.JPG,
+    ktx: ktx_1.KTX,
+    png: png_1.PNG,
+    pnm: pnm_1.PNM,
+    psd: psd_1.PSD,
+    svg: svg_1.SVG,
+    tiff: tiff_1.TIFF,
+    webp: webp_1.WEBP
+  };
+});
+
+// node_modules/image-size/dist/detector.js
+var require_detector = __commonJS((exports2) => {
+  "use strict";
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.detector = void 0;
+  var types_1 = require_types();
+  var keys = Object.keys(types_1.typeHandlers);
+  var firstBytes = {
+    56: "psd",
+    66: "bmp",
+    68: "dds",
+    71: "gif",
+    73: "tiff",
+    77: "tiff",
+    82: "webp",
+    105: "icns",
+    137: "png",
+    255: "jpg"
+  };
+  function detector(buffer) {
+    const byte = buffer[0];
+    if (byte in firstBytes) {
+      const type = firstBytes[byte];
+      if (types_1.typeHandlers[type].validate(buffer)) {
+        return type;
+      }
+    }
+    const finder = (key) => types_1.typeHandlers[key].validate(buffer);
+    return keys.find(finder);
+  }
+  exports2.detector = detector;
+});
+
+// node_modules/image-size/dist/index.js
+var require_dist = __commonJS((exports2, module2) => {
+  "use strict";
+  var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+    function adopt(value) {
+      return value instanceof P ? value : new P(function(resolve2) {
+        resolve2(value);
+      });
+    }
+    return new (P || (P = Promise))(function(resolve2, reject) {
+      function fulfilled(value) {
+        try {
+          step(generator.next(value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      function rejected(value) {
+        try {
+          step(generator["throw"](value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      function step(result) {
+        result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
+      }
+      step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  };
+  Object.defineProperty(exports2, "__esModule", {value: true});
+  exports2.types = exports2.setConcurrency = exports2.imageSize = void 0;
+  var fs6 = require("fs");
+  var path6 = require("path");
+  var queue_1 = require_queue();
+  var types_1 = require_types();
+  var detector_1 = require_detector();
+  var MaxBufferSize = 512 * 1024;
+  var queue = new queue_1.default({concurrency: 100, autostart: true});
+  function lookup(buffer, filepath) {
+    const type = detector_1.detector(buffer);
+    if (type && type in types_1.typeHandlers) {
+      const size = types_1.typeHandlers[type].calculate(buffer, filepath);
+      if (size !== void 0) {
+        size.type = type;
+        return size;
+      }
+    }
+    throw new TypeError("unsupported file type: " + type + " (file: " + filepath + ")");
+  }
+  function asyncFileToBuffer(filepath) {
+    return __awaiter(this, void 0, void 0, function* () {
+      const handle = yield fs6.promises.open(filepath, "r");
+      const {size} = yield handle.stat();
+      if (size <= 0) {
+        yield handle.close();
+        throw new Error("Empty file");
+      }
+      const bufferSize = Math.min(size, MaxBufferSize);
+      const buffer = Buffer.alloc(bufferSize);
+      yield handle.read(buffer, 0, bufferSize, 0);
+      yield handle.close();
+      return buffer;
+    });
+  }
+  function syncFileToBuffer(filepath) {
+    const descriptor = fs6.openSync(filepath, "r");
+    const {size} = fs6.fstatSync(descriptor);
+    if (size <= 0) {
+      fs6.closeSync(descriptor);
+      throw new Error("Empty file");
+    }
+    const bufferSize = Math.min(size, MaxBufferSize);
+    const buffer = Buffer.alloc(bufferSize);
+    fs6.readSync(descriptor, buffer, 0, bufferSize, 0);
+    fs6.closeSync(descriptor);
+    return buffer;
+  }
+  module2.exports = exports2 = imageSize;
+  exports2.default = imageSize;
+  function imageSize(input, callback) {
+    if (Buffer.isBuffer(input)) {
+      return lookup(input);
+    }
+    if (typeof input !== "string") {
+      throw new TypeError("invalid invocation");
+    }
+    const filepath = path6.resolve(input);
+    if (typeof callback === "function") {
+      queue.push(() => asyncFileToBuffer(filepath).then((buffer) => process.nextTick(callback, null, lookup(buffer, filepath))).catch(callback));
+    } else {
+      const buffer = syncFileToBuffer(filepath);
+      return lookup(buffer, filepath);
+    }
+  }
+  exports2.imageSize = imageSize;
+  exports2.setConcurrency = (c) => {
+    queue.concurrency = c;
+  };
+  exports2.types = Object.keys(types_1.typeHandlers);
+});
+
 // node_modules/flatted/cjs/index.js
 var require_cjs = __commonJS((exports2) => {
   "use strict";
@@ -12415,7 +13537,7 @@ var require_utils4 = __commonJS((exports2) => {
     writeFile: () => writeFile,
     writePath: () => writePath
   });
-  var fs5 = __toModule(require("fs"));
+  var fs6 = __toModule(require("fs"));
   var path6 = __toModule(require("path"));
   var crypto4 = __toModule(require("crypto"));
   var os6 = __toModule(require("os"));
@@ -12424,8 +13546,8 @@ var require_utils4 = __commonJS((exports2) => {
     let v;
     return a ? (v = a.toIterable) ? v.call(a) : a : [];
   }
-  var sys$36 = Symbol.for("#mtime");
-  var sys$43 = Symbol.for("#path");
+  var sys$37 = Symbol.for("#mtime");
+  var sys$44 = Symbol.for("#path");
   var defaultLoaders = {
     ".png": "file",
     ".svg": "file",
@@ -12436,10 +13558,9 @@ var require_utils4 = __commonJS((exports2) => {
   };
   function getCacheDir2(options) {
     let dir = process.env.IMBA_CACHEDIR || path6.default.resolve(__dirname, "..", ".imba-cache");
-    console.log("cache dir here", dir, __filename);
-    if (!fs5.default.existsSync(dir)) {
-      console.log("cache dir does not exist - create");
-      fs5.default.mkdirSync(dir);
+    if (!fs6.default.existsSync(dir)) {
+      console.log("cache dir does not exist - create", dir);
+      fs6.default.mkdirSync(dir);
     }
     ;
     return dir;
@@ -12457,16 +13578,16 @@ var require_utils4 = __commonJS((exports2) => {
   }
   async function writePath(src, body) {
     await ensureDir(src);
-    return fs5.default.promises.writeFile(src, body);
+    return fs6.default.promises.writeFile(src, body);
   }
   function writeFile(src, body) {
-    return fs5.default.promises.writeFile(src, body);
+    return fs6.default.promises.writeFile(src, body);
   }
   function readFile(src, encoding = "utf8") {
-    return fs5.default.promises.readFile(src, encoding);
+    return fs6.default.promises.readFile(src, encoding);
   }
   function exists(src) {
-    let p = fs5.default.promises.access(src, fs5.default.constants.F_OK);
+    let p = fs6.default.promises.access(src, fs6.default.constants.F_OK);
     return p.then(function() {
       return true;
     }).catch(function() {
@@ -12495,8 +13616,8 @@ var require_utils4 = __commonJS((exports2) => {
     return path6.default.format(parsed);
   }
   function pluck2(array, cb) {
-    for (let i = 0, sys$114 = iter$11(array), sys$29 = sys$114.length; i < sys$29; i++) {
-      let item = sys$114[i];
+    for (let i = 0, sys$115 = iter$11(array), sys$210 = sys$115.length; i < sys$210; i++) {
+      let item = sys$115[i];
       if (cb(item)) {
         array.splice(i, 1);
         return item;
@@ -12509,9 +13630,9 @@ var require_utils4 = __commonJS((exports2) => {
   function resolveConfig2(cwd, name) {
     try {
       let src = path6.default.resolve(cwd || ".", name || "imbaconfig.json");
-      let config2 = JSON.parse(fs5.default.readFileSync(src, "utf8"));
-      config2[sys$36] = fs5.default.statSync(src).mtimeMs || 0;
-      config2[sys$43] = src;
+      let config2 = JSON.parse(fs6.default.readFileSync(src, "utf8"));
+      config2[sys$37] = fs6.default.statSync(src).mtimeMs || 0;
+      config2[sys$44] = src;
       return resolve(config2);
     } catch (e) {
       return resolve({});
@@ -12521,7 +13642,7 @@ var require_utils4 = __commonJS((exports2) => {
   function resolvePath(name, cwd = ".", cb = null) {
     let src = path6.default.resolve(cwd, name);
     let dir = path6.default.dirname(src);
-    if (fs5.default.existsSync(src)) {
+    if (fs6.default.existsSync(src)) {
       return src;
     }
     ;
@@ -12533,7 +13654,7 @@ var require_utils4 = __commonJS((exports2) => {
     if (src = resolvePath(name, cwd)) {
       let file = {
         path: src,
-        body: fs5.default.readFileSync(src, "utf-8")
+        body: fs6.default.readFileSync(src, "utf-8")
       };
       return handler(file);
     }
@@ -12572,7 +13693,7 @@ var require_utils4 = __commonJS((exports2) => {
     let dirname = src;
     return new Promise(function(resolve2) {
       while (dirname = path6.default.dirname(dirname)) {
-        if (dirExistsCache[dirname] || fs5.default.existsSync(dirname)) {
+        if (dirExistsCache[dirname] || fs6.default.existsSync(dirname)) {
           break;
         }
         ;
@@ -12581,7 +13702,7 @@ var require_utils4 = __commonJS((exports2) => {
       ;
       while (stack.length) {
         let dir = stack.pop();
-        fs5.default.mkdirSync(dirExistsCache[dirname] = dir);
+        fs6.default.mkdirSync(dirExistsCache[dirname] = dir);
       }
       ;
       return resolve2(src);
@@ -12593,7 +13714,7 @@ var require_utils4 = __commonJS((exports2) => {
 var require_old = __commonJS((exports2) => {
   var pathModule = require("path");
   var isWindows = process.platform === "win32";
-  var fs5 = require("fs");
+  var fs6 = require("fs");
   var DEBUG = process.env.NODE_DEBUG && /fs/.test(process.env.NODE_DEBUG);
   function rethrow() {
     var callback;
@@ -12658,7 +13779,7 @@ var require_old = __commonJS((exports2) => {
       base = m[0];
       previous = "";
       if (isWindows && !knownHard[base]) {
-        fs5.lstatSync(base);
+        fs6.lstatSync(base);
         knownHard[base] = true;
       }
     }
@@ -12676,7 +13797,7 @@ var require_old = __commonJS((exports2) => {
       if (cache2 && Object.prototype.hasOwnProperty.call(cache2, base)) {
         resolvedLink = cache2[base];
       } else {
-        var stat = fs5.lstatSync(base);
+        var stat = fs6.lstatSync(base);
         if (!stat.isSymbolicLink()) {
           knownHard[base] = true;
           if (cache2)
@@ -12691,8 +13812,8 @@ var require_old = __commonJS((exports2) => {
           }
         }
         if (linkTarget === null) {
-          fs5.statSync(base);
-          linkTarget = fs5.readlinkSync(base);
+          fs6.statSync(base);
+          linkTarget = fs6.readlinkSync(base);
         }
         resolvedLink = pathModule.resolve(previous, linkTarget);
         if (cache2)
@@ -12729,7 +13850,7 @@ var require_old = __commonJS((exports2) => {
       base = m[0];
       previous = "";
       if (isWindows && !knownHard[base]) {
-        fs5.lstat(base, function(err) {
+        fs6.lstat(base, function(err) {
           if (err)
             return cb(err);
           knownHard[base] = true;
@@ -12757,7 +13878,7 @@ var require_old = __commonJS((exports2) => {
       if (cache2 && Object.prototype.hasOwnProperty.call(cache2, base)) {
         return gotResolvedLink(cache2[base]);
       }
-      return fs5.lstat(base, gotStat);
+      return fs6.lstat(base, gotStat);
     }
     function gotStat(err, stat) {
       if (err)
@@ -12774,10 +13895,10 @@ var require_old = __commonJS((exports2) => {
           return gotTarget(null, seenLinks[id], base);
         }
       }
-      fs5.stat(base, function(err2) {
+      fs6.stat(base, function(err2) {
         if (err2)
           return cb(err2);
-        fs5.readlink(base, function(err3, target) {
+        fs6.readlink(base, function(err3, target) {
           if (!isWindows)
             seenLinks[id] = target;
           gotTarget(err3, target);
@@ -12807,9 +13928,9 @@ var require_fs2 = __commonJS((exports2, module2) => {
   realpath.realpathSync = realpathSync;
   realpath.monkeypatch = monkeypatch;
   realpath.unmonkeypatch = unmonkeypatch;
-  var fs5 = require("fs");
-  var origRealpath = fs5.realpath;
-  var origRealpathSync = fs5.realpathSync;
+  var fs6 = require("fs");
+  var origRealpath = fs6.realpath;
+  var origRealpathSync = fs6.realpathSync;
   var version = process.version;
   var ok = /^v[0-5]\./.test(version);
   var old = require_old();
@@ -12847,12 +13968,12 @@ var require_fs2 = __commonJS((exports2, module2) => {
     }
   }
   function monkeypatch() {
-    fs5.realpath = realpath;
-    fs5.realpathSync = realpathSync;
+    fs6.realpath = realpath;
+    fs6.realpathSync = realpathSync;
   }
   function unmonkeypatch() {
-    fs5.realpath = origRealpath;
-    fs5.realpathSync = origRealpathSync;
+    fs6.realpath = origRealpath;
+    fs6.realpathSync = origRealpathSync;
   }
 });
 
@@ -13854,7 +14975,7 @@ var require_common = __commonJS((exports2) => {
 var require_sync2 = __commonJS((exports2, module2) => {
   module2.exports = globSync;
   globSync.GlobSync = GlobSync;
-  var fs5 = require("fs");
+  var fs6 = require("fs");
   var rp = require_fs2();
   var minimatch = require_minimatch();
   var Minimatch = minimatch.Minimatch;
@@ -14032,7 +15153,7 @@ var require_sync2 = __commonJS((exports2, module2) => {
     var lstat;
     var stat;
     try {
-      lstat = fs5.lstatSync(abs);
+      lstat = fs6.lstatSync(abs);
     } catch (er) {
       if (er.code === "ENOENT") {
         return null;
@@ -14058,7 +15179,7 @@ var require_sync2 = __commonJS((exports2, module2) => {
         return c;
     }
     try {
-      return this._readdirEntries(abs, fs5.readdirSync(abs));
+      return this._readdirEntries(abs, fs6.readdirSync(abs));
     } catch (er) {
       this._readdirError(abs, er);
       return null;
@@ -14167,7 +15288,7 @@ var require_sync2 = __commonJS((exports2, module2) => {
     if (!stat) {
       var lstat;
       try {
-        lstat = fs5.lstatSync(abs);
+        lstat = fs6.lstatSync(abs);
       } catch (er) {
         if (er && (er.code === "ENOENT" || er.code === "ENOTDIR")) {
           this.statCache[abs] = false;
@@ -14176,7 +15297,7 @@ var require_sync2 = __commonJS((exports2, module2) => {
       }
       if (lstat && lstat.isSymbolicLink()) {
         try {
-          stat = fs5.statSync(abs);
+          stat = fs6.statSync(abs);
         } catch (er) {
           stat = lstat;
         }
@@ -14321,7 +15442,7 @@ var require_inflight = __commonJS((exports2, module2) => {
 // node_modules/glob/glob.js
 var require_glob = __commonJS((exports2, module2) => {
   module2.exports = glob;
-  var fs5 = require("fs");
+  var fs6 = require("fs");
   var rp = require_fs2();
   var minimatch = require_minimatch();
   var Minimatch = minimatch.Minimatch;
@@ -14666,7 +15787,7 @@ var require_glob = __commonJS((exports2, module2) => {
     var self2 = this;
     var lstatcb = inflight(lstatkey, lstatcb_);
     if (lstatcb)
-      fs5.lstat(abs, lstatcb);
+      fs6.lstat(abs, lstatcb);
     function lstatcb_(er, lstat) {
       if (er && er.code === "ENOENT")
         return cb();
@@ -14695,7 +15816,7 @@ var require_glob = __commonJS((exports2, module2) => {
         return cb(null, c);
     }
     var self2 = this;
-    fs5.readdir(abs, readdirCb(this, abs, cb));
+    fs6.readdir(abs, readdirCb(this, abs, cb));
   };
   function readdirCb(self2, abs, cb) {
     return function(er, entries) {
@@ -14839,10 +15960,10 @@ var require_glob = __commonJS((exports2, module2) => {
     var self2 = this;
     var statcb = inflight("stat\0" + abs, lstatcb_);
     if (statcb)
-      fs5.lstat(abs, statcb);
+      fs6.lstat(abs, statcb);
     function lstatcb_(er, lstat) {
       if (lstat && lstat.isSymbolicLink()) {
-        return fs5.stat(abs, function(er2, stat2) {
+        return fs6.stat(abs, function(er2, stat2) {
           if (er2)
             self2._stat2(f, abs, null, lstat, cb);
           else
@@ -14876,7 +15997,7 @@ var require_glob = __commonJS((exports2, module2) => {
 var require_rimraf = __commonJS((exports2, module2) => {
   var assert = require("assert");
   var path6 = require("path");
-  var fs5 = require("fs");
+  var fs6 = require("fs");
   var glob = void 0;
   try {
     glob = require_glob();
@@ -14898,9 +16019,9 @@ var require_rimraf = __commonJS((exports2, module2) => {
       "readdir"
     ];
     methods.forEach((m) => {
-      options[m] = options[m] || fs5[m];
+      options[m] = options[m] || fs6[m];
       m = m + "Sync";
-      options[m] = options[m] || fs5[m];
+      options[m] = options[m] || fs6[m];
     });
     options.maxBusyTries = options.maxBusyTries || 3;
     options.emfileWait = options.emfileWait || 1e3;
@@ -15160,11 +16281,11 @@ var require_tmp = __commonJS((exports2, module2) => {
    *
    * MIT Licensed
    */
-  var fs5 = require("fs");
+  var fs6 = require("fs");
   var os5 = require("os");
   var path6 = require("path");
   var crypto3 = require("crypto");
-  var _c = {fs: fs5.constants, os: os5.constants};
+  var _c = {fs: fs6.constants, os: os5.constants};
   var rimraf = require_rimraf();
   var RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
   var TEMPLATE_PATTERN = /XXXXXX/;
@@ -15177,7 +16298,7 @@ var require_tmp = __commonJS((exports2, module2) => {
   var FILE_MODE = 384;
   var EXIT = "exit";
   var _removeObjects = [];
-  var FN_RMDIR_SYNC = fs5.rmdirSync.bind(fs5);
+  var FN_RMDIR_SYNC = fs6.rmdirSync.bind(fs6);
   var FN_RIMRAF_SYNC = rimraf.sync;
   var _gracefulCleanup = false;
   function tmpName(options, callback) {
@@ -15191,7 +16312,7 @@ var require_tmp = __commonJS((exports2, module2) => {
     (function _getUniqueName() {
       try {
         const name = _generateTmpName(opts);
-        fs5.stat(name, function(err) {
+        fs6.stat(name, function(err) {
           if (!err) {
             if (tries-- > 0)
               return _getUniqueName();
@@ -15211,7 +16332,7 @@ var require_tmp = __commonJS((exports2, module2) => {
     do {
       const name = _generateTmpName(opts);
       try {
-        fs5.statSync(name);
+        fs6.statSync(name);
       } catch (e) {
         return name;
       }
@@ -15223,11 +16344,11 @@ var require_tmp = __commonJS((exports2, module2) => {
     tmpName(opts, function _tmpNameCreated(err, name) {
       if (err)
         return cb(err);
-      fs5.open(name, CREATE_FLAGS, opts.mode || FILE_MODE, function _fileCreated(err2, fd) {
+      fs6.open(name, CREATE_FLAGS, opts.mode || FILE_MODE, function _fileCreated(err2, fd) {
         if (err2)
           return cb(err2);
         if (opts.discardDescriptor) {
-          return fs5.close(fd, function _discardCallback(possibleErr) {
+          return fs6.close(fd, function _discardCallback(possibleErr) {
             return cb(possibleErr, name, void 0, _prepareTmpFileRemoveCallback(name, -1, opts, false));
           });
         } else {
@@ -15241,9 +16362,9 @@ var require_tmp = __commonJS((exports2, module2) => {
     const args = _parseArguments(options), opts = args[0];
     const discardOrDetachDescriptor = opts.discardDescriptor || opts.detachDescriptor;
     const name = tmpNameSync(opts);
-    var fd = fs5.openSync(name, CREATE_FLAGS, opts.mode || FILE_MODE);
+    var fd = fs6.openSync(name, CREATE_FLAGS, opts.mode || FILE_MODE);
     if (opts.discardDescriptor) {
-      fs5.closeSync(fd);
+      fs6.closeSync(fd);
       fd = void 0;
     }
     return {
@@ -15257,7 +16378,7 @@ var require_tmp = __commonJS((exports2, module2) => {
     tmpName(opts, function _tmpNameCreated(err, name) {
       if (err)
         return cb(err);
-      fs5.mkdir(name, opts.mode || DIR_MODE, function _dirCreated(err2) {
+      fs6.mkdir(name, opts.mode || DIR_MODE, function _dirCreated(err2) {
         if (err2)
           return cb(err2);
         cb(null, name, _prepareTmpDirRemoveCallback(name, opts, false));
@@ -15267,7 +16388,7 @@ var require_tmp = __commonJS((exports2, module2) => {
   function dirSync(options) {
     const args = _parseArguments(options), opts = args[0];
     const name = tmpNameSync(opts);
-    fs5.mkdirSync(name, opts.mode || DIR_MODE);
+    fs6.mkdirSync(name, opts.mode || DIR_MODE);
     return {
       name,
       removeCallback: _prepareTmpDirRemoveCallback(name, opts, true)
@@ -15281,23 +16402,23 @@ var require_tmp = __commonJS((exports2, module2) => {
       next();
     };
     if (0 <= fdPath[0])
-      fs5.close(fdPath[0], function() {
-        fs5.unlink(fdPath[1], _handler);
+      fs6.close(fdPath[0], function() {
+        fs6.unlink(fdPath[1], _handler);
       });
     else
-      fs5.unlink(fdPath[1], _handler);
+      fs6.unlink(fdPath[1], _handler);
   }
   function _removeFileSync(fdPath) {
     let rethrownException = null;
     try {
       if (0 <= fdPath[0])
-        fs5.closeSync(fdPath[0]);
+        fs6.closeSync(fdPath[0]);
     } catch (e) {
       if (!_isEBADF(e) && !_isENOENT(e))
         throw e;
     } finally {
       try {
-        fs5.unlinkSync(fdPath[1]);
+        fs6.unlinkSync(fdPath[1]);
       } catch (e) {
         if (!_isENOENT(e))
           rethrownException = e;
@@ -15315,7 +16436,7 @@ var require_tmp = __commonJS((exports2, module2) => {
     return sync ? removeCallbackSync : removeCallback;
   }
   function _prepareTmpDirRemoveCallback(name, opts, sync) {
-    const removeFunction = opts.unsafeCleanup ? rimraf : fs5.rmdir.bind(fs5);
+    const removeFunction = opts.unsafeCleanup ? rimraf : fs6.rmdir.bind(fs6);
     const removeFunctionSync = opts.unsafeCleanup ? FN_RIMRAF_SYNC : FN_RMDIR_SYNC;
     const removeCallbackSync = _prepareRemoveCallback(removeFunctionSync, name, sync);
     const removeCallback = _prepareRemoveCallback(removeFunction, name, sync, removeCallbackSync);
@@ -15486,9 +16607,96 @@ var require_tmp = __commonJS((exports2, module2) => {
   module2.exports.setGracefulCleanup = setGracefulCleanup;
 });
 
+// node_modules/get-port/index.js
+var require_get_port = __commonJS((exports2, module2) => {
+  "use strict";
+  var net = require("net");
+  var Locked = class extends Error {
+    constructor(port) {
+      super(`${port} is locked`);
+    }
+  };
+  var lockedPorts = {
+    old: new Set(),
+    young: new Set()
+  };
+  var releaseOldLockedPortsIntervalMs = 1e3 * 15;
+  var interval;
+  var getAvailablePort = (options) => new Promise((resolve2, reject) => {
+    const server = net.createServer();
+    server.unref();
+    server.on("error", reject);
+    server.listen(options, () => {
+      const {port} = server.address();
+      server.close(() => {
+        resolve2(port);
+      });
+    });
+  });
+  var portCheckSequence = function* (ports) {
+    if (ports) {
+      yield* ports;
+    }
+    yield 0;
+  };
+  module2.exports = async (options) => {
+    let ports;
+    if (options) {
+      ports = typeof options.port === "number" ? [options.port] : options.port;
+    }
+    if (interval === void 0) {
+      interval = setInterval(() => {
+        lockedPorts.old = lockedPorts.young;
+        lockedPorts.young = new Set();
+      }, releaseOldLockedPortsIntervalMs);
+      if (interval.unref) {
+        interval.unref();
+      }
+    }
+    for (const port of portCheckSequence(ports)) {
+      try {
+        let availablePort = await getAvailablePort({...options, port});
+        while (lockedPorts.old.has(availablePort) || lockedPorts.young.has(availablePort)) {
+          if (port !== 0) {
+            throw new Locked(port);
+          }
+          availablePort = await getAvailablePort({...options, port});
+        }
+        lockedPorts.young.add(availablePort);
+        return availablePort;
+      } catch (error) {
+        if (!["EADDRINUSE", "EACCES"].includes(error.code) && !(error instanceof Locked)) {
+          throw error;
+        }
+      }
+    }
+    throw new Error("No available ports found");
+  };
+  module2.exports.makeRange = (from, to) => {
+    if (!Number.isInteger(from) || !Number.isInteger(to)) {
+      throw new TypeError("`from` and `to` must be integer numbers");
+    }
+    if (from < 1024 || from > 65535) {
+      throw new RangeError("`from` must be between 1024 and 65535");
+    }
+    if (to < 1024 || to > 65536) {
+      throw new RangeError("`to` must be between 1024 and 65536");
+    }
+    if (to < from) {
+      throw new RangeError("`to` must be greater than or equal to `from`");
+    }
+    const generator = function* (from2, to2) {
+      for (let port = from2; port <= to2; port++) {
+        yield port;
+      }
+    };
+    return generator(from, to);
+  };
+});
+
 // src/bin/imba.imba
 var path5 = __toModule(require("path"));
-var fs4 = __toModule(require("fs"));
+var fs5 = __toModule(require("fs"));
 var commander = __toModule(require_commander());
 
 // src/bundler/pooler.imba
@@ -15579,15 +16787,15 @@ var Resolver = class {
     this.aliases = {};
     this.entries = [];
     let t = Date.now();
-    for (let sys$53 = this.paths, sys$36 = 0, sys$43 = Object.keys(sys$53), sys$123 = sys$43.length, dir, rules; sys$36 < sys$123; sys$36++) {
-      dir = sys$43[sys$36];
+    for (let sys$53 = this.paths, sys$37 = 0, sys$44 = Object.keys(sys$53), sys$124 = sys$44.length, dir, rules; sys$37 < sys$124; sys$37++) {
+      dir = sys$44[sys$37];
       rules = sys$53[dir];
       this.entries.push(new PathEntry(dir, rules));
       let rels = this.dirs[dir] = [];
       let prefix = dir.replace("/*", "/");
       this.dirs[prefix.replace(/\/\*?$/)] = rels;
-      for (let sys$63 = 0, sys$72 = iter$(rules), sys$114 = sys$72.length; sys$63 < sys$114; sys$63++) {
-        let rule = sys$72[sys$63];
+      for (let sys$64 = 0, sys$72 = iter$(rules), sys$115 = sys$72.length; sys$64 < sys$115; sys$64++) {
+        let rule = sys$72[sys$64];
         let replacer = rule.replace("/*", "/");
         let matches = micromatch(this.files, [rule]);
         for (let sys$82 = 0, sys$92 = iter$(matches), sys$103 = sys$92.length; sys$82 < sys$103; sys$82++) {
@@ -15611,18 +16819,18 @@ var Resolver = class {
     return;
   }
   find(test) {
-    var sys$133;
-    sys$133 = [];
+    var sys$132;
+    sys$132 = [];
     for (let sys$143 = 0, sys$152 = iter$(this.files), sys$162 = sys$152.length; sys$143 < sys$162; sys$143++) {
       let file = sys$152[sys$143];
       if (!file.match(test)) {
         continue;
       }
       ;
-      sys$133.push(file);
+      sys$132.push(file);
     }
     ;
-    return sys$133;
+    return sys$132;
   }
   testWithExtensions(path6, exts = this.extensions) {
     if (this.files.indexOf(path6) >= 0) {
@@ -15694,8 +16902,8 @@ var Resolver = class {
     if (isRel) {
       let m = 0;
       let norm = np2.resolve(o.resolveDir, path6);
-      for (let sys$29 = 0, sys$302 = iter$(this.extensions), sys$31 = sys$302.length; sys$29 < sys$31; sys$29++) {
-        let ext = sys$302[sys$29];
+      for (let sys$292 = 0, sys$30 = iter$(this.extensions), sys$312 = sys$30.length; sys$292 < sys$312; sys$292++) {
+        let ext = sys$30[sys$292];
         let m2 = norm + ext;
         if (this.fs.existsSync(m2)) {
           path6 = namespace == "file" ? m2 : this.fs.relative(m2);
@@ -16912,8 +18120,8 @@ function parseAsset(raw, name) {
   let desc = {attributes: attrs, flags: []};
   let currAttr;
   let contentStart = 0;
-  for (let sys$114 = 0, sys$29 = iter$2(out.tokens), sys$36 = sys$29.length; sys$114 < sys$36; sys$114++) {
-    let tok = sys$29[sys$114];
+  for (let sys$115 = 0, sys$210 = iter$2(out.tokens), sys$37 = sys$210.length; sys$115 < sys$37; sys$115++) {
+    let tok = sys$210[sys$115];
     let val = tok.value;
     if (tok.type == "attribute.name.xml") {
       currAttr = tok;
@@ -17186,6 +18394,7 @@ var ChangeLog = class {
 var changes_default = ChangeLog;
 
 // src/bundler/fs.imba
+var image_size = __toModule(require_dist());
 function iter$4(a) {
   let v;
   return a ? (v = a.toIterable) ? v.call(a) : a : [];
@@ -17197,8 +18406,9 @@ var sys$8 = Symbol.for("#tree");
 var sys$9 = Symbol.for("#mtime");
 var sys$10 = Symbol.for("#body");
 var sys$11 = Symbol.for("#hash");
-var sys$132 = Symbol.for("#files");
-var sys$142 = Symbol.for("#map");
+var sys$122 = Symbol.for("#mtimesync");
+var sys$142 = Symbol.for("#files");
+var sys$15 = Symbol.for("#map");
 var nodefs = require("fs");
 var np3 = require("path");
 
@@ -17262,8 +18472,8 @@ function clone(object) {
   return JSON.parse(JSON.stringify(object));
 }
 function merge(config, defaults) {
-  for (let sys$114 = 0, sys$29 = Object.keys(defaults), sys$36 = sys$29.length, key, value; sys$114 < sys$36; sys$114++) {
-    key = sys$29[sys$114];
+  for (let sys$115 = 0, sys$210 = Object.keys(defaults), sys$37 = sys$210.length, key, value; sys$115 < sys$37; sys$115++) {
+    key = sys$210[sys$115];
     value = defaults[key];
     let typ = schema[key];
     if (config.hasOwnProperty(key)) {
@@ -17357,9 +18567,9 @@ var FSTree = class extends Array {
     let idx = this.indexOf(node);
     if (idx >= 0) {
       this.splice(idx, 1);
-      for (let sys$43 = this[sys$14], sys$29 = 0, sys$36 = Object.keys(sys$43), sys$53 = sys$36.length, key, res; sys$29 < sys$53; sys$29++) {
-        key = sys$36[sys$29];
-        res = sys$43[key];
+      for (let sys$44 = this[sys$14], sys$210 = 0, sys$37 = Object.keys(sys$44), sys$53 = sys$37.length, key, res; sys$210 < sys$53; sys$210++) {
+        key = sys$37[sys$210];
+        res = sys$44[key];
         res.remove(node);
       }
       ;
@@ -17369,16 +18579,20 @@ var FSTree = class extends Array {
   }
 };
 var FSNode = class {
-  static create(program2, src, abs) {
+  static create(root, src, abs) {
     let ext = src.slice(src.lastIndexOf("."));
     let types = {
       ".json": JSONFile,
       ".imba": ImbaFile,
       ".imba1": Imba1File,
-      ".svg": SVGFile
+      ".svg": SVGFile,
+      ".png": ImageFile,
+      ".jpg": ImageFile,
+      ".jpeg": ImageFile,
+      ".gif": ImageFile
     };
     let cls = types[ext] || FileNode;
-    return new cls(program2, src, abs);
+    return new cls(root, src, abs);
   }
   constructor(root, rel, abs) {
     this.fs = root;
@@ -17504,7 +18718,7 @@ var FileNode = class extends FSNode {
     });
   }
   get mtimesync() {
-    return this.existsSync() ? nodefs.statSync(this.abs).mtimeMs : 1;
+    return this[sys$122] || (this.existsSync() ? nodefs.statSync(this.abs).mtimeMs : 1);
   }
   async mtime() {
     if (!this[sys$9]) {
@@ -17584,6 +18798,16 @@ var SVGFile = class extends FileNode {
     });
   }
 };
+var ImageFile = class extends FileNode {
+  compile(o) {
+    var self2 = this;
+    return this.memo(o.format, async function() {
+      let size = await Promise.resolve(image_size.default(self2.abs));
+      let js = "import {asset} from 'imba';\nimport url from './" + self2.name + "';\nexport default asset({\n	url: url,\n	width: " + (size.width || 0) + ",\n	height: " + (size.height || 0) + ",\n	toString: function(){ return this.url;}\n})";
+      return {js};
+    });
+  }
+};
 var JSONFile = class extends FileNode {
   constructor() {
     super(...arguments);
@@ -17592,7 +18816,7 @@ var JSONFile = class extends FileNode {
     try {
       this.raw = this.readSync();
       this.data = JSON.parse(this.raw);
-    } catch (sys$123) {
+    } catch (sys$132) {
       this.data = {};
     }
     ;
@@ -17616,9 +18840,9 @@ var FileSystem = class extends component_default {
     this.nodemap = {};
     this.existsCache = {};
     this.changelog = new changes_default();
-    this[sys$132] = null;
+    this[sys$142] = null;
     this[sys$8] = new FSTree();
-    this[sys$142] = {};
+    this[sys$15] = {};
   }
   toString() {
     return this.cwd;
@@ -17654,11 +18878,11 @@ var FileSystem = class extends component_default {
     return this.program.outdir;
   }
   get files() {
-    if (!this[sys$132]) {
+    if (!this[sys$142]) {
       this.prescan();
     }
     ;
-    return this[sys$132];
+    return this[sys$142];
   }
   resolve(...src) {
     return np3.resolve(this.cwd, ...src);
@@ -17706,27 +18930,23 @@ var FileSystem = class extends component_default {
   }
   prescan(items = null) {
     var $0$5;
-    if (this[sys$132]) {
-      return this[sys$132];
+    if (this[sys$142]) {
+      return this[sys$142];
     }
     ;
-    this[sys$132] = items || this.crawl();
-    for (let sys$152 = 0, sys$162 = iter$4(this[sys$132]), sys$172 = sys$162.length; sys$152 < sys$172; sys$152++) {
-      let item = sys$162[sys$152];
+    this[sys$142] = items || this.crawl();
+    for (let sys$162 = 0, sys$172 = iter$4(this[sys$142]), sys$183 = sys$172.length; sys$162 < sys$183; sys$162++) {
+      let item = sys$172[sys$162];
       let li = item.lastIndexOf(".");
       let ext = item.slice(li) || ".*";
-      let map = ($0$5 = this[sys$132])[ext] || ($0$5[ext] = []);
-      if (!map.push) {
-        console.log("ext?!", ext, item);
-      }
-      ;
+      let map = ($0$5 = this[sys$142])[ext] || ($0$5[ext] = []);
       map.push(item);
     }
     ;
-    return this[sys$132];
+    return this[sys$142];
   }
   reset() {
-    this[sys$132] = null;
+    this[sys$142] = null;
     return this;
   }
   glob(match = [], ignore = null, ext = null) {
@@ -17765,15 +18985,15 @@ var FileSystem = class extends component_default {
   }
   find(regex, ext = null) {
     this.prescan();
-    let sources = ext ? [] : this[sys$132];
+    let sources = ext ? [] : this[sys$142];
     if (typeof ext == "string") {
       ext = ext.split(",");
     }
     ;
     if (ext instanceof Array) {
-      for (let sys$183 = 0, sys$192 = iter$4(ext), sys$20 = sys$192.length; sys$183 < sys$20; sys$183++) {
-        let item = sys$192[sys$183];
-        sources = sources.concat(this[sys$132]["." + item] || []);
+      for (let sys$192 = 0, sys$20 = iter$4(ext), sys$21 = sys$20.length; sys$192 < sys$21; sys$192++) {
+        let item = sys$20[sys$192];
+        sources = sources.concat(this[sys$142]["." + item] || []);
       }
       ;
     }
@@ -17785,8 +19005,8 @@ var FileSystem = class extends component_default {
   scan(match) {
     this.prescan();
     let matched = [];
-    for (let sys$21 = 0, sys$222 = iter$4(this[sys$132]), sys$232 = sys$222.length; sys$21 < sys$232; sys$21++) {
-      let src = sys$222[sys$21];
+    for (let sys$222 = 0, sys$232 = iter$4(this[sys$142]), sys$242 = sys$232.length; sys$222 < sys$242; sys$222++) {
+      let src = sys$232[sys$222];
       let m = false;
       if (match instanceof RegExp) {
         m = match.test(src);
@@ -17836,13 +19056,13 @@ var FileSystem = class extends component_default {
     }
     ;
     let paths = [];
-    for (let sys$242 = 0, sys$252 = iter$4(res), sys$29 = sys$252.length; sys$242 < sys$29; sys$242++) {
-      let entry = sys$252[sys$242];
+    for (let sys$252 = 0, sys$262 = iter$4(res), sys$30 = sys$262.length; sys$252 < sys$30; sys$252++) {
+      let entry = sys$262[sys$252];
       let absdir = entry.dir;
       let reldir = absdir.slice(slice);
       let dir = ($0$6 = this.nodemap)[reldir] || ($0$6[reldir] = new DirNode(this, reldir, absdir));
-      for (let sys$262 = 0, sys$273 = iter$4(entry.files), sys$282 = sys$273.length; sys$262 < sys$282; sys$262++) {
-        let f = sys$273[sys$262];
+      for (let sys$273 = 0, sys$282 = iter$4(entry.files), sys$292 = sys$282.length; sys$273 < sys$292; sys$273++) {
+        let f = sys$282[sys$273];
         let rel = reldir + "/" + f;
         let abs = absdir + "/" + f;
         let file = ($0$7 = this.nodemap)[rel] || ($0$7[rel] = FSNode.create(this, rel, abs));
@@ -17868,15 +19088,14 @@ function iter$5(a) {
   let v;
   return a ? (v = a.toIterable) ? v.call(a) : a : [];
 }
-var sys$15 = Symbol.for("#key");
+var sys$16 = Symbol.for("#key");
 var utils2 = require_utils4();
 var hashedKeyCache = {};
 var keyPathCache = {};
 var Cache = class {
   constructor(options) {
-    this[sys$15] = Symbol();
+    this[sys$16] = Symbol();
     this.o = options;
-    console.log("cache dir?", this.o.cachedir);
     this.dir = this.o.cachedir;
     this.aliaspath = path.default.resolve(this.dir, ".imba-aliases");
     this.aliasmap = "";
@@ -17895,8 +19114,8 @@ var Cache = class {
     }
     ;
     let entries = fs.default.readdirSync(this.dir);
-    for (let sys$29 = 0, sys$36 = iter$5(entries), sys$43 = sys$36.length; sys$29 < sys$43; sys$29++) {
-      let entry = sys$36[sys$29];
+    for (let sys$210 = 0, sys$37 = iter$5(entries), sys$44 = sys$37.length; sys$210 < sys$44; sys$210++) {
+      let entry = sys$37[sys$210];
       this.cache[entry] = {exists: 1};
     }
     ;
@@ -18035,7 +19254,7 @@ function iter$6(a) {
   let v;
   return a ? (v = a.toIterable) ? v.call(a) : a : [];
 }
-var sys$16 = Symbol.for("#resolver");
+var sys$17 = Symbol.for("#resolver");
 var sys$24 = Symbol.for("#workers");
 var sys$32 = Symbol.for("#hasesb");
 var sys$4 = Symbol.for("#esb");
@@ -18105,7 +19324,7 @@ var Program = class extends component_default {
     return this;
   }
   get resolver() {
-    return this[sys$16] || (this[sys$16] = new Resolver({config: this.config, files: this.fs.files, program: this, fs: this.fs}));
+    return this[sys$17] || (this[sys$17] = new Resolver({config: this.config, files: this.fs.files, program: this, fs: this.fs}));
   }
   get workers() {
     return this[sys$24] || (this[sys$24] = startWorkers());
@@ -18130,8 +19349,8 @@ var Program = class extends component_default {
   }
   async clean() {
     let sources = this.fs.nodes(this.fs.find(/\.imba1?(\.web)?\.\w+$/, "mjs,js,cjs,css,meta"));
-    for (let sys$63 = 0, sys$72 = iter$6(sources), sys$82 = sys$72.length; sys$63 < sys$82; sys$63++) {
-      let file = sys$72[sys$63];
+    for (let sys$64 = 0, sys$72 = iter$6(sources), sys$82 = sys$72.length; sys$64 < sys$82; sys$64++) {
+      let file = sys$72[sys$64];
       await file.unlink();
     }
     ;
@@ -18159,12 +19378,12 @@ function iter$7(a) {
   let v;
   return a ? (v = a.toIterable) ? v.call(a) : a : [];
 }
-var sys$17 = Symbol.for("#init");
+var sys$18 = Symbol.for("#init");
 var sys$25 = Symbol.for("#next");
 var sys$33 = Symbol.for("#prev");
 var cluster = require("cluster");
 var Instance = class {
-  [sys$17]($$ = null) {
+  [sys$18]($$ = null) {
     var $0$1;
     this.runner = $$ && ($0$1 = $$.runner) !== void 0 ? $0$1 : null;
     this.args = $$ && ($0$1 = $$.args) !== void 0 ? $0$1 : {};
@@ -18176,7 +19395,7 @@ var Instance = class {
     return this.runner.manifest;
   }
   constructor(runner2, options) {
-    this[sys$17](options);
+    this[sys$18](options);
     this.options = options;
     this.runner = runner2;
     this.atime = Date.now();
@@ -18192,7 +19411,6 @@ var Instance = class {
     }
     ;
     let o = this.runner.o;
-    console.log("imbapath", o.imbaPath);
     let loader = o.imbaPath ? path2.default.resolve(o.imbaPath, "register.js") : "imba/register.js";
     let path6 = this.manifest.main.source.path;
     let args = {
@@ -18212,7 +19430,9 @@ var Instance = class {
       IMBA_RESTARTS: this.restarts,
       IMBA_SERVE: true,
       IMBA_MANIFEST_PATH: this.manifest.path,
-      IMBA_PATH: o.imbaPath
+      IMBA_PATH: o.imbaPath,
+      IMBA_HMR: o.hmr ? true : void 0,
+      PORT: process.env.PORT || o.port
     };
     this.log.info("starting");
     if (o.execMode == "fork") {
@@ -18317,14 +19537,14 @@ function iter$8(a) {
   let v;
   return a ? (v = a.toIterable) ? v.call(a) : a : [];
 }
-var sys$18 = Symbol.for("#type");
+var sys$19 = Symbol.for("#type");
 var sys$182 = Symbol.for("#__listeners__");
 function serializeData(data) {
   let sym = Symbol();
   let refs2 = {};
   let nr = 0;
   let replacer = function(key, value) {
-    if (value && value[sys$18]) {
+    if (value && value[sys$19]) {
       let ref = value[sym] || (value[sym] = "$$" + nr++ + "$$");
       refs2[ref] = value;
       return key == ref ? value : ref;
@@ -18352,9 +19572,9 @@ function deserializeData(data, reviver = null) {
   };
   let parsed = JSON.parse(data, parser);
   if (parsed.$$) {
-    for (let sys$43 = parsed.$$, sys$29 = 0, sys$36 = Object.keys(sys$43), sys$53 = sys$36.length, k, v, obj; sys$29 < sys$53; sys$29++) {
-      k = sys$36[sys$29];
-      v = sys$43[k];
+    for (let sys$44 = parsed.$$, sys$210 = 0, sys$37 = Object.keys(sys$44), sys$53 = sys$37.length, k, v, obj; sys$210 < sys$53; sys$210++) {
+      k = sys$37[sys$210];
+      v = sys$44[k];
       if (obj = objects[k]) {
         Object.assign(obj, v);
       }
@@ -18377,8 +19597,8 @@ function patchManifest(prev, curr) {
     urls: {}
   };
   if (prev.assets) {
-    for (let sys$63 = 0, sys$72 = iter$8(prev.assets), sys$82 = sys$72.length; sys$63 < sys$82; sys$63++) {
-      let item = sys$72[sys$63];
+    for (let sys$64 = 0, sys$72 = iter$8(prev.assets), sys$82 = sys$72.length; sys$64 < sys$82; sys$64++) {
+      let item = sys$72[sys$64];
       let ref = item.originalPath || item.path;
       origs[ref] = item;
       if (item.url) {
@@ -18389,7 +19609,7 @@ function patchManifest(prev, curr) {
     ;
   }
   ;
-  for (let sys$92 = 0, sys$103 = iter$8(curr.assets || []), sys$114 = sys$103.length; sys$92 < sys$114; sys$92++) {
+  for (let sys$92 = 0, sys$103 = iter$8(curr.assets || []), sys$115 = sys$103.length; sys$92 < sys$115; sys$92++) {
     let item = sys$103[sys$92];
     let ref = item.originalPath || item.path;
     let orig = origs[ref];
@@ -18418,8 +19638,8 @@ function patchManifest(prev, curr) {
     ;
   }
   ;
-  for (let sys$123 = 0, sys$133 = Object.keys(origs), sys$143 = sys$133.length, path6, item; sys$123 < sys$143; sys$123++) {
-    path6 = sys$133[sys$123];
+  for (let sys$124 = 0, sys$132 = Object.keys(origs), sys$143 = sys$132.length, path6, item; sys$124 < sys$143; sys$124++) {
+    path6 = sys$132[sys$124];
     item = origs[path6];
     item.removed = Date.now();
     diff.all.push(item);
@@ -18440,7 +19660,7 @@ function patchManifest(prev, curr) {
 var events2 = __toModule(require("events"));
 var fs3 = __toModule(require("fs"));
 var path3 = __toModule(require("path"));
-var sys$19 = Symbol.for("#refresh");
+var sys$110 = Symbol.for("#refresh");
 var sys$26 = Symbol.for("#manifest");
 var sys$34 = Symbol.for("#abspath");
 var sys$42 = Symbol.for("#raw");
@@ -18456,29 +19676,7 @@ var Asset = class {
     return fs3.default.readFileSync(this.abspath, "utf-8");
   }
   toString() {
-    console.log("asset toString", this.url);
     return this.url;
-  }
-};
-var AssetReference = class {
-  constructor(manifest3, path6) {
-    this.manifest = manifest3;
-    this.path = path6;
-  }
-  get web() {
-    try {
-      return this.manifest.inputs.web[this.path];
-    } catch (e) {
-    }
-    ;
-  }
-  get js() {
-    var _a;
-    return (_a = this.web) == null ? void 0 : _a.js;
-  }
-  get css() {
-    var _a;
-    return (_a = this.web) == null ? void 0 : _a.css;
   }
 };
 var Manifest = class extends events2.EventEmitter {
@@ -18494,14 +19692,6 @@ var Manifest = class extends events2.EventEmitter {
       return new Asset(self2);
     };
     this.init(options.data);
-  }
-  assetReference(path6, ...rest) {
-    var $0$1;
-    if (typeof path6 != "string") {
-      return path6;
-    }
-    ;
-    return ($0$1 = this.refs)[path6] || ($0$1[path6] = new AssetReference(this, path6));
   }
   get assetsDir() {
     return this.data.assetsDir;
@@ -18577,7 +19767,7 @@ var Manifest = class extends events2.EventEmitter {
   serializeForBrowser() {
     return this.data[sys$42];
   }
-  [sys$19](data) {
+  [sys$110](data) {
     return true;
   }
   watch() {
@@ -18632,51 +19822,51 @@ function iter$9(a) {
   let v;
   return a ? (v = a.toIterable) ? v.call(a) : a : [];
 }
-var sys$110 = Symbol.for("#watcher");
+var sys$111 = Symbol.for("#watcher");
 var FLAGS2 = {
   CHANGE: 1,
   ADD: 2,
   UNLINK: 4
 };
 var Watcher = class extends component_default {
-  constructor(fs5) {
+  constructor(fs6) {
     super();
-    this.fs = fs5;
+    this.fs = fs6;
     this.history = new changes_default({withFlags: true});
     this.events = [];
     this.map = {};
-    this.map[fs5.cwd] = 1;
+    this.map[fs6.cwd] = 1;
   }
   get instance() {
     var self2 = this;
-    if (this[sys$110]) {
-      return this[sys$110];
+    if (this[sys$111]) {
+      return this[sys$111];
     }
     ;
     let initial = Object.keys(this.map);
-    this[sys$110] = chokidar3.default.watch(initial, {
+    this[sys$111] = chokidar3.default.watch(initial, {
       ignoreInitial: true,
       depth: 1,
       ignored: this.isIgnored.bind(this),
       cwd: this.fs.cwd
     });
-    this[sys$110].on("change", function(src, stats) {
+    this[sys$111].on("change", function(src, stats) {
       self2.history.mark(src, FLAGS2.CHANGE);
       self2.emit("change", src);
       return self2.emit("touch", src);
     });
-    this[sys$110].on("unlink", function(src, stats) {
+    this[sys$111].on("unlink", function(src, stats) {
       self2.history.mark(src, FLAGS2.UNLINK);
       self2.emit("unlink", src);
       return self2.emit("touch", src);
     });
-    this[sys$110].on("add", function(src, stats) {
+    this[sys$111].on("add", function(src, stats) {
       console.log("add", src);
       self2.history.mark(src, FLAGS2.ADD);
       self2.emit("add", src);
       return self2.emit("touch", src);
     });
-    return this[sys$110];
+    return this[sys$111];
   }
   isIgnored(path6) {
     if (path6.match(/(\/\.(git|cache)\/|\.DS_Store)/)) {
@@ -18687,8 +19877,8 @@ var Watcher = class extends component_default {
   }
   add(...paths) {
     let uniq = [];
-    for (let sys$29 = 0, sys$36 = iter$9(paths), sys$43 = sys$36.length; sys$29 < sys$43; sys$29++) {
-      let path6 = sys$36[sys$29];
+    for (let sys$210 = 0, sys$37 = iter$9(paths), sys$44 = sys$37.length; sys$210 < sys$44; sys$210++) {
+      let path6 = sys$37[sys$210];
       if (!this.map[path6]) {
         this.map[path6] = true;
         uniq.push(path6);
@@ -18696,8 +19886,8 @@ var Watcher = class extends component_default {
       ;
     }
     ;
-    if (this[sys$110] && uniq.length) {
-      this[sys$110].add(...uniq);
+    if (this[sys$111] && uniq.length) {
+      this[sys$111].add(...uniq);
     }
     ;
     return this;
@@ -18715,25 +19905,66 @@ var Watcher = class extends component_default {
 };
 var watcher_default = Watcher;
 
+// src/bundler/templates/serve-http.txt
+var serve_http_default = `function requireDefault$(obj){
+	return obj && obj.__esModule ? obj : { default: obj };
+};
+var sys$4 = Symbol();
+const sys$5 = Symbol.for('##up');
+const {createElement: imba_createElement, renderContext: imba_renderContext, serve: imba_serve} = require(/*$path$*/'imba'/*$*/);
+// ASSETS-START;
+import sys$6 from /*$path$*/'CLIENT_ENTRY?asset-web'/*$*/;
+// ASSETS-END;
+
+var sys$1 = requireDefault$(require(/*$path$*/'fs'/*$*/));
+var sys$2 = requireDefault$(require(/*$path$*/'path'/*$*/));
+var sys$3 = requireDefault$(require(/*$path$*/'http'/*$*/));
+
+const server = sys$3.default.createServer(function(req,res) {
+	var htmlT$1, $0$1 = (imba_renderContext.context||{}), htmlB$1, htmlD$1, headT$1, metaT$1, metaT$2, titleT$1, bodyT$1, scriptT$1;
+
+	let html = String(((htmlB$1=htmlD$1=1,htmlT$1=$0$1[sys$4]) || (htmlB$1=htmlD$1=0,$0$1[sys$4]=htmlT$1=imba_createElement('html',null,null,null)),
+	htmlB$1 || (htmlT$1[sys$5]=$0$1._),
+	htmlB$1 || (htmlT$1.lang="en"),
+	(htmlB$1 || (headT$1=imba_createElement('head',htmlT$1,null,null)),
+	(htmlB$1 || (metaT$1=imba_createElement('meta',headT$1,null,null)),
+	htmlB$1 || (metaT$1.charset="UTF-8")),
+	(htmlB$1 || (metaT$2=imba_createElement('meta',headT$1,null,null)),
+	htmlB$1 || (metaT$2.name="viewport"),
+	htmlB$1 || (metaT$2.content="width=device-width, initial-scale=1")),
+	(htmlB$1 || (titleT$1=imba_createElement('title',headT$1,null,'Project')))),
+	(htmlB$1 || (bodyT$1=imba_createElement('body',htmlT$1,null,null)),
+	(htmlB$1 || (scriptT$1=imba_createElement('script',bodyT$1,null,null)),
+	htmlB$1 || (scriptT$1.type="module"),
+	htmlB$1 || (scriptT$1.src=sys$6))),
+	htmlT$1));
+	
+	return res.end(html);
+});
+
+imba_serve(server.listen(process.env.PORT || 3000));
+`;
+
 // src/bundler/bundle.imba
 function iter$10(a) {
   let v;
   return a ? (v = a.toIterable) ? v.call(a) : a : [];
 }
-var sys$111 = Symbol.for("#key");
+var sys$112 = Symbol.for("#key");
 var sys$27 = Symbol.for("#bundles");
 var sys$35 = Symbol.for("#watchedPaths");
 var sys$102 = Symbol.for("#prev");
-var sys$112 = Symbol.for("#watching");
-var sys$122 = Symbol.for("#rebuildTimeout");
-var sys$272 = Symbol.for("#hash");
-var sys$30 = Symbol.for("#contents");
-var sys$37 = Symbol.for("#file");
-var sys$38 = Symbol.for("#output");
-var sys$422 = Symbol.for("#type");
-var sys$56 = Symbol.for("#ordered");
-var sys$61 = Symbol.for("#resolved");
-var sys$62 = Symbol.for("#text");
+var sys$113 = Symbol.for("#watching");
+var sys$123 = Symbol.for("#rebuildTimeout");
+var sys$272 = Symbol.for("#outfs");
+var sys$28 = Symbol.for("#hash");
+var sys$31 = Symbol.for("#contents");
+var sys$38 = Symbol.for("#file");
+var sys$39 = Symbol.for("#output");
+var sys$43 = Symbol.for("#type");
+var sys$57 = Symbol.for("#ordered");
+var sys$62 = Symbol.for("#resolved");
+var sys$63 = Symbol.for("#text");
 var ASSETS_URL = "/__assets__/";
 var Bundle = class extends component_default {
   get isNode() {
@@ -18763,7 +19994,7 @@ var Bundle = class extends component_default {
   constructor(bundler, o) {
     var $0$1, $0$2, $0$4, $0$3;
     super();
-    this[sys$111] = Symbol();
+    this[sys$112] = Symbol();
     this[sys$27] = {};
     this[sys$35] = {};
     this.bundler = bundler;
@@ -18791,16 +20022,16 @@ var Bundle = class extends component_default {
     ;
     let externals = [];
     let package2 = bundler.package || {};
-    for (let sys$43 = 0, sys$53 = iter$10(o.external), sys$92 = sys$53.length; sys$43 < sys$92; sys$43++) {
-      let ext = sys$53[sys$43];
+    for (let sys$44 = 0, sys$53 = iter$10(o.external), sys$92 = sys$53.length; sys$44 < sys$92; sys$44++) {
+      let ext = sys$53[sys$44];
       if (ext == "dependencies") {
         let deps = Object.keys(package2.dependencies || {});
         if (o.execOnly) {
           deps.push(...Object.keys(package2.devDependencies || {}));
         }
         ;
-        for (let sys$63 = 0, sys$72 = iter$10(deps), sys$82 = sys$72.length; sys$63 < sys$82; sys$63++) {
-          let dep = sys$72[sys$63];
+        for (let sys$64 = 0, sys$72 = iter$10(deps), sys$82 = sys$72.length; sys$64 < sys$82; sys$64++) {
+          let dep = sys$72[sys$64];
           if (o.external.indexOf("!" + dep) < 0) {
             externals.push(dep);
           }
@@ -18835,6 +20066,7 @@ var Bundle = class extends component_default {
       footer: o.footer,
       splitting: o.splitting,
       sourcemap: o.sourcemap,
+      stdin: o.stdin,
       minify: o.minify,
       incremental: !!this.watcher,
       loader: o.loader || {
@@ -18923,6 +20155,9 @@ var Bundle = class extends component_default {
     let isCSS = function(f) {
       return /^styles:/.test(f) || /\.css$/.test(f);
     };
+    let isImba = function(f) {
+      return /\.imba$/.test(f) && f.indexOf("styles:") != 0;
+    };
     const namespaceMap = {
       svg: "asset",
       link: "web",
@@ -18963,10 +20198,19 @@ var Bundle = class extends component_default {
       let real = "" + imbaDir + "/src/" + args.path + ".imba";
       return {path: real};
     });
+    build2.onResolve({filter: /\.(svg|png|jpe?g|gif|tiff|webp)$/}, function(args) {
+      if (!(isImba(args.importer) && args.namespace == "file")) {
+        return;
+      }
+      ;
+      let ext = path4.default.extname(args.path).slice(1);
+      let res = self2.program.resolver.resolve(args, self2.pathLookups);
+      res.namespace = "asset-img";
+      return res;
+    });
     build2.onResolve({filter: /\?([\w\-]+)$/}, function(args) {
       let res = self2.program.resolver.resolve(args, self2.pathLookups);
       let ns = res.namespace = namespaceMap[res.namespace] || res.namespace;
-      console.log("onResolve asset", res);
       if (ns == "serviceworker") {
         res.namespace = "entry";
         res.path = "" + ns + ":" + res.path;
@@ -18998,9 +20242,14 @@ var Bundle = class extends component_default {
       let out = await file.compile({format: "esm"}, self2);
       return {loader: "js", contents: out.js};
     });
+    build2.onLoad({filter: /.*/, namespace: "asset-img"}, async function({path: path6}) {
+      let file = self2.fs.lookup(path6);
+      let out = await file.compile({format: "esm"}, self2);
+      return {loader: "js", contents: out.js, resolveDir: file.absdir};
+    });
     build2.onLoad({filter: /.*/, namespace: "asset-web"}, function({path: path6, namespace}) {
-      let body = 'export default {input:"asset-web:$"}'.replace("$", path6);
-      return {loader: "js", contents: body};
+      let js = "import {asset} from 'imba';\nexport default asset({input: 'asset-web:" + path6 + "'})";
+      return {loader: "js", contents: js};
     });
     build2.onLoad({filter: /.*/, namespace: "asset-worker"}, async function(args) {
       var $0$5;
@@ -19038,6 +20287,7 @@ var Bundle = class extends component_default {
       return {loader: "js", contents: out.js};
     });
     build2.onLoad({filter: /.*/, namespace: "script"}, function(args) {
+      throw "namespace script not supported";
       return {loader: "text", contents: args.path};
     });
     build2.onLoad({filter: /.*/, namespace: "web"}, function(args) {
@@ -19088,7 +20338,7 @@ var Bundle = class extends component_default {
       var $0$9;
       let src = self2.fs.lookup(path6);
       let res = await src.compile(self2.imbaoptions, self2);
-      let cached = res[$0$9 = self2[sys$111]] || (res[$0$9] = {
+      let cached = res[$0$9 = self2[sys$112]] || (res[$0$9] = {
         file: {
           loader: "js",
           contents: SourceMapper.strip(res.js || ""),
@@ -19097,7 +20347,8 @@ var Bundle = class extends component_default {
           }),
           warnings: res.warnings.map(function(_0) {
             return utils5.diagnosticToESB(_0, {file: src.abs, namespace});
-          })
+          }),
+          resolveDir: src.absdir
         },
         styles: {
           loader: "css",
@@ -19133,12 +20384,12 @@ var Bundle = class extends component_default {
         this.workers = null;
       }
       ;
-      if (this.watcher && this.isMain && (this[sys$112] != true ? (this[sys$112] = true, true) : false)) {
+      if (this.watcher && this.isMain && (this[sys$113] != true ? (this[sys$113] = true, true) : false)) {
         this.watcher.start();
         this.watcher.on("touch", function() {
-          clearTimeout(self2[sys$122]);
-          return self2[sys$122] = setTimeout(function() {
-            clearTimeout(self2[sys$122]);
+          clearTimeout(self2[sys$123]);
+          return self2[sys$123] = setTimeout(function() {
+            clearTimeout(self2[sys$123]);
             return self2.rebuild({watcher: self2.watcher});
           }, 100);
         });
@@ -19156,15 +20407,14 @@ var Bundle = class extends component_default {
     if (this.watcher && !force) {
       let changes3 = this.watcher.sync(this);
       let dirty = false;
-      for (let sys$133 = 0, sys$143 = iter$10(changes3), sys$152 = sys$143.length; sys$133 < sys$152; sys$133++) {
-        let [path6, flags] = sys$143[sys$133];
+      for (let sys$132 = 0, sys$143 = iter$10(changes3), sys$152 = sys$143.length; sys$132 < sys$152; sys$132++) {
+        let [path6, flags] = sys$143[sys$132];
         if (this[sys$35][path6] || flags != 1) {
           dirty = true;
         }
         ;
       }
       ;
-      console.log("watching - rebuild?", dirty);
       if (!dirty) {
         return this.result;
       }
@@ -19215,7 +20465,7 @@ var Bundle = class extends component_default {
       outputs: outs,
       urls
     };
-    let main = manifest3.main = ins[this.entryPoints[0]].js;
+    let main = manifest3.main = ins[this.o.stdin ? this.o.stdin.sourcefile : this.entryPoints[0]].js;
     manifest3.outdir = this.o.tmpdir || this.o.outdir;
     let writeFiles = {};
     let webEntries = [];
@@ -19269,17 +20519,18 @@ var Bundle = class extends component_default {
     manifest3.hash = utils5.createHash(Object.values(outs).map(function(_0) {
       return _0.hash || _0.path;
     }).sort().join("-"));
-    if (this[sys$272] != ($0$11 = manifest3.hash) ? (this[sys$272] = $0$11, true) : false) {
+    this[sys$272] || (this[sys$272] = new FileSystem(this.o.outdir, ".", this.program));
+    if (this[sys$28] != ($0$11 = manifest3.hash) ? (this[sys$28] = $0$11, true) : false) {
       let json = serializeData(manifest3);
-      for (let sys$282 = 0, sys$29 = iter$10(manifest3.assets), sys$31 = sys$29.length; sys$282 < sys$31; sys$282++) {
-        let asset = sys$29[sys$282];
-        let path6 = path4.default.resolve(this.o.outdir, asset.path);
-        let file = this.fs.lookup(path6);
-        await file.write(asset[sys$30], asset.hash);
+      this.log.info("building in %path", this.o.outdir);
+      for (let sys$292 = 0, sys$30 = iter$10(manifest3.assets), sys$322 = sys$30.length; sys$292 < sys$322; sys$292++) {
+        let asset = sys$30[sys$292];
+        let file = this[sys$272].lookup(asset.path);
+        await file.write(asset[sys$31], asset.hash);
       }
       ;
       if (manifest3.path) {
-        let mfile = this.fs.lookup(manifest3.path);
+        let mfile = this[sys$272].lookup(".imbabuild");
         await mfile.writeSync(json, manifest3.hash);
       }
       ;
@@ -19298,8 +20549,8 @@ var Bundle = class extends component_default {
     let t = Date.now();
     if (result instanceof Error) {
       console.log("result is error!!", result);
-      for (let sys$322 = 0, sys$332 = iter$10(result.errors), sys$342 = sys$332.length; sys$322 < sys$342; sys$322++) {
-        let err = sys$332[sys$322];
+      for (let sys$332 = 0, sys$342 = iter$10(result.errors), sys$352 = sys$342.length; sys$332 < sys$352; sys$332++) {
+        let err = sys$342[sys$332];
         this.watchPath(err.location.file);
       }
       ;
@@ -19328,13 +20579,13 @@ var Bundle = class extends component_default {
     let outs = meta.outputs;
     let urls = meta.urls;
     let reloutdir = path4.default.relative(this.fs.cwd, this.esoptions.outdir);
-    for (let sys$352 = 0, sys$36 = iter$10(files), sys$39 = sys$36.length; sys$352 < sys$39; sys$352++) {
-      let file = sys$36[sys$352];
+    for (let sys$362 = 0, sys$37 = iter$10(files), sys$40 = sys$37.length; sys$362 < sys$40; sys$362++) {
+      let file = sys$37[sys$362];
       let path6 = path4.default.relative(this.fs.cwd, file.path);
       if (outs[path6]) {
-        outs[path6][sys$37] = file;
-        outs[path6][sys$30] = file.contents;
-        file[sys$38] = outs[path6];
+        outs[path6][sys$38] = file;
+        outs[path6][sys$31] = file.contents;
+        file[sys$39] = outs[path6];
       } else {
         console.log("could not map the file to anything!!", file.path, path6, reloutdir);
       }
@@ -19346,10 +20597,10 @@ var Bundle = class extends component_default {
       css: ".__dist__.css",
       map: ".__dist__.js.map"
     };
-    for (let sys$40 = 0, sys$41 = Object.keys(ins), sys$46 = sys$41.length, path6, input; sys$40 < sys$46; sys$40++) {
-      path6 = sys$41[sys$40];
+    for (let sys$41 = 0, sys$422 = Object.keys(ins), sys$47 = sys$422.length, path6, input; sys$41 < sys$47; sys$41++) {
+      path6 = sys$422[sys$41];
       input = ins[path6];
-      input[sys$422] = input._ = "input";
+      input[sys$43] = input._ = "input";
       input.path = path6;
       input.imports = input.imports.map(function(_0) {
         return ins[_0.path];
@@ -19357,8 +20608,8 @@ var Bundle = class extends component_default {
       this.watchPath(path6);
       let outname = path6.replace(/\.(imba1?|[cm]?jsx?|tsx?)$/, "");
       let jsout;
-      for (let sys$43 = 0, sys$44 = Object.keys(tests), sys$45 = sys$44.length, key, ext; sys$43 < sys$45; sys$43++) {
-        key = sys$44[sys$43];
+      for (let sys$44 = 0, sys$45 = Object.keys(tests), sys$46 = sys$45.length, key, ext; sys$44 < sys$46; sys$44++) {
+        key = sys$45[sys$44];
         ext = tests[key];
         let name = outname + ext;
         if (reloutdir) {
@@ -19392,17 +20643,17 @@ var Bundle = class extends component_default {
         matched.push(input);
       }
       ;
-      for (let sys$47 = 0, sys$48 = iter$10(input.imports), sys$49 = sys$48.length; sys$47 < sys$49; sys$47++) {
-        let item = sys$48[sys$47];
+      for (let sys$48 = 0, sys$49 = iter$10(input.imports), sys$50 = sys$49.length; sys$48 < sys$50; sys$48++) {
+        let item = sys$49[sys$48];
         walker.collectCSSInputs(item, matched, visited);
       }
       ;
       return matched;
     };
-    for (let sys$50 = 0, sys$51 = Object.keys(outs), sys$60 = sys$51.length, path6, output, m; sys$50 < sys$60; sys$50++) {
-      path6 = sys$51[sys$50];
+    for (let sys$51 = 0, sys$522 = Object.keys(outs), sys$61 = sys$522.length, path6, output, m; sys$51 < sys$61; sys$51++) {
+      path6 = sys$522[sys$51];
       output = outs[path6];
-      output[sys$422] = output._ = "output";
+      output[sys$43] = output._ = "output";
       output.path = path6;
       output.type = (path4.default.extname(path6) || "").slice(1);
       if (this.isWeb || output.type == "css") {
@@ -19411,14 +20662,14 @@ var Bundle = class extends component_default {
       }
       ;
       let inputs = [];
-      for (let sys$54 = output.inputs, sys$522 = 0, sys$53 = Object.keys(sys$54), sys$55 = sys$53.length, src, m2; sys$522 < sys$55; sys$522++) {
-        src = sys$53[sys$522];
-        m2 = sys$54[src];
+      for (let sys$55 = output.inputs, sys$53 = 0, sys$54 = Object.keys(sys$55), sys$56 = sys$54.length, src, m2; sys$53 < sys$56; sys$53++) {
+        src = sys$54[sys$53];
+        m2 = sys$55[src];
         inputs.push([ins[src], m2.bytesInOutput]);
       }
       ;
       output.inputs = inputs;
-      if (output.type == "css" && !output[sys$56]) {
+      if (output.type == "css" && !output[sys$57]) {
         let origPaths = inputs.map(function(_0) {
           return _0[0].path;
         });
@@ -19428,10 +20679,10 @@ var Bundle = class extends component_default {
         }
         ;
         let offset = 0;
-        let body = output[sys$37].text;
+        let body = output[sys$38].text;
         let chunks = [];
-        for (let sys$57 = 0, sys$58 = iter$10(inputs), sys$59 = sys$58.length; sys$57 < sys$59; sys$57++) {
-          let [input, bytes] = sys$58[sys$57];
+        for (let sys$58 = 0, sys$59 = iter$10(inputs), sys$60 = sys$59.length; sys$58 < sys$60; sys$58++) {
+          let [input, bytes] = sys$59[sys$58];
           let header = "/* " + input.path + " */\n";
           if (!this.o.minify) {
             offset += header.length;
@@ -19450,8 +20701,8 @@ var Bundle = class extends component_default {
         let text = chunks.filter(function(_0) {
           return _0;
         }).join("\n");
-        output[sys$56] = true;
-        output[sys$30] = text;
+        output[sys$57] = true;
+        output[sys$31] = text;
       }
       ;
       if (output.imports) {
@@ -19478,7 +20729,7 @@ var Bundle = class extends component_default {
     }
     ;
     walker.replacePaths = async function(body, output) {
-      let array = output[sys$30];
+      let array = output[sys$31];
       let length = body.length;
       let start = 0;
       let idx = 0;
@@ -19517,18 +20768,19 @@ var Bundle = class extends component_default {
       return body;
     };
     walker.resolveAsset = async function(asset) {
-      if (asset[sys$61] || asset.hash) {
+      var _a;
+      if (asset[sys$62] || asset.hash) {
         return asset;
       }
       ;
-      asset[sys$61] = true;
+      asset[sys$62] = true;
       if (asset.type == "js") {
-        asset[sys$62] = asset[sys$37].text;
-        asset[sys$30] = await walker.replacePaths(asset[sys$62], asset);
+        asset[sys$63] = asset[sys$38].text;
+        asset[sys$31] = await walker.replacePaths(asset[sys$63], asset);
       }
       ;
       if (asset.type == "map") {
-        let js = asset.source.js;
+        let js = (_a = asset.source) == null ? void 0 : _a.js;
         if (js) {
           await walker.resolveAsset(js);
           asset.hash = js.hash;
@@ -19536,7 +20788,7 @@ var Bundle = class extends component_default {
         ;
       }
       ;
-      asset.hash || (asset.hash = utils5.createHash(asset[sys$30]));
+      asset.hash || (asset.hash = utils5.createHash(asset[sys$31]));
       if (true) {
         let sub = self2.o.hashing !== false ? "." + asset.hash + "." : ".";
         asset.originalPath = asset.path;
@@ -19548,7 +20800,7 @@ var Bundle = class extends component_default {
         if (asset.type == "js" && asset.map) {
           let orig = path4.default.basename(asset.originalPath) + ".map";
           let replaced = path4.default.basename(asset.path) + ".map";
-          asset[sys$30] = asset[sys$30].replace(orig, replaced);
+          asset[sys$31] = asset[sys$31].replace(orig, replaced);
         }
         ;
       }
@@ -19556,8 +20808,8 @@ var Bundle = class extends component_default {
       return asset;
     };
     let newouts = {};
-    for (let sys$63 = 0, sys$64 = Object.keys(outs), sys$65 = sys$64.length, path6, output; sys$63 < sys$65; sys$63++) {
-      path6 = sys$64[sys$63];
+    for (let sys$64 = 0, sys$65 = Object.keys(outs), sys$66 = sys$65.length, path6, output; sys$64 < sys$66; sys$64++) {
+      path6 = sys$65[sys$64];
       output = outs[path6];
       await walker.resolveAsset(output);
       if (!this.isNode && output.url) {
@@ -19567,9 +20819,8 @@ var Bundle = class extends component_default {
       newouts[output.path] = output;
     }
     ;
-    console.log(Object.keys(this.presult));
-    for (let sys$66 = 0, sys$67 = Object.keys(ins), sys$68 = sys$67.length, path6, input; sys$66 < sys$68; sys$66++) {
-      path6 = sys$67[sys$66];
+    for (let sys$67 = 0, sys$68 = Object.keys(ins), sys$69 = sys$68.length, path6, input; sys$67 < sys$69; sys$67++) {
+      path6 = sys$68[sys$67];
       input = ins[path6];
       if (this.presult[path6]) {
         this.log.debug("Add presult outputs " + path6);
@@ -19594,8 +20845,10 @@ var bundle_default = Bundle;
 // src/bin/imba.imba
 var utils7 = __toModule(require_utils4());
 var tmp = __toModule(require_tmp());
-var sys$113 = Symbol.for("#parse");
-var sys$28 = Symbol.for("#IMBA_OPTIONS");
+var get_port = __toModule(require_get_port());
+var sys$114 = Symbol.for("#parse");
+var sys$29 = Symbol.for("#parsed");
+var sys$36 = Symbol.for("#IMBA_OPTIONS");
 var t0 = Date.now();
 var fmt = {
   int: function(val) {
@@ -19611,7 +20864,7 @@ var logLevel = {
   warning: "Show warnings & errors",
   error: "Show errors",
   silent: "Show nothing",
-  [sys$113]: function(val) {
+  [sys$114]: function(val) {
     if (!this[val]) {
       let msg = "Must be one of " + Object.keys(logLevel).join(",");
       throw new commander.CommanderError(1, "commander.optionArgumentRejected", message);
@@ -19621,6 +20874,10 @@ var logLevel = {
   }
 };
 function parseOptions(options, extras = []) {
+  if (options[sys$29]) {
+    return options;
+  }
+  ;
   if (options.opts instanceof Function) {
     options = options.opts();
   }
@@ -19634,7 +20891,7 @@ function parseOptions(options, extras = []) {
     path5.default.resolve(__dirname, "..", "dist", "node", "compiler.js")
   ];
   options.mtime = Math.max(...statFiles.map(function(_0) {
-    return fs4.default.statSync(_0).mtimeMs;
+    return fs5.default.statSync(_0).mtimeMs;
   }));
   options.config = utils7.resolveConfig(cwd, options.config || "imbaconfig.json");
   options.package = utils7.resolvePackage(cwd);
@@ -19649,6 +20906,7 @@ function parseOptions(options, extras = []) {
   ;
   if (options.watch || options.dev) {
     options.loglevel || (options.loglevel = "info");
+    options.hmr = true;
   }
   ;
   if (options.clean) {
@@ -19657,24 +20915,24 @@ function parseOptions(options, extras = []) {
   ;
   options.loglevel || (options.loglevel = "warning");
   options.cachedir = utils7.getCacheDir(options);
-  globalThis[sys$28] = options;
+  globalThis[sys$36] = options;
+  options[sys$29] = true;
   return options;
 }
 async function build(entry, o) {
+  let out;
   o = parseOptions(o);
-  console.log("build with entry?", entry, o);
   let prog = new program_default(o.config, o);
   let params = Object.assign({}, o.config.node, o, {
     entryPoints: [entry],
     isMain: true
   });
   let bundle2 = new bundle_default(prog, params);
-  let out = await bundle2.build();
-  return console.log("done building!!");
+  return out = await bundle2.build();
 }
 async function run(entry, o, extras) {
   var _a;
-  let exec;
+  var exec, $0$1;
   o = parseOptions(o, extras);
   let t = Date.now();
   let prog = new program_default(o.config, o);
@@ -19695,6 +20953,17 @@ async function run(entry, o, extras) {
     config: o.config,
     imbaPath: o.imbaPath
   });
+  if (o.autoserve) {
+    $0$1 = params.entryPoints, delete params.entryPoints, $0$1;
+    o.port || (o.port = await get_port.default({port: get_port.default.makeRange(3e3, 3100)}));
+    params.stdin = {
+      contents: serve_http_default.replace("CLIENT_ENTRY", "./" + file.name),
+      resolveDir: file.absdir,
+      sourcefile: file.rel,
+      loader: "js"
+    };
+  }
+  ;
   tmp.default.setGracefulCleanup();
   if (!params.outdir) {
     let tmpdir = tmp.default.dirSync({unsafeCleanup: true});
@@ -19714,7 +20983,6 @@ async function run(entry, o, extras) {
     runner2.start();
     if (o.watch) {
       bundle2.manifest.on("change:main", function() {
-        console.log("manifest change:main!!");
         return runner2.reload();
       });
     }
@@ -19723,10 +20991,18 @@ async function run(entry, o, extras) {
   ;
   return;
 }
+function serve(entry, o, extras) {
+  o = o.opts();
+  o.watch = true;
+  o.autoserve = true;
+  o = parseOptions(o, extras);
+  return run(entry, o, extras);
+}
 var binary = commander.program.storeOptionsAsProperties(false).version("2.0.0").name("imba");
 function increaseVerbosity(dummy, prev) {
   return prev + 1;
 }
 commander.program.command("exec <script>", {isDefault: true}).description("Run stuff").option("-b, --build", "").option("-d, --dev", "Enable development mode").option("-w, --watch", "Continously build and watch project while running").option("-m, --minify", "Minify generated files").option("-i, --instances [count]", "Number of instances to start", fmt.i, 1).option("-v, --verbose", "verbosity (repeat to increase)", increaseVerbosity, 0).option("--name [name]", "Give name to process").option("--outdir <value>", "").option("--loglevel [value]", "Set loglevel info|warning|error|debug|silent").option("--sourcemap <value>", "", "inline").option("--inspect", "Debug stuff").option("--no-sourcemap", "Omit sourcemaps").option("--no-hashing", "Disable hashing").option("--clean", "Disregard previosly cached compilations").action(run);
 commander.program.command("build [script]").description("clone a repository into a newly created directory").option("-w, --watch", "Continously build and watch project while running").option("-c, --clean", "Disregard previosly cached compilations").option("-m, --minify", "Minify generated files").option("-v, --verbose", "Verbose logging").option("--outfile <value>", "Disregard previosly cached compilations").option("--platform <platform>", "Disregard previosly cached compilations", "browser").option("--outdir <value>", "").option("--pubdir <value>", "Directory for public items - default to").option("--no-hashing", "Disable hashing").action(build);
+commander.program.command("serve <script>").description("Run stuff").option("-b, --build", "").option("-d, --dev", "Enable development mode").option("-w, --watch", "Continously build and watch project while running").option("-m, --minify", "Minify generated files").option("-i, --instances [count]", "Number of instances to start", fmt.i, 1).option("-v, --verbose", "verbosity (repeat to increase)", increaseVerbosity, 0).option("--name [name]", "Give name to process").option("--outdir <value>", "").option("--loglevel [value]", "Set loglevel info|warning|error|debug|silent").option("--sourcemap <value>", "", "inline").option("--inspect", "Debug stuff").option("--no-sourcemap", "Omit sourcemaps").option("--no-hashing", "Disable hashing").option("--clean", "Disregard previosly cached compilations").action(serve);
 binary.parse(process.argv);

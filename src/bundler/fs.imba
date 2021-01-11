@@ -9,6 +9,7 @@ import {parseAsset} from '../compiler/assets'
 import Component from './component'
 import ChangeLog from './changes'
 
+import imgsize from 'image-size'
 
 const blankStat = {
 	size: 0,
@@ -86,17 +87,21 @@ export class FSTree < Array
 	
 export class FSNode
 
-	static def create program, src, abs
+	static def create root, src, abs
 		let ext = src.slice(src.lastIndexOf('.'))
 		let types = {
 			'.json': JSONFile
 			'.imba': ImbaFile
 			'.imba1': Imba1File
 			'.svg': SVGFile
+			'.png': ImageFile
+			'.jpg': ImageFile
+			'.jpeg': ImageFile
+			'.gif': ImageFile
 		}
 
 		let cls = types[ext] or FileNode
-		new cls(program,src,abs)
+		new cls(root,src,abs)
 
 	def constructor root, rel, abs
 		self.fs = root
@@ -202,7 +207,7 @@ export class FileNode < FSNode
 	get mtimesync
 		# only cache if we have a fully watched fs
 		# return #mtime ||= (existsSync! ? nodefs.statSync(abs).mtimeMs : 1)
-		(existsSync! ? nodefs.statSync(abs).mtimeMs : 1)
+		#mtimesync or (existsSync! ? nodefs.statSync(abs).mtimeMs : 1)
 
 	def mtime
 		unless #mtime
@@ -281,6 +286,25 @@ export class SVGFile < FileNode
 			let svgbody = await read!
 			let parsed = parseAsset({body: svgbody})
 			return {js: "export default {JSON.stringify(parsed)};"}
+
+export class ImageFile < FileNode
+
+	def compile o
+		memo(o.format) do
+			# memo this file for later?
+			let size = await Promise.resolve(imgsize(abs))
+
+			let js = """
+			import \{asset\} from 'imba';
+			import url from './{name}';
+			export default asset(\{
+				url: url,
+				width: {size.width or 0},
+				height: {size.height or 0},
+				toString: function()\{ return this.url;\}
+			\})
+			"""
+			return {js: js}
 
 export class JSONFile < FileNode
 
@@ -390,8 +414,6 @@ export class FileSystem < Component
 			let li = item.lastIndexOf('.')
 			let ext = item.slice(li) or '.*'
 			let map = #files[ext] ||= []
-			unless map.push
-				console.log 'ext?!',ext,item
 			map.push(item)
 		# should we drop the abspart here?
 		return #files

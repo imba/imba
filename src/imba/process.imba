@@ -194,6 +194,8 @@ class Server
 		clients = new Set
 		stalledResponses = []
 		assetResponders = {}
+		if proc.env.IMBA_PATH
+			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'devtools.js')
 
 		# fetch and remove the original request listener
 		let originalHandler = server._events.request
@@ -231,6 +233,12 @@ class Server
 					return res.end!
 				else
 					return stalledResponses.push(res)
+
+			if url == '/__hmr__.js' and devtoolsPath
+				# and if hmr?
+				let stream = nfs.createReadStream(devtoolsPath)
+				res.writeHead(200, defaultHeaders.js)
+				return stream.pipe(res)
 			
 			if url == '/__hmr__'
 				let headers = {

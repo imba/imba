@@ -39,5 +39,3 @@ Module._resolveFilename = do(name,from)
 
 	let res =  _resolveFilename.apply(Module,arguments)
 	return res
-
-console.log "loading register", process.env.IMBA_MANIFEST_PATH

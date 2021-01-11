@@ -18,9 +18,8 @@ export const defaultLoaders = {
 export def getCacheDir options
 	# or just the directory of this binary?
 	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'..','.imba-cache')  # np.resolve(os.homedir!,'.imba')
-	console.log 'cache dir here',dir,__filename
 	unless nfs.existsSync(dir)
-		console.log 'cache dir does not exist - create'
+		console.log 'cache dir does not exist - create',dir
 		nfs.mkdirSync(dir)
 	return dir
 

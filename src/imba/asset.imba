@@ -20,7 +20,11 @@ class AssetProxy
 		return true
 
 	def get target, key
+		if meta.meta and meta.meta[key] != undefined
+			return meta.meta[key]
+
 		asset[key]
+
 
 export def asset data
 	if data.input

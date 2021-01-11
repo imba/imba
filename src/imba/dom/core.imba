@@ -614,21 +614,24 @@ export class HTMLHtmlElement < HTMLElement
 
 	get outerHTML
 		# watch for assets that are collected etc
-		console.log "compiling outerhtml!"
+		# console.log "compiling outerhtml!"
 		let prev = HtmlContext
 		HtmlContext = self
 		let html = super.outerHTML
-		console.log 'has scripts',self.scripts.length
+		# console.log 'has scripts',self.scripts.length
 		# automatically include stylesheets?
 		# add data-hmr yes or inject hmr script if hmr?
 		let sheets = new Set
 		let jsassets = []
 		let inject = []
 
+		if process.env.IMBA_HMR or global.IMBA_HMR
+			inject.push("<script src='/__hmr__.js'></script>")
+
 		for script in self.scripts
 			let src = script.src
 			let asset = manifest.urls[src]
-			console.log 'script source',src,String(src),!!asset,asset..path
+			# console.log 'script source',src,String(src),!!asset,asset..path
 			if asset and asset.css
 				sheets.add(asset.css)
 			# add preloads?

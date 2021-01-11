@@ -22,6 +22,17 @@ var TAG_NAMES = constants.TAG_NAMES
 var TAG_TYPES = {}
 var TAG_ATTRS = {}
 
+var EXT_LOADER_MAP = {
+	svg: 'image'
+	png: 'image'
+	apng: 'image'
+	jpg: 'image'
+	jpeg: 'image'
+	gif: 'image'
+	tiff: 'image'
+	bmp: 'image'
+}
+
 TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br
  button canvas caption cite code col colgroup data datalist dd del details dfn
  div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
@@ -4623,7 +4634,7 @@ export class Access < Op
 			if right isa Identifier
 				return right.toString
 			return yes
-		return no
+		return no	
 	# def datatype
 	#	right:datatype ? right.datatype : null
 
@@ -4632,9 +4643,6 @@ export class Access < Op
 		var lft = left
 		var rgt = right
 		var rgtexpr = null
-
-		if lft isa VarOrAccess and lft.isGlobal('import')
-			console.log 'accessing import!!!'
 
 		if lft isa VarOrAccess and lft.@variable isa ImportProxy
 			return lft.@variable.access(rgt).c
@@ -5919,7 +5927,19 @@ export class Call < Node
 			if arg isa Str
 				let asset = STACK.root.registerAsset(arg.raw,"asset-{kind}")
 				args.replace(arg,asset:ref)
+
+		elif callee.isGlobal('import')
 			
+			# TODO support interpolated strings that can be globbed
+			let arg = args.first
+			let path = arg isa Str and arg.raw
+			# console.log 'calling the global import!!',path
+			if path
+				let ext = path.split('.').pop()
+				if EXT_LOADER_MAP[ext]
+					@asset = STACK.root.registerAsset(path)
+					args.replace(arg,@asset:ref)
+					callee = runtime:asset
 
 		if runref == 'asset'
 			
@@ -5955,6 +5975,9 @@ export class Call < Node
 		@endLoc or (@args and @args.endLoc) or @callee.endLoc
 
 	def js o
+		if @asset
+			return @asset:ref.c
+
 		var opt = expression: yes
 		var rec = null
 		# var args = AST.compact(args) # really?
@@ -7214,20 +7237,22 @@ export class TagAttr < TagPart
 		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG)
 		let tagName = @tag and @tag.@tagName
 
-		let isAsset = key == 'asset' or (key == 'src' and tagName == 'img' and value isa Str)
+		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'img' or tagName == 'script'))
 
 		if isAsset
-			# console.log "IS ASSET REFERENCE!",@tag.@tagName,value isa Str
-			if value isa Str
-				let kind = 'asset'
-				if tagName == 'img'
-					kind = ''
+			let kind = 'asset'
+			if tagName == 'img'
+				kind = 'asset-img'
+			elif tagName == 'script'
+				kind = 'asset-web'
 
-				@asset = STACK.root.registerAsset(value.raw,kind)
+			let path = value isa Str and value.raw
+			# console.log "IS ASSET REFERENCE!",@tag.@tagName,value isa Str
+			if path and !path.match(/^(\/|https?\:\/\/)/)
+				@asset = STACK.root.registerAsset(path,kind)
 				val = @asset:ref.c
-				# MP(val,"path.asset.{@tag.@tagName}")
 			else
-				val = MP(val,"path.asset.{tagName}")
+				val = MP(val,"path.{kind}")
 
 		# if key == 'src' and @tag.@tagName == 'img' and value isa Str
 		#	console.log "IMG ASSET"
