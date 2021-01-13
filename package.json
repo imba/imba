@@ -62,35 +62,25 @@
   "main": "./index",
   "type": "commonjs",
   "browser": {
-    "imba": "./dist/browser/imba.js",
+    "imba": "./dist/imba.web.mjs",
     "path": "./vendor/path.js",
     "events": "./vendor/events.js",
-    "compiler": "./dist/browser/compiler.js",
-    "./program": "./dist/browser/program.mjs",
-    ".": "./dist/browser/imba.js"
+    "compiler": "./dist/compiler.web.mjs",
+    "./program": "./dist/program.web.mjs",
+    ".": "./dist/imba.web.mjs"
   },
   "exports": {
-    ".": {
-      "require": "./dist/node/imba.js",
-      "default": "./dist/node/imba.mjs",
-      "browser": "./dist/browser/imba.js"
-    },
-    "./program": {
-      "require": "./dist/node/program.js",
-      "default": "./dist/node/program.mjs",
-      "browser": "./dist/browser/program.mjs"
-    },
-    "./loader": "./loader.js",
-    "./compiler": {
-      "require": "./dist/compiler.cjs",
-      "default": "./dist/compiler.mjs",
-      "browser": "./dist/browser/compiler.js"
-    }
+    ".": "./index.js",
+    "./program": "./program.imba.js",
+    "./workers": "./workers.imba.js",
+    "./register": "./register.imba.js",
+    "./loader": "./loader.imba.js",
+    "./compiler": "./compiler.imba.js"
   },
   "bin": {
-    "imba-node": "./bin/imba-node",
     "imba": "./bin/imba",
-    "imbac": "./bin/imbac"
+    "imbac": "./bin/imbac",
+    "imba-node": "./bin/imba-node"
   },
   "preferGlobal": true,
   "homepage": "https://imba.io",
@@ -114,6 +104,6 @@
   },
   "dependencies": {
     "chokidar": "^3.4.3",
-    "esbuild": "^0.8.25"
+    "esbuild": "^0.8.31"
   }
 }

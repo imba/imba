@@ -235,12 +235,30 @@ def run page
 
 def serve
 	let statics = {}
-	for item in ['imba.js','spec.js','compiler.js']
-		let body = fs.readFileSync(path.join(__dirname,'..','dist','browser',item),'utf8')
-		statics["/{item}"] = body
+	for item in ['imba','spec','compiler']
+		try
+			let body = fs.readFileSync(path.join(__dirname,'..','dist',"{item}.web.mjs"),'utf8')
+			statics["/{item}.js"] = body
+
+	# let speccer = import.worker('../src/utils/spec.imba')
+	# would really help if we could use the imba.bundler directly here
+
+	let copts = {
+		platform: 'browser'
+		runtime: '/imba.js'
+		raiseErrors: true
+		resolve: {
+			'imba': '/imba.js',
+			'imba/compiler': '/compiler.js',
+			'imba/spec': '/spec.js'
+		}
+	}
+
+	let rawspec = fs.readFileSync(path.join(__dirname,'..','src','utils','spec.imba'),'utf8')
+	let speccer = compiler.compile(rawspec,Object.assign({sourcePath: 'spec.imba'},copts))
+	let specjs = statics["/spec.js"] = speccer.js
 
 	server = http.createServer do(req,res)
-		# console.log 'serving?!?',req.url
 		if let file = statics[req.url]
 			res.setHeader("Content-Type", "application/javascript")
 			res.write(file)
@@ -252,9 +270,6 @@ def serve
 		let ext = src.split('.').pop!
 		let barename = name.replace(/(\.(js|html|imba))+$/,'')
 		let entry = pages[src.replace(/(\.(js|html|imba))+$/,'.imba')]
-		# console.log "requested {req.url} {src}",entry
-		# let plain = src.replace(/\.(js|html|)/)
-
 
 		if ext == 'html'
 			let html = """
@@ -271,28 +286,14 @@ def serve
 			if entry and entry.body.indexOf('global.imbac') >= 0
 				console.log 'need to import the compiler?'
 				html = html.replace('</head>',"<script src='/compiler.js' type='text/javascript'></script></head>")
-			# console.log 'returning',html
 			res.write(html)
 			return res.end!
 
 		if entry
 			let body = entry.body
-			# console.log 'found page'
-			
-			let opts = {
-				platform: 'browser'
-				sourcePath: src
-				runtime: '/imba.js'
-				raiseErrors: true
-				resolve: {
-					'imba': '/imba.js',
-					'imba/compiler': '/compiler.js',
-					'imba/spec': '/compiler.js'
-				}
-			}
-
+			# console.log 'found page'			
+			let opts = Object.assign({},copts,{sourcePath: src})
 			try
-				# possibly use esbuild if there are exports etc
 				let output = compiler.compile(body,opts)
 				res.writeHead(200, { 'Content-Type': 'application/javascript' })
 				let js = output.js

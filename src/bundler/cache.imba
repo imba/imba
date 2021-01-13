@@ -12,6 +12,7 @@ const hashedKeyCache = {
 const keyPathCache  = {
 	
 }
+import log from '../utils/logger'
 
 export default class Cache
 	def constructor options
@@ -43,6 +44,7 @@ export default class Cache
 			nfs.appendFileSync(aliaspath,"")
 
 		refreshAliasMap!
+		log.ts "cache loaded"
 		self
 
 	def setup

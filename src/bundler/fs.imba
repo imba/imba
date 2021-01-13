@@ -110,6 +110,9 @@ export class FSNode
 		flags = 0
 		#watchers = new Set
 		#watched = no
+
+	get log
+		self.fs.log
 	
 	get program
 		self.fs.program
@@ -118,7 +121,7 @@ export class FSNode
 		np.basename(rel)
 
 	def memo key, cb
-		program.cache.memo("{abs}:{key}",mtimesync,cb)
+		self.fs.cache.memo("{abs}:{key}",mtimesync,cb)
 
 	def watch observer
 		#watchers.add(observer)
@@ -234,7 +237,7 @@ export class ImbaFile < FileNode
 				styles: 'extern'
 				hmr: true
 				bundle: true
-				sourcePath: rel
+				sourcePath: name
 				sourceId: program.cache.getPathAlias(abs)
 				cwd: fs.cwd
 				sourcemap: 'inline'
@@ -247,7 +250,7 @@ export class ImbaFile < FileNode
 
 			let t = Date.now!
 			let out = await context.workers.exec('compile_imba', [code,o])
-			program.log.success 'compile %path %path in %ms',rel,o.platform,Date.now! - t,o.sourceId
+			fs.log.success 'compile %path %path in %ms',rel,o.platform,Date.now! - t,o.sourceId
 			return out
 
 export class Imba1File < FileNode
@@ -275,7 +278,7 @@ export class Imba1File < FileNode
 
 			let t = Date.now!
 			let out = await context.workers.exec('compile_imba1', [code,o])
-			program.log.success 'compile %path in %ms',rel,Date.now! - t
+			log.success 'compile %path in %ms',rel,Date.now! - t
 			return out
 
 
@@ -339,10 +342,10 @@ export class JSONFile < FileNode
 			writeSync(out)
 		self
 
-export class FileSystem < Component
-	def constructor dir, base, program
+export default class FileSystem < Component
+	def constructor cwd, program
 		super()
-		cwd = np.resolve(base,dir)
+		self.cwd = np.resolve(cwd)
 		program = program
 		nodemap = {}
 		existsCache = {}
@@ -373,12 +376,15 @@ export class FileSystem < Component
 	def nodes arr
 		arr.map do lookup($1)
 
-	get outdir
-		program.outdir
-
 	get files
 		prescan! unless #files
 		return #files
+
+	get resolver
+		#resolver ||= new Resolver(config: program.config, files: files, fs: self)
+
+	get cache
+		program.cache
 
 	def resolve ...src
 		np.resolve(cwd,...src)

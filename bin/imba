@@ -1,3 +1,2 @@
 #!/usr/bin/env node
-require("./imba.js");
-// require("../dist/bin/imba.js");
+require("./imba.imba.js");

@@ -6,10 +6,8 @@ const workerPool = require 'workerpool'
 const workerScript = np.resolve(__dirname,'..','compiler-worker.js')
 
 import {startWorkers} from './pooler'
-import {FileSystem} from './fs'
-import chokidar from 'chokidar'
-import {Logger} from './logger'
 import {Resolver} from './resolver'
+import FileSystem from './fs'
 import Component from './component'
 import Cache from './cache'
 
@@ -39,15 +37,7 @@ export default class Program < Component
 		package = options.package
 		fs = new FileSystem(options.cwd,'.',self)
 		cache = new Cache(options)
-
-		manifest = fs.lookup('imbabuild.json').load!
-
-		watcher = options.watch2 ? chokidar.watch([cwd],{
-			ignoreInitial: true,
-			depth: 0,
-			ignored: ['.*','.git/**','.cache'],
-			cwd: cwd
-		}) : new VirtualWatcher
+		watcher = new VirtualWatcher
 
 		watcher.on('change') do(src,stats)
 			fs.touchFile(src)
@@ -78,11 +68,6 @@ export default class Program < Component
 
 	get workers
 		#workers ||= startWorkers! # workerPool.pool(workerScript, maxWorkers:2)
-
-	def esb
-		#hasesb = yes
-		console.log 'called program esb'
-		#esb ||= await esbuild.startService({})
 
 	def setup
 		#setup ||= new Promise do(resolve)

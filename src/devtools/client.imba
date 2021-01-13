@@ -10,7 +10,6 @@ class Manifest
 		data = {}
 
 	get assetsDir do data.assetsDir
-	get assetsUrl do data.assetsUrl
 	get changes do data.changes or {}
 	get inputs do data.inputs
 	get urls do data.urls

@@ -1,4 +1,3 @@
-import Chokidar from 'chokidar'
 import Component from './component'
 import ChangeLog from './changes'
 
@@ -22,8 +21,7 @@ export default class Watcher < Component
 		return #watcher if #watcher
 
 		let initial = Object.keys(map)
-
-		#watcher = Chokidar.watch(initial,{
+		#watcher = require('chokidar').watch(initial,{
 			ignoreInitial: true,
 			depth: 1,
 			ignored: isIgnored.bind(self) # ['.*','.git/**','.cache/**',fs.resolve('dist')],

@@ -3,6 +3,7 @@ const imba2 = require('./bootstrap.compiler2.js');
 const chokidar = require('chokidar');
 const fs = require('fs');
 const np = require('path');
+const esbuild = require('esbuild');
 
 let helpers = imba2.helpers;
 let time = 0;
@@ -13,10 +14,11 @@ let argv = helpers.parseArgs(process.argv.slice(2),{
 let meta = Symbol();
 let compileCache = {};
 
-let defaults = {
-	paths: {
-
-	}
+let globalNames = {
+	index: "imba",
+	compiler: "imbacompiler",
+	program: "imbaprogram",
+	devtools: "imbadevtools"
 }
 
 function plugin(build){
@@ -57,7 +59,6 @@ function plugin(build){
 		let cached = compileCache[key];
 
 		if(cached && cached.input == raw){
-			// console.log('found cached version',key);
 			return {contents: cached.output};
 		}
 		
@@ -104,6 +105,36 @@ function plugin(build){
 		}
 	})
 }
+async function universalise(result,o){
+	console.log('result',result);
+	for(let file of result.outputFiles){
+		
+		let bname = np.basename(file.path).split(".")[0];
+		console.log("output",file.path,bname);
+
+		fs.writeFileSync(file.path,file.contents);
+		if(o.format == 'esm' && o.platform == 'node'){
+			console.log("create cjs version as well");
+			let cjs = esbuild.transformSync(file.text,{
+				format: 'cjs'
+			})
+			let name = file.path.replace('.mjs','.js');
+			console.log("transformed to cjs",cjs.code.length,file.text.length);
+			fs.writeFileSync(name,cjs.code);
+		}
+
+		if(o.format == 'esm' && o.platform == 'browser' && globalNames[bname]){
+			console.log("create cjs version as well");
+			let iife = esbuild.transformSync(file.text,{
+				format: 'iife',
+				globalName: globalNames[bname]
+			})
+			let name = file.path.replace('.mjs','.js');
+			console.log("transformed to iife",name,iife.code.length,file.text.length);
+			fs.writeFileSync(name,iife.code);
+		}
+	}
+}
 
 async function bundle(o){
 	if(o instanceof Array){
@@ -115,11 +146,6 @@ async function bundle(o){
 	let input = o.entryPoints[0];
 	let entry = {options: o}
 	let watcher = entry.watcher = argv.watch && chokidar.watch([]);
-	let name = np.basename(input).replace(/\.imba1?$/,'');
-
-	if(name == 'index'){
-		name = np.basename(np.dirname(input));
-	}
 
 	entry.imbaOptions = o.options || {};
 
@@ -141,127 +167,41 @@ async function bundle(o){
 	o.loader = {'.txt':'text'}
 	o.incremental = !!watcher;
 	o.logLevel = 'info';
+	// o.minify = true;
+	if(o.write == undefined) o.write = false;
 
 	delete o.options;
 	
-	let result = await require('esbuild').build(o);
+	let result = await esbuild.build(o);
+	await universalise(result, o);
 	if(watcher){
 		watcher.on('change',async ()=>{
 			console.log('rebuilding',input);
 			let rebuilt = await result.rebuild();
+			await universalise(rebuilt, o);
 			console.log('rebuilt',input);
 		})
 	}
 	console.log(`built ${input} to ${o.outfile}`);
 }
 
-let universal = function(entrypoint,name){
-	let versions = [];
-
-	let add = function(o){
-		let ext = o.format == 'esm' ? 'mjs' : 'js';
-
-		versions.push({
-			entryPoints: [entrypoint],
-			outfile: `dist/${o.platform}/${name}.${ext}`,
-			format: o.format,
-			platform: o.platform
-		})
-	}
-	
-	add({platform: 'node', format: 'esm'});
-	add({platform: 'node', format: 'cjs'});
-	add({platform: 'browser', format: 'esm'});
-	add({platform: 'browser', format: 'cjs'});
-	
-	return versions;
-}
-
 let bundles = [{
-// 	entryPoints: ['src/compiler/compiler.imba1'],
-// 	outfile: 'dist/compiler.cjs',
-// 	format: 'cjs',
-// 	platform: 'browser'
-// },{
-// 	entryPoints: ['src/compiler/compiler.imba1'],
-// 	outfile: 'dist/compiler.mjs',
-// 	format: 'esm',
-// 	platform: 'browser',
-// },{
-// 	entryPoints: ['src/compiler/compiler.imba1'],
-// 	outfile: 'dist/compiler.js',
-// 	format: 'iife',
-// 	globalName: 'imbac',
-// 	platform: 'browser',
-// },{
-// 	entryPoints: ['src/compiler/compiler.imba1'],
-// 	outfile: 'dist/browser/compiler.js',
-// 	format: 'esm',
-// 	platform: 'browser'
-// },{
-	entryPoints: ['src/imba/imba.imba'],
-	outfile: 'dist/browser/imba.iife.js',
-	format: 'iife',
-	globalName: 'imba',
+	entryPoints: ['devtools.imba'],
+	outExtension: {".js": ".imba.js"},
+	bundle: true,
+	format: 'esm',
+	outdir: '.',
 	platform: 'browser'
 },{
-	entryPoints: ['src/imba/imba.imba'],
-	outfile: 'dist/browser/imba.js',
-	format: 'esm',
-	globalName: 'imba',
-	platform: 'browser',
-	minify: false
-},{
-	entryPoints: ['src/imba/imba.imba'],
-	outfile: 'dist/node/imba.js',
+	entryPoints: ['register.imba','bin/imba.imba','index.imba','program.imba','compiler.imba','workers.imba','loader.imba','bin/perf.imba'],
+	outExtension: {".js": ".imba.js"},
+	bundle: true,
+	minify: false,
+	external: ['chokidar','esbuild'],
+	outdir: '.',
 	format: 'cjs',
 	platform: 'node',
-	minify: false
-},{
-
-	entryPoints: ['test/spec.imba'],
-	outfile: 'dist/browser/spec.js',
-	minify: false,
-	format: 'esm',
-	bundle: false,
-	options: {runtime: './imba.js'},
-	platform: 'browser'
-},{
-	entryPoints: ['src/bundler/worker.imba'],
-	outfile: 'dist/compiler-worker.js',
-	minify: false,
-
-	format: 'cjs',
-	external: ['chokidar','esbuild'],
-	platform: 'node'
-},{
-	entryPoints: ['src/bin/imba.imba'],
-	outbase: 'src/bin',
-	outdir: 'bin',
-	minify: false,
-	sourcemap: false,
-	format: 'cjs',
-	external: ['chokidar','esbuild'],
-	platform: 'node'
-},{
-	entryPoints: ['register.imba'],
-	outdir: '.',
-	sourcemap: false,
-	format: 'cjs',
-	external: ['imba'],
-	platform: 'node'
-},{
-	entryPoints: ['devtools.imba'],
-	outdir: '.',
-	sourcemap: false,
-	format: 'cjs',
-	external: [],
-	platform: 'browser'
-}];
-
-bundles.push(...universal('src/program/index.imba','program'));
-
-bundles.push(...universal('src/compiler/compiler.imba1','compiler'));
-
+	metafile: 'metadata.json'
+}]
 
 bundle(bundles)

@@ -5,9 +5,9 @@ import np from 'path'
 import {EventEmitter} from 'events'
 import {manifest} from './manifest'
 import {Document,Location} from './dom/core'
-import {Logger,format} from '../bundler/logger'
+import log from '../utils/logger'
 
-# import from http2 etc?
+import {Module} from 'module'
 import http from 'http'
 import https from 'https'
 import {Http2ServerRequest} from 'http2'
@@ -151,7 +151,6 @@ export const process = new class Process < EventEmitter
 class AssetResponder
 	def constructor url, params = {}
 		url = url
-		# path = np.resolve(manifest.assetsDir,url.slice(manifest.assetsUrl.length + 1))
 		ext = np.extname(url)
 		mimeType = mimes[ext.slice(1)] or 'text/plain'
 		headers = {
@@ -213,10 +212,9 @@ class Server
 			let host = adr.address
 			if host == '::' or host == '0.0.0.0'
 				host = 'localhost'
-
 			let url = "{scheme}://{host}:{adr.port}/"
-			# console.log 'got here?!?'
-			Logger.main.warn 'listening on %bold',url
+			log.info 'listening on %bold',url
+			# Logger.main.warn 'listening on %bold',url
 
 		# setTimeout(&,100) do console.log 'imba.serve!',server.address!
 
@@ -336,13 +334,6 @@ class Server
 			flushStalledResponses!
 
 export def serve srv,...params
-	# if srv isa http.Server
-	# 	console.log 'http server!!'
-	# elif srv isa https.Server
-	# 	console.log 'https server!!'
-	# else
-	# 	console.log 'unknown server'
-
 	return Server.wrap(srv,...params)
 
 export def _filename_ path
@@ -350,3 +341,17 @@ export def _filename_ path
 
 export def _dirname_ path
 	np.dirname(_filename_(path))
+
+export def _run_ module, file
+	try
+		let srcdir = manifest.srcdir
+		let src = srcdir + '/server.imba'
+		let paths = require.resolve.paths(srcdir + '/server.imba')
+		# require.main.paths.unshift("/Users/sindre/repos/imba-templates/node_modules")
+		console.log("RESOLVE PATHS",srcdir,paths,src)
+		# console.log Module._nodeModulePaths(manifest.srcdir),module.paths
+		require.main.paths.unshift(...Module._nodeModulePaths(manifest.srcdir))
+		# console.log "paths2",Module._resolveFilename('./nodez',require.main.filename)
+		console.log "paths123",Module._resolveFilename('express',require.main)
+		
+	# console.log("RUN!",module.paths,manifest.main.source.path)

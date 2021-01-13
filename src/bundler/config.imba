@@ -6,14 +6,9 @@ const schema = {
 }
 
 export const defaultConfig = {
-	buildfile: 'imbabuild.json'
-
-	outdir: 'dist'
-
 	node: {
 		platform: 'node'
 		format: 'cjs'
-		outdir: 'dist'
 		sourcemap: true
 		target: ['node12.19.0']
 		external: ['dependencies','!imba']
@@ -22,7 +17,6 @@ export const defaultConfig = {
 	browser: {
 		platform: 'browser'
 		format: 'esm'
-		outdir: 'dist'
 		splitting: true
 
 		target: [

@@ -1,5 +1,7 @@
 import {EventEmitter} from 'events'
-import {Logger} from './logger'
+import {Logger} from '../utils/logger'
+
+import {performance} from 'perf_hooks'
 
 export default class Component < EventEmitter
 
@@ -16,3 +18,6 @@ export default class Component < EventEmitter
 	
 	def timed name = 'default'
 		let str = "time {name}: {time(name)}"
+
+	def timelog label = 'timing'
+		console.log(label,performance.now!)

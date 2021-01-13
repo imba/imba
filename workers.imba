@@ -3,7 +3,7 @@ Script for compiling imba and imba1 files inside workers using
 workerpool. 
 ###
 
-import compiler from 'dist/node/compiler.js'
+import {compile} from 'dist/../compiler.imba.js'
 import imba1 from 'dist/../scripts/bootstrap.compiler.js'
 
 const workerpool = require('workerpool')
@@ -15,7 +15,7 @@ def compile_imba code, options
 	let res = null
 	
 	try
-		res = compiler.compile(code,options)
+		res = compile(code,options)
 	catch e
 		console.log "ERROR COMPILING IMBA",e,options.sourcePath
 		res = {}
@@ -30,9 +30,6 @@ def compile_imba code, options
 		out.errors = res.errors
 
 	let js = res.js
-
-	if res.css
-		js += "\nimport 'styles:{options.sourcePath}'"
 
 	# clean up the trims now
 	out.js = js

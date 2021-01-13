@@ -1,5 +1,5 @@
 const imba1 = require('./bootstrap.compiler.js');
-const imba2 = require('./bootstrap.compiler2.js');
+// const imba2 = require('./bootstrap.compiler2.js');
 const fs = require('fs');
 
 function plugin(build){
@@ -54,16 +54,3 @@ bundle({
 	format: 'cjs',
 	platform: 'node'
 })
-// 
-// require('esbuild').build({
-// 	entryPoints: ['src/compiler/compiler.imba1'],
-// 	bundle: true,
-// 	minify: false,
-// 	sourcemap: false,
-// 	target: ['chrome58', 'firefox57', 'safari11', 'edge16'],
-// 	resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'],
-// 	plugins: [imbaPlugin],
-// 	outfile: 'build-compiler.js'
-// }).then( () => {
-// 	console.log('imba took',time);
-// });

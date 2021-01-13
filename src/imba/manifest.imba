@@ -9,6 +9,9 @@ class Asset
 
 	get absPath
 		#absPath ||= #manifest.resolve(self)
+	
+	get name
+		np.basename(path)
 
 	def readSync
 		nfs.readFileSync(absPath,'utf-8')
@@ -20,29 +23,33 @@ class Asset
 	def toString
 		url
 
+
+
 export class Manifest < EventEmitter
 	def constructor options = {}
 		super()
 		options = options
+		data = {}
 		path = options.path
-		dir = path and np.dirname(path)
 		refs = {}
 		reviver = do(key) new Asset(self)
 		init(options.data)
-
+	
+	get srcdir do data.srcdir
+	get outdir do data.outdir
 	get assetsDir do data.assetsDir
-	get assetsUrl do data.assetsUrl
 	get changes do data.changes or {}
 	get inputs do data.inputs
+	get outputs do data.outputs
 	get urls do data.urls or {}
 	get main do data.main
 	get cwd do process.cwd!
 	
 	def resolve path
 		if path._ == 'input'
-			return np.resolve(cwd,path.path)
+			return np.resolve(srcdir or cwd,path.path)
 		elif path._ == 'output'
-			return np.resolve(dir,path.path)
+			return np.resolve(outdir,path.path)
 		else
 			return np.resolve(cwd,path.path or path)
 	
@@ -50,7 +57,7 @@ export class Manifest < EventEmitter
 		nfs.readFileSync(resolve(path),'utf-8')
 
 	def loadFromFile path
-		nfs.readFileSync(path,'utf-8')
+		nfs.existsSync(path) ? nfs.readFileSync(path,'utf-8') : '{}'
 
 	def init data = null
 		if data or path
@@ -96,6 +103,24 @@ export class Manifest < EventEmitter
 		watch!
 		super
 
-const defaultPath = global.IMBA_MANIFEST_PATH or (global.IMBA_ENTRYPOINT ? global.IMBA_ENTRYPOINT + '.manifest' : null)
-export const manifest = new Manifest(path: defaultPath)
-global.#manifest = manifest
+# let path = require.main.filename + '.manifest'
+# new Manifest(path: process.env.IMBA_MANIFEST_PATH or path)
+class LazyProxy
+	static def for getter
+		new Proxy({}, new self(getter))
+
+	def constructor getter
+		getter = getter
+	
+	get target
+		getter!
+
+	def get _, key
+		target[key]
+	
+	def set _, key, value
+		target[key] = value
+		return true
+
+export const manifest = LazyProxy.for do global.#manifest
+# global.#manifest = manifest

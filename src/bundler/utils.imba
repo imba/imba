@@ -3,7 +3,6 @@ import np from 'path'
 import crypto from 'crypto'
 import os from 'os'
 
-import * as flatted from 'flatted'
 import {resolve as parseConfig} from './config'
 
 export const defaultLoaders = {
@@ -121,13 +120,6 @@ export def idGenerator alphabet = 'abcdefghijklmnopqrstuvwxyz'
 
 export def createHash body
 	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8).toUpperCase!
-
-export def serializeData data
-	flatted.stringify(data)
-
-export def deserializeData data
-	flatted.parse(data)
-	
 
 const dirExistsCache = {}
 

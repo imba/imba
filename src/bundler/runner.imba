@@ -2,7 +2,7 @@ const cluster = require 'cluster'
 import np from 'path'
 import cp from 'child_process'
 import Component from './component'
-import {Logger} from './logger'
+import {Logger} from '../utils/logger'
 
 const FLAGS = {
 
@@ -36,12 +36,15 @@ class Instance
 
 	def start
 		return if current and current.#next
-		
 		# let exec = args.exec = manifest.main.source.path # path and loader
 		let o = runner.o
-
-		let loader = o.imbaPath ? np.resolve(o.imbaPath,"register.js") : "imba/register.js"
+		let regpath = np.resolve(o.imbaPath,"loader.imba.js")
+		# console.log "relative",np.relative(o.cwd,regpath)
+		let loader = o.imbaPath ? np.relative(o.cwd,regpath) : "imba/loader"
 		let path = manifest.main.source.path
+
+		path = manifest.main.absPath
+		# loader = 
 
 		let args = {
 			windowsHide: yes
@@ -59,6 +62,7 @@ class Instance
 			IMBA_MANIFEST_PATH: manifest.path
 			IMBA_PATH: o.imbaPath
 			IMBA_HMR: o.hmr ? true : undefined
+			IMBA_LOGLEVEL: o.loglevel
 			PORT: process.env.PORT or o.port
 		}
 
