@@ -237,7 +237,7 @@ export class ImbaFile < FileNode
 				styles: 'extern'
 				hmr: true
 				bundle: true
-				sourcePath: name
+				sourcePath: rel
 				sourceId: program.cache.getPathAlias(abs)
 				cwd: fs.cwd
 				sourcemap: 'inline'

@@ -142,7 +142,7 @@ export default class Bundle < Component
 		}
 
 		if esoptions.platform == 'browser'
-			esoptions.resolveExtensions.unshift('.dist.web.mjs','.web.imba','.web.js')
+			esoptions.resolveExtensions.unshift('.web.imba','.web.js')
 		else
 			esoptions.resolveExtensions.unshift('.node.imba','.node.js')
 

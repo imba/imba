@@ -106,22 +106,28 @@ function plugin(build){
 	})
 }
 async function universalise(result,o){
-	console.log('result',result);
+	// console.log('result',result);
 	for(let file of result.outputFiles){
 		
 		let bname = np.basename(file.path).split(".")[0];
 		console.log("output",file.path,bname);
-
-		fs.writeFileSync(file.path,file.contents);
+		
 		if(o.format == 'esm' && o.platform == 'node'){
-			console.log("create cjs version as well");
+			console.log("create cjs version as well",file.path);
 			let cjs = esbuild.transformSync(file.text,{
 				format: 'cjs'
 			})
 			let name = file.path.replace('.mjs','.js');
 			console.log("transformed to cjs",cjs.code.length,file.text.length);
 			fs.writeFileSync(name,cjs.code);
+			if(bname == 'compiler'){
+				fs.writeFileSync(file.path,file.contents);
+			}
+		} else {
+			fs.writeFileSync(file.path,file.contents);
 		}
+
+		
 
 		if(o.format == 'esm' && o.platform == 'browser' && globalNames[bname]){
 			console.log("create cjs version as well");
@@ -182,26 +188,25 @@ async function bundle(o){
 			console.log('rebuilt',input);
 		})
 	}
-	console.log(`built ${input} to ${o.outfile}`);
+	console.log(`built`);
 }
 
 let bundles = [{
 	entryPoints: ['devtools.imba'],
-	outExtension: {".js": ".imba.js"},
+	outExtension: {".js": ".imba.web.js"},
 	bundle: true,
 	format: 'esm',
 	outdir: '.',
 	platform: 'browser'
 },{
-	entryPoints: ['register.imba','bin/imba.imba','index.imba','program.imba','compiler.imba','workers.imba','loader.imba','bin/perf.imba'],
+	entryPoints: ['bin/imba.imba','index.imba','program.imba','compiler.imba','workers.imba','loader.imba'],
 	outExtension: {".js": ".imba.js"},
 	bundle: true,
 	minify: false,
 	external: ['chokidar','esbuild'],
 	outdir: '.',
 	format: 'cjs',
-	platform: 'node',
-	metafile: 'metadata.json'
+	platform: 'node'
 }]
 
 bundle(bundles)

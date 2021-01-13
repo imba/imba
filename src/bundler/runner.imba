@@ -39,12 +39,8 @@ class Instance
 		# let exec = args.exec = manifest.main.source.path # path and loader
 		let o = runner.o
 		let regpath = np.resolve(o.imbaPath,"loader.imba.js")
-		# console.log "relative",np.relative(o.cwd,regpath)
-		let loader = o.imbaPath ? np.relative(o.cwd,regpath) : "imba/loader"
-		let path = manifest.main.source.path
-
-		path = manifest.main.absPath
-		# loader = 
+		let loader = o.imbaPath ? regpath : "imba/loader"
+		let path = manifest.main.absPath
 
 		let args = {
 			windowsHide: yes

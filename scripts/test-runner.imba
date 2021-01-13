@@ -1,7 +1,7 @@
 const puppeteer = require "puppeteer"
 const path = require "path"
 const fs = require "fs"
-const compiler = require "../dist/node/compiler.js"
+const compiler = require "../compiler.imba.js"
 const helpers = compiler.helpers
 const http = require('http')
 
@@ -235,13 +235,6 @@ def run page
 
 def serve
 	let statics = {}
-	for item in ['imba','spec','compiler']
-		try
-			let body = fs.readFileSync(path.join(__dirname,'..','dist',"{item}.web.mjs"),'utf8')
-			statics["/{item}.js"] = body
-
-	# let speccer = import.worker('../src/utils/spec.imba')
-	# would really help if we could use the imba.bundler directly here
 
 	let copts = {
 		platform: 'browser'
@@ -250,21 +243,21 @@ def serve
 		resolve: {
 			'imba': '/imba.js',
 			'imba/compiler': '/compiler.js',
-			'imba/spec': '/spec.js'
+			'imba/spec': '/imba.js'
 		}
 	}
 
-	let rawspec = fs.readFileSync(path.join(__dirname,'..','src','utils','spec.imba'),'utf8')
-	let speccer = compiler.compile(rawspec,Object.assign({sourcePath: 'spec.imba'},copts))
-	let specjs = statics["/spec.js"] = speccer.js
+	let basejs = import.web('../test/index.imba')
+	let cmpjs = import.worker('../test/compiler.imba')
+
+	statics["/compiler.js"] = cmpjs.readSync!
+	statics["/imba.js"] = basejs.readSync!
 
 	server = http.createServer do(req,res)
 		if let file = statics[req.url]
 			res.setHeader("Content-Type", "application/javascript")
 			res.write(file)
 			return res.end!
-
-		# let url = new URL(req.url)
 		let src = path.join(__dirname,"..","test",req.url)
 		let name = path.basename(src)
 		let ext = src.split('.').pop!
@@ -276,7 +269,6 @@ def serve
 				<html><head>
 				<meta charset='UTF-8'>
 				<script src='/imba.js' type='module'></script>
-				<script src='/spec.js' type='module'></script>
 				</head><body>
 				<script src='./{barename}.imba' type='module'></script>
 				<script type='module'>SPEC.run();</script>
@@ -284,7 +276,6 @@ def serve
 			"""
 
 			if entry and entry.body.indexOf('global.imbac') >= 0
-				console.log 'need to import the compiler?'
 				html = html.replace('</head>',"<script src='/compiler.js' type='text/javascript'></script></head>")
 			res.write(html)
 			return res.end!

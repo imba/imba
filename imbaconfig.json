@@ -1,0 +1,8 @@
+{
+    "node": {
+        "external": ["dependencies","imba","esbuild","chokidar"]
+    },
+    "browser": {
+        "external": ["imba"]
+    }
+}
