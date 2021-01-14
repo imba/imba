@@ -219,6 +219,7 @@ export class FileNode < FSNode
 		return #mtime
 
 	def unlink
+		log.debug 'unlink %path',rel
 		nodefs.promises.unlink(abs)
 
 	def extractStarPattern pat

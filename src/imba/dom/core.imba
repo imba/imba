@@ -5,7 +5,7 @@ should move elsewhere
 ###
 
 import {TYPES,MAP} from './schema'
-import {AsyncLocalStorage} from 'async_hooks'
+import {AsyncLocalStorage} from '../bindings'
 import {Flags} from './flags'
 import {manifest} from '../manifest'
 

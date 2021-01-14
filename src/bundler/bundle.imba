@@ -165,10 +165,19 @@ export default class Bundle < Component
 			css: 'external'
 		}
 
-		if esoptions.platform == 'browser'
-			esoptions.resolveExtensions.unshift('.web.imba','.web.js')
-		else
-			esoptions.resolveExtensions.unshift('.node.imba','.node.js')
+		if o.platform == 'worker'
+			# quick hack
+			imbaoptions.platform = 'node'
+
+		let addExtensions = {
+			webworker: ['.webworker.imba','.worker.imba']
+			worker: ['.worker.imba']
+			node: ['.node.imba']
+			browser: ['.web.imba']
+		}
+
+		if addExtensions[o.platform]
+			esoptions.resolveExtensions.unshift(...addExtensions[o.platform])
 
 		if !node? and false
 			let defines = esoptions.define ||= {}
@@ -181,7 +190,8 @@ export default class Bundle < Component
 			delete esoptions.external
 
 		if o.splitting and esoptions.format != 'esm'
-			esoptions.format = 'esm'
+			log.error "code-splitting not allowed when format is not esm"
+			# esoptions.format = 'esm'
 
 		if main?
 			# not if main entrypoint is web?
@@ -236,10 +246,14 @@ export default class Bundle < Component
 			import \{asset\} from 'imba';
 			export default asset({json})
 			"""
-				
-		build.onResolve(filter: /.*/) do(args)
-			# log.debug "resolve {args.path} from {args.importer}"
-			return
+
+		if o.resolve
+			let regex = new RegExp("^({Object.keys(o.resolve).join('|')})$")
+
+			build.onResolve(filter: regex) do(args)
+				let res = o.resolve[args.path]
+				res = res and res[platform] or res
+				return res
 
 		# Images imported from imba files should resolve as special assets
 		# importing metadata about the images and more
@@ -778,7 +792,7 @@ export default class Bundle < Component
 
 	def write result
 		# after write we can wipe the buildcache
-		#buildcache = {}
+		
 		let meta = result.meta
 		let ins = meta.inputs
 		let outs = meta.outputs
@@ -819,6 +833,19 @@ export default class Bundle < Component
 		#outfs ||= new FileSystem(o.outdir,program)
 
 		log.ts "ready to write"
+		let mpath = main and main.path + '.manifest'
+		let mfile = mpath and #outfs.lookup(mpath)
+
+		if program.clean
+			let rm = new Set
+			# let op = self.manifest.outputs || {}
+			let old = self.manifest.outputs || {}
+			for own path,item of old
+				unless outs[item.path]
+					rm.add(#outfs.lookup(item.path))
+
+			for file of rm
+				await file.unlink!
 
 		if #hash =? manifest.hash
 			let json = serializeData(manifest)
@@ -830,13 +857,11 @@ export default class Bundle < Component
 				let file = #outfs.lookup(asset.path)
 				await file.write(asset.#contents,asset.hash)
 
-			# how can we see if manifest has changed at all? We really only want to write this when we have changes.
-			let mpath = main and main.path + '.manifest'
-			let mfile = #outfs.lookup(mpath)
-			await mfile.writeSync json, manifest.hash
+			if mfile
+				await mfile.writeSync json, manifest.hash
 			
 			self.manifest.update(json)
 
 		try log.debug main.path,main.hash
-		
+		#buildcache = {}
 		return result
