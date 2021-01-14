@@ -5,7 +5,7 @@ var sys$4 = Symbol();
 const sys$5 = Symbol.for('##up');
 const {createElement: imba_createElement, renderContext: imba_renderContext, serve: imba_serve} = require(/*$path$*/'imba'/*$*/);
 // ASSETS-START;
-import sys$6 from /*$path$*/'CLIENT_ENTRY?asset-web'/*$*/;
+import sys$6 from /*$path$*/'CLIENT_ENTRY?as=web'/*$*/;
 // ASSETS-END;
 
 var sys$1 = requireDefault$(require(/*$path$*/'fs'/*$*/));

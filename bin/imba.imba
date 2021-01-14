@@ -104,7 +104,7 @@ def run entry, o, extras
 		delete params.entryPoints
 		
 		params.stdin = {
-			contents: SERVE_TEMPLATE.replace('CLIENT_ENTRY',file.abs),
+			contents: SERVE_TEMPLATE.replace('CLIENT_ENTRY',"./{file.rel}"),
 			resolveDir: o.cwd
 			sourcefile: 'serve.js'
 			loader: 'js'
