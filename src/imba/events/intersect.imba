@@ -2,7 +2,7 @@
 
 import {Event,CustomEvent,Element} from '../dom/core'
 
-export def events_intersect
+export def use_events_intersect
 	yes
 
 const observers = new (global.WeakMap || Map)

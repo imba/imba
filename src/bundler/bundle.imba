@@ -134,7 +134,7 @@ export default class Bundle < Component
 			banner: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')
 			footer: o.footer
 			splitting: o.splitting
-			sourcemap: o.sourcemap
+			sourcemap: (program.sourcemap === false ? no : (web? ? yes : 'inline'))
 			stdin: o.stdin
 			minify: o.minify
 			incremental: !!watcher
@@ -197,8 +197,7 @@ export default class Bundle < Component
 			# not if main entrypoint is web?
 			log.ts "created main bundle"
 			manifest = new Manifest(data: {})
-		# log.debug 'init bundle',esoptions,o.outdir,program.imbaPath,program.cachedir
-		# console.log "esbuild",esoptions
+
 
 	def addEntrypoint src
 		entryPoints.push(src) unless entryPoints.indexOf(src)>= 0
@@ -225,13 +224,13 @@ export default class Bundle < Component
 		let presets = imbaconfig.defaults
 
 		for typ in types
-			if presets[typ]
-				base.presets.push(presets[typ])
-				Object.assign(base,presets[typ])
+			let pre = presets[typ] or {}
+			base.presets.push(pre)
+			Object.assign(base,pre)
 
 		return imbaconfig[key] = base # Object.create(base)
 
-	def plugin build
+	def plugin esb
 		let externs = esoptions.external or []
 
 		let imbaDir = program.imbaPath
@@ -250,14 +249,14 @@ export default class Bundle < Component
 		if o.resolve
 			let regex = new RegExp("^({Object.keys(o.resolve).join('|')})$")
 
-			build.onResolve(filter: regex) do(args)
+			esb.onResolve(filter: regex) do(args)
 				let res = o.resolve[args.path]
 				res = res and res[platform] or res
 				return res
 
 		# Images imported from imba files should resolve as special assets
 		# importing metadata about the images and more
-		build.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?as=img)$/) do(args)
+		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?as=img)$/) do(args)
 			# only catch these when imported from an imba file?
 			return unless isImba(args.importer) and args.namespace == 'file'
 			let ext = np.extname(args.path).slice(1)
@@ -266,13 +265,13 @@ export default class Bundle < Component
 			log.debug "resolved img {args.path} -> {out.path}"
 			return out
 
-		build.onLoad(namespace: 'img', filter: /.*/) do({path})
+		esb.onLoad(namespace: 'img', filter: /.*/) do({path})
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 		
 
-		build.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
+		esb.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
 			let [path,q] = args.path.split('?')
 			let formats = q.slice(3).split(',')
 			let cfg = resolveConfigPreset(formats)
@@ -282,7 +281,7 @@ export default class Bundle < Component
 			pathMetadata[out.path] = {path: res.#rel, config: cfg}
 			return out
 
-		build.onLoad(namespace: 'entry', filter:/.*/) do({path})
+		esb.onLoad(namespace: 'entry', filter:/.*/) do({path})
 			let id = "entry:{path}"
 			let meta = pathMetadata[path]
 			let cfg = meta.config
@@ -291,8 +290,6 @@ export default class Bundle < Component
 			
 			# add this to something we want to resolve 
 			if cfg.splitting
-				# console.log "this item is splitting!!!"
-				# not in web?!
 				let js = """
 				import \{asset\} from 'imba';
 				export default asset(\{input: '{id}'\})
@@ -302,37 +299,13 @@ export default class Bundle < Component
 				builder.refs[id] = bundle
 				return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
 
-			# return {loader: 'js', contents: ""}
-			# now see if this is an image or what
-			# should these rather be resolved at the very end after all bundles?
-			console.log "lookup up bundle for id {id}"
+			log.debug "lookup up bundle for id {id}"
 			let bundler = root.#bundles[id] ||= new Bundle(root,Object.assign({entryPoints: [meta.path]},cfg))
 
 			builder.refs[id] = bundler
 			return {loader: 'js', contents: toAssetJS(input: id), resolveDir: file.absdir }
 
-			let bundle = await bundler.rebuild!
-			builder.refs[id] = bundle
-			let input = bundle.meta.inputs[meta.path]
-
-			# not for web?
-			let data = {
-				input: id
-			}
-
-			if web?
-				# we dont include these when compiling to node because
-				# we can pull this info from external manifest - to avoid
-				# having to reload the server itself when assets change
-				unless input and input.js
-					console.log "INPUT OUTPUT NOT FOUND",path,input,bundle.meta.inputs
-				data.url = input.js.url
-				data.hash = input.js.hash
-			
-			# let body = 'export default ' + JSON.stringify(data) # .replace('$',id)
-			return {loader: 'js', contents: toAssetJS(data), resolveDir: file.absdir }
-
-		build.onResolve(filter: /^\//) do(args)
+		esb.onResolve(filter: /^\//) do(args)
 			return if args.path.indexOf('?') > 0
 			console.log 'abs resolving absolute path',args,{path: args.path, external: yes}
 			return {path: args.path, external: yes}
@@ -340,7 +313,7 @@ export default class Bundle < Component
 			if isCSS(args.importer)
 				return {path: args.path, external: yes}
 
-		build.onResolve(filter: /^imba(\/|$)/) do(args)
+		esb.onResolve(filter: /^imba(\/|$)/) do(args)
 			if args.path == 'imba'
 				let out = np.resolve(imbaDir,'index.imba')
 				
@@ -351,52 +324,41 @@ export default class Bundle < Component
 
 			# if we're compiling for node we should resolve using the
 			# package json paths?
-			log.debug "IMBA RESOLVE",args.path,args.importer
+			# log.debug "IMBA RESOLVE",args.path,args.importer
 			if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
 				return null
 
 		# imba files import their stylesheets by including a plain
 		# import '_styles_' line - which resolves to he path
 		# of the importer itself, with a styles namespace
-		build.onResolve(filter: /^_styles_$/) do({importer})
+		esb.onResolve(filter: /^_styles_$/) do({importer})
 			return {path: importer, namespace: 'styles'}
 
 		# resolve any non-relative path to see if it should
 		# be external. If importer is an imba file, try to
 		# also resolve it via the imbaconfig.paths rules.
-		build.onResolve(filter: /^[\w\@]/) do(args)
+		esb.onResolve(filter: /^[\w\@]/) do(args)
 			if externs.indexOf(args.path) >= 0
 				return {external: true}
 
 			if args.importer.indexOf('.imba') > 0
 				# console.log 'resolving through imba',args.path
 				return fs.resolver.resolve(args)
-		
-		# web entries are identified from urls like ./my/client.imba?asset-web
-		build.onLoad(filter: /.*/, namespace: 'asset-web') do({path,namespace})
-			let js = """
-			import \{asset\} from 'imba';
-			export default asset(\{input: 'asset-web:{path}'\})
-			"""
-			return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
-
+	
 		# asset loader
 		# a shared catch-all loader for all urls ending up in the asset namespce
 		# where the paths may have additional details about
-		build.onLoad(filter: /.*/, namespace: 'asset') do({path})
+		esb.onLoad(filter: /.*/, namespace: 'asset') do({path})
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 
 		# The main loader that compiles and returns imba files, and their stylesheets
-		build.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
+		esb.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
 			let src = fs.lookup(path)
 		
 			let t = Date.now!
 			let res = await src.compile(imbaoptions,self)
-
-			if namespace == 'styles'
-				log.debug 'style took',Date.now! - t
 
 			let cached = res[self] ||= {
 				file: {
@@ -445,12 +407,14 @@ export default class Bundle < Component
 				if watcher and main? and (#watching =? true)
 					watcher.start!
 					watcher.on('touch') do
-						# console.log "watcher touch",$1,#watchedPaths,#id
+						log.debug "watcher touch",$1
 						clearTimeout(#rebuildTimeout)
 						#rebuildTimeout = setTimeout(&,100) do
 							clearTimeout(#rebuildTimeout)
+							log.debug 'try rebuild',!!buildcache[self],o.watch
 							rebuild!
-
+		
+			#buildcache = {}
 			return resolve(result)
 
 	def rebuild {force = no} = {}
@@ -460,6 +424,9 @@ export default class Bundle < Component
 			# console.log 'start rebuild',force
 			# let changes = fs.changelog.pull(self)
 			# for the main one we need to look at all potential inputs
+			if main?
+				log.debug "starting rebuild!",!!watcher,force
+
 			if watcher and !force
 				let changes = watcher.sync(self)
 				let dirty = no
@@ -467,8 +434,13 @@ export default class Bundle < Component
 					if #watchedPaths[path] or flags != 1
 						dirty = yes
 
+				if main?
+					log.debug "changes demanding a resolve?",changes,dirty
+
 				unless dirty
+					#buildcache = {}
 					return resolve(result)
+				
 
 			let t = Date.now!
 			let prev = result
@@ -489,6 +461,7 @@ export default class Bundle < Component
 				else
 					log.info 'finished rebuilding in %ms',Date.now! - t
 
+			#buildcache = {}
 			return resolve(result)
 
 	###
@@ -501,7 +474,7 @@ export default class Bundle < Component
 		# console.log 'transforming',result
 		let t = Date.now!
 		if result isa Error
-			console.log 'result is error!!',result
+			log.debug 'result is error!!',result
 			for err in result.errors
 				watchPath(err.location.file)
 
@@ -802,9 +775,6 @@ export default class Bundle < Component
 			# emit errors - should be linked to the inputs from previous working manifest?
 			return
 
-		for out of builder.outputs
-			console.log "output {out.path}"
-
 		let manifest = result.manifest = {
 			srcdir: outbase
 			outdir: fs.resolve(o.tmpdir or o.outdir)
@@ -863,5 +833,4 @@ export default class Bundle < Component
 			self.manifest.update(json)
 
 		try log.debug main.path,main.hash
-		#buildcache = {}
 		return result

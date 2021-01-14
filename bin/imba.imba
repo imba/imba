@@ -90,7 +90,7 @@ def run entry, o, extras
 		platform: 'node'
 		watch: o.watch
 		outdir: o.outdir
-		sourcemap: 'inline'
+		sourcemap: o.sourcemap === false ? no : 'inline'
 		hashing: false
 		execOnly: yes
 		isMain: yes
@@ -110,7 +110,6 @@ def run entry, o, extras
 			loader: 'js'
 		}
 		# params.external = ['imba']
-	console.log 'getting ready',o.imbaPath
 	tmp.setGracefulCleanup!
 
 	unless params.outdir
@@ -153,7 +152,7 @@ cli.command('run <script>', { isDefault: true })
 	.option("--clean", "Remove files from previous build")
 	.option("--inspect", "Debug")
 	.option("--sourcemap <value>", "", "inline")
-	.option("--no-sourcemap", "Omit sourcemaps")
+	.option("-S, --no-sourcemap", "Omit sourcemaps")
 	.option("--no-hashing", "Disable hashing")
 	.action(run)
 

@@ -41,6 +41,8 @@ export class Manifest < EventEmitter
 	get changes do data.changes or {}
 	get inputs do data.inputs
 	get outputs do data.outputs
+	get assets do data.assets
+
 	get urls do data.urls or {}
 	get main do data.main
 	get cwd do process.cwd!

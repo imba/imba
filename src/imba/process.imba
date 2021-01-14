@@ -195,7 +195,7 @@ class Server
 		stalledResponses = []
 		assetResponders = {}
 		if proc.env.IMBA_PATH
-			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'devtools.js')
+			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'devtools.imba.web.js')
 
 		scheme = srv isa http.Server ? 'http' : 'https'
 
@@ -217,12 +217,6 @@ class Server
 			# Logger.main.warn 'listening on %bold',url
 
 		# setTimeout(&,100) do console.log 'imba.serve!',server.address!
-
-		manifest.on('invalidate') do(params)
-			# console.log 'manifest.on invalidate from server',params
-			broadcast('invalidate',params)
-
-		# use different handler if we are on http2?
 
 		# if we are in dev-mode, broadcast updated manifest to the clients
 		manifest.on('change') do(changes,m)

@@ -12,6 +12,7 @@ class Manifest
 	get assetsDir do data.assetsDir
 	get changes do data.changes or {}
 	get inputs do data.inputs
+	get outputs do data.outputs
 	get urls do data.urls
 	get main do data.main
 
@@ -71,40 +72,15 @@ class DevTools
 		socket.addEventListener("init") do(e)
 			let json = JSON.parse(e.data)
 			manifest.init(json)
+			console.log "hmr init",manifest.data
 
 		socket.addEventListener("manifest") do(e)
 			# let parsed = deserializeData(JSON.parse(e.data))
 			let json = JSON.parse(e.data)
 			# console.log "event from manifest",e,e.data,json
 			let changes = manifest.update(json)
-			console.log "Changes for manifest",changes
+			console.log "Changes for manifest",manifest.data,changes
 			refresh changes
-
-		# REMOVE?
-		socket.addEventListener("invalidate") do(e)	
-			let origin = global.window.location.origin
-			let data = JSON.parse(e.data).map do new URL($1,origin)
-			let dirty = {css: [], js: []}
-			for sheet of doc.styleSheets
-				let url = new URL(sheet.href,origin)
-				let match = data.find do $1.pathname == url.pathname
-				if match
-					console.log "reloading stylesheet {url.pathname}"
-					sheet.ownerNode.href = match.toString!
-					dirty.css.push([sheet,match])
-			
-			# check scripts
-			for item of doc.getElementsByTagName('script')
-				continue unless item.src
-				let url = new URL(item.src,origin)
-				let match = data.find do $1.pathname == url.pathname
-				if match
-					dirty.js.push([item,match])
-
-			if dirty.js.length
-				console.log "js changed - reload?",dirty.js
-				doc.location.reload!
-			return
 
 		socket.addEventListener("reload") do(e)	
 			console.log 'asked to reload by server'

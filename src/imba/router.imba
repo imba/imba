@@ -9,6 +9,7 @@ import {History} from './router/history'
 import {Request} from './router/request'
 import {Route} from './router/route'
 import {commit,scheduler} from './scheduler'
+import {proxy} from './utils'
 
 # import './router/element'
 extend class Document
@@ -17,6 +18,9 @@ extend class Document
 
 export def use_router
 	yes
+
+export const router = proxy do
+	global.document.router
 
 export class Router < EventEmitter
 
@@ -37,7 +41,10 @@ export class Router < EventEmitter
 
 	get origin
 		#origin ||= #doc.location.origin
-		
+	
+	def init
+		self
+
 	def option key, value
 		if value == undefined
 			return options[key]
@@ -243,7 +250,7 @@ export class Router < EventEmitter
 export class ElementRoute
 	def constructor node, path, parent, options = {}
 		node = node
-		route = router.routeFor(node,path,parent ? parent.route : null,options)
+		route = self.router.routeFor(node,path,parent ? parent.route : null,options)
 		match = null
 		options = options
 		placeholder = node.$placeholder or createComment("{path}")
@@ -334,9 +341,9 @@ export class ElementRouteTo < ElementRoute
 			href = match.url or href
 
 		if options and options.replace
-			router.replace(href)
+			self.router.replace(href)
 		else
-			router.go(href)
+			self.router.go(href)
 
 extend class Node
 	get router

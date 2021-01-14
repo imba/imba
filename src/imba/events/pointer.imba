@@ -4,7 +4,7 @@ import {Event,PointerEvent,Element} from '../dom/core'
 
 import {listen,once,emit,unlisten} from '../utils'
 
-export def events_pointer
+export def use_events_pointer
 	yes
 
 def round val,step = 1

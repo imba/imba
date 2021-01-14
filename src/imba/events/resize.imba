@@ -1,7 +1,7 @@
 # imba$imbaPath=global
 import {Event,CustomEvent,Element} from '../dom/core'
 
-export def events_resize
+export def use_events_resize
 	yes
 
 let resizeObserver = null

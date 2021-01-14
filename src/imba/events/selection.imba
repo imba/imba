@@ -1,6 +1,6 @@
 import {Event,CustomEvent,Element} from '../dom/core'
 
-export def events_selection
+export def use_events_selection
 	yes
 
 let selHandler

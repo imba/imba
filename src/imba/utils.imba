@@ -1,5 +1,25 @@
 const dashRegex = /-./g
 
+export class LazyProxy
+	static def for getter
+		new Proxy({}, new self(getter))
+
+	def constructor getter
+		getter = getter
+	
+	get target
+		getter!
+
+	def get _, key
+		target[key]
+	
+	def set _, key, value
+		target[key] = value
+		return true
+
+export def proxy getter, placeholder = {}
+	new Proxy(placeholder, new LazyProxy(getter))
+
 export def serializeData data
 	let map = new Map
 	let arr = []
@@ -25,7 +45,6 @@ export def serializeData data
 		inject += "\"$${i}$$\":{item},\n"
 	json = '{' + inject + json.slice(1)
 	return json
-	# json = JSON.stringify(Object.assign({"$$": refs},JSON.parse(json)),replacer,2)
 	
 
 export def deserializeData data, reviver = null
@@ -46,13 +65,6 @@ export def deserializeData data, reviver = null
 		return value
 
 	let parsed = JSON.parse(data,parser)
-	return parsed
-
-	if parsed.$$
-		for own k,v of parsed.$$
-			if let obj = objects[k]
-				Object.assign(obj,v)
-		delete parsed.$$
 	return parsed
 
 export def patchManifest prev, curr

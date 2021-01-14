@@ -17,6 +17,9 @@ const keyCodes = {
 
 export const events = {}
 
+export def use_events
+	yes
+
 def Event.log$mod ...params
 	console.log(...params)
 	return true

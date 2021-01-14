@@ -7204,7 +7204,7 @@ export class TagAttr < TagPart
 				@mods[m.name] = 1
 
 		if @ns == 'bind'
-			STACK.use('use_dom_bind')
+			STACK.use('dom_bind')
 		#	scope__.imbaDependency('internal/bind')
 
 
@@ -8331,7 +8331,7 @@ export class Tag < TagLike
 		var shouldEnd = isComponent or useRoutes
 
 		if useRoutes
-			stack.use('use_router')
+			stack.use('router')
 
 		var dynamicKey = null
 		var ownCache = no
@@ -10500,7 +10500,7 @@ export class RootScope < Scope
 		@runtime
 
 	def use item
-		@imba.touch(item)
+		@imba.touch("use_{item}")
 
 	def sourceId
 		@sourceId ||= STACK.sourceId # @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
@@ -11147,7 +11147,7 @@ export class ZonedVariableAccess < Node
 	def c
 		let name = @variable.@name
 		if STACK.isNode
-			STACK.use("use_{name}")
+			STACK.use("{name}")
 			"{runtime:zone}.get('{name}',{@scope.context.c})"
 		else
 			# what if it is redefined somewhere?
@@ -11202,7 +11202,7 @@ export class ImportProxy < Variable
 				js.push "import \{{out}\} from {pathjs};"
 
 		if touches:length
-			js.push "({touches.map(do $1.c).join(",")});"
+			js.push "({touches.map(do $1.c + "()").join(",")});"
 
 		return js:length ? js.join('\n') : ''
 
