@@ -1,30 +1,53 @@
 const dashRegex = /-./g
 
 export def serializeData data
-	let sym = Symbol!
-	let refs = {}
-	let nr = 0
+	let map = new Map
+	let arr = []
+	let logging = no
 	let replacer = do(key,value)
-		if value and value.#type
-			let ref = value[sym] ||= "$${nr++}$$"
-			refs[ref] = value
-			return key == ref ? value : ref
+		if value and value.#type and key !== ''
+			let ref = map.get(value) # value[sym] ||= "$${nr++}$$"
+			unless map.has(value)
+				map.set(value,ref = "$${arr.length}$$")
+				arr.push(value)
+			return key == null ? value : ref
 		value
 
 	let json = JSON.stringify(data,replacer,2)
-	json = JSON.stringify(Object.assign({"$$": refs},JSON.parse(json)),replacer,2)
+	let i = 0
+	logging = yes
+	while i < arr.length
+		arr[i] = JSON.stringify(arr[i],replacer,2)
+		i++
+
+	let inject = ""
+	for item,i in arr
+		inject += "\"$${i}$$\":{item},\n"
+	json = '{' + inject + json.slice(1)
 	return json
+	# json = JSON.stringify(Object.assign({"$$": refs},JSON.parse(json)),replacer,2)
+	
 
 export def deserializeData data, reviver = null
 	let objects = {}
 	let reg = /\$\$\d+\$\$/
+	let lookup = do(value)
+		return objects[value] ||= reviver ? reviver(value) : {}
+
 	let parser = do(key,value)
 		if typeof value == 'string'
 			if value[0] == '$' and reg.test(value)
-				return objects[value] ||= reviver ? reviver(value) : {}
+				return lookup(value)
+		elif typeof key == 'string' and key[0] == '$' and reg.test(key)
+			let obj = lookup(key)
+			Object.assign(obj,value)
+			return obj
+
 		return value
 
 	let parsed = JSON.parse(data,parser)
+	return parsed
+
 	if parsed.$$
 		for own k,v of parsed.$$
 			if let obj = objects[k]

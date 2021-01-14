@@ -35,7 +35,7 @@ def parseOptions options, extras = []
 	options.extras = extras
 	
 	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
-	options.package = resolvePackage(cwd)
+	options.package = resolvePackage(cwd) or {}
 
 
 	if options.verbose > 1
@@ -47,6 +47,9 @@ def parseOptions options, extras = []
 	if options.watch or options.dev
 		options.loglevel ||= 'info'
 		options.hmr = yes
+	
+	if command == 'serve'
+		options.loglevel ||= 'info'
 
 	if options.force
 		options.mtime = Date.now!
@@ -101,13 +104,13 @@ def run entry, o, extras
 		delete params.entryPoints
 		
 		params.stdin = {
-			contents: SERVE_TEMPLATE.replace('CLIENT_ENTRY','./' + file.name),
-			resolveDir: file.absdir
-			sourcefile: file.rel
+			contents: SERVE_TEMPLATE.replace('CLIENT_ENTRY',file.abs),
+			resolveDir: o.cwd
+			sourcefile: 'serve.js'
 			loader: 'js'
 		}
-		params.external = ['imba']
-
+		# params.external = ['imba']
+	console.log 'getting ready',o.imbaPath
 	tmp.setGracefulCleanup!
 
 	unless params.outdir
@@ -171,6 +174,7 @@ cli.command('serve <script>')
 	.option("-d, --dev", "Enable development mode")
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
+	.option("-f, --force", "force overwriting and full compilation")
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,1)
 	.option("--sourcemap <value>", "", "inline")

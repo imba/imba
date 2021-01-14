@@ -155,13 +155,14 @@ export class Resolver
 				# test.push(...m)
 		return cache[path] = test
 	
-	def resolve o, lookupMap
+	def resolve o, options = null
 		setup!
 		let path = o.path
 		let found
 		let namespace = 'file'
 		let colonIndex = path.indexOf(':')
 		let qIndex = path.indexOf('?')
+		let query = ''
 
 		if colonIndex >= 0
 			namespace = path.substr(0,colonIndex)
@@ -169,7 +170,10 @@ export class Resolver
 			path = path.slice(colonIndex + 1)
 
 		if qIndex > 0
-			[path,namespace] = path.split('?')
+			query = path.slice(qIndex)
+			path = path.slice(0,qIndex)
+			# [path,query] = path.split('?')
+
 		# if found = aliases[path]
 		#	return {path: aliases[path][0], namespace: namespace}
 
@@ -187,8 +191,9 @@ export class Resolver
 				let m = norm + ext
 				if fs.existsSync(m)
 					# console.log 'resolved with ext!',fs.relative(test)
-					path = namespace == 'file' ? m : fs.relative(m)
-					return {path: path, namespace: namespace}
+					let rel = fs.relative(m)
+					path = namespace == 'file' ? m : rel
+					return {path: path, namespace: namespace, #abs: m + query, #rel: rel}
 
 			return {path: fs.relative(m), namespace: namespace}
 
@@ -196,14 +201,16 @@ export class Resolver
 			return null
 
 		elif fs
-			for m in expand(path,namespace)
+			for m in expand(path)
 				# should this be synchronous?
-				if lookupMap
-					lookupMap[m] = yes
+				# if lookupMap
+				#	lookupMap[m] = yes
 
 				if fs.existsSync(m)
-					path = namespace == 'file' ? fs.resolve(m) : m
-					return {path: path, namespace: namespace}
+					# check for correct extensions here as well?
+					let abs = fs.resolve(m)
+					path = namespace == 'file' ? abs : m
+					return {path: path, namespace: namespace, #abs: abs + query, #rel: m}
 			return null
 
 		return {path: path, namespace: namespace}

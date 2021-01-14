@@ -31,6 +31,16 @@ export const defaultConfig = {
 	bundles: []
 
 	defaults: {
+		node: {
+			platform: 'node'
+			format: 'cjs'
+			sourcemap: true
+			target: ['node12.19.0']
+			external: ['dependencies','!imba']
+			resolve: {
+				imba: {path: 'imba', external: yes}
+			}
+		}
 		web: {
 			target: [
 				'es2020',
@@ -39,14 +49,63 @@ export const defaultConfig = {
 				'safari11',
 				'edge16'
 			]
-		} 
+			platform: 'browser'
+			sourcemap: true
+			format: 'esm'
+			splitting: true
+		}
+
+		iife: {
+			splitting: false
+			format: 'iife'
+			platform: 'browser'
+			banner: "//HELLO FROM IIFE"
+		}
+
+		standalone: {
+			platform: 'browser'
+			sourcemap: true
+			format: 'esm'
+			splitting: true
+			resolve: {
+				imba: {path: '/__imba__.js', external: yes}
+			}
+		}
+
+		img: {
+			resolveExtensions: ['.svg','.png','.jpg']
+			loader: 'image'
+		}
+
+		webcjs: {
+			splitting: false
+			format: 'cjs'
+			platform: 'browser'
+			banner: "//HELLO FROM CJS"
+		}
 
 		worker: {
 			splitting: false
 			hashing: true
-			format: 'iife'
+			format: 'esm'
 			platform: 'worker'
+			banner: "//WORKER HERE"
 		}
+
+		nodeworker: {
+			splitting: false
+			format: 'esm'
+			platform: 'node'
+			banner: "//NODEWORKER"
+		}
+
+		webworker: {
+			splitting: false
+			format: 'iife'
+			platform: 'browser'
+			banner: "//WEBWORKER"
+		}
+		
 		serviceworker: {
 			splitting: false
 			hashing: false

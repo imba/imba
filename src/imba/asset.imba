@@ -11,7 +11,7 @@ class AssetProxy
 		meta = meta
 
 	get input
-		manifest.inputs.node[meta.input]
+		manifest.inputs[meta.input]
 
 	get asset
 		$web$ ? meta : input.asset
@@ -51,6 +51,8 @@ export def asset data
 		return data.#asset ||= new SVGAsset(data)
 	
 	if data.input
+		let extra = $web$ and globalThis._MF_ and globalThis._MF_[data.input]
+		Object.assign(data,extra) if extra
 		return data.#asset ||= AssetProxy.wrap(data)
 	
 	return data

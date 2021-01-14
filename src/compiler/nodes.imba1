@@ -703,7 +703,7 @@ export class Stack
 		platform == 'node'
 
 	def cjs
-		format == 'cjs' or (!format and isNode)
+		format == 'cjs' # or (!format and isNode)
 	
 	# The format defaults to esm
 	def esm
@@ -5921,7 +5921,7 @@ export class Call < Node
 			callee = runtime:asset
 
 			if arg isa Str
-				let asset = STACK.root.registerAsset(arg.raw,"asset-{kind}")
+				let asset = STACK.root.registerAsset(arg.raw,"{kind}")
 				args.replace(arg,asset:ref)
 
 		elif callee.isGlobal('import')
@@ -5932,10 +5932,10 @@ export class Call < Node
 			# console.log 'calling the global import!!',path
 			if path
 				let ext = path.split('.').pop()
-				if EXT_LOADER_MAP[ext]
+				if EXT_LOADER_MAP[ext] or path.indexOf('?as=') >= 0
 					@asset = STACK.root.registerAsset(path)
 					args.replace(arg,@asset:ref)
-					callee = runtime:asset
+					# callee = runtime:asset
 
 		if runref == 'asset'
 			
@@ -7238,9 +7238,9 @@ export class TagAttr < TagPart
 		if isAsset
 			let kind = 'asset'
 			if tagName == 'img' or tagName == 'svg'
-				kind = 'asset-img'
+				kind = 'img'
 			elif tagName == 'script'
-				kind = 'asset-web'
+				kind = 'web'
 
 			let path = value isa Str and value.raw
 			if path and !path.match(/^(\/|https?\:\/\/)/)
@@ -10614,17 +10614,11 @@ export class RootScope < Scope
 		for own name, asset of assets
 			# assets should have their own node that compiles instead? Like ImportProxy
 			try
-				if asset:external
-					let ref = asset:ref.c
-					let path = asset:path
-					if asset:kind
-						path += "?{asset:kind}"
-					head.push(LIT "import {ref} from {MP "'{path}'"}")
-				else	
-					let parsed = parseAsset(asset,name)
-					let body = JSON.stringify(parsed)
-					let out = "imba.registerAsset('{name}',{body})"
-					head.push LIT(out)
+				let ref = asset:ref.c
+				let path = asset:path
+				if asset:kind and path.indexOf('?as=') == -1
+					path += "?as={asset:kind}"
+				head.push(LIT "import {ref} from {MP "'{path}'"}")
 
 		if assetCount
 			head.push LIT('// ASSETS-END')
