@@ -62,12 +62,12 @@
   "main": "./index",
   "type": "commonjs",
   "browser": {
+    ".": "./index.imba",
     "imba": "./index.imba",
     "path": "./vendor/path.js",
     "events": "./vendor/events.js",
-    "compiler": "./dist/compiler.web.mjs",
-    "./program": "./dist/program.web.mjs",
-    ".": "./index.imba"
+    "./program.imba": "./program.imba.js",
+    "./compiler.imba": "./compiler.imba.js"
   },
   "imports": {
     "#imba": "./index.imba.js"
