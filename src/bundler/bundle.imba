@@ -780,7 +780,6 @@ export default class Bundle < Component
 		let webEntries = []
 
 		manifest.path = main.path + '.manifest'
-
 		manifest.assets = Object.values(manifest.outputs)
 		
 		for item in manifest.assets
@@ -820,6 +819,7 @@ export default class Bundle < Component
 			if mfile
 				await mfile.writeSync json, manifest.hash
 			
+			self.manifest.path = mfile.abs
 			self.manifest.update(json)
 
 		try log.debug main.path,main.hash

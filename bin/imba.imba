@@ -93,7 +93,6 @@ def run entry, o, extras
 		sourcemap: o.sourcemap === false ? no : 'inline'
 		hashing: false
 		execOnly: yes
-		isMain: yes
 		config: o.config
 		imbaPath: o.imbaPath
 	})
@@ -109,7 +108,7 @@ def run entry, o, extras
 			sourcefile: 'serve.js'
 			loader: 'js'
 		}
-		# params.external = ['imba']
+
 	tmp.setGracefulCleanup!
 
 	unless params.outdir
@@ -123,7 +122,6 @@ def run entry, o, extras
 
 	# should we really need this here?
 	if let exec = out..manifest..main
-
 		if !o.watch and o.instances == 1
 			o.execMode = 'fork'
 		o.name ||= entry
@@ -133,6 +131,9 @@ def run entry, o, extras
 		runner.start!
 
 		if o.watch
+			bundle.manifest.on('change') do
+				runner.broadcast(['emit','manifest:change',bundle.manifest.raw])
+				
 			bundle.manifest.on('change:main') do
 				runner.reload!
 	return

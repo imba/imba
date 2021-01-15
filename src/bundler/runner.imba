@@ -55,8 +55,8 @@ class Instance
 		let env = {
 			IMBA_RESTARTS: restarts
 			IMBA_SERVE: true
-			IMBA_MANIFEST_PATH: manifest.path
 			IMBA_PATH: o.imbaPath
+			IMBA_MANIFEST_PATH: manifest.path
 			IMBA_HMR: o.hmr ? true : undefined
 			IMBA_LOGLEVEL: o.loglevel
 			PORT: process.env.PORT or o.port
@@ -103,6 +103,9 @@ class Instance
 				reload!
 
 		current = worker
+	
+	def broadcast event
+		current..send(event)
 
 	def reload
 		start!
@@ -146,4 +149,9 @@ export default class Runner < Component
 	def reload
 		for worker of workers
 			worker.reload!
+		self
+
+	def broadcast ...params
+		for worker of workers
+			worker.broadcast(...params)
 		self

@@ -45,8 +45,8 @@ function plugin(build){
 
 	build.onResolve({filter: /^compiler1?$/}, (p) => {
 		// find the output dir
-		console.log('resolve compiler?',p,options);
-		let src = p.path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./compiler.cjs";
+		// console.log('resolve compiler?',p,options);
+		let src = p.path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./compiler.imba.js";
 		return {path: src, external: true}
 	});
 

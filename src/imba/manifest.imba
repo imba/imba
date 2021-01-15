@@ -23,8 +23,6 @@ class Asset
 	def toString
 		url
 
-
-
 export class Manifest < EventEmitter
 	def constructor options = {}
 		super()
@@ -46,6 +44,9 @@ export class Manifest < EventEmitter
 	get urls do data.urls or {}
 	get main do data.main
 	get cwd do process.cwd!
+
+	get raw
+		data.#raw
 	
 	def resolve path
 		if path._ == 'input'
@@ -94,7 +95,8 @@ export class Manifest < EventEmitter
 
 	def watch
 		if #watch =? yes
-			path and nfs.watch(path) do(ev,name)
+			# don't want filesystem if we are using hmr
+			path and !process.env.IMBA_HMR and nfs.watch(path) do(ev,name)
 				let exists = nfs.existsSync(path)
 				let stat = exists and nfs.statSync(path)
 				update! if exists

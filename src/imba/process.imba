@@ -106,6 +106,11 @@ export const process = new class Process < EventEmitter
 			await Promise.all(promises)
 			# console.log 'actually closed!!'
 			proc.exit(0)
+
+		on('manifest:change') do(e)
+			if proc.env.IMBA_HMR
+				# console.log 'manifest changed from master'
+				manifest.update(e)
 		yes
 
 	def send msg
@@ -216,11 +221,9 @@ class Server
 			log.info 'listening on %bold',url
 			# Logger.main.warn 'listening on %bold',url
 
-		# setTimeout(&,100) do console.log 'imba.serve!',server.address!
-
 		# if we are in dev-mode, broadcast updated manifest to the clients
+		
 		manifest.on('change') do(changes,m)
-			console.log 'manifest changed'
 			broadcast('manifest',m.data.#raw)
 		
 		handler = do(req,res)
