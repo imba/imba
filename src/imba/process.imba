@@ -160,7 +160,6 @@ class AssetResponder
 		mimeType = mimes[ext.slice(1)] or 'text/plain'
 		headers = {
 			'Access-Control-Allow-Origin': '*'
-			'Service-Worker-Allowed': '/'
 			'cache-control': 'public'
 		}
 		Object.assign(headers,defaultHeaders[ext.slice(1)] or {})

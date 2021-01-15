@@ -303,11 +303,7 @@ export default class Bundle < Component
 
 		esb.onResolve(filter: /^\//) do(args)
 			return if args.path.indexOf('?') > 0
-			console.log 'abs resolving absolute path',args,{path: args.path, external: yes}
 			return {path: args.path, external: yes}
-
-			if isCSS(args.importer)
-				return {path: args.path, external: yes}
 
 		esb.onResolve(filter: /^imba(\/|$)/) do(args)
 			if args.path == 'imba'
