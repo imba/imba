@@ -26,5 +26,6 @@ dist2/
 .imba
 *.imba.mjs
 *.imba.js
+*.imba.web.js
 test/index.js
 test/apps/**/*.js
