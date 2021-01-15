@@ -87,7 +87,6 @@ export default class Bundle < Component
 		result = null
 		built = no
 		meta = {}
-		name = options.name
 		cwd = fs.cwd
 		platform = o.platform or 'browser'
 		entryPoints = o.entryPoints or []
