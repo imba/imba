@@ -172,7 +172,7 @@ export default class Bundle < Component
 		if addExtensions[o.platform]
 			esoptions.resolveExtensions.unshift(...addExtensions[o.platform])
 
-		if !node? and false
+		if !node?
 			let defines = esoptions.define ||= {}
 			let env = o.env or process.env.NODE_ENV or 'production'
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
