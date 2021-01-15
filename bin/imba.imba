@@ -85,7 +85,7 @@ def run entry, o, extras
 	let file = o.fs.lookup(path)
 
 	let params = Object.assign({},o.config.node,{
-		entryPoints: [entry]
+		entryPoints: [file.rel]
 		platform: 'node'
 		watch: o.watch
 		outdir: o.outdir
