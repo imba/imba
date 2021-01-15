@@ -86,7 +86,6 @@ def run entry, o, extras
 
 	let params = Object.assign({},o.config.node,{
 		entryPoints: [entry]
-		minify: o.minify
 		platform: 'node'
 		watch: o.watch
 		outdir: o.outdir
@@ -133,7 +132,7 @@ def run entry, o, extras
 		if o.watch
 			bundle.manifest.on('change') do
 				runner.broadcast(['emit','manifest:change',bundle.manifest.raw])
-				
+
 			bundle.manifest.on('change:main') do
 				runner.reload!
 	return

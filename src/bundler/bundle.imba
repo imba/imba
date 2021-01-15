@@ -134,7 +134,7 @@ export default class Bundle < Component
 			splitting: o.splitting
 			sourcemap: (program.sourcemap === false ? no : (web? ? yes : 'inline'))
 			stdin: o.stdin
-			minify: o.minify
+			minify: program.minify
 			incremental: !!watcher
 			loader: o.loader or {
 				".png": "file",
@@ -610,14 +610,14 @@ export default class Bundle < Component
 
 					# check if the order is correct first?
 					
-					if !o.minify
+					if !esoptions.minify
 						offset += header.length
 					
 					let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
 					let index = corrPaths.indexOf(input)
 
 					offset += bytes
-					offset += 1 if !o.minify
+					offset += 1 if !esoptions.minify
 
 					# chunks[index] = chunk
 					chunks[index] = chunk
