@@ -44,13 +44,13 @@ def parseOptions options, extras = []
 	elif options.verbose
 		options.loglevel ||= 'info'
 
+	if command == 'serve'
+		options.watch = yes
+
 	if options.watch or options.dev
 		options.loglevel ||= 'info'
 		options.hmr = yes
 	
-	if command == 'serve'
-		options.loglevel ||= 'info'
-
 	if options.force
 		options.mtime = Date.now!
 	else
