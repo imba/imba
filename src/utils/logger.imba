@@ -96,6 +96,10 @@ export def format str,...rest
 			rest.unshift(part) if part != undefined
 			let elapsed = performance.now! # Date.now! - #ctime
 			fmt('yellow',Math.round(elapsed) + 'ms')
+		elif f == 'heap'
+			rest.unshift(part) if part != undefined
+			let used = process.memoryUsage!.heapUsed / 1024 / 1024
+			fmt('yellow',used.toFixed(2) + 'mb')
 		else
 			part
 

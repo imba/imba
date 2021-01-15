@@ -22,12 +22,15 @@ let BUNDLE_COUNTER = 0
 
 
 class Builder
-	prop previous
+	# prop previous
+	prop startAt = Date.now!
 	prop refs = {}
 	prop inputs = {}
 	prop outputs = new Set
 	prop bundlers = {}
 
+	get elapsed
+		Date.now! - startAt
 
 export default class Bundle < Component
 
@@ -81,7 +84,6 @@ export default class Bundle < Component
 		nr = BUNDLE_COUNTER++
 		styles = {}
 		options = o
-		id = options.id
 		result = null
 		built = no
 		meta = {}
@@ -104,7 +106,7 @@ export default class Bundle < Component
 			if ext == "dependencies"
 				let deps = Object.keys(package.dependencies or {})
 
-				if o.execOnly
+				if o.execOnly # clarify this
 					deps.push( ...Object.keys(package.devDependencies or {}) )
 
 				for dep in deps
@@ -124,11 +126,7 @@ export default class Bundle < Component
 			outfile: o.outfile
 			outbase: fs.cwd
 			outdir: fs.cwd
-
-			outExtension: {
-				".js": ".__dist__.js"
-				".css": ".__dist__.css"
-			}
+			outExtension: { ".js": ".__dist__.js", ".css": ".__dist__.css"}
 			globalName: o.globalName
 			publicPath: o.publicPath or ASSETS_URL
 			banner: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')
@@ -153,11 +151,7 @@ export default class Bundle < Component
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: o.pure
 			treeShaking: o.treeShaking
-			resolveExtensions: [
-				'.imba.mjs','.imba',
-				'.imba1.mjs','.imba1',
-				'.ts','.mjs','.cjs','.js'
-			]
+			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js']
 		}
 
 		imbaoptions = {
@@ -171,7 +165,7 @@ export default class Bundle < Component
 
 		let addExtensions = {
 			webworker: ['.webworker.imba','.worker.imba']
-			worker: ['.worker.imba']
+			worker: ['.imba.web-pkg.js','.worker.imba']
 			node: ['.node.imba']
 			browser: ['.web.imba']
 		}
@@ -276,6 +270,7 @@ export default class Bundle < Component
 			let formats = q.slice(3).split(',')
 			let cfg = resolveConfigPreset(formats)
 			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
+			# console.log 'resolving path?',path,res,args.resolveDir
 			let out = {path: res.#rel + '?' + q, namespace: 'entry'}
 			# cfg.path = res.#rel
 			pathMetadata[out.path] = {path: res.#rel, config: cfg}
@@ -300,9 +295,10 @@ export default class Bundle < Component
 				return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
 
 			log.debug "lookup up bundle for id {id}"
+			# adding it as a child of root is risky wrt correctly invalidating nested bundles
 			let bundler = root.#bundles[id] ||= new Bundle(root,Object.assign({entryPoints: [meta.path]},cfg))
-
 			builder.refs[id] = bundler
+			bundler.rebuild! # we can asynchronously start the rebundler
 			return {loader: 'js', contents: toAssetJS(input: id), resolveDir: file.absdir }
 
 		esb.onResolve(filter: /^\//) do(args)
@@ -326,6 +322,7 @@ export default class Bundle < Component
 			# package json paths?
 			# log.debug "IMBA RESOLVE",args.path,args.importer
 			if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
+				# console.log 'resolving compiler?!',args,o.platform,o.format,esoptions.platform
 				return null
 
 		# imba files import their stylesheets by including a plain
@@ -342,8 +339,9 @@ export default class Bundle < Component
 				return {external: true}
 
 			if args.importer.indexOf('.imba') > 0
-				# console.log 'resolving through imba',args.path
-				return fs.resolver.resolve(args)
+				let out = fs.resolver.resolve(args)
+				# could drop this until we have consistent paths support?
+				return out
 	
 		# asset loader
 		# a shared catch-all loader for all urls ending up in the asset namespce
@@ -381,7 +379,7 @@ export default class Bundle < Component
 			if (built =? true) or force
 				esb = await startService!
 				workers = await startWorkers!
-				let t = Date.now!
+				
 
 				log.debug "build {entryPoints.join(',')} {o.format}|{o.platform} {nr}"
 			
@@ -440,9 +438,7 @@ export default class Bundle < Component
 				unless dirty
 					#buildcache = {}
 					return resolve(result)
-				
 
-			let t = Date.now!
 			let prev = result
 
 			try
@@ -456,11 +452,6 @@ export default class Bundle < Component
 			
 			if main?
 				await write(result,prev)
-				if result.errors
-					log.error 'failed rebuilding in %ms',Date.now! - t
-				else
-					log.info 'finished rebuilding in %ms',Date.now! - t
-
 			#buildcache = {}
 			return resolve(result)
 
@@ -820,7 +811,6 @@ export default class Bundle < Component
 		if #hash =? manifest.hash
 			let json = serializeData(manifest)
 			log.info "building in %path",o.outdir
-			log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in manifest.assets
@@ -833,4 +823,7 @@ export default class Bundle < Component
 			self.manifest.update(json)
 
 		try log.debug main.path,main.hash
+		log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024
+
+		log.info "finished in %ms - %heap",builder.elapsed
 		return result
