@@ -7,6 +7,7 @@ import {Manifest} from '../imba/manifest'
 
 import os from 'os'
 import np from 'path'
+import nfs from 'fs'
 import {Module} from 'module'
 
 import FileSystem from './fs'
@@ -802,6 +803,9 @@ export default class Bundle < Component
 			for file of rm
 				await file.unlink!
 
+		let loaderData = nfs.readFileSync(np.resolve(program.imbaPath,'loader.imba.js'),'utf-8')
+		let loader = #outfs.lookup(main.path.replace('.js','.loader.js'))
+
 		if #hash =? manifest.hash
 			let json = serializeData(manifest)
 			log.info "building in %path",o.outdir
@@ -814,8 +818,14 @@ export default class Bundle < Component
 			if mfile
 				await mfile.writeSync json, manifest.hash
 			
+			await loader.write(loaderData)
+
 			self.manifest.path = mfile.abs
 			self.manifest.update(json)
+
+			
+
+
 
 		try log.debug main.path,main.hash
 		log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024
