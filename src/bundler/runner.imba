@@ -58,7 +58,7 @@ class Instance
 			IMBA_PATH: o.imbaPath
 			IMBA_MANIFEST_PATH: manifest.path
 			IMBA_HMR: o.hmr ? true : undefined
-			IMBA_LOGLEVEL: o.loglevel
+			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'info'
 			PORT: process.env.PORT or o.port
 		}
 
