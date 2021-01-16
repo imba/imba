@@ -7233,7 +7233,7 @@ export class TagAttr < TagPart
 		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG)
 		let tagName = @tag and @tag.@tagName
 
-		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'img' or tagName == 'script' or tagName == 'svg'))
+		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'style' or tagName == 'img' or tagName == 'script' or tagName == 'svg'))
 
 		if isAsset
 			let kind = 'asset'
@@ -7241,6 +7241,8 @@ export class TagAttr < TagPart
 				kind = 'img'
 			elif tagName == 'script'
 				kind = 'web'
+			elif tagName == 'style'
+				kind = 'css'
 
 			let path = value isa Str and value.raw
 			if path and !path.match(/^(\/|https?\:\/\/)/)

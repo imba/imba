@@ -682,6 +682,31 @@ export class HTMLLinkElement < HTMLElement
 				setAttribute('href',href)
 		super
 
+export class HTMLStyleElement < HTMLElement
+
+	set src value
+		if #src =? value
+			yes
+		return
+
+	get src
+		#src
+
+	get outerHTML
+		if HtmlContext and src
+			(HtmlContext.styles||=[]).push(self)
+
+		if src
+			# rewrite to a link? Too much magic?
+			nodeName = 'link'
+			setAttribute('rel','stylesheet')
+			setAttribute('href',String(src))
+			let out = super
+			nodeName = 'style'
+			return out
+			
+		super
+
 ### Event ###
 export class Event
 export class UIEvent < Event
@@ -739,6 +764,7 @@ MAP['textarea'].klass = HTMLTextAreaElement
 MAP['button'].klass = HTMLButtonElement
 MAP['option'].klass = HTMLOptionElement
 MAP['script'].klass = HTMLScriptElement
+MAP['style'].klass = HTMLStyleElement
 MAP['link'].klass = HTMLLinkElement
 
 MAP['svg_svg'].klass = SVGSVGElement

@@ -52,6 +52,14 @@ export const defaultConfig = {
 			splitting: true
 		}
 
+		css: {
+			splitting: false
+			format: 'css'
+			platform: 'browser'
+			external: ['dependencies','!imba'] # dont exclude css deps?
+			sourcemap: false
+		}
+
 		iife: {
 			splitting: false
 			format: 'iife'

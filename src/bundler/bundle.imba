@@ -163,6 +163,10 @@ export default class Bundle < Component
 			# quick hack
 			imbaoptions.platform = 'node'
 
+		if o.format == 'css'
+			esoptions.format = 'esm'
+			esoptions.outExtension[".js"] = ".SKIP.js"
+
 		let addExtensions = {
 			webworker: ['.webworker.imba','.worker.imba']
 			worker: ['.imba.web-pkg.js','.worker.imba']
@@ -253,6 +257,10 @@ export default class Bundle < Component
 		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?as=img)$/) do(args)
 			# only catch these when imported from an imba file?
 			return unless isImba(args.importer) and args.namespace == 'file'
+
+			if o.format == 'css'
+				return {path: "_", namespace: 'imba-raw'}
+
 			let ext = np.extname(args.path).slice(1)
 			let res = fs.resolver.resolve(args)
 			let out = {path: res.#rel or res.path, namespace: 'img'}
@@ -260,6 +268,7 @@ export default class Bundle < Component
 			return out
 
 		esb.onLoad(namespace: 'img', filter: /.*/) do({path})
+			
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
@@ -272,11 +281,14 @@ export default class Bundle < Component
 			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
 			# console.log 'resolving path?',path,res,args.resolveDir
 			let out = {path: res.#rel + '?' + q, namespace: 'entry'}
-			# cfg.path = res.#rel
 			pathMetadata[out.path] = {path: res.#rel, config: cfg}
 			return out
 
 		esb.onLoad(namespace: 'entry', filter:/.*/) do({path})
+			# skip entrypoints if compiling for css only
+			if o.format == 'css'
+				return {path: "_", namespace: 'imba-raw'}
+
 			let id = "entry:{path}"
 			let meta = pathMetadata[path]
 			let cfg = meta.config
@@ -295,10 +307,13 @@ export default class Bundle < Component
 				return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
 
 			log.debug "lookup up bundle for id {id}"
+
 			# adding it as a child of root is risky wrt correctly invalidating nested bundles
 			let bundler = root.#bundles[id] ||= new Bundle(root,Object.assign({entryPoints: [meta.path]},cfg))
 			builder.refs[id] = bundler
-			bundler.rebuild! # we can asynchronously start the rebundler
+			unless cfg.format == 'css'
+				bundler.rebuild! # we can asynchronously start the rebundler
+
 			return {loader: 'js', contents: toAssetJS(input: id), resolveDir: file.absdir }
 
 		esb.onResolve(filter: /^\//) do(args)
@@ -338,6 +353,9 @@ export default class Bundle < Component
 				let out = fs.resolver.resolve(args)
 				# could drop this until we have consistent paths support?
 				return out
+
+		esb.onLoad(filter: /.*/, namespace: 'imba-raw') do({path})
+			return {loader: 'txt', contents: ""}
 	
 		# asset loader
 		# a shared catch-all loader for all urls ending up in the asset namespce
@@ -484,6 +502,8 @@ export default class Bundle < Component
 		# log.debug "paths",Object.keys(meta.inputs),Object.keys(meta.outputs)
 
 		meta = result.meta = {
+			format: o.format
+			platform: o.platform
 			inputs: meta.inputs
 			outputs: meta.outputs
 			urls: {}
@@ -553,7 +573,7 @@ export default class Bundle < Component
 			let inp = res and res.meta and res.meta.inputs[rawpath]
 			if inp
 				# console.log "FOUND THE RAW PATH AS WELL!!!",rawpath
-				input.asset = inp.js
+				input.asset = res.meta.format == 'css' ? inp.css : inp.js
 				# console.log 'should add asset to the output',inp.js
 				addOutputs.add(res.meta.outputs)
 
@@ -599,6 +619,7 @@ export default class Bundle < Component
 				if output.source
 					walker.collectCSSInputs(output.source,corrPaths)
 
+				
 				# console.log "correct css files",corrPaths.map do $1.path
 				# due to bugs in esbuild we need to reorder the css chunks according to inputs?
 				let offset = 0
@@ -735,6 +756,7 @@ export default class Bundle < Component
 		let newouts = {}
 
 		for own path,output of outs
+			continue if path.indexOf(".SKIP.") > 0
 			await walker.resolveAsset(output)
 
 			if !node? and output.url
