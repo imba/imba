@@ -37,6 +37,10 @@ def parseOptions options, extras = []
 	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.package = resolvePackage(cwd) or {}
 
+	if command == 'build'
+		options.minify ??= yes
+		options.loglevel ||= 'info'
+		options.outdir  ||= 'dist'
 
 	if options.verbose > 1
 		options.loglevel ||= 'debug'
