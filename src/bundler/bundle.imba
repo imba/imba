@@ -322,6 +322,9 @@ export default class Bundle < Component
 
 		esb.onResolve(filter: /^imba(\/|$)/) do(args)
 			if args.path == 'imba'
+				if o.format == 'css'
+					return {path: args.path, external: yes}
+
 				let out = np.resolve(imbaDir,'index.imba')
 				
 				if node?
