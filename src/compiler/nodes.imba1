@@ -5739,11 +5739,6 @@ export class TagTypeIdentifier < Identifier
 	def toAssetName
 		isAsset ? @str : null # .slice(4)
 
-	def toAssetReference
-		let asset = STACK.root.lookupAsset(toAssetName,'svg')
-		return asset:ref
-		return OP('.',asset:ref,STR(@name))
-		
 	def symbol
 		@str
 
@@ -8074,14 +8069,6 @@ export class Tag < TagLike
 		else
 			@kind = 'element'
 
-		if type isa TagTypeIdentifier
-			if type.isAsset
-				@assetName = type.toAssetName
-				@asset = scope__.root.lookupAsset(@assetName,'svg')
-				@assetRef = type.toAssetReference
-				@isAsset = yes
-				@isSVG = yes
-
 		if attrs:length == 0 && !@options:type
 			@options:type = 'fragment'
 			
@@ -8288,7 +8275,6 @@ export class Tag < TagLike
 			# LIT('imba.createLiveFragment')
 		elif isAsset
 			runtime:createAssetElement
-			# LIT('imba.createAssetElement')
 		elif isSVG
 			runtime:createSVGElement
 			# LIT('imba.createSVGElement')
