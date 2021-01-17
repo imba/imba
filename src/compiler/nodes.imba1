@@ -3294,7 +3294,7 @@ export class TagDeclaration < ClassDeclaration
 		})
 	
 	def cssns
-		"{sourceId}{oid}"
+		"{sourceId}_{oid}"
 		
 	def cssref scope
 		if isNeverExtended and !superclass
