@@ -325,7 +325,7 @@ global class SpecAssert < SpecComponent
 		self
 
 	def toString
-		if failed and message isa String
+		if failed and typeof message == 'string'
 			let str = message
 			str = str.replace('%1',actual)
 			str = str.replace('%2',expected)
