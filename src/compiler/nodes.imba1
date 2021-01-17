@@ -9482,6 +9482,12 @@ export class StyleDeclaration < StyleNode
 				if @property.number != 1
 					val = LIT("calc({val.c} / {@property.number})")
 
+			# if this key has already been set we need to delete it
+			# because we rely on the key order of the object.
+			# Should move over to using an array for this probably
+			if o:styles[key]
+				delete o:styles[key]
+
 			o:styles[key] = val.c(property: @property)
 		self
 		
