@@ -48,7 +48,7 @@
     "prerelease": "lerna publish --dist-tag pre"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.104",
+  "version": "2.0.0-alpha.105",
   "licenses": [
     {
       "type": "MIT",
