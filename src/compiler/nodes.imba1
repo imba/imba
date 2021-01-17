@@ -632,10 +632,6 @@ export class Stack
 		# Belongs in root
 		@symbols[ref] ||= @root.declare(ref,LIT('Symbol()'),system: yes).resolve.c
 
-	def getAsset name
-		let assets = config:assets 
-		assets ? assets[name] : null
-
 	def sourceId
 		return @sourceId if (@sourceId ||= @options:sourceId)
 		let src = sourcePath
@@ -10509,9 +10505,6 @@ export class RootScope < Scope
 	
 	def lookupAsset name, kind = 'asset'
 		registerAsset(name,kind)
-		#	let asset = STACK.getAsset(name)
-		#	registerAsset(name,kind)
-		# return @assets[name]
 
 	def registerAsset path, kind, asset
 		let key = path + kind
