@@ -5797,7 +5797,7 @@ export class TagTypeIdentifier < Identifier
 			
 	def toNodeName
 		if isClass
-			@nodeName ||= helpers.dasherize(@str + '-' + sourceId)
+			@nodeName ||= helpers.dasherize(@str + '-gen-' + sourceId)
 		else
 			@str
 
