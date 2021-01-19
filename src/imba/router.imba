@@ -178,8 +178,16 @@ export class Router < EventEmitter
 		let href = a.getAttribute('href')
 		let url = new URL(a.href)
 		let target = url.href.slice(url.origin.length)
+		let currpath = realpath.split('#')[0]
+		let newpath = target.split('#')[0]
 
-		self.go(target)
+		# console.log 'clicklink',target,url,currpath,newpath
+		# checking if we are only changing the hash here
+		if currpath == newpath
+			global.document.location.hash = url.hash
+		else
+			self.go(target)
+
 		e.stopPropagation()
 		e.preventDefault()
 	
