@@ -44,6 +44,8 @@ class PathEntry
 	def constructor key, mappings
 		key = key
 		pre = key.replace(/\*$/,'')
+		if typeof mappings == 'string'
+			mappings = [mappings]
 		mappings = mappings
 		cache = {}
 	
