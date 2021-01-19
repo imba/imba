@@ -2034,6 +2034,11 @@ export class ClassBody < Block
 			if node isa Tag
 				# add as render method
 				# console.log 'add as render method'
+				unless node.tagName == 'self'
+					# console.log "cannot use non-self tagname in class"
+					let ast = node.@options:type or node
+					ast.warn "only <self> tag allowed here"
+
 				let meth = MethodDeclaration.new([],[node],Identifier.new('render'),null,{})
 				@nodes[i] = node = meth
 
