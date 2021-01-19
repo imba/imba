@@ -1149,7 +1149,7 @@ export class Node
 
 	def warn message, opts = {}
 		let loc = opts:loc or self.loc or [0,0]
-		console.log 'loc warn',loc,script.rangeAt(loc[0],loc[1])
+		# console.log 'loc warn',loc,script.rangeAt(loc[0],loc[1])
 		script.addDiagnostic(opts:severity or 'warning',{
 			message: message
 			range: script.rangeAt(loc[0],loc[1])
