@@ -55,6 +55,10 @@ extend class Element
 					opts.root = arg
 				elif typeof arg == 'number'
 					th.push(arg)
+				elif typeof arg == 'string'
+					opts.rootMargin = arg
+				elif typeof arg == 'object'
+					Object.assign(opts,arg)
 					
 			if th.length == 1
 				let num = th[0]
