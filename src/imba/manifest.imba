@@ -13,6 +13,9 @@ class Asset
 	get name
 		np.basename(path)
 
+	get body
+		readSync!
+
 	def readSync
 		nfs.readFileSync(absPath,'utf-8')
 
