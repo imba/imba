@@ -1,13 +1,14 @@
 # imba$imbaPath=global
 
-import {Event,CustomEvent,Element} from '../dom/core'
+import {Event,CustomEvent,Element,Document} from '../dom/core'
 
 export def use_events_intersect
 	yes
 
 const observers = new (global.WeakMap || Map)
-const defaults = {threshold: [0]}
-const rootTarget = {}
+export const IntersectionEventDefaults = {threshold: [0]}
+const viewport = {}
+const defaults = IntersectionEventDefaults
 
 def Event.intersect$handle
 	let obs = event.detail.observer
@@ -18,6 +19,10 @@ def Event.intersect$in
 
 def Event.intersect$out
 	return event.delta < 0
+
+def Event.intersect$css
+	element.style.setProperty("--ratio",event.ratio)
+	return true
 
 def callback name, key
 	return do(entries,observer)
@@ -36,9 +41,11 @@ def callback name, key
 			entry.target.dispatchEvent(e)
 		return
 
-def getIntersectionObserver opts = defaults
+def getIntersectionObserver opts = IntersectionEventDefaults
 	let key = opts.threshold.join('-') + opts.rootMargin
-	let target = opts.root or rootTarget
+	if !opts.root and IntersectionEventDefaults.root
+		opts.root ||= IntersectionEventDefaults.root
+	let target = opts.root or viewport
 	let map = observers.get(target)
 	map || observers.set(target,map = {})
 	map[key] ||= new IntersectionObserver(callback('intersect',key),opts)
@@ -51,7 +58,7 @@ extend class Element
 			let opts = {threshold:th}
 
 			for arg in mods.options
-				if arg isa Element
+				if arg isa Element or arg isa Document
 					opts.root = arg
 				elif typeof arg == 'number'
 					th.push(arg)

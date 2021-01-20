@@ -167,7 +167,7 @@ export class EventHandler
 
 						args[i] = value
 
-			if typeof handler == 'string' and m = handler.match(/^(emit|flag|mod|moved|pin|fit|refit|map|remap)-(.+)$/)
+			if typeof handler == 'string' and m = handler.match(/^(emit|flag|mod|moved|pin|fit|refit|map|remap|css)-(.+)$/)
 				modargs = args = [] unless modargs
 				args.unshift(m[2])
 				handler = m[1]

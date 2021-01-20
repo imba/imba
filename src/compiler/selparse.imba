@@ -1,4 +1,3 @@
-# var selparser = require('../../vendor/css-selector-parser')
 import * as selparser from '../../vendor/css-selector-parser'
 import {modifiers} from './theme.imba'
 
@@ -303,10 +302,10 @@ export def parse str, options
 	return out
 
 export def test str, log = no
-	var sel = selparser.parse(str)
+	let sel = selparser.parse(str)
 	console.log 'parsed',str,sel
-	var options = {ns: 'dvs342'}
-	var out = rewrite(sel,null,options)
+	let options = {ns: 'dvs342'}
+	let out = rewrite(sel,null,options)
 	let css = render(out)
 	console.log css
 	if log
