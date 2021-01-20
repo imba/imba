@@ -484,7 +484,7 @@ export const states = {
 
 	member_: [
 		# [/static(?=\s+(get|set|def) )/,'keyword.static'] # only in class and tagclass?
-		[/(constructor)@B/, 'entity.name.constructor','@>def_params&$1/$1']
+		[/(constructor)@B/, 'entity.name.constructor','@>def_params&def/def']
 		[/(def|get|set)(\s)(@defid)/, ['keyword.$1','white.entity','entity.name.$1','@>def_params&$1/$1']]
 		[/(def|get|set)(\s)(\[)/, ['keyword.$1','white.entity','$$','@>def_dynamic_name/$1']]
 	]

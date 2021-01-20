@@ -53,6 +53,7 @@ const Conversions = [
 	['entity.name.component.global',0,SymbolFlags.GlobalComponent]
 	['entity.name.function',0,SymbolFlags.Function]
 	['entity.name.class',0,SymbolFlags.Class]
+	['entity.name.constructor',0,SymbolFlags.Method]
 	['entity.name.def',0,SymbolFlags.Method]
 	['entity.name.get',0,SymbolFlags.GetAccessor]
 	['entity.name.set',0,SymbolFlags.SetAccessor]

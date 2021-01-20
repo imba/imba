@@ -1,6 +1,6 @@
 # imba$runtime=global
 
-import '../../src/imba/index'
+import '../../index'
 
 const chokidar = require 'chokidar'
 const path = require 'path'
