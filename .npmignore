@@ -10,7 +10,6 @@ webpack.config.js
 *.tgz
 *.log
 attic/*
-build/
 test/
 .cache
 .travis.yml
