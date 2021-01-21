@@ -213,10 +213,6 @@ export class SourceMap
 			map:file = sourceName
 			map:sources = [sourceName]
 
-		# console.log "creating sourcemap",map:file,map:sources,map:sourceRoot
-		# source:sourcemap = sourcemap
-		# var base64 = Buffer.new(JSON.stringify(map)).toString("base64")
-		# source:js += "\n//# sourceMappingURL=data:application/json;base64,{base64}"
 		@result = map
 		return self
 
