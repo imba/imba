@@ -226,7 +226,7 @@ var C = do |node,opts|
 
 # wrap output in path markers
 var MP = do |val,typ = 'path'|
-	return "/*${typ}$*/{val}/*$*/"
+	return "{val}/*${typ}$*/"
 
 var M = do |val,mark,o|
 	if mark == undefined
@@ -2879,7 +2879,6 @@ export class Root < Code
 		script:imports = transformers.extractDependencies(script:js)
 
 		if o:resolve
-			# console.log 'resolving dependencies',script:imports,script:js
 			script:js = transformers.resolveDependencies(o:sourcePath,script:js,o:resolve)
 
 		if false

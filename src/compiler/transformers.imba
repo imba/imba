@@ -3,31 +3,34 @@ import fspath from 'path'
 export def extractDependencies code, replacer = null
 	let deps = {}
 	let offset = 0
-	let pre = '/*$path$*/'
-	let post = '/*$*/'
 
 	let locs = deps.#locations = []
 
 	while true
 		# what if this is for css
-		let index = code.indexOf(pre,offset)
+		let index = code.indexOf('/*$path$*/',offset)
+
 		break if index == -1
-		offset = index + pre.length
 
-		let url = code.substr(offset,4) == 'url('
-		let end = code.indexOf(post,offset)
-		let [loff,roff] = url ? [4,1] : [1,1]
+		let end = index - 1
+		let start = end - 1
+		let endchr = code[end]
+		let startchr = endchr == ')' ? '(' : endchr
 
-		if url
-			let q = code[offset + loff]
-			if q == '"' or q == "'" and q == code[end - roff]
-				loff += 1
-				roff += 1
+		while start > 0 and code[start - 1] != startchr
+			--start
 
-		let part = code.slice(offset,end)
-		part = part.slice(loff,-roff)
-		locs.push([offset + loff,end - roff,part])
+		
+
+		if endchr == ')' and (code[start] == '"' or code[start] == "'")
+			start += 1
+			end -= 1
+
+		let part = code.slice(start,end)
+		locs.push([start,end,part])
 		deps[part] = part
+		offset = index + 3
+
 	return deps
 
 export def resolveDependencies importer, code, resolver, context = {}
