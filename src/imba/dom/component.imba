@@ -173,6 +173,12 @@ export class ImbaElement < HTMLElement
 	set autoschedule value
 		value ? (__F |= $EL_SCHEDULE$) : (__F &= ~$EL_SCHEDULE$)
 
+	set raf value
+		let o = #raf_ ||= {}
+		o.value = value
+		scheduler.schedule(self,o) if mounted?
+		return
+
 	get render?
 		return true
 
@@ -260,10 +266,16 @@ export class ImbaElement < HTMLElement
 		
 		if flags & $EL_SCHEDULE$
 			schedule()
-
+		
+		
+		scheduler.schedule(self,#raf_) if #raf_
 		return this
 
 	def disconnectedCallback
 		__F = __F & (~$EL_MOUNTED$ & ~$EL_MOUNTING$)
-		unschedule() if __F & $EL_SCHEDULED$
+		if __F & $EL_SCHEDULED$
+			# trigger potential unschedule listeners
+			unschedule()
+
 		unmount()
+		scheduler.unschedule(self,#raf_) if #raf_

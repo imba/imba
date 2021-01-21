@@ -116,6 +116,7 @@ export var F =
 	EL_RENDERING: 2 ** 8
 	EL_RENDERED: 2 ** 9
 	EL_SSR: 2 ** 10
+	EL_TRACKED: 2 ** 11 # emit mount/unmount events
 
 	# render marks
 	DIFF_BUILT: 2 ** 0

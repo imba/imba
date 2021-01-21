@@ -91,6 +91,7 @@ class Touch
 	get offsetX do event.offsetX
 	get offsetY do event.offsetY
 	get type do event.type
+	get active? do phase != 'ended'
 		
 	def emit name, ...params do emit(self,name,params)
 	def on name, ...params do listen(self,name,...params)
@@ -287,10 +288,14 @@ def Event.touch$handle
 		let typ = e.type
 		let ph = t.phase
 		t.event = e
+		let end = typ == 'pointerup' or typ == 'pointercancel'
+
+		if end
+			t.phase = 'ended'
 		
 		try handler.handleEvent(t)
 
-		if typ == 'pointerup' or typ == 'pointercancel'
+		if end
 			el.releasePointerCapture(e.pointerId)
 
 	let teardown = do(e)
