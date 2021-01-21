@@ -29,6 +29,7 @@ export const {
 
 # export const document = global.window.document
 const CustomTagConstructors = {}
+const CustomTagToElementNames = {}
 export const TYPES = {}
 export const CUSTOM_TYPES = {}
 export def get_document
@@ -38,16 +39,6 @@ export def use_window
 	yes
 
 
-export def getTagType name, klass
-	# TODO follow same structure as ssr TYPES
-	if TYPES[name]
-		return TYPES[name]
-
-	if window[klass]
-		return window[klass]
-
-	if window[name]
-		return window[name]
 
 # Basic node extensions
 
@@ -297,6 +288,47 @@ export def createComment text
 export def createFragment
 	document.createDocumentFragment!
 
+
+
+const vendor = global.navigator..vendor or ''
+const ua = global.navigator..userAgent or ''
+
+const isSafari = vendor.indexOf('Apple') > -1 || ua.indexOf('CriOS') >= 0 || ua.indexOf('FxiOS') >= 0
+const supportsCustomizedBuiltInElements = !isSafari
+const CustomDescriptorCache = new Map
+
+class CustomHook < HTMLElement
+	def connectedCallback
+		if supportsCustomizedBuiltInElements
+			parentNode.removeChild(self)
+		else
+			parentNode.connectedCallback!
+
+	def disconnectedCallback
+		console.log 'unmounted hook!!!!'
+		if !supportsCustomizedBuiltInElements
+			parentNode.disconnectedCallback!
+
+window.customElements.define('i-hook',CustomHook)
+
+def getCustomDescriptors el, klass
+	let props = CustomDescriptorCache.get(klass)
+
+	unless props
+		props = {}
+		let proto = klass.prototype
+		let protos = [proto]
+		while proto = (proto and Object.getPrototypeOf(proto))
+			break if proto.constructor == el.constructor
+			protos.unshift(proto)
+
+		for item in protos
+			let desc = Object.getOwnPropertyDescriptors(item)
+			Object.assign(props,desc)
+		CustomDescriptorCache.set(klass,props)
+
+	return props
+
 # Registry
 export def createComponent name, parent, flags, text, ctx
 	# the component could have a different web-components name?
@@ -306,13 +338,28 @@ export def createComponent name, parent, flags, text, ctx
 		if name and name.nodeName
 			name = name.nodeName
 
+	let cmpname = CustomTagToElementNames[name] or name
+
 	if CustomTagConstructors[name]
-		el = CustomTagConstructors[name].create$(el)
-		console.warn "slot not implemented"
-		# el.slot$ = proto.slot$
-		el.__slots = {}
+		let cls = CustomTagConstructors[name]
+		let typ = cls.prototype.#htmlNodeName
+		if typ and supportsCustomizedBuiltInElements
+			el = document.createElement(typ,is: name)
+		elif cls.create$ and typ
+			el = document.createElement(typ)
+			el.setAttribute('is',cmpname)
+			let props = getCustomDescriptors(el,cls)
+			Object.defineProperties(el,props)
+			el.__slots = {}
+			# check if we need a hook though?
+			el.appendChild(document.createElement('i-hook'))
+		elif cls.create$
+			el = cls.create$(el)
+			el.__slots = {}
+		else
+			console.warn "could not create tag {name}"
 	else
-		el = document.createElement(name)
+		el = document.createElement(CustomTagToElementNames[name] or name)
 
 	el.##parent = parent
 	el.#init!
@@ -324,12 +371,51 @@ export def createComponent name, parent, flags, text, ctx
 		el.flag$(flags or '')
 	return el
 
+export def getTagType name, klass
+	# TODO follow same structure as ssr TYPES
+	if TYPES[name]
+		return TYPES[name]
+
+	if window[klass]
+		return window[klass]
+
+	if window[name]
+		return window[name]
+
+export def getSuperTagType name, klass, cmp
+	let typ = getTagType(name,klass)
+	let custom = typ == cmp or typ.prototype isa cmp or typ.prototype.#htmlNodeName
+
+	if !custom
+		let cls = typ.prototype.#ImbaElement
+
+		if !cls
+			cls = class CustomBuiltInElement < typ
+				def constructor
+					super
+					__slots = {}
+					__F = 0
+
+			typ.prototype.#ImbaElement = cls
+			let descriptors = Object.getOwnPropertyDescriptors(cmp.prototype)
+			Object.defineProperties(cls.prototype,descriptors)
+			cls.prototype.#htmlNodeName = name
+
+		return cls
+
+	return typ
+
 export def defineTag name, klass, options = {}
 	TYPES[name] = CUSTOM_TYPES[name] = klass
 
 	klass.nodeName = name
 
+	let componentName = name
 	let proto = klass.prototype
+
+	if name.indexOf('-') == -1
+		componentName = "{name}-tag"
+		CustomTagToElementNames[name] = componentName
 
 	let basens = proto._ns_
 	if options.ns
@@ -341,9 +427,16 @@ export def defineTag name, klass, options = {}
 		proto._ns_ = ns
 		proto.flags$ns = flags
 
+	if proto.#htmlNodeName
+		options.extends = proto.#htmlNodeName
+
 	if options.extends
+		proto.#htmlNodeName = options.extends
 		CustomTagConstructors[name] = klass
+
+		if supportsCustomizedBuiltInElements
+			window.customElements.define(componentName,klass,extends: options.extends)
 	else
-		window.customElements.define(name,klass)
+		window.customElements.define(componentName,klass)
 
 	return klass

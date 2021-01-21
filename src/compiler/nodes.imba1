@@ -3329,6 +3329,7 @@ export class TagDeclaration < ClassDeclaration
 				addMethod('create$',[],[op]).set(static: yes)
 				set(extends: Obj.wrap(extends: sup.name))
 				@config:extends = sup.name
+
 			elif sup.isClass
 				sup.resolveVariable(scope__.parent)
 				let up = sup.@variable && sup.@variable.value
@@ -3363,9 +3364,10 @@ export class TagDeclaration < ClassDeclaration
 		if sup and sup.@variable
 			sup = sup.@variable
 		elif sup
-			sup = CALL(runtime:getTagType,[sup,STR(sup.toClassName)])
+			sup = CALL(runtime:getSuperTagType,[sup,STR(sup.toClassName),runtime:ImbaElement])
 		else
-			sup = runtime:ImbaElement # CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
+			sup = runtime:ImbaElement
+			# CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
 			# sup = CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
 
 		if STACK.tsc
@@ -3376,14 +3378,16 @@ export class TagDeclaration < ClassDeclaration
 		elif option(:extension)
 			@body.@delimiter = ','
 			@body.set(braces: yes)
-			
-			
+
 			let cls = CALL(runtime:getTagType,[name,STR(name.toClassName)])
 			if className == 'ImbaElement'
 				cls = runtime:ImbaElement
 			let tagname = TagTypeIdentifier.new(name)
 			return util.extend(cls,body).c
-
+		
+		else
+			if name.isNative
+				name.error "tag {name.symbol} already exists"
 		
 		let closure = scope__.parent
 		let jsbody = body.c()
@@ -3408,6 +3412,8 @@ export class TagDeclaration < ClassDeclaration
 				js += "; {className}[{initKey.c}]()"
 			# let ext = (option(:extends) or LIT('{}')).c
 			let ext = Obj.wrap(@config).c
+			if name.isClass
+				@config:name = name.symbol
 			js += "; {runtime:defineTag}({name.c},{className},{ext})"
 		else
 			unless option(:extension)
@@ -5723,15 +5729,21 @@ export class TagTypeIdentifier < Identifier
 
 	def isClass
 		!!@str.match(/^[A-Z]/)
+	
+	def isLowerCase
+		!@name.match(/^[A-Z]/)
 		
 	def isNative
 		!@ns and TAG_TYPES.HTML.indexOf(@str) >= 0
+
+	def isNativeHTML
+		(!@ns or @ns == 'html') and TAG_TYPES.HTML.indexOf(@name) >= 0
 
 	def isNativeSVG
 		@ns == 'svg' and TAG_TYPES.SVG.indexOf(@str) >= 0
 
 	def isSVG
-		@ns == 'svg' or (!isNative and !@ns and TAG_NAMES["svg_{@str}"]) or isAsset # TAG_TYPES.SVG.indexOf(@str) >= 0
+		@ns == 'svg' or (!isNative and !@ns and TAG_NAMES["svg_{@str}"])
 
 	def isAsset
 		false
@@ -5747,9 +5759,6 @@ export class TagTypeIdentifier < Identifier
 
 	def isComponent
 		!isNative and !isNativeSVG
-	
-	def isSimpleNative
-		isNative and !(/input|textarea|select|form|iframe/).test(@str)
 
 	def toFunctionalType
 		LIT(@str)

@@ -97,6 +97,7 @@ export class ImbaElement < HTMLElement
 	def constructor
 		super()
 		if flags$ns
+			# explain?
 			flag$ = flagExt$
 
 		setup$()
@@ -255,9 +256,6 @@ export class ImbaElement < HTMLElement
 		if res && res.then isa Function
 			res.then(scheduler.commit)
 
-		# else
-		#	if this.render and $EL_RENDERED$
-		#		this.render()
 		flags = __F = (__F | $EL_MOUNTED$) & ~$EL_MOUNTING$
 		
 		if flags & $EL_SCHEDULE$

@@ -43,7 +43,7 @@ const voidElements = {
 
 let HtmlContext = null
 
-const CustomTagConstructors = {}
+const CustomTagToElementNames = {}
 
 class CustomElementRegistry
 
@@ -94,6 +94,29 @@ export def getTagType typ, klass
 			})
 
 	return typ.klass
+
+export def getSuperTagType name, klass, cmp
+	let typ = getTagType(name,klass)
+	let custom = typ == cmp or typ.prototype isa cmp or typ.prototype.#htmlNodeName
+
+	if !custom
+		let cls = typ.prototype.#ImbaElement
+
+		if !cls
+			cls = class CustomBuiltInElement < typ
+				def constructor
+					super
+					__slots = {}
+					__F = 0
+
+			typ.prototype.#ImbaElement = cls
+			let descriptors = Object.getOwnPropertyDescriptors(cmp.prototype)
+			Object.defineProperties(cls.prototype,descriptors)
+			cls.prototype.#htmlNodeName = name
+
+		return cls
+
+	return typ
 
 const escapeAttributeValue = do(val)
 	let str = typeof val == 'string' ? val : String(val)
@@ -438,7 +461,13 @@ export class Element < Node
 	
 	get outerHTML
 		let typ = self.nodeName
+		let nativeType = #htmlNodeName
 		let sel = "{typ}"
+
+		if nativeType
+			sel = "{nativeType} is='{typ}'"
+			typ = nativeType
+
 		let v
 		let cls = self.classList.toString!
 
@@ -800,26 +829,22 @@ export def createComment text
 	doc.createComment(text)
 
 export def createFragment
-	doc.createDocumentFragment
+	doc.createDocumentFragment!
 
 export def createComponent name, parent, flags, text, ctx
 	# the component could have a different web-components name?
 	let el
-	
+
 	if typeof name != 'string'
-		# what about a class based component?
-		if name and name.nodeName
-			name = name.nodeName
 
-	if CustomTagConstructors[name]
-		el = CustomTagConstructors[name].create$(el)
-		# extend with mroe stuff
-		
-		el.slot$ = proto.slot$
-		el.__slots = {}
-	else
-		el = doc.createElement(name)
+		if name.prototype isa HTMLElement
+			el = new name()
+			el.nodeName = name.nodeName
 
+		elif name and name.nodeName
+			name = name.nodeName	
+
+	el ||= doc.createElement(name)
 	el.##parent = parent
 	el.#init!
 
@@ -836,12 +861,16 @@ export def defineTag name, klass, options = {}
 		name: name
 		klass: klass
 	}
-	klass.nodeName = name
-
+	let componentName = klass.nodeName = name
 	let proto = klass.prototype
-	
-	# if proto.render && proto.end$ == Element.prototype.end$
-	#	proto.end$ = proto.render
+
+	if name.indexOf('-') == -1
+		componentName = klass.nodeName = "{name}-tag"
+		CustomTagToElementNames[name] = componentName
+
+	if options.extends
+		proto.#htmlNodeName = options.extends
+
 	let basens = proto._ns_
 	if options.ns
 		let ns = options.ns
@@ -852,6 +881,4 @@ export def defineTag name, klass, options = {}
 		proto._ns_ = ns
 		proto.flags$ns = flags
 
-	if options.extends
-		CustomTagConstructors[name] = klass
 	return klass
