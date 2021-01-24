@@ -90,10 +90,10 @@ export class EventHandler
 	def un name, ...params do unlisten(self,name,...params)
 
 	def handleEvent event
-		var target = event.target
-		var element = event.currentTarget
-		var mods = self.params
-		var i = 0
+		let target = event.target
+		let element = event.currentTarget
+		let mods = self.params
+		let i = 0
 		let commit = yes # self.params.length == 0
 		let awaited = no
 		let prevRes = undefined
