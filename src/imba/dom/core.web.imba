@@ -305,7 +305,6 @@ class CustomHook < HTMLElement
 			parentNode.connectedCallback!
 
 	def disconnectedCallback
-		console.log 'unmounted hook!!!!'
 		if !supportsCustomizedBuiltInElements
 			parentNode.disconnectedCallback!
 
