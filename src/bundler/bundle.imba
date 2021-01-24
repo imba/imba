@@ -403,7 +403,7 @@ export default class Bundle < Component
 				try
 					builder = new Builder(previous: builder)
 					result = await esb.build(esoptions)
-					
+					firstBuild = result
 				catch e
 					result = e
 
@@ -412,7 +412,7 @@ export default class Bundle < Component
 				if main?
 					await write(result)
 
-				unless o.watch
+				unless watcher
 					esb.stop!
 					esb = null
 					workers.stop!
@@ -433,7 +433,8 @@ export default class Bundle < Component
 			return resolve(result)
 
 	def rebuild {force = no} = {}
-		return build(yes) unless built and esb and result and result.rebuild isa Function
+		unless built and esb and result and result.rebuild isa Function
+			return build(yes) 
 
 		buildcache[self] ||= new Promise do(resolve)
 			# console.log 'start rebuild',force
@@ -460,7 +461,7 @@ export default class Bundle < Component
 
 			try
 				builder = new Builder(previous: builder)
-				let rebuilt = await result.rebuild!
+				let rebuilt = await firstBuild.rebuild!
 				result = rebuilt
 			catch e
 				result = e
