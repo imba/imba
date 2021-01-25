@@ -45,6 +45,7 @@
     "build": "node scripts/build.js",
     "build-parser": "node scripts/build-parser.js",
     "watch": "node scripts/build.js -w",
+    "release": "lerna publish",
     "prerelease": "lerna publish --dist-tag pre"
   },
   "bugs": "https://github.com/imba/imba/issues",
