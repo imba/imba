@@ -16,8 +16,6 @@ import {SourceMapper} from '../compiler/sourcemapper'
 
 import Watcher from './watcher'
 
-import SERVE_TEMPLATE from './templates/serve-http.txt'
-
 const ASSETS_URL = '/__assets__/'
 let BUNDLE_COUNTER = 0
 

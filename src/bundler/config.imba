@@ -1,8 +1,12 @@
-const schema = {
+const rootSchema = {
 	loader: 'merge'
 	node: 'merge'
 	browser: 'merge'
-	defaults: 'merge'
+	defaults: {
+		'*': {
+
+		}	
+	}
 }
 
 export const defaultConfig = {
@@ -90,13 +94,13 @@ export const defaultConfig = {
 def clone object
 	JSON.parse(JSON.stringify(object))
 
-export def merge config, defaults
+export def merge config, defaults, schema = rootSchema
 	for own key,value of defaults
-		let typ = schema[key]
+		let typ = schema[key] or schema['*']
 
 		if config.hasOwnProperty(key)
-			if typ == 'merge'
-				config[key] = merge(config[key],value)
+			if typ
+				config[key] = merge(config[key],value,typ)
 		else
 			config[key] = clone(value)
 		
