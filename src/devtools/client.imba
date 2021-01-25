@@ -30,7 +30,13 @@ class DevTools
 	def constructor
 		start!
 		manifest = new Manifest({})
+		debug = no
 		self
+
+	def log ...params
+		return unless debug
+		console.log(...params)
+
 
 	def refresh changes
 		let dirty = {
@@ -51,7 +57,7 @@ class DevTools
 					dirty.js.push(asset)
 
 		if dirty.js.length
-			console.log "js changed - reload?",dirty.js
+			log "js changed - reload?",dirty.js
 			doc.location.reload!
 		self
 
@@ -60,33 +66,34 @@ class DevTools
 
 		socket = new EventSource("/__hmr__")
 		socket.onmessage = do(e)
-			console.log 'sse.onmessage',e
+			log 'sse.onmessage',e
 
 		socket.addEventListener("paused") do(e)
-			console.log "server paused"
+			log "server paused"
+			yes
 
 		socket.addEventListener("state") do(e)
 			let json = JSON.parse(e.data)
-			console.log "server state",json
+			log "server state",json
 
 		socket.addEventListener("init") do(e)
 			let json = JSON.parse(e.data)
 			manifest.init(json)
-			console.log "hmr init",manifest.data
+			log "hmr init",manifest.data
 
 		socket.addEventListener("manifest") do(e)
 			# let parsed = deserializeData(JSON.parse(e.data))
 			let json = JSON.parse(e.data)
 			# console.log "event from manifest",e,e.data,json
 			let changes = manifest.update(json)
-			console.log "Changes for manifest",manifest.data,changes
+			# console.log "Changes for manifest",manifest.data,changes
 			refresh changes
 
 		socket.addEventListener("reload") do(e)	
-			console.log 'asked to reload by server'
+			log 'asked to reload by server'
 			doc.location.reload!
 		
 		socket.onerror = do(e)
-			console.log 'hmr disconnected',e
+			log 'hmr disconnected',e
 
 global.imba_devtools = new DevTools
