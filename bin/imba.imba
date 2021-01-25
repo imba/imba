@@ -20,6 +20,8 @@ const fmt = {
 	v: do(dummy,prev) prev + 1
 }
 
+let imbapkg = resolvePackage(np.resolve(__dirname,'..')) or {}
+
 def parseOptions options, extras = []
 	if options.#parsed
 		return options
@@ -148,8 +150,7 @@ def run entry, o, extras
 				runner.reload!
 	return
 
-
-let binary = cli.storeOptionsAsProperties(false).version('2.0.0').name('imba')
+let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version).name('imba')
 
 cli.command('run <script>', { isDefault: true })
 	.description('Imba')
