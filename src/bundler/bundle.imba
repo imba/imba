@@ -16,7 +16,7 @@ import {SourceMapper} from '../compiler/sourcemapper'
 
 import Watcher from './watcher'
 
-const ASSETS_URL = '/__assets__/'
+const ASSETS_URL = '/_ASSET_PREFIX_PATH_/'
 let BUNDLE_COUNTER = 0
 
 
@@ -274,14 +274,14 @@ export default class Bundle < Component
 		# importing metadata about the images and more
 		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?as=img)$/) do(args)
 			return unless isImba(args.importer) and args.namespace == 'file'
-
+			
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
 			let ext = np.extname(args.path).slice(1)
 			let res = fs.resolver.resolve(args)
 			let out = {path: res.#rel or res.path, namespace: 'img'}
-			log.debug "resolved img {args.path} -> {out.path}"
+			# log.debug "resolved img {args.path} -> {out.path}"
 			return out
 
 		
@@ -400,7 +400,7 @@ export default class Bundle < Component
 				return out
 
 		esb.onLoad(filter: /.*/, namespace: 'imba-raw') do({path})
-			return {loader: 'txt', contents: ""}
+			return {loader: 'text', contents: ""}
 	
 		# asset loader
 		# a shared catch-all loader for all urls ending up in the asset namespce
@@ -750,7 +750,7 @@ export default class Bundle < Component
 			let path
 
 			while true
-				start = body.indexOf('/__assets__/',end)
+				start = body.indexOf(ASSETS_URL,end)
 				break if start == -1
 				delim = body[start - 1]
 				end = start + 10
@@ -766,11 +766,18 @@ export default class Bundle < Component
 					await walker.resolveAsset(asset)
 					path = asset.url
 				else
-					console.log 'asset not found',path
-					path = (baseurl + origPath)
+					# console.log 'asset not found',path,body.slice(start - 50,end)
+					path = (baseurl + origPath.replace(ASSETS_URL,'/__assets__/'))
 
 				if path != origPath
-					body = body.slice(0,start) + path + body.slice(end)
+					# TODO adjust whitespace to make path same length
+					let pad = origPath.length - path.length
+					let post = body[end]
+					
+					if pad > 0
+						post += " ".repeat(pad)
+
+					body = body.slice(0,start) + path + post + body.slice(end + 1)
 
 			let header = []
 
