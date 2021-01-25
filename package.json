@@ -45,8 +45,8 @@
     "build": "node scripts/build.js",
     "build-parser": "node scripts/build-parser.js",
     "watch": "node scripts/build.js -w",
-    "release": "lerna publish",
-    "prerelease": "lerna publish --dist-tag pre"
+    "prerelease": "lerna publish --dist-tag pre",
+    "link-latest": "PACKAGE_VERSION=$(node -p -e \"require('./package.json').version\") && npm dist-tag add imba@$PACKAGE_VERSION latest"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.112",
