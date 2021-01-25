@@ -100,6 +100,9 @@ def run entry, o, extras
 		imbaPath: o.imbaPath
 	})
 
+	if file.ext == '.html'
+		params.format = 'html'
+
 	o.port ||= await getport(port: getport.makeRange(3000, 3100))
 	
 	if o.command == 'serve'

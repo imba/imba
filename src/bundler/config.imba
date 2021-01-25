@@ -39,45 +39,50 @@ export const defaultConfig = {
 			external: ['dependencies','!imba']
 		}
 		web: {
-			target: [
-				'es2020',
-				'chrome58',
-				'firefox57',
-				'safari11',
-				'edge16'
-			]
 			platform: 'browser'
+			target: ['es2020','chrome58','firefox57','safari11','edge16']
 			sourcemap: true
 			format: 'esm'
+		}
+
+		client: {
+			extends: 'web'
 			splitting: true
 		}
 
-		css: {
+		iife: {
+			extends: 'web'
+			format: 'iife'
 			splitting: false
+			platform: 'browser'
+		}
+
+		css: {
 			format: 'css'
 			platform: 'browser'
 			external: ['dependencies','!imba'] # dont exclude css deps?
 			sourcemap: false
+			splitting: false
 		}
 
-		iife: {
-			splitting: false
-			format: 'iife'
+		html: {
+			format: 'html'
 			platform: 'browser'
+			sourcemap: false
+			splitting: false
+			hashing: false
 		}
 
 		worker: {
-			splitting: false
-			hashing: true
 			format: 'esm'
 			platform: 'worker'
+			splitting: false
 		}
 
 		webworker: {
-			splitting: false
-			hashing: true
 			format: 'esm'
 			platform: 'webworker'
+			splitting: false
 		}
 	}
 }

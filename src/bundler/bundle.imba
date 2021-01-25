@@ -29,6 +29,7 @@ class Builder
 	prop inputs = {}
 	prop outputs = new Set
 	prop bundlers = {}
+	prop meta = {}
 
 	get elapsed
 		Date.now! - startAt
@@ -142,7 +143,8 @@ export default class Bundle < Component
 				".woff2": "file",
 				".woff": "file",
 				".ttf": "file",
-				".otf": "file"
+				".otf": "file",
+				".html": "file"
 			}
 			write: false
 			metafile: "metafile.json"
@@ -166,6 +168,11 @@ export default class Bundle < Component
 		if o.format == 'css'
 			esoptions.format = 'esm'
 			esoptions.outExtension[".js"] = ".SKIP.js"
+
+		if o.format == 'html'
+			esoptions.format = 'esm'
+			esoptions.minify = false
+			esoptions.sourcemap = false
 
 		let addExtensions = {
 			webworker: ['.webworker.imba','.worker.imba']
@@ -255,7 +262,6 @@ export default class Bundle < Component
 		# Images imported from imba files should resolve as special assets
 		# importing metadata about the images and more
 		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?as=img)$/) do(args)
-			# only catch these when imported from an imba file?
 			return unless isImba(args.importer) and args.namespace == 'file'
 
 			if o.format == 'css'
@@ -267,19 +273,38 @@ export default class Bundle < Component
 			log.debug "resolved img {args.path} -> {out.path}"
 			return out
 
+		
 		esb.onLoad(namespace: 'img', filter: /.*/) do({path})
 			
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
-		
+
+		# resolve html file
+		esb.onResolve(filter: /\.html$/) do(args)
+			if isImba(args.importer) and args.namespace == 'file'				
+				let cfg = resolveConfigPreset(['html'])
+				let res = fs.resolver.resolve(path: args.path, resolveDir: args.resolveDir)
+				let out = {path: res.#rel, namespace: 'entry'}
+				pathMetadata[out.path] = {path: res.#rel, config: cfg}
+				return out
+
+		esb.onLoad(namespace: 'html', filter: /.*/) do({path})
+			let file = fs.lookup(path)
+			let out = await file.compile({format: 'esm'},self)
+			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+
+		esb.onLoad(filter: /\.html$/, namespace: 'file') do({path})
+			let file = fs.lookup(path)
+			let out = await file.compile({format: 'esm'},self)
+			builder.meta[file.rel] = out
+			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 
 		esb.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
 			let [path,q] = args.path.split('?')
 			let formats = q.slice(3).split(',')
 			let cfg = resolveConfigPreset(formats)
 			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
-			# console.log 'resolving path?',path,res,args.resolveDir
 			let out = {path: res.#rel + '?' + q, namespace: 'entry'}
 			pathMetadata[out.path] = {path: res.#rel, config: cfg}
 			return out
@@ -294,7 +319,7 @@ export default class Bundle < Component
 			let cfg = meta.config
 			# console.log 'onload custom entry',path,cfg.format,cfg.platform,cfg
 			let file = fs.lookup(meta.path)
-			
+
 			# add this to something we want to resolve 
 			if cfg.splitting
 				let js = """
@@ -304,6 +329,9 @@ export default class Bundle < Component
 				let bundle = cfg.#bundler ||= new Bundle(root,Object.create(cfg))
 				bundle.addEntrypoint(meta.path)
 				builder.refs[id] = bundle
+				if o.format == 'html'
+					return {loader: 'text', contents: id}
+
 				return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
 
 			log.debug "lookup up bundle for id {id}"
@@ -313,6 +341,9 @@ export default class Bundle < Component
 			builder.refs[id] = bundler
 			unless cfg.format == 'css'
 				bundler.rebuild! # we can asynchronously start the rebundler
+			
+			if o.format == 'html'
+				return {loader: 'text', contents: id}
 
 			return {loader: 'js', contents: toAssetJS(input: id), resolveDir: file.absdir }
 
@@ -544,7 +575,7 @@ export default class Bundle < Component
 			input.imports = input.imports.map do ins[$1.path]
 			watchPath(path)
 			# what about sourcemaps?
-			let outname = path.replace(/\.(imba1?|[cm]?jsx?|tsx?)$/,"")
+			let outname = path.replace(/\.(imba1?|[cm]?jsx?|tsx?|html)$/,"")
 			let jsout 
 			for own key,ext of tests
 
@@ -575,6 +606,10 @@ export default class Bundle < Component
 				res = await dep.rebuild!
 
 			let inp = res and res.meta and res.meta.inputs[rawpath]
+
+			if dep isa Bundle
+				Object.assign(#watchedPaths,dep.#watchedPaths)
+
 			if inp
 				# console.log "FOUND THE RAW PATH AS WELL!!!",rawpath
 				input.asset = res.meta.format == 'css' ? inp.css : inp.js
@@ -600,9 +635,14 @@ export default class Bundle < Component
 			output.path = path
 			output.type = (np.extname(path) or '').slice(1)
 
-			if web? or output.type == 'css'
+			# only when html is the entrypoint
+			if output.source and output.source.path.match(/\.html$/) and output == output.source.js
+				output.path = "public/{path.replace('.js','.html')}"
+
+			elif web? or output.type == 'css'
 				output.path = "public/__assets__/{path}"
 				output.url = "/__assets__/{path}"
+
 
 			let inputs = []
 			let dependencies = new Set
@@ -708,7 +748,35 @@ export default class Bundle < Component
 			# the referenced assets / dependencies of this output and inject them
 			# into a global asset map. We replace the first line (//BANNER) to make
 			# sure sourcemaps are still valid (they are generated before we process outputs)
-			if web?
+			if o.format == 'html'
+				try
+					let mapping = {}
+					let entryToUrlMap = {}
+
+					for item in output.dependencies when item.asset
+						let asset = await walker.resolveAsset(item.asset)
+						entryToUrlMap[item.path] = asset.url
+
+
+					body.replace(/(\w+_default\d*) = \"(.*)\"/g) do(m,name,path)
+						mapping[name] = entryToUrlMap[path] or path
+
+					let urls = body.match(/URLS = \[(.*)\]/)[1].split(/\,\s*/g).map do mapping[$1]
+		
+					# now get the html
+					let htmlstart = body.indexOf('HTML = ') + 7
+					let html = body.slice(htmlstart,body.indexOf('\n',htmlstart))
+					let meta = builder.meta[output.source.path]
+					
+					if meta and meta.html
+						let replaced = meta.html.replace(/ASSET_REF_(\d+)/g) do(m,nr)
+							let url = urls[parseInt(nr)]
+							return url
+						# console.log 'html is',meta,replaced
+						body = replaced
+
+
+			elif web?
 				let mfname = "_$MF$_"
 				for item in output.dependencies when item.asset
 					let asset = await walker.resolveAsset(item.asset)
@@ -718,6 +786,7 @@ export default class Bundle < Component
 				if header.length
 					header.unshift('var _$MF$_=(globalThis._MF_ = globalThis._MF_ || {});')
 				body = header.join('') + body.slice(body.indexOf('\n'))
+
 
 			return body
 		
@@ -830,7 +899,7 @@ export default class Bundle < Component
 				await file.unlink!
 
 		let loaderData = nfs.readFileSync(np.resolve(program.imbaPath,'loader.imba.js'),'utf-8')
-		let loader = #outfs.lookup(main.path.replace('.js','.loader.js'))
+		let loader = #outfs.lookup(main.path.replace(/(\.js)?$/,'.loader.js'))
 
 		if #hash =? manifest.hash
 			let json = serializeData(manifest)

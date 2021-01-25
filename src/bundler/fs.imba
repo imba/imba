@@ -5,7 +5,7 @@ const micromatch = require 'micromatch'
 
 import {fdir} from '../../vendor/fdir/index.js'
 import {Resolver} from './resolver'
-import {parseAsset} from '../compiler/assets'
+import {parseAsset,parseHTML} from '../compiler/assets'
 import Component from './component'
 import ChangeLog from './changes'
 
@@ -98,6 +98,7 @@ export class FSNode
 			'.jpg': ImageFile
 			'.jpeg': ImageFile
 			'.gif': ImageFile
+			'.html': HTMLFile
 		}
 
 		let cls = types[ext] or FileNode
@@ -119,6 +120,9 @@ export class FSNode
 
 	get name
 		np.basename(rel)
+
+	get ext
+		np.extname(rel)
 
 	def memo key, cb
 		self.fs.cache.memo("{abs}:{key}",mtimesync,cb)
@@ -302,6 +306,35 @@ export class SVGFile < FileNode
 			"""
 			#  "export default {JSON.stringify(parsed)};"
 			return {js: js}
+
+export class HTMLFile < FileNode
+
+	def compile o
+		memo(o.format) do
+			let body = await read!
+			let parsed = parseHTML({body: body})
+			let code = []
+			let refs = []
+
+			for item,i in parsed.imports
+				let path = item.path
+				let kind = ""
+				if item.tagType == 'img'
+					kind = ""
+				elif item.tagType == 'script'
+					kind = "web"
+				elif item.tagType == 'style'
+					kind = "css"
+				if kind and path.indexOf('?as=') == -1
+					path = path + '?as=' + kind
+
+				code.push "import ref{i} from '{path}';"
+				refs.push("ref{i}")
+			
+			code.push "export const URLS = [{refs.join(',')}];"
+			code.push "export const HTML = " + JSON.stringify(parsed.contents)
+
+			return {js: code.join('\n'), html: parsed.contents}
 
 export class ImageFile < FileNode
 
