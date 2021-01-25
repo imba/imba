@@ -171,7 +171,7 @@ cli.command('run <script>', { isDefault: true })
 	.action(run)
 
 cli.command('build <script>')
-	.description('clone a repository into a newly created directory')
+	.description('Build an imba/js/html entrypoint and their dependencies')
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
 	.option("-v, --verbose", "Verbose logging",fmt.v,1)
@@ -186,7 +186,7 @@ cli.command('build <script>')
 
 # watch should be implied?
 cli.command('serve <script>')
-	.description('Run stuff')
+	.description('Spawn a webserver for an imba/js/html entrypoint')
 	.option("-b, --build", "")
 	.option("-d, --dev", "Enable development mode")
 	.option("-w, --watch", "Continously build and watch project while running")
