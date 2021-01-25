@@ -28,6 +28,7 @@ class Builder
 	prop outputs = new Set
 	prop bundlers = {}
 	prop meta = {}
+	prop styles = {}
 
 	get elapsed
 		Date.now! - startAt
@@ -385,7 +386,8 @@ export default class Bundle < Component
 		# import '_styles_' line - which resolves to he path
 		# of the importer itself, with a styles namespace
 		esb.onResolve(filter: /^_styles_$/) do({importer})
-			return {path: importer, namespace: 'styles'}
+			let path = fs.relative(importer)
+			return {path: path, namespace: 'styles'}
 
 		# resolve any non-relative path to see if it should
 		# be external. If importer is an imba file, try to
@@ -410,6 +412,10 @@ export default class Bundle < Component
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 
+		esb.onLoad({ filter: /\.imba$/, namespace: 'styles'}) do({path,namespace})
+			if builder.styles[path]
+				return builder.styles[path]
+
 		# The main loader that compiles and returns imba files, and their stylesheets
 		esb.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
 			let src = fs.lookup(path)
@@ -417,21 +423,22 @@ export default class Bundle < Component
 			let t = Date.now!
 			let res = await src.compile(imbaoptions,self)
 
-			let cached = res[self] ||= {
-				file: {
-					loader: 'js',
-					contents: SourceMapper.strip(res.js or "") + (res.css ? "\nimport '_styles_';" : "")
-					errors: res.errors.map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
-					warnings: res.warnings.map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
-					resolveDir: src.absdir
-				}
-				styles: {
+			if res.css
+				builder.styles[src.rel] = {
 					loader: 'css'
 					contents: SourceMapper.strip(res.css or "")
 					resolveDir: src.absdir
 				}
+
+			let cached = res[self] ||= {
+				loader: 'js',
+				contents: SourceMapper.strip(res.js or "") + (res.css ? "\nimport '_styles_';" : "")
+				errors: res.errors.map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
+				warnings: res.warnings.map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
+				resolveDir: src.absdir
 			}
-			return cached[namespace]
+
+			return cached
 
 	def build force = no
 		buildcache[self] ||= new Promise do(resolve)
