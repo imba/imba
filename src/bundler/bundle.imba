@@ -52,6 +52,12 @@ export default class Bundle < Component
 	get outbase
 		o.outbase or fs.cwd
 
+	get pubdir
+		program.pubdir or 'public'
+	
+	get baseurl
+		(program.baseurl or '/').replace(/\/$/,'')
+
 	get fs
 		program.fs
 
@@ -230,7 +236,13 @@ export default class Bundle < Component
 		for typ in types
 			let pre = presets[typ] or {}
 			base.presets.push(pre)
-			Object.assign(base,pre)
+			let curr = pre
+			let add = [pre]
+			# extends need to be smarter than this flat assign
+			while curr.extends and add.length < 10
+				add.unshift(curr = presets[curr.extends])
+			for item in add
+				Object.assign(base,item)
 
 		return imbaconfig[key] = base # Object.create(base)
 
@@ -648,12 +660,15 @@ export default class Bundle < Component
 
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js
-				output.path = "public/{path.replace('.js','.html')}"
+				# console.log 'pubdir??',pubdir
+				output.path = "{pubdir}/{path.replace('.js','.html')}"
+				# output.path = path.replace('.js','.html')
+				# output.dir = 'public'
 
 			elif web? or output.type == 'css'
-				output.path = "public/__assets__/{path}"
-				output.url = "/__assets__/{path}"
-
+				# output.dir = 'assets'
+				output.path = "{pubdir}/__assets__/{path}"
+				output.url = "{baseurl}/__assets__/{path}"
 
 			let inputs = []
 			let dependencies = new Set
@@ -744,14 +759,18 @@ export default class Bundle < Component
 					end++
 
 				path = body.slice(start,end)
+				let origPath = path
 				let asset = urlOutputMap[path]
 				# what if it is referencing itself?
 				if asset
 					await walker.resolveAsset(asset)
-					if asset.url != path
-						# need to pad the length of the import to fix relative asset urls
-						body = body.slice(0,start) + asset.url + body.slice(end)
-						# console.log 'resolved found asset',asset.path,asset.hash
+					path = asset.url
+				else
+					console.log 'asset not found',path
+					path = (baseurl + origPath)
+
+				if path != origPath
+					body = body.slice(0,start) + path + body.slice(end)
 
 			let header = []
 
@@ -918,7 +937,8 @@ export default class Bundle < Component
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in manifest.assets
-				let file = #outfs.lookup(asset.path)
+				let path = asset.path
+				let file = #outfs.lookup(path)
 				await file.write(asset.#contents,asset.hash)
 
 			if mfile
