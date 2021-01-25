@@ -852,7 +852,7 @@ export default class Bundle < Component
 				asset.originalPath = asset.path
 				if asset.url
 					asset.url = asset.url.replace('.__dist__.',sub)
-					if sub == '.' and asset.hash
+					if sub == '.' and asset.hash and asset.type != 'map'
 						asset.url += '?v=' + asset.hash
 
 				asset.path = asset.path.replace('.__dist__.',sub)

@@ -156,7 +156,8 @@ export const process = new class Process < EventEmitter
 class AssetResponder
 	def constructor url, params = {}
 		url = url
-		ext = np.extname(url)
+		[path,query] = url.split('?')
+		ext = np.extname(path)
 		mimeType = mimes[ext.slice(1)] or 'text/plain'
 		headers = {
 			'Access-Control-Allow-Origin': '*'
