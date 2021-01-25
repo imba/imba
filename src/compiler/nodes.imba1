@@ -3917,7 +3917,7 @@ export class NumWithUnit < Literal
 	def c o
 		let raw = "{String(@value)}{String(@unit)}"
 		raw = "-{raw}" if option(:negate)
-		o and o:css ? raw : "'{raw}'"
+		o and o:unqouted ? raw : "'{raw}'"
 	
 export class ExpressionWithUnit < ValueNode
 	

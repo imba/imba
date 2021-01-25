@@ -11,7 +11,7 @@ export def mount mountable, into
 			mountable(ctx)
 			# now remove the context?
 		element = tick()
-		scheduler.listen('render',tick)
+		scheduler.listen('commit',tick)
 	else
 		# automatic scheduling of element - even before
 		# element.__schedule = yes

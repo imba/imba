@@ -173,8 +173,18 @@ export class ImbaElement < HTMLElement
 	set autoschedule value
 		value ? (__F |= $EL_SCHEDULE$) : (__F &= ~$EL_SCHEDULE$)
 
-	set raf value
-		let o = #raf_ ||= {}
+	###
+	Naming and accepted values will likely change - experimental
+
+	yes = render on events / imba.commit
+	no = force manual render
+	null / undefined = render via parent
+	(n)s = render every n s
+	(n)ms = render every n ms
+	(n)fps = render n times per second
+	###
+	set autorender value
+		let o = #autorender ||= {}
 		o.value = value
 		scheduler.schedule(self,o) if mounted?
 		return
@@ -207,12 +217,12 @@ export class ImbaElement < HTMLElement
 		return (__F & $EL_SSR$) != 0
 
 	def schedule
-		scheduler.listen('render',self)
+		scheduler.on('commit',self)
 		__F |= $EL_SCHEDULED$
 		return self
 
 	def unschedule
-		scheduler.unlisten('render',self)
+		scheduler.un('commit',self)
 		__F &= ~$EL_SCHEDULED$
 		return self
 
@@ -268,7 +278,7 @@ export class ImbaElement < HTMLElement
 			schedule()
 		
 		
-		scheduler.schedule(self,#raf_) if #raf_
+		scheduler.schedule(self,#autorender) if #autorender
 		return this
 
 	def disconnectedCallback
@@ -278,4 +288,4 @@ export class ImbaElement < HTMLElement
 			unschedule()
 
 		unmount()
-		scheduler.unschedule(self,#raf_) if #raf_
+		scheduler.unschedule(self,#autorender) if #autorender

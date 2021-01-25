@@ -1,13 +1,34 @@
 # imba$imbaPath=global
 let rAF = global.requestAnimationFrame || (do(blk) setTimeout(blk,1000 / 60))
 let FPS = 60
+let SPF = 1 / 60
 
+let parseCache = {}
+
+# TODO use ms as the internal unit instead of this clunky framecount
+
+def parseScheduleValue input
+	if input === true or input === false or input === null
+		return input
+
+	let v = parseCache[input]
+	return v if v !== undefined
+	let val = input
+	if typeof val == 'string'
+		if val.match(/^\d+fps$/)
+			val = 60 / parseInt(val)
+		elif val.match(/^[\d\.]+s$/)
+			val = parseFloat(val) / (1 / 60)
+		elif val.match(/^[\d\.]+ms$/)
+			val = parseFloat(val) / (1000 / 60)
+	return parseCache[input] = val
+		
 # Scheduler
 class Scheduled
 	owner = null
 	target = null
 	active = no
-	value = 0
+	value = undefined
 	skip = 0
 	last = 0
 
@@ -17,9 +38,12 @@ class Scheduled
 
 	def update o, activate?
 		let on = active
-		if value =? o.value
+		let val = parseScheduleValue(o.value)
+
+		if value != val
 			deactivate!
-		
+			value = val
+
 		if value or on or activate?
 			activate!
 		self
@@ -28,27 +52,31 @@ class Scheduled
 		owner.add(self)
 		return
 
-	set interval value
-		global.clearInterval(#interval)
-		#interval = value and global.setInterval(queue.bind(self),value)
-	
 	def activate
-		if value === yes or value >= 30
+		if value === yes
+			owner.on('commit',self)
+		elif value === no
+			yes
+			# stop from even 
+		elif value <= 2 and value >= 0.1
+			# this is not correct at all for now
 			owner.on('raf',self)
-			interval = null
-		else
-			owner.un('raf',self)
-			if typeof value == 'number'
-				let every = (FPS / value) * (1000 / FPS)
-				interval = every
+		elif value > 2
+			#interval = global.setInterval(queue.bind(self),value * (1000 / FPS))
 
 		active = yes
 		self
 
 	def deactivate
+		if value === yes
+			owner.un('commit',self)
 		owner.un('raf',self)
+
+		if #interval
+			global.clearInterval(#interval)
+			#interval = null
+
 		active = no
-		interval = null
 		self
 
 export class Scheduler
@@ -63,7 +91,7 @@ export class Scheduler
 		self.listeners = {}
 		self.intervals = {}
 		self.commit = do
-			add('render')
+			add('commit')
 			return self
 
 		#fps = 0
@@ -164,7 +192,7 @@ export class Scheduler
 export const scheduler = new Scheduler 
 
 export def commit
-	scheduler.add('render').promise
+	scheduler.add('commit').promise
 
 export def setTimeout fn,ms
 	global.setTimeout(&,ms) do
