@@ -101,6 +101,7 @@ export default class Bundle < Component
 		if o.watch or o.watcher
 			watcher ||= o.watcher or new Watcher(fs)
 
+
 		let externals = []
 		let package = program.package or {}
 		for ext in o.external
@@ -427,9 +428,19 @@ export default class Bundle < Component
 			if (built =? true) or force
 				esb = await startService!
 				workers = await startWorkers!
-				
 
 				log.debug "build {entryPoints.join(',')} {o.format}|{o.platform} {nr}"
+
+				if o.stdin and o.stdin.template
+					let tpl = fs.lookup( np.resolve(o.imbaPath,'src','templates',o.stdin.template) )
+					let compiled = await tpl.compile({platform: 'node'},self)
+					delete o.stdin.template
+
+					let js = compiled.js
+					let defs = o.stdin.define or {}
+					js = js.replace(/\__([A-Z\_]+)__/g) do(m,name) defs[name]
+					o.stdin.contents = js
+					delete o.stdin.define
 			
 				try
 					builder = new Builder(previous: builder)
@@ -480,6 +491,8 @@ export default class Bundle < Component
 				for [path,flags] in changes
 					if #watchedPaths[path] or flags != 1
 						dirty = yes
+
+				# console.log 'rebuild?!',entryPoints,changes,dirty,#watchedPaths
 
 				if main?
 					log.debug "changes demanding a resolve?",changes,dirty
@@ -864,7 +877,7 @@ export default class Bundle < Component
 			outputs: outs
 			urls: urls
 		}
-
+		# console.log 'write',entryPoints,ins
 		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]].js
 
 		let writeFiles = {}

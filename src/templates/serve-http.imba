@@ -9,7 +9,7 @@ const server = http.createServer do(req,res)
 			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<title> 'Project'
 		<body>
-			<script type="module" src='CLIENT_ENTRY'>
+			<script type="module" src='__ENTRYPOINT__'>
 
 	res.end(html)
 

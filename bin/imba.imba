@@ -8,12 +8,11 @@ import Program from '../src/bundler/program'
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
-import Cache from '../src/bundler/cache' #  './cache'
+import Cache from '../src/bundler/cache'
 
 import {resolveConfig,resolvePackage,getCacheDir} from '../src/bundler/utils'
 import tmp from 'tmp'
 import getport from 'get-port'
-import SERVE_TEMPLATE from '../src/bundler/templates/serve-http.txt'
 
 const fmt = {
 	int: do(val) parseInt(val)
@@ -107,13 +106,18 @@ def run entry, o, extras
 	
 	if o.command == 'serve'
 		delete params.entryPoints
-		
+
 		params.stdin = {
-			contents: SERVE_TEMPLATE.replace('CLIENT_ENTRY',"./{file.rel}"),
+			define: {ENTRYPOINT: "./{file.rel}"}
+			template: 'serve-http.imba'
 			resolveDir: o.cwd
-			sourcefile: 'serve.js'
+			sourcefile: 'serve.imba'
 			loader: 'js'
 		}
+
+		if params.format == 'html'
+			params.stdin.template = 'serve-html.imba'
+			params.format = 'cjs'
 
 	tmp.setGracefulCleanup!
 
