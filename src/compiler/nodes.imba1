@@ -7238,7 +7238,7 @@ export class TagAttr < TagPart
 		let val = value.c(o)
 		let bval = val
 		let op = M('=',option(:op))
-		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG)
+		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG) or ns == 'html'
 		let tagName = @tag and @tag.@tagName
 
 		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'style' or tagName == 'img' or tagName == 'script' or tagName == 'svg'))
@@ -7265,7 +7265,7 @@ export class TagAttr < TagPart
 		if isAttr 
 			if STACK.tsc
 				return "{@tag.tvar}.setAttribute('{key}',String({val}))"
-			if STACK.isNode and !@asset
+			if (STACK.isNode or ns == 'html') and !@asset 
 				# TODO don't compile to setAttribute directly for node
 				# mark compilation as being only for node?
 				STACK.meta:universal = no
