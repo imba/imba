@@ -10539,7 +10539,7 @@ export class RootScope < Scope
 		@symbolRefs = {}
 		@importProxies = {}
 		@vars.split = yes
-
+		
 		@imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
 		# @imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
 		@runtime = @imba.proxy
@@ -10552,7 +10552,8 @@ export class RootScope < Scope
 		@runtime
 
 	def use item
-		@imba.touch("use_{item}")
+		unless STACK.tsc
+			@imba.touch("use_{item}")
 
 	def sourceId
 		@sourceId ||= STACK.sourceId # @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
@@ -10667,7 +10668,10 @@ export class RootScope < Scope
 				let path = asset:path
 				if asset:kind and path.indexOf('?as=') == -1
 					path += "?as={asset:kind}"
-				head.push(LIT "import {ref} from {MP "'{path}'"}")
+				if STACK.tsc
+					head.push(LIT "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})")
+				else
+					head.push(LIT "import {ref} from {MP "'{path}'"}")
 
 		if assetCount
 			head.push LIT('// ASSETS-END')
@@ -11266,7 +11270,7 @@ export class ImportProxy < Variable
 export class ImbaRuntime < ImportProxy
 
 	def configure options
-		if options:runtime == 'global'
+		if options:runtime == 'global' or STACK.tsc
 			@globalName = 'imba'
 		elif options:runtime
 			self.path = options:runtime

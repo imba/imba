@@ -29,6 +29,13 @@ interface ImbaStyles {
     [key: string]: any;
 }
 
+interface ImbaAsset {
+    body: string;
+    url: string;
+    absPath: string;
+    path: string;
+}
+
 
 interface ImbaContext {
     setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
