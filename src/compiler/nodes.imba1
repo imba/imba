@@ -9380,8 +9380,8 @@ export class StyleRuleSet < StyleNode
 				o:styles[@sel] = @styles
 
 		else
-			let pri = !!@flag ? (@tag and @tag.isSelf ? 2 : 2) : 0
-			pri = 1 if pri < 1 and option(:inClassBody)
+			let pri = !!@flag ? (2) : 0
+			pri = 1 if pri < 1 and (option(:inClassBody) or option(:inTagTree))
 			# might want to send in the rule itself instead?
 			let component = @tagDeclaration
 			let opts = {
