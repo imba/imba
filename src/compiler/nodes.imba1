@@ -10517,6 +10517,7 @@ export class RootScope < Scope
 		register 'isFinite', self, type: 'global'
 		register '__dirname', self, type: 'global'
 		register '__filename', self, type: 'global'
+		register('__realname', self, type: 'global').@c = "__filename"
 		register('__pure__', self, type: 'global', varclass: PureReference).@c = "/* @__PURE__ */"
 		
 
