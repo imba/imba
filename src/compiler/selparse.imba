@@ -306,11 +306,11 @@ export def test str, log = no
 	console.log 'parsed',str,sel
 	let options = {ns: 'dvs342'}
 	let out = rewrite(sel,null,options)
-	let css = render(out)
-	console.log css
+	let style = render(out)
+	console.log style
 	if log
 		console.dir sel,{ depth: null }
-	return css
+	return style
 
 # test '.one:hover .test:hocus.test > again'
 # test '.test@in-base div.one @focus @in-active @in-other @md'
