@@ -35,7 +35,7 @@ var JS_KEYWORDS = [
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','const','self','await','import','require','module','export','static'
+	'when','def','tag','do','elif','begin','var','let','const','self','await','import','module','export','static'
 ]
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop','lazy']
@@ -50,7 +50,7 @@ export var ALL_KEYWORDS = [
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','const','self','await','import',
-	'and','or','is','isnt','not','yes','no','isa','case','nil','require','module','export','static'
+	'and','or','is','isnt','not','yes','no','isa','case','nil','module','export','static'
 ]
 
 # The list of keywords that are reserved by JavaScript, but not used, or are

@@ -2849,6 +2849,7 @@ export class Root < Code
 
 				@scope.lookup('__filename'):c = do LIT("{np:resolve}({STR(rel).c})").c
 				@scope.lookup('__dirname'):c = do LIT("{np:dirname}({np:resolve}({STR(rel).c}))").c
+
 				# @scope.lookup('__filename'):c = do LIT("{runtime:_filename_}({STR(rel).c})").c
 				# @scope.lookup('__dirname'):c = do LIT("{runtime:_dirname_}({STR(rel).c})").c
 			else
@@ -5888,9 +5889,6 @@ export class Call < Node
 			if str == 'extern'
 				callee.value.value.@type = 'EXTERN'
 				return ExternDeclaration.new(args)
-			if str == 'require'
-				console.log 'calling require'
-
 			if str == 'tag'
 				# console.log "ERROR - access args by some method"
 				return TagWrapper.new(args and args:index ? args.index(0) : args[0])
@@ -5940,7 +5938,12 @@ export class Call < Node
 				if EXT_LOADER_MAP[ext] or path.indexOf('?as=') >= 0
 					@asset = STACK.root.registerAsset(path)
 					args.replace(arg,@asset:ref)
-					# callee = runtime:asset
+		
+		elif callee.isGlobal('require')
+			let arg = args.first
+			let path = arg isa Str and arg.raw
+			if path
+				args.replace(arg,LIT(MP(arg.c)))
 
 		if runref == 'asset'
 			
@@ -10491,9 +10494,10 @@ export class RootScope < Scope
 		super
 
 		register('global', self, type: 'global').@c = 'globalThis'
-		register('require', self, type: 'global') # .@c = 'globalThis'
+		self.REQUIRE = register('require', self, type: 'global') # .@c = 'globalThis'
 		self.IMPORT = register('import', self, type: 'global')
-		register 'module', self, type: 'global'
+		self.MODULE = register('module', self, type: 'global')
+
 		# register 'imba', self, type: 'global', varclass: GlobalReference
 		register 'window', self, type: 'global', varclass: WindowReference
 		self.document = register 'document', self, type: 'global', varclass: DocumentReference
