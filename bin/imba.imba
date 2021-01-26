@@ -182,6 +182,8 @@ cli.command('build <script>')
 	.option("--clean", "Remove files from previous build")
 	.option("--platform <platform>", "Platform for entry","browser")
 	.option("--no-hashing", "Disable hashing")
+	.option("--sourcemap <value>", "", "inline")
+	.option("-S, --no-sourcemap", "Omit sourcemaps")
 	.action(run)
 
 # watch should be implied?
@@ -196,11 +198,10 @@ cli.command('serve <script>')
 	.option("-o, --outdir <dest>", "Directory to output files")
 	.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,1)
 	.option("--sourcemap <value>", "", "inline")
+	.option("-S, --no-sourcemap", "Omit sourcemaps")
 	.option("--inspect", "Debug stuff")
 	.option("--pubdir <dest>", "Directory for generated public files - relative to outdir","public")
 	.option("--baseurl <url>", "Base url for your generated site","/")
-	
-	.option("--no-sourcemap", "Omit sourcemaps")
 	.option("--no-hashing", "Disable hashing")
 	.action(run)
 
