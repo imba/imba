@@ -7318,7 +7318,9 @@ export class TagAttr < TagPart
 			# "dataset.{key.slice(5)}{op}{val}"
 		else
 			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
-	
+
+export class TagStyleAttr < TagAttr
+
 export class TagAttrValue < TagPart
 	
 	def isPrimitive
@@ -7651,6 +7653,8 @@ class TagLike < Node
 			node = TagLoopFragment.new(body: node.body, value: node)
 		elif node isa Tag
 			flag(F.TAG_HAS_DYNAMIC_CHILDREN) if node.isSlot
+		elif node isa StyleRuleSet
+			yes
 		else
 			flag(F.TAG_HAS_DYNAMIC_CHILDREN) unless node isa Str
 			node = TagContent.new(value: node)
@@ -7883,12 +7887,11 @@ export class TagContent < TagLike
 			return "{bvar} || {ref}.insert$({value.c(o)})"
 		elif value isa TagTextContent and isOnlyChild and !(parent isa TagSwitchFragment)
 			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$(String({key}={vvar})))"
-
 		else
 			parts.push("{vvar}={value.c(o)}")
 
 			let inskey = "{parent.cvar}[{osym(:i)}]"
-
+			# TODO rework to only introduce context with <( dynamic )> syntax (expecting tags)
 			if value isa Call or value isa BangCall
 				# let k = "{parent.cvar}[{osym.c}]"
 				let k = "{parent.cvar}[{osym('$')}]"
@@ -8736,6 +8739,24 @@ export class Tag < TagLike
 					add "{bvar} || {tvar}.insert$({item.c(o)})"
 				else
 					add "{tvar}.insert$({item.c(o)})"
+			elif item isa StyleRuleSet
+				for ph in item.placeholders
+					let item = ph.@setter
+					# TODO - this logic should definitely move into TagAttr.c
+					let iref = "{cvar}[{item.osym}]"
+					let val = item.value
+					if item.valueIsStatic
+						add "{bvar} || ({ref}.{M(item.js(o),item)})"
+					elif val isa Func
+						add "({ref}.{item.js(o)})"
+					elif val.@variable
+						let vc = val.c(o)
+						item.value = LIT("{iref}={vc}")
+						add "({vc}==={iref} || ({ref}.{M item.js(o),item}))"
+					else
+						item.value = LIT("{iref}={vvar}")
+						add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{M item.js(o),item}))"
+
 			else
 				add item.c(o)
 
@@ -9270,6 +9291,8 @@ export class StyleRuleSet < StyleNode
 		let cmp = @tagDeclaration = stack.up(TagDeclaration)
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
+
+		
 		
 		let sel = String(@selectors).trim
 
@@ -9293,18 +9316,24 @@ export class StyleRuleSet < StyleNode
 						@sel = "& {@sel}"
 					elif @sel.match(/^\@/) and !@sel.match(/&/)
 						@sel = "&{@sel}"
-
-					# @sel = @sel.replace('&',".{cmp.cssns}_")
-					# @sel = "& {@sel}" if @sel.indexOf('&') == -1
 					@sel = @sel.replace('&',".{cmp.cssns}_")
 				set(inClassBody: yes)
-				@rulescope = owner.scope__
 				
 				if cmp
 					cmp.set(hasScopedStyles: yes)
 				
 			else
 				yes # THROW here
+		
+		elif stack.parent isa TagBody
+			@tag = stack.up(TagLike)
+			# console.log "parent is tagbody! {@tag}"
+			@sel = String(@selectors).trim or '&'
+			if @sel.match(/^\>{1,3}/)
+				@sel = "& {@sel}"
+			elif @sel.match(/^\@/) and !@sel.match(/&/)
+				@sel = "&{@sel}"
+			@sel = @sel.replace('&',".{@tag.cssflag}")
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
@@ -9328,6 +9357,21 @@ export class StyleRuleSet < StyleNode
 		
 		@styles = {}
 		@body?.traverse(rule: self, styles: @styles, rootRule: (o:rule or self))
+
+
+		# add the placeholderes
+		if option(:inTagTree) and @placeholders:length
+			# console.log 'placeholders'
+			for ph in @placeholders
+				let setter = TagStyleAttr.new(ph.name)
+				setter.@tag = @tag
+				setter.value = ph.value
+				setter.set(
+					propname: ph.@propname
+					unit: ph.option('unit')
+				)
+				ph.@setter = setter
+				setter.traverse
 
 		if o:rule and o:styles
 			if o:styles[@sel] # '§ '+
@@ -9385,10 +9429,9 @@ export class StyleRuleSet < StyleNode
 				return "exports.{@identifier.c} = '{@name}'"
 			else
 				return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
-		
-		return '' if option(:inClassBody) or option(:toplevel)
+
+		return '' if option(:inClassBody) or option(:inTagTree) or option(:toplevel)
 		let out = "'{@name}'"
-		# out += '\n/*\n' + @css + '\n*/'
 		return out
 
 	# nodes # bunch of style properties and potentially nested rules

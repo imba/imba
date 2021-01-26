@@ -528,6 +528,7 @@ var grammar =
 		o 'Splat'
 		o 'LOGIC'
 		o 'Comment'
+		o 'StyleBlockDeclaration' do A1.set(inTagTree: yes)
 	]
 	
 	# Class definitions have optional bodies of prototype property assignments,
