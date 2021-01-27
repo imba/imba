@@ -36,9 +36,8 @@ export class Manifest < EventEmitter
 		reviver = do(key) new Asset(self)
 		init(options.data)
 	
-	get srcdir do data.srcdir
-	get outdir do data.outdir
-	get assetsDir do data.assetsDir
+	get srcdir do np.resolve(path,data.srcdir)
+	get outdir do np.resolve(path,data.outdir)
 	get changes do data.changes or {}
 	get inputs do data.inputs
 	get outputs do data.outputs
@@ -130,4 +129,3 @@ class LazyProxy
 		return true
 
 export const manifest = LazyProxy.for do global.#manifest
-# global.#manifest = manifest

@@ -9,7 +9,6 @@ class Manifest
 	def constructor
 		data = {}
 
-	get assetsDir do data.assetsDir
 	get changes do data.changes or {}
 	get inputs do data.inputs
 	get outputs do data.outputs

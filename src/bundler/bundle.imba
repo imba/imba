@@ -896,6 +896,7 @@ export default class Bundle < Component
 
 	def write result
 		# after write we can wipe the buildcache
+		#outfs ||= new FileSystem(o.outdir,program)
 		
 		let meta = result.meta
 		let ins = meta.inputs
@@ -907,8 +908,6 @@ export default class Bundle < Component
 			return
 
 		let manifest = result.manifest = {
-			srcdir: outbase
-			outdir: fs.resolve(o.tmpdir or o.outdir)
 			inputs: ins
 			outputs: outs
 			urls: urls
@@ -929,12 +928,13 @@ export default class Bundle < Component
 		# a sorted list of all the output hashes is a fast way to
 		# see if anything in the bundle has changed or not
 		manifest.hash = createHash(Object.values(outs).map(do $1.hash or $1.path).sort!.join('-'))
-		
-		#outfs ||= new FileSystem(o.outdir,program)
 
 		log.ts "ready to write"
 		let mpath = main and main.path + '.manifest'
 		let mfile = mpath and #outfs.lookup(mpath)
+
+		manifest.srcdir = np.relative(mfile.abs,outbase)
+		manifest.outdir = np.relative(mfile.abs,#outfs.cwd)
 
 		if program.clean
 			let rm = new Set
