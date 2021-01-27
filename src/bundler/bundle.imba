@@ -167,6 +167,9 @@ export default class Bundle < Component
 			css: 'external'
 		}
 
+		if o.sourcesContent !== undefined
+			esoptions.sourcesContent = o.sourcesContent
+
 		if o.platform == 'worker'
 			# quick hack
 			imbaoptions.platform = 'node'

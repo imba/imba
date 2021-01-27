@@ -94,7 +94,6 @@ def run entry, o, extras
 		platform: 'node'
 		watch: o.watch
 		outdir: o.outdir
-		sourcemap: o.sourcemap === false ? no : 'inline'
 		hashing: false
 		execOnly: yes
 		config: o.config

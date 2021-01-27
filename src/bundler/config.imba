@@ -13,7 +13,8 @@ export const defaultConfig = {
 	node: {
 		platform: 'node'
 		format: 'cjs'
-		sourcemap: true
+		sourcemap: 'inline'
+		sourcesContent: false
 		target: ['node12.19.0']
 		external: ['dependencies','!imba']
 	}
