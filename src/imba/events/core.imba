@@ -48,6 +48,21 @@ def Event.throttle$mod time = 250
 			element.flags.decr('throttled')
 			handler.throttled = no
 	return true
+
+def Event.debounce$mod time = 250
+	let queue = state.debounced ||= []
+	queue.push(queue.last = event)
+	new Promise do(resolve)
+		setTimeout(&,parseTime(time)) do
+			if queue.last == event
+				# if this event is still the last
+				# add the debounced queue to the event
+				# and let the chain continue
+				event.debounced = queue
+				handler.state = {}
+				resolve(true)
+			else
+				resolve(false)
 	
 def Event.flag$mod name,sel
 	# console.warn 'event flag',self,arguments,id,step
