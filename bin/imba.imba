@@ -105,7 +105,7 @@ def run entry, o, extras
 
 	o.port ||= await getport(port: getport.makeRange(3000, 3100))
 	
-	if o.command == 'serve'
+	if o.command == 'serve' or (params.format == 'html')
 		delete params.entryPoints
 
 		params.stdin = {
