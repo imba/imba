@@ -109,7 +109,6 @@ export class EventHandler
 		let element = event.currentTarget
 		let mods = self.params
 		let i = 0
-		let commit = yes # self.params.length == 0
 		let awaited = no
 		let prevRes = undefined
 		
@@ -124,6 +123,7 @@ export class EventHandler
 			id: ++self.count
 			step: -1
 			state: self.state
+			commit: null
 			current: null
 		}
 		
@@ -153,6 +153,7 @@ export class EventHandler
 				handler = handler.split('~')[0]
 			
 			let modargs = null
+			let ismod = no
 			let args = [event,state]
 			let res = undefined
 			let context = null
@@ -194,9 +195,9 @@ export class EventHandler
 			elif handler == 'prevent'
 				event.preventDefault()
 			elif handler == 'commit'
-				commit = yes
+				state.commit = yes
 			elif handler == 'silence' or handler == 'silent'
-				commit = no
+				state.commit = no
 			elif handler == 'ctrl'
 				break unless event.ctrlKey
 			elif handler == 'alt'
@@ -230,6 +231,7 @@ export class EventHandler
 					handler = fn
 					context = state
 					args = modargs or []
+					ismod = yes
 
 				# should default to first look at closure - no?
 				elif handler[0] == '_'
@@ -243,21 +245,23 @@ export class EventHandler
 			elif context
 				res = context[handler].apply(context,args)
 
-			if res and res.then isa Function and res != scheduler.$promise
-				scheduler.commit! if commit
+			if state.commit === null and !ismod
+				state.commit = yes
 
+			if res and res.then isa Function and res != scheduler.$promise
+				scheduler.commit! if state.commit
 				awaited = yes
 				# TODO what if await fails?
 				res = await res
 
 			if res === false
 				break
-				
 
 			state.value = res
 		
 		emit(state,'end',state)
-		scheduler.commit! if commit
+
+		scheduler.commit! if state.commit
 
 		self.currentEvents.delete(event)
 		if self.currentEvents.size == 0

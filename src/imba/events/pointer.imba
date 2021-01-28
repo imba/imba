@@ -266,6 +266,9 @@ def Event.touch$sync$mod item,xalias='x',yalias='y'
 			tx: state.x
 			ty: state.y
 		}
+	
+	if commit === null
+		commit = yes
 
 	item[xalias] = o.x + (state.x - o.tx) if xalias
 	item[yalias] = o.y + (state.y - o.ty) if yalias

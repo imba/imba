@@ -1,3 +1,6 @@
+## unreleased
+* Only call imba.commit when events are actually handled
+
 ## 2.0.0-alpha.117
 * Alias `tabindex` to `tabIndex` in tag attributes.
 * Fix scoping issue with css in tag trees
