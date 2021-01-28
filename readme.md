@@ -9,6 +9,21 @@
 Imba is a friendly full-stack programming language for the web that compiles to performant JavaScript.
 It has language level support for defining, extending, subclassing, instantiating and rendering DOM nodes.
 
+## Get started
+
+To try the new `imba` command before official release follow these steps
+
+```
+# clone repo somewhere on your disk
+> git clone https://github.com/imba/imba.git
+cd imba/
+npm install
+npm run bootstrap
+npm link
+```
+
+Now you should have access to the global `imba` binary anywhere in your terminal. Call `imba --help` to see available commands.
+
 ## Documentation
 
 To get started with Imba, we recommend reading through the [official guide](http://imba.io/guides). If you just want to get going, clone [hello-world-imba](https://github.com/somebee/hello-world-imba) and follow the readme. Check out the [awesome-imba](https://github.com/koolamusic/awesome-imba) list for more resources.
@@ -25,7 +40,7 @@ For the exact meeting times please use the Meetup group [Imba Oslo Meetup](https
 
 You can join us remotely via [Zoom](https://us04web.zoom.us/j/230170873).
 
-Did you miss a meeting? No worries, catch up via the [meeting notes](https://docs.google.com/document/d/1ABGjOJut9eXrajYjdN4G4-UGGU4gvKznLk5CAaXYjso/edit?usp=sharing) or [video recordings](https://www.youtube.com/playlist?list=PLf1a9PYKGPdl3OMBHV72Oz23eFy9q51jJ).
+Did you miss a meeting? No worries, catch up via the [meeting notes](https://bit.ly/2JyjGM1) or [video recordings](https://www.youtube.com/playlist?list=PLf1a9PYKGPdl3OMBHV72Oz23eFy9q51jJ).
 
 ### Chat
 

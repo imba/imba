@@ -5,6 +5,7 @@ var T = require './token'
 var Token = T.Token
 
 import INVERSES from './constants'
+import Compilation from './compilation'
 
 var K = 0
 
@@ -34,7 +35,7 @@ var JS_KEYWORDS = [
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','const','self','await','import','require','module','export','static'
+	'when','def','tag','do','elif','begin','var','let','const','self','await','import','module','export','static'
 ]
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop','lazy']
@@ -49,7 +50,7 @@ export var ALL_KEYWORDS = [
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','const','self','await','import',
-	'and','or','is','isnt','not','yes','no','isa','case','nil','require','module','export','static'
+	'and','or','is','isnt','not','yes','no','isa','case','nil','module','export','static'
 ]
 
 # The list of keywords that are reserved by JavaScript, but not used, or are
@@ -77,7 +78,7 @@ var IDENTIFIER = /// ^
 		(\$|##|#|@|\%)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]?
 	)
-	( [^\n\S]* : (?![\*\=:$\w\x7f-\uffff]) )?  # Is this a property name?
+	( [^\n\S]* : )?  # Is this a property name?
 ///
 
 var IMPORTS = /// ^
@@ -121,6 +122,10 @@ var STYLE_NUMERIC = ///^
 
 var STYLE_IDENTIFIER = ///^
 	[\w\-\$]*\w[\w\-\$]*
+///
+
+var STYLE_URL = ///^
+	url\(([^\)]*)\)
 ///
 
 var STYLE_PROPERTY = ///^
@@ -365,6 +370,7 @@ export class Lexer
 		@last    = null
 		@lastTyp = ''
 		@lastVal = null
+		@script  = null
 		self
 
 	def jisonBridge jison
@@ -378,7 +384,7 @@ export class Lexer
 		}
 
 
-	def tokenize code, o = {}
+	def tokenize code, o, script = null
 
 		if code:length == 0
 			return []
@@ -394,6 +400,7 @@ export class Lexer
 		@lastTyp = null
 		@lastVal = null
 
+		@script  = script
 		@code    = code
 		@opts    = o
 		@locOffset = o:loc or 0
@@ -407,14 +414,14 @@ export class Lexer
 		if o:gutter !== undefined
 			@state:gutter = o:gutter
 		
-		o.@tokens = @tokens 
+		if @script and !o:inline
+			@script:tokens = @tokens
 		
 		parse(code)
 		closeIndentation unless o:inline
 
-		if !o:silent and @ends:length
-			console.log @ends
-			throw error("missing {@ends.pop}")
+		if @ends:length
+			error("missing {@ends.pop}")
 
 		return @tokens
 
@@ -602,6 +609,43 @@ export class Lexer
 			pair('TAG')
 
 		return 0
+
+	def findTypeAnnotation str
+		var stack = []
+		var i = 0
+		var replaces = []
+		var ending = /[\=\n\ \t\.\,\:\+]/
+		# could it not happen here?
+		while i < str:length
+			var chr = str.charAt(i)
+			let end = stack[0]
+			let instr = end == '"' or end == "'"
+
+			if chr and chr == end
+				stack.shift()
+			
+			elif !end and (chr == ')' or chr == ']' or chr == '}' or chr == '>')
+				break
+				
+			elif chr == '('
+				stack.unshift(')')
+			elif chr == '['
+				stack.unshift(']')
+			elif chr == '{'
+				stack.unshift('}')
+			elif chr == '<'
+				stack.unshift('>')
+			elif chr == '"'
+				stack.unshift('"')
+			elif chr == "'"
+				stack.unshift("'")
+			elif !end and ending.test(chr)
+				#  (chr == '=' or chr == '\n' or chr == '{' or chr == ' ' or chr == '.' or chr == ',' or chr == ':' or chr == '+')
+				break
+			i++
+		
+		return null if i == 0
+		return str.slice(0,i)
 		
 	def findBalancedSelector str
 		var stack = []
@@ -725,7 +769,13 @@ export class Lexer
 				yes
 			token typ, m[0], len
 			return len
-			
+
+		elif m = STYLE_URL.exec(@chunk)
+			# console.log 'matching style url',m
+			let len = m[0]:length
+			token 'CSSURL', m[0], len
+			return m[0]:length
+
 		elif m = STYLE_IDENTIFIER.exec(@chunk)
 			let id = 'CSSIDENTIFIER'
 			let val = m[0]
@@ -735,6 +785,7 @@ export class Lexer
 			elif @last and !@last:spaced and ltyp == '}'
 				id = 'CSSUNIT'
 			token id, val, len
+
 			return len
 		
 		elif @last and !@last:spaced and ltyp == '}' and chr == '%'
@@ -864,11 +915,11 @@ export class Lexer
 			# only if we are on a newline? or something?
 			return true
 			
-		if id == 'struct' and @indents == 0
-			return true # 'CLASS'
-			
 		if id == 'css'
-			if !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
+			# experimental css inside tag trees - making css keyword everywhere
+			return true
+
+			if (@lastTyp in ['TERMINATOR'] or !@lastTyp)
 				return true
 				
 			if (@lastVal in ['global','local','export','default'])
@@ -877,9 +928,11 @@ export class Lexer
 			if (@lastTyp in ['='])
 				return true
 
+			
+
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css' or id == 'constructor')
 			var scop = getScope
-			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'STRUCT'
+			var incls = scop == 'CLASS' or scop == 'TAG'
 
 			# if id == 'css' and !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
 			# 	return true
@@ -1082,7 +1135,7 @@ export class Lexer
 		# switch 
 
 		# should be strict about the order, check this manually instead
-		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS' or typ == 'STRUCT'
+		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS'
 			queueScope(typ)
 
 			var i = @tokens:length
@@ -1099,9 +1152,18 @@ export class Lexer
 			queueScope(typ)
 
 		elif typ == 'IMPORT'
-			# could manually parse the whole ting here?
-			pushEnd('IMPORT')
-			token(typ, id, idlen)
+			# console.log 'import last type',lastTyp,@chunk[idlen]
+			let next = @chunk[idlen]
+			if lastTyp == 'AWAIT' or next == '(' or next == '.'
+				typ = 'IDENTIFIER'
+			else
+				pushEnd('IMPORT')
+				token(typ, id, idlen)
+				# return importsToken or len
+				return len
+
+		elif id == 'type' and lastTyp == 'IMPORT'
+			token('TYPEIMPORT', id, idlen)
 			# return importsToken or len
 			return len
 
@@ -1188,7 +1250,6 @@ export class Lexer
 		if !prev or prev:spaced or @prevVal in ['(','[','=']
 			let sym = helpers.dashToCamelCase(symbol.slice(1))
 			token 'STRING', '"' + sym + '"', match[0]:length
-			# warn error("Symbols are deprecated - use strings '{symbol.slice(1)}'")
 			return match[0]:length
 		return 0
 
@@ -1423,11 +1484,9 @@ export class Lexer
 				whitespace = whitespace.slice(gutter:length)
 
 			elif @chunk[indent:length] === undefined
-				# if this is the end of code we're okay
 				yes
 			else
-				warn('incorrect indentation')
-				# console.log "GUTTER IS INCORRECT!!",JSON.stringify(indent),JSON.stringify(@chunk[indent:length]),@last # @chunk[indent:length - 1]
+				error('incorrect indentation')
 
 			# should throw error otherwise?
 
@@ -1445,6 +1504,7 @@ export class Lexer
 
 			let indentSize = 0
 			let offset = 0
+			let offsetLoc = @loc
 
 			while true
 				let idx = whitespace.indexOf(@indentStyle,offset)
@@ -1453,14 +1513,16 @@ export class Lexer
 					offset += @indentStyle['length']
 				elif offset == whitespace:length
 					break
-				elif @opts:silent
-					break
 				else
 					# workaround to report correct location
 					@loc += indent:length - whitespace:length
+					let start = @loc
 					token('INDENT', whitespace,whitespace:length)
-					unless @opts:silent
-						throw error("use tabs for indentation")
+
+					error("Use tabs for indentation",{
+						offset: start + offset
+						length: whitespace:length - offset
+					})
 
 			size = indentSize
 
@@ -1805,7 +1867,7 @@ export class Lexer
 		elif value == ',' and context == 'IMPORT'
 			tokid = "IMPORT_COMMA"
 		
-		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or (pt == 'IDENTIFIER' or pt == 'SYMBOLID'))
+		elif value == '!' and prev and !prev:spaced and ([']',')'].indexOf(pv) >= 0 or (pt == 'IDENTIFIER' or pt == 'SYMBOLID' or pt == 'SUPER'))
 			tokid = 'BANG'
 			
 		elif value == '&' and @chunk.match(/^\&\s*[,\)\}\]]/)
@@ -1856,6 +1918,9 @@ export class Lexer
 
 		if value == '\\'
 			tokid = 'TYPE'
+			let annotation = findTypeAnnotation(@chunk.slice(1))
+			if annotation
+				value = value + annotation
 			
 		if value == '..' and !prev:spaced
 			tokid = '?.'
@@ -1894,7 +1959,8 @@ export class Lexer
 
 		if herecomment
 			if HEREDOC_ILLEGAL.test(doc)
-				throw error("block comment cannot contain '*/' starting")
+				error("block comment cannot contain '*/' starting")
+
 			return doc if doc.indexOf('\n') <= 0
 		else
 			while match = HEREDOC_INDENT.exec(doc)
@@ -1982,7 +2048,7 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter
 
-		throw error("missing { stack.pop }, starting") unless @opts:silent
+		error("missing { stack.pop }, starting")
 
 	# Expand variables and expressions inside double-quoted strings using
 	# braces for substitution of arbitrary expressions.
@@ -2053,7 +2119,7 @@ export class Lexer
 				# why create a whole new lexer? Should rather reuse one
 				# much better to simply move into interpolation mode where
 				# we continue parsing until we meet unpaired }
-				var nested = Lexer.new.tokenize inner, inline: yes, rewrite: no, loc: offset + locOffset
+				var nested = Lexer.new.tokenize(inner, {inline: yes, rewrite: no, loc: offset + locOffset}, @script)
 				# console.log nested.pop
 
 				if nested[0] and tT(nested[0]) == 'TERMINATOR'
@@ -2104,7 +2170,7 @@ export class Lexer
 
 					end = stack[stack:length - 1]
 					continue
-			if end is '}' and letter is [')']
+			if end is '}' and letter is ')'
 				stack.push end = letter
 			elif end is '}' and letter is '{'
 				stack.push end = '}'
@@ -2112,7 +2178,7 @@ export class Lexer
 				stack.push end = '}'
 			prev = letter # what, why?
 
-		throw error "missing { stack.pop }, starting"
+		error("missing { stack.pop }, starting")
 
 	# Pairs up a closing token, ensuring that all listed pairs of tokens are
 	# correctly balanced throughout the course of the token stream.
@@ -2120,7 +2186,7 @@ export class Lexer
 		var wanted = last(@ends)
 		unless tok == wanted
 			unless 'OUTDENT' is wanted
-				throw error "unmatched {tok}"
+				error("unmatched {tok}", length: tok:length)
 			var size = last(@indents)
 			@indent -= size
 			outdentToken(size, true, 0)
@@ -2181,27 +2247,11 @@ export class Lexer
 		quote + escapeLines(body, heredoc) + quote
 
 	# Throws a syntax error on the current `@line`.
-	def error message, len
-		message = "{message} on line {@line}" if @line isa Number
-
-		if len
-			message += " [{@loc}:{@loc + len}]"
-
-		var err = SyntaxError.new(message)
-		err:line = @line
-		var err = ERR.ImbaParseError.new(err, tokens: @tokens, pos: @tokens:length)
-		err.@code = @code
-		err:region = [@loc,@loc + (len or 0)]
-		return err
-
-	def warn message
-		var ary = @tokens:warnings ||= []
-		ary.push(message)
-
-		if !@opts:silent
-			if message isa ERR.ImbaParseError
-				message = message.excerpt(colors: 'yellow')
-		# add warnings to general compiler?
-		console.warn message
-		self
-
+	def error message, params = {} # len = 0
+		let loc = params:offset or @loc
+		let err = @script.addDiagnostic('error',{
+			message: message
+			source: params:source or 'imba-lexer'
+			range: params:range or @script.rangeAt(loc,loc + (params:length or len))
+		})
+		throw err.toError

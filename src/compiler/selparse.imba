@@ -1,4 +1,3 @@
-# var selparser = require('../../vendor/css-selector-parser')
 import * as selparser from '../../vendor/css-selector-parser'
 import {modifiers} from './theme.imba'
 
@@ -303,15 +302,15 @@ export def parse str, options
 	return out
 
 export def test str, log = no
-	var sel = selparser.parse(str)
+	let sel = selparser.parse(str)
 	console.log 'parsed',str,sel
-	var options = {ns: 'dvs342'}
-	var out = rewrite(sel,null,options)
-	let css = render(out)
-	console.log css
+	let options = {ns: 'dvs342'}
+	let out = rewrite(sel,null,options)
+	let style = render(out)
+	console.log style
 	if log
 		console.dir sel,{ depth: null }
-	return css
+	return style
 
 # test '.one:hover .test:hocus.test > again'
 # test '.test@in-base div.one @focus @in-active @in-other @md'

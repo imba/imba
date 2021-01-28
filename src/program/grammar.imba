@@ -402,6 +402,7 @@ export const states = {
 
 	import_: [
 		[/(import)(?=\s+['"])/,'keyword.import','@>import_source']
+		[/(import)(\s+type)(?=\s[\w\$\@\{])/,['keyword.import','keyword.import','@>import_body=decl-import/part']]
 		[/(import)@B/,'keyword.import','@>import_body=decl-import/part']
 	]
 
@@ -483,7 +484,7 @@ export const states = {
 
 	member_: [
 		# [/static(?=\s+(get|set|def) )/,'keyword.static'] # only in class and tagclass?
-		[/(constructor)@B/, 'entity.name.constructor','@>def_params&$1/$1']
+		[/(constructor)@B/, 'entity.name.constructor','@>def_params&def/def']
 		[/(def|get|set)(\s)(@defid)/, ['keyword.$1','white.entity','entity.name.$1','@>def_params&$1/$1']]
 		[/(def|get|set)(\s)(\[)/, ['keyword.$1','white.entity','$$','@>def_dynamic_name/$1']]
 	]
@@ -526,11 +527,12 @@ export const states = {
 	for_start: [
 		denter({switchTo: '@>for_body'},-1,-1)
 		[/\[/, '[', '@array_var_body']
-		[/\{/, '{', '@object_body']
+		[/\{/, '{', '@object_body'] # object_var_body?
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\,\s*)/,'separator']
 		[/\s(in|of)@B/,'keyword.$1',switchTo: '@>for_source=']
 		[/[ \t]+/, 'white']
+		'type_'
 	]
 	for_source: [
 		denter({switchTo: '@>for_body'},-1,{switchTo: '@for_body'})
@@ -554,7 +556,7 @@ export const states = {
 	]
 
 	field_: [
-		[/((?:lazy )?)((?:static )?)(const|let)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$2']] # $2_body.$S2.$2.$S4
+		[/((?:lazy )?)((?:static )?)(const|let|attr)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$3']] # $2_body.$S2.$2.$S4
 		[/static(?=\s+@id)/,'keyword.static']
 		[/(@id)(?=$)/,'field']
 		[/(@id)/,['field','@_field_1']]
@@ -564,11 +566,13 @@ export const states = {
 		denter(null,-1,-1)
 		'type_'
 		[/(\s*=\s*)/,['operator','@>_field_value']]
+		[/(\s*(?:\@)set\s*)/,['keyword.spy','@>_def&spy']]
 	]
 
 	_field_value: [
 		denter(2,-1,0)
 		'block_' # sure?
+		[/(\s*(?:\@)set\s*)/,['@rematch','@pop']]
 	]
 
 	var_: [
@@ -633,7 +637,7 @@ export const states = {
 		'member_'
 		'comment_'
 		'decorator_'
-		[/(get|set|def|static|prop|attr)@B/,'keyword.$0.invalid']
+		[/(get|set|def|static|prop|attr)@B/,'keyword.$0']
 		'field_'
 		'common_'
 		
@@ -692,11 +696,13 @@ export const states = {
 	]
 
 	_vardecl: [
+		denter(null,-1,-1)
 		[/\[/, '[', '@array_var_body']
 		[/\{/, '{', '@object_body']
 		[/(@variable)(?=\n|,|$)/,'identifier.$F','@pop']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator.declval',switchTo: '@var_value&value='] # ,switchTo: '@var_value='
+		'type_'
 	]
 
 	array_var_body: [
@@ -721,6 +727,7 @@ export const states = {
 		[/\{/, '{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator','@pop'] # ,switchTo: '@var_value='
+		'type_'
 	]
 
 	var_value: [
@@ -750,12 +757,13 @@ export const states = {
 
 	_type: [
 		denter(-1,-1,-1)
-		[/\\/,'type.delim']
-		[/\[/,'type','@/]']
-		[/\(/,'type','@/)']
-		[/\{/,'type','@/}']
-		[/\</,'type','@/>']
-		[/\,|\s/,{
+		[/\\/,'delimiter.type.prefix']
+		[/\[/,'delimiter.type','@/]']
+		[/\(/,'delimiter.type','@/)']
+		[/\{/,'delimiter.type','@/}']
+		[/\</,'delimiter.type','@/>']
+		[/\|/,'delimiter.type.union']
+		[/\,|\s|\=|\./,{
 			cases: {
 				'$/==0': { token: '@rematch', next: '@pop' }
 				'@default': 'type'
@@ -763,7 +771,7 @@ export const states = {
 		}]
 		[/[\]\}\)\>]/,{
 			cases: {
-				'$#==$/': { token: 'type', next: '@pop' }
+				'$#==$/': { token: 'delimiter.type', next: '@pop' }
 				'@default': { token: '@rematch', next: '@pop' }
 			}
 		}]

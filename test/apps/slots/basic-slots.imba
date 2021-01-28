@@ -34,8 +34,8 @@ tag app-root
 imba.mount <app-root>
 
 test do
-	ok $(.one em.slotted)
-	ok $(.one em.slotted)
-	ok $(.two em.fallback)
-	ok $(.three .div2)
-	ok $(.four div)
+	ok document.querySelector('.one em.slotted')
+	ok document.querySelector('.one em.slotted')
+	ok document.querySelector('.two em.fallback')
+	ok document.querySelector('.three .div2')
+	ok document.querySelector('.four div')

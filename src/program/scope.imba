@@ -114,6 +114,9 @@ export class Group < Node
 	get varmap
 		parent.varmap
 
+	def register symbol
+		return parent.register(symbol)
+
 	def lookup ...params
 		return parent.lookup(...params)
 
@@ -224,7 +227,7 @@ export class Scope < Node
 		ident && ident.mods & M.Static
 	
 	get handler?
-		!!type.match(/handler/)
+		!!type.match(/handler|spy/)
 
 	get member?
 		!!type.match(/def|get|set/)

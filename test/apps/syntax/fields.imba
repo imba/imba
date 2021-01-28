@@ -12,15 +12,8 @@ class A2
 test do
 	let item = new A2
 	eq item.name, 'hello'
-	
-class A3(name)
-	name = 'hello'
-	
-test do
-	let item = new A3('john')
-	eq item.name, 'john'
 
-class A4(...)
+class A4
 	name = 'hello'
 	
 test do
@@ -53,26 +46,6 @@ test do
 	eq C.one, undefined
 	eq C.type, 'cls'
 
-
-class D(a,b)
-	a = 2
-	b = 2
-	mult = a * b
-
-	
-test do
-	let d = new D
-	eq d.mult, 4
-
-class D2(a,b)
-	a = 2
-	b = 2
-	mult = a * b
-
-test do
-	let d = new D2(3)
-	eq d.mult, 6
-
 class E
 	a = 2
 	b = 2
@@ -81,6 +54,14 @@ class E
 test do
 	let e = new E
 	eq e.mult, 4
+	e = new E(a: 3)
+	eq e.mult, 6
+
+	e = new E(a: 1,b: 5)
+	eq e.mult, 5
+
+	e = new E(mult: 10)
+	eq e.mult, 10
 
 
 class F
@@ -93,3 +74,6 @@ class F
 test do
 	let f = new F
 	eq f.util.mult!, 4
+
+	f = new F(a: 3)
+	eq f.util.mult!, 6

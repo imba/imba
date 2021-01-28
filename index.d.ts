@@ -29,8 +29,15 @@ interface ImbaStyles {
     [key: string]: any;
 }
 
+interface ImbaAsset {
+    body: string;
+    url: string;
+    absPath: string;
+    path: string;
+}
 
-interface Imba {
+
+interface ImbaContext {
     setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
     setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
     clearInterval(handle?: number): void;
@@ -53,4 +60,17 @@ interface Imba {
     indexOf(target: any, source:any): boolean;
 }
 
-declare const imba: Imba
+interface Event {
+    detail: any;
+    originalEvent: Event | null;
+}
+
+interface Object {
+    [key: string]: any;
+}
+
+declare const imba: ImbaContext
+
+declare global {
+    imba: ImbaContext;
+}

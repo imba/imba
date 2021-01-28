@@ -1,6 +1,6 @@
-var puppy = window.puppy
+const puppy = window.puppy
 
-var pup = do(ns,...params)
+const pup = do(ns,...params)
 	if ns.match(/^spec/) and puppy
 		puppy(ns,params)
 		return
@@ -148,6 +148,7 @@ global class Spec < SpecComponent
 
 	def run
 		new Promise do(resolve,reject)
+			pup("spec:start",{})
 			let prevInfo = console.info
 			observer.observe(document.body,{
 				attributes: true,
@@ -324,7 +325,7 @@ global class SpecAssert < SpecComponent
 		self
 
 	def toString
-		if failed and message isa String
+		if failed and typeof message == 'string'
 			let str = message
 			str = str.replace('%1',actual)
 			str = str.replace('%2',expected)
@@ -332,7 +333,7 @@ global class SpecAssert < SpecComponent
 		else
 			"failed"
 
-window.spec = SPEC = new Spec
+window.spec = global.SPEC = new Spec
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
@@ -365,4 +366,8 @@ global def eqcss el, match,sel
 			global.eq(real,expected)
 	return
 
+window.onerror = do(e)
+	console.log('page:error',{message: (e.message or e)})
 
+window.onunhandledrejection = do(e)
+	console.log('page:error',{message: e.reason.message})

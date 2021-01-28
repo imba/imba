@@ -28,6 +28,16 @@ describe 'Defining classes' do
 		ok new expr
 		ok expr.name == 'NamedClass'
 
+	test 'new class' do
+		let obj = new class
+			one = 1
+			two = 2
+
+			def hello
+				yes
+		eq obj.hello!, yes
+		eq obj.one, 1
+
 describe 'Class body and method definitions' do
 
 	test 'Prototype methods' do

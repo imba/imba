@@ -1,3 +1,58 @@
+## 2.0.0-alpha.118
+* Only call imba.commit when events are actually handled
+
+## 2.0.0-alpha.117
+* Alias `tabindex` to `tabIndex` in tag attributes.
+* Fix scoping issue with css in tag trees
+* Add experimental router aliases/redirects support
+* Include preflight.css at root level of package
+
+
+## 2.0.0-alpha.116
+* Convert durations (`1s`, `150ms`, `60fps` etc) to ms-based numbers on compile-time
+
+## 2.0.0-alpha.115
+* Add `debounce` event modifier
+
+## 2.0.0-alpha.114
+* Add `no-minify` option to cli
+* Always compile `html` namespaced attributes to raw `setAttribute`
+
+## 2.0.0-alpha.113
+* Add `__realname` as an unaltered alias for `__filename`
+* Add support for selectors in tag tree - see [#490](https://github.com/imba/imba/issues/490)
+
+## 2.0.0-alpha.112
+* Show full version (including alpha number) in cli `imba --version`
+
+## 2.0.0-alpha.110
+* Add experimental `<tag autorender=interval>` inteface
+* Add `?v=hash` to asset urls when filename hashing is turned off
+* Add experimental support for `.html` entrypoints to `imba serve` and `imba build`
+* Add `abs` and `rel` shorthands for `position` style property
+* Fix memory leak when using `imba --watch`
+
+## 2.0.0-alpha.109
+* Support extending native tags `tag Purchase < form`
+* Allow defining global tags without dash in name
+
+## 2.0.0-alpha.108
+* Fix issue with `@nth-of-type`, `@nth-child` selectors
+* Improve internals of intersect event handling
+
+## 2.0.0-alpha.107
+* Add `asset.body` property for accessing raw content of assets
+
+## 2.0.0-alpha.106
+* Allow passing `rootMargin` options to intersect event
+* Fix issue in router related to hash links
+
+## 2.0.0-alpha.105
+* Fix issue with css property order
+
+## 2.0.0-alpha.102
+* changelog and docs coming soon. see imba.io
+
 ## 2.0.0-alpha.60
 * Add `route-to.exact` modifier to router
 

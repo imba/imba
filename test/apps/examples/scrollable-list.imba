@@ -3,8 +3,8 @@ tag scrollable-list
 	def setup
 		#views = []
 		#pool = []
-		#map = Map.new
-		#rendered = Set.new
+		#map = new Map
+		#rendered = new Set
 
 	def renderItem item, index
 		let ctx

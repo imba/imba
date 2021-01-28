@@ -18,16 +18,16 @@ let app = <app-root>
 imba.mount app
 
 test do
-	ok $(header + div.item-1)
-	ok $(div.item-2)
-	ok $(div.item-3 + footer)
+	ok document.querySelector('header + div.item-1')
+	ok document.querySelector('div.item-2')
+	ok document.querySelector('div.item-3 + footer')
 
 test do
 	items.pop()
-	$(app-root).render()
-	ok $(div.item-2 + footer)
+	document.querySelector('app-root').render()
+	ok document.querySelector('div.item-2 + footer')
 
 test do
 	items = []
-	$(app-root).render()
-	ok $(header + span.empty)
+	document.querySelector('app-root').render()
+	ok document.querySelector('header + span.empty')

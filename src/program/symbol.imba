@@ -13,7 +13,7 @@ export const SymbolFlags = {
 	GlobalComponent:         1 << 7,   # 
 	RegularEnum:             1 << 8,   #  Enum
 	ValueModule:             1 << 9,   # Instantiated module - file etc
-	Parameter:         1 << 10,  # Uninstantiated module
+	Parameter:               1 << 10,  # Uninstantiated module
 	TypeLiteral:             1 << 11,  # Type Literal or mapped type
 	ObjectLiteral:           1 << 12,  # Object Literal
 	Method:                  1 << 13,  # Method
@@ -30,11 +30,11 @@ export const SymbolFlags = {
 	Optional:                1 << 24,  # Optional property
 	
 	# Modifiers
-	IsSpecial:        1 << 27
+	IsSpecial:          1 << 27
 	IsImport:           1 << 28
 	IsStatic:           1 << 29
 	IsGlobal:           1 << 30
-	IsRoot:           1 << 31
+	IsRoot:             1 << 31
 	
 }
 
@@ -53,6 +53,7 @@ const Conversions = [
 	['entity.name.component.global',0,SymbolFlags.GlobalComponent]
 	['entity.name.function',0,SymbolFlags.Function]
 	['entity.name.class',0,SymbolFlags.Class]
+	['entity.name.constructor',0,SymbolFlags.Method]
 	['entity.name.def',0,SymbolFlags.Method]
 	['entity.name.get',0,SymbolFlags.GetAccessor]
 	['entity.name.set',0,SymbolFlags.SetAccessor]

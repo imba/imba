@@ -35,23 +35,21 @@
     },
     {
       "name": "Alexander Alemayhu",
-      "url": "https://github.com/scanf/"
+      "url": "https://github.com/aalemayhu/"
     }
   ],
   "scripts": {
-    "bootstrap": "node scripts/bootstrap.js",
-    "build-parser": "node scripts/generate-parser.js",
-    "test": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba",
-    "test-fast": "node scripts/bootstrap.js && bin/imba scripts/test-runner.imba -c",
+    "test": "bin/imba scripts/test-runner.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
-    "build": "npm run bootstrap && rollup -c rollup.config.js",
-    "watch": "npm run bootstrap && rollup --watch -c rollup.config.js",
-    "build-compiler": "npm run bootstrap && webpack --mode=none",
-    "watch-compiler": "npm run bootstrap && webpack --mode=none --watch",
-    "prerelease": "lerna publish --dist-tag pre"
+    "bootstrap": "node scripts/build-parser.js && node scripts/build.js",
+    "build": "node scripts/build.js",
+    "build-parser": "node scripts/build-parser.js",
+    "watch": "node scripts/build.js -w",
+    "prerelease": "lerna publish --dist-tag pre",
+    "link-latest": "PACKAGE_VERSION=$(node -p -e \"require('./package.json').version\") && npm dist-tag add imba@$PACKAGE_VERSION latest"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.99",
+  "version": "2.0.0-alpha.118",
   "licenses": [
     {
       "type": "MIT",
@@ -62,12 +60,30 @@
     "node": ">=13.10.0"
   },
   "directories": {},
-  "main": "./index.js",
-  "browser": "./dist/imba.js",
+  "main": "./index",
+  "type": "commonjs",
+  "browser": {
+    ".": "./index.imba",
+    "imba": "./index.imba",
+    "path": "./vendor/path.js",
+    "events": "./vendor/events.js",
+    "./program.imba": "./program.imba.js",
+    "./compiler.imba": "./compiler.imba.js"
+  },
+  "imports": {
+    "#imba": "./index.imba.js"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./program": "./program.imba.js",
+    "./workers": "./workers.imba.js",
+    "./register": "./register.imba.js",
+    "./loader": "./loader.imba.js",
+    "./compiler": "./compiler.imba.js"
+  },
   "bin": {
     "imba": "./bin/imba",
-    "imbac": "./bin/imbac",
-    "imbapack": "./bin/imbapack"
+    "imbac": "./bin/imbac"
   },
   "preferGlobal": true,
   "homepage": "https://imba.io",
@@ -76,16 +92,21 @@
     "url": "git://github.com/imba/imba.git"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^9.0.0",
-    "chokidar": "^3.4.2",
+    "commander": "^6.2.1",
+    "eventemitter3": "^4.0.7",
+    "fdir": "^4.1.0",
+    "flatted": "^3.1.0",
+    "get-port": "^5.1.1",
+    "image-size": "^0.9.3",
+    "micromatch": "^4.0.2",
+    "ora": "^5.2.0",
+    "picomatch": "^2.2.2",
     "puppeteer": "^2.1.1",
-    "raw-loader": "^3.1.0",
-    "rollup": "^1.32.1",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-terser": "^7.0.0",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10",
-    "webpack-dev-server": "^3.9.0"
+    "tmp": "^0.2.1",
+    "workerpool": "^6.0.3"
+  },
+  "dependencies": {
+    "chokidar": "^3.4.3",
+    "esbuild": "^0.8.31"
   }
 }

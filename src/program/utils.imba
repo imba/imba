@@ -1,3 +1,5 @@
+import {Range} from './structures'
+
 export class Converter
 	def constructor rules, matcher
 		self.cache = {}
@@ -51,8 +53,8 @@ export def getWellformedRange range
 	var start = range.start
 	var end = range.end
 	if start.line > end.line || start.line === end.line && start.character > end.character
-		return { start: end, end: start }
-	return range
+		return new Range(end,start) # { start: end, end: start }
+	return range isa Range ? range : (new Range(start,end))
 
 export def getWellformedEdit textEdit
 	var range = getWellformedRange(textEdit.range)

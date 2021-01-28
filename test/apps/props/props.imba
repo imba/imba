@@ -21,7 +21,7 @@ test 'cacheable function' do
 	let a = "tata"
 	let b = Math.random()
 	def render
-		var y = hello
+		let y = hello
 		<self>
 			<div test=(|a,b| a + b)>
 			<div test=(|a,b| a + b + y)>

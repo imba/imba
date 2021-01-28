@@ -1,6 +1,6 @@
 
 
-import { ImbaDocument,lexer,M, SymbolKind } from 'imba/program'
+import { ImbaDocument,lexer,M, SymbolKind } from '../../program'
 window.LEXER = lexer
 import {files} from './files'
 
@@ -274,6 +274,7 @@ tag app-root
 				<outline-part data=outline>
 			# <pre> <code innerHTML=highlight(original.getTokens!) contentEditable='true' spellcheck=false>
 
+imba.mount <app-root>
 
 global css @root
 	--token: #E3E3E3;

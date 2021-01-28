@@ -41,26 +41,26 @@ test 'class added in self' do
 	ok el.classList.contains('custom-class')
 
 test 'static class in child' do
-	ok $(div.child-class)
+	ok document.querySelector('div.child-class')
 
 test 'multiple dynamic' do
-	ok $(div.one.m1.m2)
+	ok document.querySelector('div.one.m1.m2')
 	mult = ''
 	await spec.tick()
-	ok $(div.one:not(.m2))
+	ok document.querySelector('div.one:not(.m2)')
 
 test 'combined outer and inner flags' do
-	ok $(nested-element.outer.inner)
-	ok $(static-inside.outer.inner)
+	ok document.querySelector('nested-element.outer.inner')
+	ok document.querySelector('static-inside.outer.inner')
 
 test 'combined outer and inner flags' do
 	flip = true
 	await spec.tick()
-	ok $(nested-element.outerflip.innerflip)
+	ok document.querySelector('nested-element.outerflip.innerflip')
 
 test 'static outer and inner flags' do
-	ok $(nested-element.static-outer.inner)
+	ok document.querySelector('nested-element.static-outer.inner')
 	
 
 test do
-	ok $(with-local-flags.outer.local)
+	ok document.querySelector('with-local-flags.outer.local')

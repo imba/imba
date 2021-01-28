@@ -1,4 +1,6 @@
-class ElementRoute
+import {Element} from '../dom/core'
+
+export class ElementRoute
 	def constructor node, path, parent, options = {}
 		node = node
 		route = imba.router.routeFor(node,path,parent ? parent.route : null,options)
@@ -68,7 +70,7 @@ class ElementRoute
 		node.flags.remove('routed')
 		node..routeDidLeave(self)
 
-class ElementRouteTo < ElementRoute
+export class ElementRouteTo < ElementRoute
 	
 	def enter
 		self
@@ -93,7 +95,7 @@ class ElementRouteTo < ElementRoute
 		else
 			imba.router.go(href)
 
-extend class window.Element
+extend class Element
 
 	get parent-route
 		#context.route

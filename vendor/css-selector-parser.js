@@ -628,7 +628,7 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
               return pre + "($" + pseudo.value + ")";
             } else if (pseudo.valueType === 'numeric') {
               return pre + "(" + pseudo.value + ")";
-            } else if (pseudo.valueType === 'raw') {
+            } else if (pseudo.valueType === 'raw' || pseudo.valueType === 'string' ) {
               return pre + "(" + pseudo.value + ")";
             } else {
               return pre + "(" + this.escapeIdentifier(pseudo.value) + ")";

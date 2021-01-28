@@ -1,10 +1,10 @@
-var todos = [
+let todos = [
 	{id: 1, title: "One"}
 	{id: 2, title: "Two"}
 	{id: 3, title: "Three"}
 ]
 
-var truthy = true
+let truthy = true
 
 tag app-original
 
@@ -28,14 +28,14 @@ tag app-root
 			else
 				<li> "No todo items here"
 
-imba.mount(var app = <app-original>)
+imba.mount(let app = <app-original>)
 
-var ordered = do
-	var titles = todos.map(|t| t.title).join("")
+let ordered = do
+	let titles = todos.map(|t| t.title).join("")
 	console.log titles,app.textContent
 	eq app.textContent, titles
 
-var titles = todos.map(|t| t.title).join("")
+let titles = todos.map(|t| t.title).join("")
 
 test do
 	eq app.textContent, titles

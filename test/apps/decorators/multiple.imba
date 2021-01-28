@@ -36,5 +36,5 @@ class Item
 		return sum
 		
 test 'multiple' do
-	let item = Item.new
+	let item = new Item
 	item.setup!

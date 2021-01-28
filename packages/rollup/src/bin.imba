@@ -87,7 +87,7 @@ var watch = options.watch
 var serve = options.serve
 var serving = no
 
-var imbac = require(path.resolve(lib.path,'dist','compiler.js'))
+var imbac = require(path.resolve(lib.path,'dist','compiler.cjs'))
 
 def imbaPlugin o
 	o = Object.assign({

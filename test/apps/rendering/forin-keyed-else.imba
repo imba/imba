@@ -1,10 +1,10 @@
-var todos = [
+const todos = [
 	{id: 1, title: "One"}
 	{id: 2, title: "Two"}
 	{id: 3, title: "Three"}
 ]
 
-var truthy = true
+let truthy = true
 
 tag app-original
 
@@ -30,12 +30,12 @@ tag app-root
 
 imba.mount(var app = <app-original>)
 
-var ordered = do
+const ordered = do
 	var titles = todos.map(|t| t.title).join("")
 	console.log titles,app.textContent
 	eq app.textContent, titles
 
-var titles = todos.map(|t| t.title).join("")
+let titles = todos.map(|t| t.title).join("")
 
 test do
 	# await spec.tick()

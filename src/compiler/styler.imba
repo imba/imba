@@ -6,7 +6,7 @@ import {fonts,colors,variants} from './theme.imba'
 import * as theme from  './theme.imba'
 
 const extensions = {}
-var ThemeInstance = null
+let ThemeInstance = null
 const ThemeCache = new WeakMap
 
 # {string: "hsla(0,0,0,var(--alpha,1))",h:0,s:0,l:0}
@@ -355,7 +355,7 @@ export class Calc
 		
 
 # This has to move into StyleTheme class
-var defaultPalette = {
+let defaultPalette = {
 	current: {string: "currentColor"}
 	transparent: new Color('transparent',0,0,100,'0%')
 	clear: new Color('transparent',100,100,100,'0%')
@@ -387,7 +387,7 @@ def parseColors palette, colors
 
 parseColors(defaultPalette,colors)
 
-var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
+const VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
 
 export class StyleTheme
 	
@@ -511,6 +511,15 @@ export class StyleTheme
 		for par in params
 			if let layout = layouts[String(par)]
 				layout.call(this,out,par,params)
+		return out
+
+	def position params
+		let out = {position: params}
+		let str = String(params[0])
+		if str == 'abs'
+			out.position = 'absolute'
+		elif str == 'rel'
+			out.position = 'relative'
 		return out
 		
 		

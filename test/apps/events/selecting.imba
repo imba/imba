@@ -1,4 +1,4 @@
-var name = "Jo"
+let name = "Jo"
 
 tag app-root
 
@@ -13,7 +13,7 @@ tag app-root
 imba.mount(<app-root>)
 
 test do
-	let el = $(input)
+	let el = document.querySelector('input')
 	await spec.tick()
 	eq el.value,name
 	el.focus()

@@ -27,6 +27,6 @@ tag app-root
 imba.mount <app-root>
 
 test do
-	ok $(.one div + em.main)
-	ok $(.three > .d1)
-	ok $(.three > .d2)
+	ok document.querySelector('.one div + em.main')
+	ok document.querySelector('.three > .d1')
+	ok document.querySelector('.three > .d2')

@@ -20,4 +20,7 @@ test do
 	eq data..missing..none!,undefined
 	eq data..missing..none(),undefined
 
+test do
+	eq data..unknown..method!, undefined
+
 window.imba..commit!
