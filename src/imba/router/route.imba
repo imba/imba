@@ -26,7 +26,7 @@ export class Route
 			# loop through and create regexes for matching?
 			for pair in parts.join('?').split('&')
 				continue unless pair
-				var [k,v] = pair.split('=')
+				let [k,v] = pair.split('=')
 				if k[0] == '!'
 					k = k.slice(1)
 					v = false

@@ -14,8 +14,13 @@ export class Location
 	
 	def parse url
 		url = new URL(url,router.origin) unless url isa URL
+		if let alias = router..aliases[url.pathname]
+			url.pathname = alias
 		self.url = url
 		self
+
+	def reparse
+		parse(url)
 		
 	# should definitely add match here
 	

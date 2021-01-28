@@ -28,6 +28,8 @@ export class Router < EventEmitter
 	def constructor doc, o = {}
 		super()
 		routes = {}
+		aliases = {}
+		redirects = {}
 		options = o
 		busy = []
 		#doc = doc
@@ -36,6 +38,7 @@ export class Router < EventEmitter
 		history = $web$ ? global.window.history : (new History(self))
 		location = new Location(o.url or doc.location.href,self)
 		mode = o.mode or 'history'
+		
 		self.setup!
 		self
 
@@ -43,6 +46,11 @@ export class Router < EventEmitter
 		#origin ||= #doc.location.origin
 	
 	def init
+		self
+
+	def alias from, to
+		aliases[from] = to
+		location.reparse!
 		self
 
 	def option key, value
@@ -88,7 +96,7 @@ export class Router < EventEmitter
 			if req.aborted
 				# console.log "request was aborted",params
 				# what about silent abort?
-				var res = !req.forceAbort && global.window.confirm("Are you sure you want to leave? You might have unsaved changes")
+				let res = !req.forceAbort && global.window.confirm("Are you sure you want to leave? You might have unsaved changes")
 
 				if res
 					req.aborted = no
@@ -192,7 +200,8 @@ export class Router < EventEmitter
 		e.preventDefault()
 	
 	get path
-		return location.path
+		let path = location.path
+		return aliases[path] or path
 
 	get url
 		return location.url
@@ -208,7 +217,7 @@ export class Router < EventEmitter
 
 	def serializeParams params
 		if params isa Object
-			var value = for own key,val of params
+			let value = for own key,val of params
 					[key,global.encodeURI(val)].join("=")
 			return value.join("&")
 		return params or ''
