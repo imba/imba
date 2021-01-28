@@ -369,21 +369,31 @@ export default class Bundle < Component
 		esb.onResolve(filter: /^imba(\/|$)/) do(args)
 			if args.path == 'imba'
 				if o.format == 'css'
-					return {path: args.path, external: yes}
+					return {path: "_", namespace: 'imba-raw'}
 
 				let out = np.resolve(imbaDir,'index.imba')
-				
-				if node?
-					return {path: out + '.js'}
-				else
-					return {path: out, namespace: 'file'}
+				return {path: out, namespace: 'file'}
+
+			# try to resolve imba files here?
+			let rel = args.path.slice(args.path.indexOf('/') + 1)
+			let path = np.resolve(imbaDir,rel)
+
+			let exts = ['','.imba']
+			if rel == 'program' or rel == 'compiler'
+				exts.unshift('.imba.js')
+
+			for ext in exts
+				if nfs.existsSync(path + ext)
+					return {path: path + ext}
+
+			return null
 
 			# if we're compiling for node we should resolve using the
 			# package json paths?
 			# log.debug "IMBA RESOLVE",args.path,args.importer
-			if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
-				# console.log 'resolving compiler?!',args,o.platform,o.format,esoptions.platform
-				return null
+			# if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
+			#	# console.log 'resolving compiler?!',args,o.platform,o.format,esoptions.platform
+			#	return null
 
 		# imba files import their stylesheets by including a plain
 		# import '_styles_' line - which resolves to he path
