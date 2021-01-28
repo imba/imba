@@ -7292,6 +7292,9 @@ export class TagAttr < TagPart
 			
 		let key = self.key
 
+		if key == 'tabindex'
+			key = 'tabIndex'
+
 		# why delegate differently on node and web?
 		# should rather always delegate value to '#value'?
 		if key == 'value' and @tag.@tagName in ['input','textarea','select','option','button'] and !STACK.isNode
