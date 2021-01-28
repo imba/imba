@@ -142,6 +142,9 @@ def run entry, o, extras
 		runner.start!
 
 		if o.watch
+			bundle.on('errored') do
+				runner.broadcast(['emit','manifest:error',$1])
+
 			bundle.manifest.on('change') do
 				runner.broadcast(['emit','manifest:change',bundle.manifest.raw])
 

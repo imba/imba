@@ -111,6 +111,11 @@ export const process = new class Process < EventEmitter
 			if proc.env.IMBA_HMR
 				# console.log 'manifest changed from master'
 				manifest.update(e)
+		
+		on('manifest:error') do(e)
+			console.log 'error from manifest!',e
+			manifest.errors = e
+			servers.broadcast('errors',manifest.errors)
 		yes
 
 	def send msg

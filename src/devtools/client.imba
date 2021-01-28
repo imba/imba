@@ -80,6 +80,13 @@ class DevTools
 			manifest.init(json)
 			log "hmr init",manifest.data
 
+		socket.addEventListener("errors") do(e)
+			let json = JSON.parse(e.data)
+			for item in json
+				console.error("error in {item.location.file}: {item.location.lineText} ({item.text})")
+			return
+			# manifest.init(json)
+
 		socket.addEventListener("manifest") do(e)
 			# let parsed = deserializeData(JSON.parse(e.data))
 			let json = JSON.parse(e.data)

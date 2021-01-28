@@ -574,6 +574,8 @@ export default class Bundle < Component
 			platform: o.platform
 			inputs: meta.inputs
 			outputs: meta.outputs
+			errors: [].concat(result.errors or [])
+			warnings: [].concat(result.warnings or [])
 			urls: {}
 		}
 		
@@ -648,6 +650,12 @@ export default class Bundle < Component
 				input.asset = res.meta.format == 'css' ? inp.css : inp.js
 				# console.log 'should add asset to the output',inp.js
 				addOutputs.add(res.meta.outputs)
+
+			if res and res.meta
+				# just register on root - or push to parent?
+				meta.errors.push(...res.meta.errors)
+				meta.warnings.push(...res.meta.warnings)
+
 
 		walker.collectCSSInputs = do(input, matched = [], visited = [])
 			if visited.indexOf(input) >= 0
@@ -903,8 +911,10 @@ export default class Bundle < Component
 		let outs = meta.outputs
 		let urls = meta.urls
 
-		if meta.errors
+		if meta.errors.length
 			# emit errors - should be linked to the inputs from previous working manifest?
+			log.error "failed with {meta.errors.length} errors",meta.errors
+			emit('errored',meta.errors)
 			return
 
 		let manifest = result.manifest = {
@@ -930,9 +940,7 @@ export default class Bundle < Component
 		manifest.hash = createHash(Object.values(outs).map(do $1.hash or $1.path).sort!.join('-'))
 
 		log.ts "ready to write"
-		let mpath = main and main.path + '.manifest'
-		let mfile = mpath and #outfs.lookup(mpath)
-
+		let mfile = #outfs.lookup(manifest.path)
 		manifest.srcdir = np.relative(mfile.abs,outbase)
 		manifest.outdir = np.relative(mfile.abs,#outfs.cwd)
 
