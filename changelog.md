@@ -1,8 +1,9 @@
-## unreleased
+## 2.0.0-alpha.117
 * Alias `tabindex` to `tabIndex` in tag attributes.
 * Fix scoping issue with css in tag trees
 * Add experimental router aliases/redirects support
 * Include preflight.css at root level of package
+
 
 ## 2.0.0-alpha.116
 * Convert durations (`1s`, `150ms`, `60fps` etc) to ms-based numbers on compile-time
