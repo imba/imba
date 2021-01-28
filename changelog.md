@@ -1,5 +1,6 @@
 ## unreleased
 * Alias `tabindex` to `tabIndex` in tag attributes.
+* Fix scoping issue with css in tag trees
 
 ## 2.0.0-alpha.116
 * Convert durations (`1s`, `150ms`, `60fps` etc) to ms-based numbers on compile-time

@@ -2882,13 +2882,6 @@ export class Root < Code
 
 		if o:resolve
 			script:js = transformers.resolveDependencies(o:sourcePath,script:js,o:resolve)
-
-		if false
-			console.log 'deps',script:imports
-			let resolver = do |path,ctx|
-				return "something else"
-			console.log transformers.resolveDependencies(script:js,resolver)
-
 		
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
@@ -9345,9 +9338,10 @@ export class StyleRuleSet < StyleNode
 		
 		elif stack.parent isa TagBody
 			@tag = stack.up(TagLike)
-			# console.log "parent is tagbody! {@tag}"
 			@sel = String(@selectors).trim or '&'
-			if @sel.match(/^\>{1,3}/)
+			# FIXME how does this work with multiple comma-separated selectors?
+
+			if !@sel.match(/\&/)
 				@sel = "& {@sel}"
 			elif @sel.match(/^\@/) and !@sel.match(/&/)
 				@sel = "&{@sel}"
