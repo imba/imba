@@ -1,6 +1,6 @@
 # imba$imbaPath=global
 import {Event,Element} from '../dom/core'
-import {listen,once,emit,unlisten} from '../utils'
+import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'
 
 const keyCodes = {
@@ -31,20 +31,20 @@ def Event.sel$mod expr
 def Event.if$mod expr
 	return !!expr
 	
-def Event.wait$mod num = 250
-	new Promise(do setTimeout($1,num))
+def Event.wait$mod time = 250
+	new Promise(do setTimeout($1,parseTime(time)))
 
 def Event.self$mod
 	return event.target == element
 	
-def Event.throttle$mod ms = 250
+def Event.throttle$mod time = 250
 	return false if handler.throttled
 	handler.throttled = yes
 
 	element.flags.incr('throttled')
 
 	once(current,'end') do
-		setTimeout(&,ms) do
+		setTimeout(&,parseTime(time)) do
 			element.flags.decr('throttled')
 			handler.throttled = no
 	return true

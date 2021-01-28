@@ -20,6 +20,22 @@ export class LazyProxy
 export def proxy getter, placeholder = {}
 	new Proxy(placeholder, new LazyProxy(getter))
 
+export def parseTime value
+	let typ = typeof value
+	if typ == 'number'
+		return value
+
+	if typ == 'string'
+		if (/^\d+fps$/).test(value)
+			return 1000 / parseFloat(value)
+		elif (/^([-+]?[\d\.]+)s$/).test(value)
+			return parseFloat(value) * 1000
+		elif (/^([-+]?[\d\.]+)ms$/).test(value)
+			return parseFloat(value)
+	# throw or return NaN?
+	return null
+	
+
 export def serializeData data
 	let map = new Map
 	let arr = []
