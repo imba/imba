@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.118
 * Only call imba.commit when events are actually handled
 
 ## 2.0.0-alpha.117
