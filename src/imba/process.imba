@@ -4,7 +4,7 @@ import nfs from 'fs'
 import np from 'path'
 import {EventEmitter} from 'events'
 import {manifest} from './manifest'
-import {Document,Location} from './dom/core'
+# import {Document,Location} from './dom/core'
 import log from '../utils/logger'
 
 import {Module} from 'module'
@@ -211,6 +211,7 @@ class Server
 
 		# fetch and remove the original request listener
 		let originalHandler = server._events.request
+		let dom = global.#dom
 		srv.off('request',originalHandler)
 
 		# check if this is an express app?
@@ -286,10 +287,12 @@ class Server
 
 			# console.log "get headers",base,req.url,headers,req.protocol
 			
-			let loc = new Location(req.url,base)
-
-			# create a context - not a document?
-			Document.create(location: loc) do
+			if dom
+				let loc = new dom.Location(req.url,base)
+				# create a context - not a document?
+				dom.Document.create(location: loc) do
+					return originalHandler(req,res)
+			else
 				return originalHandler(req,res)
 
 		srv.on('request',handler)

@@ -882,3 +882,8 @@ export def defineTag name, klass, options = {}
 		proto.flags$ns = flags
 
 	return klass
+
+global.#dom = {
+	Location: Location
+	Document: Document
+}
