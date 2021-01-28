@@ -2,26 +2,6 @@
 let rAF = global.requestAnimationFrame || (do(blk) setTimeout(blk,1000 / 60))
 let FPS = 60
 let SPF = 1 / 60
-
-let parseCache = {}
-
-# TODO use ms as the internal unit instead of this clunky framecount
-
-def parseScheduleValue input
-	if input === true or input === false or input === null
-		return input
-
-	let v = parseCache[input]
-	return v if v !== undefined
-	let val = input
-	if typeof val == 'string'
-		if val.match(/^\d+fps$/)
-			val = 60 / parseInt(val)
-		elif val.match(/^[\d\.]+s$/)
-			val = parseFloat(val) / (1 / 60)
-		elif val.match(/^[\d\.]+ms$/)
-			val = parseFloat(val) / (1000 / 60)
-	return parseCache[input] = val
 		
 # Scheduler
 class Scheduled
@@ -35,12 +15,14 @@ class Scheduled
 	def tick scheduler
 		last = owner.#frames
 		target.tick(owner)
+		1
 
 	def update o, activate?
 		let on = active
-		let val = parseScheduleValue(o.value)
+		let val = o.value
+		let changed = value != val
 
-		if value != val
+		if changed
 			deactivate!
 			value = val
 
@@ -57,12 +39,13 @@ class Scheduled
 			owner.on('commit',self)
 		elif value === no
 			yes
-			# stop from even 
-		elif value <= 2 and value >= 0.1
-			# this is not correct at all for now
-			owner.on('raf',self)
-		elif value > 2
-			#interval = global.setInterval(queue.bind(self),value * (1000 / FPS))
+		elif typeof value == 'number'
+			# duration
+			let tock = value / (1000 / 60)
+			if tock <= 2 
+				owner.on('raf',self)
+			else
+				#interval = global.setInterval(queue.bind(self),value)
 
 		active = yes
 		self

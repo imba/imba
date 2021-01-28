@@ -3916,8 +3916,19 @@ export class NumWithUnit < Literal
 		return self
 	
 	def c o
-		let raw = "{String(@value)}{String(@unit)}"
-		raw = "-{raw}" if option(:negate)
+		let unit = String(@unit)
+		let val = String(@value)
+
+		val = "-{val}" if option(:negate)
+
+		if unit == 's'
+			return "({val} * 1000)"
+		elif unit == 'ms'
+			return "{val}"
+		elif unit == 'fps'
+			return "(1000 / {val})"
+
+		let raw = "{val}{unit}"
 		o and o:unqouted ? raw : "'{raw}'"
 	
 export class ExpressionWithUnit < ValueNode
@@ -3927,6 +3938,7 @@ export class ExpressionWithUnit < ValueNode
 		@unit = unit
 	
 	def js o
+		let unit = String(@unit)
 		# util.unit(@value,STR(@unit)).c
 		# let out = typeof @value == 'string' ? @value : @value.c
 		"({value.c}+{STR(@unit).c})"
