@@ -143,6 +143,7 @@ export const states = {
 	op_: [
 		[/\s+\:\s+/,'operator.ternary']
 		[/(@unspaced_ops)/,cases: {
+			'@spread': 'operator.spread'
 			'@access': 'operator.access'
 			'@default': 'operator'
 		}]
@@ -1181,11 +1182,12 @@ export const grammar = {
 		'>', '<', '==', '<=', '>=', '!=', '&&', '||','===','!=='
 	],
 	ranges: ['..','...']
+	spread: ['...']
 	dot: ['.']
 	access: ['.','..']
 	math: ['+', '-', '*', '/', '++', '--'],
 
-	unspaced_ops: regexify('. .. + * / ++ --')
+	unspaced_ops: regexify('... . .. + * / ++ --')
 	comment: /#(\s.*)?(\n|$)/
 	# we include these common regular expressions
 	symbols: /[=><!~?&%|+\-*\/\^,]+/,
