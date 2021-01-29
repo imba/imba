@@ -4302,6 +4302,10 @@ export class ObjAttr < Node
 
 export class ObjRestAttr < ObjAttr
 
+	def js o
+		let key = self.key
+		"...{key.c}"
+
 export class ArgsReference < Node
 
 	# should register in this scope --
