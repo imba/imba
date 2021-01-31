@@ -112,6 +112,7 @@ var IMPLICIT_CALL_MAP =
 	'NEW': 1
 	'CLASS': 1
 	'IF': 1
+	'AWAIT': 1
 	'UNLESS': 1
 	'TRY': 1
 	'SWITCH': 1
