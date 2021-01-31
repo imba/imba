@@ -49,7 +49,7 @@
     "link-latest": "PACKAGE_VERSION=$(node -p -e \"require('./package.json').version\") && npm dist-tag add imba@$PACKAGE_VERSION latest"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.118",
+  "version": "2.0.0-alpha.119",
   "licenses": [
     {
       "type": "MIT",
