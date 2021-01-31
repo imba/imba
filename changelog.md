@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.119
 * Add support for object spread syntax `{a:1, ...obj}`
 * Fix regression causing crash when generating css
 
