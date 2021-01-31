@@ -199,7 +199,7 @@ let bundles = [{
 	outdir: '.',
 	platform: 'browser'
 },{
-	entryPoints: ['bin/imba.imba','index.imba','program.imba','compiler.imba','workers.imba','loader.imba'],
+	entryPoints: ['bin/imba.imba','bin/imba-create.imba','index.imba','program.imba','compiler.imba','workers.imba','loader.imba'],
 	outExtension: {".js": ".imba.js"},
 	bundle: true,
 	minify: false,
