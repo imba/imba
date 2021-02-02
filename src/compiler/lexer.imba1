@@ -150,8 +150,8 @@ var NUMBER = ///
 	^ 0x[\da-f_]+ |                              # hex
 	^ 0b[01_]+ |                              # binary
 	^ 0o[\d_]+ |                              # binary
-	^ (?:\d[_\d]*)\.?\d[_\d]* (?:e[+-]?\d+)? | # decimal2
-	^ \d*\.?\d+ (?:e[+-]?\d+)? # decimal
+	^ \-?(?:\d[_\d]*)\.?\d[_\d]* (?:e[+-]?\d+)? | # decimal2
+	^ \-?\d*\.?\d+ (?:e[+-]?\d+)? # decimal
 	
 ///i
 

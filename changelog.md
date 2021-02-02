@@ -2,6 +2,7 @@
 * Parse `fn await something` correctly
 * Improved router internals
 * Add internal `Node#attachToParent` and `Node#detachFromParent` methods
+* Preserve signed zero in output (Fixes #497)
 
 ## 2.0.0-alpha.119
 * Add support for object spread syntax `{a:1, ...obj}`
