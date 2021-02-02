@@ -100,6 +100,7 @@
     "get-port": "^5.1.1",
     "image-size": "^0.9.3",
     "micromatch": "^4.0.2",
+    "node-fetch": "^2.6.1",
     "ora": "^5.2.0",
     "picomatch": "^2.2.2",
     "puppeteer": "^2.1.1",

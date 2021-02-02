@@ -211,6 +211,7 @@ cli.command('serve <script>')
 	.option("--no-hashing", "Disable hashing")
 	.action(run)
 
+cli.command('create [project]','Create a new imba project from a template')
 
 log.ts 'parse options'
 binary.parse(process.argv)

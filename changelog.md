@@ -6,6 +6,7 @@
 * Make hmr reloading work with raw html assets
 * Make `--no-hashing` cli option actually work
 * Build html entrypoints in correct dist folder
+* Add `imba create` command for creating project from template
 
 ## 2.0.0-alpha.119
 * Add support for object spread syntax `{a:1, ...obj}`
