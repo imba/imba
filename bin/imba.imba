@@ -52,9 +52,10 @@ def parseOptions options, extras = []
 	if command == 'serve'
 		options.watch = yes
 
-	if options.watch or options.mode == 'development'
+	if options.watch
 		options.loglevel ||= 'info'
-		options.hmr = yes
+		if options.mode == 'development'
+			options.hmr = yes
 	
 	if options.force
 		options.mtime = Date.now!
