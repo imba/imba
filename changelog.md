@@ -3,6 +3,9 @@
 * Improved router internals
 * Add internal `Node#attachToParent` and `Node#detachFromParent` methods
 * Preserve signed zero in output (Fixes #497)
+* Make hmr reloading work with raw html assets
+* Make `--no-hashing` cli option actually work
+* Build html entrypoints in correct dist folder
 
 ## 2.0.0-alpha.119
 * Add support for object spread syntax `{a:1, ...obj}`

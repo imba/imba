@@ -1,6 +1,6 @@
 import {startService} from 'esbuild'
 import {startWorkers} from './pooler'
-import {pluck,createHash,diagnosticToESB} from './utils'
+import {pluck,createHash,diagnosticToESB,injectStringBefore} from './utils'
 
 import {serializeData,deserializeData} from '../imba/utils'
 import {Manifest} from '../imba/manifest'
@@ -40,6 +40,16 @@ export default class Bundle < Component
 
 	get web?
 		!node?
+
+	get dev?
+		program.mode == 'development'
+
+	get hmr?
+		dev?
+
+	# should generated files include hash of contents in filename?
+	get hashing?
+		(o.hashing !== false and program.hashing !== false)
 	
 	get o
 		options
@@ -684,12 +694,12 @@ export default class Bundle < Component
 		for own path,output of outs
 			output.#type = output._ = 'output'
 			output.path = path
-			output.type = (np.extname(path) or '').slice(1)
+			
 
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js
 				# console.log 'pubdir??',pubdir
-				output.path = "{pubdir}/{path.replace('.js','.html')}"
+				output.path = path = "{pubdir}/{path.replace('.js','.html')}"
 				# output.path = path.replace('.js','.html')
 				# output.dir = 'public'
 
@@ -697,6 +707,8 @@ export default class Bundle < Component
 				# output.dir = 'assets'
 				output.path = "{pubdir}/__assets__/{path}"
 				output.url = "{baseurl}/__assets__/{path}"
+
+			output.type = (np.extname(path) or '').slice(1)
 
 			let inputs = []
 			let dependencies = new Set
@@ -710,6 +722,7 @@ export default class Bundle < Component
 			output.dependencies = Array.from(dependencies)
 			output.inputs = inputs
 
+			# due to bugs in esbuild we need to reorder the css chunks
 			if output.type == 'css' and !output.#ordered
 				let origPaths = inputs.map(do $1[0].path )
 				let corrPaths = []
@@ -718,8 +731,6 @@ export default class Bundle < Component
 					walker.collectCSSInputs(output.source,corrPaths)
 
 				
-				# console.log "correct css files",corrPaths.map do $1.path
-				# due to bugs in esbuild we need to reorder the css chunks according to inputs?
 				let offset = 0
 				let body = output.#file.text
 				let chunks = []
@@ -737,18 +748,14 @@ export default class Bundle < Component
 
 					offset += bytes
 					offset += 1 if !esoptions.minify
-
-					# chunks[index] = chunk
 					chunks[index] = chunk
-					# chunks.push(chunk)
-					# console.log 'got chunk',chunk
 				
 				let text = chunks.filter(do $1).join('\n')
 				# console.log 'new text',text.length,body.length
 				output.#ordered = yes
 				output.#contents = text
 
-
+			# Workaround for esbuild bug that has been fixed
 			if output.imports
 				output.imports = output.imports.map do
 					let chunk = $1.path.indexOf("/chunk.")
@@ -828,9 +835,6 @@ export default class Bundle < Component
 
 					let urls = body.match(/URLS = \[(.*)\]/)[1].split(/\,\s*/g).map do mapping[$1]
 		
-					# now get the html
-					let htmlstart = body.indexOf('HTML = ') + 7
-					let html = body.slice(htmlstart,body.indexOf('\n',htmlstart))
 					let meta = builder.meta[output.source.path]
 					
 					if meta and meta.html
@@ -839,7 +843,8 @@ export default class Bundle < Component
 							return url
 						# console.log 'html is',meta,replaced
 						body = replaced
-
+						if hmr?
+							body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<html',''])
 
 			elif web?
 				let mfname = "_$MF$_"
@@ -859,11 +864,10 @@ export default class Bundle < Component
 			return asset if asset.#resolved or asset.hash
 			asset.#resolved = yes
 
-			if asset.type == 'js'
+			if asset.type == 'js' or asset.type == 'html'
 				log.debug "resolving assets in {asset.path}"
 				asset.#text = asset.#file.text
 				asset.#contents = await walker.replacePaths(asset.#text,asset)
-
 
 			if asset.type == 'map'
 				# console.log 'found map?!',asset,!!asset.source
@@ -876,7 +880,7 @@ export default class Bundle < Component
 
 			if true
 				# allow a fully custom pattern instead?
-				let sub = o.hashing !== false ? ".{asset.hash}." : "."
+				let sub = hashing? ? ".{asset.hash}." : "."
 				asset.originalPath = asset.path
 				if asset.url
 					asset.url = asset.url.replace('.__dist__.',sub)
@@ -888,7 +892,6 @@ export default class Bundle < Component
 				if asset.type == 'js' and asset.map
 					let orig = np.basename(asset.originalPath) + '.map'
 					let replaced = np.basename(asset.path) + '.map'
-					# console.log 'update url to the replaced map'
 					asset.#contents = asset.#contents.replace(orig,replaced)
 			return asset
 
@@ -929,30 +932,51 @@ export default class Bundle < Component
 
 		let manifest = result.manifest = {
 			inputs: ins
-			outputs: outs
+			outputs: {}
 			urls: urls
 		}
 		# console.log 'write',entryPoints,ins
 		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]].js
+		let assets  = manifest.assets = Object.values(outs)
 
 		let writeFiles = {}
 		let webEntries = []
 
 		manifest.path = main.path + '.manifest'
-		manifest.assets = Object.values(manifest.outputs)
 		
-		for item in manifest.assets
+		for item in assets
 			if item.url
 				manifest.urls[item.url] = item
 
 		# a sorted list of all the output hashes is a fast way to
 		# see if anything in the bundle has changed or not
-		manifest.hash = createHash(Object.values(outs).map(do $1.hash or $1.path).sort!.join('-'))
+		
 
 		log.ts "ready to write"
 		let mfile = #outfs.lookup(manifest.path)
 		manifest.srcdir = np.relative(mfile.abs,outbase)
 		manifest.outdir = np.relative(mfile.abs,#outfs.cwd)
+
+		if true
+			# set output paths of html files
+			let htmlFiles = assets.filter do $1.type == 'html'
+			let htmlPaths = htmlFiles.map do $1.path.split('/')
+
+			while htmlPaths[0] and htmlPaths[0].length > 1
+				let start = htmlPaths[0][0]
+				let shared = htmlPaths.every do $1[0] == start
+				break unless shared
+
+				for item in htmlPaths
+					item.shift!
+			
+			for item,i in htmlFiles
+				item.path = 'public/' + htmlPaths[i].join('/')
+
+		for item in assets
+			manifest.outputs[item.path] = item
+
+		manifest.hash = createHash(assets.map(do $1.hash or $1.path).sort!.join('-'))
 
 		if program.clean
 			let rm = new Set
@@ -973,7 +997,7 @@ export default class Bundle < Component
 			log.info "building in %path",o.outdir
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
-			for asset in manifest.assets
+			for asset in assets
 				let path = asset.path
 				let file = #outfs.lookup(path)
 				await file.write(asset.#contents,asset.hash)

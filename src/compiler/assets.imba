@@ -73,6 +73,11 @@ export def parseHTML raw
 				# find the closer
 				yes
 
+		if typ == 'delimiter.xml' and val == '>'
+			let currTyp = currTag..value
+			if currTyp == 'head' or currTyp == 'body'
+				tok.value += "<!--${currTyp}$-->"
+
 		if typ == 'attribute.name.xml'
 			currAttr = val
 

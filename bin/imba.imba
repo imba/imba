@@ -52,7 +52,7 @@ def parseOptions options, extras = []
 	if command == 'serve'
 		options.watch = yes
 
-	if options.watch or options.dev
+	if options.watch or options.mode == 'development'
 		options.loglevel ||= 'info'
 		options.hmr = yes
 	
@@ -156,7 +156,6 @@ let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version).name('
 
 cli.command('run <script>', { isDefault: true })
 	.description('Imba')
-	.option("-d, --dev", "Enable development mode")
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
 	.option("-M, --no-minify", "Disable minifying")
@@ -164,6 +163,7 @@ cli.command('run <script>', { isDefault: true })
 	.option("-o, --outdir <dest>", "Directory to output files")
 	.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
 	.option("-f, --force", "force overwriting and full compilation")
+	.option("--mode <mode>", "Configuration mode","development")
 	.option("--pubdir <dest>", "Directory for generated public files - relative to outdir","public")
 	.option("--baseurl <url>", "Base url for your generated site","/")
 	.option("--clean", "Remove files from previous build")
@@ -181,6 +181,7 @@ cli.command('build <script>')
 	.option("-v, --verbose", "Verbose logging",fmt.v,1)
 	.option("-f, --force", "force overwriting and full compilation")
 	.option("-o, --outdir <dest>", "Directory to output files","dist")
+	.option("--mode <mode>", "Configuration mode","production")
 	.option("--pubdir <dest>", "Directory for generated public files - relative to outdir","public")
 	.option("--baseurl <url>", "Base url for your generated site","/")
 	.option("--clean", "Remove files from previous build")
@@ -194,7 +195,6 @@ cli.command('build <script>')
 cli.command('serve <script>')
 	.description('Spawn a webserver for an imba/js/html entrypoint')
 	.option("-b, --build", "")
-	.option("-d, --dev", "Enable development mode")
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
 	.option("-M, --no-minify", "Disable minifying")
@@ -204,6 +204,7 @@ cli.command('serve <script>')
 	.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,1)
 	.option("--sourcemap <value>", "", "inline")
 	.option("-S, --no-sourcemap", "Omit sourcemaps")
+	.option("--mode <mode>", "Configuration mode","development")
 	.option("--inspect", "Debug stuff")
 	.option("--pubdir <dest>", "Directory for generated public files - relative to outdir","public")
 	.option("--baseurl <url>", "Base url for your generated site","/")

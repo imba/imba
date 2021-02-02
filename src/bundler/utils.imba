@@ -121,6 +121,15 @@ export def idGenerator alphabet = 'abcdefghijklmnopqrstuvwxyz'
 export def createHash body
 	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8).toUpperCase!
 
+
+export def injectStringBefore target, toInject, patterns = ['']
+	for patt in patterns
+		let idx = target.indexOf(patt)
+		if idx >= 0
+			return target.slice(0,idx) + toInject + target.slice(idx)
+	return target
+
+
 const dirExistsCache = {}
 
 export def ensureDir src
