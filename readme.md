@@ -1,5 +1,5 @@
 <p align="center">
-<a href="http://imba.io" target="_blank">
+<a href="https://imba.io" target="_blank">
 <img width="300" src="https://github.com/imba/brand/blob/master/imba-web-logo.png"></a>
 </p>
 
@@ -11,22 +11,15 @@ It has language level support for defining, extending, subclassing, instantiatin
 
 ## Get started
 
-To try the new `imba` command before official release follow these steps
-
 ```
-# clone repo somewhere on your disk
-> git clone https://github.com/imba/imba.git
-cd imba/
-npm install
-npm run bootstrap
-npm link
+npx imba create hello-world
+cd hello-world
+npm start
 ```
-
-Now you should have access to the global `imba` binary anywhere in your terminal. Call `imba --help` to see available commands.
 
 ## Documentation
 
-To get started with Imba, we recommend reading through the [official guide](http://imba.io/guides). If you just want to get going, clone [hello-world-imba](https://github.com/somebee/hello-world-imba) and follow the readme. Check out the [awesome-imba](https://github.com/koolamusic/awesome-imba) list for more resources.
+To get started with Imba, we recommend reading through the [official guide](https://imba.io/).
 
 ## Community
 
