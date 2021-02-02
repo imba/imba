@@ -153,6 +153,10 @@ export class Document
 	def constructor
 		self
 
+	get flags
+		# should be the html root
+		#flags ||= new Flags({classList: new DOMTokenList(self)})
+
 	get scripts
 		#scripts ||= []
 
@@ -324,6 +328,22 @@ export class Node
 			self.childNodes[0].insertBeforeBegin$(other)
 		else
 			self.appendChild(other)
+
+	get #placeholderNode
+		##placeholderNode ||= new Comment("")
+
+	def #attachToParent
+		let ph = #placeholderNode
+		if ph.parentNode and ph != self
+			ph.replaceWith$(self)
+		self
+
+	def #detachFromParent route
+		let ph = #placeholderNode
+		if parentNode and ph != self
+			self.replaceWith$(ph)
+			# TODO add detached flag?
+		self
 
 export class Text < Node
 

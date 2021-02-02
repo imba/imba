@@ -21,4 +21,4 @@ export * from './events/resize'
 export * from './events/selection'
 
 # Router
-export * from './router'
+export * from './router/index'

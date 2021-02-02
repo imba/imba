@@ -51,6 +51,10 @@ const contextHandler =
 				val = ctx[name]
 		return val
 
+extend class Document
+	get flags
+		self.documentElement.flags
+
 extend class Node
 	get #parent
 		##parent or this.parentNode or ##up # FIX
@@ -90,6 +94,22 @@ extend class Node
 			self.childNodes[0].insertBeforeBegin$(other)
 		else
 			self.appendChild(other)
+
+	get #placeholderNode
+		##placeholderNode ||= global.document.createComment("")
+
+	def #attachToParent
+		let ph = #placeholderNode
+		if ph.parentNode and ph != self
+			ph.replaceWith$(self)
+		self
+
+	def #detachFromParent route
+		let ph = #placeholderNode
+		if parentNode and ph != self
+			self.replaceWith$(ph)
+			# TODO add detached flag?
+		self
 
 # Basic element extensions
 extend class Element

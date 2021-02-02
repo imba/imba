@@ -3,15 +3,15 @@
 let routerInstance = null
 
 import {EventEmitter} from 'events'
-import {Node,Element,Document,createComment} from './dom/core'
-import {Location} from './router/location'
-import {History} from './router/history'
-import {Request} from './router/request'
-import {Route} from './router/route'
-import {commit,scheduler} from './scheduler'
-import {proxy} from './utils'
+import {Node,Element,Document,createComment} from '../dom/core'
+import {Location} from './location'
+import {History} from './history'
+import {Request} from './request'
+import {Route} from './route'
+import {commit,scheduler} from '../scheduler'
+import {proxy} from '../utils'
+import {Queue} from '../queue'
 
-# import './router/element'
 extend class Document
 	get router
 		#router ||= new Router(self)
@@ -27,31 +27,62 @@ export class Router < EventEmitter
 	# support redirects
 	def constructor doc, o = {}
 		super()
-		routes = {}
+		#routes = {}
 		aliases = {}
 		redirects = {}
+		rules = {}
 		options = o
 		busy = []
 		#doc = doc
+		queue = new Queue
 		web? = !!doc.defaultView
 		root = o.root or ''
+		params = {}
+		params.#cache = {}
+
 		history = $web$ ? global.window.history : (new History(self))
 		location = new Location(o.url or doc.location.href,self)
 		mode = o.mode or 'history'
+
+		if $web$
+			queue.on 'busy' do
+				global.document.flags.incr('busy')
 		
+			queue.on 'idle' do
+				global.document.flags.decr('busy')
+				commit!
+
 		self.setup!
 		self
 
 	get origin
 		#origin ||= #doc.location.origin
-	
+
+	get query
+		location.query
+
 	def init
+		refresh(mode: 'replace')
 		self
 
 	def alias from, to
 		aliases[from] = to
 		location.reparse!
 		self
+
+	def param key, loader
+		params[key] = loader
+
+	def load-params match
+		let ctx = {}
+		for own key,value of match
+			if params[key]
+				let cache = params.#cache[key]
+				let res = await params[key](value,ctx,cache)
+				params.#cache[key] = res
+			else
+				ctx[key] = value
+		return ctx
 
 	def option key, value
 		if value == undefined
@@ -68,6 +99,9 @@ export class Router < EventEmitter
 
 	get state
 		{}
+
+	get ctx
+		#request
 		
 	def pushState state, title, url
 		history.pushState(state,title or null,String(url))
@@ -83,14 +117,15 @@ export class Router < EventEmitter
 		let original = location
 		let loc = Location.parse(params.location or realpath,self)
 		let mode = params.mode
+		let prev = #request
 		# console.log 'refreshing router',params,loc,mode,original
 		# we need to compare with the previously stored location
 		# also see if state is different?
-		if !loc.equals(original)
+		if !loc.equals(original) or !prev
 			# console.log "actual url has changed!!",String(original),'to',String(loc)
 			let req = new Request(self,loc,original)
 			req.mode = mode
-			
+			#request = req
 			self.emit('beforechange',req)
 
 			if req.aborted
@@ -110,10 +145,11 @@ export class Router < EventEmitter
 
 			unless req.aborted
 				location = req.location
+				# after each middleware - see if we have redirected or thrown anything?
 
 				if mode == 'push'
 					self.pushState(params.state or self.state,null,String(location))
-				elif mode == 'replace' # params:replace
+				elif mode == 'replace' # params.replace
 					self.replaceState(params.state or self.state,null,String(location))
 					
 				if $web$
@@ -158,6 +194,8 @@ export class Router < EventEmitter
 
 			window.addEventListener('hashchange',onhashchange)
 			window.addEventListener('click',onclick,capture: yes)
+
+			refresh
 		self
 		
 	def onclick e
@@ -206,7 +244,7 @@ export class Router < EventEmitter
 	get url
 		return location.url
 	
-	def query par,val
+	def query2 par,val
 		if par == undefined
 			return location.searchParams()
 		else
@@ -228,13 +266,18 @@ export class Router < EventEmitter
 			# location:hash = serializeParams(value)
 		
 	def match pattern
-		let route = routes[pattern] ||= new Route(self,pattern)
+		let route = #routes[pattern] ||= new Route(self,pattern)
 		route.test()
 		
 	def route pattern
-		routes[pattern] ||= new Route(self,pattern)
+		let route = #routes[pattern] ||= new Route(self,pattern)
+		route
 
-	def routeFor node, path, par, opts
+	def use url, handler
+		let route = self.route(url)
+		#middlewares.push([route,handler])
+
+	def routeFor path, par, opts
 		new Route(self,path,par,opts)
 		
 	def go url, state = {}
@@ -257,6 +300,7 @@ export class Router < EventEmitter
 		
 	def onReady cb
 		scheduler.add do
+			# remnants of old loading
 			busy.length == 0 ? cb(self) : once('ready',cb)
 		
 # def emit name, ...params do imba.emit(self,name,params)
@@ -267,10 +311,10 @@ export class Router < EventEmitter
 export class ElementRoute
 	def constructor node, path, parent, options = {}
 		node = node
-		route = self.router.routeFor(node,path,parent ? parent.route : null,options)
+		route = self.router.routeFor(path,parent ? parent.route : null,options)
 		match = null
-		options = options
-		placeholder = node.$placeholder or createComment("{path}")
+		#options = options
+		#cache = {}
 
 	get raw
 		route.raw
@@ -285,53 +329,55 @@ export class ElementRoute
 		node.ownerDocument.router
 		
 	get sticky
-		options and options.sticky
+		#options and #options.sticky
 		
 	get exact
-		options and options.exact
+		#options and #options.exact
 
-	def isActive
-		match && match.active
+	get isActive
+		match && match.#active
 
 	def resolve
 		let prev = match
 		let prevUrl = prev and prev.url
 		let curr = route.test!
 
-		# console.log 'resolving route?',raw,match,prev
 		if curr
-			let active = prev and prev.active # what if the previous was active?
-			curr.active = true
+			let active = prev and prev.#active # what if the previous was active?
+			curr.#active = true
 
 			if curr != prev
 				self.match = curr
 
+			let loader = null
+
 			if curr != prev or !active or (curr.url != prevUrl)
-				resolved(curr,prev,prevUrl)
+				#resolved(curr,prev,prevUrl)
 
 			if !active
-				enter()
+				#enter!
 			
 			return curr
 
-		elif prev and prev.active
-			prev.active = false
-			leave()
+		elif prev and prev.#active
+			prev.#active = false
+			#leave!
 		elif !prev
 			self.match = prev = {}
-			leave()
+			#leave!
 			
 		return prev
 
-	def enter
+	def #enter
 		node.flags.remove('not-routed')
 		node.flags.add('routed')
 		node..routeDidEnter(self)
 		
-	def resolved match,prev,prevUrl
+	def #resolved match,prev,prevUrl
+		node..visit!
 		node..routeDidResolve(match,prev,prevUrl)
 
-	def leave
+	def #leave
 		# replace flag?
 		node.flags.add('not-routed')
 		node.flags.remove('routed')
@@ -339,25 +385,25 @@ export class ElementRoute
 
 export class ElementRouteTo < ElementRoute
 	
-	def enter
+	def #enter
 		self
 		
 	def resolve
 		url = route.resolve!
 		super
 		
-	def resolved
+	def #resolved
 		self
 		
-	def leave
+	def #leave
 		self
 	
 	def go
 		let href = route.resolve!
-		if sticky and match and !match.active
+		if sticky and match and !match.#active
 			href = match.url or href
 
-		if options and options.replace
+		if #options and #options.replace
 			self.router.replace(href)
 		else
 			self.router.go(href)
@@ -381,9 +427,9 @@ extend class Element
 
 		self.end$ = self.end$routed
 		
-		self.insertInto$ = do |parent|
+		self.insertInto$ = do(parent)
 			# should base this on a modifier
-			parent.appendChild$(#route.isActive() ? self : #route.placeholder)
+			parent.appendChild$(#route.isActive ? self : #nodePlaceholder)
 
 	get route
 		#route
@@ -400,64 +446,38 @@ extend class Element
 
 		self.onclick = do(e)
 			if !e.altKey and !e.metaKey
-				e.preventDefault()
+				e.preventDefault!
 				#route.go!
 
 	def end$routed
 		if #route
-			#route.resolve()
-			return unless #route.isActive()
+			#route.resolve!
+			return unless #route.isActive
 		
-		visit() if visit
+		visit! if visit
 
 	def end$routeTo
 		if #route
-			
+			# TODO cache / skip unless router has changes
 			let match = #route.resolve!
 			let href = #route.url
-			# let match = $route.route.test()
-			
+
 			if #route.sticky and match.url
-				
 				href = match.url
 
 			setAttribute('href',href) if nodeName == 'A'
-			flags.toggle('active',match and match.active or false)
+			flags.toggle('active',match and match.#active or false)
 			
-		visit() if visit
+		visit! if visit
 
 	def routeDidEnter route
-		let ph = route.placeholder
-		if ph.parentNode and ph != self
-			ph.replaceWith$(self)
+		#attachToParent!
 
 	def routeDidLeave route
-		let ph = route.placeholder
-		if parentNode and ph != self
-			self.replaceWith$(ph)
-		self
+		#detachFromParent!
 
-	def routeDidResolve params, prev
+	def routeDidResolve match, prev
+		if self.routed isa Function
+			self.router.queue.add do
+				let res = await self.routed(match..params,prev..params)
 		return
-
-		if !self.load or (params == prev and !self.reload)
-			self..routeDidMatch(params)
-			self..routeDidLoad(params,prev)
-			return self
-
-		#route.load do
-			self.routeDidMatch(params)
-			let val
-			try
-				if params != prev
-					val = await self.load(params,prev)
-				elif self.reload
-					val = await self.reload(params,prev)
-			catch e
-				# log "route error",e
-				val = 400
-				self.routeDidFail(e)
-			self.routeDidLoad(val)
-			return val
-
-		return self

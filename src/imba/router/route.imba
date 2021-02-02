@@ -1,14 +1,28 @@
+export class Match
+	params = {}
+	url = null
+	path = null
+
 export class Route
-	# prop raw
-	# prop params
-	# prop status watch: yes
-	
 	def constructor router, str, parent, options = {}
 		parent = parent
 		router = router
 		options = options
 		status = 200
 		path = str
+		#matches = {}
+
+	def #matchForParams params
+		let key = JSON.stringify(params)
+		let match = #matches[key]
+		unless match
+			match = #matches[key] = new Match(params: params)
+			params.#match = match
+		return match
+	
+	def load cb
+		# pushing data o the queue
+		router.queue.add cb
 		
 	set path path
 		return if $path == path
@@ -16,7 +30,6 @@ export class Route
 		raw = path
 		$path = path
 		groups = []
-		params = {}
 		cache = {}
 		
 		if path.indexOf('?') >= 0
@@ -57,25 +70,28 @@ export class Route
 		regex = new RegExp(path)
 		self
 
-	def test loc, path
+	def test loc, path, cache = self.cache
 		# test with location
 		loc ||= router.location
 		path ||= loc.pathname
-
 		let url = loc.path
+		let urlkey = (query ? url : path)
 
-		return cache.match if url == cache.url
+		# should only cache
+		if #matches[urlkey] !== undefined
+			return #matches[urlkey]
+
+		#matches[urlkey] = null
 
 		let prefix = ''
 		let matcher = path
-		cache.url = url
-		cache.match = null
 		let qmatch
+		let params = {}
 		
 		if query
 			qmatch = {}
 			for own k,v of query
-				let m = loc.query(k)
+				let m = loc.query[k]
 				let name = k
 				# no match
 				if v === false
@@ -88,6 +104,7 @@ export class Route
 
 				if (v == true and m) or v == m
 					qmatch[name] = m
+
 				else
 					return null
 
@@ -96,33 +113,27 @@ export class Route
 				if path.indexOf(m.path) == 0
 					prefix = m.path + '/'
 					matcher = path.slice(m.path.length + 1)
-		
+
 		# try to match our part of the path with regex
 		if let match = (regex ? matcher.match(regex) : [''])
 			let fullpath = prefix + match[0]
-			let prevParams = params
-			# nothing changed
-			if fullpath == params.path
-				params.url = url
-			else
-				params = {path: fullpath, url: url}
-				if groups.length
-					for item,i in match
-						if let name = groups[i - 1]
-							params[name] = item
+			
+			if groups.length
+				for item,i in match
+					if let name = groups[i - 1]
+						params[name] = item
+
 			if qmatch
-				let change = no
 				for own k,v of qmatch
-					if params[k] != v
-						change = yes
-						params[k] = v
+					params[k] = v
 
-				if change and prevParams == params
-					params = Object.assign({},params)
+			let result = #matches[urlkey] = #matchForParams(params)
+			result.url = url
+			result.path = fullpath
 			# try to match tab-values as well
-			return cache.match = params
+			return result
 
-		return cache.match = null
+		return null
 
 	def resolve url
 		return raw if raw[0] == '/'
@@ -139,9 +150,8 @@ export class Route
 		# 	# add / remove params from url
 		
 		if parent
-			if let m = parent.test()
+			if let m = parent.test!
 				if raw[0] == '?'
-					# possibly replace with & or even replace param?
 					cache.resolved = m.path + raw
 				else
 					cache.resolved = m.path + '/' + raw
