@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.120
 * Parse `fn await something` correctly
 * Improved router internals
 * Add internal `Node#attachToParent` and `Node#detachFromParent` methods
