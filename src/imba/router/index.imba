@@ -7,7 +7,7 @@ import {Node,Element,Document,createComment} from '../dom/core'
 import {Location} from './location'
 import {History} from './history'
 import {Request} from './request'
-import {Route} from './route'
+import {Route,RootRoute} from './route'
 import {commit,scheduler} from '../scheduler'
 import {proxy} from '../utils'
 import {Queue} from '../queue'
@@ -33,10 +33,12 @@ export class Router < EventEmitter
 		rules = {}
 		options = o
 		busy = []
+		#version = 0
 		#doc = doc
 		queue = new Queue
 		web? = !!doc.defaultView
 		root = o.root or ''
+		rootRoute = new RootRoute(self)
 		params = {}
 		params.#cache = {}
 
@@ -156,6 +158,7 @@ export class Router < EventEmitter
 					location.state = global.window.history.state
 					
 				self.emit('change',req)
+				#version++
 				commit!
 		
 		$web$ and self.onReady do
@@ -199,7 +202,7 @@ export class Router < EventEmitter
 		self
 		
 	def onclick e
-		return if e.metaKey or e.altKey
+		
 
 		let a = null
 		let r = null
@@ -212,8 +215,12 @@ export class Router < EventEmitter
 			if t.#routeTo
 				r ||= t
 			t = t.parentNode
+		
+		console.log 'clicked??',t,a,r
+		return if e.metaKey or e.altKey
 
 		if a and r != a and (!r or r.contains(a))
+			
 			let href = a.getAttribute('href')
 			if href && !href.match(/\:\/\//) and !a.getAttribute('target') and !a.classList.contains('external')
 				a.addEventListener('click',onclicklink.bind(self),once: true)
@@ -221,6 +228,10 @@ export class Router < EventEmitter
 		
 	def onclicklink e
 		let a = e.currentTarget or e.target
+
+		if a.#routeTo
+			a.#routeTo.resolve!
+
 		let href = a.getAttribute('href')
 		let url = new URL(a.href)
 		let target = url.href.slice(url.origin.length)
@@ -231,6 +242,8 @@ export class Router < EventEmitter
 		# checking if we are only changing the hash here
 		if currpath == newpath
 			global.document.location.hash = url.hash
+		elif a.#routeTo
+			a.#routeTo.go!
 		else
 			self.go(target)
 
@@ -244,12 +257,6 @@ export class Router < EventEmitter
 	get url
 		return location.url
 	
-	def query2 par,val
-		if par == undefined
-			return location.searchParams()
-		else
-			return location.query(par,val)
-		
 	get hash
 		#hash
 
@@ -270,8 +277,10 @@ export class Router < EventEmitter
 		route.test()
 		
 	def route pattern
-		let route = #routes[pattern] ||= new Route(self,pattern)
-		route
+		rootRoute.route(pattern)
+
+		# let route = #routes[pattern] ||= new Route(self,pattern)
+		# route
 
 	def use url, handler
 		let route = self.route(url)
@@ -310,20 +319,35 @@ export class Router < EventEmitter
 
 export class ElementRoute
 	def constructor node, path, parent, options = {}
+		self.parent = parent
 		node = node
-		route = self.router.routeFor(path,parent ? parent.route : null,options)
-		match = null
+		#path = path
+		# #route = self.router.routeFor(path,parent ? parent.route : null,options)
+		#match = null
 		#options = options
 		#cache = {}
+		#resolvedPath = null
+		#activeKey = Symbol!
+		#urlKey = Symbol!
+		# #children = new Set
+
+	def [Symbol.toPrimitive]
+		#symbol ||= Symbol!
+
+	get route
+		let pr = parent ? parent.route : self.router
+		pr.route(#path)
 
 	get raw
 		route.raw
+	
+	get match
+		#match
 
 	set path value
-		route.path = value
-
-	get params
-		match
+		if #path =? value
+			console.log 'update the route?!?!',value
+			router.#version++
 
 	get router
 		node.ownerDocument.router
@@ -335,10 +359,45 @@ export class ElementRoute
 		#options and #options.exact
 
 	get isActive
-		match && match.#active
+		!!#active
 
 	def resolve
 		let prev = match
+		
+		let v = self.router.#version
+		return unless #version =? v
+			
+		let r = route
+		let o = #options
+		let url = self.router.path
+		let match = r.match(url)
+		let shown = #active
+		let last = #match
+		console.log 'resolve real ElementRoute',r.raw,match
+		let changed = match != #match
+		let prevUrl = match and match[#urlKey]
+
+		if match
+			#active = true
+			#match = match
+			match[#urlKey] = url
+			
+		if match
+			if changed or (prevUrl != url and o.sensitive)
+				#resolved(match,last)
+
+		if !shown and match
+			#enter!
+
+		if shown and !match
+			# make inactive
+			#active = false
+			#leave!
+
+		return #match
+
+	def resolveOld
+
 		let prevUrl = prev and prev.url
 		let curr = route.test!
 
@@ -347,7 +406,7 @@ export class ElementRoute
 			curr.#active = true
 
 			if curr != prev
-				self.match = curr
+				self.#match = curr
 
 			let loader = null
 
@@ -363,9 +422,10 @@ export class ElementRoute
 			prev.#active = false
 			#leave!
 		elif !prev
-			self.match = prev = {}
+			self.#match = prev = {}
 			#leave!
-			
+		
+		#resolved? = yes
 		return prev
 
 	def #enter
@@ -373,7 +433,7 @@ export class ElementRoute
 		node.flags.add('routed')
 		node..routeDidEnter(self)
 		
-	def #resolved match,prev,prevUrl
+	def #resolved match,prev,prevUrl = ''
 		node..visit!
 		node..routeDidResolve(match,prev,prevUrl)
 
@@ -388,25 +448,41 @@ export class ElementRouteTo < ElementRoute
 	def #enter
 		self
 		
-	def resolve
-		url = route.resolve!
-		super
-		
 	def #resolved
 		self
 		
 	def #leave
 		self
+
+	def resolve
+		let v = self.router.#version
+		if #version =? v
+			let o = #options
+			let r = route
+			let url = self.router.path
+			let href = route.resolve(url)
+			let match = route.match(url)
+
+			if match
+				#match = match
+				#match[#urlKey] = url
+	
+			if o.sticky and #match
+				href = #match[#urlKey]
+
+			if #href =? href
+				node.setAttribute('href',href) if node.nodeName == 'A'
+
+			node.flags.toggle('active',!!match)
+		return
 	
 	def go
-		let href = route.resolve!
-		if sticky and match and !match.#active
-			href = match.url or href
+		resolve!
 
 		if #options and #options.replace
-			self.router.replace(href)
+			self.router.replace(#href)
 		else
-			self.router.go(href)
+			self.router.go(#href)
 
 extend class Node
 	get router
@@ -435,19 +511,22 @@ extend class Element
 		#route
 
 	set route-to value
-		if #route
-			if #route.raw != value
-				#route.path = value
+		if #routeTo
+			if #routeTo.raw != value
+				# console.log 'routeTo changed!!',value
+				#routeTo.path = value
 			return
 
 		let par = value[0] != '/' ? parent-route : null
 		#route = #routeTo = new ElementRouteTo(self,value,par,routeTo__)
 		self.end$ = self.end$routeTo
 
+		# really? shouldnt this be handled by the router instead??
 		self.onclick = do(e)
-			if !e.altKey and !e.metaKey
+			if !e.altKey and !e.metaKey and !e.#routeHandler
 				e.preventDefault!
-				#route.go!
+				e.#routeHandler = #routeTo
+				#routeTo.go!
 
 	def end$routed
 		if #route
@@ -457,17 +536,9 @@ extend class Element
 		visit! if visit
 
 	def end$routeTo
-		if #route
-			# TODO cache / skip unless router has changes
-			let match = #route.resolve!
-			let href = #route.url
+		if #routeTo
+			#routeTo.resolve!
 
-			if #route.sticky and match.url
-				href = match.url
-
-			setAttribute('href',href) if nodeName == 'A'
-			flags.toggle('active',match and match.#active or false)
-			
 		visit! if visit
 
 	def routeDidEnter route
@@ -479,5 +550,5 @@ extend class Element
 	def routeDidResolve match, prev
 		if self.routed isa Function
 			self.router.queue.add do
-				let res = await self.routed(match..params,prev..params)
+				let res = await self.routed(match,prev)
 		return
