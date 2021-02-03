@@ -1,3 +1,7 @@
+## 2.0.0-alpha.121
+* Added `imba.serve` to `index.d.ts` 
+* Fix serious regression in router causing crash
+
 ## 2.0.0-alpha.120
 * Parse `fn await something` correctly
 * Improved router internals

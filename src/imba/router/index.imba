@@ -429,7 +429,7 @@ extend class Element
 		
 		self.insertInto$ = do(parent)
 			# should base this on a modifier
-			parent.appendChild$(#route.isActive ? self : #nodePlaceholder)
+			parent.appendChild$(#route.isActive ? self : #placeholderNode)
 
 	get route
 		#route

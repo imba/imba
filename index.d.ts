@@ -58,6 +58,8 @@ interface ImbaContext {
     once(target: any, event:string, listener:any, path?: any): void;
     unlisten(target: any, event:string, listener:any, path?: any): void;
     indexOf(target: any, source:any): boolean;
+
+    serve(target: any, options?:any): any;
 }
 
 interface Event {
