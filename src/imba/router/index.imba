@@ -336,8 +336,8 @@ export class ElementRoute
 			match[#urlKey] = url
 			
 		if match
-			if changed or (prevUrl != url and o.sensitive)
-				#resolved(match,last)
+			if changed or (prevUrl != url)
+				#resolved(match,last,prevUrl)
 
 		if !shown and match
 			#enter!
@@ -464,7 +464,7 @@ extend class Element
 		#detachFromParent!
 
 	def routeDidResolve route, match, prev
-		if self.routed isa Function
+		if self.routed isa Function and (match != prev)
 			self.router.queue.add do
 				suspend!
 				let res = await self.routed(match,route.state,prev)
