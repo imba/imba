@@ -1,27 +1,81 @@
+const cacheMap = new Map
+const urlCache = {}
+const queryCache = {}
+
+def cacheForMatch match
+	unless cacheMap.has(match)
+		let map = new Map
+		cacheMap.set(match,map)
+		return map
+	return cacheMap.get(match)
+
+def combinedDeepMatch parent, params
+	let map = cacheForMatch(parent)
+	unless map.has(params)
+		let item = Object.create(parent)
+		Object.assign(item,params)
+		map.set(params,item)
+		return item
+
+	return map.get(params)
+
 export class Match
-	params = {}
-	url = null
-	path = null
+
+def parseUrl str
+	if urlCache[str]
+		return urlCache[str]
+
+	let url = urlCache[str] = {url: str}
+
+	let qryidx = str.indexOf('?')
+	let hshidx = str.indexOf('#')
+
+	if hshidx >= 0
+		url.hash = str.slice(hshidx + 1)
+		str = url.url = str.slice(0,hshidx)
+	
+	if qryidx >= 0
+		let q = url.query = str.slice(qryidx + 1)
+		str = str.slice(0,qryidx)
+		url.query = queryCache[q] ||= new URLSearchParams(q)
+	
+	url.path = str
+	return url
+
+export class RootRoute
+	constructor router
+		router = router
+		fullPath = ''
+		#routes = {}
+		#match = new Match
+		#match.path = ''
+	
+	def route pattern
+		#routes[pattern] ||= new Route(router,pattern,self)
+
+	def match
+		return #match
+	
+	def resolve url
+		return '/'
 
 export class Route
-	def constructor router, str, parent, options = {}
-		parent = parent
+	def constructor router, str, parent
+		self.parent = (parent or router.rootRoute)
 		router = router
-		options = options
 		status = 200
 		path = str
+		#symbol = Symbol!
 		#matches = {}
+		#routes = {}
+	
+	def route pattern
+		#routes[pattern] ||= new Route(router,pattern,self)
 
-	def #matchForParams params
-		let key = JSON.stringify(params)
-		let match = #matches[key]
-		unless match
-			match = #matches[key] = new Match(params: params)
-			params.#match = match
-		return match
+	get fullPath
+		"{parent.fullPath}/{$path}"
 	
 	def load cb
-		# pushing data o the queue
 		router.queue.add cb
 		
 	set path path
@@ -31,6 +85,7 @@ export class Route
 		$path = path
 		groups = []
 		cache = {}
+		dynamic = no
 		
 		if path.indexOf('?') >= 0
 			let parts = path.split('?')
@@ -41,15 +96,19 @@ export class Route
 				continue unless pair
 				let [k,v] = pair.split('=')
 				if k[0] == '!'
+					dynamic = yes
 					k = k.slice(1)
 					v = false
 				if v === ''
 					v = false
+				if v and v[0] == ':'
+					dynamic = yes
 
 				query[k] = v or (v === false ? false : true)
 
 		path = path.replace(/\:(\w+|\*)(\.)?/g) do |m,id,dot|
 			# what about :id.:format?
+			dynamic = yes
 			groups.push(id) unless id == '*'
 			if dot
 				return "([^\/\#\.\?]+)\."
@@ -61,103 +120,85 @@ export class Route
 			
 		path = '^' + path
 		let end = path[path.length - 1]
-		if options.exact and end != '$'
-			path = path + '(?=[\#\?]|$)'
-		elif (end != '/' and end != '$' and path != '^/')
-			# we only want to match end OR /
-			# if path[path:length - 1]
+		if end == '$'
+			path = path.slice(0,-1) + '(?=\/?[\#\?]|\/?$)'
+
+		if (end != '/' and end != '$' and path != '^/')
 			path = path + '(?=[\/\#\?]|$)'
+
 		regex = new RegExp(path)
+
 		self
 
-	def test loc, path, cache = self.cache
-		# test with location
-		loc ||= router.location
-		path ||= loc.pathname
-		let url = loc.path
-		let urlkey = (query ? url : path)
-
-		# should only cache
-		if #matches[urlkey] !== undefined
-			return #matches[urlkey]
-
-		#matches[urlkey] = null
-
+	def match str = router.path
+		let up = parent.match(str)
+		return null unless up
+		let url = parseUrl(str)		
+		let matcher = url.url
 		let prefix = ''
-		let matcher = path
-		let qmatch
-		let params = {}
-		
-		if query
-			qmatch = {}
-			for own k,v of query
-				let m = loc.query[k]
-				let name = k
-				# no match
-				if v === false
-					return null	if m
-					continue
-				
-				if v[0] == ':'
-					name = v.slice(1)
-					v = true
 
-				if (v == true and m) or v == m
-					qmatch[name] = m
-
-				else
-					return null
-
-		if parent and raw[0] != '/'
-			if let m = parent.test(loc,path)
-				if path.indexOf(m.path) == 0
-					prefix = m.path + '/'
-					matcher = path.slice(m.path.length + 1)
+		if up.path and url.path.indexOf(up.path) == 0
+			prefix = up.path + '/'
+			matcher = matcher.slice(prefix.length)
 
 		# try to match our part of the path with regex
 		if let match = (regex ? matcher.match(regex) : [''])
 			let fullpath = prefix + match[0]
+			let matchid = [$path]
+			let params = {}
 			
 			if groups.length
 				for item,i in match
 					if let name = groups[i - 1]
 						params[name] = item
+						matchid.push(item)
+			
+			if query
+				for own k,v of query
+					let name = k
+					let m = url.query..get(k)
 
-			if qmatch
-				for own k,v of qmatch
-					params[k] = v
+					if v === false
+						return null	if m
+						matchid.push('1')
+						continue
+					
+					if v[0] == ':'
+						name = v.slice(1)
+						v = true
 
-			let result = #matches[urlkey] = #matchForParams(params)
-			result.url = url
+					if (v == true and m) or v == m
+						params[name] = m
+						matchid.push(m)
+					else
+						return null
+
+			let key = matchid.join("*")
+			params = (#matches[key] ||= params)
+			let result = combinedDeepMatch(up,params)
 			result.path = fullpath
-			# try to match tab-values as well
 			return result
 
 		return null
 
-	def resolve url
-		return raw if raw[0] == '/'
 
-		url ||= router.url
-	
-		if cache.resolveUrl == url and cache.resolved
-			return cache.resolved
+	def resolve url = router.path
+		return raw.replace(/\$/g,'') if raw[0] == '/' and !dynamic
 
-		cache.resolveUrl = url
-		
-		# if @query
-		# 	raw = raw.slice(0,raw.indexOf('?'))
-		# 	# add / remove params from url
-		
-		if parent
-			if let m = parent.test!
-				if raw[0] == '?'
-					cache.resolved = m.path + raw
-				else
-					cache.resolved = m.path + '/' + raw
+		let up = parent.match(url)
+		let upres = parent.resolve(url)
+		let out
+
+		if dynamic
+			let m = match(url)
+			if m
+				return m.path
+			else
+				return null
+
+		if raw[0] == '?'
+			out = (upres or '/') + raw
 		else
-			# FIXME what if the url has some unknowns?
-			cache.resolved = raw # .replace(/[\@\$]/g,'')
+			out = upres + '/' + raw
 
-		return cache.resolved
-		
+		return out.replace(/\$/g,'').replace(/\/\/+/g,'/')

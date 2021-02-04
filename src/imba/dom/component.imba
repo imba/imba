@@ -161,11 +161,13 @@ export class ImbaElement < HTMLElement
 
 	# Wrapper for rendering. Default implementation
 	def commit
-		return self unless render?
-		__F |= $EL_RENDERING$
+		unless render?
+			__F |= $EL_UNRENDERED$
+			return self
+		__F |= $EL_RENDERING$ 
 		render && render()
 		rendered()
-		__F = (__F | $EL_RENDERED$) & ~$EL_RENDERING$
+		__F = (__F | $EL_RENDERED$) & ~$EL_RENDERING$ & ~$EL_UNRENDERED$
 
 	get autoschedule
 		(__F & $EL_SCHEDULE$) != 0
@@ -190,7 +192,7 @@ export class ImbaElement < HTMLElement
 		return
 
 	get render?
-		return true
+		return !suspended?
 
 	get mounting?
 		return (__F & $EL_MOUNTING$) != 0
@@ -203,6 +205,9 @@ export class ImbaElement < HTMLElement
 	
 	get rendered?
 		return (__F & $EL_RENDERED$) != 0
+
+	get suspended?
+		return (__F & $EL_SUSPENDED$) != 0
 
 	get rendering?
 		return (__F & $EL_RENDERING$) != 0
@@ -225,6 +230,22 @@ export class ImbaElement < HTMLElement
 		scheduler.un('commit',self)
 		__F &= ~$EL_SCHEDULED$
 		return self
+
+	def suspend cb = null
+		let val = flags.incr('_suspended_')
+		__F |= $EL_SUSPENDED$
+		if cb isa Function
+			await cb()
+			unsuspend!
+		self
+
+	def unsuspend
+		let val = flags.decr('_suspended_')
+		if val == 0
+			__F &= ~$EL_SUSPENDED$
+			commit! if $EL_UNRENDERED$
+
+		self
 
 	def end$
 		visit()

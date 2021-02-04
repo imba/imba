@@ -1,3 +1,7 @@
+## unreleased
+* Fix issue with type inferencing tags in certain cases
+* Add `suspend`, `unsuspend` component lifecycle methods
+
 ## 2.0.0-alpha.121
 * Added `imba.serve` to `index.d.ts` 
 * Fix serious regression in router causing crash

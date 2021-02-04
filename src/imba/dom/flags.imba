@@ -30,15 +30,13 @@ export class Flags
 		let m = stacks ||= {}
 		let c = m[ref] or 0
 		add(ref) if c < 1
-		m[ref] = Math.max(c,0) + 1
-		return self
+		return m[ref] = Math.max(c,0) + 1
 	
 	def decr ref
 		let m = stacks ||= {}
 		let c = m[ref] or 0
 		remove(ref) if c == 1
-		m[ref] = Math.max(c,1) - 1
-		return self
+		return m[ref] = Math.max(c,1) - 1
 
 	def valueOf
 		string

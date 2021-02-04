@@ -117,6 +117,8 @@ export var F =
 	EL_RENDERED: 2 ** 9
 	EL_SSR: 2 ** 10
 	EL_TRACKED: 2 ** 11 # emit mount/unmount events
+	EL_SUSPENDED: 2 ** 12 # block commit from rendering
+	EL_UNRENDERED: 2 ** 13
 
 	# render marks
 	DIFF_BUILT: 2 ** 0
@@ -8379,6 +8381,7 @@ export class Tag < TagLike
 
 			if o:inline or isExpression
 				# o:inline = wasInline
+				add "{tvar}"
 				let js = '(' + out.join(',\n') + ')'
 				return js
 			else

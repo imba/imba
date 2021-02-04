@@ -2,13 +2,6 @@ import {Location} from './location'
 # import Route from './route'
 
 export class Request
-	# prop router
-	# prop referrer
-	# prop aborted
-	# prop location
-	# prop state
-	# prop mode
-
 	def constructor router, loc, referrer
 		router = router
 		if loc
@@ -16,20 +9,16 @@ export class Request
 			original = location.clone!
 
 		referrer = referrer
-		# @path = @originalPath = path
-		# @referrer = referrer
 
 	def redirect path
 		location..update(path)
-		# allow normalizing urls
-		# @redirected = @path = path
 		self
 		
 	get path
 		location..path
 		
 	get url
-		location..toString()
+		location..toString!
 		
 	set path value
 		location.path = value
@@ -40,4 +29,4 @@ export class Request
 		self
 
 	def match str
-		location ? (new Route(self,str)).test() : null
+		location ? router.route(str).match(path) : null
