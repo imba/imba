@@ -8379,6 +8379,7 @@ export class Tag < TagLike
 
 			if o:inline or isExpression
 				# o:inline = wasInline
+				add "{tvar}"
 				let js = '(' + out.join(',\n') + ')'
 				return js
 			else
