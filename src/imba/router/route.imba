@@ -19,14 +19,7 @@ def combinedDeepMatch parent, params
 
 	return map.get(params)
 
-export class RouteMatch
-
 export class Match
-	params = {}
-	url = null
-	path = null
-
-
 
 def parseUrl str
 	if urlCache[str]
@@ -54,7 +47,7 @@ export class RootRoute
 		router = router
 		fullPath = ''
 		#routes = {}
-		#match = new RouteMatch
+		#match = new Match
 		#match.path = ''
 	
 	def route pattern
@@ -81,17 +74,8 @@ export class Route
 
 	get fullPath
 		"{parent.fullPath}/{$path}"
-
-	def #matchForParams params, prefix = ''
-		let key = prefix + JSON.stringify(params)
-		let match = #matches[key]
-		unless match
-			match = #matches[key] = new Match(params: params)
-			params.#match = match
-		return match
 	
 	def load cb
-		# pushing data o the queue
 		router.queue.add cb
 		
 	set path path
@@ -172,7 +156,7 @@ export class Route
 			if query
 				for own k,v of query
 					let name = k
-					let m = url.query.get(k)
+					let m = url.query..get(k)
 
 					if v === false
 						return null	if m
@@ -192,102 +176,11 @@ export class Route
 			let key = matchid.join("*")
 			params = (#matches[key] ||= params)
 			let result = combinedDeepMatch(up,params)
-			result.path = fullpath # why / when is this really needed tbh?
-			return result
-
-		return null
-
-	def test loc, path
-		if typeof loc == 'string'
-			loc = {pathname: loc, path: loc}
-			# let loc = new URL(loc,document.location.origin)
-			# let path = loc.href.slice(loc.origin.length)
-		# test with location
-		loc ||= router.location
-		path ||= loc.pathname
-		let url = loc.path
-		let urlkey = (query ? url : path)
-
-		# should only cache
-		let cached = #matches[urlkey]
-		if cached !== undefined
-			return cached
-
-		#matches[urlkey] = null
-
-		let prefix = ''
-		let matcher = path
-		let qmatch
-		
-		let parentMatch = null
-		
-		if query
-			qmatch = {}
-			for own k,v of query
-				let m = loc.query[k]
-				let name = k
-				# no match
-				if v === false
-					return null	if m
-					continue
-				
-				if v[0] == ':'
-					name = v.slice(1)
-					v = true
-
-				if (v == true and m) or v == m
-					qmatch[name] = m
-
-				else
-					return null
-
-		if parent and raw[0] != '/'
-			if let m = parent.test(loc,path)
-				parentMatch = m
-				if path.indexOf(m.path) == 0
-					prefix = m.path + '/'
-					matcher = path.slice(m.path.length + 1)
-					# maybe cache the subroute on the parent match / result??
-			else
-				return null
-
-		# try to match our part of the path with regex
-		if let match = (regex ? matcher.match(regex) : [''])
-			let fullpath = prefix + match[0]
-			let matchid = [$path]
-			let params = {}
-			
-			if groups.length
-				for item,i in match
-					if let name = groups[i - 1]
-						params[name] = item
-						matchid.push(item)
-
-			if qmatch
-				for own k,v of qmatch
-					params[k] = v
-					matchid.push(v)
-
-			let key = matchid.join("*")
-			console.log 'match key',key
-
-			# if parentMatch
-			let cachedParams = #matches[key] ||= params
-
-			if parentMatch
-				cachedParams = combinedDeepMatch(parentMatch,cachedParams)
-				console.log 'combined!!'
-				# result = #matches[urlkey] = combined
-
-			let result = #matches[urlkey] = cachedParams
-			# #matchForParams(params)
-			result.url = url
 			result.path = fullpath
-			# try to match tab-values as well
-
 			return result
 
 		return null
+
 
 	def resolve url = router.path
 		return raw.replace(/\$/g,'') if raw[0] == '/' and !dynamic
@@ -309,23 +202,3 @@ export class Route
 			out = upres + '/' + raw
 
 		return out.replace(/\$/g,'').replace(/\/\/+/g,'/')
-
-		url ||= router.url
-	
-		if cache.resolveUrl == url and cache.resolved
-			return cache.resolved
-
-		cache.resolveUrl = url
-		
-		if parent
-			if let m = parent.test!
-				if raw[0] == '?'
-					cache.resolved = m.path + raw
-				else
-					cache.resolved = m.path + '/' + raw
-		else
-			# FIXME what if the url has some unknowns?
-			cache.resolved = raw # .replace(/[\@\$]/g,'')
-
-		return cache.resolved
-		

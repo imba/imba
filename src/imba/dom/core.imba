@@ -329,20 +329,25 @@ export class Node
 		else
 			self.appendChild(other)
 
-	get #placeholderNode
-		##placeholderNode ||= new Comment("")
+	get #placeholder__
+		##placeholder__ ||= new Comment("")
+
+	set #placeholder__ value
+		let prev = ##placeholder__
+		##placeholder__ = value
+		if prev and prev != value and prev.parentNode
+			prev.replaceWith$(value)
 
 	def #attachToParent
-		let ph = #placeholderNode
+		let ph = #placeholder__
 		if ph.parentNode and ph != self
 			ph.replaceWith$(self)
 		self
 
 	def #detachFromParent route
-		let ph = #placeholderNode
+		let ph = #placeholder__
 		if parentNode and ph != self
 			self.replaceWith$(ph)
-			# TODO add detached flag?
 		self
 
 export class Text < Node

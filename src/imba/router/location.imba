@@ -65,10 +65,6 @@ export class Location
 		
 	def toString
 		href
-		
-	def match str
-		let route = ROUTES[str] ||= new Route(null,str)
-		route.test(self)
 
 	def #getQueryParam target, name
 		searchParams.get(name)
@@ -85,4 +81,5 @@ export class Location
 			if active?
 				# need to improve how we update the state?
 				router.history.replaceState({},null,url.toString!)
+				router.touch!
 		return yes

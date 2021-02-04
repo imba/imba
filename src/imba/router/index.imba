@@ -37,10 +37,7 @@ export class Router < EventEmitter
 		#doc = doc
 		queue = new Queue
 		web? = !!doc.defaultView
-		root = o.root or ''
-		rootRoute = new RootRoute(self)
-		params = {}
-		params.#cache = {}
+		root = new RootRoute(self)
 
 		history = $web$ ? global.window.history : (new History(self))
 		location = new Location(o.url or doc.location.href,self)
@@ -72,19 +69,8 @@ export class Router < EventEmitter
 		location.reparse!
 		self
 
-	def param key, loader
-		params[key] = loader
-
-	def load-params match
-		let ctx = {}
-		for own key,value of match
-			if params[key]
-				let cache = params.#cache[key]
-				let res = await params[key](value,ctx,cache)
-				params.#cache[key] = res
-			else
-				ctx[key] = value
-		return ctx
+	def touch
+		#version++
 
 	def option key, value
 		if value == undefined
@@ -97,7 +83,8 @@ export class Router < EventEmitter
 		if $web$
 			let loc = #doc.location
 			return loc.href.slice(loc.origin.length)
-		return location.path
+		else
+			return location.path
 
 	get state
 		{}
@@ -158,13 +145,14 @@ export class Router < EventEmitter
 					location.state = global.window.history.state
 					
 				self.emit('change',req)
-				#version++
+				touch!
 				commit!
 		
-		$web$ and self.onReady do
-			let hash = #doc.location.hash
-			if hash != #hash
-				self.emit('hashchange',#hash = hash)
+		if $web$
+			scheduler.add do 
+				let hash = #doc.location.hash
+				if hash != #hash
+					self.emit('hashchange',#hash = hash)
 
 		refreshing = no
 		self
@@ -202,22 +190,16 @@ export class Router < EventEmitter
 		self
 		
 	def onclick e
-		
+		return if e.metaKey or e.altKey
 
 		let a = null
 		let r = null
-		
 		let t = e.target
 		
-		while t
-			if t.nodeName == 'A'
-				a ||= t
-			if t.#routeTo
-				r ||= t
+		while t and (!a or !r)
+			a = t if !a and t.nodeName == 'A'
+			r = t if !r and t.#routeTo
 			t = t.parentNode
-		
-		console.log 'clicked??',t,a,r
-		return if e.metaKey or e.altKey
 
 		if a and r != a and (!r or r.contains(a))
 			
@@ -249,16 +231,16 @@ export class Router < EventEmitter
 
 		e.stopPropagation()
 		e.preventDefault()
-	
+
+	get url
+		return location.url
+
 	get path
 		let path = location.path
 		return aliases[path] or path
 
-	get url
-		return location.url
-	
-	get hash
-		#hash
+	get pathname
+		location.pathname
 
 	def serializeParams params
 		if params isa Object
@@ -267,28 +249,19 @@ export class Router < EventEmitter
 			return value.join("&")
 		return params or ''
 
+	get hash
+		#hash
+
 	set hash value
 		if $web$
-			history.replaceState({},null,'#' + self.serializeParams(value)) # last state?
-			# location:hash = serializeParams(value)
+			history.replaceState({},null,'#' + self.serializeParams(value))
 		
 	def match pattern
-		let route = #routes[pattern] ||= new Route(self,pattern)
-		route.test()
+		route(pattern).match(path)
 		
 	def route pattern
-		rootRoute.route(pattern)
+		root.route(pattern)
 
-		# let route = #routes[pattern] ||= new Route(self,pattern)
-		# route
-
-	def use url, handler
-		let route = self.route(url)
-		#middlewares.push([route,handler])
-
-	def routeFor path, par, opts
-		new Route(self,path,par,opts)
-		
 	def go url, state = {}
 		let loc = location.clone().update(url,state)
 		self.refresh(push: yes, mode: 'push', location: loc, state: state)
@@ -297,73 +270,41 @@ export class Router < EventEmitter
 	def replace url, state = {}
 		let loc = location.clone().update(url,state)
 		self.refresh(replace: yes, mode: 'replace', location: loc, state: state)
-		# history.replaceState(state,null,normalize(url,state))
-		# refresh
-		
-	def normalize url
-		if self.mode == 'hash'
-			url = "#{url}"
-		elif self.root()
-			url = self.root() + url
-		return url
-		
-	def onReady cb
-		scheduler.add do
-			# remnants of old loading
-			busy.length == 0 ? cb(self) : once('ready',cb)
-		
-# def emit name, ...params do imba.emit(self,name,params)
-# def on name, ...params do imba.listen(self,name,...params)
-# def once name, ...params do imba.once(self,name,...params)
-# def un name, ...params do imba.unlisten(self,name,...params)
+
 
 export class ElementRoute
 	def constructor node, path, parent, options = {}
 		self.parent = parent
 		node = node
 		#path = path
-		# #route = self.router.routeFor(path,parent ? parent.route : null,options)
 		#match = null
 		#options = options
 		#cache = {}
+		#active = null
 		#resolvedPath = null
 		#activeKey = Symbol!
 		#urlKey = Symbol!
-		# #children = new Set
 
-	def [Symbol.toPrimitive]
-		#symbol ||= Symbol!
+	get router
+		node.ownerDocument.router
 
 	get route
 		let pr = parent ? parent.route : self.router
 		pr.route(#path)
 
-	get raw
-		route.raw
-	
 	get match
 		#match
 
 	set path value
 		if #path =? value
-			console.log 'update the route?!?!',value
-			router.#version++
-
-	get router
-		node.ownerDocument.router
-		
-	get sticky
-		#options and #options.sticky
-		
-	get exact
-		#options and #options.exact
+			# TODO only update router if we know that we have subroutes
+			self.router.touch!
+	
 
 	get isActive
 		!!#active
 
 	def resolve
-		let prev = match
-		
 		let v = self.router.#version
 		return unless #version =? v
 			
@@ -373,8 +314,7 @@ export class ElementRoute
 		let match = r.match(url)
 		let shown = #active
 		let last = #match
-		console.log 'resolve real ElementRoute',r.raw,match
-		let changed = match != #match
+		let changed = match != last
 		let prevUrl = match and match[#urlKey]
 
 		if match
@@ -389,44 +329,12 @@ export class ElementRoute
 		if !shown and match
 			#enter!
 
-		if shown and !match
-			# make inactive
+		if !match and (shown or shown === null)
 			#active = false
 			#leave!
 
 		return #match
 
-	def resolveOld
-
-		let prevUrl = prev and prev.url
-		let curr = route.test!
-
-		if curr
-			let active = prev and prev.#active # what if the previous was active?
-			curr.#active = true
-
-			if curr != prev
-				self.#match = curr
-
-			let loader = null
-
-			if curr != prev or !active or (curr.url != prevUrl)
-				#resolved(curr,prev,prevUrl)
-
-			if !active
-				#enter!
-			
-			return curr
-
-		elif prev and prev.#active
-			prev.#active = false
-			#leave!
-		elif !prev
-			self.#match = prev = {}
-			#leave!
-		
-		#resolved? = yes
-		return prev
 
 	def #enter
 		node.flags.remove('not-routed')
@@ -456,24 +364,25 @@ export class ElementRouteTo < ElementRoute
 
 	def resolve
 		let v = self.router.#version
-		if #version =? v
-			let o = #options
-			let r = route
-			let url = self.router.path
-			let href = route.resolve(url)
-			let match = route.match(url)
+		return unless #version =? v
 
-			if match
-				#match = match
-				#match[#urlKey] = url
-	
-			if o.sticky and #match
-				href = #match[#urlKey]
+		let o = #options
+		let r = route
+		let url = self.router.path
+		let href = route.resolve(url)
+		let match = route.match(url)
 
-			if #href =? href
-				node.setAttribute('href',href) if node.nodeName == 'A'
+		if match
+			#match = match
+			#match[#urlKey] = url
 
-			node.flags.toggle('active',!!match)
+		if o.sticky and #match
+			href = #match[#urlKey]
+
+		if #href =? href
+			node.setAttribute('href',href) if node.nodeName == 'A'
+
+		node.flags.toggle('active',!!match)
 		return
 	
 	def go
@@ -489,39 +398,34 @@ extend class Node
 		ownerDocument.router
 
 extend class Element
-
-	get parent-route
-		#context.route
-
 	set route value
-		if #route and #route.raw != value
+		if #route
 			#route.path = value
 			return
 
-		let par = value[0] != '/' ? parent-route : null
+		let par = value[0] != '/' ? #context.route : null
 		#route = new ElementRoute(self,value,par,route__)
 
 		self.end$ = self.end$routed
 		
 		self.insertInto$ = do(parent)
-			# should base this on a modifier
-			parent.appendChild$(#route.isActive ? self : #placeholderNode)
+			# should base this on a modifier?
+			# what about replaceWith etc?
+			parent.appendChild$(#route.isActive ? self : #placeholder__)
 
 	get route
 		#route
 
 	set route-to value
 		if #routeTo
-			if #routeTo.raw != value
-				# console.log 'routeTo changed!!',value
-				#routeTo.path = value
+			#routeTo.path = value
 			return
 
-		let par = value[0] != '/' ? parent-route : null
+		let par = value[0] != '/' ? #context.route : null
 		#route = #routeTo = new ElementRouteTo(self,value,par,routeTo__)
 		self.end$ = self.end$routeTo
 
-		# really? shouldnt this be handled by the router instead??
+		# really? shouldnt this be handled by the main router click listener instead?
 		self.onclick = do(e)
 			if !e.altKey and !e.metaKey and !e.#routeHandler
 				e.preventDefault!
@@ -548,6 +452,9 @@ extend class Element
 		#detachFromParent!
 
 	def routeDidResolve match, prev
+		if match != prev
+			self.params = match
+
 		if self.routed isa Function
 			self.router.queue.add do
 				let res = await self.routed(match,prev)
