@@ -108,6 +108,7 @@ export const modifiers =
 	webkit: {ua: 'webkit'}
 	
 	touch: {flag: '_touch_'}
+	suspended: {flag: '_suspended_'}
 	move: {flag: '_move_'}
 	hold: {flag: '_hold_'}
 	ssr: {flag: '_ssr_'}
