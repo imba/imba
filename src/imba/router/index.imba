@@ -45,12 +45,11 @@ export class Router < EventEmitter
 
 		if $web$
 			queue.on 'busy' do
-				global.document.flags.incr('busy')
+				global.document.flags.incr('_routing_')
 		
 			queue.on 'idle' do
-				global.document.flags.decr('busy')
+				global.document.flags.decr('_routing_')
 				commit!
-
 		self.setup!
 		self
 
@@ -175,17 +174,17 @@ export class Router < EventEmitter
 		if $web$
 			onclick = onclick.bind(self)
 			onhashchange = onhashchange.bind(self)
-			
+			let win = global.window
 			#hash = #doc.location.hash
 			location = Location.parse(realpath,self)
 			history.replaceState(self.state,null,String(location))
 
-			window.onpopstate = self.onpopstate.bind(self) # do |e| onpopstate(e)
-			window.onbeforeunload = self.onbeforeunload.bind(self)
+			win.onpopstate = self.onpopstate.bind(self) # do |e| onpopstate(e)
+			win.onbeforeunload = self.onbeforeunload.bind(self)
 
-			window.addEventListener('hashchange',onhashchange)
-			window.addEventListener('click',onclick,capture: yes)
-
+			win.addEventListener('hashchange',onhashchange)
+			win.addEventListener('click',onclick,capture: yes)
+			win.document.documentElement.emit('routerinit',self)
 			refresh
 		self
 		
@@ -280,8 +279,10 @@ export class ElementRoute
 		#match = null
 		#options = options
 		#cache = {}
+		#unmatched = {}
 		#active = null
 		#resolvedPath = null
+		#dataKey = Symbol!
 		#activeKey = Symbol!
 		#urlKey = Symbol!
 
@@ -295,11 +296,23 @@ export class ElementRoute
 	get match
 		#match
 
+	get params
+		(#match or #unmatched)
+
+	get state
+		let map = #dataMap ||= new Map
+		let pars = params
+		let data = #dataMap.get(pars)
+		data || #dataMap.set(pars,data = {})
+		return data
+
+	set state value
+		(#dataMap ||= new Map).set(params,value)
+
 	set path value
 		if #path =? value
 			# TODO only update router if we know that we have subroutes
 			self.router.touch!
-	
 
 	get isActive
 		!!#active
@@ -342,8 +355,7 @@ export class ElementRoute
 		node..routeDidEnter(self)
 		
 	def #resolved match,prev,prevUrl = ''
-		node..visit!
-		node..routeDidResolve(match,prev,prevUrl)
+		node..routeDidResolve(self,match,prev,prevUrl)
 
 	def #leave
 		# replace flag?
@@ -451,11 +463,10 @@ extend class Element
 	def routeDidLeave route
 		#detachFromParent!
 
-	def routeDidResolve match, prev
-		if match != prev
-			self.params = match
-
+	def routeDidResolve route, match, prev
 		if self.routed isa Function
 			self.router.queue.add do
-				let res = await self.routed(match,prev)
+				suspend!
+				let res = await self.routed(match,route.state,prev)
+				unsuspend!
 		return
