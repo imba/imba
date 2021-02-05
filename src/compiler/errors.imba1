@@ -83,49 +83,51 @@ export class ImbaParseError < Error
 		return err
 
 	def excerpt gutter: yes, colors: no, details: yes
+		try
+			var code = @code
+			var loc = loc
+			var lines  = code.split(/\n/g)
+			var locmap = util.locationToLineColMap(code)
+			var lc = locmap[loc[0]] or [0,0]
+			var ln = lc[0]
+			var col = lc[1]
+			var line = lines[ln]
 
-		var code = @code
-		var loc = loc
-		var lines  = code.split(/\n/g)
-		var locmap = util.locationToLineColMap(code)
-		var lc = locmap[loc[0]] or [0,0]
-		var ln = lc[0]
-		var col = lc[1]
-		var line = lines[ln]
+			self:lineNumber = ln + 1
+			self:columnNumber = col
 
-		self:lineNumber = ln + 1
-		self:columnNumber = col
+			var ln0 = Math.max(0,ln - 2)
+			var ln1 = Math.min(ln0 + 5,lines:length)
+			let lni = ln - ln0
+			var l = ln0
+			var colorize = do $1
 
-		var ln0 = Math.max(0,ln - 2)
-		var ln1 = Math.min(ln0 + 5,lines:length)
-		let lni = ln - ln0
-		var l = ln0
-		var colorize = do $1
+			if colors
+				let color = self:severity == 'warn' ? 'yellow' : 'red'
+				color = colors if colors isa String
+				colorize = do util:ansi[color](util:ansi.bold($1))
 
-		if colors
-			let color = self:severity == 'warn' ? 'yellow' : 'red'
-			color = colors if colors isa String
-			colorize = do util:ansi[color](util:ansi.bold($1))
+			var out = while l < ln1
+				var line = lines[l++]
 
-		var out = while l < ln1
-			var line = lines[l++]
+			if gutter
+				out = out.map do |line,i|
+					let prefix =  "{ln0 + i + 1}"
+					while prefix:length < String(ln1):length
+						prefix = " {prefix}"
+					if i == lni
+						"   -> {prefix} | {line}"
+					else
+						"      {prefix} | {line}"
 
-		if gutter
-			out = out.map do |line,i|
-				let prefix =  "{ln0 + i + 1}"
-				while prefix:length < String(ln1):length
-					prefix = " {prefix}"
-				if i == lni
-					"   -> {prefix} | {line}"
-				else
-					"      {prefix} | {line}"
+			out[lni] = colorize(out[lni])
 
-		out[lni] = colorize(out[lni])
+			if details
+				out.unshift(colorize(self:message))
 
-		if details
-			out.unshift(colorize(self:message))
-
-		return out.join('\n') + '\n'
+			return out.join('\n') + '\n'
+		catch e
+			return ""
 
 	def prettyMessage
 		var excerpt = self.excerpt
