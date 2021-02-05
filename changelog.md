@@ -1,6 +1,7 @@
 ## unreleased
 * Update built-in colors to follow Tailwind 2.0
 * Allow interpolating colors in runtime `<div[c:{mycolor}]>`
+* Fix deep selector `>>>` with multiple nested children
 
 ## 2.0.0-alpha.123
 * Fix router crashing when event-related runtime code is tree-shaken

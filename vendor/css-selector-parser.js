@@ -337,7 +337,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         rule = this.parseRule();
 
         if (!rule) {
-          if(op == '>'){
+          if(op == '>' || op == '>>>' || op == '>>'){
             rule = {tagName: '*'}
           } else {
             throw Error('Rule expected after "' + op + '".');  
