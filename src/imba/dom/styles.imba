@@ -70,7 +70,6 @@ const CSS_COLORS = {
 
 const CSS_COLORS_REGEX = new RegExp("^({Object.keys(CSS_COLORS).join('|')})(\\d+(?:\\.\\d+)?)$")
 
-console.log CSS_COLORS_REGEX
 const CSS_PX_PROPS = /^([xyz])$/
 const CSS_DIM_PROPS = /^([tlbr]|size|[whtlbr]|[mps][tlbrxy]?|[rcxy]?[gs])$/
 
