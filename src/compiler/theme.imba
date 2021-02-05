@@ -286,7 +286,7 @@ export const colors = {
 		8: '#1e40af'
 		9: '#1e3a8a'
 	},
-	lightblue: {
+	sky: {
 		0: '#f0f9ff'
 		1: '#e0f2fe'
 		2: '#bae6fd'
@@ -406,7 +406,7 @@ export const colors = {
 		8: '#991b1b'
 		9: '#7f1d1d'
 	},
-	warmgray: {
+	warmer: {
 		0: '#fafaf9'
 		1: '#f5f5f4'
 		2: '#e7e5e4'
@@ -418,7 +418,7 @@ export const colors = {
 		8: '#292524'
 		9: '#1c1917'
 	},
-	truegray: {
+	warm: {
 		0: '#fafafa'
 		1: '#f5f5f5'
 		2: '#e5e5e5'
@@ -442,7 +442,7 @@ export const colors = {
 		8: '#27272a'
 		9: '#18181b'
 	},
-	coolgray: {
+	cool: {
 		0: '#f9fafb'
 		1: '#f3f4f6'
 		2: '#e5e7eb'
@@ -454,7 +454,7 @@ export const colors = {
 		8: '#1f2937'
 		9: '#111827'
 	},
-	bluegray: {
+	cooler: {
 		0: '#f8fafc'
 		1: '#f1f5f9'
 		2: '#e2e8f0'
