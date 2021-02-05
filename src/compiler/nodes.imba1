@@ -7319,7 +7319,15 @@ export class TagAttr < TagPart
 				pars.push(STR(k)) if k
 
 			STACK.use('styles')
-			"css$var({AST.cary(pars).join(',')})"
+			let term = option(:styleterm)
+			if term and term:param
+				while pars:length < 4
+					pars.push(NULL)
+				pars.push(term:param) # what if this is also a placeholder?
+				# console.log term:param
+
+			"css$var({AST.cary(pars,as: 'js').join(',')})"
+
 		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
 			if ns
 				"setns$('{ns}','{key}',{val})"
@@ -8124,12 +8132,13 @@ export class Tag < TagLike
 			if item isa TagFlag and item.name isa StyleRuleSet				
 				if item.name.placeholders:length
 					for ph in item.name.placeholders
-						let setter = TagAttr.new(ph.name)
+						let setter = TagStyleAttr.new(ph.name)
 						setter.@tag = self
-						setter.value = ph.value
+						setter.value = ph.runtimeValue
 						setter.set(
 							propname: ph.@propname
 							unit: ph.option('unit')
+							styleterm: ph
 						)
 						@attributes.splice(i++,0,setter)
 						setter.traverse
@@ -9381,10 +9390,11 @@ export class StyleRuleSet < StyleNode
 			for ph in @placeholders
 				let setter = TagStyleAttr.new(ph.name)
 				setter.@tag = @tag
-				setter.value = ph.value
+				setter.value = ph.runtimeValue
 				setter.set(
 					propname: ph.@propname
 					unit: ph.option('unit')
+					styleterm: ph
 				)
 				ph.@setter = setter
 				setter.traverse
@@ -9669,8 +9679,8 @@ export class StyleExpressions < ListNode
 			list = list.map do $1 isa StyleExpression ? $1 : StyleExpression.new($1)
 		[].concat(list)
 
-	def c
-		AST.cary(@nodes).join(', ')
+	def c o
+		AST.cary(@nodes,o).join(', ')
 		
 	def clone
 		StyleExpressions.new(@nodes.slice(0))
@@ -9692,7 +9702,9 @@ export class StyleExpression < ListNode
 	def clone
 		StyleExpression.new(@nodes.slice(0))
 		
-	def c
+	def c o
+		if o and o:as == 'js'
+			return AST.cary(@nodes,o).join(' ')
 		toString
 		
 	def toJSON
@@ -9775,6 +9787,9 @@ export class StyleTerm < ValueNode
 		
 	def kind
 		@kind
+
+	def runtimeValue
+		value
 	
 	def addParam param
 		@params ||= []
@@ -9795,8 +9810,11 @@ export class StyleInterpolationExpression < StyleTerm
 			o:rootRule.addPlaceholder(self)
 		@id = "{sourceId}_{oid}"
 		@name = "--{@id}"
-		
+		@runtimeValue = value
 		# @propname = stack.theme.expandProperty
+
+	def runtimeValue
+		@runtimeValue
 
 	def c
 		"var(--{@id})"
@@ -9817,7 +9835,7 @@ export class StyleFunction < Node
 	def toString
 		c
 		
-	def c
+	def c o
 		# console.log "style function {@name}"
 		let name = String(@name)
 		let pars = @params.c
@@ -9830,7 +9848,9 @@ export class StyleFunction < Node
 			return MP("{name}({SourceMapper.strip(pars)})",'path')
 
 
-		"{name}({pars})"
+		let out = "{name}({pars})"
+		out = helpers.singlequote(out) if o and o:as == 'js'
+		return out
 
 export class StyleURL < ValueNode
 
@@ -9849,10 +9869,15 @@ export class StyleIdentifier < StyleTerm
 		super
 		
 	
-	def c
+	def c o
 		return color.toString if color
 		let val = toString
-		val[0] == '$' ? "var(--{val.slice(1)})" : super
+		if val[0] == '$'
+			val = "var(--{val.slice(1)})"
+			val = helpers.singlequote(val) if o and o:as == 'js'
+			return val
+		else
+			super
 
 export class StyleString < StyleTerm
 
@@ -9860,9 +9885,8 @@ export class StyleColor < StyleTerm
 
 export class StyleVar < StyleTerm
 
-	def c
+	def c o
 		toString
-		# "var(--{toString})"
 
 var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
 

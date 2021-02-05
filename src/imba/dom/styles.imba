@@ -109,7 +109,7 @@ class Styles
 	def toString
 		Object.values(entries).map(do $1.css).join('\n\n')
 
-	def toValue value, unit, key
+	def toValue value, unit, key, param = null
 		if CSS_STR_PROPS[key]
 			value = String(value)
 
@@ -148,9 +148,13 @@ class Styles
 			if let colormatch = value.match(CSS_COLORS_REGEX)
 				let color = CSS_COLORS[colormatch[1]]
 				let level = color[parseInt(colormatch[2])]
-
+				let a = '100%'
+				if typeof param == 'number'
+					a = param + '%'
+				elif typeof param == 'string'
+					a = param
 				if level
-					return "hsl({level[0]},{level[1]}%,{level[2]}%)"
+					return "hsla({level[0]},{level[1]}%,{level[2]}%,{a})"
 
 		elif value and value.toStyleString isa Function
 			return value.toStyleString!
@@ -172,8 +176,8 @@ extend class Element
 	def css$ key, value, mods
 		self.style[key] = value
 		
-	def css$var name, value, unit, key
-		let cssval = styles.toValue(value,unit,key)
+	def css$var name, value, unit, key, param = null
+		let cssval = styles.toValue(value,unit,key,param)
 		self.style.setProperty(name,cssval)
 		return
 
