@@ -9315,8 +9315,6 @@ export class StyleRuleSet < StyleNode
 		let cmp = @tagDeclaration = stack.up(TagDeclaration)
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
-
-		
 		
 		let sel = String(@selectors).trim
 
@@ -9796,7 +9794,7 @@ export class StyleTerm < ValueNode
 		@params.push(param)
 		return self
 		
-	def c
+	def c o
 		let out = (@resolvedValue and !(@resolvedValue isa Node)) ? C(@resolvedValue) : valueOf
 		out
 	
@@ -9912,6 +9910,11 @@ export class StyleDimension < StyleTerm
 	
 	def toRaw
 		@unit ? toString : @number
+
+	def c o
+		let out = (@resolvedValue and !(@resolvedValue isa Node)) ? C(@resolvedValue) : valueOf
+		out = helpers.singlequote(out) if o and o:as == 'js' and @unit
+		out
 		
 	def valueOf
 		if unit == 'u'
