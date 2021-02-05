@@ -1,6 +1,10 @@
-## unreleased
+## 2.0.0-alpha.123
+* Fix router crashing when event-related runtime code is tree-shaken
+
+## 2.0.0-alpha.122
 * Fix issue with type inferencing tags in certain cases
 * Add `suspend`, `unsuspend` component lifecycle methods
+* Improved router interface & internals
 
 ## 2.0.0-alpha.121
 * Added `imba.serve` to `index.d.ts` 

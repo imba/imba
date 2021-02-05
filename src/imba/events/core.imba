@@ -273,12 +273,6 @@ export class EventHandler
 # Add methods to Element
 extend class Element
 
-	def emit name, detail, o = {bubbles: true}
-		o.detail = detail if detail != undefined
-		let event = new CustomEvent(name, o)
-		let res = self.dispatchEvent(event)
-		return event
-
 	def on$ type, mods, scope
 		let check = 'on$' + type
 		let handler

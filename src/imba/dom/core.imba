@@ -383,6 +383,10 @@ export class Element < Node
 		self.attributes = {}
 		self
 
+	def emit name, detail, o = {bubbles: true}
+		console.warn 'Element#emit not supported on node'
+		return
+
 	get classList
 		##classList ||= new DOMTokenList(self)
 

@@ -102,7 +102,7 @@ extend class Node
 		let prev = ##placeholder__
 		##placeholder__ = value
 		if prev and prev != value and prev.parentNode
-			prev.replaceWith(value)
+			prev.replaceWith$(value)
 
 	def #attachToParent
 		let ph = #placeholder__
@@ -123,6 +123,12 @@ extend class Element
 	def log ...params
 		console.log(...params)
 		self
+
+	def emit name, detail, o = {bubbles: true}
+		o.detail = detail if detail != undefined
+		let event = new CustomEvent(name, o)
+		let res = self.dispatchEvent(event)
+		return event
 
 	def slot$ name, ctx
 		return self
