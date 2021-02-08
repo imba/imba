@@ -1,3 +1,6 @@
+## unreleased
+* Made custom events cancelable by default
+
 ## 2.0.0-alpha.124
 * Update built-in colors to follow Tailwind 2.0
 * Allow interpolating colors in runtime `<div[c:{mycolor}]>`

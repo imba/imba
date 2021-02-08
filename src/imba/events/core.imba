@@ -187,8 +187,7 @@ export class EventHandler
 				modargs = args = [] unless modargs
 				args.unshift(m[2])
 				handler = m[1]
-			
-			# console.log "handle part",i,handler,event.currentTarget
+
 			# check if it is an array?
 			if handler == 'stop'
 				event.stopImmediatePropagation()

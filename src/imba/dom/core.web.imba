@@ -124,7 +124,7 @@ extend class Element
 		console.log(...params)
 		self
 
-	def emit name, detail, o = {bubbles: true}
+	def emit name, detail, o = {bubbles: true, cancelable: true}
 		o.detail = detail if detail != undefined
 		let event = new CustomEvent(name, o)
 		let res = self.dispatchEvent(event)
