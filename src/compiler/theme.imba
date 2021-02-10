@@ -59,6 +59,13 @@ export const modifiers =
 	where: {}
 	
 	after: {type:'el'}
+	'-webkit-scrollbar': {type:'el'}
+	'-webkit-scrollbar-button': {type:'el'}
+	'-webkit-scrollbar-track': {type:'el'}
+	'-webkit-scrollbar-track-piece': {type:'el'}
+	'-webkit-scrollbar-thumb': {type:'el'}
+	'-webkit-scrollbar-corner': {type:'el'}
+	'-webkit-resizer': {type:'el'}
 	backdrop: {type:'el'}
 	before: {type:'el'}
 	cue: {type:'el'}
