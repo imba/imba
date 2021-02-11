@@ -76,9 +76,8 @@ export const modifiers =
 	placeholder: {type:'el'}
 	selection: {type:'el'}
 	
-	
-	# all the native pseudo classes
-	force: {pri: 3}
+	force: {pri: 4}
+	important: {pri: 3}
 	
 	print: {media: 'print'}
 	screen: {media: 'screen'}
