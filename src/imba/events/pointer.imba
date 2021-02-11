@@ -67,7 +67,7 @@ class Touch
 	def constructor e,handler,el
 		phase = 'init'
 		events = []
-		event = e
+		event = originalEvent = e
 		handler = handler
 		target = currentTarget = el
 	
@@ -75,9 +75,19 @@ class Touch
 		x = value.clientX
 		y = value.clientY
 		events.push(value)
+
+	get ctrlKey do originalEvent.ctrlKey
+	get altKey do originalEvent.altKey
+	get shiftKey do originalEvent.shiftKey
+	get metaKey do originalEvent.metaKey
+	get isPrimary do originalEvent.isPrimary
+	get pointerType do originalEvent.pointerType
 	
 	get start
-		events[0]
+		originalEvent
+
+	get originalTarget
+		originalEvent.target
 		
 	get event
 		events[events.length - 1]
@@ -92,6 +102,20 @@ class Touch
 	get offsetY do event.offsetY
 	get type do event.type
 	get active? do phase != 'ended'
+
+	def stopImmediatePropagation
+		cancelBubble = yes
+		event.stopImmediatePropagation!
+		self
+
+	def stopPropagation
+		cancelBubble = yes
+		event.preventDefault!
+		self
+
+	def preventDefault
+		defaultPrevented = yes
+		event.preventDefault!
 		
 	def emit name, ...params do emit(self,name,params)
 	def on name, ...params do listen(self,name,...params)
@@ -281,7 +305,24 @@ def Event.touch$handle
 	current = state
 	return id == e.pointerId if id != undefined
 
+	let m = modifiers
+
+	# reject the touch before creation for certain modifiers
+	# TODO should allow specifying pen OR mouse etc
+	return if m.ctrl and !e.ctrlKey
+	return if m.alt and !e.altKey
+	return if m.meta and !e.metaKey
+	return if m.shift and !e.shiftKey
+	return if m.if and !!m.if[0] == false
+	return if m.self and e.target != el
+	return if m.primary and !e.isPrimary
+	return if m.pen and e.pointerType != 'pen'
+	return if m.mouse and e.pointerType != 'mouse'
+	return if m.touch and e.pointerType != 'touch'
+	return if m.sel and !e.target.matches(String(m.sel[0]))
+	
 	let t = state = handler.state = current = new Touch(e,handler,el)
+	# console.log 'starting touch with event',e,modifiers
 
 	let canceller = do(e)
 		e.preventDefault!
@@ -297,6 +338,9 @@ def Event.touch$handle
 			t.phase = 'ended'
 		
 		try handler.handleEvent(t)
+		
+		if ph == 'init'
+			t.phase = 'active'
 
 		if end
 			el.releasePointerCapture(e.pointerId)
