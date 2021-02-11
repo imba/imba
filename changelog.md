@@ -1,6 +1,8 @@
 ## unreleased
 * Make custom events cancelable by default
 * Make `@-webkit-scrollbar-*` style selectors work
+* Make core event modifiers work for `@touch` event
+* Add `@important` style modifier
 
 ## 2.0.0-alpha.124
 * Update built-in colors to follow Tailwind 2.0
