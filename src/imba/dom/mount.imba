@@ -1,6 +1,14 @@
 import {renderContext} from './context'
 import {scheduler} from '../scheduler'
 
+export def render blk, ctx = {}
+	let prev = renderContext.context
+	renderContext.context = ctx
+	let res = blk(ctx)
+	if renderContext.context == ctx
+		renderContext.context = prev
+	return res
+
 export def mount mountable, into
 	let parent = into or global.document.body
 	let element = mountable
