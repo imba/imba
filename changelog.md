@@ -3,6 +3,7 @@
 * Make `@-webkit-scrollbar-*` style selectors work
 * Make core event modifiers work for `@touch` event
 * Fix issue where text selection did not work after `@touch`
+* Make `@touch.prevent` prevent scrolling via `touch-action:none`
 * Add `@important` style modifier
 
 ## 2.0.0-alpha.124

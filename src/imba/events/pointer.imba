@@ -345,14 +345,26 @@ def Event.touch$handle
 		if end
 			el.releasePointerCapture(e.pointerId)
 
+	let disposed = no
 	let teardown = do(e)
+		return if disposed
 		el.flags.decr('_touch_')
 		t.emit('end')
+		if m.prevent
+			if (--handler.prevents) == 0
+				el.style.removeProperty('touch-action')
+
 		handler.state = {}
 		el.removeEventListener('pointermove',listener)
 		el.removeEventListener('pointerup',listener)
 		el.removeEventListener('pointercancel',listener)
 		global.document.removeEventListener('selectstart',canceller,capture:true)
+		disposed = yes
+	
+	if m.prevent
+		handler.prevents ||= 0
+		handler.prevents++
+		el.style.setProperty('touch-action','none')
 
 	el.flags.incr('_touch_')
 	el.setPointerCapture(e.pointerId)
