@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.125
 * Make custom events cancelable by default
 * Make `@-webkit-scrollbar-*` style selectors work
 * Make core event modifiers work for `@touch` event
