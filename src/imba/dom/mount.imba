@@ -7,9 +7,12 @@ export def mount mountable, into
 	if mountable isa Function
 		let ctx = {_: parent}
 		let tick = do
+			let prev = renderContext.context
 			renderContext.context = ctx
-			mountable(ctx)
-			# now remove the context?
+			let res = mountable(ctx)
+			if renderContext.context == ctx
+				renderContext.context = prev
+			return res
 		element = tick()
 		scheduler.listen('commit',tick)
 	else
