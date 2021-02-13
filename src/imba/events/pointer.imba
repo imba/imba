@@ -365,6 +365,8 @@ def Event.touch$handle
 		handler.prevents ||= 0
 		handler.prevents++
 		el.style.setProperty('touch-action','none')
+		if e.pointerType != 'mouse' and global.document.documentElement.ontouchstart !== undefined
+			el.addEventListener('touchstart',canceller,once:true)
 
 	el.flags.incr('_touch_')
 	el.setPointerCapture(e.pointerId)

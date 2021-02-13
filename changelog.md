@@ -1,3 +1,6 @@
+## 2.0.0-alpha.126
+* prevent `touchstart` event on iOS in `@touch.prevent`
+
 ## 2.0.0-alpha.125
 * Make custom events cancelable by default
 * Make `@-webkit-scrollbar-*` style selectors work
