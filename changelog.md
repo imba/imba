@@ -2,6 +2,7 @@
 * Make custom events cancelable by default
 * Make `@-webkit-scrollbar-*` style selectors work
 * Make core event modifiers work for `@touch` event
+* Fix issue where text selection did not work after `@touch`
 * Add `@important` style modifier
 
 ## 2.0.0-alpha.124

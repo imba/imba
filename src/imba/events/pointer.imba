@@ -352,7 +352,7 @@ def Event.touch$handle
 		el.removeEventListener('pointermove',listener)
 		el.removeEventListener('pointerup',listener)
 		el.removeEventListener('pointercancel',listener)
-		global.document.removeEventListener('selectstart',canceller)
+		global.document.removeEventListener('selectstart',canceller,capture:true)
 
 	el.flags.incr('_touch_')
 	el.setPointerCapture(e.pointerId)
