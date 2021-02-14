@@ -67,13 +67,11 @@ class Touch
 	def constructor e,handler,el
 		phase = 'init'
 		events = []
-		event = originalEvent = e
+		originalEvent = e
 		handler = handler
 		target = currentTarget = el
 	
 	set event value
-		x = value.clientX
-		y = value.clientY
 		events.push(value)
 
 	get ctrlKey do originalEvent.ctrlKey
@@ -110,7 +108,7 @@ class Touch
 
 	def stopPropagation
 		cancelBubble = yes
-		event.preventDefault!
+		event.stopPropagation!
 		self
 
 	def preventDefault
@@ -128,6 +126,11 @@ def Event.touch$in$mod
 def Event.touch$fit$mod
 	let o = (state[step] ||= {clamp:yes})
 	return Event.touch$reframe$mod.apply(this,arguments)
+
+def Event.touch$round$mod sx=1,sy=sx
+	event.x = round(event.x,sx)
+	event.y = round(event.y,sy)
+	return yes
 
 def Event.touch$snap$mod sx=1,sy=sx
 	event.x = round(event.x,sx)
@@ -297,15 +300,33 @@ def Event.touch$sync$mod item,xalias='x',yalias='y'
 	item[xalias] = o.x + (state.x - o.tx) if xalias
 	item[yalias] = o.y + (state.y - o.ty) if yalias
 	return yes
+
+extend class Element
+	def on$touch(mods,context,handler,o)
+		handler.type = 'touch'
+		handler.isIOS = !!global.navigator.platform.match(/iPhone|iPod|iPad/)
+		# global.document.documentElement.ontouchstart !== undefined
+		self.addEventListener('pointerdown',handler,o)
+		if handler.isIOS and !mods.passive
+			self.addEventListener('touchstart',handler)
+		return handler
 		
 def Event.touch$handle
 	let e = event
 	let el = element
 	let id = state.pointerId
-	current = state
-	return id == e.pointerId if id != undefined
-
 	let m = modifiers
+	current = state
+
+	if e.type == 'touchstart'
+		# to make PointerEvents work well on ios we need to capture
+		# the touchstart for the linked touch and cancel that
+		try 
+			if id and id == e.targetTouches[0].identifier
+				e.preventDefault!
+		return false
+
+	return id == e.pointerId if id != undefined
 
 	# reject the touch before creation for certain modifiers
 	# TODO should allow specifying pen OR mouse etc
@@ -322,7 +343,6 @@ def Event.touch$handle
 	return if m.sel and !e.target.matches(String(m.sel[0]))
 	
 	let t = state = handler.state = current = new Touch(e,handler,el)
-	# console.log 'starting touch with event',e,modifiers
 
 	let canceller = do(e)
 		e.preventDefault!
@@ -334,6 +354,10 @@ def Event.touch$handle
 		t.event = e
 		let end = typ == 'pointerup' or typ == 'pointercancel'
 
+		unless typ == 'pointercancel'
+			t.x = e.clientX
+			t.y = e.clientY
+		# console.log 'pointer',typ,ph,t.target..nodeName,e.x,e.y
 		if end
 			t.phase = 'ended'
 		
@@ -342,18 +366,18 @@ def Event.touch$handle
 		if ph == 'init'
 			t.phase = 'active'
 
-		if end
+		if end and !handler.isIOS
 			el.releasePointerCapture(e.pointerId)
 
 	let disposed = no
+	
 	let teardown = do(e)
 		return if disposed
 		el.flags.decr('_touch_')
 		t.emit('end')
-		if m.prevent
+		unless m.passive
 			if (--handler.prevents) == 0
 				el.style.removeProperty('touch-action')
-
 		handler.state = {}
 		el.removeEventListener('pointermove',listener)
 		el.removeEventListener('pointerup',listener)
@@ -361,21 +385,22 @@ def Event.touch$handle
 		global.document.removeEventListener('selectstart',canceller,capture:true)
 		disposed = yes
 	
-	if m.prevent
+	unless m.passive
 		handler.prevents ||= 0
 		handler.prevents++
 		el.style.setProperty('touch-action','none')
-		if e.pointerType != 'mouse' and global.document.documentElement.ontouchstart !== undefined
-			el.addEventListener('touchstart',canceller,once:true)
+		el.offsetWidth # force reflow for touch-action none to take effect
 
 	el.flags.incr('_touch_')
-	el.setPointerCapture(e.pointerId)
 	el.addEventListener('pointermove',listener)
 	el.addEventListener('pointerup',listener)
 	el.addEventListener('pointercancel',listener)
 	el.addEventListener('lostpointercapture',teardown,once:true)
+
+	if !handler.isIOS
+		el.setPointerCapture(e.pointerId)
+
 	global.document.addEventListener('selectstart',canceller,capture:true)
 
 	listener(e)
-	# handler.once('idle') do console.warn 'is idle!'
 	return false

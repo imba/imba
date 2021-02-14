@@ -276,11 +276,8 @@ extend class Element
 		let check = 'on$' + type
 		let handler
 
-		# check if a custom handler exists for this type?
-		if self[check] isa Function
-			handler = self[check](mods,scope)
-
 		handler = new EventHandler(mods,scope)
+
 		let capture = mods.capture
 		let passive = mods.passive
 
@@ -288,10 +285,10 @@ extend class Element
 
 		if passive
 			o = {passive: passive, capture: capture}
-		
-		if (/^(pointerdrag|touch)$/).test(type)
-			handler.type = type
-			type = 'pointerdown'
-			
-		self.addEventListener(type,handler,o)
+
+		# check if a custom handler exists for this type?
+		if self[check] isa Function
+			handler = self[check](mods,scope,handler)
+		else
+			self.addEventListener(type,handler,o)
 		return handler

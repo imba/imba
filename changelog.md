@@ -1,3 +1,7 @@
+## 2.0.0-alpha.127
+* overhauled `@touch` to work be more consistent on touch devices
+* add `@touch.round` event modifier
+
 ## 2.0.0-alpha.126
 * prevent `touchstart` event on iOS in `@touch.prevent`
 

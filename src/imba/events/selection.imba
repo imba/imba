@@ -24,5 +24,7 @@ def activateSelectionHandler
 		global.document.addEventListener('selectionchange',selHandler)
 
 extend class Element
-	def on$selection mods, context
+	def on$selection mods, context, handler,o
 		activateSelectionHandler()
+		self.addEventListener('selection',handler,o)
+		return handler

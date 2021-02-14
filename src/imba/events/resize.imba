@@ -23,5 +23,7 @@ def getResizeObserver
 		return
 
 extend class Element
-	def on$resize(chain, context)
+	def on$resize(chain, context, handler,o)
 		getResizeObserver!.observe(this)
+		self.addEventListener('resize',handler,o)
+		return handler

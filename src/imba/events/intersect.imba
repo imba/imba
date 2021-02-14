@@ -51,7 +51,7 @@ def getIntersectionObserver opts = IntersectionEventDefaults
 	map[key] ||= new IntersectionObserver(callback('intersect',key),opts)
 
 extend class Element
-	def on$intersect mods,context
+	def on$intersect mods,context,handler,o
 		let obs
 		if mods.options
 			let th = [] 
@@ -81,3 +81,5 @@ extend class Element
 
 		mods._observer = obs
 		obs.observe(this)
+		self.addEventListener('intersect',handler,o)
+		return handler
