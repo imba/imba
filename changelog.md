@@ -1,12 +1,13 @@
 ## unreleased
-* fixed image asset urls in SSR
+* Fixed image asset urls in SSR
+* Make bundler work with client entrypoint without any styles
 
 ## 2.0.0-alpha.127
-* overhauled `@touch` to work be more consistent on touch devices
-* add `@touch.round` event modifier
+* Overhauled `@touch` to work be more consistent on touch devices
+* Add `@touch.round` event modifier
 
 ## 2.0.0-alpha.126
-* prevent `touchstart` event on iOS in `@touch.prevent`
+* Prevent `touchstart` event on iOS in `@touch.prevent`
 
 ## 2.0.0-alpha.125
 * Make custom events cancelable by default

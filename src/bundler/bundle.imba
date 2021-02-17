@@ -438,6 +438,8 @@ export default class Bundle < Component
 		esb.onLoad({ filter: /\.imba$/, namespace: 'styles'}) do({path,namespace})
 			if builder.styles[path]
 				return builder.styles[path]
+			else
+				{loader: 'css', contents: ""}
 
 		# The main loader that compiles and returns imba files, and their stylesheets
 		esb.onLoad({ filter: /\.imba1?$/}) do({path,namespace})
@@ -452,10 +454,12 @@ export default class Bundle < Component
 					contents: SourceMapper.strip(res.css or "")
 					resolveDir: src.absdir
 				}
+			
+			let incStyles = res.css or o.format == 'css'
 
 			let cached = res[self] ||= {
 				loader: 'js',
-				contents: SourceMapper.strip(res.js or "") + (res.css ? "\nimport '_styles_';" : "")
+				contents: SourceMapper.strip(res.js or "") + (incStyles ? "\nimport '_styles_';" : "")
 				errors: res.errors.map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
 				warnings: res.warnings.map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
 				resolveDir: src.absdir
