@@ -1,6 +1,7 @@
 ## unreleased
 * Fixed image asset urls in SSR
 * Make bundler work with client entrypoint without any styles
+* Dispatch bubbling `resized` event from ResizeObserver
 
 ## 2.0.0-alpha.127
 * Overhauled `@touch` to work be more consistent on touch devices

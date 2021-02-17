@@ -20,6 +20,8 @@ def getResizeObserver
 			e.width = entry.target.offsetWidth
 			e.height = entry.target.offsetHeight
 			entry.target.dispatchEvent(e)
+			let e2 = new CustomEvent('resized', bubbles: true, detail: entry)
+			entry.target.dispatchEvent(e2)
 		return
 
 extend class Element
