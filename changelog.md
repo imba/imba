@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.128
 * Fixed image asset urls in SSR
 * Make bundler work with client entrypoint without any styles
 * Dispatch bubbling `resized` event from ResizeObserver
