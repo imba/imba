@@ -694,7 +694,6 @@ export default class Bundle < Component
 		for own path,output of outs
 			output.#type = output._ = 'output'
 			output.path = path
-			
 
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js
@@ -703,7 +702,7 @@ export default class Bundle < Component
 				# output.path = path.replace('.js','.html')
 				# output.dir = 'public'
 
-			elif web? or output.type == 'css'
+			elif web? or output.type == 'css' or path.match(/\.(png|svg|jpe?g|gif|webm|webp)$/)
 				# output.dir = 'assets'
 				output.path = "{pubdir}/__assets__/{path}"
 				output.url = "{baseurl}/__assets__/{path}"
@@ -844,7 +843,7 @@ export default class Bundle < Component
 						# console.log 'html is',meta,replaced
 						body = replaced
 						if hmr?
-							body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<html',''])
+							body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 
 			elif web?
 				let mfname = "_$MF$_"

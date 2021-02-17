@@ -701,6 +701,8 @@ export class HTMLHtmlElement < HTMLElement
 		
 		if inject.length
 			let pos = html.indexOf('</head>')
+			pos = html.indexOf('<body>') if pos == -1
+			pos = 0 if pos == -1
 			html = html.slice(0,pos) + '\n' + inject.join('\n') + '\n' + html.slice(pos)
 		return "<!DOCTYPE html>" + html
 
