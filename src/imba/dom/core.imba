@@ -854,6 +854,9 @@ export def createSVGElement name, parent, flags, text, ctx
 
 	if parent and parent isa Node
 		el.insertInto$(parent)
+
+	if text
+		el.textContent = text
 	return el
 
 export def createComment text
