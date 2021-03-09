@@ -1,5 +1,6 @@
 ## unreleased
 * Prevent `touchstart` event on iPad Pro in `@touch.prevent`
+* Fixed text in svg `<text>` elements (#482)
 
 ## 2.0.0-alpha.128
 * Fixed image asset urls in SSR
