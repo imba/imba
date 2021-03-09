@@ -301,10 +301,16 @@ def Event.touch$sync$mod item,xalias='x',yalias='y'
 	item[yalias] = o.y + (state.y - o.ty) if yalias
 	return yes
 
+def isIOS
+	let nav = global.navigator.platform or ''
+	return true if nav.match(/iPhone|iPod|iPad/)
+	return true if nav == 'MacIntel' and global.navigator.maxTouchPoints > 2
+	return false
+
 extend class Element
 	def on$touch(mods,context,handler,o)
 		handler.type = 'touch'
-		handler.isIOS = !!global.navigator.platform.match(/iPhone|iPod|iPad/)
+		handler.isIOS = isIOS!
 		# global.document.documentElement.ontouchstart !== undefined
 		self.addEventListener('pointerdown',handler,o)
 		if handler.isIOS and !mods.passive

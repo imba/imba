@@ -1,3 +1,6 @@
+## unreleased
+* Prevent `touchstart` event on iPad Pro in `@touch.prevent`
+
 ## 2.0.0-alpha.128
 * Fixed image asset urls in SSR
 * Make bundler work with client entrypoint without any styles
