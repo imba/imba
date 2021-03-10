@@ -10,7 +10,7 @@ interface Element {
     route: any;
     route__: any;
     $key: any;
-    emit(event:string, params?: any): Event;
+    emit(event:string, params?: any, options?: any): Event;
     focus(options?: any): void;
     blur(): void;
     
