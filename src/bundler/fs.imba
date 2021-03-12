@@ -1,4 +1,4 @@
-const nodefs = require 'fs'
+const nfs = require 'fs'
 const np = require 'path'
 const utils = require './utils'
 const micromatch = require 'micromatch'
@@ -105,7 +105,7 @@ export class FSNode
 		new cls(root,src,abs)
 
 	def constructor root, rel, abs
-		self.fs = root
+		self.root = root
 		rel = rel
 		abs = abs
 		flags = 0
@@ -113,10 +113,16 @@ export class FSNode
 		#watched = no
 
 	get log
-		self.fs.log
+		self.root.log
 	
 	get program
-		self.fs.program
+		self.root.program
+
+	get fs
+		self.root
+
+	get nodefs
+		self.root.nodefs
 
 	get name
 		np.basename(rel)
@@ -125,7 +131,9 @@ export class FSNode
 		np.extname(rel)
 
 	def memo key, cb
-		self.fs.cache.memo("{abs}:{key}",mtimesync,cb)
+		let cache = program.cache
+		cache.memo("{abs}:{key}",mtimesync,cb)
+
 
 	def watch observer
 		#watchers.add(observer)
@@ -137,13 +145,13 @@ export class FSNode
 
 	def register
 		if flags |=? FLAGS.REGISTERED
-			self.fs.#tree.add(self)
+			root.#tree.add(self)
 		self
 	
 	def deregister
 		if flags ~=? FLAGS.REGISTERED
 			# console.log 'now deregistering node',rel
-			self.fs.#tree.remove(self)
+			root.#tree.remove(self)
 
 	def touch
 		#mtime = Date.now!
@@ -168,6 +176,8 @@ export class FSNode
 			program.watcher.unwatch(abs)
 			# console.log 'unwatch',abs
 
+# 
+export class FSProxyNode
 
 export class DirNode < FSNode
 
@@ -187,19 +197,32 @@ export class FileNode < FSNode
 		abs.slice(0,abs.lastIndexOf('/') + 1)
 
 	get dir
-		self.fs.lookup(absdir,DirNode)
+		root.lookup(absdir,DirNode)
+
+	# resolve path relative to file - return rich FSNode
+	def lookup path
+		let o = {
+			importer: abs
+			resolveDir: absdir
+			path: path
+		}
+		let res = root.resolver.resolve(o)
+		# could be glob / multiple?
+		if res and res.#abs
+			return root.lookup(res.#abs)
+		return null
 	
 	def write body, hash
 		if !hash or (#hash =? hash)
-			await utils.ensureDir(abs)
+			await nodefs.promises.mkdir(absdir,recursive: true)
 			if rel.indexOf('../') != 0 or true
-				fs.log.success 'write %path %kb',rel,body.length
+				log.success 'write %path %kb',rel,body.length
 			nodefs.promises.writeFile(abs,body)
 
 	def writeSync body, hash
 		if !hash or (#hash =? hash)
 			if rel.indexOf('../') != 0 or true
-				fs.log.success 'write %path %kb',rel,body.length
+				log.success 'write %path %kb',rel,body.length
 			nodefs.writeFileSync(abs,body)
 
 	def read enc = 'utf8'
@@ -354,7 +377,11 @@ export class ImageFile < FileNode
 				toString: function()\{ return this.url;\}
 			\})
 			"""
-			return {js: js}
+			return {
+				width: size.width
+				height: size.height
+				js: js
+			}
 
 export class JSONFile < FileNode
 
@@ -410,6 +437,9 @@ export default class FileSystem < Component
 	def nodes arr
 		arr.map do lookup($1)
 
+	get nodefs
+		program.volume or nfs
+
 	get files
 		prescan! unless #files
 		return #files
@@ -425,13 +455,6 @@ export default class FileSystem < Component
 
 	def relative src
 		np.relative(cwd,resolve(src))
-
-	def writePath src,body
-		await utils.ensureDir(resolve(src))
-		writeFile(resolve(src),body)
-
-	def ensureDir src
-		await utils.ensureDir(resolve(src))
 
 	def writeFile src,body
 		nodefs.promises.writeFile(resolve(src),body)
@@ -524,33 +547,7 @@ export default class FileSystem < Component
 				matched.push(lookup(src)) if m
 		return matched
 
-	def crawl o = {}
-		# let sep = path.sep
-		let slice = cwd.length + 1
-		let filter = do(a) a[0] != '.'
-		let grouped = yes
-		let api = (new fdir).crawlWithOptions(cwd,{
-			includeBasePath: !grouped
-			# includeDirs: true
-			group: grouped
-			includeDirs: false
-			maxDepth: 8
-			filters: [filter]
-			exclude: do
-				if $3 == 7 
-					if o.includeRoots and !o.includeRoots[$1]
-						return yes
-					if o.excludeRoots and o.excludeRoots[$1]
-						return yes
-
-				return (/^(\.|node_modules)/).test($1)
-		})
-
-		let res = api.sync!
-
-		unless grouped
-			return res.map do $1.slice(slice)
-
+	def fromJSON structure, base
 		let paths = []
 		for entry in res
 			let absdir = entry.dir
@@ -563,5 +560,62 @@ export default class FileSystem < Component
 				let file = nodemap[rel] ||= FSNode.create(self,rel,abs)
 				file.register!
 				paths.push(rel)
+		yes
 
-		return paths
+	def crawl o = {}
+		
+			
+
+		# let sep = path.sep
+		let slice = cwd.length + 1
+		let filter = do(a) a[0] != '.'
+		let grouped = yes
+
+		if nodefs.toJSON
+			# doesnt work with binary files?
+			let res = nodefs.toJSON!
+			let paths = []
+			for own abs,body of res
+				let rel = abs.slice(slice)
+				let file = nodemap[rel] ||= FSNode.create(self,rel,abs)
+				file.register!
+				paths.push(rel)
+			return paths
+
+		else
+			let api = (new fdir).crawlWithOptions(cwd,{
+				includeBasePath: !grouped
+				# includeDirs: true
+				group: grouped
+				includeDirs: false
+				maxDepth: 8
+				filters: [filter]
+				exclude: do
+					if $3 == 7 
+						if o.includeRoots and !o.includeRoots[$1]
+							return yes
+						if o.excludeRoots and o.excludeRoots[$1]
+							return yes
+
+					return (/^(\.|node_modules)/).test($1)
+			})
+
+			let res = api.sync!
+
+			unless grouped
+				return res.map do $1.slice(slice)
+
+			let paths = []
+			for entry in res
+				let absdir = entry.dir
+				let reldir = absdir.slice(slice)
+				let dir = nodemap[reldir] ||= new DirNode(self,reldir,absdir)
+
+				for f in entry.files
+					let rel = reldir + '/' + f
+					let abs = absdir + '/' + f
+					let file = nodemap[rel] ||= FSNode.create(self,rel,abs)
+					file.register!
+					paths.push(rel)
+
+			return paths

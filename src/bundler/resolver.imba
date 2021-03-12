@@ -72,7 +72,7 @@ export class Resolver
 	def constructor o = {}
 		# not using new fields?!
 		# need to upgrade the bootstrapper
-		config = o.config
+		config = o.config or {}
 		files = o.files
 		program = o.program
 		fs = o.fs
@@ -191,13 +191,14 @@ export class Resolver
 
 			for ext in extensions
 				let m = norm + ext
+
 				if fs.existsSync(m)
 					# console.log 'resolved with ext!',fs.relative(test)
 					let rel = fs.relative(m)
 					path = namespace == 'file' ? m : rel
 					return {path: path, namespace: namespace, #abs: m + query, #rel: rel}
 
-			return {path: fs.relative(m), namespace: namespace}
+			return {path: norm, namespace: namespace}
 
 		elif !pathsMatcher.test(path)
 			return null
@@ -207,7 +208,7 @@ export class Resolver
 				# should this be synchronous?
 				# if lookupMap
 				#	lookupMap[m] = yes
-
+				
 				if fs.existsSync(m)
 					# check for correct extensions here as well?
 					let abs = fs.resolve(m)

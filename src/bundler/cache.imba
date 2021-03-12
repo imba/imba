@@ -3,7 +3,7 @@ import np from 'path'
 import nfs from 'fs'
 import os from 'os'
 
-import crypto from 'crypto'
+import {createHash} from 'crypto'
 
 const hashedKeyCache = {
 
@@ -19,9 +19,11 @@ export default class Cache
 		#key = Symbol!
 		o = options
 		dir = o.cachedir # or np.resolve(program.cwd,'.cache') # file.absdir # np.dirname()
-		aliaspath = np.resolve(dir,'.imba-aliases')
-		aliasmap = ""
+		nodefs = options.volume or nfs
+		aliaspath = dir and np.resolve(dir,'.imba-aliases')
+		aliasmap = []
 		aliascache = {}
+		
 
 		data = {
 			aliases: {}
@@ -29,19 +31,21 @@ export default class Cache
 		}
 
 		mintime = o.mtime or 0
+		persistToDisk = !!dir
 		idFaucet = utils.idGenerator!
 		preload!
 
 	def preload
-		unless nfs.existsSync(dir)
-			nfs.mkdirSync(dir)
+		return unless persistToDisk
+		unless nodefs.existsSync(dir)
+			nodefs.mkdirSync(dir)
 
-		let entries = nfs.readdirSync(dir)
+		let entries = nodefs.readdirSync(dir)
 		for entry in entries
 			cache[entry] = {exists: 1}
 
-		unless nfs.existsSync(aliaspath)
-			nfs.appendFileSync(aliaspath,"")
+		unless nodefs.existsSync(aliaspath)
+			nodefs.appendFileSync(aliaspath,"")
 
 		refreshAliasMap!
 		log.ts "cache loaded"
@@ -76,7 +80,7 @@ export default class Cache
 		if hashedKeyCache[key]
 			return hashedKeyCache[key]
 
-		let hash = crypto.createHash('sha1')
+		let hash = createHash('sha1')
 		hash.update(key)
 		hashedKeyCache[key] = hash.digest('hex') # '_' + hash.digest('hex').slice(0,-1)
 
@@ -89,14 +93,14 @@ export default class Cache
 		if cached and cached.time
 			return cached.time
 
-		if cached and cached.exists
+		if cached and cached.exists and persistToDisk
 			let path = fullKeyPath(key)
-			nfs.statSync(path).mtimeMs
+			nodefs.statSync(path).mtimeMs
 		else
 			0
 
 	def refreshAliasMap
-		aliasmap = nfs.readFileSync(aliaspath,'utf8').split(/\r?\n/)
+		aliasmap = nodefs.readFileSync(aliaspath,'utf8').split(/\r?\n/)
 
 	def getPathAlias path
 		getKeyAlias(path)
@@ -115,8 +119,11 @@ export default class Cache
 			# another process might have written to the
 			# same path at the same time
 			# if we read stats before and stats after - we can know for sure
-			nfs.appendFileSync(aliaspath,key + '\n','utf8')
-			refreshAliasMap!
+			if persistToDisk
+				nodefs.appendFileSync(aliaspath,key + '\n','utf8')
+				refreshAliasMap!
+			else
+				aliasmap.push(key)
 			index = aliasmap.indexOf(key)
 
 		if index >= 0
@@ -132,13 +139,14 @@ export default class Cache
 
 	def getKeyValue key
 		let path = fullKeyPath(key)
-		let val = await nfs.promises.readFile(path,'utf8')
+		let val = await nodefs.promises.readFile(path,'utf8')
 		JSON.parse(val)
 
 	def setKeyValue key, value
+		return unless persistToDisk # dont use if in-memory
 		let path = fullKeyPath(key)
 		let json = JSON.stringify(value)
-		nfs.promises.writeFile(path,json)
+		nodefs.promises.writeFile(path,json)
 
 
 	def memo name, time, cb

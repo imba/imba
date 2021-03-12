@@ -1,4 +1,4 @@
-import {startService} from 'esbuild'
+import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
 import {pluck,createHash,diagnosticToESB,injectStringBefore} from './utils'
 
@@ -118,13 +118,13 @@ export default class Bundle < Component
 
 
 		let externals = []
-		let package = program.package or {}
+		let pkg = program.package or {}
 		for ext in o.external
 			if ext == "dependencies"
-				let deps = Object.keys(package.dependencies or {})
+				let deps = Object.keys(pkg.dependencies or {})
 
 				if o.execOnly # clarify this
-					deps.push( ...Object.keys(package.devDependencies or {}) )
+					deps.push( ...Object.keys(pkg.devDependencies or {}) )
 
 				for dep in deps
 					unless o.external.indexOf("!{dep}") >= 0
@@ -146,8 +146,10 @@ export default class Bundle < Component
 			outExtension: { ".js": ".__dist__.js", ".css": ".__dist__.css"}
 			globalName: o.globalName
 			publicPath: o.publicPath or ASSETS_URL
-			banner: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')
-			footer: o.footer
+			banner: {
+				js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')
+			}
+			footer: {js: o.footer or "//__FOOT__"}
 			splitting: o.splitting
 			sourcemap: (program.sourcemap === false ? no : (web? ? yes : 'inline'))
 			stdin: o.stdin
@@ -163,9 +165,10 @@ export default class Bundle < Component
 				".html": "file"
 			}
 			write: false
-			metafile: "metafile.json"
+			metafile: true
 			external: externals
 			tsconfig: o.tsconfig
+			nodePaths: (o.nodePaths or []).slice(0) # (np.resolve(program.imbaPath,'polyfills'))
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: o.pure
 			treeShaking: o.treeShaking
@@ -206,8 +209,14 @@ export default class Bundle < Component
 		if !node?
 			let defines = esoptions.define ||= {}
 			let env = o.env or process.env.NODE_ENV or 'production'
+			defines["global"]="globalThis"
+			defines["process.platform"]="'web'"
+			defines["process.browser"]="true"
+			esoptions.inject = [np.resolve(program.imbaPath,'polyfills','buffer','index.js')]
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
+			defines["process.env"] ||= JSON.stringify(NODE_ENV: env)
 			defines["ENV_DEBUG"] ||= "false"
+			esoptions.nodePaths.push(np.resolve(program.imbaPath,'polyfills'))
 
 		if o.bundle == false
 			esoptions.bundle = false
@@ -342,7 +351,7 @@ export default class Bundle < Component
 			let id = "entry:{path}"
 			let meta = pathMetadata[path]
 			let cfg = meta.config
-			# console.log 'onload custom entry',path,cfg.format,cfg.platform,cfg
+			# console.log 'onload custom entry',path,cfg.format,cfg.platform,cfg,meta
 			let file = fs.lookup(meta.path)
 
 			# add this to something we want to resolve 
@@ -357,13 +366,14 @@ export default class Bundle < Component
 				if o.format == 'html'
 					return {loader: 'text', contents: id}
 
+				
 				return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
 
 			log.debug "lookup up bundle for id {id}"
-
 			# adding it as a child of root is risky wrt correctly invalidating nested bundles
 			let bundler = root.#bundles[id] ||= new Bundle(root,Object.assign({entryPoints: [meta.path]},cfg))
 			builder.refs[id] = bundler
+
 			unless cfg.format == 'css'
 				bundler.rebuild! # we can asynchronously start the rebundler
 			
@@ -470,7 +480,6 @@ export default class Bundle < Component
 	def build force = no
 		buildcache[self] ||= new Promise do(resolve)
 			if (built =? true) or force
-				esb = await startService!
 				workers = await startWorkers!
 
 				log.debug "build {entryPoints.join(',')} {o.format}|{o.platform} {nr}"
@@ -488,7 +497,7 @@ export default class Bundle < Component
 			
 				try
 					builder = new Builder(previous: builder)
-					result = await esb.build(esoptions)
+					result = await esbuild.build(esoptions)
 					firstBuild = result
 				catch e
 					result = e
@@ -499,8 +508,6 @@ export default class Bundle < Component
 					await write(result)
 
 				unless watcher
-					esb.stop!
-					esb = null
 					workers.stop!
 					workers = null
 
@@ -519,7 +526,7 @@ export default class Bundle < Component
 			return resolve(result)
 
 	def rebuild {force = no} = {}
-		unless built and esb and result and result.rebuild isa Function
+		unless built and result and result.rebuild isa Function
 			return build(yes) 
 
 		buildcache[self] ||= new Promise do(resolve)
@@ -588,8 +595,9 @@ export default class Bundle < Component
 	
 
 		let files = result.outputFiles or []
-		let metafile = pluck(files) do $1.path.indexOf(esoptions.metafile) >= 0
-		let meta = JSON.parse(metafile.text)
+		let meta = result.metafile
+		# pluck(files) do $1.path.indexOf(esoptions.metafile) >= 0
+		# let meta = JSON.parse(metafile.text)
 
 		# log.debug "paths",Object.keys(meta.inputs),Object.keys(meta.outputs)
 

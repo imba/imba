@@ -19,30 +19,30 @@ export default class Watcher < Component
 
 	get instance
 		return #watcher if #watcher
+		if $node$
+			let initial = Object.keys(map)
+			#watcher = require('chokidar').watch(initial,{
+				ignoreInitial: true,
+				depth: 1,
+				ignored: isIgnored.bind(self) # ['.*','.git/**','.cache/**',fs.resolve('dist')],
+				cwd: fs.cwd
+			}) 
 
-		let initial = Object.keys(map)
-		#watcher = require('chokidar').watch(initial,{
-			ignoreInitial: true,
-			depth: 1,
-			ignored: isIgnored.bind(self) # ['.*','.git/**','.cache/**',fs.resolve('dist')],
-			cwd: fs.cwd
-		}) 
+			#watcher.on('change') do(src,stats)
+				history.mark(src,FLAGS.CHANGE) # with change / remove flags
+				emit('change',src)
+				emit('touch',src)
 
-		#watcher.on('change') do(src,stats)
-			history.mark(src,FLAGS.CHANGE) # with change / remove flags
-			emit('change',src)
-			emit('touch',src)
+			#watcher.on('unlink') do(src,stats)
+				history.mark(src,FLAGS.UNLINK)
+				emit('unlink',src)
+				emit('touch',src)
 
-		#watcher.on('unlink') do(src,stats)
-			history.mark(src,FLAGS.UNLINK)
-			emit('unlink',src)
-			emit('touch',src)
-
-		#watcher.on('add') do(src,stats)
-			console.log 'add',src
-			history.mark(src,FLAGS.ADD)
-			emit('add',src)
-			emit('touch',src)
+			#watcher.on('add') do(src,stats)
+				console.log 'add',src
+				history.mark(src,FLAGS.ADD)
+				emit('add',src)
+				emit('touch',src)
 
 		return #watcher
 	
