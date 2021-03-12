@@ -1,0 +1,355 @@
+Name: crypto-browserify
+Version: 3.12.0
+License: MIT
+Private: false
+Description: implementation of crypto for the browser
+Repository: git://github.com/crypto-browserify/crypto-browserify.git
+Homepage: https://github.com/crypto-browserify/crypto-browserify
+Author: Dominic Tarr <dominic.tarr@gmail.com> (dominictarr.com)
+
+---
+
+Name: browserify-sign
+Version: 4.0.4
+License: ISC
+Private: false
+Description: adds node crypto signing for browsers
+Repository: https://github.com/crypto-browserify/browserify-sign.git
+
+---
+
+Name: randombytes
+Version: 2.1.0
+License: MIT
+Private: false
+Description: random bytes from browserify stand alone
+Repository: git@github.com:crypto-browserify/randombytes.git
+Homepage: https://github.com/crypto-browserify/randombytes
+
+---
+
+Name: create-hash
+Version: 1.2.0
+License: MIT
+Private: false
+Description: create hashes for browserify
+Repository: git@github.com:crypto-browserify/createHash.git
+Homepage: https://github.com/crypto-browserify/createHash
+
+---
+
+Name: browserify-cipher
+Version: 1.0.1
+License: MIT
+Private: false
+Description: ciphers for the browser
+Repository: git@github.com:crypto-browserify/browserify-cipher.git
+Author: Calvin Metcalf <calvin.metcalf@gmail.com>
+
+---
+
+Name: pbkdf2
+Version: 3.0.17
+License: MIT
+Private: false
+Description: This library provides the functionality of PBKDF2 with the ability to use any supported hashing algorithm returned from crypto.getHashes()
+Repository: https://github.com/crypto-browserify/pbkdf2.git
+Homepage: https://github.com/crypto-browserify/pbkdf2
+Author: Daniel Cousens
+
+---
+
+Name: diffie-hellman
+Version: 5.0.3
+License: MIT
+Private: false
+Description: pure js diffie-hellman
+Repository: https://github.com/crypto-browserify/diffie-hellman.git
+Homepage: https://github.com/crypto-browserify/diffie-hellman
+Author: Calvin Metcalf
+
+---
+
+Name: create-hmac
+Version: 1.1.7
+License: MIT
+Private: false
+Description: node style hmacs in the browser
+Repository: https://github.com/crypto-browserify/createHmac.git
+Homepage: https://github.com/crypto-browserify/createHmac
+
+---
+
+Name: create-ecdh
+Version: 4.0.3
+License: MIT
+Private: false
+Description: createECDH but browserifiable
+Repository: https://github.com/crypto-browserify/createECDH.git
+Homepage: https://github.com/crypto-browserify/createECDH
+Author: Calvin Metcalf
+
+---
+
+Name: public-encrypt
+Version: 4.0.3
+License: MIT
+Private: false
+Description: browserify version of publicEncrypt & privateDecrypt
+Repository: https://github.com/crypto-browserify/publicEncrypt.git
+Homepage: https://github.com/crypto-browserify/publicEncrypt
+Author: Calvin Metcalf
+
+---
+
+Name: randomfill
+Version: 1.0.4
+License: MIT
+Private: false
+Description: random fill from browserify stand alone
+Repository: https://github.com/crypto-browserify/randomfill.git
+Homepage: https://github.com/crypto-browserify/randomfill
+
+---
+
+Name: browserify-des
+Version: 1.0.2
+License: MIT
+Private: false
+Repository: git+https://github.com/crypto-browserify/browserify-des.git
+Homepage: https://github.com/crypto-browserify/browserify-des#readme
+Author: Calvin Metcalf <calvin.metcalf@gmail.com>
+
+---
+
+Name: browserify-aes
+Version: 1.2.0
+License: MIT
+Private: false
+Description: aes, for browserify
+Repository: git://github.com/crypto-browserify/browserify-aes.git
+Homepage: https://github.com/crypto-browserify/browserify-aes
+
+---
+
+Name: safe-buffer
+Version: 5.1.2
+License: MIT
+Private: false
+Description: Safer Node.js Buffer API
+Repository: git://github.com/feross/safe-buffer.git
+Homepage: https://github.com/feross/safe-buffer
+Author: Feross Aboukhadijeh <feross@feross.org> (http://feross.org)
+
+---
+
+Name: md5.js
+Version: 1.3.5
+License: MIT
+Private: false
+Description: node style md5 on pure JavaScript
+Repository: https://github.com/crypto-browserify/md5.js.git
+Homepage: https://github.com/crypto-browserify/md5.js
+Author: Kirill Fomichev <fanatid@ya.ru> (https://github.com/fanatid)
+
+---
+
+Name: inherits
+Version: 2.0.3
+License: ISC
+Private: false
+Description: Browser-friendly inheritance fully compatible with standard node.js inherits()
+Repository: undefined
+
+---
+
+Name: cipher-base
+Version: 1.0.4
+License: MIT
+Private: false
+Description: abstract base class for crypto-streams
+Repository: git+https://github.com/crypto-browserify/cipher-base.git
+Homepage: https://github.com/crypto-browserify/cipher-base#readme
+Author: Calvin Metcalf <calvin.metcalf@gmail.com>
+
+---
+
+Name: evp_bytestokey
+Version: 1.0.3
+License: MIT
+Private: false
+Description: The insecure key derivation algorithm from OpenSSL
+Repository: https://github.com/crypto-browserify/EVP_BytesToKey.git
+Homepage: https://github.com/crypto-browserify/EVP_BytesToKey
+Author: Calvin Metcalf <calvin.metcalf@gmail.com>
+Contributors:
+  Kirill Fomichev <fanatid@ya.ru>
+
+---
+
+Name: elliptic
+Version: 6.4.1
+License: MIT
+Private: false
+Description: EC cryptography
+Repository: git@github.com:indutny/elliptic
+Homepage: https://github.com/indutny/elliptic
+Author: Fedor Indutny <fedor@indutny.com>
+
+---
+
+Name: bn.js
+Version: 4.11.8
+License: MIT
+Private: false
+Description: Big number implementation in pure javascript
+Repository: git@github.com:indutny/bn.js
+Homepage: https://github.com/indutny/bn.js
+Author: Fedor Indutny <fedor@indutny.com>
+
+---
+
+Name: browserify-rsa
+Version: 4.0.1
+License: MIT
+Private: false
+Description: RSA for browserify
+Repository: git@github.com:crypto-browserify/browserify-rsa.git
+
+---
+
+Name: parse-asn1
+Version: 5.1.4
+License: ISC
+Private: false
+Description: utility library for parsing asn1 files for use with browserify-sign.
+Repository: git://github.com/crypto-browserify/parse-asn1.git
+
+---
+
+Name: ripemd160
+Version: 2.0.2
+License: MIT
+Private: false
+Description: Compute ripemd160 of bytes or strings.
+Repository: https://github.com/crypto-browserify/ripemd160
+
+---
+
+Name: sha.js
+Version: 2.4.11
+License: (MIT AND BSD-3-Clause)
+Private: false
+Description: Streamable SHA hashes in pure javascript
+Repository: git://github.com/crypto-browserify/sha.js.git
+Homepage: https://github.com/crypto-browserify/sha.js
+Author: Dominic Tarr <dominic.tarr@gmail.com> (dominictarr.com)
+
+---
+
+Name: miller-rabin
+Version: 4.0.1
+License: MIT
+Private: false
+Description: Miller Rabin algorithm for primality test
+Repository: git@github.com:indutny/miller-rabin
+Homepage: https://github.com/indutny/miller-rabin
+Author: Fedor Indutny <fedor@indutny.com>
+
+---
+
+Name: des.js
+Version: 1.0.0
+License: MIT
+Private: false
+Description: DES implementation
+Repository: git+ssh://git@github.com/indutny/des.js.git
+Homepage: https://github.com/indutny/des.js#readme
+Author: Fedor Indutny <fedor@indutny.com>
+
+---
+
+Name: hash-base
+Version: 3.0.4
+License: MIT
+Private: false
+Description: abstract base class for hash-streams
+Repository: https://github.com/crypto-browserify/hash-base.git
+Homepage: https://github.com/crypto-browserify/hash-base
+Author: Kirill Fomichev <fanatid@ya.ru> (https://github.com/fanatid)
+
+---
+
+Name: brorand
+Version: 1.1.0
+License: MIT
+Private: false
+Description: Random number generator for browsers and node.js
+Repository: git@github.com:indutny/brorand
+Homepage: https://github.com/indutny/brorand
+Author: Fedor Indutny <fedor@indutny.com>
+
+---
+
+Name: buffer-xor
+Version: 1.0.3
+License: MIT
+Private: false
+Description: A simple module for bitwise-xor on buffers
+Repository: https://github.com/crypto-browserify/buffer-xor.git
+Homepage: https://github.com/crypto-browserify/buffer-xor
+Author: Daniel Cousens
+
+---
+
+Name: asn1.js
+Version: 4.10.1
+License: MIT
+Private: false
+Description: ASN.1 encoder and decoder
+Repository: git@github.com:indutny/asn1.js
+Homepage: https://github.com/indutny/asn1.js
+Author: Fedor Indutny
+
+---
+
+Name: minimalistic-assert
+Version: 1.0.1
+License: ISC
+Private: false
+Description: minimalistic-assert ===
+Repository: https://github.com/calvinmetcalf/minimalistic-assert.git
+Homepage: https://github.com/calvinmetcalf/minimalistic-assert
+
+---
+
+Name: hash.js
+Version: 1.1.7
+License: MIT
+Private: false
+Description: Various hash functions that could be run by both browser and node
+Repository: git@github.com:indutny/hash.js
+Homepage: https://github.com/indutny/hash.js
+Author: Fedor Indutny <fedor@indutny.com>
+
+---
+
+Name: minimalistic-crypto-utils
+Version: 1.0.1
+License: MIT
+Private: false
+Description: Minimalistic tools for JS crypto modules
+Repository: git+ssh://git@github.com/indutny/minimalistic-crypto-utils.git
+Homepage: https://github.com/indutny/minimalistic-crypto-utils#readme
+Author: Fedor Indutny <fedor@indutny.com>
+
+---
+
+Name: hmac-drbg
+Version: 1.0.1
+License: MIT
+Private: false
+Description: Deterministic random bit generator (hmac)
+Repository: git+ssh://git@github.com/indutny/hmac-drbg.git
+Homepage: https://github.com/indutny/hmac-drbg#readme
+Author: Fedor Indutny <fedor@indutny.com>

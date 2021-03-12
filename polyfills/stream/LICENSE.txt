@@ -1,0 +1,10 @@
+Name: buffer-es6
+Version: 4.9.3
+License: MIT
+Private: false
+Description: Node.js Buffer API, for the browser
+Repository: git://github.com/calvinmetcalf/buffer-es6.git
+Author: Feross Aboukhadijeh <feross@feross.org> (http://feross.org)
+Contributors:
+  Romain Beauxis <toots@rastageeks.org>
+  James Halliday <mail@substack.net>
