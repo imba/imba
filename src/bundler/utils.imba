@@ -1,6 +1,6 @@
 import nfs from 'fs'
 import np from 'path'
-import crypto from 'crypto'
+import {createHash as cryptoCreateHash} from 'crypto'
 import os from 'os'
 
 import {resolve as parseConfig} from './config'
@@ -33,10 +33,6 @@ export def diagnosticToESB item, add = {}
 			lineText: item.lineText
 		},add)
 	}
-
-export def writePath src, body
-	await ensureDir(src)
-	nfs.promises.writeFile(src,body)
 
 export def writeFile src, body
 	nfs.promises.writeFile(src,body)
@@ -119,8 +115,7 @@ export def idGenerator alphabet = 'abcdefghijklmnopqrstuvwxyz'
 		num.toString(alphabet.length).split("").map(do remap[$1]).join("")
 
 export def createHash body
-	crypto.createHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8).toUpperCase!
-
+	cryptoCreateHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8).toUpperCase!
 
 export def injectStringBefore target, toInject, patterns = ['']
 	for patt in patterns
@@ -128,23 +123,3 @@ export def injectStringBefore target, toInject, patterns = ['']
 		if idx >= 0
 			return target.slice(0,idx) + toInject + target.slice(idx)
 	return target
-
-
-const dirExistsCache = {}
-
-export def ensureDir src
-	let stack = []
-	let dirname = src
-	
-	new Promise do(resolve)
-
-		while dirname = np.dirname(dirname)
-			if dirExistsCache[dirname] or nfs.existsSync(dirname)
-				break
-			stack.push(dirname)
-
-		while stack.length
-			let dir = stack.pop!
-			nfs.mkdirSync(dirExistsCache[dirname] = dir)
-
-		resolve(src)
