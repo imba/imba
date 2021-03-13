@@ -224,6 +224,7 @@ var C = do |node,opts|
 
 # wrap output in path markers
 var MP = do |val,typ = 'path'|
+	return val if STACK.tsc
 	return "{val}/*${typ}$*/"
 
 var M = do |val,mark,o|
