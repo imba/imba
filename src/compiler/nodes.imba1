@@ -1203,7 +1203,7 @@ export class Node
 			out = '(' + out + ')' if par isa Access || par isa Op # others? #
 			ch:cached = yes
 
-		if OPTS:sourceMap and (!o or o:mark !== false)
+		if OPTS:sourcemap and (!o or o:mark !== false)
 			out = M(out,self)
 		return out
 
@@ -5536,7 +5536,7 @@ export class MixinIdentifier < Identifier
 		let up = STACK.current
 		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
-		if OPTS:sourceMap and (!o or o:mark !== false)
+		if OPTS:sourcemap and (!o or o:mark !== false)
 			out = M(out, @token or @value)
 		return out
 
