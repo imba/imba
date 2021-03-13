@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.130
 * Upgraded esbuild to v0.9.2
 * Automatically polyfill built-in node modules like buffer,stream,crypto etc when compiling for browser. Still experimental.
 
