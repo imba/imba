@@ -28,12 +28,12 @@ export def resolveConfigFile dir,{path,fs}
 				return path.resolve(dir,value)
 			return value
 
-		let package = JSON.parse(fs.readFileSync(src,'utf8'))
+		let pkg = JSON.parse(fs.readFileSync(src,'utf8'))
 
-		let config = package.imba ||= {}
+		let config = pkg.imba ||= {}
 
 		resolvePaths(config,dir)
-		config.package = package
+		config.package = pkg
 		config.cwd ||= dir
 		return cached[src] = config
 	else
