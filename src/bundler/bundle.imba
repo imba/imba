@@ -806,7 +806,9 @@ export default class Bundle < Component
 
 				path = body.slice(start,end)
 				let origPath = path
-				let asset = urlOutputMap[path]
+				let rePath = origPath.replace(ASSETS_URL,'/__assets__/')
+				let asset = urlOutputMap[path] or urlOutputMap[rePath]
+
 				# what if it is referencing itself?
 				if asset
 					await walker.resolveAsset(asset)
