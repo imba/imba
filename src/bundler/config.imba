@@ -50,16 +50,16 @@ export const defaultConfig = {
 			format: 'esm'
 		}
 
-		client: {
-			extends: 'web'
-			splitting: true
-		}
-
 		iife: {
 			extends: 'web'
 			format: 'iife'
 			splitting: false
 			platform: 'browser'
+		}
+
+		client: {
+			extends: 'web'
+			splitting: true
 		}
 
 		css: {

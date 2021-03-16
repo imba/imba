@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
-import {pluck,createHash,diagnosticToESB,injectStringBefore} from './utils'
+import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules} from './utils'
 
 import {serializeData,deserializeData} from '../imba/utils'
 import {Manifest} from '../imba/manifest'
@@ -119,20 +119,29 @@ export default class Bundle < Component
 
 		let externals = []
 		let pkg = program.package or {}
+
 		for ext in o.external
+			continue if ext[0] == '!'
+
 			if ext == "dependencies"
 				let deps = Object.keys(pkg.dependencies or {})
 
 				if o.execOnly # clarify this
 					deps.push( ...Object.keys(pkg.devDependencies or {}) )
 
-				for dep in deps
-					unless o.external.indexOf("!{dep}") >= 0
-						externals.push(dep)
+				externals.push(...deps)
+			
+			if ext == "builtins"
+				externals.push(...Object.keys(builtInModules))
 
 			if ext == ".json"
 				externals.push("*.json")
+
 			externals.push(ext)
+		
+		externals = externals.filter do(src)
+			!o.external or o.external.indexOf("!{src}") == -1
+
 
 		esoptions = {
 			entryPoints: o.stdin ? undefined : entryPoints
@@ -710,7 +719,8 @@ export default class Bundle < Component
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js
 				# console.log 'pubdir??',pubdir
-				output.path = path = "{pubdir}/{path.replace('.js','.html')}"
+				output.url = "{baseurl}/{path.replace('.js','.html')}"
+				output.path = path = "{pubdir}/__assets__/{path.replace('.js','.html')}"
 				# output.path = path.replace('.js','.html')
 				# output.dir = 'public'
 
@@ -794,6 +804,7 @@ export default class Bundle < Component
 			let delim
 			let breaks = {"'": 1, '"':1, '(':1, ')':1}
 			let path
+			let useRelativePaths = no
 
 			while true
 				start = body.indexOf(ASSETS_URL,end)
@@ -816,6 +827,11 @@ export default class Bundle < Component
 				else
 					# console.log 'asset not found',path,body.slice(start - 50,end)
 					path = (baseurl + origPath.replace(ASSETS_URL,'/__assets__/'))
+				
+				if useRelativePaths
+					let rel = np.relative(np.dirname(output.url),path)
+					rel = './' + rel unless rel.match(/^\.\.?\//)
+					path = rel
 
 				if path != origPath
 					# TODO adjust whitespace to make path same length
@@ -846,8 +862,13 @@ export default class Bundle < Component
 					body.replace(/(\w+_default\d*) = \"(.*)\"/g) do(m,name,path)
 						mapping[name] = entryToUrlMap[path] or path
 
-					let urls = body.match(/URLS = \[(.*)\]/)[1].split(/\,\s*/g).map do mapping[$1]
-		
+					let urls = body.match(/URLS = \[(.*)\]/)[1].split(/\,\s*/g).map do
+						mapping[$1]
+
+					if useRelativePaths
+						# TODO fix relative paths
+						yes
+
 					let meta = builder.meta[output.source.path]
 					
 					if meta and meta.html
@@ -898,7 +919,8 @@ export default class Bundle < Component
 				if asset.url
 					asset.url = asset.url.replace('.__dist__.',sub)
 					if sub == '.' and asset.hash and asset.type != 'map'
-						asset.url += '?v=' + asset.hash
+						yes
+						# asset.url += '?v=' + asset.hash
 
 				asset.path = asset.path.replace('.__dist__.',sub)
 				# now replace link to sourcemap as well
@@ -971,7 +993,7 @@ export default class Bundle < Component
 		manifest.outdir = np.relative(mfile.abs,#outfs.cwd)
 
 		if true
-			# set output paths of html files
+			# set output paths of html files - should not happen after resolving?
 			let htmlFiles = assets.filter do $1.type == 'html'
 			let htmlPaths = htmlFiles.map do $1.path.split('/')
 

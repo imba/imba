@@ -1,7 +1,10 @@
+## unreleased
+* Remove `?v=xxxxxx` suffix from asset references generated with `--no-hashing`
+* Allow `"external":["builtins",...]` to externalize builtin node modules for other platforms than `node`
+
 ## 2.0.0-alpha.130
 * Upgraded esbuild to v0.9.2
 * Automatically polyfill built-in node modules like buffer,stream,crypto etc when compiling for browser. Still experimental.
-
 
 ## 2.0.0-alpha.129
 * Prevent `touchstart` event on iPad Pro in `@touch.prevent`
