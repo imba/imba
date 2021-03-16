@@ -895,8 +895,12 @@ export default class Bundle < Component
 			return body
 		
 		walker.resolveAsset = do(asset)
-			return asset if asset.#resolved or asset.hash
+			return asset if asset.#resolved
 			asset.#resolved = yes
+
+			if asset.hash
+				asset.ttl = 31536000
+				return asset
 
 			if asset.type == 'js' or asset.type == 'html'
 				log.debug "resolving assets in {asset.path}"
@@ -916,6 +920,9 @@ export default class Bundle < Component
 				# allow a fully custom pattern instead?
 				let sub = hashing? ? ".{asset.hash}." : "."
 				asset.originalPath = asset.path
+				
+				if sub != '.'
+					asset.ttl = 31536000
 				if asset.url
 					asset.url = asset.url.replace('.__dist__.',sub)
 					if sub == '.' and asset.hash and asset.type != 'map'

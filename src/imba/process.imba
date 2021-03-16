@@ -179,10 +179,17 @@ class AssetResponder
 			console.log 'found no path for',asset,url
 			res.writeHead(404, {})
 			return res.end!
-		
-		let stream = nfs.createReadStream(path)
-		res.writeHead(200, headers)
-		return stream.pipe(res)
+
+		if asset and asset.ttl > 0
+			headers['cache-control'] = "max-age={asset.ttl}"
+
+		try		
+			let stream = nfs.createReadStream(path)
+			res.writeHead(200, headers)
+			return stream.pipe(res)
+		catch
+			res.writeHead(503,{})
+			return res.end!
 
 	def createReadStream
 		nfs.createReadStream(path)
