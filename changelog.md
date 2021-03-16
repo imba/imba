@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.131
 * Serve hashed (cacheable) assets with `Cache-Control: max-age=31536000`
 * Remove `?v=xxxxxx` suffix from asset references generated with `--no-hashing`
 * Allow `"external":["builtins",...]` to externalize builtin node modules for other platforms than `node`
