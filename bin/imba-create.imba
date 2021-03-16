@@ -23,7 +23,8 @@ let imbadir = np.resolve(__dirname,'..')
 let imbapkg = read-package(imbadir) # JSON.parse(nfs.readFileSync(np.resolve(imbadir,'package.json'),'utf-8'))
 
 const templates = [
-	['base-template', 'Application with client-side scripts']
+	['base-template', 'Application with client-side scripts'],
+	['electron-template', 'Electron application']
 ].map do([name,hint]) {name: name, hint: hint}
 
 const cli = new class
