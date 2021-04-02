@@ -105,7 +105,7 @@ def run
 			await cli.exec("git clone --depth 1 {tplurl} {dir}")
 
 			cli.cwd = dir
-			await cli.exec("rm -rf {np.resolve(dir,'.git')}")
+			await nfs.rmdirSync(np.resolve(dir,'.git'), recursive: yes)
 			await cli.exec("git init .")
 			let pkg = Object.assign({},tplpkg,data)
 			write-package(dir,pkg)
