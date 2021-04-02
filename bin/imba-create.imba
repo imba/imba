@@ -96,7 +96,7 @@ def run
 	
 		# if cfg.username
 		#	cfg.repository = "{cfg.username}/{cfg.name}"
-		let ghcli = try cli.exec('which gh')
+		# let ghcli = try cli.exec('which gh')
 
 		let dir = np.resolve(data.name)
 
@@ -114,8 +114,8 @@ def run
 				log.info "add origin https://github.com/{data.repository}.git"
 				await cli.exec("git remote add origin https://github.com/{data.repository}.git")
 
-			unless ghcli
-				log.info "Install the github CLI tools (https://github.com/cli/cli) to automatically create repository"
+			# unless ghcli
+			#	log.info "Install the github CLI tools (https://github.com/cli/cli) to automatically create repository"
 
 			log.info "Installing dependencies"
 			# await cli.exec("npm install imba")
