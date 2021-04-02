@@ -102,7 +102,7 @@ def run
 
 		if await cli.ok("Create project in directory: {dir}?", initial: yes)
 			log.info "Generating files from template"
-			await cli.exec("git clone --depth 1 {tplurl} {dir}")
+			await cli.exec("git clone --depth 1 {tplurl} '{dir}'")
 
 			cli.cwd = dir
 			await nfs.rmdirSync(np.resolve(dir,'.git'), recursive: yes)
