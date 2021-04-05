@@ -624,17 +624,17 @@ export default class Bundle < Component
 		let outs = meta.outputs
 		let urls = meta.urls
 
-		let reloutdir = np.relative(fs.cwd,esoptions.outdir)
+		let reloutdir = fs.relative(esoptions.outdir)
 
 		for file in files
-			let path = np.relative(fs.cwd,file.path)
+			let path = fs.relative(file.path)
 
 			if outs[path]
 				outs[path].#file = file
 				outs[path].#contents = file.contents
 				file.#output = outs[path]
 			else
-				console.log 'could not map the file to anything!!',file.path,path,reloutdir
+				console.log 'could not map the file to anything!!',file.path,path,reloutdir,Object.keys(outs),fs.cwd,esoptions.outdir
 
 		let tests = {
 			js: ".__dist__.js"

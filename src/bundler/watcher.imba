@@ -1,5 +1,6 @@
 import Component from './component'
 import ChangeLog from './changes'
+import np from 'path'
 
 const FLAGS = {
 	CHANGE: 1
@@ -20,6 +21,7 @@ export default class Watcher < Component
 	get instance
 		return #watcher if #watcher
 		if $node$
+			let normalize = do(src) src.split(np.sep).join(np.posix.sep)
 			let initial = Object.keys(map)
 			#watcher = require('chokidar').watch(initial,{
 				ignoreInitial: true,
@@ -29,16 +31,19 @@ export default class Watcher < Component
 			}) 
 
 			#watcher.on('change') do(src,stats)
+				src = normalize(src)
 				history.mark(src,FLAGS.CHANGE) # with change / remove flags
 				emit('change',src)
 				emit('touch',src)
 
 			#watcher.on('unlink') do(src,stats)
+				src = normalize(src)
 				history.mark(src,FLAGS.UNLINK)
 				emit('unlink',src)
 				emit('touch',src)
 
 			#watcher.on('add') do(src,stats)
+				src = normalize(src)
 				console.log 'add',src
 				history.mark(src,FLAGS.ADD)
 				emit('add',src)

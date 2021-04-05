@@ -194,7 +194,7 @@ export class FileNode < FSNode
 		rel.slice(0,rel.lastIndexOf('/') + 1)
 	
 	get absdir
-		abs.slice(0,abs.lastIndexOf('/') + 1)
+		abs.slice(0,abs.lastIndexOf(np.sep) + 1)
 
 	get dir
 		root.lookup(absdir,DirNode)
@@ -217,6 +217,7 @@ export class FileNode < FSNode
 			await nodefs.promises.mkdir(absdir,recursive: true)
 			if rel.indexOf('../') != 0 or true
 				log.success 'write %path %kb',rel,body.length
+			
 			nodefs.promises.writeFile(abs,body)
 
 	def writeSync body, hash
@@ -454,7 +455,7 @@ export default class FileSystem < Component
 		np.resolve(cwd,...src)
 
 	def relative src
-		np.relative(cwd,resolve(src))
+		np.relative(cwd,resolve(src)).split(np.sep).join(np.posix.sep)
 
 	def writeFile src,body
 		nodefs.promises.writeFile(resolve(src),body)
@@ -609,11 +610,13 @@ export default class FileSystem < Component
 			for entry in res
 				let absdir = entry.dir
 				let reldir = absdir.slice(slice)
+				
 				let dir = nodemap[reldir] ||= new DirNode(self,reldir,absdir)
 
 				for f in entry.files
-					let rel = reldir + '/' + f
-					let abs = absdir + '/' + f
+					let rel = reldir ? (reldir + '/' + f) : f
+					let abs = absdir + np.sep + f
+					# console.log '!!!',absdir,reldir,rel,abs
 					let file = nodemap[rel] ||= FSNode.create(self,rel,abs)
 					file.register!
 					paths.push(rel)
