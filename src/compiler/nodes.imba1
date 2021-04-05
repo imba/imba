@@ -2842,7 +2842,7 @@ export class Root < Code
 		if o:bundle
 			if o:cwd and STACK.isNode
 				let abs = fspath.resolve(o:cwd,o:sourcePath)
-				let rel = fspath.relative(o:cwd,abs)
+				let rel = fspath.relative(o:cwd,abs).split(fspath:sep).join('/')
 				let np = @scope.importProxy('path').proxy
 
 				@scope.lookup('__filename'):c = do LIT("{np:resolve}({STR(rel).c})").c
