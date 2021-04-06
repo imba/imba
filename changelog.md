@@ -1,3 +1,6 @@
+## 2.0.0-alpha.132
+* Improve windows compatibility for bundler and `imba create`
+
 ## 2.0.0-alpha.131
 * Serve hashed (cacheable) assets with `Cache-Control: max-age=31536000`
 * Remove `?v=xxxxxx` suffix from asset references generated with `--no-hashing`
