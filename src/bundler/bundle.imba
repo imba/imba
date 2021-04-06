@@ -221,7 +221,10 @@ export default class Bundle < Component
 			defines["global"]="globalThis"
 			defines["process.platform"]="'web'"
 			defines["process.browser"]="true"
-			esoptions.inject = [np.resolve(program.imbaPath,'polyfills','buffer','index.js')]
+			esoptions.inject = [
+				np.resolve(program.imbaPath,'polyfills','buffer','index.js'),
+				np.resolve(program.imbaPath,'polyfills','__inject__.js')
+			]
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
 			defines["process.env"] ||= JSON.stringify(NODE_ENV: env)
 			defines["ENV_DEBUG"] ||= "false"
