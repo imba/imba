@@ -102,7 +102,7 @@ def run
 
 		if await cli.ok("Create project in directory: {dir}?", initial: yes)
 			log.info "Generating files from template"
-			await cli.exec("git clone --depth 1 {tplurl} '{dir}'")
+			await cli.exec("git clone --depth 1 {tplurl} \"{dir}\"")
 
 			cli.cwd = dir
 			await nfs.rmdirSync(np.resolve(dir,'.git'), recursive: yes)
@@ -110,9 +110,7 @@ def run
 			let pkg = Object.assign({},tplpkg,data)
 			write-package(dir,pkg)
 
-			if data.repository
-				log.info "add origin https://github.com/{data.repository}.git"
-				await cli.exec("git remote add origin https://github.com/{data.repository}.git")
+			
 
 			# unless ghcli
 			#	log.info "Install the github CLI tools (https://github.com/cli/cli) to automatically create repository"
@@ -120,6 +118,10 @@ def run
 			log.info "Installing dependencies"
 			# await cli.exec("npm install imba")
 			await cli.exec("npm install")
+
+			if data.repository
+				log.info "add origin https://github.com/{data.repository}.git"
+				await cli.exec("git remote add origin https://github.com/{data.repository}.git")
 
 			log.success "Finished setting up project"
 	catch e

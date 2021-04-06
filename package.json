@@ -39,7 +39,7 @@
     }
   ],
   "scripts": {
-    "test": "bin/imba scripts/test-runner.imba",
+    "test": "node bin/imba scripts/test-runner.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "bootstrap": "node scripts/build-parser.js && node scripts/build.js",
     "build": "node scripts/build.js",
