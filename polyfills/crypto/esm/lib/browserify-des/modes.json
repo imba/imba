@@ -1,0 +1,26 @@
+{
+    "des-ecb": {
+        "key": 8,
+        "iv": 0
+    },
+    "des": {
+        "key": 8,
+        "iv": 8
+    },
+    "des3": {
+        "key": 24,
+        "iv": 8
+    },
+    "des-ede3": {
+        "key": 24,
+        "iv": 0
+    },
+    "des-ede-cbc": {
+        "key": 16,
+        "iv": 8
+    },
+    "des-ede": {
+        "key": 16,
+        "iv": 0
+    }
+}

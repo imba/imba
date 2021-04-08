@@ -19,7 +19,7 @@ test/node_modules
 node_modules
 !test/node_modules/imba
 !test/node_modules/imba2
-lib/
+/lib
 build/
 dist/
 dist2/
