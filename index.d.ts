@@ -15,6 +15,9 @@ interface Element {
     blur(): void;
     
     [key: string]: any;
+
+    setAttribute(name: string, value: boolean): void;
+    setAttribute(name: string, value: number): void;
 }
 
 interface ImbaElement implements Element {
