@@ -999,11 +999,11 @@ export class Lexer
 		# little reason to check for this right here? but I guess it is only a simple check
 		if typ == '$' and ARGVAR.test(id)
 			# console.log "TYP $"
-			if id == '$0'
-				typ = 'ARGUMENTS'
-			else
-				typ = 'ARGVAR'
-				id = id.substr(1)
+			# if id == '$0'
+			# 	typ = 'ARGUMENTS'
+			# else
+			typ = 'ARGVAR'
+			id = id.substr(1)
 
 		elif typ == '$' and ENV_FLAG.test(id)
 			typ = 'ENV_FLAG'
