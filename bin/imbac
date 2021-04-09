@@ -425,15 +425,21 @@ CLI.prototype.compileFile = function (src){
 	
 	if (out.warnings && !self.o().silent && !self.o().print) {
 		// log "   {out:warnings:length} warnings"
-		for (let i = 0, items = iter$(out.warnings), len = items.length, warn; i < len; i++) {
-			warn = items[i];
-			let hl = self.o().colors && 'whiteBright';
-			let excerpt = helpers.printExcerpt(src.sourceBody,warn.loc,{hl: hl,type: 'warn',pad: 1});
-			let msg = self.b(("" + self.yellow('warn: '))) + self.yellow(warn.message);
-			self.log("   " + msg);
-			self.log(self.gray(excerpt));
-		};
-		
+		out.warnings.forEach(function(err,i){
+			if(err.toError instanceof Function){
+				err = err.toError();
+			}
+			// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
+			if (err.excerpt) {
+				self.log("   " + err.excerpt({colors: self.o().colors}));
+			} else if(err instanceof SyntaxError && err.stack){
+				self.log(err.stack);
+			} else {
+				self.log("   " + err.message);
+				self.log("   " + ("in file " + srcp));
+				if (err.stack) { self.log(err.stack) };
+			};
+		})
 		// helpers
 	};
 	

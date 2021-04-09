@@ -2862,8 +2862,8 @@ export class Root < Code
 		
 		var out = c(o)
 
-		if STACK.tsc
-			out = "import 'imba/index';\n{out}"
+		# if STACK.tsc
+		#	out = "import 'imba/index';\n{out}"
 
 		script:rawResult = {
 			js: out
@@ -3364,7 +3364,7 @@ export class TagDeclaration < ClassDeclaration
 			# sup = CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
 
 		if STACK.tsc
-			sup = superclass ? superclass.toClassName : LIT('HTMLElement')
+			sup = superclass ? superclass.toClassName : LIT('ImbaElement')
 			if option(:extension)
 				className = "Extended${className}"
 
@@ -7247,7 +7247,7 @@ export class TagAttr < TagPart
 		let val = value.c(o)
 		let bval = val
 		let op = M('=',option(:op))
-		let isAttr = key.match(/^(aria-|data-)/) or (@tag and @tag.isSVG) or ns == 'html'
+		let isAttr = (key.match(/^(aria-|data-)/) or key == 'style') or (@tag and @tag.isSVG) or ns == 'html'
 		let tagName = @tag and @tag.@tagName
 
 		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'style' or tagName == 'img' or tagName == 'script' or tagName == 'svg'))
