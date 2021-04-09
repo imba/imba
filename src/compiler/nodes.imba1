@@ -4662,8 +4662,7 @@ export class Access < Op
 		var rgtexpr = null
 
 		if lft isa VarOrAccess and lft.@variable isa ImportProxy
-			unless lft.@variable isa ImbaRuntime and STACK.tsc
-				return lft.@variable.access(rgt).c
+			return lft.@variable.access(rgt,lft).c
 
 		if rgt isa Token
 			rgt = Identifier.new(rgt)
@@ -11309,11 +11308,10 @@ export class ImportProxy < Variable
 		return js:length ? js.join('\n') : ''
 
 
-	def access key
-		let raw = C(key,mark: false)
+	def access key,ctx = null
 		if @globalName
-			return LIT("{@globalName}.{raw}")
-
+			return LIT("{M(@globalName,ctx)}.{C(key)}")
+		let raw = C(key,mark: false)
 		@exports[raw] ||= LIT("{@name}_{raw}")
 
 export class ImbaRuntime < ImportProxy
