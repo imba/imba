@@ -4662,7 +4662,8 @@ export class Access < Op
 		var rgtexpr = null
 
 		if lft isa VarOrAccess and lft.@variable isa ImportProxy
-			return lft.@variable.access(rgt).c
+			unless lft.@variable isa ImbaRuntime and STACK.tsc
+				return lft.@variable.access(rgt).c
 
 		if rgt isa Token
 			rgt = Identifier.new(rgt)
@@ -5849,12 +5850,14 @@ export class Argvar < ValueNode
 		# NEXT -- global.parseInt or Number.parseInt (better)
 		var v = parseInt(String(value))
 		# FIXME Not needed anymore? I think the lexer handles this
-		return "arguments" if v == 0
+		var out = "arguments"
+		if v > 0
+			var s = scope__
+			# params need to go up to the closeste method-scope
+			var par = s.params.at(v - 1,yes)
+			out = "{AST.c(par.name)}" # c
 
-		var s = scope__
-		# params need to go up to the closeste method-scope
-		var par = s.params.at(v - 1,yes)
-		"{AST.c(par.name)}" # c
+		M(out, @token or @value)
 
 
 # CALL
@@ -7263,8 +7266,13 @@ export class TagAttr < TagPart
 
 			let path = value isa Str and value.raw
 			if path and !path.match(/^(\/|https?\:\/\/)/)
-				@asset = STACK.root.registerAsset(path,kind)
-				val = @asset:ref.c
+				if STACK.tsc
+					val = CALL(LIT('require'),[value]).c
+					# return "{@tag.tvar}.setAttribute('{key}',String({val}))"
+				else
+					@asset = STACK.root.registerAsset(path,kind)
+					val = @asset:ref.c
+				
 			else
 				val = MP(val,"path.{kind}")
 
@@ -11316,6 +11324,10 @@ export class ImbaRuntime < ImportProxy
 		elif options:runtime
 			self.path = options:runtime
 		self
+	
+	def head
+		return '' if STACK.tsc
+		return super
 
 	def c
 		if !@importAll
@@ -11437,7 +11449,7 @@ export class Super < Node
 
 	def self.callOp name
 		let op = OP('.',LIT('super'),name)
-		CALL(op,[LIT('arguments[0]')])
+		CALL(op,[LIT('...arguments')])
 
 	def c
 		let m = @method
@@ -11455,7 +11467,7 @@ export class Super < Node
 			if m and m.isConstructor and !member
 				let target = option(:target) or LIT('super')
 				let fallbackArgs = option(:args) or [LIT('...arguments')]
-				return CALL(target,args or fallbackArgs).c
+				return M(CALL(target,args or fallbackArgs).c,@keyword)
 				op = LIT('super(...arguments)')
 			elif m and virtual
 				# FIXME - we no longer support super in class extensions
@@ -11478,7 +11490,7 @@ export class Super < Node
 			if args
 				op = CALL(op,args)
 
-			return op ? (M op.c(mark: false), self) : '/**/'
+			return op ? (M op.c(mark: false), @keyword) : '/**/'
 
 		if up isa Call and m and !m.isConstructor
 			return OP('.',sup,m.name).c
