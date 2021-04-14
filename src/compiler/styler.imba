@@ -770,12 +770,7 @@ export class StyleTheme
 			if from and to
 				return palette[name] = from.mix(to,hw,sw,lw)
 		null
-		
-	def $u number, part
-		let [step,num,unit] = config.NUMBER.match(/^(\-?[\d\.]+)(\w+|%)?$/)
-		# should we not rather convert hte value
-		return value * parseFloat(num) + unit
-	
+
 	def $parseColor identifier
 		let key = String(identifier)
 		if let color = $color(key)
@@ -797,7 +792,7 @@ export class StyleTheme
 			let str = String(params[0])
 			let fallback = params[0]
 			exclude.push('none','initial','unset','inherit')
-			if !exclude.indexOf(str) >= 0 and str.match(/^[\w\-]+$/)
+			if exclude.indexOf(str) == -1 and str.match(/^[\w\-]+$/)
 				if name == 'font' and fonts[str]
 					fallback = fonts[str]
 				if name == 'ease' and options.variants.easings[str]
