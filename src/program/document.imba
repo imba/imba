@@ -335,7 +335,8 @@ export class ImbaDocument
 
 	def adjustmentAtOffset offset,amount = 1
 		let [word,start,end] = patternAtOffset(offset)
-		let [pre,post] = word.split(/[\d\.]+/)
+		let [pre,post = ''] = word.split(/[\d\.]+/)
+
 		let num = parseFloat(word.slice(pre.length).slice(0,post.length ? -post.length : 1000))
 		if !Number.isNaN(num)
 			num += amount
@@ -396,6 +397,10 @@ export class ImbaDocument
 
 		if tok.match('operator.access')
 			flags |= CompletionTypes.Access
+
+		if tok.type == 'path' or tok.type == 'path.open'
+			flags |= CompletionTypes.Path
+			suggest.paths = 1
 
 		if tok.match('identifier tag.operator.equals br white')
 			flags |= CompletionTypes.Value
