@@ -2862,8 +2862,9 @@ export class Root < Code
 		
 		var out = c(o)
 
-		# if STACK.tsc
-		#	out = "import 'imba/index';\n{out}"
+		if STACK.tsc
+			# out = "import 'imba/index.d.ts';\n{out}"
+			out = "export \{\};\n{out}"
 
 		script:rawResult = {
 			js: out
@@ -3409,7 +3410,7 @@ export class TagDeclaration < ClassDeclaration
 				@config:name = name.symbol
 			js += "; {runtime:defineTag}({name.c},{className},{ext})"
 		else
-			unless option(:extension)
+			if !option(:extension) and !name.isClass
 				js += "; globalThis.{M className, name} = {className};"
 		return js
 
@@ -7266,8 +7267,8 @@ export class TagAttr < TagPart
 			let path = value isa Str and value.raw
 			if path and !path.match(/^(\/|https?\:\/\/)/)
 				if STACK.tsc
-					val = CALL(LIT('require'),[value]).c
-					# return "{@tag.tvar}.setAttribute('{key}',String({val}))"
+					# val = CALL(LIT('require'),[value]).c
+					return "{@tag.tvar}.setAttribute('{key}',String({val}))"
 				else
 					@asset = STACK.root.registerAsset(path,kind)
 					val = @asset:ref.c
@@ -7289,7 +7290,11 @@ export class TagAttr < TagPart
 
 		if STACK.tsc
 			# how do we remove attribute then?
-			let path = self.nameIdentifier()
+			let path = self.nameIdentifier().c
+			if path == 'value' and @tag.@tagName in ['input','textarea','select','option','button'] 
+				# path = 'richValue'
+				val = '/**@type {any}*/(' + val + ')'
+
 			let access = "{@tag.tvar}.{M(path,@name)}"
 
 			return "{M(access,@name)}{op}{@autovalue ? M('true',@value) : val}"
@@ -9089,6 +9094,14 @@ export class ImportDeclaration < ESMDeclaration
 		
 		var src = @source and @source.c(locRef: 'path')
 		# console.log("importing {@source:constructor} {src}")
+
+		if STACK.tsc
+			# let raw = src.slice(1,-1)
+			let [raw,q] = @source.raw.split('?')
+			
+			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^as=/))
+				src = M("'data:text/asset;charset=utf-8,{@source.raw}'",@source)
+				# console.log "COMPILING IMPORT",raw,@source,src
 
 		# FIXME can move away from cjs - letting esbuild transform if needed.
 		if STACK.cjs
