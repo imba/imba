@@ -193,7 +193,10 @@ export class Scope < Node
 			return parent ? "{parent.path}{sep}{name}" : name
 		
 		if component?
-			return util.pascalCase(name + 'Component')
+			if name[0] == name[0].toLowerCase!
+				return util.pascalCase(name + 'Component')
+			else
+				return name
 
 		if class?
 			return name
