@@ -1241,6 +1241,36 @@ export class ValueNode < Node
 	def region
 		[@value.@loc,@value.@loc + @value.@len]
 
+export class ValueReferenceNode < Node
+	prop value
+	prop orig
+
+	def initialize value, orig
+		setup
+		@value = value
+		@orig = orig or value
+
+	def startLoc
+		@orig?.startLoc
+
+	def endLoc
+		@orig?.endLoc
+
+	def load value
+		value
+
+	def js o
+		let res = M(@value.c(mark: false),self)
+		return res
+
+
+	def visit
+		@value.traverse if @value isa Node #  && @value:traverse
+		self
+
+	def region
+		[@orig.@loc,@orig.@loc + @orig.@len]
+
 export class ExpressionNode < ValueNode
 
 export class AssertionNode < ValueNode
@@ -1562,6 +1592,8 @@ export class ListNode < Node
 		@indentation ||= a and b ? Indentation.new(a,b) : INDENT
 		self
 
+	
+
 	def endLoc
 		if @endLoc
 			return @endLoc
@@ -1573,6 +1605,11 @@ export class ListNode < Node
 
 export class ArgList < ListNode
 
+	def startLoc
+		if typeof @startLoc == 'number'
+			return @startLoc
+		first?.startLoc
+
 	def consume node
 		if node isa TagLike
 			@nodes = @nodes.map do |child|
@@ -1582,6 +1619,14 @@ export class ArgList < ListNode
 					child
 			return self
 		super
+
+	def setEnds start,end
+		if end and end:endLoc and end.endLoc != -1
+			@endLoc = end.endLoc
+		if start and start:startLoc and start.startLoc != -1
+			@startLoc = start.startLoc
+		self
+		
 
 export class AssignList < ArgList
 
@@ -4253,6 +4298,7 @@ export class ObjAttr < Node
 				if decl
 					value = scope__.register(key.symbol,key, type: decl)
 					stack.registerSemanticToken(key,value)
+					value = value.via(key)
 
 					if @defaults
 						value = OP('=',value,@defaults)
@@ -5968,6 +6014,14 @@ export class Call < Node
 
 		@block && @block.traverse
 
+		if self isa BangCall and (@args.count == 0) and option(:keyword)
+			let bang = option(:keyword)
+			@args.setEnds(bang,bang)
+			# @args.@startLoc = option(:keyword).startLoc
+			# @args.@endLoc = option(:keyword).endLoc
+		self
+
+
 	def addBlock block
 		var pos = @args.filter(|n,i| n isa DoPlaceholder )[0]
 		pos ? args.replace(pos,block) : args.push(block)
@@ -6061,7 +6115,8 @@ export class Call < Node
 			out = "{callee.c(expression: yes)}.call({args.c(expression: yes,mark: false)})"
 
 		else
-			out = "{callee.c(expression: yes)}{safeop}({args.c(expression: yes,mark: false)})"
+			let outargs = "({args.c(expression: yes,mark: false)})"
+			out = "{callee.c(expression: yes)}{safeop}{M(outargs,@args)}"
 
 		if wrap
 			# we set the cachevar inside
@@ -7481,6 +7536,9 @@ export class TagModifier < TagPart
 				return "(" + @name.c + ")(e,\{\})"
 			# let key = 
 			let key = quoted.slice(1,-1).split('-')
+
+			if key[0] == 'options'
+				key[0] = '___setup'
 			# let op = OP('.',LIT('e.MODIFIERS'),@name)
 			# return "{op.c}({params ? params.c : ''})"
 			let call = "{M(key[0],@name)}({params ? params.c : ''})"
@@ -7620,7 +7678,10 @@ class TagHandlerCallback < ValueNode
 		
 		if val isa Access or val isa VarOrAccess
 			# let e = Token.new('IDENTIFIER','e')
+			let target = val
 			val = CALL(val,[LIT('e')])
+			val.@args.@startLoc = target.endLoc
+			val.@args.@endLoc = target.endLoc
 		# console.log 'is stack tsc?'
 		# TODO don't generate this until visiting the taghandler
 		
@@ -11132,6 +11193,8 @@ export class Variable < Node
 			refs: AST.dump(@references, typ)
 		}
 
+	def via node
+		ValueReferenceNode.new(self,node)
 
 export class SystemVariable < Variable
 
