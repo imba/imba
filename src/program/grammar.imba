@@ -859,7 +859,7 @@ export const states = {
 		'comment_'
 		[/\s+/,'style.value.white']
 		[/\(/, 'delimiter.style.parens.open', '@css_expressions']
-		[/\{/, 'delimiter.style.curly.open', '@css_interpolation']
+		[/\{/, 'delimiter.style.curly.open', '@css_interpolation&-_styleinterpolation']
 		[/(@id)/, 'style.value']
 	]
 

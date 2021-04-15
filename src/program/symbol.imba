@@ -80,10 +80,11 @@ export class Sym
 	prop value
 	prop body = null
 
-	def constructor flags, name, node
+	def constructor flags, name, node, desc = null
 		flags = flags
 		name = name
 		node = node
+		desc = desc
 
 	get static?
 		node && node.mods & M.Static

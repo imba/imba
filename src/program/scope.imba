@@ -170,7 +170,7 @@ export class Scope < Node
 
 	def setup
 		if handler?
-			varmap.e = new Sym(SymbolFlags.SpecialVar,'e')
+			varmap.e = new Sym(SymbolFlags.SpecialVar,'e',null,'eventReference')
 			# self.declare()
 			# add virtual vars
 
@@ -313,6 +313,8 @@ export class StylePropNode < Group
 		let name = find('stylepropkey')
 		name ? name.propertyName : null
 
+export class StyleInterpolation < Group
+
 export class PathNode < Group
 
 
@@ -329,6 +331,7 @@ export const ScopeTypeMap = {
 	path: PathNode
 	value: ValueNode
 	listener: Listener
+	styleinterpolation: StyleInterpolation
 	styleprop: StylePropNode
 	stylepropkey: StylePropKey
 	stylevalue: StylePropValue
