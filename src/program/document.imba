@@ -49,8 +49,8 @@ export class ImbaDocument
 	
 	def getText range = null
 		if range
-			var start = offsetAt(range.start)
-			var end = offsetAt(range.end)
+			let start = offsetAt(range.start)
+			let end = offsetAt(range.end)
 			return content.substring(start, end)
 		return content
 
@@ -74,14 +74,14 @@ export class ImbaDocument
 			return new Position(0,offset,offset)
 			# return { line: 0, character: offset, offset: offset }
 		while low < high
-			var mid = Math.floor((low + high) / 2)
+			let mid = Math.floor((low + high) / 2)
 			if lineOffsets[mid] > offset
 				high = mid
 			else
 				low = mid + 1
 		// low is the least x for which the line offset is larger than the current offset
 		// or array.length if no line offset is larger than the current offset
-		var line = low - 1
+		let line = low - 1
 		return new Position(line,offset - lineOffsets[line],offset)
 		# return { line: line, character: (offset - lineOffsets[line]), offset: offset }
 
@@ -89,14 +89,14 @@ export class ImbaDocument
 		if position.offset
 			return position.offset
 
-		var lineOffsets = lineOffsets
+		let lineOffsets = lineOffsets
 		if position.line >= lineOffsets.length
 			return content.length
 		elif position.line < 0
 			return 0
 
-		var lineOffset = lineOffsets[position.line]
-		var nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : content.length
+		let lineOffset = lineOffsets[position.line]
+		let nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : content.length
 		return position.offset = Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset)
 
 	def rangeAt start, end
@@ -122,9 +122,9 @@ export class ImbaDocument
 				edits.push([0,content.length,change.text])
 				continue
 
-			var range = getWellformedRange(change.range)
-			var startOffset = offsetAt(range.start)
-			var endOffset = offsetAt(range.end)
+			let range = getWellformedRange(change.range)
+			let startOffset = offsetAt(range.start)
+			let endOffset = offsetAt(range.end)
 
 			# console.log 'update with changes',change.text,startOffset,endOffset
 
@@ -139,12 +139,12 @@ export class ImbaDocument
 
 			edits.push([startOffset,endOffset - startOffset,change.text or ''])
 
-			var startLine = Math.max(range.start.line, 0)
-			var endLine = Math.max(range.end.line, 0)
-			var lineOffsets = self.lineOffsets
+			let startLine = Math.max(range.start.line, 0)
+			let endLine = Math.max(range.end.line, 0)
+			let lineOffsets = self.lineOffsets
 			# some bug with these line offsets here
 			# many items has no line offset changes at all?
-			var addedLineOffsets = computeLineOffsets(change.text, false, startOffset)
+			let addedLineOffsets = computeLineOffsets(change.text, false, startOffset)
 
 			if (endLine - startLine) === addedLineOffsets.length
 				for added,k in addedLineOffsets
@@ -155,7 +155,7 @@ export class ImbaDocument
 				else
 					_lineOffsets = lineOffsets = lineOffsets.slice(0, startLine + 1).concat(addedLineOffsets, lineOffsets.slice(endLine + 1))
 
-			var diff = change.text.length - (endOffset - startOffset)
+			let diff = change.text.length - (endOffset - startOffset)
 			if diff !== 0
 				let k = startLine + 1 + addedLineOffsets.length
 				while k < lineOffsets.length
