@@ -7444,11 +7444,12 @@ export class TagModifier < TagPart
 			@name.traverse
 			@name = @name.value
 			
-		if @name isa IsolatedFunc # not to be isolated for tsc
+		if @name isa Func # not to be isolated for tsc
 			let evparam = @name.params.at(0,yes,'e')
 			let stateparam = @name.params.at(1,yes,'$')
 			@name.traverse
 
+		if @name isa IsolatedFunc
 			@value = @name
 			@name = STR('$_')
 			@params = ListNode.new([@value].concat(@value.leaks or []))
@@ -7476,7 +7477,19 @@ export class TagModifier < TagPart
 		
 	def js
 		if STACK.tsc
-			return params ? params.c : quoted
+			if @name isa Func
+				return "(" + @name.c + ")(e,\{\})"
+			# let key = 
+			let key = quoted.slice(1,-1).split('-')
+			# let op = OP('.',LIT('e.MODIFIERS'),@name)
+			# return "{op.c}({params ? params.c : ''})"
+			let call = "{M(key[0],@name)}({params ? params.c : ''})"
+
+			if !params or params.count == 0
+				call = M(call,@name)
+			# need to deal with emit- flag- etc in another way
+			return "e.MODIFIERS.{call}"
+			# return params ? params.c : quoted
 
 		if params and params.count > 0
 			"[{quoted},{params.c}]"
@@ -7584,6 +7597,11 @@ export class TagHandler < TagPart
 		
 	def js o
 		if STACK.tsc
+			let out = "{@tag.tvar}.addEventListener({quoted},(e)=>" + '{\n'
+			for mod in modifiers
+				out += mod.c + ';\n'
+			out += '})'
+			return out
 			return "[{quoted},{modifiers.c}]"
 		return "on$({quoted},{modifiers.c},{scope__.context.c})"
 
@@ -7611,7 +7629,7 @@ class TagHandlerCallback < ValueNode
 			
 		value = (STACK.tsc ? Func : IsolatedFunc).new([],[val],null,{})
 		
-		if value isa IsolatedFunc
+		if value isa Func
 			let evparam = value.params.at(0,yes,'e')
 			let stateparam = value.params.at(1,yes,'$')
 
