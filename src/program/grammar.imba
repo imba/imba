@@ -953,7 +953,8 @@ export const states = {
 	]
 	tag_event_: [
 		# add an additional slot for name etc?
-		[/(\@)(@optid)/,['tag.event.start','tag.event.name','@_tag_event/$2']]
+		# [/(\@)(@optid)/,['tag.event.start','tag.event.name','@_tag_event&_tagevent/$2']]
+		[/(?=\@@optid)/,'','@_tag_event&-_listener']
 	]
 	
 	_tag_part: [
@@ -961,6 +962,7 @@ export const states = {
 	]
 	_tag_event: [
 		'_tag_part'
+		[/\@@optid/,'tag.event.name']
 		[/\.(@optid)/,'tag.event-modifier']
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&handler']

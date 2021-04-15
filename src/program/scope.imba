@@ -315,6 +315,12 @@ export class StylePropNode < Group
 
 export class PathNode < Group
 
+
+export class Listener < Group
+
+	get name
+		findChildren('tag.event.name').join('').replace('@','')
+
 export const ScopeTypeMap = {
 	style: StyleNode
 	tag: TagNode
@@ -322,6 +328,7 @@ export const ScopeTypeMap = {
 	sel: SelectorNode
 	path: PathNode
 	value: ValueNode
+	listener: Listener
 	styleprop: StylePropNode
 	stylepropkey: StylePropKey
 	stylevalue: StylePropValue
