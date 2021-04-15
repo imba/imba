@@ -469,7 +469,7 @@ export class ImbaDocument
 				continue if item.global? and !globals?
 				continue if names[item.name]
 
-				if item.node.offset < offset
+				if !item.node or (item.node.offset < offset)
 					vars.push(item)
 					names[item.name] = item
 
