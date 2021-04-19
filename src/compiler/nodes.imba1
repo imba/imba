@@ -3733,7 +3733,7 @@ export class MethodDeclaration < Func
 			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
 			prefix = "async {prefix}" if option(:async)
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
-			out = "{prefix}{M name, @name, as: 'field'}({params.c}){code}"
+			out = "{prefix}{M name, null, as: 'field'}({params.c}){code}"
 			
 			out = @params.jsdoc() + out
 

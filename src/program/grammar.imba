@@ -921,7 +921,6 @@ export const states = {
 		[/\/>/,'tag.close','@pop']
 		# [/>/,'tag.close',switchTo: '@tag_content=']
 		[/>/,'tag.close','@pop']
-		[/(\-?@tagIdentifier)(\:@id)?/,'tag.$/']
 		[/(\-?\d+)/,'tag.$S3']
 		[/(\%)(@id)/,['tag.mixin.prefix','tag.mixin']]
 		[/\#@id/,'tag.id']
@@ -935,7 +934,7 @@ export const states = {
 			'@default': {token: 'tag.flag.start', switchTo: '@/flag'}
 		}}]
 
-		[/(\$?@id)/,{ cases: {
+		[/(\$@id)/,{ cases: {
 			'$/==name': 'tag.reference'
 			'@default': 'tag.$/'
 		}}]
@@ -945,6 +944,11 @@ export const states = {
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&-value']
 		[/\:/,token: 'tag.event.start', switchTo: '@/event']
 		'tag_event_'
+		# 'tag_attr_'
+		[/(\-?@tagIdentifier)(\:@id)?/,{ cases: {
+			'$/==attr': {token: '@rematch', next: '@_tag_attr&-_tagattr'}
+			'@default': {token: 'tag.$/'}
+		}}]
 		# [/\@/,token: 'tag.event.start', switchTo: '@/event']
 		[/\{/,token: 'tag.$/.braces.open', next: '@_tag_interpolation/0']
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
@@ -956,6 +960,8 @@ export const states = {
 		# [/(\@)(@optid)/,['tag.event.start','tag.event.name','@_tag_event&_tagevent/$2']]
 		[/(?=\@@optid)/,'','@_tag_event&-_listener']
 	]
+
+	
 	
 	_tag_part: [
 		[/\)|\}|\]|\>/,'@rematch', '@pop']
@@ -966,6 +972,21 @@ export const states = {
 		[/\.(@optid)/,'tag.event-modifier']
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&handler']
+		[/\s+/,'@rematch','@pop']
+	]
+
+	tag_attr_: [
+		# add an additional slot for name etc?
+		# [/(\@)(@optid)/,['tag.event.start','tag.event.name','@_tag_event&_tagevent/$2']]
+		[/(?=@tagIdentifier(\:@id)?)/,'','@_tag_attr&-_attribute']
+	]
+
+	_tag_attr: [
+		'_tag_part'
+		[/(\-?@tagIdentifier)(\:@id)?/,'tag.attr']
+		[/\.(@optid)/,'tag.event-modifier']
+		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
+		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&-tagattrvalue']
 		[/\s+/,'@rematch','@pop']
 	]
 	

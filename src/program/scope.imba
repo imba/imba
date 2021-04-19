@@ -125,6 +125,17 @@ export class TagNode < Group
 	get name
 		findChildren('tag.name').join('')
 
+	get local?
+		name[0] == name[0].toUpperCase!
+
+	get tagName
+		name
+
+	get pathName
+		"<{name}>"
+		# let name = name
+		# local? ? name : ('globalThis.' + util.pascalCase(name) + 'Component')
+
 	get outline
 		findChildren(/tag\.(reference|name|id|white|flag|event(?!\-))/).join('')
 
@@ -295,14 +306,29 @@ export class StylePropKey < Group
 		else
 			parent.prevProperty..propertyName
 
+	get modifier
+		if start.next.match('style.property.modifier')
+			return start.next.value
+
 	get styleValue
 		yes
 
 export class StylePropValue < Group
 
+	get key
+		parent.key
+
+	get propertyName
+		parent.propertyName
+	
+	get modifier
+		parent.modifier
+
 export class StylePropNode < Group
 
 	# get name
+	get key
+		find('stylepropkey')
 
 	get prevProperty
 		if start.prev.pops
@@ -310,10 +336,36 @@ export class StylePropNode < Group
 		return null
 	
 	get propertyName
-		let name = find('stylepropkey')
-		name ? name.propertyName : null
+		key..propertyName
+		# let name = find('stylepropkey')
+		# name ? name.propertyName : null
+
+	get modifier
+		key..modifier
 
 export class StyleInterpolation < Group
+
+export class TagAttrNode < Group
+	get propertyName
+		if start.next.match('tag.attr')
+			start.next.value
+		else
+			''
+
+	get tagName
+		parent.name
+			
+
+export class TagAttrValueNode < Group
+
+	get propertyName
+		parent.propertyName
+
+	get tagName
+		parent.tagName
+
+	# get completionPath
+	#	"<>"
 
 export class PathNode < Group
 
@@ -325,11 +377,14 @@ export class Listener < Group
 
 export const ScopeTypeMap = {
 	style: StyleNode
-	tag: TagNode
+	
 	stylerule: StyleRuleNode
 	sel: SelectorNode
 	path: PathNode
 	value: ValueNode
+	tag: TagNode
+	tagattr: TagAttrNode
+	tagattrvalue: TagAttrValueNode
 	listener: Listener
 	styleinterpolation: StyleInterpolation
 	styleprop: StylePropNode

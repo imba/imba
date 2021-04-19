@@ -15,6 +15,12 @@ export class Position
 		character = c
 		offset = o
 
+	def toString
+		"{line}:{character}"
+
+	def valueOf
+		offset
+
 ###
 A range in a text document expressed as (zero-based) start and end positions. A range is comparable to a selection in an editor. Therefore the end position is exclusive. If you want to specify a range that contains a line including the line ending character(s) then use an end position denoting the start of the next line.
 ###
@@ -31,6 +37,13 @@ export class Range
 
 	get length
 		end.offset - start.offset
+
+	get ['0']
+		start.offset
+
+	get ['1']
+		end.offset
+
 
 export const DiagnosticSeverity = {
 	Error: 1

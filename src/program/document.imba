@@ -79,8 +79,8 @@ export class ImbaDocument
 				high = mid
 			else
 				low = mid + 1
-		// low is the least x for which the line offset is larger than the current offset
-		// or array.length if no line offset is larger than the current offset
+		# low is the least x for which the line offset is larger than the current offset
+		# or array.length if no line offset is larger than the current offset
 		let line = low - 1
 		return new Position(line,offset - lineOffsets[line],offset)
 		# return { line: line, character: (offset - lineOffsets[line]), offset: offset }
@@ -99,7 +99,7 @@ export class ImbaDocument
 		let nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : content.length
 		return position.offset = Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset)
 
-	def rangeAt start, end
+	def rangeAt start, end = start
 		new Range(positionAt(start),positionAt(end))
 
 	def overwrite body,newVersion
