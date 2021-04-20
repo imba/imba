@@ -44,6 +44,9 @@ export class Range
 	get ['1']
 		end.offset
 
+	def getText str
+		str.slice(start,end)
+
 
 export const DiagnosticSeverity = {
 	Error: 1

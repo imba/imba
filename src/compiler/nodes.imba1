@@ -7232,6 +7232,9 @@ export class TagFlag < TagPart
 		!!condition
 
 	def js
+		if STACK.tsc
+			let val = value.c
+			return condition ? "[{val},{condition.c}]" : "[{val}]"
 		# NOT used anymore
 		let val = value.c(as: 'string')
 		condition ? "flags.toggle({val},{condition.c})" : "classList.add({val})"
@@ -8472,7 +8475,7 @@ export class Tag < TagLike
 				add "{type.c}" # this is the string
 
 			for item in @attributes
-				if item isa TagAttr or item isa TagHandler
+				if item isa TagAttr or item isa TagHandler or item isa TagFlag
 					add item.c(o) # M("{tvar}.{item.c(o)}",item)
 					# add M("{tvar}.{item.c(o)}",item)
 				self
