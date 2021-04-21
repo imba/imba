@@ -65,6 +65,7 @@ export const CompletionTypes = {
 	Path: 1 << 9
 	StyleProp: 1 << 10
 	StyleValue: 1 << 11
+	Type: 1 << 12
 }
 
 export const KeywordTypes = {

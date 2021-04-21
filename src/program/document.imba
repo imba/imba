@@ -405,6 +405,8 @@ export class ImbaDocument
 		if tok.match('identifier tag.operator.equals br white')
 			flags |= CompletionTypes.Value
 
+		if tok.match("delimiter.type.prefix type")
+			flags |= CompletionTypes.Type
 		if tok.match('tag.name tag.open')
 			flags |= CompletionTypes.TagName
 		elif tok.match('tag.attr tag.white')
@@ -415,6 +417,9 @@ export class ImbaDocument
 			flags |= CompletionTypes.TagEventModifier
 		elif tok.match('tag.event')
 			flags |= CompletionTypes.TagEvent
+		
+		elif tok.match('operator.equals.tagop')
+			flags |= CompletionTypes.Value
 
 		if tok.match('style.property.operator') or group.closest('stylevalue')
 			flags |= CompletionTypes.StyleValue
