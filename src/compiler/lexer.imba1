@@ -24,6 +24,16 @@ var JS_KEYWORDS = [
 	'class', 'extends', 'super', 'return'
 ]
 
+var TSC_CARET_BEFORE = {
+	',': 1
+	'\n': 1
+	')': 1
+	']': 1
+	'}': 1
+	'>': 1
+	' ': 1
+}
+
 # new can be used as a keyword in imba, since object initing is done through
 # MyObject.new. new is a very useful varname.
 
@@ -423,6 +433,12 @@ export class Lexer
 		if @ends:length
 			error("missing {@ends.pop}")
 
+		if @platform == 'tsc'
+			for token in @tokens
+				if token.@type == 'SYMBOLID'
+					token.@type = 'IDENTIFIER'
+					token.@value = token.@value.replace(/#/g,'_$SYM$_')
+
 		return @tokens
 
 	def parse code
@@ -554,7 +570,7 @@ export class Lexer
 		let chr2 = @chunk[1]
 
 		# let m = TAG_PART.exec(@chunk)
-		let m = /^([A-Za-z\_\-\$\%][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
+		let m = /^([A-Za-z\_\-\$\%\#][\w\-\$]*(\:[A-Za-z\_\-\$]+)*)/.exec(@chunk) # (\:[A-Za-z\_][\w\-]*)
 			
 		if m # and false
 			let tok = m[1]
@@ -569,6 +585,9 @@ export class Lexer
 			
 			if chr == '%'
 				typ = 'MIXIN'
+			
+			if chr == '#'
+				typ = 'TAG_SYMBOL_ID'
 
 			token(typ,tok,len)
 			return len
@@ -580,6 +599,9 @@ export class Lexer
 
 		if chr == '%' or chr == ':' or chr == '.' or chr == '@'
 			token("T{chr}",chr,1)
+			
+			if chr == '.' and (!chr2 or TSC_CARET_BEFORE[chr2]) and @platform == 'tsc'
+				token('TAG_LITERAL','$CARET$',0,1)
 			return 1
 
 		elif chr == ' ' or chr == '\n' or chr == '\t'
@@ -1940,7 +1962,7 @@ export class Lexer
 
 		if @platform == 'tsc'
 			let next = @chunk[1] or ''
-			if value == '.' and (next == ' ' or next == '\n' or !next)
+			if value == '.' and (next == ' ' or next == '\n' or next == ',' or !next)
 				token('IDENTIFIER','$CARET$',0,1)
 			elif value == '@' and (!next or (/[^\$\@\-\.\w]/).test(next))
 				token('IDENTIFIER','$CARET$',0,1)

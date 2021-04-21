@@ -2909,7 +2909,8 @@ export class Root < Code
 
 		if STACK.tsc
 			# out = "import 'imba/index.d.ts';\n{out}"
-			out = "export \{\};\n{out}"
+			out = "export \{\};\n{out}\n"
+
 
 		script:rawResult = {
 			js: out
@@ -4940,7 +4941,7 @@ export class VarOrAccess < ValueNode
 		if variable and variable isa GlobalReference
 			let name = variable.name
 
-			if variable isa ZonedVariable
+			if variable isa ZonedVariable and !stack.tsc
 				@value = variable.forScope(scope)
 			elif stack.tsc
 				@value = LIT(name)
@@ -5854,6 +5855,8 @@ export class TagTypeIdentifier < Identifier
 			return 'DocumentFragment'
 		elif isClass
 			return @str
+		elif STACK.tsc
+			return @str.replace(/\-/g,'_') + '$$TAG$$'
 		else
 			return helpers.pascalCase(@str + '-component')
 			

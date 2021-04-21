@@ -732,6 +732,11 @@ export class ImbaDocument
 		parse!
 		return tokens
 
+	def getMatchingTokens filter
+		let tokens = getTokens!
+		tokens = tokens.slice(0).filter do $1.match(filter)
+		return tokens
+
 	def migrateToImba2
 		let source = self.content
 		source = source.replace(/\bdef self\./g,'static def ')

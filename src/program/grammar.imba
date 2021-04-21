@@ -786,8 +786,8 @@ export const states = {
 
 	sel_: [
 		[/(\%)((?:@id)?)/,['style.selector.mixin.prefix','style.selector.mixin']]
-		[/(\@)(\.{0,2}[\w\-\<\>\!]*\+?)/,['style.selector.modifier.prefix','style.selector.modifier']]
-		[/(\@)(\.{0,2}[\w\-\<\>\!]*)/,['style.selector.modifier.prefix','style.selector.modifier']]
+		[/(\@)(\.{0,2}[\w\-\<\>\!]*\+?)/,'style.selector.modifier']
+		[/(\@)(\.{0,2}[\w\-\<\>\!]*)/,'style.selector.modifier']
 		[/\.([\w\-]+)/,'style.selector.class-name']
 		[/\#([\w\-]+)/,'style.selector.id']
 		[/([\w\-]+)/,'style.selector.element']
