@@ -2744,15 +2744,16 @@ export class VarDeclaration < Node
 		unless @left isa Identifier and @right isa Func
 			@right.traverse if @right
 
-		@left.traverse(declaring: type) if @left
-		
-		# replace directly
-		# should the left side be wrapped in a VarDeclLeft node?
-		if @left isa Identifier
-			# TODO add an identifier.declare method for this
-			@left.@variable ||= scope__.register(@left.symbol,@left,type: type)
-			stack.registerSemanticToken(@left)
+		@variables = scope__.captureVariableDeclarations do
+			@left.traverse(declaring: type) if @left
 			
+			# replace directly
+			# should the left side be wrapped in a VarDeclLeft node?
+			if @left isa Identifier
+				# TODO add an identifier.declare method for this
+				@left.@variable ||= scope__.register(@left.symbol,@left,type: type)
+				stack.registerSemanticToken(@left)
+
 		@right.traverse if @right
 
 		# elif @left isa Obj
@@ -2793,17 +2794,32 @@ export class VarDeclaration < Node
 		return super(o)
 		
 	def js
-		let out = "{M(kind,keyword)} {left.c()}"
-		if right
-			out += " = {right.c(expression: true)}"
-			
+		let out = ''
+		let kind = kind
+
+		if STACK.tsc and @variables:length > 1 and @variables.some(do $1.vartype)
+			kind = 'let' # or var?
+			for item in @variables
+				if item.vartype
+					out += item.vartype.c + ' '
+				out += "{M(kind,keyword)} {item.c()};\n"
+			out += "({left.c()}"
+			if right
+				out += " = {right.c(expression: true)}"
+			out += ")"
+		else
+			out += "{M(kind,keyword)} {left.c()}"
+
+			if right
+				out += " = {right.c(expression: true)}"
+
 		if option(:export)
 			if STACK.cjs
 				out = "{out};\nexports.{left.c()} = {left.c()}"
 			else
 				out = M('export',option(:export)) + " {out}"
 			
-		if let typ = datatype
+		if let typ = (datatype or (@left and @left.datatype))
 			out = typ.c() + '\n' + out
 
 		return out
@@ -5000,12 +5016,12 @@ export class VarOrAccess < ValueNode
 
 	def js o
 		let val = @variable or @value
-		if @variable
+		if @variable and @variable.declarator != self
 			let typ = datatype
 			if typ
 				return typ.c() + '(' + @variable.c() + ')'
 
-		return (@variable or @value).c()
+		return val.c()
 
 	def node
 		@variable ? self : value
@@ -5081,6 +5097,7 @@ export class VarReference < ValueNode
 	def consume node
 		# really? the consumed node dissappear?
 		forceExpression
+		
 		self
 
 	def forceExpression
@@ -5100,6 +5117,7 @@ export class VarReference < ValueNode
 		@value.traverse(declaring: @type, variables: vars)
 		# console.log("has variable? {@value.@variable}")
 		# should happen automatically when traversing via traverse(declaring:...)
+
 		if @value isa Identifier
 			@value.@variable ||= scope.register(@value.symbol,self,type: @type, datatype: datatype)
 			vars.push(@value.@variable)
@@ -5112,6 +5130,7 @@ export class VarReference < ValueNode
 		let out = @value.c()
 		# console.log "result of varreference {out}"
 		# console.log "is expression?? {@expression} {params:expression}"
+
 		unless @expression
 
 			out = "{@type} {out}"
@@ -5398,6 +5417,16 @@ export class TypeAnnotation < Node
 
 	def asParam name
 		"@param \{{M(String(@value).slice(1),self)}\} {name}"
+
+	def asRawType
+		M(String(@value).slice(1),self)
+
+	def asIteratorValue
+		console.log 'asInteratorValue'
+		wrapDoc(asRawType + '[]')
+
+	def wrapDoc inner
+		return '/**@type {' + inner + '}*/'
 
 	def c
 		return '/**@type {' + M(String(@value).slice(1),self) + '}*/'
@@ -6670,7 +6699,9 @@ export class For < Loop
 			vars:len = scope.declare('len',util.len(vars:source),type: 'let', pool: 'len', system: yes)
 			
 			if o:name
-				body.unshift(VarDeclaration.new(o:name,OP('.',vars:source,vars:index),'let'),BR)
+				let decl = VarDeclaration.new(o:name,OP('.',vars:source,vars:index),'let')
+				# console.log "NAME {o:name} {o:name:constructor} {o:name.datatype}"
+				body.unshift(decl,BR)
 				
 			vars:index.addReference(oi) if oi
 
@@ -6791,13 +6822,16 @@ export class ForOf < For
 		else
 			source = vars:source = STACK.tsc ? o:source : util.iterable(o:source)
 			vars:value = o:value = o:name # need to visit these to declare them
-			o:value.traverse(declaring: 'let')
-			
-			if o:value isa Identifier
-				# v = vars:value = scope.declare(o:name,null,let: yes, type: 'let')
-				o:value.@variable ||= scope__.register(o:value.symbol,o:value,type: 'let')
-				STACK.registerSemanticToken(o:value)
-			
+			let declvars = scope__.captureVariableDeclarations do
+				o:value.traverse(declaring: 'let')
+				
+				if o:value isa Identifier
+					# v = vars:value = scope.declare(o:name,null,let: yes, type: 'let')
+					o:value.@variable ||= scope__.register(o:value.symbol,o:value,type: 'let')
+					STACK.registerSemanticToken(o:value)
+		
+			@declvars = declvars
+
 			# need to declare this variable outside the for of
 			if o:index
 				vars:counter = scope.parent.temporary(null,{},"{o:index}$")
@@ -6835,7 +6869,22 @@ export class ForOf < For
 			code = scope.c(braces: yes, indent: yes)
 			# let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
-			let js = "{M('for',keyword)} (let {v.c} of {src.c(expression: yes)})" + code
+
+			let ofjs = src.c(expression: yes)
+			let js = ''
+			if STACK.tsc
+				js = '{\n'
+				# get all the variables declared in the let
+				for item in @declvars
+					try
+						if item.vartype
+							js += item.vartype.c + ' '
+					js += "let {item.c(jsdoc: yes)};\n"
+				js += "{M('for',keyword)} ({v.c(jsdoc: no)} of {ofjs})" + code
+				js += '}'
+			else
+				js = "{M('for',keyword)} (let {v.c} of {ofjs})" + code
+
 			if vars:counter
 				js = "{vars:counter} = 0; {js}"
 			return js
@@ -10357,6 +10406,7 @@ export class Scope
 		@counters = {}
 		@varpool = []
 		@refcounter = 0
+		@declListeners = []
 		@level = (parent ? parent.@level : -1) + 1
 		setup
 
@@ -10384,7 +10434,12 @@ export class Scope
 		return item
 	
 	# def cssMixinFlag name
-		
+	def captureVariableDeclarations blk
+		let items = []
+		@declListeners.push(items)
+		blk()
+		@declListeners.pop()
+		return items		
 
 	def meta key, value
 		if value != undefined
@@ -10486,6 +10541,10 @@ export class Scope
 
 		if STACK.state and STACK.state:variables isa Array
 			STACK.state:variables.push(item)
+
+		if @declListeners:length
+			for l in @declListeners
+				l.push(item)
 		return item
 
 	def annotate obj
@@ -11023,6 +11082,9 @@ export class Variable < Node
 
 	def assignments
 		@assignments
+
+	def vartype
+		@vartype or (@declarator and @declarator.datatype)
 
 	# Here we can collect lots of type-info about variables
 	# and show warnings / give advice if variables are ambiguous etc

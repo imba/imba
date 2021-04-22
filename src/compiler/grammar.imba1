@@ -586,6 +586,7 @@ var grammar =
 
 	SimpleObjAssignable: [
 		o 'Identifier'
+		o 'Identifier Type' do A1.set(datatype: A2)
 		o 'SymbolIdentifier'
 		o 'Key'
 	]
@@ -1118,6 +1119,7 @@ var grammar =
 	# This enables support for pattern matching.
 	ForValue: [
 		o 'Identifier'
+		o 'Identifier Type' do A1.set(datatype: A2)
 		o 'Array' # do ValueNode.new A1
 		o 'Object' # do ValueNode.new A1
 	]
