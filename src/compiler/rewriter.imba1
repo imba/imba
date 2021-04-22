@@ -29,8 +29,6 @@ var arrayToHash = do |ary|
 		hash[item] = 1
 	return hash
 
-# var EXPRESSION_START = ['(','[','{','INDENT','CALL_START','PARAM_START','INDEX_START','BLOCK_PARAM_START','STRING_START','{{', 'TAG_START']
-# var EXPRESSION_END   = [')',']','}','OUTDENT','CALL_END','PARAM_END','INDEX_END','BLOCK_PARAM_END','STRING_END','}}', 'TAG_END']
 # Tokens that indicate the close of a clause of an expression.
 var EXPRESSION_CLOSE = [')',']','}','STYLE_END','OUTDENT','CALL_END','PARAM_END','INDEX_END','BLOCK_PARAM_END','STRING_END','}}', 'TAG_END','CATCH', 'WHEN', 'ELSE', 'FINALLY']
 

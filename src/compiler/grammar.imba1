@@ -981,6 +981,7 @@ var grammar =
 	Array: [
 		o '[ ]' do Arr.new(ArgList.new([])).setEnds(A1,A2)
 		o '[ ArgList OptComma ]' do Arr.new(A2).setEnds(A1,A2)
+		o 'Array Type' do A1.set(datatype: A2)
 	]
 
 	# Inclusive and exclusive range dots.

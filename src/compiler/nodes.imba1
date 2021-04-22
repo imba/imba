@@ -4164,7 +4164,10 @@ export class Arr < Literal
 		return "[]" unless val
 		var nodes = val isa Array ? val : val.nodes
 		var out = val isa Array ? AST.cary(val) : val.c
-		"[{out}]"
+		out = "[{out}]"
+		if datatype and STACK.tsc
+			out = datatype.c + '(' + out + ')'
+		return out
 
 	def hasSideEffects
 		value.some(|v| v.hasSideEffects )
@@ -5114,24 +5117,44 @@ export class VarReference < ValueNode
 
 		var virtualize = stack
 		let scope = scope__
-		@value.traverse(declaring: @type, variables: vars)
-		# console.log("has variable? {@value.@variable}")
-		# should happen automatically when traversing via traverse(declaring:...)
 
-		if @value isa Identifier
-			@value.@variable ||= scope.register(@value.symbol,self,type: @type, datatype: datatype)
-			vars.push(@value.@variable)
-			stack.registerSemanticToken(@value,@variable)
-		
-		@variables = vars
+		@variables = scope.captureVariableDeclarations do
+			@value.traverse(declaring: @type, variables: vars)
+			# console.log("has variable? {@value.@variable}")
+			# should happen automatically when traversing via traverse(declaring:...)
+			if @value isa Identifier
+				@value.@variable ||= scope.register(@value.symbol,@value,type: @type, datatype: datatype)
+				# vars.push(@value.@variable)
+				stack.registerSemanticToken(@value,@variable)
+			
+		# @variables = vars
 		return self
 	
 	def js stack,params
 		let out = @value.c()
 		# console.log "result of varreference {out}"
 		# console.log "is expression?? {@expression} {params:expression}"
+		if @right
+			out += " = {@right.c(expression: true)}"
 
-		unless @expression
+		if @expression
+			if @value isa Obj
+				out = "({out})"
+
+		else
+			if STACK.tsc and @variables:length > 1 and @variables.some(do $1.vartype)
+				let kind = @type # or var?
+				let js = ''
+				for item in @variables
+					if item.vartype
+						js += item.vartype.c + ' '
+					js += "{M(kind,@keyword)} {item.c()};\n"
+
+				if @value isa Obj
+					out = "({out})"
+
+				js += "{out}"
+				return js
 
 			out = "{@type} {out}"
 			if let typ = (STACK.tsc and datatype)
@@ -5232,12 +5255,15 @@ export class Assign < Op
 			var ctx = scope__.context
 			l = ctx.reference
 
+		if l isa VarReference
+			l.@right = r
+			return l.c
+		
 		var lc = l.c
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
 		if let typ = (datatype or (l and !(l isa VarReference) and l.datatype))
 			out = typ.c() + ' ' + out
-			# out = '/** @type {' + typ.c() + '} */ ' + out
 
 		if l isa Obj
 			out = "({out})"

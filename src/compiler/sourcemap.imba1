@@ -162,7 +162,7 @@ export class SourceMap
 					o += superMap[str[i++]]
 				return '\u208D' + o + '\u208E'
 
-			@script:js = @script:js + '\n/*\n' + prejs.replace(/\/\*\%([\w\|]*)?\$\*\//g,repSuper) + '\n*/'
+			@script:js = @script:js + '\n/*\n' + prejs.replace(/\/\*\%([\w\|]*)?\$\*\//g,repSuper).replace(/\/\*/g,'**').replace(/\*\//g,'**') + '\n*/'
 		self
 
 	def generate
