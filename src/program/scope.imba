@@ -206,7 +206,8 @@ export class Scope < Node
 		
 		if component?
 			if name[0] == name[0].toLowerCase!
-				return util.pascalCase(name + 'Component')
+				return name.replace(/\-/g,'_') + '$$TAG$$'
+				# return util.pascalCase(name.replace(/\-/g,'_') + '$$TAG$$')
 			else
 				return name
 
