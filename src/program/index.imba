@@ -6,4 +6,4 @@ export { highlight } from './highlighter'
 
 export { SymbolKind,SemanticTokenTypes,SemanticTokenModifiers,Keywords,KeywordTypes,M,CompletionTypes} from './types'
 export { SymbolFlags,Sym} from './symbol'
-
+export { Node,Scope,Group } from './scope'

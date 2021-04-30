@@ -255,8 +255,8 @@ export const states = {
 	]
 
 	params_: [
-		[/\[/, '[', '@array_var_body=decl-param']
-		[/\{/, '{', '@object_body=decl-param']
+		[/\[/, 'array.[', '@array_var_body=decl-param']
+		[/\{/, 'object.{', '@object_body=decl-param']
 		[/(@variable)/,'identifier.decl-param']
 		# [/(\s*\=\s*)(?=(for|while|until|if|unless)\s)/,'operator','@pop']
 		'spread_'
@@ -266,7 +266,7 @@ export const states = {
 	]
 
 	object_: [
-		[/\{/, '{', '@object_body']
+		[/\{/, 'object.{', '@object_body']
 	]
 
 	parens_: [
@@ -280,7 +280,7 @@ export const states = {
 	]
 
 	array_: [
-		[/\[/, '[', '@array_body']
+		[/\[/, 'array.[', '@array_body']
 	]
 
 	array_body: [
@@ -513,7 +513,7 @@ export const states = {
 	]
 
 	for_: [
-		[/for(?: own)?@B/,'keyword.$#','@for_start&flow=decl-let']
+		[/for(?: own)?@B/,'keyword.$#','@for_start&forscope=decl-for']
 		# [/for@B/,'keyword.$#','@for_start&flow=let']
 	]
 
@@ -527,10 +527,10 @@ export const states = {
 
 	for_start: [
 		denter({switchTo: '@>for_body'},-1,-1)
-		[/\[/, '[', '@array_var_body']
-		[/\{/, '{', '@object_body'] # object_var_body?
+		[/\[/, 'array.[', '@array_var_body']
+		[/\{/, 'object.{', '@object_body'] # object_var_body?
 		[/(@variable)/,'identifier.$F']
-		[/(\s*\,\s*)/,'separator']
+		[/(\s*\,\s*)/,'separator','@=decl-for-index']
 		[/\s(in|of)@B/,'keyword.$1',switchTo: '@>for_source=']
 		[/[ \t]+/, 'white']
 		'type_'
@@ -686,8 +686,8 @@ export const states = {
 
 	_varblock: [
 		denter(1,-1,-1)
-		[/\[/, '[', '@array_var_body']
-		[/\{/, '{', '@object_body']
+		[/\[/, 'array.[', '@array_var_body']
+		[/\{/, 'object.{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/\s*\,\s*/,'separator']
 		[/(\s*\=\s*)(?=(for|while|until|if|unless|try)\s)/,'operator','@pop']
@@ -698,8 +698,8 @@ export const states = {
 
 	_vardecl: [
 		denter(null,-1,-1)
-		[/\[/, '[', '@array_var_body']
-		[/\{/, '{', '@object_body']
+		[/\[/, 'array.[', '@array_var_body']
+		[/\{/, 'object.{', '@object_body']
 		[/(@variable)(?=\n|,|$)/,'identifier.$F','@pop']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator.declval',switchTo: '@var_value&value='] # ,switchTo: '@var_value='
@@ -708,8 +708,8 @@ export const states = {
 
 	array_var_body: [
 		[/\]/, ']', '@pop']
-		[/\{/, '{', '@object_body']
-		[/\[/, '[', '@array_var_body']
+		[/\{/, 'object.{', '@object_body']
+		[/\[/, 'array.[', '@array_var_body']
 		'spread_'
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator.assign','@array_var_body_value=']
@@ -724,8 +724,8 @@ export const states = {
 
 
 	inline_var_body: [
-		[/\[/, '[', '@array_var_body']
-		[/\{/, '{', '@object_body']
+		[/\[/, 'array.[', '@array_var_body']
+		[/\{/, 'object.{', '@object_body']
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator','@pop'] # ,switchTo: '@var_value='
 		'type_'
@@ -759,6 +759,7 @@ export const states = {
 	_type: [
 		denter(-1,-1,-1)
 		[/\\/,'delimiter.type.prefix']
+		# these should probably stack and pair
 		[/\[/,'delimiter.type','@/]']
 		[/\(/,'delimiter.type','@/)']
 		[/\{/,'delimiter.type','@/}']
@@ -898,6 +899,10 @@ export const states = {
 		[/[ \t\r\n]+/, 'white']
 	]
 
+	space: [
+		[/[ \t]+/, 'white']
+	]
+
 	tag_: [
 		[/(\s*)(<)(?=\.)/,['white','tag.open','@_tag/flag']],
 		[/(\s*)(<)(?=\w|\{|\[|\%|\#|>)/,['white','tag.open','@_tag/name']]
@@ -919,7 +924,8 @@ export const states = {
 
 	_tag: [		
 		[/\/>/,'tag.close','@pop']
-		# [/>/,'tag.close',switchTo: '@tag_content=']
+		[/>/,'tag.close',switchTo: '@>tag_content=&-_tagcontent']
+		# '@>css_selector&rule-_sel'
 		[/>/,'tag.close','@pop']
 		[/(\-?\d+)/,'tag.$S3']
 		[/(\%)(@id)/,['tag.mixin.prefix','tag.mixin']]
@@ -968,8 +974,8 @@ export const states = {
 	]
 	_tag_event: [
 		'_tag_part'
-		[/\@@optid/,'tag.event.name']
-		[/\.(@optid)/,'tag.event-modifier']
+		[/(\@)(@optid)/,['tag.event.start','tag.event.name']]
+		[/(\.)(@optid)/,['tag.event-modifier.start','tag.event-modifier.name']]
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&handler']
 		[/\s+/,'@rematch','@pop']
@@ -984,7 +990,7 @@ export const states = {
 	_tag_attr: [
 		'_tag_part'
 		[/(\-?@tagIdentifier)(\:@id)?/,'tag.attr']
-		[/\.(@optid)/,'tag.event-modifier']
+		[/\.(@optid)/,'tag.event-modifierzz']
 		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&-tagattrvalue']
 		[/\s+/,'@rematch','@pop']

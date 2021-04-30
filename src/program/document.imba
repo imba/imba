@@ -242,8 +242,8 @@ export class ImbaDocument
 		{start: positionAt(token.offset), end: positionAt(token.offset + token.value.length)}
 
 	def getTokensInScope scope
-		let start = tokens.indexOf(scope.token)
-		let end = scope.endIndex or tokens.length
+		let start = tokens.indexOf(scope.start)
+		let end = scope.end ? tokens.indexOf(scope.end) : tokens.length
 		let i = start
 		let parts = []
 		while i < end
@@ -253,6 +253,26 @@ export class ImbaDocument
 				i = tok.scope.endIndex + 1
 			else
 				parts.push(tok)
+		return parts
+		
+	def getNodesInScope scope,includeEnds = no
+		let tok = scope.start
+		let end = scope.end # ? tokens.indexOf(scope.end) : tokens.length
+		
+		if includeEnds
+			end = end.next
+		else
+			tok = tok.next
+
+		let parts = []
+		while tok and tok != end
+			if tok.scope and tok.scope != scope
+				parts.push(tok.scope)
+				continue tok = tok.scope.end.next
+			elif tok.type != 'white'
+				parts.push(tok)
+			tok = tok.next
+
 		return parts
 
 	def getTokenAtOffset offset,forwardLooking = no
@@ -301,6 +321,22 @@ export class ImbaDocument
 			l = pos.line
 			c = pos.character
 		return out
+		
+	def getDestructuredPath tok, stack = [], root = null
+		if tok.context.type == 'array'
+			getDestructuredPath(tok.context.start,stack,root)
+			stack.push(tok.context.indexOfNode(tok))
+			return stack
+		
+		let key = tok.value
+		
+		if tok.prev.match("operator.assign.key-value")
+			key = tok.prev.prev.value
+		if tok.context.type == 'object'
+			getDestructuredPath(tok.context.start,stack,root)
+			stack.push(key)
+			# p 'in object!',tok
+		return stack
 
 	def tokenAtOffset offset
 		let tok = tokens[0]
@@ -352,11 +388,6 @@ export class ImbaDocument
 		# console.log 'get token at offset',offset,tok,linePos,pos
 		let tokPos = offset - tok.offset
 		let ctx = tok.context
-		let tabs = util.prevToken(tok,"white.tabs")
-		let indent = tabs ? tabs.value.length : 0
-		let group = ctx
-		let scope = ctx.scope
-		let meta = {}
 
 		const before = {
 			character: content[offset - 1]
@@ -369,6 +400,19 @@ export class ImbaDocument
 			token: tok.value.slice(tokPos)
 			line: content.slice(offset,lineOffsets[pos.line + 1]).replace(/[\r\n]+/,'')
 		}
+
+		# if the token pushes a new scope and we are at the end of the token
+		if tok.scope and !after.token
+			ctx = tok.scope
+	
+		let tabs = util.prevToken(tok,"white.tabs")
+		let indent = tabs ? tabs.value.length : 0
+		let group = ctx
+		let scope = ctx.scope
+		let meta = {}
+		let target = tok
+
+		
 
 		if group
 			if group.start
@@ -394,9 +438,18 @@ export class ImbaDocument
 
 		if tok.match('entity string regexp comment style.')
 			flags = 0
+		
+		# if we are in an accessor
+
+		if tok.match('accessor')
+			target = tok.prev
 
 		if tok.match('operator.access')
 			flags |= CompletionTypes.Access
+			target = tok
+
+		if tok.match('tag.event.name tag.event-modifier.name')
+			target = tok.prev
 
 		if tok.type == 'path' or tok.type == 'path.open'
 			flags |= CompletionTypes.Path
@@ -450,6 +503,7 @@ export class ImbaDocument
 			indent: indent
 			group: ctx
 			mode: ''
+			target: target
 			path: scope.path
 			suggest: suggest
 			before: before
@@ -607,6 +661,24 @@ export class ImbaDocument
 
 		log = do yes
 
+		let pairings = {
+			']': '['
+			')': '('
+			'}': '{'
+			'>': '<'
+		}
+
+		let openers = {
+			'[': ']'
+			'(': ')'
+			'{': '}'
+			'<': '>'
+		}
+
+		let callAfter = /[\w\$\)\]\?]/
+
+		# let openers = Object.values(pairings)
+
 		try
 			for line,i in lines
 				let entityFlags = 0
@@ -616,20 +688,33 @@ export class ImbaDocument
 
 				for tok,ti in lexed.tokens
 					let types = tok.type.split('.')
+
 					let value = tok.value
 					let nextToken = lexed.tokens[ti + 1]
 					let [typ,subtyp,sub2] = types
+					let ltyp = types[types.length - 1]
 					let decl = 0
 
 					tokens.push(tok)
 
 					if typ == 'ivar'
 						value = tok.value = '@' + value.slice(1)
+
+					
 					
 					if prev
 						prev.next = tok
 						tok.prev = prev
 						tok.context = scope
+					
+					# tag content interpolation
+					if sub2 == 'braces' and value == '{'
+						scope = tok.scope = ScopeTypeMap.interpolation.build(self,tok,scope,'interpolation',types)
+
+					if typ == '(' and prev
+						let prevchr = raw[tok.offset - 1] or ''
+						if callAfter.test(prevchr)
+							scope = tok.scope = ScopeTypeMap.args.build(self,tok,scope,'args',types)
 
 					if typ == 'operator'
 						tok.op = tok.value.trim!
@@ -676,10 +761,18 @@ export class ImbaDocument
 						
 						scope = scope.pop(tok)
 					
-					elif subtyp == 'open' and ScopeTypeMap[typ]
-						scope = tok.scope = new (ScopeTypeMap[typ])(self,tok,scope,typ,types)
+					elif (subtyp == 'open' or openers[subtyp]) and ScopeTypeMap[typ]
+
+						scope = tok.scope = ScopeTypeMap[typ].build(self,tok,scope,typ,types)
 
 					elif subtyp == 'close' and ScopeTypeMap[typ]
+						scope = scope.pop(tok)
+
+					# elif openers[typ] and ScopeTypeMap[subtyp]
+					#	console.log 'create scope',
+					#	scope = tok.scope = new (ScopeTypeMap[subtyp])(self,tok,scope,subtyp,types)
+
+					elif pairings[typ] and scope and scope.start.value == pairings[typ]
 						scope = scope.pop(tok)
 
 
@@ -687,10 +780,10 @@ export class ImbaDocument
 						# let tvar = scope.declare(tok,subtyp)
 						# create a symbol
 						# console.log 'declare',tok.type,Symbol.idToFlags(tok.type,tok.mods)
-						let symFlags = Sym.idToFlags(tok.type,tok.mods)
+						let tokenSymbol = Sym.forToken(tok,tok.type,tok.mods)
 
-						if symFlags
-							lastDecl = tok.symbol = new Sym(symFlags,tok.value,tok)
+						if tokenSymbol
+							lastDecl = tok.symbol = tokenSymbol # new Sym(symFlags,tok.value,tok)
 							tok.symbol.keyword = lastVarKeyword
 							scope.register(tok.symbol)
 

@@ -59,6 +59,8 @@ const Conversions = [
 	['entity.name.set',0,SymbolFlags.SetAccessor]
 	['field',0,SymbolFlags.Property]
 	['decl-let',0,SymbolFlags.LetVariable]
+	['decl-for-index',0,SymbolFlags.LetVariable,{datatype: 'number'}]
+	['decl-for',0,SymbolFlags.LetVariable]
 	['decl-var',0,SymbolFlags.LetVariable]
 	['decl-param',0,SymbolFlags.Parameter]
 	['decl-const',0,SymbolFlags.ConstVariable]
@@ -69,13 +71,22 @@ const ConversionCache = {}
 
 export class Sym
 
-	static def idToFlags type,mods = 0
+	static def typeMatch type
 		if ConversionCache[type] != undefined
 			return ConversionCache[type]
-		for [strtest,modtest,flags] in Conversions
+		for [strtest,modtest,flags,o],i in Conversions
 			if type.indexOf(strtest) >= 0 # and (modtest == 0 or mods & modtest > 0)
-				return ConversionCache[type] = flags
-		return 0
+				return ConversionCache[type] = Conversions[i]
+		return null
+
+	static def forToken tok,type,mods = 0
+		let match = typeMatch(type)
+		
+		if match
+			let sym = new self(match[2],tok.value,tok,match[3])
+			return sym
+
+		return null
 
 	prop value
 	prop body = null
@@ -86,8 +97,14 @@ export class Sym
 		node = node
 		desc = desc
 
+	get datatype
+		desc and desc.datatype
+
 	get static?
 		node && node.mods & M.Static
+
+	get itervar?
+		node && node.match('.decl-for')
 
 	get variable?
 		flags & SymbolFlags.Variable
@@ -112,6 +129,9 @@ export class Sym
 
 	get escapedName
 		name
+
+	get scope
+		node..context..scope
 	
 	def addReference node
 		references ||= []

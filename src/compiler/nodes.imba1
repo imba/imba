@@ -3074,7 +3074,7 @@ export class ClassDeclaration < Code
 		@staticInit ||= addMethod(initKey,[],'this').set(static: yes)
 	
 	def initKey
-		@initKey ||= SymbolIdentifier.new('#init')
+		@initKey ||= (STACK.tsc ? STACK.root.symbolRef('#init') : SymbolIdentifier.new('#init'))
 	
 	def initPath
 		@initPath ||= OP('.',LIT('super'),initKey)
@@ -3218,13 +3218,11 @@ export class ClassDeclaration < Code
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
 				staticInits.add([op,BR])
 
-		if !inits.isEmpty
+		if !inits.isEmpty and !tsc
 			@inits = inits
 			instanceInit
 			inits.set(ctor: instanceInit)
-
-			unless tsc
-				instanceInit.inject(inits)
+			instanceInit.inject(inits)
 
 			if isTag
 				# tags always call init from outside the actual construction
@@ -3259,7 +3257,7 @@ export class ClassDeclaration < Code
 		if tsc and ctor and @autosuper
 			ctor.body.add([LIT("super()"),BR],0)
 
-		if !staticInits.isEmpty
+		if !staticInits.isEmpty and !tsc
 			staticInit.inject(staticInits,0)
 		self
 
@@ -3333,7 +3331,7 @@ export class ClassDeclaration < Code
 
 		if @staticInit
 			# this means we need to cache it 
-			js = "{js}; {cname}[{initKey.c}]();"
+			js = "{js}; {OP('.',LIT(cname),initKey).c}();"
 
 		return js
 
@@ -3465,15 +3463,15 @@ export class TagDeclaration < ClassDeclaration
 
 		if !STACK.tsc
 			if @staticInit
-				js += "; {className}[{initKey.c}]()"
+				js += "; {OP('.',LIT(className),initKey).c}()"
 			# let ext = (option(:extends) or LIT('{}')).c
 			let ext = Obj.wrap(@config).c
 			if name.isClass
 				@config:name = name.symbol
 			js += "; {runtime:defineTag}({name.c},{className},{ext})"
 		else
-			if !option(:extension) and !name.isClass
-				js += "; globalThis.{M className, name} = {className};"
+			if !option(:extension) and (!name.isClass or option(:export))
+				js += "; globalThis.{M name.toTscName, name} = {className};"
 		return js
 
 export class Func < Code
@@ -5598,6 +5596,9 @@ export class DecoratorIdentifier < Identifier
 export class SymbolIdentifier < Identifier
 	
 	def c o = {}
+		if STACK.tsc
+			return variable.c
+			# return "{@value.slice(0)_$}"
 		let out = variable.c
 		if o:as == 'field'
 			"[{out}]"
@@ -5914,6 +5915,9 @@ export class TagTypeIdentifier < Identifier
 			return @str.replace(/\-/g,'_') + '$$TAG$$'
 		else
 			return helpers.pascalCase(@str + '-component')
+	
+	def toTscName
+		@str.replace(/\-/g,'_') + '$$TAG$$'
 			
 	def toNodeName
 		if isClass
@@ -10880,6 +10884,9 @@ export class RootScope < Scope
 		return
 
 	def symbolRef name
+		if STACK.tsc
+			return @symbolRefs[name] ||= Identifier.new(name.slice(1) + "_$INTERNAL$_")
+
 		let map = @symbolRefs
 		map[name] ||= declare("{String(name).replace(/[\@\#]/g,'_')}$",LIT("Symbol.for('{name}')"), type: 'const', system: yes)
 		

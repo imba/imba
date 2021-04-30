@@ -32,6 +32,9 @@ export class Node
 	end
 	parent
 
+	static def build doc,tok,scope,typ,types
+		new self(doc,tok,scope,typ,types)
+
 	def constructor doc, token, parent, type
 		doc = doc
 		start = token
@@ -51,12 +54,18 @@ export class Node
 		return parent
 	
 	def find pattern
-		findChildren(pattern)[0]
-
-	def findChildren pattern
+		findChildren(pattern,yes)[0]
+		
+	get childNodes
+		let nodes = doc.getNodesInScope(self)
+		nodes
+		
+	def findChildren pattern, returnFirst = no
 		let found = []
 		let tok = start
 		while tok
+			if returnFirst and found.length
+				return found
 			if tok.scope && tok.scope != self
 				if tok.scope.match(pattern)
 					found.push(tok.scope)
@@ -95,6 +104,11 @@ export class Node
 	get next
 		end ? end.next : null
 
+	get prev
+		start ? start.prev : null
+		
+	
+
 	def match query
 		if typeof query == 'string'
 			return type.indexOf(query) >= 0
@@ -120,27 +134,10 @@ export class Group < Node
 	def lookup ...params
 		return parent.lookup(...params)
 
-export class TagNode < Group
-
-	get name
-		let name = findChildren('tag.name').join('')
-		name == 'self' ? closest('component').name : name
-
-	get local?
-		name[0] == name[0].toUpperCase!
-
-	get tagName
-		name
-
-	get pathName
-		"<{name}>"
-		# let name = name
-		# local? ? name : ('globalThis.' + util.pascalCase(name) + 'Component')
-
-	get outline
-		findChildren(/tag\.(reference|name|id|white|flag|event(?!\-))/).join('')
 
 export class ValueNode < Group
+
+export class StringNode < Group
 
 export class StyleNode < Group
 
@@ -166,10 +163,6 @@ export class Scope < Node
 		indent = parts[3] ? parts[3].length : 0
 		setup!
 		return self
-
-	def closest ref
-		return self if match(ref)
-		return parent ? parent.closest(ref) : null
 
 	def match query
 		if typeof query == 'string'
@@ -197,17 +190,22 @@ export class Scope < Node
 				if ident.symbol
 					ident.symbol.name = 'render'
 	
+	get selfPath
+		let path = self.path
+		if property?
+			return path.slice(0,path.lastIndexOf('.'))
+		return path
+	
 	get path
 		let par = parent ? parent.path : ''
 		
 		if property?
-			let sep = static? ? '.' : '#'
+			let sep = static? ? '.' : '.prototype.'
 			return parent ? "{parent.path}{sep}{name}" : name
 		
 		if component?
 			if name[0] == name[0].toLowerCase!
 				return name.replace(/\-/g,'_') + '$$TAG$$'
-				# return util.pascalCase(name.replace(/\-/g,'_') + '$$TAG$$')
 			else
 				return name
 
@@ -298,6 +296,33 @@ export class Method < Scope
 
 export class Flow < Scope
 
+export class ForScope < Scope
+	get expression
+		let kw = find('keyword.in keyword.of')
+		kw.next.next
+
+	get forvars
+		Object.values(varmap).filter do $1.itervar?
+
+	def visit
+		super
+		# console.log 'visited forscope!!'
+		let expr = expression
+		for item in forvars
+			item.#typePath = [expr,0]
+			item.#testPath = doc.getDestructuredPath(item.node,[[expr,'__@iterable']])
+		self
+
+export class WeakScope < Scope
+	# get varmap
+	#	parent.varmap
+
+	def register symbol
+		return parent.register(symbol)
+
+	def lookup ...params
+		return parent.lookup(...params)
+
 export class SelectorNode < Group
 
 export class StylePropKey < Group
@@ -347,6 +372,39 @@ export class StylePropNode < Group
 
 export class StyleInterpolation < Group
 
+
+
+export class PathNode < Group
+
+export class TagNode < Group
+
+	get name
+		let name = findChildren('tag.name').join('')
+		name == 'self' ? closest('component').name : name
+
+	get local?
+		name[0] == name[0].toUpperCase!
+
+	get tagName
+		name
+
+	get parentTag
+		closest('tagcontent')..ownerTag
+	
+	get ancestorTags
+		closest('tagcontent')..ownerTags
+
+	get ancestorPath
+		ancestorTags.map(do $1.tagName).join('.')
+
+	get pathName
+		"<{name}>"
+		# let name = name
+		# local? ? name : ('globalThis.' + util.pascalCase(name) + 'Component')
+
+	get outline
+		findChildren(/tag\.(reference|name|id|white|flag|event(?!\-))/).join('')
+
 export class TagAttrNode < Group
 	get propertyName
 		if start.next.match('tag.attr')
@@ -369,27 +427,91 @@ export class TagAttrValueNode < Group
 	# get completionPath
 	#	"<>"
 
-export class PathNode < Group
+export class TagContent < WeakScope
 
+	get ownerTag
+		start.prev.pops
+
+	get ownerTags
+		let els = [ownerTag]
+		
+		while let el = els[0].parentTag
+			els.unshift(el)
+			# curr = parent.closest('tagcontent')
+		return els
 
 export class Listener < Group
 
 	get name
 		findChildren('tag.event.name').join('').replace('@','')
 
+export class ParensNode < Group
+
+export class BracketsNode < Group
+
+	static def build doc,tok,scope,typ,types
+		let cls = self
+		let chr = doc.content[tok.offset - 1] # tok.prev.value # .slice(-1)
+		# console.log 'build brackets',tok,chr
+		if !chr or ' [{(|=&-;\n\t:/*%+-'.indexOf(chr) >= 0 # chr.match(/[\s\[\,\(\n\,]/)
+			typ = 'array'
+			cls = ArrayNode
+		else
+			typ = 'index'
+			cls = IndexNode
+
+		new cls(doc,tok,scope,typ,types)
+	
+export class BracesNode < Group
+
+export class ArrayNode < Group
+	
+	get delimiters
+		childNodes.filter do $1.match('delimiter')
+	
+	def indexOfNode node
+		let delims = delimiters
+		let index = 0
+		for delim,i of delims
+			if node.offset > delim.offset
+				index++
+		return index
+
+export class IndexNode < Group
+
+export class TypeAnnotationNode < Group
+
+	def constructor
+		super
+		prev.datatype = self
+
+export class InterpolatedValueNode < Group
+
+export class ObjectNode < BracesNode
+
 export const ScopeTypeMap = {
 	style: StyleNode
-	
+	array: BracketsNode
 	stylerule: StyleRuleNode
 	sel: SelectorNode
 	path: PathNode
 	value: ValueNode
 	tag: TagNode
+	forscope: ForScope
+	type: TypeAnnotationNode
+	parens: ParensNode
+	brackets: BracketsNode
+	object: ObjectNode
+	braces: BracesNode
+	string: StringNode
 	tagattr: TagAttrNode
+	interpolation: InterpolatedValueNode
 	tagattrvalue: TagAttrValueNode
+	tagcontent: TagContent
 	listener: Listener
 	styleinterpolation: StyleInterpolation
 	styleprop: StylePropNode
 	stylepropkey: StylePropKey
 	stylevalue: StylePropValue
+	args: ParensNode
 }
