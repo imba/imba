@@ -815,8 +815,9 @@ export default class Bundle < Component
 				delim = body[start - 1]
 				end = start + 10
 				delim = ')' if delim == '('
-				while body[end] != delim
-					end++
+				
+				let path = body.substr(start,300).match(/^[^\r\n\'\"\)]+/)[0]
+				end = start + path.length
 
 				path = body.slice(start,end)
 				let origPath = path
