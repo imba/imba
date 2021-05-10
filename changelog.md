@@ -1,4 +1,4 @@
-## Unreleased
+## 2.0.0-alpha.133
 * Improved sourcemapping
 * Improved support for type annotations
 * Fixed crash in bundler
