@@ -1,3 +1,8 @@
+## Unreleased
+* Improved sourcemapping
+* Improved support for type annotations
+* Fixed crash in bundler
+
 ## 2.0.0-alpha.132
 * Improve windows compatibility for bundler and `imba create`
 
