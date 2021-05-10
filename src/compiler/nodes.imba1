@@ -9424,7 +9424,9 @@ export class Export < ValueNode
 		if value isa Assign and value.left isa VarReference
 		
 			if !STACK.cjs
-				return isDefault ? "export default {value.c}" : "export {value.c}"
+				let ek = M('export',option(:keyword))
+				let dk = isDefault and M('default',option(:default))
+				return isDefault ? "{ek} {dk} {value.c}" : "{ek} {value.c}"
 			else
 				let val = value.left.value
 				# console.log "export is a var reference?! {value.left} {val}"
