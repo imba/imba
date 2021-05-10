@@ -928,7 +928,7 @@ export const states = {
 	]
 	tag_content: [
 		denter(2,-1,0)
-		[/\)|\}\]/,'@rematch', '@pop']
+		[/\)|\}|\]/,'@rematch', '@pop']
 		'common_'
 		'flow_'
 		'var_'
