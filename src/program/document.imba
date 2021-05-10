@@ -713,7 +713,7 @@ export class ImbaDocument
 
 	def tokenize force = no
 		# return tokenize! unless #lexed
-		let from = #lexed or {lines:[]}
+		let from = #lexed or {lines:[], version: -1}
 		
 		if from.version == version and !force
 			return from

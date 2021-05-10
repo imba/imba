@@ -933,7 +933,9 @@ export const states = {
 		'flow_'
 		'var_'
 		'for_'
+		'css_'
 		'expr_'
+		'do_'
 		# dont support object keys directly here
 	]
 
