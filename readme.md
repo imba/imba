@@ -25,9 +25,9 @@ To get started with Imba, we recommend reading through the [official guide](http
 
  [![Forum](https://img.shields.io/badge/discourse-forum-brightgreen.svg?style=flat-square)](https://users.imba.io) [![Join the chat at https://discord.gg/mkcbkRw](https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square)](https://discord.gg/mkcbkRw)
 
-### Bi-Weekly Imba Community Meeting
+### Imba Community Meeting
 
-Everyone is welcome! The developer meetings are usually on Monday's every 2 weeks. This is a great place to report your issues, hangout and talk about your project using Imba. If you have an open pull request which has not seen attention, you can ping during the meeting.
+Everyone is welcome! This is a great place to report your issues, hangout and talk about your project using Imba. If you have an open pull request which has not seen attention, you can ping during the meeting.
 
 For the exact meeting times please use the Meetup group [Imba Oslo Meetup](https://www.meetup.com/Imba-Oslo-Meetup), this is where you can see the timezone, cancellations, etc.
 
@@ -38,7 +38,7 @@ Did you miss a meeting? No worries, catch up via the [meeting notes](https://bit
 ### Chat
 
 For questions and support please use our community chat on
-[Discord](https://discord.gg/mkcbkRw) or our [discourse](https://users.imba.io/).
+[Discord](https://discord.gg/mkcbkRw).
 
 ## License
 
