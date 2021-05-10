@@ -3745,7 +3745,13 @@ export class MethodDeclaration < Func
 
 		if option(:inClassBody) or option(:inObject)
 			# what if this is async?
-			let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
+			let prefix = ''
+			if self.isGetter
+				prefix = M('get',option(:keyword)) + ' '
+			elif self.isSetter
+				prefix = M('set',option(:keyword)) + ' '
+			# let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
+
 			prefix = "async {prefix}" if option(:async)
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			out = "{prefix}{M name, null, as: 'field'}({params.c}){code}"
@@ -5018,7 +5024,13 @@ export class VarOrAccess < ValueNode
 	def js o
 		let val = @variable or @value
 		if @variable and @variable.declarator != self
-			let typ = datatype
+			if STACK.tsc and val.@typedAlias
+				return val.@typedAlias.c
+			# if @variable.c == 'val'
+			#	# not when we are part of a setter though
+			#	console.log 'compile varoraccess variable',@variable
+			let typ = datatype #  or (STACK.tsc and @variable.vartype)
+			# FIXME not if it is in left-side of assignment
 			if typ
 				return typ.c() + '(' + @variable.c() + ')'
 
@@ -6895,25 +6907,24 @@ export class ForOf < For
 			return head + code
 
 		else
+			
+			if STACK.tsc
+				# get all the variables declared in the let
+				for item in @declvars
+					if item.vartype
+						let vname = item.c
+						let decl = item.@declarator
+						let op = LIT("{item.vartype.c} let {M item.typedAlias.c,decl} = {vname}")
+						body.unshift(op)
+						
+		
 			# compile to a naive for of loop
 			code = scope.c(braces: yes, indent: yes)
 			# let inCode = osrc.@variable ? src : (OP('=',src,osrc))
 			# it is really important that this is a treated as a statement
 
 			let ofjs = src.c(expression: yes)
-			let js = ''
-			if STACK.tsc
-				js = '{\n'
-				# get all the variables declared in the let
-				for item in @declvars
-					try
-						if item.vartype
-							js += item.vartype.c + ' '
-					js += "let {item.c(jsdoc: yes)};\n"
-				js += "{M('for',keyword)} ({v.c(jsdoc: no)} of {ofjs})" + code
-				js += '}'
-			else
-				js = "{M('for',keyword)} (let {v.c} of {ofjs})" + code
+			let js = "{M('for',keyword)} (let {v.c} of {ofjs})" + code
 
 			if vars:counter
 				js = "{vars:counter} = 0; {js}"
@@ -11106,6 +11117,9 @@ export class Variable < Node
 		@references 	= [] # only needed when profiling
 		@assignments 	= []
 		self
+		
+	def typedAlias
+		@typedAlias ||= Variable.new(@scope,@name + '$TYPED$',@declarator,@options)
 	
 	def isGlobal name
 		@type == 'global' and (!name or @name == name)
@@ -11117,7 +11131,7 @@ export class Variable < Node
 		@assignments
 
 	def vartype
-		@vartype or (@declarator and @declarator.datatype)
+		@vartype or (@declarator and @declarator:datatype and @declarator.datatype)
 
 	# Here we can collect lots of type-info about variables
 	# and show warnings / give advice if variables are ambiguous etc
@@ -11219,6 +11233,9 @@ export class Variable < Node
 			return "[" + c({}) + "]"
 
 		return @c if @c
+		
+		if @typedAlias
+			@typedAlias.c(params)
 		# options - proxy??
 		if @proxy
 			if @proxy isa Node
