@@ -1305,10 +1305,21 @@ parser.parse = function parse (input, script = null) {
             expected = [];
 
             var tsym = lexer.yytext;
+            var lastToken = tsym;
             var tok = self.terminals_[symbol] || symbol;
-            var tloc = tsym ? tsym._loc : -1;
-            var tend = tloc > -1 ? (tloc + tsym._len) : -1;
-            var tpos = tloc != -1 ? "[" + tsym._loc + ":" + tsym._len + "]" : '[0:0]';
+            
+            // Find closest non-generated token
+            let tidx = lexer.tokens.indexOf(tsym);
+            let ttok = tsym;
+            while(ttok && ttok._loc == -1){
+                ttok = lexer.tokens[--tidx];
+            }
+            
+            var tloc = ttok ? ttok._loc : -1;
+            var tend = tloc > -1 ? (tloc + (ttok._len || 0)) : -1;
+            var tpos = tloc != -1 ? "[" + ttok._loc + ":" + ttok._len + "]" : '[0:0]';
+            
+            
 
             if (lexer.showPosition) {
                 errStr = 'Parse error at '+(tpos)+":\n"+lexer.showPosition()+"\nExpecting "+expected.join(', ') + ", got '" + (tok)+ "'";
@@ -1318,6 +1329,7 @@ parser.parse = function parse (input, script = null) {
             }
 
             if(script){
+                
                 let err = script.addDiagnostic('error',{
                     message: errStr,
                     source: 'imba-parser',

@@ -862,7 +862,8 @@ export class Rewriter
 		var action = do |token,i,tokens,s|
 			if token.@type != INDENT
 				if s:unfinished
-					tokens.splice i, 0, T.token('EMPTY_BLOCK', '')
+					let tok = T.token('EMPTY_BLOCK', '')
+					tokens.splice i, 0, tok
 					# T.setTyp(s:original, 'POST_' + s:original.@type)
 				else
 					T.setTyp(s:original, 'POST_' + s:original.@type)
