@@ -106,12 +106,11 @@ export class Node
 
 	get prev
 		start ? start.prev : null
-		
-	
 
 	def match query
 		if typeof query == 'string'
-			return type.indexOf(query) >= 0
+			return type == query
+			# let m = type.indexOf(query) >= 0
 		elif query isa RegExp
 			return query.test(type)
 		elif query isa Function
@@ -163,15 +162,6 @@ export class Scope < Node
 		indent = (parts[3] && parts[3][0] == '\t') ? parts[3].length : 0
 		setup!
 		return self
-
-	def match query
-		if typeof query == 'string'
-			return type.indexOf(query) >= 0
-		elif query isa RegExp
-			return query.test(type)
-		elif query isa Function
-			return query(self)
-		return yes
 
 	def setup
 		if handler?
