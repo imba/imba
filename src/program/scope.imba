@@ -160,7 +160,7 @@ export class Scope < Node
 				let tok = {value: key, offset: -1, mods: 0}
 				varmap[key] = new Sym(SymbolFlags.GlobalVar,key,tok)
 
-		indent = parts[3] ? parts[3].length : 0
+		indent = (parts[3] && parts[3][0] == '\t') ? parts[3].length : 0
 		setup!
 		return self
 
@@ -238,7 +238,7 @@ export class Scope < Node
 		!!type.match(/def|get|set/)
 
 	get static?
-		ident && ident.mods & M.Static
+		!!(ident && ident.mods & M.Static)
 	
 	get handler?
 		!!type.match(/handler|spy/)
@@ -247,7 +247,7 @@ export class Scope < Node
 		!!type.match(/def|get|set/)
 	
 	get property?
-		!!type.match(/def|get|set/)
+		!!type.match(/def|get|set|field/)
 
 	get flow?
 		!!type.match(/if|else|elif|unless|for|while|until/)
@@ -277,6 +277,7 @@ export class Scope < Node
 			name = name.slice(0,-1)
 		if let variable = varmap[name]
 			# variable.reference(token)
+			
 			return variable # token.var
 		return null
 
@@ -304,15 +305,6 @@ export class ForScope < Scope
 	get forvars
 		Object.values(varmap).filter do $1.itervar?
 
-	def visit
-		super
-		# console.log 'visited forscope!!'
-		let expr = expression
-		for item in forvars
-			item.#typePath = [expr,0]
-			item.#testPath = doc.getDestructuredPath(item.node,[[expr,'__@iterable']])
-		self
-
 export class WeakScope < Scope
 	# get varmap
 	#	parent.varmap
@@ -322,6 +314,14 @@ export class WeakScope < Scope
 
 	def lookup ...params
 		return parent.lookup(...params)
+		
+export class FieldScope < Scope
+	
+	get selfScope
+		self
+
+	# get selfPath
+		
 
 export class SelectorNode < Group
 
@@ -464,7 +464,7 @@ export class BracketsNode < Group
 	
 export class BracesNode < Group
 
-export class ArrayNode < Group
+export class ArrayNode < BracketsNode
 	
 	get delimiters
 		childNodes.filter do $1.match('delimiter')
@@ -477,13 +477,16 @@ export class ArrayNode < Group
 				index++
 		return index
 
-export class IndexNode < Group
+export class IndexNode < BracketsNode
 
 export class TypeAnnotationNode < Group
 
 	def constructor
 		super
 		prev.datatype = self
+		
+	def toString
+		value
 
 export class InterpolatedValueNode < Group
 
@@ -498,6 +501,7 @@ export const ScopeTypeMap = {
 	value: ValueNode
 	tag: TagNode
 	forscope: ForScope
+	field:FieldScope
 	type: TypeAnnotationNode
 	parens: ParensNode
 	brackets: BracketsNode

@@ -57,6 +57,9 @@ export def highlight tokens, {verbose = no}
 
 		if mods & M.Local
 			types.push('local')
+			
+		if token.end and token.end.start == token
+			parts.push("<b>")
 
 		if subtyp == 'start' or subtyp == 'open'
 			parts.push("<b class='{typ}'>")
@@ -77,6 +80,7 @@ export def highlight tokens, {verbose = no}
 			value = String(--depth)
 			parts.push("</div>")
 			continue
+			
 
 		if typ != 'white' and typ != 'line'
 			value = "<i class='{classify types} o{token.offset}'>{escape(value or '')}</i>"
@@ -85,7 +89,7 @@ export def highlight tokens, {verbose = no}
 
 		parts.push(value)
 
-		if subtyp == 'end' or subtyp == 'close'
+		if subtyp == 'end' or subtyp == 'close' or token.start
 			parts.push('</b>')
 
 	return parts.join('')

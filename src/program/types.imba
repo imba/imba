@@ -66,6 +66,9 @@ export const CompletionTypes = {
 	StyleProp: 1 << 10
 	StyleValue: 1 << 11
 	Type: 1 << 12
+	StyleModifier: 1 << 13
+	StyleSelector: 1 << 14
+	VarName: 1 << 15
 }
 
 export const KeywordTypes = {

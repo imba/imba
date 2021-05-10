@@ -1,5 +1,5 @@
 import {computeLineOffsets,getWellformedRange,getWellformedEdit,mergeSort,editIsFull,editIsIncremental} from './utils'
-import { lexer, Token } from './lexer'
+import { lexer, Token, LexedLine } from './lexer'
 import * as util from './utils'
 import { Root, Scope, Group, ScopeTypeMap } from './scope'
 import { Sym, SymbolFlags } from './symbol'
@@ -8,10 +8,24 @@ import {SemanticTokenTypes,SemanticTokenModifiers,M,CompletionTypes,Keywords,Sym
 
 import {Range, Position} from './structures'
 
+extend class Token
+
+	get node
+		if scope and scope.start == self
+			return scope
+		if pops
+			return pops
+		return self
+		
+	get nextNode
+		next..node
+		
+	get prevNode
+		prev..node
+		
 ###
 line and character are both zero based
 ###
-
 export class ImbaDocument
 
 	static def tmp content
@@ -29,9 +43,11 @@ export class ImbaDocument
 		lineTokens = []
 		isLegacy = languageId == 'imba1' or (uri && uri.match(/\.imba1$/))
 		head = seed = new Token(0,'eol','imba')
+		initialState = lexer.getInitialState!
 		seed.stack = lexer.getInitialState!
 		history = []
-		tokens = []
+		# tokens = []
+		self.lexer = lexer
 		versionToHistoryMap = {}
 		versionToHistoryMap[version] = -1
 		if content and content.match(/^\#[^\n]+imba1/m)
@@ -71,7 +87,7 @@ export class ImbaDocument
 		let low = 0
 		let high = lineOffsets.length
 		if high === 0
-			return new Position(0,offset,offset)
+			return new Position(0,offset,offset,version)
 			# return { line: 0, character: offset, offset: offset }
 		while low < high
 			let mid = Math.floor((low + high) / 2)
@@ -82,7 +98,7 @@ export class ImbaDocument
 		# low is the least x for which the line offset is larger than the current offset
 		# or array.length if no line offset is larger than the current offset
 		let line = low - 1
-		return new Position(line,offset - lineOffsets[line],offset)
+		return new Position(line,offset - lineOffsets[line],offset,version)
 		# return { line: line, character: (offset - lineOffsets[line]), offset: offset }
 
 	def offsetAt position
@@ -114,6 +130,9 @@ export class ImbaDocument
 		# what if it is a full updaate
 		# handle specific smaller changes in an optimized fashion
 		# many changes will be a single character etc
+		if version == undefined
+			version = self.version + 1
+
 		let edits = []
 		
 		for change,i in changes
@@ -167,7 +186,7 @@ export class ImbaDocument
 		versionToHistoryMap[version] = history.length - 1
 		updated(changes,version)
 
-	def offsetAtVersion fromOffset, fromVersion, toVersion = version
+	def offsetAtVersion fromOffset, fromVersion, toVersion = version, stickyStart = no
 		let from = versionToHistoryMap[fromVersion]
 		let to = versionToHistoryMap[toVersion]
 		let offset = fromOffset
@@ -178,37 +197,39 @@ export class ImbaDocument
 				let edits = history[++from]
 				for [start,len,text] in edits
 					continue if start > offset
+					start -= 1 if stickyStart
 					if offset > start and offset > (start + len)
 						offset += (text.length - len)
-		
+						
+		elif to < from
+			while to < from
+				let edits = history[from--]
+				for [start,len,text] in edits
+					continue if start > offset
+					if offset > start and offset > (start + len)
+						offset -= (text.length - len)
+
 		return offset
+		
+	def historicalOffset offset, oldVersion
+		offsetAtVersion(offset,version,oldVersion,yes)
 
 	def applyEdit change,version,changes
 		# apply textual changes
 		content = content.substring(0, change.range.start.offset) + change.text + content.substring(change.range.end.offset, content.length)
 
 		let line = change.range.start.line
-		let caret = change.range.start.character + 1
 		invalidateFromLine(line)
-		if changes.length == 1 and change.text == '<'
-			let text = getLineText(line)
-			let matcher = text.slice(0,caret) + '§' + text.slice(caret)
-
-			if matcher.match(/(^\t*|[\=\>]\s+)\<\§(?!\s*\>)/)
-				if connection
-					connection.sendNotification('closeAngleBracket',{uri: uri})
 		return
 	
-
 	def updated changes,version
 		version = version
 		self
 
 	def invalidateFromLine line
 		head = seed
-		tokens = []
+		# tokens = []
 		self
-
 
 	def after token, match
 		let idx = tokens.indexOf(token)
@@ -387,6 +408,7 @@ export class ImbaDocument
 		let linePos = lineOffsets[pos.line]
 		# console.log 'get token at offset',offset,tok,linePos,pos
 		let tokPos = offset - tok.offset
+		
 		let ctx = tok.context
 
 		const before = {
@@ -400,10 +422,18 @@ export class ImbaDocument
 			token: tok.value.slice(tokPos)
 			line: content.slice(offset,lineOffsets[pos.line + 1]).replace(/[\r\n]+/,'')
 		}
+		
+
 
 		# if the token pushes a new scope and we are at the end of the token
 		if tok.scope and !after.token
 			ctx = tok.scope
+			# are we are the beginning of a scope?
+			
+		if tok.next
+			if tok.next.value == null and tok.next.scope and !after.token and tok.match('operator.assign')
+				ctx = tok.next.scope
+				# console.log 'changed scope!!!',ctx,ctx.scope
 	
 		let tabs = util.prevToken(tok,"white.tabs")
 		let indent = tabs ? tabs.value.length : 0
@@ -411,6 +441,8 @@ export class ImbaDocument
 		let scope = ctx.scope
 		let meta = {}
 		let target = tok
+		let mstate = tok.stack.state or ''
+		let t = CompletionTypes
 
 		
 
@@ -427,9 +459,10 @@ export class ImbaDocument
 
 		if tok == tabs
 			indent = tokPos
-
-		while scope.indent > indent
-			scope = scope.parent
+		
+		if tok.match('br white.tabs')
+			while scope.indent > indent
+				scope = scope.parent
 
 		if group.type == 'tag'
 			# let name = group.findChildren('tag.name')
@@ -441,12 +474,9 @@ export class ImbaDocument
 		
 		# if we are in an accessor
 
-		if tok.match('accessor')
-			target = tok.prev
+		
 
-		if tok.match('operator.access')
-			flags |= CompletionTypes.Access
-			target = tok
+		
 
 		if tok.match('tag.event.name tag.event-modifier.name')
 			target = tok.prev
@@ -455,8 +485,17 @@ export class ImbaDocument
 			flags |= CompletionTypes.Path
 			suggest.paths = 1
 
-		if tok.match('identifier tag.operator.equals br white')
+		if tok.match('identifier tag.operator.equals br white delimiter array operator (')
 			flags |= CompletionTypes.Value
+			target = null
+
+		if tok.match('operator.access')
+			flags |= CompletionTypes.Access
+			target = tok
+			
+		if tok.match('accessor')
+			flags |= CompletionTypes.Access
+			target = tok.prev
 
 		if tok.match("delimiter.type.prefix type")
 			flags |= CompletionTypes.Type
@@ -464,6 +503,7 @@ export class ImbaDocument
 			flags |= CompletionTypes.TagName
 		elif tok.match('tag.attr tag.white')
 			flags |= CompletionTypes.TagProp
+			
 		elif tok.match('tag.flag')
 			flags |= CompletionTypes.TagFlag
 		elif tok.match('tag.event.modifier')
@@ -475,24 +515,55 @@ export class ImbaDocument
 			flags |= CompletionTypes.Value
 
 		if tok.match('style.property.operator') or group.closest('stylevalue')
-			flags |= CompletionTypes.StyleValue
+			flags |= t.StyleValue
 			try
 				suggest.styleProperty = group.closest('styleprop').propertyName
 
 		if tok.match('style.open style.property.name')
-			flags |= CompletionTypes.StyleProp
+			flags |= t.StyleProp
 
 		if tok.match('style.value.white') or (tok.prev and tok.prev.match('style.value.white'))
-			flags |= CompletionTypes.StyleProp
+			flags |= t.StyleProp
 
 		if tok.match('style.selector.element') and after.line.match(/^\s*$/)
-			flags |= CompletionTypes.StyleProp
+			flags |= t.StyleProp
+			
+		if scope.closest('rule')
+			flags |= t.StyleProp
+			flags ~= t.Value
+			
+		if tok.match('style.property.operator')
+			flags ~= t.StyleProp
+			
+		if group.match('stylevalue') && before.group.indexOf(' ') == -1
+			flags = t.StyleValue
+			
+		if tok.match('style.selector.modifier style.property.modifier')
+			flags = t.StyleModifier
+			
+		if tok.match('style.selector.element')
+			flags |= t.StyleSelector
+		
+		if scope.closest('rule') and before.line.match(/^\s*$/)
+			flags |= t.StyleSelector
+			flags ~= t.StyleValue
+			
+		if tok.match('operator.access accessor white.classname white.tagname')
+			flags ~= t.Value
+			
+		if mstate.match(/\.decl-(let|var|const|param|for)/) or tok.match(/\.decl-(for|let|var|const|param)/)
+			flags ~= t.Value
+			flags |= t.VarName
 
 		let kfilter = scope.allowedKeywordTypes
 		suggest.keywords = for own key,v of Keywords when v & kfilter
 			key
 
 		suggest.flags = flags
+		
+		for own k,v of t
+			if flags & v
+				suggest[k] ||= yes
 
 		let out = {
 			token: tok
@@ -627,14 +698,243 @@ export class ImbaDocument
 		return contextAtOffset(offset)
 
 	def ensureParsed
-		parse! if self.head.offset == 0
+		parse! # if self.head.offset == 0
 		return self
 
 	def reparse
 		invalidateFromLine(0)
 		parse!
+		
+	def profileReparse
+		let t = Date.now!
+		let res = reparse!
+		console.log 'took',Date.now! - t
+		return res
 
+	def tokenize force = no
+		# return tokenize! unless #lexed
+		let from = #lexed or {lines:[]}
+		
+		if from.version == version and !force
+			return from
+
+		let raw = content
+		
+		if isLegacy
+			raw = raw.replace(/\@\w/g) do(m) '¶' + m.slice(1)
+			raw = raw.replace(/\w\:(?=\w)/g) do(m) m[0] + '.'
+			raw = raw.replace(/(do)(\s?)\|([^\|]*)\|/g) do(m,a,space,b)
+				a + '(' + (space or '') + b + ')'
+
+		let lineOffsets = self.lineOffsets
+		let tokens = []
+		
+		let head = seed
+		let prev = head
+		let t0 = Date.now!
+		let nextState = initialState
+		
+		
+
+		#lexed = {
+			version: version
+			lines: []
+			tokens: tokens
+		}
+		
+		let lineCache = {}
+		
+		#lexed.cache = lineCache
+		
+		for line in from.lines
+			let item = (lineCache[line.text] ||= [])
+			item.push(line)
+			line
+		
+		for lineOffset,i in lineOffsets
+			let next = lineOffsets[i+1]
+			let toOffset = next or raw.length
+			let str = raw.slice(lineOffset,toOffset)
+			let startState = nextState
+			
+			let cached = lineCache[str]
+			let matches = cached and cached.filter do(item) item.startState == startState
+			let match = matches and (matches.find(do $1.offset == lineOffset) or matches[0])
+			let lexed = null
+
+			if match
+				if match.offset == lineOffset
+					lexed = match.clone(lineOffset)
+				else
+					lexed = match.clone(lineOffset)
+
+			unless lexed
+				# console.log 'need to reparse line',[str,startState],match
+				let run = lexer.tokenize(str,startState,lineOffset)
+				lexed = new LexedLine(
+					offset: lineOffset,
+					text: str,
+					startState: startState,
+					endState: run.endState,
+					tokens: run.tokens
+				)
+
+			for tok,ti in lexed.tokens
+				tokens.push(tok)
+			
+			#lexed.lines.push(lexed)
+			nextState = lexed.endState
+		
+		let elapsed = Date.now! - t0
+		console.log 'retokenized in',elapsed
+		return #lexed
+	
+	get tokens
+		astify!
+		return #lexed.tokens
+		
+	# This is essentially the tokenizer
+	def getTokens range = null
+		return self.tokens
+
+	def astify
+		# now walk the whole token-stream
+		let lexed = tokenize!
+		return self if lexed.root
+		
+		const pairings = {']': '[', ')': '(', '}': '{', '>': '<'}
+		const openers = {'[': ']','(': ')','{': '}','<': '>'}
+		const callAfter = /[\w\$\)\]\?]/
+
+		let t0 = Date.now!
+		let entity = null
+		let scope\any = lexed.root = new Root(self,seed,null,'root')
+		let raw = content
+		let log = console.log.bind(console)
+		let lastDecl = null
+		let lastVarKeyword = null
+		let lastVarAssign = null
+		let prev = null
+		let entityFlags = 0
+		
+		for tok,ti in lexed.tokens
+			let types = tok.type.split('.')
+			let value = tok.value
+			let nextToken = lexed.tokens[ti + 1]
+			let [typ,subtyp,sub2] = types
+			let ltyp = types[types.length - 1]
+			let decl = 0
+
+			if typ == 'ivar'
+				value = tok.value = '@' + value.slice(1)
+
+			if prev
+				prev.next = tok
+				
+			tok.prev = prev
+			tok.context = scope
+			
+			# tag content interpolation
+			if sub2 == 'braces' and value == '{'
+				scope = tok.scope = ScopeTypeMap.interpolation.build(self,tok,scope,'interpolation',types)
+
+			if typ == '(' and prev
+				let prevchr = raw[tok.offset - 1] or ''
+				if callAfter.test(prevchr)
+					scope = tok.scope = ScopeTypeMap.args.build(self,tok,scope,'args',types)
+
+			if typ == 'operator'
+				tok.op = tok.value.trim!
+
+			if typ == 'keyword'
+				if M[subtyp]
+					entityFlags |= M[subtyp]
+				if value == 'let' or value == 'const'
+					lastVarKeyword = tok
+					lastVarAssign = null
+			
+			if typ == 'entity'
+				tok.mods |= entityFlags
+				entityFlags = 0
+
+			if typ == 'push'
+				let scopetype = subtyp
+				let idx = subtyp.lastIndexOf('_')
+				
+				let ctor = idx >= 0 ? Group : Scope
+
+				if idx >= 0
+					scopetype = scopetype.slice(idx + 1)
+					ctor = ScopeTypeMap[scopetype] || Group
+				elif ScopeTypeMap[scopetype]
+					ctor = ScopeTypeMap[scopetype]
+
+				scope = tok.scope = new ctor(self,tok,scope,scopetype,types)
+				if lastDecl
+					lastDecl.body = scope
+					scope.symbol = lastDecl
+					lastDecl = null
+				if scope == scope.scope
+					lastVarKeyword = null
+					lastVarAssign = null
+
+			elif typ == 'pop'
+				if subtyp == 'value'
+					lastVarAssign = null
+				
+				scope = scope.pop(tok)
+			
+			elif (subtyp == 'open' or openers[subtyp]) and ScopeTypeMap[typ]
+				
+				scope = tok.scope = ScopeTypeMap[typ].build(self,tok,scope,typ,types)
+				# if subtyp == '('
+				#	console.log 'paren!!!',typ,subtyp,ScopeTypeMap[typ],tok
+
+			elif subtyp == 'close' and ScopeTypeMap[typ]
+				scope = scope.pop(tok)
+
+			elif pairings[typ] and scope and scope.start.value == pairings[typ]
+				scope = scope.pop(tok)
+
+			if tok.match(/entity\.name|decl-/)
+				let tokenSymbol = Sym.forToken(tok,tok.type,tok.mods)
+
+				if tokenSymbol
+					lastDecl = tok.symbol = tokenSymbol # new Sym(symFlags,tok.value,tok)
+					tok.symbol.keyword = lastVarKeyword
+					scope.register(tok.symbol)
+
+				tok.mods |= M.Declaration
+
+			if subtyp == 'declval'
+				lastVarAssign = tok
+
+			if tok.match('identifier') && !tok.symbol
+				let sym = scope.lookup(tok,lastVarKeyword)
+				if sym && sym.scoped?
+					if lastVarAssign and sym.keyword == lastVarKeyword
+						yes # should not resolve
+					else
+						sym.addReference(tok)
+
+				# hardcoded fallback handling
+				if prev && prev.op == '=' and sym
+					let lft = prev.prev
+					if lft && lft.symbol == sym
+						if lft.mods & M.Declaration
+							sym.dereference(tok)
+						elif !nextToken or nextToken.match('br')
+							sym.dereference(lft)
+			prev = tok
+		# self.newTokens = lexed.tokens
+		console.log 'astified',Date.now! - t0
+		self
+		
 	def parse
+		return tokens
+
+	def parseOld
+		
 		let head = seed
 
 		if head != self.head
@@ -684,7 +984,12 @@ export class ImbaDocument
 				let entityFlags = 0
 				let next = lines[i+1]
 				let str = raw.slice(line,next or raw.length)
+				let t0 = Date.now!
 				let lexed = lexer.tokenize(str,head.stack,line)
+				let t1 = Date.now!
+				
+				if (t1 - t0) > 30
+					console.log 'took a long time to parse linke',line,head.stack,str,(t1 - t0)
 
 				for tok,ti in lexed.tokens
 					let types = tok.type.split('.')
@@ -776,7 +1081,7 @@ export class ImbaDocument
 						scope = scope.pop(tok)
 
 
-					if tok.match(/entity\.name|decl-|field/)
+					if tok.match(/entity\.name|decl-/)
 						# let tvar = scope.declare(tok,subtyp)
 						# create a symbol
 						# console.log 'declare',tok.type,Symbol.idToFlags(tok.type,tok.mods)
@@ -821,13 +1126,7 @@ export class ImbaDocument
 		
 		# console.log 'parsed',tokens.length,Date.now! - t0
 		self.head = head
-		self.tokens = tokens
-		return tokens
-
-
-	# This is essentially the tokenizer
-	def getTokens range = null
-		parse!
+		# self.tokens = tokens
 		return tokens
 
 	def getMatchingTokens filter

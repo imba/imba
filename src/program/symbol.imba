@@ -59,8 +59,8 @@ const Conversions = [
 	['entity.name.set',0,SymbolFlags.SetAccessor]
 	['field',0,SymbolFlags.Property]
 	['decl-let',0,SymbolFlags.LetVariable]
-	['decl-for-index',0,SymbolFlags.LetVariable,{datatype: 'number'}]
-	['decl-for',0,SymbolFlags.LetVariable]
+	['decl-for-index',0,SymbolFlags.LetVariable,{datatype: '\\number'}]
+	['decl-for',0,SymbolFlags.LetVariable,{kind: 'for'}]
 	['decl-var',0,SymbolFlags.LetVariable]
 	['decl-param',0,SymbolFlags.Parameter]
 	['decl-const',0,SymbolFlags.ConstVariable]
@@ -98,7 +98,21 @@ export class Sym
 		desc = desc
 
 	get datatype
-		desc and desc.datatype
+		let type = desc and desc.datatype
+		return type if type
+		return #datatype if #datatype
+		
+		let next = node and node.nextNode
+		if next and next.type == 'type'
+			return next
+			
+		let scope = self.scope
+		
+		if scope and desc..kind == 'for'
+			let typ = scope.doc.getDestructuredPath(node,[[scope.expression,'__@iterable']])
+			# console.log 'resolving!!!',typ
+			return #datatype ||= typ
+		return null
 
 	get static?
 		node && node.mods & M.Static
@@ -203,5 +217,7 @@ export class Sym
 
 		return mods
 
+
+export class ForVar < Sym
 
 export class SymbolMap

@@ -10,10 +10,11 @@ export class Position
 	prop character # zero based offset on line
 	prop offset # zero based offset in whole document
 
-	def constructor l,c,o
+	def constructor l,c,o,v = null
 		line = l
 		character = c
 		offset = o
+		#version = v
 
 	def toString
 		"{line}:{character}"
@@ -46,6 +47,10 @@ export class Range
 
 	def getText str
 		str.slice(start,end)
+		
+	def equals other
+		other.offset == offset and other.length == length
+
 
 
 export const DiagnosticSeverity = {

@@ -44,6 +44,13 @@ export class Token {
 	public get indent(): number {
 		return 0;
 	}
+	
+	public clone(): Token {
+		let tok = new Token(this.offset,this.type,this.language);
+		tok.value = this.value;
+		tok.stack = this.stack;
+		return tok;
+	}
 
 	public match(val: any): boolean {
         if(typeof val == 'string'){

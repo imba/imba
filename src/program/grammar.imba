@@ -95,7 +95,6 @@ export const states = {
 		[/\$\d+/, 'identifier.special']
 		[/\#+@id/, 'identifier.symbol']
 		[/\¶@id/, 'ivar'] # imba1
-		# [/(@constant)/, 'identifier.constant.$S4']
 		[/@id\!?/,cases: {
 			'this': 'this'
 			'self': 'self'
@@ -108,6 +107,7 @@ export const states = {
 	block_: [
 		# 'common_'
 		[/^(\t+)(?=[\r\n]|$)/,'white.tabs']
+		[/[ ]+/, 'white']
 		'class_'
 		'tagclass_'
 		'var_'
@@ -126,10 +126,22 @@ export const states = {
 		'expr_'
 		'common_'
 	]
+	
+	indentable_: [
+		denter('@>_paren_indent&-_indent',null,null)
+		[/^(\t+)(?=[\r\n]|$)/,'white.tabs']
+		'whitespace'
+	]
 
 	_indent: [
 		denter(2,-1,0)
 		'block_'
+	]
+	
+	_paren_indent: [
+		denter(2,-1,0)
+		'block_'
+		[/\)|\}|\]/,'@rematch', '@pop']
 	]
 
 	block: [
@@ -246,6 +258,7 @@ export const states = {
 		eolpop
 		[/\)|\}|\]|\>/,'@rematch', '@pop']
 		'arglist_'
+		'whitespace'
 	]
 
 	arglist_: [
@@ -270,12 +283,12 @@ export const states = {
 	]
 
 	parens_: [
-		[/\(/, '(', '@parens_body']
+		[/\(/, 'parens.(', '@parens_body']
 	]
 
 	parens_body: [
-		# [/\)/, ')', '@pop']
 		[/\)/, ')', '@pop']
+		'indentable_'
 		'arglist_'
 	]
 
@@ -286,6 +299,7 @@ export const states = {
 	array_body: [
 		[/\]@implicitCall/, token: ']', switchTo: '@implicit_call_body=']
 		[/\]/, ']', '@pop']
+		'indentable_'
 		'expr_'
 		[',','delimiter']
 	]
@@ -294,15 +308,17 @@ export const states = {
 		[/\}/, '}', '@pop']
 		[/(@id)(\s*:\s*)/, ['key','operator.assign.key-value','@object_value']]
 		[/(@id)/, 'identifier.$F']
-		[/\[/, '[', '@object_dynamic_key=']
+		[/\[/, '[', '@object_dynamic_key='] # 
 		[/\s*=\s*/,'operator.assign','@object_value=']
 		[/:/,'operator.assign.key-value','@object_value=']
 		[/\,/,'delimiter.comma']
+		'indentable_'
 		'expr_'
 	]
 
 	object_value: [
 		eolpop
+		# couldnt this be indented as well?
 		# [/(?=,|\})/, 'delimiter', '@pop']
 		[/,|\}|\]|\)/, '@rematch', '@pop']
 		'expr_'
@@ -509,6 +525,7 @@ export const states = {
 		denter({switchTo: '@>_flow&$F'},-1,-1)
 		# denter({switchTo: '@>_flow&-body'},-1,-1)
 		# denter('@>_flow&block',-1,-1)
+		[/[ \t]+/, 'white']
 		'expr_'
 	]
 
@@ -558,15 +575,15 @@ export const states = {
 
 	field_: [
 		[/((?:lazy )?)((?:static )?)(const|let|attr)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$3']] # $2_body.$S2.$2.$S4
-		[/static(?=\s+@id)/,'keyword.static']
-		[/(@id)(?=$)/,'field']
-		[/(@id)/,['field','@_field_1']]
+		[/(static\s+)(?=@id)/,'keyword.static']
+		[/(@id)(?=$)/,'entity.name.field']
+		[/(@id)/,['entity.name.field','@_field_1']]
 	]
 
 	_field_1: [
 		denter(null,-1,-1)
 		'type_'
-		[/(\s*=\s*)/,['operator','@>_field_value']]
+		[/(\s*=)(?!\=)/,['operator.assign','@>_field_value&field']]
 		[/(\s*(?:\@)set\s*)/,['keyword.spy','@>_def&spy']]
 	]
 
@@ -577,12 +594,12 @@ export const states = {
 	]
 
 	var_: [
-		[/((?:export )?)(const|let)(?=\s[\[\{\$a-zA-Z]|$)/, ['keyword.export','keyword.$1','@_vardecl=decl-$2']] # $2_body.$S2.$2.$S4
+		[/((?:export )?)(const|let)(?=\s[\[\{\$a-zA-Z]|\s*$)/, ['keyword.export','keyword.$1','@_vardecl=decl-$2']] # $2_body.$S2.$2.$S4
 		[/((?:export )?)(const|let)(?=\s|$)/, ['keyword.export','keyword.$1']]
 	]
 
 	inline_var_: [
-		[/(const|let)(?=\s[\[\{\$a-zA-Z]|$)/, ['keyword.$1','@inline_var_body=decl-$1']]
+		[/(const|let)(?=\s[\[\{\$a-zA-Z]|\s*$)/, ['keyword.$1','@inline_var_body=decl-$1']]
 	]
 
 	string_: [
@@ -742,7 +759,7 @@ export const states = {
 
 	common_: [
 		[/^(\t+)(?=\n|$)/,'white.tabs']
-		'@whitespace'
+		'whitespace'
 	]
 	comma_: [
 		[/\s*,\s*/,'delimiter.comma']
@@ -779,6 +796,8 @@ export const states = {
 		}]
 		[/[\w\-\$]+/,'type']
 	]
+	
+	
 
 	css_: [
 		[/global(?=\s+css@B)/,'keyword.$#']
@@ -1225,12 +1244,9 @@ export const grammar = {
 	ivar: /\@[a-zA-Z_]\w*/
 	B: /(?=\s|$)/
 	br:/[\r\n]+/
-	constant: /[A-Z][\w\$]*@subIdentifer/
-	className: /[A-Z][A-Za-z\d\-\_]*|[A-Za-z\d\-\_]+/
-	methodName: /[A-Za-z\_][A-Za-z\d\-\_]*\=?/
-	subIdentifer: /(?:\-*[\w\$]+)*/
-	identifier: /[a-z_]@subIdentifer/
-	mixinIdentifier: /\%[a-z_]@subIdentifer/
+	constant: /[A-Z][\w\$]*(?:\-+[\w\$]+)*/
+	# subIdentifer: /(?:\-*[\w\$]+)*/
+	# identifier: /[a-z_]@subIdentifer/
 	# anyIdentifier: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*/
 	# anyIdentifierOpt: /(?:@anyIdentifier)?/
 	id: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
@@ -1241,7 +1257,8 @@ export const grammar = {
 	symid: /\#+@plainid/
 	symref: /\#\#@plainid/
 	optid: /(?:@id)?/
-	esmIdentifier: /[\@\%]?[A-Za-z_\$]@subIdentifer/
+	# (?:\-+[\w\$]+)*\??
+	esmIdentifier: /[A-Za-z_\$\@][\w\$]*(?:\-+[\w\$]+)*\??/
 	propertyPath: /(?:[A-Za-z_\$][A-Za-z\d\-\_\$]*\.)?(?:[A-Za-z_\$][A-Za-z\d\-\_\$]*)/
 	tagNameIdentifier: /(?:[\w\-]+\:)?\w+(?:\-\w+)*/
 	variable: /[\w\$]+(?:-[\w\$]*)*\??/
