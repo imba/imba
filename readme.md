@@ -38,7 +38,7 @@ Did you miss a meeting? No worries, catch up via the [meeting notes](https://bit
 ### Chat
 
 For questions and support please use our community chat on
-[Discord](https://discord.gg/mkcbkRw) or our [discourse](https://users.imba.io/).
+[Discord](https://discord.gg/mkcbkRw).
 
 ## License
 
