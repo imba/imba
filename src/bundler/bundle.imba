@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
-import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules} from './utils'
+import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject} from './utils'
 
 import {serializeData,deserializeData} from '../imba/utils'
 import {Manifest} from '../imba/manifest'
@@ -88,7 +88,7 @@ export default class Bundle < Component
 		program.fs
 
 	get imbaconfig
-		o.config or parent..imbaconfig
+		program.config # or parent..imbaconfig
 
 	get root
 		parent ? parent.root : self
@@ -127,10 +127,8 @@ export default class Bundle < Component
 
 		if parent
 			watcher = parent.watcher
-
-		if o.watch or o.watcher
-			watcher ||= o.watcher or new Watcher(fs)
-
+		elif program.watch
+			watcher ||= new Watcher(fs)
 
 		let externals = []
 		let pkg = program.package or {}
@@ -140,11 +138,10 @@ export default class Bundle < Component
 
 			if ext == "dependencies"
 				let deps = Object.keys(pkg.dependencies or {})
-
-				if o.execOnly # clarify this
-					deps.push( ...Object.keys(pkg.devDependencies or {}) )
-
 				externals.push(...deps)
+			
+			if ext == "devDependencies"
+				externals.push( ...Object.keys(pkg.devDependencies or {}) )
 			
 			if ext == "builtins"
 				externals.push(...Object.keys(builtInModules))
@@ -176,7 +173,7 @@ export default class Bundle < Component
 			splitting: o.splitting
 			sourcemap: (program.sourcemap === false ? no : (web? ? yes : 'inline'))
 			stdin: o.stdin
-			minify: program.minify
+			minify: o.minify ?? program.minify
 			incremental: !!watcher
 			loader: o.loader or {
 				".png": "file",
@@ -197,6 +194,11 @@ export default class Bundle < Component
 			treeShaking: o.treeShaking
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js']
 		}
+		
+		
+		if o.esbuild
+			extendObject(esoptions,o.esbuild,'esbuild')			
+			console.log 'esbuild config extended?!',o.esbuild
 
 		imbaoptions = {
 			platform: o.platform
@@ -209,6 +211,9 @@ export default class Bundle < Component
 		if o.platform == 'worker'
 			# quick hack
 			imbaoptions.platform = 'node'
+			
+		if o.target
+			esoptions.target = o.target
 
 		if o.format == 'css'
 			esoptions.format = 'esm'
@@ -282,7 +287,8 @@ export default class Bundle < Component
 			return cacher[key]
 
 		let base = {presets: []}
-		let presets = imbaconfig.defaults
+		let presets = imbaconfig.options
+		
 
 		for typ in types
 			let pre = presets[typ] or {}
@@ -518,7 +524,7 @@ export default class Bundle < Component
 				log.debug "build {entryPoints.join(',')} {o.format}|{o.platform} {nr}"
 
 				if o.stdin and o.stdin.template
-					let tpl = fs.lookup( np.resolve(o.imbaPath,'src','templates',o.stdin.template) )
+					let tpl = fs.lookup( np.resolve(program.imbaPath,'src','templates',o.stdin.template) )
 					let compiled = await tpl.compile({platform: 'node'},self)
 					delete o.stdin.template
 

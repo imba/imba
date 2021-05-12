@@ -3,7 +3,7 @@ import np from 'path'
 import {createHash as cryptoCreateHash} from 'crypto'
 import os from 'os'
 
-import {resolve as parseConfig} from './config'
+import {resolve as parseConfig,merge as mergeConfig} from './config'
 
 export const defaultLoaders = {
 	".png": "file",
@@ -126,6 +126,9 @@ export def resolveConfig cwd, name
 		return parseConfig(config)
 	catch e
 		return parseConfig({})
+
+export def extendObject obj,patch,path = []
+	mergeConfig(obj,patch,...path)
 	
 export def resolvePath name, cwd = '.', cb = null
 	# console.log 'resolve path',name,cwd
