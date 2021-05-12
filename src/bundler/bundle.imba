@@ -148,6 +148,8 @@ export default class Bundle < Component
 
 			if ext == ".json"
 				externals.push("*.json")
+				
+				
 
 			externals.push(ext)
 		
@@ -226,6 +228,7 @@ export default class Bundle < Component
 
 		let addExtensions = {
 			webworker: ['.webworker.imba','.worker.imba']
+			serviceworker: ['.serviceworker.imba','.webworker.imba','.worker.imba']
 			nodeworker: ['.nodeworker.imba','.worker.imba','.node.imba']
 			worker: ['.imba.web-pkg.js','.worker.imba']
 			node: ['.node.imba']

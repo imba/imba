@@ -36,6 +36,13 @@ const overrideAliases = {
 	h: {hashing: true}
 }
 
+const valueMap = {
+	'true': true
+	'false': false
+	'null': null
+	'undefined': undefined
+}
+
 for item,i in argv
 	continue unless item
 	if item.match(/^\-\-(\w+)(\.\w+)+$/)
@@ -51,6 +58,11 @@ for item,i in argv
 		if aliased
 			Object.assign(cfg,aliased)
 		else
+			if val.indexOf(' ') >= 0
+				val = val.split(/\,\s*|\s+/g)
+
+			val = valueMap[val] or val
+			
 			cfg[path[0]] = val
 			argv[i] = null
 			argv[i+1] = null

@@ -44,7 +44,7 @@ export const defaultConfig = {
 		css: {
 			format: 'css'
 			platform: 'browser'
-			external: ['dependencies','!imba'] # dont exclude css deps?
+			external: ['dependencies','devDependencies','!imba'] # dont exclude css deps?
 			sourcemap: false
 			splitting: false
 		}
@@ -77,24 +77,20 @@ export const defaultConfig = {
 			platform: 'webworker'
 			splitting: false
 		}
+		
+		serviceworker: {
+			extends: 'base'
+			format: 'esm'
+			platform: 'webworker'
+			splitting: false
+			hashing: false
+		}
 	}
 }
 
 def clone object
+	return object if object == undefined or object == null
 	JSON.parse(JSON.stringify(object))
-
-const valueMap = {
-	'true': true
-	'false': false
-	'undefined': undefined
-}
-	
-def parseValue val, key
-	if valueMap.hasOwnProperty(val)
-		return valueMap[val]
-	
-	return val
-
 
 export def merge config, patch, ...up
 	
@@ -107,14 +103,11 @@ export def merge config, patch, ...up
 	let keytype = optionTypes[up[0]]
 	
 	if keytype == 'boolean'
-		return parseValue(patch,up)
-	
-	if keytype == 'object' and !config
-		config = {}
+		return patch
 
 	if otyp == 'array'
-		if vtyp == 'string'
-			patch = patch.split(/\,\s*|\s+/g)
+		# if vtyp == 'string'
+		# 	patch = patch.split(/\,\s*|\s+/g)
 		
 		let mod = patch.every do (/[\-\+]/).test($1 or '')
 		let cloned = new Set(mod ? clone(config): [])
@@ -127,19 +120,19 @@ export def merge config, patch, ...up
 			else
 				cloned.add(item)
 		
-		return Array.from(cloned)			
-	
-	if vtyp == 'string'
-		return parseValue(patch,up)
+		return Array.from(cloned)	
+		
+	if config == null
+		return clone(patch)
 
-	
 	for own key,value of patch
 		config ||= {}
 
 		if config.hasOwnProperty(key)
 			config[key] = merge(config[key],value,key,...up)
 		else
-			config[key] = merge(null,value,key,...up)
+			# config[key] = merge(null,value,key,...up)
+			config[key] = clone(value)
 
 	return config
 
@@ -148,28 +141,28 @@ export def resolve config, cwd
 	return config
 	
 export def resolvePresets imbaconfig, config = {}, types = null
-		if typeof types == 'string'
-			types = types.split(',')
+	if typeof types == 'string'
+		types = types.split(',')
 
-		let key = Symbol.for(types.join('+'))
-		# let cacher = imbaconfig # resolveConfigPreset
-		# if cacher[key]
-		# 	return cacher[key]
+	let key = Symbol.for(types.join('+'))
+	# let cacher = imbaconfig # resolveConfigPreset
+	# if cacher[key]
+	# 	return cacher[key]
 
-		let base = Object.assign({presets: []},config)
-		let presets = imbaconfig.options
+	let base = Object.assign({presets: []},config)
+	let presets = imbaconfig.options
 
-		for typ in types
-			let pre = presets[typ] or {}
-			base.presets.push(typ)
-			let curr = pre
-			let add = [pre]
-			# extends need to be smarter than this flat assign
-			while curr.extends and add.length < 10
-				add.unshift(curr = presets[curr.extends])
-			for item in add
-				# go through and assign each key instead?
-				Object.assign(base,item)
+	for typ in types
+		let pre = presets[typ] or {}
+		base.presets.push(typ)
+		let curr = pre
+		let add = [pre]
+		# extends need to be smarter than this flat assign
+		while curr.extends and add.length < 10
+			add.unshift(curr = presets[curr.extends])
+		for item in add
+			# go through and assign each key instead?
+			Object.assign(base,item)
 
-		return base
-		# return cacher[key] = base # Object.create(base)
+	return base
+	# return cacher[key] = base # Object.create(base)
