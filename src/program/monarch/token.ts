@@ -45,6 +45,10 @@ export class Token {
 		return 0;
 	}
 	
+	public get endOffset(): number {
+		return this.offset + (this.value ? this.value.length : 0);
+	}
+	
 	public clone(): Token {
 		let tok = new Token(this.offset,this.type,this.language);
 		tok.value = this.value;

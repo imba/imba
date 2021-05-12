@@ -96,6 +96,30 @@ export class Sym
 		name = name
 		node = node
 		desc = desc
+		
+	get importSource
+		return null unless imported?
+		let ctx = node.context.closest('imports')
+		return ctx.sourcePath
+
+		
+	get exportName
+		if node.prev.match('keyword.as')
+			return node.prev.prev.value
+		elif node.match('.default')
+			'default'
+		else
+			node.value
+		
+	get importInfo
+		return null unless imported?
+		let ctx = node.context.closest('imports')
+		return {
+			exportName: exportName
+			name: node.value
+			isTypeOnly: ctx.isTypeOnly
+			path: ctx.sourcePath
+		}
 
 	get datatype
 		let type = desc and desc.datatype
@@ -137,6 +161,9 @@ export class Sym
 
 	get global?
 		flags & SymbolFlags.IsGlobal
+		
+	get imported?
+		flags & SymbolFlags.IsImport
 
 	get component?
 		flags & SymbolFlags.Component
