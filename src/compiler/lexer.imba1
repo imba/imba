@@ -2027,7 +2027,13 @@ export class Lexer
 
 	# Close up all remaining open blocks at the end of the file.
 	def closeIndentation
-		pair(context) if context == 'IMPORT' or context == 'EXPORT'
+		while true
+			var ctx = context
+			if ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT'
+				pair(ctx)
+			else
+				break
+		# pair(context) if context == 'IMPORT' or context == 'EXPORT' 
 		closeDef
 		closeSelector
 		outdentToken(@indent,no,0)
