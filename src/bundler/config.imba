@@ -83,6 +83,12 @@ export const defaultConfig = {
 			platform: 'worker'
 			splitting: false
 		}
+		
+		nodeworker: {
+			format: 'esm'
+			platform: 'node'
+			splitting: false
+		}
 
 		webworker: {
 			format: 'esm'

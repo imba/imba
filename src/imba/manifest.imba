@@ -24,7 +24,7 @@ class Asset
 		return stream.pipe(res)
 
 	def toString
-		url
+		url or absPath
 
 export class Manifest < EventEmitter
 	def constructor options = {}
