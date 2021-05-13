@@ -1021,6 +1021,7 @@ export class ImbaDocument
 		return tokens.map(do $1.value).join('')
 	
 	def createImportEdit path, name, alias = name
+		path = path.replace(/\.imba$/,'')
 		let nodes = getImportNodes!.filter do $1.sourcePath == path
 		
 		let out = ''
