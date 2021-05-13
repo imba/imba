@@ -3429,7 +3429,7 @@ export class TagDeclaration < ClassDeclaration
 			if option(:extension)
 				className = "Extended${className}"
 			else
-				body.unshift(LIT('static $$TAG$$'))
+				body.unshift(LIT('static $$TAG$$\n'))
 
 		elif option(:extension)
 			@body.@delimiter = ','
