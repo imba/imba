@@ -77,6 +77,8 @@ def parseOptions options, extras = []
 	return options
 
 def run entry, o, extras
+	return cli.help! unless o.args.length > 0
+
 	let path = np.resolve(entry)
 	let srcdir = np.dirname(path)
 
@@ -155,7 +157,8 @@ def run entry, o, extras
 
 let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version).name('imba')
 
-cli.command('run <script>', { isDefault: true })
+
+cli.command('run [script]', { isDefault: true })
 	.description('Imba')
 	.option("-w, --watch", "Continously build and watch project while running")
 	.option("-m, --minify", "Minify generated files")
