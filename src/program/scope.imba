@@ -99,7 +99,7 @@ export class Node
 		$name or ''
 	
 	get value
-		doc.content.slice(start.offset,end ? end.offset : -1)
+		doc.content.slice(start.offset,next ? next.offset : -1)
 
 	get next
 		end ? end.next : null
@@ -362,9 +362,10 @@ export class StylePropNode < Group
 
 export class StyleInterpolation < Group
 
-
-
 export class PathNode < Group
+	
+	get innerText
+		value.slice(1,-1)
 
 export class TagNode < Group
 
@@ -453,6 +454,8 @@ export class BracketsNode < Group
 		new cls(doc,tok,scope,typ,types)
 	
 export class BracesNode < Group
+	
+export class SpecifiersNode < BracesNode
 
 export class ArrayNode < BracketsNode
 	
@@ -481,6 +484,24 @@ export class TypeAnnotationNode < Group
 export class InterpolatedValueNode < Group
 
 export class ObjectNode < BracesNode
+	
+export class ImportsNode < Group
+	
+	get isTypeOnly
+		start.prev.match('keyword.type')
+	
+	get sourcePath
+		let path = childNodes.find do $1.match('path')
+		return path..innerText
+		
+	get specifiers
+		childNodes.find do $1.match('specifiers')
+		
+	get default
+		childNodes.find do $1.match('.default')
+		
+	get namespace
+		childNodes.find do $1.match('.ns')
 
 export const ScopeTypeMap = {
 	style: StyleNode
@@ -497,8 +518,10 @@ export const ScopeTypeMap = {
 	brackets: BracketsNode
 	object: ObjectNode
 	braces: BracesNode
+	specifiers: SpecifiersNode
 	string: StringNode
 	tagattr: TagAttrNode
+	imports: ImportsNode
 	interpolation: InterpolatedValueNode
 	tagattrvalue: TagAttrValueNode
 	tagcontent: TagContent

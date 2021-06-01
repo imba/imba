@@ -276,6 +276,17 @@ export class ImbaDocument
 				parts.push(tok)
 		return parts
 		
+	def getSymbols
+		astify!
+		#lexed.symbols ||= tokens.map(do $1.symbol).filter(do $1)
+		
+	def getImportedSymbols
+		getSymbols!.filter do $1.imported?
+			
+	def getImportNodes
+		let tokens = tokens.filter do $1.match('push._imports')
+		return tokens.map do $1.scope
+		
 	def getNodesInScope scope,includeEnds = no
 		let tok = scope.start
 		let end = scope.end # ? tokens.indexOf(scope.end) : tokens.length
@@ -474,10 +485,6 @@ export class ImbaDocument
 		
 		# if we are in an accessor
 
-		
-
-		
-
 		if tok.match('tag.event.name tag.event-modifier.name')
 			target = tok.prev
 
@@ -485,7 +492,7 @@ export class ImbaDocument
 			flags |= CompletionTypes.Path
 			suggest.paths = 1
 
-		if tok.match('identifier tag.operator.equals br white delimiter array operator (')
+		if tok.match('identifier tag.operator.equals br white delimiter array operator ( self')
 			flags |= CompletionTypes.Value
 			target = null
 
@@ -550,6 +557,10 @@ export class ImbaDocument
 			
 		if tok.match('operator.access accessor white.classname white.tagname')
 			flags ~= t.Value
+			
+		if group.match('imports')
+			flags ~= t.Value
+			flags |= t.ImportName
 			
 		if mstate.match(/\.decl-(let|var|const|param|for)/) or tok.match(/\.decl-(for|let|var|const|param)/)
 			flags ~= t.Value
@@ -713,7 +724,7 @@ export class ImbaDocument
 
 	def tokenize force = no
 		# return tokenize! unless #lexed
-		let from = #lexed or {lines:[]}
+		let from = #lexed or {lines:[], version: -1}
 		
 		if from.version == version and !force
 			return from
@@ -1008,3 +1019,89 @@ export class ImbaDocument
 			token.value = value
 
 		return tokens.map(do $1.value).join('')
+	
+	def createImportEdit path, name, alias = name
+		path = path.replace(/\.imba$/,'')
+		let nodes = getImportNodes!.filter do $1.sourcePath == path
+		
+		let out = ''
+		let offset = 0
+		
+		let changes = []
+		let result = {
+			changes: changes
+				
+		}
+		
+		if true
+			let symbols = getImportedSymbols!.map do $1.importInfo
+			let match = symbols.find do
+				$1.path == path and $1.name == alias and $1.exportName == name
+			if match
+				return result
+		
+		if (name != 'default' and name != '*')
+			nodes = nodes.filter do $1.specifiers or !$1.ns
+		
+		for node in nodes
+			
+			let defaults = node.default
+			let members = node.specifiers
+			let ns = node.namespace
+		
+			if name == 'default'
+				offset = node.start.offset + 1
+
+				if defaults
+					if defaults.value == alias
+						return result
+					else
+						result.alias = defaults.value
+				else
+					out = alias
+					if ns or members
+						out += ', '						
+				
+			elif name == '*'
+				continue if members
+				if defaults
+					offset = defaults.endOffset
+					out = ", * as {alias}"
+				else
+					offset = node.start.offset + 1
+					out = "* as {alias} "
+			elif ns
+				# cannot add it here
+				continue
+			else
+				let key = name
+				key += " as {alias}" if alias != name
+				
+				if members
+					offset = members.start.offset + 1
+					out = " {key},"
+				elif defaults
+					offset = defaults.endOffset
+					out = ", \{ {key} \}"
+				else
+					out = "\{ {key} \}"
+					offset = node.start.offset + 1
+					
+			break if out
+		
+		if !out
+			if name == 'default'
+				out = "import {alias} from '{path}'"
+			elif name == '*'
+				out = "import * as {alias} from '{path}'"
+			elif alias != name
+				out = "import \{ {name} as {alias} \} from '{path}'"
+			else
+				out = "import \{ {name} \} from '{path}'"
+				
+			out += '\n'
+			
+			
+		changes.push({newText: out, range: rangeAt(offset,offset)})
+		return result
+		

@@ -11,6 +11,7 @@ import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
 
 import {resolveConfig,resolvePackage,getCacheDir} from '../src/bundler/utils'
+import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import tmp from 'tmp'
 import getport from 'get-port'
 
@@ -21,6 +22,52 @@ const fmt = {
 }
 
 let imbapkg = resolvePackage(np.resolve(__dirname,'..')) or {}
+
+const overrides = {}
+let argv = process.argv.slice(0)
+# console.log 'ARGV',argv
+
+const overrideAliases = {
+	M: {minify: false}
+	m: {minify: true}
+	S: {sourcemap: false}
+	s: {sourcemap: true}
+	H: {hashing: false}
+	h: {hashing: true}
+}
+
+const valueMap = {
+	'true': true
+	'false': false
+	'null': null
+	'undefined': undefined
+}
+
+for item,i in argv
+	continue unless item
+	if item.match(/^\-\-(\w+)(\.\w+)+$/)
+		let val = argv[i+1]
+		let path = item.slice(2).split('.')
+		let cfg = overrides
+		argv[i] = null
+		while path[1]
+			cfg = cfg[path[0]] ||= {}
+			path.shift!
+		
+		let aliased = overrideAliases[path[0]]
+		if aliased
+			Object.assign(cfg,aliased)
+		else
+			if val.indexOf(' ') >= 0
+				val = val.split(/\,\s*|\s+/g)
+
+			val = valueMap[val] or val
+			
+			cfg[path[0]] = val
+			argv[i] = null
+			argv[i+1] = null
+
+argv = argv.filter do $1 !== null
 
 def parseOptions options, extras = []
 	if options.#parsed
@@ -81,27 +128,37 @@ def run entry, o, extras
 
 	let path = np.resolve(entry)
 	let srcdir = np.dirname(path)
-
-	o = parseOptions(o,extras)
-
+	let prog = o = parseOptions(o,extras)
+	
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 
+	extendConfig(prog.config.options,overrides)
+	# console.log prog.config.options,overrides
+
 	let t = Date.now!
-	let prog = new Program(o.config,o)
+	# let prog = new Program(o.config,o)
 
 	let file = o.fs.lookup(path)
 
-	let params = Object.assign({},o.config.node,{
+	let paramsold = Object.assign({},o.config.node,{
 		entryPoints: [file.rel]
 		platform: 'node'
-		watch: o.watch
 		outdir: o.outdir
 		hashing: false
 		execOnly: yes
-		config: o.config
-		imbaPath: o.imbaPath
 	})
+
+	# console.log 'params',o
+	let baseparams = {
+		entryPoints: [file.rel]
+		outdir: o.outdir
+		execOnly: yes
+		hashing: false
+	}
+
+	let params = resolvePresets(prog.config,baseparams,o.as or 'node')
+	# console.log 'params',params
 
 	if file.ext == '.html'
 		params.format = 'html'
@@ -190,6 +247,7 @@ cli.command('build <script>')
 	.option("--baseurl <url>", "Base url for your generated site","/")
 	.option("--clean", "Remove files from previous build")
 	.option("--platform <platform>", "Platform for entry","browser")
+	.option("--as <preset>", "Configuration preset","node")
 	.option("-H, --no-hashing", "Disable hashing")
 	.option("--sourcemap <value>", "", "inline")
 	.option("-S, --no-sourcemap", "Omit sourcemaps")
@@ -218,4 +276,5 @@ cli.command('serve <script>')
 cli.command('create [project]','Create a new imba project from a template')
 
 log.ts 'parse options'
-binary.parse(process.argv)
+
+binary.parse(argv)

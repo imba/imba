@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
-import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules} from './utils'
+import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject} from './utils'
 
 import {serializeData,deserializeData} from '../imba/utils'
 import {Manifest} from '../imba/manifest'
@@ -38,8 +38,23 @@ export default class Bundle < Component
 	get node?
 		platform == 'node'
 
+	get nodeworker?
+		platform == 'nodeworker'
+	
+	get nodeish?
+		node? or nodeworker?
+
 	get web?
-		!node?
+		!nodeish?
+	
+	get webworker?
+		platform == 'webworker' # or platform == 'web'
+		
+	get worker
+		webworker? or nodeworker?
+		
+	get webish?
+		web? or webworker?
 
 	get dev?
 		program.mode == 'development'
@@ -73,7 +88,7 @@ export default class Bundle < Component
 		program.fs
 
 	get imbaconfig
-		o.config or parent..imbaconfig
+		program.config # or parent..imbaconfig
 
 	get root
 		parent ? parent.root : self
@@ -88,7 +103,7 @@ export default class Bundle < Component
 
 	def constructor up,o
 		super()
-		#bundles = {}
+		#bundles = {web: {}, node: {}}
 		#watchedPaths = {}
 		#buildcache = {}
 
@@ -112,10 +127,8 @@ export default class Bundle < Component
 
 		if parent
 			watcher = parent.watcher
-
-		if o.watch or o.watcher
-			watcher ||= o.watcher or new Watcher(fs)
-
+		elif program.watch
+			watcher ||= new Watcher(fs)
 
 		let externals = []
 		let pkg = program.package or {}
@@ -125,29 +138,29 @@ export default class Bundle < Component
 
 			if ext == "dependencies"
 				let deps = Object.keys(pkg.dependencies or {})
-
-				if o.execOnly # clarify this
-					deps.push( ...Object.keys(pkg.devDependencies or {}) )
-
 				externals.push(...deps)
+			
+			if ext == "devDependencies"
+				externals.push( ...Object.keys(pkg.devDependencies or {}) )
 			
 			if ext == "builtins"
 				externals.push(...Object.keys(builtInModules))
 
 			if ext == ".json"
 				externals.push("*.json")
+				
+				
 
 			externals.push(ext)
 		
 		externals = externals.filter do(src)
 			!o.external or o.external.indexOf("!{src}") == -1
 
-
 		esoptions = {
 			entryPoints: o.stdin ? undefined : entryPoints
 			bundle: o.bundle === false ? false : true
 			define: o.define
-			platform: o.platform == 'node' ? 'node' : 'browser'
+			platform: nodeish? ? 'node' : 'browser' # o.platform == 'node' ? 'node' : 'browser'
 			format: o.format or 'esm'
 			outfile: o.outfile
 			outbase: fs.cwd
@@ -162,7 +175,7 @@ export default class Bundle < Component
 			splitting: o.splitting
 			sourcemap: (program.sourcemap === false ? no : (web? ? yes : 'inline'))
 			stdin: o.stdin
-			minify: program.minify
+			minify: o.minify ?? program.minify
 			incremental: !!watcher
 			loader: o.loader or {
 				".png": "file",
@@ -183,6 +196,11 @@ export default class Bundle < Component
 			treeShaking: o.treeShaking
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js']
 		}
+		
+		
+		if o.esbuild
+			extendObject(esoptions,o.esbuild,'esbuild')			
+			console.log 'esbuild config extended?!',o.esbuild
 
 		imbaoptions = {
 			platform: o.platform
@@ -195,6 +213,9 @@ export default class Bundle < Component
 		if o.platform == 'worker'
 			# quick hack
 			imbaoptions.platform = 'node'
+			
+		if o.target
+			esoptions.target = o.target
 
 		if o.format == 'css'
 			esoptions.format = 'esm'
@@ -207,6 +228,8 @@ export default class Bundle < Component
 
 		let addExtensions = {
 			webworker: ['.webworker.imba','.worker.imba']
+			serviceworker: ['.serviceworker.imba','.webworker.imba','.worker.imba']
+			nodeworker: ['.nodeworker.imba','.worker.imba','.node.imba']
 			worker: ['.imba.web-pkg.js','.worker.imba']
 			node: ['.node.imba']
 			browser: ['.web.imba']
@@ -215,7 +238,7 @@ export default class Bundle < Component
 		if addExtensions[o.platform]
 			esoptions.resolveExtensions.unshift(...addExtensions[o.platform])
 
-		if !node?
+		if !nodeish?
 			let defines = esoptions.define ||= {}
 			let env = o.env or process.env.NODE_ENV or 'production'
 			defines["global"]="globalThis"
@@ -262,11 +285,13 @@ export default class Bundle < Component
 
 	def resolveConfigPreset types = []
 		let key = Symbol.for(types.join('+'))
-		if imbaconfig[key]
-			return imbaconfig[key]
+		let cacher = imbaconfig # resolveConfigPreset
+		if cacher[key]
+			return cacher[key]
 
 		let base = {presets: []}
-		let presets = imbaconfig.defaults
+		let presets = imbaconfig.options
+		
 
 		for typ in types
 			let pre = presets[typ] or {}
@@ -278,8 +303,8 @@ export default class Bundle < Component
 				add.unshift(curr = presets[curr.extends])
 			for item in add
 				Object.assign(base,item)
-
-		return imbaconfig[key] = base # Object.create(base)
+		
+		return cacher[key] = base # Object.create(base)
 
 	def plugin esb
 		let externs = esoptions.external or []
@@ -328,7 +353,7 @@ export default class Bundle < Component
 
 		# resolve html file
 		esb.onResolve(filter: /\.html$/) do(args)
-			if isImba(args.importer) and args.namespace == 'file'				
+			if isImba(args.importer) and args.namespace == 'file'
 				let cfg = resolveConfigPreset(['html'])
 				let res = fs.resolver.resolve(path: args.path, resolveDir: args.resolveDir)
 				let out = {path: res.#rel, namespace: 'entry'}
@@ -349,6 +374,11 @@ export default class Bundle < Component
 		esb.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
 			let [path,q] = args.path.split('?')
 			let formats = q.slice(3).split(',')
+			let wrkidx = formats.indexOf('worker')
+			if wrkidx >= 0
+				formats[wrkidx] = nodeish? ? 'nodeworker' : 'webworker'
+				q = 'as=' + formats.join(',')
+			
 			let cfg = resolveConfigPreset(formats)
 			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
 			let out = {path: res.#rel + '?' + q, namespace: 'entry'}
@@ -497,7 +527,7 @@ export default class Bundle < Component
 				log.debug "build {entryPoints.join(',')} {o.format}|{o.platform} {nr}"
 
 				if o.stdin and o.stdin.template
-					let tpl = fs.lookup( np.resolve(o.imbaPath,'src','templates',o.stdin.template) )
+					let tpl = fs.lookup( np.resolve(program.imbaPath,'src','templates',o.stdin.template) )
 					let compiled = await tpl.compile({platform: 'node'},self)
 					delete o.stdin.template
 
@@ -727,7 +757,7 @@ export default class Bundle < Component
 				# output.path = path.replace('.js','.html')
 				# output.dir = 'public'
 
-			elif web? or output.type == 'css' or path.match(/\.(png|svg|jpe?g|gif|webm|webp)$/)
+			elif webish? or output.type == 'css' or path.match(/\.(png|svg|jpe?g|gif|webm|webp)$/)
 				# output.dir = 'assets'
 				output.path = "{pubdir}/__assets__/{path}"
 				output.url = "{baseurl}/__assets__/{path}"
@@ -884,7 +914,7 @@ export default class Bundle < Component
 						if hmr?
 							body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 
-			elif web?
+			elif webish?
 				let mfname = "_$MF$_"
 				for item in output.dependencies when item.asset
 					let asset = await walker.resolveAsset(item.asset)

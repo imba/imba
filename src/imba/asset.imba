@@ -22,6 +22,9 @@ class AssetProxy
 	def get target, key
 		if meta.meta and meta.meta[key] != undefined
 			return meta.meta[key]
+			
+		if key == 'absPath' and !asset.absPath
+			return asset.url	
 
 		asset[key]
 
@@ -54,8 +57,8 @@ export def asset data
 		let extra = globalThis._MF_ and globalThis._MF_[data.input]
 		if extra
 			Object.assign(data,extra)
-			data.#asset = data
-
+			data.toString = do this.absPath
+			# data.#asset = data
 		return data.#asset ||= AssetProxy.wrap(data)
 	
 	return data

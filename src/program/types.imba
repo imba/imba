@@ -69,6 +69,7 @@ export const CompletionTypes = {
 	StyleModifier: 1 << 13
 	StyleSelector: 1 << 14
 	VarName: 1 << 15
+	ImportName: 1 << 16
 }
 
 export const KeywordTypes = {

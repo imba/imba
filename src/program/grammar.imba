@@ -107,7 +107,6 @@ export const states = {
 	block_: [
 		# 'common_'
 		[/^(\t+)(?=[\r\n]|$)/,'white.tabs']
-		[/[ ]+/, 'white']
 		'class_'
 		'tagclass_'
 		'var_'
@@ -124,7 +123,9 @@ export const states = {
 		'do_'
 		'block_comment_'
 		'expr_'
+		[/[ ]+/, 'white']
 		'common_'
+		
 	]
 	
 	indentable_: [
@@ -154,15 +155,18 @@ export const states = {
 
 	op_: [
 		[/\s+\:\s+/,'operator.ternary']
+		# [/\s*(\=)/]
 		[/(@unspaced_ops)/,cases: {
 			'@spread': 'operator.spread'
 			'@access': 'operator.access'
 			'@default': 'operator'
 		}]
+		[/\/(?!\/)/,'operator.math']
 		[/\&(?=[,\)])/,'operator.special.blockparam']
 		[/(\s*)(@symbols)(\s*)/, cases: {
-			'$2@operators': 'operator'
+			'$2@assignments': 'operator.assign'
 			'$2@math': 'operator.math'
+			'$2@operators': 'operator'
 			'$2@logic': 'operator.logic'
 			'$2@access': 'operator.access'
 			'@default': 'delimiter'
@@ -419,8 +423,30 @@ export const states = {
 
 	import_: [
 		[/(import)(?=\s+['"])/,'keyword.import','@>import_source']
-		[/(import)(\s+type)(?=\s[\w\$\@\{])/,['keyword.import','keyword.import','@>import_body=decl-import/part']]
-		[/(import)@B/,'keyword.import','@>import_body=decl-import/part']
+		[/(import)(\s+type)(?=\s[\w\$\@\{])/,['keyword.import','keyword.type','@>import_body&-_imports=decl-import/part']]
+		[/(import)@B/,'keyword.import','@>import_body&-_imports=decl-import/part']
+	]
+	
+	import_body: [
+		denter(null,-1,0)
+		[/(@esmIdentifier)( +from)/,['identifier.$F.default','keyword.from',switchTo: '@import_source']]
+		[/(\*)(\s+as\s+)(@esmIdentifier)(\s+from)/,['keyword.star','keyword.as','identifier.$F.ns','keyword.from',switchTo: '@import_source']]
+		[/(@esmIdentifier)(\s*,\s*)(\*)(\s+as\s+)(@esmIdentifier)(from)/,
+			['identifier.$F.default','delimiter.comma','keyword.star','keyword.as','identifier.$F.ns','keyword.from',switchTo: '@import_source']]
+		# [/(\*)(\s+as\s+)(@esmIdentifier)/, ['keyword.star','keyword.as','identifier.const.import',switchTo: '@/delim']]
+		# [/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.const.import']]
+		[/\ *from/, 'keyword.from',switchTo: '@import_source']
+		[/\{/,'specifiers.{','@esm_specifiers/part']
+		[/(@esmIdentifier)/,'identifier.$F',switchTo: '@/delim']
+		[/\s*\,\s*/,'delimiter.comma',switchTo: '@/part']
+		'comma_'
+		'common_'
+	]
+	
+	import_source: [
+		denter(null,-1,0)
+		[/["']/, 'path.open','@_path=$#']
+		eolpop
 	]
 
 	export_: [
@@ -445,35 +471,7 @@ export const states = {
 		'common_'		
 	]
 
-	import_body: [
-		denter(null,-1,0)
-		[/(@esmIdentifier)( +from)/,['identifier.$F','keyword.from',switchTo: '@import_source']]
-		[/(\*)(\s+as\s+)(@esmIdentifier)(\s+from)/,['keyword.star','keyword.as','identifier.$F','keyword.from',switchTo: '@import_source']]
-		[/(@esmIdentifier)(\s*,\s*)(\*)(\s+as\s+)(@esmIdentifier)(from)/,
-			['identifier.const.import','delimiter','keyword.star','keyword.as','identifier.$F','keyword.from',switchTo: '@import_source']]
-		# [/(\*)(\s+as\s+)(@esmIdentifier)/, ['keyword.star','keyword.as','identifier.const.import',switchTo: '@/delim']]
-		# [/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.const.import']]
-		[/from/, 'keyword.from',switchTo: '@import_source']
-		[/\{/,'{','@esm_specifiers/part']
-		[/(@esmIdentifier)/,'identifier.$F',switchTo: '@/delim']
-		[/\s*\,\s*/,'delimiter.comma',switchTo: '@/part']
-		'comma_'
-		'common_'
-	]
-	import_part: [
-		[/\{/,'{','@esm_specifiers/part']
-		[/(\*)(\s+as\s+)(@esmIdentifier)/, ['keyword.star','keyword.as','identifier.$F',switchTo: '@import_delim']]
-		[/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.$F',switchTo: '@import_delim']]
-		[/(@esmIdentifier)/,'identifier.$F',switchTo: '@import_delim']
-		
-	]
-
-	import_delim: [
-		[/\}/, '}', '@pop']
-		[/\s*\,\s*/,'delimiter.comma',switchTo: '@import_part']
-		'common_'
-		[/from/, 'keyword.from',switchTo: '@import_source']
-	]
+	
 
 
 	esm_specifiers: [
@@ -487,10 +485,7 @@ export const states = {
 		'whitespace'
 	]
 
-	import_source: [
-		denter(null,-1,0)
-		[/["']/, 'path.open','@_path=$#']
-	]
+	
 	_path: [
 		[/[^"'\`\{\\]+/, 'path']
 		[/@escapes/, 'path.escape']
@@ -575,9 +570,9 @@ export const states = {
 
 	field_: [
 		[/((?:lazy )?)((?:static )?)(const|let|attr)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$3']] # $2_body.$S2.$2.$S4
-		[/(static\s+)(?=@id)/,'keyword.static']
-		[/(@id)(?=$)/,'entity.name.field']
-		[/(@id)/,['entity.name.field','@_field_1']]
+		[/(static\s+)(?=@fieldid)/,'keyword.static']
+		[/(@fieldid)(?=$)/,'entity.name.field']
+		[/(@fieldid)/,['entity.name.field','@_field_1']]
 	]
 
 	_field_1: [
@@ -933,7 +928,9 @@ export const states = {
 		'flow_'
 		'var_'
 		'for_'
+		'css_'
 		'expr_'
+		'do_'
 		# dont support object keys directly here
 	]
 
@@ -1035,6 +1032,7 @@ export const states = {
 	regexp_: [
 		[/\/(?!\ )(?=([^\\\/]|\\.)+\/)/, { token: 'regexp.slash.open', bracket: '@open', next: '@_regexp'}]
 		[/\/\/\//, { token: 'regexp.slash.open', bracket: '@open', next: '@_hereregexp'}]
+		[/(\/)(\/)/, ['regexp.slash.open','regexp.slash.close']]
 	]
 	
 	_regexp: [
@@ -1226,6 +1224,12 @@ export const grammar = {
 		'^=', '%=', '~=', '<<=', '>>=', '>>>=','..','...','||=',`&&=`,'**=','**',
 		'|=?','~=?','^=?','=?','and','or'
 	],
+	assignments: [
+		'=','|=?','~=?','^=?','=?',
+		'^=', '%=', '~=', '<<=', '>>=', '>>>=',
+		'||=',`&&=`,'?=','??=',
+		'+=', '-=', '*=', '/=', '&=', '|=','**='
+	]
 	logic: [
 		'>', '<', '==', '<=', '>=', '!=', '&&', '||','===','!=='
 	],
@@ -1233,12 +1237,12 @@ export const grammar = {
 	spread: ['...']
 	dot: ['.']
 	access: ['.','..']
-	math: ['+', '-', '*', '/', '++', '--'],
+	math: ['+', '-', '*', '/', '++', '--']
 
-	unspaced_ops: regexify('... . .. + * / ++ --')
+	unspaced_ops: regexify('... . .. + * ++ --')
 	comment: /#(\s.*)?(\n|$)/
 	# we include these common regular expressions
-	symbols: /[=><!~?&%|+\-*\/\^,]+/,
+	symbols: /[=><!~?&%|+\-*\^,]+/,
 	escapes: /\\(?:[abfnrtv\\"'$]|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 	postaccess: /(:(?=\w))?/
 	ivar: /\@[a-zA-Z_]\w*/
@@ -1249,8 +1253,9 @@ export const grammar = {
 	# identifier: /[a-z_]@subIdentifer/
 	# anyIdentifier: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*/
 	# anyIdentifierOpt: /(?:@anyIdentifier)?/
-	id: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
+	id:  /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	plainid: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
+	fieldid: /[\@\#]*@plainid/ 
 	propid: /[\@\#]*@plainid/
 	defid: /[\@\#]*@plainid/
 	decid: /\@@plainid/

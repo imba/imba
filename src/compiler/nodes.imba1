@@ -3428,6 +3428,8 @@ export class TagDeclaration < ClassDeclaration
 			sup = superclass ? superclass.toClassName : LIT('ImbaElement')
 			if option(:extension)
 				className = "Extended${className}"
+			else
+				body.unshift(LIT('static $$TAG$$\n'))
 
 		elif option(:extension)
 			@body.@delimiter = ','
@@ -3470,7 +3472,7 @@ export class TagDeclaration < ClassDeclaration
 				@config:name = name.symbol
 			js += "; {runtime:defineTag}({name.c},{className},{ext})"
 		else
-			if !option(:extension) and (!name.isClass or option(:export))
+			if !option(:extension) and (!name.isClass)
 				js += "; globalThis.{M name.toTscName, name} = {className};"
 		return js
 
@@ -9424,7 +9426,9 @@ export class Export < ValueNode
 		if value isa Assign and value.left isa VarReference
 		
 			if !STACK.cjs
-				return isDefault ? "export default {value.c}" : "export {value.c}"
+				let ek = M('export',option(:keyword))
+				let dk = isDefault and M('default',option(:default))
+				return isDefault ? "{ek} {dk} {value.c}" : "{ek} {value.c}"
 			else
 				let val = value.left.value
 				# console.log "export is a var reference?! {value.left} {val}"
