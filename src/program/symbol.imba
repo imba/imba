@@ -134,8 +134,11 @@ export class Sym
 		
 		if scope and desc..kind == 'for'
 			let typ = scope.doc.getDestructuredPath(node,[[scope.expression,'__@iterable']])
-			# console.log 'resolving!!!',typ
 			return #datatype ||= typ
+			
+		if let m = importInfo
+			return m
+
 		return null
 
 	get static?

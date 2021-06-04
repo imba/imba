@@ -3,27 +3,28 @@ import {M,KeywordTypes,SemanticTokenTypes,SemanticTokenModifiers} from './types'
 import {Sym,SymbolFlags} from './symbol'
 
 export const Globals = {
-	'global': 1
-	'imba': 1
-	'module': 1
-	'window': 1
-	'document': 1
-	'exports': 1
-	'console': 1
-	'process': 1
-	'parseInt': 1
-	'parseFloat': 1
-	'setTimeout': 1
-	'setInterval': 1
-	'setImmediate': 1
-	'clearTimeout': 1
-	'clearInterval': 1
-	'clearImmediate': 1
-	'globalThis': 1
-	'isNaN': 1
-	'isFinite': 1
-	'__dirname': 1
-	'__filename': 1
+	'global': {datatype: 'globalThis'}
+	'imba': {datatype: 'globalThis.imba'}
+	'module': {}
+	'window': {datatype: 'globalThis.window'}
+	'document': {datatype: 'globalThis.document'}
+	'exports': {}
+	'console': {datatype: 'globalThis.console'}
+	'process': {datatype: 'globalThis.process'}
+	'parseInt': {datatype: 'globalThis.parseInt'}
+	'parseFloat': {datatype: 'globalThis.parseFloat'}
+	'setTimeout':{datatype: 'globalThis.setTimeout'}
+	'setInterval': {datatype: 'globalThis.setInterval'}
+	'setImmediate': {datatype: 'globalThis.setImmediate'}
+	'clearTimeout': {datatype: 'globalThis.clearTimeout'}
+	'clearInterval': {datatype: 'globalThis.clearInterval'}
+	'clearImmediate': {datatype: 'globalThis.clearImmediate'}
+	'globalThis': {datatype: 'globalThis'}
+	'isNaN': {datatype: 'globalThis.isNaN'}
+	'isFinite': {datatype: 'globalThis.isFinite'}
+	'__dirname': {datatype: '\\string'}
+	'__filename': {datatype: '\\string'}
+	'__realname': {datatype: '\\string'}
 }
 
 export class Node
@@ -157,7 +158,7 @@ export class Scope < Node
 		if self isa Root
 			for own key,val of Globals
 				let tok = {value: key, offset: -1, mods: 0}
-				varmap[key] = new Sym(SymbolFlags.GlobalVar,key,tok)
+				varmap[key] = new Sym(SymbolFlags.GlobalVar,key,tok,val)
 
 		indent = (parts[3] && parts[3][0] == '\t') ? parts[3].length : 0
 		setup!

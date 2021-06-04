@@ -400,6 +400,7 @@ export const states = {
 		[/(extend)(?=\s+class )/,'keyword.$1']
 		[/(global)(?=\s+class )/,'keyword.$1']
 		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
+		[/(class)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]
 
 	class_start: [
@@ -961,7 +962,7 @@ export const states = {
 			'@default': 'tag.$/'
 		}}]
 
-		[/\{/,'tag.$/.braces.open', '@_tag_interpolation']
+		[/\{/,'tag.$/.interpolation.open', '@_tag_interpolation']
 		[/\[/,'style.open', '@css_inline']
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&-value']
 		[/\:/,token: 'tag.event.start', switchTo: '@/event']
@@ -972,8 +973,8 @@ export const states = {
 			'@default': {token: 'tag.$/'}
 		}}]
 		# [/\@/,token: 'tag.event.start', switchTo: '@/event']
-		[/\{/,token: 'tag.$/.braces.open', next: '@_tag_interpolation/0']
-		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
+		# [/\{/,token: 'tag.$/.braces.open', next: '@_tag_interpolation/0']
+		[/\(/,token: 'tag.$/.parens.open', next: '@_tag_parens/0']
 		[/\s+/,token: 'tag.white', switchTo: '@/attr']
 		'comment_'
 	]
@@ -992,7 +993,7 @@ export const states = {
 		'_tag_part'
 		[/(\@)(@optid)/,['tag.event.start','tag.event.name']]
 		[/(\.)(@optid)/,['tag.event-modifier.start','tag.event-modifier.name']]
-		[/\(/,token: 'tag.parens.open.$/', next: '@_tag_parens/0']
+		[/\(/,token: 'tag.$/.parens.open', next: '@_tag_parens/0']
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&handler']
 		[/\s+/,'@rematch','@pop']
 	]
@@ -1013,13 +1014,13 @@ export const states = {
 	]
 	
 	_tag_interpolation: [
-		[/\}/,'tag.$/.braces.close','@pop']
+		[/\}/,'tag.$/.interpolation.close','@pop']
 		'expr_'
 		[/\)|\]/,'invalid']
 	]
 
 	_tag_parens: [
-		[/\)/,'tag.parens.close.$/', '@pop']
+		[/\)/,'tag.$/.parens.close', '@pop']
 		'arglist_'
 		[/\]|\}/,'invalid']
 	]
