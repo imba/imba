@@ -1,3 +1,7 @@
+## 2.0.0-alpha.134
+* Minor improvements to sourcemapping
+* Fixed `import type default` compilation
+
 ## 2.0.0-alpha.133
 * Improved sourcemapping
 * Improved support for type annotations
