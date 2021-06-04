@@ -248,7 +248,7 @@ def serve
 	}
 
 	let basejs = import.web('../test/index.imba')
-	let cmpjs = import.worker('../test/compiler.imba')
+	let cmpjs = import.webworker('../test/compiler.imba')
 
 	statics["/compiler.js"] = cmpjs.readSync!
 	statics["/imba.js"] = basejs.readSync!
