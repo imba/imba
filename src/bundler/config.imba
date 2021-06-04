@@ -66,7 +66,7 @@ export const defaultConfig = {
 		
 		nodeworker: {
 			extends: 'base'
-			format: 'esm'
+			format: 'cjs'
 			platform: 'node'
 			splitting: false
 		}
@@ -106,8 +106,8 @@ export def merge config, patch, ...up
 		return patch
 
 	if otyp == 'array'
-		# if vtyp == 'string'
-		# 	patch = patch.split(/\,\s*|\s+/g)
+		if vtyp == 'string'
+			patch = patch.split(/\,\s*|\s+/g)
 		
 		let mod = patch.every do (/[\-\+]/).test($1 or '')
 		let cloned = new Set(mod ? clone(config): [])
