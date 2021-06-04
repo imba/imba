@@ -196,8 +196,7 @@ export default class Bundle < Component
 			treeShaking: o.treeShaking
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js']
 		}
-		
-		
+
 		if o.esbuild
 			extendObject(esoptions,o.esbuild,'esbuild')			
 			console.log 'esbuild config extended?!',o.esbuild
@@ -378,6 +377,10 @@ export default class Bundle < Component
 			if wrkidx >= 0
 				formats[wrkidx] = nodeish? ? 'nodeworker' : 'webworker'
 				q = 'as=' + formats.join(',')
+				
+			if q == 'as=file'
+				let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
+				return {path: res.path, namespace: 'rawfile'}
 			
 			let cfg = resolveConfigPreset(formats)
 			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
@@ -486,6 +489,11 @@ export default class Bundle < Component
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+			
+		esb.onLoad(filter: /.*/, namespace: 'rawfile') do({path})
+			console.log 'loading raw file',path
+			return {loader: 'file', contents: nfs.readFileSync(path,'utf-8')}			
+		
 
 		esb.onLoad({ filter: /\.imba$/, namespace: 'styles'}) do({path,namespace})
 			if builder.styles[path]
