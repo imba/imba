@@ -11,7 +11,7 @@ export const defaultConfig = {
 
 	options: {
 		base: {
-			target: ['es2020','chrome80','edge16']
+			target: ['es2020','chrome80','edge18']
 		}
 		node: {
 			extends: 'base'
@@ -24,7 +24,6 @@ export const defaultConfig = {
 		web: {
 			extends: 'base'
 			platform: 'browser'
-			target: ['es2020','chrome80','edge16']
 			sourcemap: true
 			format: 'esm'
 		}
@@ -65,7 +64,7 @@ export const defaultConfig = {
 		}
 		
 		nodeworker: {
-			extends: 'base'
+			extends: 'node'
 			format: 'cjs'
 			platform: 'node'
 			splitting: false
