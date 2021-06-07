@@ -83,7 +83,8 @@
   },
   "bin": {
     "imba": "./bin/imba",
-    "imbac": "./bin/imbac"
+    "imbac": "./bin/imbac",
+    "imba-create": "./bin/imba-create"
   },
   "preferGlobal": true,
   "homepage": "https://imba.io",
