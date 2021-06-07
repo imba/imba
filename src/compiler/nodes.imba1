@@ -465,6 +465,8 @@ var shortRefCache = []
 
 def AST.counterToShortRef nr
 	var base = "A".charCodeAt(0)
+	
+	nr += 30
 
 	while shortRefCache:length <= nr
 		var num = shortRefCache:length + 1
