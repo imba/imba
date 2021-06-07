@@ -3414,6 +3414,7 @@ export class TagDeclaration < ClassDeclaration
 		
 		let className = name.toClassName
 		let sup = superclass
+		let anonGlobalTag = !option(:extension) and (!name.isClass) and STACK.tsc
 		
 		if sup and sup.@variable
 			sup = sup.@variable
@@ -3456,6 +3457,12 @@ export class TagDeclaration < ClassDeclaration
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
 				jshead = "{M 'export',option(:export)} {jshead}"
+				
+				
+		if anonGlobalTag
+			jshead = "globalThis[{M("'{M(name.toNodeName,name)} tag'",name)}] = {M 'class', keyword} extends {M sup, superclass}"
+			jshead = "globalThis.{M className, name} = {M 'class', keyword} extends {M sup, superclass}"
+			# jshead = "globalThis.{className} = {M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
 		let js = "{jshead} \{{jsbody}\}"
 		
@@ -3473,9 +3480,9 @@ export class TagDeclaration < ClassDeclaration
 			if name.isClass
 				@config:name = name.symbol
 			js += "; {runtime:defineTag}({name.c},{className},{ext})"
-		else
-			if !option(:extension) and (!name.isClass)
-				js += "; globalThis.{M name.toTscName, name} = {className};"
+		# else
+		# 	if !option(:extension) and (!name.isClass)
+		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
 		return js
 
 export class Func < Code
@@ -5936,6 +5943,7 @@ export class TagTypeIdentifier < Identifier
 		elif isClass
 			return @str
 		elif STACK.tsc
+			return helpers.pascalCase(@str + '-custom-element')
 			return @str.replace(/\-/g,'_') + '$$TAG$$'
 		else
 			return helpers.pascalCase(@str + '-component')
