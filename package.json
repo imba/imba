@@ -49,7 +49,7 @@
     "link-latest": "node bin/imba scripts/link-latest.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.135",
+  "version": "2.0.0-alpha.136",
   "licenses": [
     {
       "type": "MIT",
