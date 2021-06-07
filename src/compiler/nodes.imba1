@@ -3449,6 +3449,8 @@ export class TagDeclaration < ClassDeclaration
 		let jsbody = body.c()
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 		
+		
+		
 		if option(:export) and !STACK.cjs
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
