@@ -11,7 +11,7 @@ export const defaultConfig = {
 
 	options: {
 		base: {
-			target: ['es2020','chrome80','edge18']
+			target: ['es2019','chrome80','edge18']
 		}
 		node: {
 			extends: 'base'
