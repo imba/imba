@@ -154,7 +154,7 @@ export def resolvePackage cwd
 
 # generates a function that converts integers to a short
 # alphanumeric string utilizing the supplied alphabet
-export def idGenerator alphabet = 'abcdefghijklmnopqrstuvwxyz'
+export def idGenerator alphabet = 'bcdefghijklmnopqrstuvwxyz'
 	let remap = {}
 	for k in [0 ... (alphabet.length)]
 		remap[k.toString(alphabet.length)] = alphabet[k]
