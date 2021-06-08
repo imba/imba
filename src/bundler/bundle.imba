@@ -177,15 +177,22 @@ export default class Bundle < Component
 			stdin: o.stdin
 			minify: o.minify ?? program.minify
 			incremental: !!watcher
-			loader: o.loader or {
+			loader: Object.assign({
 				".png": "file",
+				".apng": "file",
+				".webp": "file",
+				".heif": "file",
+				".avif": "file",
 				".svg": "file",
+				".gif": "file",
+				".jpg": "file",
+				".jpeg": "file",
 				".woff2": "file",
 				".woff": "file",
 				".ttf": "file",
 				".otf": "file",
 				".html": "file"
-			}
+			},o.loader or {})
 			write: false
 			metafile: true
 			external: externals

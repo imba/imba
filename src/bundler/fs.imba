@@ -95,8 +95,11 @@ export class FSNode
 			'.imba1': Imba1File
 			'.svg': SVGFile
 			'.png': ImageFile
+			'.apng': ImageFile
 			'.jpg': ImageFile
 			'.jpeg': ImageFile
+			'.webp': ImageFile
+			'.avif': ImageFile
 			'.gif': ImageFile
 			'.html': HTMLFile
 		}

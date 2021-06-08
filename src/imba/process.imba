@@ -12,38 +12,26 @@ import http from 'http'
 import https from 'https'
 import {Http2ServerRequest} from 'http2'
 
-const mimes = {
-	svg: 'image/svg+xml'
-	html: 'text/html'
-	jpg: 'image/jpeg'
-	jpeg: 'image/jpeg'
-	js: 'text/javascript'
-	mjs: 'text/javascript'
-	json: 'application/json'
-	otf: 'font/otf'
-	ttf: 'font/ttf'
-	woff: 'font/woff'
-	woff2: 'font/woff2'
-	png: 'image/png'
-	css: 'text/css'
-	avif: 'image/avif'
-}
-
 const defaultHeaders = {
-	svg: {'Content-Type': 'image/svg+xml'}
 	html: {'Content-Type': 'text/html'}
-	jpg: {'Content-Type': 'image/jpeg'}
-	jpeg: {'Content-Type': 'image/jpeg'}
 	js: {'Content-Type': 'text/javascript'}
 	mjs: {'Content-Type': 'text/javascript'}
 	json: {'Content-Type': 'application/json'}
+	css: {'Content-Type': 'text/css'}
+		
 	otf: {'Content-Type': 'font/otf'}
 	ttf: {'Content-Type': 'font/ttf'}
 	woff: {'Content-Type': 'font/woff'}
 	woff2: {'Content-Type': 'font/woff2'}
-	png: {'Content-Type': 'image/png'}
-	css: {'Content-Type': 'text/css'}
+	
+	svg: {'Content-Type': 'image/svg+xml'}
 	avif: {'Content-Type': 'image/avif'}
+	gif: {'Content-Type': 'image/gif'}
+	png: {'Content-Type': 'image/png'}
+	apng: {'Content-Type': 'image/apng'}	
+	webp: {'Content-Type': 'image/webp'}
+	jpg: {'Content-Type': 'image/jpeg'}
+	jpeg: {'Content-Type': 'image/jpeg'}
 }
 
 const proc = global.process
@@ -163,8 +151,9 @@ class AssetResponder
 		url = url
 		[path,query] = url.split('?')
 		ext = np.extname(path)
-		mimeType = mimes[ext.slice(1)] or 'text/plain'
+
 		headers = {
+			'Content-type': 'text/plain'
 			'Access-Control-Allow-Origin': '*'
 			'cache-control': 'public'
 		}
