@@ -859,7 +859,7 @@ export default class Bundle < Component
 
 				path = body.slice(start,end)
 				let origPath = path
-				let rePath = origPath.replace(ASSETS_URL,'/__assets__/')
+				let rePath = origPath.replace(ASSETS_URL,'/__assets__/').replace(/\/\//g,'/')
 				let asset = urlOutputMap[path] or urlOutputMap[rePath]
 
 				# what if it is referencing itself?
