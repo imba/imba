@@ -371,6 +371,10 @@ export default class Bundle < Component
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 
 		esb.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
+			
+			if o.format == 'css'
+				return {path: "_", namespace: 'imba-raw'}
+
 			let [path,q] = args.path.split('?')
 			let formats = q.slice(3).split(',')
 			let wrkidx = formats.indexOf('worker')
@@ -384,6 +388,7 @@ export default class Bundle < Component
 			
 			let cfg = resolveConfigPreset(formats)
 			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
+			
 			let out = {path: res.#rel + '?' + q, namespace: 'entry'}
 			pathMetadata[out.path] = {path: res.#rel, config: cfg}
 			return out
@@ -391,7 +396,7 @@ export default class Bundle < Component
 		esb.onLoad(namespace: 'entry', filter:/.*/) do({path})
 			# skip entrypoints if compiling for css only
 			if o.format == 'css'
-				return {path: "_", namespace: 'imba-raw'}
+				return {loader: 'text', contents: ""}
 
 			let id = "entry:{path}"
 			let meta = pathMetadata[path]
