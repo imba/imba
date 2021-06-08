@@ -1,3 +1,6 @@
+## 2.0.0-alpha.140
+* Improve output from `imba create`
+
 ## 2.0.0-alpha.139
 * Stop bundler from crashing when generating worker
 
