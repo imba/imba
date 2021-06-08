@@ -153,7 +153,7 @@ class AssetResponder
 		ext = np.extname(path)
 
 		headers = {
-			'Content-type': 'text/plain'
+			'Content-Type': 'text/plain'
 			'Access-Control-Allow-Origin': '*'
 			'cache-control': 'public'
 		}
