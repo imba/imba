@@ -19,7 +19,7 @@ export const defaultConfig = {
 			format: 'cjs'
 			sourcemap: true
 			target: ['node12.19.0']
-			external: ['dependencies','!imba']
+			external: ['dependencies','devDependencies','!imba']
 		}
 		web: {
 			extends: 'base'
