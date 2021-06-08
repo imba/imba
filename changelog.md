@@ -1,3 +1,7 @@
+## 2.0.0-alpha.138
+* Fix incorrect sourcemap paths with esbuild 0.9.7
+* Let server fail gracefully when accessing invalid asset urls
+
 ## 2.0.0-alpha.137
 * Fix relative path for mac/linux
 

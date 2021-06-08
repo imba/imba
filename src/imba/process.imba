@@ -173,7 +173,7 @@ class AssetResponder
 	def respond req, res
 		let asset = manifest.urls[url]
 		let headers = headers
-		let path = asset ? manifest.resolve(asset) : self.path
+		let path = asset ? manifest.resolve(asset) : manifest.resolveAssetPath('public' + self.path)
 		#  np.resolve(proc.cwd!,asset.path)
 		unless path
 			console.log 'found no path for',asset,url
@@ -182,14 +182,20 @@ class AssetResponder
 
 		if asset and asset.ttl > 0
 			headers['cache-control'] = "max-age={asset.ttl}"
-
-		try		
-			let stream = nfs.createReadStream(path)
-			res.writeHead(200, headers)
-			return stream.pipe(res)
-		catch
-			res.writeHead(503,{})
-			return res.end!
+		
+		nfs.access(path,nfs.constants.R_OK) do(err)
+			if err
+				console.log 'could not find path',path
+				res.writeHead(404,{})
+				return res.end!
+			
+			try
+				let stream = nfs.createReadStream(path)
+				res.writeHead(200, headers)
+				return stream.pipe(res)
+			catch e
+				res.writeHead(503,{})
+				return res.end!
 
 	def createReadStream
 		nfs.createReadStream(path)
@@ -279,7 +285,7 @@ class Server
 				return true
 
 			if url.indexOf(assetPrefix) == 0
-				let asset = manifest.urls[url]
+				# let asset = manifest.urls[url]
 				let responder = assetResponders[url] ||= new AssetResponder(url,self)
 				return responder.respond(req,res)
 
