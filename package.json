@@ -46,10 +46,10 @@
     "build-parser": "node scripts/build-parser.js",
     "watch": "node scripts/build.js -w",
     "prerelease": "lerna publish --dist-tag pre",
-    "link-latest": "PACKAGE_VERSION=$(node -p -e \"require('./package.json').version\") && npm dist-tag add imba@$PACKAGE_VERSION latest"
+    "link-latest": "node bin/imba scripts/link-latest.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.133",
+  "version": "2.0.0-alpha.140",
   "licenses": [
     {
       "type": "MIT",
@@ -83,7 +83,8 @@
   },
   "bin": {
     "imba": "./bin/imba",
-    "imbac": "./bin/imbac"
+    "imbac": "./bin/imbac",
+    "imba-create": "./bin/imba-create"
   },
   "preferGlobal": true,
   "homepage": "https://imba.io",
@@ -109,6 +110,6 @@
   },
   "dependencies": {
     "chokidar": "^3.4.3",
-    "esbuild": "^0.9.2"
+    "esbuild": "^0.9.7"
   }
 }

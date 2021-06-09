@@ -465,6 +465,8 @@ var shortRefCache = []
 
 def AST.counterToShortRef nr
 	var base = "A".charCodeAt(0)
+	
+	nr += 30
 
 	while shortRefCache:length <= nr
 		var num = shortRefCache:length + 1
@@ -3414,6 +3416,7 @@ export class TagDeclaration < ClassDeclaration
 		
 		let className = name.toClassName
 		let sup = superclass
+		let anonGlobalTag = !option(:extension) and (!name.isClass) and STACK.tsc
 		
 		if sup and sup.@variable
 			sup = sup.@variable
@@ -3449,11 +3452,19 @@ export class TagDeclaration < ClassDeclaration
 		let jsbody = body.c()
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 		
+		
+		
 		if option(:export) and !STACK.cjs
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
 				jshead = "{M 'export',option(:export)} {jshead}"
+				
+				
+		if anonGlobalTag
+			jshead = "globalThis[{M("'{M(name.toNodeName,name)} tag'",name)}] = {M 'class', keyword} extends {M sup, superclass}"
+			jshead = "globalThis.{M className, name} = {M 'class', keyword} extends {M sup, superclass}"
+			# jshead = "globalThis.{className} = {M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
 		let js = "{jshead} \{{jsbody}\}"
 		
@@ -3471,9 +3482,9 @@ export class TagDeclaration < ClassDeclaration
 			if name.isClass
 				@config:name = name.symbol
 			js += "; {runtime:defineTag}({name.c},{className},{ext})"
-		else
-			if !option(:extension) and (!name.isClass)
-				js += "; globalThis.{M name.toTscName, name} = {className};"
+		# else
+		# 	if !option(:extension) and (!name.isClass)
+		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
 		return js
 
 export class Func < Code
@@ -4930,6 +4941,8 @@ export class IndexAccess < Access
 		self
 
 
+export class VarAccess < ValueNode
+
 export class VarOrAccess < ValueNode
 
 	def initialize value
@@ -5298,7 +5311,13 @@ export class Assign < Op
 				return self
 
 		if node isa Return and left isa VarReference
-			# console.log 'possible consume??'
+			
+			if STACK.tsc
+				let rgt = @right
+				let vars = @left.@variables
+				let after = vars[0] ? VarAccess.new(vars[0]).consume(node) : node
+				return Block.new([self,BR,after])
+				# return Block.new([OP('=',sysvar,@right),BR,VarAccess.new(@left.@variable).consume(node)])
 			left.forceExpression
 
 		if isExpressable
@@ -5926,6 +5945,7 @@ export class TagTypeIdentifier < Identifier
 		elif isClass
 			return @str
 		elif STACK.tsc
+			return helpers.pascalCase(@str + '-custom-element')
 			return @str.replace(/\-/g,'_') + '$$TAG$$'
 		else
 			return helpers.pascalCase(@str + '-component')
@@ -9319,7 +9339,7 @@ export class ImportTypeDeclaration < ESMDeclaration
 		let src = @source.c
 
 		if @defaults
-			let tpl = '/** @typedef \{import(SOURCE)\} NAME */true'
+			let tpl = '/** @typedef \{import(SOURCE).default\} NAME */true'
 			tpl = tpl.replace('SOURCE',src).replace('NAME',@defaults.c)
 			return tpl # '/** @typedef \{import("PATH")\} NAME */'
 		else
@@ -9327,7 +9347,7 @@ export class ImportTypeDeclaration < ESMDeclaration
 
 			for item in @specifiers[0].nodes
 				let name = item.@name.c
-				let alias = item.@alias ? item.@alias.c : name
+				let alias = item.@alias ? item.@alias.c : item.@name.c
 				let part = "/** @typedef \{import({src}).{name}\} {alias} */true"
 				parts.push(part)
 				# let part = tpl.replace('SOURCE',src).replace('PATH',name).replace('PATH',name)

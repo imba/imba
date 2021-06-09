@@ -63,11 +63,30 @@ const addressTypeName = {
 	"6": "ip6"
 }
 
+export def formatMarkdown str
+	let fmt = ansi.f
+	
+	str = str.replace(/https?\:[^\s\n\)\]]+/g) do(m)
+		# fmt('italic',fmt('blueBright',m))
+		fmt('blueBright',m)
+	str = str.replace(/^[\t\s]*\>[^\n]+/gm) do(m)
+		# fmt('italic',fmt('blueBright',m))
+		fmt('bold',m)
+	
+	str = str.replace(/\t/g,'  ')
+	str = str.replace(/^/gm,'  ')
+	str
+
 export def format str,...rest
+	# color markdown?
+
 	let fmt = ansi.f
 	str = str.replace(/\%([\w\.]+)/g) do(m,f)
 		let part = rest.shift!
-		if f == 'kb'
+		if f == 'markdown'
+			formatMarkdown(part)
+	
+		elif f == 'kb'
 			fmt 'dim', (part / 1000).toFixed(1) + 'kb'
 		elif f == 'path' or f == 'bold'
 			fmt('bold',part)

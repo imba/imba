@@ -34,7 +34,7 @@ function plugin(build){
 	let absoutdir = np.resolve(__dirname,'..',outdir);
 
 	function relative(path){
-		let res = np.relative(absoutdir,np.resolve(basedir,path));
+		let res = np.relative(absoutdir,np.resolve(basedir,path)).split('\\').join('/');
 		if(res[0] != '.') res = './' + res;
 		return res;
 	}

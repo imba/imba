@@ -57,6 +57,9 @@ export class Manifest < EventEmitter
 			return np.resolve(outdir,path.path)
 		else
 			return np.resolve(cwd,path.path or path)
+			
+	def resolveAssetPath path
+		return np.resolve(outdir,path)
 	
 	def read path
 		nfs.readFileSync(resolve(path),'utf-8')

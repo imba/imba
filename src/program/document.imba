@@ -134,11 +134,16 @@ export class ImbaDocument
 			version = self.version + 1
 
 		let edits = []
+		let isSignificant = no
+		
+		edits.#ins = ''
+		edits.#del = ''
 		
 		for change,i in changes
 			if editIsFull(change)
 				overwrite(change.text,version)
 				edits.push([0,content.length,change.text])
+				isSignificant = yes
 				continue
 
 			let range = getWellformedRange(change.range)
@@ -154,9 +159,17 @@ export class ImbaDocument
 			range.end.offset = endOffset
 			# console.log 'update',startOffset,endOffset,change.text,JSON.stringify(content)
 			# content = content.substring(0, startOffset) + change.text + content.substring(endOffset, content.length)
+
+			let remLength = endOffset - startOffset
+			let prevText = remLength ? content.slice(startOffset,endOffset) : ''
+			
+			edits.#del += prevText
+			edits.#ins += change.text or ''
+
 			applyEdit(change,version,changes)
 
-			edits.push([startOffset,endOffset - startOffset,change.text or ''])
+			edits.push([startOffset,endOffset - startOffset,change.text or '',prevText])
+			
 
 			let startLine = Math.max(range.start.line, 0)
 			let endLine = Math.max(range.end.line, 0)
@@ -182,9 +195,44 @@ export class ImbaDocument
 					k++
 		
 		history.push(edits)
+		edits.#version = version
+
+		let prevEdits = history[history.length - 2]
+		let changeStr = edits.#ins + edits.#del
+		
+		if changeStr.indexOf('\n') >= 0
+			edits.#multiline = yes
+			if prevEdits and !prevEdits.#multiline
+				edits.#significant = yes
+				edits.#body = content
+		
+		# see if it is significant
 		# console.log 'updated',edits,history.length - 1,version # startOffset,endOffset,change.text,JSON.stringify(content)
 		versionToHistoryMap[version] = history.length - 1
 		updated(changes,version)
+		
+	get lastSignificantVersion
+		let i = history.length
+		while i > 0
+			let edits = history[--i]
+			if edits and edits.#significant
+				return edits.#version
+		return null
+		
+	def editsSinceVersion version
+		let from = versionToHistoryMap[version]
+		let edits = []
+		for item in history.slice(from + 1)
+			edits.push(...item)
+		return edits
+
+	def contentAtVersion version
+		# try to generate it based on changes?!
+		let nr = versionToHistoryMap[version]
+		let edits = history[nr]
+		if edits.#body != undefined
+			return edits.#body
+		return null
 
 	def offsetAtVersion fromOffset, fromVersion, toVersion = version, stickyStart = no
 		let from = versionToHistoryMap[fromVersion]
@@ -278,7 +326,7 @@ export class ImbaDocument
 		
 	def getSymbols
 		astify!
-		#lexed.symbols ||= tokens.map(do $1.symbol).filter(do $1)
+		#lexed.symbols ||= tokens.map(do $1.symbol).filter(do $1).filter(do(sym,i,arr) arr.indexOf(sym) == i)
 		
 	def getImportedSymbols
 		getSymbols!.filter do $1.imported?
@@ -558,7 +606,7 @@ export class ImbaDocument
 		if tok.match('operator.access accessor white.classname white.tagname')
 			flags ~= t.Value
 			
-		if group.match('imports')
+		if group.closest('imports')
 			flags ~= t.Value
 			flags |= t.ImportName
 			
@@ -832,6 +880,9 @@ export class ImbaDocument
 			let nextToken = lexed.tokens[ti + 1]
 			let [typ,subtyp,sub2] = types
 			let ltyp = types[types.length - 1]
+			let styp = types[types.length - 2]
+			
+			let scopeType = null
 			let decl = 0
 
 			if typ == 'ivar'
@@ -844,8 +895,8 @@ export class ImbaDocument
 			tok.context = scope
 			
 			# tag content interpolation
-			if sub2 == 'braces' and value == '{'
-				scope = tok.scope = ScopeTypeMap.interpolation.build(self,tok,scope,'interpolation',types)
+			# if sub2 == 'braces' and value == '{'
+			#	scope = tok.scope = ScopeTypeMap.interpolation.build(self,tok,scope,'interpolation',types)
 
 			if typ == '(' and prev
 				let prevchr = raw[tok.offset - 1] or ''
@@ -898,6 +949,11 @@ export class ImbaDocument
 				scope = tok.scope = ScopeTypeMap[typ].build(self,tok,scope,typ,types)
 				# if subtyp == '('
 				#	console.log 'paren!!!',typ,subtyp,ScopeTypeMap[typ],tok
+			elif ltyp == 'open' and (scopeType = ScopeTypeMap[styp])
+				scope = tok.scope = scopeType.build(self,tok,scope,styp,types)
+			
+			elif ltyp == 'close' and scope.type == styp
+				scope = scope.pop(tok)
 
 			elif subtyp == 'close' and ScopeTypeMap[typ]
 				scope = scope.pop(tok)
@@ -1057,6 +1113,8 @@ export class ImbaDocument
 						return result
 					else
 						result.alias = defaults.value
+						offset = 0
+						continue
 				else
 					out = alias
 					if ns or members
@@ -1072,6 +1130,7 @@ export class ImbaDocument
 					out = "* as {alias} "
 			elif ns
 				# cannot add it here
+				result.alias = "{ns.value}.{name}"
 				continue
 			else
 				let key = name

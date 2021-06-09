@@ -83,20 +83,30 @@ def run
 		let tplname = await cli.select("Choose your template",templates)
 		let tplurl = "https://github.com/imba/imba-{tplname}"
 		let tplpkg = await read-package("https://raw.githubusercontent.com/imba/imba-{tplname}/master/package.json")
-
-		let cfg = await cli.package(
-			name: process.argv[2] or '',
-			description: tplpkg.description
-		)
-
-		let data = JSON.parse(cfg.result)
 		
-		if data.repository[0] == '/'
-			delete data.repository
-	
-		# if cfg.username
-		#	cfg.repository = "{cfg.username}/{cfg.name}"
-		# let ghcli = try cli.exec('which gh')
+		let name = process.argv[2] or ''
+		
+		name ||= await cli.input("Name your project",initial: "hello-imba")
+		# return
+		
+		let advanced = await cli.ok("Configure package.json?")
+		let data = {
+			name: name
+		}
+		
+		if advanced
+			# optional repository
+			let repo = ""
+
+			let cfg = await cli.package(
+				name: name,
+				description: tplpkg.description
+			)
+
+			data = JSON.parse(cfg.result)
+
+			if data.repository[0] == '/'
+				delete data.repository
 
 		let dir = np.resolve(data.name)
 
@@ -110,20 +120,30 @@ def run
 			let pkg = Object.assign({},tplpkg,data)
 			write-package(dir,pkg)
 
-			
-
-			# unless ghcli
-			#	log.info "Install the github CLI tools (https://github.com/cli/cli) to automatically create repository"
-
 			log.info "Installing dependencies"
-			# await cli.exec("npm install imba")
+			await cli.exec("npm install imba")
 			await cli.exec("npm install")
 
 			if data.repository
 				log.info "add origin https://github.com/{data.repository}.git"
 				await cli.exec("git remote add origin https://github.com/{data.repository}.git")
 
-			log.success "Finished setting up project"
+			let getStarted = """
+				  
+				Install the vscode extension for the optimal experience:
+					https://marketplace.visualstudio.com/items?itemName=scrimba.vsimba
+				
+				Join the imba community on discord for help and friendly discussions:
+					https://discord.gg/mkcbkRw
+					
+				Get started:
+
+				  > cd {data.name}
+				  > npm start
+				
+			"""
+			
+			log.success 'Finished setting up project!\n%markdown',getStarted
 	catch e
 		log.error "Something went wrong during creation\n  Please report at https://github.com/imba/imba/issues"
 

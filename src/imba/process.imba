@@ -12,38 +12,26 @@ import http from 'http'
 import https from 'https'
 import {Http2ServerRequest} from 'http2'
 
-const mimes = {
-	svg: 'image/svg+xml'
-	html: 'text/html'
-	jpg: 'image/jpeg'
-	jpeg: 'image/jpeg'
-	js: 'text/javascript'
-	mjs: 'text/javascript'
-	json: 'application/json'
-	otf: 'font/otf'
-	ttf: 'font/ttf'
-	woff: 'font/woff'
-	woff2: 'font/woff2'
-	png: 'image/png'
-	css: 'text/css'
-	avif: 'image/avif'
-}
-
 const defaultHeaders = {
-	svg: {'Content-Type': 'image/svg+xml'}
 	html: {'Content-Type': 'text/html'}
-	jpg: {'Content-Type': 'image/jpeg'}
-	jpeg: {'Content-Type': 'image/jpeg'}
 	js: {'Content-Type': 'text/javascript'}
 	mjs: {'Content-Type': 'text/javascript'}
 	json: {'Content-Type': 'application/json'}
+	css: {'Content-Type': 'text/css'}
+		
 	otf: {'Content-Type': 'font/otf'}
 	ttf: {'Content-Type': 'font/ttf'}
 	woff: {'Content-Type': 'font/woff'}
 	woff2: {'Content-Type': 'font/woff2'}
-	png: {'Content-Type': 'image/png'}
-	css: {'Content-Type': 'text/css'}
+	
+	svg: {'Content-Type': 'image/svg+xml'}
 	avif: {'Content-Type': 'image/avif'}
+	gif: {'Content-Type': 'image/gif'}
+	png: {'Content-Type': 'image/png'}
+	apng: {'Content-Type': 'image/apng'}	
+	webp: {'Content-Type': 'image/webp'}
+	jpg: {'Content-Type': 'image/jpeg'}
+	jpeg: {'Content-Type': 'image/jpeg'}
 }
 
 const proc = global.process
@@ -163,8 +151,9 @@ class AssetResponder
 		url = url
 		[path,query] = url.split('?')
 		ext = np.extname(path)
-		mimeType = mimes[ext.slice(1)] or 'text/plain'
+
 		headers = {
+			'Content-Type': 'text/plain'
 			'Access-Control-Allow-Origin': '*'
 			'cache-control': 'public'
 		}
@@ -173,7 +162,7 @@ class AssetResponder
 	def respond req, res
 		let asset = manifest.urls[url]
 		let headers = headers
-		let path = asset ? manifest.resolve(asset) : self.path
+		let path = asset ? manifest.resolve(asset) : manifest.resolveAssetPath('public' + self.path)
 		#  np.resolve(proc.cwd!,asset.path)
 		unless path
 			console.log 'found no path for',asset,url
@@ -182,14 +171,20 @@ class AssetResponder
 
 		if asset and asset.ttl > 0
 			headers['cache-control'] = "max-age={asset.ttl}"
-
-		try		
-			let stream = nfs.createReadStream(path)
-			res.writeHead(200, headers)
-			return stream.pipe(res)
-		catch
-			res.writeHead(503,{})
-			return res.end!
+		
+		nfs.access(path,nfs.constants.R_OK) do(err)
+			if err
+				console.log 'could not find path',path
+				res.writeHead(404,{})
+				return res.end!
+			
+			try
+				let stream = nfs.createReadStream(path)
+				res.writeHead(200, headers)
+				return stream.pipe(res)
+			catch e
+				res.writeHead(503,{})
+				return res.end!
 
 	def createReadStream
 		nfs.createReadStream(path)
@@ -279,7 +274,7 @@ class Server
 				return true
 
 			if url.indexOf(assetPrefix) == 0
-				let asset = manifest.urls[url]
+				# let asset = manifest.urls[url]
 				let responder = assetResponders[url] ||= new AssetResponder(url,self)
 				return responder.respond(req,res)
 

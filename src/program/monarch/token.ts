@@ -45,6 +45,10 @@ export class Token {
 		return 0;
 	}
 	
+	public get startOffset(): number {
+		return this.offset;
+	}
+	
 	public get endOffset(): number {
 		return this.offset + (this.value ? this.value.length : 0);
 	}

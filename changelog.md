@@ -1,3 +1,29 @@
+## unreleased
+* Support webp,avif,apng,gif images in bundler
+
+## 2.0.0-alpha.140
+* Improve output from `imba create`
+
+## 2.0.0-alpha.139
+* Stop bundler from crashing when generating worker
+
+## 2.0.0-alpha.138
+* Fix incorrect sourcemap paths with esbuild 0.9.7
+* Let server fail gracefully when accessing invalid asset urls
+
+## 2.0.0-alpha.137
+* Fix relative path for mac/linux
+
+## 2.0.0-alpha.136
+* Raise default browser-target from `edge16` to `edge18` due to esbuild warning
+* Make `imba create` executable on mac (#550)
+* Set default esbuild target to es2019 to transpile optional chaining++
+* Avoid using `-ad` in generated class-names due to adblockers (#531)
+
+## 2.0.0-alpha.135
+* Minor improvements to sourcemapping
+* Fixed `import type default` compilation
+
 ## 2.0.0-alpha.133
 * Improved sourcemapping
 * Improved support for type annotations

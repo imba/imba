@@ -11,7 +11,7 @@ export const defaultConfig = {
 
 	options: {
 		base: {
-			target: ['es2020','chrome80','edge16']
+			target: ['es2019','chrome80','edge18']
 		}
 		node: {
 			extends: 'base'
@@ -24,7 +24,6 @@ export const defaultConfig = {
 		web: {
 			extends: 'base'
 			platform: 'browser'
-			target: ['es2020','chrome80','edge16']
 			sourcemap: true
 			format: 'esm'
 		}
@@ -65,8 +64,8 @@ export const defaultConfig = {
 		}
 		
 		nodeworker: {
-			extends: 'base'
-			format: 'esm'
+			extends: 'node'
+			format: 'cjs'
 			platform: 'node'
 			splitting: false
 		}
@@ -106,8 +105,8 @@ export def merge config, patch, ...up
 		return patch
 
 	if otyp == 'array'
-		# if vtyp == 'string'
-		# 	patch = patch.split(/\,\s*|\s+/g)
+		if vtyp == 'string'
+			patch = patch.split(/\,\s*|\s+/g)
 		
 		let mod = patch.every do (/[\-\+]/).test($1 or '')
 		let cloned = new Set(mod ? clone(config): [])
