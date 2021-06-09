@@ -804,18 +804,19 @@ export default class Bundle < Component
 				if output.source
 					walker.collectCSSInputs(output.source,corrPaths)
 
-				
 				let offset = 0
 				let body = output.#file.text
 				let chunks = []
 
-				for [input,bytes] in inputs
+				for [input,bytes],i in inputs
 					let header = "/* {input.path} */\n"
 
 					# check if the order is correct first?
-					
 					if !esoptions.minify
 						offset += header.length
+						let idx = body.indexOf(header)
+						if idx >= 0
+							offset = idx + header.length
 					
 					let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
 					let index = corrPaths.indexOf(input)

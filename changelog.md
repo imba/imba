@@ -1,5 +1,6 @@
 ## unreleased
 * Support webp,avif,apng,gif images in bundler
+* Fixed missing first character in non-minified css output
 
 ## 2.0.0-alpha.140
 * Improve output from `imba create`
