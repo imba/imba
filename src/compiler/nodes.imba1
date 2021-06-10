@@ -677,6 +677,9 @@ export class Stack
 
 	def imbaPath
 		@options:imbaPath
+		
+	def resolveColors
+		@options:styles !== 'extern'
 
 	def config
 		@options:config or {}
@@ -10081,9 +10084,14 @@ export class StyleIdentifier < StyleTerm
 	prop color
 
 	def visit stack
-		if let c = stack.theme.$color(toString)
-			color = self:param ? c.alpha(self:param.toAlpha) : c
-		
+		let raw = toString
+		if stack.resolveColors
+			if let c = stack.theme.$color(raw)
+				color = self:param ? c.alpha(self:param.toAlpha) : c
+		elif raw.match(/^[a-zA-Z]+\d$/)
+			color = "/*#*/{raw}"
+			if self:param
+				color += "/" + self:param.toAlpha
 		super
 		
 	

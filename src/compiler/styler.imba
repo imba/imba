@@ -264,14 +264,14 @@ def isNumber val
 
 export class Color
 	
-	def constructor name,h,s,l,a = '100%'
+	def constructor name,h,s,l,a = 1
 		name = name
 		h = h
 		s = s
 		l = l
 		a = a
 		
-	def alpha a = '100%'
+	def alpha a = 1
 		new Color(name,h,s,l,a)
 
 	def clone
@@ -283,7 +283,9 @@ export class Color
 		let	l1 = l + (other.l - l) * lw
 		return new Color(name + other.name,h1,s1,l1)
 	
-	def toString
+	def toString a = a
+		# if typeof a == 'string' and a.match(/%$/)
+		#	a = parseFloat(a.slice(0,-1)) / 100
 		"hsla({h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
 		
 	def c
@@ -356,7 +358,8 @@ export class Calc
 
 # This has to move into StyleTheme class
 let defaultPalette = {
-	current: {string: "currentColor"}
+	# should deprecate
+	current: {string: "currentColor", c: do 'currentColor' }
 	transparent: new Color('transparent',0,0,100,'0%')
 	clear: new Color('transparent',100,100,100,'0%')
 	black: new Color('black',0,0,0,'100%')
@@ -375,6 +378,10 @@ def parseColorString str
 
 def parseColors palette, colors
 	for own name,variations of colors
+		if typeof variations == 'string'
+			palette[name] = variations
+			continue
+
 		for own subname,raw of variations
 			let path = name + subname
 
@@ -407,9 +414,11 @@ export class StyleTheme
 	def constructor ext = {}
 		options = theme
 		palette = Object.assign({},defaultPalette)
+		
+		ext = ext.theme if ext.theme
 
-		if ext.theme and ext.theme.colors
-			parseColors(palette,ext.theme.colors)
+		if ext and ext.colors
+			parseColors(palette,ext.colors)
 
 	def expandProperty name
 		return aliases[name] or undefined
@@ -747,6 +756,10 @@ export class StyleTheme
 			let to = null
 			let n0 = nr + 1
 			let n1 = nr
+			
+			if typeof palette[ns] == 'string'
+				# proxy to a different color
+				return $color(palette[ns] + name.slice(ns.length))
 
 			while n0 > 1 and !from
 				from = palette[ns + (--n0)]
@@ -860,6 +873,14 @@ export class StyleTheme
 				return new Var("{fallback}-{str}",orig != value ? value : raw)
 			
 		return value
+		
+	def transformColors text
+		text = text.replace(/\/\*#\*\/(\w+)(?:\/(\d+%?))?/g) do(m,c,a)
+			let color = $color(c)
+			if color
+				return "/*#*/{color.toString(a)}"
+			return m
+		return text
 		
 # should not happen at root - but create a theme instance
 	

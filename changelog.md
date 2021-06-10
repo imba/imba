@@ -1,6 +1,10 @@
 ## unreleased
 * Support webp,avif,apng,gif images in bundler
 * Fixed missing first character in non-minified css output
+* Expose imba.commit++ on globalThis
+* Fix compilation issue with `if false` inside tag tree
+* Respect custom palettes in imbaconfig.json when building
+* Allow aliasing palettes in imbaconfig.json
 
 ## 2.0.0-alpha.140
 * Improve output from `imba create`

@@ -2,6 +2,7 @@ import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
 import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject} from './utils'
 
+import {StyleTheme} from '../compiler/styler'
 import {serializeData,deserializeData} from '../imba/utils'
 import {Manifest} from '../imba/manifest'
 
@@ -89,6 +90,9 @@ export default class Bundle < Component
 
 	get imbaconfig
 		program.config # or parent..imbaconfig
+		
+	get theme
+		imbaconfig.#theme ||= new StyleTheme(imbaconfig)
 
 	get root
 		parent ? parent.root : self
@@ -508,8 +512,9 @@ export default class Bundle < Component
 		
 
 		esb.onLoad({ filter: /\.imba$/, namespace: 'styles'}) do({path,namespace})
-			if builder.styles[path]
-				return builder.styles[path]
+			if let res = builder.styles[path]
+				# transform with theme
+				return res
 			else
 				{loader: 'css', contents: ""}
 
@@ -523,7 +528,7 @@ export default class Bundle < Component
 			if res.css
 				builder.styles[src.rel] = {
 					loader: 'css'
-					contents: SourceMapper.strip(res.css or "")
+					contents: theme.transformColors(SourceMapper.strip(res.css or ""))
 					resolveDir: src.absdir
 				}
 			
@@ -777,7 +782,7 @@ export default class Bundle < Component
 				# output.path = path.replace('.js','.html')
 				# output.dir = 'public'
 
-			elif webish? or output.type == 'css' or path.match(/\.(png|svg|jpe?g|gif|webm|webp)$/)
+			elif webish? or output.type == 'css' or path.match(/\.(png|svg|jpe?g|gif|webm|webp|css)$/)
 				# output.dir = 'assets'
 				output.path = "{pubdir}/__assets__/{path}"
 				output.url = "{baseurl}/__assets__/{path}"
