@@ -7759,7 +7759,7 @@ export class TagHandler < TagPart
 		super
 		STACK.use('events')
 		# Replace with something better for debugging
-		if @name and CUSTOM_EVENTS[String(@name)]
+		if @name and CUSTOM_EVENTS[String(@name)] and STACK.isWeb
 			STACK.use(CUSTOM_EVENTS[String(@name)])
 		#	scope__.imbaDependency('events/' + String(@name))
 

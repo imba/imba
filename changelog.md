@@ -1,3 +1,6 @@
+## unreleased
+* Don't crash when loading tags with `@intersect` listener on server
+
 ## 2.0.0-alpha.141
 * Support webp,avif,apng,gif images in bundler
 * Fixed missing first character in non-minified css output
