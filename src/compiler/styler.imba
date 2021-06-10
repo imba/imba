@@ -744,12 +744,17 @@ export class StyleTheme
 	#	{}
 
 	def $color name
+		
+		let m = name.match(/^(\w+)(\d)(?:\-(\d+))?$/)
+		let ns = m and m[1]
+		
+		if ns and typeof palette[ns] == 'string'
+			return $color(palette[ns] + name.slice(ns.length))
 
 		if palette[name]
 			return palette[name]
 
-		if let m = name.match(/^(\w+)(\d)(?:\-(\d+))?$/)			
-			let ns = m[1]
+		if m
 			let nr = parseInt(m[2])
 			let fraction = parseInt(m[3]) or 0
 			let from = null
