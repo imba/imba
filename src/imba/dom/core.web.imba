@@ -294,12 +294,13 @@ extend class SVGSVGElement
 
 	set src value
 		if #src =? value
-			if value..adoptNode
-				value.adoptNode(self)
-			elif value..content
-				for own k,v of value.attributes
-					setAttribute(k,v)
-				innerHTML = value.content
+			if value
+				if value.adoptNode
+					value.adoptNode(self)
+				elif value.content
+					for own k,v of value.attributes
+						setAttribute(k,v)
+					innerHTML = value.content
 		return
 
 		
@@ -325,9 +326,9 @@ export def createFragment
 	document.createDocumentFragment!
 
 
-
-const vendor = global.navigator..vendor or ''
-const ua = global.navigator..userAgent or ''
+const navigator = global.navigator
+const vendor = navigator and navigator.vendor or ''
+const ua = navigator and navigator.userAgent or ''
 
 const isSafari = vendor.indexOf('Apple') > -1 || ua.indexOf('CriOS') >= 0 || ua.indexOf('FxiOS') >= 0
 const supportsCustomizedBuiltInElements = !isSafari
@@ -475,3 +476,6 @@ export def defineTag name, klass, options = {}
 		window.customElements.define(componentName,klass)
 
 	return klass
+	
+let instance = global.imba ||= {}
+instance.document = global.document
