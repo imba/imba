@@ -27,6 +27,12 @@ export const defaultConfig = {
 			sourcemap: true
 			format: 'esm'
 		}
+		
+		esm: {
+			extends: 'web'
+			format: 'esm'
+			splitting: true
+		}
 
 		iife: {
 			extends: 'web'
