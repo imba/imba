@@ -8194,7 +8194,7 @@ export class TagSwitchFragment < TagLike
 		
 		return out if STACK.tsc
 		
-		parts.push(top)
+		parts.push(top) if top
 		parts.push(out)
 
 		for item,i in @inserts
