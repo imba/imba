@@ -1,5 +1,6 @@
 ## unreleased
 * Don't crash when loading tags with `@intersect` listener on server
+* Fix svg parsing issue for large svg files (#543)
 
 ## 2.0.0-alpha.141
 * Support webp,avif,apng,gif images in bundler
