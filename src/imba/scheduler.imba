@@ -191,3 +191,10 @@ export def setInterval fn,ms
 
 export const clearInterval = global.clearInterval
 export const clearTimeout = global.clearTimeout
+
+let instance = global.imba ||= {}
+instance.commit = commit
+instance.setTimeout = setTimeout
+instance.setInterval = setInterval
+instance.clearInterval = clearInterval
+instance.clearTimeout = clearTimeout
