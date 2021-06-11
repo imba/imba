@@ -257,7 +257,7 @@ export class ImbaElement < HTMLElement
 			classList.remove('_ssr_')
 			if flags$ext and flags$ext.indexOf('_ssr_') == 0
 				flags$ext = flags$ext.slice(5)
-			innerHTML = ''
+			innerHTML = '' unless __F & $EL_RENDERED$
 		self
 
 	def connectedCallback
