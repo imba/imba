@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.142
 * Don't crash when loading tags with `@intersect` listener on server
 * Fix svg parsing issue for large svg files (#543)
 * Fix incorrect dehydration when creating custom element on client directly via document.createElement
