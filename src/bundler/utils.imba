@@ -164,6 +164,9 @@ export def idGenerator alphabet = 'bcdefghijklmnopqrstuvwxyz'
 export def createHash body
 	cryptoCreateHash('sha1').update(body).digest('base64').replace(/[\=\+\/]/g,'').slice(0,8).toUpperCase!
 
+export def replaceAll str, pattern, replacement
+	str.replace(new RegExp(pattern, 'g'), replacement)
+
 export def injectStringBefore target, toInject, patterns = ['']
 	for patt in patterns
 		let idx = target.indexOf(patt)

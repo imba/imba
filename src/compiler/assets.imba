@@ -119,6 +119,6 @@ export def parseHTML raw
 	for tok in tokens
 		outstr += tok.value
 		
-	result.contents = outstr.replaceAll('</link>','')
+	result.contents = outstr.replace(/<\/link>/g,'')
 	# console.log tags.script
 	return result

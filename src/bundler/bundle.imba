@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
-import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject} from './utils'
+import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject,replaceAll} from './utils'
 
 import {StyleTheme} from '../compiler/styler'
 import {serializeData,deserializeData} from '../imba/utils'
@@ -672,7 +672,8 @@ export default class Bundle < Component
 			asset.#contents = asset.#contents.replace(orig,replaced)
 			
 		if asset.type == 'css' and asset.#contents.indexOf(ASSETS_URL) >= 0
-			asset.#contents = asset.#contents.replaceAll(ASSETS_URL,baseurl + '/__assets__/')
+			let reg = new RegExp(ASSETS_URL,'')
+			asset.#contents = replaceAll(asset.#contents,ASSETS_URL,baseurl + '/__assets__/')
 		return asset
 	
 	def collectStyleInputs(input, deep, matched = [], visited = [])
@@ -1137,7 +1138,7 @@ export default class Bundle < Component
 			assets.push(asset)
 			
 			for html in assets when html.type == 'html'
-				html.#contents = html.#contents.replaceAll("href='__styles__'","href='{asset.url}'")
+				html.#contents = replaceAll(html.#contents,"href='__styles__'","href='{asset.url}'")
 			
 			# if main.source.css
 		

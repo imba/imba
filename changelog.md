@@ -1,3 +1,6 @@
+## 2.0.0-alpha.143
+* Remove use of String#replaceAll (unsupported before node 15.0.0)
+
 ## 2.0.0-alpha.142
 * Don't crash when loading tags with `@intersect` listener on server
 * Fix svg parsing issue for large svg files (#543)
