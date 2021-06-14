@@ -67,10 +67,11 @@ export def parseHTML raw
 			if prev.value == '<'
 				tags.push(currTag = tok)
 				tok.attributes = {}
+				tok.#attributes = {}
 				tags[val] ||= []
 				tags[val].push(tok)
 			elif prev.value == '</'
-				# find the closer
+				currTag.closer ||= tok
 				yes
 
 		if typ == 'delimiter.xml' and val == '>'
@@ -79,6 +80,7 @@ export def parseHTML raw
 				tok.value += "<!--${currTyp}$-->"
 
 		if typ == 'attribute.name.xml'
+			currTag.#attributes[val] = tok
 			currAttr = val
 
 		if typ == 'attribute.value.xml'
@@ -100,6 +102,12 @@ export def parseHTML raw
 		elif el.value == 'link' and el.attributes.rel..raw == 'stylesheet'
 			src = el.attributes.href
 			item = {path: src.raw, tagType: 'style'}
+		elif el.value == 'style' and src
+			item = {path: src.raw, tagType: 'style'}
+			el.value = "link rel='stylesheet'"
+			el.closer.value = 'link' if el.closer
+			if el.#attributes.src
+				el.#attributes.src.value = 'href'
 
 		if src and item
 			unless item.path.match(/^(\/|https?\:\/\/)/)
@@ -111,6 +119,6 @@ export def parseHTML raw
 	for tok in tokens
 		outstr += tok.value
 		
-	result.contents = outstr
+	result.contents = outstr.replaceAll('</link>','')
 	# console.log tags.script
 	return result

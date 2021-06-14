@@ -835,6 +835,13 @@ export class Stack
 				return @nodes[i]
 			i--
 		return
+		
+	def lastImport
+		let scopes = self.scopes
+		for scope in scopes
+			if scope.@lastImport
+				return scope.@lastImport
+		return null
 
 	def isExpression
 		var i = @nodes:length - 1
@@ -1671,11 +1678,12 @@ export class Block < ListNode
 
 		if stack and stack.@tag
 			@tag = stack.@tag
-
-		for node,i in @nodes
-			# allow replacing blocks?
-			node and node.traverse
 		
+		@traversing = true
+		for node,i in @nodes.slice(0)
+			node and node.traverse
+		@traversing = false
+
 		self
 
 	def block
@@ -6081,7 +6089,7 @@ export class Call < Node
 			callee = runtime:asset
 
 			if arg isa Str
-				let asset = STACK.root.registerAsset(arg.raw,"{kind}")
+				let asset = STACK.root.registerAsset(arg.raw,"{kind}",self)
 				args.replace(arg,asset:ref)
 
 		elif callee.isGlobal('import')
@@ -6093,7 +6101,7 @@ export class Call < Node
 			if path
 				let ext = path.split('.').pop()
 				if EXT_LOADER_MAP[ext] or path.indexOf('?as=') >= 0
-					@asset = STACK.root.registerAsset(path)
+					@asset = STACK.root.registerAsset(path,'',self)
 					args.replace(arg,@asset:ref)
 		
 		elif callee.isGlobal('require')
@@ -6107,7 +6115,7 @@ export class Call < Node
 			let arg = args.first
 
 			if arg isa Str
-				let asset = STACK.root.registerAsset(arg.raw,'asset')
+				let asset = STACK.root.registerAsset(arg.raw,'asset',self)
 				args.replace(arg,asset:ref)
 			# console.log 'visit Call asset',runref
 
@@ -7402,8 +7410,29 @@ export class TagAttr < TagPart
 		if @ns == 'bind'
 			STACK.use('dom_bind')
 		#	scope__.imbaDependency('internal/bind')
+		
+		# console.log 'visit tag attr',@tag and @tag.tagName
+		
+		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (/^(style|img|script|svg)$/).test(@tag.tagName))
+		
+		if isAsset
+			let tagName = @tag.tagName
 
+			let kind = 'asset'
+			if tagName == 'img' or tagName == 'svg'
+				kind = 'img'
+			elif tagName == 'script'
+				kind = 'web'
+			elif tagName == 'style'
+				kind = 'css'
 
+			let path = value isa Str and value.raw
+			if path and !path.match(/^(\/|https?\:\/\/)/)
+				unless STACK.tsc
+					@asset = STACK.root.registerAsset(path,kind,self)
+			# else
+			#	val = MP(val,"path.{kind}")
+		
 		self
 
 	def ns
@@ -7431,7 +7460,7 @@ export class TagAttr < TagPart
 
 		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'style' or tagName == 'img' or tagName == 'script' or tagName == 'svg'))
 
-		if isAsset
+		if isAsset and false
 			let kind = 'asset'
 			if tagName == 'img' or tagName == 'svg'
 				kind = 'img'
@@ -7446,11 +7475,15 @@ export class TagAttr < TagPart
 					# val = CALL(LIT('require'),[value]).c
 					return "{@tag.tvar}.setAttribute('{key}',String({val}))"
 				else
-					@asset = STACK.root.registerAsset(path,kind)
+					# need to register asset during visit instead
+					@asset = STACK.root.registerAsset(path,kind,self)
 					val = @asset:ref.c
 				
 			else
 				val = MP(val,"path.{kind}")
+		
+		if @asset and !STACK.tsc
+			val = @asset:ref.c
 
 		# if key == 'src' and @tag.@tagName == 'img' and value isa Str
 		#	console.log "IMG ASSET"
@@ -9289,9 +9322,29 @@ export class ESMDeclaration < Statement
 		elif @source
 			"{kw} {@source.c}"
 
-export class ImportDeclaration < ESMDeclaration
-	def js
+export class AssetReference < ValueNode
+	
+	def setup
+		self
+
+	def asset
+		@value
 		
+	def c
+		let out = ""
+		let ref = value:ref.c
+		let path = value:path
+		if asset:kind and path.indexOf('?as=') == -1
+			path += "?as={asset:kind}"
+		if STACK.tsc
+			out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
+		else
+			out = "import {ref} from {MP "'{path}'"}"
+		return out
+
+export class ImportDeclaration < ESMDeclaration
+
+	def ownjs
 		var src = @source and @source.c(locRef: 'path')
 		# console.log("importing {@source:constructor} {src}")
 
@@ -9321,7 +9374,15 @@ export class ImportDeclaration < ESMDeclaration
 			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {src}"
 		else
 			"{M(keyword.c,keyword)} {src}"
-
+	
+	def js
+		let out = ownjs
+		return out
+		
+	def push next
+		let curr = (@next or self)
+		@up.replace curr, [curr,BR,@next = next]
+	
 	def visit
 		if STACK.cjs and @specifiers
 			var src = @source.c
@@ -9331,7 +9392,9 @@ export class ImportDeclaration < ESMDeclaration
 		
 		for item in @specifiers
 			item?.traverse()
-			
+		
+		scope__.@lastImport = self
+		@up = up
 		return
 
 export class ImportTypeDeclaration < ESMDeclaration
@@ -10849,21 +10912,26 @@ export class RootScope < Scope
 		if STACK.cjs and !@hasExports
 			@hasExports = yes
 			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
-	
-	def lookupAsset name, kind = 'asset'
-		registerAsset(name,kind)
 
-	def registerAsset path, kind, asset
+	def registerAsset path, kind, context
 		let key = path + kind
+		
 		if @assets[key]
 			return @assets[key]
+		
+		# console.log 'registering asset',!!STACK.lastImport
+		let insertAt = STACK.lastImport or head
 
-		@assets[key] = asset or {
+		let asset = @assets[key] = {
 			path: path,
 			kind: kind,
 			external: yes,
+			context: context
 			ref: register('asset',null,system: yes)
 		}
+		
+		insertAt.push(AssetReference.new(asset))
+		return asset
 
 	def lookup name
 		name = helpers.symbolize(name)
@@ -10937,25 +11005,27 @@ export class RootScope < Scope
 		o:expression = no
 
 		let body = node.body.c(o)
-		let assetCount = Object.keys(assets):length
+		
+		if false
+			let assetCount = Object.keys(assets):length
 
-		if assetCount
-			head.push LIT('// ASSETS-START')
+			if assetCount
+				head.push LIT('// ASSETS-START')
 
-		for own name, asset of assets
-			# assets should have their own node that compiles instead? Like ImportProxy
-			try
-				let ref = asset:ref.c
-				let path = asset:path
-				if asset:kind and path.indexOf('?as=') == -1
-					path += "?as={asset:kind}"
-				if STACK.tsc
-					head.push(LIT "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})")
-				else
-					head.push(LIT "import {ref} from {MP "'{path}'"}")
+			for own name, asset of assets
+				# assets should have their own node that compiles instead? Like ImportProxy
+				try
+					let ref = asset:ref.c
+					let path = asset:path
+					if asset:kind and path.indexOf('?as=') == -1
+						path += "?as={asset:kind}"
+					if STACK.tsc
+						head.push(LIT "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})")
+					else
+						head.push(LIT "import {ref} from {MP "'{path}'"}")
 
-		if assetCount
-			head.push LIT('// ASSETS-END')
+			if assetCount
+				head.push LIT('// ASSETS-END')
 
 		let pre = Block.new([])
 		pre.head = head

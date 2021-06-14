@@ -254,6 +254,7 @@ export class ImbaElement < HTMLElement
 		if __F & $EL_SSR$
 			__F = __F & ~$EL_SSR$
 			# remove flag
+			# not if ssr?!
 			classList.remove('_ssr_')
 			if flags$ext and flags$ext.indexOf('_ssr_') == 0
 				flags$ext = flags$ext.slice(5)
