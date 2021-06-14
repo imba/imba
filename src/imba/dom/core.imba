@@ -666,7 +666,7 @@ export class ShadowRoot < DocumentFragment
 export class HTMLElement < Element
 
 export class HTMLHtmlElement < HTMLElement
-
+	
 	get scripts
 		#scripts ||= []
 
@@ -685,18 +685,21 @@ export class HTMLHtmlElement < HTMLElement
 
 		if process.env.IMBA_HMR or global.IMBA_HMR
 			inject.push("<script src='/__hmr__.js'></script>")
-
-		for script in self.scripts
-			let src = script.src
-			let asset = manifest.urls[src]
-			# console.log 'script source',src,String(src),!!asset,asset..path
-			if asset and asset.css
-				sheets.add(asset.css)
-			# add preloads?
 		
-		for sheet of sheets
-			inject.push("<link rel='stylesheet' href='{sheet.url}'>")
-		# now go through the stylesheets?
+		# if we havent included any styles in the html at all
+		unless self.styles
+			# maybe only if there are no 
+			for script in self.scripts
+				let src = script.src
+				let asset = manifest.urls[src]
+				if asset and asset.css
+					sheets.add(asset.css)
+				# add preloads?
+			
+			for sheet of sheets
+				inject.push("<link rel='stylesheet' href='{sheet.url}'>")
+			# now go through the stylesheets?
+
 		HtmlContext = prev
 		
 		if inject.length

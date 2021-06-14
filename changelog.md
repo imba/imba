@@ -2,6 +2,11 @@
 * Don't crash when loading tags with `@intersect` listener on server
 * Fix svg parsing issue for large svg files (#543)
 * Fix incorrect dehydration when creating custom element on client directly via document.createElement
+* Inject asset imports in correct order relative to regular imports
+* Add support for `.eot` font file reference in stylesheets
+* Auto-generate combined stylesheet for server and client accessible via `<style src='*'>`
+* Stop auto-injecting styles for referenced assets when rendering `<html>` on server
+
 
 ## 2.0.0-alpha.141
 * Support webp,avif,apng,gif images in bundler

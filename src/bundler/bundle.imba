@@ -193,9 +193,10 @@ export default class Bundle < Component
 				".jpeg": "file",
 				".woff2": "file",
 				".woff": "file",
+				".eot": "file",
 				".ttf": "file",
 				".otf": "file",
-				".html": "file"
+				".html": "file",
 			},o.loader or {})
 			write: false
 			metafile: true
@@ -383,6 +384,10 @@ export default class Bundle < Component
 
 		esb.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
 			
+			# reference to _all_ styles referenced via main entrypoint
+			if args.path == '*?as=css'
+				return {path: "__styles__", namespace: 'entry'}
+			
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
@@ -403,6 +408,12 @@ export default class Bundle < Component
 			let out = {path: res.#rel + '?' + q, namespace: 'entry'}
 			pathMetadata[out.path] = {path: res.#rel, config: cfg}
 			return out
+
+		esb.onLoad(namespace:'entry', filter:/^__styles__$/) do(args)
+			if o.format == 'html'
+				return {loader: 'text', contents: '__styles__'}
+
+			return {loader: 'js', contents: toAssetJS(input: '__styles__'), resolveDir: fs.cwd }
 
 		esb.onLoad(namespace: 'entry', filter:/.*/) do({path})
 			# skip entrypoints if compiling for css only
@@ -634,6 +645,55 @@ export default class Bundle < Component
 				await write(result,prev)
 			#buildcache = {}
 			return resolve(result)
+	
+	def finalizeAsset asset, shouldHash = hashing?
+		return asset if asset.#finalized
+		asset.#finalized = yes
+		let sub = '.'
+		
+		if shouldHash
+			asset.hash ||= createHash(asset.#contents)
+			sub = ".{asset.hash}."
+
+		asset.originalPath = asset.path
+		
+		if sub != '.'
+			asset.ttl = 31536000
+		if asset.url
+			asset.url = asset.url.replace('.__dist__.',sub)
+			if sub == '.' and asset.hash and asset.type != 'map'
+				yes
+
+		asset.path = asset.path.replace('.__dist__.',sub)
+		# now replace link to sourcemap as well
+		if asset.type == 'js' and asset.map
+			let orig = np.basename(asset.originalPath) + '.map'
+			let replaced = np.basename(asset.path) + '.map'
+			asset.#contents = asset.#contents.replace(orig,replaced)
+			
+		if asset.type == 'css' and asset.#contents.indexOf(ASSETS_URL) >= 0
+			asset.#contents = asset.#contents.replaceAll(ASSETS_URL,baseurl + '/__assets__/')
+		return asset
+	
+	def collectStyleInputs(input, deep, matched = [], visited = [])
+		if visited.indexOf(input) >= 0
+			return matched
+
+		visited.push(input)
+
+		if input.path.match(/(^styles:)|(\.css$)/)  # or input.path.match(/^styles:/)
+			if matched.indexOf(input) == -1
+				unless matched.find(do $1.path == input.path)
+					matched.push(input)
+			
+		for item in input.imports
+			continue if item.path.match(/\?as=css$/)
+			collectStyleInputs(item,deep,matched,visited)
+			
+		if input.asset and deep
+			collectStyleInputs(input.asset.source,deep,matched,visited)
+
+		return matched
 
 	###
 	Go through the generated files - create hashes for the file-contents and rewrite
@@ -702,15 +762,16 @@ export default class Bundle < Component
 
 		for own path,output of outs
 			root.builder.outputs.add(output)
-
+		
 		for own path,input of ins
 			input.#type = input._ = 'input'
 			input.path = path
 			input.imports = input.imports.map do ins[$1.path]
 			watchPath(path)
 			# what about sourcemaps?
-			let outname = path.replace(/\.(imba1?|[cm]?jsx?|tsx?|html)$/,"")
+			let outname = path.replace(/\.(imba1?|[cm]?jsx?|tsx?|html|css)$/,"")
 			let jsout 
+			
 			for own key,ext of tests
 
 				let name = outname.replace(/\.\.\//g,"_.._/") + ext
@@ -754,7 +815,10 @@ export default class Bundle < Component
 				# just register on root - or push to parent?
 				meta.errors.push(...res.meta.errors)
 				meta.warnings.push(...res.meta.warnings)
-
+				
+		# Everything after this point (hashing etc) should be possible to do
+		# in a separate step after after we know that all the nested outputs
+		# have been generated?
 
 		walker.collectCSSInputs = do(input, matched = [], visited = [])
 			if visited.indexOf(input) >= 0
@@ -824,6 +888,8 @@ export default class Bundle < Component
 							offset = idx + header.length
 					
 					let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
+					input.#csschunk = chunk
+
 					let index = corrPaths.indexOf(input)
 
 					offset += bytes
@@ -962,7 +1028,7 @@ export default class Bundle < Component
 				asset.ttl = 31536000
 				return asset
 
-			if asset.type == 'js' or asset.type == 'html'
+			if asset.type == 'js' or asset.type == 'html' or asset.type == 'css'
 				log.debug "resolving assets in {asset.path}"
 				asset.#text = asset.#file.text
 				asset.#contents = await walker.replacePaths(asset.#text,asset)
@@ -973,6 +1039,9 @@ export default class Bundle < Component
 				if js
 					await walker.resolveAsset(js)
 					asset.hash = js.hash
+					
+			finalizeAsset(asset)
+			return asset
 
 			asset.hash ||= createHash(asset.#contents)
 
@@ -1040,6 +1109,38 @@ export default class Bundle < Component
 		# console.log 'write',entryPoints,ins
 		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]].js
 		let assets  = manifest.assets = Object.values(outs)
+		
+		# walk the entrypoint for css
+		if true
+			let cssinputs = collectStyleInputs(main.source,true)
+			
+			let body = ""
+			for item in cssinputs
+				body += item.#csschunk + '\n'
+			# console.log 'cssinputs',cssinputs.map(do $1.path),body.length,!!main.source.css,main.path
+
+			# now write this file as a separate asset?
+			let asset = {
+				#type: 'output'
+				_: 'output'
+				type: 'css'
+				path: "{pubdir}/__assets__/__styles__.__dist__.css"
+				url: "{baseurl}/__assets__/__styles__.__dist__.css"
+				#contents: body
+			}
+			
+			asset.asset = asset
+			# should take hashing parameter from the web/css target instead?
+			finalizeAsset(asset,program.hashing !== false)
+			manifest.css = asset
+			ins.__styles__ = asset
+			assets.push(asset)
+			
+			for html in assets when html.type == 'html'
+				html.#contents = html.#contents.replaceAll("href='__styles__'","href='{asset.url}'")
+			
+			# if main.source.css
+		
 
 		let writeFiles = {}
 		let webEntries = []
