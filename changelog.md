@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.144
 * Experimental `<global>` slot to add global listeners from inside tags
 * `@event.outside` modifier that works in conjunction with `<global>` slot
 
