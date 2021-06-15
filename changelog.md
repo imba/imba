@@ -1,3 +1,7 @@
+## unreleased
+* Experimental `<global>` slot to add global listeners from inside tags
+* `@event.outside` modifier that works in conjunction with `<global>` slot
+
 ## 2.0.0-alpha.143
 * Remove use of String#replaceAll (unsupported before node 15.0.0)
 

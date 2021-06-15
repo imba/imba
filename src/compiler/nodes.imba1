@@ -8591,7 +8591,11 @@ export class Tag < TagLike
 		let oscope = @tagDeclaration ? @tagDeclaration.scope : null
 
 		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type:isClass and type.isClass ? type.toTypeArgument : "'" + type.@value + "'"))
-
+		
+		if type.@value == 'global'
+			typ = "'i-global'"
+			STACK.use('dom_global_hook')
+			
 		var wasInline = o:inline
 		var isSVG = self.isSVG
 		var isReactive = self.isReactive

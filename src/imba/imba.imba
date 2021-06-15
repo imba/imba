@@ -12,6 +12,7 @@ export * from './dom/styles'
 export * from './dom/context'
 export * from './dom/mount'
 export * from './dom/bind'
+export * from './dom/global-hook'
 
 # Exporting events
 export * from './events/core'

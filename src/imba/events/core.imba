@@ -28,6 +28,11 @@ def Event.log$mod ...params
 def Event.sel$mod expr
 	return !!event.target.matches(String(expr))
 	
+def Event.outside$mod
+	if handler and handler.#self
+		return !handler.#self.parentNode.contains(event.target)
+	return no
+	
 def Event.if$mod expr
 	return !!expr
 	
