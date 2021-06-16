@@ -49,7 +49,10 @@ export def parseHTML raw
 
 	let currAttr
 	let contentStart = 0
-	let currTag = {}
+	let currTag = {
+		attributes: {}
+		#attributes: {}
+	}
 	let tags = []
 	let result = {
 		text: raw
