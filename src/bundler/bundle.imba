@@ -637,6 +637,7 @@ export default class Bundle < Component
 				let rebuilt = await firstBuild.rebuild!
 				result = rebuilt
 			catch e
+				log.debug "error when rebuilding",e
 				result = e
 			
 			await transform(result,prev)
@@ -651,8 +652,10 @@ export default class Bundle < Component
 		asset.#finalized = yes
 		let sub = '.'
 		
+		asset.hash ||= createHash(asset.#contents)
+		
 		if shouldHash
-			asset.hash ||= createHash(asset.#contents)
+			asset.hashed = yes
 			sub = ".{asset.hash}."
 
 		asset.originalPath = asset.path
@@ -1044,30 +1047,6 @@ export default class Bundle < Component
 			finalizeAsset(asset)
 			return asset
 
-			asset.hash ||= createHash(asset.#contents)
-
-			if true
-				# allow a fully custom pattern instead?
-				let sub = hashing? ? ".{asset.hash}." : "."
-				asset.originalPath = asset.path
-				
-				if sub != '.'
-					asset.ttl = 31536000
-				if asset.url
-					asset.url = asset.url.replace('.__dist__.',sub)
-					if sub == '.' and asset.hash and asset.type != 'map'
-						yes
-						# asset.url += '?v=' + asset.hash
-
-				asset.path = asset.path.replace('.__dist__.',sub)
-				# now replace link to sourcemap as well
-				if asset.type == 'js' and asset.map
-					let orig = np.basename(asset.originalPath) + '.map'
-					let replaced = np.basename(asset.path) + '.map'
-					asset.#contents = asset.#contents.replace(orig,replaced)
-			return asset
-
-
 		let newouts = {}
 
 		for own path,output of outs
@@ -1181,6 +1160,8 @@ export default class Bundle < Component
 			manifest.outputs[item.path] = item
 
 		manifest.hash = createHash(assets.map(do $1.hash or $1.path).sort!.join('-'))
+		
+		log.debug("manifest hash: {manifest.hash}")
 
 		if program.clean
 			let rm = new Set
