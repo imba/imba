@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.145
 * Fix bundler crash when parsing html entrypoints with doctype
 * Fix regression where imba `-w` would not detect changes in unhashed outputs
 
