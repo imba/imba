@@ -163,14 +163,23 @@ class AssetResponder
 		let asset = manifest.urls[url]
 		let headers = headers
 		let path = asset ? manifest.resolve(asset) : manifest.resolveAssetPath('public' + self.path)
+
 		#  np.resolve(proc.cwd!,asset.path)
 		unless path
 			console.log 'found no path for',asset,url
 			res.writeHead(404, {})
 			return res.end!
 
-		if asset and asset.ttl > 0
-			headers['cache-control'] = "max-age={asset.ttl}"
+		if asset 
+			if asset.ttl > 0
+				headers['cache-control'] = "max-age={asset.ttl}"
+		
+			if asset.imports
+				let link = []
+				for item in asset.imports
+					link.push("<{item.url}>; rel=modulepreload; as=script")
+				headers['Link'] = link.join(', ')
+		# include 
 		
 		nfs.access(path,nfs.constants.R_OK) do(err)
 			if err
@@ -272,8 +281,9 @@ class Server
 				broadcast('init',manifest.serializeForBrowser!,[res])
 				req.on('close') do clients.delete(res)
 				return true
-
-			if url.indexOf(assetPrefix) == 0
+			
+			# found a hit for the url?
+			if url.indexOf(assetPrefix) == 0 or manifest.urls[url]
 				# let asset = manifest.urls[url]
 				let responder = assetResponders[url] ||= new AssetResponder(url,self)
 				return responder.respond(req,res)
@@ -354,11 +364,4 @@ export def _run_ module, file
 		let srcdir = manifest.srcdir
 		let src = srcdir + '/server.imba'
 		let paths = require.resolve.paths(srcdir + '/server.imba')
-		# require.main.paths.unshift("/Users/sindre/repos/imba-templates/node_modules")
-		console.log("RESOLVE PATHS",srcdir,paths,src)
-		# console.log Module._nodeModulePaths(manifest.srcdir),module.paths
 		require.main.paths.unshift(...Module._nodeModulePaths(manifest.srcdir))
-		# console.log "paths2",Module._resolveFilename('./nodez',require.main.filename)
-		console.log "paths123",Module._resolveFilename('express',require.main)
-		
-	# console.log("RUN!",module.paths,manifest.main.source.path)
