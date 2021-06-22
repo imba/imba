@@ -1,3 +1,8 @@
+## unreleased
+* Added `--asset-names` and `--html-names` build options for controlling the generated paths
+* Tweaked format of generated manifest
+* Automatically include Link preload headers when serving through imba
+
 ## 2.0.0-alpha.145
 * Fix bundler crash when parsing html entrypoints with doctype
 * Fix regression where imba `-w` would not detect changes in unhashed outputs
