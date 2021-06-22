@@ -244,8 +244,19 @@ def Event.touch$reframe$mod ...params
 		event.dy = y - event.y0
 
 	return yes
-	
+
+###
+Allow pinning the touch to a certain point in an element, so that
+all future x,y values are relative to this pinned point.
+You can include relative anchors for x and y
+
+Make x,y relative to the center of the parent:
+	<box.target> <div.handle @touch.pin('.target',0.5,0.5)>
+
+(targetElement,anchorX?, anchorY?)
+###
 def Event.touch$pin$mod ...params
+	# TODO should support non-percentage ax,ay values here as well
 	let o = state[step] 
 		
 	unless o
