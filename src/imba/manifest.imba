@@ -36,8 +36,8 @@ export class Manifest < EventEmitter
 		reviver = do(key) new Asset(self)
 		init(options.data)
 	
-	get srcdir do np.resolve(path,data.srcdir)
-	get outdir do np.resolve(path,data.outdir)
+	get srcdir do np.resolve(np.dirname(path),data.srcdir)
+	get outdir do np.resolve(np.dirname(path),data.outdir)
 	get changes do data.changes or {}
 	get inputs do data.inputs
 	get outputs do data.outputs

@@ -14,6 +14,28 @@ export const defaultLoaders = {
 	".otf": "file"
 }
 
+export const Extensions = {
+	".png": "file",
+	".apng": "file",
+	".webp": "file",
+	".heif": "file",
+	".avif": "file",
+	".svg": "file",
+	".gif": "file",
+	".jpg": "file",
+	".jpeg": "file",
+	".ico": "file",
+	".woff2": "file",
+	".woff": "file",
+	".eot": "file",
+	".ttf": "file",
+	".otf": "file",
+	".html": "file"
+}
+
+export const FontRegex = /\.(woff2?|eot|ttf|otf)$/
+export const ImageRegex = /\.(gif?|a?png|jpe?g|svg|avif|heif|webp|ico)$/
+
 export const builtInModules = {
 	"assert":         true,
 	"async_hooks":    true,
@@ -77,6 +99,12 @@ export def diagnosticToESB item, add = {}
 			lineText: item.lineText
 		},add)
 	}
+	
+export def normalizePath src
+	src.replace(/\/+/g,'/').replace(/\/\.\//g,'/')
+	
+export def relativePath ...parts
+	np.relative(...parts).split('\\').join('/')
 
 export def writeFile src, body
 	nfs.promises.writeFile(src,body)

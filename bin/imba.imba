@@ -2,7 +2,7 @@ import np from 'path'
 import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
-import {program as cli, InvalidOptionArgumentError,CommanderError} from 'commander'
+import {program as cli} from 'commander'
 
 import Program from '../src/bundler/program'
 import FileSystem from '../src/bundler/fs'
@@ -25,7 +25,6 @@ let imbapkg = resolvePackage(np.resolve(__dirname,'..')) or {}
 
 const overrides = {}
 let argv = process.argv.slice(0)
-# console.log 'ARGV',argv
 
 const overrideAliases = {
 	M: {minify: false}
@@ -34,6 +33,7 @@ const overrideAliases = {
 	s: {sourcemap: true}
 	H: {hashing: false}
 	h: {hashing: true}
+	P: {pubdir: '.'}
 }
 
 const valueMap = {
@@ -45,6 +45,7 @@ const valueMap = {
 
 for item,i in argv
 	continue unless item
+
 	if item.match(/^\-\-(\w+)(\.\w+)+$/)
 		let val = argv[i+1]
 		let path = item.slice(2).split('.')
@@ -125,49 +126,41 @@ def parseOptions options, extras = []
 
 def run entry, o, extras
 	return cli.help! unless o.args.length > 0
+	
+	let [path,q] = entry.split('?')
+	
+	path = np.resolve(path)
 
-	let path = np.resolve(entry)
-	let srcdir = np.dirname(path)
 	let prog = o = parseOptions(o,extras)
 	
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 
 	extendConfig(prog.config.options,overrides)
-	# console.log prog.config.options,overrides
 
-	let t = Date.now!
-	# let prog = new Program(o.config,o)
+	if !o.outdir
+		if o.command == 'build'
+			o.outdir = 'dist'
+		else
+			tmp.setGracefulCleanup!
+			let tmpdir = tmp.dirSync(unsafeCleanup: yes)
+			o.outdir = o.tmpdir = tmpdir.name
 
 	let file = o.fs.lookup(path)
 
-	let paramsold = Object.assign({},o.config.node,{
-		entryPoints: [file.rel]
-		platform: 'node'
-		outdir: o.outdir
-		hashing: false
-		execOnly: yes
-	})
+	if q
+		o.as = q.replace(/^as=/,'')
+	elif file.ext == '.html'
+		o.as = 'html'
 
-	# console.log 'params',o
-	let baseparams = {
-		entryPoints: [file.rel]
-		outdir: o.outdir
-		execOnly: yes
-		hashing: false
-	}
+	let params = resolvePresets(prog.config,{entryPoints: [file.rel]},o.as or 'node')
 
-	let params = resolvePresets(prog.config,baseparams,o.as or 'node')
-	# console.log 'params',params
-
-	if file.ext == '.html'
-		params.format = 'html'
-
-	o.port ||= await getport(port: getport.makeRange(3000, 3100))
+	unless o.command == 'build'
+		o.port ||= await getport(port: getport.makeRange(3000, 3100))
 	
-	if o.command == 'serve' or (params.format == 'html')
-		delete params.entryPoints
-
+	if o.command == 'serve' or params.platform != 'node'
+		let wrapper = resolvePresets(prog.config,{},'node')
+		params = wrapper
 		params.stdin = {
 			define: {ENTRYPOINT: "./{file.rel}"}
 			template: 'serve-http.imba'
@@ -176,25 +169,21 @@ def run entry, o, extras
 			loader: 'js'
 		}
 
-		if params.format == 'html'
+		if file.ext == '.html'
 			params.stdin.template = 'serve-html.imba'
 			params.format = 'cjs'
-
-	tmp.setGracefulCleanup!
-
-	unless params.outdir
-		let tmpdir = tmp.dirSync(unsafeCleanup: yes)
-		params.outdir = params.tmpdir = tmpdir.name
 
 	let bundle = new Bundler(o,params)
 	let out = await bundle.build!
 
-	return if o.buildOnly or o.command == 'build'
+	if o.command == 'build'
+		return
 
 	# should we really need this here?
 	if let exec = out..manifest..main
 		if !o.watch and o.instances == 1
 			o.execMode = 'fork'
+
 		o.name ||= entry
 
 		let runner = new Runner(bundle.manifest,o)
@@ -214,63 +203,40 @@ def run entry, o, extras
 
 let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version).name('imba')
 
+def common cmd
+	cmd
+		.option("-o, --outdir <dir>", "Directory to output files")
+		.option("-w, --watch", "Continously build and watch project")
+		.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
+		.option("-m, --minify", "Minify generated files")
+		.option("-M, --no-minify", "Disable minifying")
+		.option("-f, --force", "Disregard previously cached outputs")
+		.option("-c, --client-only", "Generate client files only")
+		.option("--sourcemap <value>", "", "inline")
+		.option("-S, --no-sourcemap", "Omit sourcemaps")
+		.option("-H, --no-hashing", "Disable hashing")
+		.option("--pubdir <dir>", "Directory to output client-side files - relative to outdir")
+		.option("-P, --no-pubdir", "Build client-side files straight into outdir")
+		.option("--baseurl <url>", "Base url for your generated site","/")
+		.option("--asset-names <pattern>", "Paths for generated assets","assets/[dir]/[name]")
+		.option("--html-names <pattern>", "Paths for generated html files","[dir]/[name]")
+		.option("--clean", "Remove files from previous build")
+		.option("--mode <mode>", "Configuration mode","development")
 
-cli.command('run [script]', { isDefault: true })
-	.description('Imba')
-	.option("-w, --watch", "Continously build and watch project while running")
-	.option("-m, --minify", "Minify generated files")
-	.option("-M, --no-minify", "Disable minifying")
+
+common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
-	.option("-o, --outdir <dest>", "Directory to output files")
-	.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
-	.option("-f, --force", "force overwriting and full compilation")
-	.option("--mode <mode>", "Configuration mode","development")
-	.option("--pubdir <dest>", "Directory for generated public files - relative to outdir","public")
-	.option("--baseurl <url>", "Base url for your generated site","/")
-	.option("--clean", "Remove files from previous build")
 	.option("--inspect", "Debug")
-	.option("--sourcemap <value>", "", "inline")
-	.option("-S, --no-sourcemap", "Omit sourcemaps")
-	.option("-H, --no-hashing", "Disable hashing")
 	.action(run)
 
-cli.command('build <script>')
-	.description('Build an imba/js/html entrypoint and their dependencies')
-	.option("-w, --watch", "Continously build and watch project while running")
-	.option("-m, --minify", "Minify generated files")
-	.option("-M, --no-minify", "Disable minifying")
-	.option("-v, --verbose", "Verbose logging",fmt.v,1)
-	.option("-f, --force", "force overwriting and full compilation")
-	.option("-o, --outdir <dest>", "Directory to output files","dist")
-	.option("--mode <mode>", "Configuration mode","production")
-	.option("--pubdir <dest>", "Directory for generated public files - relative to outdir","public")
-	.option("--baseurl <url>", "Base url for your generated site","/")
-	.option("--clean", "Remove files from previous build")
+common(cli.command('build <script>').description('Build an imba/js/html entrypoint and their dependencies'))
 	.option("--platform <platform>", "Platform for entry","browser")
 	.option("--as <preset>", "Configuration preset","node")
-	.option("-H, --no-hashing", "Disable hashing")
-	.option("--sourcemap <value>", "", "inline")
-	.option("-S, --no-sourcemap", "Omit sourcemaps")
 	.action(run)
 
 # watch should be implied?
-cli.command('serve <script>')
-	.description('Spawn a webserver for an imba/js/html entrypoint')
-	.option("-b, --build", "")
-	.option("-w, --watch", "Continously build and watch project while running")
-	.option("-m, --minify", "Minify generated files")
-	.option("-M, --no-minify", "Disable minifying")
-	.option("-f, --force", "force overwriting and full compilation")
+common(cli.command('serve <script>').description('Spawn a webserver for an imba/js/html entrypoint'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
-	.option("-o, --outdir <dest>", "Directory to output files")
-	.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,1)
-	.option("--sourcemap <value>", "", "inline")
-	.option("-S, --no-sourcemap", "Omit sourcemaps")
-	.option("--mode <mode>", "Configuration mode","development")
-	.option("--inspect", "Debug stuff")
-	.option("--pubdir <dest>", "Directory for generated public files - relative to outdir","public")
-	.option("--baseurl <url>", "Base url for your generated site","/")
-	.option("-H, --no-hashing", "Disable hashing")
 	.action(run)
 
 cli.command('create [project]','Create a new imba project from a template')

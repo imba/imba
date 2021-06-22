@@ -101,6 +101,7 @@ export class FSNode
 			'.webp': ImageFile
 			'.avif': ImageFile
 			'.gif': ImageFile
+			'.ico': ImageFile
 			'.html': HTMLFile
 		}
 

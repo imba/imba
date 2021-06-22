@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
-import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject,replaceAll} from './utils'
+import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject,replaceAll, normalizePath, relativePath, ImageRegex, FontRegex} from './utils'
 
 import {StyleTheme} from '../compiler/styler'
 import {serializeData,deserializeData} from '../imba/utils'
@@ -74,16 +74,23 @@ export default class Bundle < Component
 		root == self
 
 	get outdir
-		o.outdir or fs.cwd
+		program.outdir or fs.cwd
 
 	get outbase
 		o.outbase or fs.cwd
+	
+	get assetNames
+		program.assetNames or 'assets/[dir]/[name]'
+		
+	get htmlNames
+		program.htmlNames or '[dir]/[name]'
 
 	get pubdir
-		program.pubdir or 'public'
+		program.pubdir == false ? '.' : (program.pubdir or 'public')
 	
+	# optional prefix prepended to all asset url references
 	get baseurl
-		(program.baseurl or '/').replace(/\/$/,'')
+		#baseurl ||= ((program.baseurl or '/') + '/').replace(/\/+/g,'/')
 
 	get fs
 		program.fs
@@ -104,6 +111,50 @@ export default class Bundle < Component
 	# useful for things like metadata[bundle] = {...}
 	def [Symbol.toPrimitive] hint
 		#_id_ ||= Symbol!
+		
+	def pathForAsset src, asset, tpl = assetNames, shouldHash = hashing?
+		# "[kind]/[dir]/[name]-[hash]"
+		let o = {}
+		o.ext = np.extname(src)
+		o.kind = o.ext.slice(1)
+		if o.ext == '.map'
+			o.ext = '.js.map'
+			o.kind = 'js'
+			
+		o.name = np.basename(src,o.ext)
+		o.dir = np.dirname(src)
+		
+		o.hash = asset..hash or null
+		
+		if o.ext.match(FontRegex)
+			o.kind = 'fonts'
+		elif o.ext.match(ImageRegex)
+			o.kind = 'img'
+		elif o.ext == '.html'
+			o.kind = ''
+			tpl = htmlNames
+			
+		unless tpl.indexOf('[name]') >= 0
+			# add warning
+			tpl += '/[name]'
+			
+		if tpl.indexOf('[hash]') == -1 and shouldHash
+			tpl = tpl.replace('[name]','[name]-[hash]')
+			
+		if tpl.indexOf('[hash]') == -1 and tpl.indexOf('[dir]') == -1
+			# TODO warn about non-unique paths
+			no
+
+		let dest = tpl.replace(/\[(\w+)\]/g) do(m,k)
+			typeof o[k] == 'string' ? o[k] : m
+		
+		dest = normalizePath(dest).replace(/^\//,'') + o.ext
+		
+		if o.hash
+			dest = dest.replace("{o.hash}-{o.hash}",o.hash)
+			# dest = dest.replace("{o.hash}-{o.hash}",o.hash)
+		return dest
+
 
 	def constructor up,o
 		super()
@@ -121,6 +172,8 @@ export default class Bundle < Component
 		styles = {}
 		options = o
 		result = null
+		firstBuild = null
+		workers = null
 		built = no
 		meta = {}
 		cwd = fs.cwd
@@ -152,8 +205,6 @@ export default class Bundle < Component
 
 			if ext == ".json"
 				externals.push("*.json")
-				
-				
 
 			externals.push(ext)
 		
@@ -169,7 +220,10 @@ export default class Bundle < Component
 			outfile: o.outfile
 			outbase: fs.cwd
 			outdir: fs.cwd
-			outExtension: { ".js": ".__dist__.js", ".css": ".__dist__.css"}
+			outExtension: {
+				".js": ".__dist__.js",
+				".css": ".__dist__.css"
+			}
 			globalName: o.globalName
 			publicPath: o.publicPath or ASSETS_URL
 			banner: {
@@ -191,6 +245,7 @@ export default class Bundle < Component
 				".gif": "file",
 				".jpg": "file",
 				".jpeg": "file",
+				".ico": "file",
 				".woff2": "file",
 				".woff": "file",
 				".eot": "file",
@@ -211,7 +266,7 @@ export default class Bundle < Component
 
 		if o.esbuild
 			extendObject(esoptions,o.esbuild,'esbuild')			
-			console.log 'esbuild config extended?!',o.esbuild
+			# console.log 'esbuild config extended?!',o.esbuild
 
 		imbaoptions = {
 			platform: o.platform
@@ -518,7 +573,7 @@ export default class Bundle < Component
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 			
 		esb.onLoad(filter: /.*/, namespace: 'rawfile') do({path})
-			console.log 'loading raw file',path
+			# console.log 'loading raw file',path
 			return {loader: 'file', contents: nfs.readFileSync(path,'utf-8')}			
 		
 
@@ -548,8 +603,8 @@ export default class Bundle < Component
 			let cached = res[self] ||= {
 				loader: 'js',
 				contents: SourceMapper.strip(res.js or "") + (incStyles ? "\nimport '_styles_';" : "")
-				errors: res.errors.map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
-				warnings: res.warnings.map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
+				errors: (res.errors or []).map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
+				warnings: (res.warnings or []).map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
 				resolveDir: src.absdir
 			}
 
@@ -658,25 +713,47 @@ export default class Bundle < Component
 			asset.hashed = yes
 			sub = ".{asset.hash}."
 
-		asset.originalPath = asset.path
+		let path = asset.originalPath = asset.path
 		
+		# now replace dist with hash or not
+		path = path.replace('.__dist__.','.')
+		# console.log path,sub
+		path = pathForAsset(path,asset,assetNames,shouldHash)
+		
+		# console.log 'finalize asset',path,shouldHash,asset.hash
+
 		if sub != '.'
 			asset.ttl = 31536000
+
 		if asset.url
+			# only if this is a public facing asset?
 			asset.url = asset.url.replace('.__dist__.',sub)
 			if sub == '.' and asset.hash and asset.type != 'map'
 				yes
 
 		asset.path = asset.path.replace('.__dist__.',sub)
+		
+		let url = baseurl + path
+		
+		if asset.public
+			asset.path = path
+			asset.url = url
+
 		# now replace link to sourcemap as well
 		if asset.type == 'js' and asset.map
 			let orig = np.basename(asset.originalPath) + '.map'
 			let replaced = np.basename(asset.path) + '.map'
-			asset.#contents = asset.#contents.replace(orig,replaced)
 			
-		if asset.type == 'css' and asset.#contents.indexOf(ASSETS_URL) >= 0
-			let reg = new RegExp(ASSETS_URL,'')
-			asset.#contents = replaceAll(asset.#contents,ASSETS_URL,baseurl + '/__assets__/')
+			let replace = /\/\/# sourceMappingURL=[\/\w\.\-\%]+\.map/
+			# console.log "replacing sourcemap",orig,replaced
+			asset.#contents = asset.#contents.replace(replace,"//# sourceMappingURL={asset.url}.map")
+			
+			# finalize the map inline?
+			asset.map.path = asset.path + '.map'
+			asset.map.url = asset.url + '.map'
+			asset.map.#finalized = yes
+
+		# console.log 'finalized asset',asset.url,url,path # ,assetNames,asset.hash
 		return asset
 	
 	def collectStyleInputs(input, deep, matched = [], visited = [])
@@ -766,6 +843,8 @@ export default class Bundle < Component
 
 		for own path,output of outs
 			root.builder.outputs.add(output)
+			if outs[path + '.map']
+				output.map = outs[path + '.map']
 		
 		for own path,input of ins
 			input.#type = input._ = 'input'
@@ -795,6 +874,7 @@ export default class Bundle < Component
 		let urlOutputMap = {}
 		let walker = {}
 		let addOutputs = new Set
+		let styleInputs = []
 
 		for own path,dep of builder.refs
 			let input = ins[path]
@@ -844,16 +924,14 @@ export default class Bundle < Component
 
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js
-				# console.log 'pubdir??',pubdir
-				output.url = "{baseurl}/{path.replace('.js','.html')}"
-				output.path = path = "{pubdir}/__assets__/{path.replace('.js','.html')}"
-				# output.path = path.replace('.js','.html')
-				# output.dir = 'public'
+				urlOutputMap[path] = output
+				output.public = yes
+				output.path = path = path.replace('.js','.html')
 
-			elif webish? or output.type == 'css' or path.match(/\.(png|svg|jpe?g|gif|webm|webp|css)$/)
-				# output.dir = 'assets'
-				output.path = "{pubdir}/__assets__/{path}"
-				output.url = "{baseurl}/__assets__/{path}"
+			elif webish? or output.type == 'css' or path.match(FontRegex) or path.match(ImageRegex)
+				urlOutputMap[path] = output
+				output.public = yes
+				output.url = "{baseurl}{path}"
 
 			output.type = (np.extname(path) or '').slice(1)
 
@@ -893,6 +971,8 @@ export default class Bundle < Component
 					
 					let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
 					input.#csschunk = chunk
+					
+					styleInputs.push(input)
 
 					let index = corrPaths.indexOf(input)
 
@@ -903,18 +983,21 @@ export default class Bundle < Component
 				let text = chunks.filter(do $1).join('\n')
 				# console.log 'new text',text.length,body.length
 				output.#ordered = yes
-				output.#contents = text
+				output.#text = text
 
-			# Workaround for esbuild bug that has been fixed
+			
 			if output.imports
 				output.imports = output.imports.map do
-					let chunk = $1.path.indexOf("/chunk.")
-					$1.path = reloutdir + $1.path.slice(chunk) if chunk >= 0
+					# Workaround for esbuild bug that has been fixed
+					# let chunk = $1.path.indexOf("/chunk.")
+					# $1.path = reloutdir + $1.path.slice(chunk) if chunk >= 0
 					outs[$1.path]
 
 			if let m = path.match(/\.([A-Z\d]{8})\.\w+$/)
 				output.hash = m[1]
-			elif m = path.match(/chunk\.([A-Z\d]{8})\.\w+\.(js|css)(\.map)?$/)
+			elif m = path.match(/\-([A-Z\d]{8})\.(\w{2,4})$/)
+				output.hash = m[1]
+			elif m = path.match(/chunk[\.\-]([A-Z\d]{8})\.\w+\.(js|css)(\.map)?$/)
 				output.hash = m[1]
 
 			if output.url
@@ -925,10 +1008,7 @@ export default class Bundle < Component
 		representation of body for performance reasons.
 		###
 		walker.replacePaths = do(body,output)
-			let array = output.#contents
-			let length = body.length
 			let start = 0
-			let idx = 0
 			let end = 0
 			let delim
 			let breaks = {"'": 1, '"':1, '(':1, ')':1}
@@ -947,16 +1027,18 @@ export default class Bundle < Component
 
 				path = body.slice(start,end)
 				let origPath = path
-				let rePath = origPath.replace(ASSETS_URL,'/__assets__/').replace(/\/\//g,'/')
-				let asset = urlOutputMap[path] or urlOutputMap[rePath]
-
+				let cleanPath = path.replace(/\/\/\.\/\//g,'/').replace(/\/\//g,'/').replace(ASSETS_URL,'')
+				let rePath = origPath.replace(ASSETS_URL,baseurl).replace(/\/\/\.\/\//g,'/').replace(/\/\//g,'/')
+				let asset = urlOutputMap[path] or urlOutputMap[cleanPath] or urlOutputMap[rePath]
+				
+				# console.log "rename asset",cleanPath,pathForAsset(cleanPath),pathForAsset(cleanPath,null,'__assets__/[dir]/[name]-[hash]')
 				# what if it is referencing itself?
-				if asset
+				if asset and !origPath.match(/\.js\.map$/)
 					await walker.resolveAsset(asset)
 					path = asset.url
 				else
-					# console.log 'asset not found',path,body.slice(start - 50,end)
-					path = (baseurl + origPath.replace(ASSETS_URL,'/__assets__/'))
+					path = baseurl + cleanPath # .replace(ASSETS_URL,baseurl)	
+					# console.log 'asset not found',origPath,cleanPath,path,Object.keys(urlOutputMap)
 				
 				if useRelativePaths
 					let rel = np.relative(np.dirname(output.url),path)
@@ -979,6 +1061,9 @@ export default class Bundle < Component
 			# the referenced assets / dependencies of this output and inject them
 			# into a global asset map. We replace the first line (//BANNER) to make
 			# sure sourcemaps are still valid (they are generated before we process outputs)
+			if output.type == 'css'
+				return body
+
 			if o.format == 'html'
 				try
 					let mapping = {}
@@ -1030,11 +1115,11 @@ export default class Bundle < Component
 
 			if asset.hash
 				asset.ttl = 31536000
-				return asset
+				# return asset
 
 			if asset.type == 'js' or asset.type == 'html' or asset.type == 'css'
 				log.debug "resolving assets in {asset.path}"
-				asset.#text = asset.#file.text
+				asset.#text ||= asset.#file.text
 				asset.#contents = await walker.replacePaths(asset.#text,asset)
 
 			if asset.type == 'map'
@@ -1048,6 +1133,10 @@ export default class Bundle < Component
 			return asset
 
 		let newouts = {}
+		
+		for item in styleInputs
+			# resolve the paths in sheets first
+			item.#csschunk = await walker.replacePaths(item.#csschunk,{type: 'css'})
 
 		for own path,output of outs
 			continue if path.indexOf(".SKIP.") > 0
@@ -1068,7 +1157,7 @@ export default class Bundle < Component
 
 	def write result
 		# after write we can wipe the buildcache
-		#outfs ||= new FileSystem(o.outdir,program)
+		#outfs ||= new FileSystem(program.outdir,program)
 		
 		let meta = result.meta
 		let ins = meta.inputs
@@ -1085,15 +1174,24 @@ export default class Bundle < Component
 			inputs: ins
 			outputs: {}
 			urls: urls
+			mappings: {}
+			hash: null
+			srcdir: null
+			outdir: null
+			path: null
+			main: null
+			assets: null
+			css: null
 		}
 		# console.log 'write',entryPoints,ins
 		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]].js
 		let assets  = manifest.assets = Object.values(outs)
 		
 		# walk the entrypoint for css
-		if true
-			let cssinputs = collectStyleInputs(main.source,true)
-			
+		let cssinputs = collectStyleInputs(main.source,true)
+		let htmlassets = assets.filter do $1.type == 'html'
+		
+		if cssinputs.length or htmlassets.length
 			let body = ""
 			for item in cssinputs
 				body += item.#csschunk + '\n'
@@ -1104,21 +1202,23 @@ export default class Bundle < Component
 				#type: 'output'
 				_: 'output'
 				type: 'css'
-				path: "{pubdir}/__assets__/__styles__.__dist__.css"
-				url: "{baseurl}/__assets__/__styles__.__dist__.css"
+				public: yes
+				path: "all.__dist__.css"
 				#contents: body
 			}
 			
 			asset.asset = asset
 			# should take hashing parameter from the web/css target instead?
 			finalizeAsset(asset,program.hashing !== false)
+			
 			manifest.css = asset
 			ins.__styles__ = asset
 			assets.push(asset)
 			
 			for html in assets when html.type == 'html'
+				# console.log "replace style reference {asset.url} {html.type}"
 				html.#contents = replaceAll(html.#contents,"href='__styles__'","href='{asset.url}'")
-			
+				html.hash = createHash(html.#contents)
 			# if main.source.css
 		
 
@@ -1133,12 +1233,15 @@ export default class Bundle < Component
 
 		# a sorted list of all the output hashes is a fast way to
 		# see if anything in the bundle has changed or not
-		
 
 		log.ts "ready to write"
 		let mfile = #outfs.lookup(manifest.path)
-		manifest.srcdir = np.relative(mfile.abs,outbase)
-		manifest.outdir = np.relative(mfile.abs,#outfs.cwd)
+		# these are relative to the manifest file - should rather be relative
+		# to the manifest dir?!
+		manifest.srcdir = relativePath(mfile.absdir,outbase) or "."
+		manifest.outdir = relativePath(mfile.absdir,#outfs.cwd) or "."
+
+		# console.log "outdir!!",manifest.outdir,manifest.srcdir,mfile.abs,manifest.path,main.path
 
 		if true
 			# set output paths of html files - should not happen after resolving?
@@ -1154,9 +1257,13 @@ export default class Bundle < Component
 					item.shift!
 			
 			for item,i in htmlFiles
-				item.path = 'public/' + htmlPaths[i].join('/')
+				#  'public/' + 
+				item.path = htmlPaths[i].join('/')
 
 		for item in assets
+			if item.public and pubdir != '.'
+				item.path = "{pubdir}/{item.path}"
+
 			manifest.outputs[item.path] = item
 
 		manifest.hash = createHash(assets.map(do $1.hash or $1.path).sort!.join('-'))
@@ -1173,24 +1280,49 @@ export default class Bundle < Component
 
 			for file of rm
 				await file.unlink!
-
+		
 		let loaderData = nfs.readFileSync(np.resolve(program.imbaPath,'loader.imba.js'),'utf-8')
 		let loader = #outfs.lookup(main.path.replace(/(\.js)?$/,'.loader.js'))
+		
+		# run through the asset inputs to generate a cleaner manifest with references
+		
+		if false
+			let structure = {}
+			
+			for asset in assets when asset.type == 'js' and asset.source
+				let source = asset.source
+				let inp = structure[source.path] ||= {
+					src: source.path
+					file: asset.path
+					url: asset.url
+					imports: []
+				}
+				for dep in asset.dependencies
+					if dep.asset
+						inp.imports.push(dep.asset.path)
+					else
+						console.log "could not find asset dependenc?!?",dep.path,dep._
+			
+			manifest.mappings = structure
 
 		if #hash =? manifest.hash
-			let json = serializeData(manifest)
-			log.info "building in %path",o.outdir
+			
+			log.info "building in %path",program.outdir
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in assets
+				
 				let path = asset.path
 				let file = #outfs.lookup(path)
 				await file.write(asset.#contents,asset.hash)
-
+			
+			let json = serializeData(manifest)
+	
 			if mfile
 				await mfile.writeSync json, manifest.hash
 			
-			await loader.write(loaderData)
+			if nodeish?
+				await loader.write(loaderData)
 
 			self.manifest.path = mfile.abs
 			self.manifest.update(json)
