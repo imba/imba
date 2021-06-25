@@ -491,9 +491,10 @@ export default class FileSystem < Component
 	def prescan items = null
 		return #files if #files
 		#files = items or crawl!
+		
 		for item in #files
 			let li = item.lastIndexOf('.')
-			let ext = item.slice(li) or '.*'
+			let ext = li == -1 ? '.*' : item.slice(li)
 			let map = #files[ext] ||= []
 			map.push(item)
 		# should we drop the abspart here?
