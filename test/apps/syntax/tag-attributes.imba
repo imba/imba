@@ -12,6 +12,10 @@ test 'global attributes' do
 	let el = <div itemprop=str unknownprop=str>
 	eq el.getAttribute('itemprop'), str
 	eq el.hasAttribute('unknownprop'), false
+	
+test 'raw setAttribute' do
+	let el = <div html:unknownprop=str>
+	eq el.getAttribute('unknownprop'), str
 
 test 'override attribute' do
 	# now extend div
