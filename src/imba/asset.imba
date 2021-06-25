@@ -14,7 +14,7 @@ class AssetProxy
 		manifest.inputs[meta.input]
 
 	get asset
-		globalThis._MF_ ? meta : input.asset
+		globalThis._MF_ ? meta : (input ? input.asset : null)
 	
 	def set target, key, value
 		return true
@@ -22,6 +22,14 @@ class AssetProxy
 	def get target, key
 		if meta.meta and meta.meta[key] != undefined
 			return meta.meta[key]
+			
+		unless asset
+			if meta.#warned =? yes
+				console.warn "Asset for '{meta.input}' not found"
+
+			if key == 'valueOf'
+				return do ""
+			return null
 			
 		if key == 'absPath' and !asset.absPath
 			return asset.url	
