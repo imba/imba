@@ -57,7 +57,7 @@ export var OPERATOR_ALIASES =
 	isa: 'instanceof' 
 
 export var HEREGEX_OMIT = /\s+(?:#.*)?/g
-export var HEREGEX = /// ^ /{3} ([\s\S]+?) /{3} ([imgy]{0,4}) (?!\w) ///
+export var HEREGEX = /// ^ /{3} ([\s\S]+?) /{3} ([a-z]{0,8}) (?!\w) ///
 
 export var TAG_TYPES = {
 	"": [-1,{id: 1,className: 'class',slot: 1,part: 1,elementTiming: 'elementtiming'}]
