@@ -50,7 +50,7 @@
     "create-example": "node bin/imba scripts/create-example.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.145",
+  "version": "2.0.0-alpha.146",
   "licenses": [
     {
       "type": "MIT",
