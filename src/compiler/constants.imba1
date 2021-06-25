@@ -59,6 +59,23 @@ export var OPERATOR_ALIASES =
 export var HEREGEX_OMIT = /\s+(?:#.*)?/g
 export var HEREGEX = /// ^ /{3} ([\s\S]+?) /{3} ([a-z]{0,8}) (?!\w) ///
 
+export var TAG_GLOBAL_ATTRIBUTES = {
+	itemid: 1
+	itemprop: 1
+	itemref: 1
+	itemscope: 1
+	itemtype: 1
+	enterkeyhint: 1
+	autofocus: 1
+	autocapitalize: 1
+	autocomplete: 1
+	accesskey: 1
+	inputmode: 1
+	spellcheck: 1
+	translate: 1
+	is: 1
+}
+
 export var TAG_TYPES = {
 	"": [-1,{id: 1,className: 'class',slot: 1,part: 1,elementTiming: 'elementtiming'}]
 	HTML: [-1,{title: 1,lang: 1,translate: 1,dir: 1,accessKey: 'accesskey',draggable: 1,spellcheck: 1,autocapitalize: 1,inputMode: 'inputmode',style: 1,tabIndex: 'tabindex',enterKeyHint: 'enterkeyhint'}]

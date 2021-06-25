@@ -19,6 +19,8 @@ import SourceMapper from './sourcemapper'
 
 var TAG_NAMES = constants.TAG_NAMES
 
+var TAG_GLOBAL_ATTRIBUTES = constants.TAG_GLOBAL_ATTRIBUTES
+
 var TAG_TYPES = {}
 var TAG_ATTRS = {}
 
@@ -7592,7 +7594,7 @@ export class TagAttr < TagPart
 
 			"css$var({AST.cary(pars,as: 'js').join(',')})"
 
-		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for'
+		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for' or TAG_GLOBAL_ATTRIBUTES[key]
 			if ns
 				"setns$('{ns}','{key}',{val})"
 			else

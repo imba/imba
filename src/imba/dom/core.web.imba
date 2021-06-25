@@ -1,4 +1,5 @@
 import {Flags} from './flags'
+import {getDeepPropertyDescriptor} from '../utils'
 
 export const {
 	Event,
@@ -26,6 +27,7 @@ export const {
 	Window,
 	customElements
 } = global.window
+
 
 # export const document = global.window.document
 const CustomTagConstructors = {}
@@ -224,13 +226,21 @@ extend class Element
 
 	def flagSync$
 		self.className = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
-
+		
+	def set$ key,value
+		# FIXME relatively slow
+		let desc = getDeepPropertyDescriptor(this,key,Element)
+		if !desc or !desc.set
+			setAttribute(key,value)
+		else
+			self[key] = value
+		return
 
 Element.prototype.appendChild$  = Element.prototype.appendChild
 Element.prototype.removeChild$  = Element.prototype.removeChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
-Element.prototype.set$ = Element.prototype.setAttribute
+# Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
 export def createElement name, parent, flags, text

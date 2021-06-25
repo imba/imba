@@ -143,6 +143,17 @@ export def toCamelCase str
 	else
 		str
 
+export def getDeepPropertyDescriptor item, key, stop
+	
+	if !item
+		return undefined
+
+	let desc = Object.getOwnPropertyDescriptor(item,key)
+
+	if desc or item == stop
+		return desc or undefined
+		
+	getDeepPropertyDescriptor(Reflect.getPrototypeOf(item),key,stop)
 
 # Basic events - move to separate file?
 const emit__ = do(event, args, node)

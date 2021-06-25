@@ -9,6 +9,8 @@ import {AsyncLocalStorage} from '../bindings'
 import {Flags} from './flags'
 import {manifest} from '../manifest'
 
+import {getDeepPropertyDescriptor} from '../utils'
+
 let asl = null
 
 export class Location < URL
@@ -643,12 +645,19 @@ export class Element < Node
 
 	def flagSync$
 		self.className = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
+		
+	def set$ key, value
+		let desc = getDeepPropertyDescriptor(this,key,Element)
+		if !desc or !desc.set
+			setAttribute(key,value)
+		else
+			self[key] = value
+		return
 
 Element.prototype.appendChild$  = Element.prototype.appendChild
 Element.prototype.removeChild$  = Element.prototype.removeChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
-Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
 export class DocumentFragment < Element
@@ -780,6 +789,7 @@ export class CustomEvent < Event
 
 
 const descriptorCache = {}
+
 def getDescriptor item,key,cache
 	if !item
 		return cache[key] = null

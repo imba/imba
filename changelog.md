@@ -4,6 +4,7 @@
 * Automatically include Link preload headers when serving through imba
 * Allow all valid RegExp flags in literal regexes
 * Generate class augmentations (`extend class/tag`) in tsc mode
+* Use setAttribute for non-idl element attributes 
 
 ## 2.0.0-alpha.145
 * Fix bundler crash when parsing html entrypoints with doctype
