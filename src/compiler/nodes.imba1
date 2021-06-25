@@ -1943,8 +1943,7 @@ export class ClassField < Node
 			elif self isa ClassAttribute or (@decorators && @decorators:length > 0)
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
 				let getter = "{prefix}get {name}{self.getter.c(keyword: '')}"
-				let delim = (@classdecl && @classdecl.isExtension ? ',\n' : '\n')
-				out = "{setter}{delim}{getter}"
+				out = "{setter}\n{getter}"
 
 			return out
 		
@@ -2068,6 +2067,10 @@ export class ClassField < Node
 			util.decorate(Arr.new(@decorators),target,name,LIT('null'))
 
 export class ClassAttribute < ClassField
+
+	def hasConstructorInits
+		!isStatic and value
+		
 	def getter
 		@getter ||= if true
 			let op = CALL(GET(THIS,'getAttribute'),[name.toAttrString])
@@ -3233,7 +3236,11 @@ export class ClassDeclaration < Code
 			if node.hasStaticInits
 				staticInits.add(node)
 			if node.hasConstructorInits
-				inits.add(node)
+				if isExtension
+					if node.value
+						node.@name.warn "field with value not supported in class extension"
+				else
+					inits.add(node)
 				
 			if !node.isStatic and restIndex != null
 				node.set(restIndex: restIndex)
@@ -3312,7 +3319,6 @@ export class ClassDeclaration < Code
 		# var namespaced = name != cname
 		var initor = null
 		var sup = superclass
-
 
 		if typeof cname != 'string' and cname
 			cname = cname.c(mark: yes)
@@ -3463,7 +3469,6 @@ export class TagDeclaration < ClassDeclaration
 			if className == 'ImbaElement'
 				cls = runtime:ImbaElement
 			let tagname = TagTypeIdentifier.new(name)
-			
 			
 			let js = "(class \{{body.c}\}).prototype"
 			return util.extend("{cls.c}.prototype",LIT(js)).c
