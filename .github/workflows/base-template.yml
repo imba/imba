@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: imba/imba-base-template
-          path: /tmp/ibt
+          path: imba-base-template
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/checkout@v2
@@ -27,5 +27,5 @@ jobs:
           lerna exec npm install
           npm run bootstrap
           npm link imba
-          npm install --prefix /tmp/ibt
-          npm run build --prefix /tmp/ibt
+          npm install --prefix ./imba-base-template
+          npm run build --prefix ./imba-base-template
