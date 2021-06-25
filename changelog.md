@@ -2,6 +2,8 @@
 * Added `--asset-names` and `--html-names` build options for controlling the generated paths
 * Tweaked format of generated manifest
 * Automatically include Link preload headers when serving through imba
+* Allow all valid RegExp flags in literal regexes
+* Generate class augmentations (`extend class/tag`) in tsc mode
 
 ## 2.0.0-alpha.145
 * Fix bundler crash when parsing html entrypoints with doctype
