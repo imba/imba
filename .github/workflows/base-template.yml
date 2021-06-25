@@ -1,0 +1,20 @@
+name: Build base template
+
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+        npm install -g lerna
+        lerna exec npm install
+        npm run bootstrap
+        npm link imba
+
+        git clone --depth 1 https://github.com/imba/imba-base-template.git /tmp/ibt
+        npm install --prefix /tmp/ibt
+        npm run build --prefix /tmp/ibt
