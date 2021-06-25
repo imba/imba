@@ -7532,9 +7532,10 @@ export class TagAttr < TagPart
 		# if key == 'src' and @tag.@tagName == 'img' and value isa Str
 		#	console.log "IMG ASSET"
 		
-		if isAttr 
-			if STACK.tsc
-				return "{@tag.tvar}.setAttribute('{key}',String({val}))"
+		if STACK.tsc and (isAttr or TAG_GLOBAL_ATTRIBUTES[key])
+			return "{@tag.tvar}.setAttribute('{key}',String({val}))"
+		
+		if isAttr
 			if (STACK.isNode or ns == 'html') and !@asset 
 				# TODO don't compile to setAttribute directly for node
 				# mark compilation as being only for node?
