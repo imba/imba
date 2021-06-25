@@ -1335,9 +1335,12 @@ export class Comment < Meta
 
 	def toJSON
 		helpers.normalizeIndentation("" + @value.@value)
+		
+	def toString
+		@value.@value
 
 	def c o
-		return "" if STACK.option(:comments) == false
+		return "" if STACK.option(:comments) == false or @skip
 
 		var v = @value.@value
 		if o and o:expression or v.match(/\n/) or @value.type == 'HERECOMMENT' # multiline?
@@ -1898,6 +1901,9 @@ export class ClassField < Node
 
 	def isPlain
 		!@decorators and (!@value or @value.isPrimitive)
+		
+	def isMember
+		!option(:static)
 
 	def isLazy
 		no
@@ -3126,12 +3132,20 @@ export class ClassDeclaration < Code
 						sup = @superclass = null
 					else
 						@autosuper = yes
-			
-		if option(:extension) and @name
+
+		if isExtension and @name
 			@name.traverse()
 			if @name isa Identifier
 				@name.resolveVariable()
-		
+			
+			if !isTag
+				@className = @name
+				@name = scope__.register("Extend${@name.value}${oid}",null)
+				if STACK.tsc
+					option(:export,true)
+			else
+				@className = LIT(@name.toClassName)
+			
 		elif @name isa Identifier
 			@name.registerVariable('const')
 			@name.@variable.value = self
@@ -3293,19 +3307,6 @@ export class ClassDeclaration < Code
 		scope.context.value = name
 		scope.context.reference = name
 
-		# should probably also warn about stuff etc
-		if option(:extension)
-			# fields are not allowed in class extensions?
-			@body.@delimiter = ','
-			@body.set(braces: yes)
-			# TODO should rather declare a variable for the class name, and refer to that?
-			return util.extend(LIT(name.c),body).c
-			# return body.c
-
-		# if there are superclasses - add to the body
-		# addMethod('super$set','return super[k] = v')
-
-
 		var o = @options or {}
 		var cname = name isa Access ? name.right : name
 		# var namespaced = name != cname
@@ -3332,6 +3333,9 @@ export class ClassDeclaration < Code
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
 				jshead = "{M 'export',option(:export)} {jshead}"
+				
+		if isExtension and STACK.tsc
+			jsbody = "\n__extends__={@className.c};\n{jsbody}"
 
 		let js = "{jshead} \{{jsbody}\}"
 		
@@ -3339,6 +3343,9 @@ export class ClassDeclaration < Code
 			let exportName = option(:default) ? 'default' : cname
 			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
 			
+		if isExtension and !STACK.tsc
+			js += ";\n" + util.extend(LIT("{@className.c}.prototype"),LIT("{name.c}.prototype")).c + ';\n'
+
 		if option(:global)
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
@@ -3441,19 +3448,25 @@ export class TagDeclaration < ClassDeclaration
 		if STACK.tsc
 			sup = superclass ? superclass.toClassName : LIT('ImbaElement')
 			if option(:extension)
-				className = "Extended${className}"
+				# className = "Extended${className}"
+				let out = "class Extend${className}${oid}"
+				let obody = body.c
+				out = "{out} \{{obody}\}"
+				out = "export {out}" unless @name.@variable
+				return out
 			else
 				body.unshift(LIT('static $$TAG$$\n'))
 
 		elif option(:extension)
-			@body.@delimiter = ','
-			@body.set(braces: yes)
-
-			let cls = CALL(runtime:getTagType,[name,STR(name.toClassName)])
+			let namevar = @name.@variable
+			let cls = namevar or CALL(runtime:getTagType,[name,STR(name.toClassName)])
 			if className == 'ImbaElement'
 				cls = runtime:ImbaElement
 			let tagname = TagTypeIdentifier.new(name)
-			return util.extend(cls,body).c
+			
+			
+			let js = "(class \{{body.c}\}).prototype"
+			return util.extend("{cls.c}.prototype",LIT(js)).c
 		
 		else
 			if name.isNative
@@ -3472,7 +3485,7 @@ export class TagDeclaration < ClassDeclaration
 				jshead = "{M 'export',option(:export)} {jshead}"
 				
 				
-		if anonGlobalTag
+		if anonGlobalTag # only tsc
 			jshead = "globalThis[{M("'{M(name.toNodeName,name)} tag'",name)}] = {M 'class', keyword} extends {M sup, superclass}"
 			jshead = "globalThis.{M className, name} = {M 'class', keyword} extends {M sup, superclass}"
 			# jshead = "globalThis.{className} = {M 'class', keyword} {M className, name} extends {M sup, superclass}"
@@ -3538,6 +3551,26 @@ export class Func < Code
 		let str = "function"
 		str = "async {str}" if option(:async)
 		return str
+		
+	def jsdoc
+		let o = []
+		# console.log 'found desc?',@desc
+		if @desc
+			@desc.@skip = yes
+			o.push(@desc.toString)
+		
+		for item in @params.nodes when item isa Param
+			if item.datatype
+				o.push(item.jsdoc())
+				
+		if option(:inExtension) and @target
+			let name = @context.node.@className
+			if name and STACK.tsc
+				# console.log 'inext',@context.node.@className
+				o.push('@this { this & ' + name.c + ' }')
+
+		let doc = o.join('\n')
+		return (doc ? '/**\n' + doc + '\n*/\n' : '')
 
 	def js s,o
 		body.consume(ImplicitReturn.new) unless option(:noreturn)
@@ -3644,6 +3677,9 @@ export class MethodDeclaration < Func
 
 	def isConstructor
 		String(name) == 'constructor'
+		
+	def isMember
+		!option(:static)
 
 	def toJSON
 		metadata
@@ -3780,7 +3816,8 @@ export class MethodDeclaration < Func
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			out = "{prefix}{M name, null, as: 'field'}({params.c}){code}"
 			
-			out = @params.jsdoc() + out
+			out = jsdoc() + out
+			# out = @params.jsdoc() + out
 
 			return out
 
@@ -4771,7 +4808,7 @@ export class Access < Op
 		unless @startLoc
 			@startLoc = (lft or rgt).startLoc
 
-		if lft isa Super and stack.method and stack.method.option('inExtension')
+		if lft isa Super and stack.method and stack.method.option('inExtension') and false
 			return CALL(
 				OP('.',scope__.context,'super$'),
 				[rgt isa Identifier ? rgt.toStr : rgt]
@@ -10378,7 +10415,7 @@ export class Util.Extend < Util
 			// @ts-ignore
 			var descriptors = Object.getOwnPropertyDescriptors(ext);
 			// @ts-ignore
-			Object.defineProperties(target.prototype,descriptors);
+			Object.defineProperties(target,descriptors);
 			return target;
 		};
 		'''
@@ -11750,6 +11787,8 @@ export class Super < Node
 		if var m = STACK.method
 			m.set(supr: {node: STACK.blockpart, block: STACK.block, real: self})
 			m.set(injectInitAfter: STACK.blockpart)
+			
+		# warn if virtual!
 		self
 
 	def replaceWithInitor
