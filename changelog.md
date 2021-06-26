@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.147
 * Fix regression resulting in nested assets being rebuilt in incorrect folder
 
 ## 2.0.0-alpha.146
