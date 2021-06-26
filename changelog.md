@@ -1,3 +1,6 @@
+## unreleased
+* Fix regression resulting in nested assets being rebuilt in incorrect folder
+
 ## 2.0.0-alpha.146
 * Added `--asset-names` and `--html-names` build options for controlling the generated paths
 * Tweaked format of generated manifest

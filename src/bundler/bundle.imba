@@ -738,14 +738,12 @@ export default class Bundle < Component
 		if asset.public
 			asset.path = path
 			asset.url = url
+			if pubdir != '.'
+				asset.path = "{pubdir}/{asset.path}"
 
 		# now replace link to sourcemap as well
 		if asset.type == 'js' and asset.map
-			let orig = np.basename(asset.originalPath) + '.map'
-			let replaced = np.basename(asset.path) + '.map'
-			
 			let replace = /\/\/# sourceMappingURL=[\/\w\.\-\%]+\.map/
-			# console.log "replacing sourcemap",orig,replaced
 			asset.#contents = asset.#contents.replace(replace,"//# sourceMappingURL={asset.url}.map")
 			
 			# finalize the map inline?
@@ -1261,9 +1259,6 @@ export default class Bundle < Component
 				item.path = htmlPaths[i].join('/')
 
 		for item in assets
-			if item.public and pubdir != '.'
-				item.path = "{pubdir}/{item.path}"
-
 			manifest.outputs[item.path] = item
 
 		manifest.hash = createHash(assets.map(do $1.hash or $1.path).sort!.join('-'))
