@@ -1,0 +1,31 @@
+name: Build base template
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - name: Clone base template
+        uses: actions/checkout@v2
+        with:
+          repository: imba/imba-base-template
+          path: imba-base-template
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/checkout@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: link and build
+        run: |
+          npm install -g lerna
+          lerna exec npm install
+          npm run bootstrap
+          npm link imba
+          npm install --prefix ./imba-base-template
+          npm run build --prefix ./imba-base-template
