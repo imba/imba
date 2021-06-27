@@ -45,6 +45,9 @@ export var ansi =
 ansi:warn = ansi:yellow
 ansi:error = ansi:red
 
+var GreekLetters = "αβγδεζηθικλμνξοπρστυφχψω"
+
+
 export def brace str
 	var lines = str.match(/\n/)
 	# what about indentation?
@@ -106,18 +109,28 @@ export def quote str
 export def singlequote str
 	"'" + str + "'"
 
-export def symbolize str
-	str = String(str)
-	var end = str.charAt(str:length - 1)
+export def isValidIdentifier str
+	!(/[?-\s]/).test(str) and str[0] != '#'
 
-	if end == '='
-		str = 'set' + str[0].toUpperCase + str.slice(1,-1)
+export def toValidIdentifier str
+	str.replace(/-/g,'φ').replace(/\?/g,'ψ')
 	
-	elif end == '?'
+export def fromValidIdentifier str
+	str.replace(/φ/g,'-').replace(/ψ/g,'?')
+
+export def isSystemIdentifier str
+	GreekLetters.indexOf(str[0]) >= 0
+
+export def symbolize str, stack
+	str = String(str)
+
+	if stack and stack.tsc or true
+		return str
+		
+	var end = str.charAt(str:length - 1)
+	
+	if end == '?'
 		str = 'is' + str[0].toUpperCase + str.slice(1,-1)
-	
-	elif end == '!'
-		str = 'do' + str[0].toUpperCase + str.slice(1,-1)
 
 	if str.indexOf("-") >= 0
 		str = str.replace(/([\-\s])(\w)/g) do |m,v,l| l.toUpperCase

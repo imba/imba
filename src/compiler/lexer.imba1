@@ -437,7 +437,7 @@ export class Lexer
 			for token in @tokens
 				if token.@type == 'SYMBOLID'
 					token.@type = 'IDENTIFIER'
-					token.@value = token.@value.replace(/#/g,'_$SYM$_')
+					# token.@value = token.@value.replace(/#/g,'_$SYM$_')
 
 		return @tokens
 

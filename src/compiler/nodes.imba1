@@ -400,7 +400,7 @@ def AST.blk obj
 
 def AST.sym obj
 	# console.log "sym {obj}"
-	helpers.symbolize(String(obj))
+	helpers.symbolize(String(obj),STACK)
 
 def AST.cary ary,params = null
 	ary.map do |v|
@@ -1933,11 +1933,12 @@ export class ClassField < Node
 		if up isa ClassBody
 			# return if isPlain
 			let prefix = isStatic ? "{M('static',option(:static))} " : ''
-			let name = name isa IdentifierExpression ? name.asObjectKey : name.c
+			let name = name isa IdentifierExpression ? name.asObjectKey : name.c(as: 'field')
 
 			if STACK.tsc
 				out = "{prefix}{M(name,@name)}" # the value scope?
-				out += " = {value.c}" if value
+				out += " = {value.c};" if value
+
 				let typ = datatype
 				if typ
 					out = "{typ.c} {out}"
@@ -1962,11 +1963,11 @@ export class ClassField < Node
 			# let watcher = watchBody
 			# Fix indent??
 			let key = name
-			if name isa Identifier
-				key = name.toStr
+			# if name isa Identifier
+			#	key = name.toStr
 
 			let tpl = """
-			Object.defineProperty(this.prototype,{key.c},\{
+			Object.defineProperty(this.prototype,{key.c(as: 'value')},\{
 				enumerable: true,
 				set{self.setter.c(keyword: '')},
 				get{self.getter.c(keyword: '')}
@@ -3595,7 +3596,7 @@ export class Func < Code
 		var name = typeof @name == 'string' ? @name : @name.c
 		name = name ? ' ' + name.replace(/\./g,'_') : ''
 		var keyword = o and o:keyword != undefined ? o:keyword : funcKeyword
-		var out = "{M(keyword,option('def') or option('keyword'))}{name}({params.c}) " + code
+		var out = "{M(keyword,option('def') or option('keyword'))}{helpers.toValidIdentifier(name)}({params.c}) " + code
 		# out = "async {out}" if option(:async)
 		out = "({out})()" if option(:eval)
 		return out
@@ -3808,7 +3809,7 @@ export class MethodDeclaration < Func
 		var name = typeof @name == 'string' ? @name : @name.c(as: 'field')
 
 		var out = ""
-		var fname = AST.sym(self.name)
+		
 
 		if option(:inClassBody) or option(:inObject)
 			# what if this is async?
@@ -3830,6 +3831,7 @@ export class MethodDeclaration < Func
 
 		var func = "({params.c})" + code
 		var ctx = context
+		var fname = helpers.toValidIdentifier(AST.sym(self.name))
 
 		if target
 			# TODO make this work with SymbolIdentifier
@@ -4419,7 +4421,7 @@ export class ObjAttr < Node
 		elif key isa Str and key.isValidIdentifier
 			kjs = key.raw
 		else
-			kjs = key.c
+			kjs = key.c(as: 'key')
 
 		# var k = key.isReserved ? "'{key.c}'" : key.c
 
@@ -5606,16 +5608,14 @@ export class Identifier < Node
 		[startLoc,endLoc]
 
 	def isValidIdentifier
-		yes
+		# !STACK.tsc or 
+		helpers.isValidIdentifier(symbol)
 
 	def isReserved
 		@value:reserved or RESERVED_TEST.test(String(@value))
 		
 	def isPredicate
 		(/\?$/).test(String(@value))
-	
-	def isDangerous
-		(/\!$/).test(String(@value))
 		
 	def isCapitalized
 		(/^[A-Z]/).test(String(@value))
@@ -5645,6 +5645,18 @@ export class Identifier < Node
 		@variable ? @variable.c() : symbol
 
 	def c o
+		# console.log 'compiling identifier as',o and o:as,symbol
+		if o
+			if o:as == 'value'
+				# console.log 'compiling identifier as',o:as,symbol
+				return "'{symbol}'"
+
+			if o:as == 'field' and !isValidIdentifier
+				return M("['{symbol}']",@token or @value)
+				
+			if o:as == 'key' and !isValidIdentifier
+				return "'{symbol}'"
+
 		let up = STACK.current
 		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
 		let out = js
@@ -7374,6 +7386,9 @@ export class TagPart < Node
 
 	def ref
 		"c$.{oid}"
+		
+	def tagRef
+		@tagRef or @tag.ref
 
 export class TagId < TagPart
 
@@ -7489,10 +7504,10 @@ export class TagAttr < TagPart
 		@mods
 
 	def nameIdentifier
-		@nameIdentifier ||= Identifier.new(helpers.dashToCamelCase(key))
+		@nameIdentifier ||= Identifier.new(key)
 
 	def modsIdentifier
-		@modsIdentifier ||= Identifier.new(helpers.dashToCamelCase(key) + '__')
+		@modsIdentifier ||= Identifier.new(key + '__')
 
 	def js o
 		# let mods = AST.compileRaw(@mods or null)
@@ -7501,7 +7516,8 @@ export class TagAttr < TagPart
 		let op = M('=',option(:op))
 		let isAttr = (key.match(/^(aria-|data-)/) or key == 'style') or (@tag and @tag.isSVG) or ns == 'html'
 		let tagName = @tag and @tag.@tagName
-
+		let tref = @tag.ref
+		
 		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'style' or tagName == 'img' or tagName == 'script' or tagName == 'svg'))
 
 		if isAsset and false
@@ -7517,7 +7533,7 @@ export class TagAttr < TagPart
 			if path and !path.match(/^(\/|https?\:\/\/)/)
 				if STACK.tsc
 					# val = CALL(LIT('require'),[value]).c
-					return "{@tag.tvar}.setAttribute('{key}',String({val}))"
+					return "{@tag.ref}.setAttribute('{key}',String({val}))"
 				else
 					# need to register asset during visit instead
 					@asset = STACK.root.registerAsset(path,kind,self)
@@ -7533,14 +7549,14 @@ export class TagAttr < TagPart
 		#	console.log "IMG ASSET"
 		
 		if STACK.tsc and (isAttr or TAG_GLOBAL_ATTRIBUTES[key])
-			return "{@tag.tvar}.setAttribute('{key}',String({val}))"
+			return "{tref}.setAttribute('{key}',String({val}))"
 		
 		if isAttr
 			if (STACK.isNode or ns == 'html') and !@asset 
 				# TODO don't compile to setAttribute directly for node
 				# mark compilation as being only for node?
 				STACK.meta:universal = no
-				return "setAttribute('{key}',{val})"
+				return "{tref}.setAttribute('{key}',{val})"
 
 		if STACK.tsc
 			# how do we remove attribute then?
@@ -7549,7 +7565,8 @@ export class TagAttr < TagPart
 				# path = 'richValue'
 				val = '/**@type {any}*/(' + val + ')'
 
-			let access = "{@tag.tvar}.{M(path,@name)}"
+			# let access = "{@tag.tvar}.{M(path,@name)}"
+			let access = OP('.',LIT(tref),nameIdentifier).c
 
 			return "{M(access,@name)}{op}{@autovalue ? M('true',@value) : val}"
 			
@@ -7564,7 +7581,7 @@ export class TagAttr < TagPart
 			key = 'richValue'
 
 		if ns == 'css'
-			"css$('{key}',{val})"
+			"{tref}.css$('{key}',{val})"
 		elif ns == 'bind'
 			let path = PATHIFY(value)
 
@@ -7576,7 +7593,7 @@ export class TagAttr < TagPart
 			elif path isa Array
 				bval = "[{val[0].c(o)},{val[1].c(o)}]"
 
-			"bind$('{key}',{bval})"
+			"{tref}.bind$('{key}',{bval})"
 		elif key.indexOf('--') == 0
 			let pars = ["'{key}'",val]
 			let u = option(:unit)
@@ -7593,20 +7610,20 @@ export class TagAttr < TagPart
 				pars.push(term:param) # what if this is also a placeholder?
 				# console.log term:param
 
-			"css$var({AST.cary(pars,as: 'js').join(',')})"
+			"{tref}.css$var({AST.cary(pars,as: 'js').join(',')})"
 
 		elif key.indexOf("aria-") == 0 or (@tag and @tag.isSVG) or key == 'for' or TAG_GLOBAL_ATTRIBUTES[key]
 			if ns
-				"setns$('{ns}','{key}',{val})"
+				"{tref}.setns$('{ns}','{key}',{val})"
 			else
-				"set$('{key}',{val})"
+				"{tref}.set$('{key}',{val})"
 			
 		elif key.indexOf("data-") == 0
 			# "set('{key}',{val})"
-			"setAttribute('{key}',{val})"
+			"{tref}.setAttribute('{key}',{val})"
 			# "dataset.{key.slice(5)}{op}{val}"
 		else
-			"{M(helpers.dashToCamelCase(key),@name)}{op}{val}"
+			OP('.',LIT(tref),key).c + "{op}{val}"
 
 export class TagStyleAttr < TagAttr
 
@@ -7854,13 +7871,13 @@ export class TagHandler < TagPart
 		
 	def js o
 		if STACK.tsc
-			let out = "{@tag.tvar}.addEventListener({quoted},(e)=>" + '{\n'
+			let out = "{tagRef}.addEventListener({quoted},(e)=>" + '{\n'
 			for mod in modifiers
 				out += mod.c + ';\n'
 			out += '})'
 			return out
 			return "[{quoted},{modifiers.c}]"
-		return "on$({quoted},{modifiers.c},{scope__.context.c})"
+		return "{tagRef}.on$({quoted},{modifiers.c},{scope__.context.c})"
 
 class TagHandlerCallback < ValueNode
 	
@@ -8037,6 +8054,7 @@ class TagLike < Node
 		@consumed:length > 0
 
 	def tagvar name
+		name = constants.SYSVAR_PREFIX[name] or name
 		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: no,alias:"{tagvarprefix}{name}"},"{tagvarprefix}{name}")
 
 	def tagvarprefix
@@ -8365,6 +8383,7 @@ export class Tag < TagLike
 		@cssflag ||= "{sourceId}"
 
 	def tagvarprefix
+		return ''
 		@tagvarprefix ||= (type and type:toVarPrefix ? type.toVarPrefix : (isSelf ? 'cmp' : 'tag'))
 
 	def traverse 
@@ -8675,6 +8694,7 @@ export class Tag < TagLike
 				add "{type.c}" # this is the string
 
 			for item in @attributes
+				@ref = tvar
 				if item isa TagAttr or item isa TagHandler or item isa TagFlag
 					add item.c(o) # M("{tvar}.{item.c(o)}",item)
 					# add M("{tvar}.{item.c(o)}",item)
@@ -8954,9 +8974,9 @@ export class Tag < TagLike
 			
 			if !isReactive
 				# buggy
-				add "{tvar}.{item.c(o)}"
+				add item.c(o) # "{tvar}.{item.c(o)}"
 			elif item.isStatic
-				add "{bvar} || ({tvar}.{item.c(o)})"
+				add "{bvar} || ({item.c(o)})"
 			else
 				let iref = "{cvar}[{item.osym}]"
 
@@ -9027,16 +9047,16 @@ export class Tag < TagLike
 					item.option(svg: true) if isSVG
 					let val = item.value
 					if item.valueIsStatic
-						add "{bvar} || ({ref}.{M(item.js(o),item)})"
+						add "{bvar} || ({M(item.js(o),item)})"
 					elif val isa Func
-						add "({ref}.{item.js(o)})"
+						add "({item.js(o)})"
 					elif val.@variable
 						let vc = val.c(o)
 						item.value = LIT("{iref}={vc}")
-						add "({vc}==={iref} || ({ref}.{M item.js(o),item}))"
+						add "({vc}==={iref} || ({M item.js(o),item}))"
 					else
 						item.value = LIT("{iref}={vvar}")
-						add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{M item.js(o),item}))"
+						add "({vvar}={val.c(o)},{vvar}==={iref} || ({M item.js(o),item}))"
 
 		if flagsToConcat:length or (isSelf && @className)
 			flagsToConcat.unshift(@className) if @className
@@ -9307,10 +9327,12 @@ export class ESMSpecifier < Node
 
 
 	def js
-		if @alias
-			"{@name.c()} as {@alias.c()}"
+		let n = helpers.toValidIdentifier(@name.c)
+		let a = @alias and helpers.toValidIdentifier(@alias.c)
+		if a
+			"{n} as {a}"
 		else
-			"{@name.c()}"
+			"{n}"
 
 
 export class ImportSpecifier < ESMSpecifier
@@ -9861,7 +9883,7 @@ export class StyleDeclaration < StyleNode
 		elif alias and alias != name
 			@property = @property.clone(alias)
 
-		let method = helpers.symbolize(alias or name)
+		let method = AST.sym(alias or name)
 		
 		@expr.traverse(decl: self, property: @property) if @expr
 
@@ -10369,6 +10391,17 @@ var HELPERS = {
 	unit: '''(value,unit){
 		return value + unit;
 	};'''
+	
+	importStar: '''(imports){
+		let keys = Object.keys(imports);
+		let out = {};
+
+		for(let key of keys){
+			
+		}
+		Object.defineProperties(el,Object.getOwnPropertyDescriptors(cls.prototype));
+		return el;
+	};'''
 
 	extendTag: '''(el,cls){
 		Object.defineProperties(el,Object.getOwnPropertyDescriptors(cls.prototype));
@@ -10699,7 +10732,7 @@ export class Scope
 		if o:system
 			return (o:varclass or SystemVariable).new(self,name,decl,o)
 
-		name = helpers.symbolize(name)
+		name = AST.sym(name)
 
 		# also look at outer scopes if this is not closed?
 		var existing = @varmap.hasOwnProperty(name) && @varmap[name]
@@ -10777,7 +10810,7 @@ export class Scope
 	def lookup name
 		@lookups ||= {}
 		var ret = null
-		name = helpers.symbolize(name)
+		name = AST.sym(name)
 		if @varmap.hasOwnProperty(name)
 			ret = @varmap[name]
 		else
@@ -10983,7 +11016,7 @@ export class RootScope < Scope
 		return asset
 
 	def lookup name
-		name = helpers.symbolize(name)
+		name = AST.sym(name)
 		@varmap[name] if @varmap.hasOwnProperty(name)
 
 	def visit
@@ -11125,7 +11158,7 @@ export class IsolatedFunctionScope < FunctionScope
 	def lookup name
 		@lookups ||= {}
 		var ret = null
-		name = helpers.symbolize(name)
+		name = AST.sym(name)
 		if @varmap.hasOwnProperty(name)
 			ret = @varmap[name]
 		else
@@ -11398,7 +11431,7 @@ export class Variable < Node
 		else
 			resolve unless @resolved
 			var v = (alias or name)
-			@c = typeof v == 'string' ? v : v.c
+			@c = typeof v == 'string' ? helpers.toValidIdentifier(v) : v.c(as: 'variable')
 			# allow certain reserved words
 			# should warn on others though (!!!)
 			# if @c == 'new'
@@ -11491,83 +11524,16 @@ export class SystemVariable < Variable
 		var alt = null
 		var node = null
 
-
-
 		@name = null
 
-		var scope = self.scope
+		let name = @name or o:alias or constants.SYSVAR_PREFIX.ANY
+		name = "_{name}" if (/\d/).test(name[0])
+		let nr = STACK.incr(name)
+		# if sysvar starts with a greek character (used for sysvars) - dont add dollar-sign
 		
-		if o:temporary and !o:alias
-			let i = 0
-			@name = '$' + i
-			# should also lookup other v
-			while scope.lookup(@name)
-				@name = "${i += 1}"
-		
-		# unless pool
-		if !o:alias or true
-			let name = @name or o:alias or 'sys'
-			name = "_{name}" if (/\d/).test(name[0])
-			let nr = STACK.incr(name)
-			@name = "{name}${nr}"
-			return self
-
-
-		if typ == 'tag'
-			let i = 0
-			while !@name
-				var alt = "t{i++}"
-				@name = alt unless scope.lookup(alt)
-
-		elif typ == 'iter'
-			names = ['ary__','ary_','coll','array','items','ary']
-
-		elif typ == 'val'
-			names = ['v_']
-
-		elif typ == 'arguments'
-			names = ['$_','$0']
-
-		elif typ == 'counter'
-			names = ['i__','i_','k','j','i']
-
-		elif typ == 'len'
-			names = ['len__','len_','len']
-
-		elif typ == 'list'
-			names = ['tmplist_','tmplist','tmp']
-
-		if alias
-			names.push(alias)
-
-		while !@name && alt = names.pop
-			let foundAlt = scope.lookup('$' + alt)
-			# check if higher level?
-			if !foundAlt # or (foundAlt.scope != scope and type == 'let')
-				@name = '$' + alt # unless scope.lookup(alt)
-
-		if !@name and @declarator
-			if node = declarator.node
-				if var nodealias = node.alias
-					names.push(nodealias)
-
-		while !@name && alt = names.pop
-			@name = '$' + alt unless scope.lookup('$' + alt)
-
-		# go through alias proxies
-		if !@name
-			let i = 0
-			@name = '$' + (alias or '') + i
-			# it is the closure that we should use
-			# 
-			while scope.lookup(@name)
-				@name = "${alias or ''}{i += 1}"
-
-		scope.varmap[@name] = self
-
-		if type != 'let' or @virtual
-			closure.varmap[@name] = self
-		self
+		@name = helpers.isSystemIdentifier(name) ? "{name}{nr}" : "{name}φ{nr}"
+		# console.log "trying to set name??",name[0],name,@name
+		return self
 
 	def name
 		resolve
