@@ -10390,16 +10390,6 @@ var HELPERS = {
 	unit: '''(value,unit){
 		return value + unit;
 	};'''
-	
-	importStar: '''(imports){
-		let desc = Object.getOwnPropertyDescriptors(imports);
-		let out = {}
-		for(var name in desc){
-			let key = name.replace(/η/gu,"-").replace(/θ/gu,"?")
-			Object.defineProperty(out,key,desc[name]);
-		}
-		return out;
-	};'''
 
 	extendTag: '''(el,cls){
 		Object.defineProperties(el,Object.getOwnPropertyDescriptors(cls.prototype));
