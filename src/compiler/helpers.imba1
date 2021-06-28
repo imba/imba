@@ -113,16 +113,20 @@ export def isValidIdentifier str
 	!(/[?-\s]/).test(str) and str[0] != '#'
 
 export def toValidIdentifier str
-	str.replace(/-/g,'φ').replace(/\?/g,'ψ')
+	str.replace(/[-\?]/g,'$') # .replace(/\?/g,'θ')
+	# str.replace(/-/g,'η').replace(/\?/g,'θ')
 	
 export def fromValidIdentifier str
-	str.replace(/φ/g,'-').replace(/ψ/g,'?')
+	str[0] + str.slice(1).replace(/\$$/,'?').replace(/\$/g,'-')
+	# str.replace(/η/g,'-').replace(/θ/g,'?')
 
 export def isSystemIdentifier str
 	GreekLetters.indexOf(str[0]) >= 0
 
 export def symbolize str, stack
 	str = String(str)
+	
+	return toValidIdentifier(str)
 
 	if stack and stack.tsc or true
 		return str

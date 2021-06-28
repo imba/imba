@@ -349,8 +349,6 @@ var BLOCK = do
 var WHILE = do |test,code|
 	While.new(test).addBody(code)
 
-
-
 export var SPLAT = do |value|
 	Splat.new(value)
 	# if value isa Assign
@@ -7393,7 +7391,7 @@ export class TagPart < Node
 export class TagId < TagPart
 
 	def js
-		"id={quoted}"
+		"{tagRef}.id={quoted}"
 
 export class TagFlag < TagPart
 	prop condition
@@ -7422,7 +7420,7 @@ export class TagFlag < TagPart
 			return condition ? "[{val},{condition.c}]" : "[{val}]"
 		# NOT used anymore
 		let val = value.c(as: 'string')
-		condition ? "flags.toggle({val},{condition.c})" : "classList.add({val})"
+		condition ? "{tagRef}.flags.toggle({val},{condition.c})" : "{tagRef}.classList.add({val})"
 	
 export class TagSep < TagPart
 	
@@ -9314,6 +9312,7 @@ export class ESMSpecifier < Node
 		@cname = helpers.clearLocationMarkers(@name.c())
 		@key = @alias ? helpers.clearLocationMarkers(@alias.c()) : @cname
 		
+		
 		# only register variable for imports?
 		
 		if @exporter
@@ -9463,7 +9462,7 @@ export class ImportDeclaration < ESMDeclaration
 		
 		for item in @specifiers
 			item?.traverse()
-		
+
 		scope__.@lastImport = self
 		@up = up
 		return
@@ -10393,14 +10392,13 @@ var HELPERS = {
 	};'''
 	
 	importStar: '''(imports){
-		let keys = Object.keys(imports);
-		let out = {};
-
-		for(let key of keys){
-			
+		let desc = Object.getOwnPropertyDescriptors(imports);
+		let out = {}
+		for(var name in desc){
+			let key = name.replace(/η/gu,"-").replace(/θ/gu,"?")
+			Object.defineProperty(out,key,desc[name]);
 		}
-		Object.defineProperties(el,Object.getOwnPropertyDescriptors(cls.prototype));
-		return el;
+		return out;
 	};'''
 
 	extendTag: '''(el,cls){
@@ -10445,14 +10443,14 @@ export class Util.Helper < Util
 
 for own k,v of HELPERS
 	Util[k] = do |*args|
-		let helper = 'function ' + k + '$' + v
-		Util.Helper.new(args).set(name: k + '$', helper: helper)
+		let helper = 'function ' + k + '$__' + v
+		Util.Helper.new(args).set(name: k + '$__', helper: helper)
 
 
 export class Util.Extend < Util
 	def helper
 		'''
-		function extend$(target,ext){
+		function extend$__(target,ext){
 			// @ts-ignore
 			var descriptors = Object.getOwnPropertyDescriptors(ext);
 			// @ts-ignore
@@ -10464,13 +10462,13 @@ export class Util.Extend < Util
 	def js o
 		# When this is triggered, we need to add it to the top of file?
 		scope__.root.helper(self,helper)
-		"extend$({AST.compact(AST.cary(args)).join(',')})"
+		"extend$__({AST.compact(AST.cary(args)).join(',')})"
 
 export class Util.IndexOf < Util
 
 	def helper
 		'''
-		function idx$(a,b){
+		function idx$__(a,b){
 			return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
 		};
 		'''
@@ -10478,14 +10476,14 @@ export class Util.IndexOf < Util
 	def js o
 		scope__.root.helper(self,helper)
 		# When this is triggered, we need to add it to the top of file?
-		"idx$({args.map(|v| v.c ).join(',')})"
+		"idx$__({args.map(|v| v.c ).join(',')})"
 
 export class Util.Promisify < Util
 
 	def helper
 		# should also check if it is a real promise
 		'''
-		function promise$(a){
+		function promise$__(a){
 			if(a instanceof Array){
 				console.warn("await (Array) is deprecated - use await Promise.all(Array)");
 				return Promise.all(a);
@@ -10497,19 +10495,19 @@ export class Util.Promisify < Util
 
 	def js o
 		scope__.root.helper(self,helper)
-		"promise$({args.map(|v| v.c).join(',')})"
+		"promise$__({args.map(|v| v.c).join(',')})"
 
 export class Util.Iterable < Util
 
 	def helper
 		# now we want to allow null values as well - just return as empty collection
 		# should be the same for for own of I guess
-		"function iter$(a)\{ let v; return a ? ((v=a.toIterable) ? v.call(a) : a) : []; \};"
+		"function iter$__(a)\{ let v; return a ? ((v=a.toIterable) ? v.call(a) : a) : []; \};"
 
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
 		scope__.root.helper(self,helper)
-		return "iter$({args[0].c})"
+		return "iter$__({args[0].c})"
 
 export class Util.IsFunction < Util
 
@@ -11596,7 +11594,10 @@ export class ImportProxy < Variable
 		@head:c = self:head.bind(self)
 		scope.@head.push(@head)
 		var getter = do |t,p,r| self.access(p)
-		@proxy = Proxy.new(self,{get: getter })
+		@proxy_ = Proxy.new(self,{get: getter })
+		
+	def proxy
+		@proxy_
 
 	def touch key
 		unless @touched[key]
@@ -11642,6 +11643,14 @@ export class ImportProxy < Variable
 			return LIT("{M(@globalName,ctx)}.{C(key)}")
 		let raw = C(key,mark: false)
 		@exports[raw] ||= LIT("{@name}_{raw}")
+		
+	def c
+		if !@importAll
+			@importAll = yes
+			# console.log "import all",STACK.current
+			# STACK.current.warn("Referencing imba directly disables efficient tree-shaking")
+		super
+
 
 export class ImbaRuntime < ImportProxy
 
