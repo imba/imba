@@ -324,7 +324,7 @@ export const MAP = {
 	svg_video:66
 	svg_view:137
 }
-var keys = Object.keys(TYPES)
+let keys = Object.keys(TYPES)
 for typ,i in keys
 	let item = TYPES[typ]
 	item.name = typ + 'Element'
