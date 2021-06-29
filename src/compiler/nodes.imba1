@@ -9882,7 +9882,7 @@ export class StyleDeclaration < StyleNode
 		elif alias and alias != name
 			@property = @property.clone(alias)
 
-		let method = AST.sym(alias or name)
+		let method = String(alias or name).replace(/-/g,'_')
 		
 		@expr.traverse(decl: self, property: @property) if @expr
 
