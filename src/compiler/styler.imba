@@ -437,16 +437,16 @@ export class StyleTheme
 
 		return value
 	
-	def padding-x [l,r=l]
+	def padding_x [l,r=l]
 		{'padding-left': l, 'padding-right': r}
 	
-	def padding-y [t,b=t]
+	def padding_y [t,b=t]
 		{'padding-top': t, 'padding-bottom': b}
 		
-	def margin-x [l,r=l]
+	def margin_x [l,r=l]
 		{'margin-left': l, 'margin-right': r}
 	
-	def margin-y [t,b=t]
+	def margin_y [t,b=t]
 		{'margin-top': t, 'margin-bottom': b}
 
 		
@@ -496,13 +496,13 @@ export class StyleTheme
 
 		return {animation: params}
 
-	def animation-timing-function ...params
+	def animation_timing_function ...params
 		for param,i in params
 			let fb = $varFallback('ease',param)
 			params[i] = fb if fb
 		return params
 
-	def animation-name ...params
+	def animation_name ...params
 		for param,i in params
 			let fb = $varFallback('animation',param)
 			if fb
@@ -609,29 +609,29 @@ export class StyleTheme
 			yes
 		return
 		
-	def font-family params
+	def font_family params
 		if let m = $varFallback('font',params)
 			return m
 		return
 		
-	def text-shadow params
+	def text_shadow params
 		if let m = $varFallback('text-shadow',params)
 			return m
 		return
 
-	def grid-template params
+	def grid_template params
 		for param,i in params
 			if isNumber(param)
 				param._resolvedValue = "repeat({param._value},1fr)"
 		return
 
-	def grid-template-columns params
-		grid-template(params)
+	def grid_template_columns params
+		grid_template(params)
 
-	def grid-template-rows params
-		grid-template(params)
+	def grid_template_rows params
+		grid_template(params)
 
-	def font-size [v]
+	def font_size [v]
 		let sizes = options.variants.fontSize
 		let raw = String(v)
 		let size = v
@@ -667,7 +667,7 @@ export class StyleTheme
 		
 		return out
 		
-	def line-height [v]
+	def line_height [v]
 		let uvar = v
 		# TODO what if it has u unit?
 		if v._number and !v._unit
@@ -678,7 +678,7 @@ export class StyleTheme
 			'--u_lh': uvar
 		}
 		
-	def text-decoration params
+	def text_decoration params
 		for param,i in params
 			let str = String(param)
 			if str == 'u'
@@ -695,49 +695,49 @@ export class StyleTheme
 			return [['1px','solid',params[0]]]
 		return
 
-	def border-left params
+	def border_left params
 		return border(params)
 		
-	def border-right params
+	def border_right params
 		return border(params)
 	
-	def border-top params
+	def border_top params
 		return border(params)
 		
-	def border-bottom params
+	def border_bottom params
 		return border(params)
 		
-	def border-x params
+	def border_x params
 		{'border-left': border(params) or params, 'border-right': border(params) or params}
 		
-	def border-y params
+	def border_y params
 		{'border-top': border(params) or params, 'border-bottom': border(params) or params}
 		
-	def border-x-width [l,r=l]
+	def border_x_width [l,r=l]
 		{blw: l, brw: r}
 		
-	def border-y-width [t,b=t]
+	def border_y_width [t,b=t]
 		{btw: t, bbw: b}
 		
-	def border-x-style [l,r=l]
+	def border_x_style [l,r=l]
 		{bls: l, brs: r}
 		
-	def border-y-style [t,b=t]
+	def border_y_style [t,b=t]
 		{bts: t, bbs: b}
 	
-	def border-x-color [l,r=l]
+	def border_x_color [l,r=l]
 		{blc: l, brc: r}
 		
-	def border-y-color [t,b=t]
+	def border_y_color [t,b=t]
 		{btc: t, bbc: b}
 	
 	def gap [v]
 		{'gap': v, '--u_rg': v,'--u_cg': v}
 			
-	def row-gap [v]
+	def row_gap [v]
 		{'row-gap': v, '--u_rg': v}
 
-	def column-gap [v]
+	def column_gap [v]
 		{'column-gap': v, '--u_cg': v}
 
 	# def shadow ...params
