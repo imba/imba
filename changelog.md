@@ -1,3 +1,14 @@
+## unreleased
+* Allow declaring return type via `def method\returntype arg1, ...`
+* Fix crash when inlining sourcemaps on node 16+ (#567)
+* Overhaul `extend class` code generation for better tooling support
+* BREAKING: Compile predicate identifiers `name?` to unicode `nameΦ` and 
+  dashed identifiers `one-two-three` to `oneΞtwoΞthree` to avoid potential 
+  naming collisions and improve tooling support. If you previously relied on 
+  dashed identifiers converting to camelCase while interacting with an 
+  external library - this will no longer work. Ie `window.add-event-listener` 
+  will not work since `window` does not have an `addΞeventΞlistener` property.
+
 ## 2.0.0-alpha.147
 * Fix regression resulting in nested assets being rebuilt in incorrect folder
 
