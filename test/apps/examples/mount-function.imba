@@ -1,4 +1,4 @@
-var counter = 0
+let counter = 0
 
 def incr amount
 	counter += amount
