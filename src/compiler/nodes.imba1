@@ -6021,6 +6021,7 @@ export class TagTypeIdentifier < Identifier
 		elif isClass
 			return @str
 		elif STACK.tsc
+			return "Γ{helpers.toValidIdentifier(@str)}"
 			return helpers.pascalCase(@str + '-custom-element')
 			return @str.replace(/\-/g,'_') + '$$TAG$$'
 		else
