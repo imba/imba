@@ -2819,6 +2819,8 @@ export class VarDeclaration < Node
 	def js
 		let out = ''
 		let kind = kind
+		let typ = (datatype or (@left and @left.datatype))
+
 
 		if STACK.tsc and @variables:length > 1 and @variables.some(do $1.vartype)
 			kind = 'let' # or var?
@@ -2842,7 +2844,7 @@ export class VarDeclaration < Node
 			else
 				out = M('export',option(:export)) + " {out}"
 			
-		if let typ = (datatype or (@left and @left.datatype))
+		if typ
 			out = typ.c() + '\n' + out
 
 		return out
@@ -3574,6 +3576,9 @@ export class Func < Code
 			if name and STACK.tsc
 				# console.log 'inext',@context.node.@className
 				o.push('@this { this & ' + name.c + ' }')
+				
+		elif option(:jsdocthis)
+			o.push('@this { ' + option(:jsdocthis) + ' }')
 
 		let doc = o.join('\n')
 		return (doc ? '/**\n' + doc + '\n*/\n' : '')
@@ -3842,6 +3847,9 @@ export class MethodDeclaration < Func
 			elif isSetter
 				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
 			else
+				if STACK.tsc
+					set(jsdocthis: target.c)
+
 				let k = OP('.',target,@name)
 				out = "{k.c} = {funcKeyword} {func}"
 
@@ -3861,6 +3869,8 @@ export class MethodDeclaration < Func
 		
 		if option(:return)
 			out = "return {out}"
+		
+		out = jsdoc() + out
 
 		return out
 
@@ -5095,7 +5105,8 @@ export class VarOrAccess < ValueNode
 		let val = @variable or @value
 		if @variable and @variable.declarator != self
 			if STACK.tsc and val.@typedAlias
-				return val.@typedAlias.c
+				let out = val.@typedAlias.c
+				return out
 			# if @variable.c == 'val'
 			#	# not when we are part of a setter though
 			#	console.log 'compile varoraccess variable',@variable
@@ -6828,8 +6839,9 @@ export class For < Loop
 			vars:len = scope.declare('len',util.len(vars:source),type: 'let', pool: 'len', system: yes)
 			
 			if o:name
-				let decl = VarDeclaration.new(o:name,OP('.',vars:source,vars:index),'let')
-				# console.log "NAME {o:name} {o:name:constructor} {o:name.datatype}"
+				let op = OP('.',vars:source,vars:index).set(datatype: o:name.datatype)
+				o:name.set(datatype: undefined)
+				let decl = VarDeclaration.new(o:name,op,'let')
 				body.unshift(decl,BR)
 				
 			vars:index.addReference(oi) if oi
@@ -7001,7 +7013,7 @@ export class ForOf < For
 					if item.vartype
 						let vname = item.c
 						let decl = item.@declarator
-						let op = LIT("{item.vartype.c} let {M item.typedAlias.c,decl} = {vname}")
+						let op = LIT("let {M item.typedAlias.c,decl} = {item.vartype.c}({vname})")
 						body.unshift(op)
 						
 		
