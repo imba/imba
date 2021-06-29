@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.148
 * Allow declaring return type via `def method\returntype arg1, ...`
 * Fix crash when inlining sourcemaps on node 16+ (#567)
 * Overhaul `extend class` code generation for better tooling support
@@ -8,6 +8,7 @@
   dashed identifiers converting to camelCase while interacting with an 
   external library - this will no longer work. Ie `window.add-event-listener` 
   will not work since `window` does not have an `addΞeventΞlistener` property.
+  See [#568](https://github.com/imba/imba/pull/568) for more info.
 
 ## 2.0.0-alpha.147
 * Fix regression resulting in nested assets being rebuilt in incorrect folder
