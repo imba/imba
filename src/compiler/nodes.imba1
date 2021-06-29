@@ -1373,6 +1373,11 @@ export class Terminator < Meta
 		let val = @value.c
 		if STACK.option(:comments) == false
 			val = val.replace(/\/\/.*$/gm,'')
+		
+		
+		if STACK.tsc
+			# make comments significant for tooling
+			val = val.replace(/\/\/(.*)$/gm,'/**$1 */ ')
 
 		if STACK.tsc and (val:length > 1 or @first)
 			return M(val.replace(/^[\t ]+/gm,''),self)
@@ -2731,7 +2736,6 @@ export class VariableDeclarator < Param
 		# FIXME need to deal with var-defines within other statements etc
 		# FIXME need better syntax for this
 		if defs != null && defs != undefined
-			# console.log "defaults is {defaults}"
 			defs = defs.c(expression: yes) if defs isa Node
 			defs = "{typ.c}({defs})" if typ
 			"{variable.c} = {defs}"
@@ -2991,6 +2995,10 @@ export class Root < Code
 		unless o:raw
 			script:css &&= SourceMapper.strip(script:css) # .replace(/\/\*\%([\w\|]*)\$\*\//g,'')
 			script:js = SourceMapper.strip(script:js) # .replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+			
+			if STACK.tsc
+				# now combine comments - keep whitespace to not mess up sourcemapping
+				script:js = script:js.replace(/\*\/\s[\r\n]+(\t*)\/\*\*/gm) do |m| m.replace(/[^\n\t]/g,' ')
 
 		return script
 
