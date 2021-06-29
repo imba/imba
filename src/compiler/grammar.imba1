@@ -632,10 +632,10 @@ var grammar =
 
 	MethodDeclaration: [
 		o 'DEF MethodScope MethodScopeType MethodIdentifier MethodParams MethodBody' do
-			MethodDeclaration.new(A5, A6, A4, A2, A3).set(def: A1,keyword: A1)
+			MethodDeclaration.new(A5, A6, A4, A2, A3).set(def: A1,keyword: A, datatype: A4.option('datatype'))
 
 		o 'DEF MethodIdentifier MethodParams MethodBody' do
-			MethodDeclaration.new(A3, A4, A2, null).set(def: A1, keyword: A1)
+			MethodDeclaration.new(A3, A4, A2, null).set(def: A1, keyword: A1, datatype: A2.option('datatype') )
 	]
 
 	MethodParams: [
@@ -653,6 +653,7 @@ var grammar =
 		o 'DecoratorIdentifier'
 		o 'SymbolIdentifier' do A1 # InterpolatedIdentifier.new(A1)
 		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
+		o 'MethodIdentifier Type' do A1.set(datatype: A2)
 	]
 
 	MethodBody: [
