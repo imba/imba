@@ -1,6 +1,6 @@
 # imba$inlineHelpers=1
 # imba$v2=0
-extern btoa, atob
+extern btoa, atob, globalThis
 
 var path = require 'path'
 var util = require './helpers'
@@ -218,12 +218,19 @@ export class SourceMap
 
 	def inlined
 		# maybe drop the sourcesContent
-		var str = JSON.stringify(@result)
-		if typeof btoa == 'function'
-			str = btoa(str)
-		else
-			str = Buffer.from(str,'utf-8').toString("base64")
-		return "\n//# sourceMappingURL=data:application/json;base64,{str}"
+		try
+			var str = JSON.stringify(@result)
+			if globalThis:Buffer
+				str = Buffer.from(str,'utf-8').toString("base64")
+			elif typeof btoa == 'function'
+				str = btoa(str)
+			else
+				
+				return
+			return "\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,{str}"
+		
+		console.warn "base64 encoding not supported - skipping inline sourceMapping"
+		return ""
 
 	# borrowed from CoffeeScript
 	def encodeVlq value
