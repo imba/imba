@@ -632,7 +632,7 @@ var grammar =
 
 	MethodDeclaration: [
 		o 'DEF MethodScope MethodScopeType MethodIdentifier MethodParams MethodBody' do
-			MethodDeclaration.new(A5, A6, A4, A2, A3).set(def: A1,keyword: A, datatype: A4.option('datatype'))
+			MethodDeclaration.new(A5, A6, A4, A2, A3).set(def: A1,keyword: A1, datatype: A4.option('datatype'))
 
 		o 'DEF MethodIdentifier MethodParams MethodBody' do
 			MethodDeclaration.new(A3, A4, A2, null).set(def: A1, keyword: A1, datatype: A2.option('datatype') )
