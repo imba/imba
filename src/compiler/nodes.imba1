@@ -3146,6 +3146,9 @@ export class ClassDeclaration < Code
 						sup = @superclass = null
 					else
 						@autosuper = yes
+						try
+							sup.@identifier.@symbol = 'ΤObject'
+							# sup.@value = 'AnyObject'
 
 		if isExtension and @name
 			@name.traverse()
@@ -3556,6 +3559,9 @@ export class Func < Code
 
 	def nonlocals
 		@scope.@nonlocals
+		
+	def returnType
+		datatype
 
 	def visit stack, o
 		scope.visit
@@ -3587,6 +3593,9 @@ export class Func < Code
 				
 		elif option(:jsdocthis)
 			o.push('@this { ' + option(:jsdocthis) + ' }')
+			
+		if returnType
+			o.push('@returns { ' + returnType.asRawType + ' }')
 
 		let doc = o.join('\n')
 		return (doc ? '/**\n' + doc + '\n*/\n' : '')
@@ -3739,6 +3748,8 @@ export class MethodDeclaration < Func
 			scope.@selfless = yes
 
 		@params.traverse
+		
+		
 			
 		if target isa Identifier
 			if let variable = scope.lookup(target.toString)
