@@ -26,3 +26,7 @@ test 'override attribute' do
 	let el2 = <div itemprop=str>
 	eq el2.hasAttribute('itemprop'), false
 	eq el2.getAttribute('other'), str
+
+test 'tag id' do
+	let el = <div#one>
+	eq el.id, 'one'
