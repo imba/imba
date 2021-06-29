@@ -5242,10 +5242,14 @@ export class VarReference < ValueNode
 	
 	def js stack,params
 		let out = @value.c()
+		let typ = (STACK.tsc and datatype)
 		# console.log "result of varreference {out}"
 		# console.log "is expression?? {@expression} {params:expression}"
 		if @right
-			out += " = {@right.c(expression: true)}"
+			let rgt = @right.c(expression: true)
+			if typ
+				rgt = "{typ.c}({rgt})"
+			out += " = {rgt}"
 
 		if @expression
 			if @value isa Obj
@@ -5267,7 +5271,10 @@ export class VarReference < ValueNode
 				return js
 
 			out = "{@type} {out}"
-			if let typ = (STACK.tsc and datatype)
+			if option(:export)
+				out = "{M('export',option(:export))} {out}"
+
+			if !@right and typ
 				out = typ.c + ' ' + out
 		return out
 
