@@ -45,6 +45,8 @@ export var ansi =
 ansi:warn = ansi:yellow
 ansi:error = ansi:red
 
+import toImbaIdentifier,toJSIdentifier from '../utils/identifiers.imba'
+
 var GreekLetters = "αβγδεζηθικλμνξοπρστυφχψω"
 
 
@@ -113,10 +115,12 @@ export def isValidIdentifier str
 	!(/[?-\s]/).test(str) and str[0] != '#'
 
 export def toValidIdentifier str
+	return toJSIdentifier(str)
 	str.replace(/[-\?]/g,'$') # .replace(/\?/g,'θ')
 	# str.replace(/-/g,'η').replace(/\?/g,'θ')
 	
 export def fromValidIdentifier str
+	return toImbaIdentifier(str)
 	str[0] + str.slice(1).replace(/\$$/,'?').replace(/\$/g,'-')
 	# str.replace(/η/g,'-').replace(/θ/g,'?')
 
