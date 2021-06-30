@@ -1,3 +1,6 @@
+## 2.0.0-alpha.149
+* Fix regression with font-size presets (#569)
+
 ## 2.0.0-alpha.148
 * Allow declaring return type via `def method\returntype arg1, ...`
 * Fix crash when inlining sourcemaps on node 16+ (#567)

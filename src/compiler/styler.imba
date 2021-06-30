@@ -632,7 +632,7 @@ export class StyleTheme
 		grid_template(params)
 
 	def font_size [v]
-		let sizes = options.variants.fontSize
+		let sizes = options.variants['font-size']
 		let raw = String(v)
 		let size = v
 		let lh

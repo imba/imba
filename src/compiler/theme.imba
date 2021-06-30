@@ -136,10 +136,10 @@ export const variants =
 	sizing:
 		NUMBER: '0.25rem'
 		
-	letter-spacing:
+	'letter-spacing':
 		NUMBER: '0.05em'
 
-	font-size:
+	'font-size':
 		'xxs': ['10px',1.5]
 		'xs':  ['12px',1.5]
 		'sm-':  ['13px',1.5]
