@@ -229,6 +229,14 @@ var MP = do |val,typ = 'path'|
 	return val if STACK.tsc
 	return "{val}/*${typ}$*/"
 
+var MLOC = do |a,b|
+	b = a if b == undefined
+
+	{
+		startLoc: do a
+		endLoc: do b 
+	}
+
 var M = do |val,mark,o|
 	if mark == undefined
 		mark = val
@@ -2954,7 +2962,7 @@ export class Root < Code
 
 		if STACK.tsc
 			# out = "import 'imba/index.d.ts';\n{out}"
-			out = "export \{\};\n{out}\n"
+			out = "export \{\};String();\n{out}\n"
 
 
 		script:rawResult = {
@@ -7786,15 +7794,27 @@ export class TagModifier < TagPart
 
 			if key[0] == 'options'
 				key[0] = '___setup'
-
-			let call = "{M(key[0],@name)}({params ? params.c : ''})"
-
+			
+			let path = key[0]
+			
+			if key:length > 0
+				if path == 'emit' or path == 'flag' or path == 'css'
+					path = "{path}-name"
+				else
+					path = key.join('-')
+			
+			path = helpers.toValidIdentifier(path)
+			let parjs = params ? params.c : ''
+			
+			if params and parjs == ''
+				parjs = M('',MLOC(@name.endLoc + 1))
+		
+			let call = "{M(path,@name)}({parjs})"
 
 			if !params or params.count == 0
 				call = M(call,@name)
-			# need to deal with emit- flag- etc in another way
+			
 			return "e.MODIFIERS.{call}"
-			# return params ? params.c : quoted
 
 		if params and params.count > 0
 			"[{quoted},{params.c}]"
