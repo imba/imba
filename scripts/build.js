@@ -203,7 +203,7 @@ let bundles = [{
 	entryPoints: ['bin/imba.imba', 'bin/imba-create.imba', 'index.imba', 'program.imba', 'compiler.imba', 'workers.imba', 'loader.imba'],
 	outExtension: { ".js": ".imba.js" },
 	bundle: true,
-	minify: false,
+	minify: true,
 	external: ['chokidar', 'esbuild'],
 	outdir: '.',
 	format: 'cjs',
