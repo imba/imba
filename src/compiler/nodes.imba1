@@ -4073,18 +4073,25 @@ export class NumWithUnit < Literal
 	def c o
 		let unit = String(@unit)
 		let val = String(@value)
-
+	
 		val = "-{val}" if option(:negate)
 
 		if unit == 's'
-			return "({val} * 1000)"
+			val = "({val} * 1000)"
 		elif unit == 'ms'
-			return "{val}"
+			val = "{val}"
 		elif unit == 'fps'
-			return "(1000 / {val})"
+			val "(1000 / {val})"
+		else
+			val = "{val}{unit}"
+			val = "'{val}'" unless o and o:unqouted
 
-		let raw = "{val}{unit}"
-		o and o:unqouted ? raw : "'{raw}'"
+		if OPTS:sourcemap and (!o or o:mark !== false)
+			val = M(val,self)
+		return val
+		
+	def endLoc
+		@unit.endLoc
 	
 export class ExpressionWithUnit < ValueNode
 	
@@ -7769,19 +7776,6 @@ export class TagModifier < TagPart
 		@params.traverse if @params
 		
 		return self
-		# TODO support evaluated paths?
-		for param in @params
-			if param isa VarOrAccess
-				let sym = param.@token.value
-				if sym and sym[0] == '$'
-					let special = TagHandlerSpecialArg.new(sym.slice(1))
-					@params.swap(param,special)
-			elif param isa PropertyAccess
-				let out = helpers.clearLocationMarkers(param.js())
-				if out[0] == '$'
-					@params.swap(param,TagHandlerSpecialArg.new(out.slice(1)))
-
-		self
 		
 	def js
 		if STACK.tsc
@@ -7792,9 +7786,9 @@ export class TagModifier < TagPart
 
 			if key[0] == 'options'
 				key[0] = '___setup'
-			# let op = OP('.',LIT('e.MODIFIERS'),@name)
-			# return "{op.c}({params ? params.c : ''})"
+
 			let call = "{M(key[0],@name)}({params ? params.c : ''})"
+
 
 			if !params or params.count == 0
 				call = M(call,@name)
@@ -7913,7 +7907,7 @@ export class TagHandler < TagPart
 				out += mod.c + ';\n'
 			out += '})'
 			return out
-			return "[{quoted},{modifiers.c}]"
+
 		return "{tagRef}.on$({quoted},{modifiers.c},{scope__.context.c})"
 
 class TagHandlerCallback < ValueNode
