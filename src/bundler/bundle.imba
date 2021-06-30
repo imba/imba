@@ -235,7 +235,7 @@ export default class Bundle < Component
 			stdin: o.stdin
 			minify: o.minify ?? program.minify
 			incremental: !!watcher
-			charset: 'utf8'
+			# charset: 'utf8'
 			loader: Object.assign({
 				".png": "file",
 				".apng": "file",

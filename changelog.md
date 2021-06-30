@@ -1,3 +1,6 @@
+## 2.0.0-alpha.150
+* Remove charset:utf8 option from esbuild
+
 ## 2.0.0-alpha.149
 * Fix regression with font-size presets (#569)
 
