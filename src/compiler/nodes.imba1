@@ -12,6 +12,7 @@ import Token from './token'
 import SourceMap from './sourcemap'
 
 import StyleRule,StyleTheme,Color from './styler.imba'
+import ReservedIdentifierRegex,InternalPrefixes,toJSIdentifier from '../utils/identifiers.imba'
 import parseAsset from './assets.imba'
 import Compilation from './compilation'
 
@@ -636,10 +637,10 @@ export class Stack
 	def generateId ns = 'oid'
 		AST.counterToShortRef(STACK.incr(ns))
 		
-	def getSymbol ref
+	def getSymbol ref, alias = null
 		ref ||= incr('symbols')
 		# Belongs in root
-		@symbols[ref] ||= @root.declare(ref,LIT('Symbol()'),system: yes).resolve.c
+		@symbols[ref] ||= @root.declare((alias or ref),LIT('Symbol()'),system: yes, alias: (alias or ref)).resolve.c
 
 	def sourceId
 		return @sourceId if (@sourceId ||= @options:sourceId)
@@ -856,7 +857,7 @@ export class Stack
 		while i >= 0
 			var node = @nodes[i]
 			# why are we not using isExpression here as well?
-			if node isa Code or node isa Loop
+			if node isa Code or node isa Loop or node.isStatementLike
 				return false
 			if node.isExpression
 				return true
@@ -1092,6 +1093,9 @@ export class Node
 
 	def isExpression
 		@expression || false
+		
+	def isStatementLike
+		false
 
 	def isRuntimeReference
 		no
@@ -2893,6 +2897,10 @@ export class Code < Node
 	prop body
 	prop scope
 	prop params
+	
+	def isStatementLike
+		yes
+		
 
 	def scopetype
 		Scope
@@ -5245,14 +5253,10 @@ export class VarReference < ValueNode
 
 		@variables = scope.captureVariableDeclarations do
 			@value.traverse(declaring: @type, variables: vars)
-			# console.log("has variable? {@value.@variable}")
 			# should happen automatically when traversing via traverse(declaring:...)
 			if @value isa Identifier
 				@value.@variable ||= scope.register(@value.symbol,@value,type: @type, datatype: datatype)
-				# vars.push(@value.@variable)
 				stack.registerSemanticToken(@value,@variable)
-			
-		# @variables = vars
 		return self
 	
 	def js stack,params
@@ -5336,8 +5340,8 @@ export class Assign < Op
 			l.traverse()
 
 		# if l isa VarOrAccess
-
-		if l isa VarReference and !(STACK.up isa Block) and !(STACK.up isa Export)
+		let up = STACK.up
+		if l isa VarReference and !(up isa Block) and !(up isa Export) and !(up isa TagBody)
 			l.forceExpression
 
 		return self
@@ -6689,6 +6693,9 @@ export class Loop < Statement
 
 	def isReactive
 		@tag and @tag.fragment.isReactive
+		
+	def isStatementLike
+		yes
 
 	def c o
 
@@ -8021,6 +8028,9 @@ class TagLike < Node
 		@traversed = no
 		@consumed = []
 		self
+		
+	def osym ns = ''
+		STACK.getSymbol(oid + ns,InternalPrefixes.SYM + (tagvarprefix or '') + ns)
 
 	def root
 		@parent ? @parent.root : self
@@ -8100,16 +8110,24 @@ class TagLike < Node
 
 	def hasNonTagChildren
 		hasLoops or hasBranches or hasDynamicChildren
+	
+	def hasDynamicDescendants
+		return true if hasNonTagChildren
+		for el in @consumed
+			if el isa Tag
+				return true if el.hasDynamicDescendants
+		return false
+		
 
 	def hasChildren
 		@consumed:length > 0
 
 	def tagvar name
-		name = constants.SYSVAR_PREFIX[name] or name
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: no,alias:"{tagvarprefix}{name}"},"{tagvarprefix}{name}")
+		name = InternalPrefixes[name] or name
+		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: no,alias:"{name}{tagvarprefix}"},"{name}{tagvarprefix}")
 
 	def tagvarprefix
-		"{level + 1}"
+		""
 
 	def level
 		@level
@@ -8298,7 +8316,7 @@ export class TagSwitchFragment < TagLike
 		@inserts = []
 		
 	def getInsertVar index
-		@inserts[index] ||= tagvar(self.oid + '$' + index)
+		@inserts[index] ||= tagvar('τ' + index + 'if') # tagvar(self.oid + '$' + index)
 		
 	def tvar
 		fragment.tvar
@@ -8413,8 +8431,9 @@ export class TagSlotProxy < TagLike
 	def tagvarprefix
 		oid+'S'
 
-
+class TagNodeClass
 export class Tag < TagLike
+
 	prop attrmap
 
 	def setup
@@ -8434,8 +8453,11 @@ export class Tag < TagLike
 		@cssflag ||= "{sourceId}"
 
 	def tagvarprefix
+		return @tagvarprefix ||= (type and type:toVarPrefix ? type.toVarPrefix : (isSelf ? 'self' : 'tag'))
 		return ''
-		@tagvarprefix ||= (type and type:toVarPrefix ? type.toVarPrefix : (isSelf ? 'cmp' : 'tag'))
+	
+	def isStatementLike
+		option(:iife)
 
 	def traverse 
 		return self if @traversed
@@ -8534,6 +8556,10 @@ export class Tag < TagLike
 			let tagdef = stack.up(TagDeclaration)
 			if tagdef
 				tagdef.addElementReference(@options:reference,self)
+				
+		@scope = TagBodyScope.new(self)
+		@scope.visit
+
 		super
 
 	def register node
@@ -8566,6 +8592,9 @@ export class Tag < TagLike
 		if isSlot and @consumed:length > 1
 			set(markWhenBuilt: yes, reactive: yes)
 		return
+		
+	def hasBlockScopedVariables
+		Object.keys(@scope.varmap):length > 0
 
 	def getSlot name
 		@slots ||= {}
@@ -8685,6 +8714,14 @@ export class Tag < TagLike
 
 	def isDetached
 		option(:detached)
+		
+	def hasDynamicParts
+		if @dynamics:length == 0 and !hasDynamicFlags and !(type isa ExpressionNode)
+			let nodes = body ? body.values : []
+			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType))
+				if !hasNonTagChildren and !isSlot and !option(:dynamic)
+					hasDynamicParts = no
+		return yes
 
 	def js o
 		var stack = STACK
@@ -8711,11 +8748,13 @@ export class Tag < TagLike
 			typ = "'i-global'"
 			STACK.use('dom_global_hook')
 			
-		var wasInline = o:inline
+		var parentIsInlined = o:inline
+		# console.log 'tag is inline?',wasInline,tagName
 		var isSVG = self.isSVG
 		var isReactive = self.isReactive
 
 		var canInline = no
+		var hasDynamicParts = yes
 		var useRoutes = @attrmap:route or @attrmap:routeTo or @attrmap['route-to']
 		var shouldEnd = isComponent or useRoutes
 
@@ -8844,8 +8883,11 @@ export class Tag < TagLike
 		# any references.
 		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey
 			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType))
-				if !shouldEnd and !hasNonTagChildren and (parent isa Tag) and !isSlot and !option(:dynamic)
-					canInline = yes
+				if !shouldEnd and !hasNonTagChildren and !isSlot and !option(:dynamic)
+					hasDynamicParts = no
+
+					if parent isa Tag
+						canInline = yes
 
 		if isFragment or isSlot
 			params = [@flags].concat(params.slice(1,2)) # .slice(1,3)
@@ -8868,7 +8910,11 @@ export class Tag < TagLike
 			# push it into ctor if it is not a variable assignment
 			# otherwise we always want to assign it
 			ctor = OP('=',option(:assign),LIT(ctor)).c()
-
+		
+		let deeplyDynamic = hasDynamicDescendants
+		# let parName = parent and parent.tag
+		# console.log !!parent,tagName,'re',isReactive,'expr',isExpression,'inline',canInline,'dyn',hasDynamicParts,'oin',o:inline,deeplyDynamic
+		
 		if !parent
 			@ref = "{tvar}"
 			@cvar = tvar
@@ -8880,21 +8926,40 @@ export class Tag < TagLike
 
 			elif isReactive
 				let scop = scope__.closure
-				# add "{bvar}={dvar}=1"
+
 				let k = "{scop.tagCache}[{osym}]"
 				add "({bvar}={dvar}=1,{tvar}={k}) || ({bvar}={dvar}=0,{k}={ctor})"
 				add "{bvar} || ({tvar}[{gsym('##up')}]={scop.tagCache}._)" # really? 
 				@ref = tvar
-				o:inline = yes if isExpression
-				# if @consumed:length or @dynamics:length
-				# 	@cvar ||= tvar
-				# 	# add "{cvar} = {tvar}.${oid} || ({tvar}.${oid}=\{\})"
+				
+				if isExpression and !deeplyDynamic
+					option(:inline,canInline = yes)
+					o:inline = yes
+				else
+					
+					if isExpression
+						option(:iife,yes)
+
+					o:inline = no
+	
 			else
 				add "({ctor})"
-				option(:inline,canInline = yes)
-				o:inline = yes
+
+				if isExpression and !hasDynamicParts
+					option(:inline,canInline = yes)
+					o:inline = yes
+					# console.log 'can inline',tagName
+				else
+					option(:iife,yes)
+					o:inline = no
 
 		else
+			# console.log tagName,'re',isReactive,'expr',isExpression,'inline',canInline,'dyn',hasDynamicParts,'oin',o:inline
+			# if the parent was inlined but we are too complex
+			if o:inline and !canInline
+				option(:iife,yes)
+				o:inline = no
+			
 			if isShadowRoot
 				let key = "{cvar}[{osym}]"
 				add "{tvar}={key} || ({key}={fragment.tvar}.attachShadow(\{mode:'open'\}))"
@@ -8992,10 +9057,6 @@ export class Tag < TagLike
 
 			if ownCache
 				@cvar = tvar # tagvar(:c)
-				# console.log 'FIX ownCache'
-				# add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
-
-					
 
 		if @slots
 			for own name, slot of @slots
@@ -9178,15 +9239,16 @@ export class Tag < TagLike
 			add "{runtime:renderContext}.context=null"
 
 		if !parent
-			if option(:return)
+			if option(:return) or option(:iife)
 				foot.push "return {tvar}"
 			elif !isReactive or o:inline
 				foot.push "{tvar}"
 
 		out = out.concat(foot)
-
+		
 		if o:inline
-			o:inline = wasInline
+			o:inline = parentIsInlined
+			
 			let js = '(' + out.join(',\n') + ')'
 			if isSlot and hasChildren
 				let key = "{cvar}[{osym}]"
@@ -9195,17 +9257,23 @@ export class Tag < TagLike
 				let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}.insert$({key__}={tvar},{@flags},{key_}))"
 				js = "({tvar}={slotPath}),(!{tvar} || {tvar}.isEmpty$() && {js}),({post})"
 			return js
-		else
-			o:inline = wasInline
-			let js = out.join(";\n")
-			if isSlot and hasChildren
-				# let key = "{cvar}.{oid}"
-				let key = "{cvar}[{osym}]"
-				let key_ = "{cvar}[{osym '_'}]"
-				let key__ = "{cvar}[{osym '__'}]"
-				let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}.insert$({key__}={tvar},{@flags},{key_}))"
-				js = "{tvar}={slotPath};\nif(!{tvar} || {tvar}.isEmpty$())\{\n{js}\n\}\n{post}"
-			return js
+
+		o:inline = parentIsInlined
+		
+		let js = out.join(";\n")
+		if isSlot and hasChildren
+			let key = "{cvar}[{osym}]"
+			let key_ = "{cvar}[{osym '_'}]"
+			let key__ = "{cvar}[{osym '__'}]"
+			let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}.insert$({key__}={tvar},{@flags},{key_}))"
+			js = "{tvar}={slotPath};\nif(!{tvar} || {tvar}.isEmpty$())\{\n{js}\n\}\n{post}"
+		
+		if option(:iife)
+			js = "(()=>\{{js};\})()"
+			js = "return {js}" if option(:return)
+		elif hasBlockScopedVariables
+			js = '{' + js + '}'
+		return js
 
 
 export class TagWrapper < ValueNode
@@ -10711,11 +10779,11 @@ export class Scope
 		
 	def tagCache
 		# deal with root instead?
-		@tagCache ||= declare('c$$',
-			# LIT('(Imba.$c ? (Imba.$c[Imba.$k] || (Imba.$c[Imba.$k] = {})) : {})'),
+		@tagCache ||= declare('ϲτ',
 			LIT("({runtime:renderContext}.context||\{\})"),
 			system: yes
 			temporary: yes
+			alias: 'ϲτ'
 		)
 	# def context
 	# 	@context ||= ScopeContext.new(self)
@@ -10781,6 +10849,9 @@ export class Scope
 		if existing
 			if decl and existing.type != 'global'
 				decl.error('Cannot redeclare variable')
+				if existing.type == 'let' and o:type == 'let'
+					# can let it pass with a warning? But only really in the same tree?
+					console.log(name,o,existing.type)
 			# console.log 'redeclaring variable',"{existing} {decl}",existing.type
 
 		# FIXME check if existing is required to be unique as well?
@@ -11122,7 +11193,8 @@ export class RootScope < Scope
 			return @symbolRefs[name] ||= Identifier.new(name.slice(1) + "_$INTERNAL$_")
 
 		let map = @symbolRefs
-		map[name] ||= declare("{String(name).replace(/[\@\#]/g,'_')}$",LIT("Symbol.for('{name}')"), type: 'const', system: yes)
+		# "{String(name).replace(/[\@\#]/g,'_')}$"
+		map[name] ||= declare(null,LIT("Symbol.for('{name}')"), type: 'const', system: yes, alias: toJSIdentifier(name))
 		
 	def c o = {}
 		o:expression = no
@@ -11303,6 +11375,8 @@ export class BlockScope < FlowScope
 
 	def region
 		node.region
+		
+export class TagBodyScope < FlowScope
 
 # lives in scope -- really a node???
 export class Variable < Node
@@ -11567,12 +11641,19 @@ export class SystemVariable < Variable
 
 		@name = null
 
-		let name = @name or o:alias or constants.SYSVAR_PREFIX.ANY
+		let name = @name or o:alias or InternalPrefixes.ANY
 		name = "_{name}" if (/\d/).test(name[0])
+		if (/\d$/).test(name)
+			name = name + InternalPrefixes.SEP
+
 		let nr = STACK.incr(name)
+		nr = '' if nr == 1
 		# if sysvar starts with a greek character (used for sysvars) - dont add dollar-sign
-		
-		@name = helpers.isSystemIdentifier(name) ? "{name}{nr}" : "{name}φ{nr}"
+		if ReservedIdentifierRegex.test(name)
+			@name = "{name}{nr}"
+		else
+			@name = "{name}φ{nr}"
+		# @name = helpers.isSystemIdentifier(name) ? "{name}{nr}" : "{name}φ{nr}"
 		# console.log "trying to set name??",name[0],name,@name
 		return self
 

@@ -84,12 +84,12 @@ export var SYSVAR_PREFIX = {
 	KEY: 'κ'
 	ANY: 'φ'
 
-	B: 'ω'
+	B: 'Θ'
 	T: 'τ'
 	C: 'ρ'
 	V: 'υ'
 	K: 'κ'
-	D: 'δ'
+	D: 'Δ'
 }
 
 export var TAG_TYPES = {
