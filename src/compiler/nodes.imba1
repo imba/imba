@@ -8801,6 +8801,8 @@ export class Tag < TagLike
 			else
 				# o:inline = wasInline
 				let js = out.join(";\n")
+				if hasBlockScopedVariables
+					js = '{' + js + '}'
 				return js
 
 		# whether this tag should set a variable indicating
