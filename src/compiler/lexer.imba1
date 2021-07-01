@@ -588,6 +588,8 @@ export class Lexer
 			
 			if chr == '#'
 				typ = 'TAG_SYMBOL_ID'
+				if tok:length == 1
+					return 0
 
 			token(typ,tok,len)
 			return len

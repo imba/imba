@@ -1,3 +1,6 @@
+## unreleased
+* Correctly parse comments inside multi-line tag literals
+
 ## 2.0.0-alpha.151
 * Fix interpolated style values in tag-tree selectors
 
