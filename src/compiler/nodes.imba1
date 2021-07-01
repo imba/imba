@@ -9136,16 +9136,16 @@ export class Tag < TagLike
 					let iref = "{cvar}[{item.osym}]"
 					let val = item.value
 					if item.valueIsStatic
-						add "{bvar} || ({ref}.{M(item.js(o),item)})"
+						add "{bvar} || ({M(item.js(o),item)})"
 					elif val isa Func
-						add "({ref}.{item.js(o)})"
+						add "({item.js(o)})"
 					elif val.@variable
 						let vc = val.c(o)
 						item.value = LIT("{iref}={vc}")
-						add "({vc}==={iref} || ({ref}.{M item.js(o),item}))"
+						add "({vc}==={iref} || ({M item.js(o),item}))"
 					else
 						item.value = LIT("{iref}={vvar}")
-						add "({vvar}={val.c(o)},{vvar}==={iref} || ({ref}.{M item.js(o),item}))"
+						add "({vvar}={val.c(o)},{vvar}==={iref} || ({M item.js(o),item}))"
 
 			else
 				add item.c(o)

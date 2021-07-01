@@ -1,3 +1,6 @@
+## 2.0.0-alpha.151
+* Fix interpolated style values in tag-tree selectors
+
 ## 2.0.0-alpha.150
 * Remove charset:utf8 option from esbuild
 
