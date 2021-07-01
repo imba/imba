@@ -1,5 +1,7 @@
-## unreleased
+## 2.0.0-alpha.152
 * Correctly parse comments inside multi-line tag literals
+* Readable names for generated (internal) variables
+* Tag literals act as block scopes for variable declarations
 
 ## 2.0.0-alpha.151
 * Fix interpolated style values in tag-tree selectors
