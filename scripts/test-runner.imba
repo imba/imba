@@ -239,7 +239,7 @@ def serve
 	let copts = {
 		platform: 'browser'
 		runtime: '/imba.js'
-		raiseErrors: true
+		raiseErrors: false
 		resolve: {
 			'imba': '/imba.js',
 			'imba/compiler': '/compiler.js',
@@ -284,17 +284,49 @@ def serve
 			let body = entry.body
 			# console.log 'found page'			
 			let opts = Object.assign({},copts,{sourcePath: src})
+			
+			# look for expected crashes
+			let expect = []
+			body.replace(/\# @(error|warn) ([^\s]+)(:? ([^\n]+))?/g) do(m,typ,locs,message)
+				expect.push([typ,locs,message])
+			let js = ''
+			
+			res.writeHead(200, { 'Content-Type': 'application/javascript' })
+			
+			let inlineTest = do(name,bool,msg)
+				let pars = JSON.stringify(message: msg)
+				'globalThis.test("'+name+'",function(){globalThis.ok(' + (bool ? 'true' : 'false') + "," + pars + ')});\n'
 			try
 				let output = compiler.compile(body,opts)
-				res.writeHead(200, { 'Content-Type': 'application/javascript' })
-				let js = output.js
-				# console.log 'js here',js
-				# js = '(function(){' + js + '})();SPEC.run()'
-				# console.log 'write html',output.js
-				res.write(js)
+		
+				js = output.js
+				
+				if output.errors.length
+					js = ''
+		
+					
+				for [typ,locs,message],i in expect
+					let diags = typ == 'warn' ? output.warnings : output.errors
+					let hit = null
+					let msg = "expect {typ} at {locs}"
+					for diag in diags
+						let loc = "{diag.range.start}-{diag.range.end}"
+						if loc == locs
+							diag.#expected = yes
+							hit ||= diag
+					# let pars = JSON.stringify(message: msg)
+					js += inlineTest(message or "{typ}{i}",hit,msg)
+					# js += 'globalThis.test(function(){globalThis.ok(' + (hit ? 'true' : 'false') + "," + pars + ')});'
+				
+				if output.errors.some(do !$1.#expected)
+					js += inlineTest("compile",false,"file did not compile")
+					# js += ';\nglobalThis.test(function(){globalThis.ok(' + (hit ? 'true' : 'false') + "," + pars + ')})'
+				
 			catch e
-				# res.write 'console.log("page:error",{message: "error compiling"})'
-				res.write 'console.log("hello")'
+				js += inlineTest("compile",false,"file did not compile")
+				# console.log "compiler failed!!",expect,e,src
+			
+			res.write js
 		else
 			console.warn "NOT HANDLING REQUEST {src}"
 			res.write('')
@@ -335,7 +367,7 @@ def main
 	let entrypoints = pages.filter do !$1.skip
 
 
-	console.log "starting tests?",entrypoints.length
+	console.log "running {entrypoints.length} tests"
 	
 		
 	# fetch the actual items to compile first

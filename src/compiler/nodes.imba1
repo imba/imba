@@ -4089,7 +4089,7 @@ export class NumWithUnit < Literal
 	def c o
 		let unit = String(@unit)
 		let val = String(@value)
-	
+
 		val = "-{val}" if option(:negate)
 
 		if unit == 's'
@@ -4097,7 +4097,7 @@ export class NumWithUnit < Literal
 		elif unit == 'ms'
 			val = "{val}"
 		elif unit == 'fps'
-			val "(1000 / {val})"
+			val = "(1000 / {val})"
 		else
 			val = "{val}{unit}"
 			val = "'{val}'" unless o and o:unqouted
@@ -10849,9 +10849,6 @@ export class Scope
 		if existing
 			if decl and existing.type != 'global'
 				decl.error('Cannot redeclare variable')
-				if existing.type == 'let' and o:type == 'let'
-					# can let it pass with a warning? But only really in the same tree?
-					console.log(name,o,existing.type)
 			# console.log 'redeclaring variable',"{existing} {decl}",existing.type
 
 		# FIXME check if existing is required to be unique as well?

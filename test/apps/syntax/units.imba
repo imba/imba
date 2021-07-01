@@ -1,5 +1,3 @@
-# <div[x:{a}px]>
-
 test do
 	let num = 10
 

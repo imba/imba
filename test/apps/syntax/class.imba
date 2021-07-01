@@ -11,7 +11,7 @@ describe 'Defining classes' do
 
 	test 'Class expressions' do
 		# unnamed
-		var expr = class
+		let expr = class
 			def constructor height, width
 				self.height = height
 				self.width = width
@@ -20,13 +20,13 @@ describe 'Defining classes' do
 		ok expr.name == 'expr'
 
 		# named
-		var expr = class NamedClass
+		let namedexpr = class NamedClass
 			def constructor height, width
 				self.height = height
 				self.width = width
 
-		ok new expr
-		ok expr.name == 'NamedClass'
+		ok new namedexpr
+		ok namedexpr.name == 'NamedClass'
 
 	test 'new class' do
 		let obj = new class
