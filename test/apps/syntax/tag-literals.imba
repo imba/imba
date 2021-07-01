@@ -34,6 +34,13 @@ describe "tag literals" do
 		eq el.title, 'div'
 		eq el.children.length, 3
 		eq el.children[0].innerHTML, "<h1></h1>"
+		
+	test "comment inside literal" do
+		let el = <div
+			title='div'
+			# title='dov'
+		>
+		eq el.title, 'div'
 	
 	test "var scoping" do
 		let num = 1
