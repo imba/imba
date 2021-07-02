@@ -1,5 +1,5 @@
-## unreleased
-* Fix issue with pop watchers not compiling correctly
+## 2.0.0-alpha.153
+* Fix issue with prop watchers not compiling correctly
 
 ## 2.0.0-alpha.152
 * Correctly parse comments inside multi-line tag literals
