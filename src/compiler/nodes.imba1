@@ -910,7 +910,7 @@ export class Node
 
 	# get global symbol with name
 	def gsym name
-		scope__.root.symbolRef(name)
+		STACK.root.symbolRef(name)
 		
 	def sourceId
 		STACK.sourceId
@@ -11188,6 +11188,8 @@ export class RootScope < Scope
 		return
 
 	def symbolRef name
+		name = SourceMapper.strip(name)
+
 		if STACK.tsc
 			return @symbolRefs[name] ||= Identifier.new(name.slice(1) + "_$INTERNAL$_")
 
