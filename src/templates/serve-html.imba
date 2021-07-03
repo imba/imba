@@ -9,4 +9,4 @@ const server = http.createServer do(req,res)
 
 	res.end body
 
-imba.serve server.listen(process.env.PORT || 3000)
+imba.serve(server.listen(process.env.PORT || 3000),static: yes)
