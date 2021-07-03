@@ -203,20 +203,22 @@ class AssetResponder
 
 class Server
 
-	static def wrap server
-		new self(server)
+	static def wrap server, o = {}
+		new self(server,o)
 
-	def constructor srv
+	def constructor srv,options
 		servers.add(self)
 		id = Math.random!
+		options = options
 		closed = no
 		paused = no
 		server = srv
 		clients = new Set
 		stalledResponses = []
 		assetResponders = {}
+		
 		if proc.env.IMBA_PATH
-			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'devtools.imba.web.js')
+			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'devtools.imba.js')
 
 		scheme = srv isa http.Server ? 'http' : 'https'
 
@@ -298,6 +300,26 @@ class Server
 				base = scheme + '://' + headers.host
 
 			# console.log "get headers",base,req.url,headers,req.protocol
+			
+			# if we've enabled serving static assets
+			if options.static
+				# bypass for the most basic stff
+				let rurl = new URL(url,base)
+				let ext = np.extname(rurl.pathname)
+				let headers = defaultHeaders[ext.slice(1)]
+				if headers
+					let path = np.resolve(manifest.cwd,".{rurl.pathname}")
+					let exists = nfs.existsSync(path)
+					# console.log "check for file!",url,manifest.cwd,path,rurl,exists
+					if exists
+						nfs.readFile(path) do(err,data)
+							if err
+								res.writeHead(500,{})
+								res.write("Error getting the file: {err}")
+							else
+								res.writeHead(200,headers)
+								res.end(data)
+						return
 			
 			if dom
 				let loc = new dom.Location(req.url,base)

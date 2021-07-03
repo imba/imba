@@ -1,6 +1,7 @@
-## 2.0.0-alpha.154
+## unreleased
 * Include precompiled browser-version of library to make it work with jspm
 * Fix issue with html parser
+* Add optional static file serving for `imba serve`
 
 ## 2.0.0-alpha.153
 * Fix issue with prop watchers not compiling correctly
