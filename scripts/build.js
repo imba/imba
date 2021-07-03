@@ -15,7 +15,7 @@ let meta = Symbol();
 let compileCache = {};
 
 let globalNames = {
-	index: "imba",
+	// index: "imba",
 	compiler: "imbacompiler",
 	program: "imbaprogram",
 	devtools: "imbadevtools"
@@ -136,8 +136,11 @@ async function universalise(result, o) {
 				globalName: globalNames[bname]
 			})
 			let name = file.path.replace('.mjs', '.js');
-			console.log("transformed to iife", name, iife.code.length, file.text.length);
-			fs.writeFileSync(name, iife.code);
+			if (true) { // name != file.path
+				console.log("transformed to iife", name, iife.code.length, file.text.length);
+				fs.writeFileSync(name, iife.code);
+			}
+
 		}
 	}
 }
@@ -178,7 +181,6 @@ async function bundle(o) {
 	if (o.write == undefined) o.write = false;
 
 	delete o.options;
-
 	let result = await esbuild.build(o);
 	await universalise(result, o);
 	if (watcher) {
@@ -193,14 +195,14 @@ async function bundle(o) {
 }
 
 let bundles = [{
-	entryPoints: ['devtools.imba'],
-	outExtension: { ".js": ".imba.web.js" },
+	entryPoints: ['devtools.imba', 'index.imba'],
+	outExtension: { ".js": ".imba.js" },
 	bundle: true,
 	format: 'esm',
 	outdir: '.',
 	platform: 'browser'
 }, {
-	entryPoints: ['bin/imba.imba', 'bin/imba-create.imba', 'index.imba', 'program.imba', 'compiler.imba', 'workers.imba', 'loader.imba'],
+	entryPoints: ['bin/imba.imba', 'bin/imba-create.imba', 'program.imba', 'compiler.imba', 'workers.imba', 'loader.imba'],
 	outExtension: { ".js": ".imba.js" },
 	bundle: true,
 	minify: true,

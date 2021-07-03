@@ -98,9 +98,9 @@ export def parseHTML raw
 		let item = null
 		let src = el.attributes.src
 
-		if el.value == 'script'
+		if el.value == 'script' and src
 			item = {path: src.raw, tagType: 'script'}
-		elif el.value == 'img'
+		elif el.value == 'img' and src
 			item = {path: src.raw, tagType: 'img'}
 		elif el.value == 'link' and el.attributes.rel..raw == 'stylesheet'
 			src = el.attributes.href
