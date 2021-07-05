@@ -103,12 +103,17 @@ export def merge config, patch, ...up
 	let otyp = typeof config
 	let vtyp = typeof patch
 	
+	
+	
 	otyp = 'array' if config isa Array	
 	vtyp = 'array' if patch isa Array
 	
 	let keytype = optionTypes[up[0]]
 	
 	if keytype == 'boolean'
+		return patch
+
+	if otyp == 'string' and vtyp == 'string'
 		return patch
 
 	if otyp == 'array'
@@ -135,6 +140,7 @@ export def merge config, patch, ...up
 		config ||= {}
 
 		if config.hasOwnProperty(key)
+			
 			config[key] = merge(config[key],value,key,...up)
 		else
 			# config[key] = merge(null,value,key,...up)
