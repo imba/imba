@@ -235,6 +235,12 @@ extend class Element
 		else
 			self[key] = value
 		return
+		
+	get richValue
+		value
+
+	set richValue value
+		self.value = value
 
 Element.prototype.appendChild$  = Element.prototype.appendChild
 Element.prototype.removeChild$  = Element.prototype.removeChild
