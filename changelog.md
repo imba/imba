@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.154
 * Include precompiled browser-version of library to make it work with jspm
 * Fix issue with html parser
 * Fix issue with `<input value=...>` not working in certain cases
