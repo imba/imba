@@ -553,7 +553,7 @@ export default class Bundle < Component
 		# resolve any non-relative path to see if it should
 		# be external. If importer is an imba file, try to
 		# also resolve it via the imbaconfig.paths rules.
-		esb.onResolve(filter: /^[\w\@]/) do(args)
+		esb.onResolve(filter: /^[\w\@\#]/) do(args)
 			if externs.indexOf(args.path) >= 0
 				return {external: true}
 
@@ -561,6 +561,7 @@ export default class Bundle < Component
 				let out = fs.resolver.resolve(args)
 				# could drop this until we have consistent paths support?
 				return out
+			return null
 
 		esb.onLoad(filter: /.*/, namespace: 'imba-raw') do({path})
 			return {loader: 'text', contents: ""}
