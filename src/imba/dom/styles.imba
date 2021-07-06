@@ -95,6 +95,7 @@ class Styles
 
 			if $web$
 				entry.node = document.createElement('style')
+				entry.node.setAttribute('data-id',id)
 				entry.node.textContent = entry.css
 				document.head.appendChild(entry.node)
 
