@@ -1,3 +1,6 @@
+## unreleased
+* Allow `$envvar$` as first argument of implicit calls (#571)
+
 ## 2.0.0-alpha.154
 * Include precompiled browser-version of library to make it work with jspm
 * Fix issue with html parser
