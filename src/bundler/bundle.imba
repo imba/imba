@@ -454,9 +454,9 @@ export default class Bundle < Component
 				formats[wrkidx] = nodeish? ? 'nodeworker' : 'webworker'
 				q = 'as=' + formats.join(',')
 				
-			if q == 'as=file'
+			if q == 'as=file' or q == 'as=text'
 				let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
-				return {path: res.path, namespace: 'rawfile'}
+				return {path: res.path, namespace: "raw{formats[0]}"}
 			
 			let cfg = resolveConfigPreset(formats)
 			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
@@ -574,8 +574,10 @@ export default class Bundle < Component
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 			
 		esb.onLoad(filter: /.*/, namespace: 'rawfile') do({path})
-			# console.log 'loading raw file',path
-			return {loader: 'file', contents: nfs.readFileSync(path,'utf-8')}			
+			return {loader: 'file', contents: nfs.readFileSync(path,'utf-8')}
+		
+		esb.onLoad(filter: /.*/, namespace: 'rawtext') do({path})
+			return {loader: 'text', contents: nfs.readFileSync(path,'utf-8')}
 		
 
 		esb.onLoad({ filter: /\.imba$/, namespace: 'styles'}) do({path,namespace})
