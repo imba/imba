@@ -3127,6 +3127,9 @@ export class ClassDeclaration < Code
 	
 	def initPath
 		@initPath ||= OP('.',LIT('super'),initKey)
+		
+	def virtualSuper
+		@virtualSuper ||= @scope.parent.declare(:tmp,null,system: yes, type: 'let')
 
 	def instanceInit
 		return @instanceInit if @instanceInit
@@ -3380,7 +3383,13 @@ export class ClassDeclaration < Code
 			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
 			
 		if isExtension and !STACK.tsc
-			js += ";\n" + util.extend(LIT("{@className.c}.prototype"),LIT("{name.c}.prototype")).c + ';\n'
+			let extTarget = LIT("{@className.c}.prototype")
+
+			if @virtualSuper
+				let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
+				extTarget = LIT("({wrap.c},{extTarget.c})")
+
+			js += ";\n" + util.extend(extTarget,LIT("{name.c}.prototype")).c + ';\n'
 
 		if option(:global)
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
@@ -10545,6 +10554,24 @@ var HELPERS = {
 	requireDefault: '''(obj){
 		return obj && obj.__esModule ? obj : { default: obj };
 	};'''
+	
+	virtualSuper: '''(target){
+		var up = Object.getPrototypeOf(target);
+		var supers = Object.getOwnPropertyDescriptors(target);
+		
+		const map = new WeakMap();
+		const obj = Object.defineProperties(Object.create(up), supers);
+
+		const proxy = {
+			apply: (self, key, ...params) => { return obj[key].apply(self, params) },
+			get: (self, key) => { return Reflect.get(obj, key, self); },
+			set: (self, key, value, receiver) => { return Reflect.set(obj, key, value, self);}
+		}
+
+		return function (s) {
+			return map.get(s) || map.set(s, new Proxy(s, proxy)) && map.get(s);
+		}
+	};'''
 }
 
 export class Util.Helper < Util
@@ -11896,7 +11923,9 @@ export class Super < Node
 			m.set(supr: {node: STACK.blockpart, block: STACK.block, real: self})
 			m.set(injectInitAfter: STACK.blockpart)
 			
-		# warn if virtual!
+		if @method and @method.option('inExtension')
+			@class = STACK.up(ClassDeclaration)
+			
 		self
 
 	def replaceWithInitor
@@ -11925,6 +11954,9 @@ export class Super < Node
 		
 		# need to know if our method is in the initial declaration
 
+		if virtual and @class
+			sup = CALL(@class.virtualSuper,[slf])
+
 		# when super is written all by itself - it means to do the default action
 		unless (up isa Access) or (up isa Call)
 			if m and m.isConstructor and !member
@@ -11932,13 +11964,6 @@ export class Super < Node
 				let fallbackArgs = option(:args) or [LIT('...arguments')]
 				return M(CALL(target,args or fallbackArgs).c,@keyword)
 				op = LIT('super(...arguments)')
-			elif m and virtual
-				# FIXME - we no longer support super in class extensions
-				op = CALL(OP('.',slf,'super$'),[m.name.toStr])
-				if m.isSetter
-					op = CALL(OP('.',slf,'super$set'),[m.name.toStr,m.params.at(0)])
-				elif !m.isGetter
-					op = CALL(OP('.',op,'apply'),[slf,LIT('arguments')])
 			elif member
 				op = OP('.',sup,member)
 			elif m
