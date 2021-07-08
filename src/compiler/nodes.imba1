@@ -5145,13 +5145,16 @@ export class VarOrAccess < ValueNode
 				return self
 			# FIX
 			# @value.safechain = safechain
+		elif value.symbol == 'self'
+			@value = scope.context
+
 		elif !@identifier.isCapitalized
+			let selfvar = scope.lookup('self')
 			let ctx = scope.context
-			if ctx isa RootScopeContext or ctx.isGlobalContext
-				yes
+			if !selfvar and ctx.isGlobalContext
 				@includeType = yes
-				# global access
 			else
+				ctx = selfvar or ctx
 				@value = ImplicitAccess.new(".",ctx,@value).set(datatype: datatype)
 				stack.registerSemanticToken(@token,'accessor')
 
@@ -11861,7 +11864,7 @@ export class ScopeContext < Node
 
 	def reference
 		# if we are in  constructor we do want to declare it after super
-		@reference ||= scope.declare("self",This.new) # {@scope.@level}_
+		@reference ||= scope.lookup('self') or scope.declare("self",This.new) # {@scope.@level}_
 
 	def fromScope other
 		IndirectScopeContext.new(other,self)

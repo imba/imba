@@ -47,7 +47,7 @@ var TSC_CARET_BEFORE = {
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','const','self','await','import','module','export','static','extend'
+	'when','def','tag','do','elif','begin','var','let','const','await','import','module','export','static','extend'
 ]
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop','lazy']
@@ -61,7 +61,7 @@ export var ALL_KEYWORDS = [
 	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally',
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','const','self','await','import',
+	'when','def','tag','do','elif','begin','var','let','const','await','import',
 	'and','or','is','isnt','not','yes','no','isa','case','nil','module','export','static','extend'
 ]
 
