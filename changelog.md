@@ -1,5 +1,9 @@
 ## unreleased
 * Allow `$envvar$` as first argument of implicit calls (#571)
+* Allow `super` in `extend class/tag` 
+* Add experimental support for `extend someObject`
+* Variable / parameter named `self` used for implicit self in scope
+* Throw error for non-self tags in tag declaration body
 
 ## 2.0.0-alpha.154
 * Include precompiled browser-version of library to make it work with jspm
