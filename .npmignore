@@ -6,6 +6,7 @@ tmp
 .gitignore
 .github
 .imba-cache
+.vscode
 webpack.config.js
 *.tgz
 *.log
