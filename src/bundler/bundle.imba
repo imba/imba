@@ -536,13 +536,6 @@ export default class Bundle < Component
 
 			return null
 
-			# if we're compiling for node we should resolve using the
-			# package json paths?
-			# log.debug "IMBA RESOLVE",args.path,args.importer
-			# if args.path.match(/^imba\/(program|compiler|dist|runtime|src\/)/)
-			#	# console.log 'resolving compiler?!',args,o.platform,o.format,esoptions.platform
-			#	return null
-
 		# imba files import their stylesheets by including a plain
 		# import '_styles_' line - which resolves to he path
 		# of the importer itself, with a styles namespace
