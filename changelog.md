@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.155
 * Allow `$envvar$` as first argument of implicit calls (#571)
 * Allow `super` in `extend class/tag` 
 * Add experimental support for `extend someObject`
