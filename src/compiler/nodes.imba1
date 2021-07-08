@@ -2706,7 +2706,6 @@ export class ScopeVariables < ListNode
 
 		if groups['let'] and (groups['var'] or groups['const'])
 			groups['let'].forEach do |item|
-
 				(item.@variable or item).@virtual = yes
 
 		elif groups['let']
@@ -3069,6 +3068,8 @@ export class ClassDeclaration < Code
 
 	def namepath
 		@namepath ||= "{name ? name.c : '--'}"
+		
+	
 
 	def metadata
 		{
@@ -3383,7 +3384,7 @@ export class ClassDeclaration < Code
 			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
 			
 		if isExtension and !STACK.tsc
-			let extTarget = LIT("{@className.c}.prototype")
+			let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
 
 			if @virtualSuper
 				let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
@@ -3394,11 +3395,14 @@ export class ClassDeclaration < Code
 		if option(:global)
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
+
 		if @staticInit
 			# this means we need to cache it 
 			js = "{js}; {OP('.',LIT(cname),initKey).c}();"
 
 		return js
+
+export class ExtendDeclaration < ClassDeclaration
 
 export class TagDeclaration < ClassDeclaration
 
@@ -3751,6 +3755,7 @@ export class MethodDeclaration < Func
 			@namepath = ctx.namepath + sep + name
 		else
 			@namepath = '&' + name
+		
 
 	def visit
 		@type = option(:type) or (option(:def)?.@value or 'def')
@@ -6116,6 +6121,8 @@ export class TagTypeIdentifier < Identifier
 export class InterpolatedIdentifier < ValueNode
 	def js
 		"[{value.c}]"
+
+	
 
 export class Argvar < ValueNode
 

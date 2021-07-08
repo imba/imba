@@ -118,7 +118,7 @@ var grammar =
 		# o 'HEADER' do Terminator.new(A1)
 		o 'Comment'
 		o 'Statement'
-		
+
 		o 'ImportDeclaration'
 		o 'ExportDeclaration'
 	]
@@ -138,6 +138,12 @@ var grammar =
 		o 'CONTINUE CALL_START Expression CALL_END' do ContinueStatement.new A1,A3
 
 		o 'DEBUGGER' do DebuggerStatement.new A1
+	]
+	
+	ExtendObject: [
+		# o 'CLASS ClassName ClassBody' do ClassDeclaration.new(A2, null, A3).set(keyword: A1)
+		o 'EXTEND Identifier ClassBody' do
+			ExtendDeclaration.new(A2, null, A3).set(instanceOnly: true, extension: A1)
 	]
 
 	ExportDeclaration: [
@@ -246,6 +252,7 @@ var grammar =
 		o 'While'
 		o 'For'
 		o 'Switch'
+		o 'ExtendObject'
 		o 'Class' # statement, no?
 		o 'TagDeclaration'
 		o 'Tag'
@@ -547,11 +554,6 @@ var grammar =
 		o 'TAG TagType ClassBody' do TagDeclaration.new(A2, null, A3).set(keyword: A1)
 		o 'TAG TagType COMPARE TagType' do TagDeclaration.new(A2, A4).set(keyword: A1)
 		o 'TAG TagType COMPARE TagType ClassBody' do TagDeclaration.new(A2, A4, A5).set(keyword: A1)
-	]
-
-	TagDeclKeywords: [
-		o ''
-		o 'EXTEND' do ['extend']
 	]
 
 	# Going to move back to fewer custom tokens
@@ -871,8 +873,6 @@ var grammar =
 		o 'CLASS ClassName COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
 		o 'CLASS COMPARE Expression ClassBody' do ClassDeclaration.new(null, A3, A4).set(keyword: A1)
 	]
-
-
 
 	ClassName: [
 		# o '' do null

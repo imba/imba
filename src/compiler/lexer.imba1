@@ -41,11 +41,13 @@ var TSC_CARET_BEFORE = {
 # Must be careful to throw the exceptions in AST, since the parser
 # wont
 
+
+
 # Imba-only keywords. var should move to JS_Keywords
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','const','self','await','import','module','export','static'
+	'when','def','tag','do','elif','begin','var','let','const','self','await','import','module','export','static','extend'
 ]
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop','lazy']
@@ -60,7 +62,7 @@ export var ALL_KEYWORDS = [
 	'class', 'extends', 'super', 'return',
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','const','self','await','import',
-	'and','or','is','isnt','not','yes','no','isa','case','nil','module','export','static'
+	'and','or','is','isnt','not','yes','no','isa','case','nil','module','export','static','extend'
 ]
 
 # The list of keywords that are reserved by JavaScript, but not used, or are
@@ -926,7 +928,7 @@ export class Lexer
 			return false
 			
 		if id == 'get' or id == 'set'
-			if let m = @chunk.match(/^[gs]et ([\$\w\-]+)/) # ( (do)|\n(\t+))
+			if let m = @chunk.match(/^[gs]et ([\$\w\-]+|\[)/) # ( (do)|\n(\t+))
 				let ctx = @contexts[@contexts:length - 1] or {}
 				let before = ctx:opener and @tokens[@tokens.indexOf(ctx:opener) - 1]
 
@@ -956,7 +958,7 @@ export class Lexer
 
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css' or id == 'constructor')
 			var scop = getScope
-			var incls = scop == 'CLASS' or scop == 'TAG'
+			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'EXTEND'
 
 			# if id == 'css' and !@context and (@lastTyp in ['TERMINATOR'] or !@lastTyp)
 			# 	return true
@@ -1173,6 +1175,9 @@ export class Lexer
 					break
 
 		elif typ == 'IF'
+			queueScope(typ)
+			
+		elif typ == 'EXTEND' and !@chunk.match(/^extend (class|tag)(\s|\n|$)/)
 			queueScope(typ)
 
 		elif typ == 'IMPORT'
