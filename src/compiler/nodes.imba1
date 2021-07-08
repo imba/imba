@@ -4886,9 +4886,15 @@ export class Access < Op
 				OP('.',scope__.context,'super$'),
 				[rgt isa Identifier ? rgt.toStr : rgt]
 			).c()
+		
+		if rgt isa Index and rgt.value isa Num
+			rgt = rgt.value 
 
 		if rgt isa Num
 			# FIXME not adding type info
+			if rgt.toNumber < 0
+				return safeop ? util.optNegIndex(ctx,rgt).c : util.negIndex(ctx,rgt).c
+
 			return ctx.c + "{safeop}[" + rgt.c + "]"
 		
 		# is this right? Should not the index compile the brackets
@@ -10532,6 +10538,9 @@ var HELPERS = {
 	unit: '''(value,unit){
 		return value + unit;
 	};'''
+	
+	optNegIndex: '''(value,index){ return value ? value[value.length + index] : null };'''
+	negIndex: '''(value,index){ return value[value.length + index] };'''
 
 	extendTag: '''(el,cls){
 		Object.defineProperties(el,Object.getOwnPropertyDescriptors(cls.prototype));

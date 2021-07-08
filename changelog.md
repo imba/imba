@@ -4,6 +4,7 @@
 * Add experimental support for `extend someObject`
 * Variable / parameter named `self` used for implicit self in scope
 * Throw error for non-self tags in tag declaration body
+* Allow accessing array elements from end with literal numbers like `array[-1]`
 
 ## 2.0.0-alpha.154
 * Include precompiled browser-version of library to make it work with jspm
