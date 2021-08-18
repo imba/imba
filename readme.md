@@ -21,6 +21,41 @@ npm start
 
 To get started with Imba, we recommend reading through the [official guide](https://imba.io/).
 
+
+## Why Imba?
+
+### Minimal syntax
+
+Imba's syntax is minimal, beautiful, and packed with clever features. It combines logic, markup and styling in a powerful way. Less keystrokes, and less switching files means you'll be able to build things fast.
+
+![ "basics"](https://user-images.githubusercontent.com/8467/121170829-074a8900-c856-11eb-88d9-d4a922c24893.png)
+
+### Runs on both server and client
+
+Imba powers both the frontend and the backend of Scrimba.com, our learning platform with 100K+ monthly active users. On the frontend, Imba replaces e.g. Vue or React, and on the backend, it works with the Node ecosystem (e.g. npm).
+
+![ "server"](https://user-images.githubusercontent.com/8467/121170852-0fa2c400-c856-11eb-8aab-322d4b6a875d.png)
+
+### Integrated styling
+
+Inspired by tailwind, Imba brings styles directly into your code. Styles can be scoped to files, components, and even parts of your tag trees. Style modifiers like @hover, @lg, @landscape and @dark can be used for extremely concise yet powerful styling.
+
+![ "styles"](https://user-images.githubusercontent.com/8467/121170905-1e897680-c856-11eb-8b67-2014f0c508e6.png)
+
+### Blazing fast, Zero config
+
+Imba comes with a built-in bundler based on the blazing fast esbuild. Import stylesheets, images, typescript, html, workers and more without any configuration. Bundling is so fast that there is no difference between production and development mode - it all happens on-demand.
+
+![ "bundling"](https://user-images.githubusercontent.com/8467/121170927-247f5780-c856-11eb-95bf-fa09ca5f8cff.png)
+
+When you run your app with the `imba` command it automatically bundles and compiles your imba code, along with typescript, css and many other file types. It provides automatic reloading of both the server and client.
+
+### Typing and tooling
+
+The tooling is implemented as a typescript server plugin giving us great intellisense, diagnostics, and even cross-file refactorings that works with js/ts files in the same project. You can import types just like in typescript, and annotate variables, parameters and expressions. Like the language, the tooling is still in alpha, but improving every day.
+
+![ "types"](https://user-images.githubusercontent.com/8467/121170940-29440b80-c856-11eb-82bb-ac821d0d0c36.png)
+
 ## Community
 
  [![Forum](https://img.shields.io/badge/discourse-forum-brightgreen.svg?style=flat-square)](https://users.imba.io) [![Join the chat at https://discord.gg/mkcbkRw](https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square)](https://discord.gg/mkcbkRw)
