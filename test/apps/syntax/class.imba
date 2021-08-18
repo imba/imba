@@ -17,7 +17,7 @@ describe 'Defining classes' do
 				self.width = width
 				
 		ok new expr
-		ok expr.name == 'expr'
+		eq expr.name, 'expr'
 
 		# named
 		let namedexpr = class NamedClass
@@ -160,4 +160,3 @@ test 'Reopen class' do
 
 	ok cat.age == 10
 	ok cat.health == 100
-
