@@ -3468,6 +3468,10 @@ export class TagDeclaration < ClassDeclaration
 						op += " = new {typ.toClassName}"
 					
 					self.body.unshift(LIT(op + ';'),yes)
+					
+		# add some default css
+		if !STACK.tsc and name and name:toNodeName and !option(:extension)
+			STACK.css += name.toNodeName + ' { display:block; }\n\n'
 		return
 		
 	def addElementReference name, child
