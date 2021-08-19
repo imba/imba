@@ -64,8 +64,7 @@
   "main": "./index",
   "type": "commonjs",
   "browser": {
-    ".": "./index.imba",
-    "imba": "./index.imba",
+    ".": "./dist/imba.js",
     "path": "./vendor/path.js",
     "events": "./vendor/events.js",
     "./program.imba": "./program.imba.js",
