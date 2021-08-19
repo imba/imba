@@ -1,4 +1,5 @@
 ## unreleased
+* Add #__inited__ hook for class instance initialization
 * All custom components defaults to display:block
 * Fix: Don't inject hmr.js script into html assets when building
 * Fix: Generate html files in public directory
