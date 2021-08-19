@@ -63,15 +63,15 @@
   "directories": {},
   "main": "./index",
   "type": "commonjs",
-  "browser": {
-    ".": "./dist/imba.mjs",
+  "browserz": {
+    ".": "./dist/imba.cjs",
     "./program.imba": "./program.imba.js",
     "./compiler.imba": "./compiler.imba.js"
   },
   "exports": {
     ".": {
-      "browser": "./dist/imba.mjs",
-      "default": "./index.js"
+      "node": "./index.js",
+      "default": "./dist/imba.js"
     },
     "./program": "./program.imba.js",
     "./workers": "./workers.imba.js",
@@ -108,5 +108,6 @@
   "dependencies": {
     "chokidar": "^3.4.3",
     "esbuild": "^0.9.7"
-  }
+  },
+  "gitHead": "89d795f6da117019aa7c018b9e57293cf732a3ab"
 }
