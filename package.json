@@ -65,8 +65,6 @@
   "type": "commonjs",
   "browser": {
     ".": "./dist/imba.js",
-    "path": "./vendor/path.js",
-    "events": "./vendor/events.js",
     "./program.imba": "./program.imba.js",
     "./compiler.imba": "./compiler.imba.js"
   },

@@ -2,7 +2,7 @@
 
 let routerInstance = null
 
-import {EventEmitter} from 'events'
+import {EventEmitter} from '../../../vendor/events.js'
 import {Node,Element,Document,createComment} from '../dom/core'
 import {Location} from './location'
 import {History} from './history'
