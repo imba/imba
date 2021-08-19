@@ -61,12 +61,12 @@
     "node": ">=13.10.0"
   },
   "directories": {},
-  "main": "./index",
-  "type": "commonjs",
-  "browserz": {
-    ".": "./dist/imba.cjs",
-    "./program.imba": "./program.imba.js",
-    "./compiler.imba": "./compiler.imba.js"
+  "main": "./index.js",
+  "module": "./dist/imba.node.js",
+  "browser": {
+    ".": "./dist/imba.js",
+    "./index.js": "./dist/imba.js",
+    "./dist/imba.node.js": "./dist/imba.mjs"
   },
   "exports": {
     ".": {
