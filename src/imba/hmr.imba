@@ -3,7 +3,7 @@
 # Improve this
 let doc =  global.document
 
-import {deserializeData,patchManifest} from '../imba/utils'
+import {deserializeData,patchManifest} from './utils'
 
 class Manifest
 	def constructor

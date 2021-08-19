@@ -1,3 +1,6 @@
+## 2.0.0-alpha.158
+* Reorganize prebuilt files into dist/
+
 ## 2.0.0-alpha.157
 * Add jspm configuration in package.json
 

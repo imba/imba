@@ -8,7 +8,6 @@ test/dist
 attic/*
 npm-debug.log
 lerna-debug.log
-dist/imba.edge.*
 /determinator.json
 test/webpack/js/**/*.js
 test/attic
