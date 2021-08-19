@@ -64,13 +64,13 @@
   "main": "./index",
   "type": "commonjs",
   "browser": {
-    ".": "./dist/imba.js",
+    ".": "./dist/imba.mjs",
     "./program.imba": "./program.imba.js",
     "./compiler.imba": "./compiler.imba.js"
   },
   "exports": {
     ".": {
-      "browser": "./dist/imba.js",
+      "browser": "./dist/imba.mjs",
       "default": "./index.js"
     },
     "./program": "./program.imba.js",
