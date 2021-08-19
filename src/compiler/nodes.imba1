@@ -638,9 +638,13 @@ export class Stack
 		AST.counterToShortRef(STACK.incr(ns))
 		
 	def getSymbol ref, alias = null
-		ref ||= incr('symbols')
+		let key = ref or incr('symbols')
+		# ref ||= "" + incr('symbols')
 		# Belongs in root
-		@symbols[ref] ||= @root.declare((alias or ref),LIT('Symbol()'),system: yes, alias: (alias or ref)).resolve.c
+		@symbols[key] ||= @root.declare((alias or ref),LIT('Symbol()'),system: yes, alias: (alias or ref)).resolve.c
+		
+	def symbolFor name
+		@root.symbolRef(name)
 
 	def sourceId
 		return @sourceId if (@sourceId ||= @options:sourceId)
@@ -3068,8 +3072,6 @@ export class ClassDeclaration < Code
 
 	def namepath
 		@namepath ||= "{name ? name.c : '--'}"
-		
-	
 
 	def metadata
 		{
@@ -3195,22 +3197,28 @@ export class ClassDeclaration < Code
 		STACK.push(self)
 		ROOT.entities.add(namepath,self)
 		scope.visit
-
+		set(iife: STACK.up isa Instantiation)
 		var separateInitChain = true
 		var fields = []
 		var signature = []
 		var params = []
 		var declaredFields = {}
 		var restIndex = undefined
+		var instanceMethodMap = {}
 
-		for node in body when node isa ClassField
-			if !node.isStatic
-				let name = String(node.name)
-				declaredFields[name] = node
-				if separateInitChain
-					node.set(restIndex: 0)
-				# if node.watchBody
-				#	console.log 'has watcher??'
+		for node in body
+			if node isa ClassField
+				if !node.isStatic
+					let name = String(node.name)
+					declaredFields[name] = node
+					if separateInitChain
+						node.set(restIndex: 0)
+					# if node.watchBody
+					#	console.log 'has watcher??'
+			if node isa MethodDeclaration
+				let name = node.rawName
+				if node.isMember
+					instanceMethodMap[name] = node
 
 		
 		if option(:params)
@@ -3302,7 +3310,9 @@ export class ClassDeclaration < Code
 					ctor = addMethod('constructor',[],[],{})
 					let param = ctor.params.at(0,yes,'$$',LIT('null'))
 					let callop = CALL(initop,[param])
-					ctor.body.add([callop,BR],0) unless tsc
+					unless tsc
+						ctor.body.add([callop,BR],0)
+						
 				else
 					let sup = ctor.option(:supr)
 					if sup
@@ -3321,12 +3331,38 @@ export class ClassDeclaration < Code
 					let after = ctor.option(:injectInitAfter)
 					ctor.inject(op,after ? {after: after} : 0)
 				yes
-
+		
 		if tsc and ctor and @autosuper
 			ctor.body.add([LIT("super()"),BR],0)
-
+			
 		if !staticInits.isEmpty and !tsc
 			staticInit.inject(staticInits,0)
+			
+		let hasInitedHook = !!instanceMethodMap["#__inited__"]
+		
+		if !isTag and !ctor and hasInitedHook
+			let ops = sup ? [Super.new(),BR] : [BR]
+			ctor = addMethod('constructor',[],ops,{})
+			
+		if ctor and !isTag
+			# set a unique local symbol for this class			
+			let ctorsym = STACK.symbolFor('#__initor__')
+			let initsym = STACK.symbolFor('#__inited__')
+
+			if sup
+				let refsym = STACK.getSymbol()
+				staticInit.inject LIT("this.prototype[{ctorsym}] = {refsym}"), 0
+				if hasInitedHook
+					ctor.inject LIT("if(this[{ctorsym}]==={refsym}) this[{initsym}]();")
+				else
+					ctor.inject LIT("this[{ctorsym}]==={refsym} && this[{initsym}] && this[{initsym}]()")
+			elif hasInitedHook
+				ctor.inject LIT("if(!this[{ctorsym}]) this[{initsym}]();")
+
+
+			# ctor.body.add([callop,BR],0)
+
+		
 		self
 
 	def addMethod name, params, mbody, options, cb
@@ -3347,7 +3383,7 @@ export class ClassDeclaration < Code
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
-
+		var up = STACK.up
 		var o = @options or {}
 		var cname = name isa Access ? name.right : name
 		# var namespaced = name != cname
@@ -3361,7 +3397,12 @@ export class ClassDeclaration < Code
 		
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
-		jshead += " {M cname, name}" if name
+		if name
+			jshead += " {M cname, name}"
+		else
+			# console.log 'are we in an assignment?',"{STACK.up}"
+			if up isa VarReference
+				try jshead += " {up.@value.@symbol}"
 		jshead += " extends {M(sup)}" if sup
 
 		if name isa Access
@@ -3397,8 +3438,10 @@ export class ClassDeclaration < Code
 
 
 		if @staticInit
-			# this means we need to cache it 
-			js = "{js}; {OP('.',LIT(cname),initKey).c}();"
+			if up isa Block or up isa Export
+				js = "{js}; {OP('.',LIT(cname),initKey).c}();"
+			else
+				js = "(({js})[{initKey.c}]())"
 
 		return js
 
@@ -3558,6 +3601,7 @@ export class TagDeclaration < ClassDeclaration
 			if name.isClass
 				@config:name = name.symbol
 			js += "; {runtime:defineTag}({name.c},{className},{ext})"
+
 		# else
 		# 	if !option(:extension) and (!name.isClass)
 		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
@@ -3711,6 +3755,9 @@ export class MethodDeclaration < Func
 
 	def identifier
 		@name
+		
+	def rawName
+		@name isa Identifier ? (@name.toRaw) : ""
 
 	def metadata
 		{
@@ -11692,8 +11739,12 @@ export class SystemVariable < Variable
 
 		@name = null
 
-		let name = @name or o:alias or InternalPrefixes.ANY
-		name = "_{name}" if (/\d/).test(name[0])
+		let name = alias or InternalPrefixes.ANY
+		
+		if (/\d/).test(name[0])
+			
+			name = "_{name}"
+
 		if (/\d$/).test(name)
 			name = name + InternalPrefixes.SEP
 
