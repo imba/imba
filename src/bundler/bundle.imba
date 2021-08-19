@@ -61,7 +61,7 @@ export default class Bundle < Component
 		program.mode == 'development'
 
 	get hmr?
-		dev?
+		program.hmr == yes
 
 	# should generated files include hash of contents in filename?
 	get hashing?
@@ -1252,8 +1252,10 @@ export default class Bundle < Component
 					item.shift!
 			
 			for item,i in htmlFiles
-				#  'public/' + 
 				item.path = htmlPaths[i].join('/')
+				
+				if pubdir != '.'
+					item.path = "{pubdir}/{item.path}"
 
 		for item in assets
 			manifest.outputs[item.path] = item
