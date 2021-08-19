@@ -75,7 +75,10 @@
     "#imba": "./index.imba.js"
   },
   "exports": {
-    ".": "./index.js",
+    ".": {
+      "browser": "./index.imba.js",
+      "default": "./index.js"
+    },
     "./program": "./program.imba.js",
     "./workers": "./workers.imba.js",
     "./register": "./register.imba.js",
