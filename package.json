@@ -90,6 +90,14 @@
     "imbac": "./bin/imbac",
     "imba-create": "./bin/imba-create"
   },
+  "jspm": {
+    "main": "./index.imba.js",
+    "type": "module",
+    "dependencies": {},
+    "exports": {
+      ".": "./index.imba.js"
+    }
+  },
   "preferGlobal": true,
   "homepage": "https://imba.io",
   "repository": {
