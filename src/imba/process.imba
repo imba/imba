@@ -218,7 +218,7 @@ class Server
 		assetResponders = {}
 		
 		if proc.env.IMBA_PATH
-			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'devtools.imba.js')
+			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'dist','hmr.js')
 
 		scheme = srv isa http.Server ? 'http' : 'https'
 

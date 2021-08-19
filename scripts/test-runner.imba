@@ -275,8 +275,6 @@ def serve
 				</body></html>
 			"""
 
-			if entry and entry.body.indexOf('global.imbac') >= 0
-				html = html.replace('</head>',"<script src='/compiler.js' type='text/javascript'></script></head>")
 			res.write(html)
 			return res.end!
 

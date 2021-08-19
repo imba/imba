@@ -13,13 +13,11 @@ let argv = helpers.parseArgs(process.argv.slice(2), {
 
 let meta = Symbol();
 let compileCache = {};
+let globalNames = {}
 
-let globalNames = {
-	// index: "imba",
-	compiler: "imbacompiler",
-	program: "imbaprogram",
-	devtools: "imbadevtools"
-}
+let distdir = np.resolve(__dirname, '..', 'dist')
+// Create the dist directory
+fs.mkdirSync(distdir, { recursive: true });
 
 function plugin(build) {
 	// console.log('setting up plugin',build,this);
@@ -29,7 +27,6 @@ function plugin(build) {
 	let fs = require('fs');
 	let basedir = np.resolve(__dirname, '..');
 	let outdir = options.outdir || np.dirname(options.outfile);
-	let distdir = np.resolve(__dirname, '..', 'dist')
 	let distrel = './' + np.relative(distdir, outdir);
 	let absoutdir = np.resolve(__dirname, '..', outdir);
 
@@ -106,18 +103,18 @@ function plugin(build) {
 	})
 }
 async function universalise(result, o) {
-	// console.log('result',result);
 	for (let file of result.outputFiles) {
 
 		let bname = np.basename(file.path).split(".")[0];
 		console.log("output", file.path, bname);
 
-		if (o.format == 'esm' && o.platform == 'node') {
+		if (o.format == 'esm' && file.path.indexOf('.mjs') >= 0) {
 			console.log("create cjs version as well", file.path);
 			let cjs = esbuild.transformSync(file.text, {
 				format: 'cjs'
-			})
-			let name = file.path.replace('.mjs', '.js');
+			});
+			//  && o.platform == 'node'
+			let name = file.path.replace('.mjs', '.cjs');
 			console.log("transformed to cjs", cjs.code.length, file.text.length);
 			fs.writeFileSync(name, cjs.code);
 			if (bname == 'compiler') {
@@ -126,8 +123,6 @@ async function universalise(result, o) {
 		} else {
 			fs.writeFileSync(file.path, file.contents);
 		}
-
-
 
 		if (o.format == 'esm' && o.platform == 'browser' && globalNames[bname]) {
 			console.log("create cjs version as well");
@@ -140,7 +135,6 @@ async function universalise(result, o) {
 				console.log("transformed to iife", name, iife.code.length, file.text.length);
 				fs.writeFileSync(name, iife.code);
 			}
-
 		}
 	}
 }
@@ -170,8 +164,9 @@ async function bundle(o) {
 		o.outdir = `dist/${o.platform}`;
 	}
 
-
 	o.target = o.target || ['es2019'];
+	o.format = o.format || 'esm';
+
 	if (o.bundle == undefined) o.bundle = true;
 	o.loader = { '.txt': 'text' }
 	o.incremental = !!watcher;
@@ -195,17 +190,17 @@ async function bundle(o) {
 }
 
 let bundles = [{
-	entryPoints: ['devtools.imba', 'index.imba'],
-	outExtension: { ".js": ".imba.js" },
-	bundle: true,
-	format: 'esm',
-	outdir: '.',
-	platform: 'browser'
+	entryPoints: ['src/imba/imba.imba', 'src/imba/hmr.imba'], outdir: 'dist', platform: 'browser', format: 'esm'
+}, {
+	entryPoints: ['src/imba/imba.imba'],
+	outExtension: { ".js": ".node.js" },
+	format: 'cjs',
+	outdir: 'dist',
+	platform: 'node'
 }, {
 	entryPoints: ['bin/imba.imba', 'bin/imba-create.imba', 'program.imba', 'compiler.imba', 'workers.imba', 'loader.imba'],
 	outExtension: { ".js": ".imba.js" },
-	bundle: true,
-	minify: true,
+	minify: false,
 	external: ['chokidar', 'esbuild'],
 	outdir: '.',
 	format: 'cjs',

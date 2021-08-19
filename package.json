@@ -71,17 +71,13 @@
     "./program.imba": "./program.imba.js",
     "./compiler.imba": "./compiler.imba.js"
   },
-  "imports": {
-    "#imba": "./index.imba.js"
-  },
   "exports": {
     ".": {
-      "browser": "./index.imba.js",
+      "browser": "./dist/imba.js",
       "default": "./index.js"
     },
     "./program": "./program.imba.js",
     "./workers": "./workers.imba.js",
-    "./register": "./register.imba.js",
     "./loader": "./loader.imba.js",
     "./compiler": "./compiler.imba.js"
   },
@@ -89,14 +85,6 @@
     "imba": "./bin/imba",
     "imbac": "./bin/imbac",
     "imba-create": "./bin/imba-create"
-  },
-  "jspm": {
-    "main": "./index.imba.js",
-    "type": "module",
-    "dependencies": {},
-    "exports": {
-      ".": "./index.imba.js"
-    }
   },
   "preferGlobal": true,
   "homepage": "https://imba.io",
