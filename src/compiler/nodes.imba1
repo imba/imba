@@ -3124,7 +3124,7 @@ export class ClassDeclaration < Code
 		@staticInit ||= addMethod(initKey,[],'this').set(static: yes)
 	
 	def initKey
-		@initKey ||= (STACK.tsc ? STACK.root.symbolRef('#init') : SymbolIdentifier.new('#init'))
+		@initKey ||= (STACK.tsc ? STACK.root.symbolRef('#__init__') : SymbolIdentifier.new('#__init__'))
 	
 	def initPath
 		@initPath ||= OP('.',LIT('super'),initKey)

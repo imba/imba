@@ -107,7 +107,7 @@ export class ImbaElement < HTMLElement
 		__slots = {}
 		__F = 0
 
-	def #init
+	def #__init__
 		__F |= ($EL_INITED$ | $EL_HYDRATED$)
 		self
 		
@@ -277,7 +277,7 @@ export class ImbaElement < HTMLElement
 		__F |= $EL_MOUNTING$
 
 		unless inited
-			#init!
+			#__init__!
 
 		unless flags & $EL_HYDRATED$
 			# clearly seems wrong?

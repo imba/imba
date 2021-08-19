@@ -64,7 +64,7 @@ extend class Node
 	get #context
 		##context ||= new Proxy(self,contextHandler)
 
-	def #init
+	def #__init__
 		self
 
 	# replace this with something else
@@ -414,7 +414,7 @@ export def createComponent name, parent, flags, text, ctx
 		el = document.createElement(CustomTagToElementNames[name] or name)
 
 	el.##parent = parent
-	el.#init!
+	el.#__init__!
 
 	if text !== null
 		el.slot$('__').text$(text)
