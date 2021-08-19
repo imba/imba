@@ -1,6 +1,8 @@
 ## unreleased
+* All custom components defaults to display:block
 * Fix: Don't inject hmr.js script into html assets when building
 * Fix: Generate html files in public directory
+
 
 ## 2.0.0-alpha.155
 * Allow `$envvar$` as first argument of implicit calls (#571)
