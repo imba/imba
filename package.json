@@ -64,7 +64,9 @@
   "main": "./index",
   "type": "commonjs",
   "browser": {
-    ".": "./dist/imba.mjs"
+    ".": "./dist/imba.mjs",
+    "./program": "./program.imba.js",
+    "./compiler": "./compiler.imba.js"
   },
   "exports": {
     ".": {

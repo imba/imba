@@ -192,7 +192,7 @@ async function bundle(o) {
 let bundles = [{
 	entryPoints: ['src/imba/hmr.imba'], outdir: 'dist', platform: 'browser', format: 'esm'
 }, {
-	entryPoints: ['src/imba/imba.imba'], outdir: 'dist', platform: 'browser', format: 'cjs', outExtension: { ".js": ".js" },
+	entryPoints: ['src/imba/imba.imba'], outdir: 'dist', platform: 'browser', format: 'esm', outExtension: { ".js": ".mjs" },
 }, {
 	entryPoints: ['src/imba/imba.imba'],
 	outExtension: { ".js": ".node.js" },
