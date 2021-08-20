@@ -50,7 +50,7 @@
     "create-example": "node bin/imba scripts/create-example.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.162",
+  "version": "2.0.0-alpha.164",
   "licenses": [
     {
       "type": "MIT",
@@ -63,15 +63,15 @@
   "directories": {},
   "main": "./index",
   "type": "commonjs",
-  "browserz": {
-    ".": "./dist/imba.cjs",
-    "./program.imba": "./program.imba.js",
-    "./compiler.imba": "./compiler.imba.js"
+  "browser": {
+    ".": "./dist/imba.mjs",
+    "./program": "./program.imba.js",
+    "./compiler": "./compiler.imba.js"
   },
   "exports": {
     ".": {
-      "node": "./index.js",
-      "default": "./dist/imba.js"
+      "browser": "./dist/imba.mjs",
+      "default": "./index.js"
     },
     "./program": "./program.imba.js",
     "./workers": "./workers.imba.js",
