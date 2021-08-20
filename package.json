@@ -61,17 +61,15 @@
     "node": ">=13.10.0"
   },
   "directories": {},
-  "main": "./index.js",
-  "module": "./dist/imba.node.js",
+  "main": "./index",
+  "type": "commonjs",
   "browser": {
-    ".": "./dist/imba.js",
-    "./index.js": "./dist/imba.js",
-    "./dist/imba.node.js": "./dist/imba.mjs"
+    ".": "./dist/imba.mjs"
   },
   "exports": {
     ".": {
-      "node": "./index.js",
-      "default": "./dist/imba.js"
+      "browser": "./dist/imba.mjs",
+      "default": "./index.js"
     },
     "./program": "./program.imba.js",
     "./workers": "./workers.imba.js",
