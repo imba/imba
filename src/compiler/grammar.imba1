@@ -82,7 +82,7 @@ var grammar =
 	# Any list of statements and expressions, separated by line breaks or semicolons.
 	Body: [
 		o 'BODYSTART' do Block.new([])
-		o 'Line' do Block.new([A1])
+		o 'Line' do Block.new([]).add(A1)
 		# o 'HEADER Line' do Block.new([A2])
 		# o 'LeadingTerminator' do Block.new([Terminator.new(A1)])
 		o 'Body Terminator Line' do A1.break(A2).add(A3) # A3.prebreak(A2) # why not add as real nodes?!
@@ -118,6 +118,7 @@ var grammar =
 		# o 'HEADER' do Terminator.new(A1)
 		o 'Comment'
 		o 'Statement'
+		o 'Decorators'
 
 		o 'ImportDeclaration'
 		o 'ExportDeclaration'

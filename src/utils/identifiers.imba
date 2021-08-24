@@ -30,9 +30,10 @@ export const ToJSMap = {
 	'-': 'Ξ'
 	'?': 'Φ'
 	'#': 'Ψ'
+	'@': 'α'
 }
 
-const toJSregex = new RegExp("[\-\?\#]","gu")
+const toJSregex = new RegExp("[\-\?\#\@]","gu")
 const toJSreplacer = do(m) ToJSMap[m]
 
 export def toJSIdentifier raw
@@ -42,9 +43,10 @@ export const ToImbaMap = {
 	'Ξ': '-'
 	'Φ': '?'
 	'Ψ': '#'
+	'α': '@'
 }
 
-const toImbaRegex = new RegExp("[ΞΦΨ]","gu")
+const toImbaRegex = new RegExp("[ΞΦΨα]","gu")
 const toImbaReplacer = do(m) ToImbaMap[m]
 
 export def toImbaIdentifier raw

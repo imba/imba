@@ -1717,6 +1717,7 @@ export class Block < ListNode
 		if let decorators = @decorators
 			@decorators = null
 			return decorators
+		return null
 
 	def loc
 		# rather indents, no?
@@ -3150,6 +3151,9 @@ export class ClassDeclaration < Code
 	def visit
 		# replace with some advanced lookup?
 		@body.@delimiter = ''
+		let blk = STACK.up(Block)
+		@decorators = blk and blk.collectDecorators
+		# console.log "FOUND DECORATORS FOR CLASS?",@decorators and @decorators:length
 
 		
 		STACK.pop(self)
@@ -3286,6 +3290,10 @@ export class ClassDeclaration < Code
 				
 			if !node.isStatic and restIndex != null
 				node.set(restIndex: restIndex)
+		
+		if !tsc and @decorators
+			let op = util.decorate(Arr.new(@decorators),THIS)
+			staticInits.add([op,BR])
 
 		for node,i in body
 			if node.@decorators
@@ -3338,29 +3346,30 @@ export class ClassDeclaration < Code
 		if !staticInits.isEmpty and !tsc
 			staticInit.inject(staticInits,0)
 			
-		let hasInitedHook = !!instanceMethodMap["#__inited__"]
-		
-		if !isTag and !ctor and hasInitedHook
-			let ops = sup ? [Super.new(),BR] : [BR]
-			ctor = addMethod('constructor',[],ops,{})
+		if !STACK.tsc
+			let hasInitedHook = !!instanceMethodMap["#__inited__"]
 			
-		if ctor and !isTag
-			# set a unique local symbol for this class			
-			let ctorsym = STACK.symbolFor('#__initor__')
-			let initsym = STACK.symbolFor('#__inited__')
+			if !isTag and !ctor and hasInitedHook
+				let ops = sup ? [Super.new(),BR] : [BR]
+				ctor = addMethod('constructor',[],ops,{})
+				
+			if ctor and !isTag
+				# set a unique local symbol for this class			
+				let ctorsym = STACK.symbolFor('#__initor__')
+				let initsym = STACK.symbolFor('#__inited__')
 
-			if sup
-				let refsym = STACK.getSymbol()
-				staticInit.inject LIT("this.prototype[{ctorsym}] = {refsym}"), 0
-				if hasInitedHook
-					ctor.inject LIT("if(this[{ctorsym}]==={refsym}) this[{initsym}]();")
-				else
-					ctor.inject LIT("this[{ctorsym}]==={refsym} && this[{initsym}] && this[{initsym}]()")
-			elif hasInitedHook
-				ctor.inject LIT("if(!this[{ctorsym}]) this[{initsym}]();")
+				if sup
+					let refsym = STACK.getSymbol()
+					staticInit.inject LIT("this.prototype[{ctorsym}] = {refsym}"), 0
+					if hasInitedHook
+						ctor.inject LIT("if(this[{ctorsym}]==={refsym}) this[{initsym}]();")
+					else
+						ctor.inject LIT("this[{ctorsym}]==={refsym} && this[{initsym}] && this[{initsym}]()")
+				elif hasInitedHook
+					ctor.inject LIT("if(!this[{ctorsym}]) this[{initsym}]();")
 
 
-			# ctor.body.add([callop,BR],0)
+				# ctor.body.add([callop,BR],0)
 
 		
 		self
@@ -5816,7 +5825,8 @@ export class Identifier < Node
 export class DecoratorIdentifier < Identifier
 	
 	def symbol
-		"decorator${@value.slice(1)}"
+		helpers.toValidIdentifier(String(@value))
+		# "decorator${@value.slice(1)}"
 		
 	def toString
 		symbol
