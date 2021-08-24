@@ -1,9 +1,9 @@
-var blocks = [
+let blocks = [
 	{type: 'todo', name: 'Test this'}
 	{type: 'note', name: 'Explain this'}
 ]
 
-var flip = yes
+let flip = yes
 
 tag shared-item
 
@@ -31,7 +31,7 @@ tag app-root
 			if flip
 				<{blocks[0].type}-item.cond> <div.inner> blocks[0].name
 
-var app = <app-root>
+let app = <app-root>
 imba.mount app
 
 test do
