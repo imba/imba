@@ -1,3 +1,6 @@
+## unreleased
+* Add experimental support for class decorators
+
 ## 2.0.0-alpha.165
 * Reorganize prebuilt files for jspm support
 
