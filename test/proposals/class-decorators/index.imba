@@ -1,54 +1,23 @@
-def @register key
-	
-	
-	yes
-
-def @actionable target
+def @indexable target
 	extend class target
-		def hey
-			"WOW!"
-	yes
+		def [Symbol.toPrimitive]
+			##symbol ||= Symbol!
 
-def @eventable target
-	extend class target
-		def on name
-			"WOW!"
-		
-		def un name
-			yes
-			
-		def emit name, data
-			yes
-
-class Decorator
-	
-	def #property
-		yes
-		
-	def #method
-		yes
-		
-	def #class
-		yes
-		
-	def #tag
-		yes
-
-
-class Simple
-	def render
-		yes
-
-@actionable @eventable
-class Lock
+@indexable
+class Model
 	
 	def constructor
 		seed = Math.random!
-	
-	def test
-		seed.toFixed
-		yes
 
-let item = new Lock
-console.log item.hey!
-console.log item.on
+
+describe 'class decorators' do
+	test do
+	let data = {}
+	let one = new Model
+	let two = new Model
+
+	data[one] = 1
+	data[two] = 2
+	
+	eq data[one], 1
+	eq data[two], 2
