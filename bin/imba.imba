@@ -201,7 +201,7 @@ def run entry, o, extras
 				runner.reload!
 	return
 
-let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version).name('imba')
+let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version, '-v, --version').name('imba')
 
 def common cmd
 	cmd
