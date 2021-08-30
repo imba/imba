@@ -15,14 +15,12 @@ class TeleportHook < ImbaElement
 		return #slot
 	
 	get #slot
-		console.log "slot", ##slot
 		unless ##slot
 			let classes = self.className
 			##slot = doc.createElement('div')
 			##slot.className = classes
 			##slot.style.cssText = "display:contents !important;"
 			
-			console.log "appending", mounted?
 			if mounted?
 				const toElement = (doc.querySelector to) or doc.body
 				toElement.appendChild(##slot)
