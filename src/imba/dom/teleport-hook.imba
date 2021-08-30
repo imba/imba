@@ -1,4 +1,4 @@
-import {ImbaElement} from './component'
+import {ImbaElement} from './component.imba'
 
 class TeleportHook < ImbaElement
 	prop to\string
@@ -10,19 +10,21 @@ class TeleportHook < ImbaElement
 		
 	def setup
 		setAttribute('style',"display:none !important;")
-		toElement = (doc.querySelector to) or doc.body
 
 	def slot$ name, ctx
 		return #slot
 	
 	get #slot
+		console.log "slot", ##slot
 		unless ##slot
 			let classes = self.className
 			##slot = doc.createElement('div')
 			##slot.className = classes
 			##slot.style.cssText = "display:contents !important;"
 			
+			console.log "appending", mounted?
 			if mounted?
+				const toElement = (doc.querySelector to) or doc.body
 				toElement.appendChild(##slot)
 		##slot
 		
@@ -41,7 +43,8 @@ class TeleportHook < ImbaElement
 	def mount
 		for [name,handler,o] in #listeners
 			win.addEventListener(name,handler,o)
-			
+		const toElement = (doc.querySelector to) or doc.body
+
 		toElement.appendChild(##slot) if ##slot
 		return
 
