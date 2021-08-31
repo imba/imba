@@ -65,7 +65,7 @@ Everyone is welcome! This is a great place to report your issues, hangout and ta
 
 For the exact meeting times, please use the Meetup group [Imba Oslo Meetup](https://www.meetup.com/Imba-Oslo-Meetup), this is where you can see the timezone, cancellations, etc.
 
-You can join us remotely via [Zoom](https://us04web.zoom.us/j/230170873).
+You can join us remotely via [Zoom](https://us02web.zoom.us/j/2571893359?pwd=MVRkdWtsbm50UUZ0di81bXVvTjl0UT09).
 
 Did you miss a meeting? No worries, catch up via the [meeting notes](https://bit.ly/2JyjGM1) or [video recordings](https://www.youtube.com/playlist?list=PLf1a9PYKGPdl3OMBHV72Oz23eFy9q51jJ).
 
