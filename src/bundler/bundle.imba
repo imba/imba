@@ -13,6 +13,7 @@ import {Module} from 'module'
 
 import FileSystem from './fs'
 import Component from './component'
+import ESResolver from './esresolver'
 import {SourceMapper} from '../compiler/sourcemapper'
 
 import Watcher from './watcher'
@@ -372,6 +373,13 @@ export default class Bundle < Component
 				Object.assign(base,item)
 		
 		return cacher[key] = base # Object.create(base)
+		
+	get esresolver
+		#esresolver ||= new ESResolver(self,{
+			platform: esoptions.platform
+			format: esoptions.format
+			resolveExtensions: esoptions.resolveExtensions
+		})
 
 	def plugin esb
 		let externs = esoptions.external or []
@@ -461,6 +469,11 @@ export default class Bundle < Component
 			let cfg = resolveConfigPreset(formats)
 			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
 			
+			unless res
+				let fallback = await esresolver.resolve(path,args.resolveDir)
+				# console.log 'fallback!?',fallback
+				res = {abs: fallback, #rel: fs.relative(fallback)}
+
 			let out = {path: res.#rel + '?' + q, namespace: 'entry'}
 			pathMetadata[out.path] = {path: res.#rel, config: cfg}
 			return out
@@ -640,6 +653,10 @@ export default class Bundle < Component
 				unless watcher
 					workers.stop!
 					workers = null
+
+					if #esresolver
+						#esresolver.stop!
+						#esresolver = null
 
 				# only add this once
 				if watcher and main? and (#watching =? true)
