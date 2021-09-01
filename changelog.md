@@ -2,6 +2,7 @@
 * Add experimental support for class decorators
 * Fix: Apply display:block to global tags without dashed name
 * Change: `inset:*` style shorthand sets `position:absolute`
+* Added `<teleport to=(sel/element)>` component (#606) by @haikyuu
 
 ## 2.0.0-alpha.165
 * Reorganize prebuilt files for jspm support
