@@ -12,9 +12,9 @@ class Scheduled
 	skip = 0
 	last = 0
 
-	def tick scheduler
+	def tick scheduler, source
 		last = owner.#frames
-		target.tick(owner)
+		target.tick(self, source)
 		1
 
 	def update o, activate?
@@ -42,7 +42,8 @@ class Scheduled
 		elif typeof value == 'number'
 			# duration
 			let tock = value / (1000 / 60)
-			if tock <= 2 
+			if tock <= 2
+				# FIXME everything from 30 to 60 fps is treated as 60fps
 				owner.on('raf',self)
 			else
 				#interval = global.setInterval(queue.bind(self),value)
@@ -133,11 +134,11 @@ export class Scheduler
 		if items.length
 			for item,i in items
 				if typeof item === 'string' && listeners[item]
-					listeners[item].forEach do |item|
-						if item.tick isa Function
-							item.tick(self)
-						elif item isa Function
-							item(self)
+					listeners[item].forEach do(listener)
+						if listener.tick isa Function
+							listener.tick(self,item)
+						elif listener isa Function
+							listener(self,item)
 				elif item isa Function
 					item(self.dt,self)
 				elif item.tick
