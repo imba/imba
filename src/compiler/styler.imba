@@ -451,7 +451,7 @@ export class StyleTheme
 
 		
 	def inset [t,r=t,b=t,l=r]
-		{top: t, right: r, bottom: b, left: l}
+		{position: 'absolute', top: t, right: r, bottom: b, left: l}
 		
 	def size [w,h=w]
 		{width: w, height: h}
