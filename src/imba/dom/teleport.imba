@@ -1,4 +1,4 @@
-import {Event,Element} from '../dom/core'
+import {Element} from './core'
 import {ImbaElement} from './component.imba'
 
 class TeleportHook < ImbaElement
