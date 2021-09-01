@@ -72,7 +72,7 @@ extend class Node
 		if !(other isa Node) and other.replace$
 			other.replace$(this)
 		else
-			self.parentNode.replaceChild(other,this)
+			self.parentNode.replaceChild$(other,this)
 		return other
 
 	def insertInto$ parent
@@ -83,19 +83,19 @@ extend class Node
 		this.insertBefore(el,prev)
 
 	def insertBeforeBegin$ other
-		self.parentNode.insertBefore(other,this)
+		self.parentNode.insertBefore$(other,this)
 
 	def insertAfterEnd$ other
 		if self.nextSibling
 			self.nextSibling.insertBeforeBegin$(other)
 		else
-			self.parentNode.appendChild(other)
+			self.parentNode.appendChild$(other)
 	
 	def insertAfterBegin$ other
 		if self.childNodes[0]
 			self.childNodes[0].insertBeforeBegin$(other)
 		else
-			self.appendChild(other)
+			self.appendChild$(other)
 
 	get #placeholder__
 		##placeholder__ ||= global.document.createComment("")
