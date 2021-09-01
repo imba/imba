@@ -1,5 +1,7 @@
 ## unreleased
 * Add experimental support for class decorators
+* Fix: Apply display:block to global tags without dashed name
+* Change: `inset:*` style shorthand sets `position:absolute`
 
 ## 2.0.0-alpha.165
 * Reorganize prebuilt files for jspm support
