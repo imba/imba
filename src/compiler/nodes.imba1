@@ -8833,9 +8833,9 @@ export class Tag < TagLike
 		let typ = isSelf ? "self" : (isFragment ? "'fragment'" : (type:isClass and type.isClass ? type.toTypeArgument : "'" + type.@value + "'"))
 		
 		if type.@value == 'global' or type.@value == 'teleport'
-			console.warn "global will be deprecated in favor of teleport in a future version. Please use teleport instead" unless type.@value == 'teleport'
-			typ = "'i-teleport'"
-			STACK.use('dom_teleport_hook')
+			# console.warn "global will be deprecated in favor of teleport in a future version. Please use teleport instead" unless type.@value == 'teleport'
+			typ = "'i-{type.@value}'"
+			STACK.use('dom_teleport')
 			
 		var parentIsInlined = o:inline
 		# console.log 'tag is inline?',wasInline,tagName

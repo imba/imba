@@ -1,7 +1,8 @@
+import {Event,Element} from '../dom/core'
 import {ImbaElement} from './component.imba'
 
 class TeleportHook < ImbaElement
-	prop to\string
+	prop to
 
 	def build
 		#listeners = []
@@ -22,9 +23,16 @@ class TeleportHook < ImbaElement
 			##slot.style.cssText = "display:contents !important;"
 			
 			if mounted?
-				const toElement = (doc.querySelector to) or doc.body
-				toElement.appendChild(##slot)
+				domTarget.appendChild(##slot)
+				# const toElement = (doc.querySelector to) or doc.body
+				# toElement.appendChild(##slot)
 		##slot
+		
+	get domTarget
+		#domTarget ||= (to isa Element ? to : (self.closest(to) or doc.querySelector(to)))
+		
+	get eventTarget
+		domTarget
 		
 	get style
 		##slot ? ##slot.style : super
@@ -39,32 +47,41 @@ class TeleportHook < ImbaElement
 		##slot ? (##slot.className=val) : super
 
 	def mount
+		
 		for [name,handler,o] in #listeners
-			win.addEventListener(name,handler,o)
-		const toElement = (doc.querySelector to) or doc.body
-
-		toElement.appendChild(##slot) if ##slot
-		return
+			eventTarget.addEventListener(name,handler,o)
+		# const toElement = (doc.querySelector to) or doc.body
+		domTarget.appendChild(##slot) if ##slot
+		return self
 
 	def unmount
 		for [name,handler,o] in #listeners
-			win.removeEventListener(name,handler,o)
+			eventTarget.removeEventListener(name,handler,o)
 			
 		if ##slot and ##slot.parentNode
 			##slot.parentNode.removeChild(##slot)
-
-		return
+		
+		#domTarget = null
+		return self
 		
 	def addEventListener name, handler, o = {}
 		handler.#self = self
 		#listeners.push([name,handler,o])
-		if !mounted? and win.addEventListener
-			win.addEventListener(name,handler,o)
+		if mounted? and eventTarget..addEventListener
+			eventTarget.addEventListener(name,handler,o)
+		
 
+class GlobalHook < TeleportHook
+	
+	get domTarget
+		doc.body
+		
+	get eventTarget
+		win
+	
 if global.customElements
 	global.customElements.define('i-teleport',TeleportHook)
+	global.customElements.define('i-global',GlobalHook)
 	
-export def use_dom_teleport_hook
-	yes
-export def use_dom_global_hook
+export def use_dom_teleport
 	yes
