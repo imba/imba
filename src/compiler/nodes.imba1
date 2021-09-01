@@ -3523,7 +3523,9 @@ export class TagDeclaration < ClassDeclaration
 					
 		# add some default css
 		if !STACK.tsc and name and name:toNodeName and !option(:extension)
-			STACK.css += name.toNodeName + ' { display:block; }\n\n'
+			let name = name.toNodeName
+			name = name + '-tag' if name.indexOf('-') == -1
+			STACK.css += name + ' { display:block; }\n\n'
 		return
 		
 	def addElementReference name, child
