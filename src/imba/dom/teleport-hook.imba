@@ -1,6 +1,8 @@
-import {ImbaElement} from './component'
+import {ImbaElement} from './component.imba'
 
-class GlobalHook < ImbaElement
+class TeleportHook < ImbaElement
+	prop to\string
+
 	def build
 		#listeners = []
 		win = global
@@ -8,7 +10,7 @@ class GlobalHook < ImbaElement
 		
 	def setup
 		setAttribute('style',"display:none !important;")
-	
+
 	def slot$ name, ctx
 		return #slot
 	
@@ -20,7 +22,8 @@ class GlobalHook < ImbaElement
 			##slot.style.cssText = "display:contents !important;"
 			
 			if mounted?
-				doc.body.appendChild(##slot)
+				const toElement = (doc.querySelector to) or doc.body
+				toElement.appendChild(##slot)
 		##slot
 		
 	get style
@@ -34,15 +37,13 @@ class GlobalHook < ImbaElement
 		
 	set className val
 		##slot ? (##slot.className=val) : super
-		
-	def setup
-		setAttribute('style',"display:none !important;")
-	
+
 	def mount
 		for [name,handler,o] in #listeners
 			win.addEventListener(name,handler,o)
-			
-		doc.body.appendChild(##slot) if ##slot
+		const toElement = (doc.querySelector to) or doc.body
+
+		toElement.appendChild(##slot) if ##slot
 		return
 
 	def unmount
@@ -61,7 +62,9 @@ class GlobalHook < ImbaElement
 			win.addEventListener(name,handler,o)
 
 if global.customElements
-	global.customElements.define('i-global',GlobalHook)
+	global.customElements.define('i-teleport',TeleportHook)
 	
+export def use_dom_teleport_hook
+	yes
 export def use_dom_global_hook
 	yes
