@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.166
 * Add experimental support for class decorators
 * Fix: Apply display:block to global tags without dashed name
 * Change: `inset:*` style shorthand sets `position:absolute`
