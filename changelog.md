@@ -1,3 +1,6 @@
+## unreleased
+* Add support for generic media selectors via `@media(some-media) ...`
+
 ## 2.0.0-alpha.166
 * Add experimental support for class decorators
 * Fix: Apply display:block to global tags without dashed name

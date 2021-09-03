@@ -79,8 +79,10 @@ export const modifiers =
 	force: {pri: 4}
 	important: {pri: 3}
 	
+	media: {type: 'media'}
 	print: {media: 'print'}
 	screen: {media: 'screen'}
+	speech: {media: 'speech'}
 	
 	xs: {media: '(min-width: 480px)' }
 	sm: {media: '(min-width: 640px)' }

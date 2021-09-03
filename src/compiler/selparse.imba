@@ -176,7 +176,9 @@ export def rewrite rule,ctx,o = {}
 					else
 						media = "(max-width: {num - 1}px)"
 
-			
+
+			if name == 'media'
+				media = "({mod.value})"
 				
 			if post == '~'
 				# NOT IMPLEMENTED sibling selector modifier
