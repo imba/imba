@@ -125,7 +125,7 @@ var SYMBOL = ///^
 ///
 
 var STYLE_HEX = ///^
-	\#[0-9a-fA-F]{3,6}
+	\#[0-9a-fA-F]{3,8}
 ///
 
 var STYLE_NUMERIC = ///^
@@ -708,9 +708,13 @@ export class Lexer
 			if !end and (letter == '=' or letter == '\n' or letter == '{')
 				break
 			
-			if !end and letter == ' ' and STYLE_PROPERTY2.exec(str.slice(i + 1))
-				# console.log 'found end!',str.slice(0,i)
-				break
+			if !end and letter == ' '
+				let after = str.slice(i + 1)
+				if STYLE_PROPERTY2.exec(after)
+					break
+				
+				if INLINE_COMMENT.exec(after)
+					break
 
 			# console.log 'try',letter,i,end,str.substr(i,5)
 			i++

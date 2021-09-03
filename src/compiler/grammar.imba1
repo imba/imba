@@ -389,6 +389,7 @@ var grammar =
 	
 	
 	StyleBlockBody: [
+		o 'INDENT Terminator OUTDENT' do StyleBody.new([]).indented(A1,A3)
 		o 'INDENT StyleBody Outdent' do A2.indented(A1,A3)
 	]
 	
