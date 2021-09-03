@@ -292,7 +292,7 @@ extend class SVGElement
 
 	def flag$ str
 		let ns = flags$ns
-		self.className.baseVal = ns ? (ns + (flags$ext = str)) : (flags$ext = str)
+		self.setAttribute('class',ns ? (ns + (flags$ext = str)) : (flags$ext = str))
 		return
 
 	def flagSelf$ str
@@ -303,7 +303,7 @@ extend class SVGElement
 		return flagSelf$(str)
 
 	def flagSync$
-		self.className.baseVal = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
+		self.setAttribute('class',(flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
 
 
 extend class SVGSVGElement
