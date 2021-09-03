@@ -3,6 +3,7 @@
 * Fix: Interpolated numeric value for `rotate:{val}` works i FF
 * Add @all and @speech style modifiers (for @media all/speech)
 * Fix: Allow empty css selectors
+* Fix: Rebuilt prebuilt imba.mjs for web
 
 ## 2.0.0-alpha.166
 * Add experimental support for class decorators

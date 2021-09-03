@@ -117,9 +117,7 @@ async function universalise(result, o) {
 			let name = file.path.replace('.mjs', '.cjs');
 			console.log("transformed to cjs", cjs.code.length, file.text.length);
 			fs.writeFileSync(name, cjs.code);
-			if (bname == 'compiler') {
-				fs.writeFileSync(file.path, file.contents);
-			}
+			fs.writeFileSync(file.path, file.contents);
 		} else {
 			fs.writeFileSync(file.path, file.contents);
 		}
