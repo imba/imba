@@ -1,6 +1,7 @@
 ## unreleased
 * Add support for generic media selectors via `@media(some-media) ...`
 * Fix: Interpolated numeric value for `rotate:{val}` works i FF
+* Add @all and @speech style modifiers (for @media all/speech)
 
 ## 2.0.0-alpha.166
 * Add experimental support for class decorators

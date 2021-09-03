@@ -83,6 +83,7 @@ export const modifiers =
 	print: {media: 'print'}
 	screen: {media: 'screen'}
 	speech: {media: 'speech'}
+	all: {media: 'all'}
 	
 	xs: {media: '(min-width: 480px)' }
 	sm: {media: '(min-width: 640px)' }
