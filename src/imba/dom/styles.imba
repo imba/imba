@@ -124,7 +124,7 @@ class Styles
 					unit = 'u'
 				elif key == 'rotate'
 					unit = 'turn'
-					value = value.toFixed(4)
+					value = (value % 1).toFixed(4)
 
 			if unit
 				if VALID_CSS_UNITS[unit]
