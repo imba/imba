@@ -1,4 +1,4 @@
-var name = "Hello"
+let name = "Hello"
 
 tag deep-item
 	def render

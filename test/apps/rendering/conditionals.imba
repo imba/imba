@@ -1,12 +1,12 @@
-var value = 1
+let value = 1
 
-var flipper = do
+let flipper = do
 	if value
 		<b.flipper> "one"
 	else
 		null
 
-var fragif = do
+let fragif = do
 	if value
 		<div> "single item"
 	else
@@ -20,7 +20,7 @@ tag app-root
 
 	def render
 		<self>
-			<button :click.flip> "flip"
+			<button @click=flip> "flip"
 			<>
 				<span> "one"
 				<span> "two"
@@ -36,7 +36,7 @@ tag app-root
 			else
 				<button.onfalse> "onfalse"
 
-imba.mount(var app = <app-root>)
+imba.mount(let app = <app-root>)
 
 test "check" do
 	ok app.querySelector('button.flipping')

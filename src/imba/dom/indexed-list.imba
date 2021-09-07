@@ -1,28 +1,37 @@
 import {createComment} from './core'
-	
-class IndexedTagFragment
+import {Fragment} from './fragment'
+
+class IndexedTagFragment < Fragment
 
 	def constructor f, parent
+		super
 		#domFlags = f
-		#parent = parentNode = parent
+		#parent = parent
 		# parent could be a fragment
+		log 'IndexedTag',parent
 
 		unless f & $TAG_LAST_CHILD$
-			#end = createComment('end')
-			parent.#appendChild(#end) if parent
-
-		self.setup()
-
-	def setup
-		self.$ = []
+			#end = createComment('list')
+			#end.node = self
+			# parent.#appendChild(#end) if parent
+			
+		self.$ = childNodes
 		self.length = 0
+			
+		if parent
+			parent.#appendChild(self)
+			
+	def hasChildNodes
+		return false if length == 0
+		return true
+
 
 	def #afterVisit len
 		let from = self.length
 		self.length = len
 
-		return if from == len or !#parent
-		let array = self.$
+		return if from == len or !parentNode
+		let array = self.childNodes
 		let par = #parent
 		let end = #end
 
@@ -37,19 +46,26 @@ class IndexedTagFragment
 		return
 		
 	def #insertInto parent, before
-		#parent = parent
-		unless parentNode
-			parentNode = parent
-			# console.log 'inserting fragment into',self,parent,self.length,self.$
-			#end.#insertInto(parent,before)
+		# #parent = parent
+		parentNode = parent
+		
+		if parent isa Node
+			# FIXME need to work with non-dom elements as well
+			if #end
+				#end.#insertInto(parent,before)
+			before ||= #end
 
-			for item,i in self.$
+			for item,i in childNodes
 				break if i == self.length
-				parent.#insertBefore(item,#end)
-			# #afterVisit(#length)
-			# before ? before.insertBeforeBegin$($end) : parent.appendChild$($end)
-			# self.attachNodes()
+				# log 'insert child',parent,item,before
+				item.#insertInto(parent,before)
+				# log 'insert child',parent,item,before,parent.innerHTML
 		return self
+		
+	def #appendChild item
+		# this should be a noop
+		# log 'list #appendChild',item
+		return
 		
 		
 	def #replaceWith rel, parent
@@ -58,29 +74,15 @@ class IndexedTagFragment
 		return res
 	
 	def #removeFrom parent
+		# log '#removeFrom',parent
 		let i = length
 		while i > 0
-			let el = self.$[--i]
+			let el = childNodes[--i]
 			el.#removeFrom(parent)
 			# parent.#removeChild(el)
-		parent.removeChild(#end)
+		parent.removeChild(#end) if #end
 		parentNode = null
 		return
 
-	def attachNodes
-		for item,i in self.$
-			break if i == self.length
-			#parent.#insertBefore(item,#end)
-			# $end.insertBeforeBegin$(item)
-		return
-
-	def detachNodes
-		let i = 0
-		while i < self.length
-			let item = self.$[i++]
-			#parent.#removeChild(item)
-		return
-
 export def createIndexedList bitflags, parent
-	console.log 'creating indexed list!!'
 	return new IndexedTagFragment(bitflags,parent)

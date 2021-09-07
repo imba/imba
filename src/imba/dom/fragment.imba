@@ -21,19 +21,19 @@ extend class DocumentFragment
 	# a single text node
 	def text$ item
 		unless $text
-			$text = this.#insert(item)
+			$text = this.#placeChild(item)
 		else
 			$text.textContent = item
 		return
 	
-	def #insert item, options, toReplace
+	def #placeChild item, options, toReplace
 		console.log 'frag insert',item,options,toReplace
 		if ##parent
 			# if the fragment is attached to a parent
 			# we can just proxy the call through
 			##parent.#insert(item,options,toReplace or #end)
 		else
-			Element.prototype.#insert.call(this,item,options,toReplace or #end)
+			Element.prototype.#placeChild.call(this,item,options,toReplace or #end)
 
 	def #insertInto parent, before
 		console.log 'insert into fragment',parent,before
@@ -78,13 +78,33 @@ extend class DocumentFragment
 		return true
 
 
+export class Fragment
+	
+	def constructor
+		childNodes = []
+		
+	def log ...params
+		return
+		console.log this.constructor.name,...params
+		
+	def hasChildNodes
+		false
+
+let counter = 0
 # like a list
-class VirtualFragment
-	def constructor flags, par
+class VirtualFragment < Fragment
+	def constructor flags, parent
+		super
+		##up = parent
 		parentNode = null
 		#domFlags = flags
-		#children = []
-		#end = createComment('slot')
+		childNodes = []
+		#end = createComment('slot' + counter++)
+		#end.node = self
+		
+		if parent
+			parent.#appendChild(self)
+
 		
 	get #parent
 		##parent or parentNode or ##up
@@ -95,16 +115,23 @@ class VirtualFragment
 	get textContent
 		#textContent
 		
-	def isEmpty$
-		for item in #children
-			unless item isa Comment
-				return false
-		return true
+	def hasChildNodes
+		for item in childNodes
+			if item isa Fragment
+				return true if item.hasChildNodes!
+			if item isa Comment
+				yes
+			elif item isa Node
+				return true
+
+			# unless item isa Comment
+			#	return false
+		return false
 		# #children.length == 0
 		
 	def text$ item
 		unless #textNode
-			#textNode = #insert(item)
+			#textNode = #placeChild(item)
 		else
 			#textNode.textContent = item
 		return #textNode
@@ -112,42 +139,46 @@ class VirtualFragment
 	def appendChild child
 		if parentNode
 			child.#insertInto(parentNode,#end)
-		else
-			#children.push(child)
+		childNodes.push(child)
 	
 	def #appendChild child
-		# log '#appendChild',child
-		appendChild(child)
+		if parentNode
+			child.#insertInto(parentNode,#end)
+		childNodes.push(child)
 	
 	def insertBefore node,refnode
 		if parentNode
 			parentNode.#insertBefore(node,refnode)
-		let idx = #children.indexOf(refnode)
+		let idx = childNodes.indexOf(refnode)
 		if idx >= 0
-			#children.splice(idx,0,node)
+			childNodes.splice(idx,0,node)
 		return node
 	
 	
 	def #removeChild node
 		if parentNode
 			parentNode.#removeChild(node)
-		let idx = #children.indexOf(node)
+		let idx = childNodes.indexOf(node)
 		if idx >= 0
-			#children.splice(idx,1)
+			childNodes.splice(idx,1)
 		return
 			
 	def #insertInto parent, before
 		# console.log 'frag #insertInto',parent,before,#children
 		let prev = parentNode
+
 		if parentNode =? parent
+			# log '#insertInto',parent,prev,before,#end
 			# what if before is a fragment etc?
-			#end.#insertInto(parent,before)
-			before = #end
-			for item in #children
+			if #end
+				before = #end.#insertInto(parent,before)
+			# before = #end
+			for item in childNodes
 				item.#insertInto(parent,before)
 		return self
 		
 	def #replaceWith node, parent
+		# log '#replaceWith',node,parent
 		# what if this
 		# log 'replaced with',node,parent
 		let res = node.#insertInto(parent,#end)
@@ -159,12 +190,12 @@ class VirtualFragment
 			insertBefore(node,refnode or #end)
 		
 		if refnode
-			let idx = #children.indexOf(refnode)
+			let idx = childNodes.indexOf(refnode)
 			# console.log 'vfragment #insertBefore',node,refnode,refnode == #end,idx,#children
 			if idx >= 0
-				#children.splice(idx,0,node)
+				childNodes.splice(idx,0,node)
 		else
-			#children.push(node)
+			childNodes.push(node)
 		return node
 		
 		
@@ -172,21 +203,14 @@ class VirtualFragment
 		# 	item.#removeFrom(parent)
 	
 	def #removeFrom parent
-		for item in #children
+		for item in childNodes
+			# log '#removeFrom',item,parent
 			item.#removeFrom(parent)
-		#end.#removeFrom(parent)
+		#end.#removeFrom(parent) if #end
 		parentNode = null
 		self
-	
-	def log ...params
-		console.log 'frag',...params
 
-	def #insert item, f, prev
-		# is connected
-		# log '#insert',item,prev,f,parentNode
-		# if parentNode
-		#	let idx = 
-		#	let res = parentNode.#insert(item,f,prev or #end)
+	def #placeChild item, f, prev
 		let par = parentNode
 		let type = typeof item
 		
@@ -197,15 +221,15 @@ class VirtualFragment
 			let el = createComment('')
 			
 			if prev
-				let idx = #children.indexOf(prev)
-				#children.splice(idx,1,el)
+				let idx = childNodes.indexOf(prev)
+				childNodes.splice(idx,1,el)
 				if par
 					prev.#replaceWith(el,par)
 				# parentNode.#insert(item,f,prev or #end)
 				return el
 			
 			
-			#children.push(el)
+			childNodes.push(el)
 			el.#insertInto(par,#end) if par
 			return el
 			# return prev ? prev.#replaceWith(el,self) : el.#insertInto(this,null)
@@ -223,37 +247,35 @@ class VirtualFragment
 					return prev
 				else
 					res = createTextNode(txt)
-					let idx = #children.indexOf(prev)
-					#children.splice(idx,1,res)
+					let idx = childNodes.indexOf(prev)
+					childNodes.splice(idx,1,res)
 					# prev.#replaceWith(res,self)
 					prev.#replaceWith(res,par) if par
 					return res
 			else
-				#children.push(res = createTextNode(txt))
+				childNodes.push(res = createTextNode(txt))
 				# self.appendChild$(res = createTextNode(txt))
 				res.#insertInto(par,#end) if par
 				return res
 
 		elif prev
-			let idx = #children.indexOf(prev)
-			#children.splice(idx,1,item)
+			let idx = childNodes.indexOf(prev)
+			childNodes.splice(idx,1,item)
 			prev.#replaceWith(item,par) if par
 			return item
 		else
-			#children.push(item)
+			childNodes.push(item)
 			item.#insertInto(par,#end) if par
 			return item
-		
-			
 
-export def createLiveFragment2 bitflags, options, par
-	const el = createFragment!
-	el.setup$(bitflags, options)
-	el.##up = par if par
+
+export def createLiveFragment bitflags, par
+	const el = new VirtualFragment(bitflags, par)
 	return el
-
-export def createLiveFragment bitflags, options, par
-	const el = new VirtualFragment(bitflags, options)
+	
+export def createSlot bitflags, par
+	const el = new VirtualFragment(bitflags, null)
+	el.##up = par
 	# el.setup$(bitflags, options)
-	el.##up = par if par
+	# el.##up = par if par
 	return el
