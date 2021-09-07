@@ -169,7 +169,7 @@ extend class Node
 			# TODO add detached flag?
 		self
 		
-	def #insert item, f, prev
+	def #placeChild item, f, prev
 		
 		let type = typeof item
 		# console.log '#inserting!',item,f,prev,type

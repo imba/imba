@@ -1,32 +1,39 @@
 import {createComment} from './core'
+import {Fragment} from './fragment'
 
-class KeyedTagFragment
+class KeyedTagFragment < Fragment
 	
 	def constructor f, parent
+		super
 		#domFlags = f
 		#parent = parent
-		parentNode = parent
-
-		if !(f & $TAG_FIRST_CHILD$)
-			#start = createComment('start')
-			parent.#appendChild(#start) if parent
-
-		unless f & $TAG_LAST_CHILD$
-			#end = createComment('end')
-			parent.#appendChild(#end) if parent
-
-		self.setup()
-
-	def setup
-		self.array = []
-		self.changes = new Map
-		self.dirty = no
+		changes = new Map
+		dirty = no
+		array = childNodes
+		# parentNode = parent
 		self.$ = {}
-		
+
+		# if !(f & $TAG_FIRST_CHILD$)
+		# 	#start = createComment('start')
+		# 	# parent.#appendChild(#start) if parent
+
+		if !(f & $TAG_LAST_CHILD$)
+			#end = createComment('map')
+			#end.node = self
+			# parent.#appendChild(#end) if parent
+			
+		if parent
+			parent.#appendChild(self)
+
+
 	def #appendChild item
 		if parentNode
 			parentNode.#insertBefore(item,#end)
-
+	
+	def hasChildNodes
+		return false if childNodes.length == 0
+		return true
+		
 	def push item, idx
 		# on first iteration we can merely run through
 		unless #domFlags & $TAG_INITED$
@@ -47,7 +54,7 @@ class KeyedTagFragment
 			if prevIndex === -1
 				# should we mark the one currently in slot as removed?
 				self.array.splice(idx,0,item)
-				self.insertChild(item,idx)
+				self.insertChild(item,idx,prevIndex)
 
 			elif prevIndex === idx + 1
 				if toReplace
@@ -63,26 +70,31 @@ class KeyedTagFragment
 				self.changes.delete(item)
 		return
 
-	def insertChild item, index
+	def insertChild item, index, prevIndex
+		let par = parentNode
+		return unless par
+		
 		# console.log 'insertChild',item,index
+		# log 'insertBefore',index,item,parentNode
 		if index > 0
 			let other = self.array[index - 1]
 			# will fail with text nodes
-			parentNode.#insertChild(item,other.nextSibling)
-		elif #start
-			parentNode.#insertChild(item,#start.nextSibling)
+			par.#insertBefore(item,other.nextSibling)
 		else
-			parentNode.#insertAfterBegin(item)
+			par.#insertBefore(item,childNodes[index + 1] or #end)
 		return
 		
 	def moveChild item, index, prevIndex
-		insertChild(item,index)
+		insertChild(item,index, prevIndex)
 
 	def removeChild item, index
 		# self.map.delete(item)
 		# what if this is a fragment or virtual node?
-		if item.parentNode == #parent
-			#parent.removeChild(item)
+		if item.parentNode
+			# log 'removeChild',item,item.parentNode
+			item.#removeFrom(item.parentNode)
+
+			# #parent.removeChild(item)
 		return
 
 	def attachNodes
@@ -110,15 +122,15 @@ class KeyedTagFragment
 		#parent = parent
 		let prev = parentNode
 		if parent != prev
-			
 			parentNode = parent
-			#start.#insertInto(parent,before) if #start
+			# #start.#insertInto(parent,before) if #start
 			#end.#insertInto(parent,before) if #end
-			# console.log 'inserting fragment into',self,parent,self.length,self.$
 			attachNodes!
 		self
 	
 	def #removeFrom parent
+		# log '#removeFrom!',parent
+
 		for item in self.array
 			parent.#removeChild(item)
 		parent.#removeChild(#end) if #end
@@ -132,6 +144,8 @@ class KeyedTagFragment
 			return
 
 		if self.dirty
+			# console.log 'was dirty!',array,self.changes
+
 			self.changes.forEach do(pos,item)
 				if pos == -1
 					self.removeChild(item)

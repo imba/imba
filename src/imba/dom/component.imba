@@ -1,5 +1,5 @@
 import {Node,HTMLElement,CUSTOM_TYPES} from './core'
-import {createLiveFragment} from './fragment'
+import {createLiveFragment,createSlot} from './fragment'
 import {scheduler} from '../scheduler'
 
 const hydrator = new class
@@ -121,7 +121,7 @@ export class ImbaElement < HTMLElement
 		if name == '__' and !render
 			return self
 
-		__slots[name] ||= createLiveFragment(0,null,self)
+		__slots[name] ||= createSlot(0,self)
 
 	# called immediately after construction 
 	def build

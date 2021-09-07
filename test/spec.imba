@@ -291,6 +291,8 @@ global class SpecAssert < SpecComponent
 
 	def constructor parent,actual,expected,options = {}
 		super()
+		if typeof options == 'string'
+			options = {message: options}
 
 		parent = parent
 		expected = expected
@@ -318,10 +320,12 @@ global class SpecAssert < SpecComponent
 		failed = yes
 		if options.warn
 			root.warnings.push(self)
+		console.log(toString!,[expected,actual])
 		self
 
 	def pass
 		passed = yes
+		console.log(toString!,[expected,actual])
 		self
 
 	def toString
@@ -330,8 +334,10 @@ global class SpecAssert < SpecComponent
 			str = str.replace('%1',actual)
 			str = str.replace('%2',expected)
 			return str
-		else
+		elif failed
 			"failed"
+		else
+			"ok"
 
 window.spec = global.SPEC = new Spec
 
