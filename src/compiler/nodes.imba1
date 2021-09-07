@@ -9344,7 +9344,7 @@ export class Tag < TagLike
 			let pref = fragment.ref
 			let cref = @cref
 			if dynamicKey
-				foot.push "({tvar}=={cref}) || (!{cref} && ({cref}={tvar}){domCall('insertInto')}({pref})) || {cref}{domCall('replaceWith')}({cref}={tvar})"
+				foot.push "({tvar}=={cref}) || (!{cref} && ({cref}={tvar}){domCall('insertInto')}({pref})) || {cref}{domCall('replaceWith')}({cref}={tvar},{pref})"
 			elif !isDetached
 				foot.push "{bvar} || {tvar}{domCall('insertInto')}({pref})"
 
