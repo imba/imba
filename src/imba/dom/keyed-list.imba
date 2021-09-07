@@ -96,6 +96,12 @@ class KeyedTagFragment < Fragment
 
 			# #parent.removeChild(item)
 		return
+		
+	def #insertChild node,relnode
+		return
+		
+	def #appendChild
+		return
 
 	def attachNodes
 		let par = parentNode
