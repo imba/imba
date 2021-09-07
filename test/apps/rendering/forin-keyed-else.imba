@@ -7,12 +7,8 @@ const todos = [
 let truthy = true
 
 tag app-original
-
-	def flip
-		truthy = !truthy
-
 	def render
-		<self :click.flip>
+		<self>
 			if truthy
 				# <div> @hello
 				for item in todos
@@ -28,24 +24,25 @@ tag app-root
 			else
 				<li> "No todo items here"
 
-imba.mount(var app = <app-original>)
+imba.mount(let app = <app-original>)
 
 const ordered = do
-	var titles = todos.map(|t| t.title).join("")
+	let titles = todos.map(do $1.title).join("")
 	console.log titles,app.textContent
 	eq app.textContent, titles
 
-let titles = todos.map(|t| t.title).join("")
+let titles = todos.map(do $1.title).join("")
 
 test do
 	# await spec.tick()
-	app.flip()
+	# app.flip()
+	truthy = false
 	app.render()
 	eq app.textContent, "--"
-	app.flip()
+	truthy = true
 	app.render()
 
 	eq app.textContent, titles
-	app.flip()
+	truthy = false
 	app.render()
 	eq app.textContent, "--"

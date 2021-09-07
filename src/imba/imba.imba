@@ -7,6 +7,8 @@ export * from './asset'
 
 export * from './dom/core'
 export * from './dom/fragment'
+export * from './dom/indexed-list'
+export * from './dom/keyed-list'
 export * from './dom/component'
 export * from './dom/styles'
 export * from './dom/context'

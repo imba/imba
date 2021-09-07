@@ -134,7 +134,8 @@ export class ImbaElement < HTMLElement
 	# called when element is attached to document
 	def mount
 		self
-
+	
+	# called when element is detached from document
 	def unmount
 		self
 
@@ -249,6 +250,10 @@ export class ImbaElement < HTMLElement
 
 	def end$
 		visit()
+		
+	def #afterVisit
+		visit()
+
 
 	def open$
 		if __F & $EL_SSR$

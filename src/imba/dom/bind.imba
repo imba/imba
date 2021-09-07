@@ -143,6 +143,9 @@ extend class HTMLSelectElement
 
 	def end$
 		self.syncValue()
+		
+	def #afterVisit
+		end$()
 
 extend class HTMLOptionElement
 	def setRichValue value
@@ -171,6 +174,9 @@ extend class HTMLTextAreaElement
 	def end$
 		if $$bound and self.value != self.data
 			self.value = self.data
+			
+	def #afterVisit
+		end$()
 
 
 extend class HTMLInputElement
@@ -233,6 +239,9 @@ extend class HTMLInputElement
 				self.richValue = self.data
 		return
 		
+	def #afterVisit
+		end$()
+		
 extend class HTMLButtonElement
 
 	get checked
@@ -272,3 +281,6 @@ extend class HTMLButtonElement
 			else
 				self.checked = bindHas(val,self.richValue)
 		return
+	
+	def #afterVisit
+		end$()

@@ -12,7 +12,7 @@ tag app-original
 		truthy = !truthy
 
 	def render
-		<self :click.flip>
+		<self @click=flip>
 			if truthy
 				# <div> @hello
 				for item in todos
@@ -31,11 +31,11 @@ tag app-root
 imba.mount(let app = <app-original>)
 
 let ordered = do
-	let titles = todos.map(|t| t.title).join("")
+	let titles = todos.map(do $1.title).join("")
 	console.log titles,app.textContent
 	eq app.textContent, titles
 
-let titles = todos.map(|t| t.title).join("")
+let titles = todos.map(do $1.title).join("")
 
 test do
 	eq app.textContent, titles

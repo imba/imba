@@ -873,6 +873,9 @@ export def createSVGElement name, parent, flags, text, ctx
 export def createComment text
 	doc.createComment(text)
 
+export def createTextNode text
+	doc.createTextNode(text)
+	
 export def createFragment
 	doc.createDocumentFragment!
 

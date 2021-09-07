@@ -49,8 +49,10 @@ let parseRemoteObject = do(obj)
 		if obj.value
 			return obj.value
 		result = {}
-		for item in obj.preview.properties
-			result[item.name] = parseRemoteObject(item) 
+		if obj.preview
+			for item in obj.preview.properties
+				result[item.name] = parseRemoteObject(item) 
+
 	elif obj.type == 'number'
 		result = parseFloat(obj.value)
 	elif obj.type == 'boolean'
