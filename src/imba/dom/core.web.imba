@@ -66,10 +66,43 @@ extend class Node
 
 	def #__init__
 		self
+	
+	def #insertBefore newnode, refnode
+		newnode.#insertInto(self,refnode)
+		
+	def #insertChild newnode, refnode
+		newnode.#insertInto(self,refnode)
+	
+	def #appendChild newnode
+		newnode.#insertInto(self,null)
+		
+	def #replaceChild newnode, oldnode
+		let res = #insertBefore(newnode,oldnode)
+		#removeChild(oldnode)
+		return res
+		
+	def #removeChild node
+		node.#removeFrom(self)
+
+	# can override if the element itself wants ot deal with this
+	def #insertInto parent, before = null
+		if before
+			parent.insertBefore(self,before)
+		else
+			parent.appendChild(self)
+		return self
+
+	def #removeFrom parent
+		parent.removeChild(self)
+		
+	def #replaceWith other
+		# console.log('#replaceWith',self,other,parentNode)
+		parentNode.#replaceChild(other,self)
+		# parentNode.#insertBefore(other,self)
 
 	# replace this with something else
 	def replaceWith$ other
-		if !(other isa Node) and other.replace$
+		if other.replace$
 			other.replace$(this)
 		else
 			self.parentNode.replaceChild$(other,this)
@@ -96,6 +129,23 @@ extend class Node
 			self.childNodes[0].insertBeforeBegin$(other)
 		else
 			self.appendChild$(other)
+			
+	def #insertAfterEnd other
+		parentNode.#insertChild(other,self.nextSibling)
+
+		# if self.nextSibling
+		# 	parentNode.#insertChild(other,self.nextSibling)
+		# else
+		# 	parentNode.#appendChild(other)
+	
+	def #insertAfterBegin node
+		#insertChild(node,childNodes[0])
+		# if let rel = self.childNodes[0]
+		# 	#insertBefore(node,rel)
+		# 	# self.childNodes[0].insertBeforeBegin$(other)
+		# else
+		# 	#appendChild(node)
+		# 	# self.appendChild$(other)
 
 	get #placeholder__
 		##placeholder__ ||= global.document.createComment("")
@@ -118,6 +168,52 @@ extend class Node
 			self.replaceWith$(ph)
 			# TODO add detached flag?
 		self
+		
+	def #insert item, f, prev
+		
+		let type = typeof item
+		# console.log '#inserting!',item,f,prev,type
+
+		if type === 'undefined' or item === null
+			# what if the prev value was the same?
+			if prev and prev isa Comment # check perf
+				return prev
+
+			let el = document.createComment('')
+			return prev ? prev.#replaceWith(el,self) : el.#insertInto(this,null)
+
+		# dont reinsert again
+		if item === prev
+			return item
+
+		# what if this is null or undefined -- add comment and return? Or blank text node?
+		elif type !== 'object'
+			let res
+			let txt = item
+			
+			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$) and false
+				# FIXME what if the previous one was not text? Possibly dangerous
+				# when we set this on a fragment - it essentially replaces the whole
+				# fragment?
+				log 'set textcontent raw',txt,prev
+				self.textContent = txt
+				return
+
+			if prev
+				if prev isa Text # check perf
+					prev.textContent = txt
+					return prev
+				else
+					res = document.createTextNode(txt)
+					prev.#replaceWith(res,self)
+					return res
+			else
+				self.appendChild(res = document.createTextNode(txt))
+				return res	
+
+		else
+			return prev ? prev.#replaceWith(item,this) : item.#insertInto(this,null)
+		return
 
 # Basic element extensions
 extend class Element
@@ -184,12 +280,67 @@ extend class Element
 			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
 			return item
 		return
+		
+	def #insert2 item, f, prev
+		console.log '#inserting!',item,f,prev,$TAG_LAST_CHILD$,$TAG_FIRST_CHILD$
+		let type = typeof item
+
+		if type === 'undefined' or item === null
+			# what if the prev value was the same?
+			if prev and prev isa Comment # check perf
+				return prev
+
+			let el = document.createComment('')
+			return prev ? prev.#replaceWith(el,self) : el.#insertInto(this,null)
+
+		# dont reinsert again
+		if item === prev
+			return item
+
+		# what if this is null or undefined -- add comment and return? Or blank text node?
+		elif type !== 'object'
+			let res
+			let txt = item
+			
+			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$)
+				# FIXME what if the previous one was not text? Possibly dangerous
+				# when we set this on a fragment - it essentially replaces the whole
+				# fragment?
+				self.textContent = txt
+				return
+
+			if prev
+				if prev isa Text # check perf
+					prev.textContent = txt
+					return prev
+				else
+					res = document.createTextNode(txt)
+					prev.#replaceWith(res,self)
+					return res
+			else
+				self.appendChild$(res = document.createTextNode(txt))
+				return res	
+
+		else
+			return prev ? prev.#replaceWith(item,self) : item.#insertInto(this,null)
+		return
+	
+	
+	def #beforeRender
+		self
+		
+	def #afterRender
+		self
 
 	def open$
 		self
 
 	def close$
 		self
+		
+	def #afterVisit
+		self.render! if self.render
+		return
 
 	def end$
 		self.render() if self.render
@@ -246,6 +397,8 @@ Element.prototype.appendChild$  = Element.prototype.appendChild
 Element.prototype.removeChild$  = Element.prototype.removeChild
 Element.prototype.insertBefore$ = Element.prototype.insertBefore
 Element.prototype.replaceChild$ = Element.prototype.replaceChild
+
+
 # Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
@@ -257,8 +410,9 @@ export def createElement name, parent, flags, text
 	if text !== null
 		el.text$(text)
 
-	if parent and parent isa Node
-		el.insertInto$(parent)
+	if parent and parent.#appendChild
+		parent.#appendChild(el)
+		# el.#insertInto(parent)
 
 	return el
 
@@ -338,6 +492,9 @@ export def createSVGElement name, parent, flags, text, ctx
 export def createComment text
 	document.createComment(text)
 
+export def createTextNode text
+	document.createTextNode(text)
+	
 export def createFragment
 	document.createDocumentFragment!
 

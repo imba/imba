@@ -1,4 +1,4 @@
-import {Element,Text,DocumentFragment,createFragment,createComment} from './core'
+import {Element,Text,DocumentFragment,createFragment,createComment,createTextNode,Comment} from './core'
 
 extend class DocumentFragment
 
@@ -7,51 +7,59 @@ extend class DocumentFragment
 
 	# Called to make a documentFragment become a live fragment
 	def setup$ flags, options
-		$start = createComment('start')
-		$end = createComment('end')
+		#start = createComment('start')
+		#end = createComment('end')
 
-		$end.replaceWith$ = do(other)
-			this.parentNode.insertBefore(other,this)
+		#end.#replaceWith = do(other)
+			this.parentNode.#insertBefore(other,this)
 			return other
 
-		this.appendChild($start)
-		this.appendChild($end)
+		this.appendChild(#start)
+		this.appendChild(#end)
 	
 	# when we for sure know that the only content should be
 	# a single text node
 	def text$ item
 		unless $text
-			$text = this.insert$(item)
+			$text = this.#insert(item)
 		else
 			$text.textContent = item
 		return
 	
-	def insert$ item, options, toReplace
+	def #insert item, options, toReplace
+		console.log 'frag insert',item,options,toReplace
 		if ##parent
 			# if the fragment is attached to a parent
 			# we can just proxy the call through
-			##parent.insert$(item,options,toReplace or $end)
+			##parent.#insert(item,options,toReplace or #end)
 		else
-			Element.prototype.insert$.call(this,item,options,toReplace or $end)
+			Element.prototype.#insert.call(this,item,options,toReplace or #end)
 
-	def insertInto$ parent, before
+	def #insertInto parent, before
+		console.log 'insert into fragment',parent,before
 		unless ##parent
 			##parent = parent
 			# console.log 'insertFrgment into',parent,Array.from(self.childNodes)
-			parent.appendChild$(this)
+			before ? parent.insertBefore(this,before) : parent.appendChild(this)
 		return this
-
-	def replaceWith$ other, parent
-		$start.insertBeforeBegin$(other)
-		var el = $start
+	
+	# replacing this slot with something else
+	def #replaceWith other, parent
+		#start.insertBeforeBegin$(other)
+		let el = #start
 		while el
+			
 			let next = el.nextSibling
 			self.appendChild(el)
-			break if el == $end
+			break if el == #end
 			el = next
 			
 		return other
 
+	def #appendChild child
+		#end ? #end.#insertBeforeBegin(child) : appendChild(child)
+		return child
+		
 	def appendChild$ child
 		$end ? $end.insertBeforeBegin$(child) : self.appendChild(child)
 		return child
@@ -69,206 +77,183 @@ extend class DocumentFragment
 			return false if el isa Element or el isa Text
 		return true
 
+
+# like a list
 class VirtualFragment
-	def constructor f, parent
-		__F = f
-		#parent = parent
-
-	def appendChild$ item, index
-		# we know that these items are dom elements
-		if $end and #parent
-			$end.insertBeforeBegin$(item)
-		elif #parent
-			#parent.appendChild$(item)
-		return
-
-	def replaceWith$ other
-		self.detachNodes()
-		$end.insertBeforeBegin$(other)
-		#parent.removeChild$($end)
-		#parent = null
-		return
-
-	def joinBefore$ before
-		self.insertInto$(before.parentNode,before)
-
-	def insertInto$ parent, before
-		unless #parent
-			#parent = parent
-			before ? before.insertBeforeBegin$($end) : parent.appendChild$($end)
-			self.attachNodes()
-		return this
-	
-	def replace$ other
-		unless #parent
-			#parent = other.parentNode
-		other.replaceWith$($end)
-		self.attachNodes()
-		self
+	def constructor flags, par
+		parentNode = null
+		#domFlags = flags
+		#children = []
+		#end = createComment('slot')
 		
-	def setup
-		self
-
-class KeyedTagFragment < VirtualFragment
+	get #parent
+		##parent or parentNode or ##up
 	
-	def constructor f, parent
-		super
-
-		if !(f & $TAG_FIRST_CHILD$)
-			$start = createComment('start')
-			parent.appendChild$($start) if parent
-
-		unless f & $TAG_LAST_CHILD$
-			$end = createComment('end')
-			parent.appendChild$($end) if parent
-
-		self.setup()
-
-	def setup
-		self.array = []
-		self.changes = new Map
-		self.dirty = no
-		self.$ = {}
-
-	def push item, idx
-		# on first iteration we can merely run through
-		unless __F & $TAG_INITED$
-			self.array.push(item)
-			self.appendChild$(item)
-			return
-
-		let toReplace = self.array[idx]
-
-		if toReplace === item
-			yes
+	set textContent text
+		#textContent = text
+	
+	get textContent
+		#textContent
+		
+	def isEmpty$
+		for item in #children
+			unless item isa Comment
+				return false
+		return true
+		# #children.length == 0
+		
+	def text$ item
+		unless #textNode
+			#textNode = #insert(item)
 		else
-			self.dirty = yes
-			# if this is a new item
-			let prevIndex = self.array.indexOf(item)
-			let changed = self.changes.get(item)
-
-			if prevIndex === -1
-				# should we mark the one currently in slot as removed?
-				self.array.splice(idx,0,item)
-				self.insertChild(item,idx)
-
-			elif prevIndex === idx + 1
-				if toReplace
-					self.changes.set(toReplace,-1)
-				self.array.splice(idx,1)
-
-			else
-				self.array.splice(prevIndex,1) if prevIndex >= 0
-				self.array.splice(idx,0,item)
-				self.insertChild(item,idx)
-
-			if changed == -1
-				self.changes.delete(item)
-		return
-
-	def insertChild item, index
-		if index > 0
-			let other = self.array[index - 1]
-			# will fail with text nodes
-			other.insertAfterEnd$(item)
-		elif $start
-			$start.insertAfterEnd$(item)
+			#textNode.textContent = item
+		return #textNode
+		
+	def appendChild child
+		if parentNode
+			child.#insertInto(parentNode,#end)
 		else
-			#parent.insertAfterBegin$(item)
+			#children.push(child)
+	
+	def #appendChild child
+		# log '#appendChild',child
+		appendChild(child)
+	
+	def insertBefore node,refnode
+		if parentNode
+			parentNode.#insertBefore(node,refnode)
+		let idx = #children.indexOf(refnode)
+		if idx >= 0
+			#children.splice(idx,0,node)
+		return node
+	
+	
+	def #removeChild node
+		if parentNode
+			parentNode.#removeChild(node)
+		let idx = #children.indexOf(node)
+		if idx >= 0
+			#children.splice(idx,1)
 		return
-
-	def removeChild item, index
-		# self.map.delete(item)
-		# what if this is a fragment or virtual node?
-		if item.parentNode == #parent
-			#parent.removeChild(item)
-		return
-
-	def attachNodes
-		for item,i in self.array
-			$end.insertBeforeBegin$(item)
-		return
-
-	def detachNodes
-		for item in self.array
-			#parent.removeChild(item)
-		return
-
-	def end$ index
-		unless __F & $TAG_INITED$
-			__F |= $TAG_INITED$
-			return
-
-		if self.dirty
-			self.changes.forEach do |pos,item|
-				if pos == -1
-					self.removeChild(item)
-			self.changes.clear()
-			self.dirty = no
-
-		# there are some items we should remove now
-		if self.array.length > index
 			
-			# remove the children below
-			while self.array.length > index
-				let item = self.array.pop()
-				self.removeChild(item)
-			# self.array.length = index
-		return
+	def #insertInto parent, before
+		# console.log 'frag #insertInto',parent,before,#children
+		let prev = parentNode
+		if parentNode =? parent
+			# what if before is a fragment etc?
+			#end.#insertInto(parent,before)
+			before = #end
+			for item in #children
+				item.#insertInto(parent,before)
+		return self
+		
+	def #replaceWith node, parent
+		# what if this
+		# log 'replaced with',node,parent
+		let res = node.#insertInto(parent,#end)
+		#removeFrom(parent)
+		res
+	
+	def #insertBefore node,refnode
+		if parentNode
+			insertBefore(node,refnode or #end)
+		
+		if refnode
+			let idx = #children.indexOf(refnode)
+			# console.log 'vfragment #insertBefore',node,refnode,refnode == #end,idx,#children
+			if idx >= 0
+				#children.splice(idx,0,node)
+		else
+			#children.push(node)
+		return node
+		
+		
+		# for item in #children
+		# 	item.#removeFrom(parent)
+	
+	def #removeFrom parent
+		for item in #children
+			item.#removeFrom(parent)
+		#end.#removeFrom(parent)
+		parentNode = null
+		self
+	
+	def log ...params
+		console.log 'frag',...params
 
-class IndexedTagFragment < VirtualFragment
+	def #insert item, f, prev
+		# is connected
+		# log '#insert',item,prev,f,parentNode
+		# if parentNode
+		#	let idx = 
+		#	let res = parentNode.#insert(item,f,prev or #end)
+		let par = parentNode
+		let type = typeof item
+		
+		if type === 'undefined' or item === null
+			if prev and prev isa Comment # check perf
+				return prev
+			
+			let el = createComment('')
+			
+			if prev
+				let idx = #children.indexOf(prev)
+				#children.splice(idx,1,el)
+				if par
+					prev.#replaceWith(el,par)
+				# parentNode.#insert(item,f,prev or #end)
+				return el
+			
+			
+			#children.push(el)
+			el.#insertInto(par,#end) if par
+			return el
+			# return prev ? prev.#replaceWith(el,self) : el.#insertInto(this,null)
 
-	def constructor f, parent
-		super
+		if item === prev
+			return item
+			
+		if type !== 'object'
+			let res
+			let txt = item
 
-		unless f & $TAG_LAST_CHILD$
-			$end = createComment('end')
-			parent.appendChild$($end) if parent
+			if prev
+				if prev isa Text # check perf
+					prev.textContent = txt
+					return prev
+				else
+					res = createTextNode(txt)
+					let idx = #children.indexOf(prev)
+					#children.splice(idx,1,res)
+					# prev.#replaceWith(res,self)
+					prev.#replaceWith(res,par) if par
+					return res
+			else
+				#children.push(res = createTextNode(txt))
+				# self.appendChild$(res = createTextNode(txt))
+				res.#insertInto(par,#end) if par
+				return res
 
-		self.setup()
+		elif prev
+			let idx = #children.indexOf(prev)
+			#children.splice(idx,1,item)
+			prev.#replaceWith(item,par) if par
+			return item
+		else
+			#children.push(item)
+			item.#insertInto(par,#end) if par
+			return item
+		
+			
 
-	def setup
-		self.$ = []
-		self.length = 0
-
-	def end$ len
-		let from = self.length
-		return if from == len or !#parent
-		let array = self.$
-		let par = #parent
-
-		if from > len
-			while from > len
-				par.removeChild$(array[--from])
-		elif len > from
-			while len > from
-				self.appendChild$(array[from++])
-		self.length = len
-		return
-
-	def attachNodes
-		for item,i in self.$
-			break if i == self.length
-			$end.insertBeforeBegin$(item)
-		return
-
-	def detachNodes
-		let i = 0
-		while i < self.length
-			let item = self.$[i++]
-			#parent.removeChild$(item)
-		return
-
-export def createLiveFragment bitflags, options, par
+export def createLiveFragment2 bitflags, options, par
 	const el = createFragment!
 	el.setup$(bitflags, options)
 	el.##up = par if par
 	return el
 
-export def createIndexedFragment bitflags, parent
-	return new IndexedTagFragment(bitflags,parent)
-
-export def createKeyedFragment bitflags, parent
-	return new KeyedTagFragment(bitflags,parent)
-
-
+export def createLiveFragment bitflags, options, par
+	const el = new VirtualFragment(bitflags, options)
+	# el.setup$(bitflags, options)
+	el.##up = par if par
+	return el

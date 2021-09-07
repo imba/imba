@@ -645,6 +645,19 @@ export class Stack
 		
 	def symbolFor name
 		@root.symbolRef(name)
+		
+	def domCall name
+		if true
+			name = {
+				start: 'beforeVisit'
+				end: 'afterVisit'
+				open: 'beforeRender'
+				close: 'afterRender'
+			}[name] or name
+
+			"[{symbolFor('#' + name)}]"
+		else
+			".{name}$"
 
 	def sourceId
 		return @sourceId if (@sourceId ||= @options:sourceId)
@@ -911,6 +924,9 @@ export class Node
 
 	def symbolRef name
 		STACK.root.symbolRef(name)
+		
+	def domCall name
+		STACK.domCall(name)
 
 	# get global symbol with name
 	def gsym name
@@ -8372,7 +8388,7 @@ export class TagContent < TagLike
 		elif isOnlyChild and (value isa Str or value isa Num)
 			return "{bvar} || {ref}.text$({value.c(o)})"
 		elif isStatic
-			return "{bvar} || {ref}.insert$({value.c(o)})"
+			return "{bvar} || {ref}{domCall('insert')}({value.c(o)})"
 		elif value isa TagTextContent and isOnlyChild and !(parent isa TagSwitchFragment)
 			return "({vvar}={value.c(o)},{vvar}==={key} || {ref}.text$(String({key}={vvar})))"
 		else
@@ -8388,9 +8404,9 @@ export class TagContent < TagLike
 				parts.push("{runtime:renderContext}.context=null")
 
 			if value isa TagTextContent
-				parts.push("({vvar}==={key}&&{bvar}) || ({inskey} = {ref}.insert$(String({key}={vvar}),{@flags},{inskey}))")
+				parts.push("({vvar}==={key}&&{bvar}) || ({inskey} = {ref}{domCall('insert')}(String({key}={vvar}),{@flags},{inskey}))")
 			else
-				parts.push("({vvar}==={key}&&{bvar}) || ({inskey} = {ref}.insert$({key}={vvar},{@flags},{inskey}))")
+				parts.push("({vvar}==={key}&&{bvar}) || ({inskey} = {ref}{domCall('insert')}({key}={vvar},{@flags},{inskey}))")
 
 		return "(" + parts.join(',') + ')'
 
@@ -8455,7 +8471,7 @@ export class TagSwitchFragment < TagLike
 
 		for item,i in @inserts
 			let key = "{cvar}[{osym(i)}]"
-			parts.push("({key} = {tvar}.insert$({item},0,{key}))")
+			parts.push("({key} = {tvar}{domCall('insert')}({item},0,{key}))")
 		
 		if o:inline
 			return parts.join(',')
@@ -8492,7 +8508,7 @@ export class TagLoopFragment < TagLike
 			return "{tvar} = new DocumentFragment;\n{value.c(o)}"
 
 		# if @tag and @childTags
-		let iref = option(:indexed) ? (runtime:createIndexedFragment) : (runtime:createKeyedFragment)
+		let iref = option(:indexed) ? (runtime:createIndexedList) : (runtime:createKeyedList)		
 		# LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
 		# should know how many inner slots this fragment has?
 		let cache = parent.cvar
@@ -8504,7 +8520,7 @@ export class TagLoopFragment < TagLike
 		out += "{kvar} = 0;\n"
 		out += "{cvar}={tvar}.$;\n"
 		out += value.c(o)
-		out += ";{tvar}.end$({kvar})"
+		out += ";{tvar}{domCall 'end'}({kvar})"
 		return out
 
 export class TagIndexedFragment < TagLike
@@ -9012,7 +9028,7 @@ export class Tag < TagLike
 			
 			if isSelf
 				add "{tvar}=this"
-				add "{tvar}.open$()"
+				add "{tvar}{domCall 'open'}()"
 				add "({bvar}={dvar}=1,{tvar}[{osym}] === 1) || ({bvar}={dvar}=0,{tvar}[{osym}]=1)"
 
 			elif isReactive
@@ -9058,7 +9074,7 @@ export class Tag < TagLike
 			elif isSlot and !hasChildren
 				let key = "{cvar}[{osym}]"
 				add("{tvar}={slotPath}")
-				add("({key} = {fragment.tvar}.insert$({tvar},{@flags},{key}))")
+				add("({key} = {fragment.tvar}{domCall('insert')}({tvar},{@flags},{key}))")
 
 			elif isSlot and @consumed:length == 1
 				# single child can act as slot?
@@ -9077,7 +9093,7 @@ export class Tag < TagLike
 				let call = CALL(option(:type).toFunctionalType,option(:args))
 				add("{tvar}={call.c(o)}")
 				add("{runtime:renderContext}.context=null")
-				add("{tvar}==={ref} || ({inskey} = {fragment.tvar}.insert$({ref}={tvar},{@flags},{inskey}))")
+				add("{tvar}==={ref} || ({inskey} = {fragment.tvar}{domCall('insert')}({ref}={tvar},{@flags},{inskey}))")
 				# call the tag - type?
 
 			elif parent isa TagLoopFragment
@@ -9278,9 +9294,9 @@ export class Tag < TagLike
 			if item isa Str # static for sure
 				# should this not go into a TagLike? Definitely
 				if isReactive
-					add "{bvar} || {tvar}.insert$({item.c(o)})"
+					add "{bvar} || {tvar}{domCall('insert')}({item.c(o)})"
 				else
-					add "{tvar}.insert$({item.c(o)})"
+					add "{tvar}{domCall('insert')}({item.c(o)})"
 			elif item isa StyleRuleSet
 				for ph in item.placeholders
 					let item = ph.@setter
@@ -9305,7 +9321,7 @@ export class Tag < TagLike
 
 		if shouldEnd
 			foot.push("{bvar} || !{tvar}.setup || {tvar}.setup({dvar})") unless isSelf
-			foot.push(isSelf ? "{tvar}.close$({dvar})" : "{tvar}.end$({dvar})")
+			foot.push(isSelf ? "{tvar}{domCall 'close'}({dvar})" : "{tvar}{domCall 'end'}({dvar})")
 
 		if parent isa TagLoopFragment
 			
@@ -9316,15 +9332,15 @@ export class Tag < TagLike
 
 		elif isFragment and parent and !(parent isa TagSwitchFragment)
 			# not fragment.tvar?
-			foot.push "{fragment.ref}.insert$({tvar},{@flags})"
+			foot.push "{fragment.ref}{domCall('insert')}({tvar},{@flags})"
 
 		elif parent and !(parent isa TagSwitchFragment) and (isComponent or dynamicKey)
 			let pref = fragment.ref
 			let cref = @cref
 			if dynamicKey
-				foot.push "({tvar}=={cref}) || (!{cref} && ({cref}={tvar}).insertInto$({pref})) || {cref}.replaceWith$({cref}={tvar})"
+				foot.push "({tvar}=={cref}) || (!{cref} && ({cref}={tvar}){domCall('insertInto')}({pref})) || {cref}{domCall('replaceWith')}({cref}={tvar})"
 			elif !isDetached
-				foot.push "{bvar} || {tvar}.insertInto$({pref})"
+				foot.push "{bvar} || {tvar}{domCall('insertInto')}({pref})"
 
 		if option(:fragmented)
 			add "{runtime:renderContext}.context=null"
@@ -9345,7 +9361,7 @@ export class Tag < TagLike
 				let key = "{cvar}[{osym}]"
 				let key_ = "{cvar}[{osym '_'}]"
 				let key__ = "{cvar}[{osym '__'}]"
-				let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}.insert$({key__}={tvar},{@flags},{key_}))"
+				let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}{domCall('insert')}({key__}={tvar},{@flags},{key_}))"
 				js = "({tvar}={slotPath}),(!{tvar} || {tvar}.isEmpty$() && {js}),({post})"
 			return js
 
@@ -9356,7 +9372,7 @@ export class Tag < TagLike
 			let key = "{cvar}[{osym}]"
 			let key_ = "{cvar}[{osym '_'}]"
 			let key__ = "{cvar}[{osym '__'}]"
-			let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}.insert$({key__}={tvar},{@flags},{key_}))"
+			let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}{domCall('insert')}({key__}={tvar},{@flags},{key_}))"
 			js = "{tvar}={slotPath};\nif(!{tvar} || {tvar}.isEmpty$())\{\n{js}\n\}\n{post}"
 		
 		if option(:iife)
