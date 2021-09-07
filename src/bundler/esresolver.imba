@@ -58,7 +58,7 @@ export default class Resolver
 				#esb = null
 				reset! if #queue.length
 			
-	def resolve path, dir = _dir
+	def resolve path, dir
 		let key = "{dir}:{path}"
 		new Promise do(resolve,reject)
 			let item = [path,dir,resolve,key]
