@@ -88,33 +88,60 @@ extend class Node
 		else
 			parent.appendChild(self)
 		return self
+		
+	def #insertIntoDeopt parent, before
+		# log '#insertIntoDeopt',parent,before
+		if before
+			parent.insertBefore(#domNode or self,before)
+		else
+			parent.appendChild(#domNode or self)
+		return self
 
 	def #removeFrom parent
 		parent.removeChild(self)
 		
-	def #replaceWith other
-		parentNode.#replaceChild(other,self)
+	def #removeFromDeopt parent
+		parent.removeChild(#domNode or self)
+		
+	def #replaceWith other, parent
+		parent.#replaceChild(other,self)
+		
+	def #replaceWithDeopt other, parent
+		parent.#replaceChild(other,#domNode or self)
 
-	get #placeholder__
-		##placeholder__ ||= global.document.createComment("")
+	get #placeholderNode
+		##placeholderNode ||= global.document.createComment("placeholder")
 
-	set #placeholder__ value
-		let prev = ##placeholder__
-		##placeholder__ = value
+	set #placeholderNode value
+		let prev = ##placeholderNode
+		##placeholderNode = value
 		if prev and prev != value and prev.parentNode
-			prev.replaceWith$(value)
+			prev.#replaceWith(value)
 
 	def #attachToParent
-		let ph = #placeholder__
-		if ph.parentNode and ph != self
-			ph.replaceWith$(self)
+		let ph = #domNode
+		let par = ph and ph.parentNode
+		if ph and par and ph != self
+			#domNode = null
+			#insertInto(par,ph)
+			ph.#removeFrom(par)
+
+		
 		self
 
-	def #detachFromParent route
-		let ph = #placeholder__
+	def #detachFromParent
+		if #domDeopt =? yes
+			#replaceWith = #replaceWithDeopt
+			#removeFrom = #removeFromDeopt
+			#insertInto = #insertIntoDeopt
+
+		let ph = #placeholderNode
 		if parentNode and ph != self
-			self.replaceWith$(ph)
-			# TODO add detached flag?
+			ph.#insertInto(parentNode,self)
+			#removeFrom(parentNode)
+
+		#domNode = ph
+		# self.#replaceWith(ph,parentNode)
 		self
 		
 	def #placeChild item, f, prev

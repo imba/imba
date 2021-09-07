@@ -171,7 +171,6 @@ class VirtualFragment < Fragment
 					res = createTextNode(txt)
 					let idx = childNodes.indexOf(prev)
 					childNodes.splice(idx,1,res)
-					# prev.#replaceWith(res,self)
 					prev.#replaceWith(res,par) if par
 					return res
 			else
