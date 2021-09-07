@@ -8,7 +8,7 @@ tag shared-item
 	def render
 		<self>
 			<div> data.name
-			<span :click.convert> "Convert!"
+			<span @click=convert> "Convert!"
 
 tag todo-item < shared-item
 	def convert
@@ -31,11 +31,14 @@ tag app-root
 
 imba.mount <app-root>
 
+def qsok query
+	ok document.querySelector(query), "expected element at {query}"
+
 test do
-	ok document.querySelector('app-root footer')
+	qsok('app-root footer')
 	blocks[2].type = 'header'
 	await imba.commit!
-	ok document.querySelector('app-root header')
+	qsok('app-root header')
 	document.querySelector('app-root todo-item span').click()
 	await imba.commit!
 	# all todos should have been converted

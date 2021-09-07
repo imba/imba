@@ -37,6 +37,7 @@ class KeyedTagFragment < Fragment
 	def push item, idx
 		# on first iteration we can merely run through
 		unless #domFlags & $TAG_INITED$
+			
 			self.array.push(item)
 			self.#appendChild(item)
 			return
@@ -100,24 +101,9 @@ class KeyedTagFragment < Fragment
 	def #insertChild node,relnode
 		return
 		
-	def #appendChild
-		return
+	# def #appendChild
+	#	return
 
-	def attachNodes
-		let par = parentNode
-		let rel = #end
-		for item,i in self.array
-			item.#insertInto(par,rel)
-		return
-
-	def detachNodes
-		let par = parentNode
-		let end = #end
-		for item in self.array
-			par.#removeChild(item)
-		end.#removeFrom(par) if end
-		return
-	
 	def #replaceWith rel, parent
 		# console.log 'can replace now?',rel,parent,#end,#end..parentNode
 		let res = rel.#insertInto(parent,#end)
@@ -125,13 +111,18 @@ class KeyedTagFragment < Fragment
 		return res
 		
 	def #insertInto parent, before
+		# log 'insertInto',parent,before
 		#parent = parent
 		let prev = parentNode
 		if parent != prev
 			parentNode = parent
 			# #start.#insertInto(parent,before) if #start
-			#end.#insertInto(parent,before) if #end
-			attachNodes!
+			for item,i in self.array
+				item.#insertInto(parent,before)
+			
+			if #end
+				#end.#insertInto(parent,before)
+			# attachNodes!
 		self
 	
 	def #removeFrom parent
