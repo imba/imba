@@ -651,8 +651,8 @@ export class Stack
 			name = {
 				start: 'beforeVisit'
 				end: 'afterVisit'
-				open: 'beforeRender'
-				close: 'afterRender'
+				open: 'beforeReconcile'
+				close: 'afterReconcile'
 				insert: 'placeChild'
 			}[name] or name
 

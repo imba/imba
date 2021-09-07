@@ -301,35 +301,20 @@ export class Node
 	def #__init__
 		self
 
-	# replace this with something else
-	def replaceWith$ other
-		if !(other isa Node) and other.replace$
-			other.replace$(this)
-		else
-			self.parentNode.replaceChild(other,this)
-		return other
+	def #replaceChild newnode, oldnode
+		let res = #insertChild(newnode,oldnode)
+		#removeChild(oldnode)
+		return res
+		
+	def #replaceWith other
+		parentNode.#replaceChild(other,self)
 
-	def insertInto$ parent
-		parent.appendChild$(this)
+	def #insertInto parent, before
+		before ? parent.insertBefore(self,before) : parent.appendChild(self)
 		return this
 
-	def insertBefore$ el, prev
-		this.insertBefore(el,prev)
-
-	def insertBeforeBegin$ other
-		self.parentNode.insertBefore(other,this)
-
-	def insertAfterEnd$ other
-		if self.nextSibling
-			self.nextSibling.insertBeforeBegin$(other)
-		else
-			self.parentNode.appendChild(other)
-	
-	def insertAfterBegin$ other
-		if self.childNodes[0]
-			self.childNodes[0].insertBeforeBegin$(other)
-		else
-			self.appendChild(other)
+	def #insertChild newnode, refnode
+		newnode.#insertInto(self,refnode)
 
 	get #placeholder__
 		##placeholder__ ||= new Comment("")
@@ -351,6 +336,52 @@ export class Node
 		if parentNode and ph != self
 			self.replaceWith$(ph)
 		self
+		
+	def #placeChild item, f, prev
+		
+		let type = typeof item
+		# console.log '#inserting!',item,f,prev,type
+
+		if type === 'undefined' or item === null
+			# what if the prev value was the same?
+			if prev and prev isa Comment # check perf
+				return prev
+
+			let el = new Comment('')
+			return prev ? prev.#replaceWith(el,self) : el.#insertInto(this,null)
+
+		# dont reinsert again
+		if item === prev
+			return item
+
+		# what if this is null or undefined -- add comment and return? Or blank text node?
+		elif type !== 'object'
+			let res
+			let txt = item
+			
+			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$) and false
+				# FIXME what if the previous one was not text? Possibly dangerous
+				# when we set this on a fragment - it essentially replaces the whole
+				# fragment?
+				# log 'set textcontent raw',txt,prev
+				self.textContent = txt
+				return
+
+			if prev
+				if prev isa Text # check perf
+					prev.textContent = txt
+					return prev
+				else
+					res = document.createTextNode(txt)
+					prev.#replaceWith(res,self)
+					return res
+			else
+				self.appendChild(res = document.createTextNode(txt))
+				return res	
+
+		else
+			return prev ? prev.#replaceWith(item,this) : item.#insertInto(this,null)
+		return
 
 export class Text < Node
 
@@ -559,58 +590,15 @@ export class Element < Node
 		self.textContent = item
 		self
 
-	def insert$ item, f, prev
-		let type = typeof item
+	
 
-		if type === 'undefined' or item === null
-			# what if the prev value was the same?
-			if prev and prev isa Comment # check perf
-				return prev
-
-			let el = new Comment('')
-			prev ? prev.replaceWith$(el) : el.insertInto$(this)
-			return el
-
-		# dont reinsert again
-		if item === prev
-			return item
-
-		# what if this is null or undefined -- add comment and return? Or blank text node?
-		elif type !== 'object'
-			let res
-			let txt = item
-			
-			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$)
-				# FIXME what if the previous one was not text? Possibly dangerous
-				# when we set this on a fragment - it essentially replaces the whole
-				# fragment?
-				self.textContent = txt
-				return
-
-			if prev
-				if prev isa Text # check perf
-					prev.textContent = txt
-					return prev
-				else
-					res = new Text(txt)
-					prev.replaceWith$(res,self)
-					return res
-			else
-				self.appendChild$(res = new Text(txt))
-				return res	
-
-		else
-			prev ? prev.replaceWith$(item,self) : item.insertInto$(self)
-			return item
-		return
-
-	def open$
+	def #beforeReconcile
 		self
 
-	def close$
+	def #afterReconcile
 		self
 
-	def end$
+	def #afterVisit
 		self.render() if self.render
 		return
 
@@ -851,9 +839,10 @@ export def createElement name, parent, flags, text
 
 	if text !== null
 		el.text$(text)
-
-	if parent and parent isa Node
-		el.insertInto$(parent)
+	
+	# FIXME
+	if parent and parent.#insertInto
+		el.#insertInto(parent)
 
 	return el
 
@@ -863,8 +852,8 @@ export def createSVGElement name, parent, flags, text, ctx
 	if flags
 		el.className = flags
 
-	if parent and parent isa Node
-		el.insertInto$(parent)
+	if parent and parent.#insertInto
+		el.#insertInto(parent)
 
 	if text
 		el.textContent = text

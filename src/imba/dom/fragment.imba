@@ -1,82 +1,4 @@
-import {Element,Text,DocumentFragment,createFragment,createComment,createTextNode,Comment} from './core'
-
-extend class DocumentFragment
-
-	get #parent
-		##up or ##parent
-
-	# Called to make a documentFragment become a live fragment
-	def setup$ flags, options
-		#start = createComment('start')
-		#end = createComment('end')
-
-		#end.#replaceWith = do(other)
-			this.parentNode.#insertBefore(other,this)
-			return other
-
-		this.appendChild(#start)
-		this.appendChild(#end)
-	
-	# when we for sure know that the only content should be
-	# a single text node
-	def text$ item
-		unless $text
-			$text = this.#placeChild(item)
-		else
-			$text.textContent = item
-		return
-	
-	def #placeChild item, options, toReplace
-		console.log 'frag insert',item,options,toReplace
-		if ##parent
-			# if the fragment is attached to a parent
-			# we can just proxy the call through
-			##parent.#insert(item,options,toReplace or #end)
-		else
-			Element.prototype.#placeChild.call(this,item,options,toReplace or #end)
-
-	def #insertInto parent, before
-		console.log 'insert into fragment',parent,before
-		unless ##parent
-			##parent = parent
-			# console.log 'insertFrgment into',parent,Array.from(self.childNodes)
-			before ? parent.insertBefore(this,before) : parent.appendChild(this)
-		return this
-	
-	# replacing this slot with something else
-	def #replaceWith other, parent
-		#start.insertBeforeBegin$(other)
-		let el = #start
-		while el
-			
-			let next = el.nextSibling
-			self.appendChild(el)
-			break if el == #end
-			el = next
-			
-		return other
-
-	def #appendChild child
-		#end ? #end.#insertBeforeBegin(child) : appendChild(child)
-		return child
-		
-	def appendChild$ child
-		$end ? $end.insertBeforeBegin$(child) : self.appendChild(child)
-		return child
-
-	def removeChild$ child
-		child.parentNode && child.parentNode.removeChild(child)
-		self
-
-	def isEmpty$
-		let el = $start
-		let end = $end
-
-		while el = el.nextSibling
-			break if el == end
-			return false if el isa Element or el isa Text
-		return true
-
+import {Text,createComment,createTextNode,Comment} from './core'
 
 export class Fragment
 	
@@ -105,7 +27,6 @@ class VirtualFragment < Fragment
 		if parent
 			parent.#appendChild(self)
 
-		
 	get #parent
 		##parent or parentNode or ##up
 	
@@ -147,8 +68,9 @@ class VirtualFragment < Fragment
 		childNodes.push(child)
 	
 	def insertBefore node,refnode
+		# check if this should really happen?
 		if parentNode
-			parentNode.#insertBefore(node,refnode)
+			parentNode.#insertChild(node,refnode)
 		let idx = childNodes.indexOf(refnode)
 		if idx >= 0
 			childNodes.splice(idx,0,node)
@@ -185,13 +107,13 @@ class VirtualFragment < Fragment
 		#removeFrom(parent)
 		res
 	
-	def #insertBefore node,refnode
+	def #insertChild node,refnode
 		if parentNode
 			insertBefore(node,refnode or #end)
 		
 		if refnode
 			let idx = childNodes.indexOf(refnode)
-			# console.log 'vfragment #insertBefore',node,refnode,refnode == #end,idx,#children
+			# console.log 'vfragment #insertChild',node,refnode,refnode == #end,idx,#children
 			if idx >= 0
 				childNodes.splice(idx,0,node)
 		else
