@@ -41,7 +41,7 @@ class IndexedTagFragment < Fragment
 		elif len > from
 			while len > from
 				# console.log 'inserting before now',array[from]
-				par.#insertBefore(array[from++],end)
+				par.#insertChild(array[from++],end)
 		self.length = len
 		return
 		

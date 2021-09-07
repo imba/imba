@@ -141,11 +141,8 @@ extend class HTMLSelectElement
 					break self.selectedIndex = i
 		return
 
-	def end$
-		self.syncValue()
-		
 	def #afterVisit
-		end$()
+		self.syncValue()
 
 extend class HTMLOptionElement
 	def setRichValue value
@@ -171,12 +168,10 @@ extend class HTMLTextAreaElement
 		self.data = self.value
 		commit!
 
-	def end$
+	def #afterVisit
 		if $$bound and self.value != self.data
 			self.value = self.data
-			
-	def #afterVisit
-		end$()
+
 
 
 extend class HTMLInputElement
@@ -226,7 +221,7 @@ extend class HTMLInputElement
 
 		return value
 
-	def end$
+	def #afterVisit
 		if $$bound
 			let typ = self.type
 			if typ == 'checkbox' or typ == 'radio'
@@ -238,9 +233,6 @@ extend class HTMLInputElement
 			else
 				self.richValue = self.data
 		return
-		
-	def #afterVisit
-		end$()
 		
 extend class HTMLButtonElement
 
@@ -270,10 +262,10 @@ extend class HTMLButtonElement
 			toggled ? bindRemove(data,val) : bindAdd(data,val)
 		else
 			self.data = toggled ? null : val
-		end$!
+		#afterVisit!
 		commit!
 
-	def end$
+	def #afterVisit
 		if $$bound
 			let val = self.data
 			if val === true or val === false or val == null
@@ -281,6 +273,3 @@ extend class HTMLButtonElement
 			else
 				self.checked = bindHas(val,self.richValue)
 		return
-	
-	def #afterVisit
-		end$()

@@ -418,7 +418,7 @@ extend class Element
 		let par = value[0] != '/' ? #context.route : null
 		#route = new ElementRoute(self,value,par,route__)
 
-		self.end$ = self.end$routed
+		self.#afterVisit = self.end$routed
 		
 		self.insertInto$ = do(parent)
 			# should base this on a modifier?
@@ -435,7 +435,7 @@ extend class Element
 
 		let par = value[0] != '/' ? #context.route : null
 		#route = #routeTo = new ElementRouteTo(self,value,par,routeTo__)
-		self.end$ = self.end$routeTo
+		self.#afterVisit = self.end$routeTo
 
 		# really? shouldnt this be handled by the main router click listener instead?
 		self.onclick = do(e)

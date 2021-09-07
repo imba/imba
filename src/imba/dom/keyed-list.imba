@@ -28,7 +28,7 @@ class KeyedTagFragment < Fragment
 
 	def #appendChild item
 		if parentNode
-			parentNode.#insertBefore(item,#end)
+			parentNode.#insertChild(item,#end)
 	
 	def hasChildNodes
 		return false if childNodes.length == 0
@@ -79,9 +79,9 @@ class KeyedTagFragment < Fragment
 		if index > 0
 			let other = self.array[index - 1]
 			# will fail with text nodes
-			par.#insertBefore(item,other.nextSibling)
+			par.#insertChild(item,other.nextSibling)
 		else
-			par.#insertBefore(item,childNodes[index + 1] or #end)
+			par.#insertChild(item,childNodes[index + 1] or #end)
 		return
 		
 	def moveChild item, index, prevIndex

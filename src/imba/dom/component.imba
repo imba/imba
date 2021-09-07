@@ -247,15 +247,11 @@ export class ImbaElement < HTMLElement
 			commit! if $EL_UNRENDERED$
 
 		self
-
-	def end$
-		visit()
 		
 	def #afterVisit
 		visit()
 
-
-	def open$
+	def #beforeReconcile
 		if __F & $EL_SSR$
 			__F = __F & ~$EL_SSR$
 			# remove flag
