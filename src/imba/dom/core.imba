@@ -317,7 +317,7 @@ export class Node
 		newnode.#insertInto(self,refnode)
 
 	get #placeholder__
-		##placeholder__ ||= new Comment("")
+		##placeholder__ ||= new Comment("placeholder")
 
 	set #placeholder__ value
 		let prev = ##placeholder__
@@ -326,15 +326,17 @@ export class Node
 			prev.replaceWith$(value)
 
 	def #attachToParent
-		let ph = #placeholder__
-		if ph.parentNode and ph != self
-			ph.replaceWith$(self)
+		#nodeIsDetached = no
+		# let ph = #placeholder__
+		# if ph.parentNode and ph != self
+		#	ph.replaceWith$(self)
 		self
 
 	def #detachFromParent route
-		let ph = #placeholder__
-		if parentNode and ph != self
-			self.replaceWith$(ph)
+		#nodeIsDetached = yes
+		# let ph = #placeholder__
+		# if parentNode and ph != self
+		# 	self.replaceWith$(ph)
 		self
 		
 	def #placeChild item, f, prev
@@ -642,10 +644,10 @@ export class Element < Node
 			self[key] = value
 		return
 
-Element.prototype.appendChild$  = Element.prototype.appendChild
-Element.prototype.removeChild$  = Element.prototype.removeChild
-Element.prototype.insertBefore$ = Element.prototype.insertBefore
-Element.prototype.replaceChild$ = Element.prototype.replaceChild
+# Element.prototype.appendChild$  = Element.prototype.appendChild
+# Element.prototype.removeChild$  = Element.prototype.removeChild
+# Element.prototype.insertBefore$ = Element.prototype.insertBefore
+# Element.prototype.replaceChild$ = Element.prototype.replaceChild
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
 export class DocumentFragment < Element

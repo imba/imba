@@ -125,8 +125,6 @@ extend class Node
 			#domNode = null
 			#insertInto(par,ph)
 			ph.#removeFrom(par)
-
-		
 		self
 
 	def #detachFromParent
@@ -268,10 +266,6 @@ extend class Element
 	set richValue value
 		self.value = value
 
-# Element.prototype.appendChild$  = Element.prototype.appendChild
-# Element.prototype.removeChild$  = Element.prototype.removeChild
-# Element.prototype.insertBefore$ = Element.prototype.insertBefore
-# Element.prototype.replaceChild$ = Element.prototype.replaceChild
 # Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 
