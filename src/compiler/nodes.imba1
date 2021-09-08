@@ -8143,6 +8143,8 @@ class TagLike < Node
 
 	def root
 		@parent ? @parent.root : self
+		
+	
 
 	def register node
 		if node isa If or node isa Switch
@@ -8877,8 +8879,8 @@ export class Tag < TagLike
 		if @asset
 			typ = @assetRef.c
 			# typ = "'{@assetName}'"
-
-		var slotPath = isSlot ? OP('.',LIT("{fragment.root.tvar}.__slots"),STR(option(:name))).c : ""
+		
+		var slotPath = isSlot ? OP('.',LIT("{root.tvar}.__slots"),STR(option(:name))).c : ""
 
 		if stack.tsc
 			# if tag is expression we want to suppress certain warnings
@@ -9077,9 +9079,10 @@ export class Tag < TagLike
 				add "{tvar}={key} || ({key}={fragment.tvar}.attachShadow(\{mode:'open'\}))"
 					
 			elif isSlot and !hasChildren
-				let key = "{cvar}[{osym}]"
 				add("{tvar}={slotPath}")
-				add("({key} = {fragment.tvar}{domCall('insert')}({tvar},{@flags},{key}))")
+				unless parent isa TagSwitchFragment
+					let key = "{cvar}[{osym}]"
+					add("({key} = {fragment.tvar}{domCall('insert')}({tvar},{@flags},{key}))")
 
 			elif isSlot and @consumed:length == 1
 				# single child can act as slot?
@@ -9364,10 +9367,12 @@ export class Tag < TagLike
 			
 			let js = '(' + out.join(',\n') + ')'
 			if isSlot and hasChildren
-				let key = "{cvar}[{osym}]"
-				let key_ = "{cvar}[{osym '_'}]"
-				let key__ = "{cvar}[{osym '__'}]"
-				let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}{domCall('insert')}({key__}={tvar},{@flags},{key_}))"
+				let post = ""
+				unless parent isa TagSwitchFragment
+					let key = "{cvar}[{osym}]"
+					let key_ = "{cvar}[{osym '_'}]"
+					let key__ = "{cvar}[{osym '__'}]"
+					let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}{domCall('insert')}({key__}={tvar},{@flags},{key_}))"
 				js = "({tvar}={slotPath}),(!{tvar} || !{tvar}.hasChildNodes() && {js}),({post})"
 			return js
 
@@ -9375,10 +9380,13 @@ export class Tag < TagLike
 		
 		let js = out.join(";\n")
 		if isSlot and hasChildren
-			let key = "{cvar}[{osym}]"
-			let key_ = "{cvar}[{osym '_'}]"
-			let key__ = "{cvar}[{osym '__'}]"
-			let post = "{tvar}==={key__} || ({key_} = {fragment.tvar}{domCall('insert')}({key__}={tvar},{@flags},{key_}))"
+			let post = ""
+			unless parent isa TagSwitchFragment
+				let key = "{cvar}[{osym}]"
+				let key_ = "{cvar}[{osym '_'}]"
+				let key__ = "{cvar}[{osym '__'}]"
+				post = "{tvar}==={key__} || ({key_} = {fragment.tvar}{domCall('insert')}({key__}={tvar},{@flags},{key_}))"
+
 			js = "{tvar}={slotPath};\nif(!{tvar} || !{tvar}.hasChildNodes())\{\n{js}\n\}\n{post}"
 		
 		if option(:iife)
