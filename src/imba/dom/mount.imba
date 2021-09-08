@@ -31,6 +31,12 @@ export def mount mountable, into
 	element.#insertInto(parent)
 	# parent.appendChild(element)
 	return element
-	
+
+export def unmount el
+	if el and el.#removeFrom
+		el.#removeFrom(el.parentNode)
+	return el
+		
 let instance = global.imba ||= {}
 instance.mount = mount
+instance.unmount = unmount
