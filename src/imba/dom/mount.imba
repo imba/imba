@@ -28,7 +28,8 @@ export def mount mountable, into
 		# element.__schedule = yes
 		element.__F |= $EL_SCHEDULE$
 
-	parent.appendChild(element)
+	element.#insertInto(parent)
+	# parent.appendChild(element)
 	return element
 	
 let instance = global.imba ||= {}
