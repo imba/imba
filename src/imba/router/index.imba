@@ -419,11 +419,6 @@ extend class Element
 		#route = new ElementRoute(self,value,par,route__)
 
 		self.#afterVisit = self.end$routed
-		
-		self.insertInto$ = do(parent)
-			# should base this on a modifier?
-			# what about replaceWith etc?
-			parent.appendChild$(#route.isActive ? self : #placeholder__)
 
 	get route
 		#route
