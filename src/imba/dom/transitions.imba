@@ -215,3 +215,6 @@ extend class Element
 			return
 
 		ease.enable(value)
+		
+export def use_dom_transitions
+	yes

@@ -7656,6 +7656,9 @@ export class TagAttr < TagPart
 
 		if @ns == 'bind'
 			STACK.use('dom_bind')
+			
+		if !@ns and @key == 'ease'
+			STACK.use('dom_transitions')
 		#	scope__.imbaDependency('internal/bind')
 		
 		# console.log 'visit tag attr',@tag and @tag.tagName
