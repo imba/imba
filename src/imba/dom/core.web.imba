@@ -29,6 +29,21 @@ export const {
 } = global.window
 
 
+const descriptorCache = {}
+def getDescriptor item,key,cache
+	if !item
+		return cache[key] = null
+
+	if cache[key] !== undefined
+		return cache[key]
+	
+	let desc = Object.getOwnPropertyDescriptor(item,key)
+
+	if desc !== undefined or item == SVGElement
+		return cache[key] = desc or null
+
+	getDescriptor(Reflect.getPrototypeOf(item),key,cache)
+
 # export const document = global.window.document
 const CustomTagConstructors = {}
 const CustomTagToElementNames = {}
@@ -52,6 +67,18 @@ const contextHandler =
 			if ctx = ctx.#parent
 				val = ctx[name]
 		return val
+
+	def set target, name, value
+		let ctx = target
+		let val = undefined
+		while ctx and val == undefined
+			let desc = getDeepPropertyDescriptor(ctx,name,Element)
+			if desc
+				ctx[name] = value
+				return yes
+			else 
+				ctx = ctx.#parent
+		return yes
 
 extend class Document
 	get flags
@@ -284,20 +311,7 @@ export def createElement name, parent, flags, text
 	return el
 
 
-const descriptorCache = {}
-def getDescriptor item,key,cache
-	if !item
-		return cache[key] = null
 
-	if cache[key] !== undefined
-		return cache[key]
-	
-	let desc = Object.getOwnPropertyDescriptor(item,key)
-
-	if desc !== undefined or item == SVGElement
-		return cache[key] = desc or null
-
-	getDescriptor(Reflect.getPrototypeOf(item),key,cache)
 
 extend class SVGElement
 
