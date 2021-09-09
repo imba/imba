@@ -1,5 +1,13 @@
-## unreleased
+## 2.0.0-alpha.168
 * Use setAttribute('class') under the hood for svg elements
+* Added `#afterVisit`, `#beforeReconcile`, `#afterReconcile` hooks
+* Added experimental easing via `<my-element ease>`, with element hooks
+  `#ease-enter`, `#ease-entered`, `#ease-enter-cancel`, and
+  `#ease-exit`, `#ease-exited`, `#ease-exit-cancel`
+* Added `ease/e`,`ease-opacity/eo`,`ease-transform/et` and `ease-colors/ec`
+  style properties for experimental easing feature
+* Fix: Passing slots into child components (#607)
+* Allow using setters on `#context`
 
 ## 2.0.0-alpha.167
 * Add support for generic media selectors via `@media(some-media) ...`
