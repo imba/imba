@@ -49,17 +49,18 @@ class IndexedTagFragment < Fragment
 		# #parent = parent
 		parentNode = parent
 		
-		if parent isa Node
-			# FIXME need to work with non-dom elements as well
-			if #end
-				#end.#insertInto(parent,before)
-			before ||= #end
+		# if parent isa Node
+		# FIXME need to work with non-dom elements as well
+		if #end
+			#end.#insertInto(parent,before)
+			
+		before ||= #end
 
-			for item,i in childNodes
-				break if i == self.length
-				# log 'insert child',parent,item,before
-				item.#insertInto(parent,before)
-				# log 'insert child',parent,item,before,parent.innerHTML
+		for item,i in childNodes
+			break if i == self.length
+			# log 'insert child',parent,item,before
+			item.#insertInto(parent,before)
+			# log 'insert child',parent,item,before,parent.innerHTML
 		return self
 		
 	def #appendChild item

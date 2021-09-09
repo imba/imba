@@ -1,3 +1,6 @@
+## unreleased
+* Fix: Various dom regressions in SSR
+
 ## 2.0.0-alpha.168
 * Use setAttribute('class') under the hood for svg elements
 * Added `#afterVisit`, `#beforeReconcile`, `#afterReconcile` hooks

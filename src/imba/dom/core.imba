@@ -306,8 +306,11 @@ export class Node
 		#removeChild(oldnode)
 		return res
 		
-	def #replaceWith other
-		parentNode.#replaceChild(other,self)
+	def #appendChild newnode
+		newnode.#insertInto(self,null)
+		
+	def #removeChild node
+		node.#removeFrom(self)
 
 	def #insertInto parent, before
 		before ? parent.insertBefore(self,before) : parent.appendChild(self)
@@ -315,28 +318,50 @@ export class Node
 
 	def #insertChild newnode, refnode
 		newnode.#insertInto(self,refnode)
+		
+	def #removeFrom parent
+		parent.removeChild(self)
 
-	get #placeholder__
-		##placeholder__ ||= new Comment("placeholder")
+	def #removeFromDeopt parent
+		parent.removeChild(#domNode or self)
+		
+	def #replaceWith other, parent
+		parent.#replaceChild(other,self)
+		
+	def #replaceWithDeopt other, parent
+		parent.#replaceChild(other,#domNode or self)
 
-	set #placeholder__ value
-		let prev = ##placeholder__
-		##placeholder__ = value
+	get #placeholderNode
+		##placeholderNode ||= global.document.createComment("placeholder")
+
+	set #placeholderNode value
+		let prev = ##placeholderNode
+		##placeholderNode = value
 		if prev and prev != value and prev.parentNode
-			prev.replaceWith$(value)
+			prev.#replaceWith(value)
 
 	def #attachToParent
-		#nodeIsDetached = no
-		# let ph = #placeholder__
-		# if ph.parentNode and ph != self
-		#	ph.replaceWith$(self)
+		let ph = #domNode
+		let par = ph and ph.parentNode
+		if ph and par and ph != self
+			#domNode = null
+			#insertInto(par,ph)
+			ph.#removeFrom(par)
 		self
 
-	def #detachFromParent route
-		#nodeIsDetached = yes
-		# let ph = #placeholder__
-		# if parentNode and ph != self
-		# 	self.replaceWith$(ph)
+	def #detachFromParent
+		if #domDeopt =? yes
+			#replaceWith = #replaceWithDeopt
+			#removeFrom = #removeFromDeopt
+			#insertInto = #insertIntoDeopt
+
+		let ph = #placeholderNode
+		if parentNode and ph != self
+			ph.#insertInto(parentNode,self)
+			#removeFrom(parentNode)
+
+		#domNode = ph
+		# self.#replaceWith(ph,parentNode)
 		self
 		
 	def #placeChild item, f, prev
@@ -843,8 +868,8 @@ export def createElement name, parent, flags, text
 		el.text$(text)
 	
 	# FIXME
-	if parent and parent.#insertInto
-		el.#insertInto(parent)
+	if parent and parent.#appendChild
+		parent.#appendChild(el)
 
 	return el
 
@@ -854,8 +879,8 @@ export def createSVGElement name, parent, flags, text, ctx
 	if flags
 		el.className = flags
 
-	if parent and parent.#insertInto
-		el.#insertInto(parent)
+	if parent and parent.#appendChild
+		parent.#appendChild(el)
 
 	if text
 		el.textContent = text
