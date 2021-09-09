@@ -5186,10 +5186,17 @@ export class VarOrAccess < ValueNode
 		# @identifier = value # this is not a real identifier?
 		var variable
 		var scope = scope__
+		var name = value.symbol
 		
 		if state && state:declaring
 			# console.log "VarOrAccess {@identifier}"
 			variable = scope.register(value,self,type: state:declaring)
+			
+		
+		
+		if name == '$'
+			if @tagref = stack.up(Tag)
+				return self
 
 		variable ||= scope.lookup(value.symbol)
 
@@ -5257,6 +5264,9 @@ export class VarOrAccess < ValueNode
 		return self
 
 	def js o
+		if @tagref
+			return @tagref.ref
+	
 		let val = @variable or @value
 		if @variable and @variable.declarator != self
 			if STACK.tsc and val.@typedAlias
@@ -8085,7 +8095,7 @@ class TagHandlerCallback < ValueNode
 		
 		if value isa Func
 			let evparam = value.params.at(0,yes,'e')
-			let stateparam = value.params.at(1,yes,'$')
+			let stateparam = value.params.at(1,yes,'$$')
 
 		value.traverse
 		return
