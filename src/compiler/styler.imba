@@ -251,6 +251,12 @@ export const aliases =
 	us: 'user-select'
 	o: 'opacity'
 	tween: 'transition'
+	
+	# easing
+	e: 'ease'
+	eo: 'ease-opacity'
+	et: 'ease-transform'
+	ec: 'ease-colors'
 
 export const abbreviations = {}
 for own k,v of aliases
@@ -448,6 +454,39 @@ export class StyleTheme
 	
 	def margin_y [t,b=t]
 		{'margin-top': t, 'margin-bottom': b}
+		
+	def ease pars
+		$ease(pars,'')
+		
+	def ease_opacity pars
+		$ease(pars,'o')
+		
+	def ease_transform pars
+		$ease(pars,'t')
+		
+	def ease_colors pars
+		$ease(pars,'c')
+		
+	def $ease pars, k = ''
+		pars = pars.slice(0)
+		let o = {}
+		let durRegex = /^[\-\+]?\d?(\.?\d+)(s|ms)?$/
+		if String(pars[0]).match(durRegex)
+			o["--e_d{k}"] = pars[0]
+			pars.shift!
+			
+	
+		if pars[0] and !String(pars[0]).match(durRegex)
+			let ev = $varFallback('ease',[pars[0]])
+			o["--e_f{k}"] = pars[0]
+			pars.shift!
+	
+		if String(pars[0]).match(durRegex)
+			o["--e_w{k}"] = pars[0]
+			pars.shift!
+		
+			
+		return o
 
 		
 	def inset [t,r=t,b=t,l=r]
@@ -894,7 +933,10 @@ export const StyleExtenders = {
 		--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;
 		--t_scale:1;--t_scale-x:1;--t_scale-y:1;
 		--t_skew-x:0;--t_skew-y:0;
-		transform: translate3d(var(--t_x),var(--t_y),var(--t_z)) rotate(var(--t_rotate)) skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
+		transform: translate3d(var(--t_x),var(--t_y),var(--t_z))
+		           rotate(var(--t_rotate))
+		           skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) 
+		           scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 	'''
 
 	transition: '''
