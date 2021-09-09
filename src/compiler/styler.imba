@@ -904,6 +904,8 @@ export const StyleExtenders = {
 			background-color var(--e_dc,var(--e_d)) var(--e_fc,var(--e_f)) var(--e_wc,var(--e_w)),
 			         opacity var(--e_do,var(--e_d)) var(--e_fo,var(--e_f)) var(--e_wo,var(--e_w));
 	'''
+	
+	
 }
 	
 export const TransformMixin = '''
@@ -969,7 +971,7 @@ export class StyleSheet
 					sel = sel.filter do !base[$1]
 				
 				continue if sel.length == 0
-				sel.unshift('._ease_') if 
+				sel.unshift('._ease_') if k == 'transition'
 				let str = sel.join(', ') + ' {\n' + helper + '\n}'
 				
 				if ns
