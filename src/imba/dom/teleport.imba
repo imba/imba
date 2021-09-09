@@ -1,5 +1,6 @@
 import {Element} from './core'
 import {ImbaElement} from './component.imba'
+import {createSlot} from './fragment'
 
 class TeleportHook < ImbaElement
 	prop to
@@ -13,20 +14,17 @@ class TeleportHook < ImbaElement
 		setAttribute('style',"display:none !important;")
 
 	def slot$ name, ctx
+		#slot ||= createSlot(0,#parent)
 		return #slot
-	
-	get #slot
-		unless ##slot
+
+	get #container
+		# FIXME the outer container is currently disabled
+		unless ##container
 			let classes = self.className
-			##slot = doc.createElement('div')
-			##slot.className = classes
-			##slot.style.cssText = "display:contents !important;"
-			
-			if mounted?
-				domTarget.appendChild(##slot)
-				# const toElement = (doc.querySelector to) or doc.body
-				# toElement.appendChild(##slot)
-		##slot
+			##container = doc.createElement('div')
+			##container.className = classes
+			##container.style.cssText = "display:contents !important;"
+		return ##container
 		
 	get domTarget
 		#domTarget ||= (to isa Element ? to : (self.closest(to) or doc.querySelector(to)))
@@ -35,32 +33,38 @@ class TeleportHook < ImbaElement
 		domTarget
 		
 	get style
-		##slot ? ##slot.style : super
+		##container ? ##container.style : super
 
 	get classList
-		##slot ? ##slot.classList : super
+		##container ? ##container.classList : super
 		
 	get className
-		##slot ? ##slot.className : super
+		##container ? ##container.className : super
 		
 	set className val
-		##slot ? (##slot.className=val) : super
+		##container ? (##container.className=val) : super
+		
+	def #afterVisit
+		if mounted? and #slot and !#slot.parentNode
+			#slot.#insertInto(target)
 
 	def mount
-		
 		for [name,handler,o] in #listeners
 			eventTarget.addEventListener(name,handler,o)
-		# const toElement = (doc.querySelector to) or doc.body
-		domTarget.appendChild(##slot) if ##slot
+
+		let target = domTarget
+		
+		if #slot
+			#slot.#insertInto(target)
 		return self
 
 	def unmount
 		for [name,handler,o] in #listeners
 			eventTarget.removeEventListener(name,handler,o)
-			
-		if ##slot and ##slot.parentNode
-			##slot.parentNode.removeChild(##slot)
 		
+		if #slot
+			#slot.#removeFrom(domTarget)
+
 		#domTarget = null
 		return self
 		
