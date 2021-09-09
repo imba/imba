@@ -1,5 +1,6 @@
-## unreleased
+## 2.0.0-alpha.169
 * Fix: Various dom regressions in SSR
+* Updated default ease duration to 300ms
 
 ## 2.0.0-alpha.168
 * Use setAttribute('class') under the hood for svg elements
