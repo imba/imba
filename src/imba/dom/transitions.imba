@@ -27,7 +27,8 @@ export class Easer
 		#nodes = []
 		
 	def log ...params
-		console.log "ease",...params
+		return
+		# console.log "ease",...params
 		
 	get flags
 		dom.flags
