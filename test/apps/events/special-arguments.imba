@@ -1,4 +1,4 @@
-var name = "John Doe"
+let name = "John Doe"
 
 tag app-root
 
@@ -6,16 +6,16 @@ tag app-root
 		console.info(args)
 
 	def render
-		<self @hello.{logs(e.type,e.detail)}>
+		<self @hello=logs(e.type,e.detail)>
 			# <div.a @click.logs($.event)> 'A'
-			<div.b @click.{logs(e.type)}> 'Event type'
+			<div.b @click=logs(e.type)> 'Event type'
 			<div.c @click.emit('hello','test')> 'Trigger custom'
 			# <div.d @click.logs('d',$)> 'D'
-			<div.e reference=123 @click.{logs($.element.reference)}> 'E'
+			<div.e reference=123 @click=logs($$.element.reference)> 'E'
 
 imba.mount(<app-root>)
 
-var click = do |state,sel,expect|
+let click = do |state,sel,expect|
 	state.log = []
 	await spec.click(sel,no)
 	eq(state.log.join(","),expect)
