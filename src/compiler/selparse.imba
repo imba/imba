@@ -41,9 +41,10 @@ export def rewrite rule,ctx,o = {}
 	
 	
 	if rule.type == 'selectors'
+		
 		for sel in rule.selectors
 			rewrite(sel,rule,o)
-			
+	
 	unless rule.type == 'ruleSet'
 		return rule
 		
@@ -215,9 +216,15 @@ export def rewrite rule,ctx,o = {}
 				specificity++
 				forceLocal = no
 				
+			elif mod.name == 'off'
+				mod.remove = yes
+				addClass(modTarget,"_off_")
+				(ctx or rule).hasTransitionStyles = yes
+				
 			elif mod.name == 'deep'
 				# TODO remove this -- supported with deep nesting operators
 				mod.remove = yes
+				
 				deeppart = part
 				
 				if prev
@@ -260,14 +267,19 @@ export def render root, content, options = {}
 	let group = ['']
 	let groups = [group]
 	let rules = root.selectors or [root]
+	
+	root.#rules = []
 
 	for rule in rules
 		let sel = selparser.render(rule)
+		rule.#string = sel
 		let media = rule.media.length ? "@media {rule.media.join(' and ')}" : ''
+		rule.#media = media
 		if media != group[0]
 			groups.push(group = [media])
 		
 		group.push(sel)
+		root.#rules.push(rule)
 		
 	let out = []
 	

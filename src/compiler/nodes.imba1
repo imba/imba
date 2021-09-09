@@ -11,7 +11,7 @@ import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
-import StyleRule,StyleTheme,Color from './styler.imba'
+import StyleRule,StyleTheme,Color,StyleSheet from './styler.imba'
 import ReservedIdentifierRegex,InternalPrefixes,toJSIdentifier from '../utils/identifiers.imba'
 import parseAsset from './assets.imba'
 import Compilation from './compilation'
@@ -599,9 +599,10 @@ export class Stack
 		@sourceId = null
 		@semanticTokens = []
 		@symbols = {}
+		@css = StyleSheet.new(self)
 		@theme = null
 		@meta = {}
-		@css = ''
+		# @css = ''
 		@runtime
 		self
 
@@ -2983,8 +2984,10 @@ export class Root < Code
 		
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)
+			
+		let css = STACK.css.toString
 
-		if STACK.css and (!o:styles or o:styles == 'inline')
+		if css and (!o:styles or o:styles == 'inline')
 			runtime:styles
 		
 		var out = c(o)
@@ -2996,11 +2999,11 @@ export class Root < Code
 
 		script:rawResult = {
 			js: out
-			css: STACK.css
+			css: css
 		}
 
 		script:js = out
-		script:css = STACK.css or ""
+		script:css = css or ""
 		script:sourceId = sourceId
 		script:assets = scope.assets
 		script:dependencies = Object.keys(scope.@dependencies)
@@ -3012,7 +3015,10 @@ export class Root < Code
 		
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
-				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{JSON.stringify(script:css)});"
+				# console.log 'css',script:css
+				# let style = JSON.stringify(script:css)
+				let style = '`' + script:css + '`'
+				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{style});"
 				if o:debug
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
@@ -3543,7 +3549,7 @@ export class TagDeclaration < ClassDeclaration
 			# name.@nodeName ||= STACK.sourceId + '-' + STACK.generateId('')
 			let name = name.toNodeName
 			name = name + '-tag' if name.indexOf('-') == -1
-			STACK.css += name + ' { display:block; }\n\n'
+			STACK.css.add name + ' { display:block; }'
 		return
 		
 	def addElementReference name, child
@@ -9882,6 +9888,7 @@ export class EnvFlag < ValueNode
 		return M(out,@value)
 
 
+
 export class StyleNode < Node
 
 export class StyleSelector < StyleNode
@@ -10015,6 +10022,7 @@ export class StyleRuleSet < StyleNode
 				inline: !!@flag
 				global: !!isGlobal
 				mixins: {}
+				apply: {}
 			}
 
 			opts:resolver = do |name|
@@ -10039,7 +10047,7 @@ export class StyleRuleSet < StyleNode
 					else
 						return m
 
-			STACK.css += @css + '\n\n'
+			STACK.css.add @css, opts
 		self
 		
 	def toRaw
