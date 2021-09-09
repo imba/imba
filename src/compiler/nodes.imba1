@@ -2984,8 +2984,12 @@ export class Root < Code
 		
 		if o:onTraversed isa Function
 			o:onTraversed(self,STACK)
-			
-		let css = STACK.css.toString
+		
+		let sheet = STACK.css
+		let css = sheet.toString
+		
+		if sheet:transitions
+			runtime:transitions
 
 		if css and (!o:styles or o:styles == 'inline')
 			runtime:styles
@@ -11370,11 +11374,15 @@ export class RootScope < Scope
 
 			if assetCount
 				head.push LIT('// ASSETS-END')
-
+		
+		let sheet = STACK.css
 		let pre = Block.new([])
 		pre.head = head
+		
+		if sheet:transitions
+			pre.add(LIT(sheet.js(self,STACK)))
 				
-		let out = pre.c(o) + '\n' + body
+		let out = pre.c(o) + '\n/*body*/\n' + body
 
 		if @helpers.len
 			out = AST.cary(@helpers).join(';\n') + '\n' + out

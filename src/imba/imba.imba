@@ -15,6 +15,7 @@ export * from './dom/context'
 export * from './dom/mount'
 export * from './dom/bind'
 export * from './dom/teleport'
+export * from './dom/transitions'
 
 # Exporting events
 export * from './events/core'

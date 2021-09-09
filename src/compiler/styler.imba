@@ -896,13 +896,13 @@ export const StyleExtenders = {
 		--t_skew-x:0;--t_skew-y:0;
 		transform: translate3d(var(--t_x),var(--t_y),var(--t_z)) rotate(var(--t_rotate)) skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 	'''
-	
+
 	transition: '''
-		transition: all var(--timing) var(--easing) var(--delay),
-		outline-color 10ms linear 0s,scrollbar-color 10ms linear 0s !important;
-		outline-color:var(--trxid);
-		text-emphasis-color:var(--trxid);
-		scrollbar-color:var(--trxid);
+		transition:      all var(--e_d) var(--e_f) var(--e_w),
+			       transform var(--e_dt,var(--e_d)) var(--e_ft,var(--e_f)) var(--e_wt,var(--e_w)),
+			           color var(--e_dc,var(--e_d)) var(--e_fc,var(--e_f)) var(--e_wc,var(--e_w)),
+			background-color var(--e_dc,var(--e_d)) var(--e_fc,var(--e_f)) var(--e_wc,var(--e_w)),
+			         opacity var(--e_do,var(--e_d)) var(--e_fo,var(--e_f)) var(--e_wo,var(--e_w));
 	'''
 }
 	
@@ -916,7 +916,8 @@ export class StyleSheet
 		#stack = stack
 		#parts = []
 		#apply = {}
-		#transforms = []
+		transforms = null
+		transitions = null
 		
 	def add part, meta = {}
 		#parts.push(part)
@@ -926,15 +927,19 @@ export class StyleSheet
 				let arr = #apply[k] ||= []
 				for item in v
 					arr.push(item) unless arr.indexOf(item) >= 0
-					
-		# let tr = meta:transformSelectors
-		# let fx = meta:transitionSelectors
-
 		return
 		
+	def js root, stack
+		let js = []
 		
+		if transitions
+			js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(transitions)})"
+		return js.join('\n')
+	
+	def parse
+		return #string if #string
 		
-	def toString
+		let js = []
 		let parts = #parts.slice(0)
 		
 		for own k,v of #apply
@@ -942,6 +947,7 @@ export class StyleSheet
 			continue unless helper
 			
 			let base = {}
+			let all = {}
 			let groups = {"": base}
 
 			for item in v
@@ -950,9 +956,11 @@ export class StyleSheet
 					let ns = rule.#media
 					let sel = rule.#string.replace(/:not\(#_\)/g,'')
 					if k == 'transition'
-						sel = sel.replace(/\._off_\b/g,'')
+						sel = sel.replace(/\._(off|out)_\b/g,'')
+
 					let group = groups[ns] ||= {}
 					group[sel] = rule
+					all[sel] = yes
 			
 			# console.log 'groups',groups
 			for own ns,group of groups
@@ -961,13 +969,25 @@ export class StyleSheet
 					sel = sel.filter do !base[$1]
 				
 				continue if sel.length == 0
+				sel.unshift('._ease_') if 
 				let str = sel.join(', ') + ' {\n' + helper + '\n}'
 				
 				if ns
 					str = ns + ' {\n' + str + '\n}'
+					
+				
 				parts.unshift(str)
+			
+			let selectors = Object.keys(all)
+			if k == 'transition' and selectors.length
+				transitions = selectors
+				parts.unshift('._easing_ {--e_d:250ms;}')
+				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
 		
-		return parts.join('\n\n')
+		return #string = parts.join('\n\n')
+		
+	def toString
+		parse!
 
 export class StyleRule
 	
