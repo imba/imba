@@ -18,14 +18,14 @@ tag app-root
 
 		<self>
 			# <div :shortcut('cmd+a').prevent>
-			<div.value :click=(value = [counter,e.type,this == $.element])> "Advanced"
-			<div.click-hello :click.{hello()}> "Call hello"
-			<div.setter :click.{counter=2}> "Set directly"
-			<div.incr :click.{counter++}> "Incr"
-			<div.add :click.{counter = one + three}> "Incr"
-			<div.model :click.{model.update(10)}> "Model.update"
+			# <div.value @click=(value = [counter,e.type,this == $$.element])> "Advanced"
+			<div.click-hello @click=hello()> "Call hello"
+			<div.setter @click=(counter=2)> "Set directly"
+			<div.incr @click=(counter++)> "Incr"
+			<div.add @click=(counter = one + three)> "Incr"
+			<div.model @click=model.update(10)> "Model.update"
 			for index in values
-				<div .index{index} :click.{counter = index}> "Item {index}"
+				<div .index{index} @click=(counter = index)> "Item {index}"
 
 			
 let app = <app-root>
@@ -72,6 +72,6 @@ test "click" do
 	
 test "click" do
 	app.counter = 0
-	await spec.click('.value',no)
-	eq app.value, [0,'click',true]
+	# await spec.click('.value',no)
+	# eq app.value, [0,'click',true]
 
