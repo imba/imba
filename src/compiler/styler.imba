@@ -888,11 +888,86 @@ export class StyleTheme
 		return text
 		
 # should not happen at root - but create a theme instance
+
+export const StyleExtenders = {
+	transform: '''
+		--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;
+		--t_scale:1;--t_scale-x:1;--t_scale-y:1;
+		--t_skew-x:0;--t_skew-y:0;
+		transform: translate3d(var(--t_x),var(--t_y),var(--t_z)) rotate(var(--t_rotate)) skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
+	'''
+	
+	transition: '''
+		transition: all var(--timing) var(--easing) var(--delay),
+		outline-color 10ms linear 0s,scrollbar-color 10ms linear 0s !important;
+		outline-color:var(--trxid);
+		text-emphasis-color:var(--trxid);
+		scrollbar-color:var(--trxid);
+	'''
+}
 	
 export const TransformMixin = '''
 	--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;--t_scale:1;--t_scale-x:1;--t_scale-y:1;--t_skew-x:0;--t_skew-y:0;
 	transform: translate3d(var(--t_x),var(--t_y),var(--t_z)) rotate(var(--t_rotate)) skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 '''
+
+export class StyleSheet
+	def constructor stack
+		#stack = stack
+		#parts = []
+		#apply = {}
+		#transforms = []
+		
+	def add part, meta = {}
+		#parts.push(part)
+		
+		if meta.apply
+			for own k,v of meta.apply
+				let arr = #apply[k] ||= []
+				for item in v
+					arr.push(item) unless arr.indexOf(item) >= 0
+					
+		# let tr = meta:transformSelectors
+		# let fx = meta:transitionSelectors
+
+		return
+		
+		
+		
+	def toString
+		let parts = #parts.slice(0)
+		
+		for own k,v of #apply
+			let helper = StyleExtenders[k]
+			continue unless helper
+			
+			let base = {}
+			let groups = {"": base}
+
+			for item in v
+				for rule in item.#rules
+					# console.log rule
+					let ns = rule.#media
+					let sel = rule.#string.replace(/:not\(#_\)/g,'')
+					if k == 'transition'
+						sel = sel.replace(/\._off_\b/g,'')
+					let group = groups[ns] ||= {}
+					group[sel] = rule
+			
+			# console.log 'groups',groups
+			for own ns,group of groups
+				let sel = Object.keys(group)
+				if ns != ''
+					sel = sel.filter do !base[$1]
+				
+				continue if sel.length == 0
+				let str = sel.join(', ') + ' {\n' + helper + '\n}'
+				
+				if ns
+					str = ns + ' {\n' + str + '\n}'
+				parts.unshift(str)
+		
+		return parts.join('\n\n')
 
 export class StyleRule
 	
@@ -907,6 +982,10 @@ export class StyleRule
 		
 	def root
 		parent ? parent.root : self
+		
+	def apply kind,sel
+		let arr = options.apply[kind] ||= []
+		arr.push(sel)
 		
 	def toString o = {}
 		let parts = []
@@ -970,7 +1049,7 @@ export class StyleRule
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
 				unless meta.transform
 					meta.transform = yes
-					parts.unshift(TransformMixin)
+					# parts.unshift(TransformMixin)
 				parts.push "--t_{key}: {value} !important;"
 			else
 				parts.push "{key}: {value};"
@@ -987,6 +1066,11 @@ export class StyleRule
 			out = "@keyframes {meta.uniqueName} \{{content}\}"
 		else
 			let sel = isKeyFrame ? selector : selparser.parse(selector,options)
+			if meta.transform
+				apply('transform',sel)
+			if sel and sel.hasTransitionStyles
+				# console.log 'has transitions!!'
+				apply('transition',sel)
 			out = content.match(/[^\n\s]/) ? selparser.render(sel,content,options) : ""
 
 		for own subrule in subrules
