@@ -9357,9 +9357,13 @@ export class Tag < TagLike
 			let pref = fragment.ref
 			let cref = @cref
 			if dynamicKey
-				foot.push "({tvar}=={cref}) || (!{cref} && ({cref}={tvar}){domCall('insertInto')}({pref})) || {cref}{domCall('replaceWith')}({cref}={tvar},{pref})"
+				if fragment isa TagSlotProxy
+					console.log 'parent is slot!!!'
+					foot.push "({tvar}=={cref}) || (!{cref} && {pref}{domCall('appendChild')}({cref}={tvar})) || ({pref}{domCall('replaceChild')}({tvar},{cref}),{cref}={tvar})"
+				else
+					foot.push "({tvar}=={cref}) || (!{cref} && ({cref}={tvar}){domCall('insertInto')}({pref})) || {cref}{domCall('replaceWith')}({cref}={tvar},{pref})"
 			elif !isDetached
-				foot.push "{bvar} || {tvar}{domCall('insertInto')}({pref})"
+				foot.push "{bvar} || {pref}{domCall('appendChild')}({tvar})"
 
 		if option(:fragmented)
 			add "{runtime:renderContext}.context=null"
