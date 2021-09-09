@@ -1025,7 +1025,7 @@ export class StyleSheet
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
 				transitions = selectors
-				parts.unshift('._easing_ {--e_d:250ms;}')
+				parts.unshift('._easing_ {--e_d:300ms;}')
 				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
 		
 		return #string = parts.join('\n\n')
