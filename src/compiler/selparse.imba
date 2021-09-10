@@ -216,7 +216,7 @@ export def rewrite rule,ctx,o = {}
 				specificity++
 				forceLocal = no
 				
-			elif mod.name == 'off' or mod.name == 'out'
+			elif mod.name == 'off' or mod.name == 'out' or mod.name == 'in'
 				mod.remove = yes
 				addClass(modTarget,"_{mod.name}_")
 				(ctx or rule).hasTransitionStyles = yes

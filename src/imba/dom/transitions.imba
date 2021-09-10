@@ -68,21 +68,22 @@ export class Easer
 			# clearing all the node animations
 			unless val
 				unflag('_out_')
+				unflag('_in_')
 				unflag('_off_')
 				#nodes = null
 				
 			if val == 'enter' and prev == 'leave'
-				dom.#ease-exit-cancel!
+				dom.#transition-out-cancel!
 			if val == 'leave' and prev == 'enter'
-				dom.#ease-enter-cancel!
+				dom.#transition-in-cancel!
 			if val == 'enter'
-				dom.#ease-enter!
+				dom.#transition-in!
 			if val == 'leave'
-				dom.#ease-exit!
+				dom.#transition-out!
 			if prev == 'leave' and !val
-				dom.#ease-exited!
+				dom.#transition-out-end!
 			if prev == 'enter' and !val
-				dom.#ease-entered!
+				dom.#transition-in-end!
 			
 	
 	get phase
@@ -127,6 +128,7 @@ export class Easer
 				phase = 'enter'
 				unflag('_off_')
 				unflag('_out_')
+				
 			# what if there are no animations?
 			anims.finished.then(finish) do log('error cancel leave',$1)
 			return dom
@@ -137,12 +139,14 @@ export class Easer
 
 		flag('_off_')
 		unflag('_out_')
+		flag('_in_')
 		
 		before ? parent.insertBefore(dom,before) : parent.appendChild(dom)
 
 		let anims = #anims = track do
 			phase = 'enter'
 			unflag('_off_')
+			unflag('_in_')
 
 		anims.finished.then(finish) do log('cancelled insert into',$1)
 		return dom
@@ -159,6 +163,7 @@ export class Easer
 		if entering?
 			let anims = track do
 				flag('_off_')
+				flag('_in_')
 				unflag('_out_')
 				phase = 'leave'
 
@@ -184,27 +189,27 @@ export class Easer
 extend class Element
 
 	# called when element is ready to enter	
-	def #ease-enter
+	def #transition-in
 		yes
 	
 	# called when element has finished entering
-	def #ease-entered
+	def #transition-in-end
 		yes
 	
 	# called when element has been asked to leave while entering
-	def #ease-enter-cancel
+	def #transition-in-cancel
 		yes
 	
 	# called when element starts to leave
-	def #ease-exit
+	def #transition-out
 		yes
 	
 	# called when element is done leaving
-	def #ease-exited
+	def #transition-out-end
 		yes
 	
 	# called when element re-enters while leaving
-	def #ease-exit-cancel
+	def #transition-out-cancel
 		yes
 		
 	get ease

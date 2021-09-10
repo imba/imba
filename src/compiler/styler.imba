@@ -1000,7 +1000,7 @@ export class StyleSheet
 					let ns = rule.#media
 					let sel = rule.#string.replace(/:not\(#_\)/g,'')
 					if k == 'transition'
-						sel = sel.replace(/\._(off|out)_\b/g,'')
+						sel = sel.replace(/\._(off|out|in|on)_\b/g,'')
 
 					let group = groups[ns] ||= {}
 					group[sel] = rule

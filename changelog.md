@@ -1,3 +1,7 @@
+## 2.0.0-alpha.170
+* Added `@in` style modifier ofr specifying in-only transitions
+* Renamed transition hooks to `#ease-(in|out)-(end|cancel)`
+
 ## 2.0.0-alpha.169
 * Fix: Various dom regressions in SSR
 * Updated default ease duration to 300ms
