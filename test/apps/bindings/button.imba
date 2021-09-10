@@ -1,5 +1,8 @@
+import 'imba/test/spec'
+
 const state =
 	bool: false
+	id: '1'
 	status: null
 	labels: []
 
@@ -29,3 +32,21 @@ test 'bool' do
 	eq state.status, 'one'
 	await spec.click('.b2')
 	eq state.status, 'two'
+
+
+tag App2
+	
+	<self>
+		<button$bool bind=state.bool> "No-value {state.bool}"
+		<button$yes bind=state.bool value=yes> "yes {state.bool}"
+		<button$no bind=state.bool value=no> "no {state.bool}"
+		<button$id1 bind=state.id value='1'> "id 1 {state.id}"
+		<button$id2 bind=state.id value='2'> "id 2 {state.id}"
+
+let app = imba.mount <App2>
+
+test 'bool' do
+	app.$bool.click!
+	eq state.bool,yes
+	app.$bool.click!
+	eq state.bool,no

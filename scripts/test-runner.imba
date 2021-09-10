@@ -297,6 +297,7 @@ def serve
 				let pars = JSON.stringify(message: msg)
 				'globalThis.test("'+name+'",function(){globalThis.ok(' + (bool ? 'true' : 'false') + "," + pars + ')});\n'
 			try
+				body = body.replace("import 'imba/test/spec'","")
 				let output = compiler.compile(body,opts)
 		
 				js = output.js

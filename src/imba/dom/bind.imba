@@ -260,6 +260,8 @@ extend class HTMLButtonElement
 		# if self.type == 'checkbox' or self.type == 'radio'
 		if isGroup(data)
 			toggled ? bindRemove(data,val) : bindAdd(data,val)
+		elif $$value == undefined
+			self.data = toggled ? false : true
 		else
 			self.data = toggled ? null : val
 		#afterVisit!
@@ -267,9 +269,11 @@ extend class HTMLButtonElement
 
 	def #afterVisit
 		if $$bound
-			let val = self.data
-			if val === true or val === false or val == null
-				self.checked = !!val
+			let data = self.data
+			let val = $$value == undefined ? yes : $$value
+			
+			if isGroup(data)
+				self.checked = bindHas(data,val)
 			else
-				self.checked = bindHas(val,self.richValue)
+				self.checked = data == val
 		return
