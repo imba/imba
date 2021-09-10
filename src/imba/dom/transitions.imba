@@ -73,17 +73,17 @@ export class Easer
 				#nodes = null
 				
 			if val == 'enter' and prev == 'leave'
-				dom.transition-out-cancel!
+				dom..transition-out-cancel(self)
 			if val == 'leave' and prev == 'enter'
-				dom.transition-in-cancel!
+				dom..transition-in-cancel(self)
 			if val == 'enter'
-				dom.transition-in!
+				dom..transition-in(self)
 			if val == 'leave'
-				dom.transition-out!
+				dom..transition-out(self)
 			if prev == 'leave' and !val
-				dom.transition-out-end!
+				dom..transition-out-end(self)
 			if prev == 'enter' and !val
-				dom.transition-in-end!
+				dom..transition-in-end(self)
 			
 	
 	get phase
@@ -189,27 +189,27 @@ export class Easer
 extend class Element
 
 	# called when element is ready to enter	
-	def transition-in
+	def transition-in transition
 		yes
 	
 	# called when element has finished entering
-	def transition-in-end
+	def transition-in-end transition
 		yes
 	
 	# called when element has been asked to leave while entering
-	def transition-in-cancel
+	def transition-in-cancel transition
 		yes
 	
 	# called when element starts to leave
-	def transition-out
+	def transition-out transition
 		yes
 	
 	# called when element is done leaving
-	def transition-out-end
+	def transition-out-end transition
 		yes
 	
 	# called when element re-enters while leaving
-	def transition-out-cancel
+	def transition-out-cancel transition
 		yes
 		
 	get ease
