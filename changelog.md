@@ -1,6 +1,7 @@
 ## 2.0.0-alpha.170
-* Added `@in` style modifier ofr specifying in-only transitions
+* Added `@in` style modifier for specifying in-only transitions
 * Renamed transition hooks to `#transition-(in|out)-(end|cancel)`
+* Using `<button bind=prop>` without a value acts like `<button bind=prop value=yes>`
 
 ## 2.0.0-alpha.169
 * Fix: Various dom regressions in SSR
