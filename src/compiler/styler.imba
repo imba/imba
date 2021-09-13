@@ -469,8 +469,8 @@ export class StyleTheme
 		
 	def $ease pars, k = ''
 		pars = pars.slice(0)
-		let o = {}
-		let durRegex = /^[\-\+]?\d?(\.?\d+)(s|ms)?$/
+		let o = {__ease__: ''}
+		let durRegex = /^[\-\+]?(\d*\.)?(\d+)(s|ms)?$/
 		if String(pars[0]).match(durRegex)
 			o["--e_d{k}"] = pars[0]
 			pars.shift!
@@ -478,7 +478,7 @@ export class StyleTheme
 	
 		if pars[0] and !String(pars[0]).match(durRegex)
 			let ev = $varFallback('ease',[pars[0]])
-			o["--e_f{k}"] = pars[0]
+			o["--e_f{k}"] = ev
 			pars.shift!
 	
 		if String(pars[0]).match(durRegex)
@@ -1027,6 +1027,8 @@ export class StyleSheet
 				transitions = selectors
 				parts.unshift('._easing_ {--e_d:300ms;}')
 				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
+			if k == 'ease' and selectors.length
+				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
 		
 		return #string = parts.join('\n\n')
 		
@@ -1115,6 +1117,11 @@ export class StyleRule
 					meta.transform = yes
 					# parts.unshift(TransformMixin)
 				parts.push "--t_{key}: {value} !important;"
+			elif key.match(/^__ease__$/)
+				meta.ease = yes
+				# meta.transform = yes
+				# parts.unshift(TransformMixin)
+				# parts.push "--t_{key}: {value} !important;"
 			else
 				parts.push "{key}: {value};"
 		
@@ -1132,6 +1139,8 @@ export class StyleRule
 			let sel = isKeyFrame ? selector : selparser.parse(selector,options)
 			if meta.transform
 				apply('transform',sel)
+			if meta.ease
+				apply('ease',sel)
 			if sel and sel.hasTransitionStyles
 				# console.log 'has transitions!!'
 				apply('transition',sel)
