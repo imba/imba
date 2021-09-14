@@ -111,7 +111,7 @@ export class EventHandler
 
 	def handleEvent event
 		let target = event.target
-		let element = event.currentTarget
+		let element = #target or event.currentTarget
 		let mods = self.params
 		let i = 0
 		let awaited = no
@@ -131,7 +131,7 @@ export class EventHandler
 			commit: null
 			current: null
 		}
-		
+
 		state.current = state
 
 		if event.handle$mod
@@ -293,7 +293,7 @@ extend class Element
 
 		# check if a custom handler exists for this type?
 		if self[check] isa Function
-			handler = self[check](mods,scope,handler)
+			handler = self[check](mods,scope,handler,o)
 		else
 			self.addEventListener(type,handler,o)
 		return handler

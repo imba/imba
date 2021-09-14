@@ -70,6 +70,7 @@ class TeleportHook < ImbaElement
 		
 	def addEventListener name, handler, o = {}
 		handler.#self = self
+		
 		#listeners.push([name,handler,o])
 		if mounted? and eventTarget..addEventListener
 			eventTarget.addEventListener(name,handler,o)
@@ -82,6 +83,14 @@ class GlobalHook < TeleportHook
 		
 	get eventTarget
 		win
+		
+	def addEventListener name, handler, o = {}
+		handler.#target = domTarget.parentNode
+		super
+		
+	def on$resize mods,scope, handler, o
+		self.addEventListener('resize',handler,o)
+		return handler
 	
 if global.customElements
 	global.customElements.define('i-teleport',TeleportHook)
