@@ -4,6 +4,7 @@
 - Fix: Variable resolution for `let item = do ... item()`
 - Fix: Allow ternary in tag trees
 - Fix: Allow `condition && <tag>` in tag trees
+- Fix: Ternary parsing `cond ? <div> "a" : "b"`
 
 ## 2.0.0-alpha.170
 

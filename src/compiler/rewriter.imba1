@@ -663,6 +663,10 @@ export class Rewriter
 
 		var callObject = no
 		var callIndent = no
+		
+		var i = 0
+		let stack = []
+		let currPair = null
 
 		var parensAction = do |token,i,tokens|
 			tokens.splice i, 0, T.token('CALL_END', ')')
@@ -687,6 +691,9 @@ export class Rewriter
 			var prev = tokenType(i - 1)
 
 			if (type == '.' or type == '?.' or type == '::') and prev === OUTDENT
+				return yes
+				
+			if type == ':' and stack[stack:length - 1] == '?' and tokens[i - 1]:spaced
 				return yes
 
 			if endCallAtTerminator and (type === INDENT or type === TERMINATOR)
@@ -715,13 +722,14 @@ export class Rewriter
 
 			return no
 
-		var i = 0
-		let stack = []
-		let currPair = null
+		
 
 		while tokens:length > (i + 1)
 			var token = tokens[i]
 			var type = token.@type
+			# ternary
+			if type == '?'
+				stack.push(type)
 			
 			if (type == 'STYLE_START' or type == 'CSS_SEL') and token.@closer
 				i = tokens.indexOf(token.@closer) + 1
@@ -737,6 +745,9 @@ export class Rewriter
 			if NO_IMPLICIT_PARENS.indexOf(currPair) >= 0
 				i++
 				continue
+				
+			if type == ':' and tokens[i - 1]:spaced and stack[stack:length - 1] == '?'
+				stack.pop()
 
 			var prev    = i > 0 ? tokens[i - 1] : null
 			var next    = tokens[i + 1]
