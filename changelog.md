@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.171
 
 - Fix: Make `<global @resize>` work correctly
 - Fix: Variable resolution for `let item = do ... item()`
