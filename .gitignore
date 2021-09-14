@@ -2,7 +2,7 @@
 .cache
 .imba-cache
 
-e2e_tests/dist/**/*
+# e2e_tests/dist/**/*
 
 tmp
 test/perf
