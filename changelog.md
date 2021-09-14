@@ -1,5 +1,6 @@
 ## unreleased
 * Fix: Make `<global @resize>` work correctly
+* Fix: Variable resolution for `let item = do ... item()`
 
 ## 2.0.0-alpha.170
 * Added `@in` style modifier for specifying in-only transitions

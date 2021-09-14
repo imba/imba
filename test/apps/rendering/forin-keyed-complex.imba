@@ -24,12 +24,12 @@ tag app-root
 let app = <app-root>
 imba.mount(app)
 
-var ordered = do
-	var titles = '-' + todos.map(|t| t.title).join("") + '-'
-	var actual = app.textContent
+let ordered = do
+	let titles = '-' + todos.map(|t| t.title).join("") + '-'
+	let actual = app.textContent
 	eq actual, titles, message: "expected order to be %2 - was %1"
 
-var mutated = do |state,count|
+let mutated = do |state,count|
 	eq state.mutations.length, count, warn: "expected %2 mutations - got %1"
 
 test do
@@ -72,7 +72,7 @@ test "add to middle" do
 	mutated($1,1)
 
 test "replace" do
-	var idx = 2
+	let idx = 2
 	pool.push(todos[idx])
 	todos[idx] = pool.shift()
 	await spec.tick()
