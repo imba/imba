@@ -1,0 +1,32 @@
+name: "e2e tests"
+on: [push]
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+
+jobs:
+  test_all:
+    name: ${{ matrix.os }} (${{ matrix.browser }})
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        os: [ubuntu-18.04, windows-latest, macos-10.15, macos-11.0]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 14
+    - name: Install operating system dependencies
+      run: npx playwright install-deps
+    - name: npm install, bootstrap, build and test
+      run: |
+        npm install -g lerna
+        lerna exec npm install
+        npm run bootstrap
+      env:
+        CI: true
+    - name: Run e2e tests
+      run: npm run test:e2e
