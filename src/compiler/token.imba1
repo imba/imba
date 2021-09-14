@@ -60,6 +60,9 @@ export class Token
 
 	def endLoc
 		@loc + @len # or @value:length)
+		
+	def loc
+		[@loc,endLoc]
 
 export def lex
 	var token = this:tokens[this:pos++]

@@ -1139,6 +1139,9 @@ export class Node
 
 	def node
 		self
+		
+	def unwrappedNode
+		self
 
 	def scope__
 		STACK.scope
@@ -2183,6 +2186,17 @@ export class Parens < ValueNode
 		@open = open
 		@close = close
 		@value = load(value)
+		
+	def unwrappedNode
+		@value.unwrappedNode
+		
+	def loc
+		try
+			let a = @open.loc
+			let b = @close.loc
+			return [a[0],b[1]]
+		catch e
+			[0,0]
 
 	def load value
 		@noparen = no
@@ -4683,6 +4697,45 @@ export class Op < Node
 		@right.traverse if @right and @right:traverse
 		@left.traverse if @left and @left:traverse
 		return self
+		
+	def hasTagRight
+		if isLogical
+			let l = @left.unwrappedNode
+			let r = @right.unwrappedNode
+			
+			if r isa TagLike
+				return yes
+			if r isa Op and r.hasTagRight
+				return yes
+			if r isa Op and r.hasTagRight
+				return yes
+		return no
+
+	def opToIfTree
+		if hasTagRight
+			let l = @left.unwrappedNode
+			let r = @right.unwrappedNode
+
+			if @op == '&&'
+				if l isa Op and l.hasTagRight
+					@left.warn "Tag not allowed here"
+					
+				l = l.opToIfTree if l isa Op
+				r = r.opToIfTree if r isa Op
+
+				if r isa If
+					r.test = OP('&&',l,r.test)
+					return r
+					
+				return If.new(l,Block.new([r]))
+			elif @op == '||'
+				l = l.opToIfTree if l isa Op
+				
+				if l isa If
+					return l.addElse(Block.new([r]))
+				else
+					return If.new(l,Block.new([])).addElse(Block.new([r]))
+		return self
 
 	def isExpressable
 		# what if right is a string?!?
@@ -4745,6 +4798,9 @@ export class Op < Node
 		
 	def isString
 		@op == '+' and @left and @left.isString
+		
+	def isLogical
+		@op == '&&' or @op == '||'
 
 	def shouldParenthesize
 		@parens
@@ -8178,6 +8234,7 @@ class TagLike < Node
 	
 
 	def register node
+		
 		if node isa If or node isa Switch
 			flag(F.TAG_HAS_BRANCHES)
 			node = TagSwitchFragment.new(body: node)
@@ -8186,6 +8243,16 @@ class TagLike < Node
 			node = TagLoopFragment.new(body: node.body, value: node)
 		elif node isa Tag
 			flag(F.TAG_HAS_DYNAMIC_CHILDREN) if node.isSlot
+		elif node isa Op
+			node = node.opToIfTree
+			
+			if node isa If
+				flag(F.TAG_HAS_BRANCHES)
+				node = TagSwitchFragment.new(body: node)
+			else
+				flag(F.TAG_HAS_DYNAMIC_CHILDREN)
+				node = TagContent.new(value: node)
+
 		elif node isa StyleRuleSet
 			yes
 		else
@@ -8304,6 +8371,10 @@ class TagLike < Node
 	def visit stack
 		var o = @options
 		var scope = @tagScope = scope__
+		
+		if up isa Op
+			set(detached: yes)
+
 		let prevTag = @parent = stack.@tag
 		@level = (@parent && @parent.@level or 0) + 1
 		stack.@tag = null
@@ -8499,8 +8570,12 @@ export class TagSwitchFragment < TagLike
 		var top = ''
 		if @inserts.len
 			top = @inserts.join(' = ') + ' = null'
-
+			
+		let wasInline = o:inline
+		if body.isExpression
+			o:inline = yes
 		var out = body.c(o)
+		o:inline = wasInline
 		
 		return out if STACK.tsc
 		
@@ -8892,7 +8967,7 @@ export class Tag < TagLike
 			STACK.use('dom_teleport')
 			
 		var parentIsInlined = o:inline
-		# console.log 'tag is inline?',wasInline,tagName
+
 		var isSVG = self.isSVG
 		var isReactive = self.isReactive
 
@@ -9030,8 +9105,8 @@ export class Tag < TagLike
 			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType))
 				if !shouldEnd and !hasNonTagChildren and !isSlot and !option(:dynamic)
 					hasDynamicParts = no
-
-					if parent isa Tag
+					if parent isa Tag and !(up isa Op)
+						# console.log "CAN INLINE {tagName} {parent} {up}"
 						canInline = yes
 
 		if isFragment or isSlot
@@ -9102,6 +9177,8 @@ export class Tag < TagLike
 			# console.log tagName,'re',isReactive,'expr',isExpression,'inline',canInline,'dyn',hasDynamicParts,'oin',o:inline
 			# if the parent was inlined but we are too complex
 			if o:inline and !canInline
+				# what if this is just asking to be inlined because of a ternary?
+				
 				option(:iife,yes)
 				o:inline = no
 			
@@ -9379,7 +9456,6 @@ export class Tag < TagLike
 			let cref = @cref
 			if dynamicKey
 				if fragment isa TagSlotProxy
-					console.log 'parent is slot!!!'
 					foot.push "({tvar}=={cref}) || (!{cref} && {pref}{domCall('appendChild')}({cref}={tvar})) || ({pref}{domCall('replaceChild')}({tvar},{cref}),{cref}={tvar})"
 				else
 					foot.push "({tvar}=={cref}) || (!{cref} && ({cref}={tvar}){domCall('insertInto')}({pref})) || {cref}{domCall('replaceWith')}({cref}={tvar},{pref})"
@@ -9428,6 +9504,7 @@ export class Tag < TagLike
 			js = "(()=>\{{js};\})()"
 			js = "return {js}" if option(:return)
 		elif hasBlockScopedVariables
+			# only if we are not in expression?
 			js = '{' + js + '}'
 		return js
 

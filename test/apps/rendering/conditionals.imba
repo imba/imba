@@ -45,3 +45,26 @@ test "check" do
 	app.render()
 	ok !app.querySelector('button.flipping')
 	ok !app.querySelector('b.flipper')
+	
+test "cond && tag" do
+	
+	tag App
+		<self>
+			pos && <a>
+				<span> 'a'
+			neg || <b>
+				<span> 'b'
+	
+	let app = <App>
+	
+	let run = do(pos,neg)
+		app.pos = pos
+		app.neg = neg
+		app.render!
+		return app.innerText
+
+	eq run(no,yes), ''
+	eq run(yes,yes), 'a'
+	eq run(yes,no), 'ab'
+	eq run(no,no), 'b'
+	
