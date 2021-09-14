@@ -2,6 +2,8 @@
 .cache
 .imba-cache
 
+e2e_tests/dist/**/*
+
 tmp
 test/perf
 test/dist

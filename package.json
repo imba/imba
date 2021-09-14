@@ -47,7 +47,8 @@
     "watch": "node scripts/build.js -w",
     "prerelease": "lerna publish --dist-tag pre",
     "link-latest": "node bin/imba scripts/link-latest.imba",
-    "create-example": "node bin/imba scripts/create-example.imba"
+    "create-example": "node bin/imba scripts/create-example.imba",
+    "test:e2e": "npx playwright test --config=playwright.config.imba.js"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.171",
@@ -90,12 +91,14 @@
     "url": "git://github.com/imba/imba.git"
   },
   "devDependencies": {
+    "@playwright/test": "^1.14.1",
     "commander": "^6.2.1",
     "enquirer": "^2.3.6",
     "eventemitter3": "^4.0.7",
     "fdir": "^4.1.0",
     "flatted": "^3.1.0",
     "get-port": "^5.1.1",
+    "glob": "^7.1.7",
     "image-size": "^0.9.3",
     "micromatch": "^4.0.2",
     "node-fetch": "^2.6.1",
