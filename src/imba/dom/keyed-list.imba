@@ -10,7 +10,6 @@ class KeyedTagFragment < Fragment
 		changes = new Map
 		dirty = no
 		array = childNodes
-		# parentNode = parent
 		self.$ = {}
 
 		# if !(f & $TAG_FIRST_CHILD$)
@@ -19,7 +18,7 @@ class KeyedTagFragment < Fragment
 
 		if !(f & $TAG_LAST_CHILD$)
 			#end = createComment('map')
-			#end.node = self
+			# #end.node = self
 			# parent.#appendChild(#end) if parent
 			
 		if parent

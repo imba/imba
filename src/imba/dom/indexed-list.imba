@@ -7,13 +7,10 @@ class IndexedTagFragment < Fragment
 		super
 		#domFlags = f
 		#parent = parent
-		# parent could be a fragment
-		log 'IndexedTag',parent
 
 		unless f & $TAG_LAST_CHILD$
 			#end = createComment('list')
-			#end.node = self
-			# parent.#appendChild(#end) if parent
+			# #end.node = self
 			
 		self.$ = childNodes
 		self.length = 0
@@ -30,9 +27,11 @@ class IndexedTagFragment < Fragment
 		let from = self.length
 		self.length = len
 
-		return if from == len or !parentNode
+		return if from == len
+		let par = parentNode
+		return if !par
+
 		let array = self.childNodes
-		let par = #parent
 		let end = #end
 
 		if from > len
@@ -54,7 +53,7 @@ class IndexedTagFragment < Fragment
 		if #end
 			#end.#insertInto(parent,before)
 			
-		before ||= #end
+		before = #end
 
 		for item,i in childNodes
 			break if i == self.length

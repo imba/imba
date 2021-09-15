@@ -1,3 +1,7 @@
+## unreleased
+
+- Fix: Rendering list inside conditional
+
 ## 2.0.0-alpha.171
 
 - Fix: Make `<global @resize>` work correctly
