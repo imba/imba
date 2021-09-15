@@ -31,7 +31,7 @@ jobs:
     - name: Run e2e tests
       run: npm run test:e2e
     - uses: actions/upload-artifact@v2
-      if: ${{ failure() || success() }}
+      if: ${{ failure() }}
       with:
         name: Failed e2e tests videos
         path: test-results/
