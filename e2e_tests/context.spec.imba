@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-test 'basic test', do({ page })
-	await page.goto "/"
-	const link = page.locator('a')
-	await expect(link).toHaveText 'Learn Imba'
+test 'context should be accessible for teleported tags', do({ page })
+	await page.goto "/context"
+	expect(page.locator "text=page: ").not.toBeVisible!
+	await page.click "button"
+	expect(page.locator "text=page: context").toBeVisible!
