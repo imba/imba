@@ -1,6 +1,9 @@
 ## unreleased
 
 - Fix: Rendering list inside conditional
+- Support css blocks inside conditionals in tag trees
+- Warn about interpolated style values outside of tag trees
+- Improved specificity for nested css rules  
 
 ## 2.0.0-alpha.171
 

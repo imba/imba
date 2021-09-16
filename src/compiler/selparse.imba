@@ -35,11 +35,28 @@ def cloneRule rule
 	JSON.parse(JSON.stringify(rule))
 
 export def calcSpecificity rule
-	let number = 0
+	# let number = 0
+	# let spec = [0,0,0]
+	let ids = 0
+	let pri = 0
+	let cls = 0
+	let els = 0
+
+	let curr = rule.rule
+	while curr
+		if curr.tagName
+			els++
+		if curr.classNames
+			cls += curr.classNames.length
+		if curr.pseudos
+			els += curr.pseudos.length
+		if curr.pri
+			pri += curr.pri
+		curr = curr.rule
+	return [pri,ids,cls,els]
 	
 export def rewrite rule,ctx,o = {}
-	
-	
+
 	if rule.type == 'selectors'
 		
 		for sel in rule.selectors
@@ -256,11 +273,18 @@ export def rewrite rule,ctx,o = {}
 	if forceLocal and localpart and o.ns
 		o.hasScopedStyles = true
 		addClass(localpart,o.ns)
-
+	
+	let last = parts[parts.length - 1]
 
 	if pri = Math.max(o.priority or 0,pri)
-		# let last = parts[parts.length - 1]
-		parts[parts.length - 1].pri = pri
+		last.pri = pri
+		
+	if o.rootFlag and last.classNames..indexOf(o.rootFlag) >= 0
+		last.pri = Math.max(last.pri or 0,o.rootPriority)
+		
+	# console.log 'specificity',calcSpecificity(rule),selparser.render(rule) # ,parts
+	# rule.specificity = calcSpecificity(rule)
+
 	return rule
 
 export def render root, content, options = {}
