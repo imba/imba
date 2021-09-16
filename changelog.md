@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0-alpha.172
 
 - Fix: Rendering list inside conditional
 - Support css blocks inside conditionals in tag trees
