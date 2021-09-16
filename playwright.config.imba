@@ -5,7 +5,8 @@ const config\PlaywrightTestConfig =
 		headless: yes
 		viewport: { width: 1280, height: 720 }
 		ignoreHTTPSErrors: yes
-		video: 'retain-on-failure'
+		trace: 'retain-on-failure'
+		screenshots: yes
 	testDir: 'e2e_tests/dist'
 	webServer:
 		command: "npm run test:e2e-server"
