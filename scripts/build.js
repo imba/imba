@@ -13,7 +13,9 @@ let argv = helpers.parseArgs(process.argv.slice(2), {
 
 let meta = Symbol();
 let compileCache = {};
-let globalNames = {}
+let globalNames = {
+	compiler: 'imbac'
+}
 
 let distdir = np.resolve(__dirname, '..', 'dist')
 // Create the dist directory
@@ -156,6 +158,7 @@ async function bundle(o) {
 		o.resolveExtensions = ['.node.imba', '.imba', '.imba1', '.ts', '.mjs', '.cjs', '.js', '.css', '.json'];
 	} else {
 		o.resolveExtensions = ['.web.imba', '.imba', '.imba1', '.ts', '.mjs', '.cjs', '.js', '.css', '.json'];
+		o.nodePaths = [np.resolve(__dirname, '..', 'polyfills')]
 	}
 
 	if (!o.outdir && !o.outfile) {
@@ -170,7 +173,7 @@ async function bundle(o) {
 	o.incremental = !!watcher;
 	o.logLevel = 'info';
 	o.charset = 'utf8';
-	// o.minify = true;
+	o.minify = true;
 	if (o.write == undefined) o.write = false;
 
 	delete o.options;
@@ -187,24 +190,58 @@ async function bundle(o) {
 	console.log(`built`);
 }
 
-let bundles = [{
-	entryPoints: ['src/imba/hmr.imba'], outdir: 'dist', platform: 'browser', format: 'esm'
-}, {
-	entryPoints: ['src/imba/imba.imba'], outdir: 'dist', platform: 'browser', format: 'esm', outExtension: { ".js": ".mjs" },
-}, {
-	entryPoints: ['src/imba/imba.imba'],
-	outExtension: { ".js": ".node.js" },
-	format: 'cjs',
-	outdir: 'dist',
-	platform: 'node'
-}, {
-	entryPoints: ['bin/imba.imba', 'bin/imba-create.imba', 'program.imba', 'compiler.imba', 'workers.imba', 'loader.imba'],
-	outExtension: { ".js": ".imba.js" },
-	minify: false,
-	external: ['chokidar', 'esbuild'],
-	outdir: '.',
-	format: 'cjs',
-	platform: 'node'
-}]
+let bundles = [
+	{
+		entryPoints: ["src/imba/hmr.imba"],
+		outdir: "dist",
+		platform: "browser",
+		format: "esm",
+	},
+	{
+		entryPoints: ["src/imba/imba.imba"],
+		outdir: "dist",
+		platform: "browser",
+		format: "esm",
+		outExtension: { ".js": ".mjs" },
+	},
+	{
+		entryPoints: ["compiler.imba"],
+		outdir: "dist",
+		platform: "browser",
+		format: "esm",
+		outExtension: { ".js": ".mjs" }
+		// outExtension: { ".js": ".mjs" },
+	},
+	// {
+	// 	entryPoints: ["src/program/monaco-worker.imba"],
+	// 	outdir: "dist",
+	// 	platform: "browser",
+	// 	format: "cjs"
+	// 	// outExtension: { ".js": ".mjs" },
+	// },
+	{
+		entryPoints: ["src/imba/imba.imba"],
+		outExtension: { ".js": ".node.js" },
+		format: "cjs",
+		outdir: "dist",
+		platform: "node",
+	},
+	{
+		entryPoints: [
+			"bin/imba.imba",
+			"bin/imba-create.imba",
+			"program.imba",
+			"compiler.imba",
+			"workers.imba",
+			"loader.imba",
+		],
+		outExtension: { ".js": ".imba.js" },
+		minify: false,
+		external: ["chokidar", "esbuild"],
+		outdir: ".",
+		format: "cjs",
+		platform: "node",
+	},
+];
 
 bundle(bundles)
