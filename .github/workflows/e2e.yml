@@ -21,11 +21,12 @@ jobs:
         node-version: 14
     - name: Install operating system dependencies
       run: npx playwright install-deps
-    - name: npm install, bootstrap, build and test
+    - name: npm install, bootstrap and build
       run: |
         npm install -g lerna
         lerna exec npm install
         npm run bootstrap
+        npm run build
       env:
         CI: true
     - name: Run e2e tests

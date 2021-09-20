@@ -48,7 +48,7 @@
     "prerelease": "lerna publish --dist-tag pre",
     "link-latest": "node bin/imba scripts/link-latest.imba",
     "create-example": "node bin/imba scripts/create-example.imba",
-    "test:e2e": "npm run build && npx playwright test --config=playwright.config.imba.js",
+    "test:e2e": "npx playwright test --config=playwright.config.imba.js",
     "test:e2e-server": "node bin/imba e2e_tests/app/server.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
