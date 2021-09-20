@@ -22,7 +22,7 @@ class VirtualFragment < Fragment
 		#domFlags = flags
 		childNodes = []
 		#end = createComment('slot' + counter++)
-		#end.node = self
+		# #end.node = self
 		
 		if parent
 			parent.#appendChild(self)

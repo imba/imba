@@ -603,7 +603,10 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
       }
       if(entity.pri > 0){
         let i = entity.pri;
-        while(--i >= 0) res += ':not(#_)';
+        // res += ":not(";
+        // while (--i >= 0) res += '#_';
+        // res += ')';
+        while (--i >= 0) res += ":not(#_)";
       }
       if (entity.attrs) {
         res += entity.attrs.map(function(attr) {

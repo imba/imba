@@ -1,3 +1,15 @@
+## unreleased
+
+- Fix: Allow binding tag properties to symbol identifiers
+- Report correct location for "Cannot redeclare variable" error (#114)
+
+## 2.0.0-alpha.172
+
+- Fix: Rendering list inside conditional
+- Support css blocks inside conditionals in tag trees
+- Warn about interpolated style values outside of tag trees
+- Improved specificity for nested css rules  
+
 ## 2.0.0-alpha.171
 
 - Fix: Make `<global @resize>` work correctly

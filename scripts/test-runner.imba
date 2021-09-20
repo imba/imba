@@ -342,6 +342,7 @@ def main
 	let server = await serve!
 	let testFolder = path.resolve(__dirname,"..","test","apps")
 	let entries = getFiles(testFolder).filter do |item|
+		item = item.replace(/\\/g,'/')
 		options.main ? (item.indexOf(options.main) >= 0) : !item.match(/(examples|tmp)\//)
 
 	# let files = entries.map(|v| )

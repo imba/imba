@@ -52,7 +52,7 @@
     "test:e2e-server": "node bin/imba e2e_tests/app/server.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.171",
+  "version": "2.0.0-alpha.172",
   "licenses": [
     {
       "type": "MIT",

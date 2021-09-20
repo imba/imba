@@ -443,7 +443,7 @@ var grammar =
 	]
 	
 	StyleTermPlaceholder: [
-		o '{ Expression }' do StyleInterpolationExpression.new(A2)
+		o '{ Expression }' do StyleInterpolationExpression.new(A2).setEnds(A1,A3)
 		o 'StyleTermPlaceholder CSSUNIT' do A1.set(unit: A2)
 	]
 	

@@ -375,6 +375,7 @@ export const states = {
 	do_: [
 		# [/(do)(\()/,['keyword.do','(','@>_do_params&do']]
 		[/do(?=\()/,'keyword.do','@>do_start&do']
+		[/do(?=\s*\|)/,'keyword.do','@>do_piped&do']
 		[/do@B/,'keyword.do','@>_do&do']
 	]
 
@@ -382,6 +383,17 @@ export const states = {
 		denter(null,-1,-1)
 		[/\(/,'(',switchTo: '@_do_params']
 		[/./,'@rematch',switchTo:'@_do']
+	]
+	
+	do_piped: [
+		denter(null,-1,-1)
+		[/\s*\|/,'args.open',switchTo: '@_do_piped_params']
+		[/./,'@rematch',switchTo:'@_do']
+	]
+	
+	_do_piped_params: [
+		[/\|/,'args.close',switchTo: '@_do']
+		'params_'
 	]
 
 	_do_params: [

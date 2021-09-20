@@ -183,6 +183,7 @@ export var OP = do |op, l, r|
 			Op.new(op,l,r)
 
 var PATHIFY = do |val|
+	# console.log "PATHIFY {val}"
 	if val isa TagAttrValue
 		val = val.value
 
@@ -208,8 +209,11 @@ var PATHIFY = do |val|
 		
 		if val isa IvarAccess
 			left ||= val.scope__.context
+			
+		if right isa SymbolIdentifier
+			yes
 
-		if right isa Identifier
+		elif right isa Identifier
 			right = helpers.singlequote(String(right.js))
 			right = Str.new(right)
 		
@@ -1053,6 +1057,9 @@ export class Node
 		no
 
 	def isGlobal name
+		no
+		
+	def isConstant
 		no
 
 	# should rather do traversals
@@ -3035,7 +3042,7 @@ export class Root < Code
 			if script:css and (!o:styles or o:styles == 'inline')
 				# console.log 'css',script:css
 				# let style = JSON.stringify(script:css)
-				let style = '`' + script:css + '`'
+				let style = '`\n' + script:css + '\n`'
 				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{style});"
 				if o:debug
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
@@ -4039,6 +4046,9 @@ export class Literal < ValueNode
 		@cache = null
 		@raw = null
 		@value = load(v)
+		
+	def isConstant
+		yes
 		
 	def load value
 		value
@@ -5949,6 +5959,9 @@ export class SymbolIdentifier < Identifier
 
 	def variable
 		@variable ||= scope__.root.symbolRef(@value.slice(0))
+		
+	def isConstant
+		yes
 
 	def asObjectKey
 		"[{c}]"
@@ -8527,15 +8540,20 @@ export class TagSwitchFragment < TagLike
 		super
 		@branches = []
 		@inserts = []
+		@styles = []
 		
 	def getInsertVar index
 		@inserts[index] ||= tagvar('τ' + index + 'if') # tagvar(self.oid + '$' + index)
+		
+	def getStyleVar index
+		@styles[index] ||= tagvar('τ' + index + 'css') # tagvar(self.oid + '$' + index)
 		
 	def tvar
 		fragment.tvar
 		
 	def register node
 		let res = super
+
 		if @branches
 			let curr = @branches[@branches:length - 1]
 			curr && curr.push(res)
@@ -8544,17 +8562,29 @@ export class TagSwitchFragment < TagLike
 	def visitAfterConsumedChildren
 
 		unless @parent isa TagSwitchFragment
-			let max = self.assignChildIndices(0,self)
+			let max = self.assignChildIndices(0,0,self)
 		return self
 	
-	def assignChildIndices start,root
+	def assignChildIndices start,stylestart,root
+		# use different counters for flags?
 		let nr = start
 		let max = start
+		
+		let stylenr = stylestart
+		let stylemax = stylestart
+
 		for branch,i in @branches
 			nr = start
+			# stylenr = stylestart
 			for item in branch
 				if item isa TagSwitchFragment
-					nr = item.assignChildIndices(nr,root)
+					let res = item.assignChildIndices(nr,stylenr,root)
+					nr = res[0]
+					stylenr = res[1]
+				elif item isa StyleRuleSet
+					item.@tvar = root.getStyleVar(stylenr)
+					item.@tvar.@stylerule = item
+					stylenr++
 				else
 					item.@tvar = root.getInsertVar(nr)
 					item.set(detached: yes)
@@ -8562,14 +8592,19 @@ export class TagSwitchFragment < TagLike
 
 			if nr > max
 				max = nr
-		return max
+				
+			if stylenr > stylemax
+				stylemax = stylenr
+
+		return [max,stylemax]
 
 	def js o
 		var parts = []
 
 		var top = ''
-		if @inserts.len
-			top = @inserts.join(' = ') + ' = null'
+		let vars = @inserts.concat(@styles)
+		if vars.len
+			top = vars.join(' = ') + ' = null'
 			
 		let wasInline = o:inline
 		if body.isExpression
@@ -8585,6 +8620,10 @@ export class TagSwitchFragment < TagLike
 		for item,i in @inserts
 			let key = "{cvar}[{osym(i)}]"
 			parts.push("({key} = {tvar}{domCall('insert')}({item},0,{key}))")
+			
+		for item,i in @styles
+			let flag = item.@stylerule.@flagIf
+			parts.push("{tvar}.flags.toggle('{flag}',!!{item})")
 		
 		if o:inline
 			return parts.join(',')
@@ -9363,14 +9402,20 @@ export class Tag < TagLike
 						let target = val[0]
 						let key = val[1]
 						let bval = "[]"
-						if target isa Literal and key isa Literal
+						
+						let alit = target and target.isConstant #  isa Literal or target isa ScopeContext
+						let blit = key and key.isConstant # isa Literal or key isa SymbolIdentifier
+
+						if alit and blit
 							bval = "[{target.c(o)},{key.c(o)}]"
-						elif key isa Literal
+							
+						elif blit
 							bval = "[null,{key.c(o)}]"
 
 						add "{vvar}={iref} || ({iref}={ref}.bind$('{item.key}',{bval}))"
+						
 						for part,i in val
-							unless part isa Literal
+							unless part and part.isConstant # isa Literal
 								add "{vvar}[{i}]={part.c(o)}"
 						# add "({vvar}={rawVal.c(o)},{vvar}=={ref}.value || ({iref}={ref}.bind$('{item.key}',{mods},{bval}))"
 					elif val isa Variable
@@ -9652,6 +9697,9 @@ export class AsyncFunc < Func
 export class ESMSpecifier < Node
 	prop alias
 	prop name
+	
+	def loc
+		@alias ? @alias.loc : @name.loc
 
 	def initialize name, alias
 		@name = name
@@ -10026,7 +10074,7 @@ export class StyleRuleSet < StyleNode
 		let cmp = @tagDeclaration = stack.up(TagDeclaration)
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
-		
+
 		let sel = String(@selectors).trim
 
 		# TODO remove mixins
@@ -10062,20 +10110,42 @@ export class StyleRuleSet < StyleNode
 			@tag = stack.up(TagLike)
 			@sel = String(@selectors).trim or '&'
 			# FIXME how does this work with multiple comma-separated selectors?
+			
+			@rootFlag = @tag.cssflag
 
 			if !@sel.match(/\&/)
 				@sel = "& {@sel}"
 			elif @sel.match(/^\@/) and !@sel.match(/&/)
 				@sel = "&{@sel}"
-			@sel = @sel.replace('&',".{@tag.cssflag}")
+			@sel = @sel.replace('&',".{@rootFlag}")
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
-			@sel ||= String(@selectors).trim
+			
+			let inbody = stack.up(TagBody)
+			
+			if inbody
+				@tag = stack.up(TagLike)
+				@sel = String(@selectors).trim or '&'
+				# FIXME how does this work with multiple comma-separated selectors?
+				
+				@name = @tag.cssflag + '_' + oid
+				@flagIf = @name
+
+				if !@sel.match(/\&/)
+					@sel = "& {@sel}"
+				elif @sel.match(/^\@/) and !@sel.match(/&/)
+					@sel = "&{@sel}"
+				@sel = @sel.replace('&',".{@name}")
+				@rootFlag = @name
+				set(inTagTree: yes)
+			else
+				@sel ||= String(@selectors).trim
 
 		elif o:rule
 			@sel ||= @selectors?.toString.trim
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
+			
 
 		elif !@name and @tag and @flag and !@flag.@condition
 			@name = @tag.cssflag
@@ -10084,9 +10154,9 @@ export class StyleRuleSet < StyleNode
 		elif !@name
 			@name = (cmp ? (cmp.cssns + oid) : (sourceId + oid))
 			@sel = ".{@name}"
-
+					
 		# if @tag and flag is not conditional -- use the flag id of the tag itself
-		
+		# console.log("StyleRule{@name}",@sel,!!o:rule,typeof @name,option(:toplevel),!!@uptag,stack.parent isa TagBody)
 		@selectors?.traverse
 		
 		@styles = {}
@@ -10094,19 +10164,24 @@ export class StyleRuleSet < StyleNode
 
 
 		# add the placeholderes
-		if option(:inTagTree) and @placeholders:length
-			# console.log 'placeholders'
-			for ph in @placeholders
-				let setter = TagStyleAttr.new(ph.name)
-				setter.@tag = @tag
-				setter.value = ph.runtimeValue
-				setter.set(
-					propname: ph.@propname
-					unit: ph.option('unit')
-					styleterm: ph
-				)
-				ph.@setter = setter
-				setter.traverse
+		if @placeholders:length
+		
+			if option(:inTagTree)
+				for ph in @placeholders
+					let setter = TagStyleAttr.new(ph.name)
+					setter.@tag = @tag
+					setter.value = ph.runtimeValue
+					setter.set(
+						propname: ph.@propname
+						unit: ph.option('unit')
+						styleterm: ph
+					)
+					ph.@setter = setter
+					setter.traverse
+			elif !@flag
+				for ph in @placeholders
+					console.log "{ph}"
+					ph.warn "Only allowed inside tag tree"
 
 		if o:rule and o:styles
 			if o:styles[@sel] # '§ '+
@@ -10116,8 +10191,9 @@ export class StyleRuleSet < StyleNode
 
 		else
 			let pri = !!@flag ? (2) : 0
+			
 			pri = 1 if pri < 1 and (option(:inClassBody) or option(:inTagTree))
-			# might want to send in the rule itself instead?
+
 			let component = @tagDeclaration
 			let opts = {
 				selectors:[]
@@ -10125,6 +10201,8 @@ export class StyleRuleSet < StyleNode
 				ns: cmp ? cmp.cssns : sourceId
 				priority: pri
 				forceLocal: !@flag && (cmp or !isGlobal)
+				rootFlag: @rootFlag
+				rootPriority: 2
 				inline: !!@flag
 				global: !!isGlobal
 				mixins: {}
@@ -10165,6 +10243,40 @@ export class StyleRuleSet < StyleNode
 				return "exports.{@identifier.c} = '{@name}'"
 			else
 				return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
+		
+		# console.log 'compile conditionals!',@flagIf,@sel,!!@tag
+		if @tvar
+			let out = ["{@tvar} = '{@flagIf}'"]
+			let add = do out.push($1)
+			let cvar = @tag.cvar
+			let bvar = @tag.bvar
+		
+			for ph in @placeholders
+
+				let item = ph.@setter
+				# TODO - this logic should definitely move into TagAttr.c
+				let iref = "{cvar}[{item.osym}]"
+				let val = item.value
+				
+				# TODO optimize the css variable setters
+				if true
+					add "{M(item.js(o),item)}"
+				elif item.valueIsStatic
+					add "{bvar} || ({M(item.js(o),item)})"
+				elif val isa Func
+					add "({item.js(o)})"
+				elif val.@variable
+					let vc = val.c(o)
+					item.value = LIT("{iref}={vc}")
+					add "({vc}==={iref} || ({M item.js(o),item}))"
+				else
+					item.value = LIT("{iref}={vvar}")
+					add "({vvar}={val.c(o)},{vvar}==={iref} || ({M item.js(o),item}))"
+
+			# console.log out.join('\n'),STACK.isExpression
+			let expr = STACK.isExpression
+			return expr ? "(" + out.join(',') + ")" : out.join(";\n")
+			# return "{@tvar} = '{@flagIf}'"
 
 		return '' if option(:inClassBody) or option(:inTagTree) or option(:toplevel)
 		let out = "'{@name}'"
@@ -10513,6 +10625,9 @@ export class StyleTerm < ValueNode
 export class StyleInterpolationExpression < StyleTerm
 	
 	prop name
+	
+	def loc
+		[@startLoc,@endLoc]
 	
 	def visit stack,o
 		super
@@ -12093,6 +12208,9 @@ export class ScopeContext < Node
 
 	def fromScope other
 		IndirectScopeContext.new(other,self)
+		
+	def isConstant
+		yes
 
 	def c
 		var val = @value # || @reference

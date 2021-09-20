@@ -37,7 +37,8 @@ var parseOpts = {
 		platform: {type: 'string'}, // node | browser | worker
 		styles: {type: 'string'}, // extern | inline
 		imbaPath: {type: 'string'}, // global | inline | import
-		format: {type: 'string'}, // cjs | esm
+		format: { type: 'string' }, // cjs | esm
+		sourceId: {type: 'string'},
 		hmr: null,
 		raw: null
 	},

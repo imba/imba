@@ -100,6 +100,12 @@ class Touch
 	get offsetY do event.offsetY
 	get type do event.type
 	get active? do phase != 'ended'
+		
+	get dx
+		#dx == undefined ? event.x - start.x : #dx
+	
+	get dy
+		#dy == undefined ? event.y - start.y : #dy
 
 	def stopImmediatePropagation
 		cancelBubble = yes
@@ -240,8 +246,8 @@ def Event.touch$reframe$mod ...params
 	else
 		let x = event.x = o.x(event.x,o.clamp)
 		let y = event.y = o.y(event.y,o.clamp)
-		event.dx = x - event.x0
-		event.dy = y - event.y0
+		event.#dx = x - event.x0
+		event.#dy = y - event.y0
 
 	return yes
 
