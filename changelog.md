@@ -1,6 +1,7 @@
 ## unreleased
 
 - Fix: Allow binding tag properties to symbol identifiers
+- Report correct location for "Cannot redeclare variable" error (#114)
 
 ## 2.0.0-alpha.172
 

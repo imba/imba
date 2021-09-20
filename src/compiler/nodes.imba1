@@ -9697,6 +9697,9 @@ export class AsyncFunc < Func
 export class ESMSpecifier < Node
 	prop alias
 	prop name
+	
+	def loc
+		@alias ? @alias.loc : @name.loc
 
 	def initialize name, alias
 		@name = name
