@@ -236,7 +236,7 @@ glob("e2e_tests/*.imba", function (er, e2eFiles) {
       outdir: 'e2e_tests/dist',
       external: ['@playwright/test'],
       platform: 'node'
-    }
+    },
     {
       entryPoints: [
         "bin/imba.imba",
