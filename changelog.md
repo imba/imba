@@ -1,3 +1,7 @@
+## unreleased
+
+- Fix: Allow binding tag properties to symbol identifiers
+
 ## 2.0.0-alpha.172
 
 - Fix: Rendering list inside conditional

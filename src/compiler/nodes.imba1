@@ -183,6 +183,7 @@ export var OP = do |op, l, r|
 			Op.new(op,l,r)
 
 var PATHIFY = do |val|
+	# console.log "PATHIFY {val}"
 	if val isa TagAttrValue
 		val = val.value
 
@@ -208,8 +209,11 @@ var PATHIFY = do |val|
 		
 		if val isa IvarAccess
 			left ||= val.scope__.context
+			
+		if right isa SymbolIdentifier
+			yes
 
-		if right isa Identifier
+		elif right isa Identifier
 			right = helpers.singlequote(String(right.js))
 			right = Str.new(right)
 		
@@ -1053,6 +1057,9 @@ export class Node
 		no
 
 	def isGlobal name
+		no
+		
+	def isConstant
 		no
 
 	# should rather do traversals
@@ -4040,6 +4047,9 @@ export class Literal < ValueNode
 		@raw = null
 		@value = load(v)
 		
+	def isConstant
+		yes
+		
 	def load value
 		value
 		
@@ -5949,6 +5959,9 @@ export class SymbolIdentifier < Identifier
 
 	def variable
 		@variable ||= scope__.root.symbolRef(@value.slice(0))
+		
+	def isConstant
+		yes
 
 	def asObjectKey
 		"[{c}]"
@@ -9389,14 +9402,20 @@ export class Tag < TagLike
 						let target = val[0]
 						let key = val[1]
 						let bval = "[]"
-						if target isa Literal and key isa Literal
+						
+						let alit = target and target.isConstant #  isa Literal or target isa ScopeContext
+						let blit = key and key.isConstant # isa Literal or key isa SymbolIdentifier
+
+						if alit and blit
 							bval = "[{target.c(o)},{key.c(o)}]"
-						elif key isa Literal
+							
+						elif blit
 							bval = "[null,{key.c(o)}]"
 
 						add "{vvar}={iref} || ({iref}={ref}.bind$('{item.key}',{bval}))"
+						
 						for part,i in val
-							unless part isa Literal
+							unless part and part.isConstant # isa Literal
 								add "{vvar}[{i}]={part.c(o)}"
 						# add "({vvar}={rawVal.c(o)},{vvar}=={ref}.value || ({iref}={ref}.bind$('{item.key}',{mods},{bval}))"
 					elif val isa Variable
@@ -12186,6 +12205,9 @@ export class ScopeContext < Node
 
 	def fromScope other
 		IndirectScopeContext.new(other,self)
+		
+	def isConstant
+		yes
 
 	def c
 		var val = @value # || @reference
