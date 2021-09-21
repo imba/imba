@@ -10196,7 +10196,7 @@ export class StyleRuleSet < StyleNode
 
 			let component = @tagDeclaration
 			let opts = {
-				selectors:[]
+				selectors: []
 				component: cmp
 				ns: cmp ? cmp.cssns : sourceId
 				priority: pri
