@@ -26,6 +26,7 @@ export const modifiers =
 	focus: {}
 	focin: {name: 'focus-within'}
 	'focus-within': {}
+	'focus-visible': {}
 	hover: {}
 	indeterminate: {}
 	'in-range': {}

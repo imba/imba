@@ -110,7 +110,7 @@ export class EventHandler
 	def un name, ...params do unlisten(self,name,...params)
 
 	def handleEvent event
-		let target = event.target
+		let target = event.#target or event.target
 		let element = #target or event.currentTarget
 		let mods = self.params
 		let i = 0
@@ -131,6 +131,8 @@ export class EventHandler
 			commit: null
 			current: null
 		}
+		
+		# console.log 'handling event',event.target,event.currentTarget
 
 		state.current = state
 
@@ -193,10 +195,21 @@ export class EventHandler
 				args.unshift(m[2])
 				handler = m[1]
 
-			# check if it is an array?
-			if handler == 'stop'
+			if handler == 'trap'
+				event.#stopPropagation = yes
+				event.stopImmediatePropagation()
+				event.#defaultPrevented = yes
+				event.preventDefault()
+
+			elif handler == 'continue'
+				event.#stopPropagation = no
+				event.#defaultPrevented = no
+
+			elif handler == 'stop'
+				event.#stopPropagation = yes
 				event.stopImmediatePropagation()
 			elif handler == 'prevent'
+				event.#defaultPrevented = yes
 				event.preventDefault()
 			elif handler == 'commit'
 				state.commit = yes
