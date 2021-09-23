@@ -97,7 +97,6 @@ export const hotkeys = new class HotKeyManager
 		yes
 
 	def handle e\Event, combo
-		# e is the original event
 		let source = e.target.#hotkeyTarget or e.target
 		let targets\HTMLElement[] = Array.from(document.querySelectorAll('[data-hotkey]'))
 		let root = source.ownerDocument
@@ -108,13 +107,9 @@ export const hotkeys = new class HotKeyManager
 			if group.hotkeys === true
 				break
 			group = group.parentNode
-			
-		# if group == root
-		# 	group = source
-		
+
 		targets = targets.reverse!.filter do |el|
 			return no unless el.#hotkeyCombos and el.#hotkeyCombos[combo]
-			return no if el.closest('.hiding,.no-hotkeys')
 
 			let par = el
 			while par and par != root
@@ -127,29 +122,20 @@ export const hotkeys = new class HotKeyManager
 	
 		let detail = {combo: combo, originalEvent: e, targets: targets}
 		let event = new CustomEvent('hotkey', bubbles: true, detail: detail)
+		
 		event.originalEvent = e
 		event.hotkey = combo
-
-		event.handle$mod = do(options)
-			let el = this.element
-			if !this.handler.#combos[combo]
-				return false
-
-			if !group.contains(el) and !el.contains(group) and !this.modifiers.global
-				console.log 'skipping!',group,el
-				return false
-
-			return true
 		
-		let res = source.dispatchEvent(event)
-		
+		source.dispatchEvent(event)
 		let handlers = []
 
 		for receiver in targets
 			for handler in receiver.#hotkeyHandlers
 				if handler.#combos[combo]
 					if !e.#inEditable or handler.capture?
-						handlers.push(handler)
+						let el = handler.#target
+						if group.contains(el) or el.contains(group) or handler.global?
+							handlers.push(handler)
 
 		for handler,i in handlers
 			handler.handleEvent(event)
@@ -199,9 +185,8 @@ extend class Element
 					handler.#combos[combo] = yes
 			Object.assign(all,handler.#combos)
 
-		let keys = Object.keys(all)
 		#hotkeyCombos = all
-		dataset.hotkey = keys.join(' ')
+		dataset.hotkey = Object.keys(all).join(' ')
 		self
 	
 def Event.hotkey$focus expr

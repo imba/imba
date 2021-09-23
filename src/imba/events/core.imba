@@ -120,6 +120,9 @@ export class EventHandler
 		
 	get silent?
 		params.silent
+		
+	get global?
+		params.global
 
 	def handleEvent event
 		let target = event.#target or event.target
@@ -215,10 +218,6 @@ export class EventHandler
 				event.stopImmediatePropagation()
 				event.#defaultPrevented = yes
 				event.preventDefault()
-
-			elif handler == 'continue'
-				event.#stopPropagation = no
-				event.#defaultPrevented = no
 
 			elif handler == 'stop'
 				event.#stopPropagation = yes
