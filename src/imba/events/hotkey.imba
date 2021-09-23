@@ -49,15 +49,14 @@ const stopCallback = do |e,el,combo|
 	
 	if el.tagName == 'INPUT' || el.tagName == 'SELECT' || el.tagName == 'TEXTAREA'
 		if Globals[combo]
-			e.#globalHotkey = yes
-			e.#inFormInput = yes
+			e.#inInput = yes
+			e.#inEditable = yes
 			return false
 		return true
 		
 	if el.contentEditable && (el.contentEditable == 'true' || el.contentEditable == 'plaintext-only' || el.closest('.editable'))
 		if Globals[combo]
-			e.#globalHotkey = yes
-			e.#inContentEditable = yes
+			e.#inEditable = yes
 			return false
 		return true
 		
@@ -81,7 +80,7 @@ export const hotkeys = new class HotKeyManager
 			combos[key] = yes
 			mousetrap.bind(key,handler)
 
-		if mods.global
+		if mods.capture
 			Globals[key] = yes
 		self
 		
@@ -110,8 +109,8 @@ export const hotkeys = new class HotKeyManager
 				break
 			group = group.parentNode
 			
-		if group == root
-			group = source
+		# if group == root
+		# 	group = source
 		
 		targets = targets.reverse!.filter do |el|
 			return no unless el.#hotkeyCombos and el.#hotkeyCombos[combo]
@@ -135,40 +134,39 @@ export const hotkeys = new class HotKeyManager
 			if !this.handler.#combos[combo]
 				return false
 
-			if e.#globalHotkey and !this.modifiers.global
-				return false
-
 			if !group.contains(el) and !el.contains(group) and !this.modifiers.global
+				console.log 'skipping!',group,el
 				return false
 
 			return true
 		
 		let res = source.dispatchEvent(event)
+		
+		let handlers = []
 
-		# global.ce = event
 		for receiver in targets
 			for handler in receiver.#hotkeyHandlers
-				unless event.#stopPropagation
-					handler.handleEvent(event)
+				if handler.#combos[combo]
+					if !e.#inEditable or handler.capture?
+						handlers.push(handler)
 
-			if event.#defaultPrevented or event.#stopPropagation
-				e.preventDefault!
-
-			if false and receiver.matches('input:not([type=button]),select,textarea')
-				e.preventDefault!
-				receiver.focus! if receiver.focus
-			else
-				yes
-				# if params.within and !receiver.parentNode.contains(document.activeElement)
-				# 	continue
-				# if (/command|cmd|ctrl|shift/).test(combo) or params.prevent
-				# 	e.preventDefault!
-				# console.log 'emit click!'
-				# receiver.click!
-
-			if event.#stopPropagation
-				break
+		for handler,i in handlers
+			handler.handleEvent(event)
+			e.preventDefault! if !handler.passive? or event.#defaultPrevented
+			break unless handler.passive?
 		self
+
+const DefaultHandler = do(e,state)
+	let el = state.element
+	
+	if el isa Element
+		if el.matches('input,textarea,select,option')
+			el.focus!
+		else
+			el.click!
+	return
+	
+DefaultHandler.passive = yes
 
 extend class Element
 		
@@ -176,8 +174,10 @@ extend class Element
 		#hotkeyHandlers ||= []
 		#hotkeyHandlers.push(handler)
 		# addEventListener('hotkey',handler,o)
-		console.log "HOTKEY",mods.options,mods
+		
 		handler.#target = self
+		# add a default handler
+		mods.$_ ||= [DefaultHandler]
 		#updateHotKeys!
 		return handler
 		

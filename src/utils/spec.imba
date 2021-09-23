@@ -98,7 +98,7 @@ global class Spec < SpecComponent
 		stack = [context = self]
 		tests = []
 		warnings = []
-		state = {info: [], mutations: [], log: []}
+		state = {info: [], mutations: [], log: [], commits: 0}
 
 		observer = new MutationObserver do(muts)
 			context.state.mutations.push(...muts)
@@ -150,6 +150,8 @@ global class Spec < SpecComponent
 		new Promise do(resolve,reject)
 			pup("spec:start",{})
 			let prevInfo = console.info
+			let fn = do context.state.commits++
+			imba.scheduler.on('commit',fn)
 			observer.observe(document.body,{
 				attributes: true,
 				childList: true,
@@ -164,6 +166,7 @@ global class Spec < SpecComponent
 			imba.once(self,'done') do
 				observer.disconnect!
 				console.info = prevInfo
+				imba.scheduler.un('commit',fn)
 				resolve!
 			await tick!
 			self.step(0)
