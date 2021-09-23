@@ -203,10 +203,6 @@ extend class Element
 		#hotkeyCombos = all
 		dataset.hotkey = keys.join(' ')
 		self
-
-def Event.hotkey$click
-	this.element.click!
-	return yes
 	
 def Event.hotkey$focus expr
 	let el = this.element
