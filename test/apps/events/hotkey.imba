@@ -137,3 +137,53 @@ describe "hotkey sequences" do
 		await spec.keyboard.type 'g'
 		await spec.keyboard.type 'i'
 		eq $1.log,['yes']
+		
+		
+describe "hotkeys grouping" do
+	tag App
+		navkeys = no
+		mainkeys = yes
+		<self>
+			<main tabIndex=-1 hotkeys=mainkeys>
+				<div @hotkey('a').log('main-a')>
+				<div @hotkey('d').log('main-d')>
+				
+			<nav tabIndex=-1 hotkeys=navkeys>
+				<div @hotkey('a').log('nav-a')>
+				<div @hotkey('b').log('nav-b')>
+				<div @hotkey('c').log('nav-c')>
+				
+			<footer$footer tabIndex=-1 hotkeys=yes>
+				<div @hotkey('b').log('footer-b')>
+				<div @hotkey('d').passive.log('footer-d')>
+
+	let app = imba.mount <App>
+	
+	# when hotkeys is set to false - no hotkeys inside
+	# the container will trigger
+	test do
+		await imba.commit!
+		await spec.keyboard.type 'a'
+		await spec.keyboard.type 'c'
+		eq $1.log,['main-a']
+	
+	# when the document-body has focus, any element with
+	# a hotkey that is NOT inside an ascendant with hotkeys=no
+	# will be enabled
+	test do
+		await imba.commit!
+		await spec.keyboard.type 'd'
+		eq $1.log,['footer-d','main-d']
+		
+	# when the source element of a key event has an element
+	# with hotkeys=yes in its path, only listeners inside of
+	# this group will be active
+	test do
+		await imba.commit!
+		app.$footer.focus!
+		await spec.keyboard.type 'a'
+		await spec.keyboard.type 'b'
+		eq $1.log,['footer-b']
+		app.$footer.blur!
+		await spec.keyboard.type 'd'
+		eq $1.log,['footer-b','footer-d','main-d']
