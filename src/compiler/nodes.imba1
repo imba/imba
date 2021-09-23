@@ -8027,7 +8027,10 @@ export class TagModifier < TagPart
 			let parjs = params ? params.c : ''
 			
 			if params and parjs == ''
-				parjs = M('',MLOC(@name.endLoc + 1))
+				if path == '___setup'
+					parjs = M('',MLOC(@handlerName.endLoc + 1))
+				else
+					parjs = M('',MLOC(@name.endLoc + 1))
 		
 			let call = "{M(path,@name)}({parjs})"
 
@@ -8119,6 +8122,7 @@ export class TagHandler < TagPart
 
 	def paramsDidSet params
 		@chain.push(@last = TagModifier.new('options'))
+		@last.@handlerName = @name
 		@last.params = params
 
 	def visit
