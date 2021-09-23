@@ -129,6 +129,9 @@ export var F =
 	DIFF_FLAGS: 2 ** 1
 	DIFF_ATTRS: 2 ** 2
 	DIFF_CHILDREN: 2 ** 3
+	DIFF_MODIFIERS: 2 ** 4
+	DIFF_INLINE: 2 ** 5
+	
 
 
 # Helpers for operators
@@ -8373,6 +8376,7 @@ class TagLike < Node
 		@cvar or (@parent ? @parent.cvar :  tagvar('C'))
 
 	def vvar do tagvar('V') # value variable
+	def hvar do tagvar('H') # handler variable
 	def kvar do tagvar('K') # key variable
 
 	# for tracking specific changes -- included in end
@@ -9383,15 +9387,21 @@ export class Tag < TagLike
 				elif item isa TagHandler
 					let mods = item.modifiers
 					let specials = mods.extractDynamics()
-	
-					add "{vvar} = {iref} || ({iref}={mods.c(o)})"
+					let visit = no
+					add "{hvar} = {iref} || ({iref}={mods.c(o)})"
 					for special in specials
 						let k = special.option(:key)
 						let i = special.option(:index)
-						add "{OP('.',vvar,k).c}[{i}]={special.c(o)}"
+						let path = "{OP('.',hvar,k).c}[{i}]"
+						if k == 'options'
+							visit = yes
+							add "({vvar}={special.c(o)},{vvar}==={path} || ({path}={vvar},{dvar}|={F.DIFF_MODIFIERS}|{F.DIFF_INLINE}))"
+						else
+							add "{path}={special.c(o)}"
 
-					mods = vvar
-					add "{bvar} || {ref}.on$({item.quoted},{mods.c},{scope__.context.c})"
+					add "{bvar} || {ref}.on$({item.quoted},{hvar.c},{scope__.context.c})"
+					if visit
+						add "{dvar}&{F.DIFF_INLINE} && ({dvar}^={F.DIFF_INLINE},{hvar}[{gsym('#visit')}]?.())"
 
 				elif item isa TagAttr and item.ns == 'bind'
 					

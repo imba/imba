@@ -32,7 +32,7 @@ describe "hotkey" do
 			<div @hotkey('f').passive.log('a')> "-"
 
 	let app = imba.mount <App>
-	let {$a,$b,$x,$y,$c:input,$d:textarea} = app
+	let {$c:input,$d:textarea} = app
 
 	test "$a" do
 		await imba.commit!
@@ -99,14 +99,24 @@ describe "hotkey" do
 		# in an input-field
 		await spec.keyboard.type 'f'
 		eq $1.log, ['a','b']
+
+describe "multiple hotkeys" do
+	imba.mount do <div>
+		<div @hotkey('a|b|c')=console.info("{e.hotkey}!")> ""
+	
+	test do
+		await spec.keyboard.type 'a'
+		eq $1.log,['a!']
 		
+		await spec.keyboard.type 'b'
+		eq $1.log,['a!','b!']
+
 describe "hotkey dynamic" do
 	let shortcut = 'a'
-	tag App
-		<self> <div @hotkey(shortcut).log('hotkey')> ""
 
-	imba.mount <App>
-	
+	imba.mount do 
+		<div @hotkey(shortcut).log('hotkey')> ""
+
 	test do
 		await spec.keyboard.type 'a'
 		eq $1.log,['hotkey']
@@ -119,5 +129,11 @@ describe "hotkey dynamic" do
 		await spec.keyboard.type 'b'
 		eq $1.log,['hotkey']
 		
-		
-		
+describe "hotkey sequences" do
+	imba.mount do 
+		<div @hotkey('g i').log('yes')> ""
+
+	test do
+		await spec.keyboard.type 'g'
+		await spec.keyboard.type 'i'
+		eq $1.log,['yes']

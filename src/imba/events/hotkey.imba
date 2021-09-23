@@ -85,7 +85,7 @@ export const hotkeys = new class HotKeyManager
 		self
 		
 	def comboIdentifier combo
-		identifiers[combo] ||= combo.replace(/\+/g,'_').replace(/\ /g,'-').replace(/\*/g,'all')
+		identifiers[combo] ||= combo.replace(/\+/g,'_').replace(/\ /g,'-').replace(/\*/g,'all').replace(/\|/g,' ')
 
 	def shortcutHTML combo
 		("<u>" + comboLabel(combo).split(" ").join("</u><u>") + "</u>").replace('<u>/</u>','<span>or</span>')
@@ -128,6 +128,7 @@ export const hotkeys = new class HotKeyManager
 		let detail = {combo: combo, originalEvent: e, targets: targets}
 		let event = new CustomEvent('hotkey', bubbles: true, detail: detail)
 		event.originalEvent = e
+		event.hotkey = combo
 
 		event.handle$mod = do(options)
 			let el = this.element
@@ -178,19 +179,21 @@ extend class Element
 		handler.#target = self
 		# add a default handler
 		mods.$_ ||= [DefaultHandler]
+		
+		mods.#visit = do #updateHotKeys!
 		#updateHotKeys!
 		return handler
 		
 	def #updateHotKeys
 		let all = {}
-		let isMac = global.navigator.platform == 'MacIntel'
+		let isApple = (global.navigator.platform or '').match(/iPhone|iPod|iPad|Mac/)
 		for handler in #hotkeyHandlers
 			let mods = handler.params
 			let key = mods.options[0]
 			let prev = handler.#key
 			if handler.#key =? key
 				handler.#combos = {}
-				let combos = key.replace(/\bmod\b/g,isMac ? 'command' : 'ctrl')
+				let combos = key.replace(/\bmod\b/g,isApple ? 'command' : 'ctrl')
 				for combo in combos.split('|')
 					hotkeys.register(combo,mods)
 					handler.#combos[combo] = yes
