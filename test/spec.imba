@@ -201,7 +201,8 @@ global class SpecGroup < SpecComponent
 		parent = parent
 		name = name
 		blocks = []
-		SPEC.eval(blk,self) if blk
+		blk = blk
+		
 		self
 
 	get fullName
@@ -222,6 +223,7 @@ global class SpecGroup < SpecComponent
 	
 	def start
 		emit('start', [self])
+		SPEC.eval(blk,self) if blk
 
 		if console.group
 			console.group(name)
@@ -230,7 +232,15 @@ global class SpecGroup < SpecComponent
 		
 	def finish
 		console.groupEnd(name) if console.groupEnd
+		console.log "ENDED SPEC-GROUP"
+		if parent == SPEC
+			cleanup!
 		emit('done', [self])
+		
+	def cleanup
+		document.body.innerHTML = ''
+		await imba.commit!
+		
 
 global class SpecExample < SpecComponent
 
