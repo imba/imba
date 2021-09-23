@@ -20,6 +20,7 @@ export const InternalPrefixes = {
 	V: 'υ'
 	K: 'κ'
 	D: 'Δ'
+	H: 'θ'
 }
 
 export const ReservedPrefixes = new Set(Object.values(InternalPrefixes))

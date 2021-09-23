@@ -19,9 +19,12 @@ export const events = {}
 
 export def use_events
 	yes
+	
+def Event.trusted$mod
+	return !!event.isTrusted
 
 def Event.log$mod ...params
-	console.log(...params)
+	console.info(...params)
 	return true
 
 # Skip unless matching selector
@@ -75,6 +78,7 @@ def Event.flag$mod name,sel
 	return true unless el
 	let step = step
 	state[step] = id
+	commit = yes
 
 	el.flags.incr(name)
 
@@ -90,7 +94,6 @@ def Event.busy$mod sel
 	return Event.flag$mod.call(this,'busy',250,sel)
 
 def Event.mod$mod name
-	# FIXME
 	return Event.flag$mod.call(this,"mod-{name}",global.document.documentElement)
 
 # could cache similar event handlers with the same parts
@@ -108,14 +111,27 @@ export class EventHandler
 	def on name, ...params do listen(self,name,...params)
 	def once name, ...params do once(self,name,...params)
 	def un name, ...params do unlisten(self,name,...params)
+		
+	get passive?
+		params.passive
+		
+	get capture?
+		params.capture
+		
+	get silent?
+		params.silent
+		
+	get global?
+		params.global
 
 	def handleEvent event
-		let target = event.target
+		let target = event.#target or event.target
 		let element = #target or event.currentTarget
 		let mods = self.params
 		let i = 0
 		let awaited = no
 		let prevRes = undefined
+		let silence = mods.silence or mods.silent
 		
 		self.count ||= 0
 		self.state ||= {}
@@ -131,6 +147,8 @@ export class EventHandler
 			commit: null
 			current: null
 		}
+		
+		# console.log 'handling event',event.target,event.currentTarget
 
 		state.current = state
 
@@ -158,7 +176,6 @@ export class EventHandler
 				handler = handler.split('~')[0]
 			
 			let modargs = null
-			let ismod = no
 			let args = [event,state]
 			let res = undefined
 			let context = null
@@ -166,9 +183,12 @@ export class EventHandler
 			let isstring = typeof handler == 'string'
 			
 			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
+				# handlers should commit by default
 				handler = val[0]
+				state.commit = yes unless handler.passive
 				args = [event,state].concat(val.slice(1))
 				context = element
+				
 
 			# parse the arguments
 			elif val isa Array
@@ -193,15 +213,20 @@ export class EventHandler
 				args.unshift(m[2])
 				handler = m[1]
 
-			# check if it is an array?
-			if handler == 'stop'
+			if handler == 'trap'
+				event.#stopPropagation = yes
+				event.stopImmediatePropagation()
+				event.#defaultPrevented = yes
+				event.preventDefault()
+
+			elif handler == 'stop'
+				event.#stopPropagation = yes
 				event.stopImmediatePropagation()
 			elif handler == 'prevent'
+				event.#defaultPrevented = yes
 				event.preventDefault()
 			elif handler == 'commit'
 				state.commit = yes
-			elif handler == 'silence' or handler == 'silent'
-				state.commit = no
 			elif handler == 'ctrl'
 				break unless event.ctrlKey
 			elif handler == 'alt'
@@ -213,7 +238,7 @@ export class EventHandler
 			elif handler == 'once'
 				# clean up bound data as well
 				element.removeEventListener(event.type,self)
-			elif handler == 'options'
+			elif handler == 'options' or handler == 'silence' or handler == 'silent'
 				continue
 
 			elif keyCodes[handler]
@@ -235,13 +260,13 @@ export class EventHandler
 					handler = fn
 					context = state
 					args = modargs or []
-					ismod = yes
 
 				# should default to first look at closure - no?
 				elif handler[0] == '_'
 					handler = handler.slice(1)
 					context = self.closure
 				else
+					# TODO deprecate this functionality and warn about it?
 					context = self.getHandlerForMethod(element,handler)
 
 			if handler isa Function
@@ -249,11 +274,8 @@ export class EventHandler
 			elif context
 				res = context[handler].apply(context,args)
 
-			if state.commit === null and !ismod
-				state.commit = yes
-
 			if res and res.then isa Function and res != scheduler.$promise
-				scheduler.commit! if state.commit
+				scheduler.commit! if state.commit and !silence
 				awaited = yes
 				# TODO what if await fails?
 				res = await res
@@ -265,7 +287,7 @@ export class EventHandler
 		
 		emit(state,'end',state)
 
-		scheduler.commit! if state.commit
+		scheduler.commit! if state.commit and !silence
 
 		self.currentEvents.delete(event)
 		if self.currentEvents.size == 0
@@ -283,7 +305,7 @@ extend class Element
 
 		handler = new EventHandler(mods,scope)
 
-		let capture = mods.capture
+		let capture = mods.capture or no
 		let passive = mods.passive
 
 		let o = capture

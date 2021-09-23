@@ -23,6 +23,7 @@ export * from './events/intersect'
 export * from './events/pointer'
 export * from './events/resize'
 export * from './events/selection'
+export * from './events/hotkey'
 
 # Router
 export * from './router/index'

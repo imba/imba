@@ -93,6 +93,10 @@ export class Scheduler
 
 		#schedule! unless #scheduled
 		return self
+	
+	get committing?
+		self.queue.indexOf('commit') >= 0
+
 
 	def listen ns, item
 		let set = listeners[ns]

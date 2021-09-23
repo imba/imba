@@ -2,6 +2,10 @@
 
 - Fix: Allow binding tag properties to symbol identifiers
 - Report correct location for "Cannot redeclare variable" error (#114)
+- Experimental support for `@hotkey` events
+- Fix: Don't run `imba.commit` on unhandled events>
+- Added `@trusted` event guard
+- Added `@trap` event modifier
 
 ## 2.0.0-alpha.172
 

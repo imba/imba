@@ -98,7 +98,7 @@ global class Spec < SpecComponent
 		stack = [context = self]
 		tests = []
 		warnings = []
-		state = {info: [], mutations: [], log: []}
+		state = {info: [], mutations: [], log: [],commits: 0}
 
 		observer = new MutationObserver do(muts)
 			context.state.mutations.push(...muts)
@@ -150,6 +150,8 @@ global class Spec < SpecComponent
 		new Promise do(resolve,reject)
 			pup("spec:start",{})
 			let prevInfo = console.info
+			let fn = do context.state.commits++
+			imba.scheduler.on('commit',fn)
 			observer.observe(document.body,{
 				attributes: true,
 				childList: true,
@@ -164,6 +166,7 @@ global class Spec < SpecComponent
 			imba.once(self,'done') do
 				observer.disconnect!
 				console.info = prevInfo
+				imba.scheduler.un('commit',fn)
 				resolve!
 			await tick!
 			self.step(0)
@@ -198,7 +201,8 @@ global class SpecGroup < SpecComponent
 		parent = parent
 		name = name
 		blocks = []
-		SPEC.eval(blk,self) if blk
+		blk = blk
+		
 		self
 
 	get fullName
@@ -219,6 +223,7 @@ global class SpecGroup < SpecComponent
 	
 	def start
 		emit('start', [self])
+		SPEC.eval(blk,self) if blk
 
 		if console.group
 			console.group(name)
@@ -227,7 +232,15 @@ global class SpecGroup < SpecComponent
 		
 	def finish
 		console.groupEnd(name) if console.groupEnd
+		console.log "ENDED SPEC-GROUP"
+		if parent == SPEC
+			cleanup!
 		emit('done', [self])
+		
+	def cleanup
+		document.body.innerHTML = ''
+		await imba.commit!
+		
 
 global class SpecExample < SpecComponent
 
@@ -239,7 +252,7 @@ global class SpecExample < SpecComponent
 		block = block
 		assertions = []
 		root.tests.push(self)
-		state = {info: [], mutations: [], log: []}
+		state = {info: [], mutations: [], log: [], commits: 0}
 		self
 
 	get fullName
