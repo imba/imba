@@ -33,8 +33,6 @@ describe "references before render" do
 				<Button$jane target=$name value="jane"> "To jane"
 				<Button$jean target=$name value="jean"> "To jean"
 				<input$name value="john">
-				# <button$action @click=($name.value="jane")> "Change"
-				# <button$other-button @click=($name.value="jean")> "Change"
 			if bool
 				<input$other>
 
@@ -49,3 +47,4 @@ describe "references before render" do
 		eq app.$name.value, "jean"
 		ok app.$other isa HTMLInputElement
 		eq app.$other.parentNode, null
+		eq app.$jean.textContent, "To jean"
