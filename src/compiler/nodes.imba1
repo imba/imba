@@ -1208,6 +1208,10 @@ export class Node
 
 	def warn message, opts = {}
 		let loc = opts:loc or self.loc or [0,0]
+		
+		if loc isa Token
+			loc = loc.loc
+
 		# console.log 'loc warn',loc,script.rangeAt(loc[0],loc[1])
 		script.addDiagnostic(opts:severity or 'warning',{
 			message: message
@@ -3583,6 +3587,10 @@ export class TagDeclaration < ClassDeclaration
 		
 	def addElementReference name, child
 		let refs = @elementReferences ||= {}
+		
+		if refs[name] and refs[name] != child
+			child.warn("Duplicate elements with same reference", loc: name)
+
 		refs[name] = child
 
 	def js s
