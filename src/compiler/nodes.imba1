@@ -9164,7 +9164,7 @@ export class Tag < TagLike
 		# any references.
 		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey
 			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType))
-				if !shouldEnd and !hasNonTagChildren and !isSlot and !option(:dynamic)
+				if !shouldEnd and !hasNonTagChildren and !isSlot and !option(:dynamic) and !option(:reference)
 					hasDynamicParts = no
 					if parent isa Tag and !(up isa Op)
 						# console.log "CAN INLINE {tagName} {parent} {up}"
