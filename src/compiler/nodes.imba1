@@ -3534,10 +3534,14 @@ export class TagDeclaration < ClassDeclaration
 	def cssref scope
 		if isNeverExtended and !superclass
 			return option(:hasScopedStyles) ? cssns : null
-
-		let s = scope.closure
-		return s.memovar('_ns_',OP('||',OP('.',s.context,'_ns_'),STR('')))
-		
+			
+		if scope
+			let s = scope.closure
+			return s.memovar('_ns_',OP('||',OP('.',s.context,'_ns_'),STR('')))
+		else
+			OP('||',OP('.',THIS,'_ns_'),STR(''))
+			
+			
 	def isNeverExtended
 		if name and name.isClass
 			return !option(:export) and !option(:extended)
@@ -3590,8 +3594,10 @@ export class TagDeclaration < ClassDeclaration
 		
 		if refs[name] and refs[name] != child
 			child.warn("Duplicate elements with same reference", loc: name)
-
-		refs[name] = child
+		else
+			refs[name] = child
+			child.set(tagdeclbody: @body)
+		return child
 
 	def js s
 		scope.virtualize # is this always needed?
@@ -3642,8 +3648,6 @@ export class TagDeclaration < ClassDeclaration
 		let closure = scope__.parent
 		let jsbody = body.c()
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
-		
-		
 		
 		if option(:export) and !STACK.cjs
 			if option(:default)
@@ -8830,6 +8834,7 @@ export class Tag < TagLike
 			if tagdef
 				tagdef.addElementReference(@options:reference,self)
 				
+				
 		@scope = TagBodyScope.new(self)
 		@scope.visit
 
@@ -9105,7 +9110,7 @@ export class Tag < TagLike
 			@classNames.unshift(stack.sourceId)
 
 		if component and !isSelf
-			if let cname = component.cssref(scope__)
+			if let cname = component.cssref(option(:reference) ? null : scope__)
 				@classNames.push cname
 		
 		if option(:reference)
@@ -9175,12 +9180,33 @@ export class Tag < TagLike
 		var ctor = M("{create_}({params.join(',')})",type)
 		
 		if option(:reference)
+			# TODO need to ensure that the name is resolved outside of render
 			# what if it is on root?
+			let par = params[1]
+			params[1] = 'null'
+			ctor = M("{create_}({params.join(',')})",type)
+			set(ctor: ctor)
+			# ctor = OP('=',OP('.',scope__.context,option(:reference)),LIT(ctor)).c()
+			ctor = OP('.',scope__.context,option(:reference)).c()
+			ctor = "({tvar}={ctor},{tvar}[{gsym('##up')}]={par},{tvar})"
+			
+			
+			let decl = option(:tagdeclbody)
+
+			if decl and !STACK.tsc
+				let head = decl.@head ||= []
+				let ref = helpers.toValidIdentifier(option(:reference).c)
+				let gen = option(:ctor)
+				let sym = STACK.getSymbol
+				let body = "return this[{sym}] || (this[{sym}] = {gen})"
+				let getter = "get {ref}()" + '{\n\t' + body + '\n}'
+				head.push( getter )
+
+			# ctor = OP('.',scope__.context,option(:reference)).c()
 			# should also check if there is already an element like this
 			# ctor = CALL(OP('.',LIT(ctor),'ref$'),[STR(option(:reference))])
-			ctor = OP('=',OP('.',scope__.context,option(:reference)),LIT(ctor)).c()
-			
-		ctor = "{tvar}={ctor}"
+		else	
+			ctor = "{tvar}={ctor}"
 
 		if option(:assign)
 			# push it into ctor if it is not a variable assignment
@@ -9515,11 +9541,9 @@ export class Tag < TagLike
 				foot.push "{parent.kvar}++"
 
 		elif isFragment and parent and !(parent isa TagSwitchFragment)
-			# not fragment.tvar?
 			yes
-			# foot.push "{fragment.ref}{domCall('insert')}({tvar},{@flags})"
 
-		elif parent and !(parent isa TagSwitchFragment) and (isComponent or dynamicKey)
+		elif parent and !(parent isa TagSwitchFragment) and (isComponent or dynamicKey or option(:reference))
 			let pref = fragment.ref
 			let cref = @cref
 			if dynamicKey
