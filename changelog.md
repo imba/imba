@@ -1,3 +1,9 @@
+## 2.0.0-alpha.174
+- Named elements (`<div$myname>`) exist immediately in components
+- Fix: Spread operator works for any expression in objects
+- Fix: Make sure ::before/after comes last in selectors with other pseudo-classes>
+- Fix: Allow symbol keys in `prop/attr #my-sym-key`
+
 ## 2.0.0-alpha.173
 
 - Fix: Allow binding tag properties to symbol identifiers
