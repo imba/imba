@@ -266,7 +266,8 @@ export def rewrite rule,ctx,o = {}
 			elif !mod.remove
 				specificity++
 
-		part.pseudos = mods.filter do !$1.remove
+		mods = mods.filter do !$1.remove
+		part.pseudos = mods.filter(do $1.type != 'el').concat(mods.filter(do $1.type == 'el'))
 	
 	rule.specificity = specificity
 	
