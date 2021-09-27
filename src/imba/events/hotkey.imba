@@ -1,5 +1,7 @@
 import {Event,CustomEvent,Element} from '../dom/core'
 
+let isApple = try (global.navigator.platform or '').match(/iPhone|iPod|iPad|Mac/)
+
 export def use_events_hotkey
 	yes
 
@@ -8,8 +10,9 @@ const KeyLabels = {
 	enter: '⏎'
 	shift: '⇧'
 	command: '⌘'
+	mod: isApple ? '⌘' : 'ctrl'
 	option: '⌥'
-	alt: '⎇'
+	alt: isApple ? '⌥' : '⎇'
 	del: '⌦'
 	backspace: '⌫'
 
@@ -91,7 +94,7 @@ export const hotkeys = new class HotKeyManager
 		("<u>" + comboLabel(combo).split(" ").join("</u><u>") + "</u>").replace('<u>/</u>','<span>or</span>')
 		
 	def comboLabel combo
-		labels[combo] ||= combo.split(" ").map(do $1.split("+").map(do KeyLabels[$1] or $2.toUpperCase!).join("") ).join(" ")
+		labels[combo] ||= combo.split(" ").map(do $1.split("+").map(do (KeyLabels[$1] or $1).toUpperCase!).join("") ).join(" ")
 		
 	def matchCombo str
 		yes
