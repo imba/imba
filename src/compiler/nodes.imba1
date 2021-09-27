@@ -2125,6 +2125,8 @@ export class ClassField < Node
 		@decorater ||= if true
 			util.decorate(Arr.new(@decorators),target,name,LIT('null'))
 
+export class ClassProperty < ClassField
+
 export class ClassAttribute < ClassField
 
 	def hasConstructorInits

@@ -942,12 +942,19 @@ var grammar =
 	]
 
 	ClassField: [
-		o 'Identifier' do ClassField.new(A1)
-		o 'SymbolIdentifier' do ClassField.new(A1)
-		o 'PROP Identifier' do ClassField.new(A2).set(keyword: A1)
-		o 'ATTR Identifier' do ClassAttribute.new(A2).set(keyword: A1)
+		o 'ClassFieldIdentifier' do ClassField.new(A1)
+		# o 'SymbolIdentifier' do ClassField.new(A1)
+		o 'PROP ClassFieldIdentifier' do ClassProperty.new(A2).set(keyword: A1)
+		o 'ATTR ClassFieldIdentifier' do ClassAttribute.new(A2).set(keyword: A1)
 		o 'ClassField Type' do A1.set(datatype: A2)
 	]
+	
+	ClassFieldIdentifier: [
+		o 'Identifier'
+		o 'SymbolIdentifier'
+	]
+	
+	
 	
 	ClassFieldBody: [
 		o 'WATCH Expression Terminator' do [A1,A2]
