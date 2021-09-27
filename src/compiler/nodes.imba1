@@ -4351,6 +4351,7 @@ export class InterpolatedString < Node
 		if kind:length == 3
 			kind = kind[0]
 		# creating the string
+
 		var parts = []
 		var str = @noparen ? '' : '('
 
@@ -4458,34 +4459,13 @@ export class Obj < Literal
 
 	def visit
 		@value.traverse if @value
-		# for v in value
-		# 	v.traverse
 		self
 
 	def isPrimitive deep
 		!value.some(|v| !v.isPrimitive(yes) )
 
 	def js o
-		var dyn = value.filter(|v| v isa ObjAttr and (v.key isa Op or v.key isa InterpolatedString)  )
-
-		# TODO should remove as it is no longer needed
-		if dyn:length > 0
-			var idx = value.indexOf(dyn[0])
-			# create a temp variable
-
-			var tmp = scope__.temporary(self)
-			# set the temporary object to the same
-			var first = value.slice(0,idx)
-			var obj = Obj.new(first)
-			var ast = [OP('=',tmp,obj)]
-
-			value.slice(idx).forEach do |atr|
-				ast.push(OP('=',OP('.',tmp,atr.key),atr.value))
-			ast.push(tmp) # access the tmp at in the last part
-			return Parens.new(ast).c
-
-		# for objects with expression-keys we need to think differently
-		'{' + value.c + '}'
+		return '{' + value.c + '}'
 
 	def add k, v
 		k = Identifier.new(k) if k isa String or k isa Token
@@ -4596,8 +4576,6 @@ export class ObjAttr < Node
 					unless value
 						value = OP('.',scope__.context,key)
 					
-		
-					
 		self
 
 	def js o
@@ -4610,6 +4588,8 @@ export class ObjAttr < Node
 		if key isa IdentifierExpression or key isa SymbolIdentifier
 			# streamline this interface
 			kjs = key.asObjectKey
+		elif key isa InterpolatedString
+			kjs = "[{key.c}]"
 		elif key.isReserved
 			kjs = "'{key.c}'"
 		elif key isa Str and key.isValidIdentifier
@@ -4636,8 +4616,12 @@ export class ObjAttr < Node
 export class ObjRestAttr < ObjAttr
 
 	def js o
+		
 		let key = self.key
-		"...{key.c}"
+		if value
+			"...{value.c}"
+		else
+			"...{key.c}"
 
 export class ArgsReference < Node
 
