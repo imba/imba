@@ -24,6 +24,17 @@ def getResizeObserver
 			entry.target.dispatchEvent(e2)
 		return
 
+def Event.resize$css
+	if element.offsetParent
+		# element.style.setProperty("--width",event.width + 'px')
+		# element.style.setProperty("--height",event.height + 'px')
+		element.style.setProperty("--u_elw",event.width + 'px')
+		element.style.setProperty("--u_elh",event.height + 'px')
+	return true
+
+# TODO Add modifier for only triggering when element is attached.
+# resize triggers by default with w/h 0 when element is removed.
+
 extend class Element
 	def on$resize(chain, context, handler,o)
 		getResizeObserver!.observe(this)
