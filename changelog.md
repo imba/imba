@@ -1,7 +1,9 @@
-## unreleased
+## 2.0.0-alpha.175
 - Fix: `@in` transitions for nested elements works
-- Experimental support for `tint:colorname` and using `tint0-9` colors in styles
+- Experimental support for tweening from/to implicit width/height in transitions
+- Experimental `@resize.css` modifier to automatically enable size units
 - Allow variables in color opacity like `color:blue4/$alpha`
+- Experimental support for `tint:colorname` and using `tint0-9` colors in styles
 
 ## 2.0.0-alpha.174
 - Named elements (`<div$myname>`) exist immediately in components
