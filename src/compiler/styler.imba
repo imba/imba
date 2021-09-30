@@ -292,10 +292,31 @@ export class Color
 	def toString a = a
 		# if typeof a == 'string' and a.match(/%$/)
 		#	a = parseFloat(a.slice(0,-1)) / 100
+		if typeof a == 'string' and a[0] == '$'
+			a = "var(--{a.slice(1)},100%)"
 		"hsla({h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%,{a})"
-		
+
+	def toVar round = 2
+		"{Math.round(h)},{Math.round(s)}%,{Math.round(l)}%"
+		# "{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%"
+
 	def c
 		toString!
+
+
+export class Tint < Color
+
+	def alpha a = 1
+		new Tint(name,h,s,l,a)
+
+	def clone
+		new Tint(name,h,s,l,a)
+
+	def toString a = a
+		if typeof a == 'string' and a[0] == '$'
+			a = "var(--{a.slice(1)},100%)"
+
+		"hsla(var(--{name}),{a})"
 
 export class Length
 	
@@ -779,16 +800,26 @@ export class StyleTheme
 	def column_gap [v]
 		{'column-gap': v, '--u_cg': v}
 
+	def tint [v]
+		let o = {'--tint': v}
+		for i in [0 ... 9]
+			o["--tint{i}"] = "/*##*/{v}{i}"
+			# new Tint("v{i}")
+		return o
+
 	# def shadow ...params
 	#	{}
 
 	def $color name
-		
 		let m = name.match(/^(\w+)(\d)(?:\-(\d+))?$/)
 		let ns = m and m[1]
 		
+		# aliased colors
 		if ns and typeof palette[ns] == 'string'
 			return $color(palette[ns] + name.slice(ns.length))
+
+		if ns == 'tint'
+			return new Tint(name)
 
 		if palette[name]
 			return palette[name]
@@ -918,11 +949,14 @@ export class StyleTheme
 			
 		return value
 		
-	def transformColors text
-		text = text.replace(/\/\*#\*\/(\w+)(?:\/(\d+%?))?/g) do(m,c,a)
-			let color = $color(c)
-			if color
-				return "/*#*/{color.toString(a)}"
+	def transformColors text, {prefix}
+		text = text.replace(/\/\*(##?)\*\/(\w+)(?:\/(\d+%?|\$[\w\-]+))?/g) do(m,typ,c,a)
+			# console.log "transforming color {m}"
+
+			if let color = $color(c)
+				# Need to work around a bug with esbuild css parsing (https://github.com/evanw/esbuild/issues/1421)
+				# Was fixed in 0.12.15 so we can remove the prefixing when we upgrade esbuild
+				return typ == '##' ? "{color.toVar(a)}" : "{prefix ? 'PREFIX' : ''}{color.toString(a)}"
 			return m
 		return text
 		
@@ -959,9 +993,10 @@ export class StyleSheet
 		#parts = []
 		#apply = {}
 		#register = {}
-
 		transforms = null
-		transitions = null
+
+	get transitions
+		#register.transition
 		
 	def add part, meta = {}
 		#parts.push(part)
@@ -976,8 +1011,8 @@ export class StyleSheet
 	def js root, stack
 		let js = []
 		
-		if transitions
-			js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(transitions)})"
+		# if transitions
+		# 	js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(transitions)})"
 		for own k,v of #register
 			js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(v)},'{k}')"
 		return js.join('\n')
@@ -1027,7 +1062,7 @@ export class StyleSheet
 			
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
-				transitions = #register.transition = selectors
+				# transitions = #register.transition = selectors
 				parts.unshift('._easing_ {--e_d:300ms;}')
 				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
 			if easing
@@ -1035,7 +1070,12 @@ export class StyleSheet
 			if k == 'ease' and selectors.length
 				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
 		
-		return #string = parts.join('\n\n')
+		#string = parts.join('\n\n')
+
+		if #stack.resolveColors!
+			#string = #stack.theme!.transformColors(#string, prefix: false)
+		
+		return #string
 		
 	def toString
 		parse!

@@ -604,7 +604,7 @@ export default class Bundle < Component
 			if res.css
 				builder.styles[src.rel] = {
 					loader: 'css'
-					contents: theme.transformColors(SourceMapper.strip(res.css or ""))
+					contents: theme.transformColors(SourceMapper.strip(res.css or ""),prefix: yes)
 					resolveDir: src.absdir
 				}
 			
@@ -981,7 +981,7 @@ export default class Bundle < Component
 						if idx >= 0
 							offset = idx + header.length
 					
-					let chunk = header + body.substr(offset,bytes) + '/* chunk:end */'
+					let chunk = header + body.substr(offset,bytes).replace(/PREFIXhsl/g,'hsl') + '/* chunk:end */'
 					input.#csschunk = chunk
 					
 					styleInputs.push(input)

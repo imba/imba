@@ -10593,25 +10593,6 @@ export class StyleExpression < ListNode
 			if name == 'gt' or name == 'grid-template'
 				reclaimParams
 		super
-		
-	def visit2
-		let items = @nodes
-		let i = 0
-
-		while i < items:length
-			let item = items[i]
-			let next = items[i + 1] # no whitespace
-			let res = item.traverse
-			
-			if res != item
-				if res isa Array
-					items.splice(i,1,*res)
-					continue
-			
-			# has changed?
-			if item == items[i]
-				i++
-		self
 
 export class StyleTerm < ValueNode
 	
@@ -10722,15 +10703,15 @@ export class StyleIdentifier < StyleTerm
 
 	def visit stack
 		let raw = toString
-		if stack.resolveColors or raw == 'black' or raw == 'white'
+		if raw == 'black' or raw == 'white'
 			if let c = stack.theme.$color(raw)
 				color = self:param ? c.alpha(self:param.toAlpha) : c
+
 		elif raw.match(/^[a-zA-Z]+\d$/)
 			color = "/*#*/{raw}"
 			if self:param
 				color += "/" + self:param.toAlpha
 		super
-		
 	
 	def c o
 		return color.toString if color
@@ -11629,8 +11610,7 @@ export class RootScope < Scope
 		let pre = Block.new([])
 		pre.head = head
 		
-		if sheet:transitions
-			pre.add(LIT(sheet.js(self,STACK)))
+		pre.add(LIT(sheet.js(self,STACK)))
 				
 		let out = pre.c(o) + '\n/*body*/\n' + body
 
