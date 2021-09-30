@@ -1,3 +1,8 @@
+## unreleased
+- Fix: `@in` transitions for nested elements works
+- Experimental support for `tint:colorname` and using `tint0-9` colors in styles
+- Allow variables in color opacity like `color:blue4/$alpha`
+
 ## 2.0.0-alpha.174
 - Named elements (`<div$myname>`) exist immediately in components
 - Fix: Spread operator works for any expression in objects
