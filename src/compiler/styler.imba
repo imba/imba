@@ -946,8 +946,6 @@ export const StyleExtenders = {
 			background-color var(--e_dc,var(--e_d)) var(--e_fc,var(--e_f)) var(--e_wc,var(--e_w)),
 			         opacity var(--e_do,var(--e_d)) var(--e_fo,var(--e_f)) var(--e_wo,var(--e_w));
 	'''
-	
-	
 }
 	
 export const TransformMixin = '''
@@ -960,6 +958,8 @@ export class StyleSheet
 		#stack = stack
 		#parts = []
 		#apply = {}
+		#register = {}
+
 		transforms = null
 		transitions = null
 		
@@ -978,6 +978,8 @@ export class StyleSheet
 		
 		if transitions
 			js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(transitions)})"
+		for own k,v of #register
+			js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(v)},'{k}')"
 		return js.join('\n')
 	
 	def parse
@@ -988,18 +990,18 @@ export class StyleSheet
 		
 		for own k,v of #apply
 			let helper = StyleExtenders[k]
-			continue unless helper
 			
 			let base = {}
 			let all = {}
 			let groups = {"": base}
+			let easing = k == 'transition' or k.match(/^_(off|out|in)_sized/)
 
 			for item in v
 				for rule in item.#rules
 					# console.log rule
 					let ns = rule.#media
 					let sel = rule.#string.replace(/:not\(#_\)/g,'')
-					if k == 'transition'
+					if easing
 						sel = sel.replace(/\._(off|out|in|on)_\b/g,'')
 
 					let group = groups[ns] ||= {}
@@ -1007,26 +1009,29 @@ export class StyleSheet
 					all[sel] = yes
 			
 			# console.log 'groups',groups
-			for own ns,group of groups
-				let sel = Object.keys(group)
-				if ns != ''
-					sel = sel.filter do !base[$1]
-				
-				continue if sel.length == 0
-				sel.unshift('._ease_') if k == 'transition'
-				let str = sel.join(', ') + ' {\n' + helper + '\n}'
-				
-				if ns
-					str = ns + ' {\n' + str + '\n}'
+			if helper
+				for own ns,group of groups
+					let sel = Object.keys(group)
+					if ns != ''
+						sel = sel.filter do !base[$1]
 					
-				
-				parts.unshift(str)
+					continue if sel.length == 0
+					sel.unshift('._ease_') if k == 'transition'
+					let str = sel.join(', ') + ' {\n' + helper + '\n}'
+					
+					if ns
+						str = ns + ' {\n' + str + '\n}'
+						
+					
+					parts.unshift(str)
 			
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
-				transitions = selectors
+				transitions = #register.transition = selectors
 				parts.unshift('._easing_ {--e_d:300ms;}')
 				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
+			if easing
+				#register[k] = selectors
 			if k == 'ease' and selectors.length
 				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
 		
@@ -1051,6 +1056,10 @@ export class StyleRule
 		
 	def apply kind,sel
 		let arr = options.apply[kind] ||= []
+		arr.push(sel)
+
+	def register kind,sel
+		let arr = options.register[kind] ||= []
 		arr.push(sel)
 		
 	def toString o = {}
@@ -1123,6 +1132,9 @@ export class StyleRule
 				# parts.unshift(TransformMixin)
 				# parts.push "--t_{key}: {value} !important;"
 			else
+				if key.match(/^(width|height)$/)
+					meta.size = yes
+
 				parts.push "{key}: {value};"
 		
 		let content = parts.join('\n')
@@ -1141,9 +1153,18 @@ export class StyleRule
 				apply('transform',sel)
 			if meta.ease
 				apply('ease',sel)
+			
+
 			if sel and sel.hasTransitionStyles
 				# console.log 'has transitions!!'
 				apply('transition',sel)
+			
+			if meta.size
+				for typ in ['_off_','_out_','_in_']
+					if sel[typ]
+						# console.log 'SIZE AND TWEEN!',sel
+						apply("{typ}sized",sel)
+
 			out = content.match(/[^\n\s]/) ? selparser.render(sel,content,options) : ""
 
 		for own subrule in subrules

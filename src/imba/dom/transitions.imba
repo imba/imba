@@ -2,33 +2,52 @@ import {Element,get_document} from './core'
 
 class Transitions
 	
-	selectors = []
+	selectors = {}
 	
-	def addSelectors add
-		selectors.push(...add)
+	def addSelectors add, group
+		let arr = selectors[group] ||= []
+		arr.push(...add)
 		yes
+
+	def getSelectors ...groups
+		let sels = []
+		for group in groups
+			if selectors[group]
+				sels.push(...selectors[group])
+		sels and sels.length ? sels.join(',') : null
 		
-	def nodesForBase base
-		let query = selectors.join(',')
+	def nodesForBase base, kind = 'transition'
+		let query = selectors[kind].join(',')
 		let hits = [base]
 		let elements = base.querySelectorAll(query)
 
 		for el in elements
 			if el.closest('._ease_') == base
 				hits.push(el)
+		hits.#all = elements
 		return hits
 
+	def nodesWithSize nodes, dir = 'in'
+		let sel = getSelectors('_off_sized',"_{dir}_sized")
+		return [] unless sel
+		nodes.filter do $1.matches(sel)
+
+
 export const transitions = new Transitions
+
+let instance = global.imba ||= {}
+instance.transitions = transitions
 
 export class Easer
 	def constructor target
 		dom = target
 		#phase = null
 		#nodes = []
+		#sizes = new Map
 		
 	def log ...params
 		return
-		# console.log "ease",...params
+		
 		
 	get flags
 		dom.flags
@@ -117,10 +136,38 @@ export class Easer
 	def getAnimatedNodes
 		return transitions.nodesForBase(dom)
 
+	def getNodeSizes dir = 'in', nodes = #nodes
+		let hits = transitions.nodesWithSize(nodes,dir)
+		let map = new Map
+
+		for node in hits
+			let style = window.getComputedStyle(node)
+			map.set(node,{
+				width: style.width # node.offsetWidth
+				height: style.height # node.offsetHeight
+			})
+		map
+
+	def applyNodeSizes map
+		for [node,rect] of map
+			node.style.width = rect.width # + 'px'
+			node.style.height = rect.height # + 'px'
+		map
+
+	def clearNodeSizes map
+		for [node,rect] of map
+			node.style.removeProperty('width')
+			node.style.removeProperty('height')
+		map
+
+	
+
 	def #insertInto parent, before
+		let sizes
 		if entering?
 			return dom
 		let finish = do
+			clearNodeSizes(sizes) if sizes
 			phase = null if entering?
 		
 		if leaving?
@@ -135,26 +182,34 @@ export class Easer
 
 		let parConnected = get_document!.contains(parent)
 
-		let nodes = #nodes = getAnimatedNodes!
-
-		flag('_off_')
-		unflag('_out_')
-		flag('_in_')
-		
 		before ? parent.insertBefore(dom,before) : parent.appendChild(dom)
+		
+		#nodes = getAnimatedNodes!
+		
+		# must be certain that they don't have a size set directly?
+		flag('_reset_')
+		sizes = #nodes.sized = getNodeSizes('in')
+		flag('_off_')
+		flag('_in_')
+		unflag('_out_')
+		commit!
+		unflag('_reset_')
 
 		let anims = #anims = track do
 			phase = 'enter'
+			applyNodeSizes(sizes)
 			unflag('_off_')
 			unflag('_in_')
 
-		anims.finished.then(finish) do log('cancelled insert into',$1)
+		anims.finished.then(finish) do
+			clearNodeSizes(sizes)
+			log('cancelled insert into',$1)
 		return dom
 
 	def #removeFrom parent
 		if leaving?
 			return
-
+		let sizes
 		let finalize = do
 			if phase == 'leave'
 				parent.removeChild(dom)
@@ -166,17 +221,20 @@ export class Easer
 				flag('_in_')
 				unflag('_out_')
 				phase = 'leave'
-
+				clearNodeSizes(#nodes.sized)
+			log "cancel enter anims own",anims.own,anims
 			anims.finished.then(finalize) do log('error cancel entering',$1)
 			return
 
 		#nodes = getAnimatedNodes!
-		
+		sizes = getNodeSizes('out')
+		applyNodeSizes(sizes)
 		
 		let anims = #anims = track do
 			phase = 'leave'
 			flag('_off_')
 			flag('_out_')
+			clearNodeSizes(sizes)
 		
 		# do it in the same tick if we find no running animations(!)
 		unless anims.own.length

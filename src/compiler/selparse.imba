@@ -237,6 +237,7 @@ export def rewrite rule,ctx,o = {}
 				mod.remove = yes
 				addClass(modTarget,"_{mod.name}_")
 				(ctx or rule).hasTransitionStyles = yes
+				(ctx or rule)["_{mod.name}_"] = yes
 				
 			elif mod.name == 'deep'
 				# TODO remove this -- supported with deep nesting operators
