@@ -1,5 +1,14 @@
 const puppy = window.puppy
 
+const KeyMap = {
+	ctrl: 'Control'
+	shift: 'Shift'
+	meta: 'Meta'
+	alt: 'Alt'
+	left: 'LeftArrow'
+	right: 'RightArrow'
+}
+
 const pup = do(ns,...params)
 	if ns.match(/^spec/) and puppy
 		puppy(ns,params)
@@ -10,18 +19,37 @@ const pup = do(ns,...params)
 		await puppy(ns,params)
 
 class PupKeyboard
+
+
 	def type text, options = {}
 		await puppy('keyboard.type',[text,options])
 	def down text, options = {}
 		await puppy('keyboard.down',[text,options])
 	def up text, options = {}
 		await puppy('keyboard.up',[text,options])
+
 	def press text, options = {}
 		await puppy('keyboard.press',[text,options])
+
+	def hold key, block
+		key = KeyMap[key] or key
+		await down(key)
+		await block()
+		await up(key)
 
 class PupMouse
 	def type text, options
 		puppy('keyboard.type',[text,options])
+
+	def down x = 0, y = 0
+		await move(x,y)
+		await puppy('mouse.down',[])
+
+	def move x = 0, y = 0
+		await puppy('mouse.move',[x,y])
+	
+	def up x = 0, y = 0
+		await puppy('mouse.up',[])
 
 const TERMINAL_COLOR_CODES =
 	bold: 1
@@ -69,15 +97,18 @@ global class Spec < SpecComponent
 	get mouse
 		_mouse ||= new PupMouse
 	
-	def click sel, trusted = yes
+	def click sel, trusted = yes, options = {}
+		if typeof trusted == 'object'
+			options = trusted
+			trusted = yes
+
 		if puppy and trusted
 			console.log "click with puppeteer!!",sel
 			try
-				await puppy('click',[sel])
+				await puppy('click',[sel,options])
 			catch e
 				console.log 'error from pup click!'
 		else
-
 			let el = document.querySelector(sel)
 			el && el.click!
 		await tick!

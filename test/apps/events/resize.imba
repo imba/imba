@@ -1,24 +1,29 @@
-tag app-root
+describe "@resize" do
 
-	def resized e
-		console.log 'resized',e.contentRect
+	let ctx = {}
+	let events = []
 
-	def render
-		<self.block>
-			<div.relative.bg-blue-200.p-4.inline-block @resize=resized>
-				<textarea.resize>
+	tag App
+		prop w = 400
+		<self[inset:0]>
+			<div[pos:abs h:200px w:{w}px] @resize=events.push(e)>
 
-imba.mount <app-root>
+	let app = imba.mount <App>
 
+	# resize should be triggered immediately
+	test do
+		await imba.commit!
+		eq app.offsetWidth,800
+		eq app.offsetHeight,600
+		let ev = events[-1]
+		ok ev isa CustomEvent
+		eq ev.width, 400
+		eq ev.height, 200
 
-### css
-
-.resizable {
-	border: 1px solid blue;
-	padding: 10px;
-	width: 200px;
-	height: 100px;
-}
-.expanded {
-	width: 400px;
-}
+	test do
+		events = []
+		app.w = 300
+		app.render!
+		await imba.commit!
+		let ev = events[-1]
+		eq ev.width, 300
