@@ -167,6 +167,13 @@ global class Spec < SpecComponent
 			name = context.blocks.length + 1
 		context.blocks.push new SpecExample(name, blk, context)
 
+	def before name, blk
+		if name isa Function
+			name = 'setup'
+			blk = name
+		let blocks = context.blocks[name] ||= []
+		blocks.push blk
+
 	def eq actual, expected, options
 		new SpecAssert(context, actual,expected, options)
 	
@@ -250,6 +257,10 @@ global class SpecGroup < SpecComponent
 		let block = blocks[i]
 		return finish! unless block
 		imba.once(block,'done') do run(i+1)
+		if blocks.setup
+			for pre in blocks.setup
+				await pre()
+
 		block.run! # this is where we wan to await?
 	
 	def start
@@ -387,6 +398,8 @@ window.spec = global.SPEC = new Spec
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
+global def before name, blk do SPEC.before(name,blk)
+# global def test name, blk do SPEC.test(name,blk)
 global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)

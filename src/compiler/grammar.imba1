@@ -481,6 +481,7 @@ var grammar =
 		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
+		o 'TagOptions T. UNARY TAG_LITERAL' do A1.addPart(A4.prepend('!'),AST.TagFlag)
 		o 'TagOptions T. TagIdentifier' do A1.addPart(A3,AST.TagFlag)
 		
 		o 'TagOptions # TagIdentifier' do A1.addPart(A3,AST.TagId)
