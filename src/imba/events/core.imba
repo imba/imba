@@ -1,5 +1,5 @@
 # imba$imbaPath=global
-import {Event,Element} from '../dom/core'
+import {Event,Element,KeyboardEvent,MouseEvent} from '../dom/core'
 import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'
 
@@ -14,6 +14,46 @@ const keyCodes = {
 	right: [39],
 	del: [8,46]
 }
+
+# export * from './modifiers'
+
+extend class Event
+	def @sel selector
+		return !!target.matches(String(selector))
+
+	def @log ...params
+		console.info(...params)
+		return true
+
+	def @trusted
+		return !!isTrusted
+
+	def @if expr
+		return !!expr
+
+extend class MouseEvent
+
+	def @left
+		return button == 0
+
+	def @middle
+		return button == 1
+
+	def @right
+		return button == 2
+
+	def @shift
+		return !!shiftKey
+
+	def @alt
+		return !!altKey
+
+	def @ctrl
+		return !!ctrlKey
+
+	def @meta
+		return !!metaKey
+
 
 export const events = {}
 
@@ -180,6 +220,7 @@ export class EventHandler
 			let res = undefined
 			let context = null
 			let m
+			let negated = no
 			let isstring = typeof handler == 'string'
 			
 			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
@@ -227,21 +268,22 @@ export class EventHandler
 				event.preventDefault()
 			elif handler == 'commit'
 				state.commit = yes
-			elif handler == 'ctrl'
-				break unless event.ctrlKey
-			elif handler == 'alt'
-				break unless event.altKey
-			elif handler == 'shift'
-				break unless event.shiftKey
-			elif handler == 'meta'
-				break unless event.metaKey
+			# elif handler == 'ctrl'
+			# 	break unless event.ctrlKey
+			# elif handler == 'alt'
+			# 	break unless event.altKey
+			# elif handler == 'shift'
+			# 	break unless event.shiftKey
+			# elif handler == 'meta'
+			# 	break unless event.metaKey
+
 			elif handler == 'once'
 				# clean up bound data as well
 				element.removeEventListener(event.type,self)
 			elif handler == 'options' or handler == 'silence' or handler == 'silent'
 				continue
 
-			elif keyCodes[handler]
+			elif keyCodes[handler] and event isa KeyboardEvent
 				unless keyCodes[handler].indexOf(event.keyCode) >= 0
 					break
 
@@ -253,13 +295,25 @@ export class EventHandler
 				let customRes = element.dispatchEvent(e)
 
 			elif typeof handler == 'string'
-				let fn = (self.type and Event[self.type + '$' + handler + '$mod'])
+				if handler[0] == '!'
+					negated = yes
+					handler = handler.slice(1)
+
+				let path = "α{handler}"
+
+				let fn = event[path]
+				fn ||= (self.type and Event[self.type + '$' + handler + '$mod'])
 				fn ||= event[handler + '$mod'] or Event[event.type + '$' + handler] or Event[handler + '$mod']
 				
 				if fn isa Function
 					handler = fn
 					context = state
 					args = modargs or []
+
+					if event[path]
+						context = event
+						event.#context = state
+
 
 				# should default to first look at closure - no?
 				elif handler[0] == '_'
@@ -280,7 +334,9 @@ export class EventHandler
 				# TODO what if await fails?
 				res = await res
 
-			if res === false
+			if negated and res === true
+				break
+			if !negated and res === false
 				break
 
 			state.value = res
