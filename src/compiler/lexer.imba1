@@ -1043,7 +1043,10 @@ export class Lexer
 		#	typ = 'IVAR'
 
 		elif typ == '@'
-			typ = 'DECORATOR'
+			if lastTyp == '.'
+				typ = 'IDENTIFIER'
+			else
+				typ = 'DECORATOR'
 		elif typ == '#'
 			typ = 'SYMBOLID'
 		elif typ == '##'

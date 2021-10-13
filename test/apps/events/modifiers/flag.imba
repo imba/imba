@@ -7,6 +7,8 @@ describe "@event.flag" do
 			# up the chain
 			<button.b @click.flag-busy('.app').wait(150ms).log('done')> "Button"
 
+			<button.c @click.busy.wait(150ms).log('done')> "Button"
+
 	let app = imba.mount <App>
 
 	let flag = do(sel,expect)
@@ -20,3 +22,6 @@ describe "@event.flag" do
 
 	test do
 		await flag(".b",'.app.busy')
+
+	test do
+		await flag(".c",'button.c.busy')

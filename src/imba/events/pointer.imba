@@ -198,7 +198,7 @@ def Event.touch$moved$mod a,b
 	
 def Event.touch$reframe$mod ...params
 	let o = (state[step] ||= {})
-		
+
 	unless o.rect
 		let el = element
 		let len = params.length
@@ -244,6 +244,7 @@ def Event.touch$reframe$mod ...params
 		event.x0 = event.x = o.x(event.x,o.clamp)
 		event.y0 = event.y = o.y(event.y,o.clamp)
 	else
+
 		let x = event.x = o.x(event.x,o.clamp)
 		let y = event.y = o.y(event.y,o.clamp)
 		event.#dx = x - event.x0
@@ -338,6 +339,8 @@ def Event.touch$handle
 	let el = element
 	let id = state.pointerId
 	let m = modifiers
+	let handler = self.handler
+
 	current = state
 
 	if e.type == 'touchstart'
@@ -374,19 +377,26 @@ def Event.touch$handle
 		let typ = e.type
 		let ph = t.phase
 		t.event = e
-		let end = typ == 'pointerup' or typ == 'pointercancel'
+		let end = typ == 'pointerup' or typ == 'pointercancel' or typ == 'lostpointercapture'
 
-		unless typ == 'pointercancel'
+		unless typ == 'pointercancel' or typ == 'lostpointercapture'
 			t.x = e.clientX
 			t.y = e.clientY
+	
+
 		# console.log 'pointer',typ,ph,t.target..nodeName,e.x,e.y
 		if end
+			# if already ended - dont end again?
 			t.phase = 'ended'
 		
+		# was already ended before
+		# if end and ph == 'ended'
+
 		try handler.handleEvent(t)
 		
-		if ph == 'init'
+		if ph == 'init' and !end
 			t.phase = 'active'
+
 
 		if end and !handler.isIOS
 			el.releasePointerCapture(e.pointerId)
@@ -396,6 +406,14 @@ def Event.touch$handle
 	let teardown = do(e)
 		return if disposed
 		el.flags.decr('_touch_')
+
+		if t.phase != 'ended'
+			t.phase = 'ended'
+			t.x = t.clientX
+			t.y = t.clientY
+			handler.handleEvent(t)
+
+
 		t.emit('end')
 		unless m.passive
 			if (--handler.prevents) == 0
@@ -420,6 +438,7 @@ def Event.touch$handle
 	el.addEventListener('lostpointercapture',teardown,once:true)
 
 	if !handler.isIOS
+
 		el.setPointerCapture(e.pointerId)
 
 	global.document.addEventListener('selectstart',canceller,capture:true)

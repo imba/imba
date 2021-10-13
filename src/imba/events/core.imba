@@ -17,6 +17,10 @@ const keyCodes = {
 
 # export * from './modifiers'
 
+# TODO Create class-based context for the event modifiers
+class EventHandlerContext
+
+
 extend class Event
 	def @sel selector
 		return !!target.matches(String(selector))
@@ -30,6 +34,76 @@ extend class Event
 
 	def @if expr
 		return !!expr
+
+	def @wait time = 250
+		new Promise(do setTimeout($1,parseTime(time)))
+
+	def @self
+		return target == #context.element
+
+
+	def @throttle time = 250
+		const {handler,element,current} = #context
+
+		if handler.throttled
+			return false
+
+		handler.throttled = yes
+		element.flags.incr('throttled')
+
+		once(current,'end') do
+			setTimeout(&,parseTime(time)) do
+				element.flags.decr('throttled')	
+				handler.throttled = no
+		return true
+
+	def @debounce time = 250
+		const {state,event,handler} = #context
+		let queue = state.debounced ||= []
+		queue.push(queue.last = event)
+		new Promise do(resolve)
+			setTimeout(&,parseTime(time)) do
+				if queue.last == event
+					# if this event is still the last
+					# add the debounced queue to the event
+					# and let the chain continue
+					event.debounced = queue
+					handler.state = {}
+					resolve(true)
+				else
+					resolve(false)
+
+	# will add a css className to the element (or selector)
+	# and keep it for the duration of the event handling,
+	# or at least 250ms
+	def @flag name, sel
+		const {element,step,state,id,current} = #context
+	
+		let el = sel isa Element ? sel : (sel ? element.closest(sel) : element)
+
+		return true unless el
+
+		#context.commit = yes
+	
+		state[step] = id
+		el.flags.incr(name)
+
+		let ts = Date.now!
+		
+		once(current,'end') do
+			let elapsed = Date.now! - ts
+			let delay = Math.max(250 - elapsed,0)
+			setTimeout(&,delay) do el.flags.decr(name)
+
+		return true
+
+	def @busy sel
+		# TODO REMOVE
+		self['αflag']('busy',sel)
+
+	def @mod name
+		# TODO REMOVE
+		self['αflag']("mod-{name}",global.document.documentElement)
 
 extend class MouseEvent
 
@@ -60,81 +134,82 @@ export const events = {}
 export def use_events
 	yes
 	
-def Event.trusted$mod
-	return !!event.isTrusted
+# def Event.trusted$mod
+#	return !!event.isTrusted
 
-def Event.log$mod ...params
-	console.info(...params)
-	return true
+# def Event.log$mod ...params
+#	console.info(...params)
+#	return true
 
 # Skip unless matching selector
-def Event.sel$mod expr
-	return !!event.target.matches(String(expr))
+# Can remove
+# def Event.sel$mod expr
+#	return !!event.target.matches(String(expr))
 	
 def Event.outside$mod
 	if handler and handler.#self
 		return !handler.#self.parentNode.contains(event.target)
 	return no
 	
-def Event.if$mod expr
-	return !!expr
+# def Event.if$mod expr
+#	return !!expr
 	
-def Event.wait$mod time = 250
-	new Promise(do setTimeout($1,parseTime(time)))
+# def Event.wait$mod time = 250
+#	new Promise(do setTimeout($1,parseTime(time)))
 
-def Event.self$mod
-	return event.target == element
+# def Event.self$mod
+#	return event.target == element
 	
-def Event.throttle$mod time = 250
-	return false if handler.throttled
-	handler.throttled = yes
+# def Event.throttlez$mod time = 250
+# 	return false if handler.throttled
+# 	handler.throttled = yes
+# 
+# 	element.flags.incr('throttled')
+# 
+# 	once(current,'end') do
+# 		setTimeout(&,parseTime(time)) do
+# 			element.flags.decr('throttled')
+# 			handler.throttled = no
+# 	return true
 
-	element.flags.incr('throttled')
-
-	once(current,'end') do
-		setTimeout(&,parseTime(time)) do
-			element.flags.decr('throttled')
-			handler.throttled = no
-	return true
-
-def Event.debounce$mod time = 250
-	let queue = state.debounced ||= []
-	queue.push(queue.last = event)
-	new Promise do(resolve)
-		setTimeout(&,parseTime(time)) do
-			if queue.last == event
-				# if this event is still the last
-				# add the debounced queue to the event
-				# and let the chain continue
-				event.debounced = queue
-				handler.state = {}
-				resolve(true)
-			else
-				resolve(false)
+# def Event.debouncex$mod time = 250
+# 	let queue = state.debounced ||= []
+# 	queue.push(queue.last = event)
+# 	new Promise do(resolve)
+# 		setTimeout(&,parseTime(time)) do
+# 			if queue.last == event
+# 				# if this event is still the last
+# 				# add the debounced queue to the event
+# 				# and let the chain continue
+# 				event.debounced = queue
+# 				handler.state = {}
+# 				resolve(true)
+# 			else
+# 				resolve(false)
 	
-def Event.flag$mod name,sel
-	# console.warn 'event flag',self,arguments,id,step
-	let el = sel isa Element ? sel : (sel ? element.closest(sel) : element)
-	return true unless el
-	let step = step
-	state[step] = id
-	commit = yes
-
-	el.flags.incr(name)
-
-	let ts = Date.now!
+# def Event.flag$mod name,sel
+# 	# console.warn 'event flag',self,arguments,id,step
+# 	let el = sel isa Element ? sel : (sel ? element.closest(sel) : element)
+# 	return true unless el
+# 	let step = step
+# 	state[step] = id
+# 	commit = yes
+# 
+# 	el.flags.incr(name)
+# 
+# 	let ts = Date.now!
+# 	
+# 	once(current,'end') do
+# 		let elapsed = Date.now! - ts
+# 		let delay = Math.max(250 - elapsed,0)
+# 		setTimeout(&,delay) do el.flags.decr(name)
+# 	return true
 	
-	once(current,'end') do
-		let elapsed = Date.now! - ts
-		let delay = Math.max(250 - elapsed,0)
-		setTimeout(&,delay) do el.flags.decr(name)
-	return true
-	
-def Event.busy$mod sel
-	return Event.flag$mod.call(this,'busy',250,sel)
+# def Event.busy$mod sel
+# 	return Event.flag$mod.call(this,'busy',250,sel)
 
-def Event.mod$mod name
-	return Event.flag$mod.call(this,"mod-{name}",global.document.documentElement)
+# def Event.mod$mod name
+#	return Event.flag$mod.call(this,"mod-{name}",global.document.documentElement)
 
 # could cache similar event handlers with the same parts
 export class EventHandler
