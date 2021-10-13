@@ -185,15 +185,18 @@ export class Easer
 		before ? parent.insertBefore(dom,before) : parent.appendChild(dom)
 		
 		#nodes = getAnimatedNodes!
-		
+
+		flag('_instant_')
+		unflag('_out_')
+		commit!
 		# must be certain that they don't have a size set directly?
-		flag('_reset_')
+		
 		sizes = #nodes.sized = getNodeSizes('in')
 		flag('_off_')
 		flag('_in_')
-		unflag('_out_')
+		
 		commit!
-		unflag('_reset_')
+		unflag('_instant_')
 
 		let anims = #anims = track do
 			phase = 'enter'
