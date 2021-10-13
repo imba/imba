@@ -105,6 +105,11 @@ extend class Event
 		# TODO REMOVE
 		self['αflag']("mod-{name}",global.document.documentElement)
 
+	def @outside
+		const {handler} = #context
+		if handler and handler.#self
+			return !handler.#self.parentNode.contains(target)
+
 extend class MouseEvent
 
 	def @left
@@ -146,10 +151,10 @@ export def use_events
 # def Event.sel$mod expr
 #	return !!event.target.matches(String(expr))
 	
-def Event.outside$mod
-	if handler and handler.#self
-		return !handler.#self.parentNode.contains(event.target)
-	return no
+# def Event.outside$mod
+# 	if handler and handler.#self
+# 		return !handler.#self.parentNode.contains(event.target)
+# 	return no
 	
 # def Event.if$mod expr
 #	return !!expr
