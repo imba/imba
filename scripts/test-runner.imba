@@ -106,7 +106,7 @@ def spawnRunner
 	# console.log 'spawning runner'
 	let browser = await puppeteer.launch(args: args, headless: true)
 	let runner = await browser.newPage!
-	runner.setViewport({width: 300, height: 300})
+	runner.setViewport({width: 800, height: 600})
 	runner.nr = counter++
 	runner.meta = []
 
