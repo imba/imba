@@ -15,12 +15,6 @@ const keyCodes = {
 	del: [8,46]
 }
 
-# export * from './modifiers'
-
-# TODO Create class-based context for the event modifiers
-class EventHandlerContext
-
-
 extend class Event
 	def @sel selector
 		return !!target.matches(String(selector))
@@ -138,83 +132,6 @@ export const events = {}
 
 export def use_events
 	yes
-	
-# def Event.trusted$mod
-#	return !!event.isTrusted
-
-# def Event.log$mod ...params
-#	console.info(...params)
-#	return true
-
-# Skip unless matching selector
-# Can remove
-# def Event.sel$mod expr
-#	return !!event.target.matches(String(expr))
-	
-# def Event.outside$mod
-# 	if handler and handler.#self
-# 		return !handler.#self.parentNode.contains(event.target)
-# 	return no
-	
-# def Event.if$mod expr
-#	return !!expr
-	
-# def Event.wait$mod time = 250
-#	new Promise(do setTimeout($1,parseTime(time)))
-
-# def Event.self$mod
-#	return event.target == element
-	
-# def Event.throttlez$mod time = 250
-# 	return false if handler.throttled
-# 	handler.throttled = yes
-# 
-# 	element.flags.incr('throttled')
-# 
-# 	once(current,'end') do
-# 		setTimeout(&,parseTime(time)) do
-# 			element.flags.decr('throttled')
-# 			handler.throttled = no
-# 	return true
-
-# def Event.debouncex$mod time = 250
-# 	let queue = state.debounced ||= []
-# 	queue.push(queue.last = event)
-# 	new Promise do(resolve)
-# 		setTimeout(&,parseTime(time)) do
-# 			if queue.last == event
-# 				# if this event is still the last
-# 				# add the debounced queue to the event
-# 				# and let the chain continue
-# 				event.debounced = queue
-# 				handler.state = {}
-# 				resolve(true)
-# 			else
-# 				resolve(false)
-	
-# def Event.flag$mod name,sel
-# 	# console.warn 'event flag',self,arguments,id,step
-# 	let el = sel isa Element ? sel : (sel ? element.closest(sel) : element)
-# 	return true unless el
-# 	let step = step
-# 	state[step] = id
-# 	commit = yes
-# 
-# 	el.flags.incr(name)
-# 
-# 	let ts = Date.now!
-# 	
-# 	once(current,'end') do
-# 		let elapsed = Date.now! - ts
-# 		let delay = Math.max(250 - elapsed,0)
-# 		setTimeout(&,delay) do el.flags.decr(name)
-# 	return true
-	
-# def Event.busy$mod sel
-# 	return Event.flag$mod.call(this,'busy',250,sel)
-
-# def Event.mod$mod name
-#	return Event.flag$mod.call(this,"mod-{name}",global.document.documentElement)
 
 # could cache similar event handlers with the same parts
 export class EventHandler
@@ -348,14 +265,6 @@ export class EventHandler
 				event.preventDefault()
 			elif handler == 'commit'
 				state.commit = yes
-			# elif handler == 'ctrl'
-			# 	break unless event.ctrlKey
-			# elif handler == 'alt'
-			# 	break unless event.altKey
-			# elif handler == 'shift'
-			# 	break unless event.shiftKey
-			# elif handler == 'meta'
-			# 	break unless event.metaKey
 
 			elif handler == 'once'
 				# clean up bound data as well

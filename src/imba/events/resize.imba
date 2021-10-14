@@ -1,10 +1,28 @@
 # imba$imbaPath=global
 import {Event,CustomEvent,Element} from '../dom/core'
+import * as helpers from './helpers'
 
 export def use_events_resize
 	yes
 
 let resizeObserver = null
+
+extend class CustomEvent
+
+	def @resize_css wunit = '1elw', hunit = '1elh', sel = ''
+		const target = target
+		if target.offsetParent
+			let wu = helpers.parseDimension(wunit)
+			let hu = helpers.parseDimension(hunit)
+			let el = helpers.toElement(sel,target)
+			
+			let wp = wu ? "--u_{wu[1]}" : "--{wunit}"
+			let hp = hu ? "--u_{hu[1]}" : "--{hunit}"
+
+			el.style.setProperty(wp,self.width + 'px')
+			el.style.setProperty(hp,self.height + 'px')
+
+		return yes
 
 def getResizeObserver
 	unless global.ResizeObserver
@@ -19,19 +37,14 @@ def getResizeObserver
 			e.rect = entry.contentRect
 			e.width = entry.target.offsetWidth
 			e.height = entry.target.offsetHeight
+			
+			e.@css = CustomEvent.prototype.@resize_css
+			
 			entry.target.dispatchEvent(e)
+			
 			let e2 = new CustomEvent('resized', bubbles: true, detail: entry)
 			entry.target.dispatchEvent(e2)
 		return
-
-def Event.resize$css
-	if element.offsetParent
-		# element.style.setProperty("--width",event.width + 'px')
-		# element.style.setProperty("--height",event.height + 'px')
-		element.style.setProperty("--u_elw",event.width + 'px')
-		element.style.setProperty("--u_elh",event.height + 'px')
-	return true
-
 # TODO Add modifier for only triggering when element is attached.
 # resize triggers by default with w/h 0 when element is removed.
 

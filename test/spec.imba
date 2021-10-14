@@ -50,6 +50,9 @@ class PupMouse
 	
 	def up x = 0, y = 0
 		await puppy('mouse.up',[])
+		
+	def click x = 0, y = 0, o = {}
+		await puppy('mouse.click',[x,y,o])
 
 const TERMINAL_COLOR_CODES =
 	bold: 1
