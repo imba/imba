@@ -517,7 +517,7 @@ export def defineTag name, klass, options = {}
 		proto._ns_ = ns
 		proto.flags$ns = flags
 
-	if proto.#htmlNodeName
+	if proto.#htmlNodeName and !options.extends
 		options.extends = proto.#htmlNodeName
 
 	if options.extends
