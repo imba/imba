@@ -1,5 +1,5 @@
 # imba$imbaPath=global
-import {Event,Element,KeyboardEvent,MouseEvent} from '../dom/core'
+import {Event,Element,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
 import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'
 
@@ -14,6 +14,15 @@ const keyCodes = {
 	right: [39],
 	del: [8,46]
 }
+
+extend class CustomEvent
+
+	def #extendType kls
+		let ext = kls.#extendDescriptors ||= if true
+			let desc = Object.getOwnPropertyDescriptors(kls.prototype)
+			delete desc.constructor
+			desc
+		Object.defineProperties(self,ext)
 
 extend class Event
 	def @sel selector

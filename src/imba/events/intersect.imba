@@ -1,6 +1,7 @@
 # imba$imbaPath=global
 
 import {Event,CustomEvent,Element,Document} from '../dom/core'
+import * as helpers from './helpers'
 
 export def use_events_intersect
 	yes
@@ -14,15 +15,30 @@ def Event.intersect$handle
 	let obs = event.detail.observer
 	return modifiers._observer == obs
 
-def Event.intersect$in
-	return event.delta >= 0 and event.entry.isIntersecting
+class IntersectionEvent < CustomEvent
+	
+	def @in
+		return delta >= 0 and entry.isIntersecting
+		
+	def @out
+		return delta < 0 # and entry.isIntersecting
+		
+	def @css name = 'ratio'
+		target.style.setProperty("--ratio",ratio)
+		return yes
+	
+	def @flag name, sel
+		let {state,step} = #context
+		let el = helpers.toElement(sel or '',target)
 
-def Event.intersect$out
-	return event.delta < 0
+		if self.isIntersecting and !state[step]
+			el.flags.incr(name)
+			state[step] = yes
+		elif state[step] and !self.isIntersecting
+			el.flags.decr(name)
+			state[step] = no
+		return yes
 
-def Event.intersect$css
-	element.style.setProperty("--ratio",event.ratio)
-	return true
 
 def callback name, key
 	return do(entries,observer)
@@ -33,10 +49,12 @@ def callback name, key
 			let ratio = entry.intersectionRatio
 			let detail = {entry: entry, ratio: ratio, from: prev, delta: (ratio - prev), observer: observer }
 			let e = new CustomEvent(name, bubbles: false, detail: detail)
+			e.#extendType(IntersectionEvent)
 			e.entry = entry
 			e.isIntersecting = entry.isIntersecting
 			e.delta = detail.delta
 			e.ratio = detail.ratio
+
 			map.set(entry.target,ratio)
 			entry.target.dispatchEvent(e)
 		return

@@ -136,7 +136,7 @@ def spawnRunner
 
 			
 	runner.on 'console' do(msg)
-		# console.log("page on console",msg._type,msg)
+		# console.log("page on console",msg._type)
 		let params = msg.args().filter(Boolean).map do |x|
 			parseRemoteObject(x._remoteObject)
 
@@ -144,6 +144,9 @@ def spawnRunner
 		# console.log 'page on console',str
 		if runner.HANDLERS and runner.HANDLERS[str]
 			runner.HANDLERS[str](*params.slice(1))
+			
+		if msg._type == 'debug'
+			console.debug.apply(console, params)
 
 		if options.console
 			let key = consoleMapping[msg.type()] or msg.type()
@@ -182,6 +185,9 @@ def run page
 		let currTest
 
 		let handlers =
+			'spec:log': do(e)
+				print e
+
 			'spec:test': do(e)
 				e.file = page.path
 				tests.push(e)
