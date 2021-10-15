@@ -1,6 +1,6 @@
 import {KeyboardEvent} from '../dom/core'
 
-export def use_keyboard_events
+export def use_events_keyboard
 	yes
 
 extend class KeyboardEvent

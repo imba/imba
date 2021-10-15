@@ -3,23 +3,11 @@ import {Event,Element,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
 import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'
 
-import {use_keyboard_events} from './keyboard'
-use_keyboard_events!
+import {use_events_keyboard} from './keyboard'
+use_events_keyboard!
 
-import {use_mouse_events} from './mouse'
-use_mouse_events!
-
-const keyCodes = {
-	esc: [27],
-	tab: [9],
-	enter: [13],
-	space: [32],
-	up: [38],
-	down: [40],
-	left: [37],
-	right: [39],
-	del: [8,46]
-}
+import {use_events_mouse} from './mouse'
+use_events_mouse!
 
 extend class CustomEvent
 

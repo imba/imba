@@ -1,6 +1,6 @@
 import {MouseEvent} from '../dom/core'
 
-export def use_mouse_events
+export def use_events_mouse
 	yes
 
 extend class MouseEvent

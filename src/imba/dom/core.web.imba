@@ -475,7 +475,7 @@ export def getTagType name, klass
 export def getSuperTagType name, klass, cmp
 	let typ = getTagType(name,klass)
 	let custom = typ == cmp or typ.prototype isa cmp or typ.prototype.#htmlNodeName
-
+	
 	if !custom
 		let cls = typ.prototype.#ImbaElement
 
@@ -517,7 +517,7 @@ export def defineTag name, klass, options = {}
 		proto._ns_ = ns
 		proto.flags$ns = flags
 
-	if proto.#htmlNodeName
+	if proto.#htmlNodeName and !options.extends
 		options.extends = proto.#htmlNodeName
 
 	if options.extends

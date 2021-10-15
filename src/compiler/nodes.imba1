@@ -36,6 +36,7 @@ var EXT_LOADER_MAP = {
 	bmp: 'image'
 }
 
+
 TAG_TYPES.HTML = "a abbr address area article aside audio b base bdi bdo big blockquote body br
  button canvas caption cite code col colgroup data datalist dd del details dfn
  div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
@@ -69,7 +70,8 @@ var CUSTOM_EVENTS = {
 	selection: 'events_selection'
 	resize: 'events_resize'
 	hotkey: 'events_hotkey'
-	touch: 'events_pointer'
+	touch: 'events_touch'
+
 	pointer: 'events_pointer'
 	pointerdown: 'events_pointer'
 	pointermove: 'events_pointer'
@@ -78,6 +80,20 @@ var CUSTOM_EVENTS = {
 	pointerup: 'events_pointer'
 	pointercancel: 'events_pointer'
 	lostpointercapture: 'events_pointer'
+
+	click: 'events_mouse'
+	mousedown: 'events_mouse'
+	mouseup: 'events_mouse'
+	mouseenter: 'events_mouse'
+	mouseleave: 'events_mouse'
+	mousemove: 'events_mouse'
+	mouseout: 'events_mouse'
+	mouseover: 'events_mouse'
+	mousewheel: 'events_mouse'
+	
+	keydown: 'events_keyboard'
+	keyup: 'events_keyboard'
+	keypress: 'events_keyboard'
 }
 
 export var AST = {}
