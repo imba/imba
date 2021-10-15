@@ -28,9 +28,10 @@ describe "@intersect" do
 			
 			# adding class while intersecting
 			<div$d @intersect.flag-showing=cb>
+			<div$e @intersect.flag-showing(':root')=cb>
 
 
-	let {$a,$b,$c,$d} = imba.mount <App>
+	let {$a,$b,$c,$d,$e} = imba.mount <App>
 	
 	def log e
 		console.debug 'rootBounds',e.entry.rootBounds
@@ -76,3 +77,11 @@ describe "@intersect" do
 		$d.style.top = 700px
 		await imba.commit!
 		ok !$d.matches('.showing')
+		
+	test ".flag(:root)" do
+		$e.style.top = 400px
+		await imba.commit!
+		ok document.documentElement.matches('.showing')
+		$e.style.top = 700px
+		await imba.commit!
+		ok !document.documentElement.matches('.showing')
