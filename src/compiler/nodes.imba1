@@ -3499,7 +3499,11 @@ export class ClassDeclaration < Code
 				jshead = "{M 'export',option(:export)} {jshead}"
 				
 		if isExtension and STACK.tsc
-			jsbody = "\n__extends__={@className.c};\n{jsbody}"
+			# if the class-name is aliased via an import we want to include that here
+			# jsbody = "\n__extends__={@className.c};\n{jsbody}"
+			yes
+			
+			
 
 		let js = "{jshead} \{{jsbody}\}"
 		
@@ -8026,22 +8030,22 @@ export class TagModifier < TagPart
 			# let key = 
 			let key = quoted.slice(1,-1).split('-')
 
-			if key[0] == 'options'
-				key[0] = '___setup'
+			# if key[0] == 'options'
+			# 	key[0] = '___setup'
 			
 			let path = key[0]
 			
-			if key:length > 0
+			if key:length > 1
 				if path == 'emit' or path == 'flag' or path == 'css'
 					path = "{path}-name"
 				else
 					path = key.join('-')
 			
-			path = helpers.toValidIdentifier(path)
+			path = helpers.toValidIdentifier('α' + path)
 			let parjs = params ? params.c : ''
 			
 			if params and parjs == ''
-				if path == '___setup'
+				if path == 'αoptions'
 					parjs = M('',MLOC(@handlerName.endLoc + 1))
 				else
 					parjs = M('',MLOC(@name.endLoc + 1))
@@ -8051,7 +8055,9 @@ export class TagModifier < TagPart
 			if !params or params.count == 0
 				call = M(call,@name)
 			
-			return "e.MODIFIERS.{call}"
+			
+			# return "e.MODIFIERS.{call}"
+			return "e.{call}"
 
 		if params and params.count > 0
 			"[{quoted},{params.c}]"

@@ -56,7 +56,7 @@ let parseRemoteObject = do(obj)
 	elif obj.type == 'number'
 		result = parseFloat(obj.value)
 	elif obj.type == 'boolean'
-		result = obj.value == 'true'
+		result = (obj.value == 'true' or obj.value === true)
 	return result
 
 

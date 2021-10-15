@@ -19,6 +19,17 @@ extend class CustomEvent
 		Object.defineProperties(self,ext)
 
 extend class Event
+
+	get #modifierState
+		#context[#context.step] ||= {}
+		
+	get #sharedModifierState
+		#context.handler[#context.step] ||= {}
+		
+		
+	def #onceHandlerEnd cb
+		once(#context,'end',cb)
+		
 	def @sel selector
 		return !!target.matches(String(selector))
 
@@ -37,35 +48,66 @@ extend class Event
 
 	def @self
 		return target == #context.element
+	
+	def @cooldown time = 250
+		let o = #sharedModifierState
 
+		if o.active
+			return no
+
+		o.active = yes
+		o.target = #context.element
+		o.target.flags.incr('cooldown')
+
+		#onceHandlerEnd do
+			setTimeout(&,parseTime(time)) do
+				o.target.flags.decr('cooldown')	
+				o.active = no
+
+		return yes
 
 	def @throttle time = 250
-		const {handler,element,current} = #context
+		let o = #sharedModifierState
 
-		if handler.throttled
-			return false
+		if o.active
+			o.next(no) if o.next
 
-		handler.throttled = yes
-		element.flags.incr('throttled')
+			return new Promise do(r)
+				o.next = do(val)
+					o.next = null
+					r(val)
 
-		once(current,'end') do
-			setTimeout(&,parseTime(time)) do
-				element.flags.decr('throttled')	
-				handler.throttled = no
-		return true
+		o.active = yes
+		o.el ||= #context.element
+		o.el.flags.incr('throttled')
+
+		once(#context,'end') do
+			let delay = parseTime(time)
+			let iv = setInterval(&,delay) do
+				if o.next
+					o.next(yes)
+				else
+					clearInterval(iv)
+					o.el.flags.decr('throttled')
+					o.active = no
+				return
+
+		return yes
 
 	def @debounce time = 250
-		const {state,event,handler} = #context
-		let queue = state.debounced ||= []
-		queue.push(queue.last = event)
+		let o = #sharedModifierState
+		let e = self
+		o.queue ||= []
+		o.queue.push(o.last = e)
 		new Promise do(resolve)
 			setTimeout(&,parseTime(time)) do
-				if queue.last == event
+				if o.last == e
 					# if this event is still the last
 					# add the debounced queue to the event
 					# and let the chain continue
-					event.debounced = queue
-					handler.state = {}
+					e.debounced = o.queue
+					o.last = null
+					o.queue = []
 					resolve(true)
 				else
 					resolve(false)
@@ -142,12 +184,10 @@ export class EventHandler
 		params.global
 
 	def handleEvent event
-		let target = event.#target or event.target
 		let element = #target or event.currentTarget
 		let mods = self.params
-		let i = 0
-		let awaited = no
-		let prevRes = undefined
+		# let i = 0
+		# let awaited = no
 		let silence = mods.silence or mods.silent
 		
 		self.count ||= 0
@@ -252,10 +292,6 @@ export class EventHandler
 			elif handler == 'options' or handler == 'silence' or handler == 'silent'
 				continue
 
-			# elif keyCodes[handler] and event isa KeyboardEvent
-			# 	unless keyCodes[handler].indexOf(event.keyCode) >= 0
-			# 		break
-
 			elif handler == 'emit'
 				let name = args[0]
 				let detail = args[1] # is custom event if not?
@@ -283,7 +319,6 @@ export class EventHandler
 						context = event
 						event.#context = state
 
-
 				# should default to first look at closure - no?
 				elif handler[0] == '_'
 					handler = handler.slice(1)
@@ -299,7 +334,7 @@ export class EventHandler
 
 			if res and res.then isa Function and res != scheduler.$promise
 				scheduler.commit! if state.commit and !silence
-				awaited = yes
+				# awaited = yes
 				# TODO what if await fails?
 				res = await res
 
