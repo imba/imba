@@ -188,6 +188,7 @@ export class EventHandler
 		let mods = self.params
 		# let i = 0
 		# let awaited = no
+		let error = null
 		let silence = mods.silence or mods.silent
 		
 		self.count ||= 0
@@ -326,17 +327,19 @@ export class EventHandler
 				else
 					# TODO deprecate this functionality and warn about it?
 					context = self.getHandlerForMethod(element,handler)
+			
+			try
+				if handler isa Function
+					res = handler.apply(context or element,args)
+				elif context
+					res = context[handler].apply(context,args)
 
-			if handler isa Function
-				res = handler.apply(context or element,args)
-			elif context
-				res = context[handler].apply(context,args)
-
-			if res and res.then isa Function and res != scheduler.$promise
-				scheduler.commit! if state.commit and !silence
-				# awaited = yes
-				# TODO what if await fails?
-				res = await res
+				if res and res.then isa Function and res != scheduler.$promise
+					scheduler.commit! if state.commit and !silence
+					res = await res
+			catch e
+				error = e
+				break
 
 			if negated and res === true
 				break
@@ -353,6 +356,10 @@ export class EventHandler
 		if self.currentEvents.size == 0
 			self.emit('idle')
 		# what if the result is a promise
+		
+		if error
+			throw error
+
 		return
 
 
