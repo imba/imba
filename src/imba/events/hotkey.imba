@@ -57,12 +57,6 @@ class HotkeyEvent < CustomEvent
 import Mousetrap from './mousetrap'
 
 const stopCallback = do |e,el,combo|	
-	if (' ' + el.className + ' ').indexOf(' mousetrap ') > -1
-		return false
-		
-	if el.mousetrappable
-		return false
-
 	if el.tagName == 'INPUT' && (combo == 'down' or combo == 'up')
 		return false
 	
@@ -73,7 +67,7 @@ const stopCallback = do |e,el,combo|
 			return false
 		return true
 		
-	if el.contentEditable && (el.contentEditable == 'true' || el.contentEditable == 'plaintext-only' || el.closest('.editable'))
+	if el.contentEditable && (el.contentEditable == 'true' || el.contentEditable == 'plaintext-only')
 		if Globals[combo]
 			e.#inEditable = yes
 			return false
