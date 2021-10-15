@@ -5,8 +5,16 @@ const KeyMap = {
 	shift: 'Shift'
 	meta: 'Meta'
 	alt: 'Alt'
-	left: 'LeftArrow'
-	right: 'RightArrow'
+	left: 'ArrowLeft'
+	right: 'ArrowRight'
+	esc: 'Escape'
+	enter: 'Enter'
+	tab: 'Tab'
+	space: 'Space'
+	up: 'ArrowUp'
+	down: 'ArrowDown'
+	del: 'Backspace'
+	
 }
 
 const pup = do(ns,...params)
@@ -23,13 +31,17 @@ class PupKeyboard
 
 	def type text, options = {}
 		await puppy('keyboard.type',[text,options])
-	def down text, options = {}
-		await puppy('keyboard.down',[text,options])
-	def up text, options = {}
-		await puppy('keyboard.up',[text,options])
+		
+	def down key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.down',[key,options])
+	def up key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.up',[key,options])
 
-	def press text, options = {}
-		await puppy('keyboard.press',[text,options])
+	def press key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.press',[key,options])
 
 	def hold key, block
 		key = KeyMap[key] or key
@@ -106,7 +118,7 @@ global class Spec < SpecComponent
 			trusted = yes
 
 		if puppy and trusted
-			console.log "click with puppeteer!!",sel
+			# console.log "click with puppeteer!!",sel
 			try
 				await puppy('click',[sel,options])
 			catch e

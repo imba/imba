@@ -3,6 +3,12 @@ import {Event,Element,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
 import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'
 
+import {use_keyboard_events} from './keyboard'
+use_keyboard_events!
+
+import {use_mouse_events} from './mouse'
+use_mouse_events!
+
 const keyCodes = {
 	esc: [27],
 	tab: [9],
@@ -112,29 +118,6 @@ extend class Event
 		const {handler} = #context
 		if handler and handler.#self
 			return !handler.#self.parentNode.contains(target)
-
-extend class MouseEvent
-
-	def @left
-		return button == 0
-
-	def @middle
-		return button == 1
-
-	def @right
-		return button == 2
-
-	def @shift
-		return !!shiftKey
-
-	def @alt
-		return !!altKey
-
-	def @ctrl
-		return !!ctrlKey
-
-	def @meta
-		return !!metaKey
 
 
 export const events = {}
@@ -281,9 +264,9 @@ export class EventHandler
 			elif handler == 'options' or handler == 'silence' or handler == 'silent'
 				continue
 
-			elif keyCodes[handler] and event isa KeyboardEvent
-				unless keyCodes[handler].indexOf(event.keyCode) >= 0
-					break
+			# elif keyCodes[handler] and event isa KeyboardEvent
+			# 	unless keyCodes[handler].indexOf(event.keyCode) >= 0
+			# 		break
 
 			elif handler == 'emit'
 				let name = args[0]

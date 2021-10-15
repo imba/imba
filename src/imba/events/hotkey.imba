@@ -38,6 +38,22 @@ const Globals = {
 	"shift+command+f": yes
 }
 
+class HotkeyEvent < CustomEvent
+	
+	def @focus expr
+		let el = this.target
+		let doc = el.ownerDocument
+		
+		if expr
+			el = el.querySelector(expr) or el.closest(expr) or doc.querySelector(expr)
+
+		if el == doc.body
+			doc.activeElement.blur! unless doc.activeElement == doc.body
+		else
+			el.focus!
+			
+		return yes
+
 import Mousetrap from './mousetrap'
 
 const stopCallback = do |e,el,combo|	
@@ -125,6 +141,7 @@ export const hotkeys = new class HotKeyManager
 	
 		let detail = {combo: combo, originalEvent: e, targets: targets}
 		let event = new CustomEvent('hotkey', bubbles: true, detail: detail)
+		event.#extendType(HotkeyEvent)
 		
 		event.originalEvent = e
 		event.hotkey = combo
@@ -191,17 +208,3 @@ extend class Element
 		#hotkeyCombos = all
 		dataset.hotkey = Object.keys(all).join(' ')
 		self
-	
-def Event.hotkey$focus expr
-	let el = this.element
-	let doc = el.ownerDocument
-	
-	if expr
-		el = el.querySelector(expr) or el.closest(expr) or doc.querySelector(expr)
-
-	if el == doc.body
-		doc.activeElement.blur! unless doc.activeElement == doc.body
-	else
-		el.focus!
-		
-	return yes

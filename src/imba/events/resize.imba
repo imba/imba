@@ -7,9 +7,8 @@ export def use_events_resize
 
 let resizeObserver = null
 
-extend class CustomEvent
-
-	def @resize_css wunit = '1elw', hunit = '1elh', sel = ''
+class ResizeEvent < CustomEvent
+	def @css wunit = '1elw', hunit = '1elh', sel = ''
 		const target = target
 		if target.offsetParent
 			let wu = helpers.parseDimension(wunit)
@@ -37,8 +36,7 @@ def getResizeObserver
 			e.rect = entry.contentRect
 			e.width = entry.target.offsetWidth
 			e.height = entry.target.offsetHeight
-			
-			e.@css = CustomEvent.prototype.@resize_css
+			e.#extendType(ResizeEvent)
 			
 			entry.target.dispatchEvent(e)
 			
