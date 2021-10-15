@@ -27,8 +27,8 @@ extend class PointerEvent
 	def @touch
 		return pointerType == 'touch'
 	
-	def @pressure threshold = 0
-		return pressure > threshold
+	def @pressure threshold = 0.5
+		return pressure >= threshold
 
 	def @lock
 		return yes

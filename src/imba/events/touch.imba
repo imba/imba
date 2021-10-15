@@ -258,8 +258,8 @@ class Touch
 	def @touch
 		return pointerType == 'touch'
 	
-	def @pressure threshold = 0
-		return pressure > threshold
+	def @pressure threshold = 0.5
+		return pressure >= threshold
 		
 	def @round sx=1,sy=sx 
 		x = helpers.round(x,sx)
