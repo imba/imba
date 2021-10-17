@@ -261,6 +261,16 @@ class Touch
 	def @pressure threshold = 0.5
 		return pressure >= threshold
 		
+	def @log ...params
+		console.info(...params)
+		return true
+		
+	def @left do originalEvent.button == 0
+
+	def @middle do originalEvent.button == 1
+
+	def @right do originalEvent.button == 2
+		
 	def @round sx=1,sy=sx 
 		x = helpers.round(x,sx)
 		y = helpers.round(y,sy)
@@ -405,6 +415,7 @@ def Event.touch$handle
 
 	# reject the touch before creation for certain modifiers
 	# TODO should allow specifying pen OR mouse etc
+	# FIXME these will not work with negated modifiers
 	return if m.ctrl and !e.ctrlKey
 	return if m.alt and !e.altKey
 	return if m.meta and !e.metaKey
