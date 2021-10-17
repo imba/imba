@@ -1,3 +1,44 @@
+# Changelog
+
+## Unreleased
+
+- Refactored event modifiers
+
+    Foundations to allow defining custom event modifiers down the road.
+    
+- Changed behavior of `@event.throttle` modifier
+
+    `throttle` would previously fire once and suppress subsequent events for a certain duration (default 250ms). Now it will re-fire at the end of the throttling if there were any suppressed events during the initial throttle. For events like `@resize` and `@scroll` where you just want to limit how often they fire, the new behavior is much more useful.
+    
+- Introduced `@event.cooldown` modifier
+
+    The old `throttle` was renamed to `cooldown`. Ie, if you want subsequent button clicks to be suppressed for `n` time (250ms default) you should now use `cooldown` instead of `throttle`.
+
+- Allow negated event guards
+
+    Certain event modifiers are called guards, like `@keydown.enter`, `@click.self` etc. These are modifiers that essentially evaluate to true/false and decides whether to continue handling an event or not. `@click.self` would only trigger if the target of the event is the same as the element to which the `@click` is bound. Now you can include a `!` in front of any such event handler to only continue if the guard is false.
+    
+    Ie. `<div @click.!shift=...>` would only trigger if shiftKey is _not_ pressed.
+  
+- Introduced `@mouse.left`, `@mouse.middle`, and `@mouse.right` modifiers
+    
+    Only trigger if the left,middle, or right mouse button is pressed. Works for all mouse and pointer events, as well as the custom `@touch` event.
+    
+- Introduced `@intersect.flag` modifier
+
+    The `flag` modifier now works differently for `@intersect` event. It will add a css class to the element when it is intersecting and remove it whenever it is not intersecting.
+    
+- Improved behaviour of `@touch` and `@click` events
+
+    `@click` events on nested children of an element with a `@touch` handler would previously be prevented. This made `@touch` pretty challenging to use for things like dragging elements with buttons etc.
+  
+    
+- Added `@touch.hold(dur=1000ms)` modifier
+
+- Added `@event.key(keyCode)` modifier for keyboard events
+
+- Introduced `@touch.end` modifier
+
 ## 2.0.0-alpha.175
 - Fix: `@in` transitions for nested elements works
 - Experimental support for tweening from/to implicit width/height in transitions
