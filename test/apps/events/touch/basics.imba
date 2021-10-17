@@ -14,7 +14,7 @@ describe "@touch" do
 	test ".self" do
 		await imba.commit!
 		# this happens inside the nested div, so touch should not be set
-		await spec.mouse.down(50,50)
+		await spec.mouse.down(30,30)
 		await imba.commit!
 		eq res,null
 		
