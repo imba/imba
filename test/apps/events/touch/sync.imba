@@ -14,10 +14,11 @@ describe "@touch" do
 		await imba.commit!
 		await spec.mouse.down(30,30)
 		await imba.commit!
-		# eq $1.log,['a']
 		eq res.x,1
 		eq res.y,1
 
 		await spec.mouse.move(40,40)
 		eq res.x,2
 		eq data.x,1
+		
+	

@@ -56,7 +56,7 @@ let parseRemoteObject = do(obj)
 	elif obj.type == 'number'
 		result = parseFloat(obj.value)
 	elif obj.type == 'boolean'
-		result = obj.value == 'true'
+		result = (obj.value == 'true' or obj.value === true)
 	return result
 
 
@@ -106,7 +106,7 @@ def spawnRunner
 	# console.log 'spawning runner'
 	let browser = await puppeteer.launch(args: args, headless: true)
 	let runner = await browser.newPage!
-	runner.setViewport({width: 300, height: 300})
+	runner.setViewport({width: 800, height: 600})
 	runner.nr = counter++
 	runner.meta = []
 
@@ -136,7 +136,7 @@ def spawnRunner
 
 			
 	runner.on 'console' do(msg)
-		# console.log("page on console",msg._type,msg)
+		# console.log("page on console",msg._type)
 		let params = msg.args().filter(Boolean).map do |x|
 			parseRemoteObject(x._remoteObject)
 
@@ -144,6 +144,9 @@ def spawnRunner
 		# console.log 'page on console',str
 		if runner.HANDLERS and runner.HANDLERS[str]
 			runner.HANDLERS[str](*params.slice(1))
+			
+		if msg._type == 'debug'
+			console.debug.apply(console, params)
 
 		if options.console
 			let key = consoleMapping[msg.type()] or msg.type()
@@ -182,6 +185,9 @@ def run page
 		let currTest
 
 		let handlers =
+			'spec:log': do(e)
+				print e
+
 			'spec:test': do(e)
 				e.file = page.path
 				tests.push(e)

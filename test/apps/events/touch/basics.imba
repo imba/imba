@@ -5,19 +5,17 @@ describe "@touch" do
 	tag App
 		<self[inset:0]>
 			<section[pos:absolute l:20px t:20px size:100px]
-				@touch.reframe(0,10,1).sync(data).log('a')=(res=e)
-			> "Rect"
+				@touch.self.log('a')=(res=e)
+			>
+				<div[pos:absolute l:0 t:0 size:20px]>
 
 	let app = imba.mount <App>
 	
-	test "start" do
+	test ".self" do
 		await imba.commit!
+		# this happens inside the nested div, so touch should not be set
 		await spec.mouse.down(30,30)
 		await imba.commit!
-		# eq $1.log,['a']
-		eq res.x,1
-		eq res.y,1
-
-		await spec.mouse.move(40,40)
-		eq res.x,2
-		eq data.x,1
+		eq res,null
+		
+	

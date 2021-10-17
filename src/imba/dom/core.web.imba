@@ -475,7 +475,7 @@ export def getTagType name, klass
 export def getSuperTagType name, klass, cmp
 	let typ = getTagType(name,klass)
 	let custom = typ == cmp or typ.prototype isa cmp or typ.prototype.#htmlNodeName
-
+	
 	if !custom
 		let cls = typ.prototype.#ImbaElement
 

@@ -1064,6 +1064,7 @@ export class StyleSheet
 			if k == 'transition' and selectors.length
 				# transitions = #register.transition = selectors
 				parts.unshift('._easing_ {--e_d:300ms;}')
+				parts.unshift('._instant_ { transition-duration:0ms !important; }')				
 				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
 			if easing
 				#register[k] = selectors

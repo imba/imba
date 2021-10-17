@@ -19,8 +19,11 @@ export * from './dom/transitions'
 
 # Exporting events
 export * from './events/core'
-export * from './events/intersect'
+export * from './events/mouse'
+export * from './events/keyboard'
 export * from './events/pointer'
+export * from './events/touch'
+export * from './events/intersect'
 export * from './events/resize'
 export * from './events/selection'
 export * from './events/hotkey'

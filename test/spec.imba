@@ -1,5 +1,22 @@
 const puppy = window.puppy
 
+const KeyMap = {
+	ctrl: 'Control'
+	shift: 'Shift'
+	meta: 'Meta'
+	alt: 'Alt'
+	left: 'ArrowLeft'
+	right: 'ArrowRight'
+	esc: 'Escape'
+	enter: 'Enter'
+	tab: 'Tab'
+	space: 'Space'
+	up: 'ArrowUp'
+	down: 'ArrowDown'
+	del: 'Backspace'
+	
+}
+
 const pup = do(ns,...params)
 	if ns.match(/^spec/) and puppy
 		puppy(ns,params)
@@ -10,18 +27,44 @@ const pup = do(ns,...params)
 		await puppy(ns,params)
 
 class PupKeyboard
+
+
 	def type text, options = {}
 		await puppy('keyboard.type',[text,options])
-	def down text, options = {}
-		await puppy('keyboard.down',[text,options])
-	def up text, options = {}
-		await puppy('keyboard.up',[text,options])
-	def press text, options = {}
-		await puppy('keyboard.press',[text,options])
+		
+	def down key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.down',[key,options])
+	def up key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.up',[key,options])
+
+	def press key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.press',[key,options])
+
+	def hold key, block
+		key = KeyMap[key] or key
+		await down(key)
+		await block()
+		await up(key)
 
 class PupMouse
 	def type text, options
 		puppy('keyboard.type',[text,options])
+
+	def down x = 0, y = 0
+		await move(x,y)
+		await puppy('mouse.down',[])
+
+	def move x = 0, y = 0
+		await puppy('mouse.move',[x,y])
+	
+	def up x = 0, y = 0
+		await puppy('mouse.up',[])
+		
+	def click x = 0, y = 0, o = {}
+		await puppy('mouse.click',[x,y,o])
 
 const TERMINAL_COLOR_CODES =
 	bold: 1
@@ -69,15 +112,18 @@ global class Spec < SpecComponent
 	get mouse
 		_mouse ||= new PupMouse
 	
-	def click sel, trusted = yes
+	def click sel, trusted = yes, options = {}
+		if typeof trusted == 'object'
+			options = trusted
+			trusted = yes
+
 		if puppy and trusted
-			console.log "click with puppeteer!!",sel
+			# console.log "click with puppeteer!!",sel
 			try
-				await puppy('click',[sel])
+				await puppy('click',[sel,options])
 			catch e
 				console.log 'error from pup click!'
 		else
-
 			let el = document.querySelector(sel)
 			el && el.click!
 		await tick!
@@ -135,6 +181,13 @@ global class Spec < SpecComponent
 			blk = name
 			name = context.blocks.length + 1
 		context.blocks.push new SpecExample(name, blk, context)
+
+	def before name, blk
+		if name isa Function
+			name = 'setup'
+			blk = name
+		let blocks = context.blocks[name] ||= []
+		blocks.push blk
 
 	def eq actual, expected, options
 		new SpecAssert(context, actual,expected, options)
@@ -219,6 +272,10 @@ global class SpecGroup < SpecComponent
 		let block = blocks[i]
 		return finish! unless block
 		imba.once(block,'done') do run(i+1)
+		if blocks.setup
+			for pre in blocks.setup
+				await pre()
+
 		block.run! # this is where we wan to await?
 	
 	def start
@@ -356,6 +413,8 @@ window.spec = global.SPEC = new Spec
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
+global def before name, blk do SPEC.before(name,blk)
+# global def test name, blk do SPEC.test(name,blk)
 global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)

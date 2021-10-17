@@ -1,100 +1,159 @@
 # imba$imbaPath=global
-import {Event,Element} from '../dom/core'
+import {Event,Element,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
 import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'
 
-const keyCodes = {
-	esc: [27],
-	tab: [9],
-	enter: [13],
-	space: [32],
-	up: [38],
-	down: [40],
-	left: [37],
-	right: [39],
-	del: [8,46]
-}
+import {use_events_keyboard} from './keyboard'
+use_events_keyboard!
+
+import {use_events_mouse} from './mouse'
+use_events_mouse!
+
+extend class CustomEvent
+
+	def #extendType kls
+		let ext = kls.#extendDescriptors ||= if true
+			let desc = Object.getOwnPropertyDescriptors(kls.prototype)
+			delete desc.constructor
+			desc
+		Object.defineProperties(self,ext)
+
+extend class Event
+
+	get #modifierState
+		#context[#context.step] ||= {}
+		
+	get #sharedModifierState
+		#context.handler[#context.step] ||= {}
+		
+		
+	def #onceHandlerEnd cb
+		once(#context,'end',cb)
+		
+	def @sel selector
+		return !!target.matches(String(selector))
+
+	def @log ...params
+		console.info(...params)
+		return true
+
+	def @trusted
+		return !!isTrusted
+
+	def @if expr
+		return !!expr
+
+	def @wait time = 250
+		new Promise(do setTimeout($1,parseTime(time)))
+
+	def @self
+		return target == #context.element
+	
+	def @cooldown time = 250
+		let o = #sharedModifierState
+
+		if o.active
+			return no
+
+		o.active = yes
+		o.target = #context.element
+		o.target.flags.incr('cooldown')
+
+		#onceHandlerEnd do
+			setTimeout(&,parseTime(time)) do
+				o.target.flags.decr('cooldown')	
+				o.active = no
+
+		return yes
+
+	def @throttle time = 250
+		let o = #sharedModifierState
+
+		if o.active
+			o.next(no) if o.next
+
+			return new Promise do(r)
+				o.next = do(val)
+					o.next = null
+					r(val)
+
+		o.active = yes
+		o.el ||= #context.element
+		o.el.flags.incr('throttled')
+
+		once(#context,'end') do
+			let delay = parseTime(time)
+			let iv = setInterval(&,delay) do
+				if o.next
+					o.next(yes)
+				else
+					clearInterval(iv)
+					o.el.flags.decr('throttled')
+					o.active = no
+				return
+
+		return yes
+
+	def @debounce time = 250
+		let o = #sharedModifierState
+		let e = self
+		o.queue ||= []
+		o.queue.push(o.last = e)
+		new Promise do(resolve)
+			setTimeout(&,parseTime(time)) do
+				if o.last == e
+					# if this event is still the last
+					# add the debounced queue to the event
+					# and let the chain continue
+					e.debounced = o.queue
+					o.last = null
+					o.queue = []
+					resolve(true)
+				else
+					resolve(false)
+
+	# will add a css className to the element (or selector)
+	# and keep it for the duration of the event handling,
+	# or at least 250ms
+	def @flag name, sel
+		const {element,step,state,id,current} = #context
+	
+		let el = sel isa Element ? sel : (sel ? element.closest(sel) : element)
+
+		return true unless el
+
+		#context.commit = yes
+	
+		state[step] = id
+		el.flags.incr(name)
+
+		let ts = Date.now!
+		
+		once(current,'end') do
+			let elapsed = Date.now! - ts
+			let delay = Math.max(250 - elapsed,0)
+			setTimeout(&,delay) do el.flags.decr(name)
+
+		return true
+
+	def @busy sel
+		# TODO REMOVE
+		self['αflag']('busy',sel)
+
+	def @mod name
+		# TODO REMOVE
+		self['αflag']("mod-{name}",global.document.documentElement)
+
+	def @outside
+		const {handler} = #context
+		if handler and handler.#self
+			return !handler.#self.parentNode.contains(target)
+
 
 export const events = {}
 
 export def use_events
 	yes
-	
-def Event.trusted$mod
-	return !!event.isTrusted
-
-def Event.log$mod ...params
-	console.info(...params)
-	return true
-
-# Skip unless matching selector
-def Event.sel$mod expr
-	return !!event.target.matches(String(expr))
-	
-def Event.outside$mod
-	if handler and handler.#self
-		return !handler.#self.parentNode.contains(event.target)
-	return no
-	
-def Event.if$mod expr
-	return !!expr
-	
-def Event.wait$mod time = 250
-	new Promise(do setTimeout($1,parseTime(time)))
-
-def Event.self$mod
-	return event.target == element
-	
-def Event.throttle$mod time = 250
-	return false if handler.throttled
-	handler.throttled = yes
-
-	element.flags.incr('throttled')
-
-	once(current,'end') do
-		setTimeout(&,parseTime(time)) do
-			element.flags.decr('throttled')
-			handler.throttled = no
-	return true
-
-def Event.debounce$mod time = 250
-	let queue = state.debounced ||= []
-	queue.push(queue.last = event)
-	new Promise do(resolve)
-		setTimeout(&,parseTime(time)) do
-			if queue.last == event
-				# if this event is still the last
-				# add the debounced queue to the event
-				# and let the chain continue
-				event.debounced = queue
-				handler.state = {}
-				resolve(true)
-			else
-				resolve(false)
-	
-def Event.flag$mod name,sel
-	# console.warn 'event flag',self,arguments,id,step
-	let el = sel isa Element ? sel : (sel ? element.closest(sel) : element)
-	return true unless el
-	let step = step
-	state[step] = id
-	commit = yes
-
-	el.flags.incr(name)
-
-	let ts = Date.now!
-	
-	once(current,'end') do
-		let elapsed = Date.now! - ts
-		let delay = Math.max(250 - elapsed,0)
-		setTimeout(&,delay) do el.flags.decr(name)
-	return true
-	
-def Event.busy$mod sel
-	return Event.flag$mod.call(this,'busy',250,sel)
-
-def Event.mod$mod name
-	return Event.flag$mod.call(this,"mod-{name}",global.document.documentElement)
 
 # could cache similar event handlers with the same parts
 export class EventHandler
@@ -125,12 +184,11 @@ export class EventHandler
 		params.global
 
 	def handleEvent event
-		let target = event.#target or event.target
 		let element = #target or event.currentTarget
 		let mods = self.params
-		let i = 0
-		let awaited = no
-		let prevRes = undefined
+		# let i = 0
+		# let awaited = no
+		let error = null
 		let silence = mods.silence or mods.silent
 		
 		self.count ||= 0
@@ -180,6 +238,7 @@ export class EventHandler
 			let res = undefined
 			let context = null
 			let m
+			let negated = no
 			let isstring = typeof handler == 'string'
 			
 			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
@@ -227,23 +286,12 @@ export class EventHandler
 				event.preventDefault()
 			elif handler == 'commit'
 				state.commit = yes
-			elif handler == 'ctrl'
-				break unless event.ctrlKey
-			elif handler == 'alt'
-				break unless event.altKey
-			elif handler == 'shift'
-				break unless event.shiftKey
-			elif handler == 'meta'
-				break unless event.metaKey
+
 			elif handler == 'once'
 				# clean up bound data as well
 				element.removeEventListener(event.type,self)
 			elif handler == 'options' or handler == 'silence' or handler == 'silent'
 				continue
-
-			elif keyCodes[handler]
-				unless keyCodes[handler].indexOf(event.keyCode) >= 0
-					break
 
 			elif handler == 'emit'
 				let name = args[0]
@@ -253,13 +301,24 @@ export class EventHandler
 				let customRes = element.dispatchEvent(e)
 
 			elif typeof handler == 'string'
-				let fn = (self.type and Event[self.type + '$' + handler + '$mod'])
+				if handler[0] == '!'
+					negated = yes
+					handler = handler.slice(1)
+
+				let path = "α{handler}"
+
+				let fn = event[path]
+				fn ||= (self.type and Event[self.type + '$' + handler + '$mod'])
 				fn ||= event[handler + '$mod'] or Event[event.type + '$' + handler] or Event[handler + '$mod']
 				
 				if fn isa Function
 					handler = fn
 					context = state
 					args = modargs or []
+
+					if event[path]
+						context = event
+						event.#context = state
 
 				# should default to first look at closure - no?
 				elif handler[0] == '_'
@@ -268,19 +327,23 @@ export class EventHandler
 				else
 					# TODO deprecate this functionality and warn about it?
 					context = self.getHandlerForMethod(element,handler)
+			
+			try
+				if handler isa Function
+					res = handler.apply(context or element,args)
+				elif context
+					res = context[handler].apply(context,args)
 
-			if handler isa Function
-				res = handler.apply(context or element,args)
-			elif context
-				res = context[handler].apply(context,args)
+				if res and res.then isa Function and res != scheduler.$promise
+					scheduler.commit! if state.commit and !silence
+					res = await res
+			catch e
+				error = e
+				break
 
-			if res and res.then isa Function and res != scheduler.$promise
-				scheduler.commit! if state.commit and !silence
-				awaited = yes
-				# TODO what if await fails?
-				res = await res
-
-			if res === false
+			if negated and res === true
+				break
+			if !negated and res === false
 				break
 
 			state.value = res
@@ -293,6 +356,10 @@ export class EventHandler
 		if self.currentEvents.size == 0
 			self.emit('idle')
 		# what if the result is a promise
+		
+		if error
+			throw error
+
 		return
 
 
