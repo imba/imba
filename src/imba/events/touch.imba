@@ -89,7 +89,7 @@ class Touch
 	def @lock
 		#capture!
 		yes
-		
+
 	def #capture
 		if #locked =? yes
 			#context.element.setPointerCapture(pointerId)
@@ -173,6 +173,7 @@ class Touch
 			let dr = Math.sqrt(dx*dx + dy*dy)
 			# cancel
 			if dr > 5 and !o.cancelled
+				clearTimeout(o.timeout)
 				o.cancelled = yes
 				#cancel!
 			
@@ -182,9 +183,8 @@ class Touch
 			o.y = clientY
 			o.timeout = setTimeout(&,time) do
 				o.active = yes
-				# let pinned = state.pinTarget
+				preventDefault!
 				el.flags.incr("_hold_")
-				#capture!
 			
 			once(self,'end') do
 				if o.active
@@ -227,8 +227,11 @@ class Touch
 			o.ty = y
 		
 		else
-			o.el.style.setProperty("--x",o.x + (x - o.tx) + 'px') if xalias
-			o.el.style.setProperty("--y",o.y + (y - o.ty) + 'px') if yalias			
+			let x = o.el.#x = o.x + (x - o.tx)
+			let y = o.el.#y = o.y + (y - o.ty)
+
+			o.el.style.setProperty("--x",x + 'px') if xalias
+			o.el.style.setProperty("--y",y + 'px') if yalias			
 		return yes
 			
 	def @end
@@ -369,7 +372,7 @@ class Touch
 				#pinTarget = box
 				box.flags.incr('_touch_')
 				once(self,'end') do box.flags.decr('_touch_')
-			console.log 'pinning',o,box
+			# console.log 'pinning',o,box
 		
 		x -= o.x
 		y -= o.y
@@ -389,8 +392,6 @@ extend class Element
 	def on$touch(mods,context,handler,o)
 		handler.type = 'touch'
 		self.addEventListener('pointerdown',handler,o)
-		if helpers.navigator.ios? and !mods.passive
-			self.addEventListener('touchstart',handler)
 		return handler
 		
 def Event.touch$handle
@@ -399,16 +400,9 @@ def Event.touch$handle
 	let id = state.pointerId
 	let m = modifiers
 	let handler = self.handler
+	let ios = helpers.navigator.ios?
 
 	current = state
-
-	if e.type == 'touchstart'
-		# to make PointerEvents work well on ios we need to capture
-		# the touchstart for the linked touch and cancel that
-		try 
-			if id and id == e.targetTouches[0].identifier
-				e.preventDefault!
-		return false
 
 	if id != undefined
 		return id == e.pointerId
@@ -429,76 +423,75 @@ def Event.touch$handle
 	return if m.sel and !e.target.matches(String(m.sel[0]))
 	
 	let t = state = handler.state = current = new Touch(e,handler,el)
-	
-	console.log 'first event for touch',t,e
+	id = t.pointerId
 	let canceller = do(e)
 		e.preventDefault!
 		return false
-		
+
 	let teardown = null
 	let sym = Symbol!
 	
 	let onclick = do(e)
-		# console.log "ONCLICK!",e,e.pointerId,t.clientX,t.clientY,e.clientX,e.clientY
+		# console.debug "ONCLICK!",e,e.pointerId,t.clientX,t.clientY,e.clientX,e.clientY
 		let tx = t.clientX
 		let ty = t.clientY
 		let ex = e.clientX
 		let ey = e.clientY
 
-		if t.#locked and ((e.pointerId == t.pointerId) or (tx == ex and ty == ey))
+		if (t.#locked or t.defaultPrevented) and ((e.pointerId == t.pointerId) or (tx == ex and ty == ey))
 			e.preventDefault!
 			e.stopPropagation!
+			
+		if onclick
+			global.removeEventListener('click',onclick,capture:true)
+			onclick = null
 		return
+		
+	let ontouch = do(e)
+		# console.debug "ontouch",e.type,e.layerX,e.layerY,e
+		e.preventDefault! if t.defaultPrevented or t.#locked
 		
 	let listener = do(e)
 		let typ = e.type
 		let ph = t.phase
 		
+		return if e.pointerId and t.pointerId != e.pointerId
+		
 		if e[sym]
-			# console.log 'already handled event!',e.type,e
 			return
-
-		if e.pointerId and t.pointerId != e.pointerId
-			console.log 'events for a different pointer!',t.pointerId,e.pointerId
-			return
-
+			
+		# console.debug 'listening',e.type,e.pressure,e.width,e.pointerType,e.tangentialPressure,e.buttons	
 		e[sym] = yes
-		
-		t.event = e
-		# console.log 'event',e.type,e
-		# console.log 'event for pointer',e.type,e
-		
-		let end = typ == 'pointerup' or typ == 'pointercancel' or typ == 'lostpointercapture'
 
-		unless typ == 'pointercancel' or typ == 'lostpointercapture'
+		let end = typ == 'pointerup' or typ == 'pointercancel'
+		
+		# if the pressure is suddenly 0 it indicates there has been a
+		# pointerup event not captured by the browser
+		if e.pressure == 0 and e.pointerType == 'mouse' and typ == 'pointermove' and t.originalEvent.pressure > 0
+			return teardown(e)
+			
+		t.event = e
+		
+		if typ == 'pointercancel'
+			t.x = t.clientX
+			t.y = t.clientY
+		else
 			t.x = e.clientX
 			t.y = e.clientY
 
-		# console.log 'pointer',typ,ph,t.target..nodeName,e.x,e.y
 		if end
-			# if already ended - dont end again?
 			t.phase = 'ended'
 			
-		# if typ == 'pointerup' and t.#locked
-		#	console.log "prevent pointerup!!"
-		#	e.preventDefault!
-		
 		try handler.handleEvent(t)
 		
 		if ph == 'init' and !end
 			t.phase = 'active'
-
-
-		if end and !helpers.navigator.ios?
-			el.releasePointerCapture(e.pointerId)
 			
 		if end and teardown
 			teardown(e)
 	
 	let disposed = no
-	
-	# Add a global listener for a pointercancel or pointerup with the same pointerId?
-	
+
 	teardown = do(e)
 		return if disposed
 		el.flags.decr('_touch_')
@@ -510,26 +503,31 @@ def Event.touch$handle
 			handler.handleEvent(t)
 
 		t.emit('end')
+		
 		unless m.passive
 			if (--handler.prevents) == 0
 				el.style.removeProperty('touch-action')
+
 		handler.state = {}
-		
-		el.removeEventListener('pointermove',listener)
-		el.removeEventListener('pointerup',listener)
-		el.removeEventListener('pointercancel',listener)
-		el.removeEventListener('lostpointercapture',teardown)
-		
-		global.removeEventListener('pointermove',listener)
+
+		global.removeEventListener('pointermove',listener,passive:m.passive)
 		global.removeEventListener('pointerup',listener)
 		global.removeEventListener('pointercancel',listener)
-		
+
 		setTimeout(&,100) do
 			if onclick
 				global.removeEventListener('click',onclick,capture:true)
 				onclick = null
+				
+			if ios and ontouch
+				global.removeEventListener('touchend',ontouch)
+				global.removeEventListener('touchmove',ontouch,{passive: false})
+				ontouch = null
 
-		global.document.removeEventListener('selectstart',canceller,capture:true)
+			
+		
+		if !m.passive
+			global.document.removeEventListener('selectstart',canceller,capture:true)
 		
 		disposed = yes
 		
@@ -539,24 +537,20 @@ def Event.touch$handle
 		handler.prevents ||= 0
 		handler.prevents++
 		el.style.setProperty('touch-action','none')
-		el.offsetWidth # force reflow for touch-action none to take effect
+		el.offsetWidth
 
 	el.flags.incr('_touch_')
-	el.addEventListener('pointermove',listener)
-	el.addEventListener('pointerup',listener)
-	el.addEventListener('pointercancel',listener)
-	el.addEventListener('lostpointercapture',teardown)
-	
-	global.addEventListener('pointermove',listener)
+	global.addEventListener('pointermove',listener,passive:m.passive)
 	global.addEventListener('pointerup',listener)
 	global.addEventListener('pointercancel',listener)
 	global.addEventListener('click',onclick,capture:true)
 
-	if !helpers.navigator.ios?
-		yes
-		# el.setPointerCapture(e.pointerId)
+	if ios and !m.passive
+		global.addEventListener('touchend',ontouch)
+		global.addEventListener('touchmove',ontouch,{passive: false})
 
-	global.document.addEventListener('selectstart',canceller,capture:true)
+	if !m.passive
+		global.document.addEventListener('selectstart',canceller,capture:true)
 
 	listener(e)
 	return false
