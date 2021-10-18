@@ -116,46 +116,49 @@ class Touch
 			o.sy = tv
 			o.x0 = x
 			o.y0 = y
+			o.dir ||= 'dist'
+			o.x = o.left = o.right = o.y = o.up = o.down = o.dist = 0
 			if (tu and tu != 'px')
 				console.warn 'only px threshold allowed in @touch.moved'
 
 		if o.active
 			return yes
+			
+		if o.cancelled
+			return no
 		
 		let th = o.threshold
 		let dx = x - o.x0
 		let dy = y - o.y0
-		let hit = no
 		
-		if dx > th and (o.dir == 'right' or o.dir == 'x')
-			hit = yes
-			
-		if !hit and dx < -th and (o.dir == 'left' or o.dir == 'x')
-			hit = yes
-			
-		if !hit and dy > th and (o.dir == 'down' or o.dir == 'y')
-			hit = yes
+		o.x = Math.max(o.x,Math.abs(dx))
+		o.y = Math.max(o.y,Math.abs(dy))
+		o.left = Math.max(o.left,-dx)
+		o.right = Math.max(o.right,dx)
+		o.up = Math.max(o.up,-dy)
+		o.down = Math.max(o.down,dy)
+		o.dist = Math.max(o.dist,Math.sqrt(dx*dx + dy*dy))
 		
-		if !hit and dy < -th and (o.dir == 'up' or o.dir == 'y')
-			hit = yes
-			
-		if !hit and !o.dir
-			let dr = Math.sqrt(dx*dx + dy*dy)
-			if dr > th
-				hit = yes
-		
-		if hit
+		let val = o[o.dir]
+
+		if val > th and val >= o.x and val >= o.y
 			o.active = yes
 			let pinned = state.pinTarget
 			element.flags.incr('_move_')
 			pinned.flags.incr('_move_') if pinned
-			self['αlock']()
+			preventDefault!
 
 			once(self,'end') do
 				pinned.flags.decr('_move_') if pinned
 				element.flags.decr('_move_')
-
-		return !!o.active
+			return true
+			
+		elif o.x > th or o.y > th
+			o.cancelled = yes
+			#cancel!
+			return no
+			
+		return no
 	
 	def @hold time = 250
 		let o = #step
