@@ -4,40 +4,160 @@
 
 - Refactored event modifiers
 
-    Foundations to allow defining custom event modifiers down the road.
+    Foundations to allow defining custom event modifiers down the road. Complex modifiers have access to the context in which it was called, including a state-object that is persisted across events etc. Documentation fo this will be in place before 2.0 final. As an example, a tiny `@keydown.f1` modifier for only passing through F1 can be defined like this:
+    
+    ```imba
+    extend class KeyboardEvent
+      
+      def @f1
+        return keyCode == 112
+    ```
     
 - Changed behavior of `@event.throttle` modifier
 
     `throttle` would previously fire once and suppress subsequent events for a certain duration (default 250ms). Now it will re-fire at the end of the throttling if there were any suppressed events during the initial throttle. For events like `@resize` and `@scroll` where you just want to limit how often they fire, the new behavior is much more useful.
     
+    ```imba
+    # handler will be called immediately upon scrolling and keep emitting
+    # every 100ms until there are no more scroll events. 
+    <div @scroll.throttle(100ms)=handler>
+    
+    # So, clicking this button twice will trigger once immediately,
+    # and then again after 1 second. Previously the second click would
+    # never trigger.
+    <div @click.throttle(1s)=handler>
+    ```
+    
 - Introduced `@event.cooldown` modifier
 
     The old `throttle` was renamed to `cooldown`. Ie, if you want subsequent button clicks to be suppressed for `n` time (250ms default) you should now use `cooldown` instead of `throttle`.
+    
+    ```imba
+    # So, clicking this button twice will trigger once immediately, and
+    # the next click will be ignored as long as it happens less than a second later
+    <div @click.cooldown(1s)=handler>
+    ```
 
-- Allow negated event guards
+- Allow negated event modifiers
 
     Certain event modifiers are called guards, like `@keydown.enter`, `@click.self` etc. These are modifiers that essentially evaluate to true/false and decides whether to continue handling an event or not. `@click.self` would only trigger if the target of the event is the same as the element to which the `@click` is bound. Now you can include a `!` in front of any such event handler to only continue if the guard is false.
     
     Ie. `<div @click.!shift=...>` would only trigger if shiftKey is _not_ pressed.
+    
+    ```imba
+    #  Only call handler if shiftKey is NOT pressed
+    <div @click.!shift=handler>
+    
+    #  Only call handler if target does NOT match the selector
+    <div @click.!sel('.active')=handler>
+    ```
   
 - Introduced `@mouse.left`, `@mouse.middle`, and `@mouse.right` modifiers
     
     Only trigger if the left,middle, or right mouse button is pressed. Works for all mouse and pointer events, as well as the custom `@touch` event.
     
+     ```imba
+    #  Only call handler if the middle mouse button was pressed
+    <div @click.middle=handler>
+
+    #  Only start touch handling if the right mouse button was pressed
+    <div @touch.right=handler>
+    ```
+    
 - Introduced `@intersect.flag` modifier
 
     The `flag` modifier now works differently for `@intersect` event. It will add a css class to the element when it is intersecting and remove it whenever it is not intersecting.
     
+     ```imba
+    # the html class showing will be present on div
+    # whenever it is intersecting with the viewport
+    <div @intersect.flag('showing')>
+    ```
+
+- Introduced `@touch.end` modifier
+
+    The `end` guard breaks unless the touch is in its ending state.
+    
+    ```imba
+    # handler is only called at the end of the touch
+    <div @touch.end=handler>
+    # handler is only called at the end of the touch if pointer moved
+    <div @touch.moved.end=handler>
+    ```
+
+- Introduced `@touch.hold(dur=1000ms)` modifier
+    
+    The `hold` modifier allows you to require an element to be pressed for some time (default 1000ms) until it starts allow events to come through.
+  
+    ```imba
+    # handler is only called once the touch has been held for 1000ms
+    <div @touch.hold=handler>
+    # handler only called if ctrl was pressed and touch held for 250ms
+    <div @touch.ctrl.hold(250ms)=handler>
+    ```
+
+
+- Introduced `@touch.apply(target,xprop='x',yprop='y')` modifier
+
+    Like `@touch.sync` but just setting the x,y values on an object directly instead of adding to the previous values. 
+    
+    ```imba
+    const obj = {}
+    # apply is essentially shorthand for setting properties:
+    <div @touch.apply(obj)>
+    <div @touch=(obj.x = e.x, obj.y = e.y)>
+    ```
+
+
+- Added `@event.key(keyOrCode)` modifier for keyboard events
+
+    KeyboardEvent.keyCode is deprecated but still useful in many cases. If you supply a number to the modifier it will stop handling if `keyCode` does not match this number.
+    
+    ```imba
+    # Only trigger if F1 is pressed (event.keyCode==112)
+    <div @keydown.key(112)=handler>
+    ```
+    
+    If you supply a string it will compare it against KeyboardEvent.key.
+    
+    ```imba
+    # Only trigger if PrintScreen is pressed (event.key=='PrintScreen')
+    <div @keydown.key('PrintScreen')=handler>
+    ```
+
+- Changed behavior of `@touch.moved` modifier
+
+    Now, if you add a `moved-left(threshold = 4px)` modifier, the event handling will be cancelled if the touch has moved more in any other direction (in this case up,down, or right) _before_ moving 4px left.
+    
+    ```imba
+    # If user moves more than 10px up/down before left/right
+    # the touch will not be handled
+    <div @touch.moved-x(10px)=draghandle>
+    ```
+
 - Improved behaviour of `@touch` and `@click` events
 
     `@click` events on nested children of an element with a `@touch` handler would previously be prevented. This made `@touch` pretty challenging to use for things like dragging elements with buttons etc.
-  
     
-- Added `@touch.hold(dur=1000ms)` modifier
+    Now `@click` events will be triggered unless the `@touch` handler has a `prevent` modifier, a `moved(-x|y|up|down)` modifier that has activated, or a `hold` modifier that has activated.
+    
+    ```imba
+    # button click is triggered onless touch is held more than 500ms
+    <li @touch.hold(500ms)=draghandle> <button @click=handle>
+    ```
 
-- Added `@event.key(keyCode)` modifier for keyboard events
+- Improved behaviour of `@touch` and scrolling on touch devices
+    Previously, scrolling (and clicking) would be disabled for any element with a `@touch` handler on iOS. Ie. if you added `@touch` to a custom slider, scrolling would not work if the user happened to touch down on the slider while flicking down the page.
+    
+    Scrolling is disabled by the `prevent` modifier, an activated `moved` modifier or activated `hold` modifier.
+    
+    ```imba
+    # Scrolling will now work fine when touching the div and flicking up/down.
+    # Only if the user holds still on the element for 500ms will scrolling and
+    # default behavior be prevented.
+    <div @touch.hold(500ms)=draghandler>
+    ```
 
-- Introduced `@touch.end` modifier
 
 ## 2.0.0-alpha.175
 - Fix: `@in` transitions for nested elements works
