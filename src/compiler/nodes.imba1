@@ -10978,7 +10978,8 @@ export class Util.Extend < Util
 		'''
 		function extend$__(target,ext){
 			// @ts-ignore
-			var descriptors = Object.getOwnPropertyDescriptors(ext);
+			const descriptors = Object.getOwnPropertyDescriptors(ext);
+			delete descriptors.constructor;
 			// @ts-ignore
 			Object.defineProperties(target,descriptors);
 			return target;
