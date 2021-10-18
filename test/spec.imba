@@ -65,6 +65,13 @@ class PupMouse
 		
 	def click x = 0, y = 0, o = {}
 		await puppy('mouse.click',[x,y,o])
+		
+	def touch ...coords
+		let first = coords.shift!
+		await down(first[0],first[1])
+		for item in coords
+			await move(item[0],item[1])
+		await up!
 
 const TERMINAL_COLOR_CODES =
 	bold: 1
