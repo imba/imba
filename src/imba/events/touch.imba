@@ -7,6 +7,8 @@ import * as helpers from './helpers'
 
 export def use_events_touch
 	yes
+	
+let iosMoveIframeFix = null
 
 class Touch
 	def constructor e,handler,el
@@ -155,7 +157,7 @@ class Touch
 			
 		elif o.x > th or o.y > th
 			o.cancelled = yes
-			#cancel!
+			# #cancel!
 			return no
 			
 		return no
@@ -165,7 +167,6 @@ class Touch
 		let el = #context.element
 		
 		return no if o.cancelled
-		# cancel the actual event!!
 		
 		if o.setup and !o.active
 			let x = clientX
@@ -178,7 +179,7 @@ class Touch
 			if dr > 5 and !o.cancelled
 				clearTimeout(o.timeout)
 				o.cancelled = yes
-				#cancel!
+				# #cancel!
 			
 		if o.setup =? yes
 			o.active = no
@@ -228,7 +229,6 @@ class Touch
 			o.y = o.el.#y or 0
 			o.tx = x
 			o.ty = y
-		
 		else
 			let x = o.el.#x = o.x + (x - o.tx)
 			let y = o.el.#y = o.y + (y - o.ty)
@@ -324,8 +324,6 @@ class Touch
 			o.rect = rect
 			o.x = helpers.createScale(rect.left,rect.right,min[0],max[0],snap[0])
 			o.y = helpers.createScale(rect.top,rect.bottom,min[1],max[1],snap[1])
-			# state.scaleX = o.x
-			# state.scaleY = o.y
 			x0 = x = o.x(x,o.clamp)
 			y0 = y = o.y(y,o.clamp)
 		else
@@ -381,21 +379,22 @@ class Touch
 		y -= o.y
 		return yes
 
-def Event.touch$lock$mod ...params
-	let o = state[step]
-	
-	unless o
-		o = state[step] = state.target.style
-		let prev = o.touchAction
-		o.touchAction = 'none'
-		state.once('end') do o.removeProperty('touch-action')
-	return yes
-
 extend class Element
 	def on$touch(mods,context,handler,o)
 		handler.type = 'touch'
-		self.addEventListener('pointerdown',handler,o)
+		self.addEventListener('pointerdown',handler,{passive: false})
+		if helpers.navigator.ios? and global.parent != global
+			if iosMoveIframeFix =? true
+				global.parent.postMessage('setupTouchFix')
+
 		return handler
+		
+if $web$ and global.parent == global and helpers.navigator.ios?
+	let fix = do(e)
+		if e.data == 'setupTouchFix'
+			global.addEventListener('touchmove',&,{passive: false}) do false
+			global.removeEventListener('message',fix)
+	global.addEventListener('message',fix)
 		
 def Event.touch$handle
 	let e = event
@@ -409,7 +408,8 @@ def Event.touch$handle
 
 	if id != undefined
 		return id == e.pointerId
-
+		
+	
 	# reject the touch before creation for certain modifiers
 	# TODO should allow specifying pen OR mouse etc
 	# FIXME these will not work with negated modifiers
@@ -427,6 +427,7 @@ def Event.touch$handle
 	
 	let t = state = handler.state = current = new Touch(e,handler,el)
 	id = t.pointerId
+
 	let canceller = do(e)
 		e.preventDefault!
 		return false
@@ -451,29 +452,30 @@ def Event.touch$handle
 		return
 		
 	let ontouch = do(e)
-		# console.debug "ontouch",e.type,e.layerX,e.layerY,e
-		e.preventDefault! if t.defaultPrevented or t.#locked
+		if t.type == 'touchmove' and e.changedTouches[0].identifier != id
+			return 	
+		# console.debug 'ontouch',e.type,t.defaultPrevented,e.changedTouches
+		if t.defaultPrevented or t.#locked
+			e.preventDefault!
 		
 	let listener = do(e)
 		let typ = e.type
 		let ph = t.phase
-		
+		# console.debug "listen",e.type,e.pointerId
 		return if e.pointerId and t.pointerId != e.pointerId
 		
 		if e[sym]
 			return
-			
-		# console.debug 'listening',e.type,e.pressure,e.width,e.pointerType,e.tangentialPressure,e.buttons	
-		e[sym] = yes
 
+		e[sym] = yes
+		
+		
 		let end = typ == 'pointerup' or typ == 'pointercancel'
 		
 		# if the pressure is suddenly 0 it indicates there has been a
 		# pointerup event not captured by the browser
 		if e.pressure == 0 and e.pointerType == 'mouse' and typ == 'pointermove' and t.originalEvent.pressure > 0
 			return teardown(e)
-			
-		t.event = e
 		
 		if typ == 'pointercancel'
 			t.x = t.clientX
@@ -481,6 +483,8 @@ def Event.touch$handle
 		else
 			t.x = e.clientX
 			t.y = e.clientY
+			
+		t.event = e
 
 		if end
 			t.phase = 'ended'
@@ -497,6 +501,7 @@ def Event.touch$handle
 
 	teardown = do(e)
 		return if disposed
+		disposed = yes
 		el.flags.decr('_touch_')
 
 		if t.phase != 'ended'
@@ -513,7 +518,7 @@ def Event.touch$handle
 
 		handler.state = {}
 
-		global.removeEventListener('pointermove',listener,passive:m.passive)
+		global.removeEventListener('pointermove',listener,passive:!!m.passive)
 		global.removeEventListener('pointerup',listener)
 		global.removeEventListener('pointercancel',listener)
 
@@ -527,23 +532,19 @@ def Event.touch$handle
 				global.removeEventListener('touchmove',ontouch,{passive: false})
 				ontouch = null
 
-			
-		
 		if !m.passive
 			global.document.removeEventListener('selectstart',canceller,capture:true)
 		
-		disposed = yes
-		
 	t.#teardown = teardown
 	
-	unless m.passive
+	if !m.passive
 		handler.prevents ||= 0
 		handler.prevents++
 		el.style.setProperty('touch-action','none')
 		el.offsetWidth
 
 	el.flags.incr('_touch_')
-	global.addEventListener('pointermove',listener,passive:m.passive)
+	global.addEventListener('pointermove',listener,passive:!!m.passive)
 	global.addEventListener('pointerup',listener)
 	global.addEventListener('pointercancel',listener)
 	global.addEventListener('click',onclick,capture:true)
