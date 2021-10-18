@@ -14,4 +14,8 @@ extend class KeyboardEvent
 	def @left do keyCode == 37
 	def @right do keyCode == 39
 	def @del do keyCode == 8 or keyCode == 46
-	def @key code do keyCode == code
+	def @key code
+		if typeof code == 'string'
+			return key == code
+		elif typeof code == 'number'
+			return keyCode == code
