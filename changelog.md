@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Renamed style property `tint` to `hue`
+    
+    Hue is a better name for the newly introduced `tint` style property.
+    
+    ```imba
+    # hue can be set to any named color from the imba color palette
+    <div[hue:orange]>
+        <h1[color:hue7]> # refer to a shade/tint of the aliased color
+    ```
+
 - Refactored event modifiers
 
     Foundations to allow defining custom event modifiers down the road. Complex modifiers have access to the context in which it was called, including a state-object that is persisted across events etc. Documentation fo this will be in place before 2.0 final. As an example, a tiny `@keydown.f1` modifier for only passing through F1 can be defined like this:

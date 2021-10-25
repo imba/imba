@@ -801,9 +801,17 @@ export class StyleTheme
 		{'column-gap': v, '--u_cg': v}
 
 	def tint [v]
-		let o = {'--tint': v}
+		
+		let o = {'--hue': v}
 		for i in [0 ... 9]
-			o["--tint{i}"] = "/*##*/{v}{i}"
+			o["--hue{i}"] = "/*##*/{v}{i}"
+			# new Tint("v{i}")
+		return o
+		
+	def hue [v]
+		let o = {'--hue': v}
+		for i in [0 ... 9]
+			o["--hue{i}"] = "/*##*/{v}{i}"
 			# new Tint("v{i}")
 		return o
 
@@ -819,6 +827,10 @@ export class StyleTheme
 			return $color(palette[ns] + name.slice(ns.length))
 
 		if ns == 'tint'
+			console.warn "tint0-9 renamed to hue0-9"
+			return new Tint("hue" + name.slice(4))
+			
+		if ns == 'hue'
 			return new Tint(name)
 
 		if palette[name]
