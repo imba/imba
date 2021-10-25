@@ -111,6 +111,9 @@ class Touch
 			if typeof a == 'string' and a.match(/^(up|down|left|right|x|y)$/)
 				o.dir = a
 				th = b or 4
+				
+			if typeof b == 'string' and b.match(/^(up|down|left|right|x|y)$/)
+				o.dir = b
 
 			o.setup = yes
 			let [tv,tu] = helpers.parseDimension(th)

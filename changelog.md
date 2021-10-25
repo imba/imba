@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Deprecated `@touch.moved-dir`
+    
+    The direction of the `@touch.moved` modifier can now be specified in the second argument of `@touch.moved` instead of as 6 separate modifiers. These are not used that often and it seems natural to keep inside a single modifier instead.
+    
+    ```imba
+    <div @touch.moved-left(4px)> # before
+    <div @touch.moved(4px,'left')> # after
+    ```
+
 - Renamed style property `tint` to `hue`
     
     Hue is a better name for the newly introduced `tint` style property.
