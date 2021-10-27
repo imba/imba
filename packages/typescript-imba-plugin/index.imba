@@ -7,6 +7,7 @@ import Patcher from './src/patches'
 
 def patch ts
 	Patcher(ts)
+
 	Object.defineProperty(ts.server.ScriptInfo.prototype,Symbol.for('#imba'),{
 		get: do
 			return null unless util.isImba(this.path)
@@ -24,7 +25,7 @@ def init modules = {}
 	if ts.#patched =? yes
 		patch(ts)
 		ts.ils = global.ils ||= new Service
-		util.log('init plugin!!!',modules,arguments)
+		util.log('init plugin',modules,arguments)
 	
 	return ts.ils
 
