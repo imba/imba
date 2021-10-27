@@ -10,7 +10,8 @@
     },
     "repository": {
         "type": "git",
-        "url": "git://github.com/imba/typescript-imba-plugin.git"
+        "url": "https://github.com/imba/imba.git",
+        "directory": "packages/typescript-imba-plugin"
     },
     "devDependencies": {
         "@types/typescript": "^2.0.0",
