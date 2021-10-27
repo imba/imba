@@ -177,6 +177,7 @@
     <div @touch.hold(500ms)=draghandler>
     ```
 
+- Add support for additional file extensions in bundler (webm, weba, avi, mp3, mp4, m4a, mpeg, wav, ogg, ogv, oga, opus, bmp)
 
 ## 2.0.0-alpha.175
 - Fix: `@in` transitions for nested elements works

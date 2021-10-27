@@ -239,6 +239,7 @@ export default class Bundle < Component
 			# charset: 'utf8'
 			loader: Object.assign({
 				".png": "file",
+				".bmp": "file",
 				".apng": "file",
 				".webp": "file",
 				".heif": "file",
@@ -254,6 +255,18 @@ export default class Bundle < Component
 				".ttf": "file",
 				".otf": "file",
 				".html": "file",
+				".webm": "file",
+				".weba": "file",
+				".avi": "file",
+				".mp3": "file",
+				".mp4": "file",
+				".m4a": "file",
+				".mpeg": "file",
+				".wav": "file",
+				".ogg": "file",
+				".ogv": "file",
+				".oga": "file",
+				".opus": "file"				
 			},o.loader or {})
 			write: false
 			metafile: true

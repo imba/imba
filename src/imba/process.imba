@@ -12,6 +12,8 @@ import http from 'http'
 import https from 'https'
 import {Http2ServerRequest} from 'http2'
 
+# TODO share mimeType list with bundler to
+# bundle supported file extensions
 const defaultHeaders = {
 	html: {'Content-Type': 'text/html'}
 	js: {'Content-Type': 'text/javascript'}
@@ -32,6 +34,21 @@ const defaultHeaders = {
 	webp: {'Content-Type': 'image/webp'}
 	jpg: {'Content-Type': 'image/jpeg'}
 	jpeg: {'Content-Type': 'image/jpeg'}
+	bmp: {'Content-Type': 'image/bmp'}
+	
+	webm: {'Content-Type': 'video/webm'}
+	weba: {'Content-Type': 'audio/webm'}
+	avi: {'Content-Type': 'video/x-msvideo'}
+	mp3: {'Content-Type': 'audio/mpeg'}
+	mp4: {'Content-Type': 'video/mp4'}
+	m4a: {'Content-Type': 'audio/m4a'}
+	mpeg: {'Content-Type': 'video/mpeg'}
+	wav: {'Content-Type': 'audio/wav'}
+	ogg: {'Content-Type': 'audio/ogg'}
+	ogv: {'Content-Type': 'video/ogg'}
+	oga: {'Content-Type': 'audio/ogg'}
+	opus: {'Content-Type': 'audio/opus'}
+	
 }
 
 const proc = global.process
