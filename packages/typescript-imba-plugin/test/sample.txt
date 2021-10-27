@@ -1,0 +1,2 @@
+items.map do |item| item
+items.map do(item) item

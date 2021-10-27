@@ -1,0 +1,1 @@
+Plugin for providing advanced diagnostics, completions and refactoring functionality to Imba. Under development.

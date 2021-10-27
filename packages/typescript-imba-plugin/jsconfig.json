@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "checkJs": true,
+        "target": "esnext",
+        "moduleResolution": "node"
+    },
+    "exclude": [
+        "**/node_modules",
+        "dist"
+    ],
+    "include": [
+        "**/src"
+    ]
+}

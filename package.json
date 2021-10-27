@@ -47,7 +47,9 @@
     "watch": "node scripts/build.js -w",
     "prerelease": "lerna publish --dist-tag pre",
     "link-latest": "node bin/imba scripts/link-latest.imba",
-    "create-example": "node bin/imba scripts/create-example.imba"
+    "create-example": "node bin/imba scripts/create-example.imba",
+    "generate-docs": "node bin/imba scripts/docs/generate.imba",
+    "generate-typings": "node bin/imba scripts/docs/generate-styles-dts.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.176",
@@ -103,6 +105,7 @@
     "picomatch": "^2.2.2",
     "puppeteer": "^10.4.0",
     "tmp": "^0.2.1",
+    "typescript": "^4.4.4",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
