@@ -8,8 +8,6 @@ import {DefaultConfig} from './constants'
 
 let libDir = np.resolve(__realname,'..','..','lib')
 
-console.warn "LIBDIR",libDir
-
 global.dirPaths = [__dirname,__filename,__realname]
 global.libDir = libDir
 global.utils = util
@@ -112,13 +110,32 @@ export default class Service
 		ps.onConfigFileChanged(jspath,0)
 
 		self
+		
+	def resolveImbaDirForProject proj
+		let imbadir = ts.resolveImportPath('imba',proj.getConfigFilePath!,proj)
+		if imbadir and imbadir.resolvedModule
+			# console.warn "RESOLVED",imbadir.resolvedModule
+			return np.dirname(imbadir.resolvedModule.resolvedFileName)
+		return null
+
 
 	def prepareProjectForImba proj
 		let inferred = proj isa ts.server.InferredProject
 		let opts = proj.getCompilerOptions!
 		let libs = opts.lib or ["esnext","dom","dom.iterable"]
-		opts.lib =  libs.concat([np.resolve(global.IMBA_TYPINGS_DIR or libDir,'imba.d.ts')])
+		let imbalib = 'imba-typings/imba.d.ts'
+		# np.resolve(global.IMBA_TYPINGS_DIR or libDir,'imba.d.ts')
+		let imbadir = resolveImbaDirForProject(proj)
 		
+		if imbadir
+			let src = np.resolve(imbadir,'typings','imba.d.ts')
+			if ps.host.fileExists(src)
+				imbalib = src
+		# resolveImportPath
+		# console.warn "PROJECT",imbalib
+		# imbalib = 'imba-typings/imba.d.ts'
+		opts.lib =  libs.concat([imbalib])
+
 		if inferred
 			opts.checkJs = true
 
@@ -130,7 +147,7 @@ export default class Service
 		# if we can resolve an imba installation for the project
 		# we should use the typings from that
 		
-		console.warn "LIBS!!",opts.lib
+		# console.warn "LIBS!!",opts.lib
 		# proj.setCompilerOptions(opts)
 		util.log('compilerOptions',proj,opts)
 		return proj

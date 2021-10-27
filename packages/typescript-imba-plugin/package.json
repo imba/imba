@@ -5,8 +5,8 @@
     "author": "Sindre Aarsaether <sindre@identu.no>",
     "main": "dist/index.js",
     "scripts": {
-        "watch": "imba build -wS index.imba",
-        "build": "imba build -S index.imba"
+        "watch": "node \"../../bin/imba\" build -wS index.imba",
+        "build": "node \"../../bin/imba\" build -S index.imba"        
     },
     "repository": {
         "type": "git",

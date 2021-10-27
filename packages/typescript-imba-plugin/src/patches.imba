@@ -3,12 +3,25 @@ import * as constants from './constants'
 import Compiler from './compiler'
 import ImbaScript from './script'
 import * as Diagnostics from './diagnostics'
+import np from 'path'
 
 let EDITING = no
 global.state = {command: ''}
 
 let EXTRA_HIT = null
 let EXTRA_EXTENSIONS = ['.imba']
+
+const typings = {
+	"imba.d.ts": import("../../../typings/imba.d.ts?as=text")
+	"imba.dom.d.ts": import("../../../typings/imba.dom.d.ts?as=text")
+	"imba.events.d.ts": import("../../../typings/imba.events.d.ts?as=text")
+	"imba.router.d.ts": import("../../../typings/imba.router.d.ts?as=text")
+	"imba.snippets.d.ts": import("../../../typings/imba.snippets.d.ts?as=text")
+	"imba.types.d.ts": import("../../../typings/imba.types.d.ts?as=text")
+	"styles.d.ts": import("../../../typings/styles.d.ts?as=text")
+	"styles.generated.d.ts": import("../../../typings/styles.generated.d.ts?as=text")
+	"styles.modifiers.d.ts": import("../../../typings/styles.modifiers.d.ts?as=text")
+}
 
 def isEditing
 	global.state.command == 'updateOpen'
@@ -323,6 +336,11 @@ export class System
 					EXTRA_HIT = [path,ipath]
 					return yes
 		
+		if path.indexOf('imba-typings') >= 0
+			let name = np.basename(path)
+			virtualFileMap[path] ||= typings[name]
+			return true
+		
 		if (/[jt]sconfig\.json/).test(path)
 			util.log('fileExists',path,#fileExists(path),!!readVirtualFile(path))
 
@@ -339,6 +357,9 @@ export class System
 	
 	def readFile path,encoding = null
 		util.log("readFile",path)
+		
+		if path.indexOf('imba-typings') >= 0
+			return readVirtualFile(path)
 		
 		if (/[jt]sconfig\.json/).test(path)
 			if let body = readVirtualFile(path)

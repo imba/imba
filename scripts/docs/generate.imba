@@ -324,7 +324,7 @@ def generate-styles
 		}
 		api.entries.push(item)
 
-	console.log api.entries
+	# console.log api.entries
 	# write('api.css',api)
 
 generate-events!
