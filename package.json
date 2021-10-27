@@ -1,8 +1,8 @@
 {
     "name": "imba-monorepo",
     "private": true,
-    
-    "scripts": {
-        
-    }
+    "devDependencies": {
+        "lerna": "^4.0.0"
+    },
+    "scripts": {}
 }
