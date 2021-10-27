@@ -1,12 +1,12 @@
 {
     "name": "typescript-imba-plugin",
     "description": "imba plugin for tsserver",
-    "version": "1.1.2",
+    "version": "1.2.0",
     "author": "Sindre Aarsaether <sindre@identu.no>",
     "main": "dist/index.js",
     "scripts": {
         "watch": "node \"../../bin/imba\" build -wS index.imba",
-        "build": "node \"../../bin/imba\" build -S index.imba"        
+        "build": "node \"../../bin/imba\" build -S index.imba"
     },
     "repository": {
         "type": "git",
@@ -14,7 +14,7 @@
     },
     "devDependencies": {
         "@types/typescript": "^2.0.0",
-        "imba": "^2.0.0-alpha.173",
+        "imba": "^2.0.0-alpha.177",
         "marked": "^3.0.7"
     },
     "dependencies": {
