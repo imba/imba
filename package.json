@@ -112,6 +112,5 @@
   "dependencies": {
     "chokidar": "^3.4.3",
     "esbuild": "^0.9.7"
-  },
-  "gitHead": "89d795f6da117019aa7c018b9e57293cf732a3ab"
+  }
 }
