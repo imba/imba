@@ -17,8 +17,10 @@ class Transitions
 		sels and sels.length ? sels.join(',') : null
 		
 	def nodesForBase base, kind = 'transition'
-		let query = selectors[kind].join(',')
 		let hits = [base]
+		let query = (selectors[kind] or []).join(',')
+		return hits if query == ''
+
 		let elements = base.querySelectorAll(query)
 
 		for el in elements
