@@ -9179,7 +9179,7 @@ export class Tag < TagLike
 		# checking to see if a node is static enough to be inserted directly into the dom without
 		# any references.
 		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey
-			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType))
+			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType and !v.option(:key)))
 				if !shouldEnd and !hasNonTagChildren and !isSlot and !option(:dynamic) and !option(:reference)
 					hasDynamicParts = no
 					if parent isa Tag and !(up isa Op)
