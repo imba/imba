@@ -15,7 +15,6 @@
     },
     "devDependencies": {
         "@types/typescript": "^2.0.0",
-        "imba": "^2.0.0-alpha.177",
         "marked": "^3.0.7"
     },
     "dependencies": {

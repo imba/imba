@@ -1,7 +1,8 @@
 import * as util from './util'
 
 import {Position,Range} from './lexer'
-const imbac = require 'imba/compiler'
+
+const imbac = require '../../../compiler.imba'
 
 const ImbaOptions = {
 	target: 'tsc'
