@@ -4,13 +4,21 @@ export def parseAsset raw,name
 	# console.log 'parse asset',name,raw
 	# what if we cannot parse this asset?
 	let text = raw.body
+	
+	let startIndex = text.indexOf('<svg')
+	
+	if startIndex > 0
+		text = text.slice(startIndex)
+	
 	let xml = Monarch.getTokenizer('xml')
 	let state = xml.getInitialState!
 	let out = xml.tokenize(text,state,0)
 
 	let attrs = {}
 	let desc = {attributes: attrs, flags: []}
-
+	
+	# for inlined assets - skip everything before the svg
+	
 	let currAttr
 	let contentStart = 0
 	for tok in out.tokens
