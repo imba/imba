@@ -110,9 +110,18 @@ export def parseHTML raw
 			item = {path: src.raw, tagType: 'script'}
 		elif el.value == 'img' and src
 			item = {path: src.raw, tagType: 'img'}
-		elif el.value == 'link' and el.attributes.rel..raw == 'stylesheet'
+		elif el.value == 'link'
+			let rel = el.attributes.rel..raw
 			src = el.attributes.href
-			item = {path: src.raw, tagType: 'style'}
+			let raw = src..raw or ''
+			if rel == 'stylesheet'
+				item = {path: raw, tagType: 'style'}
+			elif src and raw.match(/^\.\.?\//)
+				let raw = src.raw
+				if raw.match(/\.json$/)
+					raw = raw += '?as=file'
+				item = {path: raw, tagType: 'link'}
+
 		elif el.value == 'style' and src
 			item = {path: src.raw, tagType: 'style'}
 			el.value = "link rel='stylesheet'"
