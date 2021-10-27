@@ -91,6 +91,20 @@
     "type": "git",
     "url": "git://github.com/imba/imba.git"
   },
+  "files": [
+    "bin",
+    "src",
+    "dist",
+    "build",
+    "typings",
+    "vendor",
+    "scripts/bootstrap.compiler.js",
+    "polyfills",
+    "*.imba",
+    "*.d.ts",
+    "*.js",
+    "*.css"
+  ],
   "devDependencies": {
     "commander": "^6.2.1",
     "enquirer": "^2.3.6",
