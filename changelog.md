@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.177
+
+- Added type declarations into typings/
+
 ## 2.0.0-alpha.176
 
 - Deprecated `@touch.moved-dir`
