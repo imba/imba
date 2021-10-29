@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.183
+
+- Remove unneeded class names on tags when building
+
 ## 2.0.0-alpha.182
 
 - Fixed issues with using event modifiers with external imba library
