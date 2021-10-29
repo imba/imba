@@ -9,9 +9,10 @@
 	"license": "MIT",
 	"author": "Sindre Aarsaether",
 	"repository": {
-		"type": "git",
-		"url": "git://github.com/imba/vscode-imba.git"
-	},
+        "type": "git",
+        "url": "https://github.com/imba/imba.git",
+        "directory": "packages/vsimba"
+    },
 	"engines": {
 		"vscode": "^1.59.0"
 	},
@@ -217,13 +218,9 @@
 		"vscode": "^1.1.37"
 	},
 	"scripts": {
-		"dev:bootstrap": "lerna bootstrap",
 		"watch": "imba build -wS --node.external +vscode src/index.imba",
 		"build": "imba build -S --node.external +vscode src/index.imba",
-		"prod:version": "lerna version",
 		"build-theme": "imba scripts/compile-theme.imba",
-		"prep": "npm install --save-dev imba@latest & npm install typescript-imba-plugin",
-		"test": "node server/test.js",
 		"publish": "node scripts/vsce-publish.js"
 	},
 	"__metadata": {

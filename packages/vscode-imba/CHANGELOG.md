@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.9
+
+* Improved completions for events and modifiers
+
+* Use typings from the imba version of your project (starting with imba 2.0.0.alpha-179)
+    
+    This means that completions, deprecations, warnings will finally be correct
+    based on the actual imba version you are using. When you update imba in your project,
+    the completions, docs and more will keep in sync.
+
 ## 3.0.8
 * Added completions for hotkey event
 * Added semantic highlighting for `do |var|` variables
