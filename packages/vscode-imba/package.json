@@ -212,15 +212,14 @@
 	"devDependencies": {
 		"chroma-js": "^2.1.0",
 		"fs-extra": "^10.0.0",
-		"imba": "^2.0.0-alpha.181",
 		"js-yaml": "^3.14.0",
 		"plist": "^3.0.1",
 		"vscode": "^1.1.37"
 	},
 	"scripts": {
-		"watch": "imba build -wS --node.external +vscode src/index.imba",
-		"build": "imba build -S --node.external +vscode src/index.imba",
-		"build-theme": "imba scripts/compile-theme.imba",
+		"watch": "node \"../imba/bin/imba\" build -wS --node.external +vscode src/index.imba",
+		"build": "node \"../imba/bin/imba\" build -S --node.external +vscode src/index.imba",
+		"build-theme": "node \"../imba/bin/imba\" scripts/compile-theme.imba",
 		"publish": "node scripts/vsce-publish.js",
 		"prepublish": "npm run build"
 	},
