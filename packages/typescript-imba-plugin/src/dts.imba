@@ -31,9 +31,6 @@ export default class ImbaScriptDts
 			idx += 5
 			
 		# find imports
-		
-		
-		console.log imports
 		body = body.replace(/export class Extend\$(\w+)\$\w+(?:\$(\w+))?\s(extends (\w+)\s)?\{/g) do(m,name,mod)
 			# console.log 'replacing',m,mod,name
 			# if mod == 'import'

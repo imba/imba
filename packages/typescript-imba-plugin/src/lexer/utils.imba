@@ -168,7 +168,7 @@ export def fastExtractSymbols text
 			symbols.push(symbol)
 	
 	root.all = symbols
-	console.log 'fast outline',text.length,Date.now! - t0
+	# console.log 'fast outline',text.length,Date.now! - t0
 	return root
 	
 # To avoid collisions etc with symbols we are using

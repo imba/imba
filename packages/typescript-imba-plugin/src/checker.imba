@@ -338,7 +338,6 @@ export default class ImbaTypeChecker
 			continue if file.path.indexOf('node_modules') >= 0
 			let sym = file.symbol
 			exports[file.path] = {}
-		console.log 'exports!',exports
 		return exports
 			
 	

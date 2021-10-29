@@ -240,8 +240,8 @@ export class Compilation
 				res = await workers.compile_imba(ibody,ioptions)
 				
 			self.result = res
-			console.log()
-			console.log 'compiled async ',file.relName,Date.now! - t
+			# console.log()
+			# console.log 'compiled async ',file.relName,Date.now! - t
 			resolve(self)
 
 	set result res
