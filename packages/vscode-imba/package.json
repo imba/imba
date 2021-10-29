@@ -206,7 +206,7 @@
 	"dependencies": {
 		"@types/vscode": "^1.56.0",
 		"node-ipc": "^9.1.4",
-		"typescript-imba-plugin": "^1.2.0"
+		"typescript-imba-plugin": "file:../typescript-imba-plugin"
 	},
 	"devDependencies": {
 		"chroma-js": "^2.1.0",
