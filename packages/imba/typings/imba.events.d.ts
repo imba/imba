@@ -644,7 +644,6 @@ declare class ImbaResizeEvent extends UIEvent {
     height: number;
     rect: DOMRectReadOnly;
     entry: ResizeObserverEntry;
-    test: ResizeObserver;
 }
 
 declare class ImbaSelectionEvent extends Event {
