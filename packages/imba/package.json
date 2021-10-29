@@ -41,14 +41,12 @@
   "scripts": {
     "test": "node bin/imba scripts/test-runner.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
-    "bootstrap": "node scripts/build-parser.js && node scripts/build.js",
     "build": "node scripts/build-parser.js && node scripts/build.js",
     "build-parser": "node scripts/build-parser.js",
     "watch": "node scripts/build.js -w",
     "prepublish": "node scripts/build-parser.js && node scripts/build.js",
     "create-example": "node bin/imba scripts/create-example.imba",
-    "generate-docs": "node bin/imba scripts/docs/generate.imba",
-    "generate-typings": "node bin/imba scripts/docs/generate-styles-dts.imba"
+    "generate-typings": "node bin/imba scripts/docs/generate-typings.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.183",
@@ -118,7 +116,6 @@
     "picomatch": "^2.2.2",
     "puppeteer": "^10.4.0",
     "tmp": "^0.2.1",
-    "typescript": "^4.4.4",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
