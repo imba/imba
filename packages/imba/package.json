@@ -42,11 +42,10 @@
     "test": "node bin/imba scripts/test-runner.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "bootstrap": "node scripts/build-parser.js && node scripts/build.js",
-    "build": "node scripts/build.js",
+    "build": "node scripts/build-parser.js && node scripts/build.js",
     "build-parser": "node scripts/build-parser.js",
     "watch": "node scripts/build.js -w",
-    "prerelease": "lerna publish --dist-tag pre",
-    "link-latest": "node bin/imba scripts/link-latest.imba",
+    "prepublish": "node scripts/build-parser.js && node scripts/build.js",
     "create-example": "node bin/imba scripts/create-example.imba",
     "generate-docs": "node bin/imba scripts/docs/generate.imba",
     "generate-typings": "node bin/imba scripts/docs/generate-styles-dts.imba"

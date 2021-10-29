@@ -221,7 +221,8 @@
 		"watch": "imba build -wS --node.external +vscode src/index.imba",
 		"build": "imba build -S --node.external +vscode src/index.imba",
 		"build-theme": "imba scripts/compile-theme.imba",
-		"publish": "node scripts/vsce-publish.js"
+		"publish": "node scripts/vsce-publish.js",
+		"prepublish": "npm run build"
 	},
 	"__metadata": {
 		"id": "c0926dfb-bf29-4689-849e-63ca645e2c1c",

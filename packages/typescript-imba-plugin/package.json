@@ -6,7 +6,8 @@
     "main": "dist/index.js",
     "scripts": {
         "watch": "node \"../imba/bin/imba\" build -wS index.imba",
-        "build": "node \"../imba/bin/imba\" build -S index.imba"
+        "build": "node \"../imba/bin/imba\" build -S index.imba",
+        "prepublish": "npm run build"
     },
     "repository": {
         "type": "git",
