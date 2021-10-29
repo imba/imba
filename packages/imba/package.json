@@ -51,7 +51,7 @@
     "generate-typings": "node bin/imba scripts/docs/generate-styles-dts.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.182",
+  "version": "2.0.0-alpha.183",
   "licenses": [
     {
       "type": "MIT",
