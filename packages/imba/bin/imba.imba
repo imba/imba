@@ -99,6 +99,7 @@ def parseOptions options, extras = []
 
 	if command == 'serve'
 		options.watch = yes
+		options.hmr = yes
 
 	if options.watch
 		options.loglevel ||= 'info'

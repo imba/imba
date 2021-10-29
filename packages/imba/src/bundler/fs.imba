@@ -262,13 +262,16 @@ export class FileNode < FSNode
 export class ImbaFile < FileNode
 
 	def compile o,context = program
-		memo(o.platform) do
+		# hmr / production true or false
+		# console.log "compile {o.platform} {o.hmr} {o.mode} {rel}"
+		let key = "{o.platform}-{o.hmr}"
+		memo(key) do
 			o = Object.assign({
 				platform: o.platform,
 				format: 'esm',
 				imbaPath: 'imba'
 				styles: 'extern'
-				hmr: true
+				hmr: o.hmr
 				bundle: true
 				sourcePath: rel
 				sourceId: program.cache.getPathAlias(abs)

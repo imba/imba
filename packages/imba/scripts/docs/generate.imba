@@ -3,7 +3,7 @@ import nfs from 'fs'
 
 import * as ts from 'typescript/lib/tsserverlibrary'
 
-import imba-plugin from '../../packages/typescript-imba-plugin/index.imba'
+import imba-plugin from '../../../typescript-imba-plugin/index.imba'
 
 ###
 export interface Logger {

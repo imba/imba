@@ -286,6 +286,8 @@ export default class Bundle < Component
 		imbaoptions = {
 			platform: o.platform
 			css: 'external'
+			hmr: program.hmr or false
+			mode: program.mode
 		}
 
 		if o.sourcesContent !== undefined

@@ -632,6 +632,9 @@ export class Stack
 
 	def runtime
 		@root.runtime
+		
+	def cssns
+		sourceId + "__"
 	
 	def registerSemanticToken token, kind, modifiers
 		if token isa Node
@@ -9122,8 +9125,8 @@ export class Tag < TagLike
 			@classNames.unshift(cssflag)
 
 		# if we have file-scoped styles - add flag to all tags in page
-		if stack.option(:hasScopedStyles)
-			@classNames.unshift(stack.sourceId)
+		if stack.option(:hasScopedStyles) or STACK.hmr
+			@classNames.unshift(stack.cssns)
 
 		if component and !isSelf
 			if let cname = component.cssref(option(:reference) ? null : scope__)
@@ -10261,7 +10264,7 @@ export class StyleRuleSet < StyleNode
 			let opts = {
 				selectors: []
 				component: cmp
-				ns: cmp ? cmp.cssns : sourceId
+				ns: cmp ? cmp.cssns : STACK.cssns
 				priority: pri
 				forceLocal: !@flag && (cmp or !isGlobal)
 				rootFlag: @rootFlag
