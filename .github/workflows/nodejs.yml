@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [14.x,16.x]
 
     steps:
     - uses: actions/checkout@v1
@@ -19,8 +19,8 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: npm install, bootstrap, build and test
       run: |
-        npm install -g lerna
-        lerna exec npm install
+        cd packages/imba
+        npm install
         npm run bootstrap
         npm run test
       env:

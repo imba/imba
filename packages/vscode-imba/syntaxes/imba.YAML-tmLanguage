@@ -1,0 +1,1697 @@
+# [PackageDev] target_format: plist, ext: tmLanguage
+---
+name: Imba
+scopeName: source.imba
+fileTypes: [imba,imba2]
+uuid: ef98eb90-bf9b-11e4-bb52-0800200c9a67
+variables:
+  startOfIdentifier: (?<![_$[:alnum:]])(?:(?<=\.\.\.)|(?<!\.))
+  endOfIdentifier: (?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))  
+  propertyAccess: (?:(\.)|(\.\.(?!\s*[[:digit:]]|\s+)))
+  propertyAccessPreIdentifier: \??\.\s*
+  identifier: '[_$[:alpha:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\?\!]?'
+  cssPropertyKey: '(?:[\@\.]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.]+[\!\<\>]?[\w\-\$]+)*(?:\s*\:)'
+  cssVariable: '(?:--|\$)[\w\-\$]+'
+  cssPropertyName: '[\w\-\$]+'
+  cssNumModifier: '\@[\!\<\>]?[0-9]+'
+  cssModifier: '\@{{cssPropertyName}}'
+  cssUpModifier: '\.\.{{cssPropertyName}}'
+  cssIsModifier: '\.{{cssPropertyName}}'
+  pascalIdentifier: '[[:upper:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\!]?'
+  internalIdentifier: '\${{identifier}}'
+  symbolIdentifier: '\:{{identifier}}'
+  instanceIdentifier: '\@{{identifier}}'
+  metaIdentifier: '\@\@+{{identifier}}'
+  privateIdentifier: '\#+{{identifier}}'
+  tagTypeIdentifier: '\w+(?:\-\w+)*(?:\:\w+(?:\-\w+)*)*'
+  tagAttrIdentifier: '[\w$_]+(?:\-[\w$_]+)*'
+  constantIdentifier: '[[:upper:]][_$[:digit:][:upper:]]*'
+  propertyIdentifier: '\#?{{identifier}}'
+  constantPropertyIdentifier: '\#?{{constantIdentifier}}'
+  quotedStrings: (\'([^\'\\]|\\.)*\')|(\"([^\"\\]|\\.)*\")|(\`([^\`\\]|\\.)*\`)
+  nonIdentifierPropertyName: '{{quotedStrings}}|(\[([^\[\]]|\[[^\[\]]*\])+\])'
+  label: ({{identifier}})\s*(:)
+  hexNumber: \b(?<!\$)0(?:x|X)[0-9a-fA-F][0-9a-fA-F_]*(n)?\b(?!\$)
+  binaryNumber: \b(?<!\$)0(?:b|B)[01][01_]*(n)?\b(?!\$)
+  octalNumber: \b(?<!\$)0(?:o|O)?[0-7][0-7_]*(n)?\b(?!\$)
+  decimalNumber: |-
+    (?<!\$)(?:
+      (?:\b[0-9][0-9_]*(\.)[0-9][0-9_]*[eE][+-]?[0-9][0-9_]*(n)?\b)| # 1.1E+3
+      (?:\b[0-9][0-9_]*(\.)[eE][+-]?[0-9][0-9_]*(n)?\b)|             # 1.E+3
+      (?:\B(\.)[0-9][0-9_]*[eE][+-]?[0-9][0-9_]*(n)?\b)|             # .1E+3
+      (?:\b[0-9][0-9_]*[eE][+-]?[0-9][0-9_]*(n)?\b)|                 # 1E+3
+      (?:\b[0-9][0-9_]*(\.)[0-9][0-9_]*(n)?\b)|                      # 1.1
+      (?:\b[0-9][0-9_]*(\.)(n)?\B)|                                  # 1.
+      (?:\B(\.)[0-9][0-9_]*(n)?\b)|                                  # .1
+      (?:\b[0-9][0-9_]*(n)?\b)                                 # 1
+    )(?!\$)
+  anyNumber: ({{hexNumber}})|({{binaryNumber}})|({{octalNumber}})|({{decimalNumber}})
+  # any use of property name needs to ignore line breaks in regular expression because of decimal number regex (maintained for readability)
+  propertyName: ({{anyNumber}}|({{identifier}})|{{nonIdentifierPropertyName}})
+  constantVar: ({{constantIdentifier}})(?![_$[:alnum:]])
+  nonPropertyLookBehind: '[^\._$[:alnum:]]'
+  lookBehindReturn: '^return|{{nonPropertyLookBehind}}return'
+  lookBehindCase: '^case|{{nonPropertyLookBehind}}case'
+  lookBehindThrow: '^throw|{{nonPropertyLookBehind}}throw'
+  lookBehindYield: '^yield|{{nonPropertyLookBehind}}yield'
+  lookBehindAwait: '^await|{{nonPropertyLookBehind}}await'
+  lookBehindDefault: '^default|{{nonPropertyLookBehind}}default'
+  lookBehindConst: '^const|{{nonPropertyLookBehind}}const'
+  lookBehindLet: '^let|{{nonPropertyLookBehind}}let'
+  lookBehindVar: '^var|{{nonPropertyLookBehind}}var'
+  lookBehindIn: '^in|{{nonPropertyLookBehind}}in'
+  lookBehindOf: '^of|{{nonPropertyLookBehind}}of'
+  lookBehindTypeof: '^typeof|{{nonPropertyLookBehind}}typeof'
+  lookBehindImport: '^import|{{nonPropertyLookBehind}}import'
+  matchingParenthesis: (\(([^\(\)]|(\([^\(\)]*\)))*\))
+  matchingBraces: (\{([^\{\}]|(\{[^\{\}]*\}))*\})
+  matchingBrackets: (\[([^\[\]]|(\[[^\[\]]*\]))*\])
+  inlineComment: \/\*([^\*]|(\*[^\/]))*\*\/
+  startOfDeclaration: '{{startOfIdentifier}}(?:(\bexport)\s+)?'
+  regexpTail: ([gimsuy]+|(?![\/\*])|(?=\/\*))(?!\s*[a-zA-Z0-9_$])
+  completeRegexp: \/(?![\/*])(?=(?:[^\/\\\[]|\\.|\[([^\]\\]|\\.)+\])+\/{{regexpTail}})
+
+patterns:
+- include: '#root'
+- name: comment.line.shebang.imba
+  match: \A(#!).*(?=$)
+  captures:
+    '1': { name: punctuation.definition.comment.imba }
+
+repository:
+
+  root:
+    patterns:
+    - include: '#block'
+
+  block:
+    patterns:
+    - include: '#style-declaration'
+    - include: '#object-keys'
+    - include: '#tag-literal'
+    - include: '#regex'
+    - include: '#keywords'
+    - include: '#comment'
+    - include: '#literal'
+    - include: '#plain-identifiers'
+    - include: '#plain-accessors'
+    - include: '#pairs'
+    - include: '#invalid-indentation'
+
+  expr:
+    patterns:
+    - include: '#style-declaration'
+    - include: '#object-keys'
+    - include: '#tag-literal'
+    - include: '#regex'
+    - include: '#keywords'
+    - include: '#comment'
+    - include: '#literal'
+    - include: '#plain-identifiers'
+    - include: '#plain-accessors'
+    - include: '#pairs'
+
+  #literals
+  literal:
+    patterns:
+    - include: '#number-with-unit-literal'
+    - include: '#numeric-literal'
+    - include: '#boolean-literal'
+    - include: '#null-literal'
+    - include: '#undefined-literal'
+    - include: '#numericConstant-literal'
+    - include: '#this-literal'
+    - include: '#global-literal'
+    - include: '#super-literal'
+    - include: '#type-literal'
+    - include: '#string'
+
+  pairs:
+    patterns:
+    - include: '#curly-braces'
+    - include: '#square-braces'
+    - include: '#round-braces'
+
+  curly-braces:
+    begin: \s*(\{)
+    beginCaptures:
+      '1': { name: meta.brace.curly.imba }
+    end: \}
+    endCaptures:
+      '0': { name: meta.brace.curly.imba }
+    patterns:
+    - include: '#expr'
+    - include: '#punctuation-comma'
+
+  square-braces:
+    begin: \s*(\[)
+    beginCaptures:
+      '1': { name: meta.brace.square.imba }
+    end: \]
+    endCaptures:
+      '0': { name: meta.brace.square.imba }
+    patterns:
+    - include: '#expr'
+    - include: '#punctuation-comma'
+
+  round-braces:
+    begin: \s*(\()
+    beginCaptures:
+      '1': { name: meta.brace.round.imba }
+    end: \)
+    endCaptures:
+      '0': { name: meta.brace.round.imba }
+    patterns:
+    - include: '#expr'
+    - include: '#punctuation-comma'
+
+
+  keywords:
+    patterns:
+    - name: keyword.control.imba
+      match: '(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|finally|throw|as|continue|break|extend|augment){{endOfIdentifier}}'
+
+    - name: keyword.control.imba
+      match: '(?<=export\s+)(default){{endOfIdentifier}}'
+    
+    - name: keyword.control.imba
+      match: '(?<=import\s+)(type)(?=\s+[\w\{\$\_])'
+
+    - name: keyword.control.imba
+      match: '(extend)\s+(?=class|tag)'
+      
+
+    - name: keyword.control.imba
+      match: (?<=[\*\}\w\$]\s+)(from)(?=\s+[\"\'])
+
+    - name: storage.type.function.imba
+      match: '(def|get|set){{endOfIdentifier}}'
+
+    - name: storage.type.class.imba
+      match: '(tag|class|struct){{endOfIdentifier}}'
+
+    - name: storage.type.imba
+      match: '(let|const|constructor){{endOfIdentifier}}'
+
+    - name: storage.type.imba
+      match: '(prop|attr){{endOfIdentifier}}'
+
+    - name: storage.modifier.imba
+      match: '(static)\s+'
+
+    - include: '#ops'
+    
+    - name: keyword.operator.assignment.imba
+      match: (=|\|\|=|\?\?=|\&\&=|\+=|\-=|\*=|\^=|\%=)
+
+    - name: keyword.operator.imba
+      match: (\>\=?|\<\=?)
+  
+    - name: keyword.operator.imba
+      match: '(of|delete|\!?isa|typeof|in|new){{endOfIdentifier}}'
+
+  ops:
+    patterns:
+    - name: keyword.operator.spread.imba
+      match: \.\.\.
+    - name: keyword.operator.assignment.compound.imba
+      match: \*=|(?<!\()/=|%=|\+=|\-=|\?=|\?\?=|=\?
+    - name: keyword.operator.assignment.compound.bitwise.imba
+      match: \^=\?|\|=\?|\~=\?|\&=|\^=|<<=|>>=|>>>=|\|=
+    - name: keyword.operator.bitwise.shift.imba
+      match: <<|>>>|>>
+    - name: keyword.operator.comparison.imba
+      match: ===|!==|==|!=|~=
+    - name: keyword.operator.relational.imba
+      match: <=|>=|<>|<|>
+    - match: (\!)\s*(/)(?![/*])
+      captures:
+        '1': { name: keyword.operator.logical.imba }
+        '2': { name: keyword.operator.arithmetic.imba }
+    - name: keyword.operator.logical.imba
+      match: \!|&&|\|\||\?\?|or\b(?=\s|$)|and\b(?=\s|$)
+    - name: keyword.operator.bitwise.imba
+      match: \&|~|\^|\|
+    - name: keyword.operator.assignment.imba
+      match: \=
+    - name: keyword.operator.decrement.imba
+      match: --
+    - name: keyword.operator.increment.imba
+      match: \+\+
+    - name: keyword.operator.arithmetic.imba
+      match: '%|\*|/|-|\+'
+
+  object-keys:
+    patterns:
+    - match: '{{identifier}}\:'
+      name: meta.object-literal.key
+
+  invalid-indentation:
+    patterns:
+    - name: invalid.whitespace
+      match: ^[\ ]+
+    - name: invalid.whitespace
+      match: '^\t+\s+'
+    
+  style-property:
+    patterns:
+    - name: meta.property-name.css
+      begin: (?={{cssPropertyKey}})
+      beginCaptures:
+        '1': {name: support.function.calc.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: '\s*\:'
+      endCaptures:
+        '0': {name: punctuation.separator.key-value.css}
+      patterns:
+      - name: support.type.property-name.variable.css
+        match: '{{cssVariable}}'
+      - name: support.type.property-name.modifier.breakpoint.css
+        match: '{{cssNumModifier}}'
+      - name: support.type.property-name.modifier.css
+        match: '{{cssModifier}}'
+      - name: support.type.property-name.modifier.up.css
+        match: '{{cssUpModifier}}'
+      - name: support.type.property-name.modifier.is.css
+        match: '{{cssIsModifier}}'
+      - name: support.type.property-name.css
+        match: '{{cssPropertyName}}'
+
+      
+  style-expr:
+    patterns:
+    # - include: '#css-numeric-values'
+    - match: '(\b[0-9][0-9_]*)(\w+|%)?'
+      captures:
+        '1': { name: constant.numeric.integer.decimal.css }
+        '2': { name: keyword.other.unit.css }
+    - name: support.constant.property-value.var.css
+      match: '--{{identifier}}'
+    - name: support.constant.property-value.size.css
+      match: (x+s|sm-|md-|lg-|sm|md|lg|x+l|hg|x+h)(?![\w-])
+    - name: support.constant.property-value.css
+      match: '{{identifier}}'
+    - name: meta.function.css
+      begin: (\()
+      beginCaptures:
+        '1': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      patterns:
+      - include: '#style-expr'
+
+  inline-styles:
+     patterns:
+     - include: '#style-property'
+     - include: '#css-property-values'
+     - include: '#style-expr'
+     
+  style-declaration:
+    name: meta.style.imba
+    begin: ^(\t*)(?:(global|local|export)\s+)?(?:(scoped)\s+)?(css)\s
+    beginCaptures:
+        '2': { name: keyword.control.export.imba }
+        '3': { name: storage.modifier.imba }
+        '4': { name: storage.type.style.imba }
+    end: ^(?!(\1\t|\s*$))
+    patterns:
+    - include: '#css-selector'
+    - include: '#css-comment'
+    - include: '#nested-css-selector'
+    - include: '#inline-styles'
+      
+    
+  nested-style-declaration:
+    name: meta.style.imba
+    begin: ^(\t+)(?=[\n^]*\&)
+    end: ^(?!(\1\t|\s*$))
+    patterns:
+    - include: '#nested-css-selector'
+    - include: '#inline-styles'
+  
+  css-size-keywords:
+    - name: support.constant.size.property-value.css
+      match: (x+s|sm-|md-|lg-|sm|md|lg|x+l|hg|x+h)(?![\w-])
+
+  css-color-keywords:
+    patterns:
+    - name: support.constant.color.w3c-standard-color-name.css
+      match: (?i)(?<![\w-])(aqua|black|blue|fuchsia|gray|green|lime|maroon|navy|olive|orange|purple|red|silver|teal|white|yellow)(?![\w-])
+    - name: support.constant.color.w3c-extended-color-name.css
+      match: |-
+        (?xi) (?<![\w-])
+        (aliceblue|antiquewhite|aquamarine|azure|beige|bisque|blanchedalmond|blueviolet|brown|burlywood
+        |cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan
+        |darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange
+        |darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise
+        |darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen
+        |gainsboro|ghostwhite|gold|goldenrod|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki
+        |lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow
+        |lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray
+        |lightslategrey|lightsteelblue|lightyellow|limegreen|linen|magenta|mediumaquamarine|mediumblue
+        |mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise
+        |mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|oldlace|olivedrab|orangered
+        |orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum
+        |powderblue|rebeccapurple|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell
+        |sienna|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|thistle|tomato
+        |transparent|turquoise|violet|wheat|whitesmoke|yellowgreen)
+        (?![\w-])
+    - name: support.constant.color.current.css
+      match: (?i)(?<![\w-])currentColor(?![\w-])
+      
+  css-functions:
+    patterns:
+    - name: meta.function.calc.css
+      begin: (?i)(?<![\w-])(calc)(\()
+      beginCaptures:
+        '1': {name: support.function.calc.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      endCaptures:
+        '0': {name: punctuation.section.function.end.bracket.round.css}
+      patterns:
+      - name: keyword.operator.arithmetic.css
+        match: '[*/]|(?<=\s|^)[-+](?=\s|$)'
+      - include: '#css-property-values'
+    - name: meta.function.color.css
+      begin: (?i)(?<![\w-])(rgba?|hsla?)(\()
+      beginCaptures:
+        '1': {name: support.function.misc.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      endCaptures:
+        '0': {name: punctuation.section.function.end.bracket.round.css}
+      patterns:
+      - include: '#css-property-values'
+    - name: meta.function.gradient.css
+      begin: |-
+        (?xi) (?<![\w-])
+        (
+          (?:-webkit-|-moz-|-o-)?    # Accept prefixed/historical variants
+          (?:repeating-)?            # "Repeating"-type gradient
+          (?:linear|radial|conic)    # Shape
+          -gradient
+        )
+        (\()
+      beginCaptures:
+        '1': {name: support.function.gradient.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      endCaptures:
+        '0': {name: punctuation.section.function.end.bracket.round.css}
+      patterns:
+      - name: keyword.operator.gradient.css
+        match: (?i)(?<![\w-])(from|to|at)(?![\w-])
+      - include: '#css-property-values'
+    - name: meta.function.gradient.invalid.deprecated.gradient.css
+      begin: (?i)(?<![\w-])(-webkit-gradient)(\()
+      beginCaptures:
+        '1': {name: invalid.deprecated.gradient.function.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      endCaptures:
+        '0': {name: punctuation.section.function.end.bracket.round.css}
+      patterns:
+      - begin: (?i)(?<![\w-])(from|to|color-stop)(\()
+        beginCaptures:
+          '1': {name: invalid.deprecated.function.css}
+          '2': {name: punctuation.section.function.begin.bracket.round.css}
+        end: \)
+        endCaptures:
+          '0': {name: punctuation.section.function.end.bracket.round.css}
+        patterns:
+        - include: '#css-property-values'
+      - include: '#css-property-values'
+    - name: meta.function.misc.css
+      begin: |-
+        (?xi) (?<![\w-])
+        (annotation|attr|blur|brightness|character-variant|contrast|counters?
+        |cross-fade|drop-shadow|element|fit-content|format|grayscale|hue-rotate
+        |image-set|invert|local|minmax|opacity|ornaments|repeat|saturate|sepia
+        |styleset|stylistic|swash|symbols)
+        (\()
+      beginCaptures:
+        '1': {name: support.function.misc.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      endCaptures:
+        '0': {name: punctuation.section.function.end.bracket.round.css}
+      patterns:
+      - name: constant.numeric.other.density.css
+        match: (?i)(?<=[,\s"]|\*/|^)\d+x(?=[\s,"')]|/\*|$)
+      - include: '#css-property-values'
+      - name: variable.parameter.misc.css
+        match: '[^''"),\s]+'
+    - name: meta.function.shape.css
+      begin: (?i)(?<![\w-])(circle|ellipse|inset|polygon|rect)(\()
+      beginCaptures:
+        '1': {name: support.function.shape.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      endCaptures:
+        '0': {name: punctuation.section.function.end.bracket.round.css}
+      patterns:
+      - name: keyword.operator.shape.css
+        match: (?i)(?<=\s|^|\*/)(at|round)(?=\s|/\*|$)
+      - include: '#css-property-values'
+    - name: meta.function.timing-function.css
+      begin: (?i)(?<![\w-])(cubic-bezier|steps)(\()
+      beginCaptures:
+        '1': {name: support.function.timing-function.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      endCaptures:
+        '0': {name: punctuation.section.function.end.bracket.round.css}
+      patterns:
+      - name: support.constant.step-direction.css
+        match: (?i)(?<![\w-])(start|end)(?=\s*\)|$)
+      - include: '#css-property-values'
+    - begin: |-
+        (?xi) (?<![\w-])
+        ( (?:translate|scale|rotate)(?:[XYZ]|3D)?
+        | matrix(?:3D)?
+        | skew[XY]?
+        | perspective
+        )
+        (\()
+      beginCaptures:
+        '1': {name: support.function.transform.css}
+        '2': {name: punctuation.section.function.begin.bracket.round.css}
+      end: \)
+      endCaptures:
+        '0': {name: punctuation.section.function.end.bracket.round.css}
+      patterns:
+      - include: '#css-property-values'
+    
+  css-numeric-values:
+    patterns:
+    - name: constant.other.color.rgb-value.hex.css
+      match: (#)(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b
+      captures:
+        '1': {name: punctuation.definition.constant.css}
+    - name: constant.numeric.css
+      match: |-
+        (?xi) (?<![\w-])
+        [-+]?                               # Sign indicator
+
+        (?:                                 # Numerals
+            [0-9]+ (?:\.[0-9]+)?           # Integer/float with leading digits
+          | \.[0-9]+                       # Float without leading digits
+        )
+
+        (?:                                 # Scientific notation
+          (?<=[0-9])                        # Exponent must follow a digit
+          E                                 # Exponent indicator
+          [-+]?                             # Possible sign indicator
+          [0-9]+                            # Exponent value
+        )?
+
+        (?:                                 # Possible unit for data-type:
+          (%)                               # - Percentage
+          | ( deg|grad|rad|turn             # - Angle
+            | Hz|kHz                        # - Frequency
+            | ch|cm|em|ex|fr|in|mm|mozmm|   # - Length
+              pc|pt|px|q|rem|vh|vmax|vmin|
+              vw
+            | dpi|dpcm|dppx                 # - Resolution
+            | s|ms                          # - Time
+            )
+          \b                               # Boundary checking intentionally lax to
+        )?                                  # facilitate embedding in CSS-like grammars
+      captures:
+        '1': {name: keyword.other.unit.percentage.css}
+        '2': {name: 'keyword.other.unit.${2:/downcase}.css'}
+  
+  css-combinators:
+    patterns:
+    - name: punctuation.separator.combinator.css
+      match: '>>>|>>|>|\+|~'
+    - name: keyword.other.parent-selector.css
+      match: '&'
+  
+  css-pseudo-classes:
+    name: entity.other.attribute-name.pseudo-class.css
+    match: |-
+      (?xi)
+      (:)(:*)
+      (?: active|any-link|checked|default|defined|disabled|empty|enabled|first
+        | (?:first|last|only)-(?:child|of-type)|focus|focus-visible|focus-within
+        | fullscreen|host|hover|in-range|indeterminate|invalid|left|link
+        | optional|out-of-range|placeholder-shown|read-only|read-write
+        | required|right|root|scope|target|unresolved
+        | valid|visited
+      )(?![\w-]|\s*[;}])
+    captures:
+      '1': {name: punctuation.definition.entity.css}
+      '2': {name: invalid.illegal.colon.css}
+  
+  css-pseudo-elements:
+    name: entity.other.attribute-name.pseudo-element.css
+    match: |-
+      (?xi)
+      (?:
+        (::?)                       # Elements using both : and :: notation
+        (?: after
+          | before
+          | first-letter
+          | first-line
+          | (?:-(?:ah|apple|atsc|epub|hp|khtml|moz
+                  |ms|o|rim|ro|tc|wap|webkit|xv)
+              | (?:mso|prince))
+            -[a-z-]+
+        )
+        |
+        (::)                        # Double-colon only
+        (?: backdrop
+          | content
+          | grammar-error
+          | marker
+          | placeholder
+          | selection
+          | shadow
+          | spelling-error
+        )
+      )
+      (?![\w-]|\s*[;}])
+    captures:
+      '1': {name: punctuation.definition.entity.css}
+      '2': {name: punctuation.definition.entity.css}
+      
+  css-commas:
+    name: punctuation.separator.list.comma.css
+    match: ','
+
+  css-comment:
+    patterns:
+    - name: comment.line.imba
+      match: \#(\s.+)?(\n|$)
+    - name: comment.line.imba
+      match: (^\t+)(\#(\s.+)?(\n|$))
+    
+  css-escapes:
+    patterns:
+    - name: constant.character.escape.codepoint.css
+      match: \\[0-9a-fA-F]{1,6}
+    - name: constant.character.escape.newline.css
+      begin: \\$\s*
+      end: ^(?<!\G)
+    - name: constant.character.escape.css
+      match: \\.
+    
+  css-selector:
+    name: meta.selector.css
+    begin: (?<=css\s)(?!{{cssPropertyKey}})
+    end: (\s*(?={{cssPropertyKey}})|\s*$|(?=\s+\#\s))
+    endCaptures:
+      '0': {name: punctuation.separator.sel-properties.css}
+    patterns:
+    - include: '#css-selector-innards'
+    
+  nested-css-selector:
+    name: meta.selector.css
+    begin: (^\t+)(?!{{cssPropertyKey}})
+    end: (\s*(?={{cssPropertyKey}})|\s*$|(?=\s+\#\s))
+    endCaptures:
+      '0': {name: punctuation.separator.sel-properties.css}
+    patterns:
+    - include: '#css-selector-innards'
+    
+  inline-css-selector:
+    name: meta.selector.css
+    begin: (^\t+)(?!{{cssPropertyKey}})
+    end: (\s*(?={{cssPropertyKey}}|\)|\])|\s*$)
+    endCaptures:
+      '0': {name: punctuation.separator.sel-properties.css}
+    patterns:
+    - include: '#css-selector-innards'
+    
+  css-selector-innards:
+    patterns:
+    - include: '#css-commas'
+    - include: '#css-escapes'
+    - include: '#css-combinators'
+    # - include: '#tag-names'
+    - name: entity.name.tag.wildcard.css
+      match: \*
+    - name: meta.attribute-selector.css
+      begin: \[
+      beginCaptures:
+        '0': {name: punctuation.definition.entity.begin.bracket.square.css}
+      end: \]
+      endCaptures:
+        '0': {name: punctuation.definition.entity.end.bracket.square.css}
+      patterns:
+      - include: '#string'
+      - match: (?<=["'\s]|^|\*/)\s*([iI])\s*(?=[\s\]]|/\*|$)
+        captures:
+          '1': {name: storage.modifier.ignore-case.css}
+      - match: (?x)(?<==)\s*((?!/\*)(?:[^\\"'\s\]]|\\.)+)
+        captures:
+          '1':
+            name: string.unquoted.attribute-value.css
+      - include: '#css-escapes'
+      - name: keyword.operator.pattern.css
+        match: '[~|^$*]?='
+      - name: punctuation.separator.css
+        match: \|
+      - match: |-
+          (?x)
+          # Qualified namespace prefix
+          ( -?(?!\d)(?:[\w-]|[^\\x00-\\x7F]|\\(?:[0-9a-fA-F]{1,6}|.))+
+          | \*
+          )
+          # Lookahead to ensure there's a valid identifier ahead
+          (?=
+            \| (?!\s|=|$|\])
+            (?: -?(?!\d)
+             |   [\\\w-]
+             |   [^\\x00-\\x7F]
+             )
+          )
+        captures:
+          '1':
+            name: entity.other.namespace-prefix.css
+      - match: |-
+          (?x)
+          (-?(?!\d)(?>[\w-]|[^\\x00-\\x7F]|\\(?:[0-9a-fA-F]{1,6}|.))+)
+          \s*
+          (?=[~|^\]$*=]|/\*)
+        captures:
+          '1':
+            name: entity.other.attribute-name.css
+    - include: '#css-pseudo-classes'
+    - include: '#css-pseudo-elements'
+    
+  css-property-values:
+    patterns:
+    - include: '#css-commas'
+    - include: '#css-escapes'
+    - include: '#css-functions'
+    # - include: '#property-keywords'
+    # - include: '#unicode-range'
+    - include: '#css-numeric-values'
+    - include: '#css-size-keywords'
+    - include: '#css-color-keywords'
+    - include: '#string'
+    - name: keyword.other.important.css
+      match: '!\s*important(?![\w-])'
+
+  tag-literal:
+    patterns:
+    - name: meta.tag.imba
+      begin: '(<)(?=[\w\{\[\.\#\$\@])'
+      beginCaptures:
+        '1': { name: punctuation.section.tag.open.imba }
+      end: '(>)'
+      endCaptures:
+        '1': { name: punctuation.section.tag.close.imba }
+      patterns:
+      - include: '#tag-content'
+      contentName: 'meta.tag.attributes.imba'
+    
+  tag-content:
+    patterns:
+    - include: '#tag-name'
+    - include: '#tag-expr-name'
+    - include: '#tag-interpolated-content'
+    - include: '#tag-interpolated-parens'
+    - include: '#tag-interpolated-brackets'
+    - include: '#tag-event-handler'
+    - include: '#tag-classname'
+    - include: '#tag-ref'
+    - include: '#tag-attr-value'
+    - include: '#tag-attr-name'
+    - include: '#comment'
+  
+  tag-name:
+    patterns:
+    - name: entity.name.tag.special.imba
+      match: '(?<=<)(self|global|slot)(?=[\.\[\>\s\(])'
+
+  tag-expr-name:
+    begin: '(?<=<)(?=[\w\{])'
+    contentName: entity.name.tag.imba
+    end: '(?=[\.\[\>\s\(])'
+    patterns:
+    - include: '#tag-interpolated-content'
+
+  tag-interpolated-content:
+    name: meta.tag.expression.imba
+    begin: \{
+    beginCaptures:
+      '0': { name: punctuation.section.tag.imba }
+    end: \}
+    endCaptures:
+      '0': { name: punctuation.section.tag.imba }
+    patterns:
+      - include: '#expression'
+    contentName: meta.embedded.line.imba
+
+  tag-interpolated-parens:
+    name: meta.tag.expression.imba
+    begin: \(
+    beginCaptures:
+      '0': { name: punctuation.section.tag.imba }
+    end: \)
+    endCaptures:
+      '0': { name: punctuation.section.tag.imba }
+    patterns:
+      - include: '#expression'
+    contentName: meta.embedded.line.imba
+  
+  tag-interpolated-brackets:
+    name: meta.tag.expression.imba
+    begin: \[
+    beginCaptures:
+      '0': { name: punctuation.section.tag.imba }
+    end: \]
+    endCaptures:
+      '0': { name: punctuation.section.tag.imba }
+    patterns:
+      - include: '#inline-css-selector'
+      - include: '#inline-styles'
+    contentName: meta.embedded.line.imba
+
+  tag-classname:
+    begin: \.
+    patterns:
+    - include: '#tag-interpolated-content'
+    end: (?=[\.\[\>\s\(\=])
+    contentName: entity.other.attribute-name.class.css
+  
+    
+  tag-ref:
+    match: (\${{identifier}})
+    name: entity.other.attribute-name.reference.css
+
+  tag-event-handler:
+    begin: (\@{{tagAttrIdentifier}})
+    beginCaptures:
+      '0': { name: entity.other.event-name.imba }
+
+    patterns:
+    - include: '#tag-interpolated-content'
+    - include: '#tag-interpolated-parens'
+    - name: entity.other.event-modifier.imba
+      begin: \.
+      beginCaptures:
+        '0': { name: punctuation.section.tag }
+      patterns:
+      - include: '#tag-interpolated-parens'
+      - include: '#tag-interpolated-content'
+      end: (?=[\.\[\>\s\=]|$)
+    end: (?=[\[\>\s\=])
+    contentName: entity.other.tag.event
+
+  tag-attr-name:
+    begin: ({{tagAttrIdentifier}})
+    beginCaptures:
+      '0': { name: entity.other.attribute-name.imba }
+    end: (?=[\s\.\[\>\=])
+    contentName: entity.other.attribute-name.imba
+
+  tag-attr-value:
+    begin: (\=)
+    beginCaptures:
+      '0': { name: keyword.operator.tag.assignment }
+    end: (?=>|\s)
+    contentName: meta.tag.attribute-value.imba
+    patterns:
+    - include: '#expr'
+
+
+  expression:
+    patterns:
+    - begin: '\('
+      beginCaptures:
+        '0': { name: meta.brace.round.imba }
+      end: '\)'
+      endCaptures:
+        '0': { name: meta.brace.round.imba }
+      patterns:
+      - include: '#expr'
+    - include: '#tag-literal'
+    - include: '#expressionWithoutIdentifiers'
+    - include: '#identifiers'
+    - include: '#expressionPunctuations'
+
+  expressionWithoutIdentifiers:
+    patterns:
+    - include: '#string'
+    - include: '#regex'
+    - include: '#comment'
+    - include: '#function-expression'
+    - include: '#class-expression'
+    - include: '#ternary-expression'
+    - include: '#new-expr'
+    - include: '#instanceof-expr'
+    - include: '#object-literal'
+    - include: '#expression-operators'
+    - include: '#literal'
+    - include: '#support-objects'
+
+  expressionPunctuations:
+    patterns:
+    - include: '#punctuation-comma'
+    - include: '#punctuation-accessor'
+
+  decorator:
+    name: meta.decorator.imba
+    begin: '{{startOfIdentifier}}\@(?!\@)'
+    beginCaptures:
+      '0': { name: punctuation.decorator.imba }
+    end: (?=\s)
+    patterns:
+    - include: '#expr'
+  
+  array-literal:
+    name: meta.array.literal.imba
+    begin: \s*(\[)
+    beginCaptures:
+      '1': { name: meta.brace.square.imba }
+    end: \]
+    endCaptures:
+      '0': { name: meta.brace.square.imba }
+    patterns:
+    - include: '#expr'
+    - include: '#punctuation-comma'
+  
+  type-literal:
+    name: meta.type.annotation.imba
+    begin: (\\)
+    beginCaptures:
+      '1': { name: meta.type.annotation.open.imba }
+    end: (?=[\s\]\)\,\.\=\}]|$)
+    patterns:
+    - include: '#type-brackets'
+    # - include: '#punctuation-comma'
+
+  type-brackets:
+   patterns:
+    - begin: '{'
+      end: '}'
+      patterns:
+      - include: '#type-brackets'
+    - begin: '\['
+      end: '\]'
+      patterns:
+      - include: '#type-brackets'
+    - begin: '\<'
+      end: '\>'
+      patterns:
+      - include: '#type-brackets'
+    - begin: '\('
+      end: '\)'
+      patterns:
+      - include: '#type-brackets'
+
+  # With respect to seperators, we allow mroe than is syntacically valid below
+  # (multiple consecutive and trailing ones are errors), to be more graceful
+  # when the code contains errors
+  numeric-literal:
+    patterns:
+    - name: constant.numeric.hex.imba
+      match: '{{hexNumber}}'
+      captures:
+        '1': { name: storage.type.numeric.bigint.imba }
+    - name: constant.numeric.binary.imba
+      match: '{{binaryNumber}}'
+      captures:
+        '1': { name: storage.type.numeric.bigint.imba }
+    - name: constant.numeric.octal.imba
+      match: '{{octalNumber}}'
+      captures:
+        '1': { name: storage.type.numeric.bigint.imba }
+    - match: |-
+        (?x)
+        {{decimalNumber}}
+      captures:
+        '0': {name: constant.numeric.decimal.imba}
+        '1': {name: meta.delimiter.decimal.period.imba}
+        '2': { name: storage.type.numeric.bigint.imba }
+        '3': {name: meta.delimiter.decimal.period.imba}
+        '4': { name: storage.type.numeric.bigint.imba }
+        '5': {name: meta.delimiter.decimal.period.imba}
+        '6': { name: storage.type.numeric.bigint.imba }
+        '7': { name: storage.type.numeric.bigint.imba }
+        '8': {name: meta.delimiter.decimal.period.imba}
+        '9': { name: storage.type.numeric.bigint.imba }
+        '10': {name: meta.delimiter.decimal.period.imba}
+        '11': { name: storage.type.numeric.bigint.imba }
+        '12': {name: meta.delimiter.decimal.period.imba}
+        '13': { name: storage.type.numeric.bigint.imba }
+        '14': { name: storage.type.numeric.bigint.imba }
+    
+  number-with-unit-literal:
+    patterns:
+    - match: '([0-9]+)([a-z]+|\%)'
+      captures:
+        '1': { name: constant.numeric.imba }
+        '2': { name: keyword.other.unit.imba }
+    - match: ([0-9]*\.[0-9]+(?:[eE][\-+]?[0-9]+)?)([a-z]+|\%)
+      captures:
+        '1': { name: constant.numeric.decimal.imba }
+        '2': { name: keyword.other.unit.imba }
+
+  boolean-literal:
+    patterns:
+    - name: constant.language.boolean.true.imba
+      match: '{{startOfIdentifier}}(true|yes){{endOfIdentifier}}'
+    - name: constant.language.boolean.false.imba
+      match: '{{startOfIdentifier}}(false|no){{endOfIdentifier}}'
+
+  null-literal:
+    name: constant.language.null.imba
+    match: '{{startOfIdentifier}}null{{endOfIdentifier}}'
+
+  this-literal:
+    name: variable.language.this.imba
+    match: '{{startOfIdentifier}}(this|self)\b(?!\$)'
+
+  global-literal:
+    name: variable.language.global.imba
+    match: '{{startOfIdentifier}}(global)\b(?!\$)'
+
+  super-literal:
+    name: variable.language.super.imba
+    match: '{{startOfIdentifier}}super\b(?!\$)'
+
+  undefined-literal:
+    name: constant.language.undefined.imba
+    match: '{{startOfIdentifier}}undefined{{endOfIdentifier}}'
+
+  numericConstant-literal:
+    patterns:
+    - name: constant.language.nan.imba
+      match: '{{startOfIdentifier}}NaN{{endOfIdentifier}}'
+    - name: constant.language.infinity.imba
+      match: '{{startOfIdentifier}}Infinity{{endOfIdentifier}}'
+
+  plain-identifiers:
+    patterns:
+    - name: variable.other.constant.imba
+      match: '{{constantVar}}'
+    - name: variable.other.class.imba
+      match: '{{pascalIdentifier}}'
+    - name: variable.special.imba
+      match: '\$\d+'
+    - name: variable.other.internal.imba
+      match: '{{internalIdentifier}}'
+    - name: variable.other.symbol.imba
+      match: '{{metaIdentifier}}'
+    - name: variable.other.readwrite.imba
+      match: '{{identifier}}'
+    - name: variable.other.instance.imba
+      match: '{{instanceIdentifier}}'
+    - name: variable.other.private.imba
+      match: '{{privateIdentifier}}'
+    - name: string.symbol.imba
+      match: '{{symbolIdentifier}}'
+    
+  plain-accessors:
+    patterns:
+      - match: '(\.\.?)({{identifier}})'
+        captures:
+          '1': { name: punctuation.accessor.imba }
+          '2': { name: variable.other.property.imba }
+
+  identifiers:
+    patterns:
+    - match: |-
+        (?x)(?:{{propertyAccess}}\s*)?({{identifier}})(?=\s*={{functionOrArrowLookup}})
+      captures:
+        '1': { name: punctuation.accessor.imba }
+        '2': { name: punctuation.accessor.optional.imba }
+        '3': { name: entity.name.function.property.imba }
+    # const properties
+    - match: '{{propertyAccess}}\s*({{constantPropertyIdentifier}})(?![_$[:alnum:]])'
+      captures:
+        '1': { name: punctuation.accessor.imba }
+        '2': { name: punctuation.accessor.optional.imba }
+        '3': { name: variable.other.constant.property.imba }
+    # properties
+    - match: '{{propertyAccess}}({{pascalIdentifier}})'
+      captures:
+        '1': { name: punctuation.accessor.imba }
+        '2': { name: punctuation.accessor.optional.imba }
+        '3': { name: variable.other.class.property.imba }
+    - match: '{{propertyAccess}}({{propertyIdentifier}})'
+      captures:
+        '1': { name: punctuation.accessor.imba }
+        '2': { name: punctuation.accessor.optional.imba }
+        '3': { name: variable.other.property.imba }
+    
+
+    - name: keyword.other
+      match: '(for own|for|if|unless|when)\b'
+    - name: support.function.require
+      match: 'require'
+    - include: '#plain-identifiers'
+    - include: '#type-literal'
+
+  #type annotation
+  type-annotation:
+    patterns:
+    - include: '#type-literal'
+
+  #punctuations
+  punctuation-comma:
+    name: punctuation.separator.comma.imba
+    match: ','
+
+  punctuation-semicolon:
+    name: punctuation.terminator.statement.imba
+    match: ';'
+
+  punctuation-accessor:
+    match: '{{propertyAccess}}'
+    captures:
+      '1': { name: punctuation.accessor.imba }
+      '2': { name: punctuation.accessor.optional.imba }
+
+  #strings and template strings
+  string:
+    patterns:
+    - include: '#qstring-single-multi'
+    - include: '#qstring-double-multi'
+    - include: '#qstring-single'
+    - include: '#qstring-double'
+    - include: '#template'
+
+  qstring-double:
+    name: string.quoted.double.imba
+    begin: '"'
+    beginCaptures:
+      '0': { name: punctuation.definition.string.begin.imba }
+    end: '"'
+    endCaptures:
+      '0': { name: punctuation.definition.string.end.imba }
+    patterns:
+    - include: '#template-substitution-element'
+    - include: '#string-character-escape'
+
+  qstring-single:
+    name: string.quoted.single.imba
+    begin: "'"
+    beginCaptures:
+      '0': { name: punctuation.definition.string.begin.imba }
+    end: (\')|((?:[^\\\n])$)
+    endCaptures:
+      '1': { name: punctuation.definition.string.end.imba }
+      '2': { name: invalid.illegal.newline.imba }
+    patterns:
+    - include: '#string-character-escape'
+
+  qstring-single-multi:
+    name: string.quoted.single.imba
+    begin: "'''"
+    beginCaptures:
+      '0': { name: punctuation.definition.string.begin.imba }
+    end: "'''"
+    endCaptures:
+      '0': { name: punctuation.definition.string.end.imba }
+    patterns:
+    - include: '#string-character-escape'
+
+  string-character-escape:
+    name: constant.character.escape.imba
+    match: \\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\{[0-9A-Fa-f]+\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)
+
+  template:
+    patterns:
+    - name: string.template.imba
+      begin: (?=(({{identifier}}\s*{{propertyAccessPreIdentifier}})*|({{propertyAccessPreIdentifier}})?)({{identifier}})({{typeArguments}}\s*)?`)
+      end: (?=`)
+      patterns:
+      - begin: (?=(({{identifier}}\s*{{propertyAccessPreIdentifier}})*|({{propertyAccessPreIdentifier}})?)({{identifier}}))
+        end: (?=({{typeArguments}}\s*)?`)
+        patterns:
+        - name: entity.name.function.tagged-template.imba
+          match: ({{identifier}})
+    - name: string.template.imba
+      begin: ({{identifier}})\s*(?=({{typeArguments}}\s*)`)
+      beginCaptures:
+        '1': { name: entity.name.function.tagged-template.imba }
+      end: (?=`)
+      patterns:
+      - include: '#type-arguments'
+    - name: string.template.imba
+      begin: '({{identifier}})?(`)'
+      beginCaptures:
+        '1': { name: entity.name.function.tagged-template.imba }
+        '2': { name: punctuation.definition.string.template.begin.imba }
+      end: '`'
+      endCaptures:
+        '0': { name: punctuation.definition.string.template.end.imba}
+      patterns:
+       - include: '#template-substitution-element'
+       - include: '#string-character-escape'
+
+  template-substitution-element:
+    name: meta.template.expression.imba
+    begin: (?<!\\)\{
+    beginCaptures:
+      '0': { name: punctuation.definition.template-expression.begin.imba }
+    end: \}
+    endCaptures:
+      '0': { name: punctuation.definition.template-expression.end.imba }
+    patterns:
+      - include: '#expr'
+    contentName: meta.embedded.line.imba
+
+  #regular expression
+  # regexp syntax is taken from https://github.com/atom/language-javascript/
+  regex:
+    patterns:
+    - name: string.regexp.imba
+      begin: (?<!\+\+|--|})(?<=[=(:,\[?+!]|{{lookBehindReturn}}|{{lookBehindCase}}|=>|&&|\|\||\*\/)\s*(\/)(?![\/*])(?=(?:[^\/\\\[\()]|\\.|\[([^\]\\]|\\.)+\]|\(([^\)\\]|\\.)+\))+\/{{regexpTail}})
+      beginCaptures:
+        '1': { name: punctuation.definition.string.begin.imba }
+      end: (/)([gimsuy]*)
+      endCaptures:
+        '1': { name: punctuation.definition.string.end.imba }
+        '2': { name: keyword.other.imba}
+      patterns:
+      - include: '#regexp'
+    # Check if complete regexp syntax
+    - name: string.regexp.imba
+      begin: ((?<![_$[:alnum:])\]]|\+\+|--|}|\*\/)|((?<={{lookBehindReturn}}|{{lookBehindCase}}))\s*){{completeRegexp}}
+      beginCaptures:
+        '0': { name: punctuation.definition.string.begin.imba }
+      end: (/)([gimsuy]*)
+      endCaptures:
+        '1': { name: punctuation.definition.string.end.imba }
+        '2': { name: keyword.other.imba }
+      patterns:
+      - include: '#regexp'
+
+  regexp:
+    patterns:
+    - name: keyword.control.anchor.regexp
+      match: \\[bB]|\^|\$
+    - match: \\[1-9]\d*|\\k<([a-zA-Z_$][\w$]*)>
+      captures:
+        '0': { name: keyword.other.back-reference.regexp }
+        '1': { name: variable.other.regexp }
+    - name: keyword.operator.quantifier.regexp
+      match: '[?+*]|\{(\d+,\d+|\d+,|,\d+|\d+)\}\??'
+    - name: keyword.operator.or.regexp
+      match: \|
+    - name: meta.group.assertion.regexp
+      begin: (\()((\?=)|(\?!)|(\?<=)|(\?<!))
+      beginCaptures:
+        '1': { name: punctuation.definition.group.regexp }
+        '2': { name: punctuation.definition.group.assertion.regexp }
+        '3': { name: meta.assertion.look-ahead.regexp }
+        '4': { name: meta.assertion.negative-look-ahead.regexp }
+        '5': { name: meta.assertion.look-behind.regexp }
+        '6': { name: meta.assertion.negative-look-behind.regexp }
+      end: (\))
+      endCaptures:
+        '1': {name: punctuation.definition.group.regexp }
+      patterns:
+      - include: '#regexp'
+    - name: meta.group.regexp
+      begin: \((?:(\?:)|(?:\?<([a-zA-Z_$][\w$]*)>))?
+      beginCaptures:
+        '0': { name: punctuation.definition.group.regexp }
+        '1': { name: punctuation.definition.group.no-capture.regexp }
+        '2': { name: variable.other.regexp }
+      end: \)
+      endCaptures:
+        '0': { name: punctuation.definition.group.regexp }
+      patterns:
+      - include: '#regexp'
+    - name: constant.other.character-class.set.regexp
+      begin: (\[)(\^)?
+      beginCaptures:
+        '1': { name: punctuation.definition.character-class.regexp }
+        '2': { name: keyword.operator.negation.regexp }
+      end: (\])
+      endCaptures:
+        '1': {name: punctuation.definition.character-class.regexp }
+      patterns:
+      - name: constant.other.character-class.range.regexp
+        match: (?:.|(\\(?:[0-7]{3}|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}))|(\\c[A-Z])|(\\.))\-(?:[^\]\\]|(\\(?:[0-7]{3}|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}))|(\\c[A-Z])|(\\.))
+        captures:
+          '1': { name: constant.character.numeric.regexp }
+          '2': { name: constant.character.control.regexp }
+          '3': { name: constant.character.escape.backslash.regexp }
+          '4': { name: constant.character.numeric.regexp }
+          '5': { name: constant.character.control.regexp }
+          '6': { name: constant.character.escape.backslash.regexp }
+      - include: '#regex-character-class'
+    - include: '#regex-character-class'
+
+  regex-character-class:
+    patterns:
+    - name: constant.other.character-class.regexp
+      match: \\[wWsSdDtrnvf]|\.
+    - name: constant.character.numeric.regexp
+      match: \\([0-7]{3}|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4})
+    - name: constant.character.control.regexp
+      match: \\c[A-Z]
+    - name: constant.character.escape.backslash.regexp
+      match: \\.
+
+  #comments and directives
+  comment:
+    patterns:
+    - name: comment.block.documentation.imba
+      begin: /\*\*(?!/)
+      beginCaptures:
+        '0': { name: punctuation.definition.comment.imba }
+      end: \*/
+      endCaptures:
+        '0': { name: punctuation.definition.comment.imba }
+      patterns:
+      - include: '#docblock'
+    - name: comment.block.imba
+      begin: (/\*)(?:\s*((@)internal)(?=\s|(\*/)))?
+      beginCaptures:
+        '1': { name: punctuation.definition.comment.imba }
+        '2': { name: storage.type.internaldeclaration.imba }
+        '3': { name: punctuation.decorator.internaldeclaration.imba }
+      end: \*/
+      endCaptures:
+        '0': { name: punctuation.definition.comment.imba }
+    - name: comment.block.imba
+      begin: (###)
+      beginCaptures:
+        '1': { name: punctuation.definition.comment.imba }
+      end: '###(?:[ \t]*\n)'
+      endCaptures:
+        '0': { name: punctuation.definition.comment.imba }
+        
+    - begin: (^[ \t]+)?((//|\#\s)(?:\s*((@)internal)(?=\s|$))?)
+      beginCaptures:
+        '1': { name: punctuation.whitespace.comment.leading.imba }
+        '2': { name: comment.line.double-slash.imba }
+        '3': { name: punctuation.definition.comment.imba }
+        '4': { name: storage.type.internaldeclaration.imba }
+        '5': { name: punctuation.decorator.internaldeclaration.imba }
+      end: (?=$)
+      contentName: comment.line.double-slash.imba
+
+  single-line-comment-consuming-line-ending:
+    begin: (^[ \t]+)?((//|\#\s)(?:\s*((@)internal)(?=\s|$))?)
+    beginCaptures:
+      '1': { name: punctuation.whitespace.comment.leading.imba }
+      '2': { name: comment.line.double-slash.imba }
+      '3': { name: punctuation.definition.comment.imba }
+      '4': { name: storage.type.internaldeclaration.imba }
+      '5': { name: punctuation.decorator.internaldeclaration.imba }
+    end: (?=^)
+    contentName: comment.line.double-slash.imba
+
+  directives:
+    name: comment.line.triple-slash.directive.imba
+    begin: ^(///)\s*(?=<(reference|amd-dependency|amd-module)(\s+(path|types|no-default-lib|lib|name)\s*=\s*({{quotedStrings}}))+\s*/>\s*$)
+    beginCaptures:
+      '1': { name: punctuation.definition.comment.imba }
+    end: (?=$)
+    patterns:
+    - name: meta.tag.imba
+      begin: (<)(reference|amd-dependency|amd-module)
+      beginCaptures:
+        '1': { name: punctuation.definition.tag.directive.imba }
+        '2': { name: entity.name.tag.directive.imba }
+      end: />
+      endCaptures:
+        '0': { name: punctuation.definition.tag.directive.imba }
+      patterns:
+      - name: entity.other.attribute-name.directive.imba
+        match: 'path|types|no-default-lib|lib|name'
+      - name: keyword.operator.assignment.imba
+        match: '='
+      - include: '#string'
+
+  #jsdoc syntax taken from https://github.com/atom/language-javascript/
+  docblock:
+    patterns:
+    # @access private|protected|public
+    - match: |-
+        (?x)
+        ((@)(?:access|api))
+        \s+
+        (private|protected|public)
+        \b
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: constant.language.access-type.jsdoc }
+    # @author name [<email>]
+    - match: |-
+        (?x)
+        ((@)author)
+        \s+
+        (
+          [^@\s<>*/]
+          (?:[^@<>*/]|\*[^/])*
+        )
+        (?:
+          \s*
+          (<)
+          ([^>\s]+)
+          (>)
+        )?
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: entity.name.type.instance.jsdoc }
+        '4': { name: punctuation.definition.bracket.angle.begin.jsdoc }
+        '5': { name: constant.other.email.link.underline.jsdoc }
+        '6': { name: punctuation.definition.bracket.angle.end.jsdoc }
+    # @borrows <that namepath> as <this namepath>
+    - match: |-
+        (?x)
+        ((@)borrows) \s+
+        ((?:[^@\s*/]|\*[^/])+)    # <that namepath>
+        \s+ (as) \s+              # as
+        ((?:[^@\s*/]|\*[^/])+)    # <this namepath>
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: entity.name.type.instance.jsdoc }
+        '4': { name: keyword.operator.control.jsdoc }
+        '5': { name: entity.name.type.instance.jsdoc }
+    # @example text();
+    - name: meta.example.jsdoc
+      begin: ((@)example)\s+
+      end: (?=@|\*/)
+      beginCaptures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+      patterns:
+      # Match to prevent leading asterisk being highlighted as JS
+      - match: ^\s\*\s+
+      # Leading <caption>…</caption> before example
+      - contentName: constant.other.description.jsdoc
+        begin: \G(<)caption(>)
+        beginCaptures:
+          '0': { name: entity.name.tag.inline.jsdoc }
+          '1': { name: punctuation.definition.bracket.angle.begin.jsdoc }
+          '2': { name: punctuation.definition.bracket.angle.end.jsdoc }
+        end: (</)caption(>)|(?=\*/)
+        endCaptures:
+          '0': { name: entity.name.tag.inline.jsdoc }
+          '1': { name: punctuation.definition.bracket.angle.begin.jsdoc }
+          '2': { name: punctuation.definition.bracket.angle.end.jsdoc }
+      # Highlighted JavaScript example
+      - match: '[^\s@*](?:[^*]|\*[^/])*'
+        captures:
+          '0':
+            name: source.embedded.imba
+            # Commenting out the embedded pattern matching since sublime doesnt support this
+            # patterns:
+            # - include: source.imba
+    # @kind type
+    - match: >-
+        (?x)
+        ((@)kind)
+        \s+
+        (class|constant|event|external|file|function|member|mixin|module|namespace|typedef)
+        \b
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: constant.language.symbol-type.jsdoc }
+    # @see namepathOrURL
+    - match: |-
+        (?x)
+        ((@)see)
+        \s+
+        (?:
+          # URL
+          (
+            (?=https?://)
+            (?:[^\s*]|\*[^/])+
+          )
+          |
+          # JSDoc namepath
+          (
+            (?!
+              # Avoid matching bare URIs (also acceptable as links)
+              https?://
+              |
+              # Avoid matching {@inline tags}; we match those below
+              (?:\[[^\[\]]*\])? # Possible description [preceding]{@tag}
+              {@(?:link|linkcode|linkplain|tutorial)\b
+            )
+            # Matched namepath
+            (?:[^@\s*/]|\*[^/])+
+          )
+        )
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: variable.other.link.underline.jsdoc }
+        '4': { name: entity.name.type.instance.jsdoc }
+    # @template Foo,Bar
+    - match: |-
+        (?x)
+        ((@)template)
+        \s+
+        # One or more valid identifiers
+        (
+          [A-Za-z_$]         # First character: non-numeric word character
+          [\w$.\[\]]*        # Rest of identifier
+          (?:                # Possible list of additional identifiers
+            \s* , \s*
+            [A-Za-z_$]
+            [\w$.\[\]]*
+          )*
+        )
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3':
+          name: variable.other.jsdoc
+          # Commenting out the embedded pattern matching since sublime doesnt support this
+          # patterns:
+          # - name: punctuation.delimiter.object.comma.jsdoc
+          #   match: ','
+    # Tags followed by an identifier token
+    # -  @<tag> identifier
+    - match: |-
+        (?x)
+        (
+          (@)
+          (?:arg|argument|const|constant|member|namespace|param|var)
+        )
+        \s+
+        (
+          [A-Za-z_$]
+          [\w$.\[\]]*
+        )
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: variable.other.jsdoc }
+    # Tags followed by a type expression, then a namepath
+    # -  @<tag> {type} namepath
+    - begin: ((@)typedef)\s+(?={)
+      beginCaptures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+      end: (?=\s|\*/|[^{}\[\]A-Za-z_$])
+      patterns:
+      - include: '#jsdoctype'
+      - name: entity.name.type.instance.jsdoc
+        match: (?:[^@\s*/]|\*[^/])+
+    # Tags followed by a type expression, then an identifier
+    # -  @<tag> {type} identifier
+    - begin: >-
+        ((@)(?:arg|argument|const|constant|member|namespace|param|prop|property|var))\s+(?={)
+      beginCaptures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+      end: (?=\s|\*/|[^{}\[\]A-Za-z_$])
+      patterns:
+      - include: '#jsdoctype'
+      - name: variable.other.jsdoc
+        match: ([A-Za-z_$][\w$.\[\]]*)
+      # Optional value
+      - name: variable.other.jsdoc
+        match: |-
+          (?x)
+          (\[)\s*
+          [\w$]+
+          (?:
+            (?:\[\])?                                        # Foo[ ].bar properties within an array
+            \.                                                # Foo.Bar namespaced parameter
+            [\w$]+
+          )*
+          (?:
+            \s*
+            (=)                                                # [foo=bar] Default parameter value
+            \s*
+            (
+              # The inner regexes are to stop the match early at */ and to not stop at escaped quotes
+              (?>
+                "(?:(?:\*(?!/))|(?:\\(?!"))|[^*\\])*?" |                      # [foo="bar"] Double-quoted
+                '(?:(?:\*(?!/))|(?:\\(?!'))|[^*\\])*?' |                      # [foo='bar'] Single-quoted
+                \[ (?:(?:\*(?!/))|[^*])*? \] |                                # [foo=[1,2]] Array literal
+                (?:(?:\*(?!/))|\s(?!\s*\])|\[.*?(?:\]|(?=\*/))|[^*\s\[\]])*   # Everything else
+              )*
+            )
+          )?
+          \s*(?:(\])((?:[^*\s]|\*[^\s/])+)?|(?=\*/))
+        captures:
+          '1': { name: punctuation.definition.optional-value.begin.bracket.square.jsdoc }
+          '2': { name: keyword.operator.assignment.jsdoc }
+          '3':
+            name: source.embedded.imba
+            # Commenting out the embedded pattern matching since sublime doesnt support this
+            # patterns:
+            #   - include: '#inline-tags'
+            #   - include: source.js
+          '4': { name: punctuation.definition.optional-value.end.bracket.square.jsdoc }
+          '5': { name: invalid.illegal.syntax.jsdoc }
+    # Tags followed by a type expression
+    # -  @<tag> {type}
+    - begin: |-
+        (?x)
+        (
+          (@)
+          (?:define|enum|exception|export|extends|lends|implements|modifies
+          |namespace|private|protected|returns?|suppress|this|throws|type
+          |yields?)
+        )
+        \s+(?={)
+      beginCaptures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+      end: (?=\s|\*/|[^{}\[\]A-Za-z_$])
+      patterns:
+      - include: '#jsdoctype'
+    # Tags followed by a namepath
+    # -  @<tag> namepath
+    - match: |-
+        (?x)
+        (
+          (@)
+          (?:alias|augments|callback|constructs|emits|event|fires|exports?
+          |extends|external|function|func|host|lends|listens|interface|memberof!?
+          |method|module|mixes|mixin|name|requires|see|this|typedef|uses)
+        )
+        \s+
+        (
+          (?:
+            [^{}@\s*] | \*[^/]
+          )+
+        )
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: entity.name.type.instance.jsdoc }
+    # Tags followed by a quoted arbitrary value
+    # -  @<tag> "Quoted value"
+    - contentName: variable.other.jsdoc
+      begin: ((@)(?:default(?:value)?|license|version))\s+(([''"]))
+      beginCaptures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: variable.other.jsdoc }
+        '4': { name: punctuation.definition.string.begin.jsdoc }
+      end: (\3)|(?=$|\*/)
+      endCaptures:
+        '0': { name: variable.other.jsdoc }
+        '1': { name: punctuation.definition.string.end.jsdoc }
+    # Tags followed by an arbitrary value
+    # -  @<tag> value
+    - match: ((@)(?:default(?:value)?|license|tutorial|variation|version))\s+([^\s*]+)
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+        '3': { name: variable.other.jsdoc }
+    # Tags without arguments, or a tag without expected arguments. Because JSDoc permits
+    # tags to be spread across lines, we should at least highlight the opening tag for
+    # stuff like this:
+    #
+    #    /**
+    #      * @param
+    #      * {type}
+    #      * name
+    - name: storage.type.class.jsdoc
+      match: >-
+        (?x) (@)
+        (?:abstract|access|alias|api|arg|argument|async|attribute|augments|author|beta|borrows|bubbles
+        |callback|chainable|class|classdesc|code|config|const|constant|constructor|constructs|copyright
+        |default|defaultvalue|define|deprecated|desc|description|dict|emits|enum|event|example|exception
+        |exports?|extends|extension(?:_?for)?|external|externs|file|fileoverview|final|fires|for|func
+        |function|generator|global|hideconstructor|host|ignore|implements|implicitCast|inherit[Dd]oc
+        |inner|instance|interface|internal|kind|lends|license|listens|main|member|memberof!?|method
+        |mixes|mixins?|modifies|module|name|namespace|noalias|nocollapse|nocompile|nosideeffects
+        |override|overview|package|param|polymer(?:Behavior)?|preserve|private|prop|property|protected
+        |public|read[Oo]nly|record|require[ds]|returns?|see|since|static|struct|submodule|summary
+        |suppress|template|this|throws|todo|tutorial|type|typedef|unrestricted|uses|var|variation
+        |version|virtual|writeOnce|yields?)
+        \b
+      captures:
+        '1': { name: punctuation.definition.block.tag.jsdoc }
+    - include: '#inline-tags'
+    # any tag
+    - match: ((@)(?:{{identifier}}))(?=\s+)
+      captures:
+        '1': { name: storage.type.class.jsdoc }
+        '2': { name: punctuation.definition.block.tag.jsdoc }
+
+  brackets:
+  # Balanced brackets (square or curly)
+    patterns:
+    - begin: '{'
+      end: '}|(?=\*/)'
+      patterns:
+      - include: '#brackets'
+    - begin: '\['
+      end: '\]|(?=\*/)'
+      patterns:
+      - include: '#brackets'
+
+  inline-tags:
+    patterns:
+    # Description preceding {@inline tag}
+    - name: constant.other.description.jsdoc
+      match: (\[)[^\]]+(\])(?={@(?:link|linkcode|linkplain|tutorial))
+      captures:
+        '1': { name: punctuation.definition.bracket.square.begin.jsdoc }
+        '2': { name: punctuation.definition.bracket.square.end.jsdoc }
+    # {@link|@tutorial …}
+    - name: entity.name.type.instance.jsdoc
+      begin: ({)((@)(?:link(?:code|plain)?|tutorial))\s*
+      beginCaptures:
+        '1': { name: punctuation.definition.bracket.curly.begin.jsdoc }
+        '2': { name: storage.type.class.jsdoc }
+        '3': { name: punctuation.definition.inline.tag.jsdoc }
+      end: '}|(?=\*/)'
+      endCaptures:
+        '0': { name: punctuation.definition.bracket.curly.end.jsdoc }
+      patterns:
+      - match: \G((?=https?://)(?:[^|}\s*]|\*[/])+)(\|)?
+        captures:
+          '1': { name: variable.other.link.underline.jsdoc }
+          '2': { name: punctuation.separator.pipe.jsdoc }
+      - match: \G((?:[^{}@\s|*]|\*[^/])+)(\|)?
+        captures:
+          '1': { name: variable.other.description.jsdoc }
+          '2': { name: punctuation.separator.pipe.jsdoc }
+
+  jsdoctype:
+  # {type}
+    patterns:
+    # {unclosed
+    - name: invalid.illegal.type.jsdoc
+      match: \G{(?:[^}*]|\*[^/}])+$
+    - contentName: entity.name.type.instance.jsdoc
+      begin: \G({)
+      beginCaptures:
+        '0': { name: entity.name.type.instance.jsdoc }
+        '1': { name: punctuation.definition.bracket.curly.begin.jsdoc }
+      end: ((}))\s*|(?=\*/)
+      endCaptures:
+        '1': { name: entity.name.type.instance.jsdoc }
+        '2': { name: punctuation.definition.bracket.curly.end.jsdoc }
+      patterns:
+      - include: '#brackets'
+
+...

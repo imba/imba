@@ -992,7 +992,6 @@ export default class ImbaScriptInfo
 		while i > 0
 			let tok = tokens[--i]
 			if tok.match('operator.assign operator.declval')
-				console.log tok
 				unless spaced(tok)
 					edits.push([tok.endOffset,0,' '])
 				unless spaced(tok.prev)

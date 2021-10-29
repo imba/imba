@@ -1,0 +1,231 @@
+{
+	"name": "vsimba",
+	"displayName": "Imba",
+	"description": "Language support for Imba",
+	"version": "3.0.9-alpha.3",
+	"publisher": "scrimba",
+	"main": "./dist/src/index.js",
+	"icon": "assets/imba.png",
+	"license": "MIT",
+	"author": "Sindre Aarsaether",
+	"repository": {
+        "type": "git",
+        "url": "https://github.com/imba/imba.git",
+        "directory": "packages/vsimba"
+    },
+	"engines": {
+		"vscode": "^1.59.0"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"activationEvents": [
+		"onLanguage:imba",
+		"onLanguage:imba1",
+		"workspaceContains:**/*.imba",
+		"workspaceContains:**/imbaconfig.json"
+	],
+	"contributes": {
+		"commands": [
+			{
+				"command": "imba.getProgramDiagnostics",
+				"title": "Find Imba problems in Project"
+			},
+			{
+				"command": "imba.clearProgramProblems",
+				"title": "Clear Imba problems in Project"
+			},
+			{
+				"command": "imba.debugService",
+				"title": "Log details from Imba tooling"
+			},
+			{
+				"command": "ximba.incrementByOne",
+				"title": "Increment by 1"
+			},
+			{
+				"command": "ximba.decrementByOne",
+				"title": "Decrement by 1"
+			},
+			{
+				"command": "imba.foldStyles",
+				"title": "Fold Style Blocks"
+			},
+			{
+				"command": "imba.unfoldStyles",
+				"title": "Unfold Style Blocks"
+			},
+			{
+				"command": "imba.toggleStyles",
+				"title": "Toggle Style Blocks folding"
+			},
+			{
+				"command": "imba.setDefaultSettings",
+				"title": "Update Workspace Settings for Imba"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "ximba.incrementByOne",
+				"when": "editorTextFocus && editorLangId == imba",
+				"key": "ctrl+up"
+			},
+			{
+				"command": "imba.toggleStyles",
+				"when": "editorTextFocus && foldingEnabled && editorLangId == imba",
+				"key": "shift+alt+m"
+			},
+			{
+				"command": "ximba.decrementByOne",
+				"when": "editorTextFocus && editorLangId == imba",
+				"key": "ctrl+down"
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "Imba",
+			"properties": {
+				"imba.suggest.preferAbbreviatedStyleProperties": {
+					"description": "Controls whether Imba should automatically replace long-form style properties with their shorter aliases in completions.",
+					"type": "string",
+					"default": "always",
+					"enum": [
+						"always",
+						"inline",
+						"never"
+					],
+					"enumDescriptions": [
+						"Always insert abbreviated style properties",
+						"Only insert abbreviated style properties names in inline styles",
+						"Never insert abbreviated style properties"
+					]
+				},
+				"imba.debugPort": {
+					"type": "number",
+					"default": 0,
+					"description": "Port for debugging"
+				},
+				"imba.verbose": {
+					"type": "boolean",
+					"default": false,
+					"description": "Controls whether the language server should log out details"
+				},
+				"imba.checkImba": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable/disable semantic checking of Imba files. Existing imbaconfig.json overrides this setting."
+				}
+			}
+		},
+		"typescriptServerPlugins": [
+			{
+				"name": "typescript-imba-plugin",
+				"enableForWorkspaceTypeScriptVersions": true,
+				"configNamespace": "typescript-imba",
+				"languages": [
+					"imba"
+				]
+			}
+		],
+		"configurationDefaults": {
+			"[imba]": {
+				"editor.insertSpaces": false,
+				"editor.tabSize": 4,
+				"editor.autoIndent": "advanced",
+				"editor.suggest.showWords": false,
+				"editor.foldingStrategy": "indentation",
+				"files.eol": "\n"
+			},
+			"[imba1]": {
+				"editor.insertSpaces": false,
+				"editor.tabSize": 4,
+				"editor.autoIndent": "advanced",
+				"editor.suggest.showWords": false,
+				"editor.foldingStrategy": "indentation",
+				"files.eol": "\n"
+			}
+		},
+		"languages": [
+			{
+				"id": "imba1",
+				"aliases": [
+					"Imba1"
+				],
+				"extensions": [
+					".imba1"
+				],
+				"configuration": "./language-configuration.json",
+				"firstLine": "^#!/.*\\bimba1*\\b"
+			},
+			{
+				"id": "imba",
+				"aliases": [
+					"Imba",
+					"imba"
+				],
+				"extensions": [
+					".imba",
+					".imba2"
+				],
+				"configuration": "./language-configuration.json",
+				"firstLine": "^#!/.*\\bimba[2-9.-]*\\b"
+			}
+		],
+		"grammars": [
+			{
+				"language": "imba",
+				"scopeName": "source.imba",
+				"path": "./syntaxes/imba.tmLanguage"
+			},
+			{
+				"scopeName": "markdown.imba.codeblock",
+				"path": "./syntaxes/imbamd.tmLanguage.json",
+				"injectTo": [
+					"text.html.markdown"
+				],
+				"embeddedLanguages": {
+					"meta.embedded.block.imba": "imba"
+				}
+			},
+			{
+				"language": "imba1",
+				"scopeName": "source.imba1",
+				"path": "./syntaxes/imba1.tmLanguage.json",
+				"embeddedLanguages": {
+					"meta.embedded.block.css": "css"
+				}
+			}
+		],
+		"themes": [
+			{
+				"label": "Imba Dark",
+				"uiTheme": "vs-dark",
+				"path": "./themes/ImbaDark.json"
+			}
+		]
+	},
+	"dependencies": {
+		"@types/vscode": "^1.56.0",
+		"node-ipc": "^9.1.4",
+		"typescript-imba-plugin": "file:../typescript-imba-plugin"
+	},
+	"devDependencies": {
+		"chroma-js": "^2.1.0",
+		"fs-extra": "^10.0.0",
+		"imba": "^2.0.0-alpha.170",
+		"js-yaml": "^3.14.0",
+		"plist": "^3.0.1",
+		"vscode": "^1.1.37"
+	},
+	"scripts": {
+		"watch": "imba build -wS --node.external +vscode src/index.imba",
+		"build": "imba build -S --node.external +vscode src/index.imba",
+		"build-theme": "imba scripts/compile-theme.imba",
+		"publish": "node scripts/vsce-publish.js"
+	},
+	"__metadata": {
+		"id": "c0926dfb-bf29-4689-849e-63ca645e2c1c",
+		"publisherDisplayName": "Scrimba",
+		"publisherId": "d9260c1d-7c6a-483e-ae32-9e6d2314dff0"
+	}
+}

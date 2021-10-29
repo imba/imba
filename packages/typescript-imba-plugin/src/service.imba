@@ -125,12 +125,15 @@ export default class Service
 		let libs = opts.lib or ["esnext","dom","dom.iterable"]
 		let imbalib = 'imba-typings/imba.d.ts'
 		# np.resolve(global.IMBA_TYPINGS_DIR or libDir,'imba.d.ts')
-		let imbadir = resolveImbaDirForProject(proj)
+		let imbadir = !inferred && resolveImbaDirForProject(proj)
+		
 		
 		if imbadir
 			let src = np.resolve(imbadir,'typings','imba.d.ts')
 			if ps.host.fileExists(src)
 				imbalib = src
+				
+		util.log("using imba lib",imbalib,proj)
 		# resolveImportPath
 		# console.warn "PROJECT",imbalib
 		# imbalib = 'imba-typings/imba.d.ts'

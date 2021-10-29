@@ -12,15 +12,15 @@ let EXTRA_HIT = null
 let EXTRA_EXTENSIONS = ['.imba']
 
 const typings = {
-	"imba.d.ts": import("../../../typings/imba.d.ts?as=text")
-	"imba.dom.d.ts": import("../../../typings/imba.dom.d.ts?as=text")
-	"imba.events.d.ts": import("../../../typings/imba.events.d.ts?as=text")
-	"imba.router.d.ts": import("../../../typings/imba.router.d.ts?as=text")
-	"imba.snippets.d.ts": import("../../../typings/imba.snippets.d.ts?as=text")
-	"imba.types.d.ts": import("../../../typings/imba.types.d.ts?as=text")
-	"styles.d.ts": import("../../../typings/styles.d.ts?as=text")
-	"styles.generated.d.ts": import("../../../typings/styles.generated.d.ts?as=text")
-	"styles.modifiers.d.ts": import("../../../typings/styles.modifiers.d.ts?as=text")
+	"imba.d.ts": import("../../imba/typings/imba.d.ts?as=text")
+	"imba.dom.d.ts": import("../../imba/typings/imba.dom.d.ts?as=text")
+	"imba.events.d.ts": import("../../imba/typings/imba.events.d.ts?as=text")
+	"imba.router.d.ts": import("../../imba/typings/imba.router.d.ts?as=text")
+	"imba.snippets.d.ts": import("../../imba/typings/imba.snippets.d.ts?as=text")
+	"imba.types.d.ts": import("../../imba/typings/imba.types.d.ts?as=text")
+	"styles.d.ts": import("../../imba/typings/styles.d.ts?as=text")
+	"styles.generated.d.ts": import("../../imba/typings/styles.generated.d.ts?as=text")
+	"styles.modifiers.d.ts": import("../../imba/typings/styles.modifiers.d.ts?as=text")
 }
 
 def isEditing
