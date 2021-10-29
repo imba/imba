@@ -2,17 +2,17 @@
 	"name": "vsimba",
 	"displayName": "Imba",
 	"description": "Language support for Imba",
-	"version": "3.0.9-alpha.3",
+	"version": "3.0.9",
 	"publisher": "scrimba",
 	"main": "./dist/src/index.js",
 	"icon": "assets/imba.png",
 	"license": "MIT",
 	"author": "Sindre Aarsaether",
 	"repository": {
-        "type": "git",
-        "url": "https://github.com/imba/imba.git",
-        "directory": "packages/vsimba"
-    },
+		"type": "git",
+		"url": "https://github.com/imba/imba.git",
+		"directory": "packages/vsimba"
+	},
 	"engines": {
 		"vscode": "^1.59.0"
 	},
@@ -212,7 +212,7 @@
 	"devDependencies": {
 		"chroma-js": "^2.1.0",
 		"fs-extra": "^10.0.0",
-		"imba": "^2.0.0-alpha.170",
+		"imba": "^2.0.0-alpha.181",
 		"js-yaml": "^3.14.0",
 		"plist": "^3.0.1",
 		"vscode": "^1.1.37"
