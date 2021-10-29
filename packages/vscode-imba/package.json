@@ -222,7 +222,8 @@
 		"prod:version": "lerna version",
 		"build-theme": "imba scripts/compile-theme.imba",
 		"prep": "npm install --save-dev imba@latest & npm install typescript-imba-plugin",
-		"test": "node server/test.js"
+		"test": "node server/test.js",
+		"publish": "vsce package"
 	},
 	"__metadata": {
 		"id": "c0926dfb-bf29-4689-849e-63ca645e2c1c",
