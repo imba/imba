@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.182
+
+- Fixed issues with using event modifiers with external imba library
+
 ## 2.0.0-alpha.177
 
 - Added type declarations into typings/
