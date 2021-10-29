@@ -4,7 +4,7 @@
 </p>
 
 [![install size](https://packagephobia.now.sh/badge?p=imba)](https://packagephobia.now.sh/result?p=imba)
-[![Build Status](https://travis-ci.org/imba/imba.svg?branch=master)](https://travis-ci.org/imba/imba) [![Downloads](https://img.shields.io/npm/dm/imba.svg)](https://npmcharts.com/compare/imba?minimal=true) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![License](https://img.shields.io/npm/l/imba.svg)](https://www.npmjs.com/package/imba)
+[![Downloads](https://img.shields.io/npm/dm/imba.svg)](https://npmcharts.com/compare/imba?minimal=true) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![License](https://img.shields.io/npm/l/imba.svg)](https://www.npmjs.com/package/imba)
 
 Imba is a friendly full-stack programming language for the web that compiles to performant JavaScript.
 It has language-level support for defining, extending, subclassing, instantiating and rendering DOM nodes.
