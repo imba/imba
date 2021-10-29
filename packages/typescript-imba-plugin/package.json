@@ -13,10 +13,7 @@
         "url": "https://github.com/imba/imba.git",
         "directory": "packages/typescript-imba-plugin"
     },
-    "devDependencies": {
-        "@types/typescript": "^2.0.0",
-        "marked": "^3.0.7"
-    },
+    "devDependencies": {},
     "dependencies": {
         "node-ipc": "^9.1.4"
     }

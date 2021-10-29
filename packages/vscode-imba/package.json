@@ -210,6 +210,7 @@
 	},
 	"devDependencies": {
 		"chroma-js": "^2.1.0",
+		"fs-extra": "^10.0.0",
 		"imba": "^2.0.0-alpha.170",
 		"js-yaml": "^3.14.0",
 		"plist": "^3.0.1",
@@ -223,7 +224,7 @@
 		"build-theme": "imba scripts/compile-theme.imba",
 		"prep": "npm install --save-dev imba@latest & npm install typescript-imba-plugin",
 		"test": "node server/test.js",
-		"publish": "vsce package"
+		"publish": "node scripts/vsce-publish.js"
 	},
 	"__metadata": {
 		"id": "c0926dfb-bf29-4689-849e-63ca645e2c1c",
