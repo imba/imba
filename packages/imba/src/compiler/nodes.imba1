@@ -10154,7 +10154,6 @@ export class StyleRuleSet < StyleNode
 
 		
 		if stack.parent isa ClassBody
-			# console.log 'ruleset is inside of class!!'
 			let owner = stack.up(2)
 			if owner isa TagDeclaration
 				if !@variable
@@ -10343,8 +10342,18 @@ export class StyleRuleSet < StyleNode
 			let expr = STACK.isExpression
 			return expr ? "(" + out.join(',') + ")" : out.join(";\n")
 			# return "{@tvar} = '{@flagIf}'"
+			
+		
+		if STACK.tsc and @placeholders:length
+			let out = []
+			for ph in placeholders
+				out.push ph.runtimeValue.c
+			let expr = STACK.isExpression
+			return expr ? "(" + out.join(',') + ")" : out.join(";\n")
 
-		return '' if option(:inClassBody) or option(:inTagTree) or option(:toplevel)
+		if option(:inClassBody) or option(:inTagTree) or option(:toplevel)
+			return ''
+
 		let out = "'{@name}'"
 		return out
 
