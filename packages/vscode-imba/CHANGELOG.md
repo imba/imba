@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+* Don't add html class name for named elements.
+
+    Previously when naming an element like `<div$title> ...`, imba would automatically
+    add a `title` class name to the element. This can lead to confusing issues. If you
+    have used this undocumented behaviour previously you just need to add the class
+    yourself, like `<div$title.title>`.
+
 ## 3.0.9
 
 * Improved completions for events and modifiers

@@ -9135,9 +9135,7 @@ export class Tag < TagLike
 		if option(:reference)
 			if oscope
 				let name = String(option(:reference)).slice(1)
-				@classNames.push(name)
-				if component
-					@classNames.push("ref--{name}")
+				@classNames.push("ref--{name}")
 		
 		if option(:key)
 			set(detached: yes)
