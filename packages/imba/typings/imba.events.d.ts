@@ -9,10 +9,14 @@ interface Event {
     αprevent(): void;
     /**
      Stops the event from propagating up the tree. Event listeners for the same event on nodes further up the tree will not be triggered. See Event.stopPropagation()
-     
-     
     */
     αstop(): void;
+    
+    /**
+     Prevents default action & stops event from bubbling.
+    */
+    αtrap(): void;
+    
     /**
      * Indicates that the listeners should be invoked at most once. The listener will automatically be removed when invoked.
      */
