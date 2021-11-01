@@ -21,7 +21,6 @@ jobs:
       run: |
         cd packages/imba
         npm install
-        npm run bootstrap
         npm run test
       env:
         CI: true
