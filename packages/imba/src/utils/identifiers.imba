@@ -40,6 +40,7 @@ const toJSreplacer = do(m) ToJSMap[m]
 export def toJSIdentifier raw
 	raw.replace(toJSregex,toJSreplacer)
 
+
 export const ToImbaMap = {
 	'Ξ': '-'
 	'Φ': '?'
@@ -52,4 +53,6 @@ const toImbaReplacer = do(m) ToImbaMap[m]
 
 export def toImbaIdentifier raw
 	raw.replace(toImbaRegex,toImbaReplacer)
-	
+
+export def toCustomTagIdentifier str
+	'Γ' + toJSIdentifier(str)

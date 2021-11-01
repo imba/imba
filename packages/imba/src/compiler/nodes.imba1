@@ -12,7 +12,7 @@ import Token from './token'
 import SourceMap from './sourcemap'
 
 import StyleRule,StyleTheme,Color,StyleSheet from './styler.imba'
-import ReservedIdentifierRegex,InternalPrefixes,toJSIdentifier from '../utils/identifiers.imba'
+import ReservedIdentifierRegex,InternalPrefixes,toJSIdentifier,toCustomTagIdentifier from '../utils/identifiers.imba'
 import parseAsset from './assets.imba'
 import Compilation from './compilation'
 
@@ -5806,10 +5806,14 @@ export class TypeAnnotation < Node
 		@value.endLoc
 
 	def asParam name
-		"@param \{{M(String(@value).slice(1),self)}\} {name}"
+		"@param \{{asRawType}\} {name}"
 
 	def asRawType
-		M(String(@value).slice(1),self)
+		let raw = String(@value).slice(1)
+		raw = raw.replace(/(^|[\[\,])\<([a-z\-\d]+)\>/g) do |m,pre,name|
+			pre + (TagTypeIdentifier.new(name)).toClassName
+			# pre + "globalThis." + toCustomTagIdentifier(name)
+		return M(raw,self)
 
 	def asIteratorValue
 		console.log 'asInteratorValue'
@@ -5819,7 +5823,7 @@ export class TypeAnnotation < Node
 		return '/**@type {' + inner + '}*/'
 
 	def c
-		return '/**@type {' + M(String(@value).slice(1),self) + '}*/'
+		return '/**@type {' + asRawType + '}*/'
 		# M(String(@value).slice(1),self)
 		
 # IDENTIFIERS
