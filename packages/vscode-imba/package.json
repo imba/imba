@@ -2,7 +2,7 @@
 	"name": "vsimba",
 	"displayName": "Imba",
 	"description": "Language support for Imba",
-	"version": "3.0.11",
+	"version": "3.0.12",
 	"publisher": "scrimba",
 	"main": "./dist/src/index.js",
 	"icon": "assets/imba.png",
