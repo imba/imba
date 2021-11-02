@@ -90,7 +90,7 @@ interface Event {
      Stops handling unless event is trusted
      @see https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted
     */
-    αtrusted(): void;
+    αtrusted(): boolean;
 
     /** 
      * The `self` event modifier is a handy way of reacting to events only when they are clicked on the actual element you are interacting with and not, for example, a child element. This can be useful for things like modal wrappers when you only want to react when clicking directly.
