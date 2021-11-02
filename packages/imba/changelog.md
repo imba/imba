@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0-alpha.185
+## 2.0.0-alpha.186
 
 * Don't add html class name for named elements.
 
