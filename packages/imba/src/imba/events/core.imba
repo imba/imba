@@ -83,11 +83,12 @@ extend class Event
 
 		once(#context,'end') do
 			let delay = parseTime(time)
-			let iv = setInterval(&,delay) do
+
+			o.interval = setInterval(&,delay) do
 				if o.next
 					o.next(yes)
 				else
-					clearInterval(iv)
+					clearInterval(o.interval)
 					o.el.flags.decr('throttled')
 					o.active = no
 				return

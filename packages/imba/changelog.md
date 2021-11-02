@@ -19,6 +19,8 @@
     ```imba
     <div @click.mod.stop=openInNewWindow @click=openHere>
     ```
+    
+* Fixed bug in `@event.throttle` modifier
 
 ## 2.0.0-alpha.183
 
