@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.184
 
 * Don't add html class name for named elements.
 
