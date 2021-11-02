@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+* Don't add html class name for named elements.
+
+    Previously when naming an element like `<div$title> ...`, imba would automatically
+    add a `title` class name to the element. This can lead to confusing issues. If you
+    have used this undocumented behaviour previously you just need to add the class
+    yourself, like `<div$title.title>`.
+
+* Introduced `@mouse.mod` modifier
+
+    Since Mac and Windows/Linux use different keyboard modifiers for most standard actions
+    (ctrl+c,ctrl+s,ctrl+click) vs (⌘c,⌘s,⌘+click) etc, it makes sense to have an event
+    modifier that takes care of checking the platform. `@mouse.mod` will return true of
+    ⌘ is pressed on mac, and Ctrl is pressed on all other platforms.
+    
+    ```imba
+    <div @click.mod.stop=openInNewWindow @click=openHere>
+    ```
+
 ## 2.0.0-alpha.183
 
 - Remove unneeded class names on tags when building

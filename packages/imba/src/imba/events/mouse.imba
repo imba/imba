@@ -18,3 +18,7 @@ extend class MouseEvent
 	def @ctrl do !!ctrlKey
 
 	def @meta do !!metaKey
+
+	def @mod do
+		let nav = global.navigator.platform
+		(/^(Mac|iPhone|iPad|iPod)/).test(nav or '') ? !!metaKey : !!ctrlKey
