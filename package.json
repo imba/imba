@@ -5,7 +5,6 @@
         "lerna": "^4.0.0"
     },
     "scripts": {
-        "prerelease": "lerna publish --dist-tag pre",
         "release": "lerna publish"
     }
 }
