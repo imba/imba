@@ -1,5 +1,6 @@
 tag A1
 	css .btn fw:600
+	css $btn fw:600
 	css .label fw:300
 	css $label fw:200
 	

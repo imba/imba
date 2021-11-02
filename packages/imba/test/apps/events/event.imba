@@ -33,7 +33,7 @@ describe "@event.trusted" do
 
 	tag App
 		<self>
-			<div$target
+			<div$target.target
 				@click.trusted.log('trusted')
 				@click.!trusted.log('!trusted')
 			> "Button"
@@ -53,7 +53,7 @@ describe "@event.if" do
 
 	tag App
 		<self>
-			<div$target
+			<div$target.target
 				@click.if(bool).log('true')
 				@click.!if(!bool).log('!true')
 
