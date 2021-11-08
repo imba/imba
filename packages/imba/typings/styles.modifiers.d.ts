@@ -105,13 +105,15 @@ declare namespace imbacss {
     interface αssr { flag: '_ssr_' }
 
     /** 
+     * The viewport is in a landscape orientation, i.e., the width is greater than the height.
      * @detail (orientation: landscape)
-     * The viewport is in a landscape orientation, i.e., the width is greater than the height. */
+     *  */
     interface αlandscape { media: '(orientation: landscape)' }
 
     /** 
+     * The viewport is in a portrait orientation, i.e.,  the height is greater than or equal to the width.
      * @detail (orientation: portrait)
-     * The viewport is in a portrait orientation, i.e.,  the height is greater than or equal to the width.  */
+        */
     interface αportrait { media: '(orientation: portrait)' }
 
     /** Intended for paged material and documents viewed on a screen in print preview mode. 

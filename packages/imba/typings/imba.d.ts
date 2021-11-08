@@ -8,35 +8,78 @@
 /// <reference path="./styles.generated.d.ts" />
 /// <reference path="./styles.modifiers.d.ts" />
 
-interface Element {
+interface Node {
     /**
-     * Schedule this element to render after imba.commit()
+     * @custom
+     * @summary Proxy to reference data on elements up the tree
      */
-    schedule(): this;
-    unschedule(): this;
+    get Ψcontext(): ΤObject;
+    
+    
+    /**
+     * @custom
+     * @summary Reference to the parentNode even before element has been attached
+     */
+    get Ψparent(): ΤObject;
+}
+
+interface Element {
+    
+    /**
+     * @idl
+     * @summary Default property for setting the data of an element
+     */
     data: any;
-    hotkey: any;
-    hotkey__: any;
+    
+    /**
+     * @idl
+     */
     route: any;
-    route__: any;
-    router: ImbaRouter;
+    
+    /**
+     * @private
+     */
+    private route__: any;
+    
+    /**
+     * @idl
+     * @summary The path/route this element should be enabled for
+     */
+    route: string;
+    
+    /**
+     * @idl
+     * @summary The path/route to go to when clicking this element
+     */
+    routeΞto: string;
+    
+    /**
+     * @summary Reference to the imba router
+     * @custom
+     */
+    get router(): ImbaRouter;
     
     /**
     * Gives elements a stable identity inside lists
+    * @idl
     */
     $key: any;
     
     /**
-    * Sets whether @hotkey events inside of this element
+    * Sets whether `@hotkey` events inside of this element
     * is enabled or not. If explicitly set to true, only
-    * @hotkey events inside this group will be triggered
+    * `@hotkey` events inside this group will be triggered
     * when this element or a child has focus.
+    * @summary Sets whether `@hotkey` events inside of this element
+    * is enabled or not
+    * @idl
     */
     hotkeys: bool;
 
     /**
     * Enable transitions for when element is attached / detached
     * @see[Transitions](https://imba.io/css/transitions)
+    * @idl
     */
     ease: any;
 
@@ -54,25 +97,35 @@ interface Element {
     // spellcheck: any;
     // translate: any;
     // is: any;
-
-    flags: {
+    
+    /**
+     * @summary Allows for manipulation of element's class content attribute
+     */
+    get flags(): {
         contains(flag: string): boolean;
         add(flag: string): void;
         remove(flag: string): void;
-        toggle(flag: string, toggler?: boolean): void;
+        toggle(flag: string, toggler?: any): void;
         incr(flag: string): number;
         decr(flag: string): number;
     }
-
+    
+    /**
+     * Emits event
+     * @param event 
+     * @param params 
+     * @param options 
+     * @custom
+     */
     emit(event: string, params?: any, options?: any): Event;
     focus(options?: any): void;
     blur(): void;
 
     // [key: string]: any;
-
+    
     setAttribute(name: string, value: boolean): void;
     setAttribute(name: string, value: number): void;
-
+    
     addEventListener(event: string, listener: (event: Event) => void, options?: {
         passive?: boolean;
         once?: boolean;
@@ -89,11 +142,11 @@ interface Element {
 }
 
 interface Document {
-    flags: {
+    get flags(): {
         contains(flag: string): boolean;
         add(flag: string): void;
         remove(flag: string): void;
-        toggle(flag: string, toggler?: boolean): void;
+        toggle(flag: string, toggler?: any): void;
         incr(flag: string): number;
         decr(flag: string): number;
     }
@@ -130,42 +183,143 @@ declare class ΤObject {
     [key: string]: any;
 }
 
+/**
+ * @custom
+ */
 declare class ImbaElement extends HTMLElement {
+    
     /**
-  * Creates an instance of documenter.
+     * @summary Called to update the element and their children
+     * @abstract
+     * @lifecycle
+    */
+    render(): any;
+    
+    /**
+  * @summary Suspend rendering of component
   */
     suspend(): this;
+    
+    /**
+    * @summary Unsuspend rendering of component
+    * @lifecycle
+    */
     unsuspend(): this;
-    
-    Ψparent: HTMLElement;
-    
-    Ψcontext: ΤObject;
 
-    /** Return false if component should not render
+    /**
+     * @summary Tells whether the component should render
+     * @abstract
+     * @lifecycle
     */
     get renderΦ(): boolean;
-    /** True if component is currently being mounted 
+    
+    /**
+     * @readonly
+     * @summary Tells whether the component is currently being mounted
+     * @lifecycle
     */
     get mountingΦ(): boolean;
-    /** True if component is currently mounted in document */
+    
+    /** 
+     * @readonly
+     * @summary Tells whether the component is currently mounted in document
+     * @lifecycle */
     get mountedΦ(): boolean;
-    /** True if component has been awakened */
+    
+    /** 
+     * @readonly
+     * @summary Tells whether the component has been awakened
+     * @lifecycle */
     get awakenedΦ(): boolean;
-    /** True if component has been rendered */
+    
+    /** 
+     * @readonly
+     * @summary Tells whether the component has been rendered
+     * @lifecycle */
     get renderedΦ(): boolean;
-    /** True if component has been suspended */
+    
+    /**
+     * @readonly
+     * @summary Tells whether the component has been suspended
+     * @lifecycle */
     get suspendedΦ(): boolean;
-    /** True if component is currently rendering */
+    
+    /** 
+     * @readonly
+     * @summary Tells whether the component is currently rendering
+     * @lifecycle */
     get renderingΦ(): boolean;
-    /** True if component is scheduled to automatically render */
+    
+    /** 
+     * @readonly
+     * @summary Tells whether the component is scheduled to automatically render
+     * @lifecycle 
+     * */
     get scheduledΦ(): boolean;
-    /** True if component has been hydrated on the client */
+    
+    /** 
+     * @readonly
+     * @summary Tells whether the component has been hydrated on the client
+     * @lifecycle */
     get hydratedΦ(): boolean;
-    /** True if component was originally rendered on the server */
+    
+    /** 
+     * @readonly
+     * @summary Tells whether the component was originally rendered on the server */
     get ssrΦ(): boolean;
-
+    
+    /**
+     * @summary Start rendering the component on every imba.commit 
+     */
     schedule(): this;
+    
+    /**
+     * @summary Stop rendering the component automatically on every imba.commit
+     */
     unschedule(): this;
+    
+    /**
+     * @summary Called before any properties are set
+     * @lifecycle
+     * @abstract
+     */
+    build(): any;
+    
+    /**
+     * @summary Called before any properties are set
+     * @lifecycle
+     * @abstract
+     */
+    setup(): any;
+    
+    /**
+     * @summary Called before any properties are set
+     * @lifecycle
+     * @abstract
+     */
+    awaken(): any;
+    
+    /**
+     * @summary Called when element is attached to document
+     * @lifecycle
+     * @abstract
+     */
+    mount(): any;
+    
+    /**
+     * @summary Called when element is detached from document
+     * @lifecycle
+     * @abstract
+     */
+    unmount(): any;
+    
+    /**
+     * @summary Called after render
+     * @lifecycle
+     * @abstract
+     */
+    rendered(): any;
+    
 
     /**
     Schedule the element to update itself
@@ -175,6 +329,9 @@ declare class ImbaElement extends HTMLElement {
     (n)s = render every n s
     (n)ms = render every n ms
     (n)fps = render n times per second
+    
+    @summary Specify how / when the component should re-render
+    @idl
      */
     autorender: boolean | number | null | `${number}ms` | `${number}s` | `${number}fps`;
 }

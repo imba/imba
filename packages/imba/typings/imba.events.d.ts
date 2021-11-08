@@ -111,14 +111,14 @@ interface Event {
     αif(condition: unknown): boolean;
     
     /**
-     * Trigger another event via this handler {@link MyClass}
+     * Trigger a custom event via this handler
      * @param name The name of the event to trigger
      * @param detail Data associated with the event
      * @detail (name,detail = {})
      * */
     αemit(name: string, detail?: any): void;
      /**
-     * Trigger another event via this handler
+     * Trigger a custom event via this handler
      * @param detail Data associated with the event
      * @deprecated
      * */
@@ -130,6 +130,7 @@ interface Event {
      * will not be removed until said promise has resolved
      * @param name the class to add
      * @param target the element on which to add the class. Defaults to the element itself
+     * @detail (name,target?)
      * */
     αflag(name: string, target?: FlagTarget): void;
     
@@ -263,6 +264,7 @@ interface KeyboardEvent {
     
     /**
     * Handle if keyCode == code
+    * @detail (code)
     */
     αkey(code:number): boolean;
 }
@@ -285,6 +287,7 @@ interface PointerEvent {
     
     /**
     * Only when pressure is at least amount (defaults to 0.5)
+    * @detail (threshold=0.5)
     */
     αpressure(amount?:number): boolean;
 }
@@ -297,6 +300,7 @@ type ModifierElementTarget = Element | string;
 
 /**
  * To make it easier and more fun to work with touches, Imba includes a custom `@touch` event that combines `@pointerdown` -> `@pointermove` -> `@pointerup` in one convenient handler, with modifiers for commonly needed functionality.
+ * @custom
  */
 declare class ImbaTouch {
     
@@ -466,7 +470,9 @@ declare class ImbaTouch {
     */
     αpin(): void;
     αpin(target: ModifierElementTarget): void;
+    αpin(anchorX: number, anchorY?: number): void;
     αpin(target: ModifierElementTarget, anchorX?: number, anchorY?: number): void;
+    
 
     /**
     * Round the x,y coordinates with an optional accuracy
@@ -492,6 +498,34 @@ declare class ImbaTouch {
      * @deprecated
      **/
     αflagΞname(target?: FlagTarget): void;
+    
+    
+    /** 
+     * Only trigger handler if event.target matches selector
+     * @detail (selector)
+     * */
+    αsel(selector: string): boolean;
+    
+    /**
+     Tells the browser that the default action should not be taken. The event will still continue to propagate up the tree. See Event.preventDefault()
+    @see https://imba.io/events/event-modifiers#core-prevent
+    */
+    αprevent(): void;
+    /**
+     Stops the event from propagating up the tree. Event listeners for the same event on nodes further up the tree will not be triggered. See Event.stopPropagation()
+    */
+    αstop(): void;
+
+    /**
+     Prevents default action & stops event from bubbling.
+    */
+    αtrap(): void;
+    
+    /** 
+     * The `self` event modifier is a handy way of reacting to events only when they are clicked on the actual element you are interacting with and not, for example, a child element. This can be useful for things like modal wrappers when you only want to react when clicking directly.
+     * @summary Only trigger handler if event.target is the element itself 
+     */
+    αself(): boolean;
 }
 
 
@@ -549,7 +583,7 @@ A string will map to the [rootMargin](https://developer.mozilla.org/en-US/docs/W
 ```imba
 <div @intersect("20px 10px")=handler> # {rootMargin: "20px 10px"}
 ```
-
+* @custom
  */
 declare class ImbaIntersectEvent extends Event {
     /**
@@ -650,10 +684,23 @@ declare class ImbaHotkeyEvent extends Event {
     * keyboard event
     */
     αpassive(): void;
+    
+    /**
+     * The KeyboardEvent responsible for this HotkeyEvent
+     * 
+     */
+    originalEvent: KeyboardEvent;
+    
+    /**
+     * The combo for the event
+     * 
+     */
+    combo: string;
 }
 
 /**
  * The [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) interface reports changes to the dimensions of an Element's content or border box. It has [good browser support](https://caniuse.com/#feat=resizeobserver) and is very useful in a wide variety of usecases. ResizeObserver avoids infinite callback loops and cyclic dependencies that are often created when resizing via a callback function. It does this by only processing elements deeper in the DOM in subsequent frames.
+ * @custom
  */
 declare class ImbaResizeEvent extends UIEvent {
     width: number;
@@ -688,7 +735,7 @@ interface ImbaEvents {
     * The loading of a resource has been aborted. 
     *
     */
-    abort: UIEvent;
+    abort: Event;
     animationcancel: AnimationEvent;
     /**
     * A CSS animation has completed. 
@@ -762,9 +809,16 @@ interface ImbaEvents {
     focus: FocusEvent;
     focusin: FocusEvent;
     focusout: FocusEvent;
+    /**
+     * @custom
+     * @detail (combo)
+     */
     hotkey: ImbaHotkeyEvent;
     input: Event;
     invalid: Event;
+    /**
+     * @custom
+     */
     intersect: ImbaIntersectEvent;
     keydown: KeyboardEvent;
     keypress: KeyboardEvent;
@@ -833,6 +887,9 @@ interface ImbaEvents {
     progress: ProgressEvent;
     ratechange: Event;
     reset: Event;
+    /**
+     * @custom
+     */
     resize: ImbaResizeEvent;
     scroll: Event;
     securitypolicyviolation: SecurityPolicyViolationEvent;
@@ -846,8 +903,10 @@ interface ImbaEvents {
     suspend: Event;
     timeupdate: Event;
     toggle: Event;
+    /**
+     * @custom
+     */
     touch: ImbaTouch;
-    hotkey: ImbaHotkeyEvent;
     touchcancel: TouchEvent;
     touchend: TouchEvent;
     touchmove: TouchEvent;
