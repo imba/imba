@@ -203,7 +203,7 @@ export class Router < EventEmitter
 		if a and r != a and (!r or r.contains(a))
 			
 			let href = a.getAttribute('href')
-			if href && !href.match(/\:\/\//) and !a.getAttribute('target') and !a.classList.contains('external')
+			if href && !href.match(/\:\/\//) and (!a.getAttribute('target') or a.getAttribute('target') == '_self') and !a.classList.contains('external')
 				a.addEventListener('click',onclicklink.bind(self),once: true)
 		yes
 		
