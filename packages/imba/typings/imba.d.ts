@@ -57,7 +57,7 @@ interface Element {
      * @summary Reference to the imba router
      * @custom
      */
-    get router(): ImbaRouter;
+    get router(): imba.Router;
     
     /**
     * Gives elements a stable identity inside lists
@@ -401,24 +401,11 @@ declare namespace imba {
      */
     function unmount<T>(element: T): T;
     
-    /**
-     * Class for scheduling
-     */
-    interface Scheduler {
-        add(target: any, force?: boolean): void;
-        on(group: string, target: any): void;
-        un(group: string, target: any): void;
-
-        /** Milliseconds since previous tick */
-        dt: number;
-    }
+    
 
     let colors: string[];
     
-    /**
-     * Reference to global router
-     */
-    let router: ImbaRouter;
+    
 
     namespace types {
         let events: GlobalEventHandlersEventMap;
@@ -436,6 +423,18 @@ declare namespace imba {
     }
 
     let Element: ImbaElement;
+    
+    /**
+     * Class for scheduling
+     */
+    interface Scheduler {
+        add(target: any, force?: boolean): void;
+        on(group: string, target: any): void;
+        un(group: string, target: any): void;
+
+        /** Milliseconds since previous tick */
+        dt: number;
+    }
     
     /**
      * Reference to global scheduler
