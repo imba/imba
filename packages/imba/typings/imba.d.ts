@@ -376,14 +376,34 @@ declare namespace imba {
     function setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
     function clearInterval(handle?: number): void;
     function clearTimeout(handle?: number): void;
+    
+    /**
+     * Schedule re-render
+     */
     function commit(): Promise<void>;
-    function render(): Promise<void>;
     
+    /**
+     * Render elements in custom context
+     */
+    function render(func: Function, context?: any): any;
     
+    /**
+     * Attach an element to the dom
+     * @param element 
+     * @param into 
+     */
     function mount<T>(element: T, into?: Element): T;
     function mount(func: Function, into?: Element): Element;
+    
+    /**
+     * Detach element from document
+     * @param element 
+     */
     function unmount<T>(element: T): T;
-
+    
+    /**
+     * Class for scheduling
+     */
     interface Scheduler {
         add(target: any, force?: boolean): void;
         on(group: string, target: any): void;
@@ -394,6 +414,10 @@ declare namespace imba {
     }
 
     let colors: string[];
+    
+    /**
+     * Reference to global router
+     */
     let router: ImbaRouter;
 
     namespace types {
@@ -412,6 +436,10 @@ declare namespace imba {
     }
 
     let Element: ImbaElement;
+    
+    /**
+     * Reference to global scheduler
+     */
     let scheduler: Scheduler;
 
     function createIndexedFragment(...arguments: any[]): DocumentFragment;
@@ -423,6 +451,10 @@ declare namespace imba {
     function once(target: any, event: string, listener: any, path?: any): void;
     function unlisten(target: any, event: string, listener: any, path?: any): void;
     function indexOf(target: any, source: any): boolean;
+    
+    /**
+     * Start an asset-aware server
+     */
     function serve(target: any, options?: any): any;
 }
 
