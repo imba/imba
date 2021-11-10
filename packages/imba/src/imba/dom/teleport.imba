@@ -1,8 +1,8 @@
 import {Element} from './core'
-import {ImbaElement} from './component.imba'
+import {Component} from './component.imba'
 import {createSlot} from './fragment'
 
-class TeleportHook < ImbaElement
+class TeleportHook < Component
 	prop to
 
 	def build

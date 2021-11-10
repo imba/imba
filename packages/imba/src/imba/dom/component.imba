@@ -93,7 +93,7 @@ const hydrator = new class
 export def hydrate
 	hydrator.flush!
 
-export class ImbaElement < HTMLElement
+export class Component < HTMLElement
 	def constructor
 		super()
 		if flags$ns
@@ -312,3 +312,6 @@ export class ImbaElement < HTMLElement
 
 		unmount()
 		scheduler.unschedule(self,#autorender) if #autorender
+
+# Backwards compatibility
+export const ImbaElement = Component

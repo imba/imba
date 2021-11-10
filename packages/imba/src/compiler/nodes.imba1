@@ -3638,17 +3638,15 @@ export class TagDeclaration < ClassDeclaration
 		if sup and sup.@variable
 			sup = sup.@variable
 		elif sup
-			sup = CALL(runtime:getSuperTagType,[sup,STR(sup.toClassName),runtime:ImbaElement])
+			sup = CALL(runtime:getSuperTagType,[sup,STR(sup.toClassName),runtime:Component])
 		else
-			sup = runtime:ImbaElement
-			# CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
-			# sup = CALL(runtime:getTagType,[STR('component'),STR('ImbaElement')])
+			sup = runtime:Component
 
 		if STACK.tsc
-			sup = superclass ? superclass.toClassName : LIT('ImbaElement')
+			sup = superclass ? superclass.toClassName : LIT('imba.Component')
 			if option(:extension)
 				# className = "Extended${className}"
-				let out = "class Extend${className}${oid}"
+				let out = "class Extend${className.replace(/\./g,'__')}${oid}"
 				let obody = body.c
 				out = "{out} \{{obody}\}"
 				out = "export {out}" unless @name.@variable
@@ -3659,8 +3657,8 @@ export class TagDeclaration < ClassDeclaration
 		elif option(:extension)
 			let namevar = @name.@variable
 			let cls = namevar or CALL(runtime:getTagType,[name,STR(name.toClassName)])
-			if className == 'ImbaElement'
-				cls = runtime:ImbaElement
+			if className == 'ImbaElement' or className == 'imba.Component'
+				cls = runtime:Component
 			let tagname = TagTypeIdentifier.new(name)
 			
 			let js = "(class \{{body.c}\}).prototype"
@@ -6280,7 +6278,7 @@ export class TagTypeIdentifier < Identifier
 		if str == 'element'
 			return 'Element'
 		elif str == 'component'
-			return 'ImbaElement'
+			return 'imba.Component'
 		elif str == 'svg:element'
 			return 'SVGElement'
 		elif str == 'htmlelement'

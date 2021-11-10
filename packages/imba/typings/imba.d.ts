@@ -183,159 +183,6 @@ declare class ΤObject {
     [key: string]: any;
 }
 
-/**
- * @custom
- */
-declare class ImbaElement extends HTMLElement {
-    
-    /**
-     * @summary Called to update the element and their children
-     * @abstract
-     * @lifecycle
-    */
-    render(): any;
-    
-    /**
-  * @summary Suspend rendering of component
-  */
-    suspend(): this;
-    
-    /**
-    * @summary Unsuspend rendering of component
-    * @lifecycle
-    */
-    unsuspend(): this;
-
-    /**
-     * @summary Tells whether the component should render
-     * @abstract
-     * @lifecycle
-    */
-    get renderΦ(): boolean;
-    
-    /**
-     * @readonly
-     * @summary Tells whether the component is currently being mounted
-     * @lifecycle
-    */
-    get mountingΦ(): boolean;
-    
-    /** 
-     * @readonly
-     * @summary Tells whether the component is currently mounted in document
-     * @lifecycle */
-    get mountedΦ(): boolean;
-    
-    /** 
-     * @readonly
-     * @summary Tells whether the component has been awakened
-     * @lifecycle */
-    get awakenedΦ(): boolean;
-    
-    /** 
-     * @readonly
-     * @summary Tells whether the component has been rendered
-     * @lifecycle */
-    get renderedΦ(): boolean;
-    
-    /**
-     * @readonly
-     * @summary Tells whether the component has been suspended
-     * @lifecycle */
-    get suspendedΦ(): boolean;
-    
-    /** 
-     * @readonly
-     * @summary Tells whether the component is currently rendering
-     * @lifecycle */
-    get renderingΦ(): boolean;
-    
-    /** 
-     * @readonly
-     * @summary Tells whether the component is scheduled to automatically render
-     * @lifecycle 
-     * */
-    get scheduledΦ(): boolean;
-    
-    /** 
-     * @readonly
-     * @summary Tells whether the component has been hydrated on the client
-     * @lifecycle */
-    get hydratedΦ(): boolean;
-    
-    /** 
-     * @readonly
-     * @summary Tells whether the component was originally rendered on the server */
-    get ssrΦ(): boolean;
-    
-    /**
-     * @summary Start rendering the component on every imba.commit 
-     */
-    schedule(): this;
-    
-    /**
-     * @summary Stop rendering the component automatically on every imba.commit
-     */
-    unschedule(): this;
-    
-    /**
-     * @summary Called before any properties are set
-     * @lifecycle
-     * @abstract
-     */
-    build(): any;
-    
-    /**
-     * @summary Called before any properties are set
-     * @lifecycle
-     * @abstract
-     */
-    setup(): any;
-    
-    /**
-     * @summary Called before any properties are set
-     * @lifecycle
-     * @abstract
-     */
-    awaken(): any;
-    
-    /**
-     * @summary Called when element is attached to document
-     * @lifecycle
-     * @abstract
-     */
-    mount(): any;
-    
-    /**
-     * @summary Called when element is detached from document
-     * @lifecycle
-     * @abstract
-     */
-    unmount(): any;
-    
-    /**
-     * @summary Called after render
-     * @lifecycle
-     * @abstract
-     */
-    rendered(): any;
-    
-
-    /**
-    Schedule the element to update itself
-    yes = render on events / imba.commit
-    no = force manual render
-    null / undefined = render via parent
-    (n)s = render every n s
-    (n)ms = render every n ms
-    (n)fps = render n times per second
-    
-    @summary Specify how / when the component should re-render
-    @idl
-     */
-    autorender: boolean | number | null | `${number}ms` | `${number}s` | `${number}fps`;
-}
-
 
 /** Portal to declare window/document event handlers from
  * inside custom tags.
@@ -371,6 +218,159 @@ interface Event {
 // }
 
 declare namespace imba {
+
+    /**
+     * @custom
+     */
+    declare class Component extends HTMLElement {
+        
+        /**
+         * @summary Called to update the element and their children
+         * @abstract
+         * @lifecycle
+        */
+        render(): any;
+        
+        /**
+     * @summary Suspend rendering of component
+     */
+        suspend(): this;
+        
+        /**
+        * @summary Unsuspend rendering of component
+        * @lifecycle
+        */
+        unsuspend(): this;
+
+        /**
+         * @summary Tells whether the component should render
+         * @abstract
+         * @lifecycle
+        */
+        get renderΦ(): boolean;
+        
+        /**
+         * @readonly
+         * @summary Tells whether the component is currently being mounted
+         * @lifecycle
+        */
+        get mountingΦ(): boolean;
+        
+        /** 
+         * @readonly
+         * @summary Tells whether the component is currently mounted in document
+         * @lifecycle */
+        get mountedΦ(): boolean;
+        
+        /** 
+         * @readonly
+         * @summary Tells whether the component has been awakened
+         * @lifecycle */
+        get awakenedΦ(): boolean;
+        
+        /** 
+         * @readonly
+         * @summary Tells whether the component has been rendered
+         * @lifecycle */
+        get renderedΦ(): boolean;
+        
+        /**
+         * @readonly
+         * @summary Tells whether the component has been suspended
+         * @lifecycle */
+        get suspendedΦ(): boolean;
+        
+        /** 
+         * @readonly
+         * @summary Tells whether the component is currently rendering
+         * @lifecycle */
+        get renderingΦ(): boolean;
+        
+        /** 
+         * @readonly
+         * @summary Tells whether the component is scheduled to automatically render
+         * @lifecycle 
+         * */
+        get scheduledΦ(): boolean;
+        
+        /** 
+         * @readonly
+         * @summary Tells whether the component has been hydrated on the client
+         * @lifecycle */
+        get hydratedΦ(): boolean;
+        
+        /** 
+         * @readonly
+         * @summary Tells whether the component was originally rendered on the server */
+        get ssrΦ(): boolean;
+        
+        /**
+         * @summary Start rendering the component on every imba.commit 
+         */
+        schedule(): this;
+        
+        /**
+         * @summary Stop rendering the component automatically on every imba.commit
+         */
+        unschedule(): this;
+        
+        /**
+         * @summary Called before any properties are set
+         * @lifecycle
+         * @abstract
+         */
+        build(): any;
+        
+        /**
+         * @summary Called before any properties are set
+         * @lifecycle
+         * @abstract
+         */
+        setup(): any;
+        
+        /**
+         * @summary Called before any properties are set
+         * @lifecycle
+         * @abstract
+         */
+        awaken(): any;
+        
+        /**
+         * @summary Called when element is attached to document
+         * @lifecycle
+         * @abstract
+         */
+        mount(): any;
+        
+        /**
+         * @summary Called when element is detached from document
+         * @lifecycle
+         * @abstract
+         */
+        unmount(): any;
+        
+        /**
+         * @summary Called after render
+         * @lifecycle
+         * @abstract
+         */
+        rendered(): any;
+        
+
+        /**
+        Schedule the element to update itself
+        yes = render on events / imba.commit
+        no = force manual render
+        null / undefined = render via parent
+        (n)s = render every n s
+        (n)ms = render every n ms
+        (n)fps = render n times per second
+        
+        @summary Specify how / when the component should re-render
+        @idl
+        */
+        autorender: boolean | number | null | `${number}ms` | `${number}s` | `${number}fps`;
+    }
 
     function setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
     function setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
@@ -422,12 +422,12 @@ declare namespace imba {
         }
     }
 
-    let Element: ImbaElement;
+    let Element: Component;
     
     /**
      * Class for scheduling
      */
-    interface Scheduler {
+    export interface Scheduler {
         add(target: any, force?: boolean): void;
         on(group: string, target: any): void;
         un(group: string, target: any): void;
