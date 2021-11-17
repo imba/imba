@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.187
 
-* Make sure `dehydrate` is called when rendering components from the server.
+* Call `dehydrate` on compononents when rendering components from the server.
+
+* Updated type declarations.
 
 ## 2.0.0-alpha.186
 
