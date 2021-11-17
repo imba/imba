@@ -562,6 +562,7 @@ export class Element < Node
 
 		if self.dehydrate
 			cls = (cls ? ('_ssr_ ' + cls) : '_ssr_')
+			self.dehydrate!
 		
 		sel += " id=\"{escapeAttributeValue(v)}\"" if v = self.id
 		sel += " class=\"{escapeAttributeValue(cls)}\"" if cls

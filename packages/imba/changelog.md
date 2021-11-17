@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Make sure `dehydrate` is called when rendering components from the server.
+
 ## 2.0.0-alpha.186
 
 * Don't add html class name for named elements.
