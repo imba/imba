@@ -75,9 +75,22 @@ declare namespace imbacss {
 
     }
 
-    interface ΨtimingΞfunction {
+    interface ΨeasingΞfunction {
+        /**
+         * @easing cubic-bezier(0.25, 0.1, 0.25, 1.0)
+         */
+        ease: ''
+        /**
+         * @easing cubic-bezier(0.42, 0.0, 1.0, 1.0)
+         */
         easeΞin: ''
+        /**
+         * @easing cubic-bezier(0.0, 0.0, 0.58, 1.0)
+         */
         easeΞout: ''
+        /**
+         * @easing cubic-bezier(0.42, 0.0, 0.58, 1.0)
+         */
         easeΞinΞout: ''
         linear: ''
     }
@@ -268,8 +281,8 @@ declare namespace imbacss {
      * @alias tween
     */
     interface transition extends _ {
-        set(val: this | Ψtime | Ψproperty | ΨtimingΞfunction): void;
-        set(props: this | Ψproperty, duration: Ψtime, timing?: ΨtimingΞfunction, arg3?: any): void;
+        set(val: this | Ψtime | Ψproperty | ΨeasingΞfunction): void;
+        set(props: this | Ψproperty, duration: Ψtime, timing?: ΨeasingΞfunction, arg3?: any): void;
 
         /** Every property that is able to undergo a transition will do so. */
         all: ''
@@ -373,8 +386,8 @@ declare namespace imbacss {
     */
     interface ease extends _ {
         set(duration: Ψtime): void;
-        set(timing: ΨtimingΞfunction): void;
-        set(duration: Ψtime, timing: ΨtimingΞfunction): void;
+        set(timing: ΨeasingΞfunction): void;
+        set(duration: Ψtime, timing: ΨeasingΞfunction): void;
     }
     /** Shorthand for setting transform scale-x() */
     interface easeΞtransform extends ease {

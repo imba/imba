@@ -8,19 +8,126 @@
 /// <reference path="./styles.generated.d.ts" />
 /// <reference path="./styles.modifiers.d.ts" />
 
+declare namespace imba {
+
+
+    interface Globals {
+        /** The global clearInterval() method cancels a timed, repeating action which was previously established by a call to setInterval(). */
+        clearInterval(handle?: number): void;
+        /** The global clearTimeout() method cancels a timeout previously established by calling setTimeout(). */
+        clearTimeout(handle?: number): void;
+        fetch(input: RequestInfo, init?: RequestInit): Promise<Response>;
+        queueMicrotask(callback: VoidFunction): void;
+        /**
+         * The setInterval() method, offered on the Window and Worker interfaces, repeatedly calls a function or executes a code snippet, with a fixed time delay between each call.
+         */
+        setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
+        /** The global setTimeout() method sets a timer which executes a function or specified piece of code once the timer expires. */
+        setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
+        
+        /**
+         * Returns a Boolean value that indicates whether a value is the reserved value NaN (not a number).
+         * @param number A numeric value.
+         */
+        isNaN(number: number): boolean;
+
+        /**
+         * Determines whether a supplied number is finite.
+         * @param number Any numeric value.
+         */
+        isFinite(number: number): boolean;
+
+        /** Reference to the current window */
+        readonly window: Window;
+
+        /** Reference to the current document */
+        readonly document: Document;
+
+        /** Reference to the current document */
+        readonly process: any;
+
+        /** Dirname */
+        readonly __dirname: string;
+
+        /** Filename */
+        readonly __filename: string;
+
+        /** Real filename */
+        readonly __realname: string;
+
+        /** Reference to the global object */
+        readonly global: typeof globalThis;
+
+        /**
+         * Converts a string to an integer.
+         * @param string A string to convert into a number.
+         * @param radix A value between 2 and 36 that specifies the base of the number in `string`.
+         * If this argument is not supplied, strings with a prefix of '0x' are considered hexadecimal.
+         * All other strings are considered decimal.
+         */
+        parseInt(string: string, radix?: number): number;
+
+        /**
+         * Converts a string to a floating-point number.
+         * @param string A string that contains a floating-point number.
+         */
+        parseFloat(string: string): number;
+
+        /** Access to the global console object */
+        console: Console;
+    }
+
+    interface Context {
+        [key: string]: any;
+    }
+
+    interface Flags {
+        /**
+         * 
+         * @summary Returns true if the list contains the given token, otherwise false.
+         */
+        contains(flag: string): boolean;
+        /**
+         * 
+         * @summary Adds the specified token to the list.
+         */
+        add(flag: string): void;
+        /**
+         * 
+         * @summary Removes the specified token from the list.
+         */
+        remove(flag: string): void;
+        /**
+         * 
+         * @summary Toggles specified token in the list.
+         */
+        toggle(flag: string, toggler?: any): void;
+        /**
+         * 
+         * @summary Adds the specified token to the list
+         */
+        incr(flag: string): number;
+        /**
+         * 
+         * @summary Removes the specified token from the list if zero increments remain
+         */
+        decr(flag: string): number;
+    }
+}
+
 interface Node {
     /**
      * @custom
      * @summary Proxy to reference data on elements up the tree
      */
-    get Ψcontext(): ΤObject;
+    readonly Ψcontext: imba.Context;
     
     
     /**
      * @custom
      * @summary Reference to the parentNode even before element has been attached
      */
-    get Ψparent(): ΤObject;
+    readonly Ψparent: Element;
 }
 
 interface Element {
@@ -30,11 +137,6 @@ interface Element {
      * @summary Default property for setting the data of an element
      */
     data: any;
-    
-    /**
-     * @idl
-     */
-    route: any;
     
     /**
      * @private
@@ -57,7 +159,7 @@ interface Element {
      * @summary Reference to the imba router
      * @custom
      */
-    get router(): imba.Router;
+    readonly router: imba.Router;
     
     /**
     * Gives elements a stable identity inside lists
@@ -101,14 +203,7 @@ interface Element {
     /**
      * @summary Allows for manipulation of element's class content attribute
      */
-    get flags(): {
-        contains(flag: string): boolean;
-        add(flag: string): void;
-        remove(flag: string): void;
-        toggle(flag: string, toggler?: any): void;
-        incr(flag: string): number;
-        decr(flag: string): number;
-    }
+    readonly flags: imba.Flags;
     
     /**
      * Emits event
@@ -142,14 +237,7 @@ interface Element {
 }
 
 interface Document {
-    get flags(): {
-        contains(flag: string): boolean;
-        add(flag: string): void;
-        remove(flag: string): void;
-        toggle(flag: string, toggler?: any): void;
-        incr(flag: string): number;
-        decr(flag: string): number;
-    }
+    readonly flags: imba.Flags;
 }
 
 interface HTMLMetaElement {
@@ -183,6 +271,9 @@ declare class ΤObject {
     [key: string]: any;
 }
 
+declare class ImbaElement extends imba.Component {
+    
+}
 
 /** Portal to declare window/document event handlers from
  * inside custom tags.
@@ -213,6 +304,8 @@ interface Event {
     originalEvent: Event | null;
 }
 
+
+
 // interface Object {
 //     [key: string]: any;
 // }
@@ -230,10 +323,26 @@ declare namespace imba {
          * @lifecycle
         */
         render(): any;
+
+        /**
+         * @summary Called on client to hydrate SSR element
+         * @abstract
+         * @lifecycle
+        */
+         hydrate(): any;
+
+
+         /**
+         * @summary Called on server when stringifying a component
+         * @abstract
+         * @lifecycle
+        */
+          dehydrate(): any;
         
         /**
-     * @summary Suspend rendering of component
-     */
+         * @summary Suspend rendering of component
+         * @lifecycle
+         */
         suspend(): this;
         
         /**
@@ -241,6 +350,12 @@ declare namespace imba {
         * @lifecycle
         */
         unsuspend(): this;
+
+        /**
+        * @summary Called to update element via scheduler
+        * @lifecycle
+        */
+        tick(): this;
 
         /**
          * @summary Tells whether the component should render
@@ -329,7 +444,7 @@ declare namespace imba {
         setup(): any;
         
         /**
-         * @summary Called before any properties are set
+         * @summary Called when element is *first* attached to document
          * @lifecycle
          * @abstract
          */
@@ -426,6 +541,7 @@ declare namespace imba {
     
     /**
      * Class for scheduling
+     * @custom
      */
     export interface Scheduler {
         add(target: any, force?: boolean): void;

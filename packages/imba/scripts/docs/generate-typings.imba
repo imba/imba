@@ -252,7 +252,7 @@ def run
 			dts.w "/** {size} */"
 			dts.w "'{name}': '{size}';"
 	
-	dts.ind "interface ΨtimingΞfunction" do
+	dts.ind "interface ΨeasingΞfunction" do
 		for own name,value of theme.variants.easings
 			continue unless name.match(/[a-z]/)
 			let size = value isa Array ? value[0] : value

@@ -9,17 +9,17 @@ declare namespace imbacss {
     */
     interface αeven { name: 'nth-child', valueType: 'string', value: 'even' };
 
-    /** represents the first element among a group of sibling elements
+    /** Represents the first element among a group of sibling elements
      * @detail :first-child
      */
     interface αfirst { name: 'first-child' }
 
-    /** represents the last element among a group of sibling elements 
+    /** Represents the last element among a group of sibling elements 
      * @detail :last-child
     */
     interface αlast { name: 'last-child' };
 
-    /** represents an element without any siblings 
+    /** Represents an element without any siblings 
      * @detail :only-child
     */
     interface αonly { name: 'only-child' };
@@ -38,10 +38,10 @@ declare namespace imbacss {
 
     interface αchecked { name: 'checked' };
 
-    /** element has focus */
+    /** Element has focus */
     interface αfocus { name: 'focus' };
 
-    /** element OR descendant of element has focus */
+    /** Element OR descendant of element has focus */
     interface αfocin {};
 
 
@@ -81,28 +81,33 @@ declare namespace imbacss {
     
     /**
      * @custom
+     * @summary Matches when a `@touch` handler is active for element
      */
     interface αtouch { flag: '_touch_' }
-    
-    /**
-     * @custom
-     */
-    interface αsuspended { flag: '_suspended_' }
 
     /**
      * @custom
+     * @summary Matches when a `@touch.moved` modifier is active for element
      */
     interface αmove { flag: '_move_' }
     
     /**
      * @custom
+     * @summary Matches when a `@touch.hold` modifier is active for element
      */
     interface αhold { flag: '_hold_' }
     
     /**
      * @custom
+     * @summary Matches components rendered from server that are not hydrated
      */
     interface αssr { flag: '_ssr_' }
+
+    /**
+     * @custom
+     * @summary Matches when the element has been suspended (see imba.Component.suspend)
+     */
+     interface αsuspended { flag: '_suspended_' }
 
     /** 
      * The viewport is in a landscape orientation, i.e., the width is greater than the height.
@@ -116,23 +121,27 @@ declare namespace imbacss {
         */
     interface αportrait { media: '(orientation: portrait)' }
 
-    /** Intended for paged material and documents viewed on a screen in print preview mode. 
+    /** 
+     * @summary Intended for paged material and documents viewed on a screen in print preview mode. 
      * @detail (media: print)
     */
     interface αprint { media: 'print' }
 
-    /** Intended primarily for screens.
+    /**
+     * @summary Intended primarily for screens.
      * @detail (media: screen)
     */
     interface αscreen { media: 'screen' }
 
-    /** Pseudo-element that is the first child of the selected element 
+    /** 
+     * @summary Pseudo-element that is the first child of the selected element 
      * @detail ::before { ... }
      * @pseudoelement
     */
     interface αbefore { name: '::before' }
 
-    /** Pseudo-element that is the last child of the selected element 
+    /** 
+     * @summary Pseudo-element that is the last child of the selected element 
      * @pseudoelement
      * @detail ::after { ... }
     */
@@ -141,19 +150,22 @@ declare namespace imbacss {
 
     /** 
      * @see [Transitions](https://imba.io/css/transitions)
-     * @detail Style when element is transitioning into the dom
+     * @summary Matches when element is transitioning into the dom
+     * @custom
     */
     interface αin { }
 
     /** 
      * @see [Transitions](https://imba.io/css/transitions)
-     * @detail Style when element is transitioning out of the dom
+     * @summary Matches when element is transitioning out of the dom
+     * @custom
     */
     interface αout { }
 
     /** 
      * @see [Transitions](https://imba.io/css/transitions)
-     * @detail Style when element is removed
+     * @summary Matches when element is transitioning into or out of the dom
+     * @custom
     */
     interface αoff { }
 }
