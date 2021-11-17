@@ -803,14 +803,14 @@ export class StyleTheme
 	def tint [v]
 		
 		let o = {'--hue': v}
-		for i in [0 ... 9]
+		for i in [0 ... 10]
 			o["--hue{i}"] = "/*##*/{v}{i}"
 			# new Tint("v{i}")
 		return o
 		
 	def hue [v]
 		let o = {'--hue': v}
-		for i in [0 ... 9]
+		for i in [0 ... 10]
 			o["--hue{i}"] = "/*##*/{v}{i}"
 			# new Tint("v{i}")
 		return o
