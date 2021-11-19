@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+* Mark imported SVGs as @__PURE__
+
+    This allows efficient tree-shaking so that one can include all icons from a collection
+    and only bundle the ones that are used.
+
+    ```imba
+    import {* as icons} from 'imba-codicons'
+    
+    <svg src=icons.volume-up>
+    # you get completions and previews for all icons, but only volume-up
+    # will be bundled in your code now
+    ```
+
 ## 2.0.0-alpha.187
 
 * Call `dehydrate` on compononents when rendering components from the server.

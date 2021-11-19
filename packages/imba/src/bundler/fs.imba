@@ -328,7 +328,8 @@ export class SVGFile < FileNode
 			let js = """
 			import \{asset\} from 'imba';
 			import url from './{name}';
-			export default asset(\{
+			
+			export default /* @__PURE__ */ asset(\{
 				url: url,
 				type: 'svg',
 				meta: {JSON.stringify(parsed)},
