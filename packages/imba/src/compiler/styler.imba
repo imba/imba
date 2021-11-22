@@ -827,8 +827,10 @@ export class StyleTheme
 			return $color(palette[ns] + name.slice(ns.length))
 
 		if ns == 'tint'
-			console.warn "tint0-9 renamed to hue0-9"
-			return new Tint("hue" + name.slice(4))
+			let newname = "hue" + name.slice(4)
+			# TODO show as a compiler warning instead?
+			console.warn "{name} renamed to {newname}"
+			return new Tint(newname)
 			
 		if ns == 'hue'
 			return new Tint(name)
