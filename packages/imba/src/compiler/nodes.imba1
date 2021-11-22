@@ -5074,7 +5074,7 @@ export class Access < Op
 			if rgt.toNumber < 0
 				return safeop ? util.optNegIndex(ctx,rgt).c : util.negIndex(ctx,rgt).c
 
-			return ctx.c + "{safeop}[" + rgt.c + "]"
+			return ctx.c + "{safeop ? '?.' : ''}[" + rgt.c + "]"
 		
 		# is this right? Should not the index compile the brackets
 		# or value is a symbol -- should be the same, no?
@@ -5105,7 +5105,7 @@ export class Access < Op
 			ctx ? "{safeop}.{raw}" : raw
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes, as: 'value') : rgt
-			"{safeop}[{r}]"
+			"{safeop ? '?.' : ''}[{r}]"
 
 		# console.log "access up {stack.up}"
 

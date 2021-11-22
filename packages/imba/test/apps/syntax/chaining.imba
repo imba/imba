@@ -23,4 +23,8 @@ test do
 test do
 	eq data..unknown..method!, undefined
 
+test do
+	let key = 'name'
+	eq data.user..[key],'hello'
+
 window.imba..commit!

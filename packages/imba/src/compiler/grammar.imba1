@@ -782,6 +782,7 @@ var grammar =
 		o 'Value SoakableOp Identifier' do AST.OP(A2,A1,A3) # PropertyAccess.new(A2,A1,A3) # TODO change to regular access
 		o 'Value SoakableOp SymbolIdentifier' do IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3) # PropertyAccess.new(A2,A1,A3) # TODO change to regular access
 		o 'Value INDEX_START IndexValue INDEX_END' do IndexAccess.new('.',A1,A3)
+		o 'Value ?. [ IndexValue ]' do AST.OP(A2,A1,A4)
 	]
 
 	SoakableOp: [

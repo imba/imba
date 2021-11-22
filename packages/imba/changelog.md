@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Allow optional chaining with dynamic keys - #638
+
+    ```imba
+    user..[key]
+    ```
+
 * Mark imported SVGs as @__PURE__
 
     This allows efficient tree-shaking so that one can include all icons from a collection
