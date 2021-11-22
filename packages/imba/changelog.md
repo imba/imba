@@ -62,6 +62,8 @@
     # will be bundled in your code now
     ```
 
+* Don't round x,y in `@touch.reframe` and `@touch.fit` by default (#639)
+
 ## 2.0.0-alpha.187
 
 * Call `dehydrate` on compononents when rendering components from the server.

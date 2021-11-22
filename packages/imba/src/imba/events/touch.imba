@@ -294,7 +294,7 @@ class Touch
 			let box = params[0]
 			let min = 0
 			let max = 100%
-			let snap = 1
+			let snap = 0
 			let typ = typeof box
 			
 			if typ == 'number' or (typ == 'string' and (/^([-+]?\d[\d\.]*)(%|\w+)$/).test(box)) or box isa Array
@@ -317,7 +317,7 @@ class Touch
 			if len == 2
 				snap = params[1]
 			elif len > 2
-				[min,max,snap=1] = params.slice(1)
+				[min,max,snap=0] = params.slice(1)
 
 			let rect = box.getBoundingClientRect!
 			min = [min,min] unless min isa Array
