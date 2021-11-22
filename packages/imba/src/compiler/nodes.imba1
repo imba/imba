@@ -3267,8 +3267,9 @@ export class ClassDeclaration < Code
 				@className = LIT(@name.toClassName)
 			
 		elif @name isa Identifier
-			@name.registerVariable('const')
-			@name.@variable.value = self
+			if !isTag or @name.isCapitalized
+				@name.registerVariable('const')
+				@name.@variable.value = self
 
 		elif @name and !(@name isa Access)
 			@name.traverse(declaring: self)

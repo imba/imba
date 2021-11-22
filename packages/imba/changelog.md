@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Allow declaring variables and global tags with the same name.
+
+    Global web components should not be registered as regular variables.
+    Previously the compiler would throw an error if `tag app` and `let app = ...`
+    were declared in the same file.
+
 * Allow optional chaining with dynamic keys - #638
 
     ```imba
