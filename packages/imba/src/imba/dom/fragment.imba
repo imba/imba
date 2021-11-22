@@ -12,6 +12,12 @@ export class Fragment
 	def hasChildNodes
 		false
 
+	set #parent value
+		##parent = value
+
+	get #parent
+		##parent or ##up
+
 let counter = 0
 # like a list
 class VirtualFragment < Fragment
@@ -22,7 +28,6 @@ class VirtualFragment < Fragment
 		#domFlags = flags
 		childNodes = []
 		#end = createComment('slot' + counter++)
-		# #end.node = self
 		
 		if parent
 			parent.#appendChild(self)

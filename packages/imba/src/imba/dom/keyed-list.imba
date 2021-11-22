@@ -6,20 +6,14 @@ class KeyedTagFragment < Fragment
 	def constructor f, parent
 		super
 		#domFlags = f
-		#parent = parent
+		##parent = parent
 		changes = new Map
 		dirty = no
 		array = childNodes
 		self.$ = {}
 
-		# if !(f & $TAG_FIRST_CHILD$)
-		# 	#start = createComment('start')
-		# 	# parent.#appendChild(#start) if parent
-
 		if !(f & $TAG_LAST_CHILD$)
 			#end = createComment('map')
-			# #end.node = self
-			# parent.#appendChild(#end) if parent
 			
 		if parent
 			parent.#appendChild(self)
@@ -93,8 +87,6 @@ class KeyedTagFragment < Fragment
 		if item.parentNode
 			# log 'removeChild',item,item.parentNode
 			item.#removeFrom(item.parentNode)
-
-			# #parent.removeChild(item)
 		return
 		
 	def #insertChild node,relnode
@@ -111,7 +103,7 @@ class KeyedTagFragment < Fragment
 		
 	def #insertInto parent, before
 		# log 'insertInto',parent,before
-		#parent = parent
+		##parent = parent
 		let prev = parentNode
 		if parent != prev
 			parentNode = parent

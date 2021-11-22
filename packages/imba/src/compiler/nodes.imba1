@@ -8251,6 +8251,9 @@ class TagLike < Node
 		setup(o)
 		self
 
+	def isIndexableInLoop
+		no
+
 	def sourceId
 		@sourceId ||= STACK.sourceId + '-' + oid
 
@@ -8679,11 +8682,16 @@ export class TagLoopFragment < TagLike
 	def isKeyed
 		option(:keyed) or hasFlag(F.TAG_HAS_BRANCHES)
 
+	def isIndexableInLoop
+		yes
+
 	def consumeChildren
 		super
 
 		# determine if the order of elements will ever change inside loop
-		if @consumed.every(do $1 isa Tag and !$1.option(:key) and !$1.isDynamicType) and !hasFlag(F.TAG_HAS_BRANCHES)
+		if hasFlag(F.TAG_HAS_BRANCHES)
+			set(keyed: yes)
+		elif @consumed.every(do $1 isa TagLike and $1.isIndexableInLoop)
 			set(indexed: yes)
 		else
 			set(keyed: yes)
@@ -8702,20 +8710,47 @@ export class TagLoopFragment < TagLike
 		if STACK.tsc
 			return "{tvar} = new DocumentFragment;\n{value.c(o)}"
 
+		if parent isa TagLoopFragment and parent.isKeyed
+			set(detached: yes)
+
+		if parent isa TagSwitchFragment
+			set(detached: yes)
+
 		# if @tag and @childTags
 		let iref = option(:indexed) ? (runtime:createIndexedList) : (runtime:createKeyedList)		
 		# LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
 		# should know how many inner slots this fragment has?
 		let cache = parent.cvar
-		let parentRef = parent isa TagSwitchFragment ? LIT('null') : fragment.tvar
+		let parentRef = isDetached ? LIT('null') : fragment.tvar
 
 		let out = ""
-		out += "({tvar} = {cache}[{osym}]) || ({cache}[{osym}]={tvar}={iref}({@flags},{parentRef}));\n"
+		let refpath
+
+		if parent isa TagLoopFragment
+			if parent.isKeyed
+				option(:key,OP('+',LIT("'{oid}$'"),parent.kvar))
+				out += "{hvar}={option(:key).c};\n"
+				refpath = @ref = "{parent.cvar}[{hvar}]"
+			else
+				refpath = @ref = "{parent.cvar}[{parent.kvar}]"
+		else
+			refpath = "{cache}[{osym}]"
+
+		out += "({tvar} = {refpath}) || ({refpath}={tvar}={iref}({@flags},{parentRef}));\n"
 		@ref = "{tvar}"
+		if isDetached
+			out += "{tvar}[{gsym('##up')}] = {fragment.tvar};\n"
 		out += "{kvar} = 0;\n"
 		out += "{cvar}={tvar}.$;\n"
 		out += value.c(o)
-		out += ";{tvar}{domCall 'end'}({kvar})"
+		out += ";{tvar}{domCall 'end'}({kvar});"
+
+		if parent isa TagLoopFragment
+			if parent.isKeyed
+				out += "{parent.ref}.push({tvar},{parent.kvar}++,{hvar});"
+			elif parent.isIndexed
+				out += "{parent.kvar}++;"
+
 		return out
 
 export class TagIndexedFragment < TagLike
@@ -8757,6 +8792,9 @@ export class Tag < TagLike
 	
 	def isStatementLike
 		option(:iife)
+
+	def isIndexableInLoop
+		!option(:key) and !isDynamicType
 
 	def traverse 
 		return self if @traversed

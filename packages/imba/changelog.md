@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fixed issue with nested loops in tag trees
+
 * Allow declaring variables and global tags with the same name.
 
     Global web components should not be registered as regular variables.

@@ -6,7 +6,7 @@ class IndexedTagFragment < Fragment
 	def constructor f, parent
 		super
 		#domFlags = f
-		#parent = parent
+		##parent = parent
 
 		unless f & $TAG_LAST_CHILD$
 			#end = createComment('list')
@@ -45,7 +45,6 @@ class IndexedTagFragment < Fragment
 		return
 		
 	def #insertInto parent, before
-		# #parent = parent
 		parentNode = parent
 		
 		# if parent isa Node
