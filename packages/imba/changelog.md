@@ -2,11 +2,40 @@
 
 ## Unreleased
 
+* Changed rules for implicit parenthes / calling in tag trees
+
+    Indented code under a tag-tree will no longer be compiled as an invocation.
+
+    ```imba
+    <div> data.name
+        "something"
+    if data.name
+        "something"
+    ```
+
+    The code above would previously compile to div `data.name("something")`. Now
+    indentation in tag trees will behave like they do in statements like if/for/while etc.
+    This fixes #630, so you can now add css blocks like this:
+
+    ```imba
+    <div> data.name
+        css d:block # style for the div
+    ```
+
 * Added `@first-child` and `@last-child` css modifiers.
 
     We already have `@first` and `@last` as shorter aliases, but since all other standard pseudo-selectors exist it makes sense to include the longer versions of these as well.
 
 * Fixed issue with nested loops in tag trees
+
+    It is now possible to use nested loops without wrapping the inner loops in a fragment.
+
+    ```imba
+    <div>
+        for item in data.items
+            for label in item.labels
+                <div> label
+    ```
 
 * Allow declaring variables and global tags with the same name.
 

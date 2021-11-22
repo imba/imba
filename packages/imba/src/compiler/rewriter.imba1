@@ -656,6 +656,7 @@ export class Rewriter
 
 		var noCall = no
 		var seenFor = no
+		var seenTagClose = no
 		var endCallAtTerminator = no
 
 		var seenSingle  = no
@@ -758,6 +759,13 @@ export class Rewriter
 			if type === INDENT and (pt == ')' or pt == ']')
 				noCall = yes
 
+			if pt == INDENT
+				seenTagClose = no
+
+			if pt == 'TAG_END'
+				seenTagClose = prev
+
+
 			if NO_CALL_TAG_MAP[pt] # .indexOf(pt) >= 0
 				# CALLCOUNT++
 				# console.log("seen nocall tag {pt} ({pt} {type} {nt})")
@@ -776,13 +784,20 @@ export class Rewriter
 				callObject = ((next:generated and nt == '{') or nextImpCall) and prevImpFunc
 				callIndent = nextImpCall and prevImpFunc
 
+				if nt == 'TAG_START' and pt != 'TAG_END' and nextImpCall
+					callIndent = no
+
+
 			seenSingle  = no
 			seenControl = no
 
 			# this is not correct if this is inside a block,no?
 			if (type == TERMINATOR or type == OUTDENT or type == INDENT)
 				endCallAtTerminator = no
-				noCall = no 
+				noCall = no
+
+			if type == TERMINATOR
+				seenTagClose = no
 
 			if type == '?' and prev and !prev:spaced
 				token:call = yes
@@ -794,6 +809,14 @@ export class Rewriter
 			# here we deal with :spaced and :newLine
 			unless callObject or callIndent or (prev and prev:spaced) and (prev:call or IMPLICIT_FUNC_MAP[pt]) and (IMPLICIT_CALL_MAP[type] or !(token:spaced or token:newLine) and IMPLICIT_UNSPACED_CALL.indexOf(type) >= 0)
 				continue i += 1
+
+			if nt == 'TAG_START' and IMPLICIT_CALL_MAP[nt] and pt != 'TAG_END'
+				continue i += 1
+
+			if seenTagClose and nt !== 'TAG_START' and pt !== 'TAG_END'
+				if type === INDENT
+					continue i += 1
+				endCallAtTerminator = yes
 
 			# cache where we want to splice -- add them later
 			tokens.splice i, 0, T.token('CALL_START', '(')
