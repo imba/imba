@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added `@first-child` and `@last-child` css modifiers.
+
+    We already have `@first` and `@last` as shorter aliases, but since all other standard pseudo-selectors exist it makes sense to include the longer versions of these as well.
+
 * Fixed issue with nested loops in tag trees
 
 * Allow declaring variables and global tags with the same name.

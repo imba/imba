@@ -12,6 +12,9 @@ export const modifiers =
 	only: {name: 'only-child'}
 	'not-first': {name: 'not', valueType: 'raw',value: ':first-child'}
 	'not-last': {name: 'not', valueType: 'raw',value: ':last-child'}
+
+	'first-child': {}
+	'last-child': {}
 	
 	active: {}
 	checked: {}
