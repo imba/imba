@@ -1,7 +1,7 @@
 {
     "name": "typescript-imba-plugin",
     "description": "imba plugin for tsserver",
-    "version": "1.2.4",
+    "version": "1.2.5",
     "author": "Sindre Aarsaether <sindre@identu.no>",
     "main": "dist/index.js",
     "scripts": {
