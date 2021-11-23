@@ -1,0 +1,15 @@
+tag slides-widget < base-widget
+	
+	max = {
+		width: 0
+	}
+	pip = {
+		scale: 0.1
+	}
+	one = 10
+	other = test @set
+		e.value
+	
+
+	def hello
+		yes
