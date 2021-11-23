@@ -629,12 +629,12 @@ export const states = {
 	_field_1: [
 		denter(null,-1,-1)
 		'type_'
-		[/(\s*=)(?!\=)/,['operator.assign','@>_field_value&field']]
+		[/(\s*=)(?!\=)/,['operator.assign','@_field_value&field']]
 		[/(\s*(?:\@)set\s*)/,['keyword.spy','@>_def&spy']]
 	]
 
 	_field_value: [
-		denter(2,-1,0)
+		denter(2,-1,-1)
 		'block_' # sure?
 		[/(\s*(?:\@)set\s*)/,['@rematch','@pop']]
 	]
