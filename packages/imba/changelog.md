@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.189
 
 * Introduced `@hotkey.repeat` modifier
 
