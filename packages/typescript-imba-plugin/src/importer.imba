@@ -56,6 +56,26 @@ export default class AutoImportContext
 			map = ts.codefix.getSymbolToExportInfoMap(checker.sourceFile,checker.project,checker.program)
 		ts.Debug.isDebugging = debugs
 		#exportInfoMap = map
+
+	def getExportMetaInfo info
+		try
+			let variable = info.moduleSymbol.valueDeclaration.locals.get('EXPORT_NS')
+			if variable
+				let starName = variable.valueDeclaration.initializer.text
+				if starName
+					return {
+						exportKind: 3
+						exportName: '*'
+						important: true
+						importName: starName
+						modulePath: info.modulePath
+						packageName: info.packageName
+						symbol: info.moduleSymbol
+						commitCharacters: ['.']
+						exportedSymbolIsTypeOnly: false
+					}
+		return null
+
 	
 	get exportInfoEntries
 		return #exportInfoEntries if #exportInfoEntries
@@ -90,6 +110,15 @@ export default class AutoImportContext
 						name: util.pathToImportName(gid)
 						exports: []
 					}
+
+					if group.exports.length == 0
+						if let meta = getExportMetaInfo(info)
+							group.exportStar = meta
+							# out.push(meta)
+							return
+
+					if group.exportStar
+						return
 					
 					group.exports.push(info)
 					
@@ -141,8 +170,15 @@ export default class AutoImportContext
 						name: util.pathToImportName(gid)
 						exports: []
 					}
-					
+
+					if group.exports.length == 0
+						if let meta = getExportMetaInfo(info)
+							group.exportStar = meta
+							# out.push(meta)
+							return
+
 					group.exports.push(info)
+					info.#group = group
 					
 					if info.exportKind == 2 or info.exportKind == 1
 						group.default = info
@@ -158,14 +194,17 @@ export default class AutoImportContext
 							symbol: info.moduleSymbol
 							exportedSymbolIsTypeOnly: false
 						}
+						group.#entry = ginfo
+						ginfo.#group = group
 						out.push(ginfo)
 					
 					let isTag = try info.symbol.exports..has('$$TAG$$')
 					info.isTag = isTag
 					out.push(info)
-					
+
 					if info.exportKind == 2
 						info.exportName = util.pathToImportName(info.packageName or info.modulePath)
+
 		catch e
 			util.log "error in exportInfoEntries",e
 		util.log "exportInfoEntries in {Date.now! - t0}ms {Date.now! - t1}ms"
@@ -195,11 +234,12 @@ export default class AutoImportContext
 		
 	def getExportedValues
 		let entries = exportInfoEntries.filter do !$1.exportedSymbolIsTypeOnly and !$1.isTypeOnly
-	
+
 	def getVisibleExportedValues
 		let entries = getExportedValues!
 		let packages = getVisiblePackages!
-		entries.filter do(entry)
+
+		entries = entries.filter do(entry)
 			!entry.packageName or packages[entry.packageName]
 			
 	def getExportedDecorators

@@ -1,5 +1,23 @@
 
 declare namespace imba_snippets {
+
+    interface imports {
+        /**
+         * @importStar imba-codicons
+         */
+        CODICONS: void;
+
+        /**
+         * @importStar imba-material-icons
+         */
+         MATERIAL: void;
+
+        /**
+         * @importStar imba-seti-icons
+         */
+        SETI: void;
+    }
+
     interface tags {
         /** 
          * @snippet input type='checkbox'

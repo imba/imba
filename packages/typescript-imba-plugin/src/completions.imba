@@ -321,6 +321,17 @@ export class SymbolCompletion < Completion
 			type = 'snippet'
 			if snip.indexOf('$') >= 0
 				item.commitCharacters = []
+
+
+		if tags.importStar
+			ns = "import from {tags.importStar}"
+			ei = exportInfo = ei = {
+				packageName: tags.importStar
+				exportName: '*'
+				importName: name
+				modulePath: tags.importStar
+				commitCharacters: ['.']
+			}
 				
 		if tags.detail
 			ns ||= tags.detail
@@ -331,6 +342,7 @@ export class SymbolCompletion < Completion
 				ns = "import from {ei.packageName}"
 			else
 				ns = "import from {util.normalizeImportPath(script.fileName,ei.modulePath)}"
+
 			item.source = ns.slice(12)
 			if ei.exportName == '*'
 				ns = ns.replace(/^import /,'import * ')
@@ -339,9 +351,12 @@ export class SymbolCompletion < Completion
 			# should still be if the import compes
 			item.commitCharacters = item.commitCharacters.filter do(item)
 				".!([, ".indexOf(item) == -1
-			
-			# make filter-text longer for imports to let variables rank eariler
-			item.filterText = (item.filterText or name) + "        "
+
+			if ei.commitCharacters
+				item.commitCharacters = ei.commitCharacters
+			else
+				# make filter-text longer for imports to let variables rank earlier
+				item.filterText = (item.filterText or name) + "        "
 	
 	def resolve
 		let details = checker.getSymbolDetails(sym)
@@ -626,10 +641,13 @@ export default class Completions
 
 		if prefixRegex
 			let imports = checker.autoImports.getVisibleExportedValues!
-			imports = imports.filter do prefixRegex.test($1.importName or $1.exportName)
+			imports = imports.filter do $1.important or prefixRegex.test($1.importName or $1.exportName)
 			add(imports, weight: 2000)
-			
 			# check for the export paths as well
+
+		try
+			let imports = checker.snippets('imports')
+			add(imports, weight: 2000)
 
 		# variables should have higher weight - but not the global variables?
 		# add('properties',value: yes, weight: 100, implicitSelf: yes)
