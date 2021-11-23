@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+* Introduced `@hotkey.repeat` modifier
+
+    When a user presses a key and then keeps holding it, keydown/keypress
+    events will be generated every n milliseconds. For hotkeys you usually
+    only want to trigger once when the user press the combination.
+
+    If you want the handler to keep firing while user holds down the keys
+    you can now use the `.repeat` modifier:
+
+    ```imba
+    # will only toggle when pressing space, no matter how long you
+    # keep it pressed.
+    <div @hotkey('space')=togglePlayback>
+    # holding the right arrow will call fastForward repeatedly
+    <div @hotkey('right').repeat=fastForward>
+    ```
+
 * Changed rules for implicit parenthes / calling in tag trees
 
     Indented code under a tag-tree will no longer be compiled as an invocation.

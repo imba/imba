@@ -688,6 +688,13 @@ declare namespace imba {
         * keyboard event
         */
         αpassive(): void;
+
+
+        /**
+        * Allow the handler to trigger multiple times while user
+        * keeps pressing the key combination.
+        */
+         αrepeat(): void;
         
         /**
          * The KeyboardEvent responsible for this HotkeyEvent

@@ -312,6 +312,10 @@ interface Event {
 
 declare namespace imba {
 
+    namespace hotkeys {
+        function trigger(combo: string): void;
+    }
+
     /**
      * @custom
      */

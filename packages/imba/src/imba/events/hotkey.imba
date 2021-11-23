@@ -54,6 +54,9 @@ class HotkeyEvent < CustomEvent
 			
 		return yes
 
+	def @repeat
+		return yes
+
 import Mousetrap from './mousetrap'
 
 const stopCallback = do |e,el,combo|	
@@ -84,6 +87,9 @@ export const hotkeys = new class HotKeyManager
 		mousetrap = null
 		hothandler = handle.bind(self)
 
+	def trigger combo
+		mousetrap..trigger(combo)
+
 	def register key,mods = {}
 		unless mousetrap
 			mousetrap = Mousetrap(document)
@@ -110,7 +116,7 @@ export const hotkeys = new class HotKeyManager
 		yes
 
 	def handle e\Event, combo
-		let source = e.target.#hotkeyTarget or e.target
+		let source = e.target and e.target.#hotkeyTarget or e.target or global.document.body
 		let targets\HTMLElement[] = Array.from(document.querySelectorAll('[data-hotkey]'))
 		let root = source.ownerDocument
 		let group = source
@@ -152,8 +158,10 @@ export const hotkeys = new class HotKeyManager
 							handlers.push(handler)
 
 		for handler,i in handlers
-			handler.handleEvent(event)
-			e.preventDefault! if !handler.passive? or event.#defaultPrevented
+			if !e.repeat or handler.params.repeat
+				handler.handleEvent(event)
+
+			e..preventDefault! if !handler.passive? or event.#defaultPrevented
 			break unless handler.passive?
 		self
 
