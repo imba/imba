@@ -7,6 +7,7 @@ import { Sym, SymbolFlags } from './symbol'
 
 import {SemanticTokenTypes,M,CompletionTypes,Keywords} from './types'
 
+import {ScriptVersionCache} from './svc'
 import {Range, Position} from './structures'
 
 ###
@@ -16,6 +17,10 @@ export default class ImbaScriptInfo
 
 	def constructor owner,svc
 		owner = owner
+		
+		if typeof svc == 'string'
+			svc = ScriptVersionCache.fromString(svc)
+
 		svc = svc
 		seed = new Token(0,'eol','imba')
 		eof = new Token(0,'eof','imba')
