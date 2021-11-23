@@ -1043,7 +1043,7 @@ export const states = {
 	_tag_event: [
 		'_tag_part'
 		[/(\@)(@optid)/,['tag.event.start','tag.event.name']]
-		[/(\.)(@optid)/,['tag.event-modifier.start','tag.event-modifier.name']]
+		[/(\.)(\!?@optid)/,['tag.event-modifier.start','tag.event-modifier.name']]
 		[/\(/,token: 'tag.$/.parens.open', next: '@_tag_parens/0']
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&handler']
 		[/\s+/,'@rematch','@pop']
