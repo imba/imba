@@ -810,7 +810,7 @@ export class Rewriter
 			unless callObject or callIndent or (prev and prev:spaced) and (prev:call or IMPLICIT_FUNC_MAP[pt]) and (IMPLICIT_CALL_MAP[type] or !(token:spaced or token:newLine) and IMPLICIT_UNSPACED_CALL.indexOf(type) >= 0)
 				continue i += 1
 
-			if nt == 'TAG_START' and IMPLICIT_CALL_MAP[nt] and pt != 'TAG_END'
+			if type === INDENT and nt == 'TAG_START' and IMPLICIT_FUNC_MAP[pt] and pt != 'TAG_END'
 				continue i += 1
 
 			if seenTagClose and nt !== 'TAG_START' and pt !== 'TAG_END'
