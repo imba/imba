@@ -674,6 +674,7 @@ declare namespace imba {
         
         /**
         * Also trigger when input,textarea or a contenteditable is focused
+        * @deprecated Use `force` instead
         */
         αcapture(): void;
 
@@ -689,6 +690,10 @@ declare namespace imba {
         */
         αpassive(): void;
 
+        /**
+        * Also trigger when input,textarea or a contenteditable is focused
+        */
+        αforce(): void;
 
         /**
         * Allow the handler to trigger multiple times while user

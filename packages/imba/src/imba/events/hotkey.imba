@@ -99,7 +99,7 @@ export const hotkeys = new class HotKeyManager
 			combos[key] = yes
 			mousetrap.bind(key,handler)
 
-		if mods.capture
+		if mods.capture or mods.force
 			Globals[key] = yes
 		self
 		
@@ -152,9 +152,9 @@ export const hotkeys = new class HotKeyManager
 		for receiver in targets
 			for handler in receiver.#hotkeyHandlers
 				if handler.#combos[combo]
-					if !e.#inEditable or handler.capture?
+					if !e.#inEditable or (handler.capture? or handler.params.force)
 						let el = handler.#target
-						if group.contains(el) or el.contains(group) or handler.global?
+						if group.contains(el) or el.contains(group) or (handler.global?)
 							handlers.push(handler)
 
 		for handler,i in handlers
