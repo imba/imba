@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0-alpha.190
+
+* Fixed regression related to implicit parenthesis in tag trees
+
+* Renamed `@hotkey.capture` to `@hotkey.force`
+
 ## 2.0.0-alpha.189
 
 * Introduced `@hotkey.repeat` modifier
