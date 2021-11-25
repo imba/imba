@@ -67,7 +67,9 @@ export class Easer
 	def commit
 		dom.offsetWidth
 		
-	def enable
+	def enable mode
+		if mode
+			#mode = mode
 		return self unless #enabled =? yes
 		# TODO support attach/detach deopt api
 		dom.#insertInto = #insertInto.bind(self)
@@ -162,8 +164,6 @@ export class Easer
 			node.style.removeProperty('height')
 		map
 
-	
-
 	def #insertInto parent, before
 		let sizes
 		if entering?
@@ -214,13 +214,14 @@ export class Easer
 	def #removeFrom parent
 		if leaving?
 			return
+
 		let sizes
 		let finalize = do
 			if phase == 'leave'
 				parent.removeChild(dom)
 				phase = null
 
-		if entering?
+		if entering? and #mode != 'forward'
 			let anims = track do
 				flag('_off_')
 				flag('_in_')
