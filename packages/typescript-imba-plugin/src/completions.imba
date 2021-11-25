@@ -623,10 +623,8 @@ export default class Completions
 			symbols.push(found or item)
 
 		add(symbols,kind: 'var', weight: 200)
-		
-		# keywords
-		
-		if ctx.group.closest('tagcontent') and !ctx.group.closest('tag')
+
+		if ctx.group.closest('tagcontent') and !ctx.group.closest('tag') and ctx.before.token != '-'
 			add('tagnames',kind: 'tag',weight: 300)
 
 		try
