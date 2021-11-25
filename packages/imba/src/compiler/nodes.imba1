@@ -9134,11 +9134,13 @@ export class Tag < TagLike
 
 			if o:inline or isExpression
 				# o:inline = wasInline
-				add "{tvar}"
+				add option(:return) ? "return {tvar}" : "{tvar}"
 				let js = '(' + out.join(',\n') + ')'
 				return js
 			else
-				# o:inline = wasInline
+				if option(:return)
+					add "return {tvar}"
+
 				let js = out.join(";\n")
 				if hasBlockScopedVariables
 					js = '{' + js + '}'
