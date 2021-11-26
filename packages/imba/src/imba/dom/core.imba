@@ -8,7 +8,7 @@ import {TYPES,MAP} from './schema'
 import {AsyncLocalStorage} from '../bindings'
 import {Flags} from './flags'
 import {manifest} from '../manifest'
-
+import {createRenderContext} from './context'
 import {getDeepPropertyDescriptor} from '../utils'
 
 let asl = null
@@ -300,6 +300,12 @@ export class Node
 
 	def #__init__
 		self
+
+	def #getRenderContext sym
+		createRenderContext(self,sym)
+
+	def #getDynamicContext sym,key
+		#getRenderContext(sym).#getRenderContext(key)
 
 	def #replaceChild newnode, oldnode
 		let res = #insertChild(newnode,oldnode)
@@ -675,6 +681,8 @@ export class Element < Node
 # Element.prototype.insertBefore$ = Element.prototype.insertBefore
 # Element.prototype.replaceChild$ = Element.prototype.replaceChild
 Element.prototype.setns$ = Element.prototype.setAttributeNS
+Element.prototype.#isRichElement = yes
+
 
 export class DocumentFragment < Element
 	def constructor
@@ -919,6 +927,15 @@ export def createComponent name, parent, flags, text, ctx
 	if flags or el.flags$ns # or nsflag
 		el.flag$(flags or '')
 	return el
+
+export def createDynamic value, parent, flags, text
+	if value == null or value == undefined
+		return createComment('')
+	elif value isa Node
+		# check if node already exists somewhere else in dom
+		return value		
+	elif typeof value == 'string' or (value and value.prototype isa Node)
+		return createComponent(value,parent,flags,text)
 
 export def defineTag name, klass, options = {}
 	TYPES[name] = CUSTOM_TYPES[name] = {

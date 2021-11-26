@@ -27,16 +27,42 @@ export class Flags
 		bool ? add(ref) : remove(ref)
 		
 	def incr ref
-		let m = stacks ||= {}
+		let m = stacks
 		let c = m[ref] or 0
 		add(ref) if c < 1
 		return m[ref] = Math.max(c,0) + 1
 	
 	def decr ref
-		let m = stacks ||= {}
+		let m = stacks
 		let c = m[ref] or 0
 		remove(ref) if c == 1
 		return m[ref] = Math.max(c,1) - 1
+
+	def reconcile sym, str
+		let syms = #symbols
+		let vals = #batches
+		let dirty = yes
+		unless syms
+			syms = #symbols = [sym]
+			vals = #batches = [str or '']
+			self.toString = self.valueOf = self.#toStringDeopt
+		else
+			let idx = syms.indexOf(sym)
+			let val = str or ''
+			if idx == -1
+				syms.push(sym)
+				vals.push(val)
+			elif vals[idx] != val
+				vals[idx] = val
+			else
+				dirty = no
+		
+		if dirty
+			
+			#extras = ' ' + vals.join(' ')
+			console.log 'reconciled!!',sym,str,#extras
+			sync!
+		return
 
 	def valueOf
 		string
@@ -44,5 +70,11 @@ export class Flags
 	def toString
 		string
 
+	def #toStringDeopt
+		string + (#extras or '')
+
 	def sync
 		dom.flagSync$!
+
+	get stacks
+		#stacks ||= {}

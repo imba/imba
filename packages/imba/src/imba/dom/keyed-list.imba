@@ -1,5 +1,6 @@
 import {createComment} from './core'
 import {Fragment} from './fragment'
+import {RenderContext} from './context'
 
 class KeyedTagFragment < Fragment
 	
@@ -10,7 +11,7 @@ class KeyedTagFragment < Fragment
 		changes = new Map
 		dirty = no
 		array = childNodes
-		self.$ = {}
+		self.$ = new RenderContext(self)
 
 		if !(f & $TAG_LAST_CHILD$)
 			#end = createComment('map')

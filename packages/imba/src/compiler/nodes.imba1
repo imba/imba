@@ -8318,6 +8318,7 @@ class TagLike < Node
 			node = TagContent.new(value: node)
 
 		@consumed.push(node) # why consume if node isa String?
+		node.@consumedBy = self
 		node.@parent = self
 		return node
 
@@ -8408,6 +8409,18 @@ class TagLike < Node
 	def tvar
 		@tvar or tagvar('T')
 
+	def parentRef
+		@parentRef ||= (parent ? parent.ref : "{parentCache}._")
+
+	def parentCache
+		@parentCache ||= (parent ? parent.cvar : scope__.closure.tagCache)
+
+	def renderContextFn
+		"{parentCache}[{gsym('#getRenderContext')}]"
+
+	def dynamicContextFn
+		"{parentCache}[{gsym('#getDynamicContext')}]"
+
 	# built variable
 	def bvar
 		@bvar or (@parent ? @parent.bvar : tagvar('B'))
@@ -8415,6 +8428,9 @@ class TagLike < Node
 	# cache variable
 	def cvar
 		@cvar or (@parent ? @parent.cvar :  tagvar('C'))
+
+	def owncvar
+		tagvar('C')
 
 	def vvar do tagvar('V') # value variable
 	def hvar do tagvar('H') # handler variable
@@ -8480,6 +8496,7 @@ class TagLike < Node
 			last.flag(F.TAG_LAST_CHILD) if last isa TagLike
 				
 		for item in @consumed when item isa TagLike
+			item.@consumedBy = self
 			item.@parent = self
 			item.@level = (@level + 1)
 			item.visitAfterConsumed
@@ -8716,6 +8733,9 @@ export class TagLoopFragment < TagLike
 		if parent isa TagSwitchFragment
 			set(detached: yes)
 
+		if parent and !@consumedBy
+			set(detached: yes)
+
 		# if @tag and @childTags
 		let iref = option(:indexed) ? (runtime:createIndexedList) : (runtime:createKeyedList)		
 		# LIT('imba.createIndexedFragment') : LIT('imba.createKeyedFragment')
@@ -8787,6 +8807,7 @@ export class Tag < TagLike
 		@cssflag ||= "{sourceId}"
 
 	def tagvarprefix
+		return isSelf ? 'SELF' : 'T'
 		return @tagvarprefix ||= (type and type:toVarPrefix ? type.toVarPrefix : (isSelf ? 'self' : 'tag'))
 		return ''
 	
@@ -8921,9 +8942,9 @@ export class Tag < TagLike
 		if isSVG
 			@kind = 'svg'		
 		
-		if @parent isa TagLoopFragment and isDynamicType
-			if option(:key)
-				set(key: OP('+',option(:key),OP('+',STR(' '),vvar)) )
+		# if @parent isa TagLoopFragment and isDynamicType
+		#	if option(:key)
+		#		set(key: OP('+',option(:key),OP('+',STR(' '),vvar)) )
 		self
 
 	def visitAfterConsumedChildren
@@ -9039,9 +9060,12 @@ export class Tag < TagLike
 			# LIT('imba.createLiveFragment')
 		elif isAsset
 			runtime:createAssetElement
+
 		elif isSVG
 			runtime:createSVGElement
 			# LIT('imba.createSVGElement')
+		elif isDynamicType
+			runtime:createDynamic
 		elif isComponent
 			runtime:createComponent
 		else
@@ -9086,6 +9110,10 @@ export class Tag < TagLike
 			# console.warn "global will be deprecated in favor of teleport in a future version. Please use teleport instead" unless type.@value == 'teleport'
 			typ = "'i-{type.@value}'"
 			STACK.use('dom_teleport')
+
+		if parent and !@consumedBy
+			set(detached: yes)
+
 			
 		var parentIsInlined = o:inline
 
@@ -9149,18 +9177,15 @@ export class Tag < TagLike
 		# whether this tag should set a variable indicating
 		# whether this was built now or not
 		# basically whether we need a reference at all?
-		var markWhenBuilt = shouldEnd or hasDynamicFlags or attrs:length or option(:markWhenBuilt) or isDetached
+		var markWhenBuilt = shouldEnd or hasDynamicFlags or attrs:length or option(:markWhenBuilt) or isDetached or isDynamicType or !!option(:key)
 		# when it has any attributes? - but not text or
 
 		var inCondition = parent && parent.option(:condition)
 
-		if type isa ExpressionNode
-			add "{vvar}={type.c}"
-			unless (option(:key) or parent isa TagLoopFragment)
-				add "{kvar}='{oid}_'+{vvar}"
-
-			typ = vvar
-			dynamicKey = kvar
+		if isDynamicType
+			ownCache = yes
+			typ = "{owncvar}.value"
+			# @cref = "{parentCache}[{osym('$2')}]"
 
 		# add unique flag to this element if it has inline styles or
 		# we're compiling for hmr.
@@ -9222,7 +9247,7 @@ export class Tag < TagLike
 
 		# checking to see if a node is static enough to be inserted directly into the dom without
 		# any references.
-		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey
+		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey and !isDynamicType
 			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType and !v.option(:key)))
 				if !shouldEnd and !hasNonTagChildren and !isSlot and !option(:dynamic) and !option(:reference)
 					hasDynamicParts = no
@@ -9274,38 +9299,56 @@ export class Tag < TagLike
 			ctor = OP('=',option(:assign),LIT(ctor)).c()
 		
 		let deeplyDynamic = hasDynamicDescendants
-		# let parName = parent and parent.tag
-		# console.log !!parent,tagName,'re',isReactive,'expr',isExpression,'inline',canInline,'dyn',hasDynamicParts,'oin',o:inline,deeplyDynamic
+
+		# console.log "IS INLINE? {o:inline} {STACK.isExpression} {!!@consumedBy} {!!@parent} {isDetached}"
 		
-		if !parent
+		if !@consumedBy
 			@ref = "{tvar}"
-			@cvar = tvar
-			
+
 			if isSelf
 				add "{tvar}=this"
 				add "{tvar}{domCall 'open'}()"
 				add "({bvar}={dvar}=1,{tvar}[{osym}] === 1) || ({bvar}={dvar}=0,{tvar}[{osym}]=1)"
+				@cvar = tvar
 
 			elif isReactive
-				let scop = scope__.closure
+				# let scop = scope__.closure
+				let k = "{parentCache}[{osym}]"
 
-				let k = "{scop.tagCache}[{osym}]"
-				add "({bvar}={dvar}=1,{tvar}={k}) || ({bvar}={dvar}=0,{k}={ctor})"
-				add "{bvar} || ({tvar}[{gsym('##up')}]={scop.tagCache}._)" # really? 
+
+				if isDynamicType
+					if option(:key)
+						# what if this is the only one, should be special?
+						add "{owncvar}={dynamicContextFn}({osym},{option(:key).c})"
+					else
+						add "{owncvar}={renderContextFn}({osym})"
+
+					ctor = "{owncvar}.set({owncvar}.value,{ctor})"
+					add "({bvar}={dvar}=1,{tvar}={owncvar}.get({owncvar}.value={type.c})) || ({bvar}={dvar}=0,{ctor})"
+
+				elif option(:key)
+					add "{cvar}=({k}={k}||new Map())"
+					add "({bvar}={dvar}=1,{tvar}={cvar}.get({kvar}={option(:key).c})) || ({bvar}={dvar}=0,{cvar}.set({kvar},{ctor}))"
+				else	
+					add "({bvar}={dvar}=1,{tvar}={k}) || ({bvar}={dvar}=0,{tvar}={k}={ctor})"
+
+				add "{bvar} || ({tvar}[{gsym('##up')}]={parentRef})" # really? 
+
+				@cvar = tvar
 				@ref = tvar
 				
 				if isExpression and !deeplyDynamic
 					option(:inline,canInline = yes)
 					o:inline = yes
 				else
-					
 					if isExpression
 						option(:iife,yes)
 
 					o:inline = no
-	
+
 			else
 				add "({ctor})"
+				@cvar = tvar
 
 				if isExpression and !hasDynamicParts
 					option(:inline,canInline = yes)
@@ -9343,6 +9386,8 @@ export class Tag < TagLike
 				# add("{tvar}")
 			# this is a functional tag component
 			elif option(:args)
+				console.warn "support for <tag(args)> is deprecated"
+				# TODO remove the args concept
 				let key = "{cvar}[{osym}]"
 				let ckey = "{cvar}[{osym('$')}]"
 				let inskey = "{cvar}[{osym('ins')}]"
@@ -9355,35 +9400,39 @@ export class Tag < TagLike
 				# call the tag - type?
 
 			elif parent isa TagLoopFragment
-				# what if we are not reactive at all?
-				if parent.isKeyed and !option(:key)
-					# FIXME now we need a separate cache?!
-					option(:key,OP('+',LIT("'{oid}$'"),parent.kvar))
-					if isDynamicType
-						set(key: OP('+',option(:key),vvar))
-					# @ref = "{parent.cvar}[{parent.kvar}]"
+				@bvar = tagvar('B')
+				let key = option(:key)
 
 				if option(:key)
-					add "{kvar}={option(:key).c}"
-					@ref = "{parent.cvar}[{kvar}]"
-				elif parent.isIndexed
-					@ref = "{parent.cvar}[{parent.kvar}]"
+					if isDynamicType
+						add "{owncvar}={renderContextFn}({option(:key).c})"
+						let gets = "{owncvar}.get({owncvar}.value={type.c})"
+						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.set({owncvar}.value,{ctor}))"
+					else
+						let gets = "{parentCache}.get({kvar}={option(:key).c})"
+						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{parentCache}.set({kvar},{ctor}))"
 
-				# if we add our own bvar?
-				@bvar = tagvar('B')
-				add "({bvar}={dvar}=1,{tvar}={ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
+				elif parent.isIndexed
+					let memo = "{parentCache}[{parent.kvar}]"
+					add "({bvar}={dvar}=1,{tvar}={memo}) || ({bvar}={dvar}=0,{memo}={ctor})"
+
+				elif parent.isKeyed
+					if !isDynamicType
+						let gets = "({kvar}={renderContextFn}({osym})).get({parent.kvar})"
+						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{kvar}.set({parent.kvar},{ctor}))"
+					else
+						let gets = "({owncvar}={dynamicContextFn}({type.osym},{parent.kvar})).get({owncvar}.value={type.c})" # .get({parent.kvar})
+						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.set({owncvar}.value,{ctor}))"
+
 				@ref = "{tvar}"
 
-				if isDetached or true
+				if true
 					add "{bvar}||({tvar}[{gsym('##up')}]={fragment.tvar})"
 
 				# dont add cvar always!
 				# rule is just "do we need our own cache?"
 				if @dynamics:length or (@consumed:length and nodes:length)
 					ownCache = yes
-					# console.log "has dynamics? {@dynamics:length}",@consumed.map(|v| v:constructor:name)
-					# @cvar = tagvar(:c)
-					# add "{cvar}={ref}.${oid} || ({ref}.${oid}=\{\})"
 
 			elif !isReactive
 				add "({ctor})"
@@ -9391,22 +9440,33 @@ export class Tag < TagLike
 			elif canInline
 				@ref = tvar
 				@bvar = parent.bvar
+				o:inline = yes
 				add "{parent.bvar} || ({ctor})"
 			else
-				let cref = @cref = "{cvar}[{osym}]"
-				let ref = dynamicKey ? "{cvar}[{dynamicKey}]" : cref
-				
-				if option(:key)
-					let dref = @dref = "{cvar}.${oid}"
-					add "{dref} || ({dref}=\{\})"
-					dynamicKey = option(:key).c
-					ref = "{dref}[{dynamicKey}]"
+				let key = option(:key)
+				let cref = @cref ||= "{cvar}[{osym}]"
 
 				if markWhenBuilt
 					@bvar = tagvar('B')
-					add "({bvar}={dvar}=1,{tvar}={ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
+
+				if isDynamicType
+					if key
+						add "{owncvar}={dynamicContextFn}({key.osym},{key.c})"
+					else
+						add "{owncvar}={renderContextFn}({type.osym})"
+					let gets = "{owncvar}.get({owncvar}.value={type.c})"
+					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.set({owncvar}.value,{ctor}))"
+
+				elif key
+					add "{owncvar}={renderContextFn}({key.osym})"
+					let gets = "{owncvar}.get({owncvar}.value={key.c})"
+					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.set({owncvar}.value,{ctor}))"
 				else
-					add "({tvar} = {ref}) || ({ref}={ctor})"
+					let ref = "{parentCache}[{osym}]"
+					if markWhenBuilt
+						add "({bvar}={dvar}=1,{tvar}={ref}) || ({bvar}={dvar}=0,{ref}={ctor})"
+					else
+						add "({tvar}={ref}) || ({ref}={ctor})"
 
 				if isDetached
 					add "{bvar}||({tvar}[{gsym('##up')}]={fragment.tvar})"
@@ -9417,11 +9477,14 @@ export class Tag < TagLike
 					ownCache = yes
 					
 				if parent isa TagSwitchFragment
-					# console.log 'is tag switch!!!'
 					ownCache = yes
 
 			if ownCache
 				@cvar = tvar # tagvar(:c)
+
+		if isDynamicType
+			add {'if': "{tvar}[{gsym('#isRichElement')}]"}
+			# ctx:condition = 
 
 		if @slots
 			for own name, slot of @slots
@@ -9462,6 +9525,7 @@ export class Tag < TagLike
 					let val = item.name
 					let cref
 					let vref
+					let batched = !isDynamicType
 			
 					if cond and !cond.isPrimitive
 						cref = "{cvar}[{cond.osym}]"
@@ -9471,16 +9535,22 @@ export class Tag < TagLike
 						vref = "{cvar}[{val.osym}]"
 						add "({vvar}={val.c(o)},{vvar}==={vref}||({dvar}|={F.DIFF_FLAGS},{vref}={vvar}))"
 
-					if cref and vref
-						flagsToConcat.push("({cref} ? ({vref}||'') : '')")
-					elif cref
-						flagsToConcat.push("({cref} ? {val.c(as:'string')} : '')")
-					elif vref
-						flagsToConcat.push("({vref}||'')")
-					elif val isa MixinIdentifier
-						flagsToConcat.push(val.c(as:'string'))
+					if batched or true
+						if cref and vref
+							flagsToConcat.push("({cref} ? ({vref}||'') : '')")
+						elif cref
+							flagsToConcat.push("({cref} ? {val.c(as:'string')} : '')")
+						elif vref
+							flagsToConcat.push("({vref}||'')")
+						elif val isa MixinIdentifier
+							flagsToConcat.push(val.c(as:'string'))
+						else
+							flagsToConcat.push("'{val.c(as:'substring')}'")
 					else
-						flagsToConcat.push("'{val.c(as:'substring')}'")
+						if cref
+							add "{tvar}.flags.toggle({vref ? vref : val.c(as:'string')},{cref}))"
+						else
+							add "({bvar}||{tvar}.flags.add({vref ? vref : val.c(as:'string')})"
 
 				elif item isa TagHandler
 					let mods = item.modifiers
@@ -9549,10 +9619,14 @@ export class Tag < TagLike
 
 		if flagsToConcat:length or (isSelf && @className)
 			flagsToConcat.unshift(@className) if @className
-			let meth = isSelf ? 'flagSelf$' : 'flag$'
 			let cond = "{dvar}&{F.DIFF_FLAGS}"
-			cond = "(!{bvar}||{cond})" if isSelf
-			add "({cond} && {tvar}.{meth}({flagsToConcat.join("+' '+")}))"
+			let meth = isSelf ? 'flagSelf$' : 'flag$'
+			cond = "(!{bvar}||{cond})" if isSelf or isDynamicType
+
+			if isDynamicType		
+				add "({cond} && {tvar}.flags.reconcile({@dynamicContext:symbol},{flagsToConcat.join("+' '+")}))"
+			else
+				add "({cond} && {tvar}.{meth}({flagsToConcat.join("+' '+")}))"
 
 		# When there is only one value and that value is a static string or num - include it in ctor
 		# loop through attributes etc
@@ -9593,9 +9667,15 @@ export class Tag < TagLike
 			foot.push("{bvar} || !{tvar}.setup || {tvar}.setup({dvar})") unless isSelf
 			foot.push(isSelf ? "{tvar}{domCall 'close'}({dvar})" : "{tvar}{domCall 'end'}({dvar})")
 
+		# horrible hacks to work around the way we join the tag parts
+		# to expressions and/or statements
+		if isDynamicType
+			foot.push(endif: true)
+
 		if parent isa TagLoopFragment
 			
 			if parent.isKeyed
+				# the last kvar argument here is not used right now
 				foot.push "{parent.ref}.push({tvar},{parent.kvar}++,{kvar})"
 			elif parent.isIndexed
 				foot.push "{parent.kvar}++"
@@ -9606,7 +9686,7 @@ export class Tag < TagLike
 		elif parent and !(parent isa TagSwitchFragment) and (isComponent or dynamicKey or option(:reference))
 			let pref = fragment.ref
 			let cref = @cref
-			if dynamicKey
+			if dynamicKey or isDynamicType or isDetached
 				if fragment isa TagSlotProxy
 					foot.push "({tvar}=={cref}) || (!{cref} && {pref}{domCall('appendChild')}({cref}={tvar})) || ({pref}{domCall('replaceChild')}({tvar},{cref}),{cref}={tvar})"
 				else
@@ -9615,9 +9695,10 @@ export class Tag < TagLike
 				foot.push "{bvar} || {pref}{domCall('appendChild')}({tvar})"
 
 		if option(:fragmented)
+
 			add "{runtime:renderContext}.context=null"
 
-		if !parent
+		if !@consumedBy
 			if option(:return) or option(:iife)
 				foot.push "return {tvar}"
 			elif !isReactive or o:inline
@@ -9625,10 +9706,22 @@ export class Tag < TagLike
 
 		out = out.concat(foot)
 		
+		
 		if o:inline
 			o:inline = parentIsInlined
+
+			let js = '('
+			let last = out:length - 1
 			
-			let js = '(' + out.join(',\n') + ')'
+			for item,i in out
+				if item:if
+					js += "({item:if} && (\n" # + '{\n'
+				else
+					js += item:endif ? '))' : item
+					js += ',\n' unless i == last or (out[i + 1]:endif)
+			js += ')'
+			
+			# let js = '(' + out.join(',\n') + ')'
 			if isSlot and hasChildren
 				let post = ""
 				unless parent isa TagSwitchFragment
@@ -9640,8 +9733,17 @@ export class Tag < TagLike
 			return js
 
 		o:inline = parentIsInlined
+
+		let js = ''
+		for item in out
+			if item:if
+				js += "if({item:if})" + '{\n'
+			elif item:endif
+				js += '};\n'
+			else
+				js += item + ';\n'
 		
-		let js = out.join(";\n")
+		# let js = out.join(";\n")
 		if isSlot and hasChildren
 			let post = ""
 			unless parent isa TagSwitchFragment
@@ -11249,7 +11351,8 @@ export class Scope
 	def tagCache
 		# deal with root instead?
 		@tagCache ||= declare('ϲτ',
-			LIT("({runtime:renderContext}.context||\{\})"),
+			# LIT("({runtime:renderContext}.context||\{\})"),
+			LIT("{runtime:getRenderContext}()"),
 			system: yes
 			temporary: yes
 			alias: 'ϲτ'

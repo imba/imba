@@ -1,5 +1,6 @@
 import {Flags} from './flags'
 import {getDeepPropertyDescriptor} from '../utils'
+import {RenderContext,createRenderContext} from './context'
 
 export const {
 	Event,
@@ -93,6 +94,12 @@ extend class Node
 
 	def #__init__
 		self
+
+	def #getRenderContext sym
+		createRenderContext(self,sym)
+
+	def #getDynamicContext sym,key
+		#getRenderContext(sym).#getRenderContext(key)
 	
 	def #insertChild newnode, refnode
 		newnode.#insertInto(self,refnode)
@@ -295,6 +302,7 @@ extend class Element
 
 # Element.prototype.set$ = Element.prototype.setAttribute
 Element.prototype.setns$ = Element.prototype.setAttributeNS
+Element.prototype.#isRichElement = yes
 
 export def createElement name, parent, flags, text
 	let el = document.createElement(name)
@@ -460,6 +468,17 @@ export def createComponent name, parent, flags, text, ctx
 	if flags or el.flags$ns # or nsflag
 		el.flag$(flags or '')
 	return el
+
+export def createDynamic value, parent, flags, text
+	if value == null or value == undefined
+		return createComment('')
+	elif value isa Node
+		# check if node already exists somewhere else in dom
+		return value		
+	elif typeof value == 'string' or (value and value.prototype isa Node)
+		return createComponent(value,parent,flags,text)
+
+
 
 export def getTagType name, klass
 	# TODO follow same structure as ssr TYPES
