@@ -7,6 +7,7 @@ export tag Post
 export tag Category
 	uniq = count++
 	<self @pointerup.stop=(data.type = Post)> "CATEGORY! {data.title} {uniq} {data.type.name}"
+	
 const items = [
 	{type: Post, title: "Welcome!", id: 1}
 	{type: Category, title: "Articles", id: 2}
@@ -53,7 +54,7 @@ describe "dynamic template and key" do
 			<{item.type} data=item>
 
 		<self>
-			<{template(items[nr])} $key=items[nr]>
+			<(template(items[nr])) $key=items[nr]>
 
 	imba.mount(let app = <App>)
 
@@ -66,3 +67,33 @@ describe "dynamic template and key" do
 		app.render!
 		ok app.children[0] isa Post
 		items[1].type = Category
+
+describe "With component" do
+	let nr = 0
+	let counters = {
+		setup: 0
+		render: 0
+		mount: 0
+		visit: 0
+	}
+
+	tag Item
+		def setup
+			counters.setup++
+
+		def render
+			counters.render++
+			<self> <div> "Hello"
+
+
+	tag App
+		def template item
+			<Item data=item>
+
+		<self>
+			<(template(items[nr]))>
+
+	test do
+		imba.mount(let app = <App>)
+		eq counters.render,1
+		eq counters.setup,1

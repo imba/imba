@@ -8969,7 +8969,9 @@ export class Tag < TagLike
 
 		if type == TagArgList
 			if attrs:length == 0
-				set(args: part)
+				set(dynamic: yes)
+				set(type: part.nodes[0])
+				# set(args: part)
 				return self
 
 		if type == TagSep
@@ -9045,7 +9047,7 @@ export class Tag < TagLike
 		@tagName || String(@options:type)
 
 	def isDynamicType
-		type isa ExpressionNode
+		type isa ExpressionNode or @options:dynamic
 
 	def isSVG
 		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or (@parent and @parent.isSVG))
@@ -9323,8 +9325,8 @@ export class Tag < TagLike
 					else
 						add "{owncvar}={renderContextFn}({osym})"
 
-					ctor = "{owncvar}.set({owncvar}.value,{ctor})"
-					add "({bvar}={dvar}=1,{tvar}={owncvar}.get({owncvar}.value={type.c})) || ({bvar}={dvar}=0,{ctor})"
+					ctor = "{owncvar}.cache({ctor})"
+					add "({bvar}={dvar}=1,{tvar}={owncvar}.run({type.c})) || ({bvar}={dvar}=0,{ctor})"
 
 				elif option(:key)
 					add "{cvar}=({k}={k}||new Map())"
@@ -9386,7 +9388,7 @@ export class Tag < TagLike
 				# add("{tvar}")
 			# this is a functional tag component
 			elif option(:args)
-				console.warn "support for <tag(args)> is deprecated"
+				console.warn "support for <tag(args)> is deprecated",option(:args).c,type
 				# TODO remove the args concept
 				let key = "{cvar}[{osym}]"
 				let ckey = "{cvar}[{osym('$')}]"
@@ -9406,8 +9408,8 @@ export class Tag < TagLike
 				if option(:key)
 					if isDynamicType
 						add "{owncvar}={renderContextFn}({option(:key).c})"
-						let gets = "{owncvar}.get({owncvar}.value={type.c})"
-						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.set({owncvar}.value,{ctor}))"
+						let gets = "{owncvar}.run({type.c})"
+						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 					else
 						let gets = "{parentCache}.get({kvar}={option(:key).c})"
 						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{parentCache}.set({kvar},{ctor}))"
@@ -9421,8 +9423,8 @@ export class Tag < TagLike
 						let gets = "({kvar}={renderContextFn}({osym})).get({parent.kvar})"
 						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{kvar}.set({parent.kvar},{ctor}))"
 					else
-						let gets = "({owncvar}={dynamicContextFn}({type.osym},{parent.kvar})).get({owncvar}.value={type.c})" # .get({parent.kvar})
-						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.set({owncvar}.value,{ctor}))"
+						let gets = "({owncvar}={dynamicContextFn}({type.osym},{parent.kvar})).run({type.c})" # .get({parent.kvar})
+						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 
 				@ref = "{tvar}"
 
@@ -9454,13 +9456,13 @@ export class Tag < TagLike
 						add "{owncvar}={dynamicContextFn}({key.osym},{key.c})"
 					else
 						add "{owncvar}={renderContextFn}({type.osym})"
-					let gets = "{owncvar}.get({owncvar}.value={type.c})"
-					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.set({owncvar}.value,{ctor}))"
+					let gets = "{owncvar}.run({type.c})"
+					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 
 				elif key
 					add "{owncvar}={renderContextFn}({key.osym})"
-					let gets = "{owncvar}.get({owncvar}.value={key.c})"
-					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.set({owncvar}.value,{ctor}))"
+					let gets = "{owncvar}.run({key.c})"
+					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 				else
 					let ref = "{parentCache}[{osym}]"
 					if markWhenBuilt
@@ -9617,14 +9619,14 @@ export class Tag < TagLike
 						item.value = LIT("{iref}={vvar}")
 						add "({vvar}={val.c(o)},{vvar}==={iref} || ({M item.js(o),item}))"
 
-		if flagsToConcat:length or (isSelf && @className)
+		if flagsToConcat:length or ((isSelf or isDynamicType) && @className)
 			flagsToConcat.unshift(@className) if @className
 			let cond = "{dvar}&{F.DIFF_FLAGS}"
 			let meth = isSelf ? 'flagSelf$' : 'flag$'
 			cond = "(!{bvar}||{cond})" if isSelf or isDynamicType
 
-			if isDynamicType		
-				add "({cond} && {tvar}.flags.reconcile({@dynamicContext:symbol},{flagsToConcat.join("+' '+")}))"
+			if isDynamicType
+				add "({cond} && {tvar}.flags.reconcile({osym},{flagsToConcat.join("+' '+")}))"
 			else
 				add "({cond} && {tvar}.{meth}({flagsToConcat.join("+' '+")}))"
 
@@ -9664,8 +9666,14 @@ export class Tag < TagLike
 
 
 		if shouldEnd
-			foot.push("{bvar} || !{tvar}.setup || {tvar}.setup({dvar})") unless isSelf
-			foot.push(isSelf ? "{tvar}{domCall 'close'}({dvar})" : "{tvar}{domCall 'end'}({dvar})")
+			if !parent and !isSelf
+				foot.push("{bvar} || {parentRef} || !{tvar}.setup || {tvar}.setup({dvar})")
+				foot.push("{parentRef} || {tvar}{domCall 'end'}({dvar})")
+			elif isSelf
+				foot.push("{tvar}{domCall 'close'}({dvar})")
+			else
+				foot.push("{bvar} || !{tvar}.setup || {tvar}.setup({dvar})")
+				foot.push("{tvar}{domCall 'end'}({dvar})")
 
 		# horrible hacks to work around the way we join the tag parts
 		# to expressions and/or statements

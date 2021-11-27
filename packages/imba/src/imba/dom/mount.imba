@@ -1,4 +1,4 @@
-import {renderContext} from './context'
+import {renderContext,RenderContext} from './context'
 import {scheduler} from '../scheduler'
 
 export def render blk, ctx = {}
@@ -10,10 +10,17 @@ export def render blk, ctx = {}
 	return res
 
 export def mount mountable, into
+	if $node$
+		console.warn "imba.mount not supported on server"
+		# if mountable isa Function	
+		console.log String(mountable)
+		return String(mountable)
+
 	let parent = into or global.document.body
 	let element = mountable
 	if mountable isa Function
-		let ctx = {_: parent}
+
+		let ctx = new RenderContext(parent)
 		let tick = do
 			let prev = renderContext.context
 			renderContext.context = ctx
@@ -29,7 +36,6 @@ export def mount mountable, into
 		element.__F |= $EL_SCHEDULE$
 
 	element.#insertInto(parent)
-	# parent.appendChild(element)
 	return element
 
 export def unmount el

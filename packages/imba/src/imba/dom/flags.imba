@@ -58,9 +58,7 @@ export class Flags
 				dirty = no
 		
 		if dirty
-			
 			#extras = ' ' + vals.join(' ')
-			console.log 'reconciled!!',sym,str,#extras
 			sync!
 		return
 
