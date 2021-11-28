@@ -2,6 +2,8 @@ import {Node,HTMLElement,CUSTOM_TYPES} from './core'
 import {createLiveFragment,createSlot} from './fragment'
 import {scheduler} from '../scheduler'
 
+import {renderer} from './context'
+
 const hydrator = new class
 	items = []
 	current = null
@@ -259,8 +261,18 @@ export class Component < HTMLElement
 			classList.remove('_ssr_')
 			if flags$ext and flags$ext.indexOf('_ssr_') == 0
 				flags$ext = flags$ext.slice(5)
+			# TODO document this behaviour
 			innerHTML = '' unless __F & $EL_RENDERED$
+
+		if global.DEBUG_IMBA
+			renderer.push(self)
 		self
+
+	def #afterReconcile
+		if global.DEBUG_IMBA
+			renderer.pop(self)
+		self
+
 
 	def connectedCallback
 		let flags = __F

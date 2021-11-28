@@ -321,8 +321,10 @@ export default class Bundle < Component
 		if addExtensions[o.platform]
 			esoptions.resolveExtensions.unshift(...addExtensions[o.platform])
 
+		let defines = esoptions.define ||= {}
+		defines["globalThis.DEBUG_IMBA"] ||= !esoptions.minify
+
 		if !nodeish?
-			let defines = esoptions.define ||= {}
 			let env = o.env or process.env.NODE_ENV or 'production'
 			defines["global"]="globalThis"
 			defines["process.platform"]="'web'"

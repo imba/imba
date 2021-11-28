@@ -8971,7 +8971,6 @@ export class Tag < TagLike
 			if attrs:length == 0
 				set(dynamic: yes)
 				set(type: part.nodes[0])
-				# set(args: part)
 				return self
 
 		if type == TagSep

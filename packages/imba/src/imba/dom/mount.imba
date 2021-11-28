@@ -13,7 +13,7 @@ export def mount mountable, into
 	if $node$
 		console.warn "imba.mount not supported on server"
 		# if mountable isa Function	
-		console.log String(mountable)
+		# console.log String(mountable)
 		return String(mountable)
 
 	let parent = into or global.document.body

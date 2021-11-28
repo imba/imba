@@ -2,7 +2,20 @@
 
 export const renderContext = {
 	context: null
+
 }
+
+class Renderer
+
+	stack = []
+
+	def push el
+		stack.push(el)
+
+	def pop el
+		stack.pop!
+
+export const renderer = new Renderer
 
 export class RenderContext < Map
 	def constructor parent
@@ -35,6 +48,11 @@ export def createRenderContext cache,key = Symbol!,up = cache
 
 export def getRenderContext
 	let ctx = renderContext.context
+	let res = ctx or new RenderContext(null)
+	if global.DEBUG_IMBA
+		if !ctx and renderer.stack.length > 0
+			console.warn "detected unmemoized nodes in",renderer.stack,"see https://imba.io",res
+
 	renderContext.context = null if ctx
-	return ctx or new RenderContext(null)
+	return res
 	# {map:new Map}
