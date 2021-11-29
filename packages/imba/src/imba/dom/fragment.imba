@@ -1,4 +1,5 @@
 import {Text,createComment,createTextNode,Comment,Node} from './core'
+import {Flags} from './flags'
 
 export class Fragment
 	
@@ -7,7 +8,6 @@ export class Fragment
 		
 	def log ...params
 		return
-		console.log this.constructor.name,...params
 		
 	def hasChildNodes
 		false
@@ -17,6 +17,18 @@ export class Fragment
 
 	get #parent
 		##parent or ##up
+
+	get #isRichElement
+		yes
+
+	get flags
+		##flags ||= new Flags(self)
+
+	def flagSync$
+		self
+
+	def #afterVisit
+		self
 
 let counter = 0
 # like a list

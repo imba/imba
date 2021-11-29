@@ -85,6 +85,7 @@ extend class Document
 	get flags
 		self.documentElement.flags
 
+
 extend class Node
 	get #parent
 		##parent or this.parentNode or ##up # FIX
@@ -474,7 +475,10 @@ export def createDynamic value, parent, flags, text
 		return createComment('')
 	elif value isa Node
 		# check if node already exists somewhere else in dom
-		return value		
+		return value
+	elif value.#isRichElement
+		return value
+
 	elif typeof value == 'string' or (value and value.prototype isa Node)
 		return createComponent(value,parent,flags,text)
 
