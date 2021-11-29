@@ -8278,6 +8278,16 @@ class TagLike < Node
 			el = el.@parent
 		return el
 
+	def tagLikeParents
+		let parents = []
+		let el = @parent
+		while el isa TagLike
+			parents.push(el)
+			el = el.parent
+
+		return parents
+
+
 	def setup
 		@traversed = no
 		@consumed = []
@@ -8910,12 +8920,6 @@ export class Tag < TagLike
 			set(name: name)
 			@attributes = []
 		
-		if @options:reference
-			let tagdef = stack.up(TagDeclaration)
-			if tagdef
-				tagdef.addElementReference(@options:reference,self)
-				
-				
 		@scope = TagBodyScope.new(self)
 		@scope.visit
 
@@ -8940,11 +8944,31 @@ export class Tag < TagLike
 
 	def visitAfterConsumed
 		if isSVG
-			@kind = 'svg'		
-		
-		# if @parent isa TagLoopFragment and isDynamicType
-		#	if option(:key)
-		#		set(key: OP('+',option(:key),OP('+',STR(' '),vvar)) )
+			@kind = 'svg'
+
+		if @options:reference
+			let method = stack.up(MethodDeclaration)
+			let tagdef = stack.up(TagDeclaration)
+			let err
+
+			if tagdef and method and String(method.name) == 'render'
+				for el in tagLikeParents
+					if el isa TagLoopFragment
+						err = "Named tags not allowed inside loops"
+					if el isa Tag and el.isDynamicType
+						err = "Named tags not allowed inside dynamic parent"
+				
+				unless err
+					tagdef.addElementReference(@options:reference,self)
+			else
+				err = "Named tags are only allowed inside render method"
+
+			if err
+				# FIXME should actually classify as error
+				warn(err, loc: @options:reference)
+
+		# FIXME Slots are not allowed inside loops
+
 		self
 
 	def visitAfterConsumedChildren
@@ -9135,8 +9159,15 @@ export class Tag < TagLike
 		if @asset
 			typ = @assetRef.c
 			# typ = "'{@assetName}'"
+
+		var slotPath = ""
 		
-		var slotPath = isSlot ? OP('.',LIT("{root.tvar}.__slots"),STR(option(:name))).c : ""
+		if isSlot
+			if root.isSelf
+				slotPath = OP('.',OP(".",root.tvar,STR("__slots")),STR(option(:name))).c
+			else
+				let fn = OP(".",root.tvar,gsym('#registerFunctionalSlot')).c
+				slotPath = "{fn}({STR(option(:name)).c})"
 
 		if stack.tsc
 			# if tag is expression we want to suppress certain warnings
@@ -9489,8 +9520,9 @@ export class Tag < TagLike
 
 		if @slots
 			for own name, slot of @slots
-				# TODO Make sure slot is not already used
-				add "{slot.tvar} = {tvar}.slot$('{name}',{cvar})"
+				# if isDynamicType
+				let fn = isDynamicType ? gsym('#getFunctionalSlot') : gsym('#getSlot')
+				add "{slot.tvar} = {OP('.',tvar,fn).c}('{name}',{cvar})"
 
 		let flagsToConcat = []
 

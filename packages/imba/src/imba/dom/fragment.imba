@@ -1,4 +1,4 @@
-import {Text,createComment,createTextNode,Comment} from './core'
+import {Text,createComment,createTextNode,Comment,Node} from './core'
 
 export class Fragment
 	
@@ -205,3 +205,18 @@ export def createSlot bitflags, par
 	# el.setup$(bitflags, options)
 	# el.##up = par if par
 	return el
+
+extend class Node
+	def #registerFunctionalSlot name
+		let map = #functionalSlots ||= {}
+		map[name] ||= createSlot(0,self)
+	
+	def #getFunctionalSlot name, context
+		let map = #functionalSlots
+		return map and map[name] or #getSlot(name,context)
+
+	def #getSlot name, context
+		if name == '__' and !self.render
+			return self
+		
+		return __slots[name] ||= createSlot(0,self)
