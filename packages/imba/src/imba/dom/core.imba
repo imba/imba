@@ -953,15 +953,14 @@ export def defineTag name, klass, options = {}
 	if options.extends
 		proto.#htmlNodeName = options.extends
 
-	let basens = proto._ns_
-	if options.ns
-		let ns = options.ns
-		let flags = ns + ' ' + ns + '_ '
-		if basens
-			flags += proto.flags$ns 
-			ns += ' ' + basens
-		proto._ns_ = ns
-		proto.flags$ns = flags
+	if options.cssns
+		let ns = (proto._ns_ || '') + ' ' + options.cssns
+		proto._ns_ = ns.trim! + ' '
+
+	if options.cssid
+		let ids = (proto.flags$ns || '') + ' ' + options.cssid
+		proto.#cssid = options.cssid
+		proto.flags$ns = ids.trim! + ' '
 
 	return klass
 

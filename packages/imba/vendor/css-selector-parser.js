@@ -585,8 +585,8 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
       res = entity.selectors.map(this._renderEntity, this).join(', ');
       break;
     case 'rule':
-      let s0 = entity.s0;
-      let s1 = entity.s1;
+      let s0 = entity.s1;
+      let s1 = entity.s2;
       
       if (entity.tagName) {
         if (entity.tagName === '*') {
@@ -613,7 +613,7 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
           }
         }, this).join('');
 
-        if(s1 > 0 && shortest && (shortest.length * s1) < (4 + s1 * 2)){
+        if(false && s1 > 0 && shortest && (shortest.length * s1) < (4 + s1 * 2)){
           while(s1--){
             res += "." + shortest;
           }

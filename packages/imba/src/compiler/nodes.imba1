@@ -634,7 +634,7 @@ export class Stack
 		@root.runtime
 		
 	def cssns
-		sourceId + "__"
+		@root.cssns
 	
 	def registerSemanticToken token, kind, modifiers
 		if token isa Node
@@ -847,6 +847,14 @@ export class Stack
 			i -= 1
 		return null
 
+	def parents test
+		test ||= do |v| !(v isa VarOrAccess)
+		if test:prototype isa Node
+			let cls = test
+			test = do |v| v isa cls
+
+		@nodes.filter(test)
+
 	def relative node, offset = 0
 		var idx = @nodes.indexOf(node)
 		idx >= 0 ? @nodes[idx + offset] : null
@@ -876,6 +884,9 @@ export class Stack
 			scopes.push(node.@scope) if node.@scope
 			i -= 1
 		return scopes
+
+	def closures
+		scopes.filter do |scope| scope.closure == scope
 
 	def method
 		up(MethodDeclaration)
@@ -3555,11 +3566,14 @@ export class TagDeclaration < ClassDeclaration
 		})
 	
 	def cssns
-		"{sourceId}_{oid}"
+		@cssns ||= @scope.cssns
+
+	def cssid
+		@cssid ||= @scope.cssid
 		
 	def cssref scope
 		if isNeverExtended and !superclass
-			return option(:hasScopedStyles) ? cssns : null
+			return @cssns
 			
 		if scope
 			let s = scope.closure
@@ -3629,9 +3643,7 @@ export class TagDeclaration < ClassDeclaration
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
-		
-		
-		
+
 		let className = name.toClassName
 		let sup = superclass
 		let anonGlobalTag = !option(:extension) and (!name.isClass) and STACK.tsc
@@ -3691,7 +3703,8 @@ export class TagDeclaration < ClassDeclaration
 			let exportName = option(:default) ? 'default' : className
 			js = "{js};\n{M('exports',o:export)}.{exportName} = {className}"
 
-		@config:ns = cssns if option(:hasScopedStyles)
+		@config:cssns = cssns if @cssns
+		@config:cssid = cssid if @cssid
 
 		if !STACK.tsc
 			if @staticInit
@@ -8695,7 +8708,7 @@ export class TagSwitchFragment < TagLike
 			parts.push("({key} = {tvar}{domCall('insert')}({item},0,{key}))")
 			
 		for item,i in @styles
-			let flag = item.@stylerule.@flagIf
+			let flag = item.@stylerule.@name
 			parts.push("{tvar}.flags.toggle('{flag}',!!{item})")
 		
 		if o:inline
@@ -8812,6 +8825,12 @@ export class Tag < TagLike
 
 	def attrs
 		@attributes
+
+	def cssns
+		@cssns ||= "{sourceId}".replace('-','_')
+
+	def cssid
+		@cssid ||= "{sourceId}".replace('_','-')
 
 	def cssflag
 		@cssflag ||= "{sourceId}"
@@ -9221,12 +9240,17 @@ export class Tag < TagLike
 
 		# add unique flag to this element if it has inline styles or
 		# we're compiling for hmr.
-		if @cssflag or STACK.hmr
-			@classNames.unshift(cssflag)
 
-		# if we have file-scoped styles - add flag to all tags in page
-		if stack.option(:hasScopedStyles) or STACK.hmr
-			@classNames.unshift(stack.cssns)
+		if @cssid and !isSelf
+			@classNames.unshift(cssid)
+
+		for closure in STACK.closures
+			if closure.@cssns and (!isSelf or closure != oscope)
+				@classNames.push(closure.@cssns)
+
+		for par in tagLikeParents
+			if par.@cssns
+				@classNames.push(par.@cssns)
 
 		if component and !isSelf
 			if let cname = component.cssref(option(:reference) ? null : scope__)
@@ -10317,113 +10341,76 @@ export class StyleRuleSet < StyleNode
 		
 	def placeholders
 		@placeholders
+
+	def cssid
+		@cssid ||= "{STACK.root.sourceId}-{oid}"
 		
 	def visit stack, o
 		let cmp = @tagDeclaration = stack.up(TagDeclaration)
+
+		@css = {}
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
-		@scopetype = 'rule'
 
 		let sel = String(@selectors).trim
 
-		# TODO remove mixins
-		if sel.match(/^\%[\w\-]+$/)
-			set(mixin: sel.slice(1))
-			@identifier = MixinIdentifier.new(sel)
-			@name = sel.slice(1) + '-' + sourceId + oid
-			@sel = sel # "%{@name}"
-			@variable = scope__.register(@identifier.symbol,self,type: 'const', lookup: true)
-			# @variable.@resolvedValue = @sel
-
-		
 		if stack.parent isa ClassBody
+			# Declaration in a tag declaration
 			let owner = stack.up(2)
 			if owner isa TagDeclaration
-				if !@variable
-					@sel = String(@selectors).trim or '&'
+				@css:type = 'component'
 
-					if @sel.match(/^(\>{1,3}|[\.\[\#])/) and !@sel.match(/&/)
-						@sel = "& {@sel}"
-					elif @sel.match(/^\@/) and !@sel.match(/&/)
-						@sel = "&{@sel}"
-					# @sel = @sel.replace('&',".{cmp.cssns}_")
-					console.log "SEL IS {@sel}"
-					@scoping = "{cmp.cssns}_"
-					@scopetype = 'tag'
-				set(inClassBody: yes)
-				
-				if cmp
-					cmp.set(hasScopedStyles: yes)
-				
+				if !@variable
+					@sel = sel or '&'
+					@css:scope = cmp
 			else
-				yes # THROW here
+				throw "css not allowed in class declaration"
 		
 		elif stack.parent isa TagBody
+			# css nested inside tag tree
 			@tag = stack.up(TagLike)
-			@sel = String(@selectors).trim or '&'
-			# FIXME how does this work with multiple comma-separated selectors?
-			
-			@rootFlag = @tag.cssflag
-			@scoping = @tag.cssflag
-			@scopetype = 'tree'
-
-			# if there is a comma here - all of them must be scoped
-			# if !@sel.match(/\&/)
-			# 	@sel = "& {@sel}"
-			# elif @sel.match(/^\@/) and !@sel.match(/&/)
-			# 	@sel = "&{@sel}"
-			# @sel = @sel.replace('&',".{@rootFlag}")
+			@sel = sel or '&'
+			@css:scope = @tag
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
-			
+
 			let inbody = stack.up(TagBody)
 			
 			if inbody
-				@scopetype = 'tree'
+				# Inside some logical nesting
 				@tag = stack.up(TagLike)
-				@sel = String(@selectors).trim or '&'
-				# FIXME how does this work with multiple comma-separated selectors?
-				
-				@name = @tag.cssflag + '_' + oid
-				@flagIf = @name
+				@sel = sel or '&'
 
-				if !@sel.match(/\&/)
-					@sel = "& {@sel}"
-				elif @sel.match(/^\@/) and !@sel.match(/&/)
-					@sel = "&{@sel}"
+				@css:scope = @tag
+				@css:ns = cssid
+				@css:id = cssid
+				@name = cssid
+				option(inTagTree: yes)
 
-				@sel = @sel.replace('&',".{@name}")
-
-				@rootFlag = @name
-				set(inTagTree: yes)
 			else
-				# console.log 'is top level'
-				@sel ||= String(@selectors).trim
+				@css:scope = isGlobal ? null : scope__.closure
+				@sel ||= sel
 
 		elif o:rule
 			@sel ||= @selectors?.toString.trim
+			# console.log "inside other rule? {@sel} | {o:rule.@sel} |"
 			@sel = "& {@sel}" if @sel.indexOf('&') == -1
 			
-
 		elif !@name and @tag and @flag and !@flag.@condition
-			@name = @tag.cssflag
-			@sel = ".{@name}"
+			@css:scope = @tag
+			@name = @tag.cssid
+			@sel = "&"
 
 		elif !@name
-			@name = (cmp ? (cmp.cssns + oid) : (sourceId + oid))
+			@name = cssid # (cmp ? (cmp.cssns + oid) : (sourceId + oid))
 			@sel = ".{@name}"
 
-		if @flag
-			@scopetype = 'inline'
-					
-		# if @tag and flag is not conditional -- use the flag id of the tag itself
-		# console.log("StyleRule{@name}",@sel,!!o:rule,typeof @name,option(:toplevel),!!@uptag,stack.parent isa TagBody)
 		@selectors?.traverse
 		
 		@styles = {}
-		@body?.traverse(rule: self, styles: @styles, rootRule: (o:rule or self))
 
+		@body?.traverse(rule: self, styles: @styles, rootRule: (o:rule or self))
 
 		# add the placeholderes
 		if @placeholders:length
@@ -10446,58 +10433,28 @@ export class StyleRuleSet < StyleNode
 					ph.warn "Only allowed inside tag tree"
 
 		if o:rule and o:styles
-			if o:styles[@sel] # '§ '+
+			if o:styles[@sel]
 				Object.assign(o:styles[@sel],@styles)
 			else
 				o:styles[@sel] = @styles
 
 		else
-			let pri = !!@flag ? (2) : 0
-			
-			pri = 1 if pri < 1 and (option(:inClassBody) or option(:inTagTree))
-
 			let component = @tagDeclaration
 			let opts = {
 				selectors: []
+				ns: @css:ns
+				id: @css:id
+				type: @css:type
+				scope: @css:scope
 				component: cmp
-				ns: cmp ? cmp.cssns : STACK.cssns
-				priority: pri
-				forceLocal: !@flag && (cmp or !isGlobal)
-				rootFlag: @rootFlag
-				rootPriority: 2
 				inline: !!@flag
-				scoping: @scoping
-				scopeType: @scopetype
 				global: !!isGlobal
 				mixins: {}
 				apply: {}
-				inTagTree: option(:inTagTree)
-				inClassBody: option(:inClassBody)
-				
+				depth: @tag ? @tag.@level : 0
 			}
-			# console.log 'forceLocal??',addSpec,pri,!!opts:forceLocal,String(@sel),"NS",opts:ns,@rootFlag,@scopetype
-
-			opts:resolver = do |name|
-				let varname = 'mixin$' + name
-				if let resolved = scope__.lookup('mixin$' + name)
-					if resolved.@declarator isa StyleRuleSet
-						return resolved.@declarator.@sel
-					else
-						return resolved
-				return null
 
 			@css = StyleRule.new(null,@sel,@styles,opts).toString
-
-			if opts:hasScopedStyles
-				(cmp or stack).set(hasScopedStyles: yes)
-
-			@css = @css.replace(/\.mixin___([\w\-]+)/g) do |m,name|
-				let varname = 'mixin$' + name
-				if let resolved = scope__.lookup(varname)
-					if resolved.@declarator isa StyleRuleSet
-						return '.'+resolved.@declarator.@name
-					else
-						return m
 
 			STACK.css.add @css, opts
 		self
@@ -10511,10 +10468,9 @@ export class StyleRuleSet < StyleNode
 				return "exports.{@identifier.c} = '{@name}'"
 			else
 				return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
-		
-		# console.log 'compile conditionals!',@flagIf,@sel,!!@tag
+
 		if @tvar
-			let out = ["{@tvar} = '{@flagIf}'"]
+			let out = ["{@tvar} = '{@name}'"]
 			let add = do out.push($1)
 			let cvar = @tag.cvar
 			let bvar = @tag.bvar
@@ -11407,7 +11363,13 @@ export class Scope
 
 	def namepath
 		'?'
-		
+
+	def cssid
+		@cssid ||= "{root.sourceId}-{oid}"
+
+	def cssns
+		@cssns ||= "{root.sourceId}_{oid}"
+
 	def tagCache
 		# deal with root instead?
 		@tagCache ||= declare('ϲτ',
@@ -11721,6 +11683,10 @@ export class RootScope < Scope
 
 	def sourceId
 		@sourceId ||= STACK.sourceId # @options:sourcePath and helpers.identifierForPath(@options:sourcePath)
+
+	def cssns
+		@cssns ||= "{sourceId}_"
+
 	# single-file-component options
 	def sfco
 		@sfco ||= declare('sfc$',LIT('{/*$sfc$*/}'))

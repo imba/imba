@@ -8,6 +8,13 @@ def addClass rule, name
 		rule.classNames.push(name)
 	return rule
 
+def addScopeClass rule,name
+	addClass(rule,name)
+	rule.metas ||= []
+	rule.metas.push(name)
+	return rule
+
+
 def addPseudo rule, pseudo
 	rule.pseudos ||= []
 	if typeof pseudo == 'string'
@@ -23,6 +30,7 @@ def getRootRule ruleset, force
 	if !rule.isRoot
 		rule = ruleset.rule = {type: 'rule',rule: rule,isRoot:yes}
 	return rule
+	
 
 def addRootClass ruleset, name
 	addClass(getRootRule(ruleset),name)
@@ -69,8 +77,7 @@ export def rewrite rule,ctx,o = {}
 	let root = rule
 	let pri = 0
 	let specificity = 0
-	let specify = o.specify
-	
+
 	let s0 = 0
 	let s1 = 0
 	let s2 = 0
@@ -80,23 +87,11 @@ export def rewrite rule,ctx,o = {}
 
 	let parts = []
 	let curr = rule.rule
+
 	while curr
 		parts.push(curr)
 		curr = curr.rule
 
-	let scope = parts.find(do $1.isScope)
-
-	if o.scoping and !scope
-		parts.unshift(root.rule = scope = {type: 'rule',rule: root.rule,classNames: [], isScope: yes})
-		# console.log 'scoping!!',rule
-
-	if scope
-		scope.classNames ||= []
-	
-	# if no rule includes & and we have specified nesting
-	# add a root rule 
-	# console.log "rules!",parts
-	
 	let rev = parts.slice(0).reverse!
 	
 	# hack
@@ -108,19 +103,18 @@ export def rewrite rule,ctx,o = {}
 		let op = part.nestingOperator
 		
 		if !flags and !name and !op and (mods and mods.every(do $1.special))
-			# console.log 'send up to the parent',part,up,part == up
 			if up
 				up.pseudos = (up.pseudos or []).concat(mods)
 				up.rule = part.rule
 				parts.splice(parts.indexOf(part),1)
-			# else
-			# 	console.log 'cannot send further up!!!'
+			else
+				part.implicitScope = yes
 	
 	let container = parts[0]
 	let localpart = null
 	let deeppart = null
-	let forceLocal = o.forceLocal
 	let escaped = no
+	let seenDeepOperator = !!o.global
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -130,17 +124,19 @@ export def rewrite rule,ctx,o = {}
 		let name = part.tagName
 		let op = part.nestingOperator
 
-		# if part.isScope and o.scoping
-		#	addClass(part,o.scoping)
-		
 		if op == '>>'
 			localpart = prev
 			escaped = part
 			part.nestingOperator = '>'
+			seenDeepOperator = yes
 		elif op == '>>>'
 			localpart = prev
 			escaped = part
 			part.nestingOperator = null
+			seenDeepOperator = yes
+
+		if !seenDeepOperator
+			part.isScoped = yes
 		
 		if name == 'html'
 			part.isRoot = yes
@@ -148,21 +144,23 @@ export def rewrite rule,ctx,o = {}
 		if mods.some(do $1.name == 'root')
 			part.isRoot = yes
 			
-		if name == 'self'
-			if o.ns
-				addClass(part,o.ns + '_')
-				part.tagName = null
+		if name == 'self' or part.isScope
+			for prev in parts.slice(0,i)
+				prev.isScoped = no
+			part.isScope = yes
+			part.isScoped = no
+			part.tagName = null
+			# if o.ns
+			#	addClass(part,o.ns + '_')
 			
-		for flag,i in flags
 
-			if flag[0] == '%'
-				flags[i] = 'mixin___'+flag.slice(1)
-				pri = 1 if pri < 1
-			elif flag[0] == '$'
-				# flags[i] = flag.slice(1) + '-' + o.ns
+		for flag,i in flags
+			if flag[0] == '$'
 				flags[i] = 'ref--' + flag.slice(1)
-				localpart = part unless escaped
-				pri = 1 if pri < 1
+				# flags[i] = flag.slice(1) + '-' + o.ns
+				# flags[i] = 'ref--' + flag.slice(1)
+				# localpart = part unless escaped
+				# pri = 1 if pri < 1
 		
 		if part.tagName
 			specificity++
@@ -255,7 +253,6 @@ export def rewrite rule,ctx,o = {}
 				o.hasScopedStyles = yes
 				addClass(part,o.ns) if o.ns
 				specificity++
-				forceLocal = no
 				
 			elif mod.name == 'off' or mod.name == 'out' or mod.name == 'in'
 				mod.remove = yes
@@ -264,7 +261,6 @@ export def rewrite rule,ctx,o = {}
 				(ctx or rule)["_{mod.name}_"] = yes
 				
 			elif mod.name == 'deep'
-				# TODO remove this -- supported with deep nesting operators
 				mod.remove = yes
 				
 				deeppart = part
@@ -296,59 +292,53 @@ export def rewrite rule,ctx,o = {}
 	
 	rule.specificity = specificity
 
+	# Now inject scope class names etc
 	let last = parts[parts.length - 1]
+	let scope = parts.find(do $1.isScope)
 
-	let lastHasClasses = last.classNames.length > 0
-	# see if we have classes at all
-	let anyClasses = parts.some do $1.classNames.length > 0
-	
-	if scope and o.scoping
-		addClass(scope,o.scoping)
-	
-	if forceLocal and localpart and o.ns
-		# console.log 'only if there is a selector group that does not contain the scoper/scoping',parts.length
-		if !localpart.isScope
-			o.hasScopedStyles = true
-			# The style is not local 
-			addClass(localpart,o.ns)
-	
-	if o.scopeType == 'inline'
-		s1 = 3
-	elif (!localpart or localpart.isScope) and o.scopeType == 'tag'
-		# console.log "no priority!"
-		s1 = anyClasses ? 2 : 0
-	elif o.scopeType == 'tree'
-		if (!localpart or localpart.isScope)
-			s1 = anyClasses ? 2 : 0
-		elif lastHasClasses
-			s1 = 2
-		else
-			console.log "does tree have classes?",rule
-			s1 = 1
-	else
-		# what if we are inline?
-		# what if it is an id?
-		console.log "does tree have classes?",rule
-		s1 = lastHasClasses ? 2 : 1
-
-	# if pri = Math.max(o.priority or 0,pri)
-	#	last.pri = pri
+	if !scope and o.id
 		
-	# if o.rootFlag and last.classNames..indexOf(o.rootFlag) >= 0
-	#	last.pri = Math.max(last.s0 or 0,o.rootPriority)
+		let idx = parts.findIndex(do $1.isScoped)
+		let parent = idx == 0 ? rule : parts[idx - 1]
+		scope = parent.rule = {isScope: yes, rule: parts[idx], classNames: [], type: 'rule'}
 
-	if s0
-		s1 += s0
+	if !scope and parts[0].implicitScope
+		parts[0].isScope = yes
+		scope = parts[0]
+		scope.isScoped = no
+
+	# console.log "PARTS",parts,!!o.scope
 	if true
-		last.s0 = s1
-
-	# if false
-	#	last.s1 = s1
+		for part in parts
+			if part.isScoped and o.scope
+				addScopeClass(part,o.scope.cssns!)
 	
-	# last.specify = specify
-	# console.log 'specificity',calcSpecificity(rule),selparser.render(rule) # ,parts
-	# rule.specificity = calcSpecificity(rule)
-	# console.log rule,"{o.priority}"
+	if scope and o.scope
+		if !scope.classNames.length and !scope.pseudos..length and scope != last and scope == parts[0] and !o.id
+			yes # no need to scope this?
+		else
+			let id = o.id || (o.scope.cssid ? o.scope.cssid! : o.scope.cssns!)
+			addScopeClass(scope,id)
+
+	# Calculate what specificity to add
+	# Because we need to work around 
+
+	let s4 = 0
+
+	for part in parts
+		continue if part.isScope
+		let mlen = part.metas..length or 0
+		s4 += 1 if !mlen and (part.classNames..length or part..pseudos..length)
+
+	s2 = s4
+
+	if o.inline
+		s1 = 3
+		s2 = 0
+
+	if true
+		last.s1 = Math.max(s0,s1)
+		last.s2 = s2
 
 	return rule
 
