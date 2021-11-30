@@ -150,17 +150,10 @@ export def rewrite rule,ctx,o = {}
 			part.isScope = yes
 			part.isScoped = no
 			part.tagName = null
-			# if o.ns
-			#	addClass(part,o.ns + '_')
-			
 
 		for flag,i in flags
 			if flag[0] == '$'
 				flags[i] = 'ref--' + flag.slice(1)
-				# flags[i] = flag.slice(1) + '-' + o.ns
-				# flags[i] = 'ref--' + flag.slice(1)
-				# localpart = part unless escaped
-				# pri = 1 if pri < 1
 		
 		if part.tagName
 			specificity++
@@ -273,6 +266,7 @@ export def rewrite rule,ctx,o = {}
 				else
 					localpart = rule.rule = {type: 'rule',rule: rule.rule}
 			elif !mod.remove
+				console.log "mod name",mod
 				# TODO negative class modifiers like this don't work well now
 				let cls = neg ? "!mod-{mod.name.slice(1)}" : "mod-{mod.name}"
 				addClass(getRootRule(rule),cls)
@@ -296,8 +290,7 @@ export def rewrite rule,ctx,o = {}
 	let last = parts[parts.length - 1]
 	let scope = parts.find(do $1.isScope)
 
-	if !scope and o.id
-		
+	if !scope and (o.id or parts[0].nestingOperator)
 		let idx = parts.findIndex(do $1.isScoped)
 		let parent = idx == 0 ? rule : parts[idx - 1]
 		scope = parent.rule = {isScope: yes, rule: parts[idx], classNames: [], type: 'rule'}
@@ -314,7 +307,7 @@ export def rewrite rule,ctx,o = {}
 				addScopeClass(part,o.scope.cssns!)
 	
 	if scope and o.scope
-		if !scope.classNames.length and !scope.pseudos..length and scope != last and scope == parts[0] and !o.id
+		if !scope.classNames.length and !scope.pseudos..length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.nestingOperator)
 			yes # no need to scope this?
 		else
 			let id = o.id || (o.scope.cssid ? o.scope.cssid! : o.scope.cssns!)

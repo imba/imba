@@ -305,10 +305,15 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
   this.parseSingleSelector = function() {
     skipWhitespace();
+
+    let opm = str.slice(pos,pos + 4).match(/^(\>{1,3}|\+|~)/);
+
     var selector = {
       type: 'ruleSet'
     };
-    var rule = this.parseRule();
+
+    var rule = opm ? {type: 'rule', isScope: true} : this.parseRule();
+
     if (!rule) {
       return null;
     }
@@ -439,7 +444,15 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         let special = chr === '@';
         
         pos++;
-        var pseudoName = getIdent({'~':true,'+':true,'.':true,'>':true,'<':true,'!':true});
+
+        var pseudoName = ''
+        while(str.charAt(pos) == '.'){
+          pseudoName += '.';
+          pos++;
+        }
+          
+
+        pseudoName += getIdent({'~':true,'+':true,'.':false,'>':true,'<':true,'!':true});
         var pseudo = {
           special: special,
           name: pseudoName

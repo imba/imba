@@ -8970,6 +8970,9 @@ export class Tag < TagLike
 			let tagdef = stack.up(TagDeclaration)
 			let err
 
+			if @options:key
+				err = "Named element cannot be keyed at the same time"
+
 			if tagdef and method and String(method.name) == 'render'
 				for el in tagLikeParents
 					if el isa TagLoopFragment
