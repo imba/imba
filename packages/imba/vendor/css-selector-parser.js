@@ -358,7 +358,10 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
     var rule = null;
     while (pos < l) {
       chr = str.charAt(pos);
-      if (chr === '*') {
+      if (chr === '&') {
+        pos++;
+        (rule = rule || {}).isScope = true;
+      } else if (chr === '*') {
         pos++;
         (rule = rule || {}).tagName = '*';
       } else if (isIdentStart(chr) || chr === '\\') {
@@ -582,6 +585,9 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
       res = entity.selectors.map(this._renderEntity, this).join(', ');
       break;
     case 'rule':
+      let s0 = entity.s0;
+      let s1 = entity.s1;
+      
       if (entity.tagName) {
         if (entity.tagName === '*') {
           res = '*';
@@ -593,20 +599,46 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
         res += "#" + this.escapeIdentifier(entity.id);
       }
       if (entity.classNames) {
+        let shortest = null;
+
         res += entity.classNames.map(function(cn) {
           if(cn[0] == '!') {
             return ":not(." + this.escapeIdentifier(cn.slice(1)) + ")";
           } else {
-            return "." + (this.escapeIdentifier(cn));
+            let str = this.escapeIdentifier(cn);
+            if(s1 && (!shortest || shortest.length > str.length)){
+              shortest = str;
+            }
+            return "." + str;
           }
         }, this).join('');
+
+        if(s1 > 0 && shortest && (shortest.length * s1) < (4 + s1 * 2)){
+          while(s1--){
+            res += "." + shortest;
+          }
+        }
       }
-      if(entity.pri > 0){
+
+      if(entity.pri > 0 && false){
         let i = entity.pri;
         // res += ":not(";
         // while (--i >= 0) res += '#_';
         // res += ')';
-        while (--i >= 0) res += ":not(#_)";
+        while (--i >= 0) res += ":not(#P)";
+      }
+      if(s0 > 0){
+        res += ":not(";
+        while (s0--) res += '#_';
+        while (--s1 >= 0) res += '._';
+        res += ')';
+        // while (--i >= 0) res += ":not(#_)";
+      }
+      if(s1 > 0){
+        res += ":not(";
+        while (--s1 >= 0) res += (s1 ? '._' : '._0');
+        res += ')';
+        // while (--i >= 0) res += ":not(._)";
       }
       if (entity.attrs) {
         res += entity.attrs.map(function(attr) {

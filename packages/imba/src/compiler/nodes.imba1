@@ -10322,6 +10322,7 @@ export class StyleRuleSet < StyleNode
 		let cmp = @tagDeclaration = stack.up(TagDeclaration)
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
+		@scopetype = 'rule'
 
 		let sel = String(@selectors).trim
 
@@ -10340,11 +10341,15 @@ export class StyleRuleSet < StyleNode
 			if owner isa TagDeclaration
 				if !@variable
 					@sel = String(@selectors).trim or '&'
-					if @sel.match(/^\>{1,3}/)
+
+					if @sel.match(/^(\>{1,3}|[\.\[\#])/) and !@sel.match(/&/)
 						@sel = "& {@sel}"
 					elif @sel.match(/^\@/) and !@sel.match(/&/)
 						@sel = "&{@sel}"
-					@sel = @sel.replace('&',".{cmp.cssns}_")
+					# @sel = @sel.replace('&',".{cmp.cssns}_")
+					console.log "SEL IS {@sel}"
+					@scoping = "{cmp.cssns}_"
+					@scopetype = 'tag'
 				set(inClassBody: yes)
 				
 				if cmp
@@ -10359,12 +10364,15 @@ export class StyleRuleSet < StyleNode
 			# FIXME how does this work with multiple comma-separated selectors?
 			
 			@rootFlag = @tag.cssflag
+			@scoping = @tag.cssflag
+			@scopetype = 'tree'
 
-			if !@sel.match(/\&/)
-				@sel = "& {@sel}"
-			elif @sel.match(/^\@/) and !@sel.match(/&/)
-				@sel = "&{@sel}"
-			@sel = @sel.replace('&',".{@rootFlag}")
+			# if there is a comma here - all of them must be scoped
+			# if !@sel.match(/\&/)
+			# 	@sel = "& {@sel}"
+			# elif @sel.match(/^\@/) and !@sel.match(/&/)
+			# 	@sel = "&{@sel}"
+			# @sel = @sel.replace('&',".{@rootFlag}")
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
@@ -10372,6 +10380,7 @@ export class StyleRuleSet < StyleNode
 			let inbody = stack.up(TagBody)
 			
 			if inbody
+				@scopetype = 'tree'
 				@tag = stack.up(TagLike)
 				@sel = String(@selectors).trim or '&'
 				# FIXME how does this work with multiple comma-separated selectors?
@@ -10383,10 +10392,13 @@ export class StyleRuleSet < StyleNode
 					@sel = "& {@sel}"
 				elif @sel.match(/^\@/) and !@sel.match(/&/)
 					@sel = "&{@sel}"
+
 				@sel = @sel.replace('&',".{@name}")
+
 				@rootFlag = @name
 				set(inTagTree: yes)
 			else
+				# console.log 'is top level'
 				@sel ||= String(@selectors).trim
 
 		elif o:rule
@@ -10401,6 +10413,9 @@ export class StyleRuleSet < StyleNode
 		elif !@name
 			@name = (cmp ? (cmp.cssns + oid) : (sourceId + oid))
 			@sel = ".{@name}"
+
+		if @flag
+			@scopetype = 'inline'
 					
 		# if @tag and flag is not conditional -- use the flag id of the tag itself
 		# console.log("StyleRule{@name}",@sel,!!o:rule,typeof @name,option(:toplevel),!!@uptag,stack.parent isa TagBody)
@@ -10451,10 +10466,16 @@ export class StyleRuleSet < StyleNode
 				rootFlag: @rootFlag
 				rootPriority: 2
 				inline: !!@flag
+				scoping: @scoping
+				scopeType: @scopetype
 				global: !!isGlobal
 				mixins: {}
 				apply: {}
+				inTagTree: option(:inTagTree)
+				inClassBody: option(:inClassBody)
+				
 			}
+			# console.log 'forceLocal??',addSpec,pri,!!opts:forceLocal,String(@sel),"NS",opts:ns,@rootFlag,@scopetype
 
 			opts:resolver = do |name|
 				let varname = 'mixin$' + name

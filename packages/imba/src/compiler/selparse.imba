@@ -69,6 +69,12 @@ export def rewrite rule,ctx,o = {}
 	let root = rule
 	let pri = 0
 	let specificity = 0
+	let specify = o.specify
+	
+	let s0 = 0
+	let s1 = 0
+	let s2 = 0
+
 	rule.meta = {}
 	rule.media = []
 
@@ -77,6 +83,19 @@ export def rewrite rule,ctx,o = {}
 	while curr
 		parts.push(curr)
 		curr = curr.rule
+
+	let scope = parts.find(do $1.isScope)
+
+	if o.scoping and !scope
+		parts.unshift(root.rule = scope = {type: 'rule',rule: root.rule,classNames: [], isScope: yes})
+		# console.log 'scoping!!',rule
+
+	if scope
+		scope.classNames ||= []
+	
+	# if no rule includes & and we have specified nesting
+	# add a root rule 
+	# console.log "rules!",parts
 	
 	let rev = parts.slice(0).reverse!
 	
@@ -110,6 +129,9 @@ export def rewrite rule,ctx,o = {}
 		let mods = part.pseudos or []
 		let name = part.tagName
 		let op = part.nestingOperator
+
+		# if part.isScope and o.scoping
+		#	addClass(part,o.scoping)
 		
 		if op == '>>'
 			localpart = prev
@@ -147,7 +169,8 @@ export def rewrite rule,ctx,o = {}
 		
 		# or non-local?
 		if o.ns and (!next or next.nestingOperator == '>>>') and !localpart and !deeppart
-			localpart = part
+			if part.isScope or true
+				localpart = part
 
 		specificity += part.classNames.length
 		
@@ -161,7 +184,6 @@ export def rewrite rule,ctx,o = {}
 			let neg = mod.name[0] == '!'
 
 			if pre == '.'
-				# console.log 'class mod!!',mod
 				addClass(modTarget,name)
 				mod.remove = yes
 				specificity++
@@ -204,6 +226,7 @@ export def rewrite rule,ctx,o = {}
 
 			if media
 				rule.media.push(media)
+				# s1++ # media modifiers should  mimic attr specificity
 				mod.remove = yes
 
 			elif let alias = modifiers[mod.name]
@@ -221,6 +244,7 @@ export def rewrite rule,ctx,o = {}
 					specificity++
 				if alias.pri
 					pri = alias.pri
+					s0 += 4
 					mod.remove = yes
 
 				unless mod.remove
@@ -271,21 +295,60 @@ export def rewrite rule,ctx,o = {}
 		part.pseudos = mods.filter(do $1.type != 'el').concat(mods.filter(do $1.type == 'el'))
 	
 	rule.specificity = specificity
-	
-	if forceLocal and localpart and o.ns
-		o.hasScopedStyles = true
-		addClass(localpart,o.ns)
-	
+
 	let last = parts[parts.length - 1]
 
-	if pri = Math.max(o.priority or 0,pri)
-		last.pri = pri
+	let lastHasClasses = last.classNames.length > 0
+	# see if we have classes at all
+	let anyClasses = parts.some do $1.classNames.length > 0
+	
+	if scope and o.scoping
+		addClass(scope,o.scoping)
+	
+	if forceLocal and localpart and o.ns
+		# console.log 'only if there is a selector group that does not contain the scoper/scoping',parts.length
+		if !localpart.isScope
+			o.hasScopedStyles = true
+			# The style is not local 
+			addClass(localpart,o.ns)
+	
+	if o.scopeType == 'inline'
+		s1 = 3
+	elif (!localpart or localpart.isScope) and o.scopeType == 'tag'
+		# console.log "no priority!"
+		s1 = anyClasses ? 2 : 0
+	elif o.scopeType == 'tree'
+		if (!localpart or localpart.isScope)
+			s1 = anyClasses ? 2 : 0
+		elif lastHasClasses
+			s1 = 2
+		else
+			console.log "does tree have classes?",rule
+			s1 = 1
+	else
+		# what if we are inline?
+		# what if it is an id?
+		console.log "does tree have classes?",rule
+		s1 = lastHasClasses ? 2 : 1
+
+	# if pri = Math.max(o.priority or 0,pri)
+	#	last.pri = pri
 		
-	if o.rootFlag and last.classNames..indexOf(o.rootFlag) >= 0
-		last.pri = Math.max(last.pri or 0,o.rootPriority)
-		
+	# if o.rootFlag and last.classNames..indexOf(o.rootFlag) >= 0
+	#	last.pri = Math.max(last.s0 or 0,o.rootPriority)
+
+	if s0
+		s1 += s0
+	if true
+		last.s0 = s1
+
+	# if false
+	#	last.s1 = s1
+	
+	# last.specify = specify
 	# console.log 'specificity',calcSpecificity(rule),selparser.render(rule) # ,parts
 	# rule.specificity = calcSpecificity(rule)
+	# console.log rule,"{o.priority}"
 
 	return rule
 
@@ -329,6 +392,7 @@ export def unwrap parent, subsel
 		for par in pars
 			let sel = sub
 			if sel.indexOf('&') >= 0
+				# console.log "REPLACE & WITH",par
 				sel = sel.replace('&',par)
 			else
 				sel = par + ' ' + sel
