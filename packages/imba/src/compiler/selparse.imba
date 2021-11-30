@@ -72,7 +72,8 @@ export def rewrite rule,ctx,o = {}
 	
 	unless rule.type == 'ruleSet'
 		return rule
-		
+	
+	
 	
 	let root = rule
 	let pri = 0
@@ -122,7 +123,7 @@ export def rewrite rule,ctx,o = {}
 		let flags = part.classNames ||= []
 		let mods = part.pseudos or []
 		let name = part.tagName
-		let op = part.nestingOperator
+		let op = part.op = part.nestingOperator
 
 		if op == '>>'
 			localpart = prev
@@ -184,6 +185,7 @@ export def rewrite rule,ctx,o = {}
 				addClass(modTarget = prev,name)
 				mod.remove = yes
 				specificity++
+				
 
 			elif hit = mod.name.match(/^([a-z]*)(\d+)(\+|\-)?$/)
 				unless hit[1]
@@ -266,7 +268,6 @@ export def rewrite rule,ctx,o = {}
 				else
 					localpart = rule.rule = {type: 'rule',rule: rule.rule}
 			elif !mod.remove
-				console.log "mod name",mod
 				# TODO negative class modifiers like this don't work well now
 				let cls = neg ? "!mod-{mod.name.slice(1)}" : "mod-{mod.name}"
 				addClass(getRootRule(rule),cls)
@@ -307,7 +308,7 @@ export def rewrite rule,ctx,o = {}
 				addScopeClass(part,o.scope.cssns!)
 	
 	if scope and o.scope
-		if !scope.classNames.length and !scope.pseudos..length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.nestingOperator)
+		if !scope.classNames.length and !scope.pseudos..length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.op)
 			yes # no need to scope this?
 		else
 			let id = o.id || (o.scope.cssid ? o.scope.cssid! : o.scope.cssns!)

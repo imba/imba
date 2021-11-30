@@ -9244,7 +9244,7 @@ export class Tag < TagLike
 		# add unique flag to this element if it has inline styles or
 		# we're compiling for hmr.
 
-		if @cssid and !isSelf
+		if @cssid
 			@classNames.unshift(cssid)
 
 		for closure in STACK.closures
