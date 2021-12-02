@@ -11,7 +11,7 @@ class KeyedTagFragment < Fragment
 		changes = new Map
 		dirty = no
 		array = childNodes
-		self.$ = new RenderContext(self)
+		self.$ = new RenderContext(self,Symbol!)
 
 		if !(f & $TAG_LAST_CHILD$)
 			#end = createComment('map')

@@ -9725,8 +9725,8 @@ export class Tag < TagLike
 
 		if shouldEnd
 			if !parent and !isSelf
-				foot.push("{bvar} || {parentRef} || !{tvar}.setup || {tvar}.setup({dvar})")
-				foot.push("{parentRef} || {tvar}{domCall 'end'}({dvar})")
+				foot.push("{bvar} || {parentCache}.sym || !{tvar}.setup || {tvar}.setup({dvar})")
+				foot.push("{parentCache}.sym || {tvar}{domCall 'end'}({dvar})")
 			elif isSelf
 				foot.push("{tvar}{domCall 'close'}({dvar})")
 			else
