@@ -4774,14 +4774,15 @@ export class Op < Node
 					r.test = OP('&&',l,r.test)
 					return r
 					
-				return If.new(l,Block.new([r]))
+				return If.new(l,Block.new([r])).traverse
+
 			elif @op == '||'
 				l = l.opToIfTree if l isa Op
 				
 				if l isa If
 					return l.addElse(Block.new([r]))
 				else
-					return If.new(l,Block.new([])).addElse(Block.new([r]))
+					return If.new(l,Block.new([])).addElse(Block.new([r])).traverse
 		return self
 
 	def isExpressable
@@ -10373,6 +10374,7 @@ export class StyleRuleSet < StyleNode
 			# css nested inside tag tree
 			@tag = stack.up(TagLike)
 			@sel = sel or '&'
+			@css:type = 'scoped'
 			@css:scope = @tag
 
 			# FIX the selector based on the tag
@@ -10388,8 +10390,9 @@ export class StyleRuleSet < StyleNode
 				@css:scope = @tag
 				@css:ns = cssid
 				@css:id = cssid
+				@css:type = 'scoped'
 				@name = cssid
-				option(inTagTree: yes)
+				set(inTagTree: yes)
 
 			else
 				@css:scope = isGlobal ? null : scope__.closure
@@ -10417,7 +10420,6 @@ export class StyleRuleSet < StyleNode
 
 		# add the placeholderes
 		if @placeholders:length
-		
 			if option(:inTagTree)
 				for ph in @placeholders
 					let setter = TagStyleAttr.new(ph.name)

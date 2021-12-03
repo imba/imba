@@ -152,6 +152,10 @@ export def rewrite rule,ctx,o = {}
 			part.isScoped = no
 			part.tagName = null
 
+		if name == 'body' or name == 'html'
+			part.isScoped = no
+			# Warn if this is the last one?!
+
 		for flag,i in flags
 			if flag[0] == '$'
 				flags[i] = 'ref--' + flag.slice(1)
@@ -329,6 +333,9 @@ export def rewrite rule,ctx,o = {}
 	if o.inline
 		s1 = 3
 		s2 = 0
+
+	if o.type == 'scoped'
+		s1 = last.isScope ? 2 : 1
 
 	if true
 		last.s1 = Math.max(s0,s1)
