@@ -1650,7 +1650,7 @@
             <key>name</key>
             <string>meta.tag.imba</string>
             <key>begin</key>
-            <string>(&lt;)(?=[\w\{\[\.\#\$\@])</string>
+            <string>(&lt;)(?=[\w\{\[\.\#\$\@\(])</string>
             <key>beginCaptures</key>
             <dict>
               <key>1</key>

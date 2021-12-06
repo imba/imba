@@ -971,7 +971,7 @@ export const states = {
 
 	tag_: [
 		[/(\s*)(<)(?=\.)/,['white','tag.open','@_tag/flag']],
-		[/(\s*)(<)(?=\w|\{|\[|\%|\#|>)/,['white','tag.open','@_tag/name']]
+		[/(\s*)(<)(?=\w|\{|\[|\%|\#|\(|>)/,['white','tag.open','@_tag/name']]
 	]
 	tag_content: [
 		denter(2,-1,0)

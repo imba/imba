@@ -410,6 +410,9 @@ export class PathNode < Group
 export class TagNode < Group
 
 	get name
+		if start.next..match('tag.name.parens')
+			return 'any'
+
 		let name = findChildren('tag.name').join('')
 		name == 'self' ? closest('component').name : name
 		

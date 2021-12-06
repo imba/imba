@@ -701,7 +701,7 @@ repository:
   tag-literal:
     patterns:
     - name: meta.tag.imba
-      begin: '(<)(?=[\w\{\[\.\#\$\@])'
+      begin: '(<)(?=[\w\{\[\.\#\$\@\(])'
       beginCaptures:
         '1': { name: punctuation.section.tag.open.imba }
       end: '(>)'

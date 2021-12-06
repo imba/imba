@@ -116,11 +116,12 @@ export default class ImbaTypeChecker
 		let tags = symbol.getJsDocTags!
 		let md = []
 		
+		# util.log "getSymbolDetails",symbol,details,details.documentation
 		for item in details.documentation
 			md.push(item.text)
 			md.push('\n')
 			
-		for item in tags
+		for item in tags when item.text
 			let text = util.jsDocTagTextToString(item.text)
 			continue if item.name.match(/^(detail|color|snippet)$/)
 			# if item.name == 'see'
@@ -221,7 +222,8 @@ export default class ImbaTypeChecker
 			
 			unless symbol
 				# let key = name.replace(/\-/g,'_') + '$$TAG$$'
-				if let typ = type("globalThis.{util.toCustomTagIdentifier(name)}")
+				let typ = (type("globalThis.{util.toCustomTagIdentifier(name)}") or type(util.toCustomTagIdentifier(name)))
+				if typ
 					symbol = typ.symbol
 				# symbol = sym("globalThis.{util.toCustomTagIdentifier(name)}")
 				

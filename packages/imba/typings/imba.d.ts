@@ -287,6 +287,10 @@ declare class Γteleport extends HTMLElement {
     to: string | Element;
 }
 
+declare class Γany extends HTMLElement {
+    [key: string]: any;
+}
+
 interface HTMLElementTagNameMap {
     "global": Γglobal,
     "teleport": Γteleport

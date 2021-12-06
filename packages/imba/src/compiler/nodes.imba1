@@ -7885,8 +7885,7 @@ export class TagAttr < TagPart
 				# path = 'richValue'
 				val = '/**@type {any}*/(' + val + ')'
 
-			# let access = "{@tag.tvar}.{M(path,@name)}"
-			let access = OP('.',LIT(tref),nameIdentifier).c
+			let access = "{tref}.{M(path,@name)}"
 
 			return "{M(access,@name)}{op}{@autovalue ? M('true',@value) : val}"
 			
@@ -9218,6 +9217,9 @@ export class Tag < TagLike
 					add "{tvar} = new {M(type.toClassName,type)}"
 			elif isSelf
 				add "{tvar} = {type.c}" 
+			elif isDynamicType
+				add "{tvar} = new {M('Γany',type)}"
+				add "{type.c}" # this is the string
 			else
 				add "{tvar} = new {M('HTMLElement',type)}"
 				add "{type.c}" # this is the string
