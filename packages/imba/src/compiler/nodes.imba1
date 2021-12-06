@@ -3591,6 +3591,10 @@ export class TagDeclaration < ClassDeclaration
 	def visit
 		scope__.imbaDependency('core')
 
+		if STACK.hmr
+			self.cssid
+			self.cssns
+
 		super
 
 		let sup = superclass
@@ -8878,6 +8882,9 @@ export class Tag < TagLike
 		oid
 		let type = @options:type
 		type && type.traverse
+
+		if STACK.hmr
+			self.cssid
 
 		if isSelf or (tagName.indexOf('-') >= 0) or isDynamicType or (type && type.isComponent)
 			@options:custom = yes
