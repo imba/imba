@@ -87,6 +87,17 @@
         declare a\number
     ```
 
+* Allow multiline conditionals when lines start with `and`,`or`,`||`, or `&&`.
+
+    This is a temporary solution for a larger challenge. It simply ignores new-lines whenever your line starts with these operators.
+
+    ```imba
+    if condition
+    and test
+    or force
+        return ...
+    ```
+
 ## 2.0.0-alpha.190
 
 * Fixed regression related to implicit parenthesis in tag trees

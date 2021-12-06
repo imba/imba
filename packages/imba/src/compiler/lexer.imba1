@@ -237,7 +237,7 @@ var HEREDOC_INDENT  = /\n+([^\n\S]*)/g
 var HEREDOC_ILLEGAL = /\*\//
 
 # expensive?
-var LINE_CONTINUER  = /// ^ \s* (?: , | \??\.(?![.\d])) ///
+var LINE_CONTINUER  = /// ^ \s* (?: , | \??\.(?![.\d]) | (?:&&|\|\||and|or)[\n\s] ) ///
 
 var TRAILING_SPACES = /\s+$/
 
