@@ -531,10 +531,9 @@ export def defineTag name, klass, options = {}
 		CustomTagToElementNames[name] = componentName
 
 	# if options.cssns
-	if proto.#cssns
-		let ns = (proto._ns_ || proto.#cssns) + ' ' + (options.cssns or '')
-		proto._ns_ = ns.trim! + ' '
 	if options.cssns
+		let ns = (proto._ns_ || proto.#cssns || '') + ' ' + (options.cssns or '')
+		proto._ns_ = ns.trim! + ' '
 		proto.#cssns = options.cssns
 
 	if options.cssid

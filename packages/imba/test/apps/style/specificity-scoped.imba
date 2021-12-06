@@ -6,7 +6,7 @@ tag A1
 	css fw:400
 
 test do eqcss <A1>, 400
-test do eqcss <A1.box>, 400
+test do eqcss <A1.box>, 300 # class names should have higher specificity
 
 tag A2
 	# should this apply to the self?

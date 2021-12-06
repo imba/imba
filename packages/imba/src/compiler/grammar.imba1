@@ -1211,7 +1211,7 @@ var grammar =
 	# -type rule, but in order to make the precedence binding possible, separate
 	# rules are necessary.
 	Operation: [
-		o 'NEW Expression' do Instantiation.new(A2).set(keyword: A1)
+		o 'NEW Expression' do AST.Instantiation.for(A2,A1)
 		o 'UNARY Expression' do AST.OP A1, A2
 		o 'SQRT Expression' do AST.OP A1, A2
 		o '--- Expression' do AST.OP A1, A2

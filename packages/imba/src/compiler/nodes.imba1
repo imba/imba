@@ -6598,6 +6598,12 @@ export class BangCall < Call
 
 export class Instantiation < ValueNode
 
+	def self.for value, keyword
+		if value isa Tag
+			return value.set(unmemoized: keyword)
+		else
+			return self.new(value).set(keyword: keyword)
+
 	def js o
 		"{M('new',keyword)} {value.c}"
 
@@ -8388,6 +8394,9 @@ class TagLike < Node
 	def isFragment
 		@kind == 'fragment'
 
+	def isMemoized
+		!option(:unmemoized)
+
 	def hasLoops
 		hasFlag(F.TAG_HAS_LOOPS)
 
@@ -8437,7 +8446,8 @@ class TagLike < Node
 		@parentRef ||= (parent ? parent.ref : "{parentCache}._")
 
 	def parentCache
-		@parentCache ||= (parent ? parent.cvar : scope__.closure.tagCache)
+		@parentCache ||= (parent ? parent.cvar : (isMemoized ? scope__.closure.tagCache : scope__.closure.tagTempCache))
+
 
 	def renderContextFn
 		"{parentCache}[{gsym('#getRenderContext')}]"
@@ -11376,13 +11386,19 @@ export class Scope
 		@cssns ||= "{root.sourceId}_{oid}"
 
 	def tagCache
-		# deal with root instead?
 		@tagCache ||= declare('ϲτ',
-			# LIT("({runtime:renderContext}.context||\{\})"),
 			LIT("{runtime:getRenderContext}()"),
 			system: yes
 			temporary: yes
 			alias: 'ϲτ'
+		)
+
+	def tagTempCache
+		@tagTempCache ||= declare('ϲττ',
+			LIT('{}'),
+			system: yes
+			temporary: yes
+			alias: 'ϲττ'
 		)
 	# def context
 	# 	@context ||= ScopeContext.new(self)

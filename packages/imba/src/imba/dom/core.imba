@@ -956,6 +956,7 @@ export def defineTag name, klass, options = {}
 	if options.cssns
 		let ns = (proto._ns_ || '') + ' ' + options.cssns
 		proto._ns_ = ns.trim! + ' '
+		proto.#cssns = options.cssns
 
 	if options.cssid
 		let ids = (proto.flags$ns || '') + ' ' + options.cssid
