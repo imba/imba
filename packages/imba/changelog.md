@@ -1,5 +1,60 @@
 # Changelog
 
+## Unreleased
+
+* New (improved) syntax for rendering functional components / tag trees.
+
+    This was the main change holding us back from reaching beta, as it is a breaking change for most users. See documentation and related screencast.
+
+    ```imba
+    tag App
+        get body
+            <div> "This is body"
+
+        def list title, items
+            <section>
+                <h2> title
+                <ul> for item in items
+                    <li> item.title
+
+        <self>
+            # use <( expression returning memoized dom tree )>
+            <( body ).list>
+    ```
+
+* Allow non-global tag types in dynamic tag names.
+
+    Local tag types are now allowed in `<{tag-type} ...>` syntax. Previously it would only work when `tag-type` evaluated to a string, and there was a globally defined web component or native tag with that name. Now it works with classes as well.
+    ```imba
+    import {PostView,ArticleView} from './views'
+    const items = [
+        { type: Post, title: "My post"}
+        { type: Article, title: "My article"}
+    }]
+    tag App
+        <self>
+            for item in items
+                <{item.type} data=item>
+    ```
+
+* Allow using any object as `<element $key=...>` value.
+
+    Keyed elements now use a `Map` instead of a plain object to keep track of unique elements.
+
+    ```imba
+    const items = [{},{},...]
+
+    tag App
+        <self> for item in items
+            <list-item $key=item data=item>
+    ```
+
+* Only allow named elements inside `<self>`.
+
+    Using named elements (`<div$myname>`) outside of self we're previously poorly supported, and is are now only allowed inside `<self>`. Using it outself of self would previously introduce subtle bugs and conflicts.
+
+
+
 ## 2.0.0-alpha.190
 
 * Fixed regression related to implicit parenthesis in tag trees
