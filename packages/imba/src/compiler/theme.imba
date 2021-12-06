@@ -79,9 +79,10 @@ export const modifiers =
 	marker: {type:'el'}
 	placeholder: {type:'el'}
 	selection: {type:'el'}
-	
-	force: {pri: 4}
-	important: {pri: 3}
+
+	inline: {pri: 3}
+	important: {pri: 4}
+	force: {pri: 6}
 	
 	media: {type: 'media'}
 	print: {media: 'print'}

@@ -14,9 +14,6 @@ tag app-root
 	css .btn
 		fw:500
 		
-	css %btn
-		fw:700
-
 	css .i1 fw: 200
 	css $i1 fw: 300
 	css i fw: 100
@@ -32,9 +29,9 @@ tag app-root
 			<button$b1> "300"
 			<button$b2> "300"
 			<button$b3[fw:400]> "400"
-			<button$b4 %btn> "700"
-			<button$b5[fw:200].btn %btn> "400"
-			<button$b6.btn %btn> "700"
+			<button$b4> "300"
+			<button$b5[fw:200].btn> "200"
+			<button$b6.btn> "500"
 			<p$p0> "100"
 			<p$p1> "200"
 			<p$p2[fw:700]> "700"
@@ -63,14 +60,10 @@ test 'inline precedence' do
 	eqcss app.$b3, 400
 
 test 'inline precedence' do
-	eqcss app.$b4, 700
-	# app.$btn3.focus!
-	# eqcss app.$btn3, fontWeight: '400'
-test 'inline precedence' do
 	eqcss app.$b5, 200
 	
 test 'inline precedence' do
-	eqcss app.$b6, 700
+	eqcss app.$b6, 500
 	
 test 'inline precedence' do	
 	eqcss app.$p0, 100

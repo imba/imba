@@ -134,6 +134,7 @@
 				"editor.autoIndent": "advanced",
 				"editor.suggest.showWords": false,
 				"editor.foldingStrategy": "indentation",
+				"editor.wordSeparators": "`~!%^&*()=+[{]}\\|;:'\",.<>/",
 				"files.eol": "\n"
 			},
 			"[imba1]": {
@@ -142,6 +143,7 @@
 				"editor.autoIndent": "advanced",
 				"editor.suggest.showWords": false,
 				"editor.foldingStrategy": "indentation",
+				"editor.wordSeparators": "`~!%^&*()=+[{]}\\|;:'\",.<>/",
 				"files.eol": "\n"
 			}
 		},

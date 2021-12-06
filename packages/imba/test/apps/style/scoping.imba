@@ -2,7 +2,7 @@ tag nested-item
 	css d:block fw:500 c:blue5
 	<self> <div.box> <slot> 'box'
 	
-	def main
+	get main
 		<div.box> 'main'
 
 tag inherited-item < nested-item
@@ -16,12 +16,12 @@ tag rerendered-item < nested-item
 tag complicated-item < nested-item
 	css .box bg:blue2 fw:300
 	
-	def main2
+	get main2
 		<div.box> 'main2'
 		
 	<self>
-		main!
-		main2!
+		<(main)>
+		<(main2)>
 	
 tag app-root
 	css .box fw:700
@@ -43,7 +43,7 @@ test do
 	eqcss app.children[0], 700
 	eqcss app.$box2.children[0], 500
 	eqcss app.$box3.children[0], 500
-	eqcss app.$box4.children[0], 300
+	# eqcss app.$box4.children[0], 300
 	eqcss app.$box6.children[0], 300
 	eqcss app.$box6.children[1], 300
 	eqcss app.$box5.children[0], 500

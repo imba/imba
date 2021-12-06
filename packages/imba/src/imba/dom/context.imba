@@ -18,16 +18,17 @@ class Renderer
 export const renderer = new Renderer
 
 export class RenderContext < Map
-	def constructor parent
+	def constructor parent,sym = null
 		super()
 		self._ = parent
+		self.sym = sym
 
 	def pop
 		renderContext.context = null
 	
 	def #getRenderContext sym
 		let out = self.get(sym)
-		out || self.set(sym,out = new RenderContext(self._))
+		out || self.set(sym,out = new RenderContext(self._,sym))
 		return renderContext.context = out
 
 		# createRenderContext(self,sym)
@@ -44,7 +45,7 @@ export class RenderContext < Map
 		return val
 
 export def createRenderContext cache,key = Symbol!,up = cache
-	return renderContext.context = cache[key] ||= new RenderContext(up)
+	return renderContext.context = cache[key] ||= new RenderContext(up,key)
 
 export def getRenderContext
 	let ctx = renderContext.context

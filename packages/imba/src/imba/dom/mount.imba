@@ -19,8 +19,7 @@ export def mount mountable, into
 	let parent = into or global.document.body
 	let element = mountable
 	if mountable isa Function
-
-		let ctx = new RenderContext(parent)
+		let ctx = new RenderContext(parent,null)
 		let tick = do
 			let prev = renderContext.context
 			renderContext.context = ctx
@@ -29,10 +28,10 @@ export def mount mountable, into
 				renderContext.context = prev
 			return res
 		element = tick()
+		# TODO Allow unscheduling this?
 		scheduler.listen('commit',tick)
 	else
-		# automatic scheduling of element - even before
-		# element.__schedule = yes
+		# automatic scheduling of element
 		element.__F |= $EL_SCHEDULE$
 
 	element.#insertInto(parent)

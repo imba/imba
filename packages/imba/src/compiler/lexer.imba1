@@ -1024,6 +1024,11 @@ export class Lexer
 		if id == 'tag' and @chunk.indexOf("tag(") == 0 # @chunk.match(/^tokid\(/)
 			forcedIdentifier = yes
 
+		if id == 'css' and (/css\s\:\:/).exec(@chunk)
+			input = id + ' '
+			colon = null
+			forcedIdentifier = no
+
 		var isKeyword = no
 
 		# little reason to check for this right here? but I guess it is only a simple check
@@ -1222,7 +1227,7 @@ export class Lexer
 		# if id == 'new'
 		#	console.log 'new keyword', @chunk.slice(0,5),@chunk.match(/^new\s+[\w\$\(]/)
 
-		if id == 'new' and (@lastTyp != '.' and @chunk.match(/^new\s+[\w\$\(]/))
+		if id == 'new' and (@lastTyp != '.' and @chunk.match(/^new\s+[\w\$\(\<\#]/))
 			# console.log 'is new keyword!!'
 			typ = 'NEW'
 
