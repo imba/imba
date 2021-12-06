@@ -53,7 +53,33 @@
 
     Using named elements (`<div$myname>`) outside of self we're previously poorly supported, and is are now only allowed inside `<self>`. Using it outself of self would previously introduce subtle bugs and conflicts.
 
+* Changed css specificity
 
+    Styles declared in tag declaration body now has lower specificity than class selectors.
+
+    ```imba
+    css .warn hue:red
+    css .large p:4 fs:lg
+
+    tag Button
+        css p:2 fs:sm hue:blue
+    
+    # styles from classes take precedence
+    <Button.warn.large>
+    ```
+
+* Scoped selectors no longer applies to self
+
+    Now, selectors like `.warn` declared in tag declaration body only applies to elements _inside_ `Button`, not the button itself. To target the button itself, use `&` in the selector.
+
+    ```imba
+    tag Button
+        css bg:blue2
+        css .warn bg:red2
+        css &.large fs:lg
+
+        <self.warn.large> "Still blue bg - but large"
+    ```
 
 ## 2.0.0-alpha.190
 
