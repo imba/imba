@@ -915,11 +915,12 @@ var grammar =
 	]
 
 	ClassDeclLine: [
-		o 'STATIC ClassDeclLine' do A2.set(static: A1)
+		o 'STATIC ClassFieldDeclaration' do A2.set(static: A1)
+		o 'DECLARE STATIC ClassFieldDeclaration' do A3.set(static: A2,declareOnly: A1)
+		o 'DECLARE ClassFieldDeclaration' do A2.set(declareOnly: A1)
+		o 'STATIC MethodDeclaration' do A2.set(static: A1)
 		o 'MethodDeclaration'
 		o 'ClassFieldDeclaration'
-		# o 'ClassFieldIdentifier ClassFieldBody' do ClassField.new(A1, null,A2)
-		# o 'ClassFieldIdentifier INDENT ClassFieldBody OUTDENT' do ClassField.new(A1, null,A3)
 	]
 
 	ClassFieldDeclaration: [
@@ -927,6 +928,7 @@ var grammar =
 		o 'ClassField' do A1
 		o 'ClassFieldDeclaration @ WatchBody' do A1.set(watch: A3)
 		o 'ClassFieldDeclaration DECORATOR WatchBody' do A1.set(watch: A3)
+
 	]
 
 	ClassFieldDecoration: [

@@ -960,7 +960,8 @@ export class Lexer
 
 			
 
-		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css' or id == 'constructor')
+		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css' or id == 'constructor' or id == 'declare')
+		
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'EXTEND'
 
@@ -970,7 +971,7 @@ export class Lexer
 			# if id == 'css' and (@lastVal in ['global','local','export'])
 			# 	return true
 
-			if id == 'lazy'
+			if id == 'lazy' or id == 'declare'
 				return incls and @lastTyp in ['INDENT','TERMINATOR','DECORATOR']
 				
 			if id == 'constructor'

@@ -377,6 +377,12 @@
             <string>(static)\s+</string>
           </dict>
           <dict>
+            <key>name</key>
+            <string>storage.modifier.imba</string>
+            <key>match</key>
+            <string>(declare)\s+</string>
+          </dict>
+          <dict>
             <key>include</key>
             <string>#ops</string>
           </dict>

@@ -199,6 +199,9 @@ repository:
     - name: storage.modifier.imba
       match: '(static)\s+'
 
+    - name: storage.modifier.imba
+      match: '(declare)\s+'
+      
     - include: '#ops'
     
     - name: keyword.operator.assignment.imba

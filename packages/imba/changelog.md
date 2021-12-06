@@ -81,6 +81,12 @@
         <self.warn.large> "Still blue bg - but large"
     ```
 
+* Add `declare` keyword for declaring fields (with type annotations) without generating any code for that field.
+    ```imba
+    class Foo
+        declare a\number
+    ```
+
 ## 2.0.0-alpha.190
 
 * Fixed regression related to implicit parenthesis in tag trees

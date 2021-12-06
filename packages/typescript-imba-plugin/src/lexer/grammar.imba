@@ -620,7 +620,8 @@ export const states = {
 	]
 
 	field_: [
-		[/((?:lazy )?)((?:static )?)(const|let|attr)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$3']] # $2_body.$S2.$2.$S4
+		[/((?:lazy )?)((?:static )?)(const|let|attr|prop)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$3']] # $2_body.$S2.$2.$S4
+		[/(declare\s+)(?=@fieldid)/,'keyword.declare']
 		[/(static\s+)(?=@fieldid)/,'keyword.static']
 		[/(@fieldid)(?=$)/,'entity.name.field']
 		[/(@fieldid)/,['entity.name.field','@_field_1']]

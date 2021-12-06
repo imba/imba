@@ -2993,7 +2993,6 @@ export class Code < Node
 		# @scope.parent = STACK.scope(1) if @scope
 		self
 
-
 # Rename to Program?
 export class Root < Code
 
@@ -3368,13 +3367,14 @@ export class ClassDeclaration < Code
 					node.@watchMethod = fn
 					node.@watchParam = fn.params.at(0,yes,'e')
 
-			if node.hasStaticInits
+			if node.hasStaticInits and !node.option(:declareOnly)
 				staticInits.add(node)
+
 			if node.hasConstructorInits
 				if isExtension
 					if node.value
 						node.@name.warn "field with value not supported in class extension"
-				else
+				elif !node.option(:declareOnly)
 					inits.add(node)
 				
 			if !node.isStatic and restIndex != null
