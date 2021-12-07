@@ -57,7 +57,7 @@
 
 * Only allow named elements inside `<self>`.
 
-    Using named elements (`<div$myname>`) outside of self we're previously poorly supported, and is are now only allowed inside `<self>`. Using it outself of self would previously introduce subtle bugs and conflicts.
+    Using named elements (`<div$myname>`) outside of self would previously introduce subtle bugs and conflicts. They are now only allowed inside of `<self>`.
 
 * Changed css specificity
 
