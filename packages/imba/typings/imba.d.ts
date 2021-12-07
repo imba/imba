@@ -164,8 +164,17 @@ interface Element {
     /**
     * Gives elements a stable identity inside lists
     * @idl
+    * @deprecated Use key instead
     */
     $key: any;
+
+    /**
+    * Gives elements a stable identity inside lists.
+    * Any value (both objects and primitive values) may be used as a key.
+    * @idl
+    */
+    key: any;
+
     
     /**
     * Sets whether `@hotkey` events inside of this element

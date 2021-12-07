@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+* Rename $key to key
+
+    To give elements a stable identity (usually inside lists) you should now use `<el key=value>` instead of `<el $key=value>`.
+
+* Allow using any object as `<element key=...>` value.
+
+    Keyed elements now use a `Map` instead of a plain object to keep track of unique elements.
+
+    ```imba
+    const items = [{title: "One"},{title: "Two"}]
+
+    tag App
+        <self> for item in items
+            # objects themselves can be used as keys now
+            <AppItem key=item data=item>
+    ```
+
 * New (improved) syntax for rendering functional components / tag trees.
 
     This was the main change holding us back from reaching beta, as it is a breaking change for most users. See documentation and related screencast.
@@ -25,6 +42,7 @@
 * Allow non-global tag types in dynamic tag names.
 
     Local tag types are now allowed in `<{tag-type} ...>` syntax. Previously it would only work when `tag-type` evaluated to a string, and there was a globally defined web component or native tag with that name. Now it works with classes as well.
+
     ```imba
     import {PostView,ArticleView} from './views'
     const items = [
@@ -35,18 +53,6 @@
         <self>
             for item in items
                 <{item.type} data=item>
-    ```
-
-* Allow using any object as `<element $key=...>` value.
-
-    Keyed elements now use a `Map` instead of a plain object to keep track of unique elements.
-
-    ```imba
-    const items = [{},{},...]
-
-    tag App
-        <self> for item in items
-            <list-item $key=item data=item>
     ```
 
 * Only allow named elements inside `<self>`.

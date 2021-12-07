@@ -1067,7 +1067,7 @@ export class Node
 		[0,0]
 
 	def loc
-		[0,0]
+		[startLoc or 0,endLoc or 0]
 
 	def token
 		null
@@ -1239,8 +1239,14 @@ export class Node
 	def warn message, opts = {}
 		let loc = opts:loc or self.loc or [0,0]
 		
+		if loc isa Node
+			loc = [loc.startLoc,loc.endLoc]
+
 		if loc isa Token
 			loc = loc.loc
+
+		# if loc[0] == 0 and loc[1] == 0
+			
 
 		# console.log 'loc warn',loc,script.rangeAt(loc[0],loc[1])
 		script.addDiagnostic(opts:severity or 'warning',{
@@ -8936,10 +8942,16 @@ export class Tag < TagLike
 			if item isa TagFlag and item.isStatic
 				@classNames.push(item)
 				return false
+			
+			unless STACK.tsc
+				if item == @attrmap:$key
+					item.warn("$key= is deprecated, use key=", loc: item.@name)
+					self.set(key: item.value)
+					return false
 
-			if item == @attrmap:$key
-				self.set(key: item.value)
-				return false
+				if item == @attrmap:key
+					self.set(key: item.value)
+					return false
 
 			if !item.isStatic
 				@dynamics.push(item)
