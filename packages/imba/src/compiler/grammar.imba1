@@ -1119,7 +1119,7 @@ var grammar =
 
 	ForBody: [
 		o 'ForKeyword Range' do source: ValueNode.new(A2)
-		o 'ForStart ForSource' do A2.configure(own: A1:own, name: A1[0], index: A1[1], keyword: A1:keyword)
+		o 'ForStart ForSource' do A2.configure(own: A1:own, name: A1[0], index: A1[1], keyword: A1:keyword, params: A1)
 	]
 
 	ForStart: [

@@ -7109,6 +7109,7 @@ export class For < Loop
 		var src  = o:source
 		var vars = o[:vars] = {}
 		var oi   = o:index
+		var params = o:params
 
 		var bare = isBare(src)
 
@@ -7149,7 +7150,11 @@ export class For < Loop
 				vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
 
 			vars:source = bare ? src : scope.declare('items',util.iterable(src),system: yes, type: 'let', pool: 'iter')
-			vars:len = scope.declare('len',util.len(vars:source),type: 'let', pool: 'len', system: yes)
+
+			if params[2]
+				vars:len = scope.declare(params[2],util.len(vars:source),type: 'let')
+			else
+				vars:len = scope.declare('len',util.len(vars:source),type: 'let', pool: 'len', system: yes)
 			
 			if o:name
 				let op = OP('.',vars:source,vars:index).set(datatype: o:name.datatype)
@@ -7252,6 +7257,7 @@ export class ForOf < For
 	def declare
 		var o = options
 		var vars = o:vars = {}
+		var params = o:params
 		var k
 		var v
 
@@ -7291,6 +7297,9 @@ export class ForOf < For
 				vars:counter = scope.parent.temporary(null,{},"{o:index}$")
 				body.unshift(VarDeclaration.new(o:index,OP('++',vars:counter),'let'),BR)
 				self
+
+			if params[2]
+				params[2].warn("Length parameter only allowed on for-in loops")
 
 		# TODO use util - why add references already? Ah -- this is for the highlighting
 		v.addReference(o:index) if v and o:index

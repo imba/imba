@@ -104,6 +104,18 @@
         return ...
     ```
 
+* Allow third argument in `for in` loops referencing length.
+
+    If you need to know the length of a collection you are iterating over, you can now access the total length of the collection by supplying a third argument. This is not available in `for of`, only `for in`.
+
+    ```imba
+    for member,index,len in list
+        # len refers to the length of the iterable list
+        if index == len - 1
+            yes # this is the last element
+            
+    ```
+
 ## 2.0.0-alpha.190
 
 * Fixed regression related to implicit parenthesis in tag trees
