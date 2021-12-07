@@ -118,26 +118,57 @@ export default class Service
 			return np.dirname(imbadir.resolvedModule.resolvedFileName)
 		return null
 
+	def imbaForPath path
+		let cache = #imbaDirCache ||= {}
+		let dir = np.dirname(path)
+		let norm = np.resolve(dir,'_.imba')
+
+		if cache[dir]
+			return cache[dir]
+
+		let out = ts.resolveModuleName('imba',norm,{moduleResolution: 2},ps.host)
+		
+		if out and out.resolvedModule
+			let imbadir = np.dirname(out.resolvedModule.resolvedFileName)
+			let pkg = np.resolve(imbadir,'package.json')
+			# read the json file
+			let obj = {
+				path: imbadir
+				package: JSON.parse(ps.host.readFile(pkg))
+			}
+
+			return cache[dir] = obj
+		return null
+
+	def getImbaCompilerForPath path
+		let IMBA = imbaForPath(path)
+
+		if IMBA
+			return null if IMBA.#errored
+			let src = np.resolve(IMBA.path,IMBA.package.exports['./compiler'])
+			try
+				return IMBA.#compiler ||= require(src)
+			catch e
+				IMBA.#errored = yes
+				return null
+		return null
+
 
 	def prepareProjectForImba proj
 		let inferred = proj isa ts.server.InferredProject
 		let opts = proj.getCompilerOptions!
 		let libs = opts.lib or ["esnext","dom","dom.iterable"]
 		let imbalib = 'imba-typings/imba.d.ts'
-		# np.resolve(global.IMBA_TYPINGS_DIR or libDir,'imba.d.ts')
 		let imbadir = !inferred && resolveImbaDirForProject(proj)
-		
-		
+
 		if imbadir
 			let src = np.resolve(imbadir,'typings','imba.d.ts')
 			if ps.host.fileExists(src)
 				imbalib = src
+			proj.#imbadir = imbadir
 				
 		util.log("using imba lib",imbalib,proj)
-		# resolveImportPath
-		# console.warn "PROJECT",imbalib
-		# imbalib = 'imba-typings/imba.d.ts'
-		opts.lib =  libs.concat([imbalib])
+		opts.lib = libs.concat([imbalib])
 
 		if inferred
 			opts.checkJs = true

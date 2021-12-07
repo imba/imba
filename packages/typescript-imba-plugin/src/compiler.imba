@@ -1,4 +1,5 @@
 import * as util from './util'
+import np from 'path'
 
 import {Position,Range} from './lexer'
 
@@ -27,8 +28,12 @@ export class Compilation
 		# d2o - live doc to frozen output
 		# d2i - live doc to frozen input
 		# o2d - frozen output to live doc
-		
 		options = {...ImbaOptions, fileName: fileName, sourcePath: fileName}
+
+	def getCompiler
+		if !global.ils
+			return imbac
+		return global.ils.getImbaCompilerForPath(fileName) or imbac
 		
 	def dtext start, end
 		script.im.getText(start,end)
@@ -105,8 +110,6 @@ export class Compilation
 
 		let spans = locs.spans.filter do(pair)
 			o >= pair[0] and pair[1] >= o
-			
-		
 
 		if let span = spans[0]
 			let into = (o - span[0]) / (span[1] - span[0])
@@ -262,7 +265,8 @@ export class Compilation
 		try
 			done = yes
 			let t0 = Date.now!
-			self.result = imbac.compile(body,options)
+			let compiler = getCompiler!
+			self.result = compiler.compile(body,options)
 			#compiling = Promise.resolve(self)
 			util.log("compiled {fileName} in {Date.now! - t0}ms")
 		catch e
@@ -287,15 +291,9 @@ export default new class Compiler
 	def readFile src, body
 		if cache[body]
 			return cache[body].js
-		
+		# never reached?
 		let doc = cache[body] = new Compilation(null,src,body)
 		doc.compile!
 		util.log('readFile')
 
 		return doc.js or "\n"
-		
-		# let opts = {...ImbaOptions, fileName: src, sourcePath: src}
-		# let res = imbac.compile(body,opts)
-		# cache[body] = res
-		# util.log("compiled {src}")
-		# return res.js
