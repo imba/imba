@@ -12548,9 +12548,10 @@ export class Super < Node
 			m.set(supr: {node: STACK.blockpart, block: STACK.block, real: self})
 			m.set(injectInitAfter: STACK.blockpart)
 			
-		if @method and @method.option('inExtension')
+		if @method # and @method.option('inExtension')
 			@class = STACK.up(ClassDeclaration)
-			
+
+		args.traverse if args	
 		self
 
 	def replaceWithInitor
@@ -12578,27 +12579,31 @@ export class Super < Node
 		let args = self.args
 		
 		# need to know if our method is in the initial declaration
+		
 
 		if virtual and @class
+			
 			sup = CALL(@class.virtualSuper,[slf])
 
 		# when super is written all by itself - it means to do the default action
 		unless (up isa Access) or (up isa Call)
 			if m and m.isConstructor and !member
+
+				if STACK.tsc and @class and !@class.superclass
+					return args ? "[{args.c}]" : ""
+				
 				let target = option(:target) or LIT('super')
 				let fallbackArgs = option(:args) or [LIT('...arguments')]
 				return M(CALL(target,args or fallbackArgs).c,@keyword)
-				op = LIT('super(...arguments)')
+
 			elif member
 				op = OP('.',sup,member)
 			elif m
-				# console.log "type of super? {m.name}"
 				op = OP('.',sup,m.name)
 				if m.isSetter
 					op = OP('=',op,m.params.at(0))
 				elif !m.isGetter
 					args ||= [LIT('...arguments')]
-					# op = CALL(op,[LIT('...arguments')])
 
 			if args
 				op = CALL(op,args)
