@@ -1,14 +1,16 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.191
+
+There will likely be a few more alpha releases fixing regressions and issues related to the new features in alpha 191, but after these potential issues have been resolved we're moving to beta 🥳! This release does contain a few breaking changes, both in relation to styles and memoization. We'll update the docs at imba.io and publish a screencast going over the changes to make it easier to transition to this new version. Changes;
 
 * Rename $key to key
 
-    To give elements a stable identity (usually inside lists) you should now use `<el key=value>` instead of `<el $key=value>`.
+    To give elements a stable identity (usually inside lists) you should now use `<el key=value>` instead of `<el $key=value>`. `$key` is deprecated and will be removed in `beta.1`. 
 
 * Allow using any object as `<element key=...>` value.
 
-    Keyed elements now use a `Map` instead of a plain object to keep track of unique elements.
+    Keyed elements now use a `Map` instead of a plain object to keep track of unique elements. This means that any value (both objects and primitive values) may be used as keys.
 
     ```imba
     const items = [{title: "One"},{title: "Two"}]
@@ -21,7 +23,9 @@
 
 * New (improved) syntax for rendering functional components / tag trees.
 
-    This was the main change holding us back from reaching beta, as it is a breaking change for most users. See documentation and related screencast.
+    This was the main change holding us back from reaching beta, as it is a breaking change for most users. When you want to include external live dom elements from getters or methods outside of the render-tree, wrap the expression in `<(expression)>`.
+
+    Besides simplifying the way memoization works it also allows you to add classes and styles to these external fragments, making it vastly more flexible than before.
 
     ```imba
     tag App
@@ -35,8 +39,35 @@
                     <li> item.title
 
         <self>
-            # use <( expression returning memoized dom tree )>
-            <( body ).list>
+            <( body )>
+            <( list 'Top', data.popular ).large [mt:2]>
+            <( list 'New', data.posts.slice(0,10) )>
+    ```
+
+* Log warnings to console when building/running without minification.
+
+    Added runtime checks that notify about erroneous behaviour when building/running w/o minification. Initially it will only warn about non-memoized elements being created during rendering. Eventually we'll use these conventions to add much more elobrate checks and readable error messages for the most common issues users can run into.
+
+* Allow instantiating elements w/o memoization using `new`.
+
+    Imba will automagically allow any element (literal tag) in any method to be memoized.
+
+    ```imba
+    def wrap text
+        let div = <div.item> text
+        return div
+
+    imba.mount do <section>
+        <( wrap "One" )>
+        <( wrap "Two" )>
+    ```
+
+    If you call a method or access a getter that returns an element (like `def wrap`) it will look up a memoization context and just reuse/update the div for that particular context. If you call it directly without being in a context, Imba will warn you. There are however some situations where you actually just want to create new elements. In this case, use `new` in front of the element. If the root is not memoized, the children won't either, so you only need to add `new` in front of the top element.
+
+    ```imba
+    def wrap text
+        let div = new <div.item> text
+        return div
     ```
 
 * Allow non-global tag types in dynamic tag names.
