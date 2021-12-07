@@ -530,6 +530,11 @@ declare namespace imba {
          * @summary Only trigger handler if event.target is the element itself 
          */
         αself(): boolean;
+
+        /**
+         * @summary Don't trigger imba.commit from this event handler
+        */
+        αsilent(): void;
     }
 
 
