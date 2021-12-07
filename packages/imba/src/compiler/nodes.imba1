@@ -9230,8 +9230,12 @@ export class Tag < TagLike
 			elif isSelf
 				add "{tvar} = {type.c}" 
 			elif isDynamicType
-				add "{tvar} = new {M('Γany',type)}"
-				add "{type.c}" # this is the string
+				if @options:dynamic
+					add "{tvar} = new Γany"
+					add "{type.c}" # this is the string
+				else
+					add "{tvar} = new {M('Γany',type)}"
+					add "{type.c}" # this is the string
 			else
 				add "{tvar} = new {M('HTMLElement',type)}"
 				add "{type.c}" # this is the string
