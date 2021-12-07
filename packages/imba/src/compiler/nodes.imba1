@@ -3952,7 +3952,9 @@ export class MethodDeclaration < Func
 			scope.@selfless = yes
 
 		@params.traverse
-		
+
+		if @name:isPredicate and @name.isPredicate and !isSetter and !isGetter
+			@name.warn "Only getters/setters should end with ?"
 		
 			
 		if target isa Identifier
