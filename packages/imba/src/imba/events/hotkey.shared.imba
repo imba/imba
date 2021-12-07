@@ -49,9 +49,7 @@ export def format combo, platform = 'auto'
 		let strings = items.map do
 			let lbl = labels[$1] or $1
 			lbl = typeof lbl == 'string' ? lbl : (lbl[platform] or $1)
-			if true
-				lbl = lbl[0].toUpperCase! + (lbl.slice(1) or '')
-			lbl
+			lbl = lbl[0].toUpperCase! + (lbl.slice(1) or '')
 		return strings
 
 	return cache[key] = combos
