@@ -144,8 +144,12 @@ There will likely be a few more alpha releases fixing regressions and issues rel
         # len refers to the length of the iterable list
         if index == len - 1
             yes # this is the last element
-            
     ```
+
+* Exposed `imba.hotkeys.humanize` for converting hotkey combos to readable shortcuts.
+
+* Exposed `imba.hotkeys.htmlify` for converting hotkey combos to readable shortcuts as html.
+
 
 ## 2.0.0-alpha.190
 

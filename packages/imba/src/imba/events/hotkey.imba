@@ -5,38 +5,9 @@ let isApple = try (global.navigator.platform or '').match(/iPhone|iPod|iPad|Mac/
 export def use_events_hotkey
 	yes
 
-const KeyLabels = {
-	esc: '⎋'
-	enter: '⏎'
-	shift: '⇧'
-	command: '⌘'
-	mod: isApple ? '⌘' : 'ctrl'
-	option: '⌥'
-	alt: isApple ? '⌥' : '⎇'
-	del: '⌦'
-	backspace: '⌫'
+import {humanize,htmlify} from './hotkey.shared'
 
-}
-
-const Globals = {
-	"command+1": yes
-	"command+2": yes
-	"command+3": yes
-	"command+4": yes
-	"command+5": yes
-	"command+6": yes
-	"command+7": yes
-	"command+8": yes
-	"command+9": yes
-	"command+0": yes
-	"command+n": yes
-	"command+f": yes
-	"command+k": yes
-	"command+j": yes
-	"command+s": yes
-	"esc": yes
-	"shift+command+f": yes
-}
+const Globals = {"esc": yes}
 
 class HotkeyEvent < CustomEvent
 	
@@ -106,12 +77,12 @@ export const hotkeys = new class HotKeyManager
 	def comboIdentifier combo
 		identifiers[combo] ||= combo.replace(/\+/g,'_').replace(/\ /g,'-').replace(/\*/g,'all').replace(/\|/g,' ')
 
-	def shortcutHTML combo
-		("<u>" + comboLabel(combo).split(" ").join("</u><u>") + "</u>").replace('<u>/</u>','<span>or</span>')
-		
-	def comboLabel combo
-		labels[combo] ||= combo.split(" ").map(do $1.split("+").map(do (KeyLabels[$1] or $1).toUpperCase!).join("") ).join(" ")
-		
+	def humanize combo, platform = 'auto'
+		humanize(combo,platform)
+
+	def htmlify combo, platform = 'auto'
+		htmlify(combo,platform)
+	
 	def matchCombo str
 		yes
 

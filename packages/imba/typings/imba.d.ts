@@ -327,6 +327,16 @@ declare namespace imba {
 
     namespace hotkeys {
         function trigger(combo: string): void;
+
+        /**
+         * Format combo as readable label
+         */
+        function humanize(combo: string, platform?: string): string;
+
+        /**
+         * Format combo as html (readable keys wrapped in <kbd> elements)
+         */
+         function htmlify(combo: string, platform?: string): string;
     }
 
     /**
