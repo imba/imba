@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.192
 
-* Correctly resolve `node:*` imports.
+* Always resolve `node:*` imports as external
+
+* Include changelog.md in npm package
 
 ## 2.0.0-alpha.191
 
@@ -12,7 +14,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 
     To give elements a stable identity (usually inside lists) you should now use `<el key=value>` instead of `<el $key=value>`. `$key` is deprecated and will be removed in `beta.1`. 
 
-* Allow using any object as `<element key=...>` value.
+* Allow using any object as `<element key=...>` value
 
     Keyed elements now use a `Map` instead of a plain object to keep track of unique elements. This means that any value (both objects and primitive values) may be used as keys.
 
@@ -25,7 +27,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
             <AppItem key=item data=item>
     ```
 
-* New (improved) syntax for rendering functional components / tag trees.
+* New (improved) syntax for rendering functional components / tag trees
 
     This was the main change holding us back from reaching beta, as it is a breaking change for most users. When you want to include external live dom elements from getters or methods outside of the render-tree, wrap the expression in `<(expression)>`.
 
@@ -48,11 +50,11 @@ There will likely be a few more alpha releases fixing regressions and issues rel
             <( list 'New', data.posts.slice(0,10) )>
     ```
 
-* Log warnings to console when building/running without minification.
+* Log warnings to console when building/running without minification
 
     Added runtime checks that notify about erroneous behaviour when building/running w/o minification. Initially it will only warn about non-memoized elements being created during rendering. Eventually we'll use these conventions to add much more elobrate checks and readable error messages for the most common issues users can run into.
 
-* Allow instantiating elements w/o memoization using `new`.
+* Allow instantiating elements w/o memoization using `new`
 
     Imba will automagically allow any element (literal tag) in any method to be memoized.
 
@@ -74,7 +76,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
         return div
     ```
 
-* Allow non-global tag types in dynamic tag names.
+* Allow non-global tag types in dynamic tag names
 
     Local tag types are now allowed in `<{tag-type} ...>` syntax. Previously it would only work when `tag-type` evaluated to a string, and there was a globally defined web component or native tag with that name. Now it works with classes as well.
 
@@ -92,7 +94,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
                 <{item.type} data=item>
     ```
 
-* Only allow named elements inside `<self>`.
+* Only allow named elements inside `<self>`
 
     Using named elements (`<div$myname>`) outside of self would previously introduce subtle bugs and conflicts. They are now only allowed inside of `<self>`.
 
@@ -124,13 +126,14 @@ There will likely be a few more alpha releases fixing regressions and issues rel
         <self.warn.large> "Still blue bg - but large"
     ```
 
-* Add `declare` keyword for declaring fields (with type annotations) without generating any code for that field.
+* Add `declare` keyword for declaring fields (with type annotations) without generating any code for that field
+
     ```imba
     class Foo
         declare a\number
     ```
 
-* Allow multiline conditionals when lines start with `and`,`or`,`||`, or `&&`.
+* Allow multiline conditionals when lines start with `and`,`or`,`||`, or `&&`
 
     This is a temporary solution for a larger challenge. It simply ignores new-lines whenever your line starts with these operators.
 
@@ -141,7 +144,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
         return ...
     ```
 
-* Allow third argument in `for in` loops referencing length.
+* Allow third argument in `for in` loops referencing length
 
     If you need to know the length of a collection you are iterating over, you can now access the total length of the collection by supplying a third argument. This is not available in `for of`, only `for in`.
 
@@ -152,9 +155,9 @@ There will likely be a few more alpha releases fixing regressions and issues rel
             yes # this is the last element
     ```
 
-* Exposed `imba.hotkeys.humanize` for converting hotkey combos to readable shortcuts.
+* Exposed `imba.hotkeys.humanize` for converting hotkey combos to readable shortcuts
 
-* Exposed `imba.hotkeys.htmlify` for converting hotkey combos to readable shortcuts as html.
+* Exposed `imba.hotkeys.htmlify` for converting hotkey combos to readable shortcuts as html
 
 
 ## 2.0.0-alpha.190
@@ -202,7 +205,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
         css d:block # style for the div
     ```
 
-* Added `@first-child` and `@last-child` css modifiers.
+* Added `@first-child` and `@last-child` css modifiers
 
     We already have `@first` and `@last` as shorter aliases, but since all other standard pseudo-selectors exist it makes sense to include the longer versions of these as well.
 
@@ -217,7 +220,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
                 <div> label
     ```
 
-* Allow declaring variables and global tags with the same name.
+* Allow declaring variables and global tags with the same name
 
     Global web components should not be registered as regular variables.
     Previously the compiler would throw an error if `tag app` and `let app = ...`
@@ -252,7 +255,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 
 ## 2.0.0-alpha.186
 
-* Don't add html class name for named elements.
+* Don't add html class name for named elements
 
     Previously when naming an element like `<div$title> ...`, imba would automatically
     add a `title` class name to the element. This can lead to confusing issues. If you
