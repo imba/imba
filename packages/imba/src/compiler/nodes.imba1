@@ -6209,7 +6209,11 @@ export class TagTypeIdentifier < Identifier
 
 	def endLoc
 		@token?.endLoc
-		
+	
+	def toFunctionalType
+		let sym = Identifier.new(@token)
+		sym = VarOrAccess.new(sym) unless isClass
+		return sym
 
 	def load val
 		@str = ("" + val)
@@ -6284,9 +6288,6 @@ export class TagTypeIdentifier < Identifier
 	def isComponent
 		!isNative and !isNativeSVG
 
-	def toFunctionalType
-		LIT(@str)
-		
 	def toSelector
 		toNodeName
 		
@@ -9055,8 +9056,16 @@ export class Tag < TagLike
 
 		if type == TagArgList
 			if attrs:length == 0
+				
+				let typ = option(:type)
+				typ = null if typ.@token == 'div'
 				set(dynamic: yes)
-				set(type: part.nodes[0])
+				let op = part.nodes[0]
+
+				if typ
+					op = CALL(typ.toFunctionalType,part.nodes)
+
+				set(type: op)
 				return self
 
 		if type == TagSep
@@ -9490,20 +9499,6 @@ export class Tag < TagLike
 				@consumed[0].@tvar = tvar
 				@consumed[0].@parent = parent
 				# add("{tvar}")
-			# this is a functional tag component
-			elif option(:args)
-				console.warn "support for <tag(args)> is deprecated",option(:args).c,type
-				# TODO remove the args concept
-				let key = "{cvar}[{osym}]"
-				let ckey = "{cvar}[{osym('$')}]"
-				let inskey = "{cvar}[{osym('ins')}]"
-				add("{runtime:renderContext}.context=({ckey} || ({ckey}=\{\}))")
-				
-				let call = CALL(option(:type).toFunctionalType,option(:args))
-				add("{tvar}={call.c(o)}")
-				add("{runtime:renderContext}.context=null")
-				add("{tvar}==={ref} || ({inskey} = {fragment.tvar}{domCall('insert')}({ref}={tvar},{@flags},{inskey}))")
-				# call the tag - type?
 
 			elif parent isa TagLoopFragment
 				@bvar = tagvar('B')

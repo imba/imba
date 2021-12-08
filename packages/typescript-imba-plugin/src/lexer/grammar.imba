@@ -972,6 +972,7 @@ export const states = {
 
 	tag_: [
 		[/(\s*)(<)(?=\.)/,['white','tag.open','@_tag/flag']],
+		[/(\s*)(<)(\w[\-\w]*)(?=\()/,['white','tag.open','identifier.tag.name','@_tag/name']]
 		[/(\s*)(<)(?=\w|\{|\[|\%|\#|\(|>)/,['white','tag.open','@_tag/name']]
 	]
 	tag_content: [

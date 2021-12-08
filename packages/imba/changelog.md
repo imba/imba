@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.0.0-alpha.194
+
+* Improved syntax for functional tags
+
+    If you supply `()` after a tag name, Imba will now treat it as a functional tag. Ie, `<some-name(1,2)>` is equal to `<( some-name(1,2) )>`. The old syntax may be phased out before final release. 
+
+    ```imba
+    def List items
+        return if items.length == 0
+
+        <section>
+            <slot>
+            <ul> for item in items
+                <li> item.title
+
+    tag App
+        def head
+            <header> <slot> <h2> "Welcome"
+
+        <self>
+            <head()>
+            <List(data.newest)> <h2> "Newest posts"
+            <List(data.all).large> <h2> "All posts"
+    ```
+
 ## 2.0.0-alpha.193
 
 * Fix issue where parts of runtime was incorrectly tree-shaked
