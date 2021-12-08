@@ -1,6 +1,8 @@
 # Changelog
 
-## 2.0.0-alpha.192
+## 2.0.0-alpha.193
+
+* Fix issue where parts of runtime was incorrectly tree-shaked
 
 * Always resolve `node:*` imports as external
 

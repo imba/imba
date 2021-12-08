@@ -1,6 +1,10 @@
 import {Text,createComment,createTextNode,Comment,Node} from './core'
 import {Flags} from './flags'
 
+export def use_slots
+	yes
+
+
 export class Fragment
 	
 	def constructor

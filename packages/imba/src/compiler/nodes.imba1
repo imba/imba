@@ -9594,7 +9594,7 @@ export class Tag < TagLike
 
 		if @slots
 			for own name, slot of @slots
-				# if isDynamicType
+				STACK.use("slots")
 				let fn = isDynamicType ? gsym('#getFunctionalSlot') : gsym('#getSlot')
 				add "{slot.tvar} = {OP('.',tvar,fn).c}('{name}',{cvar})"
 
