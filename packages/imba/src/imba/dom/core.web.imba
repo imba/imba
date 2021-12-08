@@ -220,6 +220,11 @@ extend class Node
 				return res	
 
 		else
+			if global.DEBUG_IMBA
+				if !item.#insertInto
+					console.warn("Tried to insert",item,"into",this)
+					throw new TypeError("Only DOM Nodes can be inserted into DOM")
+
 			return prev ? prev.#replaceWith(item,this) : item.#insertInto(this,null)
 		return
 
