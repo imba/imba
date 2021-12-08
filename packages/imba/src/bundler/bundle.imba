@@ -577,6 +577,9 @@ export default class Bundle < Component
 		# be external. If importer is an imba file, try to
 		# also resolve it via the imbaconfig.paths rules.
 		esb.onResolve(filter: /^[\w\@\#]/) do(args)
+			if args.path.indexOf('node:') == 0
+				return {external: true}
+			
 			if externs.indexOf(args.path) >= 0
 				return {external: true}
 
