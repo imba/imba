@@ -52,7 +52,7 @@ def denter indent,outdent,stay,o = {}
 			indent[k] += '*$1'
 
 	# for own k,v of cases
-	let rule = [/^(\t*)(?=[^\t\n])/,{cases: cases}]
+	let rule = [/^(\t*)(?=[^ \t\n])/,{cases: cases}]
 	if o.comment
 		let clones = {}
 		for own k,v of cases
@@ -303,6 +303,7 @@ export const states = {
 	array_body: [
 		[/\]@implicitCall/, token: ']', switchTo: '@implicit_call_body=']
 		[/\]/, ']', '@pop']
+		[/\)|\}/,'invalid']
 		'indentable_'
 		'expr_'
 		[',','delimiter']
