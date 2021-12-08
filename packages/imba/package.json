@@ -100,7 +100,8 @@
     "*.imba",
     "*.d.ts",
     "*.js",
-    "*.css"
+    "*.css",
+    "*.md"
   ],
   "devDependencies": {
     "commander": "^6.2.1",
