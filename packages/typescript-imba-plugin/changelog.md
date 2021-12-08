@@ -1,3 +1,5 @@
-## 1.2.0
+# Changelog
 
-* Use typings/completions from imba version installed in your project
+## 1.2.8
+
+* Make lexer more fault tolerant
