@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* Fixed compilation issue for functional tags without arguments
+
+* Throw error when trying to use bind on functional tags
+
 ## 2.0.0-alpha.194
 
 * Improved syntax for functional tags

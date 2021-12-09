@@ -215,7 +215,6 @@ var PATHIFY = do |val|
 	
 	if val isa VarOrAccess
 		val = val.@variable or val.value
-	# console.log "TagData value {val}"
 
 	if val isa Access
 		let left = val.left
@@ -8146,7 +8145,6 @@ export class TagData < TagPart
 		
 		if val isa VarOrAccess
 			val = val.@variable or val.value
-		# console.log "TagData value {val}"
 
 		if val isa Access
 			let left = val.left
@@ -8169,7 +8167,6 @@ export class TagData < TagPart
 		
 		if val isa VarOrAccess
 			val = val.@variable or val.value
-		# console.log "TagData value {val}"
 
 		if val isa Access
 			let left = val.left
@@ -9064,8 +9061,7 @@ export class Tag < TagLike
 
 				if typ
 					op = CALL(typ.toFunctionalType,part.nodes)
-
-				set(type: op)
+				set(type: op, functional: op)
 				return self
 
 		if type == TagSep
@@ -9103,16 +9099,7 @@ export class Tag < TagLike
 		elif curr isa TagAttr
 			curr.add(part,type)
 
-		elif type == TagData
-			let bind = String(self.type) in ['input','textarea','select','button','option']
-			bind = true
-			curr = TagAttr.new(bind ? 'bind:data' : 'data',self)
-			curr.value = part.first
-			attrs.push(curr)
-			next = null
-			
 		else
-
 			if type == TagFlag and part isa IdentifierExpression and !part.isPrimitive
 				flag(F.TAG_HAS_DYNAMIC_FLAGS)
 
@@ -9124,6 +9111,9 @@ export class Tag < TagLike
 			attrs.push(next = part)
 
 			if next isa TagAttr and next.name.isPrimitive
+				if isFunctional
+					next.@name.error "bind not supported for functional fragments"
+
 				let name = String(next.name.toRaw)
 				if name == 'bind'
 					(next.@name.@single or next.@name).@value = 'bind:data'
@@ -9142,6 +9132,9 @@ export class Tag < TagLike
 
 	def isDynamicType
 		type isa ExpressionNode or @options:dynamic
+
+	def isFunctional
+		!!@options:functional
 
 	def isSVG
 		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or (@parent and @parent.isSVG))
