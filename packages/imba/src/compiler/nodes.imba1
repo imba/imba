@@ -9111,10 +9111,10 @@ export class Tag < TagLike
 			attrs.push(next = part)
 
 			if next isa TagAttr and next.name.isPrimitive
-				if isFunctional
-					next.@name.error "bind not supported for functional fragments"
-
 				let name = String(next.name.toRaw)
+
+				if name.match(/^bind(?=\:|$)/) and isFunctional
+					next.@name.error "bind not supported for functional fragments"
 				if name == 'bind'
 					(next.@name.@single or next.@name).@value = 'bind:data'
 					name = 'bind:data'
