@@ -135,7 +135,8 @@
 				"editor.suggest.showWords": false,
 				"editor.foldingStrategy": "indentation",
 				"editor.wordSeparators": "`~!%^&*()=+[{]}\\|;:'\",.<>/",
-				"files.eol": "\n"
+				"files.eol": "\n",
+				"editor.semanticHighlighting.enabled": true
 			},
 			"[imba1]": {
 				"editor.insertSpaces": false,
