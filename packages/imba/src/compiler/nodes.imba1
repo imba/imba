@@ -9116,6 +9116,8 @@ export class Tag < TagLike
 				if name.match(/^bind(?=\:|$)/) and isFunctional
 					next.@name.error "bind not supported for functional fragments"
 				if name == 'bind'
+					
+
 					(next.@name.@single or next.@name).@value = 'bind:data'
 					name = 'bind:data'
 				@attrmap[name] = next

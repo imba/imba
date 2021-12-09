@@ -104,6 +104,12 @@ interface Event {
      * */
     αsel(selector: string): boolean;
 
+    /** 
+     * Only trigger handler if event.target.closest(selector) returns a match
+     * @detail (selector)
+     * */
+     αclosest(selector: string): boolean;
+
     /**
      * Only trigger condition is truthy
      * @detail (condition)

@@ -33,6 +33,9 @@ extend class Event
 	def @sel selector
 		return !!target.matches(String(selector))
 
+	def @closest selector
+		return !!target.closest(String(selector))
+
 	def @log ...params
 		console.info(...params)
 		return true

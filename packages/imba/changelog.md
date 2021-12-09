@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.0.0-alpha.196
+
+* Introduced `@event.closest(sel)` modifier
+
+    Works like `@event.sel(selector)`, but checks for `target.closest(...)` instead of `target.matches(...)`.
+    In the cases where you want to just handle clicks that do _not_ match a selector you can negate the modifier using `.!closest(...)`.
+
+    ```imba
+    tag App
+        <self>
+            # all clicks outside of button tags
+            <div @click.!closest('button')>
+                <button> <span> "Click"
+                <p> "blabla"
+    ```
+
 ## 2.0.0-alpha.195
 
 * Fixed compilation issue for functional tags without arguments
