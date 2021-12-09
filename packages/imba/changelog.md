@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.195
 
 * Fixed compilation issue for functional tags without arguments
 
