@@ -19,6 +19,14 @@ test '||=' do
 	d ||= 1
 	eq d, 1
 
+	let e = null
+
+	e ||=
+		a: 1
+		b: 2
+	eq e.b, 2	
+
+
 test '??=' do
 	let a = 0
 	let b = null

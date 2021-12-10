@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0-alpha.197
+
+* Fixed issue with bracketless multiline object and certain operators
+
+    ```imba
+    let x = null
+    x ||=
+        one: 1
+        two: 2
+    # would previously compile incorrectly to x ||= {one: 1}
+    ```
+
 ## 2.0.0-alpha.196
 
 * Introduced `@event.closest(sel)` modifier
