@@ -362,7 +362,7 @@ declare namespace imba {
         <div @touch.moved(threshold=4px, dir='any')>
         ```
         * @summary Only when touch has moved more than threshold
-        * @detail (threshold = 4px)
+        * @detail (threshold = 4px, dir = 'any')
         */
         αmoved(threshold?: Length, dir?: string): boolean;
 
@@ -541,6 +541,12 @@ declare namespace imba {
          * @summary Don't trigger imba.commit from this event handler
         */
         αsilent(): void;
+
+
+        /**
+         * @summary Suppress pointer events on all other elements
+        */
+         αlock(): void;
     }
 
 
