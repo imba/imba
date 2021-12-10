@@ -94,6 +94,9 @@ export default class CompletionsProvider
 			
 			if typeof raw.kind == 'number'
 				item.kind = raw.kind
+
+			if raw.kindModifiers..indexOf('deprecated') >= 0
+				item.tags = [1]
 			
 			# Dont allow fancy triggers before typing any additional characters
 			if context.triggerKind == 1 and !raw.action
