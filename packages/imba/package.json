@@ -49,7 +49,7 @@
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.196",
+  "version": "2.0.0-alpha.197",
   "licenses": [
     {
       "type": "MIT",
