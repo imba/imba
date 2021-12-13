@@ -3636,6 +3636,9 @@ export class TagDeclaration < ClassDeclaration
 			let name = name.toNodeName
 			name = name + '-tag' if name.indexOf('-') == -1
 			STACK.css.add name + ' { display:block; }'
+
+		if option(:export) and name and name:isLowerCase and name.isLowerCase
+			warn "Lowercased tags are globally available - not exportable", loc: option(:export)
 		return
 		
 	def addElementReference name, child
