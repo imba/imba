@@ -328,11 +328,17 @@ export def rewrite rule,ctx,o = {}
 		let mlen = part.metas..length or 0
 		s4 += 1 if !mlen and (part.classNames..length or part..pseudos..length)
 
+	if s4 > 1
+		s4 = 1	
+
 	s2 = s4
 
 	if o.inline
 		s1 = 3
 		s2 = 0
+
+	if o.type == 'component'
+		s1 = last.isScope ? 0 : 1
 
 	if o.type == 'scoped'
 		s1 = last.isScope ? 2 : 1

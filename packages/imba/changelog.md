@@ -1,5 +1,21 @@
 # Changelog
 
+## Unrealeased
+
+* Change how css specificity is forced in generated selectors
+
+    Older browsers do not support complex selectors within `:not()`, so the style `:not(#_#_#_)` which is used for "inline" styles would not work in these browsers. We have now reverted to using multiple not selectors like `:not(#_):not(#_):not(#_)`. This is more verbose but the size is negligible, especially with compression. Debugging styles in the browser is a bit more clumsy.
+
+* Change css specificity for component rules
+
+    Selectors inside tag declarations are now compiled with a higher specificity than global selectors.
+
+    ```imba
+    tag App
+        # scoped selectors have higher precedence than global styles
+        css .selector d:block
+    ```
+
 ## 2.0.0-alpha.197
 
 * Fixed issue with bracketless multiline object and certain operators

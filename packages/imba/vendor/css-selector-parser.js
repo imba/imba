@@ -626,8 +626,8 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
           }
         }, this).join('');
 
-        if(false && s1 > 0 && shortest && (shortest.length * s1) < (4 + s1 * 2)){
-          while(s1--){
+        if(s1 > 0 && shortest && shortest.length < 9){
+          while(--s1 >= 0){
             res += "." + shortest;
           }
         }
@@ -641,16 +641,21 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
         while (--i >= 0) res += ":not(#P)";
       }
       if(s0 > 0){
-        res += ":not(";
-        while (s0--) res += '#_';
-        while (--s1 >= 0) res += '._';
-        res += ')';
+        if(false){
+          res += ":not(";
+          while (s0--) res += '#_';
+          while (--s1 >= 0) res += '._';
+          res += ')';  
+        } else {
+          while (--s0 >= 0) res += ":not(#_)";
+        }
         // while (--i >= 0) res += ":not(#_)";
       }
       if(s1 > 0){
-        res += ":not(";
-        while (--s1 >= 0) res += (s1 ? '._' : '._0');
-        res += ')';
+        while (--s0 >= 0) res += ":not(._0)";
+        // res += ":not(";
+        // while (--s1 >= 0) res += (s1 ? '._' : '._0');
+        // res += ')';
         // while (--i >= 0) res += ":not(._)";
       }
       if (entity.attrs) {

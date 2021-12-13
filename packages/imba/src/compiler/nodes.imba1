@@ -9311,6 +9311,9 @@ export class Tag < TagLike
 
 		if component and !isSelf
 			if let cname = component.cssref(option(:reference) ? null : scope__)
+				let orig = component.@cssns
+				if @classNames.indexOf(orig) >= 0
+					@classNames.splice(@classNames.indexOf(orig),1)
 				@classNames.push cname
 		
 		if option(:reference)

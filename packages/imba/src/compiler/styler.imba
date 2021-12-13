@@ -1049,7 +1049,7 @@ export class StyleSheet
 				for rule in item.#rules
 					# console.log rule
 					let ns = rule.#media
-					let sel = rule.#string.replace(/:not\(#_\)/g,'')
+					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')
 					if easing
 						sel = sel.replace(/\._(off|out|in|on)_\b/g,'')
 
