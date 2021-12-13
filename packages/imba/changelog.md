@@ -1,6 +1,6 @@
 # Changelog
 
-## Unrealeased
+## 2.0.0-alpha.198
 
 * Change how css specificity is forced in generated selectors
 
@@ -15,6 +15,8 @@
         # scoped selectors have higher precedence than global styles
         css .selector d:block
     ```
+
+* Fixed case where a generated class-name is added multiple times on elements
 
 ## 2.0.0-alpha.197
 
