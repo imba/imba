@@ -194,6 +194,7 @@ export class Easer
 		# must be certain that they don't have a size set directly?
 		
 		sizes = #nodes.sized = getNodeSizes('in')
+		dom..transition-in-init(self)
 		flag('_off_')
 		flag('_in_')
 		
@@ -251,6 +252,10 @@ export class Easer
 		return
 
 extend class Element
+
+	# called when element is getting ready to enter	
+	def transition-in-init transition
+		yes
 
 	# called when element is ready to enter	
 	def transition-in transition
