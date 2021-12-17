@@ -13,7 +13,7 @@ class TeleportHook < Component
 	def setup
 		setAttribute('style',"display:none !important;")
 
-	def slot$ name, ctx
+	def #getSlot name, ctx
 		#slot ||= createSlot(0,#parent)
 		return #slot
 

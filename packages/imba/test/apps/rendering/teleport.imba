@@ -20,7 +20,7 @@ tag App
 				
 			# listen to global click event
 			if hasGlobal
-				<global @click=clicks.push('global')>
+				<global @click=clicks.push('global')> <div.global-div> "Global div"
 
 def click sel, expected = []
 	clicks = []
@@ -34,6 +34,8 @@ test "click" do
 	await click('body',[])
 	
 	imba.mount(app)
+
+	ok document.querySelector('body > .global-div')
 	
 	await click('body',['global'])
 	# eq clicks, 1
@@ -44,6 +46,7 @@ test "click" do
 	hasGlobal = no
 	app.render!
 	await click('body',[])
+	ok !document.querySelector('body > .global-div')
 	
 	hasNested = yes
 	app.render!

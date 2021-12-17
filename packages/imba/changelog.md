@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.199
+
+* Fix regression where content of `<teleport>` and `<global>` was not rendered (#643)
+
 ## 2.0.0-alpha.198
 
 * Change how css specificity is forced in generated selectors

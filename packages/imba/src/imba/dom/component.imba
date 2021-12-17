@@ -118,13 +118,6 @@ export class Component < HTMLElement
 		self.className = flags$ext = str
 		return
 
-	# returns the named slot - for context
-	def slot$ name, ctx
-		if name == '__' and !render
-			return self
-
-		__slots[name] ||= createSlot(0,self)
-
 	# called immediately after construction 
 	def build
 		self

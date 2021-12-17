@@ -616,8 +616,6 @@ export class Element < Node
 		console.log(...params)
 		self
 
-	def slot$ name, ctx
-		return self
 
 	# inline in files or remove all together?
 	def text$ item
@@ -922,7 +920,7 @@ export def createComponent name, parent, flags, text, ctx
 	el.#__init__!
 
 	if text !== null
-		el.slot$('__').text$(text)
+		el.#getSlot('__').text$(text)
 		
 	if flags or el.flags$ns # or nsflag
 		el.flag$(flags or '')
