@@ -172,8 +172,7 @@ extend class Element
 			let prev = handler.#key
 			if handler.#key =? key
 				handler.#combos = {}
-				let combos = key.replace(/\bmod\b/g,isApple ? 'command' : 'ctrl')
-				for combo in combos.split('|')
+				for combo in key.split('|')
 					hotkeys.register(combo,mods)
 					handler.#combos[combo] = yes
 			Object.assign(all,handler.#combos)

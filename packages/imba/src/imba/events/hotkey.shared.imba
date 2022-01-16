@@ -1,31 +1,37 @@
-const labels = {
-	esc: {mac: '⎋'}
-	enter: {mac: '↩'}
-	shift: {mac: '⇧'}
-	command: '⌘'
-	mod: {mac: '⌘', win: 'ctrl'}
-	ctrl: {mac: '⌃'}
-	meta: {mac: '⌘',win: 'win'}
-	option: {mac: '⌥', win: 'alt'}
-	alt: {mac: '⌥', win: 'alt'}
-	del: '⌦'
-	backspace: '⌫'
-	left: {mac: '→'}
-	up: {mac: '↑'}
-	down: {mac: '↓'}
-	right: {mac: '←'}
-	plus: {mac: '+'}
-	tab: {mac: '⇥'}
-}
 
 const cfg = {
 	win: {
 		sep: '+'
+		name: 'win'
 		order: ['meta','ctrl','mod','alt','option','shift'].reverse!
+		labels: {
+			option: 'alt'
+			mod: 'ctrl'
+			meta: 'win'
+		}
 	}
 	mac: {
 		sep: ''
+		name: 'mac'
 		order: ['ctrl','alt','option','shift','mod','command'].reverse!
+		labels: {
+			left: '→'
+			up: '↑'
+			down: '↓'
+			right: '←'
+			plus: '+'
+			tab: '⇥'
+			meta: '⌘'
+			mod: '⌘'
+			ctrl: '⌃'
+			option: '⌥'
+			alt: '⌥'
+			del: '⌦'
+			shift: '⇧'
+			enter: '↩'
+			esc: '⎋'
+			backspace: '⌫'
+		}
 	}
 }
 
@@ -47,8 +53,7 @@ export def format combo, platform = 'auto'
 		let items = keys.sort(do o.order.indexOf($2) - o.order.indexOf($1) )
 
 		let strings = items.map do
-			let lbl = labels[$1] or $1
-			lbl = typeof lbl == 'string' ? lbl : (lbl[platform] or $1)
+			let lbl = o.labels[$1] or $1
 			lbl = lbl[0].toUpperCase! + (lbl.slice(1) or '')
 		return strings
 
