@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+* Allow nested parentheticals in css calc
+
+
 ## 2.0.0-alpha.199
 
 * Fix regression where content of `<teleport>` and `<global>` was not rendered (#643)

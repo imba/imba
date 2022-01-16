@@ -448,6 +448,7 @@ var grammar =
 	]
 	
 	StyleTerm: [
+		o '( StyleExpressions )' do A2.set(parens: yes).setEnds(A1,A3)
 		o 'CSSVAR' do StyleVar.new(A1)
 		o 'DIMENSION' do StyleDimension.new(A1)
 		o 'COLOR' do StyleColor.new(A1)
@@ -457,7 +458,7 @@ var grammar =
 		o 'StyleTermPlaceholder' do A1
 		# o '{ Expression }' do StyleInterpolationExpression.new(A2)
 		o 'CSSURL' do StyleURL.new(A1)
-		o 'CSSIDENTIFIER ( StyleExpressions )' do StyleFunction.new(A1,A3)
+		o 'CSSFUNCTION ( StyleExpressions )' do StyleFunction.new(A1,A3)
 		o 'CSSIDENTIFIER' do StyleIdentifier.new(A1)
 		o 'COMPARE StyleTerm' do A2.set(op: A1)
 		# o '> StyleTerm' do A2.set(op:A1)

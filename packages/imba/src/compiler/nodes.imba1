@@ -10783,7 +10783,10 @@ export class StyleExpressions < ListNode
 		[].concat(list)
 
 	def c o
-		AST.cary(@nodes,o).join(', ')
+		let out = AST.cary(@nodes,o).join(', ')
+		if option(:parens)
+			out = "( {out} )"
+		return out
 		
 	def clone
 		StyleExpressions.new(@nodes.slice(0))

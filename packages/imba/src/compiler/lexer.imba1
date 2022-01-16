@@ -814,6 +814,10 @@ export class Lexer
 				id = 'CSSVAR'
 			elif @last and !@last:spaced and ltyp == '}'
 				id = 'CSSUNIT'
+
+			if @chunk[len] == '('
+				id = 'CSSFUNCTION'
+
 			token id, val, len
 
 			return len
