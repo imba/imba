@@ -11,15 +11,14 @@ export class Flags
 		return self if contains(ref)
 		string += (string ? ' ' : '') + ref
 		dom.classList.add(ref)
-		# sync!
 		return self
 
 	def remove ref
 		return self unless contains(ref)
-		let regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*', 'g')
+	
+		let regex = new RegExp('(^|\\s)' + ref + '(?=\\s|$)', 'g')
 		string = string.replace(regex, '')
 		dom.classList.remove(ref)
-		# sync!
 		return self
 
 	def toggle ref, bool

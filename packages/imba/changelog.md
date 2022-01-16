@@ -4,6 +4,7 @@
 
 * Allow nested parentheticals in css calc
 
+* Fixed issue where removing class names using `el.flags.remove` would not work
 
 ## 2.0.0-alpha.199
 
