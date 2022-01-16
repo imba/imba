@@ -6,6 +6,10 @@
 
 * Fixed issue where removing class names using `el.flags.remove` would not work
 
+* Allow second argument to `el.flags.incr(flag, dur = 0)`
+
+    With this argument you can automatically decrement the flag after a certain duration.
+
 ## 2.0.0-alpha.199
 
 * Fix regression where content of `<teleport>` and `<global>` was not rendered (#643)

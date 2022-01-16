@@ -25,10 +25,14 @@ export class Flags
 		bool = !contains(ref) if bool === undefined
 		bool ? add(ref) : remove(ref)
 		
-	def incr ref
+	def incr ref, duration = 0
 		let m = stacks
 		let c = m[ref] or 0
 		add(ref) if c < 1
+
+		if duration > 0
+			setTimeout(&,duration) do decr(ref)
+
 		return m[ref] = Math.max(c,0) + 1
 	
 	def decr ref
