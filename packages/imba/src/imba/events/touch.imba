@@ -79,11 +79,12 @@ class Touch
 	def @flag name, sel
 		const {element} = #context
 		const ts = Date.now!
+		let el = sel isa Element ? sel : (sel ? element.closest(sel) : element)
 
 		if #step.setup =? yes
-			element.flags.incr(name)
+			el.flags.incr(name)
 			once(self,'end') do
-				element.flags.decr(name)
+				el.flags.decr(name)
 
 		return yes
 

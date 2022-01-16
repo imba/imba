@@ -6,6 +6,8 @@
 
 * Fixed issue where removing class names using `el.flags.remove` would not work
 
+* Made `@touch.flag` support selector in second argument to match `@event.flag`
+
 * Allow second argument to `el.flags.incr(flag, dur = 0)`
 
     With this argument you can automatically decrement the flag after a certain duration.
