@@ -165,11 +165,9 @@ extend class Element
 		
 	def #updateHotKeys
 		let all = {}
-		let isApple = (global.navigator.platform or '').match(/iPhone|iPod|iPad|Mac/)
 		for handler in #hotkeyHandlers
 			let mods = handler.params
 			let key = mods.options[0]
-			let prev = handler.#key
 			if handler.#key =? key
 				handler.#combos = {}
 				for combo in key.split('|')
