@@ -674,22 +674,30 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
       if (entity.pseudos) {
         res += entity.pseudos.map(function(pseudo) {
           let pre = ":" + this.escapeIdentifier(pseudo.name);
+          let post = "";
+
+          if(pseudo.neg){
+            pre = ":not(" + pre;
+            post = ")";
+
+          }
+
           if (pseudo.valueType) {
             if (pseudo.valueType === 'selector') {
-              return pre + "(" + this._renderEntity(pseudo.value) + ")";
+              return pre + "(" + this._renderEntity(pseudo.value) + ")" + post;
             } else if (pseudo.valueType === 'substitute') {
-              return pre + "($" + pseudo.value + ")";
+              return pre + "($" + pseudo.value + ")" + post;
             } else if (pseudo.valueType === 'numeric') {
-              return pre + "(" + pseudo.value + ")";
+              return pre + "(" + pseudo.value + ")" + post;
             } else if (pseudo.valueType === 'raw' || pseudo.valueType === 'string' ) {
-              return pre + "(" + pseudo.value + ")";
+              return pre + "(" + pseudo.value + ")" + post;
             } else {
-              return pre + "(" + this.escapeIdentifier(pseudo.value) + ")";
+              return pre + "(" + this.escapeIdentifier(pseudo.value) + ")" + post;
             }
           } else if(pseudo.type == 'el') {
             return ':' + pre;
           } else {
-            return pre;
+            return pre + post;
           }
         }, this).join('');
       }

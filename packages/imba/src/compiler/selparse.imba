@@ -177,7 +177,12 @@ export def rewrite rule,ctx,o = {}
 			let [m,pre,name,post] = (mod.name.match(/^(\$|\.+)?([^\~\+]*)([\~\+]*)$/) or [])
 			let hit
 			let media
-			let neg = mod.name[0] == '!'
+			let neg = mod.name[0] == '!' ? '!' : ''
+			let modname = neg ? mod.name.slice(1) : mod.name
+
+			if neg
+				mod.neg = yes
+				mod.name = mod.name.slice(1)
 
 			if pre == '.'
 				addClass(modTarget,name)
@@ -226,17 +231,20 @@ export def rewrite rule,ctx,o = {}
 				# s1++ # media modifiers should  mimic attr specificity
 				mod.remove = yes
 
-			elif let alias = modifiers[mod.name]
+			elif let alias = modifiers[modname]
 				if alias.media
-					rule.media.push(alias.media)
+					let m = alias.media
+					if neg and alias.medianeg
+						m = alias.medianeg
+					rule.media.push(m)
 					mod.remove = yes
 				if alias.ua
 					# get or force-create html element
-					addClass(getRootRule(rule),"ua-{alias.ua}")
+					addClass(getRootRule(rule),"{neg}ua-{alias.ua}")
 					mod.remove = yes
 					specificity++
 				if alias.flag
-					addClass(modTarget,alias.flag)
+					addClass(modTarget,"{neg}" + alias.flag)
 					mod.remove = yes
 					specificity++
 				if alias.pri

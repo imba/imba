@@ -12,6 +12,17 @@
 
     With this argument you can automatically decrement the flag after a certain duration.
 
+* Allow negated style modifiers
+
+    ```imba
+    css div
+        @!hover o:0.5 # div:not(:hover) { opacity: 0.5 } 
+        @!md d:none # @media (max-width: 767px) { div { display:none } }
+    # also works for classes
+    css div
+        @.!disabled o:0.5 # div:not(.disabled){ opacity:0.5 }
+    ```
+
 ## 2.0.0-alpha.199
 
 * Fix regression where content of `<teleport>` and `<global>` was not rendered (#643)
