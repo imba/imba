@@ -169,9 +169,10 @@ extend class HTMLTextAreaElement
 		commit!
 
 	def #afterVisit
-		if $$bound and self.value != self.data
-			self.value = self.data
-
+		let val = self.data
+		val = '' if val === null or val === undefined
+		if $$bound and self.value != val
+			self.value = val
 
 
 extend class HTMLInputElement

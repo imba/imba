@@ -129,6 +129,7 @@ export const states = {
 	]
 	
 	indentable_: [
+		[/^[ ]+/, 'white']
 		denter('@>_paren_indent&-_indent',null,null)
 		[/^(\t+)(?=[\r\n]|$)/,'white.tabs']
 		'whitespace'

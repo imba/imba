@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Make bind=data.property work for textarea when value is `undefined`
+
 * Allow nested parentheticals in css calc
 
 * Fixed issue where removing class names using `el.flags.remove` would not work
