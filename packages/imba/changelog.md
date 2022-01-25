@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.200
 
 * Allow `@hotkey('*')` to listen to all hotkey events
 
