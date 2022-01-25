@@ -18,8 +18,11 @@ class ResizeEvent < CustomEvent
 			let wp = wu ? "--u_{wu[1]}" : "--{wunit}"
 			let hp = hu ? "--u_{hu[1]}" : "--{hunit}"
 
-			el.style.setProperty(wp,self.width + 'px')
-			el.style.setProperty(hp,self.height + 'px')
+			let wval = wu ? (self.width / wu[0]) : self.width
+			let hval = hu ? (self.height / hu[0]) : self.height
+
+			el.style.setProperty(wp,wval)
+			el.style.setProperty(hp,hval)
 
 		return yes
 

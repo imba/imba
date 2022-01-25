@@ -432,14 +432,19 @@ var grammar =
 	
 	# the values
 	StyleExpression: [
-		o 'StyleTerm' do StyleExpression.new().add(A1)
-		o 'StyleExpression StyleOperator' do A1.add(A2)
-		o 'StyleExpression StyleTerm' do A1.add(A2)
+		o 'StyleValue' do StyleExpression.new().add(A1)
+		o 'StyleExpression StyleValue' do A1.add(A2)
 		o 'StyleExpression / StyleTerm' do A1.addParam(A3,A2)
 	]
+
+	StyleValue: [
+		o 'StyleTerm'
+		o 'StyleCalc'
+	]
 	
-	StyleOperation: [
-		o 'StyleTerm / StyleTerm' do A1.addParam(A3,A2)
+	StyleCalc: [
+		o 'StyleTerm StyleOperator StyleTerm' do StyleCalc.new([A1,A2,A3])
+		o 'StyleCalc StyleOperator StyleTerm' do A1.add([A2,A3])
 	]
 	
 	StyleTermPlaceholder: [

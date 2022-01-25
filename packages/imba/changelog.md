@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Automatically wrap style expressions in `calc()`
+
+    ```imba
+    css div width: calc(100vw - 40px)
+    # can now be written as
+    css div width: 100vw - 40px
+    ```
+
 * Make bind=data.property work for textarea when value is `undefined`
 
 * Allow nested parentheticals in css calc

@@ -10605,7 +10605,7 @@ export class StyleDeclaration < StyleNode
 		params = @expr.clone unless params
 		if typeof params == 'string' or typeof params == 'number'
 			params = [params]
-		if !(params isa Array) and !(params isa ListNode)
+		if !(params isa Array) and (!(params isa ListNode) or params isa StyleCalc)
 			params = [params]
 
 		StyleDeclaration.new(@property.clone(name),params)
@@ -10845,6 +10845,12 @@ export class StyleExpression < ListNode
 				reclaimParams
 		super
 
+export class StyleCalc < ListNode
+	def c o
+		if o and o:as == 'js'
+			return AST.cary(@nodes,o).join(' ')
+		"calc({AST.cary(@nodes,o).join(' ')})"
+
 export class StyleTerm < ValueNode
 	
 
@@ -11021,7 +11027,7 @@ export class StyleDimension < StyleTerm
 		elif unit in VALID_CSS_UNITS
 			return String(@value)
 		else
-			return "calc(var(--u_{unit},{String(@value)}) * {@number})"
+			return "calc(var(--u_{unit},1{unit}) * {@number})"
 			# return String(@value)
 			
 	def toAlpha
