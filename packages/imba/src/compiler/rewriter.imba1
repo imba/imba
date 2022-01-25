@@ -647,6 +647,11 @@ export class Rewriter
 
 			return 1
 
+	def generateToken typ, val
+		let tok = T.token(typ, val)
+		tok:generated = yes
+		return tok
+
 	# Methods may be optionally called without parentheses, for simple cases.
 	# Insert the implicit parentheses here, so that the parser doesn't have to
 	# deal with them.
@@ -670,7 +675,7 @@ export class Rewriter
 		let currPair = null
 
 		var parensAction = do |token,i,tokens|
-			tokens.splice i, 0, T.token('CALL_END', ')')
+			tokens.splice i, 0, generateToken('CALL_END', ')')
 
 		# function will not be optimized in single run
 		# could tro to move this out
@@ -819,7 +824,7 @@ export class Rewriter
 				endCallAtTerminator = yes
 
 			# cache where we want to splice -- add them later
-			tokens.splice i, 0, T.token('CALL_START', '(')
+			tokens.splice i, 0, generateToken('CALL_START', '(')
 			# CALLCOUNT++
 
 			detectEnd(i + 1, parensCond, parensAction)
