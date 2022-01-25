@@ -38,6 +38,10 @@ declare namespace imbacss {
 
     interface αchecked { name: 'checked' };
 
+    interface αinvalid { name: 'invalid' };
+
+    interface αvalid { name: 'valid' };
+
     /** Element has focus */
     interface αfocus { name: 'focus' };
 
