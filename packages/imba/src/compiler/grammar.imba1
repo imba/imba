@@ -447,6 +447,18 @@ var grammar =
 		o 'StyleTerm StyleOperator StyleTerm' do StyleCalc.new([A1,A2,A3])
 		o 'StyleCalc StyleOperator StyleTerm' do A1.add([A2,A3])
 	]
+
+	StyleFunctionArgs: [
+		o 'StyleFunctionArg' do StyleExpressions.new([A1])
+		o 'StyleFunctionArgs , StyleFunctionArg' do A1.add(A3)
+	]
+	
+	StyleFunctionArg: [
+		o 'StyleTerm' do StyleExpression.new().add(A1)
+		o 'StyleFunctionArg StyleOperator' do A1.add(A2)
+		o 'StyleFunctionArg StyleTerm' do A1.add(A2)
+		o 'StyleFunctionArg / StyleTerm' do A1.addParam(A3,A2)
+	]
 	
 	StyleTermPlaceholder: [
 		o '{ Expression }' do StyleInterpolationExpression.new(A2).setEnds(A1,A3)
@@ -464,7 +476,7 @@ var grammar =
 		o 'StyleTermPlaceholder' do A1
 		# o '{ Expression }' do StyleInterpolationExpression.new(A2)
 		o 'CSSURL' do StyleURL.new(A1)
-		o 'CSSFUNCTION ( StyleExpressions )' do StyleFunction.new(A1,A3)
+		o 'CSSFUNCTION ( StyleFunctionArgs )' do StyleFunction.new(A1,A3)
 		o 'CSSIDENTIFIER' do StyleIdentifier.new(A1)
 		o 'COMPARE StyleTerm' do A2.set(op: A1)
 		# o '> StyleTerm' do A2.set(op:A1)

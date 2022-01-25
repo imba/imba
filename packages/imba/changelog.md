@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.201
+
+* Fixed regression where css colors `rgb(0 0 0 / alpha)` would compile incorrectly
+
 ## 2.0.0-alpha.200
 
 * Allow `@hotkey('*')` to listen to all hotkey events
