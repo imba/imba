@@ -9490,8 +9490,11 @@ export class Tag < TagLike
 				elif option(:key)
 					add "{cvar}=({k}={k}||new Map())"
 					add "({bvar}={dvar}=1,{tvar}={cvar}.get({kvar}={option(:key).c})) || ({bvar}={dvar}=0,{cvar}.set({kvar},{ctor}))"
-				else	
-					add "({bvar}={dvar}=1,{tvar}={k}) || ({bvar}={dvar}=0,{tvar}={k}={ctor})"
+				else
+					if isMemoized
+						add "({bvar}={dvar}=1,{tvar}={k}) || ({bvar}={dvar}=0,{tvar}={k}={ctor})"
+					else
+						add "({bvar}={dvar}=0,{tvar}={ctor})"
 
 				add "{bvar} || ({tvar}[{gsym('##up')}]={parentRef})" # really? 
 
