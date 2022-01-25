@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+* Allow `@hotkey('*')` to listen to all hotkey events
+
+    This is perfect for disabling all other hotkeys in certain contexts.
+
+    ```imba
+    tag ConfirmDialog
+        # when this dialog is mounted - all hotkey handlers preceding
+        # it in the dom tree will be blocked by the `*` listener
+        <self @hotkey('*').global>
+            <button @hotkey('esc')> "Cancel"
+            <button @hotkey('enter')> "Ok"
+    ```
+
 * Automatically wrap style expressions in `calc()`
 
     ```imba

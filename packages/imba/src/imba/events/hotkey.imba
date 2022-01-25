@@ -99,7 +99,8 @@ export const hotkeys = new class HotKeyManager
 			group = group.parentNode
 
 		targets = targets.reverse!.filter do |el|
-			return no unless el.#hotkeyCombos and el.#hotkeyCombos[combo]
+			let combos = el.#hotkeyCombos
+			return no unless combos and (combos[combo] or combos['*'])
 
 			let par = el
 			while par and par != root
@@ -122,7 +123,7 @@ export const hotkeys = new class HotKeyManager
 
 		for receiver in targets
 			for handler in receiver.#hotkeyHandlers
-				if handler.#combos[combo]
+				if handler.#combos[combo] or handler.#combos['*']
 					if !e.#inEditable or (handler.capture? or handler.params.force)
 						let el = handler.#target
 						if group.contains(el) or el.contains(group) or (handler.global?)
