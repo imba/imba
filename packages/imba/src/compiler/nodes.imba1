@@ -9442,8 +9442,9 @@ export class Tag < TagLike
 				let head = decl.@head ||= []
 				let ref = helpers.toValidIdentifier(option(:reference).c)
 				let gen = option(:ctor)
-				let sym = STACK.getSymbol
-				let body = "return this[{sym}] || (this[{sym}] = {gen})"
+				# let sym = STACK.getSymbol
+				# let body = "return this[{sym}] || (this[{sym}] = {gen})"
+				let body = "let el={gen};\n\treturn (Object.defineProperty(this,'{ref}',\{value:el\}),el);"
 				let getter = "get {ref}()" + '{\n\t' + body + '\n}'
 				head.push( getter )
 
