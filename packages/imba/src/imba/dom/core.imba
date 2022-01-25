@@ -298,6 +298,12 @@ export class Node
 	get #context
 		##context ||= new Proxy(self,contextHandler)
 
+	get #closestNode
+		self
+
+	get #parentNode
+		#parent.#closestNode
+
 	def #__init__
 		self
 

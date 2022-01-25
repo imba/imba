@@ -90,6 +90,12 @@ extend class Node
 	get #parent
 		##parent or this.parentNode or ##up # FIX
 
+	get #closestNode
+		self
+
+	get #parentNode
+		#parent.#closestNode
+
 	get #context
 		##context ||= new Proxy(self,contextHandler)
 
