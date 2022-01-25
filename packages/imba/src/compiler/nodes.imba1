@@ -8200,6 +8200,13 @@ export class TagHandler < TagPart
 		@last.@handlerName = @name
 		@last.params = params
 
+	def add item, type, start, end
+		if type == TagHandlerCallback
+			item = item.first if item isa ArgList
+			item = TagHandlerCallback.new(item)
+
+		super(item,type)
+
 	def visit
 		super
 		STACK.use('events')
@@ -8227,9 +8234,46 @@ export class TagHandler < TagPart
 			out += '})'
 			return out
 
+		if @standalone
+			let up = @tag
+			let iref = "{up.cvar}[{osym}]"
+			let mods = modifiers
+			let specials = mods.extractDynamics()
+			let visit = no
+			let out = []
+			let add = do |val| out.push(val)
+			let hvar = up.hvar
+
+			add "{up.hvar} = {iref} || ({iref}={mods.c(o)})"
+			for special in specials
+				let k = special.option(:key)
+				let i = special.option(:index)
+				let path = "{OP('.',hvar,k).c}[{i}]"
+				if k == 'options'
+					visit = yes
+					add "({vvar}={special.c(o)},{vvar}==={path} || ({path}={vvar},{dvar}|={F.DIFF_MODIFIERS}|{F.DIFF_INLINE}))"
+				else
+					add "{path}={special.c(o)}"
+
+			add "{up.bvar} || {up.ref}.on$({quoted},{hvar.c},{scope__.context.c})"
+			if visit
+				add "{up.dvar}&{F.DIFF_INLINE} && ({up.dvar}^={F.DIFF_INLINE},{hvar}[{gsym('#visit')}]?.())"
+			
+			return "(" + out.join(",\n") + ")"
+			
+
 		return "{tagRef}.on$({quoted},{modifiers.c},{scope__.context.c})"
 
-class TagHandlerCallback < ValueNode
+	# swallow might be better name
+	def consume node
+		if node isa TagLike
+			@tag = node
+			@standalone = yes
+		return self			
+		# return node.register(self)
+
+
+export class TagHandlerCallback < ValueNode
 	
 	def visit
 		let val = value
