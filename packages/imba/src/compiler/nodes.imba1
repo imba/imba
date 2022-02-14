@@ -9590,7 +9590,6 @@ export class Tag < TagLike
 			elif canInline
 				@ref = tvar
 				@bvar = parent.bvar
-				o:inline = yes
 				add "{parent.bvar} || ({ctor})"
 			else
 				let key = option(:key)
