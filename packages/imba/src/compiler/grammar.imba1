@@ -413,7 +413,7 @@ var grammar =
 	]
 	
 	StyleDeclaration: [
-		o 'StyleProperty : StyleExpressions' do StyleDeclaration.new(A1,A3)
+		o 'StyleProperty : StyleExpressions' do StyleDeclaration.new(A1,A3.set(parens: no))
 	]
 	
 	StyleProperty: [
