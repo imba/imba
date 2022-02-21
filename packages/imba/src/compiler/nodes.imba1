@@ -9550,7 +9550,6 @@ export class Tag < TagLike
 			# if the parent was inlined but we are too complex
 			if o:inline and !canInline
 				# what if this is just asking to be inlined because of a ternary?
-				
 				option(:iife,yes)
 				o:inline = no
 			
@@ -10726,7 +10725,9 @@ export class StyleDeclaration < StyleNode
 				list.replace(self,expanded)
 				return
 			
-		@expr.traverse(decl: self, property: @property) if @expr
+		if @expr
+			@expr.traverse(decl: self, property: @property)
+			@expr.set(parens: no)
 		
 		if o:styles
 			let key = @property.toKey
