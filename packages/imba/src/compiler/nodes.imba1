@@ -12360,6 +12360,11 @@ export class SystemVariable < Variable
 		return self if @resolved
 		@resolved = yes
 
+		let sysnr = STACK.incr('sysvar')
+		@name = "${sysnr}"
+		return self
+
+
 		# unless @name
 		# adds a very random initial name
 		# the auto-magical goes last, or at least, possibly reuse other names
