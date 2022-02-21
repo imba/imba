@@ -747,6 +747,9 @@ export class Stack
 	def hmr
 		!!@options:hmr
 
+	def isStdLib
+		!!@options:stdlib
+
 	def isWeb
 		platform == 'browser' or platform == 'web'
 	
@@ -2034,7 +2037,7 @@ export class ClassField < Node
 				if typ
 					out = "{typ.c} {out}"
 
-			elif self isa ClassAttribute or (@decorators && @decorators:length > 0)
+			elif self isa ClassAttribute or (@decorators && @decorators:length > 0 and false)
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
 				let getter = "{prefix}get {name}{self.getter.c(keyword: '')}"
 				out = "{setter}\n{getter}"
@@ -3365,6 +3368,7 @@ export class ClassDeclaration < Code
 		var ctor = body.option(:ctor)
 
 		let fieldNodes = body.filter do |node| node isa ClassField
+		let allDecorators = []
 
 		for node in fieldNodes
 			if node.watchBody
@@ -3388,12 +3392,14 @@ export class ClassDeclaration < Code
 		if !tsc and @decorators
 			let op = util.decorate(Arr.new(@decorators),THIS)
 			staticInits.add([op,BR])
+			allDecorators.push(@decorators)
 
 		for node,i in body
 			if node.@decorators
 				let target = node.option(:static) ? THIS : PROTO
 				let desc = LIT('null')
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)
+				allDecorators.push(node.@decorators)
 				staticInits.add([op,BR])
 
 		if !inits.isEmpty and !tsc
@@ -3442,27 +3448,43 @@ export class ClassDeclaration < Code
 			
 		if !STACK.tsc
 			let hasInitedHook = !!instanceMethodMap["#__inited__"]
+			let hasDecorators = allDecorators:length > 0
+
+			if hasDecorators
+				STACK.use('hooks')
+				let decosym = STACK.symbolFor('#__hooks__')
+				staticInit.inject LIT("this.prototype[{decosym}] = {runtime:hooks}"), 0
 			
-			if !isTag and !ctor and hasInitedHook
+			if !isTag and !ctor and (hasInitedHook or hasDecorators)
 				let ops = sup ? [Super.new(),BR] : [BR]
 				ctor = addMethod('constructor',[],ops,{})
 				
-			if ctor and !isTag
-				# set a unique local symbol for this class			
-				let ctorsym = STACK.symbolFor('#__initor__')
+			if ctor and !isTag and !STACK.isStdLib
+				let ctorsym = STACK.symbolFor('#__initor__')				
 				let initsym = STACK.symbolFor('#__inited__')
+
+				let hooksym = STACK.symbolFor('#__hooks__')
+				let initedHook = LIT("this[{hooksym}]&&this[{hooksym}].inited(this)")
+
+				# console.log "emitInited",initedHook,hasDecorators,hasInitedHook,STACK.imbaPath
+
 
 				if sup
 					let refsym = STACK.getSymbol()
 					staticInit.inject LIT("this.prototype[{ctorsym}] = {refsym}"), 0
 					if hasInitedHook
-						ctor.inject LIT("if(this[{ctorsym}]==={refsym}) this[{initsym}]();")
+						ctor.inject LIT("if(this[{ctorsym}]==={refsym}) ({initedHook},this[{initsym}]());")
 					else
-						ctor.inject LIT("this[{ctorsym}]==={refsym} && this[{initsym}] && this[{initsym}]()")
-				elif hasInitedHook
-					ctor.inject LIT("if(!this[{ctorsym}]) this[{initsym}]();")
+						ctor.inject LIT("this[{ctorsym}]==={refsym} && ({initedHook},this[{initsym}] && this[{initsym}]())")
+				else
+					# if hasDecorators
+					# 	staticInit.inject LIT("this.prototype[{decosym}] = true"), 0
+					if hasInitedHook
+						ctor.inject LIT("if(!this[{ctorsym}]) ({initedHook},this[{initsym}]());")
+					elif hasDecorators
+						ctor.inject LIT("!this[{ctorsym}] && this[{hooksym}].inited(this);")
 
-
+				# If we are not in the stdlib / core - add an inherited hook for the class?
 				# ctor.body.add([callop,BR],0)
 
 		
@@ -5310,11 +5332,9 @@ export class VarOrAccess < ValueNode
 			# console.log "VarOrAccess {@identifier}"
 			variable = scope.register(value,self,type: state:declaring)
 			
-		
-		
-		if name == '$'
-			if @tagref = stack.up(Tag)
-				return self
+		# if name == '$'
+		#	if @tagref = stack.up(Tag)
+		#		return self
 
 		variable ||= scope.lookup(value.symbol)
 
@@ -6143,6 +6163,9 @@ export class Decorator < ValueNode
 	def visit
 		@variable = scope__.lookup(name)
 		@value.@variable ||= @variable
+
+		unless @variable
+			@value = runtime[name]
 
 		@call.traverse if @call
 		if option(:params)

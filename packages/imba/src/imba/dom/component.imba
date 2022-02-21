@@ -1,8 +1,11 @@
+# imba$stdlib=1
+
 import {Node,HTMLElement,CUSTOM_TYPES} from './core'
 import {createLiveFragment,createSlot} from './fragment'
 import {scheduler} from '../scheduler'
 
 import {renderer} from './context'
+import {emit} from '../utils'
 
 const hydrator = new class
 	items = []
@@ -112,6 +115,9 @@ export class Component < HTMLElement
 	def #__init__
 		__F |= ($EL_INITED$ | $EL_HYDRATED$)
 		self
+
+	def ##inited
+		#__hooks__.inited(self) if #__hooks__
 		
 	def flag$ str
 
@@ -296,6 +302,7 @@ export class Component < HTMLElement
 			awaken()
 			__F |= $EL_AWAKENED$
 
+		emit(self,'mount')
 		let res = mount()
 		if res && res.then isa Function
 			res.then(scheduler.commit)
@@ -314,7 +321,7 @@ export class Component < HTMLElement
 		if __F & $EL_SCHEDULED$
 			# trigger potential unschedule listeners
 			unschedule()
-
+		emit(self,'unmount')
 		unmount()
 		scheduler.unschedule(self,#autorender) if #autorender
 
