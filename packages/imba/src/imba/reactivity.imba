@@ -217,6 +217,9 @@ class Ref
 	def constructor kind, type, val
 		# id = NEXT_REF_ID++ # for development
 		# flags = kind
+		observer = null
+		observers = null
+
 		val.##referenced(self) if val and val.##referenced
 		return self
 
@@ -595,7 +598,7 @@ class Reaction
 	def dispose
 		clearTimeout(timeout) if timeout
 		for item in observing
-			item.removeObserver(self)
+			item.removeSubscriber(self)
 		observing = context = cb = checkComputedValues = cachedComputedVersions = null
 		self
 
