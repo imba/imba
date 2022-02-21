@@ -71,6 +71,7 @@ export class Scheduler
 		#stage = -1
 		#frames = 0
 		#scheduled = no
+		#version = 0
 		
 		self.listeners = {}
 		self.intervals = {}
@@ -87,6 +88,12 @@ export class Scheduler
 			self.tick(e)
 		self
 
+	def touch
+		#version++
+
+	get version
+		#version
+
 	def add item, force
 		if force or self.queue.indexOf(item) == -1
 			self.queue.push(item)
@@ -97,6 +104,8 @@ export class Scheduler
 	get committing?
 		self.queue.indexOf('commit') >= 0
 
+	get syncing?
+		#stage == 1
 
 	def listen ns, item
 		let set = listeners[ns]
@@ -132,6 +141,7 @@ export class Scheduler
 		self.ts = timestamp
 		self.queue = []
 		#stage = 1
+		#version++
 
 		# calculate frames elapsed since last tick etc?
 

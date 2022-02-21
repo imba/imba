@@ -1,3 +1,5 @@
+# imba$stdlib=1
+
 ###
 Very basic shim for the DOM to support rendering on the server
 We want to support this in webworkers as well, so the asynclocalstorage
@@ -305,6 +307,9 @@ export class Node
 		#parent.#closestNode
 
 	def #__init__
+		self
+
+	def ##inited
 		self
 
 	def #getRenderContext sym

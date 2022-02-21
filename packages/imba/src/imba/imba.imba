@@ -3,6 +3,7 @@ export * from './scheduler'
 export * from './manifest'
 export * from './process'
 export * from './asset'
+export * from './hooks'
 
 export * from './dom/core'
 export * from './dom/fragment'
@@ -29,3 +30,6 @@ export * from './events/hotkey'
 
 # Router
 export * from './router/index'
+
+# Reactivity
+export * from './reactivity'

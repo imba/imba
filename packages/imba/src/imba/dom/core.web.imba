@@ -1,3 +1,5 @@
+# imba$stdlib=1
+
 import {Flags} from './flags'
 import {getDeepPropertyDescriptor} from '../utils'
 import {RenderContext,createRenderContext} from './context'
@@ -100,6 +102,9 @@ extend class Node
 		##context ||= new Proxy(self,contextHandler)
 
 	def #__init__
+		self
+
+	def ##inited
 		self
 
 	def #getRenderContext sym
@@ -470,6 +475,9 @@ export def createComponent name, parent, flags, text, ctx
 
 	el.##parent = parent
 	el.#__init__!
+	el.##inited! # .inited(el) if el.#__hooks__
+		
+	# potentially 
 
 	if text !== null
 		el.#getSlot('__').text$(text)
