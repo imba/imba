@@ -325,13 +325,13 @@ export default class Bundle < Component
 		defines["globalThis.DEBUG_IMBA"] ||= !esoptions.minify
 
 		if !nodeish?
-			let env = o.env or process.env.NODE_ENV or 'production'
+			let env = o.env or process.env.NODE_ENV or (esoptions.minify ? 'production' : 'development')
 			defines["global"]="globalThis"
 			defines["process.platform"]="'web'"
 			defines["process.browser"]="true"
 			esoptions.inject = [
 				np.resolve(program.imbaPath,'polyfills','buffer','index.js'),
-				np.resolve(program.imbaPath,'polyfills','__inject__.js')
+				# np.resolve(program.imbaPath,'polyfills','__inject__.js')
 			]
 			defines["process.env.NODE_ENV"] ||= "'{env}'"
 			defines["process.env"] ||= JSON.stringify(NODE_ENV: env)
@@ -1365,5 +1365,8 @@ export default class Bundle < Component
 		try log.debug main.path,main.hash
 		log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024
 
-		log.info "finished in %ms - %heap",builder.elapsed
+		if program.#listening
+			log.info "built %bold in %ms - %heap (%address)",main.path,builder.elapsed,program.#listening
+		else
+			log.info "finished %bold in %ms - %heap",main.path,builder.elapsed
 		return result

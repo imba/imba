@@ -88,6 +88,7 @@ class Instance
 				log.info "exited"
 		
 		worker.on 'listening' do(address)
+			o.#listening = address
 			log.success "listening on %address",address
 			prev..send(['emit','reloaded'])
 			# now we can kill the reloaded process?
