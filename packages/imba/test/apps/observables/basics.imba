@@ -1,4 +1,5 @@
 let counter = 0
+# const {test,eq,ok} = imba.spec
 
 class User
 	@field firstName
@@ -71,5 +72,110 @@ test 'actions' do
 	order.incr2!
 	eq runs,4
 
+test 'arrays' do
+	let runs = 0
 
+	class OrderLine
+		@field desc = "Line"
+		@field price = 1
+		@field qty = 1
 
+		@memo get total
+			price * qty
+
+	class Order
+		@field lines\OrderLine[] = []
+
+		@memo get total
+			let sum = 0
+			for line in lines
+				sum += line.total
+			return sum
+
+		def add price = 1, qty = 1 
+			let line = new OrderLine(price: price, qty: qty)
+			lines.push(line)
+			return line
+
+		@autorun def updated
+			runs++
+			console.log "total price is now {total}"
+		
+		
+	let order = new Order
+	eq order.total,0
+	let line = order.add(10,1)
+	eq order.total,10
+	eq runs,2
+	line.desc = "Stuff"
+	eq runs,2
+	line.qty = 2
+	eq order.total,20
+	eq runs,3
+
+test 'Sets' do
+	let runs = 0
+
+	class OrderLine
+		@field desc = "Line"
+		@field price = 1
+		@field qty = 1
+
+		@memo get total
+			price * qty
+
+	class Order
+		@field lines\Set<OrderLine> = new Set
+
+		@memo get total
+			let sum = 0
+			for line of lines
+				sum += line.total
+			return sum
+
+		def add price = 1, qty = 1 
+			let line = new OrderLine(price: price, qty: qty)
+			lines.add(line)
+			return line
+
+		@autorun def updated
+			runs++
+			console.log "total price is now {total}"
+		
+	let order = new Order
+	eq order.total,0
+	let line = order.add(10,1)
+	eq order.total,10
+	eq runs,2
+	line.desc = "Stuff"
+	eq runs,2
+	line.qty = 2
+	eq order.total,20
+	eq runs,3
+
+test 'Maps' do
+	let runs = 0
+
+	class Entry
+		@field reactions = new Map
+
+		def react emoji
+			reactions.set(emoji,(reactions.get(emoji) or 0) + 1)
+
+		@memo get reactionCount
+			let sum = 0
+			for [emoji,count] of reactions
+				sum += count
+			return sum
+
+		@autorun def updated
+			runs++
+			console.log "total price is now {total}"
+		
+	let item = new Entry
+	eq item.reactionCount,0
+	item.react "😀"
+	eq item.reactionCount,1
+	item.react "😀"
+	item.react "😍"
+	eq item.reactionCount,3
