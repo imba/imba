@@ -608,10 +608,10 @@ class Action
 		context = context
 		cb = cb
 
-	def run
-		let ctx = CTX.push(self)
-		let res = cb.call(context)
-		let beacons = CTX.pop(self)
+	def run ctx = context, args = []
+		CTX.push(self)
+		let res = cb.apply(ctx,args)
+		CTX.pop(self)
 		return res
 
 export def autorun cb, options = {}
@@ -619,14 +619,16 @@ export def autorun cb, options = {}
 	reaction.call!
 	return reaction
 
-export def batch cb
+export def observable object
+	object.##reactive
+
+export def run cb
 	let action = new Action(cb,global)
 	return action.run!
 
 export def @memo target, name, desc
 	let sym = METASYM(name)
 	let field = target[sym] = new ComputedType(name,desc.get)
-
 	return field.lazyDescriptor
 
 export def @field target, key, desc
@@ -649,5 +651,9 @@ export def @autorun target, key, desc
 	schema[key] = options
 	return desc
 
-export def observable object
-	object.##reactive
+export def @action target, key, desc
+	if desc.value
+		let action = new Action(desc.value,null)
+		desc.value = do action.run(this,arguments)
+	return desc
+
