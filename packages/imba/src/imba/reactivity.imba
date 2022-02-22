@@ -25,6 +25,29 @@ const VALUESYM = do(name) Symbol.for(name)
 const METASYM = do(name) Symbol.for("#{name}__")
 const REFSYM = do(name) Symbol.for("~{name}")
 
+const OBSERVED = do(item,res)
+	CTX.add(item[OWNREF]) if TRACKING
+	return res
+
+const CHANGED = do(item,res)
+	item[OWNREF].invalidated(0)
+	return res
+
+const REFERENCED = do(item,ref,extensions)
+	let beacon = item[OWNREF]
+	unless beacon
+		beacon = item[OWNREF] = new Ref(F.OBJECT)
+		Object.defineProperties(item,extensions)
+	beacon.addSubscriber(ref) if ref
+	return item
+
+const DEREFERENCED = do(item,ref)
+	let beacon = item[OWNREF]
+	if beacon
+		beacon.removeSubscriber(ref)
+	return item
+
+
 class ArrayPatcher
 	def constructor array
 		changes = new Map
@@ -273,51 +296,24 @@ Array
 ###
 class ObservableArray < Array
 
-	def push
-		##changed(super)
-
-	def pop
-		##changed(super)
-
-	def unshift
-		##changed(super)
-	
-	def shift
-		##changed(super)
-
-	def splice
-		##changed(super)
-
-	def map
-		##observed(super)
-
-	def filter
-		##observed(super)
-
-	def find
-		##observed(super)
-
-	def slice
-		##observed(super)
-
-	get len
-		##observed(length)
+	def push do CHANGED(this,super)
+	def pop do CHANGED(this,super)
+	def unshift do CHANGED(this,super)
+	def shift do CHANGED(this,super)
+	def splice do CHANGED(this,super)
+	def map do OBSERVED(this,super)
+	def filter do OBSERVED(this,super)
+	def find do OBSERVED(this,super)
+	def slice do OBSERVED(this,super)
+	get len do OBSERVED(this,length)
 
 	set len value
 		length = value
-		##changed()
+		CHANGED(this)
 
 	def toIterable
 		CTX.add(self[OWNREF]) if TRACKING
 		return self
-
-	def ##changed res
-		self[OWNREF].invalidated(0)
-		return res
-
-	def ##observed res
-		CTX.add(self[OWNREF]) if TRACKING
-		return res
 
 const ArrayExtensions = getExtensions(ObservableArray)
 
@@ -329,23 +325,50 @@ extend class Array
 	set len value
 		length = value
 
-	get ##reactive
-		##referenced(null)
+	get ##reactive do REFERENCED(this,null,ArrayExtensions)
+	def ##referenced ref do REFERENCED(this,ref,ArrayExtensions)
+	def ##dereferenced ref do DEREFERENCED(this,ref)
 
-	def ##referenced ref
-		let beacon = self[OWNREF]
-		unless beacon
-			beacon = self[OWNREF] = new Ref(F.OBJECT)
-			Object.defineProperties(self,ArrayExtensions)
-		beacon.addSubscriber(ref) if ref
-		self
+###
+Set
+###
+class ObservableSet < Set
+	def has do OBSERVED(this,super)
+	def keys do OBSERVED(this,super)
+	def values do OBSERVED(this,super)
+	def entries do OBSERVED(this,super)
 
-	def ##dereferenced ref
-		let beacon = self[OWNREF]
-		if beacon
-			beacon.removeSubscriber(ref)
-		self
+	def add do CHANGED(this,super)
+	def clear do CHANGED(this,super)
+	def delete do CHANGED(this,super)
 
+const SetExtensions = getExtensions(ObservableSet)
+
+extend class Set
+	get ##reactive do REFERENCED(this,null,SetExtensions)
+	def ##referenced ref do REFERENCED(this,ref,SetExtensions)
+	def ##dereferenced ref do DEREFERENCED(this,ref)
+
+###
+Map
+###
+class ObservableMap < Map
+	def get do OBSERVED(this,super)
+	def has do OBSERVED(this,super)
+	def keys do OBSERVED(this,super)
+	def values do OBSERVED(this,super)
+	def entries do OBSERVED(this,super)
+
+	def set do CHANGED(this,super)
+	def clear do CHANGED(this,super)
+	def delete do CHANGED(this,super)
+
+const MapExtensions = getExtensions(ObservableMap)
+
+extend class Map
+	get ##reactive do REFERENCED(this,null,MapExtensions)
+	def ##referenced ref do REFERENCED(this,ref,MapExtensions)
+	def ##dereferenced ref do DEREFERENCED(this,ref)
 
 class PropertyType
 	def constructor name,vkey
