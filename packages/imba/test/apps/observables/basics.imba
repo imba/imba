@@ -30,5 +30,46 @@ test 'autorun' do
 
 	eq runs, 1
 	user.firstName = "Jane"
+	eq user.name, "Jane Doe"
 	eq runs, 2
-	fn.dispose!
+	# fn.dispose!
+
+	imba.run do
+		user.firstName = "John"
+		eq user.name, "John Doe"
+		user.lastName = "Dope"
+
+	eq user.name, "John Dope"
+	eq runs,3
+
+test 'actions' do
+	let runs = 0
+	class Order
+		@field price = 0
+		@field qty = 1
+
+		@memo get total
+			price * qty
+		
+		def incr1
+			price += 1
+			qty += 1
+
+		@action def incr2
+			price += 1
+			qty += 1
+
+		@autorun def updated
+			runs++
+			console.log "total price is now {total}"
+		
+		
+	let order = new Order
+	eq runs,1
+	order.incr1!
+	eq runs,3
+	order.incr2!
+	eq runs,4
+
+
+
