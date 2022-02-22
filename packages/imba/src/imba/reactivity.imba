@@ -385,6 +385,8 @@ class PropertyType
 		}
 
 		let lazy = self.lazyDescriptor = {
+			enumerable: no
+			configurable: yes
 			get: do
 				this[vkey]
 			set: do(value)
@@ -615,7 +617,7 @@ class Reaction
 
 		flags ~= (F.RUNNING | F.STALE | F.POSSIBLY_STALE)
 		TRACKING--
-		commit!
+		commit! if $web$
 		return res
 
 	def dispose
@@ -638,7 +640,7 @@ class Action
 		return res
 
 export def autorun cb, options = {}
-	let reaction = new Reaction(cb,window,options)
+	let reaction = new Reaction(cb,global,options)
 	reaction.call!
 	return reaction
 
@@ -656,9 +658,15 @@ export def @memo target, name, desc
 
 export def @field target, key, desc
 	let sym = METASYM(key)
-	let field = target[sym] = new PropertyType(key,VALUESYM(key))
+	let vsym = VALUESYM(key)
+	let field = target[sym] = new PropertyType(key,vsym)
+
+	if desc
+		Object.defineProperty(target,vsym,Object.assign({},desc))
+		return field.lazyDescriptor
+
 	Object.defineProperty(target,key,field.lazyDescriptor)
-	return
+	return null
 
 export def @ref target, name, desc
 	let sym = METASYM(name)
