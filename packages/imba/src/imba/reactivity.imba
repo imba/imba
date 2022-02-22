@@ -231,7 +231,6 @@ let SET = do(target,key,vsym,value,meta,bsym)
 	if value != prev
 		target[vsym] = value
 		let beacon = target[bsym]
-		beacon.changed(0,prev,value) if beacon
 		beacon.changed(0,value,prev) if beacon
 
 	return
