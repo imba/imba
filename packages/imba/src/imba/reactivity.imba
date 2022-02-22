@@ -232,6 +232,7 @@ let SET = do(target,key,vsym,value,meta,bsym)
 		target[vsym] = value
 		let beacon = target[bsym]
 		beacon.changed(0,prev,value) if beacon
+		beacon.changed(0,value,prev) if beacon
 
 	return
 
@@ -251,6 +252,7 @@ class Ref
 
 		oldValue.##dereferenced(self,newValue) if oldValue and oldValue.##dereferenced
 		newValue.##referenced(self,oldValue) if newValue and newValue.##referenced
+
 		# change is only called here?
 		observer.invalidated(level + 1,this,newValue,oldValue) if observer
 
@@ -577,7 +579,7 @@ class Reaction
 	def call
 		if TRACKING
 			console.warn 'should not call reaction inside an autorunning context?'
-			# CTX.add(self,target)
+			return
 
 		if flags & F.POSSIBLY_STALE and flags !& F.STALE
 			let stale = no
