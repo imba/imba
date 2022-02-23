@@ -652,12 +652,12 @@ export def run cb
 	let action = new Action(cb,global)
 	return action.run!
 
-export def @memo target, name, desc
+export def @computed target, name, desc
 	let sym = METASYM(name)
 	let field = target[sym] = new ComputedType(name,desc.get)
 	return field.lazyDescriptor
 
-export def @field target, key, desc
+export def @observable target, key, desc
 	let sym = METASYM(key)
 	let vsym = VALUESYM(key)
 	let field = target[sym] = new PropertyType(key,vsym)
