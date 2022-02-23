@@ -555,6 +555,15 @@ declare namespace imba {
      function αcomputed(): void;
 
      /**
+     * Runs the method immediately after instance is initialized
+     * and re-runs whenever any of the referenced observables
+     * change. Methods marked with autorun in tag declarations
+     * will run immediately after mount, and automatically dispose
+     * when element unmounts. 
+     */
+      function αautorun(options?: any): void;
+
+     /**
      * Mark getter as lazy. It will only be evaluated once,
      * and then return the resulting value forever after.
      */
