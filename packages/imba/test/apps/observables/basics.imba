@@ -2,10 +2,10 @@ let counter = 0
 # const {test,eq,ok} = imba.spec
 
 class User
-	@field firstName
-	@field lastName
+	@observable firstName
+	@observable lastName
 
-	@memo get name
+	@computed get name
 		counter++
 		"{firstName} {lastName}"
 
@@ -46,10 +46,10 @@ test 'autorun' do
 test 'actions' do
 	let runs = 0
 	class Order
-		@field price = 0
-		@field qty = 1
+		@observable price = 0
+		@observable qty = 1
 
-		@memo get total
+		@computed get total
 			price * qty
 		
 		def incr1
@@ -76,17 +76,17 @@ test 'arrays' do
 	let runs = 0
 
 	class OrderLine
-		@field desc = "Line"
-		@field price = 1
-		@field qty = 1
+		@observable desc = "Line"
+		@observable price = 1
+		@observable qty = 1
 
-		@memo get total
+		@computed get total
 			price * qty
 
 	class Order
-		@field lines\OrderLine[] = []
+		@observable lines\OrderLine[] = []
 
-		@memo get total
+		@computed get total
 			let sum = 0
 			for line in lines
 				sum += line.total
@@ -117,17 +117,17 @@ test 'Sets' do
 	let runs = 0
 
 	class OrderLine
-		@field desc = "Line"
-		@field price = 1
-		@field qty = 1
+		@observable desc = "Line"
+		@observable price = 1
+		@observable qty = 1
 
-		@memo get total
+		@computed get total
 			price * qty
 
 	class Order
-		@field lines\Set<OrderLine> = new Set
+		@observable lines\Set<OrderLine> = new Set
 
-		@memo get total
+		@computed get total
 			let sum = 0
 			for line of lines
 				sum += line.total
@@ -157,12 +157,12 @@ test 'Maps' do
 	let runs = 0
 
 	class Entry
-		@field reactions = new Map
+		@observable reactions = new Map
 
 		def react emoji
 			reactions.set(emoji,(reactions.get(emoji) or 0) + 1)
 
-		@memo get reactionCount
+		@computed get reactionCount
 			let sum = 0
 			for [emoji,count] of reactions
 				sum += count
