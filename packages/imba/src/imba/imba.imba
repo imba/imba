@@ -4,6 +4,7 @@ export * from './manifest'
 export * from './process'
 export * from './asset'
 export * from './hooks'
+export * from './decorators'
 
 export * from './dom/core'
 export * from './dom/fragment'
