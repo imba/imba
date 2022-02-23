@@ -542,8 +542,23 @@ declare namespace imba {
      * @param element 
      */
     function unmount<T>(element: T): T;
-    
-    
+
+
+    /**
+     * Mark field as observable
+     */
+     function αobservable(): void;
+
+    /**
+     * Mark getter as computed
+     */
+     function αcomputed(): void;
+
+     /**
+     * Mark getter as lazy. It will only be evaluated once,
+     * and then return the resulting value forever after.
+     */
+      function αlazy(): void;
 
     let colors: string[];
     
