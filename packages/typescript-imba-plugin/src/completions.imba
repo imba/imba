@@ -306,6 +306,9 @@ export class SymbolCompletion < Completion
 		else
 			type = item.kind
 			triggers '!(,.['
+
+		if cat == 'decorator'
+			triggers ' ('
 			
 		if cat == 'implicitSelf'
 			# item.insertText = item.filterText = name
@@ -552,8 +555,14 @@ export default class Completions
 	def decorators o = {}
 		# should include both global (auto-import) and local decorators
 		# just do the locals for now?
+
+
 		let vars = script.doc.varsAtOffset(pos).filter do $1.name[0] == '@'
 		add(vars,o)
+
+		# add the defaults from imba
+		let builtins = checker.props('imba').filter do $1.isDecorator
+		add(builtins,o)
 		
 		let imports = checker.autoImports.getExportedDecorators!
 		add(imports, o)
