@@ -19,11 +19,26 @@ let V = 0
 let RUN_ID = 0
 let NEXT_REF_ID = 1
 
+const MAPS = {
+	META: new Map
+	VALUE: new Map
+	REF: new Map
+}
 const OWNREF = Symbol.for("~")
 const METAREF = Symbol.for("~~")
-const VALUESYM = do(name) Symbol.for(name)
-const METASYM = do(name) Symbol.for("#{name}__")
-const REFSYM = do(name) Symbol.for("~{name}")
+
+const SymbolForSymbol = do(sym,map)
+	map.set(sym,Symbol!) unless map.has(sym)
+	return map.get(sym) 
+		
+const VALUESYM = do(name)
+	typeof name == 'symbol' ? SymbolForSymbol(name,MAPS.VALUE) : Symbol.for(name)
+
+const METASYM = do(name)
+	typeof name == 'symbol' ? SymbolForSymbol(name,MAPS.META) : Symbol.for("#{name}__")
+	
+const REFSYM = do(name)
+	typeof name == 'symbol' ? SymbolForSymbol(name,MAPS.REF) : Symbol.for("~{name}")
 
 const OBSERVED = do(item,res)
 	CTX.add(item[OWNREF]) if TRACKING
@@ -158,13 +173,14 @@ class Context
 		self == ROOT
 
 	def reset item
+		tracking = yes
 		target = item
 		beacon = item.beacon
 		patcher.reset(item.observing ||= []) # nah to the action
 		return self
 
 	def add beacon
-		patcher.push(beacon)
+		patcher.push(beacon) if tracking and beacon
 
 	def react reaction
 		ROOT.reactions.add(reaction)
@@ -173,16 +189,18 @@ class Context
 		CTX = child.reset(item)
 
 	def pop
-		let res = patcher.end!
-		let diff = patcher.changes
-		let changes = diff.size
+		let res = null
+		if beacon
+			res = patcher.end!
+			let diff = patcher.changes
+			let changes = diff.size
 
-		if changes
-			for [item,op] of diff
-				if op === 1
-					item.addSubscriber(beacon)
-				else
-					item.removeSubscriber(beacon)
+			if changes
+				for [item,op] of diff
+					if op === 1
+						item.addSubscriber(beacon)
+					else
+						item.removeSubscriber(beacon)
 
 		# should also clear patcher etc due to memory leaks?
 		patcher.cleanup!
@@ -214,6 +232,9 @@ class Root < Context
 
 let CTX = new Root(null,0)
 let ROOT = CTX
+
+let REACT = do
+	CTX.tracking = no
 
 let GET = do(target,key,vsym,meta,bsym)
 	let val = target[vsym]
@@ -409,7 +430,7 @@ class RefIndex
 		let res = self.for(value)
 		let beacon = res[OWNREF]
 		res.##reactive unless beacon
-		res.##observed! if TRACKING
+		OBSERVED(res) if TRACKING
 		return res
 
 	def add key, member
@@ -607,7 +628,8 @@ class Reaction
 		TRACKING++
 		flags |= F.RUNNING
 		let ctx = CTX.push(self)
-		let res = cb.call(context)
+		# let stop
+		let res = cb.call(context,REACT)
 		let beacons = CTX.pop(self)
 
 		self.observing = beacons
