@@ -13,7 +13,6 @@ import {Module} from 'module'
 
 import FileSystem from './fs'
 import Component from './component'
-import ESResolver from './esresolver'
 import {SourceMapper} from '../compiler/sourcemapper'
 
 import Watcher from './watcher'
@@ -391,12 +390,6 @@ export default class Bundle < Component
 		
 		return cacher[key] = base # Object.create(base)
 		
-	get esresolver
-		#esresolver ||= new ESResolver(self,{
-			platform: esoptions.platform
-			format: esoptions.format
-			resolveExtensions: esoptions.resolveExtensions
-		})
 
 	def plugin esb
 		let externs = esoptions.external or []
@@ -429,16 +422,15 @@ export default class Bundle < Component
 			
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
-
-			let ext = np.extname(args.path).slice(1)
-			let res = fs.resolver.resolve(args)
-			let out = {path: res.#rel or res.path, namespace: 'img'}
-			# log.debug "resolved img {args.path} -> {out.path}"
+			
+			let path = args.path.split('?')[0]
+			let ext = np.extname(path).slice(1)
+			let res = await esb.resolve(path,{resolveDir: args.resolveDir})
+			let out = {path: fs.relative(res.path) or res.path, namespace: 'img'}
 			return out
 
 		
 		esb.onLoad(namespace: 'img', filter: /.*/) do({path})
-			
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
@@ -447,9 +439,10 @@ export default class Bundle < Component
 		esb.onResolve(filter: /\.html$/) do(args)
 			if isImba(args.importer) and args.namespace == 'file'
 				let cfg = resolveConfigPreset(['html'])
-				let res = fs.resolver.resolve(path: args.path, resolveDir: args.resolveDir)
-				let out = {path: res.#rel, namespace: 'entry'}
-				pathMetadata[out.path] = {path: res.#rel, config: cfg}
+				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+				let path = fs.relative(res.path)
+				let out = {path: path, namespace: 'entry'}
+				pathMetadata[out.path] = {path: path, config: cfg}
 				return out
 
 		esb.onLoad(namespace: 'html', filter: /.*/) do({path})
@@ -480,19 +473,15 @@ export default class Bundle < Component
 				q = 'as=' + formats.join(',')
 				
 			if q == 'as=file' or q == 'as=text'
-				let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
+				let res = await esb.resolve(path,{resolveDir: args.resolveDir})
 				return {path: res.path, namespace: "raw{formats[0]}"}
 			
 			let cfg = resolveConfigPreset(formats)
-			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
 			
-			unless res
-				let fallback = await esresolver.resolve(path,args.resolveDir)
-				# console.log 'fallback!?',fallback
-				res = {abs: fallback, #rel: fs.relative(fallback)}
-
-			let out = {path: res.#rel + '?' + q, namespace: 'entry'}
-			pathMetadata[out.path] = {path: res.#rel, config: cfg}
+			let res = await esb.resolve(path,{resolveDir: args.resolveDir})
+			let rel = fs.relative(res.path)
+			let out = {path: rel + '?' + q, namespace: 'entry'}
+			pathMetadata[out.path] = {path: rel, config: cfg}
 			return out
 
 		esb.onLoad(namespace:'entry', filter:/^__styles__$/) do(args)
@@ -583,10 +572,11 @@ export default class Bundle < Component
 			if externs.indexOf(args.path) >= 0
 				return {external: true}
 
+			# FIXME is this needed anymore?
 			if args.importer.indexOf('.imba') > 0
-				let out = fs.resolver.resolve(args)
+				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
 				# could drop this until we have consistent paths support?
-				return out
+				return res
 			return null
 
 		esb.onLoad(filter: /.*/, namespace: 'imba-raw') do({path})
@@ -673,10 +663,6 @@ export default class Bundle < Component
 				unless watcher
 					workers.stop!
 					workers = null
-
-					if #esresolver
-						#esresolver.stop!
-						#esresolver = null
 
 				# only add this once
 				if watcher and main? and (#watching =? true)

@@ -1,10 +1,11 @@
 import express from 'express'
-import index from './index.html'
+import index from 'html/index.html'
 
 const app = express!
 
 # catch-all route that returns our index.html
 app.get(/.*/) do(req,res)
+	console.log 'get something!',index.body
 	# only render the html for requests that prefer an html response
 	unless req.accepts(['image/*', 'html']) == 'html'
 		return res.sendStatus(404)
