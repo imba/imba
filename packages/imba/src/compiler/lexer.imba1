@@ -934,6 +934,10 @@ export class Lexer
 	def isKeyword id
 		if @lastTyp == 'ATTR' or @lastTyp == 'PROP' or @lastTyp == 'DEF'
 			return false
+
+		# hack to allow imba.when to be exported with tree-shaking
+		if id == 'when' and @lastTyp == 'CONST'
+			return false
 			
 		if id == 'get' or id == 'set'
 			if let m = @chunk.match(/^[gs]et ([\$\w\-]+|\[)/) # ( (do)|\n(\t+))
