@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.0.0-alpha.202
+
+* Fixed performance regression for tag trees introduced in alpha 191
+
+* Fixed compilation of css properties wrapped in parenthesis
+
+* Make unresolved decorators resolve to `imba.@decorator`
+
+    ```imba
+    class Order
+        @lazy get lines
+            ...
+    ```
+
+    If `@lazy` is not found in the file above, the compiler will essentially include 
+    `import {@lazy} from 'imba` when compiling.
+
+* Introduced experimental state management decorators
+
+    A minimal set of decorators heavily inspired by MobX that allows you to mark classes 
+    and objects as observable, and run code upon changes. This feature will be kept under 
+    wraps until it has been battle-tested.
+
 ## 2.0.0-alpha.201
 
 * Fixed regression where css colors `rgb(0 0 0 / alpha)` would compile incorrectly

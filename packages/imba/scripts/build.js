@@ -175,6 +175,7 @@ async function bundle(o) {
 	o.logLevel = 'info';
 	o.charset = 'utf8';
 	o.minify = true;
+	o.define = {'process.env.NODE_ENV': "'production'"};
 	if (o.write == undefined) o.write = false;
 
 	delete o.options;
