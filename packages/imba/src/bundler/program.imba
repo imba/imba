@@ -6,7 +6,6 @@ const workerPool = require 'workerpool'
 const workerScript = np.resolve(__dirname,'..','compiler-worker.js')
 
 import {startWorkers} from './pooler'
-import {Resolver} from './resolver'
 import FileSystem from './fs'
 import Component from './component'
 import Cache from './cache'
@@ -63,8 +62,8 @@ export default class Program < Component
 	get program
 		self
 
-	get resolver
-		#resolver ||= new Resolver(config: config, files: fs.files, program: self, fs: fs)
+	# get resolver
+	#	#resolver ||= new Resolver(config: config, files: fs.files, program: self, fs: fs)
 
 	get workers
 		#workers ||= startWorkers! # workerPool.pool(workerScript, maxWorkers:2)

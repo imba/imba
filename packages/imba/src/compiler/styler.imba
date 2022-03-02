@@ -970,7 +970,7 @@ export class StyleTheme
 			if let color = $color(c)
 				# Need to work around a bug with esbuild css parsing (https://github.com/evanw/esbuild/issues/1421)
 				# Was fixed in 0.12.15 so we can remove the prefixing when we upgrade esbuild
-				return typ == '##' ? "{color.toVar(a)}" : "{prefix ? 'PREFIX' : ''}{color.toString(a)}"
+				return typ == '##' ? "{color.toVar(a)}" : "{prefix ? '' : ''}{color.toString(a)}"
 			return m
 		return text
 		

@@ -11,7 +11,7 @@ export const defaultConfig = {
 
 	options: {
 		base: {
-			target: ['es2019','chrome80','edge18']
+			target: ['es2019','chrome88','edge79']
 		}
 		node: {
 			extends: 'base'
@@ -19,7 +19,7 @@ export const defaultConfig = {
 			format: 'cjs'
 			sourcemap: true
 			hashing: false
-			target: ['node12.19.0']
+			target: ['node12.20.0']
 			external: ['dependencies','devDependencies','!imba']
 		}
 		web: {
@@ -27,6 +27,7 @@ export const defaultConfig = {
 			platform: 'browser'
 			sourcemap: true
 			format: 'esm'
+			splitting: true
 		}
 		
 		esm: {

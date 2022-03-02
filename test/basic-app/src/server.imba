@@ -3,6 +3,11 @@ import index from 'html/index.html'
 
 const app = express!
 
+global css html
+	$from-server: "from-server"
+
+import entries from './entries'
+
 # catch-all route that returns our index.html
 app.get(/.*/) do(req,res)
 	console.log 'get something!',index.body

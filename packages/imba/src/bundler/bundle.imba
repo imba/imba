@@ -235,6 +235,7 @@ export default class Bundle < Component
 			stdin: o.stdin
 			minify: o.minify ?? program.minify
 			incremental: !!watcher
+			legalComments: 'inline'
 			# charset: 'utf8'
 			loader: Object.assign({
 				".png": "file",
@@ -275,7 +276,7 @@ export default class Bundle < Component
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: o.pure
 			treeShaking: o.treeShaking
-			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js']
+			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.svg']
 		}
 
 		if o.esbuild
@@ -299,6 +300,7 @@ export default class Bundle < Component
 		if o.target
 			esoptions.target = o.target
 
+		# FIXME Are we using this still?
 		if o.format == 'css'
 			esoptions.format = 'esm'
 			esoptions.outExtension[".js"] = ".SKIP.js"
@@ -328,12 +330,15 @@ export default class Bundle < Component
 			defines["global"]="globalThis"
 			defines["process.platform"]="'web'"
 			defines["process.browser"]="true"
+
+			# FIXME Buffer is no longer tree-shaken if not used
 			esoptions.inject = [
-				np.resolve(program.imbaPath,'polyfills','buffer','index.js'),
-				# np.resolve(program.imbaPath,'polyfills','__inject__.js')
+				np.resolve(program.imbaPath,'polyfills','buffer','index.js')
+				np.resolve(program.imbaPath,'polyfills','__inject__.js')
 			]
-			defines["process.env.NODE_ENV"] ||= "'{env}'"
-			defines["process.env"] ||= JSON.stringify(NODE_ENV: env)
+			esoptions.inject = []
+			# defines["process.env.NODE_ENV"] ||= "'{env}'"
+			# defines["process.env"] ||= JSON.stringify(NODE_ENV: env)
 			defines["ENV_DEBUG"] ||= "false"
 			esoptions.nodePaths.push(np.resolve(program.imbaPath,'polyfills'))
 
@@ -349,6 +354,8 @@ export default class Bundle < Component
 			# not if main entrypoint is web?
 			log.ts "created main bundle"
 			manifest = new Manifest(data: {})
+
+		console.log 'bundling',esoptions,o
 
 
 	def addEntrypoint src
@@ -459,6 +466,7 @@ export default class Bundle < Component
 		esb.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
 			
 			# reference to _all_ styles referenced via main entrypoint
+			# FIXME Still using this?
 			if args.path == '*?as=css'
 				return {path: "__styles__", namespace: 'entry'}
 			
@@ -614,7 +622,7 @@ export default class Bundle < Component
 			if res.css
 				builder.styles[src.rel] = {
 					loader: 'css'
-					contents: theme.transformColors(SourceMapper.strip(res.css or ""),prefix: yes)
+					contents: theme.transformColors(SourceMapper.strip(res.css or ""),prefix: no)
 					resolveDir: src.absdir
 				}
 			
@@ -955,7 +963,7 @@ export default class Bundle < Component
 
 			let inputs = []
 			let dependencies = new Set
-
+			let origInputs = output.inputs
 			for own src,m of output.inputs
 				if src.indexOf('entry:') == 0
 					dependencies.add(ins[src])
@@ -963,15 +971,21 @@ export default class Bundle < Component
 				inputs.push [ins[src],m.bytesInOutput]
 			
 			output.dependencies = Array.from(dependencies)
+
+
 			output.inputs = inputs
 
 			# due to bugs in esbuild we need to reorder the css chunks
-			if output.type == 'css' and !output.#ordered
+			if output.type == 'css' and !output.#ordered and true
+
 				let origPaths = inputs.map(do $1[0].path )
 				let corrPaths = []
 
+				# console.log 'dealing with output css',output.path,origInputs,inputs,output.#file.text
+
 				if output.source
 					walker.collectCSSInputs(output.source,corrPaths)
+
 
 				let offset = 0
 				let body = output.#file.text
@@ -981,13 +995,20 @@ export default class Bundle < Component
 					let header = "/* {input.path} */\n"
 
 					# check if the order is correct first?
-					if !esoptions.minify
+					if !esoptions.minify and true
 						offset += header.length
 						let idx = body.indexOf(header)
 						if idx >= 0
 							offset = idx + header.length
 					
+					
+
+					# FIXME this was fixed in esbuild - drop this?
 					let chunk = header + body.substr(offset,bytes).replace(/PREFIXhsl/g,'hsl') + '/* chunk:end */'
+					# if input.path.indexOf("codicon.css") > 0
+					# 	console.warn "handling codicon.css",input,bytes
+					# 	console.warn "\nSUBSTR\n{body.substr(offset,bytes)}"
+					# 	console.warn "\nCHUNK\n{chunk}"
 					input.#csschunk = chunk
 					
 					styleInputs.push(input)
@@ -1001,7 +1022,8 @@ export default class Bundle < Component
 				let text = chunks.filter(do $1).join('\n')
 				# console.log 'new text',text.length,body.length
 				output.#ordered = yes
-				output.#text = text
+
+				output.#text = body
 
 			
 			if output.imports
@@ -1210,6 +1232,7 @@ export default class Bundle < Component
 		let htmlassets = assets.filter do $1.type == 'html'
 		
 		if cssinputs.length or htmlassets.length
+			console.log 'css inputs',cssinputs
 			let body = ""
 			for item in cssinputs
 				body += item.#csschunk + '\n'

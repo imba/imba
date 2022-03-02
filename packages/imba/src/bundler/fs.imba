@@ -4,7 +4,6 @@ const utils = require './utils'
 const micromatch = require 'micromatch'
 
 import {fdir} from '../../vendor/fdir/index.js'
-import {Resolver} from './resolver'
 import {parseAsset,parseHTML} from '../compiler/assets'
 import Component from './component'
 import ChangeLog from './changes'
@@ -205,6 +204,8 @@ export class FileNode < FSNode
 
 	# resolve path relative to file - return rich FSNode
 	def lookup path
+		throw "Not implemented"
+		
 		let o = {
 			importer: abs
 			resolveDir: absdir
@@ -453,8 +454,8 @@ export default class FileSystem < Component
 		prescan! unless #files
 		return #files
 
-	get resolver
-		#resolver ||= new Resolver(config: program.config, files: files, fs: self)
+	# get resolver
+	#	#resolver ||= new Resolver(config: program.config, files: files, fs: self)
 
 	get cache
 		program.cache
