@@ -1,5 +1,9 @@
 # Changelog
 
+## unreleased
+
+* Fixed regression with negated breakpoint modifiers like `display@!600:none`
+
 ## 2.0.0-alpha.202
 
 * Fixed performance regression for tag trees introduced in alpha 191
