@@ -1290,8 +1290,7 @@ var operators = [
 	['left',      'RELATION']
 	['left',      'COMPARE']
 	['left',      'LOGIC']
-	['left',      '?']
-	
+	['right',      '?']
 	['nonassoc',  'INDENT', 'OUTDENT']
 	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN', 'THROW', 'EXTENDS']
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']
