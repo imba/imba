@@ -1,8 +1,12 @@
 # Changelog
 
-# unreleased
+## unreleased
 
-* Fixed operator precedence for ternary expressions.
+* Fixed operator precedence for ternary expressions
+
+* Revert automatic `calc` wrapping for css values introduced in alpha 200
+
+    Introduced a lot of bugs and challenges related to `/` being a valid part of css values. `calc` will still be automatically be added around top-level parenthesis in css values, so `width:(100vw - 20px)` will still compile as `calc(100vw - 20px)`, but properties like `grid-column: 1 / 3` will now compile without calc again.
 
 ## 2.0.0-alpha.203
 

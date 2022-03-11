@@ -10674,7 +10674,7 @@ export class StyleDeclaration < StyleNode
 		params = @expr.clone unless params
 		if typeof params == 'string' or typeof params == 'number'
 			params = [params]
-		if !(params isa Array) and (!(params isa ListNode) or params isa StyleCalc)
+		if !(params isa Array) and (!(params isa ListNode) or params isa StyleOperation)
 			params = [params]
 
 		StyleDeclaration.new(@property.clone(name),params)
@@ -10916,14 +10916,30 @@ export class StyleExpression < ListNode
 				reclaimParams
 		super
 
-export class StyleCalc < ListNode
+
+export class StyleParens < ValueNode
+
+	def visit stack, o
+		super
+		set(calc: !stack.up(StyleParens) and !stack.up(StyleFunction))
+
 	def c o
+		let plain = @value.c
+
+		# TODO warn when option(:unit) is set
+		
 		if o and o:as == 'js'
-			return AST.cary(@nodes,o).join(' ')
-		"calc({AST.cary(@nodes,o).join(' ')})"
+			return plain
+		elif option(:calc)
+			return "calc({plain})"
+		else
+			return "({plain})"
+
+export class StyleOperation < ListNode
+	def c o
+		return AST.cary(@nodes,o).join(' ')
 
 export class StyleTerm < ValueNode
-	
 
 	def valueOf
 		String(@value)
@@ -10941,9 +10957,9 @@ export class StyleTerm < ValueNode
 		@token = @value
 		@property = o:property
 		@propname = o:property and o:property.@name
-		self:alone = stack.up.values:length == 1
+		self:alone = (stack.up isa StyleExpression) and stack.up.values:length == 1
 		let resolved = stack.theme.$value(self,0,@propname)
-		@resolvedValue = resolved unless stack.up(StyleFunction)
+		@resolvedValue = resolved unless (stack.up(StyleParens) or stack.up(StyleFunction))
 		self
 	
 	get param

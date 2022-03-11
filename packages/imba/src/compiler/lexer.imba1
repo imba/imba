@@ -812,7 +812,7 @@ export class Lexer
 			let len = val:length
 			if m[0].match(/^\-\-/)
 				id = 'CSSVAR'
-			elif @last and !@last:spaced and ltyp == '}'
+			elif @last and !@last:spaced and (ltyp == '}' or ltyp == ')')
 				id = 'CSSUNIT'
 
 			if @chunk[len] == '('
@@ -822,7 +822,7 @@ export class Lexer
 
 			return len
 		
-		elif @last and !@last:spaced and ltyp == '}' and chr == '%'
+		elif @last and !@last:spaced and (ltyp == '}' or ltyp == ')') and chr == '%'
 			token 'CSSUNIT', chr, 1
 			return 1
 
