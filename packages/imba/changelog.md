@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+* Support `for await ... of` syntax
+
+
 ## 2.0.0-alpha.204
 
 * Fixed operator precedence for ternary expressions

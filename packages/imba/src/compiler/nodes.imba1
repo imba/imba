@@ -7115,6 +7115,16 @@ export class For < Loop
 			body.unshift(op,BR)
 
 		declare
+
+		if options:await
+			var fnscope = stack.up(Func) # do |item| item isa MethodDeclaration or item isa Fun
+
+			if fnscope
+				set(native: yes)
+				fnscope.set(async: yes)
+
+			# TODO Throw if for loop is not for of
+			# TODO Throw if inside tag tree - await not supported there
 			
 		# here add the things to declare
 		
@@ -7373,7 +7383,10 @@ export class ForOf < For
 			# it is really important that this is a treated as a statement
 
 			let ofjs = src.c(expression: yes)
-			let js = "{M('for',keyword)} (let {v.c} of {ofjs})" + code
+			let js = "(let {v.c} of {ofjs})" + code
+			if options:await
+				js = "{M('await',options:await)} {js}"
+			js = "{M('for',keyword)} {js}"
 
 			if vars:counter
 				js = "{vars:counter} = 0; {js}"

@@ -1146,13 +1146,13 @@ var grammar =
 
 	ForBody: [
 		o 'ForKeyword Range' do source: ValueNode.new(A2)
-		o 'ForStart ForSource' do A2.configure(own: A1:own, name: A1[0], index: A1[1], keyword: A1:keyword, params: A1)
+		o 'ForStart ForSource' do A2.configure(own: A1:own, await: (A1:await), name: A1[0], index: A1[1], keyword: A1:keyword, params: A1)
 	]
 
 	ForStart: [
 		o 'ForKeyword ForVariables' do (A2:keyword = A1) && A2
-
 		# should link to the actual keyword instead
+		o 'ForKeyword AWAIT ForVariables' do (A3:await = A2) && (A3:keyword = A1) && A3
 		o 'ForKeyword OWN ForVariables' do (A3:own = yes) && (A3:keyword = A1) && A3
 
 	]
