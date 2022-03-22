@@ -6,6 +6,8 @@
 
 * Add internal `#__patch__(props)` method for class instances to update fields
 
+* Stop shimming top-level await (delegates responsibility to esbuild)
+
 
 ## 2.0.0-alpha.204
 

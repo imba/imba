@@ -10063,7 +10063,7 @@ export class Await < ValueNode
 	prop func
 
 	def js o
-		return "await {value.c}" if option(:native)
+		return "await {value.c}" # if option(:native)
 		# introduce a util here, no?
 		CALL(OP('.',Util.Promisify.new([value]),'then'),[func]).c
 
@@ -10075,9 +10075,9 @@ export class Await < ValueNode
 		var fnscope = o.up(Func) # do |item| item isa MethodDeclaration or item isa Fun
 
 		if fnscope
-			set(native: yes)
 			fnscope.set(async: yes)
-			return self
+		
+		return self
 
 		###
 		Top-level await is supported from node 14.8.0 but only when
