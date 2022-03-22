@@ -1955,6 +1955,8 @@ class ClassInitBlock < Block
 
 class InstanceInitBlock < Block
 
+class InstancePatchBlock < InstanceInitBlock
+
 export class ClassField < Node
 	prop name
 
@@ -2086,8 +2088,15 @@ export class ClassField < Node
 			let paramIndex = option(:paramIndex)
 			let restIndex = option(:restIndex)
 			let access
+
+			if up isa InstancePatchBlock
+				let rest = ctor.@params.at(restIndex,yes,'$$',LIT('{}'))
+				access = OP('.',rest,name)
+				access.cache(reuse: yes, name: 'v')
+				let right = OP('=',OP('.',THIS,name),access)
+				out = OP('&&',OP('!==',access,UNDEFINED),right)
 			
-			if paramIndex != undefined
+			elif paramIndex != undefined
 				let name = option(:paramName)
 				access = ctor.@params.at(paramIndex,yes,name)
 				if value
@@ -2108,7 +2117,8 @@ export class ClassField < Node
 			if self isa ClassAttribute and !value
 				return
 
-			out = OP('=',OP('.',THIS,name),val).c + ';\n'
+			out ||= OP('=',OP('.',THIS,name),val)
+			out = out.c + ';\n'
 
 			
 			if watchBody
@@ -3223,7 +3233,10 @@ export class ClassDeclaration < Code
 	
 	def initKey
 		@initKey ||= (STACK.tsc ? STACK.root.symbolRef('#__init__') : SymbolIdentifier.new('#__init__'))
-	
+
+	def patchKey
+		@patchKey ||= (STACK.tsc ? STACK.root.symbolRef('#__patch__') : SymbolIdentifier.new('#__patch__'))
+
 	def initPath
 		@initPath ||= OP('.',LIT('super'),initKey)
 		
@@ -3239,6 +3252,23 @@ export class ClassDeclaration < Code
 			yes
 		fn.set(noreturn: yes)
 		@instanceInit = fn
+
+	def instancePatch
+		return @instancePatch if @instancePatch
+		
+		let body = []
+		let fn = addMethod(patchKey,[],body,{}) do |fun|
+			yes
+
+		let param = fn.@params.at(0,yes,'$$',LIT('{}'))
+
+		if @superclass
+			let call = Super.callOp(patchKey,[param])
+			call = OP('&&',OP('.',LIT('super'),patchKey),call)
+			fn.inject(call)
+
+		fn.set(noreturn: yes)
+		@instancePatch = fn
 
 	def isInitingFields
 		@inits or (@supernode and @supernode:isInitingFields and @supernode.isInitingFields)
@@ -3365,6 +3395,8 @@ export class ClassDeclaration < Code
 		let tsc = STACK.tsc
 		var inits = InstanceInitBlock.new()
 		var staticInits = ClassInitBlock.new()
+		var patches = InstancePatchBlock.new()
+
 		var ctor = body.option(:ctor)
 
 		let fieldNodes = body.filter do |node| node isa ClassField
@@ -3385,6 +3417,7 @@ export class ClassDeclaration < Code
 						node.@name.warn "field with value not supported in class extension"
 				elif !node.option(:declareOnly)
 					inits.add(node)
+					patches.add(node)
 				
 			if !node.isStatic and restIndex != null
 				node.set(restIndex: restIndex)
@@ -3439,6 +3472,11 @@ export class ClassDeclaration < Code
 					let after = ctor.option(:injectInitAfter)
 					ctor.inject(op,after ? {after: after} : 0)
 				yes
+		
+		if !patches.isEmpty and !tsc
+			instancePatch
+			patches.set(ctor: instancePatch)
+			instancePatch.inject(patches)
 		
 		if tsc and ctor and @autosuper
 			ctor.body.add([LIT("super()"),BR],0)
@@ -12686,9 +12724,9 @@ export class Super < Node
 	def endLoc
 		@keyword and @keyword.endLoc
 
-	def self.callOp name
+	def self.callOp name, params
 		let op = OP('.',LIT('super'),name)
-		CALL(op,[LIT('...arguments')])
+		CALL(op,params or [LIT('...arguments')])
 
 	def c
 		let m = @method

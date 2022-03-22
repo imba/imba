@@ -4,6 +4,8 @@
 
 * Support `for await ... of` syntax
 
+* Add internal `#__patch__(props)` method for class instances to update fields
+
 
 ## 2.0.0-alpha.204
 
