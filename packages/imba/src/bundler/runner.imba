@@ -58,6 +58,7 @@ class Instance
 			IMBA_PATH: o.imbaPath
 			IMBA_MANIFEST_PATH: manifest.path
 			IMBA_HMR: o.hmr ? true : undefined
+			IMBA_WORKER_NR: options.number
 			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'info'
 			PORT: process.env.PORT or o.port
 		}
@@ -78,6 +79,7 @@ class Instance
 		if prev
 			log.info "reloading"
 			prev.#next = worker
+			prev..send(['emit','reloading'])
 
 		worker.on 'exit' do(code, signal)
 			if signal
