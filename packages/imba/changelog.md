@@ -4,6 +4,15 @@
 
 * Support `for await ... of` syntax
 
+* Support tagged templates
+
+    Works like in plain js, but `{}` is still used for interpolation instead of `${}`.
+    
+    ```imba
+        import md from 'tag-markdown'
+        const html = md`## Welcome to {name}`
+    ```
+
 * Add internal `#__patch__(props)` method for class instances to update fields
 
 * Stop shimming top-level await (delegates responsibility to esbuild)

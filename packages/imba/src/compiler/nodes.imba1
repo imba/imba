@@ -4406,6 +4406,9 @@ export class Str < Literal
 		# there are also some values we cannot use
 		raw.match(/^[a-zA-Z\$\_]+[\d\w\$\_]*$/) ? true : false
 
+	def isTemplate
+		String(@value)[0] == '`'
+
 	def js o
 		String(@value)
 
@@ -4441,9 +4444,18 @@ export class InterpolatedString < Node
 		for node in @nodes
 			node.traverse
 		self
+
+	def startLoc
+		option(:open).startLoc
+
+	def endLoc
+		option(:close).endLoc
 		
 	def isString
 		yes
+
+	def isTemplate
+		String(option(:open)) == '`'
 
 	def escapeString str
 		str = str.replace(/\n/g, '\\\n')
@@ -4457,28 +4469,36 @@ export class InterpolatedString < Node
 				
 		return items
 
-	def js o
+	def js o, opts
+
 		var kind = String(option("open") or '"')
 		if kind:length == 3
 			kind = kind[0]
 		# creating the string
+		if opts and opts:as == 'template'
+			var parts = []
+			@nodes.map do |part,i|
+				if part isa Token and part.@type == 'NEOSTRING'
+					parts.push escapeString(part.@value)
+				elif part
+					parts.push('${',part.c(expression: yes),'}')
+			return '`' + parts.join('') + '`'
+		else
+			var noparen = @noparen
+			var parts = []
+			var str = noparen ? '' : '('
+			@nodes.map do |part,i|
+				if part isa Token and part.@type == 'NEOSTRING'
+					parts.push(kind + escapeString(part.@value) + kind)
+				elif part
+					if i == 0
+						# force first part to be string
+						parts.push('""')
+					part.@parens = yes
+					parts.push(part.c(expression: yes))
 
-		var parts = []
-		var str = @noparen ? '' : '('
-
-		@nodes.map do |part,i|
-			if part isa Token and part.@type == 'NEOSTRING'
-				# esca
-				parts.push(kind + escapeString(part.@value) + kind)
-			elif part
-				if i == 0
-					# force first part to be string
-					parts.push('""')
-				part.@parens = yes
-				parts.push(part.c(expression: yes))
-
-		str += parts.join(" + ")
-		str += ')' unless @noparen
+			str += parts.join(" + ")
+			str += ')' unless noparen
 		return str
 
 # Because we've dropped the Str-wrapper it is kinda difficult
@@ -6453,6 +6473,30 @@ export class Argvar < ValueNode
 
 		
 export class DoPlaceholder < Node
+
+export class TaggedTemplate < Node
+
+	prop value
+	prop string
+
+	def initialize value,string
+		@value = value
+		@string = string
+
+	def visit
+		@value.traverse if @value isa Node
+		@string.traverse
+
+		if !@string.isTemplate
+			@string.warn("Only `` strings allowed in template literals")
+		self
+
+	def js
+		@value.c + @string.c(as: 'template')
+		# @value.c + TemplateString.new(@string.@nodes).c(as: 'template')
+
+	# def c
+	#	"HELLO"
 
 export class Call < Node
 
