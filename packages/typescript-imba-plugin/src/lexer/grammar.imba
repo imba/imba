@@ -577,7 +577,7 @@ export const states = {
 	]
 
 	for_: [
-		[/for(?: own)?@B/,'keyword.$#','@for_start&forscope=decl-for']
+		[/for(?: own| await)?@B/,'keyword.$#','@for_start&forscope=decl-for']
 		# [/for@B/,'keyword.$#','@for_start&flow=let']
 	]
 
