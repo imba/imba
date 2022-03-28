@@ -338,7 +338,7 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(extend)\s+(?=class|tag)</string>
+            <string>(extend|global)\s+(?=class|tag)</string>
           </dict>
           <dict>
             <key>name</key>

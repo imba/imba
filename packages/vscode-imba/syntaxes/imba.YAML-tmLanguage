@@ -178,7 +178,7 @@ repository:
       match: '(?<=import\s+)(type)(?=\s+[\w\{\$\_])'
 
     - name: keyword.control.imba
-      match: '(extend)\s+(?=class|tag)'
+      match: '(extend|global)\s+(?=class|tag)'
       
 
     - name: keyword.control.imba
