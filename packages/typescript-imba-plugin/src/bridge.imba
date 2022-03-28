@@ -36,7 +36,7 @@ export default class Client
 			let t0 = Date.now!
 			if let meth = ils[e.command]
 				try
-					util.log("call rpc {e.command}",...e.arguments)
+					util.group("call rpc {e.command}",...e.arguments)
 					let res = await meth.apply(ils,e.arguments)
 					if res
 						util.warn("return rpc {e.command}",Date.now! - t0,res)
@@ -50,8 +50,8 @@ export default class Client
 					})
 				catch err
 					util.log('error','responding',e.command,e.arguments,err)
-				# finally
-				# util.groupEnd!
+				finally
+					util.groupEnd!
 				
 				
 			

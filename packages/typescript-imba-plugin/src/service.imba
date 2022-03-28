@@ -72,8 +72,12 @@ export default class Service
 		return null
 		
 	def onDidChangeTextEditorSelection file,opts = {}
-		util.log('onDidChangeTextEditorSelection',file,opts)
+		#lastSelection = [file,opts]
+		# util.log('onDidChangeTextEditorSelection',file,opts)
 		return null
+
+	get f
+		getImbaScript(#lastSelection[0])
 		
 	def onDidSaveTextDocument file
 		util.log('onDidSaveTextDocument',file)

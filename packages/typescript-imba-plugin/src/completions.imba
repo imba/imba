@@ -593,11 +593,15 @@ export default class Completions
 		add(checker.snippets('tags'),o)
 		
 	def types o = {}
-		add(checker.snippets('types'),o)
-		# all globally available types
-		let typesymbols = checker.getSymbols('Type')
-		add(typesymbols,o)
-		add(autoimporter.getExportedTypes!,{kind: 'type', weight: 2000})
+		
+		if ctx.before.group.match(/^\\\<[\w-]*$/)
+			add(checker.getGlobalTags!,o)
+		else
+			add(checker.snippets('types'),o)
+			# all globally available types
+			let typesymbols = checker.getSymbols('Type')
+			add(typesymbols,o)
+			add(autoimporter.getExportedTypes!,{kind: 'type', weight: 2000})
 		
 	def tagattrs o = {}
 		# console.log 'check',"ImbaHTMLTags.{o.name}"
