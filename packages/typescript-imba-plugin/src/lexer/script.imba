@@ -419,7 +419,7 @@ export default class ImbaScriptInfo
 			flags ~= t.Value
 			flags |= t.VarName
 			
-		if tok.match("delimiter.type.prefix type")
+		if tok.match("delimiter.type.prefix type") or group.closest('type')
 			flags = CompletionTypes.Type
 
 		let kfilter = scope.allowedKeywordTypes
