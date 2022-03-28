@@ -484,6 +484,11 @@ export default class Service
 			util.log('findReferences',file,dpos,opos,res)
 			return res
 
+		intercept.getTypeDefinitionAtPosition = do(file,pos)
+			let {script,dpos,opos} = getFileContext(file,pos,ls)
+			let res = ls.getTypeDefinitionAtPosition(file,opos)
+			res = convertLocationsToImba(res,ls)
+			return res
 
 		if true
 			for own k,v of intercept
