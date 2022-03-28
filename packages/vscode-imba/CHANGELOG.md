@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.6
+
+* Make completions work with latest vscode
+* Make Goto Type Definition work
+* Minor improvements to completions
+
 ## 3.1.5
 
 * Use project-specific imba compiler for tooling when possible.

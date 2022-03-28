@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.205
 
 * Support `for await ... of` syntax
 
