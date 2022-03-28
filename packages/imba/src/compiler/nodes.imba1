@@ -3851,7 +3851,8 @@ export class Func < Code
 			let name = @context.node.@className
 			if name and STACK.tsc
 				# console.log 'inext',@context.node.@className
-				o.push('@this { this & ' + name.c + ' }')
+				# o.push('@this { this & ' + name.c + ' }')
+				o.push('@this { ' + name.c + ' }')
 				
 		elif option(:jsdocthis)
 			o.push('@this { ' + option(:jsdocthis) + ' }')
