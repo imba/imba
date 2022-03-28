@@ -22,7 +22,7 @@ declare namespace imba {
         /**
          * See if router currently matches a pattern/path
          */
-        match(pattern: string | RegExp): null | object;
+        match(pattern: string | RegExp): null | any;
     
         /**
          * Go to a url
