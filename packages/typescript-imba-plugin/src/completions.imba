@@ -359,12 +359,16 @@ export class SymbolCompletion < Completion
 				item.commitCharacters = ei.commitCharacters
 			else
 				# make filter-text longer for imports to let variables rank earlier
+				# but they should not work this way?
 				item.filterText = (item.filterText or name) + "        "
+				item.sortText = name
+
 	
 	def resolve
 		let details = checker.getSymbolDetails(sym)
 		
 		item.markdown = details.markdown
+
 
 		if let docs = details.documentation
 			item.documentation = docs # global.session.mapDisplayParts(docs,checker.project)
