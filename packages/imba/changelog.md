@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Disallow iterating over falsy values using `for in`
+
 ## 2.0.0-alpha.205
 
 * Support `for await ... of` syntax

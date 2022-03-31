@@ -11439,7 +11439,7 @@ export class Util.Iterable < Util
 	def helper
 		# now we want to allow null values as well - just return as empty collection
 		# should be the same for for own of I guess
-		"function iter$__(a)\{ let v; return a ? ((v=a.toIterable) ? v.call(a) : a) : []; \};"
+		"function iter$__(a)\{ let v; return a ? ((v=a.toIterable) ? v.call(a) : a) : a; \};"
 
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
