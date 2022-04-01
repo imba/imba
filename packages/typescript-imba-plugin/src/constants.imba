@@ -47,16 +47,15 @@ export const DefaultConfig = {
 		allowJs: true
 		checkJs: true
 		noEmit: false
-		declarations: true
 		emitDeclarationOnly: true
 		skipLibCheck: true
 		skipDefaultLibCheck: true
-		allowNonTsExtensions: true
 		allowUnreachableCode: true
 		allowSyntheticDefaultImports: true
 		esModuleInterop: true
 		suppressExcessPropertyErrors: false
 		suppressImplicitAnyIndexErrors: false
+		declaration: true
 		resolveJsonModule: true
 		module: 'esnext'
 		target: 'esnext'
