@@ -185,7 +185,7 @@ interface Element {
     * is enabled or not
     * @idl
     */
-    hotkeys: bool;
+    hotkeys: boolean;
 
     /**
     * Enable transitions for when element is attached / detached
@@ -251,6 +251,7 @@ interface Document {
 
 interface HTMLMetaElement {
     property?: string;
+    charset?: string;
 }
 
 interface EventListenerOptions {
@@ -268,6 +269,7 @@ interface HTMLStyleElement {
      */
     src: ImbaAsset | string;
 }
+
 
 interface SVGSVGElement {
     /**
@@ -317,8 +319,6 @@ interface Event {
     originalEvent: Event | null;
 }
 
-
-
 // interface Object {
 //     [key: string]: any;
 // }
@@ -342,7 +342,7 @@ declare namespace imba {
     /**
      * @custom
      */
-    declare class Component extends HTMLElement {
+    class Component extends HTMLElement {
         
         /**
          * @summary Called to update the element and their children
@@ -570,8 +570,12 @@ declare namespace imba {
       function αlazy(): void;
 
     let colors: string[];
+
+    interface ImbaProcess {
+        on(event:string,callback:Function);
+    }
     
-    
+    let process: ImbaProcess;
 
     namespace types {
         let events: GlobalEventHandlersEventMap;
@@ -622,6 +626,20 @@ declare namespace imba {
      * Start an asset-aware server
      */
     function serve(target: any, options?: any): any;
+
+    /*
+    Observability
+    TODO Complete & document types
+    */
+
+    interface Reaction {
+        dispose(): this;
+    }
+
+    function observable<T>(value: T): T;
+
+    function run(callback: any): void;
+    function autorun(callback: any): Reaction;
 }
 
 declare module "data:text/asset;*" {
