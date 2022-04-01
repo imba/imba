@@ -4,6 +4,8 @@
 
 * Disallow iterating over falsy values using `for in`
 
+* Compile literal bigints correctly
+
 ## 2.0.0-alpha.205
 
 * Support `for await ... of` syntax

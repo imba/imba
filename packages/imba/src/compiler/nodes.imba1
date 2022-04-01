@@ -4352,6 +4352,8 @@ export class NumWithUnit < Literal
 			val = "({val} * 1000)"
 		elif unit == 'ms'
 			val = "{val}"
+		elif unit == 'n'
+			val = "{val}n"
 		elif unit == 'fps'
 			val = "(1000 / {val})"
 		else
