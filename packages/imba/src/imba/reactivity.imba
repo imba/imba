@@ -393,13 +393,14 @@ extend class Map
 	def ##dereferenced ref do DEREFERENCED(this,ref)
 
 class PropertyType
-	def constructor name,vkey
+	def constructor name,vkey,options = {}
 		self.name = name
 		self.key = vkey
+		self.options = options
 		const bkey = REFSYM(name)
 
 		let descriptor = self.descriptor = {
-			enumerable: yes
+			enumerable: options.enumerable ?? yes
 			configurable: no
 			get: do TRACKING ? GET(this,name,vkey,self,bkey) : this[vkey]
 			set: do(value)
@@ -682,7 +683,8 @@ export def @computed target, name, desc
 export def @observable target, key, desc
 	let sym = METASYM(key)
 	let vsym = VALUESYM(key)
-	let field = target[sym] = new PropertyType(key,vsym)
+	let opts = this[0] or {}
+	let field = target[sym] = new PropertyType(key,vsym,opts)
 
 	if desc
 		Object.defineProperty(target,vsym,Object.assign({},desc))
