@@ -332,6 +332,8 @@ export class System
 			for ext in EXTRA_EXTENSIONS
 				let ipath = path.replace('.tsx',ext).replace(ext + ext,ext)
 				if #fileExists(ipath)
+					if #fileExists(path.replace('.tsx','.d.ts'))
+						return no
 					util.log "intercepted fileExists",path,ipath
 					EXTRA_HIT = [path,ipath]
 					return yes
