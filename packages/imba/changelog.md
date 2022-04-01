@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.206
 
 * Disallow iterating over falsy values using `for in`
 
 * Compile literal bigints correctly
+
+* Minor improvements to type definitions
 
 ## 2.0.0-alpha.205
 
