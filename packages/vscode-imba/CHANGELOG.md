@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.12
+
+* Allow `.d.ts` to take precedence over `.imba` files in tooling
+* Improved typings for imba library
+
 ## 3.1.6
 
 * Make completions work with latest vscode
