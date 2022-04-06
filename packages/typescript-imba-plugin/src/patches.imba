@@ -446,7 +446,7 @@ export class ProjectService
 			elif !project.#awakenedForImba and global.ils
 				project.#awakenedForImba = yes
 				global.ils.awakenProjectForImba(project)
-				
+				global..LOADED_PROJECT(project)
 		catch e
 			util.log('error',e,project)
 	

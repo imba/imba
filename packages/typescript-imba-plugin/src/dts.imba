@@ -17,6 +17,7 @@ export default class ImbaScriptDts
 	def update body
 		return unless body
 
+		#raw = body
 		let imports = []
 		body.replace(/^import [^\;]+\;/gm) do(m)
 			let str = m.replace(/[\r\n]/g,'')
@@ -67,6 +68,8 @@ export default class ImbaScriptDts
 			return self unless owner
 			let proj = owner.project
 			util.log 'updating dts',owner.fileName,body
+			# TODO Find better way to ensure that the Project is aware of these virtual files
+			# 
 			ps.openClientFile(fileName,body,ts.ScriptKind.TS,proj.currentDirectory)
 			let file = self.script = ps.getScriptInfo(fileName)
 

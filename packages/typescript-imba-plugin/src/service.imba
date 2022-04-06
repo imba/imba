@@ -191,7 +191,8 @@ export default class Service
 		return proj
 
 	def create info
-		#cwd ||= info.project.currentDirectory
+		#cwd ||= global.IMBASERVER_CWD or info.project.currentDirectory
+		# Should the initial InferredProject even be inited?
 		util.log('create',info)
 		setups.push(info)
 
@@ -227,7 +228,7 @@ export default class Service
 			let file = item.fileName.replace("._.d.ts",'')
 			let script = getImbaScript(file)
 			let path = "{item.containerName}.prototype.{item.name}"
-			let token = script.doc.findPath(path)
+			let token = script.doc.findPath(util.toImbaIdentifier(path))
 			util.log "converting path!?",item,path,token
 			if token
 				item.textSpan = token.span
@@ -544,7 +545,7 @@ export default class Service
 		scripts.map(do $1.#imba).filter(do $1)
 
 	get cwd
-		#cwd ||= normalizePath(process.env.VSCODE_CWD or process.env.IMBASERVER_CWD)
+		#cwd ||= normalizePath(global.IMBASERVER_CWD or process.env.VSCODE_CWD or process.env.IMBASERVER_CWD)
 	
 	get m
 		getScriptInfo('main.imba')

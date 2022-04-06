@@ -3583,10 +3583,7 @@ export class ClassDeclaration < Code
 				
 		if isExtension and STACK.tsc
 			# if the class-name is aliased via an import we want to include that here
-			# jsbody = "\n__extends__={@className.c};\n{jsbody}"
-			yes
-			
-			
+			jsbody = "\n__extends__={@className.c};\n{jsbody}"
 
 		let js = "{jshead} \{{jsbody}\}"
 		

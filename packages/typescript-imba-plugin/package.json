@@ -16,5 +16,8 @@
     },
     "dependencies": {
         "node-ipc": "^9.1.4"
+    },
+    "devDependencies": {
+        "typescript": "^4.6.3"
     }
 }

@@ -139,8 +139,9 @@ export default class ImbaScript
 			let writer = do(path,b) out[path] = body = b
 			let res = prog.emit(script,writer,null,true,[],true)
 			util.log 'emitted dts',out,res,body
-			dts.update(body) 
-		return self
+			dts.update(body)
+			return dts.#body
+		return null
 		
 	def getImbaDiagnostics
 		
