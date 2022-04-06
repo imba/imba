@@ -3848,11 +3848,16 @@ export class Func < Code
 				o.push(item.jsdoc())
 				
 		if option(:inExtension) and @target
+			let kls = @context.node
 			let name = @context.node.@className
 			if name and STACK.tsc
 				# console.log 'inext',@context.node.@className
 				# o.push('@this { this & ' + name.c + ' }')
-				o.push('@this { ' + name.c + ' }')
+				let thistype = name.c
+				if kls.option(:instanceOnly)
+					thistype = "typeof {thistype}"
+
+				o.push('@this { ' + thistype + ' }')
 				
 		elif option(:jsdocthis)
 			o.push('@this { ' + option(:jsdocthis) + ' }')
