@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Don't try to implicitly return debugger statement
+
 ## 2.0.0-alpha.206
 
 * Disallow iterating over falsy values using `for in`

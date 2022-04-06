@@ -2429,6 +2429,9 @@ export class ContinueStatement < LoopFlowStatement
 
 export class DebuggerStatement < Statement
 
+	def consume node
+		return self
+
 
 # PARAMS
 
