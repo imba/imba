@@ -36,6 +36,8 @@ declare namespace imba {
          * @param state
          */
         replace(url: string, state?: object): void;
+
+        on(event:string,callback:Function);
     }
     
     /**
