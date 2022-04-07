@@ -4,20 +4,32 @@ export default class ImbaScriptDts
 	
 	def constructor owner
 		self.owner = owner
+
+	get ils
+		global.ils
 		
 	get ps
-		global.ils.ps
+		ils.ps
 		
 	get ts
 		global.ts
 		
 	get fileName
 		owner.fileName + "._.d.ts"
+
+	def clear
+		yes
 	
 	def update body
-		return unless body
-
+		let prev = #raw
 		#raw = body
+		unless body
+			clear! if prev
+			return
+
+		if prev == body
+			return
+
 		let imports = []
 		body.replace(/^import [^\;]+\;/gm) do(m)
 			let str = m.replace(/[\r\n]/g,'')
@@ -63,19 +75,18 @@ export default class ImbaScriptDts
 		
 		body = body + '\nexport {}'
 	
-	
+		# TODO What if the new version is now empty? We want to remove it now
 		if #body =? body
 			return self unless owner
+
 			let proj = owner.project
 			util.log 'updating dts',owner.fileName,body
-			# TODO Find better way to ensure that the Project is aware of these virtual files
-			# 
-			ps.openClientFile(fileName,body,ts.ScriptKind.TS,proj.currentDirectory)
-			let file = self.script = ps.getScriptInfo(fileName)
 
-			if !proj.isRoot(file)
-				proj.addRoot(file)
+			let file = self.script = ils.setVirtualFile(fileName,body)
 
-			proj.markAsDirty!
-			proj.updateGraph!
+			if file
+				if !proj.isRoot(file)
+					proj.addRoot(file)
+				proj.markAsDirty!
+				proj.updateGraph!
 			self

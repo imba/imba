@@ -328,6 +328,11 @@ export class System
 		typeof body == 'string' ? body : undefined
 		 
 	def fileExists path
+		if path.indexOf('.imba._.d.ts') >= 0
+			util.log('fileExists',path)
+			if virtualFileMap[path]
+				return true
+
 		if (/\.tsx$/).test(path)
 			for ext in EXTRA_EXTENSIONS
 				let ipath = path.replace('.tsx',ext).replace(ext + ext,ext)
@@ -360,7 +365,7 @@ export class System
 	def readFile path,encoding = null
 		util.log("readFile",path)
 		
-		if path.indexOf('imba-typings') >= 0
+		if path.indexOf('imba-typings') >= 0 or path.indexOf('.imba._.d.ts') >= 0
 			return readVirtualFile(path)
 		
 		if (/[jt]sconfig\.json/).test(path)

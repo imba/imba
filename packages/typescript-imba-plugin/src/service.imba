@@ -3,7 +3,7 @@ import Compiler from './compiler'
 import * as util from './util'
 import Bridge from './bridge'
 import ipc from 'node-ipc'
-
+import {EventEmitter} from 'events'
 import {DefaultConfig} from './constants'
 
 let libDir = np.resolve(__realname,'..','..','lib')
@@ -14,17 +14,19 @@ global.utils = util
 
 global.ils\Service = null
 
-export default class Service
+export default class Service < EventEmitter
 	setups = []
 	bridge = null
 	virtualFiles = {}
+	virtualScripts = {}
 	ipcid
+	counter = 0
 	
 	get ts
 		global.ts
 	
 	get configuredProjects
-		Array.from(ps.configuredProjects.values())
+		ps ? Array.from(ps.configuredProjects.values()) : []
 		
 	get cp
 		configuredProjects[0]
@@ -35,7 +37,9 @@ export default class Service
 	get isSemantic
 		ps.serverMode == 0
 		
-		
+	def constructor ...params
+		super(...params)
+
 	def i i
 		let d = m.im.doc
 		let t = m.im.getTypeChecker!
@@ -94,7 +98,9 @@ export default class Service
 		return 
 		
 	def getExternalFiles proj
-		return []
+		let paths = Object.keys(virtualScripts)
+		util.log('got external files?!',paths)
+		return paths
 		
 	def handleRequest {id,data}
 		# util.log('handleRequest',data)
@@ -112,8 +118,22 @@ export default class Service
 
 		virtualFiles[jspath] = JSON.stringify(DefaultConfig,null,2)
 		ps.onConfigFileChanged(jspath,0)
-
 		self
+
+	def reloadConfigFile
+		let path = cp.getCompilerOptions!.configFilePath
+		ps.onConfigFileChanged(resolvePath(path),1)
+
+	def setVirtualFile path, body
+		virtualFiles[path] = body
+		# (fileName: NormalizedPath, openedByClient: boolean, fileContent?: string, scriptKind?: ScriptKind, hasMixedContent?: boolean, hostToQueryFileExistsOn?: {
+		#    fileExists(path: string): boolean;
+		# })
+		# could we rather fake its existence?
+		let script = ps.getOrCreateScriptInfoForNormalizedPath(path,true,body,ts.ScriptKind.TS,false)
+		virtualScripts[path] = script
+		return script
+
 		
 	def resolveImbaDirForProject proj
 		let imbadir = ts.resolveImportPath('imba',proj.getConfigFilePath!,proj)
@@ -193,6 +213,9 @@ export default class Service
 	def create info
 		#cwd ||= global.IMBASERVER_CWD or info.project.currentDirectory
 		# Should the initial InferredProject even be inited?
+		let proj = info.project
+		proj.NR ||= ++counter
+
 		util.log('create',info)
 		setups.push(info)
 
@@ -200,18 +223,18 @@ export default class Service
 		self.project = info.project
 		self.ps = project.projectService
 		
-		let proj = info.project
-			
-		setup! if ps.#patched =? yes
+		if ps.#patched =? yes
+			setup!
 			
 		for script in imbaScripts
 			script.wake!
 			
 		prepareProjectForImba(proj) if proj
-
 		info.ls = info.languageService
-		# ps.ensureConfiguredImbaProjects!
-		return decorate(info.languageService)
+		let decorated = decorate(info.languageService)
+		emit('create',info)
+
+		return decorated
 		
 	def convertSpan span, ls, filename, kind = null
 		if util.isImba(filename) and span.#ostart == undefined
@@ -520,6 +543,8 @@ export default class Service
 		for item in imbaScripts
 			item.syncDts!
 		self
+
+	
 		
 	def setup
 		let exts = (ps.hostConfiguration.extraFileExtensions ||= [])
