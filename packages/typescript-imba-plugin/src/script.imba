@@ -199,7 +199,10 @@ export default class ImbaScript
 		project.languageService
 		
 	get project
-		info.containingProjects[0]
+		let projs = info.containingProjects
+		if projs.indexOf(global.ils.cp) >= 0
+			return global.ils.cp
+		return projs[0]
 		
 	def wake
 		yes

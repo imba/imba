@@ -233,7 +233,7 @@ export default class Service < EventEmitter
 		info.ls = info.languageService
 		let decorated = decorate(info.languageService)
 		emit('create',info)
-
+		createVirtualProjectConfig!
 		return decorated
 		
 	def convertSpan span, ls, filename, kind = null
@@ -537,7 +537,7 @@ export default class Service < EventEmitter
 		msg
 	
 	def awakenProjectForImba proj
-		util.warn "service awakenProjectForImba"
+		util.warn "service awakenProjectForImba",proj
 		# what if it happens multiple times?
 		# now we should block / delay the mark project as dirty stuff
 		for item in imbaScripts
