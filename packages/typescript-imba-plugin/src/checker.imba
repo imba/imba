@@ -434,8 +434,10 @@ export default class ImbaTypeChecker
 		if item isa Array
 			let base = type(item[0])
 			for entry,i in item when i > 0
-				
-				base = type(member(base,entry))
+				let val = type(member(base,entry))
+				if !val and i == 1 and base.exports
+					val = base.exports.get(entry)
+				base = val
 			item = base
 
 		if item isa SymbolObject
@@ -491,7 +493,7 @@ export default class ImbaTypeChecker
 			
 		return null
 
-	def locals source = #file
+	def locals source = (#file or script)
 		let file = fileRef(source)
 		let locals = file.locals.values!
 		return Array.from(locals)

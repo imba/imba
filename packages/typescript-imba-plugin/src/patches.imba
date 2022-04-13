@@ -643,13 +643,26 @@ export default def patcher ts
 		ts[k] = v
 	
 	const SymbolObject = global.SymbolObject = ts.objectAllocator.getSymbolConstructor!
-	const Token = global.Token = ts.objectAllocator.getTokenConstructor!
+	const TokenObject = global.Token = ts.objectAllocator.getTokenConstructor!
 	const TypeObject   = global.TypeObject = ts.objectAllocator.getTypeConstructor!
 	const NodeObject   = global.NodeObject = ts.objectAllocator.getNodeConstructor!
 	const SourceFile   = global.SourceFile = ts.objectAllocator.getSourceFileConstructor!
 	const Signature    = global.Signature = ts.objectAllocator.getSignatureConstructor!
 	const Identifier = global.Identifier = ts.objectAllocator.getIdentifierConstructor!
 	
+	
+	extend class TokenObject
+
+		get #primitiveValue
+			if kind == ts.SyntaxKind.NumericLiteral
+				return Number(text)
+			elif kind == ts.SyntaxKind.BigIntLiteral
+				return BigInt(text.slice(0,-1))
+			elif kind == ts.SyntaxKind.StringLiteral
+				return String(text)
+			return self
+
+
 
 	extend class SourceFile
 			
@@ -737,6 +750,9 @@ export default def patcher ts
 
 		get isDeprecated
 			valueDeclaration.modifierFlagsCache & ts.ModifierFlags.Deprecated
+		
+		get isPrivate
+			valueDeclaration..modifierFlagsCache & ts.ModifierFlags.Private
 			
 		get isDecorator
 			escapedName[0] == 'α'
