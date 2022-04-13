@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.207
 
 * Don't try to implicitly return debugger statement
+
+* Improve compilation of `extend` statements for tooling
 
 ## 2.0.0-alpha.206
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.13
+
+* Make typings and completions include properties added with `extend class ...`
+* Improve reliability of language service
+* Improve reloading after js/tsconfig.json changes
+
 ## 3.1.12
 
 * Allow `.d.ts` to take precedence over `.imba` files in tooling
