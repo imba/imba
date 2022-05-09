@@ -393,10 +393,10 @@ extend class Map
 	def ##dereferenced ref do DEREFERENCED(this,ref)
 
 class PropertyType
-	def constructor name,vkey,options = {}
+	def constructor name,options = {}
 		self.name = name
-		self.key = vkey
 		self.options = options
+		const vkey = self.key = VALUESYM(name)
 		const bkey = REFSYM(name)
 
 		let descriptor = self.descriptor = {
@@ -684,7 +684,7 @@ export def @observable target, key, desc
 	let sym = METASYM(key)
 	let vsym = VALUESYM(key)
 	let opts = this[0] or {}
-	let field = target[sym] = new PropertyType(key,vsym,opts)
+	let field = target[sym] = new PropertyType(key,opts)
 
 	if desc
 		Object.defineProperty(target,vsym,Object.assign({},desc))
