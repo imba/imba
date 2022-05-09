@@ -3250,10 +3250,12 @@ export class ClassDeclaration < Code
 		return @instanceInit if @instanceInit
 		let call = Super.callOp(initKey)
 		if @superclass
-			call = OP('&&',OP('.',LIT('super'),initKey),call)
+			call = OP('&&',LIT('deep'),OP('&&',OP('.',LIT('super'),initKey),call))
 		let fn = addMethod(initKey,[],(isTag or @superclass) ? [call,BR] : '',{}) do |fun|
 			yes
 		fn.set(noreturn: yes)
+		fn.params.at(0,yes,'$$',LIT('null')) # (restIndex,yes,'$$',LIT('{}'))
+		fn.params.at(1,yes,'deep',LIT('true'))
 		@instanceInit = fn
 
 	def instancePatch
@@ -3480,7 +3482,7 @@ export class ClassDeclaration < Code
 			instancePatch
 			patches.set(ctor: instancePatch)
 			instancePatch.inject(patches)
-		
+
 		if tsc and ctor and @autosuper
 			ctor.body.add([LIT("super()"),BR],0)
 			
@@ -3528,7 +3530,6 @@ export class ClassDeclaration < Code
 				# If we are not in the stdlib / core - add an inherited hook for the class?
 				# ctor.body.add([callop,BR],0)
 
-		
 		self
 
 	def addMethod name, params, mbody, options, cb
@@ -3552,6 +3553,8 @@ export class ClassDeclaration < Code
 		var up = STACK.up
 		var o = @options or {}
 		var cname = name isa Access ? name.right : name
+
+		
 		# var namespaced = name != cname
 		var initor = null
 		var sup = superclass
@@ -3561,6 +3564,9 @@ export class ClassDeclaration < Code
 
 		@cname = cname
 		
+		var externalAccess = LIT(cname)
+		var supAccess = null
+
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
 		if name
@@ -3569,11 +3575,19 @@ export class ClassDeclaration < Code
 			# console.log 'are we in an assignment?',"{STACK.up}"
 			if up isa VarReference
 				try jshead += " {up.@value.@symbol}"
-		jshead += " extends {M(sup)}" if sup
+
+		if sup
+			supAccess = M(sup)
+			jshead += " extends {supAccess}"
 
 		if name isa Access
-			# if staticInit we need a reference to it after
+			if @staticInit
+				externalAccess = scope.root.declare(null)
+				jshead = "{externalAccess.c} = {jshead}"
+
+				
 			jshead = "{name.c} = {jshead}"
+
 		
 		if option(:export) and !STACK.cjs
 			if option(:default)
@@ -3590,7 +3604,13 @@ export class ClassDeclaration < Code
 		if option(:export) and STACK.cjs
 			let exportName = option(:default) ? 'default' : cname
 			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
-			
+
+		if @staticInit
+			if up isa Block or up isa Export
+				js = "{js}; {OP('.',externalAccess,initKey).c}();"
+			else
+				js = "(({js})[{initKey.c}]())"
+
 		if isExtension and !STACK.tsc
 			let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
 
@@ -3598,17 +3618,11 @@ export class ClassDeclaration < Code
 				let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
 				extTarget = LIT("({wrap.c},{extTarget.c})")
 
-			js += ";\n" + util.extend(extTarget,LIT("{name.c}.prototype")).c + ';\n'
+			js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
 
 		if option(:global)
+			# external access?
 			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
-
-
-		if @staticInit
-			if up isa Block or up isa Export
-				js = "{js}; {OP('.',LIT(cname),initKey).c}();"
-			else
-				js = "(({js})[{initKey.c}]())"
 
 		return js
 
