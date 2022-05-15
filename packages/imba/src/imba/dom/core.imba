@@ -806,7 +806,7 @@ export class HTMLStyleElement < HTMLElement
 		#rel
 
 	get is_preload
-		#rel.match 'preload'
+		"{#rel}".match 'preload'
 
 	get outerHTML
 		if HtmlContext and src
