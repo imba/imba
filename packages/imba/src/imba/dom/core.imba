@@ -797,6 +797,17 @@ export class HTMLStyleElement < HTMLElement
 	get src
 		#src
 
+	set rel value
+		if #rel =? value
+			yes
+		return
+
+	get rel
+		#rel
+
+	get is_preload
+		#rel.match 'preload'
+
 	get outerHTML
 		if HtmlContext and src
 			(HtmlContext.styles||=[]).push(self)
@@ -807,6 +818,12 @@ export class HTMLStyleElement < HTMLElement
 			setAttribute('rel','stylesheet')
 			setAttribute('href',String(src))
 			let out = super
+			if is_preload
+				setAttribute('rel','preload')
+				setAttribute('as','style')
+				let preloadOut = super
+				nodeName = 'style'
+				return "{preloadOut}{out}"
 			nodeName = 'style'
 			return out
 			
