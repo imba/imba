@@ -38,13 +38,13 @@ export default class ImbaScriptDts
 			''
 
 		let idx = 0
-		while (idx = body.indexOf('class Extend$',idx)) >= 0
+		while (idx = body.indexOf('class Ω',idx)) >= 0
 			# add double closer
 			body = body.slice(0,idx) + body.slice(idx).replace('\n}','\n}}')
 			idx += 5
 			
 		# find imports
-		body = body.replace(/export class Extend\$(\w+)\$\w+(?:\$(\w+))?\s(extends (\w+)\s)?\{/g) do(m,name,mod)
+		body = body.replace(/export class \Ω([\w\$]+)(?:\Ω(\w+))?\s(extends ([\w\$]+)\s)?\{/g) do(m,name,mod)
 			# console.log 'replacing',m,mod,name
 			# if mod == 'import'
 			let reg = new RegExp(" {name}[, ]")
@@ -59,7 +59,7 @@ export default class ImbaScriptDts
 		# can we do this?
 		
 		# now replace the this types
-		body = body.replace(/Extend\$(\w+)\$\w+/g,'this')
+		body = body.replace(/\Ω([\w\$]+)\Ω[\w\$]+/g,'this')
 		body = body.replace(/\@this \{ this & \w+ \}/g,'')
 		body = body.replace(/this & \w+/g,'this')
 		

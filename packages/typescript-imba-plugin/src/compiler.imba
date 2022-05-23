@@ -81,7 +81,7 @@ export class Compilation
 		return []
 		
 	get shouldGenerateDts
-		js and js.indexOf('class Extend$') >= 0
+		js and js.indexOf('Ω') >= 0
 		
 	def o2dRange start, end, fuzzy = yes
 		let range = o2iRange(start,end,fuzzy)

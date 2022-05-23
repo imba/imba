@@ -3313,7 +3313,7 @@ export class ClassDeclaration < Code
 			
 			if !isTag
 				@className = @name
-				@name = scope__.register("Extend${@name.value}${oid}",null)
+				@name = scope__.register("Ω{@name.value}Ω{oid}",null)
 				if STACK.tsc
 					option(:export,true)
 			else
@@ -3745,7 +3745,8 @@ export class TagDeclaration < ClassDeclaration
 			sup = superclass ? superclass.toClassName : LIT('imba.Component')
 			if option(:extension)
 				# className = "Extended${className}"
-				let out = "class Extend${className.replace(/\./g,'__')}${oid}"
+				# ought to support the nested stuff?
+				let out = "class Ω{className.replace(/\./g,'__')}Ω{oid}"
 				let obody = body.c
 				out = "{out} \{{obody}\}"
 				out = "export {out}" unless @name.@variable

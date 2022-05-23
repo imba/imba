@@ -119,7 +119,7 @@ export default class ImbaScript
 			result.#applied = yes
 	
 			result.script.markContainingProjectsAsDirty!
-			let needDts = result.js.indexOf('class Extend$') >= 0
+			let needDts = result.js.indexOf('class Ω') >= 0
 			util.log('onDidCompileScript',result,needDts)
 			if ils.isSemantic
 				global.session.refreshDiagnostics!
