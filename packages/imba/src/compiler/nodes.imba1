@@ -3805,6 +3805,9 @@ export class TagDeclaration < ClassDeclaration
 		# else
 		# 	if !option(:extension) and (!name.isClass)
 		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
+
+		if STACK.tsc and option(:global) and name.isClass
+			js += "; globalThis.{className} = {className}"
 		return js
 
 export class Func < Code
