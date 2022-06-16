@@ -194,8 +194,9 @@ class Context
 			res = patcher.end!
 			let diff = patcher.changes
 			let changes = diff.size
-
+			
 			if changes
+				
 				for [item,op] of diff
 					if op === 1
 						item.addSubscriber(beacon)
@@ -241,7 +242,7 @@ let GET = do(target,key,vsym,meta,bsym)
 	let beacon = target[bsym]
 
 	unless beacon
-		beacon = target[bsym] = new Ref(0,meta,val)
+		beacon = target[bsym] = new Ref(0,meta,val,key)
 
 	CTX.add(beacon,target)
 	return val
@@ -258,18 +259,18 @@ let SET = do(target,key,vsym,value,meta,bsym)
 
 class Ref
 
-	def constructor kind, type, val
-		# id = NEXT_REF_ID++ # for development
-		# flags = kind
+	def constructor kind, type, val, name
+		id = NEXT_REF_ID++
 		observer = null
 		observers = null
+		# name = name
 
 		val.##referenced(self) if val and val.##referenced
 		return self
 
 	def changed level, newValue,oldValue
 		RUN_ID++
-
+		# mixing responsibilities with deep observers?
 		oldValue.##dereferenced(self,newValue) if oldValue and oldValue.##dereferenced
 		newValue.##referenced(self,oldValue) if newValue and newValue.##referenced
 
@@ -408,6 +409,8 @@ extend class Map
 	get ##reactive do REFERENCED(this,null,MapExtensions)
 	def ##referenced ref do REFERENCED(this,ref,MapExtensions)
 	def ##dereferenced ref do DEREFERENCED(this,ref)
+
+
 
 class PropertyType
 	def constructor name,options = {}
@@ -592,6 +595,7 @@ class Reaction
 		context = context
 		options = options
 		flags = 0
+		id = NEXT_REF_ID++
 		cachedComputedVersions = new WeakMap
 		checkComputedValues = new Set
 		observing = []
