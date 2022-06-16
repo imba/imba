@@ -107,6 +107,7 @@ export const states = {
 	block_: [
 		# 'common_'
 		[/^(\t+)(?=[\r\n]|$)/,'white.tabs']
+		'extend_class_'
 		'class_'
 		'tagclass_'
 		'augmentation_'		
@@ -441,6 +442,27 @@ export const states = {
 		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
 		[/(class)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]
+
+	classname_start: [
+		[/\w/,'@rematch','@assignable&-assignable']
+		[/(\s+\<\s+)/,['keyword.extends.$/','@assignable&-value$/']]
+		[/@comment/,'comment']
+		[/^/,'@rematch',switchTo: '@>_class&class=']
+		'whitespace'
+	]
+
+	assignable: [
+		'identifier_'
+		'access_'
+		[/\s+|\n/,'@rematch','@pop']
+	]
+
+	extend_class_: [
+		[/(extend)(\s)(tag|class)(\s)/, 
+			['keyword.$1','white.$1','keyword.$3','white.extendclass','@classname_start/$3']
+		]
+	]
+
 	
 	augmentation_: [
 		[/(extend)(?=\s+@id)/,'keyword.$1','@augmentation_start=']
@@ -458,6 +480,7 @@ export const states = {
 		[/(\s+\<\s+)(@id)/,['keyword.extends','identifier.superclass']]
 		[/@comment/,'comment']
 		[/^/,'@rematch',switchTo: '@>_class&class=']
+		'whitespace'
 	]
 
 	tagclass_: [
@@ -771,6 +794,7 @@ export const states = {
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator.declval',switchTo: '@var_value&value='] # ,switchTo: '@var_value='
 		'type_'
+		'whitespace'
 	]
 
 	array_var_body: [
@@ -1132,6 +1156,10 @@ export const states = {
 # 3 = the current scope name/type (&)
 # 4 = various flags (F)
 # 5 = the monarch substate -- for identifiers++
+###
+The monarch substate can be state using /something
+
+###
 def rewrite-state raw
 	
 	let state = ['$S1','$S2','$S3','$S4','$S5','$S6']
@@ -1173,6 +1201,7 @@ def rewrite-state raw
 
 def rewrite-token raw
 	let orig = raw
+
 	raw = raw.replace('$/','$S5')
 	raw = raw.replace('$F','$S4')
 	raw = raw.replace('$&','$S3')

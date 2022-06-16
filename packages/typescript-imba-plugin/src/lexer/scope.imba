@@ -559,6 +559,8 @@ export class ImportsNode < Group
 	get namespace
 		childNodes.find do $1.match('.ns')
 
+export class Assignable < Group
+
 export const ScopeTypeMap = {
 	style: StyleNode
 	array: BracketsNode
@@ -587,4 +589,5 @@ export const ScopeTypeMap = {
 	stylepropkey: StylePropKey
 	stylevalue: StylePropValue
 	args: ParensNode
+	assignable: Assignable
 }
