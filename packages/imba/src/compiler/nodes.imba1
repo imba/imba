@@ -12060,8 +12060,8 @@ export class RootScope < Scope
 			return @symbolRefs[name] ||= Identifier.new(name.slice(1) + "_$INTERNAL$_")
 
 		let map = @symbolRefs
-		# "{String(name).replace(/[\@\#]/g,'_')}$"
-		map[name] ||= declare(null,LIT("Symbol.for('{name}')"), type: 'const', system: yes, alias: toJSIdentifier(name))
+		let alias = toJSIdentifier(name)
+		map[name] ||= declare(null,LIT("Symbol.for('{name}')"), type: 'const', system: yes, alias: alias,gsym: name)
 		
 	def c o = {}
 		o:expression = no
@@ -12496,6 +12496,11 @@ export class SystemVariable < Variable
 	def resolve
 		return self if @resolved
 		@resolved = yes
+		let o = @options
+
+		if o:gsym
+			@name = "{o:gsym.replace(/\#/g,'$')}$"
+			return self
 
 		let sysnr = STACK.incr('sysvar')
 		@name = "${sysnr}"
