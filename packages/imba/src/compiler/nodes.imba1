@@ -12152,6 +12152,10 @@ export class IsolatedFunctionScope < FunctionScope
 				@leaks ||= Map.new
 				@nonlocals ||= {}
 				@nonlocals[name] = ret
+
+				# FIXME in the context of functional components,
+				# self is to be considered a leaky variable
+				# since it can change between renders
 				
 				let shadow = @leaks.get(ret)
 				unless shadow
