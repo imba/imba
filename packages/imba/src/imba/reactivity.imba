@@ -308,10 +308,19 @@ class Ref
 			return observer = null
 
 		let obs = observers
-		let idx = obs.indexOf(self)
+		let idx = obs.indexOf(item)
 		if idx >= 0
 			obs.splice(idx,1)
 		return
+
+	def reportChanged
+		changed(0)
+
+	def reportObserved
+		CTX.add(this)
+
+export def createAtom name
+	new Ref(null,null,null,name)
 
 ###
 Array
@@ -323,10 +332,15 @@ class ObservableArray < Array
 	def unshift do CHANGED(this,super)
 	def shift do CHANGED(this,super)
 	def splice do CHANGED(this,super)
+	def at do OBSERVED(this,super)
 	def map do OBSERVED(this,super)
+	def flatMap do OBSERVED(this,super)
+	def flat do OBSERVED(this,super)
 	def filter do OBSERVED(this,super)
 	def find do OBSERVED(this,super)
 	def slice do OBSERVED(this,super)
+	def sort do OBSERVED(this,super)
+	
 	get len do OBSERVED(this,length)
 
 	set len value
@@ -336,6 +350,9 @@ class ObservableArray < Array
 	def toIterable
 		CTX.add(self[OWNREF]) if TRACKING
 		return self
+
+	def [Symbol.iterator]
+		OBSERVED(this,super)
 
 const ArrayExtensions = getExtensions(ObservableArray)
 
@@ -411,7 +428,12 @@ class PropertyType
 			enumerable: no
 			configurable: yes
 			get: do
-				this[vkey]
+				if TRACKING
+					Object.defineProperty(this,name,descriptor)
+					return this[name]
+				# not if this is the prototype
+				return this[vkey]
+
 			set: do(value)
 				this[vkey] = value
 				this[bkey] = null
@@ -599,8 +621,10 @@ class Reaction
 
 	def call
 		if TRACKING
+			# only do this to detect infinite loops somehow?
 			console.warn 'should not call reaction inside an autorunning context?'
-			return
+			# this shouldnt _always_ be the case though?
+			# return
 
 		if flags & F.POSSIBLY_STALE and flags !& F.STALE
 			let stale = no
@@ -674,6 +698,18 @@ export def observable object
 export def run cb
 	let action = new Action(cb,global)
 	return action.run!
+
+
+export def reportChanged item
+	if item and item[OWNREF]
+		item[OWNREF].invalidated(0)
+	return item
+
+export def reportObserved item
+	if item and item[OWNREF]
+		item[OWNREF].reportObserved()
+	return item
+
 
 export def @computed target, name, desc
 	let sym = METASYM(name)
