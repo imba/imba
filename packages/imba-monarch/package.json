@@ -1,0 +1,7 @@
+{
+  "name": "imba-monarch",
+  "description": "Fault-tolerant lexer/parser for imba using monarch",
+  "version": "0.1.0",
+  "author": "Sindre Aarsaether <sindre@identu.no>",
+  "dependencies": {}
+}

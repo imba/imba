@@ -1,0 +1,26 @@
+extend class One.Two < One.Three
+	title = [200]
+	other = 1234
+
+tag Hello < Other
+	def something a,b,c
+		return [a,b,c,4]
+
+extend class Stuff
+	get hello
+		yes
+
+	set hello val
+		#hello = val
+
+	def ping
+		yes
+
+
+tag app-item
+
+	<self>
+		<div> for item in items
+			<div[ff:sans] name=item.name> item.text
+		<footer> "Hello"
+			css d:block py:10
