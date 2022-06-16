@@ -8,6 +8,8 @@
 
 * Add `imba.hotkeys.addKeycodes(...)` (#677)
 
+* Made `@touch.hold(dur)=handler` trigger handler after duration without waiting for additioanl events (#664)
+
 ## 2.0.0-alpha.207
 
 * Don't try to implicitly return debugger statement

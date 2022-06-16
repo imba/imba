@@ -16,7 +16,17 @@ describe "@touch.stop" do
 		await spec.mouse.down(5,5)
 		await spec.wait(300)
 		await spec.mouse.up!
+		eq $1.log,['held','held']
+
+	test "holding should emit w/o more events" do
+		# FIXME Should we continue emitting an event immediately when hold
+		# has succeeded?
+		await spec.mouse.down(5,5)
+		await spec.wait(350)
 		eq $1.log,['held']
+		await spec.wait(100)
+		await spec.mouse.up!
+		eq $1.log,['held','held']
 	
 	test "moving" do
 		# if you move more than a certain threshold, the
