@@ -1,5 +1,13 @@
 # Changelog
 
+## unreleased
+
+* Fixed bug with observables not unsubscribing correctly in certain cases
+
+* Expose `imba.reportObserved`, `imba.reportChanged` and `imba.createAtom` (still experimental)
+
+* Add `imba.hotkeys.addKeycodes(...)` (#677)
+
 ## 2.0.0-alpha.207
 
 * Don't try to implicitly return debugger statement
