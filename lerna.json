@@ -1,4 +1,8 @@
 {
-  "packages": ["packages/*"],
+  "packages": [
+    "packages/imba",
+    "packages/typescript-imba-plugin",
+    "packages/vscode-imba"
+  ],
   "version": "independent"
 }
