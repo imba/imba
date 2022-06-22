@@ -480,7 +480,11 @@ export def createComponent name, parent, flags, text, ctx
 	# potentially 
 
 	if text !== null
-		el.#getSlot('__').text$(text)
+		let slot = el.#getSlot('__')
+		if slot
+			slot.text$(text)
+		else
+			el.text$(text)
 		
 	if flags or el.flags$ns # or nsflag
 		el.flag$(flags or '')
