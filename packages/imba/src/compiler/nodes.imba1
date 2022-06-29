@@ -4371,10 +4371,16 @@ export class NumWithUnit < Literal
 
 		val = "-{val}" if option(:negate)
 
-		if unit == 's'
-			val = "({val} * 1000)"
-		elif unit == 'ms'
+		if unit == 'ms'
 			val = "{val}"
+		elif unit == 's'
+			val = "({val} * 1000)"
+		elif unit == 'minutes'
+			val = "({val} * 60 * 1000)"
+		elif unit == 'hours'
+			val = "({val} * 60 * 60 * 1000)"
+		elif unit == 'days'
+			val = "({val} * 24 * 60 * 60 * 1000)"
 		elif unit == 'n'
 			val = "{val}n"
 		elif unit == 'fps'
