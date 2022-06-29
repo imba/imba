@@ -185,7 +185,13 @@ export default class ImbaTypeChecker
 		# allGlobals.filter do $1.escapedName.indexOf('CustomElement') > 0
 		checker.getSymbolsInScope(sourceFile,4).filter do $1.escapedName[0] == 'Γ'
 		# allGlobals.filter do $1.escapedName[0] == 'Γ'
-		
+
+	def getNumberUnits
+		checker.getSymbolsInScope(sourceFile,4).filter do $1.escapedName[0] == 'ς'
+
+	def getNumberUnit name
+		checker.getSymbolsInScope(sourceFile,4).find do $1.escapedName == 'ς' + name
+
 	def getLocalTagsInScope
 		let symbols = checker.getSymbolsInScope(sourceFile,32)
 		for s in symbols

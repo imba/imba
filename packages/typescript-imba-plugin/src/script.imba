@@ -332,6 +332,9 @@ export default class ImbaScript
 		
 		if tok.match('tag.event.start')
 			tok = tok.next
+
+		if tok.match('unit')
+			hit(checker.getNumberUnit(tok.value),'unit')
 			
 		if tok.match('tag.event-modifier.start')
 			tok = tok.next

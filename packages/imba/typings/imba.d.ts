@@ -319,6 +319,10 @@ interface Event {
     originalEvent: Event | null;
 }
 
+declare var ςminutes = 60 * 1000;
+declare var ςhours = 60 * 60 * 1000;
+declare var ςdays = 24 * 60 * 60 * 1000;
+
 // interface Object {
 //     [key: string]: any;
 // }

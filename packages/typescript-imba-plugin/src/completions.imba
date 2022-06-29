@@ -236,7 +236,11 @@ export class SymbolCompletion < Completion
 			
 		if #options.range
 			item.range = #options.range
-		
+
+		if cat == 'numberunit'
+			name = o.prefixCompletion + name
+			item.filterText = name
+
 		# let pname = sym.parent..escapedName
 		if cat == 'styleprop'
 			#uniqueName = name
@@ -468,6 +472,14 @@ export default class Completions
 		# only show completions directly after : in styles	
 		if triggerCharacter == ':' and !tok.match('style.property.operator')
 			return
+
+		if tok.match('unit')
+			let num = tok.prev.value
+			add('numberunits',kind: 'numberunit', prefixCompletion: num)
+		
+		if tok.match('number')
+			let num = tok.value
+			add('numberunits',kind: 'numberunit', prefixCompletion: num)
 		
 		if flags & CT.TagName
 			util.log('resolveTagNames',ctx)
@@ -591,6 +603,9 @@ export default class Completions
 			util.log "autoimport error",e
 
 		add(checker.snippets('tags'),o)
+
+	def numberunits o = {}
+		add(checker.getNumberUnits!,o)
 		
 	def types o = {}
 		
