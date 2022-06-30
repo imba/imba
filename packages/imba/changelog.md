@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.210
 
-- Add time units for `minutes`, `hours`, and `days`.
+- Add number units for `minutes`, `hours`, and `days`
+- Add completions for numbered units
 
 
 ## 2.0.0-alpha.209

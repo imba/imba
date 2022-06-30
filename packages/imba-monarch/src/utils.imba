@@ -193,9 +193,10 @@ export const ToImbaMap = {
 	'Ψ': '#'
 	'Γ': ''
 	'α': '@'
+	'ς': ''
 }
 
-const toImbaRegex = new RegExp("[ΞΦΨΓα]","gu")
+const toImbaRegex = new RegExp("[ΞΦΨΓας]","gu")
 const toImbaReplacer = do(m) ToImbaMap[m]
 
 export def toImbaIdentifier raw

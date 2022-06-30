@@ -1,3 +1,9 @@
+global css
+	$dim: #848d99
+
+css
+	$dim2: #848d9a
+
 extend class One.Two < One.Three
 	title = [200]
 	other = 1234
@@ -16,11 +22,25 @@ extend class Stuff
 	def ping
 		yes
 
+const answer = 42minutes
 
 tag app-item
+	css $dim3: #848d9b
+
+	prop answer2 = 42hours
+	prop answer3 = 42days
 
 	<self>
+		css $dim4: #848d9c
+
 		<div> for item in items
+			css $dim5: #848d9d
+
 			<div[ff:sans] name=item.name> item.text
-		<footer> "Hello"
+			<div[ff:sans c:$dim2] name=item.name> item.text
+			<div[ff:sans c:$dim3] name=item.name> item.text
+			<div[ff:sans c:$dim4] name=item.name> item.text
+			<div[ff:sans c:$dim5] name=item.name> item.text
+
+		<footer[c:$dim]> "Hello"
 			css d:block py:10
