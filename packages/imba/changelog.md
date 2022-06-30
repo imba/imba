@@ -3,7 +3,10 @@
 ## 2.0.0-alpha.210
 
 - Add number units for `minutes`, `hours`, and `days`
-- Add completions for numbered units
+
+- Update tooling to support number units
+
+- Fun fact: number units are disambiguiated using the greek letter `η` internally, which is aptly named "Eta".
 
 
 ## 2.0.0-alpha.209
