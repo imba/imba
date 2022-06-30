@@ -319,15 +319,48 @@ interface Event {
     originalEvent: Event | null;
 }
 
-declare var ςminutes = 60 * 1000;
-declare var ςhours = 60 * 60 * 1000;
-declare var ςdays = 24 * 60 * 60 * 1000;
-
 // interface Object {
 //     [key: string]: any;
 // }
 
 declare namespace imba {
+
+    interface units {
+        /**
+         * Milliseconds
+         */
+        ms: number;
+
+        /**
+         * Seconds
+         */
+         s: number;
+
+        /**
+         * Minutes
+         */
+         minutes: number;
+
+        /**
+         * Hours
+         */
+        hours: number;
+
+        /**
+         * Days
+         */
+        days: number;
+
+        /**
+         * Frames per second
+         */
+        fps: number;
+
+        /**
+         * Pixels
+         */
+        px: number;
+    }
 
     namespace hotkeys {
         function trigger(combo: string): void;
