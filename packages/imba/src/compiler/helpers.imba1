@@ -47,7 +47,7 @@ ansi:error = ansi:red
 
 import toImbaIdentifier,toJSIdentifier from '../utils/identifiers.imba'
 
-var GreekLetters = "αβγδεζηθικλμνξοπρστυφχψω"
+var GreekLetters = "αβγδεζηθικλμνξοπρητυφχψω"
 
 
 export def brace str
@@ -117,12 +117,10 @@ export def isValidIdentifier str
 export def toValidIdentifier str
 	return toJSIdentifier(str)
 	str.replace(/[-\?]/g,'$') # .replace(/\?/g,'θ')
-	# str.replace(/-/g,'η').replace(/\?/g,'θ')
 	
 export def fromValidIdentifier str
 	return toImbaIdentifier(str)
 	str[0] + str.slice(1).replace(/\$$/,'?').replace(/\$/g,'-')
-	# str.replace(/η/g,'-').replace(/θ/g,'?')
 
 export def isSystemIdentifier str
 	GreekLetters.indexOf(str[0]) >= 0

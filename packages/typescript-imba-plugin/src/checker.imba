@@ -182,17 +182,13 @@ export default class ImbaTypeChecker
 		return symbols.filter do(item,i,arr) arr.indexOf(item) == i
 		
 	def getGlobalTags
-		# allGlobals.filter do $1.escapedName.indexOf('CustomElement') > 0
 		checker.getSymbolsInScope(sourceFile,4).filter do $1.escapedName[0] == 'Γ'
-		# allGlobals.filter do $1.escapedName[0] == 'Γ'
 
 	def getNumberUnits
 		props(checker.getDeclaredTypeOfSymbol(resolve('imba').exports.get('units')))
-		# checker.getSymbolsInScope(sourceFile,4).filter do $1.escapedName[0] == 'ς'
 
 	def getNumberUnit name
 		getNumberUnits().find do $1.escapedName == name
-		# checker.getSymbolsInScope(sourceFile,4).find do $1.escapedName == 'ς' + name
 
 	def getLocalTagsInScope
 		let symbols = checker.getSymbolsInScope(sourceFile,32)
