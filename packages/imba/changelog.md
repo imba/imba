@@ -2,8 +2,11 @@
 
 ## 2.0.0-alpha.210
 
-- Add number units for `minutes`, `hours`, and `days`
-- Add completions for numbered units
+* Add number units for `minutes`, `hours`, and `days`
+
+* Add completions for numbered units
+
+* Fixed issue where identical nested selectors were incorrectly optimized away
 
 
 ## 2.0.0-alpha.209
