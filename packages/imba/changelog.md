@@ -8,6 +8,8 @@
 
 * Fixed issue where identical nested selectors were incorrectly optimized away
 
+* Support `silent: true` option for `imba.autorun` to not call imba.commit 
+
 
 ## 2.0.0-alpha.209
 

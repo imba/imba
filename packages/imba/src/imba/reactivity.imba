@@ -669,7 +669,7 @@ class Reaction
 
 		flags ~= (F.RUNNING | F.STALE | F.POSSIBLY_STALE)
 		TRACKING--
-		commit! if $web$
+		commit! if $web$ and !options.silent
 		return res
 
 	def dispose
