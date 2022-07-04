@@ -1,9 +1,6 @@
 import * as util from './util'
-import np from 'path'
-
-import {Position,Range} from './lexer'
-
 const imbac = require '../../imba/compiler.imba'
+
 
 const ImbaOptions = {
 	target: 'tsc'
@@ -13,8 +10,8 @@ const ImbaOptions = {
 	sourcemap: 'hidden'
 }
 
+
 export class Compilation
-	
 	constructor script, snapshot
 		script = script
 		fileName = script.fileName

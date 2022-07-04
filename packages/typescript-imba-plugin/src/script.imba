@@ -312,9 +312,18 @@ export default class ImbaScript
 				out.sym ||= checker.styleprop('@'+post)
 
 			if post.match(/^\d+$/)
-				util.log("this is a numeric thing(!!!)",tok)
-				
-				
+				util.log("this is a numeric thing(!!!)", tok)
+
+		if tok.match("style.value.var")
+			let [m, pre, neg, post] = tok.value.match(/^(\$)([\w\-\d]*)$/)
+			util.log("style.value.var hit: ", [m, pre, neg, post, tok],post.match(/^\d+$/))
+
+			if pre == '$'
+				out.sym ||= checker.stylevalues(post)
+
+			# if post.match(/^\d+$/)
+			# 	util.log("this is a numeric thing(!!!)",tok)
+
 		if g = grp.closest('stylevalue')
 			let idx = (ctx..before..group or '').split(' ').length - 1
 			let alternatives = checker.stylevalues(g.propertyName,0)
