@@ -1,16 +1,18 @@
-import {window, commands, languages, IndentAction, workspace,Range, extensions} from 'vscode'
-
 import path from 'path'
-import * as util from './util'
+import { window, commands, languages, IndentAction, workspace,Range, extensions } from 'vscode'
 
+import * as util from './util'
 import CompletionsProvider from './providers/completions'
 import DocumentSymbolProvider from './providers/symbols'
 import Bridge from './bridge'
 
-let bridge = null
-let log = util.log
 
-languages.setLanguageConfiguration('imba',{
+let bridge = null
+const log = util.log
+const foldingToggles = {}
+
+
+languages.setLanguageConfiguration('imba', {
 	wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)|(#+[\w\-]*)|(@+[\w\-]*)/g,
 	onEnterRules: [{
 		beforeText: /^\s*(?:export def|constructor|def |(export (default )?)?(static )?(def |get |set )|(export (default )?)?(class|tag)|for\s|if\s|elif\s|else|while\s|try|with|finally|except).*?$/,
@@ -27,12 +29,11 @@ languages.setLanguageConfiguration('imba',{
 	}]
 })
 
-const foldingToggles = {}
 
 def adjustmentCommand amount = 1
-	return do(editor,edit)
+	return do(editor, edit)
 		let doc = editor.document
-		let edits = await bridge.call('increment',util.toPath(doc.uri),{
+		let edits = await bridge.call('increment', util.toPath(doc.uri), {
 			by: amount
 			selections: editor.selections
 		})
@@ -40,10 +41,11 @@ def adjustmentCommand amount = 1
 		if edits
 			let start = doc.positionAt(edits[0])
 			let end = doc.positionAt(edits[0] + edits[1])
-			let range = new Range(start,end)
+			let range = new Range(start, end)
 
 			editor.edit do(edit)
-				edit.replace(range,edits[2])
+				edit.replace(range, edits[2])
+
 
 def getStyleBlockLines doc
 	let count = doc.lineCount
@@ -68,27 +70,32 @@ def getStyleBlockLines doc
 				# need to figure out whether the css part stretches multiple lines
 				lines.push(i) if res == yes
 		i++
-	log 'getStyleBlockLines',lines
+	log 'getStyleBlockLines', lines
 	return lines
 
+
 def configure items = {}
-	let cfg = workspace.getConfiguration(undefined,null)
-	for own k,v of items
-		cfg.update(k,v)
+	let cfg = workspace.getConfiguration(undefined, null)
+	for own k, v of items
+		cfg.update(k, v)
+
 
 def sendConfiguration
 	let conf = workspace.getConfiguration('imba')
 	let raw = JSON.parse(JSON.stringify(conf))
-	util.log("sending configuration",raw)
-	bridge.call('setConfiguration',raw)
+	util.log("sending configuration", raw)
+	bridge.call('setConfiguration', raw)
+
 
 export def activate context
 	let conf = workspace.getConfiguration('imba')
+	console.log "imba.activate", conf
+	log JSON.stringify({ msg: "imba.activate", conf: conf })
 	let id = "imba-ipc-{String(Math.random!)}"
 	
 	log("activating imba?! {process.env.TSS_DEBUG}")
 	
-	commands.registerCommand('imba.autoImportAlert') do(doc,item)
+	commands.registerCommand('imba.autoImportAlert') do(doc, item)
 		let message = "Added auto-import for {item.source}"
 		try
 			let edit = item.additionalTextEdits[0]
@@ -106,24 +113,27 @@ export def activate context
 		bridge = new Bridge(tlsapi)	do
 			sendConfiguration!
 		bridge.ping!
-		# bridge.call('setConfiguration',JSON.parse(JSON.stringify(conf)))
+		# bridge.call('setConfiguration', JSON.parse(JSON.stringify(conf)))
 
-		if conf.get('debugPort')
+		const debugPort = conf.get('debugPort') or process.env['IMBA_DEBUG_PORT']
+
+		if debugPort
 			unless process.env.TSS_DEBUG
-				process.env['TSS_DEBUG'] = String(conf.get('debugPort'))
+				process.env['TSS_DEBUG'] = String(debugPort)
 				log("restarting ts server in debug mode {process.env['TSS_DEBUG']}")
-				try await commands.executeCommand("typescript.restartTsServer")
+				try
+					await commands.executeCommand("typescript.restartTsServer")
+				catch e
+					console.error('await commands.executeCommand("typescript.restartTsServer")', e)
+				debugger
 					
 		# sendConfiguration!
 
-
-	languages.registerCompletionItemProvider({language: 'imba'},new CompletionsProvider(bridge),'.',':', '"', '@','%','\\',"'",'=','<','#')
+	languages.registerCompletionItemProvider({language: 'imba'}, new CompletionsProvider(bridge), '.', ':',  '"',  '@', '%', '\\', "'", '=', '<', '#')
 	util.log('setting up symbol provider')
-	languages.registerDocumentSymbolProvider({language: 'imba1'},new DocumentSymbolProvider)
+	languages.registerDocumentSymbolProvider({language: 'imba1'}, new DocumentSymbolProvider)
 
-	workspace.getConfiguration(undefined,null)
-	
-	
+	workspace.getConfiguration(undefined, null)
 	
 	commands.registerCommand('imba.getProgramDiagnostics') do
 		yes
@@ -133,47 +143,45 @@ export def activate context
 		
 	commands.registerCommand('imba.setDefaultSettings') do
 		let settings = {
-			"[imba].editor.insertSpaces": false,
-			"[imba].editor.tabSize": 4,
-			"[imba].editor.autoIndent": "advanced",
+			"[imba].editor.insertSpaces": false
+			"[imba].editor.tabSize": 4
+			"[imba].editor.autoIndent": "advanced"
 			"files.eol": "\n"
 		}
 		configure(settings)
 
-	commands.registerTextEditorCommand('ximba.incrementByOne',adjustmentCommand(1))
-	commands.registerTextEditorCommand('ximba.decrementByOne',adjustmentCommand(-1))
+	commands.registerTextEditorCommand('ximba.incrementByOne', adjustmentCommand(1))
+	commands.registerTextEditorCommand('ximba.decrementByOne', adjustmentCommand(-1))
 
-	commands.registerTextEditorCommand('imba.foldStyles') do(editor,edit)
+	commands.registerTextEditorCommand('imba.foldStyles') do(editor, edit)
 		let key = editor.document.uri.toString!
 		let lines = getStyleBlockLines(editor.document)
 		foldingToggles[key] = yes
-		await commands.executeCommand("editor.fold", {selectionLines: lines, direction: 'up'})
+		await commands.executeCommand("editor.fold", { selectionLines: lines, direction: 'up' })
 
-	commands.registerTextEditorCommand('imba.unfoldStyles') do(editor,edit)
+	commands.registerTextEditorCommand('imba.unfoldStyles') do(editor, edit)
 		let key = editor.document.uri.toString!
 		let lines = getStyleBlockLines(editor.document)
 		foldingToggles[key] =  no
-		await commands.executeCommand("editor.unfold", {selectionLines: lines})
+		await commands.executeCommand("editor.unfold", { selectionLines: lines })
 
-	commands.registerTextEditorCommand('imba.toggleStyles') do(editor,edit)
+	commands.registerTextEditorCommand('imba.toggleStyles') do(editor, edit)
 		let key = editor.document.uri.toString!
 		let lines = getStyleBlockLines(editor.document)
 		let bool = foldingToggles[key] or no
 		foldingToggles[key] = !bool
 		let cmd = bool ? 'unfold' : 'fold'
-		log 'toggle folding',cmd,lines,bool
-		await commands.executeCommand("editor.{cmd}", {selectionLines: lines, direction: 'up'})
+		log 'toggle folding', cmd, lines, bool
+		await commands.executeCommand("editor.{cmd}", { selectionLines: lines, direction: 'up' })
 	
 	workspace.onDidSaveTextDocument do(e)
-		let path = util.toPath(e.uri)
+		const path = util.toPath(e.uri)
 		log("ondidsavedoc? {path}")
 		if util.isImba(path)
-			
-			bridge.call('onDidSaveTextDocument',util.toPath(e.uri))
+			bridge.call('onDidSaveTextDocument', path)
 	
 	workspace.onDidChangeConfiguration do(e)
 		sendConfiguration!
-		
 	
 	window.onDidChangeTextEditorSelection do(e)
 		const doc = e.textEditor.document
@@ -185,8 +193,10 @@ export def activate context
 			file: util.toPath(uri)
 			uri: uri.toString!
 		}
+
 		if util.isImba(params.file)
-			bridge.call('onDidChangeTextEditorSelection',params.file,params)
+			bridge.call('onDidChangeTextEditorSelection', params.file, params)
+
 
 export def deactivate
 	return undefined

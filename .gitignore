@@ -1,7 +1,8 @@
 .DS_Store
 .cache
 .imba-cache
-.vscode
+.vscode/*
+!.vscode/launch.json
 
 tmp
 test/perf

@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Extension:Local",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--disable-extensions",
+                "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-imba"
+            ],
+            // "outFiles": ["${workspaceFolder:plugin-core}/**/*.js"],
+            "outFiles": [
+                "${workspaceFolder}/packages/vscode-imba/dist/**/*.js"
+            ],
+            "skipFiles": [
+                "<node_internals>/**/*.js",
+                "**/extension.js",
+                "**/extensionHostProcess.js"
+            ],
+            "env": {
+                "IMBA_DEBUG_PORT": "8888",
+                // "TSS_DEBUG": "8888",
+                // "debugPort": "8888",
+                // "imba": {
+                //     "debugPort": "8888",
+                // },
+                "VSCODE_DEBUGGING_EXTENSION": "vsimba"
+            }
+        }
+    ]
+}
