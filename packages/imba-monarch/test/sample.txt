@@ -1,3 +1,6 @@
+global css
+	$dim: #848d99
+
 extend class One.Two < One.Three
 	title = [200]
 	other = 1234
@@ -21,6 +24,6 @@ tag app-item
 
 	<self>
 		<div> for item in items
-			<div[ff:sans] name=item.name> item.text
+			<div[ff:sans c:$dim] name=item.name> item.text
 		<footer> "Hello"
 			css d:block py:10
