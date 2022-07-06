@@ -621,7 +621,12 @@ class Reaction
 		self
 	
 	def deactivate
-		dispose!
+		clearTimeout(timeout) if timeout
+		if observing
+			for item in observing
+				item.removeSubscriber(self)
+		observing = checkComputedValues = cachedComputedVersions = null
+		self
 
 	def call
 		if TRACKING
@@ -673,10 +678,8 @@ class Reaction
 		return res
 
 	def dispose
-		clearTimeout(timeout) if timeout
-		for item in observing
-			item.removeSubscriber(self)
-		observing = checkComputedValues = cachedComputedVersions = null
+		deactivate!
+		cb = context = options = null
 		self
 
 class Action
