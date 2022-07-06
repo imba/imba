@@ -676,7 +676,7 @@ class Reaction
 		clearTimeout(timeout) if timeout
 		for item in observing
 			item.removeSubscriber(self)
-		observing = context = cb = checkComputedValues = cachedComputedVersions = null
+		observing = checkComputedValues = cachedComputedVersions = null
 		self
 
 class Action

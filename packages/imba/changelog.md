@@ -8,7 +8,9 @@
 
 * Fixed issue where identical nested selectors were incorrectly optimized away
 
-* Support `silent: true` option for `imba.autorun` to not call imba.commit 
+* Support `silent: true` option for `imba.autorun` to not call imba.commit
+
+* Fixed issue where @autorun methods threw error when element was re-mounted (#684)
 
 
 ## 2.0.0-alpha.209
