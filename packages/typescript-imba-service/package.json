@@ -3,6 +3,10 @@
   "description": "wrapper for spawning an imba tsserver",
   "version": "0.1.0",
   "author": "Sindre Aarsaether <sindre@identu.no>",
+  "scripts": {
+    "trigger:go-to-definition:css-variable": "imba test/index.imba",
+    "trigger:completion:class": "imba test/index.imba"
+  },
   "dependencies": {
     "typescript-imba-plugin": "file:../typescript-imba-plugin"
   },
