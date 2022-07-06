@@ -135,7 +135,6 @@ export default class Service < EventEmitter
 		virtualScripts[path] = script
 		return script
 
-		
 	def resolveImbaDirForProject proj
 		let imbadir = ts.resolveImportPath('imba', proj.getConfigFilePath!, proj)
 		if imbadir and imbadir.resolvedModule
@@ -177,7 +176,6 @@ export default class Service < EventEmitter
 				IMBA.#errored = yes
 				return null
 		return null
-
 
 	def prepareProjectForImba proj
 		let inferred = proj isa ts.server.InferredProject
@@ -236,7 +234,7 @@ export default class Service < EventEmitter
 		emit('create', info)
 		createVirtualProjectConfig!
 		return decorated
-		
+
 	def convertSpan span, ls, filename, kind = null
 		if util.isImba(filename) and span.#ostart == undefined
 			span.#ostart = span.start
@@ -246,7 +244,7 @@ export default class Service < EventEmitter
 			span.start = start
 			span.length = end - start
 		return span
-		
+
 	def convertImbaDtsDefinition item
 		try
 			let file = item.fileName.replace("._.d.ts", '')
@@ -259,8 +257,7 @@ export default class Service < EventEmitter
 				item.contextSpan = token.body ? script.doc.expandSpanToLines(token.body.contextSpan) : token.span
 			item.fileName = file
 		return item
-		
-		
+
 	def convertLocationsToImba res, ls, filename, kind = null
 		if res isa Array
 			for item in res
@@ -319,13 +316,12 @@ export default class Service < EventEmitter
 			# 		dp.text = util.toImbaString(dp.text, dp, res.displayParts)
 
 		return res
-		
+
 	def getFileContext filename, pos, ls
 		let script = getImbaScript(filename)
 		let opos = script ? script.d2o(pos, ls.getProgram!) : pos
 		return {script: script, filename: filename, dpos: pos, opos: opos}
-		
-		
+
 	def decorate ls
 		if ls.#proxied
 			return ls
@@ -530,13 +526,12 @@ export default class Service < EventEmitter
 						return res
 					catch e
 						util.log('error', k, e)
-
 		
 		return new Proxy(ls, { get: do(target, key) return intercept[key] || target[key] })
-	
+
 	def rewriteInboundMessage msg
 		msg
-	
+
 	def awakenProjectForImba proj
 		util.warn "service awakenProjectForImba", proj
 		# what if it happens multiple times?
@@ -545,45 +540,43 @@ export default class Service < EventEmitter
 			item.syncDts!
 		self
 
-	
-		
 	def setup
 		let exts = (ps.hostConfiguration.extraFileExtensions ||= [])
 		exts.push('.imba') if exts.indexOf('.imba') == -1
 		setTimeout(&, 200) do createVirtualProjectConfig!
 		self
-	
+
 	def getScriptInfo src
 		ps.getScriptInfo(resolvePath(src))
-		
+
 	def getImbaScript src
 		getScriptInfo(src)..im
-	
+
 	def getSourceFile src
 		let info = getScriptInfo(src)
 		info..cacheSourceFile..sourceFile
-		
+
 	get scripts
 		Array.from(ps.filenameToScriptInfo.values())
-		
+
 	get imbaScripts
 		# scripts.filter(do(script) util.isImba(script.fileName)).map(do(script) script.imba)
 		scripts.map(do $1.#imba).filter(do $1)
 
 	get cwd
 		#cwd ||= normalizePath(global.IMBASERVER_CWD or process.env.VSCODE_CWD or process.env.IMBASERVER_CWD)
-	
+
 	get m
 		getScriptInfo('main.imba')
-			
+
 	get u
 		getScriptInfo('util.imba')
-	
+
 	def getExt src
 		src.substr(src.lastIndexOf("."))
 
 	def normalizePath src
 		src.split(np.sep).join(np.posix.sep)
-		
+
 	def resolvePath src
 		ps.toPath(normalizePath(np.resolve(cwd, src || '__.js')))

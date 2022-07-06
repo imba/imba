@@ -125,8 +125,7 @@ export def activate context
 					await commands.executeCommand("typescript.restartTsServer")
 				catch e
 					console.error('await commands.executeCommand("typescript.restartTsServer")', e)
-				debugger
-					
+
 		# sendConfiguration!
 
 	languages.registerCompletionItemProvider({language: 'imba'}, new CompletionsProvider(bridge), '.', ':',  '"',  '@', '%', '\\', "'", '=', '<', '#', '$')

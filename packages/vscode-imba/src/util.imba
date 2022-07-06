@@ -25,9 +25,9 @@ export def fastExtractSymbols text, filename = ''
 	let lines = text.split(/\n/)
 	let symbols = []
 	let scope = {
-		indent: -1,
-		name: filename,
-		kind: SymbolKind.File,
+		indent: -1
+		name: filename
+		kind: SymbolKind.File
 		children: []
 	}
 	let root = scope
@@ -35,7 +35,7 @@ export def fastExtractSymbols text, filename = ''
 	let m
 	let t0 = Date.now!
 
-	for line,i in lines
+	for line, i in lines
 		if line.match(/^\s*$/)
 			continue
 
@@ -63,13 +63,13 @@ export def fastExtractSymbols text, filename = ''
 			let md = ''
 
 			let range = {
-				start: {line: i, character: m[1].length}
-				end: {line: i, character: m[0].length}
+				start: { line: i, character: m[1].length }
+				end: { line: i, character: m[0].length }
 			}
 			
 			let selrange = {
-				start: {line: i, character: m[1].length}
-				end: {line: i, character: m[0].length}
+				start: { line: i, character: m[1].length }
+				end: { line: i, character: m[0].length }
 			}
 
 			let symbol = {
@@ -99,7 +99,7 @@ export def fastExtractSymbols text, filename = ''
 
 			if scope.type == 'tag'
 				md = "```html\n<{scope.name} {name}>\n```\n"
-				symbol.description = {kind: 'markdown',value: md}
+				symbol.description = { kind: 'markdown', value: md }
 
 			scope.children.push(symbol)
 			scope = symbol
@@ -107,5 +107,5 @@ export def fastExtractSymbols text, filename = ''
 			symbols.push(symbol)
 	
 	root.all = symbols
-	# console.log 'fast outline',text.length,Date.now! - t0
+	# console.log 'fast outline', text.length, Date.now! - t0
 	return root

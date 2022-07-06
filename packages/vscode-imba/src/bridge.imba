@@ -2,6 +2,7 @@ import ipc from 'node-ipc'
 
 import * as util from './util'
 
+
 export default class Host
 	constructor api, cb
 		self.id = "imba-ipc-{String(Math.random!)}"
@@ -15,28 +16,28 @@ export default class Host
 		
 		serve!
 		self
-		
+
 	def serve
 		ipc.config.id = id		
 		ipc.serve do
 			util.log('ipc serving on ' + id)
-			ipc.server.on('message') do(data,socket) handle(data,socket)
+			ipc.server.on('message') do(data, socket) handle(data, socket)
 			ipc.server.on('connect') do(socket)
 				util.log('server connected?')
 				cb(socket) if cb
 			emit('ready')
 		ipc.server.start!
-		
+
 	def ping
 		emit('ping', ref: reqs++)
 
 	def emit name, body = {}
 		send(type: 'event', event: name, body: body)
-		
+
 	def handle e, socket = null
 		let now = Date.now!
 		let elapsed = now - e.ts
-		util.log("ipc.onmessage {JSON.stringify(e).slice(0,20)} transferred in {elapsed}ms")
+		util.log("ipc.onmessage {JSON.stringify(e).slice(0, 20)} transferred in {elapsed}ms")
 		
 		if e.type == 'response'
 			if let id = e.responseRef
@@ -46,7 +47,7 @@ export default class Host
 				request.#resolve(e.body)
 				delete pendingRequests[id]
 		self
-	
+
 	def call method, ...params
 		let ev = {
 			type: 'request'
@@ -59,7 +60,7 @@ export default class Host
 		pendingRequests[ev.requestRef] = ev
 		send(ev)
 		return ev.#promise
-		
+
 	def send msg
 		let cfg = {id: id, data: msg}
-		self.api._pluginManager._onDidUpdateConfig.fire({ pluginId: 'imba',config: cfg})
+		self.api._pluginManager._onDidUpdateConfig.fire({ pluginId: 'imba', config: cfg })

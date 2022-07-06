@@ -1,17 +1,18 @@
 import { log } from 'node-ipc'
-import * as util from '../util'
+import { CompletionItemKind, CompletionList, CompletionItem, Range, TextEdit, MarkdownString, SnippetString } from 'vscode'
 
-import { CompletionItemKind, CompletionList, CompletionItem, Range, TextEdit, MarkdownString, SnippetString, Command } from 'vscode'
+import * as util from '../util'
 import * as Converters from '../converters'
 
+
 class ImbaCompletionItem < CompletionItem
-	
 	constructor raw
 		super(raw.label.name)
 		#raw = raw
 		Object.assign(self,raw)
 		# self.textEdit = raw.textEdit
 		# self.triggerCharacters = raw.triggerCharacters
+
 
 export default class CompletionsProvider
 	constructor bridge
@@ -36,16 +37,16 @@ export default class CompletionsProvider
 		if let te = raw.additionalTextEdits
 			for entry,i in te
 				continue if entry isa TextEdit
-				let range = new Range doc.positionAt(entry.start),doc.positionAt(entry.start + entry.length)
-				te[i] = TextEdit.replace(range,entry.newText)
+				let range = new Range doc.positionAt(entry.start), doc.positionAt(entry.start + entry.length)
+				te[i] = TextEdit.replace(range, entry.newText)
 			
 			item.additionalTextEdits = te
 		item
 
 	def provideCompletionItems(doc, pos, token, context)
 		let file = util.toPath(doc)
-		util.log("provideCompletionItems!! {doc} {doc.fsPath} {doc.offsetAt(pos)} {file} {JSON.stringify(context)}",pos)
-		let range = new Range(pos,pos)
+		util.log("provideCompletionItems!! {doc} {doc.fsPath} {doc.offsetAt(pos)} {file} {JSON.stringify(context)}", pos)
+		let range = new Range(pos, pos)
 		if context.triggerKind != 2
 			#cache = {}
 		
@@ -59,7 +60,7 @@ export default class CompletionsProvider
 		else
 			#cache = {}
 
-		let res = await #bridge.call('getCompletions',file,doc.offsetAt(pos),context)
+		let res = await #bridge.call('getCompletions', file, doc.offsetAt(pos), context)
 		
 		#doc = doc
 
@@ -68,11 +69,11 @@ export default class CompletionsProvider
 		for raw in res
 			
 			if raw.range
-				raw.range = new Range(doc.positionAt(raw.range[0]),doc.positionAt(raw.range[1]))
+				raw.range = new Range(doc.positionAt(raw.range[0]), doc.positionAt(raw.range[1]))
 			
 			if let te = raw.textEdit
-				let range = new Range doc.positionAt(te.start),doc.positionAt(te.start + te.length)
-				raw.textEdit = TextEdit.replace(range,te.newText)
+				let range = new Range doc.positionAt(te.start), doc.positionAt(te.start + te.length)
+				raw.textEdit = TextEdit.replace(range, te.newText)
 				
 			elif raw.insertText == undefined
 				raw.insertText = raw.label.name
@@ -115,29 +116,29 @@ export default class CompletionsProvider
 		if context.triggerKind == 1	or true
 			#cache[file] = {items: items}
 
-		let list = new CompletionList(items,true)
+		let list = new CompletionList(items, true)
 		return list
 	
 	def resolveCompletionItem item, token
 		if item.#resolved
 			return item
 
-		let res = await #bridge.call('resolveCompletionItem',item,item.data)
+		let res = await #bridge.call('resolveCompletionItem', item, item.data)
 		util.log("resolving item {JSON.stringify(item)} {JSON.stringify(item.#raw)} {JSON.stringify(item.data)} {JSON.stringify(res)}")
 		
 		if res.markdown
 			item.documentation ||= new MarkdownString(res.markdown)
 			
-		item.documentation ||= formatDocumentation(res.documentation,item)
+		item.documentation ||= formatDocumentation(res.documentation, item)
 		item.detail ||= res.detail
 		
 		
 		item.#resolved = yes
 		
-		syncItem(#doc,item,res)
+		syncItem(#doc, item, res)
 		
 		if item.source
-			item.command = {command: 'imba.autoImportAlert', arguments: [#doc,item]}
+			item.command = {command: 'imba.autoImportAlert', arguments: [#doc, item]}
 		
 		# item.label.parameters = "hello there"
 		# also add code actions if needed(!)
