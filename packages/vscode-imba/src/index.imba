@@ -1,5 +1,5 @@
 import path from 'path'
-import { window, commands, languages, IndentAction, workspace,Range, extensions } from 'vscode'
+import { window, commands, languages, IndentAction, workspace, Range, extensions } from 'vscode'
 
 import * as util from './util'
 import CompletionsProvider from './providers/completions'
@@ -13,7 +13,7 @@ const foldingToggles = {}
 
 
 languages.setLanguageConfiguration('imba', {
-	wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)|(#+[\w\-]*)|(@+[\w\-]*)/g,
+	wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)|(#+[\w\-]*)|(@+[\w\-]*)|(\$+[\w\-]*)/g,
 	onEnterRules: [{
 		beforeText: /^\s*(?:export def|constructor|def |(export (default )?)?(static )?(def |get |set )|(export (default )?)?(class|tag)|for\s|if\s|elif\s|else|while\s|try|with|finally|except).*?$/,
 		action: { indentAction: IndentAction.Indent }
@@ -129,7 +129,7 @@ export def activate context
 					
 		# sendConfiguration!
 
-	languages.registerCompletionItemProvider({language: 'imba'}, new CompletionsProvider(bridge), '.', ':',  '"',  '@', '%', '\\', "'", '=', '<', '#')
+	languages.registerCompletionItemProvider({language: 'imba'}, new CompletionsProvider(bridge), '.', ':',  '"',  '@', '%', '\\', "'", '=', '<', '#', '$')
 	util.log('setting up symbol provider')
 	languages.registerDocumentSymbolProvider({language: 'imba1'}, new DocumentSymbolProvider)
 

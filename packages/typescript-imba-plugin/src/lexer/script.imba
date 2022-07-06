@@ -400,6 +400,10 @@ export default class ImbaScriptInfo
 		if tok.match('style.selector.modifier style.property.modifier')
 			flags = t.StyleModifier
 			suggest.stylemodRange = [tok.offset,tok.endOffset]
+
+		if tok.match('style.value.var')
+			flags ~= t.Value
+			flags |= t.StyleProp
 			
 		if tok.match('style.selector.element')
 			flags |= t.StyleSelector

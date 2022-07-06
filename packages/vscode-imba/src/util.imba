@@ -51,6 +51,7 @@ export def fastExtractSymbols text, filename = ''
 			scope = scope.#parent or root 
 			
 
+		# TODO: Add `$dim` matching here?
 		m = line.match(/^(\t*((?:export )?(?:static )?(?:extend )?)(class|tag|def|get|set|prop|attr) )(\@?[\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
 		# m ||= line.match(/^(.*(def|get|set|prop|attr) )([\w\-\$]+)/)
 
@@ -92,6 +93,7 @@ export def fastExtractSymbols text, filename = ''
 			
 			symbol.containerName = scope..name
 
+			# TODO: Add `$dim` matching here?
 			if kind == 'tag' and m = line.match(/\<\s+([\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
 				symbol.superclass = m[1]
 

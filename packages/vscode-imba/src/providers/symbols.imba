@@ -8,6 +8,7 @@ const kindMap = {
 	get: SymbolKind.Property
 	prop: SymbolKind.Property
 	attr: SymbolKind.Property
+	svar: SymbolKind.Variable # TODO: Start using svar, or make overlap with other kinds?
 	set: SymbolKind.Method
 	class: SymbolKind.Class
 	tag: SymbolKind.Class

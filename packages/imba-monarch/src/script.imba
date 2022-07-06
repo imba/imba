@@ -417,6 +417,10 @@ export default class ImbaScriptInfo
 			
 		if tok.match('operator.access accessor white.classname white.tagname')
 			flags ~= t.Value
+
+		if tok.match('style.value.var')
+			flags ~= t.Value
+			flags |= t.StyleProp
 			
 		if group.closest('imports')
 			flags ~= t.Value
