@@ -154,6 +154,12 @@ interface Event {
      * @detail (...data)
      */
     αlog(...data: any[]): void;
+
+    /**
+     * Handle if event originates from outside the literal container of the `<global>` teleport.
+     * This modifier is only supported on `<global>` listeners.
+     */
+     αoutside(): void;
 }
 
 interface MouseEvent {
