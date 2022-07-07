@@ -1,12 +1,5 @@
 # Changelog
 
-## 2.0.0-alpha.210
-
-- Add number units for `minutes`, `hours`, and `days`
-
-- Update tooling to support number units
-
-
 ## 2.0.0-alpha.209
 
 * Fixed bug with observables not unsubscribing correctly in certain cases
