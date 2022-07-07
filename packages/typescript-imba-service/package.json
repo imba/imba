@@ -4,8 +4,10 @@
   "version": "0.1.0",
   "author": "Sindre Aarsaether <sindre@identu.no>",
   "scripts": {
-    "trigger:go-to-definition:css-variable": "imba test/index.imba",
-    "trigger:completion:class": "imba test/index.imba"
+    "trigger:css-variable:quickinfo": "imba test/test-css-variable-quickinfo.imba",
+    "trigger:css-variable:completion": "imba test/test-css-variable-completion.imba",
+    "trigger:extend-class:completion": "imba test/test-extend-class-completion.imba",
+    "trigger:variable:completion": "imba test/let-variable-completion.imba"
   },
   "dependencies": {
     "typescript-imba-plugin": "file:../typescript-imba-plugin"
