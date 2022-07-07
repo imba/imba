@@ -10677,7 +10677,8 @@ export class StyleRuleSet < StyleNode
 
 		if o:rule and o:styles
 			if o:styles[@sel]
-				Object.assign(o:styles[@sel],@styles)
+				let base = o:styles[@sel]
+				helpers.deepAssign(base,@styles)
 			else
 				o:styles[@sel] = @styles
 

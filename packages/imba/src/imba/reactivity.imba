@@ -621,7 +621,12 @@ class Reaction
 		self
 	
 	def deactivate
-		dispose!
+		clearTimeout(timeout) if timeout
+		if observing
+			for item in observing
+				item.removeSubscriber(self)
+		observing = checkComputedValues = cachedComputedVersions = null
+		self
 
 	def call
 		if TRACKING
@@ -669,14 +674,12 @@ class Reaction
 
 		flags ~= (F.RUNNING | F.STALE | F.POSSIBLY_STALE)
 		TRACKING--
-		commit! if $web$
+		commit! if $web$ and !options.silent
 		return res
 
 	def dispose
-		clearTimeout(timeout) if timeout
-		for item in observing
-			item.removeSubscriber(self)
-		observing = context = cb = checkComputedValues = cachedComputedVersions = null
+		deactivate!
+		cb = context = options = null
 		self
 
 class Action

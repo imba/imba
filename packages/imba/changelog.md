@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0-alpha.211
+
+- Add number units for `minutes`, `hours`, and `days`
+
+## 2.0.0-alpha.210
+
+* Fixed issue where identical nested selectors were incorrectly optimized away
+
+* Support `silent: true` option for `imba.autorun` to not call imba.commit
+
+* Fixed issue where @autorun methods threw error when element was re-mounted (#684)
+
 ## 2.0.0-alpha.209
 
 * Fixed bug with observables not unsubscribing correctly in certain cases
