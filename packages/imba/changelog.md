@@ -6,8 +6,6 @@
 
 - Update tooling to support number units
 
-- Fun fact: number units are disambiguiated using the greek letter `η` internally, which is aptly named "Eta".
-
 
 ## 2.0.0-alpha.209
 
