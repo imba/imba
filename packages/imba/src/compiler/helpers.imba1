@@ -47,7 +47,7 @@ ansi:error = ansi:red
 
 import toImbaIdentifier,toJSIdentifier from '../utils/identifiers.imba'
 
-var GreekLetters = "αβγδεζηθικλμνξοπρτυφχψω"
+var GreekLetters = "αβγδεζηθικλμνξοπρστυφχψω"
 
 
 export def brace str
