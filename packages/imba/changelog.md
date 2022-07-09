@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Add number units for `minutes`, `hours`, and `days`
+* Add number units for `minutes`, `hours`, and `days`
 
 * Fixed issue where identical nested selectors were incorrectly optimized away
 
