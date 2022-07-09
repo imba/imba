@@ -26,6 +26,9 @@ export default class ImbaScript
 		
 	get dts
 		#dts ||= new ImbaScriptDts(self)
+
+	get js
+		lastCompilation..js
 			
 	def getMapper target
 		let snap = target ? target.getSourceFile(fileName).scriptSnapshot : info.getSnapshot!
