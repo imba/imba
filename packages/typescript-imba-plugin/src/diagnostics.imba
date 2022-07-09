@@ -1,3 +1,10 @@
+###
+Imba supports typescript typings not to be a strict statically typed language
+but rather to provide good tooling (ie goto definition, completions etc).
+Due to the dynamic nature of Imba there are many common patterns typescript
+reports as errors that we simply silence. 
+###
+
 const Rules = [
 	
 	code: 2322	

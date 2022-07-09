@@ -561,6 +561,10 @@ export default class Service < EventEmitter
 	def getSourceFile src
 		let info = getScriptInfo(src)
 		info..cacheSourceFile..sourceFile
+
+	def getDiagnostics
+		let program = cp.program
+		return ts.getPreEmitDiagnostics(program)
 		
 	get scripts
 		Array.from(ps.filenameToScriptInfo.values())
