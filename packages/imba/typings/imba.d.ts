@@ -8,112 +8,6 @@
 /// <reference path="./styles.generated.d.ts" />
 /// <reference path="./styles.modifiers.d.ts" />
 
-declare namespace imba {
-
-
-    interface Globals {
-        /** The global clearInterval() method cancels a timed, repeating action which was previously established by a call to setInterval(). */
-        clearInterval(handle?: number): void;
-        /** The global clearTimeout() method cancels a timeout previously established by calling setTimeout(). */
-        clearTimeout(handle?: number): void;
-        fetch(input: RequestInfo, init?: RequestInit): Promise<Response>;
-        queueMicrotask(callback: VoidFunction): void;
-        /**
-         * The setInterval() method, offered on the Window and Worker interfaces, repeatedly calls a function or executes a code snippet, with a fixed time delay between each call.
-         */
-        setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
-        /** The global setTimeout() method sets a timer which executes a function or specified piece of code once the timer expires. */
-        setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
-        
-        /**
-         * Returns a Boolean value that indicates whether a value is the reserved value NaN (not a number).
-         * @param number A numeric value.
-         */
-        isNaN(number: number): boolean;
-
-        /**
-         * Determines whether a supplied number is finite.
-         * @param number Any numeric value.
-         */
-        isFinite(number: number): boolean;
-
-        /** Reference to the current window */
-        readonly window: Window;
-
-        /** Reference to the current document */
-        readonly document: Document;
-
-        /** Reference to the current document */
-        readonly process: any;
-
-        /** Dirname */
-        readonly __dirname: string;
-
-        /** Filename */
-        readonly __filename: string;
-
-        /** Real filename */
-        readonly __realname: string;
-
-        /** Reference to the global object */
-        readonly global: typeof globalThis;
-
-        /**
-         * Converts a string to an integer.
-         * @param string A string to convert into a number.
-         * @param radix A value between 2 and 36 that specifies the base of the number in `string`.
-         * If this argument is not supplied, strings with a prefix of '0x' are considered hexadecimal.
-         * All other strings are considered decimal.
-         */
-        parseInt(string: string, radix?: number): number;
-
-        /**
-         * Converts a string to a floating-point number.
-         * @param string A string that contains a floating-point number.
-         */
-        parseFloat(string: string): number;
-
-        /** Access to the global console object */
-        console: Console;
-    }
-
-    interface Context {
-        [key: string]: any;
-    }
-
-    interface Flags {
-        /**
-         * 
-         * @summary Returns true if the list contains the given token, otherwise false.
-         */
-        contains(flag: string): boolean;
-        /**
-         * 
-         * @summary Adds the specified token to the list.
-         */
-        add(flag: string): void;
-        /**
-         * 
-         * @summary Removes the specified token from the list.
-         */
-        remove(flag: string): void;
-        /**
-         * 
-         * @summary Toggles specified token in the list.
-         */
-        toggle(flag: string, toggler?: any): void;
-        /**
-         * 
-         * @summary Adds the specified token to the list
-         */
-        incr(flag: string): number;
-        /**
-         * 
-         * @summary Removes the specified token from the list if zero increments remain
-         */
-        decr(flag: string): number;
-    }
-}
 
 interface Node {
     /**
@@ -325,6 +219,109 @@ interface Event {
 
 declare namespace imba {
 
+    interface Globals {
+        /** The global clearInterval() method cancels a timed, repeating action which was previously established by a call to setInterval(). */
+        clearInterval(handle?: number): void;
+        /** The global clearTimeout() method cancels a timeout previously established by calling setTimeout(). */
+        clearTimeout(handle?: number): void;
+        fetch(input: RequestInfo, init?: RequestInit): Promise<Response>;
+        queueMicrotask(callback: VoidFunction): void;
+        /**
+         * The setInterval() method, offered on the Window and Worker interfaces, repeatedly calls a function or executes a code snippet, with a fixed time delay between each call.
+         */
+        setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
+        /** The global setTimeout() method sets a timer which executes a function or specified piece of code once the timer expires. */
+        setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
+        
+        /**
+         * Returns a Boolean value that indicates whether a value is the reserved value NaN (not a number).
+         * @param number A numeric value.
+         */
+        isNaN(number: number): boolean;
+
+        /**
+         * Determines whether a supplied number is finite.
+         * @param number Any numeric value.
+         */
+        isFinite(number: number): boolean;
+
+        /** Reference to the current window */
+        readonly window: Window;
+
+        /** Reference to the current document */
+        readonly document: Document;
+
+        /** Reference to the current document */
+        readonly process: any;
+
+        /** Dirname */
+        readonly __dirname: string;
+
+        /** Filename */
+        readonly __filename: string;
+
+        /** Real filename */
+        readonly __realname: string;
+
+        /** Reference to the global object */
+        readonly global: typeof globalThis;
+
+        /**
+         * Converts a string to an integer.
+         * @param string A string to convert into a number.
+         * @param radix A value between 2 and 36 that specifies the base of the number in `string`.
+         * If this argument is not supplied, strings with a prefix of '0x' are considered hexadecimal.
+         * All other strings are considered decimal.
+         */
+        parseInt(string: string, radix?: number): number;
+
+        /**
+         * Converts a string to a floating-point number.
+         * @param string A string that contains a floating-point number.
+         */
+        parseFloat(string: string): number;
+
+        /** Access to the global console object */
+        console: Console;
+    }
+
+    interface Context {
+        [key: string]: any;
+    }
+
+    interface Flags {
+        /**
+         * 
+         * @summary Returns true if the list contains the given token, otherwise false.
+         */
+        contains(flag: string): boolean;
+        /**
+         * 
+         * @summary Adds the specified token to the list.
+         */
+        add(flag: string): void;
+        /**
+         * 
+         * @summary Removes the specified token from the list.
+         */
+        remove(flag: string): void;
+        /**
+         * 
+         * @summary Toggles specified token in the list.
+         */
+        toggle(flag: string, toggler?: any): void;
+        /**
+         * 
+         * @summary Adds the specified token to the list
+         */
+        incr(flag: string): number;
+        /**
+         * 
+         * @summary Removes the specified token from the list if zero increments remain
+         */
+        decr(flag: string): number;
+    }
+
     interface units {
         /**
          * Milliseconds
@@ -332,34 +329,35 @@ declare namespace imba {
         ms: number;
 
         /**
-         * Seconds
+         * Seconds. Compiles to n * 1000 (milliseconds in one second)
          */
          s: number;
 
         /**
-         * Minutes
+         * Days. Compiles to n * 60000 (milliseconds in one minute)
          */
-         minutes: number;
+        minutes: number;
 
         /**
-         * Hours
+         * Hours. Compiles to n * 3600000 (milliseconds in 1 hour)
          */
         hours: number;
 
         /**
-         * Days
+         * Days. Compiles to n * 86400000 (milliseconds in one day)
          */
         days: number;
 
         /**
-         * Frames per second
+         * Frames per second. Compiles to 1000 / n
+         * Ie 60fps => 1000 / 60.
          */
         fps: number;
 
         /**
          * Pixels
          */
-        px: number;
+        px: string;
     }
 
     namespace hotkeys {
