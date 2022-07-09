@@ -1,10 +1,8 @@
 # Changelog
 
-## 2.0.0-alpha.211
+## Unreleased
 
 - Add number units for `minutes`, `hours`, and `days`
-
-## 2.0.0-alpha.210
 
 * Fixed issue where identical nested selectors were incorrectly optimized away
 
