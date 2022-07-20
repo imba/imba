@@ -1,5 +1,5 @@
 import * as util from './util'
-import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as ImbaSymbolFlags} from './lexer'
+import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as ImbaSymbolFlags} from 'imba-monarch'
 import AutoImportContext from './importer'
 const Globals = "global imba module window document exports console process parseInt parseFloat setTimeout setInterval setImmediate clearTimeout clearInterval clearImmediate globalThis isNaN isFinite __dirname __filename".split(' ')
 

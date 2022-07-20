@@ -15,6 +15,7 @@
         "directory": "packages/typescript-imba-plugin"
     },
     "dependencies": {
-        "node-ipc": "9.1.4"
+        "node-ipc": "9.1.4",
+        "imba-monarch": "file:../imba-monarch"
     }
 }

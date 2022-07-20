@@ -2,7 +2,7 @@
 import * as util from './util'
 import Context from './context'
 
-import {Sym as ImbaSymbol,CompletionTypes as CT} from './lexer'
+import {Sym as ImbaSymbol,CompletionTypes as CT, Token as ImbaToken} from 'imba-monarch'
 import type ImbaScript from './script'
 
 

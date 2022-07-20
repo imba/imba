@@ -1,7 +1,7 @@
 import * as util from './util'
 import np from 'path'
 
-import {Position,Range} from './lexer'
+import {Position,Range} from 'imba-monarch'
 
 const imbac = require '../../imba/compiler.imba'
 

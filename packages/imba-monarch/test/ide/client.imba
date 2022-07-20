@@ -1,5 +1,5 @@
 import txt from '../sample.txt'
-import Script,{Node,Token} from '../../src/index'
+import Script,{Node,Token} from '../../index'
 
 const replacements = {
 	'&': '&amp;',
@@ -23,6 +23,7 @@ class State
 			focus = context.token
 			window.localStorage.setItem('loc',val)
 			console.log 'context',context
+			window.ctx = context
 			imba.commit!
 	
 	get loc

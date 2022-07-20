@@ -25,7 +25,7 @@ export default class ImbaScriptInfo
 		initialState = lexer.getInitialState!
 		isLegacy = no
 		history = []
-		#lexed = {lines:[]}
+		#lexed = {lines:[],typeMatchCache:{}}
 		self.lexer = lexer
 		
 	def sync
@@ -355,7 +355,8 @@ export default class ImbaScriptInfo
 			flags |= CompletionTypes.Access
 			target = tok.prev
 
-		
+		if tok.match('style.property.var')
+			flags |= CompletionTypes.StyleVar
 			
 		if tok.match('tag.name tag.open')
 			flags |= CompletionTypes.TagName
@@ -414,6 +415,9 @@ export default class ImbaScriptInfo
 		if scope.closest('rule') and before.line.match(/^\s*$/)
 			flags |= t.StyleSelector
 			flags ~= t.StyleValue
+
+		if tok.match('style.value') and before.token[0] == '$'
+			flags |= t.StyleVar
 			
 		if tok.match('operator.access accessor white.classname white.tagname')
 			flags ~= t.Value
@@ -648,6 +652,7 @@ export default class ImbaScriptInfo
 			lines: []
 			tokens: tokens
 			snapshot: snap
+			typeMatchCache: {}
 		}
 		
 		let lineCache = {}
@@ -876,9 +881,19 @@ export default class ImbaScriptInfo
 
 	def getMatchingTokens filter
 		let tokens = getTokens!
+		if #lexed.typeMatchCache[filter]
+			return #lexed.typeMatchCache[filter]
 		tokens = tokens.slice(0).filter do $1.match(filter)
+		#lexed.typeMatchCache[filter] = tokens
 		return tokens
-		
+
+	def getStyleVarDeclarations
+		getMatchingTokens('style.property.var')
+
+	def getStyleVarReferences
+		getMatchingTokens('style.value.var')
+
+
 	def findPath path
 		let parts = path.split('.')
 		let name = parts[parts.length - 1]

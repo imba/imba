@@ -74,6 +74,8 @@ export const CompletionTypes = {
 	ComponentBody: 1 << 18
 	TagId: 1 << 19
 	Decorator: 1 << 20
+	StyleVar: 1 << 21
+	StyleUnit: 1 << 22
 }
 
 export const KeywordTypes = {

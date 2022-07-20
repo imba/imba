@@ -1,5 +1,6 @@
 global css
 	$dim: #848d99
+	1cu:10px
 
 extend class One.Two < One.Three
 	title = [200]
@@ -21,8 +22,10 @@ extend class Stuff
 		yes
 
 tag app-item
+
+	css w:calc(min(100px,$something))
 	<self>
 		<div> for item in items
-			<div[ff:sans c:$dim] name=item.name> item.text
+			<div[ff:sans c:$dim w:15cu x:$ y:$a] name=item.name> item.text
 		<footer> "Hello"
 			css d:block py:10
