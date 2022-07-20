@@ -573,6 +573,13 @@ export default class Service < EventEmitter
 		# scripts.filter(do(script) util.isImba(script.fileName)).map(do(script) script.imba)
 		scripts.map(do $1.#imba).filter(do $1)
 
+	def findImbaTokensOfType type
+		let res = []
+		for script in imbaScripts
+			let matches = script.doc.getMatchingTokens(type)
+			res.push(...matches)
+		return res
+
 	get cwd
 		#cwd ||= normalizePath(global.IMBASERVER_CWD or process.env.VSCODE_CWD or process.env.IMBASERVER_CWD)
 	

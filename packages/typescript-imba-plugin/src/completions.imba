@@ -412,6 +412,11 @@ export class ImbaSymbolCompletion < Completion
 	
 	def setup
 		name = sym.name
+
+export class ImbaTokenCompletion < Completion
+	
+	def setup
+		name = sym.value
 		
 export class KeywordCompletion < Completion
 	def setup
@@ -496,8 +501,11 @@ export default class Completions
 			let inline = !ctx.group.closest('rule')
 			let abbr = cfg != 'never' and (inline or cfg != 'inline')
 			add checker.styleprops, kind: 'styleprop',abbr: abbr
-			
-		if flags & CT.StyleValue
+
+		if flags & CT.StyleVar
+			add 'stylevar', kind: 'styleval'
+	
+		elif flags & CT.StyleValue
 			add 'stylevalue', kind: 'styleval'
 			
 		if flags & CT.Decorator
@@ -567,6 +575,10 @@ export default class Completions
 		let symbols = checker.stylevalues(name,nr)
 		add symbols,o
 		self
+
+	def stylevar o = {}
+		let found = checker.getStyleVarTokens()
+		add found,o
 		
 	def decorators o = {}
 		# should include both global (auto-import) and local decorators
@@ -704,6 +716,9 @@ export default class Completions
 			entry = new SymbolCompletion(item,self,opts)
 		elif item isa ImbaSymbol
 			entry = new ImbaSymbolCompletion(item,self,opts)
+		elif item isa ImbaToken
+			entry = new ImbaTokenCompletion(item,self,opts)
+
 		elif item.hasOwnProperty('exportName')
 			entry = new AutoImportCompletion(item,self,opts)
 		elif item.label

@@ -798,6 +798,12 @@ export default class ImbaTypeChecker
 		let inferred = inferType(tok,script.doc,tok)
 		return inferred
 
+	def getStyleVarTokens
+		global.ils.findImbaTokensOfType('style.property.var')
+
+	def getStyleVarReferences
+		global.ils.findImbaTokensOfType('style.value.var')
+
 	def getSignatureHelpForType typ, name
 
 		typ = type(typ)
