@@ -1,10 +1,9 @@
 {
-  "name": "imba-monarch",
-  "description": "Fault-tolerant lexer/parser for imba using monarch",
-  "version": "0.1.0",
-  "author": "Sindre Aarsaether <sindre@identu.no>",
-  "dependencies": {},
-  "main": "dist/index.js",
+    "name": "imba-monarch",
+    "description": "Fault-tolerant lexer/parser for imba using monarch",
+    "version": "0.2.0",
+    "author": "Sindre Aarsaether <sindre@identu.no>",
+    "main": "dist/index.js",
     "scripts": {
         "watch": "node \"../imba/bin/imba\" build -wS index.imba",
         "build": "node \"../imba/bin/imba\" build -S index.imba",
