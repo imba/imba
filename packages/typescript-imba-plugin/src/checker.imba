@@ -128,15 +128,37 @@ export default class ImbaTypeChecker
 			details.detail = util.fromJSIdentifier(details.detail)
 
 		details.markdown = md.join('\n')
+
+		util.log('getSymbolDetails',symbol,details)
+
+		if symbol..isMetaSymbol
+			details.displayParts = []
+			details.kind = ''
 		
 		return details
 
 	def styleprop name, fallback = yes
+		return null unless name
 		let res = resolve('imbacss').exports.get(name.tojs!)
 		if res and res.imbaTags.proxy and fallback
 			return styleprop(res.imbaTags.proxy,no)
 
 		res or (fallback and styleprop('_',no) or null)
+
+	get metatokens
+		resolve('imbameta').exports.get('tokens')
+
+	def getMetaSymbol name
+		return member(metatokens,name)
+
+	def getMetaSymbols pattern
+		props(metatokens).filter do
+			# should use more advanced matching like with tokens
+			$1.escapedName.indexOf(pattern) == 0
+
+	def getTokenMetaSymbol token
+		getMetaSymbol(token.type + ' ' + token.value)
+		# or (fallback and getMetaSymbol(token.type))
 
 	get stylesymbols
 		Array.from(resolve('imbacss').exports.values!)
@@ -194,13 +216,120 @@ export default class ImbaTypeChecker
 			key and key.getProperty('suspend')
 		return symbols
 
+	def getDefinitionForImbaToken tok
+		util.log 'getDefinitionForImbaToken',tok
+		let script = tok.context.doc.owner
+		let g = tok.context
+		let up = null
+		let out = {}
+
+		if true
+			out = {
+				textSpan: tok.span
+				contextSpan: tok.span
+				name: tok.value
+				fileName: script.fileName
+				isLocal: true
+				isAmbient: false
+				containerKind: undefined
+				containerName: ''
+				unverified: false
+				kind: "let"
+				isWriteAccess: false
+			}
+
+			if up = g.closest('styleprop')
+				out.contextSpan = up.contextSpan
+				out.#comment = up.comment
+
+		return out
+
+	def getReferenceForImbaToken tok
+		util.log 'getReferenceForImbaToken',tok
+		let script = tok.context.doc.owner
+		let out = {
+			textSpan: tok.span # {start:0, length:1}
+			contextSpan: tok.span # {start:0, length:1}
+			fileName: script.fileName
+			isWriteAccess: true
+		}
+		
+		return out
+
 	def getSymbolInfo symbol
+		let md = []
+		# special rules if it is an ImbaToken
+		if symbol isa ImbaToken
+			# util.log('getSymbolInfo for ImbaToken',symbol)
+			
+			let out = {
+				displayParts: []
+				displayString: ''
+				kind: 'interface'
+				documentation: [{text: 'Style variable?', kind: 'text'}]
+				kindModifiers: 'declare'
+				definitions: null
+			}
+			
+			if symbol.match('style.value.var') or symbol.match('style.property.var')
+				let defs = getStyleVarTokens().filter do $1.value == symbol.value
+				let refs = getStyleVarReferences().filter do $1.value == symbol.value
+				out.definitions = defs.map do getDefinitionForImbaToken($1)
+				out.definition = out.definitions[0]
+				out.references = refs.map do getReferenceForImbaToken($1)
+
+				for item in out.definitions
+					if item.#comment
+						md.push(item.#comment)
+
+				md.push(`---`) if md.length
+				md.push `**Style variable**`
+				md.push `[Reference](https://imba.io/docs/css/variables)`
+
+			elif symbol.match('style.value.unit')
+				let defs = getStyleCustomUnits().filter do $1.value == symbol.value
+				out.definitions = defs.map do getDefinitionForImbaToken($1)
+
+				if defs.length == 0
+					md.push(`No unit definition found.`)
+				
+				for item in out.definitions
+					if item.#comment
+						md.push(item.#comment)
+
+				md.push(`---`) if md.length
+				md.push `Custom CSS unit`
+				md.push `[Reference](https://imba.io/docs/css/values)`
+
+
+			out.documentation = [{text: md.join('\n\n'), kind: 'markdown'}]
+
+			util.log "getSymbolInfo ImbaToken",out,symbol
+			return out
+
+
 		symbol = sym(symbol)
 		let out = ts.SymbolDisplay.getSymbolDisplayPartsDocumentationAndSymbolKind(checker,symbol,sourceFile,sourceFile,sourceFile)
 		if out
 			out.displayParts &&= util.toImbaDisplayParts(out.displayParts)
 			out.kindModifiers = ts.SymbolDisplay.getSymbolModifiers(checker, symbol)
 			out.kind = out.symbolKind
+
+		if symbol..isHTMLTag
+			out.displayParts = []
+			# md.push("**{symbol.imbaName}**\n\n")
+			md.push(`[MDN Reference](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/{symbol.imbaName})`)
+
+		util.log "getSymbolInfo",symbol,out
+
+		if symbol..isMetaSymbol
+			out.displayParts = []
+
+		if md.length
+			let pre = '\n\n'
+			out.documentation = (out.documentation or []).concat([{text: pre + md.join('\n\n'), kind: 'markdown'}])
+
+
 		return out
 
 	def getSymbolKind symbol
@@ -803,6 +932,9 @@ export default class ImbaTypeChecker
 
 	def getStyleVarReferences
 		global.ils.findImbaTokensOfType('style.value.var')
+
+	def getStyleCustomUnits
+		global.ils.findImbaTokensOfType('style.property.unit.name')
 
 	def getSignatureHelpForType typ, name
 

@@ -1,6 +1,13 @@
 global css
-	$dim: #848d99
+	$dim: #848d99 # something about this
+	# something about this here
+	$other: 100px
 	1cu:10px
+
+	###
+	Multiline comment
+	###
+	$stuff:25px
 
 extend class One.Two < One.Three
 	title = [200]
@@ -19,6 +26,8 @@ extend class Stuff
 		#hello = val
 
 	def ping
+		if #hello =? 100
+			yes
 		yes
 
 tag app-item
@@ -26,6 +35,7 @@ tag app-item
 	css w:calc(min(100px,$something))
 	<self>
 		<div> for item in items
-			<div[ff:sans c:$dim w:15cu x:$ y:$a] name=item.name> item.text
-		<footer> "Hello"
+			<div[ff:sans c:$dim w:15cu x:$ y.selected:$a] name=item.name> item.text
+		<footer.hello.selected .hovering=true> "Hello"
 			css d:block py:10
+		<app-slider @click.stuff=render @running=render>

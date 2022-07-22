@@ -362,6 +362,10 @@ export default class Service < EventEmitter
 			if script
 				# check quick info via imba first?
 				out = script.getDefinitionAndBoundSpan(dpos,ls)
+				util.log "returned from imba script getDefinitionAndBoundSpan",out
+				if out and out.definitions
+					util.log "hijacming the definitiions!!!",out
+
 				return out if out..definitions
 
 			let res = ls.getDefinitionAndBoundSpan(filename,opos)
@@ -507,6 +511,12 @@ export default class Service < EventEmitter
 			
 		intercept.findReferences = do(file,pos)
 			let {script,dpos,opos} = getFileContext(file,pos,ls)
+
+			if script
+				# check quick info via imba first?
+				let out = script.getDefinitionAndBoundSpan(dpos,ls)
+				return [out] if out..references
+
 			let res = ls.findReferences(file,opos)
 			res = convertLocationsToImba(res,ls)
 			util.log('findReferences',file,dpos,opos,res)

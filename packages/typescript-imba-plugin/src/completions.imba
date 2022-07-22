@@ -57,21 +57,29 @@ export class Completion
 		load(symbol,context,options)
 		kind = options.kind if options.kind
 	
-		setup!
+		setup_!
 		triggers options.triggers
+		finalize!
 		
 	def load symbol, context, options = {}
 		yes
 		self
 		
+	def setup_
+		setup!
+	
 	def setup
 		Object.assign(item,sym)
+
+	def finalize
+		yes
 		
 	get id
 		return #nr if #nr >= 0
 		#nr = #context.items.indexOf(self)
 		
-	
+	get cat
+		#options.kind
 	
 	get checker
 		#context.checker
@@ -238,11 +246,15 @@ export class SymbolCompletion < Completion
 			item.range = #options.range
 
 		if cat == 'numberunit'
+			# TODO Generalize for all completion types
+			# kind = 11
+			kind = 10
 			name = o.prefixCompletion + name
 			item.filterText = name
 
+
 		# let pname = sym.parent..escapedName
-		if cat == 'styleprop'
+		elif cat == 'styleprop'
 			#uniqueName = name
 
 			if tags.alias and #options.abbr
@@ -416,7 +428,16 @@ export class ImbaSymbolCompletion < Completion
 export class ImbaTokenCompletion < Completion
 	
 	def setup
+		let o = #options
 		name = sym.value
+
+		if o.prefixCompletion
+			name = o.prefixCompletion + name
+			item.filterText = name
+
+		if cat == 'numberunit'
+			kind = 10
+
 		
 export class KeywordCompletion < Completion
 	def setup
@@ -478,11 +499,20 @@ export default class Completions
 		if triggerCharacter == ':' and !tok.match('style.property.operator')
 			return
 
-		if tok.match('unit')
+		if tok.match('style.value.unit')
+			let num = tok.prev.value
+			add('styleunits',kind: 'numberunit', prefixCompletion: num)
+
+		elif tok.match('style.value.number')
+			let num = tok.value
+			add('styleunits',kind: 'numberunit', prefixCompletion: num)
+		
+		elif tok.match('unit')
 			let num = tok.prev.value
 			add('numberunits',kind: 'numberunit', prefixCompletion: num)
-		
-		if tok.match('number')
+
+			# only if in styles
+		elif tok.match('number')
 			let num = tok.value
 			add('numberunits',kind: 'numberunit', prefixCompletion: num)
 		
@@ -617,7 +647,15 @@ export default class Completions
 		add(checker.snippets('tags'),o)
 
 	def numberunits o = {}
-		add(checker.getNumberUnits!,o)
+		add(checker.getMetaSymbols('unit '),o)
+		# add(checker.getNumberUnits!,o)
+
+	def styleunits o = {}
+		let customUnits = checker.getStyleCustomUnits()
+		util.log('add custom units',customUnits)
+		# util.log('add default units??',checker.getMetaSymbols('style.value.unit '))
+		add(customUnits,o)
+		add(checker.getMetaSymbols('style.value.unit '),o)
 		
 	def types o = {}
 		

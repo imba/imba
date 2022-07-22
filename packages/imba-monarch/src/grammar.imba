@@ -949,6 +949,12 @@ export const states = {
 		[/(@optid)(\@+|\.+)(@optid)/,['style.property.name','style.property.modifier.prefix','style.property.modifier']]
 		'op_'
 		'string_'
+		[/(\d+)([a-z]+|\%)/, ['style.value.number','style.value.unit']]
+		[/(\d*\.\d+(?:[eE][\-+]?\d+)?)([a-z]+|\%)/, ['style.value.number.float','style.value.unit']]
+		[/\d[\d_]*\.\d[\d_]*([eE][\-+]?\d+)?/, 'style.value.number.float']
+		[/\d[\d_]*/, 'style.value.number.integer']
+		[/0[0-7]+(?!\d)/, 'style.value.number.octal']
+		[/\d+/, 'style.value.number']
 		'number_'
 		'comment_'
 		[/\s+/,'style.value.white']

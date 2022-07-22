@@ -62,6 +62,15 @@ export class Node
 
 	get children
 		doc.getNodesInScope(self)
+
+	get allTokens
+		let all = []
+		let tok = start
+		while tok
+			all.push(tok)
+			break if tok == end
+			tok = tok.next
+		return all
 	
 	get parents
 		[parent].concat(parent.parents)
@@ -161,6 +170,23 @@ export class Group < Node
 
 	def lookup ...params
 		return parent.lookup(...params)
+
+	get comment
+		let val = value
+		let m = val.match(/\s\#\s([^\n]+)\n/)
+		if m
+			return m[1]
+		
+		let prev = start.prev
+		if prev and prev.match('white.tabs')
+			prev = prev.prev
+		
+		if prev..match('comment')
+			return prev.value.replace(/(^\#\s)|(\n+$)/g,'')
+
+		return null
+
+
 
 
 export class ValueNode < Group

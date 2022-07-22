@@ -704,7 +704,10 @@ export default def patcher ts
 				
 			if name == 'globalThis'
 				name = 'global'
-			
+
+			if name.indexOf(' ') > 0 and isMetaSymbol
+				name = name.slice(name.indexOf(' ') + 1)
+
 			name = util.fromJSIdentifier(name)
 
 			#imbaName = name
@@ -741,6 +744,9 @@ export default def patcher ts
 			
 		get isTag
 			self.exports..has('$$TAG$$')
+		
+		get isHTMLTag
+			parent..escapedName == 'ImbaHTMLTags'
 			
 		get isWebComponent
 			(/^[\w\-]+CustomElement$/).test(escapedName)
@@ -756,7 +762,9 @@ export default def patcher ts
 			
 		get isDecorator
 			escapedName[0] == 'α'
-			
+		
+		get isMetaSymbol
+			parent..parent..escapedName == 'imbameta'
 			
 		get isStyleProp
 			parent and parent.escapedName == 'imbacss' and (/^[a-zA-ZΞ]/gu).test(escapedName)

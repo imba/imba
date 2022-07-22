@@ -6,7 +6,7 @@ import { TokenModifier, TokenType } from './constants'
 import Compiler,{Compilation} from './compiler'
 
 # import ImbaScriptInfo from './lexer/script'
-import ImbaScriptInfo from 'imba-monarch'
+import ImbaScriptInfo, {Token as ImbaToken} from 'imba-monarch'
 import Completions from './completions'
 import ImbaScriptContext from './context'
 import ImbaTypeChecker from './checker'
@@ -285,6 +285,8 @@ export default class ImbaScript
 		let grp = ctx.group
 		let tok = ctx.token or {match: (do no)}
 		let checker = getTypeChecker!
+
+		util.log('context for quick info',ctx)
 		
 		out.textSpan = tok.span
 		
@@ -308,6 +310,9 @@ export default class ImbaScript
 			# let taginst = checker.getTagSymbolInstance(ctx.tagName,yes)
 			# out.tagattr = checker.sym([taginst,util.toJSIdentifier(ctx.tagAttrName)])
 
+		# special description!!
+		
+
 		if tok.match("style.property.modifier style.selector.modifier")
 			let [m,pre,neg,post] = tok.value.match(/^(@|\.+)(\!?)([\w\-\d]*)$/)
 			util.log("style prop modifier",[m,pre,neg,post,tok],post.match(/^\d+$/))
@@ -317,9 +322,11 @@ export default class ImbaScript
 
 			if post.match(/^\d+$/)
 				util.log("this is a numeric thing(!!!)",tok)
+		
+		if tok.match('style.value.unit')
+			hit(checker.getTokenMetaSymbol(tok) or tok,'unit')
 				
-				
-		if g = grp.closest('stylevalue')
+		elif g = grp.closest('stylevalue')
 			let idx = (ctx..before..group or '').split(' ').length - 1
 			let alternatives = checker.stylevalues(g.propertyName,0)
 			let name = tok.value.tojs!
@@ -328,7 +335,17 @@ export default class ImbaScript
 			# add generic lookups for colors etc
 			if match
 				hit(match,'stylevalue')
-				
+
+		if tok.match('style.value.var')
+			let m = checker.getStyleVarTokens().filter do $1.value == tok.value
+			if m[0]
+				hit(m[0],'stylevalue')
+
+		
+
+		if tok.match('style.property.var')
+			# util.log("matching!!",tok,checker.getSymbolInfo(tok),tok isa ImbaToken)
+			hit(tok,'styleprop')
 		
 		if g = grp.closest('styleprop')
 			hit(checker.styleprop(g.propertyName,yes),'styleprop')
@@ -336,9 +353,6 @@ export default class ImbaScript
 		
 		if tok.match('tag.event.start')
 			tok = tok.next
-
-		if tok.match('unit')
-			hit(checker.getNumberUnit(tok.value),'unit')
 			
 		if tok.match('tag.event-modifier.start')
 			tok = tok.next
@@ -349,18 +363,22 @@ export default class ImbaScript
 		if tok.match('tag.event.name')
 			let name = tok.value.replace('@','')
 			hit(checker.sym("ImbaEvents.{name}"),'event')
+
 			# out.sym ||= 
 		
-		
-		util.log('context for quick info',ctx)
 		if tok.match('tag.name')
-			out.sym = out.tag
+			# out.sym = out.tag
+			out.sym = checker.getTokenMetaSymbol(tok) or out.tag
 		
 		if tok.match('tag.attr') and out.tag
 			out.sym = out.tagattr
 			
 		if tok.match('white keyword')
 			return {info: {}}
+
+		hit(checker.getTokenMetaSymbol(tok),'meta')
+		hit(checker.getMetaSymbol(tok.type),'concept')
+		
 			
 		if out.sym
 			out.info ||= checker.getSymbolInfo(out.sym)
@@ -368,6 +386,12 @@ export default class ImbaScript
 		if out.info
 			out.info.textSpan ||= tok.span
 
+			if out.concept and out.sym != out.concept
+				let extra = checker.getSymbolInfo(out.concept)
+				out.extra = extra
+				out.info.documentation = out.info.documentation.concat([{text: '\n\n',type: 'markdown'}],extra.documentation)
+		# util
+		util.log('getInfoAt',out)
 		return out
 		
 	def getDefinitionAndBoundSpan pos, ls
@@ -381,7 +405,10 @@ export default class ImbaScript
 				}]
 				textSpan: out.textSpan
 			}
+		elif out.info..definitions
+			return out.info
 		else
+			# if out..definitions
 			return out
 			
 		
