@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.2
+
+* Added completions for number units
+* Added completions for custom css units
+* Added completions for css variables
+* Added goto definition / references for css variables and custom units
+* Fixed issue where extension crashed if Svelte extension is installed
+
 ## 3.1.13
 
 * Make typings and completions include properties added with `extend class ...`
