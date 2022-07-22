@@ -390,6 +390,10 @@ export default class ImbaScript
 				let extra = checker.getSymbolInfo(out.concept)
 				out.extra = extra
 				out.info.documentation = out.info.documentation.concat([{text: '\n\n',type: 'markdown'}],extra.documentation)
+
+		if out.sym..isMetaSymbol
+			out.info.definitions ||= []
+
 		# util
 		util.log('getInfoAt',out)
 		return out
@@ -407,6 +411,7 @@ export default class ImbaScript
 			}
 		elif out.info..definitions
 			return out.info
+			
 		else
 			# if out..definitions
 			return out

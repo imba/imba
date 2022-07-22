@@ -635,6 +635,7 @@ export default def patcher ts
 	util.extend(ts.server.ProjectService.prototype,ProjectService)
 	util.extend(ts.server.Project.prototype,Project)
 	util.extend(ts.sys,System)
+	ts.sys.readFile = ts.sys.readFile.bind(ts.sys)
 	util.extend(ts,TS)
 	
 	let subs = subclasses(ts)

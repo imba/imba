@@ -41,7 +41,8 @@ declare namespace imbameta {
      */
     "identifier.symbolx": null;
 
-    // TODO: Add all units from mdn here
+
+    // TODO: Add all units from MDN (https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Values_and_units)
 
     /**
      * Pixel style unit
@@ -66,7 +67,7 @@ declare namespace imbameta {
     /** vh */
     "style.value.unit vh": string;
 
-    // Basic units
+    // Number units
 
     /**
      * Milliseconds
