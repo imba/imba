@@ -342,7 +342,7 @@ export default class Service < EventEmitter
 			return ls.getEncodedSemanticClassifications(filename,span,format)
 		
 		intercept.getEncodedSyntacticClassifications = do(filename,span)
-			return ls.getEpncodedSyntacticClassifications(filename,span)
+			return ls.getEncodedSyntacticClassifications(filename,span)
 			
 		intercept.getQuickInfoAtPosition = do(filename,pos)
 			let {script,dpos,opos} = getFileContext(filename,pos,ls)
@@ -533,9 +533,10 @@ export default class Service < EventEmitter
 				let orig = v
 				intercept[k] = do
 					try
+						let t = Date.now!
 						util.warn("call {k}",...arguments)
 						let res = v.apply(intercept,arguments)
-						util.warn("return {k}",res)
+						util.warn("return {k} in {Date.now! - t}ms",res)
 						return res
 					catch e
 						util.log('error',k,e)

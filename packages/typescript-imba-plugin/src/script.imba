@@ -50,6 +50,8 @@ export default class ImbaScript
 		
 	def openedWithContent content
 		util.log('openedWithContent',fileName)
+		if content != self.content
+			util.log('replace content?',fileName,[content,doc.content,self.content])
 		
 	def getFromDisk
 		fs.readFileSync(fileName,'utf-8')
@@ -77,6 +79,19 @@ export default class ImbaScript
 			let its = info.textStorage
 			let snap = its.svc = global.ts.server.ScriptVersionCache.fromString(result.js or '\n')
 			its.text = undefined
+
+			let reloadWithFileText_ = its.reloadWithFileText
+
+			its.reloadWithFileText = do(tempFileName)
+				util.log('reloadWithFileText',fileName,tempFileName,this,this.ownFileText,this.pendingReloadFromDisk,this.isOpen)
+				unless tempFileName
+					let body = getFromDisk!
+					# the underlying imba code has actually changed
+					util.log('reloadWithFileText content?',fileName,[body,doc.content,content])
+					if body != content and !this.isOpen
+						replaceContent(body)
+
+				return reloadWithFileText_.call(its,tempFileName)
 			
 			its.getFileTextAndSize = do(tempFileName)
 				util.log('getFileTextAndSize',fileName,tempFileName)
@@ -179,6 +194,17 @@ export default class ImbaScript
 		# this should just start asynchronously instead
 		if ils.isSemantic
 			util.delay(self,'asyncCompile',250)
+
+	def replaceContent newText
+		let from = content
+		let snap = svc.getSnapshot!
+		util.log('replacing content',fileName,from,newText,from.length,newText.length)
+		if newText != from
+			svc.edit(0,from.length,newText)
+			svc.getSnapshot!
+			doc.tokens
+			util.log('replaced content',[newText,doc.content,content])
+		
 
 	def compile
 		let snap = svc.getSnapshot!
