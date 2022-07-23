@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.3
+
+* Fixed issue where extension would get into a broken state if imba files were changed on disk outside of vscode
+
 ## 3.2
 
 * Added completions for number units
