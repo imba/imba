@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.2.0
+## 3.2
 
 * Added completions for number units
 * Added completions for custom css units
