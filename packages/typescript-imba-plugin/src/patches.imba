@@ -18,6 +18,7 @@ const typings = {
 	"imba.router.d.ts": import("../../imba/typings/imba.router.d.ts?as=text")
 	"imba.snippets.d.ts": import("../../imba/typings/imba.snippets.d.ts?as=text")
 	"imba.types.d.ts": import("../../imba/typings/imba.types.d.ts?as=text")
+	"imba.meta.d.ts": import("../../imba/typings/imba.meta.d.ts?as=text")
 	"styles.d.ts": import("../../imba/typings/styles.d.ts?as=text")
 	"styles.generated.d.ts": import("../../imba/typings/styles.generated.d.ts?as=text")
 	"styles.modifiers.d.ts": import("../../imba/typings/styles.modifiers.d.ts?as=text")
