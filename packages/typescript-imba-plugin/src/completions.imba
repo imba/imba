@@ -381,21 +381,22 @@ export class SymbolCompletion < Completion
 
 	
 	def resolve
-		let details = checker.getSymbolDetails(sym)
-		
-		item.markdown = details.markdown
+		try
+			let details = checker.getSymbolDetails(sym)
+			
+			item.markdown = details.markdown
 
 
-		if let docs = details.documentation
-			item.documentation = docs # global.session.mapDisplayParts(docs,checker.project)
+			if let docs = details.documentation
+				item.documentation = docs # global.session.mapDisplayParts(docs,checker.project)
 
-		if let dp = details.displayParts
-			item.detail = util.displayPartsToString(dp)
-		# documentation: this.mapDisplayParts(details.documentation, project),
-		# tags: this.mapJSDocTagInfo(details.tags, project, useDisplayParts),
-		# item.documentation = details.documentation
-		# item.documentation = details.documentation
-		resolveImportEdits!
+			if let dp = details.displayParts
+				item.detail = util.displayPartsToString(dp)
+			# documentation: this.mapDisplayParts(details.documentation, project),
+			# tags: this.mapJSDocTagInfo(details.tags, project, useDisplayParts),
+			# item.documentation = details.documentation
+			# item.documentation = details.documentation
+			resolveImportEdits!
 		self
 		
 export class AutoImportCompletion < SymbolCompletion
