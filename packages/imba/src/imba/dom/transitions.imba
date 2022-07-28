@@ -159,6 +159,8 @@ export class Easer
 		map
 
 	def clearNodeSizes map
+		return unless map
+
 		for [node,rect] of map
 			node.style.removeProperty('width')
 			node.style.removeProperty('height')

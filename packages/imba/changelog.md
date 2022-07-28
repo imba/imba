@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Make `@event.emit('...')` on `<global/teleport>` dispath event inside their literal parent (fixes #693) 
+
 ## 2.0.0-alpha.210
 
 * Add number units for `minutes`, `hours`, and `days`

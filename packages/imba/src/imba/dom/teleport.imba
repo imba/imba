@@ -69,6 +69,7 @@ class TeleportHook < Component
 		return self
 		
 	def addEventListener name, handler, o = {}
+		handler.#teleport = self
 		handler.#self = self
 		
 		#listeners.push([name,handler,o])
