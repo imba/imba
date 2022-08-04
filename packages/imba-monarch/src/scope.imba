@@ -1,4 +1,4 @@
-import {prevToken,toCustomTagIdentifier} from './utils'
+import { tagNameToClassName,prevToken,toCustomTagIdentifier} from './utils'
 import {M,KeywordTypes,SemanticTokenTypes,SemanticTokenModifiers} from './types'
 import {Sym,SymbolFlags} from './symbol'
 
@@ -244,6 +244,8 @@ export class Scope < Node
 
 			# need to start at the beginning of the line?
 			let kw = prevToken(start,"keyword.class keyword.tag",10000,2)
+			keyword = kw
+
 			# console.log "found start?!",kw
 			if class? and kw
 				token = kw.next..next
@@ -275,6 +277,9 @@ export class Scope < Node
 		
 		if component?
 			if name[0] == name[0].toLowerCase!
+				let hit = tagNameToClassName(name)
+				if hit
+					return hit.name
 				return toCustomTagIdentifier(name)
 			else
 				return name
@@ -306,6 +311,12 @@ export class Scope < Node
 		
 	get class?
 		!!type.match(/^class/) or component?
+
+	get extends?
+		class? and keyword and keyword.prev.prev..match('keyword.extend')
+
+	get global?
+		class? and (!!prevToken(keyword,'keyword.global',3,1) or (component? and name[0] == name[0].toLowerCase!))
 
 	get def?
 		!!type.match(/def|get|set/)

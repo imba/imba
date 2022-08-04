@@ -13,7 +13,7 @@ def escape str
 	str.replace(/[\&\<\>]/g) do(m) replacements[m]
 
 class State
-	doc = null
+	doc
 	focus = null
 	hover = null
 
@@ -32,7 +32,8 @@ class State
 
 	def constructor
 		let code = window.localStorage.getItem('code') or txt
-		doc = new Script(null,code)
+		owner = {fileName: "/a/b/index.imba"}
+		doc = new Script(owner,code)
 		loc = parseInt(window.localStorage.getItem('loc') or '0')
 		
 const state = window.state = new State()
@@ -281,6 +282,10 @@ tag Code
 			<code> <ast-group data=data.root>
 
 tag App	
+
+	def mount
+		render!
+		$dts.innerText = state.doc.getGeneratedDTS!
 	def render
 		<self[inset:0 fs:12px d:hgrid g:1 bg:black]
 			@hotkey('esc')=(state.focus = null)
@@ -288,10 +293,14 @@ tag App
 			css section bg:gray9 pos:relative c:white
 			<section[of:auto]>
 				<Code data=state.doc>
-			<section[p:4]>
-				if let item = state.focus or state.hover
-					<ast-node-info data=item>
-				if state.context
-					<ast-context data=state.context>
+			<section[d:vflex]>
+				css section p:4
+				<section>
+					if let item = state.focus or state.hover
+						<ast-node-info data=item>
+					if state.context
+						<ast-context data=state.context>
+				<section> <pre$dts>
+					
 	
 imba.mount <App>

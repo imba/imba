@@ -2364,13 +2364,20 @@ export class Return < Statement
 			k
 
 	def c
+		if STACK.tsc and value and value.@value == 'self'
+			# console.log "returning self! {value.@value}"
+			return "return this"
+
 		return super if !value or value.isExpressable
+
 		value.consume(self).c
 
 	def consume node
 		return self
 
 export class ImplicitReturn < Return
+
+	
 
 export class GreedyReturn < ImplicitReturn
 
@@ -3313,11 +3320,13 @@ export class ClassDeclaration < Code
 			
 			if !isTag
 				@className = @name
-				@name = scope__.register("Ω{@name.value}Ω{oid}",null)
+				# @name = scope__.register("Ω{@name.value}Ω{oid}",null)
+				@mixinName = @name = scope__.register("Ω{@name.value}Ω{STACK.incr('extend')}",null)
 				if STACK.tsc
 					option(:export,true)
 			else
 				@className = LIT(@name.toClassName)
+				@mixinName = scope__.register("Ω{@className}Ω{STACK.incr('extend')}",null)
 			
 		elif @name isa Identifier
 			if !isTag or @name.isCapitalized
@@ -3603,14 +3612,11 @@ export class ClassDeclaration < Code
 
 		# if STACK.tsc and option(:global)
 
-		if isExtension and STACK.tsc
+		if isExtension and STACK.tsc and false
 			# if the class-name is aliased via an import we want to include that here
-			if !sup and false
-				jshead += " extends {@className.c}"
 			# jsbody = "\n__extends__= new {@className.c};\n{jsbody}"
-			let ext = '\n/** @type {InstanceType<typeof THIS>} */ __extends__;\n'.replace('THIS',@className.c)
-			ext = "\n// @ts-ignore\n__extends__= new {M(@className.c,@className)};\n"
-			# console.log @className
+			# let ext = '\n/** @type {InstanceType<typeof THIS>} */ __extends__;\n'.replace('THIS',@className.c)
+			let ext = "\n// @ts-ignore\n__extends__= new {M(@className.c,@className)};\n"
 			jsbody = "{ext}{jsbody}"
 			# InstanceType<typeof ImmediateDefJS>
 
@@ -3770,11 +3776,12 @@ export class TagDeclaration < ClassDeclaration
 			if option(:extension)
 				# className = "Extended${className}"
 				# ought to support the nested stuff?
-				let out = "class Ω{name.toExtensionName.replace(/\./g,'__')}Ω{oid}"
+				# let out = "class Ω{name.toExtensionName.replace(/\./g,'__')}Ω{STACK.incr('extend')}"
+				let out = "class {@mixinName.c}" 
 				#  extends {@className.c}
 				let obody = body.c
 
-				if STACK.tsc
+				if STACK.tsc and false
 					# if the class-name is aliased via an import we want to include that here
 					# console.log 'cl',@className
 					obody = "\n__extends__= new {M(@className.c,@name)};\n{obody}"
@@ -3877,9 +3884,14 @@ export class Func < Code
 
 	def visit stack, o
 		scope.visit
+
+
 		@context = scope.parent
+
 		@params.traverse(declaring: 'arg')
 		@body.traverse # so soon?
+
+
 
 	def funcKeyword
 		let str = "function"
@@ -3909,7 +3921,8 @@ export class Func < Code
 					thistype = "typeof {thistype}"
 				else
 					thistype = "InstanceType<typeof {thistype}>"
-				o.push('@this ' + thistype + '')
+				# o.push('@this ' + thistype + '')
+				
 				
 		elif option(:jsdocthis)
 			o.push('@this ' + option(:jsdocthis) + '')
@@ -4092,11 +4105,16 @@ export class MethodDeclaration < Func
 		# instance-method / member
 		if closure isa ClassScope and !target
 			@target = closure.prototype
+			let inExt = closure.node.option('extension')
 			set(
 				prototype: @target,
 				inClassBody: yes,
-				inExtension: closure.node.option('extension')
+				inExtension: inExt
 			)
+
+			# if inExt
+			#	scope.context.@value = LIT("/** @type {closure.node.@className}*/(this)")
+
 			closure.annotate(self)
 
 		if target isa Self
@@ -5513,6 +5531,7 @@ export class VarOrAccess < ValueNode
 			# @value.safechain = safechain
 		elif value.symbol == 'self'
 			@value = scope.context
+			@isSelf = yes
 
 		elif !@identifier.isCapitalized
 			let selfvar = scope.lookup('self')
@@ -5983,7 +6002,8 @@ export class TypeAnnotation < Node
 	def asRawType
 		let raw = String(@value).slice(1)
 		raw = raw.replace(/(^|[\[\,])\<([a-z\-\d]+)\>/g) do |m,pre,name|
-			pre + "InstanceType<" + (TagTypeIdentifier.new(name)).toClassName + ">"
+			# pre + "InstanceType<" + (TagTypeIdentifier.new(name)).toClassName + ">"
+			pre + (TagTypeIdentifier.new(name)).toClassName
 
 			# pre + "globalThis." + toCustomTagIdentifier(name)
 		return M(raw,self)
@@ -12218,6 +12238,18 @@ export class MethodScope < Scope
 	def setup
 		@selfless = no
 
+	def visit
+		super
+
+		if STACK.tsc and parent.closure isa ClassScope and parent.closure.node.isExtension
+			let cls = parent.closure.node
+			# console.log 'is extension!!!'
+			let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
+			# console.log 'scope'
+			# ref.datatype = cls.@className
+			ref.c
+		self
+
 export class FieldScope < Scope
 	
 	def setup
@@ -12761,9 +12793,9 @@ export class ScopeContext < Node
 	# up for the cases where we have yet to decide the
 	# name of the variable etc?
 
-	def reference
+	def reference thisValue
 		# if we are in  constructor we do want to declare it after super
-		@reference ||= scope.lookup('self') or scope.declare("self",This.new) # {@scope.@level}_
+		@reference ||= scope.lookup('self') or scope.declare("self",thisValue == undefined ? This.new : thisValue) # {@scope.@level}_
 
 	def fromScope other
 		IndirectScopeContext.new(other,self)

@@ -1,6 +1,6 @@
 import { lexer, Token, LexedLine } from './lexer'
 import { toJSIdentifier,prevToken, fastExtractSymbols, toImbaIdentifier} from './utils'
-import { Root, Scope, Group, ScopeTypeMap } from './scope'
+import { Assignable, Root, Scope, Group, ScopeTypeMap } from './scope'
 import { Sym, SymbolFlags } from './symbol'
 
 import {SemanticTokenTypes,M,CompletionTypes,Keywords} from './types'
@@ -48,6 +48,9 @@ export default class ImbaScriptInfo
 		
 	get content
 		#lexed.content ||= getText!
+
+	get fileName
+		owner.fileName
 	
 	def getText start = 0, end = snapshot.getLength!
 		if typeof start.start == 'number'
@@ -108,6 +111,9 @@ export default class ImbaScriptInfo
 	def getImportNodes
 		let tokens = tokens.filter do $1.match('push._imports')
 		return tokens.map do $1.scope
+
+	def getRootClasses
+		getNodesInScope(root).filter do $1 isa Scope and $1.class?
 		
 	def getNodesInScope scope,includeEnds = no,includeWhitespace = no
 		astify!
@@ -1094,27 +1100,94 @@ export default class ImbaScriptInfo
 		
 		edits
 
-	def getGeneratedDTS o = {}
-		# console.log 'getGeneratedDTS'
+	def findTokensForPattern pat\string
+		let i = 0
+		let m
+		let body = content
+		let matches = []
+
+		while (m = body.indexOf(pat,i)) >= 0
+			console.log 'found offset',i,m,body.substr(m,10)
+			i = m + 1
+			let tok = tokenAtOffset(m)
+			let tokAfter = tokenAtOffset(m + pat.length)
+			matches.push({start: tok, after: tokAfter})
+		return matches
+
+	def getGlobalDefs o = {}
+		content.replace(/global (class) ([\w-]+)/g) do(m,typ,name)
+			o[name] = self
+		return o
+
+	def getGeneratedDTS o = {},globals = {}
 		let ns = o.ns or "__{nr}"
 		let src = o.fileName || owner..fileName or "$$PATH$$"
-		let dts = new CodeGen
+		let dts = o.dts or new CodeGen
 		let body = content
 		dts.w "import * as {ns} from '{src}';"
 		let exists = no
-		let glob = dts.curly 'declare global'
-		
-		body.replace(/global (class) ([\w-]+)/g) do(m,typ,name)
+		let mods = {}
+		let glob = mods.global = dts.curly 'declare global'
+
+		getGlobalDefs(globals)
+
+		let classes = getRootClasses()
+
+		for cls in classes when cls.global?
+			continue if cls.extends?
+			console.log 'found global class!',cls.path
+			let name = cls.path
+			globals[name] = cls
 			exists = yes
-			glob.w "interface {name}/*{src}*/ extends {ns}.{name}" + ' {};'
-			# glob.w "export {name}"
+			glob.w "interface {name} extends {ns}.{name}" + ' {};'
 			glob.w "declare var {name}: typeof {ns}.{name};"
 
-		body.replace(/^(global )?(tag) ([a-z][\w-]*)/gm) do(m,mod,typ,name)
-			exists = yes
-			name = toJSIdentifier(name)
-			glob.w "interface {name}/*{src}*/ extends {ns}.{name}" + ' {};'
-			glob.w "declare var {name}: typeof {ns}.{name};"
+			if cls.component?
+				glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {ns}.{name} \}`
+			# glob.w "interface {name} extends {ns}.{name}" + ' {};'
+			# glob.w "export {name}"
+			# glob.w "declare var {name}: typeof {ns}.{name};"
+
+		
+		# body.replace(/global (class) ([\w-]+)/g) do(m,typ,name)
+		# 	exists = yes
+		# 	glob.w "interface {name} extends {ns}.{name}" + ' {};'
+		# 	glob.w "declare var {name}: typeof {ns}.{name};"
+
+		# body.replace(/^(global )?(tag) ([a-z][\w-]*)/gm) do(m,mod,typ,name)
+		# 	exists = yes
+		# 	
+		# 	name = toJSIdentifier(name)
+		# 	glob.w "interface {name} extends {ns}.{name}" + ' {};'
+		# 	glob.w "declare var {name}: typeof {ns}.{name};"
+
+		if true
+			let nr = 1
+			for cls in classes
+				continue unless cls.extends?
+
+				let ident = cls.ident
+				if ident isa Assignable
+					ident = ident.find('identifier.')
+				let sym = ident.symbol
+				let name = ident.value
+				let modsrc = sym..importSource
+				let origname = cls.path
+				let extname = "Ω{cls.path}Ω{nr++}"
+				exists = yes
+
+				if modsrc
+					# tweak / fix the path somehow
+					origname = sym.exportName
+					let rel = src.replace(/\/[^\/]+?$/,'/' + modsrc)
+					let mod = mods[rel] ||= dts.curly("declare module '{rel}'")
+					mod.w "interface {origname} extends {ns}.{extname}" + ' {};'
+				else
+					let desc = "interface {origname} extends {ns}.{extname}" + ' {};'
+					dts.curly("declare &&{origname}&& ").w(desc)
+					# this is where it breaks
+					# glob.w "interface {origname} extends {ns}.{extname}" + ' {};'
 
 		dts.w 'export {};'
 		exists ? String(dts) : ''
+		# String(dts)

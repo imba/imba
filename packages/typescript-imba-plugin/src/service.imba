@@ -20,6 +20,7 @@ export default class Service < EventEmitter
 	bridge = null
 	virtualFiles = {}
 	virtualScripts = {}
+	imbaGlobals = {}
 	ipcid
 	counter = 0
 	
@@ -253,6 +254,20 @@ export default class Service < EventEmitter
 	def convertImbaDtsDefinition item
 		try
 			let file = item.fileName.replace("._.d.ts",'')
+			let gdts = item.fileName == dts..fileName
+			let found
+			item.#gdts = true
+			item.#name = item.name
+
+			if gdts
+				if found = imbaGlobals[item.name]
+					# item.#found = found
+					item.textSpan = found.textSpan
+					item.contextSpan = found.contextSpan
+					item.fileName = found.doc.fileName
+					item.#scope = found
+					return item
+
 			let script = getImbaScript(file)
 			let path = "{item.containerName}.prototype.{item.name}"
 			let token = script.doc.findPath(util.toImbaIdentifier(path))
@@ -316,6 +331,8 @@ export default class Service < EventEmitter
 			item.fileName = file
 		catch e
 			console.log 'error',e
+			yes
+
 		return item
 		
 		
@@ -365,6 +382,12 @@ export default class Service < EventEmitter
 		if res.definitions
 			for item in res.definitions
 				convertLocationsToImba(item,ls,item.fileName or item.file)
+
+			res.definitions = res.definitions.filter do(item,index,arr)
+				return no if item.#scope and arr.find(do $1.#scope == item.#scope) != item
+				return yes
+
+			
 				
 		if res.description
 			res.description = util.toImbaString(res.description)
@@ -644,15 +667,25 @@ export default class Service < EventEmitter
 		self
 
 	def syncProjectForImba proj
+		# return
 		let all = ''
-		for item in imbaScripts
-			let dts = item.doc..getGeneratedDTS! or ''
+		let globals = {}
+		for item in imbaScripts when item.doc
+			let dts = item.doc.getGeneratedDTS({},globals)
 			if dts
 				all += '\n' + dts
+		# console.log 'got here?!'
+		for own k,v of globals
+			all = all.replaceAll("&&{k}&&","module '{v.doc.fileName}'")
+
+		all = all.replace(/&&.+?&&/g,'global')
 
 		console.log 'sync project',all
-		let file = proj.#dts ||= new ImbaScriptDts({fileName: np.resolve(proj.currentDirectory,'generated.imba'), project: proj})
-		file.update(all)
+		let file = dts = proj.#dts ||= new ImbaScriptDts({fileName: np.resolve(proj.currentDirectory,'generated.imba'), project: proj})
+		let changed = file.update(all)
+		imbaGlobals = globals
+		if changed and isSemantic and global.session
+			global.session..refreshDiagnostics!
 		self
 		
 	def setup

@@ -1,113 +1,41 @@
+import { AppState, AppState as AppStateAliased } from './def'
 
-class hello
-	def one
-		1
+extend class Number
 
-tag one-el
-	css d:block
+	get even
+		this % 2 == 0
 
-global css @root
-	$dim: #848d99 # something about this
-	# something about this here
-	$other: 100px
-	1cu:10px
-	$stuff:25px
+extend class AppState
 
-tag Hello < Other
-	def something a, b, c
-		return [a, b, c, 4]
-
-class Something
-	fieldname = 1
-	get getter
-		yes
-
-	def method
-		yes
-
-extend class Stuff
-	get hello
-		yes
-
-	set hello val
-		#hello = val
-
-	def ping
-		if #hello =? 100
-			yes
-		yes
-
-tag app-item
-
-	# css w:calc(min(100px,$something))
-	def render
-		<self>
-			<div> for item in items
-				<div[ff:sans c:$dim w:15cu x:$ y.selected:$a] name=item.name> item.text
-			<footer.hello.selected .hovering=true>
-				css self d:block py:10
-				css d:block
-				css
-					d:block py:10
-			<app-slider @click.stuff=render @running=render>
-
-extend tag app-button
-
-	def hello
-		yes
-
-import { Local } from './local'
+	get extended
+		self
 
 extend class SomeClass
 
-	def ext
-		yes
+	get extended
+		self
 
-extend class LateDefJS
+extend class AppStateAliased
 
-	def ext
-		yes
+	get aliased
+		self
 
-extend class ImmediateDefJS
+tag some-item
 
-	def ext
-		yes
+    def render
+        yes
 
-extend class Local
+global class SomeClass
 
-	def ext
-		yes
-
-	get state
-		global.appState
-
-	get num
-		yes
-
-	get element
-		<app-panel>
-
-
-extend tag element
-
-	spuce\<app-button>
-
-	get space\<app-button>
-		global.something
-
-	def smeth\<app-button>
-		global.something
-
-	get state
-		global.appState
+    def ping
+        yes
 
 extend tag app-button
 
-	def ext
-		yes
+    get that
+        self
 
+extend tag element
 
-extend class One.Two < One.Three
-	title = [200]
-	other = 1234
-	minutes = 42minutes
+    get that
+        self

@@ -144,13 +144,11 @@ export default class ImbaScript
 			
 			util.log('onDidCompileScript',result,needDts,isSaved)
 
-			if isSaved and needDts
+			if isSaved and needDts and false
 				# wait for the next version of the program
 				project.markAsDirty!
 				project.updateGraph!
 				syncDts!
-			elif isSaved
-				syncGeneratedDts!
 
 			if ils.isSemantic and global.session
 				global.session..refreshDiagnostics!
@@ -160,17 +158,11 @@ export default class ImbaScript
 			global.session..refreshDiagnostics!
 		self
 
-	def syncGeneratedDts
-		util.log 'syncing generated',fileName,!!doc
-		return
 
-		if #setup
-			let body = doc.getGeneratedDTS!
-			util.log('syncing generated dts',body)
-			dts.update(body) if body
-		
 	def syncDts
 		if lastCompilation..shouldGenerateDts
+			return
+
 			util.log "syncDts"
 			let prog = project.program
 			let script = prog.getSourceFile(fileName)
@@ -184,8 +176,7 @@ export default class ImbaScript
 			dts.#emitted = res
 			dts.update(body)
 			return dts.#body
-		# elif true
-		# 	syncGeneratedDts!
+
 		return null
 		
 	def getImbaDiagnostics
@@ -267,9 +258,12 @@ export default class ImbaScript
 		try
 			let snap = snapshot
 			snap.#saved = yes
+			
 			if lastCompilation..input == snap
 				util.log 'saved compilation that was already applied',lastCompilation
 				syncDts!
+
+			ils.syncProjectForImba(project)
 		yes
 		
 	def getTypeChecker sync = no
@@ -338,7 +332,7 @@ export default class ImbaScript
 		let tok = ctx.token or {match: (do no)}
 		let checker = getTypeChecker!
 
-		util.log('context for quick info',ctx)
+		# console.log('context for quick info',ctx)
 		
 		out.textSpan = tok.span
 		
@@ -415,11 +409,8 @@ export default class ImbaScript
 		if tok.match('tag.event.name')
 			let name = tok.value.replace('@','')
 			hit(checker.sym("ImbaEvents.{name}"),'event')
-
-			# out.sym ||= 
 		
 		if tok.match('tag.name')
-			# out.sym = out.tag
 			out.sym = checker.getTokenMetaSymbol(tok) or out.tag
 		
 		if tok.match('tag.attr') and out.tag
