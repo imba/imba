@@ -1,3 +1,4 @@
+import ImbaScriptDts from './dts'
 import np from 'path'
 import Compiler from './compiler'
 import * as util from './util'
@@ -443,9 +444,6 @@ export default class Service < EventEmitter
 				# check quick info via imba first?
 				out = script.getDefinitionAndBoundSpan(dpos,ls)
 				util.log "returned from imba script getDefinitionAndBoundSpan",out
-				if out and out.definitions
-					util.log "hijacming the definitiions!!!",out
-
 				return out if out..definitions
 			
 			let res = ls.getDefinitionAndBoundSpan(filename,opos)
@@ -639,9 +637,23 @@ export default class Service < EventEmitter
 		# now we should block / delay the mark project as dirty stuff
 		for item in imbaScripts
 			item.syncDts!
+
+		
+		
+		syncProjectForImba(proj)
 		self
 
-	
+	def syncProjectForImba proj
+		let all = ''
+		for item in imbaScripts
+			let dts = item.doc..getGeneratedDTS! or ''
+			if dts
+				all += '\n' + dts
+
+		console.log 'sync project',all
+		let file = proj.#dts ||= new ImbaScriptDts({fileName: np.resolve(proj.currentDirectory,'generated.imba'), project: proj})
+		file.update(all)
+		self
 		
 	def setup
 		let exts = (ps.hostConfiguration.extraFileExtensions ||= [])

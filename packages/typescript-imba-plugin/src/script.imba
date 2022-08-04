@@ -58,13 +58,14 @@ export default class ImbaScript
 
 	def setup
 		let orig = info.textStorage.text
+		# console.log 'setup',fileName,!!orig
 		if orig == undefined
 			# if this was already being edited?!
 			orig = getFromDisk!
-			util.log("setup {fileName} - read from disk",orig.length)
-		else
-			util.log("setup {fileName} from existing source",orig.length,info)
-
+			# util.log("setup {fileName} - read from disk",orig.length)
+		# else
+		# 	util.log("setup {fileName} from existing source",orig.length,info)
+		# console.log 'setup....',fileName
 		svc = global.ts.server.ScriptVersionCache.fromString(orig or '')
 		svc.currentVersionToIndex = do this.currentVersion
 		svc.versionToIndex = do(number) number
@@ -106,7 +107,7 @@ export default class ImbaScript
 			info.markContainingProjectsAsDirty!
 		catch e
 			util.log('setup error',e,self)
-
+		#setup = yes
 		return self
 			
 	def lineOffsetToPosition line, offset, editable
@@ -138,16 +139,18 @@ export default class ImbaScript
 			result.#applied = yes
 	
 			result.script.markContainingProjectsAsDirty!
-			let needDts = result.js.indexOf('class Ω') >= 0
+			let needDts = result.shouldGenerateDts # result.js.indexOf('class Ω') >= 0
 			let isSaved = result.input.#saved
 			
 			util.log('onDidCompileScript',result,needDts,isSaved)
 
-			if isSaved and result.shouldGenerateDts
+			if isSaved and needDts
 				# wait for the next version of the program
 				project.markAsDirty!
 				project.updateGraph!
 				syncDts!
+			elif isSaved
+				syncGeneratedDts!
 
 			if ils.isSemantic and global.session
 				global.session..refreshDiagnostics!
@@ -156,6 +159,15 @@ export default class ImbaScript
 			diagnostics=result.diagnostics
 			global.session..refreshDiagnostics!
 		self
+
+	def syncGeneratedDts
+		util.log 'syncing generated',fileName,!!doc
+		return
+
+		if #setup
+			let body = doc.getGeneratedDTS!
+			util.log('syncing generated dts',body)
+			dts.update(body) if body
 		
 	def syncDts
 		if lastCompilation..shouldGenerateDts
@@ -164,6 +176,7 @@ export default class ImbaScript
 			let script = prog.getSourceFile(fileName)
 			let out = {}
 			let body\string
+			
 			let writer = do(path,b) out[path] = body = b
 			let res = prog.emit(script,writer,null,true,[],true)
 			util.log 'emitted dts',out,res,body
@@ -171,6 +184,8 @@ export default class ImbaScript
 			dts.#emitted = res
 			dts.update(body)
 			return dts.#body
+		# elif true
+		# 	syncGeneratedDts!
 		return null
 		
 	def getImbaDiagnostics

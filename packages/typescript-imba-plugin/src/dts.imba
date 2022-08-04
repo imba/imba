@@ -38,6 +38,9 @@ export default class ImbaScriptDts
 
 	def clear
 		yes
+
+	get content
+		#body
 	
 	def update body
 		let prev = #raw
@@ -56,7 +59,7 @@ export default class ImbaScriptDts
 			return self unless owner
 
 			let proj = owner.project
-			util.log 'updating dts',owner.fileName,body
+			util.log 'updating dts',fileName,body
 
 			let file = self.script = ils.setVirtualFile(fileName,body)
 

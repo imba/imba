@@ -3904,7 +3904,7 @@ export class Func < Code
 				o.push('@this ' + thistype + '')
 				
 		elif option(:jsdocthis)
-			o.push('@this { ' + option(:jsdocthis) + ' }')
+			o.push('@this ' + option(:jsdocthis) + '')
 			
 		if returnType
 			o.push('@returns { ' + returnType.asRawType + ' }')

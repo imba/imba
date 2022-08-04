@@ -1,5 +1,5 @@
 import { lexer, Token, LexedLine } from './lexer'
-import {prevToken, fastExtractSymbols, toImbaIdentifier} from './utils'
+import { toJSIdentifier,prevToken, fastExtractSymbols, toImbaIdentifier} from './utils'
 import { Root, Scope, Group, ScopeTypeMap } from './scope'
 import { Sym, SymbolFlags } from './symbol'
 
@@ -7,7 +7,9 @@ import {SemanticTokenTypes,M,CompletionTypes,Keywords} from './types'
 
 import {ScriptVersionCache} from './svc'
 import {Range, Position} from './structures'
+import CodeGen from './codegen'
 
+let COUNTER = 0
 ###
 line and character are both zero based
 ###
@@ -22,6 +24,7 @@ export default class ImbaScriptInfo
 		svc = svc
 		seed = new Token(0,'eol','imba')
 		eof = new Token(0,'eof','imba')
+		nr = COUNTER++
 		initialState = lexer.getInitialState!
 		isLegacy = no
 		history = []
@@ -1090,3 +1093,28 @@ export default class ImbaScriptInfo
 					edits.push([tok.startOffset,0,' '])
 		
 		edits
+
+	def getGeneratedDTS o = {}
+		# console.log 'getGeneratedDTS'
+		let ns = o.ns or "__{nr}"
+		let src = o.fileName || owner..fileName or "$$PATH$$"
+		let dts = new CodeGen
+		let body = content
+		dts.w "import * as {ns} from '{src}';"
+		let exists = no
+		let glob = dts.curly 'declare global'
+		
+		body.replace(/global (class) ([\w-]+)/g) do(m,typ,name)
+			exists = yes
+			glob.w "interface {name}/*{src}*/ extends {ns}.{name}" + ' {};'
+			# glob.w "export {name}"
+			glob.w "declare var {name}: typeof {ns}.{name};"
+
+		body.replace(/^(global )?(tag) ([a-z][\w-]*)/gm) do(m,mod,typ,name)
+			exists = yes
+			name = toJSIdentifier(name)
+			glob.w "interface {name}/*{src}*/ extends {ns}.{name}" + ' {};'
+			glob.w "declare var {name}: typeof {ns}.{name};"
+
+		dts.w 'export {};'
+		exists ? String(dts) : ''
