@@ -1,0 +1,70 @@
+declare module "./def.imba" { interface SomeClass {
+
+    
+    ext(): boolean;
+    
+    extthis(): this;
+
+} }
+declare module "./def2" { interface LateDefJS {
+
+    
+    ext(): this;
+
+} }
+declare global { interface ImmediateDefJS {
+
+    
+    ext(): globalThis.ImmediateDefJS;
+
+} }
+declare module "./local" { interface Local {
+
+    
+    ext(): this;
+    
+    get state(): import("./def.imba").AppState;
+    
+    get num(): boolean;
+    
+    get element(): import("./def.imba").ΓappΞpanel;
+
+} }
+declare global { interface Element {
+
+     spuce: InstanceType<typeof import("./def.imba").ΓappΞbutton>;
+    
+    get space(): import("./def.imba").ΓappΞbutton;
+    
+    smeth(): InstanceType<typeof import("./def.imba").ΓappΞbutton>;
+    
+    get state(): import("./def.imba").AppState;
+    
+    get other(): import("./def.imba").ΓappΞsomething;
+
+} }
+declare global { interface HTMLElement {
+
+    
+    get state(): import("./def.imba").AppState;
+
+} }
+declare module "./def.imba" { interface ΓappΞbutton {
+
+    
+    ext(): boolean;
+
+} }
+declare module "./def.imba" { interface ΓappΞpanel {
+
+    
+    ext(): boolean;
+
+} }
+declare global { interface Element {
+
+    
+    ext2(): HTMLElement;
+
+} }
+import { Local } from "./local";

@@ -1,22 +1,29 @@
-global css
+
+class hello
+	def one
+		1
+
+tag one-el
+	css d:block
+
+global css @root
 	$dim: #848d99 # something about this
 	# something about this here
 	$other: 100px
 	1cu:10px
-
-	###
-	Multiline comment
-	###
 	$stuff:25px
-
-extend class One.Two < One.Three
-	title = [200]
-	other = 1234
-	minutes = 42minutes
 
 tag Hello < Other
 	def something a, b, c
 		return [a, b, c, 4]
+
+class Something
+	fieldname = 1
+	get getter
+		yes
+
+	def method
+		yes
 
 extend class Stuff
 	get hello
@@ -32,10 +39,75 @@ extend class Stuff
 
 tag app-item
 
-	css w:calc(min(100px,$something))
-	<self>
-		<div> for item in items
-			<div[ff:sans c:$dim w:15cu x:$ y.selected:$a] name=item.name> item.text
-		<footer.hello.selected .hovering=true> "Hello"
-			css d:block py:10
-		<app-slider @click.stuff=render @running=render>
+	# css w:calc(min(100px,$something))
+	def render
+		<self>
+			<div> for item in items
+				<div[ff:sans c:$dim w:15cu x:$ y.selected:$a] name=item.name> item.text
+			<footer.hello.selected .hovering=true>
+				css self d:block py:10
+				css d:block
+				css
+					d:block py:10
+			<app-slider @click.stuff=render @running=render>
+
+extend tag app-button
+
+	def hello
+		yes
+
+import { Local } from './local'
+
+extend class SomeClass
+
+	def ext
+		yes
+
+extend class LateDefJS
+
+	def ext
+		yes
+
+extend class ImmediateDefJS
+
+	def ext
+		yes
+
+extend class Local
+
+	def ext
+		yes
+
+	get state
+		global.appState
+
+	get num
+		yes
+
+	get element
+		<app-panel>
+
+
+extend tag element
+
+	spuce\<app-button>
+
+	get space\<app-button>
+		global.something
+
+	def smeth\<app-button>
+		global.something
+
+	get state
+		global.appState
+
+extend tag app-button
+
+	def ext
+		yes
+
+
+extend class One.Two < One.Three
+	title = [200]
+	other = 1234
+	minutes = 42minutes

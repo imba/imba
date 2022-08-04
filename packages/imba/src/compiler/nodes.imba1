@@ -3567,6 +3567,9 @@ export class ClassDeclaration < Code
 		var externalAccess = LIT(cname)
 		var supAccess = null
 
+		if isExtension and STACK.tsc
+			yes
+
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
 		if name
@@ -3579,6 +3582,9 @@ export class ClassDeclaration < Code
 		if sup
 			supAccess = M(sup)
 			jshead += " extends {supAccess}"
+		
+		# elif isExtension and STACK.tsc
+		# 	jshead += " extends {@className.c}"
 
 		if name isa Access
 			if @staticInit
@@ -3594,7 +3600,9 @@ export class ClassDeclaration < Code
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
 				jshead = "{M 'export',option(:export)} {jshead}"
-				
+
+		# if STACK.tsc and option(:global)
+
 		if isExtension and STACK.tsc
 			# if the class-name is aliased via an import we want to include that here
 			if !sup and false

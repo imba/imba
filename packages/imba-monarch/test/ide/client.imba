@@ -23,17 +23,19 @@ class State
 			focus = context.token
 			window.localStorage.setItem('loc',val)
 			console.log 'context',context
+			window.doc = doc
 			window.ctx = context
 			imba.commit!
 	
 	get loc
 		#loc
 
-	def constructor doc
-		doc = doc
+	def constructor
+		let code = window.localStorage.getItem('code') or txt
+		doc = new Script(null,code)
 		loc = parseInt(window.localStorage.getItem('loc') or '0')
-
-const state = window.state = new State(new Script(null,txt))
+		
+const state = window.state = new State()
 
 global css @root
 	tab-size: 4
@@ -69,6 +71,7 @@ global css @root
 		@before
 			pos:absolute fs:8px x:-50% y:-50%
 			content: counter(depth)
+
 	.push + *
 		counter-increment:depth 1
 
@@ -79,6 +82,9 @@ global css @root
 		@before
 			pos:absolute fs:8px x:-50% y:-50%
 			content: counter(depth)
+	
+	.push + .pop
+		counter-increment:depth 0
 
 	.invalid hue:green bgc:rose7/20
 	.comment hue:green
@@ -181,8 +187,16 @@ tag ast-group < ast-node
 		# 	<span> data.value
 
 tag ast-node-info
-	css c:white p:4
-		.quouted prefix:'"' suffix: '"'
+	css c:white p:4 cursor:default
+		.quoted prefix:'"' suffix: '"'
+		dd h:20px pos:relative d:hflex ai:center
+		dt h:20px pos:relative d:hflex ai:center
+		dl bd:1px solid white/5 d:grid gtc: 100px 1fr p:2
+		.multi
+			of:hidden h:20px pos:absolute t:0px
+			@hover h:auto of:auto pos:absolute t:0px zi:100
+
+
 	<self>
 		if data isa Token
 			<div>
@@ -190,12 +204,20 @@ tag ast-node-info
 				<div.quouted> data.value
 			<ast-node-info data=data.context>
 		elif data isa Node
-			<div> data.type
-			<span.quouted.str> data.value
-			for parent in data.parents
-				<dl>
-					<dt> parent.type
-					<dd.quouted.str[ws:pre]> parent.value.split("\n").slice(0,3).join("\n").trim()
+			# <div> data.type
+			# <span.quouted.str> data.value
+			<div>
+			for parent in [data].concat(data.parents)
+				<dl[]>
+					<dt> "type"
+					<dd> parent.type
+					<dt> "path"
+					<dd> parent.path
+					<dt> "value"
+					<dd> <.multi.str[ws:pre]> parent.value # .split("\n").slice(0,10).join("\n").trim()
+					<dt> "outerText"
+					<dd> <.multi.str[ws:pre]> parent.outerText
+					
 
 tag Prop
 	<self>
@@ -237,10 +259,25 @@ tag Code
 				state.focus = state.context.token
 				imba.commit!
 
-	<self contentEditable='true' @keyup=reselected @pointerup=reselected spellcheck=false>
+	get code
+		innerText
+
+	def save
+		window.localStorage.setItem('code',code)
+
+	def pasted e
+		log 'pasted',e
+		let txt = e.clipboardData.getData('text')
+		window.localStorage.setItem('code',txt)
+		document.location.reload!
+		# log innerText,txt
+		# setTimeout(&,100) do save!
+
+
+	<self contentEditable='true' @keyup=reselected @pointerup=reselected spellcheck=false @paste=pasted>
 		# <pre[p:2 m:0 c:blue8]>
 		# 	<code innerHTML=highlight(data)>
-		<pre[p:2 m:0 c:blue8]>
+		<pre[p:6 m:0 c:blue8]>
 			<code> <ast-group data=data.root>
 
 tag App	
@@ -249,7 +286,7 @@ tag App
 			@hotkey('esc')=(state.focus = null)
 		>
 			css section bg:gray9 pos:relative c:white
-			<section>
+			<section[of:auto]>
 				<Code data=state.doc>
 			<section[p:4]>
 				if let item = state.focus or state.hover
