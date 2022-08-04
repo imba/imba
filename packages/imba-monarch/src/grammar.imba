@@ -458,7 +458,7 @@ export const states = {
 	]
 
 	extend_class_: [
-		[/(extend)(\s)(tag|class)(\s)/, 
+		[/(extend)(\s)(class)(\s)/, 
 			['keyword.$1','white.$1','keyword.$3','white.extendclass','@classname_start/$3']
 		]
 	]
@@ -905,7 +905,7 @@ export const states = {
 	]
 
 	css_selector: [
-		denter({switchTo: '@css_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
+		denter({switchTo: '@css_props&_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
 		[/(\}|\)|\])/,'@rematch', '@pop']
 		[/(?=\s*@cssPropertyKey2)/,'',switchTo:'@css_props&_props']
 		[/\s*#\s/,'@rematch',switchTo:'@css_props&_props']

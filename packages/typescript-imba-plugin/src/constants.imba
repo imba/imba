@@ -52,11 +52,16 @@ export const DefaultConfig = {
 		skipDefaultLibCheck: true
 		allowUnreachableCode: true
 		allowSyntheticDefaultImports: true
+		allowUmdGlobalAccess: false
 		esModuleInterop: true
 		suppressExcessPropertyErrors: false
 		suppressImplicitAnyIndexErrors: false
 		declaration: true
+		declarationMap: false
+		# inlineSourceMap: false
+		strict: false
 		resolveJsonModule: true
+		noResolve: false
 		module: 'esnext'
 		target: 'esnext'
 		newLine: 'lf'

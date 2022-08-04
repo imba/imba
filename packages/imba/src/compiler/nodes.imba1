@@ -3597,7 +3597,14 @@ export class ClassDeclaration < Code
 				
 		if isExtension and STACK.tsc
 			# if the class-name is aliased via an import we want to include that here
-			jsbody = "\n__extends__={@className.c};\n{jsbody}"
+			if !sup and false
+				jshead += " extends {@className.c}"
+			# jsbody = "\n__extends__= new {@className.c};\n{jsbody}"
+			let ext = '\n/** @type {InstanceType<typeof THIS>} */ __extends__;\n'.replace('THIS',@className.c)
+			ext = "\n// @ts-ignore\n__extends__= new {M(@className.c,@className)};\n"
+			# console.log @className
+			jsbody = "{ext}{jsbody}"
+			# InstanceType<typeof ImmediateDefJS>
 
 		let js = "{jshead} \{{jsbody}\}"
 		
@@ -3622,7 +3629,16 @@ export class ClassDeclaration < Code
 
 		if option(:global)
 			# external access?
-			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
+			# js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
+
+			if STACK.tsc and true
+				js = "{js}; export \{{@cname}\}; {scope__.root.globalRef}.{@cname} = {@cname}"
+
+				# js = "{js}; export const {@cname}_ = {@cname}; {scope__.root.globalRef}.{@cname} = {@cname}_"
+				# js = "{scope__.root.globalRef}.{@cname} = {js}; {@cname}"
+				# js = "{scope__.root.globalRef}.{@cname} = {js}; {@cname}"
+			else
+				js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
 		return js
 
@@ -3746,8 +3762,15 @@ export class TagDeclaration < ClassDeclaration
 			if option(:extension)
 				# className = "Extended${className}"
 				# ought to support the nested stuff?
-				let out = "class Ω{className.replace(/\./g,'__')}Ω{oid}"
+				let out = "class Ω{name.toExtensionName.replace(/\./g,'__')}Ω{oid}"
+				#  extends {@className.c}
 				let obody = body.c
+
+				if STACK.tsc
+					# if the class-name is aliased via an import we want to include that here
+					# console.log 'cl',@className
+					obody = "\n__extends__= new {M(@className.c,@name)};\n{obody}"
+
 				out = "{out} \{{obody}\}"
 				out = "export {out}" unless @name.@variable
 				return out
@@ -3779,9 +3802,10 @@ export class TagDeclaration < ClassDeclaration
 				jshead = "{M 'export',option(:export)} {jshead}"
 				
 				
-		if anonGlobalTag # only tsc
-			jshead = "globalThis[{M("'{M(name.toNodeName,name)} tag'",name)}] = {M 'class', keyword} extends {M sup, superclass}"
-			jshead = "globalThis.{M className, name} = {M 'class', keyword} extends {M sup, superclass}"
+		if anonGlobalTag and STACK.tsc # only tsc
+			# jshead = "globalThis[{M("'{M(name.toNodeName,name)} tag'",name)}] = {M 'class', keyword} extends {M sup, superclass}"
+			# jshead = "globalThis.{M className, name} = {M 'class', keyword} extends {M sup, superclass}"
+			jshead = "export {jshead}"
 			# jshead = "globalThis.{className} = {M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
 		let js = "{jshead} \{{jsbody}\}"
@@ -3806,7 +3830,7 @@ export class TagDeclaration < ClassDeclaration
 		# 	if !option(:extension) and (!name.isClass)
 		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
 
-		if STACK.tsc and option(:global) and name.isClass
+		if STACK.tsc and (option(:global) or !name.isClass)
 			js += "; globalThis.{className} = {className}"
 		return js
 
@@ -3871,11 +3895,13 @@ export class Func < Code
 			if name and STACK.tsc
 				# console.log 'inext',@context.node.@className
 				# o.push('@this { this & ' + name.c + ' }')
+				# let thistype = "globalThis." + name.c
 				let thistype = name.c
 				if kls.option(:instanceOnly)
 					thistype = "typeof {thistype}"
-
-				o.push('@this { ' + thistype + ' }')
+				else
+					thistype = "InstanceType<typeof {thistype}>"
+				o.push('@this ' + thistype + '')
 				
 		elif option(:jsdocthis)
 			o.push('@this { ' + option(:jsdocthis) + ' }')
@@ -4159,7 +4185,8 @@ export class MethodDeclaration < Func
 				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
 			else
 				if STACK.tsc
-					set(jsdocthis: target.c)
+					let o = "InstanceType<typeof {target.c}>"
+					set(jsdocthis: o)
 
 				let k = OP('.',target,@name)
 				out = "{k.c} = {funcKeyword} {func}"
@@ -5948,7 +5975,8 @@ export class TypeAnnotation < Node
 	def asRawType
 		let raw = String(@value).slice(1)
 		raw = raw.replace(/(^|[\[\,])\<([a-z\-\d]+)\>/g) do |m,pre,name|
-			pre + (TagTypeIdentifier.new(name)).toClassName
+			pre + "InstanceType<" + (TagTypeIdentifier.new(name)).toClassName + ">"
+
 			# pre + "globalThis." + toCustomTagIdentifier(name)
 		return M(raw,self)
 
@@ -6415,6 +6443,9 @@ export class TagTypeIdentifier < Identifier
 	def toVarPrefix
 		let str = @str
 		str.replace(/[\:\-]/g,'')
+	
+	def toExtensionName
+		"Γ{helpers.toValidIdentifier(@str)}"
 
 	def toClassName
 		let str = @str
@@ -9437,7 +9468,10 @@ export class Tag < TagLike
 			if type isa TagTypeIdentifier and !isSelf
 				if type.isAsset
 					add "{tvar} = new {M("SVGSVGElement",type)}"
+				elif type.isClass
+					add "{tvar} = new {M(type.toClassName,type)}"
 				else
+					# add "{tvar} = new globalThis.{M(type.toClassName,type)}"
 					add "{tvar} = new {M(type.toClassName,type)}"
 			elif isSelf
 				add "{tvar} = {type.c}" 

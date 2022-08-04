@@ -1,5 +1,5 @@
 import { lexer, Token, LexedLine } from './lexer'
-import {prevToken, fastExtractSymbols} from './utils'
+import {prevToken, fastExtractSymbols, toImbaIdentifier} from './utils'
 import { Root, Scope, Group, ScopeTypeMap } from './scope'
 import { Sym, SymbolFlags } from './symbol'
 
@@ -47,6 +47,10 @@ export default class ImbaScriptInfo
 		#lexed.content ||= getText!
 	
 	def getText start = 0, end = snapshot.getLength!
+		if typeof start.start == 'number'
+			end = start.start + start.length
+			start = start.start
+
 		snapshot.getText(start,end)
 
 	def after token, match
@@ -198,11 +202,22 @@ export default class ImbaScriptInfo
 		return null
 		
 	def expandSpanToLines span
-		let start = index.positionToColumnAndLineText(span.start)
-		let end = index.positionToColumnAndLineText(span.start + span.end)
-		
-		span.start = span.start - start.zeroBasedColumn
-		span.length = span.length + start.zeroBasedColumn
+		try
+			let start = index.positionToColumnAndLineText(span.start)
+			let end = index.positionToColumnAndLineText(span.start + span.end)
+			span.start = span.start - start.zeroBasedColumn
+			span.length = span.length + start.zeroBasedColumn
+		catch e
+			# console.error e
+			let text = content
+			let chr
+			while true
+				chr = text[span.start]
+				break if !chr or chr == '\n'
+				span.start--
+
+			
+			yes
 		return span
 	
 	def contextAtOffset offset
@@ -222,7 +237,7 @@ export default class ImbaScriptInfo
 
 		let ctx = tok.context
 		let content = index.getText(0,index.getLength!)
-		console.log 'context',offset,tok
+		# console.log 'context',offset,tok
 
 		const before = {
 			character: lineText[col - 1] or ''
@@ -893,6 +908,57 @@ export default class ImbaScriptInfo
 	def getStyleVarReferences
 		getMatchingTokens('style.value.var')
 
+	def findTagDefinition name
+		let match = getSymbols!.find do $1.name == name
+		return match and match.body
+
+	def findNodeForTypeScriptDefinition item
+		let name = toImbaIdentifier(item.name)
+		let kind = null
+		let res
+
+		let symbols = getSymbols!.filter do $1.name == name or $1.name == item.name
+		let tokens = tokens.filter do $1.value == name
+
+		if item.kind == 'getter'
+			kind = 'entity.name.get'
+		elif item.kind == 'property'
+			kind = 'entity.name.field'
+		elif item.kind == 'method'
+			kind = 'entity.name.def'
+		elif item.kind == 'class'
+			if symbols[0]
+				res = symbols[0].node
+		
+		if item.containerName == 'globalThis'
+			res = symbols[0]
+
+		if kind and !res
+			tokens = tokens.filter(do $1.match(kind))
+			if tokens.length == 1
+				res = tokens[0]
+			elif tokens.length
+				# should not be this weak from the getgo
+				tokens = tokens.filter do(tok) toImbaIdentifier(tok.context.name).toLowerCase! == toImbaIdentifier(item.containerName).toLowerCase!
+
+				if tokens.length == 1
+					res = tokens[0]
+
+				# for tok in tokens when tok.context
+				#	console.log tok.value, tok.type, tok.context..path,toImbaIdentifier(tok.context.name),name
+				#	# if this is a tag
+				#	# if tok.context.name
+				# console.log "found multiple hits",tokens,symbols
+				# for sym in symbols
+				# 	console.log sym.name,sym.body.path,sym.body.scope..path
+
+		# if !res and tokens[0]
+		#	res = tokens[0]
+
+		if res isa Sym
+			res = res.body
+
+		return res
 
 	def findPath path
 		let parts = path.split('.')

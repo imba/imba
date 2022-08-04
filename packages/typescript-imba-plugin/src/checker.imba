@@ -1,5 +1,5 @@
 import * as util from './util'
-import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as ImbaSymbolFlags} from 'imba-monarch'
+import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as ImbaSymbolFlags, utils as MonarchUtils} from 'imba-monarch'
 import AutoImportContext from './importer'
 const Globals = "global imba module window document exports console process parseInt parseFloat setTimeout setInterval setImmediate clearTimeout clearInterval clearImmediate globalThis isNaN isFinite __dirname __filename".split(' ')
 
@@ -394,6 +394,12 @@ export default class ImbaTypeChecker
 	def resolve name,types = ts.SymbolFlags.All, location = null
 		if (/^\$\w+\$$/).test(name)
 			return self[name.slice(1,-1)]
+
+		if MonarchUtils.isTagIdentifier(name)			
+			let hit = MonarchUtils.tagNameToClassName(name)
+			# util.log 'is tag identifier!!',hit
+			if hit and hit.name
+				name = hit.name
 
 		let sym = checker.resolveName(name,location or sourceFile,symbolFlags(types),false)
 		return sym

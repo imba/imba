@@ -139,13 +139,22 @@ export default class ImbaScript
 	
 			result.script.markContainingProjectsAsDirty!
 			let needDts = result.js.indexOf('class Ω') >= 0
-			util.log('onDidCompileScript',result,needDts)
-			if ils.isSemantic
-				global.session.refreshDiagnostics!
+			let isSaved = result.input.#saved
+			
+			util.log('onDidCompileScript',result,needDts,isSaved)
+
+			if isSaved and result.shouldGenerateDts
+				# wait for the next version of the program
+				project.markAsDirty!
+				project.updateGraph!
+				syncDts!
+
+			if ils.isSemantic and global.session
+				global.session..refreshDiagnostics!
 		else
 			util.log('errors from compilation!!!',result)
 			diagnostics=result.diagnostics
-			global.session.refreshDiagnostics!
+			global.session..refreshDiagnostics!
 		self
 		
 	def syncDts
@@ -158,6 +167,8 @@ export default class ImbaScript
 			let writer = do(path,b) out[path] = body = b
 			let res = prog.emit(script,writer,null,true,[],true)
 			util.log 'emitted dts',out,res,body
+			# console.log 'emitted!!',res
+			dts.#emitted = res
 			dts.update(body)
 			return dts.#body
 		return null
@@ -448,6 +459,7 @@ export default class ImbaScript
 			let out = getInfoAt(pos,ls)
 			
 			if out.info
+				out.info.textSpan = out.textSpan
 				return out.info
 		return null
 		

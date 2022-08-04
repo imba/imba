@@ -732,7 +732,7 @@ class LineNode implements LineCollection {
         if (lineCount === 0) { // it's empty! (and lineNumberToInfo expects a one-based line)
             return { oneBasedLine: 1, zeroBasedColumn: 0, lineText: undefined };
         }
-        const leaf = Debug.checkDefined(this.lineNumberToInfo(lineCount, 0).leaf);
+        const leaf = this.lineNumberToInfo(lineCount, 0).leaf;
         return { oneBasedLine: lineCount, zeroBasedColumn: leaf.charCount(), lineText: undefined };
     }
 

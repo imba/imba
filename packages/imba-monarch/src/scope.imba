@@ -127,6 +127,9 @@ export class Node
 	get value
 		doc.content.slice(start.offset,end ? end.endOffset : -1)
 
+	get outerText
+		doc.getText(contextSpan)
+
 	get next
 		end ? end.next : null
 
@@ -142,6 +145,12 @@ export class Node
 		elif query isa Function
 			return query(self)
 		return yes
+
+	get startOffset
+		start.offset
+
+	get endOffset
+		end.endOffset
 		
 	get outlineText
 		"item"
@@ -233,6 +242,16 @@ export class Scope < Node
 		if class? or property?
 			ident = token = prevToken(start,"entity.")
 
+			# need to start at the beginning of the line?
+			let kw = prevToken(start,"keyword.class keyword.tag",10000,2)
+			# console.log "found start?!",kw
+			if class? and kw
+				token = kw.next..next
+				if token..match('push.assignable')
+					token = token.scope
+
+				ident = token
+
 			if ident
 				ident.body = self
 
@@ -321,6 +340,15 @@ export class Scope < Node
 			starts = ident.startOffset
 		let ends = end ? end.endOffset : doc.content.length
 		{start: starts, length: (ends - starts)}
+
+	get textSpan
+		ident ? ident.span : span
+
+	get contextSpan
+		if class? or component? or def?
+			doc.expandSpanToLines(span)
+		else
+			span
 
 	def visit
 		self

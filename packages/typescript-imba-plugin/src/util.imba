@@ -199,6 +199,9 @@ const toImbaRegex = new RegExp("[ΞΦΨΓα]","gu")
 const toImbaReplacer = do(m) ToImbaMap[m]
 
 export def toImbaIdentifier raw
+	if raw and raw[0] == 'Ω'
+		raw = raw.split('Ω')[1]
+
 	raw ? raw.replace(toImbaRegex,toImbaReplacer) : raw
 	
 export def toImbaString str
@@ -233,7 +236,9 @@ extend class String
 
 export def toImbaDisplayParts parts
 	for part in parts
-		part.text = part.text.replace(toImbaRegex,toImbaReplacer)
+		# if part.text[0] == 'Ω'
+		part.text = toImbaIdentifier(part.text)
+		# part.text.replace(toImbaRegex,toImbaReplacer)
 	return parts
 
 
@@ -250,6 +255,9 @@ export def toCustomTagIdentifier str
 
 export def isTagIdentifier str
 	str[0] == 'Γ'
+
+export def isClassExtension str
+	str[0] == 'Ω'
 
 export def jsDocTagTextToString content
 	let out = ''
