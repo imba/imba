@@ -6,7 +6,7 @@ fileTypes: [imba,imba2]
 uuid: ef98eb90-bf9b-11e4-bb52-0800200c9a67
 variables:
   startOfIdentifier: (?<![_$[:alnum:]])(?:(?<=\.\.\.)|(?<!\.))
-  endOfIdentifier: (?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))  
+  endOfIdentifier: (?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))  
   propertyAccess: (?:(\.)|(\.\.(?!\s*[[:digit:]]|\s+)))
   propertyAccessPreIdentifier: \??\.\s*
   identifier: '[_$[:alpha:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\?\!]?'
