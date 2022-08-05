@@ -438,7 +438,9 @@ export const states = {
 	class_: [
 		[/(extend)(?=\s+class )/,'keyword.$1']
 		[/(global)(?=\s+class )/,'keyword.$1']
-		[/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
+		# [/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
+		[/(class)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
+
 		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
 		[/(class)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]

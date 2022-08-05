@@ -251,7 +251,6 @@ export class Scope < Node
 				token = kw.next..next
 				if token..match('push.assignable')
 					token = token.scope
-
 				ident = token
 
 			if ident
@@ -261,6 +260,8 @@ export class Scope < Node
 				$name = 'render'
 				if ident.symbol
 					ident.symbol.name = 'render'
+
+		
 	
 	get selfPath
 		let path = self.path

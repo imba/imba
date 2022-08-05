@@ -541,6 +541,7 @@ export default class ImbaScriptInfo
 		let scop = null
 		let last\any = {}
 		let symbols = new Set
+		let scopesUsed = new Set
 		let awaitScope = null
 		
 		def shrinkSpan span
@@ -562,6 +563,7 @@ export default class ImbaScriptInfo
 					kindModifiers: ""
 				}
 				if sym.body..scope?
+					scopesUsed.add(sym.body)
 					item.spans = [sym.body.span]
 
 			elif item isa Group
@@ -569,6 +571,7 @@ export default class ImbaScriptInfo
 				item = item.toOutline()
 			
 			elif item isa Scope
+				scopesUsed.add(item)
 				item = item.toOutline()
 
 			last = item
@@ -626,9 +629,11 @@ export default class ImbaScriptInfo
 				elif scope.type == 'tagcontent'
 					push(scope.end)
 				
-				elif scope.type == 'class' and token.match('push.class') and scope.extends?
-					add(scope,token)
-					push(token.end)
+				elif scope.type == 'class' and token.match('push.class')
+					unless scopesUsed.has(scope)
+						# and scope.extends?
+						add(scope,token)
+						push(token.end)
 
 			if token == awaitScope
 				push(token.end)
@@ -877,6 +882,10 @@ export default class ImbaScriptInfo
 					
 
 				tok.mods |= M.Declaration
+
+				if tok.match(/\.name\.namespace/)
+					let sym = scope.lookup(tok,lastVarKeyword)
+					sym..addReference(tok)
 
 			if subtyp == 'declval'
 				lastVarAssign = tok
