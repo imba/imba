@@ -324,6 +324,12 @@ declare namespace imba {
         
         /** The final Y coordinate of the pointer (after modifiers) */
         y: number;
+
+        /** The horizontal movement of the pointer (after modifiers) */
+        dx: number;
+
+        /** The vertical movement of the pointer (after modifiers). */
+        dy: number;
         
         target: Element;
         
