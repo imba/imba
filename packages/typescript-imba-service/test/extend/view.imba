@@ -1,11 +1,11 @@
 
 extend tag element
-	get stuuff
+	get stuff
 		123
 
 tag app-view
 	def mount
-		stuuff
+		stuff
 		[SomeClass]
 
 	<self>

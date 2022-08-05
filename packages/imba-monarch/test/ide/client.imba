@@ -22,8 +22,12 @@ class State
 			context = doc.getContextAtOffset(val)
 			focus = context.token
 			window.localStorage.setItem('loc',val)
-			console.log 'context',context
+			console.log(context)
+			console.log(context.token)
+			let vars = doc.varsAtOffset(val)
+			console.log 'vars',vars
 			window.doc = doc
+			window.scop = context.scope
 			window.ctx = context
 			imba.commit!
 	
@@ -286,6 +290,11 @@ tag App
 	def mount
 		render!
 		$dts.innerText = state.doc.getGeneratedDTS!
+		let ol = state.doc.getOutline!.childItems
+		console.group 'outline'
+		for item in ol
+			console.log item
+		console.groupEnd!
 	def render
 		<self[inset:0 fs:12px d:hgrid g:1 bg:black]
 			@hotkey('esc')=(state.focus = null)

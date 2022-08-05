@@ -2,55 +2,36 @@ import { Local } from './local'
 
 Local # yes
 
+def method stuff
+	return stuff
+
 extend class String
 	get plural
 		yes
 
 extend class SomeClass
 
+	get _this_\SomeClass
+		return
+
 	def ext
 		extthis
-		main
+		_this_.main
 		yes
 
 	def extthis
-		main!
+		_this_.main!
 
+	
 	get that
 		self
+
+	get thut
+		method(self)
 	
 	get num
 		'10'
 
-extend class LateDefJS
-
-	def ext
-		main
-		main!
-	
-	get that
-		
-		self
-
-extend class ImmediateDefJS
-
-	def ext
-		main
-		main!
-
-	def ext2
-		self
-
-	get that
-		self
-
-extend class GlobalSomeClass
-
-	def ext
-		main!
-
-	get that
-		self
 
 extend class Local
 
@@ -69,12 +50,15 @@ extend class Local
 	get element
 		<app-panel>
 
+	get str
+		""
+
 extend tag element
 
 	spuce\<app-button>
 
 	get space\<app-button>
-		global.something
+		global.somethings
 
 	def smeth\<app-button>
 		global.something
@@ -84,6 +68,9 @@ extend tag element
 	
 	get other
 		<app-something>
+
+	get main
+		self
 
 extend class HTMLElement
 	get state
@@ -109,10 +96,27 @@ extend tag app-panel
 		yes
 
 extend class Element
+
+	get button\<app-button>
+		yes
+	
 	get that
 		self
+
+	# @this ThisType<this>
+	get thatexpl
+		self
+
+	get rect
+		parentElement
+		let v = querySelector('app-button')
+		getBoundingClientRect!
+
+	get rect2
+		parentElement
 		
 	def ext2
+		parentElement
 		parentElement
 
 extend class ManualGlobal
@@ -125,4 +129,10 @@ extend class AutoGlobal
 	get that
 		self
 	
-	
+extend class Element
+	get staff
+		1234
+
+extend class Element
+	get stata
+		1234232
