@@ -448,15 +448,19 @@ export default class Service < EventEmitter
 				if out
 					return out
 
-			let res = ls.getQuickInfoAtPosition(filename,opos)
-			# console.log 'res',res
-			convertLocationsToImba(res,ls,filename)
-			# console.log 'res2',res
-
-			if script and false
-				let ctx = script.doc.getContextAt(pos)
-				res.textSpan = pos.token.span
-
+			let res
+			
+			try
+				res = ls.getQuickInfoAtPosition(filename,opos)
+				util.log 'ls.getQuickInfoAtPosition',res
+				convertLocationsToImba(res,ls,filename)
+			
+				if script
+					let ctx = script.doc.contextAtOffset(pos)
+					res.textSpan = ctx.token.span
+				util.log 'ls.getQuickInfoAtPosition final',res,res..textSpan
+			catch e
+				util.log 'error',e
 			return res
 
 		intercept.getDefinitionAndBoundSpan = do(filename,pos)

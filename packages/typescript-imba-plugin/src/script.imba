@@ -76,6 +76,7 @@ export default class ImbaScript
 		
 		# how do we handle if file changes on disk?
 		try
+			# if this was cached across sessions - opening a big project would be _much_ faster
 			let result = lastCompilation = compile!
 			let its = info.textStorage
 			let snap = its.svc = global.ts.server.ScriptVersionCache.fromString(result.js or '\n')
@@ -100,9 +101,10 @@ export default class ImbaScript
 				
 			its.reload = do(newText)
 				util.log('reload',fileName,newText.slice(0,10))
-			
 				return false
-			util.log('resetting the original file',snap)
+
+			# util.log('resetting the original file',snap)
+
 			snap.getSnapshot!.mapper = result
 			info.markContainingProjectsAsDirty!
 		catch e

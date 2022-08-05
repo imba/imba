@@ -1155,8 +1155,8 @@ export default class ImbaScriptInfo
 			let name = cls.path
 			globals[name] = cls
 			exists = yes
-			glob.w "interface {name} extends {ns}.{name}" + ' {};'
-			glob.w "declare var {name}: typeof {ns}.{name};"
+			glob.w "interface {name} extends {ns}.{name}" + ' {}'
+			glob.w "var {name}: typeof {ns}.{name};"
 
 			if cls.component?
 				glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {ns}.{name} \}`
@@ -1197,9 +1197,9 @@ export default class ImbaScriptInfo
 					origname = sym.exportName
 					let rel = src.replace(/\/[^\/]+?$/,'/' + modsrc)
 					let mod = mods[rel] ||= dts.curly("declare module '{rel}'")
-					mod.w "interface {origname} extends {ns}.{extname}" + ' {};'
+					mod.w "interface {origname} extends {ns}.{extname}" + ' {}'
 				else
-					let desc = "interface {origname} extends {ns}.{extname}" + ' {};'
+					let desc = "interface {origname} extends {ns}.{extname}" + ' {}'
 					dts.curly("declare &&{origname}&& ").w(desc)
 					# this is where it breaks
 					# glob.w "interface {origname} extends {ns}.{extname}" + ' {};'

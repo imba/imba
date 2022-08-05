@@ -126,7 +126,6 @@ export class Completion
 	
 	def #resolve
 		if #resolved =? yes
-			# console.log 'resolving item',self
 			resolve!
 		return item
 	
@@ -680,9 +679,8 @@ export default class Completions
 			add(autoimporter.getExportedTypes!,{kind: 'type', weight: 2000})
 		
 	def tagattrs o = {}
-		# console.log 'check',"ImbaHTMLTags.{o.name}"
 		let sym = checker.sym("HTMLElementTagNameMap.{o.name}")
-		# let attrs = checker.props("ImbaHTMLTags.{o.name}")
+
 		let pascal = o.name[0] == o.name[0].toUpperCase!
 		let globalPath = pascal ? o.name : util.toCustomTagIdentifier(o.name)
 
@@ -807,12 +805,10 @@ export default class Completions
 	def serialize
 		let entries = []
 		let stack = {}
-		# util.time(&,'serializing') do
 		for item in items
 			let entry = item.serialize(stack)
 			entries.push(entry) if entry
 
-		# devlog 'serialized',entries,items
 		return entries
 		
 	def find item

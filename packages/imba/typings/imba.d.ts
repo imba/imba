@@ -416,9 +416,10 @@ declare namespace imba {
 
         /**
         * @summary Called to update element via scheduler
+        * @abstract
         * @lifecycle
         */
-        tick(): this;
+        tick(): any;
 
         /**
          * @summary Tells whether the component should render

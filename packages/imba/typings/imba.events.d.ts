@@ -317,7 +317,7 @@ declare namespace imba {
      * To make it easier and more fun to work with touches, Imba includes a custom `@touch` event that combines `@pointerdown` -> `@pointermove` -> `@pointerup` in one convenient handler, with modifiers for commonly needed functionality.
      * @custom
      */
-    declare class Touch {
+    class Touch {
         
         /** The final X coordinate of the pointer (after modifiers) */
         x: number;
@@ -612,7 +612,7 @@ declare namespace imba {
     ```
     * @custom
     */
-    declare class IntersectEvent extends Event {
+    class IntersectEvent extends Event {
         /**
         The `out` modifier stops the handler unless intersectionRatio has *increased*.
 
@@ -686,7 +686,7 @@ declare namespace imba {
         delta: number;
     }
 
-    declare class HotkeyEvent extends Event {
+    class HotkeyEvent extends Event {
         
         /**
          * 
@@ -743,7 +743,7 @@ declare namespace imba {
      * The [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) interface reports changes to the dimensions of an Element's content or border box. It has [good browser support](https://caniuse.com/#feat=resizeobserver) and is very useful in a wide variety of usecases. ResizeObserver avoids infinite callback loops and cyclic dependencies that are often created when resizing via a callback function. It does this by only processing elements deeper in the DOM in subsequent frames.
      * @custom
      */
-    declare class ResizeEvent extends UIEvent {
+    class ResizeEvent extends UIEvent {
         /** Width of the resized element */
         readonly width: number;
         /** Height of the resized element */
@@ -753,9 +753,16 @@ declare namespace imba {
         readonly rect: DOMRectReadOnly;
         /** the raw ResizeObserverEntry */
         readonly entry: ResizeObserverEntry;
+
+        /**
+        The css modifier sets css variables (or units) to the width/height
+        of the resized element 
+        @summary Set css variables for width / height of resized element
+        */
+        αcss(wunit?:string, hunit?:string, selector?: FlagTarget): void;
     }
 
-    declare class SelectionEvent extends Event {
+    class SelectionEvent extends Event {
         detail: {
             start: number;
             end: number;

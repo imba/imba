@@ -307,10 +307,12 @@ var TYP = do |item,format|
 	typ ||= item:datatype isa Function and item.datatype
 
 	if typ
+		let str = C(typ)
+		
 		if format == 'jsdoc'
-			"/** @type \{{M(typ,typ)}\} */"
+			"/** @type \{{M(str,typ)}\} */"
 		else
-			":{M(typ,typ)}"
+			":{M(str,typ)}"
 	else
 		""
 
@@ -5977,11 +5979,11 @@ export class TypeAnnotation < Node
 			# pre + "InstanceType<" + (TagTypeIdentifier.new(name)).toClassName + ">"
 			pre + (TagTypeIdentifier.new(name)).toClassName
 
-			# pre + "globalThis." + toCustomTagIdentifier(name)
+		raw = raw.replace(/(^|[\[\,])self([\]\,\)\>]|$)/g) do |m,pre,post|
+			pre + "this" + post
 		return M(raw,self)
 
 	def asIteratorValue
-		console.log 'asInteratorValue'
 		wrapDoc(asRawType + '[]')
 
 	def wrapDoc inner
