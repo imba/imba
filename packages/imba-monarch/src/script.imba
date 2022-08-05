@@ -567,6 +567,9 @@ export default class ImbaScriptInfo
 			elif item isa Group
 				symbols.add(item)
 				item = item.toOutline()
+			
+			elif item isa Scope
+				item = item.toOutline()
 
 			last = item
 			item.#token = tok
@@ -622,6 +625,10 @@ export default class ImbaScriptInfo
 					add(scope,token)
 				elif scope.type == 'tagcontent'
 					push(scope.end)
+				
+				elif scope.type == 'class' and token.match('push.class') and scope.extends?
+					add(scope,token)
+					push(token.end)
 
 			if token == awaitScope
 				push(token.end)

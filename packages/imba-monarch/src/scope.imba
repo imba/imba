@@ -160,7 +160,7 @@ export class Node
 		
 	def toOutline
 		{
-			name: outlineText
+			text: outlineText
 			kind: outlineKind
 		}
 
