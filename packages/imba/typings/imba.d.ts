@@ -39,24 +39,6 @@ interface Element {
     private route__: any;
     
     /**
-     * @idl
-     * @summary The path/route this element should be enabled for
-     */
-    route: string;
-    
-    /**
-     * @idl
-     * @summary The path/route to go to when clicking this element
-     */
-    routeΞto: string;
-    
-    /**
-     * @summary Reference to the imba router
-     * @custom
-     */
-    readonly router: imba.Router;
-    
-    /**
     * Gives elements a stable identity inside lists
     * @idl
     * @deprecated Use key instead

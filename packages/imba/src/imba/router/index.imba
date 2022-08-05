@@ -314,7 +314,13 @@ export class ElementRoute
 			# TODO only update router if we know that we have subroutes
 			self.router.touch!
 
+	get path
+		#path
+
 	get isActive
+		!!#active
+
+	get active?
 		!!#active
 
 	def resolve
