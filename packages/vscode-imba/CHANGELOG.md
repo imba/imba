@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.3.0
+
+* Improved automatic typings for `extend class` and `extend tag` definitions
+* Improved overall speed and reliability of tooling
+* Various fixes and completion improvements
+
 ## 3.2.3
 
 * Fixed issue where extension would get into a broken state if imba files were changed on disk outside of vscode
