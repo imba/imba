@@ -600,7 +600,6 @@ export class Stack
 	prop scopes
 	prop root
 	prop state
-	prop semanticTokens
 	prop meta
 	prop theme
 	prop css
@@ -620,7 +619,6 @@ export class Stack
 		@state = {}
 		@tag = null
 		@sourceId = null
-		@semanticTokens = []
 		@symbols = {}
 		@css = StyleSheet.new(self)
 		@theme = null
@@ -634,21 +632,6 @@ export class Stack
 		
 	def cssns
 		@root.cssns
-	
-	def registerSemanticToken token, kind, modifiers
-		if token isa Node
-			kind ||= token.@variable
-			token = token.@value
-
-		unless typeof token == 'string'
-			if kind isa Variable
-				token.@kind = kind.type
-				token.@level = kind.scope.level
-				token.@scope = kind.scope.kind
-			else
-				token.@kind = kind
-
-		@semanticTokens.push(token)
 	
 	def use item
 		@root.use(item)
@@ -2499,12 +2482,6 @@ export class Param < Node
 
 		if @value isa Identifier
 			@value.@variable ||= scope__.register(@value.symbol,@value,type: type)
-			stack.registerSemanticToken(@value)
-			# change type here?
-			# @name.@value.@type = "PARAMVAR" if @name.@value
-			# @name.references(@variable)
-			# @variable.addReference(@name)
-
 		self
 
 	def assignment
@@ -2901,7 +2878,6 @@ export class VarDeclaration < Node
 			if @left isa Identifier
 				# TODO add an identifier.declare method for this
 				@left.@variable ||= scope__.register(@left.symbol,@left,type: type)
-				stack.registerSemanticToken(@left)
 
 		@right.traverse if @right
 
@@ -4780,7 +4756,6 @@ export class ObjAttr < Node
 			if !value
 				if decl
 					value = scope__.register(key.symbol,key, type: decl)
-					stack.registerSemanticToken(key,value)
 					value = value.via(key)
 
 					if @defaults
@@ -5523,7 +5498,6 @@ export class VarOrAccess < ValueNode
 				variable.addReference(self)
 				@value = variable # variable.accessor(self)
 				@token.@variable = variable
-				stack.registerSemanticToken(@token,variable)
 				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
 				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
 				return self
@@ -5658,7 +5632,6 @@ export class VarReference < ValueNode
 			# should happen automatically when traversing via traverse(declaring:...)
 			if @value isa Identifier
 				@value.@variable ||= scope.register(@value.symbol,@value,type: @type, datatype: datatype)
-				stack.registerSemanticToken(@value,@variable)
 		return self
 	
 	def js stack,params
@@ -6048,7 +6021,6 @@ export class Identifier < Node
 
 	def references variable
 		@value.@variable = variable if @value
-		STACK.registerSemanticToken(@value,variable) if @value
 		self
 
 	def load v
@@ -6146,13 +6118,11 @@ export class Identifier < Node
 		
 	def registerVariable type, scope = scope__
 		@variable = scope.register(symbol,self,type: type)
-		stack.registerSemanticToken(@value,@variable)
 		return self
 	
 	def resolveVariable scope = scope__
 		let variable = scope.lookup(symbol)
 		@variable = variable
-		stack.registerSemanticToken(@value,@variable)
 		return self
 
 export class DecoratorIdentifier < Identifier
@@ -6461,8 +6431,7 @@ export class TagTypeIdentifier < Identifier
 		
 	def resolveVariable scope = scope__
 		let variable = scope__.lookup(@str)
-		if @variable = variable
-			stack.registerSemanticToken(@value,@variable)
+		@variable = variable
 		return self
 
 	def toVarPrefix
@@ -7494,9 +7463,7 @@ export class ForOf < For
 				o:value.traverse(declaring: 'let')
 				
 				if o:value isa Identifier
-					# v = vars:value = scope.declare(o:name,null,let: yes, type: 'let')
 					o:value.@variable ||= scope__.register(o:value.symbol,o:value,type: 'let')
-					STACK.registerSemanticToken(o:value)
 		
 			@declvars = declvars
 
@@ -10296,7 +10263,6 @@ export class ESMSpecifier < Node
 				@variable = scope__.root.lookup(@cname)
 		else
 			@variable = scope__.root.register(@key, self, type: 'imported')
-			stack.registerSemanticToken (@alias or @name), @variable
 		self
 
 
