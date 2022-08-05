@@ -610,8 +610,12 @@ export default class Service < EventEmitter
 			return res
 		
 		# fileName: string, positionOrRange: number | TextRange, preferences: UserPreferences | undefined, triggerReason?: RefactorTriggerReason, kind?: string
-		intercept.getApplicableRefactors = do(...args)
-			let res = ls.getApplicableRefactors(...args)
+		intercept.getApplicableRefactors = do(file,...args)
+			if util.isImba(file)
+				let script = getImbaScript(file)
+				return [] if !script.js
+
+			let res = ls.getApplicableRefactors(file,...args)
 			return res
 			
 		intercept.findReferences = do(file,pos)

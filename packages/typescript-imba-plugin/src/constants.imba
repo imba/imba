@@ -46,7 +46,7 @@ export const DefaultConfig = {
 	compilerOptions: {
 		allowJs: true
 		checkJs: true
-		noEmit: false
+		noEmit: true
 		emitDeclarationOnly: true
 		skipLibCheck: true
 		skipDefaultLibCheck: true
@@ -57,8 +57,6 @@ export const DefaultConfig = {
 		suppressExcessPropertyErrors: false
 		suppressImplicitAnyIndexErrors: false
 		declaration: true
-		declarationMap: false
-		# inlineSourceMap: false
 		strict: false
 		resolveJsonModule: true
 		noResolve: false
