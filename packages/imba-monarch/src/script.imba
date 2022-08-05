@@ -1,13 +1,15 @@
 import { lexer, Token, LexedLine } from './lexer'
-import {prevToken, fastExtractSymbols} from './utils'
-import { Root, Scope, Group, ScopeTypeMap } from './scope'
+import { toJSIdentifier,prevToken, fastExtractSymbols, toImbaIdentifier} from './utils'
+import { Assignable, Root, Scope, Group, ScopeTypeMap } from './scope'
 import { Sym, SymbolFlags } from './symbol'
 
 import {SemanticTokenTypes,M,CompletionTypes,Keywords} from './types'
 
 import {ScriptVersionCache} from './svc'
 import {Range, Position} from './structures'
+import CodeGen from './codegen'
 
+let COUNTER = 0
 ###
 line and character are both zero based
 ###
@@ -22,6 +24,7 @@ export default class ImbaScriptInfo
 		svc = svc
 		seed = new Token(0,'eol','imba')
 		eof = new Token(0,'eof','imba')
+		nr = COUNTER++
 		initialState = lexer.getInitialState!
 		isLegacy = no
 		history = []
@@ -45,8 +48,15 @@ export default class ImbaScriptInfo
 		
 	get content
 		#lexed.content ||= getText!
+
+	get fileName
+		owner.fileName
 	
 	def getText start = 0, end = snapshot.getLength!
+		if typeof start.start == 'number'
+			end = start.start + start.length
+			start = start.start
+
 		snapshot.getText(start,end)
 
 	def after token, match
@@ -101,6 +111,9 @@ export default class ImbaScriptInfo
 	def getImportNodes
 		let tokens = tokens.filter do $1.match('push._imports')
 		return tokens.map do $1.scope
+
+	def getRootClasses
+		getNodesInScope(root).filter do $1 isa Scope and $1.class?
 		
 	def getNodesInScope scope,includeEnds = no,includeWhitespace = no
 		astify!
@@ -198,11 +211,22 @@ export default class ImbaScriptInfo
 		return null
 		
 	def expandSpanToLines span
-		let start = index.positionToColumnAndLineText(span.start)
-		let end = index.positionToColumnAndLineText(span.start + span.end)
-		
-		span.start = span.start - start.zeroBasedColumn
-		span.length = span.length + start.zeroBasedColumn
+		try
+			let start = index.positionToColumnAndLineText(span.start)
+			let end = index.positionToColumnAndLineText(span.start + span.end)
+			span.start = span.start - start.zeroBasedColumn
+			span.length = span.length + start.zeroBasedColumn
+		catch e
+			# console.error e
+			let text = content
+			let chr
+			while true
+				chr = text[span.start]
+				break if !chr or chr == '\n'
+				span.start--
+
+			
+			yes
 		return span
 	
 	def contextAtOffset offset
@@ -222,7 +246,7 @@ export default class ImbaScriptInfo
 
 		let ctx = tok.context
 		let content = index.getText(0,index.getLength!)
-		console.log 'context',offset,tok
+		# console.log 'context',offset,tok
 
 		const before = {
 			character: lineText[col - 1] or ''
@@ -517,6 +541,7 @@ export default class ImbaScriptInfo
 		let scop = null
 		let last\any = {}
 		let symbols = new Set
+		let scopesUsed = new Set
 		let awaitScope = null
 		
 		def shrinkSpan span
@@ -538,10 +563,15 @@ export default class ImbaScriptInfo
 					kindModifiers: ""
 				}
 				if sym.body..scope?
+					scopesUsed.add(sym.body)
 					item.spans = [sym.body.span]
 
 			elif item isa Group
 				symbols.add(item)
+				item = item.toOutline()
+			
+			elif item isa Scope
+				scopesUsed.add(item)
 				item = item.toOutline()
 
 			last = item
@@ -598,6 +628,12 @@ export default class ImbaScriptInfo
 					add(scope,token)
 				elif scope.type == 'tagcontent'
 					push(scope.end)
+				
+				elif scope.type == 'class' and token.match('push.class')
+					unless scopesUsed.has(scope)
+						# and scope.extends?
+						add(scope,token)
+						push(token.end)
 
 			if token == awaitScope
 				push(token.end)
@@ -847,6 +883,10 @@ export default class ImbaScriptInfo
 
 				tok.mods |= M.Declaration
 
+				if tok.match(/\.name\.namespace/)
+					let sym = scope.lookup(tok,lastVarKeyword)
+					sym..addReference(tok)
+
 			if subtyp == 'declval'
 				lastVarAssign = tok
 
@@ -893,6 +933,57 @@ export default class ImbaScriptInfo
 	def getStyleVarReferences
 		getMatchingTokens('style.value.var')
 
+	def findTagDefinition name
+		let match = getSymbols!.find do $1.name == name
+		return match and match.body
+
+	def findNodeForTypeScriptDefinition item
+		let name = toImbaIdentifier(item.name)
+		let kind = null
+		let res
+
+		let symbols = getSymbols!.filter do $1.name == name or $1.name == item.name
+		let tokens = tokens.filter do $1.value == name
+
+		if item.kind == 'getter'
+			kind = 'entity.name.get'
+		elif item.kind == 'property'
+			kind = 'entity.name.field'
+		elif item.kind == 'method'
+			kind = 'entity.name.def'
+		elif item.kind == 'class'
+			if symbols[0]
+				res = symbols[0].node
+		
+		if item.containerName == 'globalThis'
+			res = symbols[0]
+
+		if kind and !res
+			tokens = tokens.filter(do $1.match(kind))
+			if tokens.length == 1
+				res = tokens[0]
+			elif tokens.length
+				# should not be this weak from the getgo
+				tokens = tokens.filter do(tok) toImbaIdentifier(tok.context.name).toLowerCase! == toImbaIdentifier(item.containerName).toLowerCase!
+
+				if tokens.length == 1
+					res = tokens[0]
+
+				# for tok in tokens when tok.context
+				#	console.log tok.value, tok.type, tok.context..path,toImbaIdentifier(tok.context.name),name
+				#	# if this is a tag
+				#	# if tok.context.name
+				# console.log "found multiple hits",tokens,symbols
+				# for sym in symbols
+				# 	console.log sym.name,sym.body.path,sym.body.scope..path
+
+		# if !res and tokens[0]
+		#	res = tokens[0]
+
+		if res isa Sym
+			res = res.body
+
+		return res
 
 	def findPath path
 		let parts = path.split('.')
@@ -1024,3 +1115,95 @@ export default class ImbaScriptInfo
 					edits.push([tok.startOffset,0,' '])
 		
 		edits
+
+	def findTokensForPattern pat\string
+		let i = 0
+		let m
+		let body = content
+		let matches = []
+
+		while (m = body.indexOf(pat,i)) >= 0
+			console.log 'found offset',i,m,body.substr(m,10)
+			i = m + 1
+			let tok = tokenAtOffset(m)
+			let tokAfter = tokenAtOffset(m + pat.length)
+			matches.push({start: tok, after: tokAfter})
+		return matches
+
+	def getGlobalDefs o = {}
+		content.replace(/global (class) ([\w-]+)/g) do(m,typ,name)
+			o[name] = self
+		return o
+
+	def getGeneratedDTS o = {},globals = {}
+		let ns = o.ns or "__{nr}"
+		let src = o.fileName || owner..fileName or "$$PATH$$"
+		let dts = o.dts or new CodeGen
+		let body = content
+		dts.w "import * as {ns} from '{src}';"
+		let exists = no
+		let mods = {}
+		let glob = mods.global = dts.curly 'declare global'
+
+		getGlobalDefs(globals)
+
+		let classes = getRootClasses()
+
+		for cls in classes when cls.global?
+			continue if cls.extends?
+
+			let name = cls.path
+			globals[name] = cls
+			exists = yes
+			glob.w "interface {name} extends {ns}.{name}" + ' {}'
+			glob.w "var {name}: typeof {ns}.{name};"
+
+			if cls.component?
+				glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {ns}.{name} \}`
+			# glob.w "interface {name} extends {ns}.{name}" + ' {};'
+			# glob.w "export {name}"
+			# glob.w "declare var {name}: typeof {ns}.{name};"
+
+		
+		# body.replace(/global (class) ([\w-]+)/g) do(m,typ,name)
+		# 	exists = yes
+		# 	glob.w "interface {name} extends {ns}.{name}" + ' {};'
+		# 	glob.w "declare var {name}: typeof {ns}.{name};"
+
+		# body.replace(/^(global )?(tag) ([a-z][\w-]*)/gm) do(m,mod,typ,name)
+		# 	exists = yes
+		# 	
+		# 	name = toJSIdentifier(name)
+		# 	glob.w "interface {name} extends {ns}.{name}" + ' {};'
+		# 	glob.w "declare var {name}: typeof {ns}.{name};"
+
+		if true
+			let nr = 1
+			for cls in classes
+				continue unless cls.extends?
+
+				let ident = cls.ident
+				if ident isa Assignable
+					ident = ident.find('identifier.')
+				let sym = ident.symbol
+				let name = ident.value
+				let modsrc = sym..importSource
+				let origname = cls.path
+				let extname = "Ω{cls.path}Ω{nr++}"
+				exists = yes
+
+				if modsrc
+					# tweak / fix the path somehow
+					origname = sym.exportName
+					let rel = src.replace(/\/[^\/]+?$/,'/' + modsrc)
+					let mod = mods[rel] ||= dts.curly("declare module '{rel}'")
+					mod.w "interface {origname} extends {ns}.{extname}" + ' {}'
+				else
+					let desc = "interface {origname} extends {ns}.{extname}" + ' {}'
+					dts.curly("declare &&{origname}&& ").w(desc)
+					# this is where it breaks
+					# glob.w "interface {origname} extends {ns}.{extname}" + ' {};'
+
+		dts.w 'export {};'
+		exists ? String(dts) : ''
+		# String(dts)

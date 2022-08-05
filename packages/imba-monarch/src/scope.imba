@@ -1,4 +1,4 @@
-import {prevToken,toCustomTagIdentifier} from './utils'
+import { tagNameToClassName,prevToken,toCustomTagIdentifier} from './utils'
 import {M,KeywordTypes,SemanticTokenTypes,SemanticTokenModifiers} from './types'
 import {Sym,SymbolFlags} from './symbol'
 
@@ -127,6 +127,9 @@ export class Node
 	get value
 		doc.content.slice(start.offset,end ? end.endOffset : -1)
 
+	get outerText
+		doc.getText(contextSpan)
+
 	get next
 		end ? end.next : null
 
@@ -142,6 +145,12 @@ export class Node
 		elif query isa Function
 			return query(self)
 		return yes
+
+	get startOffset
+		start.offset
+
+	get endOffset
+		end.endOffset
 		
 	get outlineText
 		"item"
@@ -151,7 +160,7 @@ export class Node
 		
 	def toOutline
 		{
-			name: outlineText
+			text: outlineText
 			kind: outlineKind
 		}
 
@@ -233,6 +242,17 @@ export class Scope < Node
 		if class? or property?
 			ident = token = prevToken(start,"entity.")
 
+			# need to start at the beginning of the line?
+			let kw = prevToken(start,"keyword.class keyword.tag",10000,2)
+			keyword = kw
+
+			# console.log "found start?!",kw
+			if class? and kw
+				token = kw.next..next
+				if token..match('push.assignable')
+					token = token.scope
+				ident = token
+
 			if ident
 				ident.body = self
 
@@ -240,6 +260,8 @@ export class Scope < Node
 				$name = 'render'
 				if ident.symbol
 					ident.symbol.name = 'render'
+
+		
 	
 	get selfPath
 		let path = self.path
@@ -256,6 +278,9 @@ export class Scope < Node
 		
 		if component?
 			if name[0] == name[0].toLowerCase!
+				let hit = tagNameToClassName(name)
+				if hit
+					return hit.name
 				return toCustomTagIdentifier(name)
 			else
 				return name
@@ -287,6 +312,12 @@ export class Scope < Node
 		
 	get class?
 		!!type.match(/^class/) or component?
+
+	get extends?
+		class? and keyword and keyword.prev.prev..match('keyword.extend')
+
+	get global?
+		class? and (!!prevToken(keyword,'keyword.global',3,1) or (component? and name[0] == name[0].toLowerCase!))
 
 	get def?
 		!!type.match(/def|get|set/)
@@ -321,6 +352,15 @@ export class Scope < Node
 			starts = ident.startOffset
 		let ends = end ? end.endOffset : doc.content.length
 		{start: starts, length: (ends - starts)}
+
+	get textSpan
+		ident ? ident.span : span
+
+	get contextSpan
+		if class? or component? or def?
+			doc.expandSpanToLines(span)
+		else
+			span
 
 	def visit
 		self

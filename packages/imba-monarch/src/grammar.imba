@@ -438,7 +438,9 @@ export const states = {
 	class_: [
 		[/(extend)(?=\s+class )/,'keyword.$1']
 		[/(global)(?=\s+class )/,'keyword.$1']
-		[/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
+		# [/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
+		[/(class)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
+
 		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
 		[/(class)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]
@@ -458,7 +460,7 @@ export const states = {
 	]
 
 	extend_class_: [
-		[/(extend)(\s)(tag|class)(\s)/, 
+		[/(extend)(\s)(class)(\s)/, 
 			['keyword.$1','white.$1','keyword.$3','white.extendclass','@classname_start/$3']
 		]
 	]
@@ -905,7 +907,7 @@ export const states = {
 	]
 
 	css_selector: [
-		denter({switchTo: '@css_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
+		denter({switchTo: '@css_props&_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
 		[/(\}|\)|\])/,'@rematch', '@pop']
 		[/(?=\s*@cssPropertyKey2)/,'',switchTo:'@css_props&_props']
 		[/\s*#\s/,'@rematch',switchTo:'@css_props&_props']

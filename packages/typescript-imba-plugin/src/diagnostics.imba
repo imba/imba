@@ -10,6 +10,9 @@ const Rules = [
 	code: 2322	
 	text: /^\$\d+/
 	---
+	code: 2612
+	message: /./
+	---
 	code: 2322 # should only be for dom nodes?
 	message: /^Type '(boolean|string|number|ImbaAsset|typeof import\("data:text\/asset;\*"\))' is not assignable to type '(string|number|boolean)'/
 	---
@@ -21,6 +24,20 @@ const Rules = [
 	---
 	code: 2339
 	message: /Property '_\$SYM\$/
+	---
+	code: 2551
+	test: do({message},item)
+		return no unless typeof message == 'string'
+		if message.match(/^Property 'Ψ/)
+			item.category = 0
+		return no
+	---
+	code: 2339
+	test: do({message},item)
+		return no unless typeof message == 'string'
+		if message.match(/^Property 'Ψ/)
+			item.category = 0
+		return no
 	---
 	code: 2339 # option allow array properties
 	message: /on type '(.*)\[\]'/
@@ -73,7 +90,7 @@ export def filter item
 			if rule.message isa RegExp
 				return if rule.message.test(msg)
 			if rule.test isa Function
-				return if rule.test({message: msg, text: item.#otext})
+				return if rule.test({message: msg, text: item.#otext},item)
 	
 	item.#suppress = no
 	return item

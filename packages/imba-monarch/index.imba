@@ -12,3 +12,5 @@ export { SymbolKind,SemanticTokenTypes,SemanticTokenModifiers,Keywords,KeywordTy
 export { SymbolFlags,Sym} from './src/symbol'
 export { Node,Scope,Group } from './src/scope'
 export { Position,Range } from './src/structures'
+
+export * as utils from './src/utils'

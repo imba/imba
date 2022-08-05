@@ -58,13 +58,14 @@ export default class ImbaScript
 
 	def setup
 		let orig = info.textStorage.text
+		# console.log 'setup',fileName,!!orig
 		if orig == undefined
 			# if this was already being edited?!
 			orig = getFromDisk!
-			util.log("setup {fileName} - read from disk",orig.length)
-		else
-			util.log("setup {fileName} from existing source",orig.length,info)
-
+			# util.log("setup {fileName} - read from disk",orig.length)
+		# else
+		# 	util.log("setup {fileName} from existing source",orig.length,info)
+		# console.log 'setup....',fileName
 		svc = global.ts.server.ScriptVersionCache.fromString(orig or '')
 		svc.currentVersionToIndex = do this.currentVersion
 		svc.versionToIndex = do(number) number
@@ -75,6 +76,7 @@ export default class ImbaScript
 		
 		# how do we handle if file changes on disk?
 		try
+			# if this was cached across sessions - opening a big project would be _much_ faster
 			let result = lastCompilation = compile!
 			let its = info.textStorage
 			let snap = its.svc = global.ts.server.ScriptVersionCache.fromString(result.js or '\n')
@@ -99,14 +101,15 @@ export default class ImbaScript
 				
 			its.reload = do(newText)
 				util.log('reload',fileName,newText.slice(0,10))
-			
 				return false
-			util.log('resetting the original file',snap)
+
+			# util.log('resetting the original file',snap)
+
 			snap.getSnapshot!.mapper = result
 			info.markContainingProjectsAsDirty!
 		catch e
 			util.log('setup error',e,self)
-
+		#setup = yes
 		return self
 			
 	def lineOffsetToPosition line, offset, editable
@@ -138,28 +141,44 @@ export default class ImbaScript
 			result.#applied = yes
 	
 			result.script.markContainingProjectsAsDirty!
-			let needDts = result.js.indexOf('class Ω') >= 0
-			util.log('onDidCompileScript',result,needDts)
-			if ils.isSemantic
-				global.session.refreshDiagnostics!
+			let needDts = result.shouldGenerateDts # result.js.indexOf('class Ω') >= 0
+			let isSaved = result.input.#saved
+			
+			util.log('onDidCompileScript',result,needDts,isSaved)
+
+			if isSaved and needDts and false
+				# wait for the next version of the program
+				project.markAsDirty!
+				project.updateGraph!
+				syncDts!
+
+			if ils.isSemantic and global.session
+				global.session..refreshDiagnostics!
 		else
 			util.log('errors from compilation!!!',result)
 			diagnostics=result.diagnostics
-			global.session.refreshDiagnostics!
+			global.session..refreshDiagnostics!
 		self
-		
+
+
 	def syncDts
 		if lastCompilation..shouldGenerateDts
+			return
+
 			util.log "syncDts"
 			let prog = project.program
 			let script = prog.getSourceFile(fileName)
 			let out = {}
 			let body\string
+			
 			let writer = do(path,b) out[path] = body = b
 			let res = prog.emit(script,writer,null,true,[],true)
 			util.log 'emitted dts',out,res,body
+			# console.log 'emitted!!',res
+			dts.#emitted = res
 			dts.update(body)
 			return dts.#body
+
 		return null
 		
 	def getImbaDiagnostics
@@ -241,9 +260,12 @@ export default class ImbaScript
 		try
 			let snap = snapshot
 			snap.#saved = yes
+			
 			if lastCompilation..input == snap
 				util.log 'saved compilation that was already applied',lastCompilation
 				syncDts!
+
+			ils.syncProjectForImba(project)
 		yes
 		
 	def getTypeChecker sync = no
@@ -312,7 +334,7 @@ export default class ImbaScript
 		let tok = ctx.token or {match: (do no)}
 		let checker = getTypeChecker!
 
-		util.log('context for quick info',ctx)
+		# console.log('context for quick info',ctx)
 		
 		out.textSpan = tok.span
 		
@@ -389,11 +411,8 @@ export default class ImbaScript
 		if tok.match('tag.event.name')
 			let name = tok.value.replace('@','')
 			hit(checker.sym("ImbaEvents.{name}"),'event')
-
-			# out.sym ||= 
 		
 		if tok.match('tag.name')
-			# out.sym = out.tag
 			out.sym = checker.getTokenMetaSymbol(tok) or out.tag
 		
 		if tok.match('tag.attr') and out.tag
@@ -448,6 +467,7 @@ export default class ImbaScript
 			let out = getInfoAt(pos,ls)
 			
 			if out.info
+				out.info.textSpan = out.textSpan
 				return out.info
 		return null
 		

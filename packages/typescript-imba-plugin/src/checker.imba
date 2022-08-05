@@ -1,5 +1,5 @@
 import * as util from './util'
-import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as ImbaSymbolFlags} from 'imba-monarch'
+import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as ImbaSymbolFlags, utils as MonarchUtils} from 'imba-monarch'
 import AutoImportContext from './importer'
 const Globals = "global imba module window document exports console process parseInt parseFloat setTimeout setInterval setImmediate clearTimeout clearInterval clearImmediate globalThis isNaN isFinite __dirname __filename".split(' ')
 
@@ -88,6 +88,15 @@ export default class ImbaTypeChecker
 	get globals
 		#globals ||= allGlobals.filter do
 			($1.pascal? or Globals.indexOf($1.escapedName) >= 0) and !$1.isWebComponent
+
+	def getTypeAtLocation node
+		return unless node
+		if node.kind == 24 # Dot
+			node = node.parent.expression
+		if node.kind == 21 # CloseParenToken
+			node = node.parent.parent.expression
+
+		checker.getTypeAtLocation(node)
 
 	def getMappedLocation dpos
 		let res = {dpos: dpos}
@@ -394,6 +403,12 @@ export default class ImbaTypeChecker
 	def resolve name,types = ts.SymbolFlags.All, location = null
 		if (/^\$\w+\$$/).test(name)
 			return self[name.slice(1,-1)]
+
+		if MonarchUtils.isTagIdentifier(name)			
+			let hit = MonarchUtils.tagNameToClassName(name)
+			# util.log 'is tag identifier!!',hit
+			if hit and hit.name
+				name = hit.name
 
 		let sym = checker.resolveName(name,location or sourceFile,symbolFlags(types),false)
 		return sym
@@ -823,7 +838,6 @@ export default class ImbaTypeChecker
 			return [['ImbaEvents',tok.context.name],'MODIFIERS']
 			# return ['ImbaEvents',tok.value]
 		
-		# if this is a call
 		if typ == ')' and tok.start
 			return [inferType(tok.start.prev),'!']
 
@@ -834,8 +848,21 @@ export default class ImbaTypeChecker
 			return basetypes.string
 
 		if tok.match('operator.access')
-			# devlog 'resolve before operator.oacecss',tok.prev
-			return inferType(tok.prev,doc)
+			if tok.prev..type == ')' and tok.prev.start
+				let otok = findExactLocationForToken(tok.prev)
+				
+				if otok
+					let typ = tok.#otyp = getTypeAtLocation(otok)
+					return typ
+	
+			let typ = inferType(tok.prev,doc)
+
+			unless typ
+				let otok = findExactLocationForToken(tok.prev)
+				if otok
+					return tok.#otyp = checker.getTypeAtLocation(otok)
+
+			return typ
 
 		if tok.type == 'self'
 			# what if the selfPath doesnt work?

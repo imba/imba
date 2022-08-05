@@ -307,10 +307,12 @@ var TYP = do |item,format|
 	typ ||= item:datatype isa Function and item.datatype
 
 	if typ
+		let str = C(typ)
+		
 		if format == 'jsdoc'
-			"/** @type \{{M(typ,typ)}\} */"
+			"/** @type \{{M(str,typ)}\} */"
 		else
-			":{M(typ,typ)}"
+			":{M(str,typ)}"
 	else
 		""
 
@@ -600,7 +602,6 @@ export class Stack
 	prop scopes
 	prop root
 	prop state
-	prop semanticTokens
 	prop meta
 	prop theme
 	prop css
@@ -620,7 +621,6 @@ export class Stack
 		@state = {}
 		@tag = null
 		@sourceId = null
-		@semanticTokens = []
 		@symbols = {}
 		@css = StyleSheet.new(self)
 		@theme = null
@@ -634,21 +634,6 @@ export class Stack
 		
 	def cssns
 		@root.cssns
-	
-	def registerSemanticToken token, kind, modifiers
-		if token isa Node
-			kind ||= token.@variable
-			token = token.@value
-
-		unless typeof token == 'string'
-			if kind isa Variable
-				token.@kind = kind.type
-				token.@level = kind.scope.level
-				token.@scope = kind.scope.kind
-			else
-				token.@kind = kind
-
-		@semanticTokens.push(token)
 	
 	def use item
 		@root.use(item)
@@ -2364,13 +2349,19 @@ export class Return < Statement
 			k
 
 	def c
+		if STACK.tsc and value isa Self
+			return "{M('return',keyword)} {M('this',value)}"
+
 		return super if !value or value.isExpressable
+
 		value.consume(self).c
 
 	def consume node
 		return self
 
 export class ImplicitReturn < Return
+
+	
 
 export class GreedyReturn < ImplicitReturn
 
@@ -2493,12 +2484,6 @@ export class Param < Node
 
 		if @value isa Identifier
 			@value.@variable ||= scope__.register(@value.symbol,@value,type: type)
-			stack.registerSemanticToken(@value)
-			# change type here?
-			# @name.@value.@type = "PARAMVAR" if @name.@value
-			# @name.references(@variable)
-			# @variable.addReference(@name)
-
 		self
 
 	def assignment
@@ -2895,7 +2880,6 @@ export class VarDeclaration < Node
 			if @left isa Identifier
 				# TODO add an identifier.declare method for this
 				@left.@variable ||= scope__.register(@left.symbol,@left,type: type)
-				stack.registerSemanticToken(@left)
 
 		@right.traverse if @right
 
@@ -3313,11 +3297,13 @@ export class ClassDeclaration < Code
 			
 			if !isTag
 				@className = @name
-				@name = scope__.register("Ω{@name.value}Ω{oid}",null)
+				# @name = scope__.register("Ω{@name.value}Ω{oid}",null)
+				@mixinName = @name = scope__.register("Ω{@name.value}Ω{STACK.incr('extend')}",null)
 				if STACK.tsc
 					option(:export,true)
 			else
 				@className = LIT(@name.toClassName)
+				@mixinName = scope__.register("Ω{@className}Ω{STACK.incr('extend')}",null)
 			
 		elif @name isa Identifier
 			if !isTag or @name.isCapitalized
@@ -3567,6 +3553,9 @@ export class ClassDeclaration < Code
 		var externalAccess = LIT(cname)
 		var supAccess = null
 
+		if isExtension and STACK.tsc
+			yes
+
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
 		if name
@@ -3579,6 +3568,9 @@ export class ClassDeclaration < Code
 		if sup
 			supAccess = M(sup)
 			jshead += " extends {supAccess}"
+		
+		# elif isExtension and STACK.tsc
+		# 	jshead += " extends {@className.c}"
 
 		if name isa Access
 			if @staticInit
@@ -3594,10 +3586,16 @@ export class ClassDeclaration < Code
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
 				jshead = "{M 'export',option(:export)} {jshead}"
-				
-		if isExtension and STACK.tsc
+
+		# if STACK.tsc and option(:global)
+
+		if isExtension and STACK.tsc and false
 			# if the class-name is aliased via an import we want to include that here
-			jsbody = "\n__extends__={@className.c};\n{jsbody}"
+			# jsbody = "\n__extends__= new {@className.c};\n{jsbody}"
+			# let ext = '\n/** @type {InstanceType<typeof THIS>} */ __extends__;\n'.replace('THIS',@className.c)
+			let ext = "\n// @ts-ignore\n__extends__= new {M(@className.c,@className)};\n"
+			jsbody = "{ext}{jsbody}"
+			# InstanceType<typeof ImmediateDefJS>
 
 		let js = "{jshead} \{{jsbody}\}"
 		
@@ -3622,7 +3620,16 @@ export class ClassDeclaration < Code
 
 		if option(:global)
 			# external access?
-			js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
+			# js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
+
+			if STACK.tsc and true
+				js = "{js}; export \{{@cname}\}; {scope__.root.globalRef}.{@cname} = {@cname}"
+
+				# js = "{js}; export const {@cname}_ = {@cname}; {scope__.root.globalRef}.{@cname} = {@cname}_"
+				# js = "{scope__.root.globalRef}.{@cname} = {js}; {@cname}"
+				# js = "{scope__.root.globalRef}.{@cname} = {js}; {@cname}"
+			else
+				js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
 		return js
 
@@ -3746,8 +3753,16 @@ export class TagDeclaration < ClassDeclaration
 			if option(:extension)
 				# className = "Extended${className}"
 				# ought to support the nested stuff?
-				let out = "class Ω{className.replace(/\./g,'__')}Ω{oid}"
+				# let out = "class Ω{name.toExtensionName.replace(/\./g,'__')}Ω{STACK.incr('extend')}"
+				let out = "class {@mixinName.c}" 
+				#  extends {@className.c}
 				let obody = body.c
+
+				if STACK.tsc and false
+					# if the class-name is aliased via an import we want to include that here
+					# console.log 'cl',@className
+					obody = "\n__extends__= new {M(@className.c,@name)};\n{obody}"
+
 				out = "{out} \{{obody}\}"
 				out = "export {out}" unless @name.@variable
 				return out
@@ -3779,9 +3794,10 @@ export class TagDeclaration < ClassDeclaration
 				jshead = "{M 'export',option(:export)} {jshead}"
 				
 				
-		if anonGlobalTag # only tsc
-			jshead = "globalThis[{M("'{M(name.toNodeName,name)} tag'",name)}] = {M 'class', keyword} extends {M sup, superclass}"
-			jshead = "globalThis.{M className, name} = {M 'class', keyword} extends {M sup, superclass}"
+		if anonGlobalTag and STACK.tsc # only tsc
+			# jshead = "globalThis[{M("'{M(name.toNodeName,name)} tag'",name)}] = {M 'class', keyword} extends {M sup, superclass}"
+			# jshead = "globalThis.{M className, name} = {M 'class', keyword} extends {M sup, superclass}"
+			jshead = "export {jshead}"
 			# jshead = "globalThis.{className} = {M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
 		let js = "{jshead} \{{jsbody}\}"
@@ -3806,7 +3822,7 @@ export class TagDeclaration < ClassDeclaration
 		# 	if !option(:extension) and (!name.isClass)
 		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
 
-		if STACK.tsc and option(:global) and name.isClass
+		if STACK.tsc and (option(:global) or !name.isClass)
 			js += "; globalThis.{className} = {className}"
 		return js
 
@@ -3845,9 +3861,14 @@ export class Func < Code
 
 	def visit stack, o
 		scope.visit
+
+
 		@context = scope.parent
+
 		@params.traverse(declaring: 'arg')
 		@body.traverse # so soon?
+
+
 
 	def funcKeyword
 		let str = "function"
@@ -3871,14 +3892,17 @@ export class Func < Code
 			if name and STACK.tsc
 				# console.log 'inext',@context.node.@className
 				# o.push('@this { this & ' + name.c + ' }')
+				# let thistype = "globalThis." + name.c
 				let thistype = name.c
 				if kls.option(:instanceOnly)
 					thistype = "typeof {thistype}"
-
-				o.push('@this { ' + thistype + ' }')
+				else
+					thistype = "InstanceType<typeof {thistype}>"
+				# o.push('@this ' + thistype + '')
+				
 				
 		elif option(:jsdocthis)
-			o.push('@this { ' + option(:jsdocthis) + ' }')
+			o.push('@this ' + option(:jsdocthis) + '')
 			
 		if returnType
 			o.push('@returns { ' + returnType.asRawType + ' }')
@@ -4058,11 +4082,16 @@ export class MethodDeclaration < Func
 		# instance-method / member
 		if closure isa ClassScope and !target
 			@target = closure.prototype
+			let inExt = closure.node.option('extension')
 			set(
 				prototype: @target,
 				inClassBody: yes,
-				inExtension: closure.node.option('extension')
+				inExtension: inExt
 			)
+
+			# if inExt
+			#	scope.context.@value = LIT("/** @type {closure.node.@className}*/(this)")
+
 			closure.annotate(self)
 
 		if target isa Self
@@ -4159,7 +4188,8 @@ export class MethodDeclaration < Func
 				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
 			else
 				if STACK.tsc
-					set(jsdocthis: target.c)
+					let o = "InstanceType<typeof {target.c}>"
+					set(jsdocthis: o)
 
 				let k = OP('.',target,@name)
 				out = "{k.c} = {funcKeyword} {func}"
@@ -4728,7 +4758,6 @@ export class ObjAttr < Node
 			if !value
 				if decl
 					value = scope__.register(key.symbol,key, type: decl)
-					stack.registerSemanticToken(key,value)
 					value = value.via(key)
 
 					if @defaults
@@ -4805,11 +4834,12 @@ export class Self < Literal
 		return self
 
 	def visit
-		scope__.context
+		@scope__ = scope__
+		@scope__.context
 		self
 	
 	def js
-		var s = scope__
+		var s = @scope__ or scope__
 		s ? s.context.c : "this"
 
 	def c
@@ -5156,6 +5186,7 @@ export class Access < Op
 		@cache = null
 		@invert = no
 		@op = o and o.@value or o
+		@optok = o
 		@left = l
 		@right = r
 		return self
@@ -5243,7 +5274,8 @@ export class Access < Op
 		var out = if raw
 			# see if it needs quoting
 			# need to check to see if it is legal
-			ctx ? "{safeop}.{raw}" : raw
+			let opjs = STACK.tsc ? M('.',@optok) : '.'
+			ctx ? "{safeop}{opjs}{raw}" : raw
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes, as: 'value') : rgt
 			"{safeop ? '?.' : ''}[{r}]"
@@ -5441,8 +5473,8 @@ export class VarOrAccess < ValueNode
 					@value = LIT("{scope.imba.c}.{name}")
 			else
 				@value = LIT(name)
+			
 		
-
 		# does not really need to have a declarator already? -- tricky
 		elif variable && variable.declarator
 			# var decl = variable.declarator
@@ -5470,7 +5502,6 @@ export class VarOrAccess < ValueNode
 				variable.addReference(self)
 				@value = variable # variable.accessor(self)
 				@token.@variable = variable
-				stack.registerSemanticToken(@token,variable)
 				# if vscope isa RootScope and vscope.context != scope.context and variable.type == 'meth'
 				# 	warn "calling method from root scope {value} is deprecated - see issue #112"
 				return self
@@ -5478,6 +5509,7 @@ export class VarOrAccess < ValueNode
 			# @value.safechain = safechain
 		elif value.symbol == 'self'
 			@value = scope.context
+			@isSelf = yes
 
 		elif !@identifier.isCapitalized
 			let selfvar = scope.lookup('self')
@@ -5485,10 +5517,7 @@ export class VarOrAccess < ValueNode
 			if !selfvar and ctx.isGlobalContext
 				@includeType = yes
 			else
-				ctx = selfvar or ctx
-				@value = ImplicitAccess.new(".",ctx,@value).set(datatype: datatype)
-				stack.registerSemanticToken(@token,'accessor')
-
+				@value = ImplicitAccess.new(".",(Self.new).traverse,@value).set(datatype: datatype)
 		return self
 
 	def js o
@@ -5607,7 +5636,6 @@ export class VarReference < ValueNode
 			# should happen automatically when traversing via traverse(declaring:...)
 			if @value isa Identifier
 				@value.@variable ||= scope.register(@value.symbol,@value,type: @type, datatype: datatype)
-				stack.registerSemanticToken(@value,@variable)
 		return self
 	
 	def js stack,params
@@ -5948,12 +5976,14 @@ export class TypeAnnotation < Node
 	def asRawType
 		let raw = String(@value).slice(1)
 		raw = raw.replace(/(^|[\[\,])\<([a-z\-\d]+)\>/g) do |m,pre,name|
+			# pre + "InstanceType<" + (TagTypeIdentifier.new(name)).toClassName + ">"
 			pre + (TagTypeIdentifier.new(name)).toClassName
-			# pre + "globalThis." + toCustomTagIdentifier(name)
+
+		raw = raw.replace(/(^|[\[\,])self([\]\,\)\>]|$)/g) do |m,pre,post|
+			pre + "this" + post
 		return M(raw,self)
 
 	def asIteratorValue
-		console.log 'asInteratorValue'
 		wrapDoc(asRawType + '[]')
 
 	def wrapDoc inner
@@ -5995,7 +6025,6 @@ export class Identifier < Node
 
 	def references variable
 		@value.@variable = variable if @value
-		STACK.registerSemanticToken(@value,variable) if @value
 		self
 
 	def load v
@@ -6093,13 +6122,11 @@ export class Identifier < Node
 		
 	def registerVariable type, scope = scope__
 		@variable = scope.register(symbol,self,type: type)
-		stack.registerSemanticToken(@value,@variable)
 		return self
 	
 	def resolveVariable scope = scope__
 		let variable = scope.lookup(symbol)
 		@variable = variable
-		stack.registerSemanticToken(@value,@variable)
 		return self
 
 export class DecoratorIdentifier < Identifier
@@ -6408,13 +6435,15 @@ export class TagTypeIdentifier < Identifier
 		
 	def resolveVariable scope = scope__
 		let variable = scope__.lookup(@str)
-		if @variable = variable
-			stack.registerSemanticToken(@value,@variable)
+		@variable = variable
 		return self
 
 	def toVarPrefix
 		let str = @str
 		str.replace(/[\:\-]/g,'')
+	
+	def toExtensionName
+		"Γ{helpers.toValidIdentifier(@str)}"
 
 	def toClassName
 		let str = @str
@@ -7438,9 +7467,7 @@ export class ForOf < For
 				o:value.traverse(declaring: 'let')
 				
 				if o:value isa Identifier
-					# v = vars:value = scope.declare(o:name,null,let: yes, type: 'let')
 					o:value.@variable ||= scope__.register(o:value.symbol,o:value,type: 'let')
-					STACK.registerSemanticToken(o:value)
 		
 			@declvars = declvars
 
@@ -9437,7 +9464,10 @@ export class Tag < TagLike
 			if type isa TagTypeIdentifier and !isSelf
 				if type.isAsset
 					add "{tvar} = new {M("SVGSVGElement",type)}"
+				elif type.isClass
+					add "{tvar} = new {M(type.toClassName,type)}"
 				else
+					# add "{tvar} = new globalThis.{M(type.toClassName,type)}"
 					add "{tvar} = new {M(type.toClassName,type)}"
 			elif isSelf
 				add "{tvar} = {type.c}" 
@@ -10237,7 +10267,6 @@ export class ESMSpecifier < Node
 				@variable = scope__.root.lookup(@cname)
 		else
 			@variable = scope__.root.register(@key, self, type: 'imported')
-			stack.registerSemanticToken (@alias or @name), @variable
 		self
 
 
@@ -11669,6 +11698,9 @@ export class Scope
 				@context = ScopeContext.new(self)
 		return @context
 
+	def isInExtend
+		closure.node.option('extension')
+
 	def traverse
 		self
 
@@ -11973,6 +12005,8 @@ export class RootScope < Scope
 
 	def globalRef
 		@globalRef ||= LIT('globalThis')
+
+	
 		
 	def activateExports
 		if STACK.cjs and !@hasExports
@@ -12124,6 +12158,7 @@ export class ClassScope < Scope
 	def namepath
 		@node.namepath
 
+
 	# called for scopes that are not real scopes in js
 	# must ensure that the local variables inside of the scopes do not
 	# collide with variables in outer scopes -- rename if needed
@@ -12175,6 +12210,19 @@ export class MethodScope < Scope
 
 	def setup
 		@selfless = no
+
+	def isInExtend
+		parent.isInExtend
+
+	def visit
+		super
+
+		if STACK.tsc and isInExtend
+			let cls = parent.closure.node
+			let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
+			context.@useReference = yes
+			ref.c
+		self
 
 export class FieldScope < Scope
 	
@@ -12719,9 +12767,9 @@ export class ScopeContext < Node
 	# up for the cases where we have yet to decide the
 	# name of the variable etc?
 
-	def reference
+	def reference thisValue
 		# if we are in  constructor we do want to declare it after super
-		@reference ||= scope.lookup('self') or scope.declare("self",This.new) # {@scope.@level}_
+		@reference ||= scope.lookup('self') or scope.declare("self",thisValue == undefined ? This.new : thisValue) # {@scope.@level}_
 
 	def fromScope other
 		IndirectScopeContext.new(other,self)
@@ -12730,6 +12778,7 @@ export class ScopeContext < Node
 		yes
 
 	def c
+		return reference.c if @useReference and @reference
 		var val = @value # || @reference
 		(val ? val.c : "this")
 

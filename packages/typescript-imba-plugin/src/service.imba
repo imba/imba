@@ -1,3 +1,4 @@
+import ImbaScriptDts from './dts'
 import np from 'path'
 import Compiler from './compiler'
 import * as util from './util'
@@ -19,6 +20,7 @@ export default class Service < EventEmitter
 	bridge = null
 	virtualFiles = {}
 	virtualScripts = {}
+	imbaGlobals = {}
 	ipcid
 	counter = 0
 	
@@ -33,6 +35,9 @@ export default class Service < EventEmitter
 		
 	get ip
 		ps.inferredProjects[0]
+	
+	get ls
+		cp.languageService
 		
 	get isSemantic
 		ps.serverMode == 0
@@ -53,7 +58,7 @@ export default class Service < EventEmitter
 		
 	def getCompletions file,pos,ctx
 		let script = getImbaScript(file)
-		util.log('getCompletions',file,pos,ctx,script)
+		# util.log('getCompletions',file,pos,ctx,script)
 		let res = #lastCompletions = script.getCompletions(pos,ctx)
 		return res.serialize!
 		
@@ -249,14 +254,85 @@ export default class Service < EventEmitter
 	def convertImbaDtsDefinition item
 		try
 			let file = item.fileName.replace("._.d.ts",'')
+			let gdts = item.fileName == dts..fileName
+			let found
+			item.#gdts = true
+			item.#name = item.name
+
+			if gdts
+				if found = imbaGlobals[item.name]
+					# item.#found = found
+					item.textSpan = found.textSpan
+					item.contextSpan = found.contextSpan
+					item.fileName = found.doc.fileName
+					item.#scope = found
+					return item
+
 			let script = getImbaScript(file)
 			let path = "{item.containerName}.prototype.{item.name}"
 			let token = script.doc.findPath(util.toImbaIdentifier(path))
 			util.log "converting path!?",item,path,token
+			# console.log "convertImbaDtsDefinition",file
 			if token
 				item.textSpan = token.span
 				item.contextSpan = token.body ? script.doc.expandSpanToLines(token.body.contextSpan) : token.span
+			else
+				let find = '-----'
+				if item.kind == 'getter'
+					find = "get {item.name}"
+
+				let idx = script.content.indexOf(find)
+				# look for tokens with this name
+				let kind = ''
+				let name = util.toImbaIdentifier(item.name)
+				item.#name = item.name
+				# if item.containerName == 'globalThis'
+
+				let hit = script.doc.findNodeForTypeScriptDefinition(item)
+
+				if hit
+					item.#token = !!hit
+					item.textSpan = hit.textSpan or hit.span
+					item.contextSpan = hit.contextSpan or hit.span
+
+				if false
+					if item.kind == 'getter'
+						kind = 'entity.name.get'
+					elif item.kind == 'property'
+						kind = 'entity.name.field'
+					elif item.kind == 'method'
+						kind = 'entity.name.def'
+					elif item.kind == 'class'
+						let symbols = script.doc.getSymbols!.filter do $1.name == name or $1.name == item.name
+
+						if symbols[0]
+							token = symbols[0].node
+
+					if kind
+						let tokens = script.doc.tokens.filter do $1.match(kind)
+						tokens = tokens.filter do $1.value == name
+						token = tokens[0]
+
+						# if token
+						#	item.textSpan = token.span
+						#	item.contextSpan = token.span
+					elif idx >= 0
+						# find the token instead?
+						item.textSpan = {start: idx, length: find.length}
+						yes
+
+					if token
+						item.#token = !!token
+						item.textSpan = token.span
+						item.contextSpan = token.span
+
+			item.#dts = yes
+
 			item.fileName = file
+		catch e
+			console.log 'error',e
+			yes
+
 		return item
 		
 		
@@ -269,9 +345,22 @@ export default class Service < EventEmitter
 			return res
 
 		if util.isImba(filename)
-			for key in ['text','context','trigger','applicable']
-				if let span = res[key + 'Span']
-					convertSpan(span,ls,filename,key)
+			let script = getImbaScript(filename)
+			# let imbaname = util.toImbaIdentifier(res.name)
+			let hit = script.doc.findNodeForTypeScriptDefinition(res)
+
+			if hit
+				# and util.isTagIdentifier(res.name)
+				# let defn = script.doc.
+				# token = script.doc.findTagDefinition(imbaname)
+				# console.log "FOUND!!",hit
+				res.textSpan &&= hit.textSpan or hit.span
+				res.contextSpan &&= hit.contextSpan or hit.span
+			else
+				for key in ['text','context','trigger','applicable']
+					if let span = res[key + 'Span']
+						convertSpan(span,ls,filename,key)
+
 			if res.textChanges
 				for item in res.textChanges
 					# this is an imba-native version!!
@@ -293,6 +382,12 @@ export default class Service < EventEmitter
 		if res.definitions
 			for item in res.definitions
 				convertLocationsToImba(item,ls,item.fileName or item.file)
+
+			res.definitions = res.definitions.filter do(item,index,arr)
+				return no if item.#scope and arr.find(do $1.#scope == item.#scope) != item
+				return yes
+
+			
 				
 		if res.description
 			res.description = util.toImbaString(res.description)
@@ -353,36 +448,50 @@ export default class Service < EventEmitter
 				if out
 					return out
 
-			let res = ls.getQuickInfoAtPosition(filename,opos)
-			return convertLocationsToImba(res,ls,filename)
+			let res
 			
+			try
+				res = ls.getQuickInfoAtPosition(filename,opos)
+				util.log 'ls.getQuickInfoAtPosition',res
+				convertLocationsToImba(res,ls,filename)
+			
+				if script
+					let ctx = script.doc.contextAtOffset(pos)
+					res.textSpan = ctx.token.span
+				util.log 'ls.getQuickInfoAtPosition final',res,res..textSpan
+			catch e
+				util.log 'error',e
+			return res
+
 		intercept.getDefinitionAndBoundSpan = do(filename,pos)
 			let {script,dpos,opos} = getFileContext(filename,pos,ls)
 			let out
+			let tok
 			if script
 				# check quick info via imba first?
 				out = script.getDefinitionAndBoundSpan(dpos,ls)
 				util.log "returned from imba script getDefinitionAndBoundSpan",out
-				if out and out.definitions
-					util.log "hijacming the definitiions!!!",out
-
 				return out if out..definitions
-
+			
 			let res = ls.getDefinitionAndBoundSpan(filename,opos)
+			# console.log 'got defs',filename,opos,res
 			res = convertLocationsToImba(res,ls,filename)
 			
-			if out and out.textSpan and res
+			if out and out.textSpan and res and false
 				res.textSpan = out.textSpan
+				delete res.textSpan
+
+			# console.log("out?!",res)
 			
 			let defs = res..definitions
 			if script and defs
 				let __new = defs.find do $1.name == '__new'
 				if __new and defs.length > 1
 					defs.splice(defs.indexOf(__new),1)
-					
+
 				let hasImbaDefs = defs.some do util.isImba($1.fileName)
 				if hasImbaDefs
-					defs = res.definitions = defs.filter do util.isImba($1.fileName)
+					defs = res.definitions = defs.filter do util.isImba($1.fileName) or !util.isImbaDts($1.fileName)
 
 			# for convenience - hide certain definitions
 			util.log('getDefinitionAndBoundSpan',script,dpos,opos,filename,res)
@@ -505,8 +614,12 @@ export default class Service < EventEmitter
 			return res
 		
 		# fileName: string, positionOrRange: number | TextRange, preferences: UserPreferences | undefined, triggerReason?: RefactorTriggerReason, kind?: string
-		intercept.getApplicableRefactors = do(...args)
-			let res = ls.getApplicableRefactors(...args)
+		intercept.getApplicableRefactors = do(file,...args)
+			if util.isImba(file)
+				let script = getImbaScript(file)
+				return [] if !script.js
+
+			let res = ls.getApplicableRefactors(file,...args)
 			return res
 			
 		intercept.findReferences = do(file,pos)
@@ -525,7 +638,9 @@ export default class Service < EventEmitter
 		intercept.getTypeDefinitionAtPosition = do(file,pos)
 			let {script,dpos,opos} = getFileContext(file,pos,ls)
 			let res = ls.getTypeDefinitionAtPosition(file,opos)
+			# let old = global.structuredClone(res)
 			res = convertLocationsToImba(res,ls)
+			# res.#old = old
 			return res
 
 		if true
@@ -553,9 +668,30 @@ export default class Service < EventEmitter
 		# now we should block / delay the mark project as dirty stuff
 		for item in imbaScripts
 			item.syncDts!
+
+		syncProjectForImba(proj)
 		self
 
-	
+	def syncProjectForImba proj
+		# return
+		let all = ''
+		let globals = {}
+		for item in imbaScripts when item.doc
+			let dts = item.doc.getGeneratedDTS({},globals)
+			if dts
+				all += '\n' + dts
+		# console.log 'got here?!'
+		for own k,v of globals
+			all = all.replaceAll("&&{k}&&","module '{v.doc.fileName}'")
+
+		all = all.replace(/&&.+?&&/g,'global')
+
+		let file = dts = proj.#dts ||= new ImbaScriptDts({fileName: np.resolve(proj.currentDirectory,'generated.imba'), project: proj})
+		let changed = file.update(all)
+		imbaGlobals = globals
+		if changed and isSemantic and global.session
+			global.session..refreshDiagnostics!
+		self
 		
 	def setup
 		let exts = (ps.hostConfiguration.extraFileExtensions ||= [])

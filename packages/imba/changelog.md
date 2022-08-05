@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.213
 
 * Make `@event.emit('...')` on `<global/teleport>` dispath event inside their literal parent (fixes #693) 
 

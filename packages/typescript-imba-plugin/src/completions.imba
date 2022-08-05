@@ -79,7 +79,7 @@ export class Completion
 		#nr = #context.items.indexOf(self)
 		
 	get cat
-		#options.kind
+		#options.kind or ''
 	
 	get checker
 		#context.checker
@@ -126,7 +126,6 @@ export class Completion
 	
 	def #resolve
 		if #resolved =? yes
-			# console.log 'resolving item',self
 			resolve!
 		return item
 	
@@ -153,6 +152,9 @@ export class Completion
 
 	set detail val
 		item.detail = val
+
+	get detail
+		item.detail
 
 	set ns val
 		if val isa Array
@@ -284,6 +286,7 @@ export class SymbolCompletion < Completion
 				item.filterText = "{name}_{name}"
 
 				detail = tags.color
+				label.description = tags.color
 			else
 				kind = 'enum'
 				
@@ -292,8 +295,10 @@ export class SymbolCompletion < Completion
 			# name = name.slice(1)
 			kind = 'event'
 			triggers ': '
-			# name = '@' + name # always?
-			# anem = name
+
+		elif cat == 'stylesel'
+			triggers ' [.(@'
+			kind = 'keyword'
 		
 		elif cat == 'tagevent'
 			triggers '.=('
@@ -391,7 +396,11 @@ export class SymbolCompletion < Completion
 				item.documentation = docs # global.session.mapDisplayParts(docs,checker.project)
 
 			if let dp = details.displayParts
-				item.detail = util.displayPartsToString(dp)
+				unless cat.indexOf('style') >= 0
+					item.detail = util.displayPartsToString(util.toImbaDisplayParts(dp))
+
+
+			util.log 'resolve completion',item
 			# documentation: this.mapDisplayParts(details.documentation, project),
 			# tags: this.mapJSDocTagInfo(details.tags, project, useDisplayParts),
 			# item.documentation = details.documentation
@@ -562,7 +571,7 @@ export default class Completions
 				add(selfprops,kind: 'implicitSelf', weight: 300, matchRegex: prefixRegex)
 			else	
 				let typ = checker.inferType(ctx.target,script.doc)
-				util.log('inferred type??',typ)
+
 				if typ
 					let props = checker.valueprops(typ).filter do !$1.isWebComponent
 					add props, kind: 'access', matchRegex: prefixRegex
@@ -670,9 +679,8 @@ export default class Completions
 			add(autoimporter.getExportedTypes!,{kind: 'type', weight: 2000})
 		
 	def tagattrs o = {}
-		# console.log 'check',"ImbaHTMLTags.{o.name}"
 		let sym = checker.sym("HTMLElementTagNameMap.{o.name}")
-		# let attrs = checker.props("ImbaHTMLTags.{o.name}")
+
 		let pascal = o.name[0] == o.name[0].toUpperCase!
 		let globalPath = pascal ? o.name : util.toCustomTagIdentifier(o.name)
 
@@ -797,12 +805,10 @@ export default class Completions
 	def serialize
 		let entries = []
 		let stack = {}
-		# util.time(&,'serializing') do
 		for item in items
 			let entry = item.serialize(stack)
 			entries.push(entry) if entry
 
-		# devlog 'serialized',entries,items
 		return entries
 		
 	def find item

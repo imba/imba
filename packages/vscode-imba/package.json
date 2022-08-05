@@ -224,6 +224,7 @@
 		"watch": "node \"../imba/bin/imba\" build -wS --node.external +vscode src/index.imba",
 		"build": "node \"../imba/bin/imba\" build -S --node.external +vscode src/index.imba",
 		"build-theme": "node \"../imba/bin/imba\" scripts/compile-theme.imba",
+		"build-syntax": "node scripts/compile-syntaxes.js",
 		"publish": "node scripts/vsce-publish.js",
 		"prepublish": "npm run build"
 	},

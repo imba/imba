@@ -3,7 +3,7 @@ import { AppState, AppState as AppStateAliased } from './def'
 extend class Number
 
 	get even
-		this % 2 == 0
+		Number(this) % 2 == 0
 
 extend class AppState
 
@@ -19,23 +19,3 @@ extend class AppStateAliased
 
 	get aliased
 		self
-
-tag some-item
-
-    def render
-        yes
-
-global class SomeClass
-
-    def ping
-        yes
-
-extend tag app-button
-
-    get that
-        self
-
-extend tag element
-
-    get that
-        self

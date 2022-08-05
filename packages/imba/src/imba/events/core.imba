@@ -149,6 +149,7 @@ extend class Event
 		self['αflag']("mod-{name}",global.document.documentElement)
 
 	def @outside
+		# TODO Support selector here?
 		const {handler} = #context
 		if handler and handler.#self
 			return !handler.#self.parentNode.contains(target)

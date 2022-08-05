@@ -55,7 +55,7 @@ var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop','lazy']
 # FixedArray for performance
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
 export var ALL_KEYWORDS = [
-	'true', 'false', 'null', 'this',
+	'true', 'false', 'null', 'this','self'
 	'delete', 'typeof', 'in', 'instanceof',
 	'throw', 'break', 'continue', 'debugger',
 	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally',

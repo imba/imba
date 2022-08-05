@@ -1,3 +1,4 @@
+import { isImba } from './util'
 import * as util from './util'
 import * as constants from './constants'
 import Compiler from './compiler'
@@ -151,6 +152,12 @@ export class Session
 	def filterDiagnostics file, project, diagnostics, kind
 		let script = project.getScriptInfoForNormalizedPath(file)
 		let state = {}
+
+		if project.projectKind == 0 and isImba(file)
+			util.log('skip diagnostics')
+			return []
+
+		util.log('filterDiagnostics!',diagnostics,project)
 		
 		# return diagnostics unless script.#imba
 		

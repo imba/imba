@@ -1,4 +1,23 @@
 import * as util from './util'
+import {rewriteDts} from './dtsutil'
+
+def extractBlock text,imports = []
+	let info = {}
+	let ext
+	info.#full = text
+	if ext = text.match(/typeof (?:import\("([^"]+)"\)\.)?([^;]+)/)
+		info.ns = ext[1]
+		info.name = ext[2]
+
+		let source = imports.find do $1[0].match(ext[2])
+		if source
+			info.ns ||= source[1]
+	# elif ext = text.match(/typeof ([\w]+)/)	
+	if text.indexOf(' {') == 0
+		info.global = yes
+
+	return info
+
 
 export default class ImbaScriptDts
 	
@@ -19,6 +38,9 @@ export default class ImbaScriptDts
 
 	def clear
 		yes
+
+	get content
+		#body
 	
 	def update body
 		let prev = #raw
@@ -30,57 +52,14 @@ export default class ImbaScriptDts
 		if prev == body
 			return
 
-		let imports = []
-		body.replace(/^import [^\;]+\;/gm) do(m)
-			let str = m.replace(/[\r\n]/g,'')
-			let path = str.split('"')[1]
-			imports.push([str.split('from')[0],path])
-			''
-
-		let idx = 0
-		while (idx = body.indexOf('class Ω',idx)) >= 0
-			# add double closer
-			body = body.slice(0,idx) + body.slice(idx).replace('\n}','\n}}')
-			idx += 5
-			
-		# find imports
-		body = body.replace(/export class \Ω([\w\$]+)(?:\Ω(\w+))?\s(extends ([\w\$]+)\s)?\{/g) do(m,name,mod)
-			# console.log 'replacing',m,mod,name
-			# if mod == 'import'
-			let reg = new RegExp(" {name}[, ]")
-			let source = imports.find do $1[0].match(reg)
-			# console.log 'found source?',source,reg
-			if source
-				return "declare module \"{source[1]}\" \{\ninterface {name} \{"
-			# let path = body.replace()
-			
-			'declare global {\ninterface ' + name + ' {'
-			
-		# can we do this?
-		
-		# now replace the this types
-		body = body.replace(/\Ω([\w\$]+)\Ω[\w\$]+/g,'this')
-		body = body.replace(/\@this \{ this & \w+ \}/g,'')
-		body = body.replace(/this & \w+/g,'this')
-		
-		# clean empty comments
-		body = body.replace(/\/\*\*?[\r\n\t\s]*\*\//g,'')
-		
-		# clean all jsdoc related comments since they should
-		# just be proxied to the real imba file
-		body = body.replace(/\/\*\*[\S\s]+?\*\//gm, '')
-		
-		# replace extends field
-		body = body.replace(/^[\t\s]+__extends__\:.+;/gm,'')
-		
-		body = body + '\nexport {}'
+		body = rewriteDts(body)
 	
 		# TODO What if the new version is now empty? We want to remove it now
 		if #body =? body
 			return self unless owner
 
 			let proj = owner.project
-			util.log 'updating dts',owner.fileName,body
+			util.log 'updating dts',fileName,body
 
 			let file = self.script = ils.setVirtualFile(fileName,body)
 
