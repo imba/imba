@@ -2364,9 +2364,8 @@ export class Return < Statement
 			k
 
 	def c
-		if STACK.tsc and value and value.@value == 'self'
-			# console.log "returning self! {value.@value}"
-			return "return this"
+		if STACK.tsc and value isa Self
+			return "{M('return',keyword)} {M('this',value)}"
 
 		return super if !value or value.isExpressable
 
@@ -4858,11 +4857,12 @@ export class Self < Literal
 		return self
 
 	def visit
-		scope__.context
+		@scope__ = scope__
+		@scope__.context
 		self
 	
 	def js
-		var s = scope__
+		var s = @scope__ or scope__
 		s ? s.context.c : "this"
 
 	def c
@@ -5494,8 +5494,8 @@ export class VarOrAccess < ValueNode
 					@value = LIT("{scope.imba.c}.{name}")
 			else
 				@value = LIT(name)
+			
 		
-
 		# does not really need to have a declarator already? -- tricky
 		elif variable && variable.declarator
 			# var decl = variable.declarator
@@ -5539,10 +5539,7 @@ export class VarOrAccess < ValueNode
 			if !selfvar and ctx.isGlobalContext
 				@includeType = yes
 			else
-				ctx = selfvar or ctx
-				@value = ImplicitAccess.new(".",ctx,@value).set(datatype: datatype)
-				stack.registerSemanticToken(@token,'accessor')
-
+				@value = ImplicitAccess.new(".",(Self.new).traverse,@value).set(datatype: datatype)
 		return self
 
 	def js o
@@ -11731,6 +11728,9 @@ export class Scope
 				@context = ScopeContext.new(self)
 		return @context
 
+	def isInExtend
+		closure.node.option('extension')
+
 	def traverse
 		self
 
@@ -12035,6 +12035,8 @@ export class RootScope < Scope
 
 	def globalRef
 		@globalRef ||= LIT('globalThis')
+
+	
 		
 	def activateExports
 		if STACK.cjs and !@hasExports
@@ -12186,6 +12188,7 @@ export class ClassScope < Scope
 	def namepath
 		@node.namepath
 
+
 	# called for scopes that are not real scopes in js
 	# must ensure that the local variables inside of the scopes do not
 	# collide with variables in outer scopes -- rename if needed
@@ -12238,15 +12241,16 @@ export class MethodScope < Scope
 	def setup
 		@selfless = no
 
+	def isInExtend
+		parent.isInExtend
+
 	def visit
 		super
 
-		if STACK.tsc and parent.closure isa ClassScope and parent.closure.node.isExtension
+		if STACK.tsc and isInExtend
 			let cls = parent.closure.node
-			# console.log 'is extension!!!'
 			let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
-			# console.log 'scope'
-			# ref.datatype = cls.@className
+			context.@useReference = yes
 			ref.c
 		self
 
@@ -12804,6 +12808,7 @@ export class ScopeContext < Node
 		yes
 
 	def c
+		return reference.c if @useReference and @reference
 		var val = @value # || @reference
 		(val ? val.c : "this")
 
