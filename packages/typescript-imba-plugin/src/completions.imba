@@ -562,7 +562,7 @@ export default class Completions
 				add(selfprops,kind: 'implicitSelf', weight: 300, matchRegex: prefixRegex)
 			else	
 				let typ = checker.inferType(ctx.target,script.doc)
-				util.log('inferred type??',typ)
+
 				if typ
 					let props = checker.valueprops(typ).filter do !$1.isWebComponent
 					add props, kind: 'access', matchRegex: prefixRegex

@@ -1135,7 +1135,7 @@ export default class ImbaScriptInfo
 
 		for cls in classes when cls.global?
 			continue if cls.extends?
-			console.log 'found global class!',cls.path
+
 			let name = cls.path
 			globals[name] = cls
 			exists = yes

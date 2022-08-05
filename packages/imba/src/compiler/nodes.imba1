@@ -5184,6 +5184,7 @@ export class Access < Op
 		@cache = null
 		@invert = no
 		@op = o and o.@value or o
+		@optok = o
 		@left = l
 		@right = r
 		return self
@@ -5271,7 +5272,8 @@ export class Access < Op
 		var out = if raw
 			# see if it needs quoting
 			# need to check to see if it is legal
-			ctx ? "{safeop}.{raw}" : raw
+			let opjs = STACK.tsc ? M('.',@optok) : '.'
+			ctx ? "{safeop}{opjs}{raw}" : raw
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes, as: 'value') : rgt
 			"{safeop ? '?.' : ''}[{r}]"

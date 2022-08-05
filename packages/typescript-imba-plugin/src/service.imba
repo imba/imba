@@ -661,8 +661,6 @@ export default class Service < EventEmitter
 		for item in imbaScripts
 			item.syncDts!
 
-		
-		
 		syncProjectForImba(proj)
 		self
 
@@ -680,7 +678,6 @@ export default class Service < EventEmitter
 
 		all = all.replace(/&&.+?&&/g,'global')
 
-		console.log 'sync project',all
 		let file = dts = proj.#dts ||= new ImbaScriptDts({fileName: np.resolve(proj.currentDirectory,'generated.imba'), project: proj})
 		let changed = file.update(all)
 		imbaGlobals = globals
