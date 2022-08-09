@@ -37,7 +37,7 @@ class State
 	def constructor
 		let code = window.localStorage.getItem('code') or txt
 		owner = {fileName: "/a/b/index.imba"}
-		doc = new Script(owner,code)
+		doc = window.doc = new Script(owner,code)
 		loc = parseInt(window.localStorage.getItem('loc') or '0')
 		
 const state = window.state = new State()

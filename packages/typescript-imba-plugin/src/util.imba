@@ -149,6 +149,10 @@ export def isImbaDts src
 	return false unless src
 	return src.indexOf(".imba._.d.ts") > 0
 
+export def isImbaStdts src
+	return false unless src
+	return src.indexOf(".d.ts") > 0 and src.match(/imba-typings|imba\/typings/)
+
 export def delay target, name, timeout = 500, params = []
 	let meta = target.#timeouts ||= {}
 

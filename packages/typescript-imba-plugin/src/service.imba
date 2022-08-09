@@ -455,7 +455,7 @@ export default class Service < EventEmitter
 				util.log 'ls.getQuickInfoAtPosition',res
 				convertLocationsToImba(res,ls,filename)
 			
-				if script
+				if script and res
 					let ctx = script.doc.contextAtOffset(pos)
 					res.textSpan = ctx.token.span
 				util.log 'ls.getQuickInfoAtPosition final',res,res..textSpan
@@ -640,8 +640,39 @@ export default class Service < EventEmitter
 			let res = ls.getTypeDefinitionAtPosition(file,opos)
 			# let old = global.structuredClone(res)
 			res = convertLocationsToImba(res,ls)
-			# res.#old = old
 			return res
+
+		intercept.getNavigateToItems = do(query,maxResults)
+			let exclusive = getConfig('workspaceSymbols.scope')
+			let regex = new RegExp(query.split('').join('.*'),'i')
+
+			let all = []
+			let res = []
+			for script in imbaScripts
+				if script.doc
+					let part = script.doc.getNavigateToItems!
+					all.push(...part)
+
+			for item in all
+				item.name ||= 'render'
+				let m = regex.test(item.name)
+				if m
+					item.matchKind = item.name == query ? "exact" : "prefix"
+					item.isCaseSensitive = true
+					res.push(item)
+
+			unless exclusive == 'imbaOnly'
+				let fromts = ls.getNavigateToItems(query,maxResults)
+				for item in fromts
+					continue if util.isImbaDts(item.fileName)
+					continue if util.isImba(item.fileName)
+					continue if util.isImbaStdts(item.fileName)
+					res.push(item)
+
+			return res
+
+		# intercept.getNavigateToItems = do(file,pos)
+
 
 		if true
 			for own k,v of intercept

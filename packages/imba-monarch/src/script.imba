@@ -499,7 +499,7 @@ export default class ImbaScriptInfo
 	def varsAtOffset offset, globals? = no
 		let tok = tokenAtOffset(offset)
 		let vars = []
-		let scope = tok.context.scope
+		let scope = tok.context..scope
 		let names = {}
 
 		while scope
@@ -1130,10 +1130,19 @@ export default class ImbaScriptInfo
 			matches.push({start: tok, after: tokAfter})
 		return matches
 
-	def getGlobalDefs o = {}
-		content.replace(/global (class) ([\w-]+)/g) do(m,typ,name)
-			o[name] = self
-		return o
+
+	def getNavigateToItems o = {}
+		return #lexed.navigateToItems if #lexed.navigateToItems
+		let res = []
+		
+		for sym in getSymbols!
+			if let item = sym.asNavigateToItem!
+				continue if item.kind == 'var'
+				continue if !item.textSpan or !item.name
+				item.fileName = fileName
+				res.push(item)
+
+		return #lexed.navigateToItems = res
 
 	def getGeneratedDTS o = {},globals = {}
 		let ns = o.ns or "__{nr}"
@@ -1144,8 +1153,6 @@ export default class ImbaScriptInfo
 		let exists = no
 		let mods = {}
 		let glob = mods.global = dts.curly 'declare global'
-
-		getGlobalDefs(globals)
 
 		let classes = getRootClasses()
 
@@ -1160,49 +1167,30 @@ export default class ImbaScriptInfo
 
 			if cls.component?
 				glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {ns}.{name} \}`
-			# glob.w "interface {name} extends {ns}.{name}" + ' {};'
-			# glob.w "export {name}"
-			# glob.w "declare var {name}: typeof {ns}.{name};"
 
-		
-		# body.replace(/global (class) ([\w-]+)/g) do(m,typ,name)
-		# 	exists = yes
-		# 	glob.w "interface {name} extends {ns}.{name}" + ' {};'
-		# 	glob.w "declare var {name}: typeof {ns}.{name};"
+		let nr = 1
+		for cls in classes
+			continue unless cls.extends?
 
-		# body.replace(/^(global )?(tag) ([a-z][\w-]*)/gm) do(m,mod,typ,name)
-		# 	exists = yes
-		# 	
-		# 	name = toJSIdentifier(name)
-		# 	glob.w "interface {name} extends {ns}.{name}" + ' {};'
-		# 	glob.w "declare var {name}: typeof {ns}.{name};"
+			let ident = cls.ident
+			if ident isa Assignable
+				ident = ident.find('identifier.')
+			let sym = ident.symbol
+			let name = ident.value
+			let modsrc = sym..importSource
+			let origname = cls.path
+			let extname = "Ω{cls.path}Ω{nr++}"
+			exists = yes
 
-		if true
-			let nr = 1
-			for cls in classes
-				continue unless cls.extends?
-
-				let ident = cls.ident
-				if ident isa Assignable
-					ident = ident.find('identifier.')
-				let sym = ident.symbol
-				let name = ident.value
-				let modsrc = sym..importSource
-				let origname = cls.path
-				let extname = "Ω{cls.path}Ω{nr++}"
-				exists = yes
-
-				if modsrc
-					# tweak / fix the path somehow
-					origname = sym.exportName
-					let rel = src.replace(/\/[^\/]+?$/,'/' + modsrc)
-					let mod = mods[rel] ||= dts.curly("declare module '{rel}'")
-					mod.w "interface {origname} extends {ns}.{extname}" + ' {}'
-				else
-					let desc = "interface {origname} extends {ns}.{extname}" + ' {}'
-					dts.curly("declare &&{origname}&& ").w(desc)
-					# this is where it breaks
-					# glob.w "interface {origname} extends {ns}.{extname}" + ' {};'
+			if modsrc
+				# tweak / fix the path somehow
+				origname = sym.exportName
+				let rel = src.replace(/\/[^\/]+?$/,'/' + modsrc)
+				let mod = mods[rel] ||= dts.curly("declare module '{rel}'")
+				mod.w "interface {origname} extends {ns}.{extname}" + ' {}'
+			else
+				let desc = "interface {origname} extends {ns}.{extname}" + ' {}'
+				dts.curly("declare &&{origname}&& ").w(desc)
 
 		dts.w 'export {};'
 		exists ? String(dts) : ''

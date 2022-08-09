@@ -1,7 +1,13 @@
 # Changelog
 
+## 3.4.0
+
+* Provide sensible results for `Go to Symbol in Workspace`
+* Added option for controlling which files are searched by go to symbol in workspace.
+
 ## 3.3.0
 
+* Correct type inference for `querySelector('my-app-element')`++
 * Improved automatic typings for `extend class` and `extend tag` definitions
 * Improved overall speed and reliability of tooling
 * Various fixes and completion improvements

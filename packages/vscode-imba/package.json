@@ -105,6 +105,19 @@
 					"default": 0,
 					"description": "Port for debugging"
 				},
+				"imba.workspaceSymbols.scope": {
+					"type": "string",
+					"default": "imbaOnly",
+					"description": "Controls which files are searched by go to symbol in workspace.",
+					"enum": [
+						"imbaOnly",
+						"allSymbols"
+					],
+					"enumDescriptions": [
+						"Only include symbols from imba files",
+						"Include symbols from whole project & dependencies"
+					]
+				},
 				"imba.verbose": {
 					"type": "boolean",
 					"default": false,

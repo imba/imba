@@ -217,6 +217,10 @@ export class Sym
 				SymbolKind.Constructor
 			else
 				SymbolKind.Method
+		elif flags & SymbolFlags.GetAccessor
+			'getter'
+		elif flags & SymbolFlags.SetAccessor
+			'setter'
 		elif flags & SymbolFlags.Function
 			SymbolKind.Function
 		else
@@ -243,7 +247,7 @@ export class Sym
 		return kind
 		
 	get outlineText
-		node.value
+		node ? node.value : '--'
 		
 	def toOutline stack
 		{
@@ -273,6 +277,28 @@ export class Sym
 			mods |= M.Special
 
 		return mods
+
+	def asNavigateToItem
+		return null unless node
+
+		let item = {
+			name: outlineText
+			kind: outlineKind
+			kindModifiers: ''
+			textSpan: node.textSpan or node.span
+			containerName: ''
+			containerKind: ''
+
+		}
+
+		try
+			let par = body..parent
+			if par and !par.root?
+				item.containerName = par.outlineText
+				item.containerKind = par.outlineKind
+
+		return item
+
 
 
 export class ForVar < Sym
