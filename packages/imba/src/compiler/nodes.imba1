@@ -8690,7 +8690,6 @@ class TagLike < Node
 	def parentCache
 		@parentCache ||= (parent ? parent.cvar : (isMemoized ? scope__.closure.tagCache : scope__.closure.tagTempCache))
 
-
 	def renderContextFn
 		"{parentCache}[{gsym('#getRenderContext')}]"
 
@@ -9191,8 +9190,9 @@ export class Tag < TagLike
 
 			return true
 
-		# if @classNames:length
-		#	@className = "'{@classNames.join(' ')}'"
+		if @parent
+			if @attrmap:route or isDynamicType
+				@parent.set(shouldEnd: yes, ownCache: yes)
 
 		if isSlot
 			# @tvar = tagvar('t'+oid)
@@ -9438,13 +9438,13 @@ export class Tag < TagLike
 		var canInline = no
 		var hasDynamicParts = yes
 		var useRoutes = @attrmap:route or @attrmap:routeTo or @attrmap['route-to']
-		var shouldEnd = isComponent or useRoutes
+		var shouldEnd = isComponent or useRoutes or option(:shouldEnd)
 
 		if useRoutes
 			stack.use('router')
 
 		var dynamicKey = null
-		var ownCache = no
+		var ownCache = option(:ownCache) or no
 
 		if @asset
 			typ = @assetRef.c
@@ -9990,7 +9990,6 @@ export class Tag < TagLike
 
 			else
 				add item.c(o)
-
 
 		if shouldEnd
 			if !parent and !isSelf

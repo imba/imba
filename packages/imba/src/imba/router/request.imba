@@ -1,5 +1,4 @@
 import {Location} from './location'
-# import Route from './route'
 
 export class Request
 	def constructor router, loc, referrer

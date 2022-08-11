@@ -221,6 +221,7 @@ export class Component < HTMLElement
 		
 	def #afterVisit
 		visit()
+		##visitContext = null if ##visitContext
 
 	def #beforeReconcile
 		if __F & $EL_SSR$

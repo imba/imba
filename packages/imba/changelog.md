@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+* Treat routes ending with `/` as exact routes.
+
+    The `<div route='/'>` would previously match any path. You could define exact routes by including a `$` at the end of the route. This lead to a lot
+    of confusion. Now, any route that ends with a `/` will only match the exact path. Use `*` to bypass
+
+    ```imba
+    <div route='/'> # matches / _only_
+    <div route='/*'> # matches any path
+
+    <div route='/items'> # matches /items, /items/1 etc
+    <div route='/items/'> # matches /items only
+    ```
+
+* Only show first matching element if multiple siblings match a route.
+
+    ```imba
+    <div>
+        <div route='/items/new'>
+        <div route='/items/:id'> # if /items/new matched - this will not show
+        <div route='/'> # matches if url is exactly '/'
+        <div route='*'> # matches if none of the above matches
+    ```
+
 ## 2.0.0-alpha.213
 
 * Make `@event.emit('...')` on `<global/teleport>` dispath event inside their literal parent (fixes #693) 

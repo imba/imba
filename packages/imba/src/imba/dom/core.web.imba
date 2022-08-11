@@ -4,6 +4,7 @@ import {Flags} from './flags'
 import {getDeepPropertyDescriptor} from '../utils'
 import {RenderContext,createRenderContext} from './context'
 
+
 export const {
 	Event,
 	UIEvent,
@@ -178,6 +179,7 @@ extend class Node
 			#replaceWith = #replaceWithDeopt
 			#removeFrom = #removeFromDeopt
 			#insertInto = #insertIntoDeopt
+			##up ||= #parent
 
 		let ph = #placeholderNode
 		if parentNode and ph != self
@@ -265,7 +267,11 @@ extend class Element
 		
 	def #afterVisit
 		self.render! if self.render
+		##visitContext = null if ##visitContext
 		return
+
+	get #visitContext
+		##visitContext ||= {}
 
 	get flags
 		unless $flags

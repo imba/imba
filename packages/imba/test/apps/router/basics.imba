@@ -25,8 +25,12 @@ export tag App
 
 				<div route="/about">
 					<div> "about"
+
+				<div route='/'> "/"
 					
 				<Custom>
+
+				<div route='*'> "404"
 					
 
 let app = imba.mount <App>
@@ -42,7 +46,7 @@ def go url, text = null
 
 test do
 	await go('/')
-	eq body.textContent, ""
+	eq body.textContent, "/"
 	await app.$a.click! # spec.click(app.$a)
 	await imba.commit!
 	eq body.textContent, "home"
@@ -58,3 +62,6 @@ test do
 	await go('/home/deep',"homedeep")
 	await go('/custom/deep',"customdeep")
 	# eq body.textContent, "custom"
+
+	await go('/random',"404")
+

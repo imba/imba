@@ -1,5 +1,3 @@
-# imba$runtimez=local
-
 let routerInstance = null
 
 import {EventEmitter} from '../../../vendor/events.js'
@@ -271,6 +269,7 @@ export class Router < EventEmitter
 		self.refresh(replace: yes, mode: 'replace', location: loc, state: state)
 
 
+
 export class ElementRoute
 	def constructor node, path, parent, options = {}
 		self.parent = parent
@@ -324,6 +323,8 @@ export class ElementRoute
 		!!#active
 
 	def resolve
+		# early return if routing clearly has not changed since
+		# previous resolve
 		let v = self.router.#version
 		return unless #version =? v
 			
@@ -414,6 +415,8 @@ export class ElementRouteTo < ElementRoute
 extend class Node
 	get router
 		ownerDocument.router
+	
+	
 
 extend class Element
 	set route value
@@ -424,7 +427,8 @@ extend class Element
 		let par = value[0] != '/' ? #context.route : null
 		#route = new ElementRoute(self,value,par,route__)
 
-		self.#afterVisit = self.end$routed
+		# TODO Use hook / event api instead
+		self.#afterVisit = self.#afterVisitRouted
 
 	get route
 		#route
@@ -436,7 +440,7 @@ extend class Element
 
 		let par = value[0] != '/' ? #context.route : null
 		#route = #routeTo = new ElementRouteTo(self,value,par,routeTo__)
-		self.#afterVisit = self.end$routeTo
+		self.#afterVisit = self.#afterVisitRouteTo
 
 		# really? shouldnt this be handled by the main router click listener instead?
 		self.onclick = do(e)
@@ -445,14 +449,27 @@ extend class Element
 				e.#routeHandler = #routeTo
 				#routeTo.go!
 
-	def end$routed
+	def #afterVisitRouted
 		if #route
-			#route.resolve!
-			return unless #route.isActive
-		
-		visit! if visit
+			let up = #parentNode
+			let ctx = up and up.#visitContext
+			if ctx and ctx.matchedRoute and ctx.matchedRoute != #route
+				if #route.#active =? no
+					#route.#leave!
+					#route.#version = -1
+				return
 
-	def end$routeTo
+			#route.resolve!
+
+			if #route.active?
+				ctx.matchedRoute = #route
+			else
+				return
+
+		visit! if visit
+		##visitContext = null if ##visitContext
+
+	def #afterVisitRouteTo
 		if #routeTo
 			#routeTo.resolve!
 
