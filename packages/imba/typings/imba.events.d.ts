@@ -559,6 +559,13 @@ declare namespace imba {
          * @summary Suppress pointer events on all other elements
         */
          αlock(): void;
+
+         /**
+         * Only trigger condition is truthy
+         * @detail (condition)
+         * */
+        αif(condition: unknown): boolean;
+
     }
 
 
