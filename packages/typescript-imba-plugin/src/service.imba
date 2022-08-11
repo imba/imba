@@ -172,7 +172,7 @@ export default class Service < EventEmitter
 	def getImbaCompilerForPath path
 		let IMBA = imbaForPath(path)
 
-		if IMBA
+		if IMBA and getConfig('useImbaFromProject')
 			return null if IMBA.#errored
 			let src = np.resolve(IMBA.path,IMBA.package.exports['./compiler'])
 			try

@@ -118,6 +118,11 @@
 						"Include symbols from whole project & dependencies"
 					]
 				},
+				"imba.useImbaFromProject": {
+					"type": "boolean",
+					"default": false,
+					"description": "Controls whether the language server should use the imba version from the project to provide typings and completions."
+				},
 				"imba.verbose": {
 					"type": "boolean",
 					"default": false,

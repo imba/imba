@@ -1,9 +1,12 @@
 # Changelog
 
+
 ## 3.4.0
 
 * Provide sensible results for `Go to Symbol in Workspace`
 * Added option for controlling which files are searched by go to symbol in workspace.
+* Use the bundled imba version for tooling by default. 
+* Add option `useImbaFromProject` to make tooling use project-specific imba version.
 
 ## 3.3.0
 
