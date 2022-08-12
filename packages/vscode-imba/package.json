@@ -235,8 +235,7 @@
 		"chroma-js": "^2.1.0",
 		"fs-extra": "^10.0.0",
 		"js-yaml": "^3.14.0",
-		"plist": "^3.0.5",
-		"vscode": "^1.1.37"
+		"plist": "^3.0.5"
 	},
 	"scripts": {
 		"watch": "node \"../imba/bin/imba\" build -wS --node.external +vscode src/index.imba",
