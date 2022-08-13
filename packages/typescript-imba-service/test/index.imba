@@ -60,10 +60,12 @@ def run
 		file = findFile(file)
 		let src = file.fileName or file
 		pos = findPos(file,pos)
+		let ctx = file.doc.getContextAtOffset(pos)
 		let res = x.ls.getQuickInfoAtPosition(src,pos)
 		let completions = file.getCompletions(pos,o)
 		let plain = completions.serialize!.map do $1.label..name or $1.label
 		console.log 'ctx',src
+		# ,ctx.before
 		console.log plain
 
 	def check doc, pos
@@ -77,7 +79,9 @@ def run
 	completions(doc,'data.extthis!.~')
 	completions(doc,'data.extthis().~')
 	completions('ns.imba','~# setup')
-	getinfo(doc,'def ti~c')
+	completions(doc,"import '~'")
+	completions(doc,"from './views/~")
+	# getinfo(doc,'def ti~c')
 
 	ils.getDiagnostics!.map do console.log $1.code,$1.messageText,$1.category
 	debugger

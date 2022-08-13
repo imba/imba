@@ -1,4 +1,6 @@
 import { Local } from './local'
+import { TestView } from './views/test'
+import ''
 
 let m = new SomeClass
 m.ext

@@ -22,8 +22,11 @@ class State
 			context = doc.getContextAtOffset(val)
 			focus = context.token
 			window.localStorage.setItem('loc',val)
+			console.group("location {val} {context.before.line}**{context.after.line}")
 			console.log(context)
 			console.log(context.token)
+			console.log(context.suggest)
+			console.groupEnd()
 			let vars = doc.varsAtOffset(val)
 			console.log 'vars',vars
 			window.doc = doc
