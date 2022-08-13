@@ -111,6 +111,12 @@ export default class CompletionsProvider
 			if raw.cat == 'tag' or raw.cat == 'tagname'
 				item.kind = CompletionItemKind.Class
 
+			if raw.cat == 'file'
+				item.kind = CompletionItemKind.File
+			
+			if raw.cat == 'folder' or raw.cat == 'dir'
+				item.kind = CompletionItemKind.Folder
+
 			items.push(item)
 		# return items
 		if context.triggerKind == 1	or true

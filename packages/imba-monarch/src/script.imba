@@ -252,20 +252,19 @@ export default class ImbaScriptInfo
 			character: lineText[col - 1] or ''
 			line: lineText.slice(0,col)
 			token: tokval.slice(0,tokPos)
+			lineWithoutToken: lineText.slice(0,col - tokPos)
+			group: ''
 		}
 
 		const after = {
 			character: lineText[col]
 			token: tokval.slice(tokPos)
 			line: lineText.slice(col).replace(/[\r\n]+/,'')
+			lineWithoutToken: lineText.slice(col - tokPos + tok.length).replace(/[\r\n]+/,'')
+			group: ''
 		}
 
-		const around = {
-			character: [before.character,after.character]
-			token: [before.token,after.token]
-			line: [before.line,after.line]
-			
-		}
+		
 
 		# if the token pushes a new scope and we are at the end of the token
 		if tok.scope and !after.token
@@ -357,6 +356,8 @@ export default class ImbaScriptInfo
 		if tok.type == 'path' or tok.type == 'path.open'
 			flags |= CompletionTypes.Path
 			suggest.paths = 1
+			let path = group.closest('path')
+			before.group = path.value
 			
 		if tok.type == 'string'
 			if tok.value.match(/^\.\.?\/|\.(svg|html|jpe?g|gif|a?png|avif|webp)$/)
@@ -447,8 +448,14 @@ export default class ImbaScriptInfo
 			flags ~= t.Value
 			
 		if group.closest('imports')
+			let g = group.closest('imports')
 			flags ~= t.Value
 			flags |= t.ImportName
+
+			suggest.importPath = g.sourcePath
+
+			if tok.match('identifier.decl-import') and before.lineWithoutToken.match(/import /)
+				flags |= t.ImportStatement
 			
 		if mstate.match(/\.decl-(let|var|const|param|for)/) or tok.match(/\.decl-(for|let|var|const|param)/)
 			flags ~= t.Value
@@ -472,6 +479,14 @@ export default class ImbaScriptInfo
 		for own k,v of t
 			if flags & v
 				suggest[k] ||= yes
+
+		const around = {
+			character: [before.character,after.character]
+			token: [before.token,after.token]
+			line: [before.line,after.line]
+			group: [before.group,after.group]
+			
+		}
 
 		let out = {
 			...meta,
@@ -1143,6 +1158,10 @@ export default class ImbaScriptInfo
 				res.push(item)
 
 		return #lexed.navigateToItems = res
+
+	def getExports o = {}
+		[]
+		
 
 	def getGeneratedDTS o = {},globals = {}
 		let ns = o.ns or "__{nr}"

@@ -76,6 +76,7 @@ export const CompletionTypes = {
 	Decorator: 1 << 20
 	StyleVar: 1 << 21
 	StyleUnit: 1 << 22
+	ImportStatement: 1 << 23
 }
 
 export const KeywordTypes = {

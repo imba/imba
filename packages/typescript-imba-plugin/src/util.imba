@@ -69,6 +69,15 @@ export def normalizePath path
 	
 export def pathToImportName path
 	np.basename(path).replace(/\.(d\.ts|tsx?|imba|jsx?)$/,'')
+
+export def nameForPath path
+	np.basename(path)
+
+export def dirForPath path
+	np.dirname(path)
+
+export def extensionForPath path
+	(path.match(/\.(d\.ts|tsx?|imba|jsx?|\w{1,4})$/) or ['',''])[1]
 	
 export def normalizeImportPath source, referenced
 	if np.isAbsolute(referenced)
@@ -148,6 +157,10 @@ export def isImba src
 export def isImbaDts src
 	return false unless src
 	return src.indexOf(".imba._.d.ts") > 0
+
+export def isDts src
+	return false unless src
+	return src.indexOf(".d.ts") > 0
 
 export def isImbaStdts src
 	return false unless src

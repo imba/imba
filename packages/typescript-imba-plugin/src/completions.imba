@@ -453,7 +453,22 @@ export class KeywordCompletion < Completion
 	def setup
 		name = sym.name
 		triggers ' '
-		
+
+export class PathCompletion < Completion
+	
+	def setup
+		let ext = util.extensionForPath(sym.path)
+		# let norm = util.normalizeImportPath(script.fileName,sym)
+		name = sym.name or sym.importPath
+		label.description = ext
+		item.cat = sym.kind or 'file'
+
+		if sym.name
+			label.description = util.nameForPath(sym.path)
+			name = sym.name.replace(/\.imba$/,'')
+
+		if sym.kind == 'dir'
+			triggers '/'
 
 export default class Completions
 	
@@ -562,6 +577,10 @@ export default class Completions
 			
 		if flags & CT.Type
 			add('types',kind: 'type')
+
+		if flags & CT.Path
+			add('paths',kind: 'path')
+
 			
 		if flags & CT.Access
 			if ctx.target == null
@@ -697,6 +716,49 @@ export default class Completions
 			
 			add(attrs,{...o, commitCharacters: ['=']})
 		yes
+
+	def paths o = {}
+		# look at the potential paths?
+		let g = ctx.group
+		if g.type == 'path'
+			let start = ctx.before.line.split(/["']/).pop!
+			let pre = ctx.before.group
+			let fileNames = global.ils.cp.program.getRootFileNames()
+
+			let dirs = fileNames.map(do util.dirForPath($1)).filter do $3.indexOf($1) == $2
+
+			let sources = fileNames.map do
+				{
+					path: $1
+					kind: 'file'
+					importPath: util.normalizeImportPath(script.fileName,$1)
+				}
+
+			for dir in dirs
+				sources.push({
+					path: dir
+					kind: 'dir'
+					importPath: util.normalizeImportPath(script.fileName,dir)
+				})
+			
+
+			# drop dts files
+			sources = sources.filter do !util.isDts($1.path)
+
+			# let norm = sources.map do util.normalizeImportPath(script.fileName,$1)
+			# relative path?
+			if start[0] == '.'
+				let reldir = start.replace(/\/[^\/]+$/,'/')
+				let dir = util.resolveImportPath(script.fileName,reldir) + '/'
+				# console.log 'in dir',dir
+				sources = sources.filter do $1.path.indexOf(dir) == 0
+				sources.map do
+					$1.name = $1.path.slice(dir.length)
+				# find the actual directory and list items from that?
+				# norm = norm.filter do $1.indexOf(start) == 0
+			# console.log "found sources",[sources,pre,start]
+			add(sources,o)
+		self
 		
 	def values
 		let vars = script.doc.varsAtOffset(pos)
