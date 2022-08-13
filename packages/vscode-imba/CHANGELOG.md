@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.4.1
+
+* Basic completions for import paths (only other imba files)
 
 ## 3.4.0
 
