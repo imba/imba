@@ -2,7 +2,8 @@
 
 ## 3.4.1
 
-* Basic completions for import paths (only other imba files)
+* Basic completions for import paths
+* Add default file icons for `.imba` files
 
 ## 3.4.0
 
