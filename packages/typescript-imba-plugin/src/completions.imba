@@ -460,12 +460,11 @@ export class PathCompletion < Completion
 		let ext = util.extensionForPath(sym.path)
 		# let norm = util.normalizeImportPath(script.fileName,sym)
 		name = sym.name or sym.importPath
-		label.description = ext
+		item.detail = util.nameForPath(sym.path)
 		item.cat = sym.kind or 'file'
 
 		if sym.name
-			label.description = util.nameForPath(sym.path)
-			name = sym.name.replace(/\.imba$/,'')
+			item.insertText = sym.name.replace(/\.imba$/,'')
 
 		if sym.kind == 'dir'
 			triggers '/'
@@ -516,6 +515,13 @@ export default class Completions
 			prefixRegex = new RegExp("^[\#\_\$\<]*{prefix[0] or ''}")
 		
 		util.log('resolveCompletions',self,ctx,tok,prefix)
+
+		if triggerCharacter == '/' and !(flags & CT.Path)
+			return
+
+		# suppress completions after / which is used as a trigger in paths
+		if ctx.before.line.match(/\/\w+$/) and !(flags & CT.Path)
+			return
 		
 		if triggerCharacter == '=' and !tok.match('operator.equals.tagop')
 			return
@@ -832,6 +838,10 @@ export default class Completions
 			entry = new AutoImportCompletion(item,self,opts)
 		elif item.label
 			entry = new Completion(item,self,opts)
+
+		elif opts.kind == 'path'
+			entry = new PathCompletion(item,self,opts)
+			
 
 		#uniques.set(item,entry)
 		return entry
