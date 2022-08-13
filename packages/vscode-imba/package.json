@@ -189,7 +189,11 @@
 					".imba2"
 				],
 				"configuration": "./language-configuration.json",
-				"firstLine": "^#!/.*\\bimba[2-9.-]*\\b"
+				"firstLine": "^#!/.*\\bimba[2-9.-]*\\b",
+				"icon": {
+					"light": "./assets/imba.svg",
+					"dark": "./assets/imba.svg"
+				}
 			}
 		],
 		"grammars": [
