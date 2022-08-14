@@ -107,6 +107,7 @@ export const states = {
 	block_: [
 		# 'common_'
 		[/^(\t+)(?=[\r\n]|$)/,'white.tabs']
+		'extend_class_'
 		'class_'
 		'tagclass_'
 		'augmentation_'		
@@ -437,9 +438,33 @@ export const states = {
 	class_: [
 		[/(extend)(?=\s+class )/,'keyword.$1']
 		[/(global)(?=\s+class )/,'keyword.$1']
+		# [/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
+		[/(class)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
+
 		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
 		[/(class)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]
+
+	classname_start: [
+		[/\w/,'@rematch','@assignable&-assignable']
+		[/(\s+\<\s+)/,['keyword.extends.$/','@assignable&-value$/']]
+		[/@comment/,'comment']
+		[/^/,'@rematch',switchTo: '@>_class&class=']
+		'whitespace'
+	]
+
+	assignable: [
+		'identifier_'
+		'access_'
+		[/\s+|\n/,'@rematch','@pop']
+	]
+
+	extend_class_: [
+		[/(extend)(\s)(class)(\s)/, 
+			['keyword.$1','white.$1','keyword.$3','white.extendclass','@classname_start/$3']
+		]
+	]
+
 	
 	augmentation_: [
 		[/(extend)(?=\s+@id)/,'keyword.$1','@augmentation_start=']
@@ -457,6 +482,7 @@ export const states = {
 		[/(\s+\<\s+)(@id)/,['keyword.extends','identifier.superclass']]
 		[/@comment/,'comment']
 		[/^/,'@rematch',switchTo: '@>_class&class=']
+		'whitespace'
 	]
 
 	tagclass_: [
@@ -577,7 +603,7 @@ export const states = {
 	]
 
 	for_: [
-		[/for(?: own)?@B/,'keyword.$#','@for_start&forscope=decl-for']
+		[/for(?: own| await)?@B/,'keyword.$#','@for_start&forscope=decl-for']
 		# [/for@B/,'keyword.$#','@for_start&flow=let']
 	]
 
@@ -770,6 +796,7 @@ export const states = {
 		[/(@variable)/,'identifier.$F']
 		[/(\s*\=\s*)/,'operator.declval',switchTo: '@var_value&value='] # ,switchTo: '@var_value='
 		'type_'
+		'whitespace'
 	]
 
 	array_var_body: [
@@ -880,7 +907,7 @@ export const states = {
 	]
 
 	css_selector: [
-		denter({switchTo: '@css_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
+		denter({switchTo: '@css_props&_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
 		[/(\}|\)|\])/,'@rematch', '@pop']
 		[/(?=\s*@cssPropertyKey2)/,'',switchTo:'@css_props&_props']
 		[/\s*#\s/,'@rematch',switchTo:'@css_props&_props']
@@ -924,6 +951,12 @@ export const states = {
 		[/(@optid)(\@+|\.+)(@optid)/,['style.property.name','style.property.modifier.prefix','style.property.modifier']]
 		'op_'
 		'string_'
+		[/(\d+)([a-z]+|\%)/, ['style.value.number','style.value.unit']]
+		[/(\d*\.\d+(?:[eE][\-+]?\d+)?)([a-z]+|\%)/, ['style.value.number.float','style.value.unit']]
+		[/\d[\d_]*\.\d[\d_]*([eE][\-+]?\d+)?/, 'style.value.number.float']
+		[/\d[\d_]*/, 'style.value.number.integer']
+		[/0[0-7]+(?!\d)/, 'style.value.number.octal']
+		[/\d+/, 'style.value.number']
 		'number_'
 		'comment_'
 		[/\s+/,'style.value.white']
@@ -1131,6 +1164,10 @@ export const states = {
 # 3 = the current scope name/type (&)
 # 4 = various flags (F)
 # 5 = the monarch substate -- for identifiers++
+###
+The monarch substate can be state using /something
+
+###
 def rewrite-state raw
 	
 	let state = ['$S1','$S2','$S3','$S4','$S5','$S6']
@@ -1172,6 +1209,7 @@ def rewrite-state raw
 
 def rewrite-token raw
 	let orig = raw
+
 	raw = raw.replace('$/','$S5')
 	raw = raw.replace('$F','$S4')
 	raw = raw.replace('$&','$S3')

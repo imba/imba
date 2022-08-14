@@ -117,12 +117,10 @@ export def isValidIdentifier str
 export def toValidIdentifier str
 	return toJSIdentifier(str)
 	str.replace(/[-\?]/g,'$') # .replace(/\?/g,'θ')
-	# str.replace(/-/g,'η').replace(/\?/g,'θ')
 	
 export def fromValidIdentifier str
 	return toImbaIdentifier(str)
 	str[0] + str.slice(1).replace(/\$$/,'?').replace(/\$/g,'-')
-	# str.replace(/η/g,'-').replace(/θ/g,'?')
 
 export def isSystemIdentifier str
 	GreekLetters.indexOf(str[0]) >= 0
@@ -343,3 +341,16 @@ export def identifierForPath str
 	hash.update(str)
 	var id = hash.b32().replace(/^\d+/,'')
 	return id.slice(0, 6)
+
+export def isPlainObject val
+	typeof val == 'object' and Object.getPrototypeOf(val) == Object:prototype
+
+export def deepAssign base, assignment
+	for own k,v of assignment
+		let orig = base[k]
+
+		if isPlainObject(orig) and isPlainObject(v)
+			deepAssign(orig,v)
+		else
+			base[k] = v
+	return base

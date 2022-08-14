@@ -1,0 +1,12 @@
+{
+  "name": "typescript-imba-service",
+  "description": "wrapper for spawning an imba tsserver",
+  "version": "0.1.0",
+  "author": "Sindre Aarsaether <sindre@identu.no>",
+  "dependencies": {
+    "typescript-imba-plugin": "file:../typescript-imba-plugin"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.0-beta"
+  }
+}

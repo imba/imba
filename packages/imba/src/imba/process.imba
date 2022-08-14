@@ -108,6 +108,8 @@ export const process = new class Process < EventEmitter
 
 			let promises = for server of servers
 				server.close!
+			
+			setTimeout(&,100) do proc.exit(0)
 			await Promise.all(promises)
 			# console.log 'actually closed!!'
 			proc.exit(0)

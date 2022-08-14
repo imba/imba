@@ -1,0 +1,17 @@
+{
+    "name": "imba-monarch",
+    "description": "Fault-tolerant lexer/parser for imba using monarch",
+    "version": "0.3.2",
+    "author": "Sindre Aarsaether <sindre@identu.no>",
+    "main": "dist/index.js",
+    "scripts": {
+        "watch": "node \"../imba/bin/imba\" build -wS index.imba",
+        "build": "node \"../imba/bin/imba\" build -S index.imba",
+        "prepublish": "npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/imba/imba.git",
+        "directory": "packages/imba-monarch"
+    }
+}

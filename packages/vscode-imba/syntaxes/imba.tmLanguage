@@ -320,13 +320,13 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|finally|throw|as|continue|break|extend|augment)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|finally|throw|as|continue|break|extend|augment)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(?&lt;=export\s+)(default)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(?&lt;=export\s+)(default)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
@@ -338,7 +338,7 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(extend)\s+(?=class|tag)</string>
+            <string>(extend|global)\s+(?=class|tag)</string>
           </dict>
           <dict>
             <key>name</key>
@@ -350,25 +350,25 @@
             <key>name</key>
             <string>storage.type.function.imba</string>
             <key>match</key>
-            <string>(def|get|set)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(def|get|set)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
             <string>storage.type.class.imba</string>
             <key>match</key>
-            <string>(tag|class|struct)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(tag|class|struct)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
             <string>storage.type.imba</string>
             <key>match</key>
-            <string>(let|const|constructor)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(let|const|constructor)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
             <string>storage.type.imba</string>
             <key>match</key>
-            <string>(prop|attr)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(prop|attr)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
@@ -402,7 +402,7 @@
             <key>name</key>
             <string>keyword.operator.imba</string>
             <key>match</key>
-            <string>(of|delete|\!?isa|typeof|in|new)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(of|delete|\!?isa|typeof|in|new)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
         </array>
       </dict>
@@ -2433,13 +2433,13 @@
             <key>name</key>
             <string>constant.language.boolean.true.imba</string>
             <key>match</key>
-            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))(true|yes)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))(true|yes)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
             <string>constant.language.boolean.false.imba</string>
             <key>match</key>
-            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))(false|no)(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))(false|no)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
         </array>
       </dict>
@@ -2448,7 +2448,7 @@
         <key>name</key>
         <string>constant.language.null.imba</string>
         <key>match</key>
-        <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))null(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+        <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))null(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
       </dict>
       <key>this-literal</key>
       <dict>
@@ -2476,7 +2476,7 @@
         <key>name</key>
         <string>constant.language.undefined.imba</string>
         <key>match</key>
-        <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))undefined(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+        <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))undefined(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
       </dict>
       <key>numericConstant-literal</key>
       <dict>
@@ -2486,13 +2486,13 @@
             <key>name</key>
             <string>constant.language.nan.imba</string>
             <key>match</key>
-            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))NaN(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))NaN(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
             <string>constant.language.infinity.imba</string>
             <key>match</key>
-            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))Infinity(?![_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))Infinity(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
         </array>
       </dict>

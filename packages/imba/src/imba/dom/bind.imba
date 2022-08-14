@@ -9,7 +9,7 @@ import {
 
 import {commit} from '../scheduler'
 
-# TODO use meta properties for $$value, $$bound etc
+# TODO use meta properties for $$value, ##bound etc
 
 export def use_dom_bind
 	yes
@@ -74,16 +74,14 @@ extend class Element
 	def bind$ key, value
 		let o = value or []
 
-		if key == 'data' and !$$bound and toBind[nodeName]
-			$$bound = yes
-			if change$
-				addEventListener('change',change$ = change$.bind(this))
-			if input$
-				addEventListener('input',input$ = input$.bind(this),capture: yes)
-			if click$
-				addEventListener('click',click$ = click$.bind(this),capture: yes)
-			# this.on$('change',{_change$: true},this) if this.change$
-			# this.on$('input',{capture: true,_input$: true},this) if this.input$
+		if key == 'data' and !##bound and toBind[nodeName]
+			##bound = yes
+			if ##onchange
+				addEventListener('change',##onchange = ##onchange.bind(this))
+			if ##oninput
+				addEventListener('input',##oninput = ##oninput.bind(this),capture: yes)
+			if ##onclick
+				addEventListener('click',##onclick = ##onclick.bind(this),capture: yes)
 
 		Object.defineProperty(self,key,o isa Array ? createProxyProperty(o) : o)
 		return o
@@ -95,7 +93,7 @@ Object.defineProperty(Element.prototype,'richValue',{
 
 extend class HTMLSelectElement
 
-	def change$ e
+	def ##onchange e
 		let model = self.data
 		let prev = $$value
 		$$value = undefined
@@ -143,6 +141,7 @@ extend class HTMLSelectElement
 
 	def #afterVisit
 		self.syncValue()
+		##visitContext = null if ##visitContext
 
 extend class HTMLOptionElement
 	def setRichValue value
@@ -164,20 +163,21 @@ extend class HTMLTextAreaElement
 			return $$value
 		return self.value
 
-	def input$ e
+	def ##oninput e
 		self.data = self.value
 		commit!
 
 	def #afterVisit
 		let val = self.data
 		val = '' if val === null or val === undefined
-		if $$bound and self.value != val
+		if ##bound and self.value != val
 			self.value = val
+		##visitContext = null if ##visitContext
 
 
 extend class HTMLInputElement
 	
-	def input$ e
+	def ##oninput e
 		let typ = self.type
 
 		if typ == 'checkbox' or typ == 'radio'
@@ -187,7 +187,7 @@ extend class HTMLInputElement
 		self.data = self.richValue
 		commit!
 
-	def change$ e
+	def ##onchange e
 		let model = self.data
 		let val = self.richValue
 
@@ -223,7 +223,7 @@ extend class HTMLInputElement
 		return value
 
 	def #afterVisit
-		if $$bound
+		if ##bound
 			let typ = self.type
 			if typ == 'checkbox' or typ == 'radio'
 				let val = self.data
@@ -233,6 +233,7 @@ extend class HTMLInputElement
 					self.checked = bindHas(val,self.richValue)
 			else
 				self.richValue = self.data
+		##visitContext = null if ##visitContext
 		return
 		
 extend class HTMLButtonElement
@@ -254,7 +255,7 @@ extend class HTMLButtonElement
 			return $$value
 		return self.value
 		
-	def click$ e
+	def ##onclick e
 		let data = self.data
 		let toggled = self.checked
 		let val = self.richValue
@@ -269,7 +270,7 @@ extend class HTMLButtonElement
 		commit!
 
 	def #afterVisit
-		if $$bound
+		if ##bound
 			let data = self.data
 			let val = $$value == undefined ? yes : $$value
 			
@@ -277,4 +278,5 @@ extend class HTMLButtonElement
 				self.checked = bindHas(data,val)
 			else
 				self.checked = data == val
+		##visitContext = null if ##visitContext
 		return

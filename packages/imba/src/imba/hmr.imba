@@ -1,7 +1,7 @@
 # import {deserializeData} from '../imba/utils'
 # import {manifest} from '../imba/manifest'
 # Improve this
-let doc =  global.document
+# let doc = global.document
 
 import {deserializeData,patchManifest} from './utils'
 
@@ -43,21 +43,21 @@ class DevTools
 			js: []
 		}
 
-		for sheet of doc.styleSheets
+		for sheet of global.document.styleSheets
 			let url = sheet.ownerNode.getAttribute('href')
 			# console.log 'look for sheet',url,manifest.urls
 			if let asset = manifest.urls[url]
 				if asset.replacedBy
 					sheet.ownerNode.href = asset.replacedBy.url
 
-		for el of doc.querySelectorAll('script[src]')
+		for el of global.document.querySelectorAll('script[src]')
 			if let asset = manifest.urls[el.getAttribute('src')]
 				if asset.replacedBy
 					dirty.js.push(asset)
 
 		if dirty.js.length
 			log "js changed - reload?",dirty.js
-			doc.location.reload!
+			global.document.location.reload!
 		self
 
 	def start
@@ -97,7 +97,7 @@ class DevTools
 
 		socket.addEventListener("reload") do(e)	
 			log 'asked to reload by server'
-			doc.location.reload!
+			global.document.location.reload!
 		
 		socket.onerror = do(e)
 			log 'hmr disconnected',e

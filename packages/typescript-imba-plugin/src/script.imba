@@ -5,7 +5,8 @@ import * as util from './util'
 import { TokenModifier, TokenType } from './constants'
 import Compiler,{Compilation} from './compiler'
 
-import ImbaScriptInfo from './lexer/script'
+# import ImbaScriptInfo from './lexer/script'
+import ImbaScriptInfo, {Token as ImbaToken} from 'imba-monarch'
 import Completions from './completions'
 import ImbaScriptContext from './context'
 import ImbaTypeChecker from './checker'
@@ -26,6 +27,9 @@ export default class ImbaScript
 		
 	get dts
 		#dts ||= new ImbaScriptDts(self)
+
+	get js
+		lastCompilation..js
 			
 	def getMapper target
 		let snap = target ? target.getSourceFile(fileName).scriptSnapshot : info.getSnapshot!
@@ -46,19 +50,22 @@ export default class ImbaScript
 		
 	def openedWithContent content
 		util.log('openedWithContent',fileName)
+		if content != self.content
+			util.log('replace content?',fileName,[content,doc.content,self.content])
 		
 	def getFromDisk
 		fs.readFileSync(fileName,'utf-8')
 
 	def setup
 		let orig = info.textStorage.text
+		# console.log 'setup',fileName,!!orig
 		if orig == undefined
 			# if this was already being edited?!
 			orig = getFromDisk!
-			util.log("setup {fileName} - read from disk",orig.length)
-		else
-			util.log("setup {fileName} from existing source",orig.length,info)
-
+			# util.log("setup {fileName} - read from disk",orig.length)
+		# else
+		# 	util.log("setup {fileName} from existing source",orig.length,info)
+		# console.log 'setup....',fileName
 		svc = global.ts.server.ScriptVersionCache.fromString(orig or '')
 		svc.currentVersionToIndex = do this.currentVersion
 		svc.versionToIndex = do(number) number
@@ -69,10 +76,24 @@ export default class ImbaScript
 		
 		# how do we handle if file changes on disk?
 		try
+			# if this was cached across sessions - opening a big project would be _much_ faster
 			let result = lastCompilation = compile!
 			let its = info.textStorage
 			let snap = its.svc = global.ts.server.ScriptVersionCache.fromString(result.js or '\n')
 			its.text = undefined
+
+			let reloadWithFileText_ = its.reloadWithFileText
+
+			its.reloadWithFileText = do(tempFileName)
+				util.log('reloadWithFileText',fileName,tempFileName,this,this.ownFileText,this.pendingReloadFromDisk,this.isOpen)
+				unless tempFileName
+					let body = getFromDisk!
+					# the underlying imba code has actually changed
+					util.log('reloadWithFileText content?',fileName,[body,doc.content,content])
+					if body != content and !this.isOpen
+						replaceContent(body)
+
+				return reloadWithFileText_.call(its,tempFileName)
 			
 			its.getFileTextAndSize = do(tempFileName)
 				util.log('getFileTextAndSize',fileName,tempFileName)
@@ -80,14 +101,15 @@ export default class ImbaScript
 				
 			its.reload = do(newText)
 				util.log('reload',fileName,newText.slice(0,10))
-			
 				return false
-			util.log('resetting the original file',snap)
+
+			# util.log('resetting the original file',snap)
+
 			snap.getSnapshot!.mapper = result
 			info.markContainingProjectsAsDirty!
 		catch e
 			util.log('setup error',e,self)
-
+		#setup = yes
 		return self
 			
 	def lineOffsetToPosition line, offset, editable
@@ -119,28 +141,45 @@ export default class ImbaScript
 			result.#applied = yes
 	
 			result.script.markContainingProjectsAsDirty!
-			let needDts = result.js.indexOf('class Extend$') >= 0
-			util.log('onDidCompileScript',result,needDts)
-			if ils.isSemantic
-				global.session.refreshDiagnostics!
+			let needDts = result.shouldGenerateDts # result.js.indexOf('class Ω') >= 0
+			let isSaved = result.input.#saved
+			
+			util.log('onDidCompileScript',result,needDts,isSaved)
+
+			if isSaved and needDts and false
+				# wait for the next version of the program
+				project.markAsDirty!
+				project.updateGraph!
+				syncDts!
+
+			if ils.isSemantic and global.session
+				global.session..refreshDiagnostics!
 		else
 			util.log('errors from compilation!!!',result)
 			diagnostics=result.diagnostics
-			global.session.refreshDiagnostics!
+			global.session..refreshDiagnostics!
 		self
-		
+
+
 	def syncDts
 		if lastCompilation..shouldGenerateDts
+			return
+
 			util.log "syncDts"
 			let prog = project.program
 			let script = prog.getSourceFile(fileName)
 			let out = {}
 			let body\string
+			
 			let writer = do(path,b) out[path] = body = b
 			let res = prog.emit(script,writer,null,true,[],true)
 			util.log 'emitted dts',out,res,body
-			dts.update(body) 
-		return self
+			# console.log 'emitted!!',res
+			dts.#emitted = res
+			dts.update(body)
+			return dts.#body
+
+		return null
 		
 	def getImbaDiagnostics
 		
@@ -175,6 +214,17 @@ export default class ImbaScript
 		if ils.isSemantic
 			util.delay(self,'asyncCompile',250)
 
+	def replaceContent newText
+		let from = content
+		let snap = svc.getSnapshot!
+		util.log('replacing content',fileName,from,newText,from.length,newText.length)
+		if newText != from
+			svc.edit(0,from.length,newText)
+			svc.getSnapshot!
+			doc.tokens
+			util.log('replaced content',[newText,doc.content,content])
+		
+
 	def compile
 		let snap = svc.getSnapshot!
 		let output = new Compilation(info,snap)
@@ -198,7 +248,10 @@ export default class ImbaScript
 		project.languageService
 		
 	get project
-		info.containingProjects[0]
+		let projs = info.containingProjects
+		if projs.indexOf(global.ils.cp) >= 0
+			return global.ils.cp
+		return projs[0]
 		
 	def wake
 		yes
@@ -207,9 +260,12 @@ export default class ImbaScript
 		try
 			let snap = snapshot
 			snap.#saved = yes
+			
 			if lastCompilation..input == snap
 				util.log 'saved compilation that was already applied',lastCompilation
 				syncDts!
+
+			ils.syncProjectForImba(project)
 		yes
 		
 	def getTypeChecker sync = no
@@ -277,6 +333,8 @@ export default class ImbaScript
 		let grp = ctx.group
 		let tok = ctx.token or {match: (do no)}
 		let checker = getTypeChecker!
+
+		# console.log('context for quick info',ctx)
 		
 		out.textSpan = tok.span
 		
@@ -300,6 +358,9 @@ export default class ImbaScript
 			# let taginst = checker.getTagSymbolInstance(ctx.tagName,yes)
 			# out.tagattr = checker.sym([taginst,util.toJSIdentifier(ctx.tagAttrName)])
 
+		# special description!!
+		
+
 		if tok.match("style.property.modifier style.selector.modifier")
 			let [m,pre,neg,post] = tok.value.match(/^(@|\.+)(\!?)([\w\-\d]*)$/)
 			util.log("style prop modifier",[m,pre,neg,post,tok],post.match(/^\d+$/))
@@ -309,9 +370,11 @@ export default class ImbaScript
 
 			if post.match(/^\d+$/)
 				util.log("this is a numeric thing(!!!)",tok)
+		
+		if tok.match('style.value.unit')
+			hit(checker.getTokenMetaSymbol(tok) or tok,'unit')
 				
-				
-		if g = grp.closest('stylevalue')
+		elif g = grp.closest('stylevalue')
 			let idx = (ctx..before..group or '').split(' ').length - 1
 			let alternatives = checker.stylevalues(g.propertyName,0)
 			let name = tok.value.tojs!
@@ -320,7 +383,17 @@ export default class ImbaScript
 			# add generic lookups for colors etc
 			if match
 				hit(match,'stylevalue')
-				
+
+		if tok.match('style.value.var')
+			let m = checker.getStyleVarTokens().filter do $1.value == tok.value
+			if m[0]
+				hit(m[0],'stylevalue')
+
+		
+
+		if tok.match('style.property.var')
+			# util.log("matching!!",tok,checker.getSymbolInfo(tok),tok isa ImbaToken)
+			hit(tok,'styleprop')
 		
 		if g = grp.closest('styleprop')
 			hit(checker.styleprop(g.propertyName,yes),'styleprop')
@@ -338,18 +411,19 @@ export default class ImbaScript
 		if tok.match('tag.event.name')
 			let name = tok.value.replace('@','')
 			hit(checker.sym("ImbaEvents.{name}"),'event')
-			# out.sym ||= 
 		
-		
-		util.log('context for quick info',ctx)
 		if tok.match('tag.name')
-			out.sym = out.tag
+			out.sym = checker.getTokenMetaSymbol(tok) or out.tag
 		
 		if tok.match('tag.attr') and out.tag
 			out.sym = out.tagattr
 			
 		if tok.match('white keyword')
 			return {info: {}}
+
+		hit(checker.getTokenMetaSymbol(tok),'meta')
+		hit(checker.getMetaSymbol(tok.type),'concept')
+		
 			
 		if out.sym
 			out.info ||= checker.getSymbolInfo(out.sym)
@@ -357,6 +431,16 @@ export default class ImbaScript
 		if out.info
 			out.info.textSpan ||= tok.span
 
+			if out.concept and out.sym != out.concept
+				let extra = checker.getSymbolInfo(out.concept)
+				out.extra = extra
+				out.info.documentation = out.info.documentation.concat([{text: '\n\n',type: 'markdown'}],extra.documentation)
+
+		if out.sym..isMetaSymbol
+			out.info.definitions ||= []
+
+		# util
+		util.log('getInfoAt',out)
 		return out
 		
 	def getDefinitionAndBoundSpan pos, ls
@@ -370,7 +454,11 @@ export default class ImbaScript
 				}]
 				textSpan: out.textSpan
 			}
+		elif out.info..definitions
+			return out.info
+			
 		else
+			# if out..definitions
 			return out
 			
 		
@@ -379,6 +467,7 @@ export default class ImbaScript
 			let out = getInfoAt(pos,ls)
 			
 			if out.info
+				out.info.textSpan = out.textSpan
 				return out.info
 		return null
 		

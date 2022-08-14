@@ -194,8 +194,9 @@ class Context
 			res = patcher.end!
 			let diff = patcher.changes
 			let changes = diff.size
-
+			
 			if changes
+				
 				for [item,op] of diff
 					if op === 1
 						item.addSubscriber(beacon)
@@ -241,7 +242,7 @@ let GET = do(target,key,vsym,meta,bsym)
 	let beacon = target[bsym]
 
 	unless beacon
-		beacon = target[bsym] = new Ref(0,meta,val)
+		beacon = target[bsym] = new Ref(0,meta,val,key)
 
 	CTX.add(beacon,target)
 	return val
@@ -258,18 +259,18 @@ let SET = do(target,key,vsym,value,meta,bsym)
 
 class Ref
 
-	def constructor kind, type, val
-		# id = NEXT_REF_ID++ # for development
-		# flags = kind
+	def constructor kind, type, val, name
+		id = NEXT_REF_ID++
 		observer = null
 		observers = null
+		# name = name
 
 		val.##referenced(self) if val and val.##referenced
 		return self
 
 	def changed level, newValue,oldValue
 		RUN_ID++
-
+		# mixing responsibilities with deep observers?
 		oldValue.##dereferenced(self,newValue) if oldValue and oldValue.##dereferenced
 		newValue.##referenced(self,oldValue) if newValue and newValue.##referenced
 
@@ -308,10 +309,19 @@ class Ref
 			return observer = null
 
 		let obs = observers
-		let idx = obs.indexOf(self)
+		let idx = obs.indexOf(item)
 		if idx >= 0
 			obs.splice(idx,1)
 		return
+
+	def reportChanged
+		changed(0)
+
+	def reportObserved
+		CTX.add(this)
+
+export def createAtom name
+	new Ref(null,null,null,name)
 
 ###
 Array
@@ -323,10 +333,15 @@ class ObservableArray < Array
 	def unshift do CHANGED(this,super)
 	def shift do CHANGED(this,super)
 	def splice do CHANGED(this,super)
+	def at do OBSERVED(this,super)
 	def map do OBSERVED(this,super)
+	def flatMap do OBSERVED(this,super)
+	def flat do OBSERVED(this,super)
 	def filter do OBSERVED(this,super)
 	def find do OBSERVED(this,super)
 	def slice do OBSERVED(this,super)
+	def sort do OBSERVED(this,super)
+	
 	get len do OBSERVED(this,length)
 
 	set len value
@@ -336,6 +351,9 @@ class ObservableArray < Array
 	def toIterable
 		CTX.add(self[OWNREF]) if TRACKING
 		return self
+
+	def [Symbol.iterator]
+		OBSERVED(this,super)
 
 const ArrayExtensions = getExtensions(ObservableArray)
 
@@ -392,14 +410,17 @@ extend class Map
 	def ##referenced ref do REFERENCED(this,ref,MapExtensions)
 	def ##dereferenced ref do DEREFERENCED(this,ref)
 
+
+
 class PropertyType
-	def constructor name,vkey
+	def constructor name,options = {}
 		self.name = name
-		self.key = vkey
+		self.options = options
+		const vkey = self.key = VALUESYM(name)
 		const bkey = REFSYM(name)
 
 		let descriptor = self.descriptor = {
-			enumerable: yes
+			enumerable: options.enumerable ?? yes
 			configurable: no
 			get: do TRACKING ? GET(this,name,vkey,self,bkey) : this[vkey]
 			set: do(value)
@@ -410,7 +431,12 @@ class PropertyType
 			enumerable: no
 			configurable: yes
 			get: do
-				this[vkey]
+				if TRACKING
+					Object.defineProperty(this,name,descriptor)
+					return this[name]
+				# not if this is the prototype
+				return this[vkey]
+
 			set: do(value)
 				this[vkey] = value
 				this[bkey] = null
@@ -569,6 +595,7 @@ class Reaction
 		context = context
 		options = options
 		flags = 0
+		id = NEXT_REF_ID++
 		cachedComputedVersions = new WeakMap
 		checkComputedValues = new Set
 		observing = []
@@ -594,12 +621,19 @@ class Reaction
 		self
 	
 	def deactivate
-		dispose!
+		clearTimeout(timeout) if timeout
+		if observing
+			for item in observing
+				item.removeSubscriber(self)
+		observing = checkComputedValues = cachedComputedVersions = null
+		self
 
 	def call
 		if TRACKING
+			# only do this to detect infinite loops somehow?
 			console.warn 'should not call reaction inside an autorunning context?'
-			return
+			# this shouldnt _always_ be the case though?
+			# return
 
 		if flags & F.POSSIBLY_STALE and flags !& F.STALE
 			let stale = no
@@ -640,14 +674,12 @@ class Reaction
 
 		flags ~= (F.RUNNING | F.STALE | F.POSSIBLY_STALE)
 		TRACKING--
-		commit! if $web$
+		commit! if $web$ and !options.silent
 		return res
 
 	def dispose
-		clearTimeout(timeout) if timeout
-		for item in observing
-			item.removeSubscriber(self)
-		observing = context = cb = checkComputedValues = cachedComputedVersions = null
+		deactivate!
+		cb = context = options = null
 		self
 
 class Action
@@ -674,6 +706,18 @@ export def run cb
 	let action = new Action(cb,global)
 	return action.run!
 
+
+export def reportChanged item
+	if item and item[OWNREF]
+		item[OWNREF].invalidated(0)
+	return item
+
+export def reportObserved item
+	if item and item[OWNREF]
+		item[OWNREF].reportObserved()
+	return item
+
+
 export def @computed target, name, desc
 	let sym = METASYM(name)
 	let field = target[sym] = new ComputedType(name,desc.get)
@@ -682,7 +726,8 @@ export def @computed target, name, desc
 export def @observable target, key, desc
 	let sym = METASYM(key)
 	let vsym = VALUESYM(key)
-	let field = target[sym] = new PropertyType(key,vsym)
+	let opts = this[0] or {}
+	let field = target[sym] = new PropertyType(key,opts)
 
 	if desc
 		Object.defineProperty(target,vsym,Object.assign({},desc))

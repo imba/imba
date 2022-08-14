@@ -73,6 +73,11 @@ class PupMouse
 			await move(item[0],item[1])
 		await up!
 
+class PupPage
+
+	def setViewport o = {}
+		await puppy('setViewport',[o])
+
 const TERMINAL_COLOR_CODES =
 	bold: 1
 	underline: 4
@@ -118,6 +123,9 @@ global class Spec < SpecComponent
 
 	get mouse
 		_mouse ||= new PupMouse
+
+	get page
+		_page ||= new PupPage
 	
 	def click sel, trusted = yes, options = {}
 		if typeof trusted == 'object'

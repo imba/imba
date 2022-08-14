@@ -117,7 +117,7 @@ export def activate context
 		# sendConfiguration!
 
 
-	languages.registerCompletionItemProvider({language: 'imba'},new CompletionsProvider(bridge),'.',':', '"', '@','%','\\',"'",'=','<','#')
+	languages.registerCompletionItemProvider({language: 'imba'},new CompletionsProvider(bridge),'.',':', '"', '@','%','\\',"'",'=','<','#','/')
 	util.log('setting up symbol provider')
 	languages.registerDocumentSymbolProvider({language: 'imba1'},new DocumentSymbolProvider)
 

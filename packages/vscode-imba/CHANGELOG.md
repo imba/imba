@@ -1,5 +1,53 @@
 # Changelog
 
+## 3.4.1
+
+* Basic completions for import paths
+* Add default file icons for `.imba` files
+
+## 3.4.0
+
+* Provide sensible results for `Go to Symbol in Workspace`
+* Added option for controlling which files are searched by go to symbol in workspace.
+* Use the bundled imba version for tooling by default. 
+* Add option `useImbaFromProject` to make tooling use project-specific imba version.
+
+## 3.3.0
+
+* Correct type inference for `querySelector('my-app-element')`++
+* Improved automatic typings for `extend class` and `extend tag` definitions
+* Improved overall speed and reliability of tooling
+* Various fixes and completion improvements
+
+## 3.2.3
+
+* Fixed issue where extension would get into a broken state if imba files were changed on disk outside of vscode
+
+## 3.2
+
+* Added completions for number units
+* Added completions for custom css units
+* Added completions for css variables
+* Added goto definition / references for css variables and custom units
+* Fixed issue where extension crashed if Svelte extension is installed
+
+## 3.1.13
+
+* Make typings and completions include properties added with `extend class ...`
+* Improve reliability of language service
+* Improve reloading after js/tsconfig.json changes
+
+## 3.1.12
+
+* Allow `.d.ts` to take precedence over `.imba` files in tooling
+* Improved typings for imba library
+
+## 3.1.6
+
+* Make completions work with latest vscode
+* Make Goto Type Definition work
+* Minor improvements to completions
+
 ## 3.1.5
 
 * Use project-specific imba compiler for tooling when possible.

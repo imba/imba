@@ -1,3 +1,4 @@
+import { isImba } from './util'
 import * as util from './util'
 import * as constants from './constants'
 import Compiler from './compiler'
@@ -18,6 +19,7 @@ const typings = {
 	"imba.router.d.ts": import("../../imba/typings/imba.router.d.ts?as=text")
 	"imba.snippets.d.ts": import("../../imba/typings/imba.snippets.d.ts?as=text")
 	"imba.types.d.ts": import("../../imba/typings/imba.types.d.ts?as=text")
+	"imba.meta.d.ts": import("../../imba/typings/imba.meta.d.ts?as=text")
 	"styles.d.ts": import("../../imba/typings/styles.d.ts?as=text")
 	"styles.generated.d.ts": import("../../imba/typings/styles.generated.d.ts?as=text")
 	"styles.modifiers.d.ts": import("../../imba/typings/styles.modifiers.d.ts?as=text")
@@ -150,6 +152,12 @@ export class Session
 	def filterDiagnostics file, project, diagnostics, kind
 		let script = project.getScriptInfoForNormalizedPath(file)
 		let state = {}
+
+		if project.projectKind == 0 and isImba(file)
+			util.log('skip diagnostics')
+			return []
+
+		util.log('filterDiagnostics!',diagnostics,project)
 		
 		# return diagnostics unless script.#imba
 		
@@ -328,10 +336,17 @@ export class System
 		typeof body == 'string' ? body : undefined
 		 
 	def fileExists path
+		if path.indexOf('.imba._.d.ts') >= 0
+			util.log('fileExists',path)
+			if virtualFileMap[path]
+				return true
+
 		if (/\.tsx$/).test(path)
 			for ext in EXTRA_EXTENSIONS
 				let ipath = path.replace('.tsx',ext).replace(ext + ext,ext)
 				if #fileExists(ipath)
+					if #fileExists(path.replace('.tsx','.d.ts'))
+						return no
 					util.log "intercepted fileExists",path,ipath
 					EXTRA_HIT = [path,ipath]
 					return yes
@@ -358,7 +373,7 @@ export class System
 	def readFile path,encoding = null
 		util.log("readFile",path)
 		
-		if path.indexOf('imba-typings') >= 0
+		if path.indexOf('imba-typings') >= 0 or path.indexOf('.imba._.d.ts') >= 0
 			return readVirtualFile(path)
 		
 		if (/[jt]sconfig\.json/).test(path)
@@ -444,7 +459,7 @@ export class ProjectService
 			elif !project.#awakenedForImba and global.ils
 				project.#awakenedForImba = yes
 				global.ils.awakenProjectForImba(project)
-				
+				global..LOADED_PROJECT(project)
 		catch e
 			util.log('error',e,project)
 	
@@ -628,6 +643,7 @@ export default def patcher ts
 	util.extend(ts.server.ProjectService.prototype,ProjectService)
 	util.extend(ts.server.Project.prototype,Project)
 	util.extend(ts.sys,System)
+	ts.sys.readFile = ts.sys.readFile.bind(ts.sys)
 	util.extend(ts,TS)
 	
 	let subs = subclasses(ts)
@@ -636,13 +652,26 @@ export default def patcher ts
 		ts[k] = v
 	
 	const SymbolObject = global.SymbolObject = ts.objectAllocator.getSymbolConstructor!
-	const Token = global.Token = ts.objectAllocator.getTokenConstructor!
+	const TokenObject = global.Token = ts.objectAllocator.getTokenConstructor!
 	const TypeObject   = global.TypeObject = ts.objectAllocator.getTypeConstructor!
 	const NodeObject   = global.NodeObject = ts.objectAllocator.getNodeConstructor!
 	const SourceFile   = global.SourceFile = ts.objectAllocator.getSourceFileConstructor!
 	const Signature    = global.Signature = ts.objectAllocator.getSignatureConstructor!
 	const Identifier = global.Identifier = ts.objectAllocator.getIdentifierConstructor!
 	
+	
+	extend class TokenObject
+
+		get #primitiveValue
+			if kind == ts.SyntaxKind.NumericLiteral
+				return Number(text)
+			elif kind == ts.SyntaxKind.BigIntLiteral
+				return BigInt(text.slice(0,-1))
+			elif kind == ts.SyntaxKind.StringLiteral
+				return String(text)
+			return self
+
+
 
 	extend class SourceFile
 			
@@ -684,7 +713,10 @@ export default def patcher ts
 				
 			if name == 'globalThis'
 				name = 'global'
-			
+
+			if name.indexOf(' ') > 0 and isMetaSymbol
+				name = name.slice(name.indexOf(' ') + 1)
+
 			name = util.fromJSIdentifier(name)
 
 			#imbaName = name
@@ -721,6 +753,9 @@ export default def patcher ts
 			
 		get isTag
 			self.exports..has('$$TAG$$')
+		
+		get isHTMLTag
+			parent..escapedName == 'ImbaHTMLTags'
 			
 		get isWebComponent
 			(/^[\w\-]+CustomElement$/).test(escapedName)
@@ -730,10 +765,15 @@ export default def patcher ts
 
 		get isDeprecated
 			valueDeclaration.modifierFlagsCache & ts.ModifierFlags.Deprecated
+		
+		get isPrivate
+			valueDeclaration..modifierFlagsCache & ts.ModifierFlags.Private
 			
 		get isDecorator
 			escapedName[0] == 'α'
-			
+		
+		get isMetaSymbol
+			parent..parent..escapedName == 'imbameta'
 			
 		get isStyleProp
 			parent and parent.escapedName == 'imbacss' and (/^[a-zA-ZΞ]/gu).test(escapedName)

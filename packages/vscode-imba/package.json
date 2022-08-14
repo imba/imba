@@ -2,7 +2,7 @@
 	"name": "vsimba",
 	"displayName": "Imba",
 	"description": "Language support for Imba",
-	"version": "3.1.10",
+	"version": "3.4.1",
 	"publisher": "scrimba",
 	"main": "./dist/src/index.js",
 	"icon": "assets/imba.png",
@@ -14,7 +14,7 @@
 		"directory": "packages/vsimba"
 	},
 	"engines": {
-		"vscode": "^1.59.0"
+		"vscode": "^1.64.0"
 	},
 	"categories": [
 		"Programming Languages"
@@ -105,6 +105,24 @@
 					"default": 0,
 					"description": "Port for debugging"
 				},
+				"imba.workspaceSymbols.scope": {
+					"type": "string",
+					"default": "imbaOnly",
+					"description": "Controls which files are searched by go to symbol in workspace.",
+					"enum": [
+						"imbaOnly",
+						"allSymbols"
+					],
+					"enumDescriptions": [
+						"Only include symbols from imba files",
+						"Include symbols from whole project & dependencies"
+					]
+				},
+				"imba.useImbaFromProject": {
+					"type": "boolean",
+					"default": false,
+					"description": "Controls whether the language server should use the imba version from the project to provide typings and completions."
+				},
 				"imba.verbose": {
 					"type": "boolean",
 					"default": false,
@@ -171,7 +189,11 @@
 					".imba2"
 				],
 				"configuration": "./language-configuration.json",
-				"firstLine": "^#!/.*\\bimba[2-9.-]*\\b"
+				"firstLine": "^#!/.*\\bimba[2-9.-]*\\b",
+				"icon": {
+					"light": "./assets/imba.svg",
+					"dark": "./assets/imba.svg"
+				}
 			}
 		],
 		"grammars": [
@@ -209,20 +231,21 @@
 	},
 	"dependencies": {
 		"@types/vscode": "^1.56.0",
-		"node-ipc": "^9.1.4",
+		"imba-monarch": "file:../imba-monarch",
+		"node-ipc": "9.1.4",
 		"typescript-imba-plugin": "file:../typescript-imba-plugin"
 	},
 	"devDependencies": {
 		"chroma-js": "^2.1.0",
 		"fs-extra": "^10.0.0",
 		"js-yaml": "^3.14.0",
-		"plist": "^3.0.1",
-		"vscode": "^1.1.37"
+		"plist": "^3.0.5"
 	},
 	"scripts": {
 		"watch": "node \"../imba/bin/imba\" build -wS --node.external +vscode src/index.imba",
 		"build": "node \"../imba/bin/imba\" build -S --node.external +vscode src/index.imba",
 		"build-theme": "node \"../imba/bin/imba\" scripts/compile-theme.imba",
+		"build-syntax": "node scripts/compile-syntaxes.js",
 		"publish": "node scripts/vsce-publish.js",
 		"prepublish": "npm run build"
 	},

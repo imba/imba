@@ -42,8 +42,6 @@ export default class Client
 						util.warn("return rpc {e.command}",Date.now! - t0,res)
 						res = JSON.parse(util.toImbaString(JSON.stringify(res)))
 
-					util.groupEnd!
-
 					host.emit('message',{
 						type: 'response'
 						responseRef: e.requestRef
@@ -52,6 +50,8 @@ export default class Client
 					})
 				catch err
 					util.log('error','responding',e.command,e.arguments,err)
+				finally
+					util.groupEnd!
 				
 				
 			

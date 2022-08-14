@@ -49,7 +49,7 @@
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.202",
+  "version": "2.0.0-alpha.215",
   "licenses": [
     {
       "type": "MIT",
@@ -115,7 +115,7 @@
     "node-fetch": "^2.6.1",
     "ora": "^5.2.0",
     "picomatch": "^2.2.2",
-    "puppeteer": "^10.4.0",
+    "puppeteer": "^16.1.0",
     "tmp": "^0.2.1",
     "workerpool": "^6.0.3"
   },

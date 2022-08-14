@@ -1,0 +1,53 @@
+
+import test from './tata'
+import { AppState, AppState as AppStateAliased } from './def'
+import tast
+
+extend class Number
+
+	get even
+		this % 2 == 0
+
+extend class AppState
+
+	get extended
+		self
+
+extend class SomeClass
+
+	get extended
+		self
+
+extend class AppStateAliased
+
+	get aliased
+		self
+
+tag some-item
+
+    def render
+        yes
+
+global class SomeClass
+
+    def ping
+        yes
+
+extend tag app-button
+
+    get that
+        self
+
+extend tag element
+
+    get that
+        self
+
+export class Stuff
+
+    def hello
+        yes
+
+export def mymeth
+    yes
+

@@ -194,30 +194,13 @@ export def rewrite rule,ctx,o = {}
 				addClass(modTarget = prev,name)
 				mod.remove = yes
 				specificity++
-				
-
-			elif hit = mod.name.match(/^([a-z]*)(\d+)(\+|\-)?$/)
-				unless hit[1]
-					if hit[3] == '-'
-						media = "(max-width: {hit[2]}px)"
-					else
-						media = "(min-width: {hit[2]}px)"
-
-			elif hit = (mod.name.match(/^([a-z\-]*)([\>\<\!])(\d+)$/) or mod.name.match(/^(\.)?(gte|lte)\-(\d+)$/))
-				# TODO simplify to just @number for gte and @!number for lt
-				let [all,key,op,val] = hit
-				let num = parseInt(val)
-				if op == '>' or op == 'gte'
-					if key == 'vh'
-						media = "(min-height: {val}px)"
-					else
-						media = "(min-width: {val}px)"
-				elif op == '<' or op == 'lte' or op == '!'
-					if key == 'vh'
-						media = "(max-height: {num - 1}px)"
-					else
-						media = "(max-width: {num - 1}px)"
-
+			
+			elif modname.match(/^\d+$/)
+				let num = parseInt(modname)
+				if neg
+					media = "(max-width: {num - 1}px)"
+				else
+					media = "(min-width: {num}px)"
 
 			if name == 'media'
 				media = "({mod.value})"

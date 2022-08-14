@@ -433,19 +433,20 @@ var grammar =
 	
 	# the values
 	StyleExpression: [
-		o 'StyleValue' do StyleExpression.new().add(A1)
-		o 'StyleExpression StyleValue' do A1.add(A2)
+		o 'StyleTerm' do StyleExpression.new().add(A1)
+		o 'StyleExpression StyleOperator' do A1.add(A2)
+		o 'StyleExpression StyleTerm' do A1.add(A2)
 		o 'StyleExpression / StyleTerm' do A1.addParam(A3,A2)
 	]
 
 	StyleValue: [
 		o 'StyleTerm'
-		o 'StyleCalc'
+		o 'StyleOperation'
 	]
 	
-	StyleCalc: [
-		o 'StyleTerm StyleOperator StyleTerm' do StyleCalc.new([A1,A2,A3])
-		o 'StyleCalc StyleOperator StyleTerm' do A1.add([A2,A3])
+	StyleOperation: [
+		o 'StyleTerm StyleOperator StyleTerm' do StyleOperation.new([A1,A2,A3])
+		o 'StyleOperation StyleOperator StyleTerm' do A1.add([A2,A3])
 	]
 
 	StyleFunctionArgs: [
@@ -464,9 +465,14 @@ var grammar =
 		o '{ Expression }' do StyleInterpolationExpression.new(A2).setEnds(A1,A3)
 		o 'StyleTermPlaceholder CSSUNIT' do A1.set(unit: A2)
 	]
+
+	StyleParens: [
+		o '( StyleValue )' do StyleParens.new(A2).setEnds(A1,A3)
+		o 'StyleParens CSSUNIT' do A1.set(unit: A2)
+	]
 	
 	StyleTerm: [
-		o '( StyleExpressions )' do A2.set(parens: yes).setEnds(A1,A3)
+		o 'StyleParens'
 		o 'CSSVAR' do StyleVar.new(A1)
 		o 'DIMENSION' do StyleDimension.new(A1)
 		o 'COLOR' do StyleColor.new(A1)
@@ -474,13 +480,10 @@ var grammar =
 		o 'NUMBER' do StyleNumber.new(A1)
 		o 'String' do A1
 		o 'StyleTermPlaceholder' do A1
-		# o '{ Expression }' do StyleInterpolationExpression.new(A2)
 		o 'CSSURL' do StyleURL.new(A1)
 		o 'CSSFUNCTION ( StyleFunctionArgs )' do StyleFunction.new(A1,A3)
 		o 'CSSIDENTIFIER' do StyleIdentifier.new(A1)
 		o 'COMPARE StyleTerm' do A2.set(op: A1)
-		# o '> StyleTerm' do A2.set(op:A1)
-		
 	]
 
 	TagOptions: [
@@ -825,6 +828,11 @@ var grammar =
 		o 'Object' # not supported anymore
 	]
 
+	TaggedTemplate: [
+		o 'SimpleAssignable InterpolatedString' do TaggedTemplate.new(A1,A2)
+		o 'SimpleAssignable String' do TaggedTemplate.new(A1,A2)
+	]
+
 	Await: [
 		o 'AWAIT Expression' do Await.new(A2).set(keyword: A1)
 	]
@@ -842,7 +850,9 @@ var grammar =
 		o 'TagId'
 		o 'Selector'
 		o 'Invocation'
+		o 'TaggedTemplate'
 		o 'Require'
+		# TODO Makes no sense that this is not more specific
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
 		# o 'Value Type' do A1.set(datatype: A2)
 	]
@@ -1143,13 +1153,13 @@ var grammar =
 
 	ForBody: [
 		o 'ForKeyword Range' do source: ValueNode.new(A2)
-		o 'ForStart ForSource' do A2.configure(own: A1:own, name: A1[0], index: A1[1], keyword: A1:keyword, params: A1)
+		o 'ForStart ForSource' do A2.configure(own: A1:own, await: (A1:await), name: A1[0], index: A1[1], keyword: A1:keyword, params: A1)
 	]
 
 	ForStart: [
 		o 'ForKeyword ForVariables' do (A2:keyword = A1) && A2
-
 		# should link to the actual keyword instead
+		o 'ForKeyword AWAIT ForVariables' do (A3:await = A2) && (A3:keyword = A1) && A3
 		o 'ForKeyword OWN ForVariables' do (A3:own = yes) && (A3:keyword = A1) && A3
 
 	]
@@ -1290,8 +1300,7 @@ var operators = [
 	['left',      'RELATION']
 	['left',      'COMPARE']
 	['left',      'LOGIC']
-	['left',      '?']
-	
+	['right',      '?']
 	['nonassoc',  'INDENT', 'OUTDENT']
 	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN', 'THROW', 'EXTENDS']
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']

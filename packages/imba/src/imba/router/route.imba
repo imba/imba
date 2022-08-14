@@ -1,6 +1,7 @@
 const cacheMap = new Map
 const urlCache = {}
 const queryCache = {}
+const anyRegex = /.*/
 
 def cacheForMatch match
 	unless cacheMap.has(match)
@@ -117,10 +118,14 @@ export class Route
 		
 		if path == '' and query
 			return
+
+		if path == '*'
+			regex = anyRegex
+			return self
 			
 		path = '^' + path
 		let end = path[path.length - 1]
-		if end == '$'
+		if end == '$' or end == '/'
 			path = path.slice(0,-1) + '(?=\/?[\#\?]|\/?$)'
 
 		if (end != '/' and end != '$' and path != '^/')

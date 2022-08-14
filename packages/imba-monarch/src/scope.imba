@@ -1,5 +1,4 @@
-import {prevToken} from './utils'
-import * as util from '../util' 
+import { tagNameToClassName,prevToken,toCustomTagIdentifier} from './utils'
 import {M,KeywordTypes,SemanticTokenTypes,SemanticTokenModifiers} from './types'
 import {Sym,SymbolFlags} from './symbol'
 
@@ -59,9 +58,23 @@ export class Node
 		findChildren(pattern,yes)[0]
 		
 	get childNodes
-		let nodes = doc.getNodesInScope(self)
-		nodes
-		
+		doc.getNodesInScope(self,yes,yes)
+
+	get children
+		doc.getNodesInScope(self)
+
+	get allTokens
+		let all = []
+		let tok = start
+		while tok
+			all.push(tok)
+			break if tok == end
+			tok = tok.next
+		return all
+	
+	get parents
+		[parent].concat(parent.parents)
+
 	get span
 		let starts = start.startOffset
 		let ends = end ? end.endOffset : doc.content.length
@@ -114,6 +127,9 @@ export class Node
 	get value
 		doc.content.slice(start.offset,end ? end.endOffset : -1)
 
+	get outerText
+		doc.getText(contextSpan)
+
 	get next
 		end ? end.next : null
 
@@ -129,6 +145,12 @@ export class Node
 		elif query isa Function
 			return query(self)
 		return yes
+
+	get startOffset
+		start.offset
+
+	get endOffset
+		end.endOffset
 		
 	get outlineText
 		"item"
@@ -138,7 +160,7 @@ export class Node
 		
 	def toOutline
 		{
-			name: outlineText
+			text: outlineText
 			kind: outlineKind
 		}
 
@@ -158,6 +180,23 @@ export class Group < Node
 	def lookup ...params
 		return parent.lookup(...params)
 
+	get comment
+		let val = value
+		let m = val.match(/\s\#\s([^\n]+)\n/)
+		if m
+			return m[1]
+		
+		let prev = start.prev
+		if prev and prev.match('white.tabs')
+			prev = prev.prev
+		
+		if prev..match('comment')
+			return prev.value.replace(/(^\#\s)|(\n+$)/g,'')
+
+		return null
+
+
+
 
 export class ValueNode < Group
 
@@ -174,7 +213,7 @@ export class Scope < Node
 
 	def constructor doc, token, parent, type, parts = []
 		super(doc, token,parent,type)
-		children = []
+		# children = []
 		entities = []
 		refs = []
 		varmap = Object.create(parent ? parent.varmap : {})
@@ -203,6 +242,17 @@ export class Scope < Node
 		if class? or property?
 			ident = token = prevToken(start,"entity.")
 
+			# need to start at the beginning of the line?
+			let kw = prevToken(start,"keyword.class keyword.tag",10000,2)
+			keyword = kw
+
+			# console.log "found start?!",kw
+			if class? and kw
+				token = kw.next..next
+				if token..match('push.assignable')
+					token = token.scope
+				ident = token
+
 			if ident
 				ident.body = self
 
@@ -210,6 +260,8 @@ export class Scope < Node
 				$name = 'render'
 				if ident.symbol
 					ident.symbol.name = 'render'
+
+		
 	
 	get selfPath
 		let path = self.path
@@ -226,7 +278,10 @@ export class Scope < Node
 		
 		if component?
 			if name[0] == name[0].toLowerCase!
-				return util.toCustomTagIdentifier(name)
+				let hit = tagNameToClassName(name)
+				if hit
+					return hit.name
+				return toCustomTagIdentifier(name)
 			else
 				return name
 
@@ -257,6 +312,12 @@ export class Scope < Node
 		
 	get class?
 		!!type.match(/^class/) or component?
+
+	get extends?
+		class? and keyword and keyword.prev.prev..match('keyword.extend')
+
+	get global?
+		class? and (!!prevToken(keyword,'keyword.global',3,1) or (component? and name[0] == name[0].toLowerCase!))
 
 	get def?
 		!!type.match(/def|get|set/)
@@ -292,6 +353,15 @@ export class Scope < Node
 		let ends = end ? end.endOffset : doc.content.length
 		{start: starts, length: (ends - starts)}
 
+	get textSpan
+		ident ? ident.span : span
+
+	get contextSpan
+		if class? or component? or def?
+			doc.expandSpanToLines(span)
+		else
+			span
+
 	def visit
 		self
 
@@ -318,6 +388,8 @@ export class Scope < Node
 export class GlobalScope < Scope
 	
 export class Root < Scope
+	get parents
+		[]
 
 export class Class < Scope
 
@@ -436,8 +508,6 @@ export class TagNode < Group
 
 	get pathName
 		"<{name}>"
-		# let name = name
-		# local? ? name : ('globalThis.' + util.pascalCase(name) + 'Component')
 	
 	get outlineText
 		let inner = findChildren(/tag\.(reference|name|id|white|flag|event(?!\-))/).join('').trim()
@@ -516,7 +586,7 @@ export class SpecifiersNode < BracesNode
 export class ArrayNode < BracketsNode
 	
 	get delimiters
-		childNodes.filter do $1.match('delimiter')
+		children.filter do $1.match('delimiter')
 	
 	def indexOfNode node
 		let delims = delimiters
@@ -547,17 +617,19 @@ export class ImportsNode < Group
 		!!start.prev.match('keyword.type')
 	
 	get sourcePath
-		let path = childNodes.find do $1.match('path')
+		let path = children.find do $1.match('path')
 		return path..innerText
 		
 	get specifiers
-		childNodes.find do $1.match('specifiers')
+		children.find do $1.match('specifiers')
 		
 	get default
-		childNodes.find do $1.match('.default')
+		children.find do $1.match('.default')
 		
 	get namespace
-		childNodes.find do $1.match('.ns')
+		children.find do $1.match('.ns')
+
+export class Assignable < Group
 
 export const ScopeTypeMap = {
 	style: StyleNode
@@ -587,4 +659,5 @@ export const ScopeTypeMap = {
 	stylepropkey: StylePropKey
 	stylevalue: StylePropValue
 	args: ParensNode
+	assignable: Assignable
 }

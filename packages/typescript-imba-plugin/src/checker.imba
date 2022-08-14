@@ -1,10 +1,9 @@
 import * as util from './util'
-import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as ImbaSymbolFlags} from './lexer'
+import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as ImbaSymbolFlags, utils as MonarchUtils} from 'imba-monarch'
 import AutoImportContext from './importer'
 const Globals = "global imba module window document exports console process parseInt parseFloat setTimeout setInterval setImmediate clearTimeout clearInterval clearImmediate globalThis isNaN isFinite __dirname __filename".split(' ')
 
 extend class ImbaSymbol
-
 	get tsFlags
 		let f = 0
 		let F = global.ts.SymbolFlags
@@ -29,9 +28,8 @@ class ImbaMappedLocation
 		opos = opos
 		context = context
 		otoken = global.ts.findPrecedingToken(opos,context.sourceFile)
-		
 		# 
-	
+
 	get thisType
 		return #thisType if #thisType
 		let node = global.ts.getThisContainer(otoken)
@@ -49,7 +47,7 @@ class ImbaMappedLocation
 			else
 				return #thisType = typ
 		return #thisType
-		
+
 	def valueOf
 		dpos
 
@@ -57,7 +55,6 @@ class SetProxy
 	
 
 export default class ImbaTypeChecker
-	
 	constructor project, program, checker, script
 		project = project
 		program = program
@@ -69,10 +66,10 @@ export default class ImbaTypeChecker
 			instanceType: new Map
 			type: new Map
 		}
-	
+
 	get sourceFile
 		#sourceFile ||= program.getSourceFile(script.fileName)
-	
+
 	get ts
 		global.ts
 
@@ -87,11 +84,20 @@ export default class ImbaTypeChecker
 
 	get allGlobals
 		#allGlobals ||= props('globalThis').slice(0)
-		
+
 	get globals
 		#globals ||= allGlobals.filter do
 			($1.pascal? or Globals.indexOf($1.escapedName) >= 0) and !$1.isWebComponent
-		
+
+	def getTypeAtLocation node
+		return unless node
+		if node.kind == 24 # Dot
+			node = node.parent.expression
+		if node.kind == 21 # CloseParenToken
+			node = node.parent.parent.expression
+
+		checker.getTypeAtLocation(node)
+
 	def getMappedLocation dpos
 		let res = {dpos: dpos}
 		# if we are just at the start of an indent -- look up
@@ -102,14 +108,14 @@ export default class ImbaTypeChecker
 		res.stmt = ts.findAncestor(res.tok,ts.isStatement)
 		res.container = ts.getThisContainer(res.tok)
 		return res
-		
+
 	def getLocation dpos, opos = null
 		opos ??= script.d2o(dpos,program)
 		new ImbaMappedLocation(self,dpos,opos)
-	
+
 	def findClosestContext dpos
 		self
-	
+
 	def getSymbolDetails symbol
 		symbol = sym(symbol)
 		let details = ts.Completions.createCompletionDetailsForSymbol(symbol,checker,sourceFile,sourceFile)
@@ -131,30 +137,50 @@ export default class ImbaTypeChecker
 			details.detail = util.fromJSIdentifier(details.detail)
 
 		details.markdown = md.join('\n')
+
+		util.log('getSymbolDetails',symbol,details)
+
+		if symbol..isMetaSymbol
+			details.displayParts = []
+			details.kind = ''
 		
 		return details
-		
-		
+
 	def styleprop name, fallback = yes
+		return null unless name
 		let res = resolve('imbacss').exports.get(name.tojs!)
 		if res and res.imbaTags.proxy and fallback
 			return styleprop(res.imbaTags.proxy,no)
 
 		res or (fallback and styleprop('_',no) or null)
-	
-	
+
+	get metatokens
+		resolve('imbameta').exports.get('tokens')
+
+	def getMetaSymbol name
+		return member(metatokens,name)
+
+	def getMetaSymbols pattern
+		props(metatokens).filter do
+			# should use more advanced matching like with tokens
+			$1.escapedName.indexOf(pattern) == 0
+
+	def getTokenMetaSymbol token
+		getMetaSymbol(token.type + ' ' + token.value)
+		# or (fallback and getMetaSymbol(token.type))
+
 	get stylesymbols
 		Array.from(resolve('imbacss').exports.values!)
-		
+
 	get styleprops
 		stylesymbols.filter do $1.isStyleProp
-		
+
 	get stylemods
 		stylesymbols.filter do $1.isStyleModifier
-		
+
 	get styletypes
 		stylesymbols.filter do $1.isStyleType
-	
+
 	def stylevaluetypes name, index = 0
 		let target = type(member(styleprop(name),'set'))
 		let signatures = checker.getSignaturesOfType(type(target),0)
@@ -166,7 +192,7 @@ export default class ImbaTypeChecker
 			types.push(type(param))
 
 		return types
-		
+
 	def stylevalues name, index = 0, filtered = yes
 		let symbols = []
 		let types = stylevaluetypes(name,index)
@@ -180,12 +206,16 @@ export default class ImbaTypeChecker
 			symbols.push(...props(styleprop('Ψglobals')))
 
 		return symbols.filter do(item,i,arr) arr.indexOf(item) == i
-		
+
 	def getGlobalTags
-		# allGlobals.filter do $1.escapedName.indexOf('CustomElement') > 0
 		checker.getSymbolsInScope(sourceFile,4).filter do $1.escapedName[0] == 'Γ'
-		# allGlobals.filter do $1.escapedName[0] == 'Γ'
-		
+
+	def getNumberUnits
+		props(checker.getDeclaredTypeOfSymbol(resolve('imba').exports.get('units')))
+
+	def getNumberUnit name
+		getNumberUnits().find do $1.escapedName == name
+
 	def getLocalTagsInScope
 		let symbols = checker.getSymbolsInScope(sourceFile,32)
 		for s in symbols
@@ -195,22 +225,128 @@ export default class ImbaTypeChecker
 			key and key.getProperty('suspend')
 		return symbols
 
+	def getDefinitionForImbaToken tok
+		util.log 'getDefinitionForImbaToken',tok
+		let script = tok.context.doc.owner
+		let g = tok.context
+		let up = null
+		let out = {}
+
+		if true
+			out = {
+				textSpan: tok.span
+				contextSpan: tok.span
+				name: tok.value
+				fileName: script.fileName
+				isLocal: true
+				isAmbient: false
+				containerKind: undefined
+				containerName: ''
+				unverified: false
+				kind: "let"
+				isWriteAccess: false
+			}
+
+			if up = g.closest('styleprop')
+				out.contextSpan = up.contextSpan
+				out.#comment = up.comment
+
+		return out
+
+	def getReferenceForImbaToken tok
+		util.log 'getReferenceForImbaToken',tok
+		let script = tok.context.doc.owner
+		let out = {
+			textSpan: tok.span # {start:0, length:1}
+			contextSpan: tok.span # {start:0, length:1}
+			fileName: script.fileName
+			isWriteAccess: true
+		}
+		
+		return out
+
 	def getSymbolInfo symbol
+		let md = []
+		# special rules if it is an ImbaToken
+		if symbol isa ImbaToken
+			# util.log('getSymbolInfo for ImbaToken',symbol)
+			
+			let out = {
+				displayParts: []
+				displayString: ''
+				kind: 'interface'
+				documentation: [{text: 'Style variable?', kind: 'text'}]
+				kindModifiers: 'declare'
+				definitions: null
+			}
+			
+			if symbol.match('style.value.var') or symbol.match('style.property.var')
+				let defs = getStyleVarTokens().filter do $1.value == symbol.value
+				let refs = getStyleVarReferences().filter do $1.value == symbol.value
+				out.definitions = defs.map do getDefinitionForImbaToken($1)
+				out.definition = out.definitions[0]
+				out.references = refs.map do getReferenceForImbaToken($1)
+
+				for item in out.definitions
+					if item.#comment
+						md.push(item.#comment)
+
+				md.push(`---`) if md.length
+				md.push `**Style variable**`
+				md.push `[Reference](https://imba.io/docs/css/variables)`
+
+			elif symbol.match('style.value.unit')
+				let defs = getStyleCustomUnits().filter do $1.value == symbol.value
+				out.definitions = defs.map do getDefinitionForImbaToken($1)
+
+				if defs.length == 0
+					md.push(`No unit definition found.`)
+				
+				for item in out.definitions
+					if item.#comment
+						md.push(item.#comment)
+
+				md.push(`---`) if md.length
+				md.push `Custom CSS unit`
+				md.push `[Reference](https://imba.io/docs/css/values)`
+
+
+			out.documentation = [{text: md.join('\n\n'), kind: 'markdown'}]
+
+			util.log "getSymbolInfo ImbaToken",out,symbol
+			return out
+
+
 		symbol = sym(symbol)
 		let out = ts.SymbolDisplay.getSymbolDisplayPartsDocumentationAndSymbolKind(checker,symbol,sourceFile,sourceFile,sourceFile)
 		if out
 			out.displayParts &&= util.toImbaDisplayParts(out.displayParts)
 			out.kindModifiers = ts.SymbolDisplay.getSymbolModifiers(checker, symbol)
 			out.kind = out.symbolKind
+
+		if symbol..isHTMLTag
+			out.displayParts = []
+			# md.push("**{symbol.imbaName}**\n\n")
+			md.push(`[MDN Reference](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/{symbol.imbaName})`)
+
+		util.log "getSymbolInfo",symbol,out
+
+		if symbol..isMetaSymbol
+			out.displayParts = []
+
+		if md.length
+			let pre = '\n\n'
+			out.documentation = (out.documentation or []).concat([{text: pre + md.join('\n\n'), kind: 'markdown'}])
+
+
 		return out
-		
+
 	def getSymbolKind symbol
 		{
 			kind: ts.SymbolDisplay.getSymbolKind(checker,symbol,sourceFile)
 			kindModifiers: ts.SymbolDisplay.getSymbolModifiers(checker,symbol,sourceFile)
 		}
-		
-	
+
 	def getTagSymbol name, forAttributes = no
 		let symbol
 		if util.isPascal(name)
@@ -232,25 +368,25 @@ export default class ImbaTypeChecker
 					symbol = sym("globalThis.{cname}")
 
 		return symbol
-	
+
 	def getTagSymbolInstance name, forAttributes = no
 		let res = getTagSymbol(name,forAttributes)
 		if !sym("HTMLElementTagNameMap.{name}")
 			res = sym([res,'prototype'])
 		return res
-		
+
 	def getEvents
 		props("ImbaEvents")
-		
+
 	def getEventModifiers eventName
 		let all = props("ImbaEvents.{eventName}")
 		all = all.filter do $1.escapedName != 'αoptions' and $1.escapedName[0] == 'α'
 		return all
-		
+
 	def getEventModifier eventName, modifierName
 		let ev = sym("ImbaEvents.{eventName}.α{modifierName}")
 		return ev
-		
+
 	def getTagAttrSymbol tagName,attrName
 		let key = util.toJSIdentifier(attrName)
 		let taginst = getTagSymbolInstance(tagName,yes)
@@ -268,33 +404,39 @@ export default class ImbaTypeChecker
 		if (/^\$\w+\$$/).test(name)
 			return self[name.slice(1,-1)]
 
+		if MonarchUtils.isTagIdentifier(name)			
+			let hit = MonarchUtils.tagNameToClassName(name)
+			# util.log 'is tag identifier!!',hit
+			if hit and hit.name
+				name = hit.name
+
 		let sym = checker.resolveName(name,location or sourceFile,symbolFlags(types),false)
 		return sym
-		
+
 	def getSymbols types = ts.SymbolFlags.All, location = null
 		let sym = checker.getSymbolsInScope(location or sourceFile,symbolFlags(types))
 		return sym
-		
+
 	def symToPath sym
 		let pre = ''
 		if sym.parent
 			pre = symToPath(sym.parent) + '.'
 		return pre + checker.symbolToString(sym,undefined,0,0)
-		
+
 	def findAmbientModule src
 		let mod = checker.tryFindAmbientModuleWithoutAugmentations(src)
 		mod and checker.getMergedSymbol(mod)
-		
+
 	def resolveModuleName path, containingFile = null
 		let res = project.resolveModuleNames([path],containingFile or sourceFile.fileName)
 		return res[0] and res[0].resolvedFileName
-		
+
 	def getModuleSymbol src, containingFile = null
 		let path = resolveModuleName(src,containingFile)
 		let file = program.getSourceFile(path)
 		return file..symbol
 		# t.checker.getExportsOfModule(s2.symbol)
-		
+
 	def resolveImportInfo info, tok, doc
 		# may need to force the checker to re-resolve
 		let sym = getModuleSymbol(info.path)
@@ -308,7 +450,7 @@ export default class ImbaTypeChecker
 			
 			return type(member(sym,info.exportName))
 		return null
-	
+
 	def pathToSym path
 		if path[0] == '"'
 			let end = path.indexOf('"',1)
@@ -317,7 +459,7 @@ export default class ImbaTypeChecker
 			let mod = abs ? program.getSourceFile(src).symbol : findAmbientModule(src)
 			return sym([mod].concat(path.slice(end + 2).split('.')))
 		return sym(path)
-		
+
 	def parseType string, token, returnAst = no
 		string = string.slice(1) if string[0] == '\\'
 		if let cached = #typecache[string]
@@ -332,7 +474,7 @@ export default class ImbaTypeChecker
 		catch e
 			yes
 			# console.log 'parseType error',e,ast
-			
+
 	def collectLocalExports
 		let exports = {}
 		let files = program.getSourceFiles!
@@ -341,8 +483,7 @@ export default class ImbaTypeChecker
 			let sym = file.symbol
 			exports[file.path] = {}
 		return exports
-			
-	
+
 	def resolveTypeExpression expr, source, ctx
 		let val = expr.getText(source)
 		
@@ -365,7 +506,6 @@ export default class ImbaTypeChecker
 				# return type(typ)
 		elif basetypes[val]
 			return basetypes[val]
-
 
 	def local name, target = sourceFile, types = ts.SymbolFlags.All
 		let sym = checker.resolveName(name,loc(target),symbolFlags(types),false)
@@ -391,11 +531,11 @@ export default class ImbaTypeChecker
 			program.getSourceFile(value)
 		else
 			value
-			
+
 	set location value
 		let item = loc(value)
 		#location = item
-	
+
 	get location
 		#location
 
@@ -417,10 +557,10 @@ export default class ImbaTypeChecker
 			return program.getSourceFile(item.fileName)
 		
 		return item
-	
+
 	def csstype name
 		checker.getDeclaredTypeOfSymbol(cssmodule.exports.get("css${name}"))
-		
+
 	def snippets name
 		props(checker.getDeclaredTypeOfSymbol(resolve('imba_snippets').exports.get(name)))
 
@@ -434,8 +574,10 @@ export default class ImbaTypeChecker
 		if item isa Array
 			let base = type(item[0])
 			for entry,i in item when i > 0
-				
-				base = type(member(base,entry))
+				let val = type(member(base,entry))
+				if !val and i == 1 and base.exports
+					val = base.exports.get(entry)
+				base = val
 			item = base
 
 		if item isa SymbolObject
@@ -491,11 +633,11 @@ export default class ImbaTypeChecker
 			
 		return null
 
-	def locals source = #file
+	def locals source = (#file or script)
 		let file = fileRef(source)
 		let locals = file.locals.values!
 		return Array.from(locals)
-	
+
 	def props item, withTypes = no
 		let typ = type(item)
 		return [] unless typ
@@ -505,12 +647,12 @@ export default class ImbaTypeChecker
 			for item in props
 				type(item)
 		return props
-		
+
 	def valueprops item, withTypes = no
 		let all = self.props(item,withTypes)
 		all = all.filter do !$1.isDecorator
 		return all
-		
+
 	def ownprops item, withTypes = no
 		let typ = type(item)
 		return [] unless typ
@@ -520,7 +662,7 @@ export default class ImbaTypeChecker
 			for item in props
 				type(item)
 		return props
-		
+
 	def allprops item, withTypes = no
 		let typ = type(item)
 		return [] unless typ
@@ -531,14 +673,14 @@ export default class ImbaTypeChecker
 			for item in props
 				type(item)
 		return props
-	
+
 	def statics item, withTypes = no
 		yes
 
 	def propnames item
 		let values = type(item).getApparentProperties!
 		values.map do $1.escapedName
-	
+
 	def getSelf loc = #location
 		yes
 		
@@ -599,7 +741,6 @@ export default class ImbaTypeChecker
 		if key !== name
 			sym = signature(sym)
 		return sym
-		
 
 	def inferType tok, doc, loc = null
 		util.log('infer',tok)
@@ -697,7 +838,6 @@ export default class ImbaTypeChecker
 			return [['ImbaEvents',tok.context.name],'MODIFIERS']
 			# return ['ImbaEvents',tok.value]
 		
-		# if this is a call
 		if typ == ')' and tok.start
 			return [inferType(tok.start.prev),'!']
 
@@ -708,8 +848,21 @@ export default class ImbaTypeChecker
 			return basetypes.string
 
 		if tok.match('operator.access')
-			# devlog 'resolve before operator.oacecss',tok.prev
-			return inferType(tok.prev,doc)
+			if tok.prev..type == ')' and tok.prev.start
+				let otok = findExactLocationForToken(tok.prev)
+				
+				if otok
+					let typ = tok.#otyp = getTypeAtLocation(otok)
+					return typ
+	
+			let typ = inferType(tok.prev,doc)
+
+			unless typ
+				let otok = findExactLocationForToken(tok.prev)
+				if otok
+					return tok.#otyp = checker.getTypeAtLocation(otok)
+
+			return typ
 
 		if tok.type == 'self'
 			# what if the selfPath doesnt work?
@@ -761,12 +914,11 @@ export default class ImbaTypeChecker
 		if tok.match('accessor')
 			# let lft = tok.prev.prev
 			return [inferType(tok.prev,doc),tok.value]
-			
 
 	def resolveType tok, doc, ctx = null
 		let paths = inferType(tok,doc || script.doc,ctx)
 		return type(paths)
-		
+
 	def findExactLocationForToken token
 		if typeof token == 'number'
 			token = script.doc.tokenAtOffset(token)
@@ -782,7 +934,7 @@ export default class ImbaTypeChecker
 				return otok
 				# see if it is the same type as well
 			return null
-					
+
 	def findExactSymbolForToken dtok
 		let otok = findExactLocationForToken(dtok)
 		if otok
@@ -791,7 +943,7 @@ export default class ImbaTypeChecker
 				sym = ts.getLocalSymbolForExportDefault(sym) or sym
 			return sym
 		return null
-	
+
 	# type at imba location	
 	def typeAtLocation offset
 		
@@ -801,7 +953,16 @@ export default class ImbaTypeChecker
 		# let loc = getLocation(offset)
 		let inferred = inferType(tok,script.doc,tok)
 		return inferred
-		
+
+	def getStyleVarTokens
+		global.ils.findImbaTokensOfType('style.property.var')
+
+	def getStyleVarReferences
+		global.ils.findImbaTokensOfType('style.value.var')
+
+	def getStyleCustomUnits
+		global.ils.findImbaTokensOfType('style.property.unit.name')
+
 	def getSignatureHelpForType typ, name
 
 		typ = type(typ)
@@ -832,9 +993,6 @@ export default class ImbaTypeChecker
 				item.prefixDisplayParts[0].text = name
 
 		return res
-		
-		
+
 	get autoImports
 		#autoImports ||= new AutoImportContext(self)
-	
-	

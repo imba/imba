@@ -33,3 +33,13 @@ describe 'For ... in' do
 		let res = for item in [0 ... 2]
 			item
 		eq res, [0,1]
+
+	test 'throw on undefined iterable' do
+		let iterable = null
+
+		try
+			for item in iterable
+				yes
+			ok no
+		catch e
+			ok yes

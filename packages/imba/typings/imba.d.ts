@@ -3,13 +3,204 @@
 /// <reference path="./imba.events.d.ts" />
 /// <reference path="./imba.router.d.ts" />
 /// <reference path="./imba.snippets.d.ts" />
+/// <reference path="./imba.meta.d.ts" />
 
 /// <reference path="./styles.d.ts" />
 /// <reference path="./styles.generated.d.ts" />
 /// <reference path="./styles.modifiers.d.ts" />
 
-declare namespace imba {
 
+interface Node {
+    /**
+     * @custom
+     * @summary Proxy to reference data on elements up the tree
+     */
+    readonly Ψcontext: imba.Context;
+    
+    
+    /**
+     * @custom
+     * @summary Reference to the parentNode even before element has been attached
+     */
+    readonly Ψparent: Element;
+}
+
+interface Element {
+    
+    /**
+     * @idl
+     * @summary Default property for setting the data of an element
+     */
+    data: any;
+    
+    /**
+     * @private
+     */
+    private route__: any;
+    
+    /**
+    * Gives elements a stable identity inside lists
+    * @idl
+    * @deprecated Use key instead
+    */
+    $key: any;
+
+    /**
+    * Gives elements a stable identity inside lists.
+    * Any value (both objects and primitive values) may be used as a key.
+    * @idl
+    */
+    key: any;
+
+    
+    /**
+    * Sets whether `@hotkey` events inside of this element
+    * is enabled or not. If explicitly set to true, only
+    * `@hotkey` events inside this group will be triggered
+    * when this element or a child has focus.
+    * @summary Sets whether `@hotkey` events inside of this element
+    * is enabled or not
+    * @idl
+    */
+    hotkeys: boolean;
+
+    /**
+    * Enable transitions for when element is attached / detached
+    * @see[Transitions](https://imba.io/css/transitions)
+    * @idl
+    */
+    ease: any;
+
+    // itemid: any;
+    // itemprop: any;
+    // itemref: any;
+    // itemscope: any;
+    // itemtype: any;
+    // enterkeyhint: any;
+    // autofocus: any;
+    // autocapitalize: any;
+    // autocomplete: any;
+    // accesskey: any;
+    // inputmode: any;
+    // spellcheck: any;
+    // translate: any;
+    // is: any;
+    
+    /**
+     * @summary Allows for manipulation of element's class content attribute
+     */
+    readonly flags: imba.Flags;
+    
+    /**
+     * Emits event
+     * @param event 
+     * @param params 
+     * @param options 
+     * @custom
+     */
+    emit(event: string, params?: any, options?: any): Event;
+    focus(options?: any): void;
+    blur(): void;
+
+    // [key: string]: any;
+    
+    setAttribute(name: string, value: boolean): void;
+    setAttribute(name: string, value: number): void;
+    
+    addEventListener(event: string, listener: (event: Event) => void, options?: {
+        passive?: boolean;
+        once?: boolean;
+        capture?: boolean;
+    });
+
+    removeEventListener(event: string, listener: (event: Event) => void, options?: {
+        passive?: boolean;
+        once?: boolean;
+        capture?: boolean;
+    });
+
+    log(...arguments: any[]): void;
+}
+
+interface Document {
+    readonly flags: imba.Flags;
+}
+
+interface HTMLMetaElement {
+    property?: string;
+    charset?: string;
+}
+
+interface EventListenerOptions {
+    passive?: boolean;
+    once?: boolean;
+}
+
+interface Storage {
+    setItem(key: string, value: number): void;
+}
+
+interface HTMLStyleElement {
+    /**
+     * The supplied path will be run through the imba bundler
+     */
+    src: ImbaAsset | string;
+}
+
+
+interface SVGSVGElement {
+    /**
+     * Reference to svg asset that will be inlined
+     */
+    src: ImbaAsset | string;
+}
+
+declare class ΤObject {
+    [key: string]: any;
+}
+
+declare class ImbaElement extends imba.Component {
+    
+}
+
+/** Portal to declare window/document event handlers from
+ * inside custom tags.
+ */
+declare class Γglobal extends HTMLElement {
+
+}
+
+declare class Γteleport extends HTMLElement {
+    /** The element (or selector) you want to add listeners and content to */
+    to: string | Element;
+}
+
+declare class Γany extends HTMLElement {
+    [key: string]: any;
+}
+
+interface HTMLElementTagNameMap {
+    "global": Γglobal,
+    "teleport": Γteleport
+}
+
+interface ImbaAsset {
+    body: string;
+    url: string;
+    absPath: string;
+    path: string;
+}
+
+interface Event {
+    detail: any;
+    originalEvent: Event | null;
+}
+
+// interface Object {
+//     [key: string]: any;
+// }
+
+declare namespace imba {
 
     interface Globals {
         /** The global clearInterval() method cancels a timed, repeating action which was previously established by a call to setInterval(). */
@@ -113,217 +304,44 @@ declare namespace imba {
          */
         decr(flag: string): number;
     }
-}
 
-interface Node {
-    /**
-     * @custom
-     * @summary Proxy to reference data on elements up the tree
-     */
-    readonly Ψcontext: imba.Context;
-    
-    
-    /**
-     * @custom
-     * @summary Reference to the parentNode even before element has been attached
-     */
-    readonly Ψparent: Element;
-}
+    interface units {
+        /**
+         * Milliseconds
+         */
+        ms: number;
 
-interface Element {
-    
-    /**
-     * @idl
-     * @summary Default property for setting the data of an element
-     */
-    data: any;
-    
-    /**
-     * @private
-     */
-    private route__: any;
-    
-    /**
-     * @idl
-     * @summary The path/route this element should be enabled for
-     */
-    route: string;
-    
-    /**
-     * @idl
-     * @summary The path/route to go to when clicking this element
-     */
-    routeΞto: string;
-    
-    /**
-     * @summary Reference to the imba router
-     * @custom
-     */
-    readonly router: imba.Router;
-    
-    /**
-    * Gives elements a stable identity inside lists
-    * @idl
-    * @deprecated Use key instead
-    */
-    $key: any;
+        /**
+         * Seconds. Compiles to n * 1000 (milliseconds in one second)
+         */
+         s: number;
 
-    /**
-    * Gives elements a stable identity inside lists.
-    * Any value (both objects and primitive values) may be used as a key.
-    * @idl
-    */
-    key: any;
+        /**
+         * Days. Compiles to n * 60000 (milliseconds in one minute)
+         */
+        minutes: number;
 
-    
-    /**
-    * Sets whether `@hotkey` events inside of this element
-    * is enabled or not. If explicitly set to true, only
-    * `@hotkey` events inside this group will be triggered
-    * when this element or a child has focus.
-    * @summary Sets whether `@hotkey` events inside of this element
-    * is enabled or not
-    * @idl
-    */
-    hotkeys: bool;
+        /**
+         * Hours. Compiles to n * 3600000 (milliseconds in 1 hour)
+         */
+        hours: number;
 
-    /**
-    * Enable transitions for when element is attached / detached
-    * @see[Transitions](https://imba.io/css/transitions)
-    * @idl
-    */
-    ease: any;
+        /**
+         * Days. Compiles to n * 86400000 (milliseconds in one day)
+         */
+        days: number;
 
-    // itemid: any;
-    // itemprop: any;
-    // itemref: any;
-    // itemscope: any;
-    // itemtype: any;
-    // enterkeyhint: any;
-    // autofocus: any;
-    // autocapitalize: any;
-    // autocomplete: any;
-    // accesskey: any;
-    // inputmode: any;
-    // spellcheck: any;
-    // translate: any;
-    // is: any;
-    
-    /**
-     * @summary Allows for manipulation of element's class content attribute
-     */
-    readonly flags: imba.Flags;
-    
-    /**
-     * Emits event
-     * @param event 
-     * @param params 
-     * @param options 
-     * @custom
-     */
-    emit(event: string, params?: any, options?: any): Event;
-    focus(options?: any): void;
-    blur(): void;
+        /**
+         * Frames per second. Compiles to 1000 / n
+         * Ie 60fps => 1000 / 60.
+         */
+        fps: number;
 
-    // [key: string]: any;
-    
-    setAttribute(name: string, value: boolean): void;
-    setAttribute(name: string, value: number): void;
-    
-    addEventListener(event: string, listener: (event: Event) => void, options?: {
-        passive?: boolean;
-        once?: boolean;
-        capture?: boolean;
-    });
-
-    removeEventListener(event: string, listener: (event: Event) => void, options?: {
-        passive?: boolean;
-        once?: boolean;
-        capture?: boolean;
-    });
-
-    log(...arguments: any[]): void;
-}
-
-interface Document {
-    readonly flags: imba.Flags;
-}
-
-interface HTMLMetaElement {
-    property?: string;
-}
-
-interface EventListenerOptions {
-    passive?: boolean;
-    once?: boolean;
-}
-
-interface Storage {
-    setItem(key: string, value: number): void;
-}
-
-interface HTMLStyleElement {
-    /**
-     * The supplied path will be run through the imba bundler
-     */
-    src: ImbaAsset | string;
-}
-
-interface SVGSVGElement {
-    /**
-     * Reference to svg asset that will be inlined
-     */
-    src: ImbaAsset | string;
-}
-
-declare class ΤObject {
-    [key: string]: any;
-}
-
-declare class ImbaElement extends imba.Component {
-    
-}
-
-/** Portal to declare window/document event handlers from
- * inside custom tags.
- */
-declare class Γglobal extends HTMLElement {
-
-}
-
-declare class Γteleport extends HTMLElement {
-    /** The element (or selector) you want to add listeners and content to */
-    to: string | Element;
-}
-
-declare class Γany extends HTMLElement {
-    [key: string]: any;
-}
-
-interface HTMLElementTagNameMap {
-    "global": Γglobal,
-    "teleport": Γteleport
-}
-
-interface ImbaAsset {
-    body: string;
-    url: string;
-    absPath: string;
-    path: string;
-}
-
-interface Event {
-    detail: any;
-    originalEvent: Event | null;
-}
-
-
-
-// interface Object {
-//     [key: string]: any;
-// }
-
-declare namespace imba {
+        /**
+         * Pixels
+         */
+        px: string;
+    }
 
     namespace hotkeys {
         function trigger(combo: string): void;
@@ -342,7 +360,7 @@ declare namespace imba {
     /**
      * @custom
      */
-    declare class Component extends HTMLElement {
+    class Component extends HTMLElement {
         
         /**
          * @summary Called to update the element and their children
@@ -380,9 +398,10 @@ declare namespace imba {
 
         /**
         * @summary Called to update element via scheduler
+        * @abstract
         * @lifecycle
         */
-        tick(): this;
+        tick(): any;
 
         /**
          * @summary Tells whether the component should render
@@ -570,8 +589,12 @@ declare namespace imba {
       function αlazy(): void;
 
     let colors: string[];
+
+    interface ImbaProcess {
+        on(event:string,callback:Function);
+    }
     
-    
+    let process: ImbaProcess;
 
     namespace types {
         let events: GlobalEventHandlersEventMap;
@@ -622,6 +645,20 @@ declare namespace imba {
      * Start an asset-aware server
      */
     function serve(target: any, options?: any): any;
+
+    /*
+    Observability
+    TODO Complete & document types
+    */
+
+    interface Reaction {
+        dispose(): this;
+    }
+
+    function observable<T>(value: T): T;
+
+    function run(callback: any): void;
+    function autorun(callback: any): Reaction;
 }
 
 declare module "data:text/asset;*" {

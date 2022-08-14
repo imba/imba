@@ -147,8 +147,10 @@ export default class AutoImportContext
 					
 					if info.exportKind == 2
 						info.exportName = util.pathToImportName(info.packageName or info.modulePath)
-						
-				map.forEach(checker.sourceFile.path,action)
+
+				let matcher = do yes
+
+				map.search(checker.sourceFile.path,false,matcher,action)
 			else
 				map = map.__cache or map
 

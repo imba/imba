@@ -149,6 +149,7 @@ extend class Event
 		self['αflag']("mod-{name}",global.document.documentElement)
 
 	def @outside
+		# TODO Support selector here?
 		const {handler} = #context
 		if handler and handler.#self
 			return !handler.#self.parentNode.contains(target)
@@ -302,7 +303,9 @@ export class EventHandler
 				let detail = args[1] # is custom event if not?
 				let e = new CustomEvent(name, bubbles: true, detail: detail) # : new Event(name)
 				e.originalEvent = event
-				let customRes = element.dispatchEvent(e)
+				let source = #teleport or element
+				let customRes = source.dispatchEvent(e)
+				# TODO Add reference to this event to the current handler context?
 
 			elif typeof handler == 'string'
 				if handler[0] == '!'

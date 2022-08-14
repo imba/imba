@@ -21,6 +21,39 @@ const ASSETS_URL = '/_ASSET_PREFIX_PATH_/'
 let BUNDLE_COUNTER = 0
 
 
+const LOADER_EXTENSIONS = {
+	".png": "file",
+	".bmp": "file",
+	".apng": "file",
+	".webp": "file",
+	".heif": "file",
+	".avif": "file",
+	".svg": "file",
+	".gif": "file",
+	".jpg": "file",
+	".jpeg": "file",
+	".ico": "file",
+	".woff2": "file",
+	".woff": "file",
+	".eot": "file",
+	".ttf": "file",
+	".otf": "file",
+	".html": "file",
+	".webm": "file",
+	".weba": "file",
+	".avi": "file",
+	".mp3": "file",
+	".mp4": "file",
+	".m4a": "file",
+	".mpeg": "file",
+	".wav": "file",
+	".ogg": "file",
+	".ogv": "file",
+	".oga": "file",
+	".opus": "file"				
+}
+
+
 class Builder
 	# prop previous
 	prop startAt = Date.now!
@@ -237,37 +270,7 @@ export default class Bundle < Component
 			incremental: !!watcher
 			legalComments: 'inline'
 			# charset: 'utf8'
-			loader: Object.assign({
-				".png": "file",
-				".bmp": "file",
-				".apng": "file",
-				".webp": "file",
-				".heif": "file",
-				".avif": "file",
-				".svg": "file",
-				".gif": "file",
-				".jpg": "file",
-				".jpeg": "file",
-				".ico": "file",
-				".woff2": "file",
-				".woff": "file",
-				".eot": "file",
-				".ttf": "file",
-				".otf": "file",
-				".html": "file",
-				".webm": "file",
-				".weba": "file",
-				".avi": "file",
-				".mp3": "file",
-				".mp4": "file",
-				".m4a": "file",
-				".mpeg": "file",
-				".wav": "file",
-				".ogg": "file",
-				".ogv": "file",
-				".oga": "file",
-				".opus": "file"				
-			},o.loader or {})
+			loader: Object.assign({},LOADER_EXTENSIONS,o.loader or {})
 			write: false
 			metafile: true
 			external: externals
@@ -466,7 +469,6 @@ export default class Bundle < Component
 		esb.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
 			
 			# reference to _all_ styles referenced via main entrypoint
-			# FIXME Still using this?
 			if args.path == '*?as=css'
 				return {path: "__styles__", namespace: 'entry'}
 			
@@ -481,10 +483,16 @@ export default class Bundle < Component
 				q = 'as=' + formats.join(',')
 				
 			if q == 'as=file' or q == 'as=text'
-				let res = await esb.resolve(path,{resolveDir: args.resolveDir})
+				let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
 				return {path: res.path, namespace: "raw{formats[0]}"}
 			
 			let cfg = resolveConfigPreset(formats)
+			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
+			
+			unless res
+				let fallback = await esresolver.resolve(path,args.resolveDir)
+				# console.log 'fallback!?',fallback
+				res = {abs: fallback, #rel: fs.relative(fallback)}
 			
 			let res = await esb.resolve(path,{resolveDir: args.resolveDir})
 			let rel = fs.relative(res.path)
@@ -597,7 +605,7 @@ export default class Bundle < Component
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
-			
+		
 		esb.onLoad(filter: /.*/, namespace: 'rawfile') do({path})
 			return {loader: 'file', contents: nfs.readFileSync(path,'utf-8')}
 		

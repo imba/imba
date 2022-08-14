@@ -112,3 +112,9 @@ test '^=?' do
 	eq (a ^=? 2),false
 	eq a,5
 	eq (a ^=? 2),true
+
+test '?' do
+	let test = do(v) v > 0 ? 10 : v < 0 ? -10 : 0
+	eq test(5), 10
+	eq test(-5), -10
+	eq test(0), 0

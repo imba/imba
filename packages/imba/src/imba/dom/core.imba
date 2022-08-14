@@ -633,8 +633,6 @@ export class Element < Node
 		self.textContent = item
 		self
 
-	
-
 	def #beforeReconcile
 		self
 
@@ -643,7 +641,11 @@ export class Element < Node
 
 	def #afterVisit
 		self.render() if self.render
+		##visitContext = null if ##visitContext
 		return
+
+	get #visitContext
+		##visitContext ||= {}
 
 	get flags
 		unless $flags

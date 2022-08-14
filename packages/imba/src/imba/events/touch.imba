@@ -189,17 +189,24 @@ class Touch
 			o.active = no
 			o.x = clientX
 			o.y = clientY
+
+			let resolve
+
 			o.timeout = setTimeout(&,time) do
 				o.active = yes
 				preventDefault!
 				el.flags.incr("_hold_")
+				resolve(yes) if resolve
+				resolve = null
 			
 			once(self,'end') do
 				if o.active
 					el.flags.decr("_hold_")
 				clearTimeout(o.timeout)
-				
-			# Should this also cancel if starting to move before this?
+				resolve(no) if resolve
+				resolve = null
+			
+			return new Promise do resolve = $1
 
 		return o.active
 		

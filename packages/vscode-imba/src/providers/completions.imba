@@ -81,10 +81,11 @@ export default class CompletionsProvider
 				raw.insertText = new SnippetString(raw.insertSnippet)
 			
 			let lbl = raw.label
+
 			if lbl and lbl.name
 				lbl.label = lbl.name
 				lbl.detail = lbl.qualifier
-				lbl.description = lbl.type
+				lbl.description ||= lbl.type
 				
 				if lbl.detail
 					lbl.detail = " " + lbl.detail
@@ -110,6 +111,12 @@ export default class CompletionsProvider
 			if raw.cat == 'tag' or raw.cat == 'tagname'
 				item.kind = CompletionItemKind.Class
 
+			if raw.cat == 'file'
+				item.kind = CompletionItemKind.File
+			
+			if raw.cat == 'folder' or raw.cat == 'dir'
+				item.kind = CompletionItemKind.Folder
+
 			items.push(item)
 		# return items
 		if context.triggerKind == 1	or true
@@ -129,8 +136,10 @@ export default class CompletionsProvider
 			item.documentation ||= new MarkdownString(res.markdown)
 			
 		item.documentation ||= formatDocumentation(res.documentation,item)
-		item.detail ||= res.detail
-		
+		item.detail = res.detail or item.detail
+
+		if item.label.label
+			item.label.description = res.detail
 		
 		item.#resolved = yes
 		
@@ -138,7 +147,5 @@ export default class CompletionsProvider
 		
 		if item.source
 			item.command = {command: 'imba.autoImportAlert', arguments: [#doc,item]}
-		
-		# item.label.parameters = "hello there"
-		# also add code actions if needed(!)
+
 		return item

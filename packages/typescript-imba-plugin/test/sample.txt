@@ -1,15 +1,204 @@
-tag slides-widget < base-widget
-	
-	max = {
-		width: 0
-	}
-	pip = {
-		scale: 0.1
-	}
-	one = 10
-	other = test @set
-		e.value
-	
+export {};String();
 
-	def hello
-		yes
+/*body*/
+import {Local} from './local';
+
+export class ΩSomeClassΩaf {
+__extends__=SomeClass;
+
+	
+	
+	/**
+	@this { SomeClass }
+	*/
+	ext(){
+		
+		this.main;
+		return true;
+	}
+	
+	/**
+	@this { SomeClass }
+	*/
+	extthis(){
+		
+		return this;
+	}
+};
+
+export class ΩLateDefJSΩag {
+__extends__=LateDefJS;
+
+	
+	
+	/**
+	@this { LateDefJS }
+	*/
+	ext(){
+		
+		return true;
+	}
+};
+
+export class ΩImmediateDefJSΩah {
+__extends__=ImmediateDefJS;
+
+	
+	
+	/**
+	@this { ImmediateDefJS }
+	*/
+	ext(){
+		
+		return true;
+	}
+};
+
+export class ΩLocalΩai {
+__extends__=Local;
+
+	
+	
+	/**
+	@this { Local }
+	*/
+	ext(){
+		
+		return true;
+	}
+	
+	/**
+	@this { Local }
+	*/
+	get state(){
+		
+		return globalThis.appState;
+		
+		
+	}
+	/**
+	@this { Local }
+	*/
+	get num(){
+		
+		return true;
+	}
+	
+	/**
+	@this { Local }
+	*/
+	get element(){
+		var $1;
+		
+		$1 = new globalThis.ΓappΞpanel;
+		return $1;
+	}
+};
+
+export class ΩΓelementΩan {
+__extends__=Element;
+
+	
+	
+	/**@type {InstanceType<ΓappΞbutton>}*/ spuce
+	
+	/**
+	@this { Element }
+	@returns { InstanceType<ΓappΞbutton> }
+	*/
+	get space(){
+		
+		return globalThis.something;
+	}
+	
+	/**
+	@this { Element }
+	@returns { InstanceType<ΓappΞbutton> }
+	*/
+	smeth(){
+		
+		return globalThis.something;
+	}
+	
+	/**
+	@this { Element }
+	*/
+	get state(){
+		
+		return globalThis.appState;
+	}
+	
+	/**
+	@this { Element }
+	*/
+	get other(){
+		var $2;
+		
+		$2 = new globalThis.ΓappΞsomething;
+		return $2;
+	}
+};
+
+export class ΩHTMLElementΩal {
+__extends__=HTMLElement;
+
+	
+	/**
+	@this { HTMLElement }
+	*/
+	get state(){
+		
+		this.offsetWidth;
+		this.offsetHeight;
+		this.offsetParent;
+		/** state.two */ 
+		return globalThis.appState;
+	}
+};
+
+export class ΩΓappΞbuttonΩao {
+__extends__=ΓappΞbutton;
+
+	
+	
+	/**
+	@this { ΓappΞbutton }
+	*/
+	ext(){
+		
+		this.offsetWidth;
+		this.ext;
+		this.offsetWidth;
+		return true;
+	}
+};
+
+
+export class ΩΓappΞpanelΩap {
+__extends__=ΓappΞpanel;
+
+	
+	
+	/**
+	@this { ΓappΞpanel }
+	*/
+	ext(){
+		
+		return true;
+	}
+};
+
+export class ΩElementΩam {
+__extends__=Element;
+
+	
+	
+	/**
+	@this { Element }
+	*/
+	ext2(){
+		
+		return this.parentElement;
+	}
+};
+

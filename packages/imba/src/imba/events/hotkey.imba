@@ -58,6 +58,9 @@ export const hotkeys = new class HotKeyManager
 		mousetrap = null
 		hothandler = handle.bind(self)
 
+	def addKeycodes obj
+		Mousetrap.addKeycodes(obj)
+
 	def trigger combo
 		mousetrap..trigger(combo)
 

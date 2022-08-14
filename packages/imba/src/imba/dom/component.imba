@@ -16,14 +16,6 @@ const hydrator = new class
 	def flush
 		let item = null
 
-		if false
-			console.log 'flush hydrate',items,tests
-			for item,i in items
-				let next = items[i + 1]
-				if next
-					unless next.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_PRECEDING
-						console.log "WRONG ORDER!!!",item,next,next.compareDocumentPosition(item)
-
 		while item = items.shift!
 			continue if !item.parentNode or item.hydrated?
 			# Mark as inited to stop connectedCallback from early exit
@@ -72,28 +64,6 @@ const hydrator = new class
 			global.queueMicrotask(flush.bind(self)) if !current
 
 		return
-
-	def run item
-		return if active
-		# look for parents that are still hydrated
-		# only the ssr elements that are not yet awakened
-		active = yes
-		# let all = global.document.getElementsByClassName('__ssr')
-		let all = global.document.querySelectorAll('.__ssr')
-		console.log 'running hydrator',item,all.length,Array.from(all)
-
-		for item in all
-			item.#count ||= 1
-			item.#count++
-			let name = item.nodeName
-			let typ = map[name] ||= global.window.customElements.get(name.toLowerCase!) or HTMLElement
-			console.log 'item type',name,typ,!!CUSTOM_TYPES[name.toLowerCase!]
-			# console.log 'hydrate??',item.constructor
-			continue if !item.connectedCallback or !item.parentNode or item.hydrated?
-			console.log 'hydrate',item # !!item.parentNode,item,item.connectedCallback
-			# item.connectedCallback!
-
-		active = no
 
 export def hydrate
 	hydrator.flush!
@@ -251,6 +221,7 @@ export class Component < HTMLElement
 		
 	def #afterVisit
 		visit()
+		##visitContext = null if ##visitContext
 
 	def #beforeReconcile
 		if __F & $EL_SSR$

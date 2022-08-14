@@ -1,5 +1,98 @@
 # Changelog
 
+## 2.0.0-alpha.214
+
+* Treat routes ending with `/` as exact routes.
+
+    The `<div route='/'>` would previously match any path. You could define exact routes by including a `$` at the end of the route. This lead to a lot
+    of confusion. Now, any route that ends with a `/` will only match the exact path. Use `*` to bypass
+
+    ```imba
+    <div route='/'> # matches / _only_
+    <div route='/*'> # matches any path
+
+    <div route='/items'> # matches /items, /items/1 etc
+    <div route='/items/'> # matches /items only
+    ```
+
+* Only show first matching element if multiple siblings match a route.
+
+    ```imba
+    <div>
+        <div route='/items/new'>
+        <div route='/items/:id'> # if /items/new matched - this will not show
+        <div route='/'> # matches if url is exactly '/'
+        <div route='*'> # matches if none of the above matches
+    ```
+
+## 2.0.0-alpha.213
+
+* Make `@event.emit('...')` on `<global/teleport>` dispath event inside their literal parent (fixes #693) 
+
+## 2.0.0-alpha.210
+
+* Add number units for `minutes`, `hours`, and `days`
+
+* Fixed issue where identical nested selectors were incorrectly optimized away
+
+* Support `silent: true` option for `imba.autorun` to not call imba.commit
+
+* Fixed issue where @autorun methods threw error when element was re-mounted (#684)
+
+## 2.0.0-alpha.209
+
+* Fixed bug with observables not unsubscribing correctly in certain cases
+
+* Expose `imba.reportObserved`, `imba.reportChanged` and `imba.createAtom` (still experimental)
+
+* Add `imba.hotkeys.addKeycodes(...)` (#677)
+
+* Made `@touch.hold(dur)=handler` trigger handler after duration without waiting for additioanl events (#664)
+
+## 2.0.0-alpha.207
+
+* Don't try to implicitly return debugger statement
+
+* Improve compilation of `extend` statements for tooling
+
+## 2.0.0-alpha.206
+
+* Disallow iterating over falsy values using `for in`
+
+* Compile literal bigints correctly
+
+* Minor improvements to type definitions
+
+## 2.0.0-alpha.205
+
+* Support `for await ... of` syntax
+
+* Support tagged templates
+
+    Works like in plain js, but `{}` is still used for interpolation instead of `${}`.
+    
+    ```imba
+        import md from 'tag-markdown'
+        const html = md`## Welcome to {name}`
+    ```
+
+* Add internal `#__patch__(props)` method for class instances to update fields
+
+* Stop shimming top-level await (delegates responsibility to esbuild)
+
+
+## 2.0.0-alpha.204
+
+* Fixed operator precedence for ternary expressions
+
+* Revert automatic `calc` wrapping for css values introduced in alpha 200
+
+    Introduced a lot of bugs and challenges related to `/` being a valid part of css values. `calc` will still be automatically be added around top-level parenthesis in css values, so `width:(100vw - 20px)` will still compile as `calc(100vw - 20px)`, but properties like `grid-column: 1 / 3` will now compile without calc again.
+
+## 2.0.0-alpha.203
+
+* Fixed regression with negated breakpoint modifiers like `display@!600:none`
+
 ## 2.0.0-alpha.202
 
 * Fixed performance regression for tag trees introduced in alpha 191
