@@ -358,7 +358,7 @@ export default class Bundle < Component
 			log.ts "created main bundle"
 			manifest = new Manifest(data: {})
 
-		console.log 'bundling',esoptions,o
+		# console.log 'bundling',esoptions,o
 
 
 	def addEntrypoint src
@@ -483,17 +483,12 @@ export default class Bundle < Component
 				q = 'as=' + formats.join(',')
 				
 			if q == 'as=file' or q == 'as=text'
-				let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
+				let res = await esb.resolve(path,{resolveDir: args.resolveDir})
 				return {path: res.path, namespace: "raw{formats[0]}"}
-			
+
+			# console.log "onResolve",args.path
+
 			let cfg = resolveConfigPreset(formats)
-			let res = fs.resolver.resolve(path: path, resolveDir: args.resolveDir)
-			
-			unless res
-				let fallback = await esresolver.resolve(path,args.resolveDir)
-				# console.log 'fallback!?',fallback
-				res = {abs: fallback, #rel: fs.relative(fallback)}
-			
 			let res = await esb.resolve(path,{resolveDir: args.resolveDir})
 			let rel = fs.relative(res.path)
 			let out = {path: rel + '?' + q, namespace: 'entry'}
@@ -595,6 +590,12 @@ export default class Bundle < Component
 				return res
 			return null
 
+		esb.onLoad(filter: /\.css$/) do(args)
+			let content = nfs.readFileSync(args.path,'utf-8')
+			content += "/*! @path {fs.relative(args.path)} */"
+			return {loader: 'css', contents: content}
+
+
 		esb.onLoad(filter: /.*/, namespace: 'imba-raw') do({path})
 			return {loader: 'text', contents: ""}
 	
@@ -615,7 +616,6 @@ export default class Bundle < Component
 
 		esb.onLoad({ filter: /\.imba$/, namespace: 'styles'}) do({path,namespace})
 			if let res = builder.styles[path]
-				# transform with theme
 				return res
 			else
 				{loader: 'css', contents: ""}
@@ -628,9 +628,12 @@ export default class Bundle < Component
 			let res = await src.compile(imbaoptions,self)
 
 			if res.css
+				let style = theme.transformColors(SourceMapper.strip(res.css or ""),prefix: no)
+				style += "/*! @path styles:{fs.relative(path)} */"
+
 				builder.styles[src.rel] = {
 					loader: 'css'
-					contents: theme.transformColors(SourceMapper.strip(res.css or ""),prefix: no)
+					contents: style
 					resolveDir: src.absdir
 				}
 			
@@ -778,9 +781,9 @@ export default class Bundle < Component
 				asset.path = "{pubdir}/{asset.path}"
 
 		# now replace link to sourcemap as well
-		if asset.type == 'js' and asset.map
-			let replace = /\/\/# sourceMappingURL=[\/\w\.\-\%]+\.map/
-			asset.#contents = asset.#contents.replace(replace,"//# sourceMappingURL={asset.url}.map")
+		if (asset.type == 'js' or asset.type == 'css') and asset.map
+			let replace = /\/([\/\*])# sourceMappingURL=[\/\w\.\-\%]+\.map/
+			asset.#contents = asset.#contents.replace(replace,"/$1# sourceMappingURL={asset.url}.map")
 			
 			# finalize the map inline?
 			asset.map.path = asset.path + '.map'
@@ -838,10 +841,6 @@ export default class Bundle < Component
 
 		let files = result.outputFiles or []
 		let meta = result.metafile
-		# pluck(files) do $1.path.indexOf(esoptions.metafile) >= 0
-		# let meta = JSON.parse(metafile.text)
-
-		# log.debug "paths",Object.keys(meta.inputs),Object.keys(meta.outputs)
 
 		meta = result.meta = {
 			format: o.format
@@ -870,16 +869,27 @@ export default class Bundle < Component
 				console.log 'could not map the file to anything!!',file.path,path,reloutdir,Object.keys(outs),fs.cwd,esoptions.outdir
 
 		let tests = {
-			js: ".__dist__.js"
-			css: ".__dist__.css"
-			map: ".__dist__.js.map"
+			".__dist__.js": "js"
+			".__dist__.css": "css"
+			".__dist__.js.map": "map"
 		}
 
 		for own path,output of outs
+			# console.log "OUT",path,output.entryPoint
+
 			root.builder.outputs.add(output)
 			if outs[path + '.map']
 				output.map = outs[path + '.map']
+
+			if output.entryPoint
+				let input = ins[output.entryPoint]
+				if input
+					output.source = input
+					let kind = path.split('.').pop!
+					if kind == 'js'
+						input.js = output
 		
+		# Add connections between inputs and outputs
 		for own path,input of ins
 			input.#type = input._ = 'input'
 			input.path = path
@@ -889,17 +899,16 @@ export default class Bundle < Component
 			let outname = path.replace(/\.(imba1?|[cm]?jsx?|tsx?|html|css)$/,"")
 			let jsout 
 			
-			for own key,ext of tests
+			for own ext,key of tests
 
 				let name = outname.replace(/\.\.\//g,"_.._/") + ext
 				name = "{reloutdir}/{name}" if reloutdir
-
-				# log.debug "looking for path {name}"
 
 				if outs[name]
 					# Hook into parent inputs here?
 					input[key] = outs[name]
 					outs[name].source = input
+
 					if key == 'js'
 						jsout = outs[name]
 					elif jsout
@@ -908,7 +917,7 @@ export default class Bundle < Component
 		let urlOutputMap = {}
 		let walker = {}
 		let addOutputs = new Set
-		let styleInputs = []
+		let styleInputs = new Set
 
 		for own path,dep of builder.refs
 			let input = ins[path]
@@ -984,61 +993,33 @@ export default class Bundle < Component
 			output.inputs = inputs
 
 			# due to bugs in esbuild we need to reorder the css chunks
-			if output.type == 'css' and !output.#ordered and true
-
-				let origPaths = inputs.map(do $1[0].path )
-				let corrPaths = []
-
-				# console.log 'dealing with output css',output.path,origInputs,inputs,output.#file.text
-
-				if output.source
-					walker.collectCSSInputs(output.source,corrPaths)
-
-
-				let offset = 0
+			# the individual css files will likely be ordered correctly with
+			# latest esbuild, but we still want to extract the chunks
+			if output.type == 'css' and !output.#ordered
+				# let origPaths = inputs.map(do $1[0].path )
+				# let corrPaths = []
+				# if output.source
+				#	walker.collectCSSInputs(output.source,corrPaths)
 				let body = output.#file.text
-				let chunks = []
+				let parts = body.split(/\/\*\! @path (.+?) \*\//g)
+				let found = {}
+				# console.log "SPLIT INTO PARTS",parts.length,inputs
 
-				for [input,bytes],i in inputs
-					let header = "/* {input.path} */\n"
-
-					# check if the order is correct first?
-					if !esoptions.minify and true
-						offset += header.length
-						let idx = body.indexOf(header)
-						if idx >= 0
-							offset = idx + header.length
-					
-					
-
-					# FIXME this was fixed in esbuild - drop this?
-					let chunk = header + body.substr(offset,bytes).replace(/PREFIXhsl/g,'hsl') + '/* chunk:end */'
-					# if input.path.indexOf("codicon.css") > 0
-					# 	console.warn "handling codicon.css",input,bytes
-					# 	console.warn "\nSUBSTR\n{body.substr(offset,bytes)}"
-					# 	console.warn "\nCHUNK\n{chunk}"
-					input.#csschunk = chunk
-					
-					styleInputs.push(input)
-
-					let index = corrPaths.indexOf(input)
-
-					offset += bytes
-					offset += 1 if !esoptions.minify
-					chunks[index] = chunk
+				while parts.length
+					let body = parts.shift! or ''
+					let path = parts.shift!
+					found[path] = body
 				
-				let text = chunks.filter(do $1).join('\n')
-				# console.log 'new text',text.length,body.length
+				# setting the csschunk extracted from output on each
+				# individual input file
+				for [input,bytes] in inputs
+					styleInputs.add(input)
+					input.#csschunk = found[input.path]
+
 				output.#ordered = yes
-
-				output.#text = body
-
 			
 			if output.imports
 				output.imports = output.imports.map do
-					# Workaround for esbuild bug that has been fixed
-					# let chunk = $1.path.indexOf("/chunk.")
-					# $1.path = reloutdir + $1.path.slice(chunk) if chunk >= 0
 					outs[$1.path]
 
 			if let m = path.match(/\.([A-Z\d]{8})\.\w+$/)
@@ -1081,7 +1062,7 @@ export default class Bundle < Component
 				
 				# console.log "rename asset",cleanPath,pathForAsset(cleanPath),pathForAsset(cleanPath,null,'__assets__/[dir]/[name]-[hash]')
 				# what if it is referencing itself?
-				if asset and !origPath.match(/\.js\.map$/)
+				if asset and !origPath.match(/\.(js|css)\.map$/)
 					await walker.resolveAsset(asset)
 					path = asset.url
 				else
@@ -1138,8 +1119,8 @@ export default class Bundle < Component
 						let replaced = meta.html.replace(/ASSET_REF_(\d+)/g) do(m,nr)
 							let url = urls[parseInt(nr)]
 							return url
-						# console.log 'html is',meta,replaced
 						body = replaced
+
 						if hmr?
 							body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 
@@ -1182,7 +1163,7 @@ export default class Bundle < Component
 
 		let newouts = {}
 		
-		for item in styleInputs
+		for item of styleInputs
 			# resolve the paths in sheets first
 			item.#csschunk = await walker.replacePaths(item.#csschunk,{type: 'css'})
 
@@ -1240,13 +1221,13 @@ export default class Bundle < Component
 		let htmlassets = assets.filter do $1.type == 'html'
 		
 		if cssinputs.length or htmlassets.length
-			console.log 'css inputs',cssinputs
 			let body = ""
 			for item in cssinputs
-				body += item.#csschunk + '\n'
-			# console.log 'cssinputs',cssinputs.map(do $1.path),body.length,!!main.source.css,main.path
+				if item.#csschunk
+					body += item.#csschunk + '\n'
 
 			# now write this file as a separate asset?
+
 			let asset = {
 				#type: 'output'
 				_: 'output'
@@ -1255,7 +1236,7 @@ export default class Bundle < Component
 				path: "all.__dist__.css"
 				#contents: body
 			}
-			
+
 			asset.asset = asset
 			# should take hashing parameter from the web/css target instead?
 			finalizeAsset(asset,program.hashing !== false)
