@@ -146,6 +146,7 @@ def run entry, o, extras
 			tmp.setGracefulCleanup!
 			let tmpdir = tmp.dirSync(unsafeCleanup: yes)
 			o.outdir = o.tmpdir = tmpdir.name
+			# fake loader
 
 	let file = o.fs.lookup(path)
 
@@ -173,6 +174,11 @@ def run entry, o, extras
 		if file.ext == '.html'
 			params.stdin.template = 'serve-html.imba'
 			params.format = 'cjs'
+
+	if o.command == 'build' and file.ext == '.html'
+		
+		yes
+
 
 	let bundle = new Bundler(o,params)
 	let out = await bundle.build!
@@ -218,11 +224,18 @@ def common cmd
 		.option("-H, --no-hashing", "Disable hashing")
 		.option("--pubdir <dir>", "Directory to output client-side files - relative to outdir")
 		.option("-P, --no-pubdir", "Build client-side files straight into outdir")
-		.option("--baseurl <url>", "Base url for your generated site","/")
+		.option("--base <url>", "Base url for your generated site",".")
 		.option("--asset-names <pattern>", "Paths for generated assets","__assets__/[dir]/[name]")
 		.option("--html-names <pattern>", "Paths for generated html files","[dir]/[name]")
 		.option("--clean", "Remove files from previous build")
+		.option("--assets-dir <pattern>", "Directory to nest generated assets under","assets")
 		.option("--mode <mode>", "Configuration mode","development")
+		.option("--web","Build as public static page")
+		.option("--lib","Build as library")
+		.option("--ssr","Build server and client separately")
+		# .option("--baseurl <url>", "Base url for your generated site","/")
+		# .option("--lib", "")
+		# .option("--ssr", "")
 
 
 common(cli.command('run [script]', { isDefault: true }).description('Imba'))

@@ -225,6 +225,42 @@ class Server
 	static def wrap server, o = {}
 		new self(server,o)
 
+	def localPathForUrl url
+		let src = url.replace(/\?.*$/,'')
+		urlToLocalPathMap[src] ||= np.resolve(publicPath,'.' + src)
+
+	def headersForAsset path
+		let ext = np.extname(path)
+		let headers = Object.assign({
+			'Content-Type': 'text/plain'
+			'Access-Control-Allow-Origin': '*'
+			'cache-control': 'public'
+		},defaultHeaders[ext.slice(1)] or {})
+
+	def respondToStatic req,res,url
+		let path = localPathForUrl(url)
+		let ext = np.extname(path)
+		
+		let headers = Object.assign({
+			'Content-Type': 'text/plain'
+			'Access-Control-Allow-Origin': '*'
+			'cache-control': 'public'
+		},defaultHeaders[ext.slice(1)] or {})
+
+		nfs.access(path,nfs.constants.R_OK) do(err)
+			if err
+				console.log 'could not find path',path
+				res.writeHead(404,{})
+				return res.end!
+			try
+				let stream = nfs.createReadStream(path)
+				res.writeHead(200, headers)
+				return stream.pipe(res)
+			catch e
+				res.writeHead(503,{})
+				return res.end!
+
+
 	def constructor srv,options
 		servers.add(self)
 		id = Math.random!
@@ -235,6 +271,11 @@ class Server
 		clients = new Set
 		stalledResponses = []
 		assetResponders = {}
+		urlToLocalPathMap = {}
+		publicExistsMap = {}
+		rootDir = try proc.env.IMBA_OUTDIR or global.IMBA_OUTDIR or np.dirname(require.main.filename)
+		publicPath = try options.publicPath or (np.resolve(rootDir,proc.env.IMBA_PUBDIR or global.IMBA_PUBDIR or '.'))
+		console.log 'publicPath is',publicPath,global.IMBA_OUTDIR
 		
 		if proc.env.IMBA_PATH
 			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'dist','hmr.js')
@@ -263,6 +304,9 @@ class Server
 		
 		manifest.on('change') do(changes,m)
 			broadcast('manifest',m.data.#raw)
+
+		let handleDynamic = do(req,res)
+
 		
 		handler = do(req,res)
 			let ishttp2 = req isa Http2ServerRequest
@@ -303,9 +347,11 @@ class Server
 				req.on('close') do clients.delete(res)
 				return true
 			
+
 			# found a hit for the url?
 			if url.indexOf(assetPrefix) == 0 or manifest.urls[url]
 				# let asset = manifest.urls[url]
+				# also need the base-url for sure
 				let responder = assetResponders[url] ||= new AssetResponder(url,self)
 				return responder.respond(req,res)
 
@@ -318,7 +364,23 @@ class Server
 				let scheme = req.connection.encrypted ? 'https' : 'http'
 				base = scheme + '://' + headers.host
 
+
 			# console.log "get headers",base,req.url,headers,req.protocol
+			# should be other tests as well I guess
+			if url.match(/\.[A-Z\d]{8}\./)
+				# console.log 'checking for url',url
+				let path = localPathForUrl(url)
+				let exists = publicExistsMap[path] ??= nfs.existsSync(path)
+				
+				if exists
+					try
+						let headers = headersForAsset(path)
+						let stream = nfs.createReadStream(path)
+						res.writeHead(200, headers)
+						return stream.pipe(res)
+					catch e
+						res.writeHead(503,{})
+						return res.end!
 			
 			# if we've enabled serving static assets
 			if options.static
@@ -340,6 +402,7 @@ class Server
 								res.end(data)
 						return
 			
+			# continue to the real server
 			if dom
 				let loc = new dom.Location(req.url,base)
 				# create a context - not a document?

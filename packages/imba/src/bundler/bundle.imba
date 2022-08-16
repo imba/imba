@@ -9,6 +9,7 @@ import {Manifest} from '../imba/manifest'
 import os from 'os'
 import np from 'path'
 import nfs from 'fs'
+import ncp from '../../vendor/ncp.js'
 import {Module} from 'module'
 
 import FileSystem from './fs'
@@ -80,6 +81,15 @@ export default class Bundle < Component
 
 	get web?
 		!nodeish?
+
+	get build?
+		program.command == 'build'
+
+	get serve?
+		program.command == 'serve'
+
+	get static?
+		!!program.web
 	
 	get webworker?
 		platform == 'webworker' # or platform == 'web'
@@ -92,6 +102,9 @@ export default class Bundle < Component
 
 	get dev?
 		program.mode == 'development'
+
+	get library?
+		main? and !!program.lib
 
 	get hmr?
 		program.hmr == yes
@@ -114,16 +127,22 @@ export default class Bundle < Component
 	
 	get assetNames
 		program.assetNames or 'assets/[dir]/[name]'
+
+	get assetsDir
+		program.assetsDir or 'assets'
 		
 	get htmlNames
 		program.htmlNames or '[dir]/[name]'
 
 	get pubdir
-		program.pubdir == false ? '.' : (program.pubdir or 'public')
+		program.pubdir == false ? '.' : (program.pubdir or (static? ? '.' : 'public'))
+	
+	get srvdir
+		program.srvdir == false ? '.' : (program.srvdir or '.')
 	
 	# optional prefix prepended to all asset url references
 	get baseurl
-		#baseurl ||= ((program.baseurl or '/') + '/').replace(/\/+/g,'/')
+		#baseurl ||= ((program.baseurl or program.base or '/') + '/').replace(/\/+/g,'/')
 
 	get fs
 		program.fs
@@ -253,12 +272,11 @@ export default class Bundle < Component
 			outfile: o.outfile
 			outbase: fs.cwd
 			outdir: fs.cwd
-			outExtension: {
-				".js": ".__dist__.js",
-				".css": ".__dist__.css"
-			}
 			globalName: o.globalName
-			publicPath: o.publicPath or ASSETS_URL
+			# publicPath: o.publicPath or ASSETS_URL
+			assetNames: "{assetsDir}/[name].[hash]"
+			chunkNames: "{assetsDir}/[name].[hash]"
+			entryNames: "{assetsDir}/[name].[hash]"
 			banner: {
 				js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')
 			}
@@ -281,6 +299,17 @@ export default class Bundle < Component
 			treeShaking: o.treeShaking
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.svg']
 		}
+
+		if main? and !web?
+			esoptions.entryNames = "[dir]/[name]"
+			yes
+			esoptions.banner.js += "\nglobalThis.IMBA_OUTDIR=__dirname;globalThis.IMBA_PUBDIR='{pubdir}';"
+		
+
+		# store the server-files in a slightly different way
+		# assetNames: '[ext]/[name]-[hash]'
+		# chunkNames: '[ext]/[name]-[hash]'
+		# entryNames: '[ext]/[name]-[hash]'
 
 		if o.esbuild
 			extendObject(esoptions,o.esbuild,'esbuild')			
@@ -411,6 +440,7 @@ export default class Bundle < Component
 		let pathMetadata = {}
 
 		let toAssetJS = do(object)
+			object.x = 10
 			let json = JSON.stringify(object)
 			let js = """
 			import \{asset\} from 'imba';
@@ -429,6 +459,7 @@ export default class Bundle < Component
 		# importing metadata about the images and more
 		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?as=img)$/) do(args)
 			return unless isImba(args.importer) and args.namespace == 'file'
+			console.log 'resolve as image?!',args
 			
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
@@ -436,10 +467,17 @@ export default class Bundle < Component
 			let path = args.path.split('?')[0]
 			let ext = np.extname(path).slice(1)
 			let res = await esb.resolve(path,{resolveDir: args.resolveDir})
-			let out = {path: fs.relative(res.path) or res.path, namespace: 'img'}
-			return out
 
+			let out = {
+				path: fs.relative(res.path) or res.path,
+				namespace: 'img'
+			}
+			return out
 		
+		# esb.onLoad(filter: /\.svg$/) do(args)
+		# 	console.log 'onLoad svg',args
+		#	# if args.suffix == '?url'
+				
 		esb.onLoad(namespace: 'img', filter: /.*/) do({path})
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
@@ -447,20 +485,34 @@ export default class Bundle < Component
 
 		# resolve html file
 		esb.onResolve(filter: /\.html$/) do(args)
-			if isImba(args.importer) and args.namespace == 'file'
+			if isImba(args.importer) and args.namespace == 'file' and !args.suffix
+				console.log 'resovle html',args
 				let cfg = resolveConfigPreset(['html'])
 				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
 				let path = fs.relative(res.path)
 				let out = {path: path, namespace: 'entry'}
 				pathMetadata[out.path] = {path: path, config: cfg}
 				return out
+			return
 
 		esb.onLoad(namespace: 'html', filter: /.*/) do({path})
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+		
+		esb.onLoad(filter: /.*/, namespace: 'file') do({path,suffix})
+			if suffix
+				let out = nfs.readFileSync(path)
+					
+				if suffix == '?raw'
+					return {loader: 'text', contents: out}
+				if suffix == '?copy'
+					return {loader: 'copy', contents: out}
+				if suffix == '?url'
+					return {loader: 'file', contents: out}
 
-		esb.onLoad(filter: /\.html$/, namespace: 'file') do({path})
+		# 
+		esb.onLoad(filter: /\.html$/, namespace: 'file') do({path,suffix})
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			builder.meta[file.rel] = out
@@ -516,11 +568,12 @@ export default class Bundle < Component
 			if cfg.splitting
 				let js = """
 				import \{asset\} from 'imba';
-				export default asset(\{input: '{id}'\})
+				export default asset(\{input: '{id}',a:1\})
 				"""
 				let bundle = cfg.#bundler ||= new Bundle(root,Object.create(cfg))
 				bundle.addEntrypoint(meta.path)
 				builder.refs[id] = bundle
+
 				if o.format == 'html'
 					return {loader: 'text', contents: id}
 
@@ -757,9 +810,9 @@ export default class Bundle < Component
 		# now replace dist with hash or not
 		path = path.replace('.__dist__.','.')
 		# console.log path,sub
-		path = pathForAsset(path,asset,assetNames,shouldHash)
+		let newpath = pathForAsset(path,asset,assetNames,shouldHash)
 		
-		# console.log 'finalize asset',path,shouldHash,asset.hash
+		console.log 'finalize asset',shouldHash,asset.hash,asset.originalPath,newpath
 
 		if sub != '.'
 			asset.ttl = 31536000
@@ -767,24 +820,25 @@ export default class Bundle < Component
 		if asset.url
 			# only if this is a public facing asset?
 			asset.url = asset.url.replace('.__dist__.',sub)
-			if sub == '.' and asset.hash and asset.type != 'map'
-				yes
 
 		asset.path = asset.path.replace('.__dist__.',sub)
 		
 		let url = baseurl + path
 		
-		if asset.public
-			asset.path = path
+		if asset.public or asset.type == 'css'
+			# asset.path = path
+			asset.public = yes
 			asset.url = url
+			
 			if pubdir != '.'
 				asset.path = "{pubdir}/{asset.path}"
+		else
+			asset.path = "{srvdir}/{asset.path}"
 
 		# now replace link to sourcemap as well
 		if (asset.type == 'js' or asset.type == 'css') and asset.map
 			let replace = /\/([\/\*])# sourceMappingURL=[\/\w\.\-\%]+\.map/
-			asset.#contents = asset.#contents.replace(replace,"/$1# sourceMappingURL={asset.url}.map")
-			
+			# asset.#contents = asset.#contents.replace(replace,"/$1# sourceMappingURL={asset.url}.map")
 			# finalize the map inline?
 			asset.map.path = asset.path + '.map'
 			asset.map.url = asset.url + '.map'
@@ -874,8 +928,10 @@ export default class Bundle < Component
 			".__dist__.js.map": "map"
 		}
 
+		# console.log 'done here',Object.keys(ins),Object.keys(outs)
+
 		for own path,output of outs
-			# console.log "OUT",path,output.entryPoint
+			console.log "OUT",path,output.entryPoint
 
 			root.builder.outputs.add(output)
 			if outs[path + '.map']
@@ -967,9 +1023,12 @@ export default class Bundle < Component
 
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js
+				console.log "FOUND OUTPUT HTML!?",path,output.source.path,output.entryPoint
 				urlOutputMap[path] = output
 				output.public = yes
-				output.path = path = path.replace('.js','.html')
+				# output.path = path = path.replace('.js','.html')
+				output.path = path = output.source.path
+				output.path = path = "{pubdir}/{output.path}"
 
 			elif webish? or output.type == 'css' or path.match(FontRegex) or path.match(ImageRegex)
 				urlOutputMap[path] = output
@@ -977,6 +1036,7 @@ export default class Bundle < Component
 				output.url = "{baseurl}{path}"
 
 			output.type = (np.extname(path) or '').slice(1)
+			console.log "output type",output.type,output.path
 
 			let inputs = []
 			let dependencies = new Set
@@ -989,21 +1049,15 @@ export default class Bundle < Component
 			
 			output.dependencies = Array.from(dependencies)
 
-
 			output.inputs = inputs
 
 			# due to bugs in esbuild we need to reorder the css chunks
 			# the individual css files will likely be ordered correctly with
 			# latest esbuild, but we still want to extract the chunks
 			if output.type == 'css' and !output.#ordered
-				# let origPaths = inputs.map(do $1[0].path )
-				# let corrPaths = []
-				# if output.source
-				#	walker.collectCSSInputs(output.source,corrPaths)
 				let body = output.#file.text
 				let parts = body.split(/\/\*\! @path (.+?) \*\//g)
 				let found = {}
-				# console.log "SPLIT INTO PARTS",parts.length,inputs
 
 				while parts.length
 					let body = parts.shift! or ''
@@ -1022,6 +1076,7 @@ export default class Bundle < Component
 				output.imports = output.imports.map do
 					outs[$1.path]
 
+			# no longer needed / relevant?
 			if let m = path.match(/\.([A-Z\d]{8})\.\w+$/)
 				output.hash = m[1]
 			elif m = path.match(/\-([A-Z\d]{8})\.(\w{2,4})$/)
@@ -1042,7 +1097,6 @@ export default class Bundle < Component
 			let delim
 			let breaks = {"'": 1, '"':1, '(':1, ')':1}
 			let path
-			let useRelativePaths = no
 
 			while true
 				start = body.indexOf(ASSETS_URL,end)
@@ -1067,12 +1121,6 @@ export default class Bundle < Component
 					path = asset.url
 				else
 					path = baseurl + cleanPath # .replace(ASSETS_URL,baseurl)	
-					# console.log 'asset not found',origPath,cleanPath,path,Object.keys(urlOutputMap)
-				
-				if useRelativePaths
-					let rel = np.relative(np.dirname(output.url),path)
-					rel = './' + rel unless rel.match(/^\.\.?\//)
-					path = rel
 
 				if path != origPath
 					# TODO adjust whitespace to make path same length
@@ -1184,6 +1232,15 @@ export default class Bundle < Component
 		# log.debug "transformed",Date.now! - t
 		return result
 
+	def copyPublicFiles
+		if build?
+			let from = fs.resolve('public')
+			let to = #outfs.resolve(pubdir)
+			console.log 'copy from',from,to
+			if nfs.existsSync(from)
+				new Promise do(resolve) ncp(from,to,{},resolve)
+
+	# Called at the top bundle after all nested entrypoints++ has been transformed
 	def write result
 		# after write we can wipe the buildcache
 		#outfs ||= new FileSystem(program.outdir,program)
@@ -1211,7 +1268,10 @@ export default class Bundle < Component
 			main: null
 			assets: null
 			css: null
+			pubdir: pubdir
 		}
+
+		console.log 'setting manifest',manifest
 		# console.log 'write',entryPoints,ins
 		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]].js
 		let assets  = manifest.assets = Object.values(outs)
@@ -1227,13 +1287,13 @@ export default class Bundle < Component
 					body += item.#csschunk + '\n'
 
 			# now write this file as a separate asset?
-
+			let hash = createHash(body)
 			let asset = {
 				#type: 'output'
 				_: 'output'
 				type: 'css'
 				public: yes
-				path: "all.__dist__.css"
+				path: "{assetsDir or '.'}/all.{hash}.css"
 				#contents: body
 			}
 
@@ -1247,6 +1307,7 @@ export default class Bundle < Component
 			
 			for html in assets when html.type == 'html'
 				# console.log "replace style reference {asset.url} {html.type}"
+				console.log "replace css all",asset.url,html.path
 				html.#contents = replaceAll(html.#contents,"href='__styles__'","href='{asset.url}'")
 				html.hash = createHash(html.#contents)
 			# if main.source.css
@@ -1273,9 +1334,11 @@ export default class Bundle < Component
 
 		# console.log "outdir!!",manifest.outdir,manifest.srcdir,mfile.abs,manifest.path,main.path
 
+
+
 		if true
 			# set output paths of html files - should not happen after resolving?
-			let htmlFiles = assets.filter do $1.type == 'html'
+			let htmlFiles = assets.filter do $1.type == 'html' and $1.entryPoint
 			let htmlPaths = htmlFiles.map do $1.path.split('/')
 
 			while htmlPaths[0] and htmlPaths[0].length > 1
@@ -1288,7 +1351,9 @@ export default class Bundle < Component
 			
 			for item,i in htmlFiles
 				item.path = htmlPaths[i].join('/')
-				
+			
+				console.log "changed html paths",htmlPaths
+
 				if pubdir != '.'
 					item.path = "{pubdir}/{item.path}"
 
@@ -1298,6 +1363,8 @@ export default class Bundle < Component
 		manifest.hash = createHash(assets.map(do $1.hash or $1.path).sort!.join('-'))
 		
 		log.debug("manifest hash: {manifest.hash}")
+
+		# if clean and first run only?
 
 		if program.clean
 			let rm = new Set
@@ -1340,23 +1407,24 @@ export default class Bundle < Component
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in assets
-				
 				let path = asset.path
 				let file = #outfs.lookup(path)
+				if build? and static? and !asset.public
+					continue
 				await file.write(asset.#contents,asset.hash)
 			
 			let json = serializeData(manifest)
-	
-			if mfile
-				await mfile.writeSync json, manifest.hash
-			
-			if nodeish?
-				await loader.write(loaderData)
 
+			unless build? and static?
+				if mfile
+					await mfile.writeSync json, manifest.hash
+				
+				if nodeish?
+					await loader.write(loaderData)
+
+			await copyPublicFiles!
 			self.manifest.path = mfile.abs
 			self.manifest.update(json)
-
-			
 
 
 

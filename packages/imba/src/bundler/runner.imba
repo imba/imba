@@ -56,6 +56,9 @@ class Instance
 			IMBA_RESTARTS: restarts
 			IMBA_SERVE: true
 			IMBA_PATH: o.imbaPath
+			IMBA_OUTDIR: o.outdir
+			IMBA_TMPDIR: o.tmpdir
+			IMBA_PUBDIR: manifest.pubdir or o.pubdir or '.'
 			IMBA_MANIFEST_PATH: manifest.path
 			IMBA_HMR: o.hmr ? true : undefined
 			IMBA_WORKER_NR: options.number

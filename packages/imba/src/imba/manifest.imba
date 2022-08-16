@@ -38,6 +38,7 @@ export class Manifest < EventEmitter
 	
 	get srcdir do np.resolve(np.dirname(path),data.srcdir)
 	get outdir do np.resolve(np.dirname(path),data.outdir)
+	get pubdir do data.pubdir
 	get changes do data.changes or {}
 	get inputs do data.inputs
 	get outputs do data.outputs
