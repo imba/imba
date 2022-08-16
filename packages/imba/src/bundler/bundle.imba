@@ -142,7 +142,7 @@ export default class Bundle < Component
 	
 	# optional prefix prepended to all asset url references
 	get baseurl
-		#baseurl ||= ((program.baseurl or program.base or '/') + '/').replace(/\/+/g,'/')
+		#baseurl ||= ((program.baseurl or program.base or '/base') + '/').replace(/\/+/g,'/')
 
 	get fs
 		program.fs
@@ -273,7 +273,7 @@ export default class Bundle < Component
 			outbase: fs.cwd
 			outdir: fs.cwd
 			globalName: o.globalName
-			# publicPath: o.publicPath or ASSETS_URL
+			publicPath: baseurl or '/'
 			assetNames: "{assetsDir}/[name].[hash]"
 			chunkNames: "{assetsDir}/[name].[hash]"
 			entryNames: "{assetsDir}/[name].[hash]"
@@ -300,20 +300,24 @@ export default class Bundle < Component
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.svg']
 		}
 
+		# esoptions.outdir = o.outdir
+
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
-			yes
 			esoptions.banner.js += "\nglobalThis.IMBA_OUTDIR=__dirname;globalThis.IMBA_PUBDIR='{pubdir}';"
-		
-
+			esoptions.publicPath = baseurl or '/'
 		# store the server-files in a slightly different way
 		# assetNames: '[ext]/[name]-[hash]'
 		# chunkNames: '[ext]/[name]-[hash]'
 		# entryNames: '[ext]/[name]-[hash]'
 
+		
+
 		if o.esbuild
 			extendObject(esoptions,o.esbuild,'esbuild')			
 			# console.log 'esbuild config extended?!',o.esbuild
+
+		console.log "PUBPATH", esoptions.publicPath
 
 		imbaoptions = {
 			platform: o.platform
@@ -428,7 +432,10 @@ export default class Bundle < Component
 				Object.assign(base,item)
 		
 		return cacher[key] = base # Object.create(base)
-		
+
+	def resolveEntrypoint path
+		let cfg = resolveConfigPreset(['iife'])
+		yes
 
 	def plugin esb
 		let externs = esoptions.external or []
@@ -510,6 +517,25 @@ export default class Bundle < Component
 					return {loader: 'copy', contents: out}
 				if suffix == '?url'
 					return {loader: 'file', contents: out}
+
+				# now for a pack
+				if suffix == '?iife'
+					
+					let id = path + suffix
+					
+					# should self-contain potential css etc, no?
+					let cfg = resolveConfigPreset(['iife'])
+					# console.log 'iife!!',id,cfg
+					let dep = root.#bundles[id] ||= new Bundle(root,Object.assign({entryPoints: [path]},cfg))
+					let res = await dep.rebuild!
+					let file = try res.outputFiles[0]
+					console.log 'returned from iife',res.metafile,file
+					if file and file.#output..url
+						return {loader: 'text', contents: file.#output..url}
+
+					return {loader: 'file', contents: file}
+
+					return {loader: 'text', contents: out}
 
 		# 
 		esb.onLoad(filter: /\.html$/, namespace: 'file') do({path,suffix})
@@ -594,6 +620,10 @@ export default class Bundle < Component
 			return {loader: 'js', contents: toAssetJS(input: id), resolveDir: file.absdir }
 
 		esb.onResolve(filter: /^\//) do(args)
+			console.log 'onResolve base',args
+			if args.kind == 'entry-point'
+				return
+
 			return if args.path.indexOf('?') > 0
 			return {path: args.path, external: yes}
 
@@ -1172,7 +1202,7 @@ export default class Bundle < Component
 						if hmr?
 							body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 
-			elif webish?
+			elif webish? or node?
 				let mfname = "_$MF$_"
 				for item in output.dependencies when item.asset
 					let asset = await walker.resolveAsset(item.asset)

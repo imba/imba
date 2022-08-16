@@ -224,7 +224,7 @@ def common cmd
 		.option("-H, --no-hashing", "Disable hashing")
 		.option("--pubdir <dir>", "Directory to output client-side files - relative to outdir")
 		.option("-P, --no-pubdir", "Build client-side files straight into outdir")
-		.option("--base <url>", "Base url for your generated site",".")
+		.option("--base <url>", "Base url for your generated site","/")
 		.option("--asset-names <pattern>", "Paths for generated assets","__assets__/[dir]/[name]")
 		.option("--html-names <pattern>", "Paths for generated html files","[dir]/[name]")
 		.option("--clean", "Remove files from previous build")
