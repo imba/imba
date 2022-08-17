@@ -119,8 +119,8 @@ export def parseHTML raw
 			elif src and raw.match(/^\.\.?\//)
 				let raw = src.raw
 				# if we link to a json file - load it as a url?
-				if raw.match(/\.json$/)
-					raw = raw += '?url'
+				# if raw.match(/\.json$/)
+				#	raw = raw += '?url'
 				item = {path: raw, tagType: 'link'}
 
 		elif el.value == 'style' and src

@@ -349,6 +349,8 @@ export class HTMLFile < FileNode
 			let code = []
 			let refs = []
 
+			code.push 'import {html} from "imba/src/imba/assets.imba"'
+
 			for item,i in parsed.imports
 				let path = item.path
 				let kind = ""
@@ -363,7 +365,7 @@ export class HTMLFile < FileNode
 
 				code.push "import ref{i} from '{path}';"
 				refs.push("ref{i}")
-				code.push 'import {html} from "imba/src/imba/assets.imba"'
+				
 
 			code.push "export const URLS = [{refs.join(',')}];"
 			# code.push "export const HTML = " + JSON.stringify(parsed.contents) + ";"

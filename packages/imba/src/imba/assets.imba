@@ -16,7 +16,12 @@ class HtmlAsset
 		refs = refs
 
 	get body
-		let res = text.replace(/ASSET_REF_(\d+)/g) do(m,nr) refs[nr]
+		let res = text.replace(/ASSET_REF_(\d+)/g) do(m,nr)
+			let ref = refs[nr]
+			if let asset = global._MF_..[ref]
+				return asset.url
+			return ref
+
 		if true
 			res = injectStringBefore(res,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 		return res

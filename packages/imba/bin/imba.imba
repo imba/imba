@@ -137,6 +137,8 @@ def run entry, o, extras
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 
+	# TODO support multiple entrypoints - especially for html
+
 	extendConfig(prog.config.options,overrides)
 
 	if !o.outdir
@@ -160,7 +162,7 @@ def run entry, o, extras
 	unless o.command == 'build'
 		o.port ||= await getport(port: getport.makeRange(3000, 3100))
 	
-	if o.command == 'serve' or params.platform != 'node'
+	if o.command == 'serve' # or params.platform != 'node'
 		let wrapper = resolvePresets(prog.config,{},'node')
 		params = wrapper
 		params.stdin = {

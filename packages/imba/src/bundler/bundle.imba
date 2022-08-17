@@ -21,6 +21,16 @@ import Watcher from './watcher'
 const ASSETS_URL = '/_ASSET_PREFIX_PATH_/'
 let BUNDLE_COUNTER = 0
 
+const LOADER_SUFFIXES = {
+	raw: 'text'
+	text: 'text'
+	copy: 'copy'
+	dataurl: 'dataurl'
+	binary: 'binary'
+	file: 'file'
+	url: 'file'
+	base64: 'base64'
+}
 
 const LOADER_EXTENSIONS = {
 	".png": "file",
@@ -92,7 +102,7 @@ export default class Bundle < Component
 		program.command == 'serve'
 
 	get static?
-		!!program.web
+		!!program.web or root.o.format == 'html'
 	
 	get webworker?
 		platform == 'webworker' # or platform == 'web'
@@ -306,26 +316,17 @@ export default class Bundle < Component
 		# esoptions.outdir = o.outdir
 
 		esoptions.entryPoints..sort!
-		console.log "ENTRY POINTS",esoptions.entryPoints
 
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
 			esoptions.banner.js += "\nglobalThis.IMBA_OUTDIR=__dirname;globalThis.IMBA_PUBDIR='{pubdir}';"
 			esoptions.publicPath = baseurl or '/'
-		# store the server-files in a slightly different way
-		# assetNames: '[ext]/[name]-[hash]'
-		# chunkNames: '[ext]/[name]-[hash]'
-		# entryNames: '[ext]/[name]-[hash]'
 
-
-
-		
+		if web? and o.ref
+			esoptions.entryNames = "{assetsDir}/{o.ref}/[dir]/[name].[hash]"
 
 		if o.esbuild
 			extendObject(esoptions,o.esbuild,'esbuild')			
-			# console.log 'esbuild config extended?!',o.esbuild
-
-		console.log "PUBPATH", esoptions.publicPath
 
 		imbaoptions = {
 			platform: o.platform
@@ -353,6 +354,9 @@ export default class Bundle < Component
 			esoptions.format = 'esm'
 			esoptions.minify = false
 			esoptions.sourcemap = false
+			esoptions.entryNames = '[dir]/[name]'
+			esoptions.loader[".json"] = 'file'
+			# throw "Hello"
 
 		let addExtensions = {
 			webworker: ['.webworker.imba','.worker.imba']
@@ -398,9 +402,6 @@ export default class Bundle < Component
 			# not if main entrypoint is web?
 			log.ts "created main bundle"
 			manifest = new Manifest(data: {})
-
-		# console.log 'bundling',esoptions,o
-
 
 	def addEntrypoint src
 		entryPoints.push(src) unless entryPoints.indexOf(src)>= 0
@@ -462,19 +463,11 @@ export default class Bundle < Component
 		let pathMetadata = {}
 
 		let toAssetJS = do(object)
-			# object.x = 10
 			let json = JSON.stringify(object)
-			let js = """
+			return """
 				import \{asset\} from 'imba/src/imba/assets.imba';
 				export default asset({json})
 				"""
-			return js
-
-			# return "export default {json}"
-			# let js = """
-			# // import \{asset\} from 'imba/asset';
-			# export default Asset({json})
-			# """
 
 		if o.resolve
 			let regex = new RegExp("^({Object.keys(o.resolve).join('|')})$")
@@ -537,14 +530,25 @@ export default class Bundle < Component
 			# TODO - support html file as entrypoint?
 
 			console.log "resolving html",args,web?,webish?,o.format,main?
-			if args.kind == 'import-statement'
+			if args.kind == 'entry-point'
 				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
-				# if res
-				#	let file = fs.relative(res.path)
+				return {
+					path: res.path
+					namespace: 'file'
+					pluginData: {
+						path: args.path
+						kind: args.kind
+					}
+				}
+			if args.kind == 'import-statement' or args.kind == 'entry-point'
+				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
 				console.log 'resolved html',res
 				return {
 					path: fs.relative(res.path)
 					namespace: 'js'
+					pluginData: {
+						kind: args.kind
+					}
 				}
 			return
 
@@ -586,6 +590,9 @@ export default class Bundle < Component
 
 			let [path,q] = args.path.split('?')
 			let formats = q.replace(/^(as=)?/,'').split(',')
+
+			if q.match(/^(url|dataurl|binary|text|base64|file|copy)/)
+				return
 
 			
 			let resolved = await esb.resolve(path,{resolveDir: args.resolveDir})
@@ -669,6 +676,20 @@ export default class Bundle < Component
 				return res
 			return null
 
+		# there are other rules
+		esb.onResolve(filter: /\.json$/) do(args)
+			
+			if args.importer..match(/\.html$/)
+				console.log 'resolve json',args
+				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+				return {path: res.path, suffix: "?url"}
+
+			if args.pluginData..resolver
+				console.log "re-resolve for html!?",args
+				throw 123
+			return
+
+
 
 		###
 		img namespace returns a js file for the image which includes image size
@@ -688,12 +709,13 @@ export default class Bundle < Component
 		esb.onLoad(namespace: 'html', filter: /.*/) do({path})
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
-			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+			return {loader: 'js', contents: out.js, resolveDir: file.absdir, pluginData: {resolver: path}}
 
 		esb.onLoad(namespace: 'js', filter: /.*/) do({path})
 			let file = fs.lookup(path)
 			console.log 'compile html file',path
 			let out = await file.compile({format: 'esm'},self)
+			builder.meta[file.rel] = out
 			console.log 'compile html file',path,out.js
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir, pluginData: {
 				importerFile: file.rel
@@ -717,25 +739,19 @@ export default class Bundle < Component
 		###
 		esb.onLoad(namespace: 'file', filter: /.*/) do({path,suffix})
 			if suffix
-				let out = nfs.readFileSync(path)
-					
-				if suffix == '?raw'
-					return {loader: 'text', contents: out}
-				if suffix == '?copy'
-					return {loader: 'copy', contents: out}
-				if suffix == '?url'
-					return {loader: 'file', contents: out}
-				if suffix == '?binary'
-					return {loader: 'binary', contents: out}
-
+				let fmt = suffix.slice(1)
+				let loader = LOADER_SUFFIXES[fmt]
+				if loader
+					let out = nfs.readFileSync(path)
+					return {loader: loader, contents: out}
 
 		esb.onLoad(namespace: 'entry', filter:/.*/) do({path,pluginData})
 
 			if path == '__styles__'
 				if o.format == 'html'
-					return {loader: 'text', contents: '__styles__'}
+					return {loader: 'text', contents: '*?css'}
 
-				return {loader: 'js', contents: toAssetJS(input: '__styles__'), resolveDir: fs.cwd }
+				return {loader: 'js', contents: toAssetJS('*?css'), resolveDir: fs.cwd }
 
 			# skip entrypoints if compiling for css only
 			if o.format == 'css'
@@ -777,24 +793,24 @@ export default class Bundle < Component
 				let building = bundler.rebuild! # we can asynchronously start the rebundler
 
 				if web?
-					console.log "rebuilt immediately - and maybe link directly to the asset?!"
+					log.debug "rebuilt immediately - and maybe link directly to the asset?!"
 					let res = await building
 					try
 						let file = try res.outputFiles[0]
 						let rootref = root.builder.entries[id]
-						console.log 'returned from iife',rootref
-						if file and file.#output..url
-							return {loader: 'text', contents: "tata" + file.#output..url}
+						log.debug 'returned from iife',rootref
+						if file and rootref
+							return {loader: 'text', contents: rootref.url}
 						
 
 			
 			if o.format == 'html'
 				return {loader: 'text', contents: id}
+
 			console.log "load asset!!"
 			return {loader: 'js', contents: toAssetJS(id), resolveDir: file.absdir }
 			
 		esb.onLoad(filter: /\.css$/) do(args)
-			# no suffixes?
 			let content = nfs.readFileSync(args.path,'utf-8')
 			content += "/*! @path {fs.relative(args.path)} */"
 			return {loader: 'css', contents: content}
@@ -807,15 +823,10 @@ export default class Bundle < Component
 		# a shared catch-all loader for all urls ending up in the asset namespce
 		# where the paths may have additional details about
 		esb.onLoad(filter: /.*/, namespace: 'asset') do({path})
+			throw "not supported?"
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
-		
-		esb.onLoad(filter: /.*/, namespace: 'rawfile') do({path})
-			return {loader: 'file', contents: nfs.readFileSync(path,'utf-8')}
-		
-		esb.onLoad(filter: /.*/, namespace: 'rawtext') do({path})
-			return {loader: 'text', contents: nfs.readFileSync(path,'utf-8')}
 		
 
 		esb.onLoad({ filter: /\.imba$/, namespace: 'styles'}) do({path,namespace})
@@ -842,6 +853,7 @@ export default class Bundle < Component
 				}
 			
 			let incStyles = res.css or o.format == 'css'
+			log.info "has css?!?",src.rel,incStyles
 
 			let cached = res[self] ||= {
 				loader: 'js',
@@ -951,12 +963,20 @@ export default class Bundle < Component
 		asset.#finalized = yes
 
 		asset.hash ||= createHash(asset.#contents)
-
+	
 		let path = asset.originalPath = asset.path
 		console.log 'finalize asset',asset.originalPath
 
+		if asset.type == 'html'
+			# console.log asset
+			yes
+			# throw "FINALIZE"
+
 		let url = baseurl + path # hmm?
 		
+		if asset.type == 'css' and nodeish?
+			asset.virtual ??= yes
+
 		if asset.public or asset.type == 'css'
 			asset.public = yes
 			asset.url = url
@@ -965,6 +985,8 @@ export default class Bundle < Component
 				asset.path = "{pubdir}/{asset.path}"
 		else
 			asset.path = "{srvdir}/{asset.path}"
+
+		
 
 		# now replace link to sourcemap as well
 		if (asset.type == 'js' or asset.type == 'css') and asset.map
@@ -977,6 +999,11 @@ export default class Bundle < Component
 		return asset
 	
 	def collectStyleInputs(input, deep, matched = [], visited = [])
+		if input isa Array
+			for member in input
+				collectStyleInputs(member,deep,matched,visited)
+			return matched
+			
 		if visited.indexOf(input) >= 0
 			return matched
 
@@ -995,6 +1022,32 @@ export default class Bundle < Component
 			collectStyleInputs(input.asset.source,deep,matched,visited)
 
 		return matched
+
+	def transformCompiledHTML js,meta
+		let mapping = {}
+		let entryToUrlMap = {}
+		let entries = root.builder.entries
+		console.log 'transform html',js
+		# need to wait until the paths are done, no??
+		js.replace(/(\w+_default\d*) = \"(.*)\"/g) do(m,name,path)
+			# console.log 'get entry?!?',path,entries[path]
+			if let entry = entries[path]
+				return mapping[name] = entry.url or entry.path # to url
+			mapping[name] = entryToUrlMap[path] or path
+
+		let urls = js.match(/URLS = \[(.*)\]/)[1].split(/\,\s*/g).map do
+			mapping[$1]
+		
+		if meta and meta.html
+			let replaced = meta.html.replace(/ASSET_REF_(\d+)/g) do(m,nr)
+				let url = urls[parseInt(nr)]
+				return url
+			# 
+			return replaced
+		return js
+
+		#	if hmr?
+		#		body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 
 	###
 	Go through the generated files - create hashes for the file-contents and rewrite
@@ -1063,11 +1116,7 @@ export default class Bundle < Component
 				console.log 'could not map the file to anything!!',file.path,path,reloutdir,Object.keys(outs),fs.cwd,esoptions.outdir
 
 		# console.log 'done here',Object.keys(ins),Object.keys(outs)
-		for own path,output of outs
-			console.log "OUT",path,output.entryPoint
-
-			# add all outputs to the root builder
-
+		for own path,output of meta.outputs
 			# skip if this is not a relevant asset, like for css?
 			root.builder.outputs.add(output)
 			
@@ -1077,25 +1126,26 @@ export default class Bundle < Component
 
 			# for the outputs that are entrypoints, set a shared reference
 			if output.entryPoint
-				let input = ins[output.entryPoint]
+				let inpath = output.entryPoint
+				let input = ins[inpath]
+				
 				if input
 					output.source = input
 					let kind = path.split('.').pop!
 					if kind == 'js' or kind == 'css'
 						input[kind] = output
+
 					if o.ref
 						let id = "entry:{output.entryPoint}?{o.ref}"
-						root.builder.entries[id] = {file: path}
-						console.log 'mapped entry',id
-		
+						root.builder.entries[id] = {file: path, url: baseurl + path, #output: output }
+						# console.log 'mapped entry',id
+
 		# Add connections between inputs and outputs
 		for own path,input of ins
 			input.#type = input._ = 'input'
 			input.path = path
 			input.imports = input.imports.map do ins[$1.path]
 			watchPath(path)
-			# what about sourcemaps?
-			let outname = path.replace(/\.(imba1?|[cm]?jsx?|tsx?|html|css)$/,"")
 
 		let urlOutputMap = {}
 		let walker = {}
@@ -1130,39 +1180,41 @@ export default class Bundle < Component
 		# in a separate step after after we know that all the nested outputs
 		# have been generated?
 
-		walker.collectCSSInputs = do(input, matched = [], visited = [])
-			if visited.indexOf(input) >= 0
-				return matched
-
-			visited.push(input)
-
-			if input.path.match(/(^styles:)|(\.css$)/)  # or input.path.match(/^styles:/)
-				matched.push(input)
-				
-			for item in input.imports
-				walker.collectCSSInputs(item,matched,visited)
-
-			return matched
-		
-		for own path,output of outs
+		for own path,output of meta.outputs
 			output.#type = output._ = 'output'
 			output.path = path
 
+			let kind = (np.extname(path) or '').slice(1)
+
+			console.log 'forin output',path
+			if kind == 'json' and Object.keys(output.inputs or {}).some(do $1.match(/\?url/))
+				output.public = yes
+
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js
-				console.log "FOUND OUTPUT HTML!?",path,output.source.path,output.entryPoint
+				log.debug "FOUND OUTPUT HTML!?",path,output.source.path,output.entryPoint
+				# throw "found html {path}"
+
 				urlOutputMap[path] = output
 				output.public = yes
-				# output.path = path = path.replace('.js','.html')
-				output.path = path = output.source.path
-				output.path = path = "{pubdir}/{output.path}"
+				# output.type = 'html'
+				output.path = path = path.replace(/\.js/,'.html')
+
+				let inpath = output.entryPoint or ''
+				let src = inpath.replace(/^\w+\:/,'')
+				let meta = builder.meta[src]
+				if meta and false
+					console.log "found meta",src,!!meta,builder.meta,output,output.source
+					let body = transformCompiledHTML(output.#file.text,meta)
+					console.log "transformed", body
+					output.#contents = output.#text = body
 
 			elif webish? or output.type == 'css' or path.match(FontRegex) or path.match(ImageRegex)
 				urlOutputMap[path] = output
 				output.public = yes
 				output.url = "{baseurl}{path}"
 
-			output.type = (np.extname(path) or '').slice(1)
+			output.type ??= (np.extname(path) or '').slice(1)
 			console.log "output type",output.type,output.path
 
 			let inputs = []
@@ -1268,7 +1320,7 @@ export default class Bundle < Component
 			if output.type == 'css'
 				return body
 
-			if o.format == 'html'
+			if o.format == 'html' and false
 				try
 					let mapping = {}
 					let entryToUrlMap = {}
@@ -1283,10 +1335,6 @@ export default class Bundle < Component
 
 					let urls = body.match(/URLS = \[(.*)\]/)[1].split(/\,\s*/g).map do
 						mapping[$1]
-
-					if useRelativePaths
-						# TODO fix relative paths
-						yes
 
 					let meta = builder.meta[output.source.path]
 					
@@ -1338,11 +1386,9 @@ export default class Bundle < Component
 			finalizeAsset(asset)
 			return asset
 
-		
-		
 		for item of styleInputs
-			# resolve the paths in sheets first
 			item.#csschunk = await walker.replacePaths(item.#csschunk,{type: 'css'})
+
 
 		# Walk through all the outputs from esbuild metafile and skip outputting
 		# certain items, while resolving the rest of the outputs and (sometimes)
@@ -1350,7 +1396,6 @@ export default class Bundle < Component
 		let newouts = {}
 
 		for own path,output of meta.outputs
-			continue if path.indexOf(".SKIP.") > 0
 			await walker.resolveAsset(output)
 
 			if !node? and output.url
@@ -1406,14 +1451,17 @@ export default class Bundle < Component
 			css: null
 			pubdir: pubdir
 		}
-
-		console.log 'setting manifest',manifest
-		# console.log 'write',entryPoints,ins
-		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]].js
+	
+		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]]..js
 		let assets  = manifest.assets = Object.values(outs)
-
+		
 
 		if hasGlobStylesheet
+			
+			let entries = entryPoints.map do ins[$1]
+			# console.log 'import css from',entries,entryPoints
+			let cssinputs = collectStyleInputs(entries,true)
+
 			###
 			Starting at the server-side entrypoint, crawl through all the dependencies,
 			into nested entrypoints, and collect all the styles imported anywhere, in order.
@@ -1422,10 +1470,10 @@ export default class Bundle < Component
 			###
 
 			# walk the entrypoint for css
-			let cssinputs = collectStyleInputs(main.source,true)
+			# let cssinputs = collectStyleInputs(main.source,true)
 			let htmlassets = assets.filter do $1.type == 'html'
 			
-			if cssinputs.length or htmlassets.length
+			if cssinputs.length
 				let body = ""
 				for item in cssinputs
 					if item.#csschunk
@@ -1440,38 +1488,57 @@ export default class Bundle < Component
 					type: 'css'
 					public: yes
 					path: "{assetsDir or '.'}/all.{hash}.css"
+					hash: hash
+					virtual: no
 					#contents: body
 				}
 
 				asset.asset = asset
+				
 				# should take hashing parameter from the web/css target instead?
 				finalizeAsset(asset)
-				
+				builder.entries['*?css'] = {
+					url: asset.url
+				}
 				manifest.css = asset
 				ins.__styles__ = asset
 				assets.push(asset)
-				
+
 				# FIXME html assets do not necacarrily need to be hashed
 				for html in assets when html.type == 'html'
-					# console.log "replace style reference {asset.url} {html.type}"
-					console.log "replace css all",asset.url,html.path
 					html.#contents = replaceAll(html.#contents,"href='__styles__'","href='{asset.url}'")
-					html.hash = createHash(html.#contents)
-				# if main.source.css
-		
 
-		let writeFiles = {}
-		let webEntries = []
+		# rewrite assets in html files
+		for asset in assets
+			if asset.type == 'html'
+				console.log 'handle html asset!',asset
+				let inpath = asset.entryPoint or ''
+				let src = inpath.replace(/^\w+\:/,'')
+				let meta = builder.meta[src]
+				if meta
+					console.log "found meta",src,!!meta,builder.meta,asset,asset.source
+					let body = transformCompiledHTML(asset.#file.text,meta)
+					console.log "transformed", body
+					# asset.#contents = 
+					asset.#text = asset.#contents = body
 
-		manifest.path = main.path + '.manifest'
-		
+			# if this is a main body now
+			if asset.type == 'js' and !asset.public
+				console.log "asset with js!!",asset.#text
+				# inject the initial manifest here
+				let body = asset.#text.replace('//__HEAD__',"globalThis._MF_={JSON.stringify(builder.entries)}")
+				asset.#text = asset.#contents = body
+
+		manifest.path = 'manifest.json'
+
 		for item in assets
 			if item.url
 				manifest.urls[item.url] = item
 
+			
+
 		# a sorted list of all the output hashes is a fast way to
 		# see if anything in the bundle has changed or not
-
 		log.ts "ready to write"
 		let mfile = #outfs.lookup(manifest.path)
 		let mfile2 = #outfs.lookup(manifest.path + '.json')
@@ -1486,7 +1553,7 @@ export default class Bundle < Component
 		mfile2.writeSync(JSON.stringify(builder.entries,null,2))
 
 
-		if true
+		if true and false
 			###
 			Support for html files are hacked in by exposing them as .js files to esbuild.
 			###
@@ -1531,8 +1598,7 @@ export default class Bundle < Component
 			for file of rm
 				await file.unlink!
 		
-		let loaderData = nfs.readFileSync(np.resolve(program.imbaPath,'loader.imba.js'),'utf-8')
-		let loader = #outfs.lookup(main.path.replace(/(\.js)?$/,'.loader.js'))
+		
 		
 		# run through the asset inputs to generate a cleaner manifest with references
 		
@@ -1555,6 +1621,7 @@ export default class Bundle < Component
 			
 			manifest.mappings = structure
 
+		# update the build
 		if #hash =? manifest.hash
 			
 			log.info "building in %path",program.outdir
@@ -1565,6 +1632,10 @@ export default class Bundle < Component
 				let file = #outfs.lookup(path)
 				if build? and static? and !asset.public
 					continue
+
+				if asset.virtual
+					continue
+
 				await file.write(asset.#contents,asset.hash)
 			
 			let json = serializeData(manifest)
@@ -1574,6 +1645,8 @@ export default class Bundle < Component
 					await mfile.writeSync json, manifest.hash
 				
 				if nodeish?
+					let loaderData = nfs.readFileSync(np.resolve(program.imbaPath,'loader.imba.js'),'utf-8')
+					let loader = #outfs.lookup(main.path.replace(/(\.js)?$/,'.loader.js'))
 					await loader.write(loaderData)
 
 			await copyPublicFiles!
@@ -1586,7 +1659,7 @@ export default class Bundle < Component
 		log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024
 
 		if program.#listening
-			log.info "built %bold in %ms - %heap (%address)",main.path,builder.elapsed,program.#listening
+			log.info "built %bold in %ms - %heap (%address)",entryPoints[0],builder.elapsed,program.#listening
 		else
-			log.info "finished %bold in %ms - %heap",main.path,builder.elapsed
+			log.info "finished %bold in %ms - %heap",entryPoints[0],builder.elapsed
 		return result
