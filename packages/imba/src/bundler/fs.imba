@@ -358,8 +358,8 @@ export class HTMLFile < FileNode
 					kind = "web"
 				elif item.tagType == 'style'
 					kind = "css"
-				if kind and path.indexOf('?as=') == -1
-					path = path + '?as=' + kind
+				if kind and path.indexOf('?') == -1
+					path = path + '?' + kind
 
 				code.push "import ref{i} from '{path}';"
 				refs.push("ref{i}")

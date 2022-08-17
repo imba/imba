@@ -39,7 +39,7 @@ const LOADER_EXTENSIONS = {
 	".eot": "file",
 	".ttf": "file",
 	".otf": "file",
-	".html": "file",
+	".html": "text",
 	".webm": "file",
 	".weba": "file",
 	".avi": "file",
@@ -56,7 +56,7 @@ const LOADER_EXTENSIONS = {
 
 
 class Builder
-	# prop previous
+	# prop previous - why not?
 	prop startAt = Date.now!
 	prop refs = {}
 	prop inputs = {}
@@ -64,11 +64,14 @@ class Builder
 	prop bundlers = {}
 	prop meta = {}
 	prop styles = {}
+	prop entries = {}
 
 	get elapsed
 		Date.now! - startAt
 
 export default class Bundle < Component
+
+	prop hasGlobStylesheet
 
 	get node?
 		platform == 'node'
@@ -129,7 +132,7 @@ export default class Bundle < Component
 		program.assetNames or 'assets/[dir]/[name]'
 
 	get assetsDir
-		program.assetsDir or 'assets'
+		o.assetsDir or program.assetsDir or 'assets'
 		
 	get htmlNames
 		program.htmlNames or '[dir]/[name]'
@@ -270,13 +273,13 @@ export default class Bundle < Component
 			platform: nodeish? ? 'node' : 'browser' # o.platform == 'node' ? 'node' : 'browser'
 			format: o.format or 'esm'
 			outfile: o.outfile
-			outbase: fs.cwd
+			# outbase: fs.cwd
 			outdir: fs.cwd
 			globalName: o.globalName
 			publicPath: baseurl or '/'
 			assetNames: "{assetsDir}/[name].[hash]"
 			chunkNames: "{assetsDir}/[name].[hash]"
-			entryNames: "{assetsDir}/[name].[hash]"
+			entryNames: o.entryNames or "{assetsDir}/[name].[hash]"
 			banner: {
 				js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')
 			}
@@ -302,6 +305,9 @@ export default class Bundle < Component
 
 		# esoptions.outdir = o.outdir
 
+		esoptions.entryPoints..sort!
+		console.log "ENTRY POINTS",esoptions.entryPoints
+
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
 			esoptions.banner.js += "\nglobalThis.IMBA_OUTDIR=__dirname;globalThis.IMBA_PUBDIR='{pubdir}';"
@@ -310,6 +316,8 @@ export default class Bundle < Component
 		# assetNames: '[ext]/[name]-[hash]'
 		# chunkNames: '[ext]/[name]-[hash]'
 		# entryNames: '[ext]/[name]-[hash]'
+
+
 
 		
 
@@ -339,7 +347,7 @@ export default class Bundle < Component
 		# FIXME Are we using this still?
 		if o.format == 'css'
 			esoptions.format = 'esm'
-			esoptions.outExtension[".js"] = ".SKIP.js"
+			# esoptions.outExtension[".js"] = ".SKIP.js"
 
 		if o.format == 'html'
 			esoptions.format = 'esm'
@@ -396,6 +404,7 @@ export default class Bundle < Component
 
 	def addEntrypoint src
 		entryPoints.push(src) unless entryPoints.indexOf(src)>= 0
+		entryPoints.sort!
 		self
 
 	def setup
@@ -411,12 +420,14 @@ export default class Bundle < Component
 		self
 
 	def resolveConfigPreset types = []
-		let key = Symbol.for(types.join('+'))
+		let ref = types.join('-')
+		let key = Symbol.for(ref)
+		
 		let cacher = imbaconfig # resolveConfigPreset
 		if cacher[key]
 			return cacher[key]
 
-		let base = {presets: []}
+		let base = {presets: [], ref: ref}
 		let presets = imbaconfig.options
 		
 
@@ -437,6 +448,10 @@ export default class Bundle < Component
 		let cfg = resolveConfigPreset(['iife'])
 		yes
 
+	###
+	The main setup for our esbuild plugin. It installs a bunch of far-reaching onResolve and onLoad
+	handlers to support nested entrypoints, style extraction from imba files and much more.
+	###
 	def plugin esb
 		let externs = esoptions.external or []
 
@@ -447,11 +462,12 @@ export default class Bundle < Component
 		let pathMetadata = {}
 
 		let toAssetJS = do(object)
-			object.x = 10
+			# object.x = 10
 			let json = JSON.stringify(object)
+			return "export default {json}"
 			let js = """
-			import \{asset\} from 'imba';
-			export default asset({json})
+			// import \{asset\} from 'imba/asset';
+			export default Asset({json})
 			"""
 
 		if o.resolve
@@ -481,153 +497,86 @@ export default class Bundle < Component
 			}
 			return out
 		
-		# esb.onLoad(filter: /\.svg$/) do(args)
-		# 	console.log 'onLoad svg',args
-		#	# if args.suffix == '?url'
-				
-		esb.onLoad(namespace: 'img', filter: /.*/) do({path})
-			let file = fs.lookup(path)
-			let out = await file.compile({format: 'esm'},self)
-			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
-
-		# resolve html file
+		# Importing html files will create a nested bundle with the html as an entrypoint
 		esb.onResolve(filter: /\.html$/) do(args)
-			if isImba(args.importer) and args.namespace == 'file' and !args.suffix
-				console.log 'resovle html',args
+			# TODO - support html file as entrypoint?
+			console.log "resolving html",args,web?,webish?,o.format,main?
+
+			# or we are on the server
+			# if args.kind == 'entry-point' and true
+			# 	let res = await esb.resolve(args.path,{resolveDir: args.resolveDir, kind: 'dynamic-import', importer: ''})
+			# 	console.log 'resolve html as entrypoint',res
+			# 	return {path: args.path, namespace: 'file', pluginData: {kind: args.kind}}
+
+			if isImba(args.importer) and args.namespace == 'file' and !args.suffix and main?
+				# html files imported from clients should likely just resolve as plain files?
+				# if webish?
+				#	return
+
 				let cfg = resolveConfigPreset(['html'])
 				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
 				let path = fs.relative(res.path)
-				let out = {path: path, namespace: 'entry'}
-				pathMetadata[out.path] = {path: path, config: cfg}
-				return out
+
+				return {path: path + '?html', namespace: 'entry', pluginData: {
+					path: path
+					config: cfg
+				}}
+
 			return
-
-		esb.onLoad(namespace: 'html', filter: /.*/) do({path})
-			let file = fs.lookup(path)
-			let out = await file.compile({format: 'esm'},self)
-			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 		
-		esb.onLoad(filter: /.*/, namespace: 'file') do({path,suffix})
-			if suffix
-				let out = nfs.readFileSync(path)
-					
-				if suffix == '?raw'
-					return {loader: 'text', contents: out}
-				if suffix == '?copy'
-					return {loader: 'copy', contents: out}
-				if suffix == '?url'
-					return {loader: 'file', contents: out}
 
-				# now for a pack
-				if suffix == '?iife'
-					
-					let id = path + suffix
-					
-					# should self-contain potential css etc, no?
-					let cfg = resolveConfigPreset(['iife'])
-					# console.log 'iife!!',id,cfg
-					let dep = root.#bundles[id] ||= new Bundle(root,Object.assign({entryPoints: [path]},cfg))
-					let res = await dep.rebuild!
-					let file = try res.outputFiles[0]
-					console.log 'returned from iife',res.metafile,file
-					if file and file.#output..url
-						return {loader: 'text', contents: file.#output..url}
+		esb.onResolve(filter: /\?(as=)?([\w\-\,\.]+)$/) do(args)
 
-					return {loader: 'file', contents: file}
-
-					return {loader: 'text', contents: out}
-
-		# 
-		esb.onLoad(filter: /\.html$/, namespace: 'file') do({path,suffix})
-			let file = fs.lookup(path)
-			let out = await file.compile({format: 'esm'},self)
-			builder.meta[file.rel] = out
-			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
-
-		esb.onResolve(filter: /\?as=([\w\-\,\.]+)$/) do(args)
+			# only resolve certain types
 			
 			# reference to _all_ styles referenced via main entrypoint
-			if args.path == '*?as=css'
+			if args.path == '*?css'
+				root.hasGlobStylesheet = yes
+				# FIXME no longer used?
 				return {path: "__styles__", namespace: 'entry'}
 			
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
 			let [path,q] = args.path.split('?')
-			let formats = q.slice(3).split(',')
+			let formats = q.replace(/^(as=)?/,'').split(',')
+
+			
+			let resolved = await esb.resolve(path,{resolveDir: args.resolveDir})
+			console.log 'resolved path?!?',resolved
+
+			# if the path could not be resolved to an actual file on disk, skip it
+			unless resolved
+				return
+
 			let wrkidx = formats.indexOf('worker')
 			if wrkidx >= 0
 				formats[wrkidx] = nodeish? ? 'nodeworker' : 'webworker'
-				q = 'as=' + formats.join(',')
-				
-			if q == 'as=file' or q == 'as=text'
-				let res = await esb.resolve(path,{resolveDir: args.resolveDir})
-				return {path: res.path, namespace: "raw{formats[0]}"}
-
-			# console.log "onResolve",args.path
+				# q = formats.join(',')
 
 			let cfg = resolveConfigPreset(formats)
-			let res = await esb.resolve(path,{resolveDir: args.resolveDir})
-			let rel = fs.relative(res.path)
-			let out = {path: rel + '?' + q, namespace: 'entry'}
-			pathMetadata[out.path] = {path: rel, config: cfg}
+			
+			# let res = await esb.resolve(path,{resolveDir: args.resolveDir})
+			let rel = fs.relative(resolved.path)
+
+			return {path: rel +  '?' + formats.join(','), namespace: 'entry', pluginData: {
+				config: cfg
+				path: rel
+			}}
 			return out
 
-		esb.onLoad(namespace:'entry', filter:/^__styles__$/) do(args)
-			if o.format == 'html'
-				return {loader: 'text', contents: '__styles__'}
-
-			return {loader: 'js', contents: toAssetJS(input: '__styles__'), resolveDir: fs.cwd }
-
-		esb.onLoad(namespace: 'entry', filter:/.*/) do({path})
-			# skip entrypoints if compiling for css only
-			if o.format == 'css'
-				return {loader: 'text', contents: ""}
-
-			let id = "entry:{path}"
-			let meta = pathMetadata[path]
-			let cfg = meta.config
-			# console.log 'onload custom entry',path,cfg.format,cfg.platform,cfg,meta
-			let file = fs.lookup(meta.path)
-
-			# add this to something we want to resolve 
-			if cfg.splitting
-				let js = """
-				import \{asset\} from 'imba';
-				export default asset(\{input: '{id}',a:1\})
-				"""
-				let bundle = cfg.#bundler ||= new Bundle(root,Object.create(cfg))
-				bundle.addEntrypoint(meta.path)
-				builder.refs[id] = bundle
-
-				if o.format == 'html'
-					return {loader: 'text', contents: id}
-
-				
-				return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
-
-			log.debug "lookup up bundle for id {id}"
-			# adding it as a child of root is risky wrt correctly invalidating nested bundles
-			let bundler = root.#bundles[id] ||= new Bundle(root,Object.assign({entryPoints: [meta.path]},cfg))
-			builder.refs[id] = bundler
-
-			unless cfg.format == 'css'
-				bundler.rebuild! # we can asynchronously start the rebundler
-			
-			if o.format == 'html'
-				return {loader: 'text', contents: id}
-
-			return {loader: 'js', contents: toAssetJS(input: id), resolveDir: file.absdir }
-
+		# be default, treat all absolute paths as external
 		esb.onResolve(filter: /^\//) do(args)
-			console.log 'onResolve base',args
 			if args.kind == 'entry-point'
-				return
+				return {path: args.path.split('?')[0], resovleDir: args.resolveDir}
+
 
 			return if args.path.indexOf('?') > 0
 			return {path: args.path, external: yes}
 
+		
 		esb.onResolve(filter: /^imba(\/|$)/) do(args)
+			# TODO Let the esbuild resolver take over here
 			if args.path == 'imba'
 				if o.format == 'css'
 					return {path: args.path, external: yes}
@@ -659,7 +608,8 @@ export default class Bundle < Component
 		# resolve any non-relative path to see if it should
 		# be external. If importer is an imba file, try to
 		# also resolve it via the imbaconfig.paths rules.
-		esb.onResolve(filter: /^[\w\@\#]/) do(args)
+		esb.onResolve(filter: /^[\w\@\#]/, namespace: 'file') do(args)
+			console.log 'on resolve still',args
 			if args.path.indexOf('node:') == 0
 				return {external: true}
 			
@@ -673,7 +623,126 @@ export default class Bundle < Component
 				return res
 			return null
 
+
+		###
+		img namespace returns a js file for the image which includes image size
+		and a url to the actual image
+		###
+		esb.onLoad(namespace: 'img', filter: /.*/) do({path})
+			let file = fs.lookup(path)
+			let out = await file.compile({format: 'esm'},self)
+			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+
+		###
+		html namespace returns a js file that extracts imports and file references
+		from the html. After esbuild is done we parse the resulting file, pull out
+		the asset references and changed it back into html, with the correct urls
+		to assets etc.
+		###
+		esb.onLoad(namespace: 'html', filter: /.*/) do({path})
+			let file = fs.lookup(path)
+			let out = await file.compile({format: 'esm'},self)
+			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+
+		esb.onLoad(namespace: 'file', filter: /\.html$/) do(args)	
+			console.log "load html file",args,o.format
+
+			# when this is in a html
+			if o.format == 'html'
+				let file = fs.lookup(args.path)
+				let out = await file.compile({format: 'esm'},self)
+				builder.meta[file.rel] = out
+				console.log 'load the HTML!',out.js
+				return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+			return
+
+		###
+		for all regular files we just intercept onLoad and check for specific
+		suffixes like ?raw, ?copy, ?url, ?binary.
+		###
+		esb.onLoad(namespace: 'file', filter: /.*/) do({path,suffix})
+			if suffix
+				let out = nfs.readFileSync(path)
+					
+				if suffix == '?raw'
+					return {loader: 'text', contents: out}
+				if suffix == '?copy'
+					return {loader: 'copy', contents: out}
+				if suffix == '?url'
+					return {loader: 'file', contents: out}
+				if suffix == '?binary'
+					return {loader: 'binary', contents: out}
+
+
+		esb.onLoad(namespace: 'entry', filter:/.*/) do({path,pluginData})
+
+			if path == '__styles__'
+				if o.format == 'html'
+					return {loader: 'text', contents: '__styles__'}
+
+				return {loader: 'js', contents: toAssetJS(input: '__styles__'), resolveDir: fs.cwd }
+
+			# skip entrypoints if compiling for css only
+			if o.format == 'css'
+				return {loader: 'text', contents: ""}
+
+			
+			let meta = pluginData # pathMetadata[path]
+			let cfg = meta.config
+
+			let id = "entry:{meta.path}?{cfg.ref}"
+			let file = fs.lookup(meta.path)
+
+			# add this to something we want to resolve 
+			if cfg.splitting or (cfg.ref == 'html' and main?)
+				# use multiple entrypoints when the ref is html as well?
+				# I guess we could always use it from the server
+				# wont work if we also include html from inside client?
+				let js = """
+				// import \{asset\} from 'imba/asset';
+				export default Asset(\{input: '{id}'\})
+				"""
+				let names = "{assetsDir}/{cfg.ref}/[dir]/[name]"
+				let bundle = cfg.#bundler ||= new Bundle(root,Object.assign(Object.create(cfg),entryNames: names))
+				bundle.addEntrypoint(meta.path)
+				root.builder.refs[id] = bundle
+				builder.refs[id] = bundle
+
+				return {loader: 'text', contents: id}
+				# if o.format == 'html'
+				#	return {loader: 'text', contents: id}
+				# return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
+
+			log.debug "lookup up bundle for id {id}"
+			# adding it as a child of root is risky wrt correctly invalidating nested bundles
+			let names = "{assetsDir}/{cfg.ref}/[dir]/[name]" # what about hash?
+			let bundler = root.#bundles[id] ||= new Bundle(root,Object.assign({entryPoints: [meta.path], entryNames: names},cfg))
+
+			builder.refs[id] = bundler
+
+			unless cfg.format == 'css'
+				# if we are in the web world we actually want to wait for the bundler
+				let building = bundler.rebuild! # we can asynchronously start the rebundler
+
+				if web?
+					console.log "rebuilt immediately - and maybe link directly to the asset?!"
+					let res = await building
+					try
+						let file = try res.outputFiles[0]
+						let rootref = root.builder.entries[id]
+						console.log 'returned from iife',rootref
+						if file and file.#output..url
+							return {loader: 'text', contents: "tata" + file.#output..url}
+						
+
+			
+			if o.format == 'html'
+				return {loader: 'text', contents: id}
+
+			return {loader: 'js', contents: toAssetJS(input: id), resolveDir: file.absdir }
+			
 		esb.onLoad(filter: /\.css$/) do(args)
+			# no suffixes?
 			let content = nfs.readFileSync(args.path,'utf-8')
 			content += "/*! @path {fs.relative(args.path)} */"
 			return {loader: 'css', contents: content}
@@ -824,39 +893,19 @@ export default class Bundle < Component
 			#buildcache = {}
 			return resolve(result)
 	
+	# called for all outputs
 	def finalizeAsset asset, shouldHash = hashing?
 		return asset if asset.#finalized
 		asset.#finalized = yes
-		let sub = '.'
-		
+
 		asset.hash ||= createHash(asset.#contents)
-		
-		if shouldHash
-			asset.hashed = yes
-			sub = ".{asset.hash}."
 
 		let path = asset.originalPath = asset.path
-		
-		# now replace dist with hash or not
-		path = path.replace('.__dist__.','.')
-		# console.log path,sub
-		let newpath = pathForAsset(path,asset,assetNames,shouldHash)
-		
-		console.log 'finalize asset',shouldHash,asset.hash,asset.originalPath,newpath
+		console.log 'finalize asset',asset.originalPath
 
-		if sub != '.'
-			asset.ttl = 31536000
-
-		if asset.url
-			# only if this is a public facing asset?
-			asset.url = asset.url.replace('.__dist__.',sub)
-
-		asset.path = asset.path.replace('.__dist__.',sub)
-		
-		let url = baseurl + path
+		let url = baseurl + path # hmm?
 		
 		if asset.public or asset.type == 'css'
-			# asset.path = path
 			asset.public = yes
 			asset.url = url
 			
@@ -868,8 +917,6 @@ export default class Bundle < Component
 		# now replace link to sourcemap as well
 		if (asset.type == 'js' or asset.type == 'css') and asset.map
 			let replace = /\/([\/\*])# sourceMappingURL=[\/\w\.\-\%]+\.map/
-			# asset.#contents = asset.#contents.replace(replace,"/$1# sourceMappingURL={asset.url}.map")
-			# finalize the map inline?
 			asset.map.path = asset.path + '.map'
 			asset.map.url = asset.url + '.map'
 			asset.map.#finalized = yes
@@ -922,11 +969,13 @@ export default class Bundle < Component
 
 			return result
 	
-
 		let files = result.outputFiles or []
 		let meta = result.metafile
 
+		# For debugging purposes, write out the original esbuild manifests, as is
+
 		meta = result.meta = {
+			ref: o.ref
 			format: o.format
 			platform: o.platform
 			inputs: meta.inputs
@@ -935,6 +984,12 @@ export default class Bundle < Component
 			warnings: [].concat(result.warnings or [])
 			urls: {}
 		}
+
+		if true
+			let tmpsrc = np.resolve(fs.cwd,'dist')
+			meta.entryPoints = esoptions.entryPoints
+			try nfs.mkdirSync(tmpsrc)
+			nfs.writeFileSync(np.resolve(tmpsrc,"manifest.{nr}.json"),JSON.stringify(meta,null,4))
 		
 		let ins = meta.inputs
 		let outs = meta.outputs
@@ -942,8 +997,11 @@ export default class Bundle < Component
 
 		let reloutdir = fs.relative(esoptions.outdir)
 
+		# expects a 1-to-1 mapping between inputs and outputs -- there is none?
 		for file in files
 			let path = fs.relative(file.path)
+
+			console.log "check for file {path}"
 
 			if outs[path]
 				outs[path].#file = file
@@ -952,28 +1010,31 @@ export default class Bundle < Component
 			else
 				console.log 'could not map the file to anything!!',file.path,path,reloutdir,Object.keys(outs),fs.cwd,esoptions.outdir
 
-		let tests = {
-			".__dist__.js": "js"
-			".__dist__.css": "css"
-			".__dist__.js.map": "map"
-		}
-
 		# console.log 'done here',Object.keys(ins),Object.keys(outs)
-
 		for own path,output of outs
 			console.log "OUT",path,output.entryPoint
 
+			# add all outputs to the root builder
+
+			# skip if this is not a relevant asset, like for css?
 			root.builder.outputs.add(output)
+			
+			# link the source-maps to their sibling outputs
 			if outs[path + '.map']
 				output.map = outs[path + '.map']
 
+			# for the outputs that are entrypoints, set a shared reference
 			if output.entryPoint
 				let input = ins[output.entryPoint]
 				if input
 					output.source = input
 					let kind = path.split('.').pop!
-					if kind == 'js'
-						input.js = output
+					if kind == 'js' or kind == 'css'
+						input[kind] = output
+					if o.ref
+						let id = "entry:{output.entryPoint}?{o.ref}"
+						root.builder.entries[id] = {file: path}
+						console.log 'mapped entry',id
 		
 		# Add connections between inputs and outputs
 		for own path,input of ins
@@ -983,22 +1044,6 @@ export default class Bundle < Component
 			watchPath(path)
 			# what about sourcemaps?
 			let outname = path.replace(/\.(imba1?|[cm]?jsx?|tsx?|html|css)$/,"")
-			let jsout 
-			
-			for own ext,key of tests
-
-				let name = outname.replace(/\.\.\//g,"_.._/") + ext
-				name = "{reloutdir}/{name}" if reloutdir
-
-				if outs[name]
-					# Hook into parent inputs here?
-					input[key] = outs[name]
-					outs[name].source = input
-
-					if key == 'js'
-						jsout = outs[name]
-					elif jsout
-						jsout[key] = outs[name]
 
 		let urlOutputMap = {}
 		let walker = {}
@@ -1202,7 +1247,9 @@ export default class Bundle < Component
 						if hmr?
 							body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 
-			elif webish? or node?
+			elif node?
+
+				# only if we actually include the exports?
 				let mfname = "_$MF$_"
 				for item in output.dependencies when item.asset
 					let asset = await walker.resolveAsset(item.asset)
@@ -1239,13 +1286,18 @@ export default class Bundle < Component
 			finalizeAsset(asset)
 			return asset
 
-		let newouts = {}
+		
 		
 		for item of styleInputs
 			# resolve the paths in sheets first
 			item.#csschunk = await walker.replacePaths(item.#csschunk,{type: 'css'})
 
-		for own path,output of outs
+		# Walk through all the outputs from esbuild metafile and skip outputting
+		# certain items, while resolving the rest of the outputs and (sometimes)
+		# rewrite the final paths
+		let newouts = {}
+
+		for own path,output of meta.outputs
 			continue if path.indexOf(".SKIP.") > 0
 			await walker.resolveAsset(output)
 
@@ -1271,6 +1323,8 @@ export default class Bundle < Component
 				new Promise do(resolve) ncp(from,to,{},resolve)
 
 	# Called at the top bundle after all nested entrypoints++ has been transformed
+	# The inputs and outputs in the result are now deeply linked to inner bundled
+	# entrypoints etc
 	def write result
 		# after write we can wipe the buildcache
 		#outfs ||= new FileSystem(program.outdir,program)
@@ -1305,42 +1359,53 @@ export default class Bundle < Component
 		# console.log 'write',entryPoints,ins
 		let main = manifest.main = ins[o.stdin ? o.stdin.sourcefile : entryPoints[0]].js
 		let assets  = manifest.assets = Object.values(outs)
-		
-		# walk the entrypoint for css
-		let cssinputs = collectStyleInputs(main.source,true)
-		let htmlassets = assets.filter do $1.type == 'html'
-		
-		if cssinputs.length or htmlassets.length
-			let body = ""
-			for item in cssinputs
-				if item.#csschunk
-					body += item.#csschunk + '\n'
 
-			# now write this file as a separate asset?
-			let hash = createHash(body)
-			let asset = {
-				#type: 'output'
-				_: 'output'
-				type: 'css'
-				public: yes
-				path: "{assetsDir or '.'}/all.{hash}.css"
-				#contents: body
-			}
 
-			asset.asset = asset
-			# should take hashing parameter from the web/css target instead?
-			finalizeAsset(asset,program.hashing !== false)
+		if hasGlobStylesheet
+			###
+			Starting at the server-side entrypoint, crawl through all the dependencies,
+			into nested entrypoints, and collect all the styles imported anywhere, in order.
+			Finally we will stitch together a shared css file containing all css chunks in
+			the whole project.
+			###
+
+			# walk the entrypoint for css
+			let cssinputs = collectStyleInputs(main.source,true)
+			let htmlassets = assets.filter do $1.type == 'html'
 			
-			manifest.css = asset
-			ins.__styles__ = asset
-			assets.push(asset)
-			
-			for html in assets when html.type == 'html'
-				# console.log "replace style reference {asset.url} {html.type}"
-				console.log "replace css all",asset.url,html.path
-				html.#contents = replaceAll(html.#contents,"href='__styles__'","href='{asset.url}'")
-				html.hash = createHash(html.#contents)
-			# if main.source.css
+			if cssinputs.length or htmlassets.length
+				let body = ""
+				for item in cssinputs
+					if item.#csschunk
+						body += item.#csschunk + '\n'
+
+				
+				# now write this file as a separate asset?
+				let hash = createHash(body)
+				let asset = {
+					#type: 'output'
+					_: 'output'
+					type: 'css'
+					public: yes
+					path: "{assetsDir or '.'}/all.{hash}.css"
+					#contents: body
+				}
+
+				asset.asset = asset
+				# should take hashing parameter from the web/css target instead?
+				finalizeAsset(asset)
+				
+				manifest.css = asset
+				ins.__styles__ = asset
+				assets.push(asset)
+				
+				# FIXME html assets do not necacarrily need to be hashed
+				for html in assets when html.type == 'html'
+					# console.log "replace style reference {asset.url} {html.type}"
+					console.log "replace css all",asset.url,html.path
+					html.#contents = replaceAll(html.#contents,"href='__styles__'","href='{asset.url}'")
+					html.hash = createHash(html.#contents)
+				# if main.source.css
 		
 
 		let writeFiles = {}
@@ -1357,6 +1422,7 @@ export default class Bundle < Component
 
 		log.ts "ready to write"
 		let mfile = #outfs.lookup(manifest.path)
+		let mfile2 = #outfs.lookup(manifest.path + '.json')
 		# these are relative to the manifest file - should rather be relative
 		# to the manifest dir?!
 		manifest.srcdir = relativePath(mfile.absdir,outbase) or "."
@@ -1365,8 +1431,14 @@ export default class Bundle < Component
 		# console.log "outdir!!",manifest.outdir,manifest.srcdir,mfile.abs,manifest.path,main.path
 
 
+		mfile2.writeSync(JSON.stringify(builder.entries,null,2))
+
 
 		if true
+			###
+			Support for html files are hacked in by exposing them as .js files to esbuild.
+			###
+
 			# set output paths of html files - should not happen after resolving?
 			let htmlFiles = assets.filter do $1.type == 'html' and $1.entryPoint
 			let htmlPaths = htmlFiles.map do $1.path.split('/')

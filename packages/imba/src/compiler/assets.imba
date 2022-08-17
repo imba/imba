@@ -118,8 +118,9 @@ export def parseHTML raw
 				item = {path: raw, tagType: 'style'}
 			elif src and raw.match(/^\.\.?\//)
 				let raw = src.raw
+				# if we link to a json file - load it as a url?
 				if raw.match(/\.json$/)
-					raw = raw += '?as=file'
+					raw = raw += '?url'
 				item = {path: raw, tagType: 'link'}
 
 		elif el.value == 'style' and src
@@ -130,7 +131,7 @@ export def parseHTML raw
 				el.#attributes.src.value = 'href'
 
 		if src and item
-			unless item.path.match(/^(\/|https?\:\/\/)/)
+			unless item.path.match(/^(\/|\w+?\:\/\/)/)
 				let nr = imports.push(item)
 				src.value = "'ASSET_REF_{nr - 1}'"
 		# if currAttr == 'src' or (currAttr == 'href' and currTag.value == 'link')

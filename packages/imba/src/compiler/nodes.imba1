@@ -6626,9 +6626,10 @@ export class Call < Node
 			let arg = args.first
 			let kind = callee.right.toString
 
-			callee = runtime:asset
-
 			if arg isa Str
+				# TODO remove need for ImbaAsset type
+				# callee = runtime:asset
+				callee = LIT('')
 				let asset = STACK.root.registerAsset(arg.raw,"{kind}",self)
 				args.replace(arg,asset:ref)
 
@@ -6640,7 +6641,8 @@ export class Call < Node
 			# console.log 'calling the global import!!',path
 			if path
 				let ext = path.split('.').pop()
-				if EXT_LOADER_MAP[ext] or path.indexOf('?as=') >= 0
+				# TODO only allow specific kinds after ?
+				if EXT_LOADER_MAP[ext] or path.indexOf('?') >= 0
 					@asset = STACK.root.registerAsset(path,'',self)
 					args.replace(arg,@asset:ref)
 		
@@ -10348,8 +10350,8 @@ export class AssetReference < ValueNode
 		let out = ""
 		let ref = value:ref.c
 		let path = value:path
-		if asset:kind and path.indexOf('?as=') == -1
-			path += "?as={asset:kind}"
+		if asset:kind and path.indexOf('?') == -1
+			path += "?{asset:kind}"
 		if STACK.tsc
 			out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
 		else
@@ -10366,7 +10368,7 @@ export class ImportDeclaration < ESMDeclaration
 			# let raw = src.slice(1,-1)
 			let [raw,q] = @source.raw.split('?')
 			
-			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^as=/))
+			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^\w/))
 				src = M("'data:text/asset;charset=utf-8,{@source.raw}'",@source)
 				# console.log "COMPILING IMPORT",raw,@source,src
 
@@ -12107,28 +12109,7 @@ export class RootScope < Scope
 		o:expression = no
 
 		let body = node.body.c(o)
-		
-		if false
-			let assetCount = Object.keys(assets):length
-
-			if assetCount
-				head.push LIT('// ASSETS-START')
-
-			for own name, asset of assets
-				# assets should have their own node that compiles instead? Like ImportProxy
-				try
-					let ref = asset:ref.c
-					let path = asset:path
-					if asset:kind and path.indexOf('?as=') == -1
-						path += "?as={asset:kind}"
-					if STACK.tsc
-						head.push(LIT "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})")
-					else
-						head.push(LIT "import {ref} from {MP "'{path}'"}")
-
-			if assetCount
-				head.push LIT('// ASSETS-END')
-		
+	
 		let sheet = STACK.css
 		let pre = Block.new([])
 		pre.head = head
