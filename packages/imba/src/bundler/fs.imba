@@ -363,9 +363,11 @@ export class HTMLFile < FileNode
 
 				code.push "import ref{i} from '{path}';"
 				refs.push("ref{i}")
-			
+				code.push 'import {html} from "imba/src/imba/assets.imba"'
+
 			code.push "export const URLS = [{refs.join(',')}];"
-			code.push "export const HTML = " + JSON.stringify(parsed.contents)
+			# code.push "export const HTML = " + JSON.stringify(parsed.contents) + ";"
+			code.push "export default html({JSON.stringify(parsed.contents)},URLS)"
 
 			return {js: code.join('\n'), html: parsed.contents}
 

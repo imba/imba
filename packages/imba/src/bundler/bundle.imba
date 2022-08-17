@@ -464,11 +464,17 @@ export default class Bundle < Component
 		let toAssetJS = do(object)
 			# object.x = 10
 			let json = JSON.stringify(object)
-			return "export default {json}"
 			let js = """
-			// import \{asset\} from 'imba/asset';
-			export default Asset({json})
-			"""
+				import \{asset\} from 'imba/src/imba/assets.imba';
+				export default asset({json})
+				"""
+			return js
+
+			# return "export default {json}"
+			# let js = """
+			# // import \{asset\} from 'imba/asset';
+			# export default Asset({json})
+			# """
 
 		if o.resolve
 			let regex = new RegExp("^({Object.keys(o.resolve).join('|')})$")
@@ -497,10 +503,50 @@ export default class Bundle < Component
 			}
 			return out
 		
+
+		
+		
 		# Importing html files will create a nested bundle with the html as an entrypoint
-		esb.onResolve(filter: /\.html$/) do(args)
+		main? and false and esb.onResolve(filter: /\.html$/) do(args)
 			# TODO - support html file as entrypoint?
 			console.log "resolving html",args,web?,webish?,o.format,main?
+
+			# or we are on the server
+			# if args.kind == 'entry-point' and true
+			# 	let res = await esb.resolve(args.path,{resolveDir: args.resolveDir, kind: 'dynamic-import', importer: ''})
+			# 	console.log 'resolve html as entrypoint',res
+			# 	return {path: args.path, namespace: 'file', pluginData: {kind: args.kind}}
+
+			if isImba(args.importer) and args.namespace == 'file' and !args.suffix and main?
+				# html files imported from clients should likely just resolve as plain files?
+				# if webish?
+				#	return
+
+				let cfg = resolveConfigPreset(['html'])
+				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+				let path = fs.relative(res.path)
+
+				return {path: path + '?html', namespace: 'entry', pluginData: {
+					path: path
+					config: cfg
+				}}
+
+			return
+
+		main? and esb.onResolve(filter: /\.html$/, namespace: 'file') do(args)
+			# TODO - support html file as entrypoint?
+
+			console.log "resolving html",args,web?,webish?,o.format,main?
+			if args.kind == 'import-statement'
+				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+				# if res
+				#	let file = fs.relative(res.path)
+				console.log 'resolved html',res
+				return {
+					path: fs.relative(res.path)
+					namespace: 'js'
+				}
+			return
 
 			# or we are on the server
 			# if args.kind == 'entry-point' and true
@@ -644,6 +690,15 @@ export default class Bundle < Component
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
 
+		esb.onLoad(namespace: 'js', filter: /.*/) do({path})
+			let file = fs.lookup(path)
+			console.log 'compile html file',path
+			let out = await file.compile({format: 'esm'},self)
+			console.log 'compile html file',path,out.js
+			return {loader: 'js', contents: out.js, resolveDir: file.absdir, pluginData: {
+				importerFile: file.rel
+			}}
+
 		esb.onLoad(namespace: 'file', filter: /\.html$/) do(args)	
 			console.log "load html file",args,o.format
 
@@ -698,20 +753,17 @@ export default class Bundle < Component
 				# use multiple entrypoints when the ref is html as well?
 				# I guess we could always use it from the server
 				# wont work if we also include html from inside client?
-				let js = """
-				// import \{asset\} from 'imba/asset';
-				export default Asset(\{input: '{id}'\})
-				"""
 				let names = "{assetsDir}/{cfg.ref}/[dir]/[name]"
 				let bundle = cfg.#bundler ||= new Bundle(root,Object.assign(Object.create(cfg),entryNames: names))
 				bundle.addEntrypoint(meta.path)
 				root.builder.refs[id] = bundle
 				builder.refs[id] = bundle
 
-				return {loader: 'text', contents: id}
-				# if o.format == 'html'
-				#	return {loader: 'text', contents: id}
-				# return {loader: 'js', contents: js, resolveDir: np.dirname(path)}
+				# return {loader: 'text', contents: "" id}
+				if o.format == 'html'
+					return {loader: 'text', contents: id}
+				# "export default ASSET('{id}')"
+				return {loader: 'js', contents: toAssetJS(id), resolveDir: np.dirname(path)}
 
 			log.debug "lookup up bundle for id {id}"
 			# adding it as a child of root is risky wrt correctly invalidating nested bundles
@@ -738,8 +790,8 @@ export default class Bundle < Component
 			
 			if o.format == 'html'
 				return {loader: 'text', contents: id}
-
-			return {loader: 'js', contents: toAssetJS(input: id), resolveDir: file.absdir }
+			console.log "load asset!!"
+			return {loader: 'js', contents: toAssetJS(id), resolveDir: file.absdir }
 			
 		esb.onLoad(filter: /\.css$/) do(args)
 			# no suffixes?
