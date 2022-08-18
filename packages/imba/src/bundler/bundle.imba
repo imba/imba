@@ -392,7 +392,6 @@ export default class Bundle < Component
 
 		let base = {presets: [], ref: ref}
 		let presets = imbaconfig.options
-		
 
 		for typ in types
 			let pre = presets[typ] or {}
@@ -446,10 +445,58 @@ export default class Bundle < Component
 
 		# Images imported from imba files should resolve as special assets
 		# importing metadata about the images and more
-		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?as=img)$/) do(args)
+		
+
+		if main? and serve?
+			esb.onResolve(filter: /.*/, namespace: 'file') do(args)
+				
+				if args.kind == 'entry-point'
+					let kind = args.path.split('.').pop!
+					let tpl = resolveTemplate("serve-{kind}.imba")
+
+					let abs = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+					return {path: tpl, pluginData: {
+						__ENTRYPOINT__: abs.path
+						resolveDir: args.resolveDir
+					}}
+
+				if args.path == '__ENTRYPOINT__'
+					return {
+						path: fs.relative(entryPoints[0])
+						namespace: 'js'
+						pluginData: {kind: args.kind}
+					}
+				return
+		
+		if main?
+			esb.onResolve(filter: /\.html$/, namespace: 'file') do(args)
+				if args.kind == 'entry-point'
+					let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+
+					return {
+						path: res.path
+						namespace: 'file'
+						pluginData: {
+							path: args.path
+							kind: args.kind
+							serve: !build?
+						}
+					}
+				if args.kind == 'import-statement'
+					let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+					# console.log 'resolved html',res
+					return {
+						path: fs.relative(res.path)
+						namespace: 'js'
+						pluginData: {
+							kind: args.kind
+						}
+					}
+				return
+
+		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?img)$/) do(args)
 			return unless isImba(args.importer) and args.namespace == 'file'
-			# console.log 'resolve as image?!',args
-			
+		
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 			
@@ -463,86 +510,30 @@ export default class Bundle < Component
 			}
 			return out
 
-		# esb.onResolve(filter: /^__ENTRYPOINT__$/) do(args)
-		#	# console.log "resolving entrypoint!!!",args
-		#	return
-
-		main? and esb.onResolve(filter: /\.imba$/, namespace: 'file') do(args)
-			
-			if main? and args.kind == 'entry-point' and serve?
-				let tpl = resolveTemplate('serve-web.imba')
-				# console.log 'resolving entrypoint?!!!',args.kind,args.path,tpl
-				let abs = await esb.resolve(args.path,{resolveDir: args.resolveDir})
-				return {path: tpl, pluginData: {
-					__ENTRYPOINT__: abs.path
-					resolveDir: args.resolveDir
-				}}
-				# throw 1
-				# let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
-			return
-
-		main? and esb.onResolve(filter: /\.html$/, namespace: 'file') do(args)
-			return unless main?
-			# TODO - support html file as entrypoint?
-
-			# console.log "resolving html",args,web?,webish?,o.format,main?
-			if args.kind == 'entry-point'
-				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
-
-				if build?
-					# compile to a completely separate thing
-					yes
-
-				return {
-					path: res.path
-					namespace: 'file'
-					pluginData: {
-						path: args.path
-						kind: args.kind
-						serve: !build?
-					}
-				}
-			if args.kind == 'import-statement'
-				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
-				# console.log 'resolved html',res
-				return {
-					path: fs.relative(res.path)
-					namespace: 'js'
-					pluginData: {
-						kind: args.kind
-					}
-				}
-			return
-		
-
-		esb.onResolve(filter: /\?(as=)?([\w\-\,\.]+)$/) do(args)
+		esb.onResolve(filter: /\?([\w\-\,\.]+)$/) do(args)
 			# only resolve certain types
 			
 			# reference to _all_ styles referenced via main entrypoint
 			if args.path == '*?css'
 				root.hasGlobStylesheet = yes
-				# FIXME no longer used?
 				return {path: "__styles__", namespace: 'entry'}
 			
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
 			let [path,q] = args.path.split('?')
-			let formats = q.replace(/^(as=)?/,'').split(',')
+			let formats = q.split('&')
 
-			if q.match(/^(url|dataurl|binary|text|base64|file|copy)/)
+			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg)/)
 				return
-			
-			let resolved = await esb.resolve(path,{resolveDir: args.resolveDir})
+
+			let resolved
 
 			if path == '__ENTRYPOINT__'
-				# console.log 'resolving ENTRYPOINT!!',args
-				let entry = args.pluginData..__ENTRYPOINT__
-				unless entry
-					entry = fs.resolve(entryPoints[0])
-				# resolved = 
-				resolved = {path: entry}
-				# throw 1
+				# FIXME - resolve path using fs.cwd and esb instead?
+				resolved = {path: fs.resolve(entryPoints[0])}
+			else
+				resolved = await esb.resolve(path,{resolveDir: args.resolveDir})
 
 			# if the path could not be resolved to an actual file on disk, skip it
 			unless resolved
@@ -567,7 +558,6 @@ export default class Bundle < Component
 		esb.onResolve(filter: /^\//) do(args)
 			if args.kind == 'entry-point'
 				return {path: args.path.split('?')[0], resovleDir: args.resolveDir}
-
 
 			return if args.path.indexOf('?') > 0
 			return {path: args.path, external: yes}
@@ -606,13 +596,20 @@ export default class Bundle < Component
 		# resolve any non-relative path to see if it should
 		# be external. If importer is an imba file, try to
 		# also resolve it via the imbaconfig.paths rules.
-		esb.onResolve(filter: /^[\w\@\#]/, namespace: 'file') do(args)
+		esb.onResolve(namespace: 'file', filter: /^[\w\@\#]/) do(args)
+			let path = args.path
+
 			# console.log 'on resolve still',args
 			if args.path.indexOf('node:') == 0
 				return {external: true}
 			
 			if externs.indexOf(args.path) >= 0
 				return {external: true}
+
+			# FIXME Formalize this behaviour
+			# if path.match(/\.json$/) and args.importer..match(/\.html$/)
+			# 	let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+			# 	return {path: res.path, suffix: "?url"}
 
 			return null
 
@@ -1010,8 +1007,14 @@ export default class Bundle < Component
 		if process.env.DEBUG or true
 			let tmpsrc = np.resolve(fs.cwd,'dist')
 			meta.entryPoints = esoptions.entryPoints
+			let json = {
+				entryPoints: meta.entryPoints
+				inputs: Object.keys(meta.inputs)
+				outputs: Object.keys(meta.outputs)
+				full: meta
+			}
 			try nfs.mkdirSync(tmpsrc)
-			nfs.writeFileSync(np.resolve(tmpsrc,"manifest.{nr}.json"),JSON.stringify(meta,null,4))
+			nfs.writeFileSync(np.resolve(tmpsrc,"manifest.{nr}.json"),JSON.stringify(json,null,4))
 
 		
 		let ins = meta.inputs
@@ -1464,7 +1467,8 @@ export default class Bundle < Component
 			# 	if mfile
 			# 		await mfile.writeSync json, manifest.hash
 
-			await copyPublicFiles!
+			if false # Turned off for scrimba testing now(!)
+				await copyPublicFiles!
 
 			let mainEntry = try ins[entryPoints[0]].output
 			# let result = {main: mainEntry.path,manifest: entryManifest}
