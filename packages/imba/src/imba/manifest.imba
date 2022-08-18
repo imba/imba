@@ -101,6 +101,7 @@ export class Manifest < EventEmitter
 
 	def watch
 		if #watch =? yes
+			console.log "drop!"
 			# don't want filesystem if we are using hmr
 			path and !process.env.IMBA_HMR and nfs.watch(path) do(ev,name)
 				let exists = nfs.existsSync(path)

@@ -1,57 +1,32 @@
-# import {deserializeData} from '../imba/utils'
-# import {manifest} from '../imba/manifest'
-# Improve this
-# let doc = global.document
-
-import {deserializeData,patchManifest} from './utils'
-
-class Manifest
-	def constructor
-		data = {}
-
-	get changes do data.changes or {}
-	get inputs do data.inputs
-	get outputs do data.outputs
-	get urls do data.urls
-	get main do data.main
-
-	def init raw
-		update(raw)
-	
-	def update raw
-		if typeof raw == 'string'
-			raw = deserializeData(raw)
-
-		data = patchManifest(data,raw)
-		return data.changes
-
 class DevTools
 	def constructor
 		start!
-		manifest = new Manifest({})
 		debug = no
 		self
 
 	def log ...params
-		return unless debug
+		# return unless debug
 		console.log(...params)
 
 
-	def refresh changes
+	def refresh manifest
 		let dirty = {
 			css: []
 			js: []
 		}
 
+		let urls = Object.values(manifest).map do $1.url
+		let regex = /\.[A-Z\d]{8}\./
+
 		for sheet of global.document.styleSheets
 			let url = sheet.ownerNode.getAttribute('href')
-			# console.log 'look for sheet',url,manifest.urls
-			if let asset = manifest.urls[url]
-				if asset.replacedBy
-					sheet.ownerNode.href = asset.replacedBy.url
+			let match = urls.find do $1.replace(regex,'') == url.replace(regex,'')
+			console.log 'look for sheet',url,match
+			if match and url != match
+				sheet.ownerNode.href = match
 
 		for el of global.document.querySelectorAll('script[src]')
-			if let asset = manifest.urls[el.getAttribute('src')]
+			if let asset = urls[el.getAttribute('src')]
 				if asset.replacedBy
 					dirty.js.push(asset)
 
@@ -62,6 +37,7 @@ class DevTools
 
 	def start
 		return if socket
+		console.log "STARTED!"
 
 		socket = new EventSource("/__hmr__")
 		socket.onmessage = do(e)
@@ -70,6 +46,12 @@ class DevTools
 		socket.addEventListener("paused") do(e)
 			log "server paused"
 			yes
+
+		socket.addEventListener("rebuild") do(e)
+			let manifest = JSON.parse(e.data)
+			console.log "rebuild!",e,manifest
+			refresh(manifest)
+
 
 		socket.addEventListener("state") do(e)
 			let json = JSON.parse(e.data)
@@ -85,15 +67,6 @@ class DevTools
 			for item in json
 				console.error("error in {item.location.file}: {item.location.lineText} ({item.text})")
 			return
-			# manifest.init(json)
-
-		socket.addEventListener("manifest") do(e)
-			# let parsed = deserializeData(JSON.parse(e.data))
-			let json = JSON.parse(e.data)
-			# console.log "event from manifest",e,e.data,json
-			let changes = manifest.update(json)
-			# console.log "Changes for manifest",manifest.data,changes
-			refresh changes
 
 		socket.addEventListener("reload") do(e)	
 			log 'asked to reload by server'

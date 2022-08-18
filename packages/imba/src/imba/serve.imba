@@ -4,11 +4,9 @@ import nfs from 'fs'
 import np from 'path'
 import {EventEmitter} from 'events'
 
-
 # import {manifest} from './manifest'
 # import {Document,Location} from './dom/core'
-
-import log from '../utils/logger'
+# import log from '../utils/logger'
 
 import {Module} from 'module'
 import http from 'http'
@@ -98,6 +96,9 @@ export const process = new class Process < EventEmitter
 
 	def #setup
 		return unless #setup? =? yes
+
+		on('rebuild') do(e)
+			servers.broadcast('rebuild',e)
 
 		on('reloading') do(e)
 			console.log 'is reloading - from outside'
@@ -300,21 +301,17 @@ class Server
 			if host == '::' or host == '0.0.0.0'
 				host = 'localhost'
 			let url = "{scheme}://{host}:{adr.port}/"
-			log.info 'listening on %bold',url
+			console.log "listening on {url}"
+			# log.info 'listening on %bold',url
 			# Logger.main.warn 'listening on %bold',url
 
 		# if we are in dev-mode, broadcast updated manifest to the clients
-		
-		manifest.on('change') do(changes,m)
-			broadcast('manifest',m.data.#raw)
-
 		let handleDynamic = do(req,res)
 
 		
 		handler = do(req,res)
 			let ishttp2 = req isa Http2ServerRequest
 			let url = req.url
-			let assetPrefix = '/__assets__/'
 
 			if paused or closed
 				res.statusCode=302
@@ -330,33 +327,27 @@ class Server
 				else
 					return stalledResponses.push(res)
 
-			if url == '/__hmr__.js' and devtoolsPath
-				# and if hmr?
-				let stream = nfs.createReadStream(devtoolsPath)
-				res.writeHead(200, defaultHeaders.js)
-				return stream.pipe(res)
-			
-			if url == '/__hmr__'
-				let headers = {
-					'Content-Type': 'text/event-stream'
-					'Cache-Control': 'no-cache'
-				}
-				unless ishttp2
-					headers['Connection'] = 'keep-alive'
+			if global.IMBA_HMR
+				if url == '/__hmr__.js' and devtoolsPath
+					# and if hmr?
+					let stream = nfs.createReadStream(devtoolsPath)
+					res.writeHead(200, defaultHeaders.js)
+					return stream.pipe(res)
+				
+				if url == '/__hmr__'
+					let headers = {
+						'Content-Type': 'text/event-stream'
+						'Cache-Control': 'no-cache'
+					}
+					unless ishttp2
+						headers['Connection'] = 'keep-alive'
 
-				res.writeHead(200,headers)
-				clients.add(res)
-				broadcast('init',manifest.serializeForBrowser!,[res])
-				req.on('close') do clients.delete(res)
-				return true
-			
+					res.writeHead(200,headers)
+					clients.add(res)
+					# broadcast('init','{}',[res])
+					req.on('close') do clients.delete(res)
+					return true
 
-			# found a hit for the url?
-			if url.indexOf(assetPrefix) == 0 or manifest.urls[url]
-				# let asset = manifest.urls[url]
-				# also need the base-url for sure
-				let responder = assetResponders[url] ||= new AssetResponder(url,self)
-				return responder.respond(req,res)
 
 			# create full url
 			let headers = req.headers
@@ -371,8 +362,9 @@ class Server
 			# console.log "get headers",base,req.url,headers,req.protocol
 			# should be other tests as well I guess
 			if url.match(/\.[A-Z\d]{8}\./)
-				# console.log 'checking for url',url
+				
 				let path = localPathForUrl(url)
+				# console.log 'checking for url',url,path
 				let exists = publicExistsMap[path] ??= nfs.existsSync(path)
 				
 				if exists
@@ -384,26 +376,6 @@ class Server
 					catch e
 						res.writeHead(503,{})
 						return res.end!
-			
-			# if we've enabled serving static assets
-			if options.static
-				# bypass for the most basic stff
-				let rurl = new URL(url,base)
-				let ext = np.extname(rurl.pathname)
-				let headers = defaultHeaders[ext.slice(1)]
-				if headers
-					let path = np.resolve(manifest.cwd,".{rurl.pathname}")
-					let exists = nfs.existsSync(path)
-					# console.log "check for file!",url,manifest.cwd,path,rurl,exists
-					if exists
-						nfs.readFile(path) do(err,data)
-							if err
-								res.writeHead(500,{})
-								res.write("Error getting the file: {err}")
-							else
-								res.writeHead(200,headers)
-								res.end(data)
-						return
 			
 			# continue to the real server
 			if dom
@@ -435,12 +407,10 @@ class Server
 	def pause
 		if paused =? yes
 			broadcast('paused')
-			# console.log 'paused server'
 		self
 
 	def resume
 		if paused =? no
-			# console.log 'resumed server'
 			broadcast('resumed')
 			flushStalledResponses!
 
@@ -459,16 +429,3 @@ class Server
 
 export def serve srv,...params
 	return Server.wrap(srv,...params)
-
-export def _filename_ path
-	np.resolve(proc.cwd!,path)
-
-export def _dirname_ path
-	np.dirname(_filename_(path))
-
-export def _run_ module, file
-	try
-		let srcdir = manifest.srcdir
-		let src = srcdir + '/server.imba'
-		let paths = require.resolve.paths(srcdir + '/server.imba')
-		require.main.paths.unshift(...Module._nodeModulePaths(manifest.srcdir))

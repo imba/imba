@@ -8,6 +8,8 @@ def injectStringBefore target, toInject, patterns = ['']
 	return target
 
 export def asset src
+	if let asset = global._MF_..[src]
+		return asset.url or asset
 	return src
 
 class HtmlAsset
@@ -22,7 +24,7 @@ class HtmlAsset
 				return asset.url
 			return ref
 
-		if true
+		if global.IMBA_HMR
 			res = injectStringBefore(res,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 		return res
 

@@ -156,31 +156,14 @@ def run entry, o, extras
 		o.as = q.replace(/^as=/,'')
 	elif file.ext == '.html'
 		o.as = 'html'
+		unless o.command == 'build'
+			o.as = 'node'
+
 
 	let params = resolvePresets(prog.config,{entryPoints: [file.rel]},o.as or 'node')
 
 	unless o.command == 'build'
 		o.port ||= await getport(port: getport.makeRange(3000, 3100))
-	
-	if o.command == 'serve' # or params.platform != 'node'
-		let wrapper = resolvePresets(prog.config,{},'node')
-		params = wrapper
-		params.stdin = {
-			define: {ENTRYPOINT: "./{file.rel}"}
-			template: 'serve-http.imba'
-			resolveDir: o.cwd
-			sourcefile: 'serve.imba'
-			loader: 'js'
-		}
-
-		if file.ext == '.html'
-			params.stdin.template = 'serve-html.imba'
-			params.format = 'cjs'
-
-	if o.command == 'build' and file.ext == '.html'
-		
-		yes
-
 
 	let bundle = new Bundler(o,params)
 	let out = await bundle.build!
@@ -189,25 +172,15 @@ def run entry, o, extras
 		return
 
 	# should we really need this here?
-	if let exec = out..manifest..main
+	if let exec = out..main
 		if !o.watch and o.instances == 1
 			o.execMode = 'fork'
 
 		o.name ||= entry
 
-		let runner = new Runner(bundle.manifest,o)
+		let runner = new Runner(bundle,o)
 
 		runner.start!
-
-		if o.watch
-			bundle.on('errored') do
-				runner.broadcast(['emit','manifest:error',$1])
-
-			bundle.manifest.on('change') do
-				runner.broadcast(['emit','manifest:change',bundle.manifest.raw])
-
-			bundle.manifest.on('change:main') do
-				runner.reload!
 	return
 
 let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version).name('imba')

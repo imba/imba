@@ -20,7 +20,10 @@ class Instance
 	restarts = 0
 
 	get manifest
-		runner.manifest
+		runner.manifest or {}
+
+	get bundle
+		runner.bundle
 
 	def constructor runner, options
 		super(options)
@@ -40,7 +43,9 @@ class Instance
 		let o = runner.o
 		let regpath = np.resolve(o.imbaPath,"loader.imba.js")
 		let loader = o.imbaPath ? regpath : "imba/loader"
-		let path = manifest.main.absPath
+		let path = bundle.result.main
+
+		console.log "STARTING"
 
 		let args = {
 			windowsHide: yes
@@ -58,8 +63,7 @@ class Instance
 			IMBA_PATH: o.imbaPath
 			IMBA_OUTDIR: o.outdir
 			IMBA_TMPDIR: o.tmpdir
-			IMBA_PUBDIR: manifest.pubdir or o.pubdir or '.'
-			IMBA_MANIFEST_PATH: manifest.path
+			IMBA_PUBDIR: o.pubdir or bundle.pubdir or '.' 
 			IMBA_HMR: o.hmr ? true : undefined
 			IMBA_WORKER_NR: options.number
 			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'info'
@@ -119,10 +123,10 @@ class Instance
 
 
 export default class Runner < Component
-	def constructor manifest, options
+	def constructor bundle, options
 		super()
 		o = options
-		manifest = manifest
+		bundle = bundle
 		workers = new Set
 
 	def start
@@ -137,7 +141,8 @@ export default class Runner < Component
 			].filter do $1
 		}
 
-		let name = o.name or np.basename(manifest.main.source.path)
+		# hmm - what?
+		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
 
 		while nr <= max
 			let opts = {
@@ -150,6 +155,10 @@ export default class Runner < Component
 		for worker of workers
 			worker.start!
 
+		if o.watch
+			bundle.on('built') do(result)
+				console.log 'build rebuilt',result
+				broadcast(['emit','rebuild',result.manifest])
 		return self
 
 	def reload

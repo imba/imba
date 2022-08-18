@@ -23,6 +23,20 @@ const blankStat = {
 	birthtime: ""
 }
 
+const HTML_SERVE_CODE = '''
+import http from "http";
+import {serve} from "imba/src/imba/serve";
+
+const server = http.createServer((req,res)=>{
+	let out = String(body);
+	if ((process.env.IMBA_HMR || globalThis.IMBA_HMR) && out.indexOf("__hmr__.js") == -1) {		
+		out = "<script src=\'/__hmr__.js\'  ></script>" + out;
+	};
+	return res.end(out);
+});
+serve(server.listen(process.env.PORT || 3000));
+'''
+
 const roots = {}
 
 const FLAGS = {
@@ -349,6 +363,8 @@ export class HTMLFile < FileNode
 			let code = []
 			let refs = []
 
+			let serve = o.format == 'serve'
+
 			code.push 'import {html} from "imba/src/imba/assets.imba"'
 
 			for item,i in parsed.imports
@@ -365,13 +381,19 @@ export class HTMLFile < FileNode
 
 				code.push "import ref{i} from '{path}';"
 				refs.push("ref{i}")
-				
+			
+			const str = JSON.stringify(parsed.contents)
 
-			code.push "export const URLS = [{refs.join(',')}];"
-			# code.push "export const HTML = " + JSON.stringify(parsed.contents) + ";"
-			code.push "export default html({JSON.stringify(parsed.contents)},URLS)"
+			# hack to use the format for this?
+			if serve
+				code.push "const body = html({str},[{refs.join(',')}]);"
+				code.push "console.log('serving',String(body));"
+				code.push HTML_SERVE_CODE
+			else
+				code.push "export const URLS = [{refs.join(',')}];"
+				code.push "export default html({str},URLS);"
 
-			return {js: code.join('\n'), html: parsed.contents}
+			return {js: code.join('\n'), html: parsed.contents, serve: serve}
 
 export class ImageFile < FileNode
 
