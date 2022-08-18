@@ -7997,7 +7997,9 @@ export class TagAttr < TagPart
 			let tagName = @tag.tagName
 
 			let kind = 'asset'
-			if tagName == 'img' or tagName == 'svg'
+			if tagName == 'svg'
+				kind = 'svg'
+			elif tagName == 'img'
 				kind = 'img'
 			elif tagName == 'script'
 				kind = 'web'

@@ -341,15 +341,11 @@ export class SVGFile < FileNode
 			let parsed = parseAsset({body: svgbody})
 			# special serializer
 			let js = """
-			import \{asset\} from 'imba';
+			// import \{asset\} from 'imba';
 			import url from './{name}';
-			
-			export default /* @__PURE__ */ asset(\{
-				url: url,
-				type: 'svg',
-				meta: {JSON.stringify(parsed)},
-				toString: function()\{ return this.url;\}
-			\})
+			export default /* @__PURE__ */ Object.assign(\{
+				url: url, type: 'svg',toString: function()\{ return this.url;\}
+			\},{JSON.stringify(parsed)})
 			"""
 			#  "export default {JSON.stringify(parsed)};"
 			return {js: js}

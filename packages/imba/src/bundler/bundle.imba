@@ -254,7 +254,8 @@ export default class Bundle < Component
 			}
 			footer: {js: o.footer or "//__FOOT__"}
 			splitting: o.splitting
-			sourcemap: (program.sourcemap === false ? no : (web? ? yes : 'inline'))
+			sourcemap: (program.sourcemap === false ? no : (web? ? yes : yes))
+			
 			# minify: o.minify ?? program.minify
 			minifySyntax: true
 			minifyWhitespace: minify?
@@ -280,6 +281,7 @@ export default class Bundle < Component
 			esoptions.entryNames = "[dir]/[name]"
 			esoptions.banner.js += "\nglobalThis.IMBA_OUTDIR=__dirname;globalThis.IMBA_PUBDIR='{pubdir}';"
 			esoptions.publicPath = baseurl or '/'
+		esoptions.outdir = program.outdir
 
 		if web? and o.ref
 			esoptions.entryNames = "{assetsDir}/{o.ref}/[dir]/[name].[hash]"
@@ -432,6 +434,13 @@ export default class Bundle < Component
 				import \{asset\} from 'imba/src/imba/assets.imba';
 				export default asset({json})
 				"""
+		
+		let esresolve = do(args)
+			console.log 'esresolve',args.path,args
+			let res = await esb.resolve(args.path,resolveDir: args.resolveDir, namespace: '')
+			console.log 'esresolved',args.path,res.path
+			# console.log 'esresolved',res
+			return res
 
 		if o.resolve
 			let regex = new RegExp("^({Object.keys(o.resolve).join('|')})$")
@@ -454,7 +463,7 @@ export default class Bundle < Component
 					let kind = args.path.split('.').pop!
 					let tpl = resolveTemplate("serve-{kind}.imba")
 
-					let abs = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+					let abs = await esb.resolve(args.path,resolveDir: args.resolveDir)
 					return {path: tpl, pluginData: {
 						__ENTRYPOINT__: abs.path
 						resolveDir: args.resolveDir
@@ -471,7 +480,7 @@ export default class Bundle < Component
 		if main?
 			esb.onResolve(filter: /\.html$/, namespace: 'file') do(args)
 				if args.kind == 'entry-point'
-					let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+					let res = await esresolve(args)
 
 					return {
 						path: res.path
@@ -483,7 +492,7 @@ export default class Bundle < Component
 						}
 					}
 				if args.kind == 'import-statement'
-					let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+					let res = await esresolve(args)
 					# console.log 'resolved html',res
 					return {
 						path: fs.relative(res.path)
@@ -496,13 +505,14 @@ export default class Bundle < Component
 
 		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?img)$/) do(args)
 			return unless isImba(args.importer) and args.namespace == 'file'
+			return
 		
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 			
 			let path = args.path.split('?')[0]
 			let ext = np.extname(path).slice(1)
-			let res = await esb.resolve(path,{resolveDir: args.resolveDir})
+			let res = await esresolve(args)
 
 			let out = {
 				path: fs.relative(res.path) or res.path,
@@ -510,19 +520,26 @@ export default class Bundle < Component
 			}
 			return out
 
-		esb.onResolve(filter: /\?([\w\-\,\.]+)$/) do(args)
+		esb.onResolve(filter: /^\*\?css$/) do(args)
+			root.hasGlobStylesheet = yes
+			return {path: "*?css", namespace: 'css'}
+
+		# catch the potential entrypoints here
+		esb.onResolve(filter: /\?(as=)?([\w\-\,\.]+)$/) do(args)
+			return if args.namespace == ''
+			console.log "RESOLVING?!?!",args
 			# only resolve certain types
 			
 			# reference to _all_ styles referenced via main entrypoint
-			if args.path == '*?css'
-				root.hasGlobStylesheet = yes
-				return {path: "__styles__", namespace: 'entry'}
+			# if args.path == '*?css'
+			# 	root.hasGlobStylesheet = yes
+			# 	return {path: "__styles__", namespace: 'entry'}
 			
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
 			let [path,q] = args.path.split('?')
-			let formats = q.split('&')
+			let formats = q.replace(/^as=/,'').split('&')
 
 			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg)/)
 				return
@@ -533,7 +550,7 @@ export default class Bundle < Component
 				# FIXME - resolve path using fs.cwd and esb instead?
 				resolved = {path: fs.resolve(entryPoints[0])}
 			else
-				resolved = await esb.resolve(path,{resolveDir: args.resolveDir})
+				resolved = await esresolve(args)
 
 			# if the path could not be resolved to an actual file on disk, skip it
 			unless resolved
@@ -546,7 +563,6 @@ export default class Bundle < Component
 
 			let cfg = resolveConfigPreset(formats)
 			
-			# let res = await esb.resolve(path,{resolveDir: args.resolveDir})
 			let rel = fs.relative(resolved.path)
 
 			return {path: rel +  '?' + formats.join(','), namespace: 'entry', pluginData: {
@@ -557,7 +573,7 @@ export default class Bundle < Component
 		# be default, treat all absolute paths as external
 		esb.onResolve(filter: /^\//) do(args)
 			if args.kind == 'entry-point'
-				return {path: args.path.split('?')[0], resovleDir: args.resolveDir}
+				return {path: args.path.split('?')[0], resolveDir: args.resolveDir}
 
 			return if args.path.indexOf('?') > 0
 			return {path: args.path, external: yes}
@@ -596,34 +612,58 @@ export default class Bundle < Component
 		# resolve any non-relative path to see if it should
 		# be external. If importer is an imba file, try to
 		# also resolve it via the imbaconfig.paths rules.
-		esb.onResolve(namespace: 'file', filter: /^[\w\@\#]/) do(args)
+		esb.onResolve(namespace: 'file', filter: /.*/) do(args)
 			let path = args.path
+			let abs? = /^(\/|\w\:\/)/.test(path)
+			let q = (path.split('?')[1] or '')
+			let rel? = path[0] == '.'
+			
+			console.log 'onresolve file',args.path
 
 			# console.log 'on resolve still',args
-			if args.path.indexOf('node:') == 0
+			if path.indexOf('node:') == 0
 				return {external: true}
 			
-			if externs.indexOf(args.path) >= 0
+			if externs.indexOf(path) >= 0
 				return {external: true}
 
+			if abs?
+				return null
+			
+			# just let it flow through
+			if q == 'img' or q == 'svg'
+				return null
+
+			let img? = /(\.(svg|png|jpe?g|gif|tiff|webp))$/.test(path)
+			
+			if isImba(args.importer) and img?
+				let resolved = await esresolve(args)
+				console.log "resolving png!",args,resolved
+				if resolved..path and isImba(args.importer)
+					console.log "load image with suffix!!"
+					return {path: resolved.path, suffix: '?js'}
+				throw 1
+
 			# FIXME Formalize this behaviour
-			# if path.match(/\.json$/) and args.importer..match(/\.html$/)
-			# 	let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
-			# 	return {path: res.path, suffix: "?url"}
+			if path.match(/\.json$/) and args.importer..match(/\.html$/)
+				let res = await esresolve(args)
+				return {path: res.path, suffix: "?url"}
 
 			return null
 
+		# Maybe use a special resolver for when we include the extension?
+		# We always do that for images etc...
+
 		# there are other rules
-		esb.onResolve(filter: /\.json$/) do(args)
-			
-			if args.importer..match(/\.html$/)
-				# FIXME Formalize this behaviour
-				let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
-				return {path: res.path, suffix: "?url"}
-
-			return
-
-
+		# esb.onResolve(filter: /\.json$/) do(args)
+		# 	
+		# 	if args.importer..match(/\.html$/)
+		# 		# FIXME Formalize this behaviour
+		# 		let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
+		# 		return {path: res.path, suffix: "?url"}
+		# 
+		# 	return
+		
 
 		###
 		img namespace returns a js file for the image which includes image size
@@ -677,20 +717,27 @@ export default class Bundle < Component
 		for all regular files we just intercept onLoad and check for specific
 		suffixes like ?raw, ?copy, ?url, ?binary.
 		###
-		esb.onLoad(namespace: 'file', filter: /.*/) do({path,suffix})
+		esb.onLoad(namespace: 'file', filter: /.*/) do({path,suffix,pluginData})
 			if suffix
 				let fmt = suffix.slice(1)
 				let loader = LOADER_SUFFIXES[fmt]
 				if loader
 					let out = nfs.readFileSync(path)
 					return {loader: loader, contents: out}
+				elif fmt == 'svg'
+					let file = fs.lookup(path)
+					let out = await file.compile({format: 'esm'},self)
+					return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+
+		esb.onLoad(namespace: 'css', filter: /^\*\?css/) do
+			return {loader: 'text', contents: '*?css'} if o.format == 'html'
+			return {loader: 'js', contents: toAssetJS('*?css'), resolveDir: fs.cwd }
 
 		esb.onLoad(namespace: 'entry', filter:/.*/) do({path,pluginData})
 
 			if path == '__styles__'
 				if o.format == 'html'
 					return {loader: 'text', contents: '*?css'}
-
 				return {loader: 'js', contents: toAssetJS('*?css'), resolveDir: fs.cwd }
 
 			# skip entrypoints if compiling for css only
@@ -1009,8 +1056,8 @@ export default class Bundle < Component
 			meta.entryPoints = esoptions.entryPoints
 			let json = {
 				entryPoints: meta.entryPoints
-				inputs: Object.keys(meta.inputs)
 				outputs: Object.keys(meta.outputs)
+				inputs: Object.keys(meta.inputs)
 				full: meta
 			}
 			try nfs.mkdirSync(tmpsrc)

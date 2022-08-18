@@ -76,9 +76,9 @@ class Servers < Set
 		for server of self
 			server.emit(event,data)
 
-export const servers = new Servers
+const servers = new Servers
 
-export const process = new class Process < EventEmitter
+const process = new class Process < EventEmitter
 
 	def constructor
 		super

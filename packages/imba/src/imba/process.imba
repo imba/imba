@@ -454,7 +454,7 @@ class Server
 			server.close(resolve)
 			flushStalledResponses!
 
-export def serve srv,...params
+def serve srv,...params
 	return Server.wrap(srv,...params)
 
 export def _filename_ path
@@ -462,10 +462,3 @@ export def _filename_ path
 
 export def _dirname_ path
 	np.dirname(_filename_(path))
-
-export def _run_ module, file
-	try
-		let srcdir = manifest.srcdir
-		let src = srcdir + '/server.imba'
-		let paths = require.resolve.paths(srcdir + '/server.imba')
-		require.main.paths.unshift(...Module._nodeModulePaths(manifest.srcdir))

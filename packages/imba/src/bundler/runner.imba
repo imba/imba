@@ -141,6 +141,8 @@ export default class Runner < Component
 			].filter do $1
 		}
 
+		console.log "enable source-maps?!",o.sourcemap,args
+
 		# hmm - what?
 		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
 

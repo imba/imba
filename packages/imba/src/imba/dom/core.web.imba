@@ -373,13 +373,11 @@ extend class SVGSVGElement
 
 	set src value
 		if #src =? value
-			if value
-				if value.adoptNode
-					value.adoptNode(self)
-				elif value.content
+			if value..type == 'svg'
+				if value.attributes
 					for own k,v of value.attributes
 						setAttribute(k,v)
-					innerHTML = value.content
+				innerHTML = value.content
 		return
 
 		
