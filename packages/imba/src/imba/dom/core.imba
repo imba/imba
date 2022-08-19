@@ -860,6 +860,11 @@ export class SVGSVGElement < SVGElement
 		if #src =? value
 			if value and value.adoptNode
 				value.adoptNode(self)
+			elif value and value.type == 'svg'
+				if value.attributes
+					for own k,v of value.attributes
+						setAttribute(k,v)
+				innerHTML = value.content
 		return
 
 TYPES[''].klass = Element

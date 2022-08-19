@@ -373,14 +373,14 @@ extend class SVGSVGElement
 
 	set src value
 		if #src =? value
-			if value..type == 'svg'
+			if value and value.adoptNode
+				value.adoptNode(self)
+			elif value and value.type == 'svg'
 				if value.attributes
 					for own k,v of value.attributes
 						setAttribute(k,v)
 				innerHTML = value.content
 		return
-
-		
 
 export def createSVGElement name, parent, flags, text, ctx
 	let el = document.createElementNS("http://www.w3.org/2000/svg",name)
