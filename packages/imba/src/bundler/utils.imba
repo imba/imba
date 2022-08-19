@@ -4,6 +4,7 @@ import {createHash as cryptoCreateHash} from 'crypto'
 import os from 'os'
 
 import {resolve as parseConfig,merge as mergeConfig} from './config'
+import * as smc from 'sourcemap-codec'
 
 export const defaultLoaders = {
 	".png": "file",

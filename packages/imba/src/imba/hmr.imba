@@ -25,12 +25,14 @@ class DevTools
 		
 		let scripts = Object.keys(global.IMBA_LOADED or {})
 
-		for script in scripts
-			let match = urls.find do $1.replace(regex,'') == script.replace(regex,'')
-			if match
-				dirty.js.push([script,match])
+		for url in scripts
+			let match = urls.find do $1.replace(regex,'') == url.replace(regex,'')
+			if match and url != match and urls.indexOf(url) == -1
+				dirty.js.push([url,match])
+		
+		console.log "refreshed",manifest,dirty
+		if dirty.js.length and false
 
-		if dirty.js.length
 			global.document.location.reload!
 		self
 

@@ -45,8 +45,7 @@ export const LOADER_EXTENSIONS = {
 	".ogg": "file",
 	".ogv": "file",
 	".oga": "file",
-	".opus": "file",
-	".json": "copy"
+	".opus": "file"
 }
 
 

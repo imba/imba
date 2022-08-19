@@ -3,18 +3,16 @@ import {startWorkers} from './pooler'
 import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject,replaceAll, normalizePath, relativePath, ImageRegex, FontRegex} from './utils'
 
 import {StyleTheme} from '../compiler/styler'
-import {serializeData,deserializeData} from '../imba/utils'
-# import {Manifest} from '../imba/manifest'
 
 import os from 'os'
 import np from 'path'
 import nfs from 'fs'
 import ncp from '../../vendor/ncp.js'
-import {Module} from 'module'
 
 import FileSystem from './fs'
 import Component from './component'
 import {SourceMapper} from '../compiler/sourcemapper'
+import * as smc from 'sourcemap-codec'
 
 import Watcher from './watcher'
 
@@ -215,8 +213,8 @@ export default class Bundle < Component
 			splitting: o.splitting
 			sourcemap: (program.sourcemap === false ? no : (web? ? yes : program.sourcemap))
 			minifySyntax: true
-			minifyWhitespace: minify?
-			minifyIdentifiers: minify?
+			minifyWhitespace: minify? and o.format != 'html'
+			minifyIdentifiers: minify? and o.format != 'html'
 			incremental: !!watcher
 			legalComments: 'inline'
 			# charset: 'utf8'
@@ -253,6 +251,9 @@ export default class Bundle < Component
 			esoptions.entryNames = "{assetsDir}/[dir]/[name].[hash]"
 		elif o.ref
 			esoptions.entryNames = "{o.ref}/[dir]/[name]"
+
+		if o.ref and o.format != 'html'
+			esoptions.outbase = fs.cwd
 
 		if o.esbuild
 			extendObject(esoptions,o.esbuild,'esbuild')			
@@ -308,7 +309,7 @@ export default class Bundle < Component
 			esoptions.resolveExtensions.unshift(...addExtensions[o.platform])
 
 		let defines = esoptions.define ||= {}
-		# defines["globalThis.DEBUG_IMBA"] ||= !minify?
+		defines["globalThis.DEBUG_IMBA"] ||= (!build? and !production?)
 
 		if !nodeish?
 			let env = o.env or process.env.NODE_ENV or (minify? ? 'production' : 'development')
@@ -478,7 +479,6 @@ export default class Bundle < Component
 		esb.onResolve(filter: /\?(as=)?([\w\-\,\.]+)$/) do(args)
 			return if args.namespace == ''
 
-
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
@@ -488,8 +488,8 @@ export default class Bundle < Component
 			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg)/)
 				return
 
-			if q.match(/webworker/)
-				console.log "resolve webworker",args
+			# if q.match(/webworker/)
+			# 	console.log "resolve webworker",args
 
 			let resolved
 
@@ -920,7 +920,7 @@ export default class Bundle < Component
 			if let entry = entries[path]
 				return mapping[name] = entry.url or entry.path # to url
 			mapping[name] = entryToUrlMap[path] or path
-
+		console.log 'transforme compiled html',js
 		let urls = js.match(/URLS = \[(.*)\]/)[1].split(/\,\s*/g).map do
 			mapping[$1]
 		
@@ -1141,7 +1141,7 @@ export default class Bundle < Component
 					outs[$1.path]
 
 			# no longer needed / relevant?
-			if let m = path.match(/\.([A-Z\d]{8})\.\w+(\.map)?$/)
+			if let m = path.match(/\.([A-Z\d]{8})(\.\w+)?\.\w+(\.map)?$/)
 				output.hash = m[1]
 
 		# Walk through all the outputs from esbuild metafile and skip outputting
@@ -1216,16 +1216,47 @@ export default class Bundle < Component
 			let entries = entryPoints.map do ins[$1] or main..source
 			# console.log 'import css from',entries,Object.keys(ins),Object.keys(outs),entryPoints,!!main,main
 			let cssinputs = collectStyleInputs(entries,true)
-			
+			# TODO Reuse previous sheet if we know that nothing has changed
 			if cssinputs.length
 				let body = ""
-				for item in cssinputs
-					if item.#csschunk
-						body += item.#csschunk + '\n'
+				# generating a rudimentary sourcemap for the generated thing
+				let smap = {
+					version: 3
+					file: ""
+					sourceRoot: fs.cwd
+					sources: []
+					names: []
+					raw: []
+					mappings: ""
+				}
 
-				# now write this file as a separate asset?
+				for item,i in cssinputs
+					# console.log 'where is chunk from?',item
+					let chunk = item.#csschunk
+					
+					if chunk
+						let path = item.path.replace(/(^\w+\:)|(\?.+$)/g,'')
+						
+						unless smap.sources.indexOf(path) >= 0
+							smap.sources.push(path)
+
+						let seg = [0,smap.sources.indexOf(path),0,0]
+						# smap.raw.push [ [0,smap.sources.indexOf(path),0,0] ]
+
+						let lines = chunk.split('\n')
+						for line in lines
+							smap.raw.push([seg.slice(0)])
+						body += chunk + '\n'
+						# smap.raw.push([])
+
 				let hash = createHash(body)
-				let path = np.resolve(fs.cwd,esoptions.outdir,assetsDir or '.',"all.{hash}.css")
+				let name = "all.{hash}.css"
+				let path = np.resolve(fs.cwd,esoptions.outdir,assetsDir or '.',name)
+
+				smap.file = name
+
+				body += "\n/*# sourceMappingURL=./{name}.map */"
+
 				let asset = {
 					#type: 'output'
 					_: 'output'
@@ -1242,13 +1273,20 @@ export default class Bundle < Component
 
 				asset.asset = asset
 				builder.entries['*?css'] = asset
-				manifest.css = asset
 				ins['*?css'] = asset
 				assets.push(asset)
 
-		# for own k,v of builder.entries
-		#	entryManifest[k] = {url: v.url}
-		
+				if true
+					smap.mappings = smc.encode(smap.raw)
+
+					assets.push({
+						path: asset.path + '.map'
+						fullpath: asset.fullpath + '.map'
+						hash: hash
+						public: yes
+						#contents: JSON.stringify(smap,null,2)
+					})
+
 
 		for asset in assets
 			if asset.public and pubdir
@@ -1338,10 +1376,13 @@ export default class Bundle < Component
 				let file = outfs.lookup(asset.fullpath)
 				await file.write(asset.#contents,asset.hash)
 
-			mfile.writeSync(JSON.stringify(entryManifest,null,2),manifest.hash)
 
 			if false # Turned off for scrimba testing now(!)
 				await copyPublicFiles!
+
+			# is this only really needed for hmr?
+
+			mfile.writeSync(JSON.stringify(entryManifest,null,2),manifest.hash)
 
 			let mainEntry = try ins[entryPoints[0]].output
 			# let result = {main: mainEntry.path,manifest: entryManifest}

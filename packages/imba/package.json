@@ -116,6 +116,7 @@
     "ora": "^5.2.0",
     "picomatch": "^2.2.2",
     "puppeteer": "^16.1.0",
+    "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.1",
     "workerpool": "^6.0.3"
   },
