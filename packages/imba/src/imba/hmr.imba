@@ -8,6 +8,8 @@ class DevTools
 		# return unless debug
 		console.log(...params)
 
+	
+
 
 	def refresh manifest
 		let dirty = {
@@ -24,11 +26,19 @@ class DevTools
 			console.log 'look for sheet',url,match
 			if match and url != match
 				sheet.ownerNode.href = match
+		
+		let scripts = Object.keys(global.IMBA_LOADED or {})
 
-		for el of global.document.querySelectorAll('script[src]')
-			if let asset = urls[el.getAttribute('src')]
-				if asset.replacedBy
-					dirty.js.push(asset)
+		for script in scripts
+			let match = urls.find do $1.replace(regex,'') == script.replace(regex,'')
+			if match
+				console.log "js has changed!!"
+				dirty.js.push([script,match])
+
+		# for el of global.document.querySelectorAll('script[src]')
+		# 	if let asset = urls[el.getAttribute('src')]
+		# 		if asset.replacedBy
+		# 			dirty.js.push(asset)
 
 		if dirty.js.length
 			log "js changed - reload?",dirty.js

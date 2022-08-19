@@ -31,8 +31,6 @@ const overrideAliases = {
 	m: {minify: true}
 	S: {sourcemap: false}
 	s: {sourcemap: true}
-	H: {hashing: false}
-	h: {hashing: true}
 	P: {pubdir: '.'}
 }
 
@@ -196,7 +194,7 @@ def common cmd
 		.option("-c, --client-only", "Generate client files only")
 		.option("--sourcemap <value>", "", "inline")
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
-		.option("-H, --no-hashing", "Disable hashing")
+		
 		.option("--pubdir <dir>", "Directory to output client-side files - relative to outdir")
 		.option("-P, --no-pubdir", "Build client-side files straight into outdir")
 		.option("--base <url>", "Base url for your generated site","/")
@@ -208,6 +206,7 @@ def common cmd
 		.option("--web","Build as public static page")
 		.option("--lib","Build as library")
 		.option("--ssr","Build server and client separately")
+		# .option("-H, --no-hashing", "Disable hashing")
 		# .option("--baseurl <url>", "Base url for your generated site","/")
 		# .option("--lib", "")
 		# .option("--ssr", "")

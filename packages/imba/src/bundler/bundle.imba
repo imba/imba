@@ -83,20 +83,16 @@ export default class Bundle < Component
 
 	prop hasGlobStylesheet
 
-	get node?
-		platform == 'node'
+	get o
+		options
 
-	get nodeworker?
-		platform == 'nodeworker'
-	
-	get nodeish?
-		node? or nodeworker?
-
-	
-		
-
-	get web?
-		!nodeish?
+	get node? do platform == 'node'
+	get nodeworker? do platform == 'nodeworker'
+	get webworker? do platform == 'webworker'
+	get worker do webworker? or nodeworker?
+	get nodeish? do node? or nodeworker?
+	get web? do !nodeish?
+	get webish? do web? or webworker?
 
 	get build?
 		program.command == 'build'
@@ -108,16 +104,7 @@ export default class Bundle < Component
 		!build?
 
 	get static?
-		!!program.web or root.o.format == 'html'
-	
-	get webworker?
-		platform == 'webworker' # or platform == 'web'
-		
-	get worker
-		webworker? or nodeworker?
-		
-	get webish?
-		web? or webworker?
+		!!program.web or root.o.format == 'html'	
 
 	get minify?
 		o.minify ?? program.minify
@@ -129,18 +116,8 @@ export default class Bundle < Component
 		# TODO clearer distinction between prod and dev
 		!!minify?
 
-	get library?
-		main? and !!program.lib
-
 	get hmr?
 		program.hmr == yes
-
-	# should generated files include hash of contents in filename?
-	get hashing?
-		(o.hashing !== false and program.hashing !== false)
-	
-	get o
-		options
 
 	get main?
 		root == self
@@ -150,9 +127,6 @@ export default class Bundle < Component
 
 	get outbase
 		o.outbase or fs.cwd
-	
-	get assetNames
-		program.assetNames or 'assets/[dir]/[name]'
 
 	get assetsDir
 		o.assetsDir or program.assetsDir or 'assets'
@@ -166,12 +140,10 @@ export default class Bundle < Component
 			url = baseurl + url
 		return  url
 	
-	get srvdir
-		program.srvdir == false ? '.' : (program.srvdir or '.')
-	
 	# optional prefix prepended to all asset url references
 	get baseurl
-		#baseurl ||= ((program.baseurl or program.base or '/base') + '/').replace(/\/+/g,'/')
+		# TODO use base instead of baseurl
+		#baseurl ||= ((program.baseurl or program.base or '') + '/').replace(/\/+/g,'/')
 
 	get fs
 		program.fs
@@ -195,7 +167,6 @@ export default class Bundle < Component
 	# useful for things like metadata[bundle] = {...}
 	def [Symbol.toPrimitive] hint
 		#_id_ ||= Symbol!
-
 
 	def constructor up,o
 		super()
@@ -272,8 +243,6 @@ export default class Bundle < Component
 			footer: {js: o.footer or "//__FOOT__"}
 			splitting: o.splitting
 			sourcemap: (program.sourcemap === false ? no : (web? ? yes : yes))
-			
-			# minify: o.minify ?? program.minify
 			minifySyntax: true
 			minifyWhitespace: minify?
 			minifyIdentifiers: minify?
@@ -371,8 +340,6 @@ export default class Bundle < Component
 				np.resolve(program.imbaPath,'polyfills','__inject__.js')
 			]
 			esoptions.inject = []
-			# defines["process.env.NODE_ENV"] ||= "'{env}'"
-			# defines["process.env"] ||= JSON.stringify(NODE_ENV: env)
 			defines["ENV_DEBUG"] ||= "false"
 			esoptions.nodePaths.push(np.resolve(program.imbaPath,'polyfills'))
 
@@ -432,10 +399,6 @@ export default class Bundle < Component
 		
 		return cacher[key] = base # Object.create(base)
 
-	def resolveEntrypoint path
-		let cfg = resolveConfigPreset(['iife'])
-		yes
-
 	def resolveTemplate name
 		np.resolve(program.imbaPath,'src','templates',name)
 
@@ -445,12 +408,9 @@ export default class Bundle < Component
 	###
 	def plugin esb
 		let externs = esoptions.external or []
-
 		let imbaDir = program.imbaPath
 		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
 		let isImba = do(f) (/\.imba$/).test(f) and f.indexOf('styles:') != 0 # (/^styles:/).test(f) or 
-
-		let pathMetadata = {}
 
 		let toAssetJS = do(object)
 			let json = JSON.stringify(object)
@@ -463,7 +423,6 @@ export default class Bundle < Component
 			# console.log 'esresolve',args.path,args
 			let res = await esb.resolve(args.path,resolveDir: args.resolveDir, namespace: '')
 			# console.log 'esresolved',args.path,res.path
-			# console.log 'esresolved',res
 			return res
 
 		if o.resolve
@@ -485,6 +444,7 @@ export default class Bundle < Component
 				
 				if args.kind == 'entry-point'
 					let kind = args.path.split('.').pop!
+					# TODO Support serving a regular js script as well - could be handy
 					let tpl = resolveTemplate("serve-{kind}.imba")
 
 					let abs = await esb.resolve(args.path,resolveDir: args.resolveDir)
@@ -527,23 +487,6 @@ export default class Bundle < Component
 					}
 				return
 
-		esb.onResolve(filter: /(\.(svg|png|jpe?g|gif|tiff|webp)|\?img)$/) do(args)
-			return unless isImba(args.importer) and args.namespace == 'file'
-			return
-		
-			if o.format == 'css'
-				return {path: "_", namespace: 'imba-raw'}
-			
-			let path = args.path.split('?')[0]
-			let ext = np.extname(path).slice(1)
-			let res = await esresolve(args)
-
-			let out = {
-				path: fs.relative(res.path) or res.path,
-				namespace: 'img'
-			}
-			return out
-
 		esb.onResolve(filter: /^\*\?css$/) do(args)
 			root.hasGlobStylesheet = yes
 			return {path: "*?css", namespace: 'css'}
@@ -564,7 +507,6 @@ export default class Bundle < Component
 			let resolved
 
 			if path == '__ENTRYPOINT__'
-				# FIXME - resolve path using fs.cwd and esb instead?
 				resolved = {path: fs.resolve(entryPoints[0])}
 			else
 				resolved = await esresolve(args)
@@ -658,7 +600,6 @@ export default class Bundle < Component
 				# console.log "resolving png!",args,resolved
 				if resolved..path and isImba(args.importer)
 					return {path: resolved.path, suffix: '?js'}
-				throw 1
 
 			# FIXME Formalize this behaviour
 			if path.match(/\.json$/) and args.importer..match(/\.html$/)
@@ -666,20 +607,6 @@ export default class Bundle < Component
 				return {path: res.path, suffix: "?url"}
 
 			return null
-
-		# Maybe use a special resolver for when we include the extension?
-		# We always do that for images etc...
-
-		# there are other rules
-		# esb.onResolve(filter: /\.json$/) do(args)
-		# 	
-		# 	if args.importer..match(/\.html$/)
-		# 		# FIXME Formalize this behaviour
-		# 		let res = await esb.resolve(args.path,{resolveDir: args.resolveDir})
-		# 		return {path: res.path, suffix: "?url"}
-		# 
-		# 	return
-		
 
 		###
 		img namespace returns a js file for the image which includes image size
@@ -755,7 +682,7 @@ export default class Bundle < Component
 			if o.format == 'css'
 				return {loader: 'text', contents: ""}
 
-			let meta = pluginData # pathMetadata[path]
+			let meta = pluginData
 			let cfg = meta.config
 
 			let id = "entry:{meta.path}?{cfg.ref}"
@@ -893,9 +820,6 @@ export default class Bundle < Component
 			return build(yes) 
 
 		buildcache[self] ||= new Promise do(resolve)
-			# console.log 'start rebuild',force
-			# let changes = fs.changelog.pull(self)
-			# for the main one we need to look at all potential inputs
 			if main?
 				log.debug "starting rebuild!",!!watcher,force
 
@@ -931,25 +855,7 @@ export default class Bundle < Component
 				await write(result,prev)
 			#buildcache = {}
 			return resolve(result)
-	
-	# called for all outputs
-	def finalizeAsset asset, shouldHash = hashing?
-		return asset if asset.#finalized
-		asset.#finalized = yes
 
-		asset.hash ||= createHash(asset.#contents)
-	
-		let path = asset.originalPath = asset.path
-
-		# let url = baseurl + path # hmm?
-		
-		if asset.type == 'css' and nodeish?
-			asset.virtual ??= yes
-
-		if asset.public or asset.type == 'css'
-			asset.public = yes
-		return asset
-	
 	def collectStyleInputs(input, deep, matched = [], visited = [])
 		if input isa Array
 			for member in input
@@ -1125,7 +1031,6 @@ export default class Bundle < Component
 			let inp = res and res.meta and res.meta.inputs[rawpath]
 
 			# find it via res.meta.entries instead?
-
 			if dep isa Bundle
 				Object.assign(#watchedPaths,dep.#watchedPaths)
 
@@ -1275,8 +1180,6 @@ export default class Bundle < Component
 		if serve?
 			main = Object.values(result.metafile.outputs)[0]
 
-		let entry
-		
 		###
 			Starting at the server-side entrypoint, crawl through all the dependencies,
 			into nested entrypoints, and collect all the styles imported anywhere, in order.
@@ -1349,9 +1252,17 @@ export default class Bundle < Component
 
 			if asset.type == 'js'
 				let body = asset.#text or asset.#file.text
+				let head = ""
 				
 				if !asset.public
-					body = body.replace('//__HEAD__',"globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}")
+					head = "globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}"
+
+				if asset.public # and hmr?
+					head = "(globalThis.IMBA_LOADED || (globalThis.IMBA_LOADED=\{\}))['{asset.url}']=true;"
+
+				if head
+					body = body.replace('//__HEAD__',head)
+
 
 				# replace all sourcemapping urls to be relative
 				let replace = /\/([\/\*])# sourceMappingURL=([\/\w\.\-\%]+\.map)/
