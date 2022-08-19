@@ -280,7 +280,7 @@ class Server
 		assetResponders = {}
 		urlToLocalPathMap = {}
 		publicExistsMap = {}
-		rootDir = try proc.env.IMBA_OUTDIR or global.IMBA_OUTDIR or np.dirname(require.main.filename)
+		rootDir = try proc.env.IMBA_OUTDIR or global.IMBA_OUTDIR or np.dirname(proc.argv[1])
 		publicPath = try options.publicPath or (np.resolve(rootDir,proc.env.IMBA_PUBDIR or global.IMBA_PUBDIR or '.'))
 		
 		if proc.env.IMBA_PATH

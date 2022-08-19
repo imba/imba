@@ -21,49 +21,7 @@ import Watcher from './watcher'
 const ASSETS_URL = '/_ASSET_PREFIX_PATH_/'
 let BUNDLE_COUNTER = 0
 
-const LOADER_SUFFIXES = {
-	raw: 'text'
-	text: 'text'
-	copy: 'copy'
-	dataurl: 'dataurl'
-	binary: 'binary'
-	file: 'file'
-	url: 'file'
-	base64: 'base64'
-}
-
-const LOADER_EXTENSIONS = {
-	".png": "file",
-	".bmp": "file",
-	".apng": "file",
-	".webp": "file",
-	".heif": "file",
-	".avif": "file",
-	".svg": "file",
-	".gif": "file",
-	".jpg": "file",
-	".jpeg": "file",
-	".ico": "file",
-	".woff2": "file",
-	".woff": "file",
-	".eot": "file",
-	".ttf": "file",
-	".otf": "file",
-	".html": "text",
-	".webm": "file",
-	".weba": "file",
-	".avi": "file",
-	".mp3": "file",
-	".mp4": "file",
-	".m4a": "file",
-	".mpeg": "file",
-	".wav": "file",
-	".ogg": "file",
-	".ogv": "file",
-	".oga": "file",
-	".opus": "file"				
-}
-
+import {LOADER_SUFFIXES, LOADER_EXTENSIONS} from './config'
 
 class Builder
 	# prop previous - why not?
@@ -84,6 +42,7 @@ class Builder
 export default class Bundle < Component
 
 	prop hasGlobStylesheet
+	prop built? = no
 
 	get o
 		options
@@ -107,6 +66,9 @@ export default class Bundle < Component
 
 	get run?
 		!build?
+
+	get standalone?
+		!!program.bundle
 
 	get static?
 		!!program.web or root.o.format == 'html'	
@@ -244,12 +206,10 @@ export default class Bundle < Component
 			globalName: o.globalName
 			publicPath: baseurl or '/'
 			assetNames: "{assetsDir}/[name].[hash]"
-			chunkNames: "{assetsDir}/[name].[hash]"
-			entryNames: o.entryNames or "{assetsDir}/[name].[hash]"
+			chunkNames: "{assetsDir}/chunks/[name].[hash]"
+			entryNames: "{assetsDir}/[name].[hash]"
 			conditions: ["imba"]
-			banner: {
-				js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')
-			}
+			banner: {js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')}
 			footer: {js: o.footer or "//__FOOT__"}
 			splitting: o.splitting
 			sourcemap: (program.sourcemap === false ? no : (web? ? yes : program.sourcemap))
@@ -280,7 +240,9 @@ export default class Bundle < Component
 
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
-			esoptions.banner.js += "\nglobalThis.IMBA_OUTDIR=__dirname;globalThis.IMBA_PUBDIR='{pubdir}';"
+			# set relative to dirs? If we are just running there is no need to set the dir at all
+			# this is also just for the main entrypoint
+			esoptions.banner.js += "\nglobalThis.IMBA_PUBDIR='{pubdir}';"
 
 		if main?
 			# override the external resolution here
@@ -289,6 +251,8 @@ export default class Bundle < Component
 
 		if web? and o.ref
 			esoptions.entryNames = "{assetsDir}/{o.ref}/[dir]/[name].[hash]"
+		elif o.ref
+			esoptions.entryNames = "{o.ref}/[dir]/[name]"
 
 		if o.esbuild
 			extendObject(esoptions,o.esbuild,'esbuild')			
@@ -313,8 +277,7 @@ export default class Bundle < Component
 		# FIXME Are we using this still?
 		if o.format == 'css'
 			esoptions.format = 'esm'
-			# esoptions.outExtension[".js"] = ".SKIP.js"
-
+		
 		if o.format == 'html'
 			esoptions.format = 'esm'
 			esoptions.minify = false
@@ -322,6 +285,11 @@ export default class Bundle < Component
 			esoptions.entryNames = '[dir]/[name]'
 			esoptions.loader[".json"] = 'file'
 			# throw "Hello"
+
+		if esoptions.format == 'esm'
+			esoptions.outExtension = {".js": ".mjs"}
+
+		# console.log esoptions
 
 		let addExtensions = {
 			webworker: ['.webworker.imba','.worker.imba']
@@ -587,7 +555,6 @@ export default class Bundle < Component
 		# be external. If importer is an imba file, try to
 		# also resolve it via the imbaconfig.paths rules.
 		esb.onResolve(namespace: 'file', filter: /.*/) do(args)
-			console.log 'onresive',args.path,args.pluginData
 			return null if args.pluginData == 'skip'
 			let path = args.path
 			let abs? = /^(\/|\w\:\/)/.test(path)
@@ -596,16 +563,12 @@ export default class Bundle < Component
 		
 			let q = (path.split('?')[1] or '')
 
-			
-			# console.log 'onresolve file',args.path
-				
-
 			# console.log 'on resolve still',args
 			if path.indexOf('node:') == 0
 				return {external: true}
 
 			# should this be the default for all external modules?
-			if pkg? and run? and nodeish?
+			if pkg? and nodeish? and run? and !standalone?
 				if externs.indexOf("!{path}") >= 0
 					console.log "don't externalize",path
 					return null
@@ -613,7 +576,7 @@ export default class Bundle < Component
 				let external? = externs.indexOf(path) >= 0
 
 				if external?
-
+						
 					let opts = {
 						importer: args.importer
 						resolveDir: args.resolveDir
@@ -629,7 +592,7 @@ export default class Bundle < Component
 			
 			if externs.indexOf(path) >= 0 # and false
 				# always external or stay 
-				console.log 'is external',args.path
+				# console.log 'is external',args.path
 
 				# check if it returns esm
 				let opts = {
@@ -643,6 +606,9 @@ export default class Bundle < Component
 				# even if we build for cjs it makes sense 
 
 				# also if it is inside of something else?
+				if program.bundle
+					return null
+
 				return {external: true}
 
 			if abs?
@@ -1023,7 +989,7 @@ export default class Bundle < Component
 		let ins = meta.inputs
 		let outs = meta.outputs
 
-		let reloutdir = fs.relative(esoptions.outdir)
+		# let reloutdir = fs.relative(esoptions.outdir)
 
 		# expects a 1-to-1 mapping between inputs and outputs -- there is none?
 		for file in files
@@ -1036,7 +1002,7 @@ export default class Bundle < Component
 				outs[path]
 				file.#output = outs[path]
 			else
-				console.log 'could not map the file to anything!!',file.path,path,reloutdir,Object.keys(outs),fs.cwd,esoptions.outdir
+				console.log 'could not map the file to anything!!',file.path,path,Object.keys(outs),fs.cwd,esoptions.outdir
 
 		# console.log 'done here',Object.keys(ins),Object.keys(outs)
 		for own path,output of meta.outputs
@@ -1056,11 +1022,12 @@ export default class Bundle < Component
 					output.source = input
 					
 					let kind = path.split('.').pop!
-					if kind == 'js' or kind == 'css'
-						input[kind] = output
+					if kind == 'mjs' or kind == 'js'
+						input.output = input[kind] = output
+						input.js ||= output
 
-					if kind == 'js'
-						input.output = output
+					if kind == 'css'
+						input.css = output
 
 					if o.ref
 						let id = "entry:{output.entryPoint}?{o.ref}"
@@ -1118,7 +1085,7 @@ export default class Bundle < Component
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js and (!main? or build?)
 				output.public = yes
-				output.path = path = path.replace(/\.js/,'.html')
+				output.path = path = path.replace(/\.m?js/,'.html')
 
 			elif webish? or output.type == 'css'
 				output.public = yes
@@ -1206,6 +1173,8 @@ export default class Bundle < Component
 	def write result
 		# after write we can wipe the buildcache
 		outfs
+
+		let buildInside = (/^(\.\/|\w)/).test(np.relative(fs.cwd,outdir))
 		
 		let meta = result.meta
 		let ins = meta.inputs
@@ -1278,6 +1247,7 @@ export default class Bundle < Component
 
 		# for own k,v of builder.entries
 		#	entryManifest[k] = {url: v.url}
+		
 
 		for asset in assets
 			if asset.public and pubdir
@@ -1307,12 +1277,17 @@ export default class Bundle < Component
 						let body = transformCompiledHTML(asset.#file.text,meta,entryManifest)
 						asset.#text = asset.#contents = body
 
-			if asset.type == 'js'
+			if asset.type == 'js' or asset.type == 'mjs'
 				let body = asset.#text or asset.#file.text
 				let head = ""
 				
 				if !asset.public
-					head = "globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}"
+					# if this is the main entrypoint? 
+					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}"]
+					if esm?
+						parts.push "console.log(process.argv)"
+					
+					head = parts.join(';')
 
 				if asset.public # and hmr?
 					head = "(globalThis.IMBA_LOADED || (globalThis.IMBA_LOADED=\{\}))['{asset.url}']=true;"
@@ -1320,9 +1295,8 @@ export default class Bundle < Component
 				if head
 					body = body.replace('//__HEAD__',head)
 
-
 				# replace all sourcemapping urls to be relative
-				let replace = /\/([\/\*])# sourceMappingURL=([\/\w\.\-\%]+\.map)/
+				let replace = /\/([\/\*])# sourceMappingURL=([\/\w\.\-\%]+\.map)/g
 				let name = np.basename(asset.path)
 				body = body.replace(replace) do(m,pre,path) "/{pre}# sourceMappingURL=./{name}.map"
 
@@ -1341,10 +1315,15 @@ export default class Bundle < Component
 		let hash = manifest.hash = createHash(assets.map(do $1.path).sort!.join('-'))
 		
 		log.debug("manifest hash: {manifest.hash}")
+
+
 	
 		# update the build
 		if #hash =? hash
 			log.info "building in %path",program.outdir
+
+			if !built? and program.clean and !program.tmpdir and buildInside
+				nfs.rmdirSync(program.outdir,{recursive: true})
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in assets
@@ -1374,6 +1353,8 @@ export default class Bundle < Component
 				log.info "built %bold in %ms - %heap (%address) - %bold",entryPoints[0],builder.elapsed,program.#listening,hash
 			else
 				log.info "finished %bold in %ms - %heap - %bold",entryPoints[0],builder.elapsed,hash
-
+			
+			built? = yes
 			emit('built',result)
+
 		return result

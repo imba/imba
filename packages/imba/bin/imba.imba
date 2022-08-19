@@ -84,6 +84,9 @@ def parseOptions options, extras = []
 	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.package = resolvePackage(cwd) or {}
 
+	if options.esm
+		options.as ??= 'esm'
+
 	if command == 'build'
 		options.minify ??= yes
 		options.loglevel ||= 'info'
@@ -199,17 +202,16 @@ def common cmd
 		.option("-c, --client-only", "Generate client files only")
 		.option("--sourcemap <value>", "", "inline")
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
-		
+		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--pubdir <dir>", "Directory to output client-side files - relative to outdir")
 		.option("-P, --no-pubdir", "Build client-side files straight into outdir")
 		.option("--base <url>", "Base url for your generated site","/")
-		.option("--asset-names <pattern>", "Paths for generated assets","__assets__/[dir]/[name]")
-		.option("--html-names <pattern>", "Paths for generated html files","[dir]/[name]")
 		.option("--clean", "Remove files from previous build")
 		.option("--assets-dir <pattern>", "Directory to nest generated assets under","assets")
 		.option("--mode <mode>", "Configuration mode","development")
 		.option("--web","Build as public static page")
 		.option("--lib","Build as library")
+		.option("--esm","Build as public static page")
 		.option("--ssr","Build server and client separately")
 		# .option("-H, --no-hashing", "Disable hashing")
 		# .option("--baseurl <url>", "Base url for your generated site","/")
@@ -224,8 +226,8 @@ common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 
 common(cli.command('build <script>').description('Build an imba/js/html entrypoint and their dependencies'))
 	.option("--platform <platform>", "Platform for entry","browser")
-	.option("--as <preset>", "Configuration preset","node")
 	.action(run)
+	# .option("--as <preset>", "Configuration preset","node")
 
 common(cli.command('dev <script>').description('Run script/server in development mode'))
 	.action(run)

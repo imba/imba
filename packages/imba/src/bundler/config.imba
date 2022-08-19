@@ -5,6 +5,50 @@ const optionTypes = {
 	minify: 'boolean'
 }
 
+export const LOADER_SUFFIXES = {
+	raw: 'text'
+	text: 'text'
+	copy: 'copy'
+	dataurl: 'dataurl'
+	binary: 'binary'
+	file: 'file'
+	url: 'file'
+	base64: 'base64'
+}
+
+export const LOADER_EXTENSIONS = {
+	".png": "file",
+	".bmp": "file",
+	".apng": "file",
+	".webp": "file",
+	".heif": "file",
+	".avif": "file",
+	".svg": "file",
+	".gif": "file",
+	".jpg": "file",
+	".jpeg": "file",
+	".ico": "file",
+	".woff2": "file",
+	".woff": "file",
+	".eot": "file",
+	".ttf": "file",
+	".otf": "file",
+	".html": "text",
+	".webm": "file",
+	".weba": "file",
+	".avi": "file",
+	".mp3": "file",
+	".mp4": "file",
+	".m4a": "file",
+	".mpeg": "file",
+	".wav": "file",
+	".ogg": "file",
+	".ogv": "file",
+	".oga": "file",
+	".opus": "file",
+	".json": "copy"
+}
+
 
 export const defaultConfig = {
 	bundles: []
@@ -21,24 +65,18 @@ export const defaultConfig = {
 			target: ['node12.20.0']
 			external: ['dependencies','!imba']
 		}
-		mjs: {
-			extends: 'base'
-			platform: 'node'
+
+		esm: {
+			extends: 'node'
 			format: 'esm'
-			sourcemap: true
-			target: ['node12.20.0']
-			external: ['dependencies','!imba']
+			target: ['node14.13.0']
+			splitting: false
 		}
+
 		web: {
 			extends: 'base'
 			platform: 'browser'
 			sourcemap: true
-			format: 'esm'
-			splitting: true
-		}
-		
-		esm: {
-			extends: 'web'
 			format: 'esm'
 			splitting: true
 		}
