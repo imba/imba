@@ -50,13 +50,14 @@ export default class Bundle < Component
 	get node? do platform == 'node'
 	get nodeworker? do platform == 'nodeworker'
 	get webworker? do platform == 'webworker'
-	get worker do webworker? or nodeworker?
+	get worker? do webworker? or nodeworker?
 	get nodeish? do node? or nodeworker?
 	get web? do !nodeish?
 	get webish? do web? or webworker?
 
 	get esm? do !o.format or o.format == 'esm'
 	get cjs? do o.format == 'cjs'
+	get iife? do o.format == 'iife'
 
 	get build?
 		program.command == 'build'
@@ -205,7 +206,7 @@ export default class Bundle < Component
 			outdir: program.outdir
 			globalName: o.globalName
 			publicPath: baseurl or '/'
-			assetNames: "{assetsDir}/[name].[hash]"
+			assetNames: "{assetsDir}/[ext]/[name].[hash]"
 			chunkNames: "{assetsDir}/chunks/[name].[hash]"
 			entryNames: "{assetsDir}/[name].[hash]"
 			conditions: ["imba"]
@@ -248,9 +249,8 @@ export default class Bundle < Component
 			# override the external resolution here
 			esoptions.external = []
 
-
 		if web? and o.ref
-			esoptions.entryNames = "{assetsDir}/{o.ref}/[dir]/[name].[hash]"
+			esoptions.entryNames = "{assetsDir}/[dir]/[name].[hash]"
 		elif o.ref
 			esoptions.entryNames = "{o.ref}/[dir]/[name]"
 
@@ -288,6 +288,10 @@ export default class Bundle < Component
 
 		if esoptions.format == 'esm'
 			esoptions.outExtension = {".js": ".mjs"}
+		elif worker?
+			esoptions.outExtension = {".js": ".worker.js"}
+		elif iife?
+			esoptions.outExtension = {".js": ".iife.js"}
 
 		# console.log esoptions
 
@@ -1033,8 +1037,6 @@ export default class Bundle < Component
 						let id = "entry:{output.entryPoint}?{o.ref}"
 						output.entryId = id
 						root.builder.entries[id] = builder.entries[id] = meta.entries[id] = output
-						# {file: path, url: baseurl + path, #output: output }
-						# console.log 'mapped entry',id
 
 		# Add connections between inputs and outputs
 		for own path,input of ins
@@ -1089,7 +1091,6 @@ export default class Bundle < Component
 
 			elif webish? or output.type == 'css'
 				output.public = yes
-				# output.url = "{baseurl}{path}"
 
 			if nodeish? and path.match(/\.css(\.map)?$/)
 				output.virtual ??= yes
@@ -1289,7 +1290,7 @@ export default class Bundle < Component
 					
 					head = parts.join(';')
 
-				if asset.public # and hmr?
+				if asset.public and hmr?
 					head = "(globalThis.IMBA_LOADED || (globalThis.IMBA_LOADED=\{\}))['{asset.url}']=true;"
 
 				if head
