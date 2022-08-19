@@ -92,6 +92,9 @@ export default class Bundle < Component
 	get nodeish?
 		node? or nodeworker?
 
+	
+		
+
 	get web?
 		!nodeish?
 
@@ -121,6 +124,10 @@ export default class Bundle < Component
 
 	get dev?
 		program.mode == 'development'
+
+	get production?
+		# TODO clearer distinction between prod and dev
+		!!minify?
 
 	get library?
 		main? and !!program.lib
@@ -286,6 +293,10 @@ export default class Bundle < Component
 		}
 
 		esoptions.entryPoints..sort!
+
+		# Don't include the sources content in production builds
+		if esoptions.sourcemap and production?
+			esoptions.sourcesContent = false
 
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
@@ -540,14 +551,7 @@ export default class Bundle < Component
 		# catch the potential entrypoints here
 		esb.onResolve(filter: /\?(as=)?([\w\-\,\.]+)$/) do(args)
 			return if args.namespace == ''
-			# console.log "RESOLVING?!?!",args
-			# only resolve certain types
-			
-			# reference to _all_ styles referenced via main entrypoint
-			# if args.path == '*?css'
-			# 	root.hasGlobStylesheet = yes
-			# 	return {path: "__styles__", namespace: 'entry'}
-			
+
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
@@ -944,21 +948,6 @@ export default class Bundle < Component
 
 		if asset.public or asset.type == 'css'
 			asset.public = yes
-			# asset.url = url
-			# 
-			# if pubdir != '.'
-			# 	asset.path = "{pubdir}/{asset.path}"
-		# else
-		# 	asset.path = "{srvdir}/{asset.path}"
-
-		# now replace link to sourcemap as well
-		# if (asset.type == 'js' or asset.type == 'css') and asset.map
-		# 	let replace = /\/([\/\*])# sourceMappingURL=[\/\w\.\-\%]+\.map/
-		# 	asset.map.path = asset.path + '.map'
-		# 	asset.map.url = asset.url + '.map'
-		# 	asset.map.#finalized = yes
-		# 
-		# console.log 'finalized asset',asset.url,url,path # ,assetNames,asset.hash
 		return asset
 	
 	def collectStyleInputs(input, deep, matched = [], visited = [])
@@ -1061,7 +1050,6 @@ export default class Bundle < Component
 				files: files.map do [$1.path,fs.relative($1.path)]
 				outputs: Object.keys(meta.outputs)
 				inputs: Object.keys(meta.inputs)
-
 				full: meta
 			}
 			try nfs.mkdirSync(tmpsrc)
@@ -1069,7 +1057,6 @@ export default class Bundle < Component
 		
 		let ins = meta.inputs
 		let outs = meta.outputs
-		let urls = meta.urls
 
 		let reloutdir = fs.relative(esoptions.outdir)
 
@@ -1081,6 +1068,7 @@ export default class Bundle < Component
 				outs[path].fullpath = file.path
 				outs[path].#file = file
 				outs[path].#contents = file.contents
+				outs[path]
 				file.#output = outs[path]
 			else
 				console.log 'could not map the file to anything!!',file.path,path,reloutdir,Object.keys(outs),fs.cwd,esoptions.outdir
@@ -1123,8 +1111,6 @@ export default class Bundle < Component
 			input.imports = input.imports.map do ins[$1.path]
 			watchPath(path)
 
-		let urlOutputMap = {}
-		let walker = {}
 		let addOutputs = new Set
 		let styleInputs = new Set
 
@@ -1167,15 +1153,15 @@ export default class Bundle < Component
 
 			# only when html is the entrypoint
 			if output.source and output.source.path.match(/\.html$/) and output == output.source.js and (!main? or build?)
-				urlOutputMap[path] = output
 				output.public = yes
 				output.path = path = path.replace(/\.js/,'.html')
 
 			elif webish? or output.type == 'css'
-				# or path.match(FontRegex) or path.match(ImageRegex)
-				urlOutputMap[path] = output
 				output.public = yes
 				# output.url = "{baseurl}{path}"
+
+			if nodeish? and path.match(/\.css(\.map)?$/)
+				output.virtual ??= yes
 
 			if output.public
 				output.url = urlForOutputPath(output.fullpath)
@@ -1201,6 +1187,7 @@ export default class Bundle < Component
 			# the individual css files will likely be ordered correctly with
 			# latest esbuild, but we still want to extract the chunks
 			if output.type == 'css' and !output.#ordered
+				# this step could easily be done at the very end?
 				let body = output.#file.text
 				let parts = body.split(/\/\*\! @path (.+?) \*\//g)
 				let found = {}
@@ -1230,103 +1217,12 @@ export default class Bundle < Component
 			elif m = path.match(/chunk[\.\-]([A-Z\d]{8})\.\w+\.(js|css)(\.map)?$/)
 				output.hash = m[1]
 
-			if output.url
-				urlOutputMap[output.url] = output
-
-		urlOutputMap = {}
-
-		###
-		Should probably use the original uint8 array rather than the text
-		representation of body for performance reasons.
-		###
-		walker.replacePaths = do(body,output)
-			let start = 0
-			let end = 0
-			let delim
-			let breaks = {"'": 1, '"':1, '(':1, ')':1}
-			let path
-
-			while true
-				start = body.indexOf(ASSETS_URL,end)
-				break if start == -1
-				delim = body[start - 1]
-				end = start + 10
-				delim = ')' if delim == '('
-				
-				let path = body.substr(start,300).match(/^[^\r\n\'\"\)]+/)[0]
-				end = start + path.length
-
-				path = body.slice(start,end)
-				let origPath = path
-				let cleanPath = path.replace(/\/\/\.\/\//g,'/').replace(/\/\//g,'/').replace(ASSETS_URL,'')
-				let rePath = origPath.replace(ASSETS_URL,baseurl).replace(/\/\/\.\/\//g,'/').replace(/\/\//g,'/')
-				let asset = urlOutputMap[path] or urlOutputMap[cleanPath] or urlOutputMap[rePath]
-				
-				# console.log "rename asset",cleanPath,pathForAsset(cleanPath),pathForAsset(cleanPath,null,'__assets__/[dir]/[name]-[hash]')
-				# what if it is referencing itself?
-				if asset and !origPath.match(/\.(js|css)\.map$/)
-					await walker.resolveAsset(asset)
-					path = asset.url
-				else
-					path = baseurl + cleanPath
-
-				if path != origPath
-					# TODO adjust whitespace to make path same length
-					let pad = origPath.length - path.length
-					let post = body[end]
-					
-					if pad > 0
-						post += " ".repeat(pad)
-
-					body = body.slice(0,start) + path + post + body.slice(end + 1)
-
-			let header = []
-
-			# web assets should not rely on an external manifest, so we loop through
-			# the referenced assets / dependencies of this output and inject them
-			# into a global asset map. We replace the first line (//BANNER) to make
-			# sure sourcemaps are still valid (they are generated before we process outputs)
-			return body
-		
-		walker.resolveAsset = do(asset)
-			return asset if asset.#resolved
-			asset.#resolved = yes
-			# return asset
-
-			if asset.hash
-				asset.ttl = 31536000
-				# return asset
-
-			if asset.type == 'js' or asset.type == 'html' or asset.type == 'css'
-				log.debug "resolving assets in {asset.path}"
-				asset.#text ||= asset.#file.text
-				asset.#contents = await walker.replacePaths(asset.#text,asset)
-
-			if asset.type == 'map'
-				# console.log 'found map?!',asset,!!asset.source
-				let js = asset.source..js
-				if js
-					await walker.resolveAsset(js)
-					asset.hash = js.hash
-					
-			finalizeAsset(asset)
-			return asset
-
-		for item of styleInputs
-			item.#csschunk = await walker.replacePaths(item.#csschunk,{type: 'css'})
-
-
 		# Walk through all the outputs from esbuild metafile and skip outputting
 		# certain items, while resolving the rest of the outputs and (sometimes)
 		# rewrite the final paths
 		let newouts = {}
 
 		for own path,output of meta.outputs
-			await walker.resolveAsset(output)
-
-			if !node? and output.url
-				urls[output.url] = output
-
 			newouts[output.path] = output
 
 		for outs of addOutputs
@@ -1334,7 +1230,6 @@ export default class Bundle < Component
 	
 		# now update the paths in output
 		outs = meta.outputs = newouts
-		# log.debug "transformed",Date.now! - t
 		return result
 
 	def copyPublicFiles
@@ -1349,7 +1244,7 @@ export default class Bundle < Component
 	# entrypoints etc
 	def write result
 		# after write we can wipe the buildcache
-		outfs # ||= new FileSystem(program.outdir,program)
+		outfs
 		
 		let meta = result.meta
 		let ins = meta.inputs
@@ -1379,8 +1274,6 @@ export default class Bundle < Component
 
 		if serve?
 			main = Object.values(result.metafile.outputs)[0]
-			# console.log "SERVE!",result.metafile,main
-			outs
 
 		let entry
 		
@@ -1419,8 +1312,6 @@ export default class Bundle < Component
 				}
 
 				asset.asset = asset
-				# should take hashing parameter from the web/css target instead?
-				# finalizeAsset(asset)
 				builder.entries['*?css'] = asset
 				manifest.css = asset
 				ins['*?css'] = asset
@@ -1457,7 +1348,7 @@ export default class Bundle < Component
 						asset.#text = asset.#contents = body
 
 			if asset.type == 'js'
-				let body = asset.#text
+				let body = asset.#text or asset.#file.text
 				
 				if !asset.public
 					body = body.replace('//__HEAD__',"globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}")
@@ -1470,25 +1361,21 @@ export default class Bundle < Component
 				asset.#text = asset.#contents = body
 
 		manifest.path = 'manifest.json'
+
 		# a sorted list of all the output hashes is a fast way to
 		# see if anything in the bundle has changed or not
 		log.ts "ready to write"
 		let mfile = outfs.lookup('manifest.json')
-		# let mfile2 = outfs.lookup(manifest.path + '.json')
-		# these are relative to the manifest file - should rather be relative
-		# to the manifest dir?!
-		# manifest.srcdir = relativePath(mfile.absdir,outbase) or "."
-		# manifest.outdir = relativePath(mfile.absdir,outfs.cwd) or "."
 
 		for item in assets
 			manifest.outputs[item.path] = item
 
-		manifest.hash = createHash(assets.map(do $1.hash or $1.path).sort!.join('-'))
+		let hash = manifest.hash = createHash(assets.map(do $1.path).sort!.join('-'))
 		
 		log.debug("manifest hash: {manifest.hash}")
 	
 		# update the build
-		if #hash =? manifest.hash
+		if #hash =? hash
 			log.info "building in %path",program.outdir
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
@@ -1516,9 +1403,9 @@ export default class Bundle < Component
 			log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024
 
 			if program.#listening
-				log.info "built %bold in %ms - %heap (%address) - %bold",entryPoints[0],builder.elapsed,program.#listening,manifest.hash
+				log.info "built %bold in %ms - %heap (%address) - %bold",entryPoints[0],builder.elapsed,program.#listening,hash
 			else
-				log.info "finished %bold in %ms - %heap - %bold",entryPoints[0],builder.elapsed,manifest.hash
+				log.info "finished %bold in %ms - %heap - %bold",entryPoints[0],builder.elapsed,hash
 
 			emit('built',result)
 		return result
