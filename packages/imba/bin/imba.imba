@@ -147,7 +147,7 @@ def run entry, o, extras
 		else
 			tmp.setGracefulCleanup!
 			let tmpdir = tmp.dirSync(unsafeCleanup: yes)
-			o.outdir = o.tmpdir = tmpdir.name
+			o.outdir = o.tmpdir = nfs.realpathSync(tmpdir.name)
 			# fake loader
 
 	let file = o.fs.lookup(path)

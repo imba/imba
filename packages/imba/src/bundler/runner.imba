@@ -41,11 +41,9 @@ class Instance
 		return if current and current.#next
 		# let exec = args.exec = manifest.main.source.path # path and loader
 		let o = runner.o
-		let regpath = np.resolve(o.imbaPath,"loader.imba.js")
-		let loader = o.imbaPath ? regpath : "imba/loader"
+		# let regpath = np.resolve(o.imbaPath,"loader.imba.js")
+		# let loader = o.imbaPath ? regpath : "imba/loader"
 		let path = bundle.result.main
-
-		console.log "STARTING"
 
 		let args = {
 			windowsHide: yes
@@ -54,7 +52,6 @@ class Instance
 			execArgv: [
 				o.inspect and '--inspect',
 				o.sourcemap and '--enable-source-maps'
-				'-r',loader
 			].filter do $1
 		}
 		let env = {
@@ -141,8 +138,6 @@ export default class Runner < Component
 			].filter do $1
 		}
 
-		console.log "enable source-maps?!",o.sourcemap,args
-
 		# hmm - what?
 		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
 
@@ -159,7 +154,6 @@ export default class Runner < Component
 
 		if o.watch
 			bundle.on('built') do(result)
-				console.log 'build rebuilt',result
 				broadcast(['emit','rebuild',result.manifest])
 		return self
 

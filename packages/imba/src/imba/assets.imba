@@ -7,9 +7,34 @@ def injectStringBefore target, toInject, patterns = ['']
 			return target.slice(0,idx) + toInject + target.slice(idx)
 	return target
 
+import fs from 'fs'
+
+class ImbaAsset
+	def constructor src
+		src = src
+	
+	get entry
+		global.IMBA_MANIFEST..[src]
+
+	get url
+		entry ? entry.url : src
+
+	get path
+		entry ? entry.path : null
+
+	get body
+		if $node$
+			if path
+				return fs.readFileSync(path,'utf-8')
+		return null
+
+	def toString
+		url
+
 export def asset src
-	if let asset = global._MF_..[src]
-		return asset.url or asset
+	if let asset = global.IMBA_MANIFEST..[src]
+		return new ImbaAsset(src)
+		# return asset.url or asset
 	return src
 
 class HtmlAsset
@@ -20,7 +45,7 @@ class HtmlAsset
 	get body
 		let res = text.replace(/ASSET_REF_(\d+)/g) do(m,nr)
 			let ref = refs[nr]
-			if let asset = global._MF_..[ref]
+			if let asset = global.IMBA_MANIFEST..[ref]
 				return asset.url
 			return ref
 

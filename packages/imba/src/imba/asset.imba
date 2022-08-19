@@ -14,7 +14,7 @@ class AssetProxy
 		manifest.inputs[meta.input]
 
 	get asset
-		globalThis._MF_ ? meta : (input ? input.asset : null)
+		globalThis.IMBA_MANIFEST ? meta : (input ? input.asset : null)
 	
 	def set target, key, value
 		return true
@@ -62,7 +62,7 @@ export def asset data
 	# 	return data.#asset ||= new SVGAsset(data)
 	
 	if data.input
-		let extra = globalThis._MF_ and globalThis._MF_[data.input]
+		let extra = globalThis.IMBA_MANIFEST and globalThis.IMBA_MANIFEST[data.input]
 		if extra
 			Object.assign(data,extra)
 			data.toString = do this.absPath

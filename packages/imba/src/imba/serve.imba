@@ -98,6 +98,9 @@ const process = new class Process < EventEmitter
 		return unless #setup? =? yes
 
 		on('rebuild') do(e)
+			# console.log 'rebuild',e
+			let prev = global.IMBA_MANIFEST
+			global.IMBA_MANIFEST = e
 			servers.broadcast('rebuild',e)
 
 		on('reloading') do(e)
@@ -279,7 +282,6 @@ class Server
 		publicExistsMap = {}
 		rootDir = try proc.env.IMBA_OUTDIR or global.IMBA_OUTDIR or np.dirname(require.main.filename)
 		publicPath = try options.publicPath or (np.resolve(rootDir,proc.env.IMBA_PUBDIR or global.IMBA_PUBDIR or '.'))
-		console.log 'publicPath is',publicPath,global.IMBA_OUTDIR
 		
 		if proc.env.IMBA_PATH
 			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'dist','hmr.js')
