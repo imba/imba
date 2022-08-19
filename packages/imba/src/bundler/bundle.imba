@@ -79,6 +79,8 @@ class Builder
 	get elapsed
 		Date.now! - startAt
 
+# TODO Check if outdir is inside of project-dir (closest package.json)
+# - when it is we can safely keep things external
 export default class Bundle < Component
 
 	prop hasGlobStylesheet
@@ -93,6 +95,9 @@ export default class Bundle < Component
 	get nodeish? do node? or nodeworker?
 	get web? do !nodeish?
 	get webish? do web? or webworker?
+
+	get esm? do !o.format or o.format == 'esm'
+	get cjs? do o.format == 'cjs'
 
 	get build?
 		program.command == 'build'
@@ -114,7 +119,8 @@ export default class Bundle < Component
 
 	get production?
 		# TODO clearer distinction between prod and dev
-		!!minify?
+		true
+		# !!minify?
 
 	get hmr?
 		program.hmr == yes
@@ -202,12 +208,14 @@ export default class Bundle < Component
 		let pkg = program.package or {}
 
 		for ext in o.external
-			continue if ext[0] == '!'
+			# if ext[0] == '!'
+			#	externals.push(ext)
 
 			if ext == "dependencies"
 				let deps = Object.keys(pkg.dependencies or {})
 				externals.push(...deps)
-			
+				externals.push( ...Object.keys(pkg.devDependencies or {}) ) if run?
+
 			if ext == "devDependencies"
 				externals.push( ...Object.keys(pkg.devDependencies or {}) )
 			
@@ -222,6 +230,8 @@ export default class Bundle < Component
 		externals = externals.filter do(src)
 			!o.external or o.external.indexOf("!{src}") == -1
 
+		self.externals = externals
+
 		# console.log "bundle externals",externals
 		esoptions = {
 			entryPoints: entryPoints
@@ -230,19 +240,19 @@ export default class Bundle < Component
 			platform: nodeish? ? 'node' : 'browser'
 			format: o.format or 'esm'
 			outfile: o.outfile
-			# outbase: fs.cwd
-			outdir: fs.cwd
+			outdir: program.outdir
 			globalName: o.globalName
 			publicPath: baseurl or '/'
 			assetNames: "{assetsDir}/[name].[hash]"
 			chunkNames: "{assetsDir}/[name].[hash]"
 			entryNames: o.entryNames or "{assetsDir}/[name].[hash]"
+			conditions: ["imba"]
 			banner: {
 				js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')
 			}
 			footer: {js: o.footer or "//__FOOT__"}
 			splitting: o.splitting
-			sourcemap: (program.sourcemap === false ? no : (web? ? yes : yes))
+			sourcemap: (program.sourcemap === false ? no : (web? ? yes : program.sourcemap))
 			minifySyntax: true
 			minifyWhitespace: minify?
 			minifyIdentifiers: minify?
@@ -264,16 +274,17 @@ export default class Bundle < Component
 		esoptions.entryPoints..sort!
 
 		# Don't include the sources content in production builds
-		if esoptions.sourcemap and production?
+		if esoptions.sourcemap
+			# hmm
 			esoptions.sourcesContent = false
 
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
 			esoptions.banner.js += "\nglobalThis.IMBA_OUTDIR=__dirname;globalThis.IMBA_PUBDIR='{pubdir}';"
-			esoptions.publicPath = baseurl or '/'
-		
-		# if build?
-		esoptions.outdir = program.outdir
+
+		if main?
+			# override the external resolution here
+			esoptions.external = []
 
 
 		if web? and o.ref
@@ -325,10 +336,9 @@ export default class Bundle < Component
 			esoptions.resolveExtensions.unshift(...addExtensions[o.platform])
 
 		let defines = esoptions.define ||= {}
-		defines["globalThis.DEBUG_IMBA"] ||= !minify?
+		# defines["globalThis.DEBUG_IMBA"] ||= !minify?
 
 		if !nodeish?
-			# hmm
 			let env = o.env or process.env.NODE_ENV or (minify? ? 'production' : 'development')
 			defines["global"]="globalThis"
 			defines["process.platform"]="'web'"
@@ -407,7 +417,7 @@ export default class Bundle < Component
 	handlers to support nested entrypoints, style extraction from imba files and much more.
 	###
 	def plugin esb
-		let externs = esoptions.external or []
+		let externs = self.externals or []
 		let imbaDir = program.imbaPath
 		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
 		let isImba = do(f) (/\.imba$/).test(f) and f.indexOf('styles:') != 0 # (/^styles:/).test(f) or 
@@ -429,6 +439,7 @@ export default class Bundle < Component
 			let regex = new RegExp("^({Object.keys(o.resolve).join('|')})$")
 
 			esb.onResolve(filter: regex) do(args)
+				# console.log 'onresolving',args.path
 				let res = o.resolve[args.path]
 				res = res and res[platform] or res
 				return res
@@ -440,7 +451,7 @@ export default class Bundle < Component
 		
 
 		if main? and serve?
-			esb.onResolve(filter: /.*/, namespace: 'file') do(args)
+			esb.onResolve(namespace: 'file', filter: /.*/) do(args)
 				
 				if args.kind == 'entry-point'
 					let kind = args.path.split('.').pop!
@@ -495,6 +506,7 @@ export default class Bundle < Component
 		esb.onResolve(filter: /\?(as=)?([\w\-\,\.]+)$/) do(args)
 			return if args.namespace == ''
 
+
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
@@ -503,6 +515,9 @@ export default class Bundle < Component
 
 			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg)/)
 				return
+
+			if q.match(/webworker/)
+				console.log "resolve webworker",args
 
 			let resolved
 
@@ -572,18 +587,62 @@ export default class Bundle < Component
 		# be external. If importer is an imba file, try to
 		# also resolve it via the imbaconfig.paths rules.
 		esb.onResolve(namespace: 'file', filter: /.*/) do(args)
+			console.log 'onresive',args.path,args.pluginData
+			return null if args.pluginData == 'skip'
 			let path = args.path
 			let abs? = /^(\/|\w\:\/)/.test(path)
-			let q = (path.split('?')[1] or '')
 			let rel? = path[0] == '.'
+			let pkg? = !abs? and !rel?
+		
+			let q = (path.split('?')[1] or '')
+
 			
 			# console.log 'onresolve file',args.path
+				
 
 			# console.log 'on resolve still',args
 			if path.indexOf('node:') == 0
 				return {external: true}
+
+			# should this be the default for all external modules?
+			if pkg? and run? and nodeish?
+				if externs.indexOf("!{path}") >= 0
+					console.log "don't externalize",path
+					return null
+
+				let external? = externs.indexOf(path) >= 0
+
+				if external?
+
+					let opts = {
+						importer: args.importer
+						resolveDir: args.resolveDir
+						namespace: ''
+						kind: esm? ? 'import-statement' : 'require-call'
+						pluginData: 'skip'
+					}
+					let res = await esb.resolve(args.path,opts)
+
+					# In certain cases we do want to use import here?
+					console.log 'resolving external!',opts,res,external?
+					return {external: true, path: res.path}
 			
-			if externs.indexOf(path) >= 0
+			if externs.indexOf(path) >= 0 # and false
+				# always external or stay 
+				console.log 'is external',args.path
+
+				# check if it returns esm
+				let opts = {
+					importer: args.importer
+					resolveDir: args.resolveDir
+					namespace: ''
+					kind: esm? ? 'import-statement' : 'require-call'
+					pluginData: 'skip'
+				}
+
+				# even if we build for cjs it makes sense 
+
+				# also if it is inside of something else?
 				return {external: true}
 
 			if abs?
@@ -1071,7 +1130,6 @@ export default class Bundle < Component
 			if output.public
 				output.url = urlForOutputPath(output.fullpath)
 
-
 			output.type ??= (np.extname(path) or '').slice(1)
 
 
@@ -1115,11 +1173,7 @@ export default class Bundle < Component
 					outs[$1.path]
 
 			# no longer needed / relevant?
-			if let m = path.match(/\.([A-Z\d]{8})\.\w+$/)
-				output.hash = m[1]
-			elif m = path.match(/\-([A-Z\d]{8})\.(\w{2,4})$/)
-				output.hash = m[1]
-			elif m = path.match(/chunk[\.\-]([A-Z\d]{8})\.\w+\.(js|css)(\.map)?$/)
+			if let m = path.match(/\.([A-Z\d]{8})\.\w+(\.map)?$/)
 				output.hash = m[1]
 
 		# Walk through all the outputs from esbuild metafile and skip outputting
@@ -1132,6 +1186,8 @@ export default class Bundle < Component
 
 		for outs of addOutputs
 			Object.assign(newouts,outs)
+
+		# TODO Move the public path re-resolution happen here
 	
 		# now update the paths in output
 		outs = meta.outputs = newouts
@@ -1225,11 +1281,12 @@ export default class Bundle < Component
 
 		for asset in assets
 			if asset.public and pubdir
-				let abs = np.resolve(fs.cwd,asset.path)
-				let rel = np.relative(esoptions.outdir,abs)
-				let newpath = np.resolve(esoptions.outdir,pubdir,rel)
-				asset.fullpath = newpath
-				asset.path = np.relative(fs.cwd,newpath)
+				if asset.resolved =? yes
+					let abs = np.resolve(fs.cwd,asset.path)
+					let rel = np.relative(esoptions.outdir,abs)
+					let newpath = np.resolve(esoptions.outdir,pubdir,rel)
+					asset.fullpath = newpath
+					asset.path = np.relative(fs.cwd,newpath)
 
 		let entryManifest = {}
 		for asset in assets when asset.entryId

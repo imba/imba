@@ -54,6 +54,7 @@ class Instance
 				o.sourcemap and '--enable-source-maps'
 			].filter do $1
 		}
+
 		let env = {
 			IMBA_RESTARTS: restarts
 			IMBA_SERVE: true
@@ -64,6 +65,7 @@ class Instance
 			IMBA_HMR: o.hmr ? true : undefined
 			IMBA_WORKER_NR: options.number
 			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'info'
+			# NODE_PATH: bundle.fs.cwd + '/node_modules'
 			PORT: process.env.PORT or o.port
 		}
 
@@ -137,7 +139,6 @@ export default class Runner < Component
 				o.sourcemap and '--enable-source-maps'
 			].filter do $1
 		}
-
 		# hmm - what?
 		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
 

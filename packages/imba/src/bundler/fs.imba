@@ -235,7 +235,7 @@ export class FileNode < FSNode
 		if !hash or (#hash =? hash)
 			await nodefs.promises.mkdir(absdir,recursive: true)
 			if rel.indexOf('../') != 0 or true
-				log.success 'write %path %kb',rel,body.length
+				log.success 'write %path %kb',rel,body.length,hash
 			
 			nodefs.promises.writeFile(abs,body)
 

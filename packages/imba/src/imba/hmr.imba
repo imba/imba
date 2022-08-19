@@ -8,9 +8,6 @@ class DevTools
 		# return unless debug
 		console.log(...params)
 
-	
-
-
 	def refresh manifest
 		let dirty = {
 			css: []
@@ -23,7 +20,6 @@ class DevTools
 		for sheet of global.document.styleSheets
 			let url = sheet.ownerNode.getAttribute('href')
 			let match = urls.find do $1.replace(regex,'') == url.replace(regex,'')
-			console.log 'look for sheet',url,match
 			if match and url != match
 				sheet.ownerNode.href = match
 		
@@ -32,16 +28,9 @@ class DevTools
 		for script in scripts
 			let match = urls.find do $1.replace(regex,'') == script.replace(regex,'')
 			if match
-				console.log "js has changed!!"
 				dirty.js.push([script,match])
 
-		# for el of global.document.querySelectorAll('script[src]')
-		# 	if let asset = urls[el.getAttribute('src')]
-		# 		if asset.replacedBy
-		# 			dirty.js.push(asset)
-
 		if dirty.js.length
-			log "js changed - reload?",dirty.js
 			global.document.location.reload!
 		self
 
@@ -59,18 +48,11 @@ class DevTools
 
 		socket.addEventListener("rebuild") do(e)
 			let manifest = JSON.parse(e.data)
-			console.log "rebuild!",e,manifest
 			refresh(manifest)
-
 
 		socket.addEventListener("state") do(e)
 			let json = JSON.parse(e.data)
 			log "server state",json
-
-		socket.addEventListener("init") do(e)
-			let json = JSON.parse(e.data)
-			manifest.init(json)
-			log "hmr init",manifest.data
 
 		socket.addEventListener("errors") do(e)
 			let json = JSON.parse(e.data)

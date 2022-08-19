@@ -18,9 +18,16 @@ export const defaultConfig = {
 			platform: 'node'
 			format: 'cjs'
 			sourcemap: true
-			hashing: false
 			target: ['node12.20.0']
-			external: ['dependencies','devDependencies','!imba']
+			external: ['dependencies','!imba']
+		}
+		mjs: {
+			extends: 'base'
+			platform: 'node'
+			format: 'esm'
+			sourcemap: true
+			target: ['node12.20.0']
+			external: ['dependencies','!imba']
 		}
 		web: {
 			extends: 'base'
@@ -61,7 +68,6 @@ export const defaultConfig = {
 			platform: 'browser'
 			sourcemap: false
 			splitting: false
-			hashing: false
 		}
 
 		worker: {
@@ -90,7 +96,6 @@ export const defaultConfig = {
 			format: 'esm'
 			platform: 'webworker'
 			splitting: false
-			hashing: false
 		}
 	}
 }

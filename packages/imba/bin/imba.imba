@@ -89,6 +89,11 @@ def parseOptions options, extras = []
 		options.loglevel ||= 'info'
 		options.outdir  ||= 'dist'
 
+	if command == 'dev'
+		options.watch = yes
+		options.hmr = yes
+		options.mode = 'development'
+
 	if options.verbose > 1
 		options.loglevel ||= 'debug'
 
@@ -220,6 +225,9 @@ common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 common(cli.command('build <script>').description('Build an imba/js/html entrypoint and their dependencies'))
 	.option("--platform <platform>", "Platform for entry","browser")
 	.option("--as <preset>", "Configuration preset","node")
+	.action(run)
+
+common(cli.command('dev <script>').description('Run script/server in development mode'))
 	.action(run)
 
 # watch should be implied?

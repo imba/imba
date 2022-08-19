@@ -178,7 +178,10 @@ export def resolveFile name,cwd,handler
 	return null
 
 export def resolvePackage cwd
-	resolveFile('package.json',cwd) do JSON.parse($1.body)
+	resolveFile('package.json',cwd) do 
+		let body = JSON.parse($1.body)
+		return body
+
 
 # generates a function that converts integers to a short
 # alphanumeric string utilizing the supplied alphabet
