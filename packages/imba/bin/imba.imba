@@ -4,7 +4,6 @@ import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
 import {program as cli} from 'commander'
 
-import Program from '../src/bundler/program'
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
@@ -12,6 +11,7 @@ import Cache from '../src/bundler/cache'
 
 import {resolveConfig,resolvePackage,getCacheDir} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
+
 import tmp from 'tmp'
 import getport from 'get-port'
 
@@ -31,7 +31,6 @@ const overrideAliases = {
 	m: {minify: true}
 	S: {sourcemap: false}
 	s: {sourcemap: true}
-	P: {pubdir: '.'}
 }
 
 const valueMap = {
@@ -203,20 +202,12 @@ def common cmd
 		.option("--sourcemap <value>", "", "inline")
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("--bundle", "Try to bundle all external dependencies")
-		.option("--pubdir <dir>", "Directory to output client-side files - relative to outdir")
-		.option("-P, --no-pubdir", "Build client-side files straight into outdir")
 		.option("--base <url>", "Base url for your generated site","/")
 		.option("--clean", "Remove files from previous build")
 		.option("--assets-dir <pattern>", "Directory to nest generated assets under","assets")
 		.option("--mode <mode>", "Configuration mode","development")
-		.option("--web","Build as public static page")
-		.option("--lib","Build as library")
-		.option("--esm","Build as public static page")
-		.option("--ssr","Build server and client separately")
-		# .option("-H, --no-hashing", "Disable hashing")
-		# .option("--baseurl <url>", "Base url for your generated site","/")
-		# .option("--lib", "")
-		# .option("--ssr", "")
+		.option("--web","Build entrypoints for the browser")
+		.option("--esm","Output module files")
 
 
 common(cli.command('run [script]', { isDefault: true }).description('Imba'))

@@ -56,6 +56,8 @@ export default class Bundle < Component
 	get esm? do !o.format or o.format == 'esm'
 	get cjs? do o.format == 'cjs'
 	get iife? do o.format == 'iife'
+	get html? do o.format == 'html'
+	
 
 	get build?
 		program.command == 'build'
@@ -69,8 +71,9 @@ export default class Bundle < Component
 	get standalone?
 		!!program.bundle
 
+	# are we building directly for web?
 	get static?
-		!!program.web or root.o.format == 'html'	
+		!!program.web or root.html?
 
 	get minify?
 		o.minify ?? program.minify
@@ -79,9 +82,7 @@ export default class Bundle < Component
 		program.mode == 'development'
 
 	get production?
-		# TODO clearer distinction between prod and dev
-		true
-		# !!minify?
+		!!minify?
 
 	get hmr?
 		program.hmr == yes
@@ -99,7 +100,7 @@ export default class Bundle < Component
 		o.assetsDir or program.assetsDir or 'assets'
 
 	get pubdir
-		program.pubdir == false ? '.' : (program.pubdir or (static? ? '.' : 'public'))
+		static? ? '.' : 'public'
 
 	def urlForOutputPath path
 		let url = np.relative(np.resolve(program.cwd,program.outdir),path)
@@ -278,14 +279,13 @@ export default class Bundle < Component
 		# FIXME Are we using this still?
 		if o.format == 'css'
 			esoptions.format = 'esm'
-		
-		if o.format == 'html'
+
+		if html?
 			esoptions.format = 'esm'
 			esoptions.minify = false
 			esoptions.sourcemap = false
 			esoptions.entryNames = '[dir]/[name]'
 			esoptions.loader[".json"] = 'file'
-			# throw "Hello"
 
 		if esoptions.format == 'esm'
 			esoptions.outExtension = {".js": ".mjs"}
@@ -308,6 +308,8 @@ export default class Bundle < Component
 		if addExtensions[o.platform]
 			esoptions.resolveExtensions.unshift(...addExtensions[o.platform])
 
+		# TODO Clean up defines
+
 		let defines = esoptions.define ||= {}
 		defines["globalThis.DEBUG_IMBA"] ||= (!build? and !production?)
 
@@ -328,6 +330,7 @@ export default class Bundle < Component
 
 		defines["globalThis.IMBA_HMR"] ||= String(hmr?)
 		defines["globalThis.IMBA_DEV"] ||= String(hmr?)
+		defines["globalThis.IMBA_RUN"] ||= String(run?)
 
 		if o.bundle == false
 			esoptions.bundle = false
@@ -339,7 +342,6 @@ export default class Bundle < Component
 		if main?
 			log.ts "created main bundle"
 			manifest = {}
-			# manifest = new Manifest(data: {})
 
 	def addEntrypoint src
 		entryPoints.push(src) unless entryPoints.indexOf(src)>= 0
@@ -362,7 +364,7 @@ export default class Bundle < Component
 		let ref = types.join('-')
 		let key = Symbol.for(ref)
 		
-		let cacher = imbaconfig # resolveConfigPreset
+		let cacher = imbaconfig
 		if cacher[key]
 			return cacher[key]
 
@@ -393,7 +395,7 @@ export default class Bundle < Component
 		let externs = self.externals or []
 		let imbaDir = program.imbaPath
 		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
-		let isImba = do(f) (/\.imba$/).test(f) and f.indexOf('styles:') != 0 # (/^styles:/).test(f) or 
+		let isImba = do(f) (/\.imba$/).test(f) and f.indexOf('styles:') != 0
 
 		let toAssetJS = do(object)
 			let json = JSON.stringify(object)
@@ -403,9 +405,7 @@ export default class Bundle < Component
 				"""
 		
 		let esresolve = do(args)
-			# console.log 'esresolve',args.path,args
 			let res = await esb.resolve(args.path,resolveDir: args.resolveDir, namespace: '')
-			# console.log 'esresolved',args.path,res.path
 			return res
 
 		if o.resolve
@@ -418,11 +418,8 @@ export default class Bundle < Component
 				return res
 
 		# TODO convert to a single resolve function? Or at least one per namespace
-
-		# Images imported from imba files should resolve as special assets
+		# TODO Images imported from imba files should resolve as special assets
 		# importing metadata about the images and more
-		
-
 		if main? and serve?
 			esb.onResolve(namespace: 'file', filter: /.*/) do(args)
 				
@@ -438,16 +435,27 @@ export default class Bundle < Component
 					}}
 
 				if args.path == '__ENTRYPOINT__'
+					let abs = await esb.resolve(entryPoints[0],resolveDir: fs.cwd)
+					console.log 'resolve',abs,entryPoints,args
 					return {
-						path: fs.relative(entryPoints[0])
-						namespace: 'js'
-						pluginData: {kind: args.kind}
+						path: abs.path # fs.abs(entryPoints[0])
+						# namespace: 'js'
+						pluginData: {
+							path: args.path
+							asset: yes
+							kind: args.kind
+						}
 					}
 				return
 		
 		if main?
+			# 
 			esb.onResolve(filter: /\.html$/, namespace: 'file') do(args)
+				# When we are targeting html files as entrypoint (building)
+				# we compile it to js and then convert it back to html before
+				# writing the final files
 				if args.kind == 'entry-point'
+					
 					let res = await esresolve(args)
 
 					return {
@@ -456,21 +464,18 @@ export default class Bundle < Component
 						pluginData: {
 							path: args.path
 							kind: args.kind
-							serve: !build?
 						}
 					}
+
 				if args.kind == 'import-statement'
 					let res = await esresolve(args)
-					# console.log 'resolved html',res
 					return {
-						path: fs.relative(res.path)
-						namespace: 'js'
-						pluginData: {
-							kind: args.kind
-						}
+						path: res.path
+						pluginData: { asset: yes, path: args.path, kind: args.kind }
 					}
 				return
 
+		# Special path referring to all styles referred from entrypoint
 		esb.onResolve(filter: /^\*\?css$/) do(args)
 			root.hasGlobStylesheet = yes
 			return {path: "*?css", namespace: 'css'}
@@ -485,11 +490,8 @@ export default class Bundle < Component
 			let [path,q] = args.path.split('?')
 			let formats = q.replace(/^as=/,'').split('&')
 
-			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg)/)
+			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg|styles)/)
 				return
-
-			# if q.match(/webworker/)
-			# 	console.log "resolve webworker",args
 
 			let resolved
 
@@ -502,16 +504,18 @@ export default class Bundle < Component
 			unless resolved
 				return
 
+			# If you import something as script?worker it will choose between
+			# nodeworker and webworker depending on the platform you are importing
+			# it from
 			let wrkidx = formats.indexOf('worker')
 			if wrkidx >= 0
 				formats[wrkidx] = nodeish? ? 'nodeworker' : 'webworker'
-				# q = formats.join(',')
 
 			let cfg = resolveConfigPreset(formats)
 			
 			let rel = fs.relative(resolved.path)
-
-			return {path: rel +  '?' + formats.join(','), namespace: 'entry', pluginData: {
+			# Why not resolve as suffix?
+			return {path: rel + '?' + formats.join(','), namespace: 'entry', pluginData: {
 				config: cfg
 				path: rel
 			}}
@@ -552,12 +556,11 @@ export default class Bundle < Component
 		# import '_styles_' line - which resolves to he path
 		# of the importer itself, with a styles namespace
 		esb.onResolve(filter: /^_styles_$/) do({importer})
-			let path = fs.relative(importer)
-			return {path: path, namespace: 'styles'}
+			# let path = fs.relative(importer)
+			return {path: importer, suffix: '?styles', namespace: 'file'}
 
-		# resolve any non-relative path to see if it should
-		# be external. If importer is an imba file, try to
-		# also resolve it via the imbaconfig.paths rules.
+		# Main resolver for imba plugin. Checks for a bunch of different
+		# conditions and returns accordingly
 		esb.onResolve(namespace: 'file', filter: /.*/) do(args)
 			return null if args.pluginData == 'skip'
 			let path = args.path
@@ -566,6 +569,9 @@ export default class Bundle < Component
 			let pkg? = !abs? and !rel?
 		
 			let q = (path.split('?')[1] or '')
+
+			if q == 'style'
+				return null
 
 			# console.log 'on resolve still',args
 			if path.indexOf('node:') == 0
@@ -606,15 +612,13 @@ export default class Bundle < Component
 					kind: esm? ? 'import-statement' : 'require-call'
 					pluginData: 'skip'
 				}
-
-				# even if we build for cjs it makes sense 
-
 				# also if it is inside of something else?
 				if program.bundle
 					return null
 
 				return {external: true}
 
+			# if this is an absolute path let esbuld resolve
 			if abs?
 				return null
 			
@@ -624,14 +628,17 @@ export default class Bundle < Component
 
 			let img? = /(\.(svg|png|jpe?g|gif|tiff|webp))$/.test(path)
 			
-			if isImba(args.importer) and img?
+			if isImba(args.importer) and img? and args.kind != 'url-token'
 				let resolved = await esresolve(args)
-				# console.log "resolving png!",args,resolved
-				if resolved..path and isImba(args.importer)
+
+				if resolved..path
+					# console.log "IMAGE!?",args,resolved
+					# throw 1
 					return {path: resolved.path, suffix: '?js'}
 
 			# FIXME Formalize this behaviour
 			if path.match(/\.json$/) and args.importer..match(/\.html$/)
+				console.log 'importing json!'
 				let res = await esresolve(args)
 				return {path: res.path, suffix: "?url"}
 
@@ -672,12 +679,13 @@ export default class Bundle < Component
 			# console.log "load html file",args,o.format
 
 			# when this is in a html
-			if o.format == 'html' or args.pluginData..serve # 
+			if html? or args.pluginData..asset
 				let file = fs.lookup(args.path)
-				let serve = args.pluginData..serve
-				let out = await file.compile({format: serve ? 'serve' : 'esm'},self)
+				let out = await file.compile({format: 'esm'},self)
 				builder.meta[file.rel] = out
-				return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+				return {loader: 'js', contents: out.js, resolveDir: file.absdir, pluginData: {
+					importerFile: file.rel
+				}}
 			return
 
 		###
@@ -695,15 +703,16 @@ export default class Bundle < Component
 					let file = fs.lookup(path)
 					let out = await file.compile({format: 'esm'},self)
 					return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+			return null
 
 		esb.onLoad(namespace: 'css', filter: /^\*\?css/) do
-			return {loader: 'text', contents: '*?css'} if o.format == 'html'
+			return {loader: 'text', contents: '*?css'} if html?
 			return {loader: 'js', contents: toAssetJS('*?css'), resolveDir: fs.cwd }
 
 		esb.onLoad(namespace: 'entry', filter:/.*/) do({path,pluginData})
 
 			if path == '__styles__'
-				if o.format == 'html'
+				if html?
 					return {loader: 'text', contents: '*?css'}
 				return {loader: 'js', contents: toAssetJS('*?css'), resolveDir: fs.cwd }
 
@@ -728,7 +737,7 @@ export default class Bundle < Component
 				builder.refs[id] = bundle
 
 				# return {loader: 'text', contents: "" id}
-				if o.format == 'html'
+				if html?
 					return {loader: 'text', contents: id}
 
 				return {loader: 'js', contents: toAssetJS(id), resolveDir: np.dirname(path)}
@@ -756,7 +765,7 @@ export default class Bundle < Component
 						console.error e
 
 			
-			if o.format == 'html'
+			if html?
 				return {loader: 'text', contents: id}
 
 			return {loader: 'js', contents: toAssetJS(id), resolveDir: file.absdir }
@@ -778,15 +787,20 @@ export default class Bundle < Component
 				{loader: 'css', contents: ""}
 
 		# The main loader that compiles and returns imba files, and their stylesheets
-		esb.onLoad({ filter: /\.imba1?$/}) do({path,namespace,pluginData})
+		esb.onLoad({ filter: /\.imba1?$/}) do({path,namespace,pluginData,suffix})
 			let src = fs.lookup(path)
-		
+
+			if suffix == '?styles'
+				let res = builder.styles[src.rel]
+				# console.log "ONLOAD {path}",arguments[0],Object.keys(builder.styles)
+				return res or {loader: 'css', contents: ""}
+
 			let t = Date.now!
 			let res = await src.compile(imbaoptions,self)
 
 			if res.css
 				let style = theme.transformColors(SourceMapper.strip(res.css or ""),prefix: no)
-				style += "/*! @path styles:{fs.relative(path)} */"
+				style += "/*! @path {fs.relative(path)}?styles */"
 
 				builder.styles[src.rel] = {
 					loader: 'css'
@@ -795,10 +809,12 @@ export default class Bundle < Component
 				}
 			
 			let incStyles = res.css or o.format == 'css'
+			let inc = incStyles ? "\nimport './{src.name}?styles';" : ""
+			inc = incStyles ? "\nimport '_styles_';" : ""
 
 			let cached = res[self] ||= {
 				loader: 'js',
-				contents: SourceMapper.strip(res.js or "") + (incStyles ? "\nimport '_styles_';" : "")
+				contents: SourceMapper.strip(res.js or "") + (inc)
 				errors: (res.errors or []).map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
 				warnings: (res.warnings or []).map(do diagnosticToESB($1,file: src.abs, namespace: namespace))
 				resolveDir: src.absdir,
@@ -896,13 +912,13 @@ export default class Bundle < Component
 
 		visited.push(input)
 
-		if input.path.match(/(^styles:)|(\.css$)/)  # or input.path.match(/^styles:/)
+		if input.path.match(/(^styles:)|(\.css$)|(\?styles?$)/)  # or input.path.match(/^styles:/)
 			if matched.indexOf(input) == -1
 				unless matched.find(do $1.path == input.path)
 					matched.push(input)
 			
 		for item in input.imports
-			continue if item.path.match(/\?as=css$/)
+			continue if item.path.match(/\?css$/)
 			collectStyleInputs(item,deep,matched,visited)
 			
 		if input.asset and deep
@@ -978,6 +994,7 @@ export default class Bundle < Component
 		}
 
 		if process.env.DEBUG or true
+			
 			let tmpsrc = np.resolve(fs.cwd,'dist')
 			meta.entryPoints = esoptions.entryPoints
 			let json = {
@@ -1037,6 +1054,9 @@ export default class Bundle < Component
 						let id = "entry:{output.entryPoint}?{o.ref}"
 						output.entryId = id
 						root.builder.entries[id] = builder.entries[id] = meta.entries[id] = output
+
+				if main? and serve?
+					output.main = yes
 
 		# Add connections between inputs and outputs
 		for own path,input of ins
@@ -1204,7 +1224,8 @@ export default class Bundle < Component
 		let main = null
 
 		if serve?
-			main = Object.values(result.metafile.outputs)[0]
+			# main = Object.values(result.metafile.outputs)[0]
+			main = assets.find do $1.main
 
 		###
 			Starting at the server-side entrypoint, crawl through all the dependencies,
@@ -1212,7 +1233,7 @@ export default class Bundle < Component
 			Finally we will stitch together a shared css file containing all css chunks in
 			the whole project.
 		###
-		if hasGlobStylesheet			
+		if hasGlobStylesheet
 			let entries = entryPoints.map do ins[$1] or main..source
 			# console.log 'import css from',entries,Object.keys(ins),Object.keys(outs),entryPoints,!!main,main
 			let cssinputs = collectStyleInputs(entries,true)
@@ -1311,10 +1332,8 @@ export default class Bundle < Component
 				let inpath = asset.entryPoint or ''
 				let src = inpath.replace(/^\w+\:/,'')
 				if let meta = builder.meta[src]
-					unless meta.serve
-						# console.log "found meta",src,!!meta,builder.meta,asset,asset.source
-						let body = transformCompiledHTML(asset.#file.text,meta,entryManifest)
-						asset.#text = asset.#contents = body
+					let body = transformCompiledHTML(asset.#file.text,meta,entryManifest)
+					asset.#text = asset.#contents = body
 
 			if asset.type == 'js' or asset.type == 'mjs'
 				let body = asset.#text or asset.#file.text
@@ -1323,9 +1342,6 @@ export default class Bundle < Component
 				if !asset.public
 					# if this is the main entrypoint? 
 					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}"]
-					if esm?
-						parts.push "console.log(process.argv)"
-					
 					head = parts.join(';')
 
 				if asset.public and hmr?
@@ -1352,11 +1368,7 @@ export default class Bundle < Component
 			manifest.outputs[item.path] = item
 
 		let hash = manifest.hash = createHash(assets.map(do $1.path).sort!.join('-'))
-		
-		log.debug("manifest hash: {manifest.hash}")
 
-
-	
 		# update the build
 		if #hash =? hash
 			log.info "building in %path",program.outdir
@@ -1385,7 +1397,6 @@ export default class Bundle < Component
 			mfile.writeSync(JSON.stringify(entryManifest,null,2),manifest.hash)
 
 			let mainEntry = try ins[entryPoints[0]].output
-			# let result = {main: mainEntry.path,manifest: entryManifest}
 			result.main = fs.resolve(mainEntry..path or main..path)
 			result.manifest = entryManifest
 

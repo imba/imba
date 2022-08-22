@@ -11,4 +11,4 @@ const server = http.createServer do(req,res)
 		body = "<script src='/__hmr__.js'  ></script>" + body
 	res.end body
 
-serve server.listen(process.env.PORT || 3000)
+serve server.listen(Number(process.env.PORT || 3000))

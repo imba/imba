@@ -1,8 +1,7 @@
-const nfs = require 'fs'
-const np = require 'path'
-const utils = require './utils'
 const micromatch = require 'micromatch'
 
+import nfs from 'fs'
+import np from 'path'
 import {fdir} from '../../vendor/fdir/index.js'
 import {parseAsset,parseHTML} from '../compiler/assets'
 import Component from './component'
@@ -22,22 +21,6 @@ const blankStat = {
 	ctime: "",
 	birthtime: ""
 }
-
-const HTML_SERVE_CODE = '''
-import http from "http";
-import {serve} from "imba/src/imba/serve";
-
-const server = http.createServer((req,res)=>{
-	let out = String(body);
-	if ((process.env.IMBA_HMR || globalThis.IMBA_HMR) && out.indexOf("__hmr__.js") == -1) {		
-		out = "<script src=\'/__hmr__.js\'  ></script>" + out;
-	};
-	return res.end(out);
-});
-serve(server.listen(process.env.PORT || 3000));
-'''
-
-const roots = {}
 
 const FLAGS = {
 	CHECKED: 1
@@ -359,8 +342,6 @@ export class HTMLFile < FileNode
 			let code = []
 			let refs = []
 
-			let serve = o.format == 'serve'
-
 			code.push 'import {html} from "imba/src/imba/assets.imba"'
 
 			for item,i in parsed.imports
@@ -380,16 +361,10 @@ export class HTMLFile < FileNode
 			
 			const str = JSON.stringify(parsed.contents)
 
-			# hack to use the format for this?
-			if serve
-				code.push "const body = html({str},[{refs.join(',')}]);"
-				code.push "console.log('serving',String(body));"
-				code.push HTML_SERVE_CODE
-			else
-				code.push "export const URLS = [{refs.join(',')}];"
-				code.push "export default html({str},URLS);"
+			code.push "export const URLS = [{refs.join(',')}];"
+			code.push "export default html({str},URLS);"
 
-			return {js: code.join('\n'), html: parsed.contents, serve: serve}
+			return {js: code.join('\n'), html: parsed.contents}
 
 export class ImageFile < FileNode
 

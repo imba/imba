@@ -7,8 +7,6 @@ import {EventEmitter} from 'events'
 # import {manifest} from './manifest'
 # import {Document,Location} from './dom/core'
 # import log from '../utils/logger'
-
-import {Module} from 'module'
 import http from 'http'
 import https from 'https'
 import {Http2ServerRequest} from 'http2'
@@ -85,20 +83,19 @@ const process = new class Process < EventEmitter
 		autoreload = no
 		state = {} # proxy for listening?
 		# process is 
-		if cluster.isWorker
-			# console.log 'created for worker!!!'
-			# does this make us unable to automatically stop a process?
-			proc.on('message') do(msg)
-				emit('message',msg)
-				emit(...msg.slice(1)) if msg[0] == 'emit'
-				# reload! if msg == 'reload'
+
+		if global.IMBA_RUN
+			if cluster.isWorker
+				proc.on('message') do(msg)
+					emit('message',msg)
+					emit(...msg.slice(1)) if msg[0] == 'emit'
+					# reload! if msg == 'reload'
 		self
 
 	def #setup
 		return unless #setup? =? yes
 
 		on('rebuild') do(e)
-			# console.log 'rebuild',e
 			let prev = global.IMBA_MANIFEST
 			global.IMBA_MANIFEST = e
 			servers.broadcast('rebuild',e)
@@ -118,18 +115,7 @@ const process = new class Process < EventEmitter
 			
 			setTimeout(&,100) do proc.exit(0)
 			await Promise.all(promises)
-			# console.log 'actually closed!!'
 			proc.exit(0)
-
-		on('manifest:change') do(e)
-			if proc.env.IMBA_HMR
-				# console.log 'manifest changed from master'
-				manifest.update(e)
-		
-		on('manifest:error') do(e)
-			if proc.env.IMBA_HMR
-				manifest.errors = e
-				servers.broadcast('errors',manifest.errors)
 		yes
 
 	def send msg
@@ -306,13 +292,10 @@ class Server
 			console.log "listening on {url}"
 			# log.info 'listening on %bold',url
 			# Logger.main.warn 'listening on %bold',url
-
-		# if we are in dev-mode, broadcast updated manifest to the clients
-		let handleDynamic = do(req,res)
-
 		
 		handler = do(req,res)
-			let ishttp2 = req isa Http2ServerRequest
+			let ishttp2 = req.constructor.name == 'Http2ServerRequest'
+			# let ishttp2 = false
 			let url = req.url
 
 			if paused or closed
@@ -354,6 +337,7 @@ class Server
 			# create full url
 			let headers = req.headers
 			let base
+			# console.log 'protocol',req.protocol
 			if ishttp2
 				base = headers[':scheme'] + '://' + headers[':authority']
 			else
@@ -368,7 +352,7 @@ class Server
 				let path = localPathForUrl(url)
 				# console.log 'checking for url',url,path
 				let exists = publicExistsMap[path] ??= nfs.existsSync(path)
-				
+
 				if exists
 					try
 						let headers = headersForAsset(path)
@@ -393,9 +377,10 @@ class Server
 		srv.on('close') do
 			console.log "server is closing!!!"
 
-		if cluster.isWorker
-			process.#setup!
-			process.send('serve')
+		if global.IMBA_RUN
+			if cluster.isWorker
+				process.#setup!
+				process.send('serve')
 
 	def broadcast event, data = {}, clients = clients
 		data = JSON.stringify(data)

@@ -1,16 +1,8 @@
-const cluster = require 'cluster'
+import cluster from 'cluster'
 import np from 'path'
 import cp from 'child_process'
 import Component from './component'
 import {Logger} from '../utils/logger'
-
-const FLAGS = {
-
-	REPLACED: 1
-	EXITED: 2
-	PAUSED: 4
-	ERRORED: 8
-}
 
 class Instance
 	runner = null
@@ -35,14 +27,9 @@ class Instance
 		current = null
 		restarts = 0
 
-		# setInterval(&,2000) do reload!
-
 	def start
 		return if current and current.#next
-		# let exec = args.exec = manifest.main.source.path # path and loader
 		let o = runner.o
-		# let regpath = np.resolve(o.imbaPath,"loader.imba.js")
-		# let loader = o.imbaPath ? regpath : "imba/loader"
 		let path = bundle.result.main
 
 		let args = {
@@ -73,7 +60,7 @@ class Instance
 			args.env = Object.assign({},process.env,env)
 			return cp.fork(np.resolve(path),args.args,args)
 
-		log.info "starting"
+		log.info "starting",env,path
 
 		cluster.setupMaster(args)
 
