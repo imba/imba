@@ -107,6 +107,8 @@ export def format str,...rest
 			fmt('redBright',part)
 		elif f == 'green'
 			fmt('greenBright',part)
+		elif f == 'imba'
+			fmt('yellowBright',part)
 		elif f == 'yellow'
 			fmt('yellowBright',part)
 		elif f == 'ref'
@@ -134,8 +136,15 @@ export class Logger
 
 	def constructor {prefix = null,loglevel} = {}
 		#ctime = Date.now!
-		self.prefix = prefix ? format(...prefix)[0] : ''
+		self.prefix = prefix # ? format(...prefix)[0] : ''
+		# FIXME Remove IMBA_OPTIONS?
 		self.loglevel = loglevel or process.env.IMBA_LOGLEVEL or (global.#IMBA_OPTIONS and global.#IMBA_OPTIONS.loglevel) or 'info'
+
+	set prefix val
+		#prefix = val ? format(...val)[0] : ''
+
+	get prefix
+		#prefix
 
 	def write kind,...parts
 		if logLevels.indexOf(kind) < logLevels.indexOf(self.loglevel)

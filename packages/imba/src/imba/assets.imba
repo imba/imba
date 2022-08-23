@@ -45,7 +45,9 @@ class HtmlAsset
 	get body
 		let res = text.replace(/ASSET_REF_(\d+)/g) do(m,nr)
 			let ref = refs[nr]
-			if let asset = global.IMBA_MANIFEST..[ref]
+			if ref isa ImbaAsset
+				return String(ref)
+			if let asset = global.IMBA_MANIFEST..[String(ref)]
 				return asset.url
 			return ref
 

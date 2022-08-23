@@ -86,6 +86,12 @@ def parseOptions options, extras = []
 	if options.esm
 		options.as ??= 'esm'
 
+	if options.verbose > 1
+		options.loglevel ||= 'debug'
+
+	elif options.verbose
+		options.loglevel ||= 'info'
+
 	if command == 'build'
 		options.minify ??= yes
 		options.loglevel ||= 'info'
@@ -96,11 +102,13 @@ def parseOptions options, extras = []
 		options.hmr = yes
 		options.mode = 'development'
 
-	if options.verbose > 1
-		options.loglevel ||= 'debug'
+	if options.web and command != 'build'
+		command = options.command = 'serve'
+		# console.log 'changing to serve!!'
 
-	elif options.verbose
-		options.loglevel ||= 'info'
+	if options.web and command != 'serve'
+		# if we are serving - the entrypoint will be redirected to a server-script
+		options.as ??= 'browser'
 
 	if command == 'serve'
 		options.watch = yes
@@ -114,7 +122,6 @@ def parseOptions options, extras = []
 	if options.force
 		options.mtime = Date.now!
 	else
-
 		let statFiles = [
 			__filename
 			np.resolve(__dirname,'..','workers.imba.js')
@@ -143,7 +150,6 @@ def run entry, o, extras
 	o.fs = new FileSystem(o.cwd,o)
 
 	# TODO support multiple entrypoints - especially for html
-
 	extendConfig(prog.config.options,overrides)
 
 	if !o.outdir
@@ -161,9 +167,9 @@ def run entry, o, extras
 		o.as = q.replace(/^as=/,'')
 	elif file.ext == '.html'
 		o.as = 'html'
+
 		unless o.command == 'build'
 			o.as = 'node'
-
 
 	let params = resolvePresets(prog.config,{entryPoints: [file.rel]},o.as or 'node')
 
@@ -176,15 +182,10 @@ def run entry, o, extras
 	if o.command == 'build'
 		return
 
-	# should we really need this here?
 	if let exec = out..main
-		if !o.watch and o.instances == 1
-			o.execMode = 'fork'
-
 		o.name ||= entry
-
+		
 		let runner = new Runner(bundle,o)
-
 		runner.start!
 	return
 
@@ -198,7 +199,6 @@ def common cmd
 		.option("-m, --minify", "Minify generated files")
 		.option("-M, --no-minify", "Disable minifying")
 		.option("-f, --force", "Disregard previously cached outputs")
-		.option("-c, --client-only", "Generate client files only")
 		.option("--sourcemap <value>", "", "inline")
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("--bundle", "Try to bundle all external dependencies")

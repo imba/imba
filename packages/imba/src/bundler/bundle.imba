@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
-import {pluck,createHash,diagnosticToESB,injectStringBefore,builtInModules,extendObject,replaceAll, normalizePath, relativePath, ImageRegex, FontRegex} from './utils'
+import {createHash,diagnosticToESB,builtInModules,extendObject,replaceAll, normalizePath, relativePath, ImageRegex, FontRegex} from './utils'
 
 import {StyleTheme} from '../compiler/styler'
 
@@ -13,13 +13,11 @@ import FileSystem from './fs'
 import Component from './component'
 import {SourceMapper} from '../compiler/sourcemapper'
 import * as smc from 'sourcemap-codec'
-
 import Watcher from './watcher'
 
-const ASSETS_URL = '/_ASSET_PREFIX_PATH_/'
 let BUNDLE_COUNTER = 0
 
-import {LOADER_SUFFIXES, LOADER_EXTENSIONS} from './config'
+import {LOADER_SUFFIXES, LOADER_EXTENSIONS, SUFFIX_TEMPLATES} from './config'
 
 class Builder
 	# prop previous - why not?
@@ -63,10 +61,14 @@ export default class Bundle < Component
 		program.command == 'build'
 
 	get serve?
-		program.command == 'serve'
+		(program.command == 'serve') or (root.entryPoints[0].match(/\.html$/) and !build?)
 
 	get run?
 		!build?
+
+	# Will bundle be run in fork mode (vs cluster)?
+	get fork?
+		!program.watch and program.instances == 1
 
 	get standalone?
 		!!program.bundle
@@ -85,7 +87,7 @@ export default class Bundle < Component
 		!!minify?
 
 	get hmr?
-		program.hmr == yes
+		program.hmr == yes or program.watch == yes
 
 	get main?
 		root == self
@@ -100,7 +102,8 @@ export default class Bundle < Component
 		o.assetsDir or program.assetsDir or 'assets'
 
 	get pubdir
-		static? ? '.' : 'public'
+		# static? ? '.' :
+		'public'
 
 	def urlForOutputPath path
 		let url = np.relative(np.resolve(program.cwd,program.outdir),path)
@@ -161,6 +164,8 @@ export default class Bundle < Component
 		entryPoints = o.entryPoints or []
 		builder = null
 
+		# log.prefix = ["%d ","bundler"]
+
 		if parent
 			watcher = parent.watcher
 		elif program.watch
@@ -212,7 +217,7 @@ export default class Bundle < Component
 			banner: {js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')}
 			footer: {js: o.footer or "//__FOOT__"}
 			splitting: o.splitting
-			sourcemap: (program.sourcemap === false ? no : (web? ? yes : program.sourcemap))
+			sourcemap: (program.sourcemap === false ? no : (web? ? yes : yes))
 			minifySyntax: true
 			minifyWhitespace: minify? and o.format != 'html'
 			minifyIdentifiers: minify? and o.format != 'html'
@@ -234,15 +239,11 @@ export default class Bundle < Component
 		esoptions.entryPoints..sort!
 
 		# Don't include the sources content in production builds
-		if esoptions.sourcemap
-			# hmm
+		if esoptions.sourcemap and !dev?
 			esoptions.sourcesContent = false
 
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
-			# set relative to dirs? If we are just running there is no need to set the dir at all
-			# this is also just for the main entrypoint
-			esoptions.banner.js += "\nglobalThis.IMBA_PUBDIR='{pubdir}';"
 
 		if main?
 			# override the external resolution here
@@ -250,8 +251,6 @@ export default class Bundle < Component
 
 		if web? and o.ref
 			esoptions.entryNames = "{assetsDir}/[dir]/[name].[hash]"
-		elif o.ref
-			esoptions.entryNames = "{o.ref}/[dir]/[name]"
 
 		if o.ref and o.format != 'html'
 			esoptions.outbase = fs.cwd
@@ -287,12 +286,13 @@ export default class Bundle < Component
 			esoptions.entryNames = '[dir]/[name]'
 			esoptions.loader[".json"] = 'file'
 
-		if esoptions.format == 'esm'
-			esoptions.outExtension = {".js": ".mjs"}
-		elif worker?
+		
+		if worker?
 			esoptions.outExtension = {".js": ".worker.js"}
 		elif iife?
 			esoptions.outExtension = {".js": ".iife.js"}
+		elif esoptions.format == 'esm'
+			esoptions.outExtension = {".js": ".mjs"}
 
 		# console.log esoptions
 
@@ -361,7 +361,7 @@ export default class Bundle < Component
 		self
 
 	def resolveConfigPreset types = []
-		let ref = types.join('-')
+		let ref = types.join('&')
 		let key = Symbol.for(ref)
 		
 		let cacher = imbaconfig
@@ -394,7 +394,6 @@ export default class Bundle < Component
 	def plugin esb
 		let externs = self.externals or []
 		let imbaDir = program.imbaPath
-		let isCSS = do(f) (/^styles:/).test(f) or (/\.css$/).test(f)
 		let isImba = do(f) (/\.imba$/).test(f) and f.indexOf('styles:') != 0
 
 		let toAssetJS = do(object)
@@ -436,10 +435,8 @@ export default class Bundle < Component
 
 				if args.path == '__ENTRYPOINT__'
 					let abs = await esb.resolve(entryPoints[0],resolveDir: fs.cwd)
-					console.log 'resolve',abs,entryPoints,args
 					return {
 						path: abs.path # fs.abs(entryPoints[0])
-						# namespace: 'js'
 						pluginData: {
 							path: args.path
 							asset: yes
@@ -449,13 +446,12 @@ export default class Bundle < Component
 				return
 		
 		if main?
-			# 
 			esb.onResolve(filter: /\.html$/, namespace: 'file') do(args)
 				# When we are targeting html files as entrypoint (building)
 				# we compile it to js and then convert it back to html before
 				# writing the final files
 				if args.kind == 'entry-point'
-					
+					console.log serve?
 					let res = await esresolve(args)
 
 					return {
@@ -464,6 +460,7 @@ export default class Bundle < Component
 						pluginData: {
 							path: args.path
 							kind: args.kind
+							serve: !build?
 						}
 					}
 
@@ -481,24 +478,39 @@ export default class Bundle < Component
 			return {path: "*?css", namespace: 'css'}
 
 		# catch the potential entrypoints here
-		esb.onResolve(filter: /\?(as=)?([\w\-\,\.]+)$/) do(args)
+		esb.onResolve(filter: /\?(as=)?([\w\-\,\.\&]+)$/) do(args)
+			# skip this when we are resolving via esb.resolve
 			return if args.namespace == ''
+
+			# console.log 'onResolve entry BEFORE',args
 
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
 			let [path,q] = args.path.split('?')
-			let formats = q.replace(/^as=/,'').split('&')
+			let formats = q.replace(/^as=/,'').split(/[&\-]/g)
 
 			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg|styles)/)
 				return
 
 			let resolved
-
+			# Could we do away with this entrypoint thing?
 			if path == '__ENTRYPOINT__'
-				resolved = {path: fs.resolve(entryPoints[0])}
+				resolved = {path: fs.resolve(entryPoints[0]), suffix: '?' + q}
 			else
 				resolved = await esresolve(args)
+
+			# console.log 'onResolve entry',args,resolved
+
+			if let tpl = SUFFIX_TEMPLATES[q]
+				tpl = tpl[webish? ? 'web' : 'node']
+				if tpl and !args.pluginData
+					return {
+						namespace: 'wrap',
+						suffix: resolved.suffix
+						path: resolved.path
+						pluginData: tpl
+					}
 
 			# if the path could not be resolved to an actual file on disk, skip it
 			unless resolved
@@ -506,25 +518,24 @@ export default class Bundle < Component
 
 			# If you import something as script?worker it will choose between
 			# nodeworker and webworker depending on the platform you are importing
-			# it from
-			let wrkidx = formats.indexOf('worker')
-			if wrkidx >= 0
-				formats[wrkidx] = nodeish? ? 'nodeworker' : 'webworker'
-
 			let cfg = resolveConfigPreset(formats)
 			
 			let rel = fs.relative(resolved.path)
 			# Why not resolve as suffix?
-			return {path: rel + '?' + formats.join(','), namespace: 'entry', pluginData: {
-				config: cfg
-				path: rel
-			}}
+			let outpath = rel + resolved.suffix
+			
+			return {
+				path: outpath,
+				namespace: 'entry',
+				pluginData: { config: cfg, path: rel }
+			}
+
 
 		# be default, treat all absolute paths as external
-		esb.onResolve(filter: /^\//) do(args)
-			if args.kind == 'entry-point'
-				return {path: args.path.split('?')[0], resolveDir: args.resolveDir}
-
+		esb.onResolve(filter: /^sdfdsfs\//) do(args)
+			# console.log "RESOLVE ABSOLUTE",args
+			# if args.kind == 'entry-point'
+			# 	return {path: args.path.split('?')[0], resolveDir: args.resolveDir}
 			return if args.path.indexOf('?') > 0
 			return {path: args.path, external: yes}
 
@@ -580,7 +591,7 @@ export default class Bundle < Component
 			# should this be the default for all external modules?
 			if pkg? and nodeish? and run? and !standalone?
 				if externs.indexOf("!{path}") >= 0
-					console.log "don't externalize",path
+					# console.log "don't externalize",path
 					return null
 
 				let external? = externs.indexOf(path) >= 0
@@ -595,9 +606,8 @@ export default class Bundle < Component
 						pluginData: 'skip'
 					}
 					let res = await esb.resolve(args.path,opts)
-
 					# In certain cases we do want to use import here?
-					console.log 'resolving external!',opts,res,external?
+					# console.log 'resolving external!',opts,res,external?
 					return {external: true, path: res.path}
 			
 			if externs.indexOf(path) >= 0 # and false
@@ -652,6 +662,15 @@ export default class Bundle < Component
 			let file = fs.lookup(path)
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir}
+
+		esb.onLoad(namespace: 'wrap', filter: /.*/) do(args)
+			let cfg = args.pluginData
+			# let cfg = SUFFIX_TEMPLATES[args.suffix.slice(1)]
+			let tpl = nfs.readFileSync(resolveTemplate(cfg),'utf-8')
+			let body = tpl.replace('__ENTRYPOINT__?',args.path + '?')
+			body = body.replace('__ENTRYPOINT__',args.path + (args.suffix or ''))
+			# console.log 'returning body',body
+			return {loader: 'js', contents: body, resolveDir: np.dirname(args.path)}
 
 		###
 		html namespace returns a js file that extracts imports and file references
@@ -758,7 +777,7 @@ export default class Bundle < Component
 						let asset = res.meta.entries[id]
 						# or root.builder.entries[id]
 						# let rootref = root.builder.entries[id]
-						log.debug 'returned from iife',asset
+						log.debug 'returned from iife',id
 						if asset
 							return {loader: 'text', contents: asset.url}
 					catch e
@@ -936,7 +955,7 @@ export default class Bundle < Component
 			if let entry = entries[path]
 				return mapping[name] = entry.url or entry.path # to url
 			mapping[name] = entryToUrlMap[path] or path
-		console.log 'transforme compiled html',js
+		
 		let urls = js.match(/URLS = \[(.*)\]/)[1].split(/\,\s*/g).map do
 			mapping[$1]
 		
@@ -961,7 +980,7 @@ export default class Bundle < Component
 		# console.log 'transforming',result
 		let t = Date.now!
 		if result isa Error
-			log.debug 'result is error!!',result
+			log.info 'result is error!!',result
 			for err in result.errors
 				watchPath(err.location.file)
 
@@ -993,7 +1012,7 @@ export default class Bundle < Component
 			urls: {}
 		}
 
-		if process.env.DEBUG or true
+		if process.env.DEBUG or false
 			
 			let tmpsrc = np.resolve(fs.cwd,'dist')
 			meta.entryPoints = esoptions.entryPoints
@@ -1071,6 +1090,7 @@ export default class Bundle < Component
 		for own path,dep of builder.refs
 			let input = ins[path]
 			let res = dep
+
 			let rawpath = path.slice(path.indexOf(':') + 1).split('?')[0]
 
 			if path and input and dep isa Bundle
@@ -1208,7 +1228,10 @@ export default class Bundle < Component
 			emit('errored',meta.errors)
 			return
 
-		let manifest = result.manifest = {
+		# The new manifest - get rid of the old one
+		let entryManifest = result.manifest = {}
+
+		let manifest = {
 			inputs: ins
 			outputs: {}
 			urls: urls
@@ -1226,6 +1249,11 @@ export default class Bundle < Component
 		if serve?
 			# main = Object.values(result.metafile.outputs)[0]
 			main = assets.find do $1.main
+
+		let mainEntry = try ins[entryPoints[0]].output
+		main = mainEntry or main
+		# result.manifest = entryManifest
+		
 
 		###
 			Starting at the server-side entrypoint, crawl through all the dependencies,
@@ -1318,15 +1346,25 @@ export default class Bundle < Component
 					asset.fullpath = newpath
 					asset.path = np.relative(fs.cwd,newpath)
 
-		let entryManifest = {}
+		
 		for asset in assets when asset.entryId
 			entryManifest[asset.entryId] = {
 				url: asset.url
 				path: asset.fullpath
 			}
+		
+		for asset in assets when asset.url and asset.imports
+			continue if asset.type == 'map'
+			let entry = entryManifest[asset.url] = {}
+			let imports = asset.imports.map(do $1.url)
+
+			if imports.length
+				entry.imports = imports
+
 
 		# rewrite assets in html files
 		for asset in assets
+			# console.log asset.path
 			# go through html files, convert them back to html and replace path references
 			if asset.type == 'html'
 				let inpath = asset.entryPoint or ''
@@ -1338,9 +1376,12 @@ export default class Bundle < Component
 			if asset.type == 'js' or asset.type == 'mjs'
 				let body = asset.#text or asset.#file.text
 				let head = ""
+
+				unless asset.hash
+					asset.hash ||= createHash(body)
 				
 				if !asset.public
-					# if this is the main entrypoint? 
+					# only if it is the main entrypoint?
 					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}"]
 					head = parts.join(';')
 
@@ -1359,6 +1400,11 @@ export default class Bundle < Component
 
 		manifest.path = 'manifest.json'
 
+		entryManifest.main = outfs.relative(main.fullpath)
+
+		result.main = main.fullpath
+		result.hash = main.hash
+
 		# a sorted list of all the output hashes is a fast way to
 		# see if anything in the bundle has changed or not
 		log.ts "ready to write"
@@ -1367,7 +1413,7 @@ export default class Bundle < Component
 		for item in assets
 			manifest.outputs[item.path] = item
 
-		let hash = manifest.hash = createHash(assets.map(do $1.path).sort!.join('-'))
+		let hash = createHash(assets.map(do $1.hash ).sort!.join('-'))
 
 		# update the build
 		if #hash =? hash
@@ -1395,10 +1441,6 @@ export default class Bundle < Component
 			# is this only really needed for hmr?
 
 			mfile.writeSync(JSON.stringify(entryManifest,null,2),manifest.hash)
-
-			let mainEntry = try ins[entryPoints[0]].output
-			result.main = fs.resolve(mainEntry..path or main..path)
-			result.manifest = entryManifest
 
 			log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024
 

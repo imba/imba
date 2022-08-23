@@ -47,21 +47,21 @@ class Instance
 			IMBA_SERVE: true
 			IMBA_PATH: o.imbaPath
 			IMBA_OUTDIR: o.outdir
-			IMBA_TMPDIR: o.tmpdir
-			IMBA_PUBDIR: o.pubdir or bundle.pubdir or '.' 
-			IMBA_HMR: o.hmr ? true : undefined
 			IMBA_WORKER_NR: options.number
-			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'info'
-			# NODE_PATH: bundle.fs.cwd + '/node_modules'
+			IMBA_CLUSTER: !bundle.fork?
+			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'warning'
 			PORT: process.env.PORT or o.port
 		}
 
-		if o.execMode == 'fork'
+		for own k,v of env
+			env[k] = '' if v === false
+
+		if bundle.fork?
 			args.env = Object.assign({},process.env,env)
-			return cp.fork(np.resolve(path),args.args,args)
+			forked = cp.fork(np.resolve(path),args.args,args)
+			return forked
 
-		log.info "starting",env,path
-
+		
 		cluster.setupMaster(args)
 
 		let worker = cluster.fork(env)
@@ -70,7 +70,7 @@ class Instance
 		let prev = worker.#prev = current
 
 		if prev
-			log.info "reloading"
+			# log.info "reloading"
 			prev.#next = worker
 			prev..send(['emit','reloading'])
 
@@ -126,7 +126,6 @@ export default class Runner < Component
 				o.sourcemap and '--enable-source-maps'
 			].filter do $1
 		}
-		# hmm - what?
 		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
 
 		while nr <= max
@@ -141,11 +140,20 @@ export default class Runner < Component
 			worker.start!
 
 		if o.watch
+			#hash = bundle.result.hash
+
 			bundle.on('built') do(result)
-				broadcast(['emit','rebuild',result.manifest])
+				# console.log "got manifest?"
+				# let hash = result.manifest.hash
+				
+				if #hash =? result.hash
+					reload!
+				else
+					broadcast(['emit','rebuild',result.manifest])
 		return self
 
 	def reload
+		log.info "reloading %path",o.name
 		for worker of workers
 			worker.reload!
 		self

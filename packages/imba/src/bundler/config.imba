@@ -16,6 +16,13 @@ export const LOADER_SUFFIXES = {
 	base64: 'base64'
 }
 
+export const SUFFIX_TEMPLATES = {
+	worker: {web: 'worker.js', node: null}
+	sharedworker: {web: 'sharedworker.js', node: null}
+	# "worker-url": {web: 'workerurl.js', node: null}
+}
+
+
 export const LOADER_EXTENSIONS = {
 	".png": "file",
 	".bmp": "file",
@@ -110,7 +117,7 @@ export const defaultConfig = {
 		worker: {
 			extends: 'base'
 			format: 'esm'
-			platform: 'worker'
+			platform: 'webworker'
 			splitting: false
 		}
 		
@@ -121,14 +128,7 @@ export const defaultConfig = {
 			splitting: false
 		}
 
-		webworker: {
-			extends: 'base'
-			format: 'esm'
-			platform: 'webworker'
-			splitting: false
-		}
-		
-		serviceworker: {
+		sharedworker: {
 			extends: 'base'
 			format: 'esm'
 			platform: 'webworker'

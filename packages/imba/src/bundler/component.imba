@@ -6,7 +6,10 @@ import {performance} from 'perf_hooks'
 export default class Component < EventEmitter
 
 	get log
-		#logger ||= new Logger
+		#logger ||= new Logger(prefix: ["%imba ","imba"])
+
+	set log val
+		#logger = val
 
 	def time name = 'default'
 		let now = Date.now!

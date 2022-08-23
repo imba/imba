@@ -1,24 +1,21 @@
-# imba$imbaPath=global
+# imba$stdlib=1
 import cluster from 'cluster'
 import nfs from 'fs'
 import np from 'path'
 import {EventEmitter} from 'events'
 
-# import {manifest} from './manifest'
-# import {Document,Location} from './dom/core'
-# import log from '../utils/logger'
 import http from 'http'
 import https from 'https'
-import {Http2ServerRequest} from 'http2'
 
 # TODO share mimeType list with bundler to
 # bundle supported file extensions
 const defaultHeaders = {
 	html: {'Content-Type': 'text/html'}
-	js: {'Content-Type': 'text/javascript'}
-	mjs: {'Content-Type': 'text/javascript'}
-	json: {'Content-Type': 'application/json'}
-	css: {'Content-Type': 'text/css'}
+	js: {'Content-Type': 'text/javascript; charset=utf-8'}
+	cjs: {'Content-Type': 'text/javascript; charset=utf-8'}
+	mjs: {'Content-Type': 'text/javascript; charset=utf-8'}
+	json: {'Content-Type': 'application/json; charset=utf-8'}
+	css: {'Content-Type': 'text/css; charset=utf-8'}
 		
 	otf: {'Content-Type': 'font/otf'}
 	ttf: {'Content-Type': 'font/ttf'}
@@ -101,14 +98,14 @@ const process = new class Process < EventEmitter
 			servers.broadcast('rebuild',e)
 
 		on('reloading') do(e)
-			console.log 'is reloading - from outside'
 			state.reloading = yes
 			for server of servers
 				server.pause!
 
 		on('reloaded') do(e)
 			state.reloaded = yes
-			console.log 'is reloaded - from outside'
+			servers.broadcast('reloaded')
+			await new Promise do setTimeout($1,100)
 
 			let promises = for server of servers
 				server.close!
@@ -123,13 +120,7 @@ const process = new class Process < EventEmitter
 			proc.send(msg)
 
 	def on name, cb
-		watch! if name == 'change'
 		super
-
-	def watch
-		if #watch =? yes
-			manifest.on('change:main') do
-				emit('change',manifest)
 
 	def reload
 		# only allow reloading once
@@ -143,66 +134,54 @@ const process = new class Process < EventEmitter
 		send('reload')
 		return
 
-		# stall all current servers
-		for server of servers
-			server.pause!
-	
-		on('reloaded') do(e)
-			# console.log 'closing servers'
-			let promises = for server of servers
-				server.close!
-			await Promise.all(promises)
-			# console.log 'actually closed!!'
-			proc.exit(0)
 
-		send('reload')
-
+def deepImports src, links = [], depth = 0
+	let asset = global.IMBA_MANIFEST[src]
+	if asset..imports
+		for item in asset..imports
+			links.push(item)
+			deepImports(item, links, depth + 1)
+	return links
 
 class AssetResponder
-	def constructor url, params = {}
+
+	def constructor server, url, asset = {}
+		server = server
 		url = url
-		[path,query] = url.split('?')
-		ext = np.extname(path)
+		[pathname,query] = url.split('?')
+		ext = np.extname(pathname)
 
 		headers = {
 			'Content-Type': 'text/plain'
 			'Access-Control-Allow-Origin': '*'
 			'cache-control': 'public'
 		}
+
 		Object.assign(headers,defaultHeaders[ext.slice(1)] or {})
 
+		headers["max-age"] = 86400000
+
+		if asset.imports
+			headers['Link'] = deepImports(url).map(do "<{$1}>; rel=modulepreload; as=script").join(', ')
+
+		path = server.localPathForUrl(url)
+
+
 	def respond req, res
-		let asset = manifest.urls[url]
-		let headers = headers
-		let path = asset ? manifest.resolve(asset) : manifest.resolveAssetPath('public' + self.path)
-
-		#  np.resolve(proc.cwd!,asset.path)
-		unless path
-			console.log 'found no path for',asset,url
-			res.writeHead(404, {})
-			return res.end!
-
-		if asset 
-			if asset.ttl > 0
-				headers['cache-control'] = "max-age={asset.ttl}"
-		
-			if asset.imports
-				let link = []
-				for item in asset.imports
-					link.push("<{item.url}>; rel=modulepreload; as=script")
-				headers['Link'] = link.join(', ')
-		# include 
-		
 		nfs.access(path,nfs.constants.R_OK) do(err)
 			if err
-				console.log 'could not find path',path
 				res.writeHead(404,{})
 				return res.end!
-			
+
 			try
-				let stream = nfs.createReadStream(path)
-				res.writeHead(200, headers)
-				return stream.pipe(res)
+				if global.BUN
+					nfs.readFile(path) do(err,data)
+						res.writeHead(200,headers)
+						res.end(data)
+				else
+					let stream = nfs.createReadStream(path)
+					res.writeHead(200, headers)
+					return stream.pipe(res)
 			catch e
 				res.writeHead(503,{})
 				return res.end!
@@ -253,6 +232,8 @@ class Server
 				res.writeHead(503,{})
 				return res.end!
 
+	get manifest
+		global.IMBA_MANIFEST or {}
 
 	def constructor srv,options
 		servers.add(self)
@@ -266,8 +247,8 @@ class Server
 		assetResponders = {}
 		urlToLocalPathMap = {}
 		publicExistsMap = {}
-		rootDir = try proc.env.IMBA_OUTDIR or global.IMBA_OUTDIR or np.dirname(proc.argv[1])
-		publicPath = try options.publicPath or (np.resolve(rootDir,proc.env.IMBA_PUBDIR or global.IMBA_PUBDIR or '.'))
+		rootDir = try np.dirname(proc.argv[1])
+		publicPath = try np.resolve(rootDir,'public')
 		
 		if proc.env.IMBA_PATH
 			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'dist','hmr.js')
@@ -277,6 +258,7 @@ class Server
 		# fetch and remove the original request listener
 		let originalHandler = server._events.request
 		let dom = global.#dom
+		
 		srv.off('request',originalHandler)
 
 		# check if this is an express app?
@@ -289,13 +271,12 @@ class Server
 			if host == '::' or host == '0.0.0.0'
 				host = 'localhost'
 			let url = "{scheme}://{host}:{adr.port}/"
-			console.log "listening on {url}"
-			# log.info 'listening on %bold',url
-			# Logger.main.warn 'listening on %bold',url
-		
+			# unless proc.env.IMBA_CLUSTER
+			unless proc.env.IMBA_CLUSTER
+				console.log "listening on! {url}",[proc.env.IMBA_CLUSTER]
+
 		handler = do(req,res)
 			let ishttp2 = req.constructor.name == 'Http2ServerRequest'
-			# let ishttp2 = false
 			let url = req.url
 
 			if paused or closed
@@ -329,7 +310,7 @@ class Server
 
 					res.writeHead(200,headers)
 					clients.add(res)
-					# broadcast('init','{}',[res])
+					broadcast('init',global.IMBA_MANIFEST,[res])
 					req.on('close') do clients.delete(res)
 					return true
 
@@ -341,24 +322,34 @@ class Server
 			if ishttp2
 				base = headers[':scheme'] + '://' + headers[':authority']
 			else
-				let scheme = req.connection.encrypted ? 'https' : 'http'
+				let scheme = req.connection.encrypted ? 'https' : 'http' # 
 				base = scheme + '://' + headers.host
 
+			let asset = manifest[url]
 
-			# console.log "get headers",base,req.url,headers,req.protocol
-			# should be other tests as well I guess
+			if asset
+				let responder = assetResponders[url] ||= new AssetResponder(self,url,asset)
+				return responder.respond(req,res)
+
 			if url.match(/\.[A-Z\d]{8}\./)
-				
 				let path = localPathForUrl(url)
-				# console.log 'checking for url',url,path
 				let exists = publicExistsMap[path] ??= nfs.existsSync(path)
 
 				if exists
 					try
 						let headers = headersForAsset(path)
-						let stream = nfs.createReadStream(path)
-						res.writeHead(200, headers)
-						return stream.pipe(res)
+						if global.BUN
+							return nfs.readFile(path) do(err,data)
+								if err
+									res.writeHead(500,{})
+									res.write("Error getting the file: {err}")
+								else
+									res.writeHead(200,headers)
+									res.end(data)
+						else
+							let stream = nfs.createReadStream(path)
+							res.writeHead(200, headers)
+							return stream.pipe(res)
 					catch e
 						res.writeHead(503,{})
 						return res.end!
@@ -408,6 +399,7 @@ class Server
 	
 	def close
 		pause!
+		console.log 'called close!'
 
 		new Promise do(resolve)
 			closed = yes

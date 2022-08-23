@@ -30,15 +30,13 @@ class DevTools
 			if match and url != match and urls.indexOf(url) == -1
 				dirty.js.push([url,match])
 		
-		console.log "refreshed",manifest,dirty
-		if dirty.js.length and false
-
+		# console.log "refreshed",manifest,dirty
+		if dirty.js.length
 			global.document.location.reload!
 		self
 
 	def start
 		return if socket
-		console.log "STARTED!"
 
 		socket = new EventSource("/__hmr__")
 		socket.onmessage = do(e)
@@ -48,7 +46,23 @@ class DevTools
 			log "server paused"
 			yes
 
+		socket.addEventListener("resumed") do(e)
+			log "server resumed"
+			yes
+
+		socket.addEventListener("reloaded") do(e)
+			log "server reloaded"
+			setTimeout(&,200) do
+				socket.close()
+				socket = null
+				start!
+			yes
+
 		socket.addEventListener("rebuild") do(e)
+			let manifest = JSON.parse(e.data)
+			refresh(manifest)
+
+		socket.addEventListener("init") do(e)
 			let manifest = JSON.parse(e.data)
 			refresh(manifest)
 
