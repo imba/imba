@@ -273,7 +273,7 @@ class Server
 			let url = "{scheme}://{host}:{adr.port}/"
 			# unless proc.env.IMBA_CLUSTER
 			unless proc.env.IMBA_CLUSTER
-				console.log "listening on! {url}",[proc.env.IMBA_CLUSTER]
+				console.log "listening on {url}"
 
 		handler = do(req,res)
 			let ishttp2 = req.constructor.name == 'Http2ServerRequest'
