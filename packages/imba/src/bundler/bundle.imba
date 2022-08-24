@@ -845,6 +845,10 @@ export default class Bundle < Component
 	def build force = no
 		buildcache[self] ||= new Promise do(resolve)
 			if (built =? true) or force
+
+				if main?
+					log.info "starting to build in %path",program.outdir
+				
 				workers = await startWorkers!
 
 				log.debug "build {entryPoints.join(',')} {o.format}|{o.platform} {nr}"

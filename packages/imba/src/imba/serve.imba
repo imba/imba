@@ -74,12 +74,10 @@ class Servers < Set
 const servers = new Servers
 
 const process = new class Process < EventEmitter
-
 	def constructor
 		super
 		autoreload = no
-		state = {} # proxy for listening?
-		# process is 
+		state = {}
 
 		if global.IMBA_RUN
 			if cluster.isWorker
@@ -137,8 +135,13 @@ const process = new class Process < EventEmitter
 
 def deepImports src, links = [], depth = 0
 	let asset = global.IMBA_MANIFEST[src]
+	return links if links.indexOf(src) >= 0
 	if asset..imports
+		
 		for item in asset..imports
+			# if links.indexOf(item) >= 0 and depth > 10
+			#	console.warn "already found import!!",item,links
+			#	return links
 			links.push(item)
 			deepImports(item, links, depth + 1)
 	return links
@@ -399,7 +402,6 @@ class Server
 	
 	def close
 		pause!
-		console.log 'called close!'
 
 		new Promise do(resolve)
 			closed = yes

@@ -9,24 +9,27 @@ class DevTools
 		console.log(...params)
 
 	def refresh manifest
+		manifest = manifest
+
 		let dirty = {
 			css: []
 			js: []
 		}
 
-		let urls = Object.values(manifest).map do $1.url
+		let urls = Object.values(manifest).map(do $1.url).filter(do $1)
 		let regex = /\.[A-Z\d]{8}\./
 
 		for sheet of global.document.styleSheets
-			let url = sheet.ownerNode.getAttribute('href')
-			let match = urls.find do $1.replace(regex,'') == url.replace(regex,'')
+			let url = sheet.ownerNode.getAttribute('href') or ''
+			let match = urls.find do $1 and $1.replace(regex,'') == url.replace(regex,'')
 			if match and url != match
 				sheet.ownerNode.href = match
 		
 		let scripts = Object.keys(global.IMBA_LOADED or {})
 
+
 		for url in scripts
-			let match = urls.find do $1.replace(regex,'') == url.replace(regex,'')
+			let match = urls.find do $1 and $1.replace(regex,'') == url.replace(regex,'')
 			if match and url != match and urls.indexOf(url) == -1
 				dirty.js.push([url,match])
 		

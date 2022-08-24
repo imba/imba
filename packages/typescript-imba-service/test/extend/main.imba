@@ -1,6 +1,19 @@
 import { Local } from './local'
 import { TestView } from './views/test'
-import ''
+
+import './index.css'
+import html from './index.html'
+import tool from './assets/tool.svg'
+
+import stuff from './ns?text'
+
+const entries = {
+	view: import.iife('./view')
+	stuff: import.iife('./ns')
+	again: import('./ns?text')
+	asset: import('./assets/tool.svg')
+}
+
 
 let m = new SomeClass
 m.ext
@@ -17,6 +30,8 @@ m3.str
 m3.state.one
 m3.element.main
 m3.state
+
+m3.#hello
 
 let m5 = <app-panel>
 m5.main
@@ -80,4 +95,5 @@ tag app-main
 	<self>
 		<app-button data @resize.css>
 		<input$text type='text'>
+		<svg src='./assets/tool.svg'>
 		

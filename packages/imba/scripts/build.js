@@ -234,8 +234,7 @@ let bundles = [
 			"bin/imba-create.imba",
 			"program.imba",
 			"compiler.imba",
-			"workers.imba",
-			"loader.imba",
+			"workers.imba"
 		],
 		outExtension: { ".js": ".imba.js" },
 		minify: false,

@@ -9,7 +9,6 @@ should move elsewhere
 import {TYPES,MAP} from './schema'
 import {AsyncLocalStorage} from '../bindings'
 import {Flags} from './flags'
-# import {manifest} from '../manifest'
 import {createRenderContext} from './context'
 import {getDeepPropertyDescriptor} from '../utils'
 

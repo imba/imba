@@ -6629,9 +6629,14 @@ export class Call < Node
 			if arg isa Str
 				# TODO remove need for ImbaAsset type
 				# callee = runtime:asset
-				callee = LIT('')
-				let asset = STACK.root.registerAsset(arg.raw,"{kind}",self)
-				args.replace(arg,asset:ref)
+				
+				if STACK.tsc and false # (false or arg.raw == './ns')
+					yes
+					callee = callee.left
+				else
+					callee = LIT('')
+					let asset = STACK.root.registerAsset(arg.raw,"{kind}",self,arg)
+					args.replace(arg,asset:ref)
 
 		elif callee.isGlobal('import')
 			
@@ -6643,7 +6648,8 @@ export class Call < Node
 				let ext = path.split('.').pop()
 				# TODO only allow specific kinds after ?
 				if EXT_LOADER_MAP[ext] or path.indexOf('?') >= 0
-					@asset = STACK.root.registerAsset(path,'',self)
+		
+					@asset = STACK.root.registerAsset(path,'',self,arg)
 					args.replace(arg,@asset:ref)
 		
 		elif callee.isGlobal('require')
@@ -8008,8 +8014,8 @@ export class TagAttr < TagPart
 
 			let path = value isa Str and value.raw
 			if path and !path.match(/^(\/|https?\:\/\/)/)
-				unless STACK.tsc
-					@asset = STACK.root.registerAsset(path,kind,self)
+				# unless STACK.tsc
+				@asset = STACK.root.registerAsset(path,kind,self,value)
 			# else
 			#	val = MP(val,"path.{kind}")
 		
@@ -8063,13 +8069,13 @@ export class TagAttr < TagPart
 			else
 				val = MP(val,"path.{kind}")
 		
-		if @asset and !STACK.tsc
+		if @asset # and !STACK.tsc
 			val = @asset:ref.c
 
 		# if key == 'src' and @tag.@tagName == 'img' and value isa Str
 		#	console.log "IMG ASSET"
 		
-		if STACK.tsc and (isAttr or TAG_GLOBAL_ATTRIBUTES[key])
+		if STACK.tsc and (isAttr or TAG_GLOBAL_ATTRIBUTES[key]) and !@asset
 			return "{tref}.setAttribute('{key}',String({val}))"
 		
 		if isAttr
@@ -10355,7 +10361,14 @@ export class AssetReference < ValueNode
 		if asset:kind and path.indexOf('?') == -1
 			path += "?{asset:kind}"
 		if STACK.tsc
-			out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
+			if value:pathToken
+				# value:pathToken
+				let pathjs = M("'{path.split('?')[0]}'",value:pathToken)
+				out = "import {pathjs}; const {ref} = /** @type\{ImbaAsset\} */(null)"
+			else
+				# out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
+				# out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
+				out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
 		else
 			out = "import {ref} from {MP "'{path}'"}"
 		return out
@@ -10369,10 +10382,16 @@ export class ImportDeclaration < ESMDeclaration
 		if STACK.tsc
 			# let raw = src.slice(1,-1)
 			let [raw,q] = @source.raw.split('?')
+			src = M("'{raw}'",@source)
 			
 			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^\w/))
-				src = M("'data:text/asset;charset=utf-8,{@source.raw}'",@source)
-				# console.log "COMPILING IMPORT",raw,@source,src
+				
+				# @source and @source.c(locRef: 'path')
+				# src = M("'data:text/asset;charset=utf-8,{@source.raw}'",@source)
+				if @specifiers and @source
+					let out = "{M(keyword.c,keyword)} {src};\nimport {AST.cary(@specifiers).join(',')} from 'data:text/asset;';"
+					return out
+				# 	"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {src}"
 
 		# FIXME can move away from cjs - letting esbuild transform if needed.
 		if STACK.cjs
@@ -12016,7 +12035,7 @@ export class RootScope < Scope
 			@hasExports = yes
 			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
 
-	def registerAsset path, kind, context
+	def registerAsset path, kind, context, pathToken
 		let key = path + kind
 		
 		if @assets[key]
@@ -12030,6 +12049,7 @@ export class RootScope < Scope
 			kind: kind,
 			external: yes,
 			context: context
+			pathToken: pathToken,
 			ref: register('asset',null,system: yes)
 		}
 		
