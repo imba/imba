@@ -4,7 +4,7 @@
 	"description": "Language support for Imba",
 	"version": "3.4.1",
 	"publisher": "scrimba",
-	"main": "./dist/src/index.js",
+	"main": "./dist/index.js",
 	"icon": "assets/imba.png",
 	"license": "MIT",
 	"author": "Sindre Aarsaether",
@@ -242,8 +242,8 @@
 		"plist": "^3.0.5"
 	},
 	"scripts": {
-		"watch": "node \"../imba/bin/imba\" build -wS --node.external +vscode src/index.imba",
-		"build": "node \"../imba/bin/imba\" build -S --node.external +vscode src/index.imba",
+		"watch": "node \"../imba/bin/imba\" build -wSM --node.external +vscode src/index.imba",
+		"build": "node \"../imba/bin/imba\" build -SM --node.external +vscode src/index.imba",
 		"build-theme": "node \"../imba/bin/imba\" scripts/compile-theme.imba",
 		"build-syntax": "node scripts/compile-syntaxes.js",
 		"publish": "node scripts/vsce-publish.js",

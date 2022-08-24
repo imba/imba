@@ -251,7 +251,7 @@ class Server
 		urlToLocalPathMap = {}
 		publicExistsMap = {}
 		rootDir = try np.dirname(proc.argv[1])
-		publicPath = try np.resolve(rootDir,'public')
+		publicPath = try np.resolve(rootDir,global.IMBA_PUBDIR or 'public')
 		
 		if proc.env.IMBA_PATH
 			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'dist','hmr.js')

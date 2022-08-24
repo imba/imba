@@ -102,8 +102,8 @@ export default class Bundle < Component
 		o.assetsDir or program.assetsDir or 'assets'
 
 	get pubdir
-		# static? ? '.' :
-		'public'
+		build? and static? ? '.' : 'public'
+		
 
 	def urlForOutputPath path
 		let url = np.relative(np.resolve(program.cwd,program.outdir),path)
@@ -426,17 +426,18 @@ export default class Bundle < Component
 					let kind = args.path.split('.').pop!
 					# TODO Support serving a regular js script as well - could be handy
 					let tpl = resolveTemplate("serve-{kind}.imba")
-
 					let abs = await esb.resolve(args.path,resolveDir: args.resolveDir)
-					return {path: tpl, pluginData: {
+
+					return {path: tpl, namespace: 'file', pluginData: {
 						__ENTRYPOINT__: abs.path
 						resolveDir: args.resolveDir
 					}}
 
 				if args.path == '__ENTRYPOINT__'
+					
 					let abs = await esb.resolve(entryPoints[0],resolveDir: fs.cwd)
 					return {
-						path: abs.path # fs.abs(entryPoints[0])
+						path: args.pluginData..__ENTRYPOINT__ or abs.path # fs.abs(entryPoints[0])
 						pluginData: {
 							path: args.path
 							asset: yes
@@ -949,7 +950,7 @@ export default class Bundle < Component
 
 		return matched
 
-	def transformCompiledHTML js,meta,manifest
+	def transformCompiledHTML asset,js,meta,manifest
 		let mapping = {}
 		let entryToUrlMap = {}
 		let entries = manifest
@@ -971,14 +972,10 @@ export default class Bundle < Component
 			return replaced
 		return js
 
-		#	if hmr?
-		#		body = injectStringBefore(body,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 
 	###
 	Go through the generated files - create hashes for the file-contents and rewrite
 	the paths and references for the bundle - ready to write to the file system.
-
-	Normalize the files and 
 	###
 	def transform result, prev
 		# console.log 'transforming',result
@@ -1140,7 +1137,7 @@ export default class Bundle < Component
 				output.virtual ??= yes
 
 			if output.public
-				output.url = urlForOutputPath(output.fullpath)
+				output.url = urlForOutputPath(output.path)
 
 			output.type ??= (np.extname(path) or '').slice(1)
 
@@ -1211,14 +1208,26 @@ export default class Bundle < Component
 			let to = outfs.resolve(pubdir)
 			if nfs.existsSync(from)
 				new Promise do(resolve) ncp(from,to,{},resolve)
+	
+	###
+	Removes all files and folders inside the dist dir, without
+	removing the dir itself. This is needed for cases where you
+	have linked a folder to a branch with git worktree etc,
+	which is useful for deploying to gh-pages
+	###
+	def cleanOutDir
+		return self unless nfs.existsSync(program.outdir)
+		let items = nfs.readdirSync(program.outdir)
+		for item in items
+			continue if item.match(/^\.git/)
+			nfs.rmSync(np.resolve(program.outdir,item),{recursive: yes})
+		self
 
 	# Called at the top bundle after all nested entrypoints++ has been transformed
 	# The inputs and outputs in the result are now deeply linked to inner bundled
 	# entrypoints etc
 	def write result
 		# after write we can wipe the buildcache
-		outfs
-
 		let buildInside = (/^(\.\/|\w)/).test(np.relative(fs.cwd,outdir))
 		
 		let meta = result.meta
@@ -1331,6 +1340,7 @@ export default class Bundle < Component
 
 				if true
 					smap.mappings = smc.encode(smap.raw)
+					delete smap.raw
 
 					assets.push({
 						path: asset.path + '.map'
@@ -1374,7 +1384,7 @@ export default class Bundle < Component
 				let inpath = asset.entryPoint or ''
 				let src = inpath.replace(/^\w+\:/,'')
 				if let meta = builder.meta[src]
-					let body = transformCompiledHTML(asset.#file.text,meta,entryManifest)
+					let body = transformCompiledHTML(asset,asset.#file.text,meta,entryManifest)
 					asset.#text = asset.#contents = body
 
 			if asset.type == 'js' or asset.type == 'mjs'
@@ -1423,8 +1433,10 @@ export default class Bundle < Component
 		if #hash =? hash
 			log.info "building in %path",program.outdir
 
+			# we only clean the output directory on the first run, and if the
+			# output dir exists inside of cwd - just as a safety mechanism
 			if !built? and program.clean and !program.tmpdir and buildInside
-				nfs.rmdirSync(program.outdir,{recursive: true})
+				cleanOutDir!
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in assets
