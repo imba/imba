@@ -8004,7 +8004,8 @@ export class TagAttr < TagPart
 
 			let kind = 'asset'
 			if tagName == 'svg'
-				kind = 'svg'
+				# kind = 'js' # no kind here?
+				kind = ''
 			elif tagName == 'img'
 				kind = 'img'
 			elif tagName == 'script'

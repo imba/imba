@@ -666,9 +666,12 @@ export default class Bundle < Component
 					return {path: resolved.path, suffix: '?js'}
 
 			# FIXME Formalize this behaviour
-			if path.match(/\.json$/) and args.importer..match(/\.html$/)
+			if path.match(/\.json(\?copy)?$/)
 				let res = await esresolve(args)
-				return {path: res.path, suffix: "?url"}
+				if args.importer..match(/\.html$/)
+					return {path: res.path, suffix: "?url"}
+				if web? and esoptions.splitting
+					return {path: res.path + '.mjs', suffix: "?external"}
 
 			return null
 
@@ -730,10 +733,24 @@ export default class Bundle < Component
 			if suffix
 				let fmt = suffix.slice(1)
 				let loader = LOADER_SUFFIXES[fmt]
+
+				if fmt == 'external'
+					# TODO Document external
+					if web? and path.match(/\.json\.m?js$/)
+						let real = path.replace(/\.m?js$/,'')
+						let out = nfs.readFileSync(real,'utf-8')
+						# maybe transform?
+						return {
+							loader: 'copy',
+							contents: "export default " + out,
+							resolveDir: np.dirname(path)
+						}
+
 				if loader
 					let out = nfs.readFileSync(path)
 					return {loader: loader, contents: out}
-				elif fmt == 'svg'
+
+				elif fmt == 'js'
 					let file = fs.lookup(path)
 					let out = await file.compile({format: 'esm'},self)
 					return {loader: 'js', contents: out.js, resolveDir: file.absdir}
