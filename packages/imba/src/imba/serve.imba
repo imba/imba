@@ -202,7 +202,13 @@ class Server
 
 	def localPathForUrl url
 		let src = url.replace(/\?.*$/,'')
-		urlToLocalPathMap[src] ||= np.resolve(publicPath,'.' + src)
+		return urlToLocalPathMap[src] ??= if true
+			let path = np.resolve(publicPath,'.' + src)
+			let res = nfs.existsSync(path) and path
+			if !res and staticDir
+				path = np.resolve(staticDir,'.' + src)
+				res = nfs.existsSync(path) and path
+			res	
 
 	def headersForAsset path
 		let ext = np.extname(path)
@@ -211,29 +217,6 @@ class Server
 			'Access-Control-Allow-Origin': '*'
 			'cache-control': 'public'
 		},defaultHeaders[ext.slice(1)] or {})
-
-	def respondToStatic req,res,url
-		let path = localPathForUrl(url)
-		let ext = np.extname(path)
-		
-		let headers = Object.assign({
-			'Content-Type': 'text/plain'
-			'Access-Control-Allow-Origin': '*'
-			'cache-control': 'public'
-		},defaultHeaders[ext.slice(1)] or {})
-
-		nfs.access(path,nfs.constants.R_OK) do(err)
-			if err
-				console.log 'could not find path',path
-				res.writeHead(404,{})
-				return res.end!
-			try
-				let stream = nfs.createReadStream(path)
-				res.writeHead(200, headers)
-				return stream.pipe(res)
-			catch e
-				res.writeHead(503,{})
-				return res.end!
 
 	get manifest
 		global.IMBA_MANIFEST or {}
@@ -252,6 +235,7 @@ class Server
 		publicExistsMap = {}
 		rootDir = try np.dirname(proc.argv[1])
 		publicPath = try np.resolve(rootDir,global.IMBA_PUBDIR or 'public')
+		staticDir = global.IMBA_STATICDIR or ''
 		
 		if proc.env.IMBA_PATH
 			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'dist','hmr.js')
@@ -335,10 +319,8 @@ class Server
 				return responder.respond(req,res)
 
 			if url.match(/\.[A-Z\d]{8}\./) or url.match(/\.\w{1,4}($|\?)/)
-				let path = localPathForUrl(url)
-				let exists = publicExistsMap[path] ??= nfs.existsSync(path)
-
-				if exists
+				
+				if let path = localPathForUrl(url)
 					try
 						let headers = headersForAsset(path)
 						if global.BUN

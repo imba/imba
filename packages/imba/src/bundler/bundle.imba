@@ -1245,6 +1245,7 @@ export default class Bundle < Component
 	def write result
 		# after write we can wipe the buildcache
 		let buildInside = (/^(\.\/|\w)/).test(np.relative(fs.cwd,outdir))
+		let staticFilesPath = nfs.existsSync(fs.resolve('public')) and fs.resolve('public')
 		
 		let meta = result.meta
 		let ins = meta.inputs
@@ -1416,6 +1417,8 @@ export default class Bundle < Component
 				if !asset.public
 					# only if it is the main entrypoint?
 					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}"]
+					if staticFilesPath and program.tmpdir
+						parts.push("globalThis.IMBA_STATICDIR='{staticFilesPath}'")
 					head = parts.join(';')
 
 				if asset.public and hmr?
@@ -1469,7 +1472,7 @@ export default class Bundle < Component
 				let file = outfs.lookup(asset.fullpath)
 				await file.write(asset.#contents,asset.hash)
 
-			if true
+			if staticFilesPath and !program.tmpdir
 				await copyPublicFiles!
 
 			# is this only really needed for hmr?
