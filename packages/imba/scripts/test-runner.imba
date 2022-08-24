@@ -258,8 +258,8 @@ def serve
 	let basejs = import.web('../test/index.imba')
 	let cmpjs = import.webworker('../test/compiler.imba')
 
-	statics["/compiler.js"] = cmpjs.readSync!
-	statics["/imba.js"] = basejs.readSync!
+	statics["/compiler.js"] = cmpjs.body
+	statics["/imba.js"] = basejs.body
 
 	server = http.createServer do(req,res)
 		if let file = statics[req.url]
@@ -420,10 +420,7 @@ def main
 		console.log "The following file(s) crashed:"
 		console.log (crashed.map do " - {$1.path}").join('\n')
 
-	# await new Promise do(resolve) setTimeout(resolve,100000)
-	# server.close do
-	
-	unless options.debug
+	if !options.debug
 		process.exit(failed.length ? 1 : 0)
 
 main()

@@ -1,0 +1,1 @@
+imba.mount <div> <svg src="svg/logo.svg">

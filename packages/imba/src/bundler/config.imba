@@ -22,6 +22,50 @@ export const SUFFIX_TEMPLATES = {
 	# "worker-url": {web: 'workerurl.js', node: null}
 }
 
+export const NODE_BUILTINS = [
+	"assert",
+	"async_hooks",
+	"buffer",
+	"child_process",
+	"cluster",
+	"console",
+	"constants",
+	"crypto",
+	"dgram",
+	"dns",
+	"domain",
+	"events",
+	"fs",
+	"fs/promises",
+	"http",
+	"http2",
+	"https",
+	"inspector",
+	"module",
+	"net",
+	"os",
+	"path",
+	"perf_hooks",
+	"process",
+	"punycode",
+	"querystring",
+	"readline",
+	"repl",
+	"stream",
+	"string_decoder",
+	"sys",
+	"timers",
+	"tls",
+	"trace_events",
+	"tty",
+	"url",
+	"util",
+	"v8",
+	"vm",
+	"worker_threads",
+	"zlib"
+]
+
 
 export const LOADER_EXTENSIONS = {
 	".png": "file",
@@ -120,7 +164,7 @@ export const defaultConfig = {
 			platform: 'webworker'
 			splitting: false
 		}
-		
+
 		nodeworker: {
 			extends: 'node'
 			format: 'cjs'
@@ -142,17 +186,17 @@ def clone object
 	JSON.parse(JSON.stringify(object))
 
 export def merge config, patch, ...up
-	
+
 	let otyp = typeof config
 	let vtyp = typeof patch
-	
-	
-	
-	otyp = 'array' if config isa Array	
+
+
+
+	otyp = 'array' if config isa Array
 	vtyp = 'array' if patch isa Array
-	
+
 	let keytype = optionTypes[up[0]]
-	
+
 	if keytype == 'boolean'
 		return patch
 
@@ -162,7 +206,7 @@ export def merge config, patch, ...up
 	if otyp == 'array'
 		if vtyp == 'string'
 			patch = patch.split(/\,\s*|\s+/g)
-		
+
 		let mod = patch.every do (/[\-\+]/).test($1 or '')
 		let cloned = new Set(mod ? clone(config): [])
 
@@ -173,9 +217,9 @@ export def merge config, patch, ...up
 				cloned.delete(item.slice(1))
 			else
 				cloned.add(item)
-		
-		return Array.from(cloned)	
-		
+
+		return Array.from(cloned)
+
 	if config == null
 		return clone(patch)
 
@@ -183,7 +227,7 @@ export def merge config, patch, ...up
 		config ||= {}
 
 		if config.hasOwnProperty(key)
-			
+
 			config[key] = merge(config[key],value,key,...up)
 		else
 			# config[key] = merge(null,value,key,...up)
@@ -194,7 +238,7 @@ export def merge config, patch, ...up
 export def resolve config, cwd
 	config = merge(clone(defaultConfig),config)
 	return config
-	
+
 export def resolvePresets imbaconfig, config = {}, types = null
 	if typeof types == 'string'
 		types = types.split(',')

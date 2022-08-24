@@ -6,6 +6,8 @@
 tmp
 test/perf
 test/dist
+packages/imba/test/cli/examples/dist
+
 npm-debug.log
 lerna-debug.log
 test/attic

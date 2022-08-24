@@ -17,7 +17,7 @@ import Watcher from './watcher'
 
 let BUNDLE_COUNTER = 0
 
-import {LOADER_SUFFIXES, LOADER_EXTENSIONS, SUFFIX_TEMPLATES} from './config'
+import {LOADER_SUFFIXES, LOADER_EXTENSIONS, SUFFIX_TEMPLATES, NODE_BUILTINS} from './config'
 
 class Builder
 	# prop previous - why not?
@@ -103,6 +103,9 @@ export default class Bundle < Component
 
 	get pubdir
 		build? and static? ? '.' : 'public'
+
+	get distInsideRoot?
+		#distInsideRoot ??= (/^(\.\/|\w)/).test(np.relative(fs.cwd,outdir))
 		
 
 	def urlForOutputPath path
@@ -579,6 +582,7 @@ export default class Bundle < Component
 			let abs? = /^(\/|\w\:\/)/.test(path)
 			let rel? = path[0] == '.'
 			let pkg? = !abs? and !rel?
+			let external? = externs.indexOf(path) >= 0
 		
 			let q = (path.split('?')[1] or '')
 
@@ -589,33 +593,24 @@ export default class Bundle < Component
 			if path.indexOf('node:') == 0
 				return {external: true}
 
+			if NODE_BUILTINS.indexOf(path) >= 0 and !web?
+				# let res = await esresolve(args)
+				# console.log 'resolved node module',res
+				# What if these actually resolved to something else?
+				# console.log 'is node module!',path
+				# not external if we are in browser?
+				# what do we want to externalize by default?
+				return {external: true, path: "node:{path}"}
+			
+
 			# should this be the default for all external modules?
 			if pkg? and nodeish? and run? and !standalone?
 				if externs.indexOf("!{path}") >= 0
 					# console.log "don't externalize",path
 					return null
 
-				let external? = externs.indexOf(path) >= 0
-
-				if external?
-						
-					let opts = {
-						importer: args.importer
-						resolveDir: args.resolveDir
-						namespace: ''
-						kind: esm? ? 'import-statement' : 'require-call'
-						pluginData: 'skip'
-					}
-					let res = await esb.resolve(args.path,opts)
-					# In certain cases we do want to use import here?
-					# console.log 'resolving external!',opts,res,external?
-					return {external: true, path: res.path}
-			
-			if externs.indexOf(path) >= 0 # and false
-				# always external or stay 
-				# console.log 'is external',args.path
-
-				# check if it returns esm
+				let reachable? = no
+				
 				let opts = {
 					importer: args.importer
 					resolveDir: args.resolveDir
@@ -623,7 +618,31 @@ export default class Bundle < Component
 					kind: esm? ? 'import-statement' : 'require-call'
 					pluginData: 'skip'
 				}
-				# also if it is inside of something else?
+				let res = await esb.resolve(args.path,opts)
+					
+				if res.path
+					let base = res.path.split('node_modules')[0]
+					let inpath = np.relative(base,outdir)
+					reachable? = yes if inpath.indexOf('../') != 0
+
+				if external? and reachable?
+					return {external: true}
+
+				if external?
+
+					# let opts = {
+					# 	importer: args.importer
+					# 	resolveDir: args.resolveDir
+					# 	namespace: ''
+					# 	kind: esm? ? 'import-statement' : 'require-call'
+					# 	pluginData: 'skip'
+					# }
+					# let res = await esb.resolve(args.path,opts)
+					# In certain cases we do want to use import here?
+					# console.log 'resolving external!',opts,res,external?
+					return {external: true, path: res.path}
+			
+			if external?
 				if program.bundle
 					return null
 
@@ -643,13 +662,11 @@ export default class Bundle < Component
 				let resolved = await esresolve(args)
 
 				if resolved..path
-					# console.log "IMAGE!?",args,resolved
-					# throw 1
+					# need more tests for this
 					return {path: resolved.path, suffix: '?js'}
 
 			# FIXME Formalize this behaviour
 			if path.match(/\.json$/) and args.importer..match(/\.html$/)
-				console.log 'importing json!'
 				let res = await esresolve(args)
 				return {path: res.path, suffix: "?url"}
 
@@ -968,7 +985,7 @@ export default class Bundle < Component
 			let replaced = meta.html.replace(/ASSET_REF_(\d+)/g) do(m,nr)
 				let url = urls[parseInt(nr)]
 				return url
-			# 
+			# include module-preload
 			return replaced
 		return js
 
@@ -1144,7 +1161,6 @@ export default class Bundle < Component
 
 			let inputs = []
 			let dependencies = new Set
-			let origInputs = output.inputs
 			for own src,m of output.inputs
 				if src.indexOf('entry:') == 0
 					dependencies.add(ins[src])
@@ -1378,7 +1394,7 @@ export default class Bundle < Component
 
 		# rewrite assets in html files
 		for asset in assets
-			# console.log asset.path
+			# console.log asset.path,asset.type,asset.fullpath
 			# go through html files, convert them back to html and replace path references
 			if asset.type == 'html'
 				let inpath = asset.entryPoint or ''
