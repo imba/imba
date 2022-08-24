@@ -102,8 +102,7 @@ def releaseRunner runner, page, close
 def spawnRunner
 	if runners[0]
 		return runners.shift!
-	
-	# console.log 'spawning runner'
+
 	let browser = await puppeteer.launch(args: args, headless: true)
 	let runner = await browser.newPage!
 	runner.setViewport({width: 800, height: 600})

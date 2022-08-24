@@ -40,6 +40,7 @@
   ],
   "scripts": {
     "test": "node bin/imba scripts/test-runner.imba",
+    "test-cli": "cd test/cli && node ../../bin/imba index.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "build": "node scripts/build-parser.js && node scripts/build.js",
     "build-parser": "node scripts/build-parser.js",
@@ -69,6 +70,7 @@
   },
   "exports": {
     ".": {
+      "imba": "./src/imba/imba.imba",
       "browser": "./dist/imba.mjs",
       "default": "./index.js"
     },

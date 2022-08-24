@@ -57,7 +57,7 @@ export class Build
 	def spawn
 		new Promise do(resolve)
 			let [bin,...params] = command.split(' ')
-			console.log 'spawning',bin,params
+
 			let resolved = no
 			let env = Object.assign({},process.env,{
 				IMBA_LOGLEVEL: 'info'
