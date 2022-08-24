@@ -12,7 +12,6 @@ npm-debug.log
 lerna-debug.log
 test/attic
 test/tmp
-test/basic-app/old
 *.tmp.js
 *.tgz
 test/node_modules
