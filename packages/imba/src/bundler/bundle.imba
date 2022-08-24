@@ -237,7 +237,7 @@ export default class Bundle < Component
 			tsconfig: o.tsconfig
 			nodePaths: (o.nodePaths or []).slice(0) # (np.resolve(program.imbaPath,'polyfills'))
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
-			pure: o.pure
+			pure: ['Symbol.for','Symbol']
 			treeShaking: o.treeShaking
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.svg']
 		}
