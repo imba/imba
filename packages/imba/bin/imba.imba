@@ -182,11 +182,16 @@ def run entry, o, extras
 	if o.command == 'build'
 		return
 
-	if let exec = out..main
-		o.name ||= entry
-		
-		let runner = new Runner(bundle,o)
-		runner.start!
+	let run = do(result)
+		if let exec = result..main
+			o.name ||= entry	
+			let runner = new Runner(bundle,o)
+			runner.start!
+
+	if out..main
+		run(out)
+	elif o.watch
+		bundle.once('built',run)
 	return
 
 let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version).name('imba')

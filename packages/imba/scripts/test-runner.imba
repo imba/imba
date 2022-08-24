@@ -110,7 +110,7 @@ def spawnRunner
 	runner.meta = []
 
 	# let t = Date.now!
-	runner.exposeFunction('puppy') do(str,params)
+	await runner.exposeFunction('puppy') do(str,params)
 		let rpc = runner.HANDLERS
 		let receiver = runner
 		let path = str.split('.')

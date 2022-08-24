@@ -60,6 +60,9 @@ export default class Bundle < Component
 	get build?
 		program.command == 'build'
 
+	get watch?
+		!!program.watch
+
 	get serve?
 		(program.command == 'serve') or (root.entryPoints[0].match(/\.html$/) and !build?)
 
@@ -486,8 +489,6 @@ export default class Bundle < Component
 			# skip this when we are resolving via esb.resolve
 			return if args.namespace == ''
 
-			# console.log 'onResolve entry BEFORE',args
-
 			if o.format == 'css'
 				return {path: "_", namespace: 'imba-raw'}
 
@@ -504,7 +505,6 @@ export default class Bundle < Component
 			else
 				resolved = await esresolve(args)
 
-			# console.log 'onResolve entry',args,resolved
 
 			if let tpl = SUFFIX_TEMPLATES[q]
 				tpl = tpl[webish? ? 'web' : 'node']
@@ -683,11 +683,9 @@ export default class Bundle < Component
 
 		esb.onLoad(namespace: 'wrap', filter: /.*/) do(args)
 			let cfg = args.pluginData
-			# let cfg = SUFFIX_TEMPLATES[args.suffix.slice(1)]
 			let tpl = nfs.readFileSync(resolveTemplate(cfg),'utf-8')
 			let body = tpl.replace('__ENTRYPOINT__?',args.path + '?')
 			body = body.replace('__ENTRYPOINT__',args.path + (args.suffix or ''))
-			# console.log 'returning body',body
 			return {loader: 'js', contents: body, resolveDir: np.dirname(args.path)}
 
 		###
@@ -701,13 +699,12 @@ export default class Bundle < Component
 			let out = await file.compile({format: 'esm'},self)
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir, pluginData: {resolver: path}}
 
+		# TODO Remove namespace
 		esb.onLoad(namespace: 'js', filter: /.*/) do({path})
 			# TODO drop the js namespace - use suffix instead?
 			let file = fs.lookup(path)
-			# console.log 'compile html file',path
 			let out = await file.compile({format: 'esm'},self)
 			builder.meta[file.rel] = out
-			# console.log 'compile html file',path,out.js
 			return {loader: 'js', contents: out.js, resolveDir: file.absdir, pluginData: {
 				importerFile: file.rel
 			}}
@@ -875,6 +872,7 @@ export default class Bundle < Component
 					builder = new Builder(previous: builder)
 					result = await esbuild.build(esoptions)
 					firstBuild = result
+					lastResult = result
 				catch e
 					result = e
 
@@ -925,14 +923,17 @@ export default class Bundle < Component
 					#buildcache = {}
 					return resolve(result)
 
-			let prev = result
+			let prev = lastResult
+			let failed = no
 
 			try
 				builder = new Builder(previous: builder)
 				let rebuilt = await firstBuild.rebuild!
 				result = rebuilt
+				lastResult = result
 			catch e
 				log.debug "error when rebuilding",e
+				failed = yes
 				result = e
 			
 			await transform(result,prev)
@@ -995,10 +996,10 @@ export default class Bundle < Component
 	the paths and references for the bundle - ready to write to the file system.
 	###
 	def transform result, prev
-		# console.log 'transforming',result
+
 		let t = Date.now!
 		if result isa Error
-			log.info 'result is error!!',result
+			# log.info '',result
 			for err in result.errors
 				watchPath(err.location.file)
 
@@ -1253,8 +1254,11 @@ export default class Bundle < Component
 
 		if meta.errors.length
 			# emit errors - should be linked to the inputs from previous working manifest?
-			log.error "failed with {meta.errors.length} errors",meta.errors
+			log.error "failed with {meta.errors.length} errors"
 			emit('errored',meta.errors)
+			# if we are not watching we actually want to exit the process
+			if !watch?
+				process.exit(1)
 			return
 
 		# The new manifest - get rid of the old one
