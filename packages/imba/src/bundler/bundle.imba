@@ -1220,11 +1220,10 @@ export default class Bundle < Component
 		return result
 
 	def copyPublicFiles
-		if build?
-			let from = fs.resolve('public')
-			let to = outfs.resolve(pubdir)
-			if nfs.existsSync(from)
-				new Promise do(resolve) ncp(from,to,{},resolve)
+		let from = fs.resolve('public')
+		let to = outfs.resolve(pubdir)
+		if nfs.existsSync(from)
+			new Promise do(resolve) ncp(from,to,{},resolve)
 	
 	###
 	Removes all files and folders inside the dist dir, without
@@ -1470,12 +1469,10 @@ export default class Bundle < Component
 				let file = outfs.lookup(asset.fullpath)
 				await file.write(asset.#contents,asset.hash)
 
-
-			if false # Turned off for scrimba testing now(!)
+			if true
 				await copyPublicFiles!
 
 			# is this only really needed for hmr?
-
 			mfile.writeSync(JSON.stringify(entryManifest,null,2),manifest.hash)
 
 			log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024

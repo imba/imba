@@ -334,7 +334,7 @@ class Server
 				let responder = assetResponders[url] ||= new AssetResponder(self,url,asset)
 				return responder.respond(req,res)
 
-			if url.match(/\.[A-Z\d]{8}\./)
+			if url.match(/\.[A-Z\d]{8}\./) or url.match(/\.\w{1,4}($|\?)/)
 				let path = localPathForUrl(url)
 				let exists = publicExistsMap[path] ??= nfs.existsSync(path)
 

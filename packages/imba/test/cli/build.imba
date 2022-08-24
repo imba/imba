@@ -120,7 +120,7 @@ export class Build
 				let out = {}
 				let res = globalThis.window.getComputedStyle(globalThis.document.documentElement)
 				# let arr = Array.from(res).filter do $1.indexOf('--') == 0
-				let arr = 'about ssr shared home iife head foot index'.split(' ')
+				let arr = 'about ssr shared home iife head foot index static'.split(' ')
 				# return arr
 				while let part = arr.pop!
 					# if part.indexOf('--') == 0

@@ -47,6 +47,7 @@ def run
 		await serve("imba --web -o dist app/about.html") do(page,body,build)
 			assert(body.indexOf("Hello from about page!") > 0)
 			assert(page.css.about == 1)
+			assert(page.css.static == 1)
 
 		# Running with the --web option will create a webserver to serve
 		# an html file importing the input .imba file
