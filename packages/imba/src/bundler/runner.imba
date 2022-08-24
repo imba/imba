@@ -6,6 +6,7 @@ import {Logger} from '../utils/logger'
 
 class Instance
 	runner = null
+	fork = null
 	args = {}
 	mode = 'cluster'
 	name = 'worker'
@@ -58,8 +59,9 @@ class Instance
 
 		if bundle.fork?
 			args.env = Object.assign({},process.env,env)
-			forked = cp.fork(np.resolve(path),args.args,args)
-			return forked
+			fork = cp.fork(np.resolve(path),args.args,args)
+			fork.on('exit') do(code) process.exit(code)
+			return fork
 
 		
 		cluster.setupMaster(args)
