@@ -8,6 +8,8 @@ const builds = new Set
 
 const cwd = np.resolve(process.cwd!,'examples')
 
+console.log 'cwd is',cwd
+
 export class Build
 
 	static def for cmd
@@ -30,6 +32,9 @@ export class Build
 		new Promise do(resolve)
 			spawned = exec(command,{cwd: cwd}) do(error,stdout,stderr)
 				# console.log([error,stdout,stderr])
+				if error
+					throw error
+
 				self.stderr += stderr if stderr
 				self.stdout += stdout if stdout
 				
@@ -95,7 +100,7 @@ export class Build
 
 	def cleanup
 		await stop! unless stopped
-		execSync("rm -rf dist")
+		execSync("rm -rf dist",cwd: cwd)
 
 	@lazy get browser
 		# cannot be
@@ -145,10 +150,11 @@ export default def command cmd
 
 
 export def cleanup
-	for build of builds
-		console.log 'stopping child',build.command,build.child.pid
-		await build.stop!
-	execSync("rm -rf dist")
+	try
+		for build of builds
+			console.log 'stopping child',build.command,build.child.pid
+			await build.stop!
+	execSync("rm -rf dist", cwd: cwd)
 		
 
 export def serve cmd, cb

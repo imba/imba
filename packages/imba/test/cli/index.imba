@@ -22,7 +22,8 @@ def run
 							errors.push(e)
 			if errors.length
 				for err in errors
-					console.log err.message
+					console.log err.message,err
+
 				process.exit(1)
 			
 			build.cleanup!
@@ -55,6 +56,7 @@ def run
 
 		console.log "all tests passed"
 	catch e
+		console.log 'errored',e
 		await cleanup!
 		console.log 'assert error?',e
 		process.exit(1)
