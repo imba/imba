@@ -7,6 +7,7 @@ import newPage from './browser'
 const builds = new Set
 
 const cwd = np.resolve(process.cwd!,'examples')
+let bin = "../../../bin/imba"
 
 console.log 'cwd is',cwd
 
@@ -16,7 +17,7 @@ export class Build
 		new self(cmd)
 
 	def constructor command
-		command = command
+		self.command = command.replace(/^imba /,bin + ' ')
 		child = null
 		stdout = ""
 		stderr = ""
