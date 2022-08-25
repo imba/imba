@@ -654,10 +654,15 @@ export default class Bundle < Component
 			# if this is an absolute path let esbuld resolve
 			if abs?
 				return null
+
+			if q == 'img'
+				let resolved = await esresolve(args)
+				return {path: resolved.path}
 			
 			# just let it flow through
-			if q == 'img' or q == 'svg'
-				return null
+			# if q == 'img' or q == 'svg'
+			#	return null
+
 
 			let img? = /(\.(svg|png|jpe?g|gif|tiff|webp))$/.test(path)
 			

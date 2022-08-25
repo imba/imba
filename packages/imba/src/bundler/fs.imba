@@ -327,7 +327,6 @@ export class SVGFile < FileNode
 			let parsed = parseAsset({body: svgbody})
 			# special serializer
 			let js = """
-			// import \{asset\} from 'imba';
 			import url from './{name}';
 			export default /* @__PURE__ */ Object.assign(\{
 				url: url, type: 'svg',toString: function()\{ return this.url;\}
@@ -377,15 +376,14 @@ export class ImageFile < FileNode
 			let size = await Promise.resolve(imgsize(abs))
 
 			let js = """
-			import \{asset\} from 'imba';
 			import url from './{name}';
-			export default asset(\{
+			export default /* @__PURE__ */ \{
 				url: url,
 				type: 'image',
 				width: {size.width or 0},
 				height: {size.height or 0},
 				toString: function()\{ return this.url;\}
-			\})
+			\}
 			"""
 			return {
 				width: size.width
