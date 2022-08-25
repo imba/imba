@@ -12,13 +12,11 @@ import SourceMap from './sourcemap'
 
 import StyleRule,StyleTheme,Color,StyleSheet from './styler.imba'
 import ReservedIdentifierRegex,InternalPrefixes,toJSIdentifier,toCustomTagIdentifier from '../utils/identifiers.imba'
-import parseAsset from './assets.imba'
 import Compilation from './compilation'
 
 import SourceMapper from './sourcemapper'
 
 var TAG_NAMES = constants.TAG_NAMES
-
 var TAG_GLOBAL_ATTRIBUTES = constants.TAG_GLOBAL_ATTRIBUTES
 
 var TAG_TYPES = {}
@@ -6614,7 +6612,6 @@ export class Call < Node
 			if arg isa Str
 				# TODO remove need for ImbaAsset type
 				# callee = runtime:asset
-				
 				if STACK.tsc and false # (false or arg.raw == './ns')
 					yes
 					callee = callee.left
