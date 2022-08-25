@@ -245,26 +245,23 @@ def serve
 
 	let copts = {
 		platform: 'browser'
-		runtime: '/imba.js'
 		raiseErrors: false
-		resolve: {
-			'imba': '/imba.js',
-			'imba/compiler': '/compiler.js',
-			'imba/spec': '/imba.js'
-		}
 	}
 
 	let basejs = import.web('../test/index.imba')
-	let cmpjs = import.webworker('../test/compiler.imba')
+	# just use one from dist instead?
+	let cmpjs = import.worker('../test/compiler.imba')
 
 	statics["/compiler.js"] = cmpjs.body
 	statics["/imba.js"] = basejs.body
 
 	server = http.createServer do(req,res)
+		# console.log "responding",req.url
 		if let file = statics[req.url]
 			res.setHeader("Content-Type", "application/javascript")
 			res.write(file)
 			return res.end!
+
 		let src = path.join(__dirname,"..","test",req.url)
 		let name = path.basename(src)
 		let ext = src.split('.').pop!
@@ -272,9 +269,17 @@ def serve
 		let entry = pages[src.replace(/(\.(js|html|imba))+$/,'.imba')]
 
 		if ext == 'html'
+			let importmap = {
+				imports: {
+					'imba': '/imba.js',
+					'imba/compiler': '/compiler.js',
+					'imba/spec': '/imba.js'
+				}
+			}
 			let html = """
 				<html><head>
 				<meta charset='UTF-8'>
+				<script type='importmap'>{JSON.stringify(importmap)}</script>
 				<script src='/imba.js' type='module'></script>
 				</head><body>
 				<script src='./{barename}.imba' type='module'></script>
@@ -285,7 +290,10 @@ def serve
 			res.write(html)
 			return res.end!
 
+		
+
 		if entry
+			
 			let body = entry.body
 			# console.log 'found page'			
 			let opts = Object.assign({},copts,{sourcePath: src})

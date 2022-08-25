@@ -632,17 +632,6 @@ export default class Bundle < Component
 					return {external: true}
 
 				if external?
-
-					# let opts = {
-					# 	importer: args.importer
-					# 	resolveDir: args.resolveDir
-					# 	namespace: ''
-					# 	kind: esm? ? 'import-statement' : 'require-call'
-					# 	pluginData: 'skip'
-					# }
-					# let res = await esb.resolve(args.path,opts)
-					# In certain cases we do want to use import here?
-					# console.log 'resolving external!',opts,res,external?
 					return {external: true, path: res.path}
 			
 			if external?
@@ -651,18 +640,13 @@ export default class Bundle < Component
 
 				return {external: true}
 
-			# if this is an absolute path let esbuld resolve
+			# if this is an absolute path let esbuild resolve
 			if abs?
 				return null
 
 			if q == 'img'
 				let resolved = await esresolve(args)
 				return {path: resolved.path}
-			
-			# just let it flow through
-			# if q == 'img' or q == 'svg'
-			#	return null
-
 
 			let img? = /(\.(svg|png|jpe?g|gif|tiff|webp))$/.test(path)
 			
