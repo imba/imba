@@ -10,12 +10,13 @@ import https from 'https'
 # TODO share mimeType list with bundler to
 # bundle supported file extensions
 const defaultHeaders = {
-	html: {'Content-Type': 'text/html'}
+	html: {'Content-Type': 'text/html; charset=utf-8'}
 	js: {'Content-Type': 'text/javascript; charset=utf-8'}
 	cjs: {'Content-Type': 'text/javascript; charset=utf-8'}
 	mjs: {'Content-Type': 'text/javascript; charset=utf-8'}
 	json: {'Content-Type': 'application/json; charset=utf-8'}
 	css: {'Content-Type': 'text/css; charset=utf-8'}
+	map: {'Content-Type': 'application/json; charset=utf-8'}
 		
 	otf: {'Content-Type': 'font/otf'}
 	ttf: {'Content-Type': 'font/ttf'}
@@ -319,7 +320,6 @@ class Server
 				return responder.respond(req,res)
 
 			if url.match(/\.[A-Z\d]{8}\./) or url.match(/\.\w{1,4}($|\?)/)
-				
 				if let path = localPathForUrl(url)
 					try
 						let headers = headersForAsset(path)
@@ -332,12 +332,21 @@ class Server
 									res.writeHead(200,headers)
 									res.end(data)
 						else
-							let stream = nfs.createReadStream(path)
+							let enc = headers['Content-Type'].indexOf('utf-8') > 0 ? 'utf8' : 'binary'
+							let stream = nfs.createReadStream(path, encoding: enc)
+							# console.log 'send',path,headers['Content-Type']
 							res.writeHead(200, headers)
 							return stream.pipe(res)
 					catch e
 						res.writeHead(503,{})
 						return res.end!
+
+			# console.log 'responding to',url,req.headers
+
+			if url.match(/\.imba$/) and false
+				let path = "/Users/sindre/repos/imba-bundle-tests/css-issue/app/basic.imba"
+				res.writeHead(200, defaultHeaders.js)
+				return nfs.createReadStream(path,encoding: 'utf-8').pipe(res)
 			
 			# continue to the real server
 			if dom

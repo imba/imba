@@ -172,7 +172,11 @@ export class Logger
 	def error ...pars do write('error',...pars)
 	def success ...pars do write('success',...pars)
 
-	def ts ...pars do write('debug',...pars,performance.now!)
+	def ts ...pars do
+		let now = performance.now!
+		let diff = #last ? (now - #last) : 0
+		write('debug',...pars,performance.now!,"+{diff.toFixed(1)}ms")
+		#last = now
 
 	def spinner
 		return

@@ -8,6 +8,7 @@ import os from 'os'
 import np from 'path'
 import nfs from 'fs'
 import ncp from '../../vendor/ncp.js'
+import URL from 'url'
 
 import FileSystem from './fs'
 import Component from './component'
@@ -229,7 +230,6 @@ export default class Bundle < Component
 			minifyIdentifiers: minify? and o.format != 'html'
 			incremental: !!watcher
 			legalComments: 'inline'
-			# charset: 'utf8'
 			loader: Object.assign({},LOADER_EXTENSIONS,o.loader or {})
 			write: false
 			metafile: true
@@ -247,9 +247,12 @@ export default class Bundle < Component
 		# Don't include the sources content in production builds
 		if esoptions.sourcemap and !dev?
 			esoptions.sourcesContent = false
-
+		
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
+
+		if dev?
+			esoptions.charset = 'utf8'
 
 		if main?
 			# override the external resolution here
@@ -1261,7 +1264,8 @@ export default class Bundle < Component
 	# entrypoints etc
 	def write result
 		# after write we can wipe the buildcache
-		let buildInside = (/^(\.\/|\w)/).test(np.relative(fs.cwd,outdir))
+		let relOutPath = np.relative(fs.cwd,outdir)
+		let buildInside = (/^(\.\/|\w)/).test(relOutPath)
 		let staticFilesPath = nfs.existsSync(fs.resolve('public')) and fs.resolve('public')
 		
 		let meta = result.meta
@@ -1321,8 +1325,7 @@ export default class Bundle < Component
 				# generating a rudimentary sourcemap for the generated thing
 				let smap = {
 					version: 3
-					file: ""
-					sourceRoot: fs.cwd
+					sourceRoot: String(URL.pathToFileURL(fs.cwd))
 					sources: []
 					names: []
 					raw: []
@@ -1375,7 +1378,7 @@ export default class Bundle < Component
 				ins['*?css'] = asset
 				assets.push(asset)
 
-				if true
+				if esoptions.sourcemap
 					smap.mappings = smc.encode(smap.raw)
 					delete smap.raw
 
@@ -1412,7 +1415,7 @@ export default class Bundle < Component
 			if imports.length
 				entry.imports = imports
 
-
+		log.ts "resolved public paths"
 		# rewrite assets in html files
 		for asset in assets
 			# console.log asset.path,asset.type,asset.fullpath
@@ -1450,7 +1453,18 @@ export default class Bundle < Component
 				body = body.replace(replace) do(m,pre,path) "/{pre}# sourceMappingURL=./{name}.map"
 
 				asset.#text = asset.#contents = body
+		
+		log.ts "injected head in assets"
 
+		for asset in assets
+			if asset.type == 'map' and asset.public and asset.#file
+				let body = asset.#file.text
+				let orig = asset.#file.path
+				let sourceRoot = URL.pathToFileURL(np.dirname(orig))
+				body =	'{"sourceRoot": "' + sourceRoot + '",' + body.slice(1)
+				asset.#contents = body
+
+		log.ts "rewrote sourcemaps"
 		manifest.path = 'manifest.json'
 
 		entryManifest.main = outfs.relative(main.fullpath)

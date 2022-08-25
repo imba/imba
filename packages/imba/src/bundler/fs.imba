@@ -99,6 +99,7 @@ export class FSNode
 			'.gif': ImageFile
 			'.ico': ImageFile
 			'.html': HTMLFile
+			'.map': SourceMapFile
 		}
 
 		let cls = types[ext] or FileNode
@@ -219,7 +220,7 @@ export class FileNode < FSNode
 			await nodefs.promises.mkdir(absdir,recursive: true)
 			if rel.indexOf('../') != 0 or true
 				log.success 'write %path %kb',rel,body.length,hash
-			
+
 			nodefs.promises.writeFile(abs,body)
 
 	def writeSync body, hash
@@ -256,6 +257,8 @@ export class FileNode < FSNode
 		let regex = new RegExp(pat.replace(/\*/g,'([^\/]+)'))
 		return (rel.match(regex) or []).slice(1)
 
+
+export class SourceMapFile < FileNode
 
 export class ImbaFile < FileNode
 
