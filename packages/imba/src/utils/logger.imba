@@ -106,7 +106,11 @@ export def format str,...rest
 		elif f == 'red'
 			fmt('redBright',part)
 		elif f == 'green'
-			fmt('greenBright',part)
+			fmt('green',part)
+		elif f == 'magenta'
+			fmt('magentaBright',part)
+		elif f == 'cyan'
+			fmt('cyanBright',part)
 		elif f == 'imba'
 			fmt('yellowBright',part)
 		elif f == 'yellow'
@@ -175,7 +179,7 @@ export class Logger
 	def ts ...pars do
 		let now = performance.now!
 		let diff = #last ? (now - #last) : 0
-		write('debug',...pars,performance.now!,"+{diff.toFixed(1)}ms")
+		write('debug',...pars,ansi.blue("+{diff.toFixed(1)}ms"))
 		#last = now
 
 	def spinner

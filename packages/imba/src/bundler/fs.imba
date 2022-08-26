@@ -32,6 +32,12 @@ const FLAGS = {
 	ADDED: 64
 }
 
+const LOG_COLORS = {
+	".js": "cyan"
+	".mjs": "cyan"
+	".css": "magenta"
+}
+
 const matchToRegexCache = {}
 
 def matchToRegex str 
@@ -219,7 +225,9 @@ export class FileNode < FSNode
 		if !hash or (#hash =? hash)
 			await nodefs.promises.mkdir(absdir,recursive: true)
 			if rel.indexOf('../') != 0 or true
-				log.success 'write %path %kb',rel,body.length,hash
+				let dir = program.outdir + '/'
+				let color = LOG_COLORS[ext] or 'green'
+				log.success "%dim%{color} %kb",dir,rel,body.length
 
 			nodefs.promises.writeFile(abs,body)
 
@@ -260,6 +268,10 @@ export class FileNode < FSNode
 
 export class SourceMapFile < FileNode
 
+export class JSFile < FileNode
+
+export class TSFile < FileNode
+
 export class ImbaFile < FileNode
 
 	def compile o,context = program
@@ -287,7 +299,7 @@ export class ImbaFile < FileNode
 
 			let t = Date.now!
 			let out = await context.workers.exec('compile_imba', [code,o])
-			fs.log.success 'compile %path %path in %ms',rel,o.platform,Date.now! - t,o.sourceId
+			log.debug 'compile %path %path in %ms',rel,o.platform,Date.now! - t,o.sourceId
 			return out
 
 export class Imba1File < FileNode

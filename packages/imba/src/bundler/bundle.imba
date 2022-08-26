@@ -217,7 +217,7 @@ export default class Bundle < Component
 			outdir: program.outdir
 			globalName: o.globalName
 			publicPath: baseurl or '/'
-			assetNames: "{assetsDir}/[ext]/[name].[hash]"
+			assetNames: "{assetsDir}/[name].[hash]"
 			chunkNames: "{assetsDir}/chunks/[name].[hash]"
 			entryNames: "{assetsDir}/[name].[hash]"
 			conditions: ["imba"]
@@ -238,7 +238,8 @@ export default class Bundle < Component
 			nodePaths: (o.nodePaths or []).slice(0) # (np.resolve(program.imbaPath,'polyfills'))
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: ['Symbol.for','Symbol']
-			treeShaking: o.treeShaking
+			treeShaking: o.treeShaking or true
+			keepNames: true
 			supported: {
 				"for-await": true
 			}
@@ -261,10 +262,11 @@ export default class Bundle < Component
 			# override the external resolution here
 			esoptions.external = []
 
-		if web? and o.ref
-			esoptions.entryNames = "{assetsDir}/[dir]/[name].[hash]"
+		if web? and o.ref and !worker?
+			# esoptions.entryNames = "{assetsDir}/[dir]/[name].[hash]"
+			esoptions.entryNames = "{assetsDir}/[name].[hash]"
 
-		if o.ref and o.format != 'html'
+		if o.ref and o.format != 'html' and o.ref != 'web'
 			esoptions.outbase = fs.cwd
 
 		if o.esbuild
@@ -307,7 +309,7 @@ export default class Bundle < Component
 			esoptions.outExtension = {".js": ".worker.js"}
 		elif iife?
 			esoptions.outExtension = {".js": ".iife.js"}
-		elif esoptions.format == 'esm'
+		elif esoptions.format == 'esm' and nodeish?
 			esoptions.outExtension = {".js": ".mjs"}
 
 		# console.log esoptions
@@ -468,7 +470,6 @@ export default class Bundle < Component
 				# we compile it to js and then convert it back to html before
 				# writing the final files
 				if args.kind == 'entry-point'
-					console.log serve?
 					let res = await esresolve(args)
 
 					return {
@@ -1349,7 +1350,7 @@ export default class Bundle < Component
 						# smap.raw.push([])
 
 				let hash = createHash(body)
-				let name = "all.{hash}.css"
+				let name = "index.{hash}.css"
 				let path = np.resolve(fs.cwd,esoptions.outdir,assetsDir or '.',name)
 
 				smap.file = name
@@ -1481,7 +1482,7 @@ export default class Bundle < Component
 
 		# update the build
 		if #hash =? hash
-			log.info "building in %path",program.outdir
+			# log.info "building in %path",program.outdir
 
 			# we only clean the output directory on the first run, and if the
 			# output dir exists inside of cwd - just as a safety mechanism
@@ -1504,14 +1505,12 @@ export default class Bundle < Component
 				await copyPublicFiles!
 
 			# is this only really needed for hmr?
-			mfile.writeSync(JSON.stringify(entryManifest,null,2),manifest.hash)
-
-			log.debug "memory used: %bold",process.memoryUsage!.heapUsed / 1024 / 1024
+			await mfile.write(JSON.stringify(entryManifest,null,2),manifest.hash)
 
 			if program.#listening
-				log.info "built %bold in %ms - %heap (%address) - %bold",entryPoints[0],builder.elapsed,program.#listening,hash
+				log.info "built %bold in %ms - %heap (%address)",entryPoints[0],builder.elapsed,program.#listening
 			else
-				log.info "finished %bold in %ms - %heap - %bold",entryPoints[0],builder.elapsed,hash
+				log.info "built %bold in %ms - %heap",entryPoints[0],builder.elapsed
 			
 			built? = yes
 			emit('built',result)

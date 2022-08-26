@@ -1,9 +1,9 @@
 export default {
 	"imba build app/simple.html": {
 		"dist/simple.html": [
-			/assets\/app\/shared\.\w{8}\.mjs/
-			/assets\/json\/manifest\.\w{8}\.json/
-			/assets\/all\.\w{8}\.css/
+			/assets\/shared\.\w{8}\.js/
+			/assets\/manifest\.\w{8}\.json/
+			/assets\/index\.\w{8}\.css/
 		]
 		"*?css": [
 			/--shared: 1/
@@ -11,9 +11,9 @@ export default {
 	}
 	"imba build --base /imba app/simple.html": {
 		"dist/simple.html": [
-			/\/imba\/assets\/app\/shared\.\w{8}\.mjs/
-			/\/imba\/assets\/json\/manifest\.\w{8}\.json/
-			/\/imba\/assets\/all\.\w{8}\.css/
+			/\/imba\/assets\/shared\.\w{8}\.js/
+			/\/imba\/assets\/manifest\.\w{8}\.json/
+			/\/imba\/assets\/index\.\w{8}\.css/
 		]
 		"*?css": [
 			/--shared: 1/
@@ -22,9 +22,9 @@ export default {
 	
 	"imba build app/multi.html": {
 		"dist/multi.html": [
-			/assets\/app\/home\.\w{8}\.mjs/
-			/assets\/app\/about\.\w{8}\.mjs/
-			/assets\/all\.\w{8}\.css/
+			/assets\/home\.\w{8}\.js/
+			/assets\/about\.\w{8}\.js/
+			/assets\/index\.\w{8}\.css/
 		]
 		"*?css": [
 			/--shared: 1/

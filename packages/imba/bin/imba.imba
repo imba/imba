@@ -94,8 +94,10 @@ def parseOptions options, extras = []
 
 	if command == 'build'
 		options.minify ??= yes
+		options.mode ??= 'production'
+		options.sourcemap ??= no
 		options.loglevel ||= 'info'
-		options.outdir  ||= 'dist'
+		options.outdir ||= 'dist'
 
 	if command == 'dev'
 		options.watch = yes
