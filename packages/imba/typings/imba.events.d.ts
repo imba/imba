@@ -94,7 +94,7 @@ interface Event {
 
     /** 
      * The `self` event modifier is a handy way of reacting to events only when they are clicked on the actual element you are interacting with and not, for example, a child element. This can be useful for things like modal wrappers when you only want to react when clicking directly.
-     * @summary Only trigger handler if event.target is the element itself 
+     * @summary Handle if event.target is the element itself 
      */
     αself(): boolean;
 
@@ -158,6 +158,8 @@ interface Event {
     /**
      * Handle if event originates from outside the literal container of the `<global>` teleport.
      * This modifier is only supported on `<global>` listeners.
+     * 
+     * @summary Handle if event originates from outside the handler
      */
      αoutside(): void;
 }
