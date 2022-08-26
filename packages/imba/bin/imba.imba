@@ -9,7 +9,7 @@ import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
 
-import {resolveConfig,resolvePackage,getCacheDir} from '../src/bundler/utils'
+import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 
 import tmp from 'tmp'
@@ -82,6 +82,7 @@ def parseOptions options, extras = []
 	
 	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.package = resolvePackage(cwd) or {}
+	options.nodeModulesPath = resolvePath('node_modules',cwd)
 
 	if options.esm
 		options.as ??= 'esm'

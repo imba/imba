@@ -1483,10 +1483,9 @@ export default class Bundle < Component
 			if !built? and !program.keep and !program.tmpdir and buildInside
 				cleanOutDir!
 
-			if !built? and program.tmpdir and node?
-				console.log ""
+			if !built? and program.tmpdir and node? and program.nodeModulesPath
 				try 
-					nfs.symlinkSync(np.resolve(fs.cwd,'node_modules'),np.resolve(program.tmpdir,'node_modules'),'dir')
+					nfs.symlinkSync(program.nodeModulesPath,np.resolve(program.tmpdir,'node_modules'),'dir')
 				catch e
 					console.log 'error here',e
 
