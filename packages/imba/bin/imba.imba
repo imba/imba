@@ -205,7 +205,7 @@ def common cmd
 		.option("-m, --minify", "Minify generated files")
 		.option("-M, --no-minify", "Disable minifying")
 		.option("-f, --force", "Disregard previously cached outputs")
-		.option("-c, --clean", "Remove files from previous build")
+		.option("-k, --keep", "Keep existing files in output directory")
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("-d, --dev","Use defaults for development")
 		.option("--bundle", "Try to bundle all external dependencies")

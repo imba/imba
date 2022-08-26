@@ -1485,7 +1485,7 @@ export default class Bundle < Component
 
 			# we only clean the output directory on the first run, and if the
 			# output dir exists inside of cwd - just as a safety mechanism
-			if !built? and program.clean and !program.tmpdir and buildInside
+			if !built? and !program.keep and !program.tmpdir and buildInside
 				cleanOutDir!
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
