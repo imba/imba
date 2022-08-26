@@ -731,13 +731,6 @@ export class Stack
 	def isNode
 		platform == 'node'
 
-	def cjs
-		format == 'cjs' # or (!format and isNode)
-	
-	# The format defaults to esm
-	def esm
-		!cjs
-
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
@@ -2930,10 +2923,7 @@ export class VarDeclaration < Node
 				out += " = {right.c(expression: true)}"
 
 		if option(:export)
-			if STACK.cjs
-				out = "{out};\nexports.{left.c()} = {left.c()}"
-			else
-				out = M('export',option(:export)) + " {out}"
+			out = M('export',option(:export)) + " {out}"
 			
 		if typ
 			out = typ.c() + '\n' + out
@@ -3564,7 +3554,7 @@ export class ClassDeclaration < Code
 			jshead = "{name.c} = {jshead}"
 
 		
-		if option(:export) and !STACK.cjs
+		if option(:export)
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
@@ -3581,10 +3571,6 @@ export class ClassDeclaration < Code
 			# InstanceType<typeof ImmediateDefJS>
 
 		let js = "{jshead} \{{jsbody}\}"
-		
-		if option(:export) and STACK.cjs
-			let exportName = option(:default) ? 'default' : cname
-			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
 
 		if @staticInit
 			if up isa Block or up isa Export
@@ -3604,13 +3590,8 @@ export class ClassDeclaration < Code
 		if option(:global)
 			# external access?
 			# js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
-
 			if STACK.tsc and true
 				js = "{js}; export \{{@cname}\}; {scope__.root.globalRef}.{@cname} = {@cname}"
-
-				# js = "{js}; export const {@cname}_ = {@cname}; {scope__.root.globalRef}.{@cname} = {@cname}_"
-				# js = "{scope__.root.globalRef}.{@cname} = {js}; {@cname}"
-				# js = "{scope__.root.globalRef}.{@cname} = {js}; {@cname}"
 			else
 				js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
@@ -3770,7 +3751,7 @@ export class TagDeclaration < ClassDeclaration
 		let jsbody = body.c()
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 		
-		if option(:export) and !STACK.cjs
+		if option(:export)
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
@@ -3784,10 +3765,6 @@ export class TagDeclaration < ClassDeclaration
 			# jshead = "globalThis.{className} = {M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
 		let js = "{jshead} \{{jsbody}\}"
-		
-		if option(:export) and STACK.cjs
-			let exportName = option(:default) ? 'default' : className
-			js = "{js};\n{M('exports',o:export)}.{exportName} = {className}"
 
 		@config:cssns = cssns if @cssns
 		@config:cssid = cssid if @cssid
@@ -4182,11 +4159,7 @@ export class MethodDeclaration < Func
 		else
 			out = "{M funcKeyword, keyword} {M fname, @name}{func}"
 			if o:export
-				if STACK.cjs
-					let exportName = o:default ? 'default' : fname
-					out = "{out};\n{M('exports',o:export)}.{exportName} = {fname}"
-				else
-					out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
+				out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
 
 		if o:global
 			out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
@@ -4944,6 +4917,8 @@ export class Op < Node
 			return "({C l} {M '&',@opToken} {C r})==0"
 			
 		elif op == '??'
+			# return "({C l} {M op,@opToken} {C r})"
+
 			let ast = IF(OP('!=',l.cache,NULL), l, r, type: '?')
 			ast.@scope.@systemscope = stack.scope
 			# ast.traverse
@@ -10237,32 +10212,13 @@ export class ESMSpecifier < Node
 
 export class ImportSpecifier < ESMSpecifier
 
-	def visit
-		super
-		if @importer and STACK.cjs
-			# FIXME will bug out if trying to set the variable
-			@variable.@c = OP('.',@importer.variable,@name).c
-
 export class ImportNamespaceSpecifier < ESMSpecifier
-
-	def visit
-		super
-		if @importer and STACK.cjs
-			# FIXME will bug out if trying to set the variable
-			@variable.@c = @importer.variable.c
-		
 		
 export class ExportSpecifier < ESMSpecifier
 
 export class ExportAllSpecifier < ESMSpecifier
 
 export class ImportDefaultSpecifier < ESMSpecifier
-
-	def visit
-		super
-		if STACK.cjs
-			if @importer
-				@variable.@c = "{@importer.variable.c}.default"
 
 export class ESMSpecifierList < ListNode
 	
@@ -10336,19 +10292,6 @@ export class ImportDeclaration < ESMDeclaration
 					let out = "{M(keyword.c,keyword)} {src};\nimport {AST.cary(@specifiers).join(',')} from 'data:text/asset;';"
 					return out
 
-		# FIXME can move away from cjs - letting esbuild transform if needed.
-		if STACK.cjs
-			# we need to combine the requires
-			let reqjs = "require({src})"
-			unless @specifiers
-				return reqjs
-			
-			# let wildcards = 
-			if @defaults and @specifiers:length == 1
-				return "var {@variable.c} = {util.requireDefault(LIT(reqjs)).c}"
-			else
-				return "var {@variable.c} = {reqjs}"
-
 		if @specifiers and @source
 			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {src}"
 		else
@@ -10363,12 +10306,6 @@ export class ImportDeclaration < ESMDeclaration
 		@up.replace curr, [curr,BR,@next = next]
 	
 	def visit
-		if STACK.cjs and @specifiers
-			var src = @source.c
-			var m = helpers.clearLocationMarkers(src).match(/([\w\_\-]+)(\.js|imba)?[\"\']$/)
-			@alias = m ? '_$' + m[1].replace(/[\/\-]/g,'_') : 'mod$'
-			@variable = scope__.register(@alias,null,system: yes)
-		
 		for item in @specifiers
 			item?.traverse()
 
@@ -10402,41 +10339,12 @@ export class ImportTypeDeclaration < ESMDeclaration
 export class ExportDeclaration < ESMDeclaration
 
 	def visit
-		scope__.root.activateExports()
-
 		for item in @specifiers
 			item?.traverse()
 		self
 		
 	def js
 		let kw = M(keyword.c,keyword)
-		let cjs = STACK.cjs
-		
-		if cjs
-			let out = []
-			
-			if @source
-				@variable ||= scope__.register(null,null,system: yes)
-				let decl = "var {@variable.c} = require({@source.c})"
-				out.push(decl)
-				
-				let tpl = '''
-				Object.defineProperty(exports, $name$, {
-					enumerable: true, get: function get() { return $path$; }
-				});
-				'''
-				
-				for item in @specifiers[0]
-					let js = tpl.replace('$name$',(item.alias or item.name).toStr().c())
-					js = js.replace('$path$',OP('.',@variable,item.name).c())
-					out.push(js)
-
-			else
-				for item in @specifiers[0]
-					let op = OP('=',OP('.',LIT('exports'),item.alias or item.name),item.@variable)
-					out.push(op.c)
-
-			return out.join(';\n')
 
 		if @specifiers and @source
 			"{kw} {AST.cary(@specifiers).join(',')} from {@source.c}"
@@ -10462,8 +10370,6 @@ export class Export < ValueNode
 		super
 		
 	def visit
-		scope__.root.activateExports()
-
 		value.set(
 			export: (option(:keyword) or self),
 			return: option(:return),
@@ -10489,22 +10395,13 @@ export class Export < ValueNode
 			return value.c
 
 		if value isa Assign and value.left isa VarReference
-		
-			if !STACK.cjs
-				let ek = M('export',option(:keyword))
-				let dk = isDefault and M('default',option(:default))
-				return isDefault ? "{ek} {dk} {value.c}" : "{ek} {value.c}"
-			else
-				let val = value.left.value
-				# console.log "export is a var reference?! {value.left} {val}"
-
-				let sym = isDefault ? "default" : value.left.value.symbol
-				value.right = OP('=',LIT("exports.{sym}"),value.right)
-				return value.c
+			let ek = M('export',option(:keyword))
+			let dk = isDefault and M('default',option(:default))
+			return isDefault ? "{ek} {dk} {value.c}" : "{ek} {value.c}"
 
 		if isDefault
 			let out = value.c
-			return STACK.cjs ? "exports.default = {out}" : "export default {out}"
+			return "export default {out}"
 		return value.c
 
 export class Require < ValueNode
@@ -10701,10 +10598,7 @@ export class StyleRuleSet < StyleNode
 		
 	def c
 		if option(:toplevel) and option(:export)
-			if STACK.cjs
-				return "exports.{@identifier.c} = '{@name}'"
-			else
-				return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
+			return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
 
 		if @tvar
 			let out = ["{@tvar} = '{@name}'"]
@@ -11962,13 +11856,6 @@ export class RootScope < Scope
 	def globalRef
 		@globalRef ||= LIT('globalThis')
 
-	
-		
-	def activateExports
-		if STACK.cjs and !@hasExports
-			@hasExports = yes
-			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
-
 	def registerAsset path, kind, context, pathToken
 		let key = path + kind
 		
@@ -12612,7 +12499,6 @@ export class ImportProxy < Variable
 		let keys = Object.keys(@exports)
 		let touches = Object.values(@touched)
 		let js = []
-		let cjs = STACK.cjs
 		let path = self.path
 
 		if path == 'imba'
@@ -12621,19 +12507,12 @@ export class ImportProxy < Variable
 		let pathjs = "'{path}'"
 
 		if @importAll
-			if cjs
-				js.push("const {@name} = require({pathjs});")
-			else
-				js.push("import * as {@name} from {pathjs};")
+			js.push("import * as {@name} from {pathjs};")
 
 
 		if keys:length > 0
-			if cjs
-				let out = keys.map(do |a| "{a}: {@exports[a]}").join(", ")
-				js.push "const \{{out}\} = require({pathjs});"
-			else
-				let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
-				js.push "import \{{out}\} from {pathjs};"
+			let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
+			js.push "import \{{out}\} from {pathjs};"
 
 		if touches:length
 			js.push "({touches.map(do $1.c + "()").join(",")});"
