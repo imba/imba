@@ -1,5 +1,67 @@
 # Changelog
 
+## Unreleased
+
+Last version (with new features) before `beta.1`. This release contains breaking changes in the bundler that need to be tested thoroughly before beta.
+
+* Use the latest version of esbuild
+
+    We are finally using the latest version of esbuild. All of our custom logic
+    for hashing, resolving and chunking is now done by esbuild instead.
+
+* Support path aliases from `[js|ts]config.json`
+
+    Now that we are using the latest version of esbuild we finally support [path aliases](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping) declared in `[js|ts]config.json` files. This also works with assets, ie. declaring `"icons/*": ["assets/svg/*","assets/codicons/*]` in your tsconfig would allow `<svg src="icons/some-icon.svg">` to work anywhere in your project.
+
+* Remove support for path aliases in `imbaconfig.json`
+
+    If you had declared path aliases in an `imbaconfig.json` these should be moved into a `[js|ts]config.json` instead.
+
+* Remove backwards compatible transforms from compiler itself.
+
+    Previously we included a bunch of logic for transforming conditional assignments like `??=`,`&&=`, and `||=` to support older browsers and node versions. Now we compile these statements as is and rely on esbuild to transform when needed.
+
+* Remove support for `?=` operator - use `??=` instead.
+
+* Drop commonjs target from compiler
+
+    The imba compiler will now always compile import/export statements natively
+    to import/export in javascript, and instead rely on esbuild to convert the output to cjs when needed.
+
+* Simplify output from `imba build`
+
+    The output of imba build is now possible to run directly through node (and soon Bun). We 
+
+* Allow running html file directly with `imba some-entry.html`
+
+    This will spawn a dev-server for this html file and its referenced scripts and stylesheets.
+
+* Allow testing client-side scripts with `imba --web some-entry.imba`
+
+    This will spawn a dev-server, a html entrypoint and all that is needed to run a script in the browser.
+
+* Copy static assets over from `public` when building
+
+    If you have a `public` directory in your project, files from this will be copied over to the public folder of your output dir (default `dist`) when building.
+
+* Allow prefixing asset paths via `--base` option
+
+    Ie, when building for github pages you would run `imba build --base /my-repo-name -o docs index.html` to build your files and assets with the correct prefix, into the `docs/` folder of your project to adhere to github pages convetions.
+
+* Support loading workers following vite conventions
+
+    ```
+    import MyWorker from './some/script?worker'
+    import MySharedWorker from './some/script?sharedworker'
+    import url from './some/script?worker&url'
+    ```
+
+* Set node14.13.0 as the default minimum target when building for node.
+
+    This can be overridden by supplying your version of node through the `--node.target` option. Ie `imba build --node.target node12 my/script.imba`
+
+* Fixed regression in router that caused routed elements inside the root component to fail.
+
 ## 2.0.0-alpha.214
 
 * Treat routes ending with `/` as exact routes.
