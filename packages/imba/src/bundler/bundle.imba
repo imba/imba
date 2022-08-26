@@ -239,6 +239,9 @@ export default class Bundle < Component
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: ['Symbol.for','Symbol']
 			treeShaking: o.treeShaking
+			supported: {
+				"for-await": true
+			}
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.svg']
 		}
 
@@ -283,6 +286,10 @@ export default class Bundle < Component
 			
 		if o.target
 			esoptions.target = o.target
+
+		if nodeish? and run? and o.target
+			let curr = process.version.replace(/^v(?=\d)/,'node')
+			esoptions.target = [curr]
 
 		# FIXME Are we using this still?
 		if o.format == 'css'
@@ -580,12 +587,13 @@ export default class Bundle < Component
 		# Main resolver for imba plugin. Checks for a bunch of different
 		# conditions and returns accordingly
 		esb.onResolve(namespace: 'file', filter: /.*/) do(args)
-			return null if args.pluginData == 'skip'
+			return null if args.pluginData == 'skip' or args.path.indexOf('data:') == 0
 			let path = args.path
 			let abs? = /^(\/|\w\:\/)/.test(path)
 			let rel? = path[0] == '.'
 			let pkg? = !abs? and !rel?
-			let external? = externs.indexOf(path) >= 0
+			let pkg = pkg? and path.match(/^(@[\w\.\-]+\/)?\w[\w\.\-]*/)[0] or null
+			let external? = (externs.indexOf(path) >= 0) or (pkg? and externs.indexOf(pkg) >= 0)
 		
 			let q = (path.split('?')[1] or '')
 
@@ -925,8 +933,8 @@ export default class Bundle < Component
 
 				# console.log 'rebuild?!',entryPoints,changes,dirty,#watchedPaths
 
-				if main?
-					log.debug "changes demanding a resolve?",changes,dirty
+				if main? and dirty
+					log.debug "changes demanding a resolve?",changes
 
 				unless dirty
 					#buildcache = {}
