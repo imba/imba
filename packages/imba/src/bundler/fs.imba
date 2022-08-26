@@ -1,10 +1,8 @@
-const nfs = require 'fs'
-const np = require 'path'
-const utils = require './utils'
 const micromatch = require 'micromatch'
 
+import nfs from 'fs'
+import np from 'path'
 import {fdir} from '../../vendor/fdir/index.js'
-import {Resolver} from './resolver'
 import {parseAsset,parseHTML} from '../compiler/assets'
 import Component from './component'
 import ChangeLog from './changes'
@@ -23,8 +21,6 @@ const blankStat = {
 	ctime: "",
 	birthtime: ""
 }
-
-const roots = {}
 
 const FLAGS = {
 	CHECKED: 1
@@ -103,6 +99,7 @@ export class FSNode
 			'.gif': ImageFile
 			'.ico': ImageFile
 			'.html': HTMLFile
+			'.map': SourceMapFile
 		}
 
 		let cls = types[ext] or FileNode
@@ -205,6 +202,8 @@ export class FileNode < FSNode
 
 	# resolve path relative to file - return rich FSNode
 	def lookup path
+		throw "Not implemented"
+		
 		let o = {
 			importer: abs
 			resolveDir: absdir
@@ -220,8 +219,8 @@ export class FileNode < FSNode
 		if !hash or (#hash =? hash)
 			await nodefs.promises.mkdir(absdir,recursive: true)
 			if rel.indexOf('../') != 0 or true
-				log.success 'write %path %kb',rel,body.length
-			
+				log.success 'write %path %kb',rel,body.length,hash
+
 			nodefs.promises.writeFile(abs,body)
 
 	def writeSync body, hash
@@ -258,6 +257,8 @@ export class FileNode < FSNode
 		let regex = new RegExp(pat.replace(/\*/g,'([^\/]+)'))
 		return (rel.match(regex) or []).slice(1)
 
+
+export class SourceMapFile < FileNode
 
 export class ImbaFile < FileNode
 
@@ -326,15 +327,10 @@ export class SVGFile < FileNode
 			let parsed = parseAsset({body: svgbody})
 			# special serializer
 			let js = """
-			import \{asset\} from 'imba';
 			import url from './{name}';
-			
-			export default /* @__PURE__ */ asset(\{
-				url: url,
-				type: 'svg',
-				meta: {JSON.stringify(parsed)},
-				toString: function()\{ return this.url;\}
-			\})
+			export default /* @__PURE__ */ Object.assign(\{
+				url: url, type: 'svg',toString: function()\{ return this.url;\}
+			\},{JSON.stringify(parsed)})
 			"""
 			#  "export default {JSON.stringify(parsed)};"
 			return {js: js}
@@ -348,6 +344,8 @@ export class HTMLFile < FileNode
 			let code = []
 			let refs = []
 
+			code.push 'import {html} from "imba/src/imba/assets.imba"'
+
 			for item,i in parsed.imports
 				let path = item.path
 				let kind = ""
@@ -357,14 +355,16 @@ export class HTMLFile < FileNode
 					kind = "web"
 				elif item.tagType == 'style'
 					kind = "css"
-				if kind and path.indexOf('?as=') == -1
-					path = path + '?as=' + kind
+				if kind and path.indexOf('?') == -1
+					path = path + '?' + kind
 
 				code.push "import ref{i} from '{path}';"
 				refs.push("ref{i}")
 			
+			const str = JSON.stringify(parsed.contents)
+
 			code.push "export const URLS = [{refs.join(',')}];"
-			code.push "export const HTML = " + JSON.stringify(parsed.contents)
+			code.push "export default html({str},URLS);"
 
 			return {js: code.join('\n'), html: parsed.contents}
 
@@ -376,15 +376,14 @@ export class ImageFile < FileNode
 			let size = await Promise.resolve(imgsize(abs))
 
 			let js = """
-			import \{asset\} from 'imba';
 			import url from './{name}';
-			export default asset(\{
+			export default /* @__PURE__ */ \{
 				url: url,
 				type: 'image',
 				width: {size.width or 0},
 				height: {size.height or 0},
 				toString: function()\{ return this.url;\}
-			\})
+			\}
 			"""
 			return {
 				width: size.width
@@ -453,8 +452,8 @@ export default class FileSystem < Component
 		prescan! unless #files
 		return #files
 
-	get resolver
-		#resolver ||= new Resolver(config: program.config, files: files, fs: self)
+	# get resolver
+	#	#resolver ||= new Resolver(config: program.config, files: files, fs: self)
 
 	get cache
 		program.cache

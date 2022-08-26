@@ -345,9 +345,10 @@ export default class ImbaScript
 		
 		# likely a path?
 		if ctx.suggest.Path
-			let str = tok.value
+			let str = tok.value.split('?')[0]
 			out.resolvedPath = util.resolveImportPath(fileName,str)
-			out.resolvedModule = resolveImport(str,yes)
+			# out.resolvedModule = resolveImport(str,yes)
+			# return null
 			
 		if ctx.tagName
 			out.tag = checker.getTagSymbol(ctx.tagName,yes)

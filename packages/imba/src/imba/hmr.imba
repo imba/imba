@@ -1,62 +1,40 @@
-# import {deserializeData} from '../imba/utils'
-# import {manifest} from '../imba/manifest'
-# Improve this
-# let doc = global.document
-
-import {deserializeData,patchManifest} from './utils'
-
-class Manifest
-	def constructor
-		data = {}
-
-	get changes do data.changes or {}
-	get inputs do data.inputs
-	get outputs do data.outputs
-	get urls do data.urls
-	get main do data.main
-
-	def init raw
-		update(raw)
-	
-	def update raw
-		if typeof raw == 'string'
-			raw = deserializeData(raw)
-
-		data = patchManifest(data,raw)
-		return data.changes
-
 class DevTools
 	def constructor
 		start!
-		manifest = new Manifest({})
 		debug = no
 		self
 
 	def log ...params
-		return unless debug
+		# return unless debug
 		console.log(...params)
 
+	def refresh manifest
+		manifest = manifest
 
-	def refresh changes
 		let dirty = {
 			css: []
 			js: []
 		}
 
+		let urls = Object.values(manifest).map(do $1.url).filter(do $1)
+		let regex = /\.[A-Z\d]{8}\./
+
 		for sheet of global.document.styleSheets
-			let url = sheet.ownerNode.getAttribute('href')
-			# console.log 'look for sheet',url,manifest.urls
-			if let asset = manifest.urls[url]
-				if asset.replacedBy
-					sheet.ownerNode.href = asset.replacedBy.url
+			let url = sheet.ownerNode.getAttribute('href') or ''
+			let match = urls.find do $1 and $1.replace(regex,'') == url.replace(regex,'')
+			if match and url != match
+				sheet.ownerNode.href = match
+		
+		let scripts = Object.keys(global.IMBA_LOADED or {})
 
-		for el of global.document.querySelectorAll('script[src]')
-			if let asset = manifest.urls[el.getAttribute('src')]
-				if asset.replacedBy
-					dirty.js.push(asset)
 
+		for url in scripts
+			let match = urls.find do $1 and $1.replace(regex,'') == url.replace(regex,'')
+			if match and url != match and urls.indexOf(url) == -1
+				dirty.js.push([url,match])
+		
+		# console.log "refreshed",manifest,dirty
 		if dirty.js.length
-			log "js changed - reload?",dirty.js
 			global.document.location.reload!
 		self
 
@@ -71,29 +49,35 @@ class DevTools
 			log "server paused"
 			yes
 
+		socket.addEventListener("resumed") do(e)
+			log "server resumed"
+			yes
+
+		socket.addEventListener("reloaded") do(e)
+			log "server reloaded"
+			setTimeout(&,200) do
+				socket.close()
+				socket = null
+				start!
+			yes
+
+		socket.addEventListener("rebuild") do(e)
+			let manifest = JSON.parse(e.data)
+			refresh(manifest)
+
+		socket.addEventListener("init") do(e)
+			let manifest = JSON.parse(e.data)
+			refresh(manifest)
+
 		socket.addEventListener("state") do(e)
 			let json = JSON.parse(e.data)
 			log "server state",json
-
-		socket.addEventListener("init") do(e)
-			let json = JSON.parse(e.data)
-			manifest.init(json)
-			log "hmr init",manifest.data
 
 		socket.addEventListener("errors") do(e)
 			let json = JSON.parse(e.data)
 			for item in json
 				console.error("error in {item.location.file}: {item.location.lineText} ({item.text})")
 			return
-			# manifest.init(json)
-
-		socket.addEventListener("manifest") do(e)
-			# let parsed = deserializeData(JSON.parse(e.data))
-			let json = JSON.parse(e.data)
-			# console.log "event from manifest",e,e.data,json
-			let changes = manifest.update(json)
-			# console.log "Changes for manifest",manifest.data,changes
-			refresh changes
 
 		socket.addEventListener("reload") do(e)	
 			log 'asked to reload by server'

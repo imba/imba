@@ -8,7 +8,6 @@ var lexer = require './lexer'
 var rewriter = require './rewriter'
 export var parser = require('../../build/parser')['parser']
 var ast = require './nodes'
-var transformers = require './transformers'
 
 import resolveConfigFile from './imbaconfig'
 import ImbaParseError from './errors'

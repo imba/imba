@@ -107,6 +107,8 @@ export def format str,...rest
 			fmt('redBright',part)
 		elif f == 'green'
 			fmt('greenBright',part)
+		elif f == 'imba'
+			fmt('yellowBright',part)
 		elif f == 'yellow'
 			fmt('yellowBright',part)
 		elif f == 'ref'
@@ -134,8 +136,15 @@ export class Logger
 
 	def constructor {prefix = null,loglevel} = {}
 		#ctime = Date.now!
-		self.prefix = prefix ? format(...prefix)[0] : ''
+		self.prefix = prefix # ? format(...prefix)[0] : ''
+		# FIXME Remove IMBA_OPTIONS?
 		self.loglevel = loglevel or process.env.IMBA_LOGLEVEL or (global.#IMBA_OPTIONS and global.#IMBA_OPTIONS.loglevel) or 'info'
+
+	set prefix val
+		#prefix = val ? format(...val)[0] : ''
+
+	get prefix
+		#prefix
 
 	def write kind,...parts
 		if logLevels.indexOf(kind) < logLevels.indexOf(self.loglevel)
@@ -163,7 +172,11 @@ export class Logger
 	def error ...pars do write('error',...pars)
 	def success ...pars do write('success',...pars)
 
-	def ts ...pars do write('debug',...pars,performance.now!)
+	def ts ...pars do
+		let now = performance.now!
+		let diff = #last ? (now - #last) : 0
+		write('debug',...pars,performance.now!,"+{diff.toFixed(1)}ms")
+		#last = now
 
 	def spinner
 		return

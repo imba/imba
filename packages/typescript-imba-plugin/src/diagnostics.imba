@@ -16,6 +16,9 @@ const Rules = [
 	code: 2322 # should only be for dom nodes?
 	message: /^Type '(boolean|string|number|ImbaAsset|typeof import\("data:text\/asset;\*"\))' is not assignable to type '(string|number|boolean)'/
 	---
+	code: 2308
+	message: /exported a member named 'Ω/
+	---
 	code: 2339
 	message: /on type 'EventTarget'/
 	---
@@ -37,6 +40,7 @@ const Rules = [
 		return no unless typeof message == 'string'
 		if message.match(/^Property 'Ψ/)
 			item.category = 0
+			return yes # configurable in plugin?
 		return no
 	---
 	code: 2339 # option allow array properties

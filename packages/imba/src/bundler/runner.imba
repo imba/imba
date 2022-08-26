@@ -1,26 +1,22 @@
-const cluster = require 'cluster'
+import cluster from 'cluster'
 import np from 'path'
 import cp from 'child_process'
 import Component from './component'
 import {Logger} from '../utils/logger'
 
-const FLAGS = {
-
-	REPLACED: 1
-	EXITED: 2
-	PAUSED: 4
-	ERRORED: 8
-}
-
 class Instance
 	runner = null
+	fork = null
 	args = {}
 	mode = 'cluster'
 	name = 'worker'
 	restarts = 0
 
 	get manifest
-		runner.manifest
+		runner.manifest or {}
+
+	get bundle
+		runner.bundle
 
 	def constructor runner, options
 		super(options)
@@ -32,15 +28,10 @@ class Instance
 		current = null
 		restarts = 0
 
-		# setInterval(&,2000) do reload!
-
 	def start
 		return if current and current.#next
-		# let exec = args.exec = manifest.main.source.path # path and loader
 		let o = runner.o
-		let regpath = np.resolve(o.imbaPath,"loader.imba.js")
-		let loader = o.imbaPath ? regpath : "imba/loader"
-		let path = manifest.main.absPath
+		let path = bundle.result.main
 
 		let args = {
 			windowsHide: yes
@@ -49,26 +40,30 @@ class Instance
 			execArgv: [
 				o.inspect and '--inspect',
 				o.sourcemap and '--enable-source-maps'
-				'-r',loader
 			].filter do $1
 		}
+
 		let env = {
 			IMBA_RESTARTS: restarts
 			IMBA_SERVE: true
 			IMBA_PATH: o.imbaPath
-			IMBA_MANIFEST_PATH: manifest.path
-			IMBA_HMR: o.hmr ? true : undefined
+			IMBA_OUTDIR: o.outdir
 			IMBA_WORKER_NR: options.number
-			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'info'
+			IMBA_CLUSTER: !bundle.fork?
+			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'warning'
 			PORT: process.env.PORT or o.port
 		}
 
-		if o.execMode == 'fork'
+		for own k,v of env
+			env[k] = '' if v === false
+
+		if bundle.fork?
 			args.env = Object.assign({},process.env,env)
-			return cp.fork(np.resolve(path),args.args,args)
+			fork = cp.fork(np.resolve(path),args.args,args)
+			fork.on('exit') do(code) process.exit(code)
+			return fork
 
-		log.info "starting"
-
+		
 		cluster.setupMaster(args)
 
 		let worker = cluster.fork(env)
@@ -77,7 +72,7 @@ class Instance
 		let prev = worker.#prev = current
 
 		if prev
-			log.info "reloading"
+			# log.info "reloading"
 			prev.#next = worker
 			prev..send(['emit','reloading'])
 
@@ -116,10 +111,10 @@ class Instance
 
 
 export default class Runner < Component
-	def constructor manifest, options
+	def constructor bundle, options
 		super()
 		o = options
-		manifest = manifest
+		bundle = bundle
 		workers = new Set
 
 	def start
@@ -133,8 +128,7 @@ export default class Runner < Component
 				o.sourcemap and '--enable-source-maps'
 			].filter do $1
 		}
-
-		let name = o.name or np.basename(manifest.main.source.path)
+		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
 
 		while nr <= max
 			let opts = {
@@ -147,9 +141,21 @@ export default class Runner < Component
 		for worker of workers
 			worker.start!
 
+		if o.watch
+			#hash = bundle.result.hash
+
+			bundle.on('built') do(result)
+				# console.log "got manifest?"
+				# let hash = result.manifest.hash
+				
+				if #hash =? result.hash
+					reload!
+				else
+					broadcast(['emit','rebuild',result.manifest])
 		return self
 
 	def reload
+		log.info "reloading %path",o.name
 		for worker of workers
 			worker.reload!
 		self

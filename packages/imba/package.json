@@ -40,6 +40,7 @@
   ],
   "scripts": {
     "test": "node bin/imba scripts/test-runner.imba",
+    "test-cli": "cd test/cli && node ../../bin/imba index.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "build": "node scripts/build-parser.js && node scripts/build.js",
     "build-parser": "node scripts/build-parser.js",
@@ -69,6 +70,7 @@
   },
   "exports": {
     ".": {
+      "imba": "./src/imba/imba.imba",
       "browser": "./dist/imba.mjs",
       "default": "./index.js"
     },
@@ -116,11 +118,13 @@
     "ora": "^5.2.0",
     "picomatch": "^2.2.2",
     "puppeteer": "^16.1.0",
+    "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.1",
+    "tree-kill": "^1.2.2",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
     "chokidar": "^3.4.3",
-    "esbuild": "^0.9.7"
+    "esbuild": "^0.15.2"
   }
 }

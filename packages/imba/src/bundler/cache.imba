@@ -1,9 +1,9 @@
-const utils = require './utils'
+
 import np from 'path'
 import nfs from 'fs'
-import os from 'os'
-
 import {createHash} from 'crypto'
+import {idGenerator} from './utils'
+
 
 const hashedKeyCache = {
 
@@ -32,7 +32,7 @@ export default class Cache
 
 		mintime = o.mtime or 0
 		persistToDisk = !!dir
-		idFaucet = utils.idGenerator!
+		idFaucet = idGenerator!
 		preload!
 
 	def preload
@@ -134,7 +134,6 @@ export default class Cache
 		else
 			console.log "key not added?",key,aliasmap
 			throw "could not add key to aliasmap"
-			# ,key,aliasmap
 
 
 	def getKeyValue key

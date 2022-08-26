@@ -187,7 +187,7 @@ export default class Service < EventEmitter
 		let inferred = proj isa ts.server.InferredProject
 		let opts = proj.getCompilerOptions!
 		let libs = opts.lib or ["esnext","dom","dom.iterable"]
-		let imbalib = 'imba-typings/imba.d.ts'
+		let imbalib = null
 		let imbadir = !inferred && resolveImbaDirForProject(proj)
 
 		if imbadir
@@ -195,7 +195,12 @@ export default class Service < EventEmitter
 			if ps.host.fileExists(src)
 				imbalib = src
 			proj.#imbadir = imbadir
-				
+
+		if global.IMBA_TYPINGS_DIR
+			imbalib ||= np.resolve(global.IMBA_TYPINGS_DIR,'imba.d.ts')
+
+		imbalib ||= 'imba-typings/imba.d.ts'
+
 		util.log("using imba lib",imbalib,proj)
 		opts.lib = libs.concat([imbalib])
 

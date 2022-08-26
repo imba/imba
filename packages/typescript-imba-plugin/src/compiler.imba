@@ -172,7 +172,8 @@ export class Compilation
 		let matches = []
 		let bestMatch = null
 
-	
+		let jscode = js or ''
+		let imbacode = body or ''
 		
 		for [ts0,ts1,imba0,imba1],idx in locs.spans
 			if i == imba0
@@ -185,21 +186,26 @@ export class Compilation
 				let isl = imba1 - imba0
 				let o = i - imba0
 				
-				matches.push([tsl,isl,locs.spans[idx]])
-				
-				if isl == tsl
-					matches.push([ts0 + o,tsl])
+				matches.push([tsl,isl,locs.spans[idx],jscode.slice(ts0,ts1),imbacode.slice(imba0,imba1)])
+
+				# if isl == tsl
+				#	matches.push([ts0 + o,tsl])
 		
 		
 		if matches.length
 			# sort and prioritize the shortest matches first
-			matches = matches.sort do $1[0] - $2[0]
-			
+			# matches = matches.sort do $1[0] - $2[0]
+			matches = matches.sort do Math.abs($1[0] - $1[1]) - Math.abs($2[0] - $2[1])
+
+
+			if matches.length > 1
+				util.log("multiple matches",matches,i)
+
 			let chr = body[i - 1]
 			
-			for [tsl,isl,[ts0,ts1,imba0,imba1]] in matches
-				let tstr = js.slice(ts0,ts1)
-				let istr = body.slice(imba0,imba1)
+			for [tsl,isl,[ts0,ts1,imba0,imba1],tstr,istr] in matches
+				# let tstr = js.slice(ts0,ts1)
+				# let istr = body.slice(imba0,imba1)
 				let ipre = istr.slice(0,i - imba0)
 				
 				if isl == tsl

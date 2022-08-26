@@ -4,7 +4,6 @@ import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
 import {program as cli} from 'commander'
 
-import Program from '../src/bundler/program'
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
@@ -12,6 +11,7 @@ import Cache from '../src/bundler/cache'
 
 import {resolveConfig,resolvePackage,getCacheDir} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
+
 import tmp from 'tmp'
 import getport from 'get-port'
 
@@ -31,9 +31,6 @@ const overrideAliases = {
 	m: {minify: true}
 	S: {sourcemap: false}
 	s: {sourcemap: true}
-	H: {hashing: false}
-	h: {hashing: true}
-	P: {pubdir: '.'}
 }
 
 const valueMap = {
@@ -86,16 +83,32 @@ def parseOptions options, extras = []
 	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.package = resolvePackage(cwd) or {}
 
-	if command == 'build'
-		options.minify ??= yes
-		options.loglevel ||= 'info'
-		options.outdir  ||= 'dist'
+	if options.esm
+		options.as ??= 'esm'
 
 	if options.verbose > 1
 		options.loglevel ||= 'debug'
 
 	elif options.verbose
 		options.loglevel ||= 'info'
+
+	if command == 'build'
+		options.minify ??= yes
+		options.loglevel ||= 'info'
+		options.outdir  ||= 'dist'
+
+	if command == 'dev'
+		options.watch = yes
+		options.hmr = yes
+		options.mode = 'development'
+
+	if options.web and command != 'build'
+		command = options.command = 'serve'
+		# console.log 'changing to serve!!'
+
+	if options.web and command != 'serve'
+		# if we are serving - the entrypoint will be redirected to a server-script
+		options.as ??= 'browser'
 
 	if command == 'serve'
 		options.watch = yes
@@ -109,7 +122,6 @@ def parseOptions options, extras = []
 	if options.force
 		options.mtime = Date.now!
 	else
-
 		let statFiles = [
 			__filename
 			np.resolve(__dirname,'..','workers.imba.js')
@@ -137,6 +149,7 @@ def run entry, o, extras
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 
+	# TODO support multiple entrypoints - especially for html
 	extendConfig(prog.config.options,overrides)
 
 	if !o.outdir
@@ -145,7 +158,8 @@ def run entry, o, extras
 		else
 			tmp.setGracefulCleanup!
 			let tmpdir = tmp.dirSync(unsafeCleanup: yes)
-			o.outdir = o.tmpdir = tmpdir.name
+			o.outdir = o.tmpdir = nfs.realpathSync(tmpdir.name)
+			# fake loader
 
 	let file = o.fs.lookup(path)
 
@@ -154,25 +168,13 @@ def run entry, o, extras
 	elif file.ext == '.html'
 		o.as = 'html'
 
+		unless o.command == 'build'
+			o.as = 'node'
+
 	let params = resolvePresets(prog.config,{entryPoints: [file.rel]},o.as or 'node')
 
 	unless o.command == 'build'
 		o.port ||= await getport(port: getport.makeRange(3000, 3100))
-	
-	if o.command == 'serve' or params.platform != 'node'
-		let wrapper = resolvePresets(prog.config,{},'node')
-		params = wrapper
-		params.stdin = {
-			define: {ENTRYPOINT: "./{file.rel}"}
-			template: 'serve-http.imba'
-			resolveDir: o.cwd
-			sourcefile: 'serve.imba'
-			loader: 'js'
-		}
-
-		if file.ext == '.html'
-			params.stdin.template = 'serve-html.imba'
-			params.format = 'cjs'
 
 	let bundle = new Bundler(o,params)
 	let out = await bundle.build!
@@ -180,26 +182,16 @@ def run entry, o, extras
 	if o.command == 'build'
 		return
 
-	# should we really need this here?
-	if let exec = out..manifest..main
-		if !o.watch and o.instances == 1
-			o.execMode = 'fork'
+	let run = do(result)
+		if let exec = result..main
+			o.name ||= entry	
+			let runner = new Runner(bundle,o)
+			runner.start!
 
-		o.name ||= entry
-
-		let runner = new Runner(bundle.manifest,o)
-
-		runner.start!
-
-		if o.watch
-			bundle.on('errored') do
-				runner.broadcast(['emit','manifest:error',$1])
-
-			bundle.manifest.on('change') do
-				runner.broadcast(['emit','manifest:change',bundle.manifest.raw])
-
-			bundle.manifest.on('change:main') do
-				runner.reload!
+	if out..main
+		run(out)
+	elif o.watch
+		bundle.once('built',run)
 	return
 
 let binary = cli.storeOptionsAsProperties(false).version(imbapkg.version).name('imba')
@@ -209,20 +201,19 @@ def common cmd
 		.option("-o, --outdir <dir>", "Directory to output files")
 		.option("-w, --watch", "Continously build and watch project")
 		.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
+		.option("-s, --sourcemap", "verbosity (repeat to increase)",fmt.v,0)
 		.option("-m, --minify", "Minify generated files")
 		.option("-M, --no-minify", "Disable minifying")
 		.option("-f, --force", "Disregard previously cached outputs")
-		.option("-c, --client-only", "Generate client files only")
-		.option("--sourcemap <value>", "", "inline")
+		.option("-c, --clean", "Remove files from previous build")
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
-		.option("-H, --no-hashing", "Disable hashing")
-		.option("--pubdir <dir>", "Directory to output client-side files - relative to outdir")
-		.option("-P, --no-pubdir", "Build client-side files straight into outdir")
-		.option("--baseurl <url>", "Base url for your generated site","/")
-		.option("--asset-names <pattern>", "Paths for generated assets","__assets__/[dir]/[name]")
-		.option("--html-names <pattern>", "Paths for generated html files","[dir]/[name]")
-		.option("--clean", "Remove files from previous build")
+		.option("-d, --dev","Use defaults for development")
+		.option("--bundle", "Try to bundle all external dependencies")
+		.option("--base <url>", "Base url for your generated site","/")
+		.option("--assets-dir <pattern>", "Directory to nest generated assets under","assets")
 		.option("--mode <mode>", "Configuration mode","development")
+		.option("--web","Build entrypoints for the browser")
+		.option("--esm","Output module files")
 
 
 common(cli.command('run [script]', { isDefault: true }).description('Imba'))
@@ -232,7 +223,10 @@ common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 
 common(cli.command('build <script>').description('Build an imba/js/html entrypoint and their dependencies'))
 	.option("--platform <platform>", "Platform for entry","browser")
-	.option("--as <preset>", "Configuration preset","node")
+	.action(run)
+	# .option("--as <preset>", "Configuration preset","node")
+
+common(cli.command('dev <script>').description('Run script/server in development mode'))
 	.action(run)
 
 # watch should be implied?

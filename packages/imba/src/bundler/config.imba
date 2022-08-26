@@ -5,32 +5,128 @@ const optionTypes = {
 	minify: 'boolean'
 }
 
+export const LOADER_SUFFIXES = {
+	raw: 'text'
+	text: 'text'
+	copy: 'copy'
+	dataurl: 'dataurl'
+	binary: 'binary'
+	file: 'file'
+	url: 'file'
+	base64: 'base64'
+}
+
+export const SUFFIX_TEMPLATES = {
+	worker: {web: 'worker.js', node: null}
+	sharedworker: {web: 'sharedworker.js', node: null}
+	# "worker-url": {web: 'workerurl.js', node: null}
+}
+
+export const NODE_BUILTINS = [
+	"assert",
+	"async_hooks",
+	"buffer",
+	"child_process",
+	"cluster",
+	"console",
+	"constants",
+	"crypto",
+	"dgram",
+	"dns",
+	"domain",
+	"events",
+	"fs",
+	"fs/promises",
+	"http",
+	"http2",
+	"https",
+	"inspector",
+	"module",
+	"net",
+	"os",
+	"path",
+	"perf_hooks",
+	"process",
+	"punycode",
+	"querystring",
+	"readline",
+	"repl",
+	"stream",
+	"string_decoder",
+	"sys",
+	"timers",
+	"tls",
+	"trace_events",
+	"tty",
+	"url",
+	"util",
+	"v8",
+	"vm",
+	"worker_threads",
+	"zlib"
+]
+
+
+export const LOADER_EXTENSIONS = {
+	".png": "file",
+	".bmp": "file",
+	".apng": "file",
+	".webp": "file",
+	".heif": "file",
+	".avif": "file",
+	".svg": "file",
+	".gif": "file",
+	".jpg": "file",
+	".jpeg": "file",
+	".ico": "file",
+	".woff2": "file",
+	".woff": "file",
+	".eot": "file",
+	".ttf": "file",
+	".otf": "file",
+	".html": "text",
+	".webm": "file",
+	".weba": "file",
+	".avi": "file",
+	".mp3": "file",
+	".mp4": "file",
+	".m4a": "file",
+	".mpeg": "file",
+	".wav": "file",
+	".ogg": "file",
+	".ogv": "file",
+	".oga": "file",
+	".opus": "file"
+}
+
 
 export const defaultConfig = {
 	bundles: []
 
 	options: {
 		base: {
-			target: ['es2019','chrome80','edge18']
+			target: ['es2019','chrome88','edge79']
 		}
 		node: {
 			extends: 'base'
 			platform: 'node'
 			format: 'cjs'
 			sourcemap: true
-			hashing: false
-			target: ['node12.19.0']
-			external: ['dependencies','devDependencies','!imba']
+			target: ['node14.13.0']
+			external: ['dependencies','!imba']
 		}
+
+		esm: {
+			extends: 'node'
+			format: 'esm'
+			target: ['node14.13.0']
+			splitting: false
+		}
+
 		web: {
 			extends: 'base'
 			platform: 'browser'
 			sourcemap: true
-			format: 'esm'
-		}
-		
-		esm: {
-			extends: 'web'
 			format: 'esm'
 			splitting: true
 		}
@@ -60,16 +156,15 @@ export const defaultConfig = {
 			platform: 'browser'
 			sourcemap: false
 			splitting: false
-			hashing: false
 		}
 
 		worker: {
 			extends: 'base'
 			format: 'esm'
-			platform: 'worker'
+			platform: 'webworker'
 			splitting: false
 		}
-		
+
 		nodeworker: {
 			extends: 'node'
 			format: 'cjs'
@@ -77,19 +172,11 @@ export const defaultConfig = {
 			splitting: false
 		}
 
-		webworker: {
+		sharedworker: {
 			extends: 'base'
 			format: 'esm'
 			platform: 'webworker'
 			splitting: false
-		}
-		
-		serviceworker: {
-			extends: 'base'
-			format: 'esm'
-			platform: 'webworker'
-			splitting: false
-			hashing: false
 		}
 	}
 }
@@ -99,17 +186,17 @@ def clone object
 	JSON.parse(JSON.stringify(object))
 
 export def merge config, patch, ...up
-	
+
 	let otyp = typeof config
 	let vtyp = typeof patch
-	
-	
-	
-	otyp = 'array' if config isa Array	
+
+
+
+	otyp = 'array' if config isa Array
 	vtyp = 'array' if patch isa Array
-	
+
 	let keytype = optionTypes[up[0]]
-	
+
 	if keytype == 'boolean'
 		return patch
 
@@ -119,7 +206,7 @@ export def merge config, patch, ...up
 	if otyp == 'array'
 		if vtyp == 'string'
 			patch = patch.split(/\,\s*|\s+/g)
-		
+
 		let mod = patch.every do (/[\-\+]/).test($1 or '')
 		let cloned = new Set(mod ? clone(config): [])
 
@@ -130,9 +217,9 @@ export def merge config, patch, ...up
 				cloned.delete(item.slice(1))
 			else
 				cloned.add(item)
-		
-		return Array.from(cloned)	
-		
+
+		return Array.from(cloned)
+
 	if config == null
 		return clone(patch)
 
@@ -140,7 +227,7 @@ export def merge config, patch, ...up
 		config ||= {}
 
 		if config.hasOwnProperty(key)
-			
+
 			config[key] = merge(config[key],value,key,...up)
 		else
 			# config[key] = merge(null,value,key,...up)
@@ -151,7 +238,7 @@ export def merge config, patch, ...up
 export def resolve config, cwd
 	config = merge(clone(defaultConfig),config)
 	return config
-	
+
 export def resolvePresets imbaconfig, config = {}, types = null
 	if typeof types == 'string'
 		types = types.split(',')

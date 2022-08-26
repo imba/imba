@@ -236,6 +236,7 @@ export class Component < HTMLElement
 
 		if global.DEBUG_IMBA
 			renderer.push(self)
+		##visitContext = null if ##visitContext
 		self
 
 	def #afterReconcile

@@ -5,7 +5,6 @@
 var helpers = require './helpers'
 var constants = require './constants'
 var fspath = require 'path'
-var transformers = require './transformers'
 
 import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
@@ -13,13 +12,11 @@ import SourceMap from './sourcemap'
 
 import StyleRule,StyleTheme,Color,StyleSheet from './styler.imba'
 import ReservedIdentifierRegex,InternalPrefixes,toJSIdentifier,toCustomTagIdentifier from '../utils/identifiers.imba'
-import parseAsset from './assets.imba'
 import Compilation from './compilation'
 
 import SourceMapper from './sourcemapper'
 
 var TAG_NAMES = constants.TAG_NAMES
-
 var TAG_GLOBAL_ATTRIBUTES = constants.TAG_GLOBAL_ATTRIBUTES
 
 var TAG_TYPES = {}
@@ -174,7 +171,7 @@ export var OP = do |op, l, r|
 		when '~='
 			return OP('&=',l,OP('~',r))
 
-		when '?=','||=','&&=','??='
+		when '||=','&&=','??='
 			ConditionalAssign.new(op,l,r)
 		when '+=','-=','*=','/=','^=','%=','**='
 			CompoundAssign.new(op,l,r)
@@ -248,11 +245,6 @@ export var NODES = []
 var C = do |node,opts|
 	(typeof node == 'string' or typeof node == 'number') ? node : node.c(opts)
 
-# wrap output in path markers
-var MP = do |val,typ = 'path'|
-	return val if STACK.tsc
-	return "{val}/*${typ}$*/"
-
 var MLOC = do |a,b|
 	b = a if b == undefined
 
@@ -273,16 +265,11 @@ var M = do |val,mark,o|
 		let m0 = ''
 		let m1 = ''
 
-		# if o and o:locRef 
-		#	ref += '|' + o:locRef
-
 		if start == 0 or start > 0
 			m0 = end >= start ? "/*%{start}|{ref}$*/" : "/*%{start}$*/"
 			
 		if end == 0 or end > 0
 			m1 = start >= 0 ? "/*%{end}|{ref}$*/" : "/*%{end}$*/"
-		if o and o:locRef
-			val = MP(val,o:locRef)
 		return m0 + val + m1
 	return C(val,o)
 
@@ -743,13 +730,6 @@ export class Stack
 	
 	def isNode
 		platform == 'node'
-
-	def cjs
-		format == 'cjs' # or (!format and isNode)
-	
-	# The format defaults to esm
-	def esm
-		!cjs
 
 	def env key
 		var val = @options["ENV_{key}"]
@@ -2943,10 +2923,7 @@ export class VarDeclaration < Node
 				out += " = {right.c(expression: true)}"
 
 		if option(:export)
-			if STACK.cjs
-				out = "{out};\nexports.{left.c()} = {left.c()}"
-			else
-				out = M('export',option(:export)) + " {out}"
+			out = M('export',option(:export)) + " {out}"
 			
 		if typ
 			out = typ.c() + '\n' + out
@@ -3037,7 +3014,7 @@ export class Root < Code
 				let abs = fspath.resolve(o:cwd,o:sourcePath)
 				let rel = fspath.relative(o:cwd,abs).split(fspath:sep).join('/')
 				let np = @scope.importProxy('path').proxy
-
+				# TODO Test this thoroughly - better to replace fater the fact?
 				@scope.lookup('__filename'):c = do LIT("{np:resolve}({STR(rel).c})").c
 				@scope.lookup('__dirname'):c = do LIT("{np:dirname}({np:resolve}({STR(rel).c}))").c
 
@@ -3077,10 +3054,6 @@ export class Root < Code
 		script:assets = scope.assets
 		script:dependencies = Object.keys(scope.@dependencies)
 		script:universal = STACK.meta:universal !== no
-		script:imports = transformers.extractDependencies(script:js)
-
-		if o:resolve
-			script:js = transformers.resolveDependencies(o:sourcePath,script:js,o:resolve)
 		
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
@@ -3581,7 +3554,7 @@ export class ClassDeclaration < Code
 			jshead = "{name.c} = {jshead}"
 
 		
-		if option(:export) and !STACK.cjs
+		if option(:export)
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
@@ -3598,10 +3571,6 @@ export class ClassDeclaration < Code
 			# InstanceType<typeof ImmediateDefJS>
 
 		let js = "{jshead} \{{jsbody}\}"
-		
-		if option(:export) and STACK.cjs
-			let exportName = option(:default) ? 'default' : cname
-			js = "{js};\n{M('exports',o:export)}.{exportName} = {cname}"
 
 		if @staticInit
 			if up isa Block or up isa Export
@@ -3621,13 +3590,8 @@ export class ClassDeclaration < Code
 		if option(:global)
 			# external access?
 			# js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
-
 			if STACK.tsc and true
 				js = "{js}; export \{{@cname}\}; {scope__.root.globalRef}.{@cname} = {@cname}"
-
-				# js = "{js}; export const {@cname}_ = {@cname}; {scope__.root.globalRef}.{@cname} = {@cname}_"
-				# js = "{scope__.root.globalRef}.{@cname} = {js}; {@cname}"
-				# js = "{scope__.root.globalRef}.{@cname} = {js}; {@cname}"
 			else
 				js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 
@@ -3787,7 +3751,7 @@ export class TagDeclaration < ClassDeclaration
 		let jsbody = body.c()
 		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
 		
-		if option(:export) and !STACK.cjs
+		if option(:export)
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
@@ -3801,10 +3765,6 @@ export class TagDeclaration < ClassDeclaration
 			# jshead = "globalThis.{className} = {M 'class', keyword} {M className, name} extends {M sup, superclass}"
 
 		let js = "{jshead} \{{jsbody}\}"
-		
-		if option(:export) and STACK.cjs
-			let exportName = option(:default) ? 'default' : className
-			js = "{js};\n{M('exports',o:export)}.{exportName} = {className}"
 
 		@config:cssns = cssns if @cssns
 		@config:cssid = cssid if @cssid
@@ -4199,11 +4159,7 @@ export class MethodDeclaration < Func
 		else
 			out = "{M funcKeyword, keyword} {M fname, @name}{func}"
 			if o:export
-				if STACK.cjs
-					let exportName = o:default ? 'default' : fname
-					out = "{out};\n{M('exports',o:export)}.{exportName} = {fname}"
-				else
-					out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
+				out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
 
 		if o:global
 			out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
@@ -4961,10 +4917,7 @@ export class Op < Node
 			return "({C l} {M '&',@opToken} {C r})==0"
 			
 		elif op == '??'
-			let ast = IF(OP('!=',l.cache,NULL), l, r, type: '?')
-			ast.@scope.@systemscope = stack.scope
-			# ast.traverse
-			return ast.c(expression: yes)
+			return "({C l} {M op,@opToken} {C r})"
 			
 		elif op == '|=?'
 			return If.ternary(OP('!&',l,r.cache),
@@ -5851,71 +5804,6 @@ export class TagPushAssign < PushAssign
 
 export class ConditionalAssign < Assign
 
-	def consume node
-		normalize.consume(node)
-
-	def normalize
-		var l = left.node
-		var ls = l
-
-		if l isa Access
-
-			if l.left
-				l.left.cache
-			ls = l.clone(l.left,l.right) # this should still be cached?
-
-			if l isa PropertyAccess # correct now, to a certain degree
-				l.cache
-
-			if l isa IndexAccess or l.right isa IdentifierExpression
-				l.right.cache
-
-			# we should only cache the value itself if it is dynamic?
-			# l.cache # cache the value as well -- we cannot use this in assigns them
-
-		# some ops are less messy
-		# need op to support consume then?
-		var expr = right.isExpressable
-		var ast = null
-		# here we should use ast = if ...
-		if expr && op == '||='
-			ast = OP('||',l, OP('=',ls,right))
-		elif expr && op == '&&='
-			ast = OP('&&',l, OP('=',ls,right))
-		else
-			ast = IF(condition, OP('=',ls,right), l) # do we need a scope for these?
-			ast.scope = null
-			# drop the scope
-			# touch scope -- should probably visit the whole thing?
-			# ast.scope.visit
-		ast.toExpression if ast.isExpressable
-		ast
-
-
-	def c
-		# WARN what if we return the same?
-		normalize.c
-
-	def condition
-
-		# use switch instead to cache op access
-		if op == '?=' or op == '??='
-			OP('==',left,NULL)
-		elif op == '||='
-			OP('!',left)
-		elif op == '&&='
-			left
-		elif op == '!?='
-			OP('!=',left,NULL)
-		else
-			left
-
-	def js o
-		var ast = IF(condition, OP('=',left,right), left)
-		ast.scope = null # not sure about this
-		ast.toExpression if ast.isExpressable # forced expression already
-		return ast.c
-
 export class CompoundAssign < Assign
 
 	# FIXME can we merge consume and js?
@@ -6626,11 +6514,16 @@ export class Call < Node
 			let arg = args.first
 			let kind = callee.right.toString
 
-			callee = runtime:asset
-
 			if arg isa Str
-				let asset = STACK.root.registerAsset(arg.raw,"{kind}",self)
-				args.replace(arg,asset:ref)
+				# TODO remove need for ImbaAsset type
+				# callee = runtime:asset
+				if STACK.tsc and false # (false or arg.raw == './ns')
+					yes
+					callee = callee.left
+				else
+					callee = LIT('')
+					let asset = STACK.root.registerAsset(arg.raw,"{kind}",self,arg)
+					args.replace(arg,asset:ref)
 
 		elif callee.isGlobal('import')
 			
@@ -6640,15 +6533,15 @@ export class Call < Node
 			# console.log 'calling the global import!!',path
 			if path
 				let ext = path.split('.').pop()
-				if EXT_LOADER_MAP[ext] or path.indexOf('?as=') >= 0
-					@asset = STACK.root.registerAsset(path,'',self)
+				# TODO only allow specific kinds after ?
+				if EXT_LOADER_MAP[ext] or path.indexOf('?') >= 0
+		
+					@asset = STACK.root.registerAsset(path,'',self,arg)
 					args.replace(arg,@asset:ref)
 		
 		elif callee.isGlobal('require')
 			let arg = args.first
 			let path = arg isa Str and arg.raw
-			if path
-				args.replace(arg,LIT(MP(arg.c)))
 
 		if runref == 'asset'
 			
@@ -7995,7 +7888,10 @@ export class TagAttr < TagPart
 			let tagName = @tag.tagName
 
 			let kind = 'asset'
-			if tagName == 'img' or tagName == 'svg'
+			if tagName == 'svg'
+				# kind = 'js' # no kind here?
+				kind = ''
+			elif tagName == 'img'
 				kind = 'img'
 			elif tagName == 'script'
 				kind = 'web'
@@ -8004,10 +7900,7 @@ export class TagAttr < TagPart
 
 			let path = value isa Str and value.raw
 			if path and !path.match(/^(\/|https?\:\/\/)/)
-				unless STACK.tsc
-					@asset = STACK.root.registerAsset(path,kind,self)
-			# else
-			#	val = MP(val,"path.{kind}")
+				@asset = STACK.root.registerAsset(path,kind,self,value)
 		
 		self
 
@@ -8034,36 +7927,9 @@ export class TagAttr < TagPart
 		let isAttr = (key.match(/^(aria-|data-)/) or key == 'style') or (@tag and @tag.isSVG) or ns == 'html'
 		let tagName = @tag and @tag.@tagName
 		let tref = @tag.ref
-		
-		let isAsset = key == 'asset' or (key == 'src' and value isa Str and (tagName == 'style' or tagName == 'img' or tagName == 'script' or tagName == 'svg'))
 
-		if isAsset and false
-			let kind = 'asset'
-			if tagName == 'img' or tagName == 'svg'
-				kind = 'img'
-			elif tagName == 'script'
-				kind = 'web'
-			elif tagName == 'style'
-				kind = 'css'
-
-			let path = value isa Str and value.raw
-			if path and !path.match(/^(\/|https?\:\/\/)/)
-				if STACK.tsc
-					# val = CALL(LIT('require'),[value]).c
-					return "{@tag.ref}.setAttribute('{key}',String({val}))"
-				else
-					# need to register asset during visit instead
-					@asset = STACK.root.registerAsset(path,kind,self)
-					val = @asset:ref.c
-				
-			else
-				val = MP(val,"path.{kind}")
-		
-		if @asset and !STACK.tsc
+		if @asset
 			val = @asset:ref.c
-
-		# if key == 'src' and @tag.@tagName == 'img' and value isa Str
-		#	console.log "IMG ASSET"
 		
 		if STACK.tsc and (isAttr or TAG_GLOBAL_ATTRIBUTES[key])
 			return "{tref}.setAttribute('{key}',String({val}))"
@@ -9367,7 +9233,6 @@ export class Tag < TagLike
 	
 	def isAsset
 		@isAsset or no
-		# type isa TagTypeIdentifier and type.isAsset
 	
 	def create_
 		if isFragment or isSlot
@@ -10257,9 +10122,6 @@ export class ESMSpecifier < Node
 		@cname = helpers.clearLocationMarkers(@name.c())
 		@key = @alias ? helpers.clearLocationMarkers(@alias.c()) : @cname
 		
-		
-		# only register variable for imports?
-		
 		if @exporter
 			# lookup variable
 			unless @exporter.source
@@ -10280,32 +10142,13 @@ export class ESMSpecifier < Node
 
 export class ImportSpecifier < ESMSpecifier
 
-	def visit
-		super
-		if @importer and STACK.cjs
-			# FIXME will bug out if trying to set the variable
-			@variable.@c = OP('.',@importer.variable,@name).c
-
 export class ImportNamespaceSpecifier < ESMSpecifier
-
-	def visit
-		super
-		if @importer and STACK.cjs
-			# FIXME will bug out if trying to set the variable
-			@variable.@c = @importer.variable.c
-		
 		
 export class ExportSpecifier < ESMSpecifier
 
 export class ExportAllSpecifier < ESMSpecifier
 
 export class ImportDefaultSpecifier < ESMSpecifier
-
-	def visit
-		super
-		if STACK.cjs
-			if @importer
-				@variable.@c = "{@importer.variable.c}.default"
 
 export class ESMSpecifierList < ListNode
 	
@@ -10348,41 +10191,36 @@ export class AssetReference < ValueNode
 		let out = ""
 		let ref = value:ref.c
 		let path = value:path
-		if asset:kind and path.indexOf('?as=') == -1
-			path += "?as={asset:kind}"
+		if asset:kind and path.indexOf('?') == -1
+			path += "?{asset:kind}"
 		if STACK.tsc
-			out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
+			if value:pathToken
+				# value:pathToken
+				let pathjs = M("'{path.split('?')[0]}'",value:pathToken)
+				out = "import {pathjs}; const {ref} = /** @type\{ImbaAsset\} */(null)"
+			else
+				# out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
+				# out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
+				out = "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})"
 		else
-			out = "import {ref} from {MP "'{path}'"}"
+			out = "import {ref} from {M("'{path}'",value:pathToken)}"
 		return out
 
 export class ImportDeclaration < ESMDeclaration
 
 	def ownjs
-		var src = @source and @source.c(locRef: 'path')
+		var src = @source and @source.c()
 		# console.log("importing {@source:constructor} {src}")
 
 		if STACK.tsc
 			# let raw = src.slice(1,-1)
 			let [raw,q] = @source.raw.split('?')
+			src = M("'{raw}'",@source)
 			
-			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^as=/))
-				src = M("'data:text/asset;charset=utf-8,{@source.raw}'",@source)
-				# console.log "COMPILING IMPORT",raw,@source,src
-
-		# FIXME can move away from cjs - letting esbuild transform if needed.
-		if STACK.cjs
-			# var src = @source.c(locRef: 'path')
-			# we need to combine the requires
-			let reqjs = "require({src})"
-			unless @specifiers
-				return reqjs
-			
-			# let wildcards = 
-			if @defaults and @specifiers:length == 1
-				return "var {@variable.c} = {util.requireDefault(LIT(reqjs)).c}"
-			else
-				return "var {@variable.c} = {reqjs}"
+			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^\w/))
+				if @specifiers and @source
+					let out = "{M(keyword.c,keyword)} {src};\nimport {AST.cary(@specifiers).join(',')} from 'data:text/asset;';"
+					return out
 
 		if @specifiers and @source
 			"{M(keyword.c,keyword)} {AST.cary(@specifiers).join(',')} from {src}"
@@ -10398,12 +10236,6 @@ export class ImportDeclaration < ESMDeclaration
 		@up.replace curr, [curr,BR,@next = next]
 	
 	def visit
-		if STACK.cjs and @specifiers
-			var src = @source.c
-			var m = helpers.clearLocationMarkers(src).match(/([\w\_\-]+)(\.js|imba)?[\"\']$/)
-			@alias = m ? '_$' + m[1].replace(/[\/\-]/g,'_') : 'mod$'
-			@variable = scope__.register(@alias,null,system: yes)
-		
 		for item in @specifiers
 			item?.traverse()
 
@@ -10437,41 +10269,12 @@ export class ImportTypeDeclaration < ESMDeclaration
 export class ExportDeclaration < ESMDeclaration
 
 	def visit
-		scope__.root.activateExports()
-
 		for item in @specifiers
 			item?.traverse()
 		self
 		
 	def js
 		let kw = M(keyword.c,keyword)
-		let cjs = STACK.cjs
-		
-		if cjs
-			let out = []
-			
-			if @source
-				@variable ||= scope__.register(null,null,system: yes)
-				let decl = "var {@variable.c} = require({@source.c})"
-				out.push(decl)
-				
-				let tpl = '''
-				Object.defineProperty(exports, $name$, {
-					enumerable: true, get: function get() { return $path$; }
-				});
-				'''
-				
-				for item in @specifiers[0]
-					let js = tpl.replace('$name$',(item.alias or item.name).toStr().c())
-					js = js.replace('$path$',OP('.',@variable,item.name).c())
-					out.push(js)
-
-			else
-				for item in @specifiers[0]
-					let op = OP('=',OP('.',LIT('exports'),item.alias or item.name),item.@variable)
-					out.push(op.c)
-
-			return out.join(';\n')
 
 		if @specifiers and @source
 			"{kw} {AST.cary(@specifiers).join(',')} from {@source.c}"
@@ -10497,8 +10300,6 @@ export class Export < ValueNode
 		super
 		
 	def visit
-		scope__.root.activateExports()
-
 		value.set(
 			export: (option(:keyword) or self),
 			return: option(:return),
@@ -10524,29 +10325,20 @@ export class Export < ValueNode
 			return value.c
 
 		if value isa Assign and value.left isa VarReference
-		
-			if !STACK.cjs
-				let ek = M('export',option(:keyword))
-				let dk = isDefault and M('default',option(:default))
-				return isDefault ? "{ek} {dk} {value.c}" : "{ek} {value.c}"
-			else
-				let val = value.left.value
-				# console.log "export is a var reference?! {value.left} {val}"
-
-				let sym = isDefault ? "default" : value.left.value.symbol
-				value.right = OP('=',LIT("exports.{sym}"),value.right)
-				return value.c
+			let ek = M('export',option(:keyword))
+			let dk = isDefault and M('default',option(:default))
+			return isDefault ? "{ek} {dk} {value.c}" : "{ek} {value.c}"
 
 		if isDefault
 			let out = value.c
-			return STACK.cjs ? "exports.default = {out}" : "export default {out}"
+			return "export default {out}"
 		return value.c
 
 export class Require < ValueNode
 
 	def js o
 		var val = value isa Parens ? value.value : value
-		var out = val.c(locRef: 'path')
+		var out = val.c()
 		out == 'require' ? 'require' : "require({out})"
 
 export class EnvFlag < ValueNode
@@ -10736,10 +10528,7 @@ export class StyleRuleSet < StyleNode
 		
 	def c
 		if option(:toplevel) and option(:export)
-			if STACK.cjs
-				return "exports.{@identifier.c} = '{@name}'"
-			else
-				return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
+			return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
 
 		if @tvar
 			let out = ["{@tvar} = '{@name}'"]
@@ -11179,14 +10968,6 @@ export class StyleFunction < Node
 		let name = String(@name)
 		let pars = @params.c
 
-		# if name == 'svg'
-		#	name = 'url'
-		#	pars = "'{name}/{pars}'"
-
-		if name == 'url'
-			return MP("{name}({SourceMapper.strip(pars)})",'path')
-
-
 		let out = "{name}({pars})"
 		out = helpers.singlequote(out) if o and o:as == 'js'
 		return out
@@ -11195,7 +10976,7 @@ export class StyleURL < ValueNode
 
 	def c
 		let out = String(@value)
-		return MP(SourceMapper.strip(out),'path')
+		return SourceMapper.strip(out)
 		# "{name}({pars})"
 
 export class StyleIdentifier < StyleTerm
@@ -12005,14 +11786,7 @@ export class RootScope < Scope
 	def globalRef
 		@globalRef ||= LIT('globalThis')
 
-	
-		
-	def activateExports
-		if STACK.cjs and !@hasExports
-			@hasExports = yes
-			@head.push(LIT('Object.defineProperty(exports, "__esModule", {value: true});'))
-
-	def registerAsset path, kind, context
+	def registerAsset path, kind, context, pathToken
 		let key = path + kind
 		
 		if @assets[key]
@@ -12026,6 +11800,7 @@ export class RootScope < Scope
 			kind: kind,
 			external: yes,
 			context: context
+			pathToken: pathToken,
 			ref: register('asset',null,system: yes)
 		}
 		
@@ -12107,28 +11882,7 @@ export class RootScope < Scope
 		o:expression = no
 
 		let body = node.body.c(o)
-		
-		if false
-			let assetCount = Object.keys(assets):length
-
-			if assetCount
-				head.push LIT('// ASSETS-START')
-
-			for own name, asset of assets
-				# assets should have their own node that compiles instead? Like ImportProxy
-				try
-					let ref = asset:ref.c
-					let path = asset:path
-					if asset:kind and path.indexOf('?as=') == -1
-						path += "?as={asset:kind}"
-					if STACK.tsc
-						head.push(LIT "const {ref} = /** @type\{ImbaAsset\} */(\{path:'{path}'\})")
-					else
-						head.push(LIT "import {ref} from {MP "'{path}'"}")
-
-			if assetCount
-				head.push LIT('// ASSETS-END')
-		
+	
 		let sheet = STACK.css
 		let pre = Block.new([])
 		pre.head = head
@@ -12675,28 +12429,20 @@ export class ImportProxy < Variable
 		let keys = Object.keys(@exports)
 		let touches = Object.values(@touched)
 		let js = []
-		let cjs = STACK.cjs
 		let path = self.path
 
 		if path == 'imba'
 			path = STACK.imbaPath or 'imba'
 
-		let pathjs = MP "'{path}'"
+		let pathjs = "'{path}'"
 
 		if @importAll
-			if cjs
-				js.push("const {@name} = require({pathjs});")
-			else
-				js.push("import * as {@name} from {pathjs};")
+			js.push("import * as {@name} from {pathjs};")
 
 
 		if keys:length > 0
-			if cjs
-				let out = keys.map(do |a| "{a}: {@exports[a]}").join(", ")
-				js.push "const \{{out}\} = require({pathjs});"
-			else
-				let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
-				js.push "import \{{out}\} from {pathjs};"
+			let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
+			js.push "import \{{out}\} from {pathjs};"
 
 		if touches:length
 			js.push "({touches.map(do $1.c + "()").join(",")});"

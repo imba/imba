@@ -209,7 +209,6 @@ export class SourceMap
 			# maps: @maps
 
 		if @options:sourcemap == 'inline'
-			# console.log 'inline sourcemap!'
 			map:file = sourceName
 			map:sources = [sourceName]
 

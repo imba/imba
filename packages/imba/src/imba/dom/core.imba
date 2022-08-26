@@ -9,9 +9,10 @@ should move elsewhere
 import {TYPES,MAP} from './schema'
 import {AsyncLocalStorage} from '../bindings'
 import {Flags} from './flags'
-import {manifest} from '../manifest'
 import {createRenderContext} from './context'
 import {getDeepPropertyDescriptor} from '../utils'
+
+const manifest = {}
 
 let asl = null
 
@@ -727,7 +728,7 @@ export class HTMLHtmlElement < HTMLElement
 		let jsassets = []
 		let inject = []
 
-		if process.env.IMBA_HMR or global.IMBA_HMR
+		if global.IMBA_HMR
 			inject.push("<script src='/__hmr__.js'></script>")
 		
 		# if we havent included any styles in the html at all
@@ -735,7 +736,8 @@ export class HTMLHtmlElement < HTMLElement
 			# maybe only if there are no 
 			for script in self.scripts
 				let src = script.src
-				let asset = manifest.urls[src]
+				let asset = manifest[src]
+
 				if asset and asset.css
 					sheets.add(asset.css)
 				# add preloads?
@@ -857,6 +859,11 @@ export class SVGSVGElement < SVGElement
 		if #src =? value
 			if value and value.adoptNode
 				value.adoptNode(self)
+			elif value and value.type == 'svg'
+				if value.attributes
+					for own k,v of value.attributes
+						setAttribute(k,v)
+				innerHTML = value.content
 		return
 
 TYPES[''].klass = Element

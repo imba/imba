@@ -17,5 +17,6 @@ test do
 	await spec.tick()
 	eq el.value,name
 	el.focus()
+	await spec.tick()
 	await spec.keyboard.type('e')
 	eq $1.log, [[2,2],[3,3]]
