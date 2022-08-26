@@ -112,7 +112,7 @@ export const defaultConfig = {
 			platform: 'node'
 			format: 'cjs'
 			sourcemap: true
-			target: ['node12.20.0']
+			target: ['node14.13.0']
 			external: ['dependencies','!imba']
 		}
 
