@@ -374,7 +374,7 @@ class Touch
 				params.unshift(box = target)
 			
 			let ax = params[1] or 0
-			let ay = params[2] ?= ax
+			let ay = params[2] ??= ax
 			let rect = box.getBoundingClientRect!
 			
 			o.x = clientX - (rect.left + rect.width * ax)

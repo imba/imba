@@ -171,7 +171,7 @@ export var OP = do |op, l, r|
 		when '~='
 			return OP('&=',l,OP('~',r))
 
-		when '?=','||=','&&=','??='
+		when '||=','&&=','??='
 			ConditionalAssign.new(op,l,r)
 		when '+=','-=','*=','/=','^=','%=','**='
 			CompoundAssign.new(op,l,r)
@@ -4917,12 +4917,7 @@ export class Op < Node
 			return "({C l} {M '&',@opToken} {C r})==0"
 			
 		elif op == '??'
-			# return "({C l} {M op,@opToken} {C r})"
-
-			let ast = IF(OP('!=',l.cache,NULL), l, r, type: '?')
-			ast.@scope.@systemscope = stack.scope
-			# ast.traverse
-			return ast.c(expression: yes)
+			return "({C l} {M op,@opToken} {C r})"
 			
 		elif op == '|=?'
 			return If.ternary(OP('!&',l,r.cache),
@@ -5808,71 +5803,6 @@ export class TagPushAssign < PushAssign
 		return self
 
 export class ConditionalAssign < Assign
-
-	def consume node
-		normalize.consume(node)
-
-	def normalize
-		var l = left.node
-		var ls = l
-
-		if l isa Access
-
-			if l.left
-				l.left.cache
-			ls = l.clone(l.left,l.right) # this should still be cached?
-
-			if l isa PropertyAccess # correct now, to a certain degree
-				l.cache
-
-			if l isa IndexAccess or l.right isa IdentifierExpression
-				l.right.cache
-
-			# we should only cache the value itself if it is dynamic?
-			# l.cache # cache the value as well -- we cannot use this in assigns them
-
-		# some ops are less messy
-		# need op to support consume then?
-		var expr = right.isExpressable
-		var ast = null
-		# here we should use ast = if ...
-		if expr && op == '||='
-			ast = OP('||',l, OP('=',ls,right))
-		elif expr && op == '&&='
-			ast = OP('&&',l, OP('=',ls,right))
-		else
-			ast = IF(condition, OP('=',ls,right), l) # do we need a scope for these?
-			ast.scope = null
-			# drop the scope
-			# touch scope -- should probably visit the whole thing?
-			# ast.scope.visit
-		ast.toExpression if ast.isExpressable
-		ast
-
-
-	def c
-		# WARN what if we return the same?
-		normalize.c
-
-	def condition
-
-		# use switch instead to cache op access
-		if op == '?=' or op == '??='
-			OP('==',left,NULL)
-		elif op == '||='
-			OP('!',left)
-		elif op == '&&='
-			left
-		elif op == '!?='
-			OP('!=',left,NULL)
-		else
-			left
-
-	def js o
-		var ast = IF(condition, OP('=',left,right), left)
-		ast.scope = null # not sure about this
-		ast.toExpression if ast.isExpressable # forced expression already
-		return ast.c
 
 export class CompoundAssign < Assign
 

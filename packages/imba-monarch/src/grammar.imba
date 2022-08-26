@@ -32,7 +32,7 @@ def denter indent,outdent,stay,o = {}
 	if stay == -1
 		stay = repop
 	elif stay == 0
-		o.comment ?= yes
+		o.comment ??= yes
 
 		stay = {}
 
