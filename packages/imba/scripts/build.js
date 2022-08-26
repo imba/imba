@@ -174,6 +174,7 @@ async function bundle(o) {
 	o.incremental = !!watcher;
 	o.logLevel = 'info';
 	o.charset = 'utf8';
+	o.pure = ['Symbol.for','Symbol'];
 	o.minify = true;
 	o.define = {'process.env.NODE_ENV': "'production'"};
 	if (o.write == undefined) o.write = false;
