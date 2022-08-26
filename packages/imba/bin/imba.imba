@@ -92,17 +92,25 @@ def parseOptions options, extras = []
 	elif options.verbose
 		options.loglevel ||= 'info'
 
+	if options.development
+		options.minify ??= no
+		options.sourcemap ??= yes
+		options.watch ??= yes
+		options.hmr = yes
+		options.mode = 'development'
+
+	if options.production
+		options.minify ??= yes
+		options.sourcemap ??= no
+		options.hmr = no
+		options.mode = 'production'
+
 	if command == 'build'
 		options.minify ??= yes
 		options.mode ??= 'production'
 		options.sourcemap ??= no
 		options.loglevel ||= 'info'
 		options.outdir ||= 'dist'
-
-	if command == 'dev'
-		options.watch = yes
-		options.hmr = yes
-		options.mode = 'development'
 
 	if options.web and command != 'build'
 		command = options.command = 'serve'
@@ -152,6 +160,7 @@ def run entry, o, extras
 	o.fs = new FileSystem(o.cwd,o)
 
 	# TODO support multiple entrypoints - especially for html
+	
 	extendConfig(prog.config.options,overrides)
 
 	if !o.outdir
@@ -209,11 +218,10 @@ def common cmd
 		.option("-f, --force", "Disregard previously cached outputs")
 		.option("-k, --keep", "Keep existing files in output directory")
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
-		.option("-d, --dev","Use defaults for development")
+		.option("-d, --development","Use defaults for development")
+		.option("-p, --production","Use defaults for production")
 		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--base <url>", "Base url for your generated site","/")
-		.option("--assets-dir <pattern>", "Directory to nest generated assets under","assets")
-		.option("--mode <mode>", "Configuration mode","development")
 		.option("--web","Build entrypoints for the browser")
 		.option("--esm","Output module files")
 
@@ -227,9 +235,6 @@ common(cli.command('build <script>').description('Build an imba/js/html entrypoi
 	.option("--platform <platform>", "Platform for entry","browser")
 	.action(run)
 	# .option("--as <preset>", "Configuration preset","node")
-
-common(cli.command('dev <script>').description('Run script/server in development mode'))
-	.action(run)
 
 # watch should be implied?
 common(cli.command('serve <script>').description('Spawn a webserver for an imba/js/html entrypoint'))

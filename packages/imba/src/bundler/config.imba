@@ -3,6 +3,7 @@ const optionTypes = {
 	external: 'array'
 	hashing: 'boolean'
 	minify: 'boolean'
+	target: 'array'
 }
 
 export const LOADER_SUFFIXES = {
@@ -119,7 +120,6 @@ export const defaultConfig = {
 		esm: {
 			extends: 'node'
 			format: 'esm'
-			target: ['node14.13.0']
 			splitting: false
 		}
 

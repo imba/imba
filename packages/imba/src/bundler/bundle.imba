@@ -88,7 +88,7 @@ export default class Bundle < Component
 		program.mode == 'development'
 
 	get production?
-		!!minify?
+		program.mode == 'production'
 
 	get hmr?
 		program.hmr == yes or program.watch == yes
@@ -232,6 +232,7 @@ export default class Bundle < Component
 			legalComments: 'inline'
 			loader: Object.assign({},LOADER_EXTENSIONS,o.loader or {})
 			write: false
+			charset: 'utf8' # Test real world performance
 			metafile: true
 			external: externals
 			tsconfig: o.tsconfig
@@ -254,9 +255,6 @@ export default class Bundle < Component
 		
 		if main? and !web?
 			esoptions.entryNames = "[dir]/[name]"
-
-		if dev?
-			esoptions.charset = 'utf8'
 
 		if main?
 			# override the external resolution here
@@ -283,7 +281,6 @@ export default class Bundle < Component
 			esoptions.sourcesContent = o.sourcesContent
 
 		if o.platform == 'worker'
-			# quick hack
 			imbaoptions.platform = 'node'
 			
 		if o.target
@@ -329,10 +326,10 @@ export default class Bundle < Component
 		# TODO Clean up defines
 
 		let defines = esoptions.define ||= {}
-		defines["globalThis.DEBUG_IMBA"] ||= (!build? and !production?)
+		defines["globalThis.DEBUG_IMBA"] ||= !production?
 
 		if !nodeish?
-			let env = o.env or process.env.NODE_ENV or (minify? ? 'production' : 'development')
+			let env = o.env or (production? ? 'production' : 'development')
 			defines["global"]="globalThis"
 			defines["process.platform"]="'web'"
 			defines["process.browser"]="true"
@@ -343,7 +340,6 @@ export default class Bundle < Component
 				np.resolve(program.imbaPath,'polyfills','__inject__.js')
 			]
 			esoptions.inject = []
-			defines["ENV_DEBUG"] ||= "false"
 			esoptions.nodePaths.push(np.resolve(program.imbaPath,'polyfills'))
 
 		defines["globalThis.IMBA_HMR"] ||= String(hmr?)
@@ -506,7 +502,7 @@ export default class Bundle < Component
 			let [path,q] = args.path.split('?')
 			let formats = q.replace(/^as=/,'').split(/[&\-]/g)
 
-			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg|styles)/)
+			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg|styles|bundle|external)/)
 				return
 
 			let resolved
@@ -544,16 +540,6 @@ export default class Bundle < Component
 				namespace: 'entry',
 				pluginData: { config: cfg, path: rel }
 			}
-
-
-		# be default, treat all absolute paths as external
-		esb.onResolve(filter: /^sdfdsfs\//) do(args)
-			# console.log "RESOLVE ABSOLUTE",args
-			# if args.kind == 'entry-point'
-			# 	return {path: args.path.split('?')[0], resolveDir: args.resolveDir}
-			return if args.path.indexOf('?') > 0
-			return {path: args.path, external: yes}
-
 		
 		esb.onResolve(filter: /^imba(\/|$)/) do(args)
 			# TODO Let the esbuild resolver take over here
@@ -595,8 +581,8 @@ export default class Bundle < Component
 			let pkg? = !abs? and !rel?
 			let pkg = pkg? and path.match(/^(@[\w\.\-]+\/)?\w[\w\.\-]*/)[0] or null
 			let external? = (externs.indexOf(path) >= 0) or (pkg? and externs.indexOf(pkg) >= 0)
-		
 			let q = (path.split('?')[1] or '')
+			let pathname = q ? path.split('?')[0] : path
 
 			if q == 'style'
 				return null
@@ -606,17 +592,24 @@ export default class Bundle < Component
 				return {external: true}
 
 			if NODE_BUILTINS.indexOf(path) >= 0 and !web?
-				# let res = await esresolve(args)
-				# console.log 'resolved node module',res
-				# What if these actually resolved to something else?
-				# console.log 'is node module!',path
-				# not external if we are in browser?
-				# what do we want to externalize by default?
 				return {external: true, path: "node:{path}"}
 			
+			if q == 'bundle'
+				let opts = {
+					importer: args.importer
+					resolveDir: args.resolveDir
+					namespace: ''
+					kind: esm? ? 'import-statement' : 'require-call'
+					pluginData: 'skip'
+				}
+				let res = await esb.resolve(pathname,opts)
+				return {path: res.path}
 
+			if q == 'external'
+				return {path: pathname, external: true}
+				
 			# should this be the default for all external modules?
-			if pkg? and nodeish? and run? and !standalone?
+			if pkg? and nodeish? and run? and !standalone? and !program.tmpdir
 				if externs.indexOf("!{path}") >= 0
 					# console.log "don't externalize",path
 					return null
@@ -672,7 +665,8 @@ export default class Bundle < Component
 				if args.importer..match(/\.html$/)
 					return {path: res.path, suffix: "?url"}
 				if web? and esoptions.splitting
-					return {path: res.path + '.mjs', suffix: "?external"}
+					# should still be treated as a watching dependency?
+					return {path: res.path + '.js', suffix: "?external"}
 
 			return null
 
@@ -1119,7 +1113,7 @@ export default class Bundle < Component
 			input.#type = input._ = 'input'
 			input.path = path
 			input.imports = input.imports.map do ins[$1.path]
-			watchPath(path)
+			watchPath(path.replace('.json.js?external','.json').replace(/\?.+/,''))
 
 		let addOutputs = new Set
 		let styleInputs = new Set
@@ -1488,6 +1482,14 @@ export default class Bundle < Component
 			# output dir exists inside of cwd - just as a safety mechanism
 			if !built? and !program.keep and !program.tmpdir and buildInside
 				cleanOutDir!
+
+			if !built? and program.tmpdir and node?
+				console.log ""
+				try 
+					nfs.symlinkSync(np.resolve(fs.cwd,'node_modules'),np.resolve(program.tmpdir,'node_modules'),'dir')
+				catch e
+					console.log 'error here',e
+
 			
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in assets
