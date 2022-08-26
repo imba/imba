@@ -592,7 +592,7 @@ export default class Bundle < Component
 				return {external: true}
 
 			if NODE_BUILTINS.indexOf(path) >= 0 and !web?
-				return {external: true, path: "node:{path}"}
+				return {external: true, path: path}
 			
 			if q == 'bundle'
 				let opts = {
