@@ -110,30 +110,29 @@ async function universalise(result, o) {
 
 		let bname = np.basename(file.path).split(".")[0];
 		console.log("output", file.path, bname);
+		fs.writeFileSync(file.path, file.contents);
 
 		if (o.format == 'esm' && file.path.indexOf('.mjs') >= 0) {
-			console.log("create cjs version as well", file.path);
 			let cjs = esbuild.transformSync(file.text, {
-				format: 'cjs'
+				format: 'cjs',
+				minify: o.minify
 			});
 			//  && o.platform == 'node'
 			let name = file.path.replace('.mjs', '.cjs');
-			console.log("transformed to cjs", cjs.code.length, file.text.length);
+			console.log("transformed to cjs", name, cjs.code.length, file.text.length);
 			fs.writeFileSync(name, cjs.code);
-			fs.writeFileSync(file.path, file.contents);
-		} else {
-			fs.writeFileSync(file.path, file.contents);
 		}
 
 		if (o.format == 'esm' && o.platform == 'browser' && globalNames[bname]) {
-			console.log("create cjs version as well");
 			let iife = esbuild.transformSync(file.text, {
 				format: 'iife',
+				minify: o.minify,
 				globalName: globalNames[bname]
 			})
+
 			let name = file.path.replace('.mjs', '.js');
 			if (true) { // name != file.path
-				console.log("transformed to iife", name, iife.code.length, file.text.length);
+				console.log("transformed to iife", name, globalNames[bname], iife.code.length, file.text.length);
 				fs.writeFileSync(name, iife.code);
 			}
 		}
@@ -190,7 +189,6 @@ async function bundle(o) {
 			console.log('rebuilt', input);
 		})
 	}
-	console.log(`built`);
 }
 
 let bundles = [
@@ -213,15 +211,7 @@ let bundles = [
 		platform: "browser",
 		format: "esm",
 		outExtension: { ".js": ".mjs" }
-		// outExtension: { ".js": ".mjs" },
 	},
-	// {
-	// 	entryPoints: ["src/program/monaco-worker.imba"],
-	// 	outdir: "dist",
-	// 	platform: "browser",
-	// 	format: "cjs"
-	// 	// outExtension: { ".js": ".mjs" },
-	// },
 	{
 		entryPoints: ["src/imba/imba.imba"],
 		outExtension: { ".js": ".node.js" },

@@ -77,7 +77,11 @@
     "./program": "./program.imba.js",
     "./workers": "./workers.imba.js",
     "./loader": "./loader.imba.js",
-    "./compiler": "./compiler.imba.js"
+    "./compiler": {
+      "browser": "./dist/compiler.mjs",
+      "require": "./dist/compiler.cjs",
+      "default": "./compiler.imba.js"
+    }
   },
   "bin": {
     "imba": "./bin/imba",
