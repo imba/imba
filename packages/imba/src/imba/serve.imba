@@ -234,8 +234,9 @@ class Server
 		assetResponders = {}
 		urlToLocalPathMap = {}
 		publicExistsMap = {}
-		rootDir = try np.dirname(proc.argv[1])
-		publicPath = try np.resolve(rootDir,global.IMBA_PUBDIR or 'public')
+		# temporary hack for pm2
+		rootDir = try proc.env.IMBA_OUTDIR or np.dirname(proc.env.pm_exec_path or proc.argv[1])
+		publicPath = try np.resolve(rootDir,proc.env.IMBA_PUBDIR or global.IMBA_PUBDIR or 'public')
 		staticDir = global.IMBA_STATICDIR or ''
 		
 		if proc.env.IMBA_PATH
@@ -316,8 +317,10 @@ class Server
 			let asset = manifest[url]
 
 			if asset
-				let responder = assetResponders[url] ||= new AssetResponder(self,url,asset)
-				return responder.respond(req,res)
+				let path = localPathForUrl(url)
+				if path
+					let responder = assetResponders[url] ||= new AssetResponder(self,url,asset)
+					return responder.respond(req,res)
 
 			if url.match(/\.[A-Z\d]{8}\./) or url.match(/\.\w{1,4}($|\?)/)
 				if let path = localPathForUrl(url)
