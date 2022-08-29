@@ -955,7 +955,7 @@ export class StyleTheme
 			if let color = $parseColor(raw)
 				return color
 		
-		if fallback
+		if fallback and !unit
 			let okstr = str.match(/^[a-zA-Z\-][\w\-]*$/) and !str.match(/^(none|inherit|unset|initial)$/)
 			let oknum = unit and VALID_CSS_UNITS.indexOf(unit) == -1
 			if (okstr or oknum) and value.alone
