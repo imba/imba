@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* Add import handler for `?serviceworker` suffix.
+
+    These assets are built without hashes in filename and to the root of the public folder, as is required for serviceworkers.
+
 ## 2.0.0-alpha.216
 
 Last version (with new features) before `beta.1`. This release contains breaking changes in the bundler that need to be tested thoroughly before beta.

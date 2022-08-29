@@ -3,6 +3,12 @@ import './shared'
 
 global css @root $home:1 bg:url(assets/code.png)
 
+import sw from './sw.imba?serviceworker'
+
+# import as url?
+console.log "serviceworker url",sw
+
+
 tag home-page
 
 	<self>

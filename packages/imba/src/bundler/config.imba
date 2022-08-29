@@ -178,6 +178,13 @@ export const defaultConfig = {
 			platform: 'webworker'
 			splitting: false
 		}
+
+		serviceworker: {
+			extends: 'base'
+			format: 'iife'
+			platform: 'webworker'
+			entryNames: "[name]"
+		}
 	}
 }
 

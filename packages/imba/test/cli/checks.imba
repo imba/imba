@@ -32,4 +32,8 @@ export default {
 			/--about: 1/
 		]
 	}
+
+	"imba build --web app/home.imba": {
+		
+	}
 }

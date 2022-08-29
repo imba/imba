@@ -219,7 +219,7 @@ export default class Bundle < Component
 			publicPath: baseurl or '/'
 			assetNames: "{assetsDir}/[name].[hash]"
 			chunkNames: "{assetsDir}/chunks/[name].[hash]"
-			entryNames: "{assetsDir}/[name].[hash]"
+			entryNames: o.entryNames or "{assetsDir}/[name].[hash]"
 			conditions: ["imba"]
 			banner: {js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')}
 			footer: {js: o.footer or "//__FOOT__"}
@@ -311,17 +311,19 @@ export default class Bundle < Component
 
 		# console.log esoptions
 
-		let addExtensions = {
-			webworker: ['.webworker.imba','.worker.imba']
-			serviceworker: ['.serviceworker.imba','.webworker.imba','.worker.imba']
-			nodeworker: ['.nodeworker.imba','.worker.imba','.node.imba']
-			worker: ['.imba.web-pkg.js','.worker.imba']
-			node: ['.node.imba']
-			browser: ['.web.imba']
-		}
+		if true
+			let addExtensions = {
+				webworker: ['.webworker.imba','.worker.imba']
+				serviceworker: ['.serviceworker.imba','.webworker.imba','.worker.imba']
+				nodeworker: ['.nodeworker.imba','.worker.imba','.node.imba']
+				worker: ['.imba.web-pkg.js','.worker.imba']
+				node: ['.node.imba']
+				browser: ['.web.imba']
+				web: ['.web.imba']
+			}
 
-		if addExtensions[o.platform]
-			esoptions.resolveExtensions.unshift(...addExtensions[o.platform])
+			if let add = addExtensions[o.platform or esoptions.platform]
+				esoptions.resolveExtensions.unshift(...add)
 
 		# TODO Clean up defines
 
