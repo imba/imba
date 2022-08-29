@@ -401,7 +401,8 @@ export default class Bundle < Component
 		return cacher[key] = base # Object.create(base)
 
 	def resolveTemplate name
-		np.resolve(program.imbaPath,'src','templates',name)
+		let path = np.resolve(program.imbaPath,'src','templates',name)
+		nfs.existsSync(path) ? path : null
 
 	###
 	The main setup for our esbuild plugin. It installs a bunch of far-reaching onResolve and onLoad
@@ -440,8 +441,7 @@ export default class Bundle < Component
 				
 				if args.kind == 'entry-point'
 					let kind = args.path.split('.').pop!
-					# TODO Support serving a regular js script as well - could be handy
-					let tpl = resolveTemplate("serve-{kind}.imba")
+					let tpl = resolveTemplate("serve-{kind}.imba") or resolveTemplate("serve-web.imba")
 					let abs = await esb.resolve(args.path,resolveDir: args.resolveDir)
 
 					return {path: tpl, namespace: 'file', pluginData: {
