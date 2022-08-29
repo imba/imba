@@ -342,13 +342,6 @@ class Server
 					catch e
 						res.writeHead(503,{})
 						return res.end!
-
-			# console.log 'responding to',url,req.headers
-
-			if url.match(/\.imba$/) and false
-				let path = "/Users/sindre/repos/imba-bundle-tests/css-issue/app/basic.imba"
-				res.writeHead(200, defaultHeaders.js)
-				return nfs.createReadStream(path,encoding: 'utf-8').pipe(res)
 			
 			# continue to the real server
 			if dom
