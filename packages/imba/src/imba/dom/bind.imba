@@ -183,6 +183,9 @@ extend class HTMLInputElement
 		if typ == 'checkbox' or typ == 'radio'
 			return
 
+		if typ == 'number' and Number.isNaN(valueAsNumber)
+			return
+
 		$$value = undefined
 		self.data = self.richValue
 		commit!
@@ -215,8 +218,12 @@ extend class HTMLInputElement
 		let typ = self.type
 
 		if typ == 'range' or typ == 'number'
-			value = self.valueAsNumber
-			value = null if Number.isNaN(value)
+			let num = self.valueAsNumber
+			num = Number(value.replace(/\,/,'.') + 0) if Number.isNaN(num)
+			num = null if Number.isNaN(num)
+			value = num
+			
+
 		elif typ == 'checkbox'
 			value = true if value == undefined or value === 'on'
 
