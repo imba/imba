@@ -1,0 +1,20 @@
+{
+  "name": "imba-template",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "imba dev index.html",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.0.1",
+    "svelte": "^3.49.0",
+    "vite": "^3.0.7",
+    "imba": "^2.0.0-alpha.215"
+  },
+  "dependencies": {
+  }
+}

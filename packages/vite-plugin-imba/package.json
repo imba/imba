@@ -1,0 +1,74 @@
+{
+  "name": "vite-plugin-imba",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "Sindre Aarsaether",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "dev": "../imba/bin/imba build -wM --node.external +devDependencies --esm src/index.ts"
+  },
+
+  "engines": {
+    "node": "^14.18.0 || >= 16"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imba/imba.git",
+    "directory": "packages/vite-plugin-imba"
+  },
+  "keywords": [
+    "vite-plugin",
+    "vite plugin",
+    "vite",
+    "imba"
+  ],
+  "bugs": {
+    "url": "https://github.com/imba/imba/issues"
+  },
+  "homepage": "https://imba.io",
+  "dependencies": {
+    "@rollup/pluginutils": "^4.2.1",
+    "debug": "^4.3.4",
+    "deepmerge": "^4.2.2",
+    "kleur": "^4.1.5",
+    "magic-string": "^0.26.2",
+    "svelte-hmr": "^0.14.12"
+  },
+  "peerDependencies": {
+    "diff-match-patch": "^1.0.5",
+    "svelte": "^3.44.0",
+    "vite": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "diff-match-patch": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.7",
+    "@types/diff-match-patch": "^1.0.32",
+    "diff-match-patch": "^1.0.5",
+    "esbuild": "^0.15.5",
+    "rollup": "^2.78.1",
+    "svelte": "^3.49.0",
+    "tsup": "^6.2.2",
+    "vite": "^3.0.9"
+  }
+}
