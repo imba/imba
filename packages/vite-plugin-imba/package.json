@@ -2,7 +2,7 @@
   "name": "vite-plugin-imba",
   "version": "0.1.0",
   "license": "MIT",
-  "author": "Sindre Aarsaether",
+  "author": "Abdellah Alaoui",
   "files": [
     "dist",
     "src",
