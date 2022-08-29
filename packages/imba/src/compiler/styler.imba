@@ -123,7 +123,8 @@ export const aliases =
 	ff: 'font-family'
 	fs: 'font-size'
 	fw: 'font-weight'
-	ts: 'text-shadow'
+	ts: 'text-shadow' # DEPCRATED
+	txs: 'text-shadow'
 	
 	# text-decoration
 	td: 'text-decoration'
@@ -219,9 +220,9 @@ export const aliases =
 	gce: 'grid-column-end'
 	
 	# shadow
-	bxs: 'box-shadow'
 	shadow: 'box-shadow' # DEPRECATED
-	
+	bxs: 'box-shadow'
+
 	# overflow
 	'of':'overflow'
 	'ofx':'overflow-x'

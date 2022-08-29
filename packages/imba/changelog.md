@@ -6,6 +6,10 @@
 
     These assets are built without hashes in filename and to the root of the public folder, as is required for serviceworkers.
 
+* Deprecate `shadow` shorthand for `box-shadow` - use `bxs` instead.
+
+* Deprecate `ts` shorthand for `text-shadow` - use `txs` instead.
+
 ## 2.0.0-alpha.216
 
 Last version (with new features) before `beta.1`. This release contains breaking changes in the bundler that need to be tested thoroughly before beta.
