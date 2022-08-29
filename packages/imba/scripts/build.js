@@ -175,6 +175,7 @@ async function bundle(o) {
 	o.charset = 'utf8';
 	o.pure = ['Symbol.for','Symbol'];
 	o.minify = true;
+	o.supported = {bigint: true}
 	o.define = {'process.env.NODE_ENV': "'production'"};
 	if (o.write == undefined) o.write = false;
 

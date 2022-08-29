@@ -1,6 +1,6 @@
 # imba$v2=0
 
-var sha1 = require '../../vendor/sha1'
+import fnv1a from '../../vendor/fnv1a'
 
 var ansiMap =
 	reset: [0, 0],
@@ -337,10 +337,9 @@ export def printWarning code, warn
 	return msg + '\n' + excerpt
 
 export def identifierForPath str
-	var hash = sha1.create()
-	hash.update(str)
-	var id = hash.b32().replace(/^\d+/,'')
-	return id.slice(0, 6)
+	let hash = fnv1a(str).toString(36)
+	hash = 'z' + hash if hash[0].match(/\d/)
+	return hash
 
 export def isPlainObject val
 	typeof val == 'object' and Object.getPrototypeOf(val) == Object:prototype
