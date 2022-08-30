@@ -1,7 +1,11 @@
-<p align="center">
+
+
+
 <a href="https://imba.io" target="_blank">
-<img width="300" src="https://github.com/imba/brand/blob/master/imba-web-logo.png"></a>
-</p>
+  <img width="200" src="https://github.com/imba/branding-imba/blob/555b21940fa796fbf0eed44df48160d450ca894b/mascot/mascot-full-yellow.png">
+</a>
+
+# Imba
 
 [![Join the chat at https://discord.gg/mkcbkRw](https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square)](https://discord.gg/mkcbkRw)
 [![install size](https://packagephobia.now.sh/badge?p=imba)](https://packagephobia.now.sh/result?p=imba)
@@ -9,6 +13,8 @@
 
 Imba is a friendly full-stack programming language for the web that compiles to performant JavaScript.
 It has language-level support for defining, extending, subclassing, instantiating and rendering DOM nodes.
+
+---
 
 ## Get started
 
