@@ -5,16 +5,9 @@
     "build": "imba build server.imba"
   },
   "dependencies": {
-    "@jspm/generator": "^1.0.0-beta.36",
     "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "imba": "^2.0.0-alpha.199",
-    "imba-codicons": "^0.1.2",
-    "imba-material-icons": "^0.1.0",
-    "markdown-wasm": "^1.2.0",
-    "puppeteers": "^16.2.0",
-    "sourcemap-codec": "^1.4.8",
-    "tree-kill": "^1.2.2",
+    "imba": "../../../",
+    "imba-codicons": "^0.2.0",
     "utility-types": "^3.10.0"
   }
 }
