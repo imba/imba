@@ -136,7 +136,7 @@ def parseOptions options, extras = []
 		let statFiles = [
 			__filename
 			np.resolve(__dirname,'..','workers.imba.js')
-			np.resolve(__dirname,'..','compiler.imba.js')
+			np.resolve(__dirname,'..','dist','compiler.cjs')
 		]
 		# also check mtime of project?
 		options.mtime = Math.max(...statFiles.map(do nfs.statSync($1).mtimeMs))

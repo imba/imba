@@ -1,10 +1,16 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.219
 
 * Add import handler for `?serviceworker` suffix.
 
     These assets are built without hashes in filename and to the root of the public folder, as is required for serviceworkers.
+
+* Deprecate `shadow` shorthand for `box-shadow` - use `bxs` instead.
+
+* Deprecate `ts` shorthand for `text-shadow` - use `txs` instead.
+
+* Support two parameters in css property `gap`
 
 ## 2.0.0-alpha.216
 

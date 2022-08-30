@@ -3,7 +3,7 @@
 var path = require('path');
 var fs = require('fs');
 var package = require('../package.json');
-var compiler = require("../compiler.imba.js");
+var compiler = require("../dist/compiler.cjs");
 var helpers = compiler.helpers;
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
@@ -37,7 +37,6 @@ var parseOpts = {
 		platform: {type: 'string'}, // node | browser | worker
 		styles: {type: 'string'}, // extern | inline
 		imbaPath: {type: 'string'}, // global | inline | import
-		format: { type: 'string' }, // cjs | esm
 		sourceId: {type: 'string'},
 		hmr: null,
 		raw: null
@@ -59,7 +58,6 @@ Usage: imbac [options] path/to/script.imba
   -s, --stdio            listen for and compile scripts over stdio
   -t, --tokenize         print out the tokens that the lexer/rewriter produce
   --platform [type]      Specify platform: 'node', 'browser', 'worker'
-  --format [type]        Specify format: 'esm' (default), 'cjs'
   --styles [format]      Specify how styles should be added: 'extern', 'inline'
   --silent               only print out errors (skip warnings)
   --hmr                  compile for hot-module-reloading

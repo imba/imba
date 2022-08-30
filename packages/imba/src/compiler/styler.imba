@@ -123,7 +123,8 @@ export const aliases =
 	ff: 'font-family'
 	fs: 'font-size'
 	fw: 'font-weight'
-	ts: 'text-shadow'
+	ts: 'text-shadow' # DEPCRATED
+	txs: 'text-shadow'
 	
 	# text-decoration
 	td: 'text-decoration'
@@ -219,9 +220,9 @@ export const aliases =
 	gce: 'grid-column-end'
 	
 	# shadow
-	bxs: 'box-shadow'
 	shadow: 'box-shadow' # DEPRECATED
-	
+	bxs: 'box-shadow'
+
 	# overflow
 	'of':'overflow'
 	'ofx':'overflow-x'
@@ -791,14 +792,25 @@ export class StyleTheme
 	def border_y_color [t,b=t]
 		{btc: t, bbc: b}
 	
-	def gap [v]
-		{'gap': v, '--u_rg': v,'--u_cg': v}
+	def gap [rg,cg = rg]
+		let o = {}
+		if cg != rg
+			o = {'row-gap': rg, 'column-gap': cg}
+		else
+			o = {'gap': rg}
+			o['--u_rg'] = rg unless rg._unit == 'rg'
+			o['--u_cg'] = rg unless rg._unit == 'cg'
+		return o
 			
 	def row_gap [v]
-		{'row-gap': v, '--u_rg': v}
+		let o = {'row-gap': v}
+		o['--u_rg'] = v unless v._unit == 'rg'
+		return o
 
 	def column_gap [v]
-		{'column-gap': v, '--u_cg': v}
+		let o = {'column-gap': v}
+		o['--u_cg'] = v unless v._unit == 'cg'
+		return o
 
 	def tint [v]
 		

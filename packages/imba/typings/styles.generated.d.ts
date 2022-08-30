@@ -1056,7 +1056,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/box-shadow)
 	 * 
-	 * @alias shadow
+	 * @alias bxs
 	*/
 	interface boxΞshadow extends _ {
 		set(val: Ψshadow | this | Ψlength | Ψcolor): void;
@@ -1070,7 +1070,7 @@ declare namespace imbacss {
 	}
 
 	/** @proxy boxΞshadow */
-	interface shadow extends boxΞshadow { }
+	interface bxs extends boxΞshadow { }
 	/**
 	 * Sets the background image(s) of an element.
 	 * 
@@ -2168,7 +2168,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-shadow)
 	 * 
-	 * @alias ts
+	 * @alias txs
 	*/
 	interface textΞshadow extends _ {
 		set(val: this | Ψlength | Ψcolor): void;
@@ -2179,7 +2179,7 @@ declare namespace imbacss {
 	}
 
 	/** @proxy textΞshadow */
-	interface ts extends textΞshadow { }
+	interface txs extends textΞshadow { }
 	/**
 	 * Defines the radii of the top left outer border edge.
 	 * 

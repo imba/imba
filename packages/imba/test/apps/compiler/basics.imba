@@ -1,6 +1,6 @@
 let fs = {}
 
-import imbac from 'imba/compiler'
+import * as imbac from 'imba/compiler'
 
 fs.code1 = """
 if $node$

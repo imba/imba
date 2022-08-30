@@ -1,6 +1,5 @@
 const imba1 = require('./bootstrap.compiler.js');
 const imba2 = require('./bootstrap.compiler2.js');
-// const imba2 = require("../compiler.imba.js");
 const chokidar = require('chokidar');
 const fs = require('fs');
 const np = require('path');
@@ -46,7 +45,7 @@ function plugin(build) {
 	build.onResolve({ filter: /^compiler1?$/ }, (p) => {
 		// find the output dir
 		// console.log('resolve compiler?',p,options);
-		let src = p.path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./compiler.imba.js";
+		let src = p.path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./dist/compiler.cjs";
 		return { path: src, external: true }
 	});
 
@@ -165,7 +164,7 @@ async function bundle(o) {
 		o.outdir = `dist/${o.platform}`;
 	}
 
-	o.target = o.target || ['es2019'];
+	o.target = o.target || ['es2020'];
 	o.format = o.format || 'esm';
 
 	if (o.bundle == undefined) o.bundle = true;
@@ -175,6 +174,7 @@ async function bundle(o) {
 	o.charset = 'utf8';
 	o.pure = ['Symbol.for','Symbol'];
 	o.minify = true;
+	o.supported = {bigint: true}
 	o.define = {'process.env.NODE_ENV': "'production'"};
 	if (o.write == undefined) o.write = false;
 
@@ -224,11 +224,10 @@ let bundles = [
 			"bin/imba.imba",
 			"bin/imba-create.imba",
 			"program.imba",
-			"compiler.imba",
 			"workers.imba"
 		],
 		outExtension: { ".js": ".imba.js" },
-		minify: false,
+		minify: true,
 		external: ["chokidar", "esbuild"],
 		outdir: ".",
 		format: "cjs",

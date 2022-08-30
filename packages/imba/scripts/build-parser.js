@@ -37,7 +37,7 @@ function plugin(build){
 async function bundle(options){
 	options.plugins = [{name: 'imba', setup: plugin.bind(options)}];
 	options.resolveExtensions = ['.imba','.imba1','.ts','.mjs','.cjs','.js','.css','.json'];
-	options.target = options.target || ['es2019']; // ['chrome58', 'firefox57', 'safari11', 'edge16'];
+	options.target = options.target || ['es2020']; // ['chrome58', 'firefox57', 'safari11', 'edge16'];
 	options.bundle = true;
 
 	let res = await require('esbuild').build(options);

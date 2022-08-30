@@ -31,6 +31,7 @@ const defaultHeaders = {
 	webp: {'Content-Type': 'image/webp'}
 	jpg: {'Content-Type': 'image/jpeg'}
 	jpeg: {'Content-Type': 'image/jpeg'}
+	ico: {'Content-Type': 'image/x-icon'}
 	bmp: {'Content-Type': 'image/bmp'}
 	
 	webm: {'Content-Type': 'video/webm'}
@@ -335,21 +336,12 @@ class Server
 									res.writeHead(200,headers)
 									res.end(data)
 						else
-							let enc = headers['Content-Type'].indexOf('utf-8') > 0 ? 'utf8' : 'binary'
-							let stream = nfs.createReadStream(path, encoding: enc)
-							# console.log 'send',path,headers['Content-Type']
+							let stream = nfs.createReadStream(path)
 							res.writeHead(200, headers)
 							return stream.pipe(res)
 					catch e
 						res.writeHead(503,{})
 						return res.end!
-
-			# console.log 'responding to',url,req.headers
-
-			if url.match(/\.imba$/) and false
-				let path = "/Users/sindre/repos/imba-bundle-tests/css-issue/app/basic.imba"
-				res.writeHead(200, defaultHeaders.js)
-				return nfs.createReadStream(path,encoding: 'utf-8').pipe(res)
 			
 			# continue to the real server
 			if dom
