@@ -3,7 +3,7 @@ Script for compiling imba and imba1 files inside workers using
 workerpool. 
 ###
 
-import {compile} from 'dist/../compiler.imba.js'
+import {compile} from 'dist/compiler.cjs'
 import imba1 from 'dist/../scripts/bootstrap.compiler.js'
 
 const workerpool = require('workerpool')

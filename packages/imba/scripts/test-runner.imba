@@ -1,7 +1,9 @@
+# TODO esmify
 const puppeteer = require "puppeteer"
 const path = require "path"
 const fs = require "fs"
-const compiler = require "../compiler.imba.js"
+# const compiler = require "../compiler.imba.js"
+const compiler = require "../dist/compiler.cjs"
 const helpers = compiler.helpers
 const http = require('http')
 
@@ -249,8 +251,7 @@ def serve
 	}
 
 	let basejs = import.web('../test/index.imba')
-	# just use one from dist instead?
-	let cmpjs = import.worker('../test/compiler.imba')
+	let cmpjs = {body: fs.readFileSync(path.resolve(__dirname,'..','dist','compiler.mjs'),'utf-8')}
 
 	statics["/compiler.js"] = cmpjs.body
 	statics["/imba.js"] = basejs.body

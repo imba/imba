@@ -1,4 +1,4 @@
-import imbac from 'imba/compiler'
+import * as imbac from 'imba/compiler'
 
 let fs = {}
 

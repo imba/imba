@@ -667,12 +667,15 @@ export class Stack
 		# TODO rename+document this option. sourceBase or sourceRoot?
 		if @options:path and cwd
 			src = @options:path.relative(cwd,src)
+
+		unless src
+			throw "Include sourceId or sourcePath in options compile(code,options)"
+
 		@sourceId = helpers.identifierForPath(src)
 		return @sourceId
 
 	def theme
 		@theme ||= StyleTheme.wrap(@options:config)
-		# config:theme or StyleTheme.wrap(config:styles)
 
 	def stash
 		@stash
@@ -3017,9 +3020,6 @@ export class Root < Code
 				# TODO Test this thoroughly - better to replace fater the fact?
 				@scope.lookup('__filename'):c = do LIT("{np:resolve}({STR(rel).c})").c
 				@scope.lookup('__dirname'):c = do LIT("{np:dirname}({np:resolve}({STR(rel).c}))").c
-
-				# @scope.lookup('__filename'):c = do LIT("{runtime:_filename_}({STR(rel).c})").c
-				# @scope.lookup('__dirname'):c = do LIT("{runtime:_dirname_}({STR(rel).c})").c
 			else
 				@scope.lookup('__filename').@c = STR(o:sourcePath).c
 				@scope.lookup('__dirname').@c = STR(fspath.dirname(o:sourcePath)).c
@@ -3042,7 +3042,6 @@ export class Root < Code
 			# out = "import 'imba/index.d.ts';\n{out}"
 			out = "export \{\};String();\n{out}\n"
 
-
 		script:rawResult = {
 			js: out
 			css: css
@@ -3052,13 +3051,11 @@ export class Root < Code
 		script:css = css or ""
 		script:sourceId = sourceId
 		script:assets = scope.assets
-		script:dependencies = Object.keys(scope.@dependencies)
 		script:universal = STACK.meta:universal !== no
 		
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
-				# console.log 'css',script:css
-				# let style = JSON.stringify(script:css)
+
 				let style = '`\n' + script:css + '\n`'
 				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{style});"
 				if o:debug
@@ -3072,14 +3069,9 @@ export class Root < Code
 			if o:sourcemap == 'inline'
 				script:js += map.inlined
 
-		# if o:sourcemap == 'inline'
-		#	let map = script:sourcemap ||= SourceMap.new(script,o:sourceMap,o).generate
-
-		# remove sourcemap markers from js and css
-		# start with other markers as well
 		unless o:raw
-			script:css &&= SourceMapper.strip(script:css) # .replace(/\/\*\%([\w\|]*)\$\*\//g,'')
-			script:js = SourceMapper.strip(script:js) # .replace(/\/\*\%([\w\|]*)\$\*\//g,'')
+			script:css &&= SourceMapper.strip(script:css)
+			script:js = SourceMapper.strip(script:js)
 			
 			if STACK.tsc
 				# now combine comments - keep whitespace to not mess up sourcemapping
@@ -3639,7 +3631,6 @@ export class TagDeclaration < ClassDeclaration
 			no
 
 	def visit
-		scope__.imbaDependency('core')
 
 		if STACK.hmr
 			self.cssid
@@ -7878,7 +7869,6 @@ export class TagAttr < TagPart
 			
 		if !@ns and @key == 'ease'
 			STACK.use('dom_transitions')
-		#	scope__.imbaDependency('internal/bind')
 		
 		# console.log 'visit tag attr',@tag and @tag.tagName
 		
@@ -8256,7 +8246,6 @@ export class TagHandler < TagPart
 		# Replace with something better for debugging
 		if @name and CUSTOM_EVENTS[String(@name)] and STACK.isWeb
 			STACK.use(CUSTOM_EVENTS[String(@name)])
-		#	scope__.imbaDependency('events/' + String(@name))
 
 	def isStatic
 		let valStatic = !value or value.isPrimitive or (value isa Func and !value.nonlocals)
@@ -8967,7 +8956,6 @@ export class Tag < TagLike
 	def traverse 
 		return self if @traversed
 		@tid = STACK.generateId('tag')
-		scope__.imbaDependency('core')
 		@tagDeclaration = STACK.up(TagDeclaration)
 		let close = @options:close
 		let body = @options:body or []
@@ -11617,14 +11605,9 @@ export class Scope
 		root.requires(path,name)
 
 	def imba
-		imbaDependency('core') unless @imba
 		# should be the same for node and js
 		STACK.meta:universal = no
 		@imba ||= (STACK.isNode ? LIT("(this && this[{root.symbolRef('#imba').c}] || globalThis[{root.symbolRef('#imba').c}])") : LIT('imba'))
-		# root.imba # requires('imba2', 'Imba')
-
-	def imbaDependency *params
-		root.imbaDependency(*params)
 
 	def autodeclare variable
 		vars.add(variable) # only if it does not exist here!!!
@@ -11750,7 +11733,6 @@ export class RootScope < Scope
 		@entities = RootEntities.new(self)
 		@object = Obj.wrap({})
 		@head = [@vars]
-		@dependencies = {}
 		@symbolRefs = {}
 		@importProxies = {}
 		@vars.split = yes
@@ -11864,9 +11846,6 @@ export class RootScope < Scope
 
 	def imba
 		@imba
-
-	def imbaDependency path
-		return
 
 	def symbolRef name
 		name = SourceMapper.strip(name)
