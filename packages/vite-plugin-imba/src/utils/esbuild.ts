@@ -1,5 +1,7 @@
 import { promises as fs } from 'fs';
-import { compile, preprocess } from 'svelte/compiler';
+// import { compile } from 'imba/compiler';
+import {compile} from '../../../imba/dist/compiler.mjs'
+
 import { DepOptimizationOptions } from 'vite';
 import { Compiled } from './compile';
 import { log } from './log';
@@ -9,23 +11,23 @@ import { toESBuildError } from './error';
 type EsbuildOptions = NonNullable<DepOptimizationOptions['esbuildOptions']>;
 type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];
 
-export const facadeEsbuildSveltePluginName = 'vite-plugin-svelte:facade';
+export const facadeEsbuildImbaPluginName = 'vite-plugin-imba:facade';
 
-export function esbuildSveltePlugin(options: ResolvedOptions): EsbuildPlugin {
+export function esbuildImbaPlugin(options: ResolvedOptions): EsbuildPlugin {
 	return {
-		name: 'vite-plugin-svelte:optimize-svelte',
+		name: 'vite-plugin-imba:optimize-imba',
 		setup(build) {
-			// Skip in scanning phase as Vite already handles scanning Svelte files.
+			// Skip in scanning phase as Vite already handles scanning Imba files.
 			// Otherwise this would heavily slow down the scanning phase.
-			if (build.initialOptions.plugins?.some((v) => v.name === 'vite:dep-scan')) return;
+			// if (build.initialOptions.plugins?.some((v) => v.name === 'vite:dep-scan')) return;
 
-			const svelteExtensions = (options.extensions ?? ['.svelte']).map((ext) => ext.slice(1));
-			const svelteFilter = new RegExp(`\\.(` + svelteExtensions.join('|') + `)(\\?.*)?$`);
+			const imbaExtensions = (options.extensions ?? ['.imba']).map((ext) => ext.slice(1));
+			const imbaFilter = new RegExp(`\\.(` + imbaExtensions.join('|') + `)(\\?.*)?$`);
 
-			build.onLoad({ filter: svelteFilter }, async ({ path: filename }) => {
+			build.onLoad({ filter: imbaFilter }, async ({ path: filename }) => {
 				const code = await fs.readFile(filename, 'utf8');
 				try {
-					const contents = await compileSvelte(options, { filename, code });
+					const contents = await compileImba(options, { filename, code });
 					return { contents };
 				} catch (e) {
 					return { errors: [toESBuildError(e, options)] };
@@ -35,7 +37,7 @@ export function esbuildSveltePlugin(options: ResolvedOptions): EsbuildPlugin {
 	};
 }
 
-async function compileSvelte(
+async function compileImba(
 	options: ResolvedOptions,
 	{ filename, code }: { filename: string; code: string }
 ): Promise<string> {
@@ -44,20 +46,21 @@ async function compileSvelte(
 		css: true,
 		filename,
 		format: 'esm',
-		generate: 'dom'
+		generate: 'dom',
+		sourcePath: filename,
 	};
 
 	let preprocessed;
 
-	if (options.preprocess) {
-		try {
-			preprocessed = await preprocess(code, options.preprocess, { filename });
-		} catch (e) {
-			e.message = `Error while preprocessing ${filename}${e.message ? ` - ${e.message}` : ''}`;
-			throw e;
-		}
-		if (preprocessed.map) compileOptions.sourcemap = preprocessed.map;
-	}
+	// if (options.preprocess) {
+	// 	try {
+	// 		preprocessed = await preprocess(code, options.preprocess, { filename });
+	// 	} catch (e) {
+	// 		e.message = `Error while preprocessing ${filename}${e.message ? ` - ${e.message}` : ''}`;
+	// 		throw e;
+	// 	}
+	// 	if (preprocessed.map) compileOptions.sourcemap = preprocessed.map;
+	// }
 
 	const finalCode = preprocessed ? preprocessed.code : code;
 

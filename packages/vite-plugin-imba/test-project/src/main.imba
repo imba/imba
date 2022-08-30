@@ -1,5 +1,5 @@
 import './app.css'
-import Counter from './lib/counter'
+import Counter from './lib/counter.imba'
 
 tag app
 	css .logo h:6em p:1.5em
@@ -8,16 +8,16 @@ tag app
 			<a href="https://vitejs.dev" target="_blank">
 				<img.logo[filter@hover:drop-shadow(0 0 4em #646cffaa)] src="/vite.svg" alt="Vite Logo">
 
-			<a href="https://svelte.dev" target="_blank">
-				<img.logo[filter@hover:drop-shadow(0 0 4em #ff3e00aa)] src="./assets/svelte.svg" alt="Svelte Logo">
+			<a href="https://imba.io" target="_blank">
+				<img.logo[filter@hover:drop-shadow(0 0 4em #ff3e00aa) h:6.5em] src="./assets/imba.svg" alt="Imba Logo">
 
-		<h1> "Vite + Imba"
-		<div.card>
+		<h1[c:yellow4]> "Vite + Imba"
+		<div.card> 
 			<Counter>
 		<p> "Check out"
-			<a href="https://github.com/sveltejs/kit#readme" target="_blank"> "SvelteKit"
-			", the official Svelte app framework powered by Vite!"
-		<p[c:#888]> "Click on the Vite and Svelte logos to learn more!!!"
+			<a href="https://imba.io" target="_blank"> " Imba.io"
+			", the Imba documentation website"
+		<p[c:#888]> "Click on the Vite and Imba logos to learn more!!!"
 
 
-imba.mount <app#app>
+imba.mount <app>, document.getElementById "app"

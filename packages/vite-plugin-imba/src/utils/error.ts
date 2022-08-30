@@ -4,14 +4,14 @@ import { buildExtendedLogMessage } from './log';
 import { PartialMessage } from 'esbuild';
 
 /**
- * convert an error thrown by svelte.compile to a RollupError so that vite displays it in a user friendly way
- * @param error a svelte compiler error, which is a mix of Warning and an error
+ * convert an error thrown by imba.compile to a RollupError so that vite displays it in a user friendly way
+ * @param error a imba compiler error, which is a mix of Warning and an error
  * @returns {RollupError} the converted error
  */
 export function toRollupError(error: Warning & Error, options: ResolvedOptions): RollupError {
 	const { filename, frame, start, code, name, stack } = error;
 	const rollupError: RollupError = {
-		name, // needed otherwise sveltekit coalesce_to_error turns it into a string
+		name, // needed otherwise imbakit coalesce_to_error turns it into a string
 		id: filename,
 		message: buildExtendedLogMessage(error), // include filename:line:column so that it's clickable
 		frame: formatFrameForVite(frame),
@@ -29,8 +29,8 @@ export function toRollupError(error: Warning & Error, options: ResolvedOptions):
 }
 
 /**
- * convert an error thrown by svelte.compile to an esbuild PartialMessage
- * @param error a svelte compiler error, which is a mix of Warning and an error
+ * convert an error thrown by imba.compile to an esbuild PartialMessage
+ * @param error a imba compiler error, which is a mix of Warning and an error
  * @returns {PartialMessage} the converted error
  */
 export function toESBuildError(error: Warning & Error, options: ResolvedOptions): PartialMessage {
@@ -66,7 +66,7 @@ function lineFromFrame(lineNo: number, frame?: string): string {
 
 /**
  * vite error overlay expects a specific format to show frames
- * this reformats svelte frame (colon separated, less whitespace)
+ * this reformats imba frame (colon separated, less whitespace)
  * to one that vite displays on overlay ( pipe separated, more whitespace)
  * e.g.
  * ```

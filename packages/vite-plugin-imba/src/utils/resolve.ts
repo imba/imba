@@ -1,20 +1,20 @@
 import path from 'path';
 import { builtinModules, createRequire } from 'module';
-import { is_common_without_svelte_field, resolveDependencyData } from './dependencies';
-import { VitePluginSvelteCache } from './vite-plugin-svelte-cache';
+import { is_common_without_imba_field, resolveDependencyData } from './dependencies';
+import { VitePluginImbaCache } from './vite-plugin-imba-cache';
 
-export function resolveViaPackageJsonSvelte(
+export function resolveViaPackageJsonImba(
 	importee: string,
 	importer: string | undefined,
-	cache: VitePluginSvelteCache
+	cache: VitePluginImbaCache
 ): string | void {
 	if (
 		importer &&
 		isBareImport(importee) &&
 		!isNodeInternal(importee) &&
-		!is_common_without_svelte_field(importee)
+		!is_common_without_imba_field(importee)
 	) {
-		const cached = cache.getResolvedSvelteField(importee, importer);
+		const cached = cache.getResolvedImbaField(importee, importer);
 		if (cached) {
 			return cached;
 		}
@@ -22,9 +22,9 @@ export function resolveViaPackageJsonSvelte(
 		const pkgData = resolveDependencyData(importee, localRequire);
 		if (pkgData) {
 			const { pkg, dir } = pkgData;
-			if (pkg.svelte) {
-				const result = path.resolve(dir, pkg.svelte);
-				cache.setResolvedSvelteField(importee, importer, result);
+			if (pkg.imba) {
+				const result = path.resolve(dir, pkg.imba);
+				cache.setResolvedImbaField(importee, importer, result);
 				return result;
 			}
 		}

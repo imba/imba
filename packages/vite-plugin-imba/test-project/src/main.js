@@ -1,10 +1,10 @@
-import './app.css'
-import App from './App.svelte'
+import './styles.imba'
+// import App from './App.svelte'
 
-import './simple.imba'
+import './main.imba'
 
-const app = new App({
-  target: document.getElementById('app')
-})
+// const app = new App({
+//   target: document.getElementById('app')
+// })
 
-export default app
+// export default app

@@ -1,10 +1,10 @@
 // eslint-disable-next-line node/no-missing-import
-import Inspector from 'virtual:svelte-inspector-path:Inspector.svelte';
+import Inspector from 'virtual:imba-inspector-path:Inspector.imba';
 
 function create_inspector_host() {
-	const id = 'svelte-inspector-host';
+	const id = 'imba-inspector-host';
 	if (document.getElementById(id) != null) {
-		throw new Error('svelte-inspector-host element already exists');
+		throw new Error('imba-inspector-host element already exists');
 	}
 	const el = document.createElement('div');
 	el.setAttribute('id', id);

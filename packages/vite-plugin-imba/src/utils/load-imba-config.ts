@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
 import { log } from './log';
-import { Options, SvelteOptions } from './options';
+import { Options, ImbaOptions } from './options';
 import { UserConfig } from 'vite';
 
 // used to require cjs config in esm.
@@ -11,10 +11,10 @@ import { UserConfig } from 'vite';
 // have no effect, likely because it has another internal cache?
 let esmRequire: NodeRequire;
 
-export const knownSvelteConfigNames = [
-	'svelte.config.js',
-	'svelte.config.cjs',
-	'svelte.config.mjs'
+export const knownImbaConfigNames = [
+	'imba.config.js',
+	'imba.config.cjs',
+	'imba.config.mjs'
 ];
 
 // hide dynamic import from ts transform to prevent it turning into a require
@@ -26,17 +26,17 @@ const dynamicImportDefault = new Function(
 	'return import(path + "?t=" + timestamp).then(m => m.default)'
 );
 
-export async function loadSvelteConfig(
+export async function loadImbaConfig(
 	viteConfig?: UserConfig,
 	inlineOptions?: Partial<Options>
-): Promise<Partial<SvelteOptions> | undefined> {
+): Promise<Partial<ImbaOptions> | undefined> {
 	if (inlineOptions?.configFile === false) {
 		return;
 	}
 	const configFile = findConfigToLoad(viteConfig, inlineOptions);
 	if (configFile) {
 		let err;
-		// try to use dynamic import for svelte.config.js first
+		// try to use dynamic import for imba.config.js first
 		if (configFile.endsWith('.js') || configFile.endsWith('.mjs')) {
 			try {
 				const result = await dynamicImportDefault(
@@ -94,19 +94,19 @@ function findConfigToLoad(viteConfig?: UserConfig, inlineOptions?: Partial<Optio
 			? inlineOptions.configFile
 			: path.resolve(root, inlineOptions.configFile);
 		if (!fs.existsSync(abolutePath)) {
-			throw new Error(`failed to find svelte config file ${abolutePath}.`);
+			throw new Error(`failed to find imba config file ${abolutePath}.`);
 		}
 		return abolutePath;
 	} else {
-		const existingKnownConfigFiles = knownSvelteConfigNames
+		const existingKnownConfigFiles = knownImbaConfigNames
 			.map((candidate) => path.resolve(root, candidate))
 			.filter((file) => fs.existsSync(file));
 		if (existingKnownConfigFiles.length === 0) {
-			log.debug(`no svelte config found at ${root}`);
+			log.debug(`no imba config found at ${root}`);
 			return;
 		} else if (existingKnownConfigFiles.length > 1) {
 			log.warn(
-				`found more than one svelte config file, using ${existingKnownConfigFiles[0]}. you should only have one!`,
+				`found more than one imba config file, using ${existingKnownConfigFiles[0]}. you should only have one!`,
 				existingKnownConfigFiles
 			);
 		}

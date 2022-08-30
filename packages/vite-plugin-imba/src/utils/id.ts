@@ -7,18 +7,18 @@ import * as fs from 'fs';
 const VITE_FS_PREFIX = '/@fs/';
 const IS_WINDOWS = process.platform === 'win32';
 
-export type SvelteQueryTypes = 'style' | 'script';
+export type ImbaQueryTypes = 'style' | 'script';
 
 export interface RequestQuery {
 	// our own
-	svelte?: boolean;
-	type?: SvelteQueryTypes;
+	imba?: boolean;
+	type?: ImbaQueryTypes;
 	// vite specific
 	url?: boolean;
 	raw?: boolean;
 }
 
-export interface SvelteRequest {
+export interface ImbaRequest {
 	id: string;
 	cssId: string;
 	filename: string;
@@ -35,14 +35,14 @@ function splitId(id: string) {
 	return { filename, rawQuery };
 }
 
-function parseToSvelteRequest(
+function parseToImbaRequest(
 	id: string,
 	filename: string,
 	rawQuery: string,
 	root: string,
 	timestamp: number,
 	ssr: boolean
-): SvelteRequest | undefined {
+): ImbaRequest | undefined {
 	const query = parseRequestQuery(rawQuery);
 	if (query.url || query.raw) {
 		// skip requests with special vite tags
@@ -62,8 +62,8 @@ function parseToSvelteRequest(
 	};
 }
 
-function createVirtualImportId(filename: string, root: string, type: SvelteQueryTypes) {
-	const parts = ['svelte', `type=${type}`];
+function createVirtualImportId(filename: string, root: string, type: ImbaQueryTypes) {
+	const parts = ['imba', `type=${type}`];
 	if (type === 'style') {
 		parts.push('lang.css');
 	}
@@ -74,7 +74,7 @@ function createVirtualImportId(filename: string, root: string, type: SvelteQuery
 			? filename.slice(VITE_FS_PREFIX.length) // remove /@fs/ from /@fs/C:/...
 			: filename.slice(VITE_FS_PREFIX.length - 1); // remove /@fs from /@fs/home/user
 	}
-	// return same virtual id format as vite-plugin-vue eg ...App.svelte?svelte&type=style&lang.css
+	// return same virtual id format as vite-plugin-vue eg ...App.imba?imba&type=style&lang.css
 	return `${filename}?${parts.join('&')}`;
 }
 
@@ -121,7 +121,7 @@ function buildFilter(
 	return (filename) => rollupFilter(filename) && extensions.some((ext) => filename.endsWith(ext));
 }
 
-export type IdParser = (id: string, ssr: boolean, timestamp?: number) => SvelteRequest | undefined;
+export type IdParser = (id: string, ssr: boolean, timestamp?: number) => ImbaRequest | undefined;
 export function buildIdParser(options: ResolvedOptions): IdParser {
 	const { include, exclude, extensions, root } = options;
 	const normalizedRoot = normalizePath(root);
@@ -129,7 +129,7 @@ export function buildIdParser(options: ResolvedOptions): IdParser {
 	return (id, ssr, timestamp = Date.now()) => {
 		const { filename, rawQuery } = splitId(id);
 		if (filter(filename)) {
-			return parseToSvelteRequest(id, filename, rawQuery, normalizedRoot, timestamp, ssr);
+			return parseToImbaRequest(id, filename, rawQuery, normalizedRoot, timestamp, ssr);
 		}
 	};
 }

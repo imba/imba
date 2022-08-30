@@ -1,11 +1,9 @@
 import fs from 'fs';
-import np from 'path';
 import { HmrContext, ModuleNode, Plugin, ResolvedConfig, UserConfig } from 'vite';
-
-// import { handleHotUpdate } from './handle-hot-update';
+import { handleHotUpdate } from './handle-hot-update';
 import { log, logCompilerWarnings } from './utils/log';
-import { CompileData, createCompileSvelte } from './utils/compile';
-import { buildIdParser, IdParser, SvelteRequest } from './utils/id';
+import { CompileData, createCompileImba } from './utils/compile';
+import { buildIdParser, IdParser, ImbaRequest } from './utils/id';
 import {
 	buildExtraViteConfig,
 	validateInlineOptions,
@@ -15,18 +13,18 @@ import {
 	patchResolvedViteConfig,
 	preResolveOptions
 } from './utils/options';
-import { VitePluginSvelteCache } from './utils/vite-plugin-svelte-cache';
+import { VitePluginImbaCache } from './utils/vite-plugin-imba-cache';
 
 import { ensureWatchedFile, setupWatchers } from './utils/watch';
-import { resolveViaPackageJsonSvelte } from './utils/resolve';
+import { resolveViaPackageJsonImba } from './utils/resolve';
 import { PartialResolvedId } from 'rollup';
 import { toRollupError } from './utils/error';
-import { saveSvelteMetadata } from './utils/optimizer';
-import { svelteInspector } from './ui/inspector/plugin';
+import { saveImbaMetadata } from './utils/optimizer';
+import { imbaInspector } from './ui/inspector/plugin';
 
 interface PluginAPI {
 	/**
-	 * must not be modified, should not be used outside of vite-plugin-svelte repo
+	 * must not be modified, should not be used outside of vite-plugin-imba repo
 	 * @internal
 	 * @experimental
 	 */
@@ -36,36 +34,31 @@ interface PluginAPI {
 
 export function imba(inlineOptions?: Partial<Options>): Plugin[] {
 	if (process.env.DEBUG != null) {
-		// log.setLevel('debug');
+		log.setLevel('debug');
 	}
-	console.log('got here',inlineOptions);
-
-	// validateInlineOptions(inlineOptions);
-
-	// const cache = new VitePluginImbaCache();
+	validateInlineOptions(inlineOptions);
+	const cache = new VitePluginImbaCache();
 	// updated in configResolved hook
 	let requestParser: IdParser;
 	let options: ResolvedOptions;
 	let viteConfig: ResolvedConfig;
 	/* eslint-disable no-unused-vars */
-	let compileSvelte: (
-		svelteRequest: SvelteRequest,
+	let compileImba: (
+		imbaRequest: ImbaRequest,
 		code: string,
 		options: Partial<ResolvedOptions>
 	) => Promise<CompileData>;
 	/* eslint-enable no-unused-vars */
 
-	let resolvedSvelteSSR: Promise<PartialResolvedId | null>;
+	let resolvedImbaSSR: Promise<PartialResolvedId | null>;
 	const api: PluginAPI = {};
 	const plugins: Plugin[] = [
 		{
 			name: 'vite-plugin-imba',
+			// make sure our resolver runs before vite internal resolver to resolve imba field correctly
 			enforce: 'pre',
 			api,
 			async config(config, configEnv): Promise<Partial<UserConfig>> {
-				console.log("configure!",config,configEnv);
-				return config;
-				
 				// setup logger
 				if (process.env.DEBUG) {
 					log.setLevel('debug');
@@ -81,21 +74,20 @@ export function imba(inlineOptions?: Partial<Options>): Plugin[] {
 			},
 
 			async configResolved(config) {
-				return;
 				options = resolveOptions(options, config);
 				patchResolvedViteConfig(config, options);
 				requestParser = buildIdParser(options);
-				compileSvelte = createCompileSvelte(options);
+				compileImba = createCompileImba(options);
 				viteConfig = config;
 				// TODO deep clone to avoid mutability from outside?
 				api.options = options;
 				log.debug('resolved options', options);
 			},
 
-			async buildStartz() {
-				if (!options.experimental?.prebundleSvelteLibraries) return;
-				const isSvelteMetadataChanged = await saveSvelteMetadata(viteConfig.cacheDir, options);
-				if (isSvelteMetadataChanged) {
+			async buildStart() {
+				if (!options.experimental?.prebundleImbaLibraries) return;
+				const isImbaMetadataChanged = await saveImbaMetadata(viteConfig.cacheDir, options);
+				if (isImbaMetadataChanged) {
 					// Force Vite to optimize again. Although we mutate the config here, it works because
 					// Vite's optimizer runs after `buildStart()`.
 					// TODO: verify this works in vite3
@@ -105,22 +97,18 @@ export function imba(inlineOptions?: Partial<Options>): Plugin[] {
 
 			configureServer(server) {
 				// eslint-disable-next-line no-unused-vars
-				// options.server = server;
-				return;
+				options.server = server;
 				setupWatchers(options, cache, requestParser);
 			},
 
 			load(id, opts) {
-				console.log('load',id,opts);
-				return;
-
 				const ssr = !!opts?.ssr;
-				const svelteRequest = requestParser(id, !!ssr);
-				if (svelteRequest) {
-					const { filename, query } = svelteRequest;
+				const imbaRequest = requestParser(id, !!ssr);
+				if (imbaRequest) {
+					const { filename, query } = imbaRequest;
 					// virtual css module
-					if (query.svelte && query.type === 'style') {
-						const css = cache.getCSS(svelteRequest);
+					if (query.imba && query.type === 'style') {
+						const css = cache.getCSS(imbaRequest);
 						if (css) {
 							log.debug(`load returns css for ${filename}`);
 							return css;
@@ -135,88 +123,77 @@ export function imba(inlineOptions?: Partial<Options>): Plugin[] {
 			},
 
 			async resolveId(importee, importer, opts) {
-				
-				if(importee.indexOf('.imba') > 0){
-					let full = np.resolve(np.dirname(importer),importee);
-					console.log('resolve!',importee,importer,opts,full);
-					return full;
-				}
-				return;
-
 				const ssr = !!opts?.ssr;
-				const svelteRequest = requestParser(importee, ssr);
-				if (svelteRequest?.query.svelte) {
-					if (svelteRequest.query.type === 'style') {
+				const imbaRequest = requestParser(importee, ssr);
+				if (imbaRequest?.query.imba) {
+					if (imbaRequest.query.type === 'style') {
 						// return cssId with root prefix so postcss pipeline of vite finds the directory correctly
-						// see https://github.com/sveltejs/vite-plugin-svelte/issues/14
-						log.debug(`resolveId resolved virtual css module ${svelteRequest.cssId}`);
-						return svelteRequest.cssId;
+						// see https://github.com/imbajs/vite-plugin-imba/issues/14
+						log.debug(`resolveId resolved virtual css module ${imbaRequest.cssId}`);
+						return imbaRequest.cssId;
 					}
 					log.debug(`resolveId resolved ${importee}`);
-					return importee; // query with svelte tag, an id we generated, no need for further analysis
+					return importee; // query with imba tag, an id we generated, no need for further analysis
 				}
 
-				if (ssr && importee === 'svelte') {
-					if (!resolvedSvelteSSR) {
-						resolvedSvelteSSR = this.resolve('svelte/ssr', undefined, { skipSelf: true }).then(
-							(svelteSSR) => {
-								log.debug('resolved svelte to svelte/ssr');
-								return svelteSSR;
+				if (ssr && importee === 'imba') {
+					if (!resolvedImbaSSR) {
+						resolvedImbaSSR = this.resolve('imba/ssr', undefined, { skipSelf: true }).then(
+							(imbaSSR) => {
+								log.debug('resolved imba to imba/ssr');
+								return imbaSSR;
 							},
 							(err) => {
 								log.debug(
-									'failed to resolve svelte to svelte/ssr. Update svelte to a version that exports it',
+									'failed to resolve imba to imba/ssr. Update imba to a version that exports it',
 									err
 								);
-								return null; // returning null here leads to svelte getting resolved regularly
+								return null; // returning null here leads to imba getting resolved regularly
 							}
 						);
 					}
-					return resolvedSvelteSSR;
+					return resolvedImbaSSR;
 				}
 				try {
-					const resolved = resolveViaPackageJsonSvelte(importee, importer, cache);
+					const resolved = resolveViaPackageJsonImba(importee, importer, cache);
 					if (resolved) {
 						log.debug(
-							`resolveId resolved ${resolved} via package.json svelte field of ${importee}`
+							`resolveId resolved ${resolved} via package.json imba field of ${importee}`
 						);
 						return resolved;
 					}
 				} catch (e) {
 					log.debug.once(
-						`error trying to resolve ${importee} from ${importer} via package.json svelte field `,
+						`error trying to resolve ${importee} from ${importer} via package.json imba field `,
 						e
 					);
-					// this error most likely happens due to non-svelte related importee/importers so swallow it here
-					// in case it really way a svelte library, users will notice anyway. (lib not working due to failed resolve)
+					// this error most likely happens due to non-imba related importee/importers so swallow it here
+					// in case it really way a imba library, users will notice anyway. (lib not working due to failed resolve)
 				}
 			},
 
 			async transform(code, id, opts) {
 				const ssr = !!opts?.ssr;
-
-				console.log('hello there?',id);
-				return;
-
-				const svelteRequest = requestParser(id, ssr);
-				if (!svelteRequest || svelteRequest.query.svelte) {
+				const imbaRequest = requestParser(id, ssr);
+				if (!imbaRequest || imbaRequest.query.imba) {
 					return;
 				}
 				let compileData;
 				try {
-					compileData = await compileSvelte(svelteRequest, code, options);
+					compileData = await compileImba(imbaRequest, code, options);
 				} catch (e) {
-					cache.setError(svelteRequest, e);
+					cache.setError(imbaRequest, e);
 					throw toRollupError(e, options);
 				}
-				logCompilerWarnings(svelteRequest, compileData.compiled.warnings, options);
+				// debugger
+				logCompilerWarnings(imbaRequest, compileData.compiled.warnings, options);
 				cache.update(compileData);
 				if (compileData.dependencies?.length && options.server) {
 					compileData.dependencies.forEach((d) => {
 						ensureWatchedFile(options.server!.watcher, d, options.root);
 					});
 				}
-				log.debug(`transform returns compiled js for ${svelteRequest.filename}`);
+				log.debug(`transform returns compiled js for ${imbaRequest.filename}`);
 				return {
 					...compileData.compiled.js,
 					meta: {
@@ -231,12 +208,10 @@ export function imba(inlineOptions?: Partial<Options>): Plugin[] {
 				if (!options.hot || !options.emitCss) {
 					return;
 				}
-				console.log('hot update?');
-				return;
-				const svelteRequest = requestParser(ctx.file, false, ctx.timestamp);
-				if (svelteRequest) {
+				const imbaRequest = requestParser(ctx.file, false, ctx.timestamp);
+				if (imbaRequest) {
 					try {
-						return handleHotUpdate(compileSvelte, ctx, svelteRequest, cache, options);
+						return handleHotUpdate(compileImba, ctx, imbaRequest, cache, options);
 					} catch (e) {
 						throw toRollupError(e, options);
 					}
@@ -244,17 +219,16 @@ export function imba(inlineOptions?: Partial<Options>): Plugin[] {
 			}
 		}
 	];
-	// plugins.push(svelteInspector());
+	plugins.push(imbaInspector());
 	return plugins.filter(Boolean);
 }
-/*
 
-export { loadSvelteConfig } from './utils/load-svelte-config';
+export { loadImbaConfig } from './utils/load-imba-config';
 
 export {
 	Options,
 	PluginOptions,
-	SvelteOptions,
+	ImbaOptions,
 	Preprocessor,
 	PreprocessorGroup,
 	CompileOptions,
@@ -266,5 +240,4 @@ export {
 	Warning
 } from './utils/options';
 
-export { SvelteWarningsMessage } from './utils/log';
-*/
+export { ImbaWarningsMessage } from './utils/log';

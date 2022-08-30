@@ -17,7 +17,8 @@ export default defineConfig({
   ]
 });
 ```
-
+## Credits
+- Svelte vite plugin
 ## License
 
 [MIT](./LICENSE)

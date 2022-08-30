@@ -1,12 +1,12 @@
-import { SvelteRequest } from './id';
+import { ImbaRequest } from './id';
 import { Code, CompileData } from './compile';
 
-export class VitePluginSvelteCache {
+export class VitePluginImbaCache {
 	private _css = new Map<string, Code>();
 	private _js = new Map<string, Code>();
 	private _dependencies = new Map<string, string[]>();
 	private _dependants = new Map<string, Set<string>>();
-	private _resolvedSvelteFields = new Map<string, string>();
+	private _resolvedImbaFields = new Map<string, string>();
 	private _errors = new Map<string, any>();
 
 	public update(compileData: CompileData) {
@@ -16,16 +16,16 @@ export class VitePluginSvelteCache {
 		this.updateDependencies(compileData);
 	}
 
-	public has(svelteRequest: SvelteRequest) {
-		const id = svelteRequest.normalizedFilename;
+	public has(imbaRequest: ImbaRequest) {
+		const id = imbaRequest.normalizedFilename;
 		return this._errors.has(id) || this._js.has(id) || this._css.has(id);
 	}
 
-	public setError(svelteRequest: SvelteRequest, error: any) {
+	public setError(imbaRequest: ImbaRequest, error: any) {
 		// keep dependency info, otherwise errors in dependants would not trigger an update after fixing
 		// because they are no longer watched
-		this.remove(svelteRequest, true);
-		this._errors.set(svelteRequest.normalizedFilename, error);
+		this.remove(imbaRequest, true);
+		this._errors.set(imbaRequest.normalizedFilename, error);
 	}
 
 	private updateCSS(compileData: CompileData) {
@@ -57,8 +57,8 @@ export class VitePluginSvelteCache {
 		});
 	}
 
-	public remove(svelteRequest: SvelteRequest, keepDependencies: boolean = false): boolean {
-		const id = svelteRequest.normalizedFilename;
+	public remove(imbaRequest: ImbaRequest, keepDependencies: boolean = false): boolean {
+		const id = imbaRequest.normalizedFilename;
 		let removed = false;
 		if (this._errors.delete(id)) {
 			removed = true;
@@ -75,8 +75,8 @@ export class VitePluginSvelteCache {
 				removed = true;
 				dependencies.forEach((d) => {
 					const dependants = this._dependants.get(d);
-					if (dependants && dependants.has(svelteRequest.filename)) {
-						dependants.delete(svelteRequest.filename);
+					if (dependants && dependants.has(imbaRequest.filename)) {
+						dependants.delete(imbaRequest.filename);
 					}
 				});
 				this._dependencies.delete(id);
@@ -86,19 +86,19 @@ export class VitePluginSvelteCache {
 		return removed;
 	}
 
-	public getCSS(svelteRequest: SvelteRequest) {
-		return this._css.get(svelteRequest.normalizedFilename);
+	public getCSS(imbaRequest: ImbaRequest) {
+		return this._css.get(imbaRequest.normalizedFilename);
 	}
 
-	public getJS(svelteRequest: SvelteRequest) {
-		if (!svelteRequest.ssr) {
+	public getJS(imbaRequest: ImbaRequest) {
+		if (!imbaRequest.ssr) {
 			// SSR js isn't cached
-			return this._js.get(svelteRequest.normalizedFilename);
+			return this._js.get(imbaRequest.normalizedFilename);
 		}
 	}
 
-	public getError(svelteRequest: SvelteRequest) {
-		return this._errors.get(svelteRequest.normalizedFilename);
+	public getError(imbaRequest: ImbaRequest) {
+		return this._errors.get(imbaRequest.normalizedFilename);
 	}
 
 	public getDependants(path: string): string[] {
@@ -106,22 +106,22 @@ export class VitePluginSvelteCache {
 		return dependants ? [...dependants] : [];
 	}
 
-	public getResolvedSvelteField(name: string, importer?: string): string | void {
-		return this._resolvedSvelteFields.get(this._getResolvedSvelteFieldKey(name, importer));
+	public getResolvedImbaField(name: string, importer?: string): string | void {
+		return this._resolvedImbaFields.get(this._getResolvedImbaFieldKey(name, importer));
 	}
 
-	public setResolvedSvelteField(
+	public setResolvedImbaField(
 		importee: string,
 		importer: string | undefined = undefined,
-		resolvedSvelte: string
+		resolvedImba: string
 	) {
-		this._resolvedSvelteFields.set(
-			this._getResolvedSvelteFieldKey(importee, importer),
-			resolvedSvelte
+		this._resolvedImbaFields.set(
+			this._getResolvedImbaFieldKey(importee, importer),
+			resolvedImba
 		);
 	}
 
-	private _getResolvedSvelteFieldKey(importee: string, importer?: string): string {
+	private _getResolvedImbaFieldKey(importee: string, importer?: string): string {
 		return importer ? `${importer} > ${importee}` : importee;
 	}
 }

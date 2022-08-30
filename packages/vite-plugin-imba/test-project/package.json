@@ -11,10 +11,11 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^1.0.1",
+    "imba": "^2.0.0-alpha.215",
     "svelte": "^3.49.0",
-    "vite": "^3.0.7",
-    "imba": "^2.0.0-alpha.215"
+    "vite": "^3.0.7"
   },
   "dependencies": {
+    "vite-plugin-imba": "0.0.3"
   }
 }

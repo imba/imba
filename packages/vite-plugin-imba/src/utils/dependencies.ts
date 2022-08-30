@@ -3,18 +3,18 @@ import path from 'path';
 import fs from 'fs';
 import { createRequire } from 'module';
 
-export function findRootSvelteDependencies(root: string, cwdFallback = true): SvelteDependency[] {
-	log.debug(`findSvelteDependencies: searching svelte dependencies in ${root}`);
+export function findRootImbaDependencies(root: string, cwdFallback = true): ImbaDependency[] {
+	log.debug(`findImbaDependencies: searching imba dependencies in ${root}`);
 	const pkgFile = path.join(root, 'package.json');
 	if (!fs.existsSync(pkgFile)) {
 		if (cwdFallback) {
 			const cwd = process.cwd();
 			if (root !== cwd) {
 				log.debug(`no package.json found in vite root ${root}`);
-				return findRootSvelteDependencies(cwd, false);
+				return findRootImbaDependencies(cwd, false);
 			}
 		}
-		log.warn(`no package.json found, findRootSvelteDependencies failed`);
+		log.warn(`no package.json found, findRootImbaDependencies failed`);
 		return [];
 	}
 
@@ -26,23 +26,23 @@ export function findRootSvelteDependencies(root: string, cwdFallback = true): Sv
 	const deps = [
 		...Object.keys(pkg.dependencies || {}),
 		...Object.keys(pkg.devDependencies || {})
-	].filter((dep) => !is_common_without_svelte_field(dep));
+	].filter((dep) => !is_common_without_imba_field(dep));
 
-	return getSvelteDependencies(deps, root);
+	return getImbaDependencies(deps, root);
 }
 
-function getSvelteDependencies(
+function getImbaDependencies(
 	deps: string[],
 	pkgDir: string,
 	path: string[] = []
-): SvelteDependency[] {
+): ImbaDependency[] {
 	const result = [];
 	const localRequire = createRequire(`${pkgDir}/package.json`);
 	const resolvedDeps = deps
 		.map((dep) => resolveDependencyData(dep, localRequire))
 		.filter(Boolean) as DependencyData[];
 	for (const { pkg, dir } of resolvedDeps) {
-		const type = getSvelteDependencyType(pkg);
+		const type = getImbaDependencyType(pkg);
 		if (!type) continue;
 		result.push({ name: pkg.name, type, pkg, dir, path });
 		// continue crawling for component libraries so we can optimize them, js libraries are fine
@@ -52,15 +52,15 @@ function getSvelteDependencies(
 			if (circular.length > 0) {
 				log.warn.enabled &&
 					log.warn(
-						`skipping circular svelte dependencies in automated vite optimizeDeps handling`,
+						`skipping circular imba dependencies in automated vite optimizeDeps handling`,
 						circular.map((x) => path.concat(x).join('>'))
 					);
 				dependencyNames = dependencyNames.filter((name) => !path.includes(name));
 			}
 			if (path.length === 3) {
-				log.debug.once(`encountered deep svelte dependency tree: ${path.join('>')}`);
+				log.debug.once(`encountered deep imba dependency tree: ${path.join('>')}`);
 			}
-			result.push(...getSvelteDependencies(dependencyNames, dir, path.concat(pkg.name)));
+			result.push(...getImbaDependencies(dependencyNames, dir, path.concat(pkg.name)));
 		}
 	}
 	return result;
@@ -107,29 +107,29 @@ function parsePkg(dir: string, silent = false): Pkg | void {
 	}
 }
 
-function getSvelteDependencyType(pkg: Pkg): SvelteDependencyType | undefined {
-	if (isSvelteComponentLib(pkg)) {
+function getImbaDependencyType(pkg: Pkg): ImbaDependencyType | undefined {
+	if (isImbaComponentLib(pkg)) {
 		return 'component-library';
-	} else if (isSvelteLib(pkg)) {
+	} else if (isImbaLib(pkg)) {
 		return 'js-library';
 	} else {
 		return undefined;
 	}
 }
 
-function isSvelteComponentLib(pkg: Pkg) {
-	return !!pkg.svelte;
+function isImbaComponentLib(pkg: Pkg) {
+	return !!pkg.imba;
 }
 
-function isSvelteLib(pkg: Pkg) {
-	return !!pkg.dependencies?.svelte || !!pkg.peerDependencies?.svelte;
+function isImbaLib(pkg: Pkg) {
+	return !!pkg.dependencies?.imba || !!pkg.peerDependencies?.imba;
 }
 
-const COMMON_DEPENDENCIES_WITHOUT_SVELTE_FIELD = [
+const COMMON_DEPENDENCIES_WITHOUT_IMBA_FIELD = [
 	'@lukeed/uuid',
 	'@playwright/test',
-	'@sveltejs/vite-plugin-svelte',
-	'@sveltejs/kit',
+	'@imbajs/vite-plugin-imba',
+	'@imbajs/kit',
 	'autoprefixer',
 	'cookie',
 	'dotenv',
@@ -140,21 +140,21 @@ const COMMON_DEPENDENCIES_WITHOUT_SVELTE_FIELD = [
 	'playwright',
 	'postcss',
 	'prettier',
-	'svelte',
-	'svelte-check',
-	'svelte-hmr',
-	'svelte-preprocess',
+	'imba',
+	'imba-check',
+	'imba-hmr',
+	'imba-preprocess',
 	'tslib',
 	'typescript',
 	'vite',
 	'vitest',
-	'__vite-browser-external' // see https://github.com/sveltejs/vite-plugin-svelte/issues/362
+	'__vite-browser-external' // see https://github.com/imbajs/vite-plugin-imba/issues/362
 ];
-const COMMON_PREFIXES_WITHOUT_SVELTE_FIELD = [
+const COMMON_PREFIXES_WITHOUT_IMBA_FIELD = [
 	'@fontsource/',
 	'@postcss-plugins/',
 	'@rollup/',
-	'@sveltejs/adapter-',
+	'@imbajs/adapter-',
 	'@types/',
 	'@typescript-eslint/',
 	'eslint-',
@@ -166,17 +166,17 @@ const COMMON_PREFIXES_WITHOUT_SVELTE_FIELD = [
 ];
 
 /**
- * Test for common dependency names that tell us it is not a package including a svelte field, eg. eslint + plugins.
+ * Test for common dependency names that tell us it is not a package including a imba field, eg. eslint + plugins.
  *
  * This speeds up the find process as we don't have to try and require the package.json for all of them
  *
  * @param dependency {string}
- * @returns {boolean} true if it is a dependency without a svelte field
+ * @returns {boolean} true if it is a dependency without a imba field
  */
-export function is_common_without_svelte_field(dependency: string): boolean {
+export function is_common_without_imba_field(dependency: string): boolean {
 	return (
-		COMMON_DEPENDENCIES_WITHOUT_SVELTE_FIELD.includes(dependency) ||
-		COMMON_PREFIXES_WITHOUT_SVELTE_FIELD.some(
+		COMMON_DEPENDENCIES_WITHOUT_IMBA_FIELD.includes(dependency) ||
+		COMMON_PREFIXES_WITHOUT_IMBA_FIELD.some(
 			(prefix) =>
 				prefix.startsWith('@')
 					? dependency.startsWith(prefix)
@@ -190,17 +190,17 @@ export function needsOptimization(dep: string, localRequire: NodeRequire): boole
 	if (!depData) return false;
 	const pkg = depData.pkg;
 	// only optimize if is cjs, using the below as heuristic
-	// see https://github.com/sveltejs/vite-plugin-svelte/issues/162
+	// see https://github.com/imbajs/vite-plugin-imba/issues/162
 	const hasEsmFields = pkg.module || pkg.exports;
 	if (hasEsmFields) return false;
 	if (pkg.main) {
 		// ensure entry is js so vite can prebundle it
-		// see https://github.com/sveltejs/vite-plugin-svelte/issues/233
+		// see https://github.com/imbajs/vite-plugin-imba/issues/233
 		const entryExt = path.extname(pkg.main);
 		return !entryExt || entryExt === '.js' || entryExt === '.cjs';
 	} else {
 		// check if has implicit index.js entrypoint
-		// https://github.com/sveltejs/vite-plugin-svelte/issues/281
+		// https://github.com/imbajs/vite-plugin-imba/issues/281
 		try {
 			localRequire.resolve(`${dep}/index.js`);
 			return true;
@@ -215,21 +215,21 @@ interface DependencyData {
 	pkg: Pkg;
 }
 
-export interface SvelteDependency {
+export interface ImbaDependency {
 	name: string;
-	type: SvelteDependencyType;
+	type: ImbaDependencyType;
 	dir: string;
 	pkg: Pkg;
 	path: string[];
 }
 
-// component-library => exports svelte components
-// js-library        => only uses svelte api, no components
-export type SvelteDependencyType = 'component-library' | 'js-library';
+// component-library => exports imba components
+// js-library        => only uses imba api, no components
+export type ImbaDependencyType = 'component-library' | 'js-library';
 
 export interface Pkg {
 	name: string;
-	svelte?: string;
+	imba?: string;
 	dependencies?: DependencyList;
 	devDependencies?: DependencyList;
 	peerDependencies?: DependencyList;

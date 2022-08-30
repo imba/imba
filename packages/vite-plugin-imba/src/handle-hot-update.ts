@@ -1,59 +1,59 @@
 import { ModuleNode, HmrContext } from 'vite';
 import { Code, CompileData } from './utils/compile';
 import { log, logCompilerWarnings } from './utils/log';
-import { SvelteRequest } from './utils/id';
-import { VitePluginSvelteCache } from './utils/vite-plugin-svelte-cache';
+import { ImbaRequest } from './utils/id';
+import { VitePluginImbaCache } from './utils/vite-plugin-imba-cache';
 import { ResolvedOptions } from './utils/options';
 
 /**
  * Vite-specific HMR handling
  */
 export async function handleHotUpdate(
-	compileSvelte: Function,
+	compileImba: Function,
 	ctx: HmrContext,
-	svelteRequest: SvelteRequest,
-	cache: VitePluginSvelteCache,
+	imbaRequest: ImbaRequest,
+	cache: VitePluginImbaCache,
 	options: ResolvedOptions
 ): Promise<ModuleNode[] | void> {
-	if (!cache.has(svelteRequest)) {
+	if (!cache.has(imbaRequest)) {
 		// file hasn't been requested yet (e.g. async component)
-		log.debug(`handleHotUpdate called before initial transform for ${svelteRequest.id}`);
+		log.debug(`handleHotUpdate called before initial transform for ${imbaRequest.id}`);
 		return;
 	}
 	const { read, server } = ctx;
 
-	const cachedJS = cache.getJS(svelteRequest);
-	const cachedCss = cache.getCSS(svelteRequest);
+	const cachedJS = cache.getJS(imbaRequest);
+	const cachedCss = cache.getCSS(imbaRequest);
 
 	const content = await read();
 	let compileData: CompileData;
 	try {
-		compileData = await compileSvelte(svelteRequest, content, options);
+		compileData = await compileImba(imbaRequest, content, options);
 		cache.update(compileData);
 	} catch (e) {
-		cache.setError(svelteRequest, e);
+		cache.setError(imbaRequest, e);
 		throw e;
 	}
 
 	const affectedModules = new Set<ModuleNode | undefined>();
 
-	const cssModule = server.moduleGraph.getModuleById(svelteRequest.cssId);
-	const mainModule = server.moduleGraph.getModuleById(svelteRequest.id);
+	const cssModule = server.moduleGraph.getModuleById(imbaRequest.cssId);
+	const mainModule = server.moduleGraph.getModuleById(imbaRequest.id);
 	const cssUpdated = cssModule && cssChanged(cachedCss, compileData.compiled.css);
 	if (cssUpdated) {
-		log.debug(`handleHotUpdate css changed for ${svelteRequest.cssId}`);
+		log.debug(`handleHotUpdate css changed for ${imbaRequest.cssId}`);
 		affectedModules.add(cssModule);
 	}
 	const jsUpdated =
-		mainModule && jsChanged(cachedJS, compileData.compiled.js, svelteRequest.filename);
+		mainModule && jsChanged(cachedJS, compileData.compiled.js, imbaRequest.filename);
 	if (jsUpdated) {
-		log.debug(`handleHotUpdate js changed for ${svelteRequest.id}`);
+		log.debug(`handleHotUpdate js changed for ${imbaRequest.id}`);
 		affectedModules.add(mainModule);
 	}
 
 	if (!jsUpdated) {
 		// transform won't be called, log warnings here
-		logCompilerWarnings(svelteRequest, compileData.compiled.warnings, options);
+		logCompilerWarnings(imbaRequest, compileData.compiled.warnings, options);
 	}
 
 	const result = [...affectedModules].filter(Boolean) as ModuleNode[];
@@ -66,7 +66,7 @@ export async function handleHotUpdate(
 	}
 	if (result.length > 0) {
 		log.debug(
-			`handleHotUpdate for ${svelteRequest.id} result: ${result.map((m) => m.id).join(', ')}`
+			`handleHotUpdate for ${imbaRequest.id} result: ${result.map((m) => m.id).join(', ')}`
 		);
 	}
 	return result;

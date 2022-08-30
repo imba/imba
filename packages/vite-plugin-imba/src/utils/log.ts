@@ -2,10 +2,10 @@
 import { cyan, yellow, red } from 'kleur/colors';
 import debug from 'debug';
 import { ResolvedOptions, Warning } from './options';
-import { SvelteRequest } from './id';
+import { ImbaRequest } from './id';
 
 const levels: string[] = ['debug', 'info', 'warn', 'error', 'silent'];
-const prefix = 'vite-plugin-svelte';
+const prefix = 'vite-plugin-imba';
 const loggers: { [key: string]: any } = {
 	debug: {
 		log: debug(`vite:${prefix}`),
@@ -100,18 +100,18 @@ export const log = {
 	setLevel
 };
 
-export type SvelteWarningsMessage = {
+export type ImbaWarningsMessage = {
 	id: string;
 	filename: string;
 	normalizedFilename: string;
 	timestamp: number;
 	warnings: Warning[]; // allWarnings filtered by warnings where onwarn did not call the default handler
-	allWarnings: Warning[]; // includes warnings filtered by onwarn and our extra vite plugin svelte warnings
+	allWarnings: Warning[]; // includes warnings filtered by onwarn and our extra vite plugin imba warnings
 	rawWarnings: Warning[]; // raw compiler output
 };
 
 export function logCompilerWarnings(
-	svelteRequest: SvelteRequest,
+	imbaRequest: ImbaRequest,
 	warnings: Warning[],
 	options: ResolvedOptions
 ) {
@@ -137,17 +137,17 @@ export function logCompilerWarnings(
 		}
 	});
 	if (sendViaWS) {
-		const message: SvelteWarningsMessage = {
-			id: svelteRequest.id,
-			filename: svelteRequest.filename,
-			normalizedFilename: svelteRequest.normalizedFilename,
-			timestamp: svelteRequest.timestamp,
+		const message: ImbaWarningsMessage = {
+			id: imbaRequest.id,
+			filename: imbaRequest.filename,
+			normalizedFilename: imbaRequest.normalizedFilename,
+			timestamp: imbaRequest.timestamp,
 			warnings: handledByDefaultWarn, // allWarnings filtered by warnings where onwarn did not call the default handler
-			allWarnings, // includes warnings filtered by onwarn and our extra vite plugin svelte warnings
+			allWarnings, // includes warnings filtered by onwarn and our extra vite plugin imba warnings
 			rawWarnings: warnings // raw compiler output
 		};
-		log.debug(`sending svelte:warnings message for ${svelteRequest.normalizedFilename}`);
-		options.server?.ws?.send('svelte:warnings', message);
+		log.debug(`sending imba:warnings message for ${imbaRequest.normalizedFilename}`);
+		options.server?.ws?.send('imba:warnings', message);
 	}
 }
 
@@ -157,13 +157,13 @@ function ignoreCompilerWarning(
 	emitCss: boolean | undefined
 ): boolean {
 	return (
-		(!emitCss && warning.code === 'css-unused-selector') || // same as rollup-plugin-svelte
+		(!emitCss && warning.code === 'css-unused-selector') || // same as rollup-plugin-imba
 		(!isBuild && isNoScopableElementWarning(warning))
 	);
 }
 
 function isNoScopableElementWarning(warning: Warning) {
-	// see https://github.com/sveltejs/vite-plugin-svelte/issues/153
+	// see https://github.com/imbajs/vite-plugin-imba/issues/153
 	return warning.code === 'css-unused-selector' && warning.message.includes('"*"');
 }
 
@@ -177,8 +177,8 @@ function buildExtraWarnings(warnings: Warning[], isBuild: boolean): Warning[] {
 				noScopableElementWarnings[noScopableElementWarnings.length - 1];
 			extraWarnings.push({
 				...noScopableElementWarning,
-				code: 'vite-plugin-svelte-css-no-scopable-elements',
-				message: `No scopable elements found in template. If you're using global styles in the style tag, you should move it into an external stylesheet file and import it in JS. See https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/faq.md#where-should-i-put-my-global-styles.`
+				code: 'vite-plugin-imba-css-no-scopable-elements',
+				message: `No scopable elements found in template. If you're using global styles in the style tag, you should move it into an external stylesheet file and import it in JS. See https://github.com/imbajs/vite-plugin-imba/blob/main/docs/faq.md#where-should-i-put-my-global-styles.`
 			});
 		}
 	}

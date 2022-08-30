@@ -8,22 +8,22 @@ import {
 	normalizePath
 } from 'vite';
 import { log } from './log';
-import { loadSvelteConfig } from './load-svelte-config';
-import { SVELTE_HMR_IMPORTS, SVELTE_IMPORTS, SVELTE_RESOLVE_MAIN_FIELDS } from './constants';
+import { loadImbaConfig } from './load-imba-config';
+import { IMBA_HMR_IMPORTS, IMBA_IMPORTS, IMBA_RESOLVE_MAIN_FIELDS } from './constants';
 // eslint-disable-next-line node/no-missing-import
-import type { CompileOptions, Warning } from 'svelte/types/compiler/interfaces';
+import type { CompileOptions, Warning } from 'imba/types/compiler/interfaces';
 import type {
 	MarkupPreprocessor,
 	Preprocessor,
 	PreprocessorGroup,
 	Processed
 	// eslint-disable-next-line node/no-missing-import
-} from 'svelte/types/compiler/preprocess';
+} from 'imba/types/compiler/preprocess';
 
 import path from 'path';
-import { findRootSvelteDependencies, needsOptimization, SvelteDependency } from './dependencies';
+import { findRootImbaDependencies, needsOptimization, ImbaDependency } from './dependencies';
 import { createRequire } from 'module';
-import { esbuildSveltePlugin, facadeEsbuildSveltePluginName } from './esbuild';
+import { esbuildImbaPlugin, facadeEsbuildImbaPluginName } from './esbuild';
 import { addExtraPreprocessors } from './preprocess';
 import deepmerge from 'deepmerge';
 
@@ -41,7 +41,7 @@ const knownRootOptions = new Set(['extensions', 'compilerOptions', 'preprocess',
 
 const allowedInlineOptions = new Set([
 	'configFile',
-	'kit', // only for internal use by sveltekit
+	'kit', // only for internal use by imbakit
 	...allowedPluginOptions,
 	...knownRootOptions
 ]);
@@ -55,14 +55,14 @@ export function validateInlineOptions(inlineOptions?: Partial<Options>) {
 	}
 }
 
-function convertPluginOptions(config?: Partial<SvelteOptions>): Partial<Options> | undefined {
+function convertPluginOptions(config?: Partial<ImbaOptions>): Partial<Options> | undefined {
 	if (!config) {
 		return;
 	}
 	const invalidRootOptions = Object.keys(config).filter((key) => allowedPluginOptions.has(key));
 	if (invalidRootOptions.length > 0) {
 		throw new Error(
-			`Invalid options in svelte config. Move the following options into 'vitePlugin:{...}': ${invalidRootOptions.join(
+			`Invalid options in imba config. Move the following options into 'vitePlugin:{...}': ${invalidRootOptions.join(
 				', '
 			)}`
 		);
@@ -76,7 +76,7 @@ function convertPluginOptions(config?: Partial<SvelteOptions>): Partial<Options>
 	const rootOptionsInPluginOptions = pluginOptionKeys.filter((key) => knownRootOptions.has(key));
 	if (rootOptionsInPluginOptions.length > 0) {
 		throw new Error(
-			`Invalid options in svelte config under vitePlugin:{...}', move them to the config root : ${rootOptionsInPluginOptions.join(
+			`Invalid options in imba config under vitePlugin:{...}', move them to the config root : ${rootOptionsInPluginOptions.join(
 				', '
 			)}`
 		);
@@ -86,7 +86,7 @@ function convertPluginOptions(config?: Partial<SvelteOptions>): Partial<Options>
 	);
 	if (duplicateOptions.length > 0) {
 		throw new Error(
-			`Invalid duplicate options in svelte config under vitePlugin:{...}', they are defined in root too and must only exist once: ${duplicateOptions.join(
+			`Invalid duplicate options in imba config under vitePlugin:{...}', they are defined in root too and must only exist once: ${duplicateOptions.join(
 				', '
 			)}`
 		);
@@ -94,7 +94,7 @@ function convertPluginOptions(config?: Partial<SvelteOptions>): Partial<Options>
 	const unknownPluginOptions = pluginOptionKeys.filter((key) => !allowedPluginOptions.has(key));
 	if (unknownPluginOptions.length > 0) {
 		log.warn(
-			`ignoring unknown plugin options in svelte config under vitePlugin:{...}: ${unknownPluginOptions.join(
+			`ignoring unknown plugin options in imba config under vitePlugin:{...}: ${unknownPluginOptions.join(
 				', '
 			)}`
 		);
@@ -114,7 +114,7 @@ function convertPluginOptions(config?: Partial<SvelteOptions>): Partial<Options>
 	return result;
 }
 
-// used in config phase, merges the default options, svelte config, and inline options
+// used in config phase, merges the default options, imba config, and inline options
 export async function preResolveOptions(
 	inlineOptions: Partial<Options> = {},
 	viteUserConfig: UserConfig,
@@ -125,11 +125,11 @@ export async function preResolveOptions(
 		root: resolveViteRoot(viteUserConfig)
 	};
 	const defaultOptions: Partial<Options> = {
-		extensions: ['.svelte'],
+		extensions: ['.imba'],
 		emitCss: true
 	};
-	const svelteConfig = convertPluginOptions(
-		await loadSvelteConfig(viteConfigWithResolvedRoot, inlineOptions)
+	const imbaConfig = convertPluginOptions(
+		await loadImbaConfig(viteConfigWithResolvedRoot, inlineOptions)
 	);
 
 	const extraOptions: Partial<PreResolvedOptions> = {
@@ -140,20 +140,20 @@ export async function preResolveOptions(
 	};
 	const merged = mergeConfigs<Partial<PreResolvedOptions> | undefined>(
 		defaultOptions,
-		svelteConfig,
+		imbaConfig,
 		inlineOptions,
 		extraOptions
 	);
-	// configFile of svelteConfig contains the absolute path it was loaded from,
+	// configFile of imbaConfig contains the absolute path it was loaded from,
 	// prefer it over the possibly relative inline path
-	if (svelteConfig?.configFile) {
-		merged.configFile = svelteConfig.configFile;
+	if (imbaConfig?.configFile) {
+		merged.configFile = imbaConfig.configFile;
 	}
 	return merged;
 }
 
 function mergeConfigs<T>(...configs: T[]): ResolvedOptions {
-	let result = {};
+	let result = {} as T;
 	for (const config of configs.filter(Boolean)) {
 		result = deepmerge<T>(result, config, {
 			// replace arrays
@@ -183,7 +183,7 @@ export function resolveOptions(
 	const merged: ResolvedOptions = mergeConfigs(defaultOptions, preResolveOptions, extraOptions);
 
 	removeIgnoredOptions(merged);
-	addSvelteKitOptions(merged);
+	addImbaKitOptions(merged);
 	addExtraPreprocessors(merged, viteConfig);
 	enforceOptionsForHmr(merged);
 	enforceOptionsForProduction(merged);
@@ -252,7 +252,7 @@ function removeIgnoredOptions(options: ResolvedOptions) {
 	const passedIgnored = passedCompilerOptions.filter((o) => ignoredCompilerOptions.includes(o));
 	if (passedIgnored.length) {
 		log.warn(
-			`The following Svelte compilerOptions are controlled by vite-plugin-svelte and essential to its functionality. User-specified values are ignored. Please remove them from your configuration: ${passedIgnored.join(
+			`The following Imba compilerOptions are controlled by vite-plugin-imba and essential to its functionality. User-specified values are ignored. Please remove them from your configuration: ${passedIgnored.join(
 				', '
 			)}`
 		);
@@ -263,11 +263,11 @@ function removeIgnoredOptions(options: ResolvedOptions) {
 	}
 }
 
-// some SvelteKit options need compilerOptions to work, so set them here.
-function addSvelteKitOptions(options: ResolvedOptions) {
-	// @ts-expect-error kit is not typed to avoid dependency on sveltekit
+// some ImbaKit options need compilerOptions to work, so set them here.
+function addImbaKitOptions(options: ResolvedOptions) {
+	// @ts-expect-error kit is not typed to avoid dependency on imbakit
 	if (options?.kit != null) {
-		// @ts-expect-error kit is not typed to avoid dependency on sveltekit
+		// @ts-expect-error kit is not typed to avoid dependency on imbakit
 		const kit_browser_hydrate = options.kit.browser?.hydrate;
 		const hydratable = kit_browser_hydrate !== false;
 		if (
@@ -275,16 +275,16 @@ function addSvelteKitOptions(options: ResolvedOptions) {
 			options.compilerOptions.hydratable !== hydratable
 		) {
 			log.warn(
-				`Conflicting values "compilerOptions.hydratable: ${options.compilerOptions.hydratable}" and "kit.browser.hydrate: ${kit_browser_hydrate}" in your svelte config. You should remove "compilerOptions.hydratable".`
+				`Conflicting values "compilerOptions.hydratable: ${options.compilerOptions.hydratable}" and "kit.browser.hydrate: ${kit_browser_hydrate}" in your imba config. You should remove "compilerOptions.hydratable".`
 			);
 		}
-		log.debug(`Setting compilerOptions.hydratable: ${hydratable} for SvelteKit`);
+		log.debug(`Setting compilerOptions.hydratable: ${hydratable} for ImbaKit`);
 		options.compilerOptions.hydratable = hydratable;
 	}
 }
 
 // vite passes unresolved `root`option to config hook but we need the resolved value, so do it here
-// https://github.com/sveltejs/vite-plugin-svelte/issues/113
+// https://github.com/imbajs/vite-plugin-imba/issues/113
 // https://github.com/vitejs/vite/blob/43c957de8a99bb326afd732c962f42127b0a4d1e/packages/vite/src/node/config.ts#L293
 function resolveViteRoot(viteConfig: UserConfig): string | undefined {
 	return normalizePath(viteConfig.root ? path.resolve(viteConfig.root) : process.cwd());
@@ -294,54 +294,54 @@ export function buildExtraViteConfig(
 	options: PreResolvedOptions,
 	config: UserConfig
 ): Partial<UserConfig> {
-	// extra handling for svelte dependencies in the project
-	const svelteDeps = findRootSvelteDependencies(options.root);
+	// extra handling for imba dependencies in the project
+	const imbaDeps = findRootImbaDependencies(options.root);
 	const extraViteConfig: Partial<UserConfig> = {
 		resolve: {
-			mainFields: [...SVELTE_RESOLVE_MAIN_FIELDS],
-			dedupe: [...SVELTE_IMPORTS, ...SVELTE_HMR_IMPORTS]
+			mainFields: [...IMBA_RESOLVE_MAIN_FIELDS],
+			dedupe: [...IMBA_IMPORTS, ...IMBA_HMR_IMPORTS]
 		}
 		// this option is still awaiting a PR in vite to be supported
-		// see https://github.com/sveltejs/vite-plugin-svelte/issues/60
+		// see https://github.com/imbajs/vite-plugin-imba/issues/60
 		// @ts-ignore
 		// knownJsSrcExtensions: options.extensions
 	};
 
-	extraViteConfig.optimizeDeps = buildOptimizeDepsForSvelte(
-		svelteDeps,
+	extraViteConfig.optimizeDeps = buildOptimizeDepsForImba(
+		imbaDeps,
 		options,
 		config.optimizeDeps
 	);
 
-	if (options.experimental?.prebundleSvelteLibraries) {
+	if (options.experimental?.prebundleImbaLibraries) {
 		extraViteConfig.optimizeDeps = {
 			...extraViteConfig.optimizeDeps,
 			// Experimental Vite API to allow these extensions to be scanned and prebundled
 			// @ts-ignore
-			extensions: options.extensions ?? ['.svelte'],
-			// Add esbuild plugin to prebundle Svelte files.
+			extensions: options.extensions ?? ['.imba'],
+			// Add esbuild plugin to prebundle Imba files.
 			// Currently a placeholder as more information is needed after Vite config is resolved,
-			// the real Svelte plugin is added in `patchResolvedViteConfig()`
+			// the real Imba plugin is added in `patchResolvedViteConfig()`
 			esbuildOptions: {
-				plugins: [{ name: facadeEsbuildSveltePluginName, setup: () => {} }]
+				plugins: [{ name: facadeEsbuildImbaPluginName, setup: () => {} }]
 			}
 		};
 	}
 
 	// @ts-ignore
-	extraViteConfig.ssr = buildSSROptionsForSvelte(svelteDeps, options, config, extraViteConfig);
+	extraViteConfig.ssr = buildSSROptionsForImba(imbaDeps, options, config, extraViteConfig);
 
 	return extraViteConfig;
 }
 
-function buildOptimizeDepsForSvelte(
-	svelteDeps: SvelteDependency[],
+function buildOptimizeDepsForImba(
+	imbaDeps: ImbaDependency[],
 	options: PreResolvedOptions,
 	optimizeDeps?: DepOptimizationOptions
 ): DepOptimizationOptions {
-	// include svelte imports for optimization unless explicitly excluded
+	// include imba imports for optimization unless explicitly excluded
 	const include: string[] = [];
-	const exclude: string[] = ['svelte-hmr'];
+	const exclude: string[] = ['imba-hmr'];
 	const isIncluded = (dep: string) => include.includes(dep) || optimizeDeps?.include?.includes(dep);
 	const isExcluded = (dep: string) => {
 		return (
@@ -351,36 +351,36 @@ function buildOptimizeDepsForSvelte(
 			optimizeDeps?.exclude?.some((id: string) => dep === id || id.startsWith(`${dep}/`))
 		);
 	};
-	if (!isExcluded('svelte')) {
-		const svelteImportsToInclude = SVELTE_IMPORTS.filter((x) => x !== 'svelte/ssr'); // not used on clientside
+	if (!isExcluded('imba')) {
+		const imbaImportsToInclude = IMBA_IMPORTS.filter((x) => x !== 'imba/ssr'); // not used on clientside
 		log.debug(
-			`adding bare svelte packages to optimizeDeps.include: ${svelteImportsToInclude.join(', ')} `
+			`adding bare imba packages to optimizeDeps.include: ${imbaImportsToInclude.join(', ')} `
 		);
-		include.push(...svelteImportsToInclude.filter((x) => !isIncluded(x)));
+		include.push(...imbaImportsToInclude.filter((x) => !isIncluded(x)));
 	} else {
-		log.debug('"svelte" is excluded in optimizeDeps.exclude, skipped adding it to include.');
+		log.debug('"imba" is excluded in optimizeDeps.exclude, skipped adding it to include.');
 	}
 
-	// If we prebundle svelte libraries, we can skip the whole prebundling dance below
-	if (options.experimental?.prebundleSvelteLibraries) {
+	// If we prebundle imba libraries, we can skip the whole prebundling dance below
+	if (options.experimental?.prebundleImbaLibraries) {
 		return { include, exclude };
 	}
 
-	// only svelte component libraries needs to be processed for optimizeDeps, js libraries work fine
-	svelteDeps = svelteDeps.filter((dep) => dep.type === 'component-library');
+	// only imba component libraries needs to be processed for optimizeDeps, js libraries work fine
+	imbaDeps = imbaDeps.filter((dep) => dep.type === 'component-library');
 
-	const svelteDepsToExclude = Array.from(new Set(svelteDeps.map((dep) => dep.name))).filter(
+	const imbaDepsToExclude = Array.from(new Set(imbaDeps.map((dep) => dep.name))).filter(
 		(dep) => !isIncluded(dep)
 	);
-	log.debug(`automatically excluding found svelte dependencies: ${svelteDepsToExclude.join(', ')}`);
-	exclude.push(...svelteDepsToExclude.filter((x) => !isExcluded(x)));
+	log.debug(`automatically excluding found imba dependencies: ${imbaDepsToExclude.join(', ')}`);
+	exclude.push(...imbaDepsToExclude.filter((x) => !isExcluded(x)));
 
 	if (options.disableDependencyReinclusion !== true) {
 		const disabledReinclusions = options.disableDependencyReinclusion || [];
 		if (disabledReinclusions.length > 0) {
 			log.debug(`not reincluding transitive dependencies of`, disabledReinclusions);
 		}
-		const transitiveDepsToInclude = svelteDeps
+		const transitiveDepsToInclude = imbaDeps
 			.filter((dep) => !disabledReinclusions.includes(dep.name) && isExcluded(dep.name))
 			.flatMap((dep) => {
 				const localRequire = createRequire(`${dep.dir}/package.json`);
@@ -389,7 +389,7 @@ function buildOptimizeDepsForSvelte(
 					.map((depOfDep) => dep.path.concat(dep.name, depOfDep).join(' > '));
 			});
 		log.debug(
-			`reincluding transitive dependencies of excluded svelte dependencies`,
+			`reincluding transitive dependencies of excluded imba dependencies`,
 			transitiveDepsToInclude
 		);
 		include.push(...transitiveDepsToInclude);
@@ -398,22 +398,22 @@ function buildOptimizeDepsForSvelte(
 	return { include, exclude };
 }
 
-function buildSSROptionsForSvelte(
-	svelteDeps: SvelteDependency[],
+function buildSSROptionsForImba(
+	imbaDeps: ImbaDependency[],
 	options: ResolvedOptions,
 	config: UserConfig
 ): any {
 	const noExternal: (string | RegExp)[] = [];
 
-	// add svelte to ssr.noExternal unless it is present in ssr.external
-	// so we can resolve it with svelte/ssr
-	if (!config.ssr?.external?.includes('svelte')) {
-		noExternal.push('svelte', /^svelte\//);
+	// add imba to ssr.noExternal unless it is present in ssr.external
+	// so we can resolve it with imba/ssr
+	if (!config.ssr?.external?.includes('imba')) {
+		noExternal.push('imba', /^imba\//);
 	}
 
-	// add svelte dependencies to ssr.noExternal unless present in ssr.external
+	// add imba dependencies to ssr.noExternal unless present in ssr.external
 	noExternal.push(
-		...Array.from(new Set(svelteDeps.map((s) => s.name))).filter(
+		...Array.from(new Set(imbaDeps.map((s) => s.name))).filter(
 			(x) => !config.ssr?.external?.includes(x)
 		)
 	);
@@ -423,9 +423,9 @@ function buildSSROptionsForSvelte(
 	};
 
 	if (options.isServe) {
-		// during dev, we have to externalize transitive dependencies, see https://github.com/sveltejs/vite-plugin-svelte/issues/281
+		// during dev, we have to externalize transitive dependencies, see https://github.com/imbajs/vite-plugin-imba/issues/281
 		ssr.external = Array.from(
-			new Set(svelteDeps.flatMap((dep) => Object.keys(dep.pkg.dependencies || {})))
+			new Set(imbaDeps.flatMap((dep) => Object.keys(dep.pkg.dependencies || {})))
 		).filter(
 			(dep) =>
 				!ssr.noExternal.includes(dep) &&
@@ -439,21 +439,21 @@ function buildSSROptionsForSvelte(
 }
 
 export function patchResolvedViteConfig(viteConfig: ResolvedConfig, options: ResolvedOptions) {
-	const facadeEsbuildSveltePlugin = viteConfig.optimizeDeps.esbuildOptions?.plugins?.find(
-		(plugin) => plugin.name === facadeEsbuildSveltePluginName
+	const facadeEsbuildImbaPlugin = viteConfig.optimizeDeps.esbuildOptions?.plugins?.find(
+		(plugin) => plugin.name === facadeEsbuildImbaPluginName
 	);
-	if (facadeEsbuildSveltePlugin) {
-		Object.assign(facadeEsbuildSveltePlugin, esbuildSveltePlugin(options));
+	if (facadeEsbuildImbaPlugin) {
+		Object.assign(facadeEsbuildImbaPlugin, esbuildImbaPlugin(options));
 	}
 }
 
-export type Options = Omit<SvelteOptions, 'vitePlugin'> & PluginOptionsInline;
+export type Options = Omit<ImbaOptions, 'vitePlugin'> & PluginOptionsInline;
 
 interface PluginOptionsInline extends PluginOptions {
 	/**
-	 * Path to a svelte config file, either absolute or relative to Vite root
+	 * Path to a imba config file, either absolute or relative to Vite root
 	 *
-	 * set to `false` to ignore the svelte config file
+	 * set to `false` to ignore the imba config file
 	 *
 	 * @see https://vitejs.dev/config/#root
 	 */
@@ -463,7 +463,7 @@ interface PluginOptionsInline extends PluginOptions {
 export interface PluginOptions {
 	/**
 	 * A `picomatch` pattern, or array of patterns, which specifies the files the plugin should
-	 * operate on. By default, all svelte files are included.
+	 * operate on. By default, all imba files are included.
 	 *
 	 * @see https://github.com/micromatch/picomatch
 	 */
@@ -478,7 +478,7 @@ export interface PluginOptions {
 	exclude?: Arrayable<string>;
 
 	/**
-	 * Emit Svelte styles as virtual CSS files for Vite and other plugins to process
+	 * Emit Imba styles as virtual CSS files for Vite and other plugins to process
 	 *
 	 * @default true
 	 */
@@ -489,21 +489,21 @@ export interface PluginOptions {
 	 *
 	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	 *
-	 * DO NOT CUSTOMIZE SVELTE-HMR OPTIONS UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING
+	 * DO NOT CUSTOMIZE IMBA-HMR OPTIONS UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING
 	 *
 	 *                             YOU HAVE BEEN WARNED
 	 *
 	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	 *
-	 * Set an object to pass custom options to svelte-hmr
+	 * Set an object to pass custom options to imba-hmr
 	 *
-	 * @see https://github.com/rixo/svelte-hmr#options
+	 * @see https://github.com/rixo/imba-hmr#options
 	 * @default true for development, always false for production
 	 */
 	hot?: boolean | { injectCss?: boolean; [key: string]: any };
 
 	/**
-	 * Some Vite plugins can contribute additional preprocessors by defining `api.sveltePreprocess`.
+	 * Some Vite plugins can contribute additional preprocessors by defining `api.imbaPreprocess`.
 	 * If you don't want to use them, set this to true to ignore them all or use an array of strings
 	 * with plugin names to specify which.
 	 *
@@ -512,7 +512,7 @@ export interface PluginOptions {
 	ignorePluginPreprocessors?: boolean | string[];
 
 	/**
-	 * vite-plugin-svelte automatically handles excluding svelte libraries and reinclusion of their dependencies
+	 * vite-plugin-imba automatically handles excluding imba libraries and reinclusion of their dependencies
 	 * in vite.optimizeDeps.
 	 *
 	 * `disableDependencyReinclusion: true` disables all reinclusions
@@ -530,37 +530,37 @@ export interface PluginOptions {
 	experimental?: ExperimentalOptions;
 }
 
-export interface SvelteOptions {
+export interface ImbaOptions {
 	/**
-	 * A list of file extensions to be compiled by Svelte
+	 * A list of file extensions to be compiled by Imba
 	 *
-	 * @default ['.svelte']
+	 * @default ['.imba']
 	 */
 	extensions?: string[];
 
 	/**
-	 * An array of preprocessors to transform the Svelte source code before compilation
+	 * An array of preprocessors to transform the Imba source code before compilation
 	 *
-	 * @see https://svelte.dev/docs#svelte_preprocess
+	 * @see https://imba.dev/docs#imba_preprocess
 	 */
 	preprocess?: Arrayable<PreprocessorGroup>;
 
 	/**
-	 * The options to be passed to the Svelte compiler. A few options are set by default,
+	 * The options to be passed to the Imba compiler. A few options are set by default,
 	 * including `dev` and `css`. However, some options are non-configurable, like
 	 * `filename`, `format`, `generate`, and `cssHash` (in dev).
 	 *
-	 * @see https://svelte.dev/docs#svelte_compile
+	 * @see https://imba.dev/docs#imba_compile
 	 */
 	compilerOptions?: Omit<CompileOptions, 'filename' | 'format' | 'generate'>;
 
 	/**
-	 * Handles warning emitted from the Svelte compiler
+	 * Handles warning emitted from the Imba compiler
 	 */
 	onwarn?: (warning: Warning, defaultHandler?: (warning: Warning) => void) => void;
 
 	/**
-	 * Options for vite-plugin-svelte
+	 * Options for vite-plugin-imba
 	 */
 	vitePlugin?: PluginOptions;
 }
@@ -572,18 +572,18 @@ export interface ExperimentalOptions {
 	/**
 	 * Use extra preprocessors that delegate style and TypeScript preprocessing to native Vite plugins
 	 *
-	 * Do not use together with `svelte-preprocess`!
+	 * Do not use together with `imba-preprocess`!
 	 *
 	 * @default false
 	 */
 	useVitePreprocess?: boolean;
 
 	/**
-	 * Force Vite to pre-bundle Svelte libraries
+	 * Force Vite to pre-bundle Imba libraries
 	 *
 	 * @default false
 	 */
-	prebundleSvelteLibraries?: boolean;
+	prebundleImbaLibraries?: boolean;
 
 	/**
 	 * If a preprocessor does not provide a sourcemap, a best-effort fallback sourcemap will be provided.
@@ -598,7 +598,7 @@ export interface ExperimentalOptions {
 	 * A function to update `compilerOptions` before compilation
 	 *
 	 * `data.filename` - The file to be compiled
-	 * `data.code` - The preprocessed Svelte code
+	 * `data.code` - The preprocessed Imba code
 	 * `data.compileOptions` - The current compiler options
 	 *
 	 * To change part of the compiler options, return an object with the changes you need.
@@ -606,7 +606,7 @@ export interface ExperimentalOptions {
 	 * @example
 	 * ```
 	 * ({ filename, compileOptions }) => {
-	 *   // Dynamically set hydration per Svelte file
+	 *   // Dynamically set hydration per Imba file
 	 *   if (compileWithHydratable(filename) && !compileOptions.hydratable) {
 	 *     return { hydratable: true };
 	 *   }
@@ -620,12 +620,12 @@ export interface ExperimentalOptions {
 	}) => Promise<Partial<CompileOptions> | void> | Partial<CompileOptions> | void;
 
 	/**
-	 * enable svelte inspector
+	 * enable imba inspector
 	 */
 	inspector?: InspectorOptions | boolean;
 
 	/**
-	 * send a websocket message with svelte compiler warnings during dev
+	 * send a websocket message with imba compiler warnings during dev
 	 *
 	 */
 	sendWarningsToBrowser?: boolean;
@@ -670,7 +670,7 @@ export interface InspectorOptions {
 	 * useful for frameworks that do not support trannsformIndexHtml hook
 	 *
 	 * WARNING: only set this if you know exactly what it does.
-	 * Regular users of vite-plugin-svelte or SvelteKit do not need it
+	 * Regular users of vite-plugin-imba or ImbaKit do not need it
 	 */
 	appendTo?: string;
 }

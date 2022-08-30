@@ -13,30 +13,30 @@ const PREBUNDLE_SENSITIVE_OPTIONS: (keyof ResolvedOptions)[] = [
 ];
 
 /**
- * @returns Whether the Svelte metadata has changed
+ * @returns Whether the Imba metadata has changed
  */
-export async function saveSvelteMetadata(cacheDir: string, options: ResolvedOptions) {
-	const svelteMetadata = generateSvelteMetadata(options);
-	const svelteMetadataPath = path.resolve(cacheDir, '_svelte_metadata.json');
+export async function saveImbaMetadata(cacheDir: string, options: ResolvedOptions) {
+	const imbaMetadata = generateImbaMetadata(options);
+	const imbaMetadataPath = path.resolve(cacheDir, '_imba_metadata.json');
 
-	const currentSvelteMetadata = JSON.stringify(svelteMetadata, (_, value) => {
+	const currentImbaMetadata = JSON.stringify(imbaMetadata, (_, value) => {
 		// Handle preprocessors
 		return typeof value === 'function' ? value.toString() : value;
 	});
 
-	let existingSvelteMetadata: string | undefined;
+	let existingImbaMetadata: string | undefined;
 	try {
-		existingSvelteMetadata = await fs.readFile(svelteMetadataPath, 'utf8');
+		existingImbaMetadata = await fs.readFile(imbaMetadataPath, 'utf8');
 	} catch {
 		// ignore
 	}
 
 	await fs.mkdir(cacheDir, { recursive: true });
-	await fs.writeFile(svelteMetadataPath, currentSvelteMetadata);
-	return currentSvelteMetadata !== existingSvelteMetadata;
+	await fs.writeFile(imbaMetadataPath, currentImbaMetadata);
+	return currentImbaMetadata !== existingImbaMetadata;
 }
 
-function generateSvelteMetadata(options: ResolvedOptions) {
+function generateImbaMetadata(options: ResolvedOptions) {
 	const metadata: Record<string, any> = {};
 	for (const key of PREBUNDLE_SENSITIVE_OPTIONS) {
 		metadata[key] = options[key];

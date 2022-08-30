@@ -1,18 +1,18 @@
-import { VitePluginSvelteCache } from './vite-plugin-svelte-cache';
+import { VitePluginImbaCache } from './vite-plugin-imba-cache';
 import fs from 'fs';
 import { log } from './log';
 import { IdParser } from './id';
 import { ResolvedOptions } from './options';
-import { knownSvelteConfigNames } from './load-svelte-config';
+import { knownImbaConfigNames } from './load-imba-config';
 import path from 'path';
 import { FSWatcher } from 'vite';
 
 export function setupWatchers(
 	options: ResolvedOptions,
-	cache: VitePluginSvelteCache,
+	cache: VitePluginImbaCache,
 	requestParser: IdParser
 ) {
-	const { server, configFile: svelteConfigFile } = options;
+	const { server, configFile: imbaConfigFile } = options;
 	if (!server) {
 		return;
 	}
@@ -32,11 +32,11 @@ export function setupWatchers(
 	};
 
 	const removeUnlinkedFromCache = (filename: string) => {
-		const svelteRequest = requestParser(filename, false);
-		if (svelteRequest) {
-			const removedFromCache = cache.remove(svelteRequest);
+		const imbaRequest = requestParser(filename, false);
+		if (imbaRequest) {
+			const removedFromCache = cache.remove(imbaRequest);
 			if (removedFromCache) {
-				log.debug(`cleared VitePluginSvelteCache for deleted file ${filename}`);
+				log.debug(`cleared VitePluginImbaCache for deleted file ${filename}`);
 			}
 		}
 	};
@@ -46,14 +46,14 @@ export function setupWatchers(
 			// in middlewareMode we can't restart the server automatically
 			// show the user an overlay instead
 			const message =
-				'Svelte config change detected, restart your dev process to apply the changes.';
+				'Imba config change detected, restart your dev process to apply the changes.';
 			log.info(message, filename);
 			ws.send({
 				type: 'error',
-				err: { message, stack: '', plugin: 'vite-plugin-svelte', id: filename }
+				err: { message, stack: '', plugin: 'vite-plugin-imba', id: filename }
 			});
 		} else {
-			log.info(`svelte config changed: restarting vite server. - file: ${filename}`);
+			log.info(`imba config changed: restarting vite server. - file: ${filename}`);
 			server.restart();
 		}
 	};
@@ -65,22 +65,22 @@ export function setupWatchers(
 		unlink: [removeUnlinkedFromCache, emitChangeEventOnDependants]
 	};
 
-	if (svelteConfigFile !== false) {
+	if (imbaConfigFile !== false) {
 		// configFile false means we ignore the file and external process is responsible
-		const possibleSvelteConfigs = knownSvelteConfigNames.map((cfg) => path.join(root, cfg));
+		const possibleImbaConfigs = knownImbaConfigNames.map((cfg) => path.join(root, cfg));
 		const restartOnConfigAdd = (filename: string) => {
-			if (possibleSvelteConfigs.includes(filename)) {
+			if (possibleImbaConfigs.includes(filename)) {
 				triggerViteRestart(filename);
 			}
 		};
 
 		const restartOnConfigChange = (filename: string) => {
-			if (filename === svelteConfigFile) {
+			if (filename === imbaConfigFile) {
 				triggerViteRestart(filename);
 			}
 		};
 
-		if (svelteConfigFile) {
+		if (imbaConfigFile) {
 			listenerCollection.change.push(restartOnConfigChange);
 			listenerCollection.unlink.push(restartOnConfigChange);
 		} else {

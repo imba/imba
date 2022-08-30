@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findRootSvelteDependencies, needsOptimization } from '../dependencies';
+import { findRootImbaDependencies, needsOptimization } from '../dependencies';
 import * as path from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
@@ -7,26 +7,26 @@ const __dir = path.dirname(fileURLToPath(import.meta.url));
 const e2eTestRoot = path.resolve(__dir, '../../../../../packages/e2e-tests');
 
 describe('dependencies', () => {
-	describe('findRootSvelteDependencies', () => {
-		it('should find svelte dependencies in packages/e2e-test/hmr', () => {
-			const deps = findRootSvelteDependencies(path.resolve('packages/e2e-tests/hmr'));
+	describe('findRootImbaDependencies', () => {
+		it('should find imba dependencies in packages/e2e-test/hmr', () => {
+			const deps = findRootImbaDependencies(path.resolve('packages/e2e-tests/hmr'));
 			expect(deps).toHaveLength(1);
-			expect(deps[0].name).toBe('e2e-test-dep-svelte-simple');
+			expect(deps[0].name).toBe('e2e-test-dep-imba-simple');
 			expect(deps[0].path).toEqual([]);
 		});
-		it('should find nested svelte dependencies in packages/e2e-test/package-json-svelte-field', () => {
-			const deps = findRootSvelteDependencies(path.join(e2eTestRoot, 'package-json-svelte-field'));
+		it('should find nested imba dependencies in packages/e2e-test/package-json-imba-field', () => {
+			const deps = findRootImbaDependencies(path.join(e2eTestRoot, 'package-json-imba-field'));
 			expect(deps).toHaveLength(3);
-			const hybrid = deps.find((dep) => dep.name === 'e2e-test-dep-svelte-hybrid');
+			const hybrid = deps.find((dep) => dep.name === 'e2e-test-dep-imba-hybrid');
 			expect(hybrid).toBeTruthy();
 			expect(hybrid.path).toHaveLength(0);
-			const nested = deps.find((dep) => dep.name === 'e2e-test-dep-svelte-nested');
+			const nested = deps.find((dep) => dep.name === 'e2e-test-dep-imba-nested');
 			expect(nested).toBeTruthy();
 			expect(nested.path).toHaveLength(0);
-			const simple = deps.find((dep) => dep.name === 'e2e-test-dep-svelte-simple');
+			const simple = deps.find((dep) => dep.name === 'e2e-test-dep-imba-simple');
 			expect(simple).toBeTruthy();
 			expect(simple.path).toHaveLength(1);
-			expect(simple.path[0]).toBe('e2e-test-dep-svelte-nested');
+			expect(simple.path[0]).toBe('e2e-test-dep-imba-nested');
 		});
 	});
 	describe('needsOptimization', () => {

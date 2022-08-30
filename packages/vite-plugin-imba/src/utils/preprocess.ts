@@ -6,7 +6,7 @@ import {
 	Plugin
 } from 'vite';
 import MagicString from 'magic-string';
-import { preprocess } from 'svelte/compiler';
+// import { preprocess } from 'imba/compiler';
 import { Preprocessor, PreprocessorGroup, Processed, ResolvedOptions } from './options';
 import { TransformPluginContext } from 'rollup';
 import { log } from './log';
@@ -17,73 +17,73 @@ const supportedStyleLangs = ['css', 'less', 'sass', 'scss', 'styl', 'stylus', 'p
 
 const supportedScriptLangs = ['ts'];
 
-function createViteScriptPreprocessor(): Preprocessor {
-	return async ({ attributes, content, filename = '' }) => {
-		const lang = attributes.lang as string;
-		if (!supportedScriptLangs.includes(lang)) return;
-		const transformResult = await transformWithEsbuild(content, filename, {
-			loader: lang as ESBuildOptions['loader'],
-			tsconfigRaw: {
-				compilerOptions: {
-					// svelte typescript needs this flag to work with type imports
-					importsNotUsedAsValues: 'preserve',
-					preserveValueImports: true
-				}
-			}
-		});
-		return {
-			code: transformResult.code,
-			map: transformResult.map
-		};
-	};
-}
+// function createViteScriptPreprocessor(): Preprocessor {
+// 	return async ({ attributes, content, filename = '' }) => {
+// 		const lang = attributes.lang as string;
+// 		if (!supportedScriptLangs.includes(lang)) return;
+// 		const transformResult = await transformWithEsbuild(content, filename, {
+// 			loader: lang as ESBuildOptions['loader'],
+// 			tsconfigRaw: {
+// 				compilerOptions: {
+// 					// imba typescript needs this flag to work with type imports
+// 					importsNotUsedAsValues: 'preserve',
+// 					preserveValueImports: true
+// 				}
+// 			}
+// 		});
+// 		return {
+// 			code: transformResult.code,
+// 			map: transformResult.map
+// 		};
+// 	};
+// }
 
-function createViteStylePreprocessor(config: ResolvedConfig): Preprocessor {
-	const pluginName = 'vite:css';
-	const plugin = config.plugins.find((p) => p.name === pluginName);
-	if (!plugin) {
-		throw new Error(`failed to find plugin ${pluginName}`);
-	}
-	if (!plugin.transform) {
-		throw new Error(`plugin ${pluginName} has no transform`);
-	}
-	const pluginTransform = plugin.transform!.bind(null as unknown as TransformPluginContext);
-	return async ({ attributes, content, filename = '' }) => {
-		const lang = attributes.lang as string;
-		if (!supportedStyleLangs.includes(lang)) return;
-		const moduleId = `${filename}.${lang}`;
-		const transformResult: TransformResult = (await pluginTransform(
-			content,
-			moduleId
-		)) as TransformResult;
-		// patch sourcemap source to point back to original filename
-		if (transformResult.map?.sources?.[0] === moduleId) {
-			transformResult.map.sources[0] = path.basename(filename);
-		}
-		return {
-			code: transformResult.code,
-			map: transformResult.map ?? undefined
-		};
-	};
-}
+// function createViteStylePreprocessor(config: ResolvedConfig): Preprocessor {
+// 	const pluginName = 'vite:css';
+// 	const plugin = config.plugins.find((p) => p.name === pluginName);
+// 	if (!plugin) {
+// 		throw new Error(`failed to find plugin ${pluginName}`);
+// 	}
+// 	if (!plugin.transform) {
+// 		throw new Error(`plugin ${pluginName} has no transform`);
+// 	}
+// 	const pluginTransform = plugin.transform!.bind(null as unknown as TransformPluginContext);
+// 	return async ({ attributes, content, filename = '' }) => {
+// 		const lang = attributes.lang as string;
+// 		if (!supportedStyleLangs.includes(lang)) return;
+// 		const moduleId = `${filename}.${lang}`;
+// 		const transformResult: TransformResult = (await pluginTransform(
+// 			content,
+// 			moduleId
+// 		)) as TransformResult;
+// 		// patch sourcemap source to point back to original filename
+// 		if (transformResult.map?.sources?.[0] === moduleId) {
+// 			transformResult.map.sources[0] = path.basename(filename);
+// 		}
+// 		return {
+// 			code: transformResult.code,
+// 			map: transformResult.map ?? undefined
+// 		};
+// 	};
+// }
 
-function createVitePreprocessorGroup(config: ResolvedConfig): PreprocessorGroup {
-	return {
-		markup({ content, filename }) {
-			return preprocess(
-				content,
-				{
-					script: createViteScriptPreprocessor(),
-					style: createViteStylePreprocessor(config)
-				},
-				{ filename }
-			);
-		}
-	} as PreprocessorGroup;
-}
+// function createVitePreprocessorGroup(config: ResolvedConfig): PreprocessorGroup {
+// 	return {
+// 		markup({ content, filename }) {
+// 			return preprocess(
+// 				content,
+// 				{
+// 					script: createViteScriptPreprocessor(),
+// 					style: createViteStylePreprocessor(config)
+// 				},
+// 				{ filename }
+// 			);
+// 		}
+// 	} as PreprocessorGroup;
+// }
 
 /**
- * this appends a *{} rule to component styles to force the svelte compiler to add style classes to all nodes
+ * this appends a *{} rule to component styles to force the imba compiler to add style classes to all nodes
  * That means adding/removing class rules from <style> node won't trigger js updates as the scope classes are not changed
  *
  * only used during dev with enabled css hmr
@@ -108,16 +108,16 @@ function buildExtraPreprocessors(options: ResolvedOptions, config: ResolvedConfi
 	const prependPreprocessors: PreprocessorGroup[] = [];
 	const appendPreprocessors: PreprocessorGroup[] = [];
 
-	if (options.experimental?.useVitePreprocess) {
-		log.debug('adding vite preprocessor');
-		prependPreprocessors.push(createVitePreprocessorGroup(config));
-	}
+	// if (options.experimental?.useVitePreprocess) {
+	// 	log.debug('adding vite preprocessor');
+	// 	prependPreprocessors.push(createVitePreprocessorGroup(config));
+	// }
 
 	// @ts-ignore
-	const pluginsWithPreprocessorsDeprecated = config.plugins.filter((p) => p?.sveltePreprocess);
+	const pluginsWithPreprocessorsDeprecated = config.plugins.filter((p) => p?.imbaPreprocess);
 	if (pluginsWithPreprocessorsDeprecated.length > 0) {
 		log.warn(
-			`The following plugins use the deprecated 'plugin.sveltePreprocess' field. Please contact their maintainers and ask them to move it to 'plugin.api.sveltePreprocess': ${pluginsWithPreprocessorsDeprecated
+			`The following plugins use the deprecated 'plugin.imbaPreprocess' field. Please contact their maintainers and ask them to move it to 'plugin.api.imbaPreprocess': ${pluginsWithPreprocessorsDeprecated
 				.map((p) => p.name)
 				.join(', ')}`
 		);
@@ -126,18 +126,18 @@ function buildExtraPreprocessors(options: ResolvedOptions, config: ResolvedConfi
 			if (!p.api) {
 				p.api = {};
 			}
-			if (p.api.sveltePreprocess === undefined) {
+			if (p.api.imbaPreprocess === undefined) {
 				// @ts-ignore
-				p.api.sveltePreprocess = p.sveltePreprocess;
+				p.api.imbaPreprocess = p.imbaPreprocess;
 			} else {
 				log.error(
-					`ignoring plugin.sveltePreprocess of ${p.name} because it already defined plugin.api.sveltePreprocess.`
+					`ignoring plugin.imbaPreprocess of ${p.name} because it already defined plugin.api.imbaPreprocess.`
 				);
 			}
 		});
 	}
 
-	const pluginsWithPreprocessors: Plugin[] = config.plugins.filter((p) => p?.api?.sveltePreprocess);
+	const pluginsWithPreprocessors: Plugin[] = config.plugins.filter((p) => p?.api?.imbaPreprocess);
 	const ignored: Plugin[] = [],
 		included: Plugin[] = [];
 	for (const p of pluginsWithPreprocessors) {
@@ -153,18 +153,18 @@ function buildExtraPreprocessors(options: ResolvedOptions, config: ResolvedConfi
 	}
 	if (ignored.length > 0) {
 		log.debug(
-			`Ignoring svelte preprocessors defined by these vite plugins: ${ignored
+			`Ignoring imba preprocessors defined by these vite plugins: ${ignored
 				.map((p) => p.name)
 				.join(', ')}`
 		);
 	}
 	if (included.length > 0) {
 		log.debug(
-			`Adding svelte preprocessors defined by these vite plugins: ${included
+			`Adding imba preprocessors defined by these vite plugins: ${included
 				.map((p) => p.name)
 				.join(', ')}`
 		);
-		appendPreprocessors.push(...pluginsWithPreprocessors.map((p) => p.api.sveltePreprocess));
+		appendPreprocessors.push(...pluginsWithPreprocessors.map((p) => p.api.imbaPreprocess));
 	}
 
 	if (options.hot && options.emitCss) {

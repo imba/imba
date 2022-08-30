@@ -17,14 +17,15 @@
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
   "scripts": {
-    "dev": "../imba/bin/imba build -wM --node.external +devDependencies --esm src/index.ts"
+    "dev": "../imba/bin/imba build -wM --node.external +devDependencies --esm src/index.ts",
+    "build:ci": "rimraf dist && tsup-node src/index.ts --format esm,cjs --no-splitting --shims",
+    "build": "npm run build:ci -- --dts --sourcemap"
   },
-
   "engines": {
     "node": "^14.18.0 || >= 16"
   },
@@ -66,6 +67,7 @@
     "@types/diff-match-patch": "^1.0.32",
     "diff-match-patch": "^1.0.5",
     "esbuild": "^0.15.5",
+    "rimraf": "^3.0.2",
     "rollup": "^2.78.1",
     "svelte": "^3.49.0",
     "tsup": "^6.2.2",
