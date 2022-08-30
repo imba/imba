@@ -2,7 +2,6 @@
 const puppeteer = require "puppeteer"
 const path = require "path"
 const fs = require "fs"
-# const compiler = require "../compiler.imba.js"
 const compiler = require "../dist/compiler.cjs"
 const helpers = compiler.helpers
 const http = require('http')

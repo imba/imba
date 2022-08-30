@@ -227,7 +227,7 @@ let bundles = [
 			"workers.imba"
 		],
 		outExtension: { ".js": ".imba.js" },
-		minify: false,
+		minify: true,
 		external: ["chokidar", "esbuild"],
 		outdir: ".",
 		format: "cjs",

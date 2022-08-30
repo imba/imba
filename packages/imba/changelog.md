@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.219
 
 * Add import handler for `?serviceworker` suffix.
 
