@@ -10,6 +10,8 @@
 
 * Deprecate `ts` shorthand for `text-shadow` - use `txs` instead.
 
+* Support two parameters in css property `gap`
+
 ## 2.0.0-alpha.216
 
 Last version (with new features) before `beta.1`. This release contains breaking changes in the bundler that need to be tested thoroughly before beta.
