@@ -46,6 +46,7 @@
   "homepage": "https://imba.io",
   "dependencies": {
     "@rollup/pluginutils": "^4.2.1",
+    "cross-env": "^7.0.3",
     "debug": "^4.3.4",
     "deepmerge": "^4.2.2",
     "kleur": "^4.1.5",
