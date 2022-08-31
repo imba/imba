@@ -24,7 +24,7 @@
   "scripts": {
     "dev": "../imba/bin/imba build -wM --node.external +devDependencies --esm src/index.ts",
     "build:ci": "rimraf dist && ../imba/bin/imba build -M --node.external +devDependencies --esm src/index.ts",
-    "build": "npm run build:ci -- --dts --sourcemap"
+    "build": "npm run build:ci"
   },
   "engines": {
     "node": "^14.18.0 || >= 16"
