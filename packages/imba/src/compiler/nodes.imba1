@@ -669,7 +669,7 @@ export class Stack
 			src = @options:path.relative(cwd,src)
 
 		unless src
-			throw "Include sourceId or sourcePath in options compile(code,options)"
+			throw Error.new("Include sourceId or sourcePath in options compile(code,options)")
 
 		@sourceId = helpers.identifierForPath(src)
 		return @sourceId

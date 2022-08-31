@@ -1,0 +1,24 @@
+{
+  "name": "vite-plugin-svelte-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:serve": "vitest run -c vitest.config.e2e.ts",
+    "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "css-color-names": "^1.0.1",
+    "fs-extra": "^10.1.0",
+    "imba": "../imba",
+    "playwright-core": "^1.25.1",
+    "tree-kill": "^1.2.2",
+    "vite-plugin-imba": "../vite-plugin-imba",
+    "vitest": "^0.22.1"
+  },
+  "type": "module",
+  "dependencies": {
+    "execa": "^6.1.0",
+    "node-fetch": "^3.2.10"
+  }
+}

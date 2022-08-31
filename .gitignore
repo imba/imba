@@ -4,6 +4,7 @@
 .vscode
 
 tmp
+temp
 test/perf
 test/dist
 packages/imba/test/cli/examples/dist

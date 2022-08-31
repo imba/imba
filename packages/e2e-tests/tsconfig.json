@@ -1,0 +1,21 @@
+{
+	"include": ["."],
+	"exclude": ["**/dist/**","**/build/**","**/node_modules/**"],
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"outDir": "dist",
+		"baseUrl": ".",
+		"allowJs": true,
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"moduleResolution": "node",
+		"skipLibCheck": true,
+		"noUnusedLocals": true,
+		"jsx": "preserve",
+		"types": ["vite/client", "vitest/globals", "node"],
+		"paths": {
+			"~utils": ["./testUtils.ts"]
+		}
+	}
+}
