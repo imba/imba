@@ -60,14 +60,14 @@ const startPlaywrightServer = async () => {
 };
 
 export async function setup() {
-	if (!isCI) {
-		// TODO currently this builds twice when running yarn test
-		console.log('');
-		console.log('preparing non ci env...');
-		await syncNodeModules();
-		await buildPackagesUnderTest();
-		console.log('preparations done');
-	}
+	// if (!isCI) {
+	// TODO currently this builds twice when running yarn test
+	console.log('');
+	console.log('preparing non ci env...');
+	await syncNodeModules();
+	await buildPackagesUnderTest();
+	console.log('preparations done');
+	// }
 	console.log('Starting playwright server ...');
 	const browserServer = await startPlaywrightServer();
 	console.log('Playwright server running');
