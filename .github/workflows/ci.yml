@@ -1,0 +1,112 @@
+# build and test on linux, windows, mac with node  14, 16, 18
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  # "checks" job runs on linux + 16 only and checks that install, build, lint and audit work
+  # it also primes the pnpm store cache for linux, important for downstream tests
+  checks:
+    timeout-minutes: 5
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # pseudo-matrix for convenience, NEVER use more than a single combination
+        node: [16]
+        os: [ubuntu-latest]
+    outputs:
+      build_successful: ${{ steps.build.outcome == 'success' }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+      - name: build imba
+        run: |
+          cd packages/imba
+          npm install
+          npm run build
+          npm link
+        env:
+          CI: true
+      - name: build the vite plugin
+        run: |
+          cd packages/vite-plugin-imba
+          npm install
+          npm run build
+          npm link imba
+          npm link
+      - name: run tests
+        run: |
+          cd packages/e2e-tests
+          npm install
+          npm run test:serve
+          npm run test:build
+
+  # this is the test matrix, it runs with node16 on linux,windows,macos + node14,18 on linux
+  # it is skipped if the build step of the checks job wasn't successful (still runs if lint or audit fail)
+  test:
+    needs: checks
+    if: (${{ success() }} || ${{ failure() }}) && (${{ needs.checks.output.build_successful }})
+    timeout-minutes: 10
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [16]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - node: 14
+            os: ubuntu-latest
+          - node: 18
+            os: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+      - name: build imba
+        run: |
+          cd packages/imba
+          npm install
+          npm run build
+          npm link
+        env:
+          CI: true
+      - name: build the vite plugin
+        run: |
+          cd packages/vite-plugin-imba
+          npm install
+          npm run build
+          npm link imba
+          npm link
+      - name: run tests
+        run: |
+          cd packages/e2e-tests
+          npm install
+          npm run test:serve
+          npm run test:build
+      - name: archive tests temp directory
+        if: failure()
+        shell: bash
+        run: tar -cvf test-temp.tar  --exclude="node_modules"  temp/
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: test-failure-${{github.run_id}}-${{ matrix.os }}-${{ matrix.node }}
+          path: |
+            test-temp.tar

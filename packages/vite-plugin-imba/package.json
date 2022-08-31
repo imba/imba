@@ -23,7 +23,7 @@
   },
   "scripts": {
     "dev": "../imba/bin/imba build -wM --node.external +devDependencies --esm src/index.ts",
-    "build:ci": "rimraf dist && tsup-node src/index.ts --format esm,cjs --no-splitting --shims",
+    "build:ci": "rimraf dist && ../imba/bin/imba build -M --node.external +devDependencies --esm src/index.ts",
     "build": "npm run build:ci -- --dts --sourcemap"
   },
   "engines": {
