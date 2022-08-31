@@ -22,8 +22,8 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "dev": "../imba/bin/imba build -wM --node.external +devDependencies --esm src/index.ts",
-    "build:ci": "rimraf dist && ../imba/bin/imba build -M --node.external +devDependencies --esm src/index.ts",
+    "dev": "cross-env ../imba/bin/imba build -wM --node.external +devDependencies --esm src/index.ts",
+    "build:ci": "cross-env rimraf dist && ../imba/bin/imba build -M --node.external +devDependencies --esm src/index.ts",
     "build": "npm run build:ci"
   },
   "engines": {
