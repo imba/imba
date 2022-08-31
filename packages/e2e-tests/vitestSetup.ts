@@ -6,7 +6,7 @@ import type { File } from 'vitest';
 import { beforeAll } from 'vitest';
 import os from 'os';
 import { fileURLToPath } from 'url';
-
+import {execa} from 'execa'
 export const isBuild = !!process.env.TEST_BUILD;
 export const isWin = process.platform === 'win32';
 export const isCI = !!process.env.CI;
@@ -101,6 +101,7 @@ beforeAll(
 			// if this is a test placed under e2e-tests/xxx/__tests__
 			// start a vite server in that directory.
 			if (testName) {
+				console.log(testName)
 				page.on('console', onConsole);
 				const e2eTestsRoot = path.dirname(fileURLToPath(import.meta.url));
 

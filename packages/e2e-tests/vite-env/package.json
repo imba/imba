@@ -9,8 +9,7 @@
   },
   "devDependencies": {
     "vite-plugin-imba": "../../vite-plugin-imba",
-	"imba": "latest",
-    "svelte": "^3.49.0",
+	"imba": "../../imba",
     "vite": "^3.0.9"
   },
   "type": "module"

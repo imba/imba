@@ -29,7 +29,18 @@ const syncNodeModules = async () => {
 		['install', '--prefer-frozen-lockfile', '--prefer-offline', '--no-lockfile', '--silent'],
 		{ stdio: 'inherit' }
 	);
-	console.log('syncing node_modules done');
+	console.log('install dependencies in all subfolders');
+	let testDirs = await fs.readdir("./", { withFileTypes: true });
+	testDirs = testDirs.filter(dir=> dir.isDirectory() && dir.name !== "node_modules")
+	await Promise.all(
+		testDirs
+			.map(dir=>execa('npm', ['install'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+	)
+	// await execa(
+	// 	'npm',
+	// 	['link', 'vite-plugin-imba'],
+	// 	{ stdio: 'inherit' }
+	// );
 };
 
 const startPlaywrightServer = async () => {
