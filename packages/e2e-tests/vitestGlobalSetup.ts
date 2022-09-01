@@ -17,7 +17,7 @@ const DIR = path.join(os.tmpdir(), 'vitest_playwright_global_setup');
 
 const buildPackagesUnderTest = async () => {
 	console.log('building packages');
-	await execa('npm', ['run', 'build:ci'], { stdio: 'inherit', cwd: pluginDir });
+	await execa('npm', ['run', 'build'], { stdio: 'inherit', cwd: pluginDir });
 	console.log('building packages done');
 };
 

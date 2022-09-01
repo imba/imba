@@ -23,8 +23,7 @@
   },
   "scripts": {
     "dev": "cross-env npx imba build -wM --node.external +devDependencies --esm src/index.ts",
-    "build:ci": "cross-env rimraf dist && npx imba build -M --node.external +devDependencies --esm src/index.ts",
-    "build": "npm run build:ci"
+    "build": "cross-env rimraf dist && npx imba build -M --node.external +devDependencies --esm src/index.ts"
   },
   "engines": {
     "node": "^14.18.0 || >= 16"
