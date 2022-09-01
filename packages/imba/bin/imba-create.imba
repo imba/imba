@@ -24,6 +24,7 @@ let imbapkg = read-package(imbadir) # JSON.parse(nfs.readFileSync(np.resolve(imb
 
 const templates = [
 	['base-template', 'Application with client-side scripts'],
+	['vite-template', 'Application using Vite and vite-plugin-imba'],
 	['electron-template', 'Electron application']
 ].map do([name,hint]) {name: name, hint: hint}
 

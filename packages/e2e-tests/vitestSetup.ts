@@ -112,9 +112,7 @@ beforeAll(
 					'node_modules',
 					'__tests__',
 					'dist',
-					'build',
-					'.svelte',
-					'.svelte-kit'
+					'build'
 				];
 				testDir = tempDir;
 				const isIgnored = (file) => {
