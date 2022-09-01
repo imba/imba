@@ -49,12 +49,10 @@
     "debug": "^4.3.4",
     "deepmerge": "^4.2.2",
     "kleur": "^4.1.5",
-    "magic-string": "^0.26.2",
-    "svelte-hmr": "^0.14.12"
+    "magic-string": "^0.26.2"
   },
   "peerDependencies": {
     "diff-match-patch": "^1.0.5",
-    "svelte": "^3.44.0",
     "vite": "^3.0.0"
   },
   "peerDependenciesMeta": {
@@ -69,8 +67,6 @@
     "esbuild": "^0.15.5",
     "rimraf": "^3.0.2",
     "rollup": "^2.78.1",
-    "svelte": "^3.49.0",
-    "tsup": "^6.2.2",
     "vite": "^3.0.9",
 	"imba": "../imba"
   }
