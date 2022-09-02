@@ -3,7 +3,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	mode: 'staging',
-	plugins: [imba()],
+	plugins: [imba({
+		hot: true
+	})],
+	resolve: {
+		extensions: ['.imba']
+	},
 	build: {
 		// make build faster by skipping transforms and minification
 		target: 'esnext',

@@ -201,7 +201,6 @@ export function imba(inlineOptions?: Partial<Options>): Plugin[] {
           cache.setError(imbaRequest, e);
           throw toRollupError(e, options);
         }
-        // debugger
         logCompilerWarnings(
           imbaRequest,
           compileData.compiled.warnings,
@@ -223,7 +222,7 @@ export function imba(inlineOptions?: Partial<Options>): Plugin[] {
           },
         };
       },
-
+	  
       handleHotUpdate(
         ctx: HmrContext,
       ): void | Promise<Array<ModuleNode> | void> {

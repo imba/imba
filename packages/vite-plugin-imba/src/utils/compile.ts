@@ -2,7 +2,7 @@ import { CompileOptions, ResolvedOptions } from './options';
 import {compile} from '../../../imba/dist/compiler.mjs'
 
 // @ts-ignore
-import { createMakeHot } from 'imba-hmr';
+import { createMakeHot } from '../imba-hmr';
 import { ImbaRequest } from './id';
 import { safeBase64Hash } from './hash';
 import { log } from './log';
@@ -102,25 +102,25 @@ const _createCompileImba = (makeHot?: Function) =>
 		};
 	};
 
-// function buildMakeHot(options: ResolvedOptions) {
-// 	const needsMakeHot = options.hot !== false && options.isServe && !options.isProduction;
-// 	if (needsMakeHot) {
-// 		// @ts-ignore
-// 		const hotApi = options?.hot?.hotApi;
-// 		// @ts-ignore
-// 		const adapter = options?.hot?.adapter;
-// 		return createMakeHot({
-// 			walk,
-// 			hotApi,
-// 			adapter,
-// 			hotOptions: { noOverlay: true, ...(options.hot as object) }
-// 		});
-// 	}
-// }
+function buildMakeHot(options: ResolvedOptions) {
+	const needsMakeHot = options.hot !== false && options.isServe && !options.isProduction;
+	if (needsMakeHot) {
+		// @ts-ignore
+		const hotApi = options?.hot?.hotApi;
+		// @ts-ignore
+		const adapter = options?.hot?.adapter;
+		return createMakeHot({
+			walk: ()=>1,
+			hotApi,
+			adapter,
+			hotOptions: { noOverlay: true, ...(options.hot as object) }
+		});
+	}
+}
 
 export function createCompileImba(options: ResolvedOptions) {
-	// const makeHot = buildMakeHot(options);
-	return _createCompileImba();
+	const makeHot = buildMakeHot(options);
+	return _createCompileImba(makeHot);
 }
 
 export interface Code {
