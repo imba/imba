@@ -423,7 +423,7 @@ function buildSSROptionsForImba(
 	};
 
 	if (options.isServe) {
-		// during dev, we have to externalize transitive dependencies, see https://github.com/imbajs/vite-plugin-imba/issues/281
+		// during dev, we have to externalize transitive dependencies, see https://github.com/imbajs/vite-plugin-svelte/issues/281
 		ssr.external = Array.from(
 			new Set(imbaDeps.flatMap((dep) => Object.keys(dep.pkg.dependencies || {})))
 		).filter(
