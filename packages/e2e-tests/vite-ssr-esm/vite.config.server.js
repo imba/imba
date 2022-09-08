@@ -2,8 +2,10 @@ import { build, defineConfig } from 'vite';
 import { imba } from 'vite-plugin-imba';
 import { resolve } from 'path'
 import {builtinModules} from 'module'
-const entry = resolve(__dirname, "server.imba")
 
+// Server ENTRY
+const entry = resolve(__dirname, "server.imba")
+// Needed for dev mode in order to keep built-in node modules
 const builtins = new RegExp(builtinModules.join("|"), 'gi');
 
 export default defineConfig(({ command, mode }) => {
@@ -28,9 +30,16 @@ export default defineConfig(({ command, mode }) => {
 				output: {
 					format: 'esm',
 					dir: "dist_server"
-					// dir: "./dist_server"
 				},
 				input: entry
+			}
+		},
+		server: {
+			watch: {
+				// During tests we edit the files too fast and sometimes chokidar
+				// misses change events, so enforce polling for consistency
+				usePolling: true,
+				interval: 100
 			}
 		}
 	}

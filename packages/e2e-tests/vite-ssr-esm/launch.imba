@@ -14,16 +14,17 @@ const server = await createServer
 		disabled: yes
 	server:
 		port: port
-	
-	
+		watch:
+			# // During tests we edit the files too fast and sometimes chokidar
+			# // misses change events, so enforce polling for consistency
+			usePolling: yes
+			interval: 100
+
 const builtins = new RegExp(builtinModules.join("|"), 'gi');
 # this is need to initialize the plugins
 await server.pluginContainer.buildStart({})
 
 const node = new ViteNodeServer server,
-	debug:
-		dumpModules: yes
-		loadDumppedModules: yes
 	ssr: yes
 	transformMode:
 		ssr: [builtins]
@@ -39,7 +40,7 @@ const runner = new ViteNodeRunner(
 	debug: yes
 	fetchModule: do(id)
 		id = id.replace("dist/imba.mjs", "dist/imba.node.mjs") if id.endsWith "dist/imba.mjs"
-		return node.fetchModule(id)
+		node.fetchModule(id)
 	resolveId: do(id, importer)
 		node.resolveId id, importer
 )

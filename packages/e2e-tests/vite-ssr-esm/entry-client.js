@@ -1,1 +1,1 @@
-import './entry-client.imba'
+import './src/main.imba'

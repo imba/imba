@@ -38,11 +38,7 @@ const syncNodeModules = async () => {
 	)
 	await Promise.all(
 		testDirs
-			.map(dir=>execa('npm', ['link', 'imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
-	)
-	await Promise.all(
-		testDirs
-			.map(dir=>execa('npm', ['link', 'vite-plugin-imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+			.map(dir=>execa('npm', ['link', 'imba', 'vite-plugin-imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
 	)
 };
 
