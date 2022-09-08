@@ -17,6 +17,7 @@ import { toRollupError } from "./utils/error";
 import { VitePluginImbaCache } from "./utils/vite-plugin-imba-cache";
 import { resolveViaPackageJsonImba } from "./utils/resolve";
 import { ensureWatchedFile, setupWatchers } from "./utils/watch";
+import url from 'url'
 
 export def imba(inlineOptions\Partial<Options> = {})
 	let name = "vite-plugin-imba"
@@ -116,7 +117,8 @@ export def imba(inlineOptions\Partial<Options> = {})
 	def configureServer(server)
 		_options.server = server
 		server.middlewares.use do(req, res, next)
-			if req.url.endsWith ".imba"
+			const pathname = url.parse(req.url).pathname;
+			if pathname.endsWith ".imba"
 				req.url += "?import"
 				res.setHeader "Content-Type", "application/javascript"
 			next()
