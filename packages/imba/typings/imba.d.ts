@@ -659,6 +659,9 @@ declare namespace imba {
 
     function run(callback: any): void;
     function autorun(callback: any): Reaction;
+
+
+    function property<T>(accessor: T): T;
 }
 
 declare module "data:text/asset;*" {

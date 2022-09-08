@@ -153,7 +153,8 @@ export var OP = do |op, l, r|
 
 	switch o
 		when '.','?.'
-			if l isa Super
+			if l isa Super and !l.member
+				
 				l.member = r
 				return l
 
@@ -636,11 +637,11 @@ export class Stack
 	def generateId ns = 'oid'
 		AST.counterToShortRef(STACK.incr(ns))
 		
-	def getSymbol ref, alias = null
+	def getSymbol ref, alias = null, name = ''
 		let key = ref or incr('symbols')
 		# ref ||= "" + incr('symbols')
 		# Belongs in root
-		@symbols[key] ||= @root.declare((alias or ref),LIT('Symbol()'),system: yes, alias: (alias or ref)).resolve.c
+		@symbols[key] ||= @root.declare((alias or ref),LIT("Symbol({name ? helpers.singlequote(name) : ''})"),system: yes, alias: (alias or ref)).resolve.c
 		
 	def symbolFor name
 		@root.symbolRef(name)
@@ -929,8 +930,8 @@ export class Node
 	def oid
 		@oid ||= STACK.generateId('')
 		
-	def osym ns = ''
-		STACK.getSymbol(oid + ns)
+	def osym ns = '',name = ''
+		STACK.getSymbol(oid + ns,null,name)
 
 	def symbolRef name
 		STACK.root.symbolRef(name)
@@ -1921,6 +1922,16 @@ export class Block < ListNode
 
 class ClassInitBlock < Block
 
+	def c o
+		# @options ||= {}
+		# @options:braces = yes
+		let out = super
+		return 'static {\n' + helpers.indent(out) + '}'
+
+	# def js o, opts
+	#	let out = super(o,opts)
+	#	return 'static {\n' + out + '}'
+
 class InstanceInitBlock < Block
 
 class InstancePatchBlock < InstanceInitBlock
@@ -1944,6 +1955,14 @@ export class ClassField < Node
 
 		if watchBody
 			@descriptor = STACK.root.declare("{oid}$Prop",util.watcher(storageSymbol,watcherSymbol), type: 'const', system: yes)
+
+
+		if wrapper
+			yes
+			wrapper.@scope = @vscope = FieldScope.new(wrapper)
+			wrapper.@scope.@parent = scope__
+			wrapper.traverse
+			# @getter = CALL(OP('.',THIS,@name),[])
 		self
 	
 
@@ -1986,6 +2005,9 @@ export class ClassField < Node
 	def watchBody
 		option(:watch)
 
+	def wrapper
+		option(:wrapper)
+
 	def loc
 		[@name.@loc,@name.region[1]]
 
@@ -1994,23 +2016,72 @@ export class ClassField < Node
 		
 		let up = STACK.current
 		let out
+		
 		if up isa ClassBody
 			# return if isPlain
 			let prefix = isStatic ? "{M('static',option(:static))} " : ''
 			let name = name isa IdentifierExpression ? name.asObjectKey : name.c(as: 'field')
 
+			if wrapper
+				let meta = @metaname = @name.metaIdentifier
+				let slot = osym('slot',String(@name))
+				let metasym = osym('meta')
+				let op = OP('.',LIT('this'),meta)
+				# console.log "type of name {meta:constructor} {meta.c}"
+				let args = "this,{slot},{@name.c(as: 'value')}"
+				@getter = LIT("()\{ return {op.c}.get({args}) \}")
+				@setter = LIT("(val)\{ {op.c}.set(val,{args}) \}")
+				let inner = "{runtime:property}({wrapper.c}).accessor(null,{args},{meta.c(as: 'value')},{metasym})"
+				inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
+				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
+
+
 			if STACK.tsc
-				out = "{prefix}{M(name,@name)}" # the value scope?
-				out += " = {value.c};" if value
+				# console.log 'here',STACK.tsc
+				if wrapper
+					let setter = "{prefix}set {M(name,@name)}{self.setter.c(keyword: '')}"
+					let getter = "{prefix}get {M(name,@name)}{self.getter.c(keyword: '')}"
 
-				let typ = datatype
-				if typ
-					out = "{typ.c} {out}"
+					if datatype
+						getter = "{datatype.c} {getter}"
 
-			elif self isa ClassAttribute or (@decorators && @decorators:length > 0 and false)
+					out = "{setter}\n{getter}\n{prefix}get {@handler.c}"
+
+					if !isStatic
+						# how would this fare with class extensions?
+						out += "\nstatic get {M(@metaname.c(as: 'field'),@name)}()\{ return {OP('.',LIT('this.prototype'),@metaname).c} \}"
+					return out
+
+				if self isa ClassAttribute or (@decorators and @decorators:length)
+					let val = value ? value.c : ''
+					let field = ''
+					let getval = ''
+					let setval = ''
+					let sym = osym
+
+					out = "{prefix} get {M(name,@name)}() \{ return {getval} \}" # the value scope?
+					
+					if datatype
+						out = "{datatype.c} {out}"
+					out += "\n{prefix} set {M(name,@name)}(val) \{ {setval} \}"
+
+				else
+					
+					out = "{prefix}{M(name,@name)}" # the value scope?
+					out += " = {value.c};" if value
+
+					let typ = datatype
+					if typ
+						out = "{typ.c} {out}"
+
+			elif self isa ClassAttribute or (@decorators && @decorators:length > 0 and false) or wrapper
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
 				let getter = "{prefix}get {name}{self.getter.c(keyword: '')}"
 				out = "{setter}\n{getter}"
+
+				if wrapper
+					# let wr = "{runtime:property}({wrapper.c}).accessor()"
+					out += "\n{prefix}get {@handler.c}"
 
 			return out
 		
@@ -2098,26 +2169,11 @@ export class ClassField < Node
 
 	def getter
 		@getter ||= if true
-			return parseTemplate('(){ return $get$; }')
-			let op = GET(THIS,storageSymbol)
-			return FN([],[op])
-
-			# let op = OP('.',THIS,storageKey)
-			let op = CALL(GET(storageMap,'get'),[THIS])
-			let getter = op
-			if value and false # and (!(value isa Str) and !(value isa Str) and !(value isa Bool) or @decorators)
-				let inlined = (value isa Num) or (value isa Str) or (value isa Bool)
-				let has = CALL(GET(storageMap,'has'),[THIS])
-				if inlined
-					op = METH([],[If.ternary(has,op,value)])
-				else
-					let setter = CALL(GET(storageMap,'set'),[THIS,value])
-					op = IF(OP('!',has),setter)
-					op = METH([],[op,BR,getter])
-				op.traverse
-				return op
+			if wrapper
+				LIT("()\{ return this.__{name.c}.get(this,{name.toStr.c},{osym}) \}")
+				# parseTemplate('(){ return this.__$name$.get(this,); }')
 			else
-				return FN([],[op])
+				parseTemplate('(){ return $get$; }')
 
 	def setterForValue value
 		OP('=',OP('.',THIS,storageKey),value)
@@ -2126,6 +2182,9 @@ export class ClassField < Node
 		tpl = tpl.replace(/\$(\w+)\$/g) do |m,key|
 			if key == 'get'
 				GET(THIS,storageSymbol).c
+			elif key == 'name'
+				name.c
+				
 			elif key == 'set'
 				OP('=',GET(THIS,storageSymbol),LIT('value')).c
 			elif key == 'watcher'
@@ -3182,6 +3241,8 @@ export class ClassDeclaration < Code
 	def staticInit
 		# @superclass ? 'super.inherited instanceof Function && super.inherited(this)' : 'this'
 		@staticInit ||= addMethod(initKey,[],'this').set(static: yes)
+		# add static block
+		
 	
 	def initKey
 		@initKey ||= (STACK.tsc ? STACK.root.symbolRef('#__init__') : SymbolIdentifier.new('#__init__'))
@@ -3437,8 +3498,8 @@ export class ClassDeclaration < Code
 		if tsc and ctor and @autosuper
 			ctor.body.add([LIT("super()"),BR],0)
 			
-		if !staticInits.isEmpty and !tsc
-			staticInit.inject(staticInits,0)
+		
+			# staticInit.inject(staticInits,0)
 			
 		if !STACK.tsc
 			let hasInitedHook = !!instanceMethodMap["#__inited__"]
@@ -3447,7 +3508,8 @@ export class ClassDeclaration < Code
 			if hasDecorators
 				STACK.use('hooks')
 				let decosym = STACK.symbolFor('#__hooks__')
-				staticInit.inject LIT("this.prototype[{decosym}] = {runtime:hooks}"), 0
+				staticInits.unshift LIT("this.prototype[{decosym}] = {runtime:hooks}"), yes
+				# staticInit.inject LIT("this.prototype[{decosym}] = {runtime:hooks}"), 0
 			
 			if !isTag and !ctor and (hasInitedHook or hasDecorators)
 				let ops = sup ? [Super.new(),BR] : [BR]
@@ -3465,7 +3527,7 @@ export class ClassDeclaration < Code
 
 				if sup
 					let refsym = STACK.getSymbol()
-					staticInit.inject LIT("this.prototype[{ctorsym}] = {refsym}"), 0
+					staticInits.unshift LIT("this.prototype[{ctorsym}] = {refsym}"), 0
 					if hasInitedHook
 						ctor.inject LIT("if(this[{ctorsym}]==={refsym}) ({initedHook},this[{initsym}]());")
 					else
@@ -3480,7 +3542,8 @@ export class ClassDeclaration < Code
 
 				# If we are not in the stdlib / core - add an inherited hook for the class?
 				# ctor.body.add([callop,BR],0)
-
+		if !staticInits.isEmpty and !tsc
+			body.add([BR,staticInits])
 		self
 
 	def addMethod name, params, mbody, options, cb
@@ -3582,10 +3645,12 @@ export class ClassDeclaration < Code
 		if option(:global)
 			# external access?
 			# js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
+			let access = name isa Access
+			let getter = name isa Access ? name.c : @cname
 			if STACK.tsc and true
-				js = "{js}; export \{{@cname}\}; {scope__.root.globalRef}.{@cname} = {@cname}"
+				js = "{js};{!access ? " export \{{@cname}\};" : ""} {scope__.root.globalRef}.{@cname} = {getter}"
 			else
-				js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
+				js = "{js}; {scope__.root.globalRef}.{@cname} = {getter}"
 
 		return js
 
@@ -5656,6 +5721,7 @@ export class Assign < Op
 		# The special case where setting `item = item` should compile to `self.item = item`
 		if l isa VarOrAccess and r isa VarOrAccess and l.@identifier.symbol == r.@identifier.symbol
 			@left = l = Access.new(".",scope__.context,l.@value)
+
 			
 		# console.log "Assign {l} {r}"
 		# Regularly, the var is declared after the right side, so `let item = item` resolves to
@@ -5687,6 +5753,7 @@ export class Assign < Op
 				left.forceExpression
 
 			return right.consume(self).c(o)
+			
 		# testing this
 		return super(o)
 
@@ -5703,8 +5770,11 @@ export class Assign < Op
 
 		var l = left.node
 		var r = right
+		var lc = null
+	
 
-		if l isa Access and l.left isa Super
+
+		if l isa Access and l.left isa Super and false
 			if let m = STACK.method
 				if m.option('inExtension')
 					let key = l.right
@@ -5718,6 +5788,7 @@ export class Assign < Op
 		# We are setting self(!)
 		# TODO document functionality
 
+		# FIXME Not supported anymore?
 		if l isa Self
 			var ctx = scope__.context
 			l = ctx.reference
@@ -5725,8 +5796,13 @@ export class Assign < Op
 		if l isa VarReference
 			l.@right = r
 			return l.c
+
+		# test for typescript namespacing
+		if l isa Access and l.@left.@value == 'OPS' and STACK.tsc
+			lc = "globalThis.{M(helpers.toNamespacedIdentifier('OPS',String(l.@right)),l.@right)}"
+			
 		
-		var lc = l.c
+		lc ||= l.c
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
 		if let typ = (datatype or (l and !(l isa VarReference) and l.datatype))
@@ -5905,6 +5981,9 @@ export class Identifier < Node
 	def references variable
 		@value.@variable = variable if @value
 		self
+	
+	def metaIdentifier
+		Identifier.new('αα' + AST.sym(@value))
 
 	def load v
 		return (v isa Identifier ? v.value : v)
@@ -5975,6 +6054,12 @@ export class Identifier < Node
 			if o:as == 'value'
 				# console.log 'compiling identifier as',o:as,symbol
 				return "'{symbol}'"
+			
+			if o:as == 'meta'
+				return "'{symbol}'"
+
+			if o:as == 'namespaced' and o:ns
+				return M("Σ{o:ns}Σ{symbol}",@token or @value)
 
 			if o:as == 'field' and !isValidIdentifier
 				return M("['{symbol}']",@token or @value)
@@ -6031,6 +6116,9 @@ export class SymbolIdentifier < Identifier
 
 	def variable
 		@variable ||= scope__.root.symbolRef(@value.slice(0))
+
+	def metaIdentifier
+		scope__.root.symbolRef("__" + @value.slice(0))
 		
 	def isConstant
 		yes
@@ -6171,6 +6259,21 @@ export class Decorator < ValueNode
 		if let block = up
 			block.@decorators ||= []
 			block.@decorators.push(self)
+
+	def tscGetter name, content = null
+		let out = @value.c
+		
+		if @params
+			out += "({@params.c(expression: yes)})"
+		else
+			out += "()"
+
+		if content
+			out += ".wrap({content})"
+
+		# out += ".get(this,{content or 'null'})"
+		
+		return out
 
 	def c 
 		# should return other places as well...
@@ -12572,11 +12675,6 @@ export class Super < Node
 		args.traverse if args	
 		self
 
-	def replaceWithInitor
-		if up isa Call
-			yes
-
-
 	def startLoc
 		@keyword and @keyword.startLoc
 
@@ -12597,8 +12695,6 @@ export class Super < Node
 		let args = self.args
 		
 		# need to know if our method is in the initial declaration
-		
-
 		if virtual and @class
 			
 			sup = CALL(@class.virtualSuper,[slf])
@@ -12627,6 +12723,9 @@ export class Super < Node
 				op = CALL(op,args)
 
 			return op ? (M op.c(mark: false), @keyword) : '/**/'
+
+		if member
+			return OP('.',sup,member).c
 
 		if up isa Call and m and !m.isConstructor
 			return OP('.',sup,m.name).c

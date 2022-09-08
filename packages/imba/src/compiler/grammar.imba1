@@ -960,7 +960,7 @@ var grammar =
 	ClassFieldDeclaration: [
 		o 'ClassField ClassFieldOp Expression' do A1.set(value: A3,op: A2) # ClassField.new(A1, A3)
 		o 'ClassField' do A1
-		o 'ClassFieldDeclaration @ WatchBody' do A1.set(watch: A3)
+		o 'ClassFieldDeclaration @ Expression' do A1.set(wrapper: A3)
 		o 'ClassFieldDeclaration DECORATOR WatchBody' do A1.set(watch: A3)
 
 	]
@@ -985,6 +985,7 @@ var grammar =
 		o 'PROP ClassFieldIdentifier' do ClassProperty.new(A2).set(keyword: A1)
 		o 'ATTR ClassFieldIdentifier' do ClassAttribute.new(A2).set(keyword: A1)
 		o 'ClassField Type' do A1.set(datatype: A2)
+		o 'ClassField CALL_START CALL_END' do A1.set(controller: A2)
 	]
 	
 	ClassFieldIdentifier: [

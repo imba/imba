@@ -87,7 +87,7 @@ var METHOD_IDENTIFIER = /// ^
 # added hyphens to identifiers now - to test
 var IDENTIFIER = /// ^
 	(
-		(\$|##|#|@|\%)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
+		(\$|##|#|@@|@|\%)[\$\wA-Za-z_\-\x7f-\uffff][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]? |
 		[$A-Za-z_][$\w\x7f-\uffff]* (\-[$\w\x7f-\uffff]+)* [\?]?
 	)
 	( [^\n\S]* : )?  # Is this a property name?
@@ -1992,7 +1992,7 @@ export class Lexer
 			let next = @chunk[1] or ''
 			if value == '.' and (!next or TSC_CARET_BEFORE[next])
 				token('IDENTIFIER','$CARET$',0,1)
-			elif value == '@' and (!next or (/[^\$\@\-\.\w]/).test(next))
+			elif value == '@' and (!next or (/[^\$\@\-\.\w]/).test(next)) and false
 				token('IDENTIFIER','$CARET$',0,1)
 
 		return value:length

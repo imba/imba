@@ -365,6 +365,9 @@ export default class Service < EventEmitter
 				for key in ['text','context','trigger','applicable']
 					if let span = res[key + 'Span']
 						convertSpan(span,ls,filename,key)
+			
+			if res.textSpan
+				res.#scope = "{filename}:{res.textSpan.start}"
 
 			if res.textChanges
 				for item in res.textChanges
