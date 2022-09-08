@@ -88,7 +88,7 @@ def run
 	try
 		let tplname = await cli.select("Choose your template",templates)
 		let tplurl = "https://github.com/imba/imba-{tplname}"
-		let tplpkg = await read-package("https://raw.githubusercontent.com/imba/imba-{tplname}/master/package.json")
+		let tplpkg = await read-package("https://raw.githubusercontent.com/imba/imba-{tplname}/main/package.json")
 		
 		let name = process.argv[2] or ''
 		
