@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-imba",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "license": "MIT",
   "author": "Abdellah Alaoui",
   "files": [
@@ -23,10 +23,10 @@
   },
   "scripts": {
     "dev": "cross-env npx imba build -wM --node.external +devDependencies --esm src/index.imba",
-	"build": "cross-env rimraf dist && npm run build:esm && npm run build:cjs",
+    "build": "cross-env rimraf dist && npm run build:esm && npm run build:cjs",
     "build:esm": "npx imba build --keep -M --node.external +devDependencies --esm src/index.imba",
     "build:cjs": "npx imba build --keep -M --node.external +devDependencies src/index.imba",
-	"test": "cross-env rimraf ../../temp && cd ../e2e-tests && npm run test:serve && npm run test:build"
+    "test": "cross-env rimraf ../../temp && cd ../e2e-tests && npm run test:serve && npm run test:build"
   },
   "engines": {
     "node": "^14.18.0 || >= 16"
