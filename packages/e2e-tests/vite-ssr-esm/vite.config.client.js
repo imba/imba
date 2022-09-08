@@ -2,7 +2,9 @@ import { build, defineConfig } from 'vite';
 import { imba } from 'vite-plugin-imba';
 import { resolve } from 'path'
 import {builtinModules} from 'module'
-const entry = resolve(__dirname, "src/entry-client.imba")
+
+// ENTRY
+const entry = resolve(__dirname, "src/main.imba")
 
 export default defineConfig(({ command, mode }) => {
 	return {
@@ -18,16 +20,18 @@ export default defineConfig(({ command, mode }) => {
 				output: {
 					dir: "./dist",
 					name: "main",
-					// assetFileNames:{
-					// 	entryFileNames: "assets/[name].js",
-					// 	chunkFileNames: "assets/[name].js",
-					// 	assetFileNames: "assets/[name].[ext]"
-					// }
 				},
 				input:{
 					entry,
-
 				},
+			}
+		},
+		server: {
+			watch: {
+				// During tests we edit the files too fast and sometimes chokidar
+				// misses change events, so enforce polling for consistency
+				usePolling: true,
+				interval: 100
 			}
 		}
 	}
