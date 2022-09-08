@@ -69,6 +69,7 @@
     "./compiler": "./dist/compiler.mjs"
   },
   "exports": {
+	"./server": "./dist/imba.node.mjs",
     ".": {
       "imba": "./src/imba/imba.imba",
       "browser": "./dist/imba.mjs",

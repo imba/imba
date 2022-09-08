@@ -59,8 +59,8 @@ export async function serve(root, isBuild, port) {
 		Array.prototype.push.apply(arr, lines);
 	};
 	const collectLogs = (proc, { out, err }) => {
-		proc.stdout.on('data', (d) => pushLines(d.toString(), out));
-		proc.stderr.on('data', (d) => pushLines(d.toString(), err));
+		proc.stdout.on('data', (d) => console.log(d.toString()) && pushLines(d.toString(), out));
+		proc.stderr.on('data', (d) => console.error(d.toString()) && pushLines(d.toString(), err));
 	};
 
 	const writeLogs = async (name, result) => {
