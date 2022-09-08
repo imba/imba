@@ -21,9 +21,6 @@ const builtins = new RegExp(builtinModules.join("|"), 'gi');
 await server.pluginContainer.buildStart({})
 
 const node = new ViteNodeServer server,
-	debug:
-		dumpModules: yes
-		loadDumppedModules: yes
 	ssr: yes
 	transformMode:
 		ssr: [builtins]
@@ -39,7 +36,7 @@ const runner = new ViteNodeRunner(
 	debug: yes
 	fetchModule: do(id)
 		id = id.replace("dist/imba.mjs", "dist/imba.node.mjs") if id.endsWith "dist/imba.mjs"
-		return node.fetchModule(id)
+		node.fetchModule(id)
 	resolveId: do(id, importer)
 		node.resolveId id, importer
 )

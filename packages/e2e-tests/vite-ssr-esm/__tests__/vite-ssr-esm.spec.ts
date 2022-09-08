@@ -12,19 +12,6 @@ import {
 } from '~utils';
 
 test.todo('/', async () => {
-	let pageConsoleListener;
-	const connectedPromise = new Promise<void>((resolve) => {
-		pageConsoleListener = (data) => {
-			const text = data.text();
-			if (text.indexOf('main App') > -1) {
-				console.log("main App loaded")
-				resolve();
-			}
-		};
-		page.on('console', pageConsoleListener);
-	});
-	await connectedPromise
-	await page.waitForLoadState()
 	expect(await page.textContent('button')).toMatch('Hello 1 times'); // after hydration
 	const html = await fetchPageText();
 	expect(html).toMatch('Hello 0 times'); // before hydration
@@ -33,7 +20,7 @@ test.todo('/', async () => {
 	}
 });
 
-test.todo('css', async () => {
+test('css', async () => {
 	if (isBuild) {
 		expect(await getColor('button')).toBe('green');
 	} else {
@@ -78,7 +65,7 @@ if (!isBuild) {
 		// 	await untilMatches(() => getText(`#hmr-test`), 'foo', '#hmr-test contains text foo');
 		// });
 		// TODO: support HMR for styles
-		test.skip('should apply style update', async () => {
+		test('should apply style update', async () => {
 			expect(await getColor(`button`)).toBe('green');
 			await updateApp((content) => content.replace('c:green', 'c:red'));
 			await untilMatches(() => getColor('button'), 'red', 'button has color red');
