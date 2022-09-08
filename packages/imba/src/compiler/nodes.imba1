@@ -3222,6 +3222,9 @@ export class ClassDeclaration < Code
 	def isExtension
 		option(:extension)
 
+	def isNamespaced
+		@name isa Access
+
 	def initialize name, superclass, body
 		# what about the namespace?
 		@traversed = no
@@ -3298,6 +3301,9 @@ export class ClassDeclaration < Code
 		
 		STACK.pop(self)
 		let sup = @superclass
+
+		if @name isa Access
+			option('namespaced',true)
 		
 		if sup
 			sup.traverse()
@@ -3320,8 +3326,15 @@ export class ClassDeclaration < Code
 			@name.traverse()
 			if @name isa Identifier
 				@name.resolveVariable()
-			
-			if !isTag
+
+			if @name isa Access
+				# console.log 'extending namespaced classes not supported'
+				yes
+				# Can just compile directly to a bunch of defineProperty items
+				# If super is used we need special casing for that
+				# option('namespaced',true)
+
+			elif !isTag
 				@className = @name
 				# @name = scope__.register("Ω{@name.value}Ω{oid}",null)
 				@mixinName = @name = scope__.register("Ω{@name.value}Ω{STACK.incr('extend')}",null)
@@ -3368,6 +3381,7 @@ export class ClassDeclaration < Code
 					instanceMethodMap[name] = node
 
 		
+		# TODO No longer used - remove
 		if option(:params)
 			# find the rest param
 			let add = []
@@ -3561,6 +3575,7 @@ export class ClassDeclaration < Code
 	# def addSetter name, body
 
 	def js o
+
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
@@ -3581,8 +3596,19 @@ export class ClassDeclaration < Code
 		var externalAccess = LIT(cname)
 		var supAccess = null
 
+		if isExtension and isNamespaced
+			# console.log 'compile as namespaced'
+			let parts = []
+			let target = @name.c
+			for part in body.@nodes
+				parts.push(part.c(as: 'descriptor',target: target))
+			return parts.join(';\n')
+
 		if isExtension and STACK.tsc
+
 			yes
+
+		
 
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
@@ -3915,9 +3941,11 @@ export class Func < Code
 				else
 					thistype = "InstanceType<typeof {thistype}>"
 				# o.push('@this ' + thistype + '')
+				# FIXME not used?
 				
 				
-		elif option(:jsdocthis)
+		if option(:jsdocthis)
+			
 			o.push('@this ' + option(:jsdocthis) + '')
 			
 		if returnType
@@ -4152,7 +4180,7 @@ export class MethodDeclaration < Func
 	# FIXME export global etc are NOT valid for methods inside any other scope than
 	# the outermost scope (root)
 
-	def js o
+	def js stack,co = {}
 		var o = @options
 		# FIXME Do this in the grammar - remnants of old implementation
 		unless type == :constructor or option(:noreturn) or isSetter()
@@ -4168,9 +4196,8 @@ export class MethodDeclaration < Func
 		var name = typeof @name == 'string' ? @name : @name.c(as: 'field')
 
 		var out = ""
-		
 
-		if option(:inClassBody) or option(:inObject)
+		if (option(:inClassBody) or option(:inObject)) and co:as != 'descriptor'
 			# what if this is async?
 			let prefix = ''
 			if self.isGetter
@@ -4191,21 +4218,32 @@ export class MethodDeclaration < Func
 		var func = "({params.c})" + code
 		var ctx = context
 		var fname = helpers.toValidIdentifier(AST.sym(self.name))
+		
 
 		if target
+
+			# special case here?
+			if STACK.tsc
+				# let o = option(:static) ? "typeof {target.c}"
+				# : "InstanceType<typeof {target.c}>"
+				set(jsdocthis: "typeof {target.c}")
+
 			# TODO make this work with SymbolIdentifier
 			if fname[0] == '['
 				fname = fname.slice(1,-1)
 			else
 				fname = "'{fname}'"
+
 			if isGetter
-				out = "Object.defineProperty({target.c},'{fname}',\{get: {funcKeyword}{func}, configurable: true\})"
+				out = "Object.defineProperty({target.c},{fname},\{get: {jsdoc()}{funcKeyword}{func}, configurable: true\})"
+				return out
 			elif isSetter
-				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
+				out = "Object.defineProperty({target.c},{fname},\{set: {jsdoc()}{funcKeyword}{func}, configurable: true\})"
+				return out
 			else
-				if STACK.tsc
-					let o = "InstanceType<typeof {target.c}>"
-					set(jsdocthis: o)
+				# if STACK.tsc
+				# 	let o = "InstanceType<typeof {target.c}>"
+				# 	set(jsdocthis: o)
 
 				let k = OP('.',target,@name)
 				out = "{k.c} = {funcKeyword} {func}"
@@ -12054,9 +12092,10 @@ export class MethodScope < Scope
 
 		if STACK.tsc and isInExtend
 			let cls = parent.closure.node
-			let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
-			context.@useReference = yes
-			ref.c
+			if cls.@className
+				let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
+				context.@useReference = yes
+				ref.c
 		self
 
 export class FieldScope < Scope
