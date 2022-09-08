@@ -36,11 +36,14 @@ const syncNodeModules = async () => {
 		testDirs
 			.map(dir=>execa('npm', ['install'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
 	)
-	// await execa(
-	// 	'npm',
-	// 	['link', 'vite-plugin-imba'],
-	// 	{ stdio: 'inherit' }
-	// );
+	await Promise.all(
+		testDirs
+			.map(dir=>execa('npm', ['link', 'imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+	)
+	await Promise.all(
+		testDirs
+			.map(dir=>execa('npm', ['link', 'vite-plugin-imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+	)
 };
 
 const startPlaywrightServer = async () => {

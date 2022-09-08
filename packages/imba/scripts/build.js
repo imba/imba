@@ -220,6 +220,13 @@ let bundles = [
 		platform: "node",
 	},
 	{
+		entryPoints: ["src/imba/imba.imba"],
+		outExtension: { ".js": ".node.mjs" },
+		format: "esm",
+		outdir: "dist",
+		platform: "node",
+	},
+	{
 		entryPoints: [
 			"bin/imba.imba",
 			"bin/imba-create.imba",
