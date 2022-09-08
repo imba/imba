@@ -226,6 +226,7 @@ async function goToUrlAndWaitForViteWSConnect(page: Page, url: string) {
 		pageConsoleListener = (data) => {
 			const text = data.text();
 			if (text.indexOf('[vite] connected.') > -1) {
+				console.log("[vite] connected")
 				resolve();
 			}
 		};
