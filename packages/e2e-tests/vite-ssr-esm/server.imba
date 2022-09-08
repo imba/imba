@@ -4,7 +4,7 @@ import {pathToFileURL} from "url"
 import express from "express"
 import compression from "compression"
 import serveStatic from "serve-static"
-import App from "./src/main.imba"
+import App from './src/main.imba'
 import * as Vite from "vite"
 
 let port = 3000
@@ -13,6 +13,7 @@ const portArgPos = args.indexOf("--port") + 1
 if portArgPos > 0
 	port = parseInt(args[portArgPos], 10)
 
+const ENTRY = "src/main.imba"
 def createServer(root = process.cwd(), isProd = process.env.NODE_ENV === "production")
 	const resolve = do(p) path.resolve(root, p)
 
@@ -60,10 +61,10 @@ def createServer(root = process.cwd(), isProd = process.env.NODE_ENV === "produc
 				<body>
 					if !isProd
 						<script type="module" src="/@vite/client">
-						<script type="module" src="/entry-client.js">
+						<script type="module" src="/{ENTRY}">
 					else
-						const prod-src = manifest["src/main.imba"].file
-						const css-files = manifest["src/main.imba"].css
+						const prod-src = manifest[ENTRY].file
+						const css-files = manifest[ENTRY].css
 						<script type="module" src=prod-src>
 						for css-file in css-files
 							<style src=css-file>
