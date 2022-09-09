@@ -34,7 +34,6 @@ class Main
 
 class Sub < Main
 
-# console.log (new Main).title
 
 test "basics" do 
 	let obj = new Main
