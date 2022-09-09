@@ -61,7 +61,7 @@ def createServer(root = process.cwd(), isProd = process.env.NODE_ENV === "produc
 				<body>
 					if !isProd
 						<script type="module" src="/@vite/client">
-						<script type="module" src="/{ENTRY}">
+						<script type="module" src="/src/main.js">
 					else
 						const prod-src = manifest[ENTRY].file
 						const css-files = manifest[ENTRY].css

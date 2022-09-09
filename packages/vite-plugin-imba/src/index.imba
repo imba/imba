@@ -116,12 +116,13 @@ export def imba(inlineOptions\Partial<Options> = {})
 			log.debug.once "error trying to resolve {importee} from {importer} via package.json imba field ", e
 	def configureServer(server)
 		_options.server = server
-		server.middlewares.use do(req, res, next)
-			const pathname = url.parse(req.url).pathname;
-			if pathname.endsWith ".imba"
-				req.url += "?import"
-				res.setHeader "Content-Type", "application/javascript"
-			next()
+		# Breaks tests, do not use until Vite has a proper fix
+		# server.middlewares.use do(req, res, next)
+		# 	const pathname = url.parse(req.url).pathname;
+		# 	if pathname.endsWith ".imba"
+		# 		req.url += "?import"
+		# 		res.setHeader "Content-Type", "application/javascript"
+		# 	next()
 		setupWatchers _options, cache, requestParser
 
 

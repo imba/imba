@@ -4,7 +4,7 @@ import { resolve } from 'path'
 import {builtinModules} from 'module'
 
 // ENTRY
-const entry = resolve(__dirname, "src/main.imba")
+const entry = resolve(__dirname, "src/main.js")
 
 export default defineConfig(({ command, mode }) => {
 	return {
