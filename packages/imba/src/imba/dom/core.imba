@@ -432,7 +432,7 @@ export class Text < Node
 
 	def constructor str
 		super()
-		self.textContent = str or ''
+		self.textContent = str ?? ''
 		self
 
 	get outerHTML
