@@ -758,6 +758,19 @@ export default class ImbaScriptInfo
 			
 			#lexed.lines.push(lexed)
 			nextState = lexed.endState
+
+		
+		if nextState..stack..state != 'root'
+			try
+				# console.log 'nextstate',nextState
+				let offset = tokens[-1].endOffset
+				let run = lexer.tokenize("\n",nextState,offset)
+				# let last = run.tokens
+				tokens.push(...run.tokens)
+
+				let end = lexer.tokenize("1",run.endState,offset + 1)
+				let last = end.tokens.pop!
+				tokens.push(...end.tokens)
 		
 		eof.offset = index.getLength!
 		return #lexed

@@ -436,7 +436,7 @@ export const states = {
 	]
 
 	class_: [
-		[/(extend)(?=\s+class )/,'keyword.$1']
+		[/(extend)(?=\s+(global )?class )/,'keyword.$1']
 		[/(global)(?=\s+class )/,'keyword.$1']
 		# [/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
 		[/(class)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
@@ -447,9 +447,10 @@ export const states = {
 
 	classname_start: [
 		[/\w/,'@rematch','@assignable&-assignable']
-		[/(\s+\<\s+)/,['keyword.extends.$/','@assignable&-value$/']]
+		[/(\s+\<\s+)/,['keyword.extends.$/','@assignable&-value']]
 		[/@comment/,'comment']
-		[/^/,'@rematch',switchTo: '@>_class&class=']
+		[/\n/,'@rematch',switchTo: '@>_class&class=']
+		# [/^/,'@rematch',switchTo: '@>_class&class=']
 		'whitespace'
 	]
 
