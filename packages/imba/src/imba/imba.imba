@@ -33,4 +33,4 @@ export * from './router/index'
 
 # Reactivity
 export * from './reactivity'
-export * from './fields'
+export * from './accessors'

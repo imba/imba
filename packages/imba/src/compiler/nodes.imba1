@@ -2039,18 +2039,26 @@ export class ClassField < Node
 			# return if isPlain
 			let prefix = isStatic ? "{M('static',option(:static))} " : ''
 			let name = name isa IdentifierExpression ? name.asObjectKey : name.c(as: 'field')
+			let cls = STACK.up(ClassDeclaration)
 
 			if wrapper
 				let meta = @metaname = @name.metaIdentifier
-				let slot = osym('slot',String(@name))
+				let slot = @slot = osym('slot',String(@name))
 				let metasym = osym('meta')
+				let inner
+
+				let context = isStatic ? cls.name.c : "{cls.name.c}.prototype"
+				
 				let op = OP('.',LIT('this'),meta)
-				# console.log "type of name {meta:constructor} {meta.c}"
 				let args = "this,{slot},{@name.c(as: 'value')}"
 				@getter = LIT("()\{ return {op.c}.get({args}) \}")
 				@setter = LIT("(val)\{ {op.c}.set(val,{args}) \}")
-				let inner = "{runtime:property}({wrapper.c}).accessor(null,{args},{meta.c(as: 'value')},{metasym})"
-				inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
+				
+				if STACK.tsc
+					inner = "return {runtime:accessor}({wrapper.c}).accessor({args},{metasym},{context},{meta.c(as: 'value')})"
+				else
+					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c},{args},{metasym},{context},{meta.c(as: 'value')})"
+					# inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
 				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
 
 

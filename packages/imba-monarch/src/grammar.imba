@@ -660,6 +660,7 @@ export const states = {
 		'type_'
 		[/(\s*=)(?!\=)/,['operator.assign','@_field_value&field']]
 		[/(\s*(?:\@)set\s*)/,['keyword.spy','@>_def&spy']]
+		[/(\s*\@)(?=\s)/,['keyword.accessor','@>_def&field']]
 	]
 
 	_field_value: [

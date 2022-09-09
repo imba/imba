@@ -467,7 +467,7 @@
             <key>name</key>
             <string>keyword.operator.logical.imba</string>
             <key>match</key>
-            <string>\!|&amp;&amp;|\|\||\?\?|or\b(?=\s|$)|and\b(?=\s|$)</string>
+            <string>\!|&amp;&amp;|\|\||\?\?|or\b(?=\s|$)|and\b(?=\s|$)|\@\b(?=\s|$)</string>
           </dict>
           <dict>
             <key>name</key>

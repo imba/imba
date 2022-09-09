@@ -1,5 +1,12 @@
 import { Local } from './local'
 
+class Model
+	prop one = op.test
+	prop name @ op.tester
+
+	def hello
+		yes
+
 global class APPCLS
     get main
         self
@@ -158,3 +165,4 @@ extend class Element
 tag app-button
     get main
         self
+

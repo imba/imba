@@ -8,6 +8,7 @@ temp
 test/perf
 test/dist
 packages/imba/test/cli/examples/dist
+packages/imba/test/apps/**/*.js
 
 npm-debug.log
 lerna-debug.log
