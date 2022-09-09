@@ -22,10 +22,13 @@ def write-package dir, data
 let imbadir = np.resolve(__dirname,'..')
 let imbapkg = read-package(imbadir) # JSON.parse(nfs.readFileSync(np.resolve(imbadir,'package.json'),'utf-8'))
 
+# NOTE: These must start with `imba-` on Github. These names expect `imba-` to be prepended when resolving the URL.
 const templates = [
-	['base-template', 'Application with client-side scripts'],
-	['electron-template', 'Electron application']
-].map do([name,hint]) {name: name, hint: hint}
+	['Full Stack', 'Full stack app with backend in Express (Imba bundler)', "base-template"]
+	['Jamstack', 'Client only application (Vite bundler)', "vite-template"],
+	# ['Electron', 'Desktop application using Electron (Node)', "electron-template"],
+	['Desktop', 'Desktop application using Tauri (Imba bundler)', "tauri-template"]
+].map do([name,hint, urlPart]) {name: name, hint: hint, urlPart: urlPart}
 
 const cli = new class
 	prop cwd = process.cwd!
@@ -81,8 +84,9 @@ const cli = new class
 def run
 	try
 		let tplname = await cli.select("Choose your template",templates)
-		let tplurl = "https://github.com/imba/imba-{tplname}"
-		let tplpkg = await read-package("https://raw.githubusercontent.com/imba/imba-{tplname}/master/package.json")
+		const urlPart = templates.find(do $1.name === tplname).urlPart
+		let tplurl = "https://github.com/imba/imba-{urlPart}"
+		let tplpkg = await read-package("https://raw.githubusercontent.com/imba/imba-{urlPart}/main/package.json")
 		
 		let name = process.argv[2] or ''
 		
@@ -112,21 +116,21 @@ def run
 
 		if await cli.ok("Create project in directory: {dir}?", initial: yes)
 			log.info "Generating files from template"
-			await cli.exec("git clone --depth 1 {tplurl} \"{dir}\"")
+			cli.exec("git clone --depth 1 {tplurl} \"{dir}\"")
 
 			cli.cwd = dir
-			await nfs.rmdirSync(np.resolve(dir,'.git'), recursive: yes)
-			await cli.exec("git init .")
+			nfs.rmSync(np.resolve(dir,'.git'), recursive: yes)
+			cli.exec("git init .")
 			let pkg = Object.assign({},tplpkg,data)
 			write-package(dir,pkg)
 
 			log.info "Installing dependencies"
-			await cli.exec("npm install imba")
-			await cli.exec("npm install")
+			cli.exec("npm install imba")
+			cli.exec("npm install")
 
 			if data.repository
 				log.info "add origin https://github.com/{data.repository}.git"
-				await cli.exec("git remote add origin https://github.com/{data.repository}.git")
+				cli.exec("git remote add origin https://github.com/{data.repository}.git")
 
 			let getStarted = """
 				  
