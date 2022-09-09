@@ -24,11 +24,11 @@ let imbapkg = read-package(imbadir) # JSON.parse(nfs.readFileSync(np.resolve(imb
 
 # NOTE: These must start with `imba-` on Github. These names expect `imba-` to be prepended when resolving the URL.
 const templates = [
-	['base-template', 'Website with both frontend and backend']
-	['vite-template', 'Client only application bundled with Vite'],
-	['tauri-template', 'Desktop application using Tauri (Rust)']
-	['electron-template', 'Desktop application using Electron (Node)']
-].map do([name,hint]) {name: name, hint: hint}
+	['Full Stack', 'Full stack app with backend in Express (Imba bundler)', "base-template"]
+	['Jamstack', 'Client only application (Vite bundler)', "vite-template"],
+	# ['Electron', 'Desktop application using Electron (Node)', "electron-template"],
+	['Desktop', 'Desktop application using Tauri (Imba bundler)', "tauri-template"]
+].map do([name,hint, urlPart]) {name: name, hint: hint, urlPart: urlPart}
 
 const cli = new class
 	prop cwd = process.cwd!
@@ -84,8 +84,9 @@ const cli = new class
 def run
 	try
 		let tplname = await cli.select("Choose your template",templates)
-		let tplurl = "https://github.com/imba/imba-{tplname}"
-		let tplpkg = await read-package("https://raw.githubusercontent.com/imba/imba-{tplname}/main/package.json")
+		const urlPart = templates.find(do $1.name === tplname).urlPart
+		let tplurl = "https://github.com/imba/imba-{urlPart}"
+		let tplpkg = await read-package("https://raw.githubusercontent.com/imba/imba-{urlPart}/main/package.json")
 		
 		let name = process.argv[2] or ''
 		
