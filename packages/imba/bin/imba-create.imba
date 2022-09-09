@@ -25,12 +25,9 @@ let imbapkg = read-package(imbadir) # JSON.parse(nfs.readFileSync(np.resolve(imb
 # NOTE: These must start with `imba-` on Github. These names expect `imba-` to be prepended when resolving the URL.
 const templates = [
 	['base-template', 'Website with both frontend and backend']
-	['static-base-template', 'Static website without backend']
-	['static-netlify-template', 'Static website without backend, on Netlify']
-	['static-github-pages-template', 'Static website without backend, on Github Pages']
-	['static-cloudflare-pages-template', 'Static website without backend, on CloudFlare Pages']
-	['tauri-template', 'Desktop application using Tauri (lighter, faster, Rust)']
-	['electron-template', 'Desktop application using Electron (heavier, slower, Node)']
+	['static-base-template', 'Static website without backend (Netlify, GitHub Pages, CloudFlare Pages, etc)']
+	['tauri-template', 'Desktop application using Tauri (Rust)']
+	['electron-template', 'Desktop application using Electron (Node)']
 ].map do([name,hint]) {name: name, hint: hint}
 
 const cli = new class
