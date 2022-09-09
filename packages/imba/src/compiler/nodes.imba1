@@ -634,6 +634,9 @@ export class Stack
 		@counters[name] ||= 0
 		@counters[name] -= 1
 
+	def strip val
+		SourceMapper.strip(val)
+
 	def generateId ns = 'oid'
 		AST.counterToShortRef(STACK.incr(ns))
 		
@@ -645,6 +648,21 @@ export class Stack
 		
 	def symbolFor name
 		@root.symbolRef(name)
+
+	def toInternalClassName name
+		if name:toClassName
+			name = name.toClassName
+		elif name:c isa Function
+			name = name.c
+
+		let str = "Ω" + strip(name).split(".").join("__")
+		let nr = incr(str)
+		if nr > 1
+			str += "Ω" + nr
+		return str
+
+
+
 		
 	def domCall name
 		if true
@@ -3222,8 +3240,20 @@ export class ClassDeclaration < Code
 	def isExtension
 		option(:extension)
 
+	def isGlobal
+		option(:global)
+
 	def isNamespaced
 		@name isa Access
+
+	def exportForDts
+		return false unless STACK.tsc
+		return true if isNamespaced and (!@name.left.@variable or @name.left.@variable.isImported)
+		return false if isNamespaced and (@name.left.@variable and !@name.left.@variable.isImported)
+		return true if isGlobal and !option(:export)
+		return true if isExtension and (!@name.@variable or @name.@variable.isImported)
+		return false
+		# STACK.tsc and !!((isNamespaced and (!@name.left.@variable or @name.left.@variable.isImported)) or (isGlobal or isExtension)
 
 	def initialize name, superclass, body
 		# what about the namespace?
@@ -3302,8 +3332,11 @@ export class ClassDeclaration < Code
 		STACK.pop(self)
 		let sup = @superclass
 
-		if @name isa Access
-			option('namespaced',true)
+		@path = @name
+		@ownName = @name
+
+
+		# let dtsify = STACK.tsc and (isGlobal or isExtension or (isNamespaced and  )
 		
 		if sup
 			sup.traverse()
@@ -3324,25 +3357,32 @@ export class ClassDeclaration < Code
 
 		if isExtension and @name
 			@name.traverse()
+
 			if @name isa Identifier
 				@name.resolveVariable()
 
-			if @name isa Access
-				# console.log 'extending namespaced classes not supported'
-				yes
-				# Can just compile directly to a bunch of defineProperty items
-				# If super is used we need special casing for that
-				# option('namespaced',true)
-
-			elif !isTag
+			if !isTag
+				let extname 
 				@className = @name
+				@ownName = STACK.toInternalClassName(@name)
+
+				# if @name isa Access
+				# 	let lft = @name.left.c					
+				# 	let rgt = @name.right.c
+				# 	# @className = @name.right
+				# 	
+				# 	extname = "Ω{rgt}Ω{STACK.incr('extend')}" # Ω{lft}
+				# else
+				# 	extname = "Ω{@name.value}Ω{STACK.incr('extend')}"
 				# @name = scope__.register("Ω{@name.value}Ω{oid}",null)
-				@mixinName = @name = scope__.register("Ω{@name.value}Ω{STACK.incr('extend')}",null)
-				if STACK.tsc
-					option(:export,true)
+				# @exportName = extname = SourceMapper.strip(extname)
+				@mixinName = scope__.register(@ownName,null)
+				# if STACK.tsc
+				# 	option(:export,true)
 			else
 				@className = LIT(@name.toClassName)
-				@mixinName = scope__.register("Ω{@className}Ω{STACK.incr('extend')}",null)
+				@ownName = STACK.toInternalClassName(@name)
+				@mixinName = scope__.register(@ownName,null)
 			
 		elif @name isa Identifier
 			if !isTag or @name.isCapitalized
@@ -3353,6 +3393,20 @@ export class ClassDeclaration < Code
 			@name.traverse(declaring: self)
 		elif @name
 			@name.traverse()
+		
+		if isGlobal and !isExtension and !isNamespaced and option(:export) and STACK.tsc
+			@exportName = STACK.toInternalClassName(@name)
+
+		if @ownName == @name and (exportForDts or isNamespaced)
+			if isGlobal and !isExtension and !isNamespaced and option(:export)
+				@exportName = STACK.toInternalClassName(@name)
+				yes
+				# if isTag
+				# 	@ownName = @name.toClassName
+			else
+				@ownName = STACK.toInternalClassName(@name)
+
+		# console.log 'visited class',exportForDts,String(@ownName),String(@exportName)
 		
 		STACK.push(self)
 		ROOT.entities.add(namepath,self)
@@ -3581,8 +3635,8 @@ export class ClassDeclaration < Code
 		scope.context.reference = name
 		var up = STACK.up
 		var o = @options or {}
-		var cname = name isa Access ? name.right : name
 
+		var cname = @ownName # name isa Access ? name.right : name
 		
 		# var namespaced = name != cname
 		var initor = null
@@ -3591,27 +3645,30 @@ export class ClassDeclaration < Code
 		if typeof cname != 'string' and cname
 			cname = cname.c(mark: yes)
 
+		if exportForDts
+			yes
+			# if !isNamespaced and option(:export)
+			#	extname = cname
+			# cname = extname
+			# @dtsname = cname
+			# cname = @ownName
+			# console.log 'compiule class',exportForDts,extname,STACK.toInternalClassName(@name)
+
 		@cname = cname
 		
 		var externalAccess = LIT(cname)
 		var supAccess = null
 
-		if isExtension and isNamespaced
-			# console.log 'compile as namespaced'
+		if STACK.tsc and isExtension and !exportForDts # (isNamespaced or @name.@variable and !@name.@variable.isImported)
 			let parts = []
 			let target = @name.c
 			for part in body.@nodes
 				parts.push(part.c(as: 'descriptor',target: target))
 			return parts.join(';\n')
-
-		if isExtension and STACK.tsc
-
-			yes
-
-		
-
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
+
+		
 		if name
 			jshead += " {M cname, name}"
 		else
@@ -3622,42 +3679,20 @@ export class ClassDeclaration < Code
 		if sup
 			supAccess = M(sup)
 			jshead += " extends {supAccess}"
-		
-		# elif isExtension and STACK.tsc
-		# 	jshead += " extends {@className.c}"
+			
 
-		if name isa Access
-			if @staticInit
-				externalAccess = scope.root.declare(null)
-				jshead = "{externalAccess.c} = {jshead}"
-
-				
+		if name isa Access and !exportForDts
+			# TODO or the definition is local
 			jshead = "{name.c} = {jshead}"
-
 		
-		if option(:export)
+		if option(:export) or (STACK.tsc and exportForDts)
+			# beware of double export
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
 				jshead = "{M 'export',option(:export)} {jshead}"
 
-		# if STACK.tsc and option(:global)
-
-		if isExtension and STACK.tsc and false
-			# if the class-name is aliased via an import we want to include that here
-			# jsbody = "\n__extends__= new {@className.c};\n{jsbody}"
-			# let ext = '\n/** @type {InstanceType<typeof THIS>} */ __extends__;\n'.replace('THIS',@className.c)
-			let ext = "\n// @ts-ignore\n__extends__= new {M(@className.c,@className)};\n"
-			jsbody = "{ext}{jsbody}"
-			# InstanceType<typeof ImmediateDefJS>
-
 		let js = "{jshead} \{{jsbody}\}"
-
-		if @staticInit
-			if up isa Block or up isa Export
-				js = "{js}; {OP('.',externalAccess,initKey).c}();"
-			else
-				js = "(({js})[{initKey.c}]())"
 
 		if isExtension and !STACK.tsc
 			let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
@@ -3665,19 +3700,23 @@ export class ClassDeclaration < Code
 			if @virtualSuper
 				let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
 				extTarget = LIT("({wrap.c},{extTarget.c})")
-
+			# TODO can this happen in static block?
 			js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
 
-		if option(:global)
+		if option(:global) and !STACK.tsc
 			# external access?
 			# js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
 			let access = name isa Access
 			let getter = name isa Access ? name.c : @cname
-			if STACK.tsc and true
+			if STACK.tsc
 				js = "{js};{!access ? " export \{{@cname}\};" : ""} {scope__.root.globalRef}.{@cname} = {getter}"
 			else
 				js = "{js}; {scope__.root.globalRef}.{@cname} = {getter}"
-
+			
+		# if option(:export) and option(:global) and STACK.tsc
+		
+		if STACK.tsc and @exportName
+			js = "{js}; export \{{@ownName} as {@exportName}\}"
 		return js
 
 export class ExtendDeclaration < ClassDeclaration
@@ -12219,6 +12258,9 @@ export class Variable < Node
 		@references 	= [] # only needed when profiling
 		@assignments 	= []
 		self
+
+	def isImported
+		@type == 'imported'
 		
 	def typedAlias
 		@typedAlias ||= Variable.new(@scope,@name + '$TYPED$',@declarator,@options)
