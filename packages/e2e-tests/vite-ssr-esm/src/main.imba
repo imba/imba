@@ -10,6 +10,5 @@ export default tag App
 		schedule!
 		imba.commit!
 	def render
-		console.log count
 		<self>
 			<button[c:green] @click.log("st")=(count++)> "Hello {count} times"

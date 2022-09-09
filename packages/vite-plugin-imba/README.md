@@ -11,12 +11,13 @@ import { imba } from 'vite-plugin-imba';
 
 export default defineConfig({
   plugins: [
-    imba({
-      /* plugin options */
-    })
+    imba()
   ]
 });
 ```
+## Full stack Usage
+In order to use the plugin both in the client and the server (with SSR and hydration), see the example in [../e2e-tests/vite-ssr-esm](../e2e-tests/vite-ssr-esm/)
+
 ## Credits
 - Svelte vite plugin
 ## License
