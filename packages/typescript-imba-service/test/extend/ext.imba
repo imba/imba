@@ -96,7 +96,7 @@ extend tag app-panel
 extend class Element
 
 	get button\<app-button>
-		yes
+		<app-button>
 	
 	get that
 		self

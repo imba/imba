@@ -75,16 +75,25 @@ def run
 		let plain = completions.serialize!.map do $1.label..name or $1.label
 		console.log plain
 
-	getdef(doc,'<ap~p-button ')
-	completions(doc,'data.extthis!.~')
-	completions(doc,'data.extthis().~')
-	completions('ns.imba','~# setup')
-	completions(doc,"import '~'")
-	completions(doc,"from './views/~")
-	# getinfo(doc,'def ti~c')
+	if false
+		getdef(doc,'<ap~p-button ')
+		completions(doc,'data.extthis!.~')
+		completions(doc,'data.extthis().~')
+		completions('ns.imba','~# setup')
+		completions(doc,"import '~'")
+		completions(doc,"from './views/~")
+		# getinfo(doc,'def ti~c')
 
-	ils.getDiagnostics!.map do console.log $1.code,$1.messageText,$1.category
-	debugger
+	ils.getDiagnostics!.map do
+		console.log $1.code,$1.messageText,$1.category,$1.file..fileName
+
+	if false
+		let dts = ils.dts.content
+		let jsdts = dts.replace(/\extend\/(.*)$/g) do "extendjs/{$1.replace('.imba','.js')}"
+		jsdts = jsdts.replace(/extend\//g,'extendjs/').replace(/\.imba/g,'.js')
+		fs.writeFileSync('./extendjs/global.d.ts',jsdts)
+
+	process.exit(0)
 
 run!
 
