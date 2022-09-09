@@ -25,6 +25,7 @@ let imbapkg = read-package(imbadir) # JSON.parse(nfs.readFileSync(np.resolve(imb
 # NOTE: These must start with `imba-` on Github. These names expect `imba-` to be prepended when resolving the URL.
 const templates = [
 	['base-template', 'Website with both frontend and backend']
+	['vite-template', 'Client only application bundled with Vite'],
 	['static-base-template', 'Static website without backend (Netlify, GitHub Pages, CloudFlare Pages, etc)']
 	['tauri-template', 'Desktop application using Tauri (Rust)']
 	['electron-template', 'Desktop application using Electron (Node)']
@@ -118,7 +119,7 @@ def run
 			await cli.exec("git clone --depth 1 {tplurl} \"{dir}\"")
 
 			cli.cwd = dir
-			await nfs.rmdirSync(np.resolve(dir,'.git'), recursive: yes)
+			await nfs.rmSync(np.resolve(dir,'.git'), recursive: yes)
 			await cli.exec("git init .")
 			let pkg = Object.assign({},tplpkg,data)
 			write-package(dir,pkg)
