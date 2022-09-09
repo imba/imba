@@ -659,6 +659,20 @@ declare namespace imba {
 
     function run(callback: any): void;
     function autorun(callback: any): Reaction;
+
+    // TODO check if T responds to accessor method - if so, return the result of that type
+    function accessor<T>(accessor: T): T;
+
+    interface AccessorGenerator {
+        accessor(target: any, key: symbol, name: string | symbol, slot: symbol, context: any);
+    }
+
+    interface Accessor {
+        get(target: any, key: string | symbol, name: string | symbol): any;
+        set(value: any, target: any, key: string | symbol, name: string | symbol): void;
+    }
+
+
 }
 
 declare module "data:text/asset;*" {

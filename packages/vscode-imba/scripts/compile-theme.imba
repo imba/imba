@@ -60,7 +60,8 @@ def exportVSCodeTheme
 		rules.push(item)
 	
 	let text = JSON.stringify(scheme,null,2)
-	let dest = path.resolve(__realname,'..','..','themes','ImbaDark.json')
+	let dest = path.resolve(__dirname,'..','themes','ImbaDark.json')
+	console.log "write to",dest,__filename,__dirname
 	fs.writeFileSync(dest,text)
 
 # exportTmTheme()

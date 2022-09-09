@@ -153,7 +153,8 @@ export var OP = do |op, l, r|
 
 	switch o
 		when '.','?.'
-			if l isa Super
+			if l isa Super and !l.member
+				
 				l.member = r
 				return l
 
@@ -633,17 +634,35 @@ export class Stack
 		@counters[name] ||= 0
 		@counters[name] -= 1
 
+	def strip val
+		SourceMapper.strip(val)
+
 	def generateId ns = 'oid'
 		AST.counterToShortRef(STACK.incr(ns))
 		
-	def getSymbol ref, alias = null
+	def getSymbol ref, alias = null, name = ''
 		let key = ref or incr('symbols')
 		# ref ||= "" + incr('symbols')
 		# Belongs in root
-		@symbols[key] ||= @root.declare((alias or ref),LIT('Symbol()'),system: yes, alias: (alias or ref)).resolve.c
+		@symbols[key] ||= @root.declare((alias or ref),LIT("Symbol({name ? helpers.singlequote(name) : ''})"),system: yes, alias: (alias or ref)).resolve.c
 		
 	def symbolFor name
 		@root.symbolRef(name)
+
+	def toInternalClassName name
+		if name:toClassName
+			name = name.toClassName
+		elif name:c isa Function
+			name = name.c
+
+		let str = "Ω" + strip(name).split(".").join("__")
+		let nr = incr(str)
+		if nr > 1
+			str += "Ω" + nr
+		return str
+
+
+
 		
 	def domCall name
 		if true
@@ -929,8 +948,8 @@ export class Node
 	def oid
 		@oid ||= STACK.generateId('')
 		
-	def osym ns = ''
-		STACK.getSymbol(oid + ns)
+	def osym ns = '',name = ''
+		STACK.getSymbol(oid + ns,null,name)
 
 	def symbolRef name
 		STACK.root.symbolRef(name)
@@ -1921,6 +1940,16 @@ export class Block < ListNode
 
 class ClassInitBlock < Block
 
+	def c o
+		# @options ||= {}
+		# @options:braces = yes
+		let out = super
+		return 'static {\n' + helpers.indent(out) + '}'
+
+	# def js o, opts
+	#	let out = super(o,opts)
+	#	return 'static {\n' + out + '}'
+
 class InstanceInitBlock < Block
 
 class InstancePatchBlock < InstanceInitBlock
@@ -1944,6 +1973,14 @@ export class ClassField < Node
 
 		if watchBody
 			@descriptor = STACK.root.declare("{oid}$Prop",util.watcher(storageSymbol,watcherSymbol), type: 'const', system: yes)
+
+
+		if wrapper
+			yes
+			wrapper.@scope = @vscope = FieldScope.new(wrapper)
+			wrapper.@scope.@parent = scope__
+			wrapper.traverse
+			# @getter = CALL(OP('.',THIS,@name),[])
 		self
 	
 
@@ -1986,6 +2023,9 @@ export class ClassField < Node
 	def watchBody
 		option(:watch)
 
+	def wrapper
+		option(:wrapper)
+
 	def loc
 		[@name.@loc,@name.region[1]]
 
@@ -1994,23 +2034,80 @@ export class ClassField < Node
 		
 		let up = STACK.current
 		let out
+		
 		if up isa ClassBody
 			# return if isPlain
 			let prefix = isStatic ? "{M('static',option(:static))} " : ''
 			let name = name isa IdentifierExpression ? name.asObjectKey : name.c(as: 'field')
+			let cls = STACK.up(ClassDeclaration)
+
+			if wrapper
+				let meta = @metaname = @name.metaIdentifier
+				let slot = @slot = osym('slot',String(@name))
+				let metasym = osym('meta')
+				let inner
+
+				let context = isStatic ? cls.name.c : "{cls.name.c}.prototype"
+				
+				let op = OP('.',LIT('this'),meta)
+				let args = "this,{slot},{@name.c(as: 'value')}"
+				@getter = LIT("()\{ return {op.c}.get({args}) \}")
+				@setter = LIT("(val)\{ {op.c}.set(val,{args}) \}")
+				
+				if STACK.tsc
+					inner = "return {runtime:accessor}({wrapper.c}).accessor({args},{metasym},{context},{meta.c(as: 'value')})"
+				else
+					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c},{args},{metasym},{context},{meta.c(as: 'value')})"
+					# inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
+				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
+
 
 			if STACK.tsc
-				out = "{prefix}{M(name,@name)}" # the value scope?
-				out += " = {value.c};" if value
+				# console.log 'here',STACK.tsc
+				if wrapper
+					let setter = "{prefix}set {M(name,@name)}{self.setter.c(keyword: '')}"
+					let getter = "{prefix}get {M(name,@name)}{self.getter.c(keyword: '')}"
 
-				let typ = datatype
-				if typ
-					out = "{typ.c} {out}"
+					if datatype
+						getter = "{datatype.c} {getter}"
 
-			elif self isa ClassAttribute or (@decorators && @decorators:length > 0 and false)
+					out = "{setter}\n{getter}\n{prefix}get {@handler.c}"
+
+					if !isStatic
+						# how would this fare with class extensions?
+						out += "\nstatic get {M(@metaname.c(as: 'field'),@name)}()\{ return {OP('.',LIT('this.prototype'),@metaname).c} \}"
+					return out
+
+				if self isa ClassAttribute or (@decorators and @decorators:length)
+					let val = value ? value.c : ''
+					let field = ''
+					let getval = ''
+					let setval = ''
+					let sym = osym
+
+					out = "{prefix} get {M(name,@name)}() \{ return {getval} \}" # the value scope?
+					
+					if datatype
+						out = "{datatype.c} {out}"
+					out += "\n{prefix} set {M(name,@name)}(val) \{ {setval} \}"
+
+				else
+					
+					out = "{prefix}{M(name,@name)}" # the value scope?
+					out += " = {value.c};" if value
+
+					let typ = datatype
+					if typ
+						out = "{typ.c} {out}"
+
+			elif self isa ClassAttribute or (@decorators && @decorators:length > 0 and false) or wrapper
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
 				let getter = "{prefix}get {name}{self.getter.c(keyword: '')}"
 				out = "{setter}\n{getter}"
+
+				if wrapper
+					# let wr = "{runtime:property}({wrapper.c}).accessor()"
+					out += "\n{prefix}get {@handler.c}"
 
 			return out
 		
@@ -2098,26 +2195,11 @@ export class ClassField < Node
 
 	def getter
 		@getter ||= if true
-			return parseTemplate('(){ return $get$; }')
-			let op = GET(THIS,storageSymbol)
-			return FN([],[op])
-
-			# let op = OP('.',THIS,storageKey)
-			let op = CALL(GET(storageMap,'get'),[THIS])
-			let getter = op
-			if value and false # and (!(value isa Str) and !(value isa Str) and !(value isa Bool) or @decorators)
-				let inlined = (value isa Num) or (value isa Str) or (value isa Bool)
-				let has = CALL(GET(storageMap,'has'),[THIS])
-				if inlined
-					op = METH([],[If.ternary(has,op,value)])
-				else
-					let setter = CALL(GET(storageMap,'set'),[THIS,value])
-					op = IF(OP('!',has),setter)
-					op = METH([],[op,BR,getter])
-				op.traverse
-				return op
+			if wrapper
+				LIT("()\{ return this.__{name.c}.get(this,{name.toStr.c},{osym}) \}")
+				# parseTemplate('(){ return this.__$name$.get(this,); }')
 			else
-				return FN([],[op])
+				parseTemplate('(){ return $get$; }')
 
 	def setterForValue value
 		OP('=',OP('.',THIS,storageKey),value)
@@ -2126,6 +2208,9 @@ export class ClassField < Node
 		tpl = tpl.replace(/\$(\w+)\$/g) do |m,key|
 			if key == 'get'
 				GET(THIS,storageSymbol).c
+			elif key == 'name'
+				name.c
+				
 			elif key == 'set'
 				OP('=',GET(THIS,storageSymbol),LIT('value')).c
 			elif key == 'watcher'
@@ -3163,6 +3248,21 @@ export class ClassDeclaration < Code
 	def isExtension
 		option(:extension)
 
+	def isGlobal
+		option(:global)
+
+	def isNamespaced
+		@name isa Access
+
+	def exportForDts
+		return false unless STACK.tsc
+		return true if isNamespaced and (!@name.left.@variable or @name.left.@variable.isImported)
+		return false if isNamespaced and (@name.left.@variable and !@name.left.@variable.isImported)
+		return true if isGlobal and !option(:export)
+		return true if isExtension and (!@name.@variable or @name.@variable.isImported)
+		return false
+		# STACK.tsc and !!((isNamespaced and (!@name.left.@variable or @name.left.@variable.isImported)) or (isGlobal or isExtension)
+
 	def initialize name, superclass, body
 		# what about the namespace?
 		@traversed = no
@@ -3182,6 +3282,8 @@ export class ClassDeclaration < Code
 	def staticInit
 		# @superclass ? 'super.inherited instanceof Function && super.inherited(this)' : 'this'
 		@staticInit ||= addMethod(initKey,[],'this').set(static: yes)
+		# add static block
+		
 	
 	def initKey
 		@initKey ||= (STACK.tsc ? STACK.root.symbolRef('#__init__') : SymbolIdentifier.new('#__init__'))
@@ -3237,6 +3339,12 @@ export class ClassDeclaration < Code
 		
 		STACK.pop(self)
 		let sup = @superclass
+
+		@path = @name
+		@ownName = @name
+
+
+		# let dtsify = STACK.tsc and (isGlobal or isExtension or (isNamespaced and  )
 		
 		if sup
 			sup.traverse()
@@ -3257,18 +3365,19 @@ export class ClassDeclaration < Code
 
 		if isExtension and @name
 			@name.traverse()
+
 			if @name isa Identifier
 				@name.resolveVariable()
-			
+
 			if !isTag
+				let extname 
 				@className = @name
-				# @name = scope__.register("Ω{@name.value}Ω{oid}",null)
-				@mixinName = @name = scope__.register("Ω{@name.value}Ω{STACK.incr('extend')}",null)
-				if STACK.tsc
-					option(:export,true)
+				@ownName = STACK.toInternalClassName(@name)
+				@mixinName = scope__.register(@ownName,null)
 			else
 				@className = LIT(@name.toClassName)
-				@mixinName = scope__.register("Ω{@className}Ω{STACK.incr('extend')}",null)
+				@ownName = STACK.toInternalClassName(@name)
+				@mixinName = scope__.register(@ownName,null)
 			
 		elif @name isa Identifier
 			if !isTag or @name.isCapitalized
@@ -3279,6 +3388,17 @@ export class ClassDeclaration < Code
 			@name.traverse(declaring: self)
 		elif @name
 			@name.traverse()
+		
+		if isGlobal and !isExtension and !isNamespaced and option(:export) and STACK.tsc
+			@exportName = STACK.toInternalClassName(@name)
+
+		if @ownName == @name and (exportForDts)
+			if isGlobal and !isExtension and !isNamespaced and option(:export)
+				@exportName = STACK.toInternalClassName(@name)
+			else
+				@ownName = STACK.toInternalClassName(@name)
+
+		# console.log 'visited class',exportForDts,String(@ownName),String(@exportName)
 		
 		STACK.push(self)
 		ROOT.entities.add(namepath,self)
@@ -3307,6 +3427,7 @@ export class ClassDeclaration < Code
 					instanceMethodMap[name] = node
 
 		
+		# TODO No longer used - remove
 		if option(:params)
 			# find the rest param
 			let add = []
@@ -3437,8 +3558,8 @@ export class ClassDeclaration < Code
 		if tsc and ctor and @autosuper
 			ctor.body.add([LIT("super()"),BR],0)
 			
-		if !staticInits.isEmpty and !tsc
-			staticInit.inject(staticInits,0)
+		
+			# staticInit.inject(staticInits,0)
 			
 		if !STACK.tsc
 			let hasInitedHook = !!instanceMethodMap["#__inited__"]
@@ -3447,7 +3568,8 @@ export class ClassDeclaration < Code
 			if hasDecorators
 				STACK.use('hooks')
 				let decosym = STACK.symbolFor('#__hooks__')
-				staticInit.inject LIT("this.prototype[{decosym}] = {runtime:hooks}"), 0
+				staticInits.unshift LIT("this.prototype[{decosym}] = {runtime:hooks}"), yes
+				# staticInit.inject LIT("this.prototype[{decosym}] = {runtime:hooks}"), 0
 			
 			if !isTag and !ctor and (hasInitedHook or hasDecorators)
 				let ops = sup ? [Super.new(),BR] : [BR]
@@ -3465,7 +3587,7 @@ export class ClassDeclaration < Code
 
 				if sup
 					let refsym = STACK.getSymbol()
-					staticInit.inject LIT("this.prototype[{ctorsym}] = {refsym}"), 0
+					staticInits.unshift LIT("this.prototype[{ctorsym}] = {refsym}"), 0
 					if hasInitedHook
 						ctor.inject LIT("if(this[{ctorsym}]==={refsym}) ({initedHook},this[{initsym}]());")
 					else
@@ -3480,7 +3602,8 @@ export class ClassDeclaration < Code
 
 				# If we are not in the stdlib / core - add an inherited hook for the class?
 				# ctor.body.add([callop,BR],0)
-
+		if !staticInits.isEmpty and !tsc
+			body.add([BR,staticInits])
 		self
 
 	def addMethod name, params, mbody, options, cb
@@ -3498,13 +3621,15 @@ export class ClassDeclaration < Code
 	# def addSetter name, body
 
 	def js o
+
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
 		var up = STACK.up
 		var o = @options or {}
-		var cname = name isa Access ? name.right : name
 
+		var cname = @ownName isa Access ? @ownName.right : @ownName
+		# var cname = @ownName # name isa Access ? name.right : name
 		
 		# var namespaced = name != cname
 		var initor = null
@@ -3518,11 +3643,16 @@ export class ClassDeclaration < Code
 		var externalAccess = LIT(cname)
 		var supAccess = null
 
-		if isExtension and STACK.tsc
-			yes
-
+		if STACK.tsc and isExtension and !exportForDts # (isNamespaced or @name.@variable and !@name.@variable.isImported)
+			let parts = []
+			let target = @name.c
+			for part in body.@nodes
+				parts.push(part.c(as: 'descriptor',target: target))
+			return parts.join(';\n')
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
+
+		
 		if name
 			jshead += " {M cname, name}"
 		else
@@ -3533,42 +3663,20 @@ export class ClassDeclaration < Code
 		if sup
 			supAccess = M(sup)
 			jshead += " extends {supAccess}"
-		
-		# elif isExtension and STACK.tsc
-		# 	jshead += " extends {@className.c}"
+			
 
-		if name isa Access
-			if @staticInit
-				externalAccess = scope.root.declare(null)
-				jshead = "{externalAccess.c} = {jshead}"
-
-				
+		if name isa Access and !exportForDts and !isExtension
+			# TODO or the definition is local
 			jshead = "{name.c} = {jshead}"
-
 		
-		if option(:export)
+		if option(:export) or (STACK.tsc and exportForDts)
+			# beware of double export
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
 			else
 				jshead = "{M 'export',option(:export)} {jshead}"
 
-		# if STACK.tsc and option(:global)
-
-		if isExtension and STACK.tsc and false
-			# if the class-name is aliased via an import we want to include that here
-			# jsbody = "\n__extends__= new {@className.c};\n{jsbody}"
-			# let ext = '\n/** @type {InstanceType<typeof THIS>} */ __extends__;\n'.replace('THIS',@className.c)
-			let ext = "\n// @ts-ignore\n__extends__= new {M(@className.c,@className)};\n"
-			jsbody = "{ext}{jsbody}"
-			# InstanceType<typeof ImmediateDefJS>
-
 		let js = "{jshead} \{{jsbody}\}"
-
-		if @staticInit
-			if up isa Block or up isa Export
-				js = "{js}; {OP('.',externalAccess,initKey).c}();"
-			else
-				js = "(({js})[{initKey.c}]())"
 
 		if isExtension and !STACK.tsc
 			let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
@@ -3576,17 +3684,23 @@ export class ClassDeclaration < Code
 			if @virtualSuper
 				let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
 				extTarget = LIT("({wrap.c},{extTarget.c})")
-
+			# TODO can this happen in static block?
 			js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
 
-		if option(:global)
+		if option(:global) and !STACK.tsc
 			# external access?
 			# js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
-			if STACK.tsc and true
-				js = "{js}; export \{{@cname}\}; {scope__.root.globalRef}.{@cname} = {@cname}"
+			let access = name isa Access
+			let getter = name isa Access ? name.c : @cname
+			if STACK.tsc
+				js = "{js};{!access ? " export \{{@cname}\};" : ""} {scope__.root.globalRef}.{@cname} = {getter}"
 			else
-				js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
-
+				js = "{js}; {scope__.root.globalRef}.{@cname} = {getter}"
+			
+		# if option(:export) and option(:global) and STACK.tsc
+		
+		if STACK.tsc and @exportName
+			js = "{js}; export \{{@ownName} as {@exportName}\}"
 		return js
 
 export class ExtendDeclaration < ClassDeclaration
@@ -3773,7 +3887,7 @@ export class TagDeclaration < ClassDeclaration
 		# 	if !option(:extension) and (!name.isClass)
 		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
 
-		if STACK.tsc and (option(:global) or !name.isClass)
+		if STACK.tsc and (option(:global) or !name.isClass) and false
 			js += "; globalThis.{className} = {className}"
 		return js
 
@@ -3850,9 +3964,11 @@ export class Func < Code
 				else
 					thistype = "InstanceType<typeof {thistype}>"
 				# o.push('@this ' + thistype + '')
+				# FIXME not used?
 				
 				
-		elif option(:jsdocthis)
+		if option(:jsdocthis)
+			
 			o.push('@this ' + option(:jsdocthis) + '')
 			
 		if returnType
@@ -4087,7 +4203,7 @@ export class MethodDeclaration < Func
 	# FIXME export global etc are NOT valid for methods inside any other scope than
 	# the outermost scope (root)
 
-	def js o
+	def js stack,co = {}
 		var o = @options
 		# FIXME Do this in the grammar - remnants of old implementation
 		unless type == :constructor or option(:noreturn) or isSetter()
@@ -4103,9 +4219,8 @@ export class MethodDeclaration < Func
 		var name = typeof @name == 'string' ? @name : @name.c(as: 'field')
 
 		var out = ""
-		
 
-		if option(:inClassBody) or option(:inObject)
+		if (option(:inClassBody) or option(:inObject)) and co:as != 'descriptor'
 			# what if this is async?
 			let prefix = ''
 			if self.isGetter
@@ -4126,21 +4241,32 @@ export class MethodDeclaration < Func
 		var func = "({params.c})" + code
 		var ctx = context
 		var fname = helpers.toValidIdentifier(AST.sym(self.name))
+		
 
 		if target
+
+			# special case here?
+			if STACK.tsc
+				# let o = option(:static) ? "typeof {target.c}"
+				# : "InstanceType<typeof {target.c}>"
+				set(jsdocthis: "typeof {target.c}")
+
 			# TODO make this work with SymbolIdentifier
 			if fname[0] == '['
 				fname = fname.slice(1,-1)
 			else
 				fname = "'{fname}'"
+
 			if isGetter
-				out = "Object.defineProperty({target.c},'{fname}',\{get: {funcKeyword}{func}, configurable: true\})"
+				out = "Object.defineProperty({target.c},{fname},\{get: {jsdoc()}{funcKeyword}{func}, configurable: true\})"
+				return out
 			elif isSetter
-				out = "Object.defineProperty({target.c},'{fname}',\{set: {funcKeyword}{func}, configurable: true\})"
+				out = "Object.defineProperty({target.c},{fname},\{set: {jsdoc()}{funcKeyword}{func}, configurable: true\})"
+				return out
 			else
-				if STACK.tsc
-					let o = "InstanceType<typeof {target.c}>"
-					set(jsdocthis: o)
+				# if STACK.tsc
+				# 	let o = "InstanceType<typeof {target.c}>"
+				# 	set(jsdocthis: o)
 
 				let k = OP('.',target,@name)
 				out = "{k.c} = {funcKeyword} {func}"
@@ -5656,6 +5782,7 @@ export class Assign < Op
 		# The special case where setting `item = item` should compile to `self.item = item`
 		if l isa VarOrAccess and r isa VarOrAccess and l.@identifier.symbol == r.@identifier.symbol
 			@left = l = Access.new(".",scope__.context,l.@value)
+
 			
 		# console.log "Assign {l} {r}"
 		# Regularly, the var is declared after the right side, so `let item = item` resolves to
@@ -5687,6 +5814,7 @@ export class Assign < Op
 				left.forceExpression
 
 			return right.consume(self).c(o)
+			
 		# testing this
 		return super(o)
 
@@ -5703,8 +5831,11 @@ export class Assign < Op
 
 		var l = left.node
 		var r = right
+		var lc = null
+	
 
-		if l isa Access and l.left isa Super
+
+		if l isa Access and l.left isa Super and false
 			if let m = STACK.method
 				if m.option('inExtension')
 					let key = l.right
@@ -5718,6 +5849,7 @@ export class Assign < Op
 		# We are setting self(!)
 		# TODO document functionality
 
+		# FIXME Not supported anymore?
 		if l isa Self
 			var ctx = scope__.context
 			l = ctx.reference
@@ -5725,8 +5857,13 @@ export class Assign < Op
 		if l isa VarReference
 			l.@right = r
 			return l.c
+
+		# test for typescript namespacing
+		if l isa Access and l.@left.@value == 'OPS' and STACK.tsc
+			lc = "globalThis.{M(helpers.toNamespacedIdentifier('OPS',String(l.@right)),l.@right)}"
+			
 		
-		var lc = l.c
+		lc ||= l.c
 		var out = "{lc} {op} {right.c(expression: true)}"
 		
 		if let typ = (datatype or (l and !(l isa VarReference) and l.datatype))
@@ -5905,6 +6042,9 @@ export class Identifier < Node
 	def references variable
 		@value.@variable = variable if @value
 		self
+	
+	def metaIdentifier
+		Identifier.new('αα' + AST.sym(@value))
 
 	def load v
 		return (v isa Identifier ? v.value : v)
@@ -5975,6 +6115,12 @@ export class Identifier < Node
 			if o:as == 'value'
 				# console.log 'compiling identifier as',o:as,symbol
 				return "'{symbol}'"
+			
+			if o:as == 'meta'
+				return "'{symbol}'"
+
+			if o:as == 'namespaced' and o:ns
+				return M("Σ{o:ns}Σ{symbol}",@token or @value)
 
 			if o:as == 'field' and !isValidIdentifier
 				return M("['{symbol}']",@token or @value)
@@ -6031,6 +6177,9 @@ export class SymbolIdentifier < Identifier
 
 	def variable
 		@variable ||= scope__.root.symbolRef(@value.slice(0))
+
+	def metaIdentifier
+		scope__.root.symbolRef("__" + @value.slice(0))
 		
 	def isConstant
 		yes
@@ -6171,6 +6320,21 @@ export class Decorator < ValueNode
 		if let block = up
 			block.@decorators ||= []
 			block.@decorators.push(self)
+
+	def tscGetter name, content = null
+		let out = @value.c
+		
+		if @params
+			out += "({@params.c(expression: yes)})"
+		else
+			out += "()"
+
+		if content
+			out += ".wrap({content})"
+
+		# out += ".get(this,{content or 'null'})"
+		
+		return out
 
 	def c 
 		# should return other places as well...
@@ -11951,9 +12115,10 @@ export class MethodScope < Scope
 
 		if STACK.tsc and isInExtend
 			let cls = parent.closure.node
-			let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
-			context.@useReference = yes
-			ref.c
+			if cls.@className
+				let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
+				context.@useReference = yes
+				ref.c
 		self
 
 export class FieldScope < Scope
@@ -12077,6 +12242,9 @@ export class Variable < Node
 		@references 	= [] # only needed when profiling
 		@assignments 	= []
 		self
+
+	def isImported
+		@type == 'imported'
 		
 	def typedAlias
 		@typedAlias ||= Variable.new(@scope,@name + '$TYPED$',@declarator,@options)
@@ -12572,11 +12740,6 @@ export class Super < Node
 		args.traverse if args	
 		self
 
-	def replaceWithInitor
-		if up isa Call
-			yes
-
-
 	def startLoc
 		@keyword and @keyword.startLoc
 
@@ -12597,8 +12760,6 @@ export class Super < Node
 		let args = self.args
 		
 		# need to know if our method is in the initial declaration
-		
-
 		if virtual and @class
 			
 			sup = CALL(@class.virtualSuper,[slf])
@@ -12627,6 +12788,9 @@ export class Super < Node
 				op = CALL(op,args)
 
 			return op ? (M op.c(mark: false), @keyword) : '/**/'
+
+		if member
+			return OP('.',sup,member).c
 
 		if up isa Call and m and !m.isConstructor
 			return OP('.',sup,m.name).c

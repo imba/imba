@@ -313,6 +313,20 @@ export class Scope < Node
 	get class?
 		!!type.match(/^class/) or component?
 
+	get exportForDts?
+		class? and !!(extends? or global? or (namespaced? and (!namespace..symbol or namespace.symbol.importSource)))
+	
+	get namespace
+		return null unless namespaced?
+		let first = ident # keyword.next.next
+		if first isa Assignable
+			return first.start.next
+		return first
+		# namespaced? ? keyword.next.next : null
+
+	get namespaced?
+		class? and (ident.value.indexOf('.') > 0)
+
 	get extends?
 		class? and keyword and keyword.prev.prev..match('keyword.extend')
 

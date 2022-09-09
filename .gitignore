@@ -8,6 +8,7 @@ temp
 test/perf
 test/dist
 packages/imba/test/cli/examples/dist
+packages/imba/test/apps/**/*.js
 
 packages/e2e-tests/**/node_modules
 packages/e2e-tests/**/dist

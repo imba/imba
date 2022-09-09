@@ -232,7 +232,7 @@ repository:
         '1': { name: keyword.operator.logical.imba }
         '2': { name: keyword.operator.arithmetic.imba }
     - name: keyword.operator.logical.imba
-      match: \!|&&|\|\||\?\?|or\b(?=\s|$)|and\b(?=\s|$)
+      match: \!|&&|\|\||\?\?|or\b(?=\s|$)|and\b(?=\s|$)|\@\b(?=\s|$)
     - name: keyword.operator.bitwise.imba
       match: \&|~|\^|\|
     - name: keyword.operator.assignment.imba

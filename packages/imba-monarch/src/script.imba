@@ -1161,56 +1161,102 @@ export default class ImbaScriptInfo
 
 	def getExports o = {}
 		[]
-		
 
 	def getGeneratedDTS o = {},globals = {}
-		let ns = o.ns or "__{nr}"
+		let srcid = o.ns or "__{nr}"
 		let src = o.fileName || owner..fileName or "$$PATH$$"
 		let dts = o.dts or new CodeGen
 		let body = content
-		dts.w "import * as {ns} from '{src}';"
+		dts.w "import * as {srcid} from '{src}';"
 		let exists = no
 		let mods = {}
+		let counts = {}
 		let glob = mods.global = dts.curly 'declare global'
 
 		let classes = getRootClasses()
 
-		for cls in classes when cls.global?
-			continue if cls.extends?
-
-			let name = cls.path
-			globals[name] = cls
+		for cls in classes
+			
+			continue unless cls.exportForDts?
+			# console.log 'do something with',cls.ident.value,cls.exportForDts?,!!cls.namespace,cls.global?,cls.component?
 			exists = yes
-			glob.w "interface {name} extends {ns}.{name}" + ' {}'
-			glob.w "var {name}: typeof {ns}.{name};"
+			let parts = cls.ident..value..split('.')
+			let dtsname = 'Ω' + parts.join('__')
+			let dtsbase = dtsname
+
+			let modul = cls.namespace
+			let ident = modul ? modul.next.next : cls.ident
+			if ident isa Assignable
+				ident = ident.start.next
+			
+			let name = ident.value or ident
+			let jsname = ident.value or ident
 
 			if cls.component?
-				glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {ns}.{name} \}`
+				jsname = cls.path
+				dtsname = cls.path 
+				if cls.extends?
+					dtsname = 'Ω' + dtsname
 
-		let nr = 1
-		for cls in classes
-			continue unless cls.extends?
+			let nr = counts[dtsname] = (counts[dtsname] or 0) + 1
+			if nr > 1
+				dtsname += 'Ω' + nr
 
-			let ident = cls.ident
-			if ident isa Assignable
-				ident = ident.find('identifier.')
-			let sym = ident.symbol
-			let name = ident.value
-			let modsrc = sym..importSource
-			let origname = cls.path
-			let extname = "Ω{cls.path}Ω{nr++}"
-			exists = yes
+			# Should support all cases?
+			if cls.global?
 
-			if modsrc
-				# tweak / fix the path somehow
-				origname = sym.exportName
-				let rel = src.replace(/\/[^\/]+?$/,'/' + modsrc)
-				let mod = mods[rel] ||= dts.curly("declare module '{rel}'")
-				mod.w "interface {origname} extends {ns}.{extname}" + ' {}'
-			else
-				let desc = "interface {origname} extends {ns}.{extname}" + ' {}'
-				dts.curly("declare &&{origname}&& ").w(desc)
+				globals[name] = cls
+		
+
+				# fix the value
+				if cls.component? and cls.extends?
+					glob.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
+				elif true
+					# dtsname = cls.path
+					glob.w "class {jsname} extends {srcid}.{dtsname}" + ' {}'
+					# glob.w "var {name}: typeof {srcid}.{dtsname};"
+					
+					if cls.component?
+						glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {srcid}.{dtsname} \}`
+				else
+					
+					glob.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
+					glob.w "var {jsname}: typeof {srcid}.{dtsname};"
+					# glob.w "var {name}: typeof {name};"
+
+				
+			
+			if modul
+				let sym = modul.symbol
+				let base = glob
+				let ns = modul.value
+
+				unless cls.extends?
+					globals[cls.path] = cls
+
+				if sym..importSource
+					ns = sym.exportName
+					let rel = src.replace(/\/[^\/]+?$/,'/' + sym.importSource)
+					base = mods[rel] ||= dts.curly("declare module '{rel}'")
+
+				let blk = base["ns{ns}"] ||= base.curly("namespace {ns}")
+				if cls.extends?
+					blk.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
+				else
+					blk.w "class {jsname} extends {srcid}.{dtsname}" + ' {}'
+					# blk.w "var {ident.value}: typeof {srcid}.{dtsname};"
+
+			elif cls.extends? and ident.symbol..importSource
+				let rel = src.replace(/\/[^\/]+?$/,'/' + ident.symbol..importSource)
+				let blk = mods[rel] ||= dts.curly("declare module '{rel}'")
+				blk.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
+
+			elif cls.extends? and !cls.component?
+				# the target seems to be global - use a placeholder declare
+				# let blk = dts.curly("declare &&{name}&& ")
+				# let rel = src.replace(/\/[^\/]+?$/,'/' + ident.symbol..importSource)
+				# let blk = mods[rel] ||= dts.curly("declare module '{rel}'")
+				glob.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
 
 		dts.w 'export {};'
 		exists ? String(dts) : ''
-		# String(dts)

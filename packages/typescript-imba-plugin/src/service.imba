@@ -263,15 +263,22 @@ export default class Service < EventEmitter
 			let found
 			item.#gdts = true
 			item.#name = item.name
+			let imbaname = util.toImbaIdentifier(item.name)
+			let fullname = "{item.containerName}.{item.name}"
+
+			# util.log('convert imba definition',gdts,item.name,Object.keys(imbaGlobals),imbaname,fullname)
 
 			if gdts
-				if found = imbaGlobals[item.name]
-					# item.#found = found
+				
+				if found = (imbaGlobals[fullname] or imbaGlobals[item.name] or imbaGlobals[imbaname])
+					# util.log "found definition",found
 					item.textSpan = found.textSpan
 					item.contextSpan = found.contextSpan
 					item.fileName = found.doc.fileName
 					item.#scope = found
 					return item
+				item.#skip = yes
+				return item
 
 			let script = getImbaScript(file)
 			let path = "{item.containerName}.prototype.{item.name}"
@@ -335,7 +342,7 @@ export default class Service < EventEmitter
 
 			item.fileName = file
 		catch e
-			console.log 'error',e
+			util.log 'error',e
 			yes
 
 		return item
@@ -365,6 +372,9 @@ export default class Service < EventEmitter
 				for key in ['text','context','trigger','applicable']
 					if let span = res[key + 'Span']
 						convertSpan(span,ls,filename,key)
+			
+			if res.textSpan
+				res.#scope = "{filename}:{res.textSpan.start}"
 
 			if res.textChanges
 				for item in res.textChanges
@@ -390,6 +400,7 @@ export default class Service < EventEmitter
 
 			res.definitions = res.definitions.filter do(item,index,arr)
 				return no if item.#scope and arr.find(do $1.#scope == item.#scope) != item
+				return no if item.#skip
 				return yes
 
 			
