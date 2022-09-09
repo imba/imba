@@ -126,7 +126,7 @@ colors.event-modifier = "#f99d72"
 colors.tag = "#e9e19b"
 colors.type = colors.comment
 colors.bgdark = '#21252b'
-colors.background = '#1c2025' # '#282c34'
+colors.background = '#111316' # '#282c34'
 colors.chromebg = '#1d2227' # '#252930'
 colors.darker = '#171a1e'
 
@@ -178,8 +178,8 @@ export let vstheme = {
 	"editorGroupHeader.tabsBackground": colors.bgdark,
 	"editorHoverWidget.background": colors.bgdark,
 	"editorHoverWidget.border": "#181a1f",
-	"editorIndentGuide.activeBackground": "#c8c8c859",
-	"editorIndentGuide.background": "#3b4048",
+	"editorIndentGuide.activeBackground": "#ffffff22",
+	"editorIndentGuide.background": "#ffffff06",
 	"editorLineNumber.foreground": "#495162",
 	"editorMarkerNavigation.background": colors.bgdark,
 	"editorRuler.foreground": "#abb2bf26",
@@ -239,8 +239,6 @@ export let vstheme = {
 	"editorError.foreground":"#ff8f8f",
 	"editorGroupHeader.tabsBackground": colors.chromebg,
 	"editorGroupHeader.tabsBorder": "#21252b",
-	"editorIndentGuide.activeBackground": "#0000002f",
-	"editorIndentGuide.background": "#00000011",
 	"editorLineNumber.activeForeground": "#9bb5dd",
 	"editorOverviewRuler.errorForeground": "#f36161",
 	"editorWhitespace.foreground": "#ffffff0e",
@@ -269,7 +267,7 @@ export let vstheme = {
 	"tab.inactiveForeground": "#d0e0ff65",
 	"titleBar.activeBackground": colors.chromebg,
 	"titleBar.border": colors.chromebg,
-	"tree.indentGuidesStroke": "#21252bcc",
+	"tree.indentGuidesStroke": "#363d49cc",
 	"widget.shadow": "#0000007c",
 	"statusBar.background": colors.chromebg,
 	"statusBar.border": "#21252b",
