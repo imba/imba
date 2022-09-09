@@ -14,7 +14,6 @@ const entries = {
 	asset: import('./assets/tool.svg')
 }
 
-
 let m = new SomeClass
 m.ext
 m.that.extthis
@@ -31,14 +30,29 @@ m3.state.one
 m3.element.main
 m3.state
 
-m3.#hello
-
 let m5 = <app-panel>
 m5.main
 m5.ext
 m5.that.ext
+global.APPNS={}
 
+if true
+	let item = new APPCLS
+	APPCLS.main
+	item.main
+	item.ext
 
+if true
+	let item = new APPNS.Main
+	APPNS.Main.main
+	item.main
+	item.ext
+
+if true
+	let item = new APPCLS.Main
+	APPCLS.Main.main
+	item.main
+	item.ext
 
 
 let m10\SomeClass
@@ -79,6 +93,7 @@ tag app-main
 		smeth
 		spuce
 		state
+		staff
 		button
 		rect
 		data.that.main
@@ -93,7 +108,7 @@ tag app-main
 		el.stata
 
 	<self>
-		<app-button data @resize.css>
+		<app-button>
 		<input$text type='text'>
-		<svg src='./assets/tool.svg'>
+		# <svg src='./assets/tool.svg'>
 		

@@ -79,6 +79,10 @@ const Rules = [
 	---
 	code: 2307
 	message: /\.(txt|css|a?png|jpe?g|gif|svg)'/
+	---
+	code: 6232
+	message: /./
+	# Declaration augments declaration in other file - not possible to solve?
 ]
 
 

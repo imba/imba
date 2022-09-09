@@ -56,7 +56,7 @@ export const DefaultConfig = {
 		esModuleInterop: true
 		suppressExcessPropertyErrors: false
 		suppressImplicitAnyIndexErrors: false
-		declaration: true
+		declaration: false
 		strict: false
 		resolveJsonModule: true
 		noResolve: false

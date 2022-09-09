@@ -3365,20 +3365,7 @@ export class ClassDeclaration < Code
 				let extname 
 				@className = @name
 				@ownName = STACK.toInternalClassName(@name)
-
-				# if @name isa Access
-				# 	let lft = @name.left.c					
-				# 	let rgt = @name.right.c
-				# 	# @className = @name.right
-				# 	
-				# 	extname = "Ω{rgt}Ω{STACK.incr('extend')}" # Ω{lft}
-				# else
-				# 	extname = "Ω{@name.value}Ω{STACK.incr('extend')}"
-				# @name = scope__.register("Ω{@name.value}Ω{oid}",null)
-				# @exportName = extname = SourceMapper.strip(extname)
 				@mixinName = scope__.register(@ownName,null)
-				# if STACK.tsc
-				# 	option(:export,true)
 			else
 				@className = LIT(@name.toClassName)
 				@ownName = STACK.toInternalClassName(@name)
@@ -3397,12 +3384,9 @@ export class ClassDeclaration < Code
 		if isGlobal and !isExtension and !isNamespaced and option(:export) and STACK.tsc
 			@exportName = STACK.toInternalClassName(@name)
 
-		if @ownName == @name and (exportForDts or isNamespaced)
+		if @ownName == @name and (exportForDts)
 			if isGlobal and !isExtension and !isNamespaced and option(:export)
 				@exportName = STACK.toInternalClassName(@name)
-				yes
-				# if isTag
-				# 	@ownName = @name.toClassName
 			else
 				@ownName = STACK.toInternalClassName(@name)
 
@@ -3636,7 +3620,8 @@ export class ClassDeclaration < Code
 		var up = STACK.up
 		var o = @options or {}
 
-		var cname = @ownName # name isa Access ? name.right : name
+		var cname = @ownName isa Access ? @ownName.right : @ownName
+		# var cname = @ownName # name isa Access ? name.right : name
 		
 		# var namespaced = name != cname
 		var initor = null
@@ -3644,15 +3629,6 @@ export class ClassDeclaration < Code
 
 		if typeof cname != 'string' and cname
 			cname = cname.c(mark: yes)
-
-		if exportForDts
-			yes
-			# if !isNamespaced and option(:export)
-			#	extname = cname
-			# cname = extname
-			# @dtsname = cname
-			# cname = @ownName
-			# console.log 'compiule class',exportForDts,extname,STACK.toInternalClassName(@name)
 
 		@cname = cname
 		
@@ -3681,7 +3657,7 @@ export class ClassDeclaration < Code
 			jshead += " extends {supAccess}"
 			
 
-		if name isa Access and !exportForDts
+		if name isa Access and !exportForDts and !isExtension
 			# TODO or the definition is local
 			jshead = "{name.c} = {jshead}"
 		
@@ -3903,7 +3879,7 @@ export class TagDeclaration < ClassDeclaration
 		# 	if !option(:extension) and (!name.isClass)
 		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
 
-		if STACK.tsc and (option(:global) or !name.isClass)
+		if STACK.tsc and (option(:global) or !name.isClass) and false
 			js += "; globalThis.{className} = {className}"
 		return js
 

@@ -1176,16 +1176,13 @@ export default class ImbaScriptInfo
 		let classes = getRootClasses()
 
 		for cls in classes
-			let parts = cls.ident..value..split('.')
-
-			# console.log 'do something with',cls.ident.value,cls.exportForDts?,!!cls.namespace,cls.global?
+			
 			continue unless cls.exportForDts?
+			# console.log 'do something with',cls.ident.value,cls.exportForDts?,!!cls.namespace,cls.global?,cls.component?
 			exists = yes
+			let parts = cls.ident..value..split('.')
 			let dtsname = 'Ω' + parts.join('__')
 			let dtsbase = dtsname
-			let nr = counts[dtsname] = (counts[dtsname] or 0) + 1
-			if nr > 1
-				dtsname += 'Ω' + nr
 
 			let modul = cls.namespace
 			let ident = modul ? modul.next.next : cls.ident
@@ -1197,53 +1194,51 @@ export default class ImbaScriptInfo
 
 			if cls.component?
 				jsname = cls.path
+				dtsname = cls.path 
+				if cls.extends?
+					dtsname = 'Ω' + dtsname
 
-			# if parts.length == 2
-			# 	if ident isa Assignable
-			# 		modul = ident.start.next
-			# 		ident = modul.next.next
-			# 	# console.log 'was assignable?',parts
-			
-			# if ident isa Assignable
-			# 	ident = ident.start.next
+			let nr = counts[dtsname] = (counts[dtsname] or 0) + 1
+			if nr > 1
+				dtsname += 'Ω' + nr
 
 			# Should support all cases?
 			if cls.global?
 
-				
-				
 				globals[name] = cls
 		
 
 				# fix the value
-				if true
-					dtsname = cls.path
+				if cls.component? and cls.extends?
+					glob.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
+				elif true
+					# dtsname = cls.path
 					glob.w "class {jsname} extends {srcid}.{dtsname}" + ' {}'
 					# glob.w "var {name}: typeof {srcid}.{dtsname};"
+					
+					if cls.component?
+						glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {srcid}.{dtsname} \}`
 				else
 					
 					glob.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
 					glob.w "var {jsname}: typeof {srcid}.{dtsname};"
 					# glob.w "var {name}: typeof {name};"
 
-				if cls.component? and !cls.extends?
-					glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {srcid}.{dtsname} \}`
+				
 			
 			if modul
 				let sym = modul.symbol
 				let base = glob
 				let ns = modul.value
+
+				unless cls.extends?
+					globals[cls.path] = cls
+
 				if sym..importSource
 					ns = sym.exportName
 					let rel = src.replace(/\/[^\/]+?$/,'/' + sym.importSource)
 					base = mods[rel] ||= dts.curly("declare module '{rel}'")
-					
-					# if false
-					# modns.w "interface {ident.value} extends {srcid}.{dtsname}" + ' {}'
-					# modns.w "var {ident.value}: typeof {srcid}.{dtsname};" if !cls.extends?
 
-				# elif !sym
-				# 	let modns = glob["ns{modul.value}"] ||= glob.curly("namespace {modul.value}")
 				let blk = base["ns{ns}"] ||= base.curly("namespace {ns}")
 				if cls.extends?
 					blk.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
@@ -1255,13 +1250,13 @@ export default class ImbaScriptInfo
 				let rel = src.replace(/\/[^\/]+?$/,'/' + ident.symbol..importSource)
 				let blk = mods[rel] ||= dts.curly("declare module '{rel}'")
 				blk.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
-			elif cls.extends?
+
+			elif cls.extends? and !cls.component?
 				# the target seems to be global - use a placeholder declare
-				let blk = dts.curly("declare &&{name}&& ")
+				# let blk = dts.curly("declare &&{name}&& ")
 				# let rel = src.replace(/\/[^\/]+?$/,'/' + ident.symbol..importSource)
 				# let blk = mods[rel] ||= dts.curly("declare module '{rel}'")
-				blk.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
+				glob.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
 
 		dts.w 'export {};'
 		exists ? String(dts) : ''
-		# String(dts)

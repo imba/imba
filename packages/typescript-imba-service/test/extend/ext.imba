@@ -1,7 +1,5 @@
 import { Local } from './local'
 
-Local # yes
-
 def method stuff
 	return stuff
 
@@ -119,6 +117,9 @@ extend class Element
 		parentElement
 		parentElement
 
+		
+
+
 extend class ManualGlobal
 
 	get that
@@ -136,3 +137,5 @@ extend class Element
 extend class Element
 	get stata
 		1234232
+
+APPNS.PROPERTY = 10
