@@ -26,7 +26,6 @@ let imbapkg = read-package(imbadir) # JSON.parse(nfs.readFileSync(np.resolve(imb
 const templates = [
 	['base-template', 'Website with both frontend and backend']
 	['vite-template', 'Client only application bundled with Vite'],
-	['static-base-template', 'Static website without backend (Netlify, GitHub Pages, CloudFlare Pages, etc)']
 	['tauri-template', 'Desktop application using Tauri (Rust)']
 	['electron-template', 'Desktop application using Electron (Node)']
 ].map do([name,hint]) {name: name, hint: hint}
@@ -116,21 +115,21 @@ def run
 
 		if await cli.ok("Create project in directory: {dir}?", initial: yes)
 			log.info "Generating files from template"
-			await cli.exec("git clone --depth 1 {tplurl} \"{dir}\"")
+			cli.exec("git clone --depth 1 {tplurl} \"{dir}\"")
 
 			cli.cwd = dir
-			await nfs.rmSync(np.resolve(dir,'.git'), recursive: yes)
-			await cli.exec("git init .")
+			nfs.rmSync(np.resolve(dir,'.git'), recursive: yes)
+			cli.exec("git init .")
 			let pkg = Object.assign({},tplpkg,data)
 			write-package(dir,pkg)
 
 			log.info "Installing dependencies"
-			await cli.exec("npm install imba")
-			await cli.exec("npm install")
+			cli.exec("npm install imba")
+			cli.exec("npm install")
 
 			if data.repository
 				log.info "add origin https://github.com/{data.repository}.git"
-				await cli.exec("git remote add origin https://github.com/{data.repository}.git")
+				cli.exec("git remote add origin https://github.com/{data.repository}.git")
 
 			let getStarted = """
 				  
