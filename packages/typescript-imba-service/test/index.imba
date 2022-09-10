@@ -56,6 +56,10 @@ def run
 		console.log 'get info for',src,pos
 		p res
 
+	def checker file
+		file = findFile(file)
+		return file.getTypeChecker!
+
 	def completions file, pos, o = {triggerCharacter: ''}
 		file = findFile(file)
 		let src = file.fileName or file

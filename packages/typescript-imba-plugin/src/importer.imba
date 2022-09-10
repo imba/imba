@@ -51,7 +51,7 @@ export default class AutoImportContext
 		let debugs = ts.Debug.isDebugging
 		ts.Debug.isDebugging = true
 		if ts.getExportInfoMap
-			map = ts.getExportInfoMap(checker.sourceFile,checker.project,checker.program)
+			map = ts.getExportInfoMap(checker.sourceFile,checker.project,checker.program,userPrefs)
 		else
 			map = ts.codefix.getSymbolToExportInfoMap(checker.sourceFile,checker.project,checker.program)
 		ts.Debug.isDebugging = debugs
@@ -102,6 +102,9 @@ export default class AutoImportContext
 					info.packageName = getPackageNameForPath(path)
 					# info.#key = key
 					info.exportName = name
+
+					if util.isTagIdentifier(name) or util.isClassExtension(name)
+						return
 					
 					let gid = info.packageName or info.modulePath
 					let group = groups[gid] ||= {
@@ -119,6 +122,9 @@ export default class AutoImportContext
 
 					if group.exportStar
 						return
+
+					
+
 					
 					group.exports.push(info)
 					
@@ -160,6 +166,10 @@ export default class AutoImportContext
 					continue if ns[0] != '/' and !builtinMap[ns]
 					let path = getResolvePathForExportInfo(info) or ns
 					continue if util.isImbaDts(path)
+
+					if util.isTagIdentifier(name) or util.isClassExtension(name)
+						continue
+
 					info.modulePath = path
 					info.packageName = getPackageNameForPath(path)
 					info.#key = key

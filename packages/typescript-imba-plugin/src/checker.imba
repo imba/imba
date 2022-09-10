@@ -3,6 +3,7 @@ import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as I
 import AutoImportContext from './importer'
 const Globals = "global imba module window document exports console process parseInt parseFloat setTimeout setInterval setImmediate clearTimeout clearInterval clearImmediate globalThis isNaN isFinite __dirname __filename".split(' ')
 
+
 extend class ImbaSymbol
 	get tsFlags
 		let f = 0
@@ -84,6 +85,9 @@ export default class ImbaTypeChecker
 
 	get allGlobals
 		#allGlobals ||= props('globalThis').slice(0)
+
+	get newGlobals
+
 
 	get globals
 		#globals ||= allGlobals.filter do
@@ -209,6 +213,12 @@ export default class ImbaTypeChecker
 
 	def getGlobalTags
 		checker.getSymbolsInScope(sourceFile,4).filter do $1.escapedName[0] == 'Γ'
+
+	def getSymbolsInScope file = sourceFile, kind = 0
+		checker.getSymbolsInScope(file,kind)
+	
+	def getClassesInScope file = sourceFile, kind = 0
+		checker.getSymbolsInScope(file,global.ts.SymbolFlags.Class).filter do !$1.isGlobalTag
 
 	def getNumberUnits
 		props(checker.getDeclaredTypeOfSymbol(resolve('imba').exports.get('units')))

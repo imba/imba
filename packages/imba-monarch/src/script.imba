@@ -1217,28 +1217,16 @@ export default class ImbaScriptInfo
 
 			# Should support all cases?
 			if cls.global?
-
 				globals[name] = cls
-		
 
-				# fix the value
 				if cls.component? and cls.extends?
 					glob.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
-				elif true
-					# dtsname = cls.path
+				elif cls.component?
 					glob.w "class {jsname} extends {srcid}.{dtsname}" + ' {}'
-					# glob.w "var {name}: typeof {srcid}.{dtsname};"
-					
-					if cls.component?
-						glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {srcid}.{dtsname} \}`
+					glob.w `interface HTMLElementTagNameMap \{ "{cls.name}": {srcid}.{dtsname} \}`
 				else
-					
-					glob.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'
-					glob.w "var {jsname}: typeof {srcid}.{dtsname};"
-					# glob.w "var {name}: typeof {name};"
+					glob.w "class {jsname} extends {srcid}.{dtsname}" + ' {}'
 
-				
-			
 			if modul
 				let sym = modul.symbol
 				let base = glob
@@ -1246,7 +1234,7 @@ export default class ImbaScriptInfo
 
 				unless cls.extends?
 					globals[cls.path] = cls
-
+	
 				if sym..importSource
 					ns = sym.exportName
 					let rel = src.replace(/\/[^\/]+?$/,'/' + sym.importSource)
@@ -1260,6 +1248,8 @@ export default class ImbaScriptInfo
 					# blk.w "var {ident.value}: typeof {srcid}.{dtsname};"
 
 			elif cls.extends? and ident.symbol..importSource
+				# console.log ident.symbol..exportName
+				jsname = ident.symbol..exportName or jsname
 				let rel = src.replace(/\/[^\/]+?$/,'/' + ident.symbol..importSource)
 				let blk = mods[rel] ||= dts.curly("declare module '{rel}'")
 				blk.w "interface {jsname} extends {srcid}.{dtsname}" + ' {}'

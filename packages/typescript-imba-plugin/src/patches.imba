@@ -759,6 +759,9 @@ export default def patcher ts
 			
 		get isWebComponent
 			(/^[\w\-]+CustomElement$/).test(escapedName)
+
+		get isGlobalTag
+			escapedName[0] == 'Γ'
 			
 		get isReadonly
 			valueDeclaration.modifierFlagsCache & ts.ModifierFlags.Readonly

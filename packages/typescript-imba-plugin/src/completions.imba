@@ -668,7 +668,7 @@ export default class Completions
 		let locals = checker.sourceFile.getLocalTags!
 		
 		add(locals,o)
-		add(checker.getGlobalTags!,o)
+		# add(checker.getGlobalTags!,o) # nope?
 		
 		util.log "local tags",locals
 
@@ -794,7 +794,9 @@ export default class Completions
 		
 		# add('variables',weight: 70)
 		# could also go from the old shared checker?
+		add(checker.getClassesInScope!,weight: 200,matchRegex: prefixRegex, implicitGlobal: yes)
 		add(checker.globals,weight: 500,matchRegex: prefixRegex, implicitGlobal: yes)
+		
 
 		if prefixRegex
 			let imports = checker.autoImports.getVisibleExportedValues!
