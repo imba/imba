@@ -26,6 +26,11 @@
 		"workspaceContains:**/imbaconfig.json"
 	],
 	"contributes": {
+		"breakpoints": [
+			{
+				"language": "imba"
+			}
+		],
 		"commands": [
 			{
 				"command": "imba.getProgramDiagnostics",
