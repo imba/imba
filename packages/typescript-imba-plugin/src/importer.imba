@@ -51,7 +51,7 @@ export default class AutoImportContext
 		let debugs = ts.Debug.isDebugging
 		ts.Debug.isDebugging = true
 		if ts.getExportInfoMap
-			map = ts.getExportInfoMap(checker.sourceFile,checker.project,checker.program,userPrefs)
+			map = ts.getExportInfoMap(checker.sourceFile,checker.project,checker.program)
 		else
 			map = ts.codefix.getSymbolToExportInfoMap(checker.sourceFile,checker.project,checker.program)
 		ts.Debug.isDebugging = debugs
