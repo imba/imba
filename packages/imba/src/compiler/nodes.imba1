@@ -1422,6 +1422,7 @@ export class Comment < Meta
 		var v = @value.@value
 		if o and o:expression or v.match(/\n/) or @value.type == 'HERECOMMENT' # multiline?
 			var out = v.replace(/\*\//g, '\\*\\/').replace(/\/\*/g, '\\/\\*')
+			
 			"/*{out}*/"
 		elif v.match(/\@(type|param)/)
 			"/** {v} */"
@@ -1451,10 +1452,12 @@ export class Terminator < Meta
 		if STACK.option(:comments) == false
 			val = val.replace(/\/\/.*$/gm,'')
 		
-		
 		if STACK.tsc
 			# make comments significant for tooling
-			val = val.replace(/\/\/(.*)$/gm,'/**$1 */ ')
+			# temporary hack to work around parsing issue with reference path
+			val = val.replace(/\/{3}/g,'~~/~~')
+			val = val.replace(/\/\/\s(.*)$/gm,'/** $1 */ ')
+			val = val.replace(/\~\~\/\~\~/g,'///')
 
 		if STACK.tsc and (val:length > 1 or @first)
 			return M(val.replace(/^[\t ]+/gm,''),self)
@@ -2081,11 +2084,11 @@ export class ClassField < Node
 				if self isa ClassAttribute or (@decorators and @decorators:length)
 					let val = value ? value.c : ''
 					let field = ''
-					let getval = ''
+					let getval = 'null'
 					let setval = ''
 					let sym = osym
 
-					out = "{prefix} get {M(name,@name)}() \{ return {getval} \}" # the value scope?
+					out = "{prefix} get {M(name,@name)}() \{ return /** @type any */({getval}) \}" # the value scope?
 					
 					if datatype
 						out = "{datatype.c} {out}"
@@ -3342,6 +3345,7 @@ export class ClassDeclaration < Code
 
 		@path = @name
 		@ownName = @name
+		@realName = @name isa Access ? @name.right : @name
 
 
 		# let dtsify = STACK.tsc and (isGlobal or isExtension or (isNamespaced and  )
@@ -3471,8 +3475,13 @@ export class ClassDeclaration < Code
 		#	# return self
 		let tsc = STACK.tsc
 		var inits = InstanceInitBlock.new()
-		var staticInits = ClassInitBlock.new()
+		var staticInits = @staticInits = ClassInitBlock.new()
 		var patches = InstancePatchBlock.new()
+
+
+		if @realName
+			staticInits.add util.defineName(THIS,@realName.toStr),0
+			# OP('=',LIT('this[Symbol.for("#name")]'),@realName.toStr),0
 
 		var ctor = body.option(:ctor)
 
@@ -3602,6 +3611,13 @@ export class ClassDeclaration < Code
 
 				# If we are not in the stdlib / core - add an inherited hook for the class?
 				# ctor.body.add([callop,BR],0)
+
+		if !tsc and sup
+			# add a reference to the namespace as well?
+			staticInits.add util.inheritClass(THIS)
+			# staticInits.add LIT('Object.getPrototypeOf(this.prototype).constructor?.inherited?.(this)')
+
+
 		if !staticInits.isEmpty and !tsc
 			body.add([BR,staticInits])
 		self
@@ -3629,7 +3645,7 @@ export class ClassDeclaration < Code
 		var o = @options or {}
 
 		var cname = @ownName isa Access ? @ownName.right : @ownName
-		# var cname = @ownName # name isa Access ? name.right : name
+		var origName = @name isa Access ? @name.right : @name
 		
 		# var namespaced = name != cname
 		var initor = null
@@ -3640,6 +3656,9 @@ export class ClassDeclaration < Code
 
 		@cname = cname
 		
+		# if origName
+		# 	staticInits.add LIT('this[Symbol.for("#name")] = "' + origName.c + '"'),0
+
 		var externalAccess = LIT(cname)
 		var supAccess = null
 
@@ -11315,6 +11334,14 @@ var HELPERS = {
 	extendTag: '''(el,cls){
 		Object.defineProperties(el,Object.getOwnPropertyDescriptors(cls.prototype));
 		return el;
+	};'''
+
+	inheritClass: '''(cls){
+		Object.getPrototypeOf(cls.prototype).constructor?.inherited?.(cls);
+	};'''
+
+	defineName: '''(cls,name){
+		Object.defineProperty(cls,"name",{value:name,configurable:true});
 	};'''
 
 	initField: '''(target,key,o){
