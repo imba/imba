@@ -1983,6 +1983,10 @@ export class ClassField < Node
 			wrapper.@scope = @vscope = FieldScope.new(wrapper)
 			wrapper.@scope.@parent = scope__
 			wrapper.traverse
+			@vslot = osym('slot',String(@name))
+			@fslot = osym('meta')
+			@fname = @name.metaIdentifier
+			# @vslot = osym('meta')
 			# @getter = CALL(OP('.',THIS,@name),[])
 		self
 	
@@ -2046,8 +2050,8 @@ export class ClassField < Node
 
 			if wrapper
 				let meta = @metaname = @name.metaIdentifier
-				let slot = @slot = osym('slot',String(@name))
-				let metasym = osym('meta')
+				let slot = @vslot
+				let metasym = @fslot
 				let inner
 
 				let context = isStatic ? cls.name.c : "{cls.name.c}.prototype"
@@ -2058,9 +2062,9 @@ export class ClassField < Node
 				@setter = LIT("(val)\{ {op.c}.set(val,{args}) \}")
 				
 				if STACK.tsc
-					inner = "return {runtime:accessor}({wrapper.c}).accessor({args},{metasym},{context},{meta.c(as: 'value')})"
+					inner = "return {runtime:accessor}({wrapper.c}).accessor({args},{metasym},{context})"
 				else
-					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c},{args},{metasym},{context},{meta.c(as: 'value')})"
+					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c},{args},{metasym},{context})"
 					# inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
 				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
 
@@ -2124,11 +2128,7 @@ export class ClassField < Node
 
 		elif !isStatic and up isa ClassInitBlock
 			return ""
-			# let watcher = watchBody
-			# Fix indent??
 			let key = name
-			# if name isa Identifier
-			#	key = name.toStr
 
 			let tpl = """
 			Object.defineProperty(this.prototype,{key.c(as: 'value')},\{
@@ -2158,6 +2158,8 @@ export class ClassField < Node
 			let access
 
 			if up isa InstancePatchBlock
+
+
 				let rest = ctor.@params.at(restIndex,yes,'$$',LIT('{}'))
 				access = OP('.',rest,name)
 				access.cache(reuse: yes, name: 'v')
@@ -2185,10 +2187,15 @@ export class ClassField < Node
 			if self isa ClassAttribute and !value
 				return
 
+			if wrapper
+				out = CALL(
+					OP('.',OP('.',THIS,@fname),STR('init')),
+					[val,THIS,@vslot,LIT(@name.c(as: 'value'))]
+				)
+
 			out ||= OP('=',OP('.',THIS,name),val)
 			out = out.c + ';\n'
 
-			
 			if watchBody
 				@descriptor ||= STACK.root.declare("{oid}$Prop",util.watcher(storageSymbol,watcherSymbol), type: 'const', system: yes)
 				out = "Object.defineProperty(this,{key.c},{@descriptor.c});\n{out}"
@@ -2200,7 +2207,6 @@ export class ClassField < Node
 		@getter ||= if true
 			if wrapper
 				LIT("()\{ return this.__{name.c}.get(this,{name.toStr.c},{osym}) \}")
-				# parseTemplate('(){ return this.__$name$.get(this,); }')
 			else
 				parseTemplate('(){ return $get$; }')
 
