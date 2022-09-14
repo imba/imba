@@ -1058,7 +1058,7 @@ export class StyleSheet
 			let easing = k == 'transition' or k.match(/^_(off|out|in)_sized/)
 
 			for item in v
-				for rule in item.#rules
+				for rule in (item.#rules or [])
 					# console.log rule
 					let ns = rule.#media
 					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')

@@ -634,6 +634,7 @@ export default class Service < EventEmitter
 			if util.isImba(file)
 				let script = getImbaScript(file)
 				return [] if !script.js
+				return [] # for now
 
 			let res = ls.getApplicableRefactors(file,...args)
 			return res
@@ -702,6 +703,7 @@ export default class Service < EventEmitter
 						return res
 					catch e
 						util.log('error',k,e)
+						return null
 
 		
 		return new Proxy(ls, {get: do(target,key) return intercept[key] || target[key]})
