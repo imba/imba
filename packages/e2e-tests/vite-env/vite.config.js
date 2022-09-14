@@ -3,7 +3,19 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	mode: 'staging',
-	plugins: [imba()],
+	plugins: [imba({
+		compilerOptions: {
+			theme: {
+				colors: {
+					"pp": "blue",
+					"lilac": {
+						"2": "hsl(253, 100%, 95%)",
+						"4": "hsl(252, 100%, 86%)"
+					},
+				}
+			}
+		}
+	})],
 	build: {
 		// make build faster by skipping transforms and minification
 		target: 'esnext',
