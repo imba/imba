@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.0-alpha.221
+
+* Rely more on esbuild to generate simpler code (ie using static blocks in classes).
+
+* Add `inherited` hook for classes.
+
+    Whenever a class is extended, the `inherited` method on the parent class will be called, with the subclass as the only argument, if one is defined.
+
+    ```imba
+    class Model
+        static def inherited subclass
+            console.log subclass,'inherited from',self
+
+    class Item < Model
+    ```
+
+
 ## 2.0.0-alpha.219
 
 * Add import handler for `?serviceworker` suffix.
