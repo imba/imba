@@ -1,5 +1,5 @@
 {
-  "name": "e2e-tests-import-from-index-html",
+  "name": "e2e-tests-vite-duplicate-styles",
   "private": true,
   "version": "1.0.0",
   "scripts": {
