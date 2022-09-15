@@ -70,6 +70,7 @@ const _createCompileImba = (makeHot?: Function) =>
 					...dynamicCompileOptions
 			  }
 			: compileOptions;
+		finalCompileOptions.config = finalCompileOptions
 		const compiled = compile(finalCode, finalCompileOptions);
 		compiled.js = {code: compiled.js}
 		compiled.css = {code: compiled.css}

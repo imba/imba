@@ -70,7 +70,7 @@ function convertPluginOptions(config?: Partial<ImbaOptions>): Partial<Options> |
 		);
 	}
 	if (!config.vitePlugin) {
-		return config;
+		return {compilerOptions: config};
 	}
 	const pluginOptions = config.vitePlugin;
 	const pluginOptionKeys = Object.keys(pluginOptions);
@@ -113,7 +113,7 @@ function convertPluginOptions(config?: Partial<ImbaOptions>): Partial<Options> |
 	// @ts-expect-error it exists
 	delete result.vitePlugin;
 
-	return result;
+	return {compilerOptions: result};
 }
 
 // used in config phase, merges the default options, imba config, and inline options
@@ -150,7 +150,9 @@ export async function preResolveOptions(
 	// prefer it over the possibly relative inline path
 	if (imbaConfig?.configFile) {
 		merged.configFile = imbaConfig.configFile;
+		merged.config = imbaConfig
 	}
+
 	return merged;
 }
 

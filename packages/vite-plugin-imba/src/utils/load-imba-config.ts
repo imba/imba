@@ -13,8 +13,12 @@ let esmRequire: NodeRequire;
 
 export const knownImbaConfigNames = [
 	'imba.config.js',
-	'imba.config.cjs',
-	'imba.config.mjs'
+	'imbaconfig.json',
+	'imba.config.json',
+	// 'imba.config.imba',
+	// 'imba.config.ts',
+	// 'imba.config.cjs',
+	// 'imba.config.mjs'
 ];
 
 // hide dynamic import from ts transform to prevent it turning into a require
@@ -24,6 +28,12 @@ const dynamicImportDefault = new Function(
 	'path',
 	'timestamp',
 	'return import(path + "?t=" + timestamp).then(m => m.default)'
+);
+
+const dynamicImportJSON = new Function(
+	'path',
+	'timestamp',
+	'return import(path + "?t=" + timestamp, {assert: {type: "json"}}).then(m => m.default)'
 );
 
 export async function loadImbaConfig(
@@ -36,8 +46,27 @@ export async function loadImbaConfig(
 	const configFile = findConfigToLoad(viteConfig, inlineOptions);
 	if (configFile) {
 		let err;
+		if (configFile.endsWith('.json')) {
+			try {
+				const result = await dynamicImportJSON(
+					pathToFileURL(configFile).href,
+					fs.statSync(configFile).mtimeMs
+				);
+				if (result != null) {
+					return {
+						...result,
+						configFile
+					};
+				} else {
+					throw new Error(`invalid export in ${configFile}`);
+				}
+			} catch (e) {
+				log.error(`failed to import config ${configFile}`, e);
+				err = e;
+			}
+		}
 		// try to use dynamic import for imba.config.js first
-		if (configFile.endsWith('.js') || configFile.endsWith('.mjs')) {
+		if (configFile.endsWith('.js') || configFile.endsWith('.mjs') || configFile.endsWith('.json')) {
 			try {
 				const result = await dynamicImportDefault(
 					pathToFileURL(configFile).href,

@@ -7,8 +7,7 @@ export default defineConfig({
 		compilerOptions: {
 			theme: {
 				colors: {
-					"pp": "blue",
-					"lilac": {
+					"pp": {
 						"2": "hsl(253, 100%, 95%)",
 						"4": "hsl(252, 100%, 86%)"
 					},
