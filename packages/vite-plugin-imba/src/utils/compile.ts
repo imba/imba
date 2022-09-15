@@ -70,14 +70,18 @@ const _createCompileImba = (makeHot?: Function) =>
 					...dynamicCompileOptions
 			  }
 			: compileOptions;
-		finalCompileOptions.config = finalCompileOptions
+			finalCompileOptions.config = finalCompileOptions
+			finalCompileOptions.styles = "extern"
+			console.log(finalCompileOptions)
 		const compiled = compile(finalCode, finalCompileOptions);
 		compiled.js = {code: compiled.js}
 		compiled.css = {code: compiled.css}
-		// if (emitCss && compiled.css.code) {
-		// 	// TODO properly update sourcemap?
-		// 	compiled.js.code += `\nimport ${JSON.stringify(cssId)};\n`;
-		// }
+		// console.log("cssr", compiled.css)
+		if (emitCss && compiled.css.code) {
+			// TODO properly update sourcemap?
+			console.log("cssss", cssId, imbaRequest)
+			compiled.js.code += `\nimport ${JSON.stringify(cssId)};\n`;
+		}
 
 		// only apply hmr when not in ssr context and hot options are set
 		if (!ssr && makeHot) {
