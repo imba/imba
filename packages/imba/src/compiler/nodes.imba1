@@ -727,7 +727,7 @@ export class Stack
 		@options:imbaPath
 		
 	def resolveColors
-		@options:styles !== 'extern'
+		@options:styles !== 'extern' or @options:resolveColors
 
 	def config
 		@options:config or {}
