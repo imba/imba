@@ -1,6 +1,6 @@
 import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
-import type { Plugin } from "vite";
+import type { Plugin, HmrContext } from "vite";
 import { buildIdParser, IdParser, ImbaRequest } from "./utils/id";
 import { log, logCompilerWarnings } from "./utils/log";
 import { CompileData, createCompileImba } from "./utils/compile";
@@ -124,7 +124,8 @@ export def imba(inlineOptions\Partial<Options> = {})
 		# 		res.setHeader "Content-Type", "application/javascript"
 		# 	next()
 		setupWatchers _options, cache, requestParser
-
+	# def handleHotUpdate(context\HmrContext)
+	# 	console.log "context", context
 
 	plugins.push svgPlugin!
 	plugins.push
@@ -137,6 +138,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 		load: load
 		resolveId: resolveId
 		configureServer: configureServer
+		# handleHotUpdate: handleHotUpdate
 
 	plugins
 		

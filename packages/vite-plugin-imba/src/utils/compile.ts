@@ -72,13 +72,17 @@ const _createCompileImba = (makeHot?: Function) =>
 			: compileOptions;
 		finalCompileOptions.config = finalCompileOptions
 		const compiled = compile(finalCode, finalCompileOptions);
-		compiled.js = {code: compiled.js}
+		finalCompileOptions.styles = "extern"
+		// compile the code twice, to get the CSS that includes the theme transformations and js that doesn't include 
+		// styles.register call which adds a style tag to the DOM.
+		const compiled_extern = compile(finalCode, finalCompileOptions);
+		compiled.js = {code: compiled_extern.js}
 		compiled.css = {code: compiled.css}
 		if (emitCss && compiled.css.code) {
 			// TODO properly update sourcemap?
 			compiled.js.code += `\nimport ${JSON.stringify(cssId)};\n`;
 		}
-
+		// https://vitejs.dev/guide/api-plugin.html#handlehotupdate
 		// only apply hmr when not in ssr context and hot options are set
 		if (!ssr && makeHot) {
 			compiled.js.code = makeHot({
