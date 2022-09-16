@@ -18,7 +18,6 @@ const _createCompileImba = (makeHot?: Function) =>
 		const { filename, normalizedFilename, cssId, ssr } = imbaRequest;
 		const { emitCss = true } = options;
 		const dependencies = [];
-		options.hot = false
 		// todo maybe: generate unique short references for all unique paths, cache them between runs, and send those in via sourceId
 		const compileOptions: CompileOptions = {
 			...options.compilerOptions,
@@ -26,7 +25,7 @@ const _createCompileImba = (makeHot?: Function) =>
 			generate: ssr ? 'ssr' : 'dom',
 			format: 'esm',
 			sourcePath: filename,
-			sourcemap: "inline"
+			sourcemap: options.compilerOptions.sourcemap ?? "inline"
 		};
 		if (options.hot && options.emitCss) {
 			const hash = `s-${safeBase64Hash(normalizedFilename)}`;
@@ -80,7 +79,7 @@ const _createCompileImba = (makeHot?: Function) =>
 		compiled.css = {code: compiled.css}
 		if (emitCss && compiled.css.code) {
 			// TODO properly update sourcemap?
-			compiled.js.code += `\nimport ${JSON.stringify(cssId)};\n`;
+			compiled.js.code += `\n/*__css_import__*/import ${JSON.stringify(cssId)};\n`;
 		}
 		// https://vitejs.dev/guide/api-plugin.html#handlehotupdate
 		// only apply hmr when not in ssr context and hot options are set
