@@ -27,7 +27,7 @@ const templates = [
 	['Full Stack', 'Full stack app with backend in Express (Imba bundler)', "base-template"]
 	['Jamstack', 'Client only application (Vite bundler)', "vite-template"],
 	# ['Electron', 'Desktop application using Electron (Node)', "electron-template"],
-	['Desktop', 'Desktop application using Tauri (Imba bundler)', "tauri-template"]
+	['Desktop', 'Desktop application using Tauri (Vite bundler)', "tauri-template"]
 ].map do([name,hint, urlPart]) {name: name, hint: hint, urlPart: urlPart}
 
 const cli = new class
