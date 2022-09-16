@@ -1,9 +1,7 @@
-console.log "main App"
 export default tag App
 	count = 0
 	def mount
 		count++
-		console.log "mounted {count}"
 
 	def hydrate
 		innerHTML = ''
