@@ -1,3 +1,4 @@
+global css body bgc:cool8
 export default tag App
 	count = 0
 	def mount
