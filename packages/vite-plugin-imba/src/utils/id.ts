@@ -95,7 +95,7 @@ function parseRequestQuery(rawQuery: string): RequestQuery {
  * @param filename
  * @param normalizedRoot
  */
-function normalize(filename: string, normalizedRoot: string) {
+export function normalize(filename: string, normalizedRoot: string) {
 	return stripRoot(normalizePath(filename), normalizedRoot);
 }
 
