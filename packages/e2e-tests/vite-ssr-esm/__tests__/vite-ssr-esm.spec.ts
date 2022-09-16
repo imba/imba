@@ -68,7 +68,7 @@ test("css", async () => {
 // });
 
 if (!isBuild) {
-  describe.todo("hmr", () => {
+  describe("hmr", () => {
     const updateApp = editFileAndWaitForHmrComplete.bind(null, "src/main.imba");
     // test('should render additional html', async () => {
     // 	expect(await getEl('#hmr-test')).toBe(null);
@@ -83,12 +83,15 @@ if (!isBuild) {
     // TODO: support HMR for styles
     test("should apply style update", async () => {
       expect(await getColor(`button`)).toBe("green");
+	  const counter = await page.$("button")
+	  counter.click()
       await updateApp((content) => content.replace("c:green", "c:red"));
       await untilMatches(
         () => getColor("button"),
         "red",
         "button has color red",
       );
+	  expect(await page.textContent("button")).toMatch("Hello 2 times");
     });
     // test('should not preserve state of updated props', async () => {
     // 	expect(await getText(`#foo`)).toBe('foo');
