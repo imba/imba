@@ -11,6 +11,9 @@ export default defineConfig(({ command, mode }) => {
 		plugins: [
 			imba()
 		],
+		resolve:{
+			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+		},
 		ssr: true,
 		build: {
 			ssrManifest: true,

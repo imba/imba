@@ -1,3 +1,4 @@
+import './counter'
 global css body bgc:cool8
 export default tag App
 	count = 0
@@ -11,3 +12,4 @@ export default tag App
 	def render
 		<self>
 			<button[c:green] @click.log("st")=(count++)> "Hello {count} times"
+			<counter>

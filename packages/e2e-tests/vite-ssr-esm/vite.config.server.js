@@ -11,6 +11,9 @@ const builtins = new RegExp(builtinModules.join("|"), 'gi');
 export default defineConfig(({ command, mode }) => {
 	return {
 		// optimizeDeps: false,
+		resolve:{
+			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+		},
 		plugins: [
 			imba()
 		],
