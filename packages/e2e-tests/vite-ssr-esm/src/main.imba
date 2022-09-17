@@ -1,9 +1,8 @@
-console.log "main App"
+global css body bgc:cool8
 export default tag App
 	count = 0
 	def mount
 		count++
-		console.log "mounted {count}"
 
 	def hydrate
 		innerHTML = ''

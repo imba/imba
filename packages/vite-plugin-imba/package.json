@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-imba",
-  "version": "0.5.0",
+  "version": "0.6.1",
   "license": "MIT",
   "author": "Abdellah Alaoui",
   "files": [
@@ -66,6 +66,8 @@
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/diff-match-patch": "^1.0.32",
+    "colors": "^1.4.0",
+    "diff": "^5.1.0",
     "diff-match-patch": "^1.0.5",
     "esbuild": "^0.15.5",
     "imba": "../imba",
