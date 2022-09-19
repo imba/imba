@@ -35,7 +35,8 @@ test("css", async () => {
     await untilMatches(
       () =>
         page.$$("style").then((res) => `${res.length || 0}`),
-      "1",
+	  // each component gets its own style tag.
+      "2",
       "The HTML page has only one style tag",
     );
     await untilMatches(
@@ -83,8 +84,7 @@ if (!isBuild) {
     // TODO: support HMR for styles
     test("should apply style update", async () => {
       expect(await getColor(`button`)).toBe("green");
-	  const counter = await page.$("button")
-	  counter.click()
+	  await page.click("button")
       await updateApp((content) => content.replace("c:green", "c:red"));
       await untilMatches(
         () => getColor("button"),
