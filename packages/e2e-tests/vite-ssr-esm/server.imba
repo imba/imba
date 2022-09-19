@@ -1,11 +1,24 @@
 import fs from "fs"
-import path, {dirname} from "path"
+import path, {dirname, basename} from "path"
 import {pathToFileURL} from "url"
 import express from "express"
 import compression from "compression"
 import serveStatic from "serve-static"
-import App from './src/main.imba'
+import App from './src/App.imba'
 import * as Vite from "vite"
+# import moduleGraph from "./server.moduleGraph.json"
+
+# We need to load SSR styles manually in order to prevent FOUC
+# We leverage vite-node to create a module graph from the server entry point
+# And we load all the tags CSS in separate files and concatenate them  here
+# We didn't put them in one big css file because Vite transforms them to be
+# imported as ESModules so their string contain some js specific stuff
+# like \n ... Instead we keep them to avoid breaking anything and import them
+# as they should be
+const ssr-css-modules = import.meta.glob("./.ssr/*.css.js")
+let ssr-styles = ""
+for own key of ssr-css-modules
+	ssr-styles += (await ssr-css-modules[key]()).default
 
 let port = 3000
 const args = process.argv.slice(2)
@@ -13,19 +26,19 @@ const portArgPos = args.indexOf("--port") + 1
 if portArgPos > 0
 	port = parseInt(args[portArgPos], 10)
 
-const ENTRY = "src/main.js"
+const CLIENT_ENTRY = "src/main.js"
+# The server entry is used in the launch.imba file
+# not used here
+const SERVER_ENTRY = "src/App.imba"
 
 def createServer(root = process.cwd(), isProd = process.env.NODE_ENV === "production")
 	const resolve = do(p) path.resolve(root, p)
 
 	const client_dist = path.join(import.meta.url, '../..', 'dist')
 
-	let ssr-manifest\Object
 	let manifest\Object
 	if isProd
-		ssr-manifest = (await import("./dist/manifest.json")).default
 		manifest = (await import("./dist/manifest.json")).default
-
 	const app = express()
 	let vite
 	if !isProd
@@ -58,17 +71,17 @@ def createServer(root = process.cwd(), isProd = process.env.NODE_ENV === "produc
 					<meta charset="UTF-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
 					<title> "Imba App"
-					# <style src="*">
-				<body>
 					if !isProd
 						<script type="module" src="/@vite/client">
-						<script type="module" src="/{ENTRY}">
+						<script type="module" src="/{CLIENT_ENTRY}">
+						<style id="dev_ssr_css" innerHTML=ssr-styles>
 					else
-						const prod-src = manifest[ENTRY].file
-						const css-files = manifest[ENTRY].css
+						const prod-src = manifest[CLIENT_ENTRY].file
+						const css-files = manifest[CLIENT_ENTRY].css
 						<script type="module" src=prod-src>
 						for css-file in css-files
 							<style src=css-file>
+				<body>
 					<App>
 			res.status(200).set("Content-Type": "text/html").end html
 		catch e

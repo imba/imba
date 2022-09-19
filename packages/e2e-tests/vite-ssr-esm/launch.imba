@@ -1,7 +1,8 @@
+import {builtinModules} from 'node:module'
+import fs from 'node:fs'
 import {createServer} from "vite"
 import {ViteNodeServer} from "vite-node/server"
 import {ViteNodeRunner} from "vite-node/client"
-import {builtinModules} from 'module'
 import consola from "consola"
 import colors from 'picocolors'
 const splitRE = /\r?\n/
@@ -10,7 +11,7 @@ def pad(source, n = 2)
 	const lines = source.split(splitRE)
 	return lines.map(do(l) " ".repeat(n) + l).join("\n")
 
-let port = 3000
+let port = 3013
 const args = process.argv.slice(2)
 const portArgPos = args.indexOf("--port") + 1
 
@@ -76,6 +77,43 @@ def buildErrorMessage(err, args = [], includeStack = true)
 	args.join "\n"
 
 await runner.executeId('/@vite/env')
-await runner.executeId("server.imba").catch error-handler
+await runner.executeFile("src/App.imba").catch error-handler
+const urls = []
+const ids = []
+const moduleMap = {}
+for [id, mod] of server.moduleGraph.idToModuleMap
+	const url = mod.url
+	urls.push url
+	ids.push id
+	moduleMap[url] = 
+		file: mod.file
+		id: mod.id
+		url: url
+		type: mod.type
+		importedModules: Array.from(mod.importedModules.keys()).map(do $1.id)
+		importers: Array.from(mod.importers.keys()).map(do $1.id)
+		code: (url.endsWith('.css') ? mod.ssrTransformResult.code : "")
+# const serialized = {urls, moduleMap, ids}
+# fs.writeFileSync("server.moduleGraph.json", JSON.stringify(serialized, null, 2), 'utf-8')
 
+const DEV_CSS_PATH = "./.ssr"
+fs.mkdirSync(DEV_CSS_PATH) unless fs.existsSync(DEV_CSS_PATH)
+for own id, mod of moduleMap when mod.code
+	fs.writeFileSync("{DEV_CSS_PATH}/{id.split("?")[0].split("/")[-1]}.css.js", mod.code.replace("__vite_ssr_exports__.default =", "export default "), 'utf-8')
+
+await runner.executeFile("server.imba").catch error-handler
 await server.close()
+
+
+# def getCssFiles(url\string, seen, files, root = process.cwd())
+# 	const resolve = do(p) path.resolve(root, p)
+# 	files ||= new Set
+# 	seen ||= new Set
+# 	for file in moduleGraph.moduleMap[url]..importedModules
+# 		const rel = "/{path.relative(root, file)}"
+# 		if rel.includes("type=style")
+# 			files.add rel 
+# 		elif const mod = moduleGraph.moduleMap[rel]
+# 			getCssFiles(mod.url, seen, files)
+# 		seen.add rel if !seen.has(rel)
+# 	Array.from files
