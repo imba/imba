@@ -1,1 +1,1 @@
-import './main.imba'
+import './App.imba'

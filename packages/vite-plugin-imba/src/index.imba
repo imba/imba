@@ -89,6 +89,10 @@ export def imba(inlineOptions\Partial<Options> = {})
 				if _css
 					log.debug "load returns css for {filename}"
 					return _css
+				else
+					console.log "cache empty: loading {id}"
+
+
 			if viteConfig.assetsInclude(filename)
 				log.debug "load returns raw content for {filename}"
 				return fs.readFileSync(filename, "utf-8")
@@ -131,9 +135,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 		const imbaRequest = requestParser(ctx.file, false, ctx.timestamp)
 		if imbaRequest
 			try
-				const r = await handleImbaHotUpdate(compileImba, ctx, imbaRequest, cache, options)
-				console.log "r", r.length
-				r
+				await handleImbaHotUpdate(compileImba, ctx, imbaRequest, cache, options)
 			catch e
 				throw toRollupError(e, options)
 
