@@ -935,7 +935,7 @@ export def createComponent name, parent, flags, text, ctx
 		elif name and name.nodeName
 			name = name.nodeName	
 
-	el ||= doc.createElement(name)
+	el ||= doc.createElement(CustomTagToElementNames[name] or name)
 	el.##parent = parent
 	el.#__init__!
 
