@@ -52,7 +52,7 @@ export def getRenderContext
 	let res = ctx or new RenderContext(null)
 	if global.DEBUG_IMBA
 		if !ctx and renderer.stack.length > 0
-			console.warn "detected unmemoized nodes in",renderer.stack,"see https://imba.io",res
+			console.warn "detected unmemoized nodes in",renderer.stack.slice(0),"see https://imba.io",res
 
 	renderContext.context = null if ctx
 	return res
