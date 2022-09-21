@@ -11,7 +11,7 @@ import { log } from './log';
 import { loadImbaConfig } from './load-imba-config';
 import { IMBA_HMR_IMPORTS, IMBA_IMPORTS, IMBA_RESOLVE_MAIN_FIELDS } from './constants';
 // eslint-disable-next-line node/no-missing-import
-import type { CompileOptions, Warning } from 'imba/types/compiler/interfaces';
+// import type { CompileOptions, Warning } from 'imba/types/compiler/interfaces';
 import type {
 	MarkupPreprocessor,
 	Preprocessor,
@@ -55,6 +55,8 @@ export function validateInlineOptions(inlineOptions?: Partial<Options>) {
 	}
 }
 
+
+
 function convertPluginOptions(config?: Partial<ImbaOptions>): Partial<Options> | undefined {
 	if (!config) {
 		return;
@@ -68,7 +70,7 @@ function convertPluginOptions(config?: Partial<ImbaOptions>): Partial<Options> |
 		);
 	}
 	if (!config.vitePlugin) {
-		return config;
+		return {compilerOptions: config};
 	}
 	const pluginOptions = config.vitePlugin;
 	const pluginOptionKeys = Object.keys(pluginOptions);
@@ -111,7 +113,7 @@ function convertPluginOptions(config?: Partial<ImbaOptions>): Partial<Options> |
 	// @ts-expect-error it exists
 	delete result.vitePlugin;
 
-	return result;
+	return {compilerOptions: result};
 }
 
 // used in config phase, merges the default options, imba config, and inline options
@@ -148,7 +150,9 @@ export async function preResolveOptions(
 	// prefer it over the possibly relative inline path
 	if (imbaConfig?.configFile) {
 		merged.configFile = imbaConfig.configFile;
+		merged.config = imbaConfig
 	}
+
 	return merged;
 }
 
@@ -446,7 +450,25 @@ export function patchResolvedViteConfig(viteConfig: ResolvedConfig, options: Res
 		Object.assign(facadeEsbuildImbaPlugin, esbuildImbaPlugin(options));
 	}
 }
-
+export interface ThemeOptions{
+	colors?: Record<string, string | Record<string | number, string>>
+}
+export interface CompilerOptions {
+	theme:ThemeOptions;
+}
+export interface ImbaOptions {
+	/**
+	 * The options to be passed to the Imba compiler. A few options are set by default,
+	 * including `dev` and `css`. However
+	 *
+	 * @see https://imba.dev/docs#imba_compile
+	 */
+	compilerOptions?: CompilerOptions
+	/**
+	 * Options for vite-plugin-imba
+	 */
+	vitePlugin?: PluginOptions;
+}
 export type Options = Omit<ImbaOptions, 'vitePlugin'> & PluginOptionsInline;
 
 interface PluginOptionsInline extends PluginOptions {
@@ -530,40 +552,6 @@ export interface PluginOptions {
 	experimental?: ExperimentalOptions;
 }
 
-export interface ImbaOptions {
-	/**
-	 * A list of file extensions to be compiled by Imba
-	 *
-	 * @default ['.imba']
-	 */
-	extensions?: string[];
-
-	/**
-	 * An array of preprocessors to transform the Imba source code before compilation
-	 *
-	 * @see https://imba.dev/docs#imba_preprocess
-	 */
-	preprocess?: Arrayable<PreprocessorGroup>;
-
-	/**
-	 * The options to be passed to the Imba compiler. A few options are set by default,
-	 * including `dev` and `css`. However, some options are non-configurable, like
-	 * `filename`, `format`, `generate`, and `cssHash` (in dev).
-	 *
-	 * @see https://imba.dev/docs#imba_compile
-	 */
-	compilerOptions?: Omit<CompileOptions, 'filename' | 'format' | 'generate'>;
-
-	/**
-	 * Handles warning emitted from the Imba compiler
-	 */
-	onwarn?: (warning: Warning, defaultHandler?: (warning: Warning) => void) => void;
-
-	/**
-	 * Options for vite-plugin-imba
-	 */
-	vitePlugin?: PluginOptions;
-}
 
 /**
  * These options are considered experimental and breaking changes to them can occur in any release
