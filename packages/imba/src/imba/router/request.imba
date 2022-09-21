@@ -1,13 +1,18 @@
 import {Location} from './location'
 
 export class Request
-	def constructor router, loc, referrer
+	def constructor router, loc, referrer, params
+		params = params
 		router = router
 		if loc
 			location = Location.parse(loc)
 			original = location.clone!
-
 		referrer = referrer
+
+	get apply do params.apply or []
+	get revert do params.revert or []
+	get state do params.state
+	get mode do params.mode
 
 	def redirect path
 		location..update(path)
