@@ -1,0 +1,27 @@
+name: 🐞 Bug
+description: File a bug/issue
+labels: [bug]
+body:
+- type: textarea
+  attributes:
+    label: Description
+    description: What is the expected behavior? What is the actual behavior?
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Steps To Reproduce
+    description: |
+      Please provide a link via [imba.new](https://imba.new/) or a link to a repo that can reproduce the problem you ran into.
+      `npx imba create test` or [stackblitz.com](https://stackblitz.com/github/imba/imba-vite-template) can be used as a starter template.
+      A [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) is required ([Why?](https://antfu.me/posts/why-reproductions-are-required)).
+    placeholder: Reproduction url and steps
+- type: textarea
+  attributes:
+    label: System Environment
+    description: |
+      Please run this command in your project directory and paste the output:
+      ```
+      npx envinfo --system --binaries --browsers --npmPackages imba --npmGlobalPackages imba
+      ```
+    render: text
