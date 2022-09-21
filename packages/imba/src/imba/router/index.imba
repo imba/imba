@@ -379,7 +379,7 @@ export class ElementRoute
 			match[#urlKey] = url
 			
 		if match
-			if changed or (prevUrl != url)
+			if changed or (prevUrl != url) or !shown
 				#resolved(match,last,prevUrl)
 
 		if !shown and match
