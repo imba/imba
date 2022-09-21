@@ -62,6 +62,5 @@ test do
 	await go('/home/deep',"homedeep")
 	await go('/custom/deep',"customdeep")
 	# eq body.textContent, "custom"
-
 	await go('/random',"404")
 
