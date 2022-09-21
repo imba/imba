@@ -1364,6 +1364,7 @@ export default class Bundle < Component
 					virtual: no
 					url: urlForOutputPath(path)
 					entryId: '*?css'
+					imports: []
 					#contents: body
 				}
 
