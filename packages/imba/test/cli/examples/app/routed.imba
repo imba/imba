@@ -1,4 +1,4 @@
-tag App
+export tag App
 	<self>
 		<nav>
 			<a route-to='/home'> "Home"
@@ -17,4 +17,5 @@ tag App
 				<div route='contact'> "Contact us at"
 		<div route='/more'> "More..."
 
-imba.mount <App.app>
+if $web$
+	imba.mount <App.app>

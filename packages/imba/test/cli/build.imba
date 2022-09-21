@@ -21,6 +21,7 @@ export class Build
 		child = null
 		stdout = ""
 		stderr = ""
+		origin = "http://localhost:3009"
 		closed = new Promise do(resolve)
 			resolveClosed = do
 				builds.delete(self)
@@ -107,7 +108,7 @@ export class Build
 		# cannot be
 		new Promise do(resolve)
 			let page = await newPage!
-			await page.goto("http://localhost:3009", waitUntil: 'domcontentloaded', timeout: 5000)
+			await page.goto(origin, waitUntil: 'domcontentloaded', timeout: 5000)
 			page.body = await page.content!
 			return resolve(page)
 
@@ -139,6 +140,13 @@ export class Build
 
 			return resolve(page)
 
+	def goto url
+		new Promise do(resolve)
+			let page = await browser
+			await page.goto(origin + url, waitUntil: 'domcontentloaded', timeout: 5000)
+			page.body = await page.content!
+			return resolve(page)
+
 	def cssval name = '--about'
 		let page = await browser
 		await page.evaluate(&,name) do(name)
@@ -163,7 +171,7 @@ export def serve cmd, cb
 	let build = new Build(cmd)
 	await build.spawn!
 	let page = await build.richPage
-	await cb(page,page.body,build)
+	await cb(build,page,build)
 	# build.stop!
 	await build.cleanup!
 	await build.closed
@@ -173,7 +181,7 @@ export def build cmd, cb
 	let build = new Build(cmd)
 	await build.spawn!
 	let page = await build.richPage
-	await cb(page,page.body,build)
+	await cb(build,page,build)
 	await build.cleanup!
 	await build.closed
 	return build
