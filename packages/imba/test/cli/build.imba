@@ -140,12 +140,19 @@ export class Build
 
 			return resolve(page)
 
-	def goto url
+	def goto url, history = no
 		new Promise do(resolve)
 			let page = await browser
-			await page.goto(origin + url, waitUntil: 'domcontentloaded', timeout: 5000)
+
+			if history
+				await page.evaluate(&,url) do(url)
+					global.document.router.go(url)
+					global.imba.commit!
+			else
+				await page.goto(origin + url, waitUntil: 'domcontentloaded', timeout: 5000)
 			page.body = await page.content!
 			return resolve(page)
+	
 
 	def cssval name = '--about'
 		let page = await browser

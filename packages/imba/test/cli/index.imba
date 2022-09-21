@@ -57,8 +57,21 @@ def run
 
 		await serve("imba -o dist app/routed.ssr.imba") do(srv,page,build)
 			page = await srv.goto("/home")
-			assert(page.body.indexOf("Welcome") > 0)
-			# assert(page.css.about == 1)
+			assert(page.body.indexOf("Page: Home") > 0)
+
+			page = await srv.goto("/about")
+			assert(page.body.indexOf("Page: About") > 0)
+
+		await serve("imba --web -o dist app/routed.imba") do(srv,page,build)
+			page = await srv.goto("/home")
+			assert(page.body.indexOf("Page: Home") > 0)
+
+			page = await srv.goto("/about")
+			assert(page.body.indexOf("Page: About") > 0)
+
+			page = await srv.goto("/home",true)
+			assert(page.body.indexOf("Page: Home") > 0)
+			assert(page.body.indexOf("Page: About") == -1)
 
 		console.log "all tests passed"
 	catch e
