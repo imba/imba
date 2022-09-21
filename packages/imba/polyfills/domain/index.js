@@ -94,7 +94,7 @@ export function createDomain() {
 export var create = createDomain;
 
 export default {
-  Domain: Domain,
-  createDomain: createDomain,
-  create: create
+  Domain,
+  createDomain,
+  create
 }
