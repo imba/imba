@@ -1,11 +1,11 @@
 let routerInstance = null
 
 import {EventEmitter} from '../../../vendor/events.js'
-import {Node,Element,Document,createComment} from '../dom/core'
+import {Node,Element,Document} from '../dom/core'
 import {Location} from './location'
 import {History} from './history'
 import {Request} from './request'
-import {Route,RootRoute} from './route'
+import {RootRoute} from './route'
 import {commit,scheduler} from '../scheduler'
 import {proxy} from '../utils'
 import {Queue} from '../queue'
@@ -25,20 +25,19 @@ export class Router < EventEmitter
 	# support redirects
 	def constructor doc, o = {}
 		super()
+		#doc = doc
+		#version = 0
 		#routes = {}
+
 		aliases = {}
 		redirects = {}
 		rules = {}
 		options = o
 		busy = []
-		#version = 0
-		#doc = doc
 		queue = new Queue
-		web? = !!doc.defaultView
 		root = new RootRoute(self)
-
-		history = $web$ ? global.window.history : (new History(self))
 		location = new Location(o.url or doc.location.href,self)
+		history = new History(self)
 		mode = o.mode or 'history'
 
 		if $web$
@@ -48,6 +47,7 @@ export class Router < EventEmitter
 			queue.on 'idle' do
 				global.document.flags.decr('_routing_')
 				commit!
+
 		self.setup!
 		self
 
@@ -84,7 +84,16 @@ export class Router < EventEmitter
 			return location.path
 
 	get state
-		{}
+		history.state
+
+	get states
+		history.currentStates
+	
+	set state value
+		if $web$
+			state.data = value
+			state.save!
+		return
 
 	get ctx
 		#request
@@ -104,25 +113,22 @@ export class Router < EventEmitter
 		let loc = Location.parse(params.location or realpath,self)
 		let mode = params.mode
 		let prev = #request
-		# console.log 'refreshing router',params,loc,mode,original
+
 		# we need to compare with the previously stored location
 		# also see if state is different?
-		if !loc.equals(original) or !prev
-			# console.log "actual url has changed!!",String(original),'to',String(loc)
-			let req = new Request(self,loc,original)
-			req.mode = mode
+		if !loc.equals(original) or !prev or params.state
+			let req = new Request(self,loc,original,params)
 			#request = req
+			# include the state as well?
 			self.emit('beforechange',req)
 
 			if req.aborted
-				# console.log "request was aborted",params
-				# what about silent abort?
 				let res = !req.forceAbort && global.window.confirm("Are you sure you want to leave? You might have unsaved changes")
 
 				if res
 					req.aborted = no
 				# if we don't confirm, push the previous state again
-				elif mode == 'pop' # params:pop
+				elif mode == 'pop'
 					self.pushState(self.state,null,String(original))
 				elif mode == 'replace' # mode != 'push' # !params:push
 					self.replaceState(self.state,null,String(original))
@@ -131,16 +137,14 @@ export class Router < EventEmitter
 
 			unless req.aborted
 				location = req.location
-				# after each middleware - see if we have redirected or thrown anything?
 
 				if mode == 'push'
-					self.pushState(params.state or self.state,null,String(location))
-				elif mode == 'replace' # params.replace
-					self.replaceState(params.state or self.state,null,String(location))
-					
-				if $web$
-					location.state = global.window.history.state
-					
+					self.pushState(req.state,null,String(location))
+				elif mode == 'replace'
+					self.replaceState(req.state,null,String(location))
+				elif mode == 'pop'
+					self.history.index = params.index
+
 				self.emit('change',req)
 				touch!
 				commit!
@@ -155,11 +159,30 @@ export class Router < EventEmitter
 		self
 	
 	def onpopstate e
-		self.refresh(pop: yes, mode: 'pop')
+		let from = history.index
+		let to = from
+
+		let params = {
+			pop: yes
+			index: 0
+			from: from
+			mode: 'pop'
+		}
+		try
+			if typeof e.state == 'string'
+				let [id,step] = e.state.split('|')
+				to = params.index = parseInt(step)
+
+				if to < from
+					params.revert = history.slice(to + 1,from + 1).reverse!
+				elif to > from
+					params.apply = history.slice(from + 1,to + 1)
+
+		self.refresh(params)
 		self
 
 	def onbeforeunload e
-		let req = new Request(self,null,location)
+		let req = new Request(self,null,location,{mode: 'unload'})
 		self.emit('beforechange',req)
 		return true if req.aborted
 		return
@@ -175,8 +198,7 @@ export class Router < EventEmitter
 			let win = global.window
 			#hash = #doc.location.hash
 			location = Location.parse(realpath,self)
-			history.replaceState(self.state,null,String(location))
-
+			
 			win.onpopstate = self.onpopstate.bind(self) # do |e| onpopstate(e)
 			win.onbeforeunload = self.onbeforeunload.bind(self)
 
@@ -251,7 +273,7 @@ export class Router < EventEmitter
 
 	set hash value
 		if $web$
-			history.replaceState({},null,'#' + self.serializeParams(value))
+			history.replaceState(state,null,'#' + self.serializeParams(value))
 		
 	def match pattern
 		route(pattern).match(path)
@@ -259,16 +281,30 @@ export class Router < EventEmitter
 	def route pattern
 		root.route(pattern)
 
-	def go url, state = {}
-		let loc = location.clone().update(url,state)
-		self.refresh(push: yes, mode: 'push', location: loc, state: state)
+	def go url, state = null
+		if typeof url == 'object' and state === null
+			state = url
+			url = path
+
+		if typeof url == 'number'
+			# now go 
+			global.history.go(url)
+			return self
+
+		let loc = location.clone().update(url)
+
+		let action = history.buildState(state,loc.path,yes)
+		self.refresh(push: yes, mode: 'push', location: loc, state: action, apply: [action])
 		self
 		
-	def replace url, state = {}
-		let loc = location.clone().update(url,state)
-		self.refresh(replace: yes, mode: 'replace', location: loc, state: state)
+	def replace url, state = null
+		if typeof url == 'object' and state === null
+			state = url
+			url = path
 
-
+		let loc = location.clone().update(url)
+		let action = history.buildState(state,loc.path,no)
+		self.refresh(replace: yes, mode: 'replace', location: loc, state: action, apply: [action])
 
 export class ElementRoute
 	def constructor node, path, parent, options = {}
