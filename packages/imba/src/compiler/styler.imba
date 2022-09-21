@@ -492,7 +492,7 @@ export class StyleTheme
 	def $ease pars, k = ''
 		pars = pars.slice(0)
 		let o = {__ease__: ''}
-		let durRegex = /^[\-\+]?(\d*\.)?(\d+)(s|ms)?$/
+		let durRegex = /^[\-\+]?(\d*\.)?(\d+)(\w+)?$/
 		if String(pars[0]).match(durRegex)
 			o["--e_d{k}"] = pars[0]
 			pars.shift!
