@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.5.0
+
+* Removed default `tabSize: 4` config for imba. Now defaulting to your global tabSize. If you want to override this for imba, you can still set `"[imba]": {"editor.tabSize": 4}` in your `.vscode/settings.json` file or globally in the settings UI.
+
 ## 3.4.1
 
 * Basic completions for import paths
