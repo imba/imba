@@ -350,7 +350,7 @@ export class Node
 		parent.#replaceChild(other,#domNode or self)
 
 	get #placeholderNode
-		##placeholderNode ||= global.document.createComment("placeholder")
+		##placeholderNode ||= doc.createComment("placeholder")
 
 	set #placeholderNode value
 		let prev = ##placeholderNode
