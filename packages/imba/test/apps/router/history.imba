@@ -52,25 +52,40 @@ router.on('change') do(e)
 	events.push(event = e)
 
 test do
-	eq router.history.length,1
+
+	let i = 0
+	
+	while i++ < 50
+		router.go("/url{i}",{nr: i})
+		await imba.commit
+
+	let start = global.history.length
+	eq history.length,i
+	eq history.index,i - 1
+
 	let obj = {anim: 'special'}
-	router.go('/home',obj)
+	await router.go('/home',obj)
 	eq event.mode,'push'
 	eq event.apply.length,1
 	eq event.apply[0].data,obj
 	eq document.location.pathname,'/home'
-	eq history.length,2
+
+	eq history.length,i + 1
 	eq history.state.data,obj
 	eq history.state.data.anim,'special'
 
+	# add one more
 	let action = {action: 'saved'}
-	router.go(action)
-	eq history.length,3
+	await router.go(action)
+	eq history.length,i + 2
 	eq history.state.data,action
-	
-	router.go(-2)
-	await imba.commit!
-	eq history.index,0
-	eq event.revert.length,2
-	eq event.revert[0].data,action
-	eq event.revert[1].data,obj
+	# eq global.history.length,start + 2
+
+	if true
+		eq history.index,i + 1
+		await go(-2)
+		await new Promise do setTimeout($1,1000)
+		eq history.index,i - 1
+		eq event.revert.length,2
+		# eq event.revert[0].data,action
+		# eq event.revert[1].data,obj
