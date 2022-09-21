@@ -1,6 +1,10 @@
 ---
 name: "\U0001F680Feature request"
 about: Suggest an idea for Imba
+title: ''
+labels: ''
+assignees: ''
+
 ---
 
 ### Description
@@ -22,4 +26,3 @@ about: Suggest an idea for Imba
 ### Is this something you're interested in working on?
 
 <!--- Yes or no -->
-
