@@ -159,7 +159,7 @@ class AssetResponder
 		headers = {
 			'Content-Type': 'text/plain'
 			'Access-Control-Allow-Origin': '*'
-			'cache-control': 'public'
+			'cache-control': 'public, max-age=31536000'
 		}
 
 		Object.assign(headers,defaultHeaders[ext.slice(1)] or {})
