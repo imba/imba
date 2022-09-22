@@ -1,0 +1,28 @@
+name: 🐞 Bug
+description: File a bug/issue
+labels: [bug]
+body:
+- type: textarea
+  attributes:
+    label: Description
+    description: What is the expected behavior? What is the actual behavior?
+  validations:
+    required: true
+- type: input
+  attributes:
+    label: Reproduction
+    description: Please provide a link via [imba.new](https://imba.new/), [stackblitz.com](https://stackblitz.com/github/imba/imba-vite-template), or a repo created with `npx imba create test` for example. [How and why?](https://antfu.me/posts/why-reproductions-are-required#how-to-create-a-minimal-reproduction)
+    placeholder: Reproduction URL and steps
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: System Environment
+    description: |
+      Please run this command in your project directory and paste the output:
+      ```
+      npx envinfo --system --binaries --browsers --npmPackages imba --npmGlobalPackages imba
+      ```
+    render: text
+  validations:
+    required: true
