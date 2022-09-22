@@ -122,6 +122,9 @@ export const modifiers =
 	opera: {ua: 'opera'}
 	blink: {ua: 'blink'}
 	webkit: {ua: 'webkit'}
+
+	enter: {flag:'_enter_'}
+	leave: {flag:'_leave_'}
 	
 	touch: {flag: '_touch_'}
 	suspended: {flag: '_suspended_'}

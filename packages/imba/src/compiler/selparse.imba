@@ -249,6 +249,10 @@ export def rewrite rule,ctx,o = {}
 				addClass(modTarget,"_{mod.name}_")
 				(ctx or rule).hasTransitionStyles = yes
 				(ctx or rule)["_{mod.name}_"] = yes
+			elif mod.name == 'enter' or mod.name == 'leave'
+				addClass(modTarget,"_{mod.name}_")
+				mod.remove = yes
+				(ctx or rule)["_{mod.name}_"] = yes
 				
 			elif mod.name == 'deep'
 				mod.remove = yes

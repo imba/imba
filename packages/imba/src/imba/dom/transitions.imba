@@ -77,16 +77,15 @@ export class Easer
 		flags.add('_ease_')
 		
 	def disable
-		flags.unflag('_ease_')
+		flags.remove('_ease_')
 		yes
 	
 	set phase val
 		let prev = #phase
 		
 		if #phase =? val
-			flags.remove("_{prev}_") if prev
-			flags.add("_{val}_")  if val
-			flags.toggle('_easing_',!!val)
+			unflag("_{prev}_") if prev
+			flag("_{val}_")  if val
 		
 			# clearing all the node animations
 			unless val
@@ -134,7 +133,21 @@ export class Easer
 				return yes if el.closest('._ease_') != dom
 			return no
 		anims.own = anims.fresh.filter do anims.deep.indexOf($1) == -1
-		anims.finished = Promise.all(anims.own.map do $1.finished)
+
+		if anims.own.length
+			anims.finished = new Promise do(resolve)
+				let all = new Set(anims.own)
+				let finish = do
+					all.delete(this)
+					if all.size == 0
+						resolve()
+
+				for anim in anims.own
+					anim.oncancel = anim.onfinish = finish
+				return
+		else
+			anims.finished = Promise.resolve(yes)
+
 		return anims
 		
 	def getAnimatedNodes
@@ -190,6 +203,8 @@ export class Easer
 		
 		#nodes = getAnimatedNodes!
 
+		# Could it be better to set the flags before adding it to the dom?
+
 		flag('_instant_')
 		unflag('_out_')
 		commit!
@@ -199,6 +214,7 @@ export class Easer
 		dom..transition-in-init(self)
 		flag('_off_')
 		flag('_in_')
+		flag('_enter_')
 		
 		commit!
 		unflag('_instant_')
@@ -238,7 +254,7 @@ export class Easer
 		#nodes = getAnimatedNodes!
 		sizes = getNodeSizes('out')
 		applyNodeSizes(sizes)
-		
+		flag('_leave_')
 		let anims = #anims = track do
 			phase = 'leave'
 			flag('_off_')
@@ -250,7 +266,8 @@ export class Easer
 			finalize!
 			return
 		
-		anims.finished.then(finalize) do yes
+		anims.finished.then(finalize) do
+			yes
 		return
 
 extend class Element

@@ -491,7 +491,7 @@ export class StyleTheme
 		
 	def $ease pars, k = ''
 		pars = pars.slice(0)
-		let o = {__ease__: ''}
+		let o = {__ease__: k}
 		let durRegex = /^[\-\+]?(\d*\.)?(\d+)(\w+)?$/
 		if String(pars[0]).match(durRegex)
 			o["--e_d{k}"] = pars[0]
@@ -506,7 +506,6 @@ export class StyleTheme
 		if String(pars[0]).match(durRegex)
 			o["--e_w{k}"] = pars[0]
 			pars.shift!
-		
 			
 		return o
 
@@ -998,20 +997,26 @@ export const StyleExtenders = {
 		           skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) 
 		           scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 	'''
-
-	transition: '''
-		transition:      all var(--e_d) var(--e_f) var(--e_w),
-			       transform var(--e_dt,var(--e_d)) var(--e_ft,var(--e_f)) var(--e_wt,var(--e_w)),
-			           color var(--e_dc,var(--e_d)) var(--e_fc,var(--e_f)) var(--e_wc,var(--e_w)),
-			background-color var(--e_dc,var(--e_d)) var(--e_fc,var(--e_f)) var(--e_wc,var(--e_w)),
-			         opacity var(--e_do,var(--e_d)) var(--e_fo,var(--e_f)) var(--e_wo,var(--e_w));
+	# TODO add specific transitions for dimensions as well as transforms
+	ease: '''
+		--e_d:0ms;--e_f:cubic-bezier(0.23, 1, 0.32, 1);--e_w:0ms;
+		--e_dt:var(--e_d);
+		--e_dc:var(--e_d);
+		--e_do:var(--e_d);
+		--e_ft:var(--e_f);
+		--e_fc:var(--e_f);
+		--e_fo:var(--e_f);
+		--e_wt:var(--e_w);
+		--e_wc:var(--e_w);
+		--e_wo:var(--e_w);
+		--e_rest:any 0ms;
+		transition: all var(--e_d) var(--e_f) var(--e_w),
+			       transform var(--e_dt) var(--e_ft) var(--e_wt),
+			           color var(--e_dc) var(--e_fc) var(--e_wc),
+			background-color var(--e_dc) var(--e_fc) var(--e_wc),
+			         opacity var(--e_do) var(--e_fo) var(--e_wo),var(--e_rest);
 	'''
 }
-	
-export const TransformMixin = '''
-	--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;--t_scale:1;--t_scale-x:1;--t_scale-y:1;--t_skew-x:0;--t_skew-y:0;
-	transform: translate3d(var(--t_x),var(--t_y),var(--t_z)) rotate(var(--t_rotate)) skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
-'''
 
 export class StyleSheet
 	def constructor stack
@@ -1036,18 +1041,20 @@ export class StyleSheet
 		
 	def js root, stack
 		let js = []
-		
-		# if transitions
-		# 	js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(transitions)})"
+
 		for own k,v of #register
 			js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(v)},'{k}')"
 		return js.join('\n')
 	
 	def parse
 		return #string if #string
-		
+
 		let js = []
 		let parts = #parts.slice(0)
+
+		let prepend = do(val)
+			unless parts.indexOf(val) >= 0
+			parts.unshift(val)
 		
 		for own k,v of #apply
 			let helper = StyleExtenders[k]
@@ -1062,7 +1069,7 @@ export class StyleSheet
 					# console.log rule
 					let ns = rule.#media
 					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')
-					if easing
+					if easing or k == 'ease'
 						sel = sel.replace(/\._(off|out|in|on)_\b/g,'')
 
 					let group = groups[ns] ||= {}
@@ -1071,31 +1078,41 @@ export class StyleSheet
 			
 			# console.log 'groups',groups
 			if helper
+				
 				for own ns,group of groups
 					let sel = Object.keys(group)
 					if ns != ''
 						sel = sel.filter do !base[$1]
 					
 					continue if sel.length == 0
-					sel.unshift('._ease_') if k == 'transition'
-					let str = sel.join(', ') + ' {\n' + helper + '\n}'
+					# sel.unshift('._ease_') if k == 'transition' or k == 'ease'
+
+					let sels = sel.sort do |a,b| a.length - b.length
+					let corr = []
+
+					for s,i in sels
+						let pre = sels.slice(0,i)
+						let some = pre.find do
+							s.indexOf($1) >= 0
+						if !some or s.match(/[\s\>\,]|:not/)
+							corr.push(s)
+					sel = corr
 					
+					let str = sel.join(', ') + ' {\n' + helper + '\n}'
+
 					if ns
 						str = ns + ' {\n' + str + '\n}'
-						
-					
+
 					parts.unshift(str)
 			
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
 				# transitions = #register.transition = selectors
-				parts.unshift('._easing_ {--e_d:300ms;}')
-				parts.unshift('._instant_ { transition-duration:0ms !important; }')				
-				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
+				prepend('._easing_ {--e_d:300ms;}')
+				prepend('._enter_:not(#_),._leave_:not(#_) {--e_d:300ms;}')
+				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }') # 
 			if easing
 				#register[k] = selectors
-			if k == 'ease' and selectors.length
-				parts.unshift(':root {--e_d:0ms;--e_f:ease-in-out;--e_w:0ms}')
 		
 		#string = parts.join('\n\n')
 
@@ -1191,13 +1208,21 @@ export class StyleRule
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
 				unless meta.transform
 					meta.transform = yes
-					# parts.unshift(TransformMixin)
 				parts.push "--t_{key}: {value} !important;"
-			elif key.match(/^__ease__$/)
+			elif key.match(/^(--e_\w+)$/)
 				meta.ease = yes
-				# meta.transform = yes
-				# parts.unshift(TransformMixin)
-				# parts.push "--t_{key}: {value} !important;"
+				if selector.match(/@in\b/)
+					yes
+					# TODO warn about easings not making sense inside here
+					# let subsel = selector.replace(/@in\b/g,'@enter')
+					# let obj = {[key]: value}
+					# subrules.push new StyleRule(self,subsel,obj,options)
+					# continue
+				parts.push "{key}: {value} !important;"
+
+
+			elif key.match(/^__ease__$/)
+				yes
 			else
 				if key.match(/^(width|height)$/)
 					meta.size = yes
@@ -1222,17 +1247,16 @@ export class StyleRule
 				apply('ease',sel)
 			
 
-			if sel and sel.hasTransitionStyles
-				# console.log 'has transitions!!'
+			if sel and sel.hasTransitionStyles and !meta.ease
 				apply('transition',sel)
+				apply('ease',sel)
 			
 			if meta.size
 				for typ in ['_off_','_out_','_in_']
 					if sel[typ]
-						# console.log 'SIZE AND TWEEN!',sel
 						apply("{typ}sized",sel)
-
-			out = content.match(/[^\n\s]/) ? selparser.render(sel,content,options) : ""
+			
+			out = (content.match(/[^\n\s]/)) ? selparser.render(sel,content,options) : ""
 
 		for own subrule in subrules
 			out += '\n' + subrule.toString()
