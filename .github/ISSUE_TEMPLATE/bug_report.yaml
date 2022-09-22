@@ -8,14 +8,13 @@ body:
     description: What is the expected behavior? What is the actual behavior?
   validations:
     required: true
-- type: textarea
+- type: input
   attributes:
-    label: Steps To Reproduce
-    description: |
-      Please provide a link via [imba.new](https://imba.new/) or a link to a repo that can reproduce the problem you ran into.
-      `npx imba create test` or [stackblitz.com](https://stackblitz.com/github/imba/imba-vite-template) can be used as a starter template.
-      A [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) is required ([Why?](https://antfu.me/posts/why-reproductions-are-required)).
-    placeholder: Reproduction url and steps
+    label: Reproduction
+    description: Please provide a link via [imba.new](https://imba.new/), [stackblitz.com](https://stackblitz.com/github/imba/imba-vite-template), or a repo created with `npx imba create test` for example. [How and why?](https://antfu.me/posts/why-reproductions-are-required#how-to-create-a-minimal-reproduction)
+    placeholder: Reproduction URL and steps
+  validations:
+    required: true
 - type: textarea
   attributes:
     label: System Environment
@@ -25,3 +24,5 @@ body:
       npx envinfo --system --binaries --browsers --npmPackages imba --npmGlobalPackages imba
       ```
     render: text
+  validations:
+    required: true
