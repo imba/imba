@@ -58,6 +58,7 @@ def cssChanged(prev, next)
 
 def jsChanged(prev, next, filename)
 	let prevJs\string = prev..code
+	return yes if !prevJs
 	const i = prevJs.indexOf("\n/*__css_import__*/")
 	prevJs = prevJs
 		.replace(/^\/\/#\ssourceMapp(.*)$/mg, "")
