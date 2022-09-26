@@ -172,6 +172,18 @@ class Context
 	get root?
 		self == ROOT
 
+	get snapshot
+		let all = []
+		let item = #child
+		while item and item.target
+			all.push({
+				depth: item.depth
+				target: item.target
+				beacon: item.beacon
+			})
+			item = item.#child
+		return all
+
 	def reset item
 		tracking = yes
 		target = item
@@ -631,7 +643,7 @@ class Reaction
 	def call
 		if TRACKING
 			# only do this to detect infinite loops somehow?
-			console.warn 'should not call reaction inside an autorunning context?'
+			console.warn 'should not call reaction inside an autorunning context?',ROOT.snapshot
 			# this shouldnt _always_ be the case though?
 			# return
 
