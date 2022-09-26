@@ -360,7 +360,6 @@ export default class ImbaScript
 			# out.tagattr = checker.sym([taginst,util.toJSIdentifier(ctx.tagAttrName)])
 
 		# special description!!
-		
 
 		if tok.match("style.property.modifier style.selector.modifier")
 			let [m,pre,neg,post] = tok.value.match(/^(@|\.+)(\!?)([\w\-\d]*)$/)
@@ -422,10 +421,10 @@ export default class ImbaScript
 		if tok.match('white keyword')
 			return {info: {}}
 
-		hit(checker.getTokenMetaSymbol(tok),'meta')
-		hit(checker.getMetaSymbol(tok.type),'concept')
-		
-			
+		try
+			hit(checker.getTokenMetaSymbol(tok),'meta')
+			hit(checker.getMetaSymbol(tok.type),'concept')
+
 		if out.sym
 			out.info ||= checker.getSymbolInfo(out.sym)
 		
