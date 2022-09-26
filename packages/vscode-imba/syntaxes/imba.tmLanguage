@@ -326,13 +326,13 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(?&lt;=export\s+)(default)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(?&lt;=export)\s+(default)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(?&lt;=import\s+)(type)(?=\s+[\w\{\$\_])</string>
+            <string>(?&lt;=import)\s+(type)(?=\s+[\w\{\$\_])</string>
           </dict>
           <dict>
             <key>name</key>
@@ -344,7 +344,7 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(?&lt;=[\*\}\w\$]\s+)(from)(?=\s+[\"\'])</string>
+            <string>(?&lt;=[\*\}\w\$])\s+(from)(?=\s+[\"\'])</string>
           </dict>
           <dict>
             <key>name</key>
@@ -754,14 +754,17 @@
         </array>
       </dict>
       <key>css-size-keywords</key>
-      <array>
-        <dict>
-          <key>name</key>
-          <string>support.constant.size.property-value.css</string>
-          <key>match</key>
-          <string>(x+s|sm-|md-|lg-|sm|md|lg|x+l|hg|x+h)(?![\w-])</string>
-        </dict>
-      </array>
+      <dict>
+        <key>patterns</key>
+        <array>
+          <dict>
+            <key>name</key>
+            <string>support.constant.size.property-value.css</string>
+            <key>match</key>
+            <string>(x+s|sm-|md-|lg-|sm|md|lg|x+l|hg|x+h)(?![\w-])</string>
+          </dict>
+        </array>
+      </dict>
       <key>css-color-keywords</key>
       <dict>
         <key>patterns</key>
