@@ -255,9 +255,10 @@ export const aliases =
 	
 	# easing
 	e: 'ease'
+	eb: 'ease-box'
 	eo: 'ease-opacity'
-	et: 'ease-transform'
 	ec: 'ease-colors'
+	et: 'ease-transform'
 
 export const abbreviations = {}
 for own k,v of aliases
@@ -478,10 +479,13 @@ export class StyleTheme
 		{'margin-top': t, 'margin-bottom': b}
 		
 	def ease pars
-		$ease(pars,'')
+		$ease(pars,'a')
 		
 	def ease_opacity pars
 		$ease(pars,'o')
+
+	def ease_box pars
+		$ease(pars,'b')
 		
 	def ease_transform pars
 		$ease(pars,'t')
@@ -494,17 +498,16 @@ export class StyleTheme
 		let o = {__ease__: k}
 		let durRegex = /^[\-\+]?(\d*\.)?(\d+)(\w+)?$/
 		if String(pars[0]).match(durRegex)
-			o["--e_d{k}"] = pars[0]
+			o["--e_{k}0"] = pars[0]
 			pars.shift!
-			
 	
 		if pars[0] and !String(pars[0]).match(durRegex)
 			let ev = $varFallback('ease',[pars[0]])
-			o["--e_f{k}"] = ev
+			o["--e_{k}1"] = ev
 			pars.shift!
 	
 		if String(pars[0]).match(durRegex)
-			o["--e_w{k}"] = pars[0]
+			o["--e_{k}2"] = pars[0]
 			pars.shift!
 			
 		return o
@@ -998,7 +1001,7 @@ export const StyleExtenders = {
 		           scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 	'''
 	# TODO add specific transitions for dimensions as well as transforms
-	ease: '''
+	easeold: '''
 		--e_d:0ms;--e_f:cubic-bezier(0.23, 1, 0.32, 1);--e_w:0ms;
 		--e_dt:var(--e_d);
 		--e_dc:var(--e_d);
@@ -1014,7 +1017,30 @@ export const StyleExtenders = {
 			       transform var(--e_dt) var(--e_ft) var(--e_wt),
 			           color var(--e_dc) var(--e_fc) var(--e_wc),
 			background-color var(--e_dc) var(--e_fc) var(--e_wc),
-			         opacity var(--e_do) var(--e_fo) var(--e_wo),var(--e_rest);
+			border-color     var(--e_dc) var(--e_fc) var(--e_wc),
+			         opacity var(--e_do) var(--e_fo) var(--e_wo),
+							 inset var(--e_dd) var(--e_fd) var(--e_wd),
+							 width var(--e_dd) var(--e_fd) var(--e_wd),
+							 height var(--e_dd) var(--e_fd) var(--e_wd),
+							 var(--e_rest);
+	'''
+
+	ease: '''
+		--e_a0:0ms;--e_a1:cubic-bezier(0.23, 1, 0.32, 1);--e_a2:0ms;
+		--e_o0:var(--e_a0);--e_o1:var(--e_a1);--e_o2:var(--e_a2);
+		--e_c0:var(--e_a0);--e_c1:var(--e_a1);--e_c2:var(--e_a2);
+		--e_b0:var(--e_a0);--e_b1:var(--e_a1);--e_b2:var(--e_a2);
+		--e_t0:var(--e_b0);--e_t1:var(--e_b1);--e_t2:var(--e_b2);
+		--e_b:var(--e_b0) var(--e_b1) var(--e_b2);
+		--e_c:var(--e_c0) var(--e_c1) var(--e_c2);
+		--e_rest:any;
+		transition:
+			all var(--e_a0) var(--e_a1) var(--e_a2),
+			opacity var(--e_o0) var(--e_o1) var(--e_o2),
+			transform var(--e_t0) var(--e_t1) var(--e_t2),
+			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c),
+			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),border-width var(--e_b),
+			var(--e_rest);
 	'''
 }
 
