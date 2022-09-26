@@ -51,7 +51,7 @@ interface Event {
     αsilent(): void;
 
     /**
-     * Calls `imba.commit` when event is handled. This will happen by default for all events with a handler (so `.commit` is superflous in the case of `<@event.commit=handler`>`). There are cases however where you just want to make sure the interface is updated when certain events are triggered, without actually doing anything in response to the event. Ie. if you have an audio-element and you render something based on the `playState` of said element, you might want to commit for certain events: `<audio @ended.commit @play.commit @pause.commit>`.
+     * Calls `imba.commit` when event is handled. This will happen by default for all events with a handler (so `.commit` is superflous in the case of `<@event.commit=handler>`). There are cases however where you just want to make sure the interface is updated when certain events are triggered, without actually doing anything in response to the event. Ie. if you have an audio-element and you render something based on the `playState` of said element, you might want to commit for certain events: `<audio @ended.commit @play.commit @pause.commit>`.
      * 
      * @summary indicates that the listener will call imba.commit
      */
