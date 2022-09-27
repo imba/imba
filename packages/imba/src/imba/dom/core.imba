@@ -626,7 +626,6 @@ export class Element < Node
 
 	def log ...params
 		console.log(...params)
-		self
 
 
 	# inline in files or remove all together?
