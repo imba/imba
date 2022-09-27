@@ -246,7 +246,6 @@ extend class Element
 	
 	def log ...params
 		console.log(...params)
-		self
 
 	def emit name, detail, o = {bubbles: true, cancelable: true}
 		o.detail = detail if detail != undefined
