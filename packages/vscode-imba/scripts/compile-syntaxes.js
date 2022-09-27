@@ -58,8 +58,11 @@ function buildGrammar(src) {
     let grammar = updateGrammarVariables(content, content.variables);
     // var grammar = getTsGrammar(function (grammarVariables) { return grammarVariables; });
     var text = plist.build(grammar);
-    var dest = src.replace('YAML-','').replace('3','')
-    fs.writeFileSync(dest, text);
+    var xmlDest = src.replace('YAML-','').replace('3','')
+    fs.writeFileSync(xmlDest, text);
+    var jsonDest = xmlDest + ".json"
+	const jsonLang = JSON.stringify(content, null, 2)
+    fs.writeFileSync(jsonDest, jsonLang);
     console.log(`${src} built`);
 }
 
