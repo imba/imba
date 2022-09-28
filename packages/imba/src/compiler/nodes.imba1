@@ -11161,11 +11161,7 @@ export class StyleIdentifier < StyleTerm
 
 	def visit stack
 		let raw = toString
-		if raw == 'black' or raw == 'white'
-			if let c = stack.theme.$color(raw)
-				color = self:param ? c.alpha(self:param.toAlpha) : c
-
-		elif raw.match(/^[a-zA-Z]+\d+$/)
+		if raw.match(/^([a-zA-Z]+\d+|black|white)$/)
 			color = "/*#*/{raw}"
 			if self:param
 				color += "/" + self:param.toAlpha
