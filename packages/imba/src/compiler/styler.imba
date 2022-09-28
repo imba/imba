@@ -1173,6 +1173,7 @@ export class StyleRule
 	def toString o = {}
 		let parts = []
 		let subrules = []
+		let subrule
 
 		if isKeyFrames
 			let [context,name] = selector.split(/\s*\@keyframes\s*/)
@@ -1218,7 +1219,11 @@ export class StyleRule
 				let subsel = selparser.unwrap(selector,keys.slice(1).join(' '))
 				let obj = {}
 				obj[keys[0]] = value
-				subrules.push new StyleRule(self,subsel,obj,options)
+				if subrule = subrules[subsel]
+					subrule.content[keys[0]] = value
+				else
+					subrule = new StyleRule(self,subsel,obj,options)
+					subrules.push subrules[subsel] = subrule
 				continue
 			
 			elif key[0] == '['
