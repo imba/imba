@@ -1133,9 +1133,7 @@ export class StyleSheet
 			
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
-				# transitions = #register.transition = selectors
-				prepend('._easing_ {--e_d:300ms;}')
-				prepend('._enter_:not(#_),._leave_:not(#_) {--e_d:300ms;}')
+				prepend('._enter_:not(#_),._leave_:not(#_) {--e_a0:300ms;}')
 				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }') # 
 			if easing
 				#register[k] = selectors
@@ -1273,9 +1271,9 @@ export class StyleRule
 				apply('ease',sel)
 			
 
-			if sel and sel.hasTransitionStyles and !meta.ease
+			if sel and sel.hasTransitionStyles
 				apply('transition',sel)
-				apply('ease',sel)
+				apply('ease',sel) if !meta.ease
 			
 			if meta.size
 				for typ in ['_off_','_out_','_in_']
