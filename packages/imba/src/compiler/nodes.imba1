@@ -10843,7 +10843,7 @@ export class StyleDeclaration < StyleNode
 							# need recursive thing here
 							body.add(clone(k2,v2))
 					else
-						expanded.push clone(k,v).set(plain: k == name)
+						expanded.push clone(k,v).set(plain: (k == name) or (k == alias))
 				list.replace(self,expanded)
 				return
 			
@@ -11165,7 +11165,7 @@ export class StyleIdentifier < StyleTerm
 			if let c = stack.theme.$color(raw)
 				color = self:param ? c.alpha(self:param.toAlpha) : c
 
-		elif raw.match(/^[a-zA-Z]+\d$/)
+		elif raw.match(/^[a-zA-Z]+\d+$/)
 			color = "/*#*/{raw}"
 			if self:param
 				color += "/" + self:param.toAlpha
