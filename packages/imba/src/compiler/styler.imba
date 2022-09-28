@@ -328,6 +328,9 @@ export class Tint < Color
 
 		"hsla(var(--{name}),{a})"
 
+	def toVar round = 2
+		"var(--{name})"
+
 export class Length
 	
 	static def parse value
