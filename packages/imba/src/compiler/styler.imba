@@ -260,6 +260,14 @@ export const aliases =
 	ec: 'ease-colors'
 	et: 'ease-transform'
 
+	# outline
+	ol: 'outline'
+	olo: 'outline-offset'
+	olc: 'outline-color'
+	ols: 'outline-style'
+	olw: 'outline-width'
+
+
 export const abbreviations = {}
 for own k,v of aliases
 	if typeof v == 'string'
