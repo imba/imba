@@ -429,7 +429,7 @@ def AST.cary ary,params = null
 		elif v && v:c
 			return params ? v.c(params) : v.c
 		else
-			console.warn 'could not compile',v
+			# console.warn 'could not compile',v
 			return String(v)
 
 def AST.dump obj, key
