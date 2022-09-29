@@ -255,10 +255,31 @@ export const aliases =
 	
 	# easing
 	e: 'ease'
-	eb: 'ease-box'
+
+	ea: 'ease'
+	ead: 'ease-all-duration'
+	eaf: 'ease-all-function'
+	eaw: 'ease-all-delay'
+
 	eo: 'ease-opacity'
+	eod: 'ease-opacity-duration'
+	eof: 'ease-opacity-function'
+	eow: 'ease-opacity-delay'
+
 	ec: 'ease-colors'
+	ecd: 'ease-colors-duration'
+	ecf: 'ease-colors-function'
+	ecw: 'ease-colors-delay'
+
+	eb: 'ease-box'
+	ebd: 'ease-box-duration'
+	ebf: 'ease-box-function'
+	ebw: 'ease-box-delay'
+
 	et: 'ease-transform'
+	etd: 'ease-transform-duration'
+	etf: 'ease-transform-function'
+	etw: 'ease-transform-delay'
 
 	# outline
 	ol: 'outline'
@@ -266,7 +287,6 @@ export const aliases =
 	olc: 'outline-color'
 	ols: 'outline-style'
 	olw: 'outline-width'
-
 
 export const abbreviations = {}
 for own k,v of aliases
@@ -503,22 +523,23 @@ export class StyleTheme
 		
 	def ease_colors pars
 		$ease(pars,'c')
-		
-	def $ease pars, k = ''
+	
+	def $ease pars, k = '',slot = null
 		pars = pars.slice(0)
+
 		let o = {__ease__: k}
 		let durRegex = /^[\-\+]?(\d*\.)?(\d+)(\w+)?$/
 		if String(pars[0]).match(durRegex)
-			o["--e_{k}0"] = pars[0]
+			o["--e_{k}d"] = pars[0]
 			pars.shift!
 	
 		if pars[0] and !String(pars[0]).match(durRegex)
 			let ev = $varFallback('ease',[pars[0]])
-			o["--e_{k}1"] = ev
+			o["--e_{k}f"] = ev
 			pars.shift!
 	
 		if String(pars[0]).match(durRegex)
-			o["--e_{k}2"] = pars[0]
+			o["--e_{k}w"] = pars[0]
 			pars.shift!
 			
 		return o
@@ -898,6 +919,16 @@ export class StyleTheme
 				return palette[name] = from.mix(to,hw,sw,lw)
 		null
 
+	def isNumeric val
+		return true if isNumber(val)
+		return true if typeof val == 'number'
+		return true if String(val).match(/^[\-\+]?\d?(\.?\d+)(\w+|%)?$/)
+		return false
+
+	def isColorish val
+		return true if $parseColor(val)
+		return false
+
 	def $parseColor identifier
 		let key = String(identifier)
 		if let color = $color(key)
@@ -930,6 +961,7 @@ export class StyleTheme
 	
 
 	def $value value, index, config
+		
 		let key = config
 		let orig = value
 		let raw = value && value.toRaw ? value.toRaw! : String(value)
@@ -955,6 +987,9 @@ export class StyleTheme
 				config = 'sizing'
 			elif config.match(/^[trblwh]$/)
 				config = 'sizing'
+			elif config.match(/^e[otbca]?f$/) or config.match(/^ease(-\w+)?-function$/)
+				config = 'easings'
+				fallback = 'ease'
 			elif config.match(/^border-.*radius/) or config.match(/^rd[tlbr]{0,2}$/)
 				config = 'radius'
 				fallback = 'border-radius'
@@ -988,14 +1023,21 @@ export class StyleTheme
 			
 		return value
 		
-	def transformColors text, {prefix}
-		text = text.replace(/\/\*(##?)\*\/(\w+)(?:\/(\d+%?|\$[\w\-]+))?/g) do(m,typ,c,a)
+	def transformColors text
+		text = text.replace(/\/\*(#+)\*\/(\w+)(?:\/(\d+%?|\$[\w\-]+))?/g) do(m,typ,c,a)
 			# console.log "transforming color {m}"
 
 			if let color = $color(c)
 				# Need to work around a bug with esbuild css parsing (https://github.com/evanw/esbuild/issues/1421)
 				# Was fixed in 0.12.15 so we can remove the prefixing when we upgrade esbuild
-				return typ == '##' ? "{color.toVar(a)}" : "{prefix ? '' : ''}{color.toString(a)}"
+				if typ == '#'
+					return color.toString(a)
+				elif typ == '##'
+					return color.toVar(a)
+				elif typ == '###'
+					return color.toString(a)
+
+				# return typ == '##' ? "{color.toVar(a)}" : "{color.toString(a)}"
 			return m
 		return text
 		
@@ -1011,46 +1053,28 @@ export const StyleExtenders = {
 		           skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) 
 		           scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 	'''
-	# TODO add specific transitions for dimensions as well as transforms
-	easeold: '''
-		--e_d:0ms;--e_f:cubic-bezier(0.23, 1, 0.32, 1);--e_w:0ms;
-		--e_dt:var(--e_d);
-		--e_dc:var(--e_d);
-		--e_do:var(--e_d);
-		--e_ft:var(--e_f);
-		--e_fc:var(--e_f);
-		--e_fo:var(--e_f);
-		--e_wt:var(--e_w);
-		--e_wc:var(--e_w);
-		--e_wo:var(--e_w);
-		--e_rest:any 0ms;
-		transition: all var(--e_d) var(--e_f) var(--e_w),
-			       transform var(--e_dt) var(--e_ft) var(--e_wt),
-			           color var(--e_dc) var(--e_fc) var(--e_wc),
-			background-color var(--e_dc) var(--e_fc) var(--e_wc),
-			border-color     var(--e_dc) var(--e_fc) var(--e_wc),
-			         opacity var(--e_do) var(--e_fo) var(--e_wo),
-							 inset var(--e_dd) var(--e_fd) var(--e_wd),
-							 width var(--e_dd) var(--e_fd) var(--e_wd),
-							 height var(--e_dd) var(--e_fd) var(--e_wd),
-							 var(--e_rest);
+
+	outline: '''
+		--ol_s:solid;--ol_w:1px;--ol_o:0px; --ol_c:transparent;
+		outline:var(--ol_w) var(--ol_s) var(--ol_c); outline-offset:var(--ol_o);
+		outline:1px solid transparent; outline-offset:var(--ol_o);
 	'''
 
 	ease: '''
-		--e_a0:0ms;--e_a1:cubic-bezier(0.23, 1, 0.32, 1);--e_a2:0ms;
-		--e_o0:var(--e_a0);--e_o1:var(--e_a1);--e_o2:var(--e_a2);
-		--e_c0:var(--e_a0);--e_c1:var(--e_a1);--e_c2:var(--e_a2);
-		--e_b0:var(--e_a0);--e_b1:var(--e_a1);--e_b2:var(--e_a2);
-		--e_t0:var(--e_b0);--e_t1:var(--e_b1);--e_t2:var(--e_b2);
-		--e_b:var(--e_b0) var(--e_b1) var(--e_b2);
-		--e_c:var(--e_c0) var(--e_c1) var(--e_c2);
+		--e_ad:0ms;--e_af:cubic-bezier(0.23, 1, 0.32, 1);--e_aw:0ms;
+		--e_od:var(--e_ad);--e_of:var(--e_af);--e_ow:var(--e_aw);
+		--e_cd:var(--e_ad);--e_cf:var(--e_af);--e_cw:var(--e_aw);
+		--e_bd:var(--e_ad);--e_bf:var(--e_af);--e_bw:var(--e_aw);
+		--e_td:var(--e_bd);--e_tf:var(--e_bf);--e_tw:var(--e_bw);
+		--e_b:var(--e_bd) var(--e_bf) var(--e_bw);
+		--e_c:var(--e_cd) var(--e_cf) var(--e_cw);
 		--e_rest:any;
 		transition:
-			all var(--e_a0) var(--e_a1) var(--e_a2),
-			opacity var(--e_o0) var(--e_o1) var(--e_o2),
-			transform var(--e_t0) var(--e_t1) var(--e_t2),
-			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c),
-			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),border-width var(--e_b),
+			all var(--e_ad) var(--e_af) var(--e_aw),
+			opacity var(--e_od) var(--e_of) var(--e_ow),
+			transform var(--e_td) var(--e_tf) var(--e_tw),
+			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c),
+			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),
 			var(--e_rest);
 	'''
 }
@@ -1106,8 +1130,12 @@ export class StyleSheet
 					# console.log rule
 					let ns = rule.#media
 					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')
+
 					if easing or k == 'ease'
 						sel = sel.replace(/\._(off|out|in|on)_\b/g,'')
+					sel = sel.replace(/(\:[\w\-]+)(?!\()/g,'')
+					
+					# simplify the selectors as much as possible
 
 					let group = groups[ns] ||= {}
 					group[sel] = rule
@@ -1144,7 +1172,7 @@ export class StyleSheet
 			
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
-				prepend('._enter_:not(#_),._leave_:not(#_) {--e_a0:300ms;}')
+				prepend('._enter_:not(#_),._leave_:not(#_) {--e_ad:300ms;}')
 				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }') # 
 			if easing
 				#register[k] = selectors
@@ -1226,6 +1254,7 @@ export class StyleRule
 			
 			elif key.indexOf('§') >= 0
 				# let keys = key.replace(/[\.\~\@\+]/g,'\\$&').split('§')
+				
 				let keys = key.split('§')
 				let subsel = selparser.unwrap(selector,keys.slice(1).join(' '))
 				let obj = {}
@@ -1236,6 +1265,9 @@ export class StyleRule
 					subrule = new StyleRule(self,subsel,obj,options)
 					subrules.push subrules[subsel] = subrule
 				continue
+
+			elif key.match(/^__(\w+)__$/)
+				meta[key.slice(2,-2)] = yes
 			
 			elif key[0] == '['
 				# better to just check if key contains '.'
@@ -1245,10 +1277,22 @@ export class StyleRule
 				subrules.push new StyleRule(self,selector,value,options)
 				continue
 
+			elif key.match(/^outline-?/)
+				meta.outline = yes
+				parts.push "{key}: {value} !important;"
+
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
 				unless meta.transform
 					meta.transform = yes
 				parts.push "--t_{key}: {value} !important;"
+			elif key.match(/^(ease-.*)$/)
+				meta.ease = yes
+				let ref = key.replace('delay','wait').split('-').map(do $1[0]).join('') 
+				parts.push "--e_{ref.slice(1)}: {value} !important;"
+
+				unless abbreviations[key]
+					console.warn "{key} is not a valid style property"
+
 			elif key.match(/^(--e_\w+)$/)
 				meta.ease = yes
 				if selector.match(/@in\b/)
@@ -1283,8 +1327,13 @@ export class StyleRule
 			let sel = isKeyFrame ? selector : selparser.parse(selector,options)
 			if meta.transform
 				apply('transform',sel)
+
 			if meta.ease
 				apply('ease',sel)
+
+			if meta.outline
+				console.log 'apply outline'
+				apply('outline',sel)
 			
 
 			if sel and sel.hasTransitionStyles
