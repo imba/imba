@@ -2,6 +2,18 @@
 
 ## 2.0.0-alpha.221
 
+* Add shorthands for `outline-*` css properties.
+
+* Unify `ease` and `transition` css properties.
+
+    This is a breaking change. Going forward it is recommended to use the `ease` properties for all transitioning. See [documentation](https://imba.io/docs/css/easing).
+
+* Add support for custom colors in predefined box-shadows.
+
+    See [documentation](https://imba.io/docs/css/properties/box-shadow) for details.
+
+* Improvements to the router.
+
 * Rely more on esbuild to generate simpler code (ie using static blocks in classes).
 
 * Add `inherited` hook for classes.
