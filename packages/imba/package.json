@@ -75,6 +75,9 @@
       "browser": "./dist/imba.mjs",
       "default": "./index.js"
     },
+    "./spec": {
+      "imba": "./src/utils/spec.imba"
+    },
     "./program": "./program.imba.js",
     "./workers": "./workers.imba.js",
     "./compiler": {
