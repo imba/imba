@@ -22,7 +22,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "dev": "cross-env npx imba build -wM --node.external +devDependencies --esm src/index.imba",
+    "dev": "cross-env npx imba build -wM --keep --node.external +devDependencies --esm src/index.imba",
     "build": "cross-env rimraf dist && npm run build:esm && npm run build:cjs",
     "build:esm": "npx imba build --keep -M --node.external +devDependencies --esm src/index.imba",
     "build:cjs": "npx imba build --keep -M --node.external +devDependencies src/index.imba",
