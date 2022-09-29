@@ -2479,7 +2479,7 @@ declare namespace imbacss {
 	/** @proxy borderΞleftΞcolor */
 	interface bcl extends borderΞleftΞcolor { }
 	/**
-	 * @font-face descriptor. Specifies the resource containing font data. It is required, whether the font is downloadable or locally installed.
+	 * `@font-face` descriptor. Specifies the resource containing font data. It is required, whether the font is downloadable or locally installed.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/src)
 	 * 
@@ -3146,7 +3146,7 @@ declare namespace imbacss {
 	}
 
 	/**
-	 * @font-face descriptor. Defines the set of Unicode codepoints that may be supported by the font face for which it is declared.
+	 * `@font-face` descriptor. Defines the set of Unicode codepoints that may be supported by the font face for which it is declared.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/unicode-range)
 	 * 
@@ -7131,7 +7131,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor. Needs to be specified if the counter system is 'additive'.
+	 * `@counter-style` descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor. Needs to be specified if the counter system is 'additive'.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/additive-symbols)
 	 * 
@@ -7181,7 +7181,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Specifies a fallback counter style to be used when the current counter style can’t create a representation for a given counter value.
+	 * `@counter-style` descriptor. Specifies a fallback counter style to be used when the current counter style can’t create a representation for a given counter value.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/fallback)
 	 * 
@@ -7491,7 +7491,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Defines how to alter the representation when the counter value is negative.
+	 * `@counter-style` descriptor. Defines how to alter the representation when the counter value is negative.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/negative)
 	 * 
@@ -7558,7 +7558,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Specifies a “fixed-width” counter style, where representations shorter than the pad value are padded with a particular <symbol>
+	 * `@counter-style` descriptor. Specifies a “fixed-width” counter style, where representations shorter than the pad value are padded with a particular <symbol>
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/pad)
 	 * 
@@ -7569,7 +7569,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Specifies a <symbol> that is prepended to the marker representation.
+	 * `@counter-style` descriptor. Specifies a <symbol> that is prepended to the marker representation.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/prefix)
 	 * 
@@ -7580,7 +7580,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Defines the ranges over which the counter style is defined.
+	 * `@counter-style` descriptor. Defines the ranges over which the counter style is defined.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/range)
 	 * 
@@ -7766,7 +7766,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Specifies a <symbol> that is appended to the marker representation.
+	 * `@counter-style` descriptor. Specifies a <symbol> that is appended to the marker representation.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/suffix)
 	 * 
@@ -7777,7 +7777,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Specifies which algorithm will be used to construct the counter’s representation based on the counter value.
+	 * `@counter-style` descriptor. Specifies which algorithm will be used to construct the counter’s representation based on the counter value.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/system)
 	 * 
@@ -7809,7 +7809,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * @counter-style descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor.
+	 * `@counter-style` descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/symbols)
 	 * 

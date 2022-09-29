@@ -60,6 +60,10 @@ def run
 		# console.log val, parsed, getType(val)
 		# ,parsed,parsed.as[0]
 		# pdeep(parsed)
+
+	let safedoc = do(val)
+		return val unless val
+		val.replace(/^@([\w\-]+)/g,"`@$1`")
 		
 	let safeid = do(val)
 		if val.indexOf('+') >= 0
@@ -147,8 +151,6 @@ def run
 		
 		if item.values..length
 			argtypes.add('this')
-			
-		
 		
 		for entry in (item.restrictions or [])
 			if entry == 'enum'
@@ -168,7 +170,8 @@ def run
 			sign += ", arg{nr++}: any"
 
 		dts.doc!
-		dts.w(item.description)
+		dts.w(safedoc item.description)
+		# dts.w(`@cat `) if see.length
 		# dts.br!.w("Syntax: {item.sign}\n") if item.sign
 		dts.br!
 		let mdn = "https://developer.mozilla.org/en-US/docs/Web/CSS/{item.name}"
@@ -184,7 +187,7 @@ def run
 			for {name,description} in item.values
 				continue if name.match(/['",]/)
 				if description
-					dts.w("/** {description} */")
+					dts.w("/** {safedoc description} */")
 				dts.w("{safeid idify name}: ''\n")
 		
 		# now go through the others
