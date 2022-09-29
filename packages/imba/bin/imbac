@@ -33,6 +33,7 @@ var parseOpts = {
 	
 	schema: {
 		output: {type: 'string'},
+		outext: {type: 'string'},
 		sourcemap: {type: 'string'}, // inline | extern
 		platform: {type: 'string'}, // node | browser | worker
 		styles: {type: 'string'}, // extern | inline
@@ -90,7 +91,7 @@ CLI.prototype.ensureDir = function (src){
 		
 		if (fs.existsSync(dir)) {
 			var stat = fs.statSync(dir);
-		} else if (part.match(/\.(imba\d?|js)$/)) {
+		} else if (part.match(/\.(imba\d?|js)$/) || i == len - 1) {
 			true;
 		} else {
 			fs.mkdirSync(dir);
@@ -161,7 +162,8 @@ CLI.prototype.pathToSource = function (src,coll,o,root){
 	};
 	
 	if (file.targetPath) {
-		file.targetPath = file.targetPath.replace(/\.imba\d?$/,'.js');
+		var ext = ('.' + (o.outext || 'js')).replace(/^\.+/,'.');
+		file.targetPath = file.targetPath.replace(/\.imba\d?$/,ext);
 	};
 	
 	return coll.push(file);

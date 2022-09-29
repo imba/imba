@@ -429,7 +429,7 @@ def AST.cary ary,params = null
 		elif v && v:c
 			return params ? v.c(params) : v.c
 		else
-			console.warn 'could not compile',v
+			# console.warn 'could not compile',v
 			return String(v)
 
 def AST.dump obj, key
@@ -10529,7 +10529,7 @@ export class EnvFlag < ValueNode
 
 	def isTruthy
 		var val = raw
-		return !!val if val !== undefined
+		return !!val if val !== undefined and !(val isa Node)
 		return undefined
 
 	def loc
@@ -10544,6 +10544,8 @@ export class EnvFlag < ValueNode
 					out = String(parseFloat(val))
 				else
 					out = "'{val}'"
+			elif val isa Node
+				out = out.c
 			else
 				out = "{val}"
 
@@ -10843,7 +10845,7 @@ export class StyleDeclaration < StyleNode
 							# need recursive thing here
 							body.add(clone(k2,v2))
 					else
-						expanded.push clone(k,v).set(plain: k == name)
+						expanded.push clone(k,v).set(plain: (k == name) or (k == alias))
 				list.replace(self,expanded)
 				return
 			
@@ -11154,25 +11156,28 @@ export class StyleURL < ValueNode
 	def c
 		let out = String(@value)
 		return SourceMapper.strip(out)
-		# "{name}({pars})"
+
 
 export class StyleIdentifier < StyleTerm
 	prop color
 
 	def visit stack
 		let raw = toString
-		if raw == 'black' or raw == 'white'
-			if let c = stack.theme.$color(raw)
-				color = self:param ? c.alpha(self:param.toAlpha) : c
-
-		elif raw.match(/^[a-zA-Z]+\d$/)
-			color = "/*#*/{raw}"
+		if raw.match(/^([a-zA-Z]+\d+|black|white)$/)
+			color = "{raw}"
 			if self:param
 				color += "/" + self:param.toAlpha
 		super
 	
 	def c o
-		return color.toString if color
+		if color
+			let val = color.toString
+			# if option(:parameterize)
+			#	val = val.replace('/*#*/','/*##*/')
+			let pre = option(:parameterize) ? '/*##*/' : '/*#*/'
+			return pre + val
+
+
 		let val = toString
 		if val[0] == '$'
 			val = "var(--{val.slice(1)})"

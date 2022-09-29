@@ -249,11 +249,12 @@ def serve
 		raiseErrors: false
 	}
 
-	let basejs = import.web('../test/index.imba')
 	let cmpjs = {body: fs.readFileSync(path.resolve(__dirname,'..','dist','compiler.mjs'),'utf-8')}
+	let specraw = import.text('../src/utils/spec.imba')
 
 	statics["/compiler.js"] = cmpjs.body
-	statics["/imba.js"] = basejs.body
+	statics["/imba.js"] = import.web('../index.imba').body
+	statics["/spec.js"] = compiler.compile(specraw,Object.assign({sourcePath: 'spec'},copts)).js
 
 	server = http.createServer do(req,res)
 		# console.log "responding",req.url
@@ -273,7 +274,7 @@ def serve
 				imports: {
 					'imba': '/imba.js',
 					'imba/compiler': '/compiler.js',
-					'imba/spec': '/imba.js'
+					'imba/spec': '/spec.js'
 				}
 			}
 			let html = """
@@ -281,6 +282,7 @@ def serve
 				<meta charset='UTF-8'>
 				<script type='importmap'>{JSON.stringify(importmap)}</script>
 				<script src='/imba.js' type='module'></script>
+				<script src='/spec.js' type='module'></script>
 				</head><body>
 				<script src='./{barename}.imba' type='module'></script>
 				<script type='module'>SPEC.run();</script>
@@ -291,12 +293,13 @@ def serve
 			return res.end!
 
 		
+		let opts = Object.assign({},copts,{sourcePath: src})
 
 		if entry
 			
 			let body = entry.body
 			# console.log 'found page'			
-			let opts = Object.assign({},copts,{sourcePath: src})
+			
 			
 			# look for expected crashes
 			let expect = []
@@ -342,8 +345,14 @@ def serve
 			
 			res.write js
 		else
-			console.warn "NOT HANDLING REQUEST {src}"
-			res.write('')
+			if fs.existsSync(src) and ext == 'imba'
+				let compiled = compiler.compile(fs.readFileSync(src,'utf-8'),opts)
+				statics[req.url] = compiled.js
+				res.setHeader("Content-Type", "application/javascript")
+				res.write(compiled.js)
+			else
+				console.warn "NOT HANDLING REQUEST {src}"
+				res.write('')
 		res.end!
 
 	new Promise do(resolve)

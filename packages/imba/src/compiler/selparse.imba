@@ -116,6 +116,7 @@ export def rewrite rule,ctx,o = {}
 	let deeppart = null
 	let escaped = no
 	let seenDeepOperator = !!o.global
+	let hasOffStates = no
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -247,6 +248,7 @@ export def rewrite rule,ctx,o = {}
 			elif mod.name == 'off' or mod.name == 'out' or mod.name == 'in'
 				mod.remove = yes
 				addClass(modTarget,"_{mod.name}_")
+				hasOffStates = yes
 				(ctx or rule).hasTransitionStyles = yes
 				(ctx or rule)["_{mod.name}_"] = yes
 			elif mod.name == 'enter' or mod.name == 'leave'
@@ -337,6 +339,10 @@ export def rewrite rule,ctx,o = {}
 
 	if o.type == 'scoped'
 		s1 = last.isScope ? 2 : 1
+
+	# styles for the @off/@out/@in conditions should always take precedence
+	if hasOffStates
+		s1 = 4
 
 	if true
 		last.s1 = Math.max(s0,s1)

@@ -383,32 +383,109 @@ declare namespace imbacss {
     /** 
      * Shorthand for setting transform skeq-y() 
      * @custom
+     * @alias ea
     */
     interface ease extends _ {
         set(duration: Ψtime): void;
         set(timing: ΨeasingΞfunction): void;
         set(duration: Ψtime, timing: ΨeasingΞfunction): void;
     }
-    /** Shorthand for setting transform scale-x() */
-    interface easeΞtransform extends ease {
+
+    /** @proxy ease */ interface e extends ease { }
+    /** @proxy ease */ interface ea extends ease { }
+
+    /** 
+     * Transition duration for all properties
+     * @custom
+     * @alias ead
+    */
+    interface easeΞallΞduration extends _ {
+        set(duration: Ψtime): void;
     }
-    /** Shorthand for setting transform scale-x() */
+
+    /** 
+     * Transition timing function for all properties
+     * @custom
+     * @alias eaf
+    */
+    interface easeΞallΞfunction extends _ {
+        set(timing: ΨeasingΞfunction): void;
+    }
+    /** 
+     * Transition delay for all properties
+     * @custom
+     * @alias eaw
+    */
+    interface easeΞallΞdelay extends _ {
+        set(duration: Ψtime): void;
+    }
+
+    /** @proxy easeΞallΞduration */ interface ead extends easeΞallΞduration {}
+    /** @proxy easeΞallΞfunction */ interface eaf extends easeΞallΞfunction {}
+    /** @proxy easeΞallΞdelay */ interface eaw extends easeΞallΞdelay {}
+    
+    /** Easing colors (color,background-color,border-color,outline-color,fill,stroke,box-shadow) 
+     * @alias ec
+    */
     interface easeΞcolors extends ease {
     }
 
-    /** Shorthand for setting transform scale-x() */
+    /** @alias ecd */ interface easeΞcolorsΞduration extends easeΞallΞduration {}
+    /** @alias ecf */ interface easeΞcolorsΞfunction extends easeΞallΞfunction {}
+    /** @alias ecw */ interface easeΞcolorsΞdelay extends easeΞallΞdelay {}
+    /** @proxy easeΞcolors */ interface ec extends easeΞcolors { }
+    /** @proxy easeΞcolorsΞduration */ interface ecd extends easeΞcolorsΞduration {}
+    /** @proxy easeΞcolorsΞfunction */ interface ecf extends easeΞcolorsΞfunction {}
+    /** @proxy easeΞcolorsΞdelay */ interface ecw extends easeΞcolorsΞdelay {}
+
+    /**
+     * Easing opacity
+     * @alias eo
+    */
     interface easeΞopacity extends ease {
     }
 
-    /** @proxy ease */
-    interface e extends ease { }
+    /** @alias eod */ interface easeΞopacityΞduration extends easeΞallΞduration {}
+    /** @alias eof */ interface easeΞopacityΞfunction extends easeΞallΞfunction {}
+    /** @alias eow */ interface easeΞopacityΞdelay extends easeΞallΞdelay {}
+    /** @proxy easeΞopacity */ interface eo extends easeΞopacity { }
+    /** @proxy easeΞopacityΞduration */ interface eod extends easeΞopacityΞduration {}
+    /** @proxy easeΞopacityΞfunction */ interface eof extends easeΞopacityΞfunction {}
+    /** @proxy easeΞopacityΞdelay */ interface eow extends easeΞopacityΞdelay {}
 
-    /** @proxy easeΞtransform */
-    interface et extends easeΞtransform { }
-    /** @proxy easeΞcolors */
-    interface ec extends easeΞcolors { }
-    /** @proxy easeΞopacity */
-    interface eo extends easeΞopacity { }
+
+    /** Easing dimensions
+     * top,left,right,bottom,width,height,max-width,max-height
+     * padding,margin,border-width,stroke-width,transform 
+     * @alias eb
+     * */
+    interface easeΞbox extends ease {
+    }
+
+    /** @alias ebd */ interface easeΞboxΞduration extends easeΞallΞduration {}
+    /** @alias ebf */ interface easeΞboxΞfunction extends easeΞallΞfunction {}
+    /** @alias ebw */ interface easeΞboxΞdelay extends easeΞallΞdelay {}
+    /** @proxy easeΞbox */ interface eb extends easeΞcolors { }
+    /** @proxy easeΞboxΞduration */ interface ebd extends easeΞboxΞduration {}
+    /** @proxy easeΞboxΞfunction */ interface ebf extends easeΞboxΞfunction {}
+    /** @proxy easeΞboxΞdelay */ interface ebw extends easeΞboxΞdelay {}
+
+
+
+    /** Shorthand for setting transform easings 
+     * @alias et
+    */
+    interface easeΞtransform extends ease {
+    }
+    
+    /** @alias etd */ interface easeΞtransformΞduration extends easeΞallΞduration {}
+    /** @alias etf */ interface easeΞtransformΞfunction extends easeΞallΞfunction {}
+    /** @alias etw */ interface easeΞtransformΞdelay extends easeΞallΞdelay {}
+    /** @proxy easeΞtransform */ interface et extends easeΞtransform { }
+    /** @proxy easeΞtransformΞduration */ interface etd extends easeΞtransformΞduration {}
+    /** @proxy easeΞtransformΞfunction */ interface etf extends easeΞtransformΞfunction {}
+    /** @proxy easeΞtransformΞdelay */ interface etw extends easeΞtransformΞdelay {}
+
     
     /** 
      * Set color alias

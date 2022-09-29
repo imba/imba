@@ -150,26 +150,41 @@ declare namespace imbacss {
      * @detail ::after { ... }
     */
     interface αafter { name: '::after' }
-
+    
+    /** 
+     * @see [Transitions](https://imba.io/css/transitions)
+     * @summary Target styles before entering / after leaving the dom
+     * @custom
+    */
+     interface αoff { }
 
     /** 
      * @see [Transitions](https://imba.io/css/transitions)
-     * @summary Matches when element is transitioning into the dom
+     * @summary Initial styles for element entering the dom
      * @custom
     */
     interface αin { }
 
     /** 
      * @see [Transitions](https://imba.io/css/transitions)
-     * @summary Matches when element is transitioning out of the dom
+     * @summary Target styles for element leaving the dom
      * @custom
     */
     interface αout { }
 
+    
+
     /** 
      * @see [Transitions](https://imba.io/css/transitions)
-     * @summary Matches when element is transitioning into or out of the dom
+     * @summary Matches when element is transitioning into the dom
      * @custom
     */
-    interface αoff { }
+     interface αenter { }
+
+    /** 
+     * @see [Transitions](https://imba.io/css/transitions)
+     * @summary Matches when element is transitioning out of the dom
+     * @custom
+    */
+     interface αleave { }
 }

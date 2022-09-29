@@ -50,7 +50,7 @@
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.220",
+  "version": "2.0.0-alpha.221",
   "licenses": [
     {
       "type": "MIT",
@@ -69,11 +69,14 @@
     "./compiler": "./dist/compiler.mjs"
   },
   "exports": {
-	"./server": "./dist/imba.node.mjs",
+    "./server": "./dist/imba.node.mjs",
     ".": {
       "imba": "./src/imba/imba.imba",
       "browser": "./dist/imba.mjs",
       "default": "./index.js"
+    },
+    "./spec": {
+      "imba": "./src/utils/spec.imba"
     },
     "./program": "./program.imba.js",
     "./workers": "./workers.imba.js",

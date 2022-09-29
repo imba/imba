@@ -1,5 +1,22 @@
 const puppy = window.puppy
 
+const KeyMap = {
+	ctrl: 'Control'
+	shift: 'Shift'
+	meta: 'Meta'
+	alt: 'Alt'
+	left: 'ArrowLeft'
+	right: 'ArrowRight'
+	esc: 'Escape'
+	enter: 'Enter'
+	tab: 'Tab'
+	space: 'Space'
+	up: 'ArrowUp'
+	down: 'ArrowDown'
+	del: 'Backspace'
+	
+}
+
 const pup = do(ns,...params)
 	if ns.match(/^spec/) and puppy
 		puppy(ns,params)
@@ -10,18 +27,56 @@ const pup = do(ns,...params)
 		await puppy(ns,params)
 
 class PupKeyboard
+
+
 	def type text, options = {}
 		await puppy('keyboard.type',[text,options])
-	def down text, options = {}
-		await puppy('keyboard.down',[text,options])
-	def up text, options = {}
-		await puppy('keyboard.up',[text,options])
-	def press text, options = {}
-		await puppy('keyboard.press',[text,options])
+		
+	def down key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.down',[key,options])
+	def up key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.up',[key,options])
+
+	def press key, options = {}
+		key = KeyMap[key] or key
+		await puppy('keyboard.press',[key,options])
+
+	def hold key, block
+		key = KeyMap[key] or key
+		await down(key)
+		await block()
+		await up(key)
 
 class PupMouse
 	def type text, options
 		puppy('keyboard.type',[text,options])
+
+	def down x = 0, y = 0
+		await move(x,y)
+		await puppy('mouse.down',[])
+
+	def move x = 0, y = 0
+		await puppy('mouse.move',[x,y])
+	
+	def up x = 0, y = 0
+		await puppy('mouse.up',[])
+		
+	def click x = 0, y = 0, o = {}
+		await puppy('mouse.click',[x,y,o])
+		
+	def touch ...coords
+		let first = coords.shift!
+		await down(first[0],first[1])
+		for item in coords
+			await move(item[0],item[1])
+		await up!
+
+class PupPage
+
+	def setViewport o = {}
+		await puppy('setViewport',[o])
 
 const TERMINAL_COLOR_CODES =
 	bold: 1
@@ -68,16 +123,22 @@ global class Spec < SpecComponent
 
 	get mouse
 		_mouse ||= new PupMouse
+
+	get page
+		_page ||= new PupPage
 	
-	def click sel, trusted = yes
+	def click sel, trusted = yes, options = {}
+		if typeof trusted == 'object'
+			options = trusted
+			trusted = yes
+
 		if puppy and trusted
-			console.log "click with puppeteer!!",sel
+			# console.log "click with puppeteer!!",sel
 			try
-				await puppy('click',[sel])
+				await puppy('click',[sel,options])
 			catch e
 				console.log 'error from pup click!'
 		else
-
 			let el = document.querySelector(sel)
 			el && el.click!
 		await tick!
@@ -98,7 +159,7 @@ global class Spec < SpecComponent
 		stack = [context = self]
 		tests = []
 		warnings = []
-		state = {info: [], mutations: [], log: [], commits: 0}
+		state = {info: [], mutations: [], log: [],commits: 0}
 
 		observer = new MutationObserver do(muts)
 			context.state.mutations.push(...muts)
@@ -136,10 +197,17 @@ global class Spec < SpecComponent
 			name = context.blocks.length + 1
 		context.blocks.push new SpecExample(name, blk, context)
 
+	def before name, blk
+		if name isa Function
+			name = 'setup'
+			blk = name
+		let blocks = context.blocks[name] ||= []
+		blocks.push blk
+
 	def eq actual, expected, options
 		new SpecAssert(context, actual,expected, options)
 	
-	def step i = 0, &blk
+	def step i = 0
 		Spec.CURRENT = self
 		let block = blocks[i]
 		return self.finish! unless block
@@ -201,7 +269,8 @@ global class SpecGroup < SpecComponent
 		parent = parent
 		name = name
 		blocks = []
-		SPEC.eval(blk,self) if blk
+		blk = blk
+		
 		self
 
 	get fullName
@@ -218,10 +287,15 @@ global class SpecGroup < SpecComponent
 		let block = blocks[i]
 		return finish! unless block
 		imba.once(block,'done') do run(i+1)
+		if blocks.setup
+			for pre in blocks.setup
+				await pre()
+
 		block.run! # this is where we wan to await?
 	
 	def start
 		emit('start', [self])
+		SPEC.eval(blk,self) if blk
 
 		if console.group
 			console.group(name)
@@ -230,7 +304,15 @@ global class SpecGroup < SpecComponent
 		
 	def finish
 		console.groupEnd(name) if console.groupEnd
+		console.log "ENDED SPEC-GROUP"
+		if parent == SPEC
+			cleanup!
 		emit('done', [self])
+		
+	def cleanup
+		document.body.innerHTML = ''
+		await imba.commit!
+		
 
 global class SpecExample < SpecComponent
 
@@ -242,7 +324,7 @@ global class SpecExample < SpecComponent
 		block = block
 		assertions = []
 		root.tests.push(self)
-		state = {info: [], mutations: [], log: []}
+		state = {info: [], mutations: [], log: [], commits: 0}
 		self
 
 	get fullName
@@ -252,8 +334,10 @@ global class SpecExample < SpecComponent
 		start!
 		# does a block really need to run here?
 		try
+			console.log 'running block!'
 			let promise = (block ? SPEC.eval(block, self) : Promise.resolve({}))
 			let res = await promise
+			console.log 'done running block',failed
 		catch e
 			console.log "error from run!",e
 			error = e
@@ -294,6 +378,8 @@ global class SpecAssert < SpecComponent
 
 	def constructor parent,actual,expected,options = {}
 		super()
+		if typeof options == 'string'
+			options = {message: options}
 
 		parent = parent
 		expected = expected
@@ -321,30 +407,36 @@ global class SpecAssert < SpecComponent
 		failed = yes
 		if options.warn
 			root.warnings.push(self)
+		console.log(toString!,[expected,actual])
 		self
 
 	def pass
 		passed = yes
+		console.log(toString!,[expected,actual])
 		self
 
 	def toString
-		if failed and message isa String
+		if failed and typeof message == 'string'
 			let str = message
 			str = str.replace('%1',actual)
 			str = str.replace('%2',expected)
 			return str
-		else
+		elif failed
 			"failed"
+		else
+			"ok"
 
 window.spec = global.SPEC = new Spec
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
+global def before name, blk do SPEC.before(name,blk)
+# global def test name, blk do SPEC.test(name,blk)
 global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
 	
-global def eqcss el, match,sel,msg
+global def eqcss el, match,sel,o
 	if typeof el == 'string'
 		el = document.querySelector(el)
 	elif el isa Element and !el.parentNode
@@ -362,11 +454,11 @@ global def eqcss el, match,sel,msg
 	for own k,expected of match
 		let real = style[k]
 		if expected isa RegExp
-			global.ok real.match(expected)
+			global.ok(real.match(expected),o)
 			unless real.match(expected)
 				console.log real,'did no match',expected
 		else
-			global.eq(real,expected)
+			global.eq(String(real),String(expected),o)
 	return
 
 window.onerror = do(e)

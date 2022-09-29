@@ -187,11 +187,16 @@ export default class Bundle < Component
 
 			if ext == "dependencies"
 				let deps = Object.keys(pkg.dependencies or {})
+				let peerDeps = Object.keys(pkg.peerDependencies or {})
 				externals.push(...deps)
+				externals.push(...peerDeps)
 				externals.push( ...Object.keys(pkg.devDependencies or {}) ) if run?
 
 			if ext == "devDependencies"
 				externals.push( ...Object.keys(pkg.devDependencies or {}) )
+
+			if ext == "peerDependencies"
+				externals.push( ...Object.keys(pkg.peerDependencies or {}) )
 			
 			if ext == "builtins"
 				externals.push(...Object.keys(builtInModules))
@@ -203,6 +208,9 @@ export default class Bundle < Component
 		
 		externals = externals.filter do(src)
 			!o.external or o.external.indexOf("!{src}") == -1
+
+		# remove duplicates
+		externals = externals.filter do(v,i,a) a.indexOf(v) == i
 
 		self.externals = externals
 

@@ -60,6 +60,10 @@ def run
 		# console.log val, parsed, getType(val)
 		# ,parsed,parsed.as[0]
 		# pdeep(parsed)
+
+	let safedoc = do(val)
+		return val unless val
+		val.replace(/^@([\w\-]+)/g,"`@$1`")
 		
 	let safeid = do(val)
 		if val.indexOf('+') >= 0
@@ -82,9 +86,11 @@ def run
 		return yes if item.skip
 		return yes if item.name.match(/^-(ms|moz|webkit|o)-/)
 		return no
+
+	let allprops = data.properties
 		
 	let propmap = {}
-	for item in data.properties
+	for item in allprops
 		propmap[item.name] = item
 		
 	for own alias,to of aliases
@@ -92,7 +98,7 @@ def run
 		if target
 			target.alias = alias
 		else
-			
+			console.log 'found no real name',alias,to
 	dts.w '/// <reference path="./styles.d.ts" />'
 
 	dts.push('declare namespace imbacss')
@@ -114,8 +120,10 @@ def run
 	}
 	
 	let signgroups = {}
+
 	
-	for item in data.properties
+	
+	for item in allprops
 		let signature = item.sign = propertyReference[item.name]
 		let patch = patches[item.name]
 		Object.assign(item,patch) if patch
@@ -132,8 +140,7 @@ def run
 				Object.assign(item,options)
 	
 	# console.log "groups {Object.keys(signgroups).length}"
-
-	for item in data.properties
+	for item in allprops
 		continue if skip(item)
 		let id = idify(item.name)
 		let types = item.restrictions
@@ -144,10 +151,8 @@ def run
 		
 		if item.values..length
 			argtypes.add('this')
-			
 		
-		
-		for entry in item.restrictions
+		for entry in (item.restrictions or [])
 			if entry == 'enum'
 				argtypes.add('this')
 			else
@@ -165,7 +170,8 @@ def run
 			sign += ", arg{nr++}: any"
 
 		dts.doc!
-		dts.w(item.description)
+		dts.w(safedoc item.description)
+		# dts.w(`@cat `) if see.length
 		# dts.br!.w("Syntax: {item.sign}\n") if item.sign
 		dts.br!
 		let mdn = "https://developer.mozilla.org/en-US/docs/Web/CSS/{item.name}"
@@ -181,7 +187,7 @@ def run
 			for {name,description} in item.values
 				continue if name.match(/['",]/)
 				if description
-					dts.w("/** {description} */")
+					dts.w("/** {safedoc description} */")
 				dts.w("{safeid idify name}: ''\n")
 		
 		# now go through the others
@@ -242,7 +248,8 @@ def run
 		for own name,value of theme.variants['box-shadow']
 			continue unless name.match(/[a-z]/)
 			let size = value isa Array ? value[0] : value
-			dts.w "/** {size} */"
+			let plain = size.replace(/var\([^\)]*\)/g,'').replace(/calc\([^\)]*\)/g,'').replace(/hsla\([^\)]*\)/g,'color')
+			dts.w "/** {plain} */"
 			dts.w "'{name}': '{size}';"
 	
 	dts.ind "interface Ψradius" do

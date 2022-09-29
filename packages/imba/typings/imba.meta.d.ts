@@ -67,6 +67,11 @@ declare namespace imbameta {
     /** vh */
     "style.value.unit vh": string;
 
+    /** vw */
+    "style.value.unit s": string;
+    /** vw */
+    "style.value.unit ms": string;
+
     // Number units
 
     /**

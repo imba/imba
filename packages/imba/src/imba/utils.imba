@@ -1,5 +1,7 @@
 const dashRegex = /-./g
 
+
+
 export class LazyProxy
 	static def for getter
 		new Proxy({}, new self(getter))
@@ -114,3 +116,9 @@ export def emit obj, event, params
 		emit__(event,params,cb[event]) if cb[event]
 		emit__(event,[event,params],cb.all) if cb.all
 	return
+
+export class Emitter
+	def emit name, ...params do emit(self,name,params)
+	def on name, ...params do listen(self,name,...params)
+	def once name, ...params do once(self,name,...params)
+	def un name, ...params do unlisten(self,name,...params)

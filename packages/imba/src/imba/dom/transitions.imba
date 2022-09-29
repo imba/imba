@@ -1,7 +1,7 @@
 import {Element,get_document} from './core'
+import {Emitter} from '../utils'
 
-class Transitions
-	
+class Transitions < Emitter
 	selectors = {}
 	
 	def addSelectors add, group
@@ -40,8 +40,9 @@ export const transitions = new Transitions
 let instance = global.imba ||= {}
 instance.transitions = transitions
 
-export class Easer
+export class Easer < Emitter
 	def constructor target
+		super()
 		dom = target
 		#phase = null
 		#nodes = []
@@ -49,7 +50,6 @@ export class Easer
 		
 	def log ...params
 		return
-		
 		
 	get flags
 		dom.flags
@@ -106,7 +106,6 @@ export class Easer
 				dom..transition-out-end(self)
 			if prev == 'enter' and !val
 				dom..transition-in-end(self)
-			
 	
 	get phase
 		#phase
@@ -143,11 +142,12 @@ export class Easer
 						resolve()
 
 				for anim in anims.own
-					anim.oncancel = anim.onfinish = finish
+					anim.#easer = self
+					anim.addEventListener('finish',finish,once:yes)
+					anim.addEventListener('cancel',finish,once:yes)
 				return
 		else
 			anims.finished = Promise.resolve(yes)
-
 		return anims
 		
 	def getAnimatedNodes
@@ -209,8 +209,8 @@ export class Easer
 		unflag('_out_')
 		commit!
 		# must be certain that they don't have a size set directly?
-		
 		sizes = #nodes.sized = getNodeSizes('in')
+
 		dom..transition-in-init(self)
 		flag('_off_')
 		flag('_in_')
@@ -218,7 +218,7 @@ export class Easer
 		
 		commit!
 		unflag('_instant_')
-
+		
 		let anims = #anims = track do
 			phase = 'enter'
 			applyNodeSizes(sizes)
@@ -237,6 +237,7 @@ export class Easer
 		let sizes
 		let finalize = do
 			if phase == 'leave'
+				dom.emit('easeoutend',{})
 				parent.removeChild(dom)
 				phase = null
 
