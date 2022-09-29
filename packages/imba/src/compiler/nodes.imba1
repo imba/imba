@@ -10529,7 +10529,7 @@ export class EnvFlag < ValueNode
 
 	def isTruthy
 		var val = raw
-		return !!val if val !== undefined
+		return !!val if val !== undefined and !(val isa Node)
 		return undefined
 
 	def loc
@@ -10544,6 +10544,8 @@ export class EnvFlag < ValueNode
 					out = String(parseFloat(val))
 				else
 					out = "'{val}'"
+			elif val isa Node
+				out = out.c
 			else
 				out = "{val}"
 
@@ -11154,7 +11156,7 @@ export class StyleURL < ValueNode
 	def c
 		let out = String(@value)
 		return SourceMapper.strip(out)
-		# "{name}({pars})"
+
 
 export class StyleIdentifier < StyleTerm
 	prop color
