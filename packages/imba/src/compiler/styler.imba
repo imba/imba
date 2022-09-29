@@ -1118,7 +1118,7 @@ export const StyleExtenders = {
 			all var(--e_ad) var(--e_af) var(--e_aw),
 			opacity var(--e_od) var(--e_of) var(--e_ow),
 			transform var(--e_td) var(--e_tf) var(--e_tw),
-			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c),
+			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c), box-shadow var(--e_c),
 			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),margin var(--e_b),padding var(--e_b),
 			var(--e_rest);
 	'''
