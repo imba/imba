@@ -11162,13 +11162,20 @@ export class StyleIdentifier < StyleTerm
 	def visit stack
 		let raw = toString
 		if raw.match(/^([a-zA-Z]+\d+|black|white)$/)
-			color = "/*#*/{raw}"
+			color = "{raw}"
 			if self:param
 				color += "/" + self:param.toAlpha
 		super
 	
 	def c o
-		return color.toString if color
+		if color
+			let val = color.toString
+			# if option(:parameterize)
+			#	val = val.replace('/*#*/','/*##*/')
+			let pre = option(:parameterize) ? '/*##*/' : '/*#*/'
+			return pre + val
+
+
 		let val = toString
 		if val[0] == '$'
 			val = "var(--{val.slice(1)})"

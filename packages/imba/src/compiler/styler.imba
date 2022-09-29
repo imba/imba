@@ -2,7 +2,7 @@
 # var conv = require('../../vendor/colors')
 import * as selparser from './selparse'
 import {conv} from '../../vendor/colors'
-import {fonts,colors,variants} from './theme.imba'
+import {fonts,colors,variants,named_colors} from './theme.imba'
 import * as theme from  './theme.imba'
 
 const extensions = {}
@@ -427,6 +427,9 @@ let defaultPalette = {
 }
 
 def parseColorString str
+	if named_colors[str]
+		str = named_colors[str]
+
 	if let m = str.match(/hsl\((\d+), *(\d+\%), *(\d+\%?)/)
 		let h = parseInt(m[1])
 		let s = parseInt(m[2])
@@ -434,6 +437,8 @@ def parseColorString str
 		return [h,s,l]
 	elif str[0] == '#'
 		return conv.rgb.hsl(conv.hex.rgb(str))
+	
+		
 
 
 def parseColors palette, colors
@@ -684,7 +689,7 @@ export class StyleTheme
 			let ease = part[2]
 			let group = groups[name]
 			
-			if group and parts.length == 1
+			if group and parts.length == 0
 				part[0] = 'none'
 				Object.assign(add,{'transition-property': group.join(',')})
 			elif group and parts.length > 1
@@ -696,7 +701,8 @@ export class StyleTheme
 				continue
 			i++
 
-		Object.assign(out,{'transition': parts},add)
+		# this is a hack
+		Object.assign(out,{'--e_rest': parts},add)
 		return out
 		
 	def font params,...rest
@@ -709,10 +715,41 @@ export class StyleTheme
 			return m
 		return
 		
-	def text_shadow params
-		if let m = $varFallback('text-shadow',params)
-			return m
-		return
+	def text_shadow ...params
+		for par,i in params
+			if let m = $varFallback('text-shadow',par)
+				params[i] = m
+		return params
+
+	def box_shadow ...params
+		# console.log params.length # ,a..length
+		let o = {'box-shadow': params}
+		for pair,i in params
+			# console.log par.length,par[0]
+			let tpl = no
+			for par,pi in pair
+				if pi == 0 and pair.length < 3
+					let str = String(par)
+					if str.match(/^[\w\-]+$/)
+						tpl = str
+						pair[pi] = new Var("box-shadow-{str}",par)
+
+				if pi == 1 and tpl
+					o["--bxs-{tpl}-color"] = "/*##*/{par}"
+
+					if par.param
+						o["--bxs-{tpl}-alpha"] = par.param.toAlpha!
+
+					par.set(parameterize: yes)
+					# console.log 'dealing with the color',par.option('parameterize')
+					pair[pi] = ''
+					# pair.pop!
+					yes
+					# need to add another property
+					# if let m = $varFallback('box-shadow',par)
+					#	params[i] = m
+		return o
+		return params
 
 	def grid_template params
 		for param,i in params
@@ -825,6 +862,20 @@ export class StyleTheme
 		
 	def border_y_color [t,b=t]
 		{btc: t, bbc: b}
+
+	def outline params		
+		# outlined
+		if params.length == 3
+			return {outline: [params]}
+		let o = {__outline__: yes}
+		if isNumeric(params[0])
+			o.olw = params.shift!
+		if isColorish(params[0])
+			o.olc = params.shift!
+
+		if !o.olw
+			o['--ol_w'] = '1px'
+		return o
 	
 	def gap [rg,cg = rg]
 		let o = {}
@@ -871,18 +922,14 @@ export class StyleTheme
 		# aliased colors
 		if ns and typeof palette[ns] == 'string'
 			return $color(palette[ns] + name.slice(ns.length))
-
-		if ns == 'tint'
-			let newname = "hue" + name.slice(4)
-			# TODO show as a compiler warning instead?
-			console.warn "{name} renamed to {newname}"
-			return new Tint(newname)
 			
 		if ns == 'hue'
 			return new Tint(name)
 
 		if palette[name]
 			return palette[name]
+
+
 
 		if m
 			let nr = parseInt(m[2])
@@ -917,6 +964,9 @@ export class StyleTheme
 
 			if from and to
 				return palette[name] = from.mix(to,hw,sw,lw)
+		
+		if let parsed = parseColorString(name)
+				return new Color('',...parsed)
 		null
 
 	def isNumeric val
@@ -969,6 +1019,8 @@ export class StyleTheme
 		let fallback = no
 		let result = null
 		let unit = orig._unit
+
+		# console.log 'value',key
 		# console.log 'resolve value',raw
 		if typeof config == 'string'
 			if aliases[config]
@@ -993,8 +1045,8 @@ export class StyleTheme
 			elif config.match(/^border-.*radius/) or config.match(/^rd[tlbr]{0,2}$/)
 				config = 'radius'
 				fallback = 'border-radius'
-			elif config.match(/^box-shadow/)
-				fallback = config = 'box-shadow'
+			# elif config.match(/^box-shadow/)
+			# 	fallback = config = 'box-shadow'
 			elif config.match(/^tween|transition/) and options.variants.easings[raw]
 				return options.variants.easings[raw]
 
@@ -1024,20 +1076,13 @@ export class StyleTheme
 		return value
 		
 	def transformColors text
-		text = text.replace(/\/\*(#+)\*\/(\w+)(?:\/(\d+%?|\$[\w\-]+))?/g) do(m,typ,c,a)
-			# console.log "transforming color {m}"
+		text = text.replace(/\/\*(#+)\*\/(\#?\w+)(?:\/(\d+%?|\$[\w\-]+))?/g) do(m,typ,c,a)
 
 			if let color = $color(c)
-				# Need to work around a bug with esbuild css parsing (https://github.com/evanw/esbuild/issues/1421)
-				# Was fixed in 0.12.15 so we can remove the prefixing when we upgrade esbuild
 				if typ == '#'
-					return color.toString(a)
+					return color.toString(a,typ)
 				elif typ == '##'
 					return color.toVar(a)
-				elif typ == '###'
-					return color.toString(a)
-
-				# return typ == '##' ? "{color.toVar(a)}" : "{color.toString(a)}"
 			return m
 		return text
 		
@@ -1074,7 +1119,7 @@ export const StyleExtenders = {
 			opacity var(--e_od) var(--e_of) var(--e_ow),
 			transform var(--e_td) var(--e_tf) var(--e_tw),
 			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c),
-			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),
+			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),margin var(--e_b),padding var(--e_b),
 			var(--e_rest);
 	'''
 }
@@ -1332,9 +1377,7 @@ export class StyleRule
 				apply('ease',sel)
 
 			if meta.outline
-				console.log 'apply outline'
 				apply('outline',sel)
-			
 
 			if sel and sel.hasTransitionStyles
 				apply('transition',sel)

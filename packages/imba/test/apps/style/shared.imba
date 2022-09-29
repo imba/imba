@@ -17,7 +17,7 @@ tag toggleable
 		showing = !showing
 		render!
 
-	<self[size:100px d:hflex ja:center] @click=toggle>
+	<self[size:100px d:hflex ja:center] @click.meta.stop=(children[0].flags.toggle('hover')) @click=toggle >
 		css self >>> * size:50px d:hflex ja:center bg:gray3
 		if showing
 			<slot>

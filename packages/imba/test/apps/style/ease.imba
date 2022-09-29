@@ -12,7 +12,13 @@ let anims = new AnimTracker
 def eqanim obj
 	for own k,v of obj
 		let anim = anims[k]
+
+		if v == false 
+			return ok(!anim,message: "Did not expect {k} transition") if anim
+			continue
+		
 		ok(!!anim,message: "Expected animations")
+		
 		return unless anim
 		# console.log 'eq anim',k,v,String(v[0]),v[1],anim,[String(anim[0]),String(anim[1]),anim[1]]
 		eq String(anim[0]),String(v[0])
@@ -107,6 +113,10 @@ tag App
 
 			<toggleable flaganim={opacity:[0.5,0.8,60]}>
 				<section.fade[eo:40ms linear 20ms]> # ease opacity with timing and delay
+
+			# disable certain easings
+			<toggleable flaganim={opacity:[0.5,0.8,40], left: false}>
+				<section.fade.pos[e:40ms transition:left 0ms]> # ease opacity with timing and delay
 
 			<toggleable flaganim={opacity:[0.5,0.8,60]}>
 				<section.fade[eod:40ms eow:20ms]> # ease opacity with timing and delay
