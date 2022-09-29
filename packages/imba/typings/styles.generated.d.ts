@@ -1323,6 +1323,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline)
 	 * 
+	 * @alias ol
 	*/
 	interface outline extends _ {
 		set(val: this | Ψlength | ΨlineΞwidth | ΨlineΞstyle | Ψcolor): void;
@@ -1335,6 +1336,8 @@ declare namespace imbacss {
 
 	}
 
+	/** @proxy outline */
+	interface ol extends outline { }
 	/**
 	 * The color of the border around all four edges of an element.
 	 * 
@@ -1883,7 +1886,7 @@ declare namespace imbacss {
 	 * 
 	*/
 	interface animation extends _ {
-		set(val: this | Ψtime | ΨeasingΞfunction | Ψidentifier | Ψnumber, arg1: any, arg2: any, arg3: any): void;
+		set(val: this | Ψtime | ΨtimingΞfunction | Ψidentifier | Ψnumber, arg1: any, arg2: any, arg3: any): void;
 
 		/** The animation cycle iterations that are odd counts are played in the normal direction, and the animation cycle iterations that are even counts are played in a reverse direction. */
 		alternate: ''
@@ -2415,7 +2418,7 @@ declare namespace imbacss {
 	 * 
 	*/
 	interface animationΞtimingΞfunction extends _ {
-		set(val: ΨeasingΞfunction, arg1: any, arg2: any, arg3: any): void;
+		set(val: ΨtimingΞfunction, arg1: any, arg2: any, arg3: any): void;
 
 	}
 
@@ -2476,7 +2479,7 @@ declare namespace imbacss {
 	/** @proxy borderΞleftΞcolor */
 	interface bcl extends borderΞleftΞcolor { }
 	/**
-	 * `@font-face` descriptor. Specifies the resource containing font data. It is required, whether the font is downloadable or locally installed.
+	 * @font-face descriptor. Specifies the resource containing font data. It is required, whether the font is downloadable or locally installed.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/src)
 	 * 
@@ -2812,12 +2815,15 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline-width)
 	 * 
+	 * @alias olw
 	*/
 	interface outlineΞwidth extends _ {
 		set(val: Ψlength | ΨlineΞwidth): void;
 
 	}
 
+	/** @proxy outlineΞwidth */
+	interface olw extends outlineΞwidth { }
 	/**
 	 * Controls the algorithm used to lay out the table cells, rows, and columns.
 	 * 
@@ -2879,7 +2885,7 @@ declare namespace imbacss {
 	 * 
 	*/
 	interface transitionΞtimingΞfunction extends _ {
-		set(val: ΨeasingΞfunction, arg1: any, arg2: any, arg3: any): void;
+		set(val: ΨtimingΞfunction, arg1: any, arg2: any, arg3: any): void;
 
 	}
 
@@ -2911,6 +2917,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline-style)
 	 * 
+	 * @alias ols
 	*/
 	interface outlineΞstyle extends _ {
 		set(val: this | ΨlineΞstyle): void;
@@ -2920,6 +2927,8 @@ declare namespace imbacss {
 
 	}
 
+	/** @proxy outlineΞstyle */
+	interface ols extends outlineΞstyle { }
 	/**
 	 * Sets the thickness of the right border.
 	 * 
@@ -2996,12 +3005,15 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline-offset)
 	 * 
+	 * @alias olo
 	*/
 	interface outlineΞoffset extends _ {
 		set(val: Ψlength): void;
 
 	}
 
+	/** @proxy outlineΞoffset */
+	interface olo extends outlineΞoffset { }
 	/**
 	 * Determines whether or not the 'back' side of a transformed element is visible when facing the viewer. With an identity transform, the front side of an element faces the viewer.
 	 * 
@@ -3134,7 +3146,7 @@ declare namespace imbacss {
 	}
 
 	/**
-	 * `@font-face` descriptor. Defines the set of Unicode codepoints that may be supported by the font face for which it is declared.
+	 * @font-face descriptor. Defines the set of Unicode codepoints that may be supported by the font face for which it is declared.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/unicode-range)
 	 * 
@@ -3734,6 +3746,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline-color)
 	 * 
+	 * @alias olc
 	*/
 	interface outlineΞcolor extends _ {
 		set(val: this | Ψcolor): void;
@@ -3743,6 +3756,8 @@ declare namespace imbacss {
 
 	}
 
+	/** @proxy outlineΞcolor */
+	interface olc extends outlineΞcolor { }
 	/**
 	 * Logical 'margin-bottom'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
 	 * 
@@ -7116,7 +7131,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor. Needs to be specified if the counter system is 'additive'.
+	 * @counter-style descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor. Needs to be specified if the counter system is 'additive'.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/additive-symbols)
 	 * 
@@ -7166,7 +7181,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Specifies a fallback counter style to be used when the current counter style can’t create a representation for a given counter value.
+	 * @counter-style descriptor. Specifies a fallback counter style to be used when the current counter style can’t create a representation for a given counter value.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/fallback)
 	 * 
@@ -7476,7 +7491,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Defines how to alter the representation when the counter value is negative.
+	 * @counter-style descriptor. Defines how to alter the representation when the counter value is negative.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/negative)
 	 * 
@@ -7543,7 +7558,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Specifies a “fixed-width” counter style, where representations shorter than the pad value are padded with a particular <symbol>
+	 * @counter-style descriptor. Specifies a “fixed-width” counter style, where representations shorter than the pad value are padded with a particular <symbol>
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/pad)
 	 * 
@@ -7554,7 +7569,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Specifies a <symbol> that is prepended to the marker representation.
+	 * @counter-style descriptor. Specifies a <symbol> that is prepended to the marker representation.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/prefix)
 	 * 
@@ -7565,7 +7580,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Defines the ranges over which the counter style is defined.
+	 * @counter-style descriptor. Defines the ranges over which the counter style is defined.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/range)
 	 * 
@@ -7751,7 +7766,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Specifies a <symbol> that is appended to the marker representation.
+	 * @counter-style descriptor. Specifies a <symbol> that is appended to the marker representation.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/suffix)
 	 * 
@@ -7762,7 +7777,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Specifies which algorithm will be used to construct the counter’s representation based on the counter value.
+	 * @counter-style descriptor. Specifies which algorithm will be used to construct the counter’s representation based on the counter value.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/system)
 	 * 
@@ -7794,7 +7809,7 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	}
 
 	/**
-	 * `@counter-style` descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor.
+	 * @counter-style descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/symbols)
 	 * 
@@ -8982,24 +8997,24 @@ Specifying any precise animations or physics used to enforce those snap points i
 	}
 
 	interface Ψshadow {
-		/** 0 0 0 1px rgba(0, 0, 0, 0.05) */
-		'xxs': '0 0 0 1px rgba(0, 0, 0, 0.05)';
-		/** 0 1px 2px 0 rgba(0, 0, 0, 0.05) */
-		'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
-		/** 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) */
-		'sm': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)';
-		/** 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) */
-		'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
-		/** 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) */
-		'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-		/** 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) */
-		'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-		/** 0 25px 50px -6px rgba(0, 0, 0, 0.25) */
-		'xxl': '0 25px 50px -6px rgba(0, 0, 0, 0.25)';
-		/** inset 0 2px 4px 0 rgba(0, 0, 0, 0.06) */
-		'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)';
-		/** 0 0 0 3px rgba(66, 153, 225, 0.5) */
-		'outline': '0 0 0 3px rgba(66, 153, 225, 0.5)';
+		/** 0 0 0 1px color */
+		'xxs': '0 0 0 1px hsla(var(--bxs-xxs-color,0,0%,0%),var(--bxs-xxs-alpha,0.05))';
+		/** 0 1px 2px 0 color */
+		'xs': '0 1px 2px 0 hsla(var(--bxs-xs-color,0,0%,0%),var(--bxs-xs-alpha,0.05))';
+		/** 0 1px 3px 0 color, 0 1px 2px 0 color */
+		'sm': '0 1px 3px 0 hsla(var(--bxs-sm-color,0,0%,0%),var(--bxs-sm-alpha,0.1)), 0 1px 2px 0 hsla(var(--bxs-sm-color,0,0%,0%),calc(var(--bxs-sm-alpha,0.1) * 0.6))';
+		/** 0 4px 6px -1px color, 0 2px 4px -1px color */
+		'md': '0 4px 6px -1px hsla(var(--bxs-md-color,0,0%,0%), var(--bxs-md-alpha,0.1)), 0 2px 4px -1px hsla(var(--bxs-md-color,0,0%,0%),calc(var(--bxs-md-alpha,0.1) * 0.6))';
+		/** 0 10px 15px -3px color, 0 4px 6px -2px color */
+		'lg': '0 10px 15px -3px hsla(var(--bxs-lg-color,0,0%,0%), var(--bxs-lg-alpha,0.1)), 0 4px 6px -2px hsla(var(--bxs-lg-color,0,0%,0%),calc(var(--bxs-lg-alpha,0.1) * 0.5))';
+		/** 0 20px 25px -5px color, 0 10px 10px -5px color */
+		'xl': '0 20px 25px -5px hsla(var(--bxs-xl-color,0,0%,0%), var(--bxs-xl-alpha,0.1)), 0 10px 10px -5px hsla(var(--bxs-xl-color,0,0%,0%), calc(var(--bxs-xl-alpha,0.1) * 0.4))';
+		/** 0 25px 50px -6px color */
+		'xxl': '0 25px 50px -6px hsla(var(--bxs-xxl-color,0,0%,0%),var(--bxs-xxl-alpha,0.25))';
+		/** inset 0 2px 4px 0 color */
+		'inner': 'inset 0 2px 4px 0 hsla(var(--bxs-inner-color,0,0%,0%),var(--bxs-inner-alpha,0.06))';
+		/** 0 0 0 3px color */
+		'outline': '0 0 0 3px hsla(var(--bxs-outline-color,207,73%,57%),var(--bxs-outline-alpha,0.5))';
 		/** none */
 		'none': 'none';
 	}

@@ -82,9 +82,11 @@ def run
 		return yes if item.skip
 		return yes if item.name.match(/^-(ms|moz|webkit|o)-/)
 		return no
+
+	let allprops = data.properties
 		
 	let propmap = {}
-	for item in data.properties
+	for item in allprops
 		propmap[item.name] = item
 		
 	for own alias,to of aliases
@@ -92,7 +94,7 @@ def run
 		if target
 			target.alias = alias
 		else
-			
+			console.log 'found no real name',alias,to
 	dts.w '/// <reference path="./styles.d.ts" />'
 
 	dts.push('declare namespace imbacss')
@@ -114,8 +116,10 @@ def run
 	}
 	
 	let signgroups = {}
+
 	
-	for item in data.properties
+	
+	for item in allprops
 		let signature = item.sign = propertyReference[item.name]
 		let patch = patches[item.name]
 		Object.assign(item,patch) if patch
@@ -132,8 +136,7 @@ def run
 				Object.assign(item,options)
 	
 	# console.log "groups {Object.keys(signgroups).length}"
-
-	for item in data.properties
+	for item in allprops
 		continue if skip(item)
 		let id = idify(item.name)
 		let types = item.restrictions
@@ -147,7 +150,7 @@ def run
 			
 		
 		
-		for entry in item.restrictions
+		for entry in (item.restrictions or [])
 			if entry == 'enum'
 				argtypes.add('this')
 			else
@@ -242,7 +245,8 @@ def run
 		for own name,value of theme.variants['box-shadow']
 			continue unless name.match(/[a-z]/)
 			let size = value isa Array ? value[0] : value
-			dts.w "/** {size} */"
+			let plain = size.replace(/var\([^\)]*\)/g,'').replace(/calc\([^\)]*\)/g,'').replace(/hsla\([^\)]*\)/g,'color')
+			dts.w "/** {plain} */"
 			dts.w "'{name}': '{size}';"
 	
 	dts.ind "interface Ψradius" do
