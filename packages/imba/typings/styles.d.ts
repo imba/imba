@@ -494,4 +494,81 @@ declare namespace imbacss {
     interface hue extends _ {
         set(val: Ψhue): void;
     }
+
+    // Custom border properties
+    /**
+	 * Shorthand property for setting border width, style and color
+	 * @alias bdx
+     * @custom
+	*/
+	interface borderΞx extends _ {
+		set(val: Ψlength | ΨlineΞwidth | ΨlineΞstyle | Ψcolor): void;
+	}
+
+    /**
+     * @alias bwx
+     * @custom
+     */
+    interface borderΞxΞwidth extends _ {
+        set(val: Ψlength | ΨlineΞwidth): void;
+    }
+    /**
+     * @alias bcx
+     * @custom
+     */
+    interface borderΞxΞcolor extends _ {
+        set(val: Ψcolor): void;
+    }
+    /**
+     * @alias bsx
+     * @custom
+     */
+    interface borderΞxΞstyle extends _ {
+        set(val: ΨlineΞstyle): void;
+    }
+
+	/** @proxy borderΞx */ interface bdx extends borderΞx { }
+    /** @proxy borderΞxΞwidth */ interface bwx extends borderΞxΞwidth { }
+    /** @proxy borderΞxΞcolor */ interface bcx extends borderΞxΞcolor { }
+    /** @proxy borderΞxΞstyle */ interface bsx extends borderΞxΞstyle { }
+
+    /**
+	 * Shorthand property for setting border width, style and color
+	 * @alias bdy
+     * @custom
+	*/
+	interface borderΞy extends _ {
+		set(val: Ψlength | ΨlineΞwidth | ΨlineΞstyle | Ψcolor): void;
+	}
+
+	/** @proxy borderΞy */ interface bdy extends borderΞy { }
+
+    /**
+     * @alias bwy
+     * @custom
+     */
+    interface borderΞyΞwidth extends _ {
+        set(val: Ψlength | ΨlineΞwidth): void;
+    }
+    /**
+     * @alias bcy
+     * @custom
+     */
+    interface borderΞyΞcolor extends _ {
+        set(val: Ψcolor): void;
+    }
+    /**
+     * @alias bsy
+     * @custom
+     */
+    interface borderΞyΞstyle extends _ {
+        set(val: ΨlineΞstyle): void;
+    }
+
+	/** @proxy borderΞyΞwidth */ interface bwy extends borderΞyΞwidth { }
+    /** @proxy borderΞyΞcolor */ interface bcy extends borderΞyΞcolor { }
+    /** @proxy borderΞyΞstyle */ interface bsy extends borderΞyΞstyle { }
+
+
+
 }

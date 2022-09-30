@@ -123,7 +123,7 @@ export const aliases =
 	ff: 'font-family'
 	fs: 'font-size'
 	fw: 'font-weight'
-	ts: 'text-shadow' # DEPCRATED
+	ts: 'text-shadow' # DEPCRATED - use for font-style instead?
 	txs: 'text-shadow'
 	
 	# text-decoration
@@ -154,6 +154,8 @@ export const aliases =
 	bdl: 'border-left'
 	bdt: 'border-top'
 	bdb: 'border-bottom'
+	bdx: 'border-x'
+	bdy: 'border-y'
 
 	# border-style
 	bs: 'border-style'
@@ -161,6 +163,8 @@ export const aliases =
 	bsl: 'border-left-style'
 	bst: 'border-top-style'
 	bsb: 'border-bottom-style'
+	bsx: 'border-x-style'
+	bsy: 'border-y-style'
 
 	# border-width
 	bw: 'border-width'
@@ -168,6 +172,8 @@ export const aliases =
 	bwl: 'border-left-width'
 	bwt: 'border-top-width'
 	bwb: 'border-bottom-width'
+	bwx: 'border-x-width'
+	bwy: 'border-y-width'
 
 	# border-color
 	bc: 'border-color'
@@ -175,6 +181,8 @@ export const aliases =
 	bcl: 'border-left-color'
 	bct: 'border-top-color'
 	bcb: 'border-bottom-color'
+	bcx: 'border-x-color'
+	bcy: 'border-y-color'
 
 	# border-radius
 	rd: 'border-radius'
@@ -182,6 +190,8 @@ export const aliases =
 	rdtr: 'border-top-right-radius'
 	rdbl: 'border-bottom-left-radius'
 	rdbr: 'border-bottom-right-radius'
+
+	# TODO change these into a shared main one
 	rdt: ['border-top-left-radius','border-top-right-radius']
 	rdb: ['border-bottom-left-radius','border-bottom-right-radius']
 	rdl: ['border-top-left-radius','border-bottom-left-radius']
@@ -823,45 +833,72 @@ export class StyleTheme
 	# TODO allow setting border style and color w/o width?
 	# TODO allow size hidden etc?
 	def border [...params]
-		if params.length == 1 and $parseColor(params[0])
-			return [['1px','solid',params[0]]]
-		return
+		$border(params,'')
+		
+
+	def $border params,side = ''
+		let o = {__border__: yes}
+		let len = params.length
+
+		if len == 3
+			o["border{side}"] = [params]
+			return o
+
+		if isNumeric(params[0])
+			if len == 2 and isColorish(params[1])
+				params.splice(1,0,'solid')
+				o["border{side}"] = [params]
+				return o
+
+			o["border{side}-style"] = 'solid'
+			o["border{side}-width"] = params.shift!
+
+		if isColorish(params[0])
+			if len == 1
+				o["border{side}"] = [['1px','solid',params[0]]]
+			else
+				# add weak border styles
+				o["border{side}-width"] ||= '1px'
+				o["border{side}-style"] = 'solid'
+				o["border{side}-color"] = params.shift!
+
+		return o
 
 	def border_left params
-		return border(params)
+		return $border(params,'-left')
 		
 	def border_right params
-		return border(params)
+		return $border(params,'-right')
 	
 	def border_top params
-		return border(params)
+		return $border(params,'-top')
 		
 	def border_bottom params
-		return border(params)
+		return $border(params,'-bottom')
 		
-	def border_x params
-		{'border-left': border(params) or params, 'border-right': border(params) or params}
+	def border_x [l,r=l]
+		Object.assign({},border_left([l]),border_right([r]))
 		
-	def border_y params
-		{'border-top': border(params) or params, 'border-bottom': border(params) or params}
+	def border_y [t,b=t]
+		Object.assign({},border_top([t]),border_bottom([b]))
 		
 	def border_x_width [l,r=l]
-		{blw: l, brw: r}
+		{bwl: l, bwr: r}
 		
 	def border_y_width [t,b=t]
-		{btw: t, bbw: b}
+		{bwt: t, bwb: b}
 		
 	def border_x_style [l,r=l]
-		{bls: l, brs: r}
+		{bsl: l, bsr: r}
 		
 	def border_y_style [t,b=t]
-		{bts: t, bbs: b}
+		{bst: t, bsb: b}
 	
 	def border_x_color [l,r=l]
-		{blc: l, brc: r}
+		{bcl: l, bcr: r}
 		
 	def border_y_color [t,b=t]
-		{btc: t, bbc: b}
+		{bct: t, bcb: b}
 
 	def outline params		
 		# outlined

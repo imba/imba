@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Enable `x` and `y` shorthands for all border properties.
+
 ## 2.0.0-alpha.221
 
 * Add shorthands for `outline-*` css properties.
