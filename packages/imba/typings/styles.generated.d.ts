@@ -53,6 +53,33 @@ declare namespace imbacss {
 	/** @proxy height */
 	interface h extends height { }
 	/**
+	 * Specifies the width and height of the content area, padding area or border area (depending on 'box-sizing') of certain boxes.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/size)
+	 * 
+	 * @alias s
+	 * @custom
+	*/
+	interface size extends _ {
+		set(val: this | Ψlength | Ψpercentage): void;
+
+		/** The width/height depends on the values of other properties. */
+		auto: ''
+
+		/** Use the fit-content inline size and fit-content block size. */
+		fitΞcontent: ''
+
+		/** Use the max-content inline size and max-content block size. */
+		maxΞcontent: ''
+
+		/** Use the min-content inline size and min-content block size. */
+		minΞcontent: ''
+
+	}
+
+	/** @proxy size */
+	interface s extends size { }
+	/**
 	 * In combination with 'float' and 'position', determines the type of box or boxes that are generated for an element.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/display)
@@ -71,10 +98,16 @@ declare namespace imbacss {
 		/** The element generates a principal flex container box and establishes a flex formatting context. */
 		flex: ''
 
-		/** Flex with flex-direction set to row */
+		/**
+		 * Flex with flex-direction set to row
+		 * @custom
+		*/
 		hflex: ''
 
-		/** Flex with flex-direction set to column */
+		/**
+		 * Flex with flex-direction set to column
+		 * @custom
+		*/
 		vflex: ''
 
 		/** The element generates a block container box, and lays out its contents using flow layout. */
@@ -83,10 +116,16 @@ declare namespace imbacss {
 		/** The element generates a principal grid container box, and establishes a grid formatting context. */
 		grid: ''
 
-		/** Grid with grid-auto-flow set to column */
+		/**
+		 * Grid with grid-auto-flow set to column
+		 * @custom
+		*/
 		hgrid: ''
 
-		/** Grid with grid-auto-flow set to row */
+		/**
+		 * Grid with grid-auto-flow set to row
+		 * @custom
+		*/
 		vgrid: ''
 
 		/** The element generates an inline-level box. */
@@ -893,6 +932,40 @@ declare namespace imbacss {
 	/** @proxy marginΞleft */
 	interface ml extends marginΞleft { }
 	/**
+	 * Shorthand property to set values the thickness of the top margin and bottom margin.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-y)
+	 * 
+	 * @alias my
+	 * @custom
+	*/
+	interface marginΞy extends _ {
+		set(val: this | Ψlength | Ψpercentage, arg1: any): void;
+
+		auto: ''
+
+	}
+
+	/** @proxy marginΞy */
+	interface my extends marginΞy { }
+	/**
+	 * Shorthand property to set values the thickness of the left margin and right margin.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-x)
+	 * 
+	 * @alias mx
+	 * @custom
+	*/
+	interface marginΞx extends _ {
+		set(val: this | Ψlength | Ψpercentage, arg1: any): void;
+
+		auto: ''
+
+	}
+
+	/** @proxy marginΞx */
+	interface mx extends marginΞx { }
+	/**
 	 * Defines the radii of the outer border edge.
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius)
@@ -983,6 +1056,36 @@ declare namespace imbacss {
 
 	/** @proxy paddingΞtop */
 	interface pt extends paddingΞtop { }
+	/**
+	 * Shorthand property to set values the thickness of the left padding and right padding.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-x)
+	 * 
+	 * @alias px
+	 * @custom
+	*/
+	interface paddingΞx extends _ {
+		set(val: Ψlength | Ψpercentage, arg1: any): void;
+
+	}
+
+	/** @proxy paddingΞx */
+	interface px extends paddingΞx { }
+	/**
+	 * Shorthand property to set values the thickness of the top padding and bottom padding.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-y)
+	 * 
+	 * @alias py
+	 * @custom
+	*/
+	interface paddingΞy extends _ {
+		set(val: Ψlength | Ψpercentage, arg1: any): void;
+
+	}
+
+	/** @proxy paddingΞy */
+	interface py extends paddingΞy { }
 	/**
 	 * Allows authors to constrain content width to a certain range.
 	 * 
@@ -2197,6 +2300,66 @@ declare namespace imbacss {
 
 	/** @proxy borderΞtopΞleftΞradius */
 	interface rdtl extends borderΞtopΞleftΞradius { }
+	/**
+	 * Defines the radii of the top left and top right outer border edge.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-radius)
+	 * 
+	 * @alias rdt
+	 * @custom
+	*/
+	interface borderΞtopΞradius extends _ {
+		set(val: Ψradius | Ψlength | Ψpercentage, arg1: any): void;
+
+	}
+
+	/** @proxy borderΞtopΞradius */
+	interface rdt extends borderΞtopΞradius { }
+	/**
+	 * Defines the radii of the top left and bottom left outer border edge.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-left-radius)
+	 * 
+	 * @alias rdl
+	 * @custom
+	*/
+	interface borderΞleftΞradius extends _ {
+		set(val: Ψradius | Ψlength | Ψpercentage, arg1: any): void;
+
+	}
+
+	/** @proxy borderΞleftΞradius */
+	interface rdl extends borderΞleftΞradius { }
+	/**
+	 * Defines the radii of the bottom left and bottom right outer border edge.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-radius)
+	 * 
+	 * @alias rdb
+	 * @custom
+	*/
+	interface borderΞbottomΞradius extends _ {
+		set(val: Ψradius | Ψlength | Ψpercentage, arg1: any): void;
+
+	}
+
+	/** @proxy borderΞbottomΞradius */
+	interface rdb extends borderΞbottomΞradius { }
+	/**
+	 * Defines the radii of the top right and bottom right outer border edge.
+	 * 
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-right-radius)
+	 * 
+	 * @alias rdr
+	 * @custom
+	*/
+	interface borderΞrightΞradius extends _ {
+		set(val: Ψradius | Ψlength | Ψpercentage, arg1: any): void;
+
+	}
+
+	/** @proxy borderΞrightΞradius */
+	interface rdr extends borderΞrightΞradius { }
 	/**
 	 * Controls the appearance of selection.
 	 * 
@@ -3926,17 +4089,6 @@ declare namespace imbacss {
 
 		/** This element does not alter the value of any counters. */
 		none: ''
-
-	}
-
-	/**
-	 * undefined
-	 * 
-	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/size)
-	 * 
-	*/
-	interface size extends _ {
-		set(val: Ψlength): void;
 
 	}
 
@@ -6252,12 +6404,15 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/place-content)
 	 * 
+	 * @alias jac
 	*/
 	interface placeΞcontent extends _ {
 		set(val: any): void;
 
 	}
 
+	/** @proxy placeΞcontent */
+	interface jac extends placeΞcontent { }
 	/**
 	 * The offset-path CSS property specifies the offset path where the element gets positioned. The exact element’s position on the offset path is determined by the offset-distance property. An offset path is either a specified path with one or multiple sub-paths or the geometry of a not-styled basic shape. Each shape or path must define an initial position for the computed value of "0" for offset-distance and an initial direction which specifies the rotation of the object to the initial position.
 
@@ -6309,12 +6464,15 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/place-items)
 	 * 
+	 * @alias jai
 	*/
 	interface placeΞitems extends _ {
 		set(val: any): void;
 
 	}
 
+	/** @proxy placeΞitems */
+	interface jai extends placeΞitems { }
 	/**
 	 * Logical 'max-height'. Mapping depends on the element’s 'writing-mode'.
 	 * 
@@ -6436,12 +6594,15 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/place-self)
 	 * 
+	 * @alias jas
 	*/
 	interface placeΞself extends _ {
 		set(val: any): void;
 
 	}
 
+	/** @proxy placeΞself */
+	interface jas extends placeΞself { }
 	/**
 	 * The font-optical-sizing CSS property allows developers to control whether browsers render text with slightly differing visual representations to optimize viewing at different sizes, or not. This only works for fonts that have an optical size variation axis.
 	 * 

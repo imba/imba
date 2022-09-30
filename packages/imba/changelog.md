@@ -4,6 +4,13 @@
 
 * Enable `x` and `y` shorthands for all border properties.
 
+* Add `s` shorthand for `size`.
+
+* Deprecate `j` and `a` shorthands.
+
+* Streamlined more css shorthands and added more tests for styling
+
+
 ## 2.0.0-alpha.221
 
 * Add shorthands for `outline-*` css properties.

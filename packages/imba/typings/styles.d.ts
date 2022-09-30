@@ -151,47 +151,7 @@ declare namespace imbacss {
     interface Ψdimension {
 
     }
-
-    /**
-     * @detail padding-(left+right)
-     * @custom
-     */
-    interface px extends _ {
-        set(x: Ψspacing): void;
-        set(left: Ψspacing, right: Ψspacing): void;
-    }
-
-    /**
-     * @detail padding-(top+bottom)
-     * @custom
-     */
-    interface py extends _ {
-        set(y: Ψspacing): void;
-        set(top: Ψspacing, bottom: Ψspacing): void;
-    }
-
-    /**
-     * @detail margin-(left+right)
-     * @custom
-     */
-    interface mx extends _ {
-        set(x: Ψspacing): void;
-        set(left: Ψspacing, right: Ψspacing): void;
-    }
-
-    interface my extends _ {
-        set(y: Ψspacing): void;
-        set(top: Ψspacing, bottom: Ψspacing): void;
-    }
-
-    /** 
-     * @detail width+height 
-     * @custom
-     * */
-    interface size extends _ {
-        set(y: Ψdimension): void;
-    }
-
+    
     /** 
      * @detail justify-(items+content)
      * @custom
@@ -242,38 +202,6 @@ declare namespace imbacss {
         set(value: justifyΞcontent): void;
         set(value: alignΞitems): void;
         set(value: justifyΞitems): void
-    }
-
-    /** 
-     * @detail border-top-(left+right)-radius
-     * @custom
-     * */
-    interface rdt extends _ {
-        set(val: Ψradius | Ψlength | Ψpercentage): void;
-    }
-
-    /** 
-     * @detail border-(top+bottom)-left-radius
-     * @custom
-     * */
-    interface rdl extends rdt {
-
-    }
-
-    /** 
-     * @detail border-bottom-(left+right)-radius
-     * @custom
-     * */
-    interface rdb extends rdt {
-
-    }
-
-    /** 
-     * @detail border-(top+bottom)-right-radius
-     * @custom
-     * */
-    interface rdr extends rdt {
-
     }
 
     /**

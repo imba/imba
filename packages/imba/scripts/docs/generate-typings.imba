@@ -178,16 +178,24 @@ def run
 		dts.w("[MDN Reference]({mdn})")
 		dts.br!
 		dts.w("@alias {item.alias}") if item.alias
+		dts.w("@custom") if item.custom
 		dts.undoc!
 		
 		dts.push("interface {id} extends _")
 		dts.w("set({sign}): void;\n")
 		
 		if item.values..length
-			for {name,description} in item.values
+			for {name,description,custom} in item.values
 				continue if name.match(/['",]/)
 				if description
-					dts.w("/** {safedoc description} */")
+					if custom
+						dts.doc!
+						dts.w(safedoc description)
+						dts.w("@custom") if custom
+						# dts.w("/** {safedoc description} */")
+						dts.undoc!
+					else
+						dts.w("/** {safedoc description} */")
 				dts.w("{safeid idify name}: ''\n")
 		
 		# now go through the others

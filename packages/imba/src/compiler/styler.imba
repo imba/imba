@@ -85,25 +85,28 @@ export const aliases =
 	b: 'bottom'
 	l: 'left'
 	r: 'right'
-	size: ['width','height']
+	s: 'size'
+	# size: ['width','height']
 	
 	# justify
 	ji: 'justify-items'
 	jc: 'justify-content'
 	js: 'justify-self'
-	j: ['justify-content','justify-items']
+	# j: ['justify-content','justify-items'] # Deprecate?
 	
 	# align
 	ai: 'align-items'
 	ac: 'align-content'
 	as: 'align-self'
-	a: ['align-content','align-items']
+	# a: ['align-content','align-items'] # Deprecate?
 
 	# justify & align
-	jai: ['justify-items','align-items']
-	jac: ['justify-content','align-content']
-	jas: ['justify-self','align-self']
-	ja: ['justify-content','align-content','justify-items','align-items']
+	# To fit better with the spec - this ought to be
+	jai: 'place-items'
+	jac: 'place-content'
+	jas: 'place-self'
+	ja: ['place-items','justify-items']
+
 	
 	# place
 	# pi: 'place-items'
@@ -192,11 +195,11 @@ export const aliases =
 	rdbr: 'border-bottom-right-radius'
 
 	# TODO change these into a shared main one
-	rdt: ['border-top-left-radius','border-top-right-radius']
-	rdb: ['border-bottom-left-radius','border-bottom-right-radius']
-	rdl: ['border-top-left-radius','border-bottom-left-radius']
-	rdr: ['border-top-right-radius','border-bottom-right-radius']
-	
+	rdt: 'border-top-radius'
+	rdb: 'border-bottom-radius'
+	rdl: 'border-left-radius'
+	rdr: 'border-right-radius'
+
 	# background
 	bg: 'background'
 	bgp: 'background-position'
@@ -773,6 +776,9 @@ export class StyleTheme
 	def grid_template_rows params
 		grid_template(params)
 
+	def size [w,h = w]
+		{width: w, height: h}
+
 	def font_size [v]
 		let sizes = options.variants['font-size']
 		let raw = String(v)
@@ -899,6 +905,18 @@ export class StyleTheme
 		
 	def border_y_color [t,b=t]
 		{bct: t, bcb: b}
+
+	def border_top_radius [l,r=l]
+		{'border-top-left-radius': l, 'border-top-right-radius': r}
+
+	def border_left_radius [t,b=t]
+		{'border-top-left-radius': t, 'border-bottom-left-radius': b}
+
+	def border_bottom_radius [t,b=t]
+		{'border-bottom-left-radius': l, 'border-bottom-right-radius': r}
+
+	def border_right_radius [t,b=t]
+		{'border-top-right-radius': t, 'border-bottom-right-radius': b}
 
 	def outline params		
 		# outlined

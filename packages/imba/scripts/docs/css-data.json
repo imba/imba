@@ -68,6 +68,34 @@
 			]
 		},
 		{
+			"name": "size",
+			"custom": true,
+			"values": [
+				{
+					"name": "auto",
+					"description": "The width/height depends on the values of other properties."
+				},
+				{
+					"name": "fit-content",
+					"description": "Use the fit-content inline size and fit-content block size."
+				},
+				{
+					"name": "max-content",
+					"description": "Use the max-content inline size and max-content block size."
+				},
+				{
+					"name": "min-content",
+					"description": "Use the min-content inline size and min-content block size."
+				}
+			],
+			"syntax": "<viewport-length>{1,2}",
+			"description": "Specifies the width and height of the content area, padding area or border area (depending on 'box-sizing') of certain boxes.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},
+		{
 			"name": "display",
 			"values": [
 				{
@@ -84,10 +112,12 @@
 				},
 				{
 					"name": "hflex",
+					"custom": true,
 					"description": "Flex with flex-direction set to row"
 				},
 				{
 					"name": "vflex",
+					"custom": true,
 					"description": "Flex with flex-direction set to column"
 				},
 				{
@@ -100,10 +130,12 @@
 				},
 				{
 					"name": "hgrid",
+					"custom": true,
 					"description": "Grid with grid-auto-flow set to column"
 				},
 				{
 					"name": "vgrid",
+					"custom": true,
 					"description": "Grid with grid-auto-flow set to row"
 				},
 				{
@@ -1194,6 +1226,48 @@
 			]
 		},
 		{
+			"name": "margin-y",
+			"custom": true,
+			"values": [
+				{
+					"name": "auto"
+				}
+			],
+			"syntax": "[ <length> | <percentage> | auto ]{1,2}",
+			"references": [
+				{
+					"name": "MDN Reference",
+					"url": "https://developer.mozilla.org/docs/Web/CSS/margin"
+				}
+			],
+			"description": "Shorthand property to set values the thickness of the top margin and bottom margin.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},
+		{
+			"name": "margin-x",
+			"custom": true,
+			"values": [
+				{
+					"name": "auto"
+				}
+			],
+			"syntax": "[ <length> | <percentage> | auto ]{1,2}",
+			"references": [
+				{
+					"name": "MDN Reference",
+					"url": "https://developer.mozilla.org/docs/Web/CSS/margin"
+				}
+			],
+			"description": "Shorthand property to set values the thickness of the left margin and right margin.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},
+		{
 			"name": "border-radius",
 			"syntax": "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]?",
 			"references": [
@@ -1294,6 +1368,38 @@
 				}
 			],
 			"description": "Shorthand property to set values the thickness of the padding area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. The value may not be negative.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},
+		{
+			"name": "padding-x",
+			"custom": true,
+			"syntax": "[ <length> | <percentage> ]{1,2}",
+			"references": [
+				{
+					"name": "MDN Reference",
+					"url": "https://developer.mozilla.org/docs/Web/CSS/padding-top"
+				}
+			],
+			"description": "Shorthand property to set values the thickness of the left padding and right padding.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},
+		{
+			"name": "padding-y",
+			"custom": true,
+			"syntax": "[ <length> | <percentage> ]{1,2}",
+			"references": [
+				{
+					"name": "MDN Reference",
+					"url": "https://developer.mozilla.org/docs/Web/CSS/padding-top"
+				}
+			],
+			"description": "Shorthand property to set values the thickness of the top padding and bottom padding.",
 			"restrictions": [
 				"length",
 				"percentage"
@@ -2929,6 +3035,66 @@
 				}
 			],
 			"description": "Defines the radii of the top left outer border edge.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},{
+			"name": "border-top-radius",
+			"custom": true,
+			"syntax": "<length-percentage>{1,2}",
+			"references": [
+				{
+					"name": "MDN Reference",
+					"url": "https://developer.mozilla.org/docs/Web/CSS/border-radius"
+				}
+			],
+			"description": "Defines the radii of the top left and top right outer border edge.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},{
+			"name": "border-left-radius",
+			"custom": true,
+			"syntax": "<length-percentage>{1,2}",
+			"references": [
+				{
+					"name": "MDN Reference",
+					"url": "https://developer.mozilla.org/docs/Web/CSS/border-radius"
+				}
+			],
+			"description": "Defines the radii of the top left and bottom left outer border edge.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},{
+			"name": "border-bottom-radius",
+			"custom": true,
+			"syntax": "<length-percentage>{1,2}",
+			"references": [
+				{
+					"name": "MDN Reference",
+					"url": "https://developer.mozilla.org/docs/Web/CSS/border-radius"
+				}
+			],
+			"description": "Defines the radii of the bottom left and bottom right outer border edge.",
+			"restrictions": [
+				"length",
+				"percentage"
+			]
+		},{
+			"name": "border-right-radius",
+			"custom": true,
+			"syntax": "<length-percentage>{1,2}",
+			"references": [
+				{
+					"name": "MDN Reference",
+					"url": "https://developer.mozilla.org/docs/Web/CSS/border-radius"
+				}
+			],
+			"description": "Defines the radii of the top right and bottom right outer border edge.",
 			"restrictions": [
 				"length",
 				"percentage"
@@ -5766,17 +5932,6 @@
 			"restrictions": [
 				"identifier",
 				"integer"
-			]
-		},
-		{
-			"name": "size",
-			"browsers": [
-				"C",
-				"O8"
-			],
-			"syntax": "<length>{1,2} | auto | [ <page-size> || [ portrait | landscape ] ]",
-			"restrictions": [
-				"length"
 			]
 		},
 		{
