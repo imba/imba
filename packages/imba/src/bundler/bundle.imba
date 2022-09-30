@@ -170,6 +170,7 @@ export default class Bundle < Component
 		platform = o.platform or 'browser'
 		entryPoints = o.entryPoints or []
 		builder = null
+		
 
 		# log.prefix = ["%d ","bundler"]
 
@@ -180,6 +181,10 @@ export default class Bundle < Component
 
 		let externals = []
 		let pkg = program.package or {}
+		peerDependencies = Object.keys(pkg.peerDependencies or {})
+		devDependencies = Object.keys(pkg.devDependencies or {})
+
+
 
 		for ext in o.external
 			# if ext[0] == '!'
@@ -187,16 +192,14 @@ export default class Bundle < Component
 
 			if ext == "dependencies"
 				let deps = Object.keys(pkg.dependencies or {})
-				let peerDeps = Object.keys(pkg.peerDependencies or {})
 				externals.push(...deps)
-				externals.push(...peerDeps)
-				externals.push( ...Object.keys(pkg.devDependencies or {}) ) if run?
+				externals.push(...devDependencies) if run?
 
 			if ext == "devDependencies"
-				externals.push( ...Object.keys(pkg.devDependencies or {}) )
+				externals.push(...devDependencies)
 
 			if ext == "peerDependencies"
-				externals.push( ...Object.keys(pkg.peerDependencies or {}) )
+				externals.push(...peerDependencies)
 			
 			if ext == "builtins"
 				externals.push(...Object.keys(builtInModules))
@@ -208,6 +211,13 @@ export default class Bundle < Component
 		
 		externals = externals.filter do(src)
 			!o.external or o.external.indexOf("!{src}") == -1
+
+		if build? and peerDependencies.length
+			# make sure to always externalize peer dependencies?
+			for dep in peerDependencies
+				let idx = externals.indexOf("!{dep}")
+				externals.splice(idx,1) if idx >= 0
+				externals.push(dep)
 
 		# remove duplicates
 		externals = externals.filter do(v,i,a) a.indexOf(v) == i
@@ -552,6 +562,8 @@ export default class Bundle < Component
 			}
 		
 		esb.onResolve(filter: /^imba(\/|$)/) do(args)
+			if peerDependencies.indexOf('imba') >= 0
+				return null
 			# TODO Let the esbuild resolver take over here
 			if args.path == 'imba'
 				if o.format == 'css'
@@ -617,6 +629,8 @@ export default class Bundle < Component
 
 			if q == 'external'
 				return {path: pathname, external: true}
+
+			
 				
 			# should this be the default for all external modules?
 			if pkg? and nodeish? and run? and !standalone? and !program.tmpdir

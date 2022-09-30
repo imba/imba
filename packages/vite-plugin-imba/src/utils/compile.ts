@@ -1,5 +1,5 @@
 import { CompileOptions, ResolvedOptions } from './options';
-import {compile} from '../../../imba/dist/compiler.mjs'
+import {compile} from 'imba/compiler'
 
 // @ts-ignore
 import { createMakeHot } from 'imba-hmr';

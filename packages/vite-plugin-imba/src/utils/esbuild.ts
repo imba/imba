@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 // import { compile } from 'imba/compiler';
-import {compile} from '../../../imba/dist/compiler.mjs'
+// import {compile} from '../../../imba/dist/compiler.mjs'
+import {compile} from 'imba/compiler'
 
 import { DepOptimizationOptions } from 'vite';
 import { Compiled } from './compile';

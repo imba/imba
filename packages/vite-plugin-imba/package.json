@@ -57,7 +57,8 @@
   },
   "peerDependencies": {
     "diff-match-patch": "^1.0.5",
-    "vite": "^3.0.0"
+    "vite": "^3.0.0",
+    "imba": "*"
   },
   "peerDependenciesMeta": {
     "diff-match-patch": {
@@ -70,7 +71,6 @@
     "colors": "^1.4.0",
     "diff-match-patch": "^1.0.5",
     "esbuild": "^0.15.5",
-    "imba": "../imba",
     "rimraf": "^3.0.2",
     "rollup": "^2.78.1",
     "vite": "^3.0.9"
