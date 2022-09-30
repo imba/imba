@@ -58,7 +58,7 @@
   "peerDependencies": {
     "diff-match-patch": "^1.0.5",
     "vite": "^3.0.0",
-    "imba": "*"
+	"imba": "*"
   },
   "peerDependenciesMeta": {
     "diff-match-patch": {

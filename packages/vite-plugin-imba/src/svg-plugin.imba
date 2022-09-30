@@ -1,6 +1,6 @@
 import { createCompileImba } from './utils/compile.ts'
 import {readFileSync} from "fs"
-import {parseAsset} from '../../imba/src/compiler/assets'
+import {parseAsset} from 'imba/compiler'
 
 def compile-svg(body\string, url\string)
 	let parsed = parseAsset({body})
